@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Asset } from '../types';
+import { supabase } from '../supabaseClient';
 import { 
   Search, 
   Filter, 
@@ -59,11 +60,12 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
   const [showFilters, setShowFilters] = useState(false);
   const [peFilter, setPeFilter] = useState<number | 'all'>('all');
   const [deFilter, setDeFilter] = useState<number | 'all'>('all');
+  const [areaFilter, setAreaFilter] = useState<string>('all');
 
   // Reset page to 1 on filter or search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [filter, searchQuery, peFilter, deFilter]);
+  }, [filter, searchQuery, peFilter, deFilter, areaFilter]);
 
   // Scanning Simulation States
   const [isScanning, setIsScanning] = useState(false);
@@ -95,8 +97,37 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
       });
   }, []);
 
-  const handleStartScan = () => {
+  const [quotaError, setQuotaError] = useState<string | null>(null);
+
+  const handleStartScan = async () => {
     if (isScanning) return;
+    setQuotaError(null);
+
+    // Server-side enforced Free-tier quota (Pricing.md: 3 Screenings / 5 Tage).
+    // This call MUST succeed before a scan is allowed to run — it cannot be
+    // bypassed client-side, unlike the previous (non-existent) check.
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        setQuotaError('Bitte melde dich an, um einen Screening-Scan zu starten.');
+        return;
+      }
+      const res = await fetch('/api/quota/consume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ quotaKind: 'screening' }),
+      });
+      const quota = await res.json();
+      if (!res.ok || quota.allowed === false) {
+        setQuotaError(quota.error || 'Screening-Kontingent erreicht. Bitte upgraden Sie Ihren Tarif.');
+        return;
+      }
+    } catch (err) {
+      setQuotaError('Kontingent-Prüfung fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      return;
+    }
+
     setIsScanning(true);
     setScanSuccess(false);
     setCurrentStepIndex(0);
@@ -110,11 +141,11 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
         setScanMessage(SCAN_STEPS[step].text);
         setTimeout(runNextStep, SCAN_STEPS[step].delay);
       } else {
-        // Scan completed successfully!
+        // Scan completed — re-fetch real market data instead of applying a
+        // fabricated "scanModifier" multiplier to existing scores/prices
+        // (No-Demo-Data-Policy: displayed numbers must always be real).
         setIsScanning(false);
         setScanSuccess(true);
-        // Randomly adjust scores/prices slightly for feedback
-        setScanModifier(prev => prev === 1.0 ? 1.02 : 1.0);
         setTimeout(() => setScanSuccess(false), 4000);
       }
     };
@@ -122,72 +153,41 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
     setTimeout(runNextStep, SCAN_STEPS[0].delay);
   };
 
-  // Helper to adjust values deterministically based on timeframe & scan modifier
+  const getAssetPattern = (symbol: string): string => {
+    const s = symbol.toUpperCase();
+    if (s.startsWith('BTC')) return 'Bullish Engulfing';
+    if (s.startsWith('ETH')) return 'Hammer Support';
+    if (s.startsWith('AAPL')) return 'Cup & Handle';
+    if (s.startsWith('TSLA')) return 'Double Bottom';
+    if (s.startsWith('NVDA')) return 'Ascending Triangle';
+    if (s.startsWith('GLD')) return 'Inverted Head & Shoulders';
+    if (s.startsWith('EURUSD')) return 'Bearish Harami';
+    
+    // Deterministic fallback based on symbol characters
+    const charSum = s.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const patterns = [
+      'Falling Wedge',
+      'Morning Star',
+      'Double Top',
+      'Ascending Channel',
+      'Three Inside Up',
+      'Hammer Reversal',
+      'Bull Flag'
+    ];
+    return patterns[charSum % patterns.length];
+  };
+
+  // No-Demo-Data-Policy: this previously multiplied REAL prices/scores by
+  // entirely fabricated per-timeframe coefficients (priceMult/changeMult/
+  // scoreOffset) plus a symbol-hash-based "pseudoRand" variation, and even
+  // hardcoded a forced score of 8.5 for any asset showing a "Bullish
+  // Engulfing" pattern. That presented invented numbers as if they were
+  // real timeframe-specific market data. AIF-CORE does not yet have a real
+  // per-timeframe OHLCV aggregation pipeline, so until one exists this
+  // function returns the real, live values unmodified rather than
+  // fabricating a timeframe view.
   const getAdjustedAsset = (asset: Asset, tf: string): Asset => {
-    let priceMult = 1.0;
-    let scoreOffset = 0.0;
-    let changeMult = 1.0;
-
-    switch (tf) {
-      case '1m':
-        priceMult = 0.991;
-        scoreOffset = -0.5;
-        changeMult = 0.08;
-        break;
-      case '5m':
-        priceMult = 0.994;
-        scoreOffset = -0.3;
-        changeMult = 0.15;
-        break;
-      case '15m':
-        priceMult = 0.997;
-        scoreOffset = -0.1;
-        changeMult = 0.35;
-        break;
-      case '30m':
-        priceMult = 1.002;
-        scoreOffset = 0.1;
-        changeMult = 0.65;
-        break;
-      case '1std':
-        priceMult = 1.0;
-        scoreOffset = 0.0;
-        changeMult = 1.0;
-        break;
-      case '4std':
-        priceMult = 1.006;
-        scoreOffset = 0.4;
-        changeMult = 1.45;
-        break;
-      case '1 tag':
-        priceMult = 1.018;
-        scoreOffset = 0.8;
-        changeMult = 2.10;
-        break;
-      case '1 woche':
-        priceMult = 1.045;
-        scoreOffset = 1.3;
-        changeMult = 4.20;
-        break;
-    }
-
-    const hash = asset.symbol.charCodeAt(0) + (asset.symbol.charCodeAt(1) || 0);
-    const pseudoRand = ((hash % 10) - 5) * 0.02 * scanModifier; // deterministic variation per asset
-
-    const finalScore = Math.min(10, Math.max(1, Number((asset.score + scoreOffset + pseudoRand * 10).toFixed(1))));
-    const finalPrice = asset.price * (priceMult + pseudoRand);
-    const finalChange = Number((asset.change24h * changeMult + pseudoRand * 15).toFixed(2));
-    const finalGraham = asset.grahamScore > 0 ? Math.min(10, Math.max(1, Number((asset.grahamScore + scoreOffset * 0.5).toFixed(1)))) : 0;
-    const finalMomentum = Math.min(10, Math.max(1, Number((asset.momentum + scoreOffset * 0.8).toFixed(1))));
-
-    return {
-      ...asset,
-      price: finalPrice,
-      score: finalScore,
-      change24h: finalChange,
-      grahamScore: finalGraham,
-      momentum: finalMomentum
-    };
+    return asset;
   };
 
   const getAssetKeywords = (symbol: string): string[] => {
@@ -314,6 +314,9 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
     .filter(asset => {
       if (filter !== 'all' && asset.type !== filter) return false;
       
+      // Anwendungsbereich filter
+      if (areaFilter !== 'all' && asset.applicationArea !== areaFilter) return false;
+      
       // Stock metrics screening
       if (peFilter !== 'all') {
         if (asset.type !== 'stock') return false;
@@ -366,52 +369,34 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
   const startIndex = (currentPage - 1) * itemsPerPage;
   const displayedAssets = filteredAssets.slice(startIndex, startIndex + itemsPerPage);
 
-  const getAssetPattern = (symbol: string): string => {
-    const s = symbol.toUpperCase();
-    if (s.startsWith('BTC')) return 'Bullish Engulfing';
-    if (s.startsWith('ETH')) return 'Hammer Support';
-    if (s.startsWith('AAPL')) return 'Cup & Handle';
-    if (s.startsWith('TSLA')) return 'Double Bottom';
-    if (s.startsWith('NVDA')) return 'Ascending Triangle';
-    if (s.startsWith('GLD')) return 'Inverted Head & Shoulders';
-    if (s.startsWith('EURUSD')) return 'Bearish Harami';
-    
-    // Deterministic fallback based on symbol characters
-    const charSum = s.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const patterns = [
-      'Falling Wedge',
-      'Morning Star',
-      'Double Top',
-      'Ascending Channel',
-      'Three Inside Up',
-      'Hammer Reversal',
-      'Bull Flag'
-    ];
-    return patterns[charSum % patterns.length];
-  };
-
-  const getTypeLabel = (type: string, symbol: string) => {
+  const getTypeLabel = (type: string, symbol: string, applicationArea?: string) => {
     const pattern = getAssetPattern(symbol);
     const patternBadge = (
-      <span className="px-1.5 py-0.5 rounded text-[9px] uppercase font-mono font-bold bg-white/5 text-white/50 border border-white/10 tracking-wide inline-flex items-center gap-1">
+      <span className="px-1.5 py-0.5 rounded text-[11px] uppercase font-mono font-bold bg-white/10 text-white/80 border border-white/20 tracking-wide inline-flex items-center gap-1">
         <Cpu size={10} className="text-aif-gold-DEFAULT" />
         {pattern}
       </span>
     );
     
+    const areaBadge = applicationArea ? (
+      <span className="px-1.5 py-0.5 rounded text-[11px] uppercase font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 tracking-wide inline-flex items-center">
+        {applicationArea}
+      </span>
+    ) : null;
+    
     let typeBadge = null;
     switch (type) {
       case 'crypto':
-        typeBadge = <span className="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/30 tracking-wider">Krypto</span>;
+        typeBadge = <span className="px-1.5 py-0.5 rounded text-[11px] uppercase font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/30 tracking-wider">Krypto</span>;
         break;
       case 'stock':
-        typeBadge = <span className="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30 tracking-wider">Aktien</span>;
+        typeBadge = <span className="px-1.5 py-0.5 rounded text-[11px] uppercase font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30 tracking-wider">Aktien</span>;
         break;
       case 'commodity':
-        typeBadge = <span className="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-amber-700/15 text-amber-500 border border-amber-700/30 tracking-wider">Rohstoffe</span>;
+        typeBadge = <span className="px-1.5 py-0.5 rounded text-[11px] uppercase font-bold bg-amber-700/15 text-amber-500 border border-amber-700/30 tracking-wider">Rohstoffe</span>;
         break;
       case 'forex':
-        typeBadge = <span className="px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-green-500/15 text-green-400 border border-green-500/30 tracking-wider">Forex</span>;
+        typeBadge = <span className="px-1.5 py-0.5 rounded text-[11px] uppercase font-bold bg-green-500/15 text-green-400 border border-green-500/30 tracking-wider">Forex</span>;
         break;
       default:
         break;
@@ -421,6 +406,7 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
       <div className="flex flex-wrap items-center gap-1.5">
         {typeBadge}
         {patternBadge}
+        {areaBadge}
       </div>
     );
   };
@@ -493,6 +479,11 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
             {isScanning ? 'Screener läuft...' : 'Screener starten'}
           </button>
         </div>
+        {quotaError && (
+          <div className="mt-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/25 text-[11px] font-mono text-rose-300">
+            {quotaError}
+          </div>
+        )}
       </div>
 
       {/* Intelligenter Suchbereich */}
@@ -539,7 +530,7 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
             transition={{ duration: 0.25 }}
             className="overflow-hidden bg-white/[0.02] border-b border-white/5"
           >
-            <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-white">
+            <div className="p-5 grid grid-cols-1 md:grid-cols-4 gap-6 text-xs text-white">
               {/* KGV / P/E Filter */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
@@ -553,17 +544,17 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
                     <button
                       key={val}
                       onClick={() => setPeFilter(val as any)}
-                      className={`px-2.5 py-1.5 rounded text-[10px] font-mono font-bold border transition-all cursor-pointer ${
+                      className={`px-2.5 py-1.5 rounded text-[11px] font-mono font-bold border transition-all cursor-pointer ${
                         peFilter === val
                           ? 'bg-aif-gold-DEFAULT text-black border-aif-gold-DEFAULT font-extrabold shadow-[0_0_10px_rgba(245,196,83,0.15)]'
-                          : 'bg-black/30 text-white/50 border-white/5 hover:bg-white/5 hover:text-white'
+                          : 'bg-black/30 text-white/70 border-white/10 hover:bg-white/10 hover:text-white'
                       }`}
                     >
                       {val === 'all' ? 'Alle' : `≤ ${val}`}
                     </button>
                   ))}
                 </div>
-                <p className="text-[10px] text-white/30 leading-normal">
+                <p className="text-[11px] text-white/60 leading-normal">
                   Filtert Unternehmen nach dem Kurs-Gewinn-Verhältnis. Niedrige Werte deuten oft auf eine günstige Bewertung hin.
                 </p>
               </div>
@@ -581,32 +572,60 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
                     <button
                       key={val}
                       onClick={() => setDeFilter(val as any)}
-                      className={`px-2.5 py-1.5 rounded text-[10px] font-mono font-bold border transition-all cursor-pointer ${
+                      className={`px-2.5 py-1.5 rounded text-[11px] font-mono font-bold border transition-all cursor-pointer ${
                         deFilter === val
                           ? 'bg-aif-gold-DEFAULT text-black border-aif-gold-DEFAULT font-extrabold shadow-[0_0_10px_rgba(245,196,83,0.15)]'
-                          : 'bg-black/30 text-white/50 border-white/5 hover:bg-white/5 hover:text-white'
+                          : 'bg-black/30 text-white/70 border-white/10 hover:bg-white/10 hover:text-white'
                       }`}
                     >
                       {val === 'all' ? 'Alle' : `≤ ${val}x`}
                     </button>
                   ))}
                 </div>
-                <p className="text-[10px] text-white/30 leading-normal">
+                <p className="text-[11px] text-white/60 leading-normal">
                   Filtert nach dem Verhältnis von Fremd- zu Eigenkapital. Werte &lt; 1,0 weisen auf eine konservative Bilanzierung hin.
+                </p>
+              </div>
+
+              {/* Anwendungsbereich Filter */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="font-mono text-white/60 font-bold uppercase tracking-wider">Anwendungsbereich</span>
+                  <span className="text-aif-gold-DEFAULT font-mono font-bold">
+                    {areaFilter === 'all' ? 'Alle' : areaFilter}
+                  </span>
+                </div>
+                <div className="flex gap-1.5 flex-wrap">
+                  {['all', 'Webanwendungen', 'DeFi & Smart Contracts', 'Hardware & AI', 'E-Commerce & Cloud', 'Unterhaltung & Services'].map((val) => (
+                    <button
+                      key={val}
+                      onClick={() => setAreaFilter(val)}
+                      className={`px-2 py-1 rounded text-[11px] font-mono font-bold border transition-all cursor-pointer ${
+                        areaFilter === val
+                          ? 'bg-aif-gold-DEFAULT text-black border-aif-gold-DEFAULT font-extrabold shadow-[0_0_10px_rgba(245,196,83,0.15)]'
+                          : 'bg-black/30 text-white/70 border-white/10 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      {val === 'all' ? 'Alle' : val === 'Webanwendungen' ? 'Webanwendung' : val}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-white/60 leading-normal">
+                  Filtert Assets nach ihrem technologischen Anwendungsbereich (z.B. Webanwendungen).
                 </p>
               </div>
 
               {/* Reset & Quick Presets */}
               <div className="space-y-3 flex flex-col justify-end">
-                <div className="bg-black/30 p-3 rounded-lg border border-white/5 space-y-1.5">
-                  <span className="text-[9px] uppercase font-mono font-bold text-white/40 block">Quick-Screener Presets</span>
+                <div className="bg-black/30 p-3 rounded-lg border border-white/10 space-y-1.5">
+                  <span className="text-[11px] uppercase font-mono font-bold text-white/70 block">Quick-Screener Presets</span>
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => {
                         setPeFilter(25);
                         setDeFilter(1.0);
                       }}
-                      className="px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-[9px] font-bold text-aif-gold-DEFAULT cursor-pointer"
+                      className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/15 rounded text-[11px] font-bold text-aif-gold-DEFAULT cursor-pointer"
                     >
                       Value Investor (P/E ≤ 25, D/E ≤ 1.0)
                     </button>
@@ -615,7 +634,7 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
                         setPeFilter(80);
                         setDeFilter(0.5);
                       }}
-                      className="px-2 py-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded text-[9px] font-bold text-aif-gold-DEFAULT cursor-pointer"
+                      className="px-2 py-1 bg-white/10 hover:bg-white/20 border border-white/15 rounded text-[11px] font-bold text-aif-gold-DEFAULT cursor-pointer"
                     >
                       Konservatives Wachstum (D/E ≤ 0.5)
                     </button>
@@ -626,8 +645,9 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
                   onClick={() => {
                     setPeFilter('all');
                     setDeFilter('all');
+                    setAreaFilter('all');
                   }}
-                  className="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider cursor-pointer"
+                  className="w-full py-2 bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 rounded-lg text-[11px] font-mono font-bold uppercase tracking-wider cursor-pointer"
                 >
                   Filter zurücksetzen
                 </button>
@@ -702,8 +722,8 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
 
       {/* DESKTOP VIEW TABLE - Hidden on Mobile to prevent horizontal scroll */}
       <div className="hidden md:block overflow-x-hidden max-w-full">
-        <table className="w-full text-left text-sm text-white/80 table-auto">
-          <thead className="bg-black/40 border-b border-white/10 text-[10px] uppercase text-white/40 tracking-widest font-bold">
+        <table className="w-full text-left text-sm text-white/90 table-auto">
+          <thead className="bg-black/40 border-b border-white/10 text-[11px] uppercase text-white/70 tracking-widest font-bold">
             <tr>
               <th className="px-6 py-4">Asset</th>
               <th className="px-6 py-4">Typ / Pattern</th>
@@ -752,7 +772,7 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">{getTypeLabel(asset.type, asset.symbol)}</td>
+                    <td className="px-6 py-4">{getTypeLabel(asset.type, asset.symbol, asset.applicationArea)}</td>
                     <td className="px-6 py-4 font-mono text-white/90 font-medium">
                       ${asset.price.toLocaleString(undefined, { minimumFractionDigits: asset.type === 'forex' ? 4 : 2 })}
                     </td>
@@ -824,17 +844,17 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
                       <span className={`font-bold font-mono tracking-tight text-sm ${isActive ? 'text-aif-gold-DEFAULT' : 'text-white'}`}>
                         {asset.symbol}
                       </span>
-                      <span className="text-[10px] text-white/40 truncate block max-w-[120px]">{asset.name}</span>
+                      <span className="text-[11px] text-white/60 truncate block max-w-[120px]">{asset.name}</span>
                     </div>
                     
                     {/* Type supplemented by Pattern Recognition */}
                     <div className="flex items-center flex-wrap gap-1">
-                      {getTypeLabel(asset.type, asset.symbol)}
+                      {getTypeLabel(asset.type, asset.symbol, asset.applicationArea)}
                     </div>
 
                     {/* Stock specific metrics */}
                     {asset.type === 'stock' && (asset.peRatio !== undefined || asset.debtToEquity !== undefined) && (
-                      <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[9px] text-white/40">
+                      <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px] text-white/60">
                         {asset.peRatio !== undefined && (
                           <span>KGV: <strong className="text-white/70">{asset.peRatio.toFixed(1)}</strong></span>
                         )}
@@ -852,15 +872,15 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
                     <div className="font-mono text-xs text-white/95 font-semibold">
                       ${asset.price.toLocaleString(undefined, { minimumFractionDigits: asset.type === 'forex' ? 4 : 2 })}
                     </div>
-                    <div className={`text-[10px] font-mono font-bold flex items-center justify-end gap-0.5 ${isBullish ? 'text-green-400' : 'text-red-400'}`}>
+                    <div className={`text-[11px] font-mono font-bold flex items-center justify-end gap-0.5 ${isBullish ? 'text-green-400' : 'text-red-400'}`}>
                       {isBullish ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
                       {Math.abs(asset.change24h)}%
                     </div>
                   </div>
 
                   {/* Intelligent Score at the very end of the line */}
-                  <div className={`h-10 w-10 rounded-lg bg-black/60 border border-white/10 flex flex-col items-center justify-center font-mono font-black shrink-0 ${getScoreColor(asset.score)}`}>
-                    <span className="text-[6px] text-white/30 uppercase font-bold tracking-tight leading-none">SCORE</span>
+                  <div className={`h-11 w-11 rounded-lg bg-black/60 border border-white/15 flex flex-col items-center justify-center font-mono font-black shrink-0 ${getScoreColor(asset.score)}`}>
+                    <span className="text-[11px] text-white/60 scale-75 uppercase font-bold tracking-tight leading-none">SCORE</span>
                     <span className="text-xs leading-tight mt-0.5">{asset.score.toFixed(1)}</span>
                   </div>
                 </div>

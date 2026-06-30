@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { supabase } from '../supabaseClient';
 import { Screener } from './Screener';
 import { Newsticker } from './Newsticker';
 import { ImageAnalyzer } from './ImageAnalyzer';
-import { HeatmapVisual } from './HeatmapVisual';
+import { CryptoEnterpriseEvaluator } from './CryptoEnterpriseEvaluator';
 import { ProfilePage, UserProfile } from './ProfilePage';
 import { MonteCarloDetailed } from './MonteCarloDetailed';
 import { BuffetValueCheck } from './BuffetValueCheck';
@@ -15,8 +16,15 @@ import { BacktestEngine } from './BacktestEngine';
 import { HeatmapCreator } from './HeatmapCreator';
 import { AifCoreLogo } from './AifCoreLogo';
 import { MarketScreener } from './MarketScreener';
+import { CryptoScoringEnterprise } from './CryptoScoringEnterprise';
 import { UserSession } from '../App';
 import { GuestCliffhangerModal } from './GuestCliffhangerModal';
+import { MarkdownOrchestrator } from './MarkdownOrchestrator';
+import { InteractModule } from './InteractModule';
+import { Charts } from './Charts';
+import { OrchestratorPanel } from './OrchestratorPanel';
+import PerformanceDashboard from './PerformanceDashboard';
+import { RealTimeRiskAssessment } from './RealTimeRiskAssessment';
 
 import { 
   LogOut, 
@@ -40,7 +48,12 @@ import {
   Sparkles,
   TrendingUp,
   Flame,
-  SlidersHorizontal
+  SlidersHorizontal,
+  FileText,
+  Orbit,
+  BarChart3,
+  Gauge,
+  ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -71,7 +84,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedSymbol, setSelectedSymbol] = useState<string>('BTC');
   const [timeframe, setTimeframe] = useState<string>('1std');
-  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment'>('dashboard');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
 
   // Guest limitations state
@@ -130,16 +143,22 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // 2. Fetch/sync latest persistent tier from backend webhook storage on mount
+    // 2. Fetch/sync latest persistent tier from backend webhook storage on mount (auth required)
     if (profile.email) {
-      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(profile.email)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.subscriptionTier && data.subscriptionTier !== profile.subscriptionTier) {
-            setProfile(prev => ({ ...prev, subscriptionTier: data.subscriptionTier }));
-          }
+      supabase.auth.getSession().then(({ data: sessionData }) => {
+        const token = sessionData?.session?.access_token;
+        if (!token) return;
+        fetch(`/api/stripe/user-subscription`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         })
-        .catch(err => console.error("Error syncing subscription tier with server:", err));
+          .then(res => res.json())
+          .then(data => {
+            if (data.subscriptionTier && data.subscriptionTier !== profile.subscriptionTier) {
+              setProfile(prev => ({ ...prev, subscriptionTier: data.subscriptionTier }));
+            }
+          })
+          .catch(err => console.error("Error syncing subscription tier with server:", err));
+      });
     }
   }, []);
 
@@ -164,7 +183,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
   };
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-aif-gold-DEFAULT/30 font-sans relative">
+    <div className="min-h-screen bg-[#18181b] text-white selection:bg-aif-gold-DEFAULT/30 font-sans relative">
       
       {/* Background Effect - Highly Active Neural Connections */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-50">
@@ -242,7 +261,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                     <AifCoreLogo size={40} showText={false} />
                     <div className="flex flex-col items-start leading-none">
                       <span className="font-black text-sm tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">AIF-CORE</span>
-                      <span className="text-[7px] text-white/40 font-mono tracking-widest uppercase mt-0.5">MODUL 1</span>
+                      <span className="text-[11px] text-white/70 font-mono tracking-widest uppercase mt-0.5">MODUL 1</span>
                     </div>
                   </div>
                   <button 
@@ -269,7 +288,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                     <h4 className="text-sm font-bold text-white truncate font-display group-hover:text-aif-gold-light transition-colors">
                       {profile.name}
                     </h4>
-                    <p className="text-[10px] text-white/50 truncate font-mono">
+                    <p className="text-[11px] text-white/70 truncate font-mono">
                       {profile.email}
                     </p>
                   </div>
@@ -277,7 +296,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
 
                 {/* Navigation Items */}
                 <div className="p-4 space-y-1">
-                  <span className="text-[9px] uppercase tracking-widest text-white/35 font-mono px-3 block mb-2">Plattform Navigation</span>
+                  <span className="text-[11px] uppercase tracking-widest text-white/65 font-mono px-3 block mb-2">Plattform Navigation</span>
                   
                   <SidebarTooltip title="Dashboard Home" text="Bietet eine Gesamtübersicht des Portfolios, aktuelle Markttrends, KI-Analysen und die wichtigsten Kennzahlen auf einen Blick.">
                     <button 
@@ -307,17 +326,17 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                     </button>
                   </SidebarTooltip>
 
-                  <SidebarTooltip title="Sentiment Heatmap" text="Visualisiert die Marktstimmung verschiedener Sektoren. Große grüne Kacheln bedeuten bullische Stimmung, rote Kacheln bärische Stimmung.">
+                  <SidebarTooltip title="Ad-Hoc Charts & Indikatoren" text="Echtzeit-Preischarts mit gleitenden Durchschnitten (SMA/EMA), RSI, MACD, Bollinger-Bändern und ad-hoc KI-Agent-Scoring.">
                     <button 
-                      onClick={() => navigateTo('heatmap')}
+                      onClick={() => navigateTo('charts')}
                       className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
-                        activeView === 'heatmap' 
+                        activeView === 'charts' 
                           ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
                           : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
                       }`}
                     >
-                      <Flame size={16} className={activeView === 'heatmap' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
-                      <span>Sentiment Heatmap</span>
+                      <BarChart3 size={16} className={activeView === 'charts' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                      <span>Ad-Hoc Charts</span>
                     </button>
                   </SidebarTooltip>
 
@@ -363,6 +382,77 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                     </button>
                   </SidebarTooltip>
 
+                  <SidebarTooltip title="Markdown Orchestrator" text="Ein intelligenter Multi-Perspektiven Dokumenten-Generator, der professionelle Berichte (CEO, Security, QA, Frontend, Backend) direkt auf Codebasis erstellt.">
+                    <button 
+                      onClick={() => navigateTo('markdown-orchestrator')}
+                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
+                        activeView === 'markdown-orchestrator' 
+                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
+                      }`}
+                    >
+                      <FileText size={16} className={activeView === 'markdown-orchestrator' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                      <span>Markdown Orchestrator</span>
+                    </button>
+                  </SidebarTooltip>
+
+                  <SidebarTooltip title="AIF Interact (Modul 2) - Temporär Deaktiviert" text="Dieses Modul wurde gemäß Systemvorgabe deaktiviert. Alle anderen Reiter stehen uneingeschränkt zur Verfügung.">
+                    <button 
+                      disabled
+                      className="w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center justify-between gap-3 transition-all relative overflow-hidden opacity-40 cursor-not-allowed border border-dashed border-white/10 bg-black/20"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Orbit size={16} className="text-cyan-500/50" />
+                        <span className="text-white/60">Interact (Modul 2)</span>
+                      </div>
+                      <span className="px-1.5 py-0.5 rounded text-[8px] bg-rose-500/10 text-rose-400 border border-rose-500/20 font-mono font-black uppercase">Deaktiviert</span>
+                    </button>
+                  </SidebarTooltip>
+
+                  {(profile.subscriptionTier === 'Enterprise' || profile.email === 'sven.kulessa@gmail.com') && (
+                  <SidebarTooltip title="Request Orchestrator" text="Live Telemetrie-Überwachung des Server-Datenstroms, asynchrones Thread-Queueing und proaktive Absicherung gegen API-Abstürze. (Nur Enterprise/Admin)">
+                    <button 
+                      onClick={() => navigateTo('request-orchestrator')}
+                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
+                        activeView === 'request-orchestrator' 
+                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
+                      }`}
+                    >
+                      <Cpu size={16} className={activeView === 'request-orchestrator' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                      <span>Request Orchestrator</span>
+                    </button>
+                  </SidebarTooltip>
+                  )}
+
+                  <SidebarTooltip title="Performance-Zentrale" text="D3.js-basierte Überwachung von Latenzzeiten, API-Effizienz des Asset Registries und Speicherauslastung.">
+                    <button 
+                      onClick={() => navigateTo('performance')}
+                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
+                        activeView === 'performance' 
+                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
+                      }`}
+                    >
+                      <Gauge size={16} className={activeView === 'performance' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                      <span>Performance-Zentrale</span>
+                    </button>
+                  </SidebarTooltip>
+
+                  <SidebarTooltip title="Risiko-Assessment (VaR)" text="Mathematische Risiko-Simulationen (Variance-Covariance, Historisches Bootstrapping & Monte-Carlo) zur Bestimmung Deiner Portfoliorisiken.">
+                    <button 
+                      onClick={() => navigateTo('risiko-assessment')}
+                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
+                        activeView === 'risiko-assessment' 
+                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
+                      }`}
+                    >
+                      <ShieldAlert size={16} className={activeView === 'risiko-assessment' ? 'text-black' : 'text-rose-500'} />
+                      <span>Risiko-Assessment (VaR)</span>
+                    </button>
+                  </SidebarTooltip>
+
                   <SidebarTooltip title="Abonnements & Tarife" text="Verwalte Deine Zahlungsmethoden und wähle den optimalen Tarif für Deine Investment-Bedürfnisse.">
                     <button 
                       onClick={() => navigateTo('abonnements')}
@@ -377,7 +467,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                     </button>
                   </SidebarTooltip>
 
-                  <span className="text-[9px] uppercase tracking-widest text-white/35 font-mono px-3 block mt-4 mb-2">Rechtliches & Support</span>
+                  <span className="text-[11px] uppercase tracking-widest text-white/65 font-mono px-3 block mt-4 mb-2">Rechtliches & Support</span>
 
                   <SidebarTooltip title="Datenschutz" text="Erfahre, wie wir Deine persönlichen Daten und Portfolio-Informationen nach DSGVO-Richtlinien schützen.">
                     <button 
@@ -434,7 +524,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
 
       {/* Sticky Main Navigation */}
       <nav className="relative z-10 border-b border-aif-gold-DEFAULT/20 bg-black/70 backdrop-blur-xl sticky top-0 shadow-[0_4px_30px_rgba(245,196,83,0.15)]">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
           
           <div className="flex items-center gap-4 sm:gap-6">
             
@@ -445,7 +535,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               aria-label="Hauptmenü öffnen"
             >
               <Menu size={20} className="group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline text-[10px] font-mono tracking-widest uppercase pr-1 font-bold">Menü</span>
+              <span className="hidden sm:inline text-[11px] font-mono tracking-widest uppercase pr-1 font-bold">Menü</span>
             </button>
 
             {/* Logo and Brand */}
@@ -461,8 +551,8 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                     <ChevronDown size={16} className={`text-aif-gold-DEFAULT transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
                   <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-[8px] text-white/40 font-mono tracking-widest uppercase">MODUL 1</span>
-                    <span className="px-1.5 py-0.5 rounded text-[7px] font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 font-mono tracking-widest">
+                    <span className="text-[11px] text-white/70 font-mono tracking-widest uppercase">MODUL 1</span>
+                    <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 font-mono tracking-widest">
                       AKTIV
                     </span>
                   </div>
@@ -514,19 +604,20 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
             {/* Thread Activity Indicator */}
             <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
               <Activity className="text-aif-neon-cyan animate-pulse" size={14} />
-              <span className="text-[10px] font-mono text-white/60 tracking-widest uppercase">8 Worker-Threads / Parallel API-Querying</span>
+              <span className="text-[11px] font-mono text-white/80 tracking-widest uppercase">8 Worker-Threads / Parallel API-Querying</span>
             </div>
           </div>
 
           {/* Top right area cleaned of duplicate navigation buttons */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {profile.subscriptionTier !== 'Enterprise' ? (
               <button
                 onClick={() => setIsSubscriptionModalOpen(true)}
-                className="px-4 py-2 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(245,196,83,0.3)] cursor-pointer"
+                className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 text-black font-black text-[11px] sm:text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1 sm:gap-1.5 shadow-[0_0_15px_rgba(245,196,83,0.3)] cursor-pointer"
               >
-                <Sparkles size={14} className="animate-pulse" />
-                <span>Premium freischalten</span>
+                <Sparkles size={12} className="animate-pulse" />
+                <span className="hidden sm:inline">Premium freischalten</span>
+                <span className="sm:hidden">Premium</span>
               </button>
             ) : (
               <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center gap-1.5">
@@ -556,6 +647,9 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                 {activeView === 'datenschutz' && 'Datenschutzbestimmungen'}
                 {activeView === 'impressum-agb' && 'Impressum & AGB'}
                 {activeView === 'profil' && 'Profilseite'}
+                {activeView === 'markdown-orchestrator' && 'Markdown Orchestrator'}
+                {activeView === 'interact' && 'Interact Workspace (Modul 2)'}
+                {activeView === 'risiko-assessment' && 'Value-at-Risk Risiko-Zentrale'}
               </span>
             </div>
             
@@ -581,18 +675,18 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
           >
             {activeView === 'dashboard' && (
               <>
-                {/* Top Row: Screener */}
-                <Screener 
+                {/* Top Row: Enterprise Crypto Scoring Module */}
+                <CryptoScoringEnterprise 
                   selectedSymbol={selectedSymbol} 
                   onSelectSymbol={setSelectedSymbol} 
                   timeframe={timeframe} 
                   onChangeTimeframe={setTimeframe} 
                 />
 
-                {/* Middle Row: Heatmap & Monte-Carlo Preview */}
+                {/* Middle Row: Enterprise Trading Evaluation Tool & AI-Newsfeed */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-2">
-                    <HeatmapVisual selectedSymbol={selectedSymbol} onSelectSymbol={setSelectedSymbol} />
+                    <CryptoEnterpriseEvaluator selectedSymbol={selectedSymbol} onSelectSymbol={setSelectedSymbol} />
                   </div>
                   <div className="space-y-6">
                     {/* Realtime AI-Newsfeed instead of Monte-Carlo Quick Card */}
@@ -609,10 +703,10 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                       title="Klicke für BuffettValueCheck Graham-DCF Rechner"
                     >
                       <div className="flex justify-between items-start mb-3">
-                        <h3 className="text-sm font-medium text-white/60 font-display group-hover:text-aif-gold-light transition-colors">
+                        <h3 className="text-sm font-medium text-white/80 font-display group-hover:text-aif-gold-light transition-colors">
                           Buffett-Value & DCF Check
                         </h3>
-                        <span className="text-[9px] font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-wider bg-aif-gold-DEFAULT/10 px-2 py-0.5 rounded">
+                        <span className="text-[11px] font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-wider bg-aif-gold-DEFAULT/10 px-2 py-0.5 rounded">
                           Berechnen
                         </span>
                       </div>
@@ -635,12 +729,14 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                         </div>
                       </div>
                       <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
-                        <span className="text-[10px] text-white/40 uppercase tracking-wider">Klicken für Rechner</span>
-                        <span className="text-[10px] font-mono text-aif-gold-DEFAULT">Graham-Formel-Modell</span>
+                        <span className="text-[11px] text-white/70 uppercase tracking-wider">Klicken für Rechner</span>
+                        <span className="text-[11px] font-mono text-aif-gold-DEFAULT">Graham-Formel-Modell</span>
                       </div>
                     </div>
                   </div>
                 </div>
+
+
 
                 {/* Bottom Row: AI Tools */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -704,16 +800,59 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                 onUpdateProfile={(newProfile) => setProfile(newProfile)} 
               />
             )}
+
+            {activeView === 'markdown-orchestrator' && (
+              <MarkdownOrchestrator />
+            )}
+
+            {activeView === 'request-orchestrator' && (profile.subscriptionTier === 'Enterprise' || profile.email === 'sven.kulessa@gmail.com') && (
+              <OrchestratorPanel />
+            )}
+
+            {activeView === 'performance' && (
+              <PerformanceDashboard />
+            )}
+
+            {activeView === 'risiko-assessment' && (
+              <RealTimeRiskAssessment 
+                userCapital={profile.capital}
+                selectedSymbol={selectedSymbol}
+                onSelectSymbol={setSelectedSymbol}
+                triggerAttempt={triggerAttempt}
+              />
+            )}
+
+            {activeView === 'interact' && (
+              <InteractModule />
+            )}
+
+            {activeView === 'charts' && (
+              <Charts 
+                selectedSymbol={selectedSymbol} 
+                onSelectSymbol={(sym) => setSelectedSymbol(sym)}
+              />
+            )}
           </motion.div>
         </AnimatePresence>
 
         {/* Footer */}
         <footer className="pt-8 pb-12 text-center border-t border-white/10 mt-12 px-6">
           <div className="max-w-4xl mx-auto flex flex-col items-center gap-4">
-            <div className="flex items-center gap-2 text-aif-gold-DEFAULT mb-2">
-               <AifCoreLogo size={32} showText={false} />
-               <span className="font-display font-black tracking-widest text-lg uppercase">AIF-CORE</span>
-               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 border border-white/20 tracking-wider font-mono">v7.5 Audit Passed</span>
+            {/* Info Siegel: Version 0.5 Beta-Phase mit dem Logo versehen */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 bg-gradient-to-r from-aif-gold-DEFAULT/10 via-black/40 to-aif-gold-DEFAULT/5 border border-aif-gold-DEFAULT/20 rounded-2xl px-5 py-2.5 backdrop-blur-md shadow-[0_0_25px_rgba(245,196,83,0.08)] mb-4">
+              <div className="flex items-center gap-2">
+                <AifCoreLogo size={24} showText={false} />
+                <span className="font-display font-black tracking-widest text-sm uppercase text-aif-gold-DEFAULT">AIF-CORE</span>
+              </div>
+              <span className="hidden sm:inline text-white/20">|</span>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-white/5 border border-white/10 text-white/80 font-mono tracking-wider uppercase">
+                  Sicherheitssiegel
+                </span>
+                <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/30 tracking-wider font-mono">
+                  Version 0.5 Beta-Phase
+                </span>
+              </div>
             </div>
             
             {/* Legal quick navigation shortcuts inside footer */}
@@ -727,10 +866,10 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               <button onClick={() => navigateTo('abonnements')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors">Abonnements</button>
             </div>
 
-            <p className="text-xs text-white/40 leading-relaxed max-w-2xl">
+            <p className="text-xs text-white/70 leading-relaxed max-w-2xl">
               ⚠️ Keine Anlageberatung. AIFinancial zeigt ausschließlich quantitative Berechnungsmodelle und sentimentbasierte Live-Informationen – die Anlageentscheidung trifft immer der Nutzer selbst. Kapitalverlust ist möglich. MiFID II konforme Datenanalyse-Software.
             </p>
-            <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest mt-2">
+            <p className="text-[11px] font-mono text-white/60 uppercase tracking-widest mt-2">
               Strikte No-Demo-Data-Policy: Keine Interpolation unvollständiger Datenreihen.
             </p>
           </div>

@@ -19,6 +19,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { Checkout } from './Checkout';
+import { supabase } from '../supabaseClient';
 
 interface AbonnementsProps {
   currentTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
@@ -45,16 +46,22 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
       .then(data => setConfigStatus(data))
       .catch(err => console.error("Error loading stripe config status:", err));
 
-    // 2. Query persisted database-tier for this user
+    // 2. Query persisted database-tier for this user (auth required)
     if (email) {
-      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(email)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.subscriptionTier && data.subscriptionTier !== currentTier) {
-            onUpdateTier(data.subscriptionTier);
-          }
+      supabase.auth.getSession().then(({ data: sessionData }) => {
+        const token = sessionData?.session?.access_token;
+        if (!token) return;
+        fetch(`/api/stripe/user-subscription`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         })
-        .catch(err => console.error("Error syncing user subscription tier:", err));
+          .then(res => res.json())
+          .then(data => {
+            if (data.subscriptionTier && data.subscriptionTier !== currentTier) {
+              onUpdateTier(data.subscriptionTier);
+            }
+          })
+          .catch(err => console.error("Error syncing user subscription tier:", err));
+      });
     }
   }, [email]);
 

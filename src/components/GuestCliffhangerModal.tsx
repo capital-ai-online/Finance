@@ -172,11 +172,11 @@ export function GuestCliffhangerModal({ isOpen, onClose, onRegister, actionName 
             </form>
 
             <div className="mt-5 pt-4 border-t border-white/5 text-center flex flex-col items-center gap-1">
-              <div className="flex items-center gap-1.5 text-emerald-400 font-mono text-[9px] uppercase font-bold">
+              <div className="flex items-center gap-1.5 text-emerald-400 font-mono text-[11px] uppercase font-bold">
                 <Trophy size={11} />
                 <span>Geschenk: Starter-Plan permanent freigeschaltet</span>
               </div>
-              <p className="text-[8px] text-white/35">Datenschutzkonforme EU-Speicherung • Jederzeit kündbar</p>
+              <p className="text-[11px] text-white/70">Datenschutzkonforme EU-Speicherung • Jederzeit kündbar</p>
             </div>
 
           </div>

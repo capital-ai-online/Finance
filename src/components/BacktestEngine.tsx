@@ -16,8 +16,10 @@ import {
   Calendar,
   Layers,
   ArrowRight,
-  Download
+  Download,
+  FileText
 } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -273,6 +275,226 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
     document.body.removeChild(link);
   };
 
+  const exportPerformanceToPDF = () => {
+    if (!hasSimulated || chartData.length === 0) return;
+    
+    const doc = new jsPDF();
+    
+    // Header banner (Charcoal block with gold accents)
+    doc.setFillColor(15, 15, 15);
+    doc.rect(0, 0, 210, 38, 'F');
+    
+    // Gold line under header
+    doc.setFillColor(245, 196, 83);
+    doc.rect(0, 38, 210, 2, 'F');
+    
+    // Header Typography
+    doc.setTextColor(245, 196, 83);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.text('JENOVA NEXUS', 15, 18);
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('AUTOMATED QUANT BACKTESTING ENGINE REPORT', 15, 28);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(245, 196, 83);
+    doc.text('SYSTEM: AUTO-ROUTER', 152, 18);
+    doc.setTextColor(200, 200, 200);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`DATUM: ${new Date().toLocaleDateString('de-DE')}`, 152, 28);
+    
+    // Section 1: Meta Configuration
+    let y = 50;
+    doc.setTextColor(15, 15, 15);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('1. SIMULATIONSPARAMETER & KONFIGURATION', 15, y);
+    doc.setDrawColor(245, 196, 83);
+    doc.setLineWidth(0.5);
+    doc.line(15, y + 2, 195, y + 2);
+    
+    y += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    
+    // 2-column configuration table
+    doc.text('Basis-Asset / Ticker:', 15, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 15, 15);
+    doc.text(String(ticker), 60, y);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text('Startkapital:', 110, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 15, 15);
+    doc.text(`EUR ${initialCapital.toLocaleString('de-DE')}`, 150, y);
+    
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text('Handelsstrategie:', 15, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 15, 15);
+    doc.text(String(strategy), 60, y);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text('Transaktionsgebuehr:', 110, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 15, 15);
+    doc.text(`${params.transactionCost}%`, 150, y);
+    
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text('Zeithorizont:', 15, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 15, 15);
+    doc.text(String(timeRange), 60, y);
+    
+    if (strategy === 'SMA_CROSS') {
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.text('SMA Perioden:', 110, y);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(15, 15, 15);
+      doc.text(`SMA ${params.shortPeriod} (Kurz) / SMA ${params.longPeriod} (Lang)`, 150, y);
+    } else if (strategy === 'RSI_MOMENTUM') {
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.text('RSI Trigger:', 110, y);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(15, 15, 15);
+      doc.text(`Oversold: ${params.rsiOversold} / Overbought: ${params.rsiOverbought}`, 150, y);
+    }
+    
+    // Section 2: Core Performance metrics
+    y += 18;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(15, 15, 15);
+    doc.text('2. PERFORMANCE-METRIKEN UND ERGEBNISSE', 15, y);
+    doc.line(15, y + 2, 195, y + 2);
+    
+    y += 10;
+    // 4 visual KPI blocks
+    const kpis = [
+      { label: 'Strategie-Endwert', value: formatCurrency(metrics.finalStrategyValue), change: `${metrics.strategyReturn >= 0 ? '+' : ''}${metrics.strategyReturn.toFixed(1)}%` },
+      { label: 'Buy & Hold Endwert', value: formatCurrency(metrics.finalHoldValue), change: `${metrics.holdReturn >= 0 ? '+' : ''}${metrics.holdReturn.toFixed(1)}%` },
+      { label: 'Sharpe Ratio', value: metrics.sharpeRatio.toFixed(2), change: `Max DD: -${metrics.maxDrawdown.toFixed(1)}%` },
+      { label: 'Trades / Winrate', value: `${metrics.totalTrades} Trades`, change: `Trefferquote: ${metrics.winRate.toFixed(0)}%` }
+    ];
+    
+    kpis.forEach((kpi, idx) => {
+      const kX = 15 + (idx * 45);
+      // draw elegant light grey cards
+      doc.setFillColor(245, 245, 245);
+      doc.setDrawColor(230, 230, 230);
+      doc.rect(kX, y, 40, 24, 'FD');
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(100, 100, 100);
+      doc.text(kpi.label, kX + 3, y + 5);
+      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(15, 15, 15);
+      doc.text(kpi.value, kX + 3, y + 13);
+      
+      doc.setFontSize(8);
+      if (kpi.change.includes('+') || (kpi.change.includes('Trefferquote') && metrics.winRate > 50)) {
+        doc.setTextColor(16, 185, 129); // emerald green
+      } else if (kpi.change.includes('-') || kpi.change.includes('Max DD')) {
+        doc.setTextColor(239, 68, 68); // rose red
+      } else {
+        doc.setTextColor(80, 80, 80);
+      }
+      doc.text(kpi.change, kX + 3, y + 20);
+    });
+    
+    // Section 3: Trade Log Table
+    y += 35;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(15, 15, 15);
+    doc.text('3. TRANSAKTIONS-PROTOKOLL (TOP TRADES)', 15, y);
+    doc.line(15, y + 2, 195, y + 2);
+    
+    y += 10;
+    // Table headers
+    doc.setFillColor(30, 30, 30);
+    doc.rect(15, y, 180, 6.5, 'F');
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.text('Datum', 18, y + 4.5);
+    doc.text('Order-Typ', 45, y + 4.5);
+    doc.text('Ausfuehrungskurs', 75, y + 4.5);
+    doc.text('Anteile', 115, y + 4.5);
+    doc.text('Volumen', 145, y + 4.5);
+    doc.text('Portfolio-Wert', 175, y + 4.5);
+    
+    y += 6.5;
+    doc.setFont('helvetica', 'normal');
+    
+    const rowsToDraw = trades.slice(0, 15);
+    rowsToDraw.forEach((trade, idx) => {
+      // zebra stripe rows
+      if (idx % 2 === 0) {
+        doc.setFillColor(248, 248, 248);
+      } else {
+        doc.setFillColor(255, 255, 255);
+      }
+      doc.rect(15, y, 180, 6.5, 'F');
+      
+      doc.setTextColor(80, 80, 80);
+      doc.text(trade.date, 18, y + 4.5);
+      
+      if (trade.type === 'BUY') {
+        doc.setTextColor(16, 185, 129);
+        doc.text('KAUF (BUY)', 45, y + 4.5);
+      } else {
+        doc.setTextColor(239, 68, 68);
+        doc.text('VERKAUF (SELL)', 45, y + 4.5);
+      }
+      
+      doc.setTextColor(40, 40, 40);
+      doc.text(`EUR ${trade.price.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`, 75, y + 4.5);
+      doc.text(trade.shares.toFixed(4), 115, y + 4.5);
+      doc.text(`EUR ${trade.totalValue.toLocaleString('de-DE', { minimumFractionDigits: 2 })}`, 145, y + 4.5);
+      
+      const portVal = trade.cashRemaining + (trade.shares * trade.price);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`EUR ${portVal.toLocaleString('de-DE', { minimumFractionDigits: 2 })}`, 175, y + 4.5);
+      doc.setFont('helvetica', 'normal');
+      
+      y += 6.5;
+    });
+    
+    if (trades.length > 15) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text(`... und ${trades.length - 15} weitere Transaktionen. Laden Sie das vollstaendige CSV-Protokoll fuer alle Details herunter.`, 15, y + 6);
+    }
+    
+    // Page bottom footer
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(140, 140, 140);
+    doc.text('Dieses Dokument wurde automatisch von Jenova Nexus generiert. DSGVO-konforme quantitative Echtzeitanalyse.', 15, 285);
+    doc.text('Sven Kulessa • sven.kulessa@gmail.com • Compliant with Art. 30 GDPR / BFSG Accessibility Standards.', 15, 289);
+    
+    doc.save(`Jenova_Nexus_Backtest_${ticker}_${strategy}.pdf`);
+  };
+
   const activeTickerInfo = availableTickers.find(t => t.symbol === ticker) || availableTickers[0] || TICKERS[0];
 
   return (
@@ -285,11 +507,11 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/5 pb-6">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 tracking-wider">
+            <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/35 tracking-wider">
               ENTERPRISE Backtest Core v4.2
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] text-white/50 font-mono">Live Simulation Engine</span>
+            <span className="text-[11px] text-white/85 font-mono">Live Simulation Engine</span>
           </div>
           <h2 className="text-2xl font-bold font-display text-white tracking-tight flex items-center gap-2">
             Quantitative Backtest Engine
@@ -345,7 +567,7 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
               ))}
             </div>
             <div className="mt-2.5">
-              <label className="text-[10px] text-white/40 block mb-1 font-mono">Oder suche aus allen 410 Assets:</label>
+              <label className="text-[11px] text-white/70 block mb-1 font-mono">Oder suche aus allen 410 Assets:</label>
               <select
                 value={availableTickers.some(t => t.symbol === ticker) ? ticker : 'BTC'}
                 onChange={(e) => setTicker(e.target.value)}
@@ -358,7 +580,7 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
                 ))}
               </select>
             </div>
-            <div className="mt-2 flex justify-between text-[10px] text-white/40 font-mono">
+            <div className="mt-2 flex justify-between text-[11px] text-white/70 font-mono">
               <span>{activeTickerInfo.name}</span>
               <span>Klasse: {activeTickerInfo.assetClass}</span>
             </div>
@@ -396,7 +618,7 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
                 className="w-full bg-black/40 border border-white/10 rounded-lg py-2 pl-8 pr-4 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50"
               />
             </div>
-            <span className="text-[9px] text-white/30 font-mono mt-1 block">
+            <span className="text-[11px] text-white/65 font-mono mt-1 block">
               Default synchronisiert mit Ihrem Profil-Kapital
             </span>
           </div>
@@ -608,7 +830,7 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
               style={{ width: `${simulationProgress}%` }}
             />
           </div>
-          <p className="text-[10px] text-white/40 font-mono">
+          <p className="text-[11px] text-white/70 font-mono">
             Echtzeit-Stochastic-Generator berechnet Pfade basierend auf historischer Kovarianz...
           </p>
         </div>
@@ -622,9 +844,9 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             
             {/* KPI 1 */}
-            <div className="bg-white/5 border border-white/5 rounded-xl p-4 relative group hover:border-white/10 transition-all">
-              <div className="absolute top-3 right-3 text-white/20 font-mono text-[10px]">KPI 1</div>
-              <span className="text-[10px] text-white/40 uppercase font-mono block mb-1">Strategie-Endwert</span>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 relative group hover:border-white/20 transition-all">
+              <div className="absolute top-3 right-3 text-white/60 font-mono text-[11px]">KPI 1</div>
+              <span className="text-[11px] text-white/75 uppercase font-mono block mb-1">Strategie-Endwert</span>
               <div className="text-lg md:text-xl font-bold font-mono text-white flex items-center gap-1">
                 {formatCurrency(metrics.finalStrategyValue)}
               </div>
@@ -635,9 +857,9 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
             </div>
 
             {/* KPI 2 */}
-            <div className="bg-white/5 border border-white/5 rounded-xl p-4 relative group hover:border-white/10 transition-all">
-              <div className="absolute top-3 right-3 text-white/20 font-mono text-[10px]">KPI 2</div>
-              <span className="text-[10px] text-white/40 uppercase font-mono block mb-1">Buy & Hold Endwert</span>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 relative group hover:border-white/20 transition-all">
+              <div className="absolute top-3 right-3 text-white/60 font-mono text-[11px]">KPI 2</div>
+              <span className="text-[11px] text-white/75 uppercase font-mono block mb-1">Buy & Hold Endwert</span>
               <div className="text-lg md:text-xl font-bold font-mono text-white/80">
                 {formatCurrency(metrics.finalHoldValue)}
               </div>
@@ -648,25 +870,25 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
             </div>
 
             {/* KPI 3 */}
-            <div className="bg-white/5 border border-white/5 rounded-xl p-4 relative group hover:border-white/10 transition-all">
-              <div className="absolute top-3 right-3 text-white/20 font-mono text-[10px]">KPI 3</div>
-              <span className="text-[10px] text-white/40 uppercase font-mono block mb-1">Sharpe Ratio / Max DD</span>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 relative group hover:border-white/20 transition-all">
+              <div className="absolute top-3 right-3 text-white/60 font-mono text-[11px]">KPI 3</div>
+              <span className="text-[11px] text-white/75 uppercase font-mono block mb-1">Sharpe Ratio / Max DD</span>
               <div className="text-lg md:text-xl font-bold font-mono text-aif-gold-DEFAULT">
                 {metrics.sharpeRatio.toFixed(2)}
               </div>
-              <span className="text-[10px] text-rose-400 font-mono font-bold mt-1 block">
+              <span className="text-[11px] text-rose-400 font-mono font-bold mt-1 block">
                 Max DD: -{metrics.maxDrawdown.toFixed(1)}%
               </span>
             </div>
 
             {/* KPI 4 */}
-            <div className="bg-white/5 border border-white/5 rounded-xl p-4 relative group hover:border-white/10 transition-all">
-              <div className="absolute top-3 right-3 text-white/20 font-mono text-[10px]">KPI 4</div>
-              <span className="text-[10px] text-white/40 uppercase font-mono block mb-1">Trades / Winrate</span>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 relative group hover:border-white/20 transition-all">
+              <div className="absolute top-3 right-3 text-white/60 font-mono text-[11px]">KPI 4</div>
+              <span className="text-[11px] text-white/75 uppercase font-mono block mb-1">Trades / Winrate</span>
               <div className="text-lg md:text-xl font-bold font-mono text-white">
                 {metrics.totalTrades}
               </div>
-              <span className="text-[10px] text-emerald-400 font-mono font-bold mt-1 block">
+              <span className="text-[11px] text-emerald-400 font-mono font-bold mt-1 block">
                 Trefferquote: {metrics.winRate.toFixed(0)}%
               </span>
             </div>
@@ -678,17 +900,25 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
               <div>
                 <h3 className="text-sm font-bold font-display text-white">Wachstumsverlauf im Vergleich</h3>
-                <p className="text-[10px] text-white/40 font-mono">Entwicklung von {formatCurrency(initialCapital)} über den Zeitraum</p>
+                <p className="text-[11px] text-white/70 font-mono">Entwicklung von {formatCurrency(initialCapital)} über den Zeitraum</p>
               </div>
               
               <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
                 <button
                   onClick={exportPerformanceToCSV}
-                  className="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 hover:text-aif-gold-DEFAULT text-white/75 border border-white/10 hover:border-aif-gold-DEFAULT/30 rounded-lg text-[9px] font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                  className="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 hover:text-aif-gold-DEFAULT text-white/75 border border-white/10 hover:border-aif-gold-DEFAULT/30 rounded-lg text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                   title="Wachstumsverlauf als CSV exportieren"
                 >
                   <Download size={12} />
                   <span>Performance Exportieren</span>
+                </button>
+                <button
+                  onClick={exportPerformanceToPDF}
+                  className="px-2.5 py-1.5 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 text-black font-mono font-bold text-[11px] rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-[0_0_12px_rgba(245,196,83,0.2)] hover:shadow-[0_0_18px_rgba(245,196,83,0.35)]"
+                  title="PDF-Bericht herunterladen"
+                >
+                  <FileText size={12} />
+                  <span>PDF-Bericht</span>
                 </button>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded bg-aif-gold-DEFAULT inline-block" />
@@ -760,19 +990,19 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-white/5 pb-3">
               <div>
                 <h3 className="text-sm font-bold font-display text-white">Transaktions-Protokoll</h3>
-                <p className="text-[10px] text-white/40 font-mono">Detaillierter Orderverlauf der simulierten Handelsaktivität</p>
+                <p className="text-[11px] text-white/70 font-mono">Detaillierter Orderverlauf der simulierten Handelsaktivität</p>
               </div>
               <div className="flex items-center gap-3">
                 <button
                   onClick={exportTradesToCSV}
                   disabled={trades.length === 0}
-                  className="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 hover:text-aif-gold-DEFAULT text-white/75 border border-white/10 hover:border-aif-gold-DEFAULT/30 rounded-lg text-[9px] font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-white disabled:hover:border-white/20 disabled:cursor-not-allowed"
+                  className="px-2.5 py-1.5 bg-white/5 hover:bg-white/10 hover:text-aif-gold-DEFAULT text-white/75 border border-white/10 hover:border-aif-gold-DEFAULT/30 rounded-lg text-[11px] font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-white disabled:hover:border-white/20 disabled:cursor-not-allowed"
                   title="Trades als CSV exportieren"
                 >
                   <Download size={12} />
                   <span>Trades Exportieren</span>
                 </button>
-                <span className="text-[10px] font-mono font-bold text-white/50 bg-white/5 border border-white/10 px-2 py-1 rounded">
+                <span className="text-[11px] font-mono font-bold text-white/80 bg-white/5 border border-white/10 px-2 py-1 rounded">
                   Gebühr: {params.transactionCost}% / Trade
                 </span>
               </div>
@@ -781,7 +1011,7 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-white/5 text-[10px] text-white/40 font-mono uppercase tracking-wider">
+                  <tr className="border-b border-white/5 text-[11px] text-white/70 font-mono uppercase tracking-wider">
                     <th className="py-2">Datum</th>
                     <th className="py-2">Order-Typ</th>
                     <th className="py-2 text-right">Ausführungskurs</th>
@@ -795,7 +1025,7 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
                     <tr key={trade.id} className="text-xs font-mono hover:bg-white/5 transition-all">
                       <td className="py-2.5 text-white/60">{trade.date}</td>
                       <td className="py-2.5">
-                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                        <span className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${
                           trade.type === 'BUY' 
                             ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
                             : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
@@ -821,7 +1051,7 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
             </div>
             
             {trades.length > 10 && (
-              <div className="pt-3 border-t border-white/5 flex justify-between items-center text-[10px] text-white/40 font-mono">
+              <div className="pt-3 border-t border-white/5 flex justify-between items-center text-[11px] text-white/70 font-mono">
                 <span>Zeige 10 von {trades.length} Transaktionen</span>
                 <span className="text-aif-gold-DEFAULT">Lade vollständigen Report im Enterprise Dashboard</span>
               </div>

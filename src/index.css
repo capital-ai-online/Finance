@@ -3,7 +3,7 @@
 
 @theme {
   --color-border: rgba(255, 255, 255, 0.08);
-  --color-background: #06070B;
+  --color-background: #18181b;
   --color-foreground: #FFFFFF;
   
   --color-aif-gold-light: #FFF2B2;
@@ -55,7 +55,7 @@
 }
 
 :root {
-  --background: #06070B;
+  --background: #18181b;
   --foreground: #FFFFFF;
 }
 

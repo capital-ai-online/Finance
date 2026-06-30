@@ -19,9 +19,11 @@ import {
   BadgePercent,
   Check,
   ChevronDown,
-  HelpCircle
+  HelpCircle,
+  FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { jsPDF } from 'jspdf';
 
 interface MarketScreenerProps {
   onSelectSymbol: (symbol: string) => void;
@@ -89,6 +91,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
   const [deMax, setDeMax] = useState<string>('');
   const [minKiScore, setMinKiScore] = useState<number>(0);
   const [minGrahamScore, setMinGrahamScore] = useState<number>(0);
+  const [areaFilter, setAreaFilter] = useState<string>('all');
 
   // Sorting
   const [sortField, setSortField] = useState<SortField>('score');
@@ -129,6 +132,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
     setDeMax('');
     setMinKiScore(0);
     setMinGrahamScore(0);
+    setAreaFilter('all');
 
     if (preset === 'value') {
       setAssetType('stock');
@@ -166,6 +170,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
     setDeMax('');
     setMinKiScore(0);
     setMinGrahamScore(0);
+    setAreaFilter('all');
     setActivePreset('all');
     setCurrentPage(1);
   };
@@ -246,6 +251,11 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
 
       // 7. KI Score
       if (asset.score < minKiScore) {
+        return false;
+      }
+
+      // Anwendungsbereich Filter
+      if (areaFilter !== 'all' && asset.applicationArea !== areaFilter) {
         return false;
       }
 
@@ -379,6 +389,196 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
     document.body.removeChild(link);
   };
 
+  const exportToPDF = () => {
+    if (sortedAssets.length === 0) return;
+    
+    const doc = new jsPDF();
+    
+    // Header Banner
+    doc.setFillColor(15, 15, 15);
+    doc.rect(0, 0, 210, 38, 'F');
+    
+    // Gold Accent Line
+    doc.setFillColor(245, 196, 83);
+    doc.rect(0, 38, 210, 2, 'F');
+    
+    // Typography
+    doc.setTextColor(245, 196, 83);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.text('JENOVA NEXUS', 15, 18);
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('COMPLIANCE MARKET SCREENER REPORT', 15, 28);
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(245, 196, 83);
+    doc.text('SYSTEM: AUTO-ROUTER', 152, 18);
+    doc.setTextColor(200, 200, 200);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`DATUM: ${new Date().toLocaleDateString('de-DE')}`, 152, 28);
+    
+    let y = 50;
+    doc.setTextColor(15, 15, 15);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('1. SCREENING PARAMETER & FILTER-KRITERIEN', 15, y);
+    doc.setDrawColor(245, 196, 83);
+    doc.setLineWidth(0.5);
+    doc.line(15, y + 2, 195, y + 2);
+    
+    y += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+    
+    // Config info
+    doc.text('Assetklasse:', 15, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 15, 15);
+    doc.text(assetType === 'all' ? 'Alle Klassen (Aktien, Crypto, Commodities, Forex)' : assetType.toUpperCase(), 45, y);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text('Ergebnisse gesamt:', 125, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 15, 15);
+    doc.text(`${sortedAssets.length} Assets gefunden`, 165, y);
+    
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text('KGV Filter (P/E):', 15, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 15, 15);
+    doc.text(peMin || peMax ? `${peMin || '0'} - ${peMax || 'Max'}` : 'Kein KGV-Limit', 45, y);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text('Kombinierter KI-Score:', 125, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 15, 15);
+    doc.text(`>= ${minKiScore}/10`, 165, y);
+    
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text('Dividenden-Rendite:', 15, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 15, 15);
+    doc.text(divMin || divMax ? `${divMin || '0'}% - ${divMax || 'Max'}%` : 'Kein Dividenden-Limit', 45, y);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.text('Graham Score:', 125, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 15, 15);
+    doc.text(minGrahamScore > 0 ? `>= ${minGrahamScore}` : 'Kein Graham-Limit', 165, y);
+    
+    y += 15;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(15, 15, 15);
+    doc.text('2. TOP MARKTSCREENER ERGEBNISSE (SORTIERT)', 15, y);
+    doc.line(15, y + 2, 195, y + 2);
+    
+    y += 10;
+    // Table headers
+    doc.setFillColor(30, 30, 30);
+    doc.rect(15, y, 180, 6.5, 'F');
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.text('Symbol', 18, y + 4.5);
+    doc.text('Name', 35, y + 4.5);
+    doc.text('Preis', 85, y + 4.5);
+    doc.text('Aend. 24h', 105, y + 4.5);
+    doc.text('KGV', 125, y + 4.5);
+    doc.text('Risiko', 142, y + 4.5);
+    doc.text('Graham', 160, y + 4.5);
+    doc.text('KI-Score', 178, y + 4.5);
+    
+    y += 6.5;
+    doc.setFont('helvetica', 'normal');
+    
+    const rowsToDraw = sortedAssets.slice(0, 25); // Top 25 in PDF
+    rowsToDraw.forEach((asset, idx) => {
+      // Zebra striping
+      if (idx % 2 === 0) {
+        doc.setFillColor(248, 248, 248);
+      } else {
+        doc.setFillColor(255, 255, 255);
+      }
+      doc.rect(15, y, 180, 6.5, 'F');
+      
+      doc.setTextColor(15, 15, 15);
+      doc.setFont('helvetica', 'bold');
+      doc.text(asset.symbol, 18, y + 4.5);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.text(asset.name.length > 25 ? asset.name.substring(0, 22) + '...' : asset.name, 35, y + 4.5);
+      
+      doc.setTextColor(15, 15, 15);
+      doc.text(`EUR ${asset.price.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`, 85, y + 4.5);
+      
+      if (asset.change24h >= 0) {
+        doc.setTextColor(16, 185, 129);
+        doc.text(`+${asset.change24h.toFixed(2)}%`, 105, y + 4.5);
+      } else {
+        doc.setTextColor(239, 68, 68);
+        doc.text(`${asset.change24h.toFixed(2)}%`, 105, y + 4.5);
+      }
+      
+      doc.setTextColor(40, 40, 40);
+      doc.text(asset.peRatio !== undefined ? asset.peRatio.toFixed(1) : 'N/A', 125, y + 4.5);
+      
+      // Risk level coloring
+      if (asset.risk === 'Low') {
+        doc.setTextColor(16, 185, 129);
+      } else if (asset.risk === 'Medium') {
+        doc.setTextColor(245, 196, 83);
+      } else {
+        doc.setTextColor(239, 68, 68);
+      }
+      doc.text(asset.risk, 142, y + 4.5);
+      
+      doc.setTextColor(40, 40, 40);
+      doc.text(asset.grahamScore > 0 ? asset.grahamScore.toFixed(1) : 'N/A', 160, y + 4.5);
+      
+      // KI-Score in bold with gold touch if >= 8.0
+      doc.setFont('helvetica', 'bold');
+      if (asset.score >= 8.0) {
+        doc.setTextColor(217, 119, 6); // amber-600
+      } else {
+        doc.setTextColor(15, 15, 15);
+      }
+      doc.text(`${asset.score.toFixed(1)}/10`, 178, y + 4.5);
+      doc.setFont('helvetica', 'normal');
+      
+      y += 6.5;
+    });
+    
+    if (sortedAssets.length > 25) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text(`... und ${sortedAssets.length - 25} weitere Uebereinstimmungen. Bitte nutzen Sie den vollstaendigen CSV-Export fuer alle Ergebnisse.`, 15, y + 6);
+    }
+    
+    // Page bottom footer
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(140, 140, 140);
+    doc.text('Dieses Dokument wurde automatisch von Jenova Nexus generiert. DSGVO-konforme quantitative Echtzeitanalyse.', 15, 285);
+    doc.text('Sven Kulessa • sven.kulessa@gmail.com • Compliant with Art. 30 GDPR / BFSG Accessibility Standards.', 15, 289);
+    
+    doc.save(`Jenova_Nexus_Screener_${assetType}_Bericht.pdf`);
+  };
+
   return (
     <div className="bg-black/40 border border-white/10 rounded-xl overflow-visible backdrop-blur-md relative p-6">
       
@@ -433,7 +633,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
         >
           <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between h-full hover:bg-white/10 transition-colors">
             <div>
-              <p className="text-[10px] text-white/40 font-mono tracking-wider uppercase">Ergebnisse</p>
+              <p className="text-[11px] text-white/70 font-mono tracking-wider uppercase">Ergebnisse</p>
               <p className="text-2xl font-black font-mono text-white mt-1">{sortedAssets.length}</p>
             </div>
             <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-white/60">
@@ -448,7 +648,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
         >
           <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between h-full hover:bg-white/10 transition-colors">
             <div>
-              <p className="text-[10px] text-white/40 font-mono tracking-wider uppercase">Ø P/E (KGV)</p>
+              <p className="text-[11px] text-white/70 font-mono tracking-wider uppercase">Ø P/E (KGV)</p>
               <p className="text-2xl font-black font-mono text-blue-400 mt-1">{stats.avgPe || 'N/A'}</p>
             </div>
             <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
@@ -463,7 +663,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
         >
           <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between h-full hover:bg-white/10 transition-colors">
             <div>
-              <p className="text-[10px] text-white/40 font-mono tracking-wider uppercase">Max Dividende</p>
+              <p className="text-[11px] text-white/70 font-mono tracking-wider uppercase">Max Dividende</p>
               <p className="text-2xl font-black font-mono text-emerald-400 mt-1">{stats.maxDiv ? `${stats.maxDiv}%` : '0.0%'}</p>
             </div>
             <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
@@ -478,7 +678,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
         >
           <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center justify-between h-full hover:bg-white/10 transition-colors">
             <div>
-              <p className="text-[10px] text-white/40 font-mono tracking-wider uppercase">Ø KI-Score</p>
+              <p className="text-[11px] text-white/70 font-mono tracking-wider uppercase">Ø KI-Score</p>
               <p className="text-2xl font-black font-mono text-aif-gold-DEFAULT mt-1">{stats.avgKi}</p>
             </div>
             <div className="w-10 h-10 rounded-lg bg-aif-gold-DEFAULT/10 flex items-center justify-center text-aif-gold-DEFAULT">
@@ -504,7 +704,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
           
           {/* Assetklasse & Search */}
           <div className="space-y-4">
@@ -513,7 +713,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                 title="Assetklasse filtern" 
                 text="Grenze die Suche auf Aktien (Unternehmensanteile) oder Kryptowährungen (dezentrale Währungen wie Bitcoin) ein."
               >
-                <label className="block text-[10px] text-white/40 font-mono uppercase tracking-wider mb-1.5 cursor-help">Asset-Klasse</label>
+                <label className="block text-[11px] text-white/70 font-mono uppercase tracking-wider mb-1.5 cursor-help">Asset-Klasse</label>
               </SimpleTooltip>
               <div className="flex bg-black/40 border border-white/10 rounded-lg p-0.5">
                 {[
@@ -541,7 +741,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                 title="Intelligente Suche" 
                 text="Tippe Symbole (AAPL), Rufnamen (Apple, Bitcoin) oder umgangssprachliche Aliase (Apfel, Krypto, E-Auto) ein, um die Treffer intelligent zu filtern."
               >
-                <label className="block text-[10px] text-white/40 font-mono uppercase tracking-wider mb-1.5 cursor-help">Direkte Suche</label>
+                <label className="block text-[11px] text-white/70 font-mono uppercase tracking-wider mb-1.5 cursor-help">Direkte Suche</label>
               </SimpleTooltip>
               <div className="relative">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
@@ -612,7 +812,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                 title="KGV (P/E Ratio)" 
                 text="Das Kurs-Gewinn-Verhältnis. Gibt an, wie viel Euro Anleger zahlen, um einen Euro Jahresgewinn des Unternehmens zu erwerben. Ein kleineres KGV ist tendenziell günstiger."
               >
-                <label className="block text-[10px] text-white/40 font-mono uppercase tracking-wider mb-1.5 cursor-help">Kurs-Gewinn-Verhältnis (P/E)</label>
+                <label className="block text-[11px] text-white/70 font-mono uppercase tracking-wider mb-1.5 cursor-help">Kurs-Gewinn-Verhältnis (P/E)</label>
               </SimpleTooltip>
               <div className="flex items-center gap-2">
                 <input 
@@ -633,7 +833,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                   className="w-full bg-black/40 border border-white/10 disabled:opacity-30 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20"
                 />
               </div>
-              <p className="text-[9px] text-white/30 mt-1.5 font-mono">Normalbereich bei Aktien: 10 - 25</p>
+              <p className="text-[11px] text-white/60 mt-1.5 font-mono">Normalbereich bei Aktien: 10 - 25</p>
             </div>
 
             <div>
@@ -641,7 +841,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                 title="Benjamin Graham Score" 
                 text="Berechnet den inneren Wert einer Aktie nach der klassischen Graham-Formel. Ein höherer Score signalisiert eine stärkere Unterbewertung relativ zu den fundamentalen Gewinnaussichten."
               >
-                <label className="block text-[10px] text-white/40 font-mono uppercase tracking-wider mb-1.5 cursor-help">Graham-DCF Mindestscore</label>
+                <label className="block text-[11px] text-white/70 font-mono uppercase tracking-wider mb-1.5 cursor-help">Graham-DCF Mindestscore</label>
               </SimpleTooltip>
               <div className="flex items-center gap-3">
                 <input 
@@ -666,7 +866,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                 title="Marktkapitalisierung" 
                 text="Der Gesamtwert aller an der Börse ausgegebenen Aktien oder Krypto-Münzen. Errechnet sich aus Preis multipliziert mit der Umlaufmenge."
               >
-                <label className="block text-[10px] text-white/40 font-mono uppercase tracking-wider mb-1.5 cursor-help">Marktkapitalisierung (Mrd. EUR)</label>
+                <label className="block text-[11px] text-white/70 font-mono uppercase tracking-wider mb-1.5 cursor-help">Marktkapitalisierung (Mrd. EUR)</label>
               </SimpleTooltip>
               <div className="flex items-center gap-2">
                 <input 
@@ -685,7 +885,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                   className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20"
                 />
               </div>
-              <p className="text-[9px] text-white/30 mt-1.5 font-mono">Mega Cap &gt; 100 Mrd. • Micro Cap &lt; 1 Mrd.</p>
+              <p className="text-[11px] text-white/60 mt-1.5 font-mono">Mega Cap &gt; 100 Mrd. • Micro Cap &lt; 1 Mrd.</p>
             </div>
 
             <div>
@@ -693,7 +893,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                 title="Intelligenter KI-Score" 
                 text="Unser komplexes KI-Modell gewichtet über 45 technische, fundamentale und stimmungsbasierte Indikatoren und gibt eine Gesamtempfehlung von 0 (bärisch/verkaufen) bis 10 (bullisch/kaufen)."
               >
-                <label className="block text-[10px] text-white/40 font-mono uppercase tracking-wider mb-1.5 cursor-help">KI Intelligent-Score Mindestwert</label>
+                <label className="block text-[11px] text-white/70 font-mono uppercase tracking-wider mb-1.5 cursor-help">KI Intelligent-Score Mindestwert</label>
               </SimpleTooltip>
               <div className="flex items-center gap-3">
                 <input 
@@ -717,7 +917,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                 title="Dividendenrendite" 
                 text="Die prozentuale jährliche Ausschüttung des Unternehmens bezogen auf den aktuellen Aktienkurs. Eine hohe Dividende bietet verlässlichen passiven Cashflow."
               >
-                <label className="block text-[10px] text-white/40 font-mono uppercase tracking-wider mb-1.5 cursor-help">Dividendenrendite (%)</label>
+                <label className="block text-[11px] text-white/70 font-mono uppercase tracking-wider mb-1.5 cursor-help">Dividendenrendite (%)</label>
               </SimpleTooltip>
               <div className="flex items-center gap-2">
                 <input 
@@ -736,7 +936,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                   className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20"
                 />
               </div>
-              <p className="text-[9px] text-white/30 mt-1.5 font-mono">Solide Dividendenzahler: 1.5% - 4%</p>
+              <p className="text-[11px] text-white/60 mt-1.5 font-mono">Solide Dividendenzahler: 1.5% - 4%</p>
             </div>
 
             <div>
@@ -744,7 +944,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                 title="Debt-to-Equity (D/E)" 
                 text="Verschuldungsgrad. Vergleicht das Gesamtfremdkapital eines Unternehmens mit seinem Eigenkapital. Werte unter 1.5 bedeuten eine gesunde finanzielle Basis."
               >
-                <label className="block text-[10px] text-white/40 font-mono uppercase tracking-wider mb-1.5 cursor-help">Debt-to-Equity Verschuldungsgrad Max</label>
+                <label className="block text-[11px] text-white/70 font-mono uppercase tracking-wider mb-1.5 cursor-help">Debt-to-Equity Verschuldungsgrad Max</label>
               </SimpleTooltip>
               <input 
                 type="number"
@@ -755,6 +955,30 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                 disabled={assetType === 'crypto'}
                 className="w-full bg-black/40 border border-white/10 disabled:opacity-30 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20"
               />
+            </div>
+          </div>
+
+          {/* Anwendungsbereich Selection */}
+          <div className="space-y-4">
+            <div>
+              <SimpleTooltip 
+                title="Anwendungsbereich" 
+                text="Filtert Assets nach ihrem technologischen Anwendungsbereich (z.B. Webanwendungen)."
+              >
+                <label className="block text-[11px] text-white/70 font-mono uppercase tracking-wider mb-1.5 cursor-help">Anwendungsbereich</label>
+              </SimpleTooltip>
+              <select
+                value={areaFilter}
+                onChange={(e) => { setAreaFilter(e.target.value); setCurrentPage(1); }}
+                className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all cursor-pointer"
+              >
+                <option value="all" className="bg-neutral-900">Alle Bereiche</option>
+                <option value="Webanwendungen" className="bg-neutral-900">Webanwendungen</option>
+                <option value="DeFi & Smart Contracts" className="bg-neutral-900">DeFi & Smart Contracts</option>
+                <option value="Hardware & AI" className="bg-neutral-900">Hardware & AI</option>
+                <option value="E-Commerce & Cloud" className="bg-neutral-900">E-Commerce & Cloud</option>
+                <option value="Unterhaltung & Services" className="bg-neutral-900">Unterhaltung & Services</option>
+              </select>
             </div>
           </div>
 
@@ -772,16 +996,29 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
             <span className="text-aif-gold-DEFAULT font-bold">{sortedAssets.length}</span> Treffern
           </div>
 
-          <SimpleTooltip title="CSV Export" text="Lade die aktuell gefilterten Ergebnisse als strukturierte Excel-kompatible CSV-Datei für Excel oder Python herunter.">
-            <button
-              onClick={exportToCSV}
-              disabled={sortedAssets.length === 0}
-              className="flex items-center gap-2 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-white/5 text-white font-mono font-bold text-xs rounded-lg border border-white/10 py-1.5 px-3 transition-all cursor-pointer"
-            >
-              <Download size={14} className="text-aif-gold-DEFAULT" />
-              <span>Ergebnisse exportieren (CSV)</span>
-            </button>
-          </SimpleTooltip>
+          <div className="flex items-center gap-3">
+            <SimpleTooltip title="CSV Export" text="Lade die aktuell gefilterten Ergebnisse als strukturierte Excel-kompatible CSV-Datei für Excel oder Python herunter.">
+              <button
+                onClick={exportToCSV}
+                disabled={sortedAssets.length === 0}
+                className="flex items-center gap-2 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-white/5 text-white font-mono font-bold text-xs rounded-lg border border-white/10 py-1.5 px-3 transition-all cursor-pointer"
+              >
+                <Download size={14} className="text-aif-gold-DEFAULT" />
+                <span>Ergebnisse exportieren (CSV)</span>
+              </button>
+            </SimpleTooltip>
+
+            <SimpleTooltip title="PDF Export" text="Lade die aktuell gefilterten Ergebnisse als formatierten, druckfertigen PDF-Analysereport herunter.">
+              <button
+                onClick={exportToPDF}
+                disabled={sortedAssets.length === 0}
+                className="flex items-center gap-2 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 disabled:opacity-30 disabled:hover:brightness-100 text-black font-mono font-bold text-xs rounded-lg py-1.5 px-3 transition-all cursor-pointer shadow-[0_0_12px_rgba(245,196,83,0.2)] hover:shadow-[0_0_18px_rgba(245,196,83,0.35)]"
+              >
+                <FileText size={14} />
+                <span>PDF-Report</span>
+              </button>
+            </SimpleTooltip>
+          </div>
         </div>
 
         {/* The responsive table */}
@@ -817,7 +1054,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                     <th 
                       key={header.field}
                       onClick={() => handleSort(header.field as SortField)}
-                      className="px-4 py-3 text-[10px] font-mono tracking-widest uppercase text-white/40 font-bold hover:text-white hover:bg-white/5 cursor-pointer transition-all select-none"
+                      className="px-4 py-3 text-[11px] font-mono tracking-widest uppercase text-white/70 font-bold hover:text-white hover:bg-white/5 cursor-pointer transition-all select-none"
                     >
                       <SimpleTooltip title={header.tooltipTitle} text={header.tooltipText}>
                         <div className="flex items-center gap-1.5">
@@ -827,7 +1064,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                       </SimpleTooltip>
                     </th>
                   ))}
-                  <th className="px-4 py-3 text-[10px] font-mono tracking-widest uppercase text-white/40 font-bold text-right">
+                  <th className="px-4 py-3 text-[11px] font-mono tracking-widest uppercase text-white/70 font-bold text-right">
                     Aktion
                   </th>
                 </tr>
@@ -858,8 +1095,20 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                           <div className="text-xs font-bold text-white max-w-[120px] truncate" title={asset.name}>
                             {asset.name}
                           </div>
-                          <div className="text-[9px] text-white/40 font-mono mt-0.5 uppercase tracking-wider">
-                            {asset.type === 'stock' ? 'Aktie' : asset.type === 'crypto' ? 'Krypto' : asset.type === 'commodity' ? 'Rohstoff' : 'Forex'}
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                            <span className="text-[11px] text-white/70 font-mono uppercase tracking-wider">
+                              {asset.type === 'stock' ? 'Aktie' : asset.type === 'crypto' ? 'Krypto' : asset.type === 'commodity' ? 'Rohstoff' : 'Forex'}
+                            </span>
+                            {asset.applicationArea && (
+                              <span className="px-1.5 py-0.5 rounded text-[11px] uppercase font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                {asset.applicationArea}
+                              </span>
+                            )}
+                            {asset.pattern && (
+                              <span className="px-1.5 py-0.5 rounded text-[11px] uppercase font-mono font-bold bg-white/5 text-white/80 border border-white/20 tracking-wide">
+                                {asset.pattern}
+                              </span>
+                            )}
                           </div>
                         </td>
 
@@ -904,7 +1153,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                         {/* Graham Value */}
                         <td className="px-4 py-3.5">
                           {asset.grahamScore > 0 ? (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                            <span className="px-1.5 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
                               {asset.grahamScore.toFixed(1)}
                             </span>
                           ) : (
@@ -923,7 +1172,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                         <td className="px-4 py-3.5 text-right">
                           <button
                             onClick={() => onSelectSymbol(asset.symbol)}
-                            className={`px-3 py-1.5 rounded-lg font-mono text-[10px] tracking-widest uppercase transition-all font-black cursor-pointer ${
+                            className={`px-3 py-1.5 rounded-lg font-mono text-[11px] tracking-widest uppercase transition-all font-black cursor-pointer ${
                               isSelected 
                                 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
                                 : 'bg-aif-gold-DEFAULT text-black hover:brightness-110 shadow-[0_0_10px_rgba(245,196,83,0.2)]'

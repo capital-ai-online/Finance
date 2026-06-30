@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
+import { supabase } from '../supabaseClient';
 import { motion } from 'motion/react';
 import { 
   CreditCard, 
@@ -75,15 +76,20 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
     }
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        throw new Error('Bitte melde dich erneut an, um den Checkout zu starten.');
+      }
       // 1. Erstelle Checkout-Session auf dem Server
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           planId,
-          email,
           billingPeriod,
           successUrl: window.location.origin + '?payment=success',
           cancelUrl: window.location.origin + '?payment=cancelled',

@@ -14,6 +14,8 @@ export interface Asset {
   marketCap?: number;
   dividendYield?: number;
   volume24h?: number;
+  pattern?: string;
+  applicationArea?: string;
 }
 
 export interface ChatMessage {

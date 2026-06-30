@@ -325,8 +325,8 @@ export function HeatmapVisual({ selectedSymbol, onSelectSymbol }: HeatmapVisualP
             <span className="text-xs font-mono text-white/40">Keine Assets für Filterkriterien gefunden.</span>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3 flex-1 max-h-[360px] overflow-y-auto pr-1.5 custom-scrollbar pb-2">
-            {filteredNodes.map((node) => {
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-3 flex-1 max-h-[360px] overflow-y-auto pr-1.5 custom-scrollbar pb-2">
+            {filteredNodes.slice(0, 9).map((node) => {
               const isSelected = selectedSymbol === node.symbol;
               const styleClasses = getSentimentColor(node.bullish);
               const badgeBg = getHeatmapBg(node.bullish);

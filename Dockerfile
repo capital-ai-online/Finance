@@ -11,6 +11,23 @@ RUN npm ci
 # Copy source code files
 COPY . .
 
+# --- Vite build-time variable injection -----------------------------------
+# Vite bakes VITE_* variables into the static bundle at BUILD time, not at
+# container start time. Render automatically populates these ARG values
+# from the service's Environment tab IF (and only if) the ARG names below
+# match the Environment Variable names exactly — set VITE_SUPABASE_URL,
+# VITE_SUPABASE_ANON_KEY and VITE_STRIPE_PUBLISHABLE_KEY in the Render
+# dashboard. Without this block, the deployed frontend ships with empty
+# Supabase credentials and the login screen will perpetually report them
+# as missing, even though they are correctly set in the dashboard.
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+ARG VITE_STRIPE_PUBLISHABLE_KEY
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+ENV VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY
+# ---------------------------------------------------------------------------
+
 # Run production build (vite build & esbuild server)
 RUN npm run build
 

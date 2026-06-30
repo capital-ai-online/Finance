@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
+import { supabase } from '../supabaseClient';
 import { User, Mail, Shield, Wallet, Award, CheckCircle2, Save, Sparkles, RefreshCw, Cpu, Flame, Target, CreditCard, Loader2 } from 'lucide-react';
 
 export interface UserProfile {
@@ -45,13 +46,18 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
     setPortalLoading(true);
     setPortalError(null);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) {
+        throw new Error('Bitte melde dich erneut an, um das Kundenportal zu öffnen.');
+      }
       const response = await fetch('/api/stripe/create-portal-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          email: profile.email,
           returnUrl: window.location.href,
         }),
       });

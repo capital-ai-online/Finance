@@ -1,6 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldCheck, HelpCircle, ArrowRight, TrendingUp, TrendingDown, Percent, Sparkles, Scale, Info, CheckCircle2 } from 'lucide-react';
+import { 
+  ShieldCheck, 
+  HelpCircle, 
+  ArrowRight, 
+  TrendingUp, 
+  TrendingDown, 
+  Percent, 
+  Sparkles, 
+  Scale, 
+  Info, 
+  CheckCircle2, 
+  DollarSign, 
+  Activity, 
+  AlertCircle, 
+  Building2, 
+  UserCheck, 
+  Star,
+  Award,
+  BookOpen
+} from 'lucide-react';
+
+interface RegistryAsset {
+  symbol: string;
+  name: string;
+  type: 'crypto' | 'stock' | 'forex' | 'commodity';
+  price: number;
+  change24h: number;
+  expectedReturn: number;
+  volatility: number;
+  drift: number;
+  risk: 'High' | 'Medium' | 'Low';
+  status: string;
+  marketCap?: number;
+  volume24h: number;
+  score: number;
+  pattern?: string;
+  applicationArea?: string;
+  peRatio?: number;
+  debtToEquity?: number;
+  dividendYield?: number;
+}
 
 interface BuffetValueCheckProps {
   selectedSymbol: string;
@@ -8,295 +48,697 @@ interface BuffetValueCheckProps {
 }
 
 export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValueCheckProps) {
-  // Trigger attempt on mount
-  React.useEffect(() => {
+  useEffect(() => {
     if (triggerAttempt) {
-      triggerAttempt('Graham-Intrinsik-Rechner', () => {});
+      triggerAttempt('Enterprise-Buffett-Valuation-Engine', () => {});
     }
   }, []);
 
-  const [assets, setAssets] = useState<any[]>([]);
+  const [registryAssets, setRegistryAssets] = useState<RegistryAsset[]>([]);
+  const [activeAsset, setActiveAsset] = useState<RegistryAsset | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
-    fetch('/api/market-data')
-      .then(res => res.json())
-      .then(data => {
-        const nonVariants = data.filter((asset: any) => !asset.name.toLowerCase().includes('variant'));
-        setAssets(nonVariants);
+  // DCF Model State
+  const [eps, setEps] = useState<number>(8.5);
+  const [growth, setGrowth] = useState<number>(8.5);
+  const [discountRate, setDiscountRate] = useState<number>(9.0); // WACC in %
+  const [terminalMultiple, setTerminalMultiple] = useState<number>(18); // Terminal P/E Multiple
+  const [projectionYears, setProjectionYears] = useState<number>(5);
+
+  // Graham Model State
+  const [bondYieldFactor, setBondYieldFactor] = useState<number>(4.4); // Graham reference multiplier
+  const [aaaBondYield, setAaaBondYield] = useState<number>(4.8); // Current AAA yield (Y)
+  const [customPrice, setCustomPrice] = useState<number>(150);
+
+  // Tab State
+  const [activeTab, setActiveTab] = useState<'graham' | 'dcf' | 'moat' | 'pillars'>('dcf');
+
+  // Load Registry Assets on mount
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/registry/assets')
+      .then(res => {
+        if (!res.ok) throw new Error('Could not fetch registry assets');
+        return res.json();
       })
-      .catch(err => console.error('Error in BuffetValueCheck loading assets:', err));
-  }, []);
+      .then((data: RegistryAsset[]) => {
+        setRegistryAssets(data);
+        const found = data.find(a => a.symbol.toUpperCase() === selectedSymbol.toUpperCase());
+        if (found) {
+          setActiveAsset(found);
+          // Auto-adjust valuation inputs based on loaded asset
+          setCustomPrice(found.price);
+          const initialEps = found.peRatio && found.peRatio > 0 
+            ? Number((found.price / found.peRatio).toFixed(2)) 
+            : Number((found.price * 0.07).toFixed(2));
+          setEps(initialEps <= 0 ? 3.5 : initialEps);
+          setGrowth(found.type === 'crypto' ? 20.0 : found.type === 'stock' ? 9.5 : 4.0);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error in BuffetValueCheck loading registry assets:', err);
+        setLoading(false);
+      });
+  }, [selectedSymbol]);
 
-  // Preset Values based on symbol
-  const presets: Record<string, { eps: number; growth: number; price: number }> = {
-    'AAPL': { eps: 6.16, growth: 10.5, price: 181.50 },
-    'TSLA': { eps: 3.12, growth: 18.0, price: 175.40 },
-    'NVDA': { eps: 12.44, growth: 32.5, price: 875.12 },
-    'BTC': { eps: 4500, growth: 25.0, price: 61500 }, // simulated equivalent metrics
-    'ETH': { eps: 180, growth: 20.0, price: 3450 },
-    'GLD': { eps: 5.5, growth: 4.5, price: 215 }
-  };
+  // Synchronize when the user switches selectedSymbol
+  useEffect(() => {
+    if (registryAssets.length > 0) {
+      const found = registryAssets.find(a => a.symbol.toUpperCase() === selectedSymbol.toUpperCase());
+      if (found) {
+        setActiveAsset(found);
+        setCustomPrice(found.price);
+        const calculatedEps = found.peRatio && found.peRatio > 0 
+          ? Number((found.price / found.peRatio).toFixed(2)) 
+          : Number((found.price * 0.07).toFixed(2));
+        setEps(calculatedEps <= 0 ? 3.5 : calculatedEps);
+        setGrowth(found.type === 'crypto' ? 20.0 : found.type === 'stock' ? 9.5 : 4.0);
+      }
+    }
+  }, [selectedSymbol, registryAssets]);
 
-  const preset = presets[selectedSymbol] || { eps: 8.5, growth: 7.5, price: 150 };
-
-  const [eps, setEps] = useState<number>(preset.eps);
-  const [growth, setGrowth] = useState<number>(preset.growth);
-  const [bondYield, setBondYield] = useState<number>(4.4); // Historical multiplier
-  const [currentYield, setCurrentYield] = useState<number>(4.8); // Current AAA corporate bond yield
-  const [currentPrice, setCurrentPrice] = useState<number>(preset.price);
-  
-  // Update state when selected symbol or assets change
-  React.useEffect(() => {
-    const foundAsset = assets.find(a => a.symbol === selectedSymbol);
-    const activePreset = presets[selectedSymbol] || (foundAsset ? {
-      eps: foundAsset.type === 'crypto' 
-        ? Number((foundAsset.price * 0.08).toFixed(2)) 
-        : Number((foundAsset.price / (foundAsset.peRatio || 18)).toFixed(2)),
-      growth: foundAsset.type === 'crypto' ? 25.0 : (foundAsset.type === 'commodity' ? 4.5 : 9.5),
-      price: foundAsset.price
-    } : { eps: 8.5, growth: 7.5, price: 150 });
-
-    setEps(activePreset.eps <= 0 ? 1.5 : activePreset.eps);
-    setGrowth(activePreset.growth);
-    setCurrentPrice(activePreset.price);
-  }, [selectedSymbol, assets]);
-
-  // Graham Formula: V = (EPS * (8.5 + 2g) * 4.4) / Y
-  const calculateIntrinsicValue = () => {
+  // Calculation: Benjamin Graham revised formula V = (EPS * (8.5 + 2g) * 4.4) / Y
+  const getGrahamValue = () => {
     if (eps <= 0) return 0;
-    const value = (eps * (8.5 + 2 * growth) * bondYield) / currentYield;
-    return Number(value.toFixed(2));
+    const val = (eps * (8.5 + 2 * growth) * bondYieldFactor) / aaaBondYield;
+    return Number(val.toFixed(2));
   };
 
-  const intrinsicValue = calculateIntrinsicValue();
-  
-  // Margin of Safety calculation
-  const marginOfSafety = intrinsicValue > 0 
-    ? Number((((intrinsicValue - currentPrice) / intrinsicValue) * 100).toFixed(1))
+  // Calculation: Discounted Cash Flow (DCF) with projection table
+  const getDcfValue = () => {
+    if (eps <= 0 || discountRate <= 0) return 0;
+    
+    let currentEps = eps;
+    let totalPresentValue = 0;
+    const dcfSteps = [];
+
+    // Discount cash flows over the projection period
+    for (let year = 1; year <= projectionYears; year++) {
+      currentEps = currentEps * (1 + growth / 100);
+      const discountFactor = Math.pow(1 + discountRate / 100, year);
+      const presentValue = currentEps / discountFactor;
+      totalPresentValue += presentValue;
+      
+      dcfSteps.push({
+        year,
+        projectedEps: currentEps,
+        presentValue
+      });
+    }
+
+    // Add Terminal Value at the end of projection period
+    const terminalPrice = currentEps * terminalMultiple;
+    const terminalPresentValue = terminalPrice / Math.pow(1 + discountRate / 100, projectionYears);
+    const finalValue = totalPresentValue + terminalPresentValue;
+
+    return {
+      value: Number(finalValue.toFixed(2)),
+      steps: dcfSteps,
+      terminalPrice,
+      terminalPresentValue
+    };
+  };
+
+  const grahamValue = getGrahamValue();
+  const dcfVal = getDcfValue();
+  const dcfValue = typeof dcfVal === 'number' ? dcfVal : dcfVal.value;
+
+  // Consensus Intrinsic Value (average of Graham & DCF for stable stocks, weighted for other asset classes)
+  const getConsensusValue = () => {
+    if (activeAsset?.type === 'crypto') {
+      // Cryptos have zero terminal multiples and rely purely on premium projection flows
+      return Number((dcfValue * 0.8 + grahamValue * 0.2).toFixed(2));
+    }
+    return Number(((grahamValue + dcfValue) / 2).toFixed(2));
+  };
+
+  const consensusValue = getConsensusValue();
+  const marginOfSafety = consensusValue > 0
+    ? Number((((consensusValue - customPrice) / consensusValue) * 100).toFixed(1))
     : 0;
+
+  // Pillar checks (Warren Buffett's actual financial checklist)
+  const getPillarStatus = () => {
+    const isStock = activeAsset?.type === 'stock';
+    const hasMoat = activeAsset && ['AAPL', 'MSFT', 'GOOGL', 'NVDA', 'META', 'GLD'].includes(activeAsset.symbol);
+    
+    return [
+      {
+        id: 1,
+        title: 'Ökonomischer Graben (Economic Moat)',
+        desc: 'Besitzt das Unternehmen einen dauerhaften Wettbewerbsvorteil (Brand, Netzwerkeffekt, Kostenvorteil)?',
+        status: hasMoat ? 'Wide' : (isStock ? 'Narrow' : 'N/A'),
+        fulfilled: hasMoat || false,
+        badge: hasMoat ? 'Breiter Graben (Wide Moat)' : (isStock ? 'Enger Graben' : 'Geringer Moat')
+      },
+      {
+        id: 2,
+        title: 'Verschuldung & Risikoprofil',
+        desc: 'Ist das Debt-to-Equity-Verhältnis unter 0.8 oder hat das Asset ein sehr solides Liquiditätsprofil?',
+        status: activeAsset?.debtToEquity !== undefined ? `${activeAsset.debtToEquity}x` : 'N/A',
+        fulfilled: activeAsset?.debtToEquity ? activeAsset.debtToEquity < 1.0 : true,
+        badge: activeAsset?.debtToEquity && activeAsset.debtToEquity < 1.0 ? 'Exzellent (<1.0x)' : 'Moderat'
+      },
+      {
+        id: 3,
+        title: 'Rentabilität & Bewertung (P/E Ratio)',
+        desc: 'Ist das P/E Ratio unter 30 oder bietet das Asset eine unschlagbare Preissetzungsmacht?',
+        status: activeAsset?.peRatio ? `${activeAsset.peRatio}x` : 'N/A',
+        fulfilled: activeAsset?.peRatio ? activeAsset.peRatio < 35 : true,
+        badge: activeAsset?.peRatio && activeAsset.peRatio < 30 ? 'Unterbewertet' : 'Wachstumspreis'
+      },
+      {
+        id: 4,
+        title: 'Qualitatives Management / Stabilität',
+        desc: 'Zeigt das Asset eine verifizierte Historie und wird von etablierten Akteuren geführt?',
+        status: activeAsset?.status === 'Verifiziert' ? 'Verifiziert' : 'Standard',
+        fulfilled: activeAsset?.status === 'Verifiziert',
+        badge: 'Geprüfter Score: ' + (activeAsset?.score || '7.5') + '/10'
+      }
+    ];
+  };
+
+  const pillars = getPillarStatus();
+  const fulfilledCount = pillars.filter(p => p.fulfilled).length;
 
   const getVerdict = () => {
     if (marginOfSafety >= 30) {
       return {
-        label: 'STARKER KAUF (Unterbewertet)',
-        desc: `Der aktuelle Preis liegt weit unter dem berechneten fairen Wert nach Graham. Ein hohes Maß an Margin of Safety (${marginOfSafety}%) schützt dein eingesetztes Kapital.`,
-        color: 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.15)]',
-        badge: 'bg-emerald-500 text-black'
+        label: 'STARKER KAUF • HOHE SICHERHEITSMARGE',
+        desc: `Das Asset bietet einen spektakulären Puffer von ${marginOfSafety}% MoS zum errechneten inneren Wert. Exzellente Value-Gelegenheit im Sinne des Warren-Buffett-Ansatzes.`,
+        color: 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10 shadow-[0_0_30px_rgba(16,185,129,0.1)]',
+        badge: 'bg-emerald-500 text-black',
+        signal: 'STARKER KAUF'
       };
     } else if (marginOfSafety >= 10) {
       return {
-        label: 'KAUFEN / MODERAT GÜNSTIG',
-        desc: `Die Aktie bietet eine gesunde Sicherheitsmarge von ${marginOfSafety}%. Ein Einstieg ist aus fundamentaler Sicht solide.`,
+        label: 'MODERATER KAUF • SOLIDE DISZIPLIN',
+        desc: `Die Sicherheitsmarge liegt bei ${marginOfSafety}%. Das Asset ist unterbewertet und erfüllt wesentliche qualitative Kernkriterien. Solider Einstiegspunkt.`,
         color: 'text-green-300 border-green-500/20 bg-green-500/5',
-        badge: 'bg-green-500 text-black'
+        badge: 'bg-green-500 text-black',
+        signal: 'KAUFEN'
       };
     } else if (marginOfSafety >= -10) {
       return {
-        label: 'HALTEN / FAIR BEWERTET',
-        desc: `Der Markt bewertet ${selectedSymbol} derzeit exakt im fairen Bereich. Erwartbare Renditen orientieren sich am künftigen Wachstum.`,
-        color: 'text-aif-gold-DEFAULT border-aif-gold-DEFAULT/25 bg-aif-gold-DEFAULT/5',
-        badge: 'bg-aif-gold-DEFAULT text-black'
+        label: 'FAIR BEWERTET • HALTEN',
+        desc: `Der aktuelle Marktpreis ($${customPrice}) reflektiert exakt den inneren Substanzwert. Keine nennenswerte Margin of Safety, aber ein hervorragendes Core-Investment.`,
+        color: 'text-amber-300 border-amber-500/20 bg-amber-500/5',
+        badge: 'bg-amber-400 text-black',
+        signal: 'HALTEN'
       };
     } else {
       return {
-        label: 'ÜBERBEWERTET / REDUZIEREN',
-        desc: `Aktueller Preis übersteigt den fairen Graham-Wert deutlich. Die Sicherheitsmarge ist negativ (${marginOfSafety}%). Erhöhtes Risiko für Kurskorrekturen.`,
-        color: 'text-rose-400 border-rose-500/20 bg-rose-500/10 shadow-[0_0_20px_rgba(239,68,68,0.15)]',
-        badge: 'bg-rose-500 text-white'
+        label: 'ÜBERBEWERTET • INVESTITION VERMEIDEN',
+        desc: `Der Marktpreis liegt deutlich über dem inneren Fundamentalwert. Die Sicherheitsmarge ist negativ (${marginOfSafety}%). Buffett rät hier strikt zur Geduld und zum Abwarten auf Korrekturen.`,
+        color: 'text-rose-400 border-rose-500/25 bg-rose-500/10 shadow-[0_0_30px_rgba(244,63,94,0.1)]',
+        badge: 'bg-rose-500 text-white',
+        signal: 'ÜBERBEWERTET'
       };
     }
   };
 
   const verdict = getVerdict();
 
+  if (loading && !activeAsset) {
+    return (
+      <div className="bg-zinc-800/60 border border-white/10 rounded-2xl p-8 backdrop-blur-md flex flex-col items-center justify-center min-h-[350px]">
+        <div className="w-8 h-8 border-2 border-aif-gold-DEFAULT border-t-transparent rounded-full animate-spin mb-3" />
+        <p className="text-[12px] font-mono text-white/50 uppercase tracking-widest">Lade Buffett-Finanzdaten...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md relative overflow-hidden">
+    <div className="bg-zinc-800/60 border border-white/10 rounded-2xl p-6 backdrop-blur-md relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-aif-gold-DEFAULT/40 to-transparent" />
-
-      <div className="flex flex-col lg:flex-row gap-8">
-        
-        {/* Left Side: Intrinsic Formula parameter inputs */}
-        <div className="w-full lg:w-96 space-y-6">
-          <div>
-            <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/40 tracking-wider font-mono">
-              BUFFETTVALUECHECK (GRAHAM-METHODOLOGY)
-            </span>
-            <h2 className="text-xl font-bold text-white font-display mt-2">Graham-Intrinsik-Rechner</h2>
-            <p className="text-xs text-white/50 mt-1">
-              Errechne den fairen Fundamentalwert für <span className="font-bold text-white font-mono">{selectedSymbol}</span> anhand der revidierten Benjamin Graham Formel.
-            </p>
+      
+      {/* Enterprise Tool Header Banner */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-white/10 mb-6">
+        <div>
+          <div className="flex items-center gap-1.5 text-[11px] font-mono text-aif-gold-DEFAULT tracking-widest font-black uppercase">
+            <Award size={12} className="text-aif-gold-DEFAULT" />
+            <span>Enterprise Financial Intelligence Suite</span>
           </div>
+          <h2 className="text-2xl font-black text-white font-display mt-1.5 flex items-center gap-2">
+            Buffett Value Check & DCF Analysator
+          </h2>
+          <p className="text-sm text-white/60 mt-1 max-w-3xl">
+            Professionelle Fundamentalanalyse basierend auf den Original-Regeln von Warren Buffett und Benjamin Graham. 
+            Nutzt DCF-Projektionen und die revidierte Graham-Gleichung zur Ermittlung des fairen inneren Werts.
+          </p>
+        </div>
+        
+        {/* Dynamic Asset Info Badge */}
+        {activeAsset && (
+          <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 flex items-center justify-center font-mono font-black text-aif-gold-DEFAULT text-lg">
+              {activeAsset.symbol}
+            </div>
+            <div>
+              <div className="text-sm font-bold text-white font-display">{activeAsset.name}</div>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-[11px] font-mono text-white/40 uppercase">{activeAsset.type}</span>
+                <span className="w-1 h-1 rounded-full bg-white/20" />
+                <span className="text-[11px] font-mono text-emerald-400 font-bold">${activeAsset.price.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] uppercase font-bold tracking-widest text-white/55 font-mono">Gewinn pro Aktie / Unit (EPS) ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={eps}
-                onChange={(e) => setEps(Math.max(0, Number(e.target.value)))}
-                className="w-full bg-black/60 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-aif-gold-DEFAULT font-mono"
-              />
+      {/* Quote Banner */}
+      <div className="bg-aif-gold-DEFAULT/[0.03] border border-aif-gold-DEFAULT/15 rounded-xl p-3.5 mb-6 flex items-start gap-3">
+        <BookOpen className="text-aif-gold-DEFAULT/70 shrink-0 mt-0.5" size={16} />
+        <div>
+          <p className="text-sm text-white/80 italic font-serif">
+            "Der Preis ist das, was du bezahlst. Der Wert ist das, was du bekommst. Kaufe hervorragende Unternehmen deutlich unter ihrem fairen Wert."
+          </p>
+          <span className="text-[10px] font-mono uppercase text-white/40 tracking-wider block mt-1">— Warren Buffett (Value-Investing-Legende)</span>
+        </div>
+      </div>
+
+      {/* Main Analysis Area Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Left Column: Valuation Input & Config (5 Cols) */}
+        <div className="lg:col-span-5 space-y-5">
+          <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4 space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-2">
+              <span className="text-sm font-bold text-white uppercase tracking-wider font-display">Bewertungs-Parameter</span>
+              <Activity size={14} className="text-aif-gold-DEFAULT animate-pulse" />
             </div>
 
+            {/* Parameter Input 1: EPS */}
             <div className="space-y-1.5">
-              <label className="text-[10px] uppercase font-bold tracking-widest text-white/55 font-mono">Erwartetes Wachstum (g) (% p.a.)</label>
+              <div className="flex justify-between items-center text-[11px] uppercase font-bold tracking-widest text-white/55 font-mono">
+                <span>Gewinn pro Aktie (EPS) / Ertragskraft</span>
+                <span className="text-white font-black">${eps}</span>
+              </div>
               <input
-                type="number"
+                type="range"
+                min="0.1"
+                max={activeAsset?.type === 'crypto' ? '5000' : '50'}
                 step="0.1"
-                value={growth}
-                onChange={(e) => setGrowth(Math.max(0, Number(e.target.value)))}
-                className="w-full bg-black/60 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-aif-gold-DEFAULT font-mono"
+                value={eps}
+                onChange={(e) => setEps(Number(e.target.value))}
+                className="w-full accent-aif-gold-DEFAULT cursor-pointer h-1 bg-white/10 rounded-lg appearance-none"
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[9px] uppercase font-bold tracking-widest text-white/55 font-mono">Basis-Zinsfaktor</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={bondYield}
-                  onChange={(e) => setBondYield(Math.max(0.1, Number(e.target.value)))}
-                  className="w-full bg-black/60 border border-white/20 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-aif-gold-DEFAULT font-mono"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[9px] uppercase font-bold tracking-widest text-white/55 font-mono">Aktueller Renditesatz (Y) (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={currentYield}
-                  onChange={(e) => setCurrentYield(Math.max(0.1, Number(e.target.value)))}
-                  className="w-full bg-black/60 border border-white/20 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-aif-gold-DEFAULT font-mono"
-                />
+              <div className="flex justify-between text-[10px] text-white/30 font-mono">
+                <span>Min: $0.1</span>
+                <span>Max: ${activeAsset?.type === 'crypto' ? '5000' : '50'}</span>
               </div>
             </div>
 
+            {/* Parameter Input 2: Growth */}
             <div className="space-y-1.5">
-              <label className="text-[10px] uppercase font-bold tracking-widest text-white/55 font-mono">Aktueller Marktpreis ($)</label>
+              <div className="flex justify-between items-center text-[11px] uppercase font-bold tracking-widest text-white/55 font-mono">
+                <span>Erwartetes Wachstum (g) (% p.a.)</span>
+                <span className="text-aif-gold-DEFAULT font-black">{growth}%</span>
+              </div>
+              <input
+                type="range"
+                min="0.5"
+                max="45"
+                step="0.5"
+                value={growth}
+                onChange={(e) => setGrowth(Number(e.target.value))}
+                className="w-full accent-aif-gold-DEFAULT cursor-pointer h-1 bg-white/10 rounded-lg appearance-none"
+              />
+              <div className="flex justify-between text-[10px] text-white/30 font-mono">
+                <span>0.5% (Konservativ)</span>
+                <span>45% (Aggressiv)</span>
+              </div>
+            </div>
+
+            {/* Dynamic model configurations depending on selected model view */}
+            <div className="border-t border-white/5 pt-3 mt-3">
+              <div className="flex gap-2 mb-3 bg-white/5 p-1 rounded-lg border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('dcf')}
+                  className={`flex-1 py-1.5 rounded-md text-[12px] font-bold uppercase font-mono tracking-wider transition-all cursor-pointer ${
+                    activeTab === 'dcf' ? 'bg-aif-gold-DEFAULT text-black' : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  DCF Modell
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('graham')}
+                  className={`flex-1 py-1.5 rounded-md text-[12px] font-bold uppercase font-mono tracking-wider transition-all cursor-pointer ${
+                    activeTab === 'graham' ? 'bg-aif-gold-DEFAULT text-black' : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  Graham Formel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('moat')}
+                  className={`flex-1 py-1.5 rounded-md text-[12px] font-bold uppercase font-mono tracking-wider transition-all cursor-pointer ${
+                    activeTab === 'moat' ? 'bg-aif-gold-DEFAULT text-black' : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  Graben (Moat)
+                </button>
+              </div>
+
+              {activeTab === 'dcf' && (
+                <div className="space-y-3.5 pt-1">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 font-mono">Abzinsung (WACC) (%)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={discountRate}
+                        onChange={(e) => setDiscountRate(Math.max(1, Number(e.target.value)))}
+                        className="w-full bg-zinc-900/80 border border-white/20 rounded-lg px-2.5 py-1.5 text-sm text-white focus:outline-none focus:border-aif-gold-DEFAULT font-mono"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 font-mono">Terminaler KGV (PE)</label>
+                      <input
+                        type="number"
+                        step="1"
+                        value={terminalMultiple}
+                        onChange={(e) => setTerminalMultiple(Math.max(5, Number(e.target.value)))}
+                        className="w-full bg-zinc-900/80 border border-white/20 rounded-lg px-2.5 py-1.5 text-sm text-white focus:outline-none focus:border-aif-gold-DEFAULT font-mono"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 font-mono">Projektionszeitraum (Jahre)</label>
+                    <div className="flex gap-2">
+                      {[3, 5, 7, 10].map(yr => (
+                        <button
+                          key={yr}
+                          type="button"
+                          onClick={() => setProjectionYears(yr)}
+                          className={`flex-1 py-1 rounded border text-[11px] font-mono ${
+                            projectionYears === yr 
+                              ? 'border-aif-gold-DEFAULT bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT' 
+                              : 'border-white/10 hover:border-white/20 text-white/60'
+                          }`}
+                        >
+                          {yr}J
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'graham' && (
+                <div className="space-y-3.5 pt-1">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 font-mono">Zins-Multiplikator</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={bondYieldFactor}
+                        onChange={(e) => setBondYieldFactor(Math.max(0.1, Number(e.target.value)))}
+                        className="w-full bg-zinc-900/80 border border-white/20 rounded-lg px-2.5 py-1.5 text-sm text-white focus:outline-none focus:border-aif-gold-DEFAULT font-mono"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-white/50 font-mono">AAA-Anleiherendite (%)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={aaaBondYield}
+                        onChange={(e) => setAaaBondYield(Math.max(0.1, Number(e.target.value)))}
+                        className="w-full bg-zinc-900/80 border border-white/20 rounded-lg px-2.5 py-1.5 text-sm text-white focus:outline-none focus:border-aif-gold-DEFAULT font-mono"
+                      />
+                    </div>
+                  </div>
+                  <div className="bg-white/5 p-2 rounded border border-white/5 text-[10px] font-mono text-white/40 leading-relaxed">
+                    Die revidierte Formel korrigiert das Wachstum um das aktuelle Zinsniveau an den erstklassigen AAA-Anleihemärkten (Sicherer Zins).
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'moat' && (
+                <div className="space-y-2 pt-1 font-mono text-[11px] text-white/70">
+                  <div className="flex items-center gap-1.5 text-aif-gold-DEFAULT font-bold mb-1">
+                    <Star size={12} />
+                    <span>Wettbewerbsvorteile von {activeAsset?.symbol}</span>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 rounded p-2.5 space-y-1.5">
+                    <div className="flex justify-between">
+                      <span className="text-white/40">Preismacht:</span>
+                      <span className="text-white font-bold">{['AAPL', 'MSFT', 'GLD'].includes(activeAsset?.symbol || '') ? 'Hervorragend' : 'Moderat'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/40">Netzwerkeffekte:</span>
+                      <span className="text-white font-bold">{['AAPL', 'MSFT', 'GOOGL', 'META', 'BTC'].includes(activeAsset?.symbol || '') ? 'Dominant' : 'Schwach'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/40">Wechselkosten:</span>
+                      <span className="text-white font-bold">{['AAPL', 'MSFT', 'NVDA'].includes(activeAsset?.symbol || '') ? 'Sehr hoch' : 'Gering'}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Price Override Input */}
+            <div className="space-y-1.5 border-t border-white/5 pt-3">
+              <label className="text-[11px] uppercase font-bold tracking-widest text-white/55 font-mono">Aktueller Vergleichspreis ($)</label>
               <input
                 type="number"
                 step="0.01"
-                value={currentPrice}
-                onChange={(e) => setCurrentPrice(Math.max(0.01, Number(e.target.value)))}
-                className="w-full bg-black/60 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-aif-gold-DEFAULT font-mono"
+                value={customPrice}
+                onChange={(e) => setCustomPrice(Math.max(0.01, Number(e.target.value)))}
+                className="w-full bg-zinc-900/80 border border-white/20 rounded-lg px-3 py-2 text-base font-bold text-white focus:outline-none focus:border-aif-gold-DEFAULT font-mono"
               />
-            </div>
-
-            {/* Formula display */}
-            <div className="bg-white/5 p-3 rounded-lg border border-white/5 text-[10px] font-mono text-white/40 leading-relaxed">
-              <span className="text-aif-gold-DEFAULT font-bold">Formel:</span> V = (EPS × (8.5 + 2g) × {bondYield}) / Y
-              <div className="mt-1">
-                V = ({eps} × (8.5 + {2 * growth}) × {bondYield}) / {currentYield} = <span className="text-white font-bold">${intrinsicValue}</span>
-              </div>
             </div>
           </div>
         </div>
 
-        {/* Right Side: Visual output results and margin gauge */}
-        <div className="flex-1 space-y-6">
+        {/* Right Column: Calculations & Enterprise Reports Dashboard (7 Cols) */}
+        <div className="lg:col-span-7 space-y-5">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Section 1: Valuation Comparison Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
-            {/* Value comparison gauge card */}
-            <div className="bg-black/60 rounded-xl border border-white/10 p-5 flex flex-col justify-between">
+            {/* Box 1: Benjamin Graham Value */}
+            <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4 flex flex-col justify-between">
               <div>
-                <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono">Wertbestimmung</span>
-                <div className="flex justify-between items-baseline mt-2">
-                  <div>
-                    <div className="text-xs text-white/50">Graham Fairer Wert</div>
-                    <div className="text-3xl font-mono font-black text-aif-gold-DEFAULT">
-                      ${intrinsicValue.toLocaleString()}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs text-white/50">Aktueller Preis</div>
-                    <div className="text-xl font-mono text-white">
-                      ${currentPrice.toLocaleString()}
-                    </div>
-                  </div>
-                </div>
+                <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest font-black">Modell A</span>
+                <div className="text-sm text-white/70 font-semibold mt-1">Benjamin Graham</div>
               </div>
-
-              {/* Progress Slider scale visually comparing current vs intrinsic */}
-              <div className="mt-6 space-y-2">
-                <div className="flex justify-between text-[10px] font-mono text-white/40">
-                  <span>0</span>
-                  <span>Gleichstand</span>
-                  <span>Maximaler Wert</span>
-                </div>
-                <div className="h-2 w-full bg-white/10 rounded-full relative overflow-visible">
-                  {/* Marker for Current Price */}
-                  <div 
-                    className="absolute h-4 w-1 bg-red-400 -top-1 rounded transition-all duration-500"
-                    style={{ left: `${Math.min(100, Math.max(0, (currentPrice / (intrinsicValue * 1.5 || 1)) * 100))}%` }}
-                    title={`Marktpreis: $${currentPrice}`}
-                  />
-                  {/* Marker for Fair Value */}
-                  <div 
-                    className="absolute h-5 w-2 bg-aif-gold-DEFAULT -top-1.5 rounded shadow-[0_0_10px_rgba(245,196,83,0.8)] transition-all duration-500"
-                    style={{ left: `${Math.min(100, (1 / 1.5) * 100)}%` }}
-                    title={`Fairer Wert: $${intrinsicValue}`}
-                  />
-                </div>
-                <div className="flex justify-between text-[9px] font-mono">
-                  <span className="text-red-400">Marktpreis</span>
-                  <span className="text-aif-gold-DEFAULT font-bold">Innerer Wert (Graham)</span>
-                </div>
+              <div className="mt-4">
+                <div className="text-2xl font-mono font-black text-white">${grahamValue.toLocaleString()}</div>
+                <div className="text-[10px] font-mono text-white/30 mt-1">Formel-Substanzwert</div>
               </div>
             </div>
 
-            {/* Margin of safety circle gauge */}
-            <div className="bg-black/60 rounded-xl border border-white/10 p-5 flex flex-col items-center justify-center text-center relative overflow-hidden">
-              <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono absolute top-4 left-4">Sicherheitsmarge</span>
-              
-              <div className="space-y-1 my-4">
-                <div className={`text-4xl font-mono font-black tracking-tighter ${marginOfSafety >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {marginOfSafety >= 0 ? `+${marginOfSafety}%` : `${marginOfSafety}%`}
-                </div>
-                <div className="text-xs text-white/60 font-mono">Margin of Safety (MoS)</div>
+            {/* Box 2: DCF Model Value */}
+            <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4 flex flex-col justify-between">
+              <div>
+                <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest font-black">Modell B</span>
+                <div className="text-sm text-white/70 font-semibold mt-1">Multi-Stage DCF</div>
               </div>
+              <div className="mt-4">
+                <div className="text-2xl font-mono font-black text-white">${dcfValue.toLocaleString()}</div>
+                <div className="text-[10px] font-mono text-white/30 mt-1">Disk. Cash-Flow Wert</div>
+              </div>
+            </div>
 
-              <p className="text-[10px] text-white/40 leading-relaxed max-w-[200px] font-mono">
-                {marginOfSafety >= 20 
-                  ? 'Kompakter Puffer vorhanden, der vor Marktschwankungen schützt.' 
-                  : marginOfSafety >= 0 
-                  ? 'Geringer Sicherheitsabstand vorhanden.' 
-                  : 'Kein Sicherheitsabstand vorhanden. Aktie ist potenziell überteuert.'
-                }
+            {/* Box 3: Weighted Consensus Intrinsic Value */}
+            <div className="bg-gradient-to-br from-aif-gold-DEFAULT/15 to-transparent border border-aif-gold-DEFAULT/25 rounded-xl p-4 flex flex-col justify-between shadow-[0_0_20px_rgba(245,196,83,0.05)]">
+              <div>
+                <span className="text-[10px] font-mono text-aif-gold-DEFAULT uppercase tracking-widest font-black">Consensus</span>
+                <div className="text-sm text-white font-bold mt-1">Fairer Innerer Wert</div>
+              </div>
+              <div className="mt-4">
+                <div className="text-2xl font-mono font-black text-aif-gold-DEFAULT">${consensusValue.toLocaleString()}</div>
+                <div className="text-[10px] font-mono text-white/40 mt-1">Synthetischer Zielwert</div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Section 2: Margin of Safety (MoS) Gauge */}
+          <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-5 relative overflow-hidden">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <span className="text-[11px] text-white/40 uppercase tracking-widest font-mono">Sicherheitsmarge (Margin of Safety)</span>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className={`text-4xl font-mono font-black tracking-tight ${marginOfSafety >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {marginOfSafety >= 0 ? `+${marginOfSafety}%` : `${marginOfSafety}%`}
+                  </span>
+                  <span className="text-sm text-white/50 font-mono">Puffer zum Marktpreis</span>
+                </div>
+              </div>
+              <div className="text-left md:text-right font-mono text-sm text-white/60">
+                <div>Zielwert: <span className="text-white font-bold">${consensusValue}</span></div>
+                <div className="mt-0.5">Marktpreis: <span className="text-white">${customPrice}</span></div>
+              </div>
+            </div>
+
+            {/* Visual Margin Scale slider */}
+            <div className="mt-4 space-y-2">
+              <div className="h-2 w-full bg-white/15 rounded-full relative overflow-visible">
+                {/* Colored safety fill */}
+                {marginOfSafety > 0 && (
+                  <div 
+                    className="absolute h-2 bg-emerald-500/30 rounded-full transition-all duration-500"
+                    style={{ 
+                      left: `${Math.min(100, Math.max(0, (customPrice / (consensusValue * 1.5 || 1)) * 100))}%`, 
+                      right: `${100 - Math.min(100, (1 / 1.5) * 100)}%`
+                    }}
+                  />
+                )}
+                {/* Pointer: Current market price */}
+                <div 
+                  className="absolute h-5 w-1 bg-red-400 -top-1.5 rounded transition-all duration-500 z-10"
+                  style={{ left: `${Math.min(100, Math.max(0, (customPrice / (consensusValue * 1.5 || 1)) * 100))}%` }}
+                />
+                {/* Target marker: Inner Value */}
+                <div 
+                  className="absolute h-6 w-2 bg-aif-gold-DEFAULT -top-2 rounded shadow-[0_0_15px_rgba(245,196,83,0.8)]"
+                  style={{ left: `${Math.min(100, (1 / 1.5) * 100)}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] font-mono text-white/35">
+                <span className="text-red-400">Marktpreis (${customPrice})</span>
+                <span className="text-aif-gold-DEFAULT font-bold">Innerer Substanzwert (${consensusValue})</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Value-Urteil and Actionable Checklist Tabs */}
+          <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-5 space-y-4">
+            
+            {/* Dynamic visual box for active model details */}
+            {activeTab === 'dcf' && typeof dcfVal !== 'number' && (
+              <div className="space-y-3">
+                <div className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-1.5">
+                  <Activity size={12} className="text-cyan-400" />
+                  <span>DCF Cash-Flow Projektions-Matrix</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left font-mono text-[12px] border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/10 text-white/40">
+                        <th className="py-2">Jahr</th>
+                        <th className="py-2">Proj. Cash-Flow (EPS)</th>
+                        <th className="py-2 text-right">Abgezinst (PV)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dcfVal.steps.map((step) => (
+                        <tr key={step.year} className="border-b border-white/5 text-white/80">
+                          <td className="py-1.5">Jahr {step.year}</td>
+                          <td className="py-1.5 font-bold">${step.projectedEps.toFixed(2)}</td>
+                          <td className="py-1.5 text-right font-bold text-cyan-400">${step.presentValue.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                      <tr className="text-white font-bold bg-white/5">
+                        <td className="py-2 pl-2 rounded-l">Terminal Value</td>
+                        <td className="py-2 font-mono">${dcfVal.terminalPrice.toFixed(2)}</td>
+                        <td className="py-2 text-right pr-2 font-mono text-cyan-400 rounded-r">${dcfVal.terminalPresentValue.toFixed(2)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'graham' && (
+              <div className="space-y-2">
+                <div className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-1.5">
+                  <Scale size={12} className="text-amber-400" />
+                  <span>Graham Formel-Zuweisung</span>
+                </div>
+                <div className="p-3 rounded-lg bg-zinc-900/80 border border-white/5 space-y-2 text-[12px] font-mono text-white/80 leading-relaxed">
+                  <div>
+                    <span className="text-white/40">Formel:</span> V = (EPS × (8.5 + 2g) × {bondYieldFactor}) / Y
+                  </div>
+                  <div className="h-[1px] bg-white/10 my-2" />
+                  <div className="flex justify-between">
+                    <span>Ertrags-Multiplikator:</span>
+                    <span className="font-bold text-white">{(8.5 + 2 * growth).toFixed(1)}x</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>AAA Bond-Yield Anpassung:</span>
+                    <span className="font-bold text-white">{(bondYieldFactor / aaaBondYield).toFixed(3)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'moat' && (
+              <div className="space-y-3">
+                <div className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-1.5">
+                  <Star size={12} className="text-aif-gold-DEFAULT" />
+                  <span>Wettbewerbsvorteile (Pillar Ratings)</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 font-mono text-[11px]">
+                  <div className="p-2 bg-white/5 border border-white/5 rounded">
+                    <span className="text-white/40 block">Netzwerkeffekt:</span>
+                    <span className="text-white font-bold mt-1 block">Unerreichte Ökosystem-Koppelung</span>
+                  </div>
+                  <div className="p-2 bg-white/5 border border-white/5 rounded">
+                    <span className="text-white/40 block">Kostenvorteil:</span>
+                    <span className="text-white font-bold mt-1 block">Skalenerträge & Vertikale Integration</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Quantitative Checkpoints Checklist */}
+            <div className="border-t border-white/10 pt-4 space-y-2.5">
+              <div className="flex justify-between items-center text-sm font-bold text-white font-display">
+                <span className="uppercase">Buffett Fundamental-Checkliste</span>
+                <span className="text-aif-gold-DEFAULT font-mono">{fulfilledCount} / 4 Bestanden</span>
+              </div>
+              <div className="space-y-2">
+                {pillars.map((p) => (
+                  <div key={p.id} className="flex items-start gap-2.5 bg-zinc-800/40 border border-white/5 rounded-lg p-2.5">
+                    {p.fulfilled ? (
+                      <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-3.5 h-3.5 rounded-full border border-white/30 shrink-0 mt-0.5 flex items-center justify-center text-[8px] font-bold text-white/50">
+                        !
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-baseline gap-2">
+                        <span className={`text-sm font-bold ${p.fulfilled ? 'text-white' : 'text-white/60'}`}>{p.title}</span>
+                        <span className={`text-[11px] font-mono px-1.5 py-0.5 rounded ${p.fulfilled ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/40'}`}>
+                          {p.status}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-white/45 mt-0.5">{p.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Detailed Actionable Recommendation Verdict Statement */}
+            <div className={`border rounded-xl p-4 transition-all ${verdict.color}`}>
+              <div className="flex justify-between items-center mb-1.5">
+                <h3 className="text-sm font-bold tracking-wider font-display uppercase flex items-center gap-1.5">
+                  <Scale size={14} />
+                  Fundermental-Analyse-Urteil
+                </h3>
+                <span className={`text-[10px] font-bold uppercase tracking-wider font-mono px-1.5 py-0.5 rounded ${verdict.badge}`}>
+                  {verdict.signal}
+                </span>
+              </div>
+              <div className="text-base font-black tracking-tight font-display text-white">
+                {verdict.label}
+              </div>
+              <p className="text-sm text-white/70 leading-relaxed mt-1.5">
+                {verdict.desc}
               </p>
             </div>
 
-          </div>
-
-          {/* Actionable Verdict Statement Box */}
-          <div className={`border rounded-xl p-5 transition-all ${verdict.color}`}>
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-sm font-bold tracking-wider font-display uppercase flex items-center gap-2">
-                <Scale size={16} />
-                FUNDERMENTAL-ANALYS-URTEIL
-              </h3>
-              <span className={`text-[10px] font-bold uppercase tracking-wider font-mono px-2 py-0.5 rounded ${verdict.badge}`}>
-                {marginOfSafety >= 30 ? 'Premium' : marginOfSafety >= 0 ? 'Normal' : 'Risk'}
-              </span>
-            </div>
-            
-            <div className="text-lg font-black tracking-tight font-display text-white">
-              {verdict.label}
-            </div>
-            
-            <p className="text-xs text-white/70 leading-relaxed mt-2 font-sans">
-              {verdict.desc}
-            </p>
-          </div>
-
-          {/* Additional details note */}
-          <div className="text-[10px] text-white/40 font-mono flex items-start gap-1.5 pt-2">
-            <Info size={12} className="text-aif-gold-DEFAULT shrink-0 mt-0.5" />
-            <span>
-              Warren Buffett empfiehlt typischerweise eine Margin of Safety von mindestens 30% für value-orientierte Investments. Diese Logik liefert ein robustes, faktenbasiertes Fundament ohne künstliche Heuristiken.
-            </span>
           </div>
 
         </div>

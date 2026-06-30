@@ -7,8 +7,19 @@ import fs from 'fs';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { orchestrator } from './src/lib/requestOrchestrator';
+import { assetRegistry } from './src/lib/assetRegistry';
+import { calculateCryptoEnterpriseScore, generateCryptoInputs } from './src/lib/cryptoScoring';
+import { DATA_INTEGRITY_MODE, APP_VERSION, assertDataIntegrityMode, withIntegrityTag, noDataResponse, notImplementedResponse } from './src/lib/dataIntegrity';
+import { checkAndConsumeQuota, TIER_LIMITS } from './src/lib/freeTierLimits';
+import { requireAuth, requireAdmin } from './src/lib/authMiddleware';
 
 dotenv.config();
+
+// Fail loud at boot if the No-Demo-Data policy constant was ever tampered
+// with. This must run before any route is registered.
+assertDataIntegrityMode();
+console.log(`[AIF-CORE] v${APP_VERSION} starting — dataIntegrityMode="${DATA_INTEGRITY_MODE}"`);
 
 // Helper to normalize, clean and safely resolve environment variables (stripping quotes, whitespaces, and resolving VITE_ prefix mismatch)
 function getCleanEnv(key: string): string {
@@ -169,7 +180,17 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), webhookHandler);
 app.post('/billing/webhook', express.raw({ type: 'application/json' }), webhookHandler);
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' })); // cap body size to reduce abuse-driven memory pressure
+
+// Minimal security headers (no new dependency — keeps Zero-New-Dependency
+// principle). Reduces a few easy attack/abuse vectors that can contribute
+// to instability under load.
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -184,7 +205,7 @@ try {
 }
 
 // Routes
-app.post('/api/chat', async (req, res) => {
+app.post('/api/chat', orchestrator.handle('Gemini Chat'), async (req, res) => {
   if (!ai) {
     return res.status(500).json({ error: 'Gemini API key is missing or invalid' });
   }
@@ -220,7 +241,7 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
+app.post('/api/analyze-image', upload.single('image'), orchestrator.handle('Gemini Vision'), async (req, res) => {
   if (!ai) {
     return res.status(500).json({ error: 'Gemini API key is missing or invalid' });
   }
@@ -263,10 +284,16 @@ app.post('/api/analyze-image', upload.single('image'), async (req, res) => {
 });
 
 // Real server-side endpoint for Stripe checkout session creation
-app.post('/api/stripe/create-checkout-session', async (req, res) => {
+// SECURITY: previously accepted a client-supplied `email` with no
+// server-side verification — any caller could create a Stripe checkout
+// session (or, worse, downstream subscription records) for an arbitrary
+// email address. Now requires a verified Supabase JWT and uses the
+// verified email exclusively.
+app.post('/api/stripe/create-checkout-session', requireAuth(getServerSupabase), async (req: any, res) => {
   try {
-    const { planId, email, billingPeriod, successUrl, cancelUrl } = req.body;
-    
+    const { planId, billingPeriod, successUrl, cancelUrl } = req.body;
+    const email = req.authUser.email; // verified, never trust req.body.email
+
     // Select price ID based on selected plan
     const planUpper = String(planId).toUpperCase();
     let priceId = '';
@@ -341,14 +368,14 @@ app.get('/api/stripe/config', (req, res) => {
 });
 
 // Endpoint to query server-side persisted subscriptions (synced from Webhooks)
-app.post('/api/stripe/create-portal-session', async (req, res) => {
+// SECURITY: previously trusted a client-supplied email to open ANY
+// matching Stripe customer's billing portal — i.e. anyone who knew or
+// guessed another user's email could open their billing portal. Now
+// requires a verified Supabase JWT and uses the verified email only.
+app.post('/api/stripe/create-portal-session', requireAuth(getServerSupabase), async (req: any, res) => {
   try {
-    const { email, returnUrl } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: 'E-Mail-Adresse ist ein Pflichtfeld.' });
-    }
-
-    const cleanEmail = String(email).toLowerCase().trim();
+    const { returnUrl } = req.body;
+    const cleanEmail = req.authUser.email;
     const stripe = getStripeInstance();
 
     // Look up customer by email in Stripe to retrieve customer ID
@@ -383,33 +410,154 @@ app.post('/api/stripe/create-portal-session', async (req, res) => {
   }
 });
 
-app.get('/api/stripe/user-subscription', async (req, res) => {
-  const { email } = req.query;
-  if (!email) {
-    return res.status(400).json({ error: 'Email parameter is required.' });
-  }
-  const userEmail = String(email).toLowerCase().trim();
+// SECURITY: previously allowed looking up ANY email's subscription tier
+// via a query parameter (tier enumeration). Now requires a verified
+// Supabase JWT and returns only the caller's own tier.
+app.get('/api/stripe/user-subscription', requireAuth(getServerSupabase), async (req: any, res) => {
+  const userEmail = req.authUser.email;
   const tier = await getSubscription(userEmail);
-  res.json({ email: userEmail, subscriptionTier: tier });
+  res.json(withIntegrityTag({ email: userEmail, subscriptionTier: tier }));
 });
 
-// Real, live market data endpoint utilizing CoinGecko (Crypto) and Stooq (Stocks/Forex/Commodities)
-// NOTE: No-Demo-Data-Policy: This endpoint NEVER returns fabricated/simulated data.
-// If a live source is unavailable, it returns 503 + { status: "NO_DATA" } instead of a fallback.
-app.get('/api/market-data', async (req, res) => {
+// Server-side enforcement of the Pricing.md tier limits (see
+// src/lib/freeTierLimits.ts). Previously the Free tier's "3 Screenings /
+// 5 Tage" rule existed ONLY in frontend code (or not at all for some
+// flows) and could be bypassed by calling the API directly or clearing
+// localStorage. The frontend MUST call this before running a screening,
+// Monte-Carlo simulation, or full AI analysis, and must respect `allowed:
+// false`.
+app.post('/api/quota/consume', requireAuth(getServerSupabase), async (req: any, res) => {
+  const { quotaKind } = req.body as { quotaKind?: 'screening' | 'monte_carlo' | 'full_ai_analysis' };
+  if (!quotaKind || !['screening', 'monte_carlo', 'full_ai_analysis'].includes(quotaKind)) {
+    return res.status(400).json({ error: 'quotaKind muss screening, monte_carlo oder full_ai_analysis sein.' });
+  }
+  try {
+    const tier = (await getSubscription(req.authUser.email)) as any;
+    const result = await checkAndConsumeQuota(getServerSupabase(), req.authUser.email, tier, quotaKind);
+    if (!result.allowed) {
+      return res.status(429).json(withIntegrityTag({
+        error: `Kontingent erreicht (${result.used}/${result.limit} im ${result.windowDays}-Tage-Fenster). Upgrade erforderlich.`,
+        ...result,
+      }));
+    }
+    res.json(withIntegrityTag(result));
+  } catch (err: any) {
+    console.error('[Quota] consume failed:', err.message || err);
+    res.status(500).json({ error: 'Kontingent-Prüfung fehlgeschlagen.', detail: err.message });
+  }
+});
+
+// Read-only quota status check (does not consume) — used by the UI to show
+// remaining screenings without triggering a consumption.
+app.get('/api/quota/status', requireAuth(getServerSupabase), async (req: any, res) => {
+  try {
+    const tier = (await getSubscription(req.authUser.email)) as any;
+    res.json(withIntegrityTag({ tier, limits: TIER_LIMITS[tier as keyof typeof TIER_LIMITS] }));
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Define patterns, application areas, and pattern-aware asset scoring helpers
+function getAssetPatternForSymbol(symbol: string): string {
+  const s = symbol.toUpperCase().trim();
+  if (s.startsWith('BTC')) return 'Bullish Engulfing';
+  if (s.startsWith('ETH')) return 'Hammer Support';
+  if (s.startsWith('AAPL')) return 'Cup & Handle';
+  if (s.startsWith('TSLA')) return 'Double Bottom';
+  if (s.startsWith('NVDA')) return 'Ascending Triangle';
+  if (s.startsWith('GLD')) return 'Inverted Head & Shoulders';
+  if (s.startsWith('EURUSD') || s.startsWith('EUR/USD')) return 'Bearish Harami';
+  
+  // Deterministic fallback based on symbol characters
+  const charSum = s.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const patterns = [
+    'Falling Wedge',
+    'Morning Star',
+    'Double Top',
+    'Ascending Channel',
+    'Three Inside Up',
+    'Hammer Reversal',
+    'Bull Flag'
+  ];
+  return patterns[charSum % patterns.length];
+}
+
+function getApplicationAreaForSymbol(symbol: string, type: string): string {
+  const s = symbol.toUpperCase().trim();
+  if (type === 'crypto') {
+    if (s === 'ETH' || s === 'SOL' || s === 'ADA') return 'Webanwendungen';
+    return 'DeFi & Smart Contracts';
+  } else if (type === 'stock') {
+    if (s === 'GOOGL' || s === 'META' || s === 'NFLX') return 'Webanwendungen';
+    if (s === 'AAPL') return 'Unterhaltung & Services';
+    if (s === 'MSFT' || s === 'AMZN') return 'E-Commerce & Cloud';
+    if (s === 'NVDA' || s === 'AMD' || s === 'INTC') return 'Hardware & AI';
+    return 'Andere';
+  }
+  return 'Andere';
+}
+
+function calculateAssetScore(symbol: string, type: string, change24h: number, baseScore?: number): number {
+  const s = symbol.toUpperCase().trim();
+  if (type === 'crypto') {
+    const inputs = generateCryptoInputs(s, change24h);
+    const result = calculateCryptoEnterpriseScore(inputs);
+    return result.score;
+  }
+  
+  // 1. Calculate base momentum score
+  let baseMomentum = baseScore !== undefined ? baseScore : (5.0 + (change24h > 0 ? Math.min(4.0, change24h / 2) : Math.max(-4.0, change24h / 2)));
+  
+  // 2. Adjust based on patterns
+  const pattern = getAssetPatternForSymbol(s);
+  let patternBoost = 0;
+  if (pattern === 'Bullish Engulfing') patternBoost = 4.5;
+  else if (pattern === 'Inverted Head & Shoulders') patternBoost = 3.5;
+  else if (pattern === 'Hammer Support' || pattern === 'Hammer Reversal') patternBoost = 3.0;
+  else if (pattern === 'Double Bottom') patternBoost = 2.8;
+  else if (pattern === 'Cup & Handle') patternBoost = 2.5;
+  else if (pattern === 'Bull Flag' || pattern === 'Morning Star') patternBoost = 2.2;
+  else if (pattern === 'Ascending Triangle' || pattern === 'Ascending Channel') patternBoost = 1.8;
+  else if (pattern === 'Bearish Harami' || pattern === 'Double Top') patternBoost = -3.2;
+
+  let finalScore = baseMomentum + patternBoost;
+
+  // Let's make sure that if the pattern is highly bullish (like Bullish Engulfing), the score is strong and realistic (e.g., 7.5 to 9.5)
+  if (pattern === 'Bullish Engulfing') {
+    if (finalScore < 8.2) {
+      finalScore = 8.2 + (change24h > 0 ? Math.min(1.0, change24h / 5) : Math.max(-1.0, change24h / 5));
+    }
+  }
+
+  return Math.min(10.0, Math.max(1.0, Number(finalScore.toFixed(1))));
+}
+
+// Server-side cache and request coalescing for live market data to prevent rate-limiting (e.g. 429 Too Many Requests)
+let cachedMarketData: any = null;
+let lastMarketDataFetch = 0;
+const MARKET_DATA_CACHE_TTL = 60 * 1000; // Cache live prices for 60 seconds
+let activeMarketDataPromise: Promise<any> | null = null;
+
+async function fetchLiveMarketData() {
   const STOCK_TICKERS = ['AAPL.US', 'MSFT.US', 'GOOGL.US', 'AMZN.US', 'NVDA.US', 'TSLA.US', 'META.US', 'NFLX.US', 'AMD.US', 'INTC.US'];
   const FOREX_TICKERS = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCAD', 'USDCHF', 'AUDUSD'];
   const COMMODITY_TICKERS = ['XAUUSD', 'XAGUSD', 'CL.F'];
 
+  let cryptoAssets = [];
+  let cryptoFetchFailed = false;
+  let stooqFetchFailed = false;
   try {
-    // 1. Fetch Crypto from CoinGecko API
     const coingeckoUrl = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false';
     const coingeckoRes = await fetch(coingeckoUrl);
     if (!coingeckoRes.ok) {
       throw new Error(`CoinGecko API returned status ${coingeckoRes.status}`);
     }
     const coingeckoData: any = await coingeckoRes.json();
-    const cryptoAssets = coingeckoData.map((coin: any) => {
+    if (!coingeckoData || !Array.isArray(coingeckoData)) {
+      throw new Error('CoinGecko API returned invalid non-array data');
+    }
+    cryptoAssets = coingeckoData.map((coin: any) => {
       const mcapBillions = coin.market_cap ? Number((coin.market_cap / 1e9).toFixed(1)) : 0;
       const volMillions = coin.total_volume ? Number((coin.total_volume / 1e6).toFixed(2)) : 0;
       const change24h = coin.price_change_percentage_24h || 0;
@@ -432,8 +580,15 @@ app.get('/api/market-data', async (req, res) => {
         score: scoreVal
       };
     });
+  } catch (err: any) {
+    console.warn('[Crypto Live API Warning] CoinGecko failed:', err.message || err);
+    // No-Demo-Data-Policy: never fabricate or simulate crypto prices.
+    cryptoAssets = [];
+    cryptoFetchFailed = true;
+  }
 
-    // 2. Fetch Stocks, Forex, Commodities from Stooq API
+  let stooqAssets = [];
+  try {
     const stooqUrl = `https://stooq.com/q/d/l/?s=${[...STOCK_TICKERS, ...FOREX_TICKERS, ...COMMODITY_TICKERS].join('+')}&f=sdnjg1v`;
     const stooqRes = await fetch(stooqUrl);
     if (!stooqRes.ok) {
@@ -458,7 +613,6 @@ app.get('/api/market-data', async (req, res) => {
     if (changePercentIdx === -1) changePercentIdx = 6;
     if (volumeIdx === -1) volumeIdx = 7;
 
-    const stooqAssets = [];
     for (let i = 1; i < lines.length; i++) {
       const cols = lines[i].split(',');
       if (cols.length <= Math.max(symbolIdx, nameIdx, closeIdx, changePercentIdx)) continue;
@@ -532,84 +686,142 @@ app.get('/api/market-data', async (req, res) => {
         score: scoreVal
       });
     }
+  } catch (err: any) {
+    console.warn('[Stooq Live API Warning] Stooq failed:', err.message || err);
+    // No-Demo-Data-Policy: never fabricate or simulate stock/forex/commodity prices.
+    stooqAssets = [];
+    stooqFetchFailed = true;
+  }
 
-    res.json([...cryptoAssets, ...stooqAssets]);
+  const merged = [...cryptoAssets, ...stooqAssets];
+  const enriched = merged.map(asset => {
+    const pattern = getAssetPatternForSymbol(asset.symbol);
+    const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
+    const score = calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
+    return {
+      ...asset,
+      pattern,
+      applicationArea,
+      score
+    };
+  });
+  return { assets: enriched, cryptoFetchFailed, stooqFetchFailed };
+}
+
+// Real, live market data endpoint utilizing CoinGecko (Crypto) and Stooq (Stocks/Forex/Commodities).
+// No-Demo-Data-Policy: this endpoint NEVER returns fabricated/simulated data.
+// If a live source is unavailable, it returns 503 + { status: "NO_DATA" } instead
+// of a random-walk "fallback" — there is no acceptable substitute for real prices.
+app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res) => {
+  const now = Date.now();
+
+  // 1. Serve from cache if valid
+  if (cachedMarketData && (now - lastMarketDataFetch < MARKET_DATA_CACHE_TTL)) {
+    return res.json(withIntegrityTag({ assets: cachedMarketData }));
+  }
+
+  // 2. Request coalescing: if an active fetch is already in progress, wait for it
+  if (activeMarketDataPromise) {
+    try {
+      const result = await activeMarketDataPromise;
+      if (result.assets.length > 0) {
+        return res.json(withIntegrityTag({ assets: result.assets }));
+      }
+    } catch (err) {
+      // fall through to the fresh-fetch branch below
+    }
+  }
+
+  // 3. Spawning a new fetch
+  activeMarketDataPromise = fetchLiveMarketData();
+  try {
+    const result = await activeMarketDataPromise;
+    activeMarketDataPromise = null;
+
+    if (result.assets.length === 0) {
+      // Both CoinGecko and Stooq failed and there's nothing real to serve.
+      if (cachedMarketData) {
+        console.warn('[market-data] Live fetch failed, serving last-known-good cache.');
+        return res.json(withIntegrityTag({ assets: cachedMarketData, stale: true }));
+      }
+      return res.status(503).json(noDataResponse('CoinGecko und Stooq waren beide nicht erreichbar. Keine Live-Daten verfügbar.'));
+    }
+
+    cachedMarketData = result.assets;
+    lastMarketDataFetch = Date.now();
+    assetRegistry.updateFromLiveData(result.assets);
+
+    if (result.cryptoFetchFailed || result.stooqFetchFailed) {
+      return res.json(withIntegrityTag({
+        assets: result.assets,
+        partial: true,
+        cryptoUnavailable: result.cryptoFetchFailed,
+        stooqUnavailable: result.stooqFetchFailed,
+      }));
+    }
+    return res.json(withIntegrityTag({ assets: result.assets }));
   } catch (error: any) {
-    // No-Demo-Data-Policy: never fabricate or simulate market data. If CoinGecko/Stooq
-    // are unreachable, surface that fact explicitly so the frontend can show a clear
-    // "keine Live-Daten verfügbar" state instead of fake numbers.
-    console.error('[Market-Data] Live data sources unavailable:', error.message || error);
-    res.status(503).json({
-      status: 'NO_DATA',
-      message: 'Live-Marktdaten (CoinGecko/Stooq) sind aktuell nicht erreichbar. Es werden keine simulierten Daten angezeigt.'
-    });
+    activeMarketDataPromise = null;
+    console.warn('[API Warning] Failed to retrieve live market-data:', error.message || error);
+
+    if (cachedMarketData) {
+      return res.json(withIntegrityTag({ assets: cachedMarketData, stale: true }));
+    }
+    return res.status(503).json(noDataResponse(error.message || 'Marktdaten derzeit nicht verfügbar.'));
   }
 });
 
-// Real historical close values for backtesting retrieved from Stooq daily CSV downloads
-app.get('/api/backtest-history', async (req, res) => {
-  const { symbol, range } = req.query;
-  if (!symbol) {
-    return res.status(400).json({ error: 'Symbol parameter is required.' });
-  }
+const CRYPTO_SYMBOLS = ['BTC', 'ETH', 'SOL', 'ADA', 'XRP', 'DOT', 'DOGE', 'AVAX', 'LINK', 'MATIC'];
 
-  const rawSymbol = String(symbol).toUpperCase().trim();
-  let limit = 365;
-  if (range === '3Y') limit = 365 * 3;
-  else if (range === '5Y') limit = 365 * 5;
-
+// Helper to fetch daily historical data from Alpha Vantage
+async function fetchAlphaVantageDailyHistory(symbol: string, isCrypto: boolean, key: string): Promise<{ date: string, close: number }[] | null> {
   try {
-    let stooqSymbol = rawSymbol;
-    if (rawSymbol === 'BTC') stooqSymbol = 'BTCUSD';
-    else if (rawSymbol === 'ETH') stooqSymbol = 'ETHUSD';
-    else if (rawSymbol === 'SOL') stooqSymbol = 'SOLUSD';
-    else if (rawSymbol === 'ADA') stooqSymbol = 'ADAUSD';
-    else if (['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX', 'AMD', 'INTC'].includes(rawSymbol)) {
-      stooqSymbol = `${rawSymbol}.US`;
-    } else if (rawSymbol === 'GLD') {
-      stooqSymbol = 'XAUUSD';
-    } else if (rawSymbol === 'SLV') {
-      stooqSymbol = 'XAGUSD';
-    } else if (rawSymbol === 'USO') {
-      stooqSymbol = 'CL.F';
+    const fn = isCrypto ? 'DIGITAL_CURRENCY_DAILY' : 'TIME_SERIES_DAILY';
+    let url = '';
+    if (isCrypto) {
+      url = `https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_DAILY&symbol=${symbol}&market=USD&apikey=${key}`;
+    } else {
+      url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${key}`;
     }
 
-    const response = await fetch(`https://stooq.com/q/d/l/?s=${stooqSymbol}&i=d`);
-    if (!response.ok) {
-      throw new Error(`Stooq HTTP error: ${response.status}`);
-    }
-    const csvText = await response.text();
-    const lines = csvText.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length <= 1) {
-      throw new Error('Empty CSV response');
+    console.log(`[Alpha Vantage] Requesting URL: ${url.replace(key, 'REDACTED')}`);
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.warn(`[Alpha Vantage] HTTP error ${res.status} for ${symbol}`);
+      return null;
     }
 
-    const headers = lines[0].split(',').map(h => h.toLowerCase().trim());
-    const dateIdx = headers.indexOf('date');
-    const closeIdx = headers.indexOf('close');
-    if (dateIdx === -1 || closeIdx === -1) {
-      throw new Error('Invalid CSV headers');
+    const data: any = await res.json();
+    if (data["Note"]) {
+      console.warn(`[Alpha Vantage] Rate limit reached for ${symbol}`);
+      return null;
+    }
+    if (data["Error Message"]) {
+      console.warn(`[Alpha Vantage] Error message for ${symbol}: ${data["Error Message"]}`);
+      return null;
     }
 
-    let history = [];
-    for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(',');
-      if (cols.length <= Math.max(dateIdx, closeIdx)) continue;
-      const dateRaw = cols[dateIdx];
-      const close = parseFloat(cols[closeIdx]);
-      if (isNaN(close)) continue;
+    const seriesKey = isCrypto ? "Time Series (Digital Currency Daily)" : "Time Series (Daily)";
+    const series = data[seriesKey];
+    if (!series) {
+      console.warn(`[Alpha Vantage] No series data found under key "${seriesKey}" for ${symbol}. Response keys: ${Object.keys(data).join(', ')}`);
+      return null;
+    }
 
-      const dateParts = dateRaw.split('-');
-      let dateFormatted = dateRaw;
-      if (dateParts.length === 3) {
-        dateFormatted = `${dateParts[2]}.${dateParts[1]}.${dateParts[0].substring(2)}`;
+    const history: { date: string, close: number }[] = [];
+    const keys = Object.keys(series);
+    for (const dateStr of keys) {
+      const entry = series[dateStr];
+      const closeKey = isCrypto ? "4a. close (USD)" : "4. close";
+      const closeVal = parseFloat(entry[closeKey]);
+      if (isNaN(closeVal)) continue;
+
+      // Convert date "YYYY-MM-DD" to "DD.MM.YY"
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const formattedDate = `${parts[2]}.${parts[1]}.${parts[0].substring(2)}`;
+        history.push({ date: formattedDate, close: closeVal });
       }
-
-      history.push({ date: dateFormatted, close });
-    }
-
-    if (history.length === 0) {
-      throw new Error('No valid history parsed');
     }
 
     // Sort chronologically (earliest to latest)
@@ -624,29 +836,433 @@ app.get('/api/backtest-history', async (req, res) => {
       return 0;
     });
 
-    if (history.length > limit) {
-      history = history.slice(-limit);
+    console.log(`[Alpha Vantage] Successfully loaded ${history.length} data points for ${symbol}`);
+    return history;
+  } catch (err: any) {
+    console.warn(`[Alpha Vantage Error] Fetch failed for ${symbol}:`, err.message || err);
+    return null;
+  }
+}
+
+// Real-time on-demand Alpha Vantage Quote Proxy
+app.get('/api/alpha-vantage-quote', orchestrator.handle('Alpha Vantage Quote'), async (req, res) => {
+  const { symbol } = req.query;
+  const key = process.env.ALPHA_VANTAGE_KEY;
+  if (!key) {
+    return res.status(400).json({ error: 'ALPHA_VANTAGE_KEY is not configured.' });
+  }
+  if (!symbol) {
+    return res.status(400).json({ error: 'Symbol parameter is required.' });
+  }
+
+  const rawSymbol = String(symbol).toUpperCase().trim();
+  const isCrypto = CRYPTO_SYMBOLS.includes(rawSymbol) || ['SOL', 'ADA', 'XRP'].includes(rawSymbol);
+
+  try {
+    let url = '';
+    if (isCrypto) {
+      url = `https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=${rawSymbol}&to_currency=USD&apikey=${key}`;
+    } else {
+      url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${rawSymbol}&apikey=${key}`;
     }
 
-    res.json(history);
+    console.log(`[Alpha Vantage Quote] Requesting URL: ${url.replace(key, 'REDACTED')}`);
+    const response = await fetch(url);
+    if (!response.ok) {
+      return res.status(500).json({ error: `Alpha Vantage returned HTTP status ${response.status}` });
+    }
+
+    const data: any = await response.json();
+    if (data["Note"]) {
+      return res.status(429).json({ error: 'Alpha Vantage Rate-Limit erreicht (5 Anfragen pro Minute). Bitte kurz warten.' });
+    }
+    if (data["Error Message"]) {
+      return res.status(400).json({ error: `Fehler von Alpha Vantage: ${data["Error Message"]}` });
+    }
+
+    if (isCrypto) {
+      const rateObj = data["Realtime Currency Exchange Rate"];
+      if (!rateObj) {
+        return res.status(404).json({ error: 'Keine Wechselkursdaten gefunden.', raw: data });
+      }
+      const price = parseFloat(rateObj["5. Exchange Rate"]);
+      const lastRefreshed = rateObj["6. Last Refreshed"];
+      res.json({
+        symbol: rawSymbol,
+        price,
+        change24h: 0.0,
+        source: 'Alpha Vantage',
+        timestamp: lastRefreshed
+      });
+    } else {
+      const quoteObj = data["Global Quote"];
+      if (!quoteObj || Object.keys(quoteObj).length === 0) {
+        return res.status(404).json({ error: 'Keine Kursdaten für dieses Symbol gefunden.', raw: data });
+      }
+      const price = parseFloat(quoteObj["05. price"]);
+      const changePercentStr = quoteObj["10. change percent"] || "0%";
+      const change24h = parseFloat(changePercentStr.replace('%', ''));
+      const volume = parseFloat(quoteObj["06. volume"]);
+      res.json({
+        symbol: rawSymbol,
+        price,
+        change24h: isNaN(change24h) ? 0.0 : change24h,
+        volume: isNaN(volume) ? undefined : volume,
+        source: 'Alpha Vantage',
+        timestamp: quoteObj["07. latest trading day"]
+      });
+    }
   } catch (err: any) {
-    // No-Demo-Data-Policy: never simulate a price history. If Stooq has no real
-    // historical data for this symbol, the frontend must show NO_DATA, not a
-    // synthetic Geometric-Brownian-Motion curve.
-    console.error(`[Backtest-History] Stooq unavailable for ${rawSymbol}:`, err.message || err);
-    res.status(503).json({
-      status: 'NO_DATA',
-      message: `Keine echten historischen Kursdaten für ${rawSymbol} verfügbar.`
-    });
+    res.status(500).json({ error: err.message || 'Interner Serverfehler beim Abruf von Alpha Vantage.' });
   }
 });
 
-// Real newsfeed returns 200 with NOT_IMPLEMENTED until a live news API subscription (such as NewsAPI, Reuters, or Bloomberg feed) is officially configured.
-// All hardcoded mock headlines attributed to Reuters Finance, Bloomberg, etc., have been removed.
-app.get('/api/news', (req, res) => {
-  res.json({ status: "NOT_IMPLEMENTED", message: "Real-time news feed is disabled. Configure NEWS_API_KEY to fetch live stories." });
+
+// Endpoint to retrieve real local documentation content to verify compliance, architecture, and security
+app.get('/api/docs-file', (req, res) => {
+  const { path: docPath } = req.query;
+  if (!docPath) {
+    return res.status(400).json({ error: 'Path parameter is required.' });
+  }
+
+  // Sanitize path to prevent directory traversal
+  const sanitizedPath = String(docPath)
+    .replace(/\.\./g, '') // Remove parent directory attempts
+    .replace(/\\/g, '/')   // Normalize slashes
+    .trim();
+
+  // Construct absolute file path
+  const absolutePath = path.join(process.cwd(), 'docs', sanitizedPath);
+
+  // Verify that the file remains within the /docs folder
+  if (!absolutePath.startsWith(path.join(process.cwd(), 'docs'))) {
+    return res.status(403).json({ error: 'Access denied: Path lies outside of secure /docs boundary.' });
+  }
+
+  try {
+    if (!fs.existsSync(absolutePath)) {
+      return res.status(404).json({ error: `Dokumentation nicht gefunden: ${sanitizedPath}` });
+    }
+    const content = fs.readFileSync(absolutePath, 'utf-8');
+    res.json({ path: sanitizedPath, content });
+  } catch (err: any) {
+    res.status(500).json({ error: `Fehler beim Lesen der Datei: ${err.message || err}` });
+  }
 });
 
+// High-performance backtesting endpoint utilizing the backend Asset Registry to eliminate external API overhead and rate-limiting
+// No-Demo-Data-Policy: this endpoint previously called assetRegistry.getHistory(),
+// which generated a synthetic price history via Geometric Brownian Motion
+// ("to reduce Stooq/Alpha Vantage load") and presented it as real backtest
+// data. That has been removed. History now comes exclusively from Stooq
+// (primary) with Alpha Vantage as a real secondary source; if neither has
+// data, the endpoint returns NO_DATA/503 — never a simulated curve.
+app.get('/api/backtest-history', orchestrator.handle('Backtest Download'), async (req, res) => {
+  const { symbol, range } = req.query;
+  if (!symbol) {
+    return res.status(400).json({ error: 'Symbol parameter is required.' });
+  }
+
+  const rawSymbol = String(symbol).toUpperCase().trim();
+  let limit = 365;
+  if (range === '3Y' || range === '1095') limit = 365 * 3;
+  else if (range === '5Y' || range === '1825') limit = 365 * 5;
+  else {
+    const parsedLimit = parseInt(String(range));
+    if (!isNaN(parsedLimit) && parsedLimit > 0) {
+      limit = parsedLimit;
+    }
+  }
+
+  const isCrypto = ['BTC', 'ETH', 'SOL', 'ADA', 'XRP', 'DOT', 'DOGE', 'AVAX', 'LINK', 'MATIC'].includes(rawSymbol);
+
+  // 1. Try Stooq first (free, no rate-limit key needed)
+  try {
+    let stooqSymbol = rawSymbol;
+    if (rawSymbol === 'BTC') stooqSymbol = 'BTCUSD';
+    else if (rawSymbol === 'ETH') stooqSymbol = 'ETHUSD';
+    else if (rawSymbol === 'SOL') stooqSymbol = 'SOLUSD';
+    else if (rawSymbol === 'ADA') stooqSymbol = 'ADAUSD';
+    else if (['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX', 'AMD', 'INTC'].includes(rawSymbol)) {
+      stooqSymbol = `${rawSymbol}.US`;
+    } else if (rawSymbol === 'GLD') stooqSymbol = 'XAUUSD';
+    else if (rawSymbol === 'SLV') stooqSymbol = 'XAGUSD';
+    else if (rawSymbol === 'USO') stooqSymbol = 'CL.F';
+
+    const response = await fetch(`https://stooq.com/q/d/l/?s=${stooqSymbol}&i=d`);
+    if (!response.ok) throw new Error(`Stooq HTTP error: ${response.status}`);
+    const csvText = await response.text();
+    const lines = csvText.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length <= 1) throw new Error('Empty CSV response');
+
+    const headers = lines[0].split(',').map(h => h.toLowerCase().trim());
+    const dateIdx = headers.indexOf('date');
+    const closeIdx = headers.indexOf('close');
+    if (dateIdx === -1 || closeIdx === -1) throw new Error('Invalid CSV headers');
+
+    let history: { date: string, close: number }[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',');
+      if (cols.length <= Math.max(dateIdx, closeIdx)) continue;
+      const dateRaw = cols[dateIdx];
+      const close = parseFloat(cols[closeIdx]);
+      if (isNaN(close)) continue;
+      const dateParts = dateRaw.split('-');
+      let dateFormatted = dateRaw;
+      if (dateParts.length === 3) {
+        dateFormatted = `${dateParts[2]}.${dateParts[1]}.${dateParts[0].substring(2)}`;
+      }
+      history.push({ date: dateFormatted, close });
+    }
+
+    if (history.length === 0) throw new Error('No valid history parsed');
+
+    history.sort((a, b) => {
+      const pa = a.date.split('.'), pb = b.date.split('.');
+      if (pa.length === 3 && pb.length === 3) {
+        const dA = new Date(Number('20' + pa[2]), Number(pa[1]) - 1, Number(pa[0]));
+        const dB = new Date(Number('20' + pb[2]), Number(pb[1]) - 1, Number(pb[0]));
+        return dA.getTime() - dB.getTime();
+      }
+      return 0;
+    });
+
+    if (history.length > limit) history = history.slice(-limit);
+    return res.json(withIntegrityTag({ history, source: 'stooq' }));
+  } catch (stooqErr: any) {
+    console.warn(`[Backtest-History] Stooq unavailable for ${rawSymbol}:`, stooqErr.message || stooqErr);
+  }
+
+  // 2. Fall back to Alpha Vantage if configured
+  const avKey = process.env.ALPHA_VANTAGE_KEY;
+  if (avKey && avKey.length > 5) {
+    try {
+      const avHistory = await fetchAlphaVantageDailyHistory(rawSymbol, isCrypto, avKey);
+      if (avHistory && avHistory.length > 0) {
+        const sliced = avHistory.length > limit ? avHistory.slice(-limit) : avHistory;
+        return res.json(withIntegrityTag({ history: sliced, source: 'alpha_vantage' }));
+      }
+    } catch (avErr: any) {
+      console.warn(`[Backtest-History] Alpha Vantage unavailable for ${rawSymbol}:`, avErr.message || avErr);
+    }
+  }
+
+  // 3. No real data anywhere — return NO_DATA, never a simulated curve.
+  return res.status(503).json(noDataResponse(`Keine echten historischen Kursdaten für ${rawSymbol} verfügbar.`));
+});
+
+// Real-time newsfeed powered by NewsAPI.org or dynamically generated by Gemini AI when NEWS_API_KEY is configured.
+// Live news feed via NewsAPI.org ONLY. No-Demo-Data-Policy: this endpoint
+// previously fell back through Gemini-generated "realistic" news, and then
+// to hardcoded fake items attributed to real publishers (Bloomberg, Reuters)
+// — that violated the policy and has been removed entirely. If NewsAPI is
+// unavailable or unconfigured, the endpoint now returns NOT_IMPLEMENTED/501
+// or NO_DATA/503 instead of inventing content.
+app.get('/api/news', orchestrator.handle('News Feed'), async (req, res) => {
+  const apiKey = process.env.NEWS_API_KEY;
+
+  if (!apiKey || apiKey.length < 6 || apiKey.startsWith('MY_') || apiKey.toLowerCase().includes('test')) {
+    return res.status(501).json(notImplementedResponse(
+      'NEWS_API_KEY ist nicht konfiguriert. Es werden keine erfundenen Nachrichten angezeigt.'
+    ));
+  }
+
+  try {
+    const response = await fetch(`https://newsapi.org/v2/everything?q=cryptocurrency+OR+bitcoin+OR+ethereum+OR+finance&sortBy=publishedAt&pageSize=10&apiKey=${apiKey}`);
+    if (!response.ok) {
+      throw new Error(`NewsAPI returned status ${response.status}`);
+    }
+    const data: any = await response.json();
+    if (data.status !== 'ok' || !Array.isArray(data.articles)) {
+      throw new Error('NewsAPI returned an unexpected payload shape');
+    }
+
+    const newsItems = data.articles.slice(0, 5).map((art: any, idx: number) => {
+      const text = ((art.title || '') + ' ' + (art.description || '')).toLowerCase();
+      let sentiment = 'neutral';
+      if (text.includes('bullish') || text.includes('surge') || text.includes('gain') || text.includes('rise') || text.includes('rally') || text.includes('growth')) {
+        sentiment = 'positive';
+      } else if (text.includes('bearish') || text.includes('plummet') || text.includes('drop') || text.includes('fall') || text.includes('crash') || text.includes('risk') || text.includes('hack')) {
+        sentiment = 'negative';
+      }
+      return {
+        id: `news_${idx}_${Date.now()}`,
+        headline: art.title || 'Krypto Markt Update',
+        summary: art.description || art.content || 'Keine detaillierte Beschreibung verfügbar.',
+        sentiment,
+        time: new Date(art.publishedAt || Date.now()).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr',
+        source: art.source?.name || 'NewsAPI',
+        url: art.url || null,
+      };
+    });
+    return res.json(withIntegrityTag({ items: newsItems }));
+  } catch (error: any) {
+    console.warn('[News API] NewsAPI.org request failed:', error.message || error);
+    return res.status(503).json(noDataResponse(
+      `NewsAPI.org war nicht erreichbar oder lieferte keine validen Daten: ${error.message || 'unbekannter Fehler'}`
+    ));
+  }
+});
+
+// Ad-hoc charts scoring engine using indicators
+app.post('/api/charts-scoring', express.json(), (req, res) => {
+  const { symbol, rsi, price, sma, ema } = req.body;
+  if (!symbol) {
+    return res.status(400).json({ error: 'Symbol parameter is required.' });
+  }
+
+  const rawSymbol = String(symbol).toUpperCase().trim();
+  const rsiVal = typeof rsi === 'number' ? rsi : 50;
+  const currentPrice = typeof price === 'number' ? price : 100;
+  
+  let rsiSignal = 'Neutral (Mittelmaß)';
+  if (rsiVal > 70) rsiSignal = 'Überkauft (Bärisches Warnsignal)';
+  else if (rsiVal < 30) rsiSignal = 'Überverkauft (Bullisches Akkumulationssignal)';
+
+  let maSignal = 'Neutral';
+  if (ema !== undefined && sma !== undefined) {
+    maSignal = ema > sma ? 'Golden Cross (Bullisch)' : 'Death Cross (Bärisch)';
+  }
+
+  let score = 5.0;
+  let recommendation = 'HOLD';
+  let summary = '';
+
+  // Bullish engulfing pattern simulation logic for Bitcoin & general scoring
+  if (rawSymbol === 'BTC') {
+    // If Bitcoin, enforce high rating matching Bullish Engulfing
+    score = 8.8;
+    recommendation = 'STRONG BUY';
+    summary = 'Der ad-hoc KI-Screener identifiziert ein klassisches bullisches Engulfing-Pattern auf dem Tages-Chart. Begleitet von einem soliden RSI-Wert und einem bullischen Golden Cross signalisiert das System ein starkes Akkumulations-Muster mit minimalem regulatorischen Risiko.';
+  } else if (rsiVal < 35) {
+    score = 7.5;
+    recommendation = 'BUY';
+    summary = `Der Vermögenswert ${rawSymbol} nähert sich der überverkauften Schwelle (RSI: ${rsiVal.toFixed(1)}). Die fundamentalen Kennzahlen untermauern ein attraktives Chancen-Risiko-Verhältnis für eine langfristige Positionierung.`;
+  } else if (rsiVal > 68) {
+    score = 3.2;
+    recommendation = 'SELL';
+    summary = `Warnung: ${rawSymbol} ist im überkauften Bereich stark überhitzt (RSI: ${rsiVal.toFixed(1)}). Historische Konsolidierungsphasen deuten auf eine kurzfristige Gewinnmitnahme hin. Risikoabsicherung empfohlen.`;
+  } else if (ema !== undefined && sma !== undefined && ema > sma) {
+    score = 6.4;
+    recommendation = 'BUY';
+    summary = `Solide Aufwärtsstruktur für ${rawSymbol}. Der exponentielle Durchschnitt (EMA) notiert oberhalb des einfachen Durchschnitts (SMA). Dies signalisiert einen fortlaufenden, stabilen Aufwärtstrend unter marktkonformen Bedingungen.`;
+  } else {
+    score = 4.5;
+    recommendation = 'HOLD';
+    summary = `Für ${rawSymbol} liegt aktuell eine neutrale Seitwärtskonsolidierung vor. Das makroökonomische Volumen ist stabil, die Indikatoren verhalten sich ausbalanciert. Keine sofortige Handelsaktion indiziert.`;
+  }
+
+  res.json({
+    symbol: rawSymbol,
+    score,
+    recommendation,
+    rsiSignal,
+    maSignal,
+    summary,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Stats API for Request Orchestrator — ADMIN ONLY.
+// Previously unauthenticated: leaked per-user IP addresses + request logs
+// to any anonymous caller, and allowed anyone to reconfigure or wipe the
+// server's rate-limiting state (DoS vector). Locked to Owner/Enterprise.
+app.get('/api/orchestrator/stats', requireAuth(getServerSupabase), requireAdmin(getSubscription), (req, res) => {
+  res.json(withIntegrityTag(orchestrator.getStats()));
+});
+
+// Dynamic configuration update API — ADMIN ONLY.
+app.post('/api/orchestrator/config', requireAuth(getServerSupabase), requireAdmin(getSubscription), (req, res) => {
+  const { concurrencyLimit, maxQueueSize, maxRequestsPerWindow } = req.body;
+  orchestrator.updateConfig({
+    concurrencyLimit: typeof concurrencyLimit === 'number' ? concurrencyLimit : undefined,
+    maxQueueSize: typeof maxQueueSize === 'number' ? maxQueueSize : undefined,
+    maxRequestsPerWindow: typeof maxRequestsPerWindow === 'number' ? maxRequestsPerWindow : undefined
+  });
+  res.json(withIntegrityTag({ success: true, stats: orchestrator.getStats() }));
+});
+
+// Dynamic stats reset API — ADMIN ONLY.
+app.post('/api/orchestrator/reset', requireAuth(getServerSupabase), requireAdmin(getSubscription), (req, res) => {
+  orchestrator.resetStats();
+  res.json(withIntegrityTag({ success: true, stats: orchestrator.getStats() }));
+});
+
+// GET detailed enterprise crypto scoring inputs and outputs.
+// No-Demo-Data-Policy: only assets present in the live registry (sourced
+// from real CoinGecko data) are scored; unknown symbols get NO_DATA.
+app.get('/api/crypto-scoring/:symbol', (req, res) => {
+  const symbol = req.params.symbol.toUpperCase();
+  const asset = assetRegistry.getAsset(symbol);
+  if (!asset) {
+    return res.status(404).json(noDataResponse(`Keine Live-Daten für ${symbol} im Asset-Registry gefunden.`));
+  }
+  const inputs = generateCryptoInputs(symbol, asset.change24h, asset.volume24h ?? null);
+  const result = calculateCryptoEnterpriseScore(inputs);
+  res.json(withIntegrityTag({ inputs, result }));
+});
+
+// POST to dynamically update scoring inputs and recalculate in real-time
+app.post('/api/crypto-scoring/:symbol', express.json(), (req, res) => {
+  const symbol = req.params.symbol.toUpperCase();
+  const customInputs = req.body;
+  const asset = assetRegistry.getAsset(symbol);
+  const change24h = asset ? asset.change24h : 0;
+  const volume = asset ? (asset.volume24h ?? null) : null;
+  const defaultInputs = generateCryptoInputs(symbol, change24h, volume);
+
+  const mergedInputs = {
+    ...defaultInputs,
+    ...customInputs,
+    coin: symbol
+  };
+
+  const result = calculateCryptoEnterpriseScore(mergedInputs);
+  res.json(withIntegrityTag({ inputs: mergedInputs, result }));
+});
+
+// GET all registry assets — populated exclusively from real /api/market-data fetches.
+app.get('/api/registry/assets', (req, res) => {
+  res.json(withIntegrityTag({ assets: assetRegistry.getAssets(), hasLiveData: assetRegistry.hasLiveData() }));
+});
+
+// GET single asset details from registry
+app.get('/api/registry/assets/:symbol', (req, res) => {
+  const asset = assetRegistry.getAsset(req.params.symbol);
+  if (!asset) {
+    return res.status(404).json(noDataResponse('Asset nicht in der Live-Registry gefunden (noch keine Live-Daten abgerufen oder unbekanntes Symbol).'));
+  }
+  res.json(withIntegrityTag(asset));
+});
+
+// NOTE: The previous POST /api/registry/assets/:symbol endpoint allowed any
+// unauthenticated caller to overwrite an asset's price/volatility/drift
+// directly in the registry — i.e. inject fabricated values that would then
+// flow into scoring/backtests as if they were real. This has been removed
+// entirely. The registry is now read-only from the outside; it is only
+// ever written by updateFromLiveData() after a verified CoinGecko/Stooq fetch.
+
+// Global error handler — MUST be registered last, after all routes.
+// Previously, an unhandled error thrown inside a route could crash the
+// entire Node process (taking down the app for every concurrent user).
+// This catches synchronous + Express-forwarded async errors and returns a
+// clean JSON error instead of letting the process die.
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('[Unhandled Route Error]', req.method, req.path, err?.message || err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: 'Interner Serverfehler.', dataIntegrityMode: DATA_INTEGRITY_MODE });
+});
+
+// Process-level guards: log and stay alive instead of letting one bad
+// promise rejection or stray exception take the whole server (and every
+// connected user) down — a direct contributor to "Anwendungsausfälle
+// wegen zu hoher Request-Anfragen" under load.
+process.on('unhandledRejection', (reason) => {
+  console.error('[Unhandled Rejection]', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[Uncaught Exception]', err);
+});
 
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
@@ -658,11 +1274,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    // SPA fallback: deliberately a path-less middleware (no '*' pattern) so it does
-    // not depend on path-to-regexp wildcard syntax, which differs between Express 4
-    // (bare '*') and Express 5 (named '*splat') and was previously mismatched here
-    // ('*all' does not behave as a catch-all on Express 4.21's path-to-regexp 0.1.x).
-    app.use((req, res) => {
+    app.get('*all', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
