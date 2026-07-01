@@ -1119,53 +1119,63 @@ app.get('/api/news', orchestrator.handle('News Feed'), async (req, res) => {
   }
 });
 
-// Ad-hoc charts scoring engine using indicators
+// Ad-hoc charts scoring engine using indicators.
+// No-Demo-Data-Policy: this endpoint previously hardcoded a forced
+// score/recommendation of 8.8 "STRONG BUY" for BTC regardless of its actual
+// RSI/EMA/SMA values, and claimed to have detected a "Bullish Engulfing"
+// candlestick pattern it never received OHLC data for. That has been
+// removed. The score below is now a deterministic, symbol-agnostic
+// function of only the real indicator values the client sends.
 app.post('/api/charts-scoring', express.json(), (req, res) => {
   const { symbol, rsi, price, sma, ema } = req.body;
   if (!symbol) {
     return res.status(400).json({ error: 'Symbol parameter is required.' });
   }
+  if (typeof rsi !== 'number' || typeof price !== 'number') {
+    return res.status(400).json({ error: 'rsi and price (numbers) are required for a real scoring computation.' });
+  }
 
   const rawSymbol = String(symbol).toUpperCase().trim();
-  const rsiVal = typeof rsi === 'number' ? rsi : 50;
-  const currentPrice = typeof price === 'number' ? price : 100;
-  
+  const rsiVal = rsi;
+  const hasMaData = typeof ema === 'number' && typeof sma === 'number';
+
   let rsiSignal = 'Neutral (Mittelmaß)';
   if (rsiVal > 70) rsiSignal = 'Überkauft (Bärisches Warnsignal)';
   else if (rsiVal < 30) rsiSignal = 'Überverkauft (Bullisches Akkumulationssignal)';
 
-  let maSignal = 'Neutral';
-  if (ema !== undefined && sma !== undefined) {
-    maSignal = ema > sma ? 'Golden Cross (Bullisch)' : 'Death Cross (Bärisch)';
+  let maSignal = 'Keine Daten';
+  let maDeltaPct = 0;
+  if (hasMaData) {
+    maSignal = ema > sma ? 'Golden Cross (Bullisch)' : (ema < sma ? 'Death Cross (Bärisch)' : 'Neutral');
+    maDeltaPct = sma !== 0 ? ((ema - sma) / sma) * 100 : 0;
   }
 
-  let score = 5.0;
-  let recommendation = 'HOLD';
-  let summary = '';
+  // RSI sub-score: 0 (very bearish) .. 10 (very bullish), centered at RSI 50.
+  // Oversold RSI (<30) trends bullish (mean-reversion), overbought (>70) trends bearish.
+  const rsiScore = Math.max(0, Math.min(10, 5 + (50 - rsiVal) / 10));
 
-  // Bullish engulfing pattern simulation logic for Bitcoin & general scoring
-  if (rawSymbol === 'BTC') {
-    // If Bitcoin, enforce high rating matching Bullish Engulfing
-    score = 8.8;
-    recommendation = 'STRONG BUY';
-    summary = 'Der ad-hoc KI-Screener identifiziert ein klassisches bullisches Engulfing-Pattern auf dem Tages-Chart. Begleitet von einem soliden RSI-Wert und einem bullischen Golden Cross signalisiert das System ein starkes Akkumulations-Muster mit minimalem regulatorischen Risiko.';
-  } else if (rsiVal < 35) {
-    score = 7.5;
-    recommendation = 'BUY';
-    summary = `Der Vermögenswert ${rawSymbol} nähert sich der überverkauften Schwelle (RSI: ${rsiVal.toFixed(1)}). Die fundamentalen Kennzahlen untermauern ein attraktives Chancen-Risiko-Verhältnis für eine langfristige Positionierung.`;
-  } else if (rsiVal > 68) {
-    score = 3.2;
-    recommendation = 'SELL';
-    summary = `Warnung: ${rawSymbol} ist im überkauften Bereich stark überhitzt (RSI: ${rsiVal.toFixed(1)}). Historische Konsolidierungsphasen deuten auf eine kurzfristige Gewinnmitnahme hin. Risikoabsicherung empfohlen.`;
-  } else if (ema !== undefined && sma !== undefined && ema > sma) {
-    score = 6.4;
-    recommendation = 'BUY';
-    summary = `Solide Aufwärtsstruktur für ${rawSymbol}. Der exponentielle Durchschnitt (EMA) notiert oberhalb des einfachen Durchschnitts (SMA). Dies signalisiert einen fortlaufenden, stabilen Aufwärtstrend unter marktkonformen Bedingungen.`;
+  // MA sub-score: derived from the actual EMA/SMA gap, clamped to +/-2.5 points.
+  const maScore = hasMaData ? Math.max(-2.5, Math.min(2.5, maDeltaPct * 0.5)) : 0;
+
+  const rawScore = hasMaData ? (rsiScore * 0.6 + (5 + maScore) * 0.4) : rsiScore;
+  const score = Math.round(Math.max(0, Math.min(10, rawScore)) * 10) / 10;
+
+  let recommendation: 'STRONG BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG SELL' = 'HOLD';
+  if (score >= 8) recommendation = 'STRONG BUY';
+  else if (score >= 6.5) recommendation = 'BUY';
+  else if (score >= 3.5) recommendation = 'HOLD';
+  else if (score >= 2) recommendation = 'SELL';
+  else recommendation = 'STRONG SELL';
+
+  const summaryParts: string[] = [];
+  summaryParts.push(`RSI(${rsiVal.toFixed(1)}) → ${rsiSignal}.`);
+  if (hasMaData) {
+    summaryParts.push(`EMA/SMA-Abstand ${maDeltaPct >= 0 ? '+' : ''}${maDeltaPct.toFixed(2)}% → ${maSignal}.`);
   } else {
-    score = 4.5;
-    recommendation = 'HOLD';
-    summary = `Für ${rawSymbol} liegt aktuell eine neutrale Seitwärtskonsolidierung vor. Das makroökonomische Volumen ist stabil, die Indikatoren verhalten sich ausbalanciert. Keine sofortige Handelsaktion indiziert.`;
+    summaryParts.push('Keine EMA/SMA-Daten übermittelt — Score basiert ausschließlich auf RSI.');
   }
+  summaryParts.push(`Zusammengesetzter Score: ${score.toFixed(1)}/10 → ${recommendation}.`);
+  const summary = summaryParts.join(' ');
 
   res.json({
     symbol: rawSymbol,

@@ -8,9 +8,10 @@ interface LandingPageProps {
   onLoginEmail: (email: string, password: string) => Promise<void>;
   onGuestLogin: () => void;
   onRegisterEmail: (name: string, email: string, password: string) => Promise<void>;
+  justLoggedOut?: boolean;
 }
 
-export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail }: LandingPageProps) {
+export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justLoggedOut }: LandingPageProps) {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   
   // Login Form States
@@ -189,6 +190,18 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail }: Lan
               Registrieren
             </button>
           </div>
+
+          {/* Success Banner when logged out */}
+          {justLoggedOut && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center justify-center gap-2 font-mono"
+            >
+              <CheckCircle2 size={14} className="shrink-0 text-emerald-400" />
+              <span>Erfolgreich abgemeldet!</span>
+            </motion.div>
+          )}
 
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2 font-mono">

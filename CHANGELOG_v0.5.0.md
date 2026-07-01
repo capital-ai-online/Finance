@@ -41,6 +41,51 @@
 - Alpha Vantage: non-standard `HTTP 444` → `404`. Otherwise already production-ready (server-side key, redacted logs).
 - NewsAPI: real-only, see item 2.3 above.
 
+## 8. BACKLOG — Supabase "Invalid API key" after rotating to new key format (2026-06-30)
+
+**Symptom:** Google OAuth login completed successfully server-side (Supabase
+Auth logs showed clean `302` on `/authorize` and `/callback`, user created
+in the DB, `login` event logged) but the browser was silently bounced back
+to the login screen with no visible error. Email/password login showed the
+error **"Invalid API key"** directly.
+
+**Root cause:** The Supabase dashboard was used to **disable the legacy
+JWT-based API keys** (anon/service_role) and generate new-format keys
+(`sb_publishable_...` / `sb_secret_...`). The codebase was still reading
+the old env var names (`VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`)
+— those values were still syntactically valid JWTs, so nothing looked
+"missing", but Supabase actively rejects them once legacy keys are turned
+off. A stray corrupted `SUPABASE_SERVICE_ROLE_KEY` (two JWTs concatenated
+into one 4-segment string) was found and re-copied as a secondary fix.
+A wrong variable name (`SUPABASE_PUBLISHABLE_KEY` without the `VITE_`
+prefix — not read anywhere in the code) was also set at one point and had
+to be removed in favor of the correctly prefixed `VITE_SUPABASE_PUBLISHABLE_KEY`.
+
+**Fast fix checklist for next time this happens:**
+1. Supabase Dashboard → Project Settings → API Keys → check whether "Legacy
+   JWT-based API keys" shows as disabled. If yes, that's almost certainly it.
+2. Confirm these exact 4 Render env vars exist (name AND value, no typos,
+   no missing `VITE_` prefix, no stray whitespace from copy/paste):
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY` (new format: `sb_publishable_...`)
+   - `SUPABASE_SECRET_KEY` (new format: `sb_secret_...`)
+   - `GEMINI_API_KEY` (server-only, **no** `VITE_` prefix — would leak into
+     the browser bundle otherwise)
+3. Re-copy both Supabase key values fresh from the dashboard (via the copy
+   button, not manual selection) directly before pasting into Render — do
+   not "correct" an existing value in place.
+4. Remove any leftover un-prefixed `SUPABASE_PUBLISHABLE_KEY` /
+   `SUPABASE_ANON_KEY` variables — dead weight, not read anywhere.
+5. Render → Manual Deploy → **"Clear build cache & deploy"** — a plain
+   Restart or "Deploy latest commit" is not sufficient, since `VITE_*`
+   vars are baked into the bundle at build time (see item 6 above).
+6. Test in a fresh Incognito tab (both email and Google login).
+
+**Code-level fix already applied** (`src/supabaseClient.ts`, `server.ts`):
+both the frontend client and the server client now prefer the new key env
+vars and fall back to the legacy names automatically, so this class of bug
+should not recur even if legacy keys are re-enabled/disabled again later.
+
 ## Known remaining items (not yet addressed — flagged, not fixed, due to scope)
 - `PerformanceDashboard.tsx`: simulated CPU/memory/registry metrics (`Math.random()`-based) — internal ops dashboard, not user-facing financial data, but still misrepresents itself as live monitoring.
 - `Charts.tsx`: a `simulatedVol` factor blended into chart rendering.

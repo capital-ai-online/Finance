@@ -19,6 +19,7 @@ export interface UserSession {
 export default function App() {
   const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [justLoggedOut, setJustLoggedOut] = useState<boolean>(false);
 
   const handleSupabaseSession = async (session: any) => {
     const user = session.user;
@@ -149,6 +150,8 @@ export default function App() {
       await supabase.auth.signOut();
     }
     setUserSession(null);
+    setJustLoggedOut(true);
+    setTimeout(() => setJustLoggedOut(false), 4000);
   };
 
   if (loading) {
@@ -172,9 +175,10 @@ export default function App() {
         />
       ) : (
         <LandingPage 
-          onLoginEmail={handleLogin} 
-          onGuestLogin={handleGuestLogin}
-          onRegisterEmail={handleRegister}
+          onLoginEmail={(email, password) => { setJustLoggedOut(false); return handleLogin(email, password); }}
+          onGuestLogin={() => { setJustLoggedOut(false); handleGuestLogin(); }}
+          onRegisterEmail={(name, email, password) => { setJustLoggedOut(false); return handleRegister(name, email, password); }}
+          justLoggedOut={justLoggedOut}
         />
       )}
     </>
