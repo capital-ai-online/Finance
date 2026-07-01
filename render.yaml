@@ -21,8 +21,15 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
-      # Supabase — REQUIRED both at build time (VITE_*) and runtime
+      # Supabase — REQUIRED both at build time (VITE_*) and runtime.
+      # New key format (sb_publishable_/sb_secret_) is primary; legacy
+      # anon/service_role JWTs only work if NOT disabled in the Supabase
+      # dashboard under Project Settings -> API Keys.
       - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: SUPABASE_SECRET_KEY
         sync: false
       - key: VITE_SUPABASE_ANON_KEY
         sync: false

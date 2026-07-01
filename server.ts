@@ -59,16 +59,31 @@ function getStripeInstance() {
 // Lazy-loaded Server-side Supabase Client instance
 let serverSupabaseClient: any = null;
 
+// Resolves the privileged server-side key. Supabase's new API key format
+// (sb_secret_...) is preferred; legacy SUPABASE_SERVICE_ROLE_KEY /
+// SUPABASE_ANON_KEY JWTs are kept only as a fallback. If legacy keys were
+// ever disabled in the Supabase dashboard (Project Settings -> API Keys),
+// any remaining JWT value here will be rejected with "Invalid API key" even
+// though it is syntactically a valid token.
+function getServerSupabaseKey(): string {
+  return (
+    getCleanEnv('SUPABASE_SECRET_KEY') ||
+    getCleanEnv('SUPABASE_SERVICE_ROLE_KEY') ||
+    getCleanEnv('VITE_SUPABASE_ANON_KEY') ||
+    getCleanEnv('SUPABASE_ANON_KEY')
+  );
+}
+
 function isSupabaseConfigured(): boolean {
   const url = getCleanEnv('SUPABASE_URL') || getCleanEnv('VITE_SUPABASE_URL');
-  const key = getCleanEnv('SUPABASE_SERVICE_ROLE_KEY') || getCleanEnv('VITE_SUPABASE_ANON_KEY') || getCleanEnv('SUPABASE_ANON_KEY');
+  const key = getServerSupabaseKey();
   return !!(url && key);
 }
 
 function getServerSupabase() {
   if (!serverSupabaseClient) {
     const url = getCleanEnv('SUPABASE_URL') || getCleanEnv('VITE_SUPABASE_URL');
-    const key = getCleanEnv('SUPABASE_SERVICE_ROLE_KEY') || getCleanEnv('VITE_SUPABASE_ANON_KEY') || getCleanEnv('SUPABASE_ANON_KEY');
+    const key = getServerSupabaseKey();
     if (!url || !key) {
       throw new Error('Supabase integration variables are missing.');
     }
