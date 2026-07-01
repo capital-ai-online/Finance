@@ -13,6 +13,7 @@ import { calculateCryptoEnterpriseScore, generateCryptoInputs } from './src/lib/
 import { DATA_INTEGRITY_MODE, APP_VERSION, assertDataIntegrityMode, withIntegrityTag, noDataResponse, notImplementedResponse } from './src/lib/dataIntegrity';
 import { checkAndConsumeQuota, TIER_LIMITS } from './src/lib/freeTierLimits';
 import { requireAuth, requireAdmin } from './src/lib/authMiddleware';
+import { validateMarketRecord, auditScoreWeights, buildAuditTrail } from './src/lib/marketScoringAudit';
 
 dotenv.config();
 
@@ -554,6 +555,66 @@ let lastMarketDataFetch = 0;
 const MARKET_DATA_CACHE_TTL = 60 * 1000; // Cache live prices for 60 seconds
 let activeMarketDataPromise: Promise<any> | null = null;
 
+// Public, keyless ticker endpoints — used only for source_integrity
+// cross-validation, never as a primary price source.
+const CROSS_VALIDATION_SYMBOLS: { symbol: string; kraken: string; binance: string }[] = [
+  { symbol: 'BTC', kraken: 'XBTUSD', binance: 'BTCUSDT' },
+  { symbol: 'ETH', kraken: 'ETHUSD', binance: 'ETHUSDT' },
+];
+const CROSS_VALIDATION_DEVIATION_THRESHOLD = 0.02; // 2%
+
+async function crossValidateCryptoSources(cryptoAssets: any[]): Promise<void> {
+  await Promise.all(CROSS_VALIDATION_SYMBOLS.map(async ({ symbol, kraken, binance }) => {
+    const asset = cryptoAssets.find(a => a.symbol === symbol);
+    if (!asset || typeof asset.price !== 'number') return;
+
+    const referencePrices: number[] = [];
+    try {
+      const krakenRes = await fetch(`https://api.kraken.com/0/public/Ticker?pair=${kraken}`);
+      if (krakenRes.ok) {
+        const krakenData: any = await krakenRes.json();
+        const pairKey = krakenData?.result ? Object.keys(krakenData.result)[0] : null;
+        const last = pairKey ? parseFloat(krakenData.result[pairKey]?.c?.[0]) : NaN;
+        if (!isNaN(last) && last > 0) referencePrices.push(last);
+      }
+    } catch (err: any) {
+      console.warn(`[Source Integrity] Kraken cross-check failed for ${symbol}:`, err.message || err);
+    }
+
+    try {
+      const binanceRes = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${binance}`);
+      if (binanceRes.ok) {
+        const binanceData: any = await binanceRes.json();
+        const last = parseFloat(binanceData?.price);
+        if (!isNaN(last) && last > 0) referencePrices.push(last);
+      }
+    } catch (err: any) {
+      console.warn(`[Source Integrity] Binance cross-check failed for ${symbol}:`, err.message || err);
+    }
+
+    if (referencePrices.length === 0) {
+      // Both reference feeds unavailable — no basis for comparison, don't flag.
+      return;
+    }
+
+    const avgReference = referencePrices.reduce((a, b) => a + b, 0) / referencePrices.length;
+    const deviation = Math.abs(asset.price - avgReference) / avgReference;
+
+    asset.sourceIntegrity = {
+      checkedAgainst: referencePrices.length,
+      deviationPct: Number((deviation * 100).toFixed(3)),
+      flagged: deviation > CROSS_VALIDATION_DEVIATION_THRESHOLD,
+    };
+
+    if (deviation > CROSS_VALIDATION_DEVIATION_THRESHOLD) {
+      console.warn(
+        `[Source Integrity] ${symbol}: CoinGecko price ${asset.price} deviates ${(deviation * 100).toFixed(2)}% ` +
+        `from Kraken/Binance average ${avgReference.toFixed(2)} — flagged, NOT auto-corrected.`
+      );
+    }
+  }));
+}
+
 async function fetchLiveMarketData() {
   const STOCK_TICKERS = ['AAPL.US', 'MSFT.US', 'GOOGL.US', 'AMZN.US', 'NVDA.US', 'TSLA.US', 'META.US', 'NFLX.US', 'AMD.US', 'INTC.US'];
   const FOREX_TICKERS = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCAD', 'USDCHF', 'AUDUSD'];
@@ -600,6 +661,16 @@ async function fetchLiveMarketData() {
     // No-Demo-Data-Policy: never fabricate or simulate crypto prices.
     cryptoAssets = [];
     cryptoFetchFailed = true;
+  }
+
+  // Market Data Validation Layer — source_integrity check: cross-validate
+  // the two highest-weight assets (BTC/ETH) against two independent public
+  // exchange feeds (Kraken, Binance). This does not replace CoinGecko as
+  // the primary source; it flags (does not silently correct) a >2%
+  // deviation, which would indicate a stale/bad CoinGecko read rather than
+  // real market divergence. No API key required for these public endpoints.
+  if (cryptoAssets.length > 0) {
+    await crossValidateCryptoSources(cryptoAssets);
   }
 
   let stooqAssets = [];
@@ -670,13 +741,21 @@ async function fetchLiveMarketData() {
         continue;
       }
 
+      // No-Demo-Data-Policy: Stooq's `sdnjg1v` feed only provides symbol,
+      // date, name, close, change%, and volume — it does NOT provide
+      // fundamentals. peRatio/debtToEquity/marketCap/dividendYield/
+      // grahamScore were previously synthesized from `price % N` formulas,
+      // which produced numbers that LOOK like real fundamentals but are
+      // pure noise. They are now correctly reported as unavailable (the
+      // frontend already renders undefined fundamentals as "N/A"/"-").
+      // Likewise, fallback volume (when Stooq reports 0) is no longer
+      // fabricated from price — it is reported as unavailable (0) instead
+      // of a plausible-looking made-up number.
       let volumeInMillions = 0;
-      if (type === 'stock') {
-        volumeInMillions = vol > 0 ? Number(((vol * price) / 1e6).toFixed(2)) : Number((price * 1.5).toFixed(1));
-      } else if (type === 'forex') {
-        volumeInMillions = Number((1200 + (price % 5) * 200).toFixed(2));
-      } else { // commodity
-        volumeInMillions = vol > 0 ? Number(((vol * price) / 1e6).toFixed(2)) : Number((350 + (price % 10) * 45).toFixed(2));
+      let volumeIsReal = false;
+      if (vol > 0) {
+        volumeInMillions = Number(((vol * price) / 1e6).toFixed(2));
+        volumeIsReal = true;
       }
 
       const isHighRisk = type === 'stock' && price > 500;
@@ -689,15 +768,16 @@ async function fetchLiveMarketData() {
         type,
         price,
         change24h,
-        grahamScore: type === 'stock' ? Number((4 + (price % 5)).toFixed(1)) : 0,
+        grahamScore: 0,
         momentum: Number(baseMomentum.toFixed(1)),
         risk: type === 'stock' ? 'Low' : 'Medium',
         status: 'Verifiziert',
-        peRatio: type === 'stock' ? Number((12 + (price % 25)).toFixed(1)) : undefined,
-        debtToEquity: type === 'stock' ? Number((0.2 + (price % 1.5)).toFixed(2)) : undefined,
-        marketCap: type === 'stock' ? Number((100 + (price % 1500)).toFixed(1)) : 450.0,
-        dividendYield: type === 'stock' && (price % 2 > 0.5) ? Number((1.5 + (price % 3)).toFixed(2)) : 0.0,
+        peRatio: undefined,
+        debtToEquity: undefined,
+        marketCap: undefined,
+        dividendYield: undefined,
         volume24h: volumeInMillions,
+        volumeIsEstimate: !volumeIsReal,
         score: scoreVal
       });
     }
@@ -783,6 +863,82 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
       return res.json(withIntegrityTag({ assets: cachedMarketData, stale: true }));
     }
     return res.status(503).json(noDataResponse(error.message || 'Marktdaten derzeit nicht verfügbar.'));
+  }
+});
+
+// --- CoinMarketCap proxy (supplemental crypto source, freemium: 300 req/day) ---
+// Server-side cache is deliberately longer than the CoinGecko cache (5 min
+// vs 60s) since the CMC free tier's daily quota is scarce. This endpoint is
+// additive/supplemental — CoinGecko remains the primary crypto source in
+// /api/market-data; this is exposed separately so the frontend can request
+// it explicitly (e.g. for symbols CoinGecko's top-50 doesn't cover) without
+// burning quota on every screener refresh.
+const CMC_CACHE_TTL = 5 * 60 * 1000;
+let cmcCache: { data: any; timestamp: number } | null = null;
+let activeCmcPromise: Promise<any> | null = null;
+
+app.get('/api/coinmarketcap/quotes', orchestrator.handle('CoinMarketCap Feed'), async (req, res) => {
+  const apiKey = getCleanEnv('COINMARKETCAP_API_KEY');
+  if (!apiKey) {
+    return res.status(501).json(notImplementedResponse('COINMARKETCAP_API_KEY ist nicht konfiguriert.'));
+  }
+
+  const now = Date.now();
+  if (cmcCache && (now - cmcCache.timestamp < CMC_CACHE_TTL)) {
+    return res.json(withIntegrityTag({ assets: cmcCache.data, cached: true }));
+  }
+
+  if (activeCmcPromise) {
+    try {
+      const data = await activeCmcPromise;
+      return res.json(withIntegrityTag({ assets: data, cached: true }));
+    } catch {
+      // fall through to fresh fetch
+    }
+  }
+
+  const symbolsParam = typeof req.query.symbols === 'string' && req.query.symbols.length > 0
+    ? req.query.symbols
+    : 'BTC,ETH,SOL,ADA,XRP,DOT,DOGE,AVAX,LINK,MATIC';
+
+  activeCmcPromise = (async () => {
+    const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${encodeURIComponent(symbolsParam)}&convert=USD`;
+    const cmcRes = await fetch(url, {
+      headers: { 'X-CMC_PRO_API_KEY': apiKey, 'Accept': 'application/json' },
+    });
+    if (!cmcRes.ok) {
+      throw new Error(`CoinMarketCap API returned status ${cmcRes.status}`);
+    }
+    const cmcData: any = await cmcRes.json();
+    const symbolData = cmcData?.data || {};
+    const assets = Object.keys(symbolData).map((sym) => {
+      const entry = Array.isArray(symbolData[sym]) ? symbolData[sym][0] : symbolData[sym];
+      const quote = entry?.quote?.USD;
+      return {
+        symbol: sym,
+        name: entry?.name,
+        price: quote?.price,
+        change24h: quote?.percent_change_24h,
+        marketCap: quote?.market_cap ? Number((quote.market_cap / 1e9).toFixed(2)) : undefined,
+        volume24h: quote?.volume_24h ? Number((quote.volume_24h / 1e6).toFixed(2)) : undefined,
+        source: 'coinmarketcap',
+      };
+    });
+    return assets;
+  })();
+
+  try {
+    const data = await activeCmcPromise;
+    activeCmcPromise = null;
+    cmcCache = { data, timestamp: Date.now() };
+    return res.json(withIntegrityTag({ assets: data }));
+  } catch (error: any) {
+    activeCmcPromise = null;
+    console.warn('[CoinMarketCap Proxy] Failed:', error.message || error);
+    if (cmcCache) {
+      return res.json(withIntegrityTag({ assets: cmcCache.data, stale: true }));
+    }
+    return res.status(503).json(noDataResponse(error.message || 'CoinMarketCap derzeit nicht erreichbar.'));
   }
 });
 
@@ -1160,6 +1316,29 @@ app.post('/api/charts-scoring', express.json(), (req, res) => {
   const rawScore = hasMaData ? (rsiScore * 0.6 + (5 + maScore) * 0.4) : rsiScore;
   const score = Math.round(Math.max(0, Math.min(10, rawScore)) * 10) / 10;
 
+  // Market Scoring Audit Layer (Layer 2): verify the weights that fed this
+  // score actually sum to 1.0 and every component stayed in its valid 0-1
+  // range BEFORE the number is trusted and returned. This is the structural
+  // safeguard against a repeat of the previous bug class (a hardcoded score
+  // override that ignored its declared formula/inputs entirely) — if the
+  // formula is ever edited such that the weights no longer sum correctly,
+  // this flags it instead of silently serving a wrong score.
+  const scoreAudit = hasMaData
+    ? auditScoreWeights(
+        { trend: 0.6, momentum: 0.4 },
+        { trend: rsiScore / 10, momentum: (5 + maScore) / 10 },
+        score * 10 // normalize to the audit layer's 0-100 scale
+      )
+    : auditScoreWeights({ trend: 1.0 }, { trend: rsiScore / 10 }, score * 10);
+
+  if (scoreAudit.status === 'rejected') {
+    console.error('[Market Scoring Audit] REJECTED /api/charts-scoring output:', scoreAudit.issues);
+    return res.status(500).json({
+      error: 'Scoring formula integrity check failed — refusing to serve an unverified score.',
+      auditTrail: buildAuditTrail(null, scoreAudit),
+    });
+  }
+
   let recommendation: 'STRONG BUY' | 'BUY' | 'HOLD' | 'SELL' | 'STRONG SELL' = 'HOLD';
   if (score >= 8) recommendation = 'STRONG BUY';
   else if (score >= 6.5) recommendation = 'BUY';
@@ -1180,6 +1359,7 @@ app.post('/api/charts-scoring', express.json(), (req, res) => {
   res.json({
     symbol: rawSymbol,
     score,
+    auditTrail: buildAuditTrail(null, scoreAudit),
     recommendation,
     rsiSignal,
     maSignal,

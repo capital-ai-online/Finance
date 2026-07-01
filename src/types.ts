@@ -14,6 +14,12 @@ export interface Asset {
   marketCap?: number;
   dividendYield?: number;
   volume24h?: number;
+  volumeIsEstimate?: boolean;
+  sourceIntegrity?: {
+    checkedAgainst: number;
+    deviationPct: number;
+    flagged: boolean;
+  };
   pattern?: string;
   applicationArea?: string;
 }

@@ -92,3 +92,43 @@ should not recur even if legacy keys are re-enabled/disabled again later.
 - `HeatmapVisual.tsx`: `Math.random()`-based daily change values in the heatmap.
 - `CryptoEnterpriseEvaluator.tsx` "On-Chain" tab (`whaleMetrics`): hardcoded per-symbol on-chain figures, not yet backed by a real provider.
 - `getAssetPattern()` (Screener.tsx and others): chart-pattern names are either keyword-matched on a handful of symbols or a deterministic hash-based fallback for everything else — not real pattern-recognition.
+
+## 9. Market Scoring Audit Layer + new data sources (2026-07-01)
+
+Ported the standalone `market_data_validation_layer` / `market_scoring_audit_layer`
+/ `market_reporting_orchestration_layer` skill spec (YAML/JSON/MD/Python
+reference design) into production as `src/lib/marketScoringAudit.ts`.
+
+**What it does:**
+- `validateMarketRecord()` — Layer 1: required-field, non-physical-value
+  (negative price/volume), and freshness checks on any market record.
+- `auditScoreWeights()` — Layer 2: verifies a scoring formula's weights sum
+  to 1.0 and every component stayed in its valid 0–1 range BEFORE the score
+  is trusted and returned. Wired into `/api/charts-scoring` — if this ever
+  fails (e.g. someone reintroduces a hardcoded override that bypasses the
+  declared formula), the endpoint now returns `500` with the audit trail
+  instead of silently serving an unverified number.
+- `buildAuditTrail()` — Layer 3 (condensed): combines validation + audit
+  results into an inline `auditTrail` field on the API response, instead of
+  writing markdown/json report files to disk (not a fit for a
+  request-scoped Express handler — see file header for rationale).
+
+**New data sources:**
+- **Kraken + Binance cross-validation** (`crossValidateCryptoSources`):
+  public, keyless ticker endpoints for BTC/ETH are compared against the
+  CoinGecko price on every `/api/market-data` fetch. A >2% deviation is
+  flagged (`asset.sourceIntegrity.flagged`) and logged — never silently
+  auto-corrected. This is the direct implementation of the
+  "source_integrity" responsibility from `market_datavalidatoon_layer.md`.
+- **CoinMarketCap proxy** (`GET /api/coinmarketcap/quotes`): supplemental
+  crypto source (freemium, 300 req/day), server-cached 5 minutes. Does
+  **not** replace CoinGecko as the primary source in `/api/market-data`.
+
+**Bonus fix found while wiring this in:** `fetchLiveMarketData()`'s Stooq
+branch was fabricating `peRatio`, `debtToEquity`, `marketCap`,
+`dividendYield`, and `grahamScore` for stocks via `price % N` formulas —
+numbers that look like real fundamentals but are pure noise (Stooq's
+`sdnjg1v` feed doesn't provide fundamentals at all). Same issue for
+forex/commodity fallback volume. All now correctly report as `undefined`
+("N/A" in the UI, which already handled this case) instead of a
+plausible-looking fabricated value — a direct No-Demo-Data-Policy fix.
