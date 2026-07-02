@@ -4,6 +4,11 @@ Refer to the official backlog and release history in `/backlog/CHANGELOG.md`.
 
 ---
 
+## [0.5.3] - 2026-07-02
+
+### Summary of Changes
+- **CRITICAL FIX — Google OAuth Login broken ("Supabase ist nicht konfiguriert")**: `Dockerfile` had no `ARG`/`ENV` declarations for `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_ANON_KEY`, or `VITE_STRIPE_PUBLISHABLE_KEY`. Render's dashboard Environment Variables are only forwarded into a Docker build stage for variable names explicitly declared as `ARG`, so the `vite build` step baked empty strings into the bundle, `src/supabaseClient.ts` resolved to `supabase = null`, and login/register threw "Supabase ist nicht konfiguriert" client-side before any request ever reached Supabase (hence zero entries in Supabase Auth Logs). Fixed by adding the missing `ARG`/`ENV` block to the builder stage. **Requires a "Clear build cache & deploy" on Render, not just a normal redeploy**, since Docker may otherwise reuse a cached layer.
+
 ## [0.5.2] - 2026-07-02
 
 ### Summary of Changes
