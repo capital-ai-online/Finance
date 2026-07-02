@@ -4,6 +4,14 @@ Refer to the official backlog and release history in `/backlog/CHANGELOG.md`.
 
 ---
 
+## [0.5.4] - 2026-07-02
+
+### Summary of Changes
+- **CRITICAL FIX — Backtest engine was using 100% fabricated history**: `assetRegistry.getHistory()`, the data source behind `/api/backtest-history` (used by `BacktestEngine.tsx` and `PortfolioBacktester.tsx`), was a seeded Geometric-Brownian-Motion simulator — it never called any real API despite a misleading comment claiming it reduced Stooq/Alpha Vantage load. Every backtest run in the app to date was computed on invented price paths. Replaced with genuine historical data: CoinGecko `market_chart` for crypto, Stooq daily CSV download for stocks/forex/commodities. If real data can't be retrieved for a symbol, the function now throws rather than returning anything simulated.
+- Removed the dead, unused `generateRealisticHistory()` (also a `Math.random()`-based fake price generator) from `server.ts` — it was defined but never called anywhere; left in place it was a latent risk.
+- Added `src/lib/backtestEngine.ts`: a shared, server-side SMA-Crossover backtest implementation mirroring the existing client-side methodology in `BacktestEngine.tsx`, so results are consistent between the app's interactive tool and generated reports.
+- Added `GET /api/backtest/top-assets-report` (admin-protected, matches the existing Kraken endpoint auth pattern since it triggers ~12 live external history fetches per call): runs the SMA-Crossover backtest on real historical data for the top 3 cryptocurrencies (determined live via CoinGecko market-cap ranking), plus documented top-3 selections for stocks (AAPL/MSFT/NVDA), FX majors (EUR/USD, USD/JPY, GBP/USD), and commodities (Gold/Silver/WTI Crude). Returns structured JSON with per-symbol strategy return, buy-and-hold return, max drawdown, win rate, and trade count — no fabricated fallback if a symbol's real data can't be fetched.
+
 ## [0.5.3] - 2026-07-02
 
 ### Summary of Changes

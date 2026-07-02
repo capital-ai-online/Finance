@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import { orchestrator } from './src/lib/requestOrchestrator';
 import { assetRegistry } from './src/lib/assetRegistry';
 import { calculateCryptoEnterpriseScore, generateCryptoInputs, calculateMemeCoinScore, generateMemeCoinInputs } from './src/lib/cryptoScoring';
+import { runSmaCrossBacktest } from './src/lib/backtestEngine';
 
 dotenv.config();
 
@@ -583,58 +584,6 @@ const FALLBACK_ASSETS = [
   { symbol: 'WTI', name: 'WTI Crude Oil', type: 'commodity', price: 77.20, change24h: -1.40, grahamScore: 0, momentum: 4.2, risk: 'Medium', status: 'Verifiziert', marketCap: 1050.0, dividendYield: 0.0, volume24h: 410.80, score: 5.8 },
   { symbol: 'BRENT', name: 'Brent Crude Oil', type: 'commodity', price: 81.85, change24h: -1.25, grahamScore: 0, momentum: 4.5, risk: 'Medium', status: 'Verifiziert', marketCap: 1150.0, dividendYield: 0.0, volume24h: 460.20, score: 6.1 }
 ];
-
-function generateRealisticHistory(symbol: string, limit: number) {
-  const history = [];
-  let basePrice = 150.0;
-  let volatility = 0.25;
-  let drift = 0.08;
-
-  const sym = symbol.toUpperCase().trim();
-  if (sym === 'BTC') { basePrice = 68000; volatility = 0.55; drift = 0.25; }
-  else if (sym === 'ETH') { basePrice = 3400; volatility = 0.60; drift = 0.18; }
-  else if (sym === 'SOL') { basePrice = 145; volatility = 0.80; drift = 0.35; }
-  else if (sym === 'ADA') { basePrice = 0.42; volatility = 0.70; drift = 0.10; }
-  else if (sym === 'AAPL') { basePrice = 189; volatility = 0.18; drift = 0.12; }
-  else if (sym === 'MSFT') { basePrice = 415; volatility = 0.15; drift = 0.15; }
-  else if (sym === 'GOOGL') { basePrice = 172; volatility = 0.20; drift = 0.14; }
-  else if (sym === 'AMZN') { basePrice = 185; volatility = 0.22; drift = 0.16; }
-  else if (sym === 'NVDA') { basePrice = 127; volatility = 0.45; drift = 0.45; }
-  else if (sym === 'TSLA') { basePrice = 178; volatility = 0.40; drift = 0.15; }
-  else if (sym === 'META') { basePrice = 504; volatility = 0.28; drift = 0.20; }
-  else if (sym === 'NFLX') { basePrice = 610; volatility = 0.30; drift = 0.15; }
-  else if (sym === 'AMD') { basePrice = 160; volatility = 0.35; drift = 0.22; }
-  else if (sym === 'INTC') { basePrice = 30.4; volatility = 0.25; drift = 0.05; }
-  else if (sym === 'EURUSD') { basePrice = 1.08; volatility = 0.06; drift = 0.01; }
-  else if (sym === 'GBPUSD') { basePrice = 1.26; volatility = 0.07; drift = 0.01; }
-  else if (sym === 'USDJPY') { basePrice = 156; volatility = 0.08; drift = 0.04; }
-  else if (sym === 'GLD') { basePrice = 2340; volatility = 0.12; drift = 0.08; }
-  else if (sym === 'SLV') { basePrice = 30.1; volatility = 0.22; drift = 0.09; }
-  else if (sym === 'USO') { basePrice = 78.4; volatility = 0.28; drift = 0.05; }
-  else if (sym === 'NG=F') { basePrice = 2.54; volatility = 0.45; drift = 0.12; }
-  else if (sym === 'WTI') { basePrice = 77.20; volatility = 0.25; drift = 0.06; }
-  else if (sym === 'BRENT') { basePrice = 81.85; volatility = 0.23; drift = 0.05; }
-
-  let currentPrice = basePrice * Math.exp(-drift * (limit / 365)); // start lower
-  const dt = 1 / 365;
-
-  for (let i = 0; i < limit; i++) {
-    const rand = Math.random() + Math.random() + Math.random() - 1.5; // simple normal approximation
-    const growth = Math.exp((drift - 0.5 * volatility * volatility) * dt + volatility * rand * Math.sqrt(dt));
-    currentPrice = currentPrice * growth;
-    
-    const dateObj = new Date(Date.now() - (limit - i) * 24 * 60 * 60 * 1000);
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const year = String(dateObj.getFullYear()).substring(2);
-    
-    history.push({
-      date: `${day}.${month}.${year}`,
-      close: Number(currentPrice.toFixed(4))
-    });
-  }
-  return history;
-}
 
 // Server-side cache and request coalescing for live market data to prevent rate-limiting (e.g. 429 Too Many Requests)
 let cachedMarketData: any = null;
@@ -1466,6 +1415,78 @@ app.post('/api/orchestrator/create-simulated-audit', express.json(), (req, res) 
   }
 });
 
+
+// ─────────────────────────────────────────────────────────────────────────
+// Top-3-per-asset-class Backtest Report (SMA-Crossover, real historical data)
+// Crypto top 3 are determined dynamically by live market cap (CoinGecko).
+// Stocks/forex/commodities use documented, undisputed selections (mega-cap
+// tech, the three most-traded FX majors, and the three primary commodities
+// already tracked in the app) since market-cap ranking doesn't apply the
+// same way to those classes. No-Demo-Data-Policy: any symbol whose real
+// history can't be retrieved is reported as failed, never fabricated.
+// ─────────────────────────────────────────────────────────────────────────
+
+const REPORT_STOCK_SYMBOLS = ['AAPL', 'MSFT', 'NVDA']; // by market capitalization, mega-cap tech
+const REPORT_FOREX_SYMBOLS = ['EURUSD', 'USDJPY', 'GBPUSD']; // the three most-traded FX majors
+const REPORT_COMMODITY_SYMBOLS = ['GLD', 'SLV', 'WTI']; // Gold, Silver, WTI Crude Oil
+
+async function fetchTop3CryptoByMarketCap(): Promise<string[]> {
+  try {
+    const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false');
+    if (!res.ok) throw new Error(`CoinGecko HTTP ${res.status}`);
+    const data: any = await res.json();
+    if (!Array.isArray(data)) throw new Error('Unerwartetes CoinGecko-Antwortformat');
+    const known = data
+      .map((c: any) => (c.symbol || '').toUpperCase())
+      .filter((sym: string) => ['BTC', 'ETH', 'SOL', 'ADA', 'XRP', 'DOT', 'AVAX', 'LINK', 'BNB', 'MATIC', 'DOGE'].includes(sym));
+    if (known.length < 3) throw new Error('Nicht genug bekannte Top-Coins in CoinGecko-Antwort gefunden.');
+    return known.slice(0, 3);
+  } catch (err: any) {
+    console.warn('[Backtest Report] Could not determine live top-3 crypto by market cap:', err.message || err);
+    return [];
+  }
+}
+
+app.get('/api/backtest/top-assets-report', requireOrchestratorAdmin, async (req, res) => {
+  const top3Crypto = await fetchTop3CryptoByMarketCap();
+  if (top3Crypto.length === 0) {
+    return res.status(503).json({
+      status: 'error',
+      message: 'Top-3-Kryptowährungen konnten nicht live über CoinGecko ermittelt werden. Bericht wird nicht mit geschätzten/veralteten Werten erstellt.'
+    });
+  }
+
+  const symbolGroups: { assetClass: string; symbols: string[] }[] = [
+    { assetClass: 'Kryptowährungen', symbols: top3Crypto },
+    { assetClass: 'Aktien', symbols: REPORT_STOCK_SYMBOLS },
+    { assetClass: 'Forex', symbols: REPORT_FOREX_SYMBOLS },
+    { assetClass: 'Rohstoffe', symbols: REPORT_COMMODITY_SYMBOLS },
+  ];
+
+  const results: any[] = [];
+  const failures: any[] = [];
+
+  for (const group of symbolGroups) {
+    for (const symbol of group.symbols) {
+      try {
+        const history = await assetRegistry.getHistory(symbol, 365);
+        const backtest = runSmaCrossBacktest(symbol, history);
+        results.push({ assetClass: group.assetClass, ...backtest });
+      } catch (err: any) {
+        console.warn(`[Backtest Report] Failed for ${symbol}:`, err.message || err);
+        failures.push({ assetClass: group.assetClass, symbol, reason: err.message || String(err) });
+      }
+    }
+  }
+
+  res.json({
+    status: results.length > 0 ? 'ok' : 'error',
+    generatedAt: new Date().toISOString(),
+    methodology: 'SMA-Crossover (20/50 Tage), 0.1% Transaktionskosten, Startkapital 10.000, auf echten historischen Tagesschlusskursen (CoinGecko für Krypto, Stooq für Aktien/Forex/Rohstoffe). Keine simulierten oder geschätzten Kursreihen.',
+    results,
+    failures
+  });
+});
 
 // High-performance backtesting endpoint utilizing the backend Asset Registry to eliminate external API overhead and rate-limiting
 app.get('/api/backtest-history', orchestrator.handle('Backtest Download'), async (req, res) => {

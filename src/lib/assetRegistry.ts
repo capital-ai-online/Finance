@@ -1,6 +1,72 @@
 import fs from 'fs';
 import path from 'path';
 
+// Real historical data sources — no fabrication (No-Demo-Data-Policy).
+const COINGECKO_ID_MAP: Record<string, string> = {
+  BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', ADA: 'cardano', XRP: 'ripple',
+  DOT: 'polkadot', AVAX: 'avalanche-2', LINK: 'chainlink', BNB: 'binancecoin', MATIC: 'matic-network',
+  DOGE: 'dogecoin', SHIB: 'shiba-inu', PEPE: 'pepe', WIF: 'dogwifcoin', BONK: 'bonk',
+  FLOKI: 'floki', POPCAT: 'popcat', BRETT: 'based-brett', MOG: 'mog-coin', BOME: 'book-of-meme'
+};
+
+const STOOQ_SYMBOL_MAP: Record<string, string> = {
+  GLD: 'gld.us', SLV: 'slv.us', USO: 'uso.us',
+  'NG=F': 'ng.f', WTI: 'cl.f', BRENT: 'co.f', COPPER: 'hg.f', PALL: 'pa.f', PLAT: 'pl.f', CORN: 'c.f',
+  EURUSD: 'eurusd', GBPUSD: 'gbpusd', USDJPY: 'usdjpy', USDCAD: 'usdcad', USDCHF: 'usdchf',
+  AUDUSD: 'audusd', NZDUSD: 'nzdusd', EURGBP: 'eurgbp', EURJPY: 'eurjpy', GBPJPY: 'gbpjpy'
+};
+
+async function fetchCoinGeckoHistory(coingeckoId: string, days: number): Promise<{ date: string, close: number }[] | null> {
+  try {
+    const cappedDays = Math.min(Math.max(days, 1), 365); // CoinGecko free tier: daily interval up to 365d
+    const url = `https://api.coingecko.com/api/v3/coins/${coingeckoId}/market_chart?vs_currency=usd&days=${cappedDays}&interval=daily`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data: any = await res.json();
+    if (!data || !Array.isArray(data.prices) || data.prices.length === 0) return null;
+    return data.prices.map(([ts, price]: [number, number]) => {
+      const d = new Date(ts);
+      return {
+        date: `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getFullYear()).substring(2)}`,
+        close: Number(price.toFixed(price > 10 ? 2 : 8))
+      };
+    });
+  } catch (e) {
+    return null;
+  }
+}
+
+async function fetchStooqHistory(stooqSymbol: string): Promise<{ date: string, close: number }[] | null> {
+  try {
+    const url = `https://stooq.com/q/d/l/?s=${stooqSymbol}&i=d`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const text = await res.text();
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length <= 1) return null;
+
+    const header = lines[0].split(',').map(h => h.toLowerCase());
+    const dateIdx = header.indexOf('date');
+    const closeIdx = header.indexOf('close');
+    if (dateIdx === -1 || closeIdx === -1) return null;
+
+    const history: { date: string, close: number }[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',');
+      if (cols.length <= Math.max(dateIdx, closeIdx)) continue;
+      const rawDate = cols[dateIdx];
+      const close = parseFloat(cols[closeIdx]);
+      if (isNaN(close)) continue;
+      const parts = rawDate.split('-'); // YYYY-MM-DD
+      if (parts.length !== 3) continue;
+      history.push({ date: `${parts[2]}.${parts[1]}.${parts[0].substring(2)}`, close });
+    }
+    return history.length > 0 ? history : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 export interface RegistryAsset {
   symbol: string;
   name: string;
@@ -129,7 +195,10 @@ export class AssetRegistry {
     }
   }
 
-  // Pre-cached or generated high-speed history data for Backtests and Monte Carlo
+  // Real historical daily closing prices for Backtests, sourced from
+  // CoinGecko (crypto) or Stooq (stocks/forex/commodities).
+  // No-Demo-Data-Policy: if no real data can be retrieved for a symbol,
+  // this throws rather than returning a fabricated/simulated series.
   public async getHistory(symbol: string, limit: number): Promise<{ date: string, close: number }[]> {
     const s = symbol.toUpperCase().trim();
     const cacheKey = `${s}_${limit}`;
@@ -139,51 +208,27 @@ export class AssetRegistry {
     }
 
     const asset = this.getAsset(s);
-    const startPrice = asset ? asset.price : 100;
-    const vol = asset ? asset.volatility / 100 : 0.25;
-    const drift = asset ? asset.drift : 0.08;
+    let history: { date: string, close: number }[] | null = null;
 
-    // Fast deterministic generation based on geometric brownian motion parameters
-    // This reduces external Stooq and Alpha Vantage query load dramatically
-    const history = [];
-    let currentPrice = startPrice;
-    const now = new Date();
+    if (asset?.type === 'crypto' || COINGECKO_ID_MAP[s]) {
+      const cgId = COINGECKO_ID_MAP[s];
+      if (cgId) {
+        history = await fetchCoinGeckoHistory(cgId, limit);
+      }
+    } else {
+      const stooqSymbol = STOOQ_SYMBOL_MAP[s] || `${s.toLowerCase()}.us`;
+      const full = await fetchStooqHistory(stooqSymbol);
+      if (full) {
+        history = full.slice(-limit);
+      }
+    }
 
-    for (let i = limit; i >= 0; i--) {
-      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-      const dateFormatted = `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getFullYear()).substring(2)}`;
-      
-      // Geometric Brownian motion step simulation
-      const rand = this.seededRandom(s, i);
-      const dailyDrift = (drift - 0.5 * vol * vol) / 252;
-      const dailyVol = vol / Math.sqrt(252);
-      currentPrice = currentPrice * Math.exp(dailyDrift + dailyVol * rand);
-
-      if (currentPrice <= 0) currentPrice = 0.01;
-
-      history.push({
-        date: dateFormatted,
-        close: Number(currentPrice.toFixed(s === 'EURUSD' || s === 'GBPUSD' ? 4 : 2))
-      });
+    if (!history || history.length === 0) {
+      throw new Error(`Keine echten historischen Daten für ${s} verfügbar (CoinGecko/Stooq nicht erreichbar oder Symbol nicht unterstützt). Es werden keine simulierten Daten zurückgegeben.`);
     }
 
     this.historyCache.set(cacheKey, history);
     return history;
-  }
-
-  // Deterministic random generation so different backtest runs of same asset match perfectly
-  private seededRandom(seed: string, step: number): number {
-    const str = seed + step;
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = (hash << 5) - hash + str.charCodeAt(i);
-      hash |= 0;
-    }
-    // Convert hash to seeded normal distribution using Box-Muller transform
-    const r1 = Math.abs((Math.sin(hash) * 10000) % 1);
-    const r2 = Math.abs((Math.cos(hash) * 10000) % 1);
-    const z0 = Math.sqrt(-2.0 * Math.log(r1 || 0.0001)) * Math.cos(2.0 * Math.PI * r2);
-    return z0;
   }
 }
 
