@@ -17,9 +17,11 @@ import {
   Layers,
   ArrowRight,
   Download,
-  FileText
+  FileText,
+  PieChart
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
+import { PortfolioBacktester } from './PortfolioBacktester';
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -76,6 +78,7 @@ const TICKERS = [
 ];
 
 export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, triggerAttempt }: BacktestEngineProps) {
+  const [activeTab, setActiveTab] = useState<'strategy' | 'portfolio'>('portfolio');
   const [availableTickers, setAvailableTickers] = useState<any[]>(TICKERS);
   const [ticker, setTicker] = useState<string>(selectedSymbol);
 
@@ -292,7 +295,7 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
     doc.setTextColor(245, 196, 83);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
-    doc.text('JENOVA NEXUS', 15, 18);
+    doc.text('AIF-CORE', 15, 18);
     
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'normal');
@@ -489,26 +492,63 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.setTextColor(140, 140, 140);
-    doc.text('Dieses Dokument wurde automatisch von Jenova Nexus generiert. DSGVO-konforme quantitative Echtzeitanalyse.', 15, 285);
+    doc.text('Dieses Dokument wurde automatisch von AIF-CORE generiert. DSGVO-konforme quantitative Echtzeitanalyse.', 15, 285);
     doc.text('Sven Kulessa • sven.kulessa@gmail.com • Compliant with Art. 30 GDPR / BFSG Accessibility Standards.', 15, 289);
     
-    doc.save(`Jenova_Nexus_Backtest_${ticker}_${strategy}.pdf`);
+    doc.save(`AIF_CORE_Backtest_${ticker}_${strategy}.pdf`);
   };
 
   const activeTickerInfo = availableTickers.find(t => t.symbol === ticker) || availableTickers[0] || TICKERS[0];
 
   return (
-    <div id="backtest-engine-panel" className="bg-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-8 relative overflow-hidden">
+    <div id="backtest-engine-panel" className="bg-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-6 relative overflow-hidden">
       {/* Visual background gradient accents */}
       <div className="absolute top-0 right-0 w-80 h-80 bg-aif-gold-DEFAULT/5 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-80 h-80 bg-aif-neon-purple/5 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* Header section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/5 pb-6">
+      {/* Tab Switcher */}
+      <div className="flex items-center gap-2 p-1 bg-black/60 border border-white/5 rounded-xl w-fit relative z-10">
+        <button
+          onClick={() => setActiveTab('portfolio')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+            activeTab === 'portfolio'
+              ? 'bg-aif-gold-DEFAULT text-black font-black'
+              : 'text-white/60 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <PieChart size={14} />
+          <span>Portfolio-Allokation</span>
+          <span className={`px-1 py-0.5 rounded text-[8px] font-mono font-bold tracking-normal uppercase ${
+            activeTab === 'portfolio' ? 'bg-black text-aif-gold-DEFAULT' : 'bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT'
+          }`}>
+            NEU
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab('strategy')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+            activeTab === 'strategy'
+              ? 'bg-aif-gold-DEFAULT text-black font-black'
+              : 'text-white/60 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Sliders size={14} />
+          <span>Asset-Strategie</span>
+        </button>
+      </div>
+
+      {activeTab === 'portfolio' && (
+        <PortfolioBacktester userCapital={userCapital} triggerAttempt={triggerAttempt} />
+      )}
+
+      {activeTab === 'strategy' && (
+        <>
+          {/* Header section */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/5 pb-6">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/35 tracking-wider">
-              ENTERPRISE Backtest Core v4.2
+              ENTERPRISE Backtest Core
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-[11px] text-white/85 font-mono">Live Simulation Engine</span>
@@ -1057,11 +1097,12 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
               </div>
             )}
           </div>
-
         </div>
       )}
-    </div>
-  );
+    </>
+  )}
+</div>
+);
 }
 
 // Format currency beautifully

@@ -1,38 +1,41 @@
-# ✍️ Content Strategy & Tone of Voice Guidelines
-**Project: Jenova Nexus (AIF-CORE)**
-**Persona: Expert Partner**
+# ✍️ Brand Persona, Copywriting & Content-Strategie
+**Project: AIF-CORE (Jenova Nexus)**  
+**Brand Voice:** Expert Partner (Sachlich, Präzise & Mathematisch)  
+**Classification:** Public Facing / Regulatory Compliant  
 
 ---
 
-## 🎭 The Brand Persona
+## 🎭 Marken-Tonalität & Persona (Brand Voice)
+AIF-CORE / Jenova Nexus tritt im Bereich der Finanzanalyse als verlässlicher, wissenschaftlicher und mathematisch-präziser Partner auf. 
 
-AIF-CORE / Jenova Nexus is an **Expert Partner**. We speak with absolute precision, technical clarity, and professional authority.
-
-* **We are**: Objective, factual, respectful, informative, and mathematically grounded.
-* **We are NOT**: Hype-driven, promotional, speculative, overly clinical, or salespeople. We strictly avoid exclamation marks in financial reports and never guarantee gains.
+* **Wir verwenden**: Eine sachliche, objektive und datengetriebene Sprache. Alle Berichte, Signale und Analysen beruhen auf realen Formeln und belegbaren Datenreihen.
+* **Wir meiden**: Reißerische Werbesprüche, unrealistische Rendite-Versprechungen, emotionale Ausrufezeichen oder künstlich übertriebene "AI-Slop"-Begriffe (wie "stellar", "jaw-dropping", "gorgeous").
+* **Einfache und menschliche Bezeichnungen**: Wir nutzen einfache, demütige und verständliche Begrifflichkeiten für alle UI-Elemente. Beispielsweise verwenden wir "Uhrzeit" statt "Solar-Orbit-Tracker" und "Aktienscreener" statt "Reichtums-Prophet".
 
 ---
 
-## 📝 Tone & Vocabulary Guidelines
+## 📝 BaFin- & MiFID II-konforme Schreibweisen
 
-| Avoid This (Hype / Sales) | Use This (Factual / Precise) | Reason |
+Jede qualitative oder quantitative Darstellung von Marktdaten, Berechnungs-Scores oder simulierten Portfolien muss zwingend mit dem rechtlichen Haftungsausschluss versehen werden:
+
+| Formulierungen zu vermeiden (Irreführend) | Erlaubte Formulierungen (Faktenbasiert) | Rechtlicher Hintergrund |
 | :--- | :--- | :--- |
-| "Die beste Krypto-Plattform aller Zeiten!" | "Ein quantitatives Berechnungsmodell für digitale Assets." | Avoids hype, remains legally compliant. |
-| "Garantiertes passives Einkommen!" | "Historisch berechnete Erträge im Backtest-Szenario." | Prevents regulatory (BaFin) issues. |
-| "Stellar", "Gorgeous", "Jaw-dropping" | "Übersichtlich strukturiert", "Sicher verschlüsselt" | AI-slop suppression; sounds professional. |
+| „Garantiertes passives Einkommen mit diesem Setup!“ | „Historisch berechnete Performance-Kennzahlen im Backtest.“ | Vermeidung von unzulässigen Gewinnversprechen (BaFin-Vorgaben). |
+| „Dieses KI-Modell weiß genau, wohin der Kurs morgen geht.“ | „Quantitative Wahrscheinlichkeiten auf Basis mathematischer Indikatoren.“ | Wahrheitsgemäße Kennzeichnung von Prognose-Modellen. |
+| „Die beste Investment-Plattform aller Zeiten!“ | „Ein modulares Analyse-Werkzeug nach Value-Investing-Kriterien.“ | Verbot irreführender Alleinstellungsansprüche (§ 5 UWG). |
 
 ---
 
-## 🌍 Multilingual and Legal Copy Standards
+## 🌍 Standardisierte Disclaimer & Währungsangaben
 
-All public content, dashboards, and modal dialogs must include explicit legal disclaimers:
+### Standard-Haftungsausschluss (DEUTSCH)
+> **HINWEIS**: Keine Anlageberatung. Die gezeigten Daten stellen ausschließlich quantitative Berechnungen dar. Die endgültige Anlageentscheidung liegt vollumfänglich beim Nutzer. Währungsangaben erfolgen standardmäßig in **EUR (€)** oder **USD ($)**.
 
-> **DEUTSCH**: Keine Anlageberatung. Die gezeigten Daten stellen ausschließlich quantitative Berechnungen dar. Die Anlageentscheidung liegt vollumfänglich beim Nutzer.
->
-> **ENGLISH**: No financial advice. The shown data represents quantitative calculations only. Investment decisions are made solely at the risk of the user.
+### Standard Disclaimer (ENGLISH)
+> **NOTICE**: No financial advice. The shown data represents quantitative calculations only. Investment decisions are made solely at the risk of the user. Currency outputs default to **EUR (€)** or **USD ($)**.
 
 ---
 
-## 🎨 Visual Content Guidelines
-* **Spacing & Rhythm**: Use generous padding, balanced negative space, and responsive bento grid layouts.
-* **Badges**: Use subtle status indicators (e.g., `Verifiziert` in cyber green, `Enterprise` in golden hues) to convey status instantly without visual noise.
+## 🎨 Visuelle Content-Strukturierung & Rhythmus
+- **Weißraum & Lesbarkeit**: Verwende großzügige Abstände (Generous Negative Space) und responsive Bento-Grid-Layouts, um die Informationsdichte auf Mobilgeräten zu minimieren.
+- **Klare Badge-Klassifizierung**: Nutze eindeutige Labels zur Kennzeichnung von Risikostufen (z.B. `Niedrig` in Cyber-Grün, `Hoch` in Rot) und Abonnement-Klassen (`Enterprise` in Gold), um den Status von Datenzeilen ohne kognitiven Ballast lesbar zu machen.

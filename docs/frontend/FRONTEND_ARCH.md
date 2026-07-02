@@ -1,54 +1,55 @@
 # 🎨 Frontend Architecture & Interface Guidelines
-**Project: Jenova Nexus (AIF-CORE)**
-**Framework: React 18 / Vite / Tailwind CSS / Motion**
+**Project: AIF-CORE (Jenova Nexus)**  
+**Framework:** React 19 / Vite 6 / Tailwind CSS 4 / Motion  
 
 ---
 
-## 🗺️ Architectural Concept
-
-The Frontend is structured as an **Event-Driven Single Page Application (SPA)** with responsive, rich interfaces, glassmorphism aesthetics, and strict performance metrics.
+## 🗺️ Architectural Concept: Event-Driven SPA
+The frontend is constructed as an **Event-Driven Single Page Application (SPA)** that runs within isolated, secure browser contexts. We combine deep cyber-slate aesthetics with strict performance, responsiveness, and accessibility guidelines.
 
 ---
 
-## 🎨 Visual Identity & Component Guidelines
+## 🎨 Visual Identity & Glassmorphism Design System
 
-### 1. The Design Aesthetic (Cyber Slate Theme)
-- **Primary Background**: Absolute black (`bg-black`) to provide high visual contrast.
-- **Backdrop Containers**: Semi-transparent dark slate panels styled with glassmorphism overlays:
+### 1. Cyber Slate Aesthetic & Palette
+- **Main Canvas Background**: Deep, rich absolute black (`bg-black`) to ensure maximum visual contrast and legibility under varying lighting conditions.
+- **Glassmorphism Panels**: Interactive modules, cards, and drawers are rendered as semi-transparent dark slate backings styled with fine border borders:
   ```tailwind
-  bg-white/5 border border-white/10 backdrop-blur-md rounded-xl p-6
+  bg-neutral-950/40 border border-white/10 backdrop-blur-md rounded-xl p-6
   ```
-- **Accent Palettes**:
-  * **Cyber Green (Success/Active)**: For verified assets or indicators (`text-green-400`).
-  * **AIF Gold (Premium)**: For premium sections or main CTA highlights (`text-aif-gold-DEFAULT`).
-  * **Neon Purple / Cyan**: For abstract neural backdrop graphics to reinforce the AI theme.
+- **Branding Highlights**:
+  * **Cyber Green (Success)**: Reflects validated parameters, stable setups, or favorable scoring states (`text-green-400`).
+  * **AIF Gold (Premium Highlight)**: Used strictly for premium features, high-priority scoring tiers, and focal calls-to-action (`text-aif-gold-DEFAULT`).
+  * **Neon Purple / Cyan**: Abstract background neural vector paths to reinforce the high-performance AI engine concept.
 
-### 2. Interaction Design (Motion guidelines)
-All views and transitions must feel highly responsive, organic, and fluid.
-- Use `motion` for staggered entrances, fade-ins, and button presses.
-- Keep exit animations fast (`duration: 0.2`) to prevent UI sluggishness.
+### 2. Kinetic Interaction Design (Motion Guidelines)
+Every transition, page load, or button interaction must feel responsive, organic, and fluid.
+* Use `motion` for staggered listings, fade-ins, and drawer slide-overs.
+* Keep exit animation times tight (`duration: 0.2`) to maintain a snappy, high-speed UX feel.
 
 ---
 
-## 📦 Directory Layout Standards
+## 📦 Directory Structure Standards
+
+The codebase enforces a highly modular, decoupled structure:
 
 ```
 /src
-  ├── main.tsx           # Application entry point (keeps clean mounts)
-  ├── App.tsx            # Main router and user session synchronizer
-  ├── index.css          # Tailwind setup, custom font rules, keyframe animations
-  ├── types.ts           # Unified type declarations for core structures
-  └── components/        # Isolated, modular, and single-purpose sub-components
-        ├── Screener.tsx          # Real-time asset overview and screener
-        ├── MarketScreener.tsx    # Multi-metric filtering matrix
-        ├── BacktestEngine.tsx    # Algorithmic backtest simulation
-        ├── BuffetValueCheck.tsx  # Graham & DCF valuation calculator
-        └── MarkdownOrchestrator.tsx # NEW: System documentation review center
+  ├── main.tsx           # Clean React 19 mounting and routing entry
+  ├── App.tsx            # Main layout controller and session context synchronizer
+  ├── index.css          # Tailwind CSS 4 directives, custom system-font rules
+  ├── types.ts           # Unified type, interface, and enum declarations
+  ├── hooks/             # Reactive state hooks (e.g. useSubscription)
+  └── components/        # Independent, single-purpose, isolated UI nodes
+        ├── Screener.tsx          # Real-time quantitative stock screener
+        ├── BacktestEngine.tsx    # Interactive portfolio backtesting mask
+        ├── BuffetValueCheck.tsx  # Benjamin Graham DCF calculator
+        └── MarkdownOrchestrator.tsx # Interactive documentation & compliance hub
 ```
 
 ---
 
-## 🚀 Responsive Design Practices
-* Use mobile-first prefixes (`md:grid-cols-3`) to guarantee visual coherence across smartphones, tablets, and 4K displays.
-* Touch target surfaces must never be smaller than **44px** on touch-enabled device viewports.
-* Always bind canvas elements or charts (e.g. Recharts layouts) to fluid container nodes using reactive resize hooks rather than hardcoded dimensions.
+## 📱 Mobile-First Desktop Precision (BFSG Accessibility)
+* **Hit Target Sizing**: In accordance with German **BFSG** and European **EN 301 549** standards, all touch-sensitive navigation items, action chips, and buttons must have a minimum tap area of **44x44px**.
+* **Responsive Reflows**: Enforce mobile-first responsive grid layouts (e.g., `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3`) to guarantee perfect responsiveness across mobile smartphones, tablets, and 4K desktop screens.
+* **Reactive Size Handling**: Never hardcode dimensions for charts, tables, or canvases. Always bind them to parent nodes using ResizeObservers or responsive layouts to adapt instantly to viewport changes.

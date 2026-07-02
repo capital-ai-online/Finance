@@ -1,3 +1,7 @@
+// DEAKTIVIERTES MODUL / DEACTIVATED MODULE: Interact (Modul 2)
+// HINWEIS: Dieses Modul wurde gemäß System- und Benutzeranweisung deaktiviert und aus der Plattform-Navigation entfernt.
+// Die Kernfunktionalität bleibt im Code als inaktive Reserve erhalten. Alle Metadaten wurden im Backlog dokumentiert.
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Sparkles, 

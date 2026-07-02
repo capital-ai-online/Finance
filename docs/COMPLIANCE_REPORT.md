@@ -1,75 +1,59 @@
-# 🇪🇺 EU Compliance & Data Privacy Report (AIF-CORE / Jenova Nexus)
-
-This report details the architectural and frontend provisions implemented in **AIF-CORE (Jenova Nexus)** to guarantee compliance with EU digital regulations: German Telemedia Act (**§5 DDG**), General Data Protection Regulation (**EU-DSGVO / GDPR**), Cookie Directives, and the German Accessibility Act (**BFSG / EN 301 549**).
+# 🇪🇺 EU-Compliance & Regulatory Audit Report (AIF-CORE)
+**Project: AIF-CORE (Jenova Nexus)**  
+**Auditor:** Compliance & Regulatory Lead  
+**Classification:** Public / Audit-Ready  
+**Stand:** 2026-06-30 (Gerichtsfeste Fassung inkl. EinwVO & BFSG)  
 
 ---
 
-## 🏛️ Regulatory Compliance Overview
+## 🏛️ Regulatory Compliance Matrix
 
-| Regulatory Body | Standard | Status | Implementation Details |
+| Regulatory Standard | Legal Framework | Status | Implementation Details |
 | :--- | :--- | :---: | :--- |
-| **EU-DSGVO** | GDPR (General Data Protection) | ✅ Compliant | Consent logs, local backtests, explicit right-to-be-forgotten option. |
-| **DDG §5** | Impressum & Legal Disclosures | ✅ Compliant | Easy access layout via dedicated legal screens. |
-| **TDDDG** | Cookie Consent Directive | ✅ Compliant | Zero pre-consent tracking, optional storage preference options. |
-| **BFSG** | EN 301 549 (Accessibility) | ✅ Compliant | Clean HTML semantics, Aria roles, high contrast visual styling. |
+| **EU-DSGVO** | GDPR (Data Privacy) | 🟢 Compliant | Zero-tracking pre-consent, complete database anonymization options, whitelisted backend proxy API streams. |
+| **DDG § 5** | Legal Disclosures (Impressum) | 🟢 Compliant | Easily accessible legal footer links satisfying BGH "2-Clicks" precedents. |
+| **EinwVO (01.04.2025)**| Consent Recording | 🟢 Compliant | Revisionssichere protocolling of analytical preferences in database schemas. |
+| **BFSG (28.06.2025)** | Accessibility (EN 301 549) | 🟢 Compliant | Accessible markup, Aria landmarks, high contrast styling, tap target area >= 44px. |
 
 ---
 
-## 🔒 GDPR / DSGVO Implementations (Art. 5–9 & 13–15)
+## 🔒 1. General Data Protection Regulation (DSGVO / GDPR)
 
-The platform is engineered using a **"Privacy-by-Design"** and **"Privacy-by-Default"** framework:
+Our application is built on a **"Privacy-by-Design"** and **"Privacy-by-Default"** framework:
 
-### 1. Zero External Fonts & Assets Leakages
-- [x] **No CDN Webfont Requests**: Google Fonts are not loaded from external Google servers (which leaks EU IP addresses without user consent). Fonts are defined natively using elegant pre-installed system font fallbacks (Inter, system-sans, JetBrains Mono), adhering to current CJEU (EuGH) rulings on GDPR violations.
-- [x] **Local Computations**: Graham Score evaluations, intrinsic value calculators, and Monte Carlo iterations are executed locally or via an anonymous server proxy without transferring user PII (Personally Identifiable Information) to unauthorized third-party trackers.
+### 1. Zero External Assets Leakage (CJEU Google Fonts Precedent)
+In compliance with the CJEU (EuGH) ruling on data leakage, the frontend completely eliminates external Google Fonts and CDN calls:
+* Webfonts are compiled locally and delivered directly from our isolated server container. No user IP addresses are leaked to third-party tracking services prior to consent.
+* All icons and graphics are packaged inside the source files using lightweight SVG components.
 
-### 2. GDPR Compliance Modules (Art. 13-15, 17, 21)
-The application provides a dedicated **Compliance Center** accessible via `/src/components/Datenschutz.tsx` containing:
-- **Art. 13/14 Information**: Transparency about data collection methods, processed fields (IP addresses, transaction inputs, subscription tier), and the identity of the data controller (AIFinancial GmbH).
-- **Art. 15 Right of Access**: The user profile page allows instant inspection of all collected preference states.
-- **Art. 17 Right to Eradication ("Right to be Forgotten")**: Subscriptions can be terminated and completely anonymized upon request through database cascading deletions on Supabase sub-tables.
-
----
-
-## 📑 German Telemedia Compliance (§5 DDG)
-
-The **Impressum & AGB (Allgemeine Geschäftsbedingungen)** comply with the maximum "2-Clicks-Away" legal precedent:
-
-- **Accessibility**: Available via direct links inside the global app footer and configuration screens.
-- **Content Requirements**:
-  - Full company legal representation (AIFinancial GmbH).
-  - Physical register entry, register number, and sales tax identification number (USt-IdNr.).
-  - Direct contact options (email and digital contact options) satisfying high-speed communication mandates.
+### 2. GDPR Verification Modules (Art. 13-15 & 17)
+* **Transparency**: Clear disclosures about processed connection parameters, transaction metadata, and subscription tiers.
+* **Access**: Users can inspect and download their profile data instantly.
+* **Right to be Forgotten**: Subscription termination automatically triggers cascading deletions on relational PostgreSQL user tables, removing all PII records permanently.
 
 ---
 
-## 🍪 Cookie & Consent Architecture (TDDDG / EinwVO)
+## 🍪 2. Cookie Consent & Protocolling (TDDDG / EinwVO)
 
-The platform rejects intrusive cookie banners and third-party advertising cookie scripts:
-
-- **Strict Necessity**: Only functional, technically necessary identifiers are used (session cookies for keeping subscription checkouts secure or matching Stripe webhooks).
-- **Consent Banner**: Realized via an elegant consent module that allows users to enable or disable analytical backtesting logs. No scripts or tracking parameters are loaded prior to user authorization.
-
----
-
-## ♿ Digital Accessibility Check (BFSG / EN 301 549)
-
-To ensure barrier-free operation for all individuals, the frontend implements:
-
-1. **High Contrast Ratios**: Dark glassmorphism interfaces are rendered with high contrast typography (deep white text over rich slate backings, paired with sharp fluorescent cyber green and cyan highlight accents).
-2. **Keyboard Navigability**: Interactive dashboards support standard Tab navigation and focus styles.
-3. **Semantic HTML Tags**: Pages use meaningful structural landmarks (`<header>`, `<main>`, `<section>`, `<article>`) with unique HTML ID elements to facilitate screen-readers.
-4. **Touch Targets**: All control elements, filter chips, and navigation links have a minimum hit area of **44x44px** to optimize usability on mobile screens.
+The platform enforces strict cookie guidelines and rejects intrusive analytical trackers:
+- **Strict Necessity**: Only functional session identifiers required for Stripe checkout or user login are set by default.
+- **Analytical Opt-In**: Users must explicitly opt-in to analytical logs. No analytical scripts are loaded prior to consent.
+- **Consent Logs**: Every consent action is recorded with a cryptographically secure timestamp to satisfy legal burden-of-proof requirements.
 
 ---
 
-## 📝 Compliance Verification Protocol
+## ♿ 3. Accessibility & Usability (BFSG / EN 301 549)
 
-To verify on-going EU-compliance before each deployment, run:
-```bash
-# 1. Validate bundle asset localization (No Google Fonts/CDNs leaked)
-grep -rn "fonts.googleapis.com" src/
+In compliance with the German **Barrier-Free Accessibility Act (BFSG)**:
+1. **High Contrast Aesthetic**: Glassmorphism overlays are matched with high-contrast text ratios (white text over dark slate cards with cyber green and gold indicators).
+2. **Keyboard Focus Navigability**: Interactive dashboards support standard keyboard tab orders with active visual focus indicators.
+3. **Semantic Landmarks**: Standard landmark tags (`<header>`, `<main>`, `<section>`, `<article>`) are used systematically to allow seamless screen-reader navigation.
+4. **Touch Target Dimensions**: All clickable controls, toggle chips, and drawers have a minimum tap area of **44x44px** to ensure mobile accessibility.
 
-# 2. Check for potential hardcoded credentials
-grep -rn "AI_KEY\|SECRET_KEY\|TOKEN" src/
-```
+---
+
+## 🔌 4. Enterprise Interface & API Audit
+To ensure absolute data integrity and compliant communication flows, our **API Audit Protocol** enforces:
+* **Server-to-Server Kapselung**: All data streams from external providers (CoinGecko, Stooq, Stripe) run purely through secure backend proxies. The client browser never communicates directly with a third-party server.
+* **Input Parameter Scrubbing**: Strict sanitizer checks on the backend to filter out parent directory traversals (`../`) and malicious SQL injections.
+* **Silent Traceback Logging**: Server errors write full stack trace details to isolated system logs while delivering abstract error structures to the user.

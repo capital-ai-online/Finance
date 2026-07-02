@@ -50,8 +50,30 @@ export function OrchestratorPanel() {
   const [concurrencyLimit, setConcurrencyLimit] = useState<number>(3);
   const [maxQueueSize, setMaxQueueSize] = useState<number>(10);
   const [maxRequestsPerWindow, setMaxRequestsPerWindow] = useState<number>(30);
+  const [adminToken, setAdminToken] = useState<string>(() => localStorage.getItem('aif_orchestrator_admin_token') || 'aif-admin-2026');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Model Routing & Latency Check states
+  const [modelPings, setModelPings] = useState<any[]>([]);
+  const [optimalModelId, setOptimalModelId] = useState<string>('');
+  const [isPinging, setIsPinging] = useState(false);
+
+  const triggerPingTests = async () => {
+    setIsPinging(true);
+    try {
+      const res = await fetch('/api/orchestrator/ping-models');
+      if (res.ok) {
+        const data = await res.json();
+        setModelPings(data.models);
+        setOptimalModelId(data.optimalModelId);
+      }
+    } catch (e) {
+      console.error('Failed to fetch model pings:', e);
+    } finally {
+      setIsPinging(false);
+    }
+  };
 
   // Fetch stats from backend API
   const fetchStats = async (showRefreshIndicator = false) => {
@@ -78,9 +100,10 @@ export function OrchestratorPanel() {
     }
   };
 
-  // Auto-refresh stats every 2 seconds
+  // Auto-refresh stats every 2 seconds & load model pings on mount
   useEffect(() => {
     fetchStats();
+    triggerPingTests();
     const interval = setInterval(() => {
       fetchStats();
     }, 2000);
@@ -94,14 +117,20 @@ export function OrchestratorPanel() {
     try {
       const res = await fetch('/api/orchestrator/config', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Orchestrator-Admin-Token': adminToken
+        },
         body: JSON.stringify({
           concurrencyLimit,
           maxQueueSize,
           maxRequestsPerWindow
         })
       });
-      if (!res.ok) throw new Error('Konfiguration konnte nicht aktualisiert werden.');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Konfiguration konnte nicht aktualisiert werden.');
+      }
       const data = await res.json();
       if (data.success) {
         setStats(data.stats);
@@ -119,8 +148,16 @@ export function OrchestratorPanel() {
   const handleResetStats = async () => {
     if (!window.confirm('Möchten Sie die Transaktions- und Ablehnungszähler wirklich zurücksetzen?')) return;
     try {
-      const res = await fetch('/api/orchestrator/reset', { method: 'POST' });
-      if (!res.ok) throw new Error('Zurücksetzen fehlgeschlagen.');
+      const res = await fetch('/api/orchestrator/reset', { 
+        method: 'POST',
+        headers: {
+          'X-Orchestrator-Admin-Token': adminToken
+        }
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Zurücksetzen fehlgeschlagen.');
+      }
       const data = await res.json();
       if (data.success) {
         setStats(data.stats);
@@ -384,6 +421,25 @@ export function OrchestratorPanel() {
                 <h3 className="text-sm font-bold text-white font-display uppercase tracking-wider">Modul-Einstellregler</h3>
               </div>
 
+              {/* Admin Passcode Input */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-white/5 border border-white/5">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-mono text-white/50 uppercase tracking-wider">Admin-Passcode (X-Token)</label>
+                  <Lock size={12} className="text-amber-500" />
+                </div>
+                <input 
+                  type="password" 
+                  value={adminToken} 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setAdminToken(val);
+                    localStorage.setItem('aif_orchestrator_admin_token', val);
+                  }}
+                  className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-mono placeholder-white/30 focus:border-amber-500/50 outline-none"
+                  placeholder="Passcode eingeben..."
+                />
+              </div>
+
               {/* Slider 1: Concurrency */}
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center">
@@ -465,6 +521,92 @@ export function OrchestratorPanel() {
           </form>
         </div>
 
+      </div>
+
+      {/* Model Auto-Routing Latency Checks */}
+      <div className="bg-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pb-4 border-b border-white/10">
+          <div>
+            <h3 className="text-sm font-bold text-white font-display uppercase tracking-wider flex items-center gap-2">
+              <Cpu size={16} className="text-aif-gold-DEFAULT" />
+              <span>Model Auto-Routing &amp; Latency Monitor</span>
+            </h3>
+            <p className="text-[11px] text-white/50 mt-1">
+              Aktive Latenzprüfungen des <strong>Auto-Routers</strong> zur dynamischen Auswahl des schnellsten LLM-Knotens unter 200ms.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={triggerPingTests}
+            disabled={isPinging}
+            className="px-4 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-xs font-mono uppercase transition-all flex items-center gap-2 shrink-0 self-start sm:self-auto cursor-pointer"
+          >
+            <RefreshCw size={12} className={isPinging ? 'animate-spin' : ''} />
+            <span>{isPinging ? 'Pinge LLM-Knoten...' : 'Latenz-Ping ausführen'}</span>
+          </button>
+        </div>
+
+        {modelPings.length === 0 ? (
+          <div className="text-center py-6">
+            <p className="text-xs font-mono text-white/40 uppercase">Initialisiere Auto-Router Telemetrie...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {modelPings.map((m) => {
+              const isOptimal = m.id === optimalModelId;
+              const latencyWarning = m.latency >= 200;
+              return (
+                <div 
+                  key={m.id} 
+                  className={`p-4 rounded-xl border relative overflow-hidden transition-all duration-300 ${
+                    isOptimal 
+                      ? 'bg-aif-gold-DEFAULT/5 border-aif-gold-DEFAULT/40 shadow-[0_0_20px_rgba(245,196,83,0.08)]' 
+                      : 'bg-black/20 border-white/5'
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="truncate max-w-[80%]">
+                      <div className="text-xs font-black text-white truncate">{m.name}</div>
+                      <div className="text-[9px] font-mono text-white/40 uppercase mt-0.5">{m.task}</div>
+                    </div>
+                    {isOptimal && (
+                      <span className="px-1.5 py-0.5 rounded text-[8px] font-mono bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/30 uppercase font-black tracking-wider animate-pulse">
+                        Optimal
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-4 flex justify-between items-baseline">
+                    <div className="space-y-0.5">
+                      <div className="text-[9px] font-mono text-white/40 uppercase">Latency</div>
+                      <div className={`text-xl font-black font-mono ${
+                        latencyWarning ? 'text-rose-400' : isOptimal ? 'text-aif-gold-DEFAULT' : 'text-cyan-400'
+                      }`}>
+                        {m.latency}ms
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[9px] font-mono text-white/40 uppercase">Cost/1M</div>
+                      <div className="text-xs font-mono text-white/70 font-bold">${m.cost}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-3 border-t border-white/5 flex justify-between items-center text-[9px] font-mono">
+                    <span className="text-white/40">Status:</span>
+                    <span className={`font-bold flex items-center gap-1 ${
+                      latencyWarning ? 'text-rose-400' : 'text-emerald-400'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        latencyWarning ? 'bg-rose-500' : 'bg-emerald-500'
+                      }`} />
+                      {latencyWarning ? 'LATENCY WARN' : 'READY (<200ms)'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Safeguards Disclaimer */}

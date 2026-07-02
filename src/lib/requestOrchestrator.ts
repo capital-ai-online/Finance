@@ -41,18 +41,12 @@ export class RequestOrchestrator {
   private rateLimitsHit = 0;
   private recentLogs: RequestLogEntry[] = [];
   
-  // Default Configurable Limits — raised from the previous defaults
-  // (concurrencyLimit: 3, maxQueueSize: 10) which caused frequent 429s /
-  // perceived "Anwendungsausfälle" under modest concurrent freemium load,
-  // since ALL endpoints (cheap, cached market-data reads AND expensive
-  // Gemini calls) shared the same tiny global concurrency pool. Raised to
-  // values appropriate for a single Render instance; revisit upward again
-  // once horizontally scaled (see BACKEND_ARCH.md scaling note).
-  private concurrencyLimit = 8;
-  private maxQueueSize = 50;            // queue more requests before rejecting with 429
-  private queueTimeoutMs = 20000;       // wait at most 20s in queue
+  // Default Configurable Limits (safely balanced to prevent server crash and external rate-limiting)
+  private concurrencyLimit = 3;         // max 3 concurrent expensive operations (e.g. Gemini AI calls)
+  private maxQueueSize = 10;            // queue up to 10 extra requests before rejecting with 429
+  private queueTimeoutMs = 15000;       // wait at most 15s in queue
   private rateLimitWindowMs = 60000;    // 1 minute window
-  private maxRequestsPerWindow = 60;     // max 60 requests per IP per minute
+  private maxRequestsPerWindow = 30;     // max 30 requests per IP per minute
   
   // Rate limiting tracker: IP -> array of timestamps
   private ipRequestTimestamps: Map<string, number[]> = new Map();
@@ -103,6 +97,24 @@ export class RequestOrchestrator {
     this.processNext();
   }
 
+  private maskIp(ip: string): string {
+    if (!ip) return 'unknown';
+    if (ip === 'unknown' || ip === '::1' || ip === '127.0.0.1') return ip;
+    if (ip.includes('.')) {
+      const parts = ip.split('.');
+      if (parts.length === 4) {
+        return `${parts[0]}.${parts[1]}.${parts[2]}.***`;
+      }
+    }
+    if (ip.includes(':')) {
+      const parts = ip.split(':');
+      if (parts.length > 2) {
+        return `${parts.slice(0, Math.min(3, parts.length - 1)).join(':')}::***`;
+      }
+    }
+    return '***.***.***.***';
+  }
+
   // Live Stats retrieval
   public getStats(): OrchestratorStats {
     const now = Date.now();
@@ -125,7 +137,10 @@ export class RequestOrchestrator {
       rateLimitWindowMs: this.rateLimitWindowMs,
       maxRequestsPerWindow: this.maxRequestsPerWindow,
       requestsLastMinute,
-      recentLogs: [...this.recentLogs]
+      recentLogs: this.recentLogs.map(log => ({
+        ...log,
+        ip: this.maskIp(log.ip)
+      }))
     };
   }
 

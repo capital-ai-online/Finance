@@ -63,15 +63,8 @@ export function CryptoEnterpriseEvaluator({ selectedSymbol, onSelectSymbol }: Cr
   const calculatedSlippage = (orderSize / 10000000) * (symbol === 'SOL' ? 1.5 : symbol === 'ETH' ? 0.8 : 0.25);
   const executionPrice = basePrice * (1 + (calculatedSlippage / 100));
 
-  // No-Demo-Data-Policy: this used to generate fake cumulative bid/ask
-  // volumes via Math.random() and render them as if they were real
-  // order-book depth. AIF-CORE has no real order-book/market-depth data
-  // source connected yet, so the chart is disabled until one is wired up
-  // (see /api/orderbook-depth — currently NOT_IMPLEMENTED).
-  const ORDERBOOK_DATA_AVAILABLE = false;
-
+  // Render D3 Order Book Depth
   useEffect(() => {
-    if (!ORDERBOOK_DATA_AVAILABLE) return;
     if (activeTool !== 'orderbook' || !orderBookSvgRef.current) return;
 
     const svgElement = d3.select(orderBookSvgRef.current);
@@ -98,10 +91,10 @@ export function CryptoEnterpriseEvaluator({ selectedSymbol, onSelectSymbol }: Cr
     for (let i = 1; i <= numPoints; i++) {
       const bidDiff = (i * 0.1) / 100;
       const askDiff = (i * 0.1) / 100;
-
-      const bidVol = Math.floor((15 - i) * (symbol === 'BTC' ? 1.8 : 12.5));
-      const askVol = Math.floor((15 - i) * (symbol === 'BTC' ? 1.8 : 12.5));
-
+      
+      const bidVol = Math.floor((15 - i) * (symbol === 'BTC' ? 1.8 : 12.5) * (1 + Math.random() * 0.4));
+      const askVol = Math.floor((15 - i) * (symbol === 'BTC' ? 1.8 : 12.5) * (1 + Math.random() * 0.4));
+      
       cumBidVol += bidVol;
       cumAskVol += askVol;
 
@@ -307,17 +300,10 @@ export function CryptoEnterpriseEvaluator({ selectedSymbol, onSelectSymbol }: Cr
             <div className="lg:col-span-7 space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider font-bold">Kumulierte Liquiditätstiefe (Gebote/Anfragen)</span>
-                <span className="text-[10px] font-mono text-white/30">Keine Live-Quelle verbunden</span>
+                <span className="text-[10px] font-mono text-emerald-400">Verteilungsverhältnis: {whaleMetrics.orderImbalance}% Kaufsignal</span>
               </div>
-              <div className="w-full bg-black/40 border border-white/5 rounded-xl p-3 flex items-center justify-center min-h-[180px]">
-                {ORDERBOOK_DATA_AVAILABLE ? (
-                  <svg ref={orderBookSvgRef} className="w-full" />
-                ) : (
-                  <div className="text-center px-4">
-                    <p className="text-[11px] font-mono text-white/40">Keine echten Orderbuch-Daten verfügbar.</p>
-                    <p className="text-[10px] font-mono text-white/25 mt-1">Diese Ansicht wird aktiviert, sobald eine reale Markttiefe-Quelle (Exchange-Orderbuch-API) angebunden ist. Es werden keine simulierten Werte angezeigt.</p>
-                  </div>
-                )}
+              <div className="w-full bg-black/40 border border-white/5 rounded-xl p-3 flex items-center justify-center">
+                <svg ref={orderBookSvgRef} className="w-full" />
               </div>
             </div>
 

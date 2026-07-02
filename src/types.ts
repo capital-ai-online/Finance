@@ -2,6 +2,7 @@ export interface Asset {
   symbol: string;
   name: string;
   type: 'crypto' | 'stock' | 'commodity' | 'forex';
+  subtype?: 'memecoin' | 'standard';
   price: number;
   change24h: number;
   score: number; // Final Intelligent Score
@@ -14,12 +15,6 @@ export interface Asset {
   marketCap?: number;
   dividendYield?: number;
   volume24h?: number;
-  volumeIsEstimate?: boolean;
-  sourceIntegrity?: {
-    checkedAgainst: number;
-    deviationPct: number;
-    flagged: boolean;
-  };
   pattern?: string;
   applicationArea?: string;
 }

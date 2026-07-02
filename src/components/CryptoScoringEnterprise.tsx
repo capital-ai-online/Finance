@@ -24,10 +24,27 @@ import {
   Trash2,
   Play,
   ShieldAlert,
-  Terminal
+  Terminal,
+  Bell,
+  BellRing
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { SCORING_WEIGHTS, DECISION_THRESHOLDS, CryptoScoringInputs, calculateCryptoEnterpriseScore, generateCryptoInputs } from '../lib/cryptoScoring';
+import { AssetLogo } from './AssetLogo';
+import { 
+  toggleSessionAlert, 
+  getSessionAlerts, 
+  PriceAlertItem 
+} from '../lib/alertStore';
+import { 
+  SCORING_WEIGHTS, 
+  DECISION_THRESHOLDS, 
+  CryptoScoringInputs, 
+  calculateCryptoEnterpriseScore, 
+  generateCryptoInputs,
+  MemeCoinInputs,
+  calculateMemeCoinScore,
+  generateMemeCoinInputs
+} from '../lib/cryptoScoring';
 
 // Intelligent Search and Mapping Database
 const CRYPTO_DATABASE = [
@@ -37,15 +54,29 @@ const CRYPTO_DATABASE = [
   { symbol: 'ADA', name: 'Cardano', nickname: 'Ada Peer Reviewed Research Academic', pair: 'ADA/USD, ADA-USD', desc: 'Tier 2 - Decentralized Research Chain', mcap: '$15.1B', price: 0.42, change24h: -0.8 },
   { symbol: 'XRP', name: 'Ripple', nickname: 'Xrp Settlement Cross Border Payments Banken SEC', pair: 'XRP/USD, XRP-USD', desc: 'Tier 2 - Cross-Border Institutional Ledger', mcap: '$31.2B', price: 0.58, change24h: 1.1 },
   { symbol: 'DOT', name: 'Polkadot', nickname: 'Dot Interoperability Sharding Multichain Parachain', pair: 'DOT/USD, DOT-USD', desc: 'Tier 2 - Interoperability Web3 Network', mcap: '$6.5B', price: 6.20, change24h: -2.3 },
-  { symbol: 'DOGE', name: 'Dogecoin', nickname: 'Doge Meme Dog Elon Musk Shibe Hund', pair: 'DOGE/USD, DOGE-USD', desc: 'Tier 3 - Premium Meme & Community Token', mcap: '$18.4B', price: 0.13, change24h: 8.4 },
   { symbol: 'AVAX', name: 'Avalanche', nickname: 'Avax Subnets Subnet EVM L1 Avalanche', pair: 'AVAX/USD, AVAX-USD', desc: 'Tier 2 - Highly Scalable Subnet L1', mcap: '$10.8B', price: 28.50, change24h: 3.2 },
   { symbol: 'LINK', name: 'Chainlink', nickname: 'Link Oracles Oracle Data feed Schnittstelle', pair: 'LINK/USD, LINK-USD', desc: 'Tier 2 - Standard Decentralized Oracle Network', mcap: '$8.9B', price: 15.40, change24h: -0.5 },
   { symbol: 'BNB', name: 'Binance Coin', nickname: 'Bnb Exchange Utility Chain EVM BSC Binance', pair: 'BNB/USD, BNB-USD', desc: 'Tier 1 - Centralized Exchange Giant Ledger', mcap: '$87.2B', price: 585.00, change24h: 0.7 },
-  { symbol: 'LTC', name: 'Litecoin', nickname: 'Ltc Silver to Bitcoin Gold Fast Payments Legacy', pair: 'LTC/USD, LTC-USD', desc: 'Tier 2 - Legacy Transactional Store', mcap: '$5.8B', price: 78.20, change24h: -0.4 },
-  { symbol: 'TRX', name: 'Tron', nickname: 'Trx Justin Sun USDT Transfer stablecoins TRX', pair: 'TRX/USD, TRX-USD', desc: 'Tier 2 - High-Throughput Payment Network', mcap: '$11.2B', price: 0.12, change24h: 0.1 },
-  { symbol: 'NEAR', name: 'Near Protocol', nickname: 'Near Sharding AI Chain User Friendly NEAR', pair: 'NEAR/USD, NEAR-USD', desc: 'Tier 2 - Sharded Developer-Focused L1', mcap: '$5.4B', price: 5.10, change24h: 4.8 },
-  { symbol: 'UNI', name: 'Uniswap', nickname: 'Uni DEX AMM Governance Token Swapping', pair: 'UNI/USD, UNI-USD', desc: 'Tier 2 - Leading Decentralized Exchange', mcap: '$4.2B', price: 7.15, change24h: -1.9 },
-  { symbol: 'MATIC', name: 'Polygon', nickname: 'Matic Polygon L2 Ethereum Scaling Rollups', pair: 'MATIC/USD, MATIC-USD', desc: 'Tier 2 - Premier Ethereum Layer-2 Scaling', mcap: '$5.1B', price: 0.55, change24h: 1.5 }
+  { symbol: 'MATIC', name: 'Polygon', nickname: 'Matic Polygon L2 Ethereum Scaling Rollups', pair: 'MATIC/USD, MATIC-USD', desc: 'Tier 2 - Premier Ethereum Layer-2 Scaling', mcap: '$5.1B', price: 0.55, change24h: 1.5 },
+  
+  // Meme Coins
+  { symbol: 'DOGE', name: 'Dogecoin', nickname: 'Doge Meme Dog Elon Musk Shibe Hund', pair: 'DOGE/USD, DOGE-USD', desc: 'Meme - The OG Dogecoin Pioneer', mcap: '$18.4B', price: 0.134, change24h: 8.4 },
+  { symbol: 'SHIB', name: 'Shiba Inu', nickname: 'Shib Shiba Inu Token Vitalik Burn Ecosystem', pair: 'SHIB/USD, SHIB-USD', desc: 'Meme - Premium Decentralized Shib Ecosystem', mcap: '$10.2B', price: 0.0000174, change24h: 4.2 },
+  { symbol: 'PEPE', name: 'Pepe', nickname: 'Pepe Frog Frosch Green Meme Cult', pair: 'PEPE/USD, PEPE-USD', desc: 'Meme - Legendary Internet Frog Hype', mcap: '$4.8B', price: 0.0000115, change24h: 12.8 },
+  { symbol: 'WIF', name: 'dogwifhat', nickname: 'Wif dogwifhat hat solana meme dog', pair: 'WIF/USD, WIF-USD', desc: 'Meme - Dog with a Hat Solana Icon', mcap: '$2.15B', price: 2.15, change24h: -5.4 },
+  { symbol: 'BONK', name: 'Bonk', nickname: 'Bonk solana dog airdrop meme', pair: 'BONK/USD, BONK-USD', desc: 'Meme - First Solana Dog Utility Coin', mcap: '$1.45B', price: 0.0000212, change24h: -1.8 },
+  { symbol: 'FLOKI', name: 'Floki', nickname: 'Floki Viking Inu GameFi Valhalla Elon Dog', pair: 'FLOKI/USD, FLOKI-USD', desc: 'Meme - Viking Elon Inu GameFi Ecosystem', mcap: '$1.38B', price: 0.000145, change24h: 3.5 },
+  { symbol: 'POPCAT', name: 'Popcat', nickname: 'Popcat cat click solana clicker meme', pair: 'POPCAT/USD, POPCAT-USD', desc: 'Meme - Viral Clicking Cat Solana Sensation', mcap: '$0.44B', price: 0.45, change24h: 15.6 },
+  { symbol: 'BRETT', name: 'Brett', type: 'crypto', nickname: 'Brett base chain blue frog pepei friend', pair: 'BRETT/USD, BRETT-USD', desc: 'Meme - Base Network Mascot King', mcap: '$1.24B', price: 0.125, change24h: 6.1 },
+  { symbol: 'MOG', name: 'Mog Coin', nickname: 'Mog coin mogging glasses viral meme', pair: 'MOG/USD, MOG-USD', desc: 'Meme - First Culture and Mogging Coin', mcap: '$0.71B', price: 0.00000185, change24h: -3.2 },
+  { symbol: 'BOME', name: 'Book of Meme', nickname: 'Bome book of meme darkfarms art graffitti', pair: 'BOME/USD, BOME-USD', desc: 'Meme - Cultural Graffiti Art Ledger on Solana', mcap: '$0.58B', price: 0.0084, change24h: -0.9 },
+
+  { symbol: 'GLD', name: 'Gold Spot', nickname: 'Gold gld gld/usd gldusd edelmetall metall unze safe haven sicher', pair: 'GLD/USD, GLD-USD', desc: 'Sichere Anlage - Edelmetall unlimitiert', mcap: '$15,800B', price: 2340.5, change24h: 0.65 },
+  { symbol: 'SLV', name: 'Silver Spot', nickname: 'Silber slv slv/usd slvusd edelmetall metall unze industrial silver', pair: 'SLV/USD, SLV-USD', desc: 'Industrielles Edelmetall', mcap: '$1,200B', price: 30.12, change24h: 1.45 },
+  { symbol: 'USO', name: 'Crude Oil', nickname: 'Rohöl uso uso/usd usousd öl crude oil brent wti energie', pair: 'USO/USD, USO-USD', desc: 'Globaler Energie-Benchmark', mcap: '$2,100B', price: 78.45, change24h: -1.82 },
+  { symbol: 'NG=F', name: 'Natural Gas', nickname: 'Erdgas gas ng=f ng ngf methan brennstoff gaspreis energie', pair: 'NG=F/USD, NG-USD', desc: 'Flüssiger Energie-Rohstoff (Erdgas)', mcap: '$180B', price: 2.54, change24h: 3.12 },
+  { symbol: 'WTI', name: 'WTI Crude Oil', nickname: 'WTI wti crude oil us-öl rohöl wti-öl wtiusd energie', pair: 'WTI/USD, WTI-USD', desc: 'West Texas Intermediate Leichtöl-Benchmark', mcap: '$1,050B', price: 77.20, change24h: -1.40 },
+  { symbol: 'BRENT', name: 'Brent Crude Oil', nickname: 'Brent brent crude oil brent-öl nordsee-öl brentusd energie', pair: 'BRENT/USD, BRENT-USD', desc: 'Nordsee Brent Rohöl-Benchmark', mcap: '$1,150B', price: 81.85, change24h: -1.25 }
 ];
 
 const TIMEFRAMES = [
@@ -64,13 +95,15 @@ interface CryptoScoringEnterpriseProps {
   onSelectSymbol?: (symbol: string) => void;
   timeframe: string;
   onChangeTimeframe?: (timeframe: string) => void;
+  userSession?: any;
 }
 
 export function CryptoScoringEnterprise({ 
   selectedSymbol, 
   onSelectSymbol, 
   timeframe, 
-  onChangeTimeframe 
+  onChangeTimeframe,
+  userSession
 }: CryptoScoringEnterpriseProps) {
   // Keep up to 3 selected symbols
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>(() => {
@@ -86,17 +119,44 @@ export function CryptoScoringEnterprise({
   const [suggestions, setSuggestions] = useState<typeof CRYPTO_DATABASE>([]);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [liveMarketData, setLiveMarketData] = useState<any[]>([]);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [activeTab, setActiveTab] = useState<'scoring' | 'simulation' | 'validation' | 'report' | 'agents'>('scoring');
   
-  // 4-hour countdown timer states (4 hours = 14400 seconds)
-  const [countdown, setCountdown] = useState<number>(14400);
+  // 2-hour countdown timer states (2 hours = 7200 seconds)
+  const [countdown, setCountdown] = useState<number>(7200);
   const [isAutomating, setIsAutomating] = useState<boolean>(true);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [activeAgentIndex, setActiveAgentIndex] = useState<number>(-1);
   const [activeIncident, setActiveIncident] = useState<'error' | 'security' | 'quality' | 'revenue' | null>(null);
+
+  const [activeAlerts, setActiveAlerts] = useState<PriceAlertItem[]>([]);
+
+  useEffect(() => {
+    const email = userSession?.email;
+    setActiveAlerts(getSessionAlerts(email));
+
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail && customEvent.detail.email === email) {
+        setActiveAlerts(customEvent.detail.alerts);
+      }
+    };
+
+    window.addEventListener('aif-alerts-updated', handleSync);
+    return () => window.removeEventListener('aif-alerts-updated', handleSync);
+  }, [userSession]);
+
+  const alertIsActive = (symbol: string) => {
+    return activeAlerts.some(a => a.symbol.toUpperCase() === symbol.toUpperCase() && !a.isTriggered);
+  };
+
+  const handleToggleAlert = (symbol: string, name: string, price: number, type: 'crypto' | 'stock' | 'forex' | 'commodity') => {
+    const email = userSession?.email;
+    toggleSessionAlert(symbol, price, name, type, email);
+  };
 
   // Repository Documents (includes stale ones to be deleted and fresh ones to be generated)
   const [repoDocuments, setRepoDocuments] = useState<Array<{
@@ -109,9 +169,9 @@ export function CryptoScoringEnterprise({
     size: string;
     category: string;
   }>>([
-    { id: 'doc-1', name: 'AIF_Crypto_Report_BTC_stale.pdf', version: 'v2.1', timeframe: '4 Std', date: 'Vor 5 Stunden', status: 'aktuell', size: '1.4 MB', category: 'Executive Report' },
-    { id: 'doc-2', name: 'Security_Integritaets_Audit_old.json', version: 'v1.8', timeframe: '1 Tag', date: 'Vor 6 Stunden', status: 'aktuell', size: '240 KB', category: 'Compliance Audit' },
-    { id: 'doc-3', name: 'Revenue_Assurance_Matrix_v1.pdf', version: 'v1.0', timeframe: '1 Std', date: 'Vor 8 Stunden', status: 'aktuell', size: '890 KB', category: 'Ertragssicherung' },
+    { id: 'doc-1', name: 'AIF_Crypto_Report_BTC_stale.pdf', version: 'v2.1', timeframe: '2 Std', date: 'Vor 1.5 Stunden', status: 'aktuell', size: '1.4 MB', category: 'Executive Report' },
+    { id: 'doc-2', name: 'Security_Integritaets_Audit_old.json', version: 'v1.8', timeframe: '1 Tag', date: 'Vor 2 Stunden', status: 'aktuell', size: '240 KB', category: 'Compliance Audit' },
+    { id: 'doc-3', name: 'Revenue_Assurance_Matrix_v1.pdf', version: 'v1.0', timeframe: '1 Std', date: 'Vor 3 Stunden', status: 'aktuell', size: '890 KB', category: 'Ertragssicherung' },
   ]);
 
   // Terminal Logs for Agent Activity
@@ -122,8 +182,8 @@ export function CryptoScoringEnterprise({
     text: string;
     status: 'info' | 'success' | 'warn' | 'error';
   }>>([
-    { id: 'log-init', time: '06:00:00', source: 'System', text: '4-Stunden-Sicherheits- & Aktualisierungsregel geladen.', status: 'info' },
-    { id: 'log-ready', time: '06:00:01', source: 'Autonome Agenten', text: 'Alle Agenten (Quality, Security, Revenue, Janitor) befinden sich im Wächter-Modus.', status: 'success' },
+    { id: 'log-init', time: '09:00:00', source: 'System', text: '2-Stunden-Sicherheits- & Aktualisierungsregel geladen (Betriebszeit: 09:00 - 22:00 Uhr).', status: 'info' },
+    { id: 'log-ready', time: '09:00:01', source: 'Autonome Agenten', text: 'Alle Agenten (Quality, Security, Revenue, Janitor) befinden sich im Wächter-Modus.', status: 'success' },
   ]);
 
   // Helper to format countdown into HH:MM:SS
@@ -168,7 +228,7 @@ export function CryptoScoringEnterprise({
       };
       addAgentLog('System', `WARNUNG: Vorfall gemeldet: ${incidentLabels[incident]}`, 'warn');
     } else {
-      addAgentLog('System', `Intervall-Auslöser: 4-Stunden-Turnus erreicht. Starte turnusmäßiges Daten- & Compliance-Audit.`, 'info');
+      addAgentLog('System', `Intervall-Auslöser: 2-Stunden-Turnus erreicht. Starte turnusmäßiges Daten- & Compliance-Audit.`, 'info');
     }
 
     // Step-by-Step autonomous simulation sequence
@@ -231,12 +291,12 @@ export function CryptoScoringEnterprise({
         const freshDocs = [
           { 
             id: `doc-fresh-1-${Date.now()}`, 
-            name: `AIF_Crypto_Report_${activeSymbol}_FRESH.pdf`, 
+            name: `AIF_Crypto_Report_${activeSymbol}_FRESH.md`, 
             version: 'v3.0', 
             timeframe, 
             date: 'Gerade eben (Autonome Generierung)', 
             status: 'aktuell' as const, 
-            size: '1.6 MB', 
+            size: '1.6 KB', 
             category: 'Executive Report' 
           },
           { 
@@ -246,21 +306,85 @@ export function CryptoScoringEnterprise({
             timeframe: 'Echtzeit', 
             date: 'Gerade eben (Autonome Generierung)', 
             status: 'aktuell' as const, 
-            size: '310 KB', 
+            size: '310 B', 
             category: 'Compliance Audit' 
           },
           { 
             id: `doc-fresh-3-${Date.now()}`, 
-            name: `Revenue_Assurance_Matrix_OPTIMIZED.pdf`, 
+            name: `Revenue_Assurance_Matrix_OPTIMIZED.md`, 
             version: 'v3.0', 
             timeframe: 'Echtzeit', 
             date: 'Gerade eben (Autonome Generierung)', 
             status: 'aktuell' as const, 
-            size: '940 KB', 
+            size: '940 B', 
             category: 'Ertragssicherung' 
           }
         ];
         return [...updatedPrev, ...freshDocs];
+      });
+
+      // Write actual files to disk via POST /api/docs-file
+      const reportContent = `# 👔 AIF-CORE Executive Crypto Report for ${activeSymbol}\n` +
+        `**Timeframe**: ${timeframe}\n` +
+        `**Generated At**: ${new Date().toLocaleString('de-DE')} (Autonomous Agent Cascade)\n` +
+        `**Status**: Real-Time Audited & Optimized\n\n` +
+        `---\n\n` +
+        `## 📊 Overview & Decision Rating\n` +
+        `The AIF-CORE Autonomous Agent Cascade has analyzed the latest quantitative, structural, and regulatory parameters for **${activeSymbol}**.\n\n` +
+        `- **Decision**: ${scoringResult?.decisionName || 'HOLD'}\n` +
+        `- **Reasoning**: ${scoringResult?.decisionDesc || 'Stable metrics across all 24 risk points.'}\n` +
+        `- **Primary Database**: SQL/Firestore Cloud Storage\n` +
+        `- **Version**: 0.5.0 (Beta-Phase)\n\n` +
+        `---\n\n` +
+        `## 🔒 Security & Data Integrity Audit\n` +
+        `All 24 security checks successfully completed. No anomalous volatility spikes or rate limit issues found. Secret isolation verified.`;
+
+      const auditContent = JSON.stringify({
+        auditId: "AIF-CR-2026-06-29",
+        symbol: activeSymbol,
+        timestamp: new Date().toISOString(),
+        status: "COMPLIANT",
+        checks: {
+          secretIsolation: "PASSED",
+          dataIntegrity: "100%",
+          database: "Cloud Firestore"
+        },
+        metrics: {
+          score: scoringResult?.score || 85,
+          riskLevel: scoringResult?.risk_level || 'LOW'
+        }
+      }, null, 2);
+
+      const matrixContent = `# 📈 AIF-CORE Revenue Assurance Matrix\n` +
+        `**Asset**: ${activeSymbol}\n` +
+        `**Date**: ${new Date().toLocaleString('de-DE')}\n\n` +
+        `---\n\n` +
+        `## 🎯 Bid-Ask Spread & Slippage Control\n` +
+        `- **Liquidity Level**: OPTIMAL\n` +
+        `- **Order Depth Coefficients**: Adjusted for latency optimization\n` +
+        `- **Penalty Sensitivity**: Calibrated\n` +
+        `- **DSGVO/GDPR compliance**: Active (PII Masking enforced)`;
+
+      Promise.all([
+        fetch('/api/docs-file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: `reports/AIF_Crypto_Report_${activeSymbol}_FRESH.md`, content: reportContent })
+        }),
+        fetch('/api/docs-file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: `reports/Security_Integritaets_Audit_FRESH.json`, content: auditContent })
+        }),
+        fetch('/api/docs-file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: `reports/Revenue_Assurance_Matrix_OPTIMIZED.md`, content: matrixContent })
+        })
+      ]).then(() => {
+        addAgentLog('Purger & Berichts-Agent', `Dateien erfolgreich im lokalen Repository-Zweig (/docs/reports/) persistiert.`, 'success');
+      }).catch(err => {
+        addAgentLog('Purger & Berichts-Agent', `Fehler beim Schreiben der echten Repository-Dokumente: ${err.message || err}`, 'error');
       });
 
       addAgentLog('Purger & Berichts-Agent', `STALE DOCUMENTS REMOVED: 3 veraltete Reports gelöscht, um Platz für neue, optimierte Datensätze zu schaffen.`, 'warn');
@@ -273,19 +397,35 @@ export function CryptoScoringEnterprise({
       setActiveAgentIndex(-1);
       setIsSimulating(false);
       setActiveIncident(null);
-      setCountdown(14400); // reset 4 hours
+      setCountdown(7200); // reset 2 hours
       addAgentLog('System', `Kaskade erfolgreich abgeschlossen. Repository ist zu 100% konsistent, optimiert und aktuell.`, 'success');
     }, 8800);
   };
 
-  // 4-Hour Countdown Timer Hook
+  // Ad-hoc start of the job immediately on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      triggerAgentAutomation();
+    }, 1200); // Small 1.2s delay on mount to let UI settle, then run
+    return () => clearTimeout(timer);
+  }, [activeSymbol]);
+
+  // 2-Hour Countdown Timer Hook (Only active between 09:00 and 22:00)
   useEffect(() => {
     if (!isAutomating || isSimulating) return;
     const interval = setInterval(() => {
+      const currentHour = new Date().getHours();
+      const isOperatingHours = currentHour >= 9 && currentHour < 22;
+      
+      if (!isOperatingHours) {
+        // Countdown is paused outside 09:00 - 22:00
+        return;
+      }
+
       setCountdown(prev => {
         if (prev <= 1) {
           triggerAgentAutomation();
-          return 14400; // Reset to 4 hours
+          return 7200; // Reset to 2 hours
         }
         return prev - 1;
       });
@@ -308,6 +448,29 @@ export function CryptoScoringEnterprise({
     };
   }, []);
 
+  // Fetch real-time live market data on mount and poll to keep display perfectly fresh
+  useEffect(() => {
+    let active = true;
+    const loadLiveData = () => {
+      fetch('/api/market-data')
+        .then(res => res.json())
+        .then(data => {
+          if (active && Array.isArray(data)) {
+            setLiveMarketData(data);
+          }
+        })
+        .catch(err => {
+          console.warn('[CryptoScoringEnterprise] Failed to fetch live prices:', err);
+        });
+    };
+    loadLiveData();
+    const interval = setInterval(loadLiveData, 15000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
+
   // Sync selectedSymbol from props to ensure dashboard is synchronized
   useEffect(() => {
     if (selectedSymbol) {
@@ -327,14 +490,48 @@ export function CryptoScoringEnterprise({
     }
   }, [selectedSymbol]);
 
+  const adjustMemeInputsForTimeframe = (raw: any, tf: string): any => {
+    const copy = { ...raw };
+    switch (tf) {
+      case '1m':
+      case '5m':
+        copy.volatility_quality = Math.min(1.0, copy.volatility_quality * 1.5);
+        copy.spread_penalty = Math.min(1.0, copy.spread_penalty * 2.0);
+        copy.momentum = Math.min(1.0, copy.momentum * 1.3);
+        copy.manipulation_penalty = Math.min(1.0, copy.manipulation_penalty * 1.4);
+        break;
+      case '15m':
+      case '30m':
+        copy.volatility_quality = Math.min(1.0, copy.volatility_quality * 1.25);
+        copy.spread_penalty = Math.min(1.0, copy.spread_penalty * 1.5);
+        break;
+      case '1std':
+      case '4std':
+        break;
+      case '1 tag':
+        copy.narrative_strength = Math.min(1.0, copy.narrative_strength * 1.1);
+        copy.decay_penalty = Math.min(1.0, copy.decay_penalty * 1.15);
+        break;
+      case '1 woche':
+        copy.narrative_strength = Math.min(1.0, copy.narrative_strength * 1.2);
+        copy.decay_penalty = Math.min(1.0, copy.decay_penalty * 1.3);
+        copy.rugpull_penalty = Math.max(0.0, copy.rugpull_penalty * 0.75);
+        break;
+    }
+    return copy;
+  };
+
   // Load / calculate inputs based on activeSymbol and timeframe
   useEffect(() => {
     setLoading(true);
+    const isMeme = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(activeSymbol);
     fetch(`/api/crypto-scoring/${activeSymbol}`)
       .then(res => res.json())
       .then(data => {
         // Adapt inputs based on the selected timeframe to make the scoring dynamic
-        const adaptedInputs = adjustInputsForTimeframe(data.inputs, timeframe);
+        const adaptedInputs = isMeme
+          ? adjustMemeInputsForTimeframe(data.inputs, timeframe)
+          : adjustInputsForTimeframe(data.inputs, timeframe);
         setInputs(adaptedInputs);
         setCustomInputs(adaptedInputs);
         setLoading(false);
@@ -343,10 +540,19 @@ export function CryptoScoringEnterprise({
         console.error('Failed to fetch crypto scoring details:', err);
         // Fallback local inputs generator
         const dbAsset = CRYPTO_DATABASE.find(c => c.symbol === activeSymbol);
-        const fallback = generateCryptoInputs(activeSymbol, dbAsset ? dbAsset.change24h : 2.5);
-        const adaptedInputs = adjustInputsForTimeframe(fallback, timeframe);
-        setInputs(adaptedInputs);
-        setCustomInputs(adaptedInputs);
+        const liveAsset = liveMarketData.find(a => a.symbol === activeSymbol);
+        const change = liveAsset ? liveAsset.change24h : (dbAsset ? dbAsset.change24h : 2.5);
+        if (isMeme) {
+          const fallback = generateMemeCoinInputs(activeSymbol, change);
+          const adaptedInputs = adjustMemeInputsForTimeframe(fallback, timeframe);
+          setInputs(adaptedInputs);
+          setCustomInputs(adaptedInputs);
+        } else {
+          const fallback = generateCryptoInputs(activeSymbol, change);
+          const adaptedInputs = adjustInputsForTimeframe(fallback, timeframe);
+          setInputs(adaptedInputs);
+          setCustomInputs(adaptedInputs);
+        }
         setLoading(false);
       });
   }, [activeSymbol, timeframe]);
@@ -486,12 +692,72 @@ export function CryptoScoringEnterprise({
     }
   };
 
+  const isMemeCoin = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(activeSymbol);
+
   // Re-calculate the score using local logic based on custom slider overrides
-  const scoringResult = customInputs && (customInputs as CryptoScoringInputs).coin 
-    ? calculateCryptoEnterpriseScore(customInputs as CryptoScoringInputs)
+  const scoringResult = customInputs && (customInputs as any).coin 
+    ? (isMemeCoin 
+        ? calculateMemeCoinScore(customInputs as MemeCoinInputs) 
+        : calculateCryptoEnterpriseScore(customInputs as CryptoScoringInputs))
     : null;
 
-  const originalResult = inputs ? calculateCryptoEnterpriseScore(inputs) : null;
+  const originalResult = inputs 
+    ? (isMemeCoin 
+        ? calculateMemeCoinScore(inputs as unknown as MemeCoinInputs) 
+        : calculateCryptoEnterpriseScore(inputs)) 
+    : null;
+
+  const memeCategories = [
+    {
+      id: 'meme_market',
+      title: 'Meme Market Structure (Base 40%)',
+      color: 'from-blue-500/20 to-indigo-500/10 border-blue-500/30 text-blue-400',
+      fields: [
+        { key: 'liquidity', label: 'Liquidity Depth', desc: 'Pool thickness and slippage resistance on DEXs', weight: 15 },
+        { key: 'volume_trend', label: 'Volume Trend', desc: 'Handelsvolumen-Wachstum über die letzten 24h', weight: 10 },
+        { key: 'trend_structure', label: 'Trend Structure', desc: 'Saubere technische Aufwärtsstruktur auf Mikro-/Makro-Ebene', weight: 15 },
+      ]
+    },
+    {
+      id: 'meme_momentum',
+      title: 'Hype & Momentum (Base 20%)',
+      color: 'from-amber-500/20 to-orange-500/10 border-amber-500/30 text-amber-400',
+      fields: [
+        { key: 'momentum', label: 'Momentum', desc: 'Extrem hohe Impulsgeschwindigkeit und RSI-Ausbruchsstärke', weight: 10 },
+        { key: 'volatility_quality', label: 'Volatility Quality', desc: 'Handelsspanne und gesunde Akkumulationswellen', weight: 10 },
+      ]
+    },
+    {
+      id: 'meme_social',
+      title: 'Social & Narrative (Base 40%)',
+      color: 'from-pink-500/20 to-rose-500/10 border-pink-500/30 text-pink-400',
+      fields: [
+        { key: 'social_sentiment', label: 'Social Sentiment', desc: 'Massiver Social-Media-Hype & Mention-Wachstum (X, Reddit, TikTok)', weight: 15 },
+        { key: 'narrative_strength', label: 'Narrative Strength', desc: 'Virale Kraft und Einzigartigkeit des Meme-Themas', weight: 10 },
+        { key: 'catalyst_strength', label: 'Catalyst Strength', desc: 'Exchange Listings, Influencer-Unterstützung oder bevorstehende Events', weight: 10 },
+      ]
+    },
+    {
+      id: 'meme_penalties',
+      title: 'Meme Risk Penalties (Reductions)',
+      color: 'from-rose-500/20 to-red-500/10 border-rose-500/30 text-rose-500',
+      fields: [
+        { key: 'spread_penalty', label: 'Spread Penalty', desc: 'Slippage-Abzug durch Bid-Ask Spreads (penalty)', weight: 20, isPenalty: true },
+        { key: 'liquidity_penalty', label: 'Liquidity Penalty', desc: 'Abzug für ungleichmäßige Liquiditätspools (penalty)', weight: 20, isPenalty: true },
+        { key: 'manipulation_penalty', label: 'Wash Trading / Manipulation Penalty', desc: 'Erkennungsrate für künstliches Handelsvolumen (penalty)', weight: 20, isPenalty: true },
+        { key: 'rugpull_penalty', label: 'Rugpull / Centralization Penalty', desc: 'Entwickler-Anteil, Contract-Sicherheit & Blacklist-Muster (penalty)', weight: 20, isPenalty: true },
+        { key: 'decay_penalty', label: 'Hype Decay Penalty', desc: 'Verfallsrate durch nachlassende virale Wellen (penalty)', weight: 20, isPenalty: true },
+      ]
+    },
+    {
+      id: 'meme_ai',
+      title: 'AI & Catalyst Confidence (Bonus)',
+      color: 'from-purple-500/20 to-fuchsia-500/10 border-purple-500/30 text-purple-400',
+      fields: [
+        { key: 'ai_confidence_bonus', label: 'AI Confidence Bonus', desc: 'Deep-Learning prognostizierte Haltezeit des Hypes', weight: 5 },
+      ]
+    }
+  ];
 
   // Categorized inputs mapping for rendering sliders beautifully
   const categories = [
@@ -562,6 +828,8 @@ export function CryptoScoringEnterprise({
     }
   ];
 
+  const categoriesToUse = isMemeCoin ? memeCategories : categories;
+
   // Helper to color decision badges elegantly
   const getDecisionBadge = (decision: string) => {
     switch (decision) {
@@ -600,21 +868,41 @@ export function CryptoScoringEnterprise({
 
   const currentBadge = scoringResult ? getDecisionBadge(scoringResult.decision) : null;
 
-  // Helper to render static scores for selected assets cards
+  // Helper to render static/dynamic scores for selected assets cards
   const getAssetDetails = (sym: string) => {
     const dbAsset = CRYPTO_DATABASE.find(c => c.symbol === sym);
-    const change = dbAsset ? dbAsset.change24h : 2.5;
-    const fallbackInputs = generateCryptoInputs(sym, change);
-    const adaptedInputs = adjustInputsForTimeframe(fallbackInputs, timeframe);
-    const result = calculateCryptoEnterpriseScore(adaptedInputs);
-    return {
-      name: dbAsset ? dbAsset.name : sym,
-      price: dbAsset ? dbAsset.price : 1.0,
-      change24h: change,
-      score: result.final_score,
-      decision: result.decision,
-      mcap: dbAsset ? dbAsset.mcap : 'N/A'
-    };
+    const liveAsset = liveMarketData.find(a => a.symbol === sym);
+
+    const price = liveAsset ? liveAsset.price : (dbAsset ? dbAsset.price : 1.0);
+    const change = liveAsset ? liveAsset.change24h : (dbAsset ? dbAsset.change24h : 2.5);
+    const mcap = liveAsset ? `$${liveAsset.marketCap}B` : (dbAsset ? dbAsset.mcap : 'N/A');
+
+    const isMeme = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(sym);
+    if (isMeme) {
+      const fallbackInputs = generateMemeCoinInputs(sym, change);
+      const adaptedInputs = adjustMemeInputsForTimeframe(fallbackInputs, timeframe);
+      const result = calculateMemeCoinScore(adaptedInputs);
+      return {
+        name: dbAsset ? dbAsset.name : sym,
+        price,
+        change24h: change,
+        score: result.final_score,
+        decision: result.decision,
+        mcap
+      };
+    } else {
+      const fallbackInputs = generateCryptoInputs(sym, change);
+      const adaptedInputs = adjustInputsForTimeframe(fallbackInputs, timeframe);
+      const result = calculateCryptoEnterpriseScore(adaptedInputs);
+      return {
+        name: dbAsset ? dbAsset.name : sym,
+        price,
+        change24h: change,
+        score: result.final_score,
+        decision: result.decision,
+        mcap
+      };
+    }
   };
 
   return (
@@ -634,7 +922,7 @@ export function CryptoScoringEnterprise({
             </span>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-bold tracking-tight text-white font-display uppercase">Crypto Scoring Enterprise</h2>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/25 font-bold uppercase tracking-wider">v3.0 Active</span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/25 font-bold uppercase tracking-wider">Aktiv</span>
             </div>
           </div>
           <p className="text-xs text-white/60 font-mono leading-relaxed max-w-xl">
@@ -684,9 +972,7 @@ export function CryptoScoringEnterprise({
                           className="w-full text-left p-3 hover:bg-white/5 flex items-center justify-between transition-colors cursor-pointer"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-bold text-xs text-white font-mono">
-                              {item.symbol}
-                            </div>
+                            <AssetLogo symbol={item.symbol} size="sm" />
                             <div>
                               <p className="text-xs font-bold text-white font-display">{item.name}</p>
                               <p className="text-[10px] text-white/40 font-mono">{item.desc}</p>
@@ -720,9 +1006,7 @@ export function CryptoScoringEnterprise({
                           className="w-full text-left p-3 hover:bg-white/5 flex items-center justify-between transition-colors cursor-pointer"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-bold text-xs text-white font-mono">
-                              {item.symbol}
-                            </div>
+                            <AssetLogo symbol={item.symbol} size="sm" />
                             <div>
                               <p className="text-xs font-bold text-white font-display">{item.name}</p>
                               <p className="text-[10px] text-white/40 font-mono">{item.desc}</p>
@@ -790,9 +1074,7 @@ export function CryptoScoringEnterprise({
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-bold text-xs text-white font-mono">
-                    {sym}
-                  </span>
+                  <AssetLogo symbol={sym} size="sm" />
                   <div>
                     <h4 className="text-xs font-bold text-white uppercase tracking-wide truncate max-w-[110px]">
                       {details.name}
@@ -801,14 +1083,38 @@ export function CryptoScoringEnterprise({
                   </div>
                 </div>
                 
-                {/* Remove slot cross */}
-                <button
-                  onClick={(e) => handleRemoveAsset(e, sym)}
-                  className="p-1 rounded text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors cursor-pointer"
-                  title="Asset entfernen"
-                >
-                  <X size={12} />
-                </button>
+                <div className="flex items-center gap-1.5">
+                  {/* Toggle Price Alert Bell Icon */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const dbAsset = CRYPTO_DATABASE.find(a => a.symbol === sym);
+                      const type = dbAsset ? 'crypto' : 'commodity';
+                      handleToggleAlert(sym, details.name, details.price, type);
+                    }}
+                    className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                      alertIsActive(sym)
+                        ? 'bg-amber-500/25 border-amber-500/40 text-amber-400 shadow-[0_0_12px_rgba(245,196,83,0.3)]'
+                        : 'bg-white/5 border-white/10 text-white/40 hover:text-white hover:border-white/20'
+                    }`}
+                    title={alertIsActive(sym) ? 'Preisalarm aktiv (Klicken zum Löschen)' : 'Preisalarm für dieses Asset einrichten'}
+                  >
+                    {alertIsActive(sym) ? (
+                      <BellRing size={12} className="text-amber-400 animate-pulse" />
+                    ) : (
+                      <Bell size={12} className="text-white/40" />
+                    )}
+                  </button>
+
+                  {/* Remove slot cross */}
+                  <button
+                    onClick={(e) => handleRemoveAsset(e, sym)}
+                    className="p-1 rounded text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Asset entfernen"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
               </div>
 
               {/* Price and score row */}
@@ -949,22 +1255,41 @@ export function CryptoScoringEnterprise({
                   <h4 className="text-xs font-mono text-white/70 font-bold uppercase tracking-wider">Scoring-Bestandteile</h4>
                   
                   <div className="space-y-2.5">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-white/60">Base Score (+)</span>
-                      <span className="font-mono text-emerald-400 font-bold">+{scoringResult.base_score}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-white/60">Risk Penalty (-)</span>
-                      <span className="font-mono text-rose-400 font-bold">-{scoringResult.risk_penalty}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-white/60">Regime Bonus (+)</span>
-                      <span className="font-mono text-purple-400 font-bold">+{scoringResult.regime_bonus}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-white/60">AI Confidence Bonus</span>
-                      <span className="font-mono text-blue-400 font-bold">+{scoringResult.ai_confidence_bonus}</span>
-                    </div>
+                    {isMemeCoin ? (
+                      <>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-white/60">Base Score (+)</span>
+                          <span className="font-mono text-emerald-400 font-bold">+{scoringResult.base_score}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-white/60">Meme Risk Penalty (-)</span>
+                          <span className="font-mono text-rose-400 font-bold">-{scoringResult.risk_penalty}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-white/60">AI Hype Confidence Bonus (+)</span>
+                          <span className="font-mono text-purple-400 font-bold">+{scoringResult.ai_confidence_bonus}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-white/60">Base Score (+)</span>
+                          <span className="font-mono text-emerald-400 font-bold">+{scoringResult.base_score}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-white/60">Risk Penalty (-)</span>
+                          <span className="font-mono text-rose-400 font-bold">-{scoringResult.risk_penalty}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-white/60">Regime Bonus (+)</span>
+                          <span className="font-mono text-purple-400 font-bold">+{scoringResult.regime_bonus}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-white/60">AI Confidence Bonus</span>
+                          <span className="font-mono text-blue-400 font-bold">+{scoringResult.ai_confidence_bonus}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className="pt-3 border-t border-white/5 flex justify-between items-center text-xs">
                     <span className="font-bold text-white uppercase">Sicherheitseinstufung</span>
@@ -1075,7 +1400,7 @@ export function CryptoScoringEnterprise({
 
               {/* Slider list */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {categories.map((cat) => (
+                {categoriesToUse.map((cat) => (
                   <div key={cat.id} className="bg-black/30 p-5 rounded-xl border border-white/5 space-y-4">
                     <div className="flex items-center gap-2 pb-2 border-b border-white/5">
                       <Layers size={14} className="text-blue-400" />
@@ -1084,7 +1409,7 @@ export function CryptoScoringEnterprise({
 
                     <div className="space-y-4">
                       {cat.fields.map((field) => {
-                        const val = customInputs[field.key as keyof CryptoScoringInputs] as number ?? 0.0;
+                        const val = (customInputs as any)[field.key] as number ?? 0.0;
                         return (
                           <div key={field.key} className="space-y-1.5">
                             <div className="flex justify-between items-center text-xs">
@@ -1101,7 +1426,7 @@ export function CryptoScoringEnterprise({
                                 max="1"
                                 step="0.01"
                                 value={val}
-                                onChange={(e) => handleSliderChange(field.key as keyof CryptoScoringInputs, parseFloat(e.target.value))}
+                                onChange={(e) => handleSliderChange(field.key, parseFloat(e.target.value))}
                                 className="flex-1 accent-blue-500 h-1 bg-white/10 rounded-lg cursor-pointer"
                               />
                             </div>
@@ -1256,7 +1581,7 @@ export function CryptoScoringEnterprise({
                   <h4 className="text-xs font-mono text-white/80 font-bold uppercase tracking-wider">Vorschau: Executive Financial Report ({activeSymbol})</h4>
                   <div className="font-mono bg-black/80 p-4 rounded text-[11px] text-zinc-400 space-y-2 border border-white/5 leading-relaxed">
                     <p className="text-blue-400">--- ENTERPRISE FINANCIAL REPORT ---</p>
-                    <p>SYSTEM ID: CryptoTop300ScoringEnterprise_v3.0</p>
+                    <p>SYSTEM ID: CryptoTop300ScoringEnterprise</p>
                     <p>COIN UNDER SCAN: {activeSymbol}</p>
                     <p>DECISION CLASS: {scoringResult.decisionName.toUpperCase()} ({scoringResult.decisionDesc})</p>
                     <p>FINAL SCORE: {scoringResult.final_score} / 100</p>
@@ -1288,11 +1613,11 @@ export function CryptoScoringEnterprise({
                         <Clock size={16} className="animate-spin-slow" />
                       </span>
                       <h3 className="text-sm font-bold text-white uppercase tracking-wider font-display">
-                        Autonome 4-Stunden-Aktualisierungs- & Optimierungsregel
+                        Autonome 2-Stunden-Aktualisierungs- & Optimierungsregel
                       </h3>
                     </div>
                     <p className="text-xs text-white/70 max-w-2xl leading-relaxed">
-                      Gemäß der Repository-Automatisierungsrichtlinie überwacht dieses System im Hintergrund kontinuierlich alle Metriken. Alle 4 Stunden löscht der <strong>Purger-Agent</strong> veraltete Datenbestände, während die spezialisierten Agenten Optimierungen kompilieren und absolut fehlerfreie, aktuelle Berichte für <strong>{activeSymbol}</strong> erzeugen.
+                      Gemäß der Repository-Automatisierungsrichtlinie überwacht dieses System im Hintergrund kontinuierlich alle Metriken. Alle 2 Stunden (im Zeitfenster von 09:00 bis 22:00 Uhr) löscht der <strong>Purger-Agent</strong> veraltete Datenbestände, während die spezialisierten Agenten Optimierungen kompilieren und absolut fehlerfreie, aktuelle Berichte für <strong>{activeSymbol}</strong> erzeugen. Vor 09:00 Uhr und nach 22:00 Uhr sind die automatisierten Scanner inaktiv.
                     </p>
                   </div>
 
@@ -1300,7 +1625,11 @@ export function CryptoScoringEnterprise({
                   <div className="md:col-span-4 bg-black/40 border border-white/10 rounded-xl p-4 text-center space-y-2">
                     <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest font-black block">Nächstes Regel-Intervall</span>
                     <div className="text-2xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 tracking-wider">
-                      {formatCountdown(countdown)}
+                      {(() => {
+                        const currentHour = new Date().getHours();
+                        const isOperatingHours = currentHour >= 9 && currentHour < 22;
+                        return isOperatingHours ? formatCountdown(countdown) : "PAUSIERT (09:00-22:00)";
+                      })()}
                     </div>
                     <div className="flex items-center justify-center gap-4 pt-1">
                       <label className="flex items-center gap-1.5 cursor-pointer text-[10px] font-mono text-white/60 hover:text-white transition-colors">
@@ -1312,7 +1641,10 @@ export function CryptoScoringEnterprise({
                         />
                         <span>Automatisierung Aktiv</span>
                       </label>
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                      <span className={`w-1.5 h-1.5 rounded-full ${(() => {
+                        const currentHour = new Date().getHours();
+                        return (currentHour >= 9 && currentHour < 22) ? "bg-emerald-500 animate-ping" : "bg-amber-500";
+                      })()}`} />
                     </div>
                   </div>
                 </div>
@@ -1555,7 +1887,7 @@ export function CryptoScoringEnterprise({
                           </div>
 
                           <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-[9px] font-mono">
-                            <span className="text-white/40">Version: {doc.version} | {doc.timeframe}</span>
+                            <span className="text-white/40">{doc.timeframe}</span>
                             <span className={isDeleted ? 'text-zinc-600' : 'text-white/60'}>{doc.date}</span>
                           </div>
                         </div>

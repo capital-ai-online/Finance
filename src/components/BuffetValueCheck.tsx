@@ -18,7 +18,9 @@ import {
   UserCheck, 
   Star,
   Award,
-  BookOpen
+  BookOpen,
+  Search,
+  ChevronDown
 } from 'lucide-react';
 
 interface RegistryAsset {
@@ -57,6 +59,16 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
   const [registryAssets, setRegistryAssets] = useState<RegistryAsset[]>([]);
   const [activeAsset, setActiveAsset] = useState<RegistryAsset | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Filter assets by search query
+  const filteredAssets = searchQuery.trim() === ''
+    ? registryAssets
+    : registryAssets.filter(asset => 
+        asset.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        asset.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
   // DCF Model State
   const [eps, setEps] = useState<number>(8.5);
@@ -289,22 +301,109 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
           </p>
         </div>
         
-        {/* Dynamic Asset Info Badge */}
-        {activeAsset && (
-          <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 flex items-center justify-center font-mono font-black text-aif-gold-DEFAULT text-lg">
-              {activeAsset.symbol}
-            </div>
-            <div>
-              <div className="text-sm font-bold text-white font-display">{activeAsset.name}</div>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[11px] font-mono text-white/40 uppercase">{activeAsset.type}</span>
-                <span className="w-1 h-1 rounded-full bg-white/20" />
-                <span className="text-[11px] font-mono text-emerald-400 font-bold">${activeAsset.price.toLocaleString()}</span>
+        {/* Dynamic Asset Info Badge with searchable dropdown */}
+        <div className="relative" id="buffett-asset-selector">
+          {isDropdownOpen && (
+            <div 
+              className="fixed inset-0 z-40" 
+              onClick={() => {
+                setIsDropdownOpen(false);
+                setSearchQuery('');
+              }}
+            />
+          )}
+
+          <div 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 flex items-center gap-3 cursor-pointer transition-all select-none relative z-40"
+          >
+            {activeAsset ? (
+              <>
+                <div className="w-10 h-10 rounded-lg bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 flex items-center justify-center font-mono font-black text-aif-gold-DEFAULT text-lg shrink-0">
+                  {activeAsset.symbol}
+                </div>
+                <div className="text-left pr-2">
+                  <div className="text-sm font-bold text-white font-display flex items-center gap-1">
+                    <span>{activeAsset.name}</span>
+                    <ChevronDown size={14} className="text-white/40" />
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[11px] font-mono text-white/40 uppercase">{activeAsset.type}</span>
+                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                    <span className="text-[11px] font-mono text-emerald-400 font-bold">${activeAsset.price.toLocaleString()}</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-white/60">Asset auswählen...</div>
+            )}
+          </div>
+
+          {/* Floating Dropdown Panel with Search Bar */}
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl p-3 z-50">
+              <div className="relative mb-2">
+                <Search className="absolute left-3 top-2.5 text-white/40" size={14} />
+                <input
+                  type="text"
+                  placeholder="Symbol oder Name suchen..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-8 py-2 text-xs text-white focus:outline-none focus:border-aif-gold-DEFAULT font-mono"
+                  autoFocus
+                />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-2 text-white/40 hover:text-white text-xs font-bold"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+
+              <div className="max-h-60 overflow-y-auto space-y-1 custom-scrollbar">
+                {filteredAssets.length > 0 ? (
+                  filteredAssets.map(asset => (
+                    <button
+                      key={asset.symbol}
+                      onClick={() => {
+                        setActiveAsset(asset);
+                        setCustomPrice(asset.price);
+                        const initialEps = asset.peRatio && asset.peRatio > 0 
+                          ? Number((asset.price / asset.peRatio).toFixed(2)) 
+                          : Number((asset.price * 0.07).toFixed(2));
+                        setEps(initialEps <= 0 ? 3.5 : initialEps);
+                        setGrowth(asset.type === 'crypto' ? 20.0 : asset.type === 'stock' ? 9.5 : 4.0);
+                        setIsDropdownOpen(false);
+                        setSearchQuery('');
+                      }}
+                      className={`w-full text-left p-2 rounded-lg flex items-center justify-between transition-colors cursor-pointer ${
+                        activeAsset?.symbol === asset.symbol 
+                          ? 'bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20' 
+                          : 'hover:bg-white/5 text-white/80'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-mono font-bold text-[10px] bg-white/5 px-1.5 py-0.5 rounded text-white min-w-[50px] text-center shrink-0">
+                          {asset.symbol}
+                        </span>
+                        <span className="text-xs font-semibold truncate max-w-[130px]">{asset.name}</span>
+                      </div>
+                      <span className="text-xs font-mono text-emerald-400 font-bold shrink-0 ml-2">
+                        ${asset.price.toLocaleString()}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-xs font-mono text-white/40">
+                    Keine Assets gefunden
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Quote Banner */}

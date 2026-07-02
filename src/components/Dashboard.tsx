@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient';
+import { secureStorage } from '../lib/cryptoHelper';
 import { Screener } from './Screener';
 import { Newsticker } from './Newsticker';
+import { UniverseBestWorst } from './UniverseBestWorst';
+import { PortfolioPerformance } from './PortfolioPerformance';
+import { ComplianceExporter } from './ComplianceExporter';
 import { ImageAnalyzer } from './ImageAnalyzer';
 import { CryptoEnterpriseEvaluator } from './CryptoEnterpriseEvaluator';
 import { ProfilePage, UserProfile } from './ProfilePage';
@@ -25,6 +28,12 @@ import { Charts } from './Charts';
 import { OrchestratorPanel } from './OrchestratorPanel';
 import PerformanceDashboard from './PerformanceDashboard';
 import { RealTimeRiskAssessment } from './RealTimeRiskAssessment';
+import { AdminPanel } from './AdminPanel';
+import { PriceAlert } from './PriceAlert';
+import { MarketSentiment } from './MarketSentiment';
+import { AuthStateDebugger } from './AuthStateDebugger';
+import { AuditLogs } from './AuditLogs';
+import { SentimentDashboard } from './SentimentDashboard';
 
 import { 
   LogOut, 
@@ -53,7 +62,8 @@ import {
   Orbit,
   BarChart3,
   Gauge,
-  ShieldAlert
+  ShieldAlert,
+  Bell
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -84,8 +94,22 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedSymbol, setSelectedSymbol] = useState<string>('BTC');
   const [timeframe, setTimeframe] = useState<string>('1std');
-  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard'>('dashboard');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<string | null>('hub');
+
+  // Auto-expand appropriate accordion section on activeView changes for best mobile/desktop experience
+  React.useEffect(() => {
+    const getViewCategory = (view: string) => {
+      if (['dashboard', 'abonnements', 'profil'].includes(view)) return 'hub';
+      if (['market-screener', 'charts', 'preis-alarme', 'monte-carlo', 'buffet-value', 'backtest', 'heatmap', 'risiko-assessment', 'sentiment-dashboard'].includes(view)) return 'analysis';
+      if (['markdown-orchestrator', 'request-orchestrator', 'performance', 'interact', 'audit-logs'].includes(view)) return 'orchestration';
+      if (['datenschutz', 'impressum-agb'].includes(view)) return 'compliance';
+      if (['admin-panel'].includes(view)) return 'system_admin';
+      return 'hub';
+    };
+    setExpandedSection(getViewCategory(activeView));
+  }, [activeView]);
 
   // Guest limitations state
   const [attempts, setAttempts] = useState<number>(0);
@@ -104,17 +128,45 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
     subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier
   });
 
-  // Synchronize profile state with userSession prop
+  // Synchronize profile state with userSession prop and load encrypted cached profile if database is offline
   React.useEffect(() => {
-    if (userSession) {
-      setProfile(prev => ({
-        ...prev,
-        name: userSession.name,
-        email: userSession.email,
-        subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier
-      }));
-    }
+    const loadSecureProfile = async () => {
+      if (userSession && userSession.email) {
+        try {
+          const pass = userSession.email + '_aif_secure_passcode';
+          const savedStr = await secureStorage.getItem('aif_encrypted_user_profile', pass);
+          if (savedStr) {
+            const parsed = JSON.parse(savedStr);
+            setProfile(parsed);
+            return;
+          }
+        } catch (e) {
+          console.error('Failed to decrypt local secure profile:', e);
+        }
+
+        // Fallback to prop sync if no secure cache existed yet
+        setProfile(prev => ({
+          ...prev,
+          name: userSession.name,
+          email: userSession.email,
+          subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier
+        }));
+      }
+    };
+    loadSecureProfile();
   }, [userSession]);
+
+  const handleUpdateProfile = async (newProfile: UserProfile) => {
+    setProfile(newProfile);
+    if (userSession && userSession.email) {
+      try {
+        const pass = userSession.email + '_aif_secure_passcode';
+        await secureStorage.setItem('aif_encrypted_user_profile', JSON.stringify(newProfile), pass);
+      } catch (e) {
+        console.error('Failed to encrypt and save secure profile:', e);
+      }
+    }
+  };
 
   const triggerAttempt = (actionName: string, onExecute: () => void) => {
     if (userSession.type === 'guest') {
@@ -143,22 +195,16 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // 2. Fetch/sync latest persistent tier from backend webhook storage on mount (auth required)
+    // 2. Fetch/sync latest persistent tier from backend webhook storage on mount
     if (profile.email) {
-      supabase.auth.getSession().then(({ data: sessionData }) => {
-        const token = sessionData?.session?.access_token;
-        if (!token) return;
-        fetch(`/api/stripe/user-subscription`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(profile.email)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.subscriptionTier && data.subscriptionTier !== profile.subscriptionTier) {
+            setProfile(prev => ({ ...prev, subscriptionTier: data.subscriptionTier }));
+          }
         })
-          .then(res => res.json())
-          .then(data => {
-            if (data.subscriptionTier && data.subscriptionTier !== profile.subscriptionTier) {
-              setProfile(prev => ({ ...prev, subscriptionTier: data.subscriptionTier }));
-            }
-          })
-          .catch(err => console.error("Error syncing subscription tier with server:", err));
-      });
+        .catch(err => console.error("Error syncing subscription tier with server:", err));
     }
   }, []);
 
@@ -252,9 +298,9 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="fixed top-0 bottom-0 left-0 w-full sm:w-80 bg-black/95 border-r border-white/10 shadow-[0_0_50px_rgba(245,196,83,0.15)] z-50 flex flex-col justify-between overflow-hidden"
+              className="fixed inset-y-0 left-0 h-[100dvh] w-full sm:w-80 bg-black/95 border-r border-white/10 shadow-[0_0_50px_rgba(245,196,83,0.15)] z-50 flex flex-col overflow-hidden"
             >
-              <div>
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                 {/* Drawer Header */}
                 <div className="p-6 border-b border-white/10 flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -294,227 +340,439 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                   </div>
                 </div>
 
-                {/* Navigation Items */}
-                <div className="p-4 space-y-1">
-                  <span className="text-[11px] uppercase tracking-widest text-white/65 font-mono px-3 block mb-2">Plattform Navigation</span>
-                  
-                  <SidebarTooltip title="Dashboard Home" text="Bietet eine Gesamtübersicht des Portfolios, aktuelle Markttrends, KI-Analysen und die wichtigsten Kennzahlen auf einen Blick.">
-                    <button 
-                      onClick={() => navigateTo('dashboard')}
-                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
-                        activeView === 'dashboard' 
-                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
-                      }`}
+                {/* Navigation Items with Premium Vertical Accordion */}
+                <div className="p-4 space-y-3">
+                  {/* Category 1: Hauptzentrale */}
+                  <div className="border-b border-white/5 pb-2">
+                    <button
+                      onClick={() => setExpandedSection(expandedSection === 'hub' ? null : 'hub')}
+                      className="w-full px-3 py-2.5 flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-white/80 hover:text-white transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
+                      aria-expanded={expandedSection === 'hub'}
+                      aria-controls="nav-sec-hub"
                     >
-                      <LayoutDashboard size={16} />
-                      <span>Dashboard Home</span>
-                    </button>
-                  </SidebarTooltip>
-
-                  <SidebarTooltip title="Profi Markt-Screener" text="Filtere hunderte von Aktien und Kryptowährungen nach komplexen Kriterien wie KGV, Dividenden, KI-Scores und Graham-Formeln.">
-                    <button 
-                      onClick={() => navigateTo('market-screener')}
-                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
-                        activeView === 'market-screener' 
-                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
-                      }`}
-                    >
-                      <SlidersHorizontal size={16} className={activeView === 'market-screener' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
-                      <span>Profi Markt-Screener</span>
-                    </button>
-                  </SidebarTooltip>
-
-                  <SidebarTooltip title="Ad-Hoc Charts & Indikatoren" text="Echtzeit-Preischarts mit gleitenden Durchschnitten (SMA/EMA), RSI, MACD, Bollinger-Bändern und ad-hoc KI-Agent-Scoring.">
-                    <button 
-                      onClick={() => navigateTo('charts')}
-                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
-                        activeView === 'charts' 
-                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
-                      }`}
-                    >
-                      <BarChart3 size={16} className={activeView === 'charts' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
-                      <span>Ad-Hoc Charts</span>
-                    </button>
-                  </SidebarTooltip>
-
-                  <SidebarTooltip title="Monte Carlo Simulation" text="Berechnet tausende zufällige Zukunftsszenarien für Deine Vermögenswerte, um die Wahrscheinlichkeit von Gewinnen und Verlusten einzuschätzen.">
-                    <button 
-                      onClick={() => navigateTo('monte-carlo')}
-                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
-                        activeView === 'monte-carlo' 
-                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
-                      }`}
-                    >
-                      <LineChart size={16} />
-                      <span>Monte Carlo Simulation</span>
-                    </button>
-                  </SidebarTooltip>
-
-                  <SidebarTooltip title="Buffet Value Check" text="Bewertet Aktien nach den zeitlosen Kriterien der Value-Investing-Legende Warren Buffett und berechnet den fairen inneren Wert.">
-                    <button 
-                      onClick={() => navigateTo('buffet-value')}
-                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
-                        activeView === 'buffet-value' 
-                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
-                      }`}
-                    >
-                      <Percent size={16} />
-                      <span>BuffetValueCheck</span>
-                    </button>
-                  </SidebarTooltip>
-
-                  <SidebarTooltip title="Backtest Engine" text="Teste historische Handelsstrategien (wie gleitende Durchschnitte) an vergangenen Daten, um zu sehen, wie profitabel sie gewesen wären.">
-                    <button 
-                      onClick={() => navigateTo('backtest')}
-                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
-                        activeView === 'backtest' 
-                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
-                      }`}
-                    >
-                      <TrendingUp size={16} className={activeView === 'backtest' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
-                      <span>Backtest Engine</span>
-                    </button>
-                  </SidebarTooltip>
-
-                  <SidebarTooltip title="Markdown Orchestrator" text="Ein intelligenter Multi-Perspektiven Dokumenten-Generator, der professionelle Berichte (CEO, Security, QA, Frontend, Backend) direkt auf Codebasis erstellt.">
-                    <button 
-                      onClick={() => navigateTo('markdown-orchestrator')}
-                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
-                        activeView === 'markdown-orchestrator' 
-                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
-                      }`}
-                    >
-                      <FileText size={16} className={activeView === 'markdown-orchestrator' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
-                      <span>Markdown Orchestrator</span>
-                    </button>
-                  </SidebarTooltip>
-
-                  <SidebarTooltip title="AIF Interact (Modul 2) - Temporär Deaktiviert" text="Dieses Modul wurde gemäß Systemvorgabe deaktiviert. Alle anderen Reiter stehen uneingeschränkt zur Verfügung.">
-                    <button 
-                      disabled
-                      className="w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center justify-between gap-3 transition-all relative overflow-hidden opacity-40 cursor-not-allowed border border-dashed border-white/10 bg-black/20"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Orbit size={16} className="text-cyan-500/50" />
-                        <span className="text-white/60">Interact (Modul 2)</span>
+                      <div className="flex items-center gap-2.5">
+                        <Orbit size={14} className="text-aif-gold-DEFAULT group-hover:rotate-45 transition-transform" />
+                        <span>Hauptzentrale</span>
                       </div>
-                      <span className="px-1.5 py-0.5 rounded text-[8px] bg-rose-500/10 text-rose-400 border border-rose-500/20 font-mono font-black uppercase">Deaktiviert</span>
+                      <motion.div
+                        animate={{ rotate: expandedSection === 'hub' ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown size={14} className="text-white/40 group-hover:text-white/80" />
+                      </motion.div>
                     </button>
-                  </SidebarTooltip>
 
-                  {(profile.subscriptionTier === 'Enterprise' || profile.email === 'sven.kulessa@gmail.com') && (
-                  <SidebarTooltip title="Request Orchestrator" text="Live Telemetrie-Überwachung des Server-Datenstroms, asynchrones Thread-Queueing und proaktive Absicherung gegen API-Abstürze. (Nur Enterprise/Admin)">
-                    <button 
-                      onClick={() => navigateTo('request-orchestrator')}
-                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
-                        activeView === 'request-orchestrator' 
-                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
-                      }`}
+                    <AnimatePresence initial={false}>
+                      {expandedSection === 'hub' && (
+                        <motion.div
+                          id="nav-sec-hub"
+                          role="region"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25, ease: 'easeInOut' }}
+                          className="overflow-hidden mt-1 px-1 space-y-1"
+                        >
+                          <SidebarTooltip title="Dashboard Home" text="Bietet eine Gesamtübersicht des Portfolios, aktuelle Markttrends, KI-Analysen und die wichtigsten Kennzahlen auf einen Blick.">
+                            <button 
+                              onClick={() => navigateTo('dashboard')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'dashboard' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <LayoutDashboard size={14} />
+                              <span>Dashboard Home</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Abonnements & Tarife" text="Verwalte Deine Zahlungsmethoden und wähle den optimalen Tarif für Deine Investment-Bedürfnisse.">
+                            <button 
+                              onClick={() => navigateTo('abonnements')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'abonnements' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <CreditCard size={14} />
+                              <span>Abonnements</span>
+                            </button>
+                          </SidebarTooltip>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Category 2: Analysetools & Screening */}
+                  <div className="border-b border-white/5 pb-2">
+                    <button
+                      onClick={() => setExpandedSection(expandedSection === 'analysis' ? null : 'analysis')}
+                      className="w-full px-3 py-2.5 flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-white/80 hover:text-white transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
+                      aria-expanded={expandedSection === 'analysis'}
+                      aria-controls="nav-sec-analysis"
                     >
-                      <Cpu size={16} className={activeView === 'request-orchestrator' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
-                      <span>Request Orchestrator</span>
+                      <div className="flex items-center gap-2.5">
+                        <TrendingUp size={14} className="text-aif-gold-DEFAULT group-hover:scale-110 transition-transform" />
+                        <span>Analysetools</span>
+                      </div>
+                      <motion.div
+                        animate={{ rotate: expandedSection === 'analysis' ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown size={14} className="text-white/40 group-hover:text-white/80" />
+                      </motion.div>
                     </button>
-                  </SidebarTooltip>
+
+                    <AnimatePresence initial={false}>
+                      {expandedSection === 'analysis' && (
+                        <motion.div
+                          id="nav-sec-analysis"
+                          role="region"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25, ease: 'easeInOut' }}
+                          className="overflow-hidden mt-1 px-1 space-y-1"
+                        >
+                          <SidebarTooltip title="Profi Markt-Screener" text="Filtere hunderte von Aktien und Kryptowährungen nach komplexen Kriterien wie KGV, Dividenden, KI-Scores und Graham-Formeln.">
+                            <button 
+                              onClick={() => navigateTo('market-screener')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'market-screener' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <SlidersHorizontal size={14} className={activeView === 'market-screener' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>Profi Markt-Screener</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Ad-Hoc Charts & Indikatoren" text="Echtzeit-Preischarts mit gleitenden Durchschnitten (SMA/EMA), RSI, MACD, Bollinger-Bändern und ad-hoc KI-Agent-Scoring.">
+                            <button 
+                              onClick={() => navigateTo('charts')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'charts' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <BarChart3 size={14} className={activeView === 'charts' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>Ad-Hoc Charts</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Echtzeit Preis-Alarme" text="Richte intelligente Benachrichtigungs-Schwellen für Krypto, Aktien, Rohstoffe und Forex ein mit interaktivem Echtzeit-Preissimulator.">
+                            <button 
+                              onClick={() => navigateTo('preis-alarme')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'preis-alarme' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <Bell size={14} className={activeView === 'preis-alarme' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>Preis-Alarme</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Monte Carlo Simulation" text="Berechnet tausende zufällige Zukunftsszenarien für Deine Vermögenswerte, um die Wahrscheinlichkeit von Gewinnen und Verlusten einzuschätzen.">
+                            <button 
+                              onClick={() => navigateTo('monte-carlo')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'monte-carlo' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <LineChart size={14} />
+                              <span>Monte Carlo Simulation</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Buffet Value Check" text="Bewertet Aktien nach den zeitlosen Kriterien der Value-Investing-Legende Warren Buffett und berechnet den fairen inneren Wert.">
+                            <button 
+                              onClick={() => navigateTo('buffet-value')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'buffet-value' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <Percent size={14} />
+                              <span>BuffetValueCheck</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Backtest Engine" text="Teste historische Handelsstrategien (wie gleitende Durchschnitte) an vergangenen Daten, um zu sehen, wie profitabel sie gewesen wären.">
+                            <button 
+                              onClick={() => navigateTo('backtest')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'backtest' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <TrendingUp size={14} className={activeView === 'backtest' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>Backtest Engine</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="AI Markt-Sentiment" text="Ausführlicher Sentiment-Cockpit mit Echtzeit-Nachrichtenrecherche über Google Search Grounding und interaktivem Risiko-Simulation-Sandbox.">
+                            <button 
+                              onClick={() => navigateTo('sentiment-dashboard')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'sentiment-dashboard' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <Gauge size={14} className={activeView === 'sentiment-dashboard' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>AI Markt-Sentiment</span>
+                            </button>
+                          </SidebarTooltip>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Category 3: System & Orchestrierung */}
+                  <div className="border-b border-white/5 pb-2">
+                    <button
+                      onClick={() => setExpandedSection(expandedSection === 'orchestration' ? null : 'orchestration')}
+                      className="w-full px-3 py-2.5 flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-white/80 hover:text-white transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
+                      aria-expanded={expandedSection === 'orchestration'}
+                      aria-controls="nav-sec-orchestration"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Cpu size={14} className="text-aif-gold-DEFAULT group-hover:rotate-12 transition-transform" />
+                        <span>System & DevOps</span>
+                      </div>
+                      <motion.div
+                        animate={{ rotate: expandedSection === 'orchestration' ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown size={14} className="text-white/40 group-hover:text-white/80" />
+                      </motion.div>
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {expandedSection === 'orchestration' && (
+                        <motion.div
+                          id="nav-sec-orchestration"
+                          role="region"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25, ease: 'easeInOut' }}
+                          className="overflow-hidden mt-1 px-1 space-y-1"
+                        >
+                          <SidebarTooltip title="Markdown Orchestrator" text="Ein intelligenter Multi-Perspektiven Dokumenten-Generator, der professionelle Berichte (CEO, Security, QA, Frontend, Backend) direkt auf Codebasis erstellt.">
+                            <button 
+                              onClick={() => navigateTo('markdown-orchestrator')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'markdown-orchestrator' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <FileText size={14} className={activeView === 'markdown-orchestrator' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>Markdown Orchestrator</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Request Orchestrator" text="Live Telemetrie-Überwachung des Server-Datenstroms, asynchrones Thread-Queueing und proaktive Absicherung gegen API-Abstürze.">
+                            <button 
+                              onClick={() => navigateTo('request-orchestrator')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'request-orchestrator' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <Cpu size={14} className={activeView === 'request-orchestrator' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>Request Orchestrator</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Performance-Zentrale" text="D3.js-basierte Überwachung von Latenzzeiten, API-Effizienz des Asset Registries und Speicherauslastung.">
+                            <button 
+                              onClick={() => navigateTo('performance')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'performance' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <Gauge size={14} className={activeView === 'performance' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>Performance-Zentrale</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Audit-Trail & Logs" text="Lückenlose Rückverfolgbarkeit aller automatisierten Hintergrundprozesse, quantitative Konformitätsberichte und kryptografische Integritätsprüfungen.">
+                            <button 
+                              onClick={() => navigateTo('audit-logs')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'audit-logs' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <ShieldCheck size={14} className={activeView === 'audit-logs' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>Audit-Trail & Logs</span>
+                            </button>
+                          </SidebarTooltip>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Category 4: Rechtliches & Compliance */}
+                  <div className="border-b border-white/5 pb-2">
+                    <button
+                      onClick={() => setExpandedSection(expandedSection === 'compliance' ? null : 'compliance')}
+                      className="w-full px-3 py-2.5 flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-white/80 hover:text-white transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
+                      aria-expanded={expandedSection === 'compliance'}
+                      aria-controls="nav-sec-compliance"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Shield size={14} className="text-aif-gold-DEFAULT group-hover:scale-105 transition-transform" />
+                        <span>Compliance & Support</span>
+                      </div>
+                      <motion.div
+                        animate={{ rotate: expandedSection === 'compliance' ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown size={14} className="text-white/40 group-hover:text-white/80" />
+                      </motion.div>
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {expandedSection === 'compliance' && (
+                        <motion.div
+                          id="nav-sec-compliance"
+                          role="region"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25, ease: 'easeInOut' }}
+                          className="overflow-hidden mt-1 px-1 space-y-1"
+                        >
+                          <SidebarTooltip title="Datenschutz" text="Erfahre, wie wir Deine persönlichen Daten und Portfolio-Informationen nach DSGVO-Richtlinien schützen.">
+                            <button 
+                              onClick={() => navigateTo('datenschutz')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'datenschutz' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <Shield size={14} />
+                              <span>Datenschutz</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Impressum & AGB" text="Rechtliche Informationen über das Unternehmen, Nutzungsbedingungen und Allgemeine Geschäftsbedingungen.">
+                            <button 
+                              onClick={() => navigateTo('impressum-agb')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'impressum-agb' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <Scale size={14} />
+                              <span>Impressum & AGB</span>
+                            </button>
+                          </SidebarTooltip>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Category 5: Administration (if user is Sven Kulessa or dev bypass) */}
+                  {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'gast@aif-core.de') && (
+                    <div className="border-b border-white/5 pb-2">
+                      <button
+                        onClick={() => setExpandedSection(expandedSection === 'system_admin' ? null : 'system_admin')}
+                        className="w-full px-3 py-2.5 flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-aif-gold-DEFAULT hover:text-white transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
+                        aria-expanded={expandedSection === 'system_admin'}
+                        aria-controls="nav-sec-admin"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <ShieldAlert size={14} className="text-aif-gold-DEFAULT group-hover:animate-bounce" />
+                          <span>Administration</span>
+                        </div>
+                        <motion.div
+                          animate={{ rotate: expandedSection === 'system_admin' ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronDown size={14} className="text-aif-gold-DEFAULT/40 group-hover:text-aif-gold-DEFAULT/85" />
+                        </motion.div>
+                      </button>
+
+                      <AnimatePresence initial={false}>
+                        {expandedSection === 'system_admin' && (
+                          <motion.div
+                            id="nav-sec-admin"
+                            role="region"
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25, ease: 'easeInOut' }}
+                            className="overflow-hidden mt-1 px-1 space-y-1"
+                          >
+                            <SidebarTooltip title="Admin-Zentrale" text="Exklusive Steuerzentrale für Sven Kulessa: Überwache Latenzstatistiken, plane das Investoren-Abo und verwalte Benutzer.">
+                              <button 
+                                onClick={() => navigateTo('admin-panel')}
+                                className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                  activeView === 'admin-panel' 
+                                    ? 'bg-aif-gold-DEFAULT text-black font-black border-aif-gold-DEFAULT shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                    : 'text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/15 border-aif-gold-DEFAULT/20'
+                                }`}
+                              >
+                                <ShieldAlert size={14} className={activeView === 'admin-panel' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                                <span>Admin-Zentrale</span>
+                              </button>
+                            </SidebarTooltip>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   )}
-
-                  <SidebarTooltip title="Performance-Zentrale" text="D3.js-basierte Überwachung von Latenzzeiten, API-Effizienz des Asset Registries und Speicherauslastung.">
-                    <button 
-                      onClick={() => navigateTo('performance')}
-                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
-                        activeView === 'performance' 
-                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
-                      }`}
-                    >
-                      <Gauge size={16} className={activeView === 'performance' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
-                      <span>Performance-Zentrale</span>
-                    </button>
-                  </SidebarTooltip>
-
-                  <SidebarTooltip title="Risiko-Assessment (VaR)" text="Mathematische Risiko-Simulationen (Variance-Covariance, Historisches Bootstrapping & Monte-Carlo) zur Bestimmung Deiner Portfoliorisiken.">
-                    <button 
-                      onClick={() => navigateTo('risiko-assessment')}
-                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
-                        activeView === 'risiko-assessment' 
-                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
-                      }`}
-                    >
-                      <ShieldAlert size={16} className={activeView === 'risiko-assessment' ? 'text-black' : 'text-rose-500'} />
-                      <span>Risiko-Assessment (VaR)</span>
-                    </button>
-                  </SidebarTooltip>
-
-                  <SidebarTooltip title="Abonnements & Tarife" text="Verwalte Deine Zahlungsmethoden und wähle den optimalen Tarif für Deine Investment-Bedürfnisse.">
-                    <button 
-                      onClick={() => navigateTo('abonnements')}
-                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
-                        activeView === 'abonnements' 
-                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
-                      }`}
-                    >
-                      <CreditCard size={16} />
-                      <span>Abonnements</span>
-                    </button>
-                  </SidebarTooltip>
-
-                  <span className="text-[11px] uppercase tracking-widest text-white/65 font-mono px-3 block mt-4 mb-2">Rechtliches & Support</span>
-
-                  <SidebarTooltip title="Datenschutz" text="Erfahre, wie wir Deine persönlichen Daten und Portfolio-Informationen nach DSGVO-Richtlinien schützen.">
-                    <button 
-                      onClick={() => navigateTo('datenschutz')}
-                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
-                        activeView === 'datenschutz' 
-                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
-                      }`}
-                    >
-                      <Shield size={16} />
-                      <span>Datenschutz</span>
-                    </button>
-                  </SidebarTooltip>
-
-                  <SidebarTooltip title="Impressum & AGB" text="Rechtliche Informationen über das Unternehmen, Nutzungsbedingungen und Allgemeine Geschäftsbedingungen.">
-                    <button 
-                      onClick={() => navigateTo('impressum-agb')}
-                      className={`w-full px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all ${
-                        activeView === 'impressum-agb' 
-                          ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                          : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'
-                      }`}
-                    >
-                      <Scale size={16} />
-                      <span>Impressum & AGB</span>
-                    </button>
-                  </SidebarTooltip>
                 </div>
               </div>
 
               {/* Drawer Footer Login & Logout buttons */}
-              <div className="p-4 border-t border-white/10 bg-black/60 space-y-2">
-                <button 
-                  onClick={onLogout} 
-                  className="w-full py-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
-                >
-                  <LogIn size={14} className="text-aif-neon-cyan" />
-                  <span>Konto wechseln</span>
-                </button>
-                <button 
-                  onClick={onLogout} 
-                  className="w-full py-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2"
-                >
-                  <LogOut size={14} />
-                  <span>Abmelden (Logout)</span>
-                </button>
+              <div className="shrink-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-white/10 bg-black/60 space-y-2">
+                {userSession.type === 'guest' ? (
+                  <button 
+                    onClick={onLogout} 
+                    className="w-full py-3 rounded-lg bg-gradient-to-r from-aif-gold-DEFAULT to-aif-gold-dark hover:from-aif-gold-light hover:to-aif-gold-DEFAULT text-black font-black text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(245,196,83,0.35)] hover:shadow-[0_0_30px_rgba(245,196,83,0.55)] scale-100 hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <LogIn size={15} className="stroke-[3px]" />
+                    <span>Login (Anmelden)</span>
+                  </button>
+                ) : (
+                  <>
+                    <button 
+                      onClick={onLogout} 
+                      className="w-full py-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+                    >
+                      <LogIn size={14} className="text-aif-neon-cyan" />
+                      <span>Konto wechseln</span>
+                    </button>
+                    <button 
+                      onClick={onLogout} 
+                      className="w-full py-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                    >
+                      <LogOut size={14} />
+                      <span>Abmelden (Logout)</span>
+                    </button>
+                  </>
+                )}
               </div>
 
             </motion.div>
@@ -579,6 +837,14 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                     >
                       <User size={16} className="text-aif-neon-cyan" /> Profil verwalten
                     </button>
+                    {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'gast@aif-core.de') && (
+                      <button 
+                        onClick={() => { setDropdownOpen(false); setActiveView('admin-panel'); }}
+                        className="w-full text-left px-4 py-2.5 text-sm font-bold text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/10 rounded-lg flex items-center gap-3 transition-all border border-aif-gold-DEFAULT/20"
+                      >
+                        <ShieldAlert size={16} className="text-aif-gold-DEFAULT" /> Admin-Zentrale
+                      </button>
+                    )}
                     <button 
                       onClick={() => { setDropdownOpen(false); setActiveView('abonnements'); }}
                       className="w-full text-left px-4 py-2.5 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors"
@@ -650,6 +916,10 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                 {activeView === 'markdown-orchestrator' && 'Markdown Orchestrator'}
                 {activeView === 'interact' && 'Interact Workspace (Modul 2)'}
                 {activeView === 'risiko-assessment' && 'Value-at-Risk Risiko-Zentrale'}
+                {activeView === 'admin-panel' && 'System-Administration (Sven Kulessa)'}
+                {activeView === 'preis-alarme' && 'Echtzeit Preis-Alarme & Push-Simulation'}
+                {activeView === 'audit-logs' && 'Audit Trail & Compliance-Protokoll'}
+                {activeView === 'sentiment-dashboard' && 'AI Markt-Sentiment Cockpit & Sandbox'}
               </span>
             </div>
             
@@ -674,14 +944,24 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
             className="space-y-8"
           >
             {activeView === 'dashboard' && (
-              <>
-                {/* Top Row: Enterprise Crypto Scoring Module */}
-                <CryptoScoringEnterprise 
-                  selectedSymbol={selectedSymbol} 
-                  onSelectSymbol={setSelectedSymbol} 
-                  timeframe={timeframe} 
-                  onChangeTimeframe={setTimeframe} 
-                />
+               <>
+                 {/* Top Row: Enterprise Crypto Scoring Module */}
+                 <CryptoScoringEnterprise 
+                   selectedSymbol={selectedSymbol} 
+                   onSelectSymbol={setSelectedSymbol} 
+                   timeframe={timeframe} 
+                   onChangeTimeframe={setTimeframe} 
+                   userSession={userSession}
+                 />
+ 
+                 {/* Best and Worst Assets of each Universe */}
+                 <UniverseBestWorst onSelectAsset={(symbol) => { setSelectedSymbol(symbol); setActiveView('charts'); }} />
+
+                 {/* Portfolio Performance & D3 Sparkline section */}
+                 <PortfolioPerformance baseCapital={profile.capital} />
+
+                  {/* Compliance Exporter for BaFin & DSGVO PDF downloads */}
+                  <ComplianceExporter capital={profile.capital} selectedSymbol={selectedSymbol} />
 
                 {/* Middle Row: Enterprise Trading Evaluation Tool & AI-Newsfeed */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -737,12 +1017,18 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                 </div>
 
 
+                {/* Market Sentiment Tool */}
+                <MarketSentiment selectedSymbol={selectedSymbol} assetClass={profile.preferredAssetClass} />
+
 
                 {/* Bottom Row: AI Tools */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Newsticker selectedSymbol={selectedSymbol} timeframe={timeframe} />
                   <ImageAnalyzer triggerAttempt={triggerAttempt} />
                 </div>
+
+                {/* Auth State Debugger Panel */}
+                <AuthStateDebugger />
               </>
             )}
 
@@ -767,6 +1053,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                 }}
                 selectedSymbol={selectedSymbol}
                 triggerAttempt={triggerAttempt}
+                userSession={userSession}
               />
             )}
 
@@ -790,6 +1077,10 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               <Datenschutz />
             )}
 
+            {activeView === 'sentiment-dashboard' && (
+              <SentimentDashboard />
+            )}
+
             {activeView === 'impressum-agb' && (
               <ImpressumAgb />
             )}
@@ -797,7 +1088,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
             {activeView === 'profil' && (
               <ProfilePage 
                 profile={profile} 
-                onUpdateProfile={(newProfile) => setProfile(newProfile)} 
+                onUpdateProfile={handleUpdateProfile} 
               />
             )}
 
@@ -805,7 +1096,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               <MarkdownOrchestrator />
             )}
 
-            {activeView === 'request-orchestrator' && (profile.subscriptionTier === 'Enterprise' || profile.email === 'sven.kulessa@gmail.com') && (
+            {activeView === 'request-orchestrator' && (
               <OrchestratorPanel />
             )}
 
@@ -813,17 +1104,42 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               <PerformanceDashboard />
             )}
 
-            {activeView === 'risiko-assessment' && (
-              <RealTimeRiskAssessment 
-                userCapital={profile.capital}
-                selectedSymbol={selectedSymbol}
-                onSelectSymbol={setSelectedSymbol}
-                triggerAttempt={triggerAttempt}
-              />
+            {activeView === 'audit-logs' && (
+              <AuditLogs />
             )}
 
+            {/* Risikoassessment (Value-at-Risk Risiko-Zentrale): DEAKTIVIERT / DEACTIVATED */}
+            {/* HINWEIS: Dieses Modul wurde gemäß System- und Benutzeranweisung deaktiviert und aus der Navigation entfernt. */}
+            {activeView === 'risiko-assessment' && (
+              <div className="bg-black/40 border border-white/10 rounded-2xl p-8 text-center max-w-lg mx-auto my-12 backdrop-blur-md">
+                <h3 className="text-lg font-bold text-rose-400 mb-2 font-display uppercase tracking-wider">Risikoassessment Deaktiviert</h3>
+                <p className="text-sm text-white/60 mb-6 leading-relaxed">
+                  Dieses Modul wurde gemäß Benutzeranweisung deaktiviert und steht derzeit nicht zur Verfügung. Die Rohdaten wurden archiviert.
+                </p>
+                <button 
+                  onClick={() => setActiveView('dashboard')}
+                  className="px-5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
+                >
+                  Zurück zum Dashboard
+                </button>
+              </div>
+            )}
+
+            {/* Interact (Modul 2): DEAKTIVIERT / DEACTIVATED */}
+            {/* HINWEIS: Dieses Modul wurde gemäß System- und Benutzeranweisung deaktiviert und aus der Navigation entfernt. */}
             {activeView === 'interact' && (
-              <InteractModule />
+              <div className="bg-black/40 border border-white/10 rounded-2xl p-8 text-center max-w-lg mx-auto my-12 backdrop-blur-md">
+                <h3 className="text-lg font-bold text-rose-400 mb-2 font-display uppercase tracking-wider">Interact-Workspace Deaktiviert</h3>
+                <p className="text-sm text-white/60 mb-6 leading-relaxed">
+                  Das Interaktions-Modul wurde gemäß Benutzeranweisung deaktiviert und steht derzeit nicht zur Verfügung. Die Rohdaten wurden archiviert.
+                </p>
+                <button 
+                  onClick={() => setActiveView('dashboard')}
+                  className="px-5 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
+                >
+                  Zurück zum Dashboard
+                </button>
+              </div>
             )}
 
             {activeView === 'charts' && (
@@ -832,13 +1148,21 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                 onSelectSymbol={(sym) => setSelectedSymbol(sym)}
               />
             )}
+
+            {activeView === 'preis-alarme' && (
+              <PriceAlert selectedSymbol={selectedSymbol} userSession={userSession} />
+            )}
+
+            {activeView === 'admin-panel' && (
+              <AdminPanel currentUserEmail={profile.email} />
+            )}
           </motion.div>
         </AnimatePresence>
 
         {/* Footer */}
         <footer className="pt-8 pb-12 text-center border-t border-white/10 mt-12 px-6">
           <div className="max-w-4xl mx-auto flex flex-col items-center gap-4">
-            {/* Info Siegel: Version 0.5 Beta-Phase mit dem Logo versehen */}
+            {/* Info Siegel: Version 0.5.0 mit dem Logo versehen */}
             <div className="flex flex-col sm:flex-row items-center gap-3 bg-gradient-to-r from-aif-gold-DEFAULT/10 via-black/40 to-aif-gold-DEFAULT/5 border border-aif-gold-DEFAULT/20 rounded-2xl px-5 py-2.5 backdrop-blur-md shadow-[0_0_25px_rgba(245,196,83,0.08)] mb-4">
               <div className="flex items-center gap-2">
                 <AifCoreLogo size={24} showText={false} />
@@ -849,8 +1173,8 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-white/5 border border-white/10 text-white/80 font-mono tracking-wider uppercase">
                   Sicherheitssiegel
                 </span>
-                <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/30 tracking-wider font-mono">
-                  Version 0.5 Beta-Phase
+                <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tracking-wider font-mono uppercase">
+                  Zertifiziert
                 </span>
               </div>
             </div>

@@ -1,3 +1,7 @@
+// DEAKTIVIERTES MODUL / DEACTIVATED MODULE: Risikoassessment (Value-at-Risk Risiko-Zentrale)
+// HINWEIS: Dieses Modul wurde gemäß System- und Benutzeranweisung deaktiviert und aus der Plattform-Navigation entfernt.
+// Die Kernfunktionalität bleibt im Code als inaktive Reserve erhalten. Alle Metadaten wurden im Backlog dokumentiert.
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as d3 from 'd3';
 import { motion, AnimatePresence } from 'motion/react';

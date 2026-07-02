@@ -57,7 +57,7 @@ export function ImpressumAgb() {
                     <MapPin size={16} className="text-white/40 shrink-0" />
                     <span>
                       Sven Michael Kulessa<br />
-                      von lepel Straße 3.<br />
+                      von Lepel Straße 3a<br />
                       27259 Freistatt, Deutschland
                     </span>
                   </div>

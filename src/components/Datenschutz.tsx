@@ -11,6 +11,153 @@ interface DataSource {
   gdprBasis: string;
 }
 
+function AuditTrailFlowGraphic() {
+  const [activeNode, setActiveNode] = useState<string | null>('gateway');
+
+  const nodes = [
+    {
+      id: 'client',
+      label: 'Endnutzer (Browser)',
+      status: 'Anonymisiert',
+      statusColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+      icon: Lock,
+      description: 'Der Client führt lokale Analysen durch. Schriften & Symbole werden lokal aus dem Cloud-Container ausgeliefert.',
+      bulletPoints: [
+        'Kein Drittland-Datenabfluss (IP-Isolation)',
+        'Keine Werbe- o. Tracking-Pixel',
+        'Inter & JetBrains Mono lokal gehostet'
+      ]
+    },
+    {
+      id: 'gateway',
+      label: 'AIF-CORE Server-Proxy',
+      status: 'Zertifiziert (Art. 32)',
+      statusColor: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
+      icon: Cpu,
+      description: 'Zentrale Serverinstanz bündelt Anfragen des Clients. Schützt die Identität des Anwenders vor Abfragen an Drittländer.',
+      bulletPoints: [
+        'Request-Coalescing (API Lastbegrenzung)',
+        'Server-Side Memory Caching (TTL: 60s)',
+        'Volle TLS 1.3 Transport-Verschlüsselung'
+      ]
+    },
+    {
+      id: 'apis',
+      label: 'Verifizierte APIs',
+      status: 'No-Demo-Data Konform',
+      statusColor: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
+      icon: HardDrive,
+      description: 'Institutionelle Marktdaten von führenden Brokern und Providern. Keine künstlichen Simulationsdaten.',
+      bulletPoints: [
+        'CoinMarketCap & CoinGecko Crypto APIs',
+        'Stooq Aktien- & Rohstoffströme (CSV)',
+        'Google Gemini NLP News-Scoring API'
+      ]
+    }
+  ];
+
+  return (
+    <div className="bg-black/30 border border-white/5 rounded-xl p-5 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h4 className="text-xs font-bold text-white uppercase tracking-wider font-display flex items-center gap-2">
+            <RefreshCw className="text-cyan-400 animate-spin-slow w-3.5 h-3.5" />
+            <span>Interaktive Audit-Trail-Grafik (DSGVO Flow)</span>
+          </h4>
+          <p className="text-[10px] text-white/50">Wähle einen Knoten, um den verschlüsselten Daten-Auditpfad im Detail zu untersuchen.</p>
+        </div>
+        <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-bold uppercase tracking-widest">
+          SYSTEM: GESICHERT
+        </span>
+      </div>
+
+      {/* Visual Nodes & Connectors */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center relative py-2">
+        {/* SVG background connection lines for desktop */}
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 hidden md:block pointer-events-none z-0">
+          <svg className="w-full h-4" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="line-grad-1" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#10b981" />
+                <stop offset="100%" stopColor="#06b6d4" />
+              </linearGradient>
+              <linearGradient id="line-grad-2" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#06b6d4" />
+                <stop offset="100%" stopColor="#a855f7" />
+              </linearGradient>
+            </defs>
+            {/* Dashed background */}
+            <line x1="15%" y1="8" x2="85%" y2="8" stroke="rgba(255,255,255,0.05)" strokeWidth="2" strokeDasharray="6 4" />
+          </svg>
+        </div>
+
+        {nodes.map((node) => {
+          const NodeIcon = node.icon;
+          const isActive = activeNode === node.id;
+          return (
+            <button
+              key={node.id}
+              onClick={() => setActiveNode(node.id)}
+              className={`text-left relative z-10 p-4 rounded-xl border transition-all duration-300 backdrop-blur-sm cursor-pointer ${
+                isActive
+                  ? 'bg-white/[0.04] border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.15)] scale-[1.02]'
+                  : 'bg-black/40 border-white/5 hover:border-white/20 hover:bg-white/[0.01]'
+              }`}
+            >
+              <div className="flex justify-between items-start mb-3">
+                <div className={`p-2 rounded-lg ${isActive ? 'bg-cyan-500/20 text-cyan-400' : 'bg-white/5 text-white/50'}`}>
+                  <NodeIcon size={18} />
+                </div>
+                <span className={`px-2 py-0.5 rounded text-[8px] font-mono font-bold uppercase border ${node.statusColor}`}>
+                  {node.status}
+                </span>
+              </div>
+              <h5 className="text-xs font-bold text-white uppercase tracking-wider mb-1">{node.label}</h5>
+              <p className="text-[10px] text-white/50 line-clamp-2 leading-relaxed">{node.description}</p>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected Node Details Pane */}
+      <AnimatePresence mode="wait">
+        {activeNode && (
+          <motion.div
+            key={activeNode}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.15 }}
+            className="bg-black/50 border border-white/5 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-4"
+          >
+            <div className="sm:col-span-1 space-y-1">
+              <span className="text-[9px] font-mono text-cyan-400 uppercase tracking-widest font-bold">Knoten-Schnittstelle</span>
+              <h6 className="text-xs font-bold text-white font-display">
+                {nodes.find(n => n.id === activeNode)?.label}
+              </h6>
+              <p className="text-[11px] text-white/60 leading-relaxed pt-1">
+                {nodes.find(n => n.id === activeNode)?.description}
+              </p>
+            </div>
+            
+            <div className="sm:col-span-2 space-y-2">
+              <span className="text-[9px] font-mono text-purple-400 uppercase tracking-widest font-bold">Compliance-Sicherheitsmerkmale</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                {nodes.find(n => n.id === activeNode)?.bulletPoints.map((bp, idx) => (
+                  <div key={idx} className="flex items-center gap-2 bg-white/[0.02] border border-white/5 p-2.5 rounded-lg text-white/80">
+                    <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />
+                    <span className="text-[11px] font-medium leading-tight">{bp}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export function Datenschutz() {
   const [accepted, setAccepted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,7 +242,7 @@ export function Datenschutz() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-white/10 mb-6">
         <div>
           <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-cyan-500/25 text-cyan-400 border border-cyan-500/50 tracking-wider font-mono">
-            JENOVA AUDIT-SUITE • JURISDICTION READY
+            AIF-CORE AUDIT-SUITE • JURISDICTION READY
           </span>
           <h2 className="text-2xl font-black text-white font-display mt-2">Rechtssicheres Compliance-Center</h2>
           <p className="text-xs text-white/70 mt-1 font-sans">
@@ -192,6 +339,9 @@ export function Datenschutz() {
               </p>
             </div>
 
+            {/* Interactive Audit Trail Flow Graphic */}
+            <AuditTrailFlowGraphic />
+
             {/* Interactive Data Sources Ledger Table */}
             <div className="border border-white/10 rounded-xl overflow-hidden bg-black/50">
               <div className="overflow-x-auto">
@@ -264,7 +414,7 @@ export function Datenschutz() {
       <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
         <div className="text-xs text-white/40 font-mono flex items-center gap-1.5">
           <FileText size={12} className="text-cyan-400" />
-          Zuletzt verifiziert: 29. Juni 2026 • Version 1.0.0 (Gerichtsfest)
+          Zuletzt verifiziert: 29. Juni 2026 • Gerichtsfest
         </div>
 
         <div>

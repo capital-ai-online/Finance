@@ -21,6 +21,15 @@ export default function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const [justLoggedOut, setJustLoggedOut] = useState<boolean>(false);
 
+  const updateUserSession = (session: UserSession | null) => {
+    setUserSession(session);
+    if (session) {
+      localStorage.setItem('mcc_user_session', JSON.stringify(session));
+    } else {
+      localStorage.removeItem('mcc_user_session');
+    }
+  };
+
   const handleSupabaseSession = async (session: any) => {
     const user = session.user;
     const email = user.email || '';
@@ -28,7 +37,7 @@ export default function App() {
     const name = user.user_metadata?.full_name || user.user_metadata?.name || email.split('@')[0] || (isAnonymous ? 'Gast-User' : 'User');
     
     if (isAnonymous) {
-      setUserSession({
+      updateUserSession({
         type: 'guest',
         name: 'Gast-User',
         email: email || 'gast@aif-core.de',
@@ -54,7 +63,7 @@ export default function App() {
         }
       }
       
-      setUserSession({
+      updateUserSession({
         type: 'registered',
         name,
         email,
@@ -63,7 +72,7 @@ export default function App() {
       });
     } catch (err) {
       console.error("Error loading subscription tier:", err);
-      setUserSession({
+      updateUserSession({
         type: 'registered',
         name,
         email,
@@ -76,6 +85,21 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Load cached session from localStorage (robust compliance with EinwVO/DSGVO & standalone readiness when JWT is deactivated)
+    const localSessionJson = localStorage.getItem('mcc_user_session');
+    if (localSessionJson) {
+      try {
+        const parsed = JSON.parse(localSessionJson);
+        if (parsed && parsed.email) {
+          setUserSession(parsed);
+          setLoading(false);
+          // Still verify with Supabase in background if possible, but don't block
+        }
+      } catch (e) {
+        console.error("Failed to parse local session", e);
+      }
+    }
+
     if (!supabase) {
       setLoading(false);
       return;
@@ -88,6 +112,9 @@ export default function App() {
       } else {
         setLoading(false);
       }
+    }).catch(err => {
+      console.warn("Supabase getSession failed, using local cache state:", err);
+      setLoading(false);
     });
 
     // Listen for auth state changes
@@ -96,7 +123,10 @@ export default function App() {
         if (session) {
           handleSupabaseSession(session);
         } else {
-          setUserSession(null);
+          // If we manually logged out, clear it, but otherwise keep local state if JWT is deactivated
+          if (event === 'SIGNED_OUT') {
+            updateUserSession(null);
+          }
           setLoading(false);
         }
       }
@@ -109,26 +139,41 @@ export default function App() {
 
   const handleLogin = async (email: string, password: string) => {
     if (!supabase) {
-      throw new Error('Supabase is not configured yet. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your env variables.');
+      throw new Error("Supabase ist nicht konfiguriert. Bitte überprüfen Sie die Verbindungseinstellungen.");
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        throw new Error(error.message);
+      }
+    } catch (err: any) {
+      console.warn("[App] Login failed:", err);
+      throw new Error(err.message || "Anmeldung fehlgeschlagen.");
+    }
   };
 
   const handleRegister = async (name: string, email: string, password: string) => {
     if (!supabase) {
-      throw new Error('Supabase is not configured yet. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your env variables.');
+      throw new Error("Supabase ist nicht konfiguriert. Registrierung nicht möglich.");
     }
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name,
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+          },
         },
-      },
-    });
-    if (error) throw error;
+      });
+      if (error) {
+        throw new Error(error.message);
+      }
+    } catch (err: any) {
+      console.warn("[App] Registration failed:", err);
+      throw new Error(err.message || "Registrierung fehlgeschlagen.");
+    }
   };
 
   const handleGuestLogin = async () => {
@@ -137,7 +182,7 @@ export default function App() {
       if (!error) return;
     }
     // Local fallback if Supabase is offline or anonymous auth is disabled
-    setUserSession({
+    updateUserSession({
       type: 'guest',
       name: 'Gast-User',
       email: 'gast@aif-core.de',
@@ -147,11 +192,17 @@ export default function App() {
 
   const handleLogout = async () => {
     if (supabase) {
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.warn("Supabase signOut error:", e);
+      }
     }
-    setUserSession(null);
+    updateUserSession(null);
     setJustLoggedOut(true);
-    setTimeout(() => setJustLoggedOut(false), 4000);
+    setTimeout(() => {
+      setJustLoggedOut(false);
+    }, 5000);
   };
 
   if (loading) {
@@ -175,13 +226,21 @@ export default function App() {
         />
       ) : (
         <LandingPage 
-          onLoginEmail={(email, password) => { setJustLoggedOut(false); return handleLogin(email, password); }}
-          onGuestLogin={() => { setJustLoggedOut(false); handleGuestLogin(); }}
-          onRegisterEmail={(name, email, password) => { setJustLoggedOut(false); return handleRegister(name, email, password); }}
+          onLoginEmail={async (email, pwd) => {
+            setJustLoggedOut(false);
+            await handleLogin(email, pwd);
+          }} 
+          onGuestLogin={async () => {
+            setJustLoggedOut(false);
+            await handleGuestLogin();
+          }}
+          onRegisterEmail={async (name, email, pwd) => {
+            setJustLoggedOut(false);
+            await handleRegister(name, email, pwd);
+          }}
           justLoggedOut={justLoggedOut}
         />
       )}
     </>
   );
 }
-

@@ -5,13 +5,23 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, Clock, Cpu, Sparkles, 
-  Settings, RefreshCw, BarChart3, ShieldAlert, CheckCircle2, ChevronRight
+  Settings, RefreshCw, BarChart3, ShieldAlert, CheckCircle2, ChevronRight,
+  Bell, BellRing, Volume2, VolumeX, Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { AssetLogo } from './AssetLogo';
+import { UserSession } from '../App';
+import { 
+  getSessionAlerts, 
+  saveSessionAlerts, 
+  PriceAlertItem 
+} from '../lib/alertStore';
+import { assetRegistry } from '../lib/assetRegistry';
 
 interface ChartsProps {
   selectedSymbol: string;
   onSelectSymbol?: (symbol: string) => void;
+  userSession?: UserSession;
 }
 
 interface HistoryItem {
@@ -41,12 +51,86 @@ interface ScoreResult {
   timestamp: string;
 }
 
-export function Charts({ selectedSymbol, onSelectSymbol }: ChartsProps) {
+export function Charts({ selectedSymbol, onSelectSymbol, userSession }: ChartsProps) {
   const [activeSymbol, setActiveSymbol] = useState(selectedSymbol || 'BTC');
   const [range, setRange] = useState<'1Y' | '3Y'>('1Y');
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Price Alert states
+  const [activeAlerts, setActiveAlerts] = useState<PriceAlertItem[]>([]);
+  const [showQuickAlert, setShowQuickAlert] = useState(false);
+  const [alertTargetPrice, setAlertTargetPrice] = useState<string>('');
+  const [alertCondition, setAlertCondition] = useState<'above' | 'below'>('above');
+  const [alertSound, setAlertSound] = useState(true);
+
+  // Load alerts on mount or when userSession changes
+  useEffect(() => {
+    const email = userSession?.email;
+    setActiveAlerts(getSessionAlerts(email));
+
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail && customEvent.detail.email === email) {
+        setActiveAlerts(customEvent.detail.alerts);
+      }
+    };
+
+    window.addEventListener('aif-alerts-updated', handleSync);
+    return () => window.removeEventListener('aif-alerts-updated', handleSync);
+  }, [userSession]);
+
+  const activeAsset = useMemo(() => {
+    return assetRegistry.getAsset(activeSymbol);
+  }, [activeSymbol]);
+
+  // Check if there is an active (untriggered) alert for the current symbol
+  const currentAlert = useMemo(() => {
+    return activeAlerts.find(a => a.symbol.toUpperCase() === activeSymbol.toUpperCase() && !a.isTriggered);
+  }, [activeAlerts, activeSymbol]);
+
+  const handleToggleAlert = () => {
+    if (currentAlert) {
+      // Toggle off / delete
+      const updated = activeAlerts.filter(a => a.id !== currentAlert.id);
+      saveSessionAlerts(updated, userSession?.email);
+    } else {
+      // Open panel or set default alert
+      const price = avQuote?.price || activeAsset?.price || 100;
+      setAlertTargetPrice(Number((price * 1.05).toFixed(price < 5 ? 4 : 2)).toString());
+      setAlertCondition('above');
+      setShowQuickAlert(prev => !prev);
+    }
+  };
+
+  const handleSaveAlert = (e: React.FormEvent) => {
+    e.preventDefault();
+    const price = avQuote?.price || activeAsset?.price || 100;
+    const name = activeAsset?.name || activeSymbol;
+    const type = activeAsset?.type || 'crypto';
+    const target = Number(alertTargetPrice);
+
+    if (isNaN(target) || target <= 0) return;
+
+    const newAlert: PriceAlertItem = {
+      id: `alert-${Date.now()}`,
+      symbol: activeSymbol.toUpperCase(),
+      assetName: name,
+      type: type as any,
+      targetPrice: target,
+      condition: alertCondition,
+      initialPrice: price,
+      currentPrice: price,
+      createdAt: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+      isTriggered: false,
+      soundEnabled: alertSound
+    };
+
+    const updated = [newAlert, ...activeAlerts];
+    saveSessionAlerts(updated, userSession?.email);
+    setShowQuickAlert(false);
+  };
 
   // Alpha Vantage real-time quote state
   const [avQuote, setAvQuote] = useState<any>(null);
@@ -356,6 +440,24 @@ export function Charts({ selectedSymbol, onSelectSymbol }: ChartsProps) {
             <option value="EURUSD">EUR / USD (Forex)</option>
           </select>
 
+          {/* Quick Price Alert Toggle Button */}
+          <button
+            onClick={handleToggleAlert}
+            className={`py-2 px-3 rounded-lg border text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
+              currentAlert
+                ? 'bg-amber-500/10 border-amber-500/50 text-amber-400 font-extrabold shadow-[0_0_15px_rgba(245,196,83,0.15)]'
+                : 'bg-white/5 border-white/10 text-white/70 hover:text-white hover:border-white/20'
+            }`}
+            title={currentAlert ? `Preisalarm aktiv bei $${currentAlert.targetPrice}` : 'Preisalarm für dieses Asset einrichten'}
+          >
+            {currentAlert ? (
+              <BellRing size={14} className="text-amber-400 animate-pulse" />
+            ) : (
+              <Bell size={14} className="text-white/60" />
+            )}
+            <span>{currentAlert ? 'Alarm Aktiv' : 'Alarm stellen'}</span>
+          </button>
+
           {/* Timeframe selector */}
           <div className="flex bg-black/40 border border-white/10 rounded-lg p-0.5">
             {['1Y', '3Y'].map((t) => (
@@ -388,12 +490,106 @@ export function Charts({ selectedSymbol, onSelectSymbol }: ChartsProps) {
         </div>
       </div>
 
+      {/* Quick Price Alert Config Box */}
+      <AnimatePresence>
+        {showQuickAlert && !currentAlert && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-gradient-to-r from-neutral-950 via-black/80 to-neutral-950 border border-white/10 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4 justify-between backdrop-blur-md">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT rounded-lg">
+                  <Bell size={16} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-black font-display text-white uppercase tracking-wider">
+                    Preisalarm für {activeSymbol} einrichten
+                  </h4>
+                  <p className="text-[10px] text-white/50">
+                    Aktueller Kurs: ${avQuote?.price?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || activeAsset?.price?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveAlert} className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                {/* Condition selection */}
+                <div className="flex bg-black/40 border border-white/10 rounded-lg p-0.5 text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => setAlertCondition('above')}
+                    className={`py-1 px-2.5 rounded font-bold uppercase transition-all ${
+                      alertCondition === 'above' ? 'bg-emerald-500/20 text-emerald-400 font-extrabold' : 'text-white/40 hover:text-white'
+                    }`}
+                  >
+                    Steigt Über (≥)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAlertCondition('below')}
+                    className={`py-1 px-2.5 rounded font-bold uppercase transition-all ${
+                      alertCondition === 'below' ? 'bg-rose-500/20 text-rose-400 font-extrabold' : 'text-white/40 hover:text-white'
+                    }`}
+                  >
+                    Fällt Unter (≤)
+                  </button>
+                </div>
+
+                {/* Price input */}
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/40 font-mono text-xs">$</span>
+                  <input
+                    type="number"
+                    step="any"
+                    required
+                    value={alertTargetPrice}
+                    onChange={(e) => setAlertTargetPrice(e.target.value)}
+                    className="bg-black/60 border border-white/10 focus:border-aif-gold-DEFAULT/50 rounded-lg py-1 px-2.5 pl-6 text-xs text-white font-mono w-28 focus:outline-none"
+                    placeholder="Zielpreis"
+                  />
+                </div>
+
+                {/* Sound Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setAlertSound(!alertSound)}
+                  className={`p-1.5 rounded-lg border transition-all ${
+                    alertSound ? 'bg-aif-gold-DEFAULT/15 border-aif-gold-DEFAULT/30 text-aif-gold-DEFAULT' : 'bg-black/30 border-white/10 text-white/30'
+                  }`}
+                  title="Ton simulieren"
+                >
+                  {alertSound ? <Volume2 size={12} /> : <VolumeX size={12} />}
+                </button>
+
+                {/* Save button */}
+                <button
+                  type="submit"
+                  className="py-1.5 px-3 bg-aif-gold-DEFAULT hover:brightness-110 text-black font-extrabold text-xs uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <Check size={12} strokeWidth={3} />
+                  <span>Aktivieren</span>
+                </button>
+
+                {/* Cancel button */}
+                <button
+                  type="button"
+                  onClick={() => setShowQuickAlert(false)}
+                  className="py-1.5 px-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 rounded-lg text-xs font-bold uppercase cursor-pointer"
+                >
+                  Abbrechen
+                </button>
+              </form>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Alpha Vantage Real-time Connection Widget */}
       <div className="bg-gradient-to-r from-aif-gold-DEFAULT/10 via-amber-500/5 to-black border border-aif-gold-DEFAULT/20 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/30 animate-pulse">
-            <CheckCircle2 size={18} />
-          </div>
+          <AssetLogo symbol={activeSymbol} size="md" className="shrink-0" />
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-black text-aif-gold-DEFAULT uppercase tracking-wider font-mono">ALPHA VANTAGE REAL-TIME FEED</span>

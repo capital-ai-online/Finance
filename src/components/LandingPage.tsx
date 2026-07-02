@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldAlert, Mail, User, Lock, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { ShieldAlert, Mail, User, Lock, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, X } from 'lucide-react';
 import { AifCoreLogo } from './AifCoreLogo';
 import { supabase } from '../supabaseClient';
 
@@ -17,19 +17,68 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
   // Login Form States
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   
   // Register Form States
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [showRegPassword, setShowRegPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   
+  // Forgot Password Modal States
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotError, setForgotError] = useState<string | null>(null);
+  const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
+  const [forgotLoading, setForgotLoading] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const handleForgotPassword = () => {
+    setForgotEmail(loginEmail || '');
+    setForgotError(null);
+    setForgotSuccess(null);
+    setIsForgotModalOpen(true);
+  };
+
+  const handleForgotResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError(null);
+    setForgotSuccess(null);
+    if (!forgotEmail) {
+      setForgotError('Bitte geben Sie Ihre E-Mail-Adresse ein.');
+      return;
+    }
+    if (!supabase) {
+      setForgotError('Supabase ist nicht konfiguriert.');
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: `${window.location.origin}`,
+      });
+      if (error) {
+        setForgotError(error.message);
+      } else {
+        setForgotSuccess('Eine E-Mail zum Zurücksetzen des Passworts wurde gesendet. Bitte überprüfen Sie Ihr Postfach.');
+      }
+    } catch (err: any) {
+      setForgotError(err.message || 'Ein Fehler ist beim Senden der Passwort-Zurücksetzen-E-Mail aufgetreten.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
     if (!loginEmail || !loginPassword) {
       setError('Bitte füllen Sie alle Felder aus.');
       return;
@@ -47,10 +96,30 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
     if (!regName || !regEmail || !regPassword) {
       setError('Bitte füllen Sie alle Felder aus.');
       return;
     }
+
+    // Password complexity check: min 8 chars, one uppercase, one number, one special character
+    if (regPassword.length < 8) {
+      setError('Das Passwort muss mindestens 8 Zeichen lang sein.');
+      return;
+    }
+    if (!/[A-Z]/.test(regPassword)) {
+      setError('Das Passwort muss mindestens einen Großbuchstaben enthalten.');
+      return;
+    }
+    if (!/[0-9]/.test(regPassword)) {
+      setError('Das Passwort muss mindestens eine Zahl enthalten.');
+      return;
+    }
+    if (!/[^A-Za-z0-9]/.test(regPassword)) {
+      setError('Das Passwort muss mindestens ein Sonderzeichen enthalten.');
+      return;
+    }
+
     if (!agreeTerms) {
       setError('Bitte stimmen Sie den AGB und Datenschutzbestimmungen zu.');
       return;
@@ -58,7 +127,7 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
     setLoading(true);
     try {
       await onRegisterEmail(regName, regEmail, regPassword);
-      setError('Registrierung erfolgreich! Bitte überprüfen Sie Ihre E-Mail auf einen Bestätigungslink.');
+      setSuccessMessage('Registrierung erfolgreich! Bitte überprüfen Sie Ihre E-Mail auf einen Bestätigungslink.');
     } catch (err: any) {
       setError(err.message || 'Ein Fehler ist bei der Registrierung aufgetreten.');
     } finally {
@@ -68,8 +137,9 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
 
   const handleOAuthLogin = async (provider: 'google' | 'azure' | 'github' | 'apple' | 'discord') => {
     setError(null);
+    setSuccessMessage(null);
     if (!supabase) {
-      setError('Supabase ist nicht konfiguriert. Bitte setzen Sie die Umgebungsvariablen VITE_SUPABASE_URL und VITE_SUPABASE_ANON_KEY.');
+      setError("Supabase ist nicht konfiguriert. Bitte legen Sie die entsprechenden Umgebungsvariablen fest.");
       return;
     }
     setLoading(true);
@@ -84,7 +154,7 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
         setError(error.message);
       }
     } catch (err: any) {
-      setError(err.message || 'OAuth Login-Fehler.');
+      setError(err.message || 'Ein OAuth-Verbindungsfehler ist aufgetreten.');
     } finally {
       setLoading(false);
     }
@@ -167,10 +237,22 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
             </p>
           </div>
 
+          {/* Success Banner when logged out */}
+          {justLoggedOut && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center justify-center gap-2 font-mono"
+            >
+              <CheckCircle2 size={14} className="shrink-0 text-emerald-400" />
+              <span>Erfolgreich abgemeldet!</span>
+            </motion.div>
+          )}
+
           {/* Toggle Tabs between Sign In and Register */}
           <div className="flex bg-white/5 p-1 rounded-lg border border-white/10 mb-6">
             <button
-              onClick={() => { setActiveTab('login'); setError(null); }}
+              onClick={() => { setActiveTab('login'); setError(null); setSuccessMessage(null); }}
               className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${
                 activeTab === 'login'
                   ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_10px_rgba(245,196,83,0.2)]'
@@ -180,7 +262,7 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
               Sign In
             </button>
             <button
-              onClick={() => { setActiveTab('register'); setError(null); }}
+              onClick={() => { setActiveTab('register'); setError(null); setSuccessMessage(null); }}
               className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${
                 activeTab === 'register'
                   ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_10px_rgba(245,196,83,0.2)]'
@@ -191,22 +273,17 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
             </button>
           </div>
 
-          {/* Success Banner when logged out */}
-          {justLoggedOut && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center justify-center gap-2 font-mono"
-            >
-              <CheckCircle2 size={14} className="shrink-0 text-emerald-400" />
-              <span>Erfolgreich abgemeldet!</span>
-            </motion.div>
-          )}
-
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2 font-mono">
               <AlertCircle size={14} className="shrink-0" />
               <span>{error}</span>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 font-mono">
+              <CheckCircle2 size={14} className="shrink-0 text-emerald-400" />
+              <span>{successMessage}</span>
             </div>
           )}
 
@@ -237,17 +314,34 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/55 font-mono">Passwort</label>
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/55 font-mono">Passwort</label>
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-[9px] font-mono text-[#0DDDDD] hover:underline focus:outline-none cursor-pointer"
+                    >
+                      Passwort vergessen?
+                    </button>
+                  </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                     <input
-                      type="password"
+                      type={showLoginPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       required
-                      className="w-full bg-black/60 border border-white/25 rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/35 focus:outline-none focus:ring-1 focus:ring-aif-gold-DEFAULT"
+                      className="w-full bg-black/60 border border-white/25 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-white/35 focus:outline-none focus:ring-1 focus:ring-aif-gold-DEFAULT"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 focus:outline-none transition-colors"
+                      title={showLoginPassword ? "Passwort ausblenden" : "Passwort anzeigen"}
+                    >
+                      {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
 
@@ -284,7 +378,7 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 relative">
                   <label className="text-[10px] uppercase font-bold tracking-widest text-white/55 font-mono">E-Mail-Adresse</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
@@ -293,25 +387,106 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
                       placeholder="name@beispiel.com"
                       value={regEmail}
                       onChange={(e) => setRegEmail(e.target.value)}
+                      onFocus={() => setIsEmailFocused(true)}
+                      onBlur={() => setIsEmailFocused(false)}
                       required
                       className="w-full bg-black/60 border border-white/25 rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/35 focus:outline-none focus:ring-1 focus:ring-aif-gold-DEFAULT"
                     />
                   </div>
+
+                  <AnimatePresence>
+                    {(isEmailFocused || (regEmail !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail))) && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute bottom-full left-0 w-full mb-2.5 p-3 rounded-xl bg-neutral-950/95 border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-md space-y-1.5 text-[10px] font-mono leading-relaxed z-30"
+                      >
+                        <div className="text-white/40 font-sans font-medium mb-1 flex items-center gap-1.5">
+                          <span className="w-1 h-1 rounded-full bg-aif-gold-DEFAULT animate-pulse" />
+                          E-Mail Formatprüfung:
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full transition-colors ${regEmail.includes('@') ? 'bg-[#0DDDDD] shadow-[0_0_8px_rgba(13,221,221,0.5)]' : 'bg-white/20'}`} />
+                          <span className={regEmail.includes('@') ? 'text-white' : 'text-white/40'}>Enthält "@"-Zeichen</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full transition-colors ${/[^\s@]+@[^\s@]+\.[^\s@]+/.test(regEmail) ? 'bg-[#0DDDDD] shadow-[0_0_8px_rgba(13,221,221,0.5)]' : 'bg-white/20'}`} />
+                          <span className={/[^\s@]+@[^\s@]+\.[^\s@]+/.test(regEmail) ? 'text-white' : 'text-white/40'}>Gültige Domain (z.B. .de / .com)</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full transition-colors ${(regEmail.length > 0 && !/\s/.test(regEmail)) ? 'bg-[#0DDDDD] shadow-[0_0_8px_rgba(13,221,221,0.5)]' : 'bg-white/20'}`} />
+                          <span className={(regEmail.length > 0 && !/\s/.test(regEmail)) ? 'text-white' : 'text-white/40'}>Keine Leerzeichen</span>
+                        </div>
+                        <div className="absolute -bottom-1.5 left-6 w-3 h-3 rotate-45 bg-neutral-950 border-r border-b border-white/10 pointer-events-none" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 relative">
                   <label className="text-[10px] uppercase font-bold tracking-widest text-white/55 font-mono">Passwort</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                     <input
-                      type="password"
+                      type={showRegPassword ? "text" : "password"}
                       placeholder="Sicheres Passwort wählen"
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
+                      onFocus={() => setIsPasswordFocused(true)}
+                      onBlur={() => setIsPasswordFocused(false)}
                       required
-                      className="w-full bg-black/60 border border-white/25 rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/35 focus:outline-none focus:ring-1 focus:ring-aif-gold-DEFAULT"
+                      className="w-full bg-black/60 border border-white/25 rounded-lg pl-10 pr-10 py-2.5 text-xs text-white placeholder-white/35 focus:outline-none focus:ring-1 focus:ring-aif-gold-DEFAULT"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowRegPassword(!showRegPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 focus:outline-none transition-colors"
+                      title={showRegPassword ? "Passwort ausblenden" : "Passwort anzeigen"}
+                    >
+                      {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
+
+                  <AnimatePresence>
+                    {(isPasswordFocused || (regPassword !== '' && (
+                      regPassword.length < 8 ||
+                      !/[A-Z]/.test(regPassword) ||
+                      !/[0-9]/.test(regPassword) ||
+                      !/[^A-Za-z0-9]/.test(regPassword)
+                    ))) && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute bottom-full left-0 w-full mb-2.5 p-3 rounded-xl bg-neutral-950/95 border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-md space-y-1.5 text-[10px] font-mono leading-relaxed z-30"
+                      >
+                        <div className="text-white/40 font-sans font-medium mb-1 flex items-center gap-1.5">
+                          <span className="w-1 h-1 rounded-full bg-aif-gold-DEFAULT animate-pulse" />
+                          Passwort-Anforderungen:
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full transition-colors ${regPassword.length >= 8 ? 'bg-[#0DDDDD] shadow-[0_0_8px_rgba(13,221,221,0.5)]' : 'bg-white/20'}`} />
+                          <span className={regPassword.length >= 8 ? 'text-white' : 'text-white/40'}>Mindestens 8 Zeichen</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full transition-colors ${/[A-Z]/.test(regPassword) ? 'bg-[#0DDDDD] shadow-[0_0_8px_rgba(13,221,221,0.5)]' : 'bg-white/20'}`} />
+                          <span className={/[A-Z]/.test(regPassword) ? 'text-white' : 'text-white/40'}>Ein Großbuchstabe (A-Z)</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full transition-colors ${/[0-9]/.test(regPassword) ? 'bg-[#0DDDDD] shadow-[0_0_8px_rgba(13,221,221,0.5)]' : 'bg-white/20'}`} />
+                          <span className={/[0-9]/.test(regPassword) ? 'text-white' : 'text-white/40'}>Eine Ziffer (0-9)</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full transition-colors ${/[^A-Za-z0-9]/.test(regPassword) ? 'bg-[#0DDDDD] shadow-[0_0_8px_rgba(13,221,221,0.5)]' : 'bg-white/20'}`} />
+                          <span className={/[^A-Za-z0-9]/.test(regPassword) ? 'text-white' : 'text-white/40'}>Ein Sonderzeichen</span>
+                        </div>
+                        <div className="absolute -bottom-1.5 left-6 w-3 h-3 rotate-45 bg-neutral-950 border-r border-b border-white/10 pointer-events-none" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <div className="flex items-start gap-2 pt-1">
@@ -446,6 +621,110 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
           </div>
         </div>
       </motion.div>
+
+      <AnimatePresence>
+        {isForgotModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 15 }}
+              transition={{ type: 'spring', duration: 0.35 }}
+              className="relative w-full max-w-md bg-neutral-950/90 border border-white/10 rounded-2xl p-6 overflow-hidden shadow-[0_0_50px_rgba(13,221,221,0.15)]"
+            >
+              {/* Subtle background gradients inside modal */}
+              <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-32 h-32 rounded-full bg-purple-600/10 blur-3xl pointer-events-none" />
+
+              <button
+                type="button"
+                onClick={() => setIsForgotModalOpen(false)}
+                className="absolute top-4 right-4 text-white/40 hover:text-white/80 transition-colors focus:outline-none cursor-pointer"
+                title="Schließen"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="mb-5 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-aif-gold-DEFAULT animate-pulse" />
+                <span className="text-[10px] font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-widest">
+                  Sicherheits-Center
+                </span>
+              </div>
+
+              <h3 className="text-lg font-bold text-white tracking-tight mb-2">
+                Passwort zurücksetzen
+              </h3>
+              <p className="text-xs text-white/60 leading-relaxed mb-5">
+                Geben Sie Ihre registrierte E-Mail-Adresse ein. Wir senden Ihnen umgehend einen sicheren Link zu, mit dem Sie ein neues Passwort erstellen können.
+              </p>
+
+              {forgotError && (
+                <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2 font-mono">
+                  <AlertCircle size={14} className="shrink-0 text-red-400" />
+                  <span>{forgotError}</span>
+                </div>
+              )}
+
+              {forgotSuccess && (
+                <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 font-mono">
+                  <CheckCircle2 size={14} className="shrink-0 text-emerald-400" />
+                  <span>{forgotSuccess}</span>
+                </div>
+              )}
+
+              {!forgotSuccess && (
+                <form onSubmit={handleForgotResetSubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/55 font-mono">E-Mail-Adresse</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                      <input
+                        type="email"
+                        placeholder="name@beispiel.com"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        required
+                        className="w-full bg-black/60 border border-white/25 rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/35 focus:outline-none focus:ring-1 focus:ring-aif-gold-DEFAULT"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    className="w-full py-2.5 px-4 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 disabled:opacity-50 text-black font-sans font-bold text-xs uppercase tracking-widest rounded-lg border border-transparent shadow-[0_0_15px_rgba(13,221,221,0.2)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                  >
+                    {forgotLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Sende Link...</span>
+                      </>
+                    ) : (
+                      <span>Reset-Link senden</span>
+                    )}
+                  </button>
+                </form>
+              )}
+
+              {forgotSuccess && (
+                <button
+                  type="button"
+                  onClick={() => setIsForgotModalOpen(false)}
+                  className="w-full py-2.5 px-4 bg-white/10 hover:bg-white/15 text-white font-sans font-bold text-xs uppercase tracking-widest rounded-lg border border-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  Schließen
+                </button>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

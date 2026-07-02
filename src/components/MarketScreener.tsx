@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Asset } from '../types';
+import { AssetLogo } from './AssetLogo';
 import { 
   Search, 
   SlidersHorizontal, 
@@ -20,15 +21,25 @@ import {
   Check,
   ChevronDown,
   HelpCircle,
-  FileText
+  FileText,
+  Bell,
+  BellRing
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
+import { UserSession } from '../App';
+import { 
+  getSessionAlerts, 
+  saveSessionAlerts, 
+  toggleSessionAlert, 
+  PriceAlertItem 
+} from '../lib/alertStore';
 
 interface MarketScreenerProps {
   onSelectSymbol: (symbol: string) => void;
   selectedSymbol: string;
   triggerAttempt?: (actionName: string, onExecute: () => void) => void;
+  userSession?: UserSession;
 }
 
 type SortField = 'symbol' | 'name' | 'price' | 'change24h' | 'score' | 'peRatio' | 'marketCap' | 'dividendYield' | 'debtToEquity' | 'grahamScore' | 'volume24h';
@@ -40,6 +51,11 @@ const ALIAS_MAP: Record<string, string[]> = {
   'TSLA': ['tesla', 'elon', 'musk', 'e-auto', 'ev', 'model s', 'cyber truck', 'elektroauto'],
   'NVDA': ['nvidia', 'ki-chips', 'gforce', 'gpu', 'grafikkarte', 'ai chips', 'rtx', 'chipsatz'],
   'GLD': ['gold', 'goldbarren', 'gld', 'edelmetall', 'sicherer hafen', 'commodity', 'rohstoff'],
+  'SLV': ['silber', 'silver', 'slv', 'edelmetall', 'metall', 'commodity', 'rohstoff'],
+  'USO': ['rohöl', 'crude oil', 'öl', 'oil', 'uso', 'energie', 'commodity', 'rohstoff'],
+  'NG=F': ['gas', 'natural gas', 'ng=f', 'ng', 'erdgas', 'methan', 'energie', 'rohstoff'],
+  'WTI': ['wti', 'wti crude oil', 'us-öl', 'west texas intermediate', 'rohöl', 'öl', 'oil', 'energie', 'rohstoff'],
+  'BRENT': ['brent', 'brent crude oil', 'nordsee-öl', 'brent-öl', 'rohöl', 'öl', 'oil', 'energie', 'rohstoff'],
   'BTC': ['bitcoin', 'btc', 'crypto', 'krypto', 'satoshi', 'digitales gold', 'digital gold', 'coin'],
   'ETH': ['ethereum', 'ether', 'eth', 'smart contracts', 'vitalik', 'gas fee', 'altcoin'],
   'EURUSD': ['forex', 'devisen', 'euro', 'dollar', 'währung', 'currency', 'geldkurs']
@@ -62,7 +78,7 @@ function SimpleTooltip({ title, text, children }: { title: string; text: string;
   );
 }
 
-export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt }: MarketScreenerProps) {
+export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt, userSession }: MarketScreenerProps) {
   // Trigger attempt on mount
   useEffect(() => {
     if (triggerAttempt) {
@@ -72,6 +88,34 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
 
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Price Alert state
+  const [activeAlerts, setActiveAlerts] = useState<PriceAlertItem[]>([]);
+
+  // Load and sync alerts
+  useEffect(() => {
+    const email = userSession?.email;
+    setActiveAlerts(getSessionAlerts(email));
+
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail && customEvent.detail.email === email) {
+        setActiveAlerts(customEvent.detail.alerts);
+      }
+    };
+
+    window.addEventListener('aif-alerts-updated', handleSync);
+    return () => window.removeEventListener('aif-alerts-updated', handleSync);
+  }, [userSession]);
+
+  const alertIsActive = (symbol: string) => {
+    return activeAlerts.some(a => a.symbol.toUpperCase() === symbol.toUpperCase() && !a.isTriggered);
+  };
+
+  const handleToggleAlert = (asset: any) => {
+    const email = userSession?.email;
+    toggleSessionAlert(asset.symbol, asset.price, asset.name, asset.type, email);
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   
@@ -109,6 +153,12 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
     fetch('/api/market-data')
       .then(res => res.json())
       .then(data => {
+        if (!Array.isArray(data)) {
+          console.error('Expected array of assets, received:', data);
+          setAssets([]);
+          setLoading(false);
+          return;
+        }
         const nonVariants = data.filter((asset: any) => !asset.name.toLowerCase().includes('variant'));
         setAssets(nonVariants);
         setLoading(false);
@@ -267,7 +317,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
 
       return true;
     });
-  }, [assets, searchQuery, assetType, peMin, peMax, mcapMin, mcapMax, divMin, divMax, deMax, minKiScore, minGrahamScore]);
+  }, [assets, searchQuery, assetType, peMin, peMax, mcapMin, mcapMax, divMin, divMax, deMax, minKiScore, minGrahamScore, areaFilter]);
 
   // Sorting logic
   const sortedAssets = useMemo(() => {
@@ -406,7 +456,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
     doc.setTextColor(245, 196, 83);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
-    doc.text('JENOVA NEXUS', 15, 18);
+    doc.text('AIF-CORE', 15, 18);
     
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'normal');
@@ -573,10 +623,10 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.setTextColor(140, 140, 140);
-    doc.text('Dieses Dokument wurde automatisch von Jenova Nexus generiert. DSGVO-konforme quantitative Echtzeitanalyse.', 15, 285);
+    doc.text('Dieses Dokument wurde automatisch von AIF-CORE generiert. DSGVO-konforme quantitative Echtzeitanalyse.', 15, 285);
     doc.text('Sven Kulessa • sven.kulessa@gmail.com • Compliant with Art. 30 GDPR / BFSG Accessibility Standards.', 15, 289);
     
-    doc.save(`Jenova_Nexus_Screener_${assetType}_Bericht.pdf`);
+    doc.save(`AIF_CORE_Screener_${assetType}_Bericht.pdf`);
   };
 
   return (
@@ -622,6 +672,119 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
               </SimpleTooltip>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* 🔍 Asset-Auswahl & Intelligente Suche */}
+      <div className="bg-gradient-to-r from-neutral-950 to-neutral-900 border border-white/10 rounded-xl p-5 shadow-[0_4px_25px_rgba(0,0,0,0.4)]">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+          
+          {/* Left Side: Label and Asset-Klasse selector */}
+          <div className="md:col-span-4 space-y-2">
+            <SimpleTooltip 
+              title="Assetklasse filtern" 
+              text="Grenze die Suche auf Aktien (Unternehmensanteile), Kryptowährungen (dezentrale Währungen wie Bitcoin), Rohstoffe (Gold, Silber, Öl) oder Forex ein."
+            >
+              <label className="block text-xs font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-widest cursor-help flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-aif-gold-DEFAULT animate-pulse" />
+                1. Asset-Klasse Wählen
+              </label>
+            </SimpleTooltip>
+            <div className="flex bg-black/60 border border-white/10 rounded-xl p-1 shadow-inner">
+              {[
+                { id: 'all', label: 'Alle' },
+                { id: 'stock', label: 'Aktien' },
+                { id: 'crypto', label: 'Krypto' },
+                { id: 'commodity', label: 'Rohstoffe' }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => { setAssetType(item.id); setCurrentPage(1); }}
+                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase tracking-wide transition-all cursor-pointer ${
+                    assetType === item.id 
+                      ? 'bg-aif-gold-DEFAULT text-black font-extrabold shadow-md' 
+                      : 'text-white/55 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Side: Intelligente Suche search input with autocomplete */}
+          <div className="md:col-span-8 space-y-2 relative">
+            <SimpleTooltip 
+              title="Intelligente Suche" 
+              text="Suche nach Symbol (z.B. BTC, GLD, SLV), Rufname (z.B. Gold, Silber, Bitcoin) oder Paar (z.B. BTC/USD)."
+            >
+              <label className="block text-xs font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-widest cursor-help flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-aif-gold-DEFAULT animate-pulse" />
+                2. Suche nach Symbol, Rufname oder Paar
+              </label>
+            </SimpleTooltip>
+            <div className="relative">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+              <input 
+                type="text"
+                placeholder="Z.B. Gold, Silber, Erdgas, WTI, Brent, Bitcoin, Apple, BTC, SLV, GLD, USO, NG=F..."
+                value={searchQuery}
+                onChange={(e) => { 
+                  setSearchQuery(e.target.value); 
+                  setCurrentPage(1);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 250)}
+                className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 focus:ring-1 focus:ring-aif-gold-DEFAULT/25 transition-all placeholder:text-white/20 shadow-inner"
+              />
+
+              {/* Autocomplete intelligent dropdown list */}
+              <AnimatePresence>
+                {showSuggestions && searchQuery.trim().length > 0 && suggestedAssets.length > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    className="absolute left-0 right-0 top-full mt-2 bg-neutral-950/95 border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden divide-y divide-white/5 backdrop-blur-md"
+                  >
+                    <div className="px-3 py-1.5 text-[9px] text-white/30 font-mono uppercase tracking-widest bg-white/[0.02]">Vorschläge</div>
+                    {suggestedAssets.map(item => (
+                      <button
+                        key={item.symbol}
+                        type="button"
+                        onMouseDown={() => {
+                          setSearchQuery(item.name);
+                          setShowSuggestions(false);
+                          onSelectSymbol(item.symbol);
+                        }}
+                        className="w-full text-left px-3 py-2.5 text-xs hover:bg-aif-gold-DEFAULT/10 flex items-center justify-between transition-all group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className="font-mono text-aif-gold-DEFAULT font-extrabold bg-aif-gold-DEFAULT/15 px-1.5 py-0.5 rounded text-[10px] border border-aif-gold-DEFAULT/20">
+                            {item.symbol}
+                          </span>
+                          <span className="text-white/80 font-bold group-hover:text-white truncate max-w-[130px]">
+                            {item.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-white/40 font-mono text-[10px]">
+                            €{item.price.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                          </span>
+                          <span className="text-[9px] font-mono font-bold uppercase text-white/30 px-1 py-0.5 rounded bg-white/5">
+                            {item.type}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -704,107 +867,8 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
           
-          {/* Assetklasse & Search */}
-          <div className="space-y-4">
-            <div>
-              <SimpleTooltip 
-                title="Assetklasse filtern" 
-                text="Grenze die Suche auf Aktien (Unternehmensanteile) oder Kryptowährungen (dezentrale Währungen wie Bitcoin) ein."
-              >
-                <label className="block text-[11px] text-white/70 font-mono uppercase tracking-wider mb-1.5 cursor-help">Asset-Klasse</label>
-              </SimpleTooltip>
-              <div className="flex bg-black/40 border border-white/10 rounded-lg p-0.5">
-                {[
-                  { id: 'all', label: 'Alle' },
-                  { id: 'stock', label: 'Aktien' },
-                  { id: 'crypto', label: 'Krypto' }
-                ].map(item => (
-                  <button
-                    key={item.id}
-                    onClick={() => { setAssetType(item.id); setCurrentPage(1); }}
-                    className={`flex-1 py-1 px-2.5 rounded-md text-xs font-mono uppercase tracking-wide transition-all cursor-pointer ${
-                      assetType === item.id 
-                        ? 'bg-white/10 text-white font-bold' 
-                        : 'text-white/40 hover:text-white'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="relative">
-              <SimpleTooltip 
-                title="Intelligente Suche" 
-                text="Tippe Symbole (AAPL), Rufnamen (Apple, Bitcoin) oder umgangssprachliche Aliase (Apfel, Krypto, E-Auto) ein, um die Treffer intelligent zu filtern."
-              >
-                <label className="block text-[11px] text-white/70 font-mono uppercase tracking-wider mb-1.5 cursor-help">Direkte Suche</label>
-              </SimpleTooltip>
-              <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-                <input 
-                  type="text"
-                  placeholder="Z.B. Apfel, BTC, Tesla..."
-                  value={searchQuery}
-                  onChange={(e) => { 
-                    setSearchQuery(e.target.value); 
-                    setCurrentPage(1);
-                    setShowSuggestions(true);
-                  }}
-                  onFocus={() => setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 250)}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg py-2 pl-9 pr-4 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20"
-                />
-
-                {/* Autocomplete intelligent dropdown list */}
-                <AnimatePresence>
-                  {showSuggestions && searchQuery.trim().length > 0 && suggestedAssets.length > 0 && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 5 }}
-                      className="absolute left-0 right-0 top-full mt-2 bg-neutral-950/95 border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden divide-y divide-white/5 backdrop-blur-md"
-                    >
-                      <div className="px-3 py-1.5 text-[9px] text-white/30 font-mono uppercase tracking-widest bg-white/[0.02]">Vorschläge</div>
-                      {suggestedAssets.map(item => (
-                        <button
-                          key={item.symbol}
-                          type="button"
-                          onMouseDown={() => {
-                            setSearchQuery(item.name);
-                            setShowSuggestions(false);
-                            onSelectSymbol(item.symbol);
-                          }}
-                          className="w-full text-left px-3 py-2.5 text-xs hover:bg-aif-gold-DEFAULT/10 flex items-center justify-between transition-all group cursor-pointer"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <span className="font-mono text-aif-gold-DEFAULT font-extrabold bg-aif-gold-DEFAULT/15 px-1.5 py-0.5 rounded text-[10px] border border-aif-gold-DEFAULT/20">
-                              {item.symbol}
-                            </span>
-                            <span className="text-white/80 font-bold group-hover:text-white truncate max-w-[130px]">
-                              {item.name}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-white/40 font-mono text-[10px]">
-                              €{item.price.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                            </span>
-                            <span className="text-[9px] font-mono font-bold uppercase text-white/30 px-1 py-0.5 rounded bg-white/5">
-                              {item.type}
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-          </div>
-
           {/* KGV / PE Ratio Custom Range */}
           <div className="space-y-4">
             <div>
@@ -821,7 +885,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                   value={peMin}
                   onChange={(e) => { setPeMin(e.target.value); setCurrentPage(1); }}
                   disabled={assetType === 'crypto'}
-                  className="w-full bg-black/40 border border-white/10 disabled:opacity-30 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20"
+                  className="w-full bg-black/40 border border-white/10 disabled:opacity-30 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20 animate-none"
                 />
                 <span className="text-white/30 text-xs">-</span>
                 <input 
@@ -830,10 +894,12 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                   value={peMax}
                   onChange={(e) => { setPeMax(e.target.value); setCurrentPage(1); }}
                   disabled={assetType === 'crypto'}
-                  className="w-full bg-black/40 border border-white/10 disabled:opacity-30 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20"
+                  className="w-full bg-black/40 border border-white/10 disabled:opacity-30 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20 animate-none"
                 />
               </div>
-              <p className="text-[11px] text-white/60 mt-1.5 font-mono">Normalbereich bei Aktien: 10 - 25</p>
+              <p className="text-[10px] text-white/50 mt-1.5 leading-relaxed font-mono">
+                Das KGV vergleicht den Aktienkurs mit dem Gewinn je Aktie. Günstig bewertete Qualitätsaktien liegen meist bei 10–25.
+              </p>
             </div>
 
             <div>
@@ -856,6 +922,9 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                 />
                 <span className="text-xs font-mono font-bold text-aif-gold-DEFAULT min-w-[24px] text-right">{minGrahamScore}</span>
               </div>
+              <p className="text-[10px] text-white/50 mt-1.5 leading-relaxed font-mono">
+                Misst die Unterbewertung nach Benjamin Graham. Ein höherer Score signalisiert eine starke Sicherheitsmarge.
+              </p>
             </div>
           </div>
 
@@ -874,7 +943,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                   placeholder="Min Mrd."
                   value={mcapMin}
                   onChange={(e) => { setMcapMin(e.target.value); setCurrentPage(1); }}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20"
+                  className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20 animate-none"
                 />
                 <span className="text-white/30 text-xs">-</span>
                 <input 
@@ -882,10 +951,12 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                   placeholder="Max Mrd."
                   value={mcapMax}
                   onChange={(e) => { setMcapMax(e.target.value); setCurrentPage(1); }}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20"
+                  className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20 animate-none"
                 />
               </div>
-              <p className="text-[11px] text-white/60 mt-1.5 font-mono">Mega Cap &gt; 100 Mrd. • Micro Cap &lt; 1 Mrd.</p>
+              <p className="text-[10px] text-white/50 mt-1.5 leading-relaxed font-mono">
+                Der gesamte Börsenwert des Assets. Mega-Konzerne liegen über 100 Mrd., kleinere Nischenwerte (Micro Caps) unter 1 Mrd.
+              </p>
             </div>
 
             <div>
@@ -907,6 +978,9 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                 />
                 <span className="text-xs font-mono font-bold text-aif-gold-DEFAULT min-w-[24px] text-right">{minKiScore}</span>
               </div>
+              <p className="text-[10px] text-white/50 mt-1.5 leading-relaxed font-mono">
+                KI-Gesamtauswertung aus über 45 technischen & fundamentalen Metriken. Werte ab 7.5 zeigen sehr hohes Potenzial.
+              </p>
             </div>
           </div>
 
@@ -925,7 +999,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                   placeholder="Min %"
                   value={divMin}
                   onChange={(e) => { setDivMin(e.target.value); setCurrentPage(1); }}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20"
+                  className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20 animate-none"
                 />
                 <span className="text-white/30 text-xs">-</span>
                 <input 
@@ -933,10 +1007,12 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                   placeholder="Max %"
                   value={divMax}
                   onChange={(e) => { setDivMax(e.target.value); setCurrentPage(1); }}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20"
+                  className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20 animate-none"
                 />
               </div>
-              <p className="text-[11px] text-white/60 mt-1.5 font-mono">Solide Dividendenzahler: 1.5% - 4%</p>
+              <p className="text-[10px] text-white/50 mt-1.5 leading-relaxed font-mono">
+                Die jährliche Ausschüttung bezogen auf den aktuellen Kurs. Solide, etablierte Dividendenzahler liegen bei 1.5%–4.0%.
+              </p>
             </div>
 
             <div>
@@ -953,8 +1029,11 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                 value={deMax}
                 onChange={(e) => { setDeMax(e.target.value); setCurrentPage(1); }}
                 disabled={assetType === 'crypto'}
-                className="w-full bg-black/40 border border-white/10 disabled:opacity-30 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20"
+                className="w-full bg-black/40 border border-white/10 disabled:opacity-30 rounded-lg py-2 px-3 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 transition-all placeholder:text-white/20 animate-none"
               />
+              <p className="text-[10px] text-white/50 mt-1.5 leading-relaxed font-mono">
+                Verhältnis von Schulden zu Eigenkapital. Werte unter 1.5 signalisieren eine gesunde, risikoarme Finanzierung.
+              </p>
             </div>
           </div>
 
@@ -979,6 +1058,9 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                 <option value="E-Commerce & Cloud" className="bg-neutral-900">E-Commerce & Cloud</option>
                 <option value="Unterhaltung & Services" className="bg-neutral-900">Unterhaltung & Services</option>
               </select>
+              <p className="text-[10px] text-white/50 mt-1.5 leading-relaxed font-mono">
+                Grenzt die Werte gezielt auf spezifische technologische Marktsegmente, Branchen oder Ökosysteme ein.
+              </p>
             </div>
           </div>
 
@@ -1085,9 +1167,12 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                       >
                         {/* Symbol */}
                         <td className="px-4 py-3.5 font-mono text-xs font-black text-white">
-                          <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 uppercase">
-                            {asset.symbol}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <AssetLogo symbol={asset.symbol} size="sm" className="shrink-0" />
+                            <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 uppercase">
+                              {asset.symbol}
+                            </span>
+                          </div>
                         </td>
 
                         {/* Name & Type */}
@@ -1168,18 +1253,38 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt 
                           </span>
                         </td>
 
-                        {/* Action select button */}
+                        {/* Action select button & Price Alert Toggle */}
                         <td className="px-4 py-3.5 text-right">
-                          <button
-                            onClick={() => onSelectSymbol(asset.symbol)}
-                            className={`px-3 py-1.5 rounded-lg font-mono text-[11px] tracking-widest uppercase transition-all font-black cursor-pointer ${
-                              isSelected 
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                                : 'bg-aif-gold-DEFAULT text-black hover:brightness-110 shadow-[0_0_10px_rgba(245,196,83,0.2)]'
-                            }`}
-                          >
-                            {isSelected ? 'AKTIV' : 'WÄHLEN'}
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleAlert(asset);
+                              }}
+                              className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                                alertIsActive(asset.symbol)
+                                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-400 shadow-[0_0_8px_rgba(245,196,83,0.15)] animate-[pulse_2s_infinite]'
+                                  : 'bg-white/5 border-white/10 text-white/50 hover:text-white hover:border-white/20'
+                              }`}
+                              title={alertIsActive(asset.symbol) ? 'Preisalarm aktiv (Klicken zum Löschen)' : 'Preisalarm für dieses Asset einrichten'}
+                            >
+                              {alertIsActive(asset.symbol) ? (
+                                <BellRing size={13} className="text-amber-400 animate-pulse" />
+                              ) : (
+                                <Bell size={13} className="text-white/40" />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => onSelectSymbol(asset.symbol)}
+                              className={`px-3 py-1.5 rounded-lg font-mono text-[11px] tracking-widest uppercase transition-all font-black cursor-pointer ${
+                                isSelected 
+                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                                  : 'bg-aif-gold-DEFAULT text-black hover:brightness-110 shadow-[0_0_10px_rgba(245,196,83,0.2)]'
+                              }`}
+                            >
+                              {isSelected ? 'AKTIV' : 'WÄHLEN'}
+                            </button>
+                          </div>
                         </td>
                       </motion.tr>
                     );

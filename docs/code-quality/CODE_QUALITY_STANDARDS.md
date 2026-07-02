@@ -1,58 +1,64 @@
-# 💻 Code Quality Standards & Best Practices
-**Project: Jenova Nexus (AIF-CORE)**
-**Language: TypeScript Strict Mode**
+# 💻 Code Quality Standards & Architecture Directives
+**Project: AIF-CORE (Jenova Nexus)**  
+**Version:** 0.5.0 (Beta-Phase)  
+**Standard:** TypeScript Strict Mode (`strict: true`)  
 
 ---
 
-## 📐 General Principles
+## 📐 General Code Integrity (Datenintegrität)
+AIF-CORE maintains strict quality standards to ensure enterprise-level performance, clean refactors, and complete compliance with European regulations:
 
-All code in Jenova Nexus must be written with readability, performance, and type-safety in mind. We operate on strict TypeScript rules (`strict: true` in `tsconfig.json`).
+1. **Strict Type-Safety**: Avoid using `any`. Explicitly declare TypeScript interfaces and models for all parameters, components, and API responses.
+2. **Defensive API Contracts**: All API responses must be validated upon receipt. Never assume any response is an array or object of correct shape without checking `Array.isArray()` or proper structural type guards. Handle exceptions gracefully without crashing components.
+3. **No Legacy Versioning**: All references to deprecated version numbers are omitted. The entire platform is strictly pinned to **Version 0.5.0** (Beta-Phase) representing the current unified release.
 
 ---
 
-## 🛠️ Strict Coding Standards
+## 🛠️ Mandatory Coding Conventions
 
-### 1. TypeScript & Type-Safety
-* **No `any` Types**: Explicitly declare types or interfaces for all parameters, states, and return payloads. If a third-party module uses `any`, cast it using custom guards or generics.
-* **Module Systems**: All `import` statements must reside at the very top of the file. Use named imports instead of object destructuring where possible.
-* **Standard Enums**: Use standard `enum` declarations instead of `const enum`.
+### 1. TypeScript Coding Rules
+* **Standard Enums**: Always declare enums using standard `enum` definitions rather than `const enum` to prevent compiler mapping mismatches across bundlers.
+* **Named Imports**: Always utilize named imports at the top-level of the file instead of full object destructuring on default imports.
 
 ```typescript
 // PREFERRED PATTERN
-export enum SubscriptionTier {
-  FREE = 'Free',
-  STARTER = 'Starter',
-  PRO = 'Pro',
-  ENTERPRISE = 'Enterprise'
-}
+import { Sparkles, Shield, Award } from 'lucide-react';
+import { SubscriptionTier } from '../types';
 ```
 
-### 2. File Modularity vs. Bloat
-* **Keep Files under 500 lines**: Do not compile all logic inside a single monolithic file (like `App.tsx` or `Screener.tsx`). Extract reusable sub-components, helper functions, and static parameters into dedicated modules inside `/src/components/`, `/src/utils/`, or `/src/types.ts`.
-* **Establish Type Files Early**: Shared interfaces must be exported from `/src/types.ts` to prevent circular dependency problems.
+### 2. Modularity & Token Budget Constraints
+To prevent generation cutoff and massive compile overhead:
+* **File Size Constraint**: Individual source files must never exceed **500 lines**.
+* **Extract Early**: Do not consolidate all logic into single files like `App.tsx` or `Screener.tsx`. Move sub-components into `/src/components/`, common utility functions into `/src/utils/`, and static database definitions into dedicated files.
+* **Shared Types**: Always export shared interfaces from `/src/types.ts` to prevent circular import trees.
 
-### 3. Component Lifecycle & Hook Safety
-To prevent heavy CPU usage or visual flickering, adhere strictly to the following `useEffect` guidelines:
-* Never update a state value directly inside the component body.
-* Keep dependency arrays as simple and primitive as possible.
+### 3. Component Hook Safety (useEffect Guidelines)
+* **Zero Body Updates**: Never write state mutators directly inside the component body.
+* **Primitive Dependencies**: Dependency arrays in `useEffect`, `useMemo`, and `useCallback` must strictly use primitive values (strings, numbers, booleans) or heavily memoized objects.
 
 ```typescript
 // CORRECT PATTERN
 useEffect(() => {
-  let active = true;
-  fetch('/api/data')
-    .then(res => res.json())
-    .then(data => {
-      if (active) setData(data);
-    });
-  return () => {
-    active = false; // clean up routine
+  let isCurrent = true;
+  const loadContent = async () => {
+    try {
+      const response = await fetch(`/api/docs-file?path=${docPath}`);
+      const data = await response.json();
+      if (isCurrent) setContent(data.content);
+    } catch (err) {
+      console.error(err);
+    }
   };
-}, [primitiveDependencyId]); // Primitive dependencies prevent infinite loops
+  loadContent();
+  return () => {
+    isCurrent = false; // Cleanup to prevent race conditions
+  };
+}, [docPath]); // docPath is a primitive string
 ```
 
 ---
 
-## ⚡ Performance Metric Goals
-- **Lighthouse Score**: Performance > 90, Accessibility > 95, Best Practices > 95.
-- **Server Cold-start**: Below **1.5s** on standard serverless environments (realized by lazy-loading heavy SDK clients like Stripe and Supabase, and bundling with esbuild).
+## ⚡ Performance KPIs & Auditing
+- **Render Latency**: Keep components light and eliminate redundant virtual DOM repaints.
+- **Serverless Cold-Start Limit**: Maintain container coldstarts below **1.5 seconds** by using lazy-loaded imports for large client libraries like `Stripe` or `@supabase/supabase-js`.
+- **Lighthouse Goals**: Target values for mobile and desktop are strictly **> 90 points** for performance, best practices, accessibility, and SEO.
