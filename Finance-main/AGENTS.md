@@ -9,7 +9,7 @@ This document contains persistent rules, architectural standards, and data integ
 All modules, components, and backend systems MUST enforce the following core directives:
 
 1. **Strict Data Integrity (Datenintegrität)**:
-   - **No Fake or Mock Data**: Under no circumstances should fake, placeholder, or simulated data be served to users when real-time or persistent data is expected. All financial, scoring, and market insights must derive from active APIs or authenticated databases.
+   - **No Fake or Mock Data and no demo data and data fall backs **: Under no circumstances should fake, placeholder, or simulated data be served to users when real-time or persistent data is expected. All financial, scoring, and market insights must derive from active APIs or authenticated databases.
    - **Defensive API Contracts**: All API responses must be validated upon receipt. Do not assume any response is an array or object of correct shape without checking `Array.isArray()` or proper structural type guards. Handle exceptions gracefully without crashing components.
    - **Type-Safe Pipelines**: Always use strict TypeScript typings (`src/types.ts`) to validate data models before executing business or quantitative logic.
 
