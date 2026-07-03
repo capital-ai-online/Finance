@@ -106,19 +106,19 @@ export function Newsticker({ selectedSymbol, timeframe }: NewstickerProps) {
 
   // Calculate dynamic trading signals based on Score
   const getTradingSignal = (score: number) => {
-    if (score >= 9.0) {
+    if (score >= 90.0) {
       return {
         label: 'STRONG BUY',
         color: 'text-aif-neon-cyan border-aif-neon-cyan/30 bg-aif-neon-cyan/10',
         glow: 'drop-shadow-[0_0_10px_rgba(13,221,221,0.5)]'
       };
-    } else if (score >= 7.5) {
+    } else if (score >= 75.0) {
       return {
         label: 'BUY',
         color: 'text-aif-gold-DEFAULT border-aif-gold-DEFAULT/30 bg-aif-gold-DEFAULT/10',
         glow: 'drop-shadow-[0_0_10px_rgba(245,196,83,0.5)]'
       };
-    } else if (score >= 5.5) {
+    } else if (score >= 55.0) {
       return {
         label: 'HOLD',
         color: 'text-white/60 border-white/20 bg-white/5',

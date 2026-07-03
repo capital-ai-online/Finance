@@ -34,6 +34,10 @@ import { MarketSentiment } from './MarketSentiment';
 import { AuthStateDebugger } from './AuthStateDebugger';
 import { AuditLogs } from './AuditLogs';
 import { SentimentDashboard } from './SentimentDashboard';
+import { DashboardSearchFilter } from './DashboardSearchFilter';
+import { RawMaterialsDashboard } from './RawMaterialsDashboard';
+import { AssetUniverseDashboard } from './AssetUniverseDashboard';
+import { SystemLatencyMonitor } from './SystemLatencyMonitor';
 
 import { 
   LogOut, 
@@ -56,6 +60,8 @@ import {
   ArrowLeft,
   Sparkles,
   TrendingUp,
+  Compass,
+  Layers,
   Flame,
   SlidersHorizontal,
   FileText,
@@ -93,16 +99,19 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedSymbol, setSelectedSymbol] = useState<string>('BTC');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<string>('1std');
-  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe'>('dashboard');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>('hub');
+  const [expandedUniverse, setExpandedUniverse] = useState<string | null>(null);
 
   // Auto-expand appropriate accordion section on activeView changes for best mobile/desktop experience
   React.useEffect(() => {
     const getViewCategory = (view: string) => {
       if (['dashboard', 'abonnements', 'profil'].includes(view)) return 'hub';
-      if (['market-screener', 'charts', 'preis-alarme', 'monte-carlo', 'buffet-value', 'backtest', 'heatmap', 'risiko-assessment', 'sentiment-dashboard'].includes(view)) return 'analysis';
+      if (['market-screener', 'charts', 'preis-alarme', 'monte-carlo', 'buffet-value', 'backtest', 'heatmap', 'risiko-assessment', 'sentiment-dashboard', 'raw-materials', 'asset-universe'].includes(view)) return 'analysis';
       if (['markdown-orchestrator', 'request-orchestrator', 'performance', 'interact', 'audit-logs'].includes(view)) return 'orchestration';
       if (['datenschutz', 'impressum-agb'].includes(view)) return 'compliance';
       if (['admin-panel'].includes(view)) return 'system_admin';
@@ -298,9 +307,9 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="fixed inset-y-0 left-0 h-[100dvh] w-full sm:w-80 bg-black/95 border-r border-white/10 shadow-[0_0_50px_rgba(245,196,83,0.15)] z-50 flex flex-col overflow-hidden"
+              className="fixed top-0 bottom-0 left-0 w-full sm:w-80 bg-black/95 border-r border-white/10 shadow-[0_0_50px_rgba(245,196,83,0.15)] z-50 flex flex-col justify-between overflow-y-auto scrollbar-thin scrollbar-thumb-white/10"
             >
-              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+              <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                 {/* Drawer Header */}
                 <div className="p-6 border-b border-white/10 flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -324,8 +333,12 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                   className="p-5 border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent hover:from-white/10 transition-all cursor-pointer flex items-center gap-4 group"
                   title="Mein Profil verwalten"
                 >
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${profile.avatarColor} flex items-center justify-center shadow-[0_0_15px_rgba(245,196,83,0.2)] group-hover:scale-105 transition-all`}>
-                    <ActiveAvatarIcon className="w-6 h-6 text-black" />
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${profile.avatarColor} flex items-center justify-center shadow-[0_0_15px_rgba(245,196,83,0.2)] group-hover:scale-105 transition-all overflow-hidden`}>
+                    {profile.customAvatarUrl ? (
+                      <img src={profile.customAvatarUrl} alt={profile.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                      <ActiveAvatarIcon className="w-6 h-6 text-black" />
+                    )}
                   </div>
                   <div className="overflow-hidden">
                     <div className="text-xs text-aif-gold-DEFAULT font-mono uppercase tracking-widest font-black flex items-center gap-1">
@@ -436,6 +449,20 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                           transition={{ duration: 0.25, ease: 'easeInOut' }}
                           className="overflow-hidden mt-1 px-1 space-y-1"
                         >
+                          <SidebarTooltip title="Multi-Asset Universum" text="Institutionelles Cockpit für Kryptowährungen, Aktien, Indizes, Rohstoffe und Forex.">
+                            <button 
+                              onClick={() => navigateTo('asset-universe')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'asset-universe' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <Sparkles size={14} className={activeView === 'asset-universe' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>Multi-Asset Universum</span>
+                            </button>
+                          </SidebarTooltip>
+
                           <SidebarTooltip title="Profi Markt-Screener" text="Filtere hunderte von Aktien und Kryptowährungen nach komplexen Kriterien wie KGV, Dividenden, KI-Scores und Graham-Formeln.">
                             <button 
                               onClick={() => navigateTo('market-screener')}
@@ -533,6 +560,247 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                               <span>AI Markt-Sentiment</span>
                             </button>
                           </SidebarTooltip>
+
+                          <SidebarTooltip title="Rohstoff-Bewertung v0.5.4" text="Analysiere, kategorisiere und bewerte physische & kritische Rohstoffe nach geopolitischen Risiken, Fundamentaldaten und strategischer Bedeutung.">
+                            <button 
+                              onClick={() => navigateTo('raw-materials')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'raw-materials' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <Orbit size={14} className={activeView === 'raw-materials' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>Rohstoff-Bewertung</span>
+                            </button>
+                          </SidebarTooltip>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Category 2.5: Asset-Universen (Enterprise) */}
+                  <div className="border-b border-white/5 pb-2">
+                    <button
+                      onClick={() => setExpandedSection(expandedSection === 'universes' ? null : 'universes')}
+                      className="w-full px-3 py-2.5 flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-white/80 hover:text-white transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
+                      aria-expanded={expandedSection === 'universes'}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Compass size={14} className="text-aif-gold-DEFAULT group-hover:rotate-45 transition-transform" />
+                        <span>Asset-Universen</span>
+                      </div>
+                      <motion.div
+                        animate={{ rotate: expandedSection === 'universes' ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown size={14} className="text-white/40 group-hover:text-white/80" />
+                      </motion.div>
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {expandedSection === 'universes' && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25, ease: 'easeInOut' }}
+                          className="overflow-hidden mt-1 px-1 space-y-2 pl-2 border-l border-white/5"
+                        >
+                                    {/* Universe 1: Equities */}
+                          <div className="space-y-1">
+                            <button
+                              onClick={() => setExpandedUniverse(expandedUniverse === 'equities' ? null : 'equities')}
+                              className="w-full px-3 py-1.5 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-cyan-400 hover:text-white transition-all rounded-md bg-cyan-500/5 hover:bg-cyan-500/10 border border-cyan-500/10 cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2">
+                                <TrendingUp size={12} className="text-cyan-400" />
+                                <span>Equities</span>
+                              </div>
+                              <ChevronDown size={12} className={`transition-transform duration-200 ${expandedUniverse === 'equities' ? 'rotate-180' : ''}`} />
+                            </button>
+                            {expandedUniverse === 'equities' && (
+                              <div className="pl-2 py-1 space-y-1 bg-black/40 rounded-lg border border-white/5">
+                                <button 
+                                  onClick={() => { setSelectedSymbol('AAPL'); setCategoryFilter('stock'); navigateTo('sentiment-dashboard'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all cursor-pointer"
+                                >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">1. Sentiment Analysis</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Echtzeit KI-News Sentiment (AAPL)</div>
+                                </button>
+                                <button 
+                                  onClick={() => { setSelectedSymbol('AAPL'); setCategoryFilter('stock'); navigateTo('buffet-value'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
+                                >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">2. Graham Valuation</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Graham Fair Value &amp; DCF Analyse</div>
+                                </button>
+                                <button 
+                                  onClick={() => { setSelectedSymbol('AAPL'); setCategoryFilter('stock'); navigateTo('monte-carlo'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
+                                >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Volatility Forecasting</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Monte-Carlo Preisprognosen</div>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Universe 2: Forex */}
+                          <div className="space-y-1">
+                            <button
+                              onClick={() => setExpandedUniverse(expandedUniverse === 'forex' ? null : 'forex')}
+                              className="w-full px-3 py-1.5 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-amber-400 hover:text-white transition-all rounded-md bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/10 cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Activity size={12} className="text-amber-400" />
+                                <span>Forex</span>
+                              </div>
+                              <ChevronDown size={12} className={`transition-transform duration-200 ${expandedUniverse === 'forex' ? 'rotate-180' : ''}`} />
+                            </button>
+                            {expandedUniverse === 'forex' && (
+                              <div className="pl-2 py-1 space-y-1 bg-black/40 rounded-lg border border-white/5">
+                                <button 
+                                  onClick={() => { setSelectedSymbol('EURUSD'); setCategoryFilter('forex'); navigateTo('sentiment-dashboard'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all cursor-pointer"
+                                >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">1. Sentiment Analysis</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Geopolitisches News-Sentiment (EURUSD)</div>
+                                </button>
+                                <button 
+                                  onClick={() => { setSelectedSymbol('EURUSD'); setCategoryFilter('forex'); navigateTo('buffet-value'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
+                                >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">2. Graham Valuation</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Makro- &amp; Zinsparitäten Fair Value</div>
+                                </button>
+                                <button 
+                                  onClick={() => { setSelectedSymbol('EURUSD'); setCategoryFilter('forex'); navigateTo('monte-carlo'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
+                                >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Volatility Forecasting</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Historische Risikoverteilung &amp; VaR</div>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Universe 3: Crypto */}
+                          <div className="space-y-1">
+                            <button
+                              onClick={() => setExpandedUniverse(expandedUniverse === 'crypto' ? null : 'crypto')}
+                              className="w-full px-3 py-1.5 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-purple-400 hover:text-white transition-all rounded-md bg-purple-500/5 hover:bg-purple-500/10 border border-purple-500/10 cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Orbit size={12} className="animate-spin-slow text-purple-400" />
+                                <span>Crypto</span>
+                              </div>
+                              <ChevronDown size={12} className={`transition-transform duration-200 ${expandedUniverse === 'crypto' ? 'rotate-180' : ''}`} />
+                            </button>
+                            {expandedUniverse === 'crypto' && (
+                              <div className="pl-2 py-1 space-y-1 bg-black/40 rounded-lg border border-white/5">
+                                <button 
+                                  onClick={() => { setSelectedSymbol('BTC'); setCategoryFilter('crypto'); navigateTo('sentiment-dashboard'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all cursor-pointer"
+                                >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">1. Sentiment Analysis</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Echtzeit News &amp; Social Sentiment (BTC)</div>
+                                </button>
+                                <button 
+                                  onClick={() => { setSelectedSymbol('BTC'); setCategoryFilter('crypto'); navigateTo('buffet-value'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
+                                >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">2. Graham Valuation</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Network Value / Fair Value Analyse</div>
+                                </button>
+                                <button 
+                                  onClick={() => { setSelectedSymbol('BTC'); setCategoryFilter('crypto'); navigateTo('monte-carlo'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
+                                >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Volatility Forecasting</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Monte-Carlo Preispfadszenarien</div>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Universe 4: Commodities */}
+                          <div className="space-y-1">
+                            <button
+                              onClick={() => setExpandedUniverse(expandedUniverse === 'commodity' ? null : 'commodity')}
+                              className="w-full px-3 py-1.5 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-rose-400 hover:text-white transition-all rounded-md bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Layers size={12} className="text-rose-400" />
+                                <span>Commodities</span>
+                              </div>
+                              <ChevronDown size={12} className={`transition-transform duration-200 ${expandedUniverse === 'commodity' ? 'rotate-180' : ''}`} />
+                            </button>
+                            {expandedUniverse === 'commodity' && (
+                              <div className="pl-2 py-1 space-y-1 bg-black/40 rounded-lg border border-white/5">
+                                <button 
+                                  onClick={() => { setSelectedSymbol('GLD'); setCategoryFilter('commodity'); navigateTo('sentiment-dashboard'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all cursor-pointer"
+                                    >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">1. Sentiment Analysis</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Supply-Chain &amp; Markt-News Sentiment</div>
+                                </button>
+                                <button 
+                                  onClick={() => { setSelectedSymbol('GLD'); setCategoryFilter('commodity'); navigateTo('buffet-value'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
+                                >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">2. Graham Valuation</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Rohstoff-Kritikalitäts &amp; Wertungsindex</div>
+                                </button>
+                                <button 
+                                  onClick={() => { setSelectedSymbol('GLD'); setCategoryFilter('commodity'); navigateTo('monte-carlo'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
+                                >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Volatility Forecasting</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Saisonalitäts- &amp; Preisvolatilitätsprognosen</div>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Universe 5: Bonds */}
+                          <div className="space-y-1">
+                            <button
+                              onClick={() => setExpandedUniverse(expandedUniverse === 'bond' ? null : 'bond')}
+                              className="w-full px-3 py-1.5 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-emerald-400 hover:text-white transition-all rounded-md bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Percent size={12} className="text-emerald-400" />
+                                <span>Bonds</span>
+                              </div>
+                              <ChevronDown size={12} className={`transition-transform duration-200 ${expandedUniverse === 'bond' ? 'rotate-180' : ''}`} />
+                            </button>
+                            {expandedUniverse === 'bond' && (
+                              <div className="pl-2 py-1 space-y-1 bg-black/40 rounded-lg border border-white/5">
+                                <button 
+                                  onClick={() => { setSelectedSymbol('US10Y'); setCategoryFilter('bond'); navigateTo('sentiment-dashboard'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all cursor-pointer"
+                                >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">1. Sentiment Analysis</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Notenbankentscheide &amp; Zins-News Sentiment</div>
+                                </button>
+                                <button 
+                                  onClick={() => { setSelectedSymbol('US10Y'); setCategoryFilter('bond'); navigateTo('buffet-value'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
+                                >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">2. Graham Valuation</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Renditekurven &amp; Fair Yield Bewertung</div>
+                                </button>
+                                <button 
+                                  onClick={() => { setSelectedSymbol('US10Y'); setCategoryFilter('bond'); navigateTo('monte-carlo'); setMenuOpen(false); }}
+                                  className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
+                                >
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Volatility Forecasting</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Monte-Carlo Zinsstrukturkurven-Szenarien</div>
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -692,8 +960,8 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                     </AnimatePresence>
                   </div>
 
-                  {/* Category 5: Administration (if user is Sven Kulessa or dev bypass) */}
-                  {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'gast@aif-core.de') && (
+                  {/* Category 5: Administration (if user is Sven Kulessa) */}
+                  {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'sven.kulessa@gmx.net') && (
                     <div className="border-b border-white/5 pb-2">
                       <button
                         onClick={() => setExpandedSection(expandedSection === 'system_admin' ? null : 'system_admin')}
@@ -746,7 +1014,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               </div>
 
               {/* Drawer Footer Login & Logout buttons */}
-              <div className="shrink-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-white/10 bg-black/60 space-y-2">
+              <div className="p-4 border-t border-white/10 bg-black/60 space-y-2">
                 {userSession.type === 'guest' ? (
                   <button 
                     onClick={onLogout} 
@@ -821,8 +1089,12 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                 <div className="absolute top-full left-0 mt-2 w-72 bg-black/95 border border-aif-gold-DEFAULT/40 rounded-xl shadow-[0_0_40px_rgba(245,196,83,0.2)] backdrop-blur-2xl z-50 overflow-hidden">
                   <div className="p-5 border-b border-white/10 bg-gradient-to-br from-white/5 to-transparent">
                     <div className="flex items-center gap-3 mb-1">
-                      <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${profile.avatarColor} border border-white/20 flex items-center justify-center text-black font-black`}>
-                        <ActiveAvatarIcon size={18} />
+                      <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${profile.avatarColor} border border-white/20 flex items-center justify-center text-black font-black overflow-hidden`}>
+                        {profile.customAvatarUrl ? (
+                          <img src={profile.customAvatarUrl} alt={profile.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        ) : (
+                          <ActiveAvatarIcon size={18} />
+                        )}
                       </div>
                       <div>
                         <p className="text-sm font-bold text-white font-display">{profile.name}</p>
@@ -837,7 +1109,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                     >
                       <User size={16} className="text-aif-neon-cyan" /> Profil verwalten
                     </button>
-                    {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'gast@aif-core.de') && (
+                    {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'sven.kulessa@gmx.net') && (
                       <button 
                         onClick={() => { setDropdownOpen(false); setActiveView('admin-panel'); }}
                         className="w-full text-left px-4 py-2.5 text-sm font-bold text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/10 rounded-lg flex items-center gap-3 transition-all border border-aif-gold-DEFAULT/20"
@@ -906,6 +1178,8 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               <span>/</span>
               <span className="text-aif-gold-DEFAULT uppercase tracking-wider font-bold">
                 {activeView === 'monte-carlo' && 'Monte Carlo Simulation'}
+                {activeView === 'raw-materials' && 'Rohstoff-Kategorisierung & AI-Scoring'}
+                {activeView === 'asset-universe' && 'Multi-Asset-Klassen Cockpit'}
                 {activeView === 'buffet-value' && 'Buffet Value Check'}
                 {activeView === 'backtest' && 'Quantitative Backtest Engine'}
                 {activeView === 'market-screener' && 'Profi Markt-Screener'}
@@ -931,6 +1205,23 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               <span>Zurück zum Dashboard</span>
             </button>
           </div>
+        )}
+
+        {/* Global Search and Filter Bar for Dashboard & Screener */}
+        {(activeView === 'dashboard' || activeView === 'market-screener') && (
+          <DashboardSearchFilter
+            onSelectAsset={(sym) => {
+              setSelectedSymbol(sym);
+              if (activeView !== 'market-screener') {
+                setActiveView('dashboard');
+              }
+            }}
+            selectedSymbol={selectedSymbol}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            categoryFilter={categoryFilter}
+            setCategoryFilter={setCategoryFilter}
+          />
         )}
 
         {/* Dynamic Rendering of Active View */}
@@ -974,6 +1265,8 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                       subscriptionTier={profile.subscriptionTier} 
                       onUpgradeClick={() => navigateTo('abonnements')}
                       selectedSymbol={selectedSymbol}
+                      searchQuery={searchQuery}
+                      categoryFilter={categoryFilter}
                     />
 
                     {/* Strategie-Evidenz-Check Quick Card (Clickable to Buffett DCF check) */}
@@ -1054,6 +1347,10 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                 selectedSymbol={selectedSymbol}
                 triggerAttempt={triggerAttempt}
                 userSession={userSession}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                categoryFilter={categoryFilter}
+                setCategoryFilter={setCategoryFilter}
               />
             )}
 
@@ -1153,6 +1450,14 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               <PriceAlert selectedSymbol={selectedSymbol} userSession={userSession} />
             )}
 
+            {activeView === 'raw-materials' && (
+              <RawMaterialsDashboard />
+            )}
+
+            {activeView === 'asset-universe' && (
+              <AssetUniverseDashboard />
+            )}
+
             {activeView === 'admin-panel' && (
               <AdminPanel currentUserEmail={profile.email} />
             )}
@@ -1162,6 +1467,9 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
         {/* Footer */}
         <footer className="pt-8 pb-12 text-center border-t border-white/10 mt-12 px-6">
           <div className="max-w-4xl mx-auto flex flex-col items-center gap-4">
+            {/* Live System Latency Monitor for API Streams */}
+            <SystemLatencyMonitor />
+
             {/* Info Siegel: Version 0.5.0 mit dem Logo versehen */}
             <div className="flex flex-col sm:flex-row items-center gap-3 bg-gradient-to-r from-aif-gold-DEFAULT/10 via-black/40 to-aif-gold-DEFAULT/5 border border-aif-gold-DEFAULT/20 rounded-2xl px-5 py-2.5 backdrop-blur-md shadow-[0_0_25px_rgba(245,196,83,0.08)] mb-4">
               <div className="flex items-center gap-2">

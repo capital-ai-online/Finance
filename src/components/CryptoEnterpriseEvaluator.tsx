@@ -44,7 +44,32 @@ export function CryptoEnterpriseEvaluator({ selectedSymbol, onSelectSymbol }: Cr
   
   // Simulated data based on selected symbol
   const symbol = selectedSymbol.toUpperCase();
-  const basePrice = symbol === 'BTC' ? 92450 : symbol === 'ETH' ? 3120 : symbol === 'SOL' ? 184 : 1.0;
+  const [livePrice, setLivePrice] = useState<number>(() => {
+    return symbol === 'BTC' ? 68500 : symbol === 'ETH' ? 3450 : symbol === 'SOL' ? 145.2 : 1.0;
+  });
+
+  useEffect(() => {
+    let active = true;
+    async function fetchLivePrice() {
+      try {
+        const res = await fetch(`/api/registry/assets/${symbol}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data.price === 'number' && active) {
+            setLivePrice(data.price);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching live price for evaluator:', err);
+      }
+    }
+    fetchLivePrice();
+    return () => {
+      active = false;
+    };
+  }, [symbol, lastRefresh]);
+
+  const basePrice = livePrice;
 
   // Refs for D3
   const orderBookSvgRef = useRef<SVGSVGElement | null>(null);

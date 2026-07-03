@@ -94,9 +94,14 @@ export function calculateCryptoEnterpriseScore(x: CryptoScoringInputs) {
     normalizeToScore(x.rugpull_risk, SCORING_WEIGHTS.rugpull_risk) +
     normalizeToScore(x.data_quality_risk, SCORING_WEIGHTS.data_quality_risk);
 
-  const base_score = base_pos;
-  const risk_penalty = base_neg;
-  const regime_bonus_val = clamp(x.regime_bonus) * SCORING_WEIGHTS.regime_bonus * 10;
+  // Sum of positive weights is 111. Let's normalize it to a base of 80 points.
+  const base_score = Number(((base_pos / 111) * 80).toFixed(2));
+  
+  // Sum of negative weights is 28. Let's normalize it to a max of 15 penalty points.
+  const risk_penalty = Number(((base_neg / 28) * 15).toFixed(2));
+  
+  // Regime bonus adds a maximum of 20 points.
+  const regime_bonus_val = Number((clamp(x.regime_bonus) * 20).toFixed(2));
   
   const final_score = Math.max(0.0, Math.min(100.0, base_score - risk_penalty + regime_bonus_val));
 
@@ -114,9 +119,9 @@ export function calculateCryptoEnterpriseScore(x: CryptoScoringInputs) {
 
   // Risk tier and reasonings based on metrics
   let risk_level = "Medium";
-  if (risk_penalty > 15) risk_level = "Extreme";
-  else if (risk_penalty > 10) risk_level = "High";
-  else if (risk_penalty < 4) risk_level = "Low";
+  if (risk_penalty > 9) risk_level = "Extreme";
+  else if (risk_penalty > 5) risk_level = "High";
+  else if (risk_penalty < 2) risk_level = "Low";
 
   const reasoning: string[] = [];
   const alerts: string[] = [];

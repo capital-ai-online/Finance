@@ -306,7 +306,7 @@ export function AuditLogs() {
         </div>
         <div className="flex items-center gap-3 bg-neutral-900/60 border border-white/10 rounded-xl px-4 py-2 text-xs font-mono text-white/50">
           <Hash size={14} className="text-aif-gold-DEFAULT" />
-          <span>System-Version: <strong className="text-white">v0.5.0-Beta</strong></span>
+          <span>System-Version: <strong className="text-white">v0.5.4-Beta</strong></span>
         </div>
       </div>
 
@@ -916,7 +916,7 @@ export function AuditLogs() {
                   <span className="font-bold uppercase tracking-wider">AIF-Core Compliance-Siegel</span>
                 </div>
                 <p className="text-[11px] text-violet-300/80 leading-normal">
-                  Dieses Simulations-Terminal führt Layer-Prüfungen durch und schreibt JSON-Auditdaten direkt in das /docs/reports Dateiverzeichnis. Alle Outputs sind version-pinned auf Version 0.5.0 (Beta-Phase).
+                  Dieses Simulations-Terminal führt Layer-Prüfungen durch und schreibt JSON-Auditdaten direkt in das /docs/reports Dateiverzeichnis. Alle Outputs sind version-pinned auf Version 0.5.4 (Beta-Phase).
                 </p>
               </div>
             </div>

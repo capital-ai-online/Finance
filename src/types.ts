@@ -1,7 +1,7 @@
 export interface Asset {
   symbol: string;
   name: string;
-  type: 'crypto' | 'stock' | 'commodity' | 'forex';
+  type: 'crypto' | 'stock' | 'commodity' | 'forex' | 'index';
   subtype?: 'memecoin' | 'standard';
   price: number;
   change24h: number;

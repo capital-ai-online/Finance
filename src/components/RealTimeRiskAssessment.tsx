@@ -37,7 +37,7 @@ interface RealTimeRiskAssessmentProps {
 interface Holding {
   symbol: string;
   name: string;
-  type: 'crypto' | 'stock' | 'commodity' | 'forex';
+  type: 'crypto' | 'stock' | 'commodity' | 'forex' | 'index';
   weight: number; // percentage (0 to 100)
   price: number;
 }
@@ -71,6 +71,7 @@ export function RealTimeRiskAssessment({
     stock: 0.22,      // 22% annual volatility
     commodity: 0.15,  // 15% annual volatility
     forex: 0.08,      // 8% annual volatility
+    index: 0.15,      // 15% annual volatility
   };
 
   // Correlation rules

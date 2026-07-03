@@ -36,7 +36,7 @@ export interface PriceAlert {
   id: string;
   symbol: string;
   assetName: string;
-  type: 'crypto' | 'stock' | 'forex' | 'commodity';
+  type: 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';
   targetPrice: number;
   condition: 'above' | 'below';
   initialPrice: number;

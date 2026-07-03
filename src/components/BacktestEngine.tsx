@@ -102,6 +102,10 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
             assetClass = 'Crypto';
             volatility = 0.55;
             drift = 0.18;
+          } else if (asset.type === 'index') {
+            assetClass = 'Indices';
+            volatility = 0.15;
+            drift = 0.08;
           } else if (asset.type === 'commodity') {
             assetClass = 'Commodities';
             volatility = 0.12;

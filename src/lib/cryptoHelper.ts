@@ -1,5 +1,5 @@
 // Web Crypto AES-GCM encryption/decryption helper
-// Enforces zero-breach data integrity and seals local states under Version 0.5.0 requirements.
+// Enforces zero-breach data integrity and seals local states under Version 0.5.4 requirements.
 
 const AES_KEY_PBKDF2_SALT = 'aif-core-salt-2026';
 

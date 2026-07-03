@@ -20,7 +20,7 @@ All modules, components, and backend systems MUST enforce the following core dir
 
 3. **No Legacy Versioning (Anti-Legacy Noise)**:
    - All references to legacy development versions (such as v7.5, v1.0.0, etc.) are deprecated.
-   - The platform version is strictly pinned to **Version 0.5.0** (Beta-Phase) to represent the current unified release. No other versions should be displayed in user-facing components unless officially logged in the backlog.
+   - The platform version is strictly pinned to **Version 0.5.4** (Beta-Phase) to represent the current unified release. No other versions should be displayed in user-facing components unless officially logged in the backlog.
 
 ---
 

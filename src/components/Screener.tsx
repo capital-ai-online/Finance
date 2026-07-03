@@ -203,14 +203,14 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
     const finalPrice = asset.price * (priceMult + pseudoRand);
     const finalChange = Number((asset.change24h * changeMult + pseudoRand * 15).toFixed(2));
     const finalGraham = asset.grahamScore > 0 ? Math.min(10, Math.max(1, Number((asset.grahamScore + scoreOffset * 0.5).toFixed(1)))) : 0;
-    const finalMomentum = Math.min(10, Math.max(1, Number((asset.momentum + scoreOffset * 0.8).toFixed(1))));
+    const finalMomentum = Math.min(100, Math.max(10, Number(((asset.momentum <= 10 ? asset.momentum * 10 : asset.momentum) + scoreOffset * 8).toFixed(1))));
 
-    let finalScore = Math.min(10, Math.max(1, Number((asset.score + scoreOffset + pseudoRand * 10).toFixed(1))));
+    let finalScore = Math.min(100, Math.max(10, Number((asset.score + scoreOffset * 10 + pseudoRand * 100).toFixed(1))));
     
     // Ensure highly bullish patterns like Bullish Engulfing keep their high rating!
     const pattern = getAssetPattern(asset.symbol);
-    if (pattern === 'Bullish Engulfing' && finalScore < 8.2) {
-      finalScore = 8.5; // Always strong bullish score
+    if (pattern === 'Bullish Engulfing' && finalScore < 82) {
+      finalScore = 85; // Always strong bullish score
     }
 
     return {
@@ -249,11 +249,11 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
       'Typ',
       'Aktueller Preis (EUR)',
       'Veraenderung 24h (%)',
-      'KI-Score (0-10)',
+      'KI-Score (0-100)',
       'KGV (P/E Ratio)',
       'Debt-to-Equity (D/E)',
       'Graham Score',
-      'Momentum (0-10)',
+      'Momentum (0-100)',
       'Risiko',
       'Status'
     ];
@@ -297,7 +297,7 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
       
       // Stock metrics screening
       if (peFilter !== 'all') {
-        if (asset.type !== 'stock') return false;
+        if (asset.type !== 'stock' && asset.type !== 'index') return false;
         if (asset.peRatio === undefined || asset.peRatio > peFilter) return false;
       }
       if (deFilter !== 'all') {
@@ -370,6 +370,9 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
       case 'stock':
         typeBadge = <span className="px-1.5 py-0.5 rounded text-[11px] uppercase font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30 tracking-wider">Aktien</span>;
         break;
+      case 'index':
+        typeBadge = <span className="px-1.5 py-0.5 rounded text-[11px] uppercase font-bold bg-purple-500/15 text-purple-400 border border-purple-500/30 tracking-wider">Indizes</span>;
+        break;
       case 'commodity':
         typeBadge = <span className="px-1.5 py-0.5 rounded text-[11px] uppercase font-bold bg-amber-700/15 text-amber-500 border border-amber-700/30 tracking-wider">Rohstoffe</span>;
         break;
@@ -390,8 +393,8 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 9.0) return 'text-aif-neon-cyan drop-shadow-[0_0_8px_rgba(13,221,221,0.6)]';
-    if (score >= 7.0) return 'text-aif-gold-DEFAULT drop-shadow-[0_0_8px_rgba(245,196,83,0.6)]';
+    if (score >= 90.0) return 'text-aif-neon-cyan drop-shadow-[0_0_8px_rgba(13,221,221,0.6)]';
+    if (score >= 70.0) return 'text-aif-gold-DEFAULT drop-shadow-[0_0_8px_rgba(245,196,83,0.6)]';
     return 'text-white/60';
   };
 
@@ -427,7 +430,7 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
 
           {/* Type filters */}
           <div className="flex gap-1.5 bg-black/60 p-1 rounded-lg border border-white/10 overflow-x-auto w-full sm:w-auto scrollbar-none">
-            {['all', 'crypto', 'stock', 'commodity', 'forex'].map(f => (
+            {['all', 'crypto', 'stock', 'index', 'commodity', 'forex'].map(f => (
               <button
                 key={f}
                 onClick={() => {
@@ -437,7 +440,7 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
                   filter === f ? 'bg-aif-gold-DEFAULT text-black' : 'text-white/50 hover:text-white/80'
                 }`}
               >
-                {f === 'all' ? 'Alle' : f === 'crypto' ? 'Krypto' : f === 'stock' ? 'Aktien' : f === 'commodity' ? 'Rohstoffe' : f}
+                {f === 'all' ? 'Alle' : f === 'crypto' ? 'Krypto' : f === 'stock' ? 'Aktien' : f === 'index' ? 'Indizes' : f === 'commodity' ? 'Rohstoffe' : f}
               </button>
             ))}
           </div>

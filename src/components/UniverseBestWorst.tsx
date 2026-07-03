@@ -18,7 +18,7 @@ import { AssetLogo } from './AssetLogo';
 interface RegistryAsset {
   symbol: string;
   name: string;
-  type: 'crypto' | 'stock' | 'forex' | 'commodity';
+  type: 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';
   price: number;
   change24h: number;
   expectedReturn: number;
@@ -115,11 +115,12 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
     );
   }
 
-  // Group assets into the 4 universes
+  // Group assets into the 5 universes
   const cryptoGroup = assets.filter(a => a.type === 'crypto');
   const stockGroup = assets.filter(a => a.type === 'stock');
   const forexGroup = assets.filter(a => a.type === 'forex');
   const commodityGroup = assets.filter(a => a.type === 'commodity');
+  const indexGroup = assets.filter(a => a.type === 'index');
 
   const getBestAndWorst = (groupAssets: RegistryAsset[]) => {
     if (groupAssets.length === 0) return { best: [], worst: [] };
@@ -154,6 +155,16 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
       bgGlow: 'rgba(6,182,212,0.15)',
       description: 'Tech-Giganten & Bluechips',
       ...getBestAndWorst(stockGroup)
+    },
+    {
+      id: 'index',
+      name: 'Index World',
+      icon: Compass,
+      color: 'from-blue-500/25 to-indigo-600/10 border-blue-500/35 text-blue-400',
+      accentColor: '#3b82f6',
+      bgGlow: 'rgba(59,130,246,0.15)',
+      description: 'Top 30 Globale Indizes',
+      ...getBestAndWorst(indexGroup)
     },
     {
       id: 'forex',
@@ -207,13 +218,13 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
             <span>Universum Best- &amp; Worst-Assets</span>
           </h2>
           <p className="text-xs text-white/50 mt-1 max-w-2xl leading-relaxed">
-            Echtzeit-Performance-Leaderboards aller vier quantitativen Handelsuniversen. Die Einstufung erfolgt streng algorithmisch basierend auf unserem Backend-Multi-Faktor-Scoringsystem (Bewertungsskala 1-10).
+            Echtzeit-Performance-Leaderboards aller fünf quantitativen Handelsuniversen. Die Einstufung erfolgt streng algorithmisch basierend auf unserem Backend-Multi-Faktor-Scoringsystem (Bewertungsskala 0-100).
           </p>
         </div>
       </div>
 
       {/* Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 relative z-10">
         {universes.map((univ) => {
           const UnivIcon = univ.icon;
           return (

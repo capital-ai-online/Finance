@@ -17,7 +17,7 @@ export function AifCoreLogo({ className = '', size = 160, showText = true }: Aif
         className="perspective-1000 select-none cursor-pointer"
         style={{ width: size, height: size }}
       >
-        <svg viewBox="0 0 200 180" width="100%" height="100%" className="filter drop-shadow-[0_0_25px_rgba(194,157,83,0.35)]">
+        <svg viewBox="0 0 200 180" width="100%" height="100%" className="filter drop-shadow-[0_0_25px_rgba(194,157,83,0.35)]" aria-hidden="true">
           <defs>
             {/* 3D Gold Shading for Spheres */}
             <radialGradient id="gold-sphere-3d" cx="35%" cy="35%" r="65%">
@@ -91,9 +91,9 @@ export function AifCoreLogo({ className = '', size = 160, showText = true }: Aif
       {showText && (
         <div className="mt-4 flex flex-col items-center">
           {/* Logo brand title with wide letter spacing */}
-          <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] via-[#D4A017] to-[#F0D597] tracking-[0.2em] font-display uppercase mr-[-0.2em]">
+          <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] via-[#D4A017] to-[#F0D597] tracking-[0.2em] font-display uppercase mr-[-0.2em]">
             AIF-CORE
-          </h2>
+          </h1>
           {/* Subtitle brand module info */}
           <p className="text-[10px] text-white/50 font-mono tracking-[0.3em] uppercase mt-1.5 mr-[-0.3em]">
             MODUL 1

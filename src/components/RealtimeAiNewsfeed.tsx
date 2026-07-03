@@ -103,9 +103,17 @@ interface RealtimeAiNewsfeedProps {
   subscriptionTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
   onUpgradeClick: () => void;
   selectedSymbol: string;
+  searchQuery?: string;
+  categoryFilter?: string;
 }
 
-export function RealtimeAiNewsfeed({ subscriptionTier, onUpgradeClick, selectedSymbol }: RealtimeAiNewsfeedProps) {
+export function RealtimeAiNewsfeed({ 
+  subscriptionTier, 
+  onUpgradeClick, 
+  selectedSymbol,
+  searchQuery = '',
+  categoryFilter = 'all'
+}: RealtimeAiNewsfeedProps) {
   const [alerts, setAlerts] = useState<NewsAlert[]>(INITIAL_ALERTS);
   const [activeAlert, setActiveAlert] = useState<NewsAlert | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -151,6 +159,17 @@ export function RealtimeAiNewsfeed({ subscriptionTier, onUpgradeClick, selectedS
         `Der Gewinn je Aktie (EPS) übertrifft den Konsens um 12.5%. Die Bruttomarge stieg dank optimierter Lieferketten und Skaleneffekte auf einen neuen Höchststand.`,
         `Die Einführung der neuen AIF-CORE kompatiblen Schnittstellen reduziert operative Kosten um geschätzte 20%. Großkunden zeigen starkes Interesse an langfristigen Verträgen.`,
         `Die Erhöhung des freien Cashflows ermöglicht erweiterte Aktienrückkäufe und Dividendenausschüttungen. Der faire Wert nach Graham liegt deutlich über dem aktuellen Kurs.`
+      ];
+    } else if (asset.type === 'index') {
+      headlines = [
+        `${name} (${sym}) erreicht Meilenstein: Globaler Index klettert auf neues Verlaufshoch`,
+        `Technischer Durchbruch beim ${sym}: Momentum-Indikatoren signalisieren Fortsetzung der Rally`,
+        `Volatilitäts-Spike im ${name}: Marktteilnehmer reagieren auf jüngste Wirtschaftsdaten`
+      ];
+      insights = [
+        `Der wichtigste Benchmark-Index verzeichnete starke Zuflüsse aus institutionellen Portfolios. Optimistische Gewinnprognosen beflügeln das Sentiment auf breiter Front.`,
+        `Durch den erfolgreichen Ausbruch über die psychologische Widerstandslinie hat sich das mittelfristige Chartbild drastisch aufgehellt. Ein Retest des alten Hochs gilt als wahrscheinlich.`,
+        `Die Zunahme der Volatilität im Zuge der Zinsentscheidungen führt zu Umschichtungen innerhalb der Sektoren. Defensive Werte bleiben weiterhin stark nachgefragt.`
       ];
     } else if (asset.type === 'forex') {
       headlines = [
@@ -327,7 +346,56 @@ export function RealtimeAiNewsfeed({ subscriptionTier, onUpgradeClick, selectedS
 
         {/* Streaming entries */}
         <div className="space-y-3 pt-1">
-          {alerts.map((alert) => {
+          {/* Active Filter Indicators */}
+          {(categoryFilter !== 'all' || searchQuery.trim() !== '') && (
+            <div className="flex flex-wrap items-center gap-1.5 p-2 bg-white/5 rounded-lg border border-white/5 text-[10px] font-mono mb-2">
+              <span className="text-white/40">News-Filter aktiv:</span>
+              {categoryFilter !== 'all' && (
+                <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold uppercase">
+                  {categoryFilter === 'crypto' ? 'Krypto' : categoryFilter === 'stock' ? 'Aktie' : categoryFilter === 'commodity' ? 'Rohstoff' : 'Index'}
+                </span>
+              )}
+              {searchQuery.trim() !== '' && (
+                <span className="px-1.5 py-0.5 rounded bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 max-w-[120px] truncate">
+                  "{searchQuery}"
+                </span>
+              )}
+            </div>
+          )}
+
+          {alerts
+            .filter((alert) => {
+              // Category filter
+              if (categoryFilter && categoryFilter !== 'all') {
+                const assetOfAlert = assets.find((a) => a.symbol === alert.symbol);
+                if (assetOfAlert) {
+                  if (assetOfAlert.type !== categoryFilter) return false;
+                } else {
+                  // Hardcoded fallbacks for initial alerts
+                  const hardcodedType = alert.symbol === 'BTC' || alert.symbol === 'ETH' ? 'crypto' :
+                                        alert.symbol === 'AAPL' || alert.symbol === 'TSLA' || alert.symbol === 'NVDA' ? 'stock' :
+                                        alert.symbol === 'GLD' ? 'commodity' : 'crypto';
+                  if (hardcodedType !== categoryFilter) return false;
+                }
+              }
+
+              // Search query filter
+              if (searchQuery && searchQuery.trim() !== '') {
+                const query = searchQuery.toLowerCase().trim();
+                const assetOfAlert = assets.find((a) => a.symbol === alert.symbol);
+                const nameMatch = assetOfAlert ? assetOfAlert.name.toLowerCase().includes(query) : false;
+                
+                return (
+                  alert.symbol.toLowerCase().includes(query) ||
+                  alert.headline.toLowerCase().includes(query) ||
+                  alert.insight.toLowerCase().includes(query) ||
+                  nameMatch
+                );
+              }
+
+              return true;
+            })
+            .map((alert) => {
             const isBullish = alert.sentiment === 'bullish';
             const isBearish = alert.sentiment === 'bearish';
             const isLocked = alert.premium && subscriptionTier === 'Free';

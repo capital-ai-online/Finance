@@ -40,6 +40,10 @@ interface MarketScreenerProps {
   selectedSymbol: string;
   triggerAttempt?: (actionName: string, onExecute: () => void) => void;
   userSession?: UserSession;
+  searchQuery?: string;
+  setSearchQuery?: (q: string) => void;
+  categoryFilter?: string;
+  setCategoryFilter?: (c: string) => void;
 }
 
 type SortField = 'symbol' | 'name' | 'price' | 'change24h' | 'score' | 'peRatio' | 'marketCap' | 'dividendYield' | 'debtToEquity' | 'grahamScore' | 'volume24h';
@@ -78,7 +82,16 @@ function SimpleTooltip({ title, text, children }: { title: string; text: string;
   );
 }
 
-export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt, userSession }: MarketScreenerProps) {
+export function MarketScreener({ 
+  onSelectSymbol, 
+  selectedSymbol, 
+  triggerAttempt, 
+  userSession,
+  searchQuery: propSearchQuery,
+  setSearchQuery: propSetSearchQuery,
+  categoryFilter: propCategoryFilter,
+  setCategoryFilter: propSetCategoryFilter
+}: MarketScreenerProps) {
   // Trigger attempt on mount
   useEffect(() => {
     if (triggerAttempt) {
@@ -116,11 +129,18 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt,
     const email = userSession?.email;
     toggleSessionAlert(asset.symbol, asset.price, asset.name, asset.type, email);
   };
-  const [searchQuery, setSearchQuery] = useState('');
+
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   
   // Custom Filters State
-  const [assetType, setAssetType] = useState<string>('all');
+  const [localAssetType, setLocalAssetType] = useState<string>('all');
+
+  const searchQuery = propSearchQuery !== undefined ? propSearchQuery : localSearchQuery;
+  const setSearchQuery = propSetSearchQuery !== undefined ? propSetSearchQuery : setLocalSearchQuery;
+
+  const assetType = propCategoryFilter !== undefined ? propCategoryFilter : localAssetType;
+  const setAssetType = propSetCategoryFilter !== undefined ? propSetCategoryFilter : setLocalAssetType;
   
   // Custom Filter Criteria
   const [peMin, setPeMin] = useState<string>('');
@@ -406,7 +426,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt,
       'Dividendenrendite (%)',
       'Debt-to-Equity (D/E)',
       'Graham Score',
-      'KI-Score (0-10)',
+      'KI-Score (0-100)',
       'Risiko',
       'Status'
     ];
@@ -510,7 +530,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt,
     doc.text('Kombinierter KI-Score:', 125, y);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 15, 15);
-    doc.text(`>= ${minKiScore}/10`, 165, y);
+    doc.text(`\u003e= ${minKiScore}/100`, 165, y);
     
     y += 6;
     doc.setFont('helvetica', 'normal');
@@ -599,14 +619,14 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt,
       doc.setTextColor(40, 40, 40);
       doc.text(asset.grahamScore > 0 ? asset.grahamScore.toFixed(1) : 'N/A', 160, y + 4.5);
       
-      // KI-Score in bold with gold touch if >= 8.0
+      // KI-Score in bold with gold touch if >= 80.0
       doc.setFont('helvetica', 'bold');
-      if (asset.score >= 8.0) {
+      if (asset.score >= 80.0) {
         doc.setTextColor(217, 119, 6); // amber-600
       } else {
         doc.setTextColor(15, 15, 15);
       }
-      doc.text(`${asset.score.toFixed(1)}/10`, 178, y + 4.5);
+      doc.text(`${asset.score.toFixed(1)}/100`, 178, y + 4.5);
       doc.setFont('helvetica', 'normal');
       
       y += 6.5;
@@ -675,117 +695,33 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt,
         </div>
       </div>
 
-      {/* 🔍 Asset-Auswahl & Intelligente Suche */}
-      <div className="bg-gradient-to-r from-neutral-950 to-neutral-900 border border-white/10 rounded-xl p-5 shadow-[0_4px_25px_rgba(0,0,0,0.4)]">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
-          
-          {/* Left Side: Label and Asset-Klasse selector */}
-          <div className="md:col-span-4 space-y-2">
-            <SimpleTooltip 
-              title="Assetklasse filtern" 
-              text="Grenze die Suche auf Aktien (Unternehmensanteile), Kryptowährungen (dezentrale Währungen wie Bitcoin), Rohstoffe (Gold, Silber, Öl) oder Forex ein."
-            >
-              <label className="block text-xs font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-widest cursor-help flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-aif-gold-DEFAULT animate-pulse" />
-                1. Asset-Klasse Wählen
-              </label>
-            </SimpleTooltip>
-            <div className="flex bg-black/60 border border-white/10 rounded-xl p-1 shadow-inner">
-              {[
-                { id: 'all', label: 'Alle' },
-                { id: 'stock', label: 'Aktien' },
-                { id: 'crypto', label: 'Krypto' },
-                { id: 'commodity', label: 'Rohstoffe' }
-              ].map(item => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => { setAssetType(item.id); setCurrentPage(1); }}
-                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase tracking-wide transition-all cursor-pointer ${
-                    assetType === item.id 
-                      ? 'bg-aif-gold-DEFAULT text-black font-extrabold shadow-md' 
-                      : 'text-white/55 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
+      {/* Synchronized status badge */}
+      <div className="bg-gradient-to-r from-emerald-500/10 via-black/40 to-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-3 backdrop-blur-md mb-6">
+        <div className="flex items-center gap-3">
+          <div className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </div>
-
-          {/* Right Side: Intelligente Suche search input with autocomplete */}
-          <div className="md:col-span-8 space-y-2 relative">
-            <SimpleTooltip 
-              title="Intelligente Suche" 
-              text="Suche nach Symbol (z.B. BTC, GLD, SLV), Rufname (z.B. Gold, Silber, Bitcoin) oder Paar (z.B. BTC/USD)."
-            >
-              <label className="block text-xs font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-widest cursor-help flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-aif-gold-DEFAULT animate-pulse" />
-                2. Suche nach Symbol, Rufname oder Paar
-              </label>
-            </SimpleTooltip>
-            <div className="relative">
-              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
-              <input 
-                type="text"
-                placeholder="Z.B. Gold, Silber, Erdgas, WTI, Brent, Bitcoin, Apple, BTC, SLV, GLD, USO, NG=F..."
-                value={searchQuery}
-                onChange={(e) => { 
-                  setSearchQuery(e.target.value); 
-                  setCurrentPage(1);
-                  setShowSuggestions(true);
-                }}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 250)}
-                className="w-full bg-black/60 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-xs font-mono text-white focus:outline-none focus:border-aif-gold-DEFAULT/50 focus:ring-1 focus:ring-aif-gold-DEFAULT/25 transition-all placeholder:text-white/20 shadow-inner"
-              />
-
-              {/* Autocomplete intelligent dropdown list */}
-              <AnimatePresence>
-                {showSuggestions && searchQuery.trim().length > 0 && suggestedAssets.length > 0 && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 5 }}
-                    className="absolute left-0 right-0 top-full mt-2 bg-neutral-950/95 border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden divide-y divide-white/5 backdrop-blur-md"
-                  >
-                    <div className="px-3 py-1.5 text-[9px] text-white/30 font-mono uppercase tracking-widest bg-white/[0.02]">Vorschläge</div>
-                    {suggestedAssets.map(item => (
-                      <button
-                        key={item.symbol}
-                        type="button"
-                        onMouseDown={() => {
-                          setSearchQuery(item.name);
-                          setShowSuggestions(false);
-                          onSelectSymbol(item.symbol);
-                        }}
-                        className="w-full text-left px-3 py-2.5 text-xs hover:bg-aif-gold-DEFAULT/10 flex items-center justify-between transition-all group cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <span className="font-mono text-aif-gold-DEFAULT font-extrabold bg-aif-gold-DEFAULT/15 px-1.5 py-0.5 rounded text-[10px] border border-aif-gold-DEFAULT/20">
-                            {item.symbol}
-                          </span>
-                          <span className="text-white/80 font-bold group-hover:text-white truncate max-w-[130px]">
-                            {item.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-white/40 font-mono text-[10px]">
-                            €{item.price.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
-                          </span>
-                          <span className="text-[9px] font-mono font-bold uppercase text-white/30 px-1 py-0.5 rounded bg-white/5">
-                            {item.type}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
+          <p className="text-xs font-mono text-white/70">
+            Enterprise Scorer &amp; Filter sind aktiv mit der <span className="text-aif-gold-DEFAULT font-bold uppercase">Hauptsuche synchronisiert</span>.
+          </p>
         </div>
+        {searchQuery ? (
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono text-white/40 uppercase">Aktive Suche:</span>
+            <span className="px-2.5 py-1 rounded bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 text-xs font-mono font-bold uppercase">
+              "{searchQuery}"
+            </span>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-[10px] font-mono text-white/45 hover:text-white uppercase hover:underline cursor-pointer"
+            >
+              Löschen
+            </button>
+          </div>
+        ) : (
+          <span className="text-[10px] font-mono text-white/30 uppercase tracking-wider">Keine aktiven Suchbegriffe</span>
+        )}
       </div>
 
       {/* Dynamic KPI Stats Row with Tooltips */}
@@ -962,7 +898,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt,
             <div>
               <SimpleTooltip 
                 title="Intelligenter KI-Score" 
-                text="Unser komplexes KI-Modell gewichtet über 45 technische, fundamentale und stimmungsbasierte Indikatoren und gibt eine Gesamtempfehlung von 0 (bärisch/verkaufen) bis 10 (bullisch/kaufen)."
+                text="Unser komplexes KI-Modell gewichtet über 45 technische, fundamentale und stimmungsbasierte Indikatoren und gibt eine Gesamtempfehlung von 0 (bärisch/verkaufen) bis 100 (bullisch/kaufen)."
               >
                 <label className="block text-[11px] text-white/70 font-mono uppercase tracking-wider mb-1.5 cursor-help">KI Intelligent-Score Mindestwert</label>
               </SimpleTooltip>
@@ -970,8 +906,8 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt,
                 <input 
                   type="range"
                   min="0"
-                  max="10"
-                  step="0.5"
+                  max="100"
+                  step="5"
                   value={minKiScore}
                   onChange={(e) => { setMinKiScore(parseFloat(e.target.value)); setCurrentPage(1); }}
                   className="w-full accent-aif-gold-DEFAULT cursor-pointer"
@@ -979,7 +915,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt,
                 <span className="text-xs font-mono font-bold text-aif-gold-DEFAULT min-w-[24px] text-right">{minKiScore}</span>
               </div>
               <p className="text-[10px] text-white/50 mt-1.5 leading-relaxed font-mono">
-                KI-Gesamtauswertung aus über 45 technischen & fundamentalen Metriken. Werte ab 7.5 zeigen sehr hohes Potenzial.
+                KI-Gesamtauswertung aus über 45 technischen & fundamentalen Metriken. Werte ab 75 zeigen sehr hohes Potenzial.
               </p>
             </div>
           </div>

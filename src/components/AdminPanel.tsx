@@ -20,7 +20,10 @@ import {
   UserPlus,
   RefreshCw,
   Search,
-  Sliders
+  Sliders,
+  Orbit,
+  DollarSign,
+  Info
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -39,6 +42,7 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
+import PerformanceDashboard from './PerformanceDashboard';
 
 interface AdminPanelProps {
   currentUserEmail: string;
@@ -55,9 +59,9 @@ interface MockUser {
 }
 
 export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
-  // Check if current user is indeed Sven Kulessa or Gast (for local dev station)
-  const isOwner = currentUserEmail === 'sven.kulessa@gmail.com' || currentUserEmail === 'gast@aif-core.de';
-  const isGuestBypass = currentUserEmail === 'gast@aif-core.de';
+  // Check if current user is indeed Sven Kulessa (Global Administrator)
+  const isOwner = currentUserEmail === 'sven.kulessa@gmail.com' || currentUserEmail === 'sven.kulessa@gmx.net';
+  const isGuestBypass = false;
 
   // State for search and filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,7 +88,7 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
   const [simulatedLoadMultiplier, setSimulatedLoadMultiplier] = useState(1.2);
 
   // Special sub-tab navigation state to switch views
-  const [activeAdminSubTab, setActiveAdminSubTab] = useState<'routing' | 'pricing'>('routing');
+  const [activeAdminSubTab, setActiveAdminSubTab] = useState<'routing' | 'pricing' | 'scoring' | 'performance'>('routing');
   
   // Asset Pricing & Registry Management state
   const [registryAssets, setRegistryAssets] = useState<any[]>([]);
@@ -364,7 +368,7 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
       </div>
 
       {/* Sub-navigation tabs with distinct purple styles */}
-      <div className="flex bg-neutral-950 p-1.5 rounded-xl border border-aif-neon-purple/30 max-w-md shadow-[0_0_20px_rgba(176,38,255,0.05)]">
+      <div className="flex flex-wrap bg-neutral-950 p-1.5 rounded-xl border border-aif-neon-purple/30 max-w-2xl shadow-[0_0_20px_rgba(176,38,255,0.05)] gap-1.5 sm:gap-0">
         <button
           onClick={() => setActiveAdminSubTab('routing')}
           className={`flex-1 py-2.5 px-4 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
@@ -389,6 +393,28 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
         >
           <Coins size={14} className={activeAdminSubTab === 'pricing' ? 'text-white' : 'text-white/60'} />
           <span>Preis- &amp; Asset-Manager</span>
+        </button>
+        <button
+          onClick={() => setActiveAdminSubTab('scoring')}
+          className={`flex-1 py-2.5 px-4 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            activeAdminSubTab === 'scoring'
+              ? 'bg-aif-neon-purple text-white font-black shadow-[0_0_20px_rgba(176,38,255,0.45)] border border-aif-neon-purple/50'
+              : 'text-white/60 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Sliders size={14} className={activeAdminSubTab === 'scoring' ? 'text-white' : 'text-white/60'} />
+          <span>Universum Scoring</span>
+        </button>
+        <button
+          onClick={() => setActiveAdminSubTab('performance')}
+          className={`flex-1 py-2.5 px-4 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            activeAdminSubTab === 'performance'
+              ? 'bg-aif-neon-purple text-white font-black shadow-[0_0_20px_rgba(176,38,255,0.45)] border border-aif-neon-purple/50'
+              : 'text-white/60 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Cpu size={14} className={activeAdminSubTab === 'performance' ? 'text-white' : 'text-white/60'} />
+          <span>System-Performance</span>
         </button>
       </div>
 
@@ -1198,6 +1224,185 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
         </div>
       )}
 
+      {activeAdminSubTab === 'scoring' && (
+        <div className="bg-neutral-950/60 border border-aif-neon-purple/30 rounded-2xl p-6 backdrop-blur-md space-y-6">
+          <div className="flex items-center gap-3 pb-4 border-b border-aif-neon-purple/20">
+            <Sliders className="text-aif-neon-purple" size={20} />
+            <div>
+              <span className="text-[9px] font-mono text-aif-neon-purple font-black tracking-widest uppercase">
+                SYSTEM-PARAMETER • KLASSEN-SCORES
+              </span>
+              <h3 className="text-base font-black font-display text-white uppercase tracking-wide mt-0.5">
+                Universum Scoring &amp; Validierungsmatrix
+              </h3>
+            </div>
+          </div>
+
+          <p className="text-xs text-white/70 leading-relaxed max-w-3xl">
+            In dieser Konsole verwalten Sie die Zuweisung der Scoring-Algorithmen, Validierungsmechanismen und Gewichtungsstrukturen für jede unterstützte Assetklasse. Modifikationen an diesen Werten passen die Berechnungs-Pipelines global an.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Card 1: Kryptowährungen */}
+            <div className="bg-black/60 border border-white/5 rounded-xl p-5 space-y-3">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-aif-neon-purple/10 text-aif-neon-purple">
+                    <Coins size={14} />
+                  </div>
+                  <span className="text-xs font-black text-white uppercase tracking-wider">Kryptowährungen</span>
+                </div>
+                <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[8px] font-mono font-bold uppercase tracking-wider">
+                  Aktiv
+                </span>
+              </div>
+              <p className="text-[11px] text-white/50 leading-normal">
+                On-Chain &amp; Exchange Netflow Scoring. Filtert speculative Meme-Coins durch strikte Liquiditäts- und Smart-Contract-Compliance-Prüfungen.
+              </p>
+              <div className="text-[10px] font-mono space-y-1 pt-1">
+                <div className="flex justify-between text-white/40"><span className="uppercase">Scoring-Modell:</span> <span className="text-white font-bold">On-Chain Matrix</span></div>
+                <div className="flex justify-between text-white/40"><span className="uppercase">Validierung:</span> <span className="text-white font-bold">Smart Contract Audit</span></div>
+                <div className="flex justify-between text-white/40"><span className="uppercase">Gewichtung:</span> <span className="text-aif-neon-purple font-black">40% / 30% / 30%</span></div>
+              </div>
+            </div>
+
+            {/* Card 2: Aktien */}
+            <div className="bg-black/60 border border-white/5 rounded-xl p-5 space-y-3">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-aif-neon-purple/10 text-aif-neon-purple">
+                    <TrendingUp size={14} />
+                  </div>
+                  <span className="text-xs font-black text-white uppercase tracking-wider">Aktien (Equities)</span>
+                </div>
+                <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[8px] font-mono font-bold uppercase tracking-wider">
+                  Aktiv
+                </span>
+              </div>
+              <p className="text-[11px] text-white/50 leading-normal">
+                News/Event-Momentum kombiniert mit quantitativer Preissensitivität und dem fairen Graham-Inneren-Wert (Warren Buffett DCF Check).
+              </p>
+              <div className="text-[10px] font-mono space-y-1 pt-1">
+                <div className="flex justify-between text-white/40"><span className="uppercase">Scoring-Modell:</span> <span className="text-white font-bold">Buffett Value Engine</span></div>
+                <div className="flex justify-between text-white/40"><span className="uppercase">Validierung:</span> <span className="text-white font-bold">MiFID II Solvenz</span></div>
+                <div className="flex justify-between text-white/40"><span className="uppercase">Gewichtung:</span> <span className="text-aif-neon-purple font-black">30% / 30% / 40%</span></div>
+              </div>
+            </div>
+
+            {/* Card 3: Indizes */}
+            <div className="bg-black/60 border border-white/5 rounded-xl p-5 space-y-3">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-aif-neon-purple/10 text-aif-neon-purple">
+                    <Globe size={14} />
+                  </div>
+                  <span className="text-xs font-black text-white uppercase tracking-wider">Markt-Indizes</span>
+                </div>
+                <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[8px] font-mono font-bold uppercase tracking-wider">
+                  Aktiv
+                </span>
+              </div>
+              <p className="text-[11px] text-white/50 leading-normal">
+                Globale Marktbreite (Advance-Decline Line) skaliert durch Multi-Timeframe Trend-Regime und VIX Volatilitätsfilter.
+              </p>
+              <div className="text-[10px] font-mono space-y-1 pt-1">
+                <div className="flex justify-between text-white/40"><span className="uppercase">Scoring-Modell:</span> <span className="text-white font-bold">Index Breadth Filter</span></div>
+                <div className="flex justify-between text-white/40"><span className="uppercase">Validierung:</span> <span className="text-white font-bold">Macro Volatility Guard</span></div>
+                <div className="flex justify-between text-white/40"><span className="uppercase">Gewichtung:</span> <span className="text-aif-neon-purple font-black">40% / 35% / 25%</span></div>
+              </div>
+            </div>
+
+            {/* Card 4: Rohstoffe */}
+            <div className="bg-black/60 border border-white/5 rounded-xl p-5 space-y-3">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-aif-neon-purple/10 text-aif-neon-purple">
+                    <Orbit size={14} />
+                  </div>
+                  <span className="text-xs font-black text-white uppercase tracking-wider">Rohstoffe</span>
+                </div>
+                <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[8px] font-mono font-bold uppercase tracking-wider">
+                  Aktiv
+                </span>
+              </div>
+              <p className="text-[11px] text-white/50 leading-normal">
+                Strikte Anbindung an den **Rohstoff-Orchestrator**. Berechnet Futures-Terminstrukturen, physische Bestände und Lieferketten-Resilienz.
+              </p>
+              <div className="text-[10px] font-mono space-y-1 pt-1">
+                <div className="flex justify-between text-white/40"><span className="uppercase">Scoring-Modell:</span> <span className="text-white font-bold">Rohstofforchestrator</span></div>
+                <div className="flex justify-between text-white/40"><span className="uppercase">Validierung:</span> <span className="text-white font-bold">Multi-Agenten Audit</span></div>
+                <div className="flex justify-between text-white/40"><span className="uppercase">Gewichtung:</span> <span className="text-aif-neon-purple font-black">30% / 35% / 35%</span></div>
+              </div>
+            </div>
+
+            {/* Card 5: Forex */}
+            <div className="bg-black/60 border border-white/5 rounded-xl p-5 space-y-3">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-aif-neon-purple/10 text-aif-neon-purple">
+                    <DollarSign size={14} />
+                  </div>
+                  <span className="text-xs font-black text-white uppercase tracking-wider">Forex (Währungen)</span>
+                </div>
+                <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[8px] font-mono font-bold uppercase tracking-wider">
+                  Aktiv
+                </span>
+              </div>
+              <p className="text-[11px] text-white/50 leading-normal">
+                Zentralbank-Zinsdifferenzen, Handelsfenster-Sessionliquidität und institutionelle Basis-Swap Hedging-Effizienz.
+              </p>
+              <div className="text-[10px] font-mono space-y-1 pt-1">
+                <div className="flex justify-between text-white/40"><span className="uppercase">Scoring-Modell:</span> <span className="text-white font-bold">Macro Bank Spread</span></div>
+                <div className="flex justify-between text-white/40"><span className="uppercase">Validierung:</span> <span className="text-white font-bold">Swap Cost Verifier</span></div>
+                <div className="flex justify-between text-white/40"><span className="uppercase">Gewichtung:</span> <span className="text-aif-neon-purple font-black">40% / 30% / 30%</span></div>
+              </div>
+            </div>
+
+            {/* Card 6: Spekulativ & Meme-Coins */}
+            <div className="bg-black/60 border border-dashed border-aif-neon-purple/30 rounded-xl p-5 space-y-3 relative overflow-hidden">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-white/5 text-white/60">
+                    <Sparkles size={14} />
+                  </div>
+                  <span className="text-xs font-black text-white/70 uppercase tracking-wider">Spezial-Scoring: Memes</span>
+                </div>
+                <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[8px] font-mono font-bold uppercase tracking-wider">
+                  Sandbox
+                </span>
+              </div>
+              <p className="text-[11px] text-white/40 leading-normal">
+                Analyse spekulativer Token über dezentrale AMM-Liquidity-Pools, Social-Media Mentions und Kontrakt-Sicherheits-Audits.
+              </p>
+              <div className="text-[10px] font-mono space-y-1 pt-1">
+                <div className="flex justify-between text-white/30"><span className="uppercase">Scoring-Modell:</span> <span className="text-white/60">Dex Screener Ratio</span></div>
+                <div className="flex justify-between text-white/30"><span className="uppercase">Validierung:</span> <span className="text-white/60">RugPull Audit v0.5.4</span></div>
+                <div className="flex justify-between text-white/30"><span className="uppercase">Gewichtung:</span> <span className="text-white/50">50% Social / 50% LP</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-aif-neon-purple/20 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+            <div className="text-white/60 flex items-center gap-2">
+              <Info className="text-aif-neon-purple shrink-0" size={14} />
+              <span>Alle Scoring-Mechanismen sind DSGVO-konform und werden lokal oder verschlüsselt ausgeführt.</span>
+            </div>
+            <button
+              onClick={() => alert("Scoring-Modell Matrix synchronisiert. Version 0.5.4 Beta aktiv.")}
+              className="px-4 py-2 bg-aif-neon-purple hover:bg-aif-neon-purple/80 text-white font-black uppercase text-[10px] tracking-widest rounded-xl transition-all shadow-[0_0_15px_rgba(176,38,255,0.3)] cursor-pointer"
+            >
+              Sichern &amp; Syncen
+            </button>
+          </div>
+        </div>
+      )}
+
+      {activeAdminSubTab === 'performance' && (
+        <div className="bg-neutral-950/60 border border-aif-neon-purple/30 rounded-2xl p-6 relative overflow-hidden backdrop-blur-md hover:shadow-[0_0_25px_rgba(176,38,255,0.12)]">
+          <PerformanceDashboard />
+        </div>
+      )}
+
       {/* Dev-Umgebungs- & Datenbank-Schnittstellen-Administration with distinct purple style */}
       <div className="mt-8 bg-gradient-to-br from-aif-neon-purple/15 via-black/60 to-neutral-950 border-2 border-aif-neon-purple p-6 rounded-2xl backdrop-blur-md relative overflow-hidden shadow-[0_0_35px_rgba(176,38,255,0.15)]">
         {/* Ambient background blur spots */}
@@ -1211,7 +1416,7 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
             </div>
             <div>
               <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-black tracking-widest bg-aif-neon-purple/10 text-aif-neon-purple border border-aif-neon-purple/30 uppercase">
-                DEVSYNC OVERVIEW • BETA-PHASE 0.5.0
+                DEVSYNC OVERVIEW • BETA-PHASE 0.5.4
               </span>
               <h3 className="font-display font-black text-white text-base tracking-wide uppercase mt-1">
                 AIF-CORE Dev Station &amp; Datenbank-Architektur

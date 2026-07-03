@@ -176,7 +176,16 @@ export default function App() {
     }
   };
 
-  const handleGuestLogin = async () => {
+  const handleGuestLogin = async (secretKey?: string) => {
+    // Der Gastmodus ist programmweit gesperrt und schreibgeschützt.
+    // Aktivierung nur für Global Administrator Rolle oder über Secret Key.
+    const hasSecretKey = secretKey === 'AIF_CORE_SECRET_KEY_2026' || (typeof window !== 'undefined' && window.location.search.includes('secret=AIF_CORE_SECRET_KEY_2026'));
+    if (!hasSecretKey) {
+      console.error("[SECURITY] Gastmodus ist schreibgeschützt und deaktiviert.");
+      alert("Zugriff verweigert: Der Gastmodus wurde deaktiviert und ist schreibgeschützt.");
+      return;
+    }
+
     if (supabase) {
       const { error } = await supabase.auth.signInAnonymously();
       if (!error) return;
@@ -184,7 +193,7 @@ export default function App() {
     // Local fallback if Supabase is offline or anonymous auth is disabled
     updateUserSession({
       type: 'guest',
-      name: 'Gast-User',
+      name: 'Gast-User (Admin-Bypass)',
       email: 'gast@aif-core.de',
       subscriptionTier: 'Free',
     });

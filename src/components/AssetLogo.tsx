@@ -71,6 +71,89 @@ export function AssetLogo({ symbol, className = "", size = 'sm' }: AssetLogoProp
   }
 
   // Individual assets rendering (Cryptos, Stocks, Commodities)
+  const indicesSymbols = [
+    'GSPC', 'IXIC', 'DJI', 'RUT', 'FTSE', 'GDAXI', 'FCHI', 'N225', 'HSI', 'AXJO', 
+    'SSMI', 'IBEX', 'FTSEMIB', 'BVSP', 'MXX', 'SSEC', 'BSESN', 'JKSE', 'KLSE', 
+    'STI', 'KS11', 'TWII', 'TA125', 'NZ50', 'AORD', 'VIX', 'SDAX', 'MDAX', 
+    'TECDAX', 'STOXX50E'
+  ];
+
+  const getIndexFlag = (sym: string): string => {
+    switch (sym) {
+      case 'GSPC':
+      case 'IXIC':
+      case 'DJI':
+      case 'RUT':
+      case 'VIX':
+        return '🇺🇸';
+      case 'FTSE':
+        return '🇬🇧';
+      case 'GDAXI':
+      case 'SDAX':
+      case 'MDAX':
+      case 'TECDAX':
+        return '🇩🇪';
+      case 'FCHI':
+        return '🇫🇷';
+      case 'N225':
+        return '🇯🇵';
+      case 'HSI':
+        return '🇭🇰';
+      case 'AXJO':
+      case 'AORD':
+        return '🇦🇺';
+      case 'SSMI':
+        return '🇨🇭';
+      case 'IBEX':
+        return '🇪🇸';
+      case 'FTSEMIB':
+        return '🇮🇹';
+      case 'BVSP':
+        return '🇧🇷';
+      case 'MXX':
+        return '🇲🇽';
+      case 'SSEC':
+        return '🇨🇳';
+      case 'BSESN':
+        return '🇮🇳';
+      case 'JKSE':
+        return '🇮🇩';
+      case 'KLSE':
+        return '🇲🇾';
+      case 'STI':
+        return '🇸🇬';
+      case 'KS11':
+        return '🇰🇷';
+      case 'TWII':
+        return '🇹🇼';
+      case 'TA125':
+        return '🇮🇱';
+      case 'NZ50':
+        return '🇳🇿';
+      case 'STOXX50E':
+        return '🇪🇺';
+      default:
+        return '🌐';
+    }
+  };
+
+  if (indicesSymbols.includes(cleanSymbol)) {
+    const flag = getIndexFlag(cleanSymbol);
+    const resolvedSize = typeof size === 'number' ? size : (size === 'xs' ? 18 : size === 'sm' ? 24 : 32);
+    return (
+      <div 
+        className={`rounded-md bg-gradient-to-br from-zinc-900 to-black border border-white/10 flex items-center justify-center shrink-0 select-none shadow-[0_0_8px_rgba(255,255,255,0.05)] ${dimClass} ${className}`}
+        style={{ width: resolvedSize, height: resolvedSize, borderRadius: '6px' }}
+        title={`${cleanSymbol} Index`}
+      >
+        <div className="flex items-center gap-0.5 justify-center leading-none">
+          <span className="text-[9px] font-mono font-black text-emerald-400">$</span>
+          <span className="text-xs leading-none select-none">{flag}</span>
+        </div>
+      </div>
+    );
+  }
+
   switch (cleanSymbol) {
     // CRYPTOCURRENCIES
     case 'BTC':

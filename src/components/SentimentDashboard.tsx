@@ -912,7 +912,7 @@ export function SentimentDashboard() {
 
             {/* Bottom footnote */}
             <div className="mt-4 pt-3 border-t border-white/5 flex justify-between items-center text-[9px] font-mono text-white/40">
-              <span>SANDBOX VERSE: 0.5.0</span>
+              <span>SANDBOX VERSE: 0.5.4</span>
               <span className="flex items-center gap-1"><ShieldCheck size={10} className="text-indigo-400" /> DSGVO-Konform</span>
             </div>
           </div>

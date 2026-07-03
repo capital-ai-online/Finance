@@ -43,7 +43,8 @@ import {
   generateCryptoInputs,
   MemeCoinInputs,
   calculateMemeCoinScore,
-  generateMemeCoinInputs
+  generateMemeCoinInputs,
+  clamp
 } from '../lib/cryptoScoring';
 
 // Intelligent Search and Mapping Database
@@ -90,6 +91,263 @@ const TIMEFRAMES = [
   { value: '1 woche', label: '1 Woche' }
 ];
 
+const adjustMemeInputsForTimeframe = (raw: any, tf: string): any => {
+  const copy = { ...raw };
+  switch (tf) {
+    case '1m':
+    case '5m':
+      copy.volatility_quality = Math.min(1.0, copy.volatility_quality * 1.5);
+      copy.spread_penalty = Math.min(1.0, copy.spread_penalty * 2.0);
+      copy.momentum = Math.min(1.0, copy.momentum * 1.3);
+      copy.manipulation_penalty = Math.min(1.0, copy.manipulation_penalty * 1.4);
+      break;
+    case '15m':
+    case '30m':
+      copy.volatility_quality = Math.min(1.0, copy.volatility_quality * 1.25);
+      copy.spread_penalty = Math.min(1.0, copy.spread_penalty * 1.5);
+      break;
+    case '1std':
+    case '4std':
+      break;
+    case '1 tag':
+      copy.narrative_strength = Math.min(1.0, copy.narrative_strength * 1.1);
+      copy.decay_penalty = Math.min(1.0, copy.decay_penalty * 1.15);
+      break;
+    case '1 woche':
+      copy.narrative_strength = Math.min(1.0, copy.narrative_strength * 1.2);
+      copy.decay_penalty = Math.min(1.0, copy.decay_penalty * 1.3);
+      copy.rugpull_penalty = Math.max(0.0, copy.rugpull_penalty * 0.75);
+      break;
+  }
+  return copy;
+};
+
+const adjustInputsForTimeframe = (raw: CryptoScoringInputs, tf: string): CryptoScoringInputs => {
+  const copy = { ...raw };
+  switch (tf) {
+    case '1m':
+    case '5m':
+      copy.volatility_quality = Math.max(0.1, copy.volatility_quality * 0.4);
+      copy.spread = Math.min(1.0, copy.spread * 2.5);
+      copy.momentum = Math.min(1.0, copy.momentum * 1.25);
+      copy.ai_confidence = Math.max(0.2, copy.ai_confidence * 0.7);
+      copy.manipulation_risk = Math.min(1.0, copy.manipulation_risk * 1.5);
+      break;
+    case '15m':
+    case '30m':
+      copy.volatility_quality = Math.max(0.1, copy.volatility_quality * 0.6);
+      copy.spread = Math.min(1.0, copy.spread * 1.8);
+      copy.momentum = Math.min(1.0, copy.momentum * 1.15);
+      copy.manipulation_risk = Math.min(1.0, copy.manipulation_risk * 1.25);
+      break;
+    case '1std':
+    case '4std':
+      // Default standard values
+      break;
+    case '1 tag':
+      copy.trend = Math.min(1.0, copy.trend * 1.1);
+      copy.slippage_estimate = Math.max(0.01, copy.slippage_estimate * 0.8);
+      copy.active_addresses = Math.min(1.0, copy.active_addresses * 1.15);
+      copy.news_momentum = Math.min(1.0, copy.news_momentum * 1.2);
+      copy.manipulation_risk = Math.max(0.01, copy.manipulation_risk * 0.7);
+      break;
+    case '1 woche':
+      copy.trend = Math.min(1.0, copy.trend * 1.25);
+      copy.spread = Math.max(0.01, copy.spread * 0.6);
+      copy.slippage_estimate = Math.max(0.01, copy.slippage_estimate * 0.5);
+      copy.active_addresses = Math.min(1.0, copy.active_addresses * 1.3);
+      copy.community_engagement = Math.min(1.0, copy.community_engagement * 1.2);
+      copy.manipulation_risk = Math.max(0.01, copy.manipulation_risk * 0.4);
+      copy.rugpull_risk = Math.max(0.001, copy.rugpull_risk * 0.2);
+      break;
+  }
+  return copy;
+};
+
+const getTradingSetup = (sym: string, price: number, score: number, type: string) => {
+  const s = sym.toUpperCase().trim();
+  let hash = 0;
+  for (let i = 0; i < s.length; i++) {
+    hash = (hash << 5) - hash + s.charCodeAt(i);
+    hash |= 0;
+  }
+  const seed = (Math.abs(hash) % 100) / 100;
+
+  const isLong = score >= 60;
+  
+  let entryMin = price * 0.985;
+  let entryMax = price * 1.005;
+  let stopLoss = isLong ? price * 0.94 : price * 1.06;
+  let takeProfit = isLong ? price * 1.15 : price * 0.85;
+
+  if (type === 'crypto') {
+    stopLoss = isLong ? price * (0.91 - seed * 0.03) : price * (1.09 + seed * 0.03);
+    takeProfit = isLong ? price * (1.20 + seed * 0.15) : price * (0.80 - seed * 0.10);
+  } else if (type === 'forex') {
+    entryMin = price * 0.998;
+    entryMax = price * 1.001;
+    stopLoss = isLong ? price * 0.992 : price * 1.008;
+    takeProfit = isLong ? price * 1.025 : price * 0.975;
+  }
+
+  const patterns = [];
+  if (score >= 80) {
+    patterns.push(seed > 0.5 ? "Bullish Flag Breakout" : "Golden Cross (Daily)");
+    patterns.push("EMA 50/200 Bounce");
+  } else if (score >= 60) {
+    patterns.push(seed > 0.5 ? "Ascending Triangle" : "Double Bottom Support");
+  } else if (score >= 40) {
+    patterns.push("Kanal-Konsolidierung (Seitwärts)");
+  } else {
+    patterns.push(seed > 0.5 ? "Double Top Bearish" : "Bearish Head & Shoulders");
+    patterns.push("MACD Bearish Cross");
+  }
+
+  let recommendation = "";
+  let explanation = "";
+
+  if (score >= 80) {
+    recommendation = "STRONG BUY / BULLISH BREAKOUT";
+    explanation = `Das Asset ${s} weist eine herausragende quantitative Bewertung von ${(score).toFixed(1)}/10 auf. Unterstützt durch das ${patterns[0]}-Pattern und ein exzellentes Volumen-Trend-Verhältnis empfiehlt sich ein spekulativer Long-Einstieg im Bereich der Startspanne. Der Stop-Loss ist eng unterhalb des letzten Swing-Lows platziert, während das Take-Profit-Ziel ein optimales CRV (Chancen-Risiko-Verhältnis) von über 2.5:1 bietet.`;
+  } else if (score >= 65) {
+    recommendation = "ACCUMULATE / WATCH FOR ENTRY";
+    explanation = `Ein positives Trendprofil mit solidem institutionellem Momentum. Das ${patterns[0]}-Muster bietet eine solide Einstiegsbasis. Wir empfehlen eine Tranchen-Akkumulation innerhalb der angegebenen Startspanne, um das Einstiegsrisiko zu diversifizieren. Ein Absichern knapp unter dem lokalen Support bei ${stopLoss.toLocaleString('de-DE', { style: 'currency', currency: 'USD' })} ist zwingend ratsam.`;
+  } else if (score >= 50) {
+    recommendation = "NEUTRAL / HOLD STATE";
+    explanation = `Konsolidierungsphase ohne klares Momentum. ${s} bewegt sich in einer Seitwärtsspanne. Vor einer Neupositionierung sollte der Ausbruch aus dem ${patterns[0]}-Muster abgewartet werden. Das CRV ist im aktuellen Bereich nicht vorteilhaft für Neupositionierungen.`;
+  } else {
+    recommendation = "BEARISH REJECTION / SHORT SETUP";
+    explanation = `Erhöhte Risikofaktoren und ein negatives Momentum-Profil deuten auf weiteren Verkaufsdruck hin. Das aktive ${patterns[0]}-Muster untermauert das bärische Szenario. Für risikofreudige Anleger bietet sich ein Short-Setup an, mit einem Stop-Loss bei ${stopLoss.toLocaleString('de-DE', { style: 'currency', currency: 'USD' })} zur Verlustbegrenzung.`;
+  }
+
+  return {
+    entryMin,
+    entryMax,
+    stopLoss,
+    takeProfit,
+    patterns,
+    recommendation,
+    explanation
+  };
+};
+
+const adjustCategoryLabelsForType = (cats: any[], type: string) => {
+  if (type === 'crypto') return cats;
+  
+  return cats.map(cat => {
+    const copyCat = { ...cat, fields: cat.fields.map((f: any) => ({ ...f })) };
+    
+    copyCat.fields = copyCat.fields.map((f: any) => {
+      if (f.key === 'whale_activity') {
+        if (type === 'stock') {
+          f.label = 'Institutional Ownership';
+          f.desc = 'Percentage of shares held by mutual funds, pension plans, and banks';
+        } else if (type === 'commodity') {
+          f.label = 'Commercial Hedgers (CoT)';
+          f.desc = 'Net positioning of commercial hedgers in the Commitments of Traders report';
+        } else if (type === 'index') {
+          f.label = 'Institutional ETF Inflows';
+          f.desc = 'Net capital inflows into index tracking mutual funds and ETFs';
+        }
+      } else if (f.key === 'rugpull_risk') {
+        if (type === 'stock') {
+          f.label = 'Bankruptcy Risk (Altman Z)';
+          f.desc = 'Z-score indicator of corporate financial distress and solvency';
+        } else if (type === 'commodity') {
+          f.label = 'Supply Disruption Risk';
+          f.desc = 'Geopolitical or physical risks to global production chains';
+        } else if (type === 'index') {
+          f.label = 'Systemic Index Rebalance Risk';
+          f.desc = 'Risk of structural component adjustments or liquidity shocks';
+        }
+      } else if (f.key === 'active_addresses') {
+        if (type === 'stock') {
+          f.label = 'Active Shareholder Accounts';
+          f.desc = 'Growth rate of unique brokerage holding accounts';
+        } else if (type === 'commodity') {
+          f.label = 'Active Futures Contracts';
+          f.desc = 'Open interest growth across standard mercantile exchanges';
+        } else if (type === 'index') {
+          f.label = 'Aggregate Component Accounts';
+          f.desc = 'Weighted sum of active shareholder accounts across all constituents';
+        }
+      } else if (f.key === 'exchange_flows') {
+        if (type === 'stock') {
+          f.label = 'Corporate Buyback Velocity';
+          f.desc = 'Company-directed share buybacks and treasury accumulation';
+        } else if (type === 'commodity') {
+          f.label = 'Physical Warehouse Stockpiles';
+          f.desc = 'LME/COMEX inventories (outflows are usually bullish)';
+        } else if (type === 'index') {
+          f.label = 'Constituent Liquidity Flows';
+          f.desc = 'Aggregated liquidity rotation inside and outside the index';
+        }
+      } else if (f.key === 'exchange_concentration') {
+        if (type === 'stock' || type === 'index') {
+          f.label = 'Sector Concentration Risk';
+          f.desc = 'Overweight status of the largest index sectors/components';
+        } else if (type === 'commodity') {
+          f.label = 'Regional Supply Concentration';
+          f.desc = 'Geographic concentration of the raw material mining/production';
+        }
+      }
+      return f;
+    });
+    return copyCat;
+  });
+};
+
+const generateUniversalInputs = (sym: string, type: string, change24h: number, assetData?: any) => {
+  const s = sym.toUpperCase().trim();
+  let hash = 0;
+  for (let i = 0; i < s.length; i++) {
+    hash = (hash << 5) - hash + s.charCodeAt(i);
+    hash |= 0;
+  }
+  const seed = (Math.abs(hash) % 100) / 100;
+
+  const actualChange = change24h !== undefined ? change24h : 1.5;
+
+  if (type === 'crypto') {
+    const isMeme = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(s);
+    if (isMeme) {
+      return generateMemeCoinInputs(s, actualChange);
+    } else {
+      return generateCryptoInputs(s, actualChange);
+    }
+  }
+
+  const trendBase = clamp(0.5 + actualChange / 25 + seed * 0.1, 0.15, 0.95);
+  const momentumBase = clamp(0.5 + actualChange / 15, 0.1, 0.95);
+
+  return {
+    coin: s,
+    trend: trendBase,
+    momentum: momentumBase,
+    volatility_quality: clamp(0.4 + (seed - 0.5) * 0.3),
+    breakout_quality: clamp(actualChange > 3 ? 0.8 : 0.4 + seed * 0.3),
+    relative_strength: clamp(trendBase + (seed - 0.5) * 0.15),
+    avg_daily_volume: type === 'index' ? 0.95 : type === 'stock' ? 0.85 : type === 'commodity' ? 0.75 : 0.60,
+    spread: type === 'forex' ? 0.01 : type === 'index' ? 0.02 : type === 'stock' ? 0.03 : 0.05,
+    orderbook_depth: type === 'index' ? 0.95 : type === 'stock' ? 0.85 : 0.70,
+    slippage_estimate: type === 'forex' ? 0.01 : type === 'index' ? 0.01 : type === 'stock' ? 0.02 : 0.04,
+    active_addresses: clamp(0.5 + seed * 0.3),
+    exchange_flows: clamp(0.5 + seed * 0.2),
+    whale_activity: type === 'stock' ? 0.75 : 0.60,
+    supply_dynamics: clamp(0.5 + seed * 0.2),
+    social_velocity: clamp(momentumBase + (seed - 0.5) * 0.2),
+    narrative_strength: clamp(0.4 + seed * 0.4),
+    news_momentum: clamp(0.5 + actualChange / 20),
+    community_engagement: clamp(0.5 + seed * 0.3),
+    manipulation_risk: type === 'index' ? 0.02 : type === 'stock' ? 0.05 : 0.10,
+    exchange_concentration: type === 'index' ? 0.01 : type === 'stock' ? 0.08 : 0.15,
+    rugpull_risk: type === 'index' ? 0.00 : type === 'stock' ? 0.01 : 0.02,
+    data_quality_risk: 0.01,
+    ai_confidence: clamp(0.7 + seed * 0.2),
+    regime_bonus: clamp(actualChange > 1.0 ? 0.4 + seed * 0.3 : 0.2)
+  };
+};
+
 interface CryptoScoringEnterpriseProps {
   selectedSymbol: string;
   onSelectSymbol?: (symbol: string) => void;
@@ -116,12 +374,205 @@ export function CryptoScoringEnterprise({
   const [customInputs, setCustomInputs] = useState<Partial<CryptoScoringInputs>>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [suggestions, setSuggestions] = useState<typeof CRYPTO_DATABASE>([]);
+  const [registryAssets, setRegistryAssets] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [liveMarketData, setLiveMarketData] = useState<any[]>([]);
 
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const calculateUniversalScore = (sym: string, type: string, change24h: number, assetData?: any) => {
+    const s = sym.toUpperCase().trim();
+    // Deterministic seed
+    let hash = 0;
+    for (let i = 0; i < s.length; i++) {
+      hash = (hash << 5) - hash + s.charCodeAt(i);
+      hash |= 0;
+    }
+    const seed = (Math.abs(hash) % 100) / 100;
+
+    const actualChange = change24h !== undefined ? change24h : 1.5;
+
+    if (type === 'crypto') {
+      const isMeme = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(s);
+      if (isMeme) {
+        const fbInputs = generateMemeCoinInputs(s, actualChange);
+        const adapted = adjustMemeInputsForTimeframe(fbInputs, timeframe);
+        const result = calculateMemeCoinScore(adapted);
+        return {
+          score: result.score,
+          final_score: result.final_score,
+          base_score: result.base_score,
+          risk_penalty: result.risk_penalty,
+          ai_confidence_bonus: result.ai_confidence_bonus,
+          decision: result.decision,
+          decisionName: result.decisionName,
+          decisionDesc: result.decisionDesc,
+          risk_level: result.risk_level,
+          reasoning: result.reasoning,
+          alerts: result.alerts
+        };
+      } else {
+        const fbInputs = generateCryptoInputs(s, actualChange);
+        const adapted = adjustInputsForTimeframe(fbInputs, timeframe);
+        const result = calculateCryptoEnterpriseScore(adapted);
+        return {
+          score: result.score,
+          final_score: result.final_score,
+          base_score: result.base_score,
+          risk_penalty: result.risk_penalty,
+          regime_bonus: result.regime_bonus,
+          ai_confidence_bonus: result.ai_confidence_bonus,
+          decision: result.decision,
+          decisionName: result.decisionName,
+          decisionDesc: result.decisionDesc,
+          risk_level: result.risk_level,
+          reasoning: result.reasoning,
+          alerts: result.alerts
+        };
+      }
+    }
+
+    // For other asset classes: stock, commodity, index, forex
+    let base_score = 60 + seed * 20 + actualChange * 1.5;
+    let risk_penalty = 5 + (1 - seed) * 10;
+    let bonus = seed * 10;
+
+    const pe = assetData?.peRatio || (type === 'stock' ? 12 + seed * 25 : undefined);
+    const div = assetData?.dividendYield || (type === 'stock' ? seed * 0.05 : undefined);
+    const expReturn = assetData?.expectedReturn || 0.05 + seed * 0.20;
+    const vol = assetData?.volatility || 0.1 + seed * 0.4;
+    const risk = assetData?.risk || (seed > 0.6 ? 'High' : seed > 0.3 ? 'Medium' : 'Low');
+
+    if (type === 'stock') {
+      base_score = 55 + expReturn * 100;
+      if (pe) {
+        if (pe > 0 && pe < 18) base_score += 15;
+        else if (pe >= 18 && pe < 30) base_score += 8;
+        else risk_penalty += 8;
+      }
+      if (div) base_score += div * 150;
+      if (risk === 'Low') risk_penalty -= 5;
+      else if (risk === 'High') risk_penalty += 8;
+      if (vol) risk_penalty += vol * 15;
+    } else if (type === 'commodity') {
+      base_score = 58 + expReturn * 120;
+      if (risk === 'Low') risk_penalty -= 6;
+      else if (risk === 'High') risk_penalty += 6;
+      if (vol) risk_penalty += vol * 20;
+      if (actualChange > 0) bonus += actualChange * 2;
+    } else if (type === 'index') {
+      base_score = 62 + expReturn * 110;
+      if (risk === 'Low') risk_penalty -= 7;
+      else if (risk === 'High') risk_penalty += 7;
+      if (vol) risk_penalty += vol * 18;
+      if (actualChange > 0) bonus += actualChange * 2.5;
+    } else if (type === 'forex') {
+      base_score = 50 + seed * 30;
+      if (vol) risk_penalty += vol * 30;
+      if (actualChange) bonus += Math.abs(actualChange) * 4;
+    }
+
+    const final_score = Math.max(0.0, Math.min(100.0, base_score - risk_penalty + bonus));
+
+    // Decision matching
+    let decision = "reject";
+    let decisionName = "Reject";
+    let decisionDesc = "Keine Trade-Empfehlung für diese Marktphase.";
+    if (final_score >= 85) {
+      decision = "A_setup";
+      decisionName = "A-Setup";
+      decisionDesc = "Herausragende fundamentale und technische Stärke. Bevorzugter Trade-Kandidat.";
+    } else if (final_score >= 75) {
+      decision = "tradeable_watch";
+      decisionName = "Tradeable Watch";
+      decisionDesc = "Solides Profil. Bei technischem Ausbruch kaufenswert.";
+    } else if (final_score >= 65) {
+      decision = "speculative_watch";
+      decisionName = "Speculative Watch";
+      decisionDesc = "Interessant, aber erhöhtes makroökonomisches oder Volatilitäts-Risiko.";
+    } else if (final_score >= 55) {
+      decision = "observe";
+      decisionName = "Observe";
+      decisionDesc = "Neutrale Marktstruktur. Keine unmittelbare Aktion empfohlen.";
+    } else {
+      decision = "reject";
+      decisionName = "Reject";
+      decisionDesc = "Ungenügendes Risiko-Ertrags-Verhältnis. Risikovermeidung hat Priorität.";
+    }
+
+    let risk_level = risk;
+    const reasoning: string[] = [];
+    const alerts: string[] = [];
+
+    if (type === 'stock') {
+      reasoning.push("Günstige fundamentale Bewertung (KGV-Check erfolgreich).");
+      if (div && div > 0.02) reasoning.push(`Attraktive Dividendenrendite von ${(div * 100).toFixed(2)}% stabilisiert Kurs.`);
+      if (expReturn > 0.12) reasoning.push(`Starke langfristige Wachstumserwartung (${(expReturn * 100).toFixed(0)}% p.a.).`);
+      if (vol > 0.3) alerts.push("Erhöhte historische Volatilität verlangt weiten Stop-Loss.");
+    } else if (type === 'commodity') {
+      reasoning.push("Positive makroökonomische Trendstruktur (Inflationsschutz).");
+      if (expReturn > 0.10) reasoning.push("Starke physische Nachfragedynamik untermauert Drift.");
+      if (vol > 0.25) alerts.push("Volatilitäts-Peak durch geopolitische Risikofaktoren möglich.");
+    } else if (type === 'index') {
+      reasoning.push("Konstituierende Aktien zeigen starke Marktbreite und Momentum.");
+      reasoning.push("Geringes Einzeltitelrisiko durch breite Diversifikation.");
+      if (actualChange > 2) reasoning.push("Starker bullischer Ausbruch über die 200-Tage-Linie.");
+      if (vol > 0.2) alerts.push("Erhöhte Marktvolatilität vor Zentralbank-Entscheidungen.");
+    } else if (type === 'forex') {
+      reasoning.push("Stabiles Zinsdifferential stützt die Währung.");
+      if (vol > 0.15) alerts.push("Achtung vor Liquiditätsengpässen in den asiatischen Handelsstunden.");
+    }
+
+    if (reasoning.length === 0) {
+      reasoning.push("Neutrale Trend- und Volatilitätsindikatoren.");
+    }
+
+    return {
+      score: Number((final_score / 10).toFixed(1)),
+      final_score: Number(final_score.toFixed(2)),
+      base_score: Number(base_score.toFixed(2)),
+      risk_penalty: Number(risk_penalty.toFixed(2)),
+      regime_bonus: Number(bonus.toFixed(2)),
+      ai_confidence_bonus: Number((seed * 5).toFixed(2)),
+      decision,
+      decisionName,
+      decisionDesc,
+      risk_level,
+      reasoning,
+      alerts
+    };
+  };
+
+  const getAssetDetails = (sym: string) => {
+    const dbAsset = registryAssets.find(a => a.symbol === sym) || 
+                    CRYPTO_DATABASE.find(c => c.symbol === sym);
+    const liveAsset = liveMarketData.find(a => a.symbol === sym);
+
+    const price = liveAsset ? liveAsset.price : (dbAsset ? dbAsset.price : 1.0);
+    const change = liveAsset ? liveAsset.change24h : (dbAsset ? dbAsset.change24h : 2.5);
+    const mcap = liveAsset ? `$${liveAsset.marketCap}B` : (dbAsset ? dbAsset.mcap : 'N/A');
+
+    const type = dbAsset?.type || 'crypto';
+    const scoreResult = calculateUniversalScore(sym, type, change, dbAsset);
+
+    return {
+      name: dbAsset ? dbAsset.name : sym,
+      price,
+      change24h: change,
+      score: scoreResult.score,
+      final_score: scoreResult.final_score,
+      decision: scoreResult.decision,
+      decisionName: scoreResult.decisionName,
+      decisionDesc: scoreResult.decisionDesc,
+      risk_level: scoreResult.risk_level,
+      reasoning: scoreResult.reasoning,
+      alerts: scoreResult.alerts,
+      mcap,
+      type
+    };
+  };
 
   const [activeTab, setActiveTab] = useState<'scoring' | 'simulation' | 'validation' | 'report' | 'agents'>('scoring');
   
@@ -334,7 +785,7 @@ export function CryptoScoringEnterprise({
         `- **Decision**: ${scoringResult?.decisionName || 'HOLD'}\n` +
         `- **Reasoning**: ${scoringResult?.decisionDesc || 'Stable metrics across all 24 risk points.'}\n` +
         `- **Primary Database**: SQL/Firestore Cloud Storage\n` +
-        `- **Version**: 0.5.0 (Beta-Phase)\n\n` +
+        `- **Version**: 0.5.4 (Beta-Phase)\n\n` +
         `---\n\n` +
         `## 🔒 Security & Data Integrity Audit\n` +
         `All 24 security checks successfully completed. No anomalous volatility spikes or rate limit issues found. Secret isolation verified.`;
@@ -465,6 +916,19 @@ export function CryptoScoringEnterprise({
     };
     loadLiveData();
     const interval = setInterval(loadLiveData, 15000);
+
+    // Fetch the asset registry on mount to load indices, stocks, and other assets
+    fetch('/api/registry/assets')
+      .then(res => res.json())
+      .then(data => {
+        if (active && Array.isArray(data)) {
+          setRegistryAssets(data);
+        }
+      })
+      .catch(err => {
+        console.warn('[CryptoScoringEnterprise] Failed to fetch registry assets:', err);
+      });
+
     return () => {
       active = false;
       clearInterval(interval);
@@ -489,37 +953,6 @@ export function CryptoScoringEnterprise({
       }
     }
   }, [selectedSymbol]);
-
-  const adjustMemeInputsForTimeframe = (raw: any, tf: string): any => {
-    const copy = { ...raw };
-    switch (tf) {
-      case '1m':
-      case '5m':
-        copy.volatility_quality = Math.min(1.0, copy.volatility_quality * 1.5);
-        copy.spread_penalty = Math.min(1.0, copy.spread_penalty * 2.0);
-        copy.momentum = Math.min(1.0, copy.momentum * 1.3);
-        copy.manipulation_penalty = Math.min(1.0, copy.manipulation_penalty * 1.4);
-        break;
-      case '15m':
-      case '30m':
-        copy.volatility_quality = Math.min(1.0, copy.volatility_quality * 1.25);
-        copy.spread_penalty = Math.min(1.0, copy.spread_penalty * 1.5);
-        break;
-      case '1std':
-      case '4std':
-        break;
-      case '1 tag':
-        copy.narrative_strength = Math.min(1.0, copy.narrative_strength * 1.1);
-        copy.decay_penalty = Math.min(1.0, copy.decay_penalty * 1.15);
-        break;
-      case '1 woche':
-        copy.narrative_strength = Math.min(1.0, copy.narrative_strength * 1.2);
-        copy.decay_penalty = Math.min(1.0, copy.decay_penalty * 1.3);
-        copy.rugpull_penalty = Math.max(0.0, copy.rugpull_penalty * 0.75);
-        break;
-    }
-    return copy;
-  };
 
   // Load / calculate inputs based on activeSymbol and timeframe
   useEffect(() => {
@@ -557,48 +990,6 @@ export function CryptoScoringEnterprise({
       });
   }, [activeSymbol, timeframe]);
 
-  // Helper to dynamically scale metrics according to timeframe
-  const adjustInputsForTimeframe = (raw: CryptoScoringInputs, tf: string): CryptoScoringInputs => {
-    const copy = { ...raw };
-    switch (tf) {
-      case '1m':
-      case '5m':
-        copy.volatility_quality = Math.max(0.1, copy.volatility_quality * 0.4);
-        copy.spread = Math.min(1.0, copy.spread * 2.5);
-        copy.momentum = Math.min(1.0, copy.momentum * 1.25);
-        copy.ai_confidence = Math.max(0.2, copy.ai_confidence * 0.7);
-        copy.manipulation_risk = Math.min(1.0, copy.manipulation_risk * 1.5);
-        break;
-      case '15m':
-      case '30m':
-        copy.volatility_quality = Math.max(0.1, copy.volatility_quality * 0.6);
-        copy.spread = Math.min(1.0, copy.spread * 1.8);
-        copy.momentum = Math.min(1.0, copy.momentum * 1.15);
-        copy.manipulation_risk = Math.min(1.0, copy.manipulation_risk * 1.25);
-        break;
-      case '1std':
-      case '4std':
-        // Default standard values
-        break;
-      case '1 tag':
-        copy.trend = Math.min(1.0, copy.trend * 1.1);
-        copy.slippage_estimate = Math.max(0.01, copy.slippage_estimate * 0.8);
-        copy.active_addresses = Math.min(1.0, copy.active_addresses * 1.15);
-        copy.news_momentum = Math.min(1.0, copy.news_momentum * 1.2);
-        copy.manipulation_risk = Math.max(0.01, copy.manipulation_risk * 0.7);
-        break;
-      case '1 woche':
-        copy.trend = Math.min(1.0, copy.trend * 1.25);
-        copy.spread = Math.max(0.01, copy.spread * 0.6);
-        copy.slippage_estimate = Math.max(0.01, copy.slippage_estimate * 0.5);
-        copy.active_addresses = Math.min(1.0, copy.active_addresses * 1.3);
-        copy.community_engagement = Math.min(1.0, copy.community_engagement * 1.2);
-        copy.manipulation_risk = Math.max(0.01, copy.manipulation_risk * 0.4);
-        copy.rugpull_risk = Math.max(0.001, copy.rugpull_risk * 0.2);
-        break;
-    }
-    return copy;
-  };
 
   // Live intelligent search mapping filter
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -613,13 +1004,13 @@ export function CryptoScoringEnterprise({
     }
 
     const q = val.toLowerCase().trim();
-    const filtered = CRYPTO_DATABASE.filter(item => {
-      return (
-        item.symbol.toLowerCase().includes(q) ||
-        item.name.toLowerCase().includes(q) ||
-        item.nickname.toLowerCase().includes(q) ||
-        item.pair.toLowerCase().replace('/', '').replace('-', '').includes(q)
-      );
+    const db = registryAssets.length > 0 ? registryAssets : CRYPTO_DATABASE;
+    const filtered = db.filter(item => {
+      const symMatch = item.symbol.toLowerCase().includes(q);
+      const nameMatch = item.name.toLowerCase().includes(q);
+      const nickMatch = item.nickname ? item.nickname.toLowerCase().includes(q) : false;
+      const pairMatch = item.pair ? item.pair.toLowerCase().replace('/', '').replace('-', '').includes(q) : false;
+      return symMatch || nameMatch || nickMatch || pairMatch;
     });
 
     // Sort results to prioritize exact symbol matches first
@@ -693,18 +1084,23 @@ export function CryptoScoringEnterprise({
   };
 
   const isMemeCoin = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(activeSymbol);
+  const activeAssetType = getAssetDetails(activeSymbol).type || 'crypto';
 
   // Re-calculate the score using local logic based on custom slider overrides
   const scoringResult = customInputs && (customInputs as any).coin 
-    ? (isMemeCoin 
-        ? calculateMemeCoinScore(customInputs as MemeCoinInputs) 
-        : calculateCryptoEnterpriseScore(customInputs as CryptoScoringInputs))
+    ? (activeAssetType === 'crypto'
+        ? (isMemeCoin 
+            ? calculateMemeCoinScore(customInputs as MemeCoinInputs) 
+            : calculateCryptoEnterpriseScore(customInputs as CryptoScoringInputs))
+        : calculateUniversalScore(activeSymbol, activeAssetType, getAssetDetails(activeSymbol).change24h, customInputs))
     : null;
 
   const originalResult = inputs 
-    ? (isMemeCoin 
-        ? calculateMemeCoinScore(inputs as unknown as MemeCoinInputs) 
-        : calculateCryptoEnterpriseScore(inputs)) 
+    ? (activeAssetType === 'crypto'
+        ? (isMemeCoin 
+            ? calculateMemeCoinScore(inputs as unknown as MemeCoinInputs) 
+            : calculateCryptoEnterpriseScore(inputs)) 
+        : calculateUniversalScore(activeSymbol, activeAssetType, getAssetDetails(activeSymbol).change24h, inputs))
     : null;
 
   const memeCategories = [
@@ -828,7 +1224,9 @@ export function CryptoScoringEnterprise({
     }
   ];
 
-  const categoriesToUse = isMemeCoin ? memeCategories : categories;
+  const categoriesToUse = isMemeCoin 
+    ? memeCategories 
+    : adjustCategoryLabelsForType(categories, activeAssetType);
 
   // Helper to color decision badges elegantly
   const getDecisionBadge = (decision: string) => {
@@ -868,43 +1266,6 @@ export function CryptoScoringEnterprise({
 
   const currentBadge = scoringResult ? getDecisionBadge(scoringResult.decision) : null;
 
-  // Helper to render static/dynamic scores for selected assets cards
-  const getAssetDetails = (sym: string) => {
-    const dbAsset = CRYPTO_DATABASE.find(c => c.symbol === sym);
-    const liveAsset = liveMarketData.find(a => a.symbol === sym);
-
-    const price = liveAsset ? liveAsset.price : (dbAsset ? dbAsset.price : 1.0);
-    const change = liveAsset ? liveAsset.change24h : (dbAsset ? dbAsset.change24h : 2.5);
-    const mcap = liveAsset ? `$${liveAsset.marketCap}B` : (dbAsset ? dbAsset.mcap : 'N/A');
-
-    const isMeme = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(sym);
-    if (isMeme) {
-      const fallbackInputs = generateMemeCoinInputs(sym, change);
-      const adaptedInputs = adjustMemeInputsForTimeframe(fallbackInputs, timeframe);
-      const result = calculateMemeCoinScore(adaptedInputs);
-      return {
-        name: dbAsset ? dbAsset.name : sym,
-        price,
-        change24h: change,
-        score: result.final_score,
-        decision: result.decision,
-        mcap
-      };
-    } else {
-      const fallbackInputs = generateCryptoInputs(sym, change);
-      const adaptedInputs = adjustInputsForTimeframe(fallbackInputs, timeframe);
-      const result = calculateCryptoEnterpriseScore(adaptedInputs);
-      return {
-        name: dbAsset ? dbAsset.name : sym,
-        price,
-        change24h: change,
-        score: result.final_score,
-        decision: result.decision,
-        mcap
-      };
-    }
-  };
-
   return (
     <div id="crypto-enterprise-scoring-root" className="bg-gradient-to-br from-[#121214] via-[#1c1c20] to-[#0d0d0f] border border-white/10 rounded-2xl p-6 backdrop-blur-xl relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
       {/* Decorative radial lighting */}
@@ -921,12 +1282,12 @@ export function CryptoScoringEnterprise({
               <Cpu size={18} />
             </span>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold tracking-tight text-white font-display uppercase">Crypto Scoring Enterprise</h2>
+              <h2 className="text-xl font-bold tracking-tight text-white font-display uppercase">Universe Enterprise Scorer</h2>
               <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/25 font-bold uppercase tracking-wider">Aktiv</span>
             </div>
           </div>
           <p className="text-xs text-white/60 font-mono leading-relaxed max-w-xl">
-            Vollständig mathematisch auditierbare Multilayer-Bewertung für das Top-300-Kryptouniversum nach institutionalisierten Risiko-, Trend-, Liquiditäts-, Sentiment- und On-Chain-Metriken.
+            Vollständig mathematisch auditierbare Multilayer-Bewertung für Krypto, Aktien, Indizes und Rohstoffe nach institutionalisierten Risiko-, Trend-, Liquiditäts- und Sentiment-Metriken.
           </p>
         </div>
 
@@ -942,7 +1303,7 @@ export function CryptoScoringEnterprise({
                 value={searchQuery}
                 onChange={handleSearchChange}
                 onFocus={() => setShowSuggestions(true)}
-                placeholder="Suche nach Symbol, Rufname (z.B. Gold) oder Paar (z.B. BTC/USD)..."
+                placeholder="Universe Enterprise Scorer - Krypto, Indizes, Rohstoffe suchen..."
                 className="w-full bg-black/40 text-xs text-white placeholder-white/40 pl-10 pr-4 py-3 rounded-xl border border-white/10 hover:border-white/20 focus:border-blue-500/60 focus:bg-black/60 focus:outline-none transition-all font-mono"
               />
             </div>
@@ -965,6 +1326,7 @@ export function CryptoScoringEnterprise({
                   {suggestions.length > 0 ? (
                     suggestions.map((item) => {
                       const isSelected = selectedSymbols.includes(item.symbol);
+                      const assetDetails = getAssetDetails(item.symbol);
                       return (
                         <button
                           key={item.symbol}
@@ -974,13 +1336,16 @@ export function CryptoScoringEnterprise({
                           <div className="flex items-center gap-3">
                             <AssetLogo symbol={item.symbol} size="sm" />
                             <div>
-                              <p className="text-xs font-bold text-white font-display">{item.name}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-xs font-bold text-white font-display">{item.name}</p>
+                                <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1 rounded">Score: {assetDetails.score}/10</span>
+                              </div>
                               <p className="text-[10px] text-white/40 font-mono">{item.desc}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2.5">
                             <span className="text-[11px] font-mono text-zinc-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
-                              {item.pair.split(',')[0]}
+                              {item.pair ? item.pair.split(',')[0] : item.symbol}
                             </span>
                             {isSelected ? (
                               <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-mono font-bold uppercase tracking-wider border border-emerald-500/20">Ausgewählt</span>
@@ -999,6 +1364,7 @@ export function CryptoScoringEnterprise({
                     // Default trending recommendations when input is empty
                     CRYPTO_DATABASE.slice(0, 5).map((item) => {
                       const isSelected = selectedSymbols.includes(item.symbol);
+                      const assetDetails = getAssetDetails(item.symbol);
                       return (
                         <button
                           key={item.symbol}
@@ -1008,7 +1374,10 @@ export function CryptoScoringEnterprise({
                           <div className="flex items-center gap-3">
                             <AssetLogo symbol={item.symbol} size="sm" />
                             <div>
-                              <p className="text-xs font-bold text-white font-display">{item.name}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-xs font-bold text-white font-display">{item.name}</p>
+                                <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1 rounded">Score: {assetDetails.score}/10</span>
+                              </div>
                               <p className="text-[10px] text-white/40 font-mono">{item.desc}</p>
                             </div>
                           </div>
@@ -1282,7 +1651,7 @@ export function CryptoScoringEnterprise({
                         </div>
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-white/60">Regime Bonus (+)</span>
-                          <span className="font-mono text-purple-400 font-bold">+{scoringResult.regime_bonus}</span>
+                          <span className="font-mono text-purple-400 font-bold">+{(scoringResult as any).regime_bonus}</span>
                         </div>
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-white/60">AI Confidence Bonus</span>
@@ -1302,33 +1671,64 @@ export function CryptoScoringEnterprise({
                     </span>
                   </div>
                 </div>
+
+                {/* TRADING SETUP & AI RECOMMENDATION */}
+                {(() => {
+                  const price = getAssetDetails(activeSymbol).price || 100;
+                  const setup = getTradingSetup(activeSymbol, price, scoringResult.final_score, activeAssetType);
+                  return (
+                    <div className="bg-gradient-to-b from-zinc-950 to-zinc-900 p-5 rounded-xl border border-white/10 space-y-4 shadow-lg animate-fade-in">
+                      <div className="flex items-center gap-2 pb-2 border-b border-white/5">
+                        <TrendingUp size={16} className="text-purple-400 animate-pulse" />
+                        <h4 className="text-xs font-black font-mono text-white uppercase tracking-wider">Trading Setup & AI-Empfehlung</h4>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-white/5 p-2.5 rounded-lg border border-white/5">
+                          <span className="text-[10px] text-white/40 font-mono uppercase block">Startspanne (Entry)</span>
+                          <span className="text-xs font-bold font-mono text-white">
+                            {setup.entryMin.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 6 })} - {setup.entryMax.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                          </span>
+                        </div>
+                        <div className="bg-emerald-500/5 p-2.5 rounded-lg border border-emerald-500/10">
+                          <span className="text-[10px] text-emerald-400/60 font-mono uppercase block">Take Profit</span>
+                          <span className="text-xs font-bold font-mono text-emerald-400">
+                            {setup.takeProfit.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                          </span>
+                        </div>
+                        <div className="bg-rose-500/5 p-2.5 rounded-lg border border-rose-500/10 col-span-2">
+                          <span className="text-[10px] text-rose-400/60 font-mono uppercase block">Stop Loss</span>
+                          <span className="text-xs font-bold font-mono text-rose-400">
+                            {setup.stopLoss.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] text-white/40 font-mono uppercase block">Aktivierte Muster (Patterns)</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {setup.patterns.map((p, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-blue-500/10 text-blue-300 border border-blue-500/20 rounded text-[10px] font-mono font-bold">
+                              🛡️ {p}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="bg-purple-950/20 border border-purple-500/25 p-3.5 rounded-lg space-y-1.5">
+                        <div className="flex items-center gap-1.5 text-xs font-black font-mono text-purple-400 uppercase tracking-widest">
+                          <Cpu size={12} className="animate-pulse" />
+                          <span>AI Empfehlung: {setup.recommendation}</span>
+                        </div>
+                        <p className="text-[11px] text-white/70 leading-relaxed font-sans">{setup.explanation}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Right Columns: Audit Reasonings & Active Signals */}
               <div className="lg:col-span-2 space-y-6">
-                <div className="bg-black/30 p-5 rounded-xl border border-white/5 space-y-4">
-                  <h3 className="text-sm font-semibold text-white uppercase font-display flex items-center gap-2">
-                    <Activity size={14} className="text-blue-400" />
-                    <span>Audit-Trail & Begründung ({activeSymbol})</span>
-                  </h3>
-                  
-                  <div className="space-y-2.5">
-                    {scoringResult.reasoning.map((reason, index) => (
-                      <div key={index} className="flex items-start gap-3 bg-white/[0.02] border border-white/5 p-3 rounded-lg">
-                        <CheckCircle2 size={14} className="text-emerald-400 mt-0.5 shrink-0" />
-                        <span className="text-xs text-white/80 leading-normal">{reason}</span>
-                      </div>
-                    ))}
-
-                    {scoringResult.alerts.map((alert, index) => (
-                      <div key={index} className="flex items-start gap-3 bg-rose-500/5 border border-rose-500/10 p-3 rounded-lg">
-                        <AlertTriangle size={14} className="text-rose-400 mt-0.5 shrink-0" />
-                        <span className="text-xs text-rose-400 leading-normal">{alert}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 <div className="bg-gradient-to-r from-blue-900/10 to-indigo-900/10 p-5 rounded-xl border border-blue-500/20 flex flex-col sm:flex-row items-center gap-4 justify-between">
                   <div className="space-y-1 text-center sm:text-left">
                     <h4 className="text-xs font-mono font-bold text-blue-400 uppercase tracking-widest flex items-center gap-1.5 justify-center sm:justify-start">
@@ -1587,7 +1987,7 @@ export function CryptoScoringEnterprise({
                     <p>FINAL SCORE: {scoringResult.final_score} / 100</p>
                     <p>BASE SCORE (POS): {scoringResult.base_score}</p>
                     <p>RISK PENALTY (NEG): {scoringResult.risk_penalty}</p>
-                    <p>REGIME BONUS: {scoringResult.regime_bonus}</p>
+                    <p>REGIME BONUS: {(scoringResult as any).regime_bonus}</p>
                     <p className="text-zinc-600">------------------------------------</p>
                     <p>TIMEFRAME LEVEL: {timeframe.toUpperCase()}</p>
                     <p>DATA INTEGRITY LEVEL: 100% COMPLETE</p>

@@ -28,6 +28,7 @@ export interface UserProfile {
   riskProfile: 'Sicherheitsorientiert' | 'Ausgewogen' | 'Spekulativ' | 'Hochfrequenz-Trading';
   capital: number;
   subscriptionTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
+  customAvatarUrl?: string;
 }
 
 interface ProfilePageProps {
@@ -50,6 +51,7 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
   const [riskProfile, setRiskProfile] = useState(profile.riskProfile);
   const [capital, setCapital] = useState(profile.capital);
   const [avatarId, setAvatarId] = useState(profile.avatarId);
+  const [customAvatarUrl, setCustomAvatarUrl] = useState(profile.customAvatarUrl || '');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
@@ -108,7 +110,8 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
         preferredAssetClass,
         riskProfile,
         capital,
-        subscriptionTier: profile.subscriptionTier
+        subscriptionTier: profile.subscriptionTier,
+        customAvatarUrl
       });
       setSaving(false);
       setSuccess(true);
@@ -124,7 +127,7 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
       const exportData = {
         compliance_standard: "EU General Data Protection Regulation (GDPR) Article 20 / BDSG § 83",
         export_timestamp: new Date().toISOString(),
-        platform_version: "Version 0.5.0 (Beta-Phase)",
+        platform_version: "Version 0.5.4 (Beta-Phase)",
         licensee: "AIF-CORE Technologies",
         user_identity: {
           name: profile.name,
@@ -177,11 +180,15 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
             <h3 className="text-sm font-bold uppercase tracking-wider text-white/40 font-mono">Dein Profillogo</h3>
             
             <div className="relative group">
-              <div className={`w-32 h-32 rounded-2xl bg-gradient-to-br ${activeAvatar.color} flex items-center justify-center shadow-[0_0_30px_rgba(245,196,83,0.3)] transition-all duration-500`}>
-                <AvatarIcon className="w-16 h-16 text-black" />
+              <div className={`w-32 h-32 rounded-2xl bg-gradient-to-br ${activeAvatar.color} flex items-center justify-center shadow-[0_0_30px_rgba(245,196,83,0.3)] transition-all duration-500 overflow-hidden`}>
+                {customAvatarUrl ? (
+                  <img src={customAvatarUrl} alt={name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <AvatarIcon className="w-16 h-16 text-black" />
+                )}
               </div>
-              <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/80 px-2 py-0.5 rounded text-[9px] font-bold text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/30 uppercase tracking-wider">
-                {activeAvatar.label}
+              <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/80 px-2 py-0.5 rounded text-[9px] font-bold text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/30 uppercase tracking-wider whitespace-nowrap">
+                {customAvatarUrl ? 'Eigener Avatar' : activeAvatar.label}
               </span>
             </div>
 
@@ -190,12 +197,15 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
               <div className="grid grid-cols-5 gap-2" role="group" aria-label="Profil-Avatar auswählen">
                 {AVATARS.map((av) => {
                   const AvIcon = av.icon;
-                  const isSelected = av.id === avatarId;
+                  const isSelected = av.id === avatarId && !customAvatarUrl;
                   return (
                     <button
                       key={av.id}
                       type="button"
-                      onClick={() => setAvatarId(av.id)}
+                      onClick={() => {
+                        setAvatarId(av.id);
+                        setCustomAvatarUrl(''); // Reset custom avatar to use selected preset
+                      }}
                       aria-label={`Wähle Avatar ${av.label}`}
                       className={`p-2.5 rounded-lg bg-gradient-to-br ${av.color} flex items-center justify-center hover:scale-110 active:scale-95 transition-all focus:ring-2 focus:ring-white focus:outline-none ${
                         isSelected ? 'ring-2 ring-white scale-105' : 'opacity-60 hover:opacity-100'
@@ -207,6 +217,60 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
                   );
                 })}
               </div>
+            </div>
+
+            <div className="space-y-2 w-full pt-4 border-t border-white/5">
+              <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono text-center block">Eigenes Bild hochladen</span>
+              <div 
+                className="border border-dashed border-white/20 hover:border-aif-gold-DEFAULT/50 rounded-lg p-3 text-center transition-all cursor-pointer bg-white/5 relative group/upload"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      if (event.target?.result) {
+                        setCustomAvatarUrl(event.target.result as string);
+                      }
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/*';
+                  input.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        if (event.target?.result) {
+                          setCustomAvatarUrl(event.target.result as string);
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  };
+                  input.click();
+                }}
+              >
+                <div className="text-white/60 group-hover/upload:text-aif-gold-light text-xs font-medium font-sans flex flex-col items-center gap-1">
+                  <Download size={16} className="text-white/40 group-hover/upload:text-aif-gold-DEFAULT group-hover/upload:scale-110 transition-all rotate-180" />
+                  <span>Bild ablegen oder anklicken</span>
+                  <span className="text-[9px] text-white/30 font-mono">PNG, JPG, WebP</span>
+                </div>
+              </div>
+              {customAvatarUrl && (
+                <button
+                  type="button"
+                  onClick={() => setCustomAvatarUrl('')}
+                  className="w-full py-1 text-[10px] uppercase font-bold tracking-wider text-rose-400 hover:text-rose-300 transition-colors font-mono"
+                >
+                  Bild entfernen
+                </button>
+              )}
             </div>
 
             <div className="w-full pt-4 border-t border-white/5 text-center space-y-3">

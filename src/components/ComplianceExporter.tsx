@@ -117,7 +117,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
         doc.setFontSize(7.5);
         doc.setTextColor(120, 120, 120);
         doc.text('Dieses Dokument wurde elektronisch generiert und bedarf keiner handschriftlichen Unterschrift.', 14, y);
-        doc.text('BaFin DSGVO-Gütebericht • Version 0.5.0 (Beta-Phase)', 196, y, { align: 'right' });
+        doc.text('BaFin DSGVO-Gütebericht • Version 0.5.4 (Beta-Phase)', 196, y, { align: 'right' });
       };
 
       // ==========================================
@@ -180,7 +180,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
       doc.text('System-Version:', 18, 60);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
-      doc.text('0.5.0 (Unified Beta Release)', 54, 60);
+      doc.text('0.5.4 (Unified Beta Release)', 54, 60);
 
       // Right col of parameter box
       doc.setFont('helvetica', 'normal');
@@ -272,7 +272,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
       doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.text('2. HANDELSUNIVERSEN LEADERBOARDS (BEWERTUNGSSKALA 1-10)', 14, 128);
+      doc.text('2. HANDELSUNIVERSEN LEADERBOARDS (BEWERTUNGSSKALA 0-100)', 14, 128);
 
       const drawUniverseRow = (title: string, best: RegistryAsset[], worst: RegistryAsset[], y: number) => {
         // Universe Header Label
@@ -500,7 +500,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       doc.text('Kryptographisches Verifikationssystem', 120, 242);
-      doc.text('Digitale Signatur: APPROVED-OK-0.5.0', 120, 246);
+      doc.text('Digitale Signatur: APPROVED-OK-0.5.4', 120, 246);
 
       doc.setDrawColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       doc.setLineWidth(0.2);
@@ -531,7 +531,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-black tracking-widest bg-aif-neon-purple/20 text-aif-neon-purple border border-aif-neon-purple/30 uppercase">
-              Compliance-Modul 0.5.0
+              Compliance-Modul 0.5.4
             </span>
             <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-black tracking-widest bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 uppercase flex items-center gap-0.5">
               <ShieldCheck size={9} />
