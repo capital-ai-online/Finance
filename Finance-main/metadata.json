@@ -1,0 +1,7 @@
+{
+  "name": "AIF-CORE",
+  "description": "A futuristic Financial AI Platform (AIF-CORE Modul 1) with complex chart validations, screenings, backtests, and Graham logic. EU compliant, no demo data policy.",
+  "version": "0.5.0",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
