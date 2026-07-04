@@ -1,12 +1,12 @@
 # ✍️ Brand Persona, Copywriting & Content-Strategie
-**Project: AIF-CORE (Jenova Nexus)**  
+**Project: CAPITAL-AI (Capital AI)**  
 **Brand Voice:** Expert Partner (Sachlich, Präzise & Mathematisch)  
 **Classification:** Public Facing / Regulatory Compliant  
 
 ---
 
 ## 🎭 Marken-Tonalität & Persona (Brand Voice)
-AIF-CORE / Jenova Nexus tritt im Bereich der Finanzanalyse als verlässlicher, wissenschaftlicher und mathematisch-präziser Partner auf. 
+CAPITAL-AI / Capital AI tritt im Bereich der Finanzanalyse als verlässlicher, wissenschaftlicher und mathematisch-präziser Partner auf. 
 
 * **Wir verwenden**: Eine sachliche, objektive und datengetriebene Sprache. Alle Berichte, Signale und Analysen beruhen auf realen Formeln und belegbaren Datenreihen.
 * **Wir meiden**: Reißerische Werbesprüche, unrealistische Rendite-Versprechungen, emotionale Ausrufezeichen oder künstlich übertriebene "AI-Slop"-Begriffe (wie "stellar", "jaw-dropping", "gorgeous").

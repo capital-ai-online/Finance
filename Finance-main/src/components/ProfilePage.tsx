@@ -131,7 +131,7 @@ export function ProfilePage({ profile, onUpdateProfile, accessToken }: ProfilePa
         compliance_standard: "EU General Data Protection Regulation (GDPR) Article 20 / BDSG § 83",
         export_timestamp: new Date().toISOString(),
         platform_version: "Version 0.5.0 (Beta-Phase)",
-        licensee: "AIF-CORE Technologies",
+        licensee: "CAPITAL-AI Technologies",
         user_identity: {
           name: profile.name,
           email: profile.email,

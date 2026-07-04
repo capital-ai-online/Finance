@@ -1,5 +1,5 @@
 # ⚖️ Gerichtsfestes Datenschutz- & Datenquellenprotokoll (Verzeichnis von Verarbeitungstätigkeiten nach Art. 30 DSGVO)
-**Projekt**: Jenova Nexus (AIF-CORE)  
+**Projekt**: Capital AI (CAPITAL-AI)  
 **Dokumenttyp**: Konformitäts- & Beweisprotokoll für EU-Aufsichtsbehörden & Gerichte  
 **Klassifizierung**: Öffentlich / Audit-Ready  
 **Version**: 1.0.0 (Gerichtsfeste Fassung)  
@@ -8,7 +8,7 @@
 ---
 
 ## 🏛️ Präambel
-Dieses Protokoll dient der rechtsverbindlichen Dokumentation aller datenverarbeitenden Prozesse, Datenflüsse und externen Schnittstellen der Anwendung **Jenova Nexus (AIF-CORE)**. Es wurde nach den strengen Standards der europäischen Datenschutz-Grundverordnung (**EU-DSGVO**), des Bundesdatenschutzgesetzes (**BDSG**) sowie des Telekommunikation-Telemedien-Datenschutz-Gesetzes (**TDDDG**) konzipiert. 
+Dieses Protokoll dient der rechtsverbindlichen Dokumentation aller datenverarbeitenden Prozesse, Datenflüsse und externen Schnittstellen der Anwendung **Capital AI (CAPITAL-AI)**. Es wurde nach den strengen Standards der europäischen Datenschutz-Grundverordnung (**EU-DSGVO**), des Bundesdatenschutzgesetzes (**BDSG**) sowie des Telekommunikation-Telemedien-Datenschutz-Gesetzes (**TDDDG**) konzipiert. 
 
 Das System ist nach dem Grundsatz **„Privacy-by-Design“ (Art. 25 Abs. 1 DSGVO)** aufgebaut. Es stellt sicher, dass **keine unautorisierten IP-Adressen-Lecks** an US-amerikanische Drittanbieter stattfinden und sämtliche Berechnungsmodelle der gesetzlichen **No-Demo-Data-Policy** (Verbot von simulierten Täuschungsdaten ohne reale Historie) entsprechen.
 
@@ -41,7 +41,7 @@ Um die Einhaltung der gesetzlichen **No-Demo-Data Policy** zu garantieren, bezie
 | **Stooq API** | Aktienkurse (US), Forex-Märkte, Edelmetalle. | **Server-to-Server HTTPS** (Schnittstellenabfrage via CSV-Stream). | Echtzeitkurse für traditionelle Anlageklassen zur Berechnung von intrinsischen DCF-Faktoren. | **Vollständig gekapselt**. Keine IP-Lecks an Stooq-Server. | Keine. |
 | **Stripe Gateway** | Zahlungsabwicklung, PCI-DSS-konforme Transaktionsdaten. | **Sichere API-Verbindung** via verschlüsselte Stripe-Tokens (Lazy-loaded im Server-Backend). | Bereitstellung und Verifizierung von Premium-Funktionen (Stripe Checkout). | IP-Adresse wird verschlüsselt für Betrugsprävention auf Stripe-Servern verarbeitet (EU-Standardvertragsklauseln aktiv). | **Hoch** (Zahlungsdaten). Geregelt über Auftragsverarbeitungsvertrag (AVV) mit Stripe Payments Europe Ltd. |
 | **Supabase / PostgreSQL** | Registrierungen, verschlüsselte Passwörter, historische Backtest-Historie. | **Infrastruktur-internes Netzwerk** (verschlüsselte TCP-Verbindung). | Speicherung des Premium-Abostatus und der systemweiten quantitativen Favoriten-Präferenzen. | IP-Adresse wird zur Missbrauchserkennung kurzzeitig protokolliert (Löschfrist: 7 Tage). | **Hoch**. Geregelt über AVV mit Supabase Inc. (Datenhaltung im Rechenzentrum Frankfurt, Deutschland). |
-| **Google GenAI (Gemini) API** | Intelligentes News-Scoring, regulatorische Analysen. | **Server-to-Server HTTPS** via Google Cloud SDK. | Generierung von Realtime AI Newsfeeds und Modell-Routing-Entscheidungen im AIF-CORE. | **Vollständig anonymisiert**. Keine Nutzerdaten oder IPs werden an Google-Modelle übermittelt. | Keine. |
+| **Google GenAI (Gemini) API** | Intelligentes News-Scoring, regulatorische Analysen. | **Server-to-Server HTTPS** via Google Cloud SDK. | Generierung von Realtime AI Newsfeeds und Modell-Routing-Entscheidungen im CAPITAL-AI. | **Vollständig anonymisiert**. Keine Nutzerdaten oder IPs werden an Google-Modelle übermittelt. | Keine. |
 
 ---
 
@@ -76,7 +76,7 @@ Sollte dieses System Gegenstand einer datenschutzrechtlichen oder finanzrechtlic
 ---
 
 ## 📝 Konformitätserklärung
-Hiermit wird bestätigt, dass die Webanwendung **Jenova Nexus (AIF-CORE)** zum Zeitpunkt der Veröffentlichung vollständig den Richtlinien der europäischen Datenschutz-Grundverordnung (DSGVO) entspricht.
+Hiermit wird bestätigt, dass die Webanwendung **Capital AI (CAPITAL-AI)** zum Zeitpunkt der Veröffentlichung vollständig den Richtlinien der europäischen Datenschutz-Grundverordnung (DSGVO) entspricht.
 
 *AIF-Capital-Core Compliance-Ausschuss*  
 *Gez. Der Datenschutz- & Compliance-Architekt*

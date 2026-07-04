@@ -96,7 +96,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
-        doc.text(`AIF-CORE COMPLIANCE AUDIT TRAIL • REPORT ID: AIF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`, 14, 13);
+        doc.text(`CAPITAL-AI COMPLIANCE AUDIT TRAIL • REPORT ID: AIF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`, 14, 13);
         doc.text(`SEITE ${pageNum} VON 2`, 196, 13, { align: 'right' });
 
         // Divider
@@ -129,7 +129,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
       doc.setFont('helvetica', 'black');
       doc.setFontSize(22);
       doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
-      doc.text('AIF-CORE COMPLIANCE AUDIT', 14, 27);
+      doc.text('CAPITAL-AI COMPLIANCE AUDIT', 14, 27);
       
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
@@ -343,7 +343,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
       
       const disclosureLines = [
         'Die quantitativen Handelsergebnisse und Asset-Rankings werden vollautomatisch über den intelligenten',
-        'Model-Router von AIF-CORE prozessiert. Je nach Kritikalität werden sensible Reviews datenschutzkonform',
+        'Model-Router von CAPITAL-AI prozessiert. Je nach Kritikalität werden sensible Reviews datenschutzkonform',
         'über lokale LLM-Filter (Llama/Mistral) im europäischen Rechtsraum verarbeitet, um den Abfluss geschützter',
         'Unternehmensdaten vollständig zu verhindern. Der Abgleich mit der API-Datenbank erfolgt ohne PII-Leaks.'
       ];
@@ -447,7 +447,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
 
       drawCompliancePoint(
         'Absolute Datenintegrität & Schutz vor Fake-Daten',
-        'Dieses System schließt jede Form von simulierten oder fiktiven Performance-Zahlen kategorisch aus. Sämtliche in diesem Bericht erfassten Finanzindikatoren beruhen auf aktiven und kryptographisch validierten Server-Endpunkten des AIF-CORE Asset-Registers.',
+        'Dieses System schließt jede Form von simulierten oder fiktiven Performance-Zahlen kategorisch aus. Sämtliche in diesem Bericht erfassten Finanzindikatoren beruhen auf aktiven und kryptographisch validierten Server-Endpunkten des CAPITAL-AI Asset-Registers.',
         127
       );
 
@@ -487,7 +487,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       doc.text('Zuständiger Systemverwalter', 18, 242);
-      doc.text('AIF-CORE Platform Owner', 18, 246);
+      doc.text('CAPITAL-AI Platform Owner', 18, 246);
       
       doc.setDrawColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       doc.setLineWidth(0.2);
@@ -496,7 +496,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
       // Right Signature: Automation
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
-      doc.text('AIF-CORE AUTOMATION ENGINE', 120, 238);
+      doc.text('CAPITAL-AI AUTOMATION ENGINE', 120, 238);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       doc.text('Kryptographisches Verifikationssystem', 120, 242);

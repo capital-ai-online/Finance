@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldAlert, Mail, User, Lock, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, X } from 'lucide-react';
-import { AifCoreLogo } from './AifCoreLogo';
+import { CapitalAiLogo } from './CapitalAiLogo';
 import { supabase } from '../supabaseClient';
 
 interface LandingPageProps {
@@ -239,8 +239,8 @@ export function LandingPage({ onLoginEmail, onRegisterEmail, justLoggedOut, init
             </button>
           )}
           <div className="text-center mb-6">
-            {/* Brand Logo & Slogan reflecting the uploaded AIF-CORE Modul 1 logo */}
-            <AifCoreLogo size={120} showText={true} />
+            {/* Brand Logo & Slogan reflecting the uploaded CAPITAL-AI Modul 1 logo */}
+            <CapitalAiLogo size={120} showText={true} />
             
             <p className="text-white/40 font-mono text-[9px] uppercase tracking-wider mt-3">
               Smarter Tools. Better Systems.
@@ -508,7 +508,7 @@ export function LandingPage({ onLoginEmail, onRegisterEmail, justLoggedOut, init
                     className="mt-0.5 rounded border-white/20 bg-black/40 text-aif-gold-DEFAULT focus:ring-0 focus:ring-offset-0 cursor-pointer h-3.5 w-3.5"
                   />
                   <label htmlFor="terms-check" className="text-[10px] text-white/50 leading-tight cursor-pointer">
-                    Ich erkläre mich mit den Nutzungsbedingungen (AGB) und Datenschutzbestimmungen des AIF-CORE Netzwerks einverstanden.
+                    Ich erkläre mich mit den Nutzungsbedingungen (AGB) und Datenschutzbestimmungen des CAPITAL-AI Netzwerks einverstanden.
                   </label>
                 </div>
 

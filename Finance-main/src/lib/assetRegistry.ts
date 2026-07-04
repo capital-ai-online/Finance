@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 // Real historical data sources — no fabrication (No-Demo-Data-Policy).
-const COINGECKO_ID_MAP: Record<string, string> = {
+export const COINGECKO_ID_MAP: Record<string, string> = {
   BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', ADA: 'cardano', XRP: 'ripple',
   DOT: 'polkadot', AVAX: 'avalanche-2', LINK: 'chainlink', BNB: 'binancecoin', MATIC: 'matic-network',
   DOGE: 'dogecoin', SHIB: 'shiba-inu', PEPE: 'pepe', WIF: 'dogwifcoin', BONK: 'bonk',
@@ -16,7 +16,7 @@ const STOOQ_SYMBOL_MAP: Record<string, string> = {
   AUDUSD: 'audusd', NZDUSD: 'nzdusd', EURGBP: 'eurgbp', EURJPY: 'eurjpy', GBPJPY: 'gbpjpy'
 };
 
-async function fetchCoinGeckoHistory(coingeckoId: string, days: number): Promise<{ date: string, close: number }[] | null> {
+export async function fetchCoinGeckoHistory(coingeckoId: string, days: number): Promise<{ date: string, close: number }[] | null> {
   try {
     const cappedDays = Math.min(Math.max(days, 1), 365); // CoinGecko free tier: daily interval up to 365d
     const url = `https://api.coingecko.com/api/v3/coins/${coingeckoId}/market_chart?vs_currency=usd&days=${cappedDays}&interval=daily`;

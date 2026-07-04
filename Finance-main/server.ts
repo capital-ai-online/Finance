@@ -10,7 +10,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { orchestrator } from './src/lib/requestOrchestrator';
 import { assetRegistry } from './src/lib/assetRegistry';
-import { calculateCryptoEnterpriseScore, generateCryptoInputs, calculateMemeCoinScore, generateMemeCoinInputs } from './src/lib/cryptoScoring';
+import { calculateCryptoEnterpriseScore, generateCryptoInputs, calculateMemeCoinScore, generateMemeCoinInputs, clamp } from './src/lib/cryptoScoring';
 import { runSmaCrossBacktest } from './src/lib/backtestEngine';
 import nodemailer from 'nodemailer';
 
@@ -389,21 +389,17 @@ app.post('/api/stripe/create-checkout-session', requireAuth, async (req, res) =>
     // other user's address.
     const email = (req as any).verifiedEmail;
     
-    // Select price ID based on selected plan
+    // Select price ID based on selected plan AND billing period.
+    // Env var pattern: STRIPE_PRICE_ID_{TIER}_{MONTHLY|YEARLY}
+    // e.g. STRIPE_PRICE_ID_STARTER_MONTHLY, STRIPE_PRICE_ID_STARTER_YEARLY
     const planUpper = String(planId).toUpperCase();
-    let priceId = '';
-    
-    if (planUpper === 'STARTER') {
-      priceId = getCleanEnv('STRIPE_PRICE_ID_STARTER');
-    } else if (planUpper === 'PRO') {
-      priceId = getCleanEnv('STRIPE_PRICE_ID_PRO');
-    } else if (planUpper === 'ENTERPRISE') {
-      priceId = getCleanEnv('STRIPE_PRICE_ID_ENTERPRISE');
-    }
+    const periodUpper = String(billingPeriod || 'monthly').toUpperCase() === 'YEARLY' ? 'YEARLY' : 'MONTHLY';
+    const priceEnvKey = `STRIPE_PRICE_ID_${planUpper}_${periodUpper}`;
+    const priceId = getCleanEnv(priceEnvKey);
 
     if (!priceId || priceId.startsWith('price_...')) {
       return res.status(400).json({ 
-        error: `Der Stripe Price ID für '${planId}' ist auf dem Server noch nicht konfiguriert. Bitte setzen Sie STRIPE_PRICE_ID_${planUpper} in Ihrer .env Datei.` 
+        error: `Der Stripe Price ID für '${planId}' (${periodUpper}) ist auf dem Server noch nicht konfiguriert. Bitte setzen Sie ${priceEnvKey} in Ihrer .env Datei / in Render.` 
       });
     }
 
@@ -413,6 +409,16 @@ app.post('/api/stripe/create-checkout-session', requireAuth, async (req, res) =>
     const finalSuccessUrl = successUrl.includes('?') 
       ? `${successUrl}&plan=${planId}` 
       : `${successUrl}?plan=${planId}`;
+
+    // 3-day free trial on the Starter plan (monthly only — an annual trial
+    // would give away nearly 1% of the whole term for free, which doesn't
+    // make sense as a "try it out" offer).
+    const subscriptionData: any = {
+      metadata: { planId, email },
+    };
+    if (planUpper === 'STARTER' && periodUpper === 'MONTHLY') {
+      subscriptionData.trial_period_days = 3;
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -427,12 +433,7 @@ app.post('/api/stripe/create-checkout-session', requireAuth, async (req, res) =>
         planId,
         email,
       },
-      subscription_data: {
-        metadata: {
-          planId,
-          email,
-        }
-      }
+      subscription_data: subscriptionData,
     });
 
     res.json({ sessionId: session.id, checkoutUrl: session.url });
@@ -515,30 +516,11 @@ app.get('/api/stripe/user-subscription', requireAuth, async (req, res) => {
   res.json({ email: userEmail, subscriptionTier: tier });
 });
 
-// Define patterns, application areas, and pattern-aware asset scoring helpers
-function getAssetPatternForSymbol(symbol: string): string {
-  const s = symbol.toUpperCase().trim();
-  if (s.startsWith('BTC')) return 'Bullish Engulfing';
-  if (s.startsWith('ETH')) return 'Hammer Support';
-  if (s.startsWith('AAPL')) return 'Cup & Handle';
-  if (s.startsWith('TSLA')) return 'Double Bottom';
-  if (s.startsWith('NVDA')) return 'Ascending Triangle';
-  if (s.startsWith('GLD')) return 'Inverted Head & Shoulders';
-  if (s.startsWith('EURUSD') || s.startsWith('EUR/USD')) return 'Bearish Harami';
-  
-  // Deterministic fallback based on symbol characters
-  const charSum = s.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const patterns = [
-    'Falling Wedge',
-    'Morning Star',
-    'Double Top',
-    'Ascending Channel',
-    'Three Inside Up',
-    'Hammer Reversal',
-    'Bull Flag'
-  ];
-  return patterns[charSum % patterns.length];
-}
+// NOTE: a fabricated getAssetPatternForSymbol() used to live here — it
+// returned a fixed, hardcoded "chart pattern" per symbol (e.g. always
+// "Bullish Engulfing" for any BTC-prefixed symbol) regardless of the
+// actual price action, and fed a score boost from it. Removed entirely;
+// real OHLC-based pattern detection is a follow-up task (Live_prio.md).
 
 function getApplicationAreaForSymbol(symbol: string, type: string): string {
   const s = symbol.toUpperCase().trim();
@@ -556,38 +538,29 @@ function getApplicationAreaForSymbol(symbol: string, type: string): string {
 }
 
 function calculateAssetScore(symbol: string, type: string, change24h: number, baseScore?: number): number {
-  const s = symbol.toUpperCase().trim();
   if (type === 'crypto') {
-    const inputs = generateCryptoInputs(s, change24h);
-    const result = calculateCryptoEnterpriseScore(inputs);
-    return result.score;
+    // Lightweight, real-data-only score for the list view: derived purely
+    // from the live 24h change (already fetched for this asset). The full
+    // history-based model (SMA/volatility/relative-strength vs. BTC) runs
+    // in the dedicated /api/crypto-scoring/:symbol endpoint instead —
+    // doing that per-asset here would mean one extra CoinGecko history
+    // fetch per crypto asset on every /api/market-data call, which risks
+    // rate-limiting for no benefit in a summary list.
+    const momentum = clamp(0.5 + change24h / 20, 0.02, 0.98);
+    return Number((momentum * 10).toFixed(2));
   }
   
-  // 1. Calculate base momentum score
-  let baseMomentum = baseScore !== undefined ? baseScore : (5.0 + (change24h > 0 ? Math.min(4.0, change24h / 2) : Math.max(-4.0, change24h / 2)));
-  
-  // 2. Adjust based on patterns
-  const pattern = getAssetPatternForSymbol(s);
-  let patternBoost = 0;
-  if (pattern === 'Bullish Engulfing') patternBoost = 4.5;
-  else if (pattern === 'Inverted Head & Shoulders') patternBoost = 3.5;
-  else if (pattern === 'Hammer Support' || pattern === 'Hammer Reversal') patternBoost = 3.0;
-  else if (pattern === 'Double Bottom') patternBoost = 2.8;
-  else if (pattern === 'Cup & Handle') patternBoost = 2.5;
-  else if (pattern === 'Bull Flag' || pattern === 'Morning Star') patternBoost = 2.2;
-  else if (pattern === 'Ascending Triangle' || pattern === 'Ascending Channel') patternBoost = 1.8;
-  else if (pattern === 'Bearish Harami' || pattern === 'Double Top') patternBoost = -3.2;
-
-  let finalScore = baseMomentum + patternBoost;
-
-  // Let's make sure that if the pattern is highly bullish (like Bullish Engulfing), the score is strong and realistic (e.g., 7.5 to 9.5)
-  if (pattern === 'Bullish Engulfing') {
-    if (finalScore < 8.2) {
-      finalScore = 8.2 + (change24h > 0 ? Math.min(1.0, change24h / 5) : Math.max(-1.0, change24h / 5));
-    }
-  }
-
-  return Math.min(10.0, Math.max(1.0, Number(finalScore.toFixed(1))));
+  // Real, honest score for non-crypto assets: derived only from the live
+  // 24h price change (baseScore, if provided by the live feed, is used as
+  // a prior). The previous version boosted this by up to +4.5 points
+  // based on a fabricated "chart pattern" (getAssetPatternForSymbol
+  // returned a fixed, hardcoded pattern per symbol — e.g. always
+  // "Bullish Engulfing" for BTC — regardless of the actual chart shape).
+  // That function is no longer used here; real OHLC-based pattern
+  // detection is a follow-up task (see Live_prio.md), not a fabricated
+  // stand-in.
+  const baseMomentum = baseScore !== undefined ? baseScore : (5.0 + (change24h > 0 ? Math.min(4.0, change24h / 2) : Math.max(-4.0, change24h / 2)));
+  return Math.min(10.0, Math.max(1.0, Number(baseMomentum.toFixed(2))));
 }
 
 // No-Demo-Data-Policy: this list intentionally contains ONLY static
@@ -1030,12 +1003,15 @@ async function fetchLiveMarketData() {
 
   const merged = [...cryptoAssets, ...stooqAssets];
   const enriched = merged.map(asset => {
-    const pattern = getAssetPatternForSymbol(asset.symbol);
+    // No fabricated chart pattern (see calculateAssetScore comment above for
+    // why getAssetPatternForSymbol was removed from use). `pattern: null`
+    // is honest; the frontend must treat it as "not yet available" rather
+    // than defaulting to some placeholder text.
     const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
     const score = calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
     return {
       ...asset,
-      pattern,
+      pattern: null,
       applicationArea,
       score
     };
@@ -1386,6 +1362,53 @@ app.post('/api/docs-file', requireOwnerAuth, express.json(), (req, res) => {
 
 
 // Endpoint to list all audit trail files from /docs/reports
+// ─────────────────────────────────────────────────────────────────────────
+// Beta-phase visitor counter. Real, minimal: one row per (day, anonymous
+// session) — see sql/003_page_views.sql. No cookies, no personal data;
+// the client generates a random per-tab id held only in memory (not
+// persisted), so this counts page loads, not tracked individuals across
+// sessions. For anything beyond a rough beta-phase number, use a proper
+// privacy-friendly analytics tool (Plausible/Umami) instead.
+// ─────────────────────────────────────────────────────────────────────────
+app.post('/api/track-visit', express.json(), async (req, res) => {
+  if (!isSupabaseConfigured()) {
+    return res.json({ tracked: false });
+  }
+  try {
+    const anonId = String(req.body?.anonId || '').slice(0, 64);
+    if (!anonId) {
+      return res.status(400).json({ error: 'anonId required' });
+    }
+    const supabaseClientInstance = getServerSupabase();
+    await supabaseClientInstance
+      .from('page_views')
+      .upsert({ day: new Date().toISOString().slice(0, 10), anon_session_id: anonId }, { onConflict: 'day,anon_session_id' });
+    res.json({ tracked: true });
+  } catch (err: any) {
+    console.error('[track-visit] Failed:', err.message || err);
+    res.json({ tracked: false });
+  }
+});
+
+app.get('/api/visitor-count', async (req, res) => {
+  if (!isSupabaseConfigured()) {
+    return res.json({ available: false, count: null });
+  }
+  try {
+    const supabaseClientInstance = getServerSupabase();
+    const today = new Date().toISOString().slice(0, 10);
+    const { count, error } = await supabaseClientInstance
+      .from('page_views')
+      .select('*', { count: 'exact', head: true })
+      .eq('day', today);
+    if (error) throw error;
+    res.json({ available: true, count: count ?? 0 });
+  } catch (err: any) {
+    console.error('[visitor-count] Failed:', err.message || err);
+    res.json({ available: false, count: null });
+  }
+});
+
 app.get('/api/orchestrator/audit-files', requireOwnerAuth, (req, res) => {
   const reportsDir = path.join(process.cwd(), 'docs', 'reports');
   try {
@@ -2022,28 +2045,25 @@ app.post('/api/orchestrator/reset', requireOrchestratorAdmin, (req, res) => {
 });
 
 // GET detailed enterprise crypto scoring inputs and outputs
-app.get('/api/crypto-scoring/:symbol', (req, res) => {
+app.get('/api/crypto-scoring/:symbol', async (req, res) => {
   const symbol = req.params.symbol.toUpperCase();
   const asset = assetRegistry.getAsset(symbol) || KNOWN_SYMBOLS.find(a => a.symbol === symbol);
   const change24h = (asset && 'change24h' in asset && typeof (asset as any).change24h === 'number') ? (asset as any).change24h : 0;
   const isMemeCoin = (asset && (asset as any).subtype === 'memecoin') || ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(symbol);
 
-  if (isMemeCoin) {
-    const inputs = generateMemeCoinInputs(symbol, change24h);
-    const result = calculateMemeCoinScore(inputs);
-    res.json({
-      inputs,
-      result,
-      isMemeCoin: true
-    });
-  } else {
-    const inputs = generateCryptoInputs(symbol, change24h);
-    const result = calculateCryptoEnterpriseScore(inputs);
-    res.json({
-      inputs,
-      result,
-      isMemeCoin: false
-    });
+  try {
+    if (isMemeCoin) {
+      const inputs = await generateMemeCoinInputs(symbol, change24h);
+      const result = calculateMemeCoinScore(inputs);
+      res.json({ inputs, result, isMemeCoin: true });
+    } else {
+      const inputs = await generateCryptoInputs(symbol, change24h);
+      const result = calculateCryptoEnterpriseScore(inputs);
+      res.json({ inputs, result, isMemeCoin: false });
+    }
+  } catch (err: any) {
+    console.error(`[crypto-scoring] Failed for ${symbol}:`, err.message || err);
+    res.status(503).json({ error: 'DATA_UNAVAILABLE', message: 'Live-Scoring-Daten konnten nicht geladen werden.' });
   }
 });
 
@@ -2379,7 +2399,7 @@ app.post('/api/portfolio-review', express.json(), orchestrator.handle('Portfolio
   const { allocation, metrics1Y, metrics3Y, metrics5Y } = req.body;
 
   try {
-    const prompt = `Du bist ein hochprofessioneller Quant-Portfolio-Analyst und Risk-Officer bei JENOVA NEXUS / AIF-CORE.
+    const prompt = `Du bist ein hochprofessioneller Quant-Portfolio-Analyst und Risk-Officer bei CAPITAL AI / CAPITAL-AI.
     Analysiere die folgende Portfolio-Allokation und deren historische Backtest-Ergebnisse (1, 3 und 5 Jahre):
     
     Allokation:
@@ -2541,17 +2561,18 @@ async function startServer() {
     const sk = getCleanEnv('STRIPE_SECRET_KEY');
     const pk = getCleanEnv('STRIPE_PUBLISHABLE_KEY');
     const wh = getCleanEnv('STRIPE_WEBHOOK_SECRET');
-    const priceStarter = getCleanEnv('STRIPE_PRICE_ID_STARTER');
-    const pricePro = getCleanEnv('STRIPE_PRICE_ID_PRO');
-    const priceEnterprise = getCleanEnv('STRIPE_PRICE_ID_ENTERPRISE');
 
     console.log("=== [Stripe Server Diagnostics] ===");
     console.log(`STRIPE_SECRET_KEY: ${sk ? `Configured (Length: ${sk.length}, Prefix: ${sk.substring(0, 7)})` : 'Missing'}`);
     console.log(`STRIPE_PUBLISHABLE_KEY: ${pk ? `Configured (Length: ${pk.length}, Prefix: ${pk.substring(0, 7)})` : 'Missing'}`);
     console.log(`STRIPE_WEBHOOK_SECRET: ${wh ? `Configured (Length: ${wh.length}, Prefix: ${wh.substring(0, 6)})` : 'Missing'}`);
-    console.log(`STRIPE_PRICE_ID_STARTER: ${priceStarter ? `Configured (Length: ${priceStarter.length}, Val: ${priceStarter.substring(0, 10)}...)` : 'Missing'}`);
-    console.log(`STRIPE_PRICE_ID_PRO: ${pricePro ? `Configured (Length: ${pricePro.length}, Val: ${pricePro.substring(0, 10)}...)` : 'Missing'}`);
-    console.log(`STRIPE_PRICE_ID_ENTERPRISE: ${priceEnterprise ? `Configured (Length: ${priceEnterprise.length}, Val: ${priceEnterprise.substring(0, 10)}...)` : 'Missing'}`);
+    for (const tier of ['STARTER', 'PRO', 'ENTERPRISE']) {
+      for (const period of ['MONTHLY', 'YEARLY']) {
+        const key = `STRIPE_PRICE_ID_${tier}_${period}`;
+        const val = getCleanEnv(key);
+        console.log(`${key}: ${val ? `Configured (Length: ${val.length}, Val: ${val.substring(0, 10)}...)` : 'Missing'}`);
+      }
+    }
     console.log("====================================");
   });
 }

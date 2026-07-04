@@ -1,4 +1,4 @@
-# AIF-CORE Platform Backlog
+# CAPITAL-AI Platform Backlog
 
 This backlog tracks upcoming features, structural enhancements, and compliance audits for future versions of the platform.
 

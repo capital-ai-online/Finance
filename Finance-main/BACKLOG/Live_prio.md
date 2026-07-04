@@ -19,7 +19,7 @@ Reihenfolge = Priorität. Kritische Punkte zuerst.
 | 4 | `POST /api/docs-file` war ein komplett offener Datei-Schreibzugriff (jeder Internet-Nutzer, kein Login nötig) | 🤖 | ✅ gefixt (Owner-Auth) |
 | 5 | `POST /api/registry/assets/:symbol` erlaubte jedem, Live-Kurse/Scores für jedes Asset zu verfälschen | 🤖 | ✅ gefixt (Owner-Auth) |
 | 6 | `POST /api/orchestrator/create-simulated-audit` erlaubte jedem, gefälschte "COMPLIANT"-Audit-Einträge einzuschleusen | 🤖 | ✅ gefixt (Owner-Auth) |
-| 7 | Gastmodus + E-Mail-basierter Admin-Bypass (`gast@aif-core.de`) | 🤖 | ✅ entfernt |
+| 7 | Gastmodus + E-Mail-basierter Admin-Bypass (`gast@capital-ai.de`) | 🤖 | ✅ entfernt |
 | 8 | Hardcodiertes `FALLBACK_ASSETS`-Array mit erfundenen Kursen/Scores, als "Verifiziert" markiert | 🤖 | ✅ entfernt |
 | 9 | **`CryptoScoringEnterprise.tsx` schreibt bei jeder Report-Generierung fest einprogrammierte Fake-Compliance-Texte** ("Alle 24 Sicherheitsprüfungen erfolgreich", statische Audit-ID, "PII Masking enforced" etc.) als Datei ins `/docs/reports`-Verzeichnis | 🧑‍💻 Entscheidung nötig | ⏳ **Feature aktuell blockiert** (schreibt nicht mehr, da Endpoint jetzt Owner-Auth braucht und Komponente keinen Token mitschickt) — brauche deine Entscheidung: entfernen oder auf echte Daten umbauen? |
 | 10 | **`AuditLogs.tsx` / "Audit-Trail"-Feature generiert Scores komplett per `Math.random()`** und präsentiert sie als Compliance-Prüfung | 🧑‍💻 Entscheidung nötig | ⏳ **Feature aktuell blockiert**, gleiche Frage wie oben |
@@ -85,7 +85,26 @@ Sag mir Preis + gewünschten Weg (1/2/3), dann baue ich es direkt ein.
 
 ---
 
-## ✅ Bereits erledigt in dieser Session
+## ✅ Bereits erledigt in dieser Session (Runde 2)
+
+- **Newsfeed komplett neu gebaut**: war zu 100% erfunden (Fake-Schlagzeilen zu echten Assets, Fake-"KI-Routing", statischer Fake-"98.4%"-Score) — läuft jetzt ausschließlich über das echte `/api/news` (NewsAPI.org), zeigt ehrlich "nicht konfiguriert"/"keine Artikel", wenn kein Key gesetzt ist
+- **Fabriziertes Pattern-Recognition entfernt** (`getAssetPatternForSymbol` — gab z.B. IMMER "Bullish Engulfing" für BTC zurück, unabhängig vom echten Chart) — floss vorher in Scores für Aktien/Forex/Rohstoffe/Indizes ein, jetzt entfernt; echte OHLC-basierte Mustererkennung ist Folgeaufgabe
+- **Krypto-Scoring-Engine (`cryptoScoring.ts`) komplett auf echte Daten umgestellt**: SMA/Momentum/Volatilität/Breakout/relative Stärke jetzt aus echter CoinGecko-Historie berechnet; On-Chain-, Orderbuch-, Social- und Manipulations-Faktoren ehrlich als `null` markiert und aus der gewichteten Berechnung ausgeschlossen (keine Fake-Zahlen mehr) — Antwort enthält jetzt `dataCompleteness` und `excludedFactors`
+- Stripe-Price-ID-Variablen auf `STRIPE_PRICE_ID_{TIER}_{MONTHLY/YEARLY}` umgestellt, 3-Tage-Trial für Starter (monatlich) im Code ergänzt
+- Rebrand: AIF-CORE/AifCore/Jenova Nexus → CAPITAL-AI in 41 Dateien ersetzt, `AifCoreLogo.tsx` → `CapitalAiLogo.tsx` umbenannt
+- `InteractModule.tsx` entfernt (toter Import, nie gerendert) — wie gewünscht
+- Echter Besucherzähler (Beta-Phase-Widget oben rechts) — neue `page_views`-Tabelle, `/api/track-visit` + `/api/visitor-count`, zeigt sich nur wenn echte Daten verfügbar sind
+
+### ⚠️ Nicht übernommen aus deinem neuen Dev-AICore-OS-Upload — braucht deine Entscheidung
+- Kraken-Empfehlungslink mit Provisionscode `yc4ggk3f` (Affiliate-Kennzeichnungspflicht prüfen)
+- `CAPITAL_AI_SECRET_KEY_2026` als clientseitig/URL-geprüfter Guest-Bypass — **nicht übernehmen**, gleiche Schwachstellenklasse wie der bereits entfernte Gast-Bypass
+- `sven.kulessa@gmx.net` als zweiter Admin-Account — sag Bescheid, ob gewollt, dann füge ich ihn sauber (JWT-geprüft) hinzu
+
+### 🔜 Noch zu bauen
+- **5 Menü-Reiter pro Assetklasse**: Navigation + Sidebar-Einträge noch nicht angelegt (nächster Schritt)
+- Rohstoff-Modul: echte Datenquelle (World Bank/USGS/EIA) noch nicht angebunden, Gemini-Schätzung bewusst noch nicht ersetzt
+- AuditLogs `Math.random()` → echte Datenqualitäts-Prüfung (angefordert, noch offen)
+- i18n (5 Sprachen), Founder-Kontaktoption, Beta-Tester-Stripe-Setup — siehe Antworten im Chat
 
 - Gastmodus + Admin-Bypass entfernt
 - `FALLBACK_ASSETS` Fake-Daten entfernt

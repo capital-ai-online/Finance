@@ -298,7 +298,7 @@ export function PortfolioPerformance({ baseCapital }: PortfolioPerformanceProps)
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded text-[8px] font-mono font-black tracking-widest bg-aif-neon-purple text-white uppercase border border-aif-neon-purple/40 animate-pulse">
-                AIF-CORE METRICS
+                CAPITAL-AI METRICS
               </span>
               <span className="px-2 py-0.5 rounded text-[8px] font-mono font-black tracking-widest bg-white/5 text-white/50 border border-white/10 uppercase">
                 Aggregiert

@@ -579,7 +579,7 @@ export default function PerformanceDashboard() {
               <Gauge size={18} className="animate-pulse" />
             </span>
             <h2 className="text-sm font-bold text-white uppercase tracking-wider font-display">
-              AIF-CORE Performance- & Diagnose-Zentrale (D3.js Engine)
+              CAPITAL-AI Performance- & Diagnose-Zentrale (D3.js Engine)
             </h2>
           </div>
           <p className="text-xs text-white/50">

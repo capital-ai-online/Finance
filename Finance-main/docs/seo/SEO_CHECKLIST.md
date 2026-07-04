@@ -1,5 +1,5 @@
 # 🔍 SEO Checklist & Technical Discovery Guide
-**Project: AIF-CORE (Jenova Nexus)**  
+**Project: CAPITAL-AI (Capital AI)**  
 **Target Focus:** Quantitative Financial Calculators & Stock Screener Platform  
 
 ---
@@ -21,11 +21,11 @@ Our main entry points incorporate optimized microdata schemas in `/index.html` t
 
 ```html
 <!-- SEO Metadata -->
-<title>AIF-CORE - Advanced Quantitative Financial Analysis Core</title>
-<meta name="description" content="Calculate Benjamin Graham DCF, simulate Monte Carlo paths, and evaluate asset scoring models. AIF-CORE provides zero-code, fully DSGVO-compliant quantitative investment analytics." />
+<title>CAPITAL-AI - Advanced Quantitative Financial Analysis Core</title>
+<meta name="description" content="Calculate Benjamin Graham DCF, simulate Monte Carlo paths, and evaluate asset scoring models. CAPITAL-AI provides zero-code, fully DSGVO-compliant quantitative investment analytics." />
 
 <!-- OpenGraph (Social Metadata) -->
-<meta property="og:title" content="AIF-CORE - Quantitative Financial Core" />
+<meta property="og:title" content="CAPITAL-AI - Quantitative Financial Core" />
 <meta property="og:description" content="Secure, high-performance financial analytics and intelligent multi-model routing." />
 <meta property="og:type" content="website" />
 ```

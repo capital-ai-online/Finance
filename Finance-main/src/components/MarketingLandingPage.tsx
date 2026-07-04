@@ -17,7 +17,7 @@ import {
   TrendingUp, Coins, LineChart, Landmark, Gem,
   ShieldCheck, BarChart3, Bell, History, ArrowRight, Check
 } from 'lucide-react';
-import { AifCoreLogo } from './AifCoreLogo';
+import { CapitalAiLogo } from './CapitalAiLogo';
 
 interface MarketingLandingPageProps {
   onGetStarted: () => void;
@@ -52,7 +52,7 @@ export function MarketingLandingPage({ onGetStarted, onLogin }: MarketingLanding
       {/* Nav */}
       <nav className="sticky top-0 z-20 backdrop-blur-xl bg-black/40 border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <AifCoreLogo size={36} showText={true} />
+          <CapitalAiLogo size={36} showText={true} />
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={onLogin}

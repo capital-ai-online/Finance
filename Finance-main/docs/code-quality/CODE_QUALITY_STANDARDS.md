@@ -1,12 +1,12 @@
 # 💻 Code Quality Standards & Architecture Directives
-**Project: AIF-CORE (Jenova Nexus)**  
+**Project: CAPITAL-AI (Capital AI)**  
 **Version:** 0.5.0 (Beta-Phase)  
 **Standard:** TypeScript Strict Mode (`strict: true`)  
 
 ---
 
 ## 📐 General Code Integrity (Datenintegrität)
-AIF-CORE maintains strict quality standards to ensure enterprise-level performance, clean refactors, and complete compliance with European regulations:
+CAPITAL-AI maintains strict quality standards to ensure enterprise-level performance, clean refactors, and complete compliance with European regulations:
 
 1. **Strict Type-Safety**: Avoid using `any`. Explicitly declare TypeScript interfaces and models for all parameters, components, and API responses.
 2. **Defensive API Contracts**: All API responses must be validated upon receipt. Never assume any response is an array or object of correct shape without checking `Array.isArray()` or proper structural type guards. Handle exceptions gracefully without crashing components.

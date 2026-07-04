@@ -1,6 +1,6 @@
-# AIF-CORE Developer and AI Agent Directives
+# CAPITAL-AI Developer and AI Agent Directives
 
-This document contains persistent rules, architectural standards, and data integrity mandates that apply to all current and future modules, components, and backend logics of the AIF-CORE platform.
+This document contains persistent rules, architectural standards, and data integrity mandates that apply to all current and future modules, components, and backend logics of the CAPITAL-AI platform.
 
 ---
 

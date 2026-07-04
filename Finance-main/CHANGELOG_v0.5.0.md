@@ -1,4 +1,4 @@
-# AIF-CORE v0.5.0 — Staging Build Changelog
+# CAPITAL-AI v0.5.0 — Staging Build Changelog
 
 ## 1. Data Integrity / Versioning
 - `package.json`, `metadata.json` → version `0.5.0`.

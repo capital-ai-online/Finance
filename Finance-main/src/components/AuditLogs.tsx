@@ -297,7 +297,7 @@ export function AuditLogs() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-white/10">
         <div>
           <span className="px-2.5 py-1 rounded text-[10px] font-bold bg-violet-500/20 text-violet-400 border border-violet-500/30 tracking-wider font-mono uppercase">
-            AIF-CORE • Compliance-Zentrale
+            CAPITAL-AI • Compliance-Zentrale
           </span>
           <h2 className="text-2xl font-black text-white font-display mt-2 tracking-tight">Audit Trail & Execution Logs</h2>
           <p className="text-xs text-white/60 mt-1 max-w-2xl leading-relaxed">
@@ -913,7 +913,7 @@ export function AuditLogs() {
               <div className="p-4 rounded-xl bg-violet-500/10 border border-violet-500/20 text-xs text-violet-300 leading-normal font-mono space-y-2">
                 <div className="flex items-center gap-1.5">
                   <ShieldCheck size={14} className="text-violet-400" />
-                  <span className="font-bold uppercase tracking-wider">AIF-Core Compliance-Siegel</span>
+                  <span className="font-bold uppercase tracking-wider">Capital-AI Compliance-Siegel</span>
                 </div>
                 <p className="text-[11px] text-violet-300/80 leading-normal">
                   Dieses Simulations-Terminal führt Layer-Prüfungen durch und schreibt JSON-Auditdaten direkt in das /docs/reports Dateiverzeichnis. Alle Outputs sind version-pinned auf Version 0.5.0 (Beta-Phase).

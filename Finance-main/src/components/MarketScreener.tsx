@@ -456,7 +456,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt,
     doc.setTextColor(245, 196, 83);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
-    doc.text('AIF-CORE', 15, 18);
+    doc.text('CAPITAL-AI', 15, 18);
     
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'normal');
@@ -623,7 +623,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt,
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.setTextColor(140, 140, 140);
-    doc.text('Dieses Dokument wurde automatisch von AIF-CORE generiert. DSGVO-konforme quantitative Echtzeitanalyse.', 15, 285);
+    doc.text('Dieses Dokument wurde automatisch von CAPITAL-AI generiert. DSGVO-konforme quantitative Echtzeitanalyse.', 15, 285);
     doc.text('Sven Kulessa • sven.kulessa@gmail.com • Compliant with Art. 30 GDPR / BFSG Accessibility Standards.', 15, 289);
     
     doc.save(`AIF_CORE_Screener_${assetType}_Bericht.pdf`);
@@ -637,7 +637,7 @@ export function MarketScreener({ onSelectSymbol, selectedSymbol, triggerAttempt,
         <div>
           <div className="flex items-center gap-2 text-aif-gold-DEFAULT text-xs font-mono tracking-widest uppercase mb-1">
             <Layers size={12} />
-            <span>AIF-CORE MODUL 1</span>
+            <span>CAPITAL-AI MODUL 1</span>
           </div>
           <h2 className="text-2xl font-black text-white tracking-widest font-display uppercase flex items-center gap-3">
             Hocheffizienter Markt-Screener

@@ -1,4 +1,4 @@
-# Changelog - AIF-CORE
+# Changelog - CAPITAL-AI
 
 Refer to the official backlog and release history in `/backlog/CHANGELOG.md`.
 

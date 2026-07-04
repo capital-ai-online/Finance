@@ -1,5 +1,5 @@
-# 🔒 Security Audit & Vulnerability Report (AIF-CORE / Jenova Nexus)
-**Project: Jenova Nexus (AIF-CORE)**  
+# 🔒 Security Audit & Vulnerability Report (CAPITAL-AI / Capital AI)
+**Project: Capital AI (CAPITAL-AI)**  
 **Auditor:** Security AI Audit Engine  
 **Status:** Audit Approved (Version 0.5.0)  
 

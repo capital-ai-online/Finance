@@ -48,7 +48,7 @@ export function MarkdownOrchestrator({ accessToken }: MarkdownOrchestratorProps)
   const [activeTab, setActiveTab] = useState<'info' | 'orchestrate' | 'templates'>('info');
   const [selectedPerspective, setSelectedPerspective] = useState<PerspectiveId>('ceo');
   const [config, setConfig] = useState<OrchestratorConfig>({
-    projectName: 'AIF-CORE Technologies',
+    projectName: 'CAPITAL-AI Technologies',
     currency: 'EUR',
     database: 'Supabase PostgreSQL',
     focus: 'Kryptowährungen & Quantitative Analysen',
@@ -987,7 +987,7 @@ We enforce a secure-by-default environment for **${config.projectName}** followi
 **Database**: ${config.database}
 **Focus**: ${config.focus}
 
-This report was compiled dynamically under the **AIF-CORE Markdown Orchestrator** framework. It implements state-of-the-art formatting guidelines, strict module splitting, and programmatic data alignment (Currency: ${currencySymbol}).`;
+This report was compiled dynamically under the **CAPITAL-AI Markdown Orchestrator** framework. It implements state-of-the-art formatting guidelines, strict module splitting, and programmatic data alignment (Currency: ${currencySymbol}).`;
     }
   }
 }

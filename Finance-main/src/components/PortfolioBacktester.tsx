@@ -478,7 +478,7 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt }: Po
     doc.setTextColor(245, 196, 83);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
-    doc.text('JENOVA NEXUS', 15, 18);
+    doc.text('CAPITAL AI', 15, 18);
 
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'normal');
@@ -616,10 +616,10 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt }: Po
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(140, 140, 140);
-    doc.text('AIF-CORE Portfoliodaten und Analysen entsprechen den Richtlinien für Zero-Breach Datenintegrität.', 15, 283);
+    doc.text('CAPITAL-AI Portfoliodaten und Analysen entsprechen den Richtlinien für Zero-Breach Datenintegrität.', 15, 283);
     doc.text('Dieses Dokument dient Informationszwecken. Historische Renditen sind keine Garantie für zukünftige Performance.', 15, 287);
 
-    doc.save(`JENOVA_NEXUS_Portfolio_Bericht.pdf`);
+    doc.save(`CAPITAL AI_NEXUS_Portfolio_Bericht.pdf`);
   };
 
   const currentPeriodMetrics = simResults ? simResults[activeChartRange] : null;
@@ -866,7 +866,7 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt }: Po
                 Parallel-Kalkulation
               </span>
               <p className="text-xs text-white/80 font-mono mt-2">
-                Sende historische Asset-Abfragen an die AIF-Core-Registry...
+                Sende historische Asset-Abfragen an die Capital-AI-Registry...
               </p>
               <p className="text-[11px] text-white/40 leading-relaxed max-w-sm">
                 Führe Kovarianz-Abstimmung, Dividenden-Bereinigung und Gebührenabzüge für {allocations.length} Vermögenswerte aus.

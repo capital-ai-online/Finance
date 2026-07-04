@@ -1,11 +1,11 @@
 # 🔒 Developer Security Guidelines & Compliance Standards
-**Project: AIF-CORE (Jenova Nexus)**  
+**Project: CAPITAL-AI (Capital AI)**  
 **Classification:** Confidential / Internal Developer Scope  
 
 ---
 
 ## 🛡️ Security Pillars & OWASP Top 10 Governance
-AIF-CORE is engineered using a **"Security-by-Design"** approach to mitigate risks outlined in the **OWASP Top 10** and enforce compliance with EU data protection regulations (DSGVO).
+CAPITAL-AI is engineered using a **"Security-by-Design"** approach to mitigate risks outlined in the **OWASP Top 10** and enforce compliance with EU data protection regulations (DSGVO).
 
 | Vulnerability Category | Risk Level | Mitigation Architecture |
 | :--- | :---: | :--- |

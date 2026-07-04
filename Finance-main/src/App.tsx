@@ -8,6 +8,7 @@ import { LandingPage } from './components/LandingPage';
 import { MarketingLandingPage } from './components/MarketingLandingPage';
 import { Dashboard } from './components/Dashboard';
 import { ResetPasswordScreen } from './components/ResetPasswordScreen';
+import { BetaVisitorCounter } from './components/BetaVisitorCounter';
 import { supabase } from './supabaseClient';
 
 export interface UserSession {
@@ -223,6 +224,7 @@ export default function App() {
 
   return (
     <>
+      <BetaVisitorCounter />
       {passwordRecoveryMode ? (
         <ResetPasswordScreen
           onComplete={() => {

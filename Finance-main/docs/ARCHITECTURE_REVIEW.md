@@ -1,16 +1,16 @@
-# 🌐 System Architecture & Agent Orchestration (AIF-CORE / Jenova Nexus)
+# 🌐 System Architecture & Agent Orchestration (CAPITAL-AI / Capital AI)
 
-This document provides an in-depth architectural analysis of **AIF-CORE (Jenova Nexus)**, detailing its model-independent orchestration engine, the standard Model Context Protocol (MCP) integrations, mobile-first zero-code configurations, and secure global memory persistence.
+This document provides an in-depth architectural analysis of **CAPITAL-AI (Capital AI)**, detailing its model-independent orchestration engine, the standard Model Context Protocol (MCP) integrations, mobile-first zero-code configurations, and secure global memory persistence.
 
 ---
 
 ## 🗺️ Architectural Concept: Model-Independent Orchestration
 
-The AIF-CORE system is built upon the principle of **LLM Neutrality**. The system does not lock itself into a single model vendor. Instead, it utilizes an automated intelligent **Model-Router** that dynamically dispatches tasks to the ideal model based on quality, latency, costs, and compliance rules.
+The CAPITAL-AI system is built upon the principle of **LLM Neutrality**. The system does not lock itself into a single model vendor. Instead, it utilizes an automated intelligent **Model-Router** that dynamically dispatches tasks to the ideal model based on quality, latency, costs, and compliance rules.
 
 ```
                   ┌───────────────────────────────┐
-                  │       AIF-CORE Gateway        │
+                  │       CAPITAL-AI Gateway        │
                   └───────────────┬───────────────┘
                                   │
                                   ▼

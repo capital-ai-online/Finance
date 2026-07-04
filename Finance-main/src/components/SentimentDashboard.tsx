@@ -702,7 +702,7 @@ export function SentimentDashboard() {
           </div>
           <div>
             <h3 className="font-display font-black text-white text-base tracking-wide uppercase">
-              AIF-CORE Sentiment Shock Sandbox
+              CAPITAL-AI Sentiment Shock Sandbox
             </h3>
             <p className="text-[10px] text-white/50 font-mono mt-0.5">
               Simuliere makroökonomische Extremereignisse und berechne theoretische Sentimentübertragungen auf Assets

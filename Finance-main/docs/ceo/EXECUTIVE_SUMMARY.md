@@ -1,12 +1,12 @@
 # 👔 Executive Summary & Strategic Vision (CEO Perspective)
-**Project: AIF-CORE (Jenova Nexus)**  
+**Project: CAPITAL-AI (Capital AI)**  
 **Version:** 0.5.0 (Beta-Phase)  
 **Classification:** Confidential / Board Approved  
 
 ---
 
 ## 🏛️ Strategic Vision & Core Objectives
-AIF-CORE is the underlying neural core of the platform, engineered to democratize quantitative financial modeling, stock analysis, and high-performance algorithmic simulation. By providing a zero-code, fully responsive interface powered by an intelligent model-router, the system enables immediate decision-making under strict DSGVO compliance.
+CAPITAL-AI is the underlying neural core of the platform, engineered to democratize quantitative financial modeling, stock analysis, and high-performance algorithmic simulation. By providing a zero-code, fully responsive interface powered by an intelligent model-router, the system enables immediate decision-making under strict DSGVO compliance.
 
 ### Strategic Key Milestones:
 1. **Model Independence & Auto-Routing**: Elimination of single-vendor locks. The system intelligently switches between Claude (deep audits), Gemini (high-speed parallel streams), and local models (compliance filtering) to optimize cost and latency.
@@ -50,7 +50,7 @@ The enterprise software stack is designed for extreme scalability, data integrit
 
 ## 💳 Pricing & Subscription Model (Zentrales SaaS-Modul)
 
-Our pricing model utilizes the unified AIF-CORE database representation to dynamically unlock functionality based on the authenticated user's tier.
+Our pricing model utilizes the unified CAPITAL-AI database representation to dynamically unlock functionality based on the authenticated user's tier.
 
 ### 1. Free Tariff (Kostenlos)
 * **Limitierungen**: Max 1 Gerät, max 3 Screenings. Kontingent wird alle 5 Tage zurückgesetzt.

@@ -17,14 +17,15 @@ import { ImpressumAgb } from './ImpressumAgb';
 import { RealtimeAiNewsfeed } from './RealtimeAiNewsfeed';
 import { BacktestEngine } from './BacktestEngine';
 import { HeatmapCreator } from './HeatmapCreator';
-import { AifCoreLogo } from './AifCoreLogo';
+import { CapitalAiLogo } from './CapitalAiLogo';
 import { MarketScreener } from './MarketScreener';
 import { CryptoScoringEnterprise } from './CryptoScoringEnterprise';
 import { UserSession } from '../App';
 
 
 import { MarkdownOrchestrator } from './MarkdownOrchestrator';
-import { InteractModule } from './InteractModule';
+
+
 import { Charts } from './Charts';
 import { OrchestratorPanel } from './OrchestratorPanel';
 import PerformanceDashboard from './PerformanceDashboard';
@@ -293,9 +294,9 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                 {/* Drawer Header */}
                 <div className="p-6 border-b border-white/10 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <AifCoreLogo size={40} showText={false} />
+                    <CapitalAiLogo size={40} showText={false} />
                     <div className="flex flex-col items-start leading-none">
-                      <span className="font-black text-sm tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">AIF-CORE</span>
+                      <span className="font-black text-sm tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">CAPITAL-AI</span>
                       <span className="text-[11px] text-white/70 font-mono tracking-widest uppercase mt-0.5">MODUL 1</span>
                     </div>
                   </div>
@@ -682,7 +683,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                   </div>
 
                   {/* Category 5: Administration (if user is Sven Kulessa or dev bypass) */}
-                  {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'gast@aif-core.de') && (
+                  {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'gast@capital-ai.de') && (
                     <div className="border-b border-white/5 pb-2">
                       <button
                         onClick={() => setExpandedSection(expandedSection === 'system_admin' ? null : 'system_admin')}
@@ -779,10 +780,10 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                 onClick={() => setDropdownOpen(!dropdownOpen)} 
                 className="flex items-center gap-3 hover:bg-white/5 p-2 rounded-xl transition-all"
               >
-                <AifCoreLogo size={44} showText={false} />
+                <CapitalAiLogo size={44} showText={false} />
                 <div className="flex flex-col items-start leading-none">
                   <div className="flex items-center gap-2">
-                    <span className="font-black text-lg tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">AIF-CORE</span>
+                    <span className="font-black text-lg tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">CAPITAL-AI</span>
                     <ChevronDown size={16} className={`text-aif-gold-DEFAULT transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
                   <div className="flex items-center gap-1.5 mt-1">
@@ -814,7 +815,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                     >
                       <User size={16} className="text-aif-neon-cyan" /> Profil verwalten
                     </button>
-                    {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'gast@aif-core.de') && (
+                    {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'gast@capital-ai.de') && (
                       <button 
                         onClick={() => { setDropdownOpen(false); setActiveView('admin-panel'); }}
                         className="w-full text-left px-4 py-2.5 text-sm font-bold text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/10 rounded-lg flex items-center gap-3 transition-all border border-aif-gold-DEFAULT/20"
@@ -879,7 +880,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
         {activeView !== 'dashboard' && (
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-md">
             <div className="flex items-center gap-2 text-xs font-mono text-white/50">
-              <span className="hover:text-white cursor-pointer uppercase tracking-wider font-bold" onClick={() => setActiveView('dashboard')}>AIF-CORE</span>
+              <span className="hover:text-white cursor-pointer uppercase tracking-wider font-bold" onClick={() => setActiveView('dashboard')}>CAPITAL-AI</span>
               <span>/</span>
               <span className="text-aif-gold-DEFAULT uppercase tracking-wider font-bold">
                 {activeView === 'monte-carlo' && 'Monte Carlo Simulation'}
@@ -1144,8 +1145,8 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
             {/* Info Siegel: Version 0.5.0 mit dem Logo versehen */}
             <div className="flex flex-col sm:flex-row items-center gap-3 bg-gradient-to-r from-aif-gold-DEFAULT/10 via-black/40 to-aif-gold-DEFAULT/5 border border-aif-gold-DEFAULT/20 rounded-2xl px-5 py-2.5 backdrop-blur-md shadow-[0_0_25px_rgba(245,196,83,0.08)] mb-4">
               <div className="flex items-center gap-2">
-                <AifCoreLogo size={24} showText={false} />
-                <span className="font-display font-black tracking-widest text-sm uppercase text-aif-gold-DEFAULT">AIF-CORE</span>
+                <CapitalAiLogo size={24} showText={false} />
+                <span className="font-display font-black tracking-widest text-sm uppercase text-aif-gold-DEFAULT">CAPITAL-AI</span>
               </div>
               <span className="hidden sm:inline text-white/20">|</span>
               <div className="flex items-center gap-2">

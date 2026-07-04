@@ -295,7 +295,7 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
     doc.setTextColor(245, 196, 83);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
-    doc.text('AIF-CORE', 15, 18);
+    doc.text('CAPITAL-AI', 15, 18);
     
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'normal');
@@ -492,7 +492,7 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.setTextColor(140, 140, 140);
-    doc.text('Dieses Dokument wurde automatisch von AIF-CORE generiert. DSGVO-konforme quantitative Echtzeitanalyse.', 15, 285);
+    doc.text('Dieses Dokument wurde automatisch von CAPITAL-AI generiert. DSGVO-konforme quantitative Echtzeitanalyse.', 15, 285);
     doc.text('Sven Kulessa • sven.kulessa@gmail.com • Compliant with Art. 30 GDPR / BFSG Accessibility Standards.', 15, 289);
     
     doc.save(`AIF_CORE_Backtest_${ticker}_${strategy}.pdf`);

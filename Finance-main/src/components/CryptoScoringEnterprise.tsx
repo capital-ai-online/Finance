@@ -324,13 +324,13 @@ export function CryptoScoringEnterprise({
       });
 
       // Write actual files to disk via POST /api/docs-file
-      const reportContent = `# 👔 AIF-CORE Executive Crypto Report for ${activeSymbol}\n` +
+      const reportContent = `# 👔 CAPITAL-AI Executive Crypto Report for ${activeSymbol}\n` +
         `**Timeframe**: ${timeframe}\n` +
         `**Generated At**: ${new Date().toLocaleString('de-DE')} (Autonomous Agent Cascade)\n` +
         `**Status**: Real-Time Audited & Optimized\n\n` +
         `---\n\n` +
         `## 📊 Overview & Decision Rating\n` +
-        `The AIF-CORE Autonomous Agent Cascade has analyzed the latest quantitative, structural, and regulatory parameters for **${activeSymbol}**.\n\n` +
+        `The CAPITAL-AI Autonomous Agent Cascade has analyzed the latest quantitative, structural, and regulatory parameters for **${activeSymbol}**.\n\n` +
         `- **Decision**: ${scoringResult?.decisionName || 'HOLD'}\n` +
         `- **Reasoning**: ${scoringResult?.decisionDesc || 'Stable metrics across all 24 risk points.'}\n` +
         `- **Primary Database**: SQL/Firestore Cloud Storage\n` +
@@ -355,7 +355,7 @@ export function CryptoScoringEnterprise({
         }
       }, null, 2);
 
-      const matrixContent = `# 📈 AIF-CORE Revenue Assurance Matrix\n` +
+      const matrixContent = `# 📈 CAPITAL-AI Revenue Assurance Matrix\n` +
         `**Asset**: ${activeSymbol}\n` +
         `**Date**: ${new Date().toLocaleString('de-DE')}\n\n` +
         `---\n\n` +
