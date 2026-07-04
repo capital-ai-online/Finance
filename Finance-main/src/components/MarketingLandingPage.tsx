@@ -73,6 +73,15 @@ export function MarketingLandingPage({ onGetStarted, onLogin }: MarketingLanding
       {/* Hero */}
       <section className="relative max-w-5xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-16 text-center">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(245,196,83,0.08),transparent_60%)]" />
+
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/30 text-aif-gold-DEFAULT text-[11px] font-mono uppercase tracking-widest mb-6"
+        >
+          <span>🚀 Für die ersten 20 FinTech-Astronauten: 1 Monat Pro gratis testen</span>
+        </motion.div>
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -113,6 +122,9 @@ export function MarketingLandingPage({ onGetStarted, onLogin }: MarketingLanding
         </motion.div>
         <p className="mt-4 text-[10px] font-mono text-white/30 uppercase tracking-widest">
           Registrierung erforderlich, um Screenings &amp; Live-Scores auszuführen
+        </p>
+        <p className="mt-2 text-[10px] font-mono text-aif-gold-DEFAULT/70">
+          Code <span className="text-aif-gold-DEFAULT font-bold">TRIAL26</span> bei der Bezahlung eingeben — 1 Monat Pro kostenlos, begrenzt auf die ersten 20 Einlösungen
         </p>
       </section>
 

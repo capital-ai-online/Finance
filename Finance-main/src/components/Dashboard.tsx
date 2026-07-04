@@ -682,8 +682,13 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                     </AnimatePresence>
                   </div>
 
-                  {/* Category 5: Administration (if user is Sven Kulessa or dev bypass) */}
-                  {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'gast@capital-ai.de') && (
+                  {/* Category 5: Administration — visible only to the verified owner
+                      accounts. A "gast@capital-ai.de" bypass reappeared here at some
+                      point (equivalent to the gast@aif-core.de bypass already removed
+                      elsewhere) and has been removed again. This check is cosmetic
+                      (nav visibility only) — the real security boundary is the
+                      server-side requireOwnerAuth JWT check in server.ts. */}
+                  {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'sven.kulessa@gmx.net') && (
                     <div className="border-b border-white/5 pb-2">
                       <button
                         onClick={() => setExpandedSection(expandedSection === 'system_admin' ? null : 'system_admin')}
@@ -815,7 +820,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                     >
                       <User size={16} className="text-aif-neon-cyan" /> Profil verwalten
                     </button>
-                    {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'gast@capital-ai.de') && (
+                    {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'sven.kulessa@gmx.net') && (
                       <button 
                         onClick={() => { setDropdownOpen(false); setActiveView('admin-panel'); }}
                         className="w-full text-left px-4 py-2.5 text-sm font-bold text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/10 rounded-lg flex items-center gap-3 transition-all border border-aif-gold-DEFAULT/20"

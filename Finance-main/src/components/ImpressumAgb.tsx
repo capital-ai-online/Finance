@@ -75,12 +75,33 @@ export function ImpressumAgb() {
               <div className="space-y-4 bg-white/5 p-4 rounded-xl border border-white/5 text-xs text-white/70 space-y-3">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-aif-gold-DEFAULT font-mono">Regulatorische Angaben</h4>
                 <div className="space-y-2 leading-relaxed">
-                  <p><strong className="text-white">Vertretungsberechtigte Geschäftsführer:</strong> Sven Michael Kulessa</p>
-                  <p><strong className="text-white">Registergericht:</strong> Amtsgericht Köln, HRB 993211</p>
-                  <p><strong className="text-white">Umsatzsteuer-Identifikationsnummer (USt-IdNr.):</strong> DE 302119932</p>
-                  <p><strong className="text-white">Zuständige Aufsichtsbehörde:</strong> Bundesanstalt für Finanzdienstleistungsaufsicht (BaFin), Marie-Curie-Straße 24-28, 60439 Frankfurt am Main</p>
+                  {/*
+                    WICHTIG (siehe Chat-Klärung mit Sven): Die vorherige
+                    Version dieses Blocks enthielt vollständig erfundene
+                    Angaben — einen "Geschäftsführer"-Titel (impliziert eine
+                    Kapitalgesellschaft), eine Handelsregisternummer
+                    (Amtsgericht Köln, HRB 993211), eine
+                    Umsatzsteuer-IdNr. und eine Behauptung, das Angebot
+                    unterläge der BaFin-Aufsicht. Keine dieser Angaben war
+                    von Sven autorisiert oder trifft zu — insbesondere die
+                    BaFin-Behauptung hätte fälschlich einen regulierten
+                    Finanzdienstleister suggeriert. Alle vier wurden
+                    ersatzlos entfernt. Sven: bitte trage hier nur ein, was
+                    tatsächlich zutrifft (z. B. deine Steuernummer, falls
+                    vorhanden; eine USt-IdNr. nur, wenn dir wirklich eine
+                    erteilt wurde; ggf. einen Kleinunternehmer-Hinweis nach
+                    § 19 UStG). Ein Registergericht/HRB-Eintrag gehört nur
+                    hierher, wenn du tatsächlich im Handelsregister
+                    eingetragen bist (z. B. als e.K.) — als Einzelunternehmer
+                    ohne Eintragung entfällt dieser Punkt ersatzlos.
+                  */}
+                  <p><strong className="text-white">Diese Plattform stellt keinen regulierten Finanzdienstleister dar.</strong> Sämtliche Inhalte sind quantitative Berechnungsmodelle und keine Anlageberatung (siehe Haftungsausschluss unten).</p>
                 </div>
               </div>
+            </div>
+
+            <div className="bg-red-500/10 border border-red-500/25 p-4 rounded-xl text-xs text-red-300 leading-relaxed">
+              <strong>Hinweis für Sven:</strong> Bitte ergänze diesen Abschnitt mit deinen tatsächlichen, zutreffenden Angaben (USt-IdNr./Steuernummer nur falls real vorhanden, Kleinunternehmerstatus falls zutreffend). Ohne echte Angaben ist "keine Angabe" rechtlich sauberer als eine erfundene.
             </div>
 
             <div className="bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/25 p-4 rounded-xl text-xs text-aif-gold-light leading-relaxed">

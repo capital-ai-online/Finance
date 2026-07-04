@@ -64,7 +64,7 @@ export function AdminPanel({ currentUserEmail, accessToken }: AdminPanelProps) {
   // all privileged server actions must additionally be verified via
   // requireOrchestratorAdmin / server-side JWT checks, never trust this
   // client-side flag alone for anything that mutates data.
-  const isOwner = currentUserEmail === 'sven.kulessa@gmail.com';
+  const isOwner = currentUserEmail === 'sven.kulessa@gmail.com' || currentUserEmail === 'sven.kulessa@gmx.net';
   const isGuestBypass = false;
 
   // State for search and filters
@@ -366,7 +366,7 @@ export function AdminPanel({ currentUserEmail, accessToken }: AdminPanelProps) {
         <div className="flex items-center gap-4 bg-black/60 border border-aif-neon-purple/30 rounded-xl px-4 py-3 self-stretch md:self-auto justify-between shadow-[0_0_15px_rgba(176,38,255,0.05)]">
           <div className="text-left">
             <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">{isGuestBypass ? 'Dev-Bypass-Modus' : 'Eingeloggter Admin'}</div>
-            <div className="text-xs font-mono text-aif-neon-purple font-black">{isGuestBypass ? 'gast@capital-ai.de (Sven)' : 'sven.kulessa@gmail.com'}</div>
+            <div className="text-xs font-mono text-aif-neon-purple font-black">{currentUserEmail}</div>
           </div>
           <div className="p-1.5 rounded-lg bg-aif-neon-purple/10 border border-aif-neon-purple/30">
             <Check size={16} className={isGuestBypass ? 'text-amber-400 shrink-0' : 'text-aif-neon-purple shrink-0'} />

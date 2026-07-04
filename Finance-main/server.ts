@@ -182,7 +182,7 @@ async function getSubscription(email: string): Promise<string> {
   // 'Free'. A paid tier must only ever be returned when explicitly found
   // in the database (or resolved via the single hardcoded owner override
   // below).
-  if (email.toLowerCase().trim() === 'sven.kulessa@gmail.com') {
+  if (email.toLowerCase().trim() === 'sven.kulessa@gmail.com' || email.toLowerCase().trim() === 'sven.kulessa@gmx.net') {
     return 'Enterprise';
   }
   if (!isSupabaseConfigured()) {
@@ -427,6 +427,7 @@ app.post('/api/stripe/create-checkout-session', requireAuth, async (req, res) =>
         price: priceId,
         quantity: 1,
       }],
+      allow_promotion_codes: true,
       success_url: finalSuccessUrl,
       cancel_url: cancelUrl,
       metadata: {
@@ -1816,7 +1817,7 @@ function requireOrchestratorAdmin(req: express.Request, res: express.Response, n
 // server-to-server / curl-only operational endpoints (Kraken, backtest
 // report generation, orchestrator config/reset).
 // ─────────────────────────────────────────────────────────────────────────
-const OWNER_EMAIL = 'sven.kulessa@gmail.com';
+const OWNER_EMAILS = ['sven.kulessa@gmail.com', 'sven.kulessa@gmx.net'];
 
 async function requireOwnerAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
   try {
@@ -1828,7 +1829,7 @@ async function requireOwnerAuth(req: express.Request, res: express.Response, nex
     const supabaseClientInstance = getServerSupabase();
     const { data, error } = await supabaseClientInstance.auth.getUser(token);
     const verifiedEmail = data?.user?.email?.toLowerCase().trim();
-    if (error || !verifiedEmail || verifiedEmail !== OWNER_EMAIL) {
+    if (error || !verifiedEmail || !OWNER_EMAILS.includes(verifiedEmail)) {
       return res.status(403).json({ error: 'Zugriff nur für den verifizierten Eigentümer-Account.' });
     }
     next();
