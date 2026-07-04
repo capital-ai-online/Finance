@@ -206,7 +206,7 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-purple-500/15 text-purple-400 border border-purple-500/25 uppercase">
-              AIF-CORE QUANT-SYSTEM
+              CAPITAL-AI QUANT-SYSTEM
             </span>
             <span className="px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 uppercase flex items-center gap-1">
               <Activity size={10} />

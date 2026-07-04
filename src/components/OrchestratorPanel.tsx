@@ -187,7 +187,7 @@ export function OrchestratorPanel() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-white/10 mb-2">
         <div>
           <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/25 text-amber-400 border border-amber-500/40 tracking-wider font-mono uppercase">
-            AIF-Core • Server-Side Traffic Protection
+            Capital-AI • Server-Side Traffic Protection
           </span>
           <h2 className="text-2xl font-black text-white font-display mt-2">Request-Orchestrator & Rate Limiter</h2>
           <p className="text-xs text-white/70 mt-1 font-sans">

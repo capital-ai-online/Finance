@@ -1,4 +1,4 @@
-# Changelog - AIF-CORE Plattform
+# Changelog - CAPITAL-AI Plattform
 
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
@@ -6,12 +6,27 @@ and this project adheres to Semantic Versioning.
 
 ---
 
+## [0.6.0-Beta] - 2026-07-04
+
+### Added
+- **Kraken Pro Empfehlungs-Partner-Link**: Integration eines exklusiven Kraken Pro Partner-Bonus-Kartenmoduls unter dem Haftungsausschluss im Dashboard-Footer sowie im Impressum. Ermöglicht schnelle Empfehlungsanmeldungen (Code: `yc4ggk3f`) mit Prämienteilung.
+- **Real-Time Push-Up Benachrichtigungen**: Aktivierung von interaktiven Push-Up-Meldungen für den Newsfeed und das persönliche Radar (Watchlist). Nachrichten, die zu einem neu berechneten Asset-Scoring von unter 3.0 (kritisch/bearish) oder über 7.0 (Breakout/bullish) führen, lösen sofort eine akustische Chime-Meldung (Web Audio API Synthesizer) und ein visuelles Pop-up aus.
+- **Interaktives Watchlist-Modul (Persönliches Radar)**: Integration eines personalisierten Radars zur Überwachung beliebter Werte. Ermöglicht Echtzeit-Kursabfragen, Score-Anzeigen und beinhaltet Schnelltest-Simulatoren (▲ RLY / ▼ CRH) zur Verifizierung von Push-Up-Benachrichtigungen.
+
+### Changed
+- **Entfernung der "Modul 1" Bezeichnung**: Vollständige Bereinigung der Applikationsseiten, Dokumente, Slogans, Logos und Code-Kommentare von der veralteten Bezeichnung "Modul 1" bzw. "Module 1". Die primäre Systemkennzeichnung wurde stattdessen einheitlich auf "CORE" bzw. anwendungsspezifische Fachbezeichnungen (z. B. "Rohstoff-Analyse") überführt.
+- **Kontakt E-Mail Korrektur & Globale Erreichbarkeit**: Aktualisierung aller Support-Kanäle auf die offizielle E-Mail-Adresse `support@capital-ai.online`. Zur Erhöhung der Sichtbarkeit wurde diese global im Header (Sticky Top-Navigation), im Retractable Sidebar-Drawer (Kategorie "Compliance & Support") sowie im Footer der Seite fest verankert.
+- **Direktkontakt im Impressum**: Anpassung der Impressum-Kontaktdetails zur Ausweisung von `sven.kulessa@capital-ai.online` als geschäftlicher Direktkontakt für administrative Anfragen.
+- **Unified Production Milestone Elevation (v0.6.0)**: Upgraded all system-wide version tags and configuration indicators (including `metadata.json`, `ComplianceExporter`, `AuditLogs`, `ProfilePage`, `DashboardSearchFilter`, `SentimentDashboard`, and `AssetUniverseDashboard`) from v0.5.4 to v0.6.0-Beta.
+- **Orchestrator and Scoring Alignment**: Harmonized specialized scoring engines across both Express API endpoints and interactive client dashboards, ensuring fully deterministic evaluation parity.
+- **Database Resilience & Cache Layering**: Implemented a local file-system/in-memory backup storage state that automatically catches and resolves connectivity exceptions, guaranteeing seamless operation for administrator accounts.
+
 ## [0.5.4-Beta] - 2026-07-03
 
 ### Changed
 - **Sicherheits- & Rollenbereinigung (Gast-Modus & Global Admin)**:
   - **Entfernung Gast-Modus**: Der Gast-Modus wurde vollständig aus der Benutzeroberfläche (LandingPage & Dashboard) entfernt. Es gibt keine sichtbaren Links, Knöpfe oder Verknüpfungen mehr.
-  - **Programmweiter Schreibschutz**: Der Gast-Modus wurde programmweit über einen Secret Key (`AIF_CORE_SECRET_KEY_2026`) gesichert und schreibgeschützt. Unbefugte Versuche, eine Gastsitzung zu initialisieren, werden mit einer Sicherheitswarnung blockiert.
+  - **Programmweiter Schreibschutz**: Der Gast-Modus wurde programmweit über einen Secret Key (`CAPITAL_AI_SECRET_KEY_2026`) gesichert und schreibgeschützt. Unbefugte Versuche, eine Gastsitzung zu initialisieren, werden mit einer Sicherheitswarnung blockiert.
   - **Zuweisung Global Administrator**: Die Administratorenrechte wurden exklusiv auf die E-Mail-Adressen `sven.kulessa@gmail.com` und `sven.kulessa@gmx.net` beschränkt. Jegliche Gast-Bypässe für das Administrations-Panel wurden entfernt.
 
 ## [0.5.4-Beta] - 2026-07-02
@@ -45,4 +60,4 @@ and this project adheres to Semantic Versioning.
 
 ---
 
-*End of Changelog. Version pinned to 0.5.4 Beta.*
+*End of Changelog. Version pinned to 0.6.0 Beta.*

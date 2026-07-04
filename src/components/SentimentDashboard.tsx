@@ -702,7 +702,7 @@ export function SentimentDashboard() {
           </div>
           <div>
             <h3 className="font-display font-black text-white text-base tracking-wide uppercase">
-              AIF-CORE Sentiment Shock Sandbox
+              CAPITAL-AI Sentiment Shock Sandbox
             </h3>
             <p className="text-[10px] text-white/50 font-mono mt-0.5">
               Simuliere makroökonomische Extremereignisse und berechne theoretische Sentimentübertragungen auf Assets
@@ -912,7 +912,7 @@ export function SentimentDashboard() {
 
             {/* Bottom footnote */}
             <div className="mt-4 pt-3 border-t border-white/5 flex justify-between items-center text-[9px] font-mono text-white/40">
-              <span>SANDBOX VERSE: 0.5.4</span>
+              <span>SANDBOX VERSE: 0.6.0</span>
               <span className="flex items-center gap-1"><ShieldCheck size={10} className="text-indigo-400" /> DSGVO-Konform</span>
             </div>
           </div>

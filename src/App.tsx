@@ -40,7 +40,7 @@ export default function App() {
       updateUserSession({
         type: 'guest',
         name: 'Gast-User',
-        email: email || 'gast@aif-core.de',
+        email: email || 'gast@capital-ai.de',
         subscriptionTier: 'Free',
         accessToken: session.access_token,
       });
@@ -179,7 +179,7 @@ export default function App() {
   const handleGuestLogin = async (secretKey?: string) => {
     // Der Gastmodus ist programmweit gesperrt und schreibgeschützt.
     // Aktivierung nur für Global Administrator Rolle oder über Secret Key.
-    const hasSecretKey = secretKey === 'AIF_CORE_SECRET_KEY_2026' || (typeof window !== 'undefined' && window.location.search.includes('secret=AIF_CORE_SECRET_KEY_2026'));
+    const hasSecretKey = secretKey === 'CAPITAL_AI_SECRET_KEY_2026' || (typeof window !== 'undefined' && window.location.search.includes('secret=CAPITAL_AI_SECRET_KEY_2026'));
     if (!hasSecretKey) {
       console.error("[SECURITY] Gastmodus ist schreibgeschützt und deaktiviert.");
       alert("Zugriff verweigert: Der Gastmodus wurde deaktiviert und ist schreibgeschützt.");
@@ -194,7 +194,7 @@ export default function App() {
     updateUserSession({
       type: 'guest',
       name: 'Gast-User (Admin-Bypass)',
-      email: 'gast@aif-core.de',
+      email: 'gast@capital-ai.de',
       subscriptionTier: 'Free',
     });
   };

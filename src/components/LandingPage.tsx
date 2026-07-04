@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldAlert, Mail, User, Lock, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, X } from 'lucide-react';
-import { AifCoreLogo } from './AifCoreLogo';
+import { ShieldAlert, Mail, User, Lock, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, X, HelpCircle, ChevronDown } from 'lucide-react';
+import { CapitalAiLogo } from './CapitalAiLogo';
 import { supabase } from '../supabaseClient';
 
 interface LandingPageProps {
@@ -14,6 +14,27 @@ interface LandingPageProps {
 export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justLoggedOut }: LandingPageProps) {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   
+  // Collapsible FAQ states
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+
+  const faqData = [
+    {
+      category: 'Finanzanalyse-Tools',
+      question: 'Welche quantitativen Analyse-Werkzeuge stehen auf CAPITAL-AI zur Verfügung?',
+      answer: 'Unsere Plattform bietet eine hochentwickelte Suite quantitativer Instrumente: Graham-DCF-Modelle zur Berechnung des fairen inneren Werts von Aktien, stochastische Monte-Carlo-Risikosimulationen mit tausenden Zukunftspfaden, automatisiertes Multi-Asset-Scoring (Skala 0.0 bis 10.0), KI-Agenten zur Stimmungsanalyse (Sentiment Grounding via Google Search) sowie historische Backtesting-Engines zur Validierung von Handelsstrategien.'
+    },
+    {
+      category: 'Abonnements & Tarife',
+      question: 'Welche Abonnement-Stufen gibt es und wie unterscheiden sie sich?',
+      answer: 'Wir bieten drei klar strukturierte Tarife an:\n• Free (Gast-Zugang): Eingeschränkter Zugriff auf grundlegende Markt-Daten und Ad-hoc-Screener mit täglichem Abfragen-Limit.\n• Pro: Unbegrenzter Zugriff auf fortgeschrittene quantitative Modelle (Graham-DCF, historische Backtests) und Echtzeit-Preisalarme.\n• Enterprise: Unbegrenzte Vollausstattung mit dedizierten Server-Ressourcen, benutzerdefinierten API-Pipelines, parallelisiertem Multi-Agent-Scoring und exklusiven Rohstoff-Analysen.'
+    },
+    {
+      category: 'Datensicherheit',
+      question: 'Wie werden meine persönlichen Daten und Portfolio-Informationen geschützt?',
+      answer: 'Datenschutz steht bei uns an oberster Stelle. CAPITAL-AI arbeitet streng konform mit der EU-DSGVO. Wir verfolgen eine konsequente "No-Demo-Data-Policy" (keine gefälschten Platzhalter) und speichern sensible Daten verschlüsselt auf sicheren Cloud-Servern oder rein lokal in Ihrem Browser via kryptografisch gesichertem LocalStorage. Es erfolgt kein Tracking oder unbefugter Verkauf an Dritte.'
+    }
+  ];
+
   // Login Form States
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -161,7 +182,7 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
   };
 
   return (
-    <main role="main" id="main-content" className="relative min-h-screen bg-black overflow-hidden flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <main role="main" id="main-content" className="relative min-h-screen bg-black overflow-y-auto flex flex-col items-center justify-start py-12 px-4 sm:px-6 lg:px-8">
       {/* Neural Network Background (Highly Active Neural Lines & Nodes) */}
       <div className="absolute inset-0 z-0 opacity-75">
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="absolute inset-0" aria-hidden="true">
@@ -229,8 +250,8 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
         {/* Main inner dark card container */}
         <div className="relative z-10 w-full rounded-[14px] bg-[#06070B]/95 backdrop-blur-2xl p-6 sm:p-8">
           <div className="text-center mb-6">
-            {/* Brand Logo & Slogan reflecting the uploaded AIF-CORE Modul 1 logo */}
-            <AifCoreLogo size={120} showText={true} />
+            {/* Brand Logo & Slogan reflecting the uploaded CAPITAL-AI logo */}
+            <CapitalAiLogo size={120} showText={true} />
             
             <p className="text-white/40 font-mono text-[9px] uppercase tracking-wider mt-3">
               Smarter Tools. Better Systems.
@@ -498,7 +519,7 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
                     className="mt-0.5 rounded border-white/20 bg-black/40 text-aif-gold-DEFAULT focus:ring-0 focus:ring-offset-0 cursor-pointer h-3.5 w-3.5"
                   />
                   <label htmlFor="terms-check" className="text-[10px] text-white/50 leading-tight cursor-pointer">
-                    Ich erkläre mich mit den Nutzungsbedingungen (AGB) und Datenschutzbestimmungen des AIF-CORE Netzwerks einverstanden.
+                    Ich erkläre mich mit den Nutzungsbedingungen (AGB) und Datenschutzbestimmungen des CAPITAL-AI Netzwerks einverstanden.
                   </label>
                 </div>
 
@@ -537,22 +558,19 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
                   <span>Google</span>
                 </button>
  
-                {/* Microsoft Azure OAuth Button */}
+                {/* Apple OAuth Button */}
                 <button 
                   type="button"
                   disabled={loading}
-                  onClick={() => handleOAuthLogin('azure')}
-                  className="py-2 px-3 bg-[#2F2F2F] hover:bg-[#3F3F3F] disabled:opacity-50 text-white font-sans font-bold text-[10px] rounded-lg border border-white/10 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] cursor-pointer"
-                  title="Microsoft"
-                  aria-label="Mit Microsoft anmelden"
+                  onClick={() => handleOAuthLogin('apple')}
+                  className="py-2 px-3 bg-[#111111] hover:bg-[#222222] disabled:opacity-50 text-white font-sans font-bold text-[10px] rounded-lg border border-white/10 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] cursor-pointer"
+                  title="Apple"
+                  aria-label="Mit Apple anmelden"
                 >
-                  <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path fill="#f35325" d="M0 0h11v11H0z" />
-                    <path fill="#80bb0a" d="M12 0h11v11H12z" />
-                    <path fill="#00a4ef" d="M0 12h11v11H0z" />
-                    <path fill="#ffb900" d="M12 12h11v11H12z" />
+                  <svg className="w-3.5 h-3.5 shrink-0 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-.96.04-2.13.64-2.82 1.45-.6.7-1.13 1.84-.99 2.94.1.08.2.12.31.12.87 0 1.96-.54 2.51-1.45z"/>
                   </svg>
-                  <span>Microsoft</span>
+                  <span>Apple</span>
                 </button>
               </div>
             </div>
@@ -563,6 +581,66 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
             <p className="font-mono text-[9px] tracking-wider text-white/60">Strict No Demo Data Policy</p>
             <p className="text-[8px] text-white/40">EU GDPR Compliant • MiFID II Ready</p>
           </div>
+        </div>
+      </motion.div>
+
+      {/* Collapsible FAQ Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.15 }}
+        className="relative z-10 w-full max-w-md mx-auto mt-6 bg-[#06070B]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
+      >
+        <div className="flex items-center gap-2 mb-4 border-b border-white/10 pb-2.5">
+          <HelpCircle className="w-4 h-4 text-aif-gold-DEFAULT" />
+          <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">Häufig gestellte Fragen (FAQ)</h3>
+        </div>
+
+        <div className="space-y-3">
+          {faqData.map((item, idx) => {
+            const isOpen = openFaqIndex === idx;
+            return (
+              <div 
+                key={idx} 
+                className={`rounded-xl border transition-all duration-300 ${
+                  isOpen ? 'bg-white/[0.04] border-aif-gold-DEFAULT/30 shadow-[0_0_15px_rgba(245,196,83,0.05)]' : 'bg-transparent border-white/5 hover:border-white/10'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                  className="w-full text-left p-3.5 flex items-start justify-between gap-3 text-xs font-bold text-white/90 hover:text-white transition-colors focus:outline-none"
+                >
+                  <div className="space-y-1">
+                    <span className="text-[9px] uppercase font-bold tracking-widest text-aif-gold-DEFAULT font-mono block">
+                      {item.category}
+                    </span>
+                    <span>{item.question}</span>
+                  </div>
+                  <ChevronDown 
+                    className={`w-4 h-4 text-white/40 shrink-0 transition-transform duration-300 mt-1 ${
+                      isOpen ? 'rotate-180 text-aif-gold-DEFAULT' : ''
+                    }`} 
+                  />
+                </button>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: 'easeInOut' }}
+                      className="overflow-hidden"
+                    >
+                      <div className="p-3.5 pt-0 border-t border-white/5 text-[11px] text-white/60 leading-relaxed whitespace-pre-line font-sans">
+                        {item.answer}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
         </div>
       </motion.div>
 

@@ -24,6 +24,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
+import { PdfExportModal } from './PdfExportModal';
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -37,6 +38,7 @@ import {
 interface PortfolioBacktesterProps {
   userCapital?: number;
   triggerAttempt?: (actionName: string, onExecute: () => void) => void;
+  userEmail?: string;
 }
 
 interface AllocationItem {
@@ -108,8 +110,9 @@ const TEMPLATES = [
   }
 ];
 
-export function PortfolioBacktester({ userCapital = 150000, triggerAttempt }: PortfolioBacktesterProps) {
+export function PortfolioBacktester({ userCapital = 150000, triggerAttempt, userEmail }: PortfolioBacktesterProps) {
   const [initialCapital, setInitialCapital] = useState<number>(userCapital);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [allocations, setAllocations] = useState<AllocationItem[]>([
     { symbol: 'AAPL', weight: 30, name: 'Apple Inc.', assetClass: 'Stocks' },
     { symbol: 'MSFT', weight: 30, name: 'Microsoft Corp.', assetClass: 'Stocks' },
@@ -616,7 +619,7 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt }: Po
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(140, 140, 140);
-    doc.text('AIF-CORE Portfoliodaten und Analysen entsprechen den Richtlinien für Zero-Breach Datenintegrität.', 15, 283);
+    doc.text('CAPITAL-AI Portfoliodaten und Analysen entsprechen den Richtlinien für Zero-Breach Datenintegrität.', 15, 283);
     doc.text('Dieses Dokument dient Informationszwecken. Historische Renditen sind keine Garantie für zukünftige Performance.', 15, 287);
 
     doc.save(`JENOVA_NEXUS_Portfolio_Bericht.pdf`);
@@ -866,7 +869,7 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt }: Po
                 Parallel-Kalkulation
               </span>
               <p className="text-xs text-white/80 font-mono mt-2">
-                Sende historische Asset-Abfragen an die AIF-Core-Registry...
+                Sende historische Asset-Abfragen an die Capital-AI-Registry...
               </p>
               <p className="text-[11px] text-white/40 leading-relaxed max-w-sm">
                 Führe Kovarianz-Abstimmung, Dividenden-Bereinigung und Gebührenabzüge für {allocations.length} Vermögenswerte aus.
@@ -946,13 +949,30 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt }: Po
                       <span>CSV</span>
                     </button>
                     <button
-                      onClick={exportPortfolioPDF}
+                      onClick={() => {
+                        if (userEmail) {
+                          setShowExportModal(true);
+                        } else {
+                          exportPortfolioPDF();
+                        }
+                      }}
                       className="p-2 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 border-none rounded-lg text-black transition-all cursor-pointer flex items-center gap-1.5 text-xs font-mono font-bold"
                       title="Vollständigen PDF-Bericht erstellen"
                     >
                       <FileText size={12} />
                       <span>PDF</span>
                     </button>
+
+                    <AnimatePresence>
+                      {showExportModal && userEmail && (
+                        <PdfExportModal 
+                          isOpen={showExportModal} 
+                          onClose={() => setShowExportModal(false)} 
+                          email={userEmail} 
+                          onSuccess={exportPortfolioPDF} 
+                        />
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
 

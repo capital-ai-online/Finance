@@ -44,7 +44,7 @@ export function MarkdownOrchestrator() {
   const [activeTab, setActiveTab] = useState<'info' | 'orchestrate' | 'templates'>('info');
   const [selectedPerspective, setSelectedPerspective] = useState<PerspectiveId>('ceo');
   const [config, setConfig] = useState<OrchestratorConfig>({
-    projectName: 'AIF-CORE Technologies',
+    projectName: 'CAPITAL-AI Technologies',
     currency: 'EUR',
     database: 'Supabase PostgreSQL',
     focus: 'Kryptowährungen & Quantitative Analysen',
@@ -656,8 +656,8 @@ export function MarkdownOrchestrator() {
                   </h4>
                   <div className="space-y-1 max-h-[180px] overflow-y-auto pr-1">
                     {[
-                      { path: 'reports/AIF_Crypto_Report_BTC_FRESH.md', label: 'BTC Executive Report', icon: Award },
-                      { path: 'reports/AIF_Crypto_Report_ETH_FRESH.md', label: 'ETH Executive Report', icon: Award },
+                      { path: 'reports/CAPITAL_AI_Crypto_Report_BTC_FRESH.md', label: 'BTC Executive Report', icon: Award },
+                      { path: 'reports/CAPITAL_AI_Crypto_Report_ETH_FRESH.md', label: 'ETH Executive Report', icon: Award },
                       { path: 'reports/Security_Integritaets_Audit_FRESH.json', label: 'Security Integritäts-Audit', icon: Shield },
                       { path: 'reports/Revenue_Assurance_Matrix_OPTIMIZED.md', label: 'Revenue Assurance Matrix', icon: FileText },
                     ].map((doc) => {
@@ -980,7 +980,7 @@ We enforce a secure-by-default environment for **${config.projectName}** followi
 **Database**: ${config.database}
 **Focus**: ${config.focus}
 
-This report was compiled dynamically under the **AIF-CORE Markdown Orchestrator** framework. It implements state-of-the-art formatting guidelines, strict module splitting, and programmatic data alignment (Currency: ${currencySymbol}).`;
+This report was compiled dynamically under the **CAPITAL-AI Markdown Orchestrator** framework. It implements state-of-the-art formatting guidelines, strict module splitting, and programmatic data alignment (Currency: ${currencySymbol}).`;
     }
   }
 }

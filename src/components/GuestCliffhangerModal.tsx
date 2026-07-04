@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldAlert, Mail, User, Lock, X, Sparkles, Trophy, HelpCircle, ArrowRight } from 'lucide-react';
-import { AifCoreLogo } from './AifCoreLogo';
+import { CapitalAiLogo } from './CapitalAiLogo';
 
 interface GuestCliffhangerModalProps {
   isOpen: boolean;
@@ -12,7 +12,7 @@ interface GuestCliffhangerModalProps {
 
 const CLIFFHANGER_SLOGANS = [
   "Der erste neuronale Rechenvektor war erfolgreich... Doch um den vollständigen Code der globalen Märkte zu knacken, fehlt dir noch der Masterkey.",
-  "Die Algorithmen haben gerade eine hochpräzise Markt-Anomalie detektiert... Das wahre Potenzial von AIF-CORE Modul 1 offenbart sich jedoch nur registrierten Pionieren.",
+  "Die Algorithmen haben gerade eine hochpräzise Markt-Anomalie detektiert... Das wahre Potenzial von CAPITAL-AI offenbart sich jedoch nur registrierten Pionieren.",
   "Du hast die Oberfläche der stochastischen Matrix berührt. Darunter liegt das unbegrenzte Potenzial paralleler API-Pipelines und historischer Backtests.",
   "Ein einzelner Versuch zeigt dir die Richtung. Eine Registrierung zeigt dir das Ziel. Gehe den nächsten Schritt, bevor das Markt-Momentum verblasst!"
 ];
@@ -74,7 +74,7 @@ export function GuestCliffhangerModal({ isOpen, onClose, onRegister, actionName 
 
             {/* Logo and feature badge */}
             <div className="flex flex-col items-center text-center mb-6">
-              <AifCoreLogo size={64} showText={false} />
+              <CapitalAiLogo size={64} showText={false} />
               
               <span className="mt-4 px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/35 tracking-wider uppercase">
                 Gast-Limit Erreicht ({actionName})
@@ -91,7 +91,7 @@ export function GuestCliffhangerModal({ isOpen, onClose, onRegister, actionName 
             <div className="text-center mb-6">
               <h3 className="text-base font-bold text-white font-display">Sichere dir dauerhaft unbegrenzten Zugriff</h3>
               <p className="text-xs text-white/50 mt-1">
-                Registriere dich in wenigen Sekunden völlig kostenlos und schalte das volle Potenzial von AIF-CORE frei (inkl. PRO-Status).
+                Registriere dich in wenigen Sekunden völlig kostenlos und schalte das volle Potenzial von CAPITAL-AI frei (inkl. PRO-Status).
               </p>
             </div>
 
@@ -158,7 +158,7 @@ export function GuestCliffhangerModal({ isOpen, onClose, onRegister, actionName 
                   className="mt-0.5 rounded border-white/20 bg-black/40 text-aif-gold-DEFAULT focus:ring-0 focus:ring-offset-0 cursor-pointer h-3.5 w-3.5"
                 />
                 <label htmlFor="modal-terms-check" className="text-[9px] text-white/50 leading-tight cursor-pointer select-none">
-                  Ich akzeptiere die Allgemeinen Geschäftsbedingungen (AGB) und Datenschutzbestimmungen des AIF-CORE Netzwerks.
+                  Ich akzeptiere die Allgemeinen Geschäftsbedingungen (AGB) und Datenschutzbestimmungen des CAPITAL-AI Netzwerks.
                 </label>
               </div>
 

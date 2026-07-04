@@ -1,6 +1,6 @@
-# Classification Model - AIF-CORE Raw Materials Taxonomy
+# Classification Model - CAPITAL-AI Raw Materials Taxonomy
 
-This document describes the categorization framework and taxonomic classes supported by the AIF-CORE platform.
+This document describes the categorization framework and taxonomic classes supported by the CAPITAL-AI platform.
 
 ---
 
@@ -43,4 +43,4 @@ This categorizing logic is fully shared between the **ClassificationAgent** and 
 
 ---
 
-*Verified under AIF-CORE Platform Specification Version 0.5.4.*
+*Verified under CAPITAL-AI Platform Specification Version 0.5.4.*

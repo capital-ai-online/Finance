@@ -22,7 +22,19 @@ export const SCORING_VERSIONS: Record<string, ScoringVersion> = {
   'v0.5.4': {
     version: '0.5.4',
     releasedAt: '2026-07-02',
-    description: 'AIF-CORE Unified Commodities Scoring Engine v0.5.4 (Beta-Phase)',
+    description: 'CAPITAL-AI Unified Commodities Scoring Engine v0.5.4 (Beta-Phase)',
+    weights: {
+      fundamentals: 0.35,  // 35%
+      risk: 0.20,          // 20% (inverted)
+      liquidity: 0.15,     // 15%
+      processing: 0.20,    // 20%
+      strategicValue: 0.10 // 10%
+    }
+  },
+  'v0.6.0': {
+    version: '0.6.0',
+    releasedAt: '2026-07-03',
+    description: 'CAPITAL-AI Unified Commodities Scoring Engine v0.6.0 (Production Beta)',
     weights: {
       fundamentals: 0.35,  // 35%
       risk: 0.20,          // 20% (inverted)

@@ -1,7 +1,7 @@
 // Web Crypto AES-GCM encryption/decryption helper
 // Enforces zero-breach data integrity and seals local states under Version 0.5.4 requirements.
 
-const AES_KEY_PBKDF2_SALT = 'aif-core-salt-2026';
+const AES_KEY_PBKDF2_SALT = 'capital-ai-salt-2026';
 
 async function deriveKey(passcode: string): Promise<CryptoKey> {
   const encoder = new TextEncoder();

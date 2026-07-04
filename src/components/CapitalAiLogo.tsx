@@ -1,13 +1,13 @@
 import React from 'react';
 import { motion } from 'motion/react';
 
-interface AifCoreLogoProps {
+interface CapitalAiLogoProps {
   className?: string;
   size?: number;
   showText?: boolean;
 }
 
-export function AifCoreLogo({ className = '', size = 160, showText = true }: AifCoreLogoProps) {
+export function CapitalAiLogo({ className = '', size = 160, showText = true }: CapitalAiLogoProps) {
   return (
     <div className={`flex flex-col items-center justify-center text-center ${className}`}>
       {/* 3D Network Node Emblem */}
@@ -91,13 +91,9 @@ export function AifCoreLogo({ className = '', size = 160, showText = true }: Aif
       {showText && (
         <div className="mt-4 flex flex-col items-center">
           {/* Logo brand title with wide letter spacing */}
-          <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] via-[#D4A017] to-[#F0D597] tracking-[0.2em] font-display uppercase mr-[-0.2em]">
-            AIF-CORE
+          <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] via-[#D4A017] to-[#F0D597] tracking-[0.1em] font-display uppercase mr-[-0.1em]">
+            CAPITAL-AI
           </h1>
-          {/* Subtitle brand module info */}
-          <p className="text-[10px] text-white/50 font-mono tracking-[0.3em] uppercase mt-1.5 mr-[-0.3em]">
-            MODUL 1
-          </p>
         </div>
       )}
     </div>

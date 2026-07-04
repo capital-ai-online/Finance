@@ -1,6 +1,6 @@
-# Classification Agent Documentation - AIF-CORE
+# Classification Agent Documentation - CAPITAL-AI
 
-The **Classification Agent** (`ClassificationAgent`) is a core component of the AIF-CORE Raw Materials scoring pipeline. It uses generative AI to analyze the name of a raw material and classify it into its respective taxonomic categories.
+The **Classification Agent** (`ClassificationAgent`) is a core component of the CAPITAL-AI Raw Materials scoring pipeline. It uses generative AI to analyze the name of a raw material and classify it into its respective taxonomic categories.
 
 ---
 
@@ -19,7 +19,7 @@ The agent communicates with the Gemini API (using the `gemini-3.1-pro-preview` m
 
 ### System Instruction
 ```text
-Du bist der "Classification Agent" der AIF-CORE Rohstoff-Bewertungsplattform.
+Du bist der "Classification Agent" der CAPITAL-AI Rohstoff-Bewertungsplattform.
 Deine Aufgabe ist es, Rohstoffe präzise zu kategorisieren.
 Du musst dich strikt an die folgenden Hauptkategorien halten:
 "Metal" (Metalle / kritische Metalle), "Energy" (Energierohstoffe), "Agriculture" (Agrarrohstoffe), "Industrial" (Industrieminerale), "Recycling" (Recycling- & Sekundärrohstoffe) oder "Unknown".
@@ -53,8 +53,8 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
 
 ## 🛡️ Robust Fallback Mechanism
 
-If the API key is missing or the external API call fails, the agent falls back to a deterministic local database lookup (`RAW_MATERIALS_DATABASE`). This guarantees **zero-downtime** execution and prevents front-end crashes, complying with strict **AIF-CORE Data Integrity** guidelines.
+If the API key is missing or the external API call fails, the agent falls back to a deterministic local database lookup (`RAW_MATERIALS_DATABASE`). This guarantees **zero-downtime** execution and prevents front-end crashes, complying with strict **CAPITAL-AI Data Integrity** guidelines.
 
 ---
 
-*Verified under AIF-CORE Platform Specification Version 0.5.4.*
+*Verified under CAPITAL-AI Platform Specification Version 0.5.4.*

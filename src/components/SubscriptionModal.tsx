@@ -32,7 +32,7 @@ export function SubscriptionModal({ isOpen, onClose, currentTier, onUpdateTier, 
       id: 'Starter' as const,
       name: 'Starter Plan',
       price: 7,
-      badge: 'AIF-Core Basis',
+      badge: 'Capital-AI Basis',
       desc: 'Erweiterte Limits und Backtests für ambitionierte Retail-Investoren.',
       features: [
         '5 Screenings pro Tag',

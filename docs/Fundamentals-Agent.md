@@ -1,4 +1,4 @@
-# Fundamentals Agent Documentation - AIF-CORE
+# Fundamentals Agent Documentation - CAPITAL-AI
 
 The **Fundamentals Agent** (`FundamentalsAgent`) is responsible for conducting the physical, geomechanical, and supply abundance analysis of a given raw material.
 
@@ -22,7 +22,7 @@ The agent uses the `gemini-3.1-pro-preview` model to compile intelligence on geo
 
 ### System Instruction
 ```text
-Du bist der "Fundamentals Agent" der AIF-CORE Plattform.
+Du bist der "Fundamentals Agent" der CAPITAL-AI Plattform.
 Deine Aufgabe ist es, die physische Verfügbarkeit, geologische Beschaffenheit und Kreislauffähigkeit von Rohstoffen quantitativ und qualitativ zu bewerten.
 Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.
 ```
@@ -51,4 +51,4 @@ When running in offline or fallback modes, standard geological coefficients deri
 
 ---
 
-*Verified under AIF-CORE Platform Specification Version 0.5.4.*
+*Verified under CAPITAL-AI Platform Specification Version 0.5.4.*

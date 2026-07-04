@@ -36,7 +36,7 @@ Schätze folgende Metriken auf einer Skala von 0 bis 100 ein (100 = extrem hoch/
 2. industrial_importance (Industrielle Bedeutung, Halbleiter, Energiewende, Schlüsselindustrien)
 Gib ein strukturiertes JSON zurück.`,
           config: {
-            systemInstruction: `Du bist der "Valuation Agent" der AIF-CORE Plattform.
+            systemInstruction: `Du bist der "Valuation Agent" der CAPITAL-AI Plattform.
 Deine Aufgabe ist es, die wehrtechnische und gesamtindustrielle Relevanz von Rohstoffen entlang internationaler Sicherheits- und Innovationsstrategien einzustufen.
 Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.`,
             responseMimeType: 'application/json',
@@ -68,7 +68,7 @@ Schätze folgende Metriken auf einer Skala von 0 bis 100 ein (100 = extrem hoch/
 2. industrial_importance (Industrielle Bedeutung, Halbleiter, Energiewende, Schlüsselindustrien)
 Gib ein strukturiertes JSON zurück.`,
           config: {
-            systemInstruction: `Du bist der "Valuation Agent" der AIF-CORE Plattform.
+            systemInstruction: `Du bist der "Valuation Agent" der CAPITAL-AI Plattform.
 Deine Aufgabe ist es, die wehrtechnische und gesamtindustrielle Relevanz von Rohstoffen entlang internationaler Sicherheits- und Innovationsstrategien einzustufen.
 Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.`,
             responseMimeType: 'application/json',

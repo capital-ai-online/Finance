@@ -75,7 +75,7 @@ export function AssetUniverseDashboard() {
         {
           title: 'On-chain Analytics',
           description: 'Überwacht Transaktionsdichte, aktive Wallet-Adressen, NVT-Verhältnisse (Network Value to Transactions) und Smart Contract Gas-Verbrauch.',
-          institutionTool: 'AIF-Core On-Chain Tracker v0.5.4',
+          institutionTool: 'Capital-AI On-Chain Tracker v0.6.0',
           metricLabel: 'On-Chain Aktivitätsscore',
           initialValue: 82,
           unit: '/ 100'
@@ -137,7 +137,7 @@ export function AssetUniverseDashboard() {
         {
           title: 'Relative Stärke & Buffett Value',
           description: 'Berechnet den fairen inneren Wert (DCF-Graham) auf Basis von Eigenkapitalrendite, Verschuldungsgrad und stabilem Free Cashflow.',
-          institutionTool: 'Buffett Value Checker v0.5.4',
+          institutionTool: 'Buffett Value Checker v0.6.0',
           metricLabel: 'Margin of Safety',
           initialValue: 88,
           unit: '/ 100'
@@ -199,7 +199,7 @@ export function AssetUniverseDashboard() {
       name: 'Rohstoffe',
       icon: <Orbit size={16} />,
       description: 'Analysiere physische, fossile und kritische Rohstoffe nach Geopolitik, Spot/Forward Curves, Angebot/Nachfrage-Zyklen und Hedging-Effizienz.',
-      scoringEngineName: 'Rohstoff-Orchestrator v0.5.4 Multi-Agenten Scoring',
+      scoringEngineName: 'Rohstoff-Orchestrator v0.6.0 Multi-Agenten Scoring',
       weights: {
         'curve': 0.30,
         'supplyDemand': 0.35,
@@ -226,7 +226,7 @@ export function AssetUniverseDashboard() {
         },
         {
           title: 'Hedge-Risk (Orchestrator)',
-          description: 'Greift auf die AIF-Core Multi-Agenten-Risikoresilienz-Scores zu, um Transportwege, ESG-Restriktionen und Produzentenmonopole zu überwachen.',
+          description: 'Greift auf die Capital-AI Multi-Agenten-Risikoresilienz-Scores zu, um Transportwege, ESG-Restriktionen und Produzentenmonopole zu überwachen.',
           institutionTool: 'Rohstoff-Orchestrator Engine',
           metricLabel: 'Lieferketten-Resilienz',
           initialValue: 62,
@@ -382,9 +382,9 @@ export function AssetUniverseDashboard() {
 
   // JSON Data structure representing this config for direct integration
   const jsonOutput = JSON.stringify({
-    version: "0.5.4-Beta",
+    version: "0.6.0-Beta",
     timestamp: "2026-07-02T07:26:08Z",
-    platform: "AIF-CORE",
+    platform: "CAPITAL-AI",
     asset_universe: assetClasses.map(ac => ({
       id: ac.id,
       name: ac.name,
@@ -413,7 +413,7 @@ export function AssetUniverseDashboard() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `AIF-CORE-Asset-Universe-Config-v0.5.4.json`;
+    link.download = `CAPITAL-AI-Asset-Universe-Config-v0.6.0.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -433,7 +433,7 @@ export function AssetUniverseDashboard() {
               ASSET-KLASSEN-UNIVERSUM
             </span>
             <span className="px-2 py-0.5 rounded text-[8px] font-mono font-black tracking-widest bg-white/5 text-white/50 border border-white/10 uppercase">
-              v0.5.4 Beta
+              v0.6.0 Beta
             </span>
           </div>
           <h1 className="text-xl font-black font-display text-white uppercase tracking-wider flex items-center gap-2">
@@ -548,7 +548,7 @@ export function AssetUniverseDashboard() {
             </h3>
 
             <div className="bg-black/60 border border-white/5 rounded-xl p-4 font-mono space-y-3">
-              <div className="text-[10px] text-white/40 uppercase">AIF-CORE Scoring-Formel:</div>
+              <div className="text-[10px] text-white/40 uppercase">CAPITAL-AI Scoring-Formel:</div>
               <div className="text-xs text-aif-gold-DEFAULT font-extrabold break-words bg-black/40 p-3 rounded-lg border border-white/5">
                 {activeConfig.formulaText}
               </div>

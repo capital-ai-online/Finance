@@ -1,6 +1,6 @@
 # API Specification - Raw Materials Module
 
-This document specifies the REST API endpoints exposed by the AIF-CORE Raw Materials scoring module.
+This document specifies the REST API endpoints exposed by the CAPITAL-AI Raw Materials scoring module.
 
 ---
 
@@ -145,4 +145,4 @@ Performs immediate deterministic mathematical scoring based on manual slider par
 
 ---
 
-*Verified under AIF-CORE Platform Specification Version 0.5.4.*
+*Verified under CAPITAL-AI Platform Specification Version 0.5.4.*

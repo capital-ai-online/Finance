@@ -1,5 +1,5 @@
 # ⚙️ Backend Architecture & Service Guidelines
-**Project: AIF-CORE (Jenova Nexus)**  
+**Project: CAPITAL-AI (Jenova Nexus)**  
 **Stack:** Node.js / Express / TypeScript / Supabase / PostgreSQL  
 
 ---

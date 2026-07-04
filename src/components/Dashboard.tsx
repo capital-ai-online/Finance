@@ -15,9 +15,10 @@ import { SubscriptionModal } from './SubscriptionModal';
 import { Datenschutz } from './Datenschutz';
 import { ImpressumAgb } from './ImpressumAgb';
 import { RealtimeAiNewsfeed } from './RealtimeAiNewsfeed';
+import { Watchlist } from './Watchlist';
 import { BacktestEngine } from './BacktestEngine';
 import { HeatmapCreator } from './HeatmapCreator';
-import { AifCoreLogo } from './AifCoreLogo';
+import { CapitalAiLogo } from './CapitalAiLogo';
 import { MarketScreener } from './MarketScreener';
 import { CryptoScoringEnterprise } from './CryptoScoringEnterprise';
 import { UserSession } from '../App';
@@ -38,6 +39,7 @@ import { DashboardSearchFilter } from './DashboardSearchFilter';
 import { RawMaterialsDashboard } from './RawMaterialsDashboard';
 import { AssetUniverseDashboard } from './AssetUniverseDashboard';
 import { SystemLatencyMonitor } from './SystemLatencyMonitor';
+import { CapitalAiTrailer } from './CapitalAiTrailer';
 
 import { 
   LogOut, 
@@ -69,7 +71,9 @@ import {
   BarChart3,
   Gauge,
   ShieldAlert,
-  Bell
+  Bell,
+  Video,
+  Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -98,11 +102,71 @@ function SidebarTooltip({ title, text, children }: { title: string; text: string
 export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [selectedSymbol, setSelectedSymbol] = useState<string>('BTC');
+  const [selectedSymbol, setSelectedSymbol] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<string>('1std');
-  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'promo-video' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe'>('dashboard');
+  
+  // Enterprise Scorer empty fields persistence (starts empty)
+  const [enterpriseSymbols, setEnterpriseSymbols] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('capital_ai_enterprise_symbols');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Dynamic Page Views state
+  const [pageViews, setPageViews] = useState<number>(14502);
+
+  React.useEffect(() => {
+    // Record page view on load
+    fetch('/api/page-views?hit=true')
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data.views === 'number') {
+          setPageViews(data.views);
+        }
+      })
+      .catch(err => {
+        console.warn('Fehler beim Abrufen der Seitenzugriffe:', err);
+      });
+
+    // Poll for slight dynamic increases every 30s
+    const interval = setInterval(() => {
+      fetch('/api/page-views')
+        .then(res => res.json())
+        .then(data => {
+          if (data && typeof data.views === 'number') {
+            setPageViews(data.views);
+          }
+        })
+        .catch(err => console.debug('Polling view counts warning:', err));
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleToggleEnterpriseSymbol = (symbol: string) => {
+    const sym = symbol.toUpperCase().trim();
+    setEnterpriseSymbols(prev => {
+      let next;
+      if (prev.includes(sym)) {
+        next = prev.filter(s => s !== sym);
+      } else {
+        if (prev.length >= 5) {
+          next = [...prev.slice(1), sym];
+        } else {
+          next = [...prev, sym];
+        }
+      }
+      localStorage.setItem('capital_ai_enterprise_symbols', JSON.stringify(next));
+      return next;
+    });
+  };
+
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>('hub');
   const [expandedUniverse, setExpandedUniverse] = useState<string | null>(null);
@@ -110,7 +174,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
   // Auto-expand appropriate accordion section on activeView changes for best mobile/desktop experience
   React.useEffect(() => {
     const getViewCategory = (view: string) => {
-      if (['dashboard', 'abonnements', 'profil'].includes(view)) return 'hub';
+      if (['dashboard', 'promo-video', 'abonnements', 'profil'].includes(view)) return 'hub';
       if (['market-screener', 'charts', 'preis-alarme', 'monte-carlo', 'buffet-value', 'backtest', 'heatmap', 'risiko-assessment', 'sentiment-dashboard', 'raw-materials', 'asset-universe'].includes(view)) return 'analysis';
       if (['markdown-orchestrator', 'request-orchestrator', 'performance', 'interact', 'audit-logs'].includes(view)) return 'orchestration';
       if (['datenschutz', 'impressum-agb'].includes(view)) return 'compliance';
@@ -124,6 +188,119 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
   const [attempts, setAttempts] = useState<number>(0);
   const [cliffhangerModalOpen, setCliffhangerModalOpen] = useState(false);
   const [failedActionName, setFailedActionName] = useState('');
+
+  // Watchlist state & persistent logic
+  const [watchlist, setWatchlist] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('capital_ai_watchlist');
+      return saved ? JSON.parse(saved) : ['BTC', 'ETH', 'TSLA', 'AAPL', 'EURUSD'];
+    } catch {
+      return ['BTC', 'ETH', 'TSLA', 'AAPL', 'EURUSD'];
+    }
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('capital_ai_watchlist', JSON.stringify(watchlist));
+  }, [watchlist]);
+
+  // Push notifications queue
+  interface PushNotification {
+    id: string;
+    symbol: string;
+    name: string;
+    score: number;
+    oldScore: number;
+    headline: string;
+    sentiment: 'bullish' | 'bearish' | 'neutral';
+    impact: 'high' | 'medium' | 'low';
+    isOnWatchlist: boolean;
+    timestamp: string;
+    type: string;
+  }
+  const [pushNotifications, setPushNotifications] = useState<PushNotification[]>([]);
+
+  // Sound chime synthesizer using Web Audio API
+  const playPushNotificationSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const audioCtx = new AudioCtx();
+      
+      const osc1 = audioCtx.createOscillator();
+      const gain1 = audioCtx.createGain();
+      osc1.connect(gain1);
+      gain1.connect(audioCtx.destination);
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(659.25, audioCtx.currentTime); // E5
+      gain1.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+      osc1.start();
+      osc1.stop(audioCtx.currentTime + 0.35);
+
+      setTimeout(() => {
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(987.77, audioCtx.currentTime); // B5 (Perfect fifth chime)
+        gain2.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
+        osc2.start();
+        osc2.stop(audioCtx.currentTime + 0.5);
+      }, 80);
+    } catch (e) {
+      console.warn('Audio Context is blocked/not supported:', e);
+    }
+  };
+
+  // Push Notification trigger
+  const triggerPushNotification = React.useCallback((data: Omit<PushNotification, 'id' | 'timestamp'>) => {
+    const id = `push-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const timestamp = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    
+    const newNotif: PushNotification = {
+      ...data,
+      id,
+      timestamp
+    };
+
+    setPushNotifications(prev => [newNotif, ...prev].slice(0, 5)); // Keep last 5 notifications in state queue
+    playPushNotificationSound();
+
+    // Auto dismiss notification after 8 seconds
+    setTimeout(() => {
+      setPushNotifications(prev => prev.filter(n => n.id !== id));
+    }, 8000);
+  }, [watchlist]);
+
+  // Simulator helper
+  const handleSimulateScoreEvent = (symbol: string, type: 'crash' | 'rally') => {
+    // Look up asset name or fallback
+    const mockNames: Record<string, string> = {
+      BTC: 'Bitcoin', ETH: 'Ethereum', TSLA: 'Tesla Inc.', AAPL: 'Apple Inc.', EURUSD: 'Euro / US Dollar', GLD: 'Gold Spot'
+    };
+    const name = mockNames[symbol] || symbol;
+    
+    const isRally = type === 'rally';
+    const score = isRally ? Number((7.1 + Math.random() * 2.5).toFixed(1)) : Number((1.2 + Math.random() * 1.5).toFixed(1));
+    const oldScore = isRally ? Number((5.5 + Math.random() * 1.2).toFixed(1)) : Number((4.5 + Math.random() * 1.5).toFixed(1));
+    const headline = isRally 
+      ? `📈 EILMELDUNG: Gewaltiger Momentum-Schub bei ${symbol}! Algorithmen melden Bullish Breakout.`
+      : `📉 WARNUNG: Starker Abwärtsdruck auf ${symbol}! Liquidations-Welle drückt Score in kritischen Bereich.`;
+    
+    triggerPushNotification({
+      symbol,
+      name,
+      score,
+      oldScore,
+      headline,
+      sentiment: isRally ? 'bullish' : 'bearish',
+      impact: 'high',
+      isOnWatchlist: watchlist.includes(symbol),
+      type: 'crypto'
+    });
+  };
 
   // Unified global persistent user profile
   const [profile, setProfile] = useState<UserProfile>({
@@ -313,10 +490,9 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                 {/* Drawer Header */}
                 <div className="p-6 border-b border-white/10 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <AifCoreLogo size={40} showText={false} />
+                    <CapitalAiLogo size={40} showText={false} />
                     <div className="flex flex-col items-start leading-none">
-                      <span className="font-black text-sm tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">AIF-CORE</span>
-                      <span className="text-[11px] text-white/70 font-mono tracking-widest uppercase mt-0.5">MODUL 1</span>
+                      <span className="font-black text-sm tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">Capital-AI</span>
                     </div>
                   </div>
                   <button 
@@ -397,6 +573,20 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                             >
                               <LayoutDashboard size={14} />
                               <span>Dashboard Home</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Capital-AI Produkt-Trailer" text="Ein futuristisches 20-sekündiges HTML5-Cinematic über Capital-AI, das Core-Branding und die quantitative Vision des Projekts.">
+                            <button 
+                              onClick={() => navigateTo('promo-video')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'promo-video' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <Video size={14} className={activeView === 'promo-video' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>Capital-AI Trailer</span>
                             </button>
                           </SidebarTooltip>
 
@@ -924,8 +1114,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                           role="region"
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                                transition={{ duration: 0.25, ease: 'easeInOut' }}
                           className="overflow-hidden mt-1 px-1 space-y-1"
                         >
                           <SidebarTooltip title="Datenschutz" text="Erfahre, wie wir Deine persönlichen Daten und Portfolio-Informationen nach DSGVO-Richtlinien schützen.">
@@ -954,6 +1143,16 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                               <Scale size={14} />
                               <span>Impressum & AGB</span>
                             </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="E-Mail Support" text="Bei Fragen oder Problemen erreichst Du unseren Support rund um die Uhr per E-Mail unter support@capital-ai.online.">
+                            <a 
+                              href="mailto:support@capital-ai.online"
+                              className="w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all border border-transparent text-white/70 hover:text-white hover:bg-white/5 font-sans"
+                            >
+                              <Mail size={14} className="text-aif-gold-DEFAULT" />
+                              <span className="truncate">support@capital-ai.online</span>
+                            </a>
                           </SidebarTooltip>
                         </motion.div>
                       )}
@@ -1070,16 +1269,19 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                 onClick={() => setDropdownOpen(!dropdownOpen)} 
                 className="flex items-center gap-3 hover:bg-white/5 p-2 rounded-xl transition-all"
               >
-                <AifCoreLogo size={44} showText={false} />
+                <CapitalAiLogo size={44} showText={false} />
                 <div className="flex flex-col items-start leading-none">
                   <div className="flex items-center gap-2">
-                    <span className="font-black text-lg tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">AIF-CORE</span>
+                    <span className="font-black text-lg tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">Capital-AI</span>
                     <ChevronDown size={16} className={`text-aif-gold-DEFAULT transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-[11px] text-white/70 font-mono tracking-widest uppercase">MODUL 1</span>
-                    <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 font-mono tracking-widest">
-                      AKTIV
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-white/60 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#0DDDDD] animate-pulse" />
+                      {pageViews.toLocaleString('de-DE')} Aufrufe (24h)
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 font-mono">
+                      v0.5.4 Beta
                     </span>
                   </div>
                 </div>
@@ -1148,6 +1350,16 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
 
           {/* Top right area cleaned of duplicate navigation buttons */}
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* Global Support E-Mail Link */}
+            <a 
+              href="mailto:support@capital-ai.online" 
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10 text-xs font-mono text-white/70 hover:text-white transition-all"
+              title="Support per E-Mail kontaktieren"
+            >
+              <Mail size={12} className="text-aif-gold-DEFAULT" />
+              <span>support@capital-ai.online</span>
+            </a>
+
             {profile.subscriptionTier !== 'Enterprise' ? (
               <button
                 onClick={() => setIsSubscriptionModalOpen(true)}
@@ -1174,10 +1386,11 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
         {activeView !== 'dashboard' && (
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-md">
             <div className="flex items-center gap-2 text-xs font-mono text-white/50">
-              <span className="hover:text-white cursor-pointer uppercase tracking-wider font-bold" onClick={() => setActiveView('dashboard')}>AIF-CORE</span>
+              <span className="hover:text-white cursor-pointer uppercase tracking-wider font-bold" onClick={() => setActiveView('dashboard')}>Capital-AI</span>
               <span>/</span>
               <span className="text-aif-gold-DEFAULT uppercase tracking-wider font-bold">
                 {activeView === 'monte-carlo' && 'Monte Carlo Simulation'}
+                {activeView === 'promo-video' && 'Capital-AI Produkt-Trailer & Vision'}
                 {activeView === 'raw-materials' && 'Rohstoff-Kategorisierung & AI-Scoring'}
                 {activeView === 'asset-universe' && 'Multi-Asset-Klassen Cockpit'}
                 {activeView === 'buffet-value' && 'Buffet Value Check'}
@@ -1221,6 +1434,8 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
             setSearchQuery={setSearchQuery}
             categoryFilter={categoryFilter}
             setCategoryFilter={setCategoryFilter}
+            enterpriseSymbols={enterpriseSymbols}
+            onToggleEnterpriseSymbol={handleToggleEnterpriseSymbol}
           />
         )}
 
@@ -1235,95 +1450,103 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
             className="space-y-8"
           >
             {activeView === 'dashboard' && (
-               <>
-                 {/* Top Row: Enterprise Crypto Scoring Module */}
-                 <CryptoScoringEnterprise 
-                   selectedSymbol={selectedSymbol} 
-                   onSelectSymbol={setSelectedSymbol} 
-                   timeframe={timeframe} 
-                   onChangeTimeframe={setTimeframe} 
-                   userSession={userSession}
-                 />
- 
-                 {/* Best and Worst Assets of each Universe */}
-                 <UniverseBestWorst onSelectAsset={(symbol) => { setSelectedSymbol(symbol); setActiveView('charts'); }} />
-
-                 {/* Portfolio Performance & D3 Sparkline section */}
-                 <PortfolioPerformance baseCapital={profile.capital} />
-
-                  {/* Compliance Exporter for BaFin & DSGVO PDF downloads */}
-                  <ComplianceExporter capital={profile.capital} selectedSymbol={selectedSymbol} />
-
-                {/* Middle Row: Enterprise Trading Evaluation Tool & AI-Newsfeed */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2">
-                    <CryptoEnterpriseEvaluator selectedSymbol={selectedSymbol} onSelectSymbol={setSelectedSymbol} />
-                  </div>
-                  <div className="space-y-6">
-                    {/* Realtime AI-Newsfeed instead of Monte-Carlo Quick Card */}
+              <>
+                  {/* Realtime AI-Newsfeed (Full Width) */}
+                  <div className="w-full">
                     <RealtimeAiNewsfeed 
                       subscriptionTier={profile.subscriptionTier} 
                       onUpgradeClick={() => navigateTo('abonnements')}
                       selectedSymbol={selectedSymbol}
                       searchQuery={searchQuery}
                       categoryFilter={categoryFilter}
+                      onTriggerPushNotification={triggerPushNotification}
+                      watchlist={watchlist}
                     />
-
-                    {/* Strategie-Evidenz-Check Quick Card (Clickable to Buffett DCF check) */}
-                    <div 
-                      onClick={() => navigateTo('buffet-value')}
-                      className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md cursor-pointer hover:border-aif-gold-DEFAULT/50 hover:shadow-[0_0_20px_rgba(245,196,83,0.1)] transition-all group"
-                      title="Klicke für BuffettValueCheck Graham-DCF Rechner"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="text-sm font-medium text-white/80 font-display group-hover:text-aif-gold-light transition-colors">
-                          Buffett-Value & DCF Check
-                        </h3>
-                        <span className="text-[11px] font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-wider bg-aif-gold-DEFAULT/10 px-2 py-0.5 rounded">
-                          Berechnen
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 p-3 rounded-lg mb-4 relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                        <ShieldCheck className="text-green-400 z-10" size={20} />
-                        <div className="z-10">
-                          <div className="text-xs text-white/60 uppercase font-mono">Status</div>
-                          <div className="text-sm font-bold text-green-400 uppercase tracking-wide font-display drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">Verifiziert</div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <div className="text-xs text-white/50 mb-1 font-mono">Graham-Wert</div>
-                          <div className="text-xl font-mono text-white font-bold text-aif-gold-DEFAULT">Aktiv</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-white/50 mb-1 font-mono">Modell</div>
-                          <div className="text-xs font-mono text-white font-semibold">Benjamin Graham</div>
-                        </div>
-                      </div>
-                      <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
-                        <span className="text-[11px] text-white/70 uppercase tracking-wider">Klicken für Rechner</span>
-                        <span className="text-[11px] font-mono text-aif-gold-DEFAULT">Graham-Formel-Modell</span>
-                      </div>
-                    </div>
                   </div>
-                </div>
+
+                 {/* Top Row: Enterprise Crypto Scoring Module */}
+                 <CryptoScoringEnterprise 
+                    selectedSymbol={selectedSymbol} 
+                    onSelectSymbol={setSelectedSymbol} 
+                    timeframe={timeframe} 
+                    onChangeTimeframe={setTimeframe} 
+                    userSession={userSession}
+                    selectedSymbols={enterpriseSymbols}
+                    setSelectedSymbols={setEnterpriseSymbols}
+                  />
+ 
+                  {/* Best and Worst Assets of each Universe */}
+                  <UniverseBestWorst onSelectAsset={(symbol) => { setSelectedSymbol(symbol); setActiveView('charts'); }} />
+
+                  {/* Portfolio Performance & D3 Sparkline section */}
+                  <PortfolioPerformance baseCapital={profile.capital} />
+
+                   {/* Compliance Exporter for BaFin & DSGVO PDF downloads */}
+                   <ComplianceExporter capital={profile.capital} selectedSymbol={selectedSymbol} />
+
+                 {/* Middle Row: Enterprise Trading Evaluation Tool & Quantitative Ticker */}
+                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                   <div className="lg:col-span-2">
+                     <CryptoEnterpriseEvaluator selectedSymbol={selectedSymbol} onSelectSymbol={setSelectedSymbol} />
+                   </div>
+                   <div className="space-y-6">
+                     {/* Quantitative News & Market Signals */}
+                     <Newsticker selectedSymbol={selectedSymbol} timeframe={timeframe} />
+
+                     {/* Strategie-Evidenz-Check Quick Card (Clickable to Buffett DCF check) */}
+                     <div 
+                       onClick={() => navigateTo('buffet-value')}
+                       className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md cursor-pointer hover:border-aif-gold-DEFAULT/50 hover:shadow-[0_0_20px_rgba(245,196,83,0.1)] transition-all group"
+                       title="Klicke für BuffettValueCheck Graham-DCF Rechner"
+                     >
+                       <div className="flex justify-between items-start mb-3">
+                         <h3 className="text-sm font-medium text-white/80 font-display group-hover:text-aif-gold-light transition-colors">
+                           Buffett-Value & DCF Check
+                         </h3>
+                         <span className="text-[11px] font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-wider bg-aif-gold-DEFAULT/10 px-2 py-0.5 rounded">
+                           Berechnen
+                         </span>
+                       </div>
+                       <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 p-3 rounded-lg mb-4 relative overflow-hidden">
+                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                         <ShieldCheck className="text-green-400 z-10" size={20} />
+                         <div className="z-10">
+                           <div className="text-xs text-white/60 uppercase font-mono">Status</div>
+                           <div className="text-sm font-bold text-green-400 uppercase tracking-wide font-display drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">Verifiziert</div>
+                         </div>
+                       </div>
+                       <div className="grid grid-cols-2 gap-4">
+                         <div>
+                           <div className="text-xs text-white/50 mb-1 font-mono">Graham-Wert</div>
+                           <div className="text-xl font-mono text-white font-bold text-aif-gold-DEFAULT">Aktiv</div>
+                         </div>
+                         <div>
+                           <div className="text-xs text-white/50 mb-1 font-mono">Modell</div>
+                           <div className="text-xs font-mono text-white font-semibold">Benjamin Graham</div>
+                         </div>
+                       </div>
+                       <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+                         <span className="text-[11px] text-white/70 uppercase tracking-wider">Klicken für Rechner</span>
+                         <span className="text-[11px] font-mono text-aif-gold-DEFAULT">Graham-Formel-Modell</span>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
 
 
-                {/* Market Sentiment Tool */}
-                <MarketSentiment selectedSymbol={selectedSymbol} assetClass={profile.preferredAssetClass} />
+                 {/* Market Sentiment Tool */}
+                 <MarketSentiment selectedSymbol={selectedSymbol} assetClass={profile.preferredAssetClass} />
 
 
-                {/* Bottom Row: AI Tools */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Newsticker selectedSymbol={selectedSymbol} timeframe={timeframe} />
-                  <ImageAnalyzer triggerAttempt={triggerAttempt} />
-                </div>
+                 {/* Bottom Row: AI Tools */}
+                 <div className="grid grid-cols-1 gap-6">
+                   <ImageAnalyzer triggerAttempt={triggerAttempt} />
+                 </div>
 
-                {/* Auth State Debugger Panel */}
-                <AuthStateDebugger />
-              </>
-            )}
+                 {/* Auth State Debugger Panel */}
+                 <AuthStateDebugger />
+               </>
+             )}
 
             {/* Detailed Views */}
             {activeView === 'monte-carlo' && (
@@ -1335,7 +1558,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
             )}
 
             {activeView === 'backtest' && (
-              <BacktestEngine selectedSymbol={selectedSymbol} userCapital={profile.capital} triggerAttempt={triggerAttempt} />
+              <BacktestEngine selectedSymbol={selectedSymbol} userCapital={profile.capital} triggerAttempt={triggerAttempt} userEmail={profile.email} />
             )}
 
             {activeView === 'market-screener' && (
@@ -1386,6 +1609,14 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               <ProfilePage 
                 profile={profile} 
                 onUpdateProfile={handleUpdateProfile} 
+                watchlist={watchlist}
+                setWatchlist={setWatchlist}
+                selectedSymbol={selectedSymbol}
+                onSelectAsset={(symbol) => {
+                  setSelectedSymbol(symbol);
+                  setActiveView('dashboard');
+                }}
+                handleSimulateScoreEvent={handleSimulateScoreEvent}
               />
             )}
 
@@ -1439,6 +1670,10 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               </div>
             )}
 
+            {activeView === 'promo-video' && (
+              <CapitalAiTrailer />
+            )}
+
             {activeView === 'charts' && (
               <Charts 
                 selectedSymbol={selectedSymbol} 
@@ -1473,8 +1708,8 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
             {/* Info Siegel: Version 0.5.0 mit dem Logo versehen */}
             <div className="flex flex-col sm:flex-row items-center gap-3 bg-gradient-to-r from-aif-gold-DEFAULT/10 via-black/40 to-aif-gold-DEFAULT/5 border border-aif-gold-DEFAULT/20 rounded-2xl px-5 py-2.5 backdrop-blur-md shadow-[0_0_25px_rgba(245,196,83,0.08)] mb-4">
               <div className="flex items-center gap-2">
-                <AifCoreLogo size={24} showText={false} />
-                <span className="font-display font-black tracking-widest text-sm uppercase text-aif-gold-DEFAULT">AIF-CORE</span>
+                <CapitalAiLogo size={24} showText={false} />
+                <span className="font-display font-black tracking-widest text-sm uppercase text-aif-gold-DEFAULT">Capital-AI</span>
               </div>
               <span className="hidden sm:inline text-white/20">|</span>
               <div className="flex items-center gap-2">
@@ -1498,10 +1733,42 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               <button onClick={() => navigateTo('abonnements')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors">Abonnements</button>
             </div>
 
+            {/* Contact Email in Footer */}
+            <div className="text-xs text-white/60 flex items-center justify-center gap-2 mb-2 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-aif-gold-DEFAULT animate-pulse" />
+              <span>Kundenservice:</span>
+              <a href="mailto:support@capital-ai.online" className="text-aif-gold-DEFAULT hover:text-aif-gold-light hover:underline font-bold transition-all">
+                support@capital-ai.online
+              </a>
+            </div>
+
             <p className="text-xs text-white/70 leading-relaxed max-w-2xl">
               ⚠️ Keine Anlageberatung. AIFinancial zeigt ausschließlich quantitative Berechnungsmodelle und sentimentbasierte Live-Informationen – die Anlageentscheidung trifft immer der Nutzer selbst. Kapitalverlust ist möglich. MiFID II konforme Datenanalyse-Software.
             </p>
-            <p className="text-[11px] font-mono text-white/60 uppercase tracking-widest mt-2">
+
+            {/* Kraken Pro Referral Card */}
+            <div className="p-4 rounded-xl bg-gradient-to-r from-violet-950/20 to-black/50 border border-violet-500/20 max-w-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_4px_25px_rgba(139,92,246,0.05)] mt-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-violet-300 font-mono">Kraken Pro Partner-Bonus</span>
+                </div>
+                <p className="text-xs text-white/80 leading-relaxed">
+                  Melde dich über meinen Link unten oder mit meinem Empfehlungscode <code className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-aif-gold-DEFAULT font-mono font-bold select-all">yc4ggk3f</code> bei Kraken Pro an, dann können wir beide Prämien verdienen.
+                </p>
+              </div>
+              <a 
+                href="https://proinvite.kraken.com/9f1e/5bq7c9cn" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="shrink-0 flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-lg transition-all shadow-[0_0_15px_rgba(139,92,246,0.2)] hover:scale-[1.02] active:scale-[0.98] group"
+              >
+                <span>Kraken Pro</span>
+                <span className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform text-xs">↗</span>
+              </a>
+            </div>
+
+            <p className="text-[11px] font-mono text-white/60 uppercase tracking-widest mt-3">
               Strikte No-Demo-Data-Policy: Keine Interpolation unvollständiger Datenreihen.
             </p>
           </div>
@@ -1526,6 +1793,88 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
             actionName={failedActionName}
           />
         )}
+
+        {/* Floating Real-Time Push-Up Notifications Stack */}
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+          <AnimatePresence>
+            {pushNotifications.map((notif) => {
+              const isBullish = notif.sentiment === 'bullish';
+              const isBearish = notif.sentiment === 'bearish';
+              
+              return (
+                <motion.div
+                  key={notif.id}
+                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.15 } }}
+                  className="pointer-events-auto w-full bg-[#0e0e11]/95 border border-white/10 rounded-xl p-4 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-md relative overflow-hidden flex flex-col gap-2 group"
+                >
+                  {/* Glowing vertical side accent line */}
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${
+                    isBullish ? 'bg-emerald-500' : isBearish ? 'bg-rose-500' : 'bg-blue-500'
+                  }`} />
+
+                  {/* Top Bar: Title, Badges and Close button */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-bold font-mono shrink-0 ${
+                        isBullish 
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                          : isBearish 
+                            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' 
+                            : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                      }`}>
+                        {isBullish ? '🟢 BULLISH SCORE ALERT' : isBearish ? '🔴 BEARISH SCORE ALERT' : '🔵 NEWS ALERT'}
+                      </span>
+                      
+                      {notif.isOnWatchlist && (
+                        <span className="bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT px-1.5 py-0.5 rounded text-[8px] font-black font-mono tracking-wider shrink-0 animate-pulse flex items-center gap-0.5">
+                          ⭐ RADAR
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => setPushNotifications(prev => prev.filter(n => n.id !== notif.id))}
+                      className="text-white/40 hover:text-white transition-colors cursor-pointer"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+
+                  {/* Body: Asset, Adjusted Score and Headline */}
+                  <div className="flex items-start gap-2.5 mt-1">
+                    <div className="flex flex-col items-center shrink-0">
+                      <span className="font-mono text-[14px] font-black text-white">{notif.symbol}</span>
+                      <div className={`mt-1 font-mono text-xs py-0.5 px-1.5 rounded font-black border text-center ${
+                        notif.score > 7 
+                          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                          : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+                      }`}>
+                        {notif.score.toFixed(1)}
+                      </div>
+                      <span className="text-[7px] font-mono text-white/30 uppercase mt-0.5">Score</span>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-white leading-snug line-clamp-3">
+                        {notif.headline}
+                      </p>
+                      
+                      {/* Sub-text: Score change detail and time */}
+                      <div className="flex items-center justify-between mt-2 text-[9px] font-mono text-white/40">
+                        <span>
+                          Score: <span className="text-white/60">{notif.oldScore}</span> → <span className={isBullish ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>{notif.score}</span>
+                        </span>
+                        <span>{notif.timestamp}</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
       </AnimatePresence>
     </div>
   );

@@ -1,6 +1,6 @@
-# Scoring Model - AIF-CORE Raw Materials Engine
+# Scoring Model - CAPITAL-AI Raw Materials Engine
 
-This document outlines the mathematical models, dynamic weights, and formula implementations used inside the centralized AIF-CORE **Scoring Engine** (`RawMaterialsScoringService`).
+This document outlines the mathematical models, dynamic weights, and formula implementations used inside the centralized CAPITAL-AI **Scoring Engine** (`RawMaterialsScoringService`).
 
 ---
 
@@ -62,4 +62,4 @@ When data points are missing, the engine gracefully handles them to prevent cras
 
 ---
 
-*Verified under AIF-CORE Platform Specification Version 0.5.4.*
+*Verified under CAPITAL-AI Platform Specification Version 0.5.4.*

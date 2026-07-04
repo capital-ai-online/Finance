@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Newspaper, ArrowRight, Zap, RefreshCw, Lock, Sparkles, CheckCircle, ShieldAlert, Cpu } from 'lucide-react';
+import { Newspaper, ArrowRight, Zap, RefreshCw, Lock, Sparkles, CheckCircle, ShieldAlert, Cpu, Star } from 'lucide-react';
 
 interface NewsAlert {
   id: string;
@@ -12,6 +12,7 @@ interface NewsAlert {
   routedTo: string;
   insight: string;
   premium?: boolean;
+  source?: string;
 }
 
 const INITIAL_ALERTS: NewsAlert[] = [
@@ -24,7 +25,8 @@ const INITIAL_ALERTS: NewsAlert[] = [
     impact: 'high',
     routedTo: 'Claude 3.5 Sonnet (Deep-Review)',
     insight: 'Die Marktliquidität steigt rasant. On-Chain-Daten zeigen eine starke Akkumulation durch Wallets mit >1.000 BTC. Der makroökonomische Rückenwind stärkt die Unterstützung bei $92.500.',
-    premium: false
+    premium: false,
+    source: 'Federal Reserve Press'
   },
   {
     id: '2',
@@ -35,7 +37,8 @@ const INITIAL_ALERTS: NewsAlert[] = [
     routedTo: 'Gemini 1.5 Pro (Low-Latency)',
     impact: 'high',
     insight: 'Die durchschnittliche Marge steigt durch den höheren Pro-Anteil auf über 42.5%. Lieferketten in Asien laufen mit 100% Auslastung. Die Bewertung nähert sich dem fairen DCF-Wert.',
-    premium: false
+    premium: false,
+    source: 'Morningstar Premium Research'
   },
   {
     id: '3',
@@ -46,7 +49,8 @@ const INITIAL_ALERTS: NewsAlert[] = [
     routedTo: 'GPT-4o (Legacy Engine)',
     impact: 'medium',
     insight: 'Zulassung im europäischen Markt wird bis Q4 2026 erwartet. Kurzfristig verharren Margen unter Druck durch anhaltende Rabattaktionen im asiatischen Raum.',
-    premium: true
+    premium: true,
+    source: 'Bloomberg Terminal'
   },
   {
     id: '4',
@@ -57,7 +61,8 @@ const INITIAL_ALERTS: NewsAlert[] = [
     routedTo: 'Llama 3 (DSGVO Local)',
     impact: 'medium',
     insight: 'Über 32 Millionen ETH sind im Smart Contract gebunden. Die Token-Burn-Rate steigt durch L2-Gebührenmigration langsamer, aber das Verknappungsszenario bleibt voll intakt.',
-    premium: true
+    premium: true,
+    source: 'Reuters Financial News'
   },
   {
     id: '5',
@@ -68,7 +73,8 @@ const INITIAL_ALERTS: NewsAlert[] = [
     routedTo: 'Grok 2.0 (Research)',
     impact: 'medium',
     insight: 'Geopolitische Diversifikation weg von Staatsanleihen treibt physisches Gold auf Allzeithochs. Starker defensiver Anker für risikominimierte Portfolios.',
-    premium: true
+    premium: true,
+    source: 'World Bank Data Feed'
   }
 ];
 
@@ -79,7 +85,8 @@ const NEW_REALTIME_ALERTS: Partial<NewsAlert>[] = [
     sentiment: 'bullish',
     impact: 'high',
     routedTo: 'Gemini 1.5 Pro (Speed Router)',
-    insight: 'Sofortige Absorption der Verkaufsorder knapp über $94.000 signalisiert starkes institutionelles Limit-Kaufinteresse.'
+    insight: 'Sofortige Absorption der Verkaufsorder knapp über $94.000 signalisiert starkes institutionelles Limit-Kaufinteresse.',
+    source: 'Bloomberg Terminal'
   },
   {
     symbol: 'NVDA',
@@ -87,7 +94,8 @@ const NEW_REALTIME_ALERTS: Partial<NewsAlert>[] = [
     sentiment: 'neutral',
     impact: 'medium',
     routedTo: 'Claude 3.5 (Quant Review)',
-    insight: 'Die Nachfrage bleibt gigantisch, doch physische Kapazitätsgrenzen limitieren das Umsatzwachstum im nächsten Quartal.'
+    insight: 'Die Nachfrage bleibt gigantisch, doch physische Kapazitätsgrenzen limitieren das Umsatzwachstum im nächsten Quartal.',
+    source: 'Morningstar Premium Research'
   },
   {
     symbol: 'EURUSD',
@@ -95,7 +103,8 @@ const NEW_REALTIME_ALERTS: Partial<NewsAlert>[] = [
     sentiment: 'bearish',
     impact: 'high',
     routedTo: 'Llama 3 (Compliance-Safe)',
-    insight: 'Anstehende Zinsdifferenz begünstigt US-Dollar-Bestände. Technischer Bruch der 1.0820 Supportzone rückt in Reichweite.'
+    insight: 'Anstehende Zinsdifferenz begünstigt US-Dollar-Bestände. Technischer Bruch der 1.0820 Supportzone rückt in Reichweite.',
+    source: 'Reuters Financial News'
   }
 ];
 
@@ -105,14 +114,41 @@ interface RealtimeAiNewsfeedProps {
   selectedSymbol: string;
   searchQuery?: string;
   categoryFilter?: string;
+  onTriggerPushNotification?: (data: {
+    symbol: string;
+    name: string;
+    score: number;
+    oldScore: number;
+    headline: string;
+    sentiment: 'bullish' | 'bearish' | 'neutral';
+    impact: 'high' | 'medium' | 'low';
+    type: string;
+    isOnWatchlist: boolean;
+  }) => void;
+  watchlist?: string[];
 }
+
+// Utility to calculate how a news sentiment/impact alters an asset score
+const calculateNewsImpactScore = (baseScore: number, sentiment: 'bullish' | 'bearish' | 'neutral', impact: 'high' | 'medium' | 'low'): number => {
+  let score = baseScore;
+  if (sentiment === 'bullish') {
+    const boost = impact === 'high' ? 1.8 : impact === 'medium' ? 1.0 : 0.4;
+    score = Math.min(10.0, baseScore + boost);
+  } else if (sentiment === 'bearish') {
+    const penalty = impact === 'high' ? 2.2 : impact === 'medium' ? 1.4 : 0.6;
+    score = Math.max(1.0, baseScore - penalty);
+  }
+  return Number(score.toFixed(1));
+};
 
 export function RealtimeAiNewsfeed({ 
   subscriptionTier, 
   onUpgradeClick, 
   selectedSymbol,
   searchQuery = '',
-  categoryFilter = 'all'
+  categoryFilter = 'all',
+  onTriggerPushNotification,
+  watchlist = []
 }: RealtimeAiNewsfeedProps) {
   const [alerts, setAlerts] = useState<NewsAlert[]>(INITIAL_ALERTS);
   const [activeAlert, setActiveAlert] = useState<NewsAlert | null>(null);
@@ -138,6 +174,14 @@ export function RealtimeAiNewsfeed({
       'Grok 2.0 (Research)'
     ];
 
+    const sources = [
+      'Morningstar Premium Research',
+      'World Bank Data Feed',
+      'Bloomberg Terminal',
+      'Reuters Financial News',
+      'IMF Global Economic Outlook'
+    ];
+
     if (asset.type === 'crypto') {
       headlines = [
         `${name} (${sym}) On-Chain Aktivität explodiert – Wale akkumulieren im Millionenbereich`,
@@ -157,7 +201,7 @@ export function RealtimeAiNewsfeed({
       ];
       insights = [
         `Der Gewinn je Aktie (EPS) übertrifft den Konsens um 12.5%. Die Bruttomarge stieg dank optimierter Lieferketten und Skaleneffekte auf einen neuen Höchststand.`,
-        `Die Einführung der neuen AIF-CORE kompatiblen Schnittstellen reduziert operative Kosten um geschätzte 20%. Großkunden zeigen starkes Interesse an langfristigen Verträgen.`,
+        `Die Einführung der neuen CAPITAL-AI kompatiblen Schnittstellen reduziert operative Kosten um geschätzte 20%. Großkunden zeigen starkes Interesse an langfristigen Verträgen.`,
         `Die Erhöhung des freien Cashflows ermöglicht erweiterte Aktienrückkäufe und Dividendenausschüttungen. Der faire Wert nach Graham liegt deutlich über dem aktuellen Kurs.`
       ];
     } else if (asset.type === 'index') {
@@ -206,7 +250,8 @@ export function RealtimeAiNewsfeed({
         impact: (idx === 0 ? 'high' : 'medium') as any,
         routedTo: routings[idx % routings.length],
         insight: insights[idx],
-        premium: idx > 0
+        premium: idx > 0,
+        source: sources[idx % sources.length]
       };
     });
   };
@@ -231,60 +276,51 @@ export function RealtimeAiNewsfeed({
       });
   }, []);
 
-  // Update newsfeed to focus on selectedSymbol whenever it changes
-  useEffect(() => {
-    if (assets.length > 0) {
-      const activeAsset = assets.find(a => a.symbol === selectedSymbol) || assets.find(a => a.symbol === 'BTC') || assets[0];
-      if (activeAsset) {
-        const customAlerts = generateCustomAlertsForAsset(activeAsset);
-        const fallbackAlerts = INITIAL_ALERTS.filter(a => a.symbol !== selectedSymbol);
-        setAlerts([...customAlerts, ...fallbackAlerts.slice(0, 2)]);
-      }
-    }
-  }, [selectedSymbol, assets]);
-
-  // Rotate / Push new real-time alerts periodically from the pool of all assets
-  useEffect(() => {
-    if (assets.length === 0) return;
-
-    const interval = setInterval(() => {
-      setIsUpdating(true);
-      setTimeout(() => {
-        // Pick a random asset from all 150+ assets
-        const randomAsset = assets[Math.floor(Math.random() * assets.length)];
-        const generated = generateCustomAlertsForAsset(randomAsset);
-        const template = generated[Math.floor(Math.random() * generated.length)];
-
-        const newAlert: NewsAlert = {
-          id: String(Date.now()),
-          time: 'Gerade eben',
-          symbol: randomAsset.symbol,
-          headline: template.headline,
-          sentiment: template.sentiment,
-          impact: template.impact,
-          routedTo: template.routedTo,
-          insight: template.insight,
-          premium: Math.random() > 0.4
-        };
-
-        // Update times for existing alerts
-        setAlerts(prev => {
-          const updated = prev.map(a => {
-            if (a.time === 'Gerade eben') return { ...a, time: 'vor 1 Min.' };
-            if (a.time.includes('Min.')) {
-              const mins = parseInt(a.time.match(/\d+/)?.[0] || '1');
-              return { ...a, time: `vor ${mins + 1} Min.` };
-            }
-            return a;
-          });
-          return [newAlert, ...updated.filter(a => a.symbol !== randomAsset.symbol || a.id === newAlert.id).slice(0, 5)];
-        });
+  const fetchNewsFromBackend = () => {
+    setIsUpdating(true);
+    const wl = Array.isArray(watchlist) ? watchlist.join(',') : '';
+    const url = `/api/news?watchlist=${encodeURIComponent(wl)}&selectedSymbol=${encodeURIComponent(selectedSymbol)}&search=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(categoryFilter)}`;
+    
+    fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error('News API response not ok');
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data)) {
+          setAlerts(data);
+          if (data.length > 0) {
+            setActiveAlert(prev => {
+              if (prev && data.some(item => item.id === prev.id)) {
+                return data.find(item => item.id === prev.id) || data[0];
+              }
+              return data[0];
+            });
+          }
+        }
+      })
+      .catch(err => {
+        console.error('Failed to fetch news from backend:', err);
+      })
+      .finally(() => {
         setIsUpdating(false);
-      }, 800);
-    }, 14000);
+      });
+  };
+
+  // Fetch news from backend whenever filters or watchlist changes
+  useEffect(() => {
+    fetchNewsFromBackend();
+  }, [selectedSymbol, searchQuery, categoryFilter, watchlist]);
+
+  // Periodic automatic updates (every 20 seconds) to simulate real-time stream
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Re-fetch from backend to get fresh prioritized and filtered news
+      fetchNewsFromBackend();
+    }, 20000);
 
     return () => clearInterval(interval);
-  }, [assets]);
+  }, [selectedSymbol, searchQuery, categoryFilter, watchlist]);
 
   const handleAlertClick = (alert: NewsAlert) => {
     // Subscription constraint logic based on pricing.md
@@ -329,7 +365,7 @@ export function RealtimeAiNewsfeed({
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
               <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400 font-mono">
-                AIF-CORE Neural Intelligence Newsfeed
+                CAPITAL-AI Neural Intelligence Newsfeed
               </span>
             </div>
             <h3 className="text-lg font-black text-white font-display mt-1">Realtime AI-Newsfeed</h3>
@@ -337,6 +373,7 @@ export function RealtimeAiNewsfeed({
           </div>
           <button 
             disabled={isUpdating}
+            onClick={fetchNewsFromBackend}
             className="p-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white transition-all cursor-pointer disabled:opacity-50"
             title="Newsfeed manuell aktualisieren"
           >
@@ -363,42 +400,11 @@ export function RealtimeAiNewsfeed({
             </div>
           )}
 
-          {alerts
-            .filter((alert) => {
-              // Category filter
-              if (categoryFilter && categoryFilter !== 'all') {
-                const assetOfAlert = assets.find((a) => a.symbol === alert.symbol);
-                if (assetOfAlert) {
-                  if (assetOfAlert.type !== categoryFilter) return false;
-                } else {
-                  // Hardcoded fallbacks for initial alerts
-                  const hardcodedType = alert.symbol === 'BTC' || alert.symbol === 'ETH' ? 'crypto' :
-                                        alert.symbol === 'AAPL' || alert.symbol === 'TSLA' || alert.symbol === 'NVDA' ? 'stock' :
-                                        alert.symbol === 'GLD' ? 'commodity' : 'crypto';
-                  if (hardcodedType !== categoryFilter) return false;
-                }
-              }
-
-              // Search query filter
-              if (searchQuery && searchQuery.trim() !== '') {
-                const query = searchQuery.toLowerCase().trim();
-                const assetOfAlert = assets.find((a) => a.symbol === alert.symbol);
-                const nameMatch = assetOfAlert ? assetOfAlert.name.toLowerCase().includes(query) : false;
-                
-                return (
-                  alert.symbol.toLowerCase().includes(query) ||
-                  alert.headline.toLowerCase().includes(query) ||
-                  alert.insight.toLowerCase().includes(query) ||
-                  nameMatch
-                );
-              }
-
-              return true;
-            })
-            .map((alert) => {
+          {alerts.map((alert) => {
             const isBullish = alert.sentiment === 'bullish';
             const isBearish = alert.sentiment === 'bearish';
             const isLocked = alert.premium && subscriptionTier === 'Free';
+            const isOnWatchlist = Array.isArray(watchlist) && watchlist.map(s => s.toUpperCase()).includes(alert.symbol.toUpperCase());
 
             return (
               <div 
@@ -407,12 +413,16 @@ export function RealtimeAiNewsfeed({
                 className={`group/item border p-3.5 rounded-xl cursor-pointer transition-all duration-300 relative overflow-hidden ${
                   isLocked 
                     ? 'bg-white/[0.01] border-white/5 opacity-55 hover:opacity-80' 
+                    : isOnWatchlist 
+                    ? 'bg-amber-950/5 border-amber-500/35 hover:border-amber-500 hover:bg-amber-950/15'
                     : 'bg-white/5 border-white/10 hover:border-violet-500/50 hover:bg-violet-950/10'
                 }`}
               >
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-black text-white bg-white/10 px-2 py-0.5 rounded">
+                    <span className={`font-mono text-xs font-black px-2 py-0.5 rounded ${
+                      isOnWatchlist ? 'bg-amber-500/25 text-amber-300 font-bold border border-amber-500/30' : 'text-white bg-white/10'
+                    }`}>
                       {alert.symbol}
                     </span>
                     <span className="text-[10px] text-white/40 font-mono">
@@ -421,9 +431,17 @@ export function RealtimeAiNewsfeed({
                   </div>
                   
                   <div className="flex items-center gap-1.5">
-                    {/* Multi-Model Router Badge */}
-                    <span className="text-[9px] font-mono text-white/35 px-1.5 py-0.5 rounded bg-white/5 border border-white/10">
-                      {alert.routedTo}
+                    {/* Prioritized Watchlist Badge */}
+                    {isOnWatchlist && (
+                      <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1 shadow-[0_0_10px_rgba(245,158,11,0.1)]">
+                        <Star size={9} className="fill-amber-400 text-amber-400" />
+                        <span>Priorisiert</span>
+                      </span>
+                    )}
+
+                    {/* Information Source Badge */}
+                    <span className="text-[9px] font-mono text-aif-gold-DEFAULT px-1.5 py-0.5 rounded bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 font-bold uppercase tracking-wider">
+                      {alert.source || 'Morningstar Premium'}
                     </span>
 
                     {/* Sentiment Badge */}
@@ -460,7 +478,7 @@ export function RealtimeAiNewsfeed({
 
       {/* Footer Info */}
       <div className="mt-4 pt-3 border-t border-white/10 text-[10px] font-mono text-white/30 flex justify-between items-center">
-        <span>Gesteuert durch AIF-CORE Multi-Model Auto-Router</span>
+        <span>Gesteuert durch CAPITAL-AI Multi-Model Auto-Router</span>
         <span className="text-emerald-400 font-bold">DSGVO Compliant</span>
       </div>
 
@@ -499,8 +517,8 @@ export function RealtimeAiNewsfeed({
 
               <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
                 <div className="flex justify-between items-center mb-2.5 text-[10px] text-white/40 font-mono uppercase tracking-wider border-b border-white/5 pb-1.5">
-                  <span>Routing Engine</span>
-                  <span className="text-violet-400 font-bold">{activeAlert.routedTo}</span>
+                  <span>Informationsquelle</span>
+                  <span className="text-aif-gold-DEFAULT font-bold">{activeAlert.source || 'Morningstar Premium'}</span>
                 </div>
                 <p className="text-xs text-white/80 leading-relaxed font-sans">
                   {activeAlert.insight}

@@ -43,7 +43,7 @@ Schätze folgende Metriken auf einer Skala von 0 bis 100 ein:
 5. recyclability (Recyclingfähigkeit: 100 = 100% zirkulär kreislauffähig, 0 = einmalige Verbrennung/Erhitzung)
 Gib ein strukturiertes JSON zurück.`,
           config: {
-            systemInstruction: `Du bist der "Fundamentals Agent" der AIF-CORE Plattform.
+            systemInstruction: `Du bist der "Fundamentals Agent" der CAPITAL-AI Plattform.
 Deine Aufgabe ist es, die physische Verfügbarkeit, geologische Beschaffenheit und Kreislauffähigkeit von Rohstoffen quantitativ und qualitativ zu bewerten.
 Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.`,
             responseMimeType: 'application/json',
@@ -84,7 +84,7 @@ Schätze folgende Metriken auf einer Skala von 0 bis 100 ein:
 5. recyclability (Recyclingfähigkeit: 100 = 100% zirkulär kreislauffähig, 0 = einmalige Verbrennung/Erhitzung)
 Gib ein strukturiertes JSON zurück.`,
           config: {
-            systemInstruction: `Du bist der "Fundamentals Agent" der AIF-CORE Plattform.
+            systemInstruction: `Du bist der "Fundamentals Agent" der CAPITAL-AI Plattform.
 Deine Aufgabe ist es, die physische Verfügbarkeit, geologische Beschaffenheit und Kreislauffähigkeit von Rohstoffen quantitativ und qualitativ zu bewerten.
 Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.`,
             responseMimeType: 'application/json',

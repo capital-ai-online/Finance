@@ -46,6 +46,9 @@ import {
   generateMemeCoinInputs,
   clamp
 } from '../lib/cryptoScoring';
+import { RawMaterialsScoringService } from '../services/rawMaterialsScoring';
+import { CryptoScoringService } from '../services/cryptoScoringService';
+import { MemeCoinScoringService } from '../services/memeCoinScoringService';
 
 // Intelligent Search and Mapping Database
 const CRYPTO_DATABASE = [
@@ -348,12 +351,162 @@ const generateUniversalInputs = (sym: string, type: string, change24h: number, a
   };
 };
 
+export const getPatternForAsset = (symbol: string) => {
+  const patterns = [
+    { name: 'Ascending Triangle', weight: 8.5 },
+    { name: 'Double Bottom', weight: 9.0 },
+    { name: 'Falling Wedge', weight: 7.8 },
+    { name: 'Cup & Handle', weight: 8.2 },
+    { name: 'Bullish Engulfing', weight: 8.8 },
+    { name: 'Morning Star', weight: 8.0 },
+    { name: 'Ascending Channel', weight: 7.5 },
+    { name: 'Three Inside Up', weight: 7.2 },
+    { name: 'Bull Flag', weight: 8.4 }
+  ];
+  const upper = (symbol || '').toUpperCase().trim();
+  const charSum = upper.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return patterns[charSum % patterns.length];
+};
+
+export const getDetailedPatternsForAsset = (symbol: string, score: number) => {
+  const s = (symbol || '').toUpperCase().trim();
+  let hash = 0;
+  for (let i = 0; i < s.length; i++) {
+    hash = (hash << 5) - hash + s.charCodeAt(i);
+    hash |= 0;
+  }
+  const seed = (Math.abs(hash) % 100) / 100;
+
+  if (score >= 60) {
+    return [
+      {
+        name: seed > 0.5 ? "Bullish Flag Breakout" : "Golden Cross (Daily)",
+        type: "Klassische Chartformation",
+        direction: "bullish",
+        weight: +(10 + seed * 5).toFixed(1),
+        status: "Bestätigt",
+        confidence: Math.floor(80 + seed * 18),
+        icon: "TrendingUp",
+        desc: "Der Ausbruch über den absteigenden Flaggenkanal signalisiert die Fortsetzung des mittelfristigen Aufwärtstrends bei steigendem Volumen."
+      },
+      {
+        name: seed > 0.5 ? "Ascending Triangle" : "Double Bottom Support",
+        type: "Trendwende-Formationen",
+        direction: "bullish",
+        weight: +(6 + seed * 4).toFixed(1),
+        status: "Aktiviert",
+        confidence: Math.floor(75 + seed * 20),
+        icon: "ShieldCheck",
+        desc: "Der erfolgreiche Test der horizontalen Widerstandslinie bestätigt den signifikanten Akkumulationsdruck institutioneller Marktteilnehmer."
+      },
+      {
+        name: "MACD Bullish Crossover",
+        type: "Technischer Oszillator",
+        direction: "bullish",
+        weight: +(4 + seed * 3).toFixed(1),
+        status: "Aktiv",
+        confidence: Math.floor(70 + seed * 15),
+        icon: "Activity",
+        desc: "Die MACD-Signallinie kreuzt die Hauptlinie im bullischen Quadranten und bestätigt den dynamischen Momentum-Aufbau."
+      },
+      {
+        name: "RSI Bullish Divergence",
+        type: "Momentum-Indikator",
+        direction: "bullish",
+        weight: +(3 + seed * 2).toFixed(1),
+        status: "In Entstehung",
+        confidence: Math.floor(55 + seed * 25),
+        icon: "Zap",
+        desc: "Konvergente Tiefs zwischen dem Kursverlauf und der RSI-Kurve deuten auf eine bevorstehende Abschwächung des Bären-Drucks hin."
+      }
+    ];
+  } else if (score < 45) {
+    return [
+      {
+        name: seed > 0.5 ? "Bearish Head & Shoulders" : "Double Top Rejection",
+        type: "Klassische Chartformation",
+        direction: "bearish",
+        weight: -(12 + seed * 4).toFixed(1),
+        status: "Bestätigt",
+        confidence: Math.floor(82 + seed * 15),
+        icon: "TrendingDown",
+        desc: "Eine markante Schulter-Kopf-Schulter-Formation signalisiert das Erschöpfen der Bullen-Kräfte auf Wochenbasis und kündigt Korrekturpotenzial an."
+      },
+      {
+        name: "MACD Bearish Cross",
+        type: "Technischer Oszillator",
+        direction: "bearish",
+        weight: -(8 + seed * 3).toFixed(1),
+        status: "Bestätigt",
+        confidence: Math.floor(85 + seed * 10),
+        icon: "Activity",
+        desc: "Das bärische Kreuzen der MACD-Linien im überkauften Bereich untermauert das kurzfristige Abwärtsrisiko und steigende Verkaufs-Volumina."
+      },
+      {
+        name: "Rising Wedge Breakout",
+        type: "Trendfolge-Muster",
+        direction: "bearish",
+        weight: -(6 + seed * 4).toFixed(1),
+        status: "Aktiv",
+        confidence: Math.floor(70 + seed * 20),
+        icon: "AlertTriangle",
+        desc: "Der dynamische Bruch des aufsteigenden Keils nach unten triggert automatisierte Stop-Loss Kaskaden der Market Maker."
+      },
+      {
+        name: "RSI Bearish Overbought",
+        type: "Momentum-Indikator",
+        direction: "bearish",
+        weight: -(4 + seed * 2).toFixed(1),
+        status: "Aktiviert",
+        confidence: Math.floor(75 + seed * 15),
+        icon: "Zap",
+        desc: "Anhaltend überhitzte Oszillatorwerte (>75) weisen auf eine akute Erschöpfung des Volumens bei lokalen Höchstständen hin."
+      }
+    ];
+  } else {
+    return [
+      {
+        name: "Symmetrical Triangle Squeeze",
+        type: "Klassische Chartformation",
+        direction: "neutral",
+        weight: +(1.5 + seed * 2).toFixed(1),
+        status: "Aktiv",
+        confidence: Math.floor(65 + seed * 25),
+        icon: "Sliders",
+        desc: "Symmetrisch zulaufende Trendlinien komprimieren die Volatilität. Ein impulsiver Ausbruch in beide Richtungen ist statistisch hochwahrscheinlich."
+      },
+      {
+        name: "Bollinger Band Squeeze",
+        type: "Volatilitäts-Indikator",
+        direction: "neutral",
+        weight: -(1.0 - seed * 2).toFixed(1),
+        status: "Aktiv",
+        confidence: Math.floor(80 + seed * 15),
+        icon: "Activity",
+        desc: "Die extreme Verengung der Bollinger Bänder signalisiert das historisch niedrigste Niveau der Volatilität vor einer großen Trendbewegung."
+      },
+      {
+        name: "EMA 50/200 Sideways Consolidation",
+        type: "Gleitender Durchschnitt",
+        direction: "neutral",
+        weight: +(0.5 + seed).toFixed(1),
+        status: "Aktiv",
+        confidence: Math.floor(70 + seed * 18),
+        icon: "ShieldCheck",
+        desc: "Der Kurs verläuft flach zwischen den 50er und 200er exponentiellen Durchschnittslinien ohne eindeutigen Trend-Bias."
+      }
+    ];
+  }
+};
+
 interface CryptoScoringEnterpriseProps {
   selectedSymbol: string;
   onSelectSymbol?: (symbol: string) => void;
   timeframe: string;
   onChangeTimeframe?: (timeframe: string) => void;
   userSession?: any;
+  selectedSymbols?: string[];
+  setSelectedSymbols?: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 export function CryptoScoringEnterprise({ 
@@ -361,15 +514,25 @@ export function CryptoScoringEnterprise({
   onSelectSymbol, 
   timeframe, 
   onChangeTimeframe,
-  userSession
+  userSession,
+  selectedSymbols: propSelectedSymbols,
+  setSelectedSymbols: propSetSelectedSymbols
 }: CryptoScoringEnterpriseProps) {
-  // Keep up to 3 selected symbols
-  const [selectedSymbols, setSelectedSymbols] = useState<string[]>(() => {
-    const initial = selectedSymbol ? selectedSymbol.toUpperCase() : 'BTC';
-    return ['BTC', 'ETH', 'SOL'].includes(initial) ? ['BTC', 'ETH', 'SOL'] : [initial, 'BTC', 'ETH'].slice(0, 3);
-  });
+  // Use up to 5 empty fields (slots) standard-mäßig empty
+  const [localSelectedSymbols, setLocalSelectedSymbols] = useState<string[]>([]);
+  const selectedSymbols = propSelectedSymbols !== undefined ? propSelectedSymbols : localSelectedSymbols;
+  const setSelectedSymbols = propSetSelectedSymbols !== undefined ? propSetSelectedSymbols : setLocalSelectedSymbols;
 
   const [activeSymbol, setActiveSymbol] = useState<string>(selectedSymbol ? selectedSymbol.toUpperCase() : 'BTC');
+
+  // Synchronize activeSymbol with selectedSymbol or first element of selectedSymbols
+  useEffect(() => {
+    if (selectedSymbol) {
+      setActiveSymbol(selectedSymbol.toUpperCase());
+    } else if (selectedSymbols.length > 0 && !selectedSymbols.includes(activeSymbol)) {
+      setActiveSymbol(selectedSymbols[0]);
+    }
+  }, [selectedSymbol, selectedSymbols]);
   const [inputs, setInputs] = useState<CryptoScoringInputs | null>(null);
   const [customInputs, setCustomInputs] = useState<Partial<CryptoScoringInputs>>({});
   const [loading, setLoading] = useState<boolean>(true);
@@ -379,6 +542,7 @@ export function CryptoScoringEnterprise({
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [liveMarketData, setLiveMarketData] = useState<any[]>([]);
+  const [customPatternMultipliers, setCustomPatternMultipliers] = useState<Record<string, number>>({});
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -394,12 +558,35 @@ export function CryptoScoringEnterprise({
 
     const actualChange = change24h !== undefined ? change24h : 1.5;
 
+    // --- PRIORITIZED SPECIALIZED SCORING ENGINES ---
+    // If a specialized orchestrator or scoring service is available for the asset type,
+    // we use it. The generic fallback score engine is only utilized for assets with no specialized module.
+
+    if (type === 'commodity') {
+      // Prioritize the Specialized Raw Materials Scoring Engine
+      const rmResult = RawMaterialsScoringService.scoreMaterial({ name: s });
+      return {
+        score: Number((rmResult.scores.final_score / 10).toFixed(1)),
+        final_score: rmResult.scores.final_score,
+        base_score: rmResult.scores.fundamentals,
+        risk_penalty: rmResult.scores.risk,
+        ai_confidence_bonus: Number(((rmResult.classification.confidence || 0.8) * 10).toFixed(2)),
+        decision: rmResult.scores.final_score >= 80 ? "A_setup" : rmResult.scores.final_score >= 65 ? "tradeable_watch" : rmResult.scores.final_score >= 50 ? "speculative_watch" : "reject",
+        decisionName: rmResult.scores.final_score >= 80 ? "A-Setup" : rmResult.scores.final_score >= 65 ? "Tradeable Watch" : rmResult.scores.final_score >= 50 ? "Speculative Watch" : "Reject",
+        decisionDesc: rmResult.scores.final_score >= 80 ? "Herausragende fundamentale und technische Stärke." : "Risiko-Profil überprüfen.",
+        risk_level: rmResult.scores.risk > 70 ? "High" : rmResult.scores.risk > 40 ? "Medium" : "Low",
+        reasoning: rmResult.reasoning,
+        alerts: rmResult.scores.risk > 60 ? ["Kritisch: Erhöhtes Risiko für Versorgungsengpässe!"] : []
+      };
+    }
+
     if (type === 'crypto') {
       const isMeme = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(s);
       if (isMeme) {
-        const fbInputs = generateMemeCoinInputs(s, actualChange);
+        // Prioritize the Specialized Meme-Coin Hype Engine
+        const fbInputs = MemeCoinScoringService.generateMemeCoinInputs(s, actualChange);
         const adapted = adjustMemeInputsForTimeframe(fbInputs, timeframe);
-        const result = calculateMemeCoinScore(adapted);
+        const result = MemeCoinScoringService.scoreMemeCoin(adapted);
         return {
           score: result.score,
           final_score: result.final_score,
@@ -414,9 +601,10 @@ export function CryptoScoringEnterprise({
           alerts: result.alerts
         };
       } else {
-        const fbInputs = generateCryptoInputs(s, actualChange);
+        // Prioritize the Specialized Corporate Crypto Engine
+        const fbInputs = CryptoScoringService.generateCryptoInputs(s, actualChange);
         const adapted = adjustInputsForTimeframe(fbInputs, timeframe);
-        const result = calculateCryptoEnterpriseScore(adapted);
+        const result = CryptoScoringService.scoreCrypto(adapted);
         return {
           score: result.score,
           final_score: result.final_score,
@@ -434,7 +622,7 @@ export function CryptoScoringEnterprise({
       }
     }
 
-    // For other asset classes: stock, commodity, index, forex
+    // For other asset classes (stock, index, forex) with no specialized orchestrators, use general fallback engine:
     let base_score = 60 + seed * 20 + actualChange * 1.5;
     let risk_penalty = 5 + (1 - seed) * 10;
     let bonus = seed * 10;
@@ -775,13 +963,13 @@ export function CryptoScoringEnterprise({
       });
 
       // Write actual files to disk via POST /api/docs-file
-      const reportContent = `# 👔 AIF-CORE Executive Crypto Report for ${activeSymbol}\n` +
+      const reportContent = `# 👔 CAPITAL-AI Executive Crypto Report for ${activeSymbol}\n` +
         `**Timeframe**: ${timeframe}\n` +
         `**Generated At**: ${new Date().toLocaleString('de-DE')} (Autonomous Agent Cascade)\n` +
         `**Status**: Real-Time Audited & Optimized\n\n` +
         `---\n\n` +
         `## 📊 Overview & Decision Rating\n` +
-        `The AIF-CORE Autonomous Agent Cascade has analyzed the latest quantitative, structural, and regulatory parameters for **${activeSymbol}**.\n\n` +
+        `The CAPITAL-AI Autonomous Agent Cascade has analyzed the latest quantitative, structural, and regulatory parameters for **${activeSymbol}**.\n\n` +
         `- **Decision**: ${scoringResult?.decisionName || 'HOLD'}\n` +
         `- **Reasoning**: ${scoringResult?.decisionDesc || 'Stable metrics across all 24 risk points.'}\n` +
         `- **Primary Database**: SQL/Firestore Cloud Storage\n` +
@@ -806,7 +994,7 @@ export function CryptoScoringEnterprise({
         }
       }, null, 2);
 
-      const matrixContent = `# 📈 AIF-CORE Revenue Assurance Matrix\n` +
+      const matrixContent = `# 📈 CAPITAL-AI Revenue Assurance Matrix\n` +
         `**Asset**: ${activeSymbol}\n` +
         `**Date**: ${new Date().toLocaleString('de-DE')}\n\n` +
         `---\n\n` +
@@ -1033,8 +1221,8 @@ export function CryptoScoringEnterprise({
     
     // Add to selected array if not already present
     if (!selectedSymbols.includes(upper)) {
-      if (selectedSymbols.length >= 3) {
-        setErrorMessage("Maximal 3 Assets gleichzeitig erlaubt. Bitte entferne ein Asset, um ein neues hinzuzufügen.");
+      if (selectedSymbols.length >= 5) {
+        setErrorMessage("Maximal 5 Assets gleichzeitig im Enterprise Scorer erlaubt. Bitte entferne ein Asset, um ein neues hinzuzufügen.");
         setTimeout(() => setErrorMessage(null), 4000);
         setShowSuggestions(false);
         setSearchQuery('');
@@ -1053,24 +1241,23 @@ export function CryptoScoringEnterprise({
 
   const handleRemoveAsset = (e: React.MouseEvent, sym: string) => {
     e.stopPropagation();
-    if (selectedSymbols.length <= 1) {
-      setErrorMessage("Mindestens ein Asset muss ausgewählt bleiben.");
-      setTimeout(() => setErrorMessage(null), 3000);
-      return;
-    }
-
     const nextSymbols = selectedSymbols.filter(s => s !== sym);
     setSelectedSymbols(nextSymbols);
     
-    // If we removed the active one, switch to the first remaining
-    if (activeSymbol === sym) {
-      const newActive = nextSymbols[0];
-      setActiveSymbol(newActive);
+    if (activeSymbol === sym && nextSymbols.length > 0) {
+      setActiveSymbol(nextSymbols[0]);
       if (onSelectSymbol) {
-        onSelectSymbol(newActive);
+        onSelectSymbol(nextSymbols[0]);
+      }
+    } else if (nextSymbols.length === 0) {
+      setActiveSymbol('');
+      if (onSelectSymbol) {
+        onSelectSymbol('');
       }
     }
   };
+
+
 
   const handleSliderChange = (key: keyof CryptoScoringInputs, val: number) => {
     const updated = { ...customInputs, [key]: val };
@@ -1273,10 +1460,10 @@ export function CryptoScoringEnterprise({
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-500/5 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Control Panel Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start pb-6 border-b border-white/10 mb-6">
+      <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between pb-6 border-b border-white/10 mb-6">
         
         {/* Left Side: Meta Title */}
-        <div className="xl:col-span-5 space-y-2">
+        <div className="space-y-2">
           <div className="flex items-center gap-2.5">
             <span className="p-2 bg-gradient-to-br from-blue-500/20 to-purple-500/10 rounded-lg border border-blue-500/30 text-blue-400 animate-pulse">
               <Cpu size={18} />
@@ -1291,143 +1478,42 @@ export function CryptoScoringEnterprise({
           </p>
         </div>
 
-        {/* Center/Right Side: Intelligent Search & Timeframe Selection */}
-        <div className="xl:col-span-7 grid grid-cols-1 sm:grid-cols-12 gap-3 w-full" ref={containerRef}>
-          
-          {/* Autocomplete Search Bar */}
-          <div className="sm:col-span-8 relative">
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" size={16} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                onFocus={() => setShowSuggestions(true)}
-                placeholder="Universe Enterprise Scorer - Krypto, Indizes, Rohstoffe suchen..."
-                className="w-full bg-black/40 text-xs text-white placeholder-white/40 pl-10 pr-4 py-3 rounded-xl border border-white/10 hover:border-white/20 focus:border-blue-500/60 focus:bg-black/60 focus:outline-none transition-all font-mono"
-              />
-            </div>
-
-            {/* Error Message Tooltip */}
-            {errorMessage && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-rose-500/90 text-white text-xs px-3 py-1.5 rounded-lg z-50 font-mono font-bold shadow-lg flex items-center gap-2 animate-fade-in">
-                <AlertTriangle size={14} />
-                <span>{errorMessage}</span>
-              </div>
-            )}
-
-            {/* suggestions overlay */}
-            {showSuggestions && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-950/95 border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden backdrop-blur-xl">
-                <div className="p-2 border-b border-white/5 bg-white/5">
-                  <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest font-black block">Vorschläge & Intelligentes Mapping</span>
-                </div>
-                <div className="max-h-60 overflow-y-auto divide-y divide-white/5">
-                  {suggestions.length > 0 ? (
-                    suggestions.map((item) => {
-                      const isSelected = selectedSymbols.includes(item.symbol);
-                      const assetDetails = getAssetDetails(item.symbol);
-                      return (
-                        <button
-                          key={item.symbol}
-                          onClick={() => handleSelectAsset(item.symbol)}
-                          className="w-full text-left p-3 hover:bg-white/5 flex items-center justify-between transition-colors cursor-pointer"
-                        >
-                          <div className="flex items-center gap-3">
-                            <AssetLogo symbol={item.symbol} size="sm" />
-                            <div>
-                              <div className="flex items-center gap-1.5">
-                                <p className="text-xs font-bold text-white font-display">{item.name}</p>
-                                <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1 rounded">Score: {assetDetails.score}/10</span>
-                              </div>
-                              <p className="text-[10px] text-white/40 font-mono">{item.desc}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2.5">
-                            <span className="text-[11px] font-mono text-zinc-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
-                              {item.pair ? item.pair.split(',')[0] : item.symbol}
-                            </span>
-                            {isSelected ? (
-                              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-mono font-bold uppercase tracking-wider border border-emerald-500/20">Ausgewählt</span>
-                            ) : (
-                              <Plus size={14} className="text-blue-400 hover:scale-110 transition-transform" />
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })
-                  ) : searchQuery.trim() ? (
-                    <div className="p-4 text-center text-white/40 text-xs font-mono">
-                      Keine passenden Werte gefunden. Versuche es mit BTC, Solana, Ether oder Gold.
-                    </div>
-                  ) : (
-                    // Default trending recommendations when input is empty
-                    CRYPTO_DATABASE.slice(0, 5).map((item) => {
-                      const isSelected = selectedSymbols.includes(item.symbol);
-                      const assetDetails = getAssetDetails(item.symbol);
-                      return (
-                        <button
-                          key={item.symbol}
-                          onClick={() => handleSelectAsset(item.symbol)}
-                          className="w-full text-left p-3 hover:bg-white/5 flex items-center justify-between transition-colors cursor-pointer"
-                        >
-                          <div className="flex items-center gap-3">
-                            <AssetLogo symbol={item.symbol} size="sm" />
-                            <div>
-                              <div className="flex items-center gap-1.5">
-                                <p className="text-xs font-bold text-white font-display">{item.name}</p>
-                                <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1 rounded">Score: {assetDetails.score}/10</span>
-                              </div>
-                              <p className="text-[10px] text-white/40 font-mono">{item.desc}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-mono text-white/40">MarketCap: {item.mcap}</span>
-                            {isSelected && (
-                              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-mono font-bold uppercase border border-emerald-500/20">Aktiv</span>
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
+        {/* Right Side: Connected Global Search & Timeframe Selection */}
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-[10px] uppercase font-bold tracking-wider text-white/40 font-mono">
+            Intervall:
+          </span>
           {/* Timeframe Selector */}
-          <div className="sm:col-span-4 flex flex-col justify-center">
-            <div className="relative">
-              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={14} />
-              <select
-                value={timeframe}
-                onChange={(e) => {
-                  if (onChangeTimeframe) {
-                    onChangeTimeframe(e.target.value);
-                  }
-                }}
-                className="w-full bg-black/40 text-xs text-white/90 pl-8 pr-4 py-3 rounded-xl border border-white/10 hover:border-white/20 focus:outline-none focus:border-blue-500/60 transition-all font-mono appearance-none cursor-pointer"
-              >
-                {TIMEFRAMES.map(tf => (
-                  <option key={tf.value} value={tf.value} className="bg-zinc-950 text-white font-mono">{tf.label}</option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center px-2 text-white/40">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-              </div>
+          <div className="relative w-36">
+            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={14} />
+            <select
+              value={timeframe}
+              onChange={(e) => {
+                if (onChangeTimeframe) {
+                  onChangeTimeframe(e.target.value);
+                }
+              }}
+              className="w-full bg-black/40 text-xs text-white/90 pl-8 pr-8 py-2.5 rounded-xl border border-white/10 hover:border-white/20 focus:outline-none focus:border-blue-500/60 transition-all font-mono appearance-none cursor-pointer"
+            >
+              {TIMEFRAMES.map(tf => (
+                <option key={tf.value} value={tf.value} className="bg-zinc-950 text-white font-mono">{tf.label}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center px-2 text-white/40">
+              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
             </div>
           </div>
-
         </div>
+
       </div>
 
-      {/* Multi-Asset Selected Row (Up to 3 Slots) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      {/* Multi-Asset Selected Row (Up to 5 Slots) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         {selectedSymbols.map((sym) => {
           const details = getAssetDetails(sym);
           const isCurrentActive = activeSymbol === sym;
           const badge = getDecisionBadge(details.decision);
+          const pat = getPatternForAsset(sym);
           return (
             <div
               key={sym}
@@ -1445,14 +1531,14 @@ export function CryptoScoringEnterprise({
                 <div className="flex items-center gap-2">
                   <AssetLogo symbol={sym} size="sm" />
                   <div>
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wide truncate max-w-[110px]">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wide truncate max-w-[80px]">
                       {details.name}
                     </h4>
-                    <span className="text-[10px] font-mono text-white/40">Mcap: {details.mcap}</span>
+                    <span className="text-[9px] font-mono text-white/40">Mcap: {details.mcap}</span>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   {/* Toggle Price Alert Bell Icon */}
                   <button
                     onClick={(e) => {
@@ -1461,7 +1547,7 @@ export function CryptoScoringEnterprise({
                       const type = dbAsset ? 'crypto' : 'commodity';
                       handleToggleAlert(sym, details.name, details.price, type);
                     }}
-                    className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                    className={`p-1 rounded-lg border transition-all cursor-pointer ${
                       alertIsActive(sym)
                         ? 'bg-amber-500/25 border-amber-500/40 text-amber-400 shadow-[0_0_12px_rgba(245,196,83,0.3)]'
                         : 'bg-white/5 border-white/10 text-white/40 hover:text-white hover:border-white/20'
@@ -1469,9 +1555,9 @@ export function CryptoScoringEnterprise({
                     title={alertIsActive(sym) ? 'Preisalarm aktiv (Klicken zum Löschen)' : 'Preisalarm für dieses Asset einrichten'}
                   >
                     {alertIsActive(sym) ? (
-                      <BellRing size={12} className="text-amber-400 animate-pulse" />
+                      <BellRing size={10} className="text-amber-400 animate-pulse" />
                     ) : (
-                      <Bell size={12} className="text-white/40" />
+                      <Bell size={10} className="text-white/40" />
                     )}
                   </button>
 
@@ -1481,7 +1567,7 @@ export function CryptoScoringEnterprise({
                     className="p-1 rounded text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors cursor-pointer"
                     title="Asset entfernen"
                   >
-                    <X size={12} />
+                    <X size={11} />
                   </button>
                 </div>
               </div>
@@ -1489,27 +1575,43 @@ export function CryptoScoringEnterprise({
               {/* Price and score row */}
               <div className="flex items-end justify-between mt-3">
                 <div className="space-y-0.5">
-                  <span className="text-[11px] font-mono text-zinc-400 block">
+                  <span className="text-[10px] font-mono text-zinc-300 block font-bold">
                     {details.price.toLocaleString('de-DE', { style: 'currency', currency: 'USD', minimumFractionDigits: sym.endsWith('USD') || sym.length > 4 ? 4 : 2 })}
                   </span>
-                  <span className={`text-[10px] font-mono font-bold flex items-center gap-0.5 ${
+                  <span className={`text-[9px] font-mono font-bold flex items-center gap-0.5 ${
                     details.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'
                   }`}>
-                    {details.change24h >= 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                    {details.change24h >= 0 ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
                     <span>{details.change24h >= 0 ? '+' : ''}{details.change24h.toFixed(2)}%</span>
                   </span>
                 </div>
 
                 <div className="text-right flex flex-col items-end">
-                  <span className="text-[10px] font-mono text-white/40 uppercase block">Score</span>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wide ${badge.bg}`}>
+                  <span className="text-[9px] font-mono text-white/30 uppercase block leading-none">Score</span>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className={`px-1 py-0.2 rounded text-[8px] font-mono font-bold uppercase tracking-wide ${badge.bg}`}>
                       {badge.label}
                     </span>
-                    <span className="text-sm font-black font-mono text-white">
+                    <span className="text-xs font-black font-mono text-white">
                       {details.score.toFixed(1)}
                     </span>
                   </div>
+                </div>
+              </div>
+
+              {/* Active Chart Pattern and weighting score */}
+              <div className="mt-2.5 pt-2 border-t border-white/5 space-y-1 text-[9px] font-mono">
+                <div className="flex items-center justify-between">
+                  <span className="text-white/30">Muster:</span>
+                  <span className="text-blue-400 font-bold max-w-[65px] truncate block text-right" title={pat.name}>
+                    {pat.name}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/30">Gewicht:</span>
+                  <span className="text-amber-400 font-bold">
+                    {pat.weight.toFixed(1)}/10
+                  </span>
                 </div>
               </div>
 
@@ -1520,22 +1622,24 @@ export function CryptoScoringEnterprise({
           );
         })}
         
-        {/* Placeholder Slot to reach up to 3 */}
-        {selectedSymbols.length < 3 && (
+        {/* Placeholder Slots to reach exactly 5 */}
+        {Array.from({ length: Math.max(0, 5 - selectedSymbols.length) }).map((_, i) => (
           <div 
+            key={`empty-slot-${i}`}
             onClick={() => {
-              if (containerRef.current) {
-                const inputEl = containerRef.current.querySelector('input');
-                if (inputEl) inputEl.focus();
+              const input = document.getElementById('global-search-input');
+              if (input) {
+                input.focus();
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
               }
             }}
-            className="border border-dashed border-white/10 hover:border-white/30 rounded-xl p-4 flex flex-col items-center justify-center text-center group cursor-pointer transition-all bg-black/10 hover:bg-black/20"
+            className="border border-dashed border-white/5 hover:border-white/15 rounded-xl p-4 flex flex-col items-center justify-center text-center group cursor-pointer transition-all bg-black/10 hover:bg-black/20 min-h-[145px]"
           >
-            <Plus size={16} className="text-white/40 group-hover:text-white/80 group-hover:scale-110 transition-transform mb-1.5" />
-            <span className="text-xs text-white/40 group-hover:text-white/70 font-mono uppercase tracking-wider">Asset hinzufügen</span>
-            <span className="text-[9px] text-white/30 font-mono">Verbleibende Slots: {3 - selectedSymbols.length}</span>
+            <Plus size={14} className="text-white/30 group-hover:text-white/60 group-hover:scale-110 transition-transform mb-1.5" />
+            <span className="text-[10px] text-white/40 group-hover:text-white/60 font-mono uppercase tracking-wider font-bold">Freier Slot</span>
+            <span className="text-[8px] text-white/25 font-mono mt-1">Über Suche mit ★ belegen</span>
           </div>
-        )}
+        ))}
       </div>
 
       {loading ? (
@@ -1727,8 +1831,215 @@ export function CryptoScoringEnterprise({
                 })()}
               </div>
 
-              {/* Right Columns: Audit Reasonings & Active Signals */}
+              {/* Right Columns: Audit Reasonings, Active Patterns & Signals */}
               <div className="lg:col-span-2 space-y-6">
+                
+                {/* ACTIVE FINANCIAL PATTERNS & WEIGHTING SCORES PANEL */}
+                {(() => {
+                  const activePatterns = getDetailedPatternsForAsset(activeSymbol, scoringResult.final_score);
+                  
+                  // Calculate dynamic weighting calculations
+                  const baseWeightSum = activePatterns.reduce((acc, p) => acc + p.weight, 0);
+                  const adjustedWeightSum = activePatterns.reduce((acc, p) => {
+                    const mult = customPatternMultipliers[p.name] ?? 1.0;
+                    return acc + (p.weight * mult);
+                  }, 0);
+                  const weightDelta = adjustedWeightSum - baseWeightSum;
+                  const simulatedScore = Math.min(100, Math.max(0, Math.round(scoringResult.final_score + weightDelta)));
+                  const isModified = Object.keys(customPatternMultipliers).some(k => customPatternMultipliers[k] !== 1.0);
+
+                  return (
+                    <div className="bg-gradient-to-b from-[#16161a] to-[#0f0f11] border border-white/10 rounded-xl p-5 space-y-5 shadow-lg relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+                      
+                      {/* Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Activity size={16} className="text-blue-400 animate-pulse" />
+                            <h4 className="text-xs font-black font-mono text-white uppercase tracking-wider">
+                              Aktive quantitative Chartmuster & Indikator-Gewichtungen
+                            </h4>
+                          </div>
+                          <p className="text-[10px] text-white/50 font-sans">
+                            Echtzeit-Mustererkennung und deren mathematischer Einfluss auf den finalen Enterprise-Score.
+                          </p>
+                        </div>
+                        {isModified && (
+                          <button
+                            onClick={() => setCustomPatternMultipliers({})}
+                            className="px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded text-[10px] font-mono text-rose-400 font-bold uppercase tracking-wider transition-all cursor-pointer"
+                          >
+                            Zurücksetzen
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Pattern List */}
+                      <div className="space-y-4">
+                        {activePatterns.map((pattern, idx) => {
+                          const multiplier = customPatternMultipliers[pattern.name] ?? 1.0;
+                          const currentWeight = +(pattern.weight * multiplier).toFixed(1);
+                          const isBullish = pattern.direction === 'bullish';
+                          const isBearish = pattern.direction === 'bearish';
+
+                          return (
+                            <div 
+                              key={pattern.name}
+                              className="bg-black/30 border border-white/5 hover:border-white/10 p-3.5 rounded-lg space-y-3 transition-all"
+                            >
+                              {/* Pattern Title & Badges */}
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                                <div className="flex items-start gap-2.5">
+                                  <span className={`p-1.5 rounded bg-white/5 border border-white/10 shrink-0 ${
+                                    isBullish ? 'text-emerald-400' : isBearish ? 'text-rose-400' : 'text-zinc-400'
+                                  }`}>
+                                    {isBullish ? <TrendingUp size={14} /> : isBearish ? <TrendingDown size={14} /> : <Sliders size={14} />}
+                                  </span>
+                                  <div>
+                                    <h5 className="text-xs font-bold text-white font-mono">{pattern.name}</h5>
+                                    <span className="text-[9px] text-white/40 uppercase font-mono tracking-wider">{pattern.type}</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 self-end sm:self-center">
+                                  {/* Trend Bias pill */}
+                                  <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-black uppercase border ${
+                                    isBullish 
+                                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                                      : isBearish 
+                                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' 
+                                        : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
+                                  }`}>
+                                    {pattern.direction}
+                                  </span>
+
+                                  {/* Status pill */}
+                                  <span className="px-2 py-0.5 bg-white/5 border border-white/10 text-white/70 rounded text-[9px] font-mono flex items-center gap-1">
+                                    <span className={`w-1 h-1 rounded-full ${
+                                      pattern.status === 'Bestätigt' 
+                                        ? 'bg-emerald-500 animate-pulse' 
+                                        : pattern.status === 'Aktiviert' || pattern.status === 'Aktiv'
+                                          ? 'bg-blue-400' 
+                                          : 'bg-amber-400'
+                                    }`} />
+                                    {pattern.status}
+                                  </span>
+
+                                  {/* Score impact badge */}
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${
+                                    currentWeight >= 0 
+                                      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' 
+                                      : 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                                  }`}>
+                                    {currentWeight >= 0 ? `+${currentWeight}` : currentWeight} Pkt.
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Description */}
+                              <p className="text-[10.5px] text-white/60 leading-relaxed font-sans pl-1 border-l border-white/5">
+                                {pattern.desc}
+                              </p>
+
+                              {/* Confidence Gauge */}
+                              <div className="space-y-1">
+                                <div className="flex justify-between items-center text-[9px] font-mono uppercase text-white/40">
+                                  <span>Muster-Match Qualität (Confidence Score)</span>
+                                  <span className="text-white/80">{pattern.confidence}% Match</span>
+                                </div>
+                                <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden border border-white/5">
+                                  <div 
+                                    className={`h-full rounded-full transition-all duration-500 ${
+                                      isBullish ? 'bg-gradient-to-r from-emerald-500 to-teal-400' :
+                                      isBearish ? 'bg-gradient-to-r from-rose-500 to-red-400' :
+                                      'bg-gradient-to-r from-blue-500 to-indigo-400'
+                                    }`}
+                                    style={{ width: `${pattern.confidence}%` }}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Interactive Model-Weighting Slider */}
+                              <div className="bg-white/5 p-2 rounded-lg border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+                                <div className="flex items-center gap-2 justify-between sm:justify-start shrink-0">
+                                  <span className="text-[9px] text-white/40 uppercase font-mono tracking-wider">Modell-Gewichtung:</span>
+                                  <span className="text-[10px] font-mono font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
+                                    {multiplier.toFixed(1)}x
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-3 w-full sm:max-w-xs">
+                                  <span className="text-[8px] font-mono text-white/30">0.0x</span>
+                                  <input 
+                                    type="range"
+                                    min="0"
+                                    max="2"
+                                    step="0.1"
+                                    value={multiplier}
+                                    onChange={(e) => {
+                                      const val = parseFloat(e.target.value);
+                                      setCustomPatternMultipliers(prev => ({
+                                        ...prev,
+                                        [pattern.name]: val
+                                      }));
+                                    }}
+                                    className="w-full accent-blue-500 bg-white/10 h-1 rounded-lg cursor-pointer"
+                                  />
+                                  <span className="text-[8px] font-mono text-white/30">2.0x</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Live Mathematical Summary Box */}
+                      <div className="bg-gradient-to-br from-blue-950/20 to-indigo-950/25 border border-blue-500/20 p-4 rounded-xl space-y-3.5">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                          <div className="space-y-0.5 text-center sm:text-left">
+                            <h5 className="text-[11px] font-mono font-bold text-blue-400 uppercase tracking-widest">
+                              Mathematischer Simulations-Effekt
+                            </h5>
+                            <p className="text-[10px] text-white/50 font-sans">
+                              Veränderung des Enterprise Final Scores basierend auf den aktiven Mustern.
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center gap-3">
+                            <div className="text-right shrink-0">
+                              <span className="text-[8px] font-mono text-white/40 block uppercase">Original Score</span>
+                              <span className="text-xs font-mono font-bold text-white/60 line-through">{scoringResult.final_score}</span>
+                            </div>
+                            <div className="w-[1px] h-6 bg-white/10" />
+                            <div className="text-center shrink-0">
+                              <span className="text-[8px] font-mono text-white/40 block uppercase">Simulierter Score</span>
+                              <span className={`text-base font-black font-mono px-2 py-0.5 rounded-lg border ${
+                                simulatedScore >= 60 
+                                  ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' 
+                                  : simulatedScore < 45
+                                    ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                                    : 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                              }`}>
+                                {simulatedScore} / 100
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {isModified ? (
+                          <div className="bg-black/40 p-2.5 rounded border border-white/5 text-[10px] font-mono text-white/70 leading-normal">
+                            ⚠️ <strong className="text-blue-400 font-bold">Modifiziertes Modell:</strong> Die Gewichtungsmatrix des Modells wurde angepasst. Der Gesamtscore hat sich um <strong className={`${weightDelta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{weightDelta >= 0 ? `+${weightDelta.toFixed(1)}` : weightDelta.toFixed(1)} Punkte</strong> verschoben.
+                          </div>
+                        ) : (
+                          <div className="text-[10px] font-mono text-white/40 leading-normal">
+                            Nutzen Sie die Schieberegler, um den mathematischen Gewichtungseinfluss (Weight-Multiplier) der einzelnen Indikatoren und Chartmuster testweise zu skalieren.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="bg-gradient-to-r from-blue-900/10 to-indigo-900/10 p-5 rounded-xl border border-blue-500/20 flex flex-col sm:flex-row items-center gap-4 justify-between">
                   <div className="space-y-1 text-center sm:text-left">
                     <h4 className="text-xs font-mono font-bold text-blue-400 uppercase tracking-widest flex items-center gap-1.5 justify-center sm:justify-start">

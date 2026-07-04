@@ -30,7 +30,7 @@ function AuditTrailFlowGraphic() {
     },
     {
       id: 'gateway',
-      label: 'AIF-CORE Server-Proxy',
+      label: 'CAPITAL-AI Server-Proxy',
       status: 'Zertifiziert (Art. 32)',
       statusColor: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
       icon: Cpu,
@@ -242,7 +242,7 @@ export function Datenschutz() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-white/10 mb-6">
         <div>
           <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-cyan-500/25 text-cyan-400 border border-cyan-500/50 tracking-wider font-mono">
-            AIF-CORE AUDIT-SUITE • JURISDICTION READY
+            CAPITAL-AI AUDIT-SUITE • JURISDICTION READY
           </span>
           <h2 className="text-2xl font-black text-white font-display mt-2">Rechtssicheres Compliance-Center</h2>
           <p className="text-xs text-white/70 mt-1 font-sans">

@@ -1,4 +1,4 @@
-# Risk Agent Documentation - AIF-CORE
+# Risk Agent Documentation - CAPITAL-AI
 
 The **Risk Agent** (`RiskAgent`) conducts extensive risk assessments across global raw material supply chains, capturing vulnerabilities, country concentrations, and regulatory hurdles.
 
@@ -23,7 +23,7 @@ The agent uses the `gemini-3.1-pro-preview` model to assess global risk vectors.
 
 ### System Instruction
 ```text
-Du bist der "Risk Agent" der AIF-CORE Plattform.
+Du bist der "Risk Agent" der CAPITAL-AI Plattform.
 Deine Aufgabe ist es, Versorgungsrisiken, Länderrisiken und ESG-bezogene Schwachstellen entlang der globalen Rohstofflieferkette zu analysieren.
 Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.
 ```
@@ -53,4 +53,4 @@ Risk scores are heavily weighted inside critical commodity configurations to cal
 
 ---
 
-*Verified under AIF-CORE Platform Specification Version 0.5.4.*
+*Verified under CAPITAL-AI Platform Specification Version 0.5.4.*

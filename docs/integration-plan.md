@@ -2,11 +2,11 @@
 
 ## Document Overview
 - **Author**: Senior Enterprise Software Architect & Quality Auditor
-- **Target Platform**: AIF-CORE Platform (Version 0.5.0 Beta-Phase)
+- **Target Platform**: CAPITAL-AI Platform (Version 0.5.0 Beta-Phase)
 - **Status**: Ready for Implementation (Approved)
 - **Last Modified**: 2026-07-01
 
-This document outlines the technical architecture for integrating the modular workflow layers and skill files into the AIF-CORE web application. This integration bridges the high-fidelity quantitative analysis engine with the real-time orchestrator, preserving audit trails, strict compliance, and high fault-tolerance.
+This document outlines the technical architecture for integrating the modular workflow layers and skill files into the CAPITAL-AI web application. This integration bridges the high-fidelity quantitative analysis engine with the real-time orchestrator, preserving audit trails, strict compliance, and high fault-tolerance.
 
 ---
 
@@ -206,7 +206,7 @@ The skill files and core scripts should be placed according to the structured di
 ## 7. Final Deliverables & Integration Roadmap
 
 ### Executive Summary:
-This architecture represents an enterprise-grade quantitative workflow system. By combining layer-based declarative skill markdown contracts with robust runtime engines, AIF-CORE guarantees calculation fidelity, auditability, and immediate disaster recovery even under extreme service outages.
+This architecture represents an enterprise-grade quantitative workflow system. By combining layer-based declarative skill markdown contracts with robust runtime engines, CAPITAL-AI guarantees calculation fidelity, auditability, and immediate disaster recovery even under extreme service outages.
 
 ### Risk Register:
 - **API Rate Limits (High Probability, Low Impact)**: Handled gracefully via local quantitative fallback loops.

@@ -61,9 +61,21 @@ export function ImpressumAgb() {
                       27259 Freistatt, Deutschland
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 text-white/80 pt-2 border-t border-white/5">
-                    <Mail size={16} className="text-white/40 shrink-0" />
-                    <span>support@aifinancial.de</span>
+                  <div className="flex flex-col gap-2 pt-2 border-t border-white/5 text-white/80">
+                    <div className="flex items-center gap-3">
+                      <Mail size={16} className="text-violet-400 shrink-0" />
+                      <div>
+                        <span className="text-[10px] font-mono text-white/40 block leading-none">Direktkontakt (Geschäftlich)</span>
+                        <span className="font-mono">sven.kulessa@capital-ai.online</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 pt-2 border-t border-white/5">
+                      <Mail size={16} className="text-aif-gold-DEFAULT shrink-0" />
+                      <div>
+                        <span className="text-[10px] font-mono text-white/40 block leading-none">Support-Anfragen</span>
+                        <span className="font-mono">support@capital-ai.online</span>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex items-center gap-3 text-white/80 pt-2 border-t border-white/5">
                     <Phone size={16} className="text-white/40 shrink-0" />
@@ -85,6 +97,28 @@ export function ImpressumAgb() {
 
             <div className="bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/25 p-4 rounded-xl text-xs text-aif-gold-light leading-relaxed">
               <strong>Haftungsausschluss:</strong> Sämtliche bereitgestellten Berechnungen (z.B. Graham-DCF Formeln oder Monte-Carlo Risikoprojektionen) stellen keine Anlageberatung oder Finanzanalyse dar. Die historische Evidenz-Validierung schließt das Risiko künftiger Verluste nicht aus.
+            </div>
+
+            {/* Kraken Pro Referral Card */}
+            <div className="p-4 rounded-xl bg-gradient-to-r from-violet-950/20 to-black/50 border border-violet-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_4px_25px_rgba(139,92,246,0.05)]">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-violet-300 font-mono">Kraken Pro Partner-Bonus</span>
+                </div>
+                <p className="text-xs text-white/80 leading-relaxed">
+                  Melde dich über meinen Link unten oder mit meinem Empfehlungscode <code className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-aif-gold-DEFAULT font-mono font-bold select-all">yc4ggk3f</code> bei Kraken Pro an, dann können wir beide Prämien verdienen.
+                </p>
+              </div>
+              <a 
+                href="https://proinvite.kraken.com/9f1e/5bq7c9cn" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="shrink-0 flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-mono font-bold text-xs uppercase tracking-wider rounded-lg transition-all shadow-[0_0_15px_rgba(139,92,246,0.2)] hover:scale-[1.02] active:scale-[0.98] group"
+              >
+                <span>Kraken Pro</span>
+                <span className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform text-xs">↗</span>
+              </a>
             </div>
           </motion.div>
         ) : (

@@ -206,7 +206,7 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
   // Users mock database
   const [users, setUsers] = useState<MockUser[]>([
     { id: '1', name: 'Sven Kulessa', email: 'sven.kulessa@gmail.com', subscriptionTier: 'Enterprise', status: 'Aktiv', registrationDate: '2026-01-10', requestsCount: 14502 },
-    { id: '2', name: 'Erika Mustermann', email: 'erika.muster@aif-core.de', subscriptionTier: 'Pro', status: 'Aktiv', registrationDate: '2026-03-15', requestsCount: 3912 },
+    { id: '2', name: 'Erika Mustermann', email: 'erika.muster@capital-ai.de', subscriptionTier: 'Pro', status: 'Aktiv', registrationDate: '2026-03-15', requestsCount: 3912 },
     { id: '3', name: 'Maximilian Schmidt', email: 'max.schmidt@gmail.com', subscriptionTier: 'Starter', status: 'Aktiv', registrationDate: '2026-04-01', requestsCount: 1205 },
     { id: '4', name: 'Sophia Müller', email: 'sophia.m@gmail.com', subscriptionTier: 'Free', status: 'Inaktiv', registrationDate: '2026-05-20', requestsCount: 42 },
     { id: '5', name: 'Christian Wagner', email: 'c.wagner@fintech-ventures.com', subscriptionTier: 'Enterprise', status: 'Aktiv', registrationDate: '2026-02-11', requestsCount: 9811 },
@@ -218,7 +218,7 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
   const handleGenerateInvite = () => {
     const code = 'INV-' + Math.random().toString(36).substr(2, 9).toUpperCase();
     setGeneratedInviteCode(code);
-    setGeneratedInviteLink(`https://aif-core.de/join?invite=${code}&role=${encodeURIComponent(futureTierName)}`);
+    setGeneratedInviteLink(`https://capital-ai.de/join?invite=${code}&role=${encodeURIComponent(futureTierName)}`);
   };
 
   // Add feature to custom tier
@@ -350,7 +350,7 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
             </span>
           </div>
           <h1 className="text-2xl font-black font-display text-white uppercase tracking-wider flex items-center gap-2.5">
-            <span>AIF-CORE System-Management</span>
+            <span>CAPITAL-AI System-Management</span>
           </h1>
           <p className="text-xs text-white/70 leading-relaxed max-w-xl">
             Willkommen zurück, <strong className="text-white">Sven Kulessa</strong>. {isGuestBypass ? 'Du bist über den Dev-Station-Gast-Bypass angemeldet.' : 'Überwache KPIs, verwalte Privilegien und konfiguriere das kommende Investoren-Abo.'}
@@ -359,7 +359,7 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
         <div className="flex items-center gap-4 bg-black/60 border border-aif-neon-purple/30 rounded-xl px-4 py-3 self-stretch md:self-auto justify-between shadow-[0_0_15px_rgba(176,38,255,0.05)]">
           <div className="text-left">
             <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">{isGuestBypass ? 'Dev-Bypass-Modus' : 'Eingeloggter Admin'}</div>
-            <div className="text-xs font-mono text-aif-neon-purple font-black">{isGuestBypass ? 'gast@aif-core.de (Sven)' : 'sven.kulessa@gmail.com'}</div>
+            <div className="text-xs font-mono text-aif-neon-purple font-black">{isGuestBypass ? 'gast@capital-ai.de (Sven)' : 'sven.kulessa@gmail.com'}</div>
           </div>
           <div className="p-1.5 rounded-lg bg-aif-neon-purple/10 border border-aif-neon-purple/30">
             <Check size={16} className={isGuestBypass ? 'text-amber-400 shrink-0' : 'text-aif-neon-purple shrink-0'} />
@@ -1376,7 +1376,7 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
               </p>
               <div className="text-[10px] font-mono space-y-1 pt-1">
                 <div className="flex justify-between text-white/30"><span className="uppercase">Scoring-Modell:</span> <span className="text-white/60">Dex Screener Ratio</span></div>
-                <div className="flex justify-between text-white/30"><span className="uppercase">Validierung:</span> <span className="text-white/60">RugPull Audit v0.5.4</span></div>
+                <div className="flex justify-between text-white/30"><span className="uppercase">Validierung:</span> <span className="text-white/60">RugPull Audit v0.6.0</span></div>
                 <div className="flex justify-between text-white/30"><span className="uppercase">Gewichtung:</span> <span className="text-white/50">50% Social / 50% LP</span></div>
               </div>
             </div>
@@ -1416,10 +1416,10 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
             </div>
             <div>
               <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-black tracking-widest bg-aif-neon-purple/10 text-aif-neon-purple border border-aif-neon-purple/30 uppercase">
-                DEVSYNC OVERVIEW • BETA-PHASE 0.5.4
+                DEVSYNC OVERVIEW • BETA-PHASE 0.6.0
               </span>
               <h3 className="font-display font-black text-white text-base tracking-wide uppercase mt-1">
-                AIF-CORE Dev Station &amp; Datenbank-Architektur
+                CAPITAL-AI Dev Station &amp; Datenbank-Architektur
               </h3>
             </div>
           </div>

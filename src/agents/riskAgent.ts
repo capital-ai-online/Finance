@@ -44,7 +44,7 @@ Schätze folgende Metriken auf einer Skala von 0 bis 100 ein (100 = extrem hohes
 6. volatility (Historische Preisschwankungen am Weltmarkt)
 Gib ein strukturiertes JSON zurück.`,
           config: {
-            systemInstruction: `Du bist der "Risk Agent" der AIF-CORE Plattform.
+            systemInstruction: `Du bist der "Risk Agent" der CAPITAL-AI Plattform.
 Deine Aufgabe ist es, Versorgungsrisiken, Länderrisiken und ESG-bezogene Schwachstellen entlang der globalen Rohstofflieferkette zu analysieren.
 Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.`,
             responseMimeType: 'application/json',
@@ -88,7 +88,7 @@ Schätze folgende Metriken auf einer Skala von 0 bis 100 ein (100 = extrem hohes
 6. volatility (Historische Preisschwankungen am Weltmarkt)
 Gib ein strukturiertes JSON zurück.`,
           config: {
-            systemInstruction: `Du bist der "Risk Agent" der AIF-CORE Plattform.
+            systemInstruction: `Du bist der "Risk Agent" der CAPITAL-AI Plattform.
 Deine Aufgabe ist es, Versorgungsrisiken, Länderrisiken und ESG-bezogene Schwachstellen entlang der globalen Rohstofflieferkette zu analysieren.
 Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.`,
             responseMimeType: 'application/json',

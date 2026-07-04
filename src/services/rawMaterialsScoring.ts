@@ -203,8 +203,8 @@ export class RawMaterialsScoringService {
       }
     };
 
-    // Logging simulation in accordance with AIF-CORE directives
-    console.log(`[AIF-CORE Scoring Engine] Evaluated ${merged.name} (Score: ${final_score}, Level: ${dataQualityLevel}, Version: ${requestedVersion})`);
+    // Logging simulation in accordance with CAPITAL-AI directives
+    console.log(`[CAPITAL-AI Scoring Engine] Evaluated ${merged.name} (Score: ${final_score}, Level: ${dataQualityLevel}, Version: ${requestedVersion})`);
 
     return payload;
   }

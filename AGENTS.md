@@ -1,6 +1,6 @@
-# AIF-CORE Developer and AI Agent Directives
+# CAPITAL-AI Developer and AI Agent Directives
 
-This document contains persistent rules, architectural standards, and data integrity mandates that apply to all current and future modules, components, and backend logics of the AIF-CORE platform.
+This document contains persistent rules, architectural standards, and data integrity mandates that apply to all current and future modules, components, and backend logics of the CAPITAL-AI platform.
 
 ---
 
@@ -28,3 +28,21 @@ All modules, components, and backend systems MUST enforce the following core dir
 
 - **Mobile First with Desktop Precision**: Maintain visual excellence with dark glassmorphism, precise grids, and immediate visual responses on any viewport size.
 - **Model-Independent Auto-Router**: Keep backend calls generic. The platform can route requests across different LLMs dynamically based on task and DSGVO/compliance rules.
+
+---
+
+## 📋 Backlog & Future Tasks (Backlog-Register)
+
+These upcoming features and shifts have been explicitly requested to be preserved in the development registry:
+
+1. **Custom Video Component (Page 2)**:
+   - Provide integration points or custom hooks for client-controlled HTML5 futuristic video playbacks or MCP (Model Context Protocol) integrations.
+
+2. **Tab Separator by Universes & Instruments**:
+   - Split existing filters or views so that navigation tabs are strictly separated by specific asset universes and tradable instrument classes.
+
+3. **Top 3 Tool Integrations**:
+   - Group the top 3 scanning and analytics utility scanners together and bundle them cleanly within the universe tabs.
+
+4. **Utility Scoring & Scanner Directory Structure**:
+   - Establish a clean folder structure organizing the 5 specialized utility scoring skills and scanners.

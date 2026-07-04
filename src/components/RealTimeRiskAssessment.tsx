@@ -856,7 +856,7 @@ export function RealTimeRiskAssessment({
         {/* LEFT COLUMN (7 COLS): Config & Holdings */}
         <div className="xl:col-span-7 space-y-6">
           
-          {/* Module 1: Portfolio Holdings Configuration */}
+          {/* Portfolio Holdings Configuration */}
           <div className="bg-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-5">
             <div className="flex justify-between items-center border-b border-white/10 pb-3">
               <div className="flex items-center gap-2">

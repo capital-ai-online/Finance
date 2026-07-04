@@ -1,4 +1,4 @@
-# Valuation Agent Documentation - AIF-CORE
+# Valuation Agent Documentation - CAPITAL-AI
 
 The **Valuation Agent** (`ValuationAgent`) focuses on the strategic importance of a raw material within international security architectures and high-tech technological roadmaps.
 
@@ -17,7 +17,7 @@ The agent uses the `gemini-3.1-pro-preview` model to fetch and consolidate defen
 
 ### System Instruction
 ```text
-Du bist der "Valuation Agent" der AIF-CORE Plattform.
+Du bist der "Valuation Agent" der CAPITAL-AI Plattform.
 Deine Aufgabe ist es, die wehrtechnische und gesamtindustrielle Relevanz von Rohstoffen entlang internationaler Sicherheits- und Innovationsstrategien einzustufen.
 Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.
 ```
@@ -37,4 +37,4 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
 
 ---
 
-*Verified under AIF-CORE Platform Specification Version 0.5.4.*
+*Verified under CAPITAL-AI Platform Specification Version 0.5.4.*

@@ -1,5 +1,5 @@
 # 🧪 Test Plan & Quantitative Finance Engine (QA Perspective)
-**Project: AIF-CORE (Jenova Nexus)**  
+**Project: CAPITAL-AI (Jenova Nexus)**  
 **Auditor:** QA & Quantitative Analysis Lead  
 **Status:** Certified & Production Ready  
 

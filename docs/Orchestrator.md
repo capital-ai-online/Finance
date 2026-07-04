@@ -1,4 +1,4 @@
-# Master Orchestrator Documentation - AIF-CORE
+# Master Orchestrator Documentation - CAPITAL-AI
 
 The **Master Orchestrator** (`RawMaterialsOrchestrator`) serves as the central coordination hub of the entire multi-agent raw material scoring system. It manages parallel thread execution, resolves inputs, and triggers the mathematical scoring engine.
 
@@ -58,4 +58,4 @@ In accordance with strict platform directives, the orchestration pipeline is **s
 
 ---
 
-*Verified under AIF-CORE Platform Specification Version 0.5.4.*
+*Verified under CAPITAL-AI Platform Specification Version 0.5.4.*

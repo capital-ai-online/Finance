@@ -295,7 +295,7 @@ export function RawMaterialsDashboard() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <span className="px-3 py-1 rounded-full text-[10px] font-bold font-mono bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/25 tracking-widest uppercase">
-              MODUL 1 - ERWEITERUNG
+              ROHSTOFF-ANALYSE
             </span>
             <span className="text-[11px] font-mono text-white/50 tracking-wider">Version 0.5.4 (Beta-Phase)</span>
           </div>

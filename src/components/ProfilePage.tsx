@@ -18,6 +18,7 @@ import {
   Download, 
   ShieldCheck 
 } from 'lucide-react';
+import { Watchlist } from './Watchlist';
 
 export interface UserProfile {
   name: string;
@@ -34,6 +35,11 @@ export interface UserProfile {
 interface ProfilePageProps {
   profile: UserProfile;
   onUpdateProfile: (newProfile: UserProfile) => void;
+  watchlist: string[];
+  setWatchlist: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedSymbol: string;
+  onSelectAsset: (symbol: string) => void;
+  handleSimulateScoreEvent?: (symbol: string, type: 'crash' | 'rally') => void;
 }
 
 const AVATARS = [
@@ -44,7 +50,15 @@ const AVATARS = [
   { id: '5', label: 'Arbitrage', icon: Target, color: 'from-purple-500 to-indigo-700' }
 ];
 
-export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
+export function ProfilePage({ 
+  profile, 
+  onUpdateProfile,
+  watchlist,
+  setWatchlist,
+  selectedSymbol,
+  onSelectAsset,
+  handleSimulateScoreEvent
+}: ProfilePageProps) {
   const [name, setName] = useState(profile.name);
   const [email, setEmail] = useState(profile.email);
   const [preferredAssetClass, setPreferredAssetClass] = useState(profile.preferredAssetClass);
@@ -128,7 +142,7 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
         compliance_standard: "EU General Data Protection Regulation (GDPR) Article 20 / BDSG § 83",
         export_timestamp: new Date().toISOString(),
         platform_version: "Version 0.5.4 (Beta-Phase)",
-        licensee: "AIF-CORE Technologies",
+        licensee: "CAPITAL-AI Technologies",
         user_identity: {
           name: profile.name,
           email: profile.email,
@@ -431,6 +445,22 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
             </form>
           </div>
         </div>
+      </div>
+
+      {/* Watchlist Section - Moved to Profile Page */}
+      <div className="max-w-4xl mx-auto mb-6">
+        <Watchlist 
+          watchlist={watchlist}
+          onRemove={(symbol) => setWatchlist(prev => prev.filter(s => s !== symbol))}
+          onAdd={(symbol) => {
+            if (!watchlist.includes(symbol)) {
+              setWatchlist(prev => [...prev, symbol]);
+            }
+          }}
+          onSelectAsset={onSelectAsset}
+          selectedSymbol={selectedSymbol}
+          onSimulateScoreEvent={handleSimulateScoreEvent}
+        />
       </div>
 
       {/* GDPR Data Portability (Art. 20 GDPR) Panel */}

@@ -89,7 +89,7 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
       id: 'Starter',
       name: 'Starter Plan',
       price: 7,
-      badge: 'AIF-Core Basis',
+      badge: 'Capital-AI Basis',
       desc: 'Erweiterte Limits und Backtests für ambitionierte Retail-Investoren.',
       devices: '1 Gerät',
       features: [
@@ -195,7 +195,7 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
         {/* Header */}
         <div className="max-w-3xl mx-auto text-center mb-10 relative z-10">
           <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/40 tracking-wider font-mono">
-            AIF-CORE SUBSCRIPTION PLATFORM
+            CAPITAL-AI SUBSCRIPTION PLATFORM
           </span>
           <h2 className="text-3xl font-black text-white font-display mt-3">Tarifstufen &amp; Stripe-Brücke</h2>
           <p className="text-xs text-white/50 mt-1 max-w-lg mx-auto">
@@ -232,7 +232,7 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
               <ShieldCheck size={28} className="mx-auto mb-2" />
               <h4 className="text-sm font-black uppercase tracking-wider font-display">Abonnement via Stripe aktiviert!</h4>
               <p className="text-xs font-medium mt-1 leading-relaxed">
-                Der Webhook wurde erfolgreich verbucht. Ihr Account wurde auf die Stufe <span className="font-bold underline">{success}</span> hochgestuft. Alle Berechtigungen wurden im AIF-CORE Berechtigungssystem aktualisiert.
+                Der Webhook wurde erfolgreich verbucht. Ihr Account wurde auf die Stufe <span className="font-bold underline">{success}</span> hochgestuft. Alle Berechtigungen wurden im CAPITAL-AI Berechtigungssystem aktualisiert.
               </p>
             </motion.div>
           )}
@@ -473,7 +473,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
     
     // DB Query: Update user plan tier instantly
     db.users.update({ email }, { subscriptionTier: planId });
-    console.log(\`[AIF-CORE webhook] User \${email} upgraded to \${planId} plan!\`);
+    console.log(\`[CAPITAL-AI webhook] User \${email} upgraded to \${planId} plan!\`);
   }
   
   res.json({ received: true });

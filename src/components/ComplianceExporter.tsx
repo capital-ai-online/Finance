@@ -10,7 +10,8 @@ import {
   HelpCircle,
   AlertCircle
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import { PdfExportModal } from './PdfExportModal';
 
 interface RegistryAsset {
   symbol: string;
@@ -34,12 +35,14 @@ interface RegistryAsset {
 interface ComplianceExporterProps {
   capital: number;
   selectedSymbol: string;
+  userEmail?: string;
 }
 
-export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExporterProps) {
+export function ComplianceExporter({ capital, selectedSymbol, userEmail }: ComplianceExporterProps) {
   const [exporting, setExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const generatePDFReport = async () => {
     try {
@@ -96,7 +99,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
-        doc.text(`AIF-CORE COMPLIANCE AUDIT TRAIL • REPORT ID: AIF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`, 14, 13);
+        doc.text(`CAPITAL-AI COMPLIANCE AUDIT TRAIL • REPORT ID: AIF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`, 14, 13);
         doc.text(`SEITE ${pageNum} VON 2`, 196, 13, { align: 'right' });
 
         // Divider
@@ -129,7 +132,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
       doc.setFont('helvetica', 'black');
       doc.setFontSize(22);
       doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
-      doc.text('AIF-CORE COMPLIANCE AUDIT', 14, 27);
+      doc.text('CAPITAL-AI COMPLIANCE AUDIT', 14, 27);
       
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
@@ -343,7 +346,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
       
       const disclosureLines = [
         'Die quantitativen Handelsergebnisse und Asset-Rankings werden vollautomatisch über den intelligenten',
-        'Model-Router von AIF-CORE prozessiert. Je nach Kritikalität werden sensible Reviews datenschutzkonform',
+        'Model-Router von CAPITAL-AI prozessiert. Je nach Kritikalität werden sensible Reviews datenschutzkonform',
         'über lokale LLM-Filter (Llama/Mistral) im europäischen Rechtsraum verarbeitet, um den Abfluss geschützter',
         'Unternehmensdaten vollständig zu verhindern. Der Abgleich mit der API-Datenbank erfolgt ohne PII-Leaks.'
       ];
@@ -447,7 +450,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
 
       drawCompliancePoint(
         'Absolute Datenintegrität & Schutz vor Fake-Daten',
-        'Dieses System schließt jede Form von simulierten oder fiktiven Performance-Zahlen kategorisch aus. Sämtliche in diesem Bericht erfassten Finanzindikatoren beruhen auf aktiven und kryptographisch validierten Server-Endpunkten des AIF-CORE Asset-Registers.',
+        'Dieses System schließt jede Form von simulierten oder fiktiven Performance-Zahlen kategorisch aus. Sämtliche in diesem Bericht erfassten Finanzindikatoren beruhen auf aktiven und kryptographisch validierten Server-Endpunkten des CAPITAL-AI Asset-Registers.',
         127
       );
 
@@ -487,7 +490,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       doc.text('Zuständiger Systemverwalter', 18, 242);
-      doc.text('AIF-CORE Platform Owner', 18, 246);
+      doc.text('CAPITAL-AI Platform Owner', 18, 246);
       
       doc.setDrawColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       doc.setLineWidth(0.2);
@@ -496,11 +499,11 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
       // Right Signature: Automation
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
-      doc.text('AIF-CORE AUTOMATION ENGINE', 120, 238);
+      doc.text('CAPITAL-AI AUTOMATION ENGINE', 120, 238);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       doc.text('Kryptographisches Verifikationssystem', 120, 242);
-      doc.text('Digitale Signatur: APPROVED-OK-0.5.4', 120, 246);
+      doc.text('Digitale Signatur: APPROVED-OK-0.6.0', 120, 246);
 
       doc.setDrawColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       doc.setLineWidth(0.2);
@@ -531,7 +534,7 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-black tracking-widest bg-aif-neon-purple/20 text-aif-neon-purple border border-aif-neon-purple/30 uppercase">
-              Compliance-Modul 0.5.4
+              Compliance-Modul 0.6.0
             </span>
             <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-black tracking-widest bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 uppercase flex items-center gap-0.5">
               <ShieldCheck size={9} />
@@ -549,7 +552,13 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
 
         <div className="shrink-0 space-y-2 w-full sm:w-auto">
           <button
-            onClick={generatePDFReport}
+            onClick={() => {
+              if (userEmail) {
+                setShowExportModal(true);
+              } else {
+                generatePDFReport();
+              }
+            }}
             disabled={exporting}
             className={`w-full sm:w-auto px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-300 scale-100 active:scale-[0.98] ${
               exporting 
@@ -569,6 +578,17 @@ export function ComplianceExporter({ capital, selectedSymbol }: ComplianceExport
               </>
             )}
           </button>
+
+          <AnimatePresence>
+            {showExportModal && userEmail && (
+              <PdfExportModal 
+                isOpen={showExportModal} 
+                onClose={() => setShowExportModal(false)} 
+                email={userEmail} 
+                onSuccess={generatePDFReport} 
+              />
+            )}
+          </AnimatePresence>
 
           {exportSuccess && (
             <motion.div 

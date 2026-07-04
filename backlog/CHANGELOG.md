@@ -1,6 +1,6 @@
-# Changelog - AIF-CORE
+# Changelog - CAPITAL-AI
 
-All notable changes to the AIF-CORE platform are documented in this file.
+All notable changes to the CAPITAL-AI platform are documented in this file.
 
 ---
 

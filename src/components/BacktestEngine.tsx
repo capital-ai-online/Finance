@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Play, 
   TrendingUp, 
@@ -21,6 +21,7 @@ import {
   PieChart
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
+import { PdfExportModal } from './PdfExportModal';
 import { PortfolioBacktester } from './PortfolioBacktester';
 import { 
   ResponsiveContainer, 
@@ -37,6 +38,7 @@ interface BacktestEngineProps {
   selectedSymbol?: string;
   userCapital?: number;
   triggerAttempt?: (actionName: string, onExecute: () => void) => void;
+  userEmail?: string;
 }
 
 interface StrategyParams {
@@ -77,8 +79,9 @@ const TICKERS = [
   { symbol: 'EURUSD', name: 'EUR/USD FX', assetClass: 'Forex', basePrice: 1.085, volatility: 0.08, drift: 0.01 },
 ];
 
-export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, triggerAttempt }: BacktestEngineProps) {
+export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, triggerAttempt, userEmail }: BacktestEngineProps) {
   const [activeTab, setActiveTab] = useState<'strategy' | 'portfolio'>('portfolio');
+  const [showExportModal, setShowExportModal] = useState(false);
   const [availableTickers, setAvailableTickers] = useState<any[]>(TICKERS);
   const [ticker, setTicker] = useState<string>(selectedSymbol);
 
@@ -299,7 +302,7 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
     doc.setTextColor(245, 196, 83);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
-    doc.text('AIF-CORE', 15, 18);
+    doc.text('CAPITAL-AI', 15, 18);
     
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'normal');
@@ -496,10 +499,10 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.setTextColor(140, 140, 140);
-    doc.text('Dieses Dokument wurde automatisch von AIF-CORE generiert. DSGVO-konforme quantitative Echtzeitanalyse.', 15, 285);
+    doc.text('Dieses Dokument wurde automatisch von CAPITAL-AI generiert. DSGVO-konforme quantitative Echtzeitanalyse.', 15, 285);
     doc.text('Sven Kulessa • sven.kulessa@gmail.com • Compliant with Art. 30 GDPR / BFSG Accessibility Standards.', 15, 289);
     
-    doc.save(`AIF_CORE_Backtest_${ticker}_${strategy}.pdf`);
+    doc.save(`CAPITAL_AI_Backtest_${ticker}_${strategy}.pdf`);
   };
 
   const activeTickerInfo = availableTickers.find(t => t.symbol === ticker) || availableTickers[0] || TICKERS[0];
@@ -542,7 +545,7 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
       </div>
 
       {activeTab === 'portfolio' && (
-        <PortfolioBacktester userCapital={userCapital} triggerAttempt={triggerAttempt} />
+        <PortfolioBacktester userCapital={userCapital} triggerAttempt={triggerAttempt} userEmail={userEmail} />
       )}
 
       {activeTab === 'strategy' && (
@@ -957,13 +960,30 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
                   <span>Performance Exportieren</span>
                 </button>
                 <button
-                  onClick={exportPerformanceToPDF}
+                  onClick={() => {
+                    if (userEmail) {
+                      setShowExportModal(true);
+                    } else {
+                      exportPerformanceToPDF();
+                    }
+                  }}
                   className="px-2.5 py-1.5 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 text-black font-mono font-bold text-[11px] rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-[0_0_12px_rgba(245,196,83,0.2)] hover:shadow-[0_0_18px_rgba(245,196,83,0.35)]"
                   title="PDF-Bericht herunterladen"
                 >
                   <FileText size={12} />
                   <span>PDF-Bericht</span>
                 </button>
+
+                <AnimatePresence>
+                  {showExportModal && userEmail && (
+                    <PdfExportModal 
+                      isOpen={showExportModal} 
+                      onClose={() => setShowExportModal(false)} 
+                      email={userEmail} 
+                      onSuccess={exportPerformanceToPDF} 
+                    />
+                  )}
+                </AnimatePresence>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded bg-aif-gold-DEFAULT inline-block" />
                   <span className="text-white/80">Strategie ({metrics.strategyReturn >= 0 ? '+' : ''}{metrics.strategyReturn.toFixed(1)}%)</span>

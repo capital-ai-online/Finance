@@ -32,7 +32,7 @@ export class ClassificationAgent {
 Bestimme die Hauptklasse (Metal, Energy, Agriculture, Industrial, Recycling, oder Unknown), eine präzise Subklasse (z.B. Batteriemetalle, Edelmetalle, Nuklearbrennstoffe), den Markttyp (z.B. LME, OTC, Physisch) und den Bewertungsmodus (z.B. Standard, Strategische Relevanz).
 Gib ein strukturiertes JSON zurück.`,
           config: {
-            systemInstruction: `Du bist der "Classification Agent" der AIF-CORE Rohstoff-Bewertungsplattform.
+            systemInstruction: `Du bist der "Classification Agent" der CAPITAL-AI Rohstoff-Bewertungsplattform.
 Deine Aufgabe ist es, Rohstoffe präzise zu kategorisieren.
 Du musst dich strikt an die folgenden Hauptkategorien halten:
 "Metal" (Metalle / kritische Metalle), "Energy" (Energierohstoffe), "Agriculture" (Agrarrohstoffe), "Industrial" (Industrieminerale), "Recycling" (Recycling- & Sekundärrohstoffe) oder "Unknown".
@@ -69,7 +69,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
           market_type: data.market_type || fallback?.market_type || 'OTC oder Physischer Direktmarkt',
           valuation_mode: data.valuation_mode || (fallback?.is_critical ? 'Kritikalität & Strategische Relevanz' : 'Standard-Marktbewertung'),
           confidence: typeof data.confidence === 'number' ? Math.max(0.1, Math.min(1.0, data.confidence)) : 0.85,
-          reasoning: Array.isArray(data.reasoning) ? data.reasoning.slice(0, 3) : ['Klassifiziert durch AIF-CORE Klassifikator.']
+          reasoning: Array.isArray(data.reasoning) ? data.reasoning.slice(0, 3) : ['Klassifiziert durch CAPITAL-AI Klassifikator.']
         };
       } catch (e) {
         console.warn(`[ClassificationAgent] Premium model 'gemini-3.1-pro-preview' failed or is rate-limited. Retrying with 'gemini-3.5-flash' fallback.`, e);
@@ -79,7 +79,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
 Bestimme die Hauptklasse (Metal, Energy, Agriculture, Industrial, Recycling, oder Unknown), eine präzise Subklasse (z.B. Batteriemetalle, Edelmetalle, Nuklearbrennstoffe), den Markttyp (z.B. LME, OTC, Physisch) und den Bewertungsmodus (z.B. Standard, Strategische Relevanz).
 Gib ein strukturiertes JSON zurück.`,
           config: {
-            systemInstruction: `Du bist der "Classification Agent" der AIF-CORE Rohstoff-Bewertungsplattform.
+            systemInstruction: `Du bist der "Classification Agent" der CAPITAL-AI Rohstoff-Bewertungsplattform.
 Deine Aufgabe ist es, Rohstoffe präzise zu kategorisieren.
 Du musst dich strikt an die folgenden Hauptkategorien halten:
 "Metal" (Metalle / kritische Metalle), "Energy" (Energierohstoffe), "Agriculture" (Agrarrohstoffe), "Industrial" (Industrieminerale), "Recycling" (Recycling- & Sekundärrohstoffe) oder "Unknown".
@@ -116,7 +116,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
           market_type: data.market_type || fallback?.market_type || 'OTC oder Physischer Direktmarkt',
           valuation_mode: data.valuation_mode || (fallback?.is_critical ? 'Kritikalität & Strategische Relevanz' : 'Standard-Marktbewertung'),
           confidence: typeof data.confidence === 'number' ? Math.max(0.1, Math.min(1.0, data.confidence)) : 0.85,
-          reasoning: Array.isArray(data.reasoning) ? data.reasoning.slice(0, 3) : ['Klassifiziert durch AIF-CORE Klassifikator.']
+          reasoning: Array.isArray(data.reasoning) ? data.reasoning.slice(0, 3) : ['Klassifiziert durch CAPITAL-AI Klassifikator.']
         };
       }
     } catch (e) {
@@ -146,7 +146,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
       valuation_mode: fallback?.is_critical ? 'Kritikalität & Strategische Relevanz' : 'Standard-Marktbewertung',
       confidence: fallback ? 0.95 : 0.50,
       reasoning: [
-        fallback ? `Referenzierte Daten aus dem verifizierten AIF-CORE Stammdatensatz.` : `Temporäre Klassifizierung aufgrund fehlender Datenpunkte.`,
+        fallback ? `Referenzierte Daten aus dem verifizierten CAPITAL-AI Stammdatensatz.` : `Temporäre Klassifizierung aufgrund fehlender Datenpunkte.`,
         fallback?.is_critical ? 'Identifiziert als kritischer Rohstoff.' : 'Standard-Risikoklasse angewendet.',
         'Robuster deterministischer Fallback aktiv.'
       ]
