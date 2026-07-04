@@ -1,6 +1,6 @@
 # 👔 Executive Summary & Strategic Vision (CEO Perspective)
-**Project: CAPITAL Ai  neuer Anwendungsname!!!
-**Version:** 0.t.7(Beta-Phase)  
+**Project: AIF-CORE (Jenova Nexus)**  
+**Version:** 0.5.0 (Beta-Phase)  
 **Classification:** Confidential / Board Approved  
 
 ---

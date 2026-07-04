@@ -17,11 +17,12 @@ interface CheckoutProps {
   price: number;
   billingPeriod: 'monthly' | 'yearly';
   email: string;
+  accessToken?: string;
   onClose: () => void;
   onSuccess: (tier: 'Starter' | 'Pro' | 'Enterprise') => void;
 }
 
-export function Checkout({ planId, price, billingPeriod, email, onClose, onSuccess }: CheckoutProps) {
+export function Checkout({ planId, price, billingPeriod, email, accessToken, onClose, onSuccess }: CheckoutProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [demoMode, setDemoMode] = useState(false);
@@ -74,16 +75,22 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
       return;
     }
 
+    if (!accessToken) {
+      setError('Bitte melde dich erneut an, um fortzufahren.');
+      setLoading(false);
+      return;
+    }
+
     try {
       // 1. Erstelle Checkout-Session auf dem Server
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           planId,
-          email,
           billingPeriod,
           successUrl: window.location.origin + '?payment=success',
           cancelUrl: window.location.origin + '?payment=cancelled',

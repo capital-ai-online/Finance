@@ -42,6 +42,7 @@ import {
 
 interface AdminPanelProps {
   currentUserEmail: string;
+  accessToken?: string;
 }
 
 interface MockUser {
@@ -54,7 +55,7 @@ interface MockUser {
   requestsCount: number;
 }
 
-export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
+export function AdminPanel({ currentUserEmail, accessToken }: AdminPanelProps) {
   // Owner check: single verified owner email only. The former guest-email
   // bypass ('gast@aif-core.de') has been removed — it granted admin-level
   // access to anyone whose session email matched that known, predictable
@@ -165,7 +166,10 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
 
     fetch(`/api/registry/assets/${symbol}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+      },
       body: JSON.stringify({
         price: parsedPrice,
         change24h: parsedChange,

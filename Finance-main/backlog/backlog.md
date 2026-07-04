@@ -16,8 +16,8 @@ This backlog tracks upcoming features, structural enhancements, and compliance a
 - [x] **Model Auto-Routing Latency Checks**: Implement active ping counters to ensure the model router selects the fastest endpoint under 200ms.
 
 ### 🛡️ Deaktivierte & Archivierte Module (Spätere Reaktivierung)
-- [ ] **Risiko-Assessment (VaR)**: Reaktivierung und Überarbeitung der Value-at-Risk Risiko-Zentrale (Variance-Covariance, Historisches Bootstrapping & Monte-Carlo Simulationen). Derzeit vollständig deaktiviert nach Benutzeranweisung (archiviert in `RealTimeRiskAssessment.tsx`).muss noch bewertet werden. Scoring von Llen Werkzeugen mit und ohme Gewichtung der Asset Orchestrator Berechnungen. somit hat ded Nutzer auch gleich ein Gefühl wie wertvoll ein tool ist .
-- [ ] **Interact (Modul 2)**: Reaktivierung des interaktiven Quantum-Workspace-Playgrounds für kooperative Multi-Modell-Simulationen. Derzeit vollständig deaktiviert nach Benutzeranweisung (archiviert in `InteractModule.tsx`).Prio 5 . soll später interaktiv die FRbe der Website undder Reiter nach sentiment verändern und interaktive Grafiken aufbauen ( upgrade vom derzeitigen starter Abo wsl nötig)
+- [ ] **Risiko-Assessment (VaR)**: Reaktivierung und Überarbeitung der Value-at-Risk Risiko-Zentrale (Variance-Covariance, Historisches Bootstrapping & Monte-Carlo Simulationen). Derzeit vollständig deaktiviert nach Benutzeranweisung (archiviert in `RealTimeRiskAssessment.tsx`).
+- [ ] **Interact (Modul 2)**: Reaktivierung des interaktiven Quantum-Workspace-Playgrounds für kooperative Multi-Modell-Simulationen. Derzeit vollständig deaktiviert nach Benutzeranweisung (archiviert in `InteractModule.tsx`).
 
 ### 🇪🇺 Compliance & Accessibility (Ongoing)
 - [x] **Section 508 & BFSG Accessibility Verification**: Complete full screen-reader and keyboard-navigation compatibility audits.

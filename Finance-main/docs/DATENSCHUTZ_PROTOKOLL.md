@@ -34,7 +34,7 @@ Das System ist nach dem Grundsatz **„Privacy-by-Design“ (Art. 25 Abs. 1 DSGV
 ## 🔌 2. Vollständige Datenquellen- & API-Matrix (No-Demo-Data Audit)
 
 Um die Einhaltung der gesetzlichen **No-Demo-Data Policy** zu garantieren, bezieht das System ausschließlich mathematisch-reale Marktdaten über dedizierte Server-Proxys. Es existiert **keine direkte Verbindung vom Browser des Endnutzers zu Drittanbieter-APIs**.
-hier fehlt die Kraken APi und die news api . außerdem sollen für den News Feed mindestens 10 apis angeschlossen werden um die breite und das regime sentiment zu glätten.
+
 | Datenquelle (Schnittstelle) | Typ der Daten | Datenübertragungskanal | Zweck der Verarbeitung | IP-Adressen-Handling | DSGVO-Relevanz |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **CoinGecko API** | Krypto-Echtzeitkurse, Marktkapitalisierung, 24h-Volumen. | **Server-to-Server HTTPS** (Port 443, verschlüsselt). | Versorgung der Screener und des Interact-Spielfelds (Modul 2) mit echten Marktwerten. | **Vollständig gekapselt**. Die IP des Nutzers berührt CoinGecko nie. Anfragen werden vom Express-Server gebündelt und gecached. | Keine (keine personenbezogenen Daten übertragen). |

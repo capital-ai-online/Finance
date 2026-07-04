@@ -19,9 +19,10 @@ interface SubscriptionModalProps {
   currentTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
   onUpdateTier: (tier: 'Free' | 'Starter' | 'Pro' | 'Enterprise') => void;
   email: string;
+  accessToken?: string;
 }
 
-export function SubscriptionModal({ isOpen, onClose, currentTier, onUpdateTier, email }: SubscriptionModalProps) {
+export function SubscriptionModal({ isOpen, onClose, currentTier, onUpdateTier, email, accessToken }: SubscriptionModalProps) {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [selectedPlan, setSelectedPlan] = useState<'Starter' | 'Pro' | 'Enterprise' | null>(null);
 
@@ -247,6 +248,7 @@ export function SubscriptionModal({ isOpen, onClose, currentTier, onUpdateTier, 
               price={Math.round(PLANS.find(p => p.id === selectedPlan)!.price * discountMultiplier)}
               billingPeriod={billingPeriod}
               email={email}
+              accessToken={accessToken}
               onClose={() => setSelectedPlan(null)}
               onSuccess={(tier) => {
                 onUpdateTier(tier);

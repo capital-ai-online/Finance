@@ -40,7 +40,11 @@ interface Perspective {
   stateOfTheArtTool: string;
 }
 
-export function MarkdownOrchestrator() {
+interface MarkdownOrchestratorProps {
+  accessToken?: string;
+}
+
+export function MarkdownOrchestrator({ accessToken }: MarkdownOrchestratorProps) {
   const [activeTab, setActiveTab] = useState<'info' | 'orchestrate' | 'templates'>('info');
   const [selectedPerspective, setSelectedPerspective] = useState<PerspectiveId>('ceo');
   const [config, setConfig] = useState<OrchestratorConfig>({
@@ -208,7 +212,10 @@ export function MarkdownOrchestrator() {
     try {
       const response = await fetch('/api/docs-file', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}),
+        },
         body: JSON.stringify({ path: relativePath, content: generatedMarkdown })
       });
       const data = await response.json();

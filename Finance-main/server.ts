@@ -12,6 +12,7 @@ import { orchestrator } from './src/lib/requestOrchestrator';
 import { assetRegistry } from './src/lib/assetRegistry';
 import { calculateCryptoEnterpriseScore, generateCryptoInputs, calculateMemeCoinScore, generateMemeCoinInputs } from './src/lib/cryptoScoring';
 import { runSmaCrossBacktest } from './src/lib/backtestEngine';
+import nodemailer from 'nodemailer';
 
 dotenv.config();
 
@@ -172,8 +173,21 @@ async function saveSubscription(email: string, tier: string) {
 }
 
 async function getSubscription(email: string): Promise<string> {
+  // SECURITY/REVENUE-CRITICAL FIX: this used to default to 'Enterprise'
+  // (the most expensive paid tier) whenever Supabase was unreachable, a
+  // query errored, OR — most importantly — whenever a user simply had no
+  // subscription row yet, which is the normal case for every brand-new
+  // Free-tier signup. That meant every user effectively got free Enterprise
+  // access. The only safe default, in every failure/not-found case, is
+  // 'Free'. A paid tier must only ever be returned when explicitly found
+  // in the database (or resolved via the single hardcoded owner override
+  // below).
+  if (email.toLowerCase().trim() === 'sven.kulessa@gmail.com') {
+    return 'Enterprise';
+  }
   if (!isSupabaseConfigured()) {
-    return 'Enterprise'; // Default premium tier fallback
+    console.error('[Supabase Backend] Supabase not configured — returning Free tier as the safe default.');
+    return 'Free';
   }
   try {
     const supabaseClientInstance = getServerSupabase();
@@ -183,16 +197,20 @@ async function getSubscription(email: string): Promise<string> {
       .select('tier')
       .eq('email', cleanEmail)
       .maybeSingle();
-      
+
     if (error) {
-      console.error("[Supabase Backend] Error reading subscription from DB:", error);
-    } else if (data) {
+      console.error("[Supabase Backend] Error reading subscription from DB — returning Free tier as the safe default:", error);
+      return 'Free';
+    }
+    if (data) {
       return data.tier;
     }
+    // No row found: user has never subscribed to a paid tier. Free.
+    return 'Free';
   } catch (e: any) {
-    console.error("[Supabase Backend] Error in getSubscription:", e.message || e);
+    console.error("[Supabase Backend] Error in getSubscription — returning Free tier as the safe default:", e.message || e);
+    return 'Free';
   }
-  return 'Enterprise'; // Default premium tier fallback
 }
 
 
@@ -363,9 +381,13 @@ app.post('/api/analyze-image', upload.single('image'), orchestrator.handle('Gemi
 });
 
 // Real server-side endpoint for Stripe checkout session creation
-app.post('/api/stripe/create-checkout-session', async (req, res) => {
+app.post('/api/stripe/create-checkout-session', requireAuth, async (req, res) => {
   try {
-    const { planId, email, billingPeriod, successUrl, cancelUrl } = req.body;
+    const { planId, billingPeriod, successUrl, cancelUrl } = req.body;
+    // Use the JWT-verified email, never trust a client-supplied email here —
+    // otherwise a caller could attribute a checkout/subscription to any
+    // other user's address.
+    const email = (req as any).verifiedEmail;
     
     // Select price ID based on selected plan
     const planUpper = String(planId).toUpperCase();
@@ -441,13 +463,14 @@ app.get('/api/stripe/config', (req, res) => {
 });
 
 // Endpoint to query server-side persisted subscriptions (synced from Webhooks)
-app.post('/api/stripe/create-portal-session', async (req, res) => {
+app.post('/api/stripe/create-portal-session', requireAuth, async (req, res) => {
   try {
-    const { email, returnUrl } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: 'E-Mail-Adresse ist ein Pflichtfeld.' });
-    }
-
+    const { returnUrl } = req.body;
+    // JWT-verified email only — this previously trusted a client-supplied
+    // email straight from the request body, which let any caller obtain a
+    // Stripe Billing Portal link (full billing management access) for any
+    // other user simply by knowing their email address. Fixed.
+    const email = (req as any).verifiedEmail;
     const cleanEmail = String(email).toLowerCase().trim();
     const stripe = getStripeInstance();
 
@@ -483,12 +506,11 @@ app.post('/api/stripe/create-portal-session', async (req, res) => {
   }
 });
 
-app.get('/api/stripe/user-subscription', async (req, res) => {
-  const { email } = req.query;
-  if (!email) {
-    return res.status(400).json({ error: 'Email parameter is required.' });
-  }
-  const userEmail = String(email).toLowerCase().trim();
+app.get('/api/stripe/user-subscription', requireAuth, async (req, res) => {
+  // JWT-verified email only — previously accepted any email as a query
+  // parameter with no verification, letting a caller read any other
+  // user's subscription tier.
+  const userEmail = (req as any).verifiedEmail;
   const tier = await getSubscription(userEmail);
   res.json({ email: userEmail, subscriptionTier: tier });
 });
@@ -1328,7 +1350,9 @@ app.get('/api/docs-file', (req, res) => {
 });
 
 // Endpoint to write or update local documentation files in the /docs folder (staging/git integration support)
-app.post('/api/docs-file', express.json(), (req, res) => {
+// SECURITY: this is an arbitrary file-write primitive (scoped to /docs) —
+// it was previously reachable by any anonymous caller. Admin-token gated.
+app.post('/api/docs-file', requireOwnerAuth, express.json(), (req, res) => {
   const { path: docPath, content } = req.body;
   if (!docPath || content === undefined) {
     return res.status(400).json({ error: 'Path and content parameters are required.' });
@@ -1362,7 +1386,7 @@ app.post('/api/docs-file', express.json(), (req, res) => {
 
 
 // Endpoint to list all audit trail files from /docs/reports
-app.get('/api/orchestrator/audit-files', (req, res) => {
+app.get('/api/orchestrator/audit-files', requireOwnerAuth, (req, res) => {
   const reportsDir = path.join(process.cwd(), 'docs', 'reports');
   try {
     if (!fs.existsSync(reportsDir)) {
@@ -1388,7 +1412,11 @@ app.get('/api/orchestrator/audit-files', (req, res) => {
 });
 
 // Endpoint to generate simulated/automated audit logs and save them as actual JSON files in /docs/reports
-app.post('/api/orchestrator/create-simulated-audit', express.json(), (req, res) => {
+// SECURITY: previously reachable by any anonymous caller, who could inject
+// a fabricated "COMPLIANT" audit record (client-controlled status/score)
+// into the audit trail shown in the Admin Panel / Compliance Exporter.
+// Admin-token gated.
+app.post('/api/orchestrator/create-simulated-audit', requireOwnerAuth, express.json(), (req, res) => {
   const { symbol, market, timeframe, price, volume, dataQualityScore, finalScore, issues, status } = req.body;
   if (!symbol) {
     return res.status(400).json({ error: 'Symbol parameter is required.' });
@@ -1692,14 +1720,126 @@ app.get('/api/orchestrator/ping-models', (req, res) => {
   });
 });
 
-const ORCHESTRATOR_ADMIN_TOKEN = process.env.ORCHESTRATOR_ADMIN_TOKEN || 'aif-admin-2026';
+const ORCHESTRATOR_ADMIN_TOKEN = process.env.ORCHESTRATOR_ADMIN_TOKEN || '';
+if (!ORCHESTRATOR_ADMIN_TOKEN) {
+  console.error('[SECURITY] ORCHESTRATOR_ADMIN_TOKEN is not set. All admin-protected endpoints will reject every request until this environment variable is configured in Render. (A hardcoded fallback token used to exist here — it was removed because it was visible in source and therefore not a secret.)');
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Service-report email notifications: fired whenever an admin/orchestrator
+// workflow is triggered via the static ORCHESTRATOR_ADMIN_TOKEN (i.e. real
+// server-to-server / scheduled automation — e.g. a Render Cron Job — not
+// interactive browser clicks). Uses Sven's own Microsoft 365 mailbox via
+// SMTP. Requires SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS to be set in
+// Render; silently no-ops (logs only) if not configured, so it never
+// blocks the underlying admin action from completing.
+// ─────────────────────────────────────────────────────────────────────────
+let smtpTransporter: nodemailer.Transporter | null = null;
+function getSmtpTransporter(): nodemailer.Transporter | null {
+  if (smtpTransporter) return smtpTransporter;
+  const host = getCleanEnv('SMTP_HOST');
+  const user = getCleanEnv('SMTP_USER');
+  const pass = getCleanEnv('SMTP_PASS');
+  if (!host || !user || !pass) return null;
+  smtpTransporter = nodemailer.createTransport({
+    host,
+    port: Number(getCleanEnv('SMTP_PORT') || '587'),
+    secure: false, // STARTTLS on 587, matches Microsoft 365's smtp.office365.com
+    requireTLS: true,
+    auth: { user, pass },
+  });
+  return smtpTransporter;
+}
+
+async function sendServiceReportEmail(subject: string, bodyText: string): Promise<void> {
+  const transporter = getSmtpTransporter();
+  if (!transporter) {
+    console.warn(`[service_report] SMTP not configured — skipped email: ${subject}`);
+    return;
+  }
+  try {
+    await transporter.sendMail({
+      from: getCleanEnv('SMTP_USER'),
+      to: 'service_report@capital-ai.online',
+      subject: `[Capital AI] ${subject}`,
+      text: bodyText,
+    });
+  } catch (err: any) {
+    console.error('[service_report] Failed to send notification email:', err.message || err);
+  }
+}
 
 function requireOrchestratorAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
   const token = req.headers['x-orchestrator-admin-token'] || req.headers['authorization']?.toString().replace('Bearer ', '');
-  if (token !== ORCHESTRATOR_ADMIN_TOKEN) {
+  if (!ORCHESTRATOR_ADMIN_TOKEN || !token || token !== ORCHESTRATOR_ADMIN_TOKEN) {
     return res.status(401).json({ error: 'Ungültiger Admin-Token. Zugriff verweigert.' });
   }
+  // Fire-and-forget notification: this request authenticated as the
+  // service account, i.e. a triggered workflow rather than an interactive
+  // owner click. Don't block the request on the email.
+  sendServiceReportEmail(
+    `Service-Account-Aktion ausgeführt: ${req.method} ${req.path}`,
+    `Ein automatisierter Workflow hat sich über den Service-Account-Token authentifiziert und folgenden Endpunkt aufgerufen:\n\n${req.method} ${req.path}\nZeitpunkt: ${new Date().toISOString()}\n\nWenn du das nicht erwartet hast, prüfe umgehend, wer/was Zugriff auf ORCHESTRATOR_ADMIN_TOKEN hat.`
+  ).catch(() => {});
   next();
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// requireOwnerAuth: for admin actions triggered from the browser (Admin
+// Panel UI), where there is no way to attach the static
+// ORCHESTRATOR_ADMIN_TOKEN. Verifies the caller's real Supabase JWT and
+// checks the resulting email against the single verified owner account.
+// The static token (requireOrchestratorAdmin) remains in place for
+// server-to-server / curl-only operational endpoints (Kraken, backtest
+// report generation, orchestrator config/reset).
+// ─────────────────────────────────────────────────────────────────────────
+const OWNER_EMAIL = 'sven.kulessa@gmail.com';
+
+async function requireOwnerAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  try {
+    const authHeader = req.headers['authorization']?.toString() || '';
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) {
+      return res.status(401).json({ error: 'Authentifizierung erforderlich.' });
+    }
+    const supabaseClientInstance = getServerSupabase();
+    const { data, error } = await supabaseClientInstance.auth.getUser(token);
+    const verifiedEmail = data?.user?.email?.toLowerCase().trim();
+    if (error || !verifiedEmail || verifiedEmail !== OWNER_EMAIL) {
+      return res.status(403).json({ error: 'Zugriff nur für den verifizierten Eigentümer-Account.' });
+    }
+    next();
+  } catch (err: any) {
+    console.error('[requireOwnerAuth] Verification failed:', err.message || err);
+    return res.status(401).json({ error: 'Authentifizierung fehlgeschlagen.' });
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────
+// requireAuth: verifies a real Supabase-issued JWT (sent as
+// `Authorization: Bearer <access_token>`) and attaches the verified email
+// to req.verifiedEmail. Use this for any endpoint that acts on a specific
+// user's own data (billing, subscription lookup) so a caller cannot simply
+// supply someone else's email in the request body/query to read or act on
+// their account (IDOR).
+// ─────────────────────────────────────────────────────────────────────────
+async function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  try {
+    const authHeader = req.headers['authorization']?.toString() || '';
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) {
+      return res.status(401).json({ error: 'Authentifizierung erforderlich. Kein Zugriffstoken übermittelt.' });
+    }
+    const supabaseClientInstance = getServerSupabase();
+    const { data, error } = await supabaseClientInstance.auth.getUser(token);
+    if (error || !data?.user?.email) {
+      return res.status(401).json({ error: 'Ungültiges oder abgelaufenes Zugriffstoken.' });
+    }
+    (req as any).verifiedEmail = data.user.email.toLowerCase().trim();
+    next();
+  } catch (err: any) {
+    console.error('[requireAuth] Verification failed:', err.message || err);
+    return res.status(401).json({ error: 'Authentifizierung fehlgeschlagen.' });
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1959,7 +2099,10 @@ app.get('/api/registry/assets/:symbol', (req, res) => {
 });
 
 // UPDATE asset parameters in registry dynamically
-app.post('/api/registry/assets/:symbol', express.json(), (req, res) => {
+// SECURITY: previously reachable by any anonymous caller, who could inject
+// fabricated price/volatility/marketCap values (or lock them against real
+// updates) into data served to every user. Admin-token gated.
+app.post('/api/registry/assets/:symbol', requireOwnerAuth, express.json(), (req, res) => {
   const { expectedReturn, volatility, drift, price, change24h, marketCap, isLocked } = req.body;
   const symbol = req.params.symbol;
   

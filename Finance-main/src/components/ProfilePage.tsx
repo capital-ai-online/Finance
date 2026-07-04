@@ -34,6 +34,7 @@ export interface UserProfile {
 interface ProfilePageProps {
   profile: UserProfile;
   onUpdateProfile: (newProfile: UserProfile) => void;
+  accessToken?: string;
 }
 
 const AVATARS = [
@@ -44,7 +45,7 @@ const AVATARS = [
   { id: '5', label: 'Arbitrage', icon: Target, color: 'from-purple-500 to-indigo-700' }
 ];
 
-export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
+export function ProfilePage({ profile, onUpdateProfile, accessToken }: ProfilePageProps) {
   const [name, setName] = useState(profile.name);
   const [email, setEmail] = useState(profile.email);
   const [preferredAssetClass, setPreferredAssetClass] = useState(profile.preferredAssetClass);
@@ -64,6 +65,10 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
   const AvatarIcon = activeAvatar.icon;
 
   const handleManageBilling = async () => {
+    if (!accessToken) {
+      setPortalError('Bitte melde dich erneut an, um dein Abo zu verwalten.');
+      return;
+    }
     setPortalLoading(true);
     setPortalError(null);
     try {
@@ -71,9 +76,9 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          email: profile.email,
           returnUrl: window.location.href,
         }),
       });

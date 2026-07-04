@@ -196,8 +196,13 @@ export function MarketingLandingPage({ onGetStarted, onLogin }: MarketingLanding
         </button>
       </section>
 
-      <footer className="border-t border-white/10 py-6 text-center text-[10px] text-white/30 font-mono">
-        Capital AI · Strict No Demo Data Policy · EU GDPR Compliant
+      <footer className="border-t border-white/10 py-6 text-center space-y-1">
+        <p className="text-[10px] text-white/30 font-mono">
+          Capital AI · Strict No Demo Data Policy · EU GDPR Compliant
+        </p>
+        <p className="text-[11px] font-mono text-white/60 uppercase tracking-widest">
+          Support: support@capital-ai.online
+        </p>
       </footer>
     </div>
   );

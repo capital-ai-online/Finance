@@ -183,8 +183,10 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
     }
 
     // 2. Fetch/sync latest persistent tier from backend webhook storage on mount
-    if (profile.email) {
-      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(profile.email)}`)
+    if (profile.email && userSession.accessToken) {
+      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(profile.email)}`, {
+        headers: { 'Authorization': `Bearer ${userSession.accessToken}` }
+      })
         .then(res => res.json())
         .then(data => {
           if (data.subscriptionTier && data.subscriptionTier !== profile.subscriptionTier) {
@@ -1045,6 +1047,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
                 currentTier={profile.subscriptionTier} 
                 onUpdateTier={(tier) => setProfile(prev => ({ ...prev, subscriptionTier: tier }))} 
                 email={profile.email}
+                accessToken={userSession.accessToken}
               />
             )}
 
@@ -1064,11 +1067,12 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
               <ProfilePage 
                 profile={profile} 
                 onUpdateProfile={handleUpdateProfile} 
+                accessToken={userSession.accessToken}
               />
             )}
 
             {activeView === 'markdown-orchestrator' && (
-              <MarkdownOrchestrator />
+              <MarkdownOrchestrator accessToken={userSession.accessToken} />
             )}
 
             {activeView === 'request-orchestrator' && (
@@ -1129,7 +1133,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
             )}
 
             {activeView === 'admin-panel' && (
-              <AdminPanel currentUserEmail={profile.email} />
+              <AdminPanel currentUserEmail={profile.email} accessToken={userSession.accessToken} />
             )}
           </motion.div>
         </AnimatePresence>
@@ -1171,6 +1175,9 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
             <p className="text-[11px] font-mono text-white/60 uppercase tracking-widest mt-2">
               Strikte No-Demo-Data-Policy: Keine Interpolation unvollständiger Datenreihen.
             </p>
+            <p className="text-[11px] font-mono text-white/60 uppercase tracking-widest mt-1">
+              Support: support@capital-ai.online
+            </p>
           </div>
         </footer>
       </main>
@@ -1183,6 +1190,7 @@ export function Dashboard({ userSession, onLogout, onRegister }: DashboardProps)
             currentTier={profile.subscriptionTier}
             onUpdateTier={(tier) => setProfile(prev => ({ ...prev, subscriptionTier: tier }))}
             email={profile.email}
+            accessToken={userSession.accessToken}
           />
         )}
       </AnimatePresence>

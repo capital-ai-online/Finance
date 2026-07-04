@@ -24,9 +24,10 @@ interface AbonnementsProps {
   currentTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
   onUpdateTier: (tier: 'Free' | 'Starter' | 'Pro' | 'Enterprise') => void;
   email?: string;
+  accessToken?: string;
 }
 
-export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@gmail.com' }: AbonnementsProps) {
+export function Abonnements({ currentTier, onUpdateTier, email, accessToken }: AbonnementsProps) {
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
@@ -45,9 +46,13 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
       .then(data => setConfigStatus(data))
       .catch(err => console.error("Error loading stripe config status:", err));
 
-    // 2. Query persisted database-tier for this user
-    if (email) {
-      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(email)}`)
+    // 2. Query persisted database-tier for this user (requires a verified
+    // session — no email fallback here, since defaulting to any email,
+    // including the owner's, would leak whichever account's tier that is).
+    if (email && accessToken) {
+      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(email)}`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      })
         .then(res => res.json())
         .then(data => {
           if (data.subscriptionTier && data.subscriptionTier !== currentTier) {
@@ -56,7 +61,7 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
         })
         .catch(err => console.error("Error syncing user subscription tier:", err));
     }
-  }, [email]);
+  }, [email, accessToken]);
 
   // Discount indicator
   const discountMultiplier = billingPeriod === 'yearly' ? 0.9 : 1.0;
@@ -518,6 +523,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
             price={showCheckoutModal === 'Free' ? 0 : Math.round(PLANS.find(p => p.id === showCheckoutModal)!.price * discountMultiplier)}
             billingPeriod={billingPeriod}
             email={email}
+            accessToken={accessToken}
             onClose={() => setShowCheckoutModal(null)}
             onSuccess={(tier) => {
               onUpdateTier(tier);
