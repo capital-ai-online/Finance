@@ -27,7 +27,7 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
   const [demoMode, setDemoMode] = useState(false);
   const [serverPublishableKey, setServerPublishableKey] = useState<string | null>(null);
 
-  // PROMO-CODE / TRIAL FEATURE: Added to handle TRIAL26 promotional campaign for free 1-month trials
+  // PROMO-CODE / TRIAL FEATURE: Added to handle TRIAL26 and BETASTAR promotional campaigns for free trials
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
@@ -36,10 +36,16 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
     setPromoError(null);
     const clean = promoCode.trim().toUpperCase();
     if (clean === 'TRIAL26') {
-      if (planId === 'Pro' && billingPeriod === 'monthly') {
+      if (planId === 'Pro') {
         setPromoApplied(true);
       } else {
-        setPromoError('Der Code TRIAL26 gilt exklusiv für das Pro Monats-Abo.');
+        setPromoError('Der Code TRIAL26 gilt exklusiv für das Pro Abonnement.');
+      }
+    } else if (clean === 'BETASTAR') {
+      if (planId === 'Pro' || planId === 'Enterprise') {
+        setPromoApplied(true);
+      } else {
+        setPromoError('Der Code BETASTAR gilt exklusiv für Pro und Enterprise Abonnements.');
       }
     } else {
       setPromoError('Ungültiger Gutscheincode.');
@@ -69,7 +75,7 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
     setLoading(true);
     setError(null);
 
-    // PROMO-CODE / TRIAL ACTIVATION: Handles free elevation if TRIAL26 is applied
+    // PROMO-CODE / TRIAL ACTIVATION: Handles free elevation if a valid promo code is applied
     if (promoApplied) {
       try {
         const response = await fetch('/api/stripe/update-subscription-simulated', {
@@ -79,7 +85,7 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
           },
           body: JSON.stringify({
             email,
-            tier: 'Pro'
+            tier: planId
           })
         });
         const data = await response.json();
@@ -87,12 +93,12 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
           throw new Error(data.error || 'Fehler bei der Aktivierung des Gutscheins.');
         }
         
-        onSuccess('Pro');
+        onSuccess(planId);
         setLoading(false);
         onClose();
         return;
       } catch (err: any) {
-        console.error('[PROMO-CODE TRIAL26] Checkout Error:', err);
+        console.error('[PROMO-CODE] Checkout Error:', err);
         setError(err.message || 'Fehler bei der Gutschein-Aktivierung.');
         setLoading(false);
         return;
@@ -279,7 +285,7 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
           {promoApplied && (
             <p className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              Gutscheincode <strong className="text-white">TRIAL26</strong> erfolgreich angewendet! (100% Rabatt)
+              Gutscheincode <strong className="text-white">{promoCode.trim().toUpperCase()}</strong> erfolgreich angewendet! (100% Rabatt)
             </p>
           )}
         </div>

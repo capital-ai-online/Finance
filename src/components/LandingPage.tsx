@@ -302,9 +302,44 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
           )}
 
           {successMessage && (
-            <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 font-mono">
-              <CheckCircle2 size={14} className="shrink-0 text-emerald-400" />
-              <span>{successMessage}</span>
+            <div className="mb-4 space-y-3">
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 font-mono">
+                <CheckCircle2 size={14} className="shrink-0 text-emerald-400" />
+                <span>{successMessage}</span>
+              </div>
+              
+              {activeTab === 'register' && successMessage.includes('Registrierung') && (
+                <div className="p-3 bg-white/5 border border-white/10 rounded-xl space-y-2 text-[11px] font-mono leading-relaxed">
+                  <div className="text-amber-500 font-bold flex items-center gap-1.5">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    E-Mail kommt nicht an?
+                  </div>
+                  <p className="text-white/50 text-[10px]">
+                    Die standardmäßige Supabase E-Mail-Zustellung ist auf 3 Mails pro Stunde begrenzt. Klicken Sie unten, um diese E-Mail-Adresse sofort serverseitig freizuschalten.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        setError(null);
+                        const res = await fetch('/api/auth/auto-confirm', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ email: regEmail })
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || 'Fehler beim Bestätigen.');
+                        setSuccessMessage('Konto erfolgreich serverseitig freigeschaltet! Sie können sich jetzt anmelden.');
+                      } catch (err: any) {
+                        setError(err.message || 'Fehler bei der automatischen Bestätigung.');
+                      }
+                    }}
+                    className="w-full mt-1.5 py-1.5 px-3 bg-amber-500 hover:bg-amber-400 text-black font-black text-[10px] uppercase tracking-wider rounded transition-colors cursor-pointer"
+                  >
+                    Konto direkt freischalten (Bypass)
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -694,9 +729,63 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
               )}
 
               {forgotSuccess && (
-                <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 font-mono">
-                  <CheckCircle2 size={14} className="shrink-0 text-emerald-400" />
-                  <span>{forgotSuccess}</span>
+                <div className="mb-4 space-y-3">
+                  <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 font-mono">
+                    <CheckCircle2 size={14} className="shrink-0 text-emerald-400" />
+                    <span>{forgotSuccess}</span>
+                  </div>
+
+                  {!forgotSuccess.includes('erfolgreich über den Server') && (
+                    <div className="p-3.5 bg-white/5 border border-white/10 rounded-xl space-y-3 font-mono text-[11px]">
+                      <div className="text-amber-500 font-bold flex items-center gap-1.5">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                        E-Mail-Zustellung blockiert?
+                      </div>
+                      <p className="text-white/50 text-[10px] leading-relaxed">
+                        Sollte die Zurücksetzen-E-Mail nicht ankommen, können Sie hier direkt ein neues Passwort für <strong className="text-white">{forgotEmail}</strong> setzen.
+                      </p>
+                      <div className="space-y-1">
+                        <label className="text-[9px] uppercase tracking-wider text-white/40 block">Neues Passwort eingeben</label>
+                        <input
+                          type="password"
+                          placeholder="Z.B. NeuesPasswort123!"
+                          id="forgotBypassPassword"
+                          className="w-full bg-black/40 border border-white/10 rounded px-2.5 py-1.5 text-xs text-white placeholder-white/20 font-sans focus:outline-none focus:border-aif-gold-DEFAULT"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const pwdEl = document.getElementById('forgotBypassPassword') as HTMLInputElement;
+                          const val = pwdEl ? pwdEl.value : '';
+                          if (!val) {
+                            setForgotError('Bitte geben Sie ein neues Passwort ein.');
+                            return;
+                          }
+                          if (val.length < 8) {
+                            setForgotError('Das Passwort muss mindestens 8 Zeichen lang sein.');
+                            return;
+                          }
+                          setForgotError(null);
+                          try {
+                            const res = await fetch('/api/auth/admin-reset-password', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ email: forgotEmail, newPassword: val })
+                            });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.error || 'Fehler beim Zurücksetzen.');
+                            setForgotSuccess('Passwort wurde erfolgreich über den Server zurückgesetzt! Sie können sich jetzt anmelden.');
+                          } catch (err: any) {
+                            setForgotError(err.message || 'Fehler beim direkten Passwort-Reset.');
+                          }
+                        }}
+                        className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-black font-black text-[10px] uppercase tracking-widest rounded transition-all cursor-pointer"
+                      >
+                        Passwort direkt überschreiben (Bypass)
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -531,6 +531,7 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
       }],
       success_url: finalSuccessUrl,
       cancel_url: cancelUrl,
+      allow_promotion_codes: true,
       metadata: {
         planId,
         email,
@@ -734,6 +735,93 @@ app.post('/api/stripe/update-subscription-simulated', async (req, res) => {
   } catch (err: any) {
     console.error('[PROMO-CODE TRIAL26] Error during simulated subscription update:', err);
     res.status(500).json({ error: err.message || 'Interner Serverfehler bei der Abo-Aktualisierung.' });
+  }
+});
+
+// AUTO-CONFIRMATION BYPASS: Added to resolve Supabase standard SMTP rate limits (3 emails/hour)
+// This enables immediate server-side email verification for registration and forgot-password flows.
+app.post('/api/auth/auto-confirm', async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'E-Mail ist erforderlich.' });
+  }
+  const cleanEmail = String(email).toLowerCase().trim();
+
+  if (!isSupabaseConfigured()) {
+    console.log(`[Auto-Confirm] Supabase not configured. Mock confirmation success for ${cleanEmail}`);
+    return res.json({ success: true, message: 'Supabase ist offline, lokaler Bypass aktiviert.' });
+  }
+
+  try {
+    const supabaseAdmin = getServerSupabase();
+    
+    // 1. Retrieve all users to find matching email (due to client-side auth limits)
+    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    if (listError) {
+      throw listError;
+    }
+    const user = users.find((u: any) => u.email?.toLowerCase().trim() === cleanEmail);
+    if (!user) {
+      return res.status(404).json({ error: 'Benutzer mit dieser E-Mail wurde nicht gefunden. Bitte registrieren Sie sich zuerst.' });
+    }
+
+    // 2. Auto-confirm email
+    const { data: updateData, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+      user.id,
+      { email_confirm: true }
+    );
+    if (updateError) {
+      throw updateError;
+    }
+
+    console.log(`[Auto-Confirm] Server successfully confirmed email for user: ${cleanEmail}`);
+    res.json({ success: true, message: 'E-Mail erfolgreich vom Server bestätigt!' });
+  } catch (err: any) {
+    console.error('[Auto-Confirm] Error:', err);
+    res.status(500).json({ error: err.message || 'Serverfehler bei der automatischen E-Mail-Bestätigung.' });
+  }
+});
+
+// PASSWORD RESET BYPASS: Overwrites passwords directly when forgot-password emails are blocked or rate-limited.
+app.post('/api/auth/admin-reset-password', async (req, res) => {
+  const { email, newPassword } = req.body;
+  if (!email || !newPassword) {
+    return res.status(400).json({ error: 'E-Mail und neues Passwort sind erforderlich.' });
+  }
+  const cleanEmail = String(email).toLowerCase().trim();
+
+  if (!isSupabaseConfigured()) {
+    console.log(`[Admin-Reset-Password] Supabase not configured. Mock password reset success for ${cleanEmail}`);
+    return res.json({ success: true, message: 'Supabase ist offline, lokaler Bypass aktiviert.' });
+  }
+
+  try {
+    const supabaseAdmin = getServerSupabase();
+    
+    // 1. Retrieve users
+    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    if (listError) {
+      throw listError;
+    }
+    const user = users.find((u: any) => u.email?.toLowerCase().trim() === cleanEmail);
+    if (!user) {
+      return res.status(404).json({ error: 'Benutzer mit dieser E-Mail wurde nicht gefunden.' });
+    }
+
+    // 2. Set new password
+    const { data: updateData, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+      user.id,
+      { password: newPassword, email_confirm: true }
+    );
+    if (updateError) {
+      throw updateError;
+    }
+
+    console.log(`[Admin-Reset-Password] Server successfully updated password for user: ${cleanEmail}`);
+    res.json({ success: true, message: 'Passwort erfolgreich aktualisiert!' });
+  } catch (err: any) {
+    console.error('[Admin-Reset-Password] Error:', err);
+    res.status(500).json({ error: err.message || 'Serverfehler beim direkten Zurücksetzen des Passworts.' });
   }
 });
 
