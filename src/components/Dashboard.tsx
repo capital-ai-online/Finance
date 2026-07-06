@@ -1395,7 +1395,7 @@ export function Dashboard({
               <span>support@capital-ai.online</span>
             </a>
 
-            {profile.subscriptionTier !== 'Enterprise' ? (
+            {profile.subscriptionTier === 'Free' ? (
               <button
                 onClick={() => setIsSubscriptionModalOpen(true)}
                 className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 text-black font-black text-[11px] sm:text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1 sm:gap-1.5 shadow-[0_0_15px_rgba(245,196,83,0.3)] cursor-pointer"
@@ -1405,9 +1405,15 @@ export function Dashboard({
                 <span className="sm:hidden">Premium</span>
               </button>
             ) : (
-              <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center gap-1.5">
+              <div className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 ${
+                profile.subscriptionTier === 'Enterprise'
+                  ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                  : profile.subscriptionTier === 'Pro'
+                  ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400'
+                  : 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
+              }`}>
                 <ShieldCheck size={14} />
-                <span>Enterprise Aktiv</span>
+                <span>{profile.subscriptionTier} Aktiv</span>
               </div>
             )}
           </div>
