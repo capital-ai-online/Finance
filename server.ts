@@ -731,10 +731,31 @@ app.post('/api/stripe/update-subscription-simulated', async (req, res) => {
   try {
     await saveSubscription(userEmail, tier);
     console.log(`[PROMO-CODE TRIAL26] Elevated subscription for ${userEmail} to ${tier}`);
-    res.json({ success: true, email: userEmail, subscriptionTier: tier });
+    console.log(`[PROMO-CODE TRIAL26] Supabase entry created/updated for ${userEmail}`);
+    res.json({ success: true, email: userEmail, subscriptionTier: tier, supabaseUpdated: true });
   } catch (err: any) {
     console.error('[PROMO-CODE TRIAL26] Error during simulated subscription update:', err);
     res.status(500).json({ error: err.message || 'Interner Serverfehler bei der Abo-Aktualisierung.' });
+  }
+});
+
+// Sync Stripe status and update Supabase after webhook processing
+app.post('/api/stripe/sync-subscription', async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'E-Mail ist erforderlich.' });
+  }
+  const userEmail = String(email).toLowerCase().trim();
+
+  try {
+    const tier = await getSubscription(userEmail);
+    // Force re-save to ensure Supabase is updated
+    await saveSubscription(userEmail, tier);
+    console.log(`[Subscription Sync] Successfully synced ${userEmail} -> ${tier} with Supabase`);
+    res.json({ success: true, email: userEmail, subscriptionTier: tier });
+  } catch (err: any) {
+    console.error('[Subscription Sync] Error syncing subscription:', err);
+    res.status(500).json({ error: err.message || 'Fehler beim Synchronisieren des Abos.' });
   }
 });
 
@@ -2910,4 +2931,3 @@ async function startServer() {
 }
 
 startServer();
-

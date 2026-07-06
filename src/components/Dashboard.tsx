@@ -393,6 +393,7 @@ export function Dashboard({
     }
 
     // 2. Fetch/sync latest persistent tier from backend webhook storage on mount
+    // This ensures that after Stripe webhook completes, we get the updated tier
     if (profile.email) {
       fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(profile.email)}`)
         .then(res => res.json())
@@ -403,6 +404,35 @@ export function Dashboard({
         })
         .catch(err => console.error("Error syncing subscription tier with server:", err));
     }
+
+    // 3. Poll for subscription updates after Stripe session (for better UX after redirect)
+    let pollCount = 0;
+    const pollInterval = setInterval(() => {
+      if (profile.email) {
+        fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(profile.email)}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.subscriptionTier && data.subscriptionTier !== profile.subscriptionTier) {
+              setProfile(prev => ({ ...prev, subscriptionTier: data.subscriptionTier }));
+              // Trigger sync with Supabase to ensure persistence
+              fetch('/api/stripe/sync-subscription', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: profile.email })
+              }).catch(err => console.error("Sync error:", err));
+              clearInterval(pollInterval);
+            }
+          })
+          .catch(err => console.error("Polling error:", err));
+
+        pollCount++;
+        if (pollCount > 15) { // Stop polling after 30 seconds
+          clearInterval(pollInterval);
+        }
+      }
+    }, 2000);
+
+    return () => clearInterval(pollInterval);
   }, []);
 
   // Get active avatar icon for sidebar and profile dropdown

@@ -157,7 +157,17 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
         throw new Error('Stripe.js konnte nicht geladen werden.');
       }
 
-      // 3. Weiterleitung zu Stripe Checkout
+      // 3. Weiterleitung zu Stripe Checkout mit Success-Callback
+      // Store sessionId in sessionStorage to track completion
+      if (data.sessionId) {
+        sessionStorage.setItem('stripe_checkout_session', JSON.stringify({
+          sessionId: data.sessionId,
+          email: email,
+          planId: planId,
+          timestamp: new Date().toISOString()
+        }));
+      }
+
       if (data.checkoutUrl) {
         // Direkte Weiterleitung an die gehostete URL
         window.location.href = data.checkoutUrl;
