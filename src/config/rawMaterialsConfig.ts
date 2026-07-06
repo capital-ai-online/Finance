@@ -19,22 +19,10 @@ export interface ScoringVersion {
 }
 
 export const SCORING_VERSIONS: Record<string, ScoringVersion> = {
-  'v0.5.4': {
-    version: '0.5.4',
-    releasedAt: '2026-07-02',
-    description: 'CAPITAL-AI Unified Commodities Scoring Engine v0.5.4 (Beta-Phase)',
-    weights: {
-      fundamentals: 0.35,  // 35%
-      risk: 0.20,          // 20% (inverted)
-      liquidity: 0.15,     // 15%
-      processing: 0.20,    // 20%
-      strategicValue: 0.10 // 10%
-    }
-  },
-  'v0.6.0': {
-    version: '0.6.0',
-    releasedAt: '2026-07-03',
-    description: 'CAPITAL-AI Unified Commodities Scoring Engine v0.6.0 (Production Beta)',
+  'v0.5.5': {
+    version: '0.5.5',
+    releasedAt: '2026-07-06',
+    description: 'CAPITAL-AI Unified Commodities Scoring Engine v0.5.5 (Beta-Phase)',
     weights: {
       fundamentals: 0.35,  // 35%
       risk: 0.20,          // 20% (inverted)
@@ -45,7 +33,7 @@ export const SCORING_VERSIONS: Record<string, ScoringVersion> = {
   }
 };
 
-export const ACTIVE_VERSION = 'v0.5.4';
+export const ACTIVE_VERSION = 'v0.5.5';
 
 /**
  * Standard database for commodities (Single Source of Truth)
@@ -291,7 +279,10 @@ export const RAW_MATERIALS_DATABASE: Record<string, RawMaterialInput & { symbol:
 /**
  * Normalizes user input into one of the supported raw material IDs or returns null
  */
-export function findRawMaterialConfig(query: string) {
+export function findRawMaterialConfig(query: string | undefined | null) {
+  if (!query || typeof query !== 'string') {
+    return null;
+  }
   const normalized = query.toLowerCase().trim();
   if (RAW_MATERIALS_DATABASE[normalized]) {
     return RAW_MATERIALS_DATABASE[normalized];
@@ -300,8 +291,8 @@ export function findRawMaterialConfig(query: string) {
   // Fallback: search by name or symbol substring
   for (const [key, item] of Object.entries(RAW_MATERIALS_DATABASE)) {
     if (
-      item.name.toLowerCase().includes(normalized) || 
-      item.symbol.toLowerCase().includes(normalized) ||
+      (item.name && item.name.toLowerCase().includes(normalized)) || 
+      (item.symbol && item.symbol.toLowerCase().includes(normalized)) ||
       normalized.includes(key)
     ) {
       return item;

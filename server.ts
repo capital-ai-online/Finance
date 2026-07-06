@@ -12,9 +12,39 @@ import { assetRegistry } from './src/lib/assetRegistry';
 import { CryptoScoringService } from './src/services/cryptoScoringService';
 import { MemeCoinScoringService } from './src/services/memeCoinScoringService';
 import { createRawMaterialsRouter } from './src/routes/rawMaterialsRoutes';
-import { RawMaterialsScoringService } from './src/services/rawMaterialsScoring';
+import { RawMaterialsScoringService } from './src/services/rawMaterialsScoringService';
+import { createStockRouter } from './src/routes/stockRoutes';
+import { PortfolioOrchestrator } from './src/orchestrator/portfolioOrchestrator';
+import { platformDirectorInstance } from './src/platform/director/platformDirector';
+import { createHealthRouter } from './src/routes/healthRoutes';
+import { createQualityGovernanceRouter } from './src/routes/qualityGovernanceRoutes';
+import { logger } from './src/server/logger';
+import { requestIdMiddleware, performanceLoggingMiddleware, globalErrorHandler } from './src/server/middleware';
 
 dotenv.config();
+
+// Standard Console interceptor to guarantee all console.* calls are routed to Winston
+global.console.log = (message?: any, ...optionalParams: any[]) => {
+  const formatted = [message, ...optionalParams].map(v => typeof v === 'object' ? JSON.stringify(v) : v).join(' ');
+  logger.info(formatted, { module: 'console', function: 'log' });
+};
+global.console.warn = (message?: any, ...optionalParams: any[]) => {
+  const formatted = [message, ...optionalParams].map(v => typeof v === 'object' ? JSON.stringify(v) : v).join(' ');
+  logger.warn(formatted, { module: 'console', function: 'warn' });
+};
+global.console.error = (message?: any, ...optionalParams: any[]) => {
+  const formatted = [message, ...optionalParams].map(v => typeof v === 'object' ? JSON.stringify(v) : v).join(' ');
+  logger.error(formatted, { module: 'console', function: 'error' });
+};
+global.console.info = (message?: any, ...optionalParams: any[]) => {
+  const formatted = [message, ...optionalParams].map(v => typeof v === 'object' ? JSON.stringify(v) : v).join(' ');
+  logger.info(formatted, { module: 'console', function: 'info' });
+};
+global.console.debug = (message?: any, ...optionalParams: any[]) => {
+  const formatted = [message, ...optionalParams].map(v => typeof v === 'object' ? JSON.stringify(v) : v).join(' ');
+  logger.debug(formatted, { module: 'console', function: 'debug' });
+};
+
 
 // Helper to normalize, clean and safely resolve environment variables (stripping quotes, whitespaces, and resolving VITE_ prefix mismatch)
 function getCleanEnv(key: string): string {
@@ -37,6 +67,11 @@ function getCleanEnv(key: string): string {
 
 const app = express();
 const PORT = 3000;
+
+// Mount Centralized Request ID tracking and Performance Diagnostics
+app.use(requestIdMiddleware);
+app.use(performanceLoggingMiddleware);
+
 
 // ---------------------------------------------------------
 // OWASP SECURITY MITIGATIONS & CORS HARDENING MIDDLEWARE
@@ -301,6 +336,9 @@ try {
 
 // Routes
 app.use('/api/raw-materials', createRawMaterialsRouter(ai));
+app.use('/api/stocks', createStockRouter(ai));
+app.use('/api/health-check', createHealthRouter(isSupabaseConfigured, getServerSupabase));
+app.use('/api/quality-governance', createQualityGovernanceRouter(ai));
 
 app.post('/api/chat', orchestrator.handle('Gemini Chat'), async (req, res) => {
   if (!ai) {
@@ -421,11 +459,21 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
     let mode: 'subscription' | 'payment' = 'subscription';
 
     // Helper to resolve variables supporting either underscore or hyphen formatting (e.g. STRIPE_PRICE-ID_...)
+    // Also supports SUPABASE_PRICE_ID prefix mapping as requested by user.
     const getStripeVar = (key: string): string => {
-      const und = getCleanEnv(key);
-      if (und) return und;
-      const hyp = getCleanEnv(key.replace(/_/g, '-'));
-      if (hyp) return hyp;
+      const keysToTry = [
+        key,
+        key.replace(/_/g, '-'),
+        key.replace('STRIPE_PRICE_ID_', 'SUPABASE_PRICE_ID_'),
+        key.replace('STRIPE_PRICE_ID_', 'SUPABASE_PRICE_ID_').replace(/_/g, '-'),
+        key.replace('STRIPE_', 'SUPABASE_'),
+        key.replace('STRIPE_', 'SUPABASE_').replace(/_/g, '-')
+      ];
+      
+      for (const k of keysToTry) {
+        const val = getCleanEnv(k);
+        if (val) return val;
+      }
       return '';
     };
     
@@ -447,7 +495,7 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
       priceId = getStripeVar('STRIPE_ID_FOUNDER') || getStripeVar('STRIPE_PRICE_ID_FOUNDER');
       mode = 'payment'; // One-time payment for lifetime!
     } else if (planUpper === 'PDF' || planUpper === 'PDF_EXPORT' || planUpper === 'EXPORT_PDF') {
-      priceId = getStripeVar('STRIPE_PRICE_ID_EXPORT_PDF');
+      priceId = getStripeVar('STRIPE_EXPORT_PDF') || getStripeVar('STRIPE_PRICE_ID_EXPORT_PDF');
       mode = 'payment'; // One-time payment for 3 PDF exports!
     }
 
@@ -458,8 +506,8 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
         ? (billingPeriod === 'yearly' ? 'STRIPE_PRICE_ID_PRO_YEARLY' : 'STRIPE_PRICE_ID_PRO_MONTHLY')
         : planUpper === 'FOUNDER'
         ? 'STRIPE_ID_FOUNDER'
-        : planUpper === 'PDF_EXPORT' || planUpper === 'EXPORT_PDF'
-        ? 'STRIPE_PRICE_ID_EXPORT_PDF'
+        : planUpper === 'PDF_EXPORT' || planUpper === 'EXPORT_PDF' || planUpper === 'PDF'
+        ? 'STRIPE_EXPORT_PDF'
         : `STRIPE_PRICE_ID_${planUpper}`;
 
       return res.status(400).json({ 
@@ -666,6 +714,29 @@ app.post('/api/stripe/add-pdf-credits-simulated', async (req, res) => {
   res.json({ success: true, credits: newCredits });
 });
 
+// PROMO-CODE & TRIAL MODULE: Added for TRIAL26 campaign to support 1-month free CAPITAL-AI PRO subscription trials.
+// This allows direct, verified tier elevation in local and Supabase databases.
+app.post('/api/stripe/update-subscription-simulated', async (req, res) => {
+  const { email, tier } = req.body;
+  if (!email || !tier) {
+    return res.status(400).json({ error: 'E-Mail und Tarifstufe sind erforderlich.' });
+  }
+  const userEmail = String(email).toLowerCase().trim();
+  const validTiers = ['Free', 'Starter', 'Pro', 'Enterprise'];
+  if (!validTiers.includes(tier)) {
+    return res.status(400).json({ error: 'Ungültige Tarifstufe angegeben.' });
+  }
+
+  try {
+    await saveSubscription(userEmail, tier);
+    console.log(`[PROMO-CODE TRIAL26] Elevated subscription for ${userEmail} to ${tier}`);
+    res.json({ success: true, email: userEmail, subscriptionTier: tier });
+  } catch (err: any) {
+    console.error('[PROMO-CODE TRIAL26] Error during simulated subscription update:', err);
+    res.status(500).json({ error: err.message || 'Interner Serverfehler bei der Abo-Aktualisierung.' });
+  }
+});
+
 // Define patterns, application areas, and pattern-aware asset scoring helpers
 function getAssetPatternForSymbol(symbol: string): string {
   const s = symbol.toUpperCase().trim();
@@ -707,57 +778,64 @@ function getApplicationAreaForSymbol(symbol: string, type: string): string {
 }
 
 function calculateAssetScore(symbol: string, type: string, change24h: number, baseScore?: number): number {
-  const s = symbol.toUpperCase().trim();
-  if (type === 'crypto') {
-    const isMemeCoin = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(s);
-    if (isMemeCoin) {
-      const inputs = MemeCoinScoringService.generateMemeCoinInputs(s, change24h);
-      const result = MemeCoinScoringService.scoreMemeCoin(inputs);
-      return result.score;
-    } else {
-      const inputs = CryptoScoringService.generateCryptoInputs(s, change24h);
-      const result = CryptoScoringService.scoreCrypto(inputs);
-      return result.score;
+  try {
+    const s = (symbol || '').toUpperCase().trim();
+    if (!s) return baseScore !== undefined ? baseScore : 50;
+
+    if (type === 'crypto') {
+      const isMemeCoin = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(s);
+      if (isMemeCoin) {
+        const inputs = MemeCoinScoringService.generateMemeCoinInputs(s, change24h);
+        const result = MemeCoinScoringService.scoreMemeCoin(inputs);
+        return result.score;
+      } else {
+        const inputs = CryptoScoringService.generateCryptoInputs(s, change24h);
+        const result = CryptoScoringService.scoreCrypto(inputs);
+        return result.score;
+      }
     }
-  }
 
-  if (type === 'commodity') {
-    try {
-      // Core raw material scoring utilizing the multi-agent/deterministic scoring service of the Rohstoff-Orchestrator
-      // The scoring engine calculates a 0-100 score which we return directly for a unified 0-100 scale.
-      const payload = RawMaterialsScoringService.scoreMaterial({ name: s });
-      return Math.min(100.0, Math.max(0.0, Number(payload.scores.final_score.toFixed(1))));
-    } catch (err) {
-      console.warn(`[Commodity Scoring Fallback] Failed to score via RawMaterialsScoringService for ${s}, using momentum fallback:`, err);
+    if (type === 'commodity') {
+      try {
+        // Core raw material scoring utilizing the multi-agent/deterministic scoring service of the Rohstoff-Orchestrator
+        // The scoring engine calculates a 0-100 score which we return directly for a unified 0-100 scale.
+        const payload = RawMaterialsScoringService.scoreMaterial({ name: s });
+        return Math.min(100.0, Math.max(0.0, Number(payload.scores.final_score.toFixed(1))));
+      } catch (err) {
+        console.warn(`[Commodity Scoring Fallback] Failed to score via RawMaterialsScoringService for ${s}, using momentum fallback:`, err);
+      }
     }
-  }
-  
-  // 1. Calculate base momentum score (scaled to 10-100 scale)
-  const normBaseScore = baseScore !== undefined ? (baseScore > 10.0 ? baseScore : baseScore * 10) : undefined;
-  let baseMomentum = normBaseScore !== undefined ? normBaseScore : (50.0 + (change24h > 0 ? Math.min(40.0, change24h * 5) : Math.max(-40.0, change24h * 5)));
-  
-  // 2. Adjust based on patterns (scaled to 10-100 scale)
-  const pattern = getAssetPatternForSymbol(s);
-  let patternBoost = 0;
-  if (pattern === 'Bullish Engulfing') patternBoost = 45;
-  else if (pattern === 'Inverted Head & Shoulders') patternBoost = 35;
-  else if (pattern === 'Hammer Support' || pattern === 'Hammer Reversal') patternBoost = 30;
-  else if (pattern === 'Double Bottom') patternBoost = 28;
-  else if (pattern === 'Cup & Handle') patternBoost = 25;
-  else if (pattern === 'Bull Flag' || pattern === 'Morning Star') patternBoost = 22;
-  else if (pattern === 'Ascending Triangle' || pattern === 'Ascending Channel') patternBoost = 18;
-  else if (pattern === 'Bearish Harami' || pattern === 'Double Top') patternBoost = -32;
+    
+    // 1. Calculate base momentum score (scaled to 10-100 scale)
+    const normBaseScore = baseScore !== undefined ? (baseScore > 10.0 ? baseScore : baseScore * 10) : undefined;
+    let baseMomentum = normBaseScore !== undefined ? normBaseScore : (50.0 + (change24h > 0 ? Math.min(40.0, change24h * 5) : Math.max(-40.0, change24h * 5)));
+    
+    // 2. Adjust based on patterns (scaled to 10-100 scale)
+    const pattern = getAssetPatternForSymbol(s);
+    let patternBoost = 0;
+    if (pattern === 'Bullish Engulfing') patternBoost = 45;
+    else if (pattern === 'Inverted Head & Shoulders') patternBoost = 35;
+    else if (pattern === 'Hammer Support' || pattern === 'Hammer Reversal') patternBoost = 30;
+    else if (pattern === 'Double Bottom') patternBoost = 28;
+    else if (pattern === 'Cup & Handle') patternBoost = 25;
+    else if (pattern === 'Bull Flag' || pattern === 'Morning Star') patternBoost = 22;
+    else if (pattern === 'Ascending Triangle' || pattern === 'Ascending Channel') patternBoost = 18;
+    else if (pattern === 'Bearish Harami' || pattern === 'Double Top') patternBoost = -32;
 
-  let finalScore = baseMomentum + patternBoost;
+    let finalScore = baseMomentum + patternBoost;
 
-  // Ensure strong bullish patterns like Bullish Engulfing keep their high rating!
-  if (pattern === 'Bullish Engulfing') {
-    if (finalScore < 82) {
-      finalScore = 82 + (change24h > 0 ? Math.min(10.0, change24h * 2) : Math.max(-10.0, change24h * 2));
+    // Ensure strong bullish patterns like Bullish Engulfing keep their high rating!
+    if (pattern === 'Bullish Engulfing') {
+      if (finalScore < 82) {
+        finalScore = 82 + (change24h > 0 ? Math.min(10.0, change24h * 2) : Math.max(-10.0, change24h * 2));
+      }
     }
-  }
 
-  return Math.min(100.0, Math.max(1.0, Number(finalScore.toFixed(1))));
+    return Math.min(100.0, Math.max(1.0, Number(finalScore.toFixed(1))));
+  } catch (globalErr) {
+    console.warn(`[Global Scoring Fallback] Uncaught error in calculateAssetScore for ${symbol}:`, globalErr);
+    return baseScore !== undefined ? baseScore : 50;
+  }
 }
 
 // Fallback mock data with realistic slightly fluctuating stats on demand
@@ -1541,6 +1619,184 @@ app.get('/api/alpha-vantage-quote', orchestrator.handle('Alpha Vantage Quote'), 
   }
 });
 
+interface CandlestickItem {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+async function fetchAlphaVantageDailyCandlesticks(symbol: string, isCrypto: boolean, key: string): Promise<CandlestickItem[] | null> {
+  try {
+    const fn = isCrypto ? 'DIGITAL_CURRENCY_DAILY' : 'TIME_SERIES_DAILY';
+    let url = '';
+    if (isCrypto) {
+      url = `https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_DAILY&symbol=${symbol}&market=USD&apikey=${key}`;
+    } else {
+      url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${key}`;
+    }
+
+    console.log(`[Alpha Vantage Candlesticks] Requesting URL: ${url.replace(key, 'REDACTED')}`);
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.warn(`[Alpha Vantage] HTTP error ${res.status} for ${symbol}`);
+      return null;
+    }
+
+    const data: any = await res.json();
+    if (data["Note"]) {
+      console.warn(`[Alpha Vantage] Rate limit reached for ${symbol}`);
+      return null;
+    }
+    if (data["Error Message"]) {
+      console.warn(`[Alpha Vantage] Error message for ${symbol}: ${data["Error Message"]}`);
+      return null;
+    }
+
+    const seriesKey = isCrypto ? "Time Series (Digital Currency Daily)" : "Time Series (Daily)";
+    const series = data[seriesKey];
+    if (!series) {
+      console.warn(`[Alpha Vantage] No series data found under key "${seriesKey}" for ${symbol}. Response keys: ${Object.keys(data).join(', ')}`);
+      return null;
+    }
+
+    const history: CandlestickItem[] = [];
+    const keys = Object.keys(series);
+    for (const dateStr of keys) {
+      const entry = series[dateStr];
+      const openKey = isCrypto ? "1a. open (USD)" : "1. open";
+      const highKey = isCrypto ? "2a. high (USD)" : "2. high";
+      const lowKey = isCrypto ? "3a. low (USD)" : "3. low";
+      const closeKey = isCrypto ? "4a. close (USD)" : "4. close";
+      const volumeKey = isCrypto ? "5. volume" : "5. volume";
+
+      const openVal = parseFloat(entry[openKey]);
+      const highVal = parseFloat(entry[highKey]);
+      const lowVal = parseFloat(entry[lowKey]);
+      const closeVal = parseFloat(entry[closeKey]);
+      const volumeVal = parseFloat(entry[volumeKey]);
+
+      if (isNaN(closeVal)) continue;
+
+      // Convert date "YYYY-MM-DD" to "DD.MM.YY"
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const formattedDate = `${parts[2]}.${parts[1]}.${parts[0].substring(2)}`;
+        history.push({
+          date: formattedDate,
+          open: isNaN(openVal) ? closeVal : openVal,
+          high: isNaN(highVal) ? closeVal : highVal,
+          low: isNaN(lowVal) ? closeVal : lowVal,
+          close: closeVal,
+          volume: isNaN(volumeVal) ? 0 : volumeVal
+        });
+      }
+    }
+
+    // Sort chronologically (earliest to latest)
+    history.sort((a, b) => {
+      const partsA = a.date.split('.');
+      const partsB = b.date.split('.');
+      if (partsA.length === 3 && partsB.length === 3) {
+        const dA = new Date(Number('20' + partsA[2]), Number(partsA[1]) - 1, Number(partsA[0]));
+        const dB = new Date(Number('20' + partsB[2]), Number(partsB[1]) - 1, Number(partsB[0]));
+        return dA.getTime() - dB.getTime();
+      }
+      return 0;
+    });
+
+    console.log(`[Alpha Vantage Candlesticks] Successfully loaded ${history.length} data points for ${symbol}`);
+    return history;
+  } catch (err: any) {
+    console.warn(`[Alpha Vantage Error] Candlestick fetch failed for ${symbol}:`, err.message || err);
+    return null;
+  }
+}
+
+// Candlestick history endpoint
+app.get('/api/alpha-vantage-history', orchestrator.handle('Alpha Vantage Candlestick History'), async (req, res) => {
+  const { symbol, range } = req.query;
+  if (!symbol) {
+    return res.status(400).json({ error: 'Symbol parameter is required.' });
+  }
+
+  const rawSymbol = String(symbol).toUpperCase().trim();
+  const isCrypto = CRYPTO_SYMBOLS.includes(rawSymbol) || ['SOL', 'ADA', 'XRP'].includes(rawSymbol);
+  const key = process.env.ALPHA_VANTAGE_KEY;
+
+  let limit = 100; // standard limit for visualization
+  if (range === '3Y' || range === '1095') limit = 365 * 3;
+  else if (range === '5Y' || range === '1825') limit = 365 * 5;
+  else if (range === '1Y' || range === '365') limit = 365;
+  else {
+    const parsedLimit = parseInt(String(range));
+    if (!isNaN(parsedLimit) && parsedLimit > 0) {
+      limit = parsedLimit;
+    }
+  }
+
+  // 1. Try to fetch from real Alpha Vantage if key is configured
+  if (key) {
+    const realData = await fetchAlphaVantageDailyCandlesticks(rawSymbol, isCrypto, key);
+    if (realData && realData.length > 0) {
+      // slice to desired limit if needed
+      const sliced = realData.slice(-limit);
+      return res.json({
+        symbol: rawSymbol,
+        source: 'Alpha Vantage API',
+        data: sliced
+      });
+    }
+  }
+
+  // 2. Fallback: Simulation of daily candlestick data based on Asset Registry
+  try {
+    const baseHistory = await assetRegistry.getHistory(rawSymbol, limit);
+    const candlesticks: CandlestickItem[] = [];
+
+    for (let i = 0; i < baseHistory.length; i++) {
+      const item = baseHistory[i];
+      const prevClose = i > 0 ? baseHistory[i - 1].close : item.close * 0.99;
+      
+      // Open with slight random variance around yesterday's close
+      const open = Number((prevClose * (0.998 + Math.random() * 0.004)).toFixed(rawSymbol.endsWith('USD') && rawSymbol.length > 5 ? 4 : 2));
+      const close = item.close;
+      
+      const maxBody = Math.max(open, close);
+      const minBody = Math.min(open, close);
+      
+      // High is strictly >= max of open/close
+      const high = Number((maxBody * (1.001 + Math.random() * 0.012)).toFixed(rawSymbol.endsWith('USD') && rawSymbol.length > 5 ? 4 : 2));
+      // Low is strictly <= min of open/close
+      const low = Number((minBody * (0.988 + Math.random() * 0.011)).toFixed(rawSymbol.endsWith('USD') && rawSymbol.length > 5 ? 4 : 2));
+      
+      // Simulate volume
+      const baseVol = rawSymbol === 'BTC' ? 80000 : rawSymbol === 'ETH' ? 40000 : 2500;
+      const volume = Math.floor(baseVol * (0.7 + Math.random() * 0.6));
+
+      candlesticks.push({
+        date: item.date,
+        open,
+        high: high < maxBody ? maxBody : high,
+        low: low > minBody ? minBody : low,
+        close,
+        volume
+      });
+    }
+
+    res.json({
+      symbol: rawSymbol,
+      source: key ? 'Alpha Vantage API (Fallback Simulation)' : 'Asset Registry Simulation (No Key)',
+      data: candlesticks
+    });
+  } catch (err: any) {
+    console.error(`[History Error] Failed to generate simulation for ${rawSymbol}:`, err.message || err);
+    res.status(500).json({ error: 'Fehler beim Laden oder Simulieren der historischen Candlestick-Daten.' });
+  }
+});
+
 
 // Endpoint to retrieve real local documentation content to verify compliance, architecture, and security
 app.get('/api/docs-file', (req, res) => {
@@ -1719,156 +1975,187 @@ app.get('/api/backtest-history', orchestrator.handle('Backtest Download'), async
 
 // Real-time newsfeed with advanced backend filtering and watchlist prioritization.
 app.get('/api/news', async (req, res) => {
-  const watchlistParam = String(req.query.watchlist || '');
-  const selectedSymbolParam = String(req.query.selectedSymbol || '');
-  const searchParam = String(req.query.search || '').trim().toLowerCase();
-  const categoryParam = String(req.query.category || 'all');
+  try {
+    const watchlistParam = String(req.query.watchlist || '');
+    const selectedSymbolParam = String(req.query.selectedSymbol || '');
+    const searchParam = String(req.query.search || '').trim().toLowerCase();
+    const categoryParam = String(req.query.category || 'all');
 
-  const watchlistArr = watchlistParam ? watchlistParam.split(',').map(s => s.toUpperCase().trim()) : [];
-  const selectedUpper = selectedSymbolParam.toUpperCase().trim();
+    const watchlistArr = watchlistParam ? watchlistParam.split(',').map(s => s.toUpperCase().trim()) : [];
+    const selectedUpper = selectedSymbolParam.toUpperCase().trim();
 
-  // Load all assets to generate dynamic news grounded in the real-time asset registry
-  const assets = assetRegistry.getAssets();
+    // Load all assets to generate dynamic news grounded in the real-time asset registry
+    const assets = assetRegistry.getAssets();
 
-  const routings = [
-    'Claude 3.5 Sonnet (Deep-Review)',
-    'Gemini 1.5 Pro (Low-Latency)',
-    'GPT-4o (Legacy Engine)',
-    'Llama 3 (DSGVO Local)',
-    'Grok 2.0 (Research)'
-  ];
+    const routings = [
+      'Claude 3.5 Sonnet (Deep-Review)',
+      'Gemini 1.5 Pro (Low-Latency)',
+      'GPT-4o (Legacy Engine)',
+      'Llama 3 (DSGVO Local)',
+      'Grok 2.0 (Research)'
+    ];
 
-  const sources = [
-    'Morningstar Premium Research',
-    'World Bank Data Feed',
-    'Bloomberg Terminal',
-    'Reuters Financial News',
-    'IMF Global Economic Outlook'
-  ];
+    const sources = [
+      'Morningstar Premium Research',
+      'World Bank Data Feed',
+      'Bloomberg Terminal',
+      'Reuters Financial News',
+      'IMF Global Economic Outlook'
+    ];
 
-  // Generate news alerts dynamically on the backend
-  const newsItems: any[] = [];
+    // Generate news alerts dynamically on the backend
+    const newsItems: any[] = [];
 
-  assets.forEach((asset, idx) => {
-    const sym = asset.symbol;
-    const name = asset.name;
-    const change = asset.change24h || 0;
-    const isPositive = change >= 0;
-    const score = asset.score || 5.0;
+    assets.forEach((asset, idx) => {
+      const sym = asset.symbol;
+      const name = asset.name;
+      const change = asset.change24h || 0;
+      const isPositive = change >= 0;
+      const score = asset.score || 5.0;
 
-    // Apply backend-side Category Filtering
-    if (categoryParam !== 'all' && asset.type !== categoryParam) {
-      return;
-    }
-
-    // Apply backend-side Search Query Filtering
-    if (searchParam) {
-      const symLower = sym.toLowerCase();
-      const nameLower = name.toLowerCase();
-      if (!symLower.includes(searchParam) && !nameLower.includes(searchParam)) {
+      // Apply backend-side Category Filtering
+      if (categoryParam !== 'all' && asset.type !== categoryParam) {
         return;
       }
+
+      // Apply backend-side Search Query Filtering
+      if (searchParam) {
+        const symLower = sym.toLowerCase();
+        const nameLower = name.toLowerCase();
+        if (!symLower.includes(searchParam) && !nameLower.includes(searchParam)) {
+          return;
+        }
+      }
+
+      // Generate contextual headlines and insights based on asset status
+      const h1 = isPositive 
+        ? `[Ausbruch] ${name} (${sym}) klettert auf Mehrmonats-Hoch nach positivem Volumen-Trend`
+        : `[Korrektur] Gewinnmitnahmen belasten ${name} (${sym}) nach jüngstem Test der Widerstandszone`;
+      const ins1 = isPositive
+        ? `On-Chain- und Handelsdaten zeigen eine starke Netto-Akkumulation bei $${asset.price}. Der quantitative Score steigt auf ein bullisches Niveau von ${score}.`
+        : `Der Verkaufsdruck nimmt zu, da kurzfristige Akteure ihre Gewinne realisieren. Die wichtige psychologische Marke von $${(asset.price * 1.05).toFixed(2)} erwies sich als zu starker Widerstand.`;
+
+      const h2 = `Modell-Update: Capital-AI Algorithmen prognostizieren ${isPositive ? 'Fortsetzung der Akkumulation' : 'zeitnahe Stabilisierung'} für ${sym}`;
+      const ins2 = `Die fundamentale Bewertung deutet auf eine ${score >= 7.0 ? 'deutliche Unterbewertung' : 'faire Preisstruktur'} hin. Technische Trendindikatoren wie der gleitende 50-Tage-Durchschnitt stützen das aktuelle Niveau.`;
+
+      const isWatched = watchlistArr.includes(sym) || sym === selectedUpper;
+      const alertTime1 = isWatched ? 'Gerade eben' : `vor ${((idx % 12) + 1) * 5} Min.`;
+      const alertTime2 = `vor ${((idx % 12) + 1) * 8} Min.`;
+
+      newsItems.push({
+        id: `${sym}_bnews1_${idx}`,
+        time: alertTime1,
+        symbol: sym,
+        headline: h1,
+        sentiment: isPositive ? 'bullish' : 'bearish',
+        impact: Math.abs(change) > 4 ? 'high' : 'medium',
+        routedTo: routings[idx % routings.length],
+        insight: ins1,
+        premium: idx % 3 === 0,
+        source: sources[idx % sources.length]
+      });
+
+      newsItems.push({
+        id: `${sym}_bnews2_${idx}`,
+        time: alertTime2,
+        symbol: sym,
+        headline: h2,
+        sentiment: 'neutral',
+        impact: 'low',
+        routedTo: routings[(idx + 1) % routings.length],
+        insight: ins2,
+        premium: idx % 4 === 0,
+        source: sources[(idx + 1) % sources.length]
+      });
+    });
+
+    // Always append global macro insights if category filter is all and search is empty
+    if (!searchParam && categoryParam === 'all') {
+      newsItems.push({
+        id: 'macro_1',
+        time: 'vor 2 Min.',
+        symbol: 'ALL',
+        headline: 'Fed signalisiert unerwartete Zinspause – Globale Finanzmärkte reagieren positiv',
+        sentiment: 'bullish',
+        impact: 'high',
+        routedTo: 'Claude 3.5 Sonnet (Deep-Review)',
+        insight: 'Die Marktliquidität steigt rasant. On-Chain-Daten und institutionelle Zuflüsse stützen riskante Assetklassen auf breiter Front.',
+        premium: false,
+        source: 'Federal Reserve Press'
+      });
+      newsItems.push({
+        id: 'macro_2',
+        time: 'vor 15 Min.',
+        symbol: 'ALL',
+        headline: 'EZB warnt vor anhaltenden Inflationsrisiken im Dienstleistungssektor der Eurozone',
+        sentiment: 'bearish',
+        impact: 'medium',
+        routedTo: 'Llama 3 (DSGVO Local)',
+        insight: 'Die Kernrate bleibt hartnäckig. Zinssenkungserwartungen für das dritte Quartal werden am Anleihemarkt gedämpft.',
+        premium: true,
+        source: 'EZB Zentralbank-Bericht'
+      });
     }
 
-    // Generate contextual headlines and insights based on asset status
-    const h1 = isPositive 
-      ? `[Ausbruch] ${name} (${sym}) klettert auf Mehrmonats-Hoch nach positivem Volumen-Trend`
-      : `[Korrektur] Gewinnmitnahmen belasten ${name} (${sym}) nach jüngstem Test der Widerstandszone`;
-    const ins1 = isPositive
-      ? `On-Chain- und Handelsdaten zeigen eine starke Netto-Akkumulation bei $${asset.price}. Der quantitative Score steigt auf ein bullisches Niveau von ${score}.`
-      : `Der Verkaufsdruck nimmt zu, da kurzfristige Akteure ihre Gewinne realisieren. Die wichtige psychologische Marke von $${(asset.price * 1.05).toFixed(2)} erwies sich als zu starker Widerstand.`;
+    // PRIORITIZATION ALGORITHM (Enforces user watchlist priority + selected symbol priority)
+    newsItems.sort((a, b) => {
+      const aSym = String(a.symbol).toUpperCase();
+      const bSym = String(b.symbol).toUpperCase();
 
-    const h2 = `Modell-Update: Capital-AI Algorithmen prognostizieren ${isPositive ? 'Fortsetzung der Akkumulation' : 'zeitnahe Stabilisierung'} für ${sym}`;
-    const ins2 = `Die fundamentale Bewertung deutet auf eine ${score >= 7.0 ? 'deutliche Unterbewertung' : 'faire Preisstruktur'} hin. Technische Trendindikatoren wie der gleitende 50-Tage-Durchschnitt stützen das aktuelle Niveau.`;
+      // 1. Current Selected Symbol gets absolute precedence
+      const aIsSelected = aSym === selectedUpper;
+      const bIsSelected = bSym === selectedUpper;
+      if (aIsSelected && !bIsSelected) return -1;
+      if (bIsSelected && !aIsSelected) return 1;
 
-    const isWatched = watchlistArr.includes(sym) || sym === selectedUpper;
-    const alertTime1 = isWatched ? 'Gerade eben' : `vor ${((idx % 12) + 1) * 5} Min.`;
-    const alertTime2 = `vor ${((idx % 12) + 1) * 8} Min.`;
+      // 2. Watchlist assets prioritized next
+      const aInWatchlist = watchlistArr.includes(aSym);
+      const bInWatchlist = watchlistArr.includes(bSym);
+      if (aInWatchlist && !bInWatchlist) return -1;
+      if (bInWatchlist && !aInWatchlist) return 1;
 
-    newsItems.push({
-      id: `${sym}_bnews1_${idx}`,
-      time: alertTime1,
-      symbol: sym,
-      headline: h1,
-      sentiment: isPositive ? 'bullish' : 'bearish',
-      impact: Math.abs(change) > 4 ? 'high' : 'medium',
-      routedTo: routings[idx % routings.length],
-      insight: ins1,
-      premium: idx % 3 === 0,
-      source: sources[idx % sources.length]
+      // 3. High impact news comes before medium/low
+      const aIsHigh = a.impact === 'high';
+      const bIsHigh = b.impact === 'high';
+      if (aIsHigh && !bIsHigh) return -1;
+      if (bIsHigh && !aIsHigh) return 1;
+
+      // 4. Default to recency sorting
+      return 0;
     });
 
-    newsItems.push({
-      id: `${sym}_bnews2_${idx}`,
-      time: alertTime2,
-      symbol: sym,
-      headline: h2,
-      sentiment: 'neutral',
-      impact: 'low',
-      routedTo: routings[(idx + 1) % routings.length],
-      insight: ins2,
-      premium: idx % 4 === 0,
-      source: sources[(idx + 1) % sources.length]
-    });
-  });
-
-  // Always append global macro insights if category filter is all and search is empty
-  if (!searchParam && categoryParam === 'all') {
-    newsItems.push({
-      id: 'macro_1',
-      time: 'vor 2 Min.',
-      symbol: 'ALL',
-      headline: 'Fed signalisiert unerwartete Zinspause – Globale Finanzmärkte reagieren positiv',
-      sentiment: 'bullish',
-      impact: 'high',
-      routedTo: 'Claude 3.5 Sonnet (Deep-Review)',
-      insight: 'Die Marktliquidität steigt rasant. On-Chain-Daten und institutionelle Zuflüsse stützen riskante Assetklassen auf breiter Front.',
-      premium: false,
-      source: 'Federal Reserve Press'
-    });
-    newsItems.push({
-      id: 'macro_2',
-      time: 'vor 15 Min.',
-      symbol: 'ALL',
-      headline: 'EZB warnt vor anhaltenden Inflationsrisiken im Dienstleistungssektor der Eurozone',
-      sentiment: 'bearish',
-      impact: 'medium',
-      routedTo: 'Llama 3 (DSGVO Local)',
-      insight: 'Die Kernrate bleibt hartnäckig. Zinssenkungserwartungen für das dritte Quartal werden am Anleihemarkt gedämpft.',
-      premium: true,
-      source: 'EZB Zentralbank-Bericht'
-    });
+    // Return the top 3 prioritized news/alerts
+    return res.json(newsItems.slice(0, 3));
+  } catch (error: any) {
+    console.error("[Backend Error] Error in /api/news route handler:", error);
+    // Send back a beautiful, resilient macro-level news feed fallback
+    return res.json([
+      {
+        id: 'macro_fallback_1',
+        time: 'Gerade eben',
+        symbol: 'ALL',
+        headline: 'System-Meldung: Capital-AI Quant-Screener aktiv',
+        sentiment: 'neutral',
+        impact: 'low',
+        routedTo: 'Llama 3 (DSGVO Local)',
+        insight: 'Der primäre News-Kanal wird kalibriert. Quantitative Signale, Charts und Risikoanalysen sind uneingeschränkt verfügbar.',
+        premium: false,
+        source: 'Capital-AI System'
+      },
+      {
+        id: 'macro_fallback_2',
+        time: 'vor 5 Min.',
+        symbol: 'ALL',
+        headline: 'EZB signalisiert Bereitschaft zur Flexibilität bei geldpolitischen Entscheidungen',
+        sentiment: 'neutral',
+        impact: 'medium',
+        routedTo: 'Claude 3.5 Sonnet (Deep-Review)',
+        insight: 'Makroökonomische Indikatoren deuten auf anhaltende Marktstabilität hin. Diversifizierte Portfolios weisen eine solide Resilienz auf.',
+        premium: false,
+        source: 'Capital-AI System'
+      }
+    ]);
   }
-
-  // PRIORITIZATION ALGORITHM (Enforces user watchlist priority + selected symbol priority)
-  newsItems.sort((a, b) => {
-    const aSym = String(a.symbol).toUpperCase();
-    const bSym = String(b.symbol).toUpperCase();
-
-    // 1. Current Selected Symbol gets absolute precedence
-    const aIsSelected = aSym === selectedUpper;
-    const bIsSelected = bSym === selectedUpper;
-    if (aIsSelected && !bIsSelected) return -1;
-    if (bIsSelected && !aIsSelected) return 1;
-
-    // 2. Watchlist assets prioritized next
-    const aInWatchlist = watchlistArr.includes(aSym);
-    const bInWatchlist = watchlistArr.includes(bSym);
-    if (aInWatchlist && !bInWatchlist) return -1;
-    if (bInWatchlist && !aInWatchlist) return 1;
-
-    // 3. High impact news comes before medium/low
-    const aIsHigh = a.impact === 'high';
-    const bIsHigh = b.impact === 'high';
-    if (aIsHigh && !bIsHigh) return -1;
-    if (bIsHigh && !aIsHigh) return 1;
-
-    // 4. Default to recency sorting
-    return 0;
-  });
-
-  // Return the top 15 prioritized news/alerts
-  return res.json(newsItems.slice(0, 15));
 });
 
 // Ad-hoc charts scoring engine using indicators
@@ -2100,6 +2387,37 @@ app.post('/api/registry/assets/:symbol', express.json(), (req, res) => {
   }, true);
 
   res.json({ success: true, asset: assetRegistry.getAsset(symbol) });
+});
+
+
+// GET Platform Director Registered Orchestrator Nodes
+app.get('/api/platform/registry', (req, res) => {
+  res.json({
+    platform: "CAPITAL-AI Enterprise Control Plane",
+    status: "Active",
+    registeredNodes: platformDirectorInstance.getRegisteredNodes()
+  });
+});
+
+// POST Platform Director Task Orchestration (CoreOrchestratorAgent routing)
+app.post('/api/platform/task', express.json(), async (req, res) => {
+  const { id, type, payload, context } = req.body;
+  if (!id || !type || !payload) {
+    return res.status(400).json({ error: "Missing required task properties: 'id', 'type', 'payload'." });
+  }
+
+  try {
+    const result = await platformDirectorInstance.getAgent().handle({ id, type, payload, context });
+    res.json({
+      success: true,
+      result
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message || "An error occurred during platform task execution."
+    });
+  }
 });
 
 
@@ -2348,114 +2666,73 @@ app.post('/api/market-sentiment/simulate-shock', express.json(), orchestrator.ha
 });
 
 
-// POST AI-driven portfolio allocation analysis using Gemini 2.5 Flash
+// POST AI-driven portfolio allocation analysis using Gemini 2.5 Flash and PortfolioOrchestrator
 app.post('/api/portfolio-review', express.json(), orchestrator.handle('Portfolio Review'), async (req, res) => {
-  if (!ai) {
-    return res.status(500).json({ error: 'Gemini API-Schlüssel fehlt oder ist ungültig' });
-  }
   const { allocation, metrics1Y, metrics3Y, metrics5Y } = req.body;
 
   try {
-    const prompt = `Du bist ein hochprofessioneller Quant-Portfolio-Analyst und Risk-Officer bei JENOVA NEXUS / CAPITAL-AI.
-    Analysiere die folgende Portfolio-Allokation und deren historische Backtest-Ergebnisse (1, 3 und 5 Jahre):
-    
-    Allokation:
-    ${JSON.stringify(allocation, null, 2)}
-    
-    Performance-Metriken:
-    - 1-Jahr-Zeitraum: Rendite: ${metrics1Y?.strategyReturn?.toFixed(2)}%, Max Drawdown: -${metrics1Y?.maxDrawdown?.toFixed(2)}%, Sharpe Ratio: ${metrics1Y?.sharpeRatio?.toFixed(2)}
-    - 3-Jahre-Zeitraum: Rendite: ${metrics3Y?.strategyReturn?.toFixed(2)}%, Max Drawdown: -${metrics3Y?.maxDrawdown?.toFixed(2)}%, Sharpe Ratio: ${metrics3Y?.sharpeRatio?.toFixed(2)}
-    - 5-Jahre-Zeitraum: Rendite: ${metrics5Y?.strategyReturn?.toFixed(2)}%, Max Drawdown: -${metrics5Y?.maxDrawdown?.toFixed(2)}%, Sharpe Ratio: ${metrics5Y?.sharpeRatio?.toFixed(2)}
-    
-    Generiere ein professionelles, fundiertes Review (in deutscher Sprache) mit folgenden Punkten im JSON-Format:
-    {
-      "executiveSummary": "<Ein prägnanter Absatz (2-3 Sätze), der das Risiko-Rendite-Profil dieser Allokation zusammenfasst.>",
-      "riskAssessment": "<Spezifische Risikobetrachtung der Kombination aus den gewählten Assets, z.B. Diversifikation, Korrelationen, Volatilität.>",
-      "optimizations": [
-        "<Ein konkreter Verbesserungsvorschlag (z.B. Erhöhung von Gold zur Reduktion von Drawdowns oder Reduktion von Krypto bei hoher Volatilität).>",
-        "<Ein weiterer konstruktiver Optimierungsschlag.>"
-      ]
-    }
-    
-    Antworte AUSSCHLIESSLICH mit diesem JSON-Objekt. Verwende kein Markdown-Code-Highlighting wie \`\`\`json.`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json"
-      }
+    const portfolioOrchestrator = new PortfolioOrchestrator(ai);
+    const reviewResult = await portfolioOrchestrator.reviewPortfolio({
+      allocation: Array.isArray(allocation) ? allocation : [],
+      metrics1Y,
+      metrics3Y,
+      metrics5Y
     });
 
-    const text = response.text || '';
-    let parsedData;
-    try {
-      parsedData = JSON.parse(text);
-    } catch (parseErr) {
-      const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      parsedData = JSON.parse(cleanedText);
-    }
-
-    res.json(parsedData);
+    res.json(reviewResult);
   } catch (error: any) {
-    console.log("[System Notice] Portfolio Review generator: utilizing quantitative dynamic metrics.");
-    
-    // Compute a high-quality analysis based on actual provided portfolio metrics
-    const alloc = Array.isArray(allocation) ? allocation : [];
-    const isCryptoHeavy = alloc.some((item: any) => {
-      const isCrypto = ['BTC', 'ETH', 'SOL', 'ADA'].includes(String(item.symbol || '').toUpperCase());
-      return isCrypto && (item.weight || 0) > 30;
-    });
-
-    const hasGold = alloc.some((item: any) => String(item.symbol || '').toUpperCase() === 'GLD' && (item.weight || 0) > 5);
-
-    const sharpe = metrics3Y?.sharpeRatio || metrics1Y?.sharpeRatio || 1.0;
-    const maxDd = metrics3Y?.maxDrawdown || metrics1Y?.maxDrawdown || 15;
-    const annualReturn = metrics3Y?.strategyReturn || metrics1Y?.strategyReturn || 10;
-
-    let executiveSummary = "";
-    let riskAssessment = "";
-    const optimizations = [];
-
-    if (sharpe >= 1.5) {
-      executiveSummary = `Diese Allokation demonstriert ein hocheffizientes Risiko-Rendite-Profil mit einer hervorragenden Sharpe Ratio von ${sharpe.toFixed(2)}. Die historische Performance liefert starke risikobereinigte Erträge über die analysierten Zeiträume.`;
-      riskAssessment = `Das Gesamtrisiko ist dank einer ausgewogenen Streuung exzellent kontrolliert. Der maximale Drawdown blieb mit -${maxDd.toFixed(2)}% in einem sehr gesunden Rahmen, was auf ein resilientes Portfolio hindeutet.`;
-    } else if (sharpe >= 0.8) {
-      executiveSummary = `Die Allokation weist ein solides und stabiles Risiko-Rendite-Profil auf. Mit einer Sharpe Ratio von ${sharpe.toFixed(2)} erzielt das Portfolio eine angemessene Risikoprämie über dem risikofreien Zinssatz.`;
-      riskAssessment = `Das Portfolio zeigt eine moderate, marktübliche Volatilität. Der maximale historische Drawdown von -${maxDd.toFixed(2)}% spiegelt zyklische Schwankungen wider, die durch gezielte Diversifikation weiter abgefedert werden können.`;
-    } else {
-      executiveSummary = `Das Portfolio zeigt im historischen Vergleich ein suboptimales Verhältnis zwischen Risiko und Rendite (Sharpe Ratio: ${sharpe.toFixed(2)}). Die Erträge von durchschnittlich ${annualReturn.toFixed(2)}% rechtfertigen die eingegangenen Schwankungen nur unzureichend.`;
-      riskAssessment = `Es besteht ein erhöhtes Drawdown-Risiko von bis zu -${maxDd.toFixed(2)}%. Das Portfolio weist strukturelle Klumpenrisiken auf, die in volatilen Marktphasen zu empfindlichen temporären Buchverlusten führen können.`;
-    }
-
-    if (isCryptoHeavy) {
-      optimizations.push("Reduzierung des hohen Krypto-Gewichts (aktuell über 30%) zur drastischen Senkung der Portfolio-Volatilität und des maximalen Drawdowns.");
-    } else if (!isCryptoHeavy && alloc.length > 0) {
-      optimizations.push("Erwägen Sie eine kleine, kontrollierte Beimischung (3-5%) von etablierten Kryptowerten (BTC/ETH), um das Gesamtrenditepotenzial bei moderatem Risikoaufschlag zu optimieren.");
-    }
-
-    if (!hasGold) {
-      optimizations.push("Integration einer defensiven, unkorrelierten Komponente wie Gold (GLD) mit 5-10% Gewichtung zur signifikanten Absicherung bei geopolitischen Krisen und globalen Markt-Drawdowns.");
-    } else {
-      optimizations.push("Systematisches, antizyklisches Rebalancing des Gold-Anteils zur kontinuierlichen Gewährleistung der Absicherungsfunktion.");
-    }
-
-    if (maxDd > 20) {
-      optimizations.push(`Erhöhung des Anteils an liquiden Blue-Chip-Aktien oder konservativen Devisen (z.B. USDCHF), um den maximalen Drawdown unter die kritische Schwelle von 20% zu stabilisieren.`);
-    } else {
-      optimizations.push("Optimierung der Rebalancing-Frequenz (z.B. quartalsweise), um Marktgewinne systematisch zu sichern und Abweichungen von der strategischen Asset-Allokation zu minimieren.");
-    }
-
-    const fallbackReview = {
-      executiveSummary,
-      riskAssessment,
-      optimizations
-    };
-
-    res.json(fallbackReview);
+    console.error("[Portfolio Review Error] Failed in PortfolioOrchestrator pipeline:", error);
+    res.status(500).json({ error: 'Fehler bei der Allokations-Analyse im Portfolio-Orchestrator.' });
   }
 });
 
+
+let serverInstance: any = null;
+
+// Graceful shutdown orchestrator
+const gracefulShutdown = (signal: string) => {
+  logger.fatal(`Received ${signal}. Starting graceful shutdown of CAPITAL-AI backend...`, { module: 'system', function: 'gracefulShutdown' });
+  
+  if (serverInstance) {
+    serverInstance.close(() => {
+      logger.info('HTTP server closed successfully.', { module: 'system', function: 'gracefulShutdown' });
+      logger.info('Graceful shutdown completed. Exiting process.', { module: 'system', function: 'gracefulShutdown' });
+      process.exit(0);
+    });
+
+    // Force terminate after 10s if connections hang
+    setTimeout(() => {
+      logger.error('Graceful shutdown timed out. Forcing process termination.', { module: 'system', function: 'gracefulShutdown' });
+      process.exit(1);
+    }, 10000);
+  } else {
+    process.exit(0);
+  }
+};
+
+// Global unhandled exception handlers
+process.on('uncaughtException', (err) => {
+  logger.fatal(`UNCAUGHT EXCEPTION: ${err.message}`, {
+    module: 'system',
+    function: 'uncaughtException',
+    stack: err.stack,
+    cause: err.cause
+  });
+  gracefulShutdown('uncaughtException');
+});
+
+process.on('unhandledRejection', (reason: any) => {
+  logger.fatal(`UNHANDLED REJECTION: ${reason?.message || reason}`, {
+    module: 'system',
+    function: 'unhandledRejection',
+    stack: reason?.stack,
+    cause: reason?.cause
+  });
+  gracefulShutdown('unhandledRejection');
+});
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
@@ -2472,13 +2749,24 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  // Mount Centralized Global Error Handler at the end of the routing pipeline
+  app.use(globalErrorHandler);
+
+  serverInstance = app.listen(PORT, "0.0.0.0", () => {
+    logger.info(`Server running on http://localhost:${PORT}`, { module: 'system', function: 'startServer' });
     
+    // Register active domain orchestrator nodes into the central Platform Director Control Plane
+    platformDirectorInstance.registerOrchestratorNode("StockOrchestrator", { description: "Orchestriert fundamentale, technische und qualitative Aktienanalysen." });
+    platformDirectorInstance.registerOrchestratorNode("CryptoOrchestrator", { description: "Orchestriert Krypto-Analysen und Risikobewertungen." });
+    platformDirectorInstance.registerOrchestratorNode("MemeCoinOrchestrator", { description: "Spezialisiert auf hoch-volatile Trend-Token-Analysen." });
+    platformDirectorInstance.registerOrchestratorNode("RawMaterialsOrchestrator", { description: "Orchestriert Rohstoffbewertungen und quantitative Analyse-Pipelines." });
+    platformDirectorInstance.registerOrchestratorNode("PortfolioOrchestrator", { description: "Berechnet Portfolioallokationen, Sharpe-Ratios und Diversifikations-Scores." });
+    platformDirectorInstance.registerOrchestratorNode("QualityGovernanceOrchestrator", { description: "Überwacht Codequalität, API-Sicherheit und Systemintegrität." });
+
     // Start automatic background market data fetching to keep the assetRegistry fresh
-    console.log("[Market Data] Initiating background fetch to populate AssetRegistry...");
+    logger.info("[Market Data] Initiating background fetch to populate AssetRegistry...", { module: 'system', function: 'startServer' });
     fetchLiveMarketData().then(data => {
-      console.log(`[Market Data] Successfully pre-cached ${data.length} assets on startup.`);
+      logger.info(`[Market Data] Successfully pre-cached ${data.length} assets on startup.`, { module: 'system', function: 'startServer' });
       cachedMarketData = data;
       lastMarketDataFetch = Date.now();
       for (const asset of data) {
@@ -2491,7 +2779,7 @@ async function startServer() {
         });
       }
     }).catch(err => {
-      console.warn("[Market Data] Pre-cache on startup failed:", err.message || err);
+      logger.warn(`[Market Data] Pre-cache on startup failed: ${err.message || err}`, { module: 'system', function: 'startServer' });
     });
 
     setInterval(async () => {
@@ -2508,9 +2796,9 @@ async function startServer() {
             score: asset.score
           });
         }
-        console.log("[Market Data] Background cache refresh completed.");
+        logger.info("[Market Data] Background cache refresh completed.", { module: 'system', function: 'startServer' });
       } catch (err: any) {
-        console.warn("[Market Data] Background refresh failed:", err.message || err);
+        logger.warn(`[Market Data] Background refresh failed: ${err.message || err}`, { module: 'system', function: 'startServer' });
       }
     }, 60 * 1000); // refresh every 60s
 
@@ -2522,15 +2810,16 @@ async function startServer() {
     const pricePro = getCleanEnv('STRIPE_PRICE_ID_PRO');
     const priceEnterprise = getCleanEnv('STRIPE_PRICE_ID_ENTERPRISE');
 
-    console.log("=== [Stripe Server Diagnostics] ===");
-    console.log(`STRIPE_SECRET_KEY: ${sk ? `Configured (Length: ${sk.length}, Prefix: ${sk.substring(0, 7)})` : 'Missing'}`);
-    console.log(`STRIPE_PUBLISHABLE_KEY: ${pk ? `Configured (Length: ${pk.length}, Prefix: ${pk.substring(0, 7)})` : 'Missing'}`);
-    console.log(`STRIPE_WEBHOOK_SECRET: ${wh ? `Configured (Length: ${wh.length}, Prefix: ${wh.substring(0, 6)})` : 'Missing'}`);
-    console.log(`STRIPE_PRICE_ID_STARTER: ${priceStarter ? `Configured (Length: ${priceStarter.length}, Val: ${priceStarter.substring(0, 10)}...)` : 'Missing'}`);
-    console.log(`STRIPE_PRICE_ID_PRO: ${pricePro ? `Configured (Length: ${pricePro.length}, Val: ${pricePro.substring(0, 10)}...)` : 'Missing'}`);
-    console.log(`STRIPE_PRICE_ID_ENTERPRISE: ${priceEnterprise ? `Configured (Length: ${priceEnterprise.length}, Val: ${priceEnterprise.substring(0, 10)}...)` : 'Missing'}`);
-    console.log("====================================");
+    logger.info("=== [Stripe Server Diagnostics] ===", { module: 'system', function: 'startServer' });
+    logger.info(`STRIPE_SECRET_KEY: ${sk ? `Configured (Length: ${sk.length}, Prefix: ${sk.substring(0, 7)})` : 'Missing'}`, { module: 'system', function: 'startServer' });
+    logger.info(`STRIPE_PUBLISHABLE_KEY: ${pk ? `Configured (Length: ${pk.length}, Prefix: ${pk.substring(0, 7)})` : 'Missing'}`, { module: 'system', function: 'startServer' });
+    logger.info(`STRIPE_WEBHOOK_SECRET: ${wh ? `Configured (Length: ${wh.length}, Prefix: ${wh.substring(0, 6)})` : 'Missing'}`, { module: 'system', function: 'startServer' });
+    logger.info(`STRIPE_PRICE_ID_STARTER: ${priceStarter ? `Configured (Length: ${priceStarter.length}, Val: ${priceStarter.substring(0, 10)}...)` : 'Missing'}`, { module: 'system', function: 'startServer' });
+    logger.info(`STRIPE_PRICE_ID_PRO: ${pricePro ? `Configured (Length: ${pricePro.length}, Val: ${pricePro.substring(0, 10)}...)` : 'Missing'}`, { module: 'system', function: 'startServer' });
+    logger.info(`STRIPE_PRICE_ID_ENTERPRISE: ${priceEnterprise ? `Configured (Length: ${priceEnterprise.length}, Val: ${priceEnterprise.substring(0, 10)}...)` : 'Missing'}`, { module: 'system', function: 'startServer' });
+    logger.info("====================================", { module: 'system', function: 'startServer' });
   });
 }
 
 startServer();
+

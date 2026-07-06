@@ -1,0 +1,16 @@
+{
+  "name": "@fintech-platform/workflow-engine",
+  "version": "2.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@fintech-platform/shared-types": "workspace:*",
+    "@fintech-platform/event-bus": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

@@ -79,7 +79,7 @@ export class CryptoOrchestrator {
       regime_bonus: customInput?.regime_bonus ?? seedInputs.regime_bonus
     };
 
-    // 4. Run the high-fidelity scoring calculations (Version 0.5.4)
+    // 4. Run the high-fidelity scoring calculations (Version 0.5.5)
     const result = CryptoScoringService.scoreCrypto(unifiedInput);
 
     // 5. Build rich aggregated reasoning by incorporating individual agent explanations

@@ -16,16 +16,24 @@ export interface UserSession {
   accessToken?: string;
 }
 
+const DEFAULT_GUEST_SESSION: UserSession = {
+  type: 'guest',
+  name: 'Gast-User',
+  email: 'gast@capital-ai.de',
+  subscriptionTier: 'Free',
+};
+
 export default function App() {
   const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [justLoggedOut, setJustLoggedOut] = useState<boolean>(false);
 
   const updateUserSession = (session: UserSession | null) => {
-    setUserSession(session);
     if (session) {
+      setUserSession(session);
       localStorage.setItem('mcc_user_session', JSON.stringify(session));
     } else {
+      setUserSession(DEFAULT_GUEST_SESSION);
       localStorage.removeItem('mcc_user_session');
     }
   };
@@ -85,6 +93,7 @@ export default function App() {
   };
 
   useEffect(() => {
+    let hasLocal = false;
     // Load cached session from localStorage (robust compliance with EinwVO/DSGVO & standalone readiness when JWT is deactivated)
     const localSessionJson = localStorage.getItem('mcc_user_session');
     if (localSessionJson) {
@@ -93,6 +102,7 @@ export default function App() {
         if (parsed && parsed.email) {
           setUserSession(parsed);
           setLoading(false);
+          hasLocal = true;
           // Still verify with Supabase in background if possible, but don't block
         }
       } catch (e) {
@@ -101,6 +111,9 @@ export default function App() {
     }
 
     if (!supabase) {
+      if (!hasLocal) {
+        setUserSession(DEFAULT_GUEST_SESSION);
+      }
       setLoading(false);
       return;
     }
@@ -110,10 +123,16 @@ export default function App() {
       if (session) {
         handleSupabaseSession(session);
       } else {
+        if (!hasLocal) {
+          setUserSession(DEFAULT_GUEST_SESSION);
+        }
         setLoading(false);
       }
     }).catch(err => {
       console.warn("Supabase getSession failed, using local cache state:", err);
+      if (!hasLocal) {
+        setUserSession(DEFAULT_GUEST_SESSION);
+      }
       setLoading(false);
     });
 
@@ -226,30 +245,23 @@ export default function App() {
   }
 
   return (
-    <>
-      {userSession ? (
-        <Dashboard 
-          userSession={userSession} 
-          onLogout={handleLogout} 
-          onRegister={(name, email) => {}}
-        />
-      ) : (
-        <LandingPage 
-          onLoginEmail={async (email, pwd) => {
-            setJustLoggedOut(false);
-            await handleLogin(email, pwd);
-          }} 
-          onGuestLogin={async () => {
-            setJustLoggedOut(false);
-            await handleGuestLogin();
-          }}
-          onRegisterEmail={async (name, email, pwd) => {
-            setJustLoggedOut(false);
-            await handleRegister(name, email, pwd);
-          }}
-          justLoggedOut={justLoggedOut}
-        />
-      )}
-    </>
+    <Dashboard 
+      userSession={userSession || DEFAULT_GUEST_SESSION} 
+      onLogout={handleLogout} 
+      onRegister={(name, email) => {}}
+      onLoginEmail={async (email, pwd) => {
+        setJustLoggedOut(false);
+        await handleLogin(email, pwd);
+      }}
+      onGuestLogin={async () => {
+        setJustLoggedOut(false);
+        updateUserSession(DEFAULT_GUEST_SESSION);
+      }}
+      onRegisterEmail={async (name, email, pwd) => {
+        setJustLoggedOut(false);
+        await handleRegister(name, email, pwd);
+      }}
+      justLoggedOut={justLoggedOut}
+    />
   );
 }

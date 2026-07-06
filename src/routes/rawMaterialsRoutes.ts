@@ -6,7 +6,7 @@
 import express from 'express';
 import { GoogleGenAI } from '@google/genai';
 import { RawMaterialsOrchestrator } from '../orchestrator/rawMaterialsOrchestrator';
-import { RawMaterialsScoringService } from '../services/rawMaterialsScoring';
+import { RawMaterialsScoringService } from '../services/rawMaterialsScoringService';
 import { validateRawMaterialInput } from '../schemas/rawMaterialsValidation';
 import { RAW_MATERIALS_DATABASE } from '../config/rawMaterialsConfig';
 

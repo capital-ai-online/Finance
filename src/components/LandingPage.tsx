@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldAlert, Mail, User, Lock, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, X, HelpCircle, ChevronDown } from 'lucide-react';
-import { CapitalAiLogo } from './CapitalAiLogo';
+import { CapitalAiLogo } from './common/CapitalAiLogo';
 import { supabase } from '../supabaseClient';
 
 interface LandingPageProps {
