@@ -698,8 +698,13 @@ app.post('/api/stripe/create-portal-session', async (req, res) => {
 
 app.get('/api/stripe/user-subscription', authMiddleware, async (req, res) => {
   const userEmail = (req as any).userEmail;
-  const tier = await getSubscription(userEmail);
-  res.json({ email: userEmail, subscriptionTier: tier });
+  try {
+    const tier = await getSubscription(userEmail);
+    res.json({ email: userEmail, subscriptionTier: tier });
+  } catch (error: any) {
+    console.error(`[User Subscription API] Error fetching subscription for ${userEmail}:`, error.message || error);
+    res.json({ email: userEmail, subscriptionTier: 'Free', error: error.message || 'Internal Server Error' });
+  }
 });
 
 // PDF Export Credits Tracking & Management APIs
@@ -742,29 +747,44 @@ function saveLocalPdfCredits(email: string, credits: number) {
 
 app.get('/api/stripe/pdf-credits', authMiddleware, async (req, res) => {
   const userEmail = (req as any).userEmail;
-  const tier = await getSubscription(userEmail);
-  const isUnlimited = tier === 'Enterprise' || tier === 'Founder';
-  const credits = getLocalPdfCredits(userEmail);
-  res.json({ email: userEmail, credits: isUnlimited ? 9999 : credits, unlimited: isUnlimited });
+  try {
+    const tier = await getSubscription(userEmail);
+    const isUnlimited = tier === 'Enterprise' || tier === 'Founder';
+    const credits = getLocalPdfCredits(userEmail);
+    res.json({ email: userEmail, credits: isUnlimited ? 9999 : credits, unlimited: isUnlimited });
+  } catch (error: any) {
+    console.error(`[PDF Credits API] Error fetching PDF credits for ${userEmail}:`, error.message || error);
+    const credits = getLocalPdfCredits(userEmail);
+    res.json({ email: userEmail, credits: credits, unlimited: false, error: error.message });
+  }
 });
 
 app.post('/api/stripe/consume-pdf-credit', authMiddleware, async (req, res) => {
   const userEmail = (req as any).userEmail;
-  const tier = await getSubscription(userEmail);
-  const isUnlimited = tier === 'Enterprise' || tier === 'Founder';
-  
-  if (isUnlimited) {
-    return res.json({ success: true, credits: 9999, unlimited: true });
+  try {
+    const tier = await getSubscription(userEmail);
+    const isUnlimited = tier === 'Enterprise' || tier === 'Founder';
+    
+    if (isUnlimited) {
+      return res.json({ success: true, credits: 9999, unlimited: true });
+    }
+    
+    const credits = getLocalPdfCredits(userEmail);
+    if (credits <= 0) {
+      return res.status(400).json({ error: 'Sie haben keine PDF-Export-Credits mehr übrig. Bitte erwerben Sie 3 weitere Exports für 3€.', credits: 0 });
+    }
+    
+    const newCredits = credits - 1;
+    saveLocalPdfCredits(userEmail, newCredits);
+    res.json({ success: true, credits: newCredits, unlimited: false });
+  } catch (error: any) {
+    console.error(`[Consume PDF Credit API] Error consuming credit for ${userEmail}:`, error.message || error);
+    // As a user-friendly fallback, let them consume the credit if there's a backend error
+    const credits = getLocalPdfCredits(userEmail);
+    const newCredits = Math.max(0, credits - 1);
+    saveLocalPdfCredits(userEmail, newCredits);
+    res.json({ success: true, credits: newCredits, unlimited: false, warning: 'Abonnement konnte nicht verifiziert werden.' });
   }
-  
-  const credits = getLocalPdfCredits(userEmail);
-  if (credits <= 0) {
-    return res.status(400).json({ error: 'Sie haben keine PDF-Export-Credits mehr übrig. Bitte erwerben Sie 3 weitere Exports für 3€.', credits: 0 });
-  }
-  
-  const newCredits = credits - 1;
-  saveLocalPdfCredits(userEmail, newCredits);
-  res.json({ success: true, credits: newCredits, unlimited: false });
 });
 
 
@@ -797,15 +817,17 @@ async function getOrCreateStripeCustomer(email: string, name?: string): Promise<
 // POST-REGISTRATION TRIGGER / WEBHOOK ENDPOINT
 // Handles both manual/direct signup calls AND Supabase Auth Database Webhook requests
 app.post('/api/auth/post-register', async (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
   try {
-    let email = req.body.email;
-    let name = req.body.name;
+    const body = req.body || {};
+    let email = body.email;
+    let name = body.name;
 
     // Handle Supabase Database Webhook payload structure
-    if (req.body.record && req.body.record.email) {
-      email = req.body.record.email;
-      if (req.body.record.raw_user_meta_data) {
-        name = req.body.record.raw_user_meta_data.full_name || req.body.record.raw_user_meta_data.name;
+    if (body.record && body.record.email) {
+      email = body.record.email;
+      if (body.record.raw_user_meta_data) {
+        name = body.record.raw_user_meta_data.full_name || body.record.raw_user_meta_data.name;
       }
     }
 
@@ -856,7 +878,8 @@ function getUserAuthSupabase() {
 // BACKEND LOGIN TRIGGER / ENDPOINT
 // Handles standard login authentication on the backend and registers the event in backend logs (Render, live systems, etc.)
 app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body;
+  res.setHeader('Content-Type', 'application/json');
+  const { email, password } = req.body || {};
 
   if (!email || !password) {
     return res.status(400).json({ error: 'E-Mail-Adresse und Passwort sind erforderlich.' });
@@ -918,8 +941,10 @@ app.post('/api/auth/login', async (req, res) => {
 // BACKEND LOGOUT TRIGGER / ENDPOINT
 // Handles registration of the logout process in the backend log (useful on Render/live systems)
 app.post('/api/auth/logout', async (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
   try {
-    let email = req.body.email || req.query.email || '';
+    const body = req.body || {};
+    let email = body.email || req.query.email || '';
     
     // Attempt parsing token from Authorization header for email extraction if not provided in body
     const authHeader = req.headers.authorization || req.headers.Authorization;
@@ -999,8 +1024,13 @@ app.post('/api/stripe/sync-subscription', authMiddleware, async (req, res) => {
     console.error(`[Sync Subscription] Error syncing for ${userEmail}:`, err.message || err);
   }
 
-  const currentTier = await getSubscription(userEmail);
-  res.json({ success: true, email: userEmail, subscriptionTier: currentTier });
+  try {
+    const currentTier = await getSubscription(userEmail);
+    res.json({ success: true, email: userEmail, subscriptionTier: currentTier });
+  } catch (err: any) {
+    console.error(`[Sync Subscription] Final tier retrieval failed for ${userEmail}:`, err.message || err);
+    res.json({ success: true, email: userEmail, subscriptionTier: 'Free', error: err.message });
+  }
 });
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
@@ -2968,6 +2998,12 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 async function startServer() {
+  // API fallback route to prevent unmatched API routes from returning HTML
+  app.all('/api/*', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.status(404).json({ success: false, error: 'API-Route nicht gefunden.' });
+  });
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },

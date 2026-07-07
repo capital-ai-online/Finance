@@ -10,10 +10,22 @@ export interface AuthenticatedRequest extends Request {
 // Lazy-initialized Supabase Client for token verification
 let supabaseClient: any = null;
 
+function getCleanValue(val: string | undefined): string {
+  if (!val) return '';
+  return val.trim().replace(/^['"]|['"]$/g, '');
+}
+
 function getSupabase() {
   if (!supabaseClient) {
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const url = getCleanValue(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
+    const key = getCleanValue(
+      process.env.SUPABASE_SECRET_KEY ||
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.SUPABASE_PUBLISHABLE_KEY ||
+      process.env.VITE_SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_ANON_KEY
+    );
     if (url && key) {
       supabaseClient = createClient(url, key);
     }
@@ -22,7 +34,16 @@ function getSupabase() {
 }
 
 function isSupabaseConfigured(): boolean {
-  return !!(process.env.SUPABASE_URL && (process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY));
+  const url = getCleanValue(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
+  const key = getCleanValue(
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY
+  );
+  return !!(url && key);
 }
 
 /**
@@ -31,6 +52,8 @@ function isSupabaseConfigured(): boolean {
  * extracts the user's email, and populates req.user & req.userEmail.
  */
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  res.setHeader('Content-Type', 'application/json');
+
   const authHeader = req.headers.authorization || req.headers.Authorization;
   if (!authHeader || typeof authHeader !== 'string' || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Nicht autorisiert. Kein Token bereitgestellt.' });

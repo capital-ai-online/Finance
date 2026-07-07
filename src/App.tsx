@@ -25,6 +25,110 @@ const DEFAULT_GUEST_SESSION: UserSession = {
   subscriptionTier: 'Free',
 };
 
+/**
+ * Diagnostic helper to log full request and response context to the browser console
+ * when the backend unexpectedly returns HTML instead of JSON.
+ */
+function logFetchDiagnostics(
+  url: string,
+  options: RequestInit,
+  res: Response,
+  responseText: string
+) {
+  const requestHeadersObj: Record<string, string> = {};
+  if (options.headers) {
+    if (options.headers instanceof Headers) {
+      options.headers.forEach((value, key) => {
+        requestHeadersObj[key] = value;
+      });
+    } else if (Array.isArray(options.headers)) {
+      options.headers.forEach(([key, value]) => {
+        requestHeadersObj[key] = value;
+      });
+    } else {
+      Object.entries(options.headers).forEach(([key, value]) => {
+        requestHeadersObj[key] = value;
+      });
+    }
+  }
+
+  const responseHeadersObj: Record<string, string> = {};
+  res.headers.forEach((value, key) => {
+    responseHeadersObj[key] = value;
+  });
+
+  const htmlSnippet = responseText.substring(0, 500);
+
+  console.group('%c[Backend Diagnostics] HTML Fallback Detected!', 'color: #ff3333; font-weight: bold; font-size: 14px;');
+  console.error(`An API endpoint returned HTML or non-JSON instead of the expected application/json format. This usually occurs when a request misses the intended backend route and gets captured by the single-page application (SPA) static index.html routing fallback.`);
+  console.log(`%cRequest URL:`, 'font-weight: bold; color: #4b5563;', url);
+  console.log(`%cRequest Method:`, 'font-weight: bold; color: #4b5563;', options.method || 'GET');
+  console.log(`%cRequest Headers:`, 'font-weight: bold; color: #4b5563;', requestHeadersObj);
+  console.log(`%cResponse Status:`, 'font-weight: bold; color: #4b5563;', `${res.status} ${res.statusText}`);
+  console.log(`%cResponse Headers:`, 'font-weight: bold; color: #4b5563;', responseHeadersObj);
+  console.log(`%cResponse Snippet:`, 'font-weight: bold; color: #4b5563;', htmlSnippet);
+  console.groupEnd();
+}
+
+/**
+ * Helper to fetch and safely parse JSON responses from the backend.
+ * Automatically checks Content-Type, detects HTML fallbacks (which cause JSON parsing errors),
+ * and implements a retry mechanism with a small backoff.
+ */
+async function safeFetchJson<T = any>(
+  url: string,
+  options: RequestInit = {},
+  retries = 2,
+  delayMs = 1000
+): Promise<T> {
+  let lastError: any = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      if (attempt > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs * Math.pow(2, attempt - 1)));
+        console.warn(`[safeFetchJson] Retrying fetch to ${url} (Attempt ${attempt}/${retries})...`);
+      }
+
+      const res = await fetch(url, options);
+      const contentType = res.headers.get('content-type') || '';
+      
+      // If the response is HTML or starts with '<' (such as an index.html fallback from Vite/Express)
+      if (contentType.includes('text/html')) {
+        const text = await res.text();
+        logFetchDiagnostics(url, options, res, text);
+        const snippet = text.substring(0, 200).trim();
+        throw new Error(
+          `Empfangene Antwort ist HTML statt JSON. Möglicherweise liegt ein Routing- oder Serverfehler vor. Status: ${res.status}. Textausschnitt: "${snippet}"`
+        );
+      }
+
+      const text = await res.text();
+      let data: any;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (parseErr: any) {
+        logFetchDiagnostics(url, options, res, text);
+        const snippet = text.substring(0, 200).trim();
+        throw new Error(
+          `Ungültiges JSON-Format erhalten. Status: ${res.status}. Fehler: ${parseErr.message}. Textausschnitt: "${snippet}"`
+        );
+      }
+
+      if (!res.ok) {
+        throw new Error(data?.error || `HTTP-Fehler ${res.status}`);
+      }
+
+      return data as T;
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`[safeFetchJson] Attempt ${attempt} failed for ${url}:`, err.message || err);
+    }
+  }
+
+  throw lastError || new Error(`Fetch failed after ${retries} attempts.`);
+}
+
 export default function App() {
   const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -60,17 +164,14 @@ export default function App() {
 
     try {
       // Fetch real subscription tier from the backend database!
-      const res = await fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(email)}`, {
+      const data = await safeFetchJson(`/api/stripe/user-subscription?email=${encodeURIComponent(email)}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
       });
       let tier: 'Free' | 'Starter' | 'Pro' | 'Enterprise' = 'Free';
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.subscriptionTier) {
-          tier = data.subscriptionTier;
-        }
+      if (data && data.subscriptionTier) {
+        tier = data.subscriptionTier;
       }
       
       updateUserSession({
@@ -178,18 +279,13 @@ export default function App() {
 
   const handleLogin = async (email: string, password: string) => {
     try {
-      const response = await fetch('/api/auth/login', {
+      const data = await safeFetchJson('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Anmeldung fehlgeschlagen.');
-      }
 
       if (data.session && supabase) {
         // Synchronize the authenticated session to the frontend Supabase client
@@ -229,7 +325,7 @@ export default function App() {
 
       // Trigger post-registration initialization (Stripe Customer Creation & Subscription Tier Initialization)
       try {
-        await fetch('/api/auth/post-register', {
+        await safeFetchJson('/api/auth/post-register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -272,19 +368,18 @@ export default function App() {
     const emailToLog = userSession?.email || '';
     const tokenToLog = userSession?.accessToken || '';
 
-    // Trigger backend logout endpoint to register process in server logging (Render, etc.)
-    const response = await fetch('/api/auth/logout', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(tokenToLog ? { 'Authorization': `Bearer ${tokenToLog}` } : {})
-      },
-      body: JSON.stringify({ email: emailToLog }),
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.error || 'Fehler bei der Abmeldung im Backend.');
+    try {
+      // Trigger backend logout endpoint to register process in server logging (Render, etc.)
+      await safeFetchJson('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(tokenToLog ? { 'Authorization': `Bearer ${tokenToLog}` } : {})
+        },
+        body: JSON.stringify({ email: emailToLog }),
+      });
+    } catch (err: any) {
+      console.warn("[App] Logout backend trigger failed/omitted:", err);
     }
 
     if (supabase) {
