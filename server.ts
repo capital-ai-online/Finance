@@ -257,7 +257,7 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
           saveLocalPdfCredits(email, newCredits);
           console.log(`✅ Webhook: PDF Export Purchase complete for ${email}. Added 3 credits (total: ${newCredits}).`);
         } else {
-          saveSubscription(email, planId);
+          await saveSubscription(email, planId);
           console.log(`✅ Webhook: User ${email} successfully upgraded to ${planId}`);
         }
       }
@@ -266,13 +266,13 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
       const email = subscription.metadata?.email;
       const planId = subscription.metadata?.planId;
       if (email && planId) {
-        saveSubscription(email, planId);
+        await saveSubscription(email, planId);
       }
     } else if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object as Stripe.Subscription;
       const email = subscription.metadata?.email;
       if (email) {
-        saveSubscription(email, 'Free');
+        await saveSubscription(email, 'Free');
       }
     }
     res.json({ received: true });
@@ -471,6 +471,10 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
       }],
       success_url: finalSuccessUrl,
       cancel_url: cancelUrl,
+      // Shows Stripe's built-in "Rabattcode hinzufügen" field on the Checkout
+      // page so customers can redeem a real Stripe Coupon/Promotion Code
+      // (created under Product Catalog -> Coupons in the Stripe Dashboard).
+      allow_promotion_codes: true,
       metadata: {
         planId,
         email,
