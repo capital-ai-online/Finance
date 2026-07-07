@@ -311,6 +311,80 @@ async function getEmailAndTierFromSubscription(subscription: Stripe.Subscription
   return { email, tier };
 }
 
+// Robust synchronization of a user's subscription tier from Stripe directly to Supabase and cache
+// Checks both 'active' and 'trialing' subscriptions to support promo codes like BETASTAR/TRIAL26 properly
+async function syncUserSubscriptionFromStripe(email: string): Promise<string> {
+  const cleanEmail = email.toLowerCase().trim();
+  let targetTier = 'Free';
+
+  try {
+    const stripe = getStripeInstance();
+    // 1. Retrieve the customer record from Stripe
+    const customers = await stripe.customers.list({
+      email: cleanEmail,
+      limit: 1,
+    });
+
+    if (customers.data.length > 0) {
+      const customerId = customers.data[0].id;
+      
+      // 2. Fetch all subscriptions for this customer
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        limit: 10,
+      });
+
+      // 3. Filter for valid and active/trialing subscriptions
+      const validSubs = subscriptions.data.filter(
+        sub => sub.status === 'active' || sub.status === 'trialing'
+      );
+
+      if (validSubs.length > 0) {
+        // Sort/select based on tier hierarchy to pick the highest tier
+        const tierHierarchy: Record<string, number> = {
+          'Free': 0,
+          'Starter': 1,
+          'Pro': 2,
+          'Enterprise': 3,
+          'Founder': 4
+        };
+
+        let highestTier = 'Free';
+        let highestScore = 0;
+
+        for (const sub of validSubs) {
+          const resolved = await getEmailAndTierFromSubscription(sub);
+          const resolvedTier = resolved.tier || 'Free';
+          const score = tierHierarchy[resolvedTier] || 0;
+          if (score > highestScore) {
+            highestScore = score;
+            highestTier = resolvedTier;
+          }
+        }
+        targetTier = highestTier;
+      }
+    }
+  } catch (err: any) {
+    console.error(`[Sync Subscription Helper] Error fetching from Stripe for ${cleanEmail}:`, err.message || err);
+    // On error, fallback to current DB tier to prevent accidental downgrade during network blips
+    try {
+      const dbTier = await getSubscription(cleanEmail);
+      return dbTier;
+    } catch (dbErr) {
+      return 'Free';
+    }
+  }
+
+  try {
+    await saveSubscription(cleanEmail, targetTier);
+    console.log(`[Sync Subscription Helper] Successfully synchronized DB tier for ${cleanEmail} to ${targetTier}`);
+  } catch (err: any) {
+    console.error(`[Sync Subscription Helper] Error saving synchronized tier to DB for ${cleanEmail}:`, err.message || err);
+  }
+
+  return targetTier;
+}
+
 
 // 1. STRIPE WEBHOOK ENDPOINT (Must be placed BEFORE express.json() to get raw request body)
 const webhookHandler = async (req: express.Request, res: express.Response) => {
@@ -370,14 +444,16 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
 
           await saveSubscription(email, tier);
           console.log(`✅ Webhook: User ${email} successfully upgraded to ${tier}`);
+          // Also double-check and sync any trial statuses
+          await syncUserSubscriptionFromStripe(email);
         }
       }
     } else if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
       const subscription = event.data.object as Stripe.Subscription;
-      const { email, tier } = await getEmailAndTierFromSubscription(subscription);
-      if (email && tier) {
-        await saveSubscription(email, tier);
-        console.log(`✅ Webhook: User ${email} subscription initialized/updated in DB to ${tier}`);
+      const { email } = await getEmailAndTierFromSubscription(subscription);
+      if (email) {
+        await syncUserSubscriptionFromStripe(email);
+        console.log(`✅ Webhook: User ${email} subscription initialized/updated, synced status.`);
       }
     } else if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object as Stripe.Subscription;
@@ -394,8 +470,8 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
         }
       }
       if (email) {
-        await saveSubscription(email, 'Free');
-        console.log(`✅ Webhook: User ${email} subscription deleted. Reverted to Free tier.`);
+        await syncUserSubscriptionFromStripe(email);
+        console.log(`✅ Webhook: User ${email} subscription deleted, verified remaining subscriptions.`);
       }
     }
     res.json({ received: true });
@@ -711,7 +787,8 @@ app.post('/api/stripe/create-portal-session', async (req, res) => {
 app.get('/api/stripe/user-subscription', authMiddleware, async (req, res) => {
   const userEmail = (req as any).userEmail;
   try {
-    const tier = await getSubscription(userEmail);
+    // Robustly sync subscription from Stripe in real-time to avoid race conditions with webhook redirects
+    const tier = await syncUserSubscriptionFromStripe(userEmail);
     res.json({ email: userEmail, subscriptionTier: tier });
   } catch (error: any) {
     console.error(`[User Subscription API] Error fetching subscription for ${userEmail}:`, error.message || error);
@@ -1040,40 +1117,10 @@ app.post('/api/auth/logout', async (req, res) => {
 // SYNC SUBSCRIPTION MODULE: Forces a sync of subscription from Stripe database to Supabase and cache
 app.post('/api/stripe/sync-subscription', authMiddleware, async (req, res) => {
   const userEmail = (req as any).userEmail;
-  let tier = 'Free';
 
   try {
-    const stripe = getStripeInstance();
-    const customers = await stripe.customers.list({
-      email: userEmail,
-      limit: 1,
-    });
-
-    if (customers.data.length > 0) {
-      const customerId = customers.data[0].id;
-      const subscriptions = await stripe.subscriptions.list({
-        customer: customerId,
-        status: 'active',
-        limit: 1,
-      });
-
-      if (subscriptions.data.length > 0) {
-        const sub = subscriptions.data[0];
-        const resolved = await getEmailAndTierFromSubscription(sub);
-        if (resolved.tier) {
-          tier = resolved.tier;
-          await saveSubscription(userEmail, tier);
-          console.log(`[Sync Subscription] Successfully synchronized ${userEmail} to ${tier} from active Stripe subscription.`);
-        }
-      }
-    }
-  } catch (err: any) {
-    console.error(`[Sync Subscription] Error syncing for ${userEmail}:`, err.message || err);
-  }
-
-  try {
-    const currentTier = await getSubscription(userEmail);
-    res.json({ success: true, email: userEmail, subscriptionTier: currentTier });
+    const targetTier = await syncUserSubscriptionFromStripe(userEmail);
+    res.json({ success: true, email: userEmail, subscriptionTier: targetTier });
   } catch (err: any) {
     console.error(`[Sync Subscription] Final tier retrieval failed for ${userEmail}:`, err.message || err);
     res.json({ success: true, email: userEmail, subscriptionTier: 'Free', error: err.message });
