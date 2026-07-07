@@ -100,9 +100,9 @@ export function MarketScreener({
   const [scanModifier, setScanModifier] = useState<number>(1.0);
   const [activeTab, setActiveTab] = useState<'screener' | 'perplexity'>('screener');
 
-  // Perplexity deep research chatbot state
+  // CAPITAL-AI deep research chatbot state
   const [perplexityChat, setPerplexityChat] = useState<any[]>([
-    { role: 'model', text: 'Willkommen bei der **Perplexity Deep Research Zentrale** (Version 0.5.5).\nKlicken Sie auf ein beliebiges Asset oben, um eine fundierte fundamentale und technische Analyse auszuführen.' }
+    { role: 'model', text: 'Willkommen bei der **CAPITAL-AI Deep Research Zentrale** (Version 0.6.0-Beta).\nKlicken Sie auf ein beliebiges Asset oben, um eine fundierte fundamentale und technische Analyse auszuführen.' }
   ]);
   const [chatLoading, setChatLoading] = useState<boolean>(false);
   const [selectedChatAsset, setSelectedChatAsset] = useState<Asset | null>(null);
@@ -113,8 +113,19 @@ export function MarketScreener({
   // Load user tier and local scans tracker
   useEffect(() => {
     if (effectiveEmail) {
+      let token = '';
+      try {
+        const localSess = localStorage.getItem('mcc_user_session');
+        if (localSess) {
+          const parsed = JSON.parse(localSess);
+          token = parsed.accessToken || '';
+        }
+      } catch (e) {}
+
       // Get user's current subscription tier
-      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(effectiveEmail)}`)
+      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(effectiveEmail)}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      })
         .then(res => res.json())
         .then(data => {
           if (data && data.subscriptionTier) {
@@ -217,7 +228,7 @@ export function MarketScreener({
     setActiveTab('perplexity');
     setChatLoading(true);
 
-    const userMessage = `Führe eine tiefgehende quantitative Finanzbewertung durch für das Asset ${asset.name} (${asset.symbol}) bezüglich intrinsischem Wert, technischem Score, Risikofaktoren und Marktpositionierung im v0.5.5 Beta-System. Stelle die Erwartungswerte und Stop-Loss Level präzise heraus.`;
+    const userMessage = `Führe eine tiefgehende quantitative Finanzbewertung durch für das Asset ${asset.name} (${asset.symbol}) bezüglich intrinsischem Wert, technischem Score, Risikofaktoren und Marktpositionierung im v0.6.0 Beta-System. Stelle die Erwartungswerte und Stop-Loss Level präzise heraus.`;
     
     const newHistory = [...perplexityChat, { role: 'user', text: `Bitte analysiere ${asset.name} (${asset.symbol})` }];
     setPerplexityChat(newHistory);
@@ -411,7 +422,7 @@ export function MarketScreener({
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
-    doc.text('CAPITAL-AI Version 0.5.5 Beta • DSGVO & BaFin-konformer Hochfrequenz-Daten-Export.', 15, 285);
+    doc.text('CAPITAL-AI Version 0.6.0-Beta • DSGVO & BaFin-konformer Hochfrequenz-Daten-Export.', 15, 285);
 
     doc.save(`CAPITAL_AI_EnterpriseScreener_Report_${Date.now()}.pdf`);
   };
@@ -435,7 +446,7 @@ export function MarketScreener({
             <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/25 tracking-widest uppercase">
               ENTERPRISE COCKPIT
             </span>
-            <span className="text-white/40 font-mono text-[10px]">v0.5.5 Beta</span>
+            <span className="text-white/40 font-mono text-[10px]">v0.6.0-Beta</span>
           </div>
           <h2 className="text-xl font-black text-white font-display uppercase tracking-tight flex items-center gap-2">
             <BarChart4 size={18} className="text-aif-gold-DEFAULT" />
@@ -509,7 +520,7 @@ export function MarketScreener({
           }`}
         >
           <MessageSquare size={13} className={activeTab === 'perplexity' ? 'text-aif-gold-DEFAULT' : ''} />
-          <span>Perplexity Deep Valuation</span>
+          <span>CAPITAL-AI Deep Valuation</span>
         </button>
       </div>
 
@@ -699,13 +710,13 @@ export function MarketScreener({
                     </div>
                   </div>
 
-                  {/* Perplexity Chat deep research trigger */}
+                  {/* CAPITAL-AI Chat deep research trigger */}
                   <button
                     onClick={() => handleTriggerPerplexityValuation(asset)}
                     className="mt-4 w-full py-2 bg-white/5 hover:bg-white/10 hover:text-aif-gold-DEFAULT border border-white/5 hover:border-aif-gold-DEFAULT/30 rounded-xl text-[10px] font-bold font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <MessageSquare size={11} />
-                    <span>Perplexity AI Analyse</span>
+                    <span>CAPITAL-AI Web-Analyse</span>
                   </button>
                 </div>
               );
@@ -726,7 +737,7 @@ export function MarketScreener({
                 <span>Dual-Interval Scoring-Methodik</span>
               </h4>
               <p className="text-[11px] text-white/40 leading-relaxed font-sans">
-                Unser System berechnet zeitgleich quantitative Wahrscheinlichkeiten über Kurzfrist- und Langfristhypothesen. Im Gegensatz zu statischen Screenings filtert die CAPITAL-AI Engine (v0.5.5) falsche Volatilitätssignale und berechnet optimierte Risikoparameter konform mit den BaFin-Qualitätsrichtlinien für Retail-Händler.
+                Unser System berechnet zeitgleich quantitative Wahrscheinlichkeiten über Kurzfrist- und Langfristhypothesen. Im Gegensatz zu statischen Screenings filtert die CAPITAL-AI Engine (v0.6.0-Beta) falsche Volatilitätssignale und berechnet optimierte Risikoparameter konform mit den BaFin-Qualitätsrichtlinien für Retail-Händler.
               </p>
             </div>
 
@@ -789,7 +800,7 @@ export function MarketScreener({
             </div>
             
             <div className="p-3 bg-white/5 border border-white/10 rounded-xl">
-              <p className="text-[9px] text-white/30 font-mono uppercase tracking-wider">Perplexity Engine</p>
+              <p className="text-[9px] text-white/30 font-mono uppercase tracking-wider">CAPITAL-AI Engine</p>
               <p className="text-[11px] text-white/50 leading-normal font-sans mt-1">
                 Deep Research sucht die quantitativen Parameter der Asset Registry und generiert Deep-Dive Berichte.
               </p>
@@ -802,8 +813,8 @@ export function MarketScreener({
             <div className="overflow-y-auto space-y-4 pr-1 flex-1">
               {perplexityChat.map((msg, i) => (
                 <div 
-                  key={i} 
-                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                   key={i} 
+                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div className={`p-4 rounded-2xl max-w-xl text-xs leading-relaxed leading-normal ${
                     msg.role === 'user' 
@@ -811,7 +822,7 @@ export function MarketScreener({
                       : 'bg-white/5 border border-white/5 text-white/90 rounded-bl-none markdown-body font-sans'
                   }`}>
                     {msg.role === 'model' ? (
-                      <Markdown>{msg.text}</Markdown>
+                       <Markdown>{msg.text}</Markdown>
                     ) : (
                       <span className="font-semibold">{msg.text}</span>
                     )}
@@ -823,7 +834,7 @@ export function MarketScreener({
                 <div className="flex justify-start">
                   <div className="bg-white/5 border border-white/5 p-4 rounded-2xl rounded-bl-none flex items-center gap-2.5 text-xs text-white/60">
                     <RefreshCw size={13} className="animate-spin text-aif-gold-DEFAULT" />
-                    <span>Perplexity Deep AI Research analysiert quantitativen Kontext...</span>
+                    <span>CAPITAL-AI Deep AI Research analysiert quantitativen Kontext...</span>
                   </div>
                 </div>
               )}

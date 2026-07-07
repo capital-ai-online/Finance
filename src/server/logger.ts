@@ -3,7 +3,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 
 /**
  * CAPITAL-AI Logger Architecture
- * Version 0.5.5 (Beta-Phase)
+ * Version 0.6.0-Beta
  */
 
 // Custom AsyncLocalStorage for managing Request ID within asynchronous contexts

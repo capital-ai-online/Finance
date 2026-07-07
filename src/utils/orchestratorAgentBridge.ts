@@ -1,6 +1,6 @@
 /**
  * CAPITAL-AI Orchestrator-Agent Bridge
- * Version 0.5.5 (Beta-Phase)
+ * Version 0.6.0-Beta
  * 
  * Programmatically bridges the domain orchestrator engines with the core AI Agent Directives (AGENTS.md).
  * Manages the high-fidelity task lifecycle, PII anonymization, performance telemetry, 
@@ -96,7 +96,7 @@ export class OrchestratorAgentBridge {
         'Strict Data Integrity: No Fake or Mock Data served to users.',
         'Harded Data Access Control: Anonymization & Masking of PII (client IPs, emails, transaction IDs).',
         'Frontend Security: No sensitive API keys loaded or executed within frontend client components.',
-        'No Legacy Versioning: Strict pinning of the platform version to Version 0.5.5 (Beta-Phase).'
+        'No Legacy Versioning: Strict pinning of the platform version to Version 0.6.0-Beta.'
       ];
     }
   }
@@ -113,7 +113,7 @@ export class OrchestratorAgentBridge {
    */
   public getSystemInstructionBlock(): string {
     return [
-      `### MANDATORY COMPLIANCE DIRECTIVES (CAPITAL-AI Version 0.5.5)`,
+      `### MANDATORY COMPLIANCE DIRECTIVES (CAPITAL-AI Version 0.6.0-Beta)`,
       `All reasoning and outputs MUST strictly adhere to the following rules:`,
       ...this.systemDirectives.map((d, idx) => `${idx + 1}. [DIRECTIVE] ${d}`),
       `\nCRITICAL: Any violation of the above directives (especially serving fake data or exposing secrets) constitutes a critical breach.`
@@ -147,7 +147,7 @@ export class OrchestratorAgentBridge {
       inputPayload: sanitizedInput,
       startTime: Date.now(),
       directivesApplied,
-      version: '0.5.5'
+      version: '0.6.0-Beta'
     };
 
     this.tasks.set(taskId, task);
@@ -252,7 +252,7 @@ export class OrchestratorAgentBridge {
         await this.failTask(task.id, err);
         throw err;
       }
-    }, { taskId: task.id, version: '0.5.5' });
+    }, { taskId: task.id, version: '0.6.0-Beta' });
   }
 
   /**

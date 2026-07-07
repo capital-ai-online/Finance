@@ -20,6 +20,7 @@ import { createHealthRouter } from './src/routes/healthRoutes';
 import { createQualityGovernanceRouter } from './src/routes/qualityGovernanceRoutes';
 import { logger } from './src/server/logger';
 import { requestIdMiddleware, performanceLoggingMiddleware, globalErrorHandler } from './src/server/middleware';
+import { authMiddleware } from './src/middleware/auth';
 
 dotenv.config();
 
@@ -218,11 +219,6 @@ async function saveSubscription(email: string, tier: string) {
 async function getSubscription(email: string): Promise<string> {
   const cleanEmail = email.toLowerCase().trim();
   
-  // Default tier for owner emails (Global Administrator)
-  if (cleanEmail === 'sven.kulessa@gmail.com' || cleanEmail === 'sven.kulessa@gmx.net') {
-    return 'Enterprise';
-  }
-
   // Get local fallback value first
   const localSubs = getLocalSubscriptions();
   const localTier = localSubs[cleanEmail];
@@ -292,7 +288,7 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
           saveLocalPdfCredits(email, newCredits);
           console.log(`✅ Webhook: PDF Export Purchase complete for ${email}. Added 3 credits (total: ${newCredits}).`);
         } else {
-          saveSubscription(email, planId);
+          await saveSubscription(email, planId);
           console.log(`✅ Webhook: User ${email} successfully upgraded to ${planId}`);
         }
       }
@@ -301,13 +297,13 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
       const email = subscription.metadata?.email;
       const planId = subscription.metadata?.planId;
       if (email && planId) {
-        saveSubscription(email, planId);
+        await saveSubscription(email, planId);
       }
     } else if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object as Stripe.Subscription;
       const email = subscription.metadata?.email;
       if (email) {
-        saveSubscription(email, 'Free');
+        await saveSubscription(email, 'Free');
       }
     }
     res.json({ received: true });
@@ -370,7 +366,7 @@ app.post('/api/chat', orchestrator.handle('Gemini Chat'), async (req, res) => {
     contents.push({ role: 'user', parts: [{ text: message }] });
 
     const systemInstruction = isFinTech
-      ? "You are Perplexity AI, the leading Web-Grounded answer engine. Since this is a FinTech / Financial query, you must answer with supreme authority, deep real-time-like research metrics, and structured bullet points. Act as the Perplexity AI Engine in cooperation with CAPITAL-AI. Always start your response exactly with this header: '⚡ **Antwort generiert über Perplexity AI (FinTech Search-Grounded Engine)** ⚡\n\n'"
+      ? "You are the CAPITAL-AI Assistant (FinTech Search-Grounded Engine). Since this is a FinTech / Financial query, you must answer with supreme authority, deep real-time research metrics, and structured bullet points. Always start your response exactly with this header: '⚡ **Antwort generiert über CAPITAL-AI (FinTech Search-Grounded Engine)** ⚡\n\n'"
       : "You are the CAPITAL-AI Assistant, a highly professional, technically precise expert partner in quantitative finance, Graham value investing, and market analysis. Use a professional, accessible tone. Do not use unnecessary jargon. Prioritize clarity and data-driven insights.";
 
     const response = await ai.models.generateContent({
@@ -532,6 +528,7 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
       success_url: finalSuccessUrl,
       cancel_url: cancelUrl,
       allow_promotion_codes: true,
+      payment_method_collection: 'if_required',
       metadata: {
         planId,
         email,
@@ -619,12 +616,8 @@ app.post('/api/stripe/create-portal-session', async (req, res) => {
   }
 });
 
-app.get('/api/stripe/user-subscription', async (req, res) => {
-  const { email } = req.query;
-  if (!email) {
-    return res.status(400).json({ error: 'Email parameter is required.' });
-  }
-  const userEmail = String(email).toLowerCase().trim();
+app.get('/api/stripe/user-subscription', authMiddleware, async (req, res) => {
+  const userEmail = (req as any).userEmail;
   const tier = await getSubscription(userEmail);
   res.json({ email: userEmail, subscriptionTier: tier });
 });
@@ -667,24 +660,16 @@ function saveLocalPdfCredits(email: string, credits: number) {
   }
 }
 
-app.get('/api/stripe/pdf-credits', async (req, res) => {
-  const { email } = req.query;
-  if (!email) {
-    return res.status(400).json({ error: 'Email parameter is required.' });
-  }
-  const userEmail = String(email).toLowerCase().trim();
+app.get('/api/stripe/pdf-credits', authMiddleware, async (req, res) => {
+  const userEmail = (req as any).userEmail;
   const tier = await getSubscription(userEmail);
   const isUnlimited = tier === 'Enterprise' || tier === 'Founder';
   const credits = getLocalPdfCredits(userEmail);
   res.json({ email: userEmail, credits: isUnlimited ? 9999 : credits, unlimited: isUnlimited });
 });
 
-app.post('/api/stripe/consume-pdf-credit', async (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'Email is required.' });
-  }
-  const userEmail = String(email).toLowerCase().trim();
+app.post('/api/stripe/consume-pdf-credit', authMiddleware, async (req, res) => {
+  const userEmail = (req as any).userEmail;
   const tier = await getSubscription(userEmail);
   const isUnlimited = tier === 'Enterprise' || tier === 'Founder';
   
@@ -702,12 +687,9 @@ app.post('/api/stripe/consume-pdf-credit', async (req, res) => {
   res.json({ success: true, credits: newCredits, unlimited: false });
 });
 
-app.post('/api/stripe/add-pdf-credits-simulated', async (req, res) => {
-  const { email, amount } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'Email is required.' });
-  }
-  const userEmail = String(email).toLowerCase().trim();
+app.post('/api/stripe/add-pdf-credits-simulated', authMiddleware, async (req, res) => {
+  const { amount } = req.body;
+  const userEmail = (req as any).userEmail;
   const current = getLocalPdfCredits(userEmail);
   const added = amount !== undefined ? Number(amount) : 3;
   const newCredits = current + added;
@@ -715,135 +697,81 @@ app.post('/api/stripe/add-pdf-credits-simulated', async (req, res) => {
   res.json({ success: true, credits: newCredits });
 });
 
-// PROMO-CODE & TRIAL MODULE: Added for TRIAL26 campaign to support 1-month free CAPITAL-AI PRO subscription trials.
-// This allows direct, verified tier elevation in local and Supabase databases.
-app.post('/api/stripe/update-subscription-simulated', async (req, res) => {
-  const { email, tier } = req.body;
-  if (!email || !tier) {
-    return res.status(400).json({ error: 'E-Mail und Tarifstufe sind erforderlich.' });
+// PROMO-CODE & TRIAL MODULE: Supports 0-Euro checkout transactions securely verified server-side.
+app.post('/api/stripe/update-subscription-simulated', authMiddleware, async (req, res) => {
+  const { tier, promoCode } = req.body;
+  const userEmail = (req as any).userEmail;
+
+  if (!tier || !promoCode) {
+    return res.status(400).json({ error: 'Tarifstufe und Gutscheincode sind erforderlich.' });
   }
-  const userEmail = String(email).toLowerCase().trim();
-  const validTiers = ['Free', 'Starter', 'Pro', 'Enterprise'];
+
+  const cleanPromo = String(promoCode).trim().toUpperCase();
+  const validTiers = ['Pro', 'Enterprise'];
   if (!validTiers.includes(tier)) {
-    return res.status(400).json({ error: 'Ungültige Tarifstufe angegeben.' });
+    return res.status(400).json({ error: 'Gutschein-Freischaltungen sind nur für Pro und Enterprise Tarife möglich.' });
+  }
+
+  // Strict server-side verification of allowed promo codes
+  if (cleanPromo === 'TRIAL26') {
+    if (tier !== 'Pro') {
+      return res.status(400).json({ error: 'Der Gutscheincode TRIAL26 ist nur für das Pro-Abonnement gültig.' });
+    }
+  } else if (cleanPromo === 'BETASTAR') {
+    if (tier !== 'Enterprise') {
+      return res.status(400).json({ error: 'Der Gutscheincode BETASTAR ist nur für das Enterprise-Abonnement gültig.' });
+    }
+  } else {
+    return res.status(400).json({ error: 'Ungültiger oder abgelaufener Gutscheincode.' });
   }
 
   try {
     await saveSubscription(userEmail, tier);
-    console.log(`[PROMO-CODE TRIAL26] Elevated subscription for ${userEmail} to ${tier}`);
-    console.log(`[PROMO-CODE TRIAL26] Supabase entry created/updated for ${userEmail}`);
-    res.json({ success: true, email: userEmail, subscriptionTier: tier, supabaseUpdated: true });
+    console.log(`[PROMO-CODE ${cleanPromo}] Elevated subscription for ${userEmail} to ${tier}`);
+    res.json({ success: true, email: userEmail, subscriptionTier: tier });
   } catch (err: any) {
-    console.error('[PROMO-CODE TRIAL26] Error during simulated subscription update:', err);
+    console.error(`[PROMO-CODE ${cleanPromo}] Error during simulated subscription update:`, err);
     res.status(500).json({ error: err.message || 'Interner Serverfehler bei der Abo-Aktualisierung.' });
   }
 });
 
-// Sync Stripe status and update Supabase after webhook processing
-app.post('/api/stripe/sync-subscription', async (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'E-Mail ist erforderlich.' });
-  }
-  const userEmail = String(email).toLowerCase().trim();
+// SYNC SUBSCRIPTION MODULE: Forces a sync of subscription from Stripe database to Supabase and cache
+app.post('/api/stripe/sync-subscription', authMiddleware, async (req, res) => {
+  const userEmail = (req as any).userEmail;
+  let tier = 'Free';
 
   try {
-    const tier = await getSubscription(userEmail);
-    // Force re-save to ensure Supabase is updated
-    await saveSubscription(userEmail, tier);
-    console.log(`[Subscription Sync] Successfully synced ${userEmail} -> ${tier} with Supabase`);
-    res.json({ success: true, email: userEmail, subscriptionTier: tier });
+    if (isSupabaseConfigured()) {
+      const stripe = getStripeInstance();
+      const customers = await stripe.customers.list({
+        email: userEmail,
+        limit: 1,
+      });
+
+      if (customers.data.length > 0) {
+        const customerId = customers.data[0].id;
+        const subscriptions = await stripe.subscriptions.list({
+          customer: customerId,
+          status: 'active',
+          limit: 1,
+        });
+
+        if (subscriptions.data.length > 0) {
+          const sub = subscriptions.data[0];
+          const planId = sub.metadata?.planId;
+          if (planId) {
+            tier = planId;
+            await saveSubscription(userEmail, tier);
+          }
+        }
+      }
+    }
   } catch (err: any) {
-    console.error('[Subscription Sync] Error syncing subscription:', err);
-    res.status(500).json({ error: err.message || 'Fehler beim Synchronisieren des Abos.' });
-  }
-});
-
-// AUTO-CONFIRMATION BYPASS: Added to resolve Supabase standard SMTP rate limits (3 emails/hour)
-// This enables immediate server-side email verification for registration and forgot-password flows.
-app.post('/api/auth/auto-confirm', async (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'E-Mail ist erforderlich.' });
-  }
-  const cleanEmail = String(email).toLowerCase().trim();
-
-  if (!isSupabaseConfigured()) {
-    console.log(`[Auto-Confirm] Supabase not configured. Mock confirmation success for ${cleanEmail}`);
-    return res.json({ success: true, message: 'Supabase ist offline, lokaler Bypass aktiviert.' });
+    console.error(`[Sync Subscription] Error syncing for ${userEmail}:`, err.message || err);
   }
 
-  try {
-    const supabaseAdmin = getServerSupabase();
-    
-    // 1. Retrieve all users to find matching email (due to client-side auth limits)
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-    if (listError) {
-      throw listError;
-    }
-    const user = users.find((u: any) => u.email?.toLowerCase().trim() === cleanEmail);
-    if (!user) {
-      return res.status(404).json({ error: 'Benutzer mit dieser E-Mail wurde nicht gefunden. Bitte registrieren Sie sich zuerst.' });
-    }
-
-    // 2. Auto-confirm email
-    const { data: updateData, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      user.id,
-      { email_confirm: true }
-    );
-    if (updateError) {
-      throw updateError;
-    }
-
-    console.log(`[Auto-Confirm] Server successfully confirmed email for user: ${cleanEmail}`);
-    res.json({ success: true, message: 'E-Mail erfolgreich vom Server bestätigt!' });
-  } catch (err: any) {
-    console.error('[Auto-Confirm] Error:', err);
-    res.status(500).json({ error: err.message || 'Serverfehler bei der automatischen E-Mail-Bestätigung.' });
-  }
-});
-
-// PASSWORD RESET BYPASS: Overwrites passwords directly when forgot-password emails are blocked or rate-limited.
-app.post('/api/auth/admin-reset-password', async (req, res) => {
-  const { email, newPassword } = req.body;
-  if (!email || !newPassword) {
-    return res.status(400).json({ error: 'E-Mail und neues Passwort sind erforderlich.' });
-  }
-  const cleanEmail = String(email).toLowerCase().trim();
-
-  if (!isSupabaseConfigured()) {
-    console.log(`[Admin-Reset-Password] Supabase not configured. Mock password reset success for ${cleanEmail}`);
-    return res.json({ success: true, message: 'Supabase ist offline, lokaler Bypass aktiviert.' });
-  }
-
-  try {
-    const supabaseAdmin = getServerSupabase();
-    
-    // 1. Retrieve users
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-    if (listError) {
-      throw listError;
-    }
-    const user = users.find((u: any) => u.email?.toLowerCase().trim() === cleanEmail);
-    if (!user) {
-      return res.status(404).json({ error: 'Benutzer mit dieser E-Mail wurde nicht gefunden.' });
-    }
-
-    // 2. Set new password
-    const { data: updateData, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      user.id,
-      { password: newPassword, email_confirm: true }
-    );
-    if (updateError) {
-      throw updateError;
-    }
-
-    console.log(`[Admin-Reset-Password] Server successfully updated password for user: ${cleanEmail}`);
-    res.json({ success: true, message: 'Passwort erfolgreich aktualisiert!' });
-  } catch (err: any) {
-    console.error('[Admin-Reset-Password] Error:', err);
-    res.status(500).json({ error: err.message || 'Serverfehler beim direkten Zurücksetzen des Passworts.' });
-  }
+  const currentTier = await getSubscription(userEmail);
+  res.json({ success: true, email: userEmail, subscriptionTier: currentTier });
 });
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
@@ -2359,20 +2287,40 @@ app.get('/api/orchestrator/ping-models', (req, res) => {
   });
 });
 
-let globalPageViews = 14502;
-// Auto-increment slightly over time to simulate active traffic
-setInterval(() => {
-  globalPageViews += Math.floor(Math.random() * 3) + 1;
-}, 60000); // add 1-3 views every minute
+let globalPageViews = 1520; // Real starting baseline
+const PAGE_VIEWS_FILE = path.join(process.cwd(), 'uploads', 'page_views.json');
+try {
+  if (fs.existsSync(PAGE_VIEWS_FILE)) {
+    const data = fs.readFileSync(PAGE_VIEWS_FILE, 'utf8');
+    const parsed = JSON.parse(data);
+    if (parsed && typeof parsed.views === 'number') {
+      globalPageViews = parsed.views;
+    }
+  } else {
+    const dir = path.dirname(PAGE_VIEWS_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(PAGE_VIEWS_FILE, JSON.stringify({ views: globalPageViews }), 'utf8');
+  }
+} catch (e) {
+  console.warn("Error loading page views file:", e);
+}
 
 app.get('/api/page-views', (req, res) => {
   if (req.query.hit === 'true') {
     globalPageViews += 1;
+    try {
+      fs.writeFileSync(PAGE_VIEWS_FILE, JSON.stringify({ views: globalPageViews }), 'utf8');
+    } catch (e) {}
   }
   res.json({ views: globalPageViews });
 });
 
-const ORCHESTRATOR_ADMIN_TOKEN = process.env.ORCHESTRATOR_ADMIN_TOKEN || 'aif-admin-2026';
+if (!process.env.ORCHESTRATOR_ADMIN_TOKEN) {
+  throw new Error("CRITICAL SECURITY ERROR: ORCHESTRATOR_ADMIN_TOKEN environment variable is not configured.");
+}
+const ORCHESTRATOR_ADMIN_TOKEN = process.env.ORCHESTRATOR_ADMIN_TOKEN;
 
 function requireOrchestratorAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
   const token = req.headers['x-orchestrator-admin-token'] || req.headers['authorization']?.toString().replace('Bearer ', '');
@@ -2866,8 +2814,6 @@ async function startServer() {
     
     // Register active domain orchestrator nodes into the central Platform Director Control Plane
     platformDirectorInstance.registerOrchestratorNode("StockOrchestrator", { description: "Orchestriert fundamentale, technische und qualitative Aktienanalysen." });
-    platformDirectorInstance.registerOrchestratorNode("CryptoOrchestrator", { description: "Orchestriert Krypto-Analysen und Risikobewertungen." });
-    platformDirectorInstance.registerOrchestratorNode("MemeCoinOrchestrator", { description: "Spezialisiert auf hoch-volatile Trend-Token-Analysen." });
     platformDirectorInstance.registerOrchestratorNode("RawMaterialsOrchestrator", { description: "Orchestriert Rohstoffbewertungen und quantitative Analyse-Pipelines." });
     platformDirectorInstance.registerOrchestratorNode("PortfolioOrchestrator", { description: "Berechnet Portfolioallokationen, Sharpe-Ratios und Diversifikations-Scores." });
     platformDirectorInstance.registerOrchestratorNode("QualityGovernanceOrchestrator", { description: "Überwacht Codequalität, API-Sicherheit und Systemintegrität." });
@@ -2931,3 +2877,4 @@ async function startServer() {
 }
 
 startServer();
+

@@ -5,7 +5,7 @@ import { AppError } from './errors';
 
 /**
  * CAPITAL-AI Request & Error Middleware
- * Version 0.5.5 (Beta-Phase)
+ * Version 0.6.0-Beta
  */
 
 // Generates a cryptographically strong UUID or robust fallback

@@ -1,6 +1,6 @@
 /**
  * CAPITAL-AI Centralized Error Architecture
- * Version 0.5.5 (Beta-Phase)
+ * Version 0.6.0-Beta
  */
 
 export class AppError extends Error {

@@ -310,7 +310,7 @@ export function Watchlist({
           <Bell size={10} className="text-aif-gold-DEFAULT animate-pulse" />
           <span>News &lt;3.0 o. &gt;7.0 triggeren Push</span>
         </span>
-        <span className="text-aif-gold-DEFAULT">Radar-Modul v0.5.5</span>
+        <span className="text-aif-gold-DEFAULT">Radar-Modul v0.6.0-Beta</span>
       </div>
     </div>
   );

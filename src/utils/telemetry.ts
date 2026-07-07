@@ -2,7 +2,7 @@ import { logger } from '../server/logger';
 
 /**
  * CAPITAL-AI Performance & Telemetry Engine
- * Version 0.5.5 (Beta-Phase)
+ * Version 0.6.0-Beta
  */
 
 interface PerformanceMetric {

@@ -614,7 +614,7 @@ export function CapitalAiTrailer() {
               </div>
               <div>
                 <p className="text-xs font-bold text-white uppercase tracking-wider">Cinematic Präsentation Abgeschlossen</p>
-                <p className="text-[11px] text-white/60">Capital-AI wurde erfolgreich auf Version 0.5.5 gehoben.</p>
+                <p className="text-[11px] text-white/60">Capital-AI wurde erfolgreich auf Version 0.6.0-Beta gehoben.</p>
               </div>
             </div>
             <button 

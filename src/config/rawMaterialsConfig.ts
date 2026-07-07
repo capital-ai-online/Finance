@@ -19,10 +19,10 @@ export interface ScoringVersion {
 }
 
 export const SCORING_VERSIONS: Record<string, ScoringVersion> = {
-  'v0.5.5': {
-    version: '0.5.5',
+  'v0.6.0-Beta': {
+    version: '0.6.0-Beta',
     releasedAt: '2026-07-06',
-    description: 'CAPITAL-AI Unified Commodities Scoring Engine v0.5.5 (Beta-Phase)',
+    description: 'CAPITAL-AI Unified Commodities Scoring Engine v0.6.0-Beta',
     weights: {
       fundamentals: 0.35,  // 35%
       risk: 0.20,          // 20% (inverted)
@@ -33,7 +33,7 @@ export const SCORING_VERSIONS: Record<string, ScoringVersion> = {
   }
 };
 
-export const ACTIVE_VERSION = 'v0.5.5';
+export const ACTIVE_VERSION = 'v0.6.0-Beta';
 
 /**
  * Standard database for commodities (Single Source of Truth)

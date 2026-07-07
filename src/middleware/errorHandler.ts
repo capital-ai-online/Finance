@@ -4,7 +4,7 @@ import { logger, requestIdStore } from '../server/logger';
 
 /**
  * CAPITAL-AI Global Error Handler Middleware
- * Version 0.5.5 (Beta-Phase)
+ * Version 0.6.0-Beta
  */
 export function globalErrorHandler(
   err: any,

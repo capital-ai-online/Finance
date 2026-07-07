@@ -388,51 +388,57 @@ export function Dashboard({
     if (payment === 'success' && plan) {
       setProfile(prev => ({ ...prev, subscriptionTier: plan as any }));
       setActiveView('abonnements');
+      
+      // Update local storage and trigger global app update
+      try {
+        const localSess = localStorage.getItem('mcc_user_session');
+        if (localSess) {
+          const parsed = JSON.parse(localSess);
+          parsed.subscriptionTier = plan;
+          localStorage.setItem('mcc_user_session', JSON.stringify(parsed));
+          window.dispatchEvent(new Event('mcc_session_update'));
+        }
+      } catch (e) {
+        console.error("Failed to update session after successful redirect:", e);
+      }
+      
       // Clear URL query parameters cleanly
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     // 2. Fetch/sync latest persistent tier from backend webhook storage on mount
-    // This ensures that after Stripe webhook completes, we get the updated tier
     if (profile.email) {
-      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(profile.email)}`)
+      let token = '';
+      try {
+        const localSess = localStorage.getItem('mcc_user_session');
+        if (localSess) {
+          const parsed = JSON.parse(localSess);
+          token = parsed.accessToken || '';
+        }
+      } catch (e) {}
+
+      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(profile.email)}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      })
         .then(res => res.json())
         .then(data => {
           if (data.subscriptionTier && data.subscriptionTier !== profile.subscriptionTier) {
             setProfile(prev => ({ ...prev, subscriptionTier: data.subscriptionTier }));
+            
+            // Also update local storage and app state!
+            try {
+              const localSess = localStorage.getItem('mcc_user_session');
+              if (localSess) {
+                const parsed = JSON.parse(localSess);
+                parsed.subscriptionTier = data.subscriptionTier;
+                localStorage.setItem('mcc_user_session', JSON.stringify(parsed));
+                window.dispatchEvent(new Event('mcc_session_update'));
+              }
+            } catch (e) {}
           }
         })
         .catch(err => console.error("Error syncing subscription tier with server:", err));
     }
-
-    // 3. Poll for subscription updates after Stripe session (for better UX after redirect)
-    let pollCount = 0;
-    const pollInterval = setInterval(() => {
-      if (profile.email) {
-        fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(profile.email)}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.subscriptionTier && data.subscriptionTier !== profile.subscriptionTier) {
-              setProfile(prev => ({ ...prev, subscriptionTier: data.subscriptionTier }));
-              // Trigger sync with Supabase to ensure persistence
-              fetch('/api/stripe/sync-subscription', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: profile.email })
-              }).catch(err => console.error("Sync error:", err));
-              clearInterval(pollInterval);
-            }
-          })
-          .catch(err => console.error("Polling error:", err));
-
-        pollCount++;
-        if (pollCount > 15) { // Stop polling after 30 seconds
-          clearInterval(pollInterval);
-        }
-      }
-    }, 2000);
-
-    return () => clearInterval(pollInterval);
   }, []);
 
   // Get active avatar icon for sidebar and profile dropdown
@@ -842,7 +848,7 @@ export function Dashboard({
                             </button>
                           </SidebarTooltip>
 
-                          <SidebarTooltip title="Rohstoff-Bewertung v0.5.5" text="Analysiere, kategorisiere und bewerte physische & kritische Rohstoffe nach geopolitischen Risiken, Fundamentaldaten und strategischer Bedeutung.">
+                          <SidebarTooltip title="Rohstoff-Bewertung v0.6.0-Beta" text="Analysiere, kategorisiere und bewerte physische & kritische Rohstoffe nach geopolitischen Risiken, Fundamentaldaten und strategischer Bedeutung.">
                             <button 
                               onClick={() => navigateTo('raw-materials')}
                               className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
@@ -1324,7 +1330,7 @@ export function Dashboard({
                       {pageViews.toLocaleString('de-DE')} Aufrufe (24h)
                     </span>
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 font-mono">
-                      v0.5.5 Beta
+                      v0.6.0-Beta
                     </span>
                   </div>
                 </div>
@@ -1395,7 +1401,7 @@ export function Dashboard({
               <span>support@capital-ai.online</span>
             </a>
 
-            {profile.subscriptionTier === 'Free' ? (
+            {profile.subscriptionTier !== 'Enterprise' ? (
               <button
                 onClick={() => setIsSubscriptionModalOpen(true)}
                 className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 text-black font-black text-[11px] sm:text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1 sm:gap-1.5 shadow-[0_0_15px_rgba(245,196,83,0.3)] cursor-pointer"
@@ -1405,15 +1411,9 @@ export function Dashboard({
                 <span className="sm:hidden">Premium</span>
               </button>
             ) : (
-              <div className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 ${
-                profile.subscriptionTier === 'Enterprise'
-                  ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
-                  : profile.subscriptionTier === 'Pro'
-                  ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400'
-                  : 'bg-blue-500/10 border border-blue-500/20 text-blue-400'
-              }`}>
+              <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center gap-1.5">
                 <ShieldCheck size={14} />
-                <span>{profile.subscriptionTier} Aktiv</span>
+                <span>Enterprise Aktiv</span>
               </div>
             )}
           </div>

@@ -1,5 +1,5 @@
 // Web Crypto AES-GCM encryption/decryption helper
-// Enforces zero-breach data integrity and seals local states under Version 0.5.5 requirements.
+// Enforces zero-breach data integrity and seals local states under Version 0.6.0-Beta requirements.
 
 const AES_KEY_PBKDF2_SALT = 'capital-ai-salt-2026';
 

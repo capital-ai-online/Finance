@@ -6,7 +6,7 @@ import { AuthenticationError, AuthorizationError } from '../server/errors';
 
 /**
  * CAPITAL-AI Secure Health & Diagnostics Router
- * Version 0.5.5 (Beta-Phase)
+ * Version 0.6.0-Beta
  */
 export function createHealthRouter(
   isSupabaseConfigured: () => boolean,
@@ -17,10 +17,14 @@ export function createHealthRouter(
   router.get('/', async (req, res, next) => {
     try {
       // 1. Secure authorization check using central tokens
-      const adminToken = process.env.ORCHESTRATOR_ADMIN_TOKEN || 'aif-admin-2026';
+      const adminToken = process.env.ORCHESTRATOR_ADMIN_TOKEN;
       const providedToken = req.headers['x-health-check-token'] || 
                             req.headers['x-orchestrator-admin-token'] || 
                             req.headers['authorization']?.toString().replace('Bearer ', '');
+
+      if (!adminToken) {
+        throw new AuthorizationError('Server-Konfiguration unvollständig (Admin-Token fehlt).');
+      }
 
       if (!providedToken) {
         throw new AuthenticationError('Authentication token is missing. Access denied.');
@@ -113,7 +117,7 @@ export function createHealthRouter(
         success: true,
         status: systemStatus,
         timestamp: new Date().toISOString(),
-        version: '0.5.5', // Pinned to 0.5.5 (Beta-Phase) per directives
+        version: '0.6.0-Beta', // Pinned to 0.6.0-Beta per directives
         uptimeSeconds: Math.round(uptimeSeconds * 100) / 100,
         system: {
           nodeVersion: process.version,

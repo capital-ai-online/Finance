@@ -21,10 +21,10 @@ export interface StockScoringVersion {
 }
 
 export const STOCK_SCORING_VERSIONS: Record<string, StockScoringVersion> = {
-  'v0.5.5': {
-    version: '0.5.5',
+  'v0.6.0-Beta': {
+    version: '0.6.0-Beta',
     releasedAt: '2026-07-06',
-    description: 'CAPITAL-AI Stock Scoring & Analytics Engine v0.5.5 (Beta-Phase)',
+    description: 'CAPITAL-AI Stock Scoring & Analytics Engine v0.6.0-Beta',
     weights: {
       value: 0.20,        // 20%
       growth: 0.20,       // 20%
@@ -37,7 +37,7 @@ export const STOCK_SCORING_VERSIONS: Record<string, StockScoringVersion> = {
   }
 };
 
-export const ACTIVE_STOCK_VERSION = 'v0.5.5';
+export const ACTIVE_STOCK_VERSION = 'v0.6.0-Beta';
 
 export interface DBStockItem extends StockInput {
   symbol: string;

@@ -5,7 +5,7 @@
 
 import { CryptoScoringInputs, CryptoAnalysisPayload } from '../types/crypto';
 
-// Weight config according to corporate standards (Version 0.5.5)
+// Weight config according to corporate standards (Version 0.6.0-Beta)
 export const CRYPTO_SCORING_WEIGHTS = {
   trend: 14,
   momentum: 12,
@@ -56,10 +56,10 @@ export class CryptoScoringService {
   }
 
   /**
-   * Main mathematical execution of the CAPITAL-AI Crypto Scoring Model (Version 0.5.5).
+   * Main mathematical execution of the CAPITAL-AI Crypto Scoring Model (Version 0.6.0-Beta).
    * Fully provable, with separated positive potential and negative risk factors.
    */
-  public static scoreCrypto(inputs: CryptoScoringInputs, version: string = "0.5.5"): CryptoAnalysisPayload {
+  public static scoreCrypto(inputs: CryptoScoringInputs, version: string = "0.6.0-Beta"): CryptoAnalysisPayload {
     const x = inputs;
     const w = CRYPTO_SCORING_WEIGHTS;
 

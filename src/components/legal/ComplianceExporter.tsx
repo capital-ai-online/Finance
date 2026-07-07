@@ -120,7 +120,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail }: Compl
         doc.setFontSize(7.5);
         doc.setTextColor(120, 120, 120);
         doc.text('Dieses Dokument wurde elektronisch generiert und bedarf keiner handschriftlichen Unterschrift.', 14, y);
-        doc.text('BaFin DSGVO-Gütebericht • Version 0.5.5 (Beta-Phase)', 196, y, { align: 'right' });
+        doc.text('BaFin DSGVO-Gütebericht • Version 0.6.0-Beta', 196, y, { align: 'right' });
       };
 
       // ==========================================
@@ -183,7 +183,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail }: Compl
       doc.text('System-Version:', 18, 60);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
-      doc.text('0.5.5 (Unified Beta Release)', 54, 60);
+      doc.text('0.6.0-Beta (Unified Release)', 54, 60);
 
       // Right col of parameter box
       doc.setFont('helvetica', 'normal');

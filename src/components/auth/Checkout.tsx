@@ -42,10 +42,10 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
         setPromoError('Der Code TRIAL26 gilt exklusiv für das Pro Abonnement.');
       }
     } else if (clean === 'BETASTAR') {
-      if (planId === 'Pro' || planId === 'Enterprise') {
+      if (planId === 'Enterprise') {
         setPromoApplied(true);
       } else {
-        setPromoError('Der Code BETASTAR gilt exklusiv für Pro und Enterprise Abonnements.');
+        setPromoError('Der Code BETASTAR gilt exklusiv für das Enterprise Abonnement.');
       }
     } else {
       setPromoError('Ungültiger Gutscheincode.');
@@ -75,22 +75,77 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
     setLoading(true);
     setError(null);
 
+    // Auto-apply promo code if filled but not explicitly applied yet
+    let activePromoApplied = promoApplied;
+    const clean = promoCode.trim().toUpperCase();
+    if (!activePromoApplied && clean) {
+      if (clean === 'TRIAL26') {
+        if (planId === 'Pro') {
+          activePromoApplied = true;
+          setPromoApplied(true);
+        } else {
+          setPromoError('Der Code TRIAL26 gilt exklusiv für das Pro Abonnement.');
+          setLoading(false);
+          return;
+        }
+      } else if (clean === 'BETASTAR') {
+        if (planId === 'Enterprise') {
+          activePromoApplied = true;
+          setPromoApplied(true);
+        } else {
+          setPromoError('Der Code BETASTAR gilt exklusiv für das Enterprise Abonnement.');
+          setLoading(false);
+          return;
+        }
+      } else {
+        setPromoError('Ungültiger Gutscheincode.');
+        setLoading(false);
+        return;
+      }
+    }
+
     // PROMO-CODE / TRIAL ACTIVATION: Handles free elevation if a valid promo code is applied
-    if (promoApplied) {
+    if (activePromoApplied) {
       try {
+        let token = '';
+        try {
+          const localSess = localStorage.getItem('mcc_user_session');
+          if (localSess) {
+            const parsed = JSON.parse(localSess);
+            token = parsed.accessToken || '';
+          }
+        } catch (e) {
+          console.error("Failed to read access token in Checkout:", e);
+        }
+
         const response = await fetch('/api/stripe/update-subscription-simulated', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           },
           body: JSON.stringify({
-            email,
-            tier: planId
+            tier: planId,
+            promoCode: promoCode.trim()
           })
         });
         const data = await response.json();
         if (!response.ok) {
           throw new Error(data.error || 'Fehler bei der Aktivierung des Gutscheins.');
+        }
+
+        // Immediately update local storage subscription state
+        try {
+          const localSess = localStorage.getItem('mcc_user_session');
+          if (localSess) {
+            const parsed = JSON.parse(localSess);
+            parsed.subscriptionTier = planId;
+            localStorage.setItem('mcc_user_session', JSON.stringify(parsed));
+            // Trigger dynamic event to notify App state
+            window.dispatchEvent(new Event('mcc_session_update'));
+          }
+        } catch (e) {
+          console.error("Failed to update local storage session in Checkout:", e);
         }
         
         onSuccess(planId);
@@ -157,17 +212,7 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
         throw new Error('Stripe.js konnte nicht geladen werden.');
       }
 
-      // 3. Weiterleitung zu Stripe Checkout mit Success-Callback
-      // Store sessionId in sessionStorage to track completion
-      if (data.sessionId) {
-        sessionStorage.setItem('stripe_checkout_session', JSON.stringify({
-          sessionId: data.sessionId,
-          email: email,
-          planId: planId,
-          timestamp: new Date().toISOString()
-        }));
-      }
-
+      // 3. Weiterleitung zu Stripe Checkout
       if (data.checkoutUrl) {
         // Direkte Weiterleitung an die gehostete URL
         window.location.href = data.checkoutUrl;
@@ -278,10 +323,19 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
                 setPromoCode(e.target.value);
                 setPromoError(null);
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (promoCode.trim() && !promoApplied) {
+                    handleApplyPromo();
+                  }
+                }
+              }}
               disabled={promoApplied}
               className="flex-1 bg-black/40 border border-white/10 focus:border-aif-gold-DEFAULT/40 rounded-lg px-3 py-1.5 text-xs font-mono text-white placeholder-white/30 uppercase outline-none transition-colors"
             />
             <button
+              type="button"
               onClick={handleApplyPromo}
               disabled={promoApplied || !promoCode.trim()}
               className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/5 hover:bg-white/10 text-white border border-white/10 disabled:opacity-40 transition-all cursor-pointer whitespace-nowrap"

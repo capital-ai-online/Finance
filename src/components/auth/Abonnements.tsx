@@ -47,7 +47,18 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
 
     // 2. Query persisted database-tier for this user
     if (email) {
-      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(email)}`)
+      let token = '';
+      try {
+        const localSess = localStorage.getItem('mcc_user_session');
+        if (localSess) {
+          const parsed = JSON.parse(localSess);
+          token = parsed.accessToken || '';
+        }
+      } catch (e) {}
+
+      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(email)}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      })
         .then(res => res.json())
         .then(data => {
           if (data.subscriptionTier && data.subscriptionTier !== currentTier) {

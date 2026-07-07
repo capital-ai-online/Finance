@@ -34,7 +34,7 @@ describe('OrchestratorAgentBridge Unit Tests', () => {
     it('should correctly format a system instruction block containing compliance directives', () => {
       const block = bridge.getSystemInstructionBlock();
       expect(block).toContain('MANDATORY COMPLIANCE DIRECTIVES');
-      expect(block).toContain('Version 0.5.5');
+      expect(block).toContain('Version 0.6.0-Beta');
       expect(block).toContain('CRITICAL');
     });
 
@@ -131,7 +131,7 @@ describe('OrchestratorAgentBridge Unit Tests', () => {
       expect(task.status).toBe('RUNNING');
       expect(task.inputPayload.email).toContain('cli***@***.com');
       expect(task.startTime).toBeLessThanOrEqual(Date.now());
-      expect(task.version).toBe('0.5.5');
+      expect(task.version).toBe('0.6.0-Beta');
     });
 
     it('should successfully complete running tasks and apply defensive schema guards', async () => {

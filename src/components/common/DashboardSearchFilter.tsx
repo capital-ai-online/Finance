@@ -69,16 +69,16 @@ export function DashboardSearchFilter({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: `Führe eine quantitative AI-Scoring Bewertung durch für das Asset ${asset.name} (${asset.symbol}) bezüglich des aktuellen Intervalls ${timeframe}. Berechne einen genauen numerischen Score (0-100) basierend auf Risiko-, Trend-, Liquiditäts- und Sentiment-Metriken im Perplexity-Stil. Nenne konkrete Kauf-/Verkauf-Schwellenwerte und ein geschätztes Stop-Loss Limit.`,
+          message: `Führe eine quantitative AI-Scoring Bewertung durch für das Asset ${asset.name} (${asset.symbol}) bezüglich des aktuellen Intervalls ${timeframe}. Berechne einen genauen numerischen Score (0-100) basierend auf Risiko-, Trend-, Liquiditäts- und Sentiment-Metriken im CAPITAL-AI-Stil. Nenne konkrete Kauf-/Verkauf-Schwellenwerte und ein geschätztes Stop-Loss Limit.`,
           history: []
         })
       });
 
-      if (!response.ok) throw new Error('Perplexity Service-Timeout');
+      if (!response.ok) throw new Error('CAPITAL-AI Service-Timeout');
       const data = await response.json();
       setPerplexityResult(data.reply);
     } catch (err: any) {
-      setPerplexityResult(`❌ **Fehler beim Perplexity AI-Scoring:** ${err.message || err}. Bitte stellen Sie sicher, dass Ihr API-Schlüssel konfiguriert ist.`);
+      setPerplexityResult(`❌ **Fehler beim CAPITAL-AI AI-Scoring:** ${err.message || err}. Bitte stellen Sie sicher, dass Ihr API-Schlüssel konfiguriert ist.`);
     } finally {
       setIsPerplexityLoading(false);
     }
@@ -431,7 +431,7 @@ export function DashboardSearchFilter({
               }}
               className="bg-transparent text-[11px] text-white focus:outline-none font-mono font-bold cursor-pointer"
             >
-              <option value="perplexity" className="bg-zinc-950 text-white font-mono">Perplexity AI</option>
+              <option value="perplexity" className="bg-zinc-950 text-white font-mono">CAPITAL-AI Web Engine</option>
               <option value="gemini" className="bg-zinc-950 text-white font-mono">Gemini 2.5</option>
               <option value="claude" className="bg-zinc-950 text-white font-mono">Claude 3.5</option>
             </select>
@@ -490,7 +490,7 @@ export function DashboardSearchFilter({
         <span>Bonds: <strong className="text-zinc-400 font-bold">{assets.filter(a => a.type === 'bond').length}</strong></span>
       </div>
 
-      {/* Perplexity AI Scoring Panel */}
+      {/* CAPITAL-AI Web-Scoring Panel */}
       {aiScoringService === 'perplexity' && currentAsset && (
         <div className="mt-4 p-4 rounded-xl border border-violet-500/30 bg-gradient-to-br from-violet-950/20 via-black/45 to-zinc-950/25 backdrop-blur-md shadow-[0_4px_20px_rgba(139,92,246,0.15)] relative overflow-hidden">
           <div className="absolute top-0 right-0 w-[120px] h-[120px] bg-violet-500/10 rounded-full blur-2xl pointer-events-none" />
@@ -501,7 +501,7 @@ export function DashboardSearchFilter({
               </div>
               <div>
                 <h4 className="text-xs font-black text-white font-display tracking-wider uppercase">
-                  Perplexity AI Scoring Dienst
+                  CAPITAL-AI Web-Scoring Dienst
                 </h4>
                 <p className="text-[9px] font-mono text-zinc-400">
                   Real-time Web-Grounded valuation & Hype analysis
@@ -522,7 +522,7 @@ export function DashboardSearchFilter({
               ) : (
                 <>
                   <Sparkles size={11} />
-                  <span>Starte Perplexity AI-Scoring</span>
+                  <span>Starte CAPITAL-AI Web-Scoring</span>
                 </>
               )}
             </button>
@@ -542,7 +542,7 @@ export function DashboardSearchFilter({
                   <Cpu className="text-violet-400 animate-pulse" size={16} />
                 </div>
                 <p className="text-[11px] font-mono text-zinc-300 animate-pulse">
-                  Verbinde mit Perplexity Web-Grounded Engine...
+                  Verbinde mit CAPITAL-AI Web-Search Engine...
                 </p>
                 <p className="text-[9px] text-zinc-500 font-mono">
                   Generiere Real-time Compliance & quantitativen Valuation-Score für {currentAsset.symbol} ({timeframe})
@@ -716,7 +716,7 @@ export function DashboardSearchFilter({
 
             {/* Bottom info banner */}
             <div className="px-4 py-2 bg-black/40 border-t border-white/5 text-[9px] font-mono text-zinc-500 flex justify-between items-center">
-              <span>CAPITAL-AI Beta Version 0.5.5</span>
+              <span>CAPITAL-AI Beta Version 0.6.0-Beta</span>
               <span>Zeige max. 8 Suchergebnisse</span>
             </div>
           </motion.div>

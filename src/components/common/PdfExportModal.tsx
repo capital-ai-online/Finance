@@ -39,7 +39,18 @@ export function PdfExportModal({ isOpen, onClose, email, onSuccess }: PdfExportM
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`/api/stripe/pdf-credits?email=${encodeURIComponent(email)}`);
+      let token = '';
+      try {
+        const localSess = localStorage.getItem('mcc_user_session');
+        if (localSess) {
+          const parsed = JSON.parse(localSess);
+          token = parsed.accessToken || '';
+        }
+      } catch (e) {}
+
+      const res = await fetch(`/api/stripe/pdf-credits?email=${encodeURIComponent(email)}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (!res.ok) throw new Error('Fehler beim Laden der Credits');
       const data = await res.json();
       setCredits(data.credits);
@@ -81,9 +92,21 @@ export function PdfExportModal({ isOpen, onClose, email, onSuccess }: PdfExportM
     try {
       setLoading(true);
       setError(null);
+      let token = '';
+      try {
+        const localSess = localStorage.getItem('mcc_user_session');
+        if (localSess) {
+          const parsed = JSON.parse(localSess);
+          token = parsed.accessToken || '';
+        }
+      } catch (e) {}
+
       const res = await fetch('/api/stripe/consume-pdf-credit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ email })
       });
 
@@ -207,7 +230,7 @@ export function PdfExportModal({ isOpen, onClose, email, onSuccess }: PdfExportM
         {/* Content */}
         <div className="space-y-4">
           <p className="text-xs text-white/60 leading-relaxed">
-            Dieser Bericht ist Teil der exklusiven quantitativen Auswertungen von AIFinancial (Version 0.5.5).
+            Dieser Bericht ist Teil der exklusiven quantitativen Auswertungen von CAPITAL-AI (Version 0.6.0-Beta).
           </p>
 
           {/* Credits Display */}
