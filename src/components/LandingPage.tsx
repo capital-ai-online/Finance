@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldAlert, Mail, User, Lock, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, X, HelpCircle, ChevronDown } from 'lucide-react';
-import { CapitalAiLogo } from './common/CapitalAiLogo';
+import { CapitalAiLogo } from './CapitalAiLogo';
 import { supabase } from '../supabaseClient';
 
 interface LandingPageProps {
@@ -57,7 +57,6 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
   const [forgotLoading, setForgotLoading] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
-  const [diagnostics, setDiagnostics] = useState<any | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -100,7 +99,6 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setDiagnostics(null);
     setSuccessMessage(null);
     if (!loginEmail || !loginPassword) {
       setError('Bitte füllen Sie alle Felder aus.');
@@ -111,9 +109,6 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
       await onLoginEmail(loginEmail, loginPassword);
     } catch (err: any) {
       setError(err.message || 'Ein Fehler ist beim Einloggen aufgetreten.');
-      if (err.diagnostics) {
-        setDiagnostics(err.diagnostics);
-      }
     } finally {
       setLoading(false);
     }
@@ -278,7 +273,7 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
           {/* Toggle Tabs between Sign In and Register */}
           <div className="flex bg-white/5 p-1 rounded-lg border border-white/10 mb-6">
             <button
-              onClick={() => { setActiveTab('login'); setError(null); setDiagnostics(null); setSuccessMessage(null); }}
+              onClick={() => { setActiveTab('login'); setError(null); setSuccessMessage(null); }}
               className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${
                 activeTab === 'login'
                   ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_10px_rgba(245,196,83,0.2)]'
@@ -288,7 +283,7 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
               Sign In
             </button>
             <button
-              onClick={() => { setActiveTab('register'); setError(null); setDiagnostics(null); setSuccessMessage(null); }}
+              onClick={() => { setActiveTab('register'); setError(null); setSuccessMessage(null); }}
               className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${
                 activeTab === 'register'
                   ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_10px_rgba(245,196,83,0.2)]'
@@ -300,35 +295,9 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
           </div>
 
           {error && (
-            <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex flex-col gap-2 font-mono">
-              <div className="flex items-center gap-2">
-                <AlertCircle size={14} className="shrink-0" />
-                <span>{error}</span>
-              </div>
-              {diagnostics && (
-                <div className="mt-2.5 pt-2.5 border-t border-rose-500/15 space-y-2 text-[10px]">
-                  <div className="text-white/60 font-bold uppercase tracking-wider mb-1 text-[9px]">Server-Umgebungs-Diagnose:</div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 bg-black/40 p-2 rounded border border-rose-500/15 font-mono">
-                    {Object.entries(diagnostics).map(([key, info]: [string, any]) => (
-                      <div key={key} className="flex flex-col border-b border-white/5 pb-1 last:border-0 last:pb-0">
-                        <span className="text-white/40 select-all font-sans font-semibold text-[9px]">{key}</span>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className={`w-1.5 h-1.5 rounded-full ${info.configured ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-                          <span className={info.configured ? 'text-emerald-400 font-bold' : 'text-rose-400'}>
-                            {info.configured ? `Aktiv (Länge: ${info.length})` : 'Nicht konfiguriert'}
-                          </span>
-                          {info.configured && info.preview && (
-                            <span className="text-white/30 text-[9px] font-mono select-all">[{info.preview}]</span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="text-white/40 text-[9px] leading-relaxed mt-1 font-sans">
-                    Bitte überprüfen Sie die Umgebungsvariablen in Ihrem Render.com Dashboard (Environment Variables). Sie müssen exakt den in der `.env.example` gezeigten Namen entsprechen.
-                  </div>
-                </div>
-              )}
+            <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2 font-mono">
+              <AlertCircle size={14} className="shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 

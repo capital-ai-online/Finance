@@ -14,10 +14,10 @@ export class MemeCoinScoringService {
   }
 
   /**
-   * Calculates high-velocity meme coin score (Version 0.6.0-Beta).
+   * Calculates high-velocity meme coin score (Version 0.5.4).
    * Fully transparent arithmetic formulas with split penalty structures.
    */
-  public static scoreMemeCoin(inputs: MemeCoinInputs, version: string = "0.6.0-Beta"): MemeCoinAnalysisPayload {
+  public static scoreMemeCoin(inputs: MemeCoinInputs, version: string = "0.5.4"): MemeCoinAnalysisPayload {
     const x = inputs;
 
     // --- POSITIVE CORE HYPE SCORE ---

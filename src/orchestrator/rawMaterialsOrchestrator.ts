@@ -9,7 +9,7 @@ import { ClassificationAgent } from '../agents/classificationAgent';
 import { FundamentalsAgent } from '../agents/fundamentalsAgent';
 import { RiskAgent } from '../agents/riskAgent';
 import { ValuationAgent } from '../agents/valuationAgent';
-import { RawMaterialsScoringService } from '../services/rawMaterialsScoringService';
+import { RawMaterialsScoringService } from '../services/rawMaterialsScoring';
 import { findRawMaterialConfig } from '../config/rawMaterialsConfig';
 
 export class RawMaterialsOrchestrator {

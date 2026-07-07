@@ -1,43 +1,46 @@
 import React, { useState } from 'react';
-import { LandingPage } from './LandingPage';
 import { secureStorage } from '../lib/cryptoHelper';
-import { Screener } from './screener/Screener';
-import { Newsticker } from './common/Newsticker';
-import { UniverseBestWorst } from './common/UniverseBestWorst';
-import { PortfolioPerformance } from './analysis/PortfolioPerformance';
-import { ComplianceExporter } from './legal/ComplianceExporter';
-import { ImageAnalyzer } from './orchestration/ImageAnalyzer';
-import { CryptoEnterpriseEvaluator } from './screener/CryptoEnterpriseEvaluator';
-import { ProfilePage, UserProfile } from './auth/ProfilePage';
-import { MonteCarloDetailed } from './analysis/MonteCarloDetailed';
-import { BuffetValueCheck } from './analysis/BuffetValueCheck';
-import { Abonnements } from './auth/Abonnements';
-import { SubscriptionModal } from './auth/SubscriptionModal';
-import { Datenschutz } from './legal/Datenschutz';
-import { ImpressumAgb } from './legal/ImpressumAgb';
-import { RealtimeAiNewsfeed } from './common/RealtimeAiNewsfeed';
-import { Watchlist } from './common/Watchlist';
-import { BacktestEngine } from './analysis/BacktestEngine';
-import { HeatmapCreator } from './analysis/HeatmapCreator';
-import { CapitalAiLogo } from './common/CapitalAiLogo';
-import { MarketScreener } from './screener/MarketScreener';
+import { Screener } from './Screener';
+import { Newsticker } from './Newsticker';
+import { UniverseBestWorst } from './UniverseBestWorst';
+import { PortfolioPerformance } from './PortfolioPerformance';
+import { ComplianceExporter } from './ComplianceExporter';
+import { ImageAnalyzer } from './ImageAnalyzer';
+import { CryptoEnterpriseEvaluator } from './CryptoEnterpriseEvaluator';
+import { ProfilePage, UserProfile } from './ProfilePage';
+import { MonteCarloDetailed } from './MonteCarloDetailed';
+import { BuffetValueCheck } from './BuffetValueCheck';
+import { Abonnements } from './Abonnements';
+import { SubscriptionModal } from './SubscriptionModal';
+import { Datenschutz } from './Datenschutz';
+import { ImpressumAgb } from './ImpressumAgb';
+import { RealtimeAiNewsfeed } from './RealtimeAiNewsfeed';
+import { Watchlist } from './Watchlist';
+import { BacktestEngine } from './BacktestEngine';
+import { HeatmapCreator } from './HeatmapCreator';
+import { CapitalAiLogo } from './CapitalAiLogo';
+import { MarketScreener } from './MarketScreener';
+import { CryptoScoringEnterprise } from './CryptoScoringEnterprise';
 import { UserSession } from '../App';
-import { GuestCliffhangerModal } from './auth/GuestCliffhangerModal';
-import { MarkdownOrchestrator } from './orchestration/MarkdownOrchestrator';
-import { InteractModule } from './orchestration/InteractModule';
-import { Charts } from './common/Charts';
-import { OrchestratorPanel } from './orchestration/OrchestratorPanel';
-import PerformanceDashboard from './analysis/PerformanceDashboard';
-import { RealTimeRiskAssessment } from './analysis/RealTimeRiskAssessment';
-import { PriceAlert } from './analysis/PriceAlert';
-import { MarketSentiment } from './analysis/MarketSentiment';
-import { AuditLogs } from './legal/AuditLogs';
-import { SentimentDashboard } from './analysis/SentimentDashboard';
-import { DashboardSearchFilter } from './common/DashboardSearchFilter';
-import { RawMaterialsDashboard } from './screener/RawMaterialsDashboard';
-import { AssetUniverseDashboard } from './screener/AssetUniverseDashboard';
-import { SystemLatencyMonitor } from './common/SystemLatencyMonitor';
-import { CapitalAiTrailer } from './common/CapitalAiTrailer';
+import { GuestCliffhangerModal } from './GuestCliffhangerModal';
+import { MarkdownOrchestrator } from './MarkdownOrchestrator';
+import { InteractModule } from './InteractModule';
+import { Charts } from './Charts';
+import { OrchestratorPanel } from './OrchestratorPanel';
+import PerformanceDashboard from './PerformanceDashboard';
+import { RealTimeRiskAssessment } from './RealTimeRiskAssessment';
+import { AdminPanel } from './AdminPanel';
+import { PriceAlert } from './PriceAlert';
+import { MarketSentiment } from './MarketSentiment';
+import { AuthStateDebugger } from './AuthStateDebugger';
+import { AuditLogs } from './AuditLogs';
+import { SentimentDashboard } from './SentimentDashboard';
+import { DashboardSearchFilter } from './DashboardSearchFilter';
+import { RawMaterialsDashboard } from './RawMaterialsDashboard';
+import { AssetUniverseDashboard } from './AssetUniverseDashboard';
+import { SystemLatencyMonitor } from './SystemLatencyMonitor';
+import { CapitalAiTrailer } from './CapitalAiTrailer';
+import { LandingPage } from './LandingPage';
 
 import { 
   LogOut, 
@@ -80,9 +83,7 @@ interface DashboardProps {
   onLogout: () => void;
   onRegister: (name: string, email: string) => void;
   onLoginEmail?: (email: string, password: string) => Promise<void>;
-  onGuestLogin?: () => void;
   onRegisterEmail?: (name: string, email: string, password: string) => Promise<void>;
-  justLoggedOut?: boolean;
 }
 
 function SidebarTooltip({ title, text, children }: { title: string; text: string; children: React.ReactNode }) {
@@ -101,83 +102,14 @@ function SidebarTooltip({ title, text, children }: { title: string; text: string
   );
 }
 
-export function Dashboard({ 
-  userSession, 
-  onLogout, 
-  onRegister,
-  onLoginEmail,
-  onGuestLogin,
-  onRegisterEmail,
-  justLoggedOut
-}: DashboardProps) {
+export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onRegisterEmail }: DashboardProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [selectedSymbol, setSelectedSymbol] = useState<string>('');
+  const [selectedSymbol, setSelectedSymbol] = useState<string>('BTC');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<string>('1std');
-  const [aiScoringService, setAiScoringService] = useState<string>('perplexity');
-  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'promo-video' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'login'>('dashboard');
-  
-  // Enterprise Scorer empty fields persistence (starts empty)
-  const [enterpriseSymbols, setEnterpriseSymbols] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('capital_ai_enterprise_symbols');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // Dynamic Page Views state
-  const [pageViews, setPageViews] = useState<number>(14502);
-
-  React.useEffect(() => {
-    // Record page view on load
-    fetch('/api/page-views?hit=true')
-      .then(res => res.json())
-      .then(data => {
-        if (data && typeof data.views === 'number') {
-          setPageViews(data.views);
-        }
-      })
-      .catch(err => {
-        console.warn('Fehler beim Abrufen der Seitenzugriffe:', err);
-      });
-
-    // Poll for slight dynamic increases every 30s
-    const interval = setInterval(() => {
-      fetch('/api/page-views')
-        .then(res => res.json())
-        .then(data => {
-          if (data && typeof data.views === 'number') {
-            setPageViews(data.views);
-          }
-        })
-        .catch(err => console.debug('Polling view counts warning:', err));
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleToggleEnterpriseSymbol = (symbol: string) => {
-    const sym = symbol.toUpperCase().trim();
-    setEnterpriseSymbols(prev => {
-      let next;
-      if (prev.includes(sym)) {
-        next = prev.filter(s => s !== sym);
-      } else {
-        if (prev.length >= 5) {
-          next = [...prev.slice(1), sym];
-        } else {
-          next = [...prev, sym];
-        }
-      }
-      localStorage.setItem('capital_ai_enterprise_symbols', JSON.stringify(next));
-      return next;
-    });
-  };
-
+  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'promo-video' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'login'>('dashboard');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>('hub');
   const [expandedUniverse, setExpandedUniverse] = useState<string | null>(null);
@@ -194,6 +126,13 @@ export function Dashboard({
     };
     setExpandedSection(getViewCategory(activeView));
   }, [activeView]);
+
+  // Switch to dashboard view automatically when user becomes registered
+  React.useEffect(() => {
+    if (userSession.type === 'registered' && activeView === 'login') {
+      setActiveView('dashboard');
+    }
+  }, [userSession.type, activeView]);
 
   // Guest limitations state
   const [attempts, setAttempts] = useState<number>(0);
@@ -334,10 +273,6 @@ export function Dashboard({
           const savedStr = await secureStorage.getItem('aif_encrypted_user_profile', pass);
           if (savedStr) {
             const parsed = JSON.parse(savedStr);
-            // Ensure the subscriptionTier is always synchronized with the latest active userSession
-            if (userSession.type !== 'guest') {
-              parsed.subscriptionTier = userSession.subscriptionTier;
-            }
             setProfile(parsed);
             return;
           }
@@ -356,14 +291,6 @@ export function Dashboard({
     };
     loadSecureProfile();
   }, [userSession]);
-
-  // Redirect logged-in users away from the login screen automatically
-  React.useEffect(() => {
-    if (userSession.type === 'registered' && activeView === 'login') {
-      console.log("[Dashboard] Logged in user detected on login screen, redirecting to dashboard...");
-      setActiveView('dashboard');
-    }
-  }, [userSession.type, activeView]);
 
   const handleUpdateProfile = async (newProfile: UserProfile) => {
     setProfile(newProfile);
@@ -400,53 +327,17 @@ export function Dashboard({
     if (payment === 'success' && plan) {
       setProfile(prev => ({ ...prev, subscriptionTier: plan as any }));
       setActiveView('abonnements');
-      
-      // Update local storage and trigger global app update
-      try {
-        const localSess = localStorage.getItem('mcc_user_session');
-        if (localSess) {
-          const parsed = JSON.parse(localSess);
-          parsed.subscriptionTier = plan;
-          localStorage.setItem('mcc_user_session', JSON.stringify(parsed));
-          window.dispatchEvent(new Event('mcc_session_update'));
-        }
-      } catch (e) {
-        console.error("Failed to update session after successful redirect:", e);
-      }
-      
       // Clear URL query parameters cleanly
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     // 2. Fetch/sync latest persistent tier from backend webhook storage on mount
     if (profile.email) {
-      let token = '';
-      try {
-        const localSess = localStorage.getItem('mcc_user_session');
-        if (localSess) {
-          const parsed = JSON.parse(localSess);
-          token = parsed.accessToken || '';
-        }
-      } catch (e) {}
-
-      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(profile.email)}`, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      })
+      fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(profile.email)}`)
         .then(res => res.json())
         .then(data => {
           if (data.subscriptionTier && data.subscriptionTier !== profile.subscriptionTier) {
             setProfile(prev => ({ ...prev, subscriptionTier: data.subscriptionTier }));
-            
-            // Also update local storage and app state!
-            try {
-              const localSess = localStorage.getItem('mcc_user_session');
-              if (localSess) {
-                const parsed = JSON.parse(localSess);
-                parsed.subscriptionTier = data.subscriptionTier;
-                localStorage.setItem('mcc_user_session', JSON.stringify(parsed));
-                window.dispatchEvent(new Event('mcc_session_update'));
-              }
-            } catch (e) {}
           }
         })
         .catch(err => console.error("Error syncing subscription tier with server:", err));
@@ -552,6 +443,7 @@ export function Dashboard({
                     <CapitalAiLogo size={40} showText={false} />
                     <div className="flex flex-col items-start leading-none">
                       <span className="font-black text-sm tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">Capital-AI</span>
+                      <span className="text-[11px] text-white/70 font-mono tracking-widest uppercase mt-0.5">CORE</span>
                     </div>
                   </div>
                   <button 
@@ -587,40 +479,6 @@ export function Dashboard({
                     </p>
                   </div>
                 </div>
-
-                {/* PROMO-BANNER FOR FREE USERS: TRIAL26 CAMPAIGN */}
-                {/* HINWEIS ZU GELDBEZUG: Dieses Feature bewerbt den Gutscheincode TRIAL26 für ein kostenloses Pro-Abonnement. */}
-                {profile.subscriptionTier === 'Free' && (
-                  <div className="mx-4 mt-4 mb-2 bg-gradient-to-br from-amber-500/20 via-aif-gold-DEFAULT/15 to-emerald-500/10 border border-aif-gold-DEFAULT/30 p-4 rounded-xl relative overflow-hidden shadow-[0_0_20px_rgba(245,196,83,0.1)]">
-                    <div className="absolute top-0 right-0 w-[80px] h-[80px] bg-gradient-to-br from-aif-gold-DEFAULT/15 to-transparent rounded-full blur-xl pointer-events-none" />
-                    <div className="relative z-10 space-y-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[8px] bg-aif-gold-DEFAULT text-black px-1.5 py-0.5 rounded font-black uppercase tracking-wider font-mono animate-pulse">
-                          Aktion
-                        </span>
-                        <span className="text-[9px] text-emerald-400 font-mono font-bold flex items-center gap-0.5">
-                          <ShieldCheck size={10} /> 1 Monat Gratis
-                        </span>
-                      </div>
-                      <h4 className="text-xs font-black text-white font-display leading-snug">
-                        CAPITAL-AI PRO kostenlos!
-                      </h4>
-                      <p className="text-[10px] text-white/70 leading-relaxed">
-                        Nutze den Code <strong className="text-aif-gold-DEFAULT font-mono bg-white/5 border border-white/10 px-1 rounded select-all cursor-pointer">TRIAL26</strong> beim Pro Monats-Abo für 30 Tage vollen Premium-Zugang.
-                      </p>
-                      <button
-                        onClick={() => {
-                          setMenuOpen(false);
-                          navigateTo('abonnements');
-                        }}
-                        className="w-full mt-1.5 py-1.5 rounded-lg text-center text-[10px] font-black uppercase tracking-widest bg-aif-gold-DEFAULT text-black hover:bg-aif-gold-light hover:shadow-[0_0_15px_rgba(245,196,83,0.4)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-center gap-1"
-                      >
-                        <Sparkles size={10} />
-                        <span>Code Jetzt Einlösen</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
 
                 {/* Navigation Items with Premium Vertical Accordion */}
                 <div className="p-4 space-y-3">
@@ -696,22 +554,6 @@ export function Dashboard({
                               <span>Abonnements</span>
                             </button>
                           </SidebarTooltip>
-
-                          {userSession.type === 'guest' && (
-                            <SidebarTooltip title="Anmelden / LOGIN" text="Melde Dich an oder registriere ein neues Konto, um Dein Portfolio zu verwalten und unbegrenzten Premium-Zugang freizuschalten.">
-                              <button 
-                                onClick={() => navigateTo('login')}
-                                className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
-                                  activeView === 'login' 
-                                    ? 'bg-gradient-to-r from-aif-gold-DEFAULT to-aif-gold-dark text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.35)]' 
-                                    : 'text-aif-gold-DEFAULT hover:text-white hover:bg-white/5 border border-aif-gold-DEFAULT/30 bg-aif-gold-DEFAULT/5'
-                                }`}
-                              >
-                                <LogIn size={14} className={activeView === 'login' ? 'text-black font-black' : 'text-aif-gold-DEFAULT'} />
-                                <span>LOGIN / Anmelden</span>
-                              </button>
-                            </SidebarTooltip>
-                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -860,7 +702,7 @@ export function Dashboard({
                             </button>
                           </SidebarTooltip>
 
-                          <SidebarTooltip title="Rohstoff-Bewertung v0.6.0-Beta" text="Analysiere, kategorisiere und bewerte physische & kritische Rohstoffe nach geopolitischen Risiken, Fundamentaldaten und strategischer Bedeutung.">
+                          <SidebarTooltip title="Rohstoff-Bewertung v0.5.4" text="Analysiere, kategorisiere und bewerte physische & kritische Rohstoffe nach geopolitischen Risiken, Fundamentaldaten und strategischer Bedeutung.">
                             <button 
                               onClick={() => navigateTo('raw-materials')}
                               className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
@@ -1267,6 +1109,57 @@ export function Dashboard({
                       )}
                     </AnimatePresence>
                   </div>
+
+                  {/* Category 5: Administration (if user is Sven Kulessa) */}
+                  {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'sven.kulessa@gmx.net') && (
+                    <div className="border-b border-white/5 pb-2">
+                      <button
+                        onClick={() => setExpandedSection(expandedSection === 'system_admin' ? null : 'system_admin')}
+                        className="w-full px-3 py-2.5 flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-aif-gold-DEFAULT hover:text-white transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
+                        aria-expanded={expandedSection === 'system_admin'}
+                        aria-controls="nav-sec-admin"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <ShieldAlert size={14} className="text-aif-gold-DEFAULT group-hover:animate-bounce" />
+                          <span>Administration</span>
+                        </div>
+                        <motion.div
+                          animate={{ rotate: expandedSection === 'system_admin' ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronDown size={14} className="text-aif-gold-DEFAULT/40 group-hover:text-aif-gold-DEFAULT/85" />
+                        </motion.div>
+                      </button>
+
+                      <AnimatePresence initial={false}>
+                        {expandedSection === 'system_admin' && (
+                          <motion.div
+                            id="nav-sec-admin"
+                            role="region"
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25, ease: 'easeInOut' }}
+                            className="overflow-hidden mt-1 px-1 space-y-1"
+                          >
+                            <SidebarTooltip title="Admin-Zentrale" text="Exklusive Steuerzentrale für Sven Kulessa: Überwache Latenzstatistiken, plane das Investoren-Abo und verwalte Benutzer.">
+                              <button 
+                                onClick={() => navigateTo('admin-panel')}
+                                className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                  activeView === 'admin-panel' 
+                                    ? 'bg-aif-gold-DEFAULT text-black font-black border-aif-gold-DEFAULT shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                    : 'text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/15 border-aif-gold-DEFAULT/20'
+                                }`}
+                              >
+                                <ShieldAlert size={14} className={activeView === 'admin-panel' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                                <span>Admin-Zentrale</span>
+                              </button>
+                            </SidebarTooltip>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1274,10 +1167,7 @@ export function Dashboard({
               <div className="p-4 border-t border-white/10 bg-black/60 space-y-2">
                 {userSession.type === 'guest' ? (
                   <button 
-                    onClick={() => {
-                      setMenuOpen(false);
-                      navigateTo('login');
-                    }} 
+                    onClick={() => { setActiveView('login'); setMenuOpen(false); }} 
                     className="w-full py-3 rounded-lg bg-gradient-to-r from-aif-gold-DEFAULT to-aif-gold-dark hover:from-aif-gold-light hover:to-aif-gold-DEFAULT text-black font-black text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(245,196,83,0.35)] hover:shadow-[0_0_30px_rgba(245,196,83,0.55)] scale-100 hover:scale-[1.02] active:scale-[0.98]"
                   >
                     <LogIn size={15} className="stroke-[3px]" />
@@ -1336,13 +1226,10 @@ export function Dashboard({
                     <span className="font-black text-lg tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">Capital-AI</span>
                     <ChevronDown size={16} className={`text-aif-gold-DEFAULT transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] font-mono text-white/60 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#0DDDDD] animate-pulse" />
-                      {pageViews.toLocaleString('de-DE')} Aufrufe (24h)
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 font-mono">
-                      v0.6.0-Beta
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="text-[11px] text-white/70 font-mono tracking-widest uppercase">CORE</span>
+                    <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 font-mono tracking-widest">
+                      AKTIV
                     </span>
                   </div>
                 </div>
@@ -1372,6 +1259,14 @@ export function Dashboard({
                     >
                       <User size={16} className="text-aif-neon-cyan" /> Profil verwalten
                     </button>
+                    {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'sven.kulessa@gmx.net') && (
+                      <button 
+                        onClick={() => { setDropdownOpen(false); setActiveView('admin-panel'); }}
+                        className="w-full text-left px-4 py-2.5 text-sm font-bold text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/10 rounded-lg flex items-center gap-3 transition-all border border-aif-gold-DEFAULT/20"
+                      >
+                        <ShieldAlert size={16} className="text-aif-gold-DEFAULT" /> Admin-Zentrale
+                      </button>
+                    )}
                     <button 
                       onClick={() => { setDropdownOpen(false); setActiveView('abonnements'); }}
                       className="w-full text-left px-4 py-2.5 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors"
@@ -1386,9 +1281,18 @@ export function Dashboard({
                     </button>
                   </div>
                   <div className="p-2 border-t border-white/10 bg-black/50">
-                    <button onClick={onLogout} className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-lg flex items-center gap-3 transition-colors">
-                      <LogOut size={16} /> Sign Out
-                    </button>
+                    {userSession.type === 'guest' ? (
+                      <button 
+                        onClick={() => { setDropdownOpen(false); setActiveView('login'); }} 
+                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-aif-gold-DEFAULT hover:bg-aif-gold-DEFAULT/10 rounded-lg flex items-center gap-3 transition-colors"
+                      >
+                        <LogIn size={16} /> Anmelden / Login
+                      </button>
+                    ) : (
+                      <button onClick={onLogout} className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-lg flex items-center gap-3 transition-colors">
+                        <LogOut size={16} /> Sign Out
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -1456,10 +1360,11 @@ export function Dashboard({
                 {activeView === 'markdown-orchestrator' && 'Markdown Orchestrator'}
                 {activeView === 'interact' && 'Interact Workspace (Modul 2)'}
                 {activeView === 'risiko-assessment' && 'Value-at-Risk Risiko-Zentrale'}
+                {activeView === 'admin-panel' && 'System-Administration (Sven Kulessa)'}
                 {activeView === 'preis-alarme' && 'Echtzeit Preis-Alarme & Push-Simulation'}
                 {activeView === 'audit-logs' && 'Audit Trail & Compliance-Protokoll'}
                 {activeView === 'sentiment-dashboard' && 'AI Markt-Sentiment Cockpit & Sandbox'}
-                {activeView === 'login' && 'Anmelden / Registrieren (Login)'}
+                {activeView === 'login' && 'System-Anmeldung (Capital-AI Login)'}
               </span>
             </div>
             
@@ -1471,42 +1376,6 @@ export function Dashboard({
               <span>Zurück zum Dashboard</span>
             </button>
           </div>
-        )}
-
-        {/* PROMO-BANNER FOR FREE USERS: TRIAL26 CAMPAIGN (Placed above the search bar under the header) */}
-        {profile.subscriptionTier === 'Free' && (activeView === 'dashboard' || activeView === 'market-screener') && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-4 rounded-xl border border-aif-gold-DEFAULT/30 bg-gradient-to-r from-amber-500/10 via-aif-gold-DEFAULT/5 to-purple-500/10 backdrop-blur-md relative overflow-hidden shadow-[0_4px_24px_rgba(245,196,83,0.08)]"
-          >
-            <div className="absolute top-0 right-0 w-[120px] h-[120px] bg-aif-gold-DEFAULT/5 rounded-full blur-2xl pointer-events-none" />
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
-              <div className="flex items-center gap-3 text-center sm:text-left">
-                <span className="text-2xl select-none">🚀💫</span>
-                <div className="space-y-0.5">
-                  <div className="flex items-center justify-center sm:justify-start gap-2">
-                    <span className="text-[9px] bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 text-black px-1.5 py-0.5 rounded font-black uppercase tracking-wider font-mono">
-                      Promo-Aktion
-                    </span>
-                    <span className="text-[10px] text-aif-gold-DEFAULT font-bold uppercase tracking-wider">
-                      TRIAL26 Exklusiv-Zugang
-                    </span>
-                  </div>
-                  <p className="text-xs text-zinc-200 font-medium">
-                    Sichern Sie sich <strong>30 Tage vollen Premium-Zugriff</strong> kostenlos! Nutzen Sie den Code <strong className="text-aif-gold-DEFAULT font-mono bg-white/5 border border-white/15 px-1.5 py-0.5 rounded select-all cursor-pointer">TRIAL26</strong> beim Pro Monats-Abo.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => navigateTo('abonnements')}
-                className="w-full sm:w-auto px-5 py-2 rounded-lg bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 text-black font-black text-[11px] uppercase tracking-wider hover:brightness-110 active:scale-[0.98] shadow-[0_0_15px_rgba(245,196,83,0.2)] hover:shadow-[0_0_25px_rgba(245,196,83,0.4)] transition-all cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
-              >
-                <Sparkles size={11} />
-                <span>Code einlösen</span>
-              </button>
-            </div>
-          </motion.div>
         )}
 
         {/* Global Search and Filter Bar for Dashboard & Screener */}
@@ -1523,12 +1392,6 @@ export function Dashboard({
             setSearchQuery={setSearchQuery}
             categoryFilter={categoryFilter}
             setCategoryFilter={setCategoryFilter}
-            enterpriseSymbols={enterpriseSymbols}
-            onToggleEnterpriseSymbol={handleToggleEnterpriseSymbol}
-            timeframe={timeframe}
-            onChangeTimeframe={setTimeframe}
-            aiScoringService={aiScoringService}
-            onChangeAiScoringService={setAiScoringService}
           />
         )}
 
@@ -1544,18 +1407,43 @@ export function Dashboard({
           >
             {activeView === 'dashboard' && (
               <>
-                  {/* Realtime AI-Newsfeed (Full Width) placed underneath */}
-                  <div className="w-full">
-                    <RealtimeAiNewsfeed 
-                      subscriptionTier={profile.subscriptionTier} 
-                      onUpgradeClick={() => navigateTo('abonnements')}
-                      selectedSymbol={selectedSymbol}
-                      searchQuery={searchQuery}
-                      categoryFilter={categoryFilter}
-                      onTriggerPushNotification={triggerPushNotification}
-                      watchlist={enterpriseSymbols}
-                    />
+                  {/* Realtime AI-Newsfeed and Watchlist Side-by-Side Grid */}
+                  <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    <div className="xl:col-span-2">
+                      <RealtimeAiNewsfeed 
+                        subscriptionTier={profile.subscriptionTier} 
+                        onUpgradeClick={() => navigateTo('abonnements')}
+                        selectedSymbol={selectedSymbol}
+                        searchQuery={searchQuery}
+                        categoryFilter={categoryFilter}
+                        onTriggerPushNotification={triggerPushNotification}
+                        watchlist={watchlist}
+                      />
+                    </div>
+                    <div>
+                      <Watchlist 
+                        watchlist={watchlist}
+                        onRemove={(symbol) => setWatchlist(prev => prev.filter(s => s !== symbol))}
+                        onAdd={(symbol) => {
+                          if (!watchlist.includes(symbol)) {
+                            setWatchlist(prev => [...prev, symbol]);
+                          }
+                        }}
+                        onSelectAsset={(symbol) => setSelectedSymbol(symbol)}
+                        selectedSymbol={selectedSymbol}
+                        onSimulateScoreEvent={handleSimulateScoreEvent}
+                      />
+                    </div>
                   </div>
+
+                 {/* Top Row: Enterprise Crypto Scoring Module */}
+                 <CryptoScoringEnterprise 
+                    selectedSymbol={selectedSymbol} 
+                    onSelectSymbol={setSelectedSymbol} 
+                    timeframe={timeframe} 
+                    onChangeTimeframe={setTimeframe} 
+                    userSession={userSession}
+                  />
  
                   {/* Best and Worst Assets of each Universe */}
                   <UniverseBestWorst onSelectAsset={(symbol) => { setSelectedSymbol(symbol); setActiveView('charts'); }} />
@@ -1573,12 +1461,7 @@ export function Dashboard({
                    </div>
                    <div className="space-y-6">
                      {/* Quantitative News & Market Signals */}
-                     <Newsticker 
-                       selectedSymbol={selectedSymbol} 
-                       timeframe={timeframe} 
-                       subscriptionTier={profile.subscriptionTier}
-                       onUpgradeClick={() => navigateTo('abonnements')}
-                     />
+                     <Newsticker selectedSymbol={selectedSymbol} timeframe={timeframe} />
 
                      {/* Strategie-Evidenz-Check Quick Card (Clickable to Buffett DCF check) */}
                      <div 
@@ -1630,7 +1513,8 @@ export function Dashboard({
                    <ImageAnalyzer triggerAttempt={triggerAttempt} />
                  </div>
 
-
+                 {/* Auth State Debugger Panel */}
+                 <AuthStateDebugger />
                </>
              )}
 
@@ -1691,27 +1575,10 @@ export function Dashboard({
               <ImpressumAgb />
             )}
 
-            {activeView === 'login' && (
-              <LandingPage 
-                onLoginEmail={onLoginEmail || (async () => {})}
-                onGuestLogin={onGuestLogin || (() => {})}
-                onRegisterEmail={onRegisterEmail || (async () => {})}
-                justLoggedOut={justLoggedOut}
-              />
-            )}
-
             {activeView === 'profil' && (
               <ProfilePage 
                 profile={profile} 
                 onUpdateProfile={handleUpdateProfile} 
-                watchlist={watchlist}
-                setWatchlist={setWatchlist}
-                selectedSymbol={selectedSymbol}
-                onSelectAsset={(symbol) => {
-                  setSelectedSymbol(symbol);
-                  setActiveView('dashboard');
-                }}
-                handleSimulateScoreEvent={handleSimulateScoreEvent}
               />
             )}
 
@@ -1786,6 +1653,28 @@ export function Dashboard({
 
             {activeView === 'asset-universe' && (
               <AssetUniverseDashboard />
+            )}
+
+            {activeView === 'admin-panel' && (
+              <AdminPanel currentUserEmail={profile.email} />
+            )}
+
+            {activeView === 'login' && (
+              <LandingPage 
+                onLoginEmail={async (email, pwd) => {
+                  if (onLoginEmail) {
+                    await onLoginEmail(email, pwd);
+                  }
+                }}
+                onGuestLogin={() => {
+                  setActiveView('dashboard');
+                }}
+                onRegisterEmail={async (name, email, pwd) => {
+                  if (onRegisterEmail) {
+                    await onRegisterEmail(name, email, pwd);
+                  }
+                }}
+              />
             )}
           </motion.div>
         </AnimatePresence>
