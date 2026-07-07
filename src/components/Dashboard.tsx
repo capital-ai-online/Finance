@@ -357,6 +357,14 @@ export function Dashboard({
     loadSecureProfile();
   }, [userSession]);
 
+  // Redirect logged-in users away from the login screen automatically
+  React.useEffect(() => {
+    if (userSession.type === 'registered' && activeView === 'login') {
+      console.log("[Dashboard] Logged in user detected on login screen, redirecting to dashboard...");
+      setActiveView('dashboard');
+    }
+  }, [userSession.type, activeView]);
+
   const handleUpdateProfile = async (newProfile: UserProfile) => {
     setProfile(newProfile);
     if (userSession && userSession.email) {
