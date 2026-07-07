@@ -198,19 +198,10 @@ export default function App() {
           refresh_token: data.session.refresh_token || '',
         });
         if (sessionErr) {
-          console.warn("[App] Could not synchronize backend session to frontend Supabase client:", sessionErr.message);
+          throw new Error("Sitzungssynchronisierung fehlgeschlagen: " + sessionErr.message);
         }
-      } else if (data.session) {
-        // Fallback for standalone/simulated authentication if Supabase is offline/not configured
-        const user = data.session.user;
-        const name = user?.user_metadata?.full_name || user?.user_metadata?.name || email.split('@')[0] || 'User';
-        updateUserSession({
-          type: 'registered',
-          name,
-          email: data.email || email,
-          subscriptionTier: 'Free',
-          accessToken: data.session.access_token,
-        });
+      } else {
+        throw new Error('Supabase-Verbindung ist im Frontend nicht konfiguriert.');
       }
     } catch (err: any) {
       console.warn("[App] Login failed via backend:", err);
@@ -282,25 +273,22 @@ export default function App() {
     const tokenToLog = userSession?.accessToken || '';
 
     // Trigger backend logout endpoint to register process in server logging (Render, etc.)
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(tokenToLog ? { 'Authorization': `Bearer ${tokenToLog}` } : {})
-        },
-        body: JSON.stringify({ email: emailToLog }),
-      });
-    } catch (err) {
-      console.warn("[App] Backend logout registration failed:", err);
+    const response = await fetch('/api/auth/logout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(tokenToLog ? { 'Authorization': `Bearer ${tokenToLog}` } : {})
+      },
+      body: JSON.stringify({ email: emailToLog }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || 'Fehler bei der Abmeldung im Backend.');
     }
 
     if (supabase) {
-      try {
-        await supabase.auth.signOut();
-      } catch (e) {
-        console.warn("Supabase signOut error:", e);
-      }
+      await supabase.auth.signOut();
     }
     updateUserSession(null);
     setJustLoggedOut(true);

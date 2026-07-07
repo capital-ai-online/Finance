@@ -24,33 +24,7 @@ interface CheckoutProps {
 export function Checkout({ planId, price, billingPeriod, email, onClose, onSuccess }: CheckoutProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [demoMode, setDemoMode] = useState(false);
   const [serverPublishableKey, setServerPublishableKey] = useState<string | null>(null);
-
-  // PROMO-CODE / TRIAL FEATURE: Added to handle TRIAL26 and BETASTAR promotional campaigns for free trials
-  const [promoCode, setPromoCode] = useState('');
-  const [promoApplied, setPromoApplied] = useState(false);
-  const [promoError, setPromoError] = useState<string | null>(null);
-
-  const handleApplyPromo = () => {
-    setPromoError(null);
-    const clean = promoCode.trim().toUpperCase();
-    if (clean === 'TRIAL26') {
-      if (planId === 'Pro') {
-        setPromoApplied(true);
-      } else {
-        setPromoError('Der Code TRIAL26 gilt exklusiv für das Pro Abonnement.');
-      }
-    } else if (clean === 'BETASTAR') {
-      if (planId === 'Enterprise') {
-        setPromoApplied(true);
-      } else {
-        setPromoError('Der Code BETASTAR gilt exklusiv für das Enterprise Abonnement.');
-      }
-    } else {
-      setPromoError('Ungültiger Gutscheincode.');
-    }
-  };
 
   React.useEffect(() => {
     // Fetch Stripe publishable key dynamically at run-time
@@ -75,91 +49,6 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
     setLoading(true);
     setError(null);
 
-    // Auto-apply promo code if filled but not explicitly applied yet
-    let activePromoApplied = promoApplied;
-    const clean = promoCode.trim().toUpperCase();
-    if (!activePromoApplied && clean) {
-      if (clean === 'TRIAL26') {
-        if (planId === 'Pro') {
-          activePromoApplied = true;
-          setPromoApplied(true);
-        } else {
-          setPromoError('Der Code TRIAL26 gilt exklusiv für das Pro Abonnement.');
-          setLoading(false);
-          return;
-        }
-      } else if (clean === 'BETASTAR') {
-        if (planId === 'Enterprise') {
-          activePromoApplied = true;
-          setPromoApplied(true);
-        } else {
-          setPromoError('Der Code BETASTAR gilt exklusiv für das Enterprise Abonnement.');
-          setLoading(false);
-          return;
-        }
-      } else {
-        setPromoError('Ungültiger Gutscheincode.');
-        setLoading(false);
-        return;
-      }
-    }
-
-    // PROMO-CODE / TRIAL ACTIVATION: Handles free elevation if a valid promo code is applied
-    if (activePromoApplied) {
-      try {
-        let token = '';
-        try {
-          const localSess = localStorage.getItem('mcc_user_session');
-          if (localSess) {
-            const parsed = JSON.parse(localSess);
-            token = parsed.accessToken || '';
-          }
-        } catch (e) {
-          console.error("Failed to read access token in Checkout:", e);
-        }
-
-        const response = await fetch('/api/stripe/update-subscription-simulated', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-          },
-          body: JSON.stringify({
-            tier: planId,
-            promoCode: promoCode.trim()
-          })
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || 'Fehler bei der Aktivierung des Gutscheins.');
-        }
-
-        // Immediately update local storage subscription state
-        try {
-          const localSess = localStorage.getItem('mcc_user_session');
-          if (localSess) {
-            const parsed = JSON.parse(localSess);
-            parsed.subscriptionTier = planId;
-            localStorage.setItem('mcc_user_session', JSON.stringify(parsed));
-            // Trigger dynamic event to notify App state
-            window.dispatchEvent(new Event('mcc_session_update'));
-          }
-        } catch (e) {
-          console.error("Failed to update local storage session in Checkout:", e);
-        }
-        
-        onSuccess(planId);
-        setLoading(false);
-        onClose();
-        return;
-      } catch (err: any) {
-        console.error('[PROMO-CODE] Checkout Error:', err);
-        setError(err.message || 'Fehler bei der Gutschein-Aktivierung.');
-        setLoading(false);
-        return;
-      }
-    }
-
     // Retrieve publishable key from dynamic state first, then build-time env as fallback
     let publishableKey = serverPublishableKey || (import.meta as any).env?.VITE_STRIPE_PUBLISHABLE_KEY;
     
@@ -176,10 +65,8 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
 
     console.log("[Stripe Diagnostics] Resolved publishable key:", publishableKey ? `${publishableKey.substring(0, 10)}...` : 'undefined');
 
-    // Gracefully handle missing Stripe keys with a high-fidelity guidance UI
     if (!publishableKey || publishableKey === '' || publishableKey === 'pk_test_...' || publishableKey.startsWith('pk_test_...')) {
-      console.warn("[Stripe Diagnostics] Publishable key is missing or is a placeholder. Switching to sandbox/demo mode.");
-      setDemoMode(true);
+      setError("Stripe ist derzeit nicht vollständig konfiguriert (Stripe API-Schlüssel fehlen im Backend).");
       setLoading(false);
       return;
     }
@@ -234,14 +121,7 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
     }
   };
 
-  const handleSimulateSuccess = () => {
-    setLoading(true);
-    setTimeout(() => {
-      onSuccess(planId);
-      setLoading(false);
-      onClose();
-    }, 1500);
-  };
+  const isStripeConfigured = !!(serverPublishableKey || (import.meta as any).env?.VITE_STRIPE_PUBLISHABLE_KEY);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
@@ -304,54 +184,10 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
           <div className="flex justify-between text-sm text-white pt-1">
             <span className="font-sans font-bold">Gesamtbetrag:</span>
             <span className="text-aif-gold-DEFAULT font-black text-base">
-              {promoApplied ? 0 : price} €
+              {price} €
               <span className="text-[10px] text-white/40 font-mono ml-0.5">/ Monat</span>
             </span>
           </div>
-        </div>
-
-        {/* PROMO-CODE MODULE: Input field for TRIAL26 code */}
-        {/* HINWEIS: Dieses Feature bewerbt und verarbeitet den Code TRIAL26 für 1 Monat kostenlosen Pro-Zugang. */}
-        <div className="mb-4 border border-white/5 bg-white/[0.02] rounded-xl p-3 space-y-2">
-          <label className="text-[10px] uppercase tracking-wider text-white/40 font-mono block">Gutscheincode / Rabatt</label>
-          <div className="flex gap-2">
-            <input 
-              type="text" 
-              placeholder="Z.B. TRIAL26"
-              value={promoCode}
-              onChange={(e) => {
-                setPromoCode(e.target.value);
-                setPromoError(null);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  if (promoCode.trim() && !promoApplied) {
-                    handleApplyPromo();
-                  }
-                }
-              }}
-              disabled={promoApplied}
-              className="flex-1 bg-black/40 border border-white/10 focus:border-aif-gold-DEFAULT/40 rounded-lg px-3 py-1.5 text-xs font-mono text-white placeholder-white/30 uppercase outline-none transition-colors"
-            />
-            <button
-              type="button"
-              onClick={handleApplyPromo}
-              disabled={promoApplied || !promoCode.trim()}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white/5 hover:bg-white/10 text-white border border-white/10 disabled:opacity-40 transition-all cursor-pointer whitespace-nowrap"
-            >
-              {promoApplied ? 'Aktiv' : 'Anwenden'}
-            </button>
-          </div>
-          {promoError && (
-            <p className="text-[10px] text-rose-400 font-mono">{promoError}</p>
-          )}
-          {promoApplied && (
-            <p className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              Gutscheincode <strong className="text-white">{promoCode.trim().toUpperCase()}</strong> erfolgreich angewendet! (100% Rabatt)
-            </p>
-          )}
         </div>
 
         {/* Error State */}
@@ -364,79 +200,31 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
           </div>
         )}
 
-        {/* Guidance when API Keys are not yet filled */}
-        {demoMode ? (
-          <div className="space-y-4">
-            <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-xl text-xs text-amber-400 font-mono space-y-2">
-              <div className="flex gap-2 items-start font-bold text-white">
-                <Info size={16} className="shrink-0 text-amber-400" />
-                <span>Stripe-Integration unvollständig</span>
-              </div>
-              <p className="text-white/70 leading-relaxed text-[11px]">
-                Um echte Stripe Checkout-Sitzungen zu starten, müssen Sie die folgenden Variablen in der Datei <code className="text-white font-bold">.env</code> konfigurieren:
-              </p>
-              <ul className="list-disc pl-4 space-y-1 text-white/60 text-[10px]">
-                <li><code className="text-white">VITE_STRIPE_PUBLISHABLE_KEY</code></li>
-                <li><code className="text-white">STRIPE_SECRET_KEY</code></li>
-                <li><code className="text-white">STRIPE_PRICE_ID_{planId.toUpperCase()}</code></li>
-              </ul>
-              <div className="pt-2 border-t border-amber-500/10 flex items-center justify-between">
-                <span className="text-[10px] text-amber-500 font-bold uppercase">Sandbox-Modus aktiv</span>
-                <span className="text-white/40 text-[9px]">Sie können die Zahlung simulieren</span>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <button 
-                onClick={handleSimulateSuccess}
-                disabled={loading}
-                className="flex-1 py-3 bg-aif-gold-DEFAULT hover:bg-aif-gold-light disabled:opacity-50 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(245,196,83,0.3)]"
-              >
-                {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                <span>Demo-Upgrade simulieren</span>
-              </button>
-              <button 
-                onClick={() => setDemoMode(false)}
-                className="px-3.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white transition-all cursor-pointer"
-                title="Erneut versuchen"
-              >
-                Zurück
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* Real Stripe checkout initiator button */
-          <div className="space-y-3">
-            <button 
-              onClick={handleCheckout}
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 disabled:opacity-50 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(245,196,83,0.3)]"
-            >
-              {loading ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" />
-                  <span>Aktivierung läuft...</span>
-                </>
-              ) : promoApplied ? (
-                <>
-                  <Sparkles size={14} />
-                  <span>Kostenlosen Pro-Monat aktivieren</span>
-                  <ArrowRight size={14} />
-                </>
-              ) : (
-                <>
-                  <ShieldCheck size={14} />
-                  <span>Sichere Stripe-Zahlung starten</span>
-                  <ArrowRight size={14} />
-                </>
-              )}
-            </button>
-            
-            <p className="text-[10px] text-white/30 text-center font-mono flex items-center justify-center gap-1">
-              <ShieldCheck size={12} className="text-emerald-400" /> End-to-End SSL verschlüsselt via Stripe Gateway
-            </p>
-          </div>
-        )}
+        {/* Real Stripe checkout initiator button */}
+        <div className="space-y-3">
+          <button 
+            onClick={handleCheckout}
+            disabled={loading || !isStripeConfigured}
+            className="w-full py-3 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 disabled:opacity-40 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(245,196,83,0.3)] disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                <span>Aktivierung läuft...</span>
+              </>
+            ) : (
+              <>
+                <ShieldCheck size={14} />
+                <span>Sichere Stripe-Zahlung starten</span>
+                <ArrowRight size={14} />
+              </>
+            )}
+          </button>
+          
+          <p className="text-[10px] text-white/30 text-center font-mono flex items-center justify-center gap-1">
+            <ShieldCheck size={12} className="text-emerald-400" /> End-to-End SSL verschlüsselt via Stripe Gateway
+          </p>
+        </div>
       </motion.div>
     </div>
   );

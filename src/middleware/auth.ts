@@ -41,46 +41,12 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     return res.status(401).json({ error: 'Nicht autorisiert. Ungültiges Token-Format.' });
   }
 
-  // 1. Owner bypass & parsing
-  try {
-    const parts = token.split('.');
-    if (parts.length === 3) {
-      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-      if (payload && payload.email) {
-        const cleanEmail = payload.email.toLowerCase().trim();
-        // Support immediate bypass for owner emails
-        if (cleanEmail === 'sven.kulessa@gmail.com' || cleanEmail === 'sven.kulessa@gmx.net') {
-          (req as AuthenticatedRequest).userEmail = cleanEmail;
-          (req as AuthenticatedRequest).user = payload;
-          return next();
-        }
-      }
-    }
-  } catch (err) {
-    console.warn('[Auth Middleware] Failed parsing payload for owner check:', err);
-  }
-
-  // 2. Offline / local fallback if Supabase is not configured
-  if (!isSupabaseConfigured()) {
-    try {
-      const parts = token.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-        if (payload && payload.email) {
-          (req as AuthenticatedRequest).userEmail = payload.email.toLowerCase().trim();
-          (req as AuthenticatedRequest).user = payload;
-          return next();
-        }
-      }
-    } catch (err) {
-      console.warn('[Auth Middleware] Fallback token parsing failed:', err);
-    }
-    return res.status(401).json({ error: 'Nicht autorisiert. Supabase ist nicht konfiguriert.' });
-  }
-
-  // 3. Official JWT verification via Supabase GoTrue
+  // Official JWT verification via Supabase GoTrue
   try {
     const supabase = getSupabase();
+    if (!supabase) {
+      return res.status(500).json({ error: 'Supabase ist im Backend nicht konfiguriert.' });
+    }
     const { data: { user }, error } = await supabase.auth.getUser(token);
     
     if (error || !user || !user.email) {

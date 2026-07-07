@@ -167,38 +167,11 @@ function getServerSupabase() {
 
 const LOCAL_SUBS_FILE = path.join(process.cwd(), 'uploads', 'subscriptions.json');
 
-function getLocalSubscriptions(): Record<string, string> {
-  try {
-    if (fs.existsSync(LOCAL_SUBS_FILE)) {
-      const data = fs.readFileSync(LOCAL_SUBS_FILE, 'utf8');
-      return JSON.parse(data) || {};
-    }
-  } catch (e) {
-    console.warn("[Local Database Fallback] Error reading local subscriptions file:", e);
-  }
-  return {};
-}
-
-function saveLocalSubscription(email: string, tier: string) {
-  try {
-    const subs = getLocalSubscriptions();
-    subs[email.toLowerCase().trim()] = tier;
-    fs.writeFileSync(LOCAL_SUBS_FILE, JSON.stringify(subs, null, 2), 'utf8');
-    console.log(`[Local Database Fallback] Persisted ${email} -> ${tier} locally.`);
-  } catch (e) {
-    console.error("[Local Database Fallback] Error writing local subscriptions file:", e);
-  }
-}
-
 async function saveSubscription(email: string, tier: string) {
   const cleanEmail = email.toLowerCase().trim();
   
-  // Save locally first as a secure fallback/cache
-  saveLocalSubscription(cleanEmail, tier);
-
   if (!isSupabaseConfigured()) {
-    console.log(`[Supabase Backend] Supabase not configured. Saved subscription locally for ${cleanEmail} -> ${tier}`);
-    return;
+    throw new Error('Supabase ist im Backend nicht konfiguriert.');
   }
   try {
     const supabaseClientInstance = getServerSupabase();
@@ -207,24 +180,21 @@ async function saveSubscription(email: string, tier: string) {
       .upsert({ email: cleanEmail, tier, updated_at: new Date().toISOString() }, { onConflict: 'email' });
       
     if (error) {
-      console.warn(`[Supabase Backend] Note: Remote DB upsert unavailable (${error.message || JSON.stringify(error)}). Using local file storage.`);
+      throw new Error(`Remote-DB-Fehler beim Speichern des Abonnements: ${error.message || JSON.stringify(error)}`);
     } else {
       console.log(`[Supabase Backend] Successfully persisted subscription to remote DB: ${cleanEmail} -> ${tier}`);
     }
   } catch (e: any) {
-    console.warn("[Supabase Backend] Error in saveSubscription remote upsert, using local:", e.message || e);
+    console.error("[Supabase Backend] Error in saveSubscription remote upsert:", e.message || e);
+    throw e;
   }
 }
 
 async function getSubscription(email: string): Promise<string> {
   const cleanEmail = email.toLowerCase().trim();
   
-  // Get local fallback value first
-  const localSubs = getLocalSubscriptions();
-  const localTier = localSubs[cleanEmail];
-
   if (!isSupabaseConfigured()) {
-    return localTier || 'Free';
+    throw new Error('Supabase ist im Backend nicht konfiguriert.');
   }
 
   try {
@@ -236,20 +206,16 @@ async function getSubscription(email: string): Promise<string> {
       .maybeSingle();
       
     if (error) {
-      console.log(`[Supabase Backend] Notice: Could not read from remote table 'subscriptions' (${error.message || JSON.stringify(error)}). Using local file fallback.`);
-      return localTier || 'Free';
+      throw new Error(`Fehler beim Lesen des Abonnements: ${error.message || JSON.stringify(error)}`);
     } else if (data && data.tier) {
-      // Sync local cache with remote DB value if they differ
-      if (localTier !== data.tier) {
-        saveLocalSubscription(cleanEmail, data.tier);
-      }
       return data.tier;
     }
   } catch (e: any) {
-    console.log("[Supabase Backend] Connection error in getSubscription, using local file fallback:", e.message || e);
+    console.error("[Supabase Backend] Connection error in getSubscription:", e.message || e);
+    throw e;
   }
   
-  return localTier || 'Free';
+  return 'Free';
 }
 
 
@@ -801,15 +767,7 @@ app.post('/api/stripe/consume-pdf-credit', authMiddleware, async (req, res) => {
   res.json({ success: true, credits: newCredits, unlimited: false });
 });
 
-app.post('/api/stripe/add-pdf-credits-simulated', authMiddleware, async (req, res) => {
-  const { amount } = req.body;
-  const userEmail = (req as any).userEmail;
-  const current = getLocalPdfCredits(userEmail);
-  const added = amount !== undefined ? Number(amount) : 3;
-  const newCredits = current + added;
-  saveLocalPdfCredits(userEmail, newCredits);
-  res.json({ success: true, credits: newCredits });
-});
+
 
 async function getOrCreateStripeCustomer(email: string, name?: string): Promise<string> {
   const stripe = getStripeInstance();
@@ -914,32 +872,8 @@ app.post('/api/auth/login', async (req, res) => {
 
   const authSupabase = getUserAuthSupabase();
   if (!authSupabase) {
-    logger.warn(`[Login Trigger] Supabase ist im Backend nicht konfiguriert für ${cleanEmail}. Verwende lokales Fallback.`);
-    // Since Supabase isn't configured, we'll try to find if there is a local subscriptions cached state,
-    // or just allow the login for standalone offline development.
-    const subs = getLocalSubscriptions();
-    const isMock = cleanEmail.includes('@') && password.length >= 6;
-    if (isMock) {
-      const tier = subs[cleanEmail] || 'Free';
-      logger.info(`[Login Trigger] Lokale Simulation erfolgreich für ${cleanEmail} (Tier: ${tier})`);
-      return res.json({
-        success: true,
-        email: cleanEmail,
-        isSimulated: true,
-        session: {
-          access_token: 'simulated-token-jwt-secret-2026',
-          user: {
-            email: cleanEmail,
-            user_metadata: {
-              full_name: cleanEmail.split('@')[0]
-            }
-          }
-        },
-        message: 'Lokaler Login-Bypass erfolgreich.'
-      });
-    } else {
-      return res.status(401).json({ error: 'Falsches Passwort oder ungültiges E-Mail Format.' });
-    }
+    logger.error(`[Login Trigger] Supabase ist im Backend nicht konfiguriert für ${cleanEmail}.`);
+    return res.status(500).json({ error: 'Supabase-Verbindung ist im Backend nicht konfiguriert.' });
   }
 
   try {
@@ -1029,43 +963,7 @@ app.post('/api/auth/logout', async (req, res) => {
   }
 });
 
-// PROMO-CODE & TRIAL MODULE: Supports 0-Euro checkout transactions securely verified server-side.
-app.post('/api/stripe/update-subscription-simulated', authMiddleware, async (req, res) => {
-  const { tier, promoCode } = req.body;
-  const userEmail = (req as any).userEmail;
 
-  if (!tier || !promoCode) {
-    return res.status(400).json({ error: 'Tarifstufe und Gutscheincode sind erforderlich.' });
-  }
-
-  const cleanPromo = String(promoCode).trim().toUpperCase();
-  const validTiers = ['Pro', 'Enterprise'];
-  if (!validTiers.includes(tier)) {
-    return res.status(400).json({ error: 'Gutschein-Freischaltungen sind nur für Pro und Enterprise Tarife möglich.' });
-  }
-
-  // Strict server-side verification of allowed promo codes
-  if (cleanPromo === 'TRIAL26') {
-    if (tier !== 'Pro') {
-      return res.status(400).json({ error: 'Der Gutscheincode TRIAL26 ist nur für das Pro-Abonnement gültig.' });
-    }
-  } else if (cleanPromo === 'BETASTAR') {
-    if (tier !== 'Enterprise') {
-      return res.status(400).json({ error: 'Der Gutscheincode BETASTAR ist nur für das Enterprise-Abonnement gültig.' });
-    }
-  } else {
-    return res.status(400).json({ error: 'Ungültiger oder abgelaufener Gutscheincode.' });
-  }
-
-  try {
-    await saveSubscription(userEmail, tier);
-    console.log(`[PROMO-CODE ${cleanPromo}] Elevated subscription for ${userEmail} to ${tier}`);
-    res.json({ success: true, email: userEmail, subscriptionTier: tier });
-  } catch (err: any) {
-    console.error(`[PROMO-CODE ${cleanPromo}] Error during simulated subscription update:`, err);
-    res.status(500).json({ error: err.message || 'Interner Serverfehler bei der Abo-Aktualisierung.' });
-  }
-});
 
 // SYNC SUBSCRIPTION MODULE: Forces a sync of subscription from Stripe database to Supabase and cache
 app.post('/api/stripe/sync-subscription', authMiddleware, async (req, res) => {
@@ -2258,60 +2156,7 @@ app.get('/api/orchestrator/audit-files', (req, res) => {
   }
 });
 
-// Endpoint to generate simulated/automated audit logs and save them as actual JSON files in /docs/reports
-app.post('/api/orchestrator/create-simulated-audit', express.json(), (req, res) => {
-  const { symbol, market, timeframe, price, volume, dataQualityScore, finalScore, issues, status } = req.body;
-  if (!symbol) {
-    return res.status(400).json({ error: 'Symbol parameter is required.' });
-  }
 
-  const timestampStr = new Date().toISOString();
-  const fileTimestamp = Math.floor(Date.now() / 1000);
-  const fileName = `audit_trail_${symbol.toUpperCase()}_${fileTimestamp}.json`;
-  const reportsDir = path.join(process.cwd(), 'docs', 'reports');
-
-  const auditPayload = {
-    auditId: `AIF-CR-${symbol.toUpperCase()}-${fileTimestamp}`,
-    symbol: symbol.toUpperCase(),
-    market: market || 'crypto',
-    timeframe: timeframe || '1std',
-    timestamp: timestampStr,
-    status: status || 'COMPLIANT',
-    validation: {
-      status: (dataQualityScore || 98) >= 90 ? 'pass' : 'review',
-      data_quality_score: dataQualityScore || 98,
-      issues: issues || []
-    },
-    score: {
-      final_score: finalScore || 85,
-      breakdown: {
-        trend: 0.15,
-        momentum: 0.15,
-        volume: 0.10,
-        liquidity: 0.15,
-        volatility: 0.10,
-        structure: 0.10,
-        regime: 0.15,
-        risk: 0.10
-      },
-      ranking_position: 1,
-      trace: `Automatisierte Verifikation für ${symbol.toUpperCase()} erfolgreich abgeschlossen. Preis: ${price || 'N/A'}, Volumen: ${volume || 'N/A'}. Keine OWASP-Verletzungen oder PII-Lecks gefunden.`
-    },
-    workflow_status: "completed",
-    checksum: Math.random().toString(36).substring(2, 11).toUpperCase()
-  };
-
-  try {
-    if (!fs.existsSync(reportsDir)) {
-      fs.mkdirSync(reportsDir, { recursive: true });
-    }
-    const absolutePath = path.join(reportsDir, fileName);
-    fs.writeFileSync(absolutePath, JSON.stringify(auditPayload, null, 2), 'utf-8');
-    res.json({ success: true, fileName, path: `reports/${fileName}`, data: auditPayload });
-  } catch (err: any) {
-    res.status(500).json({ error: `Fehler beim Erstellen des Audit-Trails: ${err.message}` });
-  }
-});
 
 
 // High-performance backtesting endpoint utilizing the backend Asset Registry to eliminate external API overhead and rate-limiting
