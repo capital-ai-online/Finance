@@ -148,9 +148,14 @@ function getStripeInstance() {
 let serverSupabaseClient: any = null;
 
 function isSupabaseConfigured(): boolean {
-  const url = getCleanEnv('SUPABASE_URL') || getCleanEnv('VITE_SUPABASE_URL');
-  const key = getCleanEnv('SUPABASE_SECRET_KEY') || getCleanEnv('SUPABASE_SERVICE_ROLE_KEY') || getCleanEnv('VITE_SUPABASE_PUBLISHABLE_KEY') || getCleanEnv('SUPABASE_PUBLISHABLE_KEY') || getCleanEnv('VITE_SUPABASE_ANON_KEY') || getCleanEnv('SUPABASE_ANON_KEY');
-  return !!(url && key);
+  try {
+    const url = getCleanEnv('SUPABASE_URL') || getCleanEnv('VITE_SUPABASE_URL');
+    const key = getCleanEnv('SUPABASE_SECRET_KEY') || getCleanEnv('SUPABASE_SERVICE_ROLE_KEY') || getCleanEnv('VITE_SUPABASE_PUBLISHABLE_KEY') || getCleanEnv('SUPABASE_PUBLISHABLE_KEY') || getCleanEnv('VITE_SUPABASE_ANON_KEY') || getCleanEnv('SUPABASE_ANON_KEY');
+    if (!url || !key) return false;
+    return url.startsWith('http://') || url.startsWith('https://');
+  } catch (e) {
+    return false;
+  }
 }
 
 function getServerSupabase() {
@@ -160,7 +165,14 @@ function getServerSupabase() {
     if (!url || !key) {
       throw new Error('Supabase integration variables are missing.');
     }
-    serverSupabaseClient = createClient(url, key);
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      throw new Error(`Ungültiges Supabase-URL-Format im Backend: ${url}`);
+    }
+    try {
+      serverSupabaseClient = createClient(url, key);
+    } catch (createErr: any) {
+      throw new Error(`Fehler bei createClient mit URL ${url}: ${createErr.message}`);
+    }
   }
   return serverSupabaseClient;
 }
@@ -867,12 +879,22 @@ app.post('/api/auth/post-register', async (req, res) => {
 
 // Helper to create user-specific auth client for Supabase
 function getUserAuthSupabase() {
-  const url = getCleanEnv('SUPABASE_URL') || getCleanEnv('VITE_SUPABASE_URL') || '';
-  const key = getCleanEnv('VITE_SUPABASE_PUBLISHABLE_KEY') || getCleanEnv('VITE_SUPABASE_ANON_KEY') || getCleanEnv('SUPABASE_PUBLISHABLE_KEY') || getCleanEnv('SUPABASE_ANON_KEY') || getCleanEnv('SUPABASE_SECRET_KEY') || getCleanEnv('SUPABASE_SERVICE_ROLE_KEY') || '';
-  if (!url || !key) {
+  try {
+    const url = getCleanEnv('SUPABASE_URL') || getCleanEnv('VITE_SUPABASE_URL') || '';
+    const key = getCleanEnv('VITE_SUPABASE_PUBLISHABLE_KEY') || getCleanEnv('VITE_SUPABASE_ANON_KEY') || getCleanEnv('SUPABASE_PUBLISHABLE_KEY') || getCleanEnv('SUPABASE_ANON_KEY') || getCleanEnv('SUPABASE_SECRET_KEY') || getCleanEnv('SUPABASE_SERVICE_ROLE_KEY') || '';
+    if (!url || !key) {
+      logger.warn('[getUserAuthSupabase] Supabase-Anmeldedaten fehlen (URL oder Key leer).');
+      return null;
+    }
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      logger.error(`[getUserAuthSupabase] Ungültiges Supabase-URL-Format im Backend: "${url}"`);
+      return null;
+    }
+    return createClient(url, key);
+  } catch (err: any) {
+    logger.error(`[getUserAuthSupabase] Ausnahmefehler bei Client-Erstellung: ${err.message || err}`);
     return null;
   }
-  return createClient(url, key);
 }
 
 // BACKEND LOGIN TRIGGER / ENDPOINT
@@ -893,13 +915,13 @@ app.post('/api/auth/login', async (req, res) => {
     timestamp: new Date().toISOString()
   });
 
-  const authSupabase = getUserAuthSupabase();
-  if (!authSupabase) {
-    logger.error(`[Login Trigger] Supabase ist im Backend nicht konfiguriert für ${cleanEmail}.`);
-    return res.status(500).json({ error: 'Supabase-Verbindung ist im Backend nicht konfiguriert.' });
-  }
-
   try {
+    const authSupabase = getUserAuthSupabase();
+    if (!authSupabase) {
+      logger.error(`[Login Trigger] Supabase ist im Backend nicht konfiguriert für ${cleanEmail}.`);
+      return res.status(500).json({ error: 'Supabase-Verbindung ist im Backend nicht konfiguriert.' });
+    }
+
     const { data, error } = await authSupabase.auth.signInWithPassword({
       email: cleanEmail,
       password,
