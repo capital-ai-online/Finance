@@ -177,17 +177,43 @@ export default function App() {
   }, []);
 
   const handleLogin = async (email: string, password: string) => {
-    if (!supabase) {
-      throw new Error("Supabase ist nicht konfiguriert. Bitte überprüfen Sie die Verbindungseinstellungen.");
-    }
-
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        throw new Error(error.message);
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Anmeldung fehlgeschlagen.');
+      }
+
+      if (data.session && supabase) {
+        // Synchronize the authenticated session to the frontend Supabase client
+        const { error: sessionErr } = await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token || '',
+        });
+        if (sessionErr) {
+          console.warn("[App] Could not synchronize backend session to frontend Supabase client:", sessionErr.message);
+        }
+      } else if (data.session) {
+        // Fallback for standalone/simulated authentication if Supabase is offline/not configured
+        const user = data.session.user;
+        const name = user?.user_metadata?.full_name || user?.user_metadata?.name || email.split('@')[0] || 'User';
+        updateUserSession({
+          type: 'registered',
+          name,
+          email: data.email || email,
+          subscriptionTier: 'Free',
+          accessToken: data.session.access_token,
+        });
       }
     } catch (err: any) {
-      console.warn("[App] Login failed:", err);
+      console.warn("[App] Login failed via backend:", err);
       throw new Error(err.message || "Anmeldung fehlgeschlagen.");
     }
   };
@@ -208,6 +234,19 @@ export default function App() {
       });
       if (error) {
         throw new Error(error.message);
+      }
+
+      // Trigger post-registration initialization (Stripe Customer Creation & Subscription Tier Initialization)
+      try {
+        await fetch('/api/auth/post-register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, name }),
+        });
+      } catch (postRegErr) {
+        console.warn("[App] Post-registration API trigger failed/omitted:", postRegErr);
       }
     } catch (err: any) {
       console.warn("[App] Registration failed:", err);
@@ -239,6 +278,23 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    const emailToLog = userSession?.email || '';
+    const tokenToLog = userSession?.accessToken || '';
+
+    // Trigger backend logout endpoint to register process in server logging (Render, etc.)
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(tokenToLog ? { 'Authorization': `Bearer ${tokenToLog}` } : {})
+        },
+        body: JSON.stringify({ email: emailToLog }),
+      });
+    } catch (err) {
+      console.warn("[App] Backend logout registration failed:", err);
+    }
+
     if (supabase) {
       try {
         await supabase.auth.signOut();

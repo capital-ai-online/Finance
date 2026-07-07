@@ -253,6 +253,87 @@ async function getSubscription(email: string): Promise<string> {
 }
 
 
+// Helper to match Price IDs with corresponding Subscription Tiers
+function getPlanFromPriceId(priceId: string): string | null {
+  if (!priceId) return null;
+  const pId = priceId.trim();
+
+  const getVar = (k: string) => (getCleanEnv(k) || '').trim();
+
+  const starterKeys = [
+    'STRIPE_PRICE_ID_STARTER',
+    'STRIPE_PRICE_ID_STARTER_MONTHLY',
+    'STRIPE_PRICE_ID_STARTER_YEARLY',
+    'SUPABASE_PRICE_ID_STARTER',
+    'SUPABASE_PRICE_ID_STARTER_MONTHLY',
+    'SUPABASE_PRICE_ID_STARTER_YEARLY'
+  ];
+  const proKeys = [
+    'STRIPE_PRICE_ID_PRO',
+    'STRIPE_PRICE_ID_PRO_MONTHLY',
+    'STRIPE_PRICE_ID_PRO_YEARLY',
+    'SUPABASE_PRICE_ID_PRO',
+    'SUPABASE_PRICE_ID_PRO_MONTHLY',
+    'SUPABASE_PRICE_ID_PRO_YEARLY'
+  ];
+  const enterpriseKeys = [
+    'STRIPE_PRICE_ID_ENTERPRISE',
+    'SUPABASE_PRICE_ID_ENTERPRISE'
+  ];
+
+  for (const k of starterKeys) {
+    const val = getVar(k);
+    if (val && (val === pId || pId.includes(val))) return 'Starter';
+  }
+  for (const k of proKeys) {
+    const val = getVar(k);
+    if (val && (val === pId || pId.includes(val))) return 'Pro';
+  }
+  for (const k of enterpriseKeys) {
+    const val = getVar(k);
+    if (val && (val === pId || pId.includes(val))) return 'Enterprise';
+  }
+
+  return null;
+}
+
+// Extract email and tier with a robust fallback to Stripe APIs and Price-ID analysis
+async function getEmailAndTierFromSubscription(subscription: Stripe.Subscription): Promise<{ email: string | null, tier: string | null }> {
+  const stripe = getStripeInstance();
+  let email = subscription.metadata?.email || null;
+  
+  if (!email && subscription.customer) {
+    try {
+      const customer = await stripe.customers.retrieve(subscription.customer as string);
+      if (customer && !customer.deleted) {
+        email = (customer as Stripe.Customer).email;
+      }
+    } catch (err) {
+      console.error(`[Webhook] Error retrieving customer for subscription:`, err);
+    }
+  }
+
+  let tier = subscription.metadata?.planId || null;
+  if (!tier && subscription.items?.data?.length > 0) {
+    const priceId = subscription.items.data[0].price?.id;
+    if (priceId) {
+      tier = getPlanFromPriceId(priceId);
+    }
+  }
+
+  // Ensure normalized capitalization
+  if (tier) {
+    const tLower = tier.toLowerCase();
+    if (tLower === 'pro') tier = 'Pro';
+    else if (tLower === 'enterprise') tier = 'Enterprise';
+    else if (tLower === 'starter') tier = 'Starter';
+    else if (tLower === 'free') tier = 'Free';
+  }
+
+  return { email, tier };
+}
+
+
 // 1. STRIPE WEBHOOK ENDPOINT (Must be placed BEFORE express.json() to get raw request body)
 const webhookHandler = async (req: express.Request, res: express.Response) => {
   const sig = req.headers['stripe-signature'];
@@ -277,9 +358,22 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
   try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      const planId = session.metadata?.planId;
-      const email = session.metadata?.email || session.customer_details?.email;
+      let planId = session.metadata?.planId;
+      let email = session.metadata?.email || session.customer_details?.email;
       
+      // If metadata is sparse but we have a subscription, resolve dynamically
+      if ((!planId || !email) && session.subscription) {
+        try {
+          const stripe = getStripeInstance();
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+          const resolved = await getEmailAndTierFromSubscription(subscription);
+          if (!email) email = resolved.email;
+          if (!planId) planId = resolved.tier;
+        } catch (subErr) {
+          console.error(`[Webhook] Failed to dynamically resolve checkout session subscription:`, subErr);
+        }
+      }
+
       if (planId && email) {
         const planUpper = String(planId).toUpperCase();
         if (planUpper === 'PDF' || planUpper === 'PDF_EXPORT' || planUpper === 'EXPORT_PDF') {
@@ -288,22 +382,42 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
           saveLocalPdfCredits(email, newCredits);
           console.log(`✅ Webhook: PDF Export Purchase complete for ${email}. Added 3 credits (total: ${newCredits}).`);
         } else {
-          await saveSubscription(email, planId);
-          console.log(`✅ Webhook: User ${email} successfully upgraded to ${planId}`);
+          // Normalize capitalization
+          let tier = planId;
+          const tLower = tier.toLowerCase();
+          if (tLower === 'pro') tier = 'Pro';
+          else if (tLower === 'enterprise') tier = 'Enterprise';
+          else if (tLower === 'starter') tier = 'Starter';
+          else if (tLower === 'free') tier = 'Free';
+
+          await saveSubscription(email, tier);
+          console.log(`✅ Webhook: User ${email} successfully upgraded to ${tier}`);
         }
       }
-    } else if (event.type === 'customer.subscription.updated') {
+    } else if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
       const subscription = event.data.object as Stripe.Subscription;
-      const email = subscription.metadata?.email;
-      const planId = subscription.metadata?.planId;
-      if (email && planId) {
-        await saveSubscription(email, planId);
+      const { email, tier } = await getEmailAndTierFromSubscription(subscription);
+      if (email && tier) {
+        await saveSubscription(email, tier);
+        console.log(`✅ Webhook: User ${email} subscription initialized/updated in DB to ${tier}`);
       }
     } else if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object as Stripe.Subscription;
-      const email = subscription.metadata?.email;
+      let email = subscription.metadata?.email;
+      if (!email && subscription.customer) {
+        try {
+          const stripe = getStripeInstance();
+          const customer = await stripe.customers.retrieve(subscription.customer as string);
+          if (customer && !customer.deleted) {
+            email = (customer as Stripe.Customer).email;
+          }
+        } catch (err) {
+          console.error(`[Webhook] Error retrieving customer email during deletion:`, err);
+        }
+      }
       if (email) {
         await saveSubscription(email, 'Free');
+        console.log(`✅ Webhook: User ${email} subscription deleted. Reverted to Free tier.`);
       }
     }
     res.json({ received: true });
@@ -697,6 +811,224 @@ app.post('/api/stripe/add-pdf-credits-simulated', authMiddleware, async (req, re
   res.json({ success: true, credits: newCredits });
 });
 
+async function getOrCreateStripeCustomer(email: string, name?: string): Promise<string> {
+  const stripe = getStripeInstance();
+  const cleanEmail = email.toLowerCase().trim();
+  
+  const customers = await stripe.customers.list({
+    email: cleanEmail,
+    limit: 1,
+  });
+  
+  if (customers.data.length > 0) {
+    return customers.data[0].id;
+  }
+  
+  const customer = await stripe.customers.create({
+    email: cleanEmail,
+    name: name || undefined,
+    metadata: {
+      source: 'supabase_registration_trigger',
+    }
+  });
+  
+  console.log(`[Stripe] Successfully created new customer record for ${cleanEmail} -> ${customer.id}`);
+  return customer.id;
+}
+
+// POST-REGISTRATION TRIGGER / WEBHOOK ENDPOINT
+// Handles both manual/direct signup calls AND Supabase Auth Database Webhook requests
+app.post('/api/auth/post-register', async (req, res) => {
+  try {
+    let email = req.body.email;
+    let name = req.body.name;
+
+    // Handle Supabase Database Webhook payload structure
+    if (req.body.record && req.body.record.email) {
+      email = req.body.record.email;
+      if (req.body.record.raw_user_meta_data) {
+        name = req.body.record.raw_user_meta_data.full_name || req.body.record.raw_user_meta_data.name;
+      }
+    }
+
+    if (!email) {
+      return res.status(400).json({ error: 'E-Mail-Adresse fehlt im Payload.' });
+    }
+
+    const cleanEmail = String(email).toLowerCase().trim();
+    console.log(`[Post-Registration Trigger] Processing registration initialization for ${cleanEmail}...`);
+
+    // 1. Initialize user's subscription tier in the database as 'Free'
+    await saveSubscription(cleanEmail, 'Free');
+
+    // 2. Automatically create customer record in Stripe
+    let stripeCustomerId = null;
+    let stripeConfigured = false;
+    try {
+      stripeCustomerId = await getOrCreateStripeCustomer(cleanEmail, name);
+      stripeConfigured = true;
+    } catch (stripeErr: any) {
+      console.warn(`[Post-Registration Trigger] Stripe customer creation omitted or failed (check STRIPE_SECRET_KEY):`, stripeErr.message || stripeErr);
+    }
+
+    res.json({
+      success: true,
+      email: cleanEmail,
+      subscriptionTier: 'Free',
+      stripeCustomerId,
+      stripeConfigured,
+      message: 'Benutzer wurde erfolgreich mit dem Tarif "Free" initialisiert und in Stripe registriert.'
+    });
+  } catch (error: any) {
+    console.error('[Post-Registration Trigger] Error running registration trigger:', error);
+    res.status(500).json({ error: error.message || 'Serverfehler im Registrierungs-Trigger.' });
+  }
+});
+
+// Helper to create user-specific auth client for Supabase
+function getUserAuthSupabase() {
+  const url = getCleanEnv('SUPABASE_URL') || getCleanEnv('VITE_SUPABASE_URL') || '';
+  const key = getCleanEnv('VITE_SUPABASE_PUBLISHABLE_KEY') || getCleanEnv('VITE_SUPABASE_ANON_KEY') || getCleanEnv('SUPABASE_PUBLISHABLE_KEY') || getCleanEnv('SUPABASE_ANON_KEY') || getCleanEnv('SUPABASE_SECRET_KEY') || getCleanEnv('SUPABASE_SERVICE_ROLE_KEY') || '';
+  if (!url || !key) {
+    return null;
+  }
+  return createClient(url, key);
+}
+
+// BACKEND LOGIN TRIGGER / ENDPOINT
+// Handles standard login authentication on the backend and registers the event in backend logs (Render, live systems, etc.)
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'E-Mail-Adresse und Passwort sind erforderlich.' });
+  }
+
+  const cleanEmail = String(email).toLowerCase().trim();
+  logger.info(`[Login Trigger] Login-Versuch gestartet für Benutzer: ${cleanEmail}`, {
+    module: 'auth',
+    function: 'login',
+    email: cleanEmail,
+    timestamp: new Date().toISOString()
+  });
+
+  const authSupabase = getUserAuthSupabase();
+  if (!authSupabase) {
+    logger.warn(`[Login Trigger] Supabase ist im Backend nicht konfiguriert für ${cleanEmail}. Verwende lokales Fallback.`);
+    // Since Supabase isn't configured, we'll try to find if there is a local subscriptions cached state,
+    // or just allow the login for standalone offline development.
+    const subs = getLocalSubscriptions();
+    const isMock = cleanEmail.includes('@') && password.length >= 6;
+    if (isMock) {
+      const tier = subs[cleanEmail] || 'Free';
+      logger.info(`[Login Trigger] Lokale Simulation erfolgreich für ${cleanEmail} (Tier: ${tier})`);
+      return res.json({
+        success: true,
+        email: cleanEmail,
+        isSimulated: true,
+        session: {
+          access_token: 'simulated-token-jwt-secret-2026',
+          user: {
+            email: cleanEmail,
+            user_metadata: {
+              full_name: cleanEmail.split('@')[0]
+            }
+          }
+        },
+        message: 'Lokaler Login-Bypass erfolgreich.'
+      });
+    } else {
+      return res.status(401).json({ error: 'Falsches Passwort oder ungültiges E-Mail Format.' });
+    }
+  }
+
+  try {
+    const { data, error } = await authSupabase.auth.signInWithPassword({
+      email: cleanEmail,
+      password,
+    });
+
+    if (error) {
+      logger.warn(`[Login Trigger] Anmeldung fehlgeschlagen für ${cleanEmail}: ${error.message}`, {
+        module: 'auth',
+        function: 'login',
+        email: cleanEmail,
+      });
+      return res.status(401).json({ error: error.message });
+    }
+
+    logger.info(`[Login Trigger] Benutzer ${cleanEmail} erfolgreich über das Backend angemeldet.`, {
+      module: 'auth',
+      function: 'login',
+      email: cleanEmail,
+      timestamp: new Date().toISOString()
+    });
+
+    res.json({
+      success: true,
+      email: cleanEmail,
+      session: data.session,
+      user: data.user,
+      message: 'Erfolgreich im Backend angemeldet.'
+    });
+  } catch (err: any) {
+    logger.error(`[Login Trigger] Unerwarteter Fehler bei Anmeldung für ${cleanEmail}: ${err.message || err}`, {
+      module: 'auth',
+      function: 'login',
+      email: cleanEmail,
+    });
+    res.status(500).json({ error: err.message || 'Serverfehler während der Anmeldung.' });
+  }
+});
+
+// BACKEND LOGOUT TRIGGER / ENDPOINT
+// Handles registration of the logout process in the backend log (useful on Render/live systems)
+app.post('/api/auth/logout', async (req, res) => {
+  try {
+    let email = req.body.email || req.query.email || '';
+    
+    // Attempt parsing token from Authorization header for email extraction if not provided in body
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      if (token) {
+        try {
+          const parts = token.split('.');
+          if (parts.length === 3) {
+            const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+            if (payload && payload.email) {
+              email = payload.email;
+            }
+          }
+        } catch (e) {
+          // Silent ignore, we will fall back to provided or empty email
+        }
+      }
+    }
+
+    const cleanEmail = String(email).toLowerCase().trim() || 'unbekannt';
+    
+    logger.info(`[Logout Trigger] Benutzer ${cleanEmail} hat sich erfolgreich abgemeldet.`, {
+      module: 'auth',
+      function: 'logout',
+      email: cleanEmail,
+      timestamp: new Date().toISOString()
+    });
+
+    res.json({
+      success: true,
+      email: cleanEmail,
+      message: 'Abmeldung im Backend erfolgreich registriert.'
+    });
+  } catch (error: any) {
+    logger.error(`[Logout Trigger] Fehler beim Abmelden im Backend: ${error.message || error}`, {
+      module: 'auth',
+      function: 'logout'
+    });
+    res.status(500).json({ error: error.message || 'Serverfehler während der Abmeldung.' });
+  }
+});
+
 // PROMO-CODE & TRIAL MODULE: Supports 0-Euro checkout transactions securely verified server-side.
 app.post('/api/stripe/update-subscription-simulated', authMiddleware, async (req, res) => {
   const { tier, promoCode } = req.body;
@@ -741,28 +1073,27 @@ app.post('/api/stripe/sync-subscription', authMiddleware, async (req, res) => {
   let tier = 'Free';
 
   try {
-    if (isSupabaseConfigured()) {
-      const stripe = getStripeInstance();
-      const customers = await stripe.customers.list({
-        email: userEmail,
+    const stripe = getStripeInstance();
+    const customers = await stripe.customers.list({
+      email: userEmail,
+      limit: 1,
+    });
+
+    if (customers.data.length > 0) {
+      const customerId = customers.data[0].id;
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'active',
         limit: 1,
       });
 
-      if (customers.data.length > 0) {
-        const customerId = customers.data[0].id;
-        const subscriptions = await stripe.subscriptions.list({
-          customer: customerId,
-          status: 'active',
-          limit: 1,
-        });
-
-        if (subscriptions.data.length > 0) {
-          const sub = subscriptions.data[0];
-          const planId = sub.metadata?.planId;
-          if (planId) {
-            tier = planId;
-            await saveSubscription(userEmail, tier);
-          }
+      if (subscriptions.data.length > 0) {
+        const sub = subscriptions.data[0];
+        const resolved = await getEmailAndTierFromSubscription(sub);
+        if (resolved.tier) {
+          tier = resolved.tier;
+          await saveSubscription(userEmail, tier);
+          console.log(`[Sync Subscription] Successfully synchronized ${userEmail} to ${tier} from active Stripe subscription.`);
         }
       }
     }

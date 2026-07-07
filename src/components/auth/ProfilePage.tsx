@@ -71,6 +71,66 @@ export function ProfilePage({
   const [portalLoading, setPortalLoading] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
 
+  // Subscription synchronization state
+  const [syncing, setSyncing] = useState(false);
+  const [syncSuccess, setSyncSuccess] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  const handleSyncSubscription = async () => {
+    setSyncing(true);
+    setSyncError(null);
+    setSyncSuccess(false);
+    try {
+      let token = '';
+      try {
+        const localSess = localStorage.getItem('mcc_user_session');
+        if (localSess) {
+          const parsed = JSON.parse(localSess);
+          token = parsed.accessToken || '';
+        }
+      } catch (e) {}
+
+      const response = await fetch('/api/stripe/sync-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Fehler beim Synchronisieren.');
+      }
+      
+      if (data.subscriptionTier) {
+        // Update local session
+        try {
+          const localSess = localStorage.getItem('mcc_user_session');
+          if (localSess) {
+            const parsed = JSON.parse(localSess);
+            parsed.subscriptionTier = data.subscriptionTier;
+            localStorage.setItem('mcc_user_session', JSON.stringify(parsed));
+            // Trigger session update event
+            window.dispatchEvent(new Event('mcc_session_update'));
+          }
+        } catch (e) {}
+
+        onUpdateProfile({
+          ...profile,
+          subscriptionTier: data.subscriptionTier
+        });
+        setSyncSuccess(true);
+        setTimeout(() => setSyncSuccess(false), 3000);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setSyncError(err.message || 'Synchronisierung fehlgeschlagen.');
+      setTimeout(() => setSyncError(null), 5000);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   // GDPR Export state
   const [exporting, setExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
@@ -290,34 +350,63 @@ export function ProfilePage({
             <div className="w-full pt-4 border-t border-white/5 text-center space-y-3">
               <div>
                 <span className="text-xs text-white/40 font-mono">Mitgliedschaft</span>
-                <div className="text-base font-black text-aif-gold-DEFAULT uppercase tracking-wider font-display mt-0.5">
-                  {profile.subscriptionTier}
+                <div className="text-base font-black text-aif-gold-DEFAULT uppercase tracking-wider font-display mt-0.5 flex items-center justify-center gap-1.5">
+                  <span>{profile.subscriptionTier}</span>
+                  {profile.subscriptionTier === 'Pro' && (
+                    <span className="px-1 py-0.5 rounded text-[8px] bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/25 text-aif-gold-DEFAULT font-bold uppercase tracking-wider">Pro</span>
+                  )}
+                  {profile.subscriptionTier === 'Enterprise' && (
+                    <span className="px-1 py-0.5 rounded text-[8px] bg-aif-neon-cyan/10 border border-aif-neon-cyan/25 text-aif-neon-cyan font-bold uppercase tracking-wider">Enterprise</span>
+                  )}
                 </div>
               </div>
 
-              {profile.subscriptionTier !== 'Free' && (
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={handleManageBilling}
-                    disabled={portalLoading}
-                    aria-label="Abrechnung und Abonnements in Stripe verwalten"
-                    className="w-full py-2 px-3 bg-white/5 hover:bg-white/10 focus:ring-2 focus:ring-aif-gold-DEFAULT focus:outline-none text-white border border-white/10 rounded-lg text-[10px] uppercase tracking-wider font-mono font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] cursor-pointer"
-                  >
-                    {portalLoading ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-aif-gold-DEFAULT" />
-                    ) : (
-                      <CreditCard className="w-3.5 h-3.5 text-aif-gold-DEFAULT" />
-                    )}
-                    Abrechnung verwalten
-                  </button>
-                  {portalError && (
-                    <p className="text-[9px] text-rose-400 mt-1.5 font-mono text-center leading-tight">
-                      {portalError}
-                    </p>
+              <div className="pt-1 space-y-2">
+                <button
+                  type="button"
+                  onClick={handleSyncSubscription}
+                  disabled={syncing}
+                  aria-label="Abonnementstatus aktualisieren"
+                  className="w-full py-2 px-3 bg-white/5 hover:bg-white/10 focus:ring-2 focus:ring-aif-gold-DEFAULT focus:outline-none text-white border border-white/10 rounded-lg text-[10px] uppercase tracking-wider font-mono font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] cursor-pointer"
+                >
+                  {syncing ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-aif-gold-DEFAULT" />
+                  ) : (
+                    <RefreshCw className="w-3.5 h-3.5 text-aif-gold-DEFAULT" />
                   )}
-                </div>
-              )}
+                  Abo synchronisieren
+                </button>
+                {syncSuccess && (
+                  <p className="text-[9px] text-emerald-400 font-mono text-center">Status erfolgreich aktualisiert!</p>
+                )}
+                {syncError && (
+                  <p className="text-[9px] text-rose-400 font-mono text-center leading-tight">{syncError}</p>
+                )}
+
+                {profile.subscriptionTier !== 'Free' && (
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={handleManageBilling}
+                      disabled={portalLoading}
+                      aria-label="Abrechnung und Abonnements in Stripe verwalten"
+                      className="w-full py-2 px-3 bg-white/5 hover:bg-white/10 focus:ring-2 focus:ring-aif-gold-DEFAULT focus:outline-none text-white border border-white/10 rounded-lg text-[10px] uppercase tracking-wider font-mono font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] cursor-pointer"
+                    >
+                      {portalLoading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-aif-gold-DEFAULT" />
+                      ) : (
+                        <CreditCard className="w-3.5 h-3.5 text-aif-gold-DEFAULT" />
+                      )}
+                      Abrechnung verwalten
+                    </button>
+                    {portalError && (
+                      <p className="text-[9px] text-rose-400 mt-1.5 font-mono text-center leading-tight">
+                        {portalError}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

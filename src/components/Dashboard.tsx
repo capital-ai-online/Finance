@@ -334,6 +334,10 @@ export function Dashboard({
           const savedStr = await secureStorage.getItem('aif_encrypted_user_profile', pass);
           if (savedStr) {
             const parsed = JSON.parse(savedStr);
+            // Ensure the subscriptionTier is always synchronized with the latest active userSession
+            if (userSession.type !== 'guest') {
+              parsed.subscriptionTier = userSession.subscriptionTier;
+            }
             setProfile(parsed);
             return;
           }
