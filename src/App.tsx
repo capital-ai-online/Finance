@@ -116,7 +116,11 @@ async function safeFetchJson<T = any>(
       }
 
       if (!res.ok) {
-        throw new Error(data?.error || `HTTP-Fehler ${res.status}`);
+        const fetchErr = new Error(data?.error || `HTTP-Fehler ${res.status}`) as any;
+        if (data?.diagnostics) {
+          fetchErr.diagnostics = data.diagnostics;
+        }
+        throw fetchErr;
       }
 
       return data as T;
@@ -279,6 +283,7 @@ export default function App() {
 
   const handleLogin = async (email: string, password: string) => {
     try {
+      // 1. Attempt login via the backend API endpoint
       const data = await safeFetchJson('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -300,8 +305,35 @@ export default function App() {
         throw new Error('Supabase-Verbindung ist im Frontend nicht konfiguriert.');
       }
     } catch (err: any) {
-      console.warn("[App] Login failed via backend:", err);
-      throw new Error(err.message || "Anmeldung fehlgeschlagen.");
+      console.warn("[App] Login via backend failed, attempting direct client-side login fallback...", err);
+
+      // 2. Client-side authentication fallback
+      if (supabase) {
+        try {
+          const { data: directData, error: directErr } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (directErr) {
+            throw directErr;
+          }
+          if (directData.session) {
+            console.log("[App] Direct client-side login succeeded as fallback!");
+            // The onAuthStateChange handler will automatically capture the session and update the userSession state.
+            return;
+          }
+        } catch (fallbackErr: any) {
+          console.error("[App] Client-side fallback login failed as well:", fallbackErr);
+          throw new Error(fallbackErr.message || "Anmeldung fehlgeschlagen.");
+        }
+      }
+
+      // If no client fallback is available, throw the original backend error
+      const loginErr = new Error(err.message || "Anmeldung fehlgeschlagen.") as any;
+      if (err.diagnostics) {
+        loginErr.diagnostics = err.diagnostics;
+      }
+      throw loginErr;
     }
   };
 

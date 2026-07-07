@@ -918,8 +918,33 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const authSupabase = getUserAuthSupabase();
     if (!authSupabase) {
-      logger.error(`[Login Trigger] Supabase ist im Backend nicht konfiguriert für ${cleanEmail}.`);
-      return res.status(500).json({ error: 'Supabase-Verbindung ist im Backend nicht konfiguriert.' });
+      // Build safe backend diagnostics
+      const keysToCheck = [
+        'SUPABASE_URL',
+        'VITE_SUPABASE_URL',
+        'SUPABASE_ANON_KEY',
+        'VITE_SUPABASE_ANON_KEY',
+        'SUPABASE_PUBLISHABLE_KEY',
+        'VITE_SUPABASE_PUBLISHABLE_KEY',
+        'SUPABASE_SECRET_KEY',
+        'SUPABASE_SERVICE_ROLE_KEY'
+      ];
+      const envDiagnostics: Record<string, any> = {};
+      for (const k of keysToCheck) {
+        const val = getCleanEnv(k);
+        envDiagnostics[k] = {
+          configured: val.length > 0,
+          length: val.length,
+          preview: val ? (val.startsWith('http') ? val.substring(0, 15) + '...' : val.substring(0, 8) + '...') : null,
+          isValidUrlFormat: val ? (val.startsWith('http://') || val.startsWith('https://')) : false
+        };
+      }
+
+      logger.error(`[Login Trigger] Supabase ist im Backend nicht konfiguriert für ${cleanEmail}. Diagnostics: ${JSON.stringify(envDiagnostics)}`);
+      return res.status(500).json({ 
+        error: 'Supabase-Verbindung ist im Backend nicht konfiguriert.',
+        diagnostics: envDiagnostics
+      });
     }
 
     const { data, error } = await authSupabase.auth.signInWithPassword({
