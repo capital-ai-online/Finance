@@ -451,99 +451,120 @@ export function RealtimeAiNewsfeed({
           </button>
         </div>
 
-        {/* Streaming entries */}
-        <div className="space-y-3 pt-1">
-          {/* Active Filter Indicators */}
-          {(categoryFilter !== 'all' || searchQuery.trim() !== '') && (
-            <div className="flex flex-wrap items-center gap-1.5 p-2 bg-white/5 rounded-lg border border-white/5 text-[10px] font-mono mb-2">
-              <span className="text-white/40">News-Filter aktiv:</span>
-              {categoryFilter !== 'all' && (
-                <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold uppercase">
-                  {categoryFilter === 'crypto' ? 'Krypto' : categoryFilter === 'stock' ? 'Aktie' : categoryFilter === 'commodity' ? 'Rohstoff' : 'Index'}
-                </span>
-              )}
-              {searchQuery.trim() !== '' && (
-                <span className="px-1.5 py-0.5 rounded bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 max-w-[120px] truncate">
-                  "{searchQuery}"
-                </span>
-              )}
+        {/* Streaming entries / Locked state for Free users */}
+        {subscriptionTier === 'Free' ? (
+          <div className="flex flex-col items-center justify-center text-center p-8 bg-white/[0.02] border border-dashed border-white/10 rounded-2xl my-4 min-h-[300px]">
+            <div className="w-16 h-16 rounded-full bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 flex items-center justify-center mb-4 relative">
+              <Lock className="text-aif-gold-DEFAULT w-6 h-6 animate-pulse" />
+              <div className="absolute inset-0 rounded-full border border-aif-gold-DEFAULT/30 animate-ping opacity-40 scale-110" style={{ animationDuration: '3s' }} />
             </div>
-          )}
-
-          {alerts.map((alert) => {
-            const isBullish = alert.sentiment === 'bullish';
-            const isBearish = alert.sentiment === 'bearish';
-            const isLocked = alert.premium && subscriptionTier === 'Free';
-            const isOnWatchlist = Array.isArray(watchlist) && watchlist.map(s => s.toUpperCase()).includes(alert.symbol.toUpperCase());
-
-            return (
-              <div 
-                key={alert.id}
-                onClick={() => handleAlertClick(alert)}
-                className={`group/item border p-3.5 rounded-xl cursor-pointer transition-all duration-300 relative overflow-hidden ${
-                  isLocked 
-                    ? 'bg-white/[0.01] border-white/5 opacity-55 hover:opacity-80' 
-                    : isOnWatchlist 
-                    ? 'bg-amber-950/5 border-amber-500/35 hover:border-amber-500 hover:bg-amber-950/15'
-                    : 'bg-white/5 border-white/10 hover:border-violet-500/50 hover:bg-violet-950/10'
-                }`}
-              >
-                <div className="flex justify-between items-start gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className={`font-mono text-xs font-black px-2 py-0.5 rounded ${
-                      isOnWatchlist ? 'bg-amber-500/25 text-amber-300 font-bold border border-amber-500/30' : 'text-white bg-white/10'
-                    }`}>
-                      {alert.symbol}
-                    </span>
-                    <span className="text-[10px] text-white/40 font-mono">
-                      {alert.time}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-1.5">
-                    {/* Prioritized Watchlist Badge */}
-                    {isOnWatchlist && (
-                      <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1 shadow-[0_0_10px_rgba(245,158,11,0.1)]">
-                        <Star size={9} className="fill-amber-400 text-amber-400" />
-                        <span>Priorisiert</span>
-                      </span>
-                    )}
-
-                    {/* Information Source Badge */}
-                    <span className="text-[9px] font-mono text-aif-gold-DEFAULT px-1.5 py-0.5 rounded bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 font-bold uppercase tracking-wider">
-                      {alert.source || 'Morningstar Premium'}
-                    </span>
-
-                    {/* Sentiment Badge */}
-                    <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-full ${
-                      isBullish ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                      isBearish ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                      'bg-white/10 text-white/60 border border-white/20'
-                    }`}>
-                      {alert.sentiment}
-                    </span>
-                  </div>
-                </div>
-
-                <h4 className="text-xs font-bold text-white mt-2 leading-snug group-hover/item:text-aif-gold-DEFAULT transition-colors pr-6">
-                  {alert.headline}
-                </h4>
-
-                {/* Lock Overlay for Premium Items on Free Tier */}
-                {isLocked ? (
-                  <div className="absolute right-3 bottom-3 flex items-center gap-1.5 text-xs font-bold text-aif-gold-DEFAULT font-mono bg-black/80 px-2 py-1 rounded border border-aif-gold-DEFAULT/20 shadow-lg z-10">
-                    <Lock size={11} />
-                    <span>PRO SPECTRUM</span>
-                  </div>
-                ) : (
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 group-hover/item:translate-x-1 transition-all">
-                    <ArrowRight size={14} className="text-aif-gold-DEFAULT" />
-                  </div>
+            <h4 className="text-base font-black text-white font-display mb-2 uppercase tracking-wide">
+              Echtzeit-News &amp; Signale gesperrt
+            </h4>
+            <p className="text-xs text-white/60 max-w-md mb-6 leading-relaxed">
+              Echtzeit-FinTech-Newsfeeds, quantitative Markt-Signale und exklusive AI-Analysen sind nur für Abonnenten der Stufen <span className="text-aif-gold-DEFAULT font-bold">Starter</span>, <span className="text-aif-gold-DEFAULT font-bold">Pro</span> oder <span className="text-aif-gold-DEFAULT font-bold">Enterprise</span> freigeschaltet. Bitte upgraden Sie Ihr Abonnement, um Live-Pressemeldungen einzuspielen.
+            </p>
+            <button
+              onClick={onUpgradeClick}
+              className="px-6 py-2.5 bg-gradient-to-r from-aif-gold-light via-aif-gold-DEFAULT to-aif-gold-dark hover:from-aif-gold-DEFAULT hover:to-aif-gold-dark text-black font-bold text-xs uppercase tracking-wider rounded-lg shadow-lg hover:shadow-aif-gold-DEFAULT/20 transition-all duration-300 cursor-pointer"
+            >
+              Jetzt abonnieren
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3 pt-1">
+            {/* Active Filter Indicators */}
+            {(categoryFilter !== 'all' || searchQuery.trim() !== '') && (
+              <div className="flex flex-wrap items-center gap-1.5 p-2 bg-white/5 rounded-lg border border-white/5 text-[10px] font-mono mb-2">
+                <span className="text-white/40">News-Filter aktiv:</span>
+                {categoryFilter !== 'all' && (
+                  <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold uppercase">
+                    {categoryFilter === 'crypto' ? 'Krypto' : categoryFilter === 'stock' ? 'Aktie' : categoryFilter === 'commodity' ? 'Rohstoff' : 'Index'}
+                  </span>
+                )}
+                {searchQuery.trim() !== '' && (
+                  <span className="px-1.5 py-0.5 rounded bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 max-w-[120px] truncate">
+                    "{searchQuery}"
+                  </span>
                 )}
               </div>
-            );
-          })}
-        </div>
+            )}
+
+            {alerts.map((alert) => {
+              const isBullish = alert.sentiment === 'bullish';
+              const isBearish = alert.sentiment === 'bearish';
+              const isLocked = false;
+              const isOnWatchlist = Array.isArray(watchlist) && watchlist.map(s => s.toUpperCase()).includes(alert.symbol.toUpperCase());
+
+              return (
+                <div 
+                  key={alert.id}
+                  onClick={() => handleAlertClick(alert)}
+                  className={`group/item border p-3.5 rounded-xl cursor-pointer transition-all duration-300 relative overflow-hidden ${
+                    isLocked 
+                      ? 'bg-white/[0.01] border-white/5 opacity-55 hover:opacity-80' 
+                      : isOnWatchlist 
+                      ? 'bg-amber-950/5 border-amber-500/35 hover:border-amber-500 hover:bg-amber-950/15'
+                      : 'bg-white/5 border-white/10 hover:border-violet-500/50 hover:bg-violet-950/10'
+                  }`}
+                >
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className={`font-mono text-xs font-black px-2 py-0.5 rounded ${
+                        isOnWatchlist ? 'bg-amber-500/25 text-amber-300 font-bold border border-amber-500/30' : 'text-white bg-white/10'
+                      }`}>
+                        {alert.symbol}
+                      </span>
+                      <span className="text-[10px] text-white/40 font-mono">
+                        {alert.time}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-1.5">
+                      {/* Prioritized Watchlist Badge */}
+                      {isOnWatchlist && (
+                        <span className="text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1 shadow-[0_0_10px_rgba(245,158,11,0.1)]">
+                          <Star size={9} className="fill-amber-400 text-amber-400" />
+                          <span>Priorisiert</span>
+                        </span>
+                      )}
+
+                      {/* Information Source Badge */}
+                      <span className="text-[9px] font-mono text-aif-gold-DEFAULT px-1.5 py-0.5 rounded bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 font-bold uppercase tracking-wider">
+                        {alert.source || 'Morningstar Premium'}
+                      </span>
+
+                      {/* Sentiment Badge */}
+                      <span className={`text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-full ${
+                        isBullish ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                        isBearish ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                        'bg-white/10 text-white/60 border border-white/20'
+                      }`}>
+                        {alert.sentiment}
+                      </span>
+                    </div>
+                  </div>
+
+                  <h4 className="text-xs font-bold text-white mt-2 leading-snug group-hover/item:text-aif-gold-DEFAULT transition-colors pr-6">
+                    {alert.headline}
+                  </h4>
+
+                  {/* Lock Overlay for Premium Items on Free Tier */}
+                  {isLocked ? (
+                    <div className="absolute right-3 bottom-3 flex items-center gap-1.5 text-xs font-bold text-aif-gold-DEFAULT font-mono bg-black/80 px-2 py-1 rounded border border-aif-gold-DEFAULT/20 shadow-lg z-10">
+                      <Lock size={11} />
+                      <span>PRO SPECTRUM</span>
+                    </div>
+                  ) : (
+                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 group-hover/item:translate-x-1 transition-all">
+                      <ArrowRight size={14} className="text-aif-gold-DEFAULT" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Footer Info */}

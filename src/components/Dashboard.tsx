@@ -1573,7 +1573,12 @@ export function Dashboard({
                    </div>
                    <div className="space-y-6">
                      {/* Quantitative News & Market Signals */}
-                     <Newsticker selectedSymbol={selectedSymbol} timeframe={timeframe} />
+                     <Newsticker 
+                       selectedSymbol={selectedSymbol} 
+                       timeframe={timeframe} 
+                       subscriptionTier={profile.subscriptionTier}
+                       onUpgradeClick={() => navigateTo('abonnements')}
+                     />
 
                      {/* Strategie-Evidenz-Check Quick Card (Clickable to Buffett DCF check) */}
                      <div 

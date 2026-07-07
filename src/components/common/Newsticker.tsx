@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Asset } from '../../types';
-import { Newspaper, TrendingUp, TrendingDown, ArrowRight, Activity, Percent, Flame, Info } from 'lucide-react';
+import { Newspaper, TrendingUp, TrendingDown, ArrowRight, Activity, Percent, Flame, Info, Lock } from 'lucide-react';
 
 interface NewstickerProps {
   selectedSymbol: string;
   timeframe: string;
+  subscriptionTier?: string;
+  onUpgradeClick?: () => void;
 }
 
 interface NewsItem {
@@ -16,7 +18,7 @@ interface NewsItem {
   source: string;
 }
 
-export function Newsticker({ selectedSymbol, timeframe }: NewstickerProps) {
+export function Newsticker({ selectedSymbol, timeframe, subscriptionTier, onUpgradeClick }: NewstickerProps) {
   const [asset, setAsset] = useState<Asset | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [newsConfigured, setNewsConfigured] = useState<boolean>(false);
@@ -140,6 +142,32 @@ export function Newsticker({ selectedSymbol, timeframe }: NewstickerProps) {
           <Activity className="w-8 h-8 text-aif-gold-DEFAULT animate-spin mx-auto" />
           <p className="text-xs text-white/40 font-mono uppercase tracking-widest">Lade Asset News & Signale...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (subscriptionTier === 'Free') {
+    return (
+      <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md flex flex-col justify-center items-center text-center h-full min-h-[460px] relative overflow-hidden group">
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-aif-gold-DEFAULT/30 to-transparent" />
+        
+        <div className="w-16 h-16 rounded-full bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 flex items-center justify-center mb-4 relative">
+          <Lock className="text-aif-gold-DEFAULT w-6 h-6 animate-pulse" />
+          <div className="absolute inset-0 rounded-full border border-aif-gold-DEFAULT/30 animate-ping opacity-40 scale-110" style={{ animationDuration: '3s' }} />
+        </div>
+        
+        <h3 className="text-base font-black text-white font-display mb-2 uppercase tracking-wide">
+          Intelligence Feed gesperrt
+        </h3>
+        <p className="text-xs text-white/60 max-w-xs mb-6 leading-relaxed">
+          Quantitative Signale, Trendstärke-Indikatoren und Echtzeit-Newsfeeds stehen ausschließlich Premium-Abonnenten zur Verfügung. Bitte upgraden Sie Ihr Abonnement, um Live-Pressemeldungen einzuspielen.
+        </p>
+        <button
+          onClick={onUpgradeClick}
+          className="px-6 py-2.5 bg-gradient-to-r from-aif-gold-light via-aif-gold-DEFAULT to-aif-gold-dark hover:from-aif-gold-DEFAULT hover:to-aif-gold-dark text-black font-bold text-xs uppercase tracking-wider rounded-lg shadow-lg hover:shadow-aif-gold-DEFAULT/20 transition-all duration-300 cursor-pointer"
+        >
+          Upgrade freischalten
+        </button>
       </div>
     );
   }

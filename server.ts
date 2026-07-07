@@ -278,7 +278,7 @@ function getPlanFromPriceId(priceId: string): string | null {
 // Extract email and tier with a robust fallback to Stripe APIs and Price-ID analysis
 async function getEmailAndTierFromSubscription(subscription: Stripe.Subscription): Promise<{ email: string | null, tier: string | null }> {
   const stripe = getStripeInstance();
-  let email = subscription.metadata?.email || null;
+  let email = subscription.metadata?.email || subscription.metadata?.user_email || null;
   
   if (!email && subscription.customer) {
     try {
@@ -291,7 +291,8 @@ async function getEmailAndTierFromSubscription(subscription: Stripe.Subscription
     }
   }
 
-  let tier = subscription.metadata?.planId || null;
+  let tier = subscription.metadata?.planId || subscription.metadata?.plan_id || subscription.metadata?.tier || null;
+  
   if (!tier && subscription.items?.data?.length > 0) {
     const priceId = subscription.items.data[0].price?.id;
     if (priceId) {
@@ -299,13 +300,56 @@ async function getEmailAndTierFromSubscription(subscription: Stripe.Subscription
     }
   }
 
+  // Fallback 1: check nickname of price or plan
+  if (!tier && subscription.items?.data?.length > 0) {
+    const item = subscription.items.data[0];
+    const nickname = item.price?.nickname || item.plan?.nickname || '';
+    if (nickname) {
+      const nickLower = nickname.toLowerCase();
+      if (nickLower.includes('enterprise') || nickLower.includes('founder')) {
+        tier = 'Enterprise';
+      } else if (nickLower.includes('pro')) {
+        tier = 'Pro';
+      } else if (nickLower.includes('starter')) {
+        tier = 'Starter';
+      }
+    }
+  }
+
+  // Fallback 2: retrieve the product name from Stripe to inspect if it contains 'enterprise', 'pro' or 'starter'
+  if (!tier && subscription.items?.data?.length > 0) {
+    const productId = subscription.items.data[0].price?.product;
+    if (productId && typeof productId === 'string') {
+      try {
+        const product = await stripe.products.retrieve(productId);
+        if (product && product.name) {
+          const prodLower = product.name.toLowerCase();
+          if (prodLower.includes('enterprise') || prodLower.includes('founder')) {
+            tier = 'Enterprise';
+          } else if (prodLower.includes('pro')) {
+            tier = 'Pro';
+          } else if (prodLower.includes('starter')) {
+            tier = 'Starter';
+          }
+        }
+      } catch (err) {
+        console.error(`[Webhook] Error retrieving product details for product ID ${productId}:`, err);
+      }
+    }
+  }
+
   // Ensure normalized capitalization
   if (tier) {
     const tLower = tier.toLowerCase();
-    if (tLower === 'pro') tier = 'Pro';
-    else if (tLower === 'enterprise') tier = 'Enterprise';
-    else if (tLower === 'starter') tier = 'Starter';
-    else if (tLower === 'free') tier = 'Free';
+    if (tLower === 'pro') {
+      tier = 'Pro';
+    } else if (tLower === 'enterprise' || tLower.includes('enterprise') || tLower.includes('founder')) {
+      tier = 'Enterprise';
+    } else if (tLower === 'starter') {
+      tier = 'Starter';
+    } else if (tLower === 'free') {
+      tier = 'Free';
+    }
   }
 
   return { email, tier };
