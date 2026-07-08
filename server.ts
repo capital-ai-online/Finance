@@ -154,26 +154,77 @@ function saveLocalSubscription(email: string, tier: string) {
   }
 }
 
-async function saveSubscription(email: string, tier: string) {
+// public.subscriptions is keyed by user_id (auth.users.id), not email — the
+// table has no email column. This resolves the Supabase Auth UUID for a
+// given email via the Admin API so we can read/write the right row.
+// Requires SUPABASE_SECRET_KEY / SUPABASE_SERVICE_ROLE_KEY (the anon/publishable
+// key has no access to auth.admin.*).
+async function getUserIdByEmail(supabaseClientInstance: any, email: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabaseClientInstance.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    if (error || !data?.users) {
+      console.warn('[Supabase] getUserIdByEmail: listUsers failed:', error?.message || error);
+      return null;
+    }
+    const match = data.users.find((u: any) => u.email?.toLowerCase().trim() === email);
+    return match?.id || null;
+  } catch (e: any) {
+    console.warn('[Supabase] getUserIdByEmail unexpected error:', e.message || e);
+    return null;
+  }
+}
+
+interface StripeSubscriptionInfo {
+  subscriptionId?: string | null;
+  status?: string | null;
+  currentPeriodEnd?: string | null; // ISO timestamp
+}
+
+// Persists the subscription against the REAL schema of public.subscriptions
+// (id, user_id, stripe_subscription_id, status, current_period_end, created_at,
+// updated_at, expires_at) — there is no email or tier column on that table.
+// Fix applied 09.07.2026: the previous version upserted { email, tier } with
+// onConflict: 'email', which cannot work against this schema and was failing
+// silently on every single call (caught, logged as a warning, swallowed).
+// `tier` therefore needs to be added as a column — see the accompanying SQL
+// migration — everything else below maps onto columns that already exist.
+async function saveSubscription(email: string, tier: string, stripeInfo?: StripeSubscriptionInfo) {
   const cleanEmail = email.toLowerCase().trim();
-  
-  // Save locally first as a secure fallback/cache
+
+  // Save locally first as a secure fallback/cache — this keeps working exactly
+  // as before regardless of the Supabase schema.
   saveLocalSubscription(cleanEmail, tier);
 
   if (!isSupabaseConfigured()) {
     console.log(`[Supabase Backend] Supabase not configured. Saved subscription locally for ${cleanEmail} -> ${tier}`);
     return;
   }
+
   try {
     const supabaseClientInstance = getServerSupabase();
+    const userId = await getUserIdByEmail(supabaseClientInstance, cleanEmail);
+    if (!userId) {
+      console.warn(`[Supabase Backend] No auth.users entry found for ${cleanEmail} — remote subscription row NOT written, only local fallback is up to date.`);
+      return;
+    }
+
+    const row: Record<string, any> = {
+      user_id: userId,
+      tier,
+      updated_at: new Date().toISOString(),
+    };
+    if (stripeInfo?.subscriptionId) row.stripe_subscription_id = stripeInfo.subscriptionId;
+    if (stripeInfo?.status) row.status = stripeInfo.status;
+    if (stripeInfo?.currentPeriodEnd !== undefined) row.current_period_end = stripeInfo.currentPeriodEnd;
+
     const { error } = await supabaseClientInstance
       .from('subscriptions')
-      .upsert({ email: cleanEmail, tier, updated_at: new Date().toISOString() }, { onConflict: 'email' });
-      
+      .upsert(row, { onConflict: 'user_id' });
+
     if (error) {
       console.warn(`[Supabase Backend] Note: Remote DB upsert unavailable (${error.message || JSON.stringify(error)}). Using local file storage.`);
     } else {
-      console.log(`[Supabase Backend] Successfully persisted subscription to remote DB: ${cleanEmail} -> ${tier}`);
+      console.log(`[Supabase Backend] Successfully persisted subscription to remote DB: ${cleanEmail} (user_id ${userId}) -> ${tier}`);
     }
   } catch (e: any) {
     console.warn("[Supabase Backend] Error in saveSubscription remote upsert, using local:", e.message || e);
@@ -198,10 +249,15 @@ async function getSubscription(email: string): Promise<string> {
 
   try {
     const supabaseClientInstance = getServerSupabase();
+    const userId = await getUserIdByEmail(supabaseClientInstance, cleanEmail);
+    if (!userId) {
+      return localTier || 'Free';
+    }
+
     const { data, error } = await supabaseClientInstance
       .from('subscriptions')
       .select('tier')
-      .eq('email', cleanEmail)
+      .eq('user_id', userId)
       .maybeSingle();
       
     if (error) {
@@ -257,7 +313,11 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
           saveLocalPdfCredits(email, newCredits);
           console.log(`✅ Webhook: PDF Export Purchase complete for ${email}. Added 3 credits (total: ${newCredits}).`);
         } else {
-          await saveSubscription(email, planId);
+          const subscriptionId = typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
+          await saveSubscription(email, planId, {
+            subscriptionId: subscriptionId || null,
+            status: 'active',
+          });
           console.log(`✅ Webhook: User ${email} successfully upgraded to ${planId}`);
         }
       }
@@ -266,13 +326,22 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
       const email = subscription.metadata?.email;
       const planId = subscription.metadata?.planId;
       if (email && planId) {
-        await saveSubscription(email, planId);
+        await saveSubscription(email, planId, {
+          subscriptionId: subscription.id,
+          status: subscription.status,
+          currentPeriodEnd: subscription.current_period_end
+            ? new Date(subscription.current_period_end * 1000).toISOString()
+            : null,
+        });
       }
     } else if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object as Stripe.Subscription;
       const email = subscription.metadata?.email;
       if (email) {
-        await saveSubscription(email, 'Free');
+        await saveSubscription(email, 'Free', {
+          subscriptionId: subscription.id,
+          status: 'canceled',
+        });
       }
     }
     res.json({ received: true });
