@@ -282,7 +282,6 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
   }
 };
 
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), webhookHandler);
 app.post('/billing/webhook', express.raw({ type: 'application/json' }), webhookHandler);
 
 app.use(express.json());
@@ -1388,77 +1387,6 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
 });
 
 const CRYPTO_SYMBOLS = ['BTC', 'ETH', 'SOL', 'ADA', 'XRP', 'DOT', 'DOGE', 'AVAX', 'LINK', 'MATIC'];
-
-// Helper to fetch daily historical data from Alpha Vantage
-async function fetchAlphaVantageDailyHistory(symbol: string, isCrypto: boolean, key: string): Promise<{ date: string, close: number }[] | null> {
-  try {
-    const fn = isCrypto ? 'DIGITAL_CURRENCY_DAILY' : 'TIME_SERIES_DAILY';
-    let url = '';
-    if (isCrypto) {
-      url = `https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_DAILY&symbol=${symbol}&market=USD&apikey=${key}`;
-    } else {
-      url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${key}`;
-    }
-
-    console.log(`[Alpha Vantage] Requesting URL: ${url.replace(key, 'REDACTED')}`);
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.warn(`[Alpha Vantage] HTTP error ${res.status} for ${symbol}`);
-      return null;
-    }
-
-    const data: any = await res.json();
-    if (data["Note"]) {
-      console.warn(`[Alpha Vantage] Rate limit reached for ${symbol}`);
-      return null;
-    }
-    if (data["Error Message"]) {
-      console.warn(`[Alpha Vantage] Error message for ${symbol}: ${data["Error Message"]}`);
-      return null;
-    }
-
-    const seriesKey = isCrypto ? "Time Series (Digital Currency Daily)" : "Time Series (Daily)";
-    const series = data[seriesKey];
-    if (!series) {
-      console.warn(`[Alpha Vantage] No series data found under key "${seriesKey}" for ${symbol}. Response keys: ${Object.keys(data).join(', ')}`);
-      return null;
-    }
-
-    const history: { date: string, close: number }[] = [];
-    const keys = Object.keys(series);
-    for (const dateStr of keys) {
-      const entry = series[dateStr];
-      const closeKey = isCrypto ? "4a. close (USD)" : "4. close";
-      const closeVal = parseFloat(entry[closeKey]);
-      if (isNaN(closeVal)) continue;
-
-      // Convert date "YYYY-MM-DD" to "DD.MM.YY"
-      const parts = dateStr.split('-');
-      if (parts.length === 3) {
-        const formattedDate = `${parts[2]}.${parts[1]}.${parts[0].substring(2)}`;
-        history.push({ date: formattedDate, close: closeVal });
-      }
-    }
-
-    // Sort chronologically (earliest to latest)
-    history.sort((a, b) => {
-      const partsA = a.date.split('.');
-      const partsB = b.date.split('.');
-      if (partsA.length === 3 && partsB.length === 3) {
-        const dA = new Date(Number('20' + partsA[2]), Number(partsA[1]) - 1, Number(partsA[0]));
-        const dB = new Date(Number('20' + partsB[2]), Number(partsB[1]) - 1, Number(partsB[0]));
-        return dA.getTime() - dB.getTime();
-      }
-      return 0;
-    });
-
-    console.log(`[Alpha Vantage] Successfully loaded ${history.length} data points for ${symbol}`);
-    return history;
-  } catch (err: any) {
-    console.warn(`[Alpha Vantage Error] Fetch failed for ${symbol}:`, err.message || err);
-    return null;
-  }
-}
 
 // Real-time on-demand Alpha Vantage Quote Proxy
 app.get('/api/alpha-vantage-quote', orchestrator.handle('Alpha Vantage Quote'), async (req, res) => {
