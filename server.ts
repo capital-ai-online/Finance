@@ -7,6 +7,7 @@ import fs from 'fs';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import WebSocket from 'ws';
 import { orchestrator } from './src/lib/requestOrchestrator';
 import { assetRegistry } from './src/lib/assetRegistry';
 import { CryptoScoringService } from './src/services/cryptoScoringService';
@@ -124,7 +125,20 @@ function getServerSupabase() {
     if (!url || !key) {
       throw new Error('Supabase integration variables are missing.');
     }
-    serverSupabaseClient = createClient(url, key);
+    // Node 20 has no native global WebSocket (that only landed unflagged in
+    // Node 22), and @supabase/realtime-js throws during construction if it
+    // can't find one and no transport was supplied — even though this app
+    // never uses realtime channels. `realtime: { enabled: false }` is not a
+    // real supabase-js option and does not prevent this. Explicitly passing
+    // the `ws` package as the transport satisfies the check so createClient()
+    // actually succeeds (Fix 09.07.2026 — this was the reason EVERY
+    // getSubscription/saveSubscription call was silently falling back to the
+    // local file, never once reaching Supabase).
+    serverSupabaseClient = createClient(url, key, {
+      realtime: {
+        transport: WebSocket as any,
+      },
+    });
   }
   return serverSupabaseClient;
 }
