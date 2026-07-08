@@ -124,7 +124,9 @@ function getServerSupabase() {
     if (!url || !key) {
       throw new Error('Supabase integration variables are missing.');
     }
-    serverSupabaseClient = createClient(url, key);
+    serverSupabaseClient = createClient(url, key, {
+  realtime: { enabled: false }
+});
   }
   return serverSupabaseClient;
 }
