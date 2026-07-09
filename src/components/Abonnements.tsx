@@ -16,7 +16,9 @@ import {
   Terminal,
   Code,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Database,
+  Server
 } from 'lucide-react';
 import { Checkout } from './Checkout';
 
@@ -36,7 +38,8 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
   const [configStatus, setConfigStatus] = useState({
     secretKeyConfigured: false,
     webhookSecretConfigured: false,
-    publishableKeyConfigured: false
+    publishableKeyConfigured: false,
+    dbConfigured: false
   });
 
   React.useEffect(() => {
@@ -484,29 +487,45 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
         )}
 
         {/* Integration Credentials list */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 pt-4 border-t border-white/5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-white/5">
           <div className="bg-white/5 border border-white/10 p-3 rounded-lg font-mono">
             <span className="text-[9px] uppercase tracking-wider text-white/40 block">Stripe Secret Key</span>
             <span className={`text-xs font-bold block mt-1 ${configStatus.secretKeyConfigured ? 'text-emerald-400' : 'text-amber-500'}`}>
-              {configStatus.secretKeyConfigured ? '● Aktiviert (Produktiv-Modus)' : '○ Nicht konfiguriert (.env)'}
+              {configStatus.secretKeyConfigured ? '● Aktiviert (Live)' : '○ Sandbox-Modus (.env)'}
             </span>
           </div>
           <div className="bg-white/5 border border-white/10 p-3 rounded-lg font-mono">
             <span className="text-[9px] uppercase tracking-wider text-white/40 block">Stripe Webhook Secret</span>
             <span className={`text-xs font-bold block mt-1 ${configStatus.webhookSecretConfigured ? 'text-emerald-400' : 'text-amber-500'}`}>
-              {configStatus.webhookSecretConfigured ? '● Aktiviert (Live Webhook)' : '○ Nicht konfiguriert (.env)'}
+              {configStatus.webhookSecretConfigured ? '● Aktiviert (Live Webhook)' : '○ Sandbox-Modus (.env)'}
+            </span>
+          </div>
+          <div className="bg-white/5 border border-white/10 p-3 rounded-lg font-mono">
+            <span className="text-[9px] uppercase tracking-wider text-white/40 block">Stripe Publishable Key</span>
+            <span className={`text-xs font-bold block mt-1 ${configStatus.publishableKeyConfigured ? 'text-emerald-400' : 'text-amber-500'}`}>
+              {configStatus.publishableKeyConfigured ? '● Aktiviert (Live)' : '○ Sandbox-Modus (.env)'}
             </span>
           </div>
           <div className="bg-white/5 border border-white/10 p-3 rounded-lg font-mono flex justify-between items-center">
             <div>
-              <span className="text-[9px] uppercase tracking-wider text-white/40 block">Publishable Key</span>
-              <span className={`text-xs font-bold block mt-1 flex items-center gap-1 ${configStatus.publishableKeyConfigured ? 'text-emerald-400' : 'text-amber-500'}`}>
-                {configStatus.publishableKeyConfigured ? '● Aktiviert (Live)' : '○ Nicht konfiguriert (.env)'}
+              <span className="text-[9px] uppercase tracking-wider text-white/40 block">Produktiv-Datenbank (Supabase)</span>
+              <span className={`text-xs font-bold block mt-1 flex items-center gap-1 ${configStatus.dbConfigured ? 'text-emerald-400' : 'text-amber-500'}`}>
+                {configStatus.dbConfigured ? '● Verbunden (Live)' : '○ Fallback (Lokales File)'}
               </span>
             </div>
-            <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded ${configStatus.secretKeyConfigured && configStatus.webhookSecretConfigured ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-500'}`}>
-              {configStatus.secretKeyConfigured && configStatus.webhookSecretConfigured ? 'Live Aktiv' : 'Sandbox Mode'}
+            <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded ${configStatus.secretKeyConfigured && configStatus.webhookSecretConfigured && configStatus.dbConfigured ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-500'}`}>
+              {configStatus.secretKeyConfigured && configStatus.webhookSecretConfigured && configStatus.dbConfigured ? 'PROD BEREIT' : 'SEMI-PROD'}
             </span>
+          </div>
+        </div>
+
+        {/* Informational Guidance Alert for Prod sync */}
+        <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/5 text-[11px] font-mono leading-relaxed text-white/70 flex items-start gap-2">
+          <CheckCircle size={14} className="text-emerald-400 mt-0.5 shrink-0" />
+          <div>
+            <span className="text-white font-bold block mb-0.5">Produktiv-Synchronisation &amp; Go-Live Leitfaden</span>
+            Die Anwendung ist voll funktionsfähig für den Produktivbetrieb vorbereitet. Sobald Sie Ihre echten Supabase Zugangsdaten und Stripe Price-IDs in der Server-Konfiguration (<code className="text-aif-gold-DEFAULT">.env</code>) hinterlegen, synchronisieren sich Daten und Zahlungen in Echtzeit. 
+            Eine detaillierte Schritt-für-Schritt-Anleitung wurde in <code className="text-aif-gold-DEFAULT">docs/PRODUCTION_DEPLOYMENT_GUIDE.md</code> für Sie hinterlegt.
           </div>
         </div>
       </div>

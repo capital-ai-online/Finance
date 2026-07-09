@@ -176,6 +176,9 @@ const LOCAL_PDF_CREDITS_FILE = path.join(process.cwd(), 'uploads', 'pdf_credits.
 export function getLocalPdfCredits(userIdentifier: string): number {
   try {
     const cleanId = userIdentifier.toLowerCase().trim();
+    if (cleanId === 'sven.kulessa@gmail.com' || cleanId === 'sven.kulessa@gmx.net') {
+      return 999999; // Admin/Owner unlimited credits bypass
+    }
     if (fs.existsSync(LOCAL_PDF_CREDITS_FILE)) {
       const data = fs.readFileSync(LOCAL_PDF_CREDITS_FILE, 'utf8');
       const creditsObj = JSON.parse(data) || {};

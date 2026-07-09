@@ -1589,7 +1589,7 @@ app.post('/api/portfolio-review', express.json(), orchestrator.handle('Portfolio
   const { allocation, metrics1Y, metrics3Y, metrics5Y } = req.body;
 
   try {
-    const prompt = `Du bist ein hochprofessioneller Quant-Portfolio-Analyst und Risk-Officer bei JENOVA NEXUS / CAPITAL-AI.
+    const prompt = `Du bist ein hochprofessioneller Quant-Portfolio-Analyst und Risk-Officer bei CAPITAL-AI.
     Analysiere die folgende Portfolio-Allokation und deren historische Backtest-Ergebnisse (1, 3 und 5 Jahre):
     
     Allokation:

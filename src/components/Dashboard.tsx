@@ -105,7 +105,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<string>('1std');
   const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'promo-video' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
-  const [adminTab, setAdminTab] = useState<'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene'>('users');
+  const [adminTab, setAdminTab] = useState<'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor'>('users');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>('hub');
   const [expandedUniverse, setExpandedUniverse] = useState<string | null>(null);
@@ -1168,6 +1168,20 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                               >
                                 <Sparkles size={14} className={activeView === 'admin-portal' && adminTab === 'hygiene' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
                                 <span>Capital-AI Documentary</span>
+                              </button>
+                            </SidebarTooltip>
+
+                            <SidebarTooltip title="Capital-AI Supervisor" text="Zentralisierte Echtzeit-Überwachung aller Plattformkomponenten. Visualisiert Latenzen, LLM-Routen, Circuit Breaker und Container-Ressourcen der Live-Plattform.">
+                              <button 
+                                onClick={() => { setActiveView('admin-portal'); setAdminTab('supervisor'); setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                  activeView === 'admin-portal' && adminTab === 'supervisor'
+                                    ? 'bg-aif-gold-DEFAULT text-black font-black border-aif-gold-DEFAULT shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                    : 'text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/15 border-aif-gold-DEFAULT/20'
+                                }`}
+                              >
+                                <Shield size={14} className={activeView === 'admin-portal' && adminTab === 'supervisor' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                                <span>Capital-AI Supervisor</span>
                               </button>
                             </SidebarTooltip>
                           </motion.div>

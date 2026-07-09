@@ -9,7 +9,8 @@ import {
   Gauge, 
   ShieldCheck, 
   Sparkles,
-  Activity
+  Activity,
+  Shield
 } from 'lucide-react';
 import { AdminPanel } from './AdminPanel';
 import { AuthStateDebugger } from './AuthStateDebugger';
@@ -19,14 +20,15 @@ import PerformanceDashboard from './PerformanceDashboard';
 import { AuditLogs } from './AuditLogs';
 import { AuditLog } from './AuditLog';
 import { DocumentHygienePanel } from './DocumentHygienePanel';
+import { SupervisorDashboard } from './SupervisorDashboard';
 
 // Hardcoded authorized administrator emails
 const ADMIN_EMAILS = ['sven.kulessa@gmail.com', 'sven.kulessa@gmx.net'];
 
 interface AdminPortalProps {
   currentUserEmail: string;
-  activeTab: 'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene';
-  onChangeTab: (tab: 'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene') => void;
+  activeTab: 'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor';
+  onChangeTab: (tab: 'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor') => void;
 }
 
 export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminPortalProps) {
@@ -107,6 +109,12 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
       label: 'Capital-AI Documentary',
       description: 'Autonome KI-Dokumentenpflege & Sync (Gründer: Sven Kulessa, sven.kulessa@capital-ai.online)',
       icon: Sparkles,
+    },
+    {
+      id: 'supervisor' as const,
+      label: 'Capital-AI Supervisor',
+      description: 'Zentralisierte Echtzeit-Überwachung aller Plattformkomponenten',
+      icon: Shield,
     },
   ];
 
@@ -233,6 +241,10 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
 
         {activeTab === 'hygiene' && (
           <DocumentHygienePanel currentUserEmail={currentUserEmail} />
+        )}
+
+        {activeTab === 'supervisor' && (
+          <SupervisorDashboard currentUserEmail={currentUserEmail} />
         )}
       </motion.div>
     </div>

@@ -28,6 +28,13 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
   const [demoMode, setDemoMode] = useState(false);
   const [serverPublishableKey, setServerPublishableKey] = useState<string | null>(null);
 
+  // Coupon states
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; percent_off: number | null; description: string } | null>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
+
   React.useEffect(() => {
     // Fetch Stripe publishable key dynamically at run-time
     fetch('/api/stripe/config')
@@ -46,6 +53,35 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
       })
       .catch(err => console.error("Error loading stripe config at run-time:", err));
   }, []);
+
+  const handleValidateCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setValidatingCoupon(true);
+    setCouponError(null);
+    setCouponSuccess(null);
+
+    try {
+      const response = await fetch('/api/stripe/validate-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Ungültiger Gutscheincode.');
+      }
+      setAppliedCoupon({
+        id: data.couponId,
+        percent_off: data.percent_off,
+        description: data.description
+      });
+      setCouponSuccess(`✓ ${data.description}`);
+    } catch (err: any) {
+      setCouponError(err.message || 'Gutscheincode konnte nicht verifiziert werden.');
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
 
   const handleCheckout = async () => {
     setLoading(true);
@@ -87,6 +123,7 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
           email,
           userId,
           billingPeriod,
+          couponId: appliedCoupon ? appliedCoupon.id : undefined,
           successUrl: window.location.origin + '?payment=success',
           cancelUrl: window.location.origin + '?payment=cancelled',
         }),
@@ -180,7 +217,7 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
         </div>
 
         {/* Pricing details */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-5 space-y-3 font-mono">
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4 space-y-3 font-mono">
           <div className="flex justify-between text-xs text-white/60">
             <span>Tarifstufe:</span>
             <span className="text-white font-bold">{planId}</span>
@@ -193,13 +230,66 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
             <span>Zahlungsmethoden:</span>
             <span className="text-white">Kreditkarte, SEPA, Sofort</span>
           </div>
+          {appliedCoupon && appliedCoupon.percent_off !== null && (
+            <div className="flex justify-between text-xs text-emerald-400 font-bold">
+              <span>Gutschein-Rabatt ({appliedCoupon.percent_off}%):</span>
+              <span>-{(price * (appliedCoupon.percent_off / 100)).toFixed(2)} €</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm text-white pt-1">
             <span className="font-sans font-bold">Gesamtbetrag:</span>
             <span className="text-aif-gold-DEFAULT font-black text-base">
-              {price} €
-              <span className="text-[10px] text-white/40 font-mono ml-0.5">/ Monat</span>
+              {appliedCoupon && appliedCoupon.percent_off === 100 ? 'Gratis' : `${(price * (appliedCoupon && appliedCoupon.percent_off !== null ? (100 - appliedCoupon.percent_off) / 100 : 1)).toFixed(2)} €`}
+              {!(appliedCoupon && appliedCoupon.percent_off === 100) && <span className="text-[10px] text-white/40 font-mono ml-0.5">/ Monat</span>}
             </span>
           </div>
+        </div>
+
+        {/* Coupon redemption input */}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-5 space-y-2">
+          <label className="text-[10px] uppercase font-mono tracking-wider text-white/40 block font-bold">Gutscheincode einlösen</label>
+          <div className="flex gap-2">
+            <input 
+              type="text"
+              placeholder="Code (z.B. SAVE20, FREE100)"
+              value={couponCode}
+              onChange={(e) => {
+                setCouponCode(e.target.value);
+                setCouponError(null);
+                setCouponSuccess(null);
+              }}
+              disabled={validatingCoupon || !!appliedCoupon}
+              className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-mono placeholder:text-white/20 focus:outline-none focus:border-aif-gold-DEFAULT/40 disabled:opacity-50"
+            />
+            {appliedCoupon ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setAppliedCoupon(null);
+                  setCouponCode('');
+                  setCouponSuccess(null);
+                }}
+                className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/25 border border-red-500/20 text-red-400 text-xs font-bold rounded-lg transition-all cursor-pointer font-mono"
+              >
+                Entfernen
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleValidateCoupon}
+                disabled={validatingCoupon || !couponCode.trim()}
+                className="px-3.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/15 text-white hover:text-aif-gold-DEFAULT text-xs font-bold rounded-lg transition-all cursor-pointer disabled:opacity-50 font-mono"
+              >
+                {validatingCoupon ? 'Prüft...' : 'Einlösen'}
+              </button>
+            )}
+          </div>
+          {couponError && (
+            <p className="text-[10px] text-red-400 font-mono">{couponError}</p>
+          )}
+          {couponSuccess && (
+            <p className="text-[10px] text-emerald-400 font-mono font-bold">{couponSuccess}</p>
+          )}
         </div>
 
         {/* Error State */}

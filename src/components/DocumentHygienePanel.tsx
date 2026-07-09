@@ -21,10 +21,12 @@ import {
   Code,
   Terminal,
   AlertOctagon,
-  Info
+  Info,
+  Plus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CapitalAiLogo } from './CapitalAiLogo';
+import { AdrForm } from './AdrForm';
 
 interface DocumentHygienePanelProps {
   currentUserEmail: string;
@@ -76,12 +78,32 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
   const [historyFiles, setHistoryFiles] = useState<BackupFile[]>([]);
   
   // Tab states inside the Hygiene panel
-  const [activeSubTab, setActiveSubTab] = useState<'tickets' | 'logs' | 'graph' | 'rollback' | 'linter'>('tickets');
+  const [activeSubTab, setActiveSubTab] = useState<'tickets' | 'logs' | 'graph' | 'rollback' | 'linter' | 'adr'>('tickets');
   const [selectedTicket, setSelectedTicket] = useState<ReviewTicket | null>(null);
   const [manualTriggerPath, setManualTriggerPath] = useState<string>('');
   const [isTriggering, setIsTriggering] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [reviewStatusMsg, setReviewStatusMsg] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // ADR States
+  const [adrs, setAdrs] = useState<any[]>([]);
+  const [isAdrsLoading, setIsAdrsLoading] = useState(false);
+  const [adrError, setAdrError] = useState<string | null>(null);
+  const [selectedAdr, setSelectedAdr] = useState<any | null>(null);
+  const [isEditingAdr, setIsEditingAdr] = useState(false);
+  const [isCreatingAdr, setIsCreatingAdr] = useState(false);
+  const [selectedAdrHistory, setSelectedAdrHistory] = useState<any[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+
+  // Form states
+  const [formId, setFormId] = useState('');
+  const [formTitle, setFormTitle] = useState('');
+  const [formStatus, setFormStatus] = useState('PROPOSED');
+  const [formDate, setFormDate] = useState('');
+  const [formAuthor, setFormAuthor] = useState('');
+  const [formContext, setFormContext] = useState('');
+  const [formDecision, setFormDecision] = useState('');
+  const [formConsequences, setFormConsequences] = useState('');
 
   // Security & Document Linter States
   const [diagnostics, setDiagnostics] = useState<any[]>([]);
@@ -92,6 +114,191 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
   const [linterSubMode, setLinterSubMode] = useState<'scan' | 'playground'>('scan');
   const [customCode, setCustomCode] = useState<string>('');
   const [customDiagnostics, setCustomDiagnostics] = useState<any[]>([]);
+
+  const fetchADRs = async () => {
+    setIsAdrsLoading(true);
+    setAdrError(null);
+    try {
+      const res = await fetch(`/api/admin/hygiene/adr?email=${encodeURIComponent(currentUserEmail)}`);
+      if (res.ok) {
+        const data = await res.json();
+        const sorted = (data.adrs || []).sort((a: any, b: any) => {
+          return b.id.localeCompare(a.id);
+        });
+        setAdrs(sorted);
+        if (sorted.length > 0 && !selectedAdr) {
+          setSelectedAdr(sorted[0]);
+        }
+      } else {
+        const data = await res.json();
+        setAdrError(data.error || 'Fehler beim Laden der ADRs');
+      }
+    } catch (err: any) {
+      setAdrError(`Netzwerkfehler: ${err.message}`);
+    } finally {
+      setIsAdrsLoading(false);
+    }
+  };
+
+  const fetchAdrHistory = async (adrId: string) => {
+    setIsHistoryLoading(true);
+    try {
+      const res = await fetch(`/api/admin/hygiene/adr/${adrId}/history?email=${encodeURIComponent(currentUserEmail)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSelectedAdrHistory(data.history || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch ADR history:', err);
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedAdr?.id) {
+      fetchAdrHistory(selectedAdr.id);
+    } else {
+      setSelectedAdrHistory([]);
+    }
+  }, [selectedAdr]);
+
+  const submitCreateAdr = async (data: {
+    id: string;
+    title: string;
+    status: string;
+    date: string;
+    author: string;
+    context: string;
+    decision: string;
+    consequences: string;
+  }) => {
+    try {
+      const res = await fetch('/api/admin/hygiene/adr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: data.id,
+          title: data.title,
+          status: data.status,
+          date: data.date,
+          author: data.author,
+          context: data.context,
+          decision: data.decision,
+          consequences: data.consequences,
+          email: currentUserEmail
+        })
+      });
+      if (res.ok) {
+        const resData = await res.json();
+        setIsCreatingAdr(false);
+        setSelectedAdr(resData.adr);
+        fetchADRs();
+        fetchStatus();
+      } else {
+        const resData = await res.json();
+        alert(`Fehler: ${resData.error}`);
+      }
+    } catch (err: any) {
+      alert(`Verbindungsfehler: ${err.message}`);
+    }
+  };
+
+  const submitUpdateAdr = async (data: {
+    title: string;
+    status: string;
+    date: string;
+    author: string;
+    context: string;
+    decision: string;
+    consequences: string;
+  }) => {
+    try {
+      const res = await fetch(`/api/admin/hygiene/adr/${selectedAdr.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: data.title,
+          status: data.status,
+          date: data.date,
+          author: data.author,
+          context: data.context,
+          decision: data.decision,
+          consequences: data.consequences,
+          email: currentUserEmail
+        })
+      });
+      if (res.ok) {
+        const resData = await res.json();
+        setIsEditingAdr(false);
+        setSelectedAdr(resData.adr);
+        fetchADRs();
+        fetchStatus();
+      } else {
+        const resData = await res.json();
+        alert(`Fehler: ${resData.error}`);
+      }
+    } catch (err: any) {
+      alert(`Verbindungsfehler: ${err.message}`);
+    }
+  };
+
+  const handleDeleteAdr = async (id: string) => {
+    if (!window.confirm(`Möchten Sie den Architecture Decision Record '${id}' wirklich unwiderruflich löschen? Die zugehörige Markdown-Datei auf dem Server wird dauerhaft entfernt.`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/hygiene/adr/${id}?email=${encodeURIComponent(currentUserEmail)}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setSelectedAdr(null);
+        fetchADRs();
+        fetchStatus();
+      } else {
+        const data = await res.json();
+        alert(`Fehler: ${data.error}`);
+      }
+    } catch (err: any) {
+      alert(`Verbindungsfehler: ${err.message}`);
+    }
+  };
+
+  const openCreateMode = () => {
+    setIsEditingAdr(false);
+    setIsCreatingAdr(true);
+    const nextNum = adrs.reduce((max, a) => {
+      const match = a.id.match(/ADR-(\d+)/i);
+      if (match) {
+        const num = parseInt(match[1]);
+        return num > max ? num : max;
+      }
+      return max;
+    }, 0) + 1;
+    const paddedId = `ADR-${String(nextNum).padStart(4, '0')}`;
+    
+    setFormId(paddedId);
+    setFormTitle('');
+    setFormStatus('PROPOSED');
+    setFormDate(new Date().toISOString().split('T')[0]);
+    setFormAuthor(currentUserEmail === 'sven.kulessa@gmail.com' || currentUserEmail === 'sven.kulessa@gmx.net' ? 'Sven Kulessa' : 'Administrator');
+    setFormContext('');
+    setFormDecision('');
+    setFormConsequences('');
+  };
+
+  const openEditMode = (adr: any) => {
+    setIsCreatingAdr(false);
+    setIsEditingAdr(true);
+    setFormId(adr.id);
+    setFormTitle(adr.title);
+    setFormStatus(adr.status);
+    setFormDate(adr.date);
+    setFormAuthor(adr.author);
+    setFormContext(adr.context);
+    setFormDecision(adr.decision);
+    setFormConsequences(adr.consequences);
+  };
 
   const runWorkspaceLint = async () => {
     setIsLinting(true);
@@ -571,6 +778,20 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
         >
           <History size={12} />
           <span>Rollback-Manager</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveSubTab('adr');
+            fetchADRs();
+          }}
+          className={`px-3 py-2 text-[11px] font-mono font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 shrink-0 ${
+            activeSubTab === 'adr' 
+              ? 'bg-aif-gold-DEFAULT text-black font-extrabold' 
+              : 'text-white/60 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <FileText size={12} />
+          <span>Architektur-Entscheidungen (ADR)</span>
         </button>
       </div>
 
@@ -1133,6 +1354,333 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* SUB-TAB: ADR MANAGER */}
+        {activeSubTab === 'adr' && (
+          <motion.div
+            key="adr"
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="space-y-6"
+          >
+            {/* Header / Info bar */}
+            <div className="bg-[#1A1A1E]/40 border border-white/5 p-5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold font-mono text-white flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-aif-gold-DEFAULT animate-pulse" />
+                  <span>ARCHITECTURE DECISION RECORDS (ADR) MANAGER</span>
+                </h3>
+                <p className="text-[11px] text-white/50 leading-relaxed max-w-2xl font-sans">
+                  Revisionssichere Dokumentation wesentlicher technischer Design- und Architekturentscheidungen der CAPITAL-AI Plattform (Version 0.5.4) im standardisierten Markdown-Format.
+                </p>
+              </div>
+              <button
+                onClick={openCreateMode}
+                className="px-4 py-2 bg-aif-gold-DEFAULT hover:bg-aif-gold-light text-black font-mono font-bold text-xs uppercase rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(245,196,83,0.15)] shrink-0 self-end md:self-auto"
+              >
+                <Plus size={12} />
+                <span>Neuer ADR-Eintrag</span>
+              </button>
+            </div>
+
+            {adrError && (
+              <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2 font-mono">
+                <AlertTriangle size={15} />
+                <span>{adrError}</span>
+              </div>
+            )}
+
+            {isAdrsLoading && adrs.length === 0 ? (
+              <div className="bg-[#1A1A1E]/20 border border-white/5 rounded-2xl p-12 text-center flex flex-col items-center justify-center min-h-[300px]">
+                <div className="w-8 h-8 border-2 border-aif-gold-DEFAULT border-t-transparent rounded-full animate-spin mb-3" />
+                <p className="text-xs font-mono text-white/40 uppercase tracking-widest animate-pulse">Lade Architektur-Entscheidungen...</p>
+              </div>
+            ) : adrs.length === 0 ? (
+              <div className="bg-black/20 border border-white/5 border-dashed rounded-2xl flex flex-col items-center justify-center text-center p-12 min-h-[300px] space-y-4">
+                <FileText size={40} className="text-white/10" />
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-white">Keine ADRs vorhanden</p>
+                  <p className="text-xs text-white/40 max-w-md mx-auto leading-normal font-sans">
+                    Es wurden noch keine Revisionsberichte im Verzeichnis <code>docs/adr</code> abgelegt. Klicken Sie auf "+ Neuer ADR-Eintrag", um Ihre erste Architekturentscheidung zu dokumentieren.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Left Column: ADR Index List */}
+                <div className="lg:col-span-1 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-[10px] font-bold uppercase tracking-wider text-white/40 font-mono">
+                      Einträge ({adrs.length})
+                    </h4>
+                    <span className="text-[9px] font-mono text-white/30">docs/adr/*.md</span>
+                  </div>
+
+                  <div className="space-y-2 max-h-[550px] overflow-y-auto pr-1">
+                    {adrs.map((adr) => {
+                      const isSelected = selectedAdr?.id === adr.id;
+                      const statusColors: Record<string, string> = {
+                        ACCEPTED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+                        PROPOSED: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+                        REJECTED: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+                        DEPRECATED: 'bg-white/5 text-white/40 border-white/5',
+                        SUPERSEDED: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+                      };
+                      const sColor = statusColors[adr.status.toUpperCase()] || statusColors.PROPOSED;
+
+                      return (
+                        <button
+                          key={adr.id}
+                          onClick={() => {
+                            setSelectedAdr(adr);
+                            setIsEditingAdr(false);
+                            setIsCreatingAdr(false);
+                          }}
+                          className={`w-full p-4 rounded-xl text-left border transition-all relative overflow-hidden flex flex-col gap-2 cursor-pointer ${
+                            isSelected && !isCreatingAdr
+                              ? 'bg-white/10 border-aif-gold-DEFAULT text-white shadow-[inset_0_0_12px_rgba(255,255,255,0.03)]'
+                              : 'bg-white/5 border-white/5 text-white/75 hover:bg-white/10'
+                          }`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-mono font-bold text-aif-gold-DEFAULT tracking-wider">{adr.id}</span>
+                            <span className={`px-2 py-0.5 rounded-[6px] text-[8px] font-mono font-bold uppercase border ${sColor}`}>
+                              {adr.status}
+                            </span>
+                          </div>
+                          
+                          <p className="text-xs font-bold leading-normal text-white group-hover:text-aif-gold-DEFAULT transition-all font-sans">
+                            {adr.title}
+                          </p>
+
+                          <div className="flex justify-between items-center mt-1 border-t border-white/5 pt-2 text-[9px] font-mono text-white/40">
+                            <span>{adr.date}</span>
+                            <span>{adr.author}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Right Column: Detail Inspector & Form Block */}
+                <div className="lg:col-span-2">
+                  <AnimatePresence mode="wait">
+                    
+                    {/* Mode 1: Create ADR */}
+                    {isCreatingAdr && (
+                      <AdrForm
+                        mode="create"
+                        onSubmit={submitCreateAdr}
+                        onCancel={() => setIsCreatingAdr(false)}
+                      />
+                    )}
+
+                    {/* Mode 2: Edit ADR */}
+                    {isEditingAdr && selectedAdr && (
+                      <AdrForm
+                        mode="edit"
+                        initialData={{
+                          id: formId,
+                          title: formTitle,
+                          status: formStatus,
+                          date: formDate,
+                          author: formAuthor,
+                          context: formContext,
+                          decision: formDecision,
+                          consequences: formConsequences,
+                        }}
+                        onSubmit={submitUpdateAdr}
+                        onCancel={() => setIsEditingAdr(false)}
+                      />
+                    )}
+
+                    {/* Mode 3: View ADR Detail */}
+                    {!isCreatingAdr && !isEditingAdr && selectedAdr && (
+                      <motion.div
+                        key="view-detail"
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.98 }}
+                        className="space-y-5"
+                      >
+                        {/* Detail Top Header Card */}
+                        <div className="bg-[#1A1A1E]/95 border border-white/10 rounded-2xl p-5 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+                          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                            <FileText size={120} />
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/5 pb-3.5 mb-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono text-[10px] font-black text-aif-gold-DEFAULT bg-aif-gold-DEFAULT/10 px-2.5 py-0.5 rounded border border-aif-gold-DEFAULT/25 uppercase">
+                                  {selectedAdr.id}
+                                </span>
+                                <span className="text-[10px] text-white/40 font-mono">Dateiname: {selectedAdr.id}.md</span>
+                              </div>
+                              <h3 className="text-base font-bold font-display text-white uppercase tracking-tight leading-snug">
+                                {selectedAdr.title}
+                              </h3>
+                            </div>
+
+                            {/* Status label */}
+                            {(() => {
+                              const statusColors: Record<string, string> = {
+                                ACCEPTED: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.1)]',
+                                PROPOSED: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30 shadow-[0_0_12px_rgba(6,182,212,0.1)]',
+                                REJECTED: 'bg-rose-500/15 text-rose-400 border-rose-500/30',
+                                DEPRECATED: 'bg-white/5 text-white/40 border-white/10',
+                                SUPERSEDED: 'bg-amber-500/15 text-amber-400 border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.1)]',
+                              };
+                              return (
+                                <span className={`px-2.5 py-0.5 rounded-lg text-[9px] font-mono font-bold uppercase border tracking-wider shrink-0 ${statusColors[selectedAdr.status.toUpperCase()] || statusColors.PROPOSED}`}>
+                                  {selectedAdr.status}
+                                </span>
+                              );
+                            })()}
+                          </div>
+
+                          {/* Metadata grid */}
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs font-mono bg-black/30 rounded-xl p-3 border border-white/5">
+                            <div className="space-y-0.5">
+                              <span className="text-[9px] text-white/40 uppercase">Datum:</span>
+                              <p className="text-white font-bold">{selectedAdr.date}</p>
+                            </div>
+                            <div className="space-y-0.5">
+                              <span className="text-[9px] text-white/40 uppercase">Verantwortlicher Autor:</span>
+                              <p className="text-white font-bold">{selectedAdr.author}</p>
+                            </div>
+                            <div className="col-span-2 sm:col-span-1 space-y-0.5">
+                              <span className="text-[9px] text-white/40 uppercase">Relativer Dateipfad:</span>
+                              <p className="text-cyan-400 truncate text-[10px]">{selectedAdr.relPath}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Detail Content Sections */}
+                        <div className="space-y-4">
+                          
+                          {/* Section 1: Context */}
+                          <div className="bg-[#121215]/80 border border-white/5 rounded-2xl p-5 space-y-2.5">
+                            <div className="flex items-center gap-2 text-white/40 pb-2 border-b border-white/5">
+                              <HelpCircle size={14} className="text-cyan-400" />
+                              <h4 className="text-[10px] font-mono uppercase font-black tracking-widest text-white/70">1. Kontext (Hintergrund &amp; Problemstellung)</h4>
+                            </div>
+                            <p className="text-xs text-white/80 leading-relaxed font-sans whitespace-pre-wrap">
+                              {selectedAdr.context || 'Kein Kontext dokumentiert.'}
+                            </p>
+                          </div>
+
+                          {/* Section 2: Decision */}
+                          <div className="bg-[#121215]/80 border border-white/5 rounded-2xl p-5 space-y-2.5 border-l-2 border-l-aif-gold-DEFAULT">
+                            <div className="flex items-center gap-2 text-white/40 pb-2 border-b border-white/5">
+                              <CheckCircle size={14} className="text-aif-gold-DEFAULT" />
+                              <h4 className="text-[10px] font-mono uppercase font-black tracking-widest text-aif-gold-DEFAULT">2. Entscheidung (Gewählte Lösung)</h4>
+                            </div>
+                            <p className="text-xs text-white/90 leading-relaxed font-sans whitespace-pre-wrap font-medium">
+                              {selectedAdr.decision || 'Keine Entscheidung dokumentiert.'}
+                            </p>
+
+                            {/* Expandable Decision Version History */}
+                            <div className="mt-4 pt-3 border-t border-white/5">
+                              <details className="group">
+                                <summary className="list-none flex items-center justify-between cursor-pointer select-none">
+                                  <span className="text-[9px] font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-widest flex items-center gap-1.5 hover:text-aif-gold-light transition-colors">
+                                    <Clock size={10} className="group-open:rotate-180 transition-transform duration-200" />
+                                    <span>Versionsverlauf der Entscheidung</span>
+                                  </span>
+                                  <div className="flex items-center gap-1 text-[8px] font-mono text-white/30">
+                                    <span>{selectedAdrHistory.length} {selectedAdrHistory.length === 1 ? 'Version' : 'Versionen'}</span>
+                                    <span className="transition-transform group-open:rotate-180 text-[7px]">▼</span>
+                                  </div>
+                                </summary>
+                                
+                                <div className="mt-3 space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+                                  {isHistoryLoading ? (
+                                    <div className="py-4 text-center text-[10px] font-mono text-white/30 animate-pulse">
+                                      Lade Historie...
+                                    </div>
+                                  ) : selectedAdrHistory.length === 0 ? (
+                                    <div className="py-3 text-center text-[10px] font-mono text-white/30 italic">
+                                      Keine vorherigen Änderungen erfasst.
+                                    </div>
+                                  ) : (
+                                    [...selectedAdrHistory].reverse().map((hist, index) => {
+                                      const isLatest = hist.version === selectedAdrHistory.length;
+                                      return (
+                                        <div
+                                          key={hist.version}
+                                          className={`p-3 rounded-xl border text-[11px] leading-relaxed transition-all ${
+                                            isLatest
+                                              ? 'bg-aif-gold-DEFAULT/[0.03] border-aif-gold-DEFAULT/20 text-white'
+                                              : 'bg-black/35 border-white/5 text-white/60'
+                                          }`}
+                                        >
+                                          <div className="flex justify-between items-center mb-1 text-[9px] font-mono">
+                                            <span className={`font-bold ${isLatest ? 'text-aif-gold-DEFAULT' : 'text-white/40'}`}>
+                                              Version {hist.version} {isLatest && '(Aktuell)'}
+                                            </span>
+                                            <span className="text-white/30">
+                                              {new Date(hist.updatedAt).toLocaleString('de-DE')}
+                                            </span>
+                                          </div>
+                                          <p className="font-sans whitespace-pre-wrap text-white/80 select-all selection:bg-aif-gold-DEFAULT selection:text-black">
+                                            {hist.decision}
+                                          </p>
+                                          <div className="mt-1.5 text-[8px] font-mono text-white/30 text-right">
+                                            Autor: {hist.updatedBy}
+                                          </div>
+                                        </div>
+                                      );
+                                    })
+                                  )}
+                                </div>
+                              </details>
+                            </div>
+                          </div>
+
+                          {/* Section 3: Consequences */}
+                          <div className="bg-[#121215]/80 border border-white/5 rounded-2xl p-5 space-y-2.5">
+                            <div className="flex items-center gap-2 text-white/40 pb-2 border-b border-white/5">
+                              <Info size={14} className="text-emerald-400" />
+                              <h4 className="text-[10px] font-mono uppercase font-black tracking-widest text-white/70">3. Konsequenzen (Trade-Offs &amp; Resultate)</h4>
+                            </div>
+                            <p className="text-xs text-white/80 leading-relaxed font-sans whitespace-pre-wrap">
+                              {selectedAdr.consequences || 'Keine Konsequenzen dokumentiert.'}
+                            </p>
+                          </div>
+
+                        </div>
+
+                        {/* Action Bar for Admin */}
+                        <div className="flex gap-3 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => openEditMode(selectedAdr)}
+                            className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-mono font-bold text-xs uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-white/10"
+                          >
+                            <span>Eintrag Bearbeiten</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAdr(selectedAdr.id)}
+                            className="px-5 py-2.5 rounded-xl bg-rose-950/20 hover:bg-rose-900/40 text-rose-400 font-mono font-bold text-xs uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-rose-900/30"
+                          >
+                            <span>Löschen</span>
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+
+                  </AnimatePresence>
+                </div>
+
               </div>
             )}
           </motion.div>

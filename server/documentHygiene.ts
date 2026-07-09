@@ -1243,6 +1243,409 @@ hygieneRouter.post('/trigger', requireAdmin, async (req, res) => {
   }
 });
 
+// ----------------- ARCHITECTURE DECISION RECORDS (ADR) MANAGER ENDPOINTS -----------------
+const ADR_DIR = path.join(process.cwd(), 'docs', 'adr');
+const ADR_HISTORY_FILE = path.join(process.cwd(), 'docs', 'adr', 'adr_history.json');
+
+function getADRHistory(): Record<string, any[]> {
+  try {
+    if (fs.existsSync(ADR_HISTORY_FILE)) {
+      return JSON.parse(fs.readFileSync(ADR_HISTORY_FILE, 'utf8'));
+    }
+  } catch (err) {
+    console.error('Error reading ADR history file:', err);
+  }
+  return {};
+}
+
+function saveADRHistory(history: Record<string, any[]>) {
+  try {
+    const dir = path.dirname(ADR_HISTORY_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(ADR_HISTORY_FILE, JSON.stringify(history, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Error saving ADR history file:', err);
+  }
+}
+
+function recordAdrHistory(
+  id: string,
+  title: string,
+  decision: string,
+  status: string,
+  author: string,
+  updatedBy: string
+) {
+  const history = getADRHistory();
+  const formattedId = id.toUpperCase();
+  if (!history[formattedId]) {
+    history[formattedId] = [];
+  }
+
+  const versions = history[formattedId];
+  const nextVersionNum = versions.length + 1;
+
+  // Check if the decision actually changed
+  if (versions.length > 0) {
+    const latest = versions[versions.length - 1];
+    if (latest.decision.trim() === decision.trim()) {
+      return; // No change in decision, skip recording
+    }
+  }
+
+  versions.push({
+    version: nextVersionNum,
+    title,
+    decision,
+    status,
+    author,
+    updatedAt: new Date().toISOString(),
+    updatedBy: updatedBy || author || 'System'
+  });
+
+  saveADRHistory(history);
+}
+
+function ensureADRDirectoryAndSeeds() {
+  if (!fs.existsSync(ADR_DIR)) {
+    fs.mkdirSync(ADR_DIR, { recursive: true });
+  }
+
+  const files = fs.readdirSync(ADR_DIR).filter(f => f.endsWith('.md'));
+  if (files.length === 0) {
+    const adr1 = {
+      id: 'ADR-0001',
+      title: 'Standardisierung der Plattform-Version auf 0.5.4',
+      status: 'ACCEPTED',
+      date: '2026-07-09',
+      author: 'Sven Kulessa',
+      context: 'Zuvor wurden auf verschiedenen Seiten und Systemprotokollen unterschiedliche Plattform-Versionen wie v7.5 oder v1.0.0 referenziert. Dies verletzte die Dokumentationsintegrität und erschwerte eine einheitliche Auditierung.',
+      decision: 'Es wird hiermit entschieden, die offizielle Revisionsnummer der gesamten CAPITAL-AI Plattform in der aktuellen Beta-Phase strikt auf Version 0.5.4 festzulegen. Ein automatischer Dokumenten-Linter prüft künftig alle Quelldateien und Berichte auf Einhaltung dieser Vorgabe.',
+      consequences: 'Alle Benutzeroberflächen, Protokolle, PDF-Exporte und Markdown-Spezifikationen verweisen nun einheitlich auf Version 0.5.4. Abweichungen führen zu Warnungen im Security Linter.'
+    };
+    fs.writeFileSync(path.join(ADR_DIR, 'ADR-0001-platform-version.md'), generateADRContent(adr1), 'utf8');
+    recordAdrHistory(adr1.id, adr1.title, adr1.decision, adr1.status, adr1.author, 'System');
+
+    const adr2 = {
+      id: 'ADR-0002',
+      title: 'Verwendung von Google Firestore für cloud-basierte Datenpersistenz',
+      status: 'ACCEPTED',
+      date: '2026-07-09',
+      author: 'Sven Kulessa',
+      context: 'Für kritische, benutzergenerierte Inhalte wie Audit-Protokolle, Freigabetickets und Benutzereinstellungen ist eine ausfallsichere, revisionssichere Cloud-Speicherung erforderlich. Ein reiner lokaler Speicher (LocalStorage) ist unzureichend für firmenweite Audit-Sicherheit.',
+      decision: 'Wir integrieren Google Firebase Firestore als primäre dokumentenorientierte Cloud-Datenbank. Alle sicherheitsrelevanten Zustände und Hygiene-Protokolle werden in Echtzeit dorthin synchronisiert, abgesichert durch restriktive Firestore Security Rules.',
+      consequences: 'Erhöhte Ausfallsicherheit und Revisionssicherheit für den Administrator und Gründer Sven Kulessa. Lokaler Cache dient nur noch als Fallback.'
+    };
+    fs.writeFileSync(path.join(ADR_DIR, 'ADR-0002-firestore-persistence.md'), generateADRContent(adr2), 'utf8');
+    recordAdrHistory(adr2.id, adr2.title, adr2.decision, adr2.status, adr2.author, 'System');
+
+    const adr3 = {
+      id: 'ADR-0003',
+      title: 'Automatisierte Dokumenten-Hygiene-Engine',
+      status: 'ACCEPTED',
+      date: '2026-07-09',
+      author: 'Sven Kulessa',
+      context: 'Markdown-Spezifikationen und Quellcode-Dateien in anspruchsvollen Finanz- und regulatorischen Systemen neigen dazu, unstrukturiert zu wachsen und sensitive Daten (wie API-Keys, PII) unverschlüsselt zu offenbaren.',
+      decision: 'Wir implementieren einen automatisierten Dokumenten-Linter im Backend, der alle Workspace-Dateien auf SEC- und DOC-Regeln scannt und im UI-Dashboard des Admin-Portals ein direktes "Auto-Fixing" anbietet.',
+      consequences: 'Revisionssichere und DSGVO-konforme Pflege aller Platform-Ressourcen ohne manuellen Entwicklungsaufwand.'
+    };
+    fs.writeFileSync(path.join(ADR_DIR, 'ADR-0003-hygiene-engine.md'), generateADRContent(adr3), 'utf8');
+    recordAdrHistory(adr3.id, adr3.title, adr3.decision, adr3.status, adr3.author, 'System');
+  }
+}
+
+function generateADRContent(adr: {
+  id: string;
+  title: string;
+  status: string;
+  date: string;
+  author: string;
+  context: string;
+  decision: string;
+  consequences: string;
+}) {
+  return `# ${adr.id}: ${adr.title}
+
+* **Status:** ${adr.status.toUpperCase()}
+* **Datum:** ${adr.date}
+* **Autor:** ${adr.author}
+
+## Kontext
+${adr.context}
+
+## Entscheidung
+${adr.decision}
+
+## Konsequenzen
+${adr.consequences}
+`;
+}
+
+function parseADRFile(filePath: string, content: string) {
+  const lines = content.split('\n');
+  let id = '';
+  let title = '';
+  let status = 'PROPOSED';
+  let date = '';
+  let author = '';
+  let context = '';
+  let decision = '';
+  let consequences = '';
+
+  const titleLine = lines.find(l => l.startsWith('#'));
+  if (titleLine) {
+    const match = titleLine.match(/^#\s*(ADR-\d+)\s*[:-]\s*(.*)$/);
+    if (match) {
+      id = match[1].trim();
+      title = match[2].trim();
+    } else {
+      title = titleLine.replace(/^#\s*/, '').trim();
+    }
+  }
+
+  if (!id) {
+    const filename = path.basename(filePath, '.md');
+    const idMatch = filename.match(/^(ADR-\d+)/i);
+    if (idMatch) {
+      id = idMatch[1].toUpperCase();
+    } else {
+      id = 'ADR-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+    }
+  }
+
+  for (const line of lines) {
+    const statusMatch = line.match(/[\*-]\s*\*\*Status:\*\*\s*(.*)/i);
+    if (statusMatch) status = statusMatch[1].trim();
+
+    const dateMatch = line.match(/[\*-]\s*\*\*Dat(?:um|e):\*\*\s*(.*)/i);
+    if (dateMatch) date = dateMatch[1].trim();
+
+    const authorMatch = line.match(/[\*-]\s*\*\*Auto(?:r|h):?\*\*\s*(.*)/i);
+    if (authorMatch) author = authorMatch[1].trim();
+  }
+
+  function findHeadingIndex(terms: string[]) {
+    for (const term of terms) {
+      const idx = content.search(new RegExp(`^##\\s*${term}`, 'im'));
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  }
+
+  const headings = [
+    { key: 'context', terms: ['kontext', 'context'] },
+    { key: 'decision', terms: ['entscheidung', 'decision'] },
+    { key: 'consequences', terms: ['konsequenzen', 'consequences'] }
+  ];
+
+  const positions = headings
+    .map(h => ({ key: h.key, index: findHeadingIndex(h.terms) }))
+    .filter(p => p.index !== -1)
+    .sort((a, b) => a.index - b.index);
+
+  for (let i = 0; i < positions.length; i++) {
+    const current = positions[i];
+    const next = positions[i + 1];
+    
+    const headingStart = current.index;
+    const newlineIdx = content.indexOf('\n', headingStart);
+    const contentStart = newlineIdx === -1 ? headingStart : newlineIdx + 1;
+    const contentEnd = next ? next.index : content.length;
+    
+    const sectionText = content.substring(contentStart, contentEnd).trim();
+    if (current.key === 'context') context = sectionText;
+    else if (current.key === 'decision') decision = sectionText;
+    else if (current.key === 'consequences') consequences = sectionText;
+  }
+
+  const relPath = path.relative(process.cwd(), filePath).replace(/\\/g, '/');
+
+  return { id, title, status, date, author, context, decision, consequences, filePath, relPath };
+}
+
+// 1. GET all ADRs
+hygieneRouter.get('/adr', requireAdmin, (req, res) => {
+  try {
+    ensureADRDirectoryAndSeeds();
+    const files = fs.readdirSync(ADR_DIR).filter(f => f.endsWith('.md'));
+    const adrs = files.map(file => {
+      const fullPath = path.join(ADR_DIR, file);
+      const content = fs.readFileSync(fullPath, 'utf8');
+      return parseADRFile(fullPath, content);
+    });
+    res.json({ success: true, adrs });
+  } catch (err: any) {
+    res.status(500).json({ error: `Fehler beim Laden der ADRs: ${err.message || err}` });
+  }
+});
+
+// 2. POST create ADR
+hygieneRouter.post('/adr', requireAdmin, (req, res) => {
+  const { id, title, status, date, author, context, decision, consequences, email } = req.body;
+  if (!id || !title || !status || !date || !author) {
+    return res.status(400).json({ error: 'id, title, status, date, and author are required.' });
+  }
+
+  try {
+    ensureADRDirectoryAndSeeds();
+    
+    const formattedId = id.trim().toUpperCase();
+    const safeTitle = title.trim().replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase().replace(/-+/g, '-');
+    const fileName = `${formattedId}-${safeTitle}.md`;
+    const fullPath = path.join(ADR_DIR, fileName);
+
+    const adrData = { id: formattedId, title, status, date, author, context, decision, consequences };
+    const content = generateADRContent(adrData);
+
+    fs.writeFileSync(fullPath, content, 'utf8');
+
+    // Record initial version in history
+    recordAdrHistory(formattedId, title, decision || '', status, author, email || author);
+
+    logSystemEvent(
+      'SECURITY',
+      'ADR Created',
+      email || 'Admin',
+      `Architectural Decision Record '${formattedId}' (${title}) created successfully.`,
+      'SUCCESS'
+    );
+
+    res.json({ success: true, adr: parseADRFile(fullPath, content) });
+  } catch (err: any) {
+    res.status(500).json({ error: `Fehler beim Erstellen der ADR: ${err.message || err}` });
+  }
+});
+
+// 3. PUT update ADR
+hygieneRouter.put('/adr/:id', requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const { title, status, date, author, context, decision, consequences, email } = req.body;
+  
+  if (!title || !status || !date || !author) {
+    return res.status(400).json({ error: 'title, status, date, and author are required.' });
+  }
+
+  try {
+    ensureADRDirectoryAndSeeds();
+    
+    const files = fs.readdirSync(ADR_DIR).filter(f => f.endsWith('.md'));
+    const targetFile = files.find(f => f.toUpperCase().startsWith(`${id.toUpperCase()}-`));
+    
+    if (!targetFile) {
+      return res.status(404).json({ error: `ADR mit ID ${id} wurde nicht gefunden.` });
+    }
+
+    const oldFullPath = path.join(ADR_DIR, targetFile);
+    
+    const safeTitle = title.trim().replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase().replace(/-+/g, '-');
+    const newFileName = `${id.toUpperCase()}-${safeTitle}.md`;
+    const newFullPath = path.join(ADR_DIR, newFileName);
+
+    const adrData = { id: id.toUpperCase(), title, status, date, author, context, decision, consequences };
+    const content = generateADRContent(adrData);
+
+    if (oldFullPath !== newFullPath) {
+      fs.unlinkSync(oldFullPath);
+    }
+
+    fs.writeFileSync(newFullPath, content, 'utf8');
+
+    // Record new version in history if decision field changed
+    recordAdrHistory(id.toUpperCase(), title, decision || '', status, author, email || author);
+
+    logSystemEvent(
+      'SECURITY',
+      'ADR Updated',
+      email || 'Admin',
+      `Architectural Decision Record '${id.toUpperCase()}' updated successfully.`,
+      'SUCCESS'
+    );
+
+    res.json({ success: true, adr: parseADRFile(newFullPath, content) });
+  } catch (err: any) {
+    res.status(500).json({ error: `Fehler beim Aktualisieren der ADR: ${err.message || err}` });
+  }
+});
+
+// 4. DELETE ADR
+hygieneRouter.delete('/adr/:id', requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const email = req.query.email || req.body.email;
+
+  try {
+    ensureADRDirectoryAndSeeds();
+    const files = fs.readdirSync(ADR_DIR).filter(f => f.endsWith('.md'));
+    const targetFile = files.find(f => f.toUpperCase().startsWith(`${id.toUpperCase()}-`));
+    
+    if (!targetFile) {
+      return res.status(404).json({ error: `ADR mit ID ${id} wurde nicht gefunden.` });
+    }
+
+    const fullPath = path.join(ADR_DIR, targetFile);
+    fs.unlinkSync(fullPath);
+
+    // Clean up history
+    const history = getADRHistory();
+    if (history[id.toUpperCase()]) {
+      delete history[id.toUpperCase()];
+      saveADRHistory(history);
+    }
+
+    logSystemEvent(
+      'SECURITY',
+      'ADR Deleted',
+      String(email || 'Admin'),
+      `Architectural Decision Record '${id.toUpperCase()}' deleted successfully.`,
+      'SUCCESS'
+    );
+
+    res.json({ success: true, message: `ADR ${id} erfolgreich gelöscht.` });
+  } catch (err: any) {
+    res.status(500).json({ error: `Fehler beim Löschen der ADR: ${err.message || err}` });
+  }
+});
+
+// 5. GET ADR history
+hygieneRouter.get('/adr/:id/history', requireAdmin, (req, res) => {
+  const { id } = req.params;
+  try {
+    ensureADRDirectoryAndSeeds();
+    let history = getADRHistory();
+    const formattedId = id.toUpperCase();
+    let adrHistory = history[formattedId] || [];
+
+    if (adrHistory.length === 0) {
+      // Find the file and parse current decision as version 1
+      const files = fs.readdirSync(ADR_DIR).filter(f => f.endsWith('.md'));
+      const targetFile = files.find(f => f.toUpperCase().startsWith(`${formattedId}-`));
+      if (targetFile) {
+        const fullPath = path.join(ADR_DIR, targetFile);
+        const content = fs.readFileSync(fullPath, 'utf8');
+        const parsed = parseADRFile(fullPath, content);
+        if (parsed && parsed.decision) {
+          recordAdrHistory(
+            formattedId,
+            parsed.title,
+            parsed.decision,
+            parsed.status,
+            parsed.author,
+            'System (Auto-Migration)'
+          );
+          // Reload history
+          history = getADRHistory();
+          adrHistory = history[formattedId] || [];
+        }
+      }
+    }
+
+    res.json({ success: true, history: adrHistory });
+  } catch (err: any) {
+    res.status(500).json({ error: `Fehler beim Laden der ADR-Historie: ${err.message || err}` });
+  }
+});
+
 
 // ----------------- RECURSIVE FILE WATCHER INITIALIZATION -----------------
 
