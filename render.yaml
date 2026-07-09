@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: aif-core
+    name: capital-ai
     runtime: docker
     envVars:
       - key: VITE_SUPABASE_URL

@@ -481,7 +481,7 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt, user
     doc.setTextColor(245, 196, 83);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
-    doc.text('JENOVA NEXUS', 15, 18);
+    doc.text('CAPITAL-AI', 15, 18);
 
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'normal');
@@ -622,7 +622,7 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt, user
     doc.text('CAPITAL-AI Portfoliodaten und Analysen entsprechen den Richtlinien für Zero-Breach Datenintegrität.', 15, 283);
     doc.text('Dieses Dokument dient Informationszwecken. Historische Renditen sind keine Garantie für zukünftige Performance.', 15, 287);
 
-    doc.save(`JENOVA_NEXUS_Portfolio_Bericht.pdf`);
+    doc.save(`CAPITAL_AI_Portfolio_Bericht.pdf`);
   };
 
   const currentPeriodMetrics = simResults ? simResults[activeChartRange] : null;

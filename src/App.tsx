@@ -14,12 +14,14 @@ export interface UserSession {
   email: string;
   subscriptionTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
   accessToken?: string;
+  id?: string;
 }
 
 export default function App() {
   const [userSession, setUserSession] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [justLoggedOut, setJustLoggedOut] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<{ message: string; code: string; expectedId: string; receivedId?: string } | null>(null);
 
   const updateUserSession = (session: UserSession | null) => {
     setUserSession(session);
@@ -43,14 +45,15 @@ export default function App() {
         email: email || 'gast@capital-ai.de',
         subscriptionTier: 'Free',
         accessToken: session.access_token,
+        id: user.id,
       });
       setLoading(false);
       return;
     }
 
     try {
-      // Fetch real subscription tier from the backend database!
-      const res = await fetch(`/api/stripe/user-subscription?email=${encodeURIComponent(email)}`, {
+      // Fetch real subscription tier from the backend database using the userId (strictly no email identification)!
+      const res = await fetch(`/api/stripe/user-subscription?userId=${encodeURIComponent(user.id)}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
@@ -58,6 +61,20 @@ export default function App() {
       let tier: 'Free' | 'Starter' | 'Pro' | 'Enterprise' = 'Free';
       if (res.ok) {
         const data = await res.json();
+        
+        // Explicitly confirm the user's identity status via auth.user.id
+        if (data && data.userId && data.userId !== user.id) {
+          console.error("CRITICAL SECURITY MISMATCH: Expected User ID", user.id, "but received", data.userId);
+          setAuthError({
+            message: "Sicherheits-Fehler: Es wurde eine Diskrepanz zwischen Ihrer lokalen Benutzer-ID und der Server-ID festgestellt. Um Ihre Daten zu schützen, wurde der Zugriff vorübergehend gesperrt.",
+            code: "IDENTITY_MISMATCH_DETECTED",
+            expectedId: user.id,
+            receivedId: data.userId
+          });
+          setLoading(false);
+          return;
+        }
+
         if (data && data.subscriptionTier) {
           tier = data.subscriptionTier;
         }
@@ -69,6 +86,7 @@ export default function App() {
         email,
         subscriptionTier: tier,
         accessToken: session.access_token,
+        id: user.id,
       });
     } catch (err) {
       console.error("Error loading subscription tier:", err);
@@ -78,6 +96,7 @@ export default function App() {
         email,
         subscriptionTier: 'Free',
         accessToken: session.access_token,
+        id: user.id,
       });
     } finally {
       setLoading(false);
@@ -256,6 +275,88 @@ export default function App() {
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-aif-gold-DEFAULT border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs text-white/40 font-mono uppercase tracking-widest animate-pulse">Lade Sicherheits-Modul...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (authError) {
+    return (
+      <div id="auth-error-screen" className="min-h-screen bg-neutral-950 flex items-center justify-center p-4 selection:bg-aif-gold-DEFAULT selection:text-black">
+        <div id="auth-error-card" className="w-full max-w-md bg-black/40 border border-red-500/30 rounded-2xl p-8 backdrop-blur-xl shadow-[0_0_50px_rgba(239,68,68,0.1)] relative overflow-hidden">
+          <div id="auth-error-accent-bar" className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-amber-500 to-red-500" />
+          
+          <div className="flex flex-col items-center text-center space-y-6">
+            <div id="auth-error-icon" className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 animate-pulse">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+
+            <div className="space-y-2">
+              <h1 id="auth-error-title" className="text-xl font-bold font-display tracking-tight text-white">Identitäts-Diskrepanz erkannt</h1>
+              <p className="text-xs font-mono uppercase tracking-widest text-red-400">Security Guard Protocol</p>
+            </div>
+
+            <p id="auth-error-message" className="text-sm text-white/70 leading-relaxed">
+              {authError.message}
+            </p>
+
+            <div id="auth-error-details" className="w-full bg-white/5 border border-white/10 rounded-xl p-4 space-y-3 text-left font-mono text-[11px]">
+              <div>
+                <span className="text-white/40 block mb-0.5">Aktive Auth-Sitzung (id):</span>
+                <span className="text-aif-gold-DEFAULT font-semibold break-all">{authError.expectedId}</span>
+              </div>
+              {authError.receivedId && (
+                <div>
+                  <span className="text-white/40 block mb-0.5">Vom Server gemeldet (userId):</span>
+                  <span className="text-red-400 font-semibold break-all">{authError.receivedId}</span>
+                </div>
+              )}
+              <div>
+                <span className="text-white/40 block mb-0.5">Fehlercode:</span>
+                <span className="text-white/80">{authError.code}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full pt-2">
+              <button
+                id="auth-error-retry-btn"
+                onClick={async () => {
+                  setAuthError(null);
+                  setLoading(true);
+                  if (supabase) {
+                    try {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (session) {
+                        await handleSupabaseSession(session);
+                      } else {
+                        setLoading(false);
+                      }
+                    } catch (err) {
+                      console.error("Retry failed:", err);
+                      setLoading(false);
+                    }
+                  } else {
+                    setLoading(false);
+                  }
+                }}
+                className="flex-1 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-all cursor-pointer"
+              >
+                Erneut versuchen
+              </button>
+              <button
+                id="auth-error-reset-btn"
+                onClick={async () => {
+                  setAuthError(null);
+                  await handleLogout();
+                }}
+                className="flex-1 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 transition-all cursor-pointer"
+              >
+                Sitzung zurücksetzen
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );

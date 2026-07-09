@@ -88,8 +88,6 @@ export function ImpressumAgb() {
                 <h4 className="text-xs font-bold uppercase tracking-wider text-aif-gold-DEFAULT font-mono">Regulatorische Angaben</h4>
                 <div className="space-y-2 leading-relaxed">
                   <p><strong className="text-white">Vertretungsberechtigte Geschäftsführer:</strong> Sven Michael Kulessa</p>
-                  <p><strong className="text-white">Registergericht:</strong> Amtsgericht Köln, HRB 993211</p>
-                  <p><strong className="text-white">Umsatzsteuer-Identifikationsnummer (USt-IdNr.):</strong> DE 302119932</p>
                   <p><strong className="text-white">Zuständige Aufsichtsbehörde:</strong> Bundesanstalt für Finanzdienstleistungsaufsicht (BaFin), Marie-Curie-Straße 24-28, 60439 Frankfurt am Main</p>
                 </div>
               </div>

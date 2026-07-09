@@ -1,5 +1,5 @@
 # 🧪 Test Plan & Quantitative Finance Engine (QA Perspective)
-**Project: CAPITAL-AI (Jenova Nexus)**  
+**Project: CAPITAL-AI**  
 **Auditor:** QA & Quantitative Analysis Lead  
 **Status:** Certified & Production Ready  
 

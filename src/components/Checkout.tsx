@@ -9,8 +9,7 @@ import {
   ArrowRight, 
   X, 
   AlertTriangle,
-  Info,
-  Ticket
+  Info
 } from 'lucide-react';
 
 interface CheckoutProps {
@@ -18,19 +17,16 @@ interface CheckoutProps {
   price: number;
   billingPeriod: 'monthly' | 'yearly';
   email: string;
+  userId?: string;
   onClose: () => void;
   onSuccess: (tier: 'Starter' | 'Pro' | 'Enterprise') => void;
 }
 
-export function Checkout({ planId, price, billingPeriod, email, onClose, onSuccess }: CheckoutProps) {
+export function Checkout({ planId, price, billingPeriod, email, userId, onClose, onSuccess }: CheckoutProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [demoMode, setDemoMode] = useState(false);
   const [serverPublishableKey, setServerPublishableKey] = useState<string | null>(null);
-  const [couponCode, setCouponCode] = useState('');
-  const [couponValidating, setCouponValidating] = useState(false);
-  const [couponError, setCouponError] = useState<string | null>(null);
-  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
 
   React.useEffect(() => {
     // Fetch Stripe publishable key dynamically at run-time
@@ -50,42 +46,6 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
       })
       .catch(err => console.error("Error loading stripe config at run-time:", err));
   }, []);
-
-  // Validate and apply coupon code
-  const handleValidateCoupon = async () => {
-    if (!couponCode.trim()) {
-      setCouponError('Bitte geben Sie einen Coupon-Code ein.');
-      return;
-    }
-
-    setCouponValidating(true);
-    setCouponError(null);
-
-    try {
-      const response = await fetch('/api/stripe/validate-coupon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ couponCode: couponCode.trim().toUpperCase() })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setCouponError(data.error || 'Coupon-Code ist ungültig oder abgelaufen.');
-        setAppliedCoupon(null);
-        setCouponValidating(false);
-        return;
-      }
-
-      setAppliedCoupon(data);
-      setCouponError(null);
-      console.log('✅ Coupon applied:', data);
-    } catch (err: any) {
-      setCouponError('Fehler beim Validieren des Coupon-Codes.');
-      console.error('Coupon validation error:', err);
-    }
-    setCouponValidating(false);
-  };
 
   const handleCheckout = async () => {
     setLoading(true);
@@ -116,7 +76,7 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
     }
 
     try {
-      // 1. Erstelle Checkout-Session auf dem Server mit optional Coupon-Code
+      // 1. Erstelle Checkout-Session auf dem Server
       const response = await fetch('/api/stripe/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -125,8 +85,8 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
         body: JSON.stringify({
           planId,
           email,
+          userId,
           billingPeriod,
-          couponCode: appliedCoupon ? couponCode.trim().toUpperCase() : undefined,
           successUrl: window.location.origin + '?payment=success',
           cancelUrl: window.location.origin + '?payment=cancelled',
         }),
@@ -174,11 +134,6 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
       onClose();
     }, 1500);
   };
-
-  // Calculate discount display
-  const discountPercentage = appliedCoupon?.percent_off || 0;
-  const discountedPrice = appliedCoupon ? Math.round(price * (1 - discountPercentage / 100)) : price;
-  const savingsAmount = price - discountedPrice;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
@@ -238,87 +193,13 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
             <span>Zahlungsmethoden:</span>
             <span className="text-white">Kreditkarte, SEPA, Sofort</span>
           </div>
-          
-          {/* Pricing with optional discount */}
-          <div className="pt-2 space-y-2">
-            {appliedCoupon && (
-              <>
-                <div className="flex justify-between text-xs text-white">
-                  <span>Originalpreis:</span>
-                  <span className="line-through text-white/40">{price} €</span>
-                </div>
-                <div className="flex justify-between text-xs text-emerald-400 font-bold">
-                  <span>Rabatt ({discountPercentage}%):</span>
-                  <span>-{savingsAmount} €</span>
-                </div>
-              </>
-            )}
-            <div className="flex justify-between text-sm text-white pt-1">
-              <span className="font-sans font-bold">Gesamtbetrag:</span>
-              <span className={`font-black text-base ${appliedCoupon ? 'text-emerald-400' : 'text-aif-gold-DEFAULT'}`}>
-                {discountedPrice} €
-                <span className="text-[10px] text-white/40 font-mono ml-0.5">/ Monat</span>
-              </span>
-            </div>
+          <div className="flex justify-between text-sm text-white pt-1">
+            <span className="font-sans font-bold">Gesamtbetrag:</span>
+            <span className="text-aif-gold-DEFAULT font-black text-base">
+              {price} €
+              <span className="text-[10px] text-white/40 font-mono ml-0.5">/ Monat</span>
+            </span>
           </div>
-        </div>
-
-        {/* Coupon Input Section */}
-        <div className="mb-5 p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl space-y-3">
-          <div className="flex items-center gap-2">
-            <Ticket size={14} className="text-amber-400" />
-            <span className="text-xs font-bold text-amber-400 uppercase">Coupon-Code</span>
-          </div>
-          
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="z.B. SAVE20"
-              value={couponCode}
-              onChange={(e) => {
-                setCouponCode(e.target.value);
-                setCouponError(null);
-              }}
-              disabled={appliedCoupon !== null || couponValidating}
-              className="flex-1 px-3 py-2 bg-white/10 border border-white/10 rounded-lg text-xs text-white placeholder-white/40 focus:outline-none focus:border-amber-500/50 disabled:opacity-50"
-            />
-            <button
-              onClick={handleValidateCoupon}
-              disabled={appliedCoupon !== null || couponValidating || !couponCode.trim()}
-              className={`px-3 py-2 rounded-lg text-xs font-bold uppercase transition-all ${
-                appliedCoupon
-                  ? 'bg-emerald-500/20 text-emerald-400 cursor-default'
-                  : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 disabled:opacity-50 cursor-pointer'
-              }`}
-            >
-              {couponValidating ? (
-                <Loader2 size={12} className="animate-spin" />
-              ) : appliedCoupon ? (
-                '✓ Angewendet'
-              ) : (
-                'Prüfen'
-              )}
-            </button>
-          </div>
-
-          {couponError && (
-            <p className="text-[10px] text-red-400">{couponError}</p>
-          )}
-
-          {appliedCoupon && (
-            <div className="text-[10px] text-emerald-400">
-              ✅ Coupon angewendet: <span className="font-bold">{appliedCoupon.id}</span> ({discountPercentage}% Rabatt)
-              <button
-                onClick={() => {
-                  setAppliedCoupon(null);
-                  setCouponCode('');
-                }}
-                className="ml-2 text-amber-400 underline cursor-pointer hover:text-amber-300"
-              >
-                Entfernen
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Error State */}
@@ -357,7 +238,7 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
               <button 
                 onClick={handleSimulateSuccess}
                 disabled={loading}
-                className="flex-1 py-3 bg-aif-gold-DEFAULT hover:bg-aif-gold-light disabled:opacity-50 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="flex-1 py-3 bg-aif-gold-DEFAULT hover:bg-aif-gold-light disabled:opacity-50 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(245,196,83,0.3)]"
               >
                 {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                 <span>Demo-Upgrade simulieren</span>
@@ -377,7 +258,7 @@ export function Checkout({ planId, price, billingPeriod, email, onClose, onSucce
             <button 
               onClick={handleCheckout}
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 disabled:opacity-50 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 disabled:opacity-50 text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(245,196,83,0.3)]"
             >
               {loading ? (
                 <>

@@ -1,5 +1,5 @@
 # ⚖️ Gerichtsfestes Datenschutz- & Datenquellenprotokoll (Verzeichnis von Verarbeitungstätigkeiten nach Art. 30 DSGVO)
-**Projekt**: Jenova Nexus (CAPITAL-AI)  
+**Projekt**: CAPITAL-AI  
 **Dokumenttyp**: Konformitäts- & Beweisprotokoll für EU-Aufsichtsbehörden & Gerichte  
 **Klassifizierung**: Öffentlich / Audit-Ready  
 **Version**: 1.0.0 (Gerichtsfeste Fassung)  
@@ -8,7 +8,7 @@
 ---
 
 ## 🏛️ Präambel
-Dieses Protokoll dient der rechtsverbindlichen Dokumentation aller datenverarbeitenden Prozesse, Datenflüsse und externen Schnittstellen der Anwendung **Jenova Nexus (CAPITAL-AI)**. Es wurde nach den strengen Standards der europäischen Datenschutz-Grundverordnung (**EU-DSGVO**), des Bundesdatenschutzgesetzes (**BDSG**) sowie des Telekommunikation-Telemedien-Datenschutz-Gesetzes (**TDDDG**) konzipiert. 
+Dieses Protokoll dient der rechtsverbindlichen Dokumentation aller datenverarbeitenden Prozesse, Datenflüsse und externen Schnittstellen der Anwendung **CAPITAL-AI**. Es wurde nach den strengen Standards der europäischen Datenschutz-Grundverordnung (**EU-DSGVO**), des Bundesdatenschutzgesetzes (**BDSG**) sowie des Telekommunikation-Telemedien-Datenschutz-Gesetzes (**TDDDG**) konzipiert. 
 
 Das System ist nach dem Grundsatz **„Privacy-by-Design“ (Art. 25 Abs. 1 DSGVO)** aufgebaut. Es stellt sicher, dass **keine unautorisierten IP-Adressen-Lecks** an US-amerikanische Drittanbieter stattfinden und sämtliche Berechnungsmodelle der gesetzlichen **No-Demo-Data-Policy** (Verbot von simulierten Täuschungsdaten ohne reale Historie) entsprechen.
 
@@ -76,7 +76,7 @@ Sollte dieses System Gegenstand einer datenschutzrechtlichen oder finanzrechtlic
 ---
 
 ## 📝 Konformitätserklärung
-Hiermit wird bestätigt, dass die Webanwendung **Jenova Nexus (CAPITAL-AI)** zum Zeitpunkt der Veröffentlichung vollständig den Richtlinien der europäischen Datenschutz-Grundverordnung (DSGVO) entspricht.
+Hiermit wird bestätigt, dass die Webanwendung **CAPITAL-AI** zum Zeitpunkt der Veröffentlichung vollständig den Richtlinien der europäischen Datenschutz-Grundverordnung (DSGVO) entspricht.
 
 *AIF-Capital-Core Compliance-Ausschuss*  
 *Gez. Der Datenschutz- & Compliance-Architekt*

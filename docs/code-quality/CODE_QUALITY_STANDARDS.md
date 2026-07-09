@@ -1,5 +1,5 @@
 # 💻 Code Quality Standards & Architecture Directives
-**Project: CAPITAL-AI (Jenova Nexus)**  
+**Project: CAPITAL-AI**  
 **Version:** 0.5.0 (Beta-Phase)  
 **Standard:** TypeScript Strict Mode (`strict: true`)  
 

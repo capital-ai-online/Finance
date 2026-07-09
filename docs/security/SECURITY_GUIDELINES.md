@@ -1,5 +1,5 @@
 # 🔒 Developer Security Guidelines & Compliance Standards
-**Project: CAPITAL-AI (Jenova Nexus)**  
+**Project: CAPITAL-AI**  
 **Classification:** Confidential / Internal Developer Scope  
 
 ---

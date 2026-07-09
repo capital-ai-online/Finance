@@ -24,9 +24,10 @@ interface AbonnementsProps {
   currentTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
   onUpdateTier: (tier: 'Free' | 'Starter' | 'Pro' | 'Enterprise') => void;
   email?: string;
+  userId?: string;
 }
 
-export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@gmail.com' }: AbonnementsProps) {
+export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@gmail.com', userId }: AbonnementsProps) {
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
@@ -518,6 +519,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
             price={showCheckoutModal === 'Free' ? 0 : Math.round(PLANS.find(p => p.id === showCheckoutModal)!.price * discountMultiplier)}
             billingPeriod={billingPeriod}
             email={email}
+            userId={userId}
             onClose={() => setShowCheckoutModal(null)}
             onSuccess={(tier) => {
               onUpdateTier(tier);

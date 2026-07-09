@@ -1,5 +1,5 @@
 # 🎨 Frontend Architecture & Interface Guidelines
-**Project: CAPITAL-AI (Jenova Nexus)**  
+**Project: CAPITAL-AI**  
 **Framework:** React 19 / Vite 6 / Tailwind CSS 4 / Motion  
 
 ---

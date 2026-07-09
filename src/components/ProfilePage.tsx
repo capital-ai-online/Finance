@@ -29,6 +29,7 @@ export interface UserProfile {
   capital: number;
   subscriptionTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
   customAvatarUrl?: string;
+  id?: string;
 }
 
 interface ProfilePageProps {

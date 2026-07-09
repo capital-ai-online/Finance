@@ -1,5 +1,5 @@
 # 🇪🇺 EU-Compliance & Regulatory Audit Report (CAPITAL-AI)
-**Project: CAPITAL-AI (Jenova Nexus)**  
+**Project: CAPITAL-AI**  
 **Auditor:** Compliance & Regulatory Lead  
 **Classification:** Public / Audit-Ready  
 **Stand:** 2026-06-30 (Gerichtsfeste Fassung inkl. EinwVO & BFSG)  

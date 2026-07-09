@@ -23,17 +23,12 @@ import { MarketScreener } from './MarketScreener';
 import { CryptoScoringEnterprise } from './CryptoScoringEnterprise';
 import { UserSession } from '../App';
 import { GuestCliffhangerModal } from './GuestCliffhangerModal';
-import { MarkdownOrchestrator } from './MarkdownOrchestrator';
+import { AdminPortal } from './AdminPortal';
 import { InteractModule } from './InteractModule';
 import { Charts } from './Charts';
-import { OrchestratorPanel } from './OrchestratorPanel';
-import PerformanceDashboard from './PerformanceDashboard';
 import { RealTimeRiskAssessment } from './RealTimeRiskAssessment';
-import { AdminPanel } from './AdminPanel';
 import { PriceAlert } from './PriceAlert';
 import { MarketSentiment } from './MarketSentiment';
-import { AuthStateDebugger } from './AuthStateDebugger';
-import { AuditLogs } from './AuditLogs';
 import { SentimentDashboard } from './SentimentDashboard';
 import { DashboardSearchFilter } from './DashboardSearchFilter';
 import { RawMaterialsDashboard } from './RawMaterialsDashboard';
@@ -109,7 +104,8 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<string>('1std');
-  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'promo-video' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'login'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'promo-video' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
+  const [adminTab, setAdminTab] = useState<'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene'>('users');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>('hub');
   const [expandedUniverse, setExpandedUniverse] = useState<string | null>(null);
@@ -119,9 +115,8 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
     const getViewCategory = (view: string) => {
       if (['dashboard', 'promo-video', 'abonnements', 'profil'].includes(view)) return 'hub';
       if (['market-screener', 'charts', 'preis-alarme', 'monte-carlo', 'buffet-value', 'backtest', 'heatmap', 'risiko-assessment', 'sentiment-dashboard', 'raw-materials', 'asset-universe'].includes(view)) return 'analysis';
-      if (['markdown-orchestrator', 'request-orchestrator', 'performance', 'interact', 'audit-logs'].includes(view)) return 'orchestration';
       if (['datenschutz', 'impressum-agb'].includes(view)) return 'compliance';
-      if (['admin-panel'].includes(view)) return 'system_admin';
+      if (['admin-panel', 'auth-debugger', 'markdown-orchestrator', 'request-orchestrator', 'performance', 'audit-logs', 'admin-portal'].includes(view)) return 'system_admin';
       return 'hub';
     };
     setExpandedSection(getViewCategory(activeView));
@@ -261,7 +256,8 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
     preferredAssetClass: 'Crypto',
     riskProfile: 'Ausgewogen',
     capital: 150000,
-    subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier
+    subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier,
+    id: userSession.id
   });
 
   // Synchronize profile state with userSession prop and load encrypted cached profile if database is offline
@@ -273,7 +269,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
           const savedStr = await secureStorage.getItem('aif_encrypted_user_profile', pass);
           if (savedStr) {
             const parsed = JSON.parse(savedStr);
-            setProfile(parsed);
+            setProfile({ ...parsed, id: userSession.id });
             return;
           }
         } catch (e) {
@@ -285,7 +281,8 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
           ...prev,
           name: userSession.name,
           email: userSession.email,
-          subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier
+          subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier,
+          id: userSession.id
         }));
       }
     };
@@ -356,6 +353,28 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   };
 
   const ActiveAvatarIcon = getAvatarIcon(profile.avatarId);
+
+  const renderTierBadge = (tier: string) => {
+    let classes = "";
+    switch (tier) {
+      case "Enterprise":
+        classes = "bg-[#F0D597]/15 text-[#F0D597] border-[#F0D597]/30 shadow-[0_0_8px_rgba(240,213,151,0.25)]";
+        break;
+      case "Pro":
+        classes = "bg-cyan-500/15 text-cyan-400 border-cyan-500/30 shadow-[0_0_8px_rgba(6,182,212,0.25)]";
+        break;
+      case "Starter":
+        classes = "bg-violet-500/15 text-violet-400 border-violet-500/30 shadow-[0_0_8px_rgba(139,92,246,0.25)]";
+        break;
+      default:
+        classes = "bg-white/5 text-white/50 border-white/10";
+    }
+    return (
+      <span className={`px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-widest rounded border ${classes} inline-flex items-center justify-center shrink-0`}>
+        {tier}
+      </span>
+    );
+  };
 
   // Quick navigation handler that closes the drawer automatically
   const navigateTo = (view: typeof activeView) => {
@@ -471,8 +490,9 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                     <div className="text-xs text-aif-gold-DEFAULT font-mono uppercase tracking-widest font-black flex items-center gap-1">
                       {profile.subscriptionTier}
                     </div>
-                    <h4 className="text-sm font-bold text-white truncate font-display group-hover:text-aif-gold-light transition-colors">
-                      {profile.name}
+                    <h4 className="text-sm font-bold text-white truncate font-display group-hover:text-aif-gold-light transition-colors flex items-center gap-2">
+                      <span className="truncate">{profile.name}</span>
+                      {renderTierBadge(profile.subscriptionTier)}
                     </h4>
                     <p className="text-[11px] text-white/70 truncate font-mono">
                       {profile.email}
@@ -947,96 +967,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                     </AnimatePresence>
                   </div>
 
-                  {/* Category 3: System & Orchestrierung */}
-                  <div className="border-b border-white/5 pb-2">
-                    <button
-                      onClick={() => setExpandedSection(expandedSection === 'orchestration' ? null : 'orchestration')}
-                      className="w-full px-3 py-2.5 flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-white/80 hover:text-white transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
-                      aria-expanded={expandedSection === 'orchestration'}
-                      aria-controls="nav-sec-orchestration"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Cpu size={14} className="text-aif-gold-DEFAULT group-hover:rotate-12 transition-transform" />
-                        <span>System & DevOps</span>
-                      </div>
-                      <motion.div
-                        animate={{ rotate: expandedSection === 'orchestration' ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <ChevronDown size={14} className="text-white/40 group-hover:text-white/80" />
-                      </motion.div>
-                    </button>
 
-                    <AnimatePresence initial={false}>
-                      {expandedSection === 'orchestration' && (
-                        <motion.div
-                          id="nav-sec-orchestration"
-                          role="region"
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.25, ease: 'easeInOut' }}
-                          className="overflow-hidden mt-1 px-1 space-y-1"
-                        >
-                          <SidebarTooltip title="Markdown Orchestrator" text="Ein intelligenter Multi-Perspektiven Dokumenten-Generator, der professionelle Berichte (CEO, Security, QA, Frontend, Backend) direkt auf Codebasis erstellt.">
-                            <button 
-                              onClick={() => navigateTo('markdown-orchestrator')}
-                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
-                                activeView === 'markdown-orchestrator' 
-                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
-                              }`}
-                            >
-                              <FileText size={14} className={activeView === 'markdown-orchestrator' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
-                              <span>Markdown Orchestrator</span>
-                            </button>
-                          </SidebarTooltip>
-
-                          <SidebarTooltip title="Request Orchestrator" text="Live Telemetrie-Überwachung des Server-Datenstroms, asynchrones Thread-Queueing und proaktive Absicherung gegen API-Abstürze.">
-                            <button 
-                              onClick={() => navigateTo('request-orchestrator')}
-                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
-                                activeView === 'request-orchestrator' 
-                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
-                              }`}
-                            >
-                              <Cpu size={14} className={activeView === 'request-orchestrator' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
-                              <span>Request Orchestrator</span>
-                            </button>
-                          </SidebarTooltip>
-
-                          <SidebarTooltip title="Performance-Zentrale" text="D3.js-basierte Überwachung von Latenzzeiten, API-Effizienz des Asset Registries und Speicherauslastung.">
-                            <button 
-                              onClick={() => navigateTo('performance')}
-                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
-                                activeView === 'performance' 
-                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
-                              }`}
-                            >
-                              <Gauge size={14} className={activeView === 'performance' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
-                              <span>Performance-Zentrale</span>
-                            </button>
-                          </SidebarTooltip>
-
-                          <SidebarTooltip title="Audit-Trail & Logs" text="Lückenlose Rückverfolgbarkeit aller automatisierten Hintergrundprozesse, quantitative Konformitätsberichte und kryptografische Integritätsprüfungen.">
-                            <button 
-                              onClick={() => navigateTo('audit-logs')}
-                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
-                                activeView === 'audit-logs' 
-                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
-                              }`}
-                            >
-                              <ShieldCheck size={14} className={activeView === 'audit-logs' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
-                              <span>Audit-Trail & Logs</span>
-                            </button>
-                          </SidebarTooltip>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
 
                   {/* Category 4: Rechtliches & Compliance */}
                   <div className="border-b border-white/5 pb-2">
@@ -1110,7 +1041,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                     </AnimatePresence>
                   </div>
 
-                  {/* Category 5: Administration (if user is Sven Kulessa) */}
+                  {/* Category 5: Admin-Portal (if user is Sven Kulessa) */}
                   {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'sven.kulessa@gmx.net') && (
                     <div className="border-b border-white/5 pb-2">
                       <button
@@ -1121,7 +1052,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                       >
                         <div className="flex items-center gap-2.5">
                           <ShieldAlert size={14} className="text-aif-gold-DEFAULT group-hover:animate-bounce" />
-                          <span>Administration</span>
+                          <span>Admin-Portal</span>
                         </div>
                         <motion.div
                           animate={{ rotate: expandedSection === 'system_admin' ? 180 : 0 }}
@@ -1144,15 +1075,99 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                           >
                             <SidebarTooltip title="Admin-Zentrale" text="Exklusive Steuerzentrale für Sven Kulessa: Überwache Latenzstatistiken, plane das Investoren-Abo und verwalte Benutzer.">
                               <button 
-                                onClick={() => navigateTo('admin-panel')}
+                                onClick={() => { setActiveView('admin-portal'); setAdminTab('users'); setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                                 className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
-                                  activeView === 'admin-panel' 
+                                  activeView === 'admin-portal' && adminTab === 'users'
                                     ? 'bg-aif-gold-DEFAULT text-black font-black border-aif-gold-DEFAULT shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
                                     : 'text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/15 border-aif-gold-DEFAULT/20'
                                 }`}
                               >
-                                <ShieldAlert size={14} className={activeView === 'admin-panel' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                                <ShieldAlert size={14} className={activeView === 'admin-portal' && adminTab === 'users' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
                                 <span>Admin-Zentrale</span>
+                              </button>
+                            </SidebarTooltip>
+
+                            <SidebarTooltip title="Auth State Debugger" text="Überwache Live-Authentifizierungstokens, Benutzer-Sitzungen und verschlüsselte lokale Speicher-Pipelines.">
+                              <button 
+                                onClick={() => { setActiveView('admin-portal'); setAdminTab('auth'); setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                  activeView === 'admin-portal' && adminTab === 'auth'
+                                    ? 'bg-aif-gold-DEFAULT text-black font-black border-aif-gold-DEFAULT shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                    : 'text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/15 border-aif-gold-DEFAULT/20'
+                                }`}
+                              >
+                                <Activity size={14} className={activeView === 'admin-portal' && adminTab === 'auth' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                                <span>Auth State Debugger</span>
+                              </button>
+                            </SidebarTooltip>
+
+                            <SidebarTooltip title="Markdown Orchestrator" text="Ein intelligenter Multi-Perspektiven Dokumenten-Generator, der professionelle Berichte (CEO, Security, QA, Frontend, Backend) direkt auf Codebasis erstellt.">
+                              <button 
+                                onClick={() => { setActiveView('admin-portal'); setAdminTab('markdown'); setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                  activeView === 'admin-portal' && adminTab === 'markdown'
+                                    ? 'bg-aif-gold-DEFAULT text-black font-black border-aif-gold-DEFAULT shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                    : 'text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/15 border-aif-gold-DEFAULT/20'
+                                }`}
+                              >
+                                <FileText size={14} className={activeView === 'admin-portal' && adminTab === 'markdown' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                                <span>Markdown Orchestrator</span>
+                              </button>
+                            </SidebarTooltip>
+
+                            <SidebarTooltip title="Request Orchestrator" text="Live Telemetrie-Überwachung des Server-Datenstroms, asynchrones Thread-Queueing und proaktive Absicherung gegen API-Abstürze.">
+                              <button 
+                                onClick={() => { setActiveView('admin-portal'); setAdminTab('requests'); setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                  activeView === 'admin-portal' && adminTab === 'requests'
+                                    ? 'bg-aif-gold-DEFAULT text-black font-black border-aif-gold-DEFAULT shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                    : 'text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/15 border-aif-gold-DEFAULT/20'
+                                }`}
+                              >
+                                <Cpu size={14} className={activeView === 'admin-portal' && adminTab === 'requests' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                                <span>Request Orchestrator</span>
+                              </button>
+                            </SidebarTooltip>
+
+                            <SidebarTooltip title="Performance-Zentrale" text="D3.js-basierte Überwachung von Latenzzeiten, API-Effizienz des Asset Registries und Speicherauslastung.">
+                              <button 
+                                onClick={() => { setActiveView('admin-portal'); setAdminTab('performance'); setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                  activeView === 'admin-portal' && adminTab === 'performance'
+                                    ? 'bg-aif-gold-DEFAULT text-black font-black border-aif-gold-DEFAULT shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                    : 'text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/15 border-aif-gold-DEFAULT/20'
+                                }`}
+                              >
+                                <Gauge size={14} className={activeView === 'admin-portal' && adminTab === 'performance' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                                <span>Performance-Zentrale</span>
+                              </button>
+                            </SidebarTooltip>
+
+                            <SidebarTooltip title="Audit-Trail & Logs" text="Lückenlose Rückverfolgbarkeit aller automatisierten Hintergrundprozesse, quantitative Konformitätsberichte und kryptografische Integritätsprüfungen.">
+                              <button 
+                                onClick={() => { setActiveView('admin-portal'); setAdminTab('logs'); setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                  activeView === 'admin-portal' && adminTab === 'logs'
+                                    ? 'bg-aif-gold-DEFAULT text-black font-black border-aif-gold-DEFAULT shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                    : 'text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/15 border-aif-gold-DEFAULT/20'
+                                }`}
+                              >
+                                <ShieldCheck size={14} className={activeView === 'admin-portal' && adminTab === 'logs' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                                <span>Audit-Trail & Logs</span>
+                              </button>
+                            </SidebarTooltip>
+
+                            <SidebarTooltip title="Capital-AI Documentary" text="Autonome KI-gestützte Dokumentenpflege, Änderungs-Klassifizierung, semantische Synchronisation und revisionssicherer Rollback-Manager. Verwaltet durch Gründer Sven Kulessa (sven.kulessa@capital-ai.online).">
+                              <button 
+                                onClick={() => { setActiveView('admin-portal'); setAdminTab('hygiene'); setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                  activeView === 'admin-portal' && adminTab === 'hygiene'
+                                    ? 'bg-aif-gold-DEFAULT text-black font-black border-aif-gold-DEFAULT shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                    : 'text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/15 border-aif-gold-DEFAULT/20'
+                                }`}
+                              >
+                                <Sparkles size={14} className={activeView === 'admin-portal' && adminTab === 'hygiene' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                                <span>Capital-AI Documentary</span>
                               </button>
                             </SidebarTooltip>
                           </motion.div>
@@ -1247,7 +1262,10 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                         )}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-white font-display">{profile.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-white font-display truncate max-w-[120px]">{profile.name}</p>
+                          {renderTierBadge(profile.subscriptionTier)}
+                        </div>
                         <p className="text-xs text-white/50 truncate max-w-[180px]">{profile.email}</p>
                       </div>
                     </div>
@@ -1357,12 +1375,10 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                 {activeView === 'datenschutz' && 'Datenschutzbestimmungen'}
                 {activeView === 'impressum-agb' && 'Impressum & AGB'}
                 {activeView === 'profil' && 'Profilseite'}
-                {activeView === 'markdown-orchestrator' && 'Markdown Orchestrator'}
+                {activeView === 'admin-portal' && 'Admin-Portal & DevOps-Zentrale'}
                 {activeView === 'interact' && 'Interact Workspace (Modul 2)'}
                 {activeView === 'risiko-assessment' && 'Value-at-Risk Risiko-Zentrale'}
-                {activeView === 'admin-panel' && 'System-Administration (Sven Kulessa)'}
                 {activeView === 'preis-alarme' && 'Echtzeit Preis-Alarme & Push-Simulation'}
-                {activeView === 'audit-logs' && 'Audit Trail & Compliance-Protokoll'}
                 {activeView === 'sentiment-dashboard' && 'AI Markt-Sentiment Cockpit & Sandbox'}
                 {activeView === 'login' && 'System-Anmeldung (Capital-AI Login)'}
               </span>
@@ -1512,9 +1528,6 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                  <div className="grid grid-cols-1 gap-6">
                    <ImageAnalyzer triggerAttempt={triggerAttempt} />
                  </div>
-
-                 {/* Auth State Debugger Panel */}
-                 <AuthStateDebugger />
                </>
              )}
 
@@ -1560,6 +1573,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                 currentTier={profile.subscriptionTier} 
                 onUpdateTier={(tier) => setProfile(prev => ({ ...prev, subscriptionTier: tier }))} 
                 email={profile.email}
+                userId={profile.id}
               />
             )}
 
@@ -1582,20 +1596,12 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
               />
             )}
 
-            {activeView === 'markdown-orchestrator' && (
-              <MarkdownOrchestrator />
-            )}
-
-            {activeView === 'request-orchestrator' && (
-              <OrchestratorPanel />
-            )}
-
-            {activeView === 'performance' && (
-              <PerformanceDashboard />
-            )}
-
-            {activeView === 'audit-logs' && (
-              <AuditLogs />
+            {activeView === 'admin-portal' && (
+              <AdminPortal 
+                currentUserEmail={profile.email} 
+                activeTab={adminTab} 
+                onChangeTab={setAdminTab} 
+              />
             )}
 
             {/* Risikoassessment (Value-at-Risk Risiko-Zentrale): DEAKTIVIERT / DEACTIVATED */}
@@ -1655,9 +1661,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
               <AssetUniverseDashboard />
             )}
 
-            {activeView === 'admin-panel' && (
-              <AdminPanel currentUserEmail={profile.email} />
-            )}
+
 
             {activeView === 'login' && (
               <LandingPage 
@@ -1701,17 +1705,6 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                 </span>
               </div>
             </div>
-            
-            {/* Legal quick navigation shortcuts inside footer */}
-            <div className="flex gap-4 text-[11px] font-mono text-white/40 mb-2">
-              <button onClick={() => navigateTo('datenschutz')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors">Datenschutz</button>
-              <span>•</span>
-              <button onClick={() => navigateTo('impressum-agb')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors">Impressum</button>
-              <span>•</span>
-              <button onClick={() => navigateTo('impressum-agb')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors">AGB</button>
-              <span>•</span>
-              <button onClick={() => navigateTo('abonnements')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors">Abonnements</button>
-            </div>
 
             {/* Contact Email in Footer */}
             <div className="text-xs text-white/60 flex items-center justify-center gap-2 mb-2 bg-white/5 border border-white/10 px-4 py-1.5 rounded-full font-mono">
@@ -1751,6 +1744,28 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
             <p className="text-[11px] font-mono text-white/60 uppercase tracking-widest mt-3">
               Strikte No-Demo-Data-Policy: Keine Interpolation unvollständiger Datenreihen.
             </p>
+
+            {/* Legal quick navigation shortcuts inside footer - Moved to the absolute bottom */}
+            <div className="w-full max-w-4xl border-t border-white/5 mt-6 pt-4 flex flex-col items-center gap-4">
+              <div className="flex justify-center gap-4 text-[11px] font-mono text-white/40">
+                <button onClick={() => navigateTo('datenschutz')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Datenschutz</button>
+                <span>•</span>
+                <button onClick={() => navigateTo('impressum-agb')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Impressum</button>
+                <span>•</span>
+                <button onClick={() => navigateTo('impressum-agb')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">AGB</button>
+                <span>•</span>
+                <button onClick={() => navigateTo('abonnements')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Abonnements</button>
+              </div>
+
+              {/* Website Under Construction Notice */}
+              <div className="w-full max-w-md bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-2.5 flex items-center justify-center gap-2.5 text-xs text-amber-200/80 font-mono tracking-wide shadow-[0_0_15px_rgba(245,158,11,0.03)]">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+                <span>Diese Webseite befindet sich aktuell im Aufbau.</span>
+              </div>
+            </div>
           </div>
         </footer>
       </main>
@@ -1763,6 +1778,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
             currentTier={profile.subscriptionTier}
             onUpdateTier={(tier) => setProfile(prev => ({ ...prev, subscriptionTier: tier }))}
             email={profile.email}
+            userId={profile.id}
           />
         )}
         {cliffhangerModalOpen && (

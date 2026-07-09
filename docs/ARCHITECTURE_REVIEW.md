@@ -1,6 +1,6 @@
-# 🌐 System Architecture & Agent Orchestration (CAPITAL-AI / Jenova Nexus)
+# 🌐 System Architecture & Agent Orchestration (CAPITAL-AI / CAPITAL-AI)
 
-This document provides an in-depth architectural analysis of **CAPITAL-AI (Jenova Nexus)**, detailing its model-independent orchestration engine, the standard Model Context Protocol (MCP) integrations, mobile-first zero-code configurations, and secure global memory persistence.
+This document provides an in-depth architectural analysis of **CAPITAL-AI**, detailing its model-independent orchestration engine, the standard Model Context Protocol (MCP) integrations, mobile-first zero-code configurations, and secure global memory persistence.
 
 ---
 

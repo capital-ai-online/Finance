@@ -1,5 +1,5 @@
 # 🔍 SEO Checklist & Technical Discovery Guide
-**Project: CAPITAL-AI (Jenova Nexus)**  
+**Project: CAPITAL-AI**  
 **Target Focus:** Quantitative Financial Calculators & Stock Screener Platform  
 
 ---

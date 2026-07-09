@@ -143,27 +143,7 @@ export function PdfExportModal({ isOpen, onClose, email, onSuccess }: PdfExportM
     }
   };
 
-  const handleSimulatePurchase = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch('/api/stripe/add-pdf-credits-simulated', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, amount: 3 })
-      });
 
-      if (!res.ok) throw new Error('Fehler bei der Kaufsimulation');
-      const data = await res.json();
-      setCredits(data.credits);
-      setSuccessMsg('Demo-Modus: 3 PDF Export-Credits erfolgreich hinzugefügt!');
-      setTimeout(() => setSuccessMsg(null), 3000);
-    } catch (err: any) {
-      setError('Konnte Demo-Kauf nicht simulieren.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (!isOpen) return null;
 
@@ -275,20 +255,7 @@ export function PdfExportModal({ isOpen, onClose, email, onSuccess }: PdfExportM
               </button>
             )}
 
-            {/* Simulation Purchase Button for Sandbox Testing */}
-            {demoMode && !isUnlimited && (
-              <div className="border-t border-white/5 pt-3 mt-1.5 text-center">
-                <span className="text-[10px] text-white/30 block mb-1.5">AISTUDIO PREVIEW / DEMO STAGE</span>
-                <button
-                  type="button"
-                  onClick={handleSimulatePurchase}
-                  className="w-full py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-aif-gold-DEFAULT/30 hover:border-aif-gold-DEFAULT/60 bg-aif-gold-DEFAULT/5 text-aif-gold-DEFAULT flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <Zap size={10} />
-                  <span>Kauf simulieren (+3 Credits gratis)</span>
-                </button>
-              </div>
-            )}
+
 
             <button
               onClick={onClose}

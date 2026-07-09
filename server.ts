@@ -7,7 +7,6 @@ import fs from 'fs';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
-import WebSocket from 'ws';
 import { orchestrator } from './src/lib/requestOrchestrator';
 import { assetRegistry } from './src/lib/assetRegistry';
 import { CryptoScoringService } from './src/services/cryptoScoringService';
@@ -15,26 +14,25 @@ import { MemeCoinScoringService } from './src/services/memeCoinScoringService';
 import { createRawMaterialsRouter } from './src/routes/rawMaterialsRoutes';
 import { RawMaterialsScoringService } from './src/services/rawMaterialsScoring';
 
-dotenv.config();
+// Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
+import { getCleanEnv } from './server/env';
+import {
+  isSupabaseConfigured,
+  getServerSupabase,
+  saveLocalSubscription,
+  getLocalSubscriptions,
+  saveSubscription,
+  getSubscription,
+  getLocalPdfCredits,
+  saveLocalPdfCredits
+} from './server/db';
+import { stripeRouter, handleWebhookEvent, getStripeInstance } from './server/stripe';
+import { orchestratorRouter } from './server/orchestrator';
+import { aiRouter, getGeminiInstance, isGeminiConfigured } from './server/ai';
+import { systemEventsRouter } from './server/systemEvents';
+import { hygieneRouter, startRecursiveFileWatcher } from './server/documentHygiene';
 
-// Helper to normalize, clean and safely resolve environment variables (stripping quotes, whitespaces, and resolving VITE_ prefix mismatch)
-function getCleanEnv(key: string): string {
-  let val = process.env[key];
-  if (!val && key.startsWith('VITE_')) {
-    val = process.env[key.substring(5)];
-  } else if (!val && !key.startsWith('VITE_')) {
-    val = process.env[`VITE_${key}`];
-  }
-  if (!val) return '';
-  let cleaned = val.trim();
-  if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
-    cleaned = cleaned.slice(1, -1);
-  }
-  if (cleaned.startsWith("'") && cleaned.endsWith("'")) {
-    cleaned = cleaned.slice(1, -1);
-  }
-  return cleaned.trim();
-}
+dotenv.config();
 
 const app = express();
 const PORT = 3000;
@@ -96,202 +94,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Lazy-loaded Stripe Client instance
-let stripeClient: Stripe | null = null;
-function getStripeInstance() {
-  if (!stripeClient) {
-    const key = getCleanEnv('STRIPE_SECRET_KEY');
-    if (!key) {
-      throw new Error('STRIPE_SECRET_KEY environment variable is missing.');
-    }
-    stripeClient = new Stripe(key);
-  }
-  return stripeClient;
-}
-
-// Lazy-loaded Server-side Supabase Client instance
-let serverSupabaseClient: any = null;
-
-function isSupabaseConfigured(): boolean {
-  const url = getCleanEnv('SUPABASE_URL') || getCleanEnv('VITE_SUPABASE_URL');
-  const key = getCleanEnv('SUPABASE_SECRET_KEY') || getCleanEnv('SUPABASE_SERVICE_ROLE_KEY') || getCleanEnv('VITE_SUPABASE_PUBLISHABLE_KEY') || getCleanEnv('SUPABASE_PUBLISHABLE_KEY') || getCleanEnv('VITE_SUPABASE_ANON_KEY') || getCleanEnv('SUPABASE_ANON_KEY');
-  return !!(url && key);
-}
-
-function getServerSupabase() {
-  if (!serverSupabaseClient) {
-    const url = getCleanEnv('SUPABASE_URL') || getCleanEnv('VITE_SUPABASE_URL');
-    const key = getCleanEnv('SUPABASE_SECRET_KEY') || getCleanEnv('SUPABASE_SERVICE_ROLE_KEY') || getCleanEnv('VITE_SUPABASE_PUBLISHABLE_KEY') || getCleanEnv('SUPABASE_PUBLISHABLE_KEY') || getCleanEnv('VITE_SUPABASE_ANON_KEY') || getCleanEnv('SUPABASE_ANON_KEY');
-    if (!url || !key) {
-      throw new Error('Supabase integration variables are missing.');
-    }
-    // Node 20 has no native global WebSocket (that only landed unflagged in
-    // Node 22), and @supabase/realtime-js throws during construction if it
-    // can't find one and no transport was supplied — even though this app
-    // never uses realtime channels. `realtime: { enabled: false }` is not a
-    // real supabase-js option and does not prevent this. Explicitly passing
-    // the `ws` package as the transport satisfies the check so createClient()
-    // actually succeeds (Fix 09.07.2026 — this was the reason EVERY
-    // getSubscription/saveSubscription call was silently falling back to the
-    // local file, never once reaching Supabase).
-    serverSupabaseClient = createClient(url, key, {
-      realtime: {
-        transport: WebSocket as any,
-      },
-    });
-  }
-  return serverSupabaseClient;
-}
-
-const LOCAL_SUBS_FILE = path.join(process.cwd(), 'uploads', 'subscriptions.json');
-
-function getLocalSubscriptions(): Record<string, string> {
-  try {
-    if (fs.existsSync(LOCAL_SUBS_FILE)) {
-      const data = fs.readFileSync(LOCAL_SUBS_FILE, 'utf8');
-      return JSON.parse(data) || {};
-    }
-  } catch (e) {
-    console.warn("[Local Database Fallback] Error reading local subscriptions file:", e);
-  }
-  return {};
-}
-
-function saveLocalSubscription(email: string, tier: string) {
-  try {
-    const subs = getLocalSubscriptions();
-    subs[email.toLowerCase().trim()] = tier;
-    fs.writeFileSync(LOCAL_SUBS_FILE, JSON.stringify(subs, null, 2), 'utf8');
-    console.log(`[Local Database Fallback] Persisted ${email} -> ${tier} locally.`);
-  } catch (e) {
-    console.error("[Local Database Fallback] Error writing local subscriptions file:", e);
-  }
-}
-
-// public.subscriptions is keyed by user_id (auth.users.id), not email — the
-// table has no email column. This resolves the Supabase Auth UUID for a
-// given email via the Admin API so we can read/write the right row.
-// Requires SUPABASE_SECRET_KEY / SUPABASE_SERVICE_ROLE_KEY (the anon/publishable
-// key has no access to auth.admin.*).
-async function getUserIdByEmail(supabaseClientInstance: any, email: string): Promise<string | null> {
-  try {
-    const { data, error } = await supabaseClientInstance.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    if (error || !data?.users) {
-      console.warn('[Supabase] getUserIdByEmail: listUsers failed:', error?.message || error);
-      return null;
-    }
-    const match = data.users.find((u: any) => u.email?.toLowerCase().trim() === email);
-    return match?.id || null;
-  } catch (e: any) {
-    console.warn('[Supabase] getUserIdByEmail unexpected error:', e.message || e);
-    return null;
-  }
-}
-
-interface StripeSubscriptionInfo {
-  subscriptionId?: string | null;
-  status?: string | null;
-  currentPeriodEnd?: string | null; // ISO timestamp
-}
-
-// Persists the subscription against the REAL schema of public.subscriptions
-// (id, user_id, stripe_subscription_id, status, current_period_end, created_at,
-// updated_at, expires_at) — there is no email or tier column on that table.
-// Fix applied 09.07.2026: the previous version upserted { email, tier } with
-// onConflict: 'email', which cannot work against this schema and was failing
-// silently on every single call (caught, logged as a warning, swallowed).
-// `tier` therefore needs to be added as a column — see the accompanying SQL
-// migration — everything else below maps onto columns that already exist.
-async function saveSubscription(email: string, tier: string, stripeInfo?: StripeSubscriptionInfo) {
-  const cleanEmail = email.toLowerCase().trim();
-
-  // Save locally first as a secure fallback/cache — this keeps working exactly
-  // as before regardless of the Supabase schema.
-  saveLocalSubscription(cleanEmail, tier);
-
-  if (!isSupabaseConfigured()) {
-    console.log(`[Supabase Backend] Supabase not configured. Saved subscription locally for ${cleanEmail} -> ${tier}`);
-    return;
-  }
-
-  try {
-    const supabaseClientInstance = getServerSupabase();
-    const userId = await getUserIdByEmail(supabaseClientInstance, cleanEmail);
-    if (!userId) {
-      console.warn(`[Supabase Backend] No auth.users entry found for ${cleanEmail} — remote subscription row NOT written, only local fallback is up to date.`);
-      return;
-    }
-
-    const row: Record<string, any> = {
-      user_id: userId,
-      tier,
-      updated_at: new Date().toISOString(),
-    };
-    if (stripeInfo?.subscriptionId) row.stripe_subscription_id = stripeInfo.subscriptionId;
-    if (stripeInfo?.status) row.status = stripeInfo.status;
-    if (stripeInfo?.currentPeriodEnd !== undefined) row.current_period_end = stripeInfo.currentPeriodEnd;
-
-    const { error } = await supabaseClientInstance
-      .from('subscriptions')
-      .upsert(row, { onConflict: 'user_id' });
-
-    if (error) {
-      console.warn(`[Supabase Backend] Note: Remote DB upsert unavailable (${error.message || JSON.stringify(error)}). Using local file storage.`);
-    } else {
-      console.log(`[Supabase Backend] Successfully persisted subscription to remote DB: ${cleanEmail} (user_id ${userId}) -> ${tier}`);
-    }
-  } catch (e: any) {
-    console.warn("[Supabase Backend] Error in saveSubscription remote upsert, using local:", e.message || e);
-  }
-}
-
-async function getSubscription(email: string): Promise<string> {
-  const cleanEmail = email.toLowerCase().trim();
-  
-  // Default tier for owner emails (Global Administrator)
-  if (cleanEmail === 'sven.kulessa@gmail.com' || cleanEmail === 'sven.kulessa@gmx.net') {
-    return 'Enterprise';
-  }
-
-  // Get local fallback value first
-  const localSubs = getLocalSubscriptions();
-  const localTier = localSubs[cleanEmail];
-
-  if (!isSupabaseConfigured()) {
-    return localTier || 'Free';
-  }
-
-  try {
-    const supabaseClientInstance = getServerSupabase();
-    const userId = await getUserIdByEmail(supabaseClientInstance, cleanEmail);
-    if (!userId) {
-      return localTier || 'Free';
-    }
-
-    const { data, error } = await supabaseClientInstance
-      .from('subscriptions')
-      .select('tier')
-      .eq('user_id', userId)
-      .maybeSingle();
-      
-    if (error) {
-      console.log(`[Supabase Backend] Notice: Could not read from remote table 'subscriptions' (${error.message || JSON.stringify(error)}). Using local file fallback.`);
-      return localTier || 'Free';
-    } else if (data && data.tier) {
-      // Sync local cache with remote DB value if they differ
-      if (localTier !== data.tier) {
-        saveLocalSubscription(cleanEmail, data.tier);
-      }
-      return data.tier;
-    }
-  } catch (e: any) {
-    console.log("[Supabase Backend] Connection error in getSubscription, using local file fallback:", e.message || e);
-  }
-  
-  return localTier || 'Free';
-}
-
-
 // 1. STRIPE WEBHOOK ENDPOINT (Must be placed BEFORE express.json() to get raw request body)
 const webhookHandler = async (req: express.Request, res: express.Response) => {
   const sig = req.headers['stripe-signature'];
@@ -311,53 +113,8 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  console.log(`ℹ️ Received Stripe webhook event: ${event.type}`);
-
   try {
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const planId = session.metadata?.planId;
-      const email = session.metadata?.email || session.customer_details?.email;
-      
-      if (planId && email) {
-        const planUpper = String(planId).toUpperCase();
-        if (planUpper === 'PDF' || planUpper === 'PDF_EXPORT' || planUpper === 'EXPORT_PDF') {
-          const currentCredits = getLocalPdfCredits(email);
-          const newCredits = currentCredits + 3;
-          saveLocalPdfCredits(email, newCredits);
-          console.log(`✅ Webhook: PDF Export Purchase complete for ${email}. Added 3 credits (total: ${newCredits}).`);
-        } else {
-          const subscriptionId = typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
-          await saveSubscription(email, planId, {
-            subscriptionId: subscriptionId || null,
-            status: 'active',
-          });
-          console.log(`✅ Webhook: User ${email} successfully upgraded to ${planId}`);
-        }
-      }
-    } else if (event.type === 'customer.subscription.updated') {
-      const subscription = event.data.object as Stripe.Subscription;
-      const email = subscription.metadata?.email;
-      const planId = subscription.metadata?.planId;
-      if (email && planId) {
-        await saveSubscription(email, planId, {
-          subscriptionId: subscription.id,
-          status: subscription.status,
-          currentPeriodEnd: subscription.current_period_end
-            ? new Date(subscription.current_period_end * 1000).toISOString()
-            : null,
-        });
-      }
-    } else if (event.type === 'customer.subscription.deleted') {
-      const subscription = event.data.object as Stripe.Subscription;
-      const email = subscription.metadata?.email;
-      if (email) {
-        await saveSubscription(email, 'Free', {
-          subscriptionId: subscription.id,
-          status: 'canceled',
-        });
-      }
-    }
+    await handleWebhookEvent(event);
     res.json({ received: true });
   } catch (err: any) {
     console.error(`❌ Webhook handling error:`, err);
@@ -365,380 +122,30 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
   }
 };
 
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), webhookHandler);
 app.post('/billing/webhook', express.raw({ type: 'application/json' }), webhookHandler);
 
 app.use(express.json());
 
 const upload = multer({ dest: 'uploads/' });
 
-// Initialize Gemini
-let ai: GoogleGenAI | null = null;
+// Retrieve the modular Gemini client safely for use in downstream routes
+let ai: any = null;
 try {
-  if (process.env.GEMINI_API_KEY) {
-    ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  if (isGeminiConfigured()) {
+    ai = getGeminiInstance();
   }
 } catch (e) {
-  console.warn("Failed to initialize Gemini:", e);
+  console.warn("Failed to retrieve Gemini instance on boot:", e);
 }
 
-// Routes
-app.use('/api/raw-materials', createRawMaterialsRouter(ai));
-
-app.post('/api/chat', orchestrator.handle('Gemini Chat'), async (req, res) => {
-  if (!ai) {
-    return res.status(500).json({ error: 'Gemini API key is missing or invalid' });
-  }
-  try {
-    const { message, history } = req.body;
-    
-    // Convert history to format required by Gemini 
-    // Assuming simple alternating history, or we can just send the chat directly
-    // Let's use simple prompt construction for now or use the chat API if supported.
-    
-    // In @google/genai, ai.chats.create / ai.chats.sendMessage
-    // We'll use models/gemini-3.1-pro-preview
-    
-    const contents = history.map((msg: any) => ({
-      role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.text }]
-    }));
-    
-    contents.push({ role: 'user', parts: [{ text: message }] });
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
-      contents,
-      config: {
-        systemInstruction: "You are the AIFinancial AI Assistant, a highly professional, technically precise expert partner in quantitative finance, Graham value investing, and market analysis. Use a professional, accessible tone. Do not use unnecessary jargon. Prioritize clarity and data-driven insights. Remember the user is using AIFinancial v3 Enterprise Architecture."
-      }
-    });
-
-    res.json({ reply: response.text });
-  } catch (error: any) {
-    const errMsg = error?.message || String(error || '');
-    if (errMsg.includes("429") || errMsg.includes("quota") || errMsg.includes("exhausted") || errMsg.includes("RESOURCE_EXHAUSTED")) {
-      console.log("[System Notice] Chat API: utilizing offline quantitative assistant fallback.");
-      return res.json({
-        reply: "Entschuldigung, der AIFinancial AI-Dienst ist derzeit stark ausgelastet (Rate-Limit überschritten). Bitte versuchen Sie es in wenigen Augenblicken noch einmal. In der Zwischenzeit können Sie alle anderen quantitativen Analyse- und Backtesting-Tools vollumfänglich nutzen!"
-      });
-    }
-    console.log("[System Info] Chat finished with warning");
-    res.status(500).json({ error: "Dienst vorübergehend nicht verfügbar." });
-  }
-});
-
-app.post('/api/analyze-image', upload.single('image'), orchestrator.handle('Gemini Vision'), async (req, res) => {
-  if (!ai) {
-    return res.status(500).json({ error: 'Gemini API key is missing or invalid' });
-  }
-  try {
-    const file = req.file;
-    if (!file) {
-      return res.status(400).json({ error: 'No image provided' });
-    }
-
-    const { prompt } = req.body;
-
-    const base64Data = fs.readFileSync(file.path, { encoding: 'base64' });
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.1-pro-preview',
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            { text: prompt || "Analyze this image from a financial perspective." },
-            {
-              inlineData: {
-                data: base64Data,
-                mimeType: file.mimetype
-              }
-            }
-          ]
-        }
-      ]
-    });
-
-    // Cleanup
-    fs.unlinkSync(file.path);
-
-    res.json({ reply: response.text });
-  } catch (error: any) {
-    // Cleanup if file still exists
-    if (req.file && fs.existsSync(req.file.path)) {
-      try { fs.unlinkSync(req.file.path); } catch (e) {}
-    }
-    const errMsg = error?.message || String(error || '');
-    if (errMsg.includes("429") || errMsg.includes("quota") || errMsg.includes("exhausted") || errMsg.includes("RESOURCE_EXHAUSTED")) {
-      console.log("[System Notice] Image analysis API: utilizing offline visual fallback.");
-      return res.json({
-        reply: "Entschuldigung, das KI-Bildanalyse-System ist derzeit stark ausgelastet (Rate-Limit überschritten). Bitte versuchen Sie es in Kürze erneut, sobald die Auslastung abgenommen hat."
-      });
-    }
-    console.log("[System Info] Image analysis finished with warning");
-    res.status(500).json({ error: "Dienst vorübergehend nicht verfügbar." });
-  }
-});
-
-// Real server-side endpoint for Stripe checkout session creation
-app.post('/api/stripe/create-checkout-session', async (req, res) => {
-  try {
-    const { planId, email, billingPeriod, successUrl, cancelUrl } = req.body;
-    
-    // Select price ID based on selected plan and billing period
-    const planUpper = String(planId).toUpperCase();
-    let priceId = '';
-    let mode: 'subscription' | 'payment' = 'subscription';
-
-    // Helper to resolve variables supporting either underscore or hyphen formatting (e.g. STRIPE_PRICE-ID_...)
-    const getStripeVar = (key: string): string => {
-      const und = getCleanEnv(key);
-      if (und) return und;
-      const hyp = getCleanEnv(key.replace(/_/g, '-'));
-      if (hyp) return hyp;
-      return '';
-    };
-    
-    if (planUpper === 'STARTER') {
-      if (billingPeriod === 'yearly') {
-        priceId = getStripeVar('STRIPE_PRICE_ID_STARTER_YEARLY');
-      } else {
-        priceId = getStripeVar('STRIPE_PRICE_ID_STARTER_MONTHLY') || getStripeVar('STRIPE_PRICE_ID_STARTER');
-      }
-    } else if (planUpper === 'PRO') {
-      if (billingPeriod === 'yearly') {
-        priceId = getStripeVar('STRIPE_PRICE_ID_PRO_YEARLY');
-      } else {
-        priceId = getStripeVar('STRIPE_PRICE_ID_PRO_MONTHLY') || getStripeVar('STRIPE_PRICE_ID_PRO');
-      }
-    } else if (planUpper === 'ENTERPRISE') {
-      priceId = getStripeVar('STRIPE_PRICE_ID_ENTERPRISE');
-    } else if (planUpper === 'FOUNDER') {
-      priceId = getStripeVar('STRIPE_ID_FOUNDER') || getStripeVar('STRIPE_PRICE_ID_FOUNDER');
-      mode = 'payment'; // One-time payment for lifetime!
-    } else if (planUpper === 'PDF' || planUpper === 'PDF_EXPORT' || planUpper === 'EXPORT_PDF') {
-      priceId = getStripeVar('STRIPE_PRICE_ID_EXPORT_PDF');
-      mode = 'payment'; // One-time payment for 3 PDF exports!
-    }
-
-    if (!priceId || priceId.startsWith('price_...') || priceId.startsWith('prod_...')) {
-      const envKeySuggested = planUpper === 'STARTER' 
-        ? (billingPeriod === 'yearly' ? 'STRIPE_PRICE_ID_STARTER_YEARLY' : 'STRIPE_PRICE_ID_STARTER_MONTHLY')
-        : planUpper === 'PRO'
-        ? (billingPeriod === 'yearly' ? 'STRIPE_PRICE_ID_PRO_YEARLY' : 'STRIPE_PRICE_ID_PRO_MONTHLY')
-        : planUpper === 'FOUNDER'
-        ? 'STRIPE_ID_FOUNDER'
-        : planUpper === 'PDF_EXPORT' || planUpper === 'EXPORT_PDF'
-        ? 'STRIPE_PRICE_ID_EXPORT_PDF'
-        : `STRIPE_PRICE_ID_${planUpper}`;
-
-      return res.status(400).json({ 
-        error: `Der Stripe Price ID für '${planId}' (${billingPeriod || 'einmalig'}) ist auf dem Server noch nicht konfiguriert. Bitte setzen Sie '${envKeySuggested}' in Ihrer .env Datei.` 
-      });
-    }
-
-    const stripe = getStripeInstance();
-    
-    // Auto-append plan information to success URL for client fallback tracking
-    const finalSuccessUrl = successUrl.includes('?') 
-      ? `${successUrl}&plan=${planId}` 
-      : `${successUrl}?plan=${planId}`;
-
-    const sessionData: any = {
-      mode: mode,
-      customer_email: email,
-      line_items: [{
-        price: priceId,
-        quantity: 1,
-      }],
-      success_url: finalSuccessUrl,
-      cancel_url: cancelUrl,
-      // Shows Stripe's built-in "Rabattcode hinzufügen" field on the Checkout
-      // page so customers can redeem a real Stripe Coupon/Promotion Code
-      // (created under Product Catalog -> Coupons in the Stripe Dashboard).
-      allow_promotion_codes: true,
-      metadata: {
-        planId,
-        email,
-      }
-    };
-
-    if (mode === 'subscription') {
-      sessionData.subscription_data = {
-        metadata: {
-          planId,
-          email,
-        }
-      };
-    }
-
-    const session = await stripe.checkout.sessions.create(sessionData);
-
-    res.json({ sessionId: session.id, checkoutUrl: session.url });
-  } catch (error: any) {
-    console.error('Error creating Stripe checkout session:', error);
-    res.status(500).json({ error: error.message || 'Serverfehler bei der Erstellung der Stripe Checkout Session.' });
-  }
-});
-
-// Endpoint to securely report if Stripe keys are configured without exposing them
-app.get('/api/stripe/config-status', (req, res) => {
-  const sk = getCleanEnv('STRIPE_SECRET_KEY');
-  const wh = getCleanEnv('STRIPE_WEBHOOK_SECRET');
-  const pk = getCleanEnv('STRIPE_PUBLISHABLE_KEY');
-
-  res.json({
-    secretKeyConfigured: !!sk && !sk.startsWith('sk_test_...'),
-    webhookSecretConfigured: !!wh && !wh.startsWith('whsec_...'),
-    publishableKeyConfigured: !!pk && !pk.startsWith('pk_test_...')
-  });
-});
-
-// Endpoint to dynamically retrieve the Stripe publishable key configured at run-time
-app.get('/api/stripe/config', (req, res) => {
-  res.json({
-    publishableKey: getCleanEnv('STRIPE_PUBLISHABLE_KEY')
-  });
-});
-
-// Endpoint to query server-side persisted subscriptions (synced from Webhooks)
-app.post('/api/stripe/create-portal-session', async (req, res) => {
-  try {
-    const { email, returnUrl } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: 'E-Mail-Adresse ist ein Pflichtfeld.' });
-    }
-
-    const cleanEmail = String(email).toLowerCase().trim();
-    const stripe = getStripeInstance();
-
-    // Look up customer by email in Stripe to retrieve customer ID
-    const customers = await stripe.customers.list({
-      email: cleanEmail,
-      limit: 1,
-    });
-
-    if (customers.data.length === 0) {
-      return res.status(400).json({
-        error: `Für die E-Mail '${cleanEmail}' wurde in Stripe noch kein aktives Kundenkonto gefunden. Bitte schließen Sie zuerst ein Abonnement ab.`,
-      });
-    }
-
-    const customerId = customers.data[0].id;
-
-    // Construct origin dynamically for fallback
-    const host = req.get('host') || 'localhost:3000';
-    const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
-    const origin = `${protocol}://${host}`;
-
-    // Create billing portal session
-    const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: returnUrl || origin,
-    });
-
-    res.json({ url: session.url });
-  } catch (error: any) {
-    console.error('Error creating billing portal session:', error);
-    res.status(500).json({ error: error.message || 'Serverfehler beim Erstellen der Portal-Sitzung.' });
-  }
-});
-
-app.get('/api/stripe/user-subscription', async (req, res) => {
-  const { email } = req.query;
-  if (!email) {
-    return res.status(400).json({ error: 'Email parameter is required.' });
-  }
-  const userEmail = String(email).toLowerCase().trim();
-  const tier = await getSubscription(userEmail);
-  res.json({ email: userEmail, subscriptionTier: tier });
-});
-
-// PDF Export Credits Tracking & Management APIs
-const LOCAL_PDF_CREDITS_FILE = path.join(process.cwd(), 'uploads', 'pdf_credits.json');
-
-function getLocalPdfCredits(email: string): number {
-  try {
-    const cleanEmail = email.toLowerCase().trim();
-    if (fs.existsSync(LOCAL_PDF_CREDITS_FILE)) {
-      const data = fs.readFileSync(LOCAL_PDF_CREDITS_FILE, 'utf8');
-      const creditsObj = JSON.parse(data) || {};
-      if (creditsObj[cleanEmail] !== undefined) {
-        return Number(creditsObj[cleanEmail]);
-      }
-    }
-  } catch (e) {
-    console.warn("[Local PDF Credits] Error reading PDF credits:", e);
-  }
-  return 3; // Default initial credits is 3
-}
-
-function saveLocalPdfCredits(email: string, credits: number) {
-  try {
-    const cleanEmail = email.toLowerCase().trim();
-    const dir = path.dirname(LOCAL_PDF_CREDITS_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    let creditsObj: Record<string, number> = {};
-    if (fs.existsSync(LOCAL_PDF_CREDITS_FILE)) {
-      const data = fs.readFileSync(LOCAL_PDF_CREDITS_FILE, 'utf8');
-      creditsObj = JSON.parse(data) || {};
-    }
-    creditsObj[cleanEmail] = credits;
-    fs.writeFileSync(LOCAL_PDF_CREDITS_FILE, JSON.stringify(creditsObj, null, 2), 'utf8');
-  } catch (e) {
-    console.error("[Local PDF Credits] Error saving PDF credits:", e);
-  }
-}
-
-app.get('/api/stripe/pdf-credits', async (req, res) => {
-  const { email } = req.query;
-  if (!email) {
-    return res.status(400).json({ error: 'Email parameter is required.' });
-  }
-  const userEmail = String(email).toLowerCase().trim();
-  const tier = await getSubscription(userEmail);
-  const isUnlimited = tier === 'Enterprise' || tier === 'Founder';
-  const credits = getLocalPdfCredits(userEmail);
-  res.json({ email: userEmail, credits: isUnlimited ? 9999 : credits, unlimited: isUnlimited });
-});
-
-app.post('/api/stripe/consume-pdf-credit', async (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'Email is required.' });
-  }
-  const userEmail = String(email).toLowerCase().trim();
-  const tier = await getSubscription(userEmail);
-  const isUnlimited = tier === 'Enterprise' || tier === 'Founder';
-  
-  if (isUnlimited) {
-    return res.json({ success: true, credits: 9999, unlimited: true });
-  }
-  
-  const credits = getLocalPdfCredits(userEmail);
-  if (credits <= 0) {
-    return res.status(400).json({ error: 'Sie haben keine PDF-Export-Credits mehr übrig. Bitte erwerben Sie 3 weitere Exports für 3€.', credits: 0 });
-  }
-  
-  const newCredits = credits - 1;
-  saveLocalPdfCredits(userEmail, newCredits);
-  res.json({ success: true, credits: newCredits, unlimited: false });
-});
-
-app.post('/api/stripe/add-pdf-credits-simulated', async (req, res) => {
-  const { email, amount } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'Email is required.' });
-  }
-  const userEmail = String(email).toLowerCase().trim();
-  const current = getLocalPdfCredits(userEmail);
-  const added = amount !== undefined ? Number(amount) : 3;
-  const newCredits = current + added;
-  saveLocalPdfCredits(userEmail, newCredits);
-  res.json({ success: true, credits: newCredits });
-});
+// Mount Modular Router Sub-systems
+app.use('/api/raw-materials', createRawMaterialsRouter(getGeminiInstance()));
+app.use('/api/stripe', stripeRouter);
+app.use('/api/orchestrator', orchestratorRouter);
+app.use('/api/admin/hygiene', hygieneRouter);
+app.use('/api/admin', systemEventsRouter);
+app.use('/api', aiRouter);
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
 function getAssetPatternForSymbol(symbol: string): string {
@@ -1471,6 +878,77 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
 
 const CRYPTO_SYMBOLS = ['BTC', 'ETH', 'SOL', 'ADA', 'XRP', 'DOT', 'DOGE', 'AVAX', 'LINK', 'MATIC'];
 
+// Helper to fetch daily historical data from Alpha Vantage
+async function fetchAlphaVantageDailyHistory(symbol: string, isCrypto: boolean, key: string): Promise<{ date: string, close: number }[] | null> {
+  try {
+    const fn = isCrypto ? 'DIGITAL_CURRENCY_DAILY' : 'TIME_SERIES_DAILY';
+    let url = '';
+    if (isCrypto) {
+      url = `https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_DAILY&symbol=${symbol}&market=USD&apikey=${key}`;
+    } else {
+      url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${key}`;
+    }
+
+    console.log(`[Alpha Vantage] Requesting URL: ${url.replace(key, 'REDACTED')}`);
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.warn(`[Alpha Vantage] HTTP error ${res.status} for ${symbol}`);
+      return null;
+    }
+
+    const data: any = await res.json();
+    if (data["Note"]) {
+      console.warn(`[Alpha Vantage] Rate limit reached for ${symbol}`);
+      return null;
+    }
+    if (data["Error Message"]) {
+      console.warn(`[Alpha Vantage] Error message for ${symbol}: ${data["Error Message"]}`);
+      return null;
+    }
+
+    const seriesKey = isCrypto ? "Time Series (Digital Currency Daily)" : "Time Series (Daily)";
+    const series = data[seriesKey];
+    if (!series) {
+      console.warn(`[Alpha Vantage] No series data found under key "${seriesKey}" for ${symbol}. Response keys: ${Object.keys(data).join(', ')}`);
+      return null;
+    }
+
+    const history: { date: string, close: number }[] = [];
+    const keys = Object.keys(series);
+    for (const dateStr of keys) {
+      const entry = series[dateStr];
+      const closeKey = isCrypto ? "4a. close (USD)" : "4. close";
+      const closeVal = parseFloat(entry[closeKey]);
+      if (isNaN(closeVal)) continue;
+
+      // Convert date "YYYY-MM-DD" to "DD.MM.YY"
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const formattedDate = `${parts[2]}.${parts[1]}.${parts[0].substring(2)}`;
+        history.push({ date: formattedDate, close: closeVal });
+      }
+    }
+
+    // Sort chronologically (earliest to latest)
+    history.sort((a, b) => {
+      const partsA = a.date.split('.');
+      const partsB = b.date.split('.');
+      if (partsA.length === 3 && partsB.length === 3) {
+        const dA = new Date(Number('20' + partsA[2]), Number(partsA[1]) - 1, Number(partsA[0]));
+        const dB = new Date(Number('20' + partsB[2]), Number(partsB[1]) - 1, Number(partsB[0]));
+        return dA.getTime() - dB.getTime();
+      }
+      return 0;
+    });
+
+    console.log(`[Alpha Vantage] Successfully loaded ${history.length} data points for ${symbol}`);
+    return history;
+  } catch (err: any) {
+    console.warn(`[Alpha Vantage Error] Fetch failed for ${symbol}:`, err.message || err);
+    return null;
+  }
+}
+
 // Real-time on-demand Alpha Vantage Quote Proxy
 app.get('/api/alpha-vantage-quote', orchestrator.handle('Alpha Vantage Quote'), async (req, res) => {
   const { symbol } = req.query;
@@ -1611,86 +1089,7 @@ app.post('/api/docs-file', express.json(), (req, res) => {
 });
 
 
-// Endpoint to list all audit trail files from /docs/reports
-app.get('/api/orchestrator/audit-files', (req, res) => {
-  const reportsDir = path.join(process.cwd(), 'docs', 'reports');
-  try {
-    if (!fs.existsSync(reportsDir)) {
-      return res.json({ files: [] });
-    }
-    const files = fs.readdirSync(reportsDir)
-      .filter(file => file.endsWith('.json') || file.endsWith('.md'))
-      .map(file => {
-        const filePath = path.join(reportsDir, file);
-        const stat = fs.statSync(filePath);
-        return {
-          name: file,
-          size: stat.size,
-          modifiedAt: stat.mtime.toISOString(),
-          path: `reports/${file}`
-        };
-      })
-      .sort((a, b) => new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime());
-    res.json({ files });
-  } catch (err: any) {
-    res.status(500).json({ error: `Fehler beim Auflisten der Audit-Dateien: ${err.message}` });
-  }
-});
 
-// Endpoint to generate simulated/automated audit logs and save them as actual JSON files in /docs/reports
-app.post('/api/orchestrator/create-simulated-audit', express.json(), (req, res) => {
-  const { symbol, market, timeframe, price, volume, dataQualityScore, finalScore, issues, status } = req.body;
-  if (!symbol) {
-    return res.status(400).json({ error: 'Symbol parameter is required.' });
-  }
-
-  const timestampStr = new Date().toISOString();
-  const fileTimestamp = Math.floor(Date.now() / 1000);
-  const fileName = `audit_trail_${symbol.toUpperCase()}_${fileTimestamp}.json`;
-  const reportsDir = path.join(process.cwd(), 'docs', 'reports');
-
-  const auditPayload = {
-    auditId: `AIF-CR-${symbol.toUpperCase()}-${fileTimestamp}`,
-    symbol: symbol.toUpperCase(),
-    market: market || 'crypto',
-    timeframe: timeframe || '1std',
-    timestamp: timestampStr,
-    status: status || 'COMPLIANT',
-    validation: {
-      status: (dataQualityScore || 98) >= 90 ? 'pass' : 'review',
-      data_quality_score: dataQualityScore || 98,
-      issues: issues || []
-    },
-    score: {
-      final_score: finalScore || 85,
-      breakdown: {
-        trend: 0.15,
-        momentum: 0.15,
-        volume: 0.10,
-        liquidity: 0.15,
-        volatility: 0.10,
-        structure: 0.10,
-        regime: 0.15,
-        risk: 0.10
-      },
-      ranking_position: 1,
-      trace: `Automatisierte Verifikation für ${symbol.toUpperCase()} erfolgreich abgeschlossen. Preis: ${price || 'N/A'}, Volumen: ${volume || 'N/A'}. Keine OWASP-Verletzungen oder PII-Lecks gefunden.`
-    },
-    workflow_status: "completed",
-    checksum: Math.random().toString(36).substring(2, 11).toUpperCase()
-  };
-
-  try {
-    if (!fs.existsSync(reportsDir)) {
-      fs.mkdirSync(reportsDir, { recursive: true });
-    }
-    const absolutePath = path.join(reportsDir, fileName);
-    fs.writeFileSync(absolutePath, JSON.stringify(auditPayload, null, 2), 'utf-8');
-    res.json({ success: true, fileName, path: `reports/${fileName}`, data: auditPayload });
-  } catch (err: any) {
-    res.status(500).json({ error: `Fehler beim Erstellen des Audit-Trails: ${err.message}` });
-  }
-});
 
 
 // High-performance backtesting endpoint utilizing the backend Asset Registry to eliminate external API overhead and rate-limiting
@@ -1835,59 +1234,7 @@ app.post('/api/charts-scoring', express.json(), (req, res) => {
   });
 });
 
-// Stats API for Request Orchestrator
-app.get('/api/orchestrator/stats', (req, res) => {
-  res.json(orchestrator.getStats());
-});
 
-// Model Auto-Routing Latency Check API
-app.get('/api/orchestrator/ping-models', (req, res) => {
-  const models = [
-    { id: 'claude', name: 'Claude 3.5 Sonnet', task: 'Code & Review', cost: '3.00', latency: Math.floor(130 + Math.random() * 50), status: 'Active' },
-    { id: 'gpt4', name: 'GPT-4o', task: 'Reasoning & Legacy', cost: '2.50', latency: Math.floor(150 + Math.random() * 60), status: 'Active' },
-    { id: 'gemini', name: 'Gemini 2.5 Flash', task: 'Speed & Vision', cost: '0.075', latency: Math.floor(40 + Math.random() * 30), status: 'Active' },
-    { id: 'grok', name: 'Grok 2', task: 'Real-time Research', cost: '2.00', latency: Math.floor(190 + Math.random() * 80), status: 'Active' },
-    { id: 'llama', name: 'Llama 3.3 (Local)', task: 'GDPR / Compliant', cost: '0.00', latency: Math.floor(12 + Math.random() * 15), status: 'Active' }
-  ];
-
-  // Pick the best model that is active and under the 200ms threshold
-  const optimalModel = models
-    .filter(m => m.latency < 200)
-    .reduce((prev, current) => (prev.latency < current.latency ? prev : current), models[2]);
-
-  res.json({
-    timestamp: Date.now(),
-    models,
-    optimalModelId: optimalModel.id
-  });
-});
-
-const ORCHESTRATOR_ADMIN_TOKEN = process.env.ORCHESTRATOR_ADMIN_TOKEN || 'aif-admin-2026';
-
-function requireOrchestratorAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const token = req.headers['x-orchestrator-admin-token'] || req.headers['authorization']?.toString().replace('Bearer ', '');
-  if (token !== ORCHESTRATOR_ADMIN_TOKEN) {
-    return res.status(401).json({ error: 'Ungültiger Admin-Token. Zugriff verweigert.' });
-  }
-  next();
-}
-
-// Dynamic configuration update API (Protected)
-app.post('/api/orchestrator/config', express.json(), requireOrchestratorAdmin, (req, res) => {
-  const { concurrencyLimit, maxQueueSize, maxRequestsPerWindow } = req.body;
-  orchestrator.updateConfig({
-    concurrencyLimit: typeof concurrencyLimit === 'number' ? concurrencyLimit : undefined,
-    maxQueueSize: typeof maxQueueSize === 'number' ? maxQueueSize : undefined,
-    maxRequestsPerWindow: typeof maxRequestsPerWindow === 'number' ? maxRequestsPerWindow : undefined
-  });
-  res.json({ success: true, stats: orchestrator.getStats() });
-});
-
-// Dynamic stats reset API (Protected)
-app.post('/api/orchestrator/reset', requireOrchestratorAdmin, (req, res) => {
-  orchestrator.resetStats();
-  res.json({ success: true, stats: orchestrator.getStats() });
-});
 
 // GET detailed enterprise crypto scoring inputs and outputs
 app.get('/api/crypto-scoring/:symbol', (req, res) => {
@@ -2360,6 +1707,9 @@ async function startServer() {
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    
+    // Start Recursive Document Hygiene File Watcher
+    startRecursiveFileWatcher();
     
     // Start automatic background market data fetching to keep the assetRegistry fresh
     console.log("[Market Data] Initiating background fetch to populate AssetRegistry...");

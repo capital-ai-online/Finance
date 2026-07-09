@@ -1,5 +1,5 @@
-# 🔒 Security Audit & Vulnerability Report (CAPITAL-AI / Jenova Nexus)
-**Project: Jenova Nexus (CAPITAL-AI)**  
+# 🔒 Security Audit & Vulnerability Report (CAPITAL-AI / CAPITAL-AI)
+**Project: CAPITAL-AI**  
 **Auditor:** Security AI Audit Engine  
 **Status:** Audit Approved (Version 0.5.0)  
 
