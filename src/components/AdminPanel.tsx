@@ -43,6 +43,7 @@ import {
   Legend
 } from 'recharts';
 import PerformanceDashboard from './PerformanceDashboard';
+import { ComplianceBadge } from './ComplianceBadge';
 
 interface AdminPanelProps {
   currentUserEmail: string;
@@ -170,7 +171,8 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
         volatility: parsedVol,
         drift: parsedDrift,
         marketCap: parsedMcap,
-        isLocked: editIsLocked
+        isLocked: editIsLocked,
+        email: currentUserEmail
       })
     })
       .then(res => {
@@ -368,53 +370,93 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
       </div>
 
       {/* Sub-navigation tabs with distinct purple styles */}
-      <div className="flex flex-wrap bg-neutral-950 p-1.5 rounded-xl border border-aif-neon-purple/30 max-w-2xl shadow-[0_0_20px_rgba(176,38,255,0.05)] gap-1.5 sm:gap-0">
+      <div className="flex flex-wrap bg-neutral-950 p-1.5 rounded-xl border border-aif-neon-purple/30 max-w-4xl shadow-[0_0_20px_rgba(176,38,255,0.05)] gap-2">
         <button
           onClick={() => setActiveAdminSubTab('routing')}
-          className={`flex-1 py-2.5 px-4 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+          className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-between gap-2.5 cursor-pointer border ${
             activeAdminSubTab === 'routing'
-              ? 'bg-aif-neon-purple text-white font-black shadow-[0_0_20px_rgba(176,38,255,0.45)] border border-aif-neon-purple/50'
-              : 'text-white/60 hover:text-white hover:bg-white/5'
+              ? 'bg-aif-neon-purple text-white font-black shadow-[0_0_20px_rgba(176,38,255,0.45)] border-aif-neon-purple/50'
+              : 'text-white/60 hover:text-white hover:bg-white/5 border-transparent'
           }`}
         >
-          <Activity size={14} className={activeAdminSubTab === 'routing' ? 'text-white' : 'text-white/60'} />
-          <span>System &amp; Routing</span>
+          <div className="flex items-center gap-2">
+            <Activity size={14} className={activeAdminSubTab === 'routing' ? 'text-white' : 'text-white/60'} />
+            <span>System &amp; Routing</span>
+          </div>
+          <ComplianceBadge
+            adr="ADR-0006"
+            title="DSGVO LLM Routing &amp; Weighting"
+            description="Regelt die dynamischen Gewichtungen von LLM-Modellpfaden und schützt Telemetriedatenströme durch PII-Anonymisierung."
+            isActive={activeAdminSubTab === 'routing'}
+            placement="top"
+            className="shrink-0 scale-90"
+          />
         </button>
         <button
           onClick={() => {
             setActiveAdminSubTab('pricing');
             loadRegistryAssets();
           }}
-          className={`flex-1 py-2.5 px-4 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+          className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-between gap-2.5 cursor-pointer border ${
             activeAdminSubTab === 'pricing'
-              ? 'bg-aif-neon-purple text-white font-black shadow-[0_0_20px_rgba(176,38,255,0.45)] border border-aif-neon-purple/50'
-              : 'text-white/60 hover:text-white hover:bg-white/5'
+              ? 'bg-aif-neon-purple text-white font-black shadow-[0_0_20px_rgba(176,38,255,0.45)] border-aif-neon-purple/50'
+              : 'text-white/60 hover:text-white hover:bg-white/5 border-transparent'
           }`}
         >
-          <Coins size={14} className={activeAdminSubTab === 'pricing' ? 'text-white' : 'text-white/60'} />
-          <span>Preis- &amp; Asset-Manager</span>
+          <div className="flex items-center gap-2">
+            <Coins size={14} className={activeAdminSubTab === 'pricing' ? 'text-white' : 'text-white/60'} />
+            <span>Preis- &amp; Asset-Manager</span>
+          </div>
+          <ComplianceBadge
+            adr="ADR-0007"
+            title="Data Integrity Asset Price Registry"
+            description="Gewährleistet Datenintegrität durch Sperren und Versionieren kritischer Asset-Bewertungen, um unberechtigte Preisausschläge zu verhindern."
+            isActive={activeAdminSubTab === 'pricing'}
+            placement="top"
+            className="shrink-0 scale-90"
+          />
         </button>
         <button
           onClick={() => setActiveAdminSubTab('scoring')}
-          className={`flex-1 py-2.5 px-4 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+          className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-between gap-2.5 cursor-pointer border ${
             activeAdminSubTab === 'scoring'
-              ? 'bg-aif-neon-purple text-white font-black shadow-[0_0_20px_rgba(176,38,255,0.45)] border border-aif-neon-purple/50'
-              : 'text-white/60 hover:text-white hover:bg-white/5'
+              ? 'bg-aif-neon-purple text-white font-black shadow-[0_0_20px_rgba(176,38,255,0.45)] border-aif-neon-purple/50'
+              : 'text-white/60 hover:text-white hover:bg-white/5 border-transparent'
           }`}
         >
-          <Sliders size={14} className={activeAdminSubTab === 'scoring' ? 'text-white' : 'text-white/60'} />
-          <span>Universum Scoring</span>
+          <div className="flex items-center gap-2">
+            <Sliders size={14} className={activeAdminSubTab === 'scoring' ? 'text-white' : 'text-white/60'} />
+            <span>Universum Scoring</span>
+          </div>
+          <ComplianceBadge
+            adr="ADR-0005"
+            title="Schnittstellen-Scoring-Standard"
+            description="Regelt die Integration und Bewertung von Scoring-Algorithmen und Spezialscannern zur Gewährleistung mathematischer Validität."
+            isActive={activeAdminSubTab === 'scoring'}
+            placement="top"
+            className="shrink-0 scale-90"
+          />
         </button>
         <button
           onClick={() => setActiveAdminSubTab('performance')}
-          className={`flex-1 py-2.5 px-4 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer ${
+          className={`flex-1 py-2.5 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-between gap-2.5 cursor-pointer border ${
             activeAdminSubTab === 'performance'
-              ? 'bg-aif-neon-purple text-white font-black shadow-[0_0_20px_rgba(176,38,255,0.45)] border border-aif-neon-purple/50'
-              : 'text-white/60 hover:text-white hover:bg-white/5'
+              ? 'bg-aif-neon-purple text-white font-black shadow-[0_0_20px_rgba(176,38,255,0.45)] border-aif-neon-purple/50'
+              : 'text-white/60 hover:text-white hover:bg-white/5 border-transparent'
           }`}
         >
-          <Cpu size={14} className={activeAdminSubTab === 'performance' ? 'text-white' : 'text-white/60'} />
-          <span>System-Performance</span>
+          <div className="flex items-center gap-2">
+            <Cpu size={14} className={activeAdminSubTab === 'performance' ? 'text-white' : 'text-white/60'} />
+            <span>System-Performance</span>
+          </div>
+          <ComplianceBadge
+            adr="ADR-0005"
+            title="Load Performance &amp; UI Response SLA"
+            description="Garantiert, dass Ladezeiten und Latenzen von Frontend-Komponenten die vertraglich vereinbarten Service-Level-Agreements einhalten."
+            isActive={activeAdminSubTab === 'performance'}
+            placement="top"
+            className="shrink-0 scale-90"
+          />
         </button>
       </div>
 

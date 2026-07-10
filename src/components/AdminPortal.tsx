@@ -21,6 +21,8 @@ import { AuditLogs } from './AuditLogs';
 import { AuditLog } from './AuditLog';
 import { DocumentHygienePanel } from './DocumentHygienePanel';
 import { SupervisorDashboard } from './SupervisorDashboard';
+import { ComplianceBadge } from './ComplianceBadge';
+import { ComplianceNotifications } from './ComplianceNotifications';
 
 // Hardcoded authorized administrator emails
 const ADMIN_EMAILS = ['sven.kulessa@gmail.com', 'sven.kulessa@gmx.net'];
@@ -66,60 +68,101 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
     );
   }
 
-  // Admin tabs definition
+  // Admin tabs definition with ADR compliance mapping
   const tabs = [
     {
       id: 'users' as const,
       label: 'Admin-Zentrale',
       description: 'Benutzerverwaltung & Berechtigungen',
       icon: Users,
+      compliance: {
+        adr: 'ADR-0003.5',
+        title: 'Identity Access Management & Owner-IAM',
+        description: 'Erzwingt strenge Multi-Faktor-Authentifizierung (Passkey/FIDO2) und Berechtigungskontrollen für Admin-Zonen gem. FinTech Regulierung.'
+      }
     },
     {
       id: 'auth' as const,
       label: 'Auth Debugger',
       description: 'Token & Secure Local Pipelines',
       icon: KeyRound,
+      compliance: {
+        adr: 'ADR-0003.5',
+        title: 'Cryptographic Token Tracking',
+        description: 'Sichert lokale Authentifizierungs-Pipelines und verhindert versehentliches Ausgeben sensibler Tokens in Debug-Protokollen.'
+      }
     },
     {
       id: 'markdown' as const,
       label: 'Markdown Orchestrator',
       description: 'Code-basierter Dokumenten-Generator',
       icon: FileText,
+      compliance: {
+        adr: 'ADR-0007',
+        title: 'Compliance Value Chain & System Documentation',
+        description: 'Ermöglicht automatische, manipulationssichere Berichterstellung direkt aus der Codebase zur lückenlosen Prüfpfad-Erstellung.'
+      }
     },
     {
       id: 'requests' as const,
       label: 'Request Orchestrator',
       description: 'Telemetrie- & API-Datenstrom-Überwachung',
       icon: Cpu,
+      compliance: {
+        adr: 'ADR-0006',
+        title: 'Model-Independent Router & Data Masking',
+        description: 'Sichert die Einhaltung von Datenschutzvorgaben (DSGVO) bei Multi-LLM-Routings und anonymisiert Logdaten-Signaturen.'
+      }
     },
     {
       id: 'performance' as const,
       label: 'Performance-Zentrale',
       description: 'Latenz, API-Effizienz & Ressourcenauslastung',
       icon: Gauge,
+      compliance: {
+        adr: 'ADR-0005',
+        title: 'Micro-Frontend SLAs & Load Performance',
+        description: 'Überprüft und garantiert die im System definierten Latenz-SLA-Grenzwerte in modular integrierten Web-Komponenten.'
+      }
     },
     {
       id: 'logs' as const,
       label: 'Audit-Trail & Logs',
       description: 'Sicherheits- & Aktivitätsprotokolle',
       icon: ShieldCheck,
+      compliance: {
+        adr: 'ADR-0003.5 & ADR-0007',
+        title: 'Immutable Audit Logs & PII Obfuscation',
+        description: 'Sichert Systemlogs vor Manipulationen ab und maskiert sensible PII-Nutzerdaten (E-Mails, IP-Adressen) im Audit-Protokoll.'
+      }
     },
     {
       id: 'hygiene' as const,
       label: 'Capital-AI Documentary',
       description: 'Autonome KI-Dokumentenpflege & Sync (Gründer: Sven Kulessa, sven.kulessa@capital-ai.online)',
       icon: Sparkles,
+      compliance: {
+        adr: 'ADR-0004 & ADR-0007',
+        title: 'Autonomous Documentary & Version Pinning',
+        description: 'Wacht über Dokumentenhygiene und Branding-Vorgaben gem. Version 0.5.4, führt Linters aus und verwaltet Rollbacks.'
+      }
     },
     {
       id: 'supervisor' as const,
       label: 'Capital-AI Supervisor',
       description: 'Zentralisierte Echtzeit-Überwachung aller Plattformkomponenten',
       icon: Shield,
+      compliance: {
+        adr: 'ADR-0006',
+        title: 'Decentralized Multi-Agent State Tracking',
+        description: 'Stellt sicher, dass dezentrale Multi-Agenten-Netzwerkakteure lückenlos protokolliert und deren Ausfälle im Ernstfall abgefangen werden.'
+      }
     },
   ];
 
   return (
     <div className="space-y-6">
+      <ComplianceNotifications currentUserEmail={currentUserEmail} />
       {/* Top Header section for the entire portal */}
       <div className="bg-gradient-to-r from-[#1c1c21] to-[#121215] border border-white/5 rounded-2xl p-6 shadow-xl relative overflow-hidden">
         {/* Decorative Grid background overlay */}
@@ -165,14 +208,26 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
               <button
                 key={tab.id}
                 onClick={() => onChangeTab(tab.id)}
-                className={`px-4 py-2.5 rounded-xl text-left font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2.5 transition-all cursor-pointer border ${
+                className={`px-4 py-2.5 rounded-xl text-left font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-between gap-4 transition-all cursor-pointer border shrink-0 ${
                   isTabActive
                     ? 'bg-aif-gold-DEFAULT text-black font-black border-aif-gold-DEFAULT shadow-[0_0_15px_rgba(245,196,83,0.25)]'
                     : 'bg-black/20 hover:bg-white/5 text-white/70 hover:text-white border-white/5'
                 }`}
               >
-                <IconComponent size={14} className={isTabActive ? 'text-black' : 'text-aif-gold-DEFAULT'} />
-                <span>{tab.label}</span>
+                <div className="flex items-center gap-2.5">
+                  <IconComponent size={14} className={isTabActive ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                  <span>{tab.label}</span>
+                </div>
+                {tab.compliance && (
+                  <ComplianceBadge
+                    adr={tab.compliance.adr}
+                    title={tab.compliance.title}
+                    description={tab.compliance.description}
+                    isActive={isTabActive}
+                    placement="top"
+                    className="shrink-0"
+                  />
+                )}
               </button>
             );
           })}

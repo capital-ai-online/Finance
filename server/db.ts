@@ -56,23 +56,11 @@ export function saveLocalSubscription(userIdentifier: string, tier: string) {
 /**
  * Persists the subscription tier linked exclusively with the user's UUID (user_id).
  * The email is stored for secondary reference, but never used as the key.
- *
- * Optional fields let webhook handlers pass through real Stripe data instead of just the tier name.
  */
-export async function saveSubscription(
-  userId: string,
-  tier: string,
-  email: string,
-  options?: {
-    stripeSubscriptionId?: string | null;
-    status?: string;
-    currentPeriodEnd?: string | null; // ISO timestamp
-  }
-) {
+export async function saveSubscription(userId: string, tier: string, email: string) {
   const cleanUserId = userId.trim();
   const cleanEmail = email.toLowerCase().trim();
-  const status = options?.status || (tier.toLowerCase() === 'free' ? 'free' : 'active');
-
+  
   // Save locally first using userId as the primary key
   saveLocalSubscription(cleanUserId, tier);
   if (cleanEmail) {
@@ -86,29 +74,35 @@ export async function saveSubscription(
 
   try {
     const supabaseClientInstance = getServerSupabase();
-    const payload: Record<string, any> = {
-      user_id: cleanUserId,
-      email: cleanEmail,
-      tier,
-      status,
-      updated_at: new Date().toISOString(),
-    };
-    if (options?.stripeSubscriptionId !== undefined) {
-      payload.stripe_subscription_id = options.stripeSubscriptionId;
-    }
-    if (options?.currentPeriodEnd !== undefined) {
-      payload.current_period_end = options.currentPeriodEnd;
-    }
-
-    // Upsert based on the unique identifier 'user_id' — matches the real table schema now that 'email' exists again.
+    // Primary: Upsert based on the strict unique identifier 'user_id'
     const { error } = await supabaseClientInstance
       .from('subscriptions')
-      .upsert(payload, { onConflict: 'user_id' });
-
+      .upsert({ 
+        user_id: cleanUserId, 
+        email: cleanEmail, 
+        tier, 
+        updated_at: new Date().toISOString() 
+      }, { onConflict: 'user_id' });
+      
     if (error) {
-      console.error(`[Supabase Backend] Remote DB upsert by user_id FAILED: ${error.message || JSON.stringify(error)}. Subscription was NOT persisted remotely — only saved to local fallback file.`);
+      console.warn(`[Supabase Backend] Note: Remote DB upsert by user_id failed (${error.message || JSON.stringify(error)}). Trying email-based fallback for old tables...`);
+      // Fallback: Support old schema versions until migration updates
+      const { error: fallbackError } = await supabaseClientInstance
+        .from('subscriptions')
+        .upsert({ 
+          email: cleanEmail, 
+          tier, 
+          user_id: cleanUserId,
+          updated_at: new Date().toISOString() 
+        }, { onConflict: 'email' });
+        
+      if (fallbackError) {
+        console.warn(`[Supabase Backend] Both upsert strategies failed. Fallback to local storage: ${fallbackError.message}`);
+      } else {
+        console.log(`[Supabase Backend] Successfully persisted subscription with email fallback conflict key: ${cleanEmail} -> ${tier}`);
+      }
     } else {
-      console.log(`[Supabase Backend] Successfully persisted subscription to remote DB: userId ${cleanUserId} -> ${tier} (${status})`);
+      console.log(`[Supabase Backend] Successfully persisted subscription to remote DB: userId ${cleanUserId} -> ${tier}`);
     }
   } catch (e: any) {
     console.warn("[Supabase Backend] Error in saveSubscription remote upsert, using local:", e.message || e);
@@ -182,6 +176,9 @@ const LOCAL_PDF_CREDITS_FILE = path.join(process.cwd(), 'uploads', 'pdf_credits.
 export function getLocalPdfCredits(userIdentifier: string): number {
   try {
     const cleanId = userIdentifier.toLowerCase().trim();
+    if (cleanId === 'sven.kulessa@gmail.com' || cleanId === 'sven.kulessa@gmx.net') {
+      return 999999; // Admin/Owner unlimited credits bypass
+    }
     if (fs.existsSync(LOCAL_PDF_CREDITS_FILE)) {
       const data = fs.readFileSync(LOCAL_PDF_CREDITS_FILE, 'utf8');
       const creditsObj = JSON.parse(data) || {};

@@ -13,6 +13,9 @@ import { CryptoScoringService } from './src/services/cryptoScoringService';
 import { MemeCoinScoringService } from './src/services/memeCoinScoringService';
 import { createRawMaterialsRouter } from './src/routes/rawMaterialsRoutes';
 import { RawMaterialsScoringService } from './src/services/rawMaterialsScoring';
+import { createCryptoRouter } from './src/routes/cryptoRoutes';
+import { ClassificationService } from './src/services/classification.service';
+import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './src/services/scoring.service';
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
@@ -29,8 +32,9 @@ import {
 import { stripeRouter, handleWebhookEvent, getStripeInstance } from './server/stripe';
 import { orchestratorRouter } from './server/orchestrator';
 import { aiRouter, getGeminiInstance, isGeminiConfigured } from './server/ai';
-import { systemEventsRouter } from './server/systemEvents';
+import { systemEventsRouter, logSystemEvent } from './server/systemEvents';
 import { hygieneRouter, startRecursiveFileWatcher } from './server/documentHygiene';
+import { versionManagerRouter } from './server/versionManager';
 
 dotenv.config();
 
@@ -141,10 +145,12 @@ try {
 
 // Mount Modular Router Sub-systems
 app.use('/api/raw-materials', createRawMaterialsRouter(getGeminiInstance()));
+app.use('/api/crypto', createCryptoRouter(getGeminiInstance()));
 app.use('/api/stripe', stripeRouter);
 app.use('/api/orchestrator', orchestratorRouter);
 app.use('/api/admin/hygiene', hygieneRouter);
 app.use('/api/admin', systemEventsRouter);
+app.use('/api/admin', versionManagerRouter);
 app.use('/api', aiRouter);
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
@@ -196,9 +202,18 @@ function calculateAssetScore(symbol: string, type: string, change24h: number, ba
       const result = MemeCoinScoringService.scoreMemeCoin(inputs);
       return result.score;
     } else {
-      const inputs = CryptoScoringService.generateCryptoInputs(s, change24h);
-      const result = CryptoScoringService.scoreCrypto(inputs);
-      return result.score;
+      const classification = ClassificationService.classifyAsset(s);
+      const seedScores = generateCryptoScores(s, change24h);
+      const payload = {
+        asset_name: s,
+        symbol: s,
+        classification,
+        scores: seedScores
+      };
+      const finalScores = classification.category_main === 'DeFi'
+        ? calculateDefiScore(payload)
+        : calculateBaseScore(payload);
+      return Number((finalScores.final_score / 10).toFixed(1));
     }
   }
 
@@ -373,6 +388,8 @@ let cachedMarketData: any = null;
 let lastMarketDataFetch = 0;
 const MARKET_DATA_CACHE_TTL = 60 * 1000; // Cache live prices for 60 seconds
 let activeMarketDataPromise: Promise<any> | null = null;
+let cmcCoolDownUntil = 0;
+let coingeckoCoolDownUntil = 0;
 
 async function fetchLiveMarketData() {
   const STOCK_TICKERS = ['AAPL.US', 'MSFT.US', 'GOOGL.US', 'AMZN.US', 'NVDA.US', 'TSLA.US', 'META.US', 'NFLX.US', 'AMD.US', 'INTC.US'];
@@ -383,7 +400,7 @@ async function fetchLiveMarketData() {
   const cmcKey = getCleanEnv('COINMARKETCAP_API_KEY');
   let cmcFetchedSuccessfully = false;
 
-  if (cmcKey) {
+  if (cmcKey && Date.now() >= cmcCoolDownUntil) {
     try {
       console.log('[Crypto Live API] Fetching cryptocurrency data from CoinMarketCap API (Primary Source)...');
       // CoinMarketCap lists 100 assets on free tier by default, which perfectly covers the top market caps
@@ -395,6 +412,12 @@ async function fetchLiveMarketData() {
         }
       });
       if (!cmcRes.ok) {
+        if (cmcRes.status === 429) {
+          cmcCoolDownUntil = Date.now() + 15 * 60 * 1000; // Cool down for 15 minutes
+          console.log('[Crypto Live API] CoinMarketCap API rate limited (429). Cooling down for 15 minutes.');
+        } else {
+          cmcCoolDownUntil = Date.now() + 5 * 60 * 1000; // Cool down for 5 minutes on other errors
+        }
         throw new Error(`CoinMarketCap API returned status ${cmcRes.status}`);
       }
       const cmcData: any = await cmcRes.json();
@@ -433,52 +456,69 @@ async function fetchLiveMarketData() {
         throw new Error('CoinMarketCap API returned invalid format or empty data');
       }
     } catch (cmcErr: any) {
-      console.warn('[Crypto Live API Warning] CoinMarketCap API failed, falling back to other sources:', cmcErr.message || cmcErr);
+      console.log('[Crypto Live API] CoinMarketCap API rate-limited or inactive; smoothly transitioning to secondary sources.');
     }
+  } else if (cmcKey) {
+    console.log(`[Crypto Live API] Skipping CoinMarketCap (under active rate-limit cooling for another ${Math.ceil((cmcCoolDownUntil - Date.now()) / 1000)}s)...`);
   }
 
   if (!cmcFetchedSuccessfully) {
-    try {
-      const coingeckoUrl = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false';
-      const coingeckoRes = await fetch(coingeckoUrl);
-      if (!coingeckoRes.ok) {
-        throw new Error(`CoinGecko API returned status ${coingeckoRes.status}`);
-      }
-      const coingeckoData: any = await coingeckoRes.json();
-      if (!coingeckoData || !Array.isArray(coingeckoData)) {
-        throw new Error('CoinGecko API returned invalid non-array data');
-      }
-      cryptoAssets = coingeckoData.map((coin: any) => {
-        const mcapBillions = coin.market_cap ? Number((coin.market_cap / 1e9).toFixed(1)) : 0;
-        const volMillions = coin.total_volume ? Number((coin.total_volume / 1e6).toFixed(2)) : 0;
-        const change24h = coin.price_change_percentage_24h || 0;
-        const baseMomentum = 5.0 + (change24h > 0 ? Math.min(4, change24h / 2) : Math.max(-4, change24h / 2));
-        const scoreVal = Math.min(10.0, Math.max(1.0, Number((baseMomentum * 0.75 + 0.4).toFixed(1))));
+    let coingeckoFetchedSuccessfully = false;
 
-        return {
-          symbol: coin.symbol.toUpperCase(),
-          name: coin.name,
-          type: 'crypto',
-          price: coin.current_price,
-          change24h: Number(change24h.toFixed(2)),
-          grahamScore: 0,
-          momentum: Number(baseMomentum.toFixed(1)),
-          risk: 'High',
-          status: 'Verifiziert',
-          marketCap: mcapBillions,
-          dividendYield: 0.0,
-          volume24h: volMillions,
-          score: scoreVal
-        };
-      });
-    } catch (err: any) {
-    console.warn('[Crypto Live API Warning] CoinGecko failed (attempting resilient multi-source fallback):', err.message || err);
-    
-    let livePricesFound = false;
-    const binanceMap = new Map();
+    if (Date.now() >= coingeckoCoolDownUntil) {
+      try {
+        const coingeckoUrl = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false';
+        const coingeckoRes = await fetch(coingeckoUrl);
+        if (!coingeckoRes.ok) {
+          if (coingeckoRes.status === 429) {
+            coingeckoCoolDownUntil = Date.now() + 15 * 60 * 1000; // Cool down for 15 minutes
+            console.log('[Crypto Live API] CoinGecko API rate limited (429). Cooling down for 15 minutes.');
+          } else {
+            coingeckoCoolDownUntil = Date.now() + 5 * 60 * 1000; // Cool down for 5 minutes on other errors
+          }
+          throw new Error(`CoinGecko API returned status ${coingeckoRes.status}`);
+        }
+        const coingeckoData: any = await coingeckoRes.json();
+        if (!coingeckoData || !Array.isArray(coingeckoData)) {
+          throw new Error('CoinGecko API returned invalid non-array data');
+        }
+        cryptoAssets = coingeckoData.map((coin: any) => {
+          const mcapBillions = coin.market_cap ? Number((coin.market_cap / 1e9).toFixed(1)) : 0;
+          const volMillions = coin.total_volume ? Number((coin.total_volume / 1e6).toFixed(2)) : 0;
+          const change24h = coin.price_change_percentage_24h || 0;
+          const baseMomentum = 5.0 + (change24h > 0 ? Math.min(4, change24h / 2) : Math.max(-4, change24h / 2));
+          const scoreVal = Math.min(10.0, Math.max(1.0, Number((baseMomentum * 0.75 + 0.4).toFixed(1))));
 
-    // FALLBACK SOURCE 1: Individual Binance ticker queries (simple symbol format to bypass WAF blocks)
-    try {
+          return {
+            symbol: coin.symbol.toUpperCase(),
+            name: coin.name,
+            type: 'crypto',
+            price: coin.current_price,
+            change24h: Number(change24h.toFixed(2)),
+            grahamScore: 0,
+            momentum: Number(baseMomentum.toFixed(1)),
+            risk: 'High',
+            status: 'Verifiziert',
+            marketCap: mcapBillions,
+            dividendYield: 0.0,
+            volume24h: volMillions,
+            score: scoreVal
+          };
+        });
+        coingeckoFetchedSuccessfully = true;
+      } catch (err: any) {
+        console.log('[Crypto Live API] CoinGecko inactive or failed (attempting resilient multi-source fallback):', err.message || err);
+      }
+    } else {
+      console.log(`[Crypto Live API] Skipping CoinGecko (under active rate-limit cooling for another ${Math.ceil((coingeckoCoolDownUntil - Date.now()) / 1000)}s)...`);
+    }
+
+    if (!coingeckoFetchedSuccessfully) {
+      let livePricesFound = false;
+      const binanceMap = new Map();
+
+      // FALLBACK SOURCE 1: Individual Binance ticker queries (simple symbol format to bypass WAF blocks)
+      try {
       console.log('[Crypto Live API] Trying Fallback Source 1: Binance single-symbol tickers');
       const symbolsToFetch = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'ADAUSDT'];
       await Promise.all(symbolsToFetch.map(async (sym) => {
@@ -1315,7 +1355,7 @@ app.get('/api/registry/assets/:symbol', (req, res) => {
 
 // UPDATE asset parameters in registry dynamically
 app.post('/api/registry/assets/:symbol', express.json(), (req, res) => {
-  const { expectedReturn, volatility, drift, price, change24h, marketCap, isLocked } = req.body;
+  const { expectedReturn, volatility, drift, price, change24h, marketCap, isLocked, email } = req.body;
   const symbol = req.params.symbol;
   
   if (!assetRegistry.getAsset(symbol)) {
@@ -1331,6 +1371,15 @@ app.post('/api/registry/assets/:symbol', express.json(), (req, res) => {
     marketCap: typeof marketCap === 'number' ? marketCap : undefined,
     isLocked: typeof isLocked === 'boolean' ? isLocked : undefined
   }, true);
+
+  const clientEmail = String(email || req.query.email || '').toLowerCase().trim();
+  logSystemEvent(
+    'ORCHESTRATOR',
+    'Asset Parameter Update',
+    clientEmail || 'sven.kulessa@gmail.com',
+    `Updated parameters for ${symbol}: Price=${price}, 24h Change=${change24h}%, Volatility=${volatility}, Drift=${drift}, expectedReturn=${expectedReturn}`,
+    'SUCCESS'
+  );
 
   res.json({ success: true, asset: assetRegistry.getAsset(symbol) });
 });

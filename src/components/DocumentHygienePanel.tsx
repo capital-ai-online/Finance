@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, 
   Shield, 
+  ShieldAlert,
   GitBranch, 
   History, 
   Check, 
@@ -27,6 +28,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { CapitalAiLogo } from './CapitalAiLogo';
 import { AdrForm } from './AdrForm';
+import SicherheitsmanagementPoC from './SicherheitsmanagementPoC';
 
 interface DocumentHygienePanelProps {
   currentUserEmail: string;
@@ -78,7 +80,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
   const [historyFiles, setHistoryFiles] = useState<BackupFile[]>([]);
   
   // Tab states inside the Hygiene panel
-  const [activeSubTab, setActiveSubTab] = useState<'tickets' | 'logs' | 'graph' | 'rollback' | 'linter' | 'adr'>('tickets');
+  const [activeSubTab, setActiveSubTab] = useState<'tickets' | 'logs' | 'graph' | 'rollback' | 'linter' | 'adr' | 'sicherheit_poc'>('tickets');
   const [selectedTicket, setSelectedTicket] = useState<ReviewTicket | null>(null);
   const [manualTriggerPath, setManualTriggerPath] = useState<string>('');
   const [isTriggering, setIsTriggering] = useState(false);
@@ -792,6 +794,19 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
         >
           <FileText size={12} />
           <span>Architektur-Entscheidungen (ADR)</span>
+        </button>
+        <button
+          onClick={() => {
+            setActiveSubTab('sicherheit_poc');
+          }}
+          className={`px-3 py-2 text-[11px] font-mono font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 shrink-0 ${
+            activeSubTab === 'sicherheit_poc' 
+              ? 'bg-aif-gold-DEFAULT text-black font-extrabold shadow-[0_0_10px_rgba(245,196,83,0.15)]' 
+              : 'text-white/60 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <ShieldAlert size={12} className={activeSubTab === 'sicherheit_poc' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+          <span>Sicherheits-PoC (ADR-0003.5)</span>
         </button>
       </div>
 
@@ -1683,6 +1698,17 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
 
               </div>
             )}
+          </motion.div>
+        )}
+
+        {activeSubTab === 'sicherheit_poc' && (
+          <motion.div
+            key="sicherheit_poc"
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+          >
+            <SicherheitsmanagementPoC />
           </motion.div>
         )}
 

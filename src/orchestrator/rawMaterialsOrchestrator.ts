@@ -11,6 +11,7 @@ import { RiskAgent } from '../agents/riskAgent';
 import { ValuationAgent } from '../agents/valuationAgent';
 import { RawMaterialsScoringService } from '../services/rawMaterialsScoring';
 import { findRawMaterialConfig } from '../config/rawMaterialsConfig';
+import { updateAgentActivity } from '../../server/systemEvents';
 
 export class RawMaterialsOrchestrator {
   private ai: GoogleGenAI | null;
@@ -34,13 +35,24 @@ export class RawMaterialsOrchestrator {
   public async analyzeMaterial(name: string, customInput?: Partial<RawMaterialInput>): Promise<AnalysisPayload> {
     console.log(`[Master Orchestrator] Initializing multi-agent pipeline for raw material: "${name}"`);
 
-    // 1. Run Classification, Fundamentals, Risk, and Valuation Agents in parallel
-    const [classification, fundamentals, risk, valuation] = await Promise.all([
-      this.classificationAgent.analyze(name),
-      this.fundamentalsAgent.analyze(name),
-      this.riskAgent.analyze(name),
-      this.valuationAgent.analyze(name)
-    ]);
+    updateAgentActivity('ag_scanner', `Klassifiziert Rohstoff ${name}`, true);
+    updateAgentActivity('ag_allocator', `Analysiert fundamentale Faktoren & Bewertung für ${name}`, true);
+    updateAgentActivity('ag_risk', `Analysiert geopolitische und makroökonomische Risiken für ${name}`, true);
+
+    let classification, fundamentals, risk, valuation;
+    try {
+      // 1. Run Classification, Fundamentals, Risk, and Valuation Agents in parallel
+      [classification, fundamentals, risk, valuation] = await Promise.all([
+        this.classificationAgent.analyze(name),
+        this.fundamentalsAgent.analyze(name),
+        this.riskAgent.analyze(name),
+        this.valuationAgent.analyze(name)
+      ]);
+    } finally {
+      updateAgentActivity('ag_scanner', `Keine aktive Aufgabe`, false);
+      updateAgentActivity('ag_allocator', `Keine aktive Aufgabe`, false);
+      updateAgentActivity('ag_risk', `Keine aktive Aufgabe`, false);
+    }
 
     // 2. Resolve database defaults for fields that are not covered by the agents
     const config = findRawMaterialConfig(name);

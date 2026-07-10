@@ -5,9 +5,10 @@ interface CapitalAiLogoProps {
   className?: string;
   size?: number;
   showText?: boolean;
+  version?: string;
 }
 
-export function CapitalAiLogo({ className = '', size = 160, showText = true }: CapitalAiLogoProps) {
+export function CapitalAiLogo({ className = '', size = 160, showText = true, version = '0.5.4' }: CapitalAiLogoProps) {
   return (
     <div className={`flex flex-col items-center justify-center text-center ${className}`}>
       {/* 3D Network Node Emblem */}
@@ -96,7 +97,7 @@ export function CapitalAiLogo({ className = '', size = 160, showText = true }: C
           </h1>
           {/* Subtitle brand module info */}
           <p className="text-[10px] text-white/50 font-mono tracking-[0.3em] uppercase mt-1.5 mr-[-0.3em]">
-            CORE
+            VERSION {version}
           </p>
         </div>
       )}

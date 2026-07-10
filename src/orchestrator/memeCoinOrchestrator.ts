@@ -8,6 +8,7 @@ import { MemeCoinAnalysisPayload, MemeCoinInputs } from '../types/memeCoin';
 import { MemeSentimentAgent } from '../agents/memeSentimentAgent';
 import { MemeRiskAgent } from '../agents/memeRiskAgent';
 import { MemeCoinScoringService } from '../services/memeCoinScoringService';
+import { updateAgentActivity } from '../../server/systemEvents';
 
 export class MemeCoinOrchestrator {
   private ai: GoogleGenAI | null;
@@ -26,11 +27,20 @@ export class MemeCoinOrchestrator {
   public async analyzeMemeCoin(coin: string, customInput?: Partial<MemeCoinInputs>): Promise<MemeCoinAnalysisPayload> {
     console.log(`[Meme-coin Master] Initializing multi-agent pipeline for meme: "${coin}"`);
 
-    // 1. Run Sentiment and Risk Agents in parallel
-    const [sentiment, risk] = await Promise.all([
-      this.sentimentAgent.analyze(coin),
-      this.riskAgent.analyze(coin)
-    ]);
+    updateAgentActivity('ag_scanner', `Scant soziale Netzwerke nach Sentiment zu ${coin}`, true);
+    updateAgentActivity('ag_risk', `Analysiert Rug-Pull-Risiken für ${coin}`, true);
+
+    let sentiment, risk;
+    try {
+      // 1. Run Sentiment and Risk Agents in parallel
+      [sentiment, risk] = await Promise.all([
+        this.sentimentAgent.analyze(coin),
+        this.riskAgent.analyze(coin)
+      ]);
+    } finally {
+      updateAgentActivity('ag_scanner', `Keine aktive Aufgabe`, false);
+      updateAgentActivity('ag_risk', `Keine aktive Aufgabe`, false);
+    }
 
     // 2. Generate initial seed inputs
     const seedInputs = MemeCoinScoringService.generateMemeCoinInputs(coin, 5.5);

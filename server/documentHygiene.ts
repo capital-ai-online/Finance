@@ -1658,6 +1658,13 @@ export function startRecursiveFileWatcher() {
     fs.mkdirSync(DOCS_DIR, { recursive: true });
   }
 
+  // Ensure ADR directory is created and seeded immediately on start!
+  try {
+    ensureADRDirectoryAndSeeds();
+  } catch (err) {
+    console.error('[DocumentHygiene] Error pre-seeding ADRs on start:', err);
+  }
+
   // Pre-emptively apply the Capital-AI Documentary branding to all existing docs under /docs
   console.log('[DocumentHygiene] Launching programmatic sweep for Capital-AI Documentary branding...');
   applyBrandingToAllDocs();

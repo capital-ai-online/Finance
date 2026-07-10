@@ -36,6 +36,7 @@ import { AssetUniverseDashboard } from './AssetUniverseDashboard';
 import { SystemLatencyMonitor } from './SystemLatencyMonitor';
 import { CapitalAiTrailer } from './CapitalAiTrailer';
 import { LandingPage } from './LandingPage';
+import { DeFiOrchestration } from './DeFiOrchestration';
 
 import { 
   LogOut, 
@@ -69,7 +70,8 @@ import {
   ShieldAlert,
   Bell,
   Video,
-  Mail
+  Mail,
+  Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -104,7 +106,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<string>('1std');
-  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'promo-video' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'promo-video' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'defi-orchestration' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
   const [adminTab, setAdminTab] = useState<'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor'>('users');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>('hub');
@@ -462,7 +464,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                     <CapitalAiLogo size={40} showText={false} />
                     <div className="flex flex-col items-start leading-none">
                       <span className="font-black text-sm tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">Capital-AI</span>
-                      <span className="text-[11px] text-white/70 font-mono tracking-widest uppercase mt-0.5">CORE</span>
+                      <span className="text-[11px] text-white/50 font-mono tracking-widest uppercase mt-0.5">VERSION 0.5.4</span>
                     </div>
                   </div>
                   <button 
@@ -881,6 +883,24 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                                   <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Volatility Forecasting</div>
                                   <div className="text-[9px] text-white/40 font-mono mt-0.5">Monte-Carlo Preispfadszenarien</div>
                                 </button>
+
+                                {/* DeFi subcategory section */}
+                                <div className="border-t border-white/5 mt-1 pt-1.5 space-y-1">
+                                  <div className="text-[9px] font-mono text-purple-400 font-bold px-2 py-0.5 uppercase tracking-wider flex items-center gap-1.5">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                                    <span>DeFi Kategorie</span>
+                                  </div>
+                                  <button 
+                                    onClick={() => { setSelectedSymbol('AAVE'); setCategoryFilter('crypto'); navigateTo('defi-orchestration'); setMenuOpen(false); }}
+                                    className={`w-full text-left p-2 hover:bg-purple-500/10 rounded text-[10px] transition-all cursor-pointer ${activeView === 'defi-orchestration' ? 'bg-purple-500/10 text-white border-l border-purple-500' : 'text-white/70 hover:text-white'}`}
+                                  >
+                                    <div className="font-bold uppercase tracking-wide text-purple-300 flex items-center gap-1">
+                                      <Zap size={10} className="text-purple-400 animate-bounce" />
+                                      <span>DeFi Orchestration</span>
+                                    </div>
+                                    <div className="text-[9px] text-white/40 font-mono mt-0.5">Liquidity depth &amp; IL Radar</div>
+                                  </button>
+                                </div>
                               </div>
                             )}
                           </div>
@@ -1245,89 +1265,22 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
 
             {/* Logo and Brand */}
             <div className="relative">
-              <button 
-                onClick={() => setDropdownOpen(!dropdownOpen)} 
-                className="flex items-center gap-3 hover:bg-white/5 p-2 rounded-xl transition-all"
+              <div 
+                className="flex items-center gap-3 p-2 rounded-xl"
               >
                 <CapitalAiLogo size={44} showText={false} />
                 <div className="flex flex-col items-start leading-none">
                   <div className="flex items-center gap-2">
                     <span className="font-black text-lg tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">Capital-AI</span>
-                    <ChevronDown size={16} className={`text-aif-gold-DEFAULT transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
                   <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-[11px] text-white/70 font-mono tracking-widest uppercase">CORE</span>
+                    <span className="text-[11px] text-white/50 font-mono tracking-widest uppercase">VERSION 0.5.4</span>
                     <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 font-mono tracking-widest">
                       AKTIV
                     </span>
                   </div>
                 </div>
-              </button>
-
-              {dropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-72 bg-black/95 border border-aif-gold-DEFAULT/40 rounded-xl shadow-[0_0_40px_rgba(245,196,83,0.2)] backdrop-blur-2xl z-50 overflow-hidden">
-                  <div className="p-5 border-b border-white/10 bg-gradient-to-br from-white/5 to-transparent">
-                    <div className="flex items-center gap-3 mb-1">
-                      <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${profile.avatarColor} border border-white/20 flex items-center justify-center text-black font-black overflow-hidden`}>
-                        {profile.customAvatarUrl ? (
-                          <img src={profile.customAvatarUrl} alt={profile.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                        ) : (
-                          <ActiveAvatarIcon size={18} />
-                        )}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-bold text-white font-display truncate max-w-[120px]">{profile.name}</p>
-                          {renderTierBadge(profile.subscriptionTier)}
-                        </div>
-                        <p className="text-xs text-white/50 truncate max-w-[180px]">{profile.email}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-2 space-y-1">
-                    <button 
-                      onClick={() => { setDropdownOpen(false); setActiveView('profil'); }}
-                      className="w-full text-left px-4 py-2.5 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors"
-                    >
-                      <User size={16} className="text-aif-neon-cyan" /> Profil verwalten
-                    </button>
-                    {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'sven.kulessa@gmx.net') && (
-                      <button 
-                        onClick={() => { setDropdownOpen(false); setActiveView('admin-panel'); }}
-                        className="w-full text-left px-4 py-2.5 text-sm font-bold text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/10 rounded-lg flex items-center gap-3 transition-all border border-aif-gold-DEFAULT/20"
-                      >
-                        <ShieldAlert size={16} className="text-aif-gold-DEFAULT" /> Admin-Zentrale
-                      </button>
-                    )}
-                    <button 
-                      onClick={() => { setDropdownOpen(false); setActiveView('abonnements'); }}
-                      className="w-full text-left px-4 py-2.5 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors"
-                    >
-                      <CreditCard size={16} className="text-aif-gold-DEFAULT" /> Abonnements verwalten
-                    </button>
-                    <button 
-                      onClick={() => { setDropdownOpen(false); setActiveView('datenschutz'); }}
-                      className="w-full text-left px-4 py-2.5 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-lg flex items-center gap-3 transition-colors"
-                    >
-                      <Shield size={16} className="text-white/50" /> Datenschutz & DSGVO
-                    </button>
-                  </div>
-                  <div className="p-2 border-t border-white/10 bg-black/50">
-                    {userSession.type === 'guest' ? (
-                      <button 
-                        onClick={() => { setDropdownOpen(false); setActiveView('login'); }} 
-                        className="w-full text-left px-4 py-2.5 text-sm font-medium text-aif-gold-DEFAULT hover:bg-aif-gold-DEFAULT/10 rounded-lg flex items-center gap-3 transition-colors"
-                      >
-                        <LogIn size={16} /> Anmelden / Login
-                      </button>
-                    ) : (
-                      <button onClick={onLogout} className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-lg flex items-center gap-3 transition-colors">
-                        <LogOut size={16} /> Sign Out
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
             
             {/* Thread Activity Indicator */}
@@ -1382,6 +1335,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                 {activeView === 'promo-video' && 'Capital-AI Produkt-Trailer & Vision'}
                 {activeView === 'raw-materials' && 'Rohstoff-Kategorisierung & AI-Scoring'}
                 {activeView === 'asset-universe' && 'Multi-Asset-Klassen Cockpit'}
+                {activeView === 'defi-orchestration' && 'DeFi Token Orchestration & IL Radar'}
                 {activeView === 'buffet-value' && 'Buffet Value Check'}
                 {activeView === 'backtest' && 'Quantitative Backtest Engine'}
                 {activeView === 'market-screener' && 'Profi Markt-Screener'}
@@ -1673,6 +1627,10 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
 
             {activeView === 'asset-universe' && (
               <AssetUniverseDashboard />
+            )}
+
+            {activeView === 'defi-orchestration' && (
+              <DeFiOrchestration />
             )}
 
 

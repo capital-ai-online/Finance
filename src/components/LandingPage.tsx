@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldAlert, Mail, User, Lock, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, X, HelpCircle, ChevronDown } from 'lucide-react';
+import { ShieldAlert, Mail, User, Lock, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, X } from 'lucide-react';
 import { CapitalAiLogo } from './CapitalAiLogo';
 import { supabase } from '../supabaseClient';
 
@@ -13,27 +13,6 @@ interface LandingPageProps {
 
 export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justLoggedOut }: LandingPageProps) {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
-  
-  // Collapsible FAQ states
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
-
-  const faqData = [
-    {
-      category: 'Finanzanalyse-Tools',
-      question: 'Welche quantitativen Analyse-Werkzeuge stehen auf CAPITAL-AI zur Verfügung?',
-      answer: 'Unsere Plattform bietet eine hochentwickelte Suite quantitativer Instrumente: Graham-DCF-Modelle zur Berechnung des fairen inneren Werts von Aktien, stochastische Monte-Carlo-Risikosimulationen mit tausenden Zukunftspfaden, automatisiertes Multi-Asset-Scoring (Skala 0.0 bis 10.0), KI-Agenten zur Stimmungsanalyse (Sentiment Grounding via Google Search) sowie historische Backtesting-Engines zur Validierung von Handelsstrategien.'
-    },
-    {
-      category: 'Abonnements & Tarife',
-      question: 'Welche Abonnement-Stufen gibt es und wie unterscheiden sie sich?',
-      answer: 'Wir bieten drei klar strukturierte Tarife an:\n• Free (Gast-Zugang): Eingeschränkter Zugriff auf grundlegende Markt-Daten und Ad-hoc-Screener mit täglichem Abfragen-Limit.\n• Pro: Unbegrenzter Zugriff auf fortgeschrittene quantitative Modelle (Graham-DCF, historische Backtests) und Echtzeit-Preisalarme.\n• Enterprise: Unbegrenzte Vollausstattung mit dedizierten Server-Ressourcen, benutzerdefinierten API-Pipelines, parallelisiertem Multi-Agent-Scoring und exklusiven Rohstoff-Analysen.'
-    },
-    {
-      category: 'Datensicherheit',
-      question: 'Wie werden meine persönlichen Daten und Portfolio-Informationen geschützt?',
-      answer: 'Datenschutz steht bei uns an oberster Stelle. CAPITAL-AI arbeitet streng konform mit der EU-DSGVO. Wir verfolgen eine konsequente "No-Demo-Data-Policy" (keine gefälschten Platzhalter) und speichern sensible Daten verschlüsselt auf sicheren Cloud-Servern oder rein lokal in Ihrem Browser via kryptografisch gesichertem LocalStorage. Es erfolgt kein Tracking oder unbefugter Verkauf an Dritte.'
-    }
-  ];
 
   // Login Form States
   const [loginEmail, setLoginEmail] = useState('');
@@ -584,65 +563,7 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
         </div>
       </motion.div>
 
-      {/* Collapsible FAQ Section */}
-      <motion.div 
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.15 }}
-        className="relative z-10 w-full max-w-md mx-auto mt-6 bg-[#06070B]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
-      >
-        <div className="flex items-center gap-2 mb-4 border-b border-white/10 pb-2.5">
-          <HelpCircle className="w-4 h-4 text-aif-gold-DEFAULT" />
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">Häufig gestellte Fragen (FAQ)</h3>
-        </div>
 
-        <div className="space-y-3">
-          {faqData.map((item, idx) => {
-            const isOpen = openFaqIndex === idx;
-            return (
-              <div 
-                key={idx} 
-                className={`rounded-xl border transition-all duration-300 ${
-                  isOpen ? 'bg-white/[0.04] border-aif-gold-DEFAULT/30 shadow-[0_0_15px_rgba(245,196,83,0.05)]' : 'bg-transparent border-white/5 hover:border-white/10'
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                  className="w-full text-left p-3.5 flex items-start justify-between gap-3 text-xs font-bold text-white/90 hover:text-white transition-colors focus:outline-none"
-                >
-                  <div className="space-y-1">
-                    <span className="text-[9px] uppercase font-bold tracking-widest text-aif-gold-DEFAULT font-mono block">
-                      {item.category}
-                    </span>
-                    <span>{item.question}</span>
-                  </div>
-                  <ChevronDown 
-                    className={`w-4 h-4 text-white/40 shrink-0 transition-transform duration-300 mt-1 ${
-                      isOpen ? 'rotate-180 text-aif-gold-DEFAULT' : ''
-                    }`} 
-                  />
-                </button>
-                <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2, ease: 'easeInOut' }}
-                      className="overflow-hidden"
-                    >
-                      <div className="p-3.5 pt-0 border-t border-white/5 text-[11px] text-white/60 leading-relaxed whitespace-pre-line font-sans">
-                        {item.answer}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
-        </div>
-      </motion.div>
 
       <AnimatePresence>
         {isForgotModalOpen && (

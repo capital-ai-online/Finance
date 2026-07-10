@@ -1,0 +1,99 @@
+{
+  "ADR-0001": [
+    {
+      "version": 1,
+      "title": "Standardisierung der Plattform-Version auf 0.5.4",
+      "decision": "Es wird hiermit entschieden, die offizielle Revisionsnummer der gesamten CAPITAL-AI Plattform in der aktuellen Beta-Phase strikt auf Version 0.5.4 festzulegen. Ein automatischer Dokumenten-Linter prüft künftig alle Quelldateien und Berichte auf Einhaltung dieser Vorgabe.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-10T09:00:26.896Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0002": [
+    {
+      "version": 1,
+      "title": "Verwendung von Google Firestore für cloud-basierte Datenpersistenz",
+      "decision": "Wir integrieren Google Firebase Firestore als primäre dokumentenorientierte Cloud-Datenbank. Alle sicherheitsrelevanten Zustände und Hygiene-Protokolle werden in Echtzeit dorthin synchronisiert, abgesichert durch restriktive Firestore Security Rules.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-10T09:00:26.896Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0003": [
+    {
+      "version": 1,
+      "title": "Automatisierte Dokumenten-Hygiene-Engine",
+      "decision": "Wir implementieren einen automatisierten Dokumenten-Linter im Backend, der alle Workspace-Dateien auf SEC- und DOC-Regeln scannt und im UI-Dashboard des Admin-Portals ein direktes \"Auto-Fixing\" anbietet.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-10T09:00:26.896Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0003.5": [
+    {
+      "version": 1,
+      "title": "Owner-IAM, Passkey/2FA-Absicherung & zugriffsbeschränkte Systemzonen",
+      "decision": "Einführung eines FIDO2/Passkey Multi-Faktor-Authentifizierungsmodells und Step-Up-Auth Tokens zur Absicherung der Compliance-Wertschöpfungskette und Schutz sensibler Server-Zonen.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-10T11:50:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0004": [
+    {
+      "version": 1,
+      "title": "Entfernung des \"Core\"-Schriftzugs und des aufklappbaren Profil-Panels",
+      "decision": "Der statische Schriftzug \"CORE\" wird auf allen Plattformebenen entfernt und durch die Versionsbezeichnung V0.5.4 ersetzt. Zudem wird das ausklappbare Header-Dropdown-Profil-Panel vollständig deaktiviert und die Navigation in der Seitenleiste konsolidiert.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-10T10:47:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0005": [
+    {
+      "version": 1,
+      "title": "Einbindung eines Capital-AI Front-End Moduls im Capital-AI FinTech Ökosystem",
+      "decision": "Das React-Front-End wird als Remote-Modul via Module Federation bereitgestellt und über eine standardisierte Event-Bus PostMessage-Schnittstelle sowie geteilte JWT-Tokens nahtlos in das übergeordnete FinTech-Ökosystem eingebunden.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-10T11:00:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0006": [
+    {
+      "version": 1,
+      "title": "Nächste architektonische Schritte zur Anbindung eines Plattform-Direktors innerhalb der Plattform",
+      "decision": "Einrichtung einer zentralen Governance-Schicht (Plattform-Direktor) im Backend zur Steuerung von API-Routing, Lastverteilung, DSGVO-Sicherheits-Gateways und Bereitstellung eines Steuerungspanels für System-Admins.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-10T11:05:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0007": [
+    {
+      "version": 1,
+      "title": "Bereitstellung einer vollen Capital-AI Compliance Wertschöpfungskette",
+      "decision": "Etablierung einer durchgängigen Compliance-Wertschöpfungskette (Ingestion-Gateway, PII-Maskierung, deterministische Engines, Immutable Audit Trail und automatisierte Zertifikats-Exporte) zur rechtssicheren Offenlegung im regulierten Marktumfeld.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-10T11:15:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "documentaryMetadata": {
+    "system": "Capital-AI Documentary",
+    "founder": "Sven Kulessa",
+    "email": "sven.kulessa@capital-ai.online",
+    "emblem": "⊞ CAPITAL-AI CORE",
+    "version": "0.5.4",
+    "status": "Verified & Hygienically Cleaned",
+    "timestamp": "2026-07-10T13:11:50.457Z"
+  }
+}

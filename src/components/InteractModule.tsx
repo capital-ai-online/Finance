@@ -438,7 +438,7 @@ export function InteractModule() {
           <div>
             <h2 className="text-xl font-bold font-display tracking-tight flex items-center gap-2">
               <Compass className={style.text} size={24} />
-              <span>AIF-Capital-Core: Modul 2 (Interact)</span>
+              <span>Capital-AI: Modul 2 (Interact)</span>
             </h2>
             <p className="text-xs text-white/50 font-mono mt-1">
               Kollaborative Quanten-Simulationen & Interaktiver Formel-Newsfeed
@@ -456,7 +456,7 @@ export function InteractModule() {
 
         {/* Informational Callout */}
         <div className="p-4 bg-white/5 border border-white/5 rounded-xl text-xs text-white/80 leading-relaxed font-sans mt-4">
-          Willkommen im interaktiven Quanten-Spielfeld von <strong>AIF-Capital-Core (Modul 2)</strong>. Hier kombinieren Sie mathematische Berechnungsformeln in Echtzeit. Der <strong>Finanzorchestrator</strong> und der <strong>Designarchitekt</strong> leiten das Ergebnis durch eine strukturierte Transformations-Pipeline direkt an die UI weiter.
+          Willkommen im interaktiven Quanten-Spielfeld von <strong>Capital-AI (Modul 2)</strong>. Hier kombinieren Sie mathematische Berechnungsformeln in Echtzeit. Der <strong>Finanzorchestrator</strong> und der <strong>Designarchitekt</strong> leiten das Ergebnis durch eine strukturierte Transformations-Pipeline direkt an die UI weiter.
         </div>
 
         {/* Step-by-Step Orchestrator Workspace */}
@@ -671,7 +671,7 @@ export function InteractModule() {
             <Info size={12} className="text-cyan-400" />
             <span>Keine Anlageberatung. Alle Ergebnisse basieren auf rein quantitativen Formeln.</span>
           </span>
-          <span>© AIF-Capital-Core – Module 2 (Interact)</span>
+          <span>© Capital-AI – Module 2 (Interact)</span>
         </div>
 
       </div>

@@ -106,6 +106,29 @@ export default function App() {
   useEffect(() => {
     // Load cached session from localStorage (robust compliance with EinwVO/DSGVO & standalone readiness when JWT is deactivated)
     let hasLocalSession = false;
+    
+    // Auto-login for Sven Kulessa in Google AI Preview / Development
+    const isDevOrPreview = typeof window !== 'undefined' && (
+      window.location.hostname.includes('localhost') || 
+      window.location.hostname.includes('run.app') || 
+      process.env.NODE_ENV !== 'production'
+    );
+
+    if (isDevOrPreview) {
+      const devSession: UserSession = {
+        type: 'registered',
+        name: 'Sven Kulessa (Dev Admin)',
+        email: 'sven.kulessa@gmx.net',
+        subscriptionTier: 'Enterprise',
+        id: 'dev-admin-sven-kulessa-gmx-net',
+        accessToken: 'dev-bypass-token'
+      };
+      setUserSession(devSession);
+      localStorage.setItem('mcc_user_session', JSON.stringify(devSession));
+      setLoading(false);
+      return;
+    }
+
     const localSessionJson = localStorage.getItem('mcc_user_session');
     if (localSessionJson) {
       try {

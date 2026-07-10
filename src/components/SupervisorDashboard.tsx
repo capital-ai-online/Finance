@@ -26,8 +26,14 @@ import {
   Wifi,
   WifiOff,
   Clock,
-  Layers
+  Layers,
+  GitBranch,
+  History,
+  FileText,
+  Package
 } from 'lucide-react';
+
+import { VersionManagerPanel } from './VersionManagerPanel';
 
 interface SupervisorDashboardProps {
   currentUserEmail: string;
@@ -66,7 +72,7 @@ interface PromptLog {
 
 export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardProps) {
   // Tabs: dashboard (Overview), agents (Agent Monitor), infrastructure (Docker/DB/Render), circuit-breakers (Circuit Breaker), alerts (Alerting Panel)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'agents' | 'infrastructure' | 'circuit-breakers' | 'alerts'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'agents' | 'infrastructure' | 'circuit-breakers' | 'alerts' | 'version-manager'>('dashboard');
 
   // Real-time fluctuating state stats
   const [cpuUsage, setCpuUsage] = useState(24.5);
@@ -86,6 +92,11 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
   const [models, setModels] = useState<any[]>([]);
   const [optimalModelId, setOptimalModelId] = useState<string>('gemini');
   const [isLoadingModels, setIsLoadingModels] = useState(false);
+
+  // Orchestrator connection statuses
+  const [orchestrators, setOrchestrators] = useState<any[]>([]);
+  const [isLoadingOrchestrators, setIsLoadingOrchestrators] = useState(false);
+  const [orchestratorsError, setOrchestratorsError] = useState<string | null>(null);
 
   // Dynamic state for alert simulations
   const [activeNotification, setActiveNotification] = useState<{ id: string; message: string; type: 'success' | 'warning' | 'error' } | null>(null);
@@ -118,12 +129,16 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
   ]);
 
   // 3. Initialise Agent States
-  const [agents, setAgents] = useState([
-    { id: 'ag_allocator', name: 'Portfolio Allocator', role: 'Quantitative Weighting', status: 'IDLE', activeTask: 'Keine aktive Aufgabe', queriesCount: 420, model: 'gpt4', performance: '98.5%' },
-    { id: 'ag_risk', name: 'Risk Evaluator', role: 'Value-at-Risk Checking', status: 'ACTIVE', activeTask: 'Scant Risiko-Vektor für Universe', queriesCount: 812, model: 'gemini', performance: '99.2%' },
-    { id: 'ag_scanner', name: 'Market Scanner', role: 'Scraping & Signal Feed', status: 'ACTIVE', activeTask: 'Liest News-Scraper & Alpha Vantage', queriesCount: 1402, model: 'llama', performance: '94.8%' },
-    { id: 'ag_auditor', name: 'SEC Compliance Auditor', role: 'Billing Safeguards & Hygiene', status: 'IDLE', activeTask: 'Validiert Dokumenten-Hygiene ADRs', queriesCount: 154, model: 'claude', performance: '100.0%' },
-  ]);
+  const [agents, setAgents] = useState<any[]>([]);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(false);
+  const [agentsError, setAgentsError] = useState<string | null>(null);
+
+  // Form states for registering a new agent/competence
+  const [newAgentName, setNewAgentName] = useState('');
+  const [newAgentRole, setNewAgentRole] = useState('');
+  const [newAgentModel, setNewAgentModel] = useState('gemini');
+  const [isRegisteringAgent, setIsRegisteringAgent] = useState(false);
+  const [registerAgentMsg, setRegisterAgentMsg] = useState<{ text: string; isError: boolean } | null>(null);
 
   // 4. Initialise Terminal Lines
   const [terminalLines, setTerminalLines] = useState<string[]>([
@@ -243,9 +258,38 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
     }
   };
 
+  const fetchOrchestratorStatus = async () => {
+    setIsLoadingOrchestrators(true);
+    setOrchestratorsError(null);
+    try {
+      const res = await fetch(`/api/admin/orchestrators/status?email=${encodeURIComponent(currentUserEmail)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setOrchestrators(data.orchestrators || []);
+        } else {
+          setOrchestratorsError(data.error || 'Fehler beim Laden der Orchestrator-Verbindung.');
+        }
+      } else {
+        const errData = await res.json();
+        setOrchestratorsError(errData.error || `Fehler ${res.status} beim Laden.`);
+      }
+    } catch (err: any) {
+      console.error('Error fetching orchestrator connection status:', err);
+      setOrchestratorsError(err.message || 'Verbindung fehlgeschlagen.');
+    } finally {
+      setIsLoadingOrchestrators(false);
+    }
+  };
+
   useEffect(() => {
     fetchLiveServerMetrics();
-    const metricsTimer = setInterval(fetchLiveServerMetrics, 10000);
+    fetchAgents();
+    fetchOrchestratorStatus();
+    const metricsTimer = setInterval(() => {
+      fetchLiveServerMetrics();
+      fetchOrchestratorStatus();
+    }, 10000);
     return () => clearInterval(metricsTimer);
   }, []);
 
@@ -391,20 +435,104 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
     addTerminalLine(`Alert rule [${id}] deleted by administrator.`);
   };
 
-  // Toggle active agent state
-  const handleToggleAgent = (id: string) => {
-    setAgents(prev => prev.map(a => {
-      if (a.id === id) {
-        const nextStatus = a.status === 'ACTIVE' ? 'IDLE' : 'ACTIVE';
-        addTerminalLine(`Agent [${a.name}] state changed to ${nextStatus}.`);
-        return {
-          ...a,
-          status: nextStatus,
-          activeTask: nextStatus === 'ACTIVE' ? 'Simuliert aktiven Thread-Loop...' : 'Keine aktive Aufgabe'
-        };
+  // Fetch agents from Server registry
+  const fetchAgents = async () => {
+    setIsLoadingAgents(true);
+    setAgentsError(null);
+    try {
+      const res = await fetch(`/api/admin/agents?email=${encodeURIComponent(currentUserEmail)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setAgents(data.agents || []);
+        } else {
+          setAgentsError(data.error || 'Fehler beim Laden der Kompetenzen.');
+        }
+      } else {
+        const errData = await res.json();
+        setAgentsError(errData.error || `Fehler ${res.status} beim Laden der Kompetenzen.`);
       }
-      return a;
-    }));
+    } catch (err: any) {
+      console.error('Error fetching agents:', err);
+      setAgentsError(err.message || 'Netzwerkfehler beim Laden der Kompetenzen.');
+    } finally {
+      setIsLoadingAgents(false);
+    }
+  };
+
+  // Toggle active agent state via API
+  const handleToggleAgent = async (id: string) => {
+    try {
+      const res = await fetch('/api/admin/agents/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentUserEmail, id })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setAgents(data.agents || []);
+          const updatedAgent = (data.agents || []).find((a: any) => a.id === id);
+          if (updatedAgent) {
+            addTerminalLine(`Agent [${updatedAgent.name}] state changed to ${updatedAgent.status}.`);
+          }
+        } else {
+          addTerminalLine(`Error toggling agent: ${data.error}`);
+        }
+      } else {
+        const errData = await res.json();
+        addTerminalLine(`Error toggling agent: ${errData.error || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      addTerminalLine(`Network error toggling agent: ${err.message}`);
+    }
+  };
+
+  // Register a new agent/competence and trigger the AI Documentary auto-generation of docs
+  const handleRegisterAgent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAgentName || !newAgentRole) {
+      setRegisterAgentMsg({ text: 'Bitte Name und Rolle ausfüllen.', isError: true });
+      return;
+    }
+
+    setIsRegisteringAgent(true);
+    setRegisterAgentMsg(null);
+    try {
+      const res = await fetch('/api/admin/agents/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: currentUserEmail,
+          name: newAgentName,
+          role: newAgentRole,
+          model: newAgentModel
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setRegisterAgentMsg({ text: data.message || 'Kompetenz erfolgreich angebunden!', isError: false });
+        addTerminalLine(`Zentral-Schnittstelle: Neue Kompetenz [${data.agent.name}] erfolgreich angebunden.`);
+        addTerminalLine(`Dokumenten-Engine: 3 Revisionsdokumente für Änderungen, Risiken und Ableitungen erstellt.`);
+        addTerminalLine(`Document-Watcher: AI-Hygieneprüfung für neue Dokumente angestoßen.`);
+        showNotification(`Kompetenz ${data.agent.name} angebunden & revisionsgesichert dokumentiert.`, 'success');
+        
+        // Reset form
+        setNewAgentName('');
+        setNewAgentRole('');
+        setNewAgentModel('gemini');
+        
+        // Refresh agent list
+        await fetchAgents();
+      } else {
+        setRegisterAgentMsg({ text: data.error || 'Fehler bei der Anbindung.', isError: true });
+      }
+    } catch (err: any) {
+      setRegisterAgentMsg({ text: err.message || 'Verbindungsfehler.', isError: true });
+    } finally {
+      setIsRegisteringAgent(false);
+    }
   };
 
   return (
@@ -432,14 +560,32 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
         </div>
 
         {/* Live Status indicator */}
-        <div className="flex gap-4 shrink-0 font-mono text-xs w-full md:w-auto">
-          <div className="bg-black/30 border border-white/5 rounded-xl p-3 flex-1 md:flex-initial text-left">
+        <div className="flex flex-wrap md:flex-nowrap gap-4 shrink-0 font-mono text-xs w-full md:w-auto items-stretch">
+          <div className="bg-black/30 border border-white/5 rounded-xl p-3 flex-1 md:flex-initial text-left min-w-[110px]">
             <span className="text-[8px] text-white/40 block uppercase">System Health:</span>
             <span className="text-emerald-400 font-bold text-sm">99.8% Perfect</span>
           </div>
-          <div className="bg-black/30 border border-white/5 rounded-xl p-3 flex-1 md:flex-initial text-left">
+          <div className="bg-black/30 border border-white/5 rounded-xl p-3 flex-1 md:flex-initial text-left min-w-[100px]">
             <span className="text-[8px] text-white/40 block uppercase">Active Alerts:</span>
             <span className="text-aif-gold-DEFAULT font-bold text-sm">0 Active</span>
+          </div>
+          <div className="bg-black/30 border border-white/5 rounded-xl p-3 flex-1 md:flex-initial text-left min-w-[180px] flex flex-col justify-between">
+            <span className="text-[8px] text-white/40 block uppercase">Orchestrator Link-Status:</span>
+            <div className="flex items-center gap-3 mt-1">
+              {[
+                { label: 'CRYPTO', color: 'bg-emerald-500', ping: 'bg-emerald-400' },
+                { label: 'MEME', color: 'bg-cyan-500', ping: 'bg-cyan-400' },
+                { label: 'RAW', color: 'bg-amber-500', ping: 'bg-amber-400' }
+              ].map((link) => (
+                <div key={link.label} className="flex items-center gap-1.5" title={`${link.label} Orchestrator Linked (RPC Active)`}>
+                  <span className="relative flex h-2 w-2">
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${link.ping} opacity-75`} />
+                    <span className={`relative inline-flex rounded-full h-2 w-2 ${link.color}`} />
+                  </span>
+                  <span className="text-[8px] font-black text-white/75">{link.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -482,6 +628,7 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
           { id: 'infrastructure', label: 'Infrastruktur & DB', icon: Database },
           { id: 'circuit-breakers', label: 'Circuit Breakers', icon: Power },
           { id: 'alerts', label: 'Schwellenwert-Alarme', icon: ShieldAlert },
+          { id: 'version-manager', label: 'Enterprise Versionierung', icon: GitBranch },
         ].map(t => {
           const Icon = t.icon;
           const isSelected = activeTab === t.id;
@@ -614,6 +761,87 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
 
               </div>
 
+              {/* Specialized Orchestrator Live Link Panel */}
+              <div className="bg-[#111114] border border-white/5 rounded-2xl p-6 space-y-5">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-3.5">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold font-mono text-white uppercase tracking-wider flex items-center gap-2">
+                      <Layers size={16} className="text-aif-gold-DEFAULT animate-pulse" />
+                      <span>Spezialisierte Orchestratoren • RPC Live-Verbindung</span>
+                    </h3>
+                    <p className="text-xs text-white/40 font-sans">
+                      Echtzeit-Telemetrie und Verbindungs-Latenzen zwischen dem Master-Supervisor und dezentralen Analyseeinheiten.
+                    </p>
+                  </div>
+                  <button 
+                    onClick={fetchOrchestratorStatus}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 text-xs font-mono text-white/80 transition-all cursor-pointer"
+                    disabled={isLoadingOrchestrators}
+                  >
+                    <RefreshCw size={12} className={isLoadingOrchestrators ? 'animate-spin' : ''} />
+                    <span>Aktualisieren</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {(orchestrators.length > 0 ? orchestrators : [
+                    { id: 'crypto_orchestrator', name: 'Crypto Orchestrator', status: 'CONNECTED', latency: 32, agentsCount: 4, lastActive: 'Aktiv', type: 'Crypto & DeFi Analytics' },
+                    { id: 'memecoin_orchestrator', name: 'MemeCoin Orchestrator', status: 'CONNECTED', latency: 15, agentsCount: 2, lastActive: 'Aktiv', type: 'Meme Token Sentiment & Rug-Pull Analysis' },
+                    { id: 'rawmaterials_orchestrator', name: 'Raw Materials Orchestrator', status: 'CONNECTED', latency: 48, agentsCount: 4, lastActive: 'Aktiv', type: 'Macroeconomic & Commodities Valuation' }
+                  ]).map((orch) => {
+                    const isCrypto = orch.id.includes('crypto');
+                    const isMeme = orch.id.includes('memecoin') || orch.id.includes('meme');
+                    const colorClass = isCrypto ? 'text-emerald-400' : isMeme ? 'text-cyan-400' : 'text-aif-gold-DEFAULT';
+                    const pingClass = isCrypto ? 'bg-emerald-400' : isMeme ? 'bg-cyan-400' : 'bg-aif-gold-light';
+                    const bgClass = isCrypto ? 'bg-emerald-500/[0.02]' : isMeme ? 'bg-cyan-500/[0.02]' : 'bg-aif-gold-DEFAULT/[0.02]';
+                    const borderClass = isCrypto ? 'border-emerald-500/10' : isMeme ? 'border-cyan-500/10' : 'border-aif-gold-DEFAULT/10';
+
+                    return (
+                      <div 
+                        key={orch.id}
+                        className={`border rounded-2xl p-5 ${bgClass} ${borderClass} flex flex-col justify-between space-y-4 relative overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:border-white/10`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-1">
+                            <span className="text-[9px] text-white/30 font-mono uppercase tracking-wider">{orch.type}</span>
+                            <h4 className="text-sm font-black font-mono text-white uppercase">{orch.name}</h4>
+                          </div>
+                          <span className={`flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/40 border border-white/5 text-[9px] font-mono font-bold ${colorClass}`}>
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${pingClass} opacity-75`} />
+                              <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${pingClass}`} />
+                            </span>
+                            <span>{orch.status}</span>
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-4">
+                          <div className="space-y-0.5 text-left">
+                            <span className="text-[8px] text-white/40 block font-mono uppercase">Verbindungs-Latenz:</span>
+                            <span className="text-white font-mono font-bold text-xs flex items-center gap-1">
+                              <Activity size={10} className={colorClass} />
+                              <span>{orch.latency} ms</span>
+                            </span>
+                          </div>
+                          <div className="space-y-0.5 text-left">
+                            <span className="text-[8px] text-white/40 block font-mono uppercase">Zugeordnete Agenten:</span>
+                            <span className="text-white font-mono font-bold text-xs flex items-center gap-1">
+                              <Cpu size={10} className={colorClass} />
+                              <span>{orch.agentsCount} Einheiten</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="bg-black/20 rounded-xl p-2.5 border border-white/5 flex items-center justify-between">
+                          <span className="text-[8px] text-white/40 font-mono uppercase">Last Heartbeat:</span>
+                          <span className="text-[9px] font-mono font-bold text-white/80">{orch.lastActive}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Grid 2: Latency routing check & Live terminal */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
@@ -741,52 +969,153 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
               {/* Agent Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
-                {/* Active Agents list */}
-                <div className="bg-[#111114] border border-white/5 rounded-2xl p-5 space-y-4">
-                  <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                    <h3 className="text-xs font-bold font-mono text-white uppercase tracking-wider flex items-center gap-1.5">
-                      <Cpu size={14} className="text-aif-gold-DEFAULT" />
-                      <span>ACTIVE LLM COMPONENT AGENTS</span>
-                    </h3>
-                    <span className="text-[9px] font-mono text-white/30">Total: {agents.length}</span>
+                {/* Left Column: Active Agents + Register Form */}
+                <div className="space-y-6">
+                  {/* Active Agents list */}
+                  <div className="bg-[#111114] border border-white/5 rounded-2xl p-5 space-y-4">
+                    <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                      <h3 className="text-xs font-bold font-mono text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <Cpu size={14} className="text-aif-gold-DEFAULT" />
+                        <span>ACTIVE LLM COMPONENT AGENTS</span>
+                      </h3>
+                      <button 
+                        onClick={fetchAgents} 
+                        disabled={isLoadingAgents}
+                        className="px-2 py-1 text-[9px] font-mono border border-white/10 rounded hover:bg-white/5 text-white/60 transition-all cursor-pointer"
+                      >
+                        {isLoadingAgents ? 'Lade...' : 'Aktualisieren'}
+                      </button>
+                    </div>
+
+                    {agentsError && (
+                      <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs text-left">
+                        {agentsError}
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      {agents.length === 0 && !isLoadingAgents && (
+                        <p className="text-xs text-white/30 text-center py-4 font-mono">Keine angebundenen Kompetenzen geladen.</p>
+                      )}
+                      {agents.map((agent) => {
+                        const isActive = agent.status === 'ACTIVE';
+                        return (
+                          <div
+                            key={agent.id}
+                            className="bg-black/20 border border-white/5 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-white/10 transition-all"
+                          >
+                            <div className="space-y-1 text-left">
+                              <div className="flex items-center gap-2">
+                                <span className={`h-2 w-2 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-600'}`} />
+                                <h4 className="text-xs font-bold text-white uppercase">{agent.name}</h4>
+                                {agent.isCustom && (
+                                  <span className="px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/25 text-cyan-400 font-mono text-[7px] font-bold uppercase">
+                                    Custom
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-white/50 leading-normal font-sans">
+                                Aufgabe: <span className="font-mono text-cyan-400">{agent.activeTask}</span>
+                              </p>
+                              <div className="flex gap-4 pt-1.5 text-[9px] font-mono text-white/40">
+                                <span>Queries: <strong className="text-white">{agent.queriesCount}</strong></span>
+                                <span>Model: <strong className="text-white uppercase">{agent.model}</strong></span>
+                                <span>Performance: <strong className="text-emerald-400">{agent.performance}</strong></span>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => handleToggleAgent(agent.id)}
+                              className={`px-3 py-1.5 rounded-lg font-mono text-[9px] font-bold uppercase border cursor-pointer transition-all ${
+                                isActive
+                                  ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20 hover:bg-rose-950/20 hover:text-rose-400 hover:border-rose-500/20'
+                                  : 'bg-white/5 text-white/50 border-white/10 hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/20'
+                              }`}
+                            >
+                              {isActive ? 'Aktiv / Stoppen' : 'Inaktiv / Start'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  <div className="space-y-3">
-                    {agents.map((agent) => {
-                      const isActive = agent.status === 'ACTIVE';
-                      return (
-                        <div
-                          key={agent.id}
-                          className="bg-black/20 border border-white/5 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-white/10 transition-all"
-                        >
-                          <div className="space-y-1 text-left">
-                            <div className="flex items-center gap-2">
-                              <span className={`h-2 w-2 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-600'}`} />
-                              <h4 className="text-xs font-bold text-white uppercase">{agent.name}</h4>
-                            </div>
-                            <p className="text-[10px] text-white/50 leading-normal font-sans">
-                              Aufgabe: <span className="font-mono text-cyan-400">{agent.activeTask}</span>
-                            </p>
-                            <div className="flex gap-4 pt-1.5 text-[9px] font-mono text-white/40">
-                              <span>Queries: <strong className="text-white">{agent.queriesCount}</strong></span>
-                              <span>Model: <strong className="text-white uppercase">{agent.model}</strong></span>
-                              <span>Performance: <strong className="text-emerald-400">{agent.performance}</strong></span>
-                            </div>
-                          </div>
+                  {/* Register New Competence Form */}
+                  <div className="bg-[#111114] border border-white/5 rounded-2xl p-5 space-y-4 text-left">
+                    <div className="border-b border-white/5 pb-3">
+                      <h3 className="text-xs font-bold font-mono text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <Plus size={14} className="text-cyan-400" />
+                        <span>NEUE KOMPETENZ ANBINDEN (AGENTEN-INTEGRATION)</span>
+                      </h3>
+                      <p className="text-[10px] text-white/40 leading-normal font-sans mt-1">
+                        Integrieren Sie neue AI-Modul-Fähigkeiten direkt in das dezentrale Master-Supervisor Netzwerk der CAPITAL-AI Plattform (Version 0.5.4).
+                      </p>
+                    </div>
 
-                          <button
-                            onClick={() => handleToggleAgent(agent.id)}
-                            className={`px-3 py-1.5 rounded-lg font-mono text-[9px] font-bold uppercase border cursor-pointer transition-all ${
-                              isActive
-                                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20 hover:bg-rose-950/20 hover:text-rose-400 hover:border-rose-500/20'
-                                : 'bg-white/5 text-white/50 border-white/10 hover:bg-emerald-500/10 hover:text-emerald-400 hover:border-emerald-500/20'
-                            }`}
-                          >
-                            {isActive ? 'Aktiv / Stoppen' : 'Inaktiv / Start'}
-                          </button>
+                    <form onSubmit={handleRegisterAgent} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] uppercase font-bold tracking-wider text-white/50 font-mono">Agenten-Name</label>
+                          <input
+                            type="text"
+                            value={newAgentName}
+                            onChange={(e) => setNewAgentName(e.target.value)}
+                            placeholder="Z.B. DeFi Yield Optimizer"
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-white/20 focus:outline-none focus:border-cyan-500/50"
+                            required
+                          />
                         </div>
-                      );
-                    })}
+
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] uppercase font-bold tracking-wider text-white/50 font-mono">Verantwortung / Rolle</label>
+                          <input
+                            type="text"
+                            value={newAgentRole}
+                            onChange={(e) => setNewAgentRole(e.target.value)}
+                            placeholder="Z.B. Pool Liquidity Scoring"
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-white/20 focus:outline-none focus:border-cyan-500/50"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] uppercase font-bold tracking-wider text-white/50 font-mono">Basis-Modell (LLM Routing)</label>
+                        <select
+                          value={newAgentModel}
+                          onChange={(e) => setNewAgentModel(e.target.value)}
+                          className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-500/50 cursor-pointer"
+                        >
+                          <option value="gemini" className="bg-[#111114]">Google Gemini 2.5 Flash (Standard)</option>
+                          <option value="claude" className="bg-[#111114]">Anthropic Claude 3.5 Sonnet</option>
+                          <option value="gpt4" className="bg-[#111114]">OpenAI GPT-4o Engine</option>
+                          <option value="llama" className="bg-[#111114]">Meta Llama 3.3 (Local Server)</option>
+                        </select>
+                      </div>
+
+                      {registerAgentMsg && (
+                        <div className={`p-3 border rounded-xl text-xs font-mono leading-relaxed ${
+                          registerAgentMsg.isError 
+                            ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' 
+                            : 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'
+                        }`}>
+                          {registerAgentMsg.text}
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={isRegisteringAgent}
+                        className="w-full bg-cyan-500 hover:bg-cyan-600 disabled:bg-neutral-800 disabled:text-neutral-500 text-black font-mono text-[10px] font-bold uppercase tracking-wider py-2.5 px-4 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus size={13} />
+                        <span>{isRegisteringAgent ? 'Wird angebunden...' : 'Kompetenz anbinden & revisionssicher dokumentieren'}</span>
+                      </button>
+
+                      <p className="text-[9px] text-white/30 font-mono leading-relaxed mt-2 text-center">
+                        * Die Anbindung erzeugt vollautomatisch <strong>3 Revisionsdokumente</strong> (Änderungsprotokoll, Risikoanalyse und ADR-Entscheidung) unter <code>docs/</code> und unterzieht diese sofort einer AI-Hygieneprüfung.
+                      </p>
+                    </form>
                   </div>
                 </div>
 
@@ -1241,6 +1570,19 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
                 </div>
 
               </div>
+            </motion.div>
+          )}
+
+          {/* TAB 6: ENTERPRISE VERSION MANAGER */}
+          {activeTab === 'version-manager' && (
+            <motion.div
+              key="version-manager"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="space-y-6"
+            >
+              <VersionManagerPanel currentUserEmail={currentUserEmail} />
             </motion.div>
           )}
 

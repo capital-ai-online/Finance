@@ -5,7 +5,8 @@ import {
   saveSubscription,
   getSubscription,
   getLocalPdfCredits,
-  saveLocalPdfCredits
+  saveLocalPdfCredits,
+  isSupabaseConfigured
 } from './db';
 
 export const stripeRouter = express.Router();
@@ -104,6 +105,12 @@ stripeRouter.post('/create-checkout-session', async (req, res) => {
       }
     };
 
+    if (couponId) {
+      sessionData.discounts = [{ coupon: couponId }];
+    } else {
+      sessionData.allow_promotion_codes = true;
+    }
+
     if (mode === 'subscription') {
       sessionData.subscription_data = {
         metadata: {
@@ -125,7 +132,98 @@ stripeRouter.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-// 2. Stripe Configuration Status Info Endpoint
+// Coupon Validation Endpoint for Coupon application feature
+stripeRouter.post('/validate-coupon', async (req, res) => {
+  const { code } = req.body;
+  if (!code) {
+    return res.status(400).json({ error: 'Bitte geben Sie einen Gutscheincode ein.' });
+  }
+
+  const cleanCode = String(code).toUpperCase().trim();
+
+  // 1. Check for standard sandbox / demo coupons first
+  const demoCoupons: Record<string, { code: string, percent_off: number, description: string }> = {
+    'WELCOME10': { code: 'WELCOME10', percent_off: 10, description: '10% Willkommensrabatt' },
+    'SAVE10': { code: 'SAVE10', percent_off: 10, description: '10% Rabatt' },
+    'PRODUKTIV20': { code: 'PRODUKTIV20', percent_off: 20, description: '20% Produktiv-Rabatt' },
+    'SAVE20': { code: 'SAVE20', percent_off: 20, description: '20% Rabatt' },
+    'SVENSPECIAL50': { code: 'SVENSPECIAL50', percent_off: 50, description: '50% Sven Sonder-Rabatt' },
+    'SAVE50': { code: 'SAVE50', percent_off: 50, description: '50% Rabatt' },
+    'FREE100': { code: 'FREE100', percent_off: 100, description: '100% Voll-Gratis Freischaltung' }
+  };
+
+  if (demoCoupons[cleanCode]) {
+    return res.json({
+      success: true,
+      couponId: demoCoupons[cleanCode].code,
+      code: demoCoupons[cleanCode].code,
+      percent_off: demoCoupons[cleanCode].percent_off,
+      description: demoCoupons[cleanCode].description,
+      isDemo: true
+    });
+  }
+
+  // 2. If Stripe is configured, check Stripe coupons or promo codes
+  const hasStripe = !!getCleanEnv('STRIPE_SECRET_KEY');
+  if (hasStripe) {
+    try {
+      const stripe = getStripeInstance();
+      // Try listing promotion codes
+      const promoCodes = await stripe.promotionCodes.list({
+        code: cleanCode,
+        active: true,
+        limit: 1
+      });
+
+      if (promoCodes.data.length > 0) {
+        const promo = promoCodes.data[0] as any;
+        const coupon = promo.coupon;
+        return res.json({
+          success: true,
+          couponId: coupon.id,
+          code: promo.code,
+          percent_off: coupon.percent_off || null,
+          amount_off: coupon.amount_off || null,
+          currency: coupon.currency || null,
+          description: coupon.percent_off 
+            ? `${coupon.percent_off}% Rabatt (Stripe)` 
+            : coupon.amount_off 
+            ? `${(coupon.amount_off / 100).toFixed(2)} ${String(coupon.currency).toUpperCase()} Rabatt (Stripe)`
+            : 'Rabattcoupon angewendet',
+          isDemo: false
+        });
+      }
+
+      // Fallback: retrieve directly as a coupon ID
+      try {
+        const coupon = await stripe.coupons.retrieve(code.trim());
+        if (coupon && coupon.valid) {
+          return res.json({
+            success: true,
+            couponId: coupon.id,
+            code: coupon.id,
+            percent_off: coupon.percent_off || null,
+            amount_off: coupon.amount_off || null,
+            currency: coupon.currency || null,
+            description: coupon.percent_off 
+              ? `${coupon.percent_off}% Rabatt (Stripe)` 
+              : coupon.amount_off 
+              ? `${(coupon.amount_off / 100).toFixed(2)} ${String(coupon.currency).toUpperCase()} Rabatt (Stripe)`
+              : 'Rabattcoupon angewendet',
+            isDemo: false
+          });
+        }
+      } catch (err) {}
+
+    } catch (error: any) {
+      console.warn('Stripe coupon retrieval failed, but checking for local support:', error.message || error);
+    }
+  }
+
+  return res.status(404).json({ error: 'Gutscheincode ist ungültig, abgelaufen oder nicht konfiguriert.' });
+});
+
+// 2. Stripe & DB Configuration Status Info Endpoint
 stripeRouter.get('/config-status', (req, res) => {
   const sk = getCleanEnv('STRIPE_SECRET_KEY');
   const pk = getCleanEnv('STRIPE_PUBLISHABLE_KEY') || getCleanEnv('VITE_STRIPE_PUBLISHABLE_KEY');
@@ -135,6 +233,7 @@ stripeRouter.get('/config-status', (req, res) => {
     secretKeyConfigured: !!sk && !sk.startsWith('sk_test_...'),
     publishableKeyConfigured: !!pk && !pk.startsWith('pk_test_...'),
     webhookSecretConfigured: !!wh && !wh.startsWith('whsec_...'),
+    dbConfigured: isSupabaseConfigured()
   });
 });
 
@@ -274,13 +373,7 @@ export const handleWebhookEvent = async (event: Stripe.Event) => {
         saveLocalPdfCredits(identifier, newCredits);
         console.log(`✅ [Webhook Router] PDF Export Purchase complete for ${identifier}. Added 3 credits (total: ${newCredits}).`);
       } else {
-        const stripeSubscriptionId = typeof session.subscription === 'string'
-          ? session.subscription
-          : session.subscription?.id || null;
-        await saveSubscription(userId, planId, email, {
-          stripeSubscriptionId,
-          status: 'active',
-        });
+        await saveSubscription(userId, planId, email);
         console.log(`✅ [Webhook Router] User ID ${userId} (${email}) successfully upgraded to ${planId}`);
       }
     } else {
@@ -292,25 +385,14 @@ export const handleWebhookEvent = async (event: Stripe.Event) => {
     const email = subscription.metadata?.email || '';
     const planId = subscription.metadata?.plan_id || subscription.metadata?.planId;
     if (userId && planId) {
-      const currentPeriodEnd = subscription.current_period_end
-        ? new Date(subscription.current_period_end * 1000).toISOString()
-        : null;
-      await saveSubscription(userId, planId, email, {
-        stripeSubscriptionId: subscription.id,
-        status: subscription.status === 'active' || subscription.status === 'trialing' ? 'active' : subscription.status,
-        currentPeriodEnd,
-      });
+      await saveSubscription(userId, planId, email);
     }
   } else if (event.type === 'customer.subscription.deleted') {
     const subscription = event.data.object as Stripe.Subscription;
     const userId = subscription.metadata?.user_id || subscription.metadata?.userId;
     const email = subscription.metadata?.email || '';
     if (userId) {
-      await saveSubscription(userId, 'Free', email, {
-        stripeSubscriptionId: null,
-        status: 'canceled',
-        currentPeriodEnd: null,
-      });
+      await saveSubscription(userId, 'Free', email);
     }
   }
 };
