@@ -87,6 +87,17 @@
       "updatedBy": "System"
     }
   ],
+  "ADR-0008": [
+    {
+      "version": 1,
+      "title": "Behebung des Reaktivitäts- & Lebenszyklus-Ausfalls im Document Hygiene Panel",
+      "decision": "Absicherung des initialen useEffect im DocumentHygienePanel durch ein Conditional Early-Return und Einbindung von currentUserEmail in das Dependency-Array, um verfrühte administrative API-Abfragen vor abgeschlossener Benutzer-Authentifizierung zu verhindern.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-10T17:03:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
   "documentaryMetadata": {
     "system": "Capital-AI Documentary",
     "founder": "Sven Kulessa",
@@ -94,6 +105,6 @@
     "emblem": "⊞ CAPITAL-AI CORE",
     "version": "0.5.4",
     "status": "Verified & Hygienically Cleaned",
-    "timestamp": "2026-07-10T13:11:50.457Z"
+    "timestamp": "2026-07-10T16:52:27.111Z"
   }
 }

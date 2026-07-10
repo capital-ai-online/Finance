@@ -504,13 +504,14 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
   };
 
   useEffect(() => {
+    if (!currentUserEmail) return;
     fetchStatus();
     fetchHistoryFiles();
     const interval = setInterval(() => {
       fetchStatus();
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentUserEmail]);
 
   const handleReviewDecision = async (ticketId: string, decision: 'approve' | 'decline') => {
     setReviewStatusMsg(null);
@@ -1708,6 +1709,10 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
           >
+            <div className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-xs font-mono text-amber-300">
+              ⚠️ Deprecated Proof-of-Concept — simuliert IAM/Passkey/2FA rein client-seitig, ohne echte Serverprüfung.
+              Produktive IAM-Implementierung: server/iam/authMiddleware.ts (ADR-0003.5/0008).
+            </div>
             <SicherheitsmanagementPoC />
           </motion.div>
         )}

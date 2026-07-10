@@ -19,6 +19,8 @@ import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
+import { checkAdminAccess } from './server/iam/authMiddleware';
+import { SUPERVISOR_ZONE_ROLES } from './server/iam/types';
 import {
   isSupabaseConfigured,
   getServerSupabase,
@@ -1354,8 +1356,16 @@ app.get('/api/registry/assets/:symbol', (req, res) => {
 });
 
 // UPDATE asset parameters in registry dynamically
-app.post('/api/registry/assets/:symbol', express.json(), (req, res) => {
-  const { expectedReturn, volatility, drift, price, change24h, marketCap, isLocked, email } = req.body;
+app.post('/api/registry/assets/:symbol', express.json(), async (req, res) => {
+  // ADR-0003.5/0008: zuvor KEINE Zugriffsprüfung an dieser Stelle - jeder Aufrufer
+  // konnte Asset-Parameter unauthentifiziert ändern. Jetzt über IAM abgesichert
+  // (Master-Supervisor-/Orchestrator-Zone).
+  const authz = await checkAdminAccess(req, 'registry:assets:update', SUPERVISOR_ZONE_ROLES);
+  if (!authz.authorized) {
+    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.' });
+  }
+
+  const { expectedReturn, volatility, drift, price, change24h, marketCap, isLocked } = req.body;
   const symbol = req.params.symbol;
   
   if (!assetRegistry.getAsset(symbol)) {
@@ -1372,11 +1382,10 @@ app.post('/api/registry/assets/:symbol', express.json(), (req, res) => {
     isLocked: typeof isLocked === 'boolean' ? isLocked : undefined
   }, true);
 
-  const clientEmail = String(email || req.query.email || '').toLowerCase().trim();
   logSystemEvent(
     'ORCHESTRATOR',
     'Asset Parameter Update',
-    clientEmail || 'sven.kulessa@gmail.com',
+    authz.actorLabel,
     `Updated parameters for ${symbol}: Price=${price}, 24h Change=${change24h}%, Volatility=${volatility}, Drift=${drift}, expectedReturn=${expectedReturn}`,
     'SUCCESS'
   );

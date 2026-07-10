@@ -11,13 +11,14 @@ import {
   sanitizeJsonContent, 
   sanitizeAllDocs 
 } from './documentSanitizer';
+import { checkAdminAccess } from './iam/authMiddleware';
+import { ADMIN_ZONE_ROLES } from './iam/types';
 
 export const hygieneRouter = express.Router();
 
 const DOCS_DIR = path.join(process.cwd(), 'docs');
 const HISTORY_DIR = path.join(DOCS_DIR, '.history');
 const HYGIENE_DB_FILE = path.join(process.cwd(), 'uploads', 'document_hygiene.json');
-const ADMIN_EMAILS = ['sven.kulessa@gmail.com', 'sven.kulessa@gmx.net'];
 
 // Initialize Gemini Client
 const ai = new GoogleGenAI({
@@ -629,11 +630,11 @@ export function getHygieneStatusData() {
   };
 }
 
-// Restrict routes to hardcoded administrators
-function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const email = String(req.query.email || req.body.email || '').toLowerCase().trim();
-  if (!email || !ADMIN_EMAILS.includes(email)) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to hardcoded administrators only.' });
+// Restrict routes to IAM-verified administrators/owners (ADR-0003.5/0008)
+async function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authz = await checkAdminAccess(req, 'document-hygiene', ADMIN_ZONE_ROLES);
+  if (!authz.authorized) {
+    return res.status(403).json({ error: 'Access Denied: Restricted to administrators only.' });
   }
   next();
 }

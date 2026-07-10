@@ -53,10 +53,12 @@ All updates, workarounds, and environmental parameters for local and Cloud Run c
 
 ### Added
 - **ADR-0003.5 - Identity Access Management (Sicherheitsmanagement & Compliance)**: Neues Entscheidungsdokument (`docs/adr/ADR-0003_5-identity-access-management.md`) zur Definition des Owner-IAM, erzwungener Passkey (WebAuthn/FIDO2) & 2FA Multi-Faktor-Absicherung, Step-Up Tokenisierung und geschützter Systemzonen.
+- **ADR-0008 - Behebung des Reaktivitäts- & Lebenszyklus-Ausfalls im Document Hygiene Panel**: Neues Entscheidungsdokument (`docs/adr/ADR-0008-document-hygiene-lifecycle-fix.md`) zur Behebung verfrühter administrativer Status-Abfragen vor abgeschlossener Benutzer-Authentifizierung im Client.
 - **Interaktiver Proof of Concept (PoC)**: Entwicklung eines voll funktionsfähigen, interaktiven Sicherheits- & Compliance-PoC (`src/components/SicherheitsmanagementPoC.tsx`), um die neuen Authentifizierungsschleifen, geschützten Zonen und anonymisierten Audit-Logs visuell zu validieren.
 - **Anforderungskatalog Integration**: Einbindung des Anforderungskatalogs (`docs/adr/anforderungskatalog.md`) als prioritäres, ausstehendes Dokument (`PENDING`) im Documentary Wiki.
 
 ### Fixed
+- **Lebenszyklus-Fehler im Document Hygiene Panel**: Absicherung der initialen Abfragen im `DocumentHygienePanel` via Conditional Early-Return und Erweiterung des Dependency-Arrays um `currentUserEmail`. Dies verhindert unauthorisierte Backend-API-Fehler beim Laden der Komponente.
 - **Behebung von Namenskonventionsfehlern**: Bereinigung verbleibender Referenzen des Alt-Projekts `AIF-Capital-Core` in `src/components/InteractModule.tsx` hin zur einheitlichen Marken- und Systemidentität `Capital-AI`.
 
 ---

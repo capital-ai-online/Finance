@@ -24,6 +24,45 @@ export function getServerSupabase() {
   return serverSupabaseClient;
 }
 
+// ADR-0003.5/0008: Übergangs-Helper. Prüft primär profiles.role='owner' in Supabase.
+// TEMPORÄR: solange die IAM-Migration noch nicht produktiv gelaufen ist, wird auf die
+// alte hartcodierte E-Mail-Liste zurückgefallen (mit Warn-Log), damit Owner-Funktionen
+// nicht ausfallen. ENTFERNEN in Prompt 3, sobald die Migration verifiziert ist.
+const LEGACY_OWNER_EMAILS = ['sven.kulessa@gmail.com', 'sven.kulessa@gmx.net'];
+
+async function isOwnerIdentifier(rawIdentifier: string, lowerIdentifier: string): Promise<boolean> {
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = getServerSupabase();
+      const isEmail = rawIdentifier.includes('@');
+      const query = supabase.from('profiles').select('role');
+      const { data, error } = isEmail
+        ? await query.eq('email', lowerIdentifier).maybeSingle()
+        : await query.eq('id', rawIdentifier).maybeSingle();
+
+      if (!error && data) {
+        return data.role === 'owner';
+      }
+      // Kein Fehler, aber keine Daten -> Identifier unbekannt, KEIN Legacy-Fallback für unbekannte User
+      if (!error && !data) {
+        return false;
+      }
+      // error vorhanden (z.B. Spalte/Tabelle existiert noch nicht -> Migration ausstehend)
+    } catch {
+      // fällt unten auf Legacy-Check durch
+    }
+  }
+
+  if (LEGACY_OWNER_EMAILS.includes(lowerIdentifier)) {
+    console.warn(
+      `[IAM][LEGACY FALLBACK AKTIV] Owner-Bypass für ${lowerIdentifier} über hartcodierte Liste, ` +
+      `da profiles.role nicht verfügbar (Migration ausstehend?). In Prompt 3 entfernen (ADR-0003.5).`
+    );
+    return true;
+  }
+  return false;
+}
+
 const LOCAL_SUBS_FILE = path.join(process.cwd(), 'uploads', 'subscriptions.json');
 
 export function getLocalSubscriptions(): Record<string, string> {
@@ -114,10 +153,13 @@ export async function saveSubscription(userId: string, tier: string, email: stri
  */
 export async function getSubscription(userIdOrEmail: string): Promise<string> {
   const cleanKey = userIdOrEmail.trim();
-
-  // Handle owner emails bypass for direct enterprise privileges
   const cleanLower = cleanKey.toLowerCase();
-  if (cleanLower === 'sven.kulessa@gmail.com' || cleanLower === 'sven.kulessa@gmx.net') {
+
+  // ADR-0003.5/0008: Owner-Bypass war zuvor ein hartcodierter E-Mail-Vergleich.
+  // Jetzt primär gegen profiles.role='owner' geprüft; Legacy-E-Mail-Check bleibt
+  // NUR als Fallback aktiv, solange die IAM-Migration noch nicht produktiv gelaufen
+  // ist (siehe docs/adr/IAM_IMPLEMENTATION_LOG.md). In Prompt 3 entfernen.
+  if (await isOwnerIdentifier(cleanKey, cleanLower)) {
     return 'Enterprise';
   }
 
@@ -173,10 +215,11 @@ export async function getSubscription(userIdOrEmail: string): Promise<string> {
 // PDF Export Credits Tracking & Management APIs
 const LOCAL_PDF_CREDITS_FILE = path.join(process.cwd(), 'uploads', 'pdf_credits.json');
 
-export function getLocalPdfCredits(userIdentifier: string): number {
+export async function getLocalPdfCredits(userIdentifier: string): Promise<number> {
   try {
     const cleanId = userIdentifier.toLowerCase().trim();
-    if (cleanId === 'sven.kulessa@gmail.com' || cleanId === 'sven.kulessa@gmx.net') {
+    // ADR-0003.5/0008: siehe Hinweis in getSubscription() - gleiche Übergangslogik.
+    if (await isOwnerIdentifier(userIdentifier.trim(), cleanId)) {
       return 999999; // Admin/Owner unlimited credits bypass
     }
     if (fs.existsSync(LOCAL_PDF_CREDITS_FILE)) {

@@ -498,7 +498,11 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
                     className="mt-0.5 rounded border-white/20 bg-black/40 text-aif-gold-DEFAULT focus:ring-0 focus:ring-offset-0 cursor-pointer h-3.5 w-3.5"
                   />
                   <label htmlFor="terms-check" className="text-[10px] text-white/50 leading-tight cursor-pointer">
-                    Ich erkläre mich mit den Nutzungsbedingungen (AGB) und Datenschutzbestimmungen des CAPITAL-AI Netzwerks einverstanden.
+                    Ich erkläre mich mit den{' '}
+                    <a href="/impressum" className="text-aif-gold-DEFAULT hover:underline font-bold">Nutzungsbedingungen (AGB)</a>{' '}
+                    und{' '}
+                    <a href="/datenschutz" className="text-aif-gold-DEFAULT hover:underline font-bold">Datenschutzbestimmungen</a>{' '}
+                    des CAPITAL-AI Netzwerks einverstanden.
                   </label>
                 </div>
 
@@ -562,6 +566,46 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
           </div>
         </div>
       </motion.div>
+
+      {/* Public Footer containing Webscan Radar badge and Compliance Links */}
+      <footer className="relative z-10 mt-8 mb-4 w-full max-w-md text-center space-y-4">
+        {/* Compliance Links */}
+        <div className="flex items-center justify-center gap-4 text-[11px] font-mono">
+          <a 
+            href="/impressum" 
+            className="text-white/40 hover:text-aif-gold-DEFAULT transition-colors hover:underline tracking-wider uppercase font-bold"
+          >
+            Impressum
+          </a>
+          <span className="text-white/20">•</span>
+          <a 
+            href="/datenschutz" 
+            className="text-white/40 hover:text-aif-gold-DEFAULT transition-colors hover:underline tracking-wider uppercase font-bold"
+          >
+            Datenschutz
+          </a>
+        </div>
+
+        {/* Webscan Radar Badge */}
+        <div className="flex flex-col items-center justify-center gap-2">
+          <span className="text-[9px] font-mono text-white/30 uppercase tracking-widest block">
+            System Security Verified By
+          </span>
+          <a 
+            href="https://webscan-radar.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-block transition-all hover:scale-105 active:scale-95 duration-200"
+          >
+            <img 
+              src="https://webscan-radar.com/badge/capital-ai.online" 
+              alt="Sicherheits-Score von Webscan Radar" 
+              className="h-9 w-auto rounded border border-white/10 shadow-lg"
+              referrerPolicy="no-referrer"
+            />
+          </a>
+        </div>
+      </footer>
 
 
 

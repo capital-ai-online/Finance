@@ -18,9 +18,12 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { supabase } from '../supabaseClient';
 
-// Hardcoded authorized administrator emails matching AdminPortal
-const ADMIN_EMAILS = ['sven.kulessa@gmail.com', 'sven.kulessa@gmx.net'];
+// ADR-0003.5/0008: Die frühere client-seitige ADMIN_EMAILS-Prüfung wurde entfernt.
+// Diese Komponente trifft keine eigene Autorisierungsentscheidung mehr - Sichtbarkeit
+// richtet sich ausschließlich nach der Server-Antwort (401/403) auf jeden Request.
+// isAdmin/ADMIN_EMAILS hier zu reproduzieren wäre reine UI-Kosmetik ohne Sicherheitswert.
 
 export interface SystemEvent {
   id: string;
@@ -38,7 +41,9 @@ interface AuditLogProps {
 }
 
 export function AuditLog({ currentUserEmail }: AuditLogProps) {
-  const isAdmin = ADMIN_EMAILS.includes(currentUserEmail);
+  // Wird erst nach der ersten Server-Antwort gesetzt - vorher unbekannt (null),
+  // damit keine UI-Entscheidung auf Basis von Client-Daten getroffen wird.
+  const [accessDenied, setAccessDenied] = useState<boolean | null>(null);
 
   const [events, setEvents] = useState<SystemEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -60,17 +65,25 @@ export function AuditLog({ currentUserEmail }: AuditLogProps) {
   const [submitSuccess, setSubmitSuccess] = useState<boolean>(false);
 
   const fetchEvents = async () => {
-    if (!isAdmin) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/system-events?email=${encodeURIComponent(currentUserEmail)}`);
+      const session = supabase ? (await supabase.auth.getSession()).data.session : null;
+      const headers: Record<string, string> = {};
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+      // email-Query bleibt als Übergangs-Fallback bestehen, bis die IAM-Migration
+      // produktiv läuft (siehe server/iam/authMiddleware.ts) - entscheidend ist der Token.
+      const res = await fetch(`/api/admin/system-events?email=${encodeURIComponent(currentUserEmail)}`, { headers });
+      if (res.status === 401 || res.status === 403) {
+        setAccessDenied(true);
+        throw new Error('Access Denied: Kein ausreichend berechtigter Zugriff.');
+      }
       if (!res.ok) {
-        if (res.status === 403) {
-          throw new Error('Access Denied (403): Unauthorized access attempt detected.');
-        }
         throw new Error('Fehler beim Abrufen des Aktivitäts-Protokolls.');
       }
+      setAccessDenied(false);
       const data = await res.json();
       setEvents(data.events || []);
     } catch (err: any) {
@@ -87,14 +100,19 @@ export function AuditLog({ currentUserEmail }: AuditLogProps) {
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAdmin || !newAction || !newDetails) return;
+    if (!newAction || !newDetails) return;
 
     setSubmitLoading(true);
     setSubmitSuccess(false);
     try {
+      const session = supabase ? (await supabase.auth.getSession()).data.session : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
       const res = await fetch('/api/admin/system-events', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           email: currentUserEmail,
           type: newType,
@@ -105,6 +123,10 @@ export function AuditLog({ currentUserEmail }: AuditLogProps) {
         })
       });
 
+      if (res.status === 401 || res.status === 403) {
+        setAccessDenied(true);
+        throw new Error('Access Denied: Kein ausreichend berechtigter Zugriff.');
+      }
       if (!res.ok) {
         throw new Error('Konnte manuelles Ereignis nicht registrieren.');
       }
@@ -135,7 +157,7 @@ export function AuditLog({ currentUserEmail }: AuditLogProps) {
     downloadAnchor.remove();
   };
 
-  if (!isAdmin) {
+  if (accessDenied) {
     return (
       <div id="unauthorized-audit-view" className="bg-[#1C1C21]/80 border border-rose-500/20 rounded-2xl p-8 text-center space-y-4 backdrop-blur-xl">
         <div className="mx-auto w-12 h-12 rounded-xl bg-rose-500/10 flex items-center justify-center border border-rose-500/30">

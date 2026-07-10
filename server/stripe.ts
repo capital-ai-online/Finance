@@ -318,7 +318,7 @@ stripeRouter.get('/pdf-credits', async (req, res) => {
     isUnlimited = (tier === 'Enterprise');
   }
   
-  const credits = getLocalPdfCredits(identifier);
+  const credits = await getLocalPdfCredits(identifier);
   res.json({ credits, unlimited: isUnlimited });
 });
 
@@ -342,7 +342,7 @@ stripeRouter.post('/consume-pdf-credit', async (req, res) => {
     return res.json({ success: true, credits: 9999, unlimited: true });
   }
   
-  const current = getLocalPdfCredits(identifier);
+  const current = await getLocalPdfCredits(identifier);
   if (current <= 0) {
     return res.status(402).json({ error: 'Sie haben keine PDF-Export-Credits mehr übrig. Bitte erwerben Sie neue Credits oder wechseln Sie zum Pro/Enterprise-Plan.' });
   }
@@ -368,7 +368,7 @@ export const handleWebhookEvent = async (event: Stripe.Event) => {
       const planUpper = String(planId).toUpperCase();
       if (planUpper === 'PDF' || planUpper === 'PDF_EXPORT' || planUpper === 'EXPORT_PDF') {
         const identifier = userId || email;
-        const currentCredits = getLocalPdfCredits(identifier);
+        const currentCredits = await getLocalPdfCredits(identifier);
         const newCredits = currentCredits + 3;
         saveLocalPdfCredits(identifier, newCredits);
         console.log(`✅ [Webhook Router] PDF Export Purchase complete for ${identifier}. Added 3 credits (total: ${newCredits}).`);

@@ -23,9 +23,7 @@ import { DocumentHygienePanel } from './DocumentHygienePanel';
 import { SupervisorDashboard } from './SupervisorDashboard';
 import { ComplianceBadge } from './ComplianceBadge';
 import { ComplianceNotifications } from './ComplianceNotifications';
-
-// Hardcoded authorized administrator emails
-const ADMIN_EMAILS = ['sven.kulessa@gmail.com', 'sven.kulessa@gmx.net'];
+import { supabase } from '../supabaseClient';
 
 interface AdminPortalProps {
   currentUserEmail: string;
@@ -34,11 +32,58 @@ interface AdminPortalProps {
 }
 
 export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminPortalProps) {
-  // Exclusively check for authorized admin email addresses
-  const isAdmin = ADMIN_EMAILS.includes(currentUserEmail);
+  // ADR-0003.5/0008: keine client-seitige E-Mail-Liste mehr. Die Rolle wird per
+  // RLS-geschützter Supabase-Abfrage der eigenen profiles-Zeile ermittelt (auth.uid() = id).
+  // Das ist weiterhin NUR ein UX-Hinweis - die eigentliche Autorisierung jedes einzelnen
+  // Requests erfolgt serverseitig in den jeweiligen Panels (AuditLog, DocumentHygienePanel, ...).
+  const [roleCheckState, setRoleCheckState] = React.useState<'loading' | 'authorized' | 'denied'>('loading');
   const [logSubTab, setLogSubTab] = React.useState<'system' | 'files'>('system');
 
-  if (!isAdmin) {
+  React.useEffect(() => {
+    let cancelled = false;
+    async function verifyRole() {
+      if (!supabase) {
+        // Kein Supabase konfiguriert -> Migration/IAM noch nicht aktiv, UI-Gate deaktiviert lassen.
+        // Echte Absicherung bleibt in jedem Fall serverseitig in den einzelnen Panels bestehen.
+        if (!cancelled) setRoleCheckState('authorized');
+        return;
+      }
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData?.user) {
+          if (!cancelled) setRoleCheckState('denied');
+          return;
+        }
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userData.user.id)
+          .maybeSingle();
+
+        if (error || !profile) {
+          // profiles.role evtl. noch nicht migriert -> UI nicht blockieren, Server entscheidet ohnehin.
+          if (!cancelled) setRoleCheckState('authorized');
+          return;
+        }
+        const authorized = profile.role === 'owner' || profile.role === 'admin';
+        if (!cancelled) setRoleCheckState(authorized ? 'authorized' : 'denied');
+      } catch {
+        if (!cancelled) setRoleCheckState('authorized'); // Server bleibt die eigentliche Instanz
+      }
+    }
+    verifyRole();
+    return () => { cancelled = true; };
+  }, []);
+
+  if (roleCheckState === 'loading') {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-xs font-mono text-white/40 uppercase tracking-widest">Prüfe Berechtigungen…</div>
+      </div>
+    );
+  }
+
+  if (roleCheckState === 'denied') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
         <motion.div 

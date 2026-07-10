@@ -2,11 +2,12 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { getHygieneStatusData, processFileEvent } from './documentHygiene';
+import { checkAdminAccess } from './iam/authMiddleware';
+import { SUPERVISOR_ZONE_ROLES } from './iam/types';
 
 export const systemEventsRouter = express.Router();
 
 const SYSTEM_EVENTS_FILE = path.join(process.cwd(), 'uploads', 'system_events.json');
-const ADMIN_EMAILS = ['sven.kulessa@gmail.com', 'sven.kulessa@gmx.net'];
 
 export interface SystemEvent {
   id: string;
@@ -126,11 +127,10 @@ export function logSystemEvent(
 }
 
 // SECURE API Endpoint for fetching system events - strictly restricted to admin emails
-systemEventsRouter.get('/system-events', (req, res) => {
-  const email = String(req.query.email || '').toLowerCase().trim();
-
-  if (!email || !ADMIN_EMAILS.includes(email)) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to hardcoded administrators only.' });
+systemEventsRouter.get('/system-events', async (req, res) => {
+  const authz = await checkAdminAccess(req, 'system-events:read');
+  if (!authz.authorized) {
+    return res.status(403).json({ error: 'Access Denied: Restricted to administrators only.' });
   }
 
   const events = getSystemEvents();
@@ -138,11 +138,10 @@ systemEventsRouter.get('/system-events', (req, res) => {
 });
 
 // GET real-time SSE stream for administrators
-systemEventsRouter.get('/system-events/stream', (req, res) => {
-  const email = String(req.query.email || '').toLowerCase().trim();
-
-  if (!email || !ADMIN_EMAILS.includes(email)) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to hardcoded administrators only.' });
+systemEventsRouter.get('/system-events/stream', async (req, res) => {
+  const authz = await checkAdminAccess(req, 'system-events:stream');
+  if (!authz.authorized) {
+    return res.status(403).json({ error: 'Access Denied: Restricted to administrators only.' });
   }
 
   res.setHeader('Content-Type', 'text/event-stream');
@@ -169,11 +168,10 @@ systemEventsRouter.get('/system-events/stream', (req, res) => {
 });
 
 // Endpoint to append a manual event (useful for admin testing)
-systemEventsRouter.post('/system-events', (req, res) => {
-  const email = String(req.body.email || '').toLowerCase().trim();
-
-  if (!email || !ADMIN_EMAILS.includes(email)) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to hardcoded administrators only.' });
+systemEventsRouter.post('/system-events', async (req, res) => {
+  const authz = await checkAdminAccess(req, 'system-events:write');
+  if (!authz.authorized) {
+    return res.status(403).json({ error: 'Access Denied: Restricted to administrators only.' });
   }
 
   const { type, action, details, status, targetEmail } = req.body;
@@ -181,16 +179,15 @@ systemEventsRouter.post('/system-events', (req, res) => {
     return res.status(400).json({ error: 'Type, action and details are required.' });
   }
 
-  logSystemEvent(type, action, targetEmail || email, details, status || 'SUCCESS');
+  logSystemEvent(type, action, targetEmail || authz.actorLabel, details, status || 'SUCCESS');
   res.json({ success: true, events: getSystemEvents() });
 });
 
 // GET current status of the document orchestration pipeline and summary of recent events
-systemEventsRouter.get('/doc-status', (req, res) => {
-  const email = String(req.query.email || '').toLowerCase().trim();
-
-  if (!email || !ADMIN_EMAILS.includes(email)) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to hardcoded administrators only.' });
+systemEventsRouter.get('/doc-status', async (req, res) => {
+  const authz = await checkAdminAccess(req, 'doc-status');
+  if (!authz.authorized) {
+    return res.status(403).json({ error: 'Access Denied: Restricted to administrators only.' });
   }
 
   try {
@@ -296,19 +293,19 @@ export function updateAgentActivity(id: string, activeTask: string, isStarting: 
 }
 
 // 1. GET all agents
-systemEventsRouter.get('/agents', (req, res) => {
-  const email = String(req.query.email || '').toLowerCase().trim();
-  if (!email || !ADMIN_EMAILS.includes(email)) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to hardcoded administrators only.' });
+systemEventsRouter.get('/agents', async (req, res) => {
+  const authz = await checkAdminAccess(req, 'agents:read', SUPERVISOR_ZONE_ROLES);
+  if (!authz.authorized) {
+    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.' });
   }
   res.json({ success: true, agents: getAgentsRegistry() });
 });
 
 // 2. POST register a new agent & auto-generate 3 document types (Changes, Risks, ADR/Derivation)
-systemEventsRouter.post('/agents/register', (req, res) => {
-  const email = String(req.body.email || '').toLowerCase().trim();
-  if (!email || !ADMIN_EMAILS.includes(email)) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to hardcoded administrators only.' });
+systemEventsRouter.post('/agents/register', async (req, res) => {
+  const authz = await checkAdminAccess(req, 'agents:register', SUPERVISOR_ZONE_ROLES);
+  if (!authz.authorized) {
+    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.' });
   }
 
   const { name, role, model } = req.body;
@@ -469,11 +466,12 @@ Wir binden den Agenten \`${newAgent.id}\` mit dem Modell \`${newAgent.model}\` f
 });
 
 // 3. POST toggle agent status
-systemEventsRouter.post('/agents/toggle', (req, res) => {
-  const email = String(req.body.email || '').toLowerCase().trim();
-  if (!email || !ADMIN_EMAILS.includes(email)) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to hardcoded administrators only.' });
+systemEventsRouter.post('/agents/toggle', async (req, res) => {
+  const authz = await checkAdminAccess(req, 'agents:toggle', SUPERVISOR_ZONE_ROLES);
+  if (!authz.authorized) {
+    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.' });
   }
+  const email = authz.actorLabel;
 
   const { id } = req.body;
   if (!id) {
@@ -508,10 +506,10 @@ systemEventsRouter.post('/agents/toggle', (req, res) => {
 });
 
 // 4. GET Orchestrator Connection status
-systemEventsRouter.get('/orchestrators/status', (req, res) => {
-  const email = String(req.query.email || '').toLowerCase().trim();
-  if (!email || !ADMIN_EMAILS.includes(email)) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to hardcoded administrators only.' });
+systemEventsRouter.get('/orchestrators/status', async (req, res) => {
+  const authz = await checkAdminAccess(req, 'orchestrators:status', SUPERVISOR_ZONE_ROLES);
+  if (!authz.authorized) {
+    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.' });
   }
 
   const rnd = () => Math.floor(Math.random() * 15);

@@ -3,13 +3,14 @@ import path from 'path';
 import express from 'express';
 import { logSystemEvent } from './systemEvents';
 import { processFileEvent } from './documentHygiene';
+import { checkAdminAccess } from './iam/authMiddleware';
+import { SUPERVISOR_ZONE_ROLES } from './iam/types';
 
 export const versionManagerRouter = express.Router();
 
 const VERSION_DB_FILE = path.join(process.cwd(), 'uploads', 'version_manager.json');
 const DOCS_DIR = path.join(process.cwd(), 'docs');
 const ADR_DIR = path.join(DOCS_DIR, 'adr');
-const ADMIN_EMAILS = ['sven.kulessa@gmail.com', 'sven.kulessa@gmx.net'];
 
 export interface VersionState {
   version: string;
@@ -610,10 +611,10 @@ Dieses Dokument stellt das systemische Wissen für zukünftige Entwickler und KI
 
 // ----------------- EXPRESS API ROUTES -----------------
 
-function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const email = String(req.query.email || req.body.email || '').toLowerCase().trim();
-  if (!email || !ADMIN_EMAILS.includes(email)) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to hardcoded administrators only.' });
+async function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authz = await checkAdminAccess(req, 'version-manager', SUPERVISOR_ZONE_ROLES);
+  if (!authz.authorized) {
+    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.' });
   }
   next();
 }

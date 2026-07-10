@@ -1,3 +1,10 @@
+// ⚠️ DEPRECATED / PoC — NICHT PRODUKTIV.
+// Diese Komponente simuliert IAM/Passkey/2FA rein client-seitig (fake JWT, fake WebAuthn)
+// und wird durch keine echte Server-Prüfung abgesichert. Sie diente als Konzeptnachweis
+// für ADR-0003.5/0008. Die produktive Implementierung liegt in server/iam/authMiddleware.ts
+// (Supabase-gestützt) und den migrierten Routen in systemEvents.ts, versionManager.ts,
+// documentHygiene.ts, server.ts, db.ts. Siehe docs/adr/IAM_IMPLEMENTATION_LOG.md.
+// Diese Datei nicht mehr in produktive Navigationspfade einbinden.
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
