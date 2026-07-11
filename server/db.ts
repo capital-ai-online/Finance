@@ -24,7 +24,9 @@ export function getServerSupabase() {
   return serverSupabaseClient;
 }
 
-// ADR-0003.5/0008: Übergangs-Helper. Prüft primär profiles.role='owner' in Supabase.
+// ADR-0003.5/0008: Übergangs-Helper. Prüft primär profiles.iam_role='owner' in Supabase.
+// (profiles.role ist bereits mit anderer Bedeutung belegt: Abo-Tier free/pro/enterprise -
+// die IAM-Berechtigungsrolle liegt deshalb in der separaten Spalte iam_role.)
 // TEMPORÄR: solange die IAM-Migration noch nicht produktiv gelaufen ist, wird auf die
 // alte hartcodierte E-Mail-Liste zurückgefallen (mit Warn-Log), damit Owner-Funktionen
 // nicht ausfallen. ENTFERNEN in Prompt 3, sobald die Migration verifiziert ist.
@@ -35,13 +37,13 @@ async function isOwnerIdentifier(rawIdentifier: string, lowerIdentifier: string)
     try {
       const supabase = getServerSupabase();
       const isEmail = rawIdentifier.includes('@');
-      const query = supabase.from('profiles').select('role');
+      const query = supabase.from('profiles').select('iam_role');
       const { data, error } = isEmail
         ? await query.eq('email', lowerIdentifier).maybeSingle()
         : await query.eq('id', rawIdentifier).maybeSingle();
 
       if (!error && data) {
-        return data.role === 'owner';
+        return data.iam_role === 'owner';
       }
       // Kein Fehler, aber keine Daten -> Identifier unbekannt, KEIN Legacy-Fallback für unbekannte User
       if (!error && !data) {
@@ -56,7 +58,7 @@ async function isOwnerIdentifier(rawIdentifier: string, lowerIdentifier: string)
   if (LEGACY_OWNER_EMAILS.includes(lowerIdentifier)) {
     console.warn(
       `[IAM][LEGACY FALLBACK AKTIV] Owner-Bypass für ${lowerIdentifier} über hartcodierte Liste, ` +
-      `da profiles.role nicht verfügbar (Migration ausstehend?). In Prompt 3 entfernen (ADR-0003.5).`
+      `da profiles.iam_role nicht verfügbar (Migration ausstehend?). In Prompt 3 entfernen (ADR-0003.5).`
     );
     return true;
   }
@@ -156,7 +158,7 @@ export async function getSubscription(userIdOrEmail: string): Promise<string> {
   const cleanLower = cleanKey.toLowerCase();
 
   // ADR-0003.5/0008: Owner-Bypass war zuvor ein hartcodierter E-Mail-Vergleich.
-  // Jetzt primär gegen profiles.role='owner' geprüft; Legacy-E-Mail-Check bleibt
+  // Jetzt primär gegen profiles.iam_role='owner' geprüft; Legacy-E-Mail-Check bleibt
   // NUR als Fallback aktiv, solange die IAM-Migration noch nicht produktiv gelaufen
   // ist (siehe docs/adr/IAM_IMPLEMENTATION_LOG.md). In Prompt 3 entfernen.
   if (await isOwnerIdentifier(cleanKey, cleanLower)) {
