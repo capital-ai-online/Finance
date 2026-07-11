@@ -38,7 +38,7 @@ async function resolveRoleFromToken(token: string): Promise<{ role: Role | null;
 
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
-      .select('role')
+      .select('iam_role')
       .eq('id', userData.user.id)
       .single();
 
@@ -46,7 +46,7 @@ async function resolveRoleFromToken(token: string): Promise<{ role: Role | null;
       // profiles.role existiert evtl. noch nicht (Migration ausstehend) -> kontrolliert null zurückgeben
       return { role: null, userId: userData.user.id };
     }
-    return { role: (profile.role as Role) || 'user', userId: userData.user.id };
+    return { role: (profile.iam_role as Role) || 'user', userId: userData.user.id };
   } catch {
     return { role: null };
   }
