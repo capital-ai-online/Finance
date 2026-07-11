@@ -56,16 +56,16 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
         }
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('role')
+          .select('iam_role')
           .eq('id', userData.user.id)
           .maybeSingle();
 
         if (error || !profile) {
-          // profiles.role evtl. noch nicht migriert -> UI nicht blockieren, Server entscheidet ohnehin.
+          // profiles.iam_role evtl. noch nicht migriert -> UI nicht blockieren, Server entscheidet ohnehin.
           if (!cancelled) setRoleCheckState('authorized');
           return;
         }
-        const authorized = profile.role === 'owner' || profile.role === 'admin';
+        const authorized = profile.iam_role === 'owner' || profile.iam_role === 'admin';
         if (!cancelled) setRoleCheckState(authorized ? 'authorized' : 'denied');
       } catch {
         if (!cancelled) setRoleCheckState('authorized'); // Server bleibt die eigentliche Instanz
