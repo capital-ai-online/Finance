@@ -6,10 +6,12 @@
 -- Diese Datei ist idempotent geschrieben (IF NOT EXISTS / DO-Blöcke), kann also gefahrlos
 -- erneut ausgeführt werden, falls ein Lauf abbricht.
 
--- 1. Rollenfeld auf bestehender profiles-Tabelle
+-- 1. IAM-Rollenfeld auf bestehender profiles-Tabelle
+--    WICHTIG: 'role' existierte bereits mit anderer Bedeutung (Abo-Tier: free/pro/enterprise).
+--    Um Kollision zu vermeiden, wird die IAM-Berechtigungsrolle in einer separaten Spalte geführt.
 alter table public.profiles
-  add column if not exists role text
-    check (role in ('owner','admin','supervisor','user'))
+  add column if not exists iam_role text
+    check (iam_role in ('owner','admin','supervisor','user'))
     default 'user';
 
 -- 2. Audit-Trail für IAM-relevante Ereignisse (Rollenänderungen, Break-Glass, Step-up)
