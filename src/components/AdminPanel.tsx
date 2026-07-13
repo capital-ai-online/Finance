@@ -47,6 +47,14 @@ import { ComplianceBadge } from './ComplianceBadge';
 
 interface AdminPanelProps {
   currentUserEmail: string;
+  /**
+   * ADR-0003.5: keine eigene E-Mail-Liste mehr in diesem Panel. Der Autorisierungsstatus
+   * wird ausschließlich von AdminPortal.tsx über die RLS-geschützte profiles.iam_role-Abfrage
+   * ermittelt und hier als bereits geprüftes Ergebnis durchgereicht. Dies ist weiterhin nur
+   * ein UX-Gate — die eigentliche Durchsetzung erfolgt serverseitig in jedem Request über
+   * checkAdminAccess() (server/iam/authMiddleware.ts).
+   */
+  isAuthorized: boolean;
 }
 
 interface MockUser {
@@ -59,10 +67,10 @@ interface MockUser {
   requestsCount: number;
 }
 
-export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
-  // Check if current user is indeed Sven Kulessa (Global Administrator)
-  const isOwner = currentUserEmail === 'sven.kulessa@gmail.com' || currentUserEmail === 'sven.kulessa@gmx.net';
-  const isGuestBypass = false;
+export function AdminPanel({ currentUserEmail, isAuthorized }: AdminPanelProps) {
+  // ADR-0003.5: Autorisierung kommt ausschließlich aus AdminPortal (RLS-geprüfte
+  // profiles.iam_role-Abfrage), keine hartcodierte E-Mail-Liste mehr in diesem Panel.
+  const isOwner = isAuthorized;
 
   // State for search and filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -343,28 +351,24 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
             <span className="px-2.5 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-aif-neon-purple text-white border border-aif-neon-purple/40 uppercase shadow-[0_0_10px_rgba(176,38,255,0.4)] animate-pulse">
               ADMIN-COCKPIT
             </span>
-            <span className={`px-2.5 py-0.5 rounded text-[9px] font-mono font-black tracking-widest border uppercase ${
-              isGuestBypass 
-                ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
-                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-            }`}>
-              {isGuestBypass ? 'Dev-Station Bypass' : 'Owner Verified'}
+            <span className="px-2.5 py-0.5 rounded text-[9px] font-mono font-black tracking-widest border uppercase bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+              Owner Verified
             </span>
           </div>
           <h1 className="text-2xl font-black font-display text-white uppercase tracking-wider flex items-center gap-2.5">
             <span>CAPITAL-AI System-Management</span>
           </h1>
           <p className="text-xs text-white/70 leading-relaxed max-w-xl">
-            Willkommen zurück, <strong className="text-white">Sven Kulessa</strong>. {isGuestBypass ? 'Du bist über den Dev-Station-Gast-Bypass angemeldet.' : 'Überwache KPIs, verwalte Privilegien und konfiguriere das kommende Investoren-Abo.'}
+            Willkommen zurück, <strong className="text-white">Sven Kulessa</strong>. Überwache KPIs, verwalte Privilegien und konfiguriere das kommende Investoren-Abo.
           </p>
         </div>
         <div className="flex items-center gap-4 bg-black/60 border border-aif-neon-purple/30 rounded-xl px-4 py-3 self-stretch md:self-auto justify-between shadow-[0_0_15px_rgba(176,38,255,0.05)]">
           <div className="text-left">
-            <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">{isGuestBypass ? 'Dev-Bypass-Modus' : 'Eingeloggter Admin'}</div>
-            <div className="text-xs font-mono text-aif-neon-purple font-black">{isGuestBypass ? 'gast@capital-ai.de (Sven)' : 'sven.kulessa@gmail.com'}</div>
+            <div className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Eingeloggter Admin</div>
+            <div className="text-xs font-mono text-aif-neon-purple font-black">{currentUserEmail}</div>
           </div>
           <div className="p-1.5 rounded-lg bg-aif-neon-purple/10 border border-aif-neon-purple/30">
-            <Check size={16} className={isGuestBypass ? 'text-amber-400 shrink-0' : 'text-aif-neon-purple shrink-0'} />
+            <Check size={16} className="text-aif-neon-purple shrink-0" />
           </div>
         </div>
       </div>

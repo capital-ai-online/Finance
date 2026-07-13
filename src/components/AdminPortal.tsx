@@ -288,7 +288,10 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
         className="space-y-6"
       >
         {activeTab === 'users' && (
-          <AdminPanel currentUserEmail={currentUserEmail} />
+          <AdminPanel
+            currentUserEmail={currentUserEmail}
+            isAuthorized={roleCheckState === 'authorized'}
+          />
         )}
         
         {activeTab === 'auth' && (
