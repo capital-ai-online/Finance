@@ -1,29 +1,23 @@
 // ADR-0003.5 / ADR-0008 — zentrale IAM-Autorisierung.
 //
-// WICHTIG (Übergangsphase): Solange die Supabase-Migration aus
-// supabase/migrations/<timestamp>_iam.sql in Produktion noch NICHT ausgeführt wurde
-// (profiles.role, audit_logs_iam, iam_access_log existieren noch nicht), fällt diese
-// Middleware kontrolliert auf die alte ADMIN_EMAILS-Liste zurück, damit zwischen
-// Code-Deployment (Prompt 1) und Migrationsausführung (Prompt 2) keine Admin-/
-// Owner-Funktionalität ausfällt.
-//
-// ENTFERNEN in Prompt 3: sobald docs/adr/IAM_IMPLEMENTATION_LOG.md die erfolgreiche
-// Migration bestätigt, müssen LEGACY_ADMIN_EMAILS und der gesamte Fallback-Zweig
-// entfernt werden. Bis dahin gilt jeder Fallback-Zugriff als NICHT vollständig
-// ADR-konform und wird deshalb mit einem expliziten Warn-Log markiert.
+// Produktions-Migration (supabase/migrations/20260711000000_iam.sql) ist verifiziert
+// live: profiles.iam_role, audit_logs_iam und iam_access_log existieren produktiv
+// (verifiziert 2026-07-13). Der frühere Übergangs-Fallback auf eine hartcodierte
+// LEGACY_ADMIN_EMAILS-Liste wurde daher entfernt: er prüfte serverseitig keinerlei
+// Credential (nur req.query.email / req.body.email) und war damit ein unauthentifizierter
+// Privilege-Escalation-Pfad auf alle an checkAdminAccess() hängenden Zonen, unabhängig
+// vom tatsächlichen Migrationsstatus. Autorisierung läuft jetzt ausschließlich über
+// verifizierte Supabase-Session-Tokens gegen profiles.iam_role.
 
 import type { Request } from 'express';
 import { getServerSupabase, isSupabaseConfigured } from '../db';
 import type { Role } from './types';
 import { ADMIN_ZONE_ROLES } from './types';
 
-// TEMPORÄR — nur bis Migration produktiv verifiziert ist (siehe Hinweis oben).
-const LEGACY_ADMIN_EMAILS = ['sven.kulessa@gmail.com', 'sven.kulessa@gmx.net'];
-
 export interface AuthzResult {
   authorized: boolean;
-  role: Role | 'legacy-admin' | null;
-  reason: 'iam-role' | 'insufficient-role' | 'legacy-fallback' | 'no-valid-credentials';
+  role: Role | null;
+  reason: 'iam-role' | 'insufficient-role' | 'no-valid-credentials' | 'supabase-not-configured';
   userId?: string;
   /** Für Logging/Anzeige-Zwecke, NICHT für Autorisierungsentscheidungen verwenden. */
   actorLabel: string;
@@ -60,15 +54,11 @@ async function logAccess(role: string, zone: string, outcome: 'GRANTED' | 'DENIE
       role,
       zone,
       outcome,
-      token_id: tokenRef ? `tok_${tokenRef.slice(0, 10)}` : 'legacy-email',
+      token_id: tokenRef ? `tok_${tokenRef.slice(0, 10)}` : 'no-token',
     });
   } catch {
     // iam_access_log existiert evtl. noch nicht (Migration ausstehend) -> Request nicht blockieren
   }
-}
-
-function extractLegacyEmail(req: Request): string {
-  return String(req.query.email || req.body?.email || '').toLowerCase().trim();
 }
 
 /**
@@ -84,35 +74,33 @@ export async function checkAdminAccess(
   zone: string,
   allowedRoles: Role[] = ADMIN_ZONE_ROLES
 ): Promise<AuthzResult> {
+  if (!isSupabaseConfigured()) {
+    // Fail closed: ohne Supabase kann keine Rolle verifiziert werden. Kein Fallback.
+    console.error(`[IAM][BLOCKED] Zone "${zone}" — Supabase nicht konfiguriert, Zugriff verweigert (fail-closed).`);
+    return { authorized: false, role: null, reason: 'supabase-not-configured', actorLabel: 'unknown' };
+  }
+
   const authHeader = req.headers.authorization || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
 
-  if (token) {
-    const { role, userId } = await resolveRoleFromToken(token);
-    if (role && allowedRoles.includes(role)) {
-      await logAccess(role, zone, 'GRANTED', token);
-      return { authorized: true, role, reason: 'iam-role', userId, actorLabel: userId || role };
-    }
-    if (role) {
-      await logAccess(role, zone, 'DENIED', token);
-      return { authorized: false, role, reason: 'insufficient-role', actorLabel: userId || role };
-    }
-    // role konnte nicht ermittelt werden (keine Session ODER Migration noch nicht ausgeführt)
-    // -> kontrollierter Fallback unten, kein sofortiger Abbruch
+  if (!token) {
+    await logAccess('unknown', zone, 'DENIED');
+    return { authorized: false, role: null, reason: 'no-valid-credentials', actorLabel: 'unknown' };
   }
 
-  const legacyEmail = extractLegacyEmail(req);
-  if (legacyEmail && LEGACY_ADMIN_EMAILS.includes(legacyEmail)) {
-    console.warn(
-      `[IAM][LEGACY FALLBACK AKTIV] Zone "${zone}" — Supabase-Rollenprüfung nicht verfügbar (Migration ausstehend?), ` +
-      `ADMIN_EMAILS-Fallback genutzt für ${legacyEmail}. Fallback nach Migrationsabschluss in Prompt 3 entfernen (ADR-0003.5).`
-    );
-    await logAccess('legacy-admin', zone, 'GRANTED');
-    return { authorized: true, role: 'legacy-admin', reason: 'legacy-fallback', actorLabel: legacyEmail };
+  const { role, userId } = await resolveRoleFromToken(token);
+
+  if (role && allowedRoles.includes(role)) {
+    await logAccess(role, zone, 'GRANTED', token);
+    return { authorized: true, role, reason: 'iam-role', userId, actorLabel: userId || role };
+  }
+  if (role) {
+    await logAccess(role, zone, 'DENIED', token);
+    return { authorized: false, role, reason: 'insufficient-role', actorLabel: userId || role };
   }
 
-  await logAccess('unknown', zone, 'DENIED', token || undefined);
-  return { authorized: false, role: null, reason: 'no-valid-credentials', actorLabel: legacyEmail || 'unknown' };
+  await logAccess('unknown', zone, 'DENIED', token);
+  return { authorized: false, role: null, reason: 'no-valid-credentials', actorLabel: 'unknown' };
 }
 
 /**
