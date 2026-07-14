@@ -29,9 +29,24 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CapitalAiLogo } from './CapitalAiLogo';
 import { AdrForm } from './AdrForm';
 import SicherheitsmanagementPoC from './SicherheitsmanagementPoC';
+import { supabase } from '../supabaseClient';
 
 interface DocumentHygienePanelProps {
   currentUserEmail: string;
+}
+
+// ADR-0003.5: zentrale Fetch-Hilfsfunktion für alle /api/admin/hygiene/*-Aufrufe.
+// Hängt das Supabase-Session-Token als Bearer-Header an; ersetzt die frühere
+// ?email=...-Query, die server/iam/authMiddleware.ts nicht mehr auswertet.
+async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const session = supabase ? (await supabase.auth.getSession()).data.session : null;
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> | undefined),
+  };
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
+  return fetch(url, { ...options, headers });
 }
 
 interface ReviewTicket {
@@ -121,7 +136,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
     setIsAdrsLoading(true);
     setAdrError(null);
     try {
-      const res = await fetch(`/api/admin/hygiene/adr?email=${encodeURIComponent(currentUserEmail)}`);
+      const res = await authFetch('/api/admin/hygiene/adr');
       if (res.ok) {
         const data = await res.json();
         const sorted = (data.adrs || []).sort((a: any, b: any) => {
@@ -145,7 +160,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
   const fetchAdrHistory = async (adrId: string) => {
     setIsHistoryLoading(true);
     try {
-      const res = await fetch(`/api/admin/hygiene/adr/${adrId}/history?email=${encodeURIComponent(currentUserEmail)}`);
+      const res = await authFetch(`/api/admin/hygiene/adr/${adrId}/history`);
       if (res.ok) {
         const data = await res.json();
         setSelectedAdrHistory(data.history || []);
@@ -176,7 +191,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
     consequences: string;
   }) => {
     try {
-      const res = await fetch('/api/admin/hygiene/adr', {
+      const res = await authFetch('/api/admin/hygiene/adr', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -187,8 +202,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
           author: data.author,
           context: data.context,
           decision: data.decision,
-          consequences: data.consequences,
-          email: currentUserEmail
+          consequences: data.consequences
         })
       });
       if (res.ok) {
@@ -216,7 +230,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
     consequences: string;
   }) => {
     try {
-      const res = await fetch(`/api/admin/hygiene/adr/${selectedAdr.id}`, {
+      const res = await authFetch(`/api/admin/hygiene/adr/${selectedAdr.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -226,8 +240,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
           author: data.author,
           context: data.context,
           decision: data.decision,
-          consequences: data.consequences,
-          email: currentUserEmail
+          consequences: data.consequences
         })
       });
       if (res.ok) {
@@ -250,7 +263,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
       return;
     }
     try {
-      const res = await fetch(`/api/admin/hygiene/adr/${id}?email=${encodeURIComponent(currentUserEmail)}`, {
+      const res = await authFetch(`/api/admin/hygiene/adr/${id}`, {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -283,7 +296,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
     setFormTitle('');
     setFormStatus('PROPOSED');
     setFormDate(new Date().toISOString().split('T')[0]);
-    setFormAuthor(currentUserEmail === 'sven.kulessa@gmail.com' || currentUserEmail === 'sven.kulessa@gmx.net' ? 'Sven Kulessa' : 'Administrator');
+    setFormAuthor(currentUserEmail || 'Administrator');
     setFormContext('');
     setFormDecision('');
     setFormConsequences('');
@@ -306,7 +319,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
     setIsLinting(true);
     setFixSuccessMsg(null);
     try {
-      const res = await fetch(`/api/admin/hygiene/lint?email=${encodeURIComponent(currentUserEmail)}`);
+      const res = await authFetch('/api/admin/hygiene/lint');
       if (res.ok) {
         const data = await res.json();
         setDiagnostics(data.diagnostics || []);
@@ -325,14 +338,13 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
     setIsFixing(diag.id);
     setFixSuccessMsg(null);
     try {
-      const res = await fetch('/api/admin/hygiene/lint-fix', {
+      const res = await authFetch('/api/admin/hygiene/lint-fix', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           filePath: diag.filePath,
           line: diag.line,
-          ruleId: diag.ruleId,
-          email: currentUserEmail
+          ruleId: diag.ruleId
         })
       });
       if (res.ok) {
@@ -472,7 +484,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
   const fetchStatus = async (showIndicator = false) => {
     if (showIndicator) setIsRefreshing(true);
     try {
-      const res = await fetch(`/api/admin/hygiene/status?email=${encodeURIComponent(currentUserEmail)}`);
+      const res = await authFetch('/api/admin/hygiene/status');
       if (!res.ok) {
         throw new Error(`Fehler ${res.status}: Zugriff verweigert oder Serverfehler.`);
       }
@@ -493,7 +505,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
 
   const fetchHistoryFiles = async () => {
     try {
-      const res = await fetch(`/api/admin/hygiene/history-files?email=${encodeURIComponent(currentUserEmail)}`);
+      const res = await authFetch('/api/admin/hygiene/history-files');
       if (res.ok) {
         const data = await res.json();
         setHistoryFiles(data.files || []);
@@ -516,13 +528,12 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
   const handleReviewDecision = async (ticketId: string, decision: 'approve' | 'decline') => {
     setReviewStatusMsg(null);
     try {
-      const res = await fetch('/api/admin/hygiene/review', {
+      const res = await authFetch('/api/admin/hygiene/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ticketId,
-          decision,
-          email: currentUserEmail
+          decision
         })
       });
       const data = await res.json();
@@ -547,13 +558,12 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
   const handleRollback = async (filePath: string, backupName: string) => {
     if (!window.confirm(`Möchten Sie '${filePath}' wirklich auf den Stand von '${backupName}' zurückrollen?`)) return;
     try {
-      const res = await fetch('/api/admin/hygiene/rollback', {
+      const res = await authFetch('/api/admin/hygiene/rollback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           filePath,
-          backupName,
-          email: currentUserEmail
+          backupName
         })
       });
       const data = await res.json();
@@ -574,12 +584,11 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
     if (!manualTriggerPath.trim()) return;
     setIsTriggering(true);
     try {
-      const res = await fetch('/api/admin/hygiene/trigger', {
+      const res = await authFetch('/api/admin/hygiene/trigger', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          filePath: manualTriggerPath.trim(),
-          email: currentUserEmail
+          filePath: manualTriggerPath.trim()
         })
       });
       const data = await res.json();
