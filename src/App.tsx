@@ -112,21 +112,31 @@ export default function App() {
     // Load cached session from localStorage (robust compliance with EinwVO/DSGVO & standalone readiness when JWT is deactivated)
     let hasLocalSession = false;
     
-    // Auto-login for Sven Kulessa in Google AI Preview / Development
-    const isDevOrPreview = typeof window !== 'undefined' && (
-      window.location.hostname.includes('localhost') || 
-      window.location.hostname.includes('run.app') || 
-      process.env.NODE_ENV !== 'production'
-    );
+    // ADR-0003.5: Auto-Login NUR für lokale Entwicklung, mit doppeltem Schutz gegen
+    // versehentliche Aktivierung in Produktion:
+    //   1. Exakter Hostname-Vergleich (nicht .includes(), das auch auf z.B.
+    //      "evil-localhost.example.com" oder jede *.run.app-Domain gepasst hätte).
+    //   2. Zusätzlicher expliziter Opt-in per Build-Flag, der in Produktions-Builds
+    //      nicht gesetzt sein darf. process.env.NODE_ENV allein wurde bewusst entfernt,
+    //      da eine fehlerhafte Docker/Render-Konfiguration diesen Wert unbeabsichtigt
+    //      auf einen Nicht-'production'-Wert lassen könnte und damit für JEDEN Besucher
+    //      automatisch einen Owner-Enterprise-Login ausgelöst hätte.
+    const isExplicitLocalDev =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
+      (import.meta as any).env?.VITE_ENABLE_DEV_AUTOLOGIN === 'true';
 
-    if (isDevOrPreview) {
+    if (isExplicitLocalDev) {
       const devSession: UserSession = {
         type: 'registered',
         name: 'Sven Kulessa (Dev Admin)',
         email: 'sven.kulessa@gmx.net',
         subscriptionTier: 'Enterprise',
         id: 'dev-admin-sven-kulessa-gmx-net',
-        accessToken: 'dev-bypass-token'
+        // Absichtlich kein plausibel aussehendes Token: jeder echte Backend-Call mit
+        // diesem Wert scheitert an checkAdminAccess() / supabase.auth.getUser(), statt
+        // fälschlich als gültige Session interpretiert zu werden.
+        accessToken: 'LOCAL_DEV_ONLY_INVALID_TOKEN'
       };
       setUserSession(devSession);
       localStorage.setItem('mcc_user_session', JSON.stringify(devSession));
