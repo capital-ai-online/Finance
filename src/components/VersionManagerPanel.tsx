@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { supabase } from '../supabaseClient';
 import {
   GitBranch,
   History,
@@ -67,8 +68,17 @@ export function VersionManagerPanel({ currentUserEmail }: VersionManagerPanelPro
     setIsLoading(true);
     setError(null);
     try {
-      const emailParam = encodeURIComponent(currentUserEmail || 'sven.kulessa@gmail.com');
-      const res = await fetch(`/api/admin/version?email=${emailParam}`);
+      // ADR-0003.5: Autorisierung läuft ausschließlich über das Supabase-Session-Token,
+      // keine E-Mail-Query mehr (siehe server/iam/authMiddleware.ts).
+      const session = supabase ? (await supabase.auth.getSession()).data.session : null;
+      const headers: Record<string, string> = {};
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+      const res = await fetch('/api/admin/version', { headers });
+      if (res.status === 401 || res.status === 403) {
+        throw new Error('Zugriff verweigert: Keine ausreichende Berechtigung für den Version Manager.');
+      }
       if (!res.ok) {
         throw new Error(`HTTP-Fehler! Status: ${res.status}`);
       }
@@ -95,18 +105,24 @@ export function VersionManagerPanel({ currentUserEmail }: VersionManagerPanelPro
     e.preventDefault();
     setIsBumping(true);
     try {
-      const emailVal = currentUserEmail || 'sven.kulessa@gmail.com';
+      const session = supabase ? (await supabase.auth.getSession()).data.session : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
       const res = await fetch('/api/admin/version/bump', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
-          email: emailVal,
           forceBump: bumpType,
           author: authorName,
           notes: bumpNotes || `Versions-Bump (${bumpType.toUpperCase()}) manuell ausgelöst.`
         })
       });
 
+      if (res.status === 401 || res.status === 403) {
+        throw new Error('Zugriff verweigert: Keine ausreichende Berechtigung für Versions-Bumps.');
+      }
       if (!res.ok) {
         throw new Error(`HTTP-Fehler! Status: ${res.status}`);
       }

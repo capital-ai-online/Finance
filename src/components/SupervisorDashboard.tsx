@@ -34,9 +34,24 @@ import {
 } from 'lucide-react';
 
 import { VersionManagerPanel } from './VersionManagerPanel';
+import { supabase } from '../supabaseClient';
 
 interface SupervisorDashboardProps {
   currentUserEmail: string;
+}
+
+// ADR-0003.5: zentrale Fetch-Hilfsfunktion für alle /api/admin/*-Aufrufe.
+// Hängt das Supabase-Session-Token als Bearer-Header an; ersetzt die frühere
+// ?email=.../email-Body-Feld-Praxis, die server/iam/authMiddleware.ts nicht mehr auswertet.
+async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const session = supabase ? (await supabase.auth.getSession()).data.session : null;
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> | undefined),
+  };
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
+  return fetch(url, { ...options, headers });
 }
 
 interface AlertRule {
@@ -262,7 +277,7 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
     setIsLoadingOrchestrators(true);
     setOrchestratorsError(null);
     try {
-      const res = await fetch(`/api/admin/orchestrators/status?email=${encodeURIComponent(currentUserEmail)}`);
+      const res = await authFetch('/api/admin/orchestrators/status');
       if (res.ok) {
         const data = await res.json();
         if (data.success) {
@@ -305,11 +320,10 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
     
     try {
       // Create actual audit event
-      const res = await fetch('/api/admin/system-events', {
+      const res = await authFetch('/api/admin/system-events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: currentUserEmail,
           type: 'ORCHESTRATOR',
           action: 'Manual Database Backup',
           details: 'Durable backup snapshot triggered manually via CAPITAL-AI Supervisor Terminal. Version 0.5.4.',
@@ -354,11 +368,10 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
         showNotification(msg, nextStatus === 'OPEN' ? 'warning' : 'success');
         
         // Log to backend audit trail
-        fetch('/api/admin/system-events', {
+        authFetch('/api/admin/system-events', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: currentUserEmail,
             type: 'SECURITY',
             action: `Trip Circuit Breaker: ${cb.name}`,
             details: `Admin changed state of ${cb.name} to ${nextStatus}. System will fail over to backup redundant pipelines.`,
@@ -383,11 +396,10 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
 
     // Post to live audit log on the server!
     try {
-      await fetch('/api/admin/system-events', {
+      await authFetch('/api/admin/system-events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: currentUserEmail,
           type: 'SECURITY',
           action: `Alert Triggered: ${rule.metric}`,
           details: `Simulated live alert trigger for ${rule.metric} ${rule.condition} ${rule.value} ${rule.unit}. Response loop active.`,
@@ -440,7 +452,7 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
     setIsLoadingAgents(true);
     setAgentsError(null);
     try {
-      const res = await fetch(`/api/admin/agents?email=${encodeURIComponent(currentUserEmail)}`);
+      const res = await authFetch('/api/admin/agents');
       if (res.ok) {
         const data = await res.json();
         if (data.success) {
@@ -463,10 +475,10 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
   // Toggle active agent state via API
   const handleToggleAgent = async (id: string) => {
     try {
-      const res = await fetch('/api/admin/agents/toggle', {
+      const res = await authFetch('/api/admin/agents/toggle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: currentUserEmail, id })
+        body: JSON.stringify({ id })
       });
       if (res.ok) {
         const data = await res.json();
@@ -499,11 +511,10 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
     setIsRegisteringAgent(true);
     setRegisterAgentMsg(null);
     try {
-      const res = await fetch('/api/admin/agents/register', {
+      const res = await authFetch('/api/admin/agents/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: currentUserEmail,
           name: newAgentName,
           role: newAgentRole,
           model: newAgentModel
