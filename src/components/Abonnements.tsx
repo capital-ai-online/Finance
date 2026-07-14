@@ -25,11 +25,14 @@ import { Checkout } from './Checkout';
 interface AbonnementsProps {
   currentTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
   onUpdateTier: (tier: 'Free' | 'Starter' | 'Pro' | 'Enterprise') => void;
-  email?: string;
+  // ADR-0003.5: kein hartcodierter Fallback mehr auf ein echtes Konto. Fehlt die E-Mail,
+  // wird schlicht keine Subscription-Abfrage ausgelöst (siehe useEffect unten), statt
+  // versehentlich die Stripe-Daten von sven.kulessa@gmail.com für einen anderen Nutzer zu laden.
+  email: string;
   userId?: string;
 }
 
-export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@gmail.com', userId }: AbonnementsProps) {
+export function Abonnements({ currentTier, onUpdateTier, email, userId }: AbonnementsProps) {
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');

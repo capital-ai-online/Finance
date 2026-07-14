@@ -133,7 +133,7 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
         user_identity: {
           name: profile.name,
           email: profile.email,
-          verified_status: profile.email === 'sven.kulessa@gmail.com' ? 'Platform Owner / Administrator' : 'Subscribed User'
+          verified_status: profile.subscriptionTier === 'Enterprise' ? 'Platform Owner / Administrator' : 'Subscribed User'
         },
         profile_parameters: {
           preferred_asset_class: preferredAssetClass,
@@ -146,7 +146,7 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
         active_session_activity: {
           last_login: new Date().toLocaleDateString('de-DE'),
           device_fingerprint_secure: "SHA-256 ENCRYPTED LOCALLY",
-          requests_completed_estimate: profile.email === 'sven.kulessa@gmail.com' ? 14502 : 480
+          requests_completed_estimate: profile.subscriptionTier === 'Enterprise' ? 14502 : 480
         },
         backtest_history_archive: [
           { symbol: "BTC/USD", strategy: "MA Cross Momentum", timeframe: "1std", profit_factor: 1.82, status: "SUCCESS" },
