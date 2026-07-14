@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { secureStorage } from '../lib/cryptoHelper';
+import { supabase } from '../supabaseClient';
 import { Screener } from './Screener';
 import { Newsticker } from './Newsticker';
 import { UniverseBestWorst } from './UniverseBestWorst';
@@ -261,6 +262,33 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
     subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier,
     id: userSession.id
   });
+
+  // ADR-0003.5: keine hartcodierte E-Mail-Liste mehr für die Admin-Portal-Sichtbarkeit.
+  // Nur ein UX-Gate - die eigentliche Autorisierung jedes Requests bleibt serverseitig
+  // in checkAdminAccess() (server/iam/authMiddleware.ts) und erneut in AdminPortal.tsx.
+  const [isAdminOrOwner, setIsAdminOrOwner] = useState(false);
+  React.useEffect(() => {
+    let cancelled = false;
+    async function checkRole() {
+      if (!supabase) return;
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData?.user) return;
+        const { data: profileRow } = await supabase
+          .from('profiles')
+          .select('iam_role')
+          .eq('id', userData.user.id)
+          .maybeSingle();
+        if (!cancelled && profileRow) {
+          setIsAdminOrOwner(profileRow.iam_role === 'owner' || profileRow.iam_role === 'admin');
+        }
+      } catch {
+        // Serverseitige Prüfung bleibt maßgeblich; UI-Gate bleibt bei Fehlern konservativ zu.
+      }
+    }
+    checkRole();
+    return () => { cancelled = true; };
+  }, [userSession.id]);
 
   // Synchronize profile state with userSession prop and load encrypted cached profile if database is offline
   React.useEffect(() => {
@@ -1062,7 +1090,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                   </div>
 
                   {/* Category 5: Admin-Portal (if user is Sven Kulessa) */}
-                  {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'sven.kulessa@gmx.net') && (
+                  {isAdminOrOwner && (
                     <div className="border-b border-white/5 pb-2">
                       <button
                         onClick={() => setExpandedSection(expandedSection === 'system_admin' ? null : 'system_admin')}
