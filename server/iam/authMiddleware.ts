@@ -140,3 +140,13 @@ export async function logIamEvent(
     // audit_logs_iam existiert evtl. noch nicht (Migration ausstehend)
   }
 }
+/**
+ * Liefert zu einem gültigen Supabase-Token die Benutzer-ID und die IAM-Rolle zurück.
+ * Wird von stepUp.ts für die Verifikation von Step‑up‑Tokens verwendet.
+ */
+export async function resolveVerifiedIdentity(token: string): Promise<{ userId: string; role: Role | null } | null> {
+  if (!isSupabaseConfigured()) return null;
+  const { role, userId } = await resolveRoleFromToken(token);
+  if (!userId) return null;
+  return { userId, role: role ?? null };
+}
