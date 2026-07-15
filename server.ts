@@ -37,6 +37,7 @@ import { aiRouter, getGeminiInstance, isGeminiConfigured } from './server/ai';
 import { systemEventsRouter, logSystemEvent } from './server/systemEvents';
 import { hygieneRouter, startRecursiveFileWatcher } from './server/documentHygiene';
 import { versionManagerRouter } from './server/versionManager';
+import { stepUpRouter } from './server/stepUp';
 
 dotenv.config();
 
@@ -44,33 +45,91 @@ const app = express();
 const PORT = 3000;
 
 // ---------------------------------------------------------
-// OWASP SECURITY MITIGATIONS & CORS HARDENING MIDDLEWARE
-// Implements A05:2021-Security Misconfiguration & Security Headers
+// ADR-0009 — CORS Hardening. Ersetzt die vorherige OWASP-Mitigation, die via
+// `origin.endsWith('.run.app')` / `origin.startsWith('https://ais-')` faktisch
+// jede beliebige Cloud-Run-Domain als vertrauenswürdig behandelte - ein Wildcard
+// in Verkleidung, genau das, was ADR-0009 explizit verbietet.
+// Zusätzlich fehlte die echte Produktionsdomain in der bisherigen Liste.
 // ---------------------------------------------------------
+
+const isProductionEnv = getCleanEnv('NODE_ENV') === 'production';
+
+// Produktionsdomains: fest codiert, keine Muster-/Suffix-Prüfung (ADR-0009 Regel 1+2).
+const PRODUCTION_ORIGINS = [
+  'https://capital-ai.online',
+  'https://www.capital-ai.online',
+];
+
+// Google AI Studio: NUR über explizite Environment Variable, nie hartcodiert,
+// und NUR außerhalb der echten Produktionsumgebung nutzbar (ADR-0009,
+// "Dadurch bleibt die Produktionsumgebung frei von unnötigen Entwicklungsfreigaben").
+const AI_STUDIO_ORIGIN = getCleanEnv('AI_STUDIO_ORIGIN');
+
+function isLocalDevOrigin(origin: string): boolean {
+  // Nur exakt localhost/127.0.0.1 mit optionalem Port - kein Teilstring-Match,
+  // der z.B. auf "http://localhost.attacker.com" anspringen könnte.
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+}
+
+function isOriginAllowed(origin: string): boolean {
+  if (PRODUCTION_ORIGINS.includes(origin)) return true;
+  if (!isProductionEnv) {
+    if (isLocalDevOrigin(origin)) return true;
+    if (AI_STUDIO_ORIGIN && origin === AI_STUDIO_ORIGIN) return true;
+  }
+  return false;
+}
+
+async function logBlockedOrigin(origin: string, req: express.Request) {
+  console.warn(`[SECURITY] Blocked CORS Origin: ${origin}`);
+  if (!isSupabaseConfigured()) return;
+  try {
+    const supabase = getServerSupabase();
+    const xff = req.headers['x-forwarded-for'];
+    const ip = typeof xff === 'string' ? xff.split(',')[0].trim() : (req.socket?.remoteAddress || 'unknown');
+    await supabase.from('security_events').insert({
+      event_type: 'suspicious_request',
+      ip_address: ip,
+      user_agent: req.headers['user-agent'] || null,
+      endpoint: req.originalUrl,
+      outcome: 'blocked',
+      reason: `Blocked CORS Origin: ${origin}`,
+    });
+  } catch {
+    // security_events-Logging ist best-effort und darf den Request nicht blockieren.
+  }
+}
+
 app.use((req, res, next) => {
-  // 1. Dynamic CORS Whitelist Protection (A05:2021)
+  // 1. CORS-Allowlist-Prüfung (ADR-0009): keine dynamische Freigabe unbekannter
+  // Domains, jede Origin wird explizit gegen eine feste Liste geprüft.
   const origin = req.headers.origin;
-  const allowedOrigins = [
-    'https://ai.studio',
-    'https://ais-dev-2bxbexir43hlm24lzc33vg-235862716476.europe-west2.run.app',
-    'https://ais-pre-2bxbexir43hlm24lzc33vg-235862716476.europe-west2.run.app'
-  ];
 
   if (origin) {
-    const isAllowed = allowedOrigins.includes(origin) || 
-                      origin.startsWith('https://ais-') || 
-                      origin.endsWith('.run.app') || 
-                      origin.startsWith('http://localhost:');
-    if (isAllowed) {
+    if (isOriginAllowed(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
+      // Credentials nur setzen, wenn die Origin tatsächlich validiert wurde
+      // (ADR-0009: "Voraussetzung: Origin muss vorher validiert sein.").
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+    } else {
+      void logBlockedOrigin(origin, req);
+      if (req.method === 'OPTIONS') {
+        return res.status(403).json({ error: 'Origin nicht erlaubt.' });
+      }
+      // Kein ACAO-Header -> der Browser blockiert die Antwort clientseitig.
     }
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-orchestrator-admin-token, stripe-signature');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  // ADR-0009 listet zusätzlich `x-orchestrator-admin-token` als erlaubten Header.
+  // Bewusst NICHT übernommen: dieser Header gehörte zum in ADR-0003.5 entfernten
+  // Legacy-Token-Mechanismus (server/orchestrator.ts nutzt jetzt ausschließlich
+  // JWT via checkAdminAccess()). Ihn hier wieder zuzulassen würde der eigentlichen,
+  // bereits umgesetzten Architektur widersprechen - bitte ADR-0009 entsprechend
+  // aktualisieren/dieses Feld als überholt markieren.
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, stripe-signature');
 
-  // Handle CORS preflight OPTIONS request immediately
+  // Preflight: nur erlaubte Origins erhalten 200 OK (ADR-0009 "Preflight Handling").
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
@@ -80,7 +139,14 @@ app.use((req, res, next) => {
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-  // Content-Security-Policy: Allow frame embedding in Google AI Studio and trusted development/production environments, while preventing unauthorized clickjacking.
+  // Content-Security-Policy: frame-ancestors an dieselbe Allowlist-Logik wie CORS
+  // angeglichen (dieselbe `*.run.app`-Wildcard-Schwäche betraf zuvor auch hier
+  // die Clickjacking-Absicherung, siehe ADR-0009-Geist auch wenn nicht wörtlich
+  // Teil des ADR-Texts).
+  const frameAncestors = [
+    "'self'",
+    ...(!isProductionEnv ? ["https://ai.studio", "http://localhost:*"] : []),
+  ].join(' ');
   res.setHeader(
     'Content-Security-Policy',
     "default-src 'self' https:; " +
@@ -89,11 +155,11 @@ app.use((req, res, next) => {
     "img-src 'self' data: https: referrer; " +
     "font-src 'self' data: https://fonts.gstatic.com; " +
     "frame-src 'self' https://*.stripe.com; " +
-    "frame-ancestors 'self' https://ai.studio https://*.run.app https://*.google.com http://localhost:*;"
+    `frame-ancestors ${frameAncestors};`
   );
 
   // Strict-Transport-Security (HSTS) in production
-  if (process.env.NODE_ENV === 'production') {
+  if (isProductionEnv) {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
 
@@ -153,6 +219,7 @@ app.use('/api/orchestrator', orchestratorRouter);
 app.use('/api/admin/hygiene', hygieneRouter);
 app.use('/api/admin', systemEventsRouter);
 app.use('/api/admin', versionManagerRouter);
+app.use('/api/auth', stepUpRouter);
 app.use('/api', aiRouter);
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
