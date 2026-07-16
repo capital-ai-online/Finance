@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { authFetch } from '../lib/authFetch';
 import { 
   Activity, 
   Cpu, 
@@ -50,7 +51,6 @@ export function OrchestratorPanel() {
   const [concurrencyLimit, setConcurrencyLimit] = useState<number>(3);
   const [maxQueueSize, setMaxQueueSize] = useState<number>(10);
   const [maxRequestsPerWindow, setMaxRequestsPerWindow] = useState<number>(30);
-  const [adminToken, setAdminToken] = useState<string>(() => localStorage.getItem('aif_orchestrator_admin_token') || 'aif-admin-2026');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -115,11 +115,10 @@ export function OrchestratorPanel() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const res = await fetch('/api/orchestrator/config', {
+      const res = await authFetch('/api/orchestrator/config', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
-          'X-Orchestrator-Admin-Token': adminToken
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           concurrencyLimit,
@@ -148,11 +147,8 @@ export function OrchestratorPanel() {
   const handleResetStats = async () => {
     if (!window.confirm('Möchten Sie die Transaktions- und Ablehnungszähler wirklich zurücksetzen?')) return;
     try {
-      const res = await fetch('/api/orchestrator/reset', { 
-        method: 'POST',
-        headers: {
-          'X-Orchestrator-Admin-Token': adminToken
-        }
+      const res = await authFetch('/api/orchestrator/reset', { 
+        method: 'POST'
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
@@ -421,24 +417,9 @@ export function OrchestratorPanel() {
                 <h3 className="text-sm font-bold text-white font-display uppercase tracking-wider">Modul-Einstellregler</h3>
               </div>
 
-              {/* Admin Passcode Input */}
-              <div className="space-y-1.5 p-3 rounded-xl bg-white/5 border border-white/5">
-                <div className="flex justify-between items-center">
-                  <label className="text-[10px] font-mono text-white/50 uppercase tracking-wider">Admin-Passcode (X-Token)</label>
-                  <Lock size={12} className="text-amber-500" />
-                </div>
-                <input 
-                  type="password" 
-                  value={adminToken} 
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setAdminToken(val);
-                    localStorage.setItem('aif_orchestrator_admin_token', val);
-                  }}
-                  className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-mono placeholder-white/30 focus:border-amber-500/50 outline-none"
-                  placeholder="Passcode eingeben..."
-                />
-              </div>
+              {/* ADR-0003.5: Admin-Passcode-Eingabe entfernt - Autorisierung läuft
+                  jetzt automatisch über die Supabase-Session (Bearer-Token), kein
+                  manuell eingegebener/gespeicherter Passcode mehr nötig. */}
 
               {/* Slider 1: Concurrency */}
               <div className="space-y-1.5">
