@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { authFetch } from '../lib/authFetch';
 import { 
   Shield, 
   ShieldAlert, 
@@ -95,7 +96,7 @@ export function AuditLogs() {
     setLoadingFiles(true);
     setFilesError(null);
     try {
-      const res = await fetch('/api/orchestrator/audit-files');
+      const res = await authFetch('/api/orchestrator/audit-files');
       if (!res.ok) throw new Error('Die Audit-Dateien konnten nicht abgerufen werden.');
       const data = await res.json();
       setAuditFiles(data.files || []);
@@ -214,7 +215,7 @@ export function AuditLogs() {
       const dataQualityScore = Math.floor(Math.random() * 5) + 95; // 95 - 99
       const finalScore = Math.floor(Math.random() * 20) + 75; // 75 - 95
       
-      const res = await fetch('/api/orchestrator/create-simulated-audit', {
+      const res = await authFetch('/api/orchestrator/create-simulated-audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
