@@ -34,24 +34,10 @@ import {
 } from 'lucide-react';
 
 import { VersionManagerPanel } from './VersionManagerPanel';
-import { supabase } from '../supabaseClient';
+import { authFetch } from '../lib/authFetch';
 
 interface SupervisorDashboardProps {
   currentUserEmail: string;
-}
-
-// ADR-0003.5: zentrale Fetch-Hilfsfunktion für alle /api/admin/*-Aufrufe.
-// Hängt das Supabase-Session-Token als Bearer-Header an; ersetzt die frühere
-// ?email=.../email-Body-Feld-Praxis, die server/iam/authMiddleware.ts nicht mehr auswertet.
-async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  const session = supabase ? (await supabase.auth.getSession()).data.session : null;
-  const headers: Record<string, string> = {
-    ...(options.headers as Record<string, string> | undefined),
-  };
-  if (session?.access_token) {
-    headers['Authorization'] = `Bearer ${session.access_token}`;
-  }
-  return fetch(url, { ...options, headers });
 }
 
 interface AlertRule {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { supabase } from '../supabaseClient';
+import { authFetch } from '../lib/authFetch';
 import {
   GitBranch,
   History,
@@ -68,14 +68,7 @@ export function VersionManagerPanel({ currentUserEmail }: VersionManagerPanelPro
     setIsLoading(true);
     setError(null);
     try {
-      // ADR-0003.5: Autorisierung läuft ausschließlich über das Supabase-Session-Token,
-      // keine E-Mail-Query mehr (siehe server/iam/authMiddleware.ts).
-      const session = supabase ? (await supabase.auth.getSession()).data.session : null;
-      const headers: Record<string, string> = {};
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-      const res = await fetch('/api/admin/version', { headers });
+      const res = await authFetch('/api/admin/version');
       if (res.status === 401 || res.status === 403) {
         throw new Error('Zugriff verweigert: Keine ausreichende Berechtigung für den Version Manager.');
       }
@@ -105,14 +98,9 @@ export function VersionManagerPanel({ currentUserEmail }: VersionManagerPanelPro
     e.preventDefault();
     setIsBumping(true);
     try {
-      const session = supabase ? (await supabase.auth.getSession()).data.session : null;
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-      }
-      const res = await fetch('/api/admin/version/bump', {
+      const res = await authFetch('/api/admin/version/bump', {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           forceBump: bumpType,
           author: authorName,
