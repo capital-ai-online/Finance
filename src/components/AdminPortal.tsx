@@ -114,6 +114,14 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
   }
 
   // Admin tabs definition with ADR compliance mapping
+  // ADR-0003.5: Der Auth-Debugger zeigt rohe Session-/User-Token-Daten an und darf
+  // in Produktion nicht erreichbar sein. Gleiches Opt-in-Flag wie beim lokalen
+  // Dev-Auto-Login (src/App.tsx) - kein separates, leicht zu vergessendes Flag.
+  const isLocalDevTooling =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
+    (import.meta as any).env?.VITE_ENABLE_DEV_AUTOLOGIN === 'true';
+
   const tabs = [
     {
       id: 'users' as const,
@@ -126,7 +134,7 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
         description: 'Erzwingt strenge Multi-Faktor-Authentifizierung (Passkey/FIDO2) und Berechtigungskontrollen für Admin-Zonen gem. FinTech Regulierung.'
       }
     },
-    {
+    ...(isLocalDevTooling ? [{
       id: 'auth' as const,
       label: 'Auth Debugger',
       description: 'Token & Secure Local Pipelines',
@@ -136,7 +144,7 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
         title: 'Cryptographic Token Tracking',
         description: 'Sichert lokale Authentifizierungs-Pipelines und verhindert versehentliches Ausgeben sensibler Tokens in Debug-Protokollen.'
       }
-    },
+    }] : []),
     {
       id: 'markdown' as const,
       label: 'Markdown Orchestrator',
@@ -294,7 +302,7 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
           />
         )}
         
-        {activeTab === 'auth' && (
+        {activeTab === 'auth' && isLocalDevTooling && (
           <AuthStateDebugger />
         )}
 
