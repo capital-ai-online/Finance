@@ -24,43 +24,34 @@ export function getServerSupabase() {
   return serverSupabaseClient;
 }
 
-// ADR-0003.5/0008: Übergangs-Helper. Prüft primär profiles.iam_role='owner' in Supabase.
-// (profiles.role ist bereits mit anderer Bedeutung belegt: Abo-Tier free/pro/enterprise -
-// die IAM-Berechtigungsrolle liegt deshalb in der separaten Spalte iam_role.)
-// TEMPORÄR: solange die IAM-Migration noch nicht produktiv gelaufen ist, wird auf die
-// alte hartcodierte E-Mail-Liste zurückgefallen (mit Warn-Log), damit Owner-Funktionen
-// nicht ausfallen. ENTFERNEN in Prompt 3, sobald die Migration verifiziert ist.
-const LEGACY_OWNER_EMAILS = ['sven.kulessa@gmail.com', 'sven.kulessa@gmx.net'];
+// ADR-0003.5/0008: Owner-Bypass war zuvor ein hartcodierter E-Mail-Vergleich, der
+// UNBEDINGT auslöste: profiles hat keine email-Spalte (die liegt in auth.users), daher
+// warf die E-Mail-Query hier IMMER einen Fehler und fiel dadurch unabhängig vom
+// Migrationsstatus auf LEGACY_OWNER_EMAILS zurück. Fallback vollständig entfernt.
+// Owner-Prüfung läuft jetzt ausschließlich über profiles.id (verifizierte User-ID aus
+// einer echten Supabase-Session), nie mehr über einen client-gelieferten E-Mail-String.
 
 async function isOwnerIdentifier(rawIdentifier: string, lowerIdentifier: string): Promise<boolean> {
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = getServerSupabase();
-      const isEmail = rawIdentifier.includes('@');
-      const query = supabase.from('profiles').select('iam_role');
-      const { data, error } = isEmail
-        ? await query.eq('email', lowerIdentifier).maybeSingle()
-        : await query.eq('id', rawIdentifier).maybeSingle();
-
-      if (!error && data) {
-        return data.iam_role === 'owner';
-      }
-      // Kein Fehler, aber keine Daten -> Identifier unbekannt, KEIN Legacy-Fallback für unbekannte User
-      if (!error && !data) {
-        return false;
-      }
-      // error vorhanden (z.B. Spalte/Tabelle existiert noch nicht -> Migration ausstehend)
-    } catch {
-      // fällt unten auf Legacy-Check durch
-    }
+  const isEmail = rawIdentifier.includes('@');
+  if (isEmail) {
+    // profiles hat keine email-Spalte - Owner-Prüfung per E-Mail wird nicht unterstützt.
+    // Fail-closed statt (fehlerhaft) auf eine hartcodierte Liste auszuweichen. Aufrufer
+    // sollten die verifizierte User-ID aus der Session verwenden, nicht die E-Mail.
+    return false;
   }
-
-  if (LEGACY_OWNER_EMAILS.includes(lowerIdentifier)) {
-    console.warn(
-      `[IAM][LEGACY FALLBACK AKTIV] Owner-Bypass für ${lowerIdentifier} über hartcodierte Liste, ` +
-      `da profiles.iam_role nicht verfügbar (Migration ausstehend?). In Prompt 3 entfernen (ADR-0003.5).`
-    );
-    return true;
+  if (!isSupabaseConfigured()) return false;
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('iam_role')
+      .eq('id', rawIdentifier)
+      .maybeSingle();
+    if (!error && data) {
+      return data.iam_role === 'owner';
+    }
+  } catch {
+    // Fail-closed bei Verbindungs-/Schemafehlern.
   }
   return false;
 }
