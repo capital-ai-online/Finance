@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
+import PasskeySettings from './PasskeySettings';
 import { 
   User, 
   Mail, 
@@ -476,6 +477,13 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* ADR-0003.5: echte Passkey/WebAuthn-Verwaltung (Supabase Auth Passkey Beta),
+          ersetzt die zuvor nur clientseitig simulierte Proof-of-Concept-Komponente,
+          die im Admin-Panel unter "sicherheit_poc" versteckt war. */}
+      <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+        <PasskeySettings />
       </div>
     </div>
   );
