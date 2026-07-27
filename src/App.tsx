@@ -307,6 +307,21 @@ export default function App() {
     }, 5000);
   };
 
+  // Compliance-Review Punkt 5: globale 401-Behandlung. Die zentrale authFetch()-
+  // Hilfsfunktion (src/lib/authFetch.ts) löst bei jeder 401-Antwort dieses Event aus -
+  // z.B. wenn ein Admin-Token abgelaufen ist oder eine Rolle serverseitig entzogen
+  // wurde, während die Person noch in einem Admin-Panel unterwegs ist. Statt dass jede
+  // einzelne Komponente das separat behandelt (oder gar nicht), führt das hier
+  // zentral zu einem sauberen Logout mit Rückführung zur Anmeldung.
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      console.warn('[Auth] 401 empfangen - Session ist ungültig/abgelaufen, logge aus.');
+      handleLogout();
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
