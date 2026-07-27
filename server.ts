@@ -19,7 +19,7 @@ import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
-import { checkAdminAccess } from './server/iam/authMiddleware';
+import { checkAdminAccess, runIamSchemaHealthCheck } from './server/iam/authMiddleware';
 import { SUPERVISOR_ZONE_ROLES } from './server/iam/types';
 import {
   isSupabaseConfigured,
@@ -43,6 +43,22 @@ dotenv.config();
 
 const app = express();
 const PORT = 3000;
+
+// ---------------------------------------------------------
+// Compliance-Review Punkt 1: Prozessweites Sicherheitsnetz gegen unbehandelte
+// Promise-Rejections/Exceptions. Ersetzt keinen sauberen try/catch in einzelnen
+// Handlern (die bleiben die erste Verteidigungslinie), verhindert aber, dass ein
+// übersehener Fall den gesamten Prozess unkontrolliert abstürzen lässt.
+// ---------------------------------------------------------
+process.on('unhandledRejection', (reason) => {
+  console.error('[PROCESS][UNHANDLED REJECTION]', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[PROCESS][UNCAUGHT EXCEPTION]', err);
+  // Bewusst kein process.exit(): ein einzelner unerwarteter Fehler soll nicht den
+  // gesamten Server für alle Nutzer beenden. Stattdessen wird geloggt, damit das
+  // Monitoring (Compliance-Review Punkt 3) den Vorfall sichtbar macht.
+});
 
 // ---------------------------------------------------------
 // ADR-0009 — CORS Hardening. Ersetzt die vorherige OWASP-Mitigation, die via
@@ -112,7 +128,9 @@ app.use((req, res, next) => {
       // (ADR-0009: "Voraussetzung: Origin muss vorher validiert sein.").
       res.setHeader('Access-Control-Allow-Credentials', 'true');
     } else {
-      void logBlockedOrigin(origin, req);
+      logBlockedOrigin(origin, req).catch((err) => {
+        console.error('[SECURITY] logBlockedOrigin fehlgeschlagen:', err);
+      });
       if (req.method === 'OPTIONS') {
         return res.status(403).json({ error: 'Origin nicht erlaubt.' });
       }
@@ -1816,6 +1834,13 @@ app.post('/api/portfolio-review', express.json(), orchestrator.handle('Portfolio
 
 
 async function startServer() {
+  // Compliance-Review Punkt 2: IAM-Schema-Health-Check EINMALIG beim Start, statt
+  // stillschweigend erst beim ersten Admin-Request zu bemerken, dass profiles.iam_role
+  // fehlt. Blockiert den Start nicht (ein vorübergehend nicht erreichbares Supabase soll
+  // nicht den ganzen Server verhindern) - checkAdminAccess() bleibt aber fail-closed,
+  // falls der Check fehlschlägt.
+  await runIamSchemaHealthCheck();
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -1829,6 +1854,18 @@ async function startServer() {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
+
+  // Compliance-Review Punkt 1: globale Express-Error-Middleware (4 Argumente = von
+  // Express als Error-Handler erkannt) als letztes Glied der Kette. Fängt alles ab,
+  // was über asyncHandler()/next(err) hierher durchgereicht wird, statt dass der
+  // Request ohne Antwort hängen bleibt oder der Prozess abstürzt.
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error(`[SERVER][UNHANDLED ROUTE ERROR] ${req.method} ${req.originalUrl}:`, err);
+    if (res.headersSent) {
+      return next(err);
+    }
+    res.status(500).json({ error: 'Interner Serverfehler.' });
+  });
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
