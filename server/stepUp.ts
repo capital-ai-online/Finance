@@ -46,7 +46,18 @@ function requireAuth(handler: (req: express.Request, res: express.Response, iden
     if (!identity) {
       return res.status(401).json({ error: 'Authentifizierung erforderlich.' });
     }
-    await handler(req, res, identity);
+    // Compliance-Review Punkt 1: Express 4 fängt Rejections aus async Handlern nicht
+    // automatisch ab. Ohne dieses try/catch würde z.B. ein fehlendes
+    // TOTP_ENCRYPTION_KEY (encryptSecret()/decryptSecret() werfen dann) den Request
+    // unbeantwortet hängen lassen statt eine klare 500-Antwort zu liefern.
+    try {
+      await handler(req, res, identity);
+    } catch (err: any) {
+      console.error(`[STEP-UP][ERROR] ${req.method} ${req.originalUrl}:`, err?.message || err);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Interner Serverfehler.' });
+      }
+    }
   };
 }
 
