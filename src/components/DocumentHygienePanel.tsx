@@ -28,25 +28,10 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { CapitalAiLogo } from './CapitalAiLogo';
 import { AdrForm } from './AdrForm';
-import SicherheitsmanagementPoC from './SicherheitsmanagementPoC';
-import { supabase } from '../supabaseClient';
+import { authFetch } from '../lib/authFetch';
 
 interface DocumentHygienePanelProps {
   currentUserEmail: string;
-}
-
-// ADR-0003.5: zentrale Fetch-Hilfsfunktion für alle /api/admin/hygiene/*-Aufrufe.
-// Hängt das Supabase-Session-Token als Bearer-Header an; ersetzt die frühere
-// ?email=...-Query, die server/iam/authMiddleware.ts nicht mehr auswertet.
-async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  const session = supabase ? (await supabase.auth.getSession()).data.session : null;
-  const headers: Record<string, string> = {
-    ...(options.headers as Record<string, string> | undefined),
-  };
-  if (session?.access_token) {
-    headers['Authorization'] = `Bearer ${session.access_token}`;
-  }
-  return fetch(url, { ...options, headers });
 }
 
 interface ReviewTicket {
@@ -95,7 +80,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
   const [historyFiles, setHistoryFiles] = useState<BackupFile[]>([]);
   
   // Tab states inside the Hygiene panel
-  const [activeSubTab, setActiveSubTab] = useState<'tickets' | 'logs' | 'graph' | 'rollback' | 'linter' | 'adr' | 'sicherheit_poc'>('tickets');
+  const [activeSubTab, setActiveSubTab] = useState<'tickets' | 'logs' | 'graph' | 'rollback' | 'linter' | 'adr'>('tickets');
   const [selectedTicket, setSelectedTicket] = useState<ReviewTicket | null>(null);
   const [manualTriggerPath, setManualTriggerPath] = useState<string>('');
   const [isTriggering, setIsTriggering] = useState(false);
@@ -804,19 +789,6 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
         >
           <FileText size={12} />
           <span>Architektur-Entscheidungen (ADR)</span>
-        </button>
-        <button
-          onClick={() => {
-            setActiveSubTab('sicherheit_poc');
-          }}
-          className={`px-3 py-2 text-[11px] font-mono font-bold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 shrink-0 ${
-            activeSubTab === 'sicherheit_poc' 
-              ? 'bg-aif-gold-DEFAULT text-black font-extrabold shadow-[0_0_10px_rgba(245,196,83,0.15)]' 
-              : 'text-white/60 hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <ShieldAlert size={12} className={activeSubTab === 'sicherheit_poc' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
-          <span>Sicherheits-PoC (ADR-0003.5)</span>
         </button>
       </div>
 
@@ -1708,21 +1680,6 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
 
               </div>
             )}
-          </motion.div>
-        )}
-
-        {activeSubTab === 'sicherheit_poc' && (
-          <motion.div
-            key="sicherheit_poc"
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-xs font-mono text-amber-300">
-              ⚠️ Deprecated Proof-of-Concept — simuliert IAM/Passkey/2FA rein client-seitig, ohne echte Serverprüfung.
-              Produktive IAM-Implementierung: server/iam/authMiddleware.ts (ADR-0003.5/0008).
-            </div>
-            <SicherheitsmanagementPoC />
           </motion.div>
         )}
 
