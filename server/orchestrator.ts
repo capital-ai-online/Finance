@@ -2,16 +2,21 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { orchestrator } from '../src/lib/requestOrchestrator';
-import { getCleanEnv } from './env';
+import { checkAdminAccess } from './iam/authMiddleware';
+import { SUPERVISOR_ZONE_ROLES } from './iam/types';
 
 export const orchestratorRouter = express.Router();
 
-const ORCHESTRATOR_ADMIN_TOKEN = getCleanEnv('ORCHESTRATOR_ADMIN_TOKEN') || 'aif-admin-2026';
-
-function requireOrchestratorAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const token = req.headers['x-orchestrator-admin-token'] || req.headers['authorization']?.toString().replace('Bearer ', '');
-  if (token !== ORCHESTRATOR_ADMIN_TOKEN) {
-    return res.status(401).json({ error: 'Ungültiger Admin-Token. Zugriff verweigert.' });
+// ADR-0003.5: Der frühere Token-Vergleich hatte einen hartcodierten Fallback-Wert
+// ('aif-admin-2026'), der greift, sobald ORCHESTRATOR_ADMIN_TOKEN in der Umgebung fehlt -
+// ein bekannter, im Quellcode sichtbarer Master-Schlüssel für jede Fehlkonfiguration.
+// Zusätzlich war der Vergleich (!==) nicht timing-sicher. Ersetzt durch dieselbe
+// JWT-basierte checkAdminAccess()-Prüfung wie alle anderen Admin-Endpunkte
+// (einheitlicher Authentifizierungsmechanismus, siehe ADR-0003.5).
+async function requireOrchestratorAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authz = await checkAdminAccess(req, 'orchestrator-config', SUPERVISOR_ZONE_ROLES);
+  if (!authz.authorized) {
+    return res.status(authz.reason === 'rate-limited' ? 429 : 401).json({ error: 'Ungültiger Zugriff. Zugriff verweigert.' });
   }
   next();
 }
@@ -60,7 +65,9 @@ orchestratorRouter.post('/reset', requireOrchestratorAdmin, (req, res) => {
 });
 
 // 5. Endpoint to list all audit trail files from /docs/reports
-orchestratorRouter.get('/audit-files', (req, res) => {
+// ADR-0003.5: war zuvor unauthentifiziert erreichbar (Informationspreisgabe über
+// Compliance-Berichte). Jetzt wie alle Admin-Zonen per checkAdminAccess geschützt.
+orchestratorRouter.get('/audit-files', requireOrchestratorAdmin, (req, res) => {
   const reportsDir = path.join(process.cwd(), 'docs', 'reports');
   try {
     if (!fs.existsSync(reportsDir)) {
@@ -86,7 +93,11 @@ orchestratorRouter.get('/audit-files', (req, res) => {
 });
 
 // 6. Endpoint to generate simulated/automated audit logs and save them as actual JSON files in /docs/reports
-orchestratorRouter.post('/create-simulated-audit', (req, res) => {
+// ADR-0003.5: war zuvor unauthentifiziert - jeder konnte beliebige, als "COMPLIANT"
+// deklarierte Audit-Datensätze für beliebige Symbole erzeugen (siehe Compliance-Review:
+// "Static seed data ≠ audit logs" - hier ging es über reine Seed-Daten hinaus zu einem
+// aktiv ausnutzbaren Schreibzugriff). Jetzt Admin/Supervisor-only.
+orchestratorRouter.post('/create-simulated-audit', requireOrchestratorAdmin, (req, res) => {
   const { symbol, market, timeframe, price, volume, dataQualityScore, finalScore, issues, status } = req.body;
   if (!symbol) {
     return res.status(400).json({ error: 'Symbol parameter is required.' });

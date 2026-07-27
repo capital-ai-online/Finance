@@ -8,6 +8,7 @@ import {
   saveLocalPdfCredits,
   isSupabaseConfigured
 } from './db';
+import { resolveVerifiedIdentity } from './iam/authMiddleware';
 
 export const stripeRouter = express.Router();
 
@@ -27,7 +28,22 @@ export function getStripeInstance() {
 // 1. Stripe Checkout Session Creation
 stripeRouter.post('/create-checkout-session', async (req, res) => {
   try {
-    const { planId, email, userId, billingPeriod, successUrl, cancelUrl, couponId } = req.body;
+    const { planId, billingPeriod, successUrl, cancelUrl, couponId } = req.body;
+    let { email } = req.body;
+
+    // Compliance-Review Punkt 4: Ein client-geliefertes userId wird NIE mehr
+    // akzeptiert - auch nicht für Gast-Checkouts. Bei bestehender Session hat die
+    // verifizierte Identität Vorrang; ohne Session bleibt userId in den Metadaten
+    // leer, und der Webhook-Handler löst die tatsächliche User-ID beim
+    // Checkout-Abschluss anhand der E-Mail auf (siehe handleWebhookEvent).
+    // Das schließt auch das Restrisiko, dass jemand eine fremde user_id in die
+    // Metadaten schreibt, vollständig statt nur teilweise.
+    const identity = await resolveVerifiedIdentity(req);
+    let userId = '';
+    if (identity) {
+      userId = identity.userId;
+      email = identity.email || email;
+    }
     
     // Select price ID based on selected plan and billing period
     const planUpper = String(planId).toUpperCase();
@@ -244,16 +260,22 @@ stripeRouter.get('/config', (req, res) => {
 });
 
 // 4. Create Stripe Customer Billing Portal session
+// ADR-0003.5: Vormals wurde die zu suchende/erstellende Stripe-Customer-E-Mail direkt
+// aus dem Request-Body übernommen - jeder konnte damit eine echte Billing-Portal-Session
+// (Zahlungsmethoden, Rechnungen, Abo-Verwaltung) für eine BELIEBIGE E-Mail-Adresse anfordern.
+// Identität kommt jetzt ausschließlich aus dem verifizierten Bearer-Token.
 stripeRouter.post('/create-portal-session', async (req, res) => {
   try {
-    const { email, userId, returnUrl } = req.body;
+    const identity = await resolveVerifiedIdentity(req);
+    if (!identity || !identity.email) {
+      return res.status(401).json({ error: 'Authentifizierung erforderlich.' });
+    }
+    const { returnUrl } = req.body;
     const stripe = getStripeInstance();
     const origin = req.headers.origin || `http://localhost:3000`;
 
-    // Try finding customer via email as backup, but prioritize userId-based workflows
-    const lookupKey = email || '';
     const customers = await stripe.customers.list({
-      email: lookupKey,
+      email: identity.email,
       limit: 1,
     });
 
@@ -263,9 +285,9 @@ stripeRouter.post('/create-portal-session', async (req, res) => {
     } else {
       // Create fresh customer if none exists
       const customer = await stripe.customers.create({
-        email: lookupKey,
+        email: identity.email,
         metadata: {
-          user_id: userId || '',
+          user_id: identity.userId,
         }
       });
       customerId = customer.id;
@@ -283,61 +305,48 @@ stripeRouter.post('/create-portal-session', async (req, res) => {
   }
 });
 
-// 5. Query user subscription tier (strictly supports user_id query)
+// 5. Query user subscription tier
+//
+// ADR-0003.5: Vormals nahm dieser Endpunkt userId/email direkt aus der Query entgegen -
+// ohne jede Prüfung, ob der Aufrufer tatsächlich dieser User ist (IDOR: jeder konnte den
+// Abo-Status JEDES beliebigen Kontos abfragen, inkl. des durch den kaputten
+// isOwnerIdentifier()-Fallback fälschlich als 'Enterprise' auflösenden Owner-Accounts).
+// Identität kommt jetzt ausschließlich aus dem verifizierten Bearer-Token.
 stripeRouter.get('/user-subscription', async (req, res) => {
-  const { userId, email } = req.query;
-  if (!userId && !email) {
-    return res.status(400).json({ error: 'userId or email parameter is required.' });
+  const identity = await resolveVerifiedIdentity(req);
+  if (!identity) {
+    return res.status(401).json({ error: 'Authentifizierung erforderlich.' });
   }
-  
-  let tier = 'Free';
-  if (userId) {
-    tier = await getSubscription(String(userId));
-  } else if (email) {
-    tier = await getSubscription(String(email));
-  }
-  
-  res.json({ userId, email, subscriptionTier: tier });
+
+  const tier = await getSubscription(identity.userId);
+  res.json({ userId: identity.userId, email: identity.email, subscriptionTier: tier });
 });
 
 // 6. PDF Credits management
+// ADR-0003.5: gleiche IDOR-Klasse wie oben - identifier kam vorher ungeprüft vom Client
+// und erlaubte, die PDF-Credits JEDES Kontos abzufragen bzw. zu verbrauchen.
 stripeRouter.get('/pdf-credits', async (req, res) => {
-  const { email, userId } = req.query;
-  const identifier = String(userId || email || '').toLowerCase().trim();
-  if (!identifier) {
-    return res.status(400).json({ error: 'userId or email is required.' });
+  const identity = await resolveVerifiedIdentity(req);
+  if (!identity) {
+    return res.status(401).json({ error: 'Authentifizierung erforderlich.' });
   }
-  
-  // Enterprise tier gets unlimited credits, Starter / Pro / Free get finite credits
-  let isUnlimited = false;
-  if (userId) {
-    const tier = await getSubscription(String(userId));
-    isUnlimited = (tier === 'Enterprise');
-  } else if (email) {
-    const tier = await getSubscription(String(email));
-    isUnlimited = (tier === 'Enterprise');
-  }
-  
-  const credits = await getLocalPdfCredits(identifier);
+
+  const tier = await getSubscription(identity.userId);
+  const isUnlimited = tier === 'Enterprise';
+  const credits = await getLocalPdfCredits(identity.userId);
   res.json({ credits, unlimited: isUnlimited });
 });
 
 stripeRouter.post('/consume-pdf-credit', async (req, res) => {
-  const { email, userId } = req.body;
-  const identifier = String(userId || email || '').toLowerCase().trim();
-  if (!identifier) {
-    return res.status(400).json({ error: 'userId or email is required.' });
+  const identity = await resolveVerifiedIdentity(req);
+  if (!identity) {
+    return res.status(401).json({ error: 'Authentifizierung erforderlich.' });
   }
-  
-  let isUnlimited = false;
-  if (userId) {
-    const tier = await getSubscription(String(userId));
-    isUnlimited = (tier === 'Enterprise');
-  } else if (email) {
-    const tier = await getSubscription(String(email));
-    isUnlimited = (tier === 'Enterprise');
-  }
-  
+  const identifier = identity.userId;
+
+  const tier = await getSubscription(identifier);
+  const isUnlimited = tier === 'Enterprise';
+
   if (isUnlimited) {
     return res.json({ success: true, credits: 9999, unlimited: true });
   }
@@ -354,6 +363,26 @@ stripeRouter.post('/consume-pdf-credit', async (req, res) => {
 
 
 
+// Compliance-Review Punkt 4: löst eine E-Mail-Adresse zur echten Supabase-User-ID auf,
+// über die service_role-only View internal_user_lookup (siehe Migration
+// create_internal_user_lookup_view). Nötig, weil supabase-js kein zuverlässiges
+// getUserByEmail() bietet (listUsers() paginiert nur, kein Email-Filter).
+async function resolveUserIdByEmail(email: string): Promise<string | null> {
+  if (!isSupabaseConfigured() || !email) return null;
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('internal_user_lookup')
+      .select('id')
+      .eq('email', email.toLowerCase().trim())
+      .maybeSingle();
+    if (error || !data) return null;
+    return data.id;
+  } catch {
+    return null;
+  }
+}
+
 // 7. Core Webhook handling logic
 export const handleWebhookEvent = async (event: Stripe.Event) => {
   console.log(`ℹ️ [Webhook Router] Received Stripe event: ${event.type}`);
@@ -361,8 +390,21 @@ export const handleWebhookEvent = async (event: Stripe.Event) => {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
     const planId = session.metadata?.plan_id || session.metadata?.planId || 'Free';
-    const userId = session.metadata?.user_id || session.metadata?.userId || '';
     const email = session.metadata?.email || session.customer_details?.email || '';
+    let userId = session.metadata?.user_id || session.metadata?.userId || '';
+
+    // Gast-Checkout (keine Session bei Kaufstart): userId war zum Schutz vor
+    // Metadaten-Manipulation absichtlich leer (siehe create-checkout-session).
+    // Jetzt, nach erfolgreicher Zahlung, per E-Mail auflösen.
+    if (!userId && email) {
+      const resolved = await resolveUserIdByEmail(email);
+      if (resolved) {
+        userId = resolved;
+        console.log(`ℹ️ [Webhook Router] Gast-Checkout: user_id für ${email} nachträglich aufgelöst.`);
+      } else {
+        console.warn(`⚠️ [Webhook Router] Gast-Checkout: keine passende User-ID für ${email} gefunden (Konto evtl. noch nicht registriert).`);
+      }
+    }
     
     if (userId && planId) {
       const planUpper = String(planId).toUpperCase();
