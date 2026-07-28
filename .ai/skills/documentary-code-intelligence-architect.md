@@ -2833,3 +2833,614 @@ sondern Bestandteil der Wissensarchitektur des gesamten CAPITAL-AI Core.
 ---
 
 # End of Chapter 5
+---
+
+# Chapter 6
+
+# Architecture Intelligence & Digital Twin Engine
+
+## Enterprise Purpose
+
+Die Architecture Intelligence Engine bildet den digitalen Zwilling der gesamten CAPITAL-AI Plattform.
+
+Sie besitzt vollständige Kenntnis über
+
+- Architektur
+- Komponenten
+- Services
+- Datenflüsse
+- Ereignisse
+- Verantwortlichkeiten
+- Abhängigkeiten
+- Versionen
+- Evolution
+
+Die Plattform kennt dadurch jederzeit ihren aktuellen technischen Zustand.
+
+---
+
+# Mission
+
+Die Architecture Intelligence Engine beantwortet jederzeit folgende Fragen.
+
+Wie ist die Plattform aufgebaut?
+
+Welche Komponenten existieren?
+
+Welche Komponenten kommunizieren miteinander?
+
+Welche Komponenten besitzen Risiken?
+
+Welche Komponenten wurden verändert?
+
+Welche Architekturverletzungen existieren?
+
+Welche Services sind kritisch?
+
+Welche Komponenten fehlen?
+
+Welche Komponenten besitzen technische Schulden?
+
+Welche Komponenten sind veraltet?
+
+---
+
+# Enterprise Principle
+
+Die Architektur wird niemals manuell beschrieben.
+
+Sie wird vollständig aus dem Knowledge Graph rekonstruiert.
+
+Der digitale Zwilling stellt jederzeit den tatsächlichen Zustand der Plattform dar.
+
+---
+
+# Digital Twin Lifecycle
+
+Repository
+
+↓
+
+Repository Intelligence
+
+↓
+
+Code Intelligence
+
+↓
+
+Knowledge Graph
+
+↓
+
+Architecture Intelligence
+
+↓
+
+Digital Twin
+
+↓
+
+Supervisor
+
+↓
+
+Platform Director
+
+---
+
+# Architecture Domains
+
+Die Engine erkennt automatisch folgende Domänen.
+
+Frontend
+
+Backend
+
+Shared
+
+Infrastructure
+
+Database
+
+Authentication
+
+Authorization
+
+Billing
+
+Security
+
+Compliance
+
+AI
+
+Orchestrator
+
+Agents
+
+Platform
+
+Documentary
+
+Versioning
+
+Deployment
+
+Monitoring
+
+Testing
+
+Configuration
+
+---
+
+# Layer Intelligence
+
+Automatische Erkennung der Architekturebenen.
+
+Presentation Layer
+
+Application Layer
+
+Domain Layer
+
+Infrastructure Layer
+
+Persistence Layer
+
+Integration Layer
+
+Platform Layer
+
+AI Layer
+
+Knowledge Layer
+
+Documentation Layer
+
+Governance Layer
+
+---
+
+# Component Topology
+
+Automatisch erzeugen
+
+Component Tree
+
+Module Tree
+
+Service Tree
+
+Agent Tree
+
+Orchestrator Tree
+
+API Tree
+
+Database Tree
+
+Knowledge Tree
+
+Documentation Tree
+
+Deployment Tree
+
+---
+
+# Runtime Architecture
+
+Automatisch erkennen
+
+Application Startup
+
+Service Registration
+
+Dependency Injection
+
+Plugin Registration
+
+Agent Registration
+
+Supervisor Registration
+
+Event Registration
+
+Health Checks
+
+Lifecycle
+
+Shutdown
+
+Recovery
+
+---
+
+# Communication Intelligence
+
+Die Engine erkennt automatisch
+
+REST Kommunikation
+
+Internal API
+
+External API
+
+Realtime
+
+Events
+
+Webhooks
+
+Cron
+
+Queue
+
+Observer
+
+Scheduler
+
+Broadcast
+
+---
+
+# Architecture Relationships
+
+Automatisch erzeugen
+
+communicates_with
+
+depends_on
+
+owns
+
+creates
+
+uses
+
+extends
+
+implements
+
+observes
+
+publishes
+
+subscribes
+
+validates
+
+documents
+
+controls
+
+supervises
+
+deploys
+
+---
+
+# Critical Path Detection
+
+Automatisch identifizieren
+
+Single Points of Failure
+
+kritische Services
+
+kritische Agenten
+
+kritische APIs
+
+kritische Datenbankobjekte
+
+kritische Events
+
+kritische Abhängigkeiten
+
+kritische Workflows
+
+kritische Sicherheitskomponenten
+
+---
+
+# Architectural Drift Detection
+
+Automatisch erkennen
+
+ungeplante Änderungen
+
+verwaiste Services
+
+nicht dokumentierte Komponenten
+
+fehlende ADR
+
+fehlende Versionierung
+
+unerwartete Abhängigkeiten
+
+Layer Verletzungen
+
+Governance Verstöße
+
+---
+
+# Architecture Evolution
+
+Die Plattform dokumentiert automatisch
+
+wann eine Komponente entstand
+
+wann sie geändert wurde
+
+welche Version betroffen ist
+
+welche ADR dazu existiert
+
+welcher Commit verantwortlich ist
+
+welcher Entwickler die Änderung durchgeführt hat
+
+welcher Agent die Änderung dokumentiert hat
+
+---
+
+# Architecture Timeline
+
+Version
+
+↓
+
+Commit
+
+↓
+
+Komponente
+
+↓
+
+Änderung
+
+↓
+
+ADR
+
+↓
+
+Knowledge Update
+
+↓
+
+Release
+
+↓
+
+Deployment
+
+↓
+
+Produktionsstatus
+
+---
+
+# Enterprise Architecture Graph
+
+Die Engine erzeugt automatisch
+
+System Graph
+
+Component Graph
+
+Dependency Graph
+
+Event Graph
+
+API Graph
+
+Database Graph
+
+Security Graph
+
+Compliance Graph
+
+Knowledge Graph
+
+Deployment Graph
+
+Workflow Graph
+
+---
+
+# Architecture Metrics
+
+Automatisch berechnen
+
+Komponentenanzahl
+
+Serviceanzahl
+
+Agentenanzahl
+
+Orchestratoren
+
+Events
+
+APIs
+
+Datenbankobjekte
+
+Architekturkomplexität
+
+Dokumentationsabdeckung
+
+Codequalität
+
+Technische Schulden
+
+Kopplungsgrad
+
+Kohäsion
+
+---
+
+# Architecture Risk Analysis
+
+Automatisch bewerten
+
+fehlende Dokumentation
+
+fehlende Tests
+
+fehlende Events
+
+fehlende Versionierung
+
+kritische Abhängigkeiten
+
+Legacy Code
+
+Duplicate Code
+
+Dead Code
+
+Circular Dependencies
+
+Security Risiken
+
+Compliance Risiken
+
+---
+
+# Architecture Simulation
+
+Vor jeder Migration simulieren
+
+Welche Komponenten ändern sich?
+
+Welche Dokumente ändern sich?
+
+Welche APIs ändern sich?
+
+Welche Events ändern sich?
+
+Welche Datenbankobjekte ändern sich?
+
+Welche Agenten ändern sich?
+
+Welche Orchestratoren ändern sich?
+
+Welche Version muss erhöht werden?
+
+Welche Tests müssen erneut ausgeführt werden?
+
+---
+
+# Enterprise Digital Twin
+
+Der digitale Zwilling besitzt jederzeit Kenntnis über
+
+den aktuellen Zustand
+
+den historischen Zustand
+
+den geplanten Zustand
+
+den Zielzustand
+
+Dadurch können Architekturentscheidungen bereits vor ihrer Implementierung bewertet werden.
+
+---
+
+# Integration
+
+Die Architecture Intelligence Engine liefert Informationen an
+
+Knowledge Engine
+
+↓
+
+Documentation Engine
+
+↓
+
+Version Manager
+
+↓
+
+Supervisor
+
+↓
+
+Platform Director
+
+↓
+
+Compliance Center
+
+↓
+
+Security Center
+
+↓
+
+Quality Center
+
+↓
+
+Release Center
+
+---
+
+# Enterprise Rules
+
+Keine Architekturentscheidung ohne Knowledge Graph.
+
+Keine Migration ohne Architekturvergleich.
+
+Keine Freigabe ohne Architekturvalidierung.
+
+Keine Versionserhöhung ohne Architekturprüfung.
+
+Keine ADR ohne Architekturreferenz.
+
+---
+
+# Success Criteria
+
+Die Architecture Intelligence Engine gilt als erfolgreich wenn
+
+✓ die vollständige Plattform rekonstruiert werden kann
+
+✓ jede Komponente im Digital Twin existiert
+
+✓ sämtliche Beziehungen bekannt sind
+
+✓ sämtliche kritischen Abhängigkeiten erkannt wurden
+
+✓ Architekturverletzungen automatisch erkannt werden
+
+✓ jede Änderung historisiert wird
+
+✓ jede Version nachvollziehbar bleibt
+
+✓ Supervisor und Platform Director jederzeit den aktuellen Architekturzustand kennen
+
+✓ zukünftige KI-Agenten ausschließlich den Digital Twin zur Architekturinterpretation verwenden
+
+---
+
+# Enterprise Extension
+
+Der Digital Twin ist das zentrale Architekturmodell des CAPITAL-AI Core.
+
+Alle zukünftigen Plattformkomponenten greifen ausschließlich auf dieses Modell zurück.
+
+Dadurch existiert nur noch eine einzige gültige Darstellung der gesamten Systemarchitektur.
+
+Die Architecture Intelligence Engine wird langfristig zur zentralen Governance-Komponente für sämtliche CAPITAL-AI Projekte.
+
+---
+
+# End of Chapter 6
