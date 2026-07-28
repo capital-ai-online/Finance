@@ -1593,3 +1593,216 @@ Sie erzeugt ausschließlich Wissen.
 ---
 
 # End of Chapter 3
+---
+
+# Chapter 4
+
+# Enterprise Knowledge Graph & Machine Readable Knowledge
+
+## Enterprise Purpose
+
+Die Knowledge Engine bildet das zentrale Wissenssystem der CAPITAL-AI Plattform.
+
+Sie besitzt nicht die Aufgabe Dokumente zu speichern.
+
+Sie besitzt die Aufgabe, den vollständigen Wissensstand der Plattform dauerhaft aufzubauen, miteinander zu verknüpfen und für Menschen sowie KI-Systeme verfügbar zu machen.
+
+Die Knowledge Engine erzeugt dadurch einen digitalen Zwilling der gesamten Softwarearchitektur.
+
+---
+
+# Mission
+
+Jede technische Information der Plattform wird automatisch in Wissen umgewandelt.
+
+Dieses Wissen besitzt Beziehungen.
+
+Es kennt seinen Ursprung.
+
+Es kennt seine Abhängigkeiten.
+
+Es kennt seine Historie.
+
+Es kennt seine Version.
+
+Es kennt seine Verantwortung.
+
+---
+
+# Enterprise Principle
+
+Code erzeugt Wissen.
+
+Wissen erzeugt Architektur.
+
+Architektur erzeugt Dokumentation.
+
+Dokumentation ist niemals der Ursprung.
+
+---
+
+# Knowledge Lifecycle
+
+Repository
+
+↓
+
+Repository Intelligence
+
+↓
+
+Code Intelligence
+
+↓
+
+Knowledge Engine
+
+↓
+
+Knowledge Graph
+
+↓
+
+Documentation Engine
+
+↓
+
+Supervisor
+
+↓
+
+Platform Director
+
+---
+
+# Enterprise Knowledge Model
+
+Die Knowledge Engine verwaltet ausschließlich Beziehungen.
+
+Beispiel
+
+Platform Director
+
+↓
+
+besitzt
+
+↓
+
+Supervisor
+
+↓
+
+registriert
+
+↓
+
+Agent
+
+↓
+
+verwendet
+
+↓
+
+Service
+
+↓
+
+nutzt
+
+↓
+
+API
+
+↓
+
+greift auf
+
+↓
+
+Datenbank
+
+↓
+
+besitzt
+
+↓
+
+RLS
+
+↓
+
+gehört zu
+
+↓
+
+ADR
+
+---
+
+# Knowledge Objects
+
+Automatisch erzeugen
+
+Repository
+
+Module
+
+Services
+
+Klassen
+
+Interfaces
+
+Methoden
+
+Events
+
+Agenten
+
+Orchestratoren
+
+APIs
+
+Datenbankobjekte
+
+Konfigurationen
+
+Dokumentationen
+
+Versionen
+
+Releases
+
+ADR
+
+Workflows
+
+Policies
+
+---
+
+# Knowledge Relationships
+
+Automatisch erzeugen
+
+USES
+
+IMPLEMENTS
+
+DEPENDS_ON
+
+CALLS
+
+LISTENS_TO
+
+EMITS
+
+OWNS
+
+BELONGS_TO
+
+GENERATES
+
+REGISTERS
