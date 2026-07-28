@@ -26,7 +26,8 @@ import {
   ShieldAlert,
   Terminal,
   Bell,
-  BellRing
+  BellRing,
+  Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AssetLogo } from './AssetLogo';
@@ -357,6 +358,9 @@ interface CryptoScoringEnterpriseProps {
   timeframe: string;
   onChangeTimeframe?: (timeframe: string) => void;
   userSession?: any;
+  /** Enterprise Scorer requires Starter plan or higher. Guests and Free users are gated below. */
+  subscriptionTier?: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
+  onUpgradeClick?: () => void;
 }
 
 export function CryptoScoringEnterprise({ 
@@ -364,7 +368,9 @@ export function CryptoScoringEnterprise({
   onSelectSymbol, 
   timeframe, 
   onChangeTimeframe,
-  userSession
+  userSession,
+  subscriptionTier = 'Free',
+  onUpgradeClick
 }: CryptoScoringEnterpriseProps) {
   // Keep up to 3 selected symbols
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>(() => {
@@ -1292,6 +1298,32 @@ export function CryptoScoringEnterprise({
   };
 
   const currentBadge = scoringResult ? getDecisionBadge(scoringResult.decision) : null;
+
+  // Access control: Enterprise Scorer is available from the Starter plan upward.
+  // Guests and Free-tier users see an upgrade prompt instead of scoring data.
+  if (subscriptionTier === 'Free') {
+    return (
+      <div id="crypto-enterprise-scoring-root" className="bg-gradient-to-br from-[#121214] via-[#1c1c20] to-[#0d0d0f] border border-white/10 rounded-2xl p-8 backdrop-blur-xl relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex flex-col items-center text-center gap-4">
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="p-3 bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/25 text-aif-gold-DEFAULT rounded-full relative z-10">
+          <Lock size={26} />
+        </div>
+        <h3 className="text-lg font-black text-white font-display uppercase tracking-tight relative z-10">
+          Enterprise Scorer – Ab dem Starter-Plan
+        </h3>
+        <p className="text-xs text-white/50 max-w-md leading-relaxed relative z-10">
+          Der Multi-Universe Enterprise Scorer (neuronale Scorings, Risk-Layer, AI-Konfidenz) ist ab dem Starter-Tarif freigeschaltet. Upgraden Sie, um vollen Zugriff auf die Scoring-Engine zu erhalten.
+        </p>
+        <button
+          onClick={onUpgradeClick}
+          className="relative z-10 px-5 py-2.5 bg-aif-gold-DEFAULT hover:bg-aif-gold-light text-black font-black text-xs uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(245,196,83,0.3)] transition-all flex items-center gap-2 cursor-pointer"
+        >
+          <Sparkles size={14} />
+          <span>Jetzt auf Starter upgraden</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div id="crypto-enterprise-scoring-root" className="bg-gradient-to-br from-[#121214] via-[#1c1c20] to-[#0d0d0f] border border-white/10 rounded-2xl p-6 backdrop-blur-xl relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.6)]">

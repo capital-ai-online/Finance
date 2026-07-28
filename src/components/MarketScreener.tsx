@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Asset } from '../types';
 import { AssetLogo } from './AssetLogo';
 import { 
@@ -83,6 +83,7 @@ export function MarketScreener({
   // Scan state trackers (limit of 3 for Starter tier)
   const [scansCount, setScansCount] = useState<number>(0);
   const [scanLimitReached, setScanLimitReached] = useState<boolean>(false);
+  const [assetLimitReached, setAssetLimitReached] = useState<boolean>(false);
   const [userTier, setUserTier] = useState<string>('Free');
 
   // Search and Multi-Asset Selection (Up to 3 assets compare grid)
@@ -110,6 +111,10 @@ export function MarketScreener({
   // Export Paywall State
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
 
+  // Free-tier (and Guest, which defaults to 'Free') users may only screen 1 asset at a time.
+  // Starter and above keep the existing 3-asset comparison limit.
+  const maxAssets = userTier === 'Free' ? 1 : 3;
+
   // Load user tier and local scans tracker
   useEffect(() => {
     if (effectiveEmail) {
@@ -132,6 +137,19 @@ export function MarketScreener({
     }
   }, [effectiveEmail]);
 
+  // Whenever the resolved tier drops the allowed max (e.g. Guest/Free), trim the
+  // currently compared assets down so Free users never end up viewing more than 1 asset.
+  useEffect(() => {
+    setSelectedAssets(prev => (prev.length > maxAssets ? prev.slice(0, maxAssets) : prev));
+  }, [maxAssets]);
+
+  // Keep a ref of the latest maxAssets so the mount-only registry fetch below can read the
+  // current tier limit without needing to re-run (and re-fetch) whenever the tier resolves.
+  const maxAssetsRef = useRef(maxAssets);
+  useEffect(() => {
+    maxAssetsRef.current = maxAssets;
+  }, [maxAssets]);
+
   // Load all assets dynamically on mount
   useEffect(() => {
     fetch('/api/registry/assets')
@@ -142,12 +160,12 @@ export function MarketScreener({
       .then(data => {
         if (data && Array.isArray(data)) {
           setAllRegistryAssets(data);
-          // Set initial compared assets (BTC, AAPL, EURUSD)
+          // Set initial compared assets (BTC, AAPL, EURUSD), capped to the user's tier limit
           const btc = data.find(a => a.symbol === 'BTC');
           const aapl = data.find(a => a.symbol === 'AAPL');
           const eurusd = data.find(a => a.symbol === 'EURUSD');
           const initialList = [btc, aapl, eurusd].filter(Boolean) as Asset[];
-          setSelectedAssets(initialList.slice(0, 3));
+          setSelectedAssets(initialList.slice(0, maxAssetsRef.current));
         }
       })
       .catch(err => console.error(err));
@@ -164,17 +182,26 @@ export function MarketScreener({
     ).slice(0, 8);
   }, [searchVal, allRegistryAssets]);
 
-  // Add Asset to compared list (Max 3)
+  // Add Asset to compared list (capped at maxAssets: 1 for Free/Guest, 3 for Starter+)
   const handleAddAsset = (asset: Asset) => {
     if (selectedAssets.some(a => a.symbol === asset.symbol)) {
       setSearchVal('');
       setShowDropdown(false);
       return;
     }
-    
-    if (selectedAssets.length >= 3) {
+
+    if (userTier === 'Free' && selectedAssets.length >= maxAssets) {
+      // Free/Guest users are capped at 1 screened asset; prompt to upgrade instead of swapping silently.
+      setSearchVal('');
+      setShowDropdown(false);
+      setAssetLimitReached(true);
+      return;
+    }
+    setAssetLimitReached(false);
+
+    if (selectedAssets.length >= maxAssets) {
       // Replace the last one
-      setSelectedAssets(prev => [...prev.slice(0, 2), asset]);
+      setSelectedAssets(prev => [...prev.slice(0, maxAssets - 1), asset]);
     } else {
       setSelectedAssets(prev => [...prev, asset]);
     }
@@ -184,6 +211,7 @@ export function MarketScreener({
 
   const handleRemoveAsset = (symbol: string) => {
     setSelectedAssets(prev => prev.filter(a => a.symbol !== symbol));
+    setAssetLimitReached(false);
   };
 
   // Perform multi-interval scan check and limitations
@@ -442,7 +470,9 @@ export function MarketScreener({
             <span>Enterprise Multi-Interval Screener</span>
           </h2>
           <p className="text-xs text-white/50 leading-relaxed max-w-2xl mt-1">
-            Analysieren Sie bis zu 3 Assets parallel über zwei beliebige Zeithorizonte hinweg. Ermitteln Sie neuronale Scorings, aktive Chart-Muster und automatisierte Stop-Loss/Take-Profit Entry-Ränge im Ampel-Layout.
+            {userTier === 'Free'
+              ? 'Analysieren Sie 1 Asset über zwei beliebige Zeithorizonte hinweg. Ermitteln Sie neuronale Scorings, aktive Chart-Muster und automatisierte Stop-Loss/Take-Profit Entry-Ränge im Ampel-Layout.'
+              : 'Analysieren Sie bis zu 3 Assets parallel über zwei beliebige Zeithorizonte hinweg. Ermitteln Sie neuronale Scorings, aktive Chart-Muster und automatisierte Stop-Loss/Take-Profit Entry-Ränge im Ampel-Layout.'}
           </p>
         </div>
 
@@ -484,6 +514,21 @@ export function MarketScreener({
           <div className="space-y-1 leading-normal">
             <strong className="block text-white">Starter Scan-Limit von 3 täglichen Scans erreicht</strong>
             <p>Schalten Sie unbegrenzte Echtzeit-Scans und tiefe quantitative Risikowertungen über ein Upgrade frei.</p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Free/Guest single-asset screening limit hint */}
+      {userTier === 'Free' && assetLimitReached && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-xl bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/25 text-xs text-aif-gold-DEFAULT flex items-start gap-3"
+        >
+          <AlertTriangle className="text-aif-gold-DEFAULT mt-0.5 shrink-0" size={16} />
+          <div className="space-y-1 leading-normal">
+            <strong className="block text-white">Free-Limit: Nur 1 Asset gleichzeitig screenbar</strong>
+            <p>Entfernen Sie das aktuelle Asset, um ein anderes zu screenen, oder upgraden Sie auf Starter für den parallelen Vergleich von bis zu 3 Assets.</p>
           </div>
         </motion.div>
       )}

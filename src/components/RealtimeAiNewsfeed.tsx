@@ -250,7 +250,11 @@ export function RealtimeAiNewsfeed({
   };
 
   // Fetch all assets from server on mount
+  // Guests and Free-tier users do not receive the Realtime AI Newsfeed at all,
+  // so skip the network call and the rotation loop below entirely for them.
   useEffect(() => {
+    if (subscriptionTier === 'Free') return;
+
     fetch('/api/market-data')
       .then(res => {
         if (!res.ok) throw new Error(`Market data response not ok: ${res.status}`);
@@ -267,10 +271,11 @@ export function RealtimeAiNewsfeed({
       .catch(err => {
         console.error('Error fetching market-data in RealtimeAiNewsfeed:', err);
       });
-  }, []);
+  }, [subscriptionTier]);
 
   // Rotate / Push new real-time alerts periodically from assets with priority for Enterprise Scorer assets
   useEffect(() => {
+    if (subscriptionTier === 'Free') return;
     if (assets.length === 0) return;
 
     const interval = setInterval(() => {
@@ -332,7 +337,7 @@ export function RealtimeAiNewsfeed({
     }, 14000);
 
     return () => clearInterval(interval);
-  }, [assets, watchlist, prioritySymbols, selectedSymbol, onTriggerPushNotification, pushNotificationsEnabled]);
+  }, [assets, watchlist, prioritySymbols, selectedSymbol, onTriggerPushNotification, pushNotificationsEnabled, subscriptionTier]);
 
   const handleManualRefresh = () => {
     if (isUpdating || assets.length === 0) return;
@@ -384,6 +389,32 @@ export function RealtimeAiNewsfeed({
     setShowCheckoutModal(false);
     onUpgradeClick(); // Redirect them to pricing plan overview
   };
+
+  // Access control: Guests and Free-tier users receive no Realtime AI Newsfeed
+  // messages at all (per Pricing.md). Show an upgrade card instead of any feed content.
+  if (subscriptionTier === 'Free') {
+    return (
+      <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md flex flex-col items-center justify-center text-center gap-4 h-full relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-violet-600 via-blue-500 to-emerald-500" />
+        <div className="p-3 bg-white/5 border border-white/10 text-white/60 rounded-full">
+          <Lock size={24} />
+        </div>
+        <h3 className="text-sm font-black text-white font-display uppercase tracking-tight">
+          Realtime AI-Newsfeed – Ab dem Starter-Plan
+        </h3>
+        <p className="text-xs text-white/50 max-w-sm leading-relaxed">
+          Gast- und Free-Nutzer erhalten keine Echtzeit-KI-Newsfeed-Meldungen. Upgraden Sie auf Starter oder höher, um Live-Marktnachrichten und KI-Insights freizuschalten.
+        </p>
+        <button
+          onClick={onUpgradeClick}
+          className="px-5 py-2.5 bg-aif-gold-DEFAULT hover:bg-aif-gold-light text-black font-black text-xs uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(245,196,83,0.3)] transition-all flex items-center gap-2 cursor-pointer"
+        >
+          <Sparkles size={14} />
+          <span>Jetzt upgraden</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md flex flex-col justify-between h-full relative overflow-hidden group">

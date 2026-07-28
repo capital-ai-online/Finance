@@ -1335,6 +1335,8 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                      timeframe={timeframe} 
                      onChangeTimeframe={setTimeframe} 
                      userSession={userSession}
+                     subscriptionTier={profile.subscriptionTier}
+                     onUpgradeClick={() => navigateTo('abonnements')}
                   />
 
                   {/* Realtime AI-Newsfeed and Watchlist Side-by-Side Grid */}
