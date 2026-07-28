@@ -986,3 +986,610 @@ wenn
 ---
 
 # End of Chapter 2
+---
+
+# Chapter 3
+
+# Code Intelligence Engine
+
+## Enterprise Purpose
+
+Die Code Intelligence Engine ist das zentrale Analysemodul der CAPITAL-AI Documentary Engine.
+
+Ihre Aufgabe besteht darin, den vollständigen Quellcode semantisch zu verstehen.
+
+Sie analysiert nicht nur Dateien.
+
+Sie analysiert die Architektur, die Beziehungen und das Verhalten der Plattform.
+
+Die Code Intelligence Engine erzeugt dadurch den vollständigen technischen Wissensgraphen der CAPITAL-AI Plattform.
+
+---
+
+# Mission
+
+Die Engine beantwortet jederzeit folgende Fragen:
+
+Welche Komponenten existieren?
+
+Welche Verantwortung besitzt jede Komponente?
+
+Welche Abhängigkeiten existieren?
+
+Welche Komponenten kommunizieren miteinander?
+
+Welche Events werden ausgelöst?
+
+Welche Services sind kritisch?
+
+Welche Komponenten besitzen technische Schulden?
+
+Welche Komponenten müssen dokumentiert werden?
+
+---
+
+# Enterprise Principle
+
+Code besitzt Bedeutung.
+
+Die Documentary Engine analysiert deshalb nicht Zeichenketten.
+
+Sie analysiert semantische Zusammenhänge.
+
+---
+
+# Semantic Analysis Pipeline
+
+Repository
+
+↓
+
+Parser
+
+↓
+
+Abstract Syntax Tree (AST)
+
+↓
+
+Semantic Analyzer
+
+↓
+
+Relationship Analyzer
+
+↓
+
+Architecture Analyzer
+
+↓
+
+Knowledge Graph
+
+↓
+
+Documentation Engine
+
+---
+
+# Source Code Parsing
+
+Automatisch analysieren
+
+TypeScript
+
+JavaScript
+
+React
+
+Node
+
+Express
+
+SQL
+
+JSON
+
+YAML
+
+Markdown
+
+Python
+
+Shell
+
+PowerShell
+
+---
+
+# AST Analysis
+
+Für jede Datei wird ein vollständiger Abstract Syntax Tree erzeugt.
+
+Es werden erkannt
+
+Imports
+
+Exports
+
+Klassen
+
+Interfaces
+
+Enums
+
+Typen
+
+Funktionen
+
+Methoden
+
+Properties
+
+Namespaces
+
+Module
+
+Generics
+
+Decorators
+
+---
+
+# Component Discovery
+
+Automatisch erkennen
+
+Services
+
+Controllers
+
+Middleware
+
+Hooks
+
+Utilities
+
+Repositories
+
+Providers
+
+DTO
+
+Entities
+
+Schemas
+
+Configuration
+
+Plugins
+
+Factories
+
+Builders
+
+Strategies
+
+Observers
+
+---
+
+# Service Intelligence
+
+Für jeden Service werden automatisch erfasst
+
+Verantwortung
+
+öffentliche Methoden
+
+interne Methoden
+
+Dependencies
+
+Events
+
+API Nutzung
+
+Datenbankzugriffe
+
+externe Provider
+
+Konfiguration
+
+Risiko
+
+Dokumentationsstatus
+
+---
+
+# Agent Intelligence
+
+Automatisch analysieren
+
+Agent ID
+
+Agent Typ
+
+Owner
+
+Verantwortung
+
+Eingaben
+
+Ausgaben
+
+Trigger
+
+Events
+
+Abhängigkeiten
+
+Health Status
+
+Supervisor Registrierung
+
+Version
+
+ADR
+
+Knowledge Entry
+
+---
+
+# Orchestrator Intelligence
+
+Automatisch erkennen
+
+Crypto Orchestrator
+
+Portfolio Orchestrator
+
+Compliance Orchestrator
+
+Platform Director
+
+Supervisor
+
+Version Manager
+
+AI Gateway
+
+Billing
+
+News
+
+Workflow Engine
+
+---
+
+# Event Intelligence
+
+Automatisch erkennen
+
+Emitter
+
+Listener
+
+Dispatcher
+
+Observer
+
+Queue
+
+Retry
+
+Scheduler
+
+Cron
+
+Realtime
+
+Lifecycle
+
+---
+
+# API Intelligence
+
+Automatisch analysieren
+
+REST Endpunkte
+
+Express Router
+
+Middleware
+
+Authentication
+
+Authorization
+
+Rate Limiter
+
+Versionierung
+
+Request
+
+Response
+
+DTO
+
+Swagger
+
+OpenAPI
+
+---
+
+# Database Intelligence
+
+Automatisch erkennen
+
+Tabellen
+
+Views
+
+Functions
+
+RPC
+
+RLS
+
+Policies
+
+Constraints
+
+Indexes
+
+Relations
+
+Migrationen
+
+---
+
+# Dependency Intelligence
+
+Automatisch erzeugen
+
+Class Dependency Graph
+
+Service Dependency Graph
+
+Module Dependency Graph
+
+Event Dependency Graph
+
+Agent Dependency Graph
+
+Orchestrator Dependency Graph
+
+Database Dependency Graph
+
+Frontend Dependency Graph
+
+Backend Dependency Graph
+
+---
+
+# Architecture Intelligence
+
+Die Engine erkennt automatisch
+
+Layer Violations
+
+Circular Dependencies
+
+Dead Code
+
+Duplicate Code
+
+Missing Documentation
+
+Missing Tests
+
+Missing ADR
+
+Missing Events
+
+Deprecated Components
+
+Legacy Code
+
+---
+
+# Behaviour Analysis
+
+Die Documentary Engine analysiert zusätzlich
+
+Startsequenzen
+
+Registrierungen
+
+Initialisierung
+
+Dependency Injection
+
+Service Discovery
+
+Plugin Discovery
+
+Lifecycle
+
+Shutdown
+
+Recovery
+
+---
+
+# Naming Intelligence
+
+Automatisch prüfen
+
+Klassen
+
+Methoden
+
+Variablen
+
+Interfaces
+
+Ordner
+
+Module
+
+Events
+
+Services
+
+Dateien
+
+Namenskonventionen
+
+---
+
+# Documentation Coverage
+
+Für jede Komponente wird geprüft
+
+existiert
+
+ADR
+
+Architecture Description
+
+API Dokumentation
+
+Knowledge Entry
+
+Version
+
+Owner
+
+Event Registrierung
+
+Supervisor Registrierung
+
+---
+
+# Machine Readable Output
+
+Die Code Intelligence Engine erzeugt ausschließlich strukturierte Modelle.
+
+Beispiele
+
+components.json
+
+classes.json
+
+interfaces.json
+
+services.json
+
+events.json
+
+dependencies.json
+
+apis.json
+
+database.json
+
+agents.json
+
+orchestrators.json
+
+architecture.json
+
+code-quality.json
+
+technical-debt.json
+
+---
+
+# Architectural Memory
+
+Die Engine speichert zusätzlich
+
+wann
+
+warum
+
+durch wen
+
+eine Komponente verändert wurde.
+
+Dadurch entsteht eine vollständige Evolutionshistorie der Plattform.
+
+---
+
+# Enterprise Rules
+
+Keine Interpretation ohne Quellcode.
+
+Keine Dokumentation ohne Analyse.
+
+Keine Klassifizierung ohne AST.
+
+Keine Architekturentscheidung ohne Dependency Analyse.
+
+Keine Migration ohne vollständiges Komponentenverständnis.
+
+---
+
+# Success Criteria
+
+Die Code Intelligence Engine gilt als erfolgreich wenn
+
+✓ sämtliche Klassen erkannt wurden
+
+✓ sämtliche Interfaces erkannt wurden
+
+✓ sämtliche Services erkannt wurden
+
+✓ sämtliche Agenten erkannt wurden
+
+✓ sämtliche Orchestratoren erkannt wurden
+
+✓ sämtliche Events erkannt wurden
+
+✓ sämtliche APIs erkannt wurden
+
+✓ sämtliche Datenbankobjekte erkannt wurden
+
+✓ sämtliche Abhängigkeiten erkannt wurden
+
+✓ sämtliche Architekturverletzungen erkannt wurden
+
+✓ der vollständige Wissensgraph reproduzierbar aufgebaut werden kann
+
+---
+
+# Integration
+
+Die Code Intelligence Engine liefert ihre Ergebnisse ausschließlich an
+
+Repository Intelligence
+
+↓
+
+Knowledge Engine
+
+↓
+
+Documentation Engine
+
+↓
+
+Version Manager
+
+↓
+
+Supervisor
+
+↓
+
+Platform Director
+
+Sie erzeugt selbst keine Dokumentation.
+
+Sie erzeugt ausschließlich Wissen.
+
+---
+
+# End of Chapter 3
