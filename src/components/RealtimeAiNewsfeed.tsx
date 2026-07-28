@@ -117,6 +117,7 @@ interface RealtimeAiNewsfeedProps {
     isOnWatchlist: boolean;
   }) => void;
   watchlist?: string[];
+  maxDisplayItems?: number;
 }
 
 // Utility to calculate how a news sentiment/impact alters an asset score
@@ -139,7 +140,8 @@ export function RealtimeAiNewsfeed({
   searchQuery = '',
   categoryFilter = 'all',
   onTriggerPushNotification,
-  watchlist = []
+  watchlist = [],
+  maxDisplayItems = 3
 }: RealtimeAiNewsfeedProps) {
   const [alerts, setAlerts] = useState<NewsAlert[]>(INITIAL_ALERTS);
   const [activeAlert, setActiveAlert] = useState<NewsAlert | null>(null);
@@ -442,6 +444,7 @@ export function RealtimeAiNewsfeed({
 
               return true;
             })
+            .slice(0, maxDisplayItems)
             .map((alert) => {
             const isBullish = alert.sentiment === 'bullish';
             const isBearish = alert.sentiment === 'bearish';
