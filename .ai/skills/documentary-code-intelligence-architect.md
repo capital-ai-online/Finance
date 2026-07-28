@@ -1806,3 +1806,407 @@ BELONGS_TO
 GENERATES
 
 REGISTERS
+
+VALIDATES
+
+DEPLOYS
+
+CONFIGURES
+
+MIGRATES
+
+SUPERVISES
+
+DOCUMENTS
+
+---
+
+# Knowledge Graph
+
+Die Plattform erzeugt automatisch einen vollständigen Graphen.
+
+Beispiel
+
+Platform Director
+
+↓
+
+Supervisor
+
+↓
+
+Crypto Orchestrator
+
+↓
+
+DeFi Scoring
+
+↓
+
+Risk Service
+
+↓
+
+API
+
+↓
+
+Supabase
+
+↓
+
+Migration
+
+↓
+
+ADR
+
+↓
+
+Version
+
+↓
+
+Release
+
+---
+
+# Machine Readable Knowledge
+
+Neben Markdown erzeugt die Knowledge Engine strukturierte Wissensmodelle.
+
+knowledge/
+
+repository.json
+
+architecture.json
+
+components.json
+
+services.json
+
+events.json
+
+agents.json
+
+orchestrators.json
+
+database.json
+
+api.json
+
+security.json
+
+documentation.json
+
+dependencies.json
+
+workflows.json
+
+policies.json
+
+versions.json
+
+releases.json
+
+---
+
+# Component Knowledge
+
+Für jede Komponente werden automatisch gespeichert
+
+ID
+
+Name
+
+Typ
+
+Version
+
+Owner
+
+Beschreibung
+
+Verantwortung
+
+Abhängigkeiten
+
+Events
+
+API
+
+Dokumentation
+
+ADR
+
+Supervisor Status
+
+Health Status
+
+Lifecycle
+
+Historie
+
+---
+
+# Architecture Memory
+
+Die Knowledge Engine merkt sich
+
+wann
+
+warum
+
+wie
+
+durch wen
+
+eine Komponente verändert wurde.
+
+Sie kennt dadurch die vollständige Entwicklung der Plattform.
+
+---
+
+# Historical Intelligence
+
+Für jede Version werden gespeichert
+
+welche Dateien geändert wurden
+
+welche Klassen geändert wurden
+
+welche APIs geändert wurden
+
+welche Agenten geändert wurden
+
+welche Events geändert wurden
+
+welche Dokumente geändert wurden
+
+welche ADR erstellt wurden
+
+welche Migrationen entstanden
+
+welche Risiken erkannt wurden
+
+---
+
+# Version Relationship
+
+Version
+
+↓
+
+Commit
+
+↓
+
+Änderungen
+
+↓
+
+Komponenten
+
+↓
+
+Events
+
+↓
+
+Dokumentation
+
+↓
+
+Release
+
+↓
+
+Deployment
+
+↓
+
+Produktivsystem
+
+---
+
+# AI Knowledge
+
+Jeder zukünftige KI-Agent verwendet dieselbe Wissensbasis.
+
+Kein Agent analysiert das Repository mehrfach.
+
+Die Knowledge Engine stellt allen Agenten identische Informationen bereit.
+
+Dadurch entstehen
+
+keine unterschiedlichen Interpretationen
+
+keine widersprüchlichen Dokumentationen
+
+keine redundanten Analysen.
+
+---
+
+# Knowledge Queries
+
+Die Knowledge Engine muss Fragen beantworten können.
+
+Beispiele
+
+Welche Services verwendet der Crypto Orchestrator?
+
+Welche Agenten nutzen den Supervisor?
+
+Welche APIs greifen auf Supabase zu?
+
+Welche Komponenten besitzen keine ADR?
+
+Welche Events besitzen keinen Listener?
+
+Welche Klassen besitzen technische Schulden?
+
+Welche Version hat diese Klasse eingeführt?
+
+Welche Migration gehört zu dieser Tabelle?
+
+Welche Dokumentation ist veraltet?
+
+Welche Komponenten wurden seit Version X verändert?
+
+---
+
+# Enterprise Search
+
+Die gesamte Plattform wird semantisch durchsuchbar.
+
+Nicht nach Dateinamen.
+
+Sondern nach Bedeutung.
+
+Beispiele
+
+"Alle Komponenten die Stripe verwenden."
+
+"Alle Agenten mit Telemetrie."
+
+"Alle Klassen mit Security Bezug."
+
+"Alle APIs ohne Dokumentation."
+
+"Alle Orchestratoren mit Supervisor Integration."
+
+---
+
+# Knowledge Validation
+
+Vor jeder Dokumentation wird geprüft
+
+existiert bereits Wissen?
+
+existiert bereits eine Beziehung?
+
+existiert bereits eine Version?
+
+existiert bereits eine ADR?
+
+existiert bereits eine Dokumentation?
+
+existiert bereits ein Diagramm?
+
+existiert bereits eine Migration?
+
+---
+
+# Knowledge Synchronisation
+
+Die Knowledge Engine synchronisiert automatisch
+
+Repository
+
+↓
+
+Code Intelligence
+
+↓
+
+Documentation
+
+↓
+
+Version Manager
+
+↓
+
+Supervisor
+
+↓
+
+Platform Director
+
+↓
+
+Release Center
+
+↓
+
+Compliance Center
+
+↓
+
+Security Center
+
+↓
+
+Quality Center
+
+---
+
+# Enterprise Rules
+
+Wissen wird niemals manuell geändert.
+
+Wissen entsteht ausschließlich aus Analyse.
+
+Keine Dokumentation verändert Wissen.
+
+Nur Quellcode verändert Wissen.
+
+---
+
+# Success Criteria
+
+Die Knowledge Engine gilt als erfolgreich wenn
+
+✓ sämtliche Komponenten Beziehungen besitzen
+
+✓ sämtliche Agenten registriert sind
+
+✓ sämtliche Services dokumentiert sind
+
+✓ sämtliche APIs verknüpft wurden
+
+✓ sämtliche Datenbankobjekte bekannt sind
+
+✓ sämtliche ADR referenziert werden
+
+✓ sämtliche Versionen nachvollziehbar bleiben
+
+✓ sämtliche Änderungen historisiert werden
+
+✓ alle KI-Agenten dieselbe Wissensbasis verwenden
+
+✓ der vollständige Architekturgraph jederzeit reproduzierbar aufgebaut werden kann
+
+---
+
+# Enterprise Extension
+
+Die Knowledge Engine bildet den zentralen digitalen Zwilling der CAPITAL-AI Plattform.
+
+Alle zukünftigen Enterprise-Komponenten greifen ausschließlich auf diese Wissensbasis zu.
+
+Sie ersetzt langfristig isolierte Dokumentationen und entwickelt sich zum zentralen Knowledge Operating System des CAPITAL-AI Core.
+
+---
+
+# End of Chapter 4
