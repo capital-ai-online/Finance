@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Newspaper, ArrowRight, Zap, RefreshCw, Lock, Sparkles, CheckCircle, ShieldAlert, Cpu } from 'lucide-react';
+import { Newspaper, ArrowRight, Zap, RefreshCw, Lock, Sparkles, CheckCircle, ShieldAlert, Cpu, Bell, BellOff } from 'lucide-react';
 
 interface NewsAlert {
   id: string;
@@ -102,7 +102,7 @@ const NEW_REALTIME_ALERTS: Partial<NewsAlert>[] = [
 interface RealtimeAiNewsfeedProps {
   subscriptionTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
   onUpgradeClick: () => void;
-  selectedSymbol: string;
+  selectedSymbol?: string;
   searchQuery?: string;
   categoryFilter?: string;
   onTriggerPushNotification?: (data: {
@@ -136,7 +136,7 @@ const calculateNewsImpactScore = (baseScore: number, sentiment: 'bullish' | 'bea
 export function RealtimeAiNewsfeed({ 
   subscriptionTier, 
   onUpgradeClick, 
-  selectedSymbol,
+  selectedSymbol = '',
   searchQuery = '',
   categoryFilter = 'all',
   onTriggerPushNotification,
@@ -149,6 +149,7 @@ export function RealtimeAiNewsfeed({
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [selectedPlanForStripe, setSelectedPlanForStripe] = useState<any>(null);
   const [assets, setAssets] = useState<any[]>([]);
+  const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState<boolean>(true);
 
   // Generate dynamic, realistic news alert data for any asset
   const generateCustomAlertsForAsset = (asset: any): NewsAlert[] => {
@@ -260,26 +261,14 @@ export function RealtimeAiNewsfeed({
       });
   }, []);
 
-  // Update newsfeed to focus on selectedSymbol whenever it changes
-  useEffect(() => {
-    if (assets.length > 0) {
-      const activeAsset = assets.find(a => a.symbol === selectedSymbol) || assets.find(a => a.symbol === 'BTC') || assets[0];
-      if (activeAsset) {
-        const customAlerts = generateCustomAlertsForAsset(activeAsset);
-        const fallbackAlerts = INITIAL_ALERTS.filter(a => a.symbol !== selectedSymbol);
-        setAlerts([...customAlerts, ...fallbackAlerts.slice(0, 2)]);
-      }
-    }
-  }, [selectedSymbol, assets]);
-
-  // Rotate / Push new real-time alerts periodically from the pool of all assets
+  // Rotate / Push new real-time alerts periodically from the global pool of all assets
   useEffect(() => {
     if (assets.length === 0) return;
 
     const interval = setInterval(() => {
       setIsUpdating(true);
       setTimeout(() => {
-        // Pick a random asset from all 150+ assets
+        // Pick a random asset from all 150+ assets globally
         const randomAsset = assets[Math.floor(Math.random() * assets.length)];
         const generated = generateCustomAlertsForAsset(randomAsset);
         const template = generated[Math.floor(Math.random() * generated.length)];
@@ -300,8 +289,8 @@ export function RealtimeAiNewsfeed({
         const baseScore = randomAsset.score > 10 ? randomAsset.score / 10 : randomAsset.score;
         const adjustedScore = calculateNewsImpactScore(baseScore, template.sentiment, template.impact);
 
-        // Check if adjusted score triggers push notification (under 3 or over 7)
-        if ((adjustedScore < 3.0 || adjustedScore > 7.0) && onTriggerPushNotification) {
+        // Check if adjusted score triggers push notification (only when push notifications are activated by user)
+        if ((adjustedScore < 3.0 || adjustedScore > 7.0) && onTriggerPushNotification && pushNotificationsEnabled) {
           const isOnWatchlist = watchlist.includes(randomAsset.symbol);
           onTriggerPushNotification({
             symbol: randomAsset.symbol,
@@ -326,14 +315,37 @@ export function RealtimeAiNewsfeed({
             }
             return a;
           });
-          return [newAlert, ...updated.filter(a => a.symbol !== randomAsset.symbol || a.id === newAlert.id).slice(0, 5)];
+          return [newAlert, ...updated.filter(a => a.id !== newAlert.id).slice(0, 5)];
         });
         setIsUpdating(false);
       }, 800);
     }, 14000);
 
     return () => clearInterval(interval);
-  }, [assets, watchlist, onTriggerPushNotification]);
+  }, [assets, watchlist, onTriggerPushNotification, pushNotificationsEnabled]);
+
+  const handleManualRefresh = () => {
+    if (isUpdating || assets.length === 0) return;
+    setIsUpdating(true);
+    setTimeout(() => {
+      const randomAsset = assets[Math.floor(Math.random() * assets.length)];
+      const generated = generateCustomAlertsForAsset(randomAsset);
+      const template = generated[Math.floor(Math.random() * generated.length)];
+      const newAlert: NewsAlert = {
+        id: String(Date.now()),
+        time: 'Gerade eben',
+        symbol: randomAsset.symbol,
+        headline: template.headline,
+        sentiment: template.sentiment,
+        impact: template.impact,
+        routedTo: template.routedTo,
+        insight: template.insight,
+        premium: false
+      };
+      setAlerts(prev => [newAlert, ...prev.filter(a => a.id !== newAlert.id).slice(0, 4)]);
+      setIsUpdating(false);
+    }, 600);
+  };
 
   const handleAlertClick = (alert: NewsAlert) => {
     // Subscription constraint logic based on pricing.md
@@ -370,7 +382,7 @@ export function RealtimeAiNewsfeed({
       
       {/* Header Info */}
       <div className="space-y-4">
-        <div className="flex justify-between items-start border-b border-white/10 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
@@ -378,72 +390,58 @@ export function RealtimeAiNewsfeed({
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
               <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400 font-mono">
-                CAPITAL-AI Neural Intelligence Newsfeed
+                CAPITAL-AI Global Neural Intelligence Newsfeed
               </span>
             </div>
             <h3 className="text-lg font-black text-white font-display mt-1">Realtime AI-Newsfeed</h3>
-            <p className="text-xs text-white/50">Multi-Model-Router für anlagenrelevante Marktindizien</p>
+            <p className="text-xs text-white/50">Multi-Model-Router für globale Echtzeit-Marktindizien</p>
           </div>
-          <button 
-            disabled={isUpdating}
-            className="p-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white transition-all cursor-pointer disabled:opacity-50"
-            title="Newsfeed manuell aktualisieren"
-          >
-            <RefreshCw size={14} className={isUpdating ? 'animate-spin text-aif-gold-DEFAULT' : ''} />
-          </button>
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            {/* Pushup Notifications Regler / Switch */}
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl text-xs font-mono">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-white/60 hidden sm:inline">
+                Push-Alerts:
+              </span>
+              <button
+                type="button"
+                onClick={() => setPushNotificationsEnabled(!pushNotificationsEnabled)}
+                className="flex items-center gap-2 focus:outline-none cursor-pointer"
+                title={pushNotificationsEnabled ? "Push-Benachrichtigungen deaktivieren" : "Push-Benachrichtigungen aktivieren"}
+              >
+                {pushNotificationsEnabled ? (
+                  <Bell size={13} className="text-emerald-400 animate-pulse shrink-0" />
+                ) : (
+                  <BellOff size={13} className="text-zinc-500 shrink-0" />
+                )}
+                <span className={`text-[10px] font-black uppercase font-mono ${pushNotificationsEnabled ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                  {pushNotificationsEnabled ? 'Aktiv' : 'Inaktiv'}
+                </span>
+                {/* Regler Switch Pill */}
+                <div className={`w-8 h-4 rounded-full p-0.5 transition-colors relative ${
+                  pushNotificationsEnabled ? 'bg-emerald-500/30 border border-emerald-500/50' : 'bg-zinc-800 border border-zinc-700'
+                }`}>
+                  <div className={`w-3 h-3 rounded-full transition-transform duration-200 ${
+                    pushNotificationsEnabled ? 'translate-x-4 bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'translate-x-0 bg-zinc-500'
+                  }`} />
+                </div>
+              </button>
+            </div>
+
+            <button 
+              disabled={isUpdating}
+              onClick={handleManualRefresh}
+              className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white transition-all cursor-pointer disabled:opacity-50"
+              title="Newsfeed manuell aktualisieren"
+            >
+              <RefreshCw size={14} className={isUpdating ? 'animate-spin text-aif-gold-DEFAULT' : ''} />
+            </button>
+          </div>
         </div>
 
         {/* Streaming entries */}
         <div className="space-y-3 pt-1">
-          {/* Active Filter Indicators */}
-          {(categoryFilter !== 'all' || searchQuery.trim() !== '') && (
-            <div className="flex flex-wrap items-center gap-1.5 p-2 bg-white/5 rounded-lg border border-white/5 text-[10px] font-mono mb-2">
-              <span className="text-white/40">News-Filter aktiv:</span>
-              {categoryFilter !== 'all' && (
-                <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold uppercase">
-                  {categoryFilter === 'crypto' ? 'Krypto' : categoryFilter === 'stock' ? 'Aktie' : categoryFilter === 'commodity' ? 'Rohstoff' : 'Index'}
-                </span>
-              )}
-              {searchQuery.trim() !== '' && (
-                <span className="px-1.5 py-0.5 rounded bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 max-w-[120px] truncate">
-                  "{searchQuery}"
-                </span>
-              )}
-            </div>
-          )}
-
           {alerts
-            .filter((alert) => {
-              // Category filter
-              if (categoryFilter && categoryFilter !== 'all') {
-                const assetOfAlert = assets.find((a) => a.symbol === alert.symbol);
-                if (assetOfAlert) {
-                  if (assetOfAlert.type !== categoryFilter) return false;
-                } else {
-                  // Hardcoded fallbacks for initial alerts
-                  const hardcodedType = alert.symbol === 'BTC' || alert.symbol === 'ETH' ? 'crypto' :
-                                        alert.symbol === 'AAPL' || alert.symbol === 'TSLA' || alert.symbol === 'NVDA' ? 'stock' :
-                                        alert.symbol === 'GLD' ? 'commodity' : 'crypto';
-                  if (hardcodedType !== categoryFilter) return false;
-                }
-              }
-
-              // Search query filter
-              if (searchQuery && searchQuery.trim() !== '') {
-                const query = searchQuery.toLowerCase().trim();
-                const assetOfAlert = assets.find((a) => a.symbol === alert.symbol);
-                const nameMatch = assetOfAlert ? assetOfAlert.name.toLowerCase().includes(query) : false;
-                
-                return (
-                  alert.symbol.toLowerCase().includes(query) ||
-                  alert.headline.toLowerCase().includes(query) ||
-                  alert.insight.toLowerCase().includes(query) ||
-                  nameMatch
-                );
-              }
-
-              return true;
-            })
             .slice(0, maxDisplayItems)
             .map((alert) => {
             const isBullish = alert.sentiment === 'bullish';

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { secureStorage } from '../lib/cryptoHelper';
-import { supabase } from '../supabaseClient';
 import { Screener } from './Screener';
 import { Newsticker } from './Newsticker';
 import { UniverseBestWorst } from './UniverseBestWorst';
@@ -9,7 +8,6 @@ import { ComplianceExporter } from './ComplianceExporter';
 import { ImageAnalyzer } from './ImageAnalyzer';
 import { CryptoEnterpriseEvaluator } from './CryptoEnterpriseEvaluator';
 import { ProfilePage, UserProfile } from './ProfilePage';
-import { MonteCarloDetailed } from './MonteCarloDetailed';
 import { BuffetValueCheck } from './BuffetValueCheck';
 import { Abonnements } from './Abonnements';
 import { SubscriptionModal } from './SubscriptionModal';
@@ -31,7 +29,6 @@ import { RealTimeRiskAssessment } from './RealTimeRiskAssessment';
 import { PriceAlert } from './PriceAlert';
 import { MarketSentiment } from './MarketSentiment';
 import { SentimentDashboard } from './SentimentDashboard';
-import { DashboardSearchFilter } from './DashboardSearchFilter';
 import { RawMaterialsDashboard } from './RawMaterialsDashboard';
 import { AssetUniverseDashboard } from './AssetUniverseDashboard';
 import { SystemLatencyMonitor } from './SystemLatencyMonitor';
@@ -107,8 +104,8 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<string>('1std');
-  const [activeView, setActiveView] = useState<'dashboard' | 'monte-carlo' | 'promo-video' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'defi-orchestration' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
-  const [adminTab, setAdminTab] = useState<'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor'>('users');
+  const [activeView, setActiveView] = useState<'dashboard' | 'promo-video' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'defi-orchestration' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
+  const [adminTab, setAdminTab] = useState<'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor' | 'compliance'>('users');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>('hub');
   const [expandedUniverse, setExpandedUniverse] = useState<string | null>(null);
@@ -117,7 +114,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   React.useEffect(() => {
     const getViewCategory = (view: string) => {
       if (['dashboard', 'promo-video', 'abonnements', 'profil'].includes(view)) return 'hub';
-      if (['market-screener', 'charts', 'preis-alarme', 'monte-carlo', 'buffet-value', 'backtest', 'heatmap', 'risiko-assessment', 'sentiment-dashboard', 'raw-materials', 'asset-universe'].includes(view)) return 'analysis';
+      if (['market-screener', 'charts', 'preis-alarme', 'buffet-value', 'backtest', 'heatmap', 'risiko-assessment', 'sentiment-dashboard', 'raw-materials', 'asset-universe'].includes(view)) return 'analysis';
       if (['datenschutz', 'impressum-agb'].includes(view)) return 'compliance';
       if (['admin-panel', 'auth-debugger', 'markdown-orchestrator', 'request-orchestrator', 'performance', 'audit-logs', 'admin-portal'].includes(view)) return 'system_admin';
       return 'hub';
@@ -222,8 +219,8 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
     }, 8000);
   }, [watchlist]);
 
-  // Simulator helper
-  const handleSimulateScoreEvent = (symbol: string, type: 'crash' | 'rally') => {
+  // Testauslösung Helper
+  const handleTriggerTestScoreEvent = (symbol: string, type: 'crash' | 'rally') => {
     // Look up asset name or fallback
     const mockNames: Record<string, string> = {
       BTC: 'Bitcoin', ETH: 'Ethereum', TSLA: 'Tesla Inc.', AAPL: 'Apple Inc.', EURUSD: 'Euro / US Dollar', GLD: 'Gold Spot'
@@ -262,33 +259,6 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
     subscriptionTier: userSession.type === 'guest' ? 'Free' : userSession.subscriptionTier,
     id: userSession.id
   });
-
-  // ADR-0003.5: keine hartcodierte E-Mail-Liste mehr für die Admin-Portal-Sichtbarkeit.
-  // Nur ein UX-Gate - die eigentliche Autorisierung jedes Requests bleibt serverseitig
-  // in checkAdminAccess() (server/iam/authMiddleware.ts) und erneut in AdminPortal.tsx.
-  const [isAdminOrOwner, setIsAdminOrOwner] = useState(false);
-  React.useEffect(() => {
-    let cancelled = false;
-    async function checkRole() {
-      if (!supabase) return;
-      try {
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData?.user) return;
-        const { data: profileRow } = await supabase
-          .from('profiles')
-          .select('iam_role')
-          .eq('id', userData.user.id)
-          .maybeSingle();
-        if (!cancelled && profileRow) {
-          setIsAdminOrOwner(profileRow.iam_role === 'owner' || profileRow.iam_role === 'admin');
-        }
-      } catch {
-        // Serverseitige Prüfung bleibt maßgeblich; UI-Gate bleibt bei Fehlern konservativ zu.
-      }
-    }
-    checkRole();
-    return () => { cancelled = true; };
-  }, [userSession.id]);
 
   // Synchronize profile state with userSession prop and load encrypted cached profile if database is offline
   React.useEffect(() => {
@@ -492,7 +462,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                     <CapitalAiLogo size={40} showText={false} />
                     <div className="flex flex-col items-start leading-none">
                       <span className="font-black text-sm tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">Capital-AI</span>
-                      <span className="text-[11px] text-white/50 font-mono tracking-widest uppercase mt-0.5">VERSION 0.5.4</span>
+                      <span className="text-[11px] text-white/50 font-mono tracking-widest uppercase mt-0.5">PRODUCTION RELEASE</span>
                     </div>
                   </div>
                   <button 
@@ -696,20 +666,6 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                             </button>
                           </SidebarTooltip>
 
-                          <SidebarTooltip title="Monte Carlo Simulation" text="Berechnet tausende zufällige Zukunftsszenarien für Deine Vermögenswerte, um die Wahrscheinlichkeit von Gewinnen und Verlusten einzuschätzen.">
-                            <button 
-                              onClick={() => navigateTo('monte-carlo')}
-                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
-                                activeView === 'monte-carlo' 
-                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
-                              }`}
-                            >
-                              <LineChart size={14} />
-                              <span>Monte Carlo Simulation</span>
-                            </button>
-                          </SidebarTooltip>
-
                           <SidebarTooltip title="Buffet Value Check" text="Bewertet Aktien nach den zeitlosen Kriterien der Value-Investing-Legende Warren Buffett und berechnet den fairen inneren Wert.">
                             <button 
                               onClick={() => navigateTo('buffet-value')}
@@ -752,7 +708,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                             </button>
                           </SidebarTooltip>
 
-                          <SidebarTooltip title="Rohstoff-Bewertung v0.5.4" text="Analysiere, kategorisiere und bewerte physische & kritische Rohstoffe nach geopolitischen Risiken, Fundamentaldaten und strategischer Bedeutung.">
+                          <SidebarTooltip title="Rohstoff-Bewertung" text="Analysiere, kategorisiere und bewerte physische & kritische Rohstoffe nach geopolitischen Risiken, Fundamentaldaten und strategischer Bedeutung.">
                             <button 
                               onClick={() => navigateTo('raw-materials')}
                               className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
@@ -827,11 +783,11 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                                   <div className="text-[9px] text-white/40 font-mono mt-0.5">Graham Fair Value &amp; DCF Analyse</div>
                                 </button>
                                 <button 
-                                  onClick={() => { setSelectedSymbol('AAPL'); setCategoryFilter('stock'); navigateTo('monte-carlo'); setMenuOpen(false); }}
+                                  onClick={() => { setSelectedSymbol('AAPL'); setCategoryFilter('stock'); navigateTo('risiko-assessment'); setMenuOpen(false); }}
                                   className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
                                 >
-                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Volatility Forecasting</div>
-                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Monte-Carlo Preisprognosen</div>
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Risk Assessment</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Stress-Testing &amp; Value-at-Risk</div>
                                 </button>
                               </div>
                             )}
@@ -866,11 +822,11 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                                   <div className="text-[9px] text-white/40 font-mono mt-0.5">Makro- &amp; Zinsparitäten Fair Value</div>
                                 </button>
                                 <button 
-                                  onClick={() => { setSelectedSymbol('EURUSD'); setCategoryFilter('forex'); navigateTo('monte-carlo'); setMenuOpen(false); }}
+                                  onClick={() => { setSelectedSymbol('EURUSD'); setCategoryFilter('forex'); navigateTo('risiko-assessment'); setMenuOpen(false); }}
                                   className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
                                 >
-                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Volatility Forecasting</div>
-                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Historische Risikoverteilung &amp; VaR</div>
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Risk Assessment</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Stress-Testing &amp; Value-at-Risk</div>
                                 </button>
                               </div>
                             )}
@@ -905,11 +861,11 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                                   <div className="text-[9px] text-white/40 font-mono mt-0.5">Network Value / Fair Value Analyse</div>
                                 </button>
                                 <button 
-                                  onClick={() => { setSelectedSymbol('BTC'); setCategoryFilter('crypto'); navigateTo('monte-carlo'); setMenuOpen(false); }}
+                                  onClick={() => { setSelectedSymbol('BTC'); setCategoryFilter('crypto'); navigateTo('risiko-assessment'); setMenuOpen(false); }}
                                   className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
                                 >
-                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Volatility Forecasting</div>
-                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Monte-Carlo Preispfadszenarien</div>
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Risk Assessment</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Stress-Testing &amp; Value-at-Risk</div>
                                 </button>
 
                                 {/* DeFi subcategory section */}
@@ -962,11 +918,11 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                                   <div className="text-[9px] text-white/40 font-mono mt-0.5">Rohstoff-Kritikalitäts &amp; Wertungsindex</div>
                                 </button>
                                 <button 
-                                  onClick={() => { setSelectedSymbol('GLD'); setCategoryFilter('commodity'); navigateTo('monte-carlo'); setMenuOpen(false); }}
+                                  onClick={() => { setSelectedSymbol('GLD'); setCategoryFilter('commodity'); navigateTo('risiko-assessment'); setMenuOpen(false); }}
                                   className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
                                 >
-                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Volatility Forecasting</div>
-                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Saisonalitäts- &amp; Preisvolatilitätsprognosen</div>
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Risk Assessment</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Stress-Testing &amp; Value-at-Risk</div>
                                 </button>
                               </div>
                             )}
@@ -1001,11 +957,11 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                                   <div className="text-[9px] text-white/40 font-mono mt-0.5">Renditekurven &amp; Fair Yield Bewertung</div>
                                 </button>
                                 <button 
-                                  onClick={() => { setSelectedSymbol('US10Y'); setCategoryFilter('bond'); navigateTo('monte-carlo'); setMenuOpen(false); }}
+                                  onClick={() => { setSelectedSymbol('US10Y'); setCategoryFilter('bond'); navigateTo('risiko-assessment'); setMenuOpen(false); }}
                                   className="w-full text-left p-2 hover:bg-white/5 rounded text-[10px] text-white/70 hover:text-white transition-all border-t border-white/5 cursor-pointer"
                                 >
-                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Volatility Forecasting</div>
-                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Monte-Carlo Zinsstrukturkurven-Szenarien</div>
+                                  <div className="font-bold uppercase tracking-wide text-aif-gold-DEFAULT">3. Risk Assessment</div>
+                                  <div className="text-[9px] text-white/40 font-mono mt-0.5">Stress-Testing &amp; Value-at-Risk</div>
                                 </button>
                               </div>
                             )}
@@ -1090,7 +1046,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                   </div>
 
                   {/* Category 5: Admin-Portal (if user is Sven Kulessa) */}
-                  {isAdminOrOwner && (
+                  {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'sven.kulessa@gmx.net') && (
                     <div className="border-b border-white/5 pb-2">
                       <button
                         onClick={() => setExpandedSection(expandedSection === 'system_admin' ? null : 'system_admin')}
@@ -1232,6 +1188,20 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                                 <span>Capital-AI Supervisor</span>
                               </button>
                             </SidebarTooltip>
+
+                            <SidebarTooltip title="Compliance Auditor" text="Regulatorische BaFin- und DSGVO-Compliance-Prüfung. Führt 21 automatisierte Quellcode- und Konfigurationsscans durch.">
+                              <button 
+                                onClick={() => { setActiveView('admin-portal'); setAdminTab('compliance'); setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                  activeView === 'admin-portal' && adminTab === 'compliance'
+                                    ? 'bg-aif-gold-DEFAULT text-black font-black border-aif-gold-DEFAULT shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                    : 'text-aif-gold-DEFAULT hover:text-white hover:bg-aif-gold-DEFAULT/15 border-aif-gold-DEFAULT/20'
+                                }`}
+                              >
+                                <ShieldCheck size={14} className={activeView === 'admin-portal' && adminTab === 'compliance' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                                <span>Compliance Auditor</span>
+                              </button>
+                            </SidebarTooltip>
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -1302,7 +1272,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                     <span className="font-black text-lg tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] to-[#D4A017] font-display uppercase">Capital-AI</span>
                   </div>
                   <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-[11px] text-white/50 font-mono tracking-widest uppercase">VERSION 0.5.4</span>
+                    <span className="text-[11px] text-white/50 font-mono tracking-widest uppercase">PRODUCTION RELEASE</span>
                     <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 font-mono tracking-widest">
                       AKTIV
                     </span>
@@ -1359,7 +1329,6 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
               <span className="hover:text-white cursor-pointer uppercase tracking-wider font-bold" onClick={() => setActiveView('dashboard')}>Capital-AI</span>
               <span>/</span>
               <span className="text-aif-gold-DEFAULT uppercase tracking-wider font-bold">
-                {activeView === 'monte-carlo' && 'Monte Carlo Simulation'}
                 {activeView === 'promo-video' && 'Capital-AI Produkt-Trailer & Vision'}
                 {activeView === 'raw-materials' && 'Rohstoff-Kategorisierung & AI-Scoring'}
                 {activeView === 'asset-universe' && 'Multi-Asset-Klassen Cockpit'}
@@ -1390,22 +1359,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
           </div>
         )}
 
-        {/* Global Search and Filter Bar for Dashboard & Screener */}
-        {(activeView === 'dashboard' || activeView === 'market-screener') && (
-          <DashboardSearchFilter
-            onSelectAsset={(sym) => {
-              setSelectedSymbol(sym);
-              if (activeView !== 'market-screener') {
-                setActiveView('dashboard');
-              }
-            }}
-            selectedSymbol={selectedSymbol}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            categoryFilter={categoryFilter}
-            setCategoryFilter={setCategoryFilter}
-          />
-        )}
+
 
         {/* Dynamic Rendering of Active View */}
         <AnimatePresence mode="wait">
@@ -1425,11 +1379,9 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                       <RealtimeAiNewsfeed 
                         subscriptionTier={profile.subscriptionTier} 
                         onUpgradeClick={() => navigateTo('abonnements')}
-                        selectedSymbol={selectedSymbol}
-                        searchQuery={searchQuery}
-                        categoryFilter={categoryFilter}
                         onTriggerPushNotification={triggerPushNotification}
                         watchlist={watchlist}
+                        maxDisplayItems={3}
                       />
                     </div>
                     <div>
@@ -1443,7 +1395,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                         }}
                         onSelectAsset={(symbol) => setSelectedSymbol(symbol)}
                         selectedSymbol={selectedSymbol}
-                        onSimulateScoreEvent={handleSimulateScoreEvent}
+                        onTriggerTestScoreEvent={handleTriggerTestScoreEvent}
                       />
                     </div>
                   </div>
@@ -1528,10 +1480,6 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
              )}
 
             {/* Detailed Views */}
-            {activeView === 'monte-carlo' && (
-              <MonteCarloDetailed selectedSymbol={selectedSymbol} triggerAttempt={triggerAttempt} />
-            )}
-
             {activeView === 'buffet-value' && (
               <BuffetValueCheck selectedSymbol={selectedSymbol} triggerAttempt={triggerAttempt} />
             )}
@@ -1747,6 +1695,15 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
 
             {/* Legal quick navigation shortcuts inside footer - Moved to the absolute bottom */}
             <div className="w-full max-w-4xl border-t border-white/5 mt-6 pt-4 flex flex-col items-center gap-4">
+              {/* Website Under Construction Notice */}
+              <div className="w-full max-w-md bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-2.5 flex items-center justify-center gap-2.5 text-xs text-amber-200/80 font-mono tracking-wide shadow-[0_0_15px_rgba(245,158,11,0.03)]">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+                <span>Diese Webseite befindet sich aktuell im Aufbau.</span>
+              </div>
+
               <div className="flex justify-center gap-4 text-[11px] font-mono text-white/40">
                 <button onClick={() => navigateTo('datenschutz')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Datenschutz</button>
                 <span>•</span>
@@ -1755,15 +1712,6 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                 <button onClick={() => navigateTo('impressum-agb')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">AGB</button>
                 <span>•</span>
                 <button onClick={() => navigateTo('abonnements')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Abonnements</button>
-              </div>
-
-              {/* Website Under Construction Notice */}
-              <div className="w-full max-w-md bg-amber-500/5 border border-amber-500/20 rounded-xl px-4 py-2.5 flex items-center justify-center gap-2.5 text-xs text-amber-200/80 font-mono tracking-wide shadow-[0_0_15px_rgba(245,158,11,0.03)]">
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                </span>
-                <span>Diese Webseite befindet sich aktuell im Aufbau.</span>
               </div>
             </div>
           </div>
