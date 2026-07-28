@@ -17,95 +17,10 @@ export function CapitalAiTrailer() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  // Synthesize ambient futuristic soundscapes using Web Audio API on state changes
-  const playSynthSound = (type: 'intro' | 'node' | 'beep' | 'outro' | 'ambient') => {
-    if (isMuted) return;
-    try {
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      }
-      const ctx = audioContextRef.current;
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
-
-      const now = ctx.currentTime;
-
-      if (type === 'intro') {
-        // Deep cinematic sweep
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(55, now); // Low A
-        osc.frequency.exponentialRampToValueAtTime(110, now + 2.5);
-
-        // Filter for deep warm bass
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(200, now);
-        filter.frequency.exponentialRampToValueAtTime(800, now + 2.5);
-
-        gain.gain.setValueAtTime(0.01, now);
-        gain.gain.linearRampToValueAtTime(0.2, now + 0.4);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 3);
-
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 3);
-      } else if (type === 'beep') {
-        // High-tech sonar beep
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, now);
-        osc.frequency.exponentialRampToValueAtTime(1760, now + 0.1);
-
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.3);
-      } else if (type === 'node') {
-        // Neural network node sound
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(220, now);
-        osc.frequency.setValueAtTime(440, now + 0.15);
-
-        gain.gain.setValueAtTime(0.08, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.45);
-      } else if (type === 'outro') {
-        // Ascending major chord highlight
-        const notes = [220, 277.18, 329.63, 440]; // A major
-        notes.forEach((freq, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, now + idx * 0.12);
-          
-          gain.gain.setValueAtTime(0.01, now + idx * 0.12);
-          gain.gain.linearRampToValueAtTime(0.07, now + idx * 0.12 + 0.05);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 1.2);
-
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now + idx * 0.12);
-          osc.stop(now + idx * 0.12 + 1.2);
-        });
-      }
-    } catch (e) {
-      console.warn('Web Audio synthesis failed or not supported:', e);
-    }
+  // Synthesize ambient futuristic soundscapes (disabled per site settings)
+  const playSynthSound = (_type: 'intro' | 'node' | 'beep' | 'outro' | 'ambient') => {
+    // Töne & Sound deaktiviert
+    return;
   };
 
   // Timeline loop control
@@ -614,7 +529,7 @@ export function CapitalAiTrailer() {
               </div>
               <div>
                 <p className="text-xs font-bold text-white uppercase tracking-wider">Cinematic Präsentation Abgeschlossen</p>
-                <p className="text-[11px] text-white/60">Capital-AI wurde erfolgreich auf Version 0.5.4 gehoben.</p>
+                <p className="text-[11px] text-white/60">Capital-AI wurde erfolgreich initialisiert und gehärtet.</p>
               </div>
             </div>
             <button 

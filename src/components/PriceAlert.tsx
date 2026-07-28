@@ -60,7 +60,7 @@ export function PriceAlert({ selectedSymbol, userSession }: PriceAlertComponentP
   const [selectedAssetSymbol, setSelectedAssetSymbol] = useState<string>('BTC');
   const [targetPrice, setTargetPrice] = useState<string>('');
   const [condition, setCondition] = useState<'above' | 'below'>('above');
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(false);
   
   // Active alerts lists
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
@@ -74,7 +74,7 @@ export function PriceAlert({ selectedSymbol, userSession }: PriceAlertComponentP
   }>>([]);
   
   // Simulation config
-  const [isSimulationActive, setIsSimulationActive] = useState<boolean>(true);
+  const [isSimulationActive, setIsSimulationActive] = useState<boolean>(false);
   const [simulationSpeed, setSimulationSpeed] = useState<number>(3000); // ms
   const [toastNotification, setToastNotification] = useState<{
     id: string;
@@ -146,40 +146,10 @@ export function PriceAlert({ selectedSymbol, userSession }: PriceAlertComponentP
     saveSessionLogs(updatedLogs, userSession?.email);
   };
 
-  // Play audio synth notification
+  // Play audio synth notification (disabled per site settings)
   const playAlertSound = () => {
-    try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      
-      // First tone (high-pitched bell)
-      const osc1 = audioCtx.createOscillator();
-      const gain1 = audioCtx.createGain();
-      osc1.connect(gain1);
-      gain1.connect(audioCtx.destination);
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
-      gain1.gain.setValueAtTime(0.15, audioCtx.currentTime);
-      gain1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
-      osc1.start();
-      osc1.stop(audioCtx.currentTime + 0.5);
-
-      // Second tone slightly offset (warm harmony)
-      setTimeout(() => {
-        const osc2 = audioCtx.createOscillator();
-        const gain2 = audioCtx.createGain();
-        osc2.connect(gain2);
-        gain2.connect(audioCtx.destination);
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(1109.73, audioCtx.currentTime); // C#6 note (major third)
-        gain2.gain.setValueAtTime(0.15, audioCtx.currentTime);
-        gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-        osc2.start();
-        osc2.stop(audioCtx.currentTime + 0.6);
-      }, 100);
-
-    } catch (err) {
-      console.warn('Audio Context is blocked or not supported by browser:', err);
-    }
+    // Töne & Sound deaktiviert
+    return;
   };
 
   // Trigger notification
@@ -398,7 +368,7 @@ export function PriceAlert({ selectedSymbol, userSession }: PriceAlertComponentP
               </p>
               <div className="text-[10px] text-aif-gold-DEFAULT font-mono uppercase tracking-wider font-extrabold flex items-center gap-1 mt-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping inline-block" />
-                <span>Simuliertes System-Echtzeitsignal</span>
+                <span>System-Echtzeitsignal</span>
               </div>
             </div>
             <button 
@@ -559,7 +529,7 @@ export function PriceAlert({ selectedSymbol, userSession }: PriceAlertComponentP
                 {/* Sound Settings switch */}
                 <div className="flex items-center justify-between py-1 border-t border-b border-white/5">
                   <span className="text-xs font-mono text-white/70 uppercase tracking-wide">
-                    Soundeffekt simulieren
+                    Soundeffekt abspielen
                   </span>
                   <button
                     type="button"
@@ -587,63 +557,7 @@ export function PriceAlert({ selectedSymbol, userSession }: PriceAlertComponentP
             )}
           </div>
 
-          {/* Simulator Control Panel Card */}
-          <div className="bg-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-4">
-            <div className="flex items-center justify-between border-b border-white/5 pb-4">
-              <div className="flex items-center gap-2">
-                <Activity className="text-aif-neon-cyan animate-pulse" size={18} />
-                <h4 className="text-xs font-black font-mono text-white uppercase tracking-wider">
-                  Preissimulator
-                </h4>
-              </div>
-              <span className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono tracking-wider ${
-                isSimulationActive 
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                  : 'bg-white/5 text-white/50 border border-white/10'
-              }`}>
-                {isSimulationActive ? 'LIVE AKTIV' : 'PAUSIERT'}
-              </span>
-            </div>
 
-            <p className="text-[11px] text-white/60 leading-relaxed font-sans">
-              Der Simulator fluktuiert im Hintergrund kontinuierlich Marktpreise des Asset-Registries im Sekundentakt. Sobald eine Preisschwelle durchbrochen wird, ertönt ein synthetischer Sound und ein in-App Banner erscheint.
-            </p>
-
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setIsSimulationActive(!isSimulationActive)}
-                className={`py-2 px-3 rounded-xl border text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  isSimulationActive
-                    ? 'bg-amber-500/10 border-amber-500/40 text-amber-400 font-extrabold'
-                    : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400 font-extrabold'
-                }`}
-              >
-                {isSimulationActive ? (
-                  <>
-                    <Pause size={12} />
-                    <span>Stop Simulator</span>
-                  </>
-                ) : (
-                  <>
-                    <Play size={12} />
-                    <span>Start Simulator</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={() => {
-                  // Simulate rapid tick of all prices
-                  setSimulationSpeed(prev => prev === 1000 ? 5000 : prev === 5000 ? 3000 : 1000);
-                }}
-                className="py-2 px-3 bg-white/5 border border-white/10 hover:bg-white/10 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all text-white/85"
-                title="Aktualisierungstakt anpassen"
-              >
-                <Sliders size={12} />
-                <span>Takt: {simulationSpeed / 1000}s</span>
-              </button>
-            </div>
-          </div>
 
         </div>
 
@@ -800,7 +714,7 @@ export function PriceAlert({ selectedSymbol, userSession }: PriceAlertComponentP
 
             {alerts.length > 0 && (
               <div className="text-[10px] text-white/40 font-mono text-center pt-2 mt-4 border-t border-white/5">
-                💡 Tipp: Nutze die <strong>"Testauslösung"</strong>-Schaltfläche, um den Preisalarm-Empfang und die Push-Banner-Simulation sofort zu verifizieren.
+                💡 Tipp: Nutze die <strong>"Testauslösung"</strong>-Schaltfläche, um den Preisalarm-Empfang sofort zu verifizieren.
               </div>
             )}
           </div>

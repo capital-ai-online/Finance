@@ -105,6 +105,7 @@ interface RealtimeAiNewsfeedProps {
   selectedSymbol?: string;
   searchQuery?: string;
   categoryFilter?: string;
+  prioritySymbols?: string[];
   onTriggerPushNotification?: (data: {
     symbol: string;
     name: string;
@@ -119,6 +120,12 @@ interface RealtimeAiNewsfeedProps {
   watchlist?: string[];
   maxDisplayItems?: number;
 }
+
+const DEFAULT_SCORER_SYMBOLS = [
+  'BTC', 'ETH', 'SOL', 'ADA', 'XRP', 'DOT', 'AVAX', 'LINK', 'BNB', 'MATIC',
+  'DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME',
+  'GLD', 'SLV', 'USO', 'NG=F', 'WTI', 'BRENT', 'AAPL', 'NVDA', 'TSLA'
+];
 
 // Utility to calculate how a news sentiment/impact alters an asset score
 const calculateNewsImpactScore = (baseScore: number, sentiment: 'bullish' | 'bearish' | 'neutral', impact: 'high' | 'medium' | 'low'): number => {
@@ -139,6 +146,7 @@ export function RealtimeAiNewsfeed({
   selectedSymbol = '',
   searchQuery = '',
   categoryFilter = 'all',
+  prioritySymbols = DEFAULT_SCORER_SYMBOLS,
   onTriggerPushNotification,
   watchlist = [],
   maxDisplayItems = 3
@@ -149,7 +157,7 @@ export function RealtimeAiNewsfeed({
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [selectedPlanForStripe, setSelectedPlanForStripe] = useState<any>(null);
   const [assets, setAssets] = useState<any[]>([]);
-  const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState<boolean>(true);
+  const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState<boolean>(false);
 
   // Generate dynamic, realistic news alert data for any asset
   const generateCustomAlertsForAsset = (asset: any): NewsAlert[] => {
@@ -261,15 +269,17 @@ export function RealtimeAiNewsfeed({
       });
   }, []);
 
-  // Rotate / Push new real-time alerts periodically from the global pool of all assets
+  // Rotate / Push new real-time alerts periodically from assets with priority for Enterprise Scorer assets
   useEffect(() => {
     if (assets.length === 0) return;
 
     const interval = setInterval(() => {
       setIsUpdating(true);
       setTimeout(() => {
-        // Pick a random asset from all 150+ assets globally
-        const randomAsset = assets[Math.floor(Math.random() * assets.length)];
+        // Prioritize assets listed in Enterprise Scorer
+        const priorityPool = assets.filter(a => prioritySymbols.includes(a.symbol) || a.symbol === selectedSymbol || watchlist.includes(a.symbol));
+        const poolToUse = (priorityPool.length > 0 && Math.random() < 0.85) ? priorityPool : assets;
+        const randomAsset = poolToUse[Math.floor(Math.random() * poolToUse.length)];
         const generated = generateCustomAlertsForAsset(randomAsset);
         const template = generated[Math.floor(Math.random() * generated.length)];
 
@@ -322,7 +332,7 @@ export function RealtimeAiNewsfeed({
     }, 14000);
 
     return () => clearInterval(interval);
-  }, [assets, watchlist, onTriggerPushNotification, pushNotificationsEnabled]);
+  }, [assets, watchlist, prioritySymbols, selectedSymbol, onTriggerPushNotification, pushNotificationsEnabled]);
 
   const handleManualRefresh = () => {
     if (isUpdating || assets.length === 0) return;
@@ -394,7 +404,12 @@ export function RealtimeAiNewsfeed({
               </span>
             </div>
             <h3 className="text-lg font-black text-white font-display mt-1">Realtime AI-Newsfeed</h3>
-            <p className="text-xs text-white/50">Multi-Model-Router für globale Echtzeit-Marktindizien</p>
+            <div className="flex flex-wrap items-center gap-2 mt-0.5">
+              <p className="text-xs text-white/50">Multi-Model-Router für globale Echtzeit-Marktindizien</p>
+              <span className="text-[9px] font-mono font-bold text-aif-gold-DEFAULT bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 px-2 py-0.5 rounded-full">
+                Synchronisiert mit Enterprise Scorer
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0">
@@ -441,12 +456,20 @@ export function RealtimeAiNewsfeed({
 
         {/* Streaming entries */}
         <div className="space-y-3 pt-1">
-          {alerts
+          {[...alerts]
+            .sort((a, b) => {
+              const aPriority = prioritySymbols.includes(a.symbol) || a.symbol === selectedSymbol || watchlist.includes(a.symbol);
+              const bPriority = prioritySymbols.includes(b.symbol) || b.symbol === selectedSymbol || watchlist.includes(b.symbol);
+              if (aPriority && !bPriority) return -1;
+              if (!aPriority && bPriority) return 1;
+              return 0;
+            })
             .slice(0, maxDisplayItems)
             .map((alert) => {
             const isBullish = alert.sentiment === 'bullish';
             const isBearish = alert.sentiment === 'bearish';
             const isLocked = alert.premium && subscriptionTier === 'Free';
+            const isScorerPriority = prioritySymbols.includes(alert.symbol) || alert.symbol === selectedSymbol;
 
             return (
               <div 
@@ -463,6 +486,11 @@ export function RealtimeAiNewsfeed({
                     <span className="font-mono text-xs font-black text-white bg-white/10 px-2 py-0.5 rounded">
                       {alert.symbol}
                     </span>
+                    {isScorerPriority && (
+                      <span className="text-[9px] font-mono font-bold text-aif-gold-DEFAULT bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 px-1.5 py-0.5 rounded">
+                        Scorer Asset
+                      </span>
+                    )}
                     <span className="text-[10px] text-white/40 font-mono">
                       {alert.time}
                     </span>
