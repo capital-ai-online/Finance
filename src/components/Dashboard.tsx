@@ -164,39 +164,10 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   }
   const [pushNotifications, setPushNotifications] = useState<PushNotification[]>([]);
 
-  // Sound chime synthesizer using Web Audio API
+  // Sound chime synthesizer (disabled per site settings)
   const playPushNotificationSound = () => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const audioCtx = new AudioCtx();
-      
-      const osc1 = audioCtx.createOscillator();
-      const gain1 = audioCtx.createGain();
-      osc1.connect(gain1);
-      gain1.connect(audioCtx.destination);
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(659.25, audioCtx.currentTime); // E5
-      gain1.gain.setValueAtTime(0.08, audioCtx.currentTime);
-      gain1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-      osc1.start();
-      osc1.stop(audioCtx.currentTime + 0.35);
-
-      setTimeout(() => {
-        const osc2 = audioCtx.createOscillator();
-        const gain2 = audioCtx.createGain();
-        osc2.connect(gain2);
-        gain2.connect(audioCtx.destination);
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(987.77, audioCtx.currentTime); // B5 (Perfect fifth chime)
-        gain2.gain.setValueAtTime(0.12, audioCtx.currentTime);
-        gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
-        osc2.start();
-        osc2.stop(audioCtx.currentTime + 0.5);
-      }, 80);
-    } catch (e) {
-      console.warn('Audio Context is blocked/not supported:', e);
-    }
+    // Töne & Sound deaktiviert
+    return;
   };
 
   // Push Notification trigger
@@ -1373,6 +1344,15 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
           >
             {activeView === 'dashboard' && (
               <>
+                  {/* Top Row: Universe Enterprise Scorer with all elements */}
+                  <CryptoScoringEnterprise 
+                     selectedSymbol={selectedSymbol} 
+                     onSelectSymbol={setSelectedSymbol} 
+                     timeframe={timeframe} 
+                     onChangeTimeframe={setTimeframe} 
+                     userSession={userSession}
+                  />
+
                   {/* Realtime AI-Newsfeed and Watchlist Side-by-Side Grid */}
                   <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                     <div className="xl:col-span-2">
@@ -1382,6 +1362,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                         onTriggerPushNotification={triggerPushNotification}
                         watchlist={watchlist}
                         maxDisplayItems={3}
+                        selectedSymbol={selectedSymbol}
                       />
                     </div>
                     <div>
@@ -1399,15 +1380,6 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                       />
                     </div>
                   </div>
-
-                 {/* Top Row: Enterprise Crypto Scoring Module */}
-                 <CryptoScoringEnterprise 
-                    selectedSymbol={selectedSymbol} 
-                    onSelectSymbol={setSelectedSymbol} 
-                    timeframe={timeframe} 
-                    onChangeTimeframe={setTimeframe} 
-                    userSession={userSession}
-                  />
  
                   {/* Best and Worst Assets of each Universe */}
                   <UniverseBestWorst onSelectAsset={(symbol) => { setSelectedSymbol(symbol); setActiveView('charts'); }} />
