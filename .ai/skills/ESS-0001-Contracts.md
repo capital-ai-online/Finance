@@ -1748,3 +1748,558 @@ Dependency Contracts
 ---
 
 # End of Chapter 3
+---
+
+# Chapter 4
+
+# TypeScript & Interface Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindlichen TypeScript-, Interface- und Contract-Regeln des CAPITAL-AI Core.
+
+Alle Plattformkomponenten verwenden dieselben technischen Standards.
+
+Es dürfen keine individuellen Implementierungsstile entstehen.
+
+Alle KI-Systeme müssen identische öffentliche Schnittstellen erzeugen.
+
+---
+
+# Mission
+
+Die TypeScript Contracts gewährleisten
+
+- deterministische Codegenerierung
+
+- starke Typisierung
+
+- reproduzierbare APIs
+
+- modulare Erweiterbarkeit
+
+- hohe Testbarkeit
+
+- langfristige Wartbarkeit
+
+---
+
+# Enterprise Principle
+
+Interfaces beschreiben Verhalten.
+
+Klassen implementieren Verhalten.
+
+Typen beschreiben Daten.
+
+Contracts definieren Regeln.
+
+Keine Implementierung existiert ohne Contract.
+
+---
+
+# TypeScript Standard
+
+Der gesamte CAPITAL-AI Core verwendet ausschließlich
+
+TypeScript
+
+Strict Mode
+
+ES Modules
+
+ECMAScript Latest
+
+Node LTS
+
+---
+
+# Compiler Rules
+
+Folgende Compileroptionen sind verpflichtend
+
+strict
+
+noImplicitAny
+
+strictNullChecks
+
+noUncheckedIndexedAccess
+
+exactOptionalPropertyTypes
+
+noImplicitOverride
+
+useUnknownInCatchVariables
+
+noFallthroughCasesInSwitch
+
+noImplicitReturns
+
+forceConsistentCasingInFileNames
+
+---
+
+# Language Rules
+
+Verboten
+
+any
+
+var
+
+namespace
+
+enum
+
+Nicht typisierte Funktionen
+
+Nicht typisierte Parameter
+
+Implizite Rückgabetypen
+
+Erlaubt
+
+interface
+
+type
+
+class
+
+readonly
+
+async/await
+
+Generics
+
+Union Types
+
+Discriminated Unions
+
+---
+
+# Interface Contracts
+
+Alle öffentlichen Komponenten besitzen mindestens ein Interface.
+
+Beispiel
+
+RepositoryScanner
+
+↓
+
+IRepositoryScanner
+
+KnowledgeRegistry
+
+↓
+
+IKnowledgeRegistry
+
+VersionManager
+
+↓
+
+IVersionManager
+
+DocumentGenerator
+
+↓
+
+IDocumentGenerator
+
+Supervisor
+
+↓
+
+ISupervisor
+
+---
+
+# Interface Responsibilities
+
+Interfaces enthalten ausschließlich
+
+Methodensignaturen
+
+Eigenschaften
+
+Dokumentation
+
+Typdefinitionen
+
+Keine Logik.
+
+Keine Implementierung.
+
+---
+
+# Base Interfaces
+
+Die Plattform definiert zentrale Basisinterfaces.
+
+Mindestens
+
+IComponent
+
+IService
+
+IEngine
+
+IRegistry
+
+IValidator
+
+IGenerator
+
+IProvider
+
+IConsumer
+
+IPlugin
+
+IEvent
+
+ILifecycle
+
+IHealthCheck
+
+IRepositoryObject
+
+IKnowledgeObject
+
+IVersioned
+
+---
+
+# Class Contracts
+
+Jede Klasse
+
+implementiert mindestens ein Interface
+
+besitzt genau eine Verantwortung
+
+ist vollständig typisiert
+
+ist testbar
+
+ist dokumentiert
+
+---
+
+# Constructor Rules
+
+Abhängigkeiten werden ausschließlich über Dependency Injection übergeben.
+
+Keine Klasse erzeugt ihre eigenen Abhängigkeiten.
+
+---
+
+# Type Contracts
+
+Komplexe Daten werden ausschließlich über
+
+type
+
+oder
+
+interface
+
+beschrieben.
+
+Inline-Objekte sind zu vermeiden.
+
+---
+
+# Generic Contracts
+
+Generics werden verwendet wenn
+
+Komponenten mehrfach wiederverwendbar sind.
+
+Beispiel
+
+Registry<T>
+
+Generator<T>
+
+Validator<T>
+
+Provider<T>
+
+Repository<T>
+
+---
+
+# Naming Rules
+
+Interfaces
+
+IRepositoryScanner
+
+IKnowledgeRegistry
+
+IVersionProvider
+
+ISupervisor
+
+IPlatformComponent
+
+Klassen
+
+RepositoryScanner
+
+KnowledgeRegistry
+
+VersionManager
+
+Supervisor
+
+PlatformDirector
+
+Typen
+
+RepositoryMetadata
+
+KnowledgeNode
+
+EventPayload
+
+ArchitectureSnapshot
+
+---
+
+# Export Rules
+
+Jede öffentliche Komponente exportiert ausschließlich
+
+öffentliche Interfaces
+
+öffentliche Typen
+
+öffentliche Klassen
+
+Interne Hilfsklassen bleiben privat.
+
+---
+
+# File Structure
+
+Pro Datei
+
+eine Hauptklasse
+
+ein Hauptinterface
+
+zusätzliche Helper ausschließlich wenn logisch zusammengehörig.
+
+Keine Sammeldateien mit mehreren unabhängigen Klassen.
+
+---
+
+# Dependency Injection
+
+Pflicht
+
+Constructor Injection
+
+Factory Injection
+
+Provider Injection
+
+Nicht erlaubt
+
+globale Singletons
+
+versteckte Abhängigkeiten
+
+Service Locator Pattern
+
+---
+
+# Async Contracts
+
+Asynchrone Methoden liefern ausschließlich
+
+Promise<T>
+
+Keine Callback APIs.
+
+Keine EventEmitter-Abhängigkeiten innerhalb der Businesslogik.
+
+---
+
+# Error Contracts
+
+Fehler werden ausschließlich über typisierte Error-Klassen behandelt.
+
+Keine
+
+throw "Error"
+
+throw "String"
+
+throw 123
+
+Erlaubt
+
+throw new RepositoryError()
+
+throw new ValidationError()
+
+throw new ContractViolationError()
+
+---
+
+# Documentation Rules
+
+Jede öffentliche Klasse
+
+besitzt
+
+Beschreibung
+
+Zweck
+
+Parameter
+
+Rückgabewerte
+
+Beispiele
+
+ESS Referenz
+
+ADR Referenz
+
+---
+
+# Testing Contracts
+
+Jede öffentliche Klasse besitzt mindestens
+
+Unit Test
+
+Contract Test
+
+Optional
+
+Integration Test
+
+Performance Test
+
+Architecture Test
+
+---
+
+# Import Rules
+
+Relative Imports nur innerhalb derselben Komponente.
+
+Komponentenübergreifend ausschließlich Alias Imports.
+
+Beispiel
+
+@platform/Core
+
+@platform/Documentary
+
+@platform/Supervisor
+
+@platform/VersionManager
+
+---
+
+# Forbidden
+
+Keine zyklischen Imports.
+
+Keine impliziten Typen.
+
+Keine any-Typen.
+
+Keine globalen Variablen.
+
+Keine statischen Utility-Klassen ohne Begründung.
+
+Keine versteckten Seiteneffekte.
+
+---
+
+# Validation
+
+Vor jeder Integration wird geprüft
+
+✓ Strict Mode
+
+✓ Typisierung vollständig
+
+✓ Interface vorhanden
+
+✓ Contract erfüllt
+
+✓ Dependency Injection
+
+✓ Test vorhanden
+
+✓ Dokumentation vorhanden
+
+✓ Naming korrekt
+
+---
+
+# Enterprise Rules
+
+Jede öffentliche Klasse implementiert mindestens ein Interface.
+
+Jede Klasse besitzt genau eine Verantwortung.
+
+Jede öffentliche API ist vollständig typisiert.
+
+Jede Änderung bleibt rückwärts nachvollziehbar.
+
+Alle Interfaces sind Bestandteil der Enterprise Contracts.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ keine Klasse ohne Interface existiert
+
+✓ keine Klasse "any" verwendet
+
+✓ sämtliche APIs vollständig typisiert sind
+
+✓ alle Komponenten dieselben Interface-Regeln verwenden
+
+✓ alle KI-Systeme identische Schnittstellen erzeugen
+
+✓ der gesamte Core deterministisch implementierbar bleibt
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 5
+
+Enterprise Naming Contracts
+
+↓
+
+Chapter 6
+
+Dependency Contracts
+
+↓
+
+Chapter 7
+
+Enterprise Data Models
+
+---
+
+# End of Chapter 4
