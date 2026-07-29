@@ -366,3 +366,624 @@ sämtliche weiteren Enterprise Contracts.
 ---
 
 # End of Chapter 1
+
+---
+
+# Chapter 2
+
+# Repository Structure Contract
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindliche Repository-Struktur des CAPITAL-AI Core.
+
+Die Repository-Struktur ist Bestandteil der Enterprise-Architektur.
+
+Sie darf nicht eigenständig verändert oder erweitert werden.
+
+Neue Verzeichnisse oder strukturelle Änderungen benötigen einen Architecture Decision Record (ADR).
+
+---
+
+# Mission
+
+Jede Datei besitzt einen eindeutig definierten Speicherort.
+
+Jeder Ordner besitzt genau eine Verantwortung.
+
+Jede KI erzeugt identische Projektstrukturen.
+
+Die Repository-Struktur bleibt langfristig stabil und reproduzierbar.
+
+---
+
+# Enterprise Principle
+
+Die Struktur folgt dem Prinzip
+
+Architecture before Implementation.
+
+Die Architektur bestimmt den Speicherort.
+
+Nicht die Implementierung.
+
+---
+
+# Repository Root
+
+Die oberste Ebene des Repositories besitzt ausschließlich folgende Verzeichnisse.
+
+```text
+.ai/
+docs/
+scripts/
+src/
+supabase/
+tests/
+public/
+dist/
+```
+
+Weitere Root-Verzeichnisse dürfen ausschließlich über einen ADR eingeführt werden.
+
+---
+
+# Root Responsibilities
+
+## .ai/
+
+Enthält ausschließlich KI-bezogene Artefakte.
+
+Beispiele
+
+Skills
+
+Prompts
+
+Contracts
+
+Templates
+
+Schemas
+
+Registries
+
+Knowledge Seeds
+
+---
+
+## docs/
+
+Enterprise-Dokumentation
+
+Architecture
+
+ADR
+
+Compliance
+
+Security
+
+Migration
+
+Release
+
+Quality
+
+Knowledge
+
+---
+
+## scripts/
+
+Build
+
+Migration
+
+Deployment
+
+Automation
+
+Maintenance
+
+Validation
+
+---
+
+## src/
+
+Gesamter Quellcode der Plattform.
+
+Keine Dokumentation.
+
+Keine Build-Artefakte.
+
+Keine generierten Reports.
+
+---
+
+## supabase/
+
+Migrationen
+
+Policies
+
+Functions
+
+RPC
+
+Schema
+
+Seed-Dateien
+
+Storage-Konfiguration
+
+---
+
+## tests/
+
+Integration
+
+Unit
+
+Contract
+
+Architecture
+
+Performance
+
+Security
+
+End-to-End
+
+---
+
+## public/
+
+Statische Web-Ressourcen.
+
+---
+
+## dist/
+
+Build-Ausgabe.
+
+Dieses Verzeichnis wird niemals manuell geändert.
+
+---
+
+# Source Structure
+
+Der gesamte Plattformcode befindet sich ausschließlich unter
+
+```text
+src/
+```
+
+---
+
+# Platform Structure
+
+Die Enterprise-Komponenten befinden sich ausschließlich unter
+
+```text
+src/platform/
+```
+
+Die Platform-Ebene enthält ausschließlich zentrale Plattformdienste.
+
+---
+
+# Mandatory Platform Modules
+
+```text
+src/platform/
+
+Documentary/
+
+PlatformDirector/
+
+Supervisor/
+
+VersionManager/
+
+Knowledge/
+
+Architecture/
+
+Discovery/
+
+Registry/
+
+Events/
+
+Contracts/
+
+Models/
+
+Interfaces/
+
+Validators/
+
+Generators/
+
+Plugins/
+
+Telemetry/
+
+Quality/
+
+Security/
+
+Compliance/
+
+Release/
+
+Shared/
+```
+
+Diese Struktur ist verbindlich.
+
+---
+
+# Documentary Structure
+
+```text
+src/platform/Documentary/
+
+Engine/
+
+Discovery/
+
+Knowledge/
+
+Documentation/
+
+Architecture/
+
+Migration/
+
+Versioning/
+
+Events/
+
+Registry/
+
+Generators/
+
+Validators/
+
+Templates/
+
+Mermaid/
+
+Plugins/
+
+Types/
+
+Models/
+
+Interfaces/
+
+Contracts/
+
+Utils/
+```
+
+Jedes Unterverzeichnis besitzt genau eine Verantwortung.
+
+---
+
+# Shared Structure
+
+Gemeinsam genutzte Komponenten befinden sich ausschließlich unter
+
+```text
+src/platform/Shared/
+```
+
+Beispiele
+
+Utilities
+
+Logger
+
+Errors
+
+Configuration
+
+Constants
+
+Types
+
+Base Classes
+
+Helper
+
+---
+
+# Feature Isolation
+
+Geschäftslogik gehört niemals in
+
+Shared
+
+Platform
+
+oder Documentary.
+
+Sie wird ausschließlich in ihren jeweiligen Domänen implementiert.
+
+Beispiele
+
+```text
+src/features/
+
+crypto/
+
+stocks/
+
+portfolio/
+
+billing/
+
+news/
+
+users/
+
+settings/
+```
+
+---
+
+# Configuration
+
+Konfigurationen befinden sich ausschließlich unter
+
+```text
+src/config/
+```
+
+Keine Konfiguration innerhalb von Services.
+
+---
+
+# Environment
+
+```text
+.env.example
+
+.env.local
+
+.env.production
+```
+
+Secrets werden niemals im Repository gespeichert.
+
+---
+
+# Naming Rules
+
+Verzeichnisse verwenden ausschließlich PascalCase.
+
+Beispiele
+
+```text
+PlatformDirector/
+
+VersionManager/
+
+Knowledge/
+
+Documentary/
+```
+
+Keine Leerzeichen.
+
+Keine Sonderzeichen.
+
+Keine Abkürzungen ohne Definition.
+
+---
+
+# File Placement Rules
+
+Jede Datei besitzt genau einen Speicherort.
+
+Eine Datei darf niemals dieselbe Verantwortung wie eine andere Datei besitzen.
+
+Keine doppelten Implementierungen.
+
+Keine alternativen Versionen derselben Klasse.
+
+---
+
+# Generated Files
+
+Automatisch erzeugte Dateien werden ausschließlich innerhalb definierter Generator-Verzeichnisse gespeichert.
+
+Beispiele
+
+```text
+Generated/
+
+Reports/
+
+Snapshots/
+```
+
+Generierter Code darf produktiven Code niemals überschreiben.
+
+---
+
+# Documentation Placement
+
+Dokumentation befindet sich ausschließlich in
+
+```text
+docs/
+```
+
+Ausnahmen
+
+README.md
+
+CHANGELOG.md
+
+LICENSE
+
+CODE_OF_CONDUCT.md
+
+CONTRIBUTING.md
+
+---
+
+# AI Resources
+
+Alle KI-Artefakte befinden sich ausschließlich unter
+
+```text
+.ai/
+```
+
+Beispiele
+
+```text
+.ai/
+
+skills/
+
+prompts/
+
+contracts/
+
+templates/
+
+schemas/
+
+registry/
+
+knowledge/
+```
+
+---
+
+# Import Boundaries
+
+Eine Komponente darf ausschließlich auf definierte Ebenen zugreifen.
+
+Beispiel
+
+```text
+Shared
+
+↓
+
+Contracts
+
+↓
+
+Models
+
+↓
+
+Services
+
+↓
+
+Generators
+
+↓
+
+Documentary
+
+↓
+
+Supervisor
+
+↓
+
+Platform Director
+```
+
+Zirkuläre Abhängigkeiten sind nicht zulässig.
+
+---
+
+# Repository Validation
+
+Vor jedem Build wird geprüft
+
+✓ Ordnerstruktur vollständig
+
+✓ keine unbekannten Root-Verzeichnisse
+
+✓ keine doppelten Komponenten
+
+✓ keine verbotenen Speicherorte
+
+✓ keine Architekturverletzungen
+
+✓ keine verwaisten Dateien
+
+---
+
+# Enterprise Rules
+
+Keine Datei außerhalb der definierten Struktur.
+
+Keine spontanen Verzeichnisse.
+
+Keine gemischten Verantwortlichkeiten.
+
+Keine Dokumentation innerhalb produktiver Komponenten.
+
+Keine Build-Artefakte im Quellcode.
+
+Keine Testdateien außerhalb des Testbereichs.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ jede Datei eindeutig eingeordnet werden kann
+
+✓ jede KI dieselbe Repository-Struktur erzeugt
+
+✓ keine Architekturentscheidungen während der Implementierung getroffen werden müssen
+
+✓ alle Komponenten eindeutig lokalisiert sind
+
+✓ die Repository-Struktur langfristig stabil bleibt
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 3
+
+Directory Contracts
+
+↓
+
+Chapter 4
+
+Interface Contracts
+
+↓
+
+Chapter 5
+
+Enterprise Naming Contracts
+
+↓
+
+sämtliche nachfolgenden technischen Contracts.
+
+---
+
+# End of Chapter 2
