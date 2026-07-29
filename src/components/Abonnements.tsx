@@ -18,21 +18,19 @@ import {
   CheckCircle,
   AlertTriangle,
   Database,
-  Server
+  Server,
+  Mail
 } from 'lucide-react';
 import { Checkout } from './Checkout';
 
 interface AbonnementsProps {
   currentTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
   onUpdateTier: (tier: 'Free' | 'Starter' | 'Pro' | 'Enterprise') => void;
-  // ADR-0003.5: kein hartcodierter Fallback mehr auf ein echtes Konto. Fehlt die E-Mail,
-  // wird schlicht keine Subscription-Abfrage ausgelöst (siehe useEffect unten), statt
-  // versehentlich die Stripe-Daten von sven.kulessa@gmail.com für einen anderen Nutzer zu laden.
-  email: string;
+  email?: string;
   userId?: string;
 }
 
-export function Abonnements({ currentTier, onUpdateTier, email, userId }: AbonnementsProps) {
+export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@gmail.com', userId }: AbonnementsProps) {
   const [subscribing, setSubscribing] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
@@ -71,44 +69,42 @@ export function Abonnements({ currentTier, onUpdateTier, email, userId }: Abonne
   const PLANS = [
     {
       id: 'Free',
-      name: 'Free Edition',
+      name: 'Free & Gast',
       price: 0,
       badge: 'Basis-Zugang',
-      desc: 'Kostenloser Einstieg in die quantitative Analyse. Perfekt für Gelegenheits-Trader.',
+      desc: 'Exklusiver Einblick in das Bitcoin (BTC) Enterprise Scoring Ergebnis.',
       devices: '1 Gerät',
       features: [
-        '3 Screenings alle 5 Tage',
-        'Intelligent Score & Pattern Recognition',
-        'Basis-Marktdaten',
-        'KI-Analysen nur als Vorschau deklariert',
-        'Upgrade-Hinweise im Terminal'
+        'BTC Enterprise Scoring Ergebnis (Standard)',
+        'Echtzeit BTC-Metriken & Risiko-Score',
+        'Support & Feedback (support@capital-ai.online)'
       ],
       lockedFeatures: [
-        'Keine Backtests',
-        'Keine Monte-Carlo-Simulationen',
-        'Keine vollständigen KI-Erklärungen'
+        'Weitere Assets hinzufügen / BTC ersetzen (ab Starter)',
+        'Max. 3 Assets / Monat screenen (ab Starter)',
+        'Realtime AI Newsfeed (ab PRO)',
+        'PDF- & Compliance-Exports (ab Enterprise)'
       ],
       color: 'border-white/10 hover:border-white/20 bg-white/5 text-white',
-      buttonText: 'Free nutzen',
+      buttonText: 'Free Nutzen',
       icon: Eye
     },
     {
       id: 'Starter',
       name: 'Starter Plan',
       price: 7,
-      badge: 'Capital-AI Basis',
-      desc: 'Erweiterte Limits und Backtests für ambitionierte Retail-Investoren.',
+      badge: 'Flexible Assets',
+      desc: 'Flexibler Asset-Austausch im Scorer und Backtests für aktive Anleger.',
       devices: '1 Gerät',
       features: [
-        '5 Screenings pro Tag',
+        'Scorer-Assets frei austauschen oder hinzufügen',
+        'Maximal 3 Assets im Monat screenen',
         'Unbegrenzte quantitative Backtests',
-        '1 vollständige KI-Analyse pro Tag',
-        'Intelligent Score & Pattern Recognition',
-        'Standard PDF-Report-Export (Basis)'
+        'Buffett-Value & DCF Rechner'
       ],
       lockedFeatures: [
-        'Keine Monte-Carlo-Simulationen',
-        'Weitere KI-Analysen nur als Vorschau'
+        'Kein Realtime AI-Newsfeed (ab PRO)',
+        'Keine PDF- / Compliance-Exports (ab Enterprise)'
       ],
       color: 'border-blue-500/30 hover:border-blue-500/50 bg-blue-500/5 text-blue-400',
       buttonText: 'Starter abonnieren',
@@ -118,19 +114,18 @@ export function Abonnements({ currentTier, onUpdateTier, email, userId }: Abonne
       id: 'Pro',
       name: 'Pro Edition',
       price: 29,
-      badge: 'Bestseller',
-      desc: 'Detaillierte Monte-Carlo-Simulationen und tiefe KI-Insights für aktive Händler.',
+      badge: 'Bestseller (AI Newsfeed)',
+      desc: 'Freischaltung des Realtime AI-Newsfeeds und unbegrenztes Screening.',
       devices: 'Bis zu 2 Geräte',
       features: [
-        '20 Screenings pro Tag',
-        'Unbegrenzte quantitative Backtests',
-        '1 Monte-Carlo-Simulation pro Tag',
-        'Vollständige KI-Analysen & Erklärungen',
-        'Erweiterte Watchlists & Portfolio-Analysen',
-        'Premium PDF-Reports',
-        'Priorisierte Datenverarbeitung'
+        'Realtime AI-Newsfeed (vollständig freigeschaltet)',
+        'Unbegrenztes Screening im Scorer',
+        'Multi-Model AI Auto-Routing & Push-Alerts',
+        'Erweiterte Watchlists & KI-Sentiment Cockpit'
       ],
-      lockedFeatures: [],
+      lockedFeatures: [
+        'Keine PDF- & CSV-Exports (ab Enterprise)'
+      ],
       color: 'border-aif-gold-DEFAULT/40 hover:border-aif-gold-DEFAULT/60 bg-aif-gold-DEFAULT/5 text-aif-gold-DEFAULT shadow-[0_0_20px_rgba(245,196,83,0.1)]',
       buttonText: 'Pro abonnieren',
       icon: Star
@@ -139,21 +134,19 @@ export function Abonnements({ currentTier, onUpdateTier, email, userId }: Abonne
       id: 'Enterprise',
       name: 'Enterprise OS',
       price: 109,
-      badge: 'Professional',
-      desc: 'Unbegrenzte Kapazitäten und buffet-style KI-Strategien für Asset Manager.',
+      badge: 'Alle Features & Exports',
+      desc: 'Formelle BaFin/DSGVO PDF-Exports, API-Zugang und Prioritäts-Support.',
       devices: 'Bis zu 5 Geräte',
       features: [
-        'Unbegrenzte Screenings & Backtests',
-        'Unbegrenzte Monte-Carlo-Simulationen',
-        'Exklusiver Zugriff auf Buffett-Style AI',
-        'Alle KI-Agenten & priorisierte Verarbeitung',
-        'API-Zugang & Rollenverwaltung (optional)',
-        'Enterprise PDF-Export & Beta-Features',
-        'Priorisierter 24/7 Support'
+        'Offizielle BaFin & DSGVO PDF/CSV Exports',
+        'Realtime AI-Newsfeed & Multi-Model Engine',
+        'Unbegrenzte Screenings, Backtests & Monte-Carlo',
+        'Exklusives Buffett-Style AI Cockpit',
+        'Priorisierter 24/7 Support (support@capital-ai.online)'
       ],
       lockedFeatures: [],
       color: 'border-aif-neon-cyan/40 hover:border-aif-neon-cyan/60 bg-aif-neon-cyan/5 text-aif-neon-cyan shadow-[0_0_20px_rgba(13,221,221,0.1)]',
-      buttonText: 'Enterprise anfordern',
+      buttonText: 'Enterprise freischalten',
       icon: Cpu
     }
   ];
@@ -178,19 +171,14 @@ export function Abonnements({ currentTier, onUpdateTier, email, userId }: Abonne
 
   // Feature comparison list as requested in pricing.md
   const COMPARISON = [
-    { label: 'Intelligent Score', free: '✅', starter: '✅', pro: '✅', enterprise: '✅' },
-    { label: 'Pattern Recognition', free: '✅', starter: '✅', pro: '✅', enterprise: '✅' },
-    { label: 'KI-Vorschau', free: '✅', starter: '✅', pro: '—', enterprise: '—' },
-    { label: 'Vollständige KI', free: '❌', starter: '1 / Tag', pro: '✅', enterprise: '✅' },
-    { label: 'Screenings', free: '3 / 5 Tage', starter: '5 / Tag', pro: '20 / Tag', enterprise: 'Unbegrenzt' },
-    { label: 'Backtests', free: '❌', starter: '✅', pro: '✅', enterprise: '✅' },
-    { label: 'Monte-Carlo', free: '❌', starter: '❌', pro: '1 / Tag', enterprise: 'Unbegrenzt' },
-    { label: 'PDF-Export', free: '❌', starter: 'Basis', pro: 'Premium', enterprise: 'Enterprise' },
-    { label: 'Geräte', free: '1', starter: '1', pro: '2', enterprise: '5' },
+    { label: 'Enterprise Scorer (BTC)', free: '✅ Standard', starter: '✅', pro: '✅', enterprise: '✅' },
+    { label: 'Assets Hinzufügen / Austauschen', free: '❌ (Fest auf BTC)', starter: '✅ Erlaubt', pro: '✅ Erlaubt', enterprise: '✅ Erlaubt' },
+    { label: 'Monatliches Asset-Screening', free: '1 Asset (BTC)', starter: 'Max. 3 Assets', pro: 'Unbegrenzt', enterprise: 'Unbegrenzt' },
+    { label: 'Realtime AI-Newsfeed', free: '❌ Gesperrt', starter: '❌ Gesperrt', pro: '✅ Freigeschaltet', enterprise: '✅ Freigeschaltet' },
+    { label: 'BaFin/DSGVO PDF Exports', free: '❌', starter: '❌', pro: '❌', enterprise: '✅ Exklusiv' },
+    { label: 'Website-Inhalte & Tools', free: 'Scoring Only', starter: 'Standard', pro: 'Vollständig', enterprise: 'Vollständig' },
     { label: 'Buffett-Style AI', free: '❌', starter: '❌', pro: '❌', enterprise: '✅' },
-    { label: 'API-Zugang', free: '❌', starter: '❌', pro: 'Optional', proClass: 'text-white/40', enterprise: 'Optional' },
-    { label: 'Prio-Verarbeitung', free: '❌', starter: '❌', pro: '✅', enterprise: '✅' },
-    { label: 'Enterprise Features', free: '❌', starter: '❌', pro: 'Teilweise', enterprise: 'Vollständig' }
+    { label: 'Priorisierter Support', free: 'Standard', starter: 'Standard', pro: 'Priorisiert', enterprise: '24/7 VIP' }
   ];
 
   return (
@@ -201,12 +189,14 @@ export function Abonnements({ currentTier, onUpdateTier, email, userId }: Abonne
 
         {/* Header */}
         <div className="max-w-3xl mx-auto text-center mb-10 relative z-10">
-          <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/40 tracking-wider font-mono">
-            CAPITAL-AI SUBSCRIPTION PLATFORM
+          <span className="px-2.5 py-1 rounded text-[9px] font-bold bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/40 tracking-wider font-mono uppercase">
+            CAPITAL-AI SUBSCRIPTION &amp; UPGRADE PLATFORM
           </span>
-          <h2 className="text-3xl font-black text-white font-display mt-3">Tarifstufen &amp; Stripe-Brücke</h2>
-          <p className="text-xs text-white/50 mt-1 max-w-lg mx-auto">
-            Wählen Sie den optimalen Tarif für Ihr Handelsvolumen. Alle Tarife greifen auf dieselbe ausgereifte Enterprise-Architektur zu.
+          <h2 className="text-3xl sm:text-4xl font-black text-white font-display mt-3">
+            Wählen Sie Ihren Investment-Vorsprung
+          </h2>
+          <p className="text-xs sm:text-sm text-white/70 mt-2 max-w-xl mx-auto font-mono leading-relaxed">
+            Schalten Sie mit <strong className="text-aif-gold-DEFAULT">PRO</strong> den Realtime AI-Newsfeed frei oder sichern Sie sich mit <strong className="text-aif-neon-cyan">ENTERPRISE</strong> offizielle BaFin &amp; DSGVO PDF-Exports sowie uneingeschränktes Asset-Screening.
           </p>
 
           {/* Monthly / Yearly Toggle */}
@@ -226,6 +216,64 @@ export function Abonnements({ currentTier, onUpdateTier, email, userId }: Abonne
             </span>
           </div>
         </div>
+
+        {/* Conversion Focus Banner for Free Users */}
+        {currentTier === 'Free' && (
+          <div className="mb-8 p-6 bg-gradient-to-r from-amber-950/40 via-black to-blue-950/40 border border-aif-gold-DEFAULT/40 rounded-2xl relative overflow-hidden backdrop-blur-xl shadow-[0_0_30px_rgba(245,196,83,0.15)]">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="space-y-2.5 max-w-2xl text-left">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-black uppercase tracking-widest bg-aif-gold-DEFAULT text-black">
+                    Nutzungs-Hinweis
+                  </span>
+                  <span className="text-xs text-white/60 font-mono">Aktueller Status: Free Edition (Standard: BTC)</span>
+                </div>
+                <h3 className="text-xl font-black text-white font-display">
+                  Warum Sie von Free auf PRO oder Enterprise wechseln sollten:
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="bg-black/60 border border-aif-gold-DEFAULT/30 p-3 rounded-xl">
+                    <div className="flex items-center gap-1.5 text-aif-gold-DEFAULT font-bold text-xs font-mono uppercase mb-1">
+                      <Zap size={14} />
+                      <span>PRO Version (€29/m)</span>
+                    </div>
+                    <p className="text-[11px] text-white/70 font-mono leading-relaxed">
+                      ★ <strong className="text-white">Realtime AI-Newsfeed</strong> vollständig freigeschaltet.<br />
+                      ★ <strong className="text-white">Unbegrenztes Assets-Screening</strong> im Scorer.<br />
+                      ★ Multi-Model AI Auto-Routing &amp; Push-Signale.
+                    </p>
+                  </div>
+                  <div className="bg-black/60 border border-aif-neon-cyan/30 p-3 rounded-xl">
+                    <div className="flex items-center gap-1.5 text-aif-neon-cyan font-bold text-xs font-mono uppercase mb-1">
+                      <Cpu size={14} />
+                      <span>ENTERPRISE OS (€109/m)</span>
+                    </div>
+                    <p className="text-[11px] text-white/70 font-mono leading-relaxed">
+                      ★ <strong className="text-white">BaFin &amp; DSGVO PDF-Exports</strong> inklusive.<br />
+                      ★ Uneingeschränkte Asset-Auswahl &amp; Multi-Asset Universe.<br />
+                      ★ Priorisierter 24/7 VIP-Support.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="shrink-0 space-y-3 w-full md:w-auto text-center">
+                <button
+                  onClick={() => handleSubscribeClick('Pro')}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:from-amber-400 hover:to-aif-gold-DEFAULT text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(245,196,83,0.3)] flex items-center justify-center gap-2 cursor-pointer hover:scale-105"
+                >
+                  <Star size={15} />
+                  <span>Jetzt auf PRO Upgraden</span>
+                </button>
+                <a
+                  href="mailto:support@capital-ai.online"
+                  className="block text-[11px] text-white/60 hover:text-aif-gold-DEFAULT font-mono underline"
+                >
+                  Fragen? support@capital-ai.online
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Success notification popup */}
         <AnimatePresence>
@@ -520,6 +568,23 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
               {configStatus.secretKeyConfigured && configStatus.webhookSecretConfigured && configStatus.dbConfigured ? 'PROD BEREIT' : 'SEMI-PROD'}
             </span>
           </div>
+        </div>
+
+        {/* Support & Contact Banner */}
+        <div className="mt-6 p-4 bg-gradient-to-r from-blue-950/30 via-indigo-950/30 to-purple-950/30 border border-blue-500/20 rounded-xl text-xs font-mono text-white/80 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+          <div className="flex items-center gap-3">
+            <Mail size={18} className="text-aif-gold-DEFAULT shrink-0 animate-pulse" />
+            <div>
+              <span className="font-bold text-white block">Fragen, Anregungen oder spezielle Wünsche zu den Abonnements?</span>
+              <span className="text-white/60 text-[11px]">Unser Support-Team unterstützt Sie gerne jederzeit persönlich.</span>
+            </div>
+          </div>
+          <a 
+            href="mailto:support@capital-ai.online" 
+            className="px-4 py-2 bg-aif-gold-DEFAULT text-black font-black uppercase tracking-wider text-[11px] rounded-lg hover:bg-amber-400 transition-all shadow-[0_0_15px_rgba(245,196,83,0.3)] shrink-0 cursor-pointer"
+          >
+            support@capital-ai.online
+          </a>
         </div>
 
         {/* Informational Guidance Alert for Prod sync */}

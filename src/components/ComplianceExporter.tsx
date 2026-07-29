@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PdfExportModal } from './PdfExportModal';
+import { ComplianceConsentWrapper } from './ComplianceConsentModal';
 
 interface RegistryAsset {
   symbol: string;
@@ -36,13 +37,30 @@ interface ComplianceExporterProps {
   capital: number;
   selectedSymbol: string;
   userEmail?: string;
+  subscriptionTier?: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
+  onUpgradeClick?: () => void;
 }
 
-export function ComplianceExporter({ capital, selectedSymbol, userEmail }: ComplianceExporterProps) {
+export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscriptionTier, onUpgradeClick }: ComplianceExporterProps) {
   const [exporting, setExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
+
+  const isEnterprise = subscriptionTier === 'Enterprise';
+
+  const handleExportClick = () => {
+    if (!isEnterprise) {
+      setError("Exports sind erst ab der Version ENTERPRISE ermöglicht. Bitte schalten Sie das Enterprise-Abonnement frei.");
+      if (onUpgradeClick) onUpgradeClick();
+      return;
+    }
+    if (userEmail) {
+      setShowExportModal(true);
+    } else {
+      generatePDFReport();
+    }
+  };
 
   const generatePDFReport = async () => {
     try {
@@ -552,13 +570,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail }: Compl
 
         <div className="shrink-0 space-y-2 w-full sm:w-auto">
           <button
-            onClick={() => {
-              if (userEmail) {
-                setShowExportModal(true);
-              } else {
-                generatePDFReport();
-              }
-            }}
+            onClick={handleExportClick}
             disabled={exporting}
             className={`w-full sm:w-auto px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-300 scale-100 active:scale-[0.98] ${
               exporting 
@@ -574,7 +586,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail }: Compl
             ) : (
               <>
                 <FileDown size={15} className="animate-bounce" />
-                <span>PDF-Report Exportieren</span>
+                <span>PDF-Report Exportieren {!isEnterprise && '(Enterprise)'}</span>
               </>
             )}
           </button>

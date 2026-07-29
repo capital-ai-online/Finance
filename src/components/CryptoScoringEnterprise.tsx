@@ -357,6 +357,8 @@ interface CryptoScoringEnterpriseProps {
   timeframe: string;
   onChangeTimeframe?: (timeframe: string) => void;
   userSession?: any;
+  subscriptionTier?: 'Free' | 'Starter' | 'Pro' | 'Enterprise';
+  onUpgradeClick?: () => void;
 }
 
 export function CryptoScoringEnterprise({ 
@@ -364,15 +366,27 @@ export function CryptoScoringEnterprise({
   onSelectSymbol, 
   timeframe, 
   onChangeTimeframe,
-  userSession
+  userSession,
+  subscriptionTier,
+  onUpgradeClick
 }: CryptoScoringEnterpriseProps) {
-  // Keep up to 3 selected symbols
+  const effectiveTier: 'Free' | 'Starter' | 'Pro' | 'Enterprise' = 
+    subscriptionTier || (userSession?.type === 'guest' ? 'Free' : (userSession?.subscriptionTier || 'Free'));
+
+  const isFreeUser = effectiveTier === 'Free';
+  const isStarterUser = effectiveTier === 'Starter';
+
+  // Keep selected symbols - Free users are strictly locked to ['BTC']
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>(() => {
+    if (isFreeUser) return ['BTC'];
     const initial = selectedSymbol ? selectedSymbol.toUpperCase() : 'BTC';
     return ['BTC', 'ETH', 'SOL'].includes(initial) ? ['BTC', 'ETH', 'SOL'] : [initial, 'BTC', 'ETH'].slice(0, 3);
   });
 
-  const [activeSymbol, setActiveSymbol] = useState<string>(selectedSymbol ? selectedSymbol.toUpperCase() : 'BTC');
+  const [activeSymbol, setActiveSymbol] = useState<string>(() => {
+    if (isFreeUser) return 'BTC';
+    return selectedSymbol ? selectedSymbol.toUpperCase() : 'BTC';
+  });
   const [inputs, setInputs] = useState<CryptoScoringInputs | null>(null);
   const [customInputs, setCustomInputs] = useState<Partial<CryptoScoringInputs>>({});
   const [loading, setLoading] = useState<boolean>(true);
@@ -964,6 +978,11 @@ export function CryptoScoringEnterprise({
 
   // Sync selectedSymbol from props to ensure dashboard is synchronized
   useEffect(() => {
+    if (isFreeUser) {
+      setActiveSymbol('BTC');
+      setSelectedSymbols(['BTC']);
+      return;
+    }
     if (selectedSymbol) {
       const upper = selectedSymbol.toUpperCase();
       setActiveSymbol(upper);
@@ -979,7 +998,7 @@ export function CryptoScoringEnterprise({
         });
       }
     }
-  }, [selectedSymbol]);
+  }, [selectedSymbol, isFreeUser]);
 
   // Load / calculate inputs based on activeSymbol and timeframe
   useEffect(() => {
@@ -1058,6 +1077,26 @@ export function CryptoScoringEnterprise({
   const handleSelectAsset = (sym: string) => {
     const upper = sym.toUpperCase();
     
+    // Free User Guard: Only BTC allowed in Free/Guest Mode
+    if (isFreeUser && upper !== 'BTC') {
+      setErrorMessage("Im Free- & Gast-Modus ist die Enterprise Scoring Komponente fest mit Bitcoin (BTC) befüllt. Erst ab der STARTER Version ist es möglich weitere Assets hinzuzufügen oder Bitcoin zu ersetzen (max. 3 Assets im Monat).");
+      setTimeout(() => setErrorMessage(null), 7000);
+      setShowSuggestions(false);
+      setSearchQuery('');
+      if (onUpgradeClick) onUpgradeClick();
+      return;
+    }
+
+    // Starter User Guard: Max 3 assets screened per month
+    if (isStarterUser && !selectedSymbols.includes(upper) && selectedSymbols.length >= 3) {
+      setErrorMessage("In der Starter-Version können maximal 3 Assets im Monat gescreent werden. Bitte führen Sie ein Upgrade auf PRO oder Enterprise durch für unbegrenztes Screening.");
+      setTimeout(() => setErrorMessage(null), 6000);
+      setShowSuggestions(false);
+      setSearchQuery('');
+      if (onUpgradeClick) onUpgradeClick();
+      return;
+    }
+
     // Add to selected array if not already present
     if (!selectedSymbols.includes(upper)) {
       if (selectedSymbols.length >= 3) {
@@ -1080,6 +1119,11 @@ export function CryptoScoringEnterprise({
 
   const handleRemoveAsset = (e: React.MouseEvent, sym: string) => {
     e.stopPropagation();
+    if (isFreeUser) {
+      setErrorMessage("Im Free- & Gast-Modus bleibt Bitcoin (BTC) als einziges Asset verankert. Erst ab der Starter-Version können Assets ausgetauscht werden.");
+      setTimeout(() => setErrorMessage(null), 4000);
+      return;
+    }
     if (selectedSymbols.length <= 1) {
       setErrorMessage("Mindestens ein Asset muss ausgewählt bleiben.");
       setTimeout(() => setErrorMessage(null), 3000);
@@ -1308,9 +1352,21 @@ export function CryptoScoringEnterprise({
             <span className="p-2 bg-gradient-to-br from-blue-500/20 to-purple-500/10 rounded-lg border border-blue-500/30 text-blue-400 animate-pulse">
               <Cpu size={18} />
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-xl font-bold tracking-tight text-white font-display uppercase">Universe Enterprise Scorer</h2>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/25 font-bold uppercase tracking-wider">Aktiv</span>
+              {isFreeUser ? (
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/25 font-bold uppercase tracking-wider flex items-center gap-1">
+                  Standard: Bitcoin (BTC)
+                </span>
+              ) : isStarterUser ? (
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/25 font-bold uppercase tracking-wider">
+                  Starter Tarif (Max 3 Assets)
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 font-bold uppercase tracking-wider">
+                  Unbegrenztes Screening
+                </span>
+              )}
             </div>
           </div>
           <p className="text-xs text-white/60 font-mono leading-relaxed max-w-xl">

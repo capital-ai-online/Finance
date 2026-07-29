@@ -385,8 +385,40 @@ export function RealtimeAiNewsfeed({
     onUpgradeClick(); // Redirect them to pricing plan overview
   };
 
+  const isNewsfeedLocked = subscriptionTier !== 'Pro' && subscriptionTier !== 'Enterprise';
+
   return (
     <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md flex flex-col justify-between h-full relative overflow-hidden group">
+      {/* Locked Overlay for Free & Starter tiers */}
+      {isNewsfeedLocked && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-black/85 backdrop-blur-md text-center rounded-2xl border border-aif-gold-DEFAULT/30 shadow-[0_0_50px_rgba(245,196,83,0.15)]">
+          <div className="w-12 h-12 rounded-full bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/30 flex items-center justify-center text-aif-gold-DEFAULT mb-3 shadow-[0_0_20px_rgba(245,196,83,0.3)] animate-pulse">
+            <Lock size={22} />
+          </div>
+          <span className="px-2.5 py-1 rounded text-[10px] font-mono font-bold uppercase tracking-widest bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/40 mb-2">
+            PRO-EXKLUSIV
+          </span>
+          <h3 className="text-lg font-black text-white font-display">
+            Realtime AI-Newsfeed ab der PRO-Version
+          </h3>
+          <p className="text-xs text-white/70 max-w-md mt-1.5 mb-5 leading-relaxed font-mono">
+            Der Realtime AI-Newsfeed mit ungefilterten Markt-Eilmeldungen, KI-Sentiment-Impact-Analysen, Multi-Modell Auto-Routing und Push-Signalen ist grundsätzlich erst ab dem <strong className="text-aif-gold-DEFAULT font-bold">PRO-Abonnement</strong> freigeschaltet.
+          </p>
+          <button
+            onClick={onUpgradeClick}
+            className="px-5 py-2.5 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:from-amber-400 hover:to-aif-gold-DEFAULT text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-[0_0_20px_rgba(245,196,83,0.3)] flex items-center gap-2 cursor-pointer hover:scale-105"
+          >
+            <Sparkles size={15} />
+            <span>Jetzt auf PRO Upgraden</span>
+          </button>
+          <div className="mt-4 pt-3 border-t border-white/10 text-[10px] text-white/50 font-mono">
+            Fragen oder Anregungen? Schreiben Sie uns an{' '}
+            <a href="mailto:support@capital-ai.online" className="text-aif-gold-DEFAULT hover:underline font-bold">
+              support@capital-ai.online
+            </a>
+          </div>
+        </div>
+      )}
       {/* Decorative colored top line for visual excellence */}
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-violet-600 via-blue-500 to-emerald-500" />
       
