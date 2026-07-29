@@ -1749,3 +1749,393 @@ Dependency Contracts
 ---
 
 # End of Chapter 3
+---
+
+# Chapter 4
+
+# TypeScript & Interface Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindlichen TypeScript-, Interface- und Implementierungsstandards des CAPITAL-AI Core.
+
+Alle Enterprise-Komponenten verwenden dieselben technischen Regeln.
+
+Dadurch wird sichergestellt, dass sämtliche KI-Systeme (Claude Code, Google AI Studio, ChatGPT und zukünftige Modelle) identische, reproduzierbare und langfristig wartbare Implementierungen erzeugen.
+
+Dieses Kapitel bildet den technischen Standard des CAPITAL-AI Core.
+
+---
+
+# Mission
+
+Die TypeScript & Interface Contracts gewährleisten
+
+- deterministische Codegenerierung
+- starke Typisierung
+- reproduzierbare Enterprise APIs
+- langfristige Wartbarkeit
+- modulare Erweiterbarkeit
+- maximale Testbarkeit
+- minimale Kopplung
+- hohe Wiederverwendbarkeit
+- vollständige Dokumentierbarkeit
+- automatische Architekturvalidierung
+
+---
+
+# Enterprise Principle
+
+Im CAPITAL-AI Core gilt grundsätzlich
+
+Interfaces beschreiben Verhalten.
+
+Klassen implementieren Verhalten.
+
+Typen beschreiben Daten.
+
+Contracts definieren Regeln.
+
+Events beschreiben Kommunikation.
+
+Modelle beschreiben Informationen.
+
+Keine Implementierung existiert ohne Contract.
+
+Keine öffentliche API existiert ohne Interface.
+
+Keine Plattformkomponente existiert ohne Dokumentation.
+
+---
+
+# TypeScript Standard
+
+Der gesamte CAPITAL-AI Core verwendet ausschließlich
+
+TypeScript
+
+ES Modules
+
+Node LTS
+
+ECMAScript Latest
+
+Strict Mode
+
+Alle Komponenten besitzen dieselben Compiler- und Sprachregeln.
+
+---
+
+# Compiler Rules
+
+Folgende TypeScript-Regeln sind verpflichtend
+
+strict
+
+strictNullChecks
+
+noImplicitAny
+
+noImplicitReturns
+
+noImplicitOverride
+
+noUncheckedIndexedAccess
+
+exactOptionalPropertyTypes
+
+forceConsistentCasingInFileNames
+
+useUnknownInCatchVariables
+
+noFallthroughCasesInSwitch
+
+noPropertyAccessFromIndexSignature
+
+---
+
+# Language Rules
+
+Erlaubt
+
+interface
+
+type
+
+class
+
+readonly
+
+Generics
+
+Union Types
+
+Discriminated Unions
+
+async / await
+
+Record
+
+Readonly
+
+Partial
+
+Required
+
+Pick
+
+Omit
+
+Unknown
+
+Template Literal Types
+
+Mapped Types
+
+Conditional Types
+
+---
+
+Nicht erlaubt
+
+any
+
+var
+
+namespace
+
+nicht typisierte Parameter
+
+implizite Rückgabetypen
+
+globale Variablen
+
+Monkey Patching
+
+nicht dokumentierte öffentliche Klassen
+
+---
+
+# Interface Contracts
+
+Alle öffentlichen Plattformkomponenten besitzen mindestens ein Interface.
+
+Interfaces definieren ausschließlich den öffentlichen Vertrag.
+
+Interfaces enthalten keine Implementierung.
+
+Interfaces definieren ausschließlich
+
+Methodensignaturen
+
+Eigenschaften
+
+Typdefinitionen
+
+Vertragsbedingungen
+
+Dokumentation
+
+---
+
+## Beispiel
+
+DocumentaryEngine
+
+↓
+
+IDocumentaryEngine
+
+Supervisor
+
+↓
+
+ISupervisor
+
+VersionManager
+
+↓
+
+IVersionManager
+
+KnowledgeRegistry
+
+↓
+
+IKnowledgeRegistry
+
+RepositoryScanner
+
+↓
+
+IRepositoryScanner
+
+---
+
+# Public Interface Contract
+
+## Enterprise Purpose
+
+Die Plattform unterscheidet zwischen
+
+öffentlichen Enterprise Interfaces
+
+und
+
+internen Komponenteninterfaces.
+
+Diese Trennung stellt sicher, dass langfristig stabile APIs entstehen und interne Implementierungsdetails niemals Bestandteil öffentlicher Verträge werden.
+
+---
+
+## Public Enterprise Interfaces
+
+Alle öffentlichen Plattforminterfaces befinden sich ausschließlich unter
+
+src/platform/Interfaces/
+
+Diese Interfaces bilden die offiziellen Enterprise Contracts.
+
+Sie dürfen von sämtlichen Plattformkomponenten verwendet werden.
+
+Sie definieren die öffentliche technische API des CAPITAL-AI Core.
+
+---
+
+### Beispiele
+
+IPlatformComponent
+
+IEngine
+
+IService
+
+IRegistry
+
+IValidator
+
+IGenerator
+
+IProvider
+
+IConsumer
+
+IPlugin
+
+ILifecycle
+
+IHealthCheck
+
+IEvent
+
+IVersioned
+
+IKnowledgeObject
+
+IRepositoryObject
+
+---
+
+## Component Interfaces
+
+Interne Komponenteninterfaces befinden sich ausschließlich innerhalb ihrer jeweiligen Komponente.
+
+Beispiele
+
+src/platform/Core/Interfaces/
+
+src/platform/Documentary/Interfaces/
+
+src/platform/Supervisor/Interfaces/
+
+src/platform/VersionManager/Interfaces/
+
+Diese Interfaces dürfen ausschließlich innerhalb ihrer eigenen Komponente verwendet werden.
+
+Sie sind kein Bestandteil der öffentlichen Enterprise API.
+
+---
+
+## Promotion Contract
+
+Soll ein internes Interface zukünftig komponentenübergreifend verwendet werden,
+
+muss es
+
+fachlich validiert werden
+
+technisch dokumentiert werden
+
+versioniert werden
+
+einen Enterprise Contract erhalten
+
+in
+
+src/platform/Interfaces/
+
+verschoben werden.
+
+Vor Abschluss dieser Schritte ist eine komponentenübergreifende Verwendung nicht zulässig.
+
+---
+
+## Documentation Contract
+
+Jedes öffentliche Interface besitzt mindestens
+
+Beschreibung
+
+Verantwortlichkeit
+
+Version
+
+ESS-Referenz
+
+ADR-Referenz (falls vorhanden)
+
+Änderungsverlauf
+
+Implementierende Komponenten
+
+Verantwortlichen Owner
+
+---
+
+## Validation
+
+Vor jeder Integration wird automatisch geprüft
+
+✓ öffentliche Interfaces befinden sich ausschließlich unter
+
+src/platform/Interfaces/
+
+✓ interne Interfaces befinden sich ausschließlich innerhalb ihrer Komponente
+
+✓ keine Komponente verwendet interne Interfaces anderer Komponenten
+
+✓ alle öffentlichen Interfaces besitzen Dokumentation
+
+✓ alle öffentlichen Interfaces besitzen einen Enterprise Contract
+
+✓ alle öffentlichen Interfaces besitzen eine eindeutige Verantwortlichkeit
+
+---
+
+## Enterprise Rules
+
+Es darf niemals zwei öffentliche Interfaces mit derselben Verantwortung geben.
+
+Komponenten dürfen ausschließlich öffentliche Enterprise Interfaces oder ihre eigenen internen Interfaces verwenden.
+
+Direkte Abhängigkeiten auf interne Interfaces anderer Komponenten sind nicht zulässig.
+
+Die Documentary Engine registriert sämtliche öffentlichen Interfaces automatisch.
+
+Der Platform Director verwendet ausschließlich öffentliche Enterprise Interfaces zur komponentenübergreifenden Kommunikation.
+
+Der Supervisor überwacht ausschließlich öffentliche Enterprise Interfaces.
+
+---
+
+# End of Part 1
