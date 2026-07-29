@@ -3988,3 +3988,600 @@ Dadurch wird die Documentary Engine nicht nur Dokumentationssystem, sondern die 
 ---
 
 # End of Chapter 7
+---
+
+# Chapter 8
+
+# Event Driven Documentation & Enterprise Event Bus
+
+## Enterprise Purpose
+
+Die Event Driven Documentation Architecture bildet das zentrale Nervensystem des CAPITAL-AI Core.
+
+Jede Änderung innerhalb der Plattform erzeugt ein standardisiertes Enterprise Event.
+
+Diese Events bilden die einzige zulässige Kommunikationsform zwischen sämtlichen Enterprise-Komponenten.
+
+Direkte Dokumentenerzeugung ist untersagt.
+
+Direkte Versionierung ist untersagt.
+
+Direkte Synchronisation ist untersagt.
+
+Alle Prozesse beginnen mit einem Event.
+
+---
+
+# Mission
+
+Jede technische Änderung der Plattform erzeugt exakt ein oder mehrere standardisierte Enterprise Events.
+
+Diese Events steuern anschließend automatisch
+
+- Documentary Engine
+- Knowledge Engine
+- Version Manager
+- Supervisor
+- Platform Director
+- Security Center
+- Compliance Center
+- Quality Center
+- Release Center
+
+---
+
+# Enterprise Principle
+
+Events besitzen höchste Priorität.
+
+Der Code erzeugt Events.
+
+Events erzeugen Wissen.
+
+Wissen erzeugt Dokumentation.
+
+Dokumentation erzeugt Governance.
+
+Governance steuert die Plattform.
+
+---
+
+# Event Lifecycle
+
+Repository Change
+
+↓
+
+Event Detection
+
+↓
+
+Enterprise Event
+
+↓
+
+Enterprise Event Bus
+
+↓
+
+Event Registry
+
+↓
+
+Event Validation
+
+↓
+
+Knowledge Engine
+
+↓
+
+Documentation Engine
+
+↓
+
+Version Manager
+
+↓
+
+Supervisor
+
+↓
+
+Platform Director
+
+↓
+
+Release Center
+
+---
+
+# Enterprise Event Categories
+
+## Repository Events
+
+RepositoryCreated
+
+RepositoryUpdated
+
+RepositoryValidated
+
+RepositoryIndexed
+
+RepositoryArchived
+
+---
+
+## Code Events
+
+FileCreated
+
+FileDeleted
+
+FileModified
+
+ClassCreated
+
+ClassUpdated
+
+InterfaceUpdated
+
+MethodChanged
+
+DependencyChanged
+
+ImportChanged
+
+ExportChanged
+
+---
+
+## Architecture Events
+
+ArchitectureChanged
+
+LayerChanged
+
+ComponentAdded
+
+ComponentRemoved
+
+ComponentRefactored
+
+DependencyDetected
+
+ArchitectureViolationDetected
+
+---
+
+## Knowledge Events
+
+KnowledgeCreated
+
+KnowledgeUpdated
+
+KnowledgeValidated
+
+KnowledgeSynchronized
+
+KnowledgeConflictDetected
+
+---
+
+## Documentation Events
+
+DocumentCreated
+
+DocumentUpdated
+
+DocumentValidated
+
+ADRCreated
+
+ADRUpdated
+
+DiagramGenerated
+
+DocumentationCompleted
+
+---
+
+## Version Events
+
+VersionCreated
+
+VersionIncremented
+
+VersionValidated
+
+ReleasePrepared
+
+ReleasePublished
+
+RollbackCreated
+
+---
+
+## Security Events
+
+PolicyChanged
+
+PermissionChanged
+
+IAMChanged
+
+RLSChanged
+
+SecurityIncident
+
+SecretUpdated
+
+AuthenticationChanged
+
+AuthorizationChanged
+
+---
+
+## Compliance Events
+
+ComplianceCheckStarted
+
+ComplianceValidated
+
+AuditCreated
+
+RiskDetected
+
+RiskResolved
+
+PolicyViolationDetected
+
+---
+
+## Database Events
+
+MigrationCreated
+
+MigrationValidated
+
+MigrationExecuted
+
+SchemaChanged
+
+TableCreated
+
+ViewCreated
+
+PolicyUpdated
+
+StorageChanged
+
+---
+
+## AI Events
+
+AgentRegistered
+
+AgentUpdated
+
+AgentRemoved
+
+PromptUpdated
+
+SkillUpdated
+
+KnowledgeModelUpdated
+
+LLMConfigurationChanged
+
+---
+
+## Platform Events
+
+SupervisorStarted
+
+PlatformDirectorStarted
+
+HealthCheckCompleted
+
+DeploymentStarted
+
+DeploymentCompleted
+
+RollbackExecuted
+
+SystemShutdown
+
+RecoveryCompleted
+
+---
+
+# Enterprise Event Model
+
+Jedes Event besitzt einen standardisierten Aufbau.
+
+Event ID
+
+Event Name
+
+Kategorie
+
+Quelle
+
+Komponente
+
+Version
+
+Timestamp
+
+Correlation ID
+
+Repository Version
+
+Knowledge Version
+
+Architecture Version
+
+Payload
+
+Priority
+
+Status
+
+Owner
+
+Validation Status
+
+---
+
+# Event Registry
+
+Alle Events werden zentral registriert.
+
+Es dürfen keine unbekannten Events existieren.
+
+Jedes Event besitzt
+
+eine Definition
+
+eine Version
+
+eine Beschreibung
+
+eine Payload Definition
+
+einen Verantwortlichen
+
+eine Dokumentation
+
+eine ADR Referenz
+
+---
+
+# Event Validation
+
+Vor der Verarbeitung prüfen
+
+Event vollständig
+
+Schema gültig
+
+Payload gültig
+
+Version gültig
+
+Quelle gültig
+
+Komponente registriert
+
+Doppelte Events
+
+Zirkuläre Events
+
+---
+
+# Event Routing
+
+Die Event Engine bestimmt automatisch
+
+welche Komponenten informiert werden.
+
+Beispiele
+
+ArchitectureChanged
+
+↓
+
+Knowledge Engine
+
+↓
+
+Documentation Engine
+
+↓
+
+Version Manager
+
+↓
+
+Supervisor
+
+↓
+
+Platform Director
+
+---
+
+SecurityIncident
+
+↓
+
+Security Center
+
+↓
+
+Compliance Center
+
+↓
+
+Supervisor
+
+↓
+
+Platform Director
+
+↓
+
+Documentary
+
+---
+
+MigrationCreated
+
+↓
+
+Version Manager
+
+↓
+
+Documentation Engine
+
+↓
+
+Knowledge Engine
+
+↓
+
+Release Center
+
+↓
+
+Supervisor
+
+---
+
+# Event Persistence
+
+Jedes Event wird dauerhaft gespeichert.
+
+Die Event Historie ist unveränderbar.
+
+Alle Plattformentscheidungen bleiben dadurch vollständig nachvollziehbar.
+
+---
+
+# Event Replay
+
+Die Plattform kann jederzeit
+
+sämtliche Events erneut abspielen.
+
+Dadurch kann
+
+Knowledge Graph
+
+Documentation
+
+Versionierung
+
+Architektur
+
+vollständig rekonstruiert werden.
+
+---
+
+# Event Priorities
+
+Critical
+
+High
+
+Medium
+
+Low
+
+Information
+
+---
+
+# Event Security
+
+Events dürfen niemals
+
+gefälscht
+
+dupliziert
+
+verändert
+
+gelöscht
+
+werden.
+
+Jedes Event besitzt
+
+Integritätsprüfung
+
+Version
+
+Zeitstempel
+
+Quelle
+
+Signatur (optional für zukünftige Versionen)
+
+---
+
+# Enterprise Rules
+
+Keine Dokumentation ohne Event.
+
+Keine Versionierung ohne Event.
+
+Keine Migration ohne Event.
+
+Keine ADR ohne Event.
+
+Keine Release Erstellung ohne Event.
+
+Keine Architekturänderung ohne Event.
+
+---
+
+# Success Criteria
+
+Die Event Driven Architecture gilt als erfolgreich wenn
+
+✓ jede Plattformänderung ein Event erzeugt
+
+✓ alle Events registriert sind
+
+✓ keine unbekannten Events existieren
+
+✓ sämtliche Events validiert werden
+
+✓ sämtliche Komponenten ausschließlich über Events kommunizieren
+
+✓ Knowledge Engine vollständig synchron bleibt
+
+✓ Documentary automatisch aktualisiert wird
+
+✓ Version Manager automatisch ausgelöst wird
+
+✓ Supervisor jederzeit den aktuellen Plattformzustand kennt
+
+✓ Platform Director sämtliche Enterprise Events überwachen kann
+
+---
+
+# Enterprise Extension
+
+Der Enterprise Event Bus bildet langfristig die zentrale Kommunikationsschicht des CAPITAL-AI Core.
+
+Alle zukünftigen Module, Agenten, Orchestratoren, Plugins und KI-Systeme kommunizieren ausschließlich über standardisierte Enterprise Events.
+
+Dadurch entsteht eine lose gekoppelte, hochskalierbare und vollständig nachvollziehbare AI-native Plattformarchitektur.
+
+---
+
+# End of Chapter 8
