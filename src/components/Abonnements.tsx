@@ -19,7 +19,11 @@ import {
   AlertTriangle,
   Database,
   Server,
-  Mail
+  Mail,
+  ChevronDown,
+  Clock,
+  X,
+  ArrowRight
 } from 'lucide-react';
 import { Checkout } from './Checkout';
 
@@ -35,7 +39,68 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
   const [success, setSuccess] = useState<string | null>(null);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [showStripeGuide, setShowStripeGuide] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [showCheckoutModal, setShowCheckoutModal] = useState<string | null>(null);
+  const [showInactivityOverlay, setShowInactivityOverlay] = useState(false);
+  const lastActivityRef = React.useRef<number>(Date.now());
+
+  // Client-side inactivity monitoring for Free users (triggers after 180 seconds = 180,000ms)
+  React.useEffect(() => {
+    if (currentTier !== 'Free') {
+      setShowInactivityOverlay(false);
+      return;
+    }
+
+    const resetActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    const events = ['mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach(evt => window.addEventListener(evt, resetActivity, { passive: true }));
+
+    const checkInterval = setInterval(() => {
+      const inactiveMs = Date.now() - lastActivityRef.current;
+      if (inactiveMs >= 180000) {
+        setShowInactivityOverlay(prev => {
+          if (!prev) return true;
+          return prev;
+        });
+      }
+    }, 2000);
+
+    return () => {
+      events.forEach(evt => window.removeEventListener(evt, resetActivity));
+      clearInterval(checkInterval);
+    };
+  }, [currentTier]);
+
+  const FAQS = [
+    {
+      question: "Warum ist im Free- & Gast-Modus nur Bitcoin (BTC) verfügbar?",
+      answer: "Im kostenlosen Free- & Gast-Modus bieten wir eine Vorschau unseres Enterprise Scorer Algorithmus anhand von Bitcoin (BTC) an. Um weitere Krypto-Assets, Aktien oder Indizes hinzuzufügen oder BTC durch andere Werte zu ersetzen, können Sie auf die Starter-Version (max. 3 Assets/Monat) oder höher upgraden.",
+      tierBadge: "Starter ab 7€/Monat"
+    },
+    {
+      question: "Was bietet die PRO Edition mit dem Realtime AI-Newsfeed?",
+      answer: "Der Realtime AI-Newsfeed ist exklusiv ab der PRO Version (29€/Monat) freigeschaltet. Er liefert ungefilterte Markt-Eilmeldungen mit automatischer KI-Sentiment-Analyse, Sentiment-Impact-Scoring und Multi-Modell Auto-Routing für blitzschnelle Reaktionen auf Marktbewegungen sowie unbegrenztes Screening.",
+      tierBadge: "PRO (Bestseller)"
+    },
+    {
+      question: "Warum benötige ich die ENTERPRISE Version für Exports?",
+      answer: "Formelle BaFin- und DSGVO-konforme PDF- & CSV-Exports aller Scoring-Ergebnisse, Compliance-Audits und Risikokennzahlen erfordern erhebliche Server-Ressourcen und Audit-Logs. Diese Funktion sowie der 24/7 VIP-Support sind der ENTERPRISE OS Version (109€/Monat) vorbehalten.",
+      tierBadge: "Enterprise OS"
+    },
+    {
+      question: "Kann ich mein Abonnement jederzeit kündigen oder anpassen?",
+      answer: "Ja! Alle Abonnements sind monatlich flexibel im Stripe Kundenportal kündbar oder anpassbar. Nach einem Upgrade schaltet das System Ihre neuen Funktionen ohne Wartezeit sofort frei.",
+      tierBadge: "Flexibler Vertrag"
+    },
+    {
+      question: "Wie erreiche ich den Support bei Fragen oder individuellen Anfragen?",
+      answer: "Sie können uns jederzeit per E-Mail unter support@capital-ai.online erreichen. Unser Team antwortet in der Regel innerhalb weniger Stunden und unterstützt Sie gerne bei allen Anliegen.",
+      tierBadge: "Direkter Support"
+    }
+  ];
   const [configStatus, setConfigStatus] = useState({
     secretKeyConfigured: false,
     webhookSecretConfigured: false,
@@ -441,6 +506,65 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
         </div>
       </div>
 
+      {/* Frequently Asked Questions (FAQ) Section for Free User Conversions */}
+      <div className="bg-black/40 border border-white/10 rounded-xl p-6 sm:p-8 backdrop-blur-md relative">
+        <div className="flex items-center gap-2.5 mb-2">
+          <div className="p-2 bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/30 rounded-lg text-aif-gold-DEFAULT">
+            <HelpCircle size={20} />
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-white font-display">Häufig gestellte Fragen (FAQ) &amp; Tarif-Vergleich</h3>
+            <p className="text-xs text-white/60 font-mono">Antworten zu Limits im Free-Modus, AI Newsfeed Freischaltung und Exports</p>
+          </div>
+        </div>
+
+        <div className="mt-6 space-y-3">
+          {FAQS.map((faq, index) => {
+            const isOpen = openFaqIndex === index;
+            return (
+              <div 
+                key={index} 
+                className={`border rounded-xl transition-all duration-200 overflow-hidden ${
+                  isOpen 
+                    ? 'border-aif-gold-DEFAULT/40 bg-white/[0.03]' 
+                    : 'border-white/10 bg-black/20 hover:border-white/20'
+                }`}
+              >
+                <button
+                  onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                  className="w-full text-left p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer focus:outline-none"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-white/5 border border-white/10 text-aif-gold-DEFAULT shrink-0">
+                      {faq.tierBadge}
+                    </span>
+                    <h4 className="text-sm font-bold text-white font-display">{faq.question}</h4>
+                  </div>
+                  <ChevronDown 
+                    size={18} 
+                    className={`text-white/50 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-aif-gold-DEFAULT' : ''}`} 
+                  />
+                </button>
+
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="px-4 sm:px-5 pb-5 pt-1 text-xs text-white/75 font-mono leading-relaxed border-t border-white/5 bg-black/40"
+                    >
+                      {faq.answer}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Stripe Developer & Integration Guide section */}
       <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md relative">
         <div className="flex justify-between items-center mb-4">
@@ -614,6 +738,143 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
               setTimeout(() => setSuccess(null), 4000);
             }}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Client-side Inactivity Overlay for Free Users (Triggered after 180s inactivity) */}
+      <AnimatePresence>
+        {showInactivityOverlay && currentTier === 'Free' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="max-w-2xl w-full bg-gradient-to-b from-neutral-900 via-neutral-950 to-black border border-aif-gold-DEFAULT/50 rounded-2xl p-6 sm:p-8 shadow-[0_0_50px_rgba(245,196,83,0.25)] relative overflow-hidden"
+            >
+              {/* Decorative top bar glow */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-aif-gold-DEFAULT via-amber-400 to-aif-neon-cyan" />
+
+              {/* Close button */}
+              <button
+                onClick={() => {
+                  setShowInactivityOverlay(false);
+                  lastActivityRef.current = Date.now();
+                }}
+                className="absolute top-4 right-4 p-2 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-all cursor-pointer"
+                title="Hinweis schließen"
+              >
+                <X size={18} />
+              </button>
+
+              {/* Header Badge */}
+              <div className="flex items-center gap-2 mb-3">
+                <span className="px-2.5 py-1 rounded text-[10px] font-mono font-black uppercase tracking-wider bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/40 flex items-center gap-1.5">
+                  <Clock size={12} className="animate-spin" style={{ animationDuration: '6s' }} />
+                  Inaktivitäts-Hinweis (180s System-Limit)
+                </span>
+                <span className="text-xs text-white/50 font-mono">Aktuell: Free Edition (BTC)</span>
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl font-black text-white font-display leading-tight mb-2">
+                Verpassen Sie keine wichtigen Marktsignale
+              </h2>
+              <p className="text-xs sm:text-sm text-white/70 font-mono leading-relaxed mb-6">
+                Nach 180 Sekunden Inaktivität möchten wir Sie an Ihre ungenutzten Handelsvorteile erinnern. Im kostenlosen <strong className="text-white">Free-Modus</strong> nutzen Sie lediglich die Vorschau für Bitcoin (BTC).
+              </p>
+
+              {/* Upgrade Tier Comparison Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                {/* PRO Tier Highlight */}
+                <div className="p-4 bg-gradient-to-b from-aif-gold-DEFAULT/10 to-black/60 border border-aif-gold-DEFAULT/40 rounded-xl relative group hover:border-aif-gold-DEFAULT transition-all">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-black text-aif-gold-DEFAULT uppercase tracking-wider font-mono flex items-center gap-1">
+                      <Star size={14} /> PRO Edition
+                    </span>
+                    <span className="text-xs font-bold text-white font-mono">€29/m</span>
+                  </div>
+                  <ul className="text-[11px] text-white/80 font-mono space-y-1.5 mb-4">
+                    <li className="flex items-start gap-1.5">
+                      <Zap size={13} className="text-aif-gold-DEFAULT shrink-0 mt-0.5" />
+                      <span><strong className="text-white">Realtime AI-Newsfeed</strong> mit Sentiment-Scoring</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <Check size={13} className="text-aif-gold-DEFAULT shrink-0 mt-0.5" />
+                      <span>Unbegrenztes Screening aller Assets</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <Check size={13} className="text-aif-gold-DEFAULT shrink-0 mt-0.5" />
+                      <span>Multi-Model AI Auto-Routing &amp; Push-Alerts</span>
+                    </li>
+                  </ul>
+                  <button
+                    onClick={() => {
+                      setShowInactivityOverlay(false);
+                      handleSubscribeClick('Pro');
+                    }}
+                    className="w-full py-2.5 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:from-amber-400 hover:to-aif-gold-DEFAULT text-black font-black text-xs uppercase tracking-wider rounded-lg transition-all shadow-[0_0_15px_rgba(245,196,83,0.3)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02]"
+                  >
+                    <span>Jetzt auf PRO Upgraden</span>
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+
+                {/* ENTERPRISE OS Highlight */}
+                <div className="p-4 bg-gradient-to-b from-aif-neon-cyan/10 to-black/60 border border-aif-neon-cyan/40 rounded-xl relative group hover:border-aif-neon-cyan transition-all">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-black text-aif-neon-cyan uppercase tracking-wider font-mono flex items-center gap-1">
+                      <Cpu size={14} /> Enterprise OS
+                    </span>
+                    <span className="text-xs font-bold text-white font-mono">€109/m</span>
+                  </div>
+                  <ul className="text-[11px] text-white/80 font-mono space-y-1.5 mb-4">
+                    <li className="flex items-start gap-1.5">
+                      <ShieldCheck size={13} className="text-aif-neon-cyan shrink-0 mt-0.5" />
+                      <span><strong className="text-white">Offizielle BaFin &amp; DSGVO PDF-Exports</strong></span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <Check size={13} className="text-aif-neon-cyan shrink-0 mt-0.5" />
+                      <span>Uneingeschränkte Asset-Auswahl &amp; Backtesting</span>
+                    </li>
+                    <li className="flex items-start gap-1.5">
+                      <Check size={13} className="text-aif-neon-cyan shrink-0 mt-0.5" />
+                      <span>Priorisierter 24/7 VIP-Support</span>
+                    </li>
+                  </ul>
+                  <button
+                    onClick={() => {
+                      setShowInactivityOverlay(false);
+                      handleSubscribeClick('Enterprise');
+                    }}
+                    className="w-full py-2.5 bg-gradient-to-r from-aif-neon-cyan to-blue-500 hover:from-cyan-400 hover:to-aif-neon-cyan text-black font-black text-xs uppercase tracking-wider rounded-lg transition-all shadow-[0_0_15px_rgba(13,221,221,0.3)] flex items-center justify-center gap-1.5 cursor-pointer hover:scale-[1.02]"
+                  >
+                    <span>Enterprise Wählen</span>
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Footer */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-white/10 text-xs font-mono">
+                <span className="text-white/50 text-[11px]">
+                  Jederzeit monatlich flexibel kündbar.
+                </span>
+                <button
+                  onClick={() => {
+                    setShowInactivityOverlay(false);
+                    lastActivityRef.current = Date.now();
+                  }}
+                  className="text-white/60 hover:text-white underline cursor-pointer text-[11px]"
+                >
+                  Weiter im Free-Modus bleiben
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

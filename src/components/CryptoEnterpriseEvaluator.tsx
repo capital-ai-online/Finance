@@ -13,16 +13,31 @@ import {
   ShieldCheck, 
   DollarSign, 
   ArrowRightLeft, 
-  RefreshCw 
+  RefreshCw,
+  Lock,
+  ArrowRight,
+  AlertCircle,
+  X,
+  Check,
+  Search,
+  Plus,
+  Sparkles,
+  Globe,
+  Newspaper
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { AssetLogo } from './AssetLogo';
+import { assetRegistry } from '../lib/assetRegistry';
+import { Newsticker } from './Newsticker';
 
 interface CryptoEnterpriseEvaluatorProps {
   selectedSymbol: string;
   onSelectSymbol: (symbol: string) => void;
+  subscriptionTier?: string;
+  onUpgradeClick?: () => void;
 }
 
-type ActiveTool = 'orderbook' | 'arbitrage' | 'onchain';
+type ActiveTool = 'orderbook' | 'arbitrage' | 'onchain' | 'news';
 
 interface ArbitrageOpportunity {
   exchangeA: string;
@@ -33,8 +48,139 @@ interface ArbitrageOpportunity {
   profitPotential: number; // USD
 }
 
-export function CryptoEnterpriseEvaluator({ selectedSymbol, onSelectSymbol }: CryptoEnterpriseEvaluatorProps) {
+// Dynamically generate database from assetRegistry incorporating all universe assets
+const getMarketAssetsDatabase = () => {
+  const registryAssets = assetRegistry.getAssets();
+  return registryAssets.map(asset => {
+    let category = 'Crypto';
+    if (asset.type === 'crypto') {
+      category = asset.subtype === 'memecoin' ? 'Meme Crypto' : 'Crypto';
+    } else if (asset.type === 'stock') {
+      category = 'Aktien';
+    } else if (asset.type === 'commodity') {
+      category = 'Rohstoffe';
+    } else if (asset.type === 'forex') {
+      category = 'Forex';
+    } else if (asset.type === 'index') {
+      category = 'Indizes';
+    } else if (asset.type === 'bond') {
+      category = 'Bonds & Yields';
+    }
+
+    const displayScore = asset.score > 10 ? Number((asset.score / 10).toFixed(1)) : Number(asset.score.toFixed(1));
+
+    return {
+      symbol: asset.symbol,
+      name: asset.name,
+      category,
+      type: asset.type,
+      price: asset.price,
+      score: displayScore
+    };
+  });
+};
+
+export function CryptoEnterpriseEvaluator({ 
+  selectedSymbol, 
+  onSelectSymbol,
+  subscriptionTier,
+  onUpgradeClick 
+}: CryptoEnterpriseEvaluatorProps) {
+  // Normalize current user subscription tier
+  const effectiveTier = (subscriptionTier || (typeof window !== 'undefined' ? localStorage.getItem('capital_ai_subscription_tier') : 'Free')) || 'Free';
+  
+  const isFreeOrGuest = effectiveTier === 'Free' || effectiveTier === 'Gast' || effectiveTier === 'Guest';
+  const isStarter = effectiveTier === 'Starter';
+  const isPro = effectiveTier === 'Pro' || effectiveTier === 'PRO';
+  const isEnterprise = effectiveTier === 'Enterprise' || effectiveTier === 'Enterprise OS';
+
   const [activeTool, setActiveTool] = useState<ActiveTool>('orderbook');
+  const [tierNotice, setTierNotice] = useState<string | null>(null);
+
+  // Custom Asset List & Intelligent Search State
+  const [customAssetList, setCustomAssetList] = useState<string[]>([
+    'BTC', 'ETH', 'SOL', 'XRP', 'AVAX', 'BNB', 'DOGE', 'PEPE', 'NVDA', 'AAPL'
+  ]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchCategory, setSearchCategory] = useState<string>('Alle');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Close search dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleAddSearchAsset = (assetSymbol: string) => {
+    const upper = assetSymbol.trim().toUpperCase();
+    if (!upper) return;
+
+    if (isStarter && upper !== 'BTC') {
+      setTierNotice(`Starter-Limit: Das Hinzufügen von ${upper} ist gesperrt. Im Starter-Tarif steht nur Bitcoin (BTC) zur Verfügung.`);
+      setIsSearchOpen(false);
+      return;
+    }
+    if (isPro && !['BTC', 'ETH', 'SOL'].includes(upper)) {
+      setTierNotice(`PRO-Limit: In der PRO-Version stehen BTC, ETH und SOL bereit. Das Asset ${upper} erfordert den Enterprise OS Tarif.`);
+      setIsSearchOpen(false);
+      return;
+    }
+
+    if (!customAssetList.includes(upper)) {
+      setCustomAssetList(prev => [...prev, upper]);
+    }
+    setTierNotice(null);
+    onSelectSymbol(upper);
+    setSearchQuery('');
+    setIsSearchOpen(false);
+  };
+
+  // Auto-enforce Starter & PRO restrictions on symbol
+  useEffect(() => {
+    if (isStarter && selectedSymbol !== 'BTC') {
+      onSelectSymbol('BTC');
+      setTierNotice('Starter-Limit: Im Starter-Tarif ist für das Bewertungssystem lediglich Bitcoin (BTC) verfügbar.');
+    } else if (isPro && !['BTC', 'ETH', 'SOL'].includes(selectedSymbol.toUpperCase())) {
+      onSelectSymbol('BTC');
+      setTierNotice('PRO-Limit: In der PRO-Version stehen BTC, ETH und SOL zur Verfügung. Upgrade auf Enterprise OS für alle Assets.');
+    }
+  }, [isStarter, isPro, selectedSymbol]);
+
+  // Auto-enforce Starter tool restriction (Orderbuch only)
+  useEffect(() => {
+    if (isStarter && activeTool !== 'orderbook') {
+      setActiveTool('orderbook');
+    }
+  }, [isStarter, activeTool]);
+
+  const handleToolSelect = (tool: ActiveTool) => {
+    if (isStarter && tool !== 'orderbook') {
+      setTierNotice('Tool gesperrt: Arbitrage-Index, On-Chain Momentum & Realtime Intelligence Feed erfordern mindestens die PRO Edition (29€/Monat).');
+      return;
+    }
+    setTierNotice(null);
+    setActiveTool(tool);
+  };
+
+  const handleAssetSelect = (sym: string) => {
+    const upper = sym.toUpperCase();
+    if (isStarter && upper !== 'BTC') {
+      setTierNotice(`Im Starter-Tarif ist nur Bitcoin (BTC) freigeschaltet. Wähle PRO für ETH & SOL oder Enterprise für ${upper}.`);
+      return;
+    }
+    if (isPro && !['BTC', 'ETH', 'SOL'].includes(upper)) {
+      setTierNotice(`In der PRO Edition sind BTC, ETH und SOL verfügbar. Das Asset ${upper} erfordert den Enterprise OS Tarif.`);
+      return;
+    }
+    setTierNotice(null);
+    onSelectSymbol(sym);
+  };
   
   // Controls state
   const [orderSize, setOrderSize] = useState<number>(100000); // USD
@@ -42,28 +188,49 @@ export function CryptoEnterpriseEvaluator({ selectedSymbol, onSelectSymbol }: Cr
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   
-  // Simulated data based on selected symbol
+  // State for full scoring architecture details
   const symbol = selectedSymbol.toUpperCase();
   const [livePrice, setLivePrice] = useState<number>(() => {
     return symbol === 'BTC' ? 68500 : symbol === 'ETH' ? 3450 : symbol === 'SOL' ? 145.2 : 1.0;
   });
 
+  const [assetDetails, setAssetDetails] = useState<{
+    name?: string;
+    score?: number;
+    pattern?: string;
+    risk?: string;
+    change24h?: number;
+    expectedReturn?: number;
+    volatility?: number;
+  }>({});
+
   useEffect(() => {
     let active = true;
-    async function fetchLivePrice() {
+    async function fetchLiveAssetDetails() {
       try {
         const res = await fetch(`/api/registry/assets/${symbol}`);
         if (res.ok) {
           const data = await res.json();
-          if (data && typeof data.price === 'number' && active) {
-            setLivePrice(data.price);
+          if (data && active) {
+            if (typeof data.price === 'number') {
+              setLivePrice(data.price);
+            }
+            setAssetDetails({
+              name: data.name || symbol,
+              score: typeof data.score === 'number' ? data.score : 8.2,
+              pattern: data.pattern || 'Muster analysiert',
+              risk: data.risk || 'Medium',
+              change24h: typeof data.change24h === 'number' ? data.change24h : 0.0,
+              expectedReturn: typeof data.expectedReturn === 'number' ? data.expectedReturn : 15,
+              volatility: typeof data.volatility === 'number' ? data.volatility : 50
+            });
           }
         }
       } catch (err) {
         console.error('Error fetching live price for evaluator:', err);
       }
     }
-    fetchLivePrice();
+    fetchLiveAssetDetails();
     return () => {
       active = false;
     };
@@ -250,30 +417,177 @@ export function CryptoEnterpriseEvaluator({ selectedSymbol, onSelectSymbol }: Cr
     };
   }, [symbol]);
 
+  // --- LOCK OVERLAY FOR FREE & GAST USERS ---
+  if (isFreeOrGuest) {
+    return (
+      <div id="crypto-enterprise-evaluator" className="bg-black/60 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden space-y-6 shadow-[0_0_40px_rgba(0,0,0,0.8)]">
+        {/* Decorative top bar */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-aif-gold-DEFAULT via-amber-400 to-aif-neon-cyan" />
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 shrink-0">
+              <Lock size={22} />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-wider font-display">
+                  Enterprise Trading Bewertungssystem
+                </h2>
+                <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                  Für Free &amp; Gast gesperrt
+                </span>
+              </div>
+              <p className="text-xs text-white/60 font-mono mt-0.5">
+                Professionelle Orderbuch-Tiefenanalyse, Multi-Exchange Arbitrage &amp; On-Chain Whale Momentum
+              </p>
+            </div>
+          </div>
+
+          {onUpgradeClick && (
+            <button
+              onClick={onUpgradeClick}
+              className="px-4 py-2 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:from-amber-400 hover:to-aif-gold-DEFAULT text-black font-black text-xs uppercase tracking-wider rounded-lg transition-all shadow-[0_0_20px_rgba(245,196,83,0.3)] flex items-center gap-1.5 cursor-pointer hover:scale-[1.02] shrink-0"
+            >
+              <span>Jetzt Freischalten</span>
+              <ArrowRight size={14} />
+            </button>
+          )}
+        </div>
+
+        {/* Lock Notice Box */}
+        <div className="bg-gradient-to-r from-rose-950/40 via-black to-neutral-900/60 border border-rose-500/30 rounded-xl p-6 text-center space-y-4">
+          <div className="inline-flex items-center justify-center p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-full text-rose-400">
+            <Lock size={32} />
+          </div>
+          <h3 className="text-xl font-black text-white font-display">
+            In der Free- &amp; Gast-Version nicht enthalten
+          </h3>
+          <p className="text-xs sm:text-sm text-white/70 font-mono max-w-xl mx-auto leading-relaxed">
+            Das Enterprise Trading Bewertungssystem verarbeitet hochfrequente Marktdaten und erfordert einen aktiven <strong className="text-aif-gold-DEFAULT">Starter-Tarif</strong> (ab 7€/m) oder höher.
+          </p>
+
+          {/* Tier Feature Matrix */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2 text-left">
+            {/* Starter */}
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-2">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <span className="text-xs font-black text-amber-400 uppercase font-mono">Starter</span>
+                <span className="text-[10px] text-white/60 font-mono">7€ / m</span>
+              </div>
+              <ul className="text-[11px] font-mono text-white/70 space-y-1.5">
+                <li className="flex items-center gap-1.5 text-emerald-400">
+                  <Check size={12} /> Bitcoin (BTC)
+                </li>
+                <li className="flex items-center gap-1.5 text-emerald-400">
+                  <Check size={12} /> Orderbuch-Tiefenanalyse
+                </li>
+                <li className="flex items-center gap-1.5 text-white/40">
+                  <X size={12} /> Arbitrage &amp; On-Chain
+                </li>
+              </ul>
+            </div>
+
+            {/* PRO */}
+            <div className="bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/40 rounded-xl p-4 space-y-2">
+              <div className="flex items-center justify-between border-b border-aif-gold-DEFAULT/20 pb-2">
+                <span className="text-xs font-black text-aif-gold-DEFAULT uppercase font-mono flex items-center gap-1">
+                  <Zap size={12} /> PRO (Bestseller)
+                </span>
+                <span className="text-[10px] text-white/60 font-mono">29€ / m</span>
+              </div>
+              <ul className="text-[11px] font-mono text-white/80 space-y-1.5">
+                <li className="flex items-center gap-1.5 text-emerald-400">
+                  <Check size={12} /> BTC, ETH &amp; SOL
+                </li>
+                <li className="flex items-center gap-1.5 text-emerald-400">
+                  <Check size={12} /> Alle 3 Trading Tools
+                </li>
+                <li className="flex items-center gap-1.5 text-emerald-400">
+                  <Check size={12} /> Arbitrage &amp; On-Chain
+                </li>
+              </ul>
+            </div>
+
+            {/* Enterprise */}
+            <div className="bg-aif-neon-cyan/10 border border-aif-neon-cyan/40 rounded-xl p-4 space-y-2">
+              <div className="flex items-center justify-between border-b border-aif-neon-cyan/20 pb-2">
+                <span className="text-xs font-black text-aif-neon-cyan uppercase font-mono flex items-center gap-1">
+                  <ShieldCheck size={12} /> Enterprise OS
+                </span>
+                <span className="text-[10px] text-white/60 font-mono">109€ / m</span>
+              </div>
+              <ul className="text-[11px] font-mono text-white/80 space-y-1.5">
+                <li className="flex items-center gap-1.5 text-emerald-400">
+                  <Check size={12} /> Alle Assets &amp; Aktien
+                </li>
+                <li className="flex items-center gap-1.5 text-emerald-400">
+                  <Check size={12} /> Uneingeschränkter Zugriff
+                </li>
+                <li className="flex items-center gap-1.5 text-emerald-400">
+                  <Check size={12} /> Zukünftige Features
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {onUpgradeClick && (
+            <div className="pt-2">
+              <button
+                onClick={onUpgradeClick}
+                className="px-6 py-3 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:from-amber-400 hover:to-aif-gold-DEFAULT text-black font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-[0_0_25px_rgba(245,196,83,0.4)] cursor-pointer hover:scale-105 inline-flex items-center gap-2"
+              >
+                <span>Jetzt Tarif ab 7€/Monat wählen</span>
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div id="crypto-enterprise-evaluator" className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md space-y-6">
       
       {/* Tab Controller and Title */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-white/10 pb-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="p-1.5 bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/20 rounded-md">
               <Activity size={18} className="animate-pulse" />
             </span>
             <h2 className="text-sm font-bold text-white uppercase tracking-wider font-display">
-              Enterprise Trading Bewertungstool (Top-3 Trading-Matrix)
+              Enterprise Trading Bewertungstool
             </h2>
+
+            {/* Current Tier Status Badge */}
+            {isStarter && (
+              <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                Starter Tier (BTC &amp; Orderbuch)
+              </span>
+            )}
+            {isPro && (
+              <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/40">
+                PRO Tier (BTC, ETH, SOL - Alle Tools)
+              </span>
+            )}
+            {isEnterprise && (
+              <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-aif-neon-cyan/20 text-aif-neon-cyan border border-aif-neon-cyan/40">
+                Enterprise OS (Vollzugriff)
+              </span>
+            )}
           </div>
           <p className="text-xs text-white/50">
-            Austausch der Standard-Heatmap durch professionelle, interaktive Orderbuch-Tiefenanalyse, Arbitrage-Indizes und On-Chain Metriken für <span className="text-aif-gold-DEFAULT font-bold">{symbol}</span>.
+            Professionelle, interaktive Orderbuch-Tiefenanalyse, Arbitrage-Indizes, On-Chain Metriken &amp; Realtime Intelligence Feed für <span className="text-aif-gold-DEFAULT font-bold">{symbol}</span>.
           </p>
         </div>
 
-        {/* Tab Selection buttons */}
+        {/* Tab Selection buttons with Tier locks */}
         <div className="flex flex-wrap gap-1.5 bg-black/40 p-1 border border-white/5 rounded-lg">
           <button
-            onClick={() => setActiveTool('orderbook')}
-            className={`px-3 py-1.5 rounded-md font-mono text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            onClick={() => handleToolSelect('orderbook')}
+            className={`px-3 py-1.5 rounded-md font-mono text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTool === 'orderbook'
                 ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-md'
                 : 'text-white/60 hover:text-white hover:bg-white/5'
@@ -284,28 +598,317 @@ export function CryptoEnterpriseEvaluator({ selectedSymbol, onSelectSymbol }: Cr
           </button>
 
           <button
-            onClick={() => setActiveTool('arbitrage')}
-            className={`px-3 py-1.5 rounded-md font-mono text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            onClick={() => handleToolSelect('arbitrage')}
+            className={`px-3 py-1.5 rounded-md font-mono text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTool === 'arbitrage'
                 ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-md'
                 : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           >
+            {isStarter && <Lock size={10} className="text-amber-400 shrink-0" />}
             <ArrowRightLeft size={11} />
             <span>Arbitrage-Index</span>
+            {isStarter && <span className="text-[8px] bg-amber-500/20 text-amber-300 px-1 rounded">PRO</span>}
           </button>
 
           <button
-            onClick={() => setActiveTool('onchain')}
-            className={`px-3 py-1.5 rounded-md font-mono text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+            onClick={() => handleToolSelect('onchain')}
+            className={`px-3 py-1.5 rounded-md font-mono text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTool === 'onchain'
                 ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-md'
                 : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           >
+            {isStarter && <Lock size={10} className="text-amber-400 shrink-0" />}
             <TrendingUp size={11} />
             <span>On-Chain Momentum</span>
+            {isStarter && <span className="text-[8px] bg-amber-500/20 text-amber-300 px-1 rounded">PRO</span>}
           </button>
+
+          <button
+            onClick={() => handleToolSelect('news')}
+            className={`px-3 py-1.5 rounded-md font-mono text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTool === 'news'
+                ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-md'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            {isStarter && <Lock size={10} className="text-amber-400 shrink-0" />}
+            <Newspaper size={11} />
+            <span>Intelligence Feed</span>
+            {isStarter && <span className="text-[8px] bg-amber-500/20 text-amber-300 px-1 rounded">PRO</span>}
+          </button>
+        </div>
+      </div>
+
+      {/* Tier Notice Alert if user clicks restricted asset or tool */}
+      <AnimatePresence>
+        {tierNotice && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs font-mono"
+          >
+            <div className="flex items-center gap-2.5 text-amber-200">
+              <AlertCircle size={16} className="text-amber-400 shrink-0" />
+              <span>{tierNotice}</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {onUpgradeClick && (
+                <button
+                  onClick={onUpgradeClick}
+                  className="px-2.5 py-1 bg-amber-500 text-black font-black text-[10px] uppercase rounded hover:bg-amber-400 transition-all cursor-pointer"
+                >
+                  Upgrade
+                </button>
+              )}
+              <button
+                onClick={() => setTierNotice(null)}
+                className="text-white/50 hover:text-white cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Asset Quick Selector & Scoring Architecture Sync Banner */}
+      <div className="bg-black/60 border border-white/10 rounded-xl p-3.5 space-y-3">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-white/50 font-bold">Asset Schnell-Auswahl:</span>
+            <div className="flex flex-wrap gap-1 items-center">
+              {customAssetList.map((sym) => {
+                const upper = sym.toUpperCase();
+                const isAssetStarterDisabled = isStarter && upper !== 'BTC';
+                const isAssetProDisabled = isPro && !['BTC', 'ETH', 'SOL'].includes(upper);
+                const isLockedForCurrentTier = isAssetStarterDisabled || isAssetProDisabled;
+
+                return (
+                  <button
+                    key={sym}
+                    onClick={() => handleAddSearchAsset(sym)}
+                    className={`px-2.5 py-1 rounded text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      symbol === upper
+                        ? 'bg-aif-gold-DEFAULT text-black shadow-[0_0_10px_rgba(245,196,83,0.3)]'
+                        : isLockedForCurrentTier
+                        ? 'bg-white/5 text-white/40 border border-white/5 hover:bg-white/10'
+                        : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/5'
+                    }`}
+                    title={
+                      isAssetStarterDisabled 
+                        ? 'Erfordert PRO (ETH/SOL) oder Enterprise' 
+                        : isAssetProDisabled 
+                        ? 'Erfordert Enterprise OS' 
+                        : sym
+                    }
+                  >
+                    <AssetLogo symbol={upper} size="xs" className="shrink-0" />
+                    <span>{sym}</span>
+                    {isLockedForCurrentTier && <Lock size={9} className="text-amber-400/80" />}
+                    {isAssetStarterDisabled && <span className="text-[7px] text-amber-300 font-normal font-sans">PRO</span>}
+                    {isAssetProDisabled && <span className="text-[7px] text-aif-neon-cyan font-normal font-sans">ENT</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Intelligent Enterprise Asset Search Field */}
+          <div className="relative w-full lg:w-auto" ref={searchContainerRef}>
+            <div className="flex items-center bg-white/5 border border-white/10 focus-within:border-aif-gold-DEFAULT/60 rounded-lg px-2.5 py-1.5 text-xs transition-all w-full lg:w-72">
+              <Search size={13} className="text-aif-gold-DEFAULT mr-2 shrink-0" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchOpen(true);
+                }}
+                onFocus={() => setIsSearchOpen(true)}
+                placeholder="Enterprise Asset-Suche (z.B. SUI, TSLA, GOLD, EURUSD)..."
+                className="bg-transparent text-white placeholder-white/40 focus:outline-none w-full font-mono text-[11px]"
+              />
+              {searchQuery ? (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-white/40 hover:text-white ml-1 cursor-pointer"
+                >
+                  <X size={12} />
+                </button>
+              ) : (
+                <span className="flex items-center gap-1 text-[9px] font-mono text-aif-neon-cyan bg-aif-neon-cyan/10 border border-aif-neon-cyan/30 px-1.5 py-0.5 rounded ml-1 shrink-0">
+                  <Sparkles size={10} />
+                  Enterprise OS
+                </span>
+              )}
+            </div>
+
+            {/* Search Results Dropdown */}
+            <AnimatePresence>
+              {isSearchOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                  className="absolute left-0 lg:right-0 lg:left-auto top-full mt-1.5 w-full sm:w-[420px] bg-neutral-950/95 border border-white/15 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.9)] backdrop-blur-xl z-50 p-2 space-y-1.5 max-h-80 overflow-y-auto"
+                >
+                  {(() => {
+                    const allMarketAssets = getMarketAssetsDatabase();
+                    return (
+                      <>
+                        <div className="flex items-center justify-between px-2 py-1 border-b border-white/10 text-[10px] font-mono text-white/50 uppercase tracking-wider">
+                          <span className="flex items-center gap-1">
+                            <Globe size={11} className="text-aif-gold-DEFAULT" />
+                            Enterprise Asset Registry
+                          </span>
+                          <span className="text-aif-gold-DEFAULT font-bold">{allMarketAssets.length} Assets im Bestand</span>
+                        </div>
+
+                        {/* Universe Category Tabs Filter */}
+                        <div className="flex items-center gap-1 p-1 bg-white/5 rounded-lg border border-white/5 overflow-x-auto no-scrollbar">
+                          {['Alle', 'Crypto', 'Aktien', 'Rohstoffe', 'Forex', 'Indizes'].map(cat => (
+                            <button
+                              key={cat}
+                              onClick={() => setSearchCategory(cat)}
+                              className={`px-2 py-0.5 rounded text-[10px] font-mono transition-all shrink-0 cursor-pointer ${
+                                searchCategory === cat
+                                  ? 'bg-aif-gold-DEFAULT text-black font-bold shadow-[0_0_8px_rgba(217,119,6,0.3)]'
+                                  : 'text-white/60 hover:text-white hover:bg-white/10'
+                              }`}
+                            >
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Filtered Assets from Database */}
+                        {(() => {
+                          const query = searchQuery.trim().toLowerCase();
+                          const filtered = allMarketAssets.filter(item => {
+                            const matchesQuery = !query || 
+                              item.symbol.toLowerCase().includes(query) || 
+                              item.name.toLowerCase().includes(query) || 
+                              item.category.toLowerCase().includes(query);
+
+                            if (!matchesQuery) return false;
+
+                            if (searchCategory === 'Alle') return true;
+                            if (searchCategory === 'Crypto') return item.type === 'crypto';
+                            if (searchCategory === 'Aktien') return item.type === 'stock';
+                            if (searchCategory === 'Rohstoffe') return item.type === 'commodity';
+                            if (searchCategory === 'Forex') return item.type === 'forex';
+                            if (searchCategory === 'Indizes') return item.type === 'index' || item.type === 'bond';
+
+                            return true;
+                          });
+
+                          if (filtered.length === 0 && searchQuery.trim()) {
+                            const customSym = searchQuery.trim().toUpperCase();
+                            return (
+                              <div className="p-3 text-center space-y-2">
+                                <p className="text-xs font-mono text-white/60">Kein vordefiniertes Asset für &quot;{searchQuery}&quot; in {searchCategory} gefunden.</p>
+                                <button
+                                  onClick={() => handleAddSearchAsset(customSym)}
+                                  className="w-full py-1.5 px-3 bg-aif-gold-DEFAULT/20 hover:bg-aif-gold-DEFAULT text-aif-gold-DEFAULT hover:text-black border border-aif-gold-DEFAULT/40 rounded-lg text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                >
+                                  <Plus size={14} />
+                                  <span>Symbol &quot;{customSym}&quot; als Custom Asset hinzufügen</span>
+                                </button>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className="space-y-1 pt-1">
+                              {filtered.slice(0, 10).map(asset => {
+                                const upper = asset.symbol;
+                                const isAssetStarterDisabled = isStarter && upper !== 'BTC';
+                                const isAssetProDisabled = isPro && !['BTC', 'ETH', 'SOL'].includes(upper);
+                                const isLocked = isAssetStarterDisabled || isAssetProDisabled;
+
+                                return (
+                                  <button
+                                    key={asset.symbol}
+                                    onClick={() => handleAddSearchAsset(asset.symbol)}
+                                    className="w-full p-2 hover:bg-white/10 rounded-lg transition-all text-left flex items-center justify-between gap-2 group cursor-pointer border border-transparent hover:border-white/10"
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      <div className="p-1 bg-white/5 border border-white/10 rounded group-hover:border-aif-gold-DEFAULT/50 shrink-0 flex items-center justify-center">
+                                        <AssetLogo symbol={asset.symbol} size="sm" className="shrink-0" />
+                                      </div>
+                                      <div className="min-w-0">
+                                        <div className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
+                                          <span className="font-mono text-aif-gold-DEFAULT font-bold">{asset.symbol}</span>
+                                          <span className="truncate text-white/90 max-w-[150px]">{asset.name}</span>
+                                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white/5 text-white/50 border border-white/5 shrink-0">
+                                            {asset.category}
+                                          </span>
+                                        </div>
+                                        <div className="text-[10px] font-mono text-white/40">
+                                          Kurs: ${asset.price < 1 ? asset.price.toFixed(6) : asset.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | AI Score: {asset.score}/10
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      {isLocked ? (
+                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                                          <Lock size={10} />
+                                          {isAssetStarterDisabled ? 'PRO/ENT' : 'Enterprise'}
+                                        </span>
+                                      ) : (
+                                        <span className="p-1 bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/30 text-aif-gold-DEFAULT rounded group-hover:bg-aif-gold-DEFAULT group-hover:text-black transition-all">
+                                          <Plus size={12} />
+                                        </span>
+                                      )}
+                                    </div>
+                                  </button>
+                                );
+                              })}
+
+                              {searchQuery.trim() && !filtered.some(a => a.symbol.toLowerCase() === searchQuery.trim().toLowerCase()) && (
+                                <button
+                                  onClick={() => handleAddSearchAsset(searchQuery.trim().toUpperCase())}
+                                  className="w-full mt-1 py-1.5 px-3 bg-white/5 hover:bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT border border-white/10 hover:border-aif-gold-DEFAULT/40 rounded-lg text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                >
+                                  <Plus size={12} />
+                                  <span>Custom Symbol &quot;{searchQuery.trim().toUpperCase()}&quot; hinzufügen</span>
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </>
+                    );
+                  })()}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Scoring Sync Badge */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 text-xs font-mono">
+          <div className="flex items-center gap-2">
+            <span className="text-white/50 text-[10px]">Aktives Asset:</span>
+            <div className="flex items-center gap-1.5 font-black text-white bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT px-2 py-0.5 rounded border border-aif-gold-DEFAULT/30">
+              <AssetLogo symbol={symbol} size="xs" className="shrink-0" />
+              <span>{symbol}</span>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-white/50 text-[10px]">Scoring Architektur:</span>
+            <span className="font-bold text-aif-gold-DEFAULT">{assetDetails.score ?? 8.2} / 10</span>
+            <span className="text-white/30">|</span>
+            <span className="text-emerald-400 font-bold">{assetDetails.pattern || 'Muster analysiert'}</span>
+            <span className="text-white/30">|</span>
+            <span className={(assetDetails.change24h ?? 0) >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+              {(assetDetails.change24h ?? 0) >= 0 ? `+${assetDetails.change24h}%` : `${assetDetails.change24h}%`}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -564,6 +1167,19 @@ export function CryptoEnterpriseEvaluator({ selectedSymbol, onSelectSymbol }: Cr
                 </span>
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {/* TAB 4: Realtime Intelligence Feed */}
+        {activeTool === 'news' && (
+          <motion.div
+            key="news"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="w-full"
+          >
+            <Newsticker selectedSymbol={symbol} timeframe="1D" />
           </motion.div>
         )}
 

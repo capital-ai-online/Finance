@@ -1427,8 +1427,8 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                     />
                   </div>
 
-                  {/* Portfolio Performance & D3 Sparkline section */}
-                  <PortfolioPerformance baseCapital={profile.capital} />
+                  {/* Portfolio Performance Zentrale (Vorerst deaktiviert - wird zu einem späteren Zeitpunkt aktiviert) */}
+                  {/* <PortfolioPerformance baseCapital={profile.capital} /> */}
 
                    {/* Compliance Exporter for BaFin & DSGVO PDF downloads */}
                    <ComplianceExporter 
@@ -1441,12 +1441,14 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                  {/* Middle Row: Enterprise Trading Evaluation Tool & Quantitative Ticker */}
                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                    <div className="lg:col-span-2">
-                     <CryptoEnterpriseEvaluator selectedSymbol={selectedSymbol} onSelectSymbol={setSelectedSymbol} />
+                     <CryptoEnterpriseEvaluator 
+                       selectedSymbol={selectedSymbol} 
+                       onSelectSymbol={setSelectedSymbol}
+                       subscriptionTier={profile.subscriptionTier}
+                       onUpgradeClick={() => navigateTo('abonnements')}
+                     />
                    </div>
                    <div className="space-y-6">
-                     {/* Quantitative News & Market Signals */}
-                     <Newsticker selectedSymbol={selectedSymbol} timeframe={timeframe} />
-
                      {/* Strategie-Evidenz-Check Quick Card (Clickable to Buffett DCF check) */}
                      <div 
                        onClick={() => navigateTo('buffet-value')}

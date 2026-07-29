@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Asset } from '../types';
 import { Newspaper, TrendingUp, TrendingDown, ArrowRight, Activity, Percent, Flame, Info } from 'lucide-react';
+import { assetRegistry } from '../lib/assetRegistry';
+import { AssetLogo } from './AssetLogo';
 
 interface NewstickerProps {
   selectedSymbol: string;
@@ -57,7 +59,31 @@ export function Newsticker({ selectedSymbol, timeframe }: NewstickerProps) {
         if (!data || !Array.isArray(data)) {
           throw new Error('Invalid market data format');
         }
-        const found = data.find(a => a.symbol === selectedSymbol) || data[0];
+        const upperSym = selectedSymbol.toUpperCase();
+        let found = data.find(a => a.symbol.toUpperCase() === upperSym);
+        
+        if (!found) {
+          const regAsset = assetRegistry.getAsset(selectedSymbol);
+          if (regAsset) {
+            found = {
+              symbol: regAsset.symbol,
+              name: regAsset.name,
+              type: regAsset.type as any,
+              price: regAsset.price,
+              change24h: Number((Math.random() * 4 - 1.5).toFixed(2)),
+              volume24h: regAsset.volume24h || Math.floor(Math.random() * 500 + 100),
+              score: regAsset.score > 10 ? regAsset.score : regAsset.score * 10,
+              grahamScore: 78,
+              momentum: Math.floor(Math.random() * 3 + 7),
+              risk: regAsset.risk as any,
+              status: regAsset.status || 'Verifiziert',
+              marketCap: regAsset.marketCap || Math.floor(Math.random() * 5000 + 1000)
+            };
+          } else {
+            found = data[0];
+          }
+        }
+
         setAsset(found);
         
         // Generate actual quantitative signals computed directly from live asset values
@@ -70,8 +96,8 @@ export function Newsticker({ selectedSymbol, timeframe }: NewstickerProps) {
               id: 'q1',
               headline: `Momentum-Analyse: ${found.symbol} Trendstärke bewertet mit ${found.momentum}/10`,
               summary: changePercent >= 0 
-                ? `Aufwärtsmomentum bestätigt. Die kurzfristigen exponentiell gewichteten gleitenden Durchschnitte signalisieren einen stabilen Unterstützungsbereich.` 
-                : `Konsolidierungsphase aktiv. Verkaufsdruck flacht im kurzfristigen Bereich ab, was auf eine potenzielle Stabilisierung hindeutet.`,
+                ? `Aufwärtsmomentum für ${found.name} (${found.symbol}) bestätigt. Die kurzfristigen gewichteten Durchschnitte signalisieren einen stabilen Unterstützungsbereich.` 
+                : `Konsolidierungsphase aktiv. Verkaufsdruck für ${found.name} flacht im kurzfristigen Bereich ab, was auf eine Stabilisierung hindeutet.`,
               sentiment: changePercent >= 0 ? 'positive' : 'negative',
               time: 'Echtzeit-Berechnung',
               source: 'System Quantitative Signal'
@@ -79,7 +105,7 @@ export function Newsticker({ selectedSymbol, timeframe }: NewstickerProps) {
             {
               id: 'q2',
               headline: `Volatilitäts-Indikator: Handelsvolumen erreicht $${found.volume24h.toLocaleString()}M`,
-              summary: `Das Verhältnis von 24h-Volumen zu Marktkapitalisierung deutet auf eine geordnete Liquidität und solide Orderbuch-Tiefe im aktuellen Preisbereich hin.`,
+              summary: `Das Verhältnis von 24h-Volumen zu Marktkapitalisierung deutet auf geordnete Liquidität und solide Orderbuch-Tiefe bei ${found.symbol} hin.`,
               sentiment: 'neutral',
               time: 'Echtzeit-Berechnung',
               source: 'Liquidity Matrix'
@@ -87,8 +113,8 @@ export function Newsticker({ selectedSymbol, timeframe }: NewstickerProps) {
             {
               id: 'q3',
               headline: `Risikobewertung: Asset-Klassifizierung '${found.risk}'`,
-              summary: `Die Risikometrik bewertet das Stärkenprofil des Assets mit einem quantitativen Score von ${score.toFixed(1)} von 10 Punkten.`,
-              sentiment: score >= 7.5 ? 'positive' : (score < 5.0 ? 'negative' : 'neutral'),
+              summary: `Die Risikometrik bewertet das Stärkenprofil von ${found.symbol} mit einem quantitativen Score von ${(score > 10 ? score / 10 : score).toFixed(1)} von 10 Punkten.`,
+              sentiment: score >= 75 || score >= 7.5 ? 'positive' : (score < 50 && score < 5.0 ? 'negative' : 'neutral'),
               time: 'Echtzeit-Berechnung',
               source: 'Risk Engine'
             }
@@ -165,8 +191,13 @@ export function Newsticker({ selectedSymbol, timeframe }: NewstickerProps) {
                   Interval: {timeframe}
                 </span>
               </h3>
-              <p className="text-xs text-white/50 font-sans mt-0.5">
-                Nachrichten & quantitative Analyse für <span className="font-bold text-white font-mono">{asset.symbol}</span> ({asset.name})
+              <p className="text-xs text-white/50 font-sans mt-0.5 flex items-center gap-1.5">
+                <span>Nachrichten & quantitative Analyse für</span>
+                <span className="inline-flex items-center gap-1 font-bold text-white font-mono bg-white/5 px-1.5 py-0.5 rounded border border-white/10">
+                  <AssetLogo symbol={asset.symbol} size="xs" />
+                  <span>{asset.symbol}</span>
+                </span>
+                <span>({asset.name})</span>
               </p>
             </div>
           </div>
