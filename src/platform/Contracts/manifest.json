@@ -1,0 +1,21 @@
+{
+  "name": "Contracts",
+  "version": "1.0.0",
+  "status": "development",
+  "owner": "CAPITAL-AI",
+  "description": "",
+  "category": "platform",
+  "ess": [
+    "ESS-0001",
+    "ESS-0001-CONTRACTS"
+  ],
+  "adr": [],
+  "dependencies": [],
+  "events": [],
+  "knowledge": [],
+  "interfaces": [],
+  "contracts": [],
+  "documentation": [
+    "README.md"
+  ]
+}
