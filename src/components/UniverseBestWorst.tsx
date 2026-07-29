@@ -115,6 +115,16 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
     );
   }
 
+  // Helper function for score normalization & data integrity check (0-100 scale)
+  const normalizeScore = (rawScore: number | undefined): number => {
+    if (typeof rawScore !== 'number' || isNaN(rawScore)) return 50.0;
+    // If score is on 0-10 scale (e.g. 8.5), scale to 0-100 (85.0)
+    if (rawScore <= 10.0) {
+      return Number((rawScore * 10).toFixed(1));
+    }
+    return Number(rawScore.toFixed(1));
+  };
+
   // Group assets into the 5 universes
   const cryptoGroup = assets.filter(a => a.type === 'crypto');
   const stockGroup = assets.filter(a => a.type === 'stock');
@@ -125,12 +135,20 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
   const getBestAndWorst = (groupAssets: RegistryAsset[]) => {
     if (groupAssets.length === 0) return { best: [], worst: [] };
     
-    // Sort by score descending
-    const sorted = [...groupAssets].sort((a, b) => b.score - a.score);
+    // Sort by normalized score descending with data integrity guard
+    const sorted = [...groupAssets]
+      .map(a => ({
+        ...a,
+        score: normalizeScore(a.score)
+      }))
+      .sort((a, b) => b.score - a.score);
     
-    const best = sorted.slice(0, 2);
-    // For worst, if there are fewer than 4 assets, slice from the remaining elements
-    const worst = sorted.slice(-2).reverse(); // Reverse so the absolute worst is last or first depending on preference
+    // Top 3 Outperformer
+    const best = sorted.slice(0, 3);
+    // Top 3 Underperformer (sliced from lowest score assets)
+    const worst = sorted.length >= 6 
+      ? sorted.slice(-3).reverse() 
+      : sorted.slice(Math.min(3, sorted.length)).reverse();
     
     return { best, worst };
   };
@@ -250,11 +268,11 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
 
               {/* Leaderboards */}
               <div className="space-y-5">
-                {/* Best Assets (Top 2) */}
+                {/* Best Assets (Top 3) */}
                 <div>
                   <h4 className="text-[9px] font-mono font-black text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    Top 2 Outperformer (Best)
+                    Top 3 Outperformer (Best)
                   </h4>
                   <div className="space-y-1.5">
                     {univ.best.map((asset) => (
@@ -291,11 +309,11 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
                   </div>
                 </div>
 
-                {/* Worst Assets (Top 2 Worst) */}
+                {/* Worst Assets (Top 3 Worst) */}
                 <div>
                   <h4 className="text-[9px] font-mono font-black text-rose-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-                    Top 2 Underperformer (Worst)
+                    Top 3 Underperformer (Worst)
                   </h4>
                   <div className="space-y-1.5">
                     {univ.worst.map((asset) => (

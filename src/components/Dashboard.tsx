@@ -68,7 +68,11 @@ import {
   Bell,
   Video,
   Mail,
-  Zap
+  Zap,
+  FolderKanban,
+  Eye,
+  ArrowUpRight,
+  Award
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -103,7 +107,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<string>('1std');
-  const [activeView, setActiveView] = useState<'dashboard' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'defi-orchestration' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'myworkspace' | 'universe-scoring' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'defi-orchestration' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
   const [adminTab, setAdminTab] = useState<'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor' | 'compliance'>('users');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>('hub');
@@ -112,7 +116,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   // Auto-expand appropriate accordion section on activeView changes for best mobile/desktop experience
   React.useEffect(() => {
     const getViewCategory = (view: string) => {
-      if (['dashboard', 'abonnements', 'profil'].includes(view)) return 'hub';
+      if (['dashboard', 'myworkspace', 'universe-scoring', 'abonnements', 'profil'].includes(view)) return 'hub';
       if (['market-screener', 'charts', 'preis-alarme', 'buffet-value', 'backtest', 'heatmap', 'risiko-assessment', 'sentiment-dashboard', 'raw-materials', 'asset-universe'].includes(view)) return 'analysis';
       if (['datenschutz', 'impressum-agb'].includes(view)) return 'compliance';
       if (['admin-panel', 'auth-debugger', 'markdown-orchestrator', 'request-orchestrator', 'performance', 'audit-logs', 'admin-portal'].includes(view)) return 'system_admin';
@@ -514,6 +518,34 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                             >
                               <LayoutDashboard size={14} />
                               <span>Dashboard Home</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Myworkspace" text="Dein persönlicher Arbeitsbereich mit individuellem Radar, Watchlist-Analyse und benutzerdefinierten Asset-Monitoren.">
+                            <button 
+                              onClick={() => navigateTo('myworkspace')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'myworkspace' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <FolderKanban size={14} className={activeView === 'myworkspace' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>Myworkspace</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Best & Worst Scoring" text="Live-Performance-Leaderboards & Top 3 / Flop 3 Grafik-Analysen aller 5 quantitativen Handelsuniversen.">
+                            <button 
+                              onClick={() => navigateTo('universe-scoring')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'universe-scoring' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <Award size={14} className={activeView === 'universe-scoring' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>Best & Worst Assets</span>
                             </button>
                           </SidebarTooltip>
 
@@ -1285,6 +1317,8 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
               <span className="hover:text-white cursor-pointer uppercase tracking-wider font-bold" onClick={() => setActiveView('dashboard')}>Capital-AI</span>
               <span>/</span>
               <span className="text-aif-gold-DEFAULT uppercase tracking-wider font-bold">
+                {activeView === 'myworkspace' && 'Myworkspace – Persönlicher Radar'}
+                {activeView === 'universe-scoring' && 'Universum Best & Worst Asset Leaderboard'}
                 {activeView === 'raw-materials' && 'Rohstoff-Kategorisierung & AI-Scoring'}
                 {activeView === 'asset-universe' && 'Multi-Asset-Klassen Cockpit'}
                 {activeView === 'defi-orchestration' && 'DeFi Token Orchestration & IL Radar'}
@@ -1335,40 +1369,21 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                      timeframe={timeframe} 
                      onChangeTimeframe={setTimeframe} 
                      userSession={userSession}
-                     subscriptionTier={profile.subscriptionTier}
-                     onUpgradeClick={() => navigateTo('abonnements')}
                   />
 
-                  {/* Realtime AI-Newsfeed and Watchlist Side-by-Side Grid */}
-                  <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                    <div className="xl:col-span-2">
-                      <RealtimeAiNewsfeed 
-                        subscriptionTier={profile.subscriptionTier} 
-                        onUpgradeClick={() => navigateTo('abonnements')}
-                        onTriggerPushNotification={triggerPushNotification}
-                        watchlist={watchlist}
-                        maxDisplayItems={3}
-                        selectedSymbol={selectedSymbol}
-                      />
-                    </div>
-                    <div>
-                      <Watchlist 
-                        watchlist={watchlist}
-                        onRemove={(symbol) => setWatchlist(prev => prev.filter(s => s !== symbol))}
-                        onAdd={(symbol) => {
-                          if (!watchlist.includes(symbol)) {
-                            setWatchlist(prev => [...prev, symbol]);
-                          }
-                        }}
-                        onSelectAsset={(symbol) => setSelectedSymbol(symbol)}
-                        selectedSymbol={selectedSymbol}
-                        onTriggerTestScoreEvent={handleTriggerTestScoreEvent}
-                      />
-                    </div>
+                  {/* Realtime AI-Newsfeed Full Width */}
+                  <div className="w-full">
+                    <RealtimeAiNewsfeed 
+                      subscriptionTier={profile.subscriptionTier} 
+                      onUpgradeClick={() => navigateTo('abonnements')}
+                      onTriggerPushNotification={triggerPushNotification}
+                      watchlist={watchlist}
+                      maxDisplayItems={3}
+                      selectedSymbol={selectedSymbol}
+                    />
                   </div>
  
-                  {/* Best and Worst Assets of each Universe */}
-                  <UniverseBestWorst onSelectAsset={(symbol) => { setSelectedSymbol(symbol); setActiveView('charts'); }} />
+ 
 
                   {/* Portfolio Performance & D3 Sparkline section */}
                   <PortfolioPerformance baseCapital={profile.capital} />
@@ -1437,7 +1452,152 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                </>
              )}
 
+            {activeView === 'myworkspace' && (
+              <div className="space-y-6">
+                {/* Myworkspace Header Banner */}
+                <div className="bg-gradient-to-r from-black/80 via-black/60 to-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/30 rounded-2xl p-6 backdrop-blur-xl relative overflow-hidden shadow-2xl">
+                  <div className="absolute top-0 right-0 w-96 h-96 bg-aif-gold-DEFAULT/5 rounded-full blur-3xl pointer-events-none" />
+                  
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3.5 bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/30 rounded-2xl text-aif-gold-DEFAULT shadow-[0_0_20px_rgba(245,196,83,0.15)]">
+                        <FolderKanban size={28} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-aif-gold-DEFAULT bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 px-2.5 py-0.5 rounded-full">
+                            Persönlicher Arbeitsbereich
+                          </span>
+                          <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            Radar-Engine Aktiv
+                          </span>
+                        </div>
+                        <h2 className="text-2xl font-black text-white font-display mt-1">Myworkspace</h2>
+                        <p className="text-xs text-white/60 max-w-2xl mt-0.5">
+                          Dein persönliches Radar-Cockpit für benutzerdefinierte Asset-Überwachung, Scoring-Aktionen und selektive Markt-Transparenz.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => navigateTo('market-screener')}
+                        className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2"
+                      >
+                        <SlidersHorizontal size={14} className="text-aif-gold-DEFAULT" />
+                        <span>Assets suchen</span>
+                      </button>
+                      <button
+                        onClick={() => navigateTo('charts')}
+                        className="px-4 py-2 bg-aif-gold-DEFAULT text-black font-black rounded-xl text-xs uppercase tracking-wider hover:bg-amber-400 transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(245,196,83,0.25)]"
+                      >
+                        <BarChart3 size={14} />
+                        <span>Chart Analyse</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Myworkspace Main Section: Persönlicher Radar (Watchlist) */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 h-full">
+                    <Watchlist 
+                      watchlist={watchlist}
+                      onRemove={(symbol) => setWatchlist(prev => prev.filter(s => s !== symbol))}
+                      onAdd={(symbol) => {
+                        if (!watchlist.includes(symbol)) {
+                          setWatchlist(prev => [...prev, symbol]);
+                        }
+                      }}
+                      onSelectAsset={(symbol) => setSelectedSymbol(symbol)}
+                      selectedSymbol={selectedSymbol}
+                      onTriggerTestScoreEvent={handleTriggerTestScoreEvent}
+                    />
+                  </div>
+
+                  {/* Right Column: Quick Workspace Widgets */}
+                  <div className="space-y-6 flex flex-col justify-between">
+                    {/* Radar Telemetry & Status Card */}
+                    <div className="bg-black/40 border border-white/10 rounded-2xl p-5 backdrop-blur-md space-y-4">
+                      <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                        <div className="flex items-center gap-2">
+                          <Eye size={16} className="text-aif-gold-DEFAULT" />
+                          <h4 className="text-sm font-bold text-white font-display">Radar Telemetrie</h4>
+                        </div>
+                        <span className="text-[10px] font-mono text-aif-gold-DEFAULT bg-aif-gold-DEFAULT/10 px-2 py-0.5 rounded-full border border-aif-gold-DEFAULT/20">
+                          PRO-LEVEL
+                        </span>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="p-3 bg-white/[0.03] border border-white/5 rounded-xl flex items-center justify-between">
+                          <span className="text-xs text-white/60">Überwachte Assets:</span>
+                          <span className="text-xs font-mono font-bold text-white bg-white/10 px-2 py-0.5 rounded-md">
+                            {watchlist.length} Assets
+                          </span>
+                        </div>
+
+                        <div className="p-3 bg-white/[0.03] border border-white/5 rounded-xl flex items-center justify-between">
+                          <span className="text-xs text-white/60">Fokus-Asset:</span>
+                          <span className="text-xs font-mono font-bold text-aif-gold-DEFAULT bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 px-2 py-0.5 rounded-md">
+                            {selectedSymbol || 'BTC-USD'}
+                          </span>
+                        </div>
+
+                        <div className="p-3 bg-white/[0.03] border border-white/5 rounded-xl flex items-center justify-between">
+                          <span className="text-xs text-white/60">Benachrichtigungen:</span>
+                          <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+                            Echtzeit Live
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="pt-2">
+                        <p className="text-[11px] text-white/40 leading-relaxed">
+                          Assets auf Deinem persönlichen Radar werden kontinuierlich vom CAPITAL-AI Multi-Modell Router bezüglich Sentiment, Liquidität und Scoring-Veränderungen überwacht.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Quick Actions Card */}
+                    <div className="bg-gradient-to-br from-black/60 to-purple-950/20 border border-purple-500/20 rounded-2xl p-5 backdrop-blur-md space-y-3">
+                      <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-purple-300 flex items-center gap-2">
+                        <Sparkles size={14} />
+                        Workspace Schnellzugriff
+                      </h4>
+                      <p className="text-xs text-white/60">
+                        Nutze die KI-Funktionen für vertiefte Analysen Deines persönlichen Radars:
+                      </p>
+                      <div className="grid grid-cols-1 gap-2 pt-1">
+                        <button
+                          onClick={() => navigateTo('sentiment-dashboard')}
+                          className="w-full text-left p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-medium text-white transition-all flex items-center justify-between group"
+                        >
+                          <span>AI Sentiment Cockpit öffnen</span>
+                          <ArrowUpRight size={14} className="text-white/40 group-hover:text-aif-gold-DEFAULT group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                        </button>
+                        <button
+                          onClick={() => navigateTo('risiko-assessment')}
+                          className="w-full text-left p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-medium text-white transition-all flex items-center justify-between group"
+                        >
+                          <span>Value-at-Risk Assessment</span>
+                          <ArrowUpRight size={14} className="text-white/40 group-hover:text-aif-gold-DEFAULT group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Detailed Views */}
+            {activeView === 'universe-scoring' && (
+              <div className="space-y-6">
+                <UniverseBestWorst onSelectAsset={(symbol) => { setSelectedSymbol(symbol); setActiveView('charts'); }} />
+              </div>
+            )}
+
             {activeView === 'buffet-value' && (
               <BuffetValueCheck selectedSymbol={selectedSymbol} triggerAttempt={triggerAttempt} />
             )}
