@@ -1916,6 +1916,110 @@ ISupervisor
 
 ---
 
+# Public Interface Contract
+
+Die Plattform unterscheidet zwischen
+
+öffentlichen Enterprise Interfaces
+
+und
+
+internen Komponenteninterfaces.
+
+---
+
+## Public Interfaces
+
+Alle öffentlichen Schnittstellen der Plattform befinden sich ausschließlich unter
+
+src/platform/Interfaces/
+
+Diese Interfaces bilden die offiziellen Enterprise Contracts.
+
+Sie dürfen von sämtlichen Plattformkomponenten verwendet werden.
+
+Sie definieren die öffentliche API des CAPITAL-AI Core.
+
+Beispiele
+
+IPlatformComponent
+
+IEngine
+
+IService
+
+IRegistry
+
+IValidator
+
+IGenerator
+
+IProvider
+
+IConsumer
+
+IPlugin
+
+IHealthCheck
+
+---
+
+## Component Interfaces
+
+Interne Komponenteninterfaces befinden sich ausschließlich innerhalb der jeweiligen Komponente.
+
+Beispiele
+
+src/platform/Documentary/Interfaces/
+
+src/platform/Core/Interfaces/
+
+src/platform/Supervisor/Interfaces/
+
+src/platform/VersionManager/Interfaces/
+
+Diese Interfaces dürfen ausschließlich innerhalb ihrer Komponente verwendet werden.
+
+---
+
+## Promotion Rule
+
+Soll ein Komponenteninterface zukünftig von mehreren Plattformkomponenten verwendet werden,
+
+muss dieses Interface
+
+1. überprüft werden
+
+2. dokumentiert werden
+
+3. versioniert werden
+
+4. nach
+
+src/platform/Interfaces/
+
+verschoben werden.
+
+Eine direkte Mehrfachverwendung interner Interfaces ist nicht zulässig.
+
+---
+
+## Validation
+
+Vor jeder Integration wird geprüft
+
+✓ öffentliche Interfaces befinden sich ausschließlich unter
+
+src/platform/Interfaces/
+
+✓ interne Interfaces befinden sich ausschließlich innerhalb ihrer Komponente
+
+✓ keine Komponente verwendet interne Interfaces anderer Komponenten
+
+✓ alle öffentlichen Interfaces sind dokumentiert
+
+✓ alle öffentlichen Interfaces besitzen einen Enterprise Contract
+
 # Interface Responsibilities
 
 Interfaces enthalten ausschließlich
