@@ -29,6 +29,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { AssetLogo } from './AssetLogo';
 import { assetRegistry } from '../lib/assetRegistry';
 import { Newsticker } from './Newsticker';
+import { 
+  getDailyScreeningCount, 
+  canPerformScreening, 
+  recordScreening, 
+  STARTER_DAILY_LIMIT 
+} from '../lib/dailyScreeningTracker';
 
 interface CryptoEnterpriseEvaluatorProps {
   selectedSymbol: string;
@@ -97,10 +103,22 @@ export function CryptoEnterpriseEvaluator({
   const [activeTool, setActiveTool] = useState<ActiveTool>('orderbook');
   const [tierNotice, setTierNotice] = useState<string | null>(null);
 
-  // Custom Asset List & Intelligent Search State
-  const [customAssetList, setCustomAssetList] = useState<string[]>([
-    'BTC', 'ETH', 'SOL', 'XRP', 'AVAX', 'BNB', 'DOGE', 'PEPE', 'NVDA', 'AAPL'
-  ]);
+  // Track daily screening count
+  const [dailyCount, setDailyCount] = useState<number>(() => getDailyScreeningCount());
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setDailyCount(getDailyScreeningCount());
+    };
+    window.addEventListener('dailyScreeningUpdated', handleUpdate);
+    return () => window.removeEventListener('dailyScreeningUpdated', handleUpdate);
+  }, []);
+
+  // Custom Asset List State
+  const [customAssetList, setCustomAssetList] = useState<string[]>(() => {
+    if (isFreeOrGuest) return ['BTC', 'ETH'];
+    return ['BTC', 'ETH', 'SOL', 'XRP', 'AVAX', 'BNB', 'DOGE', 'PEPE', 'NVDA', 'AAPL'];
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [searchCategory, setSearchCategory] = useState<string>('Alle');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -121,15 +139,20 @@ export function CryptoEnterpriseEvaluator({
     const upper = assetSymbol.trim().toUpperCase();
     if (!upper) return;
 
-    if (isStarter && upper !== 'BTC') {
-      setTierNotice(`Starter-Limit: Das Hinzufügen von ${upper} ist gesperrt. Im Starter-Tarif steht nur Bitcoin (BTC) zur Verfügung.`);
+    if (isFreeOrGuest && !customAssetList.includes(upper) && customAssetList.length >= 2) {
+      setTierNotice(`Free/Gast-Limit: Im Free/Gast-Tarif können Sie maximal 1 Zusatz-Asset neben BTC hinzufügen (BTC + 1 Zusatz-Asset).`);
       setIsSearchOpen(false);
       return;
     }
-    if (isPro && !['BTC', 'ETH', 'SOL'].includes(upper)) {
-      setTierNotice(`PRO-Limit: In der PRO-Version stehen BTC, ETH und SOL bereit. Das Asset ${upper} erfordert den Enterprise OS Tarif.`);
-      setIsSearchOpen(false);
-      return;
+
+    if ((isFreeOrGuest || isStarter) && selectedSymbol !== upper) {
+      if (!canPerformScreening(effectiveTier)) {
+        setTierNotice(`Tägliches Screening-Limit erreicht (5/5 Screenings verbraucht). Upgraden Sie auf PRO für unbegrenzte Screenings.`);
+        setIsSearchOpen(false);
+        if (onUpgradeClick) onUpgradeClick();
+        return;
+      }
+      recordScreening(upper, effectiveTier);
     }
 
     if (!customAssetList.includes(upper)) {
@@ -141,43 +164,29 @@ export function CryptoEnterpriseEvaluator({
     setIsSearchOpen(false);
   };
 
-  // Auto-enforce Starter & PRO restrictions on symbol
-  useEffect(() => {
-    if (isStarter && selectedSymbol !== 'BTC') {
-      onSelectSymbol('BTC');
-      setTierNotice('Starter-Limit: Im Starter-Tarif ist für das Bewertungssystem lediglich Bitcoin (BTC) verfügbar.');
-    } else if (isPro && !['BTC', 'ETH', 'SOL'].includes(selectedSymbol.toUpperCase())) {
-      onSelectSymbol('BTC');
-      setTierNotice('PRO-Limit: In der PRO-Version stehen BTC, ETH und SOL zur Verfügung. Upgrade auf Enterprise OS für alle Assets.');
-    }
-  }, [isStarter, isPro, selectedSymbol]);
-
-  // Auto-enforce Starter tool restriction (Orderbuch only)
-  useEffect(() => {
-    if (isStarter && activeTool !== 'orderbook') {
-      setActiveTool('orderbook');
-    }
-  }, [isStarter, activeTool]);
-
   const handleToolSelect = (tool: ActiveTool) => {
-    if (isStarter && tool !== 'orderbook') {
-      setTierNotice('Tool gesperrt: Arbitrage-Index, On-Chain Momentum & Realtime Intelligence Feed erfordern mindestens die PRO Edition (29€/Monat).');
-      return;
-    }
     setTierNotice(null);
     setActiveTool(tool);
   };
 
   const handleAssetSelect = (sym: string) => {
     const upper = sym.toUpperCase();
-    if (isStarter && upper !== 'BTC') {
-      setTierNotice(`Im Starter-Tarif ist nur Bitcoin (BTC) freigeschaltet. Wähle PRO für ETH & SOL oder Enterprise für ${upper}.`);
+    
+    if (isFreeOrGuest && upper !== 'BTC') {
+      setTierNotice(`Schutzhinweis: Im Free- & Gast-Modus ist im Enterprise Bewertungstool exklusiv Bitcoin (BTC) freigeschaltet. Für die volle Auswertung anderer Assets upgraden Sie auf Starter, PRO oder Enterprise OS.`);
+      onSelectSymbol(sym);
       return;
     }
-    if (isPro && !['BTC', 'ETH', 'SOL'].includes(upper)) {
-      setTierNotice(`In der PRO Edition sind BTC, ETH und SOL verfügbar. Das Asset ${upper} erfordert den Enterprise OS Tarif.`);
-      return;
+
+    if (isStarter && selectedSymbol !== upper) {
+      if (!canPerformScreening(effectiveTier)) {
+        setTierNotice(`Tägliches Screening-Limit erreicht (5/5 Screenings heute verbraucht). Im Starter-Tarif stehen täglich 5 Screenings zur Verfügung. Upgrade auf PRO für unbegrenztes Screening.`);
+        if (onUpgradeClick) onUpgradeClick();
+        return;
+      }
+      recordScreening(upper, effectiveTier);
     }
+
     setTierNotice(null);
     onSelectSymbol(sym);
   };
@@ -562,19 +571,24 @@ export function CryptoEnterpriseEvaluator({
             </h2>
 
             {/* Current Tier Status Badge */}
-            {isStarter && (
+            {isFreeOrGuest && (
               <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                Starter Tier (BTC &amp; Orderbuch)
+                Free / Gast Tier (BTC Standard)
               </span>
             )}
-            {isPro && (
-              <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/40">
-                PRO Tier (BTC, ETH, SOL - Alle Tools)
-              </span>
+            {isStarter && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-blue-500/20 text-blue-300 border border-blue-500/40">
+                  Starter Tier
+                </span>
+                <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-white/10 text-white border border-white/20">
+                  Screenings heute: <strong className={dailyCount >= 5 ? "text-rose-400" : "text-emerald-400"}>{dailyCount}/5</strong>
+                </span>
+              </div>
             )}
-            {isEnterprise && (
+            {(isPro || isEnterprise) && (
               <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-aif-neon-cyan/20 text-aif-neon-cyan border border-aif-neon-cyan/40">
-                Enterprise OS (Vollzugriff)
+                PRO / Enterprise OS (Unbegrenzt)
               </span>
             )}
           </div>

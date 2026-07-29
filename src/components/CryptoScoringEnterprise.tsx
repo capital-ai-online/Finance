@@ -36,6 +36,12 @@ import {
   PriceAlertItem 
 } from '../lib/alertStore';
 import { 
+  getDailyScreeningCount, 
+  canPerformScreening, 
+  recordScreening, 
+  STARTER_DAILY_LIMIT 
+} from '../lib/dailyScreeningTracker';
+import { 
   SCORING_WEIGHTS, 
   DECISION_THRESHOLDS, 
   CryptoScoringInputs, 
@@ -375,16 +381,29 @@ export function CryptoScoringEnterprise({
 
   const isFreeUser = effectiveTier === 'Free';
   const isStarterUser = effectiveTier === 'Starter';
+  const isLimitedTier = isFreeUser || isStarterUser;
 
-  // Keep selected symbols - Free users are strictly locked to ['BTC']
+  // Track daily screenings count reactively
+  const [dailyCount, setDailyCount] = useState<number>(() => getDailyScreeningCount());
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setDailyCount(getDailyScreeningCount());
+    };
+    window.addEventListener('dailyScreeningUpdated', handleUpdate);
+    return () => window.removeEventListener('dailyScreeningUpdated', handleUpdate);
+  }, []);
+
+  // Free & Starter users can use BTC + 1 additional custom asset slot (max 2 slots total)
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>(() => {
-    if (isFreeUser) return ['BTC'];
     const initial = selectedSymbol ? selectedSymbol.toUpperCase() : 'BTC';
+    if (isLimitedTier) {
+      return initial === 'BTC' ? ['BTC'] : ['BTC', initial];
+    }
     return ['BTC', 'ETH', 'SOL'].includes(initial) ? ['BTC', 'ETH', 'SOL'] : [initial, 'BTC', 'ETH'].slice(0, 3);
   });
 
   const [activeSymbol, setActiveSymbol] = useState<string>(() => {
-    if (isFreeUser) return 'BTC';
     return selectedSymbol ? selectedSymbol.toUpperCase() : 'BTC';
   });
   const [inputs, setInputs] = useState<CryptoScoringInputs | null>(null);
@@ -978,27 +997,24 @@ export function CryptoScoringEnterprise({
 
   // Sync selectedSymbol from props to ensure dashboard is synchronized
   useEffect(() => {
-    if (isFreeUser) {
-      setActiveSymbol('BTC');
-      setSelectedSymbols(['BTC']);
-      return;
-    }
     if (selectedSymbol) {
       const upper = selectedSymbol.toUpperCase();
       setActiveSymbol(upper);
       if (!selectedSymbols.includes(upper)) {
         setSelectedSymbols(prev => {
           if (prev.includes(upper)) return prev;
+          if (isLimitedTier) {
+            return [prev[0] || 'BTC', upper].slice(0, 2);
+          }
           if (prev.length < 3) {
             return [...prev, upper];
           } else {
-            // Replace the last element if we already have 3
             return [prev[0], prev[1], upper];
           }
         });
       }
     }
-  }, [selectedSymbol, isFreeUser]);
+  }, [selectedSymbol, isLimitedTier]);
 
   // Load / calculate inputs based on activeSymbol and timeframe
   useEffect(() => {
@@ -1077,19 +1093,9 @@ export function CryptoScoringEnterprise({
   const handleSelectAsset = (sym: string) => {
     const upper = sym.toUpperCase();
     
-    // Free User Guard: Only BTC allowed in Free/Guest Mode
-    if (isFreeUser && upper !== 'BTC') {
-      setErrorMessage("Im Free- & Gast-Modus ist die Enterprise Scoring Komponente fest mit Bitcoin (BTC) befüllt. Erst ab der STARTER Version ist es möglich weitere Assets hinzuzufügen oder Bitcoin zu ersetzen (max. 3 Assets im Monat).");
-      setTimeout(() => setErrorMessage(null), 7000);
-      setShowSuggestions(false);
-      setSearchQuery('');
-      if (onUpgradeClick) onUpgradeClick();
-      return;
-    }
-
-    // Starter User Guard: Max 3 assets screened per month
-    if (isStarterUser && !selectedSymbols.includes(upper) && selectedSymbols.length >= 3) {
-      setErrorMessage("In der Starter-Version können maximal 3 Assets im Monat gescreent werden. Bitte führen Sie ein Upgrade auf PRO oder Enterprise durch für unbegrenztes Screening.");
+    // Check slot limit for Free / Gast / Starter users (BTC + 1 custom asset slot = max 2 slots)
+    if (isLimitedTier && !selectedSymbols.includes(upper) && selectedSymbols.length >= 2) {
+      setErrorMessage("Starter / Free Limit: Sie können maximal 1 zusätzliches Asset-Slot neben BTC hinzufügen (BTC + 1 Zusatz-Asset). Für unbegrenzte Asset-Slots upgraden Sie auf PRO oder Enterprise OS.");
       setTimeout(() => setErrorMessage(null), 6000);
       setShowSuggestions(false);
       setSearchQuery('');
@@ -1097,10 +1103,23 @@ export function CryptoScoringEnterprise({
       return;
     }
 
+    // Check daily 5 screenings limit for Free / Gast / Starter users
+    if (isLimitedTier && activeSymbol !== upper) {
+      if (!canPerformScreening(effectiveTier)) {
+        setErrorMessage("Tägliches Screening-Limit erreicht (5/5 Screenings verbraucht). Im Free & Starter Tarif stehen täglich 5 Screenings zur Verfügung. Upgrade auf PRO für unbegrenzte Screenings.");
+        setTimeout(() => setErrorMessage(null), 7000);
+        setShowSuggestions(false);
+        setSearchQuery('');
+        if (onUpgradeClick) onUpgradeClick();
+        return;
+      }
+      recordScreening(upper, effectiveTier);
+    }
+
     // Add to selected array if not already present
     if (!selectedSymbols.includes(upper)) {
-      if (selectedSymbols.length >= 3) {
-        setErrorMessage("Maximal 3 Assets gleichzeitig erlaubt. Bitte entferne ein Asset, um ein neues hinzuzufügen.");
+      if (!isLimitedTier && selectedSymbols.length >= 3) {
+        setErrorMessage("Maximal 3 Assets gleichzeitig in der Schnellansicht erlaubt. Bitte entferne ein Asset, um ein neues hinzuzufügen.");
         setTimeout(() => setErrorMessage(null), 4000);
         setShowSuggestions(false);
         setSearchQuery('');
@@ -1117,13 +1136,28 @@ export function CryptoScoringEnterprise({
     setShowSuggestions(false);
   };
 
+  const handleSwitchActiveSymbol = (sym: string) => {
+    const upper = sym.toUpperCase();
+    if (activeSymbol === upper) return;
+
+    if (isLimitedTier) {
+      if (!canPerformScreening(effectiveTier)) {
+        setErrorMessage("Tägliches Screening-Limit erreicht (5/5 Screenings verbraucht). Im Free & Starter Tarif stehen täglich 5 Screenings zur Verfügung. Upgrade auf PRO für unbegrenzte Screenings.");
+        setTimeout(() => setErrorMessage(null), 7000);
+        if (onUpgradeClick) onUpgradeClick();
+        return;
+      }
+      recordScreening(upper, effectiveTier);
+    }
+
+    setActiveSymbol(upper);
+    if (onSelectSymbol) {
+      onSelectSymbol(upper);
+    }
+  };
+
   const handleRemoveAsset = (e: React.MouseEvent, sym: string) => {
     e.stopPropagation();
-    if (isFreeUser) {
-      setErrorMessage("Im Free- & Gast-Modus bleibt Bitcoin (BTC) als einziges Asset verankert. Erst ab der Starter-Version können Assets ausgetauscht werden.");
-      setTimeout(() => setErrorMessage(null), 4000);
-      return;
-    }
     if (selectedSymbols.length <= 1) {
       setErrorMessage("Mindestens ein Asset muss ausgewählt bleiben.");
       setTimeout(() => setErrorMessage(null), 3000);
@@ -1354,17 +1388,19 @@ export function CryptoScoringEnterprise({
             </span>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-xl font-bold tracking-tight text-white font-display uppercase">Universe Enterprise Scorer</h2>
-              {isFreeUser ? (
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/25 font-bold uppercase tracking-wider flex items-center gap-1">
-                  Standard: Bitcoin (BTC)
-                </span>
-              ) : isStarterUser ? (
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/25 font-bold uppercase tracking-wider">
-                  Starter Tarif (Max 3 Assets)
-                </span>
+              {isLimitedTier ? (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/25 font-bold uppercase tracking-wider flex items-center gap-1">
+                    Free / Starter: BTC + 1 Zusatz-Slot
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/15 text-blue-300 border border-blue-500/30 font-bold tracking-wider flex items-center gap-1.5">
+                    <Clock size={11} className="text-blue-400" />
+                    <span>Screenings heute: <strong className={dailyCount >= 5 ? "text-rose-400" : "text-white"}>{dailyCount}/5</strong></span>
+                  </span>
+                </div>
               ) : (
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 font-bold uppercase tracking-wider">
-                  Unbegrenztes Screening
+                  Unbegrenztes Screening (PRO / Enterprise)
                 </span>
               )}
             </div>
@@ -1514,10 +1550,7 @@ export function CryptoScoringEnterprise({
           return (
             <div
               key={sym}
-              onClick={() => {
-                setActiveSymbol(sym);
-                if (onSelectSymbol) onSelectSymbol(sym);
-              }}
+              onClick={() => handleSwitchActiveSymbol(sym)}
               className={`p-4 rounded-xl border backdrop-blur-md cursor-pointer transition-all relative group flex flex-col justify-between ${
                 isCurrentActive
                   ? 'bg-gradient-to-br from-blue-900/15 via-indigo-950/15 to-transparent border-blue-500/50 shadow-[0_4px_25px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/20'

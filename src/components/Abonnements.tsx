@@ -76,14 +76,19 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
 
   const FAQS = [
     {
-      question: "Warum ist im Free- & Gast-Modus nur Bitcoin (BTC) verfügbar?",
-      answer: "Im kostenlosen Free- & Gast-Modus bieten wir eine Vorschau unseres Enterprise Scorer Algorithmus anhand von Bitcoin (BTC) an. Um weitere Krypto-Assets, Aktien oder Indizes hinzuzufügen oder BTC durch andere Werte zu ersetzen, können Sie auf die Starter-Version (max. 3 Assets/Monat) oder höher upgraden.",
-      tierBadge: "Starter ab 7€/Monat"
+      question: "Was können Free- & Gast-User im Enterprise Scorer und Bewertungstool nutzen?",
+      answer: "Free- & Gast-User erhalten vollen Zugriff auf Bitcoin (BTC) im Enterprise Scorer und Bewertungstool und können zusätzlich 1 weiteres Asset-Slot im Scorer hinzufügen (BTC + 1 Zusatz-Asset) und screenen.",
+      tierBadge: "Free / Gast (BTC + 1 Slot)"
+    },
+    {
+      question: "Welche Limits gelten für die Starter Version (7€/Monat)?",
+      answer: "In der Starter Version steht der Enterprise Scorer frei zur Verfügung und ist auf täglich 5 Asset-Screenings beschränkt. Ein Screening umfasst die Auswahl eines Assets und dessen detaillierte Bewertungsergebnisse.",
+      tierBadge: "Starter (5 Screenings/Tag)"
     },
     {
       question: "Was bietet die PRO Edition mit dem Realtime AI-Newsfeed?",
-      answer: "Der Realtime AI-Newsfeed ist exklusiv ab der PRO Version (29€/Monat) freigeschaltet. Er liefert ungefilterte Markt-Eilmeldungen mit automatischer KI-Sentiment-Analyse, Sentiment-Impact-Scoring und Multi-Modell Auto-Routing für blitzschnelle Reaktionen auf Marktbewegungen sowie unbegrenztes Screening.",
-      tierBadge: "PRO (Bestseller)"
+      answer: "Der Realtime AI-Newsfeed ist exklusiv ab der PRO Version (29€/Monat) freigeschaltet. Er liefert ungefilterte Markt-Eilmeldungen mit automatischer KI-Sentiment-Analyse, Sentiment-Impact-Scoring und unbegrenzten täglichen Screenings.",
+      tierBadge: "PRO (Unbegrenztes Screening)"
     },
     {
       question: "Warum benötige ich die ENTERPRISE Version für Exports?",
@@ -137,16 +142,17 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
       name: 'Free & Gast',
       price: 0,
       badge: 'Basis-Zugang',
-      desc: 'Exklusiver Einblick in das Bitcoin (BTC) Enterprise Scoring Ergebnis.',
+      desc: 'Bitcoin (BTC) Freischaltung + 1 zusätzliches Asset-Slot im Enterprise Scorer.',
       devices: '1 Gerät',
       features: [
-        'BTC Enterprise Scoring Ergebnis (Standard)',
+        'BTC Enterprise Scoring & Bewertungstool freigeschaltet',
+        '1 zusätzliches Asset-Slot im Scorer (BTC + 1 Zusatz-Asset)',
         'Echtzeit BTC-Metriken & Risiko-Score',
         'Support & Feedback (support@capital-ai.online)'
       ],
       lockedFeatures: [
-        'Weitere Assets hinzufügen / BTC ersetzen (ab Starter)',
-        'Max. 3 Assets / Monat screenen (ab Starter)',
+        'Täglich mehr als 1 Zusatz-Asset screenen (ab Starter)',
+        'Täglich 5 Screenings frei nutzen (ab Starter)',
         'Realtime AI Newsfeed (ab PRO)',
         'PDF- & Compliance-Exports (ab Enterprise)'
       ],
@@ -158,17 +164,18 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
       id: 'Starter',
       name: 'Starter Plan',
       price: 7,
-      badge: 'Flexible Assets',
-      desc: 'Flexibler Asset-Austausch im Scorer und Backtests für aktive Anleger.',
+      badge: '5 Screenings / Tag',
+      desc: 'Freie Nutzung des Enterprise Scorers mit täglich 5 Asset-Screenings.',
       devices: '1 Gerät',
       features: [
-        'Scorer-Assets frei austauschen oder hinzufügen',
-        'Maximal 3 Assets im Monat screenen',
+        'ENTERPRISE Scorer frei nutzbar (täglich 5 Screenings)',
+        'Flexible Asset-Auswahl (Krypto, Aktien, Indizes, Rohstoffe)',
         'Unbegrenzte quantitative Backtests',
         'Buffett-Value & DCF Rechner'
       ],
       lockedFeatures: [
         'Kein Realtime AI-Newsfeed (ab PRO)',
+        'Limit auf 5 Screenings/Tag (ab PRO unbegrenzt)',
         'Keine PDF- / Compliance-Exports (ab Enterprise)'
       ],
       color: 'border-blue-500/30 hover:border-blue-500/50 bg-blue-500/5 text-blue-400',
@@ -179,12 +186,12 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
       id: 'Pro',
       name: 'Pro Edition',
       price: 29,
-      badge: 'Bestseller (AI Newsfeed)',
-      desc: 'Freischaltung des Realtime AI-Newsfeeds und unbegrenztes Screening.',
+      badge: 'Bestseller (Unbegrenzt)',
+      desc: 'Unbegrenztes tägliches Asset-Screening & Realtime AI-Newsfeed.',
       devices: 'Bis zu 2 Geräte',
       features: [
         'Realtime AI-Newsfeed (vollständig freigeschaltet)',
-        'Unbegrenztes Screening im Scorer',
+        'Unbegrenztes tägliches Asset-Screening',
         'Multi-Model AI Auto-Routing & Push-Alerts',
         'Erweiterte Watchlists & KI-Sentiment Cockpit'
       ],
