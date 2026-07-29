@@ -986,3 +986,765 @@ sämtliche nachfolgenden technischen Contracts.
 ---
 
 # End of Chapter 2
+---
+
+# Chapter 3
+
+# Directory Responsibility Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindlichen Verantwortlichkeiten sämtlicher Verzeichnisse innerhalb des CAPITAL-AI Core.
+
+Jedes Verzeichnis besitzt genau eine klar definierte Aufgabe.
+
+Verantwortlichkeiten dürfen sich nicht überschneiden.
+
+Jede Klasse, jedes Interface, jedes Datenmodell und jede Ressource besitzt einen eindeutig definierten Speicherort.
+
+---
+
+# Mission
+
+Die Directory Contracts gewährleisten
+
+- eindeutige Verantwortlichkeiten
+- reproduzierbare Projektstrukturen
+- deterministische Codegenerierung
+- klare Abhängigkeitsregeln
+- langfristige Wartbarkeit
+- modulare Erweiterbarkeit
+
+---
+
+# Enterprise Principle
+
+Ein Verzeichnis besitzt genau eine Verantwortung.
+
+Eine Verantwortung besitzt genau ein Verzeichnis.
+
+---
+
+# Directory Contract Model
+
+Jedes Verzeichnis definiert
+
+- Zweck
+- erlaubte Inhalte
+- verbotene Inhalte
+- zulässige Abhängigkeiten
+- verbotene Abhängigkeiten
+- Eigentümer
+- Lebenszyklus
+
+---
+
+# Core Directory
+
+## src/platform/Core
+
+### Purpose
+
+Technische Basis der gesamten Plattform.
+
+### Contains
+
+Base Classes
+
+Core Interfaces
+
+Core Types
+
+Core Events
+
+Core Contracts
+
+Core Errors
+
+Lifecycle
+
+Logging
+
+Telemetry
+
+Utilities
+
+### Forbidden
+
+Business Logic
+
+Feature Code
+
+API Endpoints
+
+UI
+
+Database Queries
+
+Domain Services
+
+### Accessible by
+
+Alle Plattformkomponenten.
+
+---
+
+# Documentary Directory
+
+## src/platform/Documentary
+
+### Purpose
+
+Codebasierte Dokumentation und Repository Intelligence.
+
+### Contains
+
+Repository Discovery
+
+Architecture Discovery
+
+Knowledge Generation
+
+Documentation Generation
+
+Migration Analysis
+
+Impact Analysis
+
+Version Intelligence
+
+Documentation Templates
+
+Mermaid Generator
+
+Markdown Generator
+
+Registry Synchronisation
+
+### Forbidden
+
+Business Logic
+
+Frontend
+
+REST APIs
+
+Feature Implementierungen
+
+Produktive Geschäftsprozesse
+
+---
+
+# Knowledge Directory
+
+## src/platform/Knowledge
+
+### Purpose
+
+Zentrale Wissensbasis der Plattform.
+
+### Contains
+
+Knowledge Graph
+
+Knowledge Objects
+
+Relationships
+
+Semantic Models
+
+Knowledge Registry
+
+Knowledge Validation
+
+### Forbidden
+
+Dokumentengenerierung
+
+Frontend
+
+Business Services
+
+---
+
+# Platform Director
+
+## src/platform/PlatformDirector
+
+### Purpose
+
+Strategische Steuerung der gesamten Plattform.
+
+### Contains
+
+Governance
+
+Policy Engine
+
+Enterprise Coordination
+
+Decision Engine
+
+Workflow Orchestration
+
+### Forbidden
+
+Business Logic
+
+Repository Analyse
+
+Dokumentengenerierung
+
+---
+
+# Supervisor
+
+## src/platform/Supervisor
+
+### Purpose
+
+Operative Überwachung sämtlicher Plattformprozesse.
+
+### Contains
+
+Health Monitoring
+
+Lifecycle Management
+
+Status Monitoring
+
+Event Coordination
+
+Alerting
+
+Recovery
+
+### Forbidden
+
+Architekturentscheidungen
+
+Business Services
+
+Feature Code
+
+---
+
+# Version Manager
+
+## src/platform/VersionManager
+
+### Purpose
+
+Versionierung der gesamten Plattform.
+
+### Contains
+
+Semantic Versioning
+
+Release Preparation
+
+Version Registry
+
+Version Validation
+
+Impact Classification
+
+Change Tracking
+
+### Forbidden
+
+Business Logic
+
+Feature Code
+
+REST APIs
+
+---
+
+# Registry
+
+## src/platform/Registry
+
+### Purpose
+
+Zentrale Registrierung aller Plattformobjekte.
+
+### Contains
+
+Component Registry
+
+Service Registry
+
+Plugin Registry
+
+Generator Registry
+
+Agent Registry
+
+Workflow Registry
+
+Template Registry
+
+### Forbidden
+
+Business Services
+
+Knowledge Generation
+
+UI
+
+---
+
+# Discovery
+
+## src/platform/Discovery
+
+### Purpose
+
+Erkennung neuer Plattformkomponenten.
+
+### Contains
+
+Repository Scanner
+
+Dependency Scanner
+
+Architecture Scanner
+
+Module Scanner
+
+Component Discovery
+
+### Forbidden
+
+Dokumentengenerierung
+
+Business Code
+
+---
+
+# Events
+
+## src/platform/Events
+
+### Purpose
+
+Enterprise Event Definitionen.
+
+### Contains
+
+Event Definitions
+
+Event Types
+
+Event Registry
+
+Event Contracts
+
+Event Metadata
+
+### Forbidden
+
+Business Logic
+
+Repository Scan
+
+Versioning
+
+---
+
+# Contracts
+
+## src/platform/Contracts
+
+### Purpose
+
+Globale technische Verträge.
+
+### Contains
+
+Interfaces
+
+Contracts
+
+Schemas
+
+Validation Rules
+
+### Forbidden
+
+Implementierungen
+
+Business Logic
+
+---
+
+# Models
+
+## src/platform/Models
+
+### Purpose
+
+Gemeinsame Enterprise Datenmodelle.
+
+### Contains
+
+DTOs
+
+Entities
+
+Metadata
+
+Shared Models
+
+### Forbidden
+
+Services
+
+Controller
+
+Business Logic
+
+---
+
+# Interfaces
+
+## src/platform/Interfaces
+
+### Purpose
+
+Globale Plattforminterfaces.
+
+### Contains
+
+Interface Definitionen
+
+Public Contracts
+
+Shared Interfaces
+
+### Forbidden
+
+Implementierungen
+
+---
+
+# Validators
+
+## src/platform/Validators
+
+### Purpose
+
+Validierung sämtlicher Plattformobjekte.
+
+### Contains
+
+Schema Validation
+
+Contract Validation
+
+Architecture Validation
+
+Repository Validation
+
+Knowledge Validation
+
+### Forbidden
+
+Business Logic
+
+---
+
+# Generators
+
+## src/platform/Generators
+
+### Purpose
+
+Automatische Code- und Dokumentengenerierung.
+
+### Contains
+
+Markdown Generator
+
+ADR Generator
+
+Mermaid Generator
+
+Code Generator
+
+Documentation Generator
+
+### Forbidden
+
+Repository Discovery
+
+Business Services
+
+---
+
+# Plugins
+
+## src/platform/Plugins
+
+### Purpose
+
+Erweiterungspunkte der Plattform.
+
+### Contains
+
+Plugin Loader
+
+Plugin Contracts
+
+Plugin Registry
+
+Plugin Metadata
+
+### Forbidden
+
+Business Logik
+
+---
+
+# Telemetry
+
+## src/platform/Telemetry
+
+### Purpose
+
+Technische Metriken.
+
+### Contains
+
+Metrics
+
+Tracing
+
+Performance
+
+Observability
+
+Health Metrics
+
+### Forbidden
+
+Business Logic
+
+---
+
+# Quality
+
+## src/platform/Quality
+
+### Purpose
+
+Qualitätssicherung.
+
+### Contains
+
+Quality Gates
+
+Architecture Checks
+
+Static Analysis
+
+Coverage
+
+Code Metrics
+
+### Forbidden
+
+Business Logic
+
+---
+
+# Security
+
+## src/platform/Security
+
+### Purpose
+
+Technische Sicherheitsdienste.
+
+### Contains
+
+Security Validation
+
+Security Policies
+
+Secrets Validation
+
+IAM Integration
+
+Risk Detection
+
+### Forbidden
+
+Business Features
+
+---
+
+# Compliance
+
+## src/platform/Compliance
+
+### Purpose
+
+Compliance und Audit.
+
+### Contains
+
+Audit Reports
+
+Compliance Rules
+
+Policy Validation
+
+Risk Reports
+
+Governance Reports
+
+### Forbidden
+
+Business Logic
+
+---
+
+# Release
+
+## src/platform/Release
+
+### Purpose
+
+Release Management.
+
+### Contains
+
+Release Planning
+
+Deployment Reports
+
+Release Validation
+
+Rollback Planning
+
+### Forbidden
+
+Repository Discovery
+
+Knowledge Generation
+
+---
+
+# Shared
+
+## src/platform/Shared
+
+### Purpose
+
+Gemeinsam genutzte Infrastruktur.
+
+### Contains
+
+Shared Utilities
+
+Constants
+
+Shared Types
+
+Configuration Helpers
+
+### Forbidden
+
+Business Logic
+
+Feature Implementierungen
+
+---
+
+# Directory Ownership
+
+Jedes Verzeichnis besitzt genau einen fachlichen Eigentümer.
+
+Änderungen an einem Verzeichnis dürfen ausschließlich innerhalb seiner definierten Verantwortung erfolgen.
+
+---
+
+# Directory Expansion Rules
+
+Neue Unterverzeichnisse dürfen ausschließlich entstehen wenn
+
+- eine neue Verantwortung entsteht
+- keine bestehende Verantwortung erweitert werden kann
+- ein ADR die Erweiterung genehmigt
+
+---
+
+# Directory Validation
+
+Vor jeder Integration wird geprüft
+
+✓ Verantwortlichkeit eindeutig
+
+✓ keine doppelte Verantwortung
+
+✓ keine Architekturverletzung
+
+✓ keine unerlaubten Inhalte
+
+✓ Contract-Konformität
+
+✓ Import-Konformität
+
+---
+
+# Enterprise Rules
+
+Keine Klasse außerhalb ihrer Verantwortung.
+
+Keine Vermischung technischer und fachlicher Logik.
+
+Keine mehrfachen Implementierungen derselben Verantwortung.
+
+Keine Querverweise außerhalb der definierten Abhängigkeitsregeln.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ jede Datei einem eindeutigen Verzeichnis zugeordnet werden kann
+
+✓ keine Verantwortungsüberschneidungen existieren
+
+✓ sämtliche KI-Systeme identische Ablagestrukturen erzeugen
+
+✓ die Plattform langfristig modular erweiterbar bleibt
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 4
+
+TypeScript & Interface Contracts
+
+↓
+
+Chapter 5
+
+Enterprise Naming Contracts
+
+↓
+
+Chapter 6
+
+Dependency Contracts
+
+---
+
+# End of Chapter 3
