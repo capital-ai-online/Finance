@@ -167,7 +167,7 @@ export function Datenschutz() {
     {
       id: '1',
       title: '1. Allgemeine Hinweise & Verantwortliche Stelle',
-      content: 'Die Betreiber dieser Seiten nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend den gesetzlichen Datenschutzvorschriften (DSGVO) sowie dieser Datenschutzerklärung. Verantwortliche Stelle im Sinne des Art. 4 Abs. 7 DSGVO ist die AIFinancial GmbH.'
+      content: 'Die Betreiber dieser Seiten nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend den gesetzlichen Datenschutzvorschriften (DSGVO) sowie dieser Datenschutzerklärung. Verantwortliche Stelle im Sinne des Art. 4 Abs. 7 DSGVO ist die Capital-AI GmbH.'
     },
     {
       id: '2',
@@ -177,7 +177,7 @@ export function Datenschutz() {
     {
       id: '3',
       title: '3. Analyse-Tools & Intelligente Vorhersagen',
-      content: 'Unsere Applikation nutzt ausschließlich On-Device und hochgradig anonymisierte Backtest-Analysen. Die Berechnung von Graham-Intrinsic-Werten und Monte-Carlo Simulationen findet serverseitig ohne Speicherung von PII (Personally Identifiable Information) statt. Eine Profilerstellung, die über die von Ihnen selbst festgelegten Filter und Anlageklassen hinausgeht, erfolgt nicht.'
+      content: 'Unsere Applikation nutzt ausschließlich On-Device und hochgradig anonymisierte Backtest-Analysen. Die Berechnung von Graham-Intrinsic-Werten und Risiko-Analysen findet serverseitig ohne Speicherung von PII (Personally Identifiable Information) statt. Eine Profilerstellung, die über die von Ihnen selbst festgelegten Filter und Anlageklassen hinausgeht, erfolgt nicht.'
     },
     {
       id: '4',

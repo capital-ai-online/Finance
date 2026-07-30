@@ -129,18 +129,18 @@ export function ImpressumAgb() {
           >
             <div>
               <h3 className="text-lg font-black text-white font-display">Allgemeine Geschäftsbedingungen (AGB)</h3>
-              <p className="text-xs text-white/50 mt-1">Vertragliche Rahmenbedingungen für die Nutzung der AIFinancial Quantitative Plattform</p>
+              <p className="text-xs text-white/50 mt-1">Vertragliche Rahmenbedingungen für die Nutzung der Capital-AI Quantitative Plattform</p>
             </div>
 
             <div className="space-y-4 max-h-[260px] overflow-y-auto pr-2 scrollbar-none text-xs text-white/70 space-y-4">
               <div className="space-y-1">
                 <h4 className="font-bold text-white font-display">§ 1 Geltungsbereich und Vertragsgegenstand</h4>
-                <p className="leading-relaxed">Diese Allgemeinen Geschäftsbedingungen gelten für die Nutzung der von AIFinancial GmbH angebotenen Software-Tools, insbesondere des Screeners, der Graham Value Checks sowie der Monte-Carlo Simulationen.</p>
+                <p className="leading-relaxed">Diese Allgemeinen Geschäftsbedingungen gelten für die Nutzung der von Capital-AI GmbH angebotenen Software-Tools, insbesondere des Screeners, der Graham Value Checks sowie der Risiko-Analysen.</p>
               </div>
 
               <div className="space-y-1">
                 <h4 className="font-bold text-white font-display">§ 2 Nutzungsrechte & Lizenzierung</h4>
-                <p className="leading-relaxed">AIFinancial gewährt dem Nutzer eine zeitlich auf die Laufzeit des Abonnements beschränkte, einfache, nicht übertragbare Lizenz zur Nutzung der bereitgestellten Analysewerkzeuge zu privaten oder geschäftsmäßigen Zwecken (je nach Tarifstufe).</p>
+                <p className="leading-relaxed">Capital-AI gewährt dem Nutzer eine zeitlich auf die Laufzeit des Abonnements beschränkte, einfache, nicht übertragbare Lizenz zur Nutzung der bereitgestellten Analysewerkzeuge zu privaten oder geschäftsmäßigen Zwecken (je nach Tarifstufe).</p>
               </div>
 
               <div className="space-y-1">
@@ -150,7 +150,7 @@ export function ImpressumAgb() {
 
               <div className="space-y-1">
                 <h4 className="font-bold text-white font-display">§ 4 Haftungsausschluss & Datenintegrität</h4>
-                <p className="leading-relaxed">AIFinancial haftet nicht für Schäden, die auf fehlerhafte Analysen, fehlende Marktdaten-Aktualität oder Server-Ausfälle zurückzuführen sind. Die Software dient rein mathematischen Berechnungen und Informationszwecken.</p>
+                <p className="leading-relaxed">Capital-AI haftet nicht für Schäden, die auf fehlerhafte Analysen, fehlende Marktdaten-Aktualität oder Server-Ausfälle zurückzuführen sind. Die Software dient rein mathematischen Berechnungen und Informationszwecken.</p>
               </div>
             </div>
 

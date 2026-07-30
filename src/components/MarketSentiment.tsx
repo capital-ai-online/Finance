@@ -66,10 +66,11 @@ export function MarketSentiment({ selectedSymbol, assetClass = 'Crypto' }: Marke
 
     try {
       const response = await fetch(`/api/market-sentiment?symbol=${encodeURIComponent(selectedSymbol)}&assetClass=${encodeURIComponent(assetClass)}`);
+      const result = await response.json().catch(() => ({}));
+      
       if (!response.ok) {
-        throw new Error(`Fehler beim Laden: ${response.statusText}`);
+        throw new Error(result.error || `Fehler beim Laden (Status ${response.status})`);
       }
-      const result = await response.json();
       
       if (result.error) {
         throw new Error(result.error);

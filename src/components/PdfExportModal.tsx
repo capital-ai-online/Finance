@@ -12,6 +12,7 @@ import {
   HelpCircle,
   RefreshCw
 } from 'lucide-react';
+import { ComplianceConsentWrapper } from './ComplianceConsentModal';
 
 interface PdfExportModalProps {
   isOpen: boolean;
@@ -187,7 +188,7 @@ export function PdfExportModal({ isOpen, onClose, email, onSuccess }: PdfExportM
         {/* Content */}
         <div className="space-y-4">
           <p className="text-xs text-white/60 leading-relaxed">
-            Dieser Bericht ist Teil der exklusiven quantitativen Auswertungen von AIFinancial (Version 0.5.4).
+            Dieser Bericht ist Teil der exklusiven quantitativen Auswertungen von Capital-AI (Version 0.5.4).
           </p>
 
           {/* Credits Display */}
@@ -228,18 +229,19 @@ export function PdfExportModal({ isOpen, onClose, email, onSuccess }: PdfExportM
           {/* Action Buttons */}
           <div className="space-y-2.5 pt-2">
             {isUnlimited || credits > 0 ? (
-              <button
-                disabled={loading}
-                onClick={handleConsumeAndExport}
-                className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider bg-aif-gold-DEFAULT hover:bg-amber-500 text-black shadow-[0_0_15px_rgba(245,196,83,0.25)] flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
-              >
-                {loading ? (
-                  <RefreshCw size={14} className="animate-spin" />
-                ) : (
-                  <Check size={14} />
-                )}
-                <span>Bericht jetzt exportieren</span>
-              </button>
+              <ComplianceConsentWrapper onConfirm={handleConsumeAndExport} reportName="BaFin PDF-Export">
+                <button
+                  disabled={loading}
+                  className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider bg-aif-gold-DEFAULT hover:bg-amber-500 text-black shadow-[0_0_15px_rgba(245,196,83,0.25)] flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {loading ? (
+                    <RefreshCw size={14} className="animate-spin" />
+                  ) : (
+                    <Check size={14} />
+                  )}
+                  <span>Bericht jetzt exportieren</span>
+                </button>
+              </ComplianceConsentWrapper>
             ) : (
               <button
                 disabled={loading}

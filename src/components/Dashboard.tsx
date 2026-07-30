@@ -1827,7 +1827,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
             </div>
 
             <p className="text-xs text-white/70 leading-relaxed max-w-2xl">
-              ⚠️ Keine Anlageberatung. AIFinancial zeigt ausschließlich quantitative Berechnungsmodelle und sentimentbasierte Live-Informationen – die Anlageentscheidung trifft immer der Nutzer selbst. Kapitalverlust ist möglich. MiFID II konforme Datenanalyse-Software.
+              ⚠️ Keine Anlageberatung. Capital-AI zeigt ausschließlich quantitative Berechnungsmodelle und sentimentbasierte Live-Informationen – die Anlageentscheidung trifft immer der Nutzer selbst. Kapitalverlust ist möglich. MiFID II konforme Datenanalyse-Software.
             </p>
 
             {/* Kraken Pro Referral Card */}

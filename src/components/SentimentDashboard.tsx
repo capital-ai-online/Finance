@@ -56,7 +56,7 @@ interface SentimentData {
   sources: SentimentSource[];
 }
 
-interface ShockSimulationResult {
+interface ShockAnalysisResult {
   originalScore: number;
   newScore: number;
   impactLabel: string;
@@ -145,12 +145,12 @@ export function SentimentDashboard() {
   const [customSymbol, setCustomSymbol] = useState<string>('');
   const [customClass, setCustomClass] = useState<string>('Stock');
 
-  // Simulation states
+  // Impact analysis states
   const [simAsset, setSimAsset] = useState<string>('BTC');
   const [simClass, setSimClass] = useState<string>('Crypto');
   const [customShockText, setCustomShockText] = useState<string>('');
   const [simulating, setSimulating] = useState<boolean>(false);
-  const [simResult, setSimResult] = useState<ShockSimulationResult | null>(null);
+  const [simResult, setSimResult] = useState<ShockAnalysisResult | null>(null);
   const [simError, setSimError] = useState<string | null>(null);
 
   // Load initial preset sentiment when component mounts or activeAsset changes
@@ -163,10 +163,10 @@ export function SentimentDashboard() {
     setError(null);
     try {
       const response = await fetch(`/api/market-sentiment?symbol=${encodeURIComponent(symbol)}&assetClass=${encodeURIComponent(assetClass)}`);
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(`Fehler beim Laden der API: ${response.statusText}`);
+        throw new Error(data.error || `Fehler beim Laden der API (Status ${response.status})`);
       }
-      const data = await response.json();
       if (data.error) {
         throw new Error(data.error);
       }
@@ -197,7 +197,7 @@ export function SentimentDashboard() {
     setSimResult(null);
 
     try {
-      const response = await fetch('/api/market-sentiment/simulate-shock', {
+      const response = await fetch('/api/market-sentiment/analyze-shock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -208,7 +208,7 @@ export function SentimentDashboard() {
       });
 
       if (!response.ok) {
-        throw new Error(`Simulationsfehler: ${response.statusText}`);
+        throw new Error(`Analysefehler: ${response.statusText}`);
       }
 
       const result = await response.json();
@@ -218,8 +218,8 @@ export function SentimentDashboard() {
 
       setSimResult(result);
     } catch (err: any) {
-      console.error('Error simulating shock:', err);
-      setSimError(err.message || 'Die KI-basierte Schocksimulation ist vorübergehend fehlgeschlagen.');
+      console.error('Error analyzing shock:', err);
+      setSimError(err.message || 'Die KI-basierte Schockanalyse ist vorübergehend fehlgeschlagen.');
     } finally {
       setSimulating(false);
     }
@@ -690,7 +690,7 @@ export function SentimentDashboard() {
         </div>
       </div>
 
-      {/* Interactive What-If Sentiment Simulator Sandbox */}
+      {/* Interactive What-If Sentiment Analysis Sandbox */}
       <div className="bg-gradient-to-br from-indigo-950/20 via-black/40 to-emerald-950/10 border border-white/10 rounded-2xl p-6 backdrop-blur-md relative overflow-hidden">
         {/* Decorative ambient spots */}
         <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-indigo-500/5 blur-[80px] rounded-full -translate-y-1/2 pointer-events-none" />
@@ -702,10 +702,10 @@ export function SentimentDashboard() {
           </div>
           <div>
             <h3 className="font-display font-black text-white text-base tracking-wide uppercase">
-              CAPITAL-AI Sentiment Shock Sandbox
+              CAPITAL-AI Sentiment Shock Analysator
             </h3>
             <p className="text-[10px] text-white/50 font-mono mt-0.5">
-              Simuliere makroökonomische Extremereignisse und berechne theoretische Sentimentübertragungen auf Assets
+              Analysiere makroökonomische Extremereignisse und berechne theoretische Sentimentübertragungen auf Assets
             </p>
           </div>
         </div>
@@ -777,7 +777,7 @@ export function SentimentDashboard() {
                 className="w-full py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:from-indigo-600 hover:to-indigo-700 transition-all cursor-pointer shadow-lg shadow-indigo-950/50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Zap size={14} className={simulating ? 'animate-bounce text-aif-gold-DEFAULT' : ''} />
-                <span>{simulating ? 'KI-Simulation berechnet...' : 'Schock-Einfluss simulieren'}</span>
+                <span>{simulating ? 'KI-Analyse berechnet...' : 'Schock-Einfluss analysieren'}</span>
               </button>
             </form>
           </div>
@@ -795,8 +795,8 @@ export function SentimentDashboard() {
                 >
                   <div className="w-12 h-12 rounded-full border-4 border-indigo-500/20 border-t-indigo-400 animate-spin" />
                   <div className="space-y-1 max-w-xs">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-indigo-400">Monte Carlo Transmission</span>
-                    <p className="text-xs text-white/80 font-medium">Gemini 3.5 Flash errechnet Übertragungskanäle und Markt-Drivers...</p>
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-indigo-400">Geopolitische Transmission</span>
+                    <p className="text-xs text-white/80 font-medium">Gemini 3.5 Flash analysiert Übertragungskanäle und Markt-Drivers...</p>
                   </div>
                 </motion.div>
               ) : simError ? (
@@ -821,7 +821,7 @@ export function SentimentDashboard() {
                   <div className="flex justify-between items-start gap-4">
                     <div>
                       <span className="text-[9px] font-mono uppercase text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
-                        Simulation Erfolgreich
+                        Analyse Erfolgreich
                       </span>
                       <h4 className="font-display font-black text-white text-base tracking-wide mt-1.5 uppercase">
                         Szenario-Bericht für {simAsset}
@@ -901,9 +901,9 @@ export function SentimentDashboard() {
                     <Sliders size={20} />
                   </div>
                   <div className="space-y-1">
-                    <h5 className="text-xs font-mono uppercase text-white/60">Simulator-Ausgabe</h5>
+                    <h5 className="text-xs font-mono uppercase text-white/60">Analyse-Ausgabe</h5>
                     <p className="text-[11px] text-white/40 max-w-xs mx-auto">
-                      Bitte konfiguriere links die Parameter und starte die KI-Simulation, um Ergebnisse zu berechnen.
+                      Bitte konfiguriere links die Parameter und starte die KI-Analyse, um Ergebnisse zu berechnen.
                     </p>
                   </div>
                 </div>

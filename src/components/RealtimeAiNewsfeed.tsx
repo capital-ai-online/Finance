@@ -376,9 +376,9 @@ export function RealtimeAiNewsfeed({
   const triggerStripeCheckout = (planName: string, price: string) => {
     alert(
       `[STRIPE PAYMENTS] Leite weiter zu Stripe Checkout...\n\n` +
-      `📦 Produkt: AIFinancial ${planName} Subscription\n` +
+      `📦 Produkt: Capital-AI ${planName} Subscription\n` +
       `💰 Preis: ${price}/Monat\n` +
-      `🔗 URL: stripe.com/checkout/pay/ai_financial_secure_session\n\n` +
+      `🔗 URL: stripe.com/checkout/pay/capital_ai_secure_session\n\n` +
       `Dieser Prozess wird später über das Stripe Dashboard & Webhooks vollautomatisch verarbeitet.`
     );
     setShowCheckoutModal(false);
@@ -673,7 +673,7 @@ export function RealtimeAiNewsfeed({
                 <div className="p-3 bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT w-fit mx-auto rounded-full">
                   <Lock size={28} />
                 </div>
-                <h3 className="text-xl font-black text-white font-display">AIFinancial Premium freischalten</h3>
+                <h3 className="text-xl font-black text-white font-display">Capital-AI Premium freischalten</h3>
                 <p className="text-xs text-white/50 max-w-sm mx-auto">
                   Sie versuchen auf eine exklusive Premium-KI-Analyse zuzugreifen. Wählen Sie Ihr Abonnement für vollen Zugriff.
                 </p>

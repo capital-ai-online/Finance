@@ -589,7 +589,7 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
         </div>
 
         <p className="text-xs text-white/60 leading-relaxed mb-4">
-          Für die reale Abrechnung von AIFinancial wurde das Stripe-Protokoll vorbereitet. Der untere Code zeigt die Stripe Session-Erstellung, um Stripe Customer Portals und Webhooks für automatische API-Planänderungen zu aktivieren.
+          Für die reale Abrechnung von Capital-AI wurde das Stripe-Protokoll vorbereitet. Der untere Code zeigt die Stripe Session-Erstellung, um Stripe Customer Portals und Webhooks für automatische API-Planänderungen zu aktivieren.
         </p>
 
         {showStripeGuide && (

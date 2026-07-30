@@ -33,14 +33,14 @@ export function SubscriptionModal({ isOpen, onClose, currentTier, onUpdateTier, 
       id: 'Starter' as const,
       name: 'Starter Plan',
       price: 7,
-      badge: 'Capital-AI Basis',
-      desc: 'Erweiterte Limits und Backtests für ambitionierte Retail-Investoren.',
+      badge: '5 Screenings / Tag',
+      desc: 'Freie Nutzung des Enterprise Scorers mit täglich 5 Asset-Screenings.',
       features: [
-        '5 Screenings pro Tag',
+        'ENTERPRISE Scorer frei nutzbar (täglich 5 Screenings)',
+        'Flexible Asset-Auswahl (Krypto, Aktien, Indizes, Rohstoffe)',
         'Unbegrenzte quantitative Backtests',
-        '1 vollständige KI-Analyse pro Tag',
-        'Intelligent Score & Pattern Recognition',
-        'Standard PDF-Report-Export (Basis)'
+        'Buffett-Value & DCF Rechner',
+        'Smart Pattern Recognition & Risiko-Metriken'
       ],
       color: 'border-blue-500/30 hover:border-blue-500/50 bg-blue-500/5 text-blue-400',
       icon: Zap,
@@ -51,15 +51,14 @@ export function SubscriptionModal({ isOpen, onClose, currentTier, onUpdateTier, 
       id: 'Pro' as const,
       name: 'Pro Edition',
       price: 29,
-      badge: 'Bestseller',
-      desc: 'Detaillierte Monte-Carlo-Simulationen und tiefe KI-Insights für aktive Händler.',
+      badge: 'Bestseller (Unbegrenzt)',
+      desc: 'Unbegrenztes tägliches Asset-Screening & Realtime AI-Newsfeed.',
       features: [
-        '20 Screenings pro Tag',
-        'Unbegrenzte quantitative Backtests',
-        '1 Monte-Carlo-Simulation pro Tag',
-        'Vollständige KI-Analysen & Erklärungen',
-        'Erweiterte Watchlists & Portfolio-Analysen',
-        'Premium PDF-Reports'
+        'Realtime AI-Newsfeed (vollständig freigeschaltet)',
+        'Unbegrenztes tägliches Asset-Screening',
+        'Multi-Model AI Auto-Routing & Push-Alerts',
+        'Erweiterte Watchlists & KI-Sentiment Cockpit',
+        'Vollständige KI-Analysen & Erklärungs-Engine'
       ],
       color: 'border-aif-gold-DEFAULT/40 hover:border-aif-gold-DEFAULT/60 bg-aif-gold-DEFAULT/5 text-aif-gold-DEFAULT',
       icon: Star,
@@ -71,15 +70,14 @@ export function SubscriptionModal({ isOpen, onClose, currentTier, onUpdateTier, 
       id: 'Enterprise' as const,
       name: 'Enterprise OS',
       price: 109,
-      badge: 'Professional',
-      desc: 'Unbegrenzte Kapazitäten und buffet-style KI-Strategien für Asset Manager.',
+      badge: 'Alle Features & Exports',
+      desc: 'Formelle BaFin/DSGVO PDF- & CSV-Exports, API-Zugang und Prioritäts-Support.',
       features: [
-        'Unbegrenzte Screenings & Backtests',
-        'Unbegrenzte Monte-Carlo-Simulationen',
-        'Exklusiver Zugriff auf Buffett-Style AI',
-        'Alle KI-Agenten & priorisierte Verarbeitung',
-        'API-Zugang & Rollenverwaltung (optional)',
-        'Enterprise PDF-Export & Beta-Features'
+        'Offizielle BaFin & DSGVO PDF/CSV Exports',
+        'Realtime AI-Newsfeed & Multi-Model Engine',
+        'Unbegrenzte Screenings, Backtests & Monte-Carlo',
+        'Exklusives Buffett-Style AI Cockpit',
+        'Priorisierter 24/7 Support (support@capital-ai.online)'
       ],
       color: 'border-aif-neon-cyan/40 hover:border-aif-neon-cyan/60 bg-aif-neon-cyan/5 text-aif-neon-cyan',
       icon: Cpu,
@@ -129,10 +127,10 @@ export function SubscriptionModal({ isOpen, onClose, currentTier, onUpdateTier, 
         {/* Promo Title */}
         <div className="text-center space-y-3 mb-8">
           <h2 className="text-2xl md:text-3xl font-black text-white font-display">
-            AIFinancial Premium-Pläne
+            Capital-AI Premium-Pläne
           </h2>
           <p className="text-xs md:text-sm text-white/55 max-w-xl mx-auto leading-relaxed">
-            Schalte fortschrittliche neuronale Analysetools, unbegrenzte Backtests und exklusive KI-Module frei. Flexibel kündbar und sicher verschlüsselt.
+            Schalten Sie fortschrittliche neuronale Analysetools, unbegrenzte Backtests und exklusive KI-Module frei. Flexibel kündbar und sicher verschlüsselt.
           </p>
 
           {/* Monthly / Yearly Toggle */}
