@@ -135,7 +135,7 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
     }
   };
 
-  const handleOAuthLogin = async (provider: 'google' | 'azure' | 'github' | 'apple' | 'discord') => {
+  const handleOAuthLogin = async (provider: 'google' | 'azure' | 'github' | 'discord') => {
     setError(null);
     setSuccessMessage(null);
     if (!supabase) {
@@ -522,38 +522,23 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
             <div className="space-y-2">
               <span className="block text-[10px] font-mono text-white/40 uppercase tracking-widest text-center">Mit Social Account anmelden</span>
               
-              <div className="grid grid-cols-2 gap-2">
+              <div className="flex justify-center">
                 {/* Google OAuth Button */}
                 <button 
                   type="button"
                   disabled={loading}
                   onClick={() => handleOAuthLogin('google')}
-                  className="py-2 px-3 bg-white hover:bg-neutral-100 disabled:opacity-50 text-neutral-800 font-sans font-bold text-[10px] rounded-lg border border-neutral-300 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] cursor-pointer"
+                  className="w-full py-2.5 px-3 bg-white hover:bg-neutral-100 disabled:opacity-50 text-neutral-800 font-sans font-bold text-xs rounded-lg border border-neutral-300 transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] cursor-pointer"
                   title="Google"
                   aria-label="Mit Google anmelden"
                 >
-                  <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.53-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-8.83z" />
                     <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.11 0-5.74-2.11-6.68-4.96H1.21v3.15C3.18 21.88 7.39 24 12 24z" />
                     <path fill="#FBBC05" d="M5.32 14.24A7.16 7.16 0 0 1 5 12c0-.79.13-1.57.32-2.34V6.51H1.21A11.94 11.94 0 0 0 0 12c0 1.92.45 3.74 1.21 5.39l4.11-3.15z" />
                     <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.39 0 3.18 2.12 1.21 5.39l4.11 3.15c.94-2.85 3.57-4.96 6.68-4.96z" />
                   </svg>
-                  <span>Google</span>
-                </button>
- 
-                {/* Apple OAuth Button */}
-                <button 
-                  type="button"
-                  disabled={loading}
-                  onClick={() => handleOAuthLogin('apple')}
-                  className="py-2 px-3 bg-[#111111] hover:bg-[#222222] disabled:opacity-50 text-white font-sans font-bold text-[10px] rounded-lg border border-white/10 transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] cursor-pointer"
-                  title="Apple"
-                  aria-label="Mit Apple anmelden"
-                >
-                  <svg className="w-3.5 h-3.5 shrink-0 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-.96.04-2.13.64-2.82 1.45-.6.7-1.13 1.84-.99 2.94.1.08.2.12.31.12.87 0 1.96-.54 2.51-1.45z"/>
-                  </svg>
-                  <span>Apple</span>
+                  <span>Mit Google anmelden</span>
                 </button>
               </div>
             </div>
