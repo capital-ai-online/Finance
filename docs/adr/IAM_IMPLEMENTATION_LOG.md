@@ -52,3 +52,61 @@
 - **Offener Punkt für Prompt 2:** vor dem produktiven Deployment `npm install && npm run lint` in einer Umgebung mit Netzwerkzugriff ausführen und Ergebnis hier ergänzen.
 
 **Ende Eintrag 1. Nächster Eintrag wird von Prompt 2 (Produktion) ergänzt.**
+
+---
+
+## Eintrag 2 — Finaler Stand (Runde 1-6, Produktion, mit Supabase-DB-Zugriff)
+
+**Zeitstempel:** 2026-07-30
+**Agent/Autor:** Claude (Produktionsumgebung, mit Supabase-MCP-Zugriff)
+**Bezug:** ADR-0003.5, ADR-0008, ADR-0009
+
+Alle in Eintrag 1 offenen Punkte wurden über mehrere Runden bearbeitet:
+
+1. **`profiles`-Tabellenname/Schema verifiziert:** `public.profiles` existiert, hat
+   **keine** `email`-Spalte (die liegt in `auth.users`) - das war Ursache eines eigenen,
+   bis dahin unentdeckten Bugs (`isOwnerIdentifier()` in `server/db.ts` griff bei jeder
+   E-Mail-basierten Prüfung fälschlich auf eine Legacy-Liste zurück). Behoben: Owner-
+   Prüfung läuft ausschließlich über `profiles.id` gegen `profiles.iam_role`.
+2. **Rate-Limiting implementiert:** dependency-freier In-Memory-Limiter
+   (`server/iam/rateLimiter.ts`), zentral in `checkAdminAccess()` integriert - deckt
+   dadurch alle Admin-Zonen einheitlich ab. Bekannte Grenze: pro Prozess/Instanz, kein
+   geteilter Zustand bei horizontaler Skalierung.
+3. **Step-up-Ausstellungs-Endpunkt gebaut:** `server/stepUp.ts` - TOTP-Setup/Verifikation
+   (RFC 6238, ohne externe Dependency), Step-Up-Token-Ausstellung (`step_up_tokens`,
+   einmalig, 5 Min. gültig), Break-Glass-Recovery (`break_glass_codes`, an Supabases
+   eigenen Passwort-Reset-Flow gekoppelt, nicht als eigenständiger Auth-Bypass).
+4. **Zusätzliche hartcodierte Owner-Vergleiche behoben:** alle in Punkt 4 (Eintrag 1)
+   gelisteten Dateien wurden bereinigt (`AdminPanel.tsx`, `Dashboard.tsx`,
+   `ProfilePage.tsx`, `Abonnements.tsx`, `DocumentHygienePanel.tsx`,
+   `VersionManagerPanel.tsx`, `App.tsx`). `App.tsx` enthielt zusätzlich einen
+   automatischen Dev-Login, der über jede `*.run.app`-Domain oder eine fehlkonfigurierte
+   `NODE_ENV` ausgelöst werden konnte - jetzt auf exakten `localhost`-Hostnamen plus
+   explizites Build-Flag beschränkt.
+5. **`SicherheitsmanagementPoC.tsx` entfernt:** Tab `sicherheit_poc` und Komponente
+   vollständig aus `DocumentHygienePanel.tsx` entfernt, ersetzt durch die echte
+   Supabase-native Passkey-Integration in `src/components/ProfilePage.tsx`.
+6. **TypeScript-Prüfung weiterhin eingeschränkt:** kein Netzwerkzugriff in dieser Sandbox
+   für `npm install`/`npm run lint` - **weiterhin offener Punkt für dich**, vor jedem
+   Merge lokal/in CI zu verifizieren.
+
+**Zusätzlich in diesen Runden gefunden und behoben (nicht in Eintrag 1 antizipiert):**
+- `server/stripe.ts`: mehrere unauthentifizierte Endpunkte erlaubten IDOR (fremde
+  Abo-/Credit-Daten abfragen/verändern, beliebige Stripe-Billing-Portal-Sessions).
+- `server/orchestrator.ts`: hartcodierter Fallback-Admin-Token (`aif-admin-2026`), im
+  Frontend sogar standardmäßig vorausgefüllt; unauthentifizierter Endpunkt zum Schreiben
+  gefälschter "Compliance-Audit"-Dateien.
+- ADR-0009 (CORS-Hardening): Wildcard-artige Origin-Prüfung (`*.run.app`) ersetzt durch
+  feste Produktions-Allowlist.
+- Supabase-Stripe-Sync-Engine-Integration: ein bereits vorhandener, fehlerhafter DB-
+  Trigger (Type-Fehler + gefährlicher Pro-Default bei unbekannter Price-ID) behoben.
+- "Passwort vergessen": fehlende `PASSWORD_RECOVERY`-Event-Behandlung gefunden und
+  behoben - Funktion sendete zuvor nur die E-Mail, ohne je ein Formular zum tatsächlichen
+  Setzen eines neuen Passworts zu zeigen.
+
+**Ausdrücklich NICHT Teil dieser Runden:** ADR-0004 bis ADR-0007 (Branding, Frontend-
+Modul-Integration, Plattform-Direktor, Compliance-Wertschöpfungskette) - siehe
+`docs/adr/README.md` für den Status dieser ADRs.
+
+**Ende Eintrag 2.**
+
