@@ -4172,3 +4172,543 @@ Versioning & Release Contracts
 ---
 
 # End of Chapter 6
+---
+
+# Chapter 7
+
+# Enterprise Data Model & Metadata Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindlichen Datenmodelle, Metadaten und semantischen Strukturen des CAPITAL-AI Core.
+
+Jede Enterprise-Komponente besitzt standardisierte Metadaten.
+
+Diese Metadaten bilden die Grundlage für
+
+- Documentary Engine
+- Knowledge Engine
+- Platform Director
+- Supervisor
+- Version Manager
+- Enterprise Registry
+- AI Governance
+
+Alle Komponenten werden dadurch selbstbeschreibend.
+
+---
+
+# Mission
+
+Die Data Model & Metadata Contracts gewährleisten
+
+- eine einheitliche Datenstruktur
+- automatische Dokumentation
+- automatische Discovery
+- automatische Versionierung
+- Knowledge Graph Integration
+- Impact Analysen
+- Architekturtransparenz
+- AI-Kompatibilität
+
+---
+
+# Enterprise Principle
+
+Jede Komponente besitzt Metadaten.
+
+Jede Metadatenstruktur besitzt einen Contract.
+
+Alle Plattforminformationen sind maschinenlesbar.
+
+---
+
+# Metadata Architecture
+
+Jede Enterprise-Komponente besitzt mindestens
+
+README.md
+
+manifest.json
+
+component.yaml
+
+CHANGELOG.md
+
+ADR.md
+
+Optional
+
+LICENSE
+
+ROADMAP.md
+
+TESTING.md
+
+---
+
+# Enterprise Metadata
+
+Jede Komponente beschreibt mindestens
+
+Name
+
+Beschreibung
+
+Version
+
+Status
+
+Owner
+
+Kategorie
+
+ESS Referenzen
+
+ADR Referenzen
+
+Abhängigkeiten
+
+Events
+
+Interfaces
+
+Contracts
+
+Lifecycle
+
+Health
+
+Quality
+
+Security
+
+Dokumentation
+
+---
+
+# Manifest Contract
+
+manifest.json dient als primäre maschinenlesbare Beschreibung.
+
+Pflichtfelder
+
+name
+
+version
+
+status
+
+owner
+
+description
+
+category
+
+dependencies
+
+interfaces
+
+contracts
+
+events
+
+knowledge
+
+documentation
+
+---
+
+# Component Contract
+
+component.yaml dient als
+
+menschenlesbare
+
+KI-lesbare
+
+Enterprise-Komponentenbeschreibung.
+
+Die YAML-Datei besitzt denselben Informationsumfang wie manifest.json.
+
+---
+
+# README Contract
+
+README.md beschreibt
+
+Zweck
+
+Verantwortung
+
+Architektur
+
+Abhängigkeiten
+
+Integration
+
+Beispiele
+
+ESS Referenzen
+
+---
+
+# CHANGELOG Contract
+
+Alle Änderungen werden dokumentiert.
+
+Mindestens
+
+Version
+
+Datum
+
+Beschreibung
+
+Breaking Changes
+
+Autor
+
+---
+
+# ADR Contract
+
+Jede Komponente verweist auf alle relevanten ADRs.
+
+Breaking Changes müssen dokumentiert werden.
+
+---
+
+# Metadata Ownership
+
+Jede Komponente besitzt genau einen fachlichen Owner.
+
+Der Owner ist verantwortlich für
+
+Qualität
+
+Dokumentation
+
+Versionierung
+
+ADR Pflege
+
+---
+
+# Enterprise Registry
+
+Alle Komponenten werden automatisch registriert.
+
+Die Registry enthält mindestens
+
+Komponentenname
+
+Version
+
+Kategorie
+
+Owner
+
+Status
+
+Layer
+
+ESS Referenzen
+
+ADR Referenzen
+
+Abhängigkeiten
+
+Health Status
+
+---
+
+# Knowledge Graph Contract
+
+Alle Komponenten werden automatisch Teil des Knowledge Graph.
+
+Knoten
+
+Komponenten
+
+Dokumente
+
+Interfaces
+
+Events
+
+ADRs
+
+ESS
+
+Repositories
+
+Edges
+
+verwendet
+
+implementiert
+
+erzeugt
+
+abhängig von
+
+dokumentiert
+
+versioniert
+
+überwacht
+
+---
+
+# Metadata Synchronisation
+
+Die Documentary Engine synchronisiert automatisch
+
+README
+
+manifest.json
+
+component.yaml
+
+Registry
+
+Knowledge Graph
+
+---
+
+# Lifecycle Contract
+
+Jede Komponente besitzt einen Lifecycle.
+
+Mindestens
+
+Development
+
+Experimental
+
+Beta
+
+Stable
+
+Deprecated
+
+Archived
+
+Retired
+
+---
+
+# Health Contract
+
+Jede Komponente besitzt einen Health Status.
+
+Beispiele
+
+Healthy
+
+Warning
+
+Critical
+
+Deprecated
+
+Unknown
+
+---
+
+# Quality Contract
+
+Qualitätsmetriken
+
+Dokumentation
+
+Testabdeckung
+
+Codequalität
+
+Architecture Score
+
+Security Score
+
+Documentation Score
+
+Knowledge Score
+
+---
+
+# Security Metadata
+
+Jede Komponente beschreibt
+
+Security Classification
+
+Sensitivity
+
+Compliance
+
+Audit Status
+
+Encryption
+
+---
+
+# AI Metadata
+
+Jede Komponente beschreibt zusätzlich
+
+AI Owner
+
+AI Generated
+
+AI Reviewed
+
+AI Validated
+
+AI Compatible
+
+Supported AI Systems
+
+Claude Code
+
+Google AI Studio
+
+ChatGPT
+
+Future Enterprise AI
+
+---
+
+# Repository Contract
+
+Alle Komponenten besitzen eine eindeutige Repository-Zuordnung.
+
+Beispiele
+
+Finance
+
+Finance-Dev
+
+Platform
+
+Shared
+
+---
+
+# Semantic Version Contract
+
+Metadaten besitzen dieselbe Version wie die Komponente.
+
+Versionen müssen synchron bleiben.
+
+---
+
+# Automatic Discovery
+
+Neue Komponenten werden automatisch erkannt.
+
+Die Documentary Engine erzeugt automatisch
+
+README
+
+Registry
+
+Knowledge Nodes
+
+Metadata
+
+Architecture Reports
+
+---
+
+# Validation
+
+Vor jeder Integration wird geprüft
+
+✓ manifest.json vorhanden
+
+✓ component.yaml vorhanden
+
+✓ README vorhanden
+
+✓ CHANGELOG vorhanden
+
+✓ ADR Referenzen vorhanden
+
+✓ Owner definiert
+
+✓ Version vorhanden
+
+✓ ESS Referenzen vorhanden
+
+✓ Layer definiert
+
+✓ Health Status vorhanden
+
+✓ Security Metadata vorhanden
+
+✓ Quality Metadata vorhanden
+
+✓ AI Metadata vorhanden
+
+---
+
+# Enterprise Rules
+
+Keine Enterprise-Komponente darf ohne Metadaten existieren.
+
+Metadaten gelten als Bestandteil des Quellcodes.
+
+Alle Änderungen an Metadaten werden versioniert.
+
+Die Documentary Engine ist die führende Instanz für Metadaten.
+
+Der Knowledge Graph wird ausschließlich aus validierten Metadaten aufgebaut.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ sämtliche Komponenten vollständig beschrieben sind
+
+✓ sämtliche Metadaten synchron sind
+
+✓ automatische Discovery funktioniert
+
+✓ Knowledge Graph automatisch erzeugt werden kann
+
+✓ Documentary sämtliche Komponenten dokumentieren kann
+
+✓ Platform Director sämtliche Komponenten verwalten kann
+
+✓ Supervisor sämtliche Komponenten überwachen kann
+
+✓ Version Manager sämtliche Änderungen bewerten kann
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 8
+
+Enterprise Event & Messaging Contracts
+
+↓
+
+Chapter 9
+
+Enterprise Versioning & Release Contracts
+
+↓
+
+Chapter 10
+
+Enterprise AI Governance & Documentary Contracts
+
+---
+
+# End of Chapter 7
