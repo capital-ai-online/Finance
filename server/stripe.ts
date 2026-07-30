@@ -2,13 +2,13 @@ import express from 'express';
 import Stripe from 'stripe';
 import { getCleanEnv } from './env';
 import {
-  saveSubscription,
   getSubscription,
   getLocalPdfCredits,
   saveLocalPdfCredits,
   isSupabaseConfigured
 } from './db';
 import { resolveVerifiedIdentity } from './iam/authMiddleware';
+import { sendMail, buildSubscriptionActivatedEmail } from './mailer';
 
 export const stripeRouter = express.Router();
 
@@ -415,26 +415,33 @@ export const handleWebhookEvent = async (event: Stripe.Event) => {
         saveLocalPdfCredits(identifier, newCredits);
         console.log(`✅ [Webhook Router] PDF Export Purchase complete for ${identifier}. Added 3 credits (total: ${newCredits}).`);
       } else {
-        await saveSubscription(userId, planId, email);
-        console.log(`✅ [Webhook Router] User ID ${userId} (${email}) successfully upgraded to ${planId}`);
+        // Der eigentliche Abo-Tarif wird NICHT mehr hier gesetzt - das übernimmt
+        // seit der Supabase-Stripe-Synchronisation der DB-Trigger
+        // sync_stripe_subscription_to_public() auf stripe.subscriptions (Single
+        // Source of Truth, siehe COMPLIANCE_REVIEW.md). Dieser Zweig löst nur noch
+        // die Aktivierungs-E-Mail aus - fire-and-forget, blockiert die
+        // Webhook-Antwort nicht und lässt sie bei Fehlschlag nicht scheitern.
+        console.log(`✅ [Webhook Router] Checkout abgeschlossen für ${userId} (${email}), Plan ${planId}. Tarif-Synchronisation läuft über stripe.subscriptions-Trigger.`);
+        if (email) {
+          const { subject, html } = buildSubscriptionActivatedEmail(planId, email);
+          sendMail({ to: email, subject, html }).catch((err) => {
+            console.error('[Webhook Router] Aktivierungs-E-Mail fehlgeschlagen:', err);
+          });
+        }
       }
     } else {
       console.warn('⚠️ [Webhook Router] checkout.session.completed received but missing user_id or plan_id in metadata:', session.metadata);
     }
-  } else if (event.type === 'customer.subscription.updated') {
-    const subscription = event.data.object as Stripe.Subscription;
-    const userId = subscription.metadata?.user_id || subscription.metadata?.userId;
-    const email = subscription.metadata?.email || '';
-    const planId = subscription.metadata?.plan_id || subscription.metadata?.planId;
-    if (userId && planId) {
-      await saveSubscription(userId, planId, email);
-    }
-  } else if (event.type === 'customer.subscription.deleted') {
-    const subscription = event.data.object as Stripe.Subscription;
-    const userId = subscription.metadata?.user_id || subscription.metadata?.userId;
-    const email = subscription.metadata?.email || '';
-    if (userId) {
-      await saveSubscription(userId, 'Free', email);
-    }
   }
+  // customer.subscription.updated / customer.subscription.deleted werden nicht mehr
+  // hier verarbeitet. Diese Zweige riefen zuvor saveSubscription() mit
+  // subscription.metadata.user_id auf - das erforderte, dass Stripe-Metadata
+  // zuverlässig auf das Subscription-Objekt propagiert wird, was insbesondere bei
+  // manuell im Dashboard geänderten Abos (z.B. Coupon nachträglich angewendet)
+  // nicht garantiert war und zu der stillen "public.subscriptions bleibt auf Free"-
+  // Diskrepanz führte (siehe Compliance-Review). Die Supabase-Stripe-Synchronisation
+  // (Edge Function -> stripe.subscriptions -> Trigger sync_stripe_subscription_to_public())
+  // ist jetzt die alleinige, zuverlässigere Quelle für Tarif-Änderungen und
+  // Kündigungen. Dieser Express-Webhook bleibt nur noch für Checkout-Abschluss
+  // (PDF-Credits, Aktivierungs-E-Mail) zuständig.
 };
