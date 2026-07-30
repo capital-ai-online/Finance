@@ -3727,3 +3727,448 @@ Event & Messaging Contracts
 ---
 
 # End of Chapter 5
+---
+
+# Chapter 6
+
+# Dependency & Layer Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindlichen Abhängigkeits- und Layer-Regeln des CAPITAL-AI Core.
+
+Alle Komponenten kommunizieren ausschließlich über definierte Contracts und Interfaces.
+
+Zyklische Abhängigkeiten, unkontrollierte Kopplungen und Architekturverletzungen sind nicht zulässig.
+
+Die Layer Contracts bilden die technische Governance der gesamten Plattform.
+
+---
+
+# Mission
+
+Die Dependency & Layer Contracts gewährleisten
+
+- eindeutige Architekturgrenzen
+- lose Kopplung
+- hohe Wartbarkeit
+- deterministische Codegenerierung
+- kontrollierte Erweiterbarkeit
+- automatische Architekturvalidierung
+- reproduzierbare Enterprise-Strukturen
+
+---
+
+# Enterprise Principle
+
+Jede Abhängigkeit besitzt eine Richtung.
+
+Eine Komponente kennt ausschließlich ihre erlaubten Nachbarn.
+
+Architekturgrenzen dürfen niemals umgangen werden.
+
+---
+
+# Layer Architecture
+
+Der CAPITAL-AI Core folgt einer festen Layer-Hierarchie.
+
+```text
+Platform Director
+        │
+Supervisor
+        │
+Version Manager
+        │
+Documentary
+        │
+Knowledge
+        │
+Discovery
+        │
+Registry
+        │
+Shared
+        │
+Core
+```
+
+Abhängigkeiten verlaufen ausschließlich von oben nach unten.
+
+---
+
+# Core Layer
+
+## Purpose
+
+Der Core bildet das technische Fundament der Plattform.
+
+### Responsibilities
+
+- Basisklassen
+- Interfaces
+- Events
+- Errors
+- Lifecycle
+- Logging
+- Telemetry
+- Utilities
+
+### Allowed Dependencies
+
+keine Plattformkomponenten
+
+nur TypeScript Standardbibliothek
+
+---
+
+# Shared Layer
+
+## Purpose
+
+Gemeinsam genutzte Infrastruktur.
+
+### Allowed Dependencies
+
+Core
+
+---
+
+# Registry Layer
+
+## Purpose
+
+Registrierung aller Plattformobjekte.
+
+### Allowed Dependencies
+
+Core
+
+Shared
+
+---
+
+# Discovery Layer
+
+## Purpose
+
+Analyse und Erkennung neuer Komponenten.
+
+### Allowed Dependencies
+
+Core
+
+Shared
+
+Registry
+
+---
+
+# Knowledge Layer
+
+## Purpose
+
+Zentrale Wissensbasis.
+
+### Allowed Dependencies
+
+Core
+
+Shared
+
+Registry
+
+Discovery
+
+---
+
+# Documentary Layer
+
+## Purpose
+
+Automatische Dokumentation.
+
+### Allowed Dependencies
+
+Core
+
+Shared
+
+Registry
+
+Discovery
+
+Knowledge
+
+---
+
+# Version Manager Layer
+
+## Purpose
+
+Versionierung und Release Management.
+
+### Allowed Dependencies
+
+Core
+
+Shared
+
+Registry
+
+Knowledge
+
+Documentary
+
+---
+
+# Supervisor Layer
+
+## Purpose
+
+Monitoring und Governance.
+
+### Allowed Dependencies
+
+alle darunterliegenden Layer
+
+---
+
+# Platform Director Layer
+
+## Purpose
+
+Strategische Orchestrierung der gesamten Plattform.
+
+### Allowed Dependencies
+
+alle Plattformkomponenten
+
+---
+
+# Dependency Rules
+
+Eine Komponente darf ausschließlich
+
+- ihre eigene Komponente
+- niedrigere Layer
+- öffentliche Enterprise Interfaces
+
+verwenden.
+
+---
+
+# Forbidden Dependencies
+
+Nicht zulässig sind
+
+- zyklische Abhängigkeiten
+- gegenseitige Komponentenreferenzen
+- direkte Zugriffe auf interne Klassen anderer Komponenten
+- Umgehung definierter Layer
+- Import privater Komponenten
+
+---
+
+# Communication Rules
+
+Komponenten kommunizieren ausschließlich über
+
+- öffentliche Interfaces
+- Events
+- Registries
+- Contracts
+
+Direkte Implementierungsabhängigkeiten sind zu vermeiden.
+
+---
+
+# Event Communication
+
+Asynchrone Kommunikation erfolgt ausschließlich über Enterprise Events.
+
+Events dürfen keine Geschäftslogik enthalten.
+
+---
+
+# Interface Communication
+
+Komponentenübergreifende Kommunikation erfolgt ausschließlich über
+
+src/platform/Interfaces/
+
+Interne Interfaces dürfen nicht verwendet werden.
+
+---
+
+# Plugin Dependencies
+
+Plugins besitzen keine direkten Abhängigkeiten auf Plattformkomponenten.
+
+Sie kommunizieren ausschließlich über
+
+- Contracts
+- Interfaces
+- Events
+
+---
+
+# Documentary Integration
+
+Die Documentary Engine analysiert automatisch
+
+- Abhängigkeiten
+- Layer
+- Architekturverletzungen
+- zyklische Referenzen
+- verbotene Imports
+- neue Komponenten
+
+---
+
+# Supervisor Integration
+
+Der Supervisor überwacht
+
+- Dependency Violations
+- Layer Violations
+- Import Violations
+- Event Violations
+
+---
+
+# Platform Director Integration
+
+Der Platform Director entscheidet über
+
+- neue Layer
+- neue Komponenten
+- Architekturänderungen
+- Layer-Erweiterungen
+
+Alle Änderungen benötigen einen ADR.
+
+---
+
+# Version Manager Integration
+
+Der Version Manager bewertet
+
+- Breaking Changes
+- Layer-Änderungen
+- Interface-Änderungen
+- Dependency-Änderungen
+
+und empfiehlt automatisch
+
+Major
+
+Minor
+
+Patch
+
+Versionen.
+
+---
+
+# AI Compatibility Contract
+
+Alle KI-Systeme müssen diese Layer-Struktur unverändert einhalten.
+
+Eigene Architekturentscheidungen sind nicht zulässig.
+
+Neue Layer dürfen ausschließlich
+
+- dokumentiert
+- begründet
+- per ADR freigegeben
+
+werden.
+
+---
+
+# Validation
+
+Vor jeder Integration wird geprüft
+
+✓ keine zyklischen Abhängigkeiten
+
+✓ Layer-Regeln eingehalten
+
+✓ ausschließlich erlaubte Imports
+
+✓ öffentliche Interfaces verwendet
+
+✓ Event Contracts eingehalten
+
+✓ Dependency Contracts erfüllt
+
+✓ Architecture Contracts erfüllt
+
+✓ Documentary kompatibel
+
+✓ Supervisor kompatibel
+
+✓ Platform Director kompatibel
+
+✓ Version Manager kompatibel
+
+---
+
+# Enterprise Rules
+
+Keine Komponente darf höhere Layer referenzieren.
+
+Keine interne Implementierung anderer Komponenten darf direkt verwendet werden.
+
+Alle Komponenten kommunizieren ausschließlich über definierte Enterprise Contracts.
+
+Layer-Verletzungen gelten als Architekturfehler.
+
+Breaking Changes der Layer-Struktur benötigen einen ADR.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ sämtliche Komponenten eindeutig einem Layer zugeordnet sind
+
+✓ keine Architekturverletzungen existieren
+
+✓ alle Abhängigkeiten deterministisch sind
+
+✓ Documentary sämtliche Layer automatisch analysieren kann
+
+✓ Supervisor Architekturverletzungen erkennt
+
+✓ Platform Director die gesamte Plattform orchestrieren kann
+
+✓ Version Manager Änderungen korrekt klassifizieren kann
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 7
+
+Enterprise Data Model & Metadata Contracts
+
+↓
+
+Chapter 8
+
+Event & Messaging Contracts
+
+↓
+
+Chapter 9
+
+Versioning & Release Contracts
+
+---
+
+# End of Chapter 6
