@@ -49,9 +49,15 @@ export function ImpressumAgb() {
               <p className="text-xs text-white/50 mt-1">Verantwortlich für den Inhalt dieses Telemediendienstes</p>
             </div>
 
+            <div className="bg-white/5 border border-white/10 p-3 rounded-xl text-[11px] text-white/60 leading-relaxed">
+              Dieses Angebot wird von einer Privatperson betrieben (kein eingetragenes Unternehmen,
+              keine Gesellschaftsform). Es handelt sich um ein privates, nicht-kommerzielles Projekt
+              ohne laufende Umsätze.
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4 bg-white/5 p-4 rounded-xl border border-white/5">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-aif-gold-DEFAULT font-mono">Unternehmenssitz</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-aif-gold-DEFAULT font-mono">Angaben zur Person</h4>
                 <div className="space-y-3 text-xs">
                   <div className="flex items-center gap-3 text-white/80">
                     <MapPin size={16} className="text-white/40 shrink-0" />
@@ -65,7 +71,7 @@ export function ImpressumAgb() {
                     <div className="flex items-center gap-3">
                       <Mail size={16} className="text-violet-400 shrink-0" />
                       <div>
-                        <span className="text-[10px] font-mono text-white/40 block leading-none">Direktkontakt (Geschäftlich)</span>
+                        <span className="text-[10px] font-mono text-white/40 block leading-none">Kontakt</span>
                         <span className="font-mono">sven.kulessa@capital-ai.online</span>
                       </div>
                     </div>
@@ -85,10 +91,11 @@ export function ImpressumAgb() {
               </div>
 
               <div className="space-y-4 bg-white/5 p-4 rounded-xl border border-white/5 text-xs text-white/70 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-aif-gold-DEFAULT font-mono">Regulatorische Angaben</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-aif-gold-DEFAULT font-mono">Rechtlicher Status</h4>
                 <div className="space-y-2 leading-relaxed">
-                  <p><strong className="text-white">Vertretungsberechtigte Geschäftsführer:</strong> Sven Michael Kulessa</p>
-                  <p><strong className="text-white">Zuständige Aufsichtsbehörde:</strong> Bundesanstalt für Finanzdienstleistungsaufsicht (BaFin), Marie-Curie-Straße 24-28, 60439 Frankfurt am Main</p>
+                  <p><strong className="text-white">Betreiber:</strong> Sven Michael Kulessa (Privatperson, kein eingetragenes Unternehmen)</p>
+                  <p><strong className="text-white">Umsatzsteuer:</strong> Es wird derzeit keine Umsatzsteuer ausgewiesen (kein laufender Geschäftsbetrieb).</p>
+                  <p className="text-white/50">Die bereitgestellten Werkzeuge dienen ausschließlich Informations- und Berechnungszwecken (siehe Haftungsausschluss unten) und stellen keine lizenzierte Finanzdienstleistung dar.</p>
                 </div>
               </div>
             </div>
@@ -135,7 +142,7 @@ export function ImpressumAgb() {
             <div className="space-y-4 max-h-[260px] overflow-y-auto pr-2 scrollbar-none text-xs text-white/70 space-y-4">
               <div className="space-y-1">
                 <h4 className="font-bold text-white font-display">§ 1 Geltungsbereich und Vertragsgegenstand</h4>
-                <p className="leading-relaxed">Diese Allgemeinen Geschäftsbedingungen gelten für die Nutzung der von Capital-AI GmbH angebotenen Software-Tools, insbesondere des Screeners, der Graham Value Checks sowie der Risiko-Analysen.</p>
+                <p className="leading-relaxed">Diese Allgemeinen Geschäftsbedingungen gelten für die Nutzung der von Sven Michael Kulessa (Privatperson, kein eingetragenes Unternehmen) unter der Bezeichnung "Capital-AI" angebotenen Software-Tools, insbesondere des Screeners, der Graham Value Checks sowie der Risiko-Analysen.</p>
               </div>
 
               <div className="space-y-1">
