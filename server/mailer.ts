@@ -1,7 +1,8 @@
 // SMTP-Mailer fuer transaktionale System-E-Mails (z.B. Abo-Aktivierung).
-// Nutzt das eigene SMTP-Konto (support@capital-ai.online) statt eines Drittanbieter-
-// E-Mail-API-Dienstes, wie gewuenscht. Alle Zugangsdaten ausschliesslich ueber
-// Umgebungsvariablen, niemals hartcodiert.
+// Nutzt nodemailer (etablierte, battle-tested Standard-Bibliothek fuer Node.js SMTP -
+// Auth-Mechanismus-Aushandlung, Multiline-Response-Handling, Provider-Eigenheiten sind
+// dort bereits ueber Jahre gegen reale SMTP-Server gehaertet) statt einer eigenen
+// Protokoll-Implementierung. Alle Zugangsdaten ausschliesslich ueber Umgebungsvariablen.
 
 import nodemailer from 'nodemailer';
 import { getCleanEnv } from './env';
@@ -18,7 +19,7 @@ function getTransporter() {
     transporter = nodemailer.createTransport({
       host: getCleanEnv('SMTP_HOST'),
       port,
-      // Port 465 = implizites TLS von Anfang an; 587/25 = STARTTLS nach Verbindungsaufbau.
+      // Port 465 = implizites TLS von Anfang an; 587 = STARTTLS nach Verbindungsaufbau.
       secure: port === 465,
       auth: {
         user: getCleanEnv('SMTP_USER'),

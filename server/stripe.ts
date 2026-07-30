@@ -428,6 +428,25 @@ export const handleWebhookEvent = async (event: Stripe.Event) => {
             console.error('[Webhook Router] Aktivierungs-E-Mail fehlgeschlagen:', err);
           });
         }
+        // Interne Benachrichtigung an den Owner bei jedem abgeschlossenen Abo,
+        // unabhängig davon ob die Kunden-Mail oben erfolgreich war oder nicht.
+        sendMail({
+          to: 'sven.kulessa@gmail.com',
+          subject: `Neues Abo aktiviert: ${planId} (${email || userId})`,
+          html: `
+            <div style="font-family: sans-serif;">
+              <h3>Neue Abo-Aktivierung</h3>
+              <ul>
+                <li><strong>Plan:</strong> ${planId}</li>
+                <li><strong>E-Mail:</strong> ${email || '(unbekannt)'}</li>
+                <li><strong>User-ID:</strong> ${userId}</li>
+                <li><strong>Stripe Checkout Session:</strong> ${session.id}</li>
+              </ul>
+            </div>
+          `,
+        }).catch((err) => {
+          console.error('[Webhook Router] Interne Owner-Benachrichtigung fehlgeschlagen:', err);
+        });
       }
     } else {
       console.warn('⚠️ [Webhook Router] checkout.session.completed received but missing user_id or plan_id in metadata:', session.metadata);
