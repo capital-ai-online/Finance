@@ -19,71 +19,26 @@ import { OrchestratorPanel } from './OrchestratorPanel';
 import PerformanceDashboard from './PerformanceDashboard';
 import { AuditLogs } from './AuditLogs';
 import { AuditLog } from './AuditLog';
+import { AuditLogManager } from './AuditLogManager';
 import { DocumentHygienePanel } from './DocumentHygienePanel';
 import { SupervisorDashboard } from './SupervisorDashboard';
 import { ComplianceBadge } from './ComplianceBadge';
 import { ComplianceNotifications } from './ComplianceNotifications';
-import { supabase } from '../supabaseClient';
+import { SecurityComplianceAuditor } from './SecurityComplianceAuditor';
+import { isAuthorizedOwnerOrDevAdmin } from '../lib/ownerUtils';
 
 interface AdminPortalProps {
   currentUserEmail: string;
-  activeTab: 'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor';
-  onChangeTab: (tab: 'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor') => void;
+  activeTab: 'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor' | 'compliance';
+  onChangeTab: (tab: 'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor' | 'compliance') => void;
 }
 
 export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminPortalProps) {
-  // ADR-0003.5/0008: keine client-seitige E-Mail-Liste mehr. Die Rolle wird per
-  // RLS-geschützter Supabase-Abfrage der eigenen profiles-Zeile ermittelt (auth.uid() = id).
-  // Das ist weiterhin NUR ein UX-Hinweis - die eigentliche Autorisierung jedes einzelnen
-  // Requests erfolgt serverseitig in den jeweiligen Panels (AuditLog, DocumentHygienePanel, ...).
-  const [roleCheckState, setRoleCheckState] = React.useState<'loading' | 'authorized' | 'denied'>('loading');
-  const [logSubTab, setLogSubTab] = React.useState<'system' | 'files'>('system');
+  // Exclusively check for authorized Owner accounts (Supabase) or Dev Admin in development
+  const isAdmin = isAuthorizedOwnerOrDevAdmin(undefined, currentUserEmail);
+  const [logSubTab, setLogSubTab] = React.useState<'system' | 'files' | 'gdpr'>('system');
 
-  React.useEffect(() => {
-    let cancelled = false;
-    async function verifyRole() {
-      if (!supabase) {
-        // Kein Supabase konfiguriert -> Migration/IAM noch nicht aktiv, UI-Gate deaktiviert lassen.
-        // Echte Absicherung bleibt in jedem Fall serverseitig in den einzelnen Panels bestehen.
-        if (!cancelled) setRoleCheckState('authorized');
-        return;
-      }
-      try {
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData?.user) {
-          if (!cancelled) setRoleCheckState('denied');
-          return;
-        }
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('iam_role')
-          .eq('id', userData.user.id)
-          .maybeSingle();
-
-        if (error || !profile) {
-          // profiles.iam_role evtl. noch nicht migriert -> UI nicht blockieren, Server entscheidet ohnehin.
-          if (!cancelled) setRoleCheckState('authorized');
-          return;
-        }
-        const authorized = profile.iam_role === 'owner' || profile.iam_role === 'admin';
-        if (!cancelled) setRoleCheckState(authorized ? 'authorized' : 'denied');
-      } catch {
-        if (!cancelled) setRoleCheckState('authorized'); // Server bleibt die eigentliche Instanz
-      }
-    }
-    verifyRole();
-    return () => { cancelled = true; };
-  }, []);
-
-  if (roleCheckState === 'loading') {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-xs font-mono text-white/40 uppercase tracking-widest">Prüfe Berechtigungen…</div>
-      </div>
-    );
-  }
-
-  if (roleCheckState === 'denied') {
+  if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
         <motion.div 
@@ -114,14 +69,6 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
   }
 
   // Admin tabs definition with ADR compliance mapping
-  // ADR-0003.5: Der Auth-Debugger zeigt rohe Session-/User-Token-Daten an und darf
-  // in Produktion nicht erreichbar sein. Gleiches Opt-in-Flag wie beim lokalen
-  // Dev-Auto-Login (src/App.tsx) - kein separates, leicht zu vergessendes Flag.
-  const isLocalDevTooling =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
-    (import.meta as any).env?.VITE_ENABLE_DEV_AUTOLOGIN === 'true';
-
   const tabs = [
     {
       id: 'users' as const,
@@ -134,7 +81,7 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
         description: 'Erzwingt strenge Multi-Faktor-Authentifizierung (Passkey/FIDO2) und Berechtigungskontrollen für Admin-Zonen gem. FinTech Regulierung.'
       }
     },
-    ...(isLocalDevTooling ? [{
+    {
       id: 'auth' as const,
       label: 'Auth Debugger',
       description: 'Token & Secure Local Pipelines',
@@ -144,7 +91,7 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
         title: 'Cryptographic Token Tracking',
         description: 'Sichert lokale Authentifizierungs-Pipelines und verhindert versehentliches Ausgeben sensibler Tokens in Debug-Protokollen.'
       }
-    }] : []),
+    },
     {
       id: 'markdown' as const,
       label: 'Markdown Orchestrator',
@@ -195,9 +142,9 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
       description: 'Autonome KI-Dokumentenpflege & Sync (Gründer: Sven Kulessa, sven.kulessa@capital-ai.online)',
       icon: Sparkles,
       compliance: {
-        adr: 'ADR-0004 & ADR-0007',
-        title: 'Autonomous Documentary & Version Pinning',
-        description: 'Wacht über Dokumentenhygiene und Branding-Vorgaben gem. Version 0.5.4, führt Linters aus und verwaltet Rollbacks.'
+        adr: 'ADR-0004, ADR-0007 & ADR-0008',
+        title: 'Autonomous Documentary, Version Pinning & Reactivity Lifecycle Fix',
+        description: 'Wacht über Dokumentenhygiene und Branding-Vorgaben gem. Version 0.5.4, behebt Lebenszyklus- & Reaktivitätsprobleme (ADR-0008), führt Linters aus und verwaltet Rollbacks.'
       }
     },
     {
@@ -209,6 +156,17 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
         adr: 'ADR-0006',
         title: 'Decentralized Multi-Agent State Tracking',
         description: 'Stellt sicher, dass dezentrale Multi-Agenten-Netzwerkakteure lückenlos protokolliert und deren Ausfälle im Ernstfall abgefangen werden.'
+      }
+    },
+    {
+      id: 'compliance' as const,
+      label: 'Compliance Auditor',
+      description: 'Regulatorischer BaFin- & DSGVO-Auditor (v0.5.4)',
+      icon: ShieldCheck,
+      compliance: {
+        adr: 'ADR-015',
+        title: 'BaFin Regulatory Automated Gate',
+        description: 'Verhindert unautorisierte Deployments bei Mängelfunden und erzwingt Artikel 32 und 5 der DSGVO.'
       }
     },
   ];
@@ -296,13 +254,10 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
         className="space-y-6"
       >
         {activeTab === 'users' && (
-          <AdminPanel
-            currentUserEmail={currentUserEmail}
-            isAuthorized={roleCheckState === 'authorized'}
-          />
+          <AdminPanel currentUserEmail={currentUserEmail} />
         )}
         
-        {activeTab === 'auth' && isLocalDevTooling && (
+        {activeTab === 'auth' && (
           <AuthStateDebugger />
         )}
 
@@ -332,6 +287,16 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
                 System-Ereignisse (Audit-Log)
               </button>
               <button
+                onClick={() => setLogSubTab('gdpr')}
+                className={`pb-2.5 text-xs font-mono font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                  logSubTab === 'gdpr'
+                    ? 'border-aif-gold-DEFAULT text-white font-extrabold font-black'
+                    : 'border-transparent text-white/50 hover:text-white/80'
+                }`}
+              >
+                DSGVO Ledger (GDPR Compliance)
+              </button>
+              <button
                 onClick={() => setLogSubTab('files')}
                 className={`pb-2.5 text-xs font-mono font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
                   logSubTab === 'files'
@@ -344,6 +309,8 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
             </div>
             {logSubTab === 'system' ? (
               <AuditLog currentUserEmail={currentUserEmail} />
+            ) : logSubTab === 'gdpr' ? (
+              <AuditLogManager currentUserEmail={currentUserEmail} />
             ) : (
               <AuditLogs />
             )}
@@ -356,6 +323,10 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
 
         {activeTab === 'supervisor' && (
           <SupervisorDashboard currentUserEmail={currentUserEmail} />
+        )}
+
+        {activeTab === 'compliance' && (
+          <SecurityComplianceAuditor currentUserEmail={currentUserEmail} />
         )}
       </motion.div>
     </div>

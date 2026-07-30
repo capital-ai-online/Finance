@@ -41,6 +41,7 @@ import {
   recordScreening, 
   STARTER_DAILY_LIMIT 
 } from '../lib/dailyScreeningTracker';
+import { isAuthorizedOwnerOrDevAdmin } from '../lib/ownerUtils';
 import { 
   SCORING_WEIGHTS, 
   DECISION_THRESHOLDS, 
@@ -382,6 +383,9 @@ export function CryptoScoringEnterprise({
   const isFreeUser = effectiveTier === 'Free';
   const isStarterUser = effectiveTier === 'Starter';
   const isLimitedTier = isFreeUser || isStarterUser;
+
+  // Verify access for Owner accounts (Supabase) and Dev Admin (Development)
+  const isAuthorizedForAgentControl = isAuthorizedOwnerOrDevAdmin(userSession, userSession?.email);
 
   // Track daily screenings count reactively
   const [dailyCount, setDailyCount] = useState<number>(() => getDailyScreeningCount());
@@ -1668,7 +1672,7 @@ export function CryptoScoringEnterprise({
               { id: 'simulation', label: 'Interaktiver Simulator', icon: Sliders },
               { id: 'validation', label: 'Validierungs-Bericht', icon: ShieldCheck },
               { id: 'report', label: 'Reporting & Export', icon: FileText },
-              { id: 'agents', label: 'Agenten-Steuerung (Auto-4h)', icon: Sparkles }
+              ...(isAuthorizedForAgentControl ? [{ id: 'agents', label: 'Agenten-Steuerung (Auto-4h)', icon: Sparkles }] : [])
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -2116,6 +2120,7 @@ export function CryptoScoringEnterprise({
           
           {/* TAB 5: Autonomous Agent Control Room */}
           {activeTab === 'agents' && (
+            isAuthorizedForAgentControl ? (
             <div id="autonomous-agent-control-room" className="space-y-6">
               {/* Header with 4-Hour Rule, Active Countdown, and Manual Intervall Trigger */}
               <div className="bg-gradient-to-r from-blue-950/20 via-zinc-900/40 to-purple-950/20 border border-white/10 rounded-xl p-6 relative overflow-hidden">
@@ -2413,6 +2418,19 @@ export function CryptoScoringEnterprise({
                 </div>
               </div>
             </div>
+            ) : (
+              <div className="p-8 bg-black/40 border border-rose-500/20 rounded-xl text-center space-y-4">
+                <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto">
+                  <ShieldAlert size={24} />
+                </div>
+                <h3 className="text-base font-bold text-white uppercase tracking-wider font-display">
+                  Zugriff verweigert (403)
+                </h3>
+                <p className="text-xs text-white/60 max-w-md mx-auto leading-relaxed font-sans">
+                  Die Agenten-Steuerung und das manuelle Störungs- & Aktivierungsdesk sind exklusiv für die beiden eingetragenen Owner Accounts (Supabase) sowie den Dev Admin in der Entwicklungsumgebung reserviert.
+                </p>
+              </div>
+            )
           )}
         </div>
       )}
