@@ -7,10 +7,18 @@
 ## Implementation-Status
 
 🟡 **IN PROGRESS** — Die Ausnahmen sind registriert und damit vertragskonform getragen
-(`.ai/registry/exception-registry.json`). Die Überführung in die Zielstruktur ist Gegenstand der
-Umsetzungsstufen 3, 9 und 11 aus `docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md` und noch
-nicht begonnen. Die maschinelle Überwachung der Ausnahmen setzt den Structure Validator aus
-Chapter 12 voraus, der ebenfalls noch nicht implementiert ist.
+(`.ai/registry/exception-registry.json`).
+
+**EXC-0003 (`sql/`) ist aufgelöst** (2026-07-30): byteidentische Überführung nach
+`supabase/migrations/20260730000000_user_quota.sql`, Verzeichnis entfernt, Status `Revoked`.
+Nachweis: `docs/migration/MIGRATION_EXC-0003_sql_to_supabase.md`. Dabei wurde
+FND-EXC-0003-01 festgestellt: die Migration ist im aktuellen Codebestand verwaist.
+
+Die übrigen sieben Ausnahmen bestehen unverändert fort. Die Überführung von EXC-0001 und
+EXC-0002 ist Gegenstand der Umsetzungsstufen 3, 9 und 11 aus
+`docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md` und noch nicht begonnen. Die maschinelle
+Überwachung der Ausnahmen setzt den Structure Validator aus Chapter 12 voraus, der ebenfalls
+noch nicht implementiert ist.
 
 ## Datum
 
