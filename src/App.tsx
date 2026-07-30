@@ -27,6 +27,14 @@ export default function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const [justLoggedOut, setJustLoggedOut] = useState<boolean>(false);
   const [authError, setAuthError] = useState<{ message: string; code: string; expectedId: string; receivedId?: string } | null>(null);
+  // Fix: "Passwort vergessen" sendete zuvor nur die E-Mail, behandelte den
+  // Rücksprung-Link aber wie einen normalen Login (handleSupabaseSession), ohne
+  // je ein Formular zum tatsächlichen Setzen des neuen Passworts zu zeigen -
+  // Nutzer landeten eingeloggt, aber ihr altes Passwort blieb unverändert und
+  // unbekannt. Dieser State fängt das Supabase-eigene PASSWORD_RECOVERY-Event ab.
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const [passwordRecoveryError, setPasswordRecoveryError] = useState<string | null>(null);
+  const [passwordRecoverySubmitting, setPasswordRecoverySubmitting] = useState(false);
 
   const updateUserSession = (session: UserSession | null) => {
     setUserSession(session);
@@ -203,6 +211,15 @@ export default function App() {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // Muss VOR der generischen session-Behandlung geprüft werden: Supabase
+        // liefert bei PASSWORD_RECOVERY ebenfalls eine (temporäre) Session mit,
+        // die sonst durch handleSupabaseSession() wie ein normaler Login
+        // behandelt würde.
+        if (event === 'PASSWORD_RECOVERY') {
+          setIsPasswordRecovery(true);
+          setLoading(false);
+          return;
+        }
         if (session) {
           handleSupabaseSession(session);
         } else {
@@ -287,6 +304,38 @@ export default function App() {
     });
   };
 
+  const handleSetNewPassword = async (newPassword: string) => {
+    setPasswordRecoveryError(null);
+    if (!supabase) {
+      setPasswordRecoveryError('Supabase ist nicht konfiguriert.');
+      return;
+    }
+    if (!newPassword || newPassword.length < 8) {
+      setPasswordRecoveryError('Das Passwort muss mindestens 8 Zeichen lang sein.');
+      return;
+    }
+    setPasswordRecoverySubmitting(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        setPasswordRecoveryError(error.message);
+        return;
+      }
+      setIsPasswordRecovery(false);
+      setPasswordRecoveryError(null);
+      // Nach erfolgreichem Zurücksetzen ist die (temporäre) Recovery-Session bereits
+      // eine gültige, vollwertige Session mit dem neuen Passwort - normal einloggen.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        await handleSupabaseSession(session);
+      }
+    } catch (err: any) {
+      setPasswordRecoveryError(err.message || 'Das Passwort konnte nicht aktualisiert werden.');
+    } finally {
+      setPasswordRecoverySubmitting(false);
+    }
+  };
+
   const handleLogout = async () => {
     if (supabase) {
       try {
@@ -328,6 +377,65 @@ export default function App() {
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-aif-gold-DEFAULT border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs text-white/40 font-mono uppercase tracking-widest animate-pulse">Lade Sicherheits-Modul...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isPasswordRecovery) {
+    return (
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4 selection:bg-aif-gold-DEFAULT selection:text-black">
+        <div className="w-full max-w-md bg-black/40 border border-aif-gold-DEFAULT/30 rounded-2xl p-8 backdrop-blur-xl shadow-[0_0_50px_rgba(245,196,83,0.1)]">
+          <div className="space-y-2 text-center mb-6">
+            <h1 className="text-xl font-bold font-display tracking-tight text-white">Neues Passwort festlegen</h1>
+            <p className="text-xs text-white/60">Bitte vergeben Sie ein neues Passwort für Ihr Konto.</p>
+          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const form = e.target as HTMLFormElement;
+              const pw = (form.elements.namedItem('newPassword') as HTMLInputElement)?.value || '';
+              const pwConfirm = (form.elements.namedItem('newPasswordConfirm') as HTMLInputElement)?.value || '';
+              if (pw !== pwConfirm) {
+                setPasswordRecoveryError('Die Passwörter stimmen nicht überein.');
+                return;
+              }
+              handleSetNewPassword(pw);
+            }}
+            className="space-y-4"
+          >
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono text-white/50 uppercase tracking-wider">Neues Passwort</label>
+              <input
+                name="newPassword"
+                type="password"
+                required
+                minLength={8}
+                autoFocus
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-aif-gold-DEFAULT/50 outline-none"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono text-white/50 uppercase tracking-wider">Passwort bestätigen</label>
+              <input
+                name="newPasswordConfirm"
+                type="password"
+                required
+                minLength={8}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:border-aif-gold-DEFAULT/50 outline-none"
+              />
+            </div>
+            {passwordRecoveryError && (
+              <p className="text-xs text-red-400">{passwordRecoveryError}</p>
+            )}
+            <button
+              type="submit"
+              disabled={passwordRecoverySubmitting}
+              className="w-full px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-aif-gold-DEFAULT text-black hover:opacity-90 transition-all disabled:opacity-50"
+            >
+              {passwordRecoverySubmitting ? 'Wird gespeichert…' : 'Passwort speichern'}
+            </button>
+          </form>
         </div>
       </div>
     );
