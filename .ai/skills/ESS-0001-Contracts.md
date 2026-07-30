@@ -3118,3 +3118,612 @@ Vor jeder Integration validiert die Plattform automatisch
 ---
 
 # End of Part 3
+---
+
+# Chapter 5
+
+# Enterprise Naming Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert den verbindlichen Enterprise Naming Standard des CAPITAL-AI Core.
+
+Alle Komponenten, Dateien, Klassen, Interfaces, Events, Registries, Dokumente und KI-Artefakte verwenden einheitliche Benennungsregeln.
+
+Die Benennung ist Bestandteil der Enterprise-Architektur.
+
+Abweichungen sind ausschließlich über einen Architecture Decision Record (ADR) zulässig.
+
+---
+
+# Mission
+
+Die Naming Contracts gewährleisten
+
+- konsistente Repository-Strukturen
+- reproduzierbare Codegenerierung
+- deterministische KI-Ausgaben
+- eindeutige Verantwortlichkeiten
+- automatische Dokumentation
+- vereinfachte Architekturvalidierung
+- langfristige Wartbarkeit
+
+---
+
+# Enterprise Principle
+
+Ein Objekt besitzt genau einen Namen.
+
+Ein Name beschreibt genau eine Verantwortung.
+
+Mehrdeutige Bezeichnungen sind nicht zulässig.
+
+---
+
+# Naming Language
+
+Die gesamte technische Plattform verwendet ausschließlich
+
+Englisch
+
+für
+
+- Quellcode
+- Klassen
+- Interfaces
+- Dateien
+- Verzeichnisse
+- Events
+- Typen
+- APIs
+- Konfigurationen
+
+Dokumentationen dürfen zusätzlich deutschsprachige Inhalte enthalten.
+
+---
+
+# General Naming Rules
+
+Namen müssen
+
+- eindeutig
+- sprechend
+- fachlich korrekt
+- konsistent
+- erweiterbar
+
+sein.
+
+Abkürzungen sind nur zulässig, wenn sie projektweit definiert wurden.
+
+---
+
+# Directory Naming
+
+Verzeichnisse verwenden ausschließlich
+
+PascalCase
+
+Beispiele
+
+Core/
+
+Documentary/
+
+PlatformDirector/
+
+VersionManager/
+
+Knowledge/
+
+Security/
+
+Compliance/
+
+Release/
+
+---
+
+# File Naming
+
+Dateinamen entsprechen dem Namen der Hauptklasse.
+
+Beispiele
+
+DocumentaryEngine.ts
+
+KnowledgeRegistry.ts
+
+VersionManager.ts
+
+PlatformDirector.ts
+
+Supervisor.ts
+
+RepositoryScanner.ts
+
+---
+
+# Interface Naming
+
+Alle Interfaces besitzen den Präfix
+
+I
+
+Beispiele
+
+IEngine
+
+IService
+
+IRegistry
+
+IDocumentaryEngine
+
+IKnowledgeRegistry
+
+IVersionManager
+
+IPlatformComponent
+
+---
+
+# Class Naming
+
+Klassen verwenden
+
+PascalCase
+
+Substantive
+
+Beispiele
+
+DocumentaryEngine
+
+KnowledgeRegistry
+
+ArchitectureScanner
+
+Supervisor
+
+PlatformDirector
+
+VersionManager
+
+---
+
+# Type Naming
+
+Typdefinitionen beschreiben ausschließlich Daten.
+
+Beispiele
+
+ComponentManifest
+
+ArchitectureSnapshot
+
+RepositoryMetadata
+
+VersionInformation
+
+KnowledgeNode
+
+HealthStatus
+
+---
+
+# Event Naming
+
+Events enden immer mit
+
+Event
+
+Beispiele
+
+DocumentationGeneratedEvent
+
+VersionReleasedEvent
+
+RepositoryScannedEvent
+
+KnowledgeUpdatedEvent
+
+MigrationCompletedEvent
+
+HealthCheckCompletedEvent
+
+---
+
+# Registry Naming
+
+Registries enden immer mit
+
+Registry
+
+Beispiele
+
+KnowledgeRegistry
+
+ComponentRegistry
+
+EventRegistry
+
+PluginRegistry
+
+VersionRegistry
+
+---
+
+# Generator Naming
+
+Generatoren enden immer mit
+
+Generator
+
+Beispiele
+
+MarkdownGenerator
+
+ADRGenerator
+
+DocumentationGenerator
+
+MermaidGenerator
+
+KnowledgeGenerator
+
+---
+
+# Validator Naming
+
+Validatoren enden immer mit
+
+Validator
+
+Beispiele
+
+ArchitectureValidator
+
+RepositoryValidator
+
+KnowledgeValidator
+
+SecurityValidator
+
+ContractValidator
+
+---
+
+# Provider Naming
+
+Provider enden immer mit
+
+Provider
+
+Beispiele
+
+ConfigurationProvider
+
+KnowledgeProvider
+
+VersionProvider
+
+PluginProvider
+
+---
+
+# Factory Naming
+
+Factories enden immer mit
+
+Factory
+
+Beispiele
+
+EngineFactory
+
+GeneratorFactory
+
+RegistryFactory
+
+PluginFactory
+
+---
+
+# Manager Naming
+
+Manager koordinieren Prozesse.
+
+Sie enden immer mit
+
+Manager
+
+Beispiele
+
+VersionManager
+
+LifecycleManager
+
+ReleaseManager
+
+PluginManager
+
+---
+
+# Service Naming
+
+Services implementieren fachliche oder technische Funktionen.
+
+Beispiele
+
+KnowledgeService
+
+MigrationService
+
+SecurityService
+
+ReleaseService
+
+---
+
+# Contract Naming
+
+Contracts enden immer mit
+
+Contract
+
+Beispiele
+
+InterfaceContract
+
+RepositoryContract
+
+DependencyContract
+
+NamingContract
+
+---
+
+# Documentation Naming
+
+Enterprise-Dokumente folgen einem standardisierten Schema.
+
+Beispiele
+
+ESS-0001.md
+
+ESS-0001-CONTRACTS.md
+
+ADR-0005.md
+
+README.md
+
+CHANGELOG.md
+
+ROADMAP.md
+
+---
+
+# AI Artifact Naming
+
+KI-Artefakte befinden sich ausschließlich unter
+
+.ai/
+
+Beispiele
+
+Documentary-Migration-Architect.md
+
+Platform-Director.md
+
+Security-Auditor.md
+
+Version-Manager.md
+
+---
+
+# Configuration Naming
+
+Konfigurationsdateien verwenden
+
+kebab-case
+
+Beispiele
+
+tsconfig.json
+
+package.json
+
+eslint.config.js
+
+vite.config.ts
+
+---
+
+# Constant Naming
+
+Konstanten verwenden
+
+UPPER_SNAKE_CASE
+
+Beispiele
+
+DEFAULT_TIMEOUT
+
+MAX_RETRY_COUNT
+
+DEFAULT_LANGUAGE
+
+---
+
+# Variable Naming
+
+Variablen verwenden
+
+camelCase
+
+Beispiele
+
+repositoryScanner
+
+knowledgeRegistry
+
+architectureSnapshot
+
+---
+
+# Function Naming
+
+Methoden beginnen mit einem Verb.
+
+Beispiele
+
+generateDocumentation()
+
+scanRepository()
+
+validateArchitecture()
+
+loadKnowledge()
+
+createSnapshot()
+
+publishVersion()
+
+---
+
+# Boolean Naming
+
+Booleans beginnen mit
+
+is
+
+has
+
+can
+
+should
+
+Beispiele
+
+isHealthy
+
+hasChanges
+
+canGenerate
+
+shouldPublish
+
+---
+
+# Enumeration Naming
+
+Enums verwenden PascalCase.
+
+Enum-Werte verwenden PascalCase.
+
+Union Types werden bevorzugt.
+
+---
+
+# Forbidden
+
+Nicht zulässig sind
+
+Abkürzungen ohne Definition
+
+mehrdeutige Namen
+
+temporäre Namen
+
+Class1
+
+Test2
+
+ManagerNew
+
+HelperFinal
+
+Misc
+
+Utils2
+
+---
+
+# Naming Validation
+
+Vor jeder Integration wird geprüft
+
+✓ Naming Standard eingehalten
+
+✓ Dateiname korrekt
+
+✓ Klassenname korrekt
+
+✓ Interface korrekt
+
+✓ Event korrekt
+
+✓ Registry korrekt
+
+✓ Dokument korrekt
+
+✓ AI-Artefakte korrekt
+
+---
+
+# Enterprise Rules
+
+Neue Komponenten müssen dem Naming Standard entsprechen.
+
+Namensänderungen an öffentlichen Komponenten gelten als Breaking Change.
+
+Breaking Changes benötigen einen ADR.
+
+Die Documentary Engine validiert automatisch sämtliche Benennungen.
+
+Der Supervisor überwacht Naming-Verletzungen.
+
+Der Platform Director verwaltet zukünftige Erweiterungen des Naming Standards.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ sämtliche Komponenten konsistent benannt sind
+
+✓ alle KI-Systeme identische Namen erzeugen
+
+✓ automatische Dokumentation eindeutige Namen verwendet
+
+✓ keine Namenskonflikte existieren
+
+✓ Repository-Struktur und Naming vollständig synchron sind
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 6
+
+Dependency & Layer Contracts
+
+↓
+
+Chapter 7
+
+Data Model & Metadata Contracts
+
+↓
+
+Chapter 8
+
+Event & Messaging Contracts
+
+---
+
+# End of Chapter 5
