@@ -2139,3 +2139,982 @@ Der Supervisor überwacht ausschließlich öffentliche Enterprise Interfaces.
 ---
 
 # End of Part 1
+---
+
+# Base Interfaces
+
+## Enterprise Purpose
+
+Die Base Interfaces definieren die technischen Grundverträge sämtlicher Plattformkomponenten.
+
+Sie bilden die gemeinsame Sprache des CAPITAL-AI Core.
+
+Jede Enterprise-Komponente implementiert mindestens ein Base Interface.
+
+Dadurch entsteht eine konsistente, austauschbare und testbare Architektur.
+
+---
+
+## Mandatory Base Interfaces
+
+Der CAPITAL-AI Core definiert mindestens folgende Basisinterfaces
+
+IPlatformComponent
+
+IEngine
+
+IService
+
+IRegistry
+
+IGenerator
+
+IValidator
+
+IProvider
+
+IConsumer
+
+IPlugin
+
+ILifecycle
+
+IHealthCheck
+
+IEvent
+
+IRepositoryObject
+
+IKnowledgeObject
+
+IVersioned
+
+IConfiguration
+
+IDiscovery
+
+IAuditable
+
+IMonitorable
+
+---
+
+## Interface Responsibilities
+
+Jedes Base Interface besitzt genau eine technische Verantwortung.
+
+Interfaces dürfen sich nicht überschneiden.
+
+Neue Base Interfaces dürfen ausschließlich über einen ADR eingeführt werden.
+
+---
+
+## Interface Hierarchy
+
+Die technische Vererbung folgt ausschließlich der Enterprise-Hierarchie.
+
+```text
+IPlatformComponent
+        │
+        ├───────────────┐
+        │               │
+     IEngine        IService
+        │               │
+        │               │
+  Documentary      Knowledge
+  Supervisor       Registry
+  VersionManager   Discovery
+```
+
+Mehrfachvererbungen sind ausschließlich bei fachlicher Notwendigkeit zulässig.
+
+---
+
+# Class Contracts
+
+## Enterprise Purpose
+
+Jede Klasse implementiert exakt definierte Verantwortlichkeiten.
+
+Klassen enthalten ausschließlich Implementierungslogik.
+
+Die öffentliche API wird vollständig über Interfaces beschrieben.
+
+---
+
+## Rules
+
+Jede Klasse
+
+implementiert mindestens ein Interface
+
+besitzt genau eine Verantwortung
+
+ist vollständig typisiert
+
+ist dokumentiert
+
+ist testbar
+
+besitzt einen definierten Lebenszyklus
+
+---
+
+## Single Responsibility
+
+Eine Klasse löst genau ein Problem.
+
+Neue Verantwortlichkeiten führen zu einer neuen Klasse.
+
+---
+
+## Public Classes
+
+Öffentliche Klassen
+
+werden dokumentiert
+
+werden versioniert
+
+werden automatisch registriert
+
+werden automatisch durch die Documentary Engine erkannt
+
+---
+
+## Internal Classes
+
+Interne Klassen
+
+dürfen ausschließlich innerhalb ihrer Komponente verwendet werden.
+
+Sie sind kein Bestandteil der öffentlichen Plattform-API.
+
+---
+
+# Constructor Contracts
+
+## Enterprise Purpose
+
+Abhängigkeiten werden niemals innerhalb einer Klasse erzeugt.
+
+Alle Abhängigkeiten werden von außen bereitgestellt.
+
+---
+
+## Constructor Injection
+
+Verpflichtend
+
+Constructor Injection
+
+Factory Injection
+
+Provider Injection
+
+---
+
+## Nicht erlaubt
+
+new innerhalb produktiver Services
+
+globale Instanzen
+
+Singleton ohne ADR
+
+Service Locator Pattern
+
+versteckte Abhängigkeiten
+
+---
+
+## Lifetime
+
+Komponenten besitzen definierte Lebenszyklen
+
+Transient
+
+Scoped
+
+Singleton (nur mit ADR)
+
+---
+
+# Type Contracts
+
+## Enterprise Purpose
+
+Alle Datenstrukturen besitzen eine eindeutige Typdefinition.
+
+Inline-Objekte sind auf ein Minimum zu reduzieren.
+
+---
+
+## Rules
+
+Komplexe Daten
+
+werden ausschließlich über
+
+type
+
+oder
+
+interface
+
+beschrieben.
+
+---
+
+## Naming
+
+Typen beschreiben ausschließlich Daten.
+
+Beispiele
+
+RepositoryMetadata
+
+ComponentManifest
+
+ArchitectureSnapshot
+
+KnowledgeNode
+
+VersionInformation
+
+MigrationReport
+
+ValidationResult
+
+HealthStatus
+
+---
+
+## Forbidden
+
+Anonyme komplexe Objekte
+
+Mehrfachdefinition identischer Typen
+
+Typen mit Geschäftslogik
+
+---
+
+# Generic Contracts
+
+## Enterprise Purpose
+
+Generics erhöhen Wiederverwendbarkeit ohne Typverlust.
+
+---
+
+## Mandatory Usage
+
+Generics werden verwendet bei
+
+Registries
+
+Generatoren
+
+Validatoren
+
+Providern
+
+Repositories
+
+Factories
+
+Discovery Services
+
+Knowledge Services
+
+---
+
+## Examples
+
+Registry<T>
+
+Validator<T>
+
+Generator<T>
+
+Provider<T>
+
+Repository<T>
+
+Factory<T>
+
+---
+
+## Rules
+
+Generics müssen
+
+vollständig typisiert sein
+
+einen fachlichen Nutzen besitzen
+
+keine Lesbarkeit verschlechtern
+
+---
+
+## Forbidden
+
+Unnötige Generics
+
+Generics ohne Typsicherheit
+
+Generics mit any
+
+---
+
+# Naming Rules
+
+## Enterprise Purpose
+
+Einheitliche Benennung erhöht Verständlichkeit und automatische Dokumentierbarkeit.
+
+---
+
+## Interfaces
+
+Prefix
+
+I
+
+Beispiele
+
+IRepositoryScanner
+
+IPlatformComponent
+
+IVersionManager
+
+IDocumentaryEngine
+---
+
+## Classes
+
+PascalCase
+
+Beispiele
+
+RepositoryScanner
+
+DocumentaryEngine
+
+KnowledgeRegistry
+
+PlatformDirector
+
+Supervisor
+
+VersionManager
+
+---
+
+## Types
+
+PascalCase
+
+Substantive
+
+Beispiele
+
+ArchitectureSnapshot
+
+ComponentManifest
+
+KnowledgeNode
+
+VersionReport
+
+---
+
+## Enums
+
+Nur wenn technisch erforderlich.
+
+Ansonsten
+
+Union Types
+
+---
+
+## Files
+
+Eine Hauptklasse pro Datei.
+
+Dateiname entspricht Klassenname.
+
+---
+
+# Export Rules
+
+## Public
+
+Exportiert werden ausschließlich
+
+öffentliche Klassen
+
+Interfaces
+
+Typdefinitionen
+
+Factory Functions
+
+---
+
+## Internal
+
+Interne Hilfsklassen bleiben privat.
+
+Hilfsfunktionen werden nicht exportiert.
+
+---
+
+## Index Files
+
+Öffentliche Komponenten dürfen Barrel Exports verwenden.
+
+Interne Komponenten verzichten auf Barrel Exports.
+
+---
+
+# File Contracts
+
+## Rules
+
+Eine Datei besitzt
+
+genau eine Hauptklasse
+
+genau eine Hauptverantwortung
+
+---
+
+## Documentation
+
+Jede öffentliche Datei besitzt
+
+Beschreibung
+
+ESS-Referenz
+
+ADR-Referenz
+
+Version
+
+Owner
+
+---
+
+# Dependency Injection
+
+## Enterprise Purpose
+
+Komponenten besitzen keine versteckten Abhängigkeiten.
+
+Alle Abhängigkeiten werden explizit bereitgestellt.
+
+---
+
+## Allowed
+
+Constructor Injection
+
+Factory Injection
+
+Provider Injection
+
+---
+
+## Forbidden
+
+Globale Services
+
+Service Locator
+
+Statische Service Container
+
+Direkte Initialisierung fremder Komponenten
+
+---
+
+## Validation
+
+Vor jeder Integration wird geprüft
+
+✓ Interface vorhanden
+
+✓ Klasse implementiert Interface
+
+✓ Constructor Injection verwendet
+
+✓ keine versteckten Abhängigkeiten
+
+✓ Typisierung vollständig
+
+✓ Dokumentation vollständig
+
+✓ Naming Rules eingehalten
+
+✓ Single Responsibility erfüllt
+
+✓ öffentliche API dokumentiert
+
+---
+
+# End of Part 2
+---
+
+# Async Contracts
+
+## Enterprise Purpose
+
+Alle asynchronen Prozesse des CAPITAL-AI Core folgen einem einheitlichen Ausführungsmodell.
+
+Asynchrone Operationen müssen reproduzierbar, nachvollziehbar und testbar sein.
+
+---
+
+## Rules
+
+Asynchrone Methoden liefern ausschließlich
+
+Promise<T>
+
+oder
+
+Promise<void>
+
+zurück.
+
+Callbacks sind nicht zulässig.
+
+---
+
+## Error Propagation
+
+Fehler dürfen niemals stillschweigend verworfen werden.
+
+Alle Exceptions werden
+
+- behandelt
+- protokolliert
+- typisiert
+- dokumentiert
+
+---
+
+## Cancellation
+
+Langlaufende Prozesse unterstützen nach Möglichkeit kontrollierte Abbrüche.
+
+Hierfür sind standardisierte Mechanismen (z. B. AbortSignal) zu bevorzugen.
+
+---
+
+## Timeouts
+
+Alle externen Operationen besitzen definierte Timeout-Regeln.
+
+Unbegrenzte Wartezeiten sind nicht zulässig.
+
+---
+
+## Parallel Execution
+
+Parallele Verarbeitung darf ausschließlich verwendet werden, wenn
+
+- keine Race Conditions entstehen
+- Datenkonsistenz gewährleistet bleibt
+- Fehler eindeutig zugeordnet werden können
+
+---
+
+## Validation
+
+Vor jeder Integration wird geprüft
+
+✓ Promise-basierte API
+
+✓ Fehlerbehandlung vorhanden
+
+✓ Timeout definiert
+
+✓ Logging vorhanden
+
+✓ Rückgabetyp vollständig typisiert
+
+---
+
+# Error Contracts
+
+## Enterprise Purpose
+
+Alle Fehler werden standardisiert behandelt.
+
+Fehler sind Bestandteil der Enterprise-Architektur.
+
+---
+
+## Rules
+
+Es dürfen ausschließlich typisierte Error-Klassen verwendet werden.
+
+Beispiele
+
+RepositoryError
+
+ValidationError
+
+ConfigurationError
+
+SecurityError
+
+ContractViolationError
+
+KnowledgeError
+
+VersionError
+
+DiscoveryError
+
+MigrationError
+
+---
+
+## Forbidden
+
+throw "Error"
+
+throw "String"
+
+throw 123
+
+throw {}
+
+---
+
+## Error Hierarchy
+
+Alle Fehler leiten sich von einer gemeinsamen Enterprise-Basisklasse ab.
+
+Beispiel
+
+EnterpriseError
+
+↓
+
+ValidationError
+
+↓
+
+ContractViolationError
+
+---
+
+## Logging
+
+Jeder Fehler wird protokolliert.
+
+Mindestens
+
+- Zeitpunkt
+- Komponente
+- Fehlerklasse
+- Ursache
+- Kontext
+
+---
+
+## Validation
+
+✓ typisierte Fehler
+
+✓ keine String-Exceptions
+
+✓ vollständiges Logging
+
+✓ Fehlerhierarchie eingehalten
+
+---
+
+# Documentation Contracts
+
+## Enterprise Purpose
+
+Jede öffentliche Komponente muss vollständig dokumentiert sein.
+
+Dokumentation ist Bestandteil der Implementierung.
+
+---
+
+## Public Classes
+
+Jede öffentliche Klasse besitzt mindestens
+
+- Beschreibung
+- Zweck
+- Verantwortlichkeit
+- ESS-Referenz
+- ADR-Referenz (falls vorhanden)
+- Version
+- Owner
+
+---
+
+## Public Methods
+
+Jede öffentliche Methode dokumentiert
+
+- Zweck
+- Parameter
+- Rückgabewert
+- mögliche Exceptions
+- Nebenwirkungen
+
+---
+
+## Documentation Format
+
+Dokumentation erfolgt standardisiert.
+
+Die Documentary Engine muss sämtliche Dokumentationen automatisch auswerten können.
+
+---
+
+## Automatic Documentation
+
+Alle öffentlichen Komponenten werden automatisch registriert.
+
+Die Documentary Engine erzeugt daraus
+
+- Architekturberichte
+- Komponentenübersichten
+- Dependency Graphs
+- Knowledge Graph
+- API-Dokumentation
+
+---
+
+## Validation
+
+✓ Dokumentation vorhanden
+
+✓ ESS-Referenz vorhanden
+
+✓ Version vorhanden
+
+✓ öffentliche Methoden dokumentiert
+
+---
+
+# Testing Contracts
+
+## Enterprise Purpose
+
+Jede öffentliche Komponente ist testbar.
+
+Tests sind Bestandteil des Enterprise Contracts.
+
+---
+
+## Mandatory Tests
+
+Mindestens
+
+Unit Test
+
+Contract Test
+
+---
+
+## Optional Tests
+
+Integration Test
+
+Performance Test
+
+Architecture Test
+
+Security Test
+
+End-to-End Test
+
+Regression Test
+
+---
+
+## Test Rules
+
+Tests müssen
+
+deterministisch
+
+automatisiert
+
+isoliert
+
+reproduzierbar
+
+sein.
+
+---
+
+## Coverage
+
+Öffentliche Komponenten sollen vollständig durch Tests abgedeckt werden.
+
+Die angestrebte Testabdeckung wird projektweit definiert.
+
+---
+
+## Validation
+
+✓ Test vorhanden
+
+✓ Contract Test vorhanden
+
+✓ Build erfolgreich
+
+✓ Tests reproduzierbar
+
+---
+
+# Import Contracts
+
+## Enterprise Purpose
+
+Imports definieren die zulässigen Abhängigkeiten innerhalb des CAPITAL-AI Core.
+
+---
+
+## Rules
+
+Relative Imports
+
+ausschließlich innerhalb derselben Komponente.
+
+Komponentenübergreifend ausschließlich Alias Imports.
+
+---
+
+## Examples
+
+@platform/Core
+
+@platform/Documentary
+
+@platform/Supervisor
+
+@platform/VersionManager
+
+@platform/Knowledge
+
+---
+
+## Forbidden
+
+../../../
+
+../../../../
+
+Zyklische Imports
+
+Direkte Abhängigkeiten auf interne Komponenten
+
+---
+
+## Dependency Direction
+
+Die Architektur folgt einer eindeutigen Richtung.
+
+Core
+
+↓
+
+Shared
+
+↓
+
+Knowledge
+
+↓
+
+Documentary
+
+↓
+
+Version Manager
+
+↓
+
+Supervisor
+
+↓
+
+Platform Director
+
+Eine niedrigere Ebene darf niemals von einer höheren Ebene abhängen.
+
+---
+
+## Import Validation
+
+Vor jeder Integration wird geprüft
+
+✓ keine zyklischen Imports
+
+✓ Alias Imports verwendet
+
+✓ Layer-Regeln eingehalten
+
+✓ keine verbotenen Abhängigkeiten
+
+✓ Architekturverletzungen ausgeschlossen
+
+---
+
+# Enterprise Validation
+
+Vor jeder Integration validiert die Plattform automatisch
+
+✓ Compiler-Regeln
+
+✓ TypeScript-Regeln
+
+✓ Interface Contracts
+
+✓ Public Interface Contracts
+
+✓ Constructor Contracts
+
+✓ Dependency Injection
+
+✓ Async Contracts
+
+✓ Error Contracts
+
+✓ Documentation Contracts
+
+✓ Testing Contracts
+
+✓ Import Contracts
+
+✓ ESS-Konformität
+
+✓ ADR-Konformität
+
+✓ Versionierung
+
+✓ Documentary-Kompatibilität
+
+✓ Supervisor-Kompatibilität
+
+✓ Platform-Director-Kompatibilität
+
+---
+
+# End of Part 3
