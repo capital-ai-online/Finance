@@ -1,0 +1,130 @@
+{
+  "registry": "ESS Registry",
+  "registryVersion": "1.0.0",
+  "authority": "Platform Director",
+  "contract": "ESS-0001-CONTRACTS Chapter 16 — ESS Registry Contract",
+  "description": "Verbindliche Vergabe des ESS-Nummernraums des CAPITAL-AI Core. Reservierte Nummern stammen aus ESS-0001, Abschnitt 'Related Enterprise Specifications', und duerfen niemals abweichend belegt werden.",
+  "generated": false,
+  "seed": true,
+  "note": "Dieser Registry-Eintrag ist ein Knowledge Seed. Nach Bereitstellung des Enterprise Bootstrappers wird die Registry generatorgestuetzt fortgeschrieben.",
+  "updatedAt": "2026-07-30",
+  "freeNumberSpaceStartsAt": "ESS-0010",
+  "entries": [
+    {
+      "id": "ESS-0001",
+      "title": "Documentary & Code Intelligence Architect",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0001-Documentary-Architect.md",
+      "reservedBy": "ESS-0001",
+      "owner": "Platform Director"
+    },
+    {
+      "id": "ESS-0001-CONTRACTS",
+      "title": "Enterprise Technical Contracts",
+      "status": "published",
+      "version": "1.1.0",
+      "document": ".ai/skills/ESS-0001-Contracts.md",
+      "reservedBy": "ESS-0001",
+      "owner": "Platform Director",
+      "note": "Technischer Vertragsteil von ESS-0001. Belegt keine eigene Nummer."
+    },
+    {
+      "id": "ESS-0002",
+      "title": "Supervisor Architect",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0002-Supervisor-Architect.md",
+      "reservedBy": "ESS-0001",
+      "owner": "Platform Director"
+    },
+    {
+      "id": "ESS-0003",
+      "title": "Platform Director",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0003-Platform-Director.md",
+      "reservedBy": "ESS-0001",
+      "owner": "Platform Director",
+      "relatedAdr": ["ADR-0006"]
+    },
+    {
+      "id": "ESS-0004",
+      "title": "Enterprise Version Manager",
+      "status": "reserved",
+      "version": null,
+      "document": null,
+      "reservedBy": "ESS-0001",
+      "owner": "Platform Director",
+      "rationale": "Versionierung ist derzeit vollstaendig durch ESS-0001 Chapter 9 und ESS-0001-CONTRACTS Chapter 9 geregelt. Ein eigenstaendiges Dokument wuerde bestehende Regeln wiederholen und gegen das Verbot redundanter Dokumente verstossen. Eroeffnung erst bei nachgewiesenem Regelbedarf."
+    },
+    {
+      "id": "ESS-0005",
+      "title": "Quality Center",
+      "status": "reserved",
+      "version": null,
+      "document": null,
+      "reservedBy": "ESS-0001",
+      "owner": "Platform Director",
+      "rationale": "Qualitaets- und Validierungsregeln sind vollstaendig durch ESS-0001-CONTRACTS Chapter 12 geregelt."
+    },
+    {
+      "id": "ESS-0006",
+      "title": "Security & Compliance",
+      "status": "reserved",
+      "version": null,
+      "document": null,
+      "reservedBy": "ESS-0001",
+      "owner": "Platform Director",
+      "rationale": "Sicherheits- und Compliance-Regeln sind vollstaendig durch ESS-0001-CONTRACTS Chapter 11 geregelt."
+    },
+    {
+      "id": "ESS-0007",
+      "title": "Enterprise Release Center",
+      "status": "reserved",
+      "version": null,
+      "document": null,
+      "reservedBy": "ESS-0001",
+      "owner": "Platform Director",
+      "rationale": "Release-Regeln sind durch ESS-0001-CONTRACTS Chapter 9 und Chapter 19 geregelt."
+    },
+    {
+      "id": "ESS-0008",
+      "title": "AI Agent Framework",
+      "status": "reserved",
+      "version": null,
+      "document": null,
+      "reservedBy": "ESS-0001",
+      "owner": "Platform Director",
+      "rationale": "Offener Regelbedarf. Die fachlichen Domaenen-Agenten unter src/agents besitzen bislang keine Enterprise-Spezifikation. ESS-0001-CONTRACTS Chapter 17 regelt ausschliesslich die Orchestrierung der KI-Systeme, nicht das Agentenmodell der Fachdomaenen."
+    },
+    {
+      "id": "ESS-0009",
+      "title": "Enterprise Knowledge Platform",
+      "status": "reserved",
+      "version": null,
+      "document": null,
+      "reservedBy": "ESS-0001",
+      "owner": "Platform Director",
+      "rationale": "Wissensmodell ist durch ESS-0001 Chapter 4 und ESS-0001-CONTRACTS Chapter 15 geregelt."
+    },
+    {
+      "id": "ESS-0010",
+      "title": "Repository Governance",
+      "status": "not_required",
+      "version": null,
+      "document": null,
+      "reservedBy": null,
+      "owner": "Platform Director",
+      "rationale": "Repository Governance ist vollstaendig und normativ durch ESS-0001-CONTRACTS Chapter 16 geregelt. Ein eigenstaendiges ESS-Dokument waere ein Duplikat. Die Nummer bleibt frei."
+    }
+  ],
+  "rules": [
+    "Jede ESS-Nummer wird genau einmal vergeben.",
+    "Vergebene Nummern werden niemals umbenannt.",
+    "Reservierte Nummern werden niemals abweichend belegt.",
+    "Neue ESS-Dokumente erhalten die naechste freie Nummer.",
+    "Zwischennummern sind nicht zulaessig.",
+    "Kein KI-System vergibt ESS-Nummern eigenstaendig."
+  ]
+}

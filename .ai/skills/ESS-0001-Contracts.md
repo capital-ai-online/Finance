@@ -4,7 +4,7 @@
 
 ### Version
 
-1.0.0
+1.1.0
 
 ### Status
 
@@ -6349,3 +6349,6036 @@ Enterprise Plugin & Extension Contracts
 ---
 
 # End of Chapter 10
+
+---
+
+# Chapter 11
+
+# Enterprise Security & Compliance Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindlichen Sicherheits- und Compliance-Verträge des CAPITAL-AI Core.
+
+Sicherheit ist keine nachgelagerte Prüfung.
+
+Sicherheit ist Bestandteil der Architektur.
+
+Jede Enterprise-Komponente beschreibt ihre Sicherheitseigenschaften maschinenlesbar.
+
+Jede Änderung wird automatisch gegen Sicherheits- und Compliance-Regeln geprüft.
+
+Die Documentary Engine dokumentiert sämtliche sicherheitsrelevanten Zustände automatisch.
+
+---
+
+# Mission
+
+Die Security & Compliance Contracts gewährleisten
+
+- nachweisbare Sicherheitseigenschaften jeder Komponente
+- automatische Prüfung sämtlicher Änderungen
+- vollständige Auditierbarkeit
+- reproduzierbare Compliance-Nachweise
+- deterministische Bewertung von Sicherheitsrisiken
+- lückenlose Dokumentation sicherheitsrelevanter Entscheidungen
+
+---
+
+# Enterprise Principle
+
+Keine Komponente ohne Sicherheitsklassifizierung.
+
+Keine Änderung ohne Sicherheitsbewertung.
+
+Keine Freigabe ohne Compliance-Prüfung.
+
+Keine Sicherheitsentscheidung ohne Dokumentation.
+
+Keine Ausnahme ohne ADR.
+
+---
+
+# Security Lifecycle
+
+Repository Change
+
+↓
+
+Security Classification
+
+↓
+
+Security Analysis
+
+↓
+
+Compliance Analysis
+
+↓
+
+Risk Evaluation
+
+↓
+
+Security Event
+
+↓
+
+Documentary Engine
+
+↓
+
+Supervisor
+
+↓
+
+Platform Director
+
+↓
+
+Release Freigabe
+
+---
+
+# Security Classification
+
+Jede Enterprise-Komponente besitzt genau eine Sicherheitsklassifizierung.
+
+Public
+
+Internal
+
+Confidential
+
+Restricted
+
+Critical
+
+Die Klassifizierung wird in den Metadaten geführt und ist Bestandteil des Manifest Contracts aus Chapter 7.
+
+---
+
+# Classification Rules
+
+Public
+
+Keine personenbezogenen Daten.
+
+Keine Geschäftsgeheimnisse.
+
+---
+
+Internal
+
+Interne Plattforminformationen ohne Personenbezug.
+
+---
+
+Confidential
+
+Personenbezogene Daten.
+
+Geschäftsdaten.
+
+Abrechnungsdaten.
+
+---
+
+Restricted
+
+Authentifizierung.
+
+Autorisierung.
+
+Schlüsselverwaltung.
+
+Zahlungsverkehr.
+
+---
+
+Critical
+
+Komponenten, deren Ausfall oder Kompromittierung den Plattformbetrieb unmittelbar gefährdet.
+
+---
+
+# Sensitivity Contract
+
+Jede Komponente beschreibt zusätzlich
+
+Datenkategorien
+
+Personenbezug
+
+Speicherort
+
+Übertragungswege
+
+Aufbewahrungsdauer
+
+Löschkonzept
+
+---
+
+# Secure by Design
+
+Jede Komponente erfüllt verbindlich
+
+Least Privilege
+
+Deny by Default
+
+Fail Secure
+
+Defense in Depth
+
+Complete Mediation
+
+Separation of Duties
+
+Zero Trust zwischen Layern
+
+---
+
+# Authentication Contract
+
+Authentifizierung erfolgt ausschließlich über zentrale Plattformdienste.
+
+Komponenten implementieren niemals eigene Authentifizierung.
+
+Verbindlich sind
+
+zentrale Identitätsprüfung
+
+zentrale Sitzungsverwaltung
+
+zentrale Token-Validierung
+
+zentrale Mehrfaktor-Prüfung
+
+---
+
+# Authorization Contract
+
+Autorisierung erfolgt ausschließlich rollenbasiert.
+
+Jede geschützte Operation beschreibt
+
+erforderliche Rolle
+
+erforderliche Berechtigung
+
+erforderliche Sicherheitszone
+
+erforderliche Step-Up-Anforderung
+
+Berechtigungen werden niemals im Frontend entschieden.
+
+---
+
+# Secret Contract
+
+Secrets befinden sich niemals im Repository.
+
+Verbindlich sind
+
+Ablage ausschließlich in Umgebungsvariablen oder Secret Stores
+
+Referenzierung ausschließlich über Konfiguration
+
+keine Secrets in Logs
+
+keine Secrets in Events
+
+keine Secrets in Dokumentation
+
+keine Secrets in Knowledge Nodes
+
+keine Secrets in Fehlermeldungen
+
+---
+
+# Data Protection Contract
+
+Personenbezogene Daten unterliegen zusätzlich
+
+Zweckbindung
+
+Datenminimierung
+
+Maskierung in Protokollen
+
+Anonymisierung in Diagnosedaten
+
+Verschlüsselung bei Übertragung
+
+Verschlüsselung bei Speicherung sensibler Daten
+
+Löschbarkeit
+
+---
+
+# Logging Contract
+
+Sicherheitsrelevante Ereignisse werden verbindlich protokolliert.
+
+Mindestens
+
+Authentifizierungsversuche
+
+Autorisierungsverweigerungen
+
+Rechteänderungen
+
+Konfigurationsänderungen
+
+Secret-Änderungen
+
+Zugriffe auf Restricted-Komponenten
+
+Administrative Operationen
+
+Protokolle enthalten niemals Klartext-Secrets oder unmaskierte personenbezogene Daten.
+
+---
+
+# Security Metadata Contract
+
+Jede Komponente führt in ihren Metadaten verbindlich
+
+classification
+
+sensitivity
+
+authentication
+
+authorization
+
+encryption
+
+audit
+
+compliance
+
+lastSecurityReview
+
+Diese Angaben erweitern die Security Metadata aus Chapter 7.
+
+---
+
+# Compliance Contract
+
+Jede Komponente beschreibt ihre Compliance-Anforderungen.
+
+Beispiele
+
+Datenschutz
+
+Finanzaufsicht
+
+Aufbewahrungspflichten
+
+Nachweispflichten
+
+Protokollpflichten
+
+Exportpflichten
+
+Compliance-Anforderungen sind Bestandteil der Komponentenbeschreibung.
+
+---
+
+# Compliance Evidence
+
+Compliance wird ausschließlich durch Nachweise belegt.
+
+Zulässige Nachweise
+
+Audit Trail
+
+Security Report
+
+Compliance Report
+
+Validation Report
+
+Test Report
+
+Architecture Report
+
+Behauptungen ohne Nachweis besitzen keine Gültigkeit.
+
+---
+
+# Security Events
+
+Sicherheitsrelevante Zustandsänderungen erzeugen verbindlich Enterprise Events gemäß Chapter 8.
+
+SecurityScanCompletedEvent
+
+SecurityClassificationChangedEvent
+
+SecurityViolationDetectedEvent
+
+ComplianceValidatedEvent
+
+ComplianceViolationDetectedEvent
+
+RiskDetectedEvent
+
+RiskResolvedEvent
+
+AuditCompletedEvent
+
+PermissionChangedEvent
+
+SecretRotatedEvent
+
+Alle Event-Namen folgen dem Naming Contract aus Chapter 8.
+
+---
+
+# Security Validation
+
+Vor jeder Integration wird geprüft
+
+✓ Security Classification vorhanden
+
+✓ Sensitivity beschrieben
+
+✓ Authentifizierung zentral
+
+✓ Autorisierung rollenbasiert
+
+✓ keine Secrets im Repository
+
+✓ keine Secrets in Logs
+
+✓ keine unmaskierten personenbezogenen Daten
+
+✓ Verschlüsselung definiert
+
+✓ Audit Trail vorhanden
+
+✓ Compliance-Anforderungen beschrieben
+
+✓ Security Events registriert
+
+✓ Security Metadata vollständig
+
+---
+
+# Risk Contract
+
+Jedes erkannte Risiko besitzt
+
+Risiko-ID
+
+Beschreibung
+
+Kategorie
+
+Eintrittswahrscheinlichkeit
+
+Auswirkung
+
+betroffene Komponenten
+
+Maßnahme
+
+Verantwortlichen
+
+Status
+
+Risiken werden niemals ohne Dokumentation geschlossen.
+
+---
+
+# Risk Categories
+
+Technisches Risiko
+
+Architekturrisiko
+
+Sicherheitsrisiko
+
+Compliance-Risiko
+
+Datenschutzrisiko
+
+Betriebsrisiko
+
+Abhängigkeitsrisiko
+
+Lieferkettenrisiko
+
+---
+
+# Dependency Security
+
+Externe Abhängigkeiten unterliegen zusätzlich
+
+Herkunftsprüfung
+
+Versionsbindung
+
+Änderungsüberwachung
+
+Schwachstellenbewertung
+
+Freigabepflicht bei Major-Wechseln
+
+Neue externe Abhängigkeiten erfordern eine Bewertung durch das Security Center.
+
+---
+
+# Security Review Contract
+
+Ein Security Review ist verbindlich bei
+
+neuen Restricted-Komponenten
+
+neuen Critical-Komponenten
+
+Änderungen an Authentifizierung
+
+Änderungen an Autorisierung
+
+Änderungen an Zahlungsprozessen
+
+Änderungen an Datenbank-Policies
+
+Änderungen an Secret-Verwaltung
+
+neuen externen Abhängigkeiten
+
+Migrationen mit Datenzugriff
+
+---
+
+# Audit Trail Contract
+
+Der Audit Trail ist unveränderbar.
+
+Jeder Eintrag enthält
+
+Zeitpunkt
+
+auslösende Instanz
+
+Komponente
+
+Operation
+
+Ergebnis
+
+Version
+
+Correlation ID
+
+ESS Referenzen
+
+ADR Referenzen
+
+Einträge werden niemals gelöscht oder verändert.
+
+---
+
+# Incident Contract
+
+Sicherheitsvorfälle erzeugen verbindlich
+
+Incident Event
+
+Incident Report
+
+Impact Analyse
+
+Sofortmaßnahme
+
+Nachbereitung
+
+ADR bei Architekturänderung
+
+Knowledge Update
+
+---
+
+# Documentary Integration
+
+Die Documentary Engine erzeugt automatisch
+
+Security Report
+
+Compliance Report
+
+Risk Report
+
+Audit Report
+
+Permission Report
+
+Policy Report
+
+Diese Berichte werden ausschließlich aus validierten Metadaten und Events erzeugt.
+
+---
+
+# Supervisor Integration
+
+Der Supervisor überwacht
+
+Sicherheitsverletzungen
+
+Compliance-Verstöße
+
+fehlende Klassifizierungen
+
+fehlende Audit-Einträge
+
+nicht bewertete Risiken
+
+überfällige Security Reviews
+
+---
+
+# Platform Director Integration
+
+Der Platform Director entscheidet über
+
+Sicherheitsausnahmen
+
+Freigabe kritischer Komponenten
+
+Risikoakzeptanz
+
+Compliance-Strategie
+
+Sicherheitsrelevante Architekturentscheidungen
+
+Ausnahmen werden ausschließlich über ADR dokumentiert.
+
+---
+
+# Version Manager Integration
+
+Der Version Manager bewertet sicherheitsrelevante Änderungen zusätzlich als
+
+Security Patch
+
+Security Minor
+
+Security Major
+
+Hotfix
+
+Sicherheitskorrekturen besitzen jederzeit Vorrang vor funktionalen Änderungen.
+
+---
+
+# AI Security Contract
+
+KI-Systeme dürfen niemals
+
+Sicherheitsmechanismen entfernen
+
+Berechtigungsprüfungen abschwächen
+
+Secrets erzeugen, speichern oder ausgeben
+
+Sicherheitsklassifizierungen herabstufen
+
+Audit-Einträge verändern
+
+Compliance-Nachweise erzeugen, die nicht auf Analyse beruhen
+
+Jede KI-gestützte sicherheitsrelevante Änderung erfordert eine gesonderte Validierung.
+
+---
+
+# Enterprise Rules
+
+Keine Komponente ohne Security Classification.
+
+Keine Restricted-Komponente ohne Security Review.
+
+Keine Änderung ohne Sicherheitsbewertung.
+
+Keine Compliance-Aussage ohne Nachweis.
+
+Keine Ausnahme ohne ADR.
+
+Keine Secrets im Repository.
+
+Keine Manipulation des Audit Trails.
+
+Sicherheitskorrekturen besitzen höchste Priorität.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ sämtliche Komponenten klassifiziert sind
+
+✓ sämtliche Sicherheitsmetadaten vollständig sind
+
+✓ sämtliche sicherheitsrelevanten Ereignisse Events erzeugen
+
+✓ sämtliche Risiken dokumentiert und bewertet sind
+
+✓ der Audit Trail lückenlos ist
+
+✓ Security und Compliance Reports automatisch erzeugt werden
+
+✓ keine Freigabe ohne Sicherheitsprüfung erfolgt
+
+✓ sämtliche Ausnahmen durch ADR gedeckt sind
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 12
+
+Enterprise Validation & Quality Contracts
+
+↓
+
+Chapter 16
+
+Enterprise Repository Governance
+
+↓
+
+Chapter 17
+
+Enterprise AI Orchestration Contracts
+
+---
+
+# End of Chapter 11
+---
+
+# Chapter 12
+
+# Enterprise Validation & Quality Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindlichen Validierungs- und Qualitätsverträge des CAPITAL-AI Core.
+
+Qualität ist kein Ergebnis.
+
+Qualität ist eine überprüfbare Eigenschaft.
+
+Jede Regel dieser Enterprise Contracts muss maschinell durchsetzbar sein.
+
+Ein Contract ohne Validator besitzt keine Wirkung.
+
+---
+
+# Mission
+
+Die Validation & Quality Contracts gewährleisten
+
+- maschinelle Durchsetzbarkeit sämtlicher Contracts
+- deterministische Qualitätsbewertung
+- reproduzierbare Prüfergebnisse
+- automatische Blockade nicht konformer Änderungen
+- nachvollziehbare Qualitätshistorie
+- einheitliche Bewertungsmaßstäbe für Mensch und KI
+
+---
+
+# Enterprise Principle
+
+Jeder Contract besitzt einen Validator.
+
+Jeder Validator besitzt ein deterministisches Ergebnis.
+
+Jedes Ergebnis besitzt eine Version.
+
+Kein Quality Gate ohne ausführbare Prüfung.
+
+---
+
+# Validation Lifecycle
+
+Change
+
+↓
+
+Static Validation
+
+↓
+
+Contract Validation
+
+↓
+
+Architecture Validation
+
+↓
+
+Metadata Validation
+
+↓
+
+Documentation Validation
+
+↓
+
+Test Validation
+
+↓
+
+Security Validation
+
+↓
+
+Quality Score
+
+↓
+
+Quality Gate Decision
+
+↓
+
+Supervisor
+
+↓
+
+Platform Director
+
+---
+
+# Validator Contract
+
+Jeder Validator besitzt verbindlich
+
+ID
+
+Name
+
+Version
+
+geprüfter Contract
+
+Prüfumfang
+
+Eingaben
+
+Ergebnisstruktur
+
+Schweregrade
+
+Owner
+
+Validatoren befinden sich ausschließlich unter
+
+```text
+src/platform/Validators/
+```
+
+Komponentenspezifische Validatoren befinden sich im Validators-Verzeichnis der jeweiligen Komponente.
+
+---
+
+# Validator Rules
+
+Ein Validator verändert niemals den geprüften Gegenstand.
+
+Ein Validator besitzt keine Seiteneffekte.
+
+Ein Validator ist idempotent.
+
+Ein Validator liefert bei identischer Eingabe identische Ergebnisse.
+
+Ein Validator erzeugt niemals Dokumentation.
+
+---
+
+# Validation Result Contract
+
+Jedes Prüfergebnis besitzt
+
+Validator ID
+
+Validator Version
+
+geprüftes Objekt
+
+Zeitpunkt
+
+Ergebnis
+
+Schweregrad
+
+Befunde
+
+Nachweise
+
+Correlation ID
+
+---
+
+# Severity Levels
+
+Critical
+
+Blockiert jede Integration.
+
+---
+
+High
+
+Blockiert Releases.
+
+---
+
+Medium
+
+Blockiert Produktionsfreigaben.
+
+---
+
+Low
+
+Wird protokolliert.
+
+---
+
+Information
+
+Rein informativ.
+
+---
+
+# Mandatory Validators
+
+Verbindlich sind mindestens
+
+RepositoryStructureValidator
+
+DirectoryResponsibilityValidator
+
+NamingValidator
+
+LayerValidator
+
+DependencyValidator
+
+InterfaceValidator
+
+ManifestValidator
+
+ComponentValidator
+
+MetadataValidator
+
+DocumentationValidator
+
+EventValidator
+
+VersionValidator
+
+SecurityValidator
+
+ComplianceValidator
+
+KnowledgeValidator
+
+TwinValidator
+
+Jeder Validator prüft genau einen Contract-Bereich.
+
+---
+
+# Quality Gates
+
+Die in Chapter 1 definierten Quality Gates werden verbindlich als ausführbare Prüfungen geführt.
+
+Gate 1
+
+Contract-Konformität
+
+---
+
+Gate 2
+
+Architektur-Konformität
+
+---
+
+Gate 3
+
+Versionskonformität
+
+---
+
+Gate 4
+
+Dokumentationsstatus
+
+---
+
+Gate 5
+
+Teststatus
+
+---
+
+Gate 6
+
+Sicherheitsauswirkungen
+
+---
+
+Gate 7
+
+Compliance-Auswirkungen
+
+---
+
+Gate 8
+
+Build-Ergebnis
+
+Ein Gate gilt ausschließlich als bestanden, wenn sämtliche zugeordneten Validatoren ohne Critical- und High-Befunde abschließen.
+
+---
+
+# Gate Ownership
+
+Jedes Quality Gate besitzt genau einen verantwortlichen Enterprise-Bereich.
+
+| Gate | Verantwortung |
+|---|---|
+| Contract-Konformität | Quality Center |
+| Architektur-Konformität | Architecture |
+| Versionskonformität | Version Manager |
+| Dokumentationsstatus | Documentary Engine |
+| Teststatus | Quality Center |
+| Sicherheitsauswirkungen | Security Center |
+| Compliance-Auswirkungen | Compliance Center |
+| Build-Ergebnis | Release Center |
+
+---
+
+# Test Contract
+
+Die Testverträge aus Chapter 4 bleiben unverändert gültig.
+
+Dieses Kapitel ergänzt ausschließlich die verbindliche Zuordnung der Testarten zu Testverzeichnissen.
+
+```text
+tests/unit/           Klassen und Funktionen
+tests/integration/    Zusammenspiel mehrerer Komponenten
+tests/contract/       Einhaltung der Enterprise Contracts
+tests/architecture/   Layer, Abhängigkeiten, Struktur
+tests/security/       Sicherheits- und Berechtigungsprüfungen
+tests/performance/    Laufzeit und Ressourcenverhalten
+tests/e2e/            Vollständige Prozessketten
+```
+
+---
+
+# Architecture Test Contract
+
+Architecture Tests prüfen verbindlich
+
+Repository-Struktur
+
+Verzeichnisverantwortung
+
+Layer-Hierarchie
+
+Abhängigkeitsrichtung
+
+zyklische Abhängigkeiten
+
+Namenskonventionen
+
+Import-Grenzen
+
+Architecture Tests besitzen höchste Priorität, da sie sämtliche Struktur-Contracts durchsetzbar machen.
+
+---
+
+# Contract Test Contract
+
+Contract Tests prüfen verbindlich
+
+Manifest-Schema
+
+Component-Schema
+
+Event-Schema
+
+Registry-Schema
+
+Knowledge-Schema
+
+Version-Schema
+
+Interface-Signaturen
+
+Contract Tests bilden die maschinelle Repräsentation dieses Dokumentes.
+
+---
+
+# Quality Metrics
+
+Für jede Komponente werden verbindlich berechnet
+
+Documentation Score
+
+Test Score
+
+Architecture Score
+
+Security Score
+
+Knowledge Score
+
+Metadata Score
+
+Twin Score
+
+Jede Metrik besitzt einen Wertebereich von 0 bis 100.
+
+---
+
+# Quality Score
+
+Der Gesamtwert einer Komponente ergibt sich ausschließlich aus den Einzelmetriken.
+
+Die Berechnung ist deterministisch.
+
+Der Quality Score wird niemals manuell gesetzt.
+
+---
+
+# Quality Thresholds
+
+Development
+
+kein Mindestwert
+
+---
+
+Beta
+
+mindestens 60
+
+---
+
+Stable
+
+mindestens 80
+
+---
+
+Critical
+
+mindestens 90
+
+Komponenten unterhalb ihres Schwellwertes dürfen nicht in den nächsthöheren Lifecycle-Zustand überführt werden.
+
+---
+
+# Technical Debt Contract
+
+Technische Schulden werden verbindlich erfasst.
+
+Jeder Eintrag besitzt
+
+ID
+
+Beschreibung
+
+Ursache
+
+betroffene Komponente
+
+Auswirkung
+
+geschätzten Aufwand
+
+Priorität
+
+Zielversion
+
+Technische Schulden werden niemals stillschweigend akzeptiert.
+
+---
+
+# Observability Contract
+
+Qualität ist ausschließlich messbar, wenn das Systemverhalten beobachtbar ist.
+
+Jede Enterprise-Komponente stellt verbindlich bereit
+
+Health Status
+
+Lifecycle Status
+
+Telemetriedaten
+
+Fehlerzähler
+
+Laufzeitkennzahlen
+
+Ereignisstatistiken
+
+Telemetrie befindet sich ausschließlich unter
+
+```text
+src/platform/Telemetry/
+```
+
+Telemetriedaten enthalten niemals personenbezogene Daten.
+
+---
+
+# Validation Events
+
+Validierungen erzeugen verbindlich Enterprise Events.
+
+ValidationStartedEvent
+
+ValidationCompletedEvent
+
+ValidationFailedEvent
+
+ContractViolationEvent
+
+QualityGatePassedEvent
+
+QualityGateFailedEvent
+
+QualityScoreChangedEvent
+
+TechnicalDebtDetectedEvent
+
+---
+
+# Documentary Integration
+
+Die Documentary Engine erzeugt automatisch
+
+Validation Report
+
+Quality Report
+
+Architecture Report
+
+Technical Debt Report
+
+Coverage Report
+
+Gate Report
+
+Berichte werden ausschließlich aus Validierungsergebnissen erzeugt.
+
+---
+
+# Supervisor Integration
+
+Der Supervisor überwacht
+
+fehlgeschlagene Validierungen
+
+nicht ausgeführte Validatoren
+
+veraltete Prüfergebnisse
+
+sinkende Quality Scores
+
+wachsende technische Schulden
+
+blockierte Quality Gates
+
+---
+
+# Platform Director Integration
+
+Der Platform Director entscheidet über
+
+Schwellwerte
+
+Ausnahmen
+
+Priorisierung technischer Schulden
+
+Freigabe trotz offener Befunde
+
+Ausnahmen erfordern verbindlich eine ADR.
+
+---
+
+# AI Validation Contract
+
+KI-Systeme dürfen
+
+✓ Validatoren erzeugen
+
+✓ Tests erzeugen
+
+✓ Befunde analysieren
+
+✓ Korrekturen vorschlagen
+
+Sie dürfen jedoch nicht
+
+✗ Validatoren deaktivieren
+
+✗ Schwellwerte verändern
+
+✗ Befunde ohne Korrektur schließen
+
+✗ Quality Gates umgehen
+
+✗ Prüfergebnisse erzeugen, die nicht auf Ausführung beruhen
+
+---
+
+# Validation
+
+Vor jeder Integration wird geprüft
+
+✓ sämtliche Pflichtvalidatoren ausgeführt
+
+✓ keine Critical-Befunde
+
+✓ keine High-Befunde
+
+✓ Quality Gates bestanden
+
+✓ Testverzeichnisse korrekt belegt
+
+✓ Coverage-Anforderungen erfüllt
+
+✓ Quality Score berechnet
+
+✓ technische Schulden erfasst
+
+✓ Validierungsergebnisse versioniert
+
+---
+
+# Enterprise Rules
+
+Kein Contract ohne Validator.
+
+Kein Quality Gate ohne ausführbare Prüfung.
+
+Keine Integration mit Critical-Befunden.
+
+Kein Lifecycle-Wechsel ohne Schwellwert.
+
+Keine Qualitätsaussage ohne Messung.
+
+Keine manuelle Vergabe von Quality Scores.
+
+Keine Ausnahme ohne ADR.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ sämtliche Contracts durch Validatoren abgedeckt sind
+
+✓ sämtliche Quality Gates ausführbar sind
+
+✓ sämtliche Prüfergebnisse reproduzierbar sind
+
+✓ sämtliche Komponenten einen Quality Score besitzen
+
+✓ Architecture Tests sämtliche Strukturregeln durchsetzen
+
+✓ Contract Tests sämtliche Schemata prüfen
+
+✓ technische Schulden vollständig erfasst sind
+
+✓ keine nicht konforme Änderung integriert werden kann
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 13
+
+Enterprise Plugin & Extension Contracts
+
+↓
+
+Chapter 14
+
+Enterprise Migration & Lifecycle Contracts
+
+↓
+
+Chapter 19
+
+Enterprise Automation Contracts
+
+---
+
+# End of Chapter 12
+---
+
+# Chapter 13
+
+# Enterprise Plugin & Extension Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindlichen Erweiterungsverträge des CAPITAL-AI Core.
+
+Die Plattform ist erweiterbar, ohne veränderbar zu sein.
+
+Erweiterungen dürfen niemals bestehende Komponenten modifizieren.
+
+Jede Erweiterung wird registriert, versioniert, validiert und dokumentiert.
+
+Das Open Closed Principle aus Chapter 1 wird dadurch technisch durchgesetzt.
+
+---
+
+# Mission
+
+Die Plugin & Extension Contracts gewährleisten
+
+- kontrollierte Erweiterbarkeit
+- vollständige Isolation von Erweiterungen
+- deterministische Ladereihenfolge
+- vollständige Registrierung
+- automatische Dokumentation jeder Erweiterung
+- Rückbaubarkeit ohne Nebenwirkungen
+
+---
+
+# Enterprise Principle
+
+Die Plattform wird erweitert.
+
+Die Plattform wird nicht verändert.
+
+Jede Erweiterung besitzt einen Vertrag.
+
+Jede Erweiterung besitzt eine Version.
+
+Jede Erweiterung besitzt einen Owner.
+
+---
+
+# Extension Types
+
+Der CAPITAL-AI Core kennt ausschließlich folgende Erweiterungsarten.
+
+Generator Plugin
+
+Validator Plugin
+
+Discovery Plugin
+
+Knowledge Plugin
+
+Documentation Plugin
+
+Diagram Plugin
+
+Report Plugin
+
+Event Plugin
+
+Integration Plugin
+
+AI Plugin
+
+Weitere Erweiterungsarten erfordern eine ADR.
+
+---
+
+# Plugin Location
+
+Plattformweite Erweiterungen befinden sich ausschließlich unter
+
+```text
+src/platform/Plugins/
+```
+
+Komponentenspezifische Erweiterungen befinden sich ausschließlich im Plugins-Verzeichnis der jeweiligen Komponente.
+
+```text
+src/platform/Documentary/Plugins/
+```
+
+---
+
+# Plugin Contract
+
+Jedes Plugin beschreibt verbindlich
+
+ID
+
+Name
+
+Version
+
+Typ
+
+Beschreibung
+
+Owner
+
+Lifecycle
+
+Abhängigkeiten
+
+benötigte Interfaces
+
+erzeugte Events
+
+konsumierte Events
+
+Konfiguration
+
+ESS Referenzen
+
+ADR Referenzen
+
+Sicherheitsklassifizierung
+
+---
+
+# Plugin Identity
+
+Jede Plugin-ID ist plattformweit eindeutig.
+
+Format
+
+```text
+<domain>.<type>.<name>
+```
+
+Beispiele
+
+```text
+documentary.generator.architecture
+documentary.validator.manifest
+knowledge.plugin.graph-export
+platform.integration.supabase
+```
+
+Die ID bleibt über sämtliche Versionen unverändert.
+
+---
+
+# Plugin Interface Contract
+
+Jedes Plugin implementiert ausschließlich öffentliche Enterprise Interfaces.
+
+Verbindlich sind
+
+initialize
+
+validate
+
+execute
+
+dispose
+
+describe
+
+Ein Plugin greift niemals auf interne Klassen anderer Komponenten zu.
+
+---
+
+# Plugin Lifecycle
+
+Discovery
+
+↓
+
+Validation
+
+↓
+
+Registration
+
+↓
+
+Initialization
+
+↓
+
+Activation
+
+↓
+
+Execution
+
+↓
+
+Deactivation
+
+↓
+
+Disposal
+
+Jede Stufe erzeugt ein Enterprise Event.
+
+---
+
+# Plugin Discovery
+
+Plugins werden ausschließlich automatisch erkannt.
+
+Manuelle Registrierung ist nicht zulässig.
+
+Die Discovery erfolgt über
+
+Verzeichnisstruktur
+
+Plugin-Manifest
+
+Interface-Implementierung
+
+Metadaten
+
+---
+
+# Plugin Registration
+
+Jedes erkannte Plugin wird verbindlich in der Enterprise Registry geführt.
+
+Registrierte Angaben
+
+ID
+
+Version
+
+Typ
+
+Status
+
+Owner
+
+Abhängigkeiten
+
+Events
+
+Ladereihenfolge
+
+Health Status
+
+Nicht registrierte Plugins werden niemals ausgeführt.
+
+---
+
+# Load Order Contract
+
+Die Ladereihenfolge ist deterministisch.
+
+Sie ergibt sich ausschließlich aus
+
+Layer
+
+Abhängigkeiten
+
+Plugin-Typ
+
+ID in lexikografischer Ordnung
+
+Zufällige oder zeitabhängige Reihenfolgen sind nicht zulässig.
+
+---
+
+# Isolation Contract
+
+Ein Plugin darf niemals
+
+bestehende Klassen überschreiben
+
+bestehende Dateien verändern
+
+globale Zustände modifizieren
+
+andere Plugins direkt aufrufen
+
+Layer-Grenzen umgehen
+
+Contracts erweitern
+
+Plugins kommunizieren ausschließlich über Enterprise Events und öffentliche Interfaces.
+
+---
+
+# Configuration Contract
+
+Plugin-Konfiguration erfolgt ausschließlich über
+
+```text
+src/config/
+```
+
+Jede Konfigurationsoption besitzt
+
+Name
+
+Typ
+
+Standardwert
+
+Beschreibung
+
+Gültigkeitsbereich
+
+Plugins besitzen niemals eigene Konfigurationsdateien außerhalb der definierten Struktur.
+
+---
+
+# Failure Contract
+
+Ein fehlerhaftes Plugin darf die Plattform niemals beeinträchtigen.
+
+Verbindlich sind
+
+Fehlerkapselung
+
+Zeitbegrenzung
+
+Wiederholungsgrenzen
+
+automatische Deaktivierung nach wiederholtem Fehler
+
+Health-Status-Aktualisierung
+
+Fehler-Event
+
+Die Plattform bleibt jederzeit funktionsfähig.
+
+---
+
+# Plugin Events
+
+Verbindlich sind
+
+PluginDiscoveredEvent
+
+PluginRegisteredEvent
+
+PluginActivatedEvent
+
+PluginDeactivatedEvent
+
+PluginExecutedEvent
+
+PluginFailedEvent
+
+PluginRemovedEvent
+
+---
+
+# Plugin Versioning
+
+Plugins folgen dem Versioning Contract aus Chapter 9.
+
+Breaking Changes an Plugin-Interfaces erfordern
+
+Major Version
+
+ADR
+
+Migrationspfad
+
+Ein Plugin darf niemals eine höhere Interface-Version voraussetzen als die Plattform bereitstellt.
+
+---
+
+# Compatibility Contract
+
+Jedes Plugin beschreibt verbindlich
+
+minimale Plattformversion
+
+maximale Plattformversion
+
+benötigte Interface-Version
+
+benötigte Event-Version
+
+Inkompatible Plugins werden registriert, jedoch niemals aktiviert.
+
+---
+
+# Documentation Contract
+
+Für jedes Plugin erzeugt die Documentary Engine automatisch
+
+Plugin-Beschreibung
+
+Interface-Dokumentation
+
+Event-Dokumentation
+
+Konfigurationsdokumentation
+
+Abhängigkeitsdiagramm
+
+Registry-Eintrag
+
+Knowledge Node
+
+Ein Plugin ohne Dokumentation gilt als nicht integriert.
+
+---
+
+# Security Contract
+
+Plugins unterliegen vollständig Chapter 11.
+
+Zusätzlich gilt
+
+kein direkter Datenbankzugriff ohne Freigabe
+
+kein direkter Netzwerkzugriff ohne Deklaration
+
+keine Ausführung fremden Codes
+
+keine dynamische Codegenerierung
+
+keine Umgehung der Autorisierung
+
+Plugins mit Sicherheitsklassifizierung Restricted oder Critical erfordern ein Security Review.
+
+---
+
+# Extension Governance
+
+Neue Erweiterungsarten
+
+neue Plugin-Interfaces
+
+neue Ladephasen
+
+neue Konfigurationsmechanismen
+
+erfordern verbindlich eine ADR.
+
+---
+
+# Supervisor Integration
+
+Der Supervisor überwacht
+
+Plugin-Ausfälle
+
+Ladefehler
+
+Zeitüberschreitungen
+
+Versionskonflikte
+
+nicht registrierte Erweiterungen
+
+deaktivierte Plugins
+
+---
+
+# Platform Director Integration
+
+Der Platform Director entscheidet über
+
+Zulassung neuer Erweiterungsarten
+
+Freigabe kritischer Plugins
+
+Deaktivierung von Plugins
+
+Erweiterungsstrategie der Plattform
+
+---
+
+# Validation
+
+Vor jeder Aktivierung wird geprüft
+
+✓ Plugin-Manifest vollständig
+
+✓ ID eindeutig
+
+✓ Interfaces implementiert
+
+✓ Abhängigkeiten auflösbar
+
+✓ Versionskompatibilität erfüllt
+
+✓ Ladereihenfolge bestimmbar
+
+✓ Events registriert
+
+✓ Sicherheitsklassifizierung vorhanden
+
+✓ Konfiguration gültig
+
+✓ Dokumentation erzeugt
+
+✓ Registry-Eintrag vorhanden
+
+---
+
+# Enterprise Rules
+
+Keine Erweiterung ohne Vertrag.
+
+Keine Erweiterung ohne Registrierung.
+
+Keine Erweiterung ohne Version.
+
+Keine Erweiterung ohne Dokumentation.
+
+Keine Erweiterung verändert bestehende Komponenten.
+
+Keine Erweiterung umgeht Layer-Grenzen.
+
+Keine neue Erweiterungsart ohne ADR.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ sämtliche Erweiterungen automatisch erkannt werden
+
+✓ sämtliche Erweiterungen registriert sind
+
+✓ die Ladereihenfolge deterministisch ist
+
+✓ fehlerhafte Plugins die Plattform nicht beeinträchtigen
+
+✓ sämtliche Plugins dokumentiert sind
+
+✓ sämtliche Plugins versioniert sind
+
+✓ keine Erweiterung bestehende Komponenten verändert
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 14
+
+Enterprise Migration & Lifecycle Contracts
+
+↓
+
+Chapter 17
+
+Enterprise AI Orchestration Contracts
+
+↓
+
+Chapter 19
+
+Enterprise Automation Contracts
+
+---
+
+# End of Chapter 13
+---
+
+# Chapter 14
+
+# Enterprise Migration & Lifecycle Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindlichen Lebenszyklus- und Migrationsverträge des CAPITAL-AI Core.
+
+Jede Komponente durchläuft einen definierten Lebenszyklus.
+
+Jeder Zustandswechsel besitzt Voraussetzungen.
+
+Jede Migration besitzt einen Ausgangszustand, einen Zielzustand und eine Rückführungsstrategie.
+
+Bestehende produktive Komponenten werden niemals ersetzt, sondern kontrolliert überführt.
+
+---
+
+# Mission
+
+Die Migration & Lifecycle Contracts gewährleisten
+
+- eindeutige Zustände jeder Komponente
+- kontrollierte Zustandsübergänge
+- reproduzierbare Migrationen
+- vollständige Rückbaubarkeit
+- Schutz produktiver Bestandskomponenten
+- lückenlose Dokumentation jeder Überführung
+
+---
+
+# Enterprise Principle
+
+Kein Zustandswechsel ohne Voraussetzung.
+
+Keine Migration ohne Impact Analyse.
+
+Keine Migration ohne Rollback.
+
+Keine Ablösung ohne Nachweis der Gleichwertigkeit.
+
+Kein Bestandssystem wird ohne ADR entfernt.
+
+---
+
+# Lifecycle States
+
+Die verbindlichen Lebenszyklus-Zustände einer Komponente entsprechen Chapter 7.
+
+Development
+
+Experimental
+
+Beta
+
+Stable
+
+Deprecated
+
+Archived
+
+Retired
+
+Diese Werte beschreiben ausschließlich die Komponente.
+
+---
+
+# Version Categories
+
+Die Versionskategorien aus ESS-0001 Chapter 9 beschreiben ausschließlich die Version einer Auslieferung.
+
+Development
+
+Experimental
+
+Preview
+
+Alpha
+
+Beta
+
+Release Candidate
+
+Production
+
+Long Term Support
+
+Hotfix
+
+Emergency
+
+Legacy
+
+Archived
+
+Beide Vokabulare bestehen unverändert nebeneinander.
+
+Lifecycle beschreibt die Komponente.
+
+Version Category beschreibt die Version.
+
+---
+
+# Vocabulary Mapping
+
+Zur eindeutigen Auswertung gilt verbindlich folgende Zuordnung.
+
+| Lifecycle | zulässige Version Categories |
+|---|---|
+| Development | Development, Experimental |
+| Experimental | Experimental, Preview, Alpha |
+| Beta | Beta, Release Candidate |
+| Stable | Production, Long Term Support, Hotfix, Emergency |
+| Deprecated | Production, Legacy |
+| Archived | Legacy, Archived |
+| Retired | Archived |
+
+Metadatenwerte werden ausschließlich in der hier definierten Schreibweise geführt.
+
+---
+
+# Lifecycle Transitions
+
+Zulässig sind ausschließlich folgende Übergänge.
+
+```text
+Development  → Experimental
+Development  → Beta
+Experimental → Beta
+Beta         → Stable
+Stable       → Deprecated
+Deprecated   → Archived
+Archived     → Retired
+```
+
+Rückwärtsgerichtete Übergänge sind ausschließlich zulässig von
+
+```text
+Beta         → Development
+Stable       → Beta
+Deprecated   → Stable
+```
+
+Jeder Rückwärtsübergang erfordert eine Begründung im Changelog.
+
+---
+
+# Transition Requirements
+
+Development → Experimental
+
+Manifest vollständig
+
+README vorhanden
+
+Registry-Eintrag vorhanden
+
+---
+
+Experimental → Beta
+
+Contract Tests vorhanden
+
+Architecture Tests bestanden
+
+Quality Score mindestens 60
+
+Events registriert
+
+---
+
+Beta → Stable
+
+Quality Score mindestens 80
+
+Testabdeckung erfüllt
+
+Security Review bei Restricted und Critical
+
+Dokumentation vollständig
+
+Knowledge Nodes vorhanden
+
+Digital Twin synchron
+
+---
+
+Stable → Deprecated
+
+Nachfolger benannt
+
+Migrationspfad dokumentiert
+
+Deprecation-Datum gesetzt
+
+ADR vorhanden
+
+---
+
+Deprecated → Archived
+
+keine aktiven Abhängigkeiten
+
+Ersatz produktiv
+
+Abschlussdokumentation erzeugt
+
+---
+
+Archived → Retired
+
+Code entfernt oder eingefroren
+
+Historie im Knowledge Graph erhalten
+
+---
+
+# Deprecation Contract
+
+Eine Komponente gilt erst dann als veraltet, wenn
+
+ein Nachfolger existiert
+
+der Nachfolger produktiv ist
+
+ein Migrationspfad dokumentiert ist
+
+sämtliche Abhängigkeiten informiert wurden
+
+ein Deprecation-Datum gesetzt wurde
+
+Veraltete Komponenten werden weiterhin dokumentiert und überwacht.
+
+---
+
+# Migration Contract
+
+Jede Migration beschreibt verbindlich
+
+Migration ID
+
+Titel
+
+Kategorie
+
+Ausgangszustand
+
+Zielzustand
+
+betroffene Komponenten
+
+betroffene Daten
+
+Reihenfolge
+
+Voraussetzungen
+
+Validierung
+
+Rollback
+
+Version
+
+ADR Referenz
+
+---
+
+# Migration Categories
+
+Structural Migration
+
+Component Migration
+
+Data Migration
+
+Interface Migration
+
+Event Migration
+
+Documentation Migration
+
+Legacy Migration
+
+Configuration Migration
+
+---
+
+# Migration Lifecycle
+
+Der Migrationsprozess folgt verbindlich ESS-0001 Chapter 7.
+
+Feature Request
+
+↓
+
+Architecture Analysis
+
+↓
+
+Impact Analysis
+
+↓
+
+Risk Analysis
+
+↓
+
+Migration Planning
+
+↓
+
+Documentation Planning
+
+↓
+
+Version Planning
+
+↓
+
+Implementation
+
+↓
+
+Validation
+
+↓
+
+Deployment
+
+↓
+
+Knowledge Synchronisation
+
+Keine Stufe darf übersprungen werden.
+
+---
+
+# Legacy Contract
+
+Produktive Komponenten außerhalb der in Chapter 2 definierten Struktur gelten als Legacy-Bestand.
+
+Legacy-Bestand wird verbindlich
+
+registriert
+
+klassifiziert
+
+dokumentiert
+
+versioniert
+
+überwacht
+
+Legacy-Bestand wird niemals
+
+ohne ADR entfernt
+
+ohne Nachweis der Gleichwertigkeit ersetzt
+
+ohne Migrationspfad neu implementiert
+
+---
+
+# Legacy Registration
+
+Jede Legacy-Komponente erhält einen Registry-Eintrag mit
+
+ID
+
+Pfad
+
+Verantwortung
+
+Zielkomponente
+
+Migrationsstatus
+
+Risiko
+
+ADR Referenz
+
+Der Migrationsstatus lautet
+
+Identified
+
+Registered
+
+Wrapped
+
+Migrated
+
+Retired
+
+---
+
+# Adapter Contract
+
+Bis zum Abschluss einer Legacy-Migration erfolgt die Anbindung ausschließlich über Adapter.
+
+Ein Adapter
+
+kapselt die Legacy-Implementierung vollständig
+
+veröffentlicht ausschließlich Enterprise Interfaces
+
+erzeugt Enterprise Events
+
+verändert die Legacy-Implementierung nicht
+
+besitzt eine eigene Version
+
+Adapter befinden sich in der jeweiligen Zielkomponente.
+
+---
+
+# Duplicate Prevention
+
+Vor jeder Migration wird verbindlich geprüft
+
+existiert die Funktion bereits?
+
+existiert eine produktionsreife Implementierung?
+
+existiert eine ältere Version?
+
+existiert bereits ein Adapter?
+
+existiert bereits ein Registry-Eintrag?
+
+Eine bestehende produktionsreife Implementierung wird niemals neu entwickelt.
+
+---
+
+# Data Migration Contract
+
+Datenmigrationen erfordern zusätzlich
+
+Sicherung des Ausgangszustands
+
+Prüfsumme vor und nach der Migration
+
+Idempotenz
+
+Wiederanlauffähigkeit
+
+Rollback-Skript
+
+Testlauf in nicht produktiver Umgebung
+
+Freigabe durch den Platform Director
+
+---
+
+# Rollback Contract
+
+Jede Migration besitzt verbindlich
+
+Rollback-Strategie
+
+Rollback-Reihenfolge
+
+Rollback-Voraussetzungen
+
+Rollback-Risiken
+
+Rollback-Tests
+
+Rollback-Version
+
+Eine Migration ohne Rollback wird niemals ausgeführt.
+
+---
+
+# Migration Events
+
+Verbindlich sind
+
+MigrationPlannedEvent
+
+MigrationValidatedEvent
+
+MigrationStartedEvent
+
+MigrationCompletedEvent
+
+MigrationFailedEvent
+
+RollbackStartedEvent
+
+RollbackCompletedEvent
+
+LifecycleChangedEvent
+
+DeprecationAnnouncedEvent
+
+LegacyRegisteredEvent
+
+---
+
+# Documentary Integration
+
+Die Documentary Engine erzeugt automatisch
+
+Migration Report
+
+Lifecycle Report
+
+Deprecation Report
+
+Legacy Inventory
+
+Rollback Report
+
+Impact Report
+
+Die Berichte werden ausschließlich aus Events und Metadaten erzeugt.
+
+---
+
+# Supervisor Integration
+
+Der Supervisor überwacht
+
+laufende Migrationen
+
+fehlgeschlagene Migrationen
+
+überfällige Deprecations
+
+nicht registrierten Legacy-Bestand
+
+Zustandswechsel ohne Voraussetzung
+
+---
+
+# Platform Director Integration
+
+Der Platform Director entscheidet über
+
+Freigabe von Migrationen
+
+Deprecation-Zeitpunkte
+
+Entfernung von Legacy-Bestand
+
+Priorisierung der Migrationsreihenfolge
+
+---
+
+# Version Manager Integration
+
+Der Version Manager bestimmt automatisch
+
+Versionsauswirkung jeder Migration
+
+Zielversion
+
+Breaking Changes
+
+Release-Zuordnung
+
+Rollback-Version
+
+---
+
+# Validation
+
+Vor jeder Migration wird geprüft
+
+✓ Impact Analyse vorhanden
+
+✓ Risikobewertung vorhanden
+
+✓ Zielzustand definiert
+
+✓ Reihenfolge definiert
+
+✓ Rollback definiert
+
+✓ Tests vorhanden
+
+✓ ADR vorhanden
+
+✓ Version bestimmt
+
+✓ Dokumentation geplant
+
+✓ keine Duplikate
+
+✓ Legacy-Bestand berücksichtigt
+
+---
+
+# Enterprise Rules
+
+Kein Zustandswechsel ohne erfüllte Voraussetzungen.
+
+Keine Migration ohne Impact Analyse.
+
+Keine Migration ohne Rollback.
+
+Keine Neuentwicklung produktionsreifer Bestandskomponenten.
+
+Kein Legacy-Bestand ohne Registrierung.
+
+Keine Entfernung ohne ADR.
+
+Keine Deprecation ohne Nachfolger.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ jede Komponente einen eindeutigen Lebenszyklus besitzt
+
+✓ sämtliche Zustandswechsel überprüfbar sind
+
+✓ sämtlicher Legacy-Bestand registriert ist
+
+✓ sämtliche Migrationen dokumentiert sind
+
+✓ sämtliche Migrationen rückführbar sind
+
+✓ keine produktionsreife Komponente doppelt entwickelt wird
+
+✓ Documentary sämtliche Migrationen automatisch dokumentiert
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 15
+
+Enterprise Knowledge Graph Contracts
+
+↓
+
+Chapter 16
+
+Enterprise Repository Governance
+
+↓
+
+Chapter 18
+
+Enterprise Digital Twin Contracts
+
+---
+
+# End of Chapter 14
+---
+
+# Chapter 15
+
+# Enterprise Knowledge Graph Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindlichen technischen Verträge des Enterprise Knowledge Graph.
+
+ESS-0001 Chapter 4 beschreibt das Wissensmodell der Plattform.
+
+Chapter 7 dieser Contracts definiert die Metadaten, aus denen Wissen entsteht.
+
+Dieses Kapitel definiert ausschließlich die technische Struktur, die Erzeugung, die Validierung und die Versionierung des Knowledge Graph.
+
+Der Knowledge Graph ist die einzige autorisierte Quelle für Architekturwissen.
+
+---
+
+# Mission
+
+Die Knowledge Graph Contracts gewährleisten
+
+- eine eindeutige Knotenidentität
+- eine eindeutige Beziehungssemantik
+- vollständige Rückverfolgbarkeit jedes Wissenselements
+- reproduzierbaren Aufbau aus dem Repository
+- automatische Validierung
+- identische Wissensbasis für sämtliche KI-Systeme
+
+---
+
+# Enterprise Principle
+
+Wissen entsteht ausschließlich aus Analyse.
+
+Wissen wird niemals manuell geschrieben.
+
+Jeder Knoten besitzt einen Ursprung.
+
+Jede Beziehung besitzt eine Richtung.
+
+Jede Aussage besitzt eine Version.
+
+---
+
+# Knowledge Lifecycle
+
+Repository
+
+↓
+
+Discovery
+
+↓
+
+Code Intelligence
+
+↓
+
+Metadata
+
+↓
+
+Knowledge Builder
+
+↓
+
+Knowledge Validation
+
+↓
+
+Knowledge Graph
+
+↓
+
+Digital Twin
+
+↓
+
+Documentary Engine
+
+---
+
+# Knowledge Location
+
+Der maschinenlesbare Wissensbestand befindet sich ausschließlich unter
+
+```text
+.ai/knowledge/
+```
+
+Die erzeugende Logik befindet sich ausschließlich unter
+
+```text
+src/platform/Knowledge/
+```
+
+Wissensdateien werden niemals manuell bearbeitet.
+
+---
+
+# Node Contract
+
+Jeder Knoten besitzt verbindlich
+
+id
+
+type
+
+name
+
+version
+
+owner
+
+source
+
+layer
+
+lifecycle
+
+description
+
+essReferences
+
+adrReferences
+
+createdAt
+
+updatedAt
+
+checksum
+
+---
+
+# Node Identity
+
+Die Knoten-ID ist plattformweit eindeutig und stabil.
+
+Format
+
+```text
+<type>:<domain>/<name>
+```
+
+Beispiele
+
+```text
+component:platform/Documentary
+interface:platform/IKnowledgeBuilder
+event:platform/KnowledgeUpdatedEvent
+adr:governance/ADR-0010
+ess:governance/ESS-0001
+plugin:documentary.generator.architecture
+```
+
+Die ID bleibt über sämtliche Versionen unverändert.
+
+---
+
+# Node Types
+
+Verbindlich sind
+
+Repository
+
+Module
+
+Component
+
+Class
+
+Interface
+
+Type
+
+Method
+
+Event
+
+Agent
+
+Orchestrator
+
+Service
+
+API
+
+DatabaseObject
+
+Migration
+
+Configuration
+
+Plugin
+
+Validator
+
+Generator
+
+Document
+
+ADR
+
+ESS
+
+Version
+
+Release
+
+Risk
+
+Policy
+
+Neue Knotentypen erfordern eine ADR.
+
+---
+
+# Relationship Contract
+
+Jede Beziehung besitzt verbindlich
+
+id
+
+type
+
+source
+
+target
+
+direction
+
+version
+
+origin
+
+confidence
+
+createdAt
+
+---
+
+# Relationship Types
+
+Verbindlich sind die in ESS-0001 Chapter 4 definierten Beziehungen.
+
+USES
+
+IMPLEMENTS
+
+DEPENDS_ON
+
+CALLS
+
+LISTENS_TO
+
+EMITS
+
+OWNS
+
+BELONGS_TO
+
+GENERATES
+
+REGISTERS
+
+VALIDATES
+
+DEPLOYS
+
+CONFIGURES
+
+MIGRATES
+
+SUPERVISES
+
+DOCUMENTS
+
+Zusätzlich zulässig sind
+
+REPLACES
+
+DEPRECATES
+
+REFERENCES
+
+DERIVED_FROM
+
+Weitere Beziehungstypen erfordern eine ADR.
+
+---
+
+# Direction Contract
+
+Jede Beziehung ist gerichtet.
+
+Ungerichtete Beziehungen sind nicht zulässig.
+
+Gegenbeziehungen werden niemals doppelt gespeichert, sondern ausschließlich berechnet.
+
+---
+
+# Origin Contract
+
+Jeder Knoten und jede Beziehung besitzt einen nachweisbaren Ursprung.
+
+Zulässige Ursprünge
+
+SourceCode
+
+Manifest
+
+ComponentDescriptor
+
+Documentation
+
+ADR
+
+ESS
+
+Event
+
+Registry
+
+Migration
+
+GitHistory
+
+Wissen ohne Ursprung wird verworfen.
+
+---
+
+# Confidence Contract
+
+Jede abgeleitete Beziehung besitzt einen Vertrauenswert.
+
+Verified
+
+aus explizitem Code oder Metadaten abgeleitet
+
+---
+
+Derived
+
+aus Analyse mehrerer Quellen abgeleitet
+
+---
+
+Assumed
+
+nicht zulässig
+
+Beziehungen mit dem Wert Assumed dürfen niemals in den Knowledge Graph aufgenommen werden.
+
+---
+
+# Knowledge Versioning
+
+Der Knowledge Graph besitzt eine eigene Version gemäß ESS-0001 Chapter 9.
+
+Die Knowledge Version wird erhöht bei
+
+neuen Knotentypen
+
+neuen Beziehungstypen
+
+strukturellen Änderungen des Wissensmodells
+
+vollständigem Neuaufbau
+
+Jedes Dokument speichert die Knowledge Version, auf der es beruht.
+
+---
+
+# Determinism Contract
+
+Der Knowledge Graph ist vollständig reproduzierbar.
+
+Bei identischem Repository-Zustand erzeugt jeder Aufbau
+
+identische Knoten
+
+identische IDs
+
+identische Beziehungen
+
+identische Prüfsummen
+
+Zeitstempel und Laufzeitinformationen sind von der Prüfsummenbildung ausgenommen.
+
+---
+
+# Knowledge Files
+
+Die Wissensbasis wird verbindlich in getrennten Dateien geführt.
+
+```text
+repository.json
+architecture.json
+components.json
+interfaces.json
+services.json
+events.json
+agents.json
+orchestrators.json
+database.json
+api.json
+security.json
+documentation.json
+dependencies.json
+workflows.json
+policies.json
+versions.json
+releases.json
+plugins.json
+risks.json
+graph.json
+```
+
+Jede Datei besitzt ein Schema unter `.ai/schemas/`.
+
+---
+
+# Query Contract
+
+Der Knowledge Graph beantwortet verbindlich mindestens
+
+Welche Komponenten besitzen keine ADR?
+
+Welche Komponenten besitzen keine Tests?
+
+Welche Events besitzen keinen Consumer?
+
+Welche Interfaces besitzen keine Implementierung?
+
+Welche Komponenten verletzen die Layer-Hierarchie?
+
+Welche Komponenten sind veraltet?
+
+Welche Komponenten besitzen technische Schulden?
+
+Welche Version hat eine Komponente eingeführt?
+
+Welche Dokumente beruhen auf einer veralteten Knowledge Version?
+
+Welche Legacy-Komponenten besitzen keinen Adapter?
+
+---
+
+# Consistency Contract
+
+Der Knowledge Graph ist widerspruchsfrei.
+
+Nicht zulässig sind
+
+Knoten ohne Typ
+
+Knoten ohne Ursprung
+
+Beziehungen auf nicht existierende Knoten
+
+doppelte IDs
+
+zyklische OWNS-Beziehungen
+
+widersprüchliche Versionsangaben
+
+verwaiste Knoten ohne Beziehung
+
+---
+
+# Synchronisation Contract
+
+Der Knowledge Graph wird verbindlich aktualisiert bei
+
+Repository-Änderungen
+
+Metadatenänderungen
+
+Contract-Änderungen
+
+ADR-Änderungen
+
+ESS-Änderungen
+
+Versionsänderungen
+
+Migrationen
+
+Plugin-Registrierungen
+
+Die Aktualisierung erfolgt ausschließlich ereignisgesteuert.
+
+---
+
+# Knowledge Events
+
+Verbindlich sind
+
+KnowledgeBuildStartedEvent
+
+KnowledgeCreatedEvent
+
+KnowledgeUpdatedEvent
+
+KnowledgeLinkedEvent
+
+KnowledgeValidatedEvent
+
+KnowledgeConflictDetectedEvent
+
+KnowledgeVersionChangedEvent
+
+---
+
+# Registry Relationship
+
+Die Enterprise Registry aus Chapter 7 und der Knowledge Graph besitzen getrennte Verantwortungen.
+
+Registry
+
+verwaltet Existenz, Identität und Status registrierter Objekte
+
+---
+
+Knowledge Graph
+
+verwaltet Bedeutung, Beziehungen und Historie
+
+Die Registry ist Quelle des Knowledge Graph.
+
+Der Knowledge Graph verändert die Registry niemals.
+
+---
+
+# AI Knowledge Contract
+
+Sämtliche KI-Systeme verwenden ausschließlich den Knowledge Graph als Wissensquelle.
+
+Nicht zulässig sind
+
+eigene Repository-Analysen zur Wissensbildung
+
+lokale Wissensspeicher
+
+abweichende Interpretationen
+
+manuelle Ergänzungen
+
+Ein KI-System, das Wissen benötigt, fragt den Knowledge Graph ab.
+
+---
+
+# Documentary Integration
+
+Die Documentary Engine erzeugt sämtliche Dokumentation ausschließlich aus dem Knowledge Graph.
+
+Erzeugt werden
+
+Knowledge Report
+
+Knowledge Index
+
+Component Registry
+
+Dependency Report
+
+Architecture Report
+
+Diagramme
+
+Kein Dokument entsteht ohne Knowledge-Referenz.
+
+---
+
+# Validation
+
+Vor jeder Veröffentlichung des Knowledge Graph wird geprüft
+
+✓ sämtliche Knoten besitzen IDs
+
+✓ sämtliche IDs sind eindeutig
+
+✓ sämtliche Knoten besitzen einen Ursprung
+
+✓ sämtliche Beziehungen besitzen gültige Endpunkte
+
+✓ keine Assumed-Beziehungen
+
+✓ keine verwaisten Knoten
+
+✓ keine zyklischen Eigentumsbeziehungen
+
+✓ Schema-Konformität aller Dateien
+
+✓ Prüfsummen reproduzierbar
+
+✓ Knowledge Version gesetzt
+
+---
+
+# Enterprise Rules
+
+Wissen entsteht ausschließlich aus Analyse.
+
+Wissen wird niemals manuell verändert.
+
+Kein Knoten ohne Ursprung.
+
+Keine Beziehung ohne Richtung.
+
+Keine Annahme im Knowledge Graph.
+
+Kein Dokument ohne Knowledge-Referenz.
+
+Keine parallele Wissensbasis.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ sämtliche Komponenten als Knoten existieren
+
+✓ sämtliche Beziehungen abgeleitet wurden
+
+✓ der Graph reproduzierbar aufgebaut werden kann
+
+✓ sämtliche Wissensdateien schemakonform sind
+
+✓ sämtliche Dokumente auf Knowledge-Referenzen beruhen
+
+✓ sämtliche KI-Systeme dieselbe Wissensbasis verwenden
+
+✓ Widersprüche automatisch erkannt werden
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 16
+
+Enterprise Repository Governance
+
+↓
+
+Chapter 18
+
+Enterprise Digital Twin Contracts
+
+↓
+
+Chapter 19
+
+Enterprise Automation Contracts
+
+---
+
+# End of Chapter 15
+---
+
+# Chapter 16
+
+# Enterprise Repository Governance
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindliche Governance des CAPITAL-AI Repositorys.
+
+Chapter 2 definiert die Struktur.
+
+Chapter 3 definiert die Verantwortlichkeiten.
+
+Dieses Kapitel definiert, wie die Einhaltung dieser Struktur dauerhaft durchgesetzt, überwacht und weiterentwickelt wird.
+
+Das Repository ist die einzige technische Wahrheit der Plattform und unterliegt deshalb derselben Governance wie produktiver Code.
+
+---
+
+# Mission
+
+Die Repository Governance gewährleistet
+
+- dauerhafte Strukturstabilität
+- kontrollierte Strukturerweiterung
+- automatische Erkennung von Abweichungen
+- eindeutige Eigentümerschaft jedes Bereichs
+- nachvollziehbare Ausnahmen
+- reproduzierbaren Repository-Zustand
+
+---
+
+# Enterprise Principle
+
+Struktur ist Architektur.
+
+Struktur wird niemals beiläufig verändert.
+
+Jede Abweichung ist entweder ein Befund oder eine dokumentierte Ausnahme.
+
+---
+
+# Governance Scope
+
+Dieses Kapitel gilt für
+
+Root-Verzeichnisse
+
+Root-Dateien
+
+Plattformmodule
+
+Feature-Domänen
+
+Dokumentationsbereiche
+
+AI-Ressourcen
+
+Testbereiche
+
+Skriptbereiche
+
+Datenbankartefakte
+
+Generierte Artefakte
+
+---
+
+# Structural Authority
+
+Die Rangfolge aus Chapter 1 gilt unverändert.
+
+ADR
+
+↓
+
+ESS Contracts
+
+↓
+
+ESS
+
+↓
+
+Projektdokumentation
+
+↓
+
+Implementierung
+
+Strukturentscheidungen werden ausschließlich durch ADR getroffen.
+
+---
+
+# Platform Module Clarification
+
+Chapter 2 definiert die verbindlichen fachlichen Plattformmodule.
+
+Chapter 3 definiert zusätzlich `src/platform/Core` als technische Basis.
+
+Chapter 6 führt Core als unterste Ebene der Layer-Hierarchie.
+
+Klarstellung
+
+Core ist verbindlicher Bestandteil der Plattform und bildet das Fundament sämtlicher Module.
+
+Core wird nicht als fachliches Modul geführt, sondern als technische Basisschicht.
+
+Diese Klarstellung ändert keine bestehende Regel, sondern beseitigt eine Auslegungslücke.
+
+---
+
+# Cross Cutting Modules
+
+Chapter 6 definiert die Layer-Hierarchie der fachlichen Plattformebenen.
+
+Folgende Pflichtmodule aus Chapter 2 sind Querschnittsmodule und besitzen keine eigene Ebene innerhalb dieser Hierarchie.
+
+```text
+Architecture   Events       Contracts    Models
+Interfaces     Validators   Generators   Plugins
+Telemetry      Quality      Security     Compliance
+Release
+```
+
+Für Querschnittsmodule gilt verbindlich
+
+sie besitzen ausschließlich Abhängigkeiten auf Core und Shared
+
+sie besitzen niemals Abhängigkeiten auf Documentary, Version Manager, Supervisor oder Platform Director
+
+sie werden von höheren Layern verwendet, verwenden diese jedoch niemals selbst
+
+Ausnahme
+
+Release besitzt zusätzlich Zugriff auf Registry, Knowledge, Documentary und Version Manager, da es deren Ergebnisse zusammenführt.
+
+Diese Zuordnung ergänzt Chapter 6, ohne die bestehende Hierarchie zu verändern.
+
+---
+
+# Directory Ownership
+
+Jeder Repository-Bereich besitzt genau einen Eigentümer.
+
+| Bereich | Eigentümer |
+|---|---|
+| `.ai/` | Platform Director |
+| `docs/` | Documentary Engine |
+| `docs/adr/` | Platform Director |
+| `scripts/` | Release Center |
+| `src/platform/` | Platform Director |
+| `src/features/` | jeweilige Domäne |
+| `src/config/` | Platform Director |
+| `supabase/` | Security Center |
+| `tests/` | Quality Center |
+| `public/` | Frontend |
+| `dist/` | Build |
+
+Ohne Eigentümer existiert kein zulässiger Repository-Bereich.
+
+---
+
+# Root Governance
+
+Root-Verzeichnisse sind abschließend in Chapter 2 definiert.
+
+Root-Dokumente sind abschließend in Chapter 2 definiert.
+
+Jede Abweichung erfordert verbindlich
+
+einen ADR
+
+eine Begründung
+
+eine Zielstruktur
+
+ein Enddatum oder den Status Permanent Exception
+
+Nicht dokumentierte Abweichungen sind Befunde der Stufe Critical.
+
+---
+
+# Exception Contract
+
+Eine Ausnahme besitzt verbindlich
+
+Exception ID
+
+betroffenen Pfad
+
+verletzten Contract
+
+Begründung
+
+Risiko
+
+Zielzustand
+
+Verantwortlichen
+
+ADR Referenz
+
+Status
+
+Zulässige Status
+
+Approved
+
+Time Limited
+
+Permanent
+
+Revoked
+
+Ausnahmen werden im Repository geführt und automatisch überwacht.
+
+---
+
+# Drift Detection
+
+Als Strukturdrift gilt verbindlich
+
+neues Root-Verzeichnis ohne ADR
+
+neue Root-Datei ohne Ausnahme
+
+Plattformmodul ohne Manifest
+
+Plattformmodul ohne README
+
+Komponente ohne Registry-Eintrag
+
+Datei außerhalb ihrer Verantwortungszone
+
+Geschäftslogik außerhalb von Features
+
+Dokumentation innerhalb produktiver Komponenten
+
+Testdateien außerhalb des Testbereichs
+
+generierte Dateien außerhalb der Generatorbereiche
+
+Strukturdrift wird bei jedem Discovery-Lauf erkannt.
+
+---
+
+# Naming Governance
+
+Die Namensverträge aus Chapter 5 gelten unverändert.
+
+Zusätzlich gilt verbindlich
+
+Dateinamen enthalten niemals Leerzeichen
+
+Dokumentnamen folgen dem definierten Enterprise-Schema
+
+ADR-Nummern sind vierstellig und fortlaufend
+
+ESS-Nummern sind vierstellig und werden ausschließlich über die ESS Registry vergeben
+
+Zwischennummern sind nicht zulässig
+
+---
+
+# ESS Registry Contract
+
+Der ESS-Nummernraum wird zentral verwaltet.
+
+Verbindlich gilt
+
+jede ESS-Nummer wird genau einmal vergeben
+
+vergebene Nummern werden niemals umbenannt
+
+reservierte Nummern werden niemals abweichend belegt
+
+neue ESS-Dokumente erhalten die nächste freie Nummer
+
+jede ESS-Nummer besitzt genau ein Dokument
+
+Die Reservierungen aus ESS-0001 sind verbindlich und unverändert zu übernehmen.
+
+---
+
+# ADR Governance
+
+Verbindlich gilt
+
+jede Architekturentscheidung besitzt ein ADR-Dokument
+
+jedes ADR-Dokument besitzt eine eindeutige Nummer
+
+die ADR-Historie ist vollständig
+
+Status und Implementation-Status werden getrennt geführt
+
+abgeschlossene ADRs werden nach `docs/adr/resolved/` überführt
+
+die maschinenlesbare ADR-Registrierung wird generiert, nicht manuell gepflegt
+
+---
+
+# Repository Validation
+
+Vor jedem Build wird zusätzlich zu Chapter 2 geprüft
+
+✓ sämtliche Root-Verzeichnisse zulässig oder als Ausnahme registriert
+
+✓ sämtliche Root-Dateien zulässig oder als Ausnahme registriert
+
+✓ sämtliche Plattformmodule vollständig
+
+✓ sämtliche Module besitzen Manifest, Component Descriptor, README und CHANGELOG
+
+✓ sämtliche Bereiche besitzen einen Eigentümer
+
+✓ sämtliche Ausnahmen besitzen einen gültigen Status
+
+✓ keine Strukturdrift
+
+✓ keine Namensverletzungen
+
+✓ ESS Registry konsistent
+
+✓ ADR Registry konsistent
+
+---
+
+# Governance Events
+
+Verbindlich sind
+
+RepositoryScannedEvent
+
+RepositoryValidatedEvent
+
+StructureViolationDetectedEvent
+
+ExceptionRegisteredEvent
+
+ExceptionExpiredEvent
+
+OwnershipChangedEvent
+
+GovernanceReportGeneratedEvent
+
+---
+
+# Documentary Integration
+
+Die Documentary Engine erzeugt automatisch
+
+Repository Report
+
+Structure Report
+
+Ownership Report
+
+Exception Report
+
+Governance Report
+
+Drift Report
+
+Diese Berichte sind Bestandteil jeder Release-Dokumentation.
+
+---
+
+# Supervisor Integration
+
+Der Supervisor überwacht
+
+Strukturverletzungen
+
+abgelaufene Ausnahmen
+
+fehlende Eigentümer
+
+fehlende Metadaten
+
+nicht registrierte Komponenten
+
+nicht registrierten Legacy-Bestand
+
+---
+
+# Platform Director Integration
+
+Der Platform Director entscheidet über
+
+Strukturerweiterungen
+
+Ausnahmen
+
+Eigentümerschaft
+
+ESS-Nummernvergabe
+
+Priorisierung von Strukturkorrekturen
+
+---
+
+# AI Repository Contract
+
+KI-Systeme dürfen
+
+✓ Strukturabweichungen melden
+
+✓ Strukturkorrekturen vorschlagen
+
+✓ fehlende Metadaten erzeugen
+
+✓ Berichte generieren
+
+Sie dürfen jedoch nicht
+
+✗ neue Root-Verzeichnisse anlegen
+
+✗ Strukturregeln auslegen
+
+✗ Ausnahmen selbst genehmigen
+
+✗ ESS-Nummern eigenständig vergeben
+
+✗ ADR-Nummern eigenständig vergeben
+
+---
+
+# Enterprise Rules
+
+Keine Strukturänderung ohne ADR.
+
+Keine Abweichung ohne registrierte Ausnahme.
+
+Kein Repository-Bereich ohne Eigentümer.
+
+Keine Komponente ohne Metadaten.
+
+Keine ESS-Nummer ohne Registry-Eintrag.
+
+Keine ADR-Nummer ohne Dokument.
+
+Keine stillschweigende Strukturdrift.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ sämtliche Repository-Bereiche einen Eigentümer besitzen
+
+✓ sämtliche Abweichungen registriert sind
+
+✓ Strukturdrift automatisch erkannt wird
+
+✓ ESS- und ADR-Nummernräume widerspruchsfrei sind
+
+✓ sämtliche Plattformmodule vollständig beschrieben sind
+
+✓ der Repository-Zustand reproduzierbar validiert werden kann
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 17
+
+Enterprise AI Orchestration Contracts
+
+↓
+
+Chapter 18
+
+Enterprise Digital Twin Contracts
+
+↓
+
+Chapter 20
+
+Official Enterprise Standard
+
+---
+
+# End of Chapter 16
+---
+
+# Chapter 17
+
+# Enterprise AI Orchestration Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindliche Orchestrierung sämtlicher KI-Systeme innerhalb des CAPITAL-AI Core.
+
+Chapter 10 definiert die Verantwortlichkeiten der einzelnen KI-Systeme.
+
+Dieses Kapitel definiert die Reihenfolge, die Übergaben, die Auslöser und die Abbruchbedingungen der gesamten AI-Wertschöpfungskette.
+
+Die Wertschöpfungskette ist deterministisch.
+
+Sie beginnt niemals ohne Auslöser und endet niemals ohne Nachweis.
+
+---
+
+# Mission
+
+Die AI Orchestration Contracts gewährleisten
+
+- eine eindeutige Reihenfolge sämtlicher KI-Stufen
+- definierte Übergabeartefakte zwischen den Stufen
+- automatische Auslösung durch Enterprise Events
+- vollständige Nachvollziehbarkeit jeder Übergabe
+- kontrollierten Abbruch bei Vertragsverletzung
+- reproduzierbare Ergebnisse unabhängig vom eingesetzten Modell
+
+---
+
+# Enterprise Principle
+
+Kein KI-System arbeitet außerhalb der Kette.
+
+Keine Stufe beginnt ohne Eingangsartefakt.
+
+Keine Stufe endet ohne Ausgangsartefakt.
+
+Jede Übergabe erzeugt ein Enterprise Event.
+
+Jede Stufe kann die Kette anhalten.
+
+---
+
+# Enterprise AI Value Chain
+
+Die verbindliche Wertschöpfungskette lautet
+
+Google AI Studio
+
+↓
+
+Claude Code
+
+↓
+
+Documentary Engine
+
+↓
+
+Supervisor
+
+↓
+
+Platform Director
+
+↓
+
+Version Manager
+
+↓
+
+Release
+
+↓
+
+Production
+
+Keine Stufe darf übersprungen werden.
+
+Keine Stufe darf ihre Reihenfolge verändern.
+
+---
+
+# Stage Contract
+
+Jede Stufe der Kette besitzt verbindlich
+
+Stage ID
+
+Verantwortung
+
+Eingangsartefakte
+
+Ausgangsartefakte
+
+auslösendes Event
+
+erzeugtes Event
+
+Abbruchbedingungen
+
+Validierung
+
+Owner
+
+---
+
+# Stage 1 — Google AI Studio
+
+## Verantwortung
+
+Frontend
+
+UI
+
+UX
+
+Rapid Development
+
+Prototyping
+
+Dokumentationsunterstützung
+
+## Eingang
+
+Anforderung
+
+Designvorgabe
+
+bestehende Contracts
+
+## Ausgang
+
+Entwurf
+
+Prototyp
+
+Frontend-Artefakt
+
+Änderungsbeschreibung
+
+## Erzeugtes Event
+
+DesignProposedEvent
+
+## Abbruch
+
+Verstoß gegen Naming Contracts
+
+Verstoß gegen Layer-Grenzen
+
+fehlende Anforderungsbeschreibung
+
+---
+
+# Stage 2 — Claude Code
+
+## Verantwortung
+
+Backend
+
+Implementierung
+
+Refactoring
+
+Migration
+
+Repository-Änderungen
+
+Tests
+
+produktionsnahe Codeänderungen
+
+## Eingang
+
+Entwurf aus Stage 1
+
+Knowledge Graph
+
+Enterprise Contracts
+
+Impact Analyse
+
+## Ausgang
+
+Implementierung
+
+Tests
+
+Metadaten
+
+Migrationsplan
+
+Changelog-Eintrag
+
+## Erzeugtes Event
+
+ImplementationCompletedEvent
+
+## Abbruch
+
+Contract-Verletzung
+
+fehlende Impact Analyse
+
+fehlende ADR bei Architekturänderung
+
+nicht auflösbare Abhängigkeit
+
+---
+
+# Stage 3 — Documentary Engine
+
+## Verantwortung
+
+Repository Discovery
+
+Code Discovery
+
+Knowledge Graph
+
+Enterprise Registry
+
+Contract Validation
+
+Architecture Reports
+
+Impact Analysen
+
+Digital Twin
+
+## Eingang
+
+Repository-Zustand
+
+Implementierungsartefakte
+
+Events der vorgelagerten Stufen
+
+## Ausgang
+
+Knowledge Update
+
+Dokumentation
+
+Architecture Report
+
+Validation Report
+
+Twin Update
+
+## Erzeugtes Event
+
+DocumentationGeneratedEvent
+
+KnowledgeUpdatedEvent
+
+TwinSynchronizedEvent
+
+## Abbruch
+
+nicht auflösbare Wissenskonflikte
+
+fehlende Metadaten
+
+Schema-Verletzung
+
+---
+
+# Stage 4 — Supervisor
+
+## Verantwortung
+
+Überwachung
+
+Vollständigkeitsprüfung
+
+Governance-Prüfung
+
+Konsistenzprüfung
+
+## Eingang
+
+Dokumentation
+
+Validation Reports
+
+Knowledge Graph
+
+Twin-Zustand
+
+## Ausgang
+
+Supervisor Assessment
+
+Befundliste
+
+Freigabeempfehlung
+
+## Erzeugtes Event
+
+SupervisorValidatedEvent
+
+SupervisorAlertEvent
+
+## Abbruch
+
+offene Critical-Befunde
+
+nicht dokumentierte Änderungen
+
+Governance-Verstöße
+
+---
+
+# Stage 5 — Platform Director
+
+## Verantwortung
+
+strategische Entscheidung
+
+Freigabe
+
+Priorisierung
+
+Ausnahmegenehmigung
+
+## Eingang
+
+Supervisor Assessment
+
+Impact Analyse
+
+Risikobewertung
+
+## Ausgang
+
+Entscheidung
+
+Freigabe oder Ablehnung
+
+ADR bei Architekturentscheidung
+
+## Erzeugtes Event
+
+PlatformDecisionEvent
+
+## Abbruch
+
+fehlende Entscheidungsgrundlage
+
+nicht akzeptables Risiko
+
+---
+
+# Stage 6 — Version Manager
+
+## Verantwortung
+
+Versionsbewertung
+
+Versionsempfehlung
+
+Versionssynchronisation
+
+Rollback-Planung
+
+## Eingang
+
+Freigabe des Platform Director
+
+Impact Analyse
+
+Änderungsumfang
+
+## Ausgang
+
+Version
+
+Changelog
+
+Release Notes
+
+Rollback-Plan
+
+## Erzeugtes Event
+
+VersionCalculatedEvent
+
+VersionChangedEvent
+
+## Abbruch
+
+widersprüchliche Versionsstände
+
+fehlender Rollback-Plan
+
+---
+
+# Stage 7 — Release
+
+## Verantwortung
+
+Release-Vorbereitung
+
+Artefakterzeugung
+
+Deployment-Planung
+
+Freigabedokumentation
+
+## Eingang
+
+Version
+
+Dokumentation
+
+Validierungsergebnisse
+
+## Ausgang
+
+Release-Paket
+
+Deployment-Plan
+
+Release Report
+
+## Erzeugtes Event
+
+ReleasePreparedEvent
+
+ReleasePublishedEvent
+
+## Abbruch
+
+nicht bestandene Quality Gates
+
+fehlende Freigabe
+
+---
+
+# Stage 8 — Production
+
+## Verantwortung
+
+Betrieb
+
+Überwachung
+
+Rückmeldung
+
+## Eingang
+
+Release-Paket
+
+## Ausgang
+
+Betriebsstatus
+
+Telemetrie
+
+Vorfälle
+
+## Erzeugtes Event
+
+DeploymentCompletedEvent
+
+PlatformHealthChangedEvent
+
+## Abbruch
+
+fehlgeschlagenes Deployment
+
+Rollback-Auslösung
+
+---
+
+# Handover Contract
+
+Jede Übergabe zwischen zwei Stufen besitzt verbindlich
+
+Correlation ID
+
+Quellstufe
+
+Zielstufe
+
+Übergabeartefakte
+
+Zeitpunkt
+
+Version
+
+Validierungsergebnis
+
+Eine Übergabe ohne vollständiges Artefakt ist nicht zulässig.
+
+---
+
+# Correlation Contract
+
+Sämtliche Events einer Wertschöpfungskette teilen dieselbe Correlation ID.
+
+Die Correlation ID entsteht in Stage 1 und bleibt bis Stage 8 unverändert.
+
+Dadurch ist jede Änderung von der Anforderung bis zur Produktion lückenlos nachvollziehbar.
+
+---
+
+# Trigger Contract
+
+Jede Stufe wird ausschließlich durch Enterprise Events ausgelöst.
+
+| Auslösendes Event | Ausgelöste Stufe |
+|---|---|
+| DesignProposedEvent | Claude Code |
+| ImplementationCompletedEvent | Documentary Engine |
+| DocumentationGeneratedEvent | Supervisor |
+| SupervisorValidatedEvent | Platform Director |
+| PlatformDecisionEvent | Version Manager |
+| VersionChangedEvent | Release |
+| ReleasePublishedEvent | Production |
+
+Direkte Aufrufe zwischen Stufen sind nicht zulässig.
+
+---
+
+# Documentary Trigger Contract
+
+Die Documentary Engine wird zusätzlich zu Chapter 10 verbindlich ausgelöst bei
+
+jeder Repository-Änderung
+
+jeder Metadatenänderung
+
+jeder Contract-Änderung
+
+jeder ESS-Änderung
+
+jeder ADR-Änderung
+
+jeder Versionsänderung
+
+jeder Migration
+
+jeder Plugin-Registrierung
+
+jedem Security Review
+
+jedem Compliance Review
+
+Die Documentary Engine ist niemals optional.
+
+---
+
+# Abort Contract
+
+Jede Stufe darf die Kette anhalten.
+
+Ein Abbruch erzeugt verbindlich
+
+Abort Event
+
+Begründung
+
+betroffene Artefakte
+
+Verantwortlichen
+
+Korrekturhinweis
+
+Eine abgebrochene Kette wird niemals stillschweigend fortgesetzt.
+
+---
+
+# Retry Contract
+
+Wiederholungen sind ausschließlich zulässig
+
+nach Behebung der Abbruchursache
+
+mit unveränderter Correlation ID
+
+mit dokumentiertem Wiederholungsgrund
+
+Endlose Wiederholungen sind nicht zulässig.
+
+---
+
+# Human Override
+
+Die Regelung aus Chapter 1 gilt unverändert.
+
+Autorisierte Projektverantwortliche dürfen
+
+die Kette anhalten
+
+Stufen erneut ausführen
+
+Entscheidungen des Platform Director ersetzen
+
+Ausnahmen genehmigen
+
+Jeder Eingriff wird als Event protokolliert.
+
+---
+
+# AI Audit Trail
+
+Zusätzlich zu Chapter 10 wird je Stufe protokolliert
+
+Stage ID
+
+KI-System
+
+Modellkennung
+
+Eingangsartefakte
+
+Ausgangsartefakte
+
+Dauer
+
+Validierungsergebnis
+
+Correlation ID
+
+Der Audit Trail ist unveränderbar.
+
+---
+
+# Model Independence
+
+Die Kette ist unabhängig vom eingesetzten Modell.
+
+Ein Modellwechsel darf niemals
+
+die Reihenfolge
+
+die Artefakte
+
+die Contracts
+
+die Ergebnisse in Architektur, Struktur oder Semantik
+
+verändern.
+
+Ausschließlich Formulierungen dürfen abweichen.
+
+---
+
+# Validation
+
+Vor jedem Kettendurchlauf wird geprüft
+
+✓ Auslöser vorhanden
+
+✓ Correlation ID erzeugt
+
+✓ Eingangsartefakte vollständig
+
+✓ Contracts geladen
+
+✓ Knowledge Graph aktuell
+
+✓ Digital Twin synchron
+
+Nach jedem Kettendurchlauf wird geprüft
+
+✓ sämtliche Stufen ausgeführt
+
+✓ sämtliche Events erzeugt
+
+✓ sämtliche Artefakte dokumentiert
+
+✓ Version bestimmt
+
+✓ Audit Trail vollständig
+
+---
+
+# Enterprise Rules
+
+Keine Stufe ohne Auslöser.
+
+Keine Übergabe ohne Artefakt.
+
+Keine Stufe ohne Event.
+
+Keine Kette ohne Correlation ID.
+
+Kein Abbruch ohne Begründung.
+
+Keine Produktion ohne vollständige Kette.
+
+Kein Modellwechsel verändert Ergebnisse.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ jede Stufe automatisch ausgelöst wird
+
+✓ jede Übergabe dokumentiert ist
+
+✓ jede Kette lückenlos nachvollziehbar bleibt
+
+✓ die Documentary Engine bei jeder relevanten Änderung ausgelöst wird
+
+✓ die Versionierung vollständig integriert ist
+
+✓ der Knowledge Graph automatisch aktualisiert wird
+
+✓ der Digital Twin nach jeder Kette synchron ist
+
+✓ kein KI-System außerhalb der Kette arbeitet
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 18
+
+Enterprise Digital Twin Contracts
+
+↓
+
+Chapter 19
+
+Enterprise Automation Contracts
+
+↓
+
+Chapter 20
+
+Official Enterprise Standard
+
+---
+
+# End of Chapter 17
+---
+
+# Chapter 18
+
+# Enterprise Digital Twin Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindlichen Verträge des digitalen Zwillings der CAPITAL-AI Plattform.
+
+ESS-0001 Chapter 6 beschreibt den Digital Twin konzeptionell.
+
+Dieses Kapitel definiert seine technische Struktur, seine Zustände, seine Synchronisation und seine Überprüfbarkeit.
+
+Die Documentary Engine ist der digitale Zwilling der gesamten Plattform.
+
+Jede Enterprise-Komponente besitzt einen eigenen Digital Twin.
+
+---
+
+# Mission
+
+Die Digital Twin Contracts gewährleisten
+
+- eine jederzeit gültige Abbildung des tatsächlichen Systemzustands
+- messbare Synchronität zwischen Code und Modell
+- automatische Erkennung von Abweichungen
+- reproduzierbare Rekonstruktion jedes historischen Zustands
+- Bewertung geplanter Änderungen vor ihrer Umsetzung
+
+---
+
+# Enterprise Principle
+
+Der Zwilling beschreibt niemals einen gewünschten Zustand.
+
+Der Zwilling beschreibt ausschließlich den nachweisbaren Zustand.
+
+Weicht der Zwilling vom Code ab, ist der Zwilling fehlerhaft, niemals der Code.
+
+---
+
+# Twin Scope
+
+Der Digital Twin umfasst verbindlich
+
+Repository
+
+Plattformmodule
+
+Komponenten
+
+Interfaces
+
+Events
+
+Abhängigkeiten
+
+Datenbankobjekte
+
+APIs
+
+Konfiguration
+
+Plugins
+
+Dokumentation
+
+Versionen
+
+Releases
+
+Risiken
+
+Governance-Zustand
+
+---
+
+# Component Twin Contract
+
+Jede Enterprise-Komponente besitzt einen Digital Twin mit verbindlich
+
+twinId
+
+componentId
+
+version
+
+twinVersion
+
+sourceChecksum
+
+metadataChecksum
+
+knowledgeVersion
+
+architectureVersion
+
+lifecycle
+
+health
+
+quality
+
+security
+
+dependencies
+
+interfaces
+
+events
+
+documentation
+
+lastSynchronizedAt
+
+state
+
+---
+
+# Twin Identity
+
+Die Twin-ID ist stabil und plattformweit eindeutig.
+
+Format
+
+```text
+twin:<componentId>
+```
+
+Beispiel
+
+```text
+twin:component:platform/Documentary
+```
+
+Die Twin-ID bleibt über sämtliche Versionen unverändert.
+
+---
+
+# Twin States
+
+Ein Digital Twin besitzt verbindlich genau einen Zustand.
+
+Synchronized
+
+Zwilling und Repository stimmen vollständig überein.
+
+---
+
+Drifted
+
+Es bestehen erkannte Abweichungen.
+
+---
+
+Stale
+
+Der Zwilling wurde seit einer relevanten Änderung nicht aktualisiert.
+
+---
+
+Incomplete
+
+Für den Aufbau erforderliche Informationen fehlen.
+
+---
+
+Unknown
+
+Der Zwilling wurde noch nie aufgebaut.
+
+Ausschließlich der Zustand Synchronized ist für Produktionsfreigaben zulässig.
+
+---
+
+# Synchronisation Contract
+
+Der Digital Twin wird verbindlich synchronisiert bei
+
+jeder Repository-Änderung
+
+jeder Metadatenänderung
+
+jeder Versionsänderung
+
+jeder Migration
+
+jeder Plugin-Registrierung
+
+jeder Contract-Änderung
+
+jeder ADR-Änderung
+
+jedem Release
+
+Die Synchronisation erfolgt ausschließlich ereignisgesteuert.
+
+---
+
+# Drift Contract
+
+Als Drift gilt verbindlich jede Abweichung zwischen
+
+Quellcode und Twin-Modell
+
+Metadaten und Twin-Modell
+
+Registry und Twin-Modell
+
+Knowledge Graph und Twin-Modell
+
+Dokumentation und Twin-Modell
+
+Version und Twin-Version
+
+Drift wird ausschließlich durch Vergleich von Prüfsummen und Strukturen erkannt.
+
+---
+
+# Drift Tolerance
+
+Zulässige Drift beträgt null.
+
+Es existiert keine akzeptierte Abweichung.
+
+Erkannte Drift erzeugt verbindlich
+
+TwinDriftDetectedEvent
+
+Befundeintrag
+
+Korrekturauftrag
+
+Eine Produktionsfreigabe bei bestehender Drift ist nicht zulässig.
+
+---
+
+# Reconciliation Contract
+
+Der Abgleich erfolgt ausschließlich in einer Richtung.
+
+Repository
+
+↓
+
+Discovery
+
+↓
+
+Knowledge Graph
+
+↓
+
+Digital Twin
+
+Der Digital Twin verändert niemals das Repository.
+
+Der Digital Twin verändert niemals Metadaten.
+
+Der Digital Twin erzeugt ausschließlich Befunde und Berichte.
+
+---
+
+# Twin Versioning
+
+Der Digital Twin besitzt eine eigene Version.
+
+Die Twin-Version wird erhöht bei
+
+strukturellen Änderungen des Twin-Modells
+
+neuen Twin-Attributen
+
+geänderter Prüfsummenbildung
+
+vollständigem Neuaufbau
+
+Jeder Twin-Zustand speichert zusätzlich
+
+Repository Version
+
+Knowledge Version
+
+Architecture Version
+
+Documentation Version
+
+---
+
+# Historical Twin
+
+Jeder freigegebene Zustand wird dauerhaft gespeichert.
+
+Für jede Version existiert verbindlich ein rekonstruierbarer Zwilling.
+
+Dadurch beantwortet die Plattform jederzeit
+
+Wie war die Architektur zum Zeitpunkt einer Version?
+
+Welche Komponenten existierten?
+
+Welche Abhängigkeiten bestanden?
+
+Welche Risiken waren bekannt?
+
+Welche Dokumentation war gültig?
+
+---
+
+# Planned Twin
+
+Vor jeder Migration wird zusätzlich ein geplanter Zwilling erzeugt.
+
+Der geplante Zwilling beschreibt
+
+Zielarchitektur
+
+geplante Komponenten
+
+geplante Abhängigkeiten
+
+geplante Events
+
+geplante Versionen
+
+Der Vergleich zwischen aktuellem und geplantem Zwilling bildet die Grundlage der Impact Analyse nach ESS-0001 Chapter 7.
+
+---
+
+# Twin Simulation
+
+Vor jeder Freigabe wird simuliert
+
+Welche Komponenten ändern sich?
+
+Welche Abhängigkeiten entstehen?
+
+Welche Abhängigkeiten entfallen?
+
+Welche Events ändern sich?
+
+Welche Dokumente ändern sich?
+
+Welche Version ist erforderlich?
+
+Welche Tests müssen erneut ausgeführt werden?
+
+Die Simulation verändert niemals den produktiven Zustand.
+
+---
+
+# Twin Storage
+
+Der Digital Twin wird ausschließlich maschinenlesbar geführt.
+
+```text
+.ai/knowledge/twin/
+```
+
+Er enthält verbindlich
+
+current.json
+
+planned.json
+
+history/
+
+drift.json
+
+Manuelle Änderungen sind nicht zulässig.
+
+---
+
+# Twin Events
+
+Verbindlich sind
+
+TwinBuildStartedEvent
+
+TwinSynchronizedEvent
+
+TwinDriftDetectedEvent
+
+TwinDriftResolvedEvent
+
+TwinSnapshotCreatedEvent
+
+TwinSimulationCompletedEvent
+
+TwinVersionChangedEvent
+
+---
+
+# Documentary Integration
+
+Die Documentary Engine erzeugt aus dem Digital Twin automatisch
+
+Architecture Report
+
+Component Report
+
+Dependency Report
+
+Drift Report
+
+Impact Report
+
+Version Report
+
+Sämtliche Architekturdiagramme werden ausschließlich aus dem Digital Twin erzeugt.
+
+---
+
+# Supervisor Integration
+
+Der Supervisor überwacht
+
+Twin-Zustand
+
+Drift
+
+veraltete Zwillinge
+
+fehlende Snapshots
+
+nicht synchronisierte Komponenten
+
+---
+
+# Platform Director Integration
+
+Der Platform Director verwendet den Digital Twin als alleinige Entscheidungsgrundlage für
+
+Architekturentscheidungen
+
+Freigaben
+
+Priorisierung
+
+Risikobewertung
+
+Roadmap-Planung
+
+---
+
+# AI Twin Contract
+
+Sämtliche KI-Systeme verwenden ausschließlich den Digital Twin zur Architekturinterpretation.
+
+Nicht zulässig sind
+
+eigene Architekturmodelle
+
+abweichende Interpretationen
+
+Annahmen über nicht abgebildete Komponenten
+
+Ein KI-System, das Architektur benötigt, liest den Digital Twin.
+
+---
+
+# Validation
+
+Vor jeder Freigabe wird geprüft
+
+✓ Twin für sämtliche Komponenten vorhanden
+
+✓ Twin-Zustand Synchronized
+
+✓ keine offene Drift
+
+✓ Prüfsummen reproduzierbar
+
+✓ Twin-Version gesetzt
+
+✓ Snapshot erzeugt
+
+✓ Simulation durchgeführt
+
+✓ Twin-Berichte erzeugt
+
+---
+
+# Enterprise Rules
+
+Kein Zwilling ohne Ursprung.
+
+Keine Freigabe bei Drift.
+
+Keine manuelle Änderung des Zwillings.
+
+Keine Architekturentscheidung ohne Zwilling.
+
+Keine Migration ohne geplanten Zwilling.
+
+Keine Version ohne Snapshot.
+
+Der Code besitzt jederzeit Vorrang vor dem Modell.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ jede Komponente einen Digital Twin besitzt
+
+✓ sämtliche Zwillinge synchron sind
+
+✓ Drift automatisch erkannt wird
+
+✓ jeder historische Zustand rekonstruierbar ist
+
+✓ geplante Änderungen vor der Umsetzung bewertbar sind
+
+✓ sämtliche Diagramme aus dem Zwilling erzeugt werden
+
+✓ sämtliche KI-Systeme denselben Zwilling verwenden
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 19
+
+Enterprise Automation Contracts
+
+↓
+
+Chapter 20
+
+Official Enterprise Standard
+
+---
+
+# End of Chapter 18
+---
+
+# Chapter 19
+
+# Enterprise Automation Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindlichen Automatisierungsverträge des CAPITAL-AI Core.
+
+Automatisierung ist kein Werkzeug.
+
+Automatisierung ist die Ausführungsform der Enterprise Contracts.
+
+Jede in diesen Contracts definierte Regel besitzt eine automatisierte Entsprechung.
+
+Manuelle Ausführung ist ausschließlich als Notfallmaßnahme zulässig.
+
+---
+
+# Mission
+
+Die Automation Contracts gewährleisten
+
+- reproduzierbare Ausführung sämtlicher Plattformprozesse
+- deterministische Ergebnisse unabhängig vom Ausführenden
+- vollständige Protokollierung jeder Ausführung
+- automatische Auslösung durch Enterprise Events
+- Wiederherstellbarkeit des gesamten Repository-Gerüsts
+- Unabhängigkeit von einzelnen Personen oder KI-Systemen
+
+---
+
+# Enterprise Principle
+
+Was nicht automatisiert ist, ist nicht durchgesetzt.
+
+Jeder automatisierte Prozess ist idempotent.
+
+Jeder automatisierte Prozess ist versioniert.
+
+Jeder automatisierte Prozess erzeugt Events.
+
+---
+
+# Automation Scope
+
+Verbindlich automatisiert werden
+
+Repository Discovery
+
+Code Discovery
+
+Metadatenerzeugung
+
+Registry-Aufbau
+
+Knowledge Graph Aufbau
+
+Digital Twin Synchronisation
+
+Dokumentationserzeugung
+
+Diagrammerzeugung
+
+Contract Validation
+
+Architecture Validation
+
+Quality Gates
+
+Versionsbewertung
+
+Changelog-Erzeugung
+
+Release-Vorbereitung
+
+Governance Reports
+
+Security Reports
+
+Compliance Reports
+
+---
+
+# Automation Location
+
+Automatisierte Prozesse befinden sich ausschließlich unter
+
+```text
+scripts/
+```
+
+Die verbindliche Aufteilung lautet
+
+```text
+scripts/automation/    Enterprise-Prozesse und Bootstrapping
+scripts/validation/    Validatoren und Quality Gates
+scripts/migration/     Migrations- und Rollback-Prozesse
+scripts/deployment/    Release- und Deployment-Prozesse
+scripts/maintenance/   Wartung, Bereinigung, Reparatur
+```
+
+Die zugehörige Logik befindet sich in den Plattformmodulen.
+
+Skripte enthalten niemals Geschäftslogik.
+
+---
+
+# Process Contract
+
+Jeder automatisierte Prozess besitzt verbindlich
+
+Process ID
+
+Name
+
+Version
+
+Zweck
+
+Eingaben
+
+Ausgaben
+
+Voraussetzungen
+
+Auslöser
+
+Ergebnisstruktur
+
+Fehlerverhalten
+
+Owner
+
+---
+
+# Determinism Contract
+
+Jeder Prozess erfüllt verbindlich
+
+gleiche Eingabe erzeugt gleiche Ausgabe
+
+keine Abhängigkeit von der Ausführungsreihenfolge
+
+keine Abhängigkeit von Zufallswerten
+
+keine Abhängigkeit von Systemzeit außerhalb von Zeitstempeln
+
+keine Abhängigkeit von Netzwerkzuständen ohne Deklaration
+
+keine Abhängigkeit vom ausführenden KI-System
+
+---
+
+# Idempotency Contract
+
+Jeder Prozess ist wiederholbar.
+
+Eine wiederholte Ausführung ohne Eingabeänderung
+
+erzeugt keine zusätzlichen Artefakte
+
+erzeugt keine doppelten Registry-Einträge
+
+erzeugt keine doppelten Knowledge Nodes
+
+erzeugt keine doppelten Dokumente
+
+verändert keine Versionen
+
+---
+
+# Bootstrapper Contract
+
+Das vollständige Enterprise-Gerüst wird verbindlich reproduzierbar erzeugt.
+
+Der Bootstrapper erzeugt
+
+sämtliche Pflichtmodule
+
+sämtliche Pflichtverzeichnisse
+
+sämtliche Manifeste
+
+sämtliche Component Descriptors
+
+sämtliche READMEs
+
+sämtliche CHANGELOGs
+
+sämtliche Registry-Einträge
+
+Der Bootstrapper überschreibt niemals
+
+vorhandene Implementierungen
+
+vorhandene Dokumentationsinhalte
+
+vorhandene Versionen
+
+vorhandene ADRs
+
+Fehlende Artefakte werden ergänzt, vorhandene niemals ersetzt.
+
+---
+
+# Generator Contract
+
+Generatoren erzeugen ausschließlich Artefakte, niemals Entscheidungen.
+
+Jeder Generator
+
+besitzt genau einen Ausgabetyp
+
+besitzt eine Version
+
+kennzeichnet erzeugte Artefakte als generiert
+
+speichert Ausgaben ausschließlich in definierten Generatorbereichen
+
+überschreibt niemals produktiven Code
+
+Generatoren befinden sich unter
+
+```text
+src/platform/Generators/
+```
+
+---
+
+# Generated Artifact Contract
+
+Jedes generierte Artefakt enthält verbindlich
+
+Generator ID
+
+Generator Version
+
+Erzeugungszeitpunkt
+
+Quellreferenz
+
+Knowledge Version
+
+Repository Version
+
+Generierte Artefakte werden niemals manuell bearbeitet.
+
+---
+
+# Trigger Contract
+
+Automatisierte Prozesse werden ausschließlich durch
+
+Enterprise Events
+
+Zeitpläne
+
+ausdrückliche Freigaben
+
+ausgelöst.
+
+Verbindliche Zuordnung
+
+| Auslöser | Prozess |
+|---|---|
+| RepositoryScannedEvent | Metadaten- und Registry-Aktualisierung |
+| ImplementationCompletedEvent | Validierung und Dokumentation |
+| KnowledgeUpdatedEvent | Digital Twin Synchronisation |
+| TwinSynchronizedEvent | Berichtserzeugung |
+| VersionChangedEvent | Changelog und Release-Vorbereitung |
+| StructureViolationDetectedEvent | Governance Report |
+| TwinDriftDetectedEvent | Drift Report und Korrekturauftrag |
+
+---
+
+# Scheduling Contract
+
+Zeitgesteuerte Prozesse besitzen verbindlich
+
+Zeitplan
+
+Zeitzone
+
+maximale Laufzeit
+
+Überlappungsschutz
+
+Ausfallverhalten
+
+Benachrichtigung bei Fehlschlag
+
+Ein Prozess läuft niemals mehrfach gleichzeitig.
+
+---
+
+# Execution Contract
+
+Jede Ausführung protokolliert verbindlich
+
+Process ID
+
+Process Version
+
+Auslöser
+
+Correlation ID
+
+Startzeit
+
+Endzeit
+
+Ergebnis
+
+erzeugte Artefakte
+
+erzeugte Events
+
+Befunde
+
+---
+
+# Failure Contract
+
+Fehlgeschlagene Prozesse
+
+hinterlassen niemals unvollständige Artefakte
+
+setzen niemals Versionen
+
+verändern niemals die Registry teilweise
+
+erzeugen verbindlich ein Fehler-Event
+
+erzeugen verbindlich einen Befund
+
+Teilweise ausgeführte Prozesse werden vollständig zurückgesetzt.
+
+---
+
+# Recovery Contract
+
+Für jeden Prozess existiert ein definiertes Wiederanlaufverhalten.
+
+Zulässig sind
+
+vollständige Wiederholung
+
+Fortsetzung ab dokumentiertem Prüfpunkt
+
+manuelle Freigabe nach Prüfung
+
+Nicht zulässig ist eine stillschweigende Fortsetzung nach Fehler.
+
+---
+
+# Manual Execution
+
+Manuelle Ausführung ist ausschließlich zulässig
+
+im Notfallbetrieb
+
+bei ausgefallener Automatisierung
+
+nach ausdrücklicher Freigabe
+
+Jede manuelle Ausführung wird verbindlich als Event protokolliert und im Governance Report ausgewiesen.
+
+---
+
+# Automation Events
+
+Verbindlich sind
+
+ProcessStartedEvent
+
+ProcessCompletedEvent
+
+ProcessFailedEvent
+
+ArtifactGeneratedEvent
+
+BootstrapCompletedEvent
+
+ScheduleTriggeredEvent
+
+ManualExecutionEvent
+
+---
+
+# Documentary Integration
+
+Die Documentary Engine erzeugt automatisch
+
+Automation Report
+
+Execution History
+
+Generator Report
+
+Failure Report
+
+Coverage der Automatisierung
+
+Die Automatisierung dokumentiert sich dadurch selbst.
+
+---
+
+# Supervisor Integration
+
+Der Supervisor überwacht
+
+fehlgeschlagene Prozesse
+
+nicht ausgeführte Zeitpläne
+
+überfällige Synchronisationen
+
+manuelle Eingriffe
+
+nicht idempotente Ergebnisse
+
+---
+
+# Platform Director Integration
+
+Der Platform Director entscheidet über
+
+neue automatisierte Prozesse
+
+Zeitpläne
+
+Notfallfreigaben
+
+Priorisierung der Automatisierung
+
+---
+
+# AI Automation Contract
+
+KI-Systeme dürfen
+
+✓ Prozesse ausführen
+
+✓ Prozesse erzeugen
+
+✓ Fehlerursachen analysieren
+
+✓ Korrekturen vorschlagen
+
+Sie dürfen jedoch nicht
+
+✗ Prozesse deaktivieren
+
+✗ Zeitpläne eigenständig ändern
+
+✗ Ergebnisse ohne Ausführung erzeugen
+
+✗ Fehlerprotokolle verändern
+
+✗ manuelle Ausführungen als automatisiert ausweisen
+
+---
+
+# Validation
+
+Vor jeder Aufnahme eines Prozesses wird geprüft
+
+✓ Process Contract vollständig
+
+✓ Determinismus nachgewiesen
+
+✓ Idempotenz nachgewiesen
+
+✓ Auslöser definiert
+
+✓ Fehlerverhalten definiert
+
+✓ Wiederanlauf definiert
+
+✓ Events definiert
+
+✓ Owner benannt
+
+✓ Version gesetzt
+
+---
+
+# Enterprise Rules
+
+Kein Contract ohne automatisierte Durchsetzung.
+
+Kein Prozess ohne Version.
+
+Kein Prozess ohne Auslöser.
+
+Kein Prozess ohne Protokoll.
+
+Keine Generierung außerhalb der Generatorbereiche.
+
+Keine manuelle Ausführung ohne Protokollierung.
+
+Kein Bootstrapping überschreibt Bestand.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ das Enterprise-Gerüst reproduzierbar erzeugt werden kann
+
+✓ sämtliche Contracts automatisiert geprüft werden
+
+✓ sämtliche Dokumentation automatisch entsteht
+
+✓ sämtliche Prozesse idempotent sind
+
+✓ sämtliche Ausführungen protokolliert werden
+
+✓ manuelle Eingriffe die Ausnahme bleiben
+
+✓ die Plattform ohne personelle Abhängigkeit betrieben werden kann
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 20
+
+Official Enterprise Standard
+
+---
+
+# End of Chapter 19
+---
+
+# Chapter 20
+
+# Official Enterprise Standard
+
+## Enterprise Purpose
+
+Dieses Kapitel schließt die Enterprise Technical Contracts des CAPITAL-AI Core ab.
+
+Es fasst keine Inhalte zusammen.
+
+Es definiert die verbindliche Geltung, die Rangfolge, die Konformitätsstufen und die Weiterentwicklung des Standards.
+
+Mit Abschluss dieses Kapitels bilden ESS-0001 und ESS-0001-CONTRACTS gemeinsam den offiziellen Enterprise Standard des CAPITAL-AI Core.
+
+---
+
+# Standard Definition
+
+Der offizielle Enterprise Standard besteht verbindlich aus
+
+ESS-0001
+
+Enterprise-Architektur der Documentary Engine
+
+---
+
+ESS-0001-CONTRACTS
+
+Enterprise Technical Contracts
+
+---
+
+sämtliche verabschiedeten ADRs
+
+---
+
+sämtliche weiteren ESS-Dokumente gemäß ESS Registry
+
+Kein weiteres Dokument besitzt normative Wirkung.
+
+---
+
+# Scope of Application
+
+Der Standard gilt verbindlich für
+
+sämtliche Plattformkomponenten
+
+sämtliche Feature-Domänen
+
+sämtliche Erweiterungen
+
+sämtliche automatisierten Prozesse
+
+sämtliche KI-Systeme
+
+sämtliche Repositories des CAPITAL-AI Ökosystems
+
+Ausnahmen bestehen ausschließlich in registrierter Form gemäß Chapter 16.
+
+---
+
+# Authority
+
+Die Rangfolge aus Chapter 1 gilt unverändert.
+
+ADR
+
+↓
+
+ESS Contracts
+
+↓
+
+Enterprise Specifications
+
+↓
+
+Projektdokumentation
+
+↓
+
+Implementierung
+
+Bei Widersprüchen gilt jederzeit die höher priorisierte Ebene.
+
+---
+
+# Normative Clarifications
+
+Die folgenden Klarstellungen beseitigen Auslegungslücken.
+
+Sie ändern keine bestehende Regel.
+
+---
+
+## Event Naming
+
+ESS-0001 Chapter 8 benennt Ereigniskategorien.
+
+ESS-0001-CONTRACTS Chapter 8 definiert die verbindliche technische Schreibweise.
+
+Verbindlich gilt für sämtliche implementierten Ereignisse das Suffix
+
+```text
+Event
+```
+
+Die Bezeichnungen in ESS-0001 Chapter 8 sind als Kategorienamen zu lesen.
+
+---
+
+## Core Module
+
+`src/platform/Core` ist gemäß Chapter 3 und Chapter 6 verbindlicher Bestandteil der Plattform.
+
+Core wird als technische Basisschicht geführt, nicht als fachliches Modul.
+
+---
+
+## Cross Cutting Modules
+
+Die Layer-Zuordnung der Querschnittsmodule ist in Chapter 16 verbindlich definiert.
+
+Chapter 6 bleibt unverändert gültig.
+
+---
+
+## Lifecycle und Version Category
+
+Lifecycle beschreibt die Komponente.
+
+Version Category beschreibt die Version.
+
+Die verbindliche Zuordnung ist in Chapter 14 definiert.
+
+---
+
+## ESS Numbering
+
+Die in ESS-0001 reservierten Nummern ESS-0002 bis ESS-0009 sind verbindlich.
+
+Der freie Nummernraum beginnt bei ESS-0010.
+
+Die Vergabe erfolgt ausschließlich über die ESS Registry gemäß Chapter 16.
+
+---
+
+# Chapter Index
+
+Der Standard umfasst verbindlich folgende Kapitel.
+
+| Kapitel | Gegenstand |
+|---|---|
+| 1 | Enterprise Foundation & Governance Contracts |
+| 2 | Repository Structure Contract |
+| 3 | Directory Responsibility Contracts |
+| 4 | TypeScript & Interface Contracts |
+| 5 | Enterprise Naming Contracts |
+| 6 | Dependency & Layer Contracts |
+| 7 | Enterprise Data Model & Metadata Contracts |
+| 8 | Enterprise Event & Messaging Contracts |
+| 9 | Enterprise Versioning & Release Contracts |
+| 10 | Enterprise AI Governance & Documentary Contracts |
+| 11 | Enterprise Security & Compliance Contracts |
+| 12 | Enterprise Validation & Quality Contracts |
+| 13 | Enterprise Plugin & Extension Contracts |
+| 14 | Enterprise Migration & Lifecycle Contracts |
+| 15 | Enterprise Knowledge Graph Contracts |
+| 16 | Enterprise Repository Governance |
+| 17 | Enterprise AI Orchestration Contracts |
+| 18 | Enterprise Digital Twin Contracts |
+| 19 | Enterprise Automation Contracts |
+| 20 | Official Enterprise Standard |
+
+---
+
+# Completeness Assessment
+
+Vor Abschluss dieses Standards wurde geprüft, ob weitere Kapitel erforderlich sind.
+
+Zwei Regelbereiche wurden zusätzlich untersucht.
+
+---
+
+## Registry & Discovery
+
+Registry und Discovery besitzen verbindliche Verträge in
+
+Chapter 7 — Enterprise Registry
+
+Chapter 15 — Registry Relationship
+
+Chapter 16 — Repository Governance
+
+Ein eigenständiges Kapitel würde bestehende Regeln wiederholen und damit gegen das Verbot redundanter Dokumente verstoßen.
+
+Ergebnis
+
+Kein zusätzliches Kapitel erforderlich.
+
+---
+
+## Observability & Telemetry
+
+Beobachtbarkeit besitzt verbindliche Verträge in
+
+Chapter 12 — Observability Contract
+
+Chapter 19 — Execution Contract
+
+Chapter 18 — Twin States
+
+Ergebnis
+
+Kein zusätzliches Kapitel erforderlich.
+
+---
+
+# Conformance Levels
+
+Der Standard definiert verbindlich drei Konformitätsstufen.
+
+## Level 1 — Structural Conformance
+
+Repository-Struktur erfüllt
+
+Verzeichnisverantwortung erfüllt
+
+Namensverträge erfüllt
+
+Metadaten vollständig
+
+Registry-Einträge vorhanden
+
+---
+
+## Level 2 — Operational Conformance
+
+Level 1 erfüllt
+
+Enterprise Events implementiert
+
+Validatoren ausführbar
+
+Quality Gates ausführbar
+
+Versionierung automatisiert
+
+Dokumentation generiert
+
+---
+
+## Level 3 — Enterprise Conformance
+
+Level 2 erfüllt
+
+Knowledge Graph vollständig
+
+Digital Twin synchron
+
+AI-Wertschöpfungskette vollständig automatisiert
+
+Security und Compliance vollständig nachweisbar
+
+sämtliche Prozesse idempotent und protokolliert
+
+Die Konformitätsstufe jeder Komponente wird in den Metadaten geführt.
+
+---
+
+# Standard Validation
+
+Der Standard gilt als eingehalten wenn
+
+✓ sämtliche Kapitel durch Validatoren abgedeckt sind
+
+✓ sämtliche Komponenten eine Konformitätsstufe besitzen
+
+✓ sämtliche Abweichungen registriert sind
+
+✓ sämtliche Ausnahmen durch ADR gedeckt sind
+
+✓ sämtliche Berichte automatisch erzeugt werden
+
+✓ der Digital Twin den tatsächlichen Zustand abbildet
+
+---
+
+# Change Contract
+
+Änderungen an diesem Standard erfolgen ausschließlich über
+
+einen ADR
+
+eine Versionserhöhung dieses Dokumentes
+
+eine Aktualisierung der ESS Registry
+
+eine Aktualisierung des Knowledge Graph
+
+eine Aktualisierung des Digital Twin
+
+Nicht zulässig sind
+
+stillschweigende Änderungen
+
+lokale Sonderregeln
+
+abweichende Auslegungen einzelner KI-Systeme
+
+nachträgliche Umnummerierung von Kapiteln
+
+---
+
+# Extension Contract
+
+Neue Kapitel werden ausschließlich am Ende ergänzt.
+
+Chapter 20 bleibt dabei das abschließende Kapitel des Standards und wird entsprechend fortgeschrieben.
+
+Bestehende Kapitelnummern bleiben dauerhaft stabil.
+
+---
+
+# Deprecation Contract
+
+Regeln dieses Standards werden niemals ersatzlos entfernt.
+
+Eine Regel wird ausschließlich
+
+durch eine neue Regel ersetzt
+
+als veraltet gekennzeichnet
+
+mit Übergangsfrist versehen
+
+durch ADR dokumentiert
+
+---
+
+# Enterprise Rules
+
+Der Standard ist verbindlich für Mensch und KI.
+
+Kein Dokument außerhalb des Standards besitzt normative Wirkung.
+
+Keine Änderung ohne ADR.
+
+Keine Auslegung ohne Klarstellung im Standard.
+
+Keine Konformitätsaussage ohne Validierung.
+
+Keine Komponente ohne Konformitätsstufe.
+
+---
+
+# Success Criteria
+
+Der Standard gilt als vollständig etabliert wenn
+
+✓ sämtliche Enterprise-Komponenten nach diesem Standard beschrieben sind
+
+✓ sämtliche Regeln maschinell durchgesetzt werden
+
+✓ sämtliche Änderungen automatisch dokumentiert werden
+
+✓ sämtliche Änderungen automatisch versioniert werden
+
+✓ sämtliche Änderungen automatisch in den Digital Twin übernommen werden
+
+✓ jede unterstützte KI identische Ergebnisse erzeugt
+
+✓ die Plattform sich vollständig selbst beschreibt
+
+---
+
+# End of Chapter 20
+---
+
+# Enterprise Final Statement
+
+# Governance Statement
+
+ESS-0001-CONTRACTS ist die verbindliche technische Vertragsgrundlage des CAPITAL-AI Core.
+
+Sämtliche Implementierungen, Erweiterungen und automatisierten Prozesse müssen mit diesem Standard vereinbar sein.
+
+Abweichungen erfordern einen Architecture Decision Record.
+
+---
+
+# Version History
+
+| Version | Status | Beschreibung |
+|----------|--------|--------------|
+| 1.0.0 | Initial Release | Chapter 1 bis Chapter 10 — Enterprise Baseline Specification |
+| 1.1.0 | Enterprise Extension | Chapter 11 bis Chapter 20 — Security, Qualität, Erweiterungen, Migration, Knowledge Graph, Repository Governance, AI Orchestration, Digital Twin, Automation, Enterprise Standard |
+
+---
+
+# Related Enterprise Specifications
+
+ESS-0001 — Documentary & Code Intelligence Architect
+
+ESS-0002 — Supervisor Architect
+
+ESS-0003 — Platform Director
+
+ESS-0004 — Enterprise Version Manager
+
+ESS-0005 — Quality Center
+
+ESS-0006 — Security & Compliance
+
+ESS-0007 — Enterprise Release Center
+
+ESS-0008 — AI Agent Framework
+
+ESS-0009 — Enterprise Knowledge Platform
+
+ESS-0010 — Repository Governance
+
+---
+
+# Approval
+
+Document Status
+
+APPROVED
+
+Enterprise Standard
+
+CAPITAL-AI Core Architecture
+
+Version 1.1.0
+
+---
+
+# End of Document
+
+ESS-0001-CONTRACTS
+
+CAPITAL-AI Enterprise Technical Contracts
+
+Version 1.1.0
