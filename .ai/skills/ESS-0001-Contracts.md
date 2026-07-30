@@ -4712,3 +4712,554 @@ Enterprise AI Governance & Documentary Contracts
 ---
 
 # End of Chapter 7
+---
+
+# Chapter 8
+
+# Enterprise Event & Messaging Contracts
+
+## Enterprise Purpose
+
+Dieses Kapitel definiert die verbindliche Event- und Messaging-Architektur des CAPITAL-AI Core.
+
+Alle Plattformkomponenten kommunizieren ausschließlich über standardisierte Enterprise Events oder öffentliche Enterprise Interfaces.
+
+Das Enterprise Event Mesh bildet die zentrale Kommunikationsschicht zwischen allen Komponenten.
+
+Es gewährleistet Nachvollziehbarkeit, Erweiterbarkeit und vollständige Automatisierung der Plattform.
+
+---
+
+# Mission
+
+Die Enterprise Event & Messaging Contracts gewährleisten
+
+- lose Kopplung
+- ereignisgesteuerte Architektur
+- automatische Dokumentation
+- automatische Versionierung
+- vollständige Auditierbarkeit
+- AI-gesteuerte Automatisierung
+- deterministische Kommunikation
+
+---
+
+# Enterprise Principle
+
+Jede relevante Änderung erzeugt ein Event.
+
+Jedes Event besitzt einen Contract.
+
+Jedes Event ist versioniert.
+
+Jedes Event ist dokumentiert.
+
+Jedes Event ist nachvollziehbar.
+
+---
+
+# Enterprise Event Mesh
+
+Alle Plattformkomponenten kommunizieren über das Enterprise Event Mesh.
+
+Komponenten dürfen keine versteckten Seiteneffekte erzeugen.
+
+Alle relevanten Zustandsänderungen werden als Event veröffentlicht.
+
+---
+
+# Event Architecture
+
+Ein Event beschreibt ausschließlich
+
+eine bereits eingetretene Änderung.
+
+Events enthalten keine Geschäftslogik.
+
+Events enthalten ausschließlich Informationen.
+
+---
+
+# Event Naming
+
+Alle Events enden mit
+
+Event
+
+Beispiele
+
+RepositoryScannedEvent
+
+DocumentationGeneratedEvent
+
+KnowledgeUpdatedEvent
+
+ArchitectureValidatedEvent
+
+ComponentRegisteredEvent
+
+VersionCalculatedEvent
+
+ReleaseCreatedEvent
+
+SecurityAuditCompletedEvent
+
+SupervisorAlertEvent
+
+PlatformDecisionEvent
+
+---
+
+# Event Categories
+
+## Repository Events
+
+RepositoryCreatedEvent
+
+RepositoryUpdatedEvent
+
+RepositoryScannedEvent
+
+RepositoryValidatedEvent
+
+---
+
+## Documentary Events
+
+DocumentationGeneratedEvent
+
+DocumentationUpdatedEvent
+
+DocumentationValidatedEvent
+
+KnowledgeExtractedEvent
+
+---
+
+## Knowledge Events
+
+KnowledgeCreatedEvent
+
+KnowledgeUpdatedEvent
+
+KnowledgeLinkedEvent
+
+KnowledgeValidatedEvent
+
+---
+
+## Version Events
+
+VersionCalculatedEvent
+
+VersionChangedEvent
+
+ReleasePreparedEvent
+
+ReleasePublishedEvent
+
+---
+
+## Architecture Events
+
+ArchitectureScannedEvent
+
+ArchitectureValidatedEvent
+
+DependencyViolationEvent
+
+LayerViolationEvent
+
+ContractViolationEvent
+
+---
+
+## Security Events
+
+SecurityScanCompletedEvent
+
+ComplianceValidatedEvent
+
+RiskDetectedEvent
+
+AuditCompletedEvent
+
+---
+
+## Platform Events
+
+PlatformStartedEvent
+
+PlatformStoppedEvent
+
+PlatformDecisionEvent
+
+PlatformHealthChangedEvent
+
+---
+
+# Event Contract
+
+Jedes Event besitzt mindestens
+
+Name
+
+Version
+
+Timestamp
+
+Source Component
+
+Target Component
+
+Correlation ID
+
+Event Type
+
+Payload
+
+Schema Version
+
+ESS Referenzen
+
+ADR Referenzen
+
+---
+
+# Event Payload
+
+Der Payload enthält ausschließlich
+
+fachliche Informationen.
+
+Keine technischen Implementierungsdetails.
+
+Keine Geschäftslogik.
+
+---
+
+# Correlation Contract
+
+Jedes Event besitzt eine eindeutige Correlation ID.
+
+Alle zusammengehörigen Events können dadurch nachvollzogen werden.
+
+---
+
+# Event Versioning
+
+Alle Events besitzen eine Version.
+
+Breaking Changes erfordern
+
+Major Version
+
+Neue optionale Felder
+
+Minor Version
+
+Fehlerkorrekturen
+
+Patch Version
+
+---
+
+# Event Registry
+
+Alle Enterprise Events werden automatisch registriert.
+
+Die Registry enthält
+
+Name
+
+Version
+
+Beschreibung
+
+Producer
+
+Consumer
+
+Payload Schema
+
+ESS Referenzen
+
+ADR Referenzen
+
+---
+
+# Event Producers
+
+Jede Plattformkomponente darf Events veröffentlichen.
+
+Alle veröffentlichten Events müssen dokumentiert werden.
+
+---
+
+# Event Consumers
+
+Komponenten abonnieren ausschließlich dokumentierte Enterprise Events.
+
+Direkte Implementierungsabhängigkeiten sind nicht zulässig.
+
+---
+
+# Event Routing
+
+Das Enterprise Event Mesh entscheidet automatisch
+
+welche Komponenten
+
+welche Events
+
+empfangen.
+
+---
+
+# Documentary Integration
+
+Die Documentary Engine reagiert automatisch auf
+
+RepositoryScannedEvent
+
+ArchitectureValidatedEvent
+
+DocumentationGeneratedEvent
+
+VersionChangedEvent
+
+ReleasePublishedEvent
+
+ContractViolationEvent
+
+---
+
+# Supervisor Integration
+
+Der Supervisor überwacht
+
+Event-Ausfälle
+
+Event-Verzögerungen
+
+Event-Fehler
+
+Event-Ketten
+
+unerwartete Event-Muster
+
+---
+
+# Platform Director Integration
+
+Der Platform Director bewertet
+
+neue Event-Typen
+
+neue Event-Kategorien
+
+Event-Abhängigkeiten
+
+Event-Governance
+
+---
+
+# Version Manager Integration
+
+Der Version Manager analysiert automatisch
+
+Breaking Events
+
+Interface Events
+
+Release Events
+
+Migration Events
+
+und empfiehlt daraus
+
+Major
+
+Minor
+
+Patch
+
+Versionen.
+
+---
+
+# AI Trigger Contracts
+
+Jedes Enterprise Event kann einen AI-Prozess auslösen.
+
+Beispiele
+
+DocumentationGeneratedEvent
+
+↓
+
+Documentary Engine
+
+ArchitectureValidatedEvent
+
+↓
+
+Supervisor
+
+ReleasePreparedEvent
+
+↓
+
+Version Manager
+
+KnowledgeUpdatedEvent
+
+↓
+
+Knowledge Engine
+
+SecurityScanCompletedEvent
+
+↓
+
+Security Auditor
+
+PlatformDecisionEvent
+
+↓
+
+Platform Director
+
+---
+
+# Enterprise Automation
+
+Die Plattform darf auf Basis validierter Events automatisch
+
+Dokumentationen erzeugen
+
+Versionen berechnen
+
+Architekturdiagramme aktualisieren
+
+Knowledge Graphs erweitern
+
+Release Notes erzeugen
+
+Repositories analysieren
+
+Risiken erkennen
+
+Governance Reports erstellen
+
+---
+
+# Event Audit Trail
+
+Alle Events werden revisionssicher protokolliert.
+
+Mindestens
+
+Timestamp
+
+Komponente
+
+Event
+
+Version
+
+Correlation ID
+
+Status
+
+Ergebnis
+
+---
+
+# Validation
+
+Vor jeder Integration wird geprüft
+
+✓ Event dokumentiert
+
+✓ Event registriert
+
+✓ Version vorhanden
+
+✓ Payload vollständig
+
+✓ Correlation ID vorhanden
+
+✓ Producer definiert
+
+✓ Consumer definiert
+
+✓ ESS Referenzen vorhanden
+
+✓ ADR Referenzen vorhanden
+
+✓ Event Mesh kompatibel
+
+---
+
+# Enterprise Rules
+
+Keine Plattformkomponente kommuniziert direkt an der Event-Governance vorbei.
+
+Alle relevanten Zustandsänderungen erzeugen Enterprise Events.
+
+Alle Events werden automatisch durch die Documentary Engine dokumentiert.
+
+Der Supervisor überwacht sämtliche Event-Flüsse.
+
+Der Platform Director verwaltet die Event-Governance.
+
+Der Version Manager bewertet Event-Auswirkungen auf die Plattformversion.
+
+---
+
+# Success Criteria
+
+Dieses Kapitel gilt als erfüllt wenn
+
+✓ sämtliche Komponenten ausschließlich über Enterprise Events oder öffentliche Interfaces kommunizieren
+
+✓ alle Events versioniert sind
+
+✓ sämtliche Events dokumentiert werden
+
+✓ das Enterprise Event Mesh alle Event-Flüsse verwaltet
+
+✓ Documentary automatisch auf relevante Events reagiert
+
+✓ Supervisor Event-Verletzungen erkennt
+
+✓ Platform Director die Event-Governance steuert
+
+✓ Version Manager Event-basierte Versionsentscheidungen treffen kann
+
+---
+
+# Integration
+
+Dieses Kapitel bildet die Grundlage für
+
+Chapter 9
+
+Enterprise Versioning & Release Contracts
+
+↓
+
+Chapter 10
+
+Enterprise AI Governance & Documentary Contracts
+
+↓
+
+Chapter 11
+
+Enterprise Security & Compliance Contracts
+
+---
+
+# End of Chapter 8
