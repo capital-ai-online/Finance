@@ -526,7 +526,59 @@ Orphan der Klasse `UndecidedStructure` beziehungsweise über `GOV-TRACE-002` erk
 
 **Aktualisierte Gesamtzahl: 222 Befunde** (3 Critical, 143 High, 76 Medium).
 
-## N.5 Bewertung
+## N.5 ESS-Vollständigkeit hergestellt (ADR-0016)
+
+Die Prüfung des ESS-Bestands ergab sechs reservierte Nummern **ohne Dokument**:
+ESS-0004 bis ESS-0009. In der Registry standen sie mit `document: null`.
+
+Die frühere Begründung — die Regelbereiche seien durch Chapter 9, 11, 12, 15 und 19 abgedeckt,
+ein Dokument wäre ein Duplikat — wurde vom Platform Director überprüft und verworfen.
+
+**Die Prüfung bestätigt die Korrektur.** Die Begründung verwechselte *Regelbereich* mit
+*Komponentenbeschreibung*: Chapter 9 legt fest, **wie versioniert wird**; es beschreibt nicht,
+**woraus der Version Manager besteht**. ESS-0002 und ESS-0003 waren bereits nach genau diesem
+Muster angelegt.
+
+Sechs Komponentenspezifikationen wurden ergänzt, Titel unverändert aus der Reservierung:
+
+| Nummer | Komponente |
+|---|---|
+| ESS-0004 | `src/platform/VersionManager` |
+| ESS-0005 | `src/platform/Quality` |
+| ESS-0006 | `src/platform/Security`, `src/platform/Compliance` |
+| ESS-0007 | `src/platform/Release` |
+| ESS-0008 | `src/agents`, `src/orchestrator` |
+| ESS-0009 | `src/platform/Knowledge` |
+
+**Auswirkung auf die Befunde**
+
+| Regel | vorher | nachher |
+|---|---|---|
+| `GOV-ESS-001` bis `GOV-ESS-008` | 0 | 0 |
+| Registry-Einträge ohne Dokument | 6 | **0** |
+
+Der Befundstand bleibt bei **222**. Der ESS-Bereich war bereits vor dieser Ergänzung
+befundfrei — die sechs fehlenden Dokumente waren ein Registry-Vollständigkeitsproblem, kein
+Regelverstoß. Genau deshalb hätten die 57 Governance-Regeln sie **nicht** erkannt.
+
+**Ableitung für das Regelwerk**
+
+Es fehlt eine Regel, die reservierte Nummern ohne Dokument erkennt. Empfehlung für die
+nächste Fassung von ESS-0012-CONTRACTS:
+
+```text
+GOV-ESS-009  reservierte ESS-Nummer ohne hinterlegtes Dokument   Severity Medium
+```
+
+Diese Regel wird hier **nicht** ergänzt — eine Änderung an ESS-0012-CONTRACTS erfordert einen
+eigenen ADR. Sie ist als Folgeentscheidung vorgemerkt.
+
+**ESS-0008 schließt zusätzlich eine echte Regelungslücke.** Die acht produktiven
+Domänen-Agenten unter `src/agents` besaßen keinerlei Enterprise-Vertrag. Chapter 10 und
+Chapter 17 regeln ausschließlich die KI-Entwicklungssysteme, nicht die Agenten im
+Produktivbetrieb.
+
+## N.6 Bewertung
 
 Die Kollision ist der erste dokumentierte Fall, in dem eine Regel aus ESS-0012-CONTRACTS
 (`GOV-ADR-004`) einen realen Konflikt beschrieben hätte, bevor er entstand. Sie wurde
