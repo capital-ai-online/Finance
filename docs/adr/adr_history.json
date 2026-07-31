@@ -98,6 +98,127 @@
       "updatedBy": "System"
     }
   ],
+  "ADR-0009": [
+    {
+      "version": 1,
+      "title": "CORS Hardening für Entwicklungs- und Produktionsumgebung",
+      "decision": "Feste Produktions-Allowlist (capital-ai.online, www.capital-ai.online), AI_STUDIO_ORIGIN nur ausserhalb Produktion, Credentials nur fuer validierte Origins, blockierte Origins werden nach security_events geloggt.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-14T00:00:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0010": [
+    {
+      "version": 1,
+      "title": "Erweiterung des Enterprise Standards um ESS-0001-CONTRACTS Chapter 11-20, ESS-0002, ESS-0003 und die ESS Registry",
+      "decision": "ESS-0001-CONTRACTS wird um Kapitel 11-20 erweitert (u.a. ESS-Registry-Vertrag), ESS-0002 (Supervisor Architect) und ESS-0003 (Platform Director) werden als Spezifikationen vergeben.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-31T00:00:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0011": [
+    {
+      "version": 1,
+      "title": "Bestandsschutz und Zielstruktur für die Root-Abweichungen server/, sql/ und server.ts",
+      "decision": "Acht Root-Abweichungen werden als Ausnahmen in der Exception-Registry (.ai/registry/exception-registry.json) registriert statt sofort migriert, mit dokumentierter Zielstruktur und Ablaufdatum je Ausnahme.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-31T00:00:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0012": [
+    {
+      "version": 1,
+      "title": "SecurityComplianceAuditor Integration",
+      "decision": "Der SecurityComplianceAuditor wird als fester Bestandteil der Governance-Architektur integriert und dient als zentrale Oberflaeche fuer Compliance-Scans, Zertifizierung und Reporting im Admin-Portal.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-31T00:00:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0013": [
+    {
+      "version": 1,
+      "title": "Konsolidierung der ESS-Dokumentationsverantwortung, Vergabe von ESS-0010 und ESS-0011",
+      "decision": "Klaerung, welche Rolle fuer welche ESS-Dokumente die Schreibverantwortung traegt; Vergabe von ESS-0010 (Documentary Engine) und ESS-0011 (Enterprise Traceability).",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-31T00:00:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0014": [
+    {
+      "version": 1,
+      "title": "Documentation Governance Validator als Kernkomponente der Documentary Engine",
+      "decision": "Einfuehrung eines Documentation Governance Validators (ESS-0012) mit 57 Regeln in neun Bereichen als verbindliche Pruefinstanz fuer Dokumentationsqualitaet.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-31T00:00:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0015": [
+    {
+      "version": 1,
+      "title": "Einführung der Traceability-Komponente als Plattformmodul",
+      "decision": "Einfuehrung von src/platform/Traceability als eigenstaendiges Plattformmodul zur Verwaltung bidirektionaler Beziehungen zwischen ESS, ADR, Code, Tests und Dokumentation (ESS-0011).",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-31T00:00:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0016": [
+    {
+      "version": 1,
+      "title": "Nachvergabe der reservierten ESS-Nummern 0004 bis 0009 als Komponentenspezifikationen",
+      "decision": "Die reservierten Nummern ESS-0004 bis ESS-0009 werden als vollstaendige Komponentenspezifikationen vergeben (Version Manager, Quality Center, Security & Compliance, Release Center, AI Agent Framework, Knowledge Platform).",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-31T00:00:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0017": [
+    {
+      "version": 1,
+      "title": "Produktions-Audit-Nachbesserungen — Quota-Durchsetzung, Supabase-Härtung, Stripe-Jahresrabatt, Compliance-Backend",
+      "decision": "Serverseitige Screening-Quota (server/quota.ts), Supabase-RLS-Nachbesserungen, Stripe-Jahresrabatt ueber produktseitigen Rabatt statt Server-Logik, sowie Anbindung des Compliance-Backends werden umgesetzt.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-31T00:00:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0018": [
+    {
+      "version": 1,
+      "title": "Einführung der Enterprise Event Mesh als Plattformmodul",
+      "decision": "Einfuehrung von src/platform/EventMesh (ESS-0013) als zentraler, typisierter Event Bus fuer plattformweite Kommunikation zwischen Komponenten, mit Registry, Contracts und Validierung.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-31T00:00:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
+  "ADR-0019": [
+    {
+      "version": 1,
+      "title": "Fork-Divergenz zwischen Entwicklungs- und Produktivstand, Konsolidierung des ADR- und ESS-Nummernraums",
+      "decision": "Der Produktivstand dieses Repositorys wird als fuehrende Umgebung festgeschrieben. Die abweichende ADR-/ESS-Nummernbelegung eines parallel entwickelten Standes (CAPITAL-AI-Dev-main) wird fuer ungueltig erklaert; Uebernahme von dortigem Code nur unter Neuvergabe ueber die ESS-Registry.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-07-31T00:00:00.000Z",
+      "updatedBy": "System"
+    }
+  ],
   "documentaryMetadata": {
     "system": "Capital-AI Documentary",
     "founder": "Sven Kulessa",
@@ -105,6 +226,6 @@
     "emblem": "⊞ CAPITAL-AI CORE",
     "version": "0.5.4",
     "status": "Verified & Hygienically Cleaned",
-    "timestamp": "2026-07-10T16:52:27.111Z"
+    "timestamp": "2026-07-31T19:58:35.925Z"
   }
 }

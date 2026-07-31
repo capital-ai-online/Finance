@@ -155,49 +155,16 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
     `[${new Date().toISOString()}] File watcher attached to docs/adr directory. 1 revision recorded in index.`
   ]);
 
-  // 5. Initialise Prompt History
-  const [promptHistory, setPromptHistory] = useState<PromptLog[]>([
-    {
-      timestamp: new Date(Date.now() - 3 * 60000).toISOString(),
-      agentName: 'Portfolio Allocator',
-      model: 'GPT-4o',
-      prompt: 'Calculate Markowitz allocation for Universe: CRYPTO with historical 30-day covariance matrix.',
-      inputTokens: 1450,
-      outputTokens: 680,
-      cost: 0.045,
-      status: 'SUCCESS'
-    },
-    {
-      timestamp: new Date(Date.now() - 12 * 60000).toISOString(),
-      agentName: 'Risk Evaluator',
-      model: 'Gemini 2.5 Flash',
-      prompt: 'Analyze sentiment score correlation to BTC/USD price movements.',
-      inputTokens: 2500,
-      outputTokens: 410,
-      cost: 0.002,
-      status: 'SUCCESS'
-    },
-    {
-      timestamp: new Date(Date.now() - 25 * 60000).toISOString(),
-      agentName: 'Market Scanner',
-      model: 'Llama 3.3 (Local)',
-      prompt: 'Scrape top 10 breaking news headlines for financial impact analysis.',
-      inputTokens: 3800,
-      outputTokens: 150,
-      cost: 0.000,
-      status: 'SUCCESS'
-    },
-    {
-      timestamp: new Date(Date.now() - 40 * 60000).toISOString(),
-      agentName: 'SEC Compliance Auditor',
-      model: 'Claude 3.5 Sonnet',
-      prompt: 'Verify document hygiene for manual billing override bypass routes.',
-      inputTokens: 900,
-      outputTokens: 350,
-      cost: 0.012,
-      status: 'SUCCESS'
-    }
-  ]);
+  // 5. Prompt History
+  //
+  // Audit ARCH-AUDIT-0002 (Q7): Hier standen zuvor vier erfundene Prompt-Logs mit erfundenen
+  // Token-Zahlen und Kosten fuer Modelle (GPT-4o, Llama, Claude 3.5), die in dieser Codebasis
+  // gar nicht angebunden sind (nur Gemini ist real integriert, siehe server/orchestrator.ts).
+  // Es gibt keine Backend-Instrumentierung, die reale Prompt-Logs liefert - eine solche
+  // Prompt-Registry mit Token-/Kostenerfassung ist ein eigenes, hier nicht umgesetztes
+  // Vorhaben (Roadmap N2, ARCH-AUDIT-0002 Kapitel 14.4). Bis dahin bleibt die Liste leer,
+  // statt erfundene Eintraege als reale Nutzung darzustellen.
+  const [promptHistory, setPromptHistory] = useState<PromptLog[]>([]);
 
   // Die zuvor hier vorhandene "Simulated Fluctuation Engine" (setInterval mit
   // Math.random() fuer CPU/RAM/DB-Queries/DB-Latenz/Modell-Latenz/Kosten) wurde
@@ -1111,6 +1078,11 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
                   </p>
 
                   <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                    {promptHistory.length === 0 && (
+                      <p className="text-[10px] text-white/30 font-mono uppercase tracking-widest text-center py-4">
+                        Keine Prompt-Protokollierung verfügbar
+                      </p>
+                    )}
                     {promptHistory.map((log, idx) => (
                       <div
                         key={idx}

@@ -2,6 +2,7 @@ services:
   - type: web
     name: capital-ai
     runtime: docker
+    healthCheckPath: /healthz
     envVars:
       - key: VITE_SUPABASE_URL
         sync: false
@@ -26,4 +27,28 @@ services:
       - key: NEWS_API_KEY
         sync: false
       - key: COINMARKETCAP_API_KEY
+        sync: false
+      - key: STRIPE_PRICE_ID_STARTER
+        sync: false
+      - key: STRIPE_PRICE_ID_PRO
+        sync: false
+      - key: STRIPE_PRICE_ID_ENTERPRISE
+        sync: false
+      # ADR-0003.5 Step-Up-Authentication: ohne diesen Wert schlaegt jede
+      # TOTP-Ver-/Entschluesselung fehl (fail-closed, server/iam/secretCrypto.ts).
+      - key: TOTP_ENCRYPTION_KEY
+        sync: false
+      # SMTP fuer System-E-Mails (Abo-Aktivierungsbestaetigungen, server/mailer.ts).
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      # ADR-0009 CORS Hardening: nur wirksam ausserhalb NODE_ENV=production.
+      - key: AI_STUDIO_ORIGIN
         sync: false

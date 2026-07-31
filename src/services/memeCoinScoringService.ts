@@ -5,6 +5,21 @@
 
 import { MemeCoinInputs, MemeCoinAnalysisPayload } from '../types/memeCoin';
 
+// Audit ARCH-AUDIT-0002 (Q6): Diese Gewichte lagen zuvor doppelt vor - einmal als Literale in
+// der base_score-Formel, einmal als separates weightsRecord-Objekt fuer die Antwort-Payload.
+// Beide liefen strukturell auseinander, wenn nur eine Stelle geaendert wurde. Jetzt eine
+// einzige Quelle, die an beiden Stellen verwendet wird.
+const MEME_COIN_WEIGHTS = {
+  liquidity: 0.15,
+  volume_trend: 0.10,
+  trend_structure: 0.15,
+  momentum: 0.10,
+  volatility_quality: 0.10,
+  social_sentiment: 0.15,
+  narrative_strength: 0.10,
+  catalyst_strength: 0.10,
+} as const;
+
 export class MemeCoinScoringService {
   /**
    * Safe clamp utility to preserve values between [0.0, 1.0].
@@ -23,15 +38,16 @@ export class MemeCoinScoringService {
     // --- POSITIVE CORE HYPE SCORE ---
     // Represents viral force and basic trading support. Total multiplier sums up to 1.00 (100%).
     // Formula: BaseScore = (Sum(Metric * Allocation)) * 100
+    const w = MEME_COIN_WEIGHTS;
     const base_score = (
-      this.clamp(x.liquidity) * 0.15 +            // Pool depth and slippage buffer (15%)
-      this.clamp(x.volume_trend) * 0.10 +         // Volume growth multiplier (10%)
-      this.clamp(x.trend_structure) * 0.15 +      // Technical trend healthiness (15%)
-      this.clamp(x.momentum) * 0.10 +             // RSI/MACD buy pressure (10%)
-      this.clamp(x.volatility_quality) * 0.10 +   // Trading velocity continuity (10%)
-      this.clamp(x.social_sentiment) * 0.15 +     // TikTok, Twitter, Reddit viral velocity (15%)
-      this.clamp(x.narrative_strength) * 0.10 +   // Topic positioning (e.g. AI-Meme, Cat-Theme) (10%)
-      this.clamp(x.catalyst_strength) * 0.10      // Near-term events, exchange listing prospects (10%)
+      this.clamp(x.liquidity) * w.liquidity +                    // Pool depth and slippage buffer
+      this.clamp(x.volume_trend) * w.volume_trend +               // Volume growth multiplier
+      this.clamp(x.trend_structure) * w.trend_structure +         // Technical trend healthiness
+      this.clamp(x.momentum) * w.momentum +                       // RSI/MACD buy pressure
+      this.clamp(x.volatility_quality) * w.volatility_quality +   // Trading velocity continuity
+      this.clamp(x.social_sentiment) * w.social_sentiment +       // TikTok, Twitter, Reddit viral velocity
+      this.clamp(x.narrative_strength) * w.narrative_strength +   // Topic positioning (e.g. AI-Meme, Cat-Theme)
+      this.clamp(x.catalyst_strength) * w.catalyst_strength       // Near-term events, exchange listing prospects
     ) * 100;
 
     // --- DESTRUCTIVE PENALTY CALCULATION ---
@@ -112,17 +128,6 @@ export class MemeCoinScoringService {
     else if (x.coin === "SHIB") catSub = "Shiba Inu Ecosystem / Layer-2 Utility";
     else if (x.coin === "PEPE") catSub = "Pure Viral Meme-Asset Benchmark";
 
-    const weightsRecord = {
-      liquidity: 0.15,
-      volume_trend: 0.10,
-      trend_structure: 0.15,
-      momentum: 0.10,
-      volatility_quality: 0.10,
-      social_sentiment: 0.15,
-      narrative_strength: 0.10,
-      catalyst_strength: 0.10
-    };
-
     return {
       coin: x.coin,
       score: Number((final_score / 10).toFixed(1)), // Keep 0-10 format compatible
@@ -155,7 +160,7 @@ export class MemeCoinScoringService {
         risk_resilience: 100 - riskScoreValue,
         strategic_importance: avgStrat
       },
-      weights: weightsRecord,
+      weights: MEME_COIN_WEIGHTS,
       data_quality: {
         level: x.spread_penalty > 0.08 ? "low" : x.spread_penalty > 0.04 ? "medium" : "high"
       },

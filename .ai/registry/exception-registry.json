@@ -7,16 +7,21 @@
   "generated": false,
   "seed": true,
   "note": "Knowledge Seed. Nach Bereitstellung des Structure Validators wird der Abgleich zwischen Repository-Zustand und dieser Registry automatisiert (Chapter 16, Drift Detection).",
-  "updatedAt": "2026-07-30",
+  "updatedAt": "2026-07-31",
   "adr": "ADR-0011",
-  "statusValues": ["Approved", "Time Limited", "Permanent", "Revoked"],
+  "statusValues": [
+    "Approved",
+    "Time Limited",
+    "Permanent",
+    "Revoked"
+  ],
   "exceptions": [
     {
       "id": "EXC-0001",
       "path": "server/",
       "type": "root_directory",
       "violatedContract": "ESS-0001-CONTRACTS Chapter 2 — Repository Root, Source Structure",
-      "rationale": "Enthaelt den vollstaendigen produktiven Backend-Code der Plattform (15 Dateien, u. a. documentHygiene.ts, systemEvents.ts, versionManager.ts, decisionEngine.ts, iam/). Saemtliche Komponenten sind produktionsreif und laufen im Wirkbetrieb. ESS-0001 Chapter 2 (Existing Documentary Detection) untersagt ausdruecklich die Neuentwicklung produktionsreifer Bestandskomponenten.",
+      "rationale": "Enthaelt den vollstaendigen produktiven Backend-Code der Plattform (24 Dateien, u. a. documentHygiene.ts, systemEvents.ts, versionManager.ts, decisionEngine.ts, iam/ [5 Module], compliance/ [4 Module], mailer.ts, quota.ts, ownerConfig_server.ts, stepUp.ts). Saemtliche Komponenten sind produktionsreif und laufen im Wirkbetrieb. ESS-0001 Chapter 2 (Existing Documentary Detection) untersagt ausdruecklich die Neuentwicklung produktionsreifer Bestandskomponenten.",
       "risk": "Medium",
       "riskDescription": "Backend-Code liegt ausserhalb der vertraglich definierten Struktur und ist dadurch nicht Bestandteil der Plattform-Registry, des Knowledge Graph und des Digital Twin. Keine unmittelbare Betriebsgefahr.",
       "targetState": "Ueberfuehrung gemaess ESS-0001-CONTRACTS Chapter 14 (Legacy Contract, Adapter Contract). Zielzuordnung je Datei siehe ADR-0011, Abschnitt Zielstruktur.",
@@ -25,14 +30,15 @@
       "expiresAt": "2027-01-31",
       "reviewCondition": "Umsetzungsstufe 11 aus docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md abgeschlossen",
       "resolvesFinding": "GAP-006",
-      "adr": "ADR-0011"
+      "adr": "ADR-0011",
+      "note": "Dateizahl am 2026-07-31 im Rahmen von ARCH-AUDIT-0002 (Q8) von 15 auf den tatsaechlichen Bestand (24) nachgefuehrt; seit Registrierung der Ausnahme sind iam/ (ADR-0003.5), compliance/ (ADR-0012), mailer.ts, quota.ts und ownerConfig_server.ts hinzugekommen. Inhalt und Geltungsbereich der Ausnahme unveraendert."
     },
     {
       "id": "EXC-0002",
       "path": "server.ts",
       "type": "root_file",
       "violatedContract": "ESS-0001-CONTRACTS Chapter 2 — Repository Root, Source Structure, Documentation Placement",
-      "rationale": "Anwendungseinstieg und HTTP-Schicht des Backends (1.934 Zeilen). Wird durch package.json (dev, build) und Dockerfile unmittelbar referenziert. Eine Verlagerung ohne gleichzeitige Anpassung von Build, Container und Deployment wuerde den Wirkbetrieb unterbrechen.",
+      "rationale": "Anwendungseinstieg und HTTP-Schicht des Backends (1.923 Zeilen, Stand 2026-07-31). Wird durch package.json (dev, build) und Dockerfile unmittelbar referenziert. Eine Verlagerung ohne gleichzeitige Anpassung von Build, Container und Deployment wuerde den Wirkbetrieb unterbrechen.",
       "risk": "High",
       "riskDescription": "Groesste Einzeldatei des Repositorys ausserhalb der Struktur. Verlagerung beruehrt Build, Container und Deployment gleichzeitig.",
       "targetState": "Aufteilung: Bootstrap nach src/, Routen je Domaene nach src/features/<domain>, plattformweite Belange nach src/platform/*. Erfolgt ausschliesslich schrittweise mit Rollback-Plan gemaess Chapter 14.",
@@ -41,7 +47,8 @@
       "expiresAt": "2027-01-31",
       "reviewCondition": "Umsetzungsstufe 11 abgeschlossen",
       "resolvesFinding": "GAP-006",
-      "adr": "ADR-0011"
+      "adr": "ADR-0011",
+      "note": "Zeilenzahl am 2026-07-31 im Rahmen von ARCH-AUDIT-0002 (Q8) von 1.934 auf den tatsaechlichen Stand (1.923) nachgefuehrt. Inhalt und Geltungsbereich der Ausnahme unveraendert."
     },
     {
       "id": "EXC-0003",

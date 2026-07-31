@@ -246,11 +246,17 @@ export interface Agent {
   isCustom?: boolean;
 }
 
+// Audit ARCH-AUDIT-0002 (Q7): queriesCount und performance waren zuvor mit erfundenen
+// Werten (420/812/1402/154 Abfragen, 94.8%-100.0% Performance) vorbelegt und erweckten den
+// Eindruck bereits gemessener Betriebsdaten, obwohl performance an keiner Stelle im Code
+// tatsaechlich berechnet wird (No-Demo-Data-Policy, docs/DATENSCHUTZ_PROTOKOLL.md).
+// queriesCount startet bei 0 und waechst ausschliesslich ueber echte updateAgentActivity()-
+// Aufrufe; performance zeigt 'N/A', solange keine reale Messung existiert.
 const DEFAULT_AGENTS: Agent[] = [
-  { id: 'ag_allocator', name: 'Portfolio Allocator', role: 'Quantitative Weighting', status: 'IDLE', activeTask: 'Keine aktive Aufgabe', queriesCount: 420, model: 'gpt4', performance: '98.5%' },
-  { id: 'ag_risk', name: 'Risk Evaluator', role: 'Value-at-Risk Checking', status: 'ACTIVE', activeTask: 'Scant Risiko-Vektor für Universe', queriesCount: 812, model: 'gemini', performance: '99.2%' },
-  { id: 'ag_scanner', name: 'Market Scanner', role: 'Scraping & Signal Feed', status: 'ACTIVE', activeTask: 'Liest News-Scraper & Alpha Vantage', queriesCount: 1402, model: 'llama', performance: '94.8%' },
-  { id: 'ag_auditor', name: 'SEC Compliance Auditor', role: 'Billing Safeguards & Hygiene', status: 'IDLE', activeTask: 'Validiert Dokumenten-Hygiene ADRs', queriesCount: 154, model: 'claude', performance: '100.0%' }
+  { id: 'ag_allocator', name: 'Portfolio Allocator', role: 'Quantitative Weighting', status: 'IDLE', activeTask: 'Keine aktive Aufgabe', queriesCount: 0, model: 'gpt4', performance: 'N/A' },
+  { id: 'ag_risk', name: 'Risk Evaluator', role: 'Value-at-Risk Checking', status: 'IDLE', activeTask: 'Keine aktive Aufgabe', queriesCount: 0, model: 'gemini', performance: 'N/A' },
+  { id: 'ag_scanner', name: 'Market Scanner', role: 'Scraping & Signal Feed', status: 'IDLE', activeTask: 'Keine aktive Aufgabe', queriesCount: 0, model: 'llama', performance: 'N/A' },
+  { id: 'ag_auditor', name: 'SEC Compliance Auditor', role: 'Billing Safeguards & Hygiene', status: 'IDLE', activeTask: 'Keine aktive Aufgabe', queriesCount: 0, model: 'claude', performance: 'N/A' }
 ];
 
 export function getAgentsRegistry(): Agent[] {
@@ -344,7 +350,7 @@ systemEventsRouter.post('/agents/register', async (req, res) => {
       activeTask: 'Keine aktive Aufgabe',
       queriesCount: 0,
       model: model.trim(),
-      performance: '100.0%',
+      performance: 'N/A',
       isCustom: true
     };
 

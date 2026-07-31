@@ -38,8 +38,22 @@ RUN npm ci --only=production
 # Copy built application assets from the builder stage
 COPY --from=builder /app/dist ./dist
 
+# Audit ARCH-AUDIT-0002 (AUD2-F-018): Container lief zuvor als root. Non-root-User anlegen und
+# die zur Laufzeit beschriebenen Verzeichnisse (uploads/, docs/ - documentHygiene.ts legt beide
+# per mkdirSync selbst an, falls sie fehlen) vorab mit passendem Besitzer bereitstellen, damit
+# der Prozess unter diesem User weiterhin schreiben kann.
+RUN addgroup -S capitalai && adduser -S capitalai -G capitalai \
+  && mkdir -p /app/uploads /app/docs \
+  && chown -R capitalai:capitalai /app
+USER capitalai
+
 # Expose port 3000
 EXPOSE 3000
+
+# Audit ARCH-AUDIT-0002 (AUD2-F-018): Container-Health per HTTP-Check gegen /healthz statt gar
+# keiner Ueberwachung. wget ist Teil von busybox in node:22-alpine, kein zusaetzliches Paket noetig.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget -q -O /dev/null http://127.0.0.1:3000/healthz || exit 1
 
 # Start command
 CMD ["npm", "run", "start"]

@@ -231,6 +231,22 @@ try {
   console.warn("Failed to retrieve Gemini instance on boot:", e);
 }
 
+// Health-Check-Endpunkt fuer Deployment-Plattformen (Audit ARCH-AUDIT-0002, Befund AUD2-F: kein
+// Health-Check vorhanden). Bewusst ohne Netzwerkaufrufe an Drittanbieter - ein Health-Check muss
+// schnell und unabhaengig von externen Ausfaellen antworten. `configured` spiegelt nur, ob die
+// jeweilige Umgebungsvariable gesetzt ist, keine Live-Erreichbarkeit.
+app.get('/healthz', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptimeSeconds: Math.floor(process.uptime()),
+    configured: {
+      supabase: isSupabaseConfigured(),
+      gemini: isGeminiConfigured(),
+    },
+  });
+});
+
 // Mount Modular Router Sub-systems
 //
 // WICHTIG: Hier wird die oben defensiv ermittelte Instanz `ai` weitergereicht und NICHT erneut
