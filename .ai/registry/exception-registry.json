@@ -61,7 +61,7 @@
       "resolvedAt": "2026-07-30",
       "resolution": "Abweichung beseitigt. 001_user_quota.sql wurde byteidentisch nach supabase/migrations/20260730000000_user_quota.sql ueberfuehrt (Pruefsumme 10c791c4e413c99b9825efdf6cf1482098cf6824e1b623a83fac73a722c80196 vor und nach der Verschiebung), das leere Verzeichnis sql/ wurde entfernt. Nachweis: docs/migration/MIGRATION_EXC-0003_sql_to_supabase.md",
       "migrationReport": "docs/migration/MIGRATION_EXC-0003_sql_to_supabase.md",
-      "openFinding": "FND-EXC-0003-01 — Die Migration ist im aktuellen Codebestand verwaist: src/lib/freeTierLimits.ts existiert nicht und hat nie existiert, es gibt keine Code-Referenz auf public.user_quota. Die Datei wurde bewusst nicht geloescht; die Entfernung von Bestand ist gemaess Chapter 14 dem Platform Director vorbehalten."
+      "openFinding": "FND-EXC-0003-01 (geklaert 2026-07-31) — public.user_quota existiert nicht in der verknuepften Supabase-Produktivumgebung (Projekt ryzywoktpmyhwzxmstyu, 13 Tabellen geprueft, keine Uebereinstimmung), keine Edge Function und keine RPC-Funktion referenzieren sie. Die Migration wurde nie ausgefuehrt. Risikofreie Entfernung waere damit moeglich, die Entfernung von Bestand ist jedoch gemaess Chapter 14 dem Platform Director vorbehalten und steht noch aus. Zwischenzustand: Migration bleibt unveraendert im Bestand, als inaktiv dokumentiert."
     },
     {
       "id": "EXC-0004",
