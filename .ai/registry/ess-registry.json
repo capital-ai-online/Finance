@@ -269,5 +269,38 @@
         "parserFix": "Das Dokument besass keine Markdown-Struktur und war fuer die ADR-Auto-Migration in server/documentHygiene.ts nicht parsebar. Titel, Metadatenfelder und Abschnittsueberschriften wurden formatangeglichen, der Inhalt blieb unveraendert."
       }
     ]
+  },
+  "forkDivergence": {
+    "adr": "ADR-0019",
+    "document": "docs/adr/ADR-0019-fork-divergenz-und-nummernraum-konsolidierung.md",
+    "decidedAt": "2026-07-31",
+    "note": "Der Entwicklungsstand CAPITAL-AI-Dev-main hat ADR- und ESS-Nummern abweichend belegt. ADR-0019 erklaert die Belegung dieses Repositorys fuer verbindlich und die abweichende Belegung des Entwicklungsstands fuer ungueltig.",
+    "leadingEnvironment": "Produktivstand dieses Repositorys",
+    "invalidatedExternalAssignments": {
+      "source": "CAPITAL-AI-Dev-main",
+      "adr": [
+        "ADR-0010",
+        "ADR-0011",
+        "ADR-0012",
+        "ADR-0013"
+      ],
+      "ess": [
+        "ESS-0002",
+        "ESS-0003",
+        "ESS-0004",
+        "ESS-0005",
+        "ESS-0006",
+        "ESS-0007",
+        "ESS-0008",
+        "ESS-0009",
+        "ESS-0010",
+        "ESS-0013",
+        "ESS-0013-CONTRACTS",
+        "ESS-0014",
+        "ESS-0014-CONTRACTS"
+      ]
+    },
+    "freeNumberSpaceUnchanged": "ESS-0014 bleibt frei. Die abweichende Belegung im Entwicklungsstand begruendet keine Vergabe.",
+    "auditReference": "docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md (ARCH-AUDIT-0002)"
   }
 }

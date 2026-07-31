@@ -54,12 +54,17 @@ All specialized orchestrators utilize high-concurrency multi-agent prompts power
   * **Crypto Risk Agent:** Analyzes wash-trading risks and custody centralisation risks.
 * **Scoring Engine:** `CryptoScoringService.scoreCrypto`
 
-### C. Meme-Coin Master Orchestrator
-* **Location:** `/src/orchestrator/memeCoinOrchestrator.ts`
-* **Agents Involved:**
-  * **Meme Sentiment Agent:** Rates micro-hype, viral trends (cat, dog, frog themes), and influencer catalysts.
-  * **Meme Risk Agent:** Audits developer centralisation, locked liquidity pools, snipers, and social decay rates.
-* **Scoring Engine:** `MemeCoinScoringService.scoreMemeCoin`
+### C. Meme-Coin Scoring (kein Orchestrator)
+* **Scoring Engine:** `MemeCoinScoringService.scoreMemeCoin` — `/src/services/memeCoinScoringService.ts`
+* **Aufrufpfad:** direkt aus `server.ts` (`/api/crypto-score`, `/api/meme-score`), ohne vorgelagerten Orchestrator.
+* **Agents Involved:** keine.
+
+> **Korrektur (Audit ARCH-AUDIT-0002, 2026-07-31):** Dieser Abschnitt beschrieb zuvor einen
+> „Meme-Coin Master Orchestrator" unter `/src/orchestrator/memeCoinOrchestrator.ts` mit zwei
+> Agenten (Meme Sentiment Agent, Meme Risk Agent). Weder die Orchestrator-Datei noch die beiden
+> Agenten existieren in dieser Codebasis. Die Meme-Coin-Bewertung erfolgt ausschliesslich ueber
+> die oben genannte Scoring-Engine. Der korrespondierende Falscheintrag in
+> `/api/admin/orchestrators/status` (`server/systemEvents.ts`) wurde im selben Zug entfernt.
 
 ---
 

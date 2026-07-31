@@ -752,12 +752,20 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
                   </button>
                 </div>
 
+                {/* No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md): Hier stand frueher ein
+                    hartkodiertes Fallback-Array mit erfundenen Latenzen (32/15/48 ms) und einem
+                    'memecoin_orchestrator', den es in dieser Codebasis nicht gibt. Solange
+                    /api/admin/orchestrators/status nichts geliefert hat, wird jetzt ein leerer
+                    Zustand angezeigt statt erfundener Betriebsdaten. */}
+                {orchestrators.length === 0 && !isLoadingOrchestrators && (
+                  <div className="bg-black/20 border border-white/5 rounded-xl p-6 text-center">
+                    <p className="text-[10px] text-white/40 font-mono uppercase tracking-widest">
+                      Keine Orchestrator-Statusdaten geladen
+                    </p>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {(orchestrators.length > 0 ? orchestrators : [
-                    { id: 'crypto_orchestrator', name: 'Crypto Orchestrator', status: 'CONNECTED', latency: 32, agentsCount: 4, lastActive: 'Aktiv', type: 'Crypto & DeFi Analytics' },
-                    { id: 'memecoin_orchestrator', name: 'MemeCoin Orchestrator', status: 'CONNECTED', latency: 15, agentsCount: 2, lastActive: 'Aktiv', type: 'Meme Token Sentiment & Rug-Pull Analysis' },
-                    { id: 'rawmaterials_orchestrator', name: 'Raw Materials Orchestrator', status: 'CONNECTED', latency: 48, agentsCount: 4, lastActive: 'Aktiv', type: 'Macroeconomic & Commodities Valuation' }
-                  ]).map((orch) => {
+                  {orchestrators.map((orch) => {
                     const isCrypto = orch.id.includes('crypto');
                     const isMeme = orch.id.includes('memecoin') || orch.id.includes('meme');
                     const colorClass = isCrypto ? 'text-emerald-400' : isMeme ? 'text-cyan-400' : 'text-aif-gold-DEFAULT';

@@ -548,15 +548,12 @@ systemEventsRouter.get('/orchestrators/status', async (req, res) => {
         lastActive: 'Aktiv',
         type: 'Crypto & DeFi Analytics'
       },
-      {
-        id: 'memecoin_orchestrator',
-        name: 'MemeCoin Orchestrator',
-        status: 'CONNECTED',
-        latency: null,
-        agentsCount: 2,
-        lastActive: 'Aktiv',
-        type: 'Meme Token Sentiment & Rug-Pull Analysis'
-      },
+      // Ein 'memecoin_orchestrator' wurde hier frueher als CONNECTED mit 2 Agenten gemeldet,
+      // obwohl weder src/orchestrator/memeCoinOrchestrator.ts noch die zugehoerigen Agenten in
+      // dieser Codebasis existieren. Eine nicht vorhandene Komponente als betriebsbereit
+      // auszuweisen ist derselbe No-Demo-Data-Policy-Verstoss wie eine erfundene Messzahl
+      // (docs/DATENSCHUTZ_PROTOKOLL.md) - der Eintrag ist daher entfernt. Wird der
+      // Orchestrator spaeter tatsaechlich implementiert, wird er hier wieder aufgenommen.
       {
         id: 'rawmaterials_orchestrator',
         name: 'Raw Materials Orchestrator',

@@ -232,8 +232,15 @@ try {
 }
 
 // Mount Modular Router Sub-systems
-app.use('/api/raw-materials', createRawMaterialsRouter(getGeminiInstance()));
-app.use('/api/crypto', createCryptoRouter(getGeminiInstance()));
+//
+// WICHTIG: Hier wird die oben defensiv ermittelte Instanz `ai` weitergereicht und NICHT erneut
+// getGeminiInstance() aufgerufen. getGeminiInstance() wirft ohne GEMINI_API_KEY (server/ai.ts);
+// ein Aufruf an dieser Stelle liegt ausserhalb jedes try/catch und wuerde den Serverstart
+// komplett verhindern, statt den Betrieb ohne KI-Funktionen fortzusetzen. Beide Router und die
+// dahinterliegenden Orchestratoren akzeptieren `GoogleGenAI | null` und liefern ohne Client
+// ihre quantitativen Fallbacks.
+app.use('/api/raw-materials', createRawMaterialsRouter(ai));
+app.use('/api/crypto', createCryptoRouter(ai));
 app.use('/api/stripe', stripeRouter);
 app.use('/api/orchestrator', orchestratorRouter);
 app.use('/api/admin/hygiene', hygieneRouter);
