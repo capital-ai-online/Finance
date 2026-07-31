@@ -8,7 +8,7 @@
   "seed": true,
   "note": "Dieser Registry-Eintrag ist ein Knowledge Seed. Nach Bereitstellung des Enterprise Bootstrappers wird die Registry generatorgestuetzt fortgeschrieben.",
   "updatedAt": "2026-07-31",
-  "freeNumberSpaceStartsAt": "ESS-0012",
+  "freeNumberSpaceStartsAt": "ESS-0013",
   "entries": [
     {
       "id": "ESS-0001",
@@ -141,6 +141,28 @@
       "owner": "Platform Director",
       "relatedAdr": ["ADR-0012"],
       "note": "Vertragsteil von ESS-0011. Belegt keine eigene Nummer. Besitzt ausschliesslich ETM-Geltung, niemals globale Wirkung."
+    },
+    {
+      "id": "ESS-0012",
+      "title": "Documentation Governance",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0012-Documentation-Governance.md",
+      "reservedBy": null,
+      "owner": "Platform Director",
+      "relatedAdr": ["ADR-0013"],
+      "rationale": "Spezifikation des Documentation Governance Validator. Notwendigkeitsnachweis gemaess Pruefliste ARCH-RESP-0001 im Dokument selbst gefuehrt: die semantische, dokumentuebergreifende Governance-Pruefung (doppelte und widerspruechliche ESS-Regeln, widerspruechliche ADRs, doppelte Contracts, Breaking Changes ohne ADR) ist von keinem bestehenden Dokument abgedeckt. Chapter 12 prueft Struktur und Schema, ESS-0011 prueft Verknuepfungen."
+    },
+    {
+      "id": "ESS-0012-CONTRACTS",
+      "title": "Documentation Governance Contracts",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0012-Contracts.md",
+      "reservedBy": null,
+      "owner": "Platform Director",
+      "relatedAdr": ["ADR-0013"],
+      "note": "Vertragsteil von ESS-0012. Belegt keine eigene Nummer. Definiert 57 Regeln in neun Bereichen mit stabilen IDs im Format GOV-<AREA>-<NNN>. Besitzt ausschliesslich Governance-Geltung, niemals globale Wirkung."
     }
   ],
   "rules": [

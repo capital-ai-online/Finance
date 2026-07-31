@@ -95,6 +95,14 @@ samt Referenzanpassung, ohne einen Nutzen zu erzeugen.
 | **ESS-0010**<br>Documentary Engine | Technical Specification | technische Spezifikation der Documentary Engine | Komponenten, Services, APIs, Events, Workflows, Trigger, Discovery, Registry, Digital Twin, Integration | Vision, Motivation, historische Inhalte, globale Contracts |
 | **ESS-0011**<br>Enterprise Traceability | Technical Specification | Spezifikation der Enterprise Traceability Matrix | ETM-Architektur, ETM-Komponenten, ETM-Prozesse, ETM-Reports, ETM-Integration, ETM-Workflows | allgemeine Enterprise-Regeln, globale Contracts |
 | **ESS-0011-CONTRACTS**<br>ETM Contracts | Scoped Contracts | Traceability-Matrix-Contracts | ausschließlich ETM-bezogene Contracts | globale Repository-, Naming-, Layer- und Governance-Contracts |
+| **ESS-0012**<br>Documentation Governance | Technical Specification | Spezifikation des Documentation Governance Validator | Prüfbereiche, Komponentenarchitektur des Validators, Trigger, Reports, Integration, Rollentrennung | Validator-Basisregeln, Severity-Definitionen, Coverage-Schwellwerte, Twin-Regeln, globale Contracts |
+| **ESS-0012-CONTRACTS**<br>Governance Contracts | Scoped Contracts | Governance-Regelwerk und Scoring | Regel-IDs, Regeltexte, Schweregradzuordnung, Nachweistypen, Scoring-Formeln, Governance-Events | globale Repository-, Naming-, Layer- und Governance-Contracts, Severity-Definitionen, Orphan-Klassen |
+| **SKILL-GOV-0001**<br>Documentation-Governance-Validator | Operational Skill | Handlungsanweisung für KI-Systeme | Anwendungsreihenfolge, Trigger, Pflichten je KI-System, Abbruchbedingungen, Verweise | normative Regeln, Regeltexte, Schweregrade, Schwellwerte |
+
+**Hinweis zu SKILL-GOV-0001:** Der Skill ist kein ESS-Dokument und belegt keine ESS-Nummer.
+Er besitzt keine normative Wirkung — bei Abweichung gelten ESS-0012 und ESS-0012-CONTRACTS.
+Er ist hier aufgeführt, weil er als einziges Nicht-ESS-Artefakt unter `.ai/skills/` liegt und
+damit derselben Verantwortungsabgrenzung unterliegt.
 
 ---
 
@@ -107,6 +115,9 @@ Bei inhaltlichen Abweichungen zwischen Dokumenten gilt verbindlich:
 | ESS-0001 gegen ESS-0010 | **ESS-0010** — technische Autorität |
 | ESS-0001 gegen ESS-0001-CONTRACTS | **ESS-0001-CONTRACTS** — Chapter 1, Rangfolge |
 | ESS-0011-CONTRACTS gegen ESS-0001-CONTRACTS | **ESS-0001-CONTRACTS** — globale Wirkung schlägt begrenzte |
+| ESS-0012-CONTRACTS gegen ESS-0001-CONTRACTS | **ESS-0001-CONTRACTS** — globale Wirkung schlägt begrenzte |
+| ESS-0012 gegen ESS-0011-CONTRACTS (Coverage, Orphans) | **ESS-0011-CONTRACTS** — Traceability ist dort geregelt |
+| SKILL-GOV-0001 gegen ESS-0012 | **ESS-0012** — Skills besitzen keine normative Wirkung |
 | Komponenten-ESS gegen ESS-0001-CONTRACTS | **ESS-0001-CONTRACTS** |
 | ADR gegen jedes ESS-Dokument | **ADR** — Chapter 1, Rangfolge |
 
@@ -157,8 +168,11 @@ erhalten; `crossReference:` wurde additiv daneben ergänzt.
 | ESS-0010 | `crossReference:` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | ESS-0011 | `crossReference:` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | ESS-0011-CONTRACTS | Markdown | ✓ | ✓ | ✓ | ✓ | ✓ |
+| ESS-0012 | `crossReference:` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| ESS-0012-CONTRACTS | Markdown | ✓ | ✓ | ✓ | ✓ | ✓ |
+| SKILL-GOV-0001 | `crossReference:` | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-Vollständig — sieben von sieben Dokumenten.
+Vollständig — zehn von zehn Artefakten unter `.ai/skills/`.
 
 ---
 
