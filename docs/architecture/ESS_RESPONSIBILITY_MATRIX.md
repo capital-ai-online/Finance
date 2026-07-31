@@ -104,11 +104,15 @@ samt Referenzanpassung, ohne einen Nutzen zu erzeugen.
 | **ESS-0012**<br>Documentation Governance | Technical Specification | Spezifikation des Documentation Governance Validator | Prüfbereiche, Komponentenarchitektur des Validators, Trigger, Reports, Integration, Rollentrennung | Validator-Basisregeln, Severity-Definitionen, Coverage-Schwellwerte, Twin-Regeln, globale Contracts |
 | **ESS-0012-CONTRACTS**<br>Governance Contracts | Scoped Contracts | Governance-Regelwerk und Scoring | Regel-IDs, Regeltexte, Schweregradzuordnung, Nachweistypen, Scoring-Formeln, Governance-Events | globale Repository-, Naming-, Layer- und Governance-Contracts, Severity-Definitionen, Orphan-Klassen |
 | **SKILL-GOV-0001**<br>Documentation-Governance-Validator | Operational Skill | Handlungsanweisung für KI-Systeme | Anwendungsreihenfolge, Trigger, Pflichten je KI-System, Abbruchbedingungen, Verweise | normative Regeln, Regeltexte, Schweregrade, Schwellwerte |
+| **ESS-0013**<br>Enterprise Event Mesh | Technical Specification | Komponentenspezifikation der Enterprise Event Mesh | Core-Klassen, Contract-Typen, Registry-Mechanik, Validator-Kette, Report-Typen, Standard Event Catalog | Event-Namensregel, Event-Prinzip, globale Producer-/Consumer-Grundregeln, Routing-Prinzip (bleiben in ESS-0001-CONTRACTS Chapter 8) |
+| **ESS-0013-CONTRACTS**<br>Enterprise Event Mesh Contracts | Scoped Contracts | Event-Katalog-, Kompatibilitäts-, Registry-, Routing-, Discovery-, Policy- und Report-Contracts | ausschließlich EventMesh-Komponenten-Contracts | globale Event-Namensregeln, globale Repository-, Layer- und Governance-Contracts |
+| **SKILL-EVT-0001**<br>Enterprise-Event-Mesh | Operational Skill | Handlungsanweisung für KI-Systeme zur Event-Nutzung | Event Governance, Producer-/Consumer-Pflichten, Trigger, ETM-/Documentary-Integration, Versionierung | normative Regeln, Event-Kategorien-Definition, globale Contracts |
 
-**Hinweis zu SKILL-GOV-0001:** Der Skill ist kein ESS-Dokument und belegt keine ESS-Nummer.
-Er besitzt keine normative Wirkung — bei Abweichung gelten ESS-0012 und ESS-0012-CONTRACTS.
-Er ist hier aufgeführt, weil er als einziges Nicht-ESS-Artefakt unter `.ai/skills/` liegt und
-damit derselben Verantwortungsabgrenzung unterliegt.
+**Hinweis zu SKILL-GOV-0001 und SKILL-EVT-0001:** Beide Skills sind keine ESS-Dokumente
+und belegen keine ESS-Nummer. Sie besitzen keine normative Wirkung — bei Abweichung
+gelten die jeweils referenzierten ESS-Dokumente (ESS-0012/ESS-0012-CONTRACTS bzw.
+ESS-0013/ESS-0013-CONTRACTS). Sie sind hier aufgeführt, weil sie als Nicht-ESS-Artefakte
+unter `.ai/skills/` liegen und damit derselben Verantwortungsabgrenzung unterliegen.
 
 ---
 
@@ -122,6 +126,8 @@ Bei inhaltlichen Abweichungen zwischen Dokumenten gilt verbindlich:
 | ESS-0001 gegen ESS-0001-CONTRACTS | **ESS-0001-CONTRACTS** — Chapter 1, Rangfolge |
 | ESS-0011-CONTRACTS gegen ESS-0001-CONTRACTS | **ESS-0001-CONTRACTS** — globale Wirkung schlägt begrenzte |
 | ESS-0012-CONTRACTS gegen ESS-0001-CONTRACTS | **ESS-0001-CONTRACTS** — globale Wirkung schlägt begrenzte |
+| ESS-0013-CONTRACTS gegen ESS-0001-CONTRACTS Chapter 8 | **ESS-0001-CONTRACTS** — globale Wirkung schlägt begrenzte |
+| SKILL-EVT-0001 gegen ESS-0013 | **ESS-0013** — Skills besitzen keine normative Wirkung |
 | ESS-0012 gegen ESS-0011-CONTRACTS (Coverage, Orphans) | **ESS-0011-CONTRACTS** — Traceability ist dort geregelt |
 | SKILL-GOV-0001 gegen ESS-0012 | **ESS-0012** — Skills besitzen keine normative Wirkung |
 | Komponenten-ESS gegen ESS-0001-CONTRACTS | **ESS-0001-CONTRACTS** |
@@ -305,6 +311,7 @@ ESS-0001-CONTRACTS Chapter 1, Chapter 16, Chapter 20
 | Version | Status | Beschreibung |
 |---|---|---|
 | 1.0.0 | Initial Release | Verbindliche Verantwortungszuordnung für sieben ESS-Dokumente |
+| 1.1.0 | Update | ESS-0013, ESS-0013-CONTRACTS und SKILL-EVT-0001 ergänzt (ADR-0018, Enterprise Event Mesh) |
 
 ---
 

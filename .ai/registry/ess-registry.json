@@ -8,7 +8,7 @@
   "seed": true,
   "note": "Dieser Registry-Eintrag ist ein Knowledge Seed. Nach Bereitstellung des Enterprise Bootstrappers wird die Registry generatorgestuetzt fortgeschrieben.",
   "updatedAt": "2026-07-31",
-  "freeNumberSpaceStartsAt": "ESS-0013",
+  "freeNumberSpaceStartsAt": "ESS-0014",
   "entries": [
     {
       "id": "ESS-0001",
@@ -206,6 +206,34 @@
       ],
       "note": "Vertragsteil von ESS-0012. Belegt keine eigene Nummer. Definiert 57 Regeln in neun Bereichen mit stabilen IDs im Format GOV-<AREA>-<NNN>. Besitzt ausschliesslich Governance-Geltung, niemals globale Wirkung.",
       "implementedBy": "src/platform/Documentary/Governance"
+    },
+    {
+      "id": "ESS-0013",
+      "title": "Enterprise Event Mesh",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0013-Enterprise-Event-Mesh.md",
+      "reservedBy": null,
+      "owner": "Platform Director",
+      "relatedAdr": [
+        "ADR-0018"
+      ],
+      "rationale": "Erste Vergabe aus dem freien Nummernraum nach ESS-0012. Komponentenspezifikation der bereits in ESS-0001-CONTRACTS Chapter 8 normativ definierten Enterprise Event Mesh - Chapter 8 bleibt unveraendert; ESS-0013 beschreibt ausschliesslich die umsetzende Komponente (Core-Klassen, Registry-Mechanik, Validator-Kette, Report-Typen, Standard Event Catalog). Dasselbe Muster wie ESS-0004 bis ESS-0009 gegenueber ihren jeweiligen Regelkapiteln.",
+      "implementedBy": "src/platform/EventMesh"
+    },
+    {
+      "id": "ESS-0013-CONTRACTS",
+      "title": "Enterprise Event Mesh Contracts",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0013-Contracts.md",
+      "reservedBy": null,
+      "owner": "Platform Director",
+      "relatedAdr": [
+        "ADR-0018"
+      ],
+      "note": "Vertragsteil von ESS-0013. Belegt keine eigene Nummer. Definiert Event-Katalog-, Kompatibilitaets-, Registry-, Routing-, Discovery-, Policy- und Report-Contracts. Wiederholt keine Regel aus ESS-0001-CONTRACTS Chapter 8.",
+      "implementedBy": "src/platform/EventMesh"
     }
   ],
   "rules": [

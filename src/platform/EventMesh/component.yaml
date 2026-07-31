@@ -1,0 +1,134 @@
+# Enterprise Component Descriptor
+# ESS-0001-CONTRACTS Chapter 7 — Component Contract
+#
+# Diese Datei besitzt denselben Informationsumfang wie manifest.json und dient als
+# menschen- und KI-lesbare Komponentenbeschreibung. Bei Abweichungen zwischen beiden
+# Dateien gilt manifest.json als primaere maschinenlesbare Beschreibung.
+
+component:
+  name: EventMesh
+  displayName: Enterprise Event Mesh
+  version: 1.0.0
+  status: development
+  lifecycle: Development
+  health: Unknown
+  owner: Platform Director
+  category: platform
+  layer: CrossCutting
+  repository: Finance
+
+purpose: >
+  Die Enterprise Event Mesh ist die zentrale Kommunikationsschicht der CAPITAL-AI
+  Plattform. Sie registriert, validiert, routet und protokolliert Enterprise Events
+  zwischen Fachkomponenten, erzeugt selbst jedoch keine fachlichen Events. Implementiert
+  das bereits in ESS-0001-CONTRACTS Chapter 8 normativ definierte Event- und
+  Messaging-Regelwerk als konkrete Softwarekomponente.
+
+responsibilities:
+  - Registrierung aller Enterprise Events (Producer, Consumer, Version, Status)
+  - Validierung von Event Contracts, Schemas, Versionen und Kompatibilitaet
+  - Routing von Events zwischen Producern und deklarierten Consumern
+  - Erzeugung von Event-Flow-, Coverage-, Health- und Dependency-Reports
+  - Bereitstellung der Event-Achse fuer die Enterprise Traceability Matrix
+
+notResponsibleFor:
+  - Erzeugung fachlicher Events (Aufgabe der jeweiligen Fachkomponente)
+  - Geschaeftslogik innerhalb von Event-Payloads
+  - Entscheidungen ueber Event-Inhalte
+  - Aenderung von ESS-0001-CONTRACTS Chapter 8 (Regelwerk bleibt unveraendert)
+  - Ersatz des bestehenden Audit-Log-Mechanismus in server/systemEvents.ts
+
+eventCategories:
+  - Repository Events
+  - Documentation Events
+  - Traceability Events
+  - Knowledge Events
+  - Compliance Events
+  - Security Events
+  - Versioning Events
+  - Release Events
+  - Supervisor Events
+  - Platform Director Events
+  - AI Events
+  - System Events
+
+structure:
+  Contracts:  Event-Contract-Definitionen (EventContract, EventPayload, EventMetadata, EventVersion, EventSchema)
+  Core:       EventBus, EventDispatcher, EventPublisher, EventSubscriber, EventRouter
+  Discovery:  Automatische Erkennung moeglicher Producer und Consumer
+  Events:     Konkrete Enterprise-Event-Klassen je Kategorie
+  Interfaces: Oeffentliche Schnittstellen
+  Models:     Datenmodelle fuer Registry- und Katalogeintraege
+  Policies:   Routing-, Retry- und Kompatibilitaetspolicies
+  Registry:   EventRegistry, ProducerRegistry, ConsumerRegistry, EventCatalog
+  Reports:    EventFlowReport, EventCoverageReport, EventHealthReport, EventDependencyReport
+  Services:   Ausfuehrung und Orchestrierung des Routings
+  Tests:      Vertrags- und Kompatibilitaetstests
+
+dependencies:
+  allowed:
+    - src/platform/Core
+    - src/platform/Shared
+    - src/platform/Registry
+    - src/platform/Discovery
+  forbidden:
+    - src/platform/Supervisor
+    - src/platform/PlatformDirector
+    - src/platform/Documentary
+    - src/platform/Traceability
+    - src/platform/Knowledge
+    - src/platform/Compliance
+    - src/platform/VersionManager
+    - src/platform/Security
+    - src/platform/Release
+    - src/platform/Quality
+  note: >
+    Umgekehrte Regel gegenueber ueblichen Querschnittsmodulen: keine Fachkomponente
+    darf die EventMesh-Implementierung direkt importieren, ausschliesslich ueber
+    Interfaces/.
+
+interfaces:
+  - IEventBus
+  - IEventPublisher
+  - IEventSubscriber
+  - IEventRouter
+  - IEventRegistry
+
+references:
+  ess:
+    - ESS-0013
+    - ESS-0013-CONTRACTS
+    - ESS-0001-CONTRACTS
+    - ESS-0011
+    - ESS-0010
+  adr:
+    - ADR-0018
+  documentation:
+    - docs/architecture/ENTERPRISE_EVENT_READINESS_REPORT.md
+    - docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md
+
+security:
+  classification: Internal
+  sensitivity: Event-Payloads enthalten ausschliesslich fachliche Informationen, keine Implementierungsdetails (Chapter 8, Event Payload)
+  audit: Saemtliche Events werden revisionssicher protokolliert (Chapter 8, Event Audit Trail)
+
+ai:
+  aiOwner: Platform Director
+  aiGenerated: true
+  aiReviewed: false
+  aiValidated: false
+  aiCompatible: true
+  supportedAiSystems:
+    - Claude Code
+    - Google AI Studio
+    - ChatGPT
+    - Future Enterprise AI
+  note: >
+    Google AI Studio, Claude Code und ChatGPT muessen dieselbe Enterprise Event Mesh
+    verwenden, sobald sie implementiert ist. Neue Komponenten duerfen ausschliesslich
+    ueber registrierte Enterprise Events kommunizieren.
+
+implementationStatus: >
+  Spezifiziert, nicht implementiert. Die Umsetzung entspricht Stufe 3 aus
+  docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md (Enterprise Event Bus) und setzt
+  Stufe 1 und 2 (Schema/Metadata Foundation, Core/Contracts) voraus.
