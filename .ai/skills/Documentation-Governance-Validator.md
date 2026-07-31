@@ -52,7 +52,7 @@ crossReference:
     - ESS-0010
     - ESS-0011
   relatedAdr:
-    - ADR-0013
+    - ADR-0014
   relatedComponents:
     - src/platform/Documentary/Governance
   relatedSkills:
@@ -301,7 +301,7 @@ ESS-0011 — Enterprise Traceability
 
 ESS-0001-CONTRACTS — Chapter 8, Chapter 9, Chapter 12, Chapter 15, Chapter 18
 
-ADR-0013 — Documentation Governance Validator
+ADR-0014 — Documentation Governance Validator
 
 ---
 

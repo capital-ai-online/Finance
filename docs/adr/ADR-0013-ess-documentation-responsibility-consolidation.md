@@ -1,4 +1,4 @@
-# ADR-0012: Konsolidierung der ESS-Dokumentationsverantwortung, Vergabe von ESS-0010 und ESS-0011
+# ADR-0013: Konsolidierung der ESS-Dokumentationsverantwortung, Vergabe von ESS-0010 und ESS-0011
 
 ## Status
 
@@ -23,6 +23,22 @@ Entscheidung.
 ## Verantwortlich
 
 Platform Director
+
+## Hinweis zur Nummernvergabe
+
+Dieser ADR wurde ursprünglich als **ADR-0012** erstellt. Während der Bearbeitung wurde auf
+`main` unabhängig ein anderer **ADR-0012 — SecurityComplianceAuditor Integration** gemergt
+(Commits `04de42a`, `d1348c7`).
+
+ESS-0001-CONTRACTS Chapter 16 legt fest: *„Jede ESS-Nummer wird genau einmal vergeben"* — für
+ADR-Nummern gilt dieselbe Regel über *„ADR-Nummern sind vierstellig und fortlaufend"*.
+
+Die auf `main` bereits gemergte Vergabe besitzt Vorrang. Dieser ADR wurde daher auf
+**ADR-0013** umnummeriert, der zugehörige Governance-ADR von 0013 auf **ADR-0014**. Sämtliche
+Referenzen in 18 Dateien wurden entsprechend nachgezogen.
+
+Die Kollision selbst ist ein Anwendungsfall der Regel `GOV-ADR-004` aus ESS-0012-CONTRACTS —
+sie wäre bei aktivem Governance Validator automatisch erkannt worden.
 
 ## Betroffene Dokumente
 

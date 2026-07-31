@@ -21,7 +21,7 @@ an bestehenden Dokumenten sind Ergänzungen im Frontmatter oder im Dokumentkopf.
 
 Die Nummernentscheidung aus Teil H wurde durch den Platform Director getroffen: **Option A**.
 
-Umsetzung dokumentiert in ADR-0012.
+Umsetzung dokumentiert in ADR-0013.
 
 ### Datum
 
@@ -518,7 +518,7 @@ Sämtliche Maßnahmen sind **additiv**. Keine löscht oder überschreibt bestehe
 | M-07 | ETM-Contracts anlegen | Neuanlage | neu |
 | M-08 | Registry um drei Einträge ergänzen | Ergänzung | `.ai/registry/ess-registry.json` |
 | M-09 | Responsibility Matrix als eigenständiges Governance-Dokument ablegen | Neuanlage | neu |
-| M-10 | ADR für die Konsolidierung | Neuanlage | ADR-0012 |
+| M-10 | ADR für die Konsolidierung | Neuanlage | ADR-0013 |
 
 **M-10 ist erforderlich**, weil die Anlage neuer ESS-Dokumente nach Chapter 16 eine
 Nummernvergabe durch den Platform Director voraussetzt und Chapter 20 Änderungen am
@@ -611,7 +611,7 @@ nach dieser Vergabe bei ESS-0012.
 | M-07 | ESS-0011-CONTRACTS | ✓ | Neuanlage |
 | M-08 | Registry um drei Einträge ergänzt | ✓ | Ergänzung |
 | M-09 | Responsibility Matrix als Governance-Dokument | ✓ | Neuanlage `ARCH-RESP-0001` |
-| M-10 | ADR-0012 | ✓ | Neuanlage |
+| M-10 | ADR-0013 | ✓ | Neuanlage |
 
 Zehn von zehn Maßnahmen ausgeführt.
 

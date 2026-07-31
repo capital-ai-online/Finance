@@ -61,9 +61,9 @@ ESS-0012 — Documentation Governance
 
 ADR-0010 — Enterprise Standard Extension
 
-ADR-0012 — ESS Documentation Responsibility Consolidation
+ADR-0013 — ESS Documentation Responsibility Consolidation
 
-ADR-0013 — Documentation Governance Validator
+ADR-0014 — Documentation Governance Validator
 
 **Related Components**
 

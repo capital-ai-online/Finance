@@ -71,7 +71,7 @@ crossReference:
     - ADR-0007
     - ADR-0010
     - ADR-0011
-    - ADR-0012
+    - ADR-0013
   relatedComponents:
     - src/platform/PlatformDirector
     - src/platform/Release

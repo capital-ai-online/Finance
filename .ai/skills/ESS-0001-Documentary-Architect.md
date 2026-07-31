@@ -45,7 +45,7 @@ classification:
   role: Gründungs- und Visionsdokument der Documentary Engine
   technicalAuthority: ESS-0010
   note: >
-    Ergänzt am 2026-07-31 durch ADR-0012. Die Klassifizierung präzisiert die
+    Ergänzt am 2026-07-31 durch ADR-0013. Die Klassifizierung präzisiert die
     Verantwortung dieses Dokumentes. Es wurde kein bestehender Inhalt verändert.
 
 crossReference:
@@ -57,7 +57,7 @@ crossReference:
     - ESS-0010
   relatedAdr:
     - ADR-0010
-    - ADR-0012
+    - ADR-0013
   relatedComponents:
     - src/platform/Documentary
     - src/platform/Knowledge

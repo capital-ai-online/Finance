@@ -65,7 +65,7 @@ crossReference:
     - ESS-0011
   relatedAdr:
     - ADR-0006
-    - ADR-0012
+    - ADR-0013
   relatedComponents:
     - src/platform/Supervisor
     - src/platform/Telemetry

@@ -1,4 +1,4 @@
-# ADR-0013: Documentation Governance Validator als Kernkomponente der Documentary Engine
+# ADR-0014: Documentation Governance Validator als Kernkomponente der Documentary Engine
 
 ## Status
 
@@ -60,7 +60,7 @@ Diese Lücke ist nicht theoretisch. Sämtliche bisherigen Befunde dieser Sitzung
 Cross-References) — wurden **manuell** gefunden. Keiner davon wäre durch eine bestehende
 automatisierte Prüfung aufgefallen.
 
-Zusätzlich wächst der Regelbestand: nach ADR-0010 (Chapter 11–20) und ADR-0012 (ESS-0010,
+Zusätzlich wächst der Regelbestand: nach ADR-0010 (Chapter 11–20) und ADR-0013 (ESS-0010,
 ESS-0011) umfasst der Standard sieben ESS-Dokumente mit 20 Contract-Kapiteln. Ohne
 maschinelle Prüfung skaliert die manuelle Konsistenzsicherung nicht.
 
@@ -118,11 +118,11 @@ Nachweispflicht und deterministischem Scoring.
 
 **Abweichung von der Aufgabenformulierung.** Die Aufgabe nannte „ADR-0011 Documentation
 Governance Validator". ADR-0011 ist jedoch bereits vergeben (*Bestandsschutz und Zielstruktur
-für die Root-Abweichungen*, gemergt über PR #2). ADR-0012 ist ebenfalls vergeben
+für die Root-Abweichungen*, gemergt über PR #2). ADR-0013 ist ebenfalls vergeben
 (ESS-Konsolidierung).
 
 ESS-0001-CONTRACTS Chapter 16 legt fest: *„Vergebene Nummern werden niemals umbenannt"* und
-*„ADR-Nummern sind vierstellig und fortlaufend"*. Die nächste freie Nummer ist **ADR-0013**.
+*„ADR-Nummern sind vierstellig und fortlaufend"*. Die nächste freie Nummer ist **ADR-0014**.
 
 ### 4. Read-Only-Prinzip
 
@@ -167,7 +167,7 @@ widersprochen.
 **B) Prüfungen in ESS-0011 (Traceability) unterbringen.**
 Verworfen. ESS-0011 verknüpft Artefakte; es bewertet ihre inhaltliche Qualität nicht.
 Die Vermischung hätte zwei Verantwortungen in einem Dokument erzeugt — genau das, was
-ADR-0012 gerade beseitigt hat.
+ADR-0013 gerade beseitigt hat.
 
 **C) Kein eigenes Dokument, Prüfregeln direkt im Skill.**
 Verworfen. Ein Skill ist eine Handlungsanweisung ohne normative Wirkung. Regeln mit
@@ -233,6 +233,6 @@ Nicht Gegenstand dieser Entscheidung:
 - ESS-0011 / ESS-0011-CONTRACTS — Enterprise Traceability
 - ESS-0001-CONTRACTS — Chapter 2, 3, 7, 8, 9, 10, 12, 15, 16, 17, 18
 - ADR-0010 — Enterprise Standard Extension
-- ADR-0012 — ESS Documentation Responsibility Consolidation
+- ADR-0013 — ESS Documentation Responsibility Consolidation
 - `docs/architecture/ESS_RESPONSIBILITY_MATRIX.md` — ARCH-RESP-0001
 - `docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md` — Umsetzungsstufen 1–4

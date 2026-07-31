@@ -24,7 +24,7 @@ ESS-0012, ESS-0012-CONTRACTS (57 Regeln)
 
 ESS-0001-CONTRACTS, ESS-0010, ESS-0011
 
-ADR-0013
+ADR-0014
 
 ---
 
@@ -68,7 +68,7 @@ Manuelle Anwendung der 57 Regeln. Zahlen aus direkter Repository-Messung.
 |---|---|
 | GOV-ESS-001 bis GOV-ESS-008 | **0** |
 
-Nach ADR-0012 ist der ESS-Bereich vollständig konsistent: zehn Artefakte mit Dokumentklasse
+Nach ADR-0013 ist der ESS-Bereich vollständig konsistent: zehn Artefakte mit Dokumentklasse
 und vollständigen Cross-References, lückenloser Nummernraum, keine Duplikate, keine
 Widersprüche ohne Vorrangregel.
 
@@ -214,7 +214,7 @@ Changelogs, 0 Component Descriptors, 0 Knowledge-Dateien.**
 Der Wert 0 ist damit die korrekte Aussage — nicht „schlechte Governance", sondern
 **„Governance-Grundlagen nicht vorhanden"**.
 
-Dieser Effekt wurde in ADR-0013, Abschnitt *Negativ/Aufwand*, ausdrücklich vorhergesagt.
+Dieser Effekt wurde in ADR-0014, Abschnitt *Negativ/Aufwand*, ausdrücklich vorhergesagt.
 
 ---
 
@@ -289,7 +289,7 @@ Score = 0,4 × Definition + 0,3 × Implementation + 0,3 × Automation
 **Der Enterprise Score hat sich nicht verändert.**
 
 Das ist die zentrale Aussage dieses Reports: Vier Lieferungen Spezifikationsarbeit
-(ADR-0010 bis ADR-0013, zehn ESS-Artefakte, 20 Contract-Kapitel, 57 Governance-Regeln) haben
+(ADR-0010 bis ADR-0014, zehn ESS-Artefakte, 20 Contract-Kapitel, 57 Governance-Regeln) haben
 die Definitionsdimension auf 92 gehoben, den Gesamtscore aber nicht bewegt — weil jede neue
 Spezifikation die Messlatte im selben Maß anhebt, in dem sie Klarheit schafft.
 
@@ -368,7 +368,7 @@ Die Schwellwerte aus ESS-0012-CONTRACTS Chapter 3 sollten frühestens ab **G5** 
 werden. Eine frühere Aktivierung würde jede Produktionsfreigabe blockieren, ohne dass ein
 Weg zur Behebung offensteht.
 
-Diese Empfehlung ist als Folgeentscheidung in ADR-0013 festgehalten.
+Diese Empfehlung ist als Folgeentscheidung in ADR-0014 festgehalten.
 
 ---
 
@@ -412,6 +412,59 @@ erstmals seit Beginn dieser Arbeit spürbar an.
 
 ---
 
+# Nachtrag — Änderungen auf `main` nach der Messung
+
+Nach Erstellung dieses Reports wurde `main` um drei Commits erweitert
+(`339eec1`, `04de42a`, `d1348c7`). Sie verändern das Befundbild in zwei Punkten.
+
+## N.1 GAP-020 teilweise behoben
+
+`package.json` führt nun `"name": "capital-ai"` und `"version": "0.6.0"` statt
+`"react-example"` / `"0.0.0"`.
+
+**Auswirkung** Der Naming-Verstoß aus GAP-020 ist beseitigt. Die Versionsstände sind jedoch
+weiterhin widersprüchlich:
+
+| Quelle | Version |
+|---|---|
+| `package.json` | 0.6.0 |
+| `metadata.json` | 0.6.0 |
+| `AGENTS.md` | 0.5.4 |
+| `server/versionManager.ts` | 0.5.4 |
+| `src/platform/*/manifest.json` | 1.0.0 |
+
+`GOV-VER-001` (Critical) bleibt damit bestehen — vier Versionsstände statt zuvor fünf.
+
+## N.2 Neuer ADR-0012 auf `main` — Nummernkollision
+
+`main` enthält seit `04de42a` einen **ADR-0012 — SecurityComplianceAuditor Integration**.
+Dieser kollidierte mit dem in derselben Arbeit vergebenen ADR-0012 (ESS-Konsolidierung).
+
+**Auflösung** Die gemergte Vergabe besitzt Vorrang. Die beiden ADRs dieser Arbeit wurden auf
+ADR-0013 und ADR-0014 umnummeriert (siehe ADR-0013, *Hinweis zur Nummernvergabe*).
+
+**Zusätzliche Befunde durch den neuen ADR**
+
+| Regel | Befund | Severity |
+|---|---|---|
+| GOV-ADR-005 | ADR-0012 ohne `Implementation-Status` | Medium |
+| GOV-ADR-008 | `adr_history.json` führt ADR-0012 nicht | bereits gezählt |
+
+**Aktualisierte Gesamtzahl: 221 Befunde** (3 Critical, 142 High, 76 Medium).
+
+Der Governance Score bleibt bei **0** — die Änderung liegt weit innerhalb der Abschneidung.
+
+## N.3 Bewertung
+
+Die Kollision ist der erste dokumentierte Fall, in dem eine Regel aus ESS-0012-CONTRACTS
+(`GOV-ADR-004`) einen realen Konflikt beschrieben hätte, bevor er entstand. Sie wurde
+stattdessen manuell beim Merge entdeckt.
+
+Das belegt den Nutzen des Validators und zugleich die Kernaussage dieses Reports: Solange er
+nicht ausführbar ist, hängt die Erkennung an manueller Aufmerksamkeit.
+
+---
+
 # Related Documents
 
 `docs/architecture/ARCHITECTURE_GAP_REPORT.md` — ARCH-GAP-0001
@@ -424,7 +477,7 @@ erstmals seit Beginn dieser Arbeit spürbar an.
 
 ESS-0012 / ESS-0012-CONTRACTS
 
-ADR-0013
+ADR-0014
 
 ---
 

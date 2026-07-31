@@ -52,7 +52,7 @@ ADR-0010 — Enterprise Standard Extension
 
 ADR-0011 — Bestandsschutz Root-Abweichungen
 
-ADR-0012 — ESS Documentation Responsibility Consolidation
+ADR-0013 — ESS Documentation Responsibility Consolidation
 
 **Related Components**
 

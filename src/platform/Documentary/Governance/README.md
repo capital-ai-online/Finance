@@ -89,9 +89,9 @@ ESS-0001-CONTRACTS — Master Enterprise Standard
 
 ## ADR References
 
-ADR-0013 — Documentation Governance Validator
+ADR-0014 — Documentation Governance Validator
 
-ADR-0012 — ESS Documentation Responsibility Consolidation
+ADR-0013 — ESS Documentation Responsibility Consolidation
 
 ADR-0010 — Enterprise Standard Extension
 

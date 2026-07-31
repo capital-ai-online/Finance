@@ -59,7 +59,7 @@ crossReference:
     - ESS-0011-CONTRACTS
   relatedAdr:
     - ADR-0010
-    - ADR-0012
+    - ADR-0013
   relatedComponents:
     - src/platform/Registry
     - src/platform/Knowledge

@@ -63,8 +63,8 @@ crossReference:
     - ESS-0012-CONTRACTS
   relatedAdr:
     - ADR-0010
-    - ADR-0012
     - ADR-0013
+    - ADR-0014
   relatedComponents:
     - src/platform/Documentary/Governance
     - src/platform/Documentary

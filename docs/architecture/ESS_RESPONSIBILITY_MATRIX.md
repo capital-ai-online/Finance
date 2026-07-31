@@ -20,7 +20,7 @@ Enterprise Governance — verbindlich
 
 ### ADR-Referenz
 
-ADR-0012 — ESS Documentation Responsibility Consolidation
+ADR-0013 — ESS Documentation Responsibility Consolidation
 
 ---
 
@@ -254,7 +254,7 @@ Der Validator gehört in Umsetzungsstufe 4 aus
 
 `.ai/registry/ess-registry.json`
 
-ADR-0012 — ESS Documentation Responsibility Consolidation
+ADR-0013 — ESS Documentation Responsibility Consolidation
 
 ESS-0001-CONTRACTS Chapter 1, Chapter 16, Chapter 20
 
