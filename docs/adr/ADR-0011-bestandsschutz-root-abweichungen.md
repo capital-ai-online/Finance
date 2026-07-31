@@ -9,16 +9,38 @@
 🟡 **IN PROGRESS** — Die Ausnahmen sind registriert und damit vertragskonform getragen
 (`.ai/registry/exception-registry.json`).
 
-**EXC-0003 (`sql/`) ist aufgelöst** (2026-07-30): byteidentische Überführung nach
-`supabase/migrations/20260730000000_user_quota.sql`, Verzeichnis entfernt, Status `Revoked`.
-Nachweis: `docs/migration/MIGRATION_EXC-0003_sql_to_supabase.md`. Dabei wurde
-FND-EXC-0003-01 festgestellt: die Migration ist im aktuellen Codebestand verwaist.
+**Vier von acht Ausnahmen sind aufgelöst:**
 
-Die übrigen sieben Ausnahmen bestehen unverändert fort. Die Überführung von EXC-0001 und
-EXC-0002 ist Gegenstand der Umsetzungsstufen 3, 9 und 11 aus
-`docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md` und noch nicht begonnen. Die maschinelle
-Überwachung der Ausnahmen setzt den Structure Validator aus Chapter 12 voraus, der ebenfalls
-noch nicht implementiert ist.
+| ID | Pfad | Aufgelöst am | Nachweis |
+|---|---|---|---|
+| EXC-0003 | `sql/` | 2026-07-30 | `docs/migration/MIGRATION_EXC-0003_sql_to_supabase.md` |
+| EXC-0005 | `ORCHESTRATORS_AND_SCORING_ENGINES.md` | 2026-07-31 | `docs/migration/MIGRATION_EXC-0005_EXC-0007_root_docs.md` |
+| EXC-0007 | `favicon.svg` | 2026-07-31 | `docs/migration/MIGRATION_EXC-0005_EXC-0007_root_docs.md` |
+
+EXC-0003: byteidentische Überführung nach `supabase/migrations/20260730000000_user_quota.sql`,
+Verzeichnis entfernt. Dabei wurde FND-EXC-0003-01 festgestellt — die Migration ist im
+aktuellen Codebestand verwaist (`src/lib/freeTierLimits.ts` existiert nicht und hat nie
+existiert). Klärung, ob `public.user_quota` in der Zielumgebung Daten enthält, steht aus.
+
+EXC-0005: byteidentische Überführung nach `docs/architecture/`. Die in ADR-0011 zusätzlich
+vorgesehene Ergänzung von ESS-/ADR-Referenzen wurde bewusst nicht miterledigt, um die
+Prüfsumme als Nachweis der reinen Strukturverlagerung zu erhalten (bleibt unter GAP-029 offen).
+
+EXC-0007: byteidentische Überführung nach `public/`. `index.html` war unverändert lassbar, da
+die Referenz bereits root-absolut (`/favicon.svg`) war. Dabei wurde FND-EXC-0007-01
+aufgedeckt: da `public/` zuvor leer war und Vite ausschließlich `publicDir` nach `dist/`
+kopiert, gelangte das Favicon vermutlich nie in den Produktions-Build. Diese Migration behebt
+den Fehler als Nebeneffekt der Strukturkonformität.
+
+**Drei Ausnahmen bleiben mit Permanent-Status bestehen** (EXC-0004, EXC-0006, EXC-0008) —
+das ist der beabsichtigte Endzustand, keine offene Arbeit.
+
+**EXC-0001 und EXC-0002 bestehen unverändert fort.** Ihre Überführung ist Gegenstand der
+Umsetzungsstufen 3, 9 und 11 aus `docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md`
+(Enterprise Event Bus, Security & Compliance, Legacy Migration) und wurde bewusst nicht
+begonnen — siehe Abschnitt *Bewertung von EXC-0001/EXC-0002* unten. Die maschinelle
+Überwachung sämtlicher Ausnahmen setzt zudem den Structure Validator aus Chapter 12 voraus,
+der noch nicht implementiert ist.
 
 ## Datum
 
@@ -227,6 +249,58 @@ lediglich ein dauerhafter Verzicht auf die Zielarchitektur.
 - Kein produktiver Code wurde geändert oder verschoben. Der Wirkbetrieb ist unberührt.
 - Die vier durch ESS-0001 geschützten Documentary-Komponenten bleiben unverändert und werden
   gekapselt, nicht neu entwickelt.
+
+---
+
+## Bewertung von EXC-0001/EXC-0002 zum Stand 2026-07-31
+
+Bei der Umsetzung der übrigen sechs Ausnahmen wurde geprüft, ob EXC-0001 (`server/`) und
+EXC-0002 (`server.ts`) im selben Arbeitsgang aufgelöst werden können. Das Ergebnis ist Nein —
+und zwar aus genau den Gründen, die dieses ADR für sie selbst bereits festgehalten hat.
+
+**Befund**
+
+`server/` enthält 15 Dateien, deren Zielkomponenten sich über sechs verschiedene Bereiche
+verteilen (`Documentary`, `Events`, `Telemetry`, `VersionManager`, `Security`,
+`src/features/*`, `src/config/`). `server.ts` (1.934 Zeilen) verdrahtet sämtliche dieser
+Module zu einer laufenden Express-Anwendung und wird direkt von `package.json` (`dev`,
+`build`) und dem `Dockerfile` referenziert. Darunter befindet sich sicherheitskritischer
+Code — `server/iam/` (Authentifizierung, Rate Limiting, Secret-Verschlüsselung, TOTP) und
+`server/stripe.ts` (Zahlungsverkehr).
+
+Eine Verlagerung dieser Art ist keine Structural Migration wie bei EXC-0003, EXC-0005 und
+EXC-0007. Dort genügte ein reiner Git-Rename mit Prüfsummenvergleich, weil jeweils genau eine
+Datei ohne Code-Abhängigkeiten betroffen war. Hier stehen dem gegenüber:
+
+- Import-Pfade in `server.ts` und in sämtlichen 15 verschobenen Dateien müssten gleichzeitig
+  umgeschrieben werden.
+- Der Enterprise Event Bus, über den die Zielkomponenten laut Chapter 8 und Chapter 17
+  kommunizieren sollen, existiert nicht — die Module könnten am neuen Ort nicht in die
+  vertraglich vorgesehene Architektur eingebettet werden, sondern nur erneut als loses
+  Dateikonvolut.
+- Der Adapter-Mechanismus aus Chapter 14, der die Legacy-Implementierung kapseln soll, ohne
+  sie zu verändern, setzt Enterprise Interfaces voraus, die ebenfalls nicht existieren.
+- Ein Fehler in Authentifizierung oder Zahlungsverkehr wäre, anders als bei den bisherigen vier
+  Ausnahmen, keine Dokumentations- oder Struktur-Regression, sondern ein Sicherheits- oder
+  Compliance-Vorfall.
+
+**Entscheidung**
+
+EXC-0001 und EXC-0002 werden mit diesem ADR **nicht** aufgelöst. Sie werden im
+Ausnahmestatus `Time Limited` bis 2027-01-31 belassen, wie bereits festgelegt.
+
+Diese Entscheidung ist keine Abweichung von ADR-0011 — sie ist seine Bestätigung: ADR-0011
+hat die Reihenfolge selbst vorgegeben (Abschnitt *Reihenfolge der Auflösung*) und EXC-0001
+sowie EXC-0002 ausdrücklich als von Stufe 3 (Event Bus) und Stufe 11 (Legacy Migration)
+abhängig markiert. Diese Stufen sind nicht Gegenstand dieses ADR und wurden im Rahmen dieser
+Arbeit nicht umgesetzt.
+
+**Nächster zulässiger Schritt**
+
+Sobald der Enterprise Event Bus (Stufe 3) und mindestens ein funktionierender Adapter-Mechanismus
+(Stufe 11) vorliegen, kann für `server/` ein eigener Migrationsplan mit Impact Analyse,
+Reihenfolge je Datei und Rollback-Strategie gemäß Chapter 14 erstellt werden. Bis dahin bleibt
+`server/` unverändert im Wirkbetrieb.
 
 ---
 

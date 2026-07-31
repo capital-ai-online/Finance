@@ -1,0 +1,147 @@
+# Enterprise Component Descriptor
+# ESS-0001-CONTRACTS Chapter 7 — Component Contract
+#
+# Diese Datei besitzt denselben Informationsumfang wie manifest.json und dient als
+# menschen- und KI-lesbare Komponentenbeschreibung. Bei Abweichungen zwischen beiden
+# Dateien gilt manifest.json als primaere maschinenlesbare Beschreibung.
+
+component:
+  name: Traceability
+  displayName: Enterprise Traceability Matrix
+  version: 1.0.0
+  status: development
+  lifecycle: Development
+  health: Unknown
+  owner: Platform Director
+  category: platform
+  layer: CrossCutting
+  repository: Finance
+
+purpose: >
+  Die Enterprise Traceability Matrix verwaltet die bidirektionalen Beziehungen zwischen
+  saemtlichen Enterprise-Artefakten. Sie beantwortet lueckenlos und maschinell, welche
+  Anforderung zu welchem Artefakt gefuehrt hat und welches Artefakt welche Regel erfuellt.
+
+responsibilities:
+  - Aufbau der Traceability Matrix aus validierten Quellen
+  - Bidirektionale Aufloesung saemtlicher Verknuepfungen
+  - Berechnung der Abdeckungsgrade je Achse
+  - Erkennung nicht verknuepfter Artefakte
+  - Bereitstellung der Daten fuer Traceability-Berichte
+
+notResponsibleFor:
+  - Erzeugung von Regeln
+  - Erzeugung von Dokumentation
+  - Veraenderung von Quellen
+  - Entscheidungen ueber Freigaben
+  - Bewertung von Befunden
+
+traceabilityAxes:
+  - ESS
+  - ADR
+  - Exception
+  - Component
+  - Interface
+  - Event
+  - Test
+
+linkTypes:
+  - SPECIFIES
+  - DECIDES
+  - IMPLEMENTS
+  - EMITS
+  - VALIDATES
+  - COVERS
+  - EXEMPTS
+  - SUPERSEDES
+
+structure:
+  Contracts:   Komponentenspezifische Contracts
+  Core:        Basislogik der Matrix
+  Discovery:   Erkennung verknuepfbarer Artefakte
+  Events:      Event-Erzeugung und -Konsum
+  Interfaces:  Oeffentliche Schnittstellen
+  Models:      Datenmodelle
+  Registry:    Registrierung der Matrixeintraege
+  Reports:     Berichtsdatenerzeugung
+  Services:    Ausfuehrung und Orchestrierung
+  Validators:  Pruefung der Matrix
+  Versioning:  Versionierung der Matrix
+
+dependencies:
+  allowed:
+    - src/platform/Core
+    - src/platform/Shared
+    - src/platform/Registry
+    - src/platform/Knowledge
+    - src/platform/Discovery
+    - src/platform/Documentary
+  forbidden:
+    - src/platform/Supervisor
+    - src/platform/PlatformDirector
+
+events:
+  produces:
+    - TraceabilityBuildStartedEvent
+    - TraceabilityBuildCompletedEvent
+    - TraceabilityBuildFailedEvent
+    - CoverageCalculatedEvent
+    - CoverageThresholdViolatedEvent
+    - OrphanDetectedEvent
+    - OrphanResolvedEvent
+    - TraceabilityReportGeneratedEvent
+  consumes:
+    - KnowledgeUpdatedEvent
+    - TwinSynchronizedEvent
+    - ComponentRegisteredEvent
+    - ExceptionRegisteredEvent
+    - ReleasePreparedEvent
+
+interfaces:
+  - ITraceabilityBuilder
+  - ICoverageAnalyzer
+  - IOrphanDetector
+  - ITraceabilityReporter
+  - ITraceabilityLink
+
+integration:
+  documentaryEngine: >
+    Verwendet Knowledge Graph, Registry und Digital Twin. Schreibt niemals zurueck.
+  supervisor: >
+    Liefert Abdeckungskennzahlen und Orphan-Befunde. Der Supervisor bewertet.
+  platformDirector: >
+    Liefert Compliance Trace und Impact Trace als Entscheidungsgrundlage.
+  versionManager: >
+    Liefert die Regelachse der Versionsbewertung. Die Entscheidung trifft der Version Manager.
+
+references:
+  ess:
+    - ESS-0011
+    - ESS-0011-CONTRACTS
+    - ESS-0001-CONTRACTS
+    - ESS-0010
+  adr:
+    - ADR-0015
+  documentation:
+    - docs/traceability/
+
+security:
+  classification: Internal
+  sensitivity: Keine personenbezogenen Daten
+  audit: Saemtliche Matrixlaeufe werden protokolliert
+
+ai:
+  aiOwner: Platform Director
+  aiGenerated: true
+  aiReviewed: false
+  aiValidated: false
+  aiCompatible: true
+  supportedAiSystems:
+    - Claude Code
+    - Google AI Studio
+    - ChatGPT
+    - Future Enterprise AI
+
+implementationStatus: >
+  Spezifiziert, nicht implementiert. Die Umsetzung setzt die Stufen 1 bis 4 aus
+  docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md voraus.

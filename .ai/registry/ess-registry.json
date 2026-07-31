@@ -7,8 +7,8 @@
   "generated": false,
   "seed": true,
   "note": "Dieser Registry-Eintrag ist ein Knowledge Seed. Nach Bereitstellung des Enterprise Bootstrappers wird die Registry generatorgestuetzt fortgeschrieben.",
-  "updatedAt": "2026-07-30",
-  "freeNumberSpaceStartsAt": "ESS-0010",
+  "updatedAt": "2026-07-31",
+  "freeNumberSpaceStartsAt": "ESS-0013",
   "entries": [
     {
       "id": "ESS-0001",
@@ -46,7 +46,9 @@
       "document": ".ai/skills/ESS-0003-Platform-Director.md",
       "reservedBy": "ESS-0001",
       "owner": "Platform Director",
-      "relatedAdr": ["ADR-0006"]
+      "relatedAdr": [
+        "ADR-0006"
+      ]
     },
     {
       "id": "ESS-0004",
@@ -110,13 +112,76 @@
     },
     {
       "id": "ESS-0010",
-      "title": "Repository Governance",
-      "status": "not_required",
-      "version": null,
-      "document": null,
+      "title": "Documentary Engine",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0010-Documentary-Engine.md",
       "reservedBy": null,
       "owner": "Platform Director",
-      "rationale": "Repository Governance ist vollstaendig und normativ durch ESS-0001-CONTRACTS Chapter 16 geregelt. Ein eigenstaendiges ESS-Dokument waere ein Duplikat. Die Nummer bleibt frei."
+      "relatedAdr": [
+        "ADR-0013"
+      ],
+      "rationale": "Erste Vergabe aus dem freien Nummernraum. Schliesst die in ARCH-CONSOL-0001 als K-10 dokumentierte Luecke: die Documentary Engine war ueber vier Dokumente verteilt beschrieben und besass als einzige Kernkomponente keine eigene technische Spezifikation.",
+      "supersededTopic": "Repository Governance war urspruenglich fuer ESS-0010 vorgesehen, wurde jedoch als not_required eingestuft, da ESS-0001-CONTRACTS Chapter 16 den Bereich vollstaendig und normativ abdeckt. Die Nummer war damit frei und wurde regulaer weitervergeben."
+    },
+    {
+      "id": "ESS-0011",
+      "title": "Enterprise Traceability",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0011-Enterprise-Traceability.md",
+      "reservedBy": null,
+      "owner": "Platform Director",
+      "relatedAdr": [
+        "ADR-0013",
+        "ADR-0015"
+      ],
+      "rationale": "Spezifikation der Enterprise Traceability Matrix. Verknuepft ESS, ADR, Exceptions, Komponenten, Interfaces, Events und Tests bidirektional.",
+      "implementedBy": "src/platform/Traceability",
+      "operationalDocs": "docs/traceability/"
+    },
+    {
+      "id": "ESS-0011-CONTRACTS",
+      "title": "Enterprise Traceability Matrix Contracts",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0011-Contracts.md",
+      "reservedBy": null,
+      "owner": "Platform Director",
+      "relatedAdr": [
+        "ADR-0013",
+        "ADR-0015"
+      ],
+      "note": "Vertragsteil von ESS-0011. Belegt keine eigene Nummer. Besitzt ausschliesslich ETM-Geltung, niemals globale Wirkung.",
+      "implementedBy": "src/platform/Traceability"
+    },
+    {
+      "id": "ESS-0012",
+      "title": "Documentation Governance",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0012-Documentation-Governance.md",
+      "reservedBy": null,
+      "owner": "Platform Director",
+      "relatedAdr": [
+        "ADR-0014"
+      ],
+      "rationale": "Spezifikation des Documentation Governance Validator. Notwendigkeitsnachweis gemaess Pruefliste ARCH-RESP-0001 im Dokument selbst gefuehrt: die semantische, dokumentuebergreifende Governance-Pruefung (doppelte und widerspruechliche ESS-Regeln, widerspruechliche ADRs, doppelte Contracts, Breaking Changes ohne ADR) ist von keinem bestehenden Dokument abgedeckt. Chapter 12 prueft Struktur und Schema, ESS-0011 prueft Verknuepfungen.",
+      "implementedBy": "src/platform/Documentary/Governance"
+    },
+    {
+      "id": "ESS-0012-CONTRACTS",
+      "title": "Documentation Governance Contracts",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0012-Contracts.md",
+      "reservedBy": null,
+      "owner": "Platform Director",
+      "relatedAdr": [
+        "ADR-0014"
+      ],
+      "note": "Vertragsteil von ESS-0012. Belegt keine eigene Nummer. Definiert 57 Regeln in neun Bereichen mit stabilen IDs im Format GOV-<AREA>-<NNN>. Besitzt ausschliesslich Governance-Geltung, niemals globale Wirkung.",
+      "implementedBy": "src/platform/Documentary/Governance"
     }
   ],
   "rules": [
@@ -126,5 +191,31 @@
     "Neue ESS-Dokumente erhalten die naechste freie Nummer.",
     "Zwischennummern sind nicht zulaessig.",
     "Kein KI-System vergibt ESS-Nummern eigenstaendig."
-  ]
+  ],
+  "externalAdrIntegration": {
+    "note": "Extern eingebrachte ADRs, die nachtraeglich in die Governance-Struktur eingebunden wurden. Der Entscheidungsinhalt wurde nicht veraendert.",
+    "entries": [
+      {
+        "adr": "ADR-0012",
+        "title": "SecurityComplianceAuditor Integration",
+        "document": "docs/adr/ADR-0012-SecurityComplianceAuditor.md",
+        "origin": "manuell angelegt, gemergt ueber main (04de42a, d1348c7)",
+        "integratedAt": "2026-07-31",
+        "integratedBy": "ADR-0013 Nummernaufloesung und nachtraegliche Formatangleichung",
+        "component": "src/components/SecurityComplianceAuditor.tsx",
+        "relatedEss": [
+          "ESS-0001-CONTRACTS",
+          "ESS-0002",
+          "ESS-0011",
+          "ESS-0012"
+        ],
+        "relatedAdr": [
+          "ADR-0003.5"
+        ],
+        "implementationStatus": "IN PROGRESS",
+        "openFinding": "FND-ADR-0012-01 - Die Komponente ruft sieben Endpunkte unter /api/compliance/* auf, von denen keiner im Backend existiert. Die im ADR genannten Datenquellen audit_logs_iam und iam_access_log werden von der Komponente nicht referenziert. Die beschriebene aktive Produktionsintegration ist damit nicht gegeben.",
+        "parserFix": "Das Dokument besass keine Markdown-Struktur und war fuer die ADR-Auto-Migration in server/documentHygiene.ts nicht parsebar. Titel, Metadatenfelder und Abschnittsueberschriften wurden formatangeglichen, der Inhalt blieb unveraendert."
+      }
+    ]
+  }
 }

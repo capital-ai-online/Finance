@@ -280,6 +280,57 @@ Bis zur Klärung bleibt die Migration unverändert im Bestand.
 
 ---
 
+## Klärung (2026-07-31)
+
+Die unter *Empfehlung* geforderte Prüfung wurde gegen die verknüpfte Supabase-Produktivumgebung
+durchgeführt (Projekt `ryzywoktpmyhwzxmstyu`, dieselbe Umgebung, gegen die auch der
+`Supabase Preview`-CI-Check läuft).
+
+**Ergebnis**
+
+| Prüfung | Befund |
+|---|---|
+| Existiert `public.user_quota` in der Datenbank? | **Nein** — nicht unter den 13 vorhandenen Tabellen des Schemas `public` |
+| Existiert eine Edge Function, die die Tabelle referenziert? | Nein — `supabase/functions/` enthält ausschließlich `.gitkeep` |
+| Existiert eine RPC-Funktion, die die Tabelle referenziert? | Nein — `supabase/rpc/` enthält ausschließlich `.gitkeep` |
+| Existiert eine strukturell verwandte Tabelle? | Ja — `public.usage_log` (46 Zeilen, Spalten `user_id`, `endpoint`, `interval_used`), konzeptionell ähnlich, jedoch mit abweichendem Schema (keine `quota_kind`-Klassifizierung, kein Zeitfenster-Zähler) und ohne Code-Referenz im Repository |
+
+**Schlussfolgerung**
+
+Die zweite in diesem Report offengehaltene Erklärung — *„Die Tabelle wird von einer Komponente
+außerhalb dieses Repositorys verwendet"* — ist widerlegt: Eine Tabelle, die nicht existiert,
+kann nicht verwendet werden. Es verbleibt ausschließlich die erste Erklärung: Die
+Quota-Durchsetzung wurde nie in Betrieb genommen. Die Migration wurde nie gegen die
+Produktivumgebung ausgeführt.
+
+**Risikobewertung der Entfernung**
+
+Da die Tabelle nicht existiert, kann ihre Entfernung aus dem Migrationsbestand keinen
+Datenverlust verursachen — es gibt keine Zeilen, die verloren gehen könnten. Der unter
+*Bewusst nicht getroffene Entscheidung* beschriebene Vorbehalt (Chapter 14: kein Bestand ohne
+Nachweis fehlender aktiver Abhängigkeiten) ist damit erfüllt.
+
+**Weiterhin nicht getroffene Entscheidung**
+
+Trotz des vorliegenden Nachweises wurde die Datei im Rahmen dieser Klärung **nicht** gelöscht.
+
+Chapter 14 weist die Entfernung von Bestand ausdrücklich dem Platform Director zu — nicht der
+Documentary Engine und nicht dem ausführenden KI-System. Der vorliegende Nachweis liefert die
+Entscheidungsgrundlage; die Entscheidung selbst ist hiermit zur Freigabe vorgelegt:
+
+- **Entfernen** — `supabase/migrations/20260730000000_user_quota.sql` löschen. Risikofrei, da
+  keine Daten betroffen sind. Der freie Tarif verliert damit endgültig die im Dateikopf
+  beschriebene serverseitige Quota-Durchsetzung, falls sie künftig gewünscht wird.
+- **Belassen und ausführen** — die Migration gegen die Produktivumgebung anwenden und die im
+  Code fehlende Durchsetzung (`src/lib/freeTierLimits.ts` oder Äquivalent) nachträglich
+  implementieren, falls die Quota-Begrenzung fachlich weiterhin gewollt ist.
+- **Belassen und dokumentieren** — Migration unverändert im Bestand halten, als bewusst
+  aufgeschobene, aktuell inaktive Funktionalität kennzeichnen.
+
+Bis zur Entscheidung des Platform Director gilt die dritte Option als Zwischenzustand.
+
+---
+
 # Auswirkung auf die Exception Registry
 
 | Feld | vorher | nachher |

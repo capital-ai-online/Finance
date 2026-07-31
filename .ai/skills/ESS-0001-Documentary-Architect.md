@@ -40,10 +40,67 @@ authority:
     - OAuth Authentication
     - Database Business Logic
 
+classification:
+  type: Foundational Architecture Document
+  role: Gründungs- und Visionsdokument der Documentary Engine
+  technicalAuthority: ESS-0010
+  note: >
+    Ergänzt am 2026-07-31 durch ADR-0013. Die Klassifizierung präzisiert die
+    Verantwortung dieses Dokumentes. Es wurde kein bestehender Inhalt verändert.
+
+crossReference:
+  dependsOn: []
+  relatedEss:
+    - ESS-0001-CONTRACTS
+    - ESS-0002
+    - ESS-0003
+    - ESS-0010
+  relatedAdr:
+    - ADR-0010
+    - ADR-0013
+  relatedComponents:
+    - src/platform/Documentary
+    - src/platform/Knowledge
+    - src/platform/Discovery
+    - src/platform/Architecture
+  relatedSkills:
+    - .ai/skills/ESS-0001-Contracts.md
+    - .ai/skills/ESS-0010-Documentary-Engine.md
+
 created: 2026-07-28
 ---
 
 # Documentary & Code Intelligence Architect
+
+## Dokumentklassifizierung
+
+Dieses Dokument ist das **Foundational Architecture Document** der CAPITAL-AI Documentary
+Engine.
+
+Es beschreibt Motivation, Zielbild, Architekturidee, ursprüngliche Vision und Designprinzipien.
+
+Es besitzt unverändert Gültigkeit als Gründungsdokument der Plattformarchitektur.
+
+---
+
+### Verhältnis zur technischen Spezifikation
+
+Die Kapitel 2 bis 9 dieses Dokumentes beschreiben den ursprünglichen technischen
+Architekturentwurf aus dem Jahr 2026.
+
+Für die verbindliche technische Spezifikation der Documentary Engine gilt ausschließlich
+
+**ESS-0010 — Documentary Engine**
+
+Bei Abweichungen zwischen diesem Dokument und ESS-0010 besitzt ESS-0010 Vorrang.
+
+Für globale Enterprise Contracts gilt ausschließlich ESS-0001-CONTRACTS.
+
+Diese Vorrangregel folgt der bereits in ESS-0001-CONTRACTS Chapter 20 etablierten Systematik
+der normativen Klarstellung. Sie ändert keine Aussage dieses Dokumentes und entfernt keinen
+Inhalt.
+
+---
 
 ## Enterprise Mission
 

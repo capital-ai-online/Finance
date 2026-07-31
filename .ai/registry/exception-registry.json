@@ -61,7 +61,7 @@
       "resolvedAt": "2026-07-30",
       "resolution": "Abweichung beseitigt. 001_user_quota.sql wurde byteidentisch nach supabase/migrations/20260730000000_user_quota.sql ueberfuehrt (Pruefsumme 10c791c4e413c99b9825efdf6cf1482098cf6824e1b623a83fac73a722c80196 vor und nach der Verschiebung), das leere Verzeichnis sql/ wurde entfernt. Nachweis: docs/migration/MIGRATION_EXC-0003_sql_to_supabase.md",
       "migrationReport": "docs/migration/MIGRATION_EXC-0003_sql_to_supabase.md",
-      "openFinding": "FND-EXC-0003-01 — Die Migration ist im aktuellen Codebestand verwaist: src/lib/freeTierLimits.ts existiert nicht und hat nie existiert, es gibt keine Code-Referenz auf public.user_quota. Die Datei wurde bewusst nicht geloescht; die Entfernung von Bestand ist gemaess Chapter 14 dem Platform Director vorbehalten."
+      "openFinding": "FND-EXC-0003-01 (geklaert 2026-07-31) — public.user_quota existiert nicht in der verknuepften Supabase-Produktivumgebung (Projekt ryzywoktpmyhwzxmstyu, 13 Tabellen geprueft, keine Uebereinstimmung), keine Edge Function und keine RPC-Funktion referenzieren sie. Die Migration wurde nie ausgefuehrt. Risikofreie Entfernung waere damit moeglich, die Entfernung von Bestand ist jedoch gemaess Chapter 14 dem Platform Director vorbehalten und steht noch aus. Zwischenzustand: Migration bleibt unveraendert im Bestand, als inaktiv dokumentiert."
     },
     {
       "id": "EXC-0004",
@@ -88,11 +88,14 @@
       "riskDescription": "Architekturdokumentation ausserhalb des Dokumentationsbereichs wird von der Documentation Discovery nicht erfasst.",
       "targetState": "Verlagerung nach docs/architecture/ mit Ergaenzung von ESS- und ADR-Referenzen gemaess Chapter 7.",
       "owner": "Documentary Engine",
-      "status": "Time Limited",
-      "expiresAt": "2026-09-30",
+      "status": "Revoked",
+      "expiresAt": null,
       "reviewCondition": "Verlagerung durchgefuehrt",
       "resolvesFinding": "GAP-006, GAP-020, GAP-029",
-      "adr": "ADR-0011"
+      "adr": "ADR-0011",
+      "resolvedAt": "2026-07-31",
+      "resolution": "Abweichung beseitigt. Byteidentische Verlagerung nach docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md (Pruefsumme f24340be80bb10a5ebe93843dcbc7b18c76d43ddba61cbaf6487d7219c45591a vor und nach der Verschiebung). ESS- und ADR-Referenzergaenzung gemaess Chapter 7 bleibt offen und wird generatorgestuetzt nachgezogen (GAP-029), sobald die Documentation Engine verfuegbar ist.",
+      "migrationReport": "docs/migration/MIGRATION_EXC-0005_EXC-0007_root_docs.md"
     },
     {
       "id": "EXC-0006",
@@ -119,11 +122,14 @@
       "riskDescription": "Keine.",
       "targetState": "Verlagerung nach public/ mit Anpassung der Referenz in index.html.",
       "owner": "Frontend",
-      "status": "Time Limited",
-      "expiresAt": "2026-09-30",
+      "status": "Revoked",
+      "expiresAt": null,
       "reviewCondition": "Verlagerung durchgefuehrt",
       "resolvesFinding": "GAP-006",
-      "adr": "ADR-0011"
+      "adr": "ADR-0011",
+      "resolvedAt": "2026-07-31",
+      "resolution": "Abweichung beseitigt. Byteidentische Verlagerung nach public/favicon.svg (Pruefsumme eb8b5116e54ebd520ec0558c09e5180a348bd93a1f02da4b0a507747cc6a9451 vor und nach der Verschiebung). index.html referenziert bereits root-absolut (/favicon.svg) und war unveraendert lassbar. Waehrend der Migration wurde festgestellt, dass die Datei zuvor NICHT in den Produktions-Build gelangte, da Vite ausschliesslich public/ nach dist/ kopiert -- siehe FND-EXC-0007-01 im Migration Report.",
+      "migrationReport": "docs/migration/MIGRATION_EXC-0005_EXC-0007_root_docs.md"
     },
     {
       "id": "EXC-0008",

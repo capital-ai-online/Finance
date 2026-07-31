@@ -57,7 +57,7 @@ CORS stellt zwar keine vollständige Zugriffskontrolle dar, ist aber ein wichtig
 
 ---
 
-# Problemstellung
+## Problemstellung
 
 Die Anwendung benötigt eine klare Trennung zwischen:
 
@@ -80,7 +80,7 @@ Aktuelle Risiken:
 
 ---
 
-# Ziel
+## Ziel
 
 Einführung eines zentral kontrollierten CORS Security Layers.
 
@@ -95,7 +95,7 @@ Der Security Layer soll:
 
 ---
 
-# Entscheidung
+## Entscheidung
 
 Capital-AI implementiert eine restriktive CORS-Allowlist Architektur.
 

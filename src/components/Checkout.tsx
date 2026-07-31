@@ -240,7 +240,7 @@ export function Checkout({ planId, price, billingPeriod, email, userId, onClose,
             <span className="font-sans font-bold">Gesamtbetrag:</span>
             <span className="text-aif-gold-DEFAULT font-black text-base">
               {appliedCoupon && appliedCoupon.percent_off === 100 ? 'Gratis' : `${(price * (appliedCoupon && appliedCoupon.percent_off !== null ? (100 - appliedCoupon.percent_off) / 100 : 1)).toFixed(2)} €`}
-              {!(appliedCoupon && appliedCoupon.percent_off === 100) && <span className="text-[10px] text-white/40 font-mono ml-0.5">/ Monat</span>}
+              {!(appliedCoupon && appliedCoupon.percent_off === 100) && <span className="text-[10px] text-white/40 font-mono ml-0.5">{billingPeriod === 'yearly' ? '/ Jahr' : '/ Monat'}</span>}
             </span>
           </div>
         </div>

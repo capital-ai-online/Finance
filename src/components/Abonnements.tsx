@@ -136,6 +136,18 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
   // Discount indicator
   const discountMultiplier = billingPeriod === 'yearly' ? 0.9 : 1.0;
 
+  // Bei jährlicher Abrechnung wird der Gesamtbetrag für 12 Monate ausgewiesen,
+  // nicht der rabattierte Monatspreis. Der angezeigte Betrag entspricht damit
+  // dem tatsächlich abgebuchten Betrag.
+  const priceFor = (basePrice: number) =>
+    basePrice === 0
+      ? 0
+      : billingPeriod === 'yearly'
+      ? Math.round(basePrice * 12 * discountMultiplier)
+      : Math.round(basePrice * discountMultiplier);
+
+  const periodLabel = billingPeriod === 'yearly' ? '/ Jahr' : '/ Monat';
+
   const PLANS = [
     {
       id: 'Free',
@@ -371,7 +383,8 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
             const PlanIcon = plan.icon;
             const isCurrent = currentTier === plan.id;
             const isButtonDisabled = subscribing !== null || isCurrent;
-            const calculatedPrice = plan.price === 0 ? 0 : Math.round(plan.price * discountMultiplier);
+            const calculatedPrice = priceFor(plan.price);
+            const effectiveMonthly = plan.price === 0 ? 0 : Math.round(plan.price * discountMultiplier);
 
             return (
               <div 
@@ -402,9 +415,16 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
                   <h3 className="text-lg font-black font-display text-white">{plan.name}</h3>
                   <p className="text-xs opacity-60 mt-1.5 min-h-[48px] leading-relaxed">{plan.desc}</p>
 
-                  <div className="my-5 flex items-baseline gap-1">
-                    <span className="text-3xl font-mono font-black text-white">{calculatedPrice}€</span>
-                    <span className="text-xs opacity-40 font-mono">/ Monat</span>
+                  <div className="my-5">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-mono font-black text-white">{calculatedPrice}€</span>
+                      <span className="text-xs opacity-40 font-mono">{periodLabel}</span>
+                    </div>
+                    {billingPeriod === 'yearly' && plan.price > 0 && (
+                      <div className="text-[10px] text-aif-gold-DEFAULT/70 font-mono mt-1">
+                        entspricht {effectiveMonthly}€ / Monat
+                      </div>
+                    )}
                   </div>
 
                   <div className="text-[10px] text-white/40 font-mono mb-3 uppercase tracking-widest">
@@ -734,7 +754,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
         {showCheckoutModal && (
           <Checkout 
             planId={showCheckoutModal as any}
-            price={showCheckoutModal === 'Free' ? 0 : Math.round(PLANS.find(p => p.id === showCheckoutModal)!.price * discountMultiplier)}
+            price={showCheckoutModal === 'Free' ? 0 : priceFor(PLANS.find(p => p.id === showCheckoutModal)!.price)}
             billingPeriod={billingPeriod}
             email={email}
             userId={userId}
