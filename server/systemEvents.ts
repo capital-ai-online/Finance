@@ -523,8 +523,14 @@ systemEventsRouter.get('/orchestrators/status', async (req, res) => {
     return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.' });
   }
 
-  const rnd = () => Math.floor(Math.random() * 15);
-  
+  // latency war zuvor eine erfundene Zufallszahl (32/15/48 + Math.random()*15),
+  // die wie eine gemessene Verbindungslatenz aussah - No-Demo-Data-Policy-Verstoss
+  // (docs/DATENSCHUTZ_PROTOKOLL.md). Es findet kein echtes Latenz-Messverfahren
+  // gegen diese Orchestrator-Module statt (sie laufen im selben Prozess, ein
+  // Netzwerk-Ping ergibt hier keinen Sinn) - daher jetzt null statt einer
+  // erfundenen Zahl. status/agentsCount/type beschreiben strukturelle Fakten
+  // (die Router sind kompiliert und gemountet, siehe server.ts createCryptoRouter/
+  // createRawMaterialsRouter), keine Live-Messung.
   res.json({
     success: true,
     timestamp: new Date().toISOString(),
@@ -533,7 +539,7 @@ systemEventsRouter.get('/orchestrators/status', async (req, res) => {
         id: 'crypto_orchestrator',
         name: 'Crypto Orchestrator',
         status: 'CONNECTED',
-        latency: 32 + rnd(),
+        latency: null,
         agentsCount: 4,
         lastActive: 'Aktiv',
         type: 'Crypto & DeFi Analytics'
@@ -542,7 +548,7 @@ systemEventsRouter.get('/orchestrators/status', async (req, res) => {
         id: 'memecoin_orchestrator',
         name: 'MemeCoin Orchestrator',
         status: 'CONNECTED',
-        latency: 15 + rnd(),
+        latency: null,
         agentsCount: 2,
         lastActive: 'Aktiv',
         type: 'Meme Token Sentiment & Rug-Pull Analysis'
@@ -551,7 +557,7 @@ systemEventsRouter.get('/orchestrators/status', async (req, res) => {
         id: 'rawmaterials_orchestrator',
         name: 'Raw Materials Orchestrator',
         status: 'CONNECTED',
-        latency: 48 + rnd(),
+        latency: null,
         agentsCount: 4,
         lastActive: 'Aktiv',
         type: 'Macroeconomic & Commodities Valuation'

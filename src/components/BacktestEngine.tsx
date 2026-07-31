@@ -175,6 +175,11 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
 
   const [chartData, setChartData] = useState<SimResult[]>([]);
   const [trades, setTrades] = useState<Trade[]>([]);
+  // No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md): /api/backtest-history
+  // liefert seit der Umstellung auf echte historische Kurse (CoinGecko/Stooq) immer
+  // eine source-Kennzeichnung mit. 'simulated' wird dem Nutzer sichtbar offengelegt,
+  // statt unmarkiert wie reale Historie dargestellt zu werden.
+  const [historySource, setHistorySource] = useState<'live' | 'simulated' | null>(null);
 
   // Backtest on real historical data fetched dynamically from API
   const runSimulation = () => {
@@ -188,18 +193,20 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
         if (!response.ok) {
           throw new Error('NO_DATA');
         }
-        const historicalData = await response.json();
-        if (historicalData.status === 'NO_DATA' || !Array.isArray(historicalData) || historicalData.length === 0) {
+        const responseBody = await response.json();
+        const historicalData = responseBody?.data;
+        if (!Array.isArray(historicalData) || historicalData.length === 0) {
           throw new Error('NO_DATA');
         }
 
         setSimulationProgress(65);
 
         const computed = calculateBacktestOnRealData(historicalData, strategy, params, initialCapital);
-        
+
         setChartData(computed.chartData);
         setTrades(computed.trades);
         setMetrics(computed.metrics);
+        setHistorySource(responseBody?.source === 'live' ? 'live' : 'simulated');
         setIsSimulating(false);
         setHasSimulated(true);
       } catch (err) {
@@ -886,7 +893,18 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
       {/* Results View */}
       {hasSimulated && !isSimulating && (
         <div className="space-y-6">
-          
+
+          {historySource === 'simulated' && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-start gap-2">
+              <Info size={16} className="text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-200 font-mono leading-relaxed">
+                Für <strong>{ticker}</strong> lagen keine echten historischen Kursdaten vor. Dieser Backtest basiert auf
+                einer <strong>simulierten Kursentwicklung</strong> (geometrische Brownsche Bewegung auf Basis von Volatilität
+                und Drift) und spiegelt keine reale Marktvergangenheit wider.
+              </p>
+            </div>
+          )}
+
           {/* Key Metrics Dashboard */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             

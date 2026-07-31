@@ -415,64 +415,6 @@ const FALLBACK_ASSETS = [
   { symbol: 'STOXX50E', name: 'EURO STOXX 50', type: 'index', price: 4950.20, change24h: 0.28, grahamScore: 0, momentum: 4.9, risk: 'Low', status: 'Verifiziert', marketCap: 3800.0, dividendYield: 3.15, volume24h: 1100.0, score: 6.4, pattern: 'Ascending Channel', applicationArea: 'Europäische Blue Chips' }
 ];
 
-function generateRealisticHistory(symbol: string, limit: number) {
-  const history = [];
-  let basePrice = 150.0;
-  let volatility = 0.25;
-  let drift = 0.08;
-
-  const sym = symbol.toUpperCase().trim();
-  if (sym === 'BTC') { basePrice = 68000; volatility = 0.55; drift = 0.25; }
-  else if (sym === 'ETH') { basePrice = 3400; volatility = 0.60; drift = 0.18; }
-  else if (sym === 'SOL') { basePrice = 145; volatility = 0.80; drift = 0.35; }
-  else if (sym === 'ADA') { basePrice = 0.42; volatility = 0.70; drift = 0.10; }
-  else if (sym === 'AAPL') { basePrice = 189; volatility = 0.18; drift = 0.12; }
-  else if (sym === 'MSFT') { basePrice = 415; volatility = 0.15; drift = 0.15; }
-  else if (sym === 'GOOGL') { basePrice = 172; volatility = 0.20; drift = 0.14; }
-  else if (sym === 'AMZN') { basePrice = 185; volatility = 0.22; drift = 0.16; }
-  else if (sym === 'NVDA') { basePrice = 127; volatility = 0.45; drift = 0.45; }
-  else if (sym === 'TSLA') { basePrice = 178; volatility = 0.40; drift = 0.15; }
-  else if (sym === 'META') { basePrice = 504; volatility = 0.28; drift = 0.20; }
-  else if (sym === 'NFLX') { basePrice = 610; volatility = 0.30; drift = 0.15; }
-  else if (sym === 'AMD') { basePrice = 160; volatility = 0.35; drift = 0.22; }
-  else if (sym === 'INTC') { basePrice = 30.4; volatility = 0.25; drift = 0.05; }
-  else if (sym === 'EURUSD') { basePrice = 1.08; volatility = 0.06; drift = 0.01; }
-  else if (sym === 'GBPUSD') { basePrice = 1.26; volatility = 0.07; drift = 0.01; }
-  else if (sym === 'USDJPY') { basePrice = 156; volatility = 0.08; drift = 0.04; }
-  else if (sym === 'GLD') { basePrice = 2340; volatility = 0.12; drift = 0.08; }
-  else if (sym === 'SLV') { basePrice = 30.1; volatility = 0.22; drift = 0.09; }
-  else if (sym === 'USO') { basePrice = 78.4; volatility = 0.28; drift = 0.05; }
-  else if (sym === 'NG=F') { basePrice = 2.54; volatility = 0.45; drift = 0.12; }
-  else if (sym === 'WTI') { basePrice = 77.20; volatility = 0.25; drift = 0.06; }
-  else if (sym === 'BRENT') { basePrice = 81.85; volatility = 0.23; drift = 0.05; }
-  else if (['GSPC', 'IXIC', 'DJI', 'RUT', 'FTSE', 'GDAXI', 'FCHI', 'N225', 'HSI', 'AXJO', 'SSMI', 'IBEX', 'FTSEMIB', 'BVSP', 'MXX', 'SSEC', 'BSESN', 'JKSE', 'KLSE', 'STI', 'KS11', 'TWII', 'TA125', 'NZ50', 'AORD', 'VIX', 'SDAX', 'MDAX', 'TECDAX', 'STOXX50E'].includes(sym)) {
-    const asset = FALLBACK_ASSETS.find(a => a.symbol === sym);
-    basePrice = asset ? asset.price : 5000;
-    volatility = sym === 'VIX' ? 0.45 : 0.15;
-    drift = sym === 'VIX' ? 0.01 : 0.08;
-  }
-
-  let currentPrice = basePrice * Math.exp(-drift * (limit / 365)); // start lower
-  const dt = 1 / 365;
-
-  for (let i = 0; i < limit; i++) {
-    const rand = Math.random() + Math.random() + Math.random() - 1.5; // simple normal approximation
-    const growth = Math.exp((drift - 0.5 * volatility * volatility) * dt + volatility * rand * Math.sqrt(dt));
-    currentPrice = currentPrice * growth;
-    
-    const dateObj = new Date(Date.now() - (limit - i) * 24 * 60 * 60 * 1000);
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const year = String(dateObj.getFullYear()).substring(2);
-    
-    history.push({
-      date: `${day}.${month}.${year}`,
-      close: Number(currentPrice.toFixed(4))
-    });
-  }
-  return history;
-}
-
 // Server-side cache and request coalescing for live market data to prevent rate-limiting (e.g. 429 Too Many Requests)
 let cachedMarketData: any = null;
 let lastMarketDataFetch = 0;
@@ -592,7 +534,8 @@ async function fetchLiveMarketData() {
             marketCap: mcapBillions,
             dividendYield: 0.0,
             volume24h: volMillions,
-            score: scoreVal
+            score: scoreVal,
+            dataSource: 'live'
           };
         });
         coingeckoFetchedSuccessfully = true;
@@ -705,10 +648,15 @@ async function fetchLiveMarketData() {
             if (res.ok) {
               const data: any = await res.json();
               if (data && data.data && data.data.amount) {
+                // Coinbase Spot API liefert nur den aktuellen Preis, keine 24h-
+                // Aenderung/kein Volumen. Frueher wurde hier ein zufaelliger
+                // change24h-Wert erfunden (No-Demo-Data-Policy-Verstoss, siehe
+                // docs/DATENSCHUTZ_PROTOKOLL.md) - jetzt explizit 0 statt einer
+                // erfundenen Zahl, da der reale Wert aus dieser Quelle unbekannt ist.
                 binanceMap.set(cb.symbol, {
                   price: parseFloat(data.data.amount),
-                  change24h: (Math.random() * 4 - 2), // random fallback percent
-                  volume: 15000.0
+                  change24h: 0,
+                  volume: 0
                 });
               }
             }
@@ -726,7 +674,12 @@ async function fetchLiveMarketData() {
       }
     }
 
-    // Map fetched results or use static list with real-time fluctuations
+    // Map fetched results, oder als letzte Stufe der Resilienzkette den statischen
+    // Fallback-Bestand verwenden - explizit ohne erfundene "Live-Fluktuation"
+    // (No-Demo-Data-Policy, docs/DATENSCHUTZ_PROTOKOLL.md): eine zufaellige
+    // Preisbewegung auf einem statischen Snapshot zu simulieren wuerde genau die
+    // "simulierten Taeuschungsdaten" erzeugen, die die Policy verbietet. dataSource
+    // markiert stattdessen ehrlich, ob der jeweilige Wert live oder Fallback ist.
     cryptoAssets = FALLBACK_ASSETS.filter(a => a.type === 'crypto').map(asset => {
       const binanceKey = `${asset.symbol}USDT`;
       const liveData = binanceMap.get(binanceKey);
@@ -740,14 +693,14 @@ async function fetchLiveMarketData() {
           change24h: Number(change24h.toFixed(2)),
           momentum: Number(baseMomentum.toFixed(1)),
           score: scoreVal,
-          volume24h: liveData.volume > 0 ? Number(((liveData.volume * liveData.price) / 1e6).toFixed(2)) : asset.volume24h
+          volume24h: liveData.volume > 0 ? Number(((liveData.volume * liveData.price) / 1e6).toFixed(2)) : asset.volume24h,
+          dataSource: 'live'
         };
       } else {
-        const fluctuation = 1 + (Math.random() * 0.006 - 0.003); // +/- 0.3%
         return {
           ...asset,
-          price: Number((asset.price * fluctuation).toFixed(asset.price > 10 ? 2 : 4)),
-          change24h: Number((asset.change24h + (Math.random() * 0.2 - 0.1)).toFixed(2))
+          status: 'Fallback',
+          dataSource: 'fallback'
         };
       }
     });
@@ -849,18 +802,22 @@ async function fetchLiveMarketData() {
         continue;
       }
 
-      let volumeInMillions = 0;
+      // Stooqs kostenloser CSV-Endpunkt liefert keine Fundamentaldaten (P/E,
+      // Verschuldungsgrad, Dividendenrendite) und fuer Forex/Rohstoffe kein
+      // Handelsvolumen. Frueher wurden diese Felder ueber bedeutungslose
+      // price-Modulo-Formeln erfunden (No-Demo-Data-Policy-Verstoss, siehe
+      // docs/DATENSCHUTZ_PROTOKOLL.md) - jetzt bewusst undefined bzw. der reale
+      // statische Snapshot aus FALLBACK_ASSETS statt einer erfundenen Zahl.
+      const originalAsset = FALLBACK_ASSETS.find(a => a.symbol === displaySymbol);
+
+      let volumeInMillions: number | undefined;
       if (type === 'stock') {
-        volumeInMillions = vol > 0 ? Number(((vol * price) / 1e6).toFixed(2)) : Number((price * 1.5).toFixed(1));
-      } else if (type === 'forex') {
-        volumeInMillions = Number((1200 + (price % 5) * 200).toFixed(2));
-      } else { // commodity
-        volumeInMillions = vol > 0 ? Number(((vol * price) / 1e6).toFixed(2)) : Number((350 + (price % 10) * 45).toFixed(2));
+        volumeInMillions = vol > 0 ? Number(((vol * price) / 1e6).toFixed(2)) : originalAsset?.volume24h;
+      } else {
+        volumeInMillions = vol > 0 ? Number(((vol * price) / 1e6).toFixed(2)) : originalAsset?.volume24h;
       }
 
-      const isHighRisk = type === 'stock' && price > 500;
       const baseMomentum = 5.0 + (change24h > 0 ? Math.min(4, change24h) : Math.max(-4, change24h));
-      const originalAsset = FALLBACK_ASSETS.find(a => a.symbol === displaySymbol);
       const basePresetScore = originalAsset ? originalAsset.score : undefined;
 
       stooqAssets.push({
@@ -869,46 +826,42 @@ async function fetchLiveMarketData() {
         type,
         price,
         change24h,
-        grahamScore: type === 'stock' ? Number((4 + (price % 5)).toFixed(1)) : 0,
+        grahamScore: originalAsset?.grahamScore,
         momentum: Number(baseMomentum.toFixed(1)),
         risk: type === 'stock' ? 'Low' : 'Medium',
         status: 'Verifiziert',
-        peRatio: type === 'stock' ? Number((12 + (price % 25)).toFixed(1)) : undefined,
-        debtToEquity: type === 'stock' ? Number((0.2 + (price % 1.5)).toFixed(2)) : undefined,
-        marketCap: type === 'stock' ? Number((100 + (price % 1500)).toFixed(1)) : 450.0,
-        dividendYield: type === 'stock' && (price % 2 > 0.5) ? Number((1.5 + (price % 3)).toFixed(2)) : 0.0,
-        volume24h: volumeInMillions,
-        score: basePresetScore
+        peRatio: originalAsset?.peRatio,
+        debtToEquity: originalAsset?.debtToEquity,
+        marketCap: originalAsset?.marketCap ?? 450.0,
+        dividendYield: originalAsset?.dividendYield ?? 0.0,
+        volume24h: volumeInMillions ?? 0,
+        score: basePresetScore,
+        dataSource: 'live'
       });
     }
   } catch (err: any) {
-    console.warn('[Stooq Live API Warning] Stooq failed (using resilient high-fidelity fallback):', err.message || err);
-    stooqAssets = FALLBACK_ASSETS.filter(a => a.type !== 'crypto').map(asset => {
-      const fluctuation = 1 + (Math.random() * 0.004 - 0.002); // +/- 0.2%
-      return {
-        ...asset,
-        price: Number((asset.price * fluctuation).toFixed(asset.price > 10 ? 2 : 4)),
-        change24h: Number((asset.change24h + (Math.random() * 0.1 - 0.05)).toFixed(2))
-      };
-    });
+    console.warn('[Stooq Live API Warning] Stooq failed (using resilient fallback):', err.message || err);
+    // Statischer Fallback ohne erfundene "Live-Fluktuation" (No-Demo-Data-Policy) -
+    // siehe Kommentar bei der analogen Krypto-Fallback-Stelle weiter oben.
+    stooqAssets = FALLBACK_ASSETS.filter(a => a.type !== 'crypto').map(asset => ({
+      ...asset,
+      status: 'Fallback',
+      dataSource: 'fallback'
+    }));
   }
 
   const merged = [...cryptoAssets, ...stooqAssets];
-  // Ensure all indices and other assets in the full asset registry are present in the final merged array
+  // Ensure all indices and other assets in the full asset registry are present in the final merged array.
+  // Indizes (S&P 500, DAX etc.) haben in diesem Projekt keine angebundene Live-Quelle
+  // und sind daher immer ein statischer Snapshot - ohne erfundene "Live-Fluktuation"
+  // (No-Demo-Data-Policy, docs/DATENSCHUTZ_PROTOKOLL.md), dafuer ehrlich als
+  // dataSource: 'fallback' gekennzeichnet.
   const existingSymbols = new Set(merged.map(a => a.symbol.toUpperCase()));
-  const missingFallbackAssets = assetRegistry.getAssets().filter(a => !existingSymbols.has(a.symbol.toUpperCase())).map(asset => {
-    const fluctuation = 1 + (Math.random() * 0.004 - 0.002); // +/- 0.2%
-    const price = Number((asset.price * fluctuation).toFixed(asset.price > 10 ? (asset.price > 1000 ? 1 : 2) : 4));
-    const change24h = Number((asset.change24h + (Math.random() * 0.1 - 0.05)).toFixed(2));
-    const baseMomentum = 5.0 + (change24h > 0 ? Math.min(4, change24h) : Math.max(-4, change24h));
-    const score = Math.min(10.0, Math.max(1.0, Number((baseMomentum * 0.75 + 1.2).toFixed(1))));
-    return {
-      ...asset,
-      price,
-      change24h,
-      score
-    };
-  });
+  const missingFallbackAssets = assetRegistry.getAssets().filter(a => !existingSymbols.has(a.symbol.toUpperCase())).map(asset => ({
+    ...asset,
+    status: 'Fallback',
+    dataSource: 'fallback' as const
+  }));
 
   const allMerged = [...merged, ...missingFallbackAssets];
 
@@ -974,33 +927,24 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
       return res.json(cachedMarketData);
     }
 
+    // Statischer Fallback ohne erfundene "Live-Fluktuation" (No-Demo-Data-Policy,
+    // docs/DATENSCHUTZ_PROTOKOLL.md). Schreibt bewusst NICHT mehr in die
+    // assetRegistry zurueck - ein zufaellig gejitterter Fallback-Preis wuerde sonst
+    // die Registry dauerhaft mit erfundenen Werten ueberschreiben und faelschlich
+    // zur Grundlage nachfolgender Requests werden.
     const dynamicFallback = assetRegistry.getAssets().map(asset => {
-      const fluctuation = 1 + (Math.random() * 0.004 - 0.002); // +/- 0.2%
-      const price = Number((asset.price * fluctuation).toFixed(asset.price > 10 ? 2 : 4));
-      const change24h = Number((asset.change24h + (Math.random() * 0.1 - 0.05)).toFixed(2));
       const pattern = getAssetPatternForSymbol(asset.symbol);
       const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
-      const score = calculateAssetScore(asset.symbol, asset.type, change24h, asset.score);
+      const score = calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
       return {
         ...asset,
-        price,
-        change24h,
+        status: 'Fallback',
+        dataSource: 'fallback' as const,
         pattern,
         applicationArea,
         score
       };
     });
-
-    // Sync to backend assetRegistry
-    for (const asset of dynamicFallback) {
-      assetRegistry.updateAsset(asset.symbol, {
-        price: asset.price,
-        change24h: asset.change24h,
-        marketCap: asset.marketCap,
-        volume24h: asset.volume24h,
-        score: asset.score
-      });
-    }
 
     res.json(dynamicFallback);
   }
@@ -1242,7 +1186,10 @@ app.get('/api/backtest-history', orchestrator.handle('Backtest Download'), async
 
   try {
     const history = await assetRegistry.getHistory(rawSymbol, limit);
-    res.json(history);
+    // No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md): source wird immer
+    // mitgeliefert, damit simulierte Notfall-Historie im Frontend erkennbar bleibt
+    // und nie unmarkiert als reale Historie dargestellt wird.
+    res.json({ data: history.points, source: history.source });
   } catch (err: any) {
     console.error(`[Backtest Error] Failed to get history for ${rawSymbol} from registry:`, err.message || err);
     res.status(500).json({ error: 'Fehler beim Laden der historischen Daten aus der Asset-Registry.' });

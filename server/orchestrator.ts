@@ -4,6 +4,8 @@ import fs from 'fs';
 import { orchestrator } from '../src/lib/requestOrchestrator';
 import { checkAdminAccess } from './iam/authMiddleware';
 import { SUPERVISOR_ZONE_ROLES } from './iam/types';
+import { isGeminiConfigured } from './ai';
+import { getCleanEnv } from './env';
 
 export const orchestratorRouter = express.Router();
 
@@ -26,24 +28,41 @@ orchestratorRouter.get('/stats', (req, res) => {
   res.json(orchestrator.getStats());
 });
 
-// 2. Model Auto-Routing Latency Check API
+// 2. Model configuration status API.
+//
+// Fruehere Fassung ("Model Auto-Routing Latency Check") gab fuer alle fuenf
+// gelisteten Modelle - unabhaengig davon, ob ueberhaupt eine Integration existiert -
+// eine erfundene Zufallslatenz und pauschal status: 'Active' zurueck. Tatsaechlich
+// integriert ist in diesem Repository ausschliesslich Google Gemini (@google/genai);
+// Claude, GPT-4o, Grok und ein lokales Llama sind nicht angebunden. Das war ein
+// No-Demo-Data-Policy-Verstoss (docs/DATENSCHUTZ_PROTOKOLL.md): eine als
+// "Live-Latenzpruefung" bezeichnete Admin-Ansicht zeigte vollstaendig simulierte
+// Werte ohne jede Kennzeichnung.
+//
+// Diese Fassung misst keine erfundenen Latenzen mehr, sondern meldet ausschliesslich
+// den tatsaechlichen Konfigurationsstatus je Modell - ehrlich, aber ohne den Umfang
+// auf eine echte Multi-Provider-Latenzmessung auszuweiten (eigene, hier nicht
+// angeforderte Integrationsentscheidung fuer jeden zusaetzlichen Provider).
 orchestratorRouter.get('/ping-models', (req, res) => {
   const models = [
-    { id: 'claude', name: 'Claude 3.5 Sonnet', task: 'Code & Review', cost: '3.00', latency: Math.floor(130 + Math.random() * 50), status: 'Active' },
-    { id: 'gpt4', name: 'GPT-4o', task: 'Reasoning & Legacy', cost: '2.50', latency: Math.floor(150 + Math.random() * 60), status: 'Active' },
-    { id: 'gemini', name: 'Gemini 2.5 Flash', task: 'Speed & Vision', cost: '0.075', latency: Math.floor(40 + Math.random() * 30), status: 'Active' },
-    { id: 'grok', name: 'Grok 2', task: 'Real-time Research', cost: '2.00', latency: Math.floor(190 + Math.random() * 80), status: 'Active' },
-    { id: 'llama', name: 'Llama 3.3 (Local)', task: 'GDPR / Compliant', cost: '0.00', latency: Math.floor(12 + Math.random() * 15), status: 'Active' }
-  ];
+    { id: 'claude', name: 'Claude 3.5 Sonnet', task: 'Code & Review', cost: '3.00', configured: false },
+    { id: 'gpt4', name: 'GPT-4o', task: 'Reasoning & Legacy', cost: '2.50', configured: false },
+    { id: 'gemini', name: 'Gemini 2.5 Flash', task: 'Speed & Vision', cost: '0.075', configured: isGeminiConfigured() },
+    { id: 'grok', name: 'Grok 2', task: 'Real-time Research', cost: '2.00', configured: false },
+    { id: 'llama', name: 'Llama 3.3 (Local)', task: 'GDPR / Compliant', cost: '0.00', configured: !!getCleanEnv('LLAMA_LOCAL_ENDPOINT') },
+    // latency: null statt einer erfundenen Zahl - keine Latenz wird tatsaechlich
+    // gemessen. Feld bleibt aus Frontend-Kompatibilitaet erhalten (OrchestratorPanel.tsx,
+    // SupervisorDashboard.tsx), muss dort aber "-" statt einer Zahl anzeigen.
+  ].map((m) => ({ ...m, status: m.configured ? 'Configured' : 'Not Integrated', latency: null as number | null }));
 
-  const optimalModel = models
-    .filter(m => m.latency < 200)
-    .reduce((prev, current) => (prev.latency < current.latency ? prev : current), models[2]);
+  const configuredModels = models.filter((m) => m.configured);
 
   res.json({
     timestamp: Date.now(),
+    simulated: false,
+    note: 'Zeigt den tatsaechlichen Integrations-/Konfigurationsstatus je Modell, keine gemessene Latenz.',
     models,
-    optimalModelId: optimalModel.id
+    optimalModelId: configuredModels[0]?.id ?? null,
   });
 });
 
