@@ -9,7 +9,8 @@ import {
   getServerSupabase
 } from './db';
 import { resolveVerifiedIdentity } from './iam/authMiddleware';
-import { sendMail, buildSubscriptionActivatedEmail } from './mailer';
+import { sendSubscriptionConfirmation } from './mailer';
+import { OWNER_NOTIFICATION_EMAIL } from './ownerConfig_server';
 
 export const stripeRouter = express.Router();
 
@@ -426,33 +427,21 @@ export const handleWebhookEvent = async (event: Stripe.Event) => {
         // seit der Supabase-Stripe-Synchronisation der DB-Trigger
         // sync_stripe_subscription_to_public() auf stripe.subscriptions (Single
         // Source of Truth, siehe COMPLIANCE_REVIEW.md). Dieser Zweig löst nur noch
-        // die Aktivierungs-E-Mail aus - fire-and-forget, blockiert die
-        // Webhook-Antwort nicht und lässt sie bei Fehlschlag nicht scheitern.
+        // die Bestätigungs-/Benachrichtigungs-E-Mails aus - sendSubscriptionConfirmation()
+        // ist deterministisch, idempotent (pro Checkout Session) und wirft niemals,
+        // blockiert die Webhook-Antwort also nicht und lässt sie bei E-Mail-Fehlschlag
+        // nicht scheitern (200 OK unabhängig vom E-Mail-Ergebnis).
         console.log(`✅ [Webhook Router] Checkout abgeschlossen für ${userId} (${email}), Plan ${planId}. Tarif-Synchronisation läuft über stripe.subscriptions-Trigger.`);
-        if (email) {
-          const { subject, html } = buildSubscriptionActivatedEmail(planId, email);
-          sendMail({ to: email, subject, html }).catch((err) => {
-            console.error('[Webhook Router] Aktivierungs-E-Mail fehlgeschlagen:', err);
-          });
-        }
-        // Interne Benachrichtigung an den Owner bei jedem abgeschlossenen Abo,
-        // unabhängig davon ob die Kunden-Mail oben erfolgreich war oder nicht.
-        sendMail({
-          to: 'sven.kulessa@gmail.com',
-          subject: `Neues Abo aktiviert: ${planId} (${email || userId})`,
-          html: `
-            <div style="font-family: sans-serif;">
-              <h3>Neue Abo-Aktivierung</h3>
-              <ul>
-                <li><strong>Plan:</strong> ${planId}</li>
-                <li><strong>E-Mail:</strong> ${email || '(unbekannt)'}</li>
-                <li><strong>User-ID:</strong> ${userId}</li>
-                <li><strong>Stripe Checkout Session:</strong> ${session.id}</li>
-              </ul>
-            </div>
-          `,
+        sendSubscriptionConfirmation(email, OWNER_NOTIFICATION_EMAIL, {
+          planId,
+          sessionId: session.id,
+          userId,
+          amountTotal: session.amount_total,
+          currency: session.currency,
         }).catch((err) => {
-          console.error('[Webhook Router] Interne Owner-Benachrichtigung fehlgeschlagen:', err);
+          // sendSubscriptionConfirmation() wirft laut eigenem Contract nie - dieser
+          // catch ist ausschliesslich ein Sicherheitsnetz gegen zukünftige Regressionen.
+          console.error('[Webhook Router] sendSubscriptionConfirmation unerwartet fehlgeschlagen:', err);
         });
       }
     } else {
