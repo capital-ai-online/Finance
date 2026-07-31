@@ -454,7 +454,79 @@ ADR-0013 und ADR-0014 umnummeriert (siehe ADR-0013, *Hinweis zur Nummernvergabe*
 
 Der Governance Score bleibt bei **0** — die Änderung liegt weit innerhalb der Abschneidung.
 
-## N.3 Bewertung
+## N.3 ADR-0012 war für das Documentary-System unsichtbar
+
+Bei der nachträglichen Integration von ADR-0012 wurde ein Defekt festgestellt, der über die
+Nummernkollision hinausgeht.
+
+**Nachweis**
+
+`server/documentHygiene.ts` besitzt eine Auto-Migration: Fehlt eine ADR in
+`adr_history.json`, wird sie beim ersten Abruf geparst und nachgetragen. Die Aufnahme erfolgt
+jedoch ausschließlich, wenn `parsed.decision` befüllt ist:
+
+```ts
+if (parsed && parsed.decision) { recordAdrHistory(...) }
+```
+
+`parseADRFile` findet den Entscheidungsabschnitt über `^##\s*(entscheidung|decision)`.
+
+ADR-0012 besaß in der eingebrachten Fassung **keine Markdown-Struktur** — weder
+`#`-Titelzeile noch `##`-Abschnittsüberschriften, und die Metadaten standen als reine
+Textzeilen statt als Listenfelder. Damit blieb `decision` leer, die Auto-Migration brach ab,
+und die ADR erschien in keiner Auswertung des Admin-Portals.
+
+**Prüfung des Gesamtbestands**
+
+| ADRs | Zustand vorher |
+|---|---|
+| 13 | gesamt |
+| 11 | migrierbar |
+| **2** | **nicht migrierbar** — ADR-0012 und ADR-0009 |
+
+ADR-0009 nutzte `# Entscheidung` statt `## Entscheidung` und war aus demselben Grund
+betroffen.
+
+**Behebung**
+
+Beide Dokumente wurden formatangeglichen. Bei ADR-0012 wurden ausschließlich Titelzeile,
+Metadatenfelder und Abschnittsüberschriften angepasst; der Diff weist keine inhaltliche
+Änderung aus (Wortdifferenz von exakt 10 entspricht den entfernten Gliederungsnummern).
+
+Ergebnis: **13 von 13 ADRs migrierbar.**
+
+## N.4 Neuer Befund FND-ADR-0012-01
+
+**Stufe** High
+
+**Kategorie** Traceability — Abweichung zwischen Entscheidung und Umsetzung
+
+`src/components/SecurityComplianceAuditor.tsx` ist in `AdminPortal.tsx` korrekt eingebunden
+(Import Zeile 27, Verwendung Zeile 329), ruft jedoch sieben Endpunkte unter
+`/api/compliance/*` auf:
+
+```text
+dashboard · risk · certificates · run · certify · report
+```
+
+**Keiner dieser Endpunkte existiert** in `server.ts` oder `server/*.ts`.
+
+Zusätzlich nennt ADR-0012 unter *Audit Logging* die Tabellen `audit_logs_iam` und
+`iam_access_log` als Datenquellen. Die Komponente referenziert keine davon.
+
+**Bewertung**
+
+Die im ADR beschriebene aktive Produktionsintegration ist nicht gegeben. Die Komponente ist
+eingebunden, aber ohne Datengrundlage funktionslos.
+
+Dies ist der erste konkrete Anwendungsfall für die Verknüpfungsart `DECIDES` aus
+ESS-0011-CONTRACTS: Entscheidung vorhanden, Artefakt vorhanden, Verbindung zur beschriebenen
+Datenquelle fehlt. Bei aufgebauter Traceability Matrix wäre der Befund automatisch als
+Orphan der Klasse `UndecidedStructure` beziehungsweise über `GOV-TRACE-002` erkannt worden.
+
+**Aktualisierte Gesamtzahl: 222 Befunde** (3 Critical, 143 High, 76 Medium).
+
+## N.5 Bewertung
 
 Die Kollision ist der erste dokumentierte Fall, in dem eine Regel aus ESS-0012-CONTRACTS
 (`GOV-ADR-004`) einen realen Konflikt beschrieben hätte, bevor er entstand. Sie wurde

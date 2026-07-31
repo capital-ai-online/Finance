@@ -191,5 +191,31 @@
     "Neue ESS-Dokumente erhalten die naechste freie Nummer.",
     "Zwischennummern sind nicht zulaessig.",
     "Kein KI-System vergibt ESS-Nummern eigenstaendig."
-  ]
+  ],
+  "externalAdrIntegration": {
+    "note": "Extern eingebrachte ADRs, die nachtraeglich in die Governance-Struktur eingebunden wurden. Der Entscheidungsinhalt wurde nicht veraendert.",
+    "entries": [
+      {
+        "adr": "ADR-0012",
+        "title": "SecurityComplianceAuditor Integration",
+        "document": "docs/adr/ADR-0012-SecurityComplianceAuditor.md",
+        "origin": "manuell angelegt, gemergt ueber main (04de42a, d1348c7)",
+        "integratedAt": "2026-07-31",
+        "integratedBy": "ADR-0013 Nummernaufloesung und nachtraegliche Formatangleichung",
+        "component": "src/components/SecurityComplianceAuditor.tsx",
+        "relatedEss": [
+          "ESS-0001-CONTRACTS",
+          "ESS-0002",
+          "ESS-0011",
+          "ESS-0012"
+        ],
+        "relatedAdr": [
+          "ADR-0003.5"
+        ],
+        "implementationStatus": "IN PROGRESS",
+        "openFinding": "FND-ADR-0012-01 - Die Komponente ruft sieben Endpunkte unter /api/compliance/* auf, von denen keiner im Backend existiert. Die im ADR genannten Datenquellen audit_logs_iam und iam_access_log werden von der Komponente nicht referenziert. Die beschriebene aktive Produktionsintegration ist damit nicht gegeben.",
+        "parserFix": "Das Dokument besass keine Markdown-Struktur und war fuer die ADR-Auto-Migration in server/documentHygiene.ts nicht parsebar. Titel, Metadatenfelder und Abschnittsueberschriften wurden formatangeglichen, der Inhalt blieb unveraendert."
+      }
+    ]
+  }
 }

@@ -1,14 +1,64 @@
-ADR-0012 — SecurityComplianceAuditor Integration
+# ADR-0012: SecurityComplianceAuditor Integration
 
-Status: Accepted
-Datum: 31.07.2026
-Projekt: Capital-AI / AIF-CORE
-Version: 0.6.0
-Entscheidungsträger: Capital-AI Architecture Governance
+- **Status:** Accepted
+- **Datum:** 31.07.2026
+- **Projekt:** Capital-AI / AIF-CORE
+- **Version:** 0.6.0
+- **Autor:** Capital-AI Architecture Governance
+
+## Implementation-Status
+
+🟡 **IN PROGRESS** (verifiziert 2026-07-31)
+
+Ergänzt gemäß der Konvention aus `docs/adr/README.md`, die zwei getrennte Statusfelder
+fordert. Der ursprüngliche Entscheidungstext wurde nicht verändert.
+
+**Umgesetzt**
+
+- `src/components/SecurityComplianceAuditor.tsx` vorhanden (695 Zeilen)
+- Einbindung in `src/components/AdminPortal.tsx` verifiziert (Import Zeile 27, Verwendung Zeile 329)
+- Frontend-Build erfolgreich
+- Versionsangleichung auf 0.6.0 in `package.json` und `package-lock.json` erfolgt
+
+**Offen**
+
+- **Backend-Anbindung fehlt vollständig.** Die Komponente ruft sieben Endpunkte unter
+  `/api/compliance/*` auf (`dashboard`, `risk`, `certificates`, `run`, `certify`, `report`).
+  Keiner dieser Endpunkte existiert in `server.ts` oder `server/*.ts`. Sämtliche Aufrufe
+  laufen derzeit ins Leere.
+- **Abweichung zwischen ADR und Implementierung.** Abschnitt *Audit Logging* nennt
+  `audit_logs_iam` und `iam_access_log` als Datenquellen. Die Komponente referenziert keine
+  dieser Tabellen, sondern ausschließlich die genannte REST-Schnittstelle.
+- Verbindung zu produktiven Audit-Daten validieren (bereits im ADR als offen markiert)
+- Security Review durchführen (bereits im ADR als offen markiert)
+
+**Bewertung**
+
+Die unter *6. Entwicklungs- und Produktionsrichtlinie* beschriebene aktive Produktions-
+integration mit Supabase IAM, Audit Logs und Compliance Reports ist derzeit **nicht**
+gegeben. Die Komponente ist eingebunden, jedoch ohne Datengrundlage funktionslos.
+
+Dieser Befund wurde durch eine Traceability-Prüfung ermittelt und ist ein Anwendungsfall der
+Verknüpfungsart `DECIDES` aus ESS-0011-CONTRACTS: Die Entscheidung existiert, das
+umsetzende Artefakt existiert, die Verbindung zur beschriebenen Datenquelle fehlt.
+
+## Enterprise-Referenzen
+
+Ergänzt zur Einbindung in Traceability Matrix und Knowledge Graph. Der Entscheidungsinhalt
+bleibt davon unberührt.
+
+- **ESS-0001-CONTRACTS Chapter 11** — Security & Compliance Contracts
+- **ESS-0002** — Supervisor Architect (der ADR nennt unter *10. Folgeentscheidungen*
+  ausdrücklich eine Supervisor-Integration)
+- **ESS-0011 / ESS-0011-CONTRACTS** — Enterprise Traceability
+- **ESS-0012 / ESS-0012-CONTRACTS** — Documentation Governance
+- **ADR-0003.5** — Owner-IAM (liefert die referenzierten Tabellen `audit_logs_iam`,
+  `iam_access_log`)
+- **Komponente** — `src/components/SecurityComplianceAuditor.tsx`
 
 ---
 
-1. Kontext
+## Kontext
 
 Capital-AI besitzt eine sicherheitsorientierte Architektur mit zentralem IAM, Audit Logging und Produktionskontrollen.
 
@@ -25,7 +75,7 @@ Nach Wiederherstellung der Datei konnte die Deployment-Pipeline erfolgreich durc
 
 ---
 
-2. Entscheidung
+## Entscheidung
 
 Der SecurityComplianceAuditor wird als fester Bestandteil der Capital-AI Governance-Architektur integriert.
 
@@ -39,7 +89,7 @@ Die Komponente bleibt Bestandteil des Admin-Portals und dient als zentrale Oberf
 
 ---
 
-3. Architektur
+## Architektur
 
 Die Integration erfolgt innerhalb der bestehenden Architektur:
 
@@ -66,7 +116,7 @@ Supabase Security Tables
 
 ---
 
-4. Verantwortlichkeiten
+## Verantwortlichkeiten
 
 SecurityComplianceAuditor
 
@@ -104,7 +154,7 @@ Nachvollziehbarkeit kritischer Aktionen gemäß Security Governance.
 
 ---
 
-5. Sicherheitsanforderungen
+## Sicherheitsanforderungen
 
 Der SecurityComplianceAuditor darf:
 
@@ -121,7 +171,7 @@ Er besitzt ausschließlich:
 
 ---
 
-6. Entwicklungs- und Produktionsrichtlinie
+## Entwicklungs- und Produktionsrichtlinie
 
 Entwicklungsumgebung
 
@@ -150,7 +200,7 @@ Aktive Integration:
 
 ---
 
-7. Versionierung
+## Versionierung
 
 Die Integration gehört zu:
 
@@ -170,7 +220,7 @@ package-lock.json muss synchronisiert werden.
 
 ---
 
-8. Deployment Anforderungen
+## Deployment Anforderungen
 
 Vor Produktionsfreigabe:
 
@@ -183,7 +233,7 @@ Vor Produktionsfreigabe:
 
 ---
 
-9. Konsequenzen
+## Konsequenzen
 
 Vorteile
 
@@ -200,7 +250,7 @@ Nachteile
 
 ---
 
-10. Folgeentscheidungen
+## Folgeentscheidungen
 
 Folgende ADRs können darauf aufbauen:
 
