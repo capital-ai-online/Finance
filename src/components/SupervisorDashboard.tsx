@@ -75,19 +75,25 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
   // Tabs: dashboard (Overview), agents (Agent Monitor), infrastructure (Docker/DB/Render), circuit-breakers (Circuit Breaker), alerts (Alerting Panel)
   const [activeTab, setActiveTab] = useState<'dashboard' | 'agents' | 'infrastructure' | 'circuit-breakers' | 'alerts' | 'version-manager'>('dashboard');
 
-  // Real-time fluctuating state stats
-  const [cpuUsage, setCpuUsage] = useState(24.5);
-  const [ramUsage, setRamUsage] = useState(1.42); // GB
-  const [dbQueries, setDbQueries] = useState(2410);
-  const [dbReadCount, setDbReadCount] = useState(1890);
-  const [dbWriteCount, setDbWriteCount] = useState(520);
-  const [dbLatency, setDbLatency] = useState(8.2); // ms
-  const [costLlm, setCostLlm] = useState(4.12);
-  const [costDb, setCostDb] = useState(1.22);
-  const [costExternal, setCostExternal] = useState(0.45);
+  // Operative Kennzahlen. Waren zuvor mit erfundenen Startwerten belegt und wurden
+  // per "Simulated Fluctuation Engine" (Math.random(), siehe Git-Historie) laufend
+  // fortgeschrieben - No-Demo-Data-Policy-Verstoss (docs/DATENSCHUTZ_PROTOKOLL.md):
+  // eine Supervisor-Kennzahl, die sich wie eine echte Live-Messung verhaelt, aber
+  // vollstaendig simuliert ist. Starten jetzt bei 0 statt einer erfundenen Zahl;
+  // echte Instrumentierung (Supabase-Query-Metriken, Gemini-Kostenabrechnung) ist
+  // ein eigenes, hier nicht umgesetztes Vorhaben - siehe Hinweisbanner im Rendering.
+  const [cpuUsage, setCpuUsage] = useState(0);
+  const [ramUsage, setRamUsage] = useState(0); // GB
+  const [dbQueries, setDbQueries] = useState(0);
+  const [dbReadCount, setDbReadCount] = useState(0);
+  const [dbWriteCount, setDbWriteCount] = useState(0);
+  const [dbLatency, setDbLatency] = useState(0); // ms
+  const [costLlm, setCostLlm] = useState(0);
+  const [costDb, setCostDb] = useState(0);
+  const [costExternal, setCostExternal] = useState(0);
   const [requestQueue, setRequestQueue] = useState<number>(0);
   const [activeRequests, setActiveRequests] = useState<number>(0);
-  const [processedRequests, setProcessedRequests] = useState<number>(1204);
+  const [processedRequests, setProcessedRequests] = useState<number>(0);
 
   // Model Latency stats from API
   const [models, setModels] = useState<any[]>([]);
@@ -193,47 +199,13 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
     }
   ]);
 
-  // 6. Simulated Fluctuation Engine
-  useEffect(() => {
-    const timer = setInterval(() => {
-      // Fluctuating CPU, RAM
-      setCpuUsage(prev => {
-        const delta = (Math.random() - 0.5) * 4;
-        const next = Math.max(10, Math.min(95, prev + delta));
-        return parseFloat(next.toFixed(1));
-      });
-
-      setRamUsage(prev => {
-        const delta = (Math.random() - 0.5) * 0.05;
-        const next = Math.max(0.8, Math.min(3.2, prev + delta));
-        return parseFloat(next.toFixed(2));
-      });
-
-      // Fluctuating Database Queries
-      setDbQueries(prev => prev + Math.floor(Math.random() * 3));
-      setDbReadCount(prev => prev + Math.floor(Math.random() * 2));
-      setDbWriteCount(prev => prev + (Math.random() > 0.8 ? 1 : 0));
-      setDbLatency(prev => {
-        const delta = (Math.random() - 0.5) * 1.2;
-        const next = Math.max(4.0, Math.min(25.0, prev + delta));
-        return parseFloat(next.toFixed(1));
-      });
-
-      // Fluctuate model latencies slightly
-      setModels(prev => {
-        if (prev.length === 0) return prev;
-        return prev.map(m => ({
-          ...m,
-          latency: Math.max(10, m.latency + Math.floor((Math.random() - 0.5) * 10))
-        }));
-      });
-
-      // Live accumulate cost
-      setCostLlm(prev => prev + 0.00005);
-    }, 4000);
-
-    return () => clearInterval(timer);
-  }, []);
+  // Die zuvor hier vorhandene "Simulated Fluctuation Engine" (setInterval mit
+  // Math.random() fuer CPU/RAM/DB-Queries/DB-Latenz/Modell-Latenz/Kosten) wurde
+  // entfernt - No-Demo-Data-Policy-Verstoss (docs/DATENSCHUTZ_PROTOKOLL.md): sie
+  // erzeugte eine laufend wachsende, vollstaendig erfundene Zahlenreihe, die wie
+  // eine echte Live-Messung aussah. Reale Instrumentierung (Supabase-Query-
+  // Metriken, Gemini-Kostenabrechnung, System-Ressourcennutzung) ist ein eigenes,
+  // hier nicht umgesetztes Vorhaben - siehe Hinweisbanner im Rendering-Teil.
 
   // Fetch metrics from Server (RequestOrchestrator stats & model pings)
   const fetchLiveServerMetrics = async () => {
@@ -817,7 +789,7 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
                             <span className="text-[8px] text-white/40 block font-mono uppercase">Verbindungs-Latenz:</span>
                             <span className="text-white font-mono font-bold text-xs flex items-center gap-1">
                               <Activity size={10} className={colorClass} />
-                              <span>{orch.latency} ms</span>
+                              <span>{typeof orch.latency === 'number' ? `${orch.latency} ms` : '—'}</span>
                             </span>
                           </div>
                           <div className="space-y-0.5 text-left">
@@ -892,7 +864,7 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
                             </div>
                             <div className="text-right font-mono">
                               <span className={`text-xs font-bold ${isOptimal ? 'text-aif-gold-DEFAULT' : 'text-white'}`}>
-                                {model.latency} ms
+                                {typeof model.latency === 'number' ? `${model.latency} ms` : '—'}
                               </span>
                               <p className="text-[8px] text-white/30">{model.cost} € / 1k Tokens</p>
                             </div>

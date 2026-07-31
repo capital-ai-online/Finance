@@ -37,6 +37,18 @@ export const OWNER_DEFAULT_AUTHOR_EMAIL =
   getCleanEnv('OWNER_DEFAULT_AUTHOR_EMAIL') || OWNER_BUSINESS_EMAIL;
 
 /**
+ * Empfängeradresse für zeitkritische interne Transaktionsbenachrichtigungen
+ * (z.B. neue Abo-Aktivierung). Bewusst eine eigene, von OWNER_BUSINESS_EMAIL
+ * getrennte Konstante: die Geschäftsadresse ist öffentlich/support-facing,
+ * diese Adresse ist die private Alarm-/Benachrichtigungsadresse des Eigentümers.
+ * War zuvor in server/stripe.ts hardcodiert (sven.kulessa@gmail.com) - hierher
+ * verlagert, um demselben Muster wie OWNER_BUSINESS_EMAIL/OWNER_DEFAULT_AUTHOR_EMAIL
+ * zu folgen und nicht erneut eine private Adresse verstreut im Code zu duplizieren.
+ */
+export const OWNER_NOTIFICATION_EMAIL =
+  getCleanEnv('OWNER_NOTIFICATION_EMAIL') || 'sven.kulessa@gmx.net';
+
+/**
  * Allowlist für den PII-Sanitizer (documentHygiene.ts, Regel DOC-04):
  * Adressen, die trotz Regex-Treffer NICHT als unmaskierte Kunden-PII
  * gemeldet/maskiert werden, weil es sich um bekannte Eigentümer- bzw.

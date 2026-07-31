@@ -24,9 +24,62 @@ export interface RegistryAsset {
   isLocked?: boolean;
 }
 
+export interface HistoryPoint {
+  date: string;
+  close: number;
+}
+
+export interface HistoryResult {
+  points: HistoryPoint[];
+  /**
+   * 'live' = reale historische Kurse von CoinGecko/Stooq. 'simulated' = geometrische
+   * Brownsche Bewegung (siehe generateSimulatedHistory) - No-Demo-Data-Policy
+   * (docs/DATENSCHUTZ_PROTOKOLL.md Abschnitt 2): Verbot simulierter Täuschungsdaten
+   * ohne reale Historie. Die Simulation bleibt als Notfall-Fallback bestehen, wird
+   * aber ab sofort nicht mehr unmarkiert wie echte Daten ausgeliefert - der Aufrufer
+   * (server.ts /api/backtest-history, BacktestEngine.tsx) MUSS dieses Feld auswerten
+   * und darf 'simulated' nicht als reale Historie darstellen.
+   */
+  source: 'live' | 'simulated';
+}
+
+// CoinGecko-IDs fuer die in der Registry gefuehrten Krypto-Symbole. Nur fuer Symbole
+// mit Eintrag wird echte Historie versucht; alle anderen (auch neu hinzugefuegte)
+// fallen kontrolliert auf die simulierte Historie zurueck, statt mit einer geratenen
+// ID einen falschen Coin zu laden.
+const CRYPTO_COINGECKO_IDS: Record<string, string> = {
+  BTC: 'bitcoin',
+  ETH: 'ethereum',
+  SOL: 'solana',
+  ADA: 'cardano',
+  XRP: 'ripple',
+  DOT: 'polkadot',
+  AVAX: 'avalanche-2',
+  LINK: 'chainlink',
+  BNB: 'binancecoin',
+  MATIC: 'matic-network',
+  DOGE: 'dogecoin',
+  SHIB: 'shiba-inu',
+};
+
+// Stooq-Ticker fuer die US-Aktien aus der Registry (dieselbe .US-Konvention wie im
+// Live-Kurs-Pfad in server.ts, STOCK_TICKERS).
+const STOCK_STOOQ_TICKERS: Record<string, string> = {
+  AAPL: 'aapl.us',
+  MSFT: 'msft.us',
+  GOOGL: 'googl.us',
+  AMZN: 'amzn.us',
+  NVDA: 'nvda.us',
+  TSLA: 'tsla.us',
+  META: 'meta.us',
+  NFLX: 'nflx.us',
+  AMD: 'amd.us',
+  INTC: 'intc.us',
+};
+
 export class AssetRegistry {
   private assets: Map<string, RegistryAsset> = new Map();
-  private historyCache: Map<string, { date: string, close: number }[]> = new Map();
+  private historyCache: Map<string, HistoryResult> = new Map();
 
   constructor() {
     this.initializeDefaultRegistry();
@@ -502,8 +555,14 @@ export class AssetRegistry {
     }
   }
 
-  // Pre-cached or generated high-speed history data for Backtests and Monte Carlo
-  public async getHistory(symbol: string, limit: number): Promise<{ date: string, close: number }[]> {
+  // Historie fuer Backtests und Monte Carlo. Versucht zuerst reale historische
+  // Kurse (CoinGecko fuer Krypto, Stooq fuer US-Aktien); faellt nur bei Fehlschlag
+  // oder fuer Symbole ohne bekannte Quelle (Forex/Rohstoffe/Indizes/exotische
+  // Krypto-Werte) auf die simulierte geometrische Brownsche Bewegung zurueck. Das
+  // Ergebnis ist immer mit source markiert - No-Demo-Data-Policy
+  // (docs/DATENSCHUTZ_PROTOKOLL.md): simulierte Daten duerfen nie unmarkiert wie
+  // reale Historie ausgeliefert werden.
+  public async getHistory(symbol: string, limit: number): Promise<HistoryResult> {
     const s = symbol.toUpperCase().trim();
     const cacheKey = `${s}_${limit}`;
 
@@ -511,22 +570,103 @@ export class AssetRegistry {
       return this.historyCache.get(cacheKey)!;
     }
 
+    let result: HistoryResult | null = null;
+
+    const coingeckoId = CRYPTO_COINGECKO_IDS[s];
+    if (coingeckoId) {
+      result = await this.fetchCoinGeckoHistory(coingeckoId, limit);
+    } else {
+      const stooqTicker = STOCK_STOOQ_TICKERS[s];
+      if (stooqTicker) {
+        result = await this.fetchStooqHistory(stooqTicker, limit, s);
+      }
+    }
+
+    if (!result || result.points.length === 0) {
+      result = { points: this.generateSimulatedHistory(s, limit), source: 'simulated' };
+    }
+
+    this.historyCache.set(cacheKey, result);
+    return result;
+  }
+
+  private async fetchCoinGeckoHistory(coingeckoId: string, limit: number): Promise<HistoryResult | null> {
+    try {
+      const days = Math.min(Math.max(limit, 1), 1825);
+      const url = `https://api.coingecko.com/api/v3/coins/${coingeckoId}/market_chart?vs_currency=usd&days=${days}&interval=daily`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data: any = await res.json();
+      const prices: [number, number][] = data?.prices;
+      if (!Array.isArray(prices) || prices.length === 0) return null;
+
+      const points: HistoryPoint[] = prices.map(([timestampMs, close]) => {
+        const date = new Date(timestampMs);
+        return {
+          date: `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getFullYear()).substring(2)}`,
+          close: Number(close.toFixed(close > 10 ? 2 : 6)),
+        };
+      });
+      return { points, source: 'live' };
+    } catch (err) {
+      console.warn(`[AssetRegistry] CoinGecko-Historie fuer ${coingeckoId} fehlgeschlagen, falle auf Simulation zurueck:`, (err as Error)?.message || err);
+      return null;
+    }
+  }
+
+  private async fetchStooqHistory(ticker: string, limit: number, displaySymbol: string): Promise<HistoryResult | null> {
+    try {
+      const end = new Date();
+      const start = new Date(end.getTime() - Math.min(Math.max(limit, 1), 1825) * 24 * 60 * 60 * 1000);
+      const fmt = (d: Date) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+      const url = `https://stooq.com/q/d/l/?s=${ticker}&d1=${fmt(start)}&d2=${fmt(end)}&i=d`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const text = await res.text();
+      const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+      if (lines.length <= 1) return null;
+
+      const headers = lines[0].split(',').map((h) => h.toLowerCase());
+      const dateIdx = headers.indexOf('date');
+      const closeIdx = headers.indexOf('close');
+      if (dateIdx === -1 || closeIdx === -1) return null;
+
+      const points: HistoryPoint[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',');
+        if (cols.length <= Math.max(dateIdx, closeIdx)) continue;
+        const rawDate = cols[dateIdx]; // Stooq-Format: YYYY-MM-DD
+        const close = parseFloat(cols[closeIdx]);
+        if (isNaN(close) || !/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) continue;
+        const [y, m, d] = rawDate.split('-');
+        points.push({ date: `${d}.${m}.${y.slice(2)}`, close: Number(close.toFixed(2)) });
+      }
+      if (points.length === 0) return null;
+      return { points, source: 'live' };
+    } catch (err) {
+      console.warn(`[AssetRegistry] Stooq-Historie fuer ${displaySymbol} fehlgeschlagen, falle auf Simulation zurueck:`, (err as Error)?.message || err);
+      return null;
+    }
+  }
+
+  private generateSimulatedHistory(s: string, limit: number): HistoryPoint[] {
     const asset = this.getAsset(s);
     const startPrice = asset ? asset.price : 100;
     const vol = asset ? asset.volatility / 100 : 0.25;
     const drift = asset ? asset.drift : 0.08;
 
-    // Fast deterministic generation based on geometric brownian motion parameters
-    // This reduces external Stooq and Alpha Vantage query load dramatically
-    const history = [];
+    // Geometrische Brownsche Bewegung als Notfall-Fallback, wenn weder eine
+    // CoinGecko- noch eine Stooq-Quelle fuer dieses Symbol existiert oder beide
+    // fehlschlagen. Liefert NIEMALS reale Historie - Aufrufer muessen
+    // HistoryResult.source === 'simulated' auswerten und entsprechend kennzeichnen.
+    const history: HistoryPoint[] = [];
     let currentPrice = startPrice;
     const now = new Date();
 
     for (let i = limit; i >= 0; i--) {
       const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const dateFormatted = `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getFullYear()).substring(2)}`;
-      
-      // Geometric Brownian motion step simulation
+
       const rand = this.seededRandom(s, i);
       const dailyDrift = (drift - 0.5 * vol * vol) / 252;
       const dailyVol = vol / Math.sqrt(252);
@@ -540,7 +680,6 @@ export class AssetRegistry {
       });
     }
 
-    this.historyCache.set(cacheKey, history);
     return history;
   }
 

@@ -535,7 +535,8 @@ export function OrchestratorPanel() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {modelPings.map((m) => {
               const isOptimal = m.id === optimalModelId;
-              const latencyWarning = m.latency >= 200;
+              const isConfigured = m.configured ?? m.status === 'Configured';
+              const latencyWarning = typeof m.latency === 'number' && m.latency >= 200;
               return (
                 <div 
                   key={m.id} 
@@ -563,7 +564,7 @@ export function OrchestratorPanel() {
                       <div className={`text-xl font-black font-mono ${
                         latencyWarning ? 'text-rose-400' : isOptimal ? 'text-aif-gold-DEFAULT' : 'text-cyan-400'
                       }`}>
-                        {m.latency}ms
+                        {typeof m.latency === 'number' ? `${m.latency}ms` : '—'}
                       </div>
                     </div>
                     <div className="text-right">
@@ -575,12 +576,12 @@ export function OrchestratorPanel() {
                   <div className="mt-3 pt-3 border-t border-white/5 flex justify-between items-center text-[9px] font-mono">
                     <span className="text-white/40">Status:</span>
                     <span className={`font-bold flex items-center gap-1 ${
-                      latencyWarning ? 'text-rose-400' : 'text-emerald-400'
+                      isConfigured ? 'text-emerald-400' : 'text-white/40'
                     }`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${
-                        latencyWarning ? 'bg-rose-500' : 'bg-emerald-500'
+                        isConfigured ? 'bg-emerald-500' : 'bg-white/20'
                       }`} />
-                      {latencyWarning ? 'LATENCY WARN' : 'READY (<200ms)'}
+                      {isConfigured ? 'CONFIGURED' : 'NOT INTEGRATED'}
                     </span>
                   </div>
                 </div>
