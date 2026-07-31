@@ -38,6 +38,8 @@ import { systemEventsRouter, logSystemEvent } from './server/systemEvents';
 import { hygieneRouter, startRecursiveFileWatcher } from './server/documentHygiene';
 import { versionManagerRouter } from './server/versionManager';
 import { stepUpRouter } from './server/stepUp';
+import { enforceScreeningQuota } from './server/quota';
+import { complianceRouter } from './server/compliance/router';
 
 dotenv.config();
 
@@ -238,6 +240,7 @@ app.use('/api/admin/hygiene', hygieneRouter);
 app.use('/api/admin', systemEventsRouter);
 app.use('/api/admin', versionManagerRouter);
 app.use('/api/auth', stepUpRouter);
+app.use('/api/compliance', complianceRouter);
 app.use('/api', aiRouter);
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
@@ -1364,7 +1367,15 @@ app.post('/api/charts-scoring', express.json(), (req, res) => {
 
 
 // GET detailed enterprise crypto scoring inputs and outputs
-app.get('/api/crypto-scoring/:symbol', (req, res) => {
+app.get('/api/crypto-scoring/:symbol', async (req, res) => {
+  const quota = await enforceScreeningQuota(req);
+  if (!quota.allowed) {
+    return res.status(429).json({
+      error: 'Tägliches Screening-Limit erreicht. Upgrade auf PRO für unbegrenzte Screenings.',
+      reason: quota.reason,
+    });
+  }
+
   const symbol = req.params.symbol.toUpperCase();
   const asset = assetRegistry.getAsset(symbol) || FALLBACK_ASSETS.find(a => a.symbol === symbol);
   const change24h = asset ? asset.change24h : 0;
@@ -1390,7 +1401,15 @@ app.get('/api/crypto-scoring/:symbol', (req, res) => {
 });
 
 // POST to dynamically update scoring inputs and recalculate in real-time
-app.post('/api/crypto-scoring/:symbol', express.json(), (req, res) => {
+app.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
+  const quota = await enforceScreeningQuota(req);
+  if (!quota.allowed) {
+    return res.status(429).json({
+      error: 'Tägliches Screening-Limit erreicht. Upgrade auf PRO für unbegrenzte Screenings.',
+      reason: quota.reason,
+    });
+  }
+
   const symbol = req.params.symbol.toUpperCase();
   const customInputs = req.body;
   const asset = assetRegistry.getAsset(symbol) || FALLBACK_ASSETS.find(a => a.symbol === symbol);

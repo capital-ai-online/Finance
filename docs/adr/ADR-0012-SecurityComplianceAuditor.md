@@ -8,39 +8,42 @@
 
 ## Implementation-Status
 
-🟡 **IN PROGRESS** (verifiziert 2026-07-31)
+✅ **COMPLETE** (verifiziert 2026-07-31, siehe ADR-0017)
 
 Ergänzt gemäß der Konvention aus `docs/adr/README.md`, die zwei getrennte Statusfelder
 fordert. Der ursprüngliche Entscheidungstext wurde nicht verändert.
 
 **Umgesetzt**
 
-- `src/components/SecurityComplianceAuditor.tsx` vorhanden (695 Zeilen)
+- `src/components/SecurityComplianceAuditor.tsx` vorhanden, kaputter Import auf
+  `server/compliance/types` behoben (diese Datei existiert jetzt), alle Aufrufe auf
+  `authFetch()` umgestellt.
 - Einbindung in `src/components/AdminPortal.tsx` verifiziert (Import Zeile 27, Verwendung Zeile 329)
-- Frontend-Build erfolgreich
+- Frontend-Build erfolgreich, `tsc --noEmit`-Fehler für diese Komponente auf 0 reduziert
 - Versionsangleichung auf 0.6.0 in `package.json` und `package-lock.json` erfolgt
+- **Backend-Anbindung implementiert (ADR-0017).** Alle sieben Aufrufe unter
+  `/api/compliance/*` (`dashboard`, `risk`, `certificates`, `run`, `certify`, `report`) sind
+  in `server/compliance/router.ts` implementiert, gemountet in `server.ts`, und jeweils über
+  `checkAdminAccess()` gegen `ADMIN_ZONE_ROLES` geschützt.
+- 21 Scanner-Module (`server/compliance/scanners.ts`) liefern reale, zur Laufzeit berechnete
+  Befunde aus Repository-, Migrations- und Registry-Zustand statt Demo-Daten.
+- Persistenz über eigene Tabellen `compliance_runs`/`compliance_certificates`
+  (`server/compliance/store.ts`, Migration `20260731000200_compliance_runs.sql`).
 
-**Offen**
+**Bewusst abweichend vom ursprünglichen ADR-Text (siehe ADR-0017 Abschnitt 4)**
 
-- **Backend-Anbindung fehlt vollständig.** Die Komponente ruft sieben Endpunkte unter
-  `/api/compliance/*` auf (`dashboard`, `risk`, `certificates`, `run`, `certify`, `report`).
-  Keiner dieser Endpunkte existiert in `server.ts` oder `server/*.ts`. Sämtliche Aufrufe
-  laufen derzeit ins Leere.
-- **Abweichung zwischen ADR und Implementierung.** Abschnitt *Audit Logging* nennt
-  `audit_logs_iam` und `iam_access_log` als Datenquellen. Die Komponente referenziert keine
-  dieser Tabellen, sondern ausschließlich die genannte REST-Schnittstelle.
-- Verbindung zu produktiven Audit-Daten validieren (bereits im ADR als offen markiert)
-- Security Review durchführen (bereits im ADR als offen markiert)
+- **Datenquelle korrigiert.** Abschnitt *Audit Logging* nennt `audit_logs_iam` und
+  `iam_access_log` als Datenquellen. Diese Tabellen sind IAM-Ereignis-Logs
+  (Actor/Target/Action-Schema) und für Compliance-Scan-Ergebnisse strukturell ungeeignet —
+  diese Abweichung war bereits vor ADR-0017 als offener Punkt dokumentiert. Gelöst über
+  eigene, zweckgebundene Tabellen statt Zweckentfremdung der IAM-Tabellen.
 
-**Bewertung**
+**Weiterhin offen**
 
-Die unter *6. Entwicklungs- und Produktionsrichtlinie* beschriebene aktive Produktions-
-integration mit Supabase IAM, Audit Logs und Compliance Reports ist derzeit **nicht**
-gegeben. Die Komponente ist eingebunden, jedoch ohne Datengrundlage funktionslos.
-
-Dieser Befund wurde durch eine Traceability-Prüfung ermittelt und ist ein Anwendungsfall der
-Verknüpfungsart `DECIDES` aus ESS-0011-CONTRACTS: Die Entscheidung existiert, das
-umsetzende Artefakt existiert, die Verbindung zur beschriebenen Datenquelle fehlt.
+- Security Review der neuen Endpunkte durch eine zweite Instanz (bereits im ADR als offen
+  markiert).
+- Die 21 Scanner sind statische Repository-Analysen, kein Ersatz für einen externen
+  SAST-/Dependency-Scanner (siehe ADR-0017 Folgeentscheidung 3).
 
 ## Enterprise-Referenzen
 
@@ -54,7 +57,8 @@ bleibt davon unberührt.
 - **ESS-0012 / ESS-0012-CONTRACTS** — Documentation Governance
 - **ADR-0003.5** — Owner-IAM (liefert die referenzierten Tabellen `audit_logs_iam`,
   `iam_access_log`)
-- **Komponente** — `src/components/SecurityComplianceAuditor.tsx`
+- **ADR-0017** — Backend-Implementierung (`server/compliance/*`), Datenquellen-Korrektur
+- **Komponente** — `src/components/SecurityComplianceAuditor.tsx`, `server/compliance/*`
 
 ---
 

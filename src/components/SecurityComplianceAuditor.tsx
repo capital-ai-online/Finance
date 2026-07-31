@@ -21,6 +21,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { ComplianceRun, ScannerResult, Finding, RemediationPlan, ComplianceCertificate } from '../../server/compliance/types';
+import { authFetch } from '../lib/authFetch';
 
 interface SecurityComplianceAuditorProps {
   currentUserEmail: string;
@@ -43,14 +44,14 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/compliance/dashboard');
+      const res = await authFetch('/api/compliance/dashboard');
       if (res.ok) {
         const data = await res.json();
         setDashboardData(data);
         if (data.lastRun) {
           setSelectedRunId(data.lastRun.id);
           // Fetch additional risk profiles & remediation plans
-          const riskRes = await fetch(`/api/compliance/risk?runId=${data.lastRun.id}`);
+          const riskRes = await authFetch(`/api/compliance/risk?runId=${data.lastRun.id}`);
           if (riskRes.ok) {
             const riskData = await riskRes.json();
             setRemediations(riskData.reremediations || riskData.remediationPlans || []);
@@ -58,7 +59,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
         }
       }
       
-      const certsRes = await fetch('/api/compliance/certificates');
+      const certsRes = await authFetch('/api/compliance/certificates');
       if (certsRes.ok) {
         const certsData = await certsRes.json();
         setCertificates(certsData.certificates || []);
@@ -79,7 +80,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
     try {
       setRunningAudit(true);
       setFeedback(null);
-      const res = await fetch('/api/compliance/run', {
+      const res = await authFetch('/api/compliance/run', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -105,7 +106,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
   const triggerCertify = async () => {
     if (!dashboardData?.lastRun) return;
     try {
-      const res = await fetch('/api/compliance/certify', {
+      const res = await authFetch('/api/compliance/certify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +118,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
       if (res.ok && data.success) {
         setFeedback({ message: `Regulatory Certificate ${data.certificate.id} erfolgreich ausgestellt!`, type: 'success' });
         // Refresh cert list
-        const certsRes = await fetch('/api/compliance/certificates');
+        const certsRes = await authFetch('/api/compliance/certificates');
         if (certsRes.ok) {
           const certsData = await certsRes.json();
           setCertificates(certsData.certificates || []);
@@ -134,7 +135,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
   const fetchReportExport = async (type: 'markdown' | 'json' | 'mermaid' | 'documentaryExport') => {
     if (!dashboardData?.lastRun) return;
     try {
-      const res = await fetch(`/api/compliance/report?runId=${dashboardData.lastRun.id}`);
+      const res = await authFetch(`/api/compliance/report?runId=${dashboardData.lastRun.id}`);
       if (res.ok) {
         const data = await res.json();
         const content = data.reports[type];

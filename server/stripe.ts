@@ -5,7 +5,8 @@ import {
   getSubscription,
   getLocalPdfCredits,
   saveLocalPdfCredits,
-  isSupabaseConfigured
+  isSupabaseConfigured,
+  getServerSupabase
 } from './db';
 import { resolveVerifiedIdentity } from './iam/authMiddleware';
 import { sendMail, buildSubscriptionActivatedEmail } from './mailer';
@@ -121,6 +122,12 @@ stripeRouter.post('/create-checkout-session', async (req, res) => {
       }
     };
 
+    // Der Jahresrabatt steckt bereits im Betrag der jeweiligen
+    // STRIPE_PRICE_ID_*_YEARLY Price-ID (separates Stripe-Produkt/-Preis,
+    // vom Platform Director im Dashboard mit dem rabattierten Jahresbetrag
+    // hinterlegt). Dafür ist keine serverseitige Berechnung, kein Coupon und
+    // keine zusätzliche Variable nötig - couponId bleibt ausschließlich für
+    // vom Kunden eingelöste Promotion-Codes reserviert (ADR-0017).
     if (couponId) {
       sessionData.discounts = [{ coupon: couponId }];
     } else {

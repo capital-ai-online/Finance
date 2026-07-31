@@ -133,12 +133,17 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
     }
   }, [email]);
 
-  // Discount indicator
+  // Preisvorschau im Frontend. Der tatsächlich abgerechnete Betrag wird
+  // ausschließlich von Stripe über die separate STRIPE_PRICE_ID_*_YEARLY
+  // Price-ID bestimmt (siehe server/stripe.ts) - der Rabatt steckt bereits
+  // im dort hinterlegten Betrag, es gibt bewusst keine serverseitige
+  // Rabattberechnung und keine Coupon-Variable (ADR-0017). Diese Berechnung
+  // dient ausschließlich der Vorabanzeige vor dem Checkout.
   const discountMultiplier = billingPeriod === 'yearly' ? 0.9 : 1.0;
 
   // Bei jährlicher Abrechnung wird der Gesamtbetrag für 12 Monate ausgewiesen,
   // nicht der rabattierte Monatspreis. Der angezeigte Betrag entspricht damit
-  // dem tatsächlich abgebuchten Betrag.
+  // dem voraussichtlich abgebuchten Betrag.
   const priceFor = (basePrice: number) =>
     basePrice === 0
       ? 0
@@ -293,12 +298,17 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
               <div className={`w-4 h-4 rounded-full bg-aif-gold-DEFAULT transition-all ${billingPeriod === 'yearly' ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
             <span className={`text-xs font-mono flex items-center gap-1.5 ${billingPeriod === 'yearly' ? 'text-aif-gold-DEFAULT font-bold' : 'text-white/40'}`}>
-              Jährlich 
+              Jährlich
               <span className="bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT text-[9px] px-1.5 py-0.5 rounded uppercase font-black">
                 -10% Rabatt
               </span>
             </span>
           </div>
+          {billingPeriod === 'yearly' && (
+            <p className="text-[10px] text-white/40 font-mono mt-2">
+              Gezeigte Preise sind Vorabschätzungen. Der endgültige Betrag wird beim Checkout von Stripe ausgewiesen.
+            </p>
+          )}
         </div>
 
         {/* Conversion Focus Banner for Free Users */}

@@ -1,5 +1,5 @@
 -- AIF-CORE: Server-side quota enforcement table
--- Backs src/lib/freeTierLimits.ts. Run this against the Supabase project
+-- Backs server/quota.ts (ADR-0017). Run this against the Supabase project
 -- used by both staging and production before deploying the 0.5.0 build.
 
 create table if not exists public.user_quota (
