@@ -46,7 +46,9 @@
       "document": ".ai/skills/ESS-0003-Platform-Director.md",
       "reservedBy": "ESS-0001",
       "owner": "Platform Director",
-      "relatedAdr": ["ADR-0006"]
+      "relatedAdr": [
+        "ADR-0006"
+      ]
     },
     {
       "id": "ESS-0004",
@@ -116,7 +118,9 @@
       "document": ".ai/skills/ESS-0010-Documentary-Engine.md",
       "reservedBy": null,
       "owner": "Platform Director",
-      "relatedAdr": ["ADR-0013"],
+      "relatedAdr": [
+        "ADR-0013"
+      ],
       "rationale": "Erste Vergabe aus dem freien Nummernraum. Schliesst die in ARCH-CONSOL-0001 als K-10 dokumentierte Luecke: die Documentary Engine war ueber vier Dokumente verteilt beschrieben und besass als einzige Kernkomponente keine eigene technische Spezifikation.",
       "supersededTopic": "Repository Governance war urspruenglich fuer ESS-0010 vorgesehen, wurde jedoch als not_required eingestuft, da ESS-0001-CONTRACTS Chapter 16 den Bereich vollstaendig und normativ abdeckt. Die Nummer war damit frei und wurde regulaer weitervergeben."
     },
@@ -128,8 +132,13 @@
       "document": ".ai/skills/ESS-0011-Enterprise-Traceability.md",
       "reservedBy": null,
       "owner": "Platform Director",
-      "relatedAdr": ["ADR-0013"],
-      "rationale": "Spezifikation der Enterprise Traceability Matrix. Verknuepft ESS, ADR, Exceptions, Komponenten, Interfaces, Events und Tests bidirektional."
+      "relatedAdr": [
+        "ADR-0013",
+        "ADR-0015"
+      ],
+      "rationale": "Spezifikation der Enterprise Traceability Matrix. Verknuepft ESS, ADR, Exceptions, Komponenten, Interfaces, Events und Tests bidirektional.",
+      "implementedBy": "src/platform/Traceability",
+      "operationalDocs": "docs/traceability/"
     },
     {
       "id": "ESS-0011-CONTRACTS",
@@ -139,8 +148,12 @@
       "document": ".ai/skills/ESS-0011-Contracts.md",
       "reservedBy": null,
       "owner": "Platform Director",
-      "relatedAdr": ["ADR-0013"],
-      "note": "Vertragsteil von ESS-0011. Belegt keine eigene Nummer. Besitzt ausschliesslich ETM-Geltung, niemals globale Wirkung."
+      "relatedAdr": [
+        "ADR-0013",
+        "ADR-0015"
+      ],
+      "note": "Vertragsteil von ESS-0011. Belegt keine eigene Nummer. Besitzt ausschliesslich ETM-Geltung, niemals globale Wirkung.",
+      "implementedBy": "src/platform/Traceability"
     },
     {
       "id": "ESS-0012",
@@ -150,8 +163,11 @@
       "document": ".ai/skills/ESS-0012-Documentation-Governance.md",
       "reservedBy": null,
       "owner": "Platform Director",
-      "relatedAdr": ["ADR-0014"],
-      "rationale": "Spezifikation des Documentation Governance Validator. Notwendigkeitsnachweis gemaess Pruefliste ARCH-RESP-0001 im Dokument selbst gefuehrt: die semantische, dokumentuebergreifende Governance-Pruefung (doppelte und widerspruechliche ESS-Regeln, widerspruechliche ADRs, doppelte Contracts, Breaking Changes ohne ADR) ist von keinem bestehenden Dokument abgedeckt. Chapter 12 prueft Struktur und Schema, ESS-0011 prueft Verknuepfungen."
+      "relatedAdr": [
+        "ADR-0014"
+      ],
+      "rationale": "Spezifikation des Documentation Governance Validator. Notwendigkeitsnachweis gemaess Pruefliste ARCH-RESP-0001 im Dokument selbst gefuehrt: die semantische, dokumentuebergreifende Governance-Pruefung (doppelte und widerspruechliche ESS-Regeln, widerspruechliche ADRs, doppelte Contracts, Breaking Changes ohne ADR) ist von keinem bestehenden Dokument abgedeckt. Chapter 12 prueft Struktur und Schema, ESS-0011 prueft Verknuepfungen.",
+      "implementedBy": "src/platform/Documentary/Governance"
     },
     {
       "id": "ESS-0012-CONTRACTS",
@@ -161,8 +177,11 @@
       "document": ".ai/skills/ESS-0012-Contracts.md",
       "reservedBy": null,
       "owner": "Platform Director",
-      "relatedAdr": ["ADR-0014"],
-      "note": "Vertragsteil von ESS-0012. Belegt keine eigene Nummer. Definiert 57 Regeln in neun Bereichen mit stabilen IDs im Format GOV-<AREA>-<NNN>. Besitzt ausschliesslich Governance-Geltung, niemals globale Wirkung."
+      "relatedAdr": [
+        "ADR-0014"
+      ],
+      "note": "Vertragsteil von ESS-0012. Belegt keine eigene Nummer. Definiert 57 Regeln in neun Bereichen mit stabilen IDs im Format GOV-<AREA>-<NNN>. Besitzt ausschliesslich Governance-Geltung, niemals globale Wirkung.",
+      "implementedBy": "src/platform/Documentary/Governance"
     }
   ],
   "rules": [

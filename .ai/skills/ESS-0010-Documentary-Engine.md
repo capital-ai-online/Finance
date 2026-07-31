@@ -71,6 +71,7 @@ crossReference:
     - ADR-0010
     - ADR-0011
     - ADR-0013
+    - ADR-0015
   relatedComponents:
     - src/platform/Documentary
     - src/platform/Knowledge
@@ -80,6 +81,7 @@ crossReference:
     - src/platform/Generators
     - src/platform/Validators
     - src/platform/Events
+    - src/platform/Traceability
   relatedSkills:
     - .ai/skills/ESS-0001-Documentary-Architect.md
     - .ai/skills/ESS-0001-Contracts.md

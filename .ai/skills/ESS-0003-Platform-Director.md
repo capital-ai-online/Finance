@@ -72,10 +72,12 @@ crossReference:
     - ADR-0010
     - ADR-0011
     - ADR-0013
+    - ADR-0015
   relatedComponents:
     - src/platform/PlatformDirector
     - src/platform/Release
     - src/platform/Compliance
+    - src/platform/Traceability
   relatedSkills:
     - .ai/skills/ESS-0001-Contracts.md
     - .ai/skills/ESS-0002-Supervisor-Architect.md

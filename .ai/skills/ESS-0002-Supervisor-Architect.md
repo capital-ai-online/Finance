@@ -66,10 +66,12 @@ crossReference:
   relatedAdr:
     - ADR-0006
     - ADR-0013
+    - ADR-0015
   relatedComponents:
     - src/platform/Supervisor
     - src/platform/Telemetry
     - src/platform/Quality
+    - src/platform/Traceability
   relatedSkills:
     - .ai/skills/ESS-0001-Contracts.md
     - .ai/skills/ESS-0003-Platform-Director.md

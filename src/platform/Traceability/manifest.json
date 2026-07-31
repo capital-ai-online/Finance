@@ -1,0 +1,113 @@
+{
+  "name": "Traceability",
+  "version": "1.0.0",
+  "status": "development",
+  "owner": "Platform Director",
+  "description": "Enterprise Traceability Matrix (ETM). Verwaltet die bidirektionalen Beziehungen zwischen ESS, ADR, Repository, Komponenten, Klassen, Interfaces, Events, Tests, Dokumentation, Knowledge Graph, Versionen und Releases. Erzeugt keine Artefakte und keine Regeln, sondern ausschliesslich Verknuepfungen, Kennzahlen und Berichte.",
+  "category": "platform",
+  "layer": "CrossCutting",
+  "layerNote": "Querschnittsmodul mit erweitertem Zugriff analog Release, siehe ESS-0001-CONTRACTS Chapter 16 (Cross Cutting Modules).",
+  "lifecycle": "Development",
+  "health": "Unknown",
+  "repository": "Finance",
+  "ess": [
+    "ESS-0001",
+    "ESS-0001-CONTRACTS",
+    "ESS-0010",
+    "ESS-0011",
+    "ESS-0011-CONTRACTS",
+    "ESS-0012"
+  ],
+  "adr": [
+    "ADR-0013",
+    "ADR-0014",
+    "ADR-0015"
+  ],
+  "dependencies": [
+    "src/platform/Core",
+    "src/platform/Shared",
+    "src/platform/Registry",
+    "src/platform/Knowledge",
+    "src/platform/Discovery",
+    "src/platform/Documentary"
+  ],
+  "forbiddenDependencies": [
+    "src/platform/Supervisor",
+    "src/platform/PlatformDirector"
+  ],
+  "events": {
+    "produces": [
+      "TraceabilityBuildStartedEvent",
+      "TraceabilityBuildCompletedEvent",
+      "TraceabilityBuildFailedEvent",
+      "CoverageCalculatedEvent",
+      "CoverageThresholdViolatedEvent",
+      "OrphanDetectedEvent",
+      "OrphanResolvedEvent",
+      "TraceabilityReportGeneratedEvent"
+    ],
+    "consumes": [
+      "KnowledgeUpdatedEvent",
+      "TwinSynchronizedEvent",
+      "ComponentRegisteredEvent",
+      "ExceptionRegisteredEvent",
+      "ReleasePreparedEvent"
+    ]
+  },
+  "interfaces": [
+    "ITraceabilityBuilder",
+    "ICoverageAnalyzer",
+    "IOrphanDetector",
+    "ITraceabilityReporter",
+    "ITraceabilityLink"
+  ],
+  "contracts": [
+    "ESS-0011-CONTRACTS"
+  ],
+  "knowledge": [
+    ".ai/knowledge/traceability/"
+  ],
+  "quality": {
+    "documentationScore": null,
+    "testScore": null,
+    "architectureScore": null,
+    "securityScore": null,
+    "knowledgeScore": null,
+    "metadataScore": null,
+    "twinScore": null,
+    "note": "Kennzahlen werden ausschliesslich berechnet, niemals manuell gesetzt (ESS-0001-CONTRACTS Chapter 12)."
+  },
+  "security": {
+    "classification": "Internal",
+    "sensitivity": "Keine personenbezogenen Daten. Verarbeitet ausschliesslich Repository-Metadaten und Beziehungsinformationen.",
+    "authentication": "nicht anwendbar",
+    "authorization": "nicht anwendbar",
+    "encryption": "nicht anwendbar",
+    "audit": "Saemtliche Matrixlaeufe werden protokolliert",
+    "compliance": [
+      "ESS-0001-CONTRACTS Chapter 11"
+    ],
+    "lastSecurityReview": null
+  },
+  "ai": {
+    "aiOwner": "Platform Director",
+    "aiGenerated": true,
+    "aiReviewed": false,
+    "aiValidated": false,
+    "aiCompatible": true,
+    "supportedAiSystems": [
+      "Claude Code",
+      "Google AI Studio",
+      "ChatGPT",
+      "Future Enterprise AI"
+    ]
+  },
+  "documentation": [
+    "README.md",
+    "CHANGELOG.md",
+    "component.yaml",
+    "docs/traceability/"
+  ],
+  "conformanceLevel": null,
+  "note": "Erste Komponente des Repositorys mit vollstaendigem Metadatensatz einschliesslich component.yaml und CHANGELOG.md. Erfuellt damit GOV-REPO-002 und GOV-REPO-004 aus ESS-0012-CONTRACTS."
+}

@@ -196,8 +196,23 @@ Verbindlich gilt ESS-0001-CONTRACTS Chapter 16, *ESS Registry Contract*:
 |---|---|
 | ESS-0001 bis ESS-0003 | vergeben |
 | ESS-0004 bis ESS-0009 | reserviert durch ESS-0001, unverändert |
-| ESS-0010, ESS-0011 | vergeben |
-| freier Nummernraum | ab **ESS-0012** |
+| ESS-0010 bis ESS-0012 | vergeben |
+| freier Nummernraum | ab **ESS-0013** |
+
+## Implementierende Komponenten
+
+Zwei ESS-Dokumente besitzen seit ADR-0014 und ADR-0015 eine implementierende Komponente.
+Die Zuordnung ist verbindlich und verhindert, dass Spezifikationsinhalte in den
+Komponenten-READMEs wiederholt werden.
+
+| Spezifikation | Implementierende Komponente | Operative Doku |
+|---|---|---|
+| ESS-0011 / ESS-0011-CONTRACTS | `src/platform/Traceability/` | `docs/traceability/` |
+| ESS-0012 / ESS-0012-CONTRACTS | `src/platform/Documentary/Governance/` | — |
+
+**Regel** Komponenten-READMEs und operative Dokumentation wiederholen niemals
+Spezifikationsinhalte. Sie verweisen auf das zuständige ESS-Kapitel. Bei Abweichung gilt
+die Spezifikation.
 
 ---
 
