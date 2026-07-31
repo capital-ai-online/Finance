@@ -92,6 +92,12 @@ samt Referenzanpassung, ohne einen Nutzen zu erzeugen.
 | **ESS-0001-CONTRACTS**<br>Enterprise Technical Contracts | Master Enterprise Standard | einzige globale Contract-Referenz der Plattform | globale Contracts, Repository Standards, Architekturregeln, Naming, Layer, Versionierung, Governance, AI Standards, normative Klarstellungen | komponentenspezifische Spezifikationen, Vision, historische Inhalte, ETM-Detailprozesse |
 | **ESS-0002**<br>Supervisor Architect | Component Specification | Komponentenspezifikation Supervisor | Beobachtungsmodell, Health- und Lifecycle-Überwachung, Findings, Eskalation, supervisorspezifische Contracts | globale Contracts, Entscheidungsbefugnisse, Dokumentationserzeugung |
 | **ESS-0003**<br>Platform Director | Component Specification | Komponentenspezifikation Platform Director | Entscheidungsbefugnis, Governance-Modell, Ausnahmen, Eigentümerschaft, Release-Autorität | globale Contracts, Überwachungslogik, Implementierungsdetails anderer Komponenten |
+| **ESS-0004**<br>Enterprise Version Manager | Component Specification | Komponentenspezifikation Version Manager | Komponentenaufbau, Interfaces, Events, Rollback-Planung, Versionssynchronisation | Versionsstrategie, Versionskategorien, globale Release-Contracts |
+| **ESS-0005**<br>Quality Center | Component Specification | Komponentenspezifikation Quality Center | Validator-Registry, Gate-Ausführung, Score-Berechnung, Technical Debt Register | Validator-Vertrag, Severity-Stufen, Quality-Gate-Definition, Schwellwerte |
+| **ESS-0006**<br>Security & Compliance | Component Specification | Komponentenspezifikation Security Center und Compliance Center | Classification Registry, Audit Trail, Risk Register, Evidence Collector | sämtliche Sicherheits- und Compliance-Regeln, IAM-Regeln |
+| **ESS-0007**<br>Enterprise Release Center | Component Specification | Komponentenspezifikation Release Center | Release-Vorbereitung, Deployment-Planung, Rollback-Ausführung, Snapshots | Versionsregeln, Freigabekriterien, Freigabeentscheidung |
+| **ESS-0008**<br>AI Agent Framework | Technical Specification | Rahmenwerk fachlicher Domänen-Agenten | Agent Contract, Agent-Identität, Determinismus-Deklaration, Orchestrator Contract, Registrierung | Scoring-Algorithmen, Bewertungslogik, Orchestrierung der KI-Entwicklungssysteme |
+| **ESS-0009**<br>Enterprise Knowledge Platform | Component Specification | Komponentenspezifikation Knowledge Engine | Knowledge Builder, Validator, Query, Versionierung, Store | Wissensmodell, Knoten- und Beziehungsregeln, Vertrauenswerte |
 | **ESS-0010**<br>Documentary Engine | Technical Specification | technische Spezifikation der Documentary Engine | Komponenten, Services, APIs, Events, Workflows, Trigger, Discovery, Registry, Digital Twin, Integration | Vision, Motivation, historische Inhalte, globale Contracts |
 | **ESS-0011**<br>Enterprise Traceability | Technical Specification | Spezifikation der Enterprise Traceability Matrix | ETM-Architektur, ETM-Komponenten, ETM-Prozesse, ETM-Reports, ETM-Integration, ETM-Workflows | allgemeine Enterprise-Regeln, globale Contracts |
 | **ESS-0011-CONTRACTS**<br>ETM Contracts | Scoped Contracts | Traceability-Matrix-Contracts | ausschließlich ETM-bezogene Contracts | globale Repository-, Naming-, Layer- und Governance-Contracts |
@@ -194,10 +200,29 @@ Verbindlich gilt ESS-0001-CONTRACTS Chapter 16, *ESS Registry Contract*:
 
 | Bereich | Zustand |
 |---|---|
-| ESS-0001 bis ESS-0003 | vergeben |
-| ESS-0004 bis ESS-0009 | reserviert durch ESS-0001, unverändert |
-| ESS-0010 bis ESS-0012 | vergeben |
+| ESS-0001 bis ESS-0012 | vergeben, sämtlich mit Dokument |
 | freier Nummernraum | ab **ESS-0013** |
+
+Seit ADR-0016 existiert **kein reservierter Nummernplatz ohne Dokument** mehr. Die Registry
+führt 15 von 15 Einträgen mit hinterlegtem Dokument.
+
+## Abgrenzung Vertrag gegen Komponente
+
+Die Dokumente ESS-0004 bis ESS-0009 sind **Komponentenspezifikationen**, keine Regelwerke.
+Die Unterscheidung ist verbindlich und verhindert Duplikate:
+
+| Frage | Zuständig |
+|---|---|
+| *Wie wird versioniert?* | ESS-0001-CONTRACTS Chapter 9 |
+| *Woraus besteht der Version Manager?* | ESS-0004 |
+| *Welche Validierungsregeln gelten?* | ESS-0001-CONTRACTS Chapter 12 |
+| *Wie führt das Quality Center sie aus?* | ESS-0005 |
+| *Welche Sicherheitsregeln gelten?* | ESS-0001-CONTRACTS Chapter 11 |
+| *Woraus bestehen Security und Compliance Center?* | ESS-0006 |
+| *Wie ist das Wissensmodell definiert?* | ESS-0001-CONTRACTS Chapter 15 |
+| *Woraus besteht die Knowledge Engine?* | ESS-0009 |
+
+Eine Komponentenspezifikation wiederholt niemals eine Regel. Sie verweist auf sie.
 
 ## Implementierende Komponenten
 

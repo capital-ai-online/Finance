@@ -53,62 +53,86 @@
     {
       "id": "ESS-0004",
       "title": "Enterprise Version Manager",
-      "status": "reserved",
-      "version": null,
-      "document": null,
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0004-Enterprise-Version-Manager.md",
       "reservedBy": "ESS-0001",
       "owner": "Platform Director",
-      "rationale": "Versionierung ist derzeit vollstaendig durch ESS-0001 Chapter 9 und ESS-0001-CONTRACTS Chapter 9 geregelt. Ein eigenstaendiges Dokument wuerde bestehende Regeln wiederholen und gegen das Verbot redundanter Dokumente verstossen. Eroeffnung erst bei nachgewiesenem Regelbedarf."
+      "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
+      "implementedBy": "src/platform/VersionManager",
+      "relatedAdr": [
+        "ADR-0016"
+      ]
     },
     {
       "id": "ESS-0005",
       "title": "Quality Center",
-      "status": "reserved",
-      "version": null,
-      "document": null,
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0005-Quality-Center.md",
       "reservedBy": "ESS-0001",
       "owner": "Platform Director",
-      "rationale": "Qualitaets- und Validierungsregeln sind vollstaendig durch ESS-0001-CONTRACTS Chapter 12 geregelt."
+      "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
+      "implementedBy": "src/platform/Quality",
+      "relatedAdr": [
+        "ADR-0016"
+      ]
     },
     {
       "id": "ESS-0006",
       "title": "Security & Compliance",
-      "status": "reserved",
-      "version": null,
-      "document": null,
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0006-Security-Compliance.md",
       "reservedBy": "ESS-0001",
       "owner": "Platform Director",
-      "rationale": "Sicherheits- und Compliance-Regeln sind vollstaendig durch ESS-0001-CONTRACTS Chapter 11 geregelt."
+      "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
+      "implementedBy": "src/platform/Security, src/platform/Compliance",
+      "relatedAdr": [
+        "ADR-0016"
+      ]
     },
     {
       "id": "ESS-0007",
       "title": "Enterprise Release Center",
-      "status": "reserved",
-      "version": null,
-      "document": null,
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0007-Enterprise-Release-Center.md",
       "reservedBy": "ESS-0001",
       "owner": "Platform Director",
-      "rationale": "Release-Regeln sind durch ESS-0001-CONTRACTS Chapter 9 und Chapter 19 geregelt."
+      "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
+      "implementedBy": "src/platform/Release",
+      "relatedAdr": [
+        "ADR-0016"
+      ]
     },
     {
       "id": "ESS-0008",
       "title": "AI Agent Framework",
-      "status": "reserved",
-      "version": null,
-      "document": null,
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0008-AI-Agent-Framework.md",
       "reservedBy": "ESS-0001",
       "owner": "Platform Director",
-      "rationale": "Offener Regelbedarf. Die fachlichen Domaenen-Agenten unter src/agents besitzen bislang keine Enterprise-Spezifikation. ESS-0001-CONTRACTS Chapter 17 regelt ausschliesslich die Orchestrierung der KI-Systeme, nicht das Agentenmodell der Fachdomaenen."
+      "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
+      "implementedBy": "src/agents, src/orchestrator",
+      "relatedAdr": [
+        "ADR-0016"
+      ]
     },
     {
       "id": "ESS-0009",
       "title": "Enterprise Knowledge Platform",
-      "status": "reserved",
-      "version": null,
-      "document": null,
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0009-Enterprise-Knowledge-Platform.md",
       "reservedBy": "ESS-0001",
       "owner": "Platform Director",
-      "rationale": "Wissensmodell ist durch ESS-0001 Chapter 4 und ESS-0001-CONTRACTS Chapter 15 geregelt."
+      "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
+      "implementedBy": "src/platform/Knowledge",
+      "relatedAdr": [
+        "ADR-0016"
+      ]
     },
     {
       "id": "ESS-0010",
