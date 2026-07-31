@@ -11,7 +11,17 @@
   ],
   "adr": [],
   "dependencies": [],
-  "events": [],
+  "events": {
+    "produces": [
+      "KnowledgeUpdatedEvent",
+      "KnowledgeRelationCreatedEvent",
+      "KnowledgeValidationCompletedEvent"
+    ],
+    "consumes": [
+      "DocumentationGeneratedEvent"
+    ],
+    "note": "Nachgepflegt gemaess ADR-0018 Folgeentscheidung 2 (Enterprise Event Mesh Manifest-Nachpflege)."
+  },
   "knowledge": [],
   "interfaces": [],
   "contracts": [],

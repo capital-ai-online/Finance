@@ -11,7 +11,11 @@
   ],
   "adr": [],
   "dependencies": [],
-  "events": [],
+  "events": {
+    "produces": [],
+    "consumes": [],
+    "note": "Kein Producer/Consumer im aktuellen Standard-Event-Katalog identifiziert (ESS-0013). Wird nachgezogen, sobald ESS-0005 eigene Events spezifiziert."
+  },
   "knowledge": [],
   "interfaces": [],
   "contracts": [],

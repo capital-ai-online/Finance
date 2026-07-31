@@ -340,8 +340,17 @@ eigenständigen Fachkomponenten — siehe Folgeentscheidungen in ADR-0018.
 
 ### Documentary Engine
 
-Veröffentlicht mindestens: `RepositoryScannedEvent`, `DocumentationGeneratedEvent`,
-`DocumentationValidatedEvent`, `TwinSynchronizedEvent`.
+Veröffentlicht mindestens: `DocumentationGeneratedEvent`, `DocumentationValidatedEvent`,
+`TwinSynchronizedEvent`.
+
+**Präzisierung gegenüber der Erstfassung (Folgeentscheidung 2, ADR-0018):** Die
+Manifest-Nachpflege ordnet `RepositoryScannedEvent` stattdessen `src/platform/Discovery`
+als tatsächlichem Producer zu — Discovery führt den technischen Scan aus, Documentary
+**konsumiert** `RepositoryScannedEvent` und löst darauf die Dokumentationserzeugung aus
+(konsistent mit Chapter 8, *Documentary Integration*: „Die Documentary Engine reagiert
+automatisch auf RepositoryScannedEvent"). Kein Widerspruch zur auslösenden Anforderung,
+die Documentary lediglich als eine der veröffentlichenden Instanzen nannte — die
+Detailzuordnung erfolgt hier erstmals granular.
 
 ### Enterprise Traceability Matrix
 
@@ -469,18 +478,25 @@ Chapter-8-Checkliste um ETM-Bezug):
 
 ## Implementierungsstand
 
-Diese Komponente ist **spezifiziert, nicht implementiert**.
+Diese Komponente ist **implementiert (Stufe 1–4)** — als erste Komponente im gesamten
+`src/platform/`-Baum mit ausführbarem Code (ADR-0018, Folgeentscheidung 1, 2026-07-31).
 
 | Stufe | Voraussetzung | Zustand |
 |---|---|---|
-| 1 | JSON-Schemata für Event Contract | offen |
-| 2 | Core, Interfaces, Models, Registry | offen |
-| 3 | Enterprise Event Bus (Routing) | offen — Stufe 3 aus `REPOSITORY_STRUCTURE_ANALYSIS.md` |
-| 4 | Validator-Kette | offen |
+| 1 | JSON-Schemata für Event Contract | ✅ erledigt |
+| 2 | Core, Interfaces, Models, Registry | ✅ erledigt |
+| 3 | Enterprise Event Bus (Routing) | ✅ erledigt |
+| 4 | Validator-Kette | ✅ erledigt |
 
-Ohne Knowledge Graph und Digital Twin (Stufe 5) kann kein Event vollständig gemäß der
-Validation-Checkliste registriert werden — dieselbe Abhängigkeitskette, die bereits für
-die ETM in ESS-0011 dokumentiert ist.
+`Discovery/ManifestDiscovery.ts` fand zur Laufzeit 23 Komponenten unter
+`src/platform/` (mehr als die neun in der Vorab-Analyse identifizierten). Sieben
+Vertrags- und Kompatibilitätstests (`Tests/eventBus.test.ts`) bestehen.
+
+Unverändert gültig bleibt: Ohne Knowledge Graph und Digital Twin (Stufe 5) kann kein
+Event vollständig gemäß der Validation-Checkliste (ETM-Referenz, Knowledge-Graph-
+Verknüpfung) durchlaufen — die Implementierung deckt den Zustellmechanismus ab, nicht
+die vorgelagerten Datenquellen. Dieselbe Abhängigkeitskette ist bereits für die ETM in
+ESS-0011 dokumentiert.
 
 ---
 

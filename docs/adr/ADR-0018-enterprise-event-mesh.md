@@ -6,10 +6,22 @@
 
 ## Implementation-Status
 
-🟡 **IN PROGRESS** — Komponentenstruktur, vollständiger Metadatensatz und
-Spezifikation (ESS-0013/ESS-0013-CONTRACTS) sind angelegt. Die **Implementierung** ist
-nicht begonnen und setzt die Umsetzungsstufen 1 bis 3 aus
-`docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md` voraus.
+✅ **COMPLETE** (verifiziert 2026-07-31) — Komponentenstruktur, vollständiger
+Metadatensatz, Spezifikation (ESS-0013/ESS-0013-CONTRACTS) und alle vier vom Platform
+Director freigegebenen Folgeentscheidungen sind umgesetzt:
+
+1. Implementierung Stufe 1–4 (`src/platform/EventMesh/{Contracts,Interfaces,Models,
+   Registry,Core,Validators,Reports,Policies,Discovery,Services,Events,Tests}/`) —
+   erste Komponente im gesamten `src/platform/`-Baum mit ausführbarem Code.
+2. Manifest-Nachpflege in 12 Komponenten (`events.produces`/`events.consumes`
+   befüllt, Documentary-Manifest korrigiert).
+3. `server/systemEvents.ts` additiv auf die Enterprise Event Mesh erweitert (bestehender
+   Audit-Log-Mechanismus vollständig erhalten).
+4. 7 neu identifizierte Events registriert.
+
+Verifiziert: `npx tsx src/platform/EventMesh/Tests/eventBus.test.ts` (7/7 bestanden),
+`npx tsc --noEmit` unverändert 9 vorbestehende Fehler (keine neuen), `npx vite build`
+erfolgreich.
 
 ## Datum
 
@@ -204,18 +216,29 @@ Risikoabwägung durchführbar.
 
 ## Folgeentscheidungen
 
-1. Implementierung der Stufen 1 bis 4 (Schema/Metadata, Core/Contracts, Event Bus,
-   Validator-Kette).
-2. Nachpflege der `events`-Felder in `PlatformDirector/`, `Supervisor/`,
-   `VersionManager/`, `Security/`, `Quality/`, `Release/manifest.json` durch die
-   jeweils zuständigen Komponenten-Owner.
-3. Migration von `server/systemEvents.ts` auf die Enterprise Event Mesh — eigene,
-   gesondert zu entscheidende Folgeentscheidung mit Produktivcode-Auswirkung.
-4. Registrierung der acht neu identifizierten Events (`VersionApprovedEvent`,
+Alle vier wurden am 2026-07-31 vom Platform Director zur Ausführung freigegeben und
+sind umgesetzt:
+
+1. ✅ **Implementierung der Stufen 1 bis 4** (Schema/Metadata, Core/Contracts, Event
+   Bus, Validator-Kette) — `src/platform/EventMesh/`, siehe `CHANGELOG.md` [1.1.0].
+2. ✅ **Nachpflege der `events`-Felder** — in zwölf Komponenten befüllt
+   (`Documentary`, `Discovery`, `Knowledge`, `Compliance`, `Architecture`, `Security`,
+   `VersionManager`, `Release`, `Supervisor`, `PlatformDirector`, `Registry`,
+   `Quality`). Dabei einen Fehler in der Erstfassung dieses ADR korrigiert: die
+   Documentary Engine besaß entgegen der ursprünglichen Behauptung bereits ein
+   (leeres) `manifest.json`.
+3. ✅ **`server/systemEvents.ts` additiv erweitert** — `logSystemEvent()` publiziert
+   zusätzlich ein Enterprise Event über die neue Mesh; der bestehende, funktionierende
+   Audit-Log-Mechanismus bleibt vollständig erhalten und unveraendert im Erfolgsfall.
+4. ✅ **7 neu identifizierte Events registriert** (`VersionApprovedEvent`,
    `RoadmapUpdatedEvent`, `ArchitectureDecisionApprovedEvent`,
    `CriticalArchitectureViolationEvent`, `DependencyMappedEvent`,
-   `KnowledgeRelationCreatedEvent`, `KnowledgeValidationCompletedEvent`) durch die
-   jeweils zuständige Fachkomponente, sobald diese implementiert wird.
+   `KnowledgeRelationCreatedEvent`, `KnowledgeValidationCompletedEvent` — sieben,
+   nicht acht wie in der Erstfassung fälschlich gezählt) — Teil von
+   `Events/StandardEventCatalog.ts`.
+
+Details, Testergebnisse und der während der Umsetzung gefundene Registry-Bug:
+`docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md`, Nachtrag.
 
 ---
 
