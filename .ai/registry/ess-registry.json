@@ -7,8 +7,8 @@
   "generated": false,
   "seed": true,
   "note": "Dieser Registry-Eintrag ist ein Knowledge Seed. Nach Bereitstellung des Enterprise Bootstrappers wird die Registry generatorgestuetzt fortgeschrieben.",
-  "updatedAt": "2026-07-30",
-  "freeNumberSpaceStartsAt": "ESS-0010",
+  "updatedAt": "2026-07-31",
+  "freeNumberSpaceStartsAt": "ESS-0012",
   "entries": [
     {
       "id": "ESS-0001",
@@ -110,13 +110,37 @@
     },
     {
       "id": "ESS-0010",
-      "title": "Repository Governance",
-      "status": "not_required",
-      "version": null,
-      "document": null,
+      "title": "Documentary Engine",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0010-Documentary-Engine.md",
       "reservedBy": null,
       "owner": "Platform Director",
-      "rationale": "Repository Governance ist vollstaendig und normativ durch ESS-0001-CONTRACTS Chapter 16 geregelt. Ein eigenstaendiges ESS-Dokument waere ein Duplikat. Die Nummer bleibt frei."
+      "relatedAdr": ["ADR-0012"],
+      "rationale": "Erste Vergabe aus dem freien Nummernraum. Schliesst die in ARCH-CONSOL-0001 als K-10 dokumentierte Luecke: die Documentary Engine war ueber vier Dokumente verteilt beschrieben und besass als einzige Kernkomponente keine eigene technische Spezifikation.",
+      "supersededTopic": "Repository Governance war urspruenglich fuer ESS-0010 vorgesehen, wurde jedoch als not_required eingestuft, da ESS-0001-CONTRACTS Chapter 16 den Bereich vollstaendig und normativ abdeckt. Die Nummer war damit frei und wurde regulaer weitervergeben."
+    },
+    {
+      "id": "ESS-0011",
+      "title": "Enterprise Traceability",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0011-Enterprise-Traceability.md",
+      "reservedBy": null,
+      "owner": "Platform Director",
+      "relatedAdr": ["ADR-0012"],
+      "rationale": "Spezifikation der Enterprise Traceability Matrix. Verknuepft ESS, ADR, Exceptions, Komponenten, Interfaces, Events und Tests bidirektional."
+    },
+    {
+      "id": "ESS-0011-CONTRACTS",
+      "title": "Enterprise Traceability Matrix Contracts",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0011-Contracts.md",
+      "reservedBy": null,
+      "owner": "Platform Director",
+      "relatedAdr": ["ADR-0012"],
+      "note": "Vertragsteil von ESS-0011. Belegt keine eigene Nummer. Besitzt ausschliesslich ETM-Geltung, niemals globale Wirkung."
     }
   ],
   "rules": [

@@ -12,9 +12,16 @@ ARCH-CONSOL-0001
 
 ### Status
 
-Enterprise Analysis — **Phase 1: Dokumentenanalyse**
+Enterprise Analysis — **Phase 2: Konsolidierung ausgeführt**
 
-Es wurden keine bestehenden Dokumente verändert.
+Phase 1 (Analyse) und Phase 2 (additive Umsetzung) sind abgeschlossen.
+
+Es wurde kein Dokument gelöscht, verschoben oder inhaltlich überschrieben. Sämtliche Eingriffe
+an bestehenden Dokumenten sind Ergänzungen im Frontmatter oder im Dokumentkopf.
+
+Die Nummernentscheidung aus Teil H wurde durch den Platform Director getroffen: **Option A**.
+
+Umsetzung dokumentiert in ADR-0012.
 
 ### Datum
 
@@ -581,6 +588,79 @@ Vorgelegt zur Entscheidung durch den Platform Director:
 |---|---|---|---|
 | **A** *(empfohlen)* | ESS-0010 | ESS-0011 / ESS-0011-CONTRACTS | nein |
 | **B** | ESS-0004 | ESS-0011 / ESS-0011-CONTRACTS | ja — ADR zur Aufhebung der Reservierung, Version Manager benötigt neue Nummer |
+
+**Entscheidung des Platform Director am 2026-07-31: Option A.**
+
+ESS-0004 bleibt als *Enterprise Version Manager* reserviert. Der freie Nummernraum beginnt
+nach dieser Vergabe bei ESS-0012.
+
+---
+
+# Teil I — Umsetzungsstand Phase 2
+
+## I.1 Ausgeführte Maßnahmen
+
+| Nr. | Maßnahme | Status | Art des Eingriffs |
+|---|---|---|---|
+| M-01 | Cross-Reference-Block in ESS-0001 | ✓ | Frontmatter ergänzt |
+| M-02 | Cross-Reference-Abschnitt in ESS-0001-CONTRACTS | ✓ | Markdown ergänzt |
+| M-03 | `crossReference:` in ESS-0002 und ESS-0003 | ✓ | Frontmatter ergänzt, `references:` unverändert erhalten |
+| M-04 | ESS-0001 als Foundational Architecture Document | ✓ | Frontmatter und Kopfabschnitt ergänzt |
+| M-05 | ESS-0010 Documentary Engine | ✓ | Neuanlage |
+| M-06 | ESS-0011 Enterprise Traceability | ✓ | Neuanlage |
+| M-07 | ESS-0011-CONTRACTS | ✓ | Neuanlage |
+| M-08 | Registry um drei Einträge ergänzt | ✓ | Ergänzung |
+| M-09 | Responsibility Matrix als Governance-Dokument | ✓ | Neuanlage `ARCH-RESP-0001` |
+| M-10 | ADR-0012 | ✓ | Neuanlage |
+
+Zehn von zehn Maßnahmen ausgeführt.
+
+---
+
+## I.2 Befundstatus nach Umsetzung
+
+| Befund | Stufe | Status |
+|---|---|---|
+| K-01 — `docs/ess/` existiert nicht | Medium | **aufgelöst** — Ablage unter `.ai/skills/` in ARCH-RESP-0001 verbindlich festgeschrieben, kein neues Verzeichnis |
+| K-02 — ESS-0004 Nummernkonflikt | Critical | **aufgelöst** — Option A, Reservierung unangetastet |
+| K-03 — ESS-0011 ohne ESS-0010 | High | **aufgelöst** — lückenlose Vergabe ab ESS-0010 |
+| K-04 — kein Frontmatter in Contracts | Medium | **aufgelöst** — Markdown-Konvention festgeschrieben |
+| K-05 — Vision/Technik vermischt | High | **entschärft** — Vorrangregel gesetzt; technischer Inhalt bleibt physisch erhalten (Löschverbot) |
+| K-06 — bereits aufgelöste Überschneidungen | Info | unverändert, referenziert |
+| K-07 — komponentenspezifische Contracts | Low | **aufgelöst** — Abgrenzung in ARCH-RESP-0001 und in den Klassifizierungen |
+| K-08 — unvollständige Cross-References | High | **aufgelöst** — sieben von sieben Dokumenten vollständig |
+| K-09 — unvollständige ADR-Referenzen | Medium | **aufgelöst** für ESS-Dokumente; GAP-026 bleibt offen |
+| K-10 — Documentary Engine ohne Spezifikation | High | **aufgelöst** — ESS-0010 |
+
+Neun von zehn Befunden vollständig aufgelöst, einer entschärft.
+
+---
+
+## I.3 Validierung nach Umsetzung
+
+| Prüfkriterium | vorher | nachher |
+|---|---|---|
+| keine Dokumentenduplikate | ✓ | ✓ |
+| keine doppelten Contracts | ✓ | ✓ |
+| keine konkurrierenden Verantwortlichkeiten | ✗ | ✓ — Vorrangregeln in ARCH-RESP-0001 |
+| vollständige Cross-References | ✗ | ✓ — 7 von 7 |
+| ESS-Nummerierung konsistent | ✗ | ✓ — lückenlos, frei ab ESS-0012 |
+| ADR-Referenzen vollständig | ✗ | ✓ für ESS-Dokumente |
+| Documentary kompatibel | ✓ | ✓ |
+| Version Manager kompatibel | ✓ | ✓ |
+| Platform Director kompatibel | ✓ | ✓ |
+
+**Neun von neun Kriterien erfüllt** (zuvor vier von neun).
+
+---
+
+## I.4 Verbleibende Einschränkung
+
+Die Durchsetzung ist dokumentarisch, nicht maschinell.
+
+`DocumentResponsibilityValidator` und `TraceabilityValidator` setzen Umsetzungsstufe 4 aus
+`REPOSITORY_STRUCTURE_ANALYSIS.md` voraus und existieren nicht. Bis dahin sind die
+Verantwortungszuordnungen eine verbindliche Zusage, deren Einhaltung manuell zu prüfen ist.
 
 ---
 

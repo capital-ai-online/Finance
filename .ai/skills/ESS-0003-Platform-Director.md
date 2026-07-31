@@ -42,12 +42,43 @@ authority:
     - Database Business Logic
     - Audit Trail
 
+classification:
+  type: Component Specification
+  role: Komponentenspezifikation Platform Director
+  contractAuthority: ESS-0001-CONTRACTS
+  note: >
+    Dieses Dokument definiert ausschließlich Contracts des Platform Director.
+    Globale Contracts verbleiben in ESS-0001-CONTRACTS.
+
 references:
   - ESS-0001
   - ESS-0001-CONTRACTS
   - ESS-0002
   - ADR-0006
   - ADR-0007
+
+crossReference:
+  dependsOn:
+    - ESS-0001
+    - ESS-0001-CONTRACTS
+    - ESS-0002
+  relatedEss:
+    - ESS-0010
+    - ESS-0011
+    - ESS-0011-CONTRACTS
+  relatedAdr:
+    - ADR-0006
+    - ADR-0007
+    - ADR-0010
+    - ADR-0011
+    - ADR-0012
+  relatedComponents:
+    - src/platform/PlatformDirector
+    - src/platform/Release
+    - src/platform/Compliance
+  relatedSkills:
+    - .ai/skills/ESS-0001-Contracts.md
+    - .ai/skills/ESS-0002-Supervisor-Architect.md
 
 created: 2026-07-30
 ---

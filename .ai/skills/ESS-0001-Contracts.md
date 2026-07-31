@@ -12,6 +12,68 @@ Enterprise Baseline Specification
 
 ---
 
+## Dokumentklassifizierung
+
+Dieses Dokument ist der **Master Enterprise Standard** des CAPITAL-AI Core.
+
+Es ist die einzige globale Contract-Referenz der Plattform.
+
+Komponentenspezifische Enterprise-Spezifikationen dürfen ausschließlich komponentenspezifische
+Contracts definieren. Bei Konflikt gilt ausnahmslos dieses Dokument.
+
+---
+
+## Cross Reference
+
+Dieses Dokument besitzt kein YAML-Frontmatter. Die Referenzen werden deshalb als
+Markdown-Abschnitt geführt. Beide Formen sind gleichwertig.
+
+**Depends On**
+
+ESS-0001
+
+**Related ESS**
+
+ESS-0001 — Documentary & Code Intelligence Architect
+
+ESS-0002 — Supervisor Architect
+
+ESS-0003 — Platform Director
+
+ESS-0010 — Documentary Engine
+
+ESS-0011 — Enterprise Traceability
+
+ESS-0011-CONTRACTS — Enterprise Traceability Matrix Contracts
+
+**Related ADR**
+
+ADR-0010 — Enterprise Standard Extension
+
+ADR-0011 — Bestandsschutz Root-Abweichungen
+
+ADR-0012 — ESS Documentation Responsibility Consolidation
+
+**Related Components**
+
+sämtliche 22 Module unter `src/platform/`
+
+**Related Skills**
+
+`.ai/skills/ESS-0001-Documentary-Architect.md`
+
+`.ai/skills/ESS-0002-Supervisor-Architect.md`
+
+`.ai/skills/ESS-0003-Platform-Director.md`
+
+`.ai/skills/ESS-0010-Documentary-Engine.md`
+
+`.ai/skills/ESS-0011-Enterprise-Traceability.md`
+
+`.ai/skills/ESS-0011-Contracts.md`
+
+---
+
 # Chapter 1
 
 # Enterprise Foundation & Governance Contracts

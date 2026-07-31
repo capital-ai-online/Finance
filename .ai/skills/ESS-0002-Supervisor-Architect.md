@@ -42,10 +42,37 @@ authority:
     - Enterprise Specifications
     - Architecture Decision Records
 
+classification:
+  type: Component Specification
+  role: Komponentenspezifikation Supervisor
+  contractAuthority: ESS-0001-CONTRACTS
+  note: >
+    Dieses Dokument definiert ausschließlich supervisorspezifische Contracts.
+    Globale Contracts verbleiben in ESS-0001-CONTRACTS.
+
 references:
   - ESS-0001
   - ESS-0001-CONTRACTS
   - ADR-0006
+
+crossReference:
+  dependsOn:
+    - ESS-0001
+    - ESS-0001-CONTRACTS
+  relatedEss:
+    - ESS-0003
+    - ESS-0010
+    - ESS-0011
+  relatedAdr:
+    - ADR-0006
+    - ADR-0012
+  relatedComponents:
+    - src/platform/Supervisor
+    - src/platform/Telemetry
+    - src/platform/Quality
+  relatedSkills:
+    - .ai/skills/ESS-0001-Contracts.md
+    - .ai/skills/ESS-0003-Platform-Director.md
 
 created: 2026-07-30
 ---
