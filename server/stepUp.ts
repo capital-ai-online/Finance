@@ -40,7 +40,7 @@ async function logSecurityEvent(fields: {
   }
 }
 
-function requireAuth(handler: (req: express.Request, res: express.Response, identity: { userId: string; email: string | null }) => Promise<void>) {
+function requireAuth(handler: (req: express.Request, res: express.Response, identity: { userId: string; email: string | null }) => Promise<void | express.Response>) {
   return async (req: express.Request, res: express.Response) => {
     const identity = await resolveVerifiedIdentity(req);
     if (!identity) {

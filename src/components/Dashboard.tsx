@@ -1561,7 +1561,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                       }}
                       onSelectAsset={(symbol) => setSelectedSymbol(symbol)}
                       selectedSymbol={selectedSymbol}
-                      onTriggerTestScoreEvent={handleTriggerTestScoreEvent}
+                      onSimulateScoreEvent={handleTriggerTestScoreEvent}
                     />
                   </div>
 

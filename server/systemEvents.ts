@@ -318,6 +318,10 @@ systemEventsRouter.post('/agents/register', async (req, res) => {
   if (!authz.authorized) {
     return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.' });
   }
+  // actorLabel ist ausschliesslich fuer Logging/Anzeige bestimmt (siehe
+  // authMiddleware.ts), nicht fuer Autorisierungsentscheidungen - hier fuer die
+  // Dokumenten-Hygiene-Zuschreibung und den System-Event-Log verwendet.
+  const email = authz.actorLabel;
 
   const { name, role, model } = req.body;
   if (!name || !role || !model) {
