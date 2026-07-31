@@ -134,9 +134,11 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
   }, [email]);
 
   // Preisvorschau im Frontend. Der tatsächlich abgerechnete Betrag wird
-  // ausschließlich von Stripe bestimmt (Jahres-Price-ID + optionaler
-  // STRIPE_COUPON_ID_YEARLY-Coupon, siehe server/stripe.ts) - diese
-  // Berechnung dient nur der Vorabanzeige vor dem Checkout (ADR-0017).
+  // ausschließlich von Stripe über die separate STRIPE_PRICE_ID_*_YEARLY
+  // Price-ID bestimmt (siehe server/stripe.ts) - der Rabatt steckt bereits
+  // im dort hinterlegten Betrag, es gibt bewusst keine serverseitige
+  // Rabattberechnung und keine Coupon-Variable (ADR-0017). Diese Berechnung
+  // dient ausschließlich der Vorabanzeige vor dem Checkout.
   const discountMultiplier = billingPeriod === 'yearly' ? 0.9 : 1.0;
 
   // Bei jährlicher Abrechnung wird der Gesamtbetrag für 12 Monate ausgewiesen,
@@ -304,7 +306,7 @@ export function Abonnements({ currentTier, onUpdateTier, email = 'sven.kulessa@g
           </div>
           {billingPeriod === 'yearly' && (
             <p className="text-[10px] text-white/40 font-mono mt-2">
-              Der Rabatt wird automatisch als Stripe-Coupon beim Checkout angewendet. Gezeigte Preise sind Vorabschätzungen.
+              Gezeigte Preise sind Vorabschätzungen. Der endgültige Betrag wird beim Checkout von Stripe ausgewiesen.
             </p>
           )}
         </div>

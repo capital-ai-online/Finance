@@ -308,17 +308,21 @@ const SCANNERS: ScannerDef[] = [
     },
   },
   {
-    id: 'BIL-03', name: 'Serverseitige Rabatt-Durchsetzung', type: 'BILLING',
+    id: 'BIL-03', name: 'Jahresrabatt über eigene Price-ID', type: 'BILLING',
     evaluate: (files) => {
       const stripeFile = files.find(f => f.relPath.endsWith(path.join('server', 'stripe.ts')));
-      const ok = !!stripeFile && /STRIPE_COUPON_ID_YEARLY/.test(stripeFile.content);
+      // Der Jahresrabatt steckt im Betrag der separaten STRIPE_PRICE_ID_*_YEARLY
+      // Price-Objekte (Stripe-seitig konfiguriert) - bewusst keine serverseitige
+      // Coupon-Berechnung (ADR-0017 Nachtrag, Platform-Director-Entscheidung:
+      // Jahresabonnements benötigen keine serverseitige Rabatt-Logik).
+      const ok = !!stripeFile && /STRIPE_PRICE_ID_STARTER_YEARLY/.test(stripeFile.content) && /STRIPE_PRICE_ID_PRO_YEARLY/.test(stripeFile.content);
       const findings: Finding[] = ok ? [] : [mkFinding({
-        title: 'Jahresrabatt ist nicht serverseitig als Stripe-Coupon verankert',
+        title: 'Jahrespreise sind nicht über eigene Stripe-Price-IDs abgebildet',
         severity: 'MEDIUM', complianceReference: 'ADR-0017',
-        risk: 'Angezeigter Rabatt könnte vom tatsächlich abgerechneten Betrag abweichen.',
-        description: 'Kein STRIPE_COUPON_ID_YEARLY-Handling in server/stripe.ts gefunden.',
+        risk: 'Ohne separate Jahres-Price-ID müsste der Rabatt an anderer Stelle berechnet werden, wodurch Anzeige und Abrechnung auseinanderlaufen könnten.',
+        description: 'Keine STRIPE_PRICE_ID_*_YEARLY-Verwendung in server/stripe.ts gefunden.',
       })];
-      return { findings, evidence: ok ? 'Checkout wendet den Jahresrabatt über einen serverseitig validierten Stripe-Coupon an.' : 'Kein serverseitiger Coupon-Mechanismus gefunden.' };
+      return { findings, evidence: ok ? 'Checkout wählt für billingPeriod=yearly eine eigene, bereits rabattierte Stripe-Price-ID - keine serverseitige Rabattberechnung nötig.' : 'Keine separaten Jahres-Price-IDs gefunden.' };
     },
   },
 

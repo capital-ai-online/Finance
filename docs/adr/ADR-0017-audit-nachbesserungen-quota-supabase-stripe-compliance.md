@@ -19,7 +19,7 @@ Platform Director
 
 ## Betroffene Artefakte
 
-`server/quota.ts` (neu), `server.ts` (Quota-Einbindung, Router-Mount), `supabase/migrations/20260730000000_user_quota.sql` (angepasst), `supabase/migrations/20260731000000_add_missing_service_role_rls_policies.sql` (neu), `supabase/migrations/20260731000100_harden_handle_new_user_search_path.sql` (neu), `supabase/migrations/20260731000200_compliance_runs.sql` (neu), `server/stripe.ts` (Coupon-Logik, Import-Fix), `server/_.env.example` (neue Variablen), `src/components/Abonnements.tsx` (Hinweistext), `server/compliance/types.ts` (neu), `server/compliance/scanners.ts` (neu), `server/compliance/store.ts` (neu), `server/compliance/router.ts` (neu), `src/components/SecurityComplianceAuditor.tsx` (Import-Fix, `authFetch`), `docs/adr/ADR-0012-SecurityComplianceAuditor.md` (Implementation-Status aktualisiert)
+`server/quota.ts` (neu), `server.ts` (Quota-Einbindung, Router-Mount), `supabase/migrations/20260730000000_user_quota.sql` (angepasst), `supabase/migrations/20260731000000_add_missing_service_role_rls_policies.sql` (neu), `supabase/migrations/20260731000100_harden_handle_new_user_search_path.sql` (neu), `supabase/migrations/20260731000200_compliance_runs.sql` (neu), `server/stripe.ts` (Import-Fix), `server/_.env.example` (Jahres-Price-ID-Dokumentation), `src/components/Abonnements.tsx` (Hinweistext), `server/compliance/types.ts` (neu), `server/compliance/scanners.ts` (neu), `server/compliance/store.ts` (neu), `server/compliance/router.ts` (neu), `src/components/SecurityComplianceAuditor.tsx` (Import-Fix, `authFetch`), `docs/adr/ADR-0012-SecurityComplianceAuditor.md` (Implementation-Status aktualisiert)
 
 ---
 
@@ -94,28 +94,27 @@ vorher dokumentierten Migrationen sind angewendet. Der im Produktionsaudit dokum
   Migration erreichbar. Verbleibt als offener Punkt für den Platform Director (Supabase Dashboard
   → Authentication → Policies).
 
-### 3. Stripe-Jahresrabatt über Produktrabatt statt Client-Rechnung
+### 3. Stripe-Jahresrabatt — keine serverseitige Berechnung
 
-Der zuvor gefixte `discountMultiplier = 0.9` in `Abonnements.tsx` berechnete nur eine
-**Vorschau** — er hatte nie Einfluss auf den tatsächlich abgerechneten Betrag, da Stripe
-Subscriptions über Price-IDs abrechnet, nicht über einen vom Client übergebenen Betrag. Damit war
-die eigentliche Lücke nicht die Anzeige, sondern dass **kein serverseitiger Mechanismus
-garantierte**, dass der angezeigte Rabatt jemals tatsächlich angewendet wird.
+**Erster Ansatz (verworfen, siehe Alternativen):** ein serverseitig automatisch angewendeter
+Stripe-Coupon (`STRIPE_COUPON_ID_YEARLY`). Der Platform Director hat diesen Ansatz korrigiert:
+Jahresabonnements benötigen **keine serverseitige Berechnung und somit auch keine Variable und
+keine Backend-Logik**.
 
-`server/stripe.ts` (`/create-checkout-session`) wendet jetzt bei `billingPeriod === 'yearly'`
-automatisch einen Stripe-Coupon an, dessen ID über `STRIPE_COUPON_ID_YEARLY` konfiguriert wird:
+**Begründung:** `server/stripe.ts` wählt bei `billingPeriod === 'yearly'` bereits seit vorheriger
+Implementierung eine **eigene** Stripe-Price-ID (`STRIPE_PRICE_ID_STARTER_YEARLY`,
+`STRIPE_PRICE_ID_PRO_YEARLY`) statt der Monatspreis-ID. Der Jahresrabatt gehört damit strukturell
+in den Betrag dieses separaten, im Stripe Dashboard gepflegten Price-Objekts — nicht in eine
+zusätzliche Coupon-Berechnung zur Laufzeit. Ein Coupon obendrauf hätte den Rabatt dupliziert oder
+mit dem bereits im Jahrespreis enthaltenen Rabatt kollidieren können.
 
-- Die Coupon-ID wird vor Sitzungsaufbau per `stripe.coupons.retrieve()` validiert.
-- Ist kein Coupon konfiguriert oder im Stripe-Konto nicht auffindbar, fällt der Checkout
-  kontrolliert auf `allow_promotion_codes: true` zurück (Checkout bleibt nutzbar, nur ohne
-  automatischen Rabatt) — kein harter Fehler.
-- `server/_.env.example` dokumentiert die neue Variable inkl. Vorgabe (`YEARLY10`, 10% percent_off).
-- **Der eigentliche Stripe-Coupon muss vom Platform Director im Stripe Dashboard angelegt
-  werden** — dieses Environment hat keinen Stripe-API-Zugriff und darf produktive
-  Abrechnungsobjekte nicht ungefragt anlegen.
-- `Abonnements.tsx` behält die Vorschau-Berechnung (jetzt explizit als Schätzung kommentiert) und
-  zeigt bei aktivierter Jahresansicht zusätzlich den Hinweis, dass der Rabatt automatisch beim
-  Checkout über Stripe angewendet wird.
+**Entscheidung:** Die zunächst eingeführte Coupon-Logik (`effectiveCouponId`,
+`STRIPE_COUPON_ID_YEARLY`, `stripe.coupons.retrieve()`) wurde vollständig entfernt.
+`server/stripe.ts` verwendet für `couponId` wieder ausschließlich den vom Client übergebenen Wert
+— reserviert für vom Kunden eingelöste Promotion-Codes (bestehendes `validate-coupon`-Feature),
+nicht für den automatischen Jahresrabatt. `server/_.env.example` führt `STRIPE_COUPON_ID_YEARLY`
+nicht mehr. `Abonnements.tsx` zeigt weiterhin eine Vorabschätzung (0.9-Multiplikator auf den
+Monatspreis) ohne Verweis auf einen serverseitigen Coupon-Mechanismus, da keiner mehr existiert.
 
 ### 4. ADR-0012 Compliance-Endpunkte — Backend implementiert
 
@@ -167,9 +166,15 @@ adressiert; eine Service-Role-only-Policy bildet den tatsächlichen Zugriff exak
 Prozesskette anzufassen. Feingranularere Policies wären eine eigene, hier nicht angeforderte
 Entscheidung.
 
-**Zu 3) Rabatt weiterhin ausschließlich clientseitig berechnen.**
-Verworfen. Widerspricht der expliziten Vorgabe "über Stripe Rabatt in den Produkten gelöst" und
-hätte das Risiko fortbestehen lassen, dass Anzeige und Abrechnung auseinanderlaufen.
+**Zu 3a) Rabatt weiterhin ausschließlich clientseitig berechnen (ursprünglicher Zustand).**
+Verworfen. Widerspricht der Vorgabe "über Stripe Rabatt in den Produkten gelöst".
+
+**Zu 3b) Serverseitiger Stripe-Coupon, automatisch angewendet (erster Umsetzungsversuch).**
+Verworfen und wieder entfernt. Der Rabatt steckt bereits strukturell im Betrag der separaten
+Jahres-Price-ID; ein zusätzlicher Coupon wäre redundante, potenziell kollidierende
+Backend-Logik für etwas, das Stripe über die Price-ID-Auswahl bereits abbildet. Explizite
+Platform-Director-Korrektur: "Alle Jahresabonnements benötigen keine serverseitige Berechnung
+und somit auch keine Variable und keine Backend-Logik."
 
 **Zu 4) `audit_logs_iam`/`iam_access_log` wie im ADR-Text beschrieben zweckentfremden.**
 Verworfen. Das ADR selbst dokumentierte diese Abweichung bereits als offenen Punkt; eigene,
@@ -185,14 +190,17 @@ korrekt geformte Tabellen lösen den Konflikt, statt ihn fortzuschreiben.
   durchgesetzt.
 - 6 RLS-Advisory-Befunde und 1 Function-Search-Path-Befund gegen die produktive Datenbank behoben,
   ohne Login- oder Abo-Sync-Verhalten zu verändern.
-- Jahresrabatt ist ab sofort strukturell an Stripe gebunden statt an eine Client-Berechnung.
+- Jahresrabatt ist strukturell an die Stripe-Price-ID gebunden, ohne zusätzliche
+  Backend-Logik, Variable oder Fehlerquelle im Server.
 - C-01 (kaputter Import, 19 von 38 TypeScript-Fehlern) ist behoben; FND-ADR-0012-01 (fehlende
   Compliance-Endpunkte) ist geschlossen.
 
 ### Negativ / Aufwand
 
-- Der reale 10%-Coupon muss der Platform Director noch im Stripe Dashboard anlegen; bis dahin
-  läuft der Checkout ohne automatischen Rabatt (kontrollierter Fallback, kein Fehlerzustand).
+- Der Platform Director muss sicherstellen, dass die Beträge der
+  `STRIPE_PRICE_ID_STARTER_YEARLY`/`STRIPE_PRICE_ID_PRO_YEARLY` Price-Objekte im Stripe
+  Dashboard den beworbenen 10%-Rabatt tatsächlich enthalten — das Frontend zeigt weiterhin nur
+  eine Schätzung, keine live abgefragte Zahl.
 - Die 21 Compliance-Scanner sind statische Repository-Analysen, kein Ersatz für einen echten
   SAST/Dependency-Scanner. Sie sind bewusst leichtgewichtig, um ohne externe Abhängigkeiten
   innerhalb eines Admin-Panel-Requests zu laufen.
@@ -207,8 +215,8 @@ korrekt geformte Tabellen lösen den Konflikt, statt ihn fortzuschreiben.
 
 ## Folgeentscheidungen
 
-1. Platform Director legt `STRIPE_COUPON_ID_YEARLY` im Stripe Dashboard an und hinterlegt die ID
-   in der Server-Konfiguration.
+1. Platform Director verifiziert, dass die Beträge der Jahres-Price-IDs im Stripe Dashboard den
+   beworbenen 10%-Rabatt korrekt enthalten.
 2. Platform Director aktiviert "Leaked Password Protection" im Supabase-Auth-Dashboard.
 3. Prüfung, ob die 21 statischen Compliance-Scanner mittelfristig um einen echten
    Dependency-/SAST-Scan ergänzt werden sollen.

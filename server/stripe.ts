@@ -122,35 +122,14 @@ stripeRouter.post('/create-checkout-session', async (req, res) => {
       }
     };
 
-    // Der 10%-Jahresrabatt wird als echter Stripe-Coupon auf das Produkt
-    // angewendet, nicht mehr clientseitig als Multiplikator vorgerechnet
-    // (Platform-Director-Entscheidung, ADR-0017). Der Coupon muss im Stripe
-    // Dashboard angelegt und dessen ID in STRIPE_COUPON_ID_YEARLY hinterlegt
-    // werden. Ohne diese Konfiguration verhält sich der Checkout wie zuvor
-    // (Promotion-Code-Feld bleibt nutzbar) statt fehlzuschlagen.
-    let effectiveCouponId = couponId;
-    if (!effectiveCouponId && billingPeriod === 'yearly' && mode === 'subscription') {
-      const yearlyCoupon = getStripeVar('STRIPE_COUPON_ID_YEARLY');
-      if (yearlyCoupon) {
-        effectiveCouponId = yearlyCoupon;
-      }
-    }
-
-    if (effectiveCouponId) {
-      try {
-        // Validiert die Coupon-ID vor dem Session-Aufbau, damit ein falsch
-        // konfigurierter/gelöschter Coupon den Checkout nicht hart abbrechen
-        // lässt, sondern kontrolliert auf allow_promotion_codes zurückfällt.
-        const coupon = await stripe.coupons.retrieve(effectiveCouponId);
-        if (coupon && coupon.valid) {
-          sessionData.discounts = [{ coupon: effectiveCouponId }];
-        } else {
-          sessionData.allow_promotion_codes = true;
-        }
-      } catch {
-        console.warn(`[Stripe] Konfigurierter Coupon '${effectiveCouponId}' ist im Stripe-Konto nicht auffindbar, Checkout läuft ohne automatischen Rabatt weiter.`);
-        sessionData.allow_promotion_codes = true;
-      }
+    // Der Jahresrabatt steckt bereits im Betrag der jeweiligen
+    // STRIPE_PRICE_ID_*_YEARLY Price-ID (separates Stripe-Produkt/-Preis,
+    // vom Platform Director im Dashboard mit dem rabattierten Jahresbetrag
+    // hinterlegt). Dafür ist keine serverseitige Berechnung, kein Coupon und
+    // keine zusätzliche Variable nötig - couponId bleibt ausschließlich für
+    // vom Kunden eingelöste Promotion-Codes reserviert (ADR-0017).
+    if (couponId) {
+      sessionData.discounts = [{ coupon: couponId }];
     } else {
       sessionData.allow_promotion_codes = true;
     }
