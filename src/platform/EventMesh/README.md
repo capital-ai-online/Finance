@@ -143,19 +143,33 @@ ADR-0013 — ESS Documentation Responsibility Consolidation
 
 ## Implementierungsstand
 
-Diese Komponente ist **spezifiziert, nicht implementiert**.
+Diese Komponente ist **implementiert (Stufe 1–4)** — als erste Komponente im
+gesamten `src/platform/`-Baum mit ausführbarem Code (ADR-0018, Folgeentscheidung 1).
 
 | Stufe | Voraussetzung | Zustand |
 |---|---|---|
-| 1 | JSON-Schemata für Event Contract, vollständige Metadaten | offen |
-| 2 | Core, Interfaces, Models, Registry | offen |
-| 3 | Enterprise Event Bus (Routing, Zustellung) | offen — Stufe 3 aus `REPOSITORY_STRUCTURE_ANALYSIS.md` |
-| 4 | Validator-Kette (`Validators/`) | offen |
+| 1 | JSON-Schemata für Event Contract, vollständige Metadaten | ✅ erledigt — `Contracts/` |
+| 2 | Core, Interfaces, Models, Registry | ✅ erledigt |
+| 3 | Enterprise Event Bus (Routing, Zustellung) | ✅ erledigt — `Core/EventBus.ts` |
+| 4 | Validator-Kette (`Validators/`) | ✅ erledigt — vier Validatoren |
 
-Kein bestehender Code wurde verändert. `server/systemEvents.ts` (Audit-Log) und die
-Frontend-`CustomEvent`-Nutzung bleiben unverändert und außerhalb des Geltungsbereichs
-dieser Komponente — siehe `docs/architecture/ENTERPRISE_EVENT_READINESS_REPORT.md`
-Abschnitt 3.2.
+In-Memory, ohne externe Abhängigkeiten (konsistent mit `server/iam/rateLimiter.ts`).
+Sieben Vertragstests unter `Tests/eventBus.test.ts`, ausführbar via
+`npx tsx src/platform/EventMesh/Tests/eventBus.test.ts` — kein Testframework
+eingeführt, da `package.json` keinen `test`-Script führt (Audit-Befund „0
+Testdateien"; diese Datei ändert daran bewusst nichts an der Projektkonfiguration).
+
+`Discovery/ManifestDiscovery.ts` liest `manifest.json` aller `src/platform/`-
+Komponenten zur Laufzeit und fand dabei **23 Komponenten** — mehr als die neun in der
+Vorab-Analyse identifizierten, darunter bislang nicht einzeln geprüfte
+Querschnittsverzeichnisse (`Core`, `Contracts`, `Events`, `Interfaces`, `Models`,
+`Registry`, `Shared`, `Telemetry`, `Validators`, `Plugins`, `Generators`).
+
+`server/systemEvents.ts` (Audit-Log) und die Frontend-`CustomEvent`-Nutzung wurden
+**additiv** erweitert (ADR-0018, Folgeentscheidung 3) — der bestehende Mechanismus
+bleibt vollständig erhalten, die Enterprise Event Mesh ergänzt eine zusätzliche
+Veröffentlichung, ersetzt ihn nicht. Details:
+`docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md`.
 
 ---
 

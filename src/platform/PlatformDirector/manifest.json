@@ -11,7 +11,18 @@
   ],
   "adr": [],
   "dependencies": [],
-  "events": [],
+  "events": {
+    "produces": [
+      "PlatformDecisionEvent",
+      "RoadmapUpdatedEvent",
+      "ArchitectureDecisionApprovedEvent"
+    ],
+    "consumes": [
+      "SupervisorAlertEvent",
+      "CriticalArchitectureViolationEvent"
+    ],
+    "note": "Nachgepflegt gemaess ADR-0018 Folgeentscheidung 2 (Enterprise Event Mesh Manifest-Nachpflege)."
+  },
   "knowledge": [],
   "interfaces": [],
   "contracts": [],

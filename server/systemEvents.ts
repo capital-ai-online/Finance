@@ -4,6 +4,7 @@ import path from 'path';
 import { getHygieneStatusData, processFileEvent } from './documentHygiene';
 import { checkAdminAccess } from './iam/authMiddleware';
 import { SUPERVISOR_ZONE_ROLES } from './iam/types';
+import { publishSystemAuditEvent } from '../src/platform/EventMesh/Services/SystemAuditBridge';
 
 export const systemEventsRouter = express.Router();
 
@@ -121,6 +122,16 @@ export function logSystemEvent(
         console.error("SSE failed to write to a client:", err);
       }
     });
+
+    // ADR-0018, Folgeentscheidung 3: zusaetzliche Veroeffentlichung ueber die
+    // Enterprise Event Mesh - additiv, eigener try/catch, damit ein Fehler hier
+    // niemals den obigen (bereits abgeschlossenen) Audit-Log-Schreibvorgang oder das
+    // SSE-Broadcast gefaehrden kann.
+    try {
+      publishSystemAuditEvent({ type, action, userEmail: newEvent.userEmail, details, status, ip });
+    } catch (meshErr) {
+      console.error("[EventMesh] SystemAuditEvent konnte nicht veroeffentlicht werden:", meshErr);
+    }
   } catch (e) {
     console.error("Error logging system event:", e);
   }

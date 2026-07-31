@@ -1,6 +1,6 @@
 {
   "name": "EventMesh",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "development",
   "owner": "Platform Director",
   "description": "Enterprise Event Mesh (EEM). Zentrale Kommunikationsschicht der CAPITAL-AI Plattform. Registriert, validiert, routet und protokolliert Enterprise Events zwischen Fachkomponenten. Erzeugt selbst keine fachlichen Events und keine Geschaeftslogik, sondern ausschliesslich Registrierung, Routing und Reports. Implementiert das in ESS-0001-CONTRACTS Chapter 8 bereits normativ definierte Event- und Messaging-Regelwerk.",
@@ -137,5 +137,6 @@
     "docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md"
   ],
   "conformanceLevel": null,
+  "implementationStatus": "Implementiert (Stufe 1-4). Erste Komponente im gesamten src/platform-Baum mit ausfuehrbarem Code (ADR-0018, Folgeentscheidung 1). In-Memory, ohne externe Abhaengigkeiten. Sieben Vertragstests unter Tests/eventBus.test.ts.",
   "note": "Zweite Komponente des Repositorys mit vollstaendigem Metadatensatz einschliesslich component.yaml und CHANGELOG.md, nach Traceability (ADR-0015) und in gleicher Weise wie dort etabliert."
 }
