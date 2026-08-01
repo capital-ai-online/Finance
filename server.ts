@@ -22,6 +22,7 @@ import { generateTraditionalAssetInputs, generateTraditionalAssetInputsFromClose
 import { ensureFundamentalsFresh, getCachedFundamentals } from './server/stockFundamentals';
 import { INDEX_FMP_TICKERS, ensureIndexQuoteFresh, getCachedIndexQuote, ensureIndexHistoryFresh, getCachedIndexHistory } from './server/fmpIndices';
 import { supervisorRouter } from './server/supervisorRouter';
+import { createAgentEvaluationRouter } from './server/agentEvaluationRouter';
 import { executeSupervised } from './src/platform/Supervisor/supervisor';
 import { newsRouter } from './src/features/news/newsRoutes';
 import { registryRouter } from './src/features/registry/registryRoutes';
@@ -362,6 +363,7 @@ app.use('/api/compliance', complianceRouter);
 app.use('/api/scoring', scoreValidationRouter);
 app.use('/api/alerts', alertsRouter);
 app.use('/api/admin/supervisor', supervisorRouter);
+app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai));
 app.use('/api/news', newsRouter);
 app.use('/api/registry', registryRouter);
 app.use('/api', aiRouter);
