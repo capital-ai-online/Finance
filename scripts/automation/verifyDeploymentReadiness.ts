@@ -52,7 +52,7 @@ const KNOWN_OPTIONAL_ENV_VARS = new Set([
   'OWNER_DISPLAY_NAME', 'OWNER_BUSINESS_EMAIL', 'OWNER_DEFAULT_AUTHOR_EMAIL', 'OWNER_NOTIFICATION_EMAIL', 'OWNER_LEGACY_EMAILS', // server/ownerConfig_server.ts: alle mit hartkodiertem Fallback.
   'RENDER_EXTERNAL_URL', // server/alerts.ts (H2): von Render automatisch gesetzt, lokaler Fallback auf localhost.
   'PORT', // server/alerts.ts (H2): hartkodierter Fallback '3000', identisch zu server.ts' eigener PORT-Konstante.
-  'ANTHROPIC_MODEL', // server/anthropicClient.ts (J3): hartkodierter Fallback 'claude-haiku-4-5-20251001'.
+  'ANTHROPIC_MODEL', // server/anthropicClient.ts (J3): hartkodierter Fallback 'claude-haiku-4-5'.
 ]);
 
 // Gruppen von Variablen, die sich gegenseitig per `||` vertreten (server/db.ts, server/stripe.ts) -

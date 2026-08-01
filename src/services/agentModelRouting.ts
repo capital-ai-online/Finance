@@ -36,7 +36,7 @@ export interface StructuredGenerationRequest {
 
 export interface StructuredGenerationResult {
   data: any;
-  /** Tatsaechlich erfolgreich verwendetes Modell, z.B. 'gemini-3.1-pro-preview' oder 'anthropic:claude-haiku-4-5-20251001'. */
+  /** Tatsaechlich erfolgreich verwendetes Modell, z.B. 'gemini-3.1-pro-preview' oder 'anthropic:claude-haiku-4-5'. */
   provider: string;
 }
 

@@ -32,5 +32,5 @@ export function isAnthropicConfigured(): boolean {
  * wenn beide Gemini-Modelle bereits fehlgeschlagen sind, nicht als Premium-Erstwahl.
  */
 export function getAnthropicModel(): string {
-  return getCleanEnv('ANTHROPIC_MODEL') || 'claude-haiku-4-5-20251001';
+  return getCleanEnv('ANTHROPIC_MODEL') || 'claude-haiku-4-5';
 }
