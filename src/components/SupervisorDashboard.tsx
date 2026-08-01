@@ -105,6 +105,11 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
   const [isLoadingOrchestrators, setIsLoadingOrchestrators] = useState(false);
   const [orchestratorsError, setOrchestratorsError] = useState<string | null>(null);
 
+  // Audit ARCH-AUDIT-0002 (H4): Status der realen Supervisor-Komponente
+  // (src/platform/Supervisor/supervisor.ts, GET /api/admin/supervisor/status).
+  const [supervisorStatus, setSupervisorStatus] = useState<any | null>(null);
+  const [supervisorStatusError, setSupervisorStatusError] = useState<string | null>(null);
+
   // Dynamic state for alert simulations
   const [activeNotification, setActiveNotification] = useState<{ id: string; message: string; type: 'success' | 'warning' | 'error' } | null>(null);
   const [backupStatus, setBackupStatus] = useState<'idle' | 'running' | 'success'>('idle');
@@ -222,13 +227,31 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
     }
   };
 
+  // Audit ARCH-AUDIT-0002 (H4): laedt Routing-Tabelle + juengste supervised Ausfuehrungen.
+  const fetchSupervisorStatus = async () => {
+    try {
+      const res = await authFetch('/api/admin/supervisor/status');
+      if (res.ok) {
+        setSupervisorStatus(await res.json());
+        setSupervisorStatusError(null);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setSupervisorStatusError(errData.error || `Fehler ${res.status} beim Laden.`);
+      }
+    } catch (err: any) {
+      setSupervisorStatusError(err?.message || 'Verbindung fehlgeschlagen.');
+    }
+  };
+
   useEffect(() => {
     fetchLiveServerMetrics();
     fetchAgents();
     fetchOrchestratorStatus();
+    fetchSupervisorStatus();
     const metricsTimer = setInterval(() => {
       fetchLiveServerMetrics();
       fetchOrchestratorStatus();
+      fetchSupervisorStatus();
     }, 10000);
     return () => clearInterval(metricsTimer);
   }, []);
@@ -784,6 +807,75 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Audit ARCH-AUDIT-0002 (H4): reale Supervisor-Steuerungslogik statt reiner
+                  Anzeige - Routing-Tabelle + juengste executeSupervised()-Ausfuehrungen aus
+                  server/supervisorRouter.ts (GET /api/admin/supervisor/status). */}
+              <div className="bg-[#111114] border border-white/5 rounded-2xl p-6 space-y-5">
+                <div className="space-y-1 border-b border-white/5 pb-3.5">
+                  <h3 className="text-sm font-bold font-mono text-white uppercase tracking-wider flex items-center gap-2">
+                    <Settings size={16} className="text-aif-gold-DEFAULT" />
+                    <span>Supervisor • Task Routing &amp; Execution Control</span>
+                  </h3>
+                  <p className="text-xs text-white/40 font-sans">
+                    Reale Steuerungslogik (src/platform/Supervisor/supervisor.ts): Anlageklasse → zuständige Engine, sowie Retry-mit-Backoff für supervised Hintergrund-Aufgaben.
+                  </p>
+                </div>
+
+                {supervisorStatusError && (
+                  <div className="bg-rose-500/5 border border-rose-500/20 rounded-xl p-4 text-xs font-mono text-rose-300">
+                    {supervisorStatusError}
+                  </div>
+                )}
+
+                {supervisorStatus && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <span className="text-[9px] text-white/40 font-mono uppercase tracking-widest">Routing-Tabelle</span>
+                      <div className="space-y-1.5">
+                        {Object.entries(supervisorStatus.routingTable || {}).map(([assetClass, route]: [string, any]) => (
+                          <div key={assetClass} className="flex items-center justify-between bg-black/20 border border-white/5 rounded-lg px-3 py-2 text-[10px] font-mono">
+                            <span className="text-white/70 uppercase">{assetClass}</span>
+                            <span className={route.hasDedicatedEngine ? 'text-emerald-400' : 'text-amber-400'}>{route.engineId}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {Object.entries(supervisorStatus.capabilities || {}).map(([cap, enabled]: [string, any]) => (
+                          <span
+                            key={cap}
+                            className={`text-[8px] font-mono uppercase px-1.5 py-0.5 rounded border ${
+                              enabled ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-white/5 border-white/10 text-white/30'
+                            }`}
+                            title={enabled ? 'implementiert' : 'nicht implementiert'}
+                          >
+                            {cap}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <span className="text-[9px] text-white/40 font-mono uppercase tracking-widest">Jüngste supervised Ausführungen</span>
+                      {(supervisorStatus.recentExecutions || []).length === 0 ? (
+                        <div className="bg-black/20 border border-white/5 rounded-xl p-4 text-center text-[10px] text-white/40 font-mono">
+                          Noch keine Ausführungen aufgezeichnet.
+                        </div>
+                      ) : (
+                        <div className="space-y-1 max-h-[220px] overflow-y-auto custom-scrollbar pr-1">
+                          {supervisorStatus.recentExecutions.slice(0, 10).map((exec: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between bg-black/20 border border-white/5 rounded-lg px-3 py-1.5 text-[9px] font-mono">
+                              <span className="text-white/60">{exec.taskName}</span>
+                              <span className="text-white/40">{exec.attempts}× · {exec.durationMs}ms</span>
+                              <span className={exec.succeeded ? 'text-emerald-400' : 'text-rose-400'}>{exec.succeeded ? 'OK' : 'FEHLER'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Grid 2: Latency routing check & Live terminal */}

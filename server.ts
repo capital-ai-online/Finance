@@ -20,6 +20,8 @@ import { scoreValidationRouter, recordDailySnapshots } from './server/scoreValid
 import { alertsRouter, evaluateAlerts } from './server/alerts';
 import { generateTraditionalAssetInputs, TraditionalAssetScoringService } from './src/services/traditionalAssetScoring';
 import { ensureFundamentalsFresh, getCachedFundamentals } from './server/stockFundamentals';
+import { supervisorRouter } from './server/supervisorRouter';
+import { executeSupervised } from './src/platform/Supervisor/supervisor';
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
@@ -355,6 +357,7 @@ app.use('/api/auth', stepUpRouter);
 app.use('/api/compliance', complianceRouter);
 app.use('/api/scoring', scoreValidationRouter);
 app.use('/api/alerts', alertsRouter);
+app.use('/api/admin/supervisor', supervisorRouter);
 app.use('/api', aiRouter);
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
@@ -1059,23 +1062,25 @@ async function fetchLiveMarketData() {
     };
   }));
 
-  // Audit ARCH-AUDIT-0002 (N1): taeglicher Score-/Preis-Snapshot fuer die rueckwirkende
-  // Score-Validierung (server/scoreValidation.ts). Best-effort und nicht abgewartet -
-  // ein Fehler oder eine Verzoegerung hier darf /api/market-data nicht beeintraechtigen.
-  recordDailySnapshots(enriched.map(a => ({
+  // Audit ARCH-AUDIT-0002 (N1, H4): taeglicher Score-/Preis-Snapshot fuer die rueckwirkende
+  // Score-Validierung (server/scoreValidation.ts). Best-effort und nicht abgewartet - ein
+  // Fehler oder eine Verzoegerung hier darf /api/market-data nicht beeintraechtigen. Laeuft
+  // seit H4 ueber den Supervisor (echter Retry-mit-Backoff statt Aufgeben beim ersten
+  // Fehlschlag, z.B. bei einem voruebergehenden Supabase-Verbindungsfehler).
+  executeSupervised('recordDailySnapshots', () => recordDailySnapshots(enriched.map(a => ({
     symbol: a.symbol,
     assetType: a.type,
     score: a.score,
     scoreBasis: a.scoreBasis,
     price: a.price,
-  }))).catch(err => {
+  })))).catch(err => {
     console.warn('[ScoreValidation] recordDailySnapshots fehlgeschlagen:', err?.message || err);
   });
 
-  // Audit ARCH-AUDIT-0002 (H2): Auswertung faelliger Alert-Abos gegen die soeben
+  // Audit ARCH-AUDIT-0002 (H2, H4): Auswertung faelliger Alert-Abos gegen die soeben
   // aktualisierten Scores. Best-effort und nicht abgewartet, gleiches Muster wie
-  // recordDailySnapshots() oben - ein Fehler hier darf /api/market-data nicht beeintraechtigen.
-  evaluateAlerts(enriched.map(a => ({ symbol: a.symbol, score: a.score }))).catch(err => {
+  // recordDailySnapshots() oben - ueber den Supervisor mit echtem Retry.
+  executeSupervised('evaluateAlerts', () => evaluateAlerts(enriched.map(a => ({ symbol: a.symbol, score: a.score })))).catch(err => {
     console.warn('[Alerts] evaluateAlerts fehlgeschlagen:', err?.message || err);
   });
 
