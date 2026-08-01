@@ -1,16 +1,20 @@
 {
   "name": "Supervisor",
-  "version": "1.0.0",
-  "status": "development",
+  "version": "1.1.0",
+  "status": "implemented",
   "owner": "CAPITAL-AI",
-  "description": "",
+  "description": "Task Routing/Tool Selection (Anlageklasse -> zustaendige Scoring-Engine) und Execution Control/Retry/Recovery/Self-Healing (executeSupervised(), echter Retry-mit-Backoff statt Aufgeben beim ersten Fehlschlag) fuer server.ts. Conflict Resolution bewusst nicht implementiert - die Architektur hat pro Anlageklasse genau eine autoritative Engine, siehe supervisor.ts.",
   "category": "platform",
   "ess": [
     "ESS-0001",
     "ESS-0001-CONTRACTS"
   ],
-  "adr": [],
-  "dependencies": [],
+  "adr": [
+    "ADR-0018"
+  ],
+  "dependencies": [
+    "EventMesh"
+  ],
   "events": {
     "produces": [
       "SupervisorAlertEvent",

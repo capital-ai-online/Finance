@@ -17,6 +17,13 @@ import { ClassificationService } from './src/services/classification.service';
 import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './src/services/scoring.service';
 import { trackedGenerateContent } from './src/services/aiUsageTracker';
 import { scoreValidationRouter, recordDailySnapshots } from './server/scoreValidation';
+import { alertsRouter, evaluateAlerts } from './server/alerts';
+import { generateTraditionalAssetInputs, TraditionalAssetScoringService } from './src/services/traditionalAssetScoring';
+import { ensureFundamentalsFresh, getCachedFundamentals } from './server/stockFundamentals';
+import { supervisorRouter } from './server/supervisorRouter';
+import { executeSupervised } from './src/platform/Supervisor/supervisor';
+import { newsRouter } from './src/features/news/newsRoutes';
+import { registryRouter } from './src/features/registry/registryRoutes';
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
@@ -351,6 +358,10 @@ app.use('/api/admin', versionManagerRouter);
 app.use('/api/auth', stepUpRouter);
 app.use('/api/compliance', complianceRouter);
 app.use('/api/scoring', scoreValidationRouter);
+app.use('/api/alerts', alertsRouter);
+app.use('/api/admin/supervisor', supervisorRouter);
+app.use('/api/news', newsRouter);
+app.use('/api/registry', registryRouter);
 app.use('/api', aiRouter);
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
@@ -403,27 +414,39 @@ function getApplicationAreaForSymbol(symbol: string, type: string): string {
 //   ausgeschlossen statt geschaetzt (renormalizeAndScore()). Enthaelt KEINE Agenten-Analyse
 //   (die gibt es nur ueber /api/crypto/analyze via CryptoOrchestrator) - daher weiterhin von
 //   einer vollstaendigen Multi-Agenten-Bewertung unterschieden statt als "live" bezeichnet.
-// - 'heuristic': Aktien, Forex, Indizes, Anleihen - keine eigene Fachengine (anders als
-//   Crypto/Meme/DeFi/Rohstoffe), stattdessen eine Momentum-/Pattern-Heuristik auf Basis von
+// - 'market-data' (Aktien/Forex, seit H1): traditionalAssetScoring.ts kombiniert echte
+//   technische Faktoren (Trend/Momentum/Breakout/Volatilitaet/RSI aus assetRegistry.getHistory(),
+//   dieselben Primitive wie beim Krypto-Scoring) mit - nur bei Aktien - realen Fundamentaldaten
+//   (KGV/Dividendenrendite/Nettomarge von Alpha Vantage OVERVIEW, server/stockFundamentals.ts).
+//   Faellt fuer ein konkretes Symbol ohne jede reale Datenquelle auf die Heuristik zurueck
+//   (dann basis='heuristic', siehe calculateAssetScore()).
+// - 'heuristic': Indizes, Anleihen (keine Live-Kursquelle vorhanden) sowie Aktien/Forex im
+//   seltenen Fall ohne jede reale Datenquelle - eine Momentum-/Pattern-Heuristik auf Basis von
 //   change24h und einer ebenfalls deterministischen Mustererkennung (calculateAssetScore
 //   unterer Zweig).
 // - undefined: Rohstoffe (RawMaterialsScoringService) haben eine dedizierte, konfigurierbare
 //   Fachengine und sind von diesem Befund nicht betroffen.
 const MEME_COIN_SYMBOLS = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'];
-function getScoreBasis(type: string, _symbol?: string): 'market-data' | 'heuristic' | undefined {
-  if (type === 'crypto') return 'market-data';
-  if (type === 'stock' || type === 'forex' || type === 'index' || type === 'bond') return 'heuristic';
-  return undefined;
-}
 
-async function calculateAssetScore(symbol: string, type: string, change24h: number, baseScore?: number): Promise<number> {
+type ScoreBasis = 'market-data' | 'heuristic' | undefined;
+interface AssetScoreResult { score: number; basis: ScoreBasis }
+
+/**
+ * Audit ARCH-AUDIT-0002 (H1): basis spiegelt die TATSAECHLICH verwendete Berechnung wider,
+ * nicht nur den statischen Anlagetyp - Aktien/Forex fallen auf die alte Heuristik zurueck,
+ * wenn fuer ein konkretes Symbol weder reale Kurshistorie noch Fundamentaldaten vorliegen
+ * (siehe unten); in diesem Fall darf 'basis' NICHT 'market-data' behaupten, obwohl der
+ * Anlagetyp das normalerweise waere. Vorher war scoreBasis rein typbasiert (getScoreBasis())
+ * und konnte diesen Fall nicht abbilden.
+ */
+async function calculateAssetScore(symbol: string, type: string, change24h: number, baseScore?: number): Promise<AssetScoreResult> {
   const s = symbol.toUpperCase().trim();
   if (type === 'crypto') {
     const isMemeCoin = MEME_COIN_SYMBOLS.includes(s);
     if (isMemeCoin) {
       const inputs = await MemeCoinScoringService.generateMemeCoinInputs(s, change24h);
       const result = MemeCoinScoringService.scoreMemeCoin(inputs);
-      return result.score;
+      return { score: result.score, basis: 'market-data' };
     } else {
       const classification = ClassificationService.classifyAsset(s);
       const seedScores = await generateCryptoScores(s, change24h);
@@ -436,7 +459,7 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
       const finalScores = classification.category_main === 'DeFi'
         ? calculateDefiScore(payload)
         : calculateBaseScore(payload);
-      return Number(((finalScores.final_score ?? 0) / 10).toFixed(1));
+      return { score: Number(((finalScores.final_score ?? 0) / 10).toFixed(1)), basis: 'market-data' };
     }
   }
 
@@ -445,16 +468,39 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
       // Core raw material scoring utilizing the multi-agent/deterministic scoring service of the Rohstoff-Orchestrator
       // The scoring engine calculates a 0-100 score which we return directly for a unified 0-100 scale.
       const payload = RawMaterialsScoringService.scoreMaterial({ name: s });
-      return Math.min(100.0, Math.max(0.0, Number(payload.scores.final_score.toFixed(1))));
+      return { score: Math.min(100.0, Math.max(0.0, Number(payload.scores.final_score.toFixed(1)))), basis: undefined };
     } catch (err) {
       console.warn(`[Commodity Scoring Fallback] Failed to score via RawMaterialsScoringService for ${s}, using momentum fallback:`, err);
     }
   }
-  
+
+  // Audit ARCH-AUDIT-0002 (H1): echte technische (+ bei Aktien fundamentale) Bewertungslogik,
+  // ersetzt die Hash-Pattern-Heuristik unten fuer genau diese beiden Anlageklassen (Indizes/
+  // Anleihen bleiben auf der Heuristik - es existiert fuer sie aktuell keine Live-Kursquelle).
+  if (type === 'stock' || type === 'forex') {
+    try {
+      let fundamentals: { peRatio?: number; dividendYieldPct?: number; profitMarginPct?: number } | undefined;
+      if (type === 'stock') {
+        await ensureFundamentalsFresh(s);
+        fundamentals = getCachedFundamentals(s);
+      }
+      const inputs = await generateTraditionalAssetInputs(s, type, fundamentals);
+      const result = TraditionalAssetScoringService.scoreTraditionalAsset(inputs);
+      if (result.usedFactors.length > 0) {
+        return { score: result.score, basis: 'market-data' };
+      }
+      // Keine reale Datenquelle fuer dieses Symbol verfuegbar (weder Historie noch
+      // Fundamentaldaten) - auf die Heuristik unten zurueckfallen. basis bleibt unten
+      // korrekt 'heuristic', TROTZ Anlagetyp stock/forex.
+    } catch (err: any) {
+      console.warn(`[TraditionalAssetScoring Fallback] Failed for ${s}, using momentum fallback:`, err?.message || err);
+    }
+  }
+
   // 1. Calculate base momentum score (scaled to 10-100 scale)
   const normBaseScore = baseScore !== undefined ? (baseScore > 10.0 ? baseScore : baseScore * 10) : undefined;
   let baseMomentum = normBaseScore !== undefined ? normBaseScore : (50.0 + (change24h > 0 ? Math.min(40.0, change24h * 5) : Math.max(-40.0, change24h * 5)));
-  
+
   // 2. Adjust based on patterns (scaled to 10-100 scale)
   const pattern = getAssetPatternForSymbol(s);
   let patternBoost = 0;
@@ -476,7 +522,8 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
     }
   }
 
-  return Math.min(100.0, Math.max(1.0, Number(finalScore.toFixed(1))));
+  const clamped = Math.min(100.0, Math.max(1.0, Number(finalScore.toFixed(1))));
+  return { score: clamped, basis: (type === 'index' || type === 'bond' || type === 'stock' || type === 'forex') ? 'heuristic' : undefined };
 }
 
 // Fallback mock data with realistic slightly fluctuating stats on demand
@@ -1009,27 +1056,36 @@ async function fetchLiveMarketData() {
   const enriched = await Promise.all(allMerged.map(async asset => {
     const pattern = getAssetPatternForSymbol(asset.symbol);
     const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
-    const score = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
+    const { score, basis } = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
     return {
       ...asset,
       pattern,
       applicationArea,
       score,
-      scoreBasis: getScoreBasis(asset.type, asset.symbol)
+      scoreBasis: basis
     };
   }));
 
-  // Audit ARCH-AUDIT-0002 (N1): taeglicher Score-/Preis-Snapshot fuer die rueckwirkende
-  // Score-Validierung (server/scoreValidation.ts). Best-effort und nicht abgewartet -
-  // ein Fehler oder eine Verzoegerung hier darf /api/market-data nicht beeintraechtigen.
-  recordDailySnapshots(enriched.map(a => ({
+  // Audit ARCH-AUDIT-0002 (N1, H4): taeglicher Score-/Preis-Snapshot fuer die rueckwirkende
+  // Score-Validierung (server/scoreValidation.ts). Best-effort und nicht abgewartet - ein
+  // Fehler oder eine Verzoegerung hier darf /api/market-data nicht beeintraechtigen. Laeuft
+  // seit H4 ueber den Supervisor (echter Retry-mit-Backoff statt Aufgeben beim ersten
+  // Fehlschlag, z.B. bei einem voruebergehenden Supabase-Verbindungsfehler).
+  executeSupervised('recordDailySnapshots', () => recordDailySnapshots(enriched.map(a => ({
     symbol: a.symbol,
     assetType: a.type,
     score: a.score,
     scoreBasis: a.scoreBasis,
     price: a.price,
-  }))).catch(err => {
+  })))).catch(err => {
     console.warn('[ScoreValidation] recordDailySnapshots fehlgeschlagen:', err?.message || err);
+  });
+
+  // Audit ARCH-AUDIT-0002 (H2, H4): Auswertung faelliger Alert-Abos gegen die soeben
+  // aktualisierten Scores. Best-effort und nicht abgewartet, gleiches Muster wie
+  // recordDailySnapshots() oben - ueber den Supervisor mit echtem Retry.
+  executeSupervised('evaluateAlerts', () => evaluateAlerts(enriched.map(a => ({ symbol: a.symbol, score: a.score })))).catch(err => {
+    console.warn('[Alerts] evaluateAlerts fehlgeschlagen:', err?.message || err);
   });
 
   return enriched;
@@ -1096,7 +1152,7 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
     const dynamicFallback = await Promise.all(assetRegistry.getAssets().map(async asset => {
       const pattern = getAssetPatternForSymbol(asset.symbol);
       const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
-      const score = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
+      const { score, basis } = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
       return {
         ...asset,
         status: 'Fallback',
@@ -1104,7 +1160,7 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
         pattern,
         applicationArea,
         score,
-        scoreBasis: getScoreBasis(asset.type, asset.symbol)
+        scoreBasis: basis
       };
     }));
 
@@ -1358,56 +1414,6 @@ app.get('/api/backtest-history', orchestrator.handle('Backtest Download'), async
   }
 });
 
-// Real-time newsfeed powered by NewsAPI.org or dynamically generated by Gemini AI when NEWS_API_KEY is configured.
-app.get('/api/news', async (req, res) => {
-  const apiKey = process.env.NEWS_API_KEY || process.env.News_API_KEy;
-  
-  if (!apiKey || apiKey.startsWith('MY_') || apiKey.includes('test') || apiKey.length <= 5) {
-    return res.status(503).json({ 
-      status: "NO_DATA", 
-      reason: "NEWS_API_KEY ist nicht konfiguriert oder ungültig." 
-    });
-  }
-
-  // If apiKey is present, try to fetch real news from NewsAPI.org
-  try {
-    const response = await fetch(`https://newsapi.org/v2/everything?q=cryptocurrency+OR+bitcoin+OR+ethereum+OR+finance&sortBy=publishedAt&pageSize=10&apiKey=${apiKey}`);
-    if (response.ok) {
-      const data: any = await response.json();
-      if (data.status === 'ok' && Array.isArray(data.articles)) {
-        const newsItems = data.articles.slice(0, 5).map((art: any, idx: number) => {
-          const text = ((art.title || '') + ' ' + (art.description || '')).toLowerCase();
-          let sentiment = 'neutral';
-          if (text.includes('bullish') || text.includes('surge') || text.includes('gain') || text.includes('rise') || text.includes('rally') || text.includes('growth')) {
-            sentiment = 'positive';
-          } else if (text.includes('bearish') || text.includes('plummet') || text.includes('drop') || text.includes('fall') || text.includes('crash') || text.includes('risk') || text.includes('hack')) {
-            sentiment = 'negative';
-          }
-          return {
-            id: `news_${idx}_${Date.now()}`,
-            headline: art.title || 'Krypto Markt Update',
-            summary: art.description || art.content || 'Keine detaillierte Beschreibung verfügbar.',
-            sentiment,
-            time: new Date(art.publishedAt || Date.now()).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr',
-            source: art.source?.name || 'NewsAPI'
-          };
-        });
-        return res.json(newsItems);
-      }
-    }
-    return res.status(503).json({
-      status: "NO_DATA",
-      reason: "Fehler beim Abrufen der Nachrichten von der externen NewsAPI (Antwort war fehlerhaft)."
-    });
-  } catch (error: any) {
-    console.warn('[News API] Failed to fetch from NewsAPI.org:', error.message || error);
-    return res.status(503).json({
-      status: "NO_DATA",
-      reason: `Der externe NewsAPI-Aufruf ist fehlgeschlagen: ${error.message || error}`
-    });
-  }
-});
-
 // Ad-hoc charts scoring engine using indicators
 app.post('/api/charts-scoring', express.json(), (req, res) => {
   const { symbol, rsi, price, sma, ema } = req.body;
@@ -1491,7 +1497,7 @@ app.get('/api/crypto-scoring/:symbol', async (req, res) => {
   const isMemeCoin = (asset && (asset as any).subtype === 'memecoin') || ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(symbol);
 
   // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): inputs stammen aus realen Marktdaten der
-  // AssetRegistry (siehe getScoreBasis() weiter oben in dieser Datei) statt eines
+  // AssetRegistry (siehe calculateAssetScore() weiter oben in dieser Datei) statt eines
   // Zeichen-Hash-Generators; fehlende Faktoren werden dynamisch ausgeschlossen.
   if (isMemeCoin) {
     const inputs = await MemeCoinScoringService.generateMemeCoinInputs(symbol, change24h);
@@ -1566,56 +1572,6 @@ app.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
 });
 
 // GET all registry assets (highly efficient, zero rate-limit risk)
-app.get('/api/registry/assets', (req, res) => {
-  res.json(assetRegistry.getAssets());
-});
-
-// GET single asset details from registry
-app.get('/api/registry/assets/:symbol', (req, res) => {
-  const asset = assetRegistry.getAsset(req.params.symbol);
-  if (!asset) {
-    return res.status(404).json({ error: 'Asset nicht in der Registry gefunden.' });
-  }
-  res.json(asset);
-});
-
-// UPDATE asset parameters in registry dynamically
-app.post('/api/registry/assets/:symbol', express.json(), async (req, res) => {
-  // ADR-0003.5/0008: zuvor KEINE Zugriffsprüfung an dieser Stelle - jeder Aufrufer
-  // konnte Asset-Parameter unauthentifiziert ändern. Jetzt über IAM abgesichert
-  // (Master-Supervisor-/Orchestrator-Zone).
-  const authz = await checkAdminAccess(req, 'registry:assets:update', SUPERVISOR_ZONE_ROLES);
-  if (!authz.authorized) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.' });
-  }
-
-  const { expectedReturn, volatility, drift, price, change24h, marketCap, isLocked } = req.body;
-  const symbol = req.params.symbol;
-  
-  if (!assetRegistry.getAsset(symbol)) {
-    return res.status(404).json({ error: 'Asset nicht in der Registry gefunden.' });
-  }
-
-  assetRegistry.updateAsset(symbol, {
-    expectedReturn: typeof expectedReturn === 'number' ? expectedReturn : undefined,
-    volatility: typeof volatility === 'number' ? volatility : undefined,
-    drift: typeof drift === 'number' ? drift : undefined,
-    price: typeof price === 'number' ? price : undefined,
-    change24h: typeof change24h === 'number' ? change24h : undefined,
-    marketCap: typeof marketCap === 'number' ? marketCap : undefined,
-    isLocked: typeof isLocked === 'boolean' ? isLocked : undefined
-  }, true);
-
-  logSystemEvent(
-    'ORCHESTRATOR',
-    'Asset Parameter Update',
-    authz.actorLabel,
-    `Updated parameters for ${symbol}: Price=${price}, 24h Change=${change24h}%, Volatility=${volatility}, Drift=${drift}, expectedReturn=${expectedReturn}`,
-    'SUCCESS'
-  );
-
-  res.json({ success: true, asset: assetRegistry.getAsset(symbol) });
-});
 
 
 // GET real-time financial market sentiment via Google Search Grounding and Gemini 3.5 Flash
