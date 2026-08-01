@@ -77,6 +77,14 @@ interface ScannerDef {
   id: string;
   name: string;
   type: string;
+  // Audit ARCH-AUDIT-0002 (N6): ISO/IEC 27001:2022 Annex-A-Kontrollen (2022er Revision,
+  // NICHT die 2013er Nummerierung mit den Domaenen A.9/A.12/A.14), denen dieser Scanner
+  // fachlich zuzuordnen ist. Interne Selbsteinschaetzung anhand des tatsaechlich
+  // geprueften Sachverhalts, kein zertifiziertes Audit-Mapping - dient als Startpunkt fuer
+  // eine spaetere ISO-27001-Zertifizierungsvorbereitung (Roadmap J6), nicht als deren
+  // Ersatz. Bewusst leer bei reinen Code-Qualitaets-/Geschaeftslogik-Pruefungen ohne
+  // direkten Informationssicherheits-Kontrollbezug, statt eine Zuordnung zu erzwingen.
+  isoControls: string[];
   evaluate: (files: RepoFile[]) => { findings: Finding[]; evidence: string; confidenceScore?: number };
 }
 
@@ -84,6 +92,7 @@ const SCANNERS: ScannerDef[] = [
   // --- SECURITY (7) --------------------------------------------------
   {
     id: 'SEC-01', name: 'Hardcoded Live Secrets', type: 'SECURITY',
+    isoControls: ['A.8.28 Secure coding', 'A.5.17 Authentication information'],
     evaluate: (files) => {
       const pattern = /sk_live_[A-Za-z0-9]+|pk_live_[A-Za-z0-9]+|AKIA[0-9A-Z]{16}|-----BEGIN (RSA |EC )?PRIVATE KEY-----/;
       const hits = files.filter(f => pattern.test(f.content));
@@ -99,6 +108,7 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'SEC-02', name: 'Globales API Rate Limiting', type: 'SECURITY',
+    isoControls: ['A.8.6 Capacity management'],
     evaluate: (files) => {
       const serverTs = files.find(f => f.relPath === 'server.ts');
       const hasGlobal = !!serverTs && /app\.use\([^)]*rate.?limit/i.test(serverTs.content);
@@ -114,6 +124,7 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'SEC-03', name: 'Stripe Webhook Signaturprüfung', type: 'SECURITY',
+    isoControls: ['A.8.26 Application security requirements', 'A.5.20 Addressing information security within supplier agreements'],
     evaluate: (files) => {
       const stripeFile = files.find(f => f.relPath === path.join('server', 'stripe.ts')) ||
         files.find(f => f.relPath.endsWith(path.join('server', 'stripe.ts')));
@@ -132,6 +143,7 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'SEC-04', name: 'IAM Fail-Closed Verhalten', type: 'SECURITY',
+    isoControls: ['A.5.15 Access control', 'A.8.2 Privileged access rights'],
     evaluate: (files) => {
       const authMw = files.find(f => f.relPath.endsWith(path.join('iam', 'authMiddleware.ts')));
       const failClosed = !!authMw && /authorized:\s*false/.test(authMw.content) && /supabase-not-configured/.test(authMw.content);
@@ -147,6 +159,7 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'SEC-05', name: 'Step-Up-Erzwingung für Owner-Aktionen', type: 'SECURITY',
+    isoControls: ['A.8.5 Secure authentication', 'A.8.2 Privileged access rights'],
     evaluate: (files) => {
       const usages = files.filter(f => !f.relPath.endsWith(path.join('iam', 'authMiddleware.ts')) && /requireStepUp\(/.test(f.content));
       const findings: Finding[] = usages.length > 0 ? [] : [mkFinding({
@@ -160,6 +173,7 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'SEC-06', name: 'CORS-Konfiguration', type: 'SECURITY',
+    isoControls: ['A.8.26 Application security requirements'],
     evaluate: (files) => {
       const serverTs = files.find(f => f.relPath === 'server.ts');
       const content = serverTs?.content || '';
@@ -175,6 +189,7 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'SEC-07', name: 'HTTP-Sicherheitsheader', type: 'SECURITY',
+    isoControls: ['A.8.26 Application security requirements'],
     evaluate: (files) => {
       const serverTs = files.find(f => f.relPath === 'server.ts');
       const content = serverTs?.content || '';
@@ -195,6 +210,7 @@ const SCANNERS: ScannerDef[] = [
   // --- DATA & PRIVACY (5) ---------------------------------------------
   {
     id: 'DAT-01', name: 'Row Level Security Abdeckung (Migrationen)', type: 'DATA',
+    isoControls: ['A.8.3 Information access restriction', 'A.5.15 Access control'],
     evaluate: () => {
       const migrDir = path.join(REPO_ROOT, 'supabase', 'migrations');
       let files: string[] = [];
@@ -218,6 +234,7 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'DAT-02', name: 'Serverseitige Quota-Durchsetzung', type: 'DATA',
+    isoControls: ['A.8.3 Information access restriction'],
     evaluate: (files) => {
       const quotaFile = files.find(f => f.relPath === path.join('server', 'quota.ts'));
       const serverTs = files.find(f => f.relPath === 'server.ts');
@@ -233,6 +250,7 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'DAT-03', name: 'IAM Audit-Trail-Abdeckung', type: 'DATA',
+    isoControls: ['A.8.15 Logging'],
     evaluate: (files) => {
       const usages = files.filter(f => !f.relPath.endsWith(path.join('iam', 'authMiddleware.ts')) && /logIamEvent\(/.test(f.content));
       const findings: Finding[] = usages.length > 0 ? [] : [mkFinding({
@@ -246,6 +264,7 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'DAT-04', name: 'PII in Log-Ausgaben', type: 'DATA',
+    isoControls: ['A.8.12 Data leakage prevention', 'A.5.34 Privacy and protection of PII'],
     evaluate: (files) => {
       const pattern = /console\.(log|warn|error)\([^)]*\$\{[^}]*password[^}]*\}/i;
       const hits = files.filter(f => pattern.test(f.content));
@@ -261,6 +280,7 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'DAT-05', name: 'Secret-Hygiene (.env)', type: 'DATA',
+    isoControls: ['A.5.17 Authentication information', 'A.8.12 Data leakage prevention'],
     evaluate: () => {
       const gitignorePath = path.join(REPO_ROOT, '.gitignore');
       let ignoresEnv = false;
@@ -280,6 +300,7 @@ const SCANNERS: ScannerDef[] = [
   // --- BILLING (3) -----------------------------------------------------
   {
     id: 'BIL-01', name: 'Verifizierte Identität in Billing-Endpunkten', type: 'BILLING',
+    isoControls: ['A.5.15 Access control', 'A.8.3 Information access restriction'],
     evaluate: (files) => {
       const stripeFile = files.find(f => f.relPath.endsWith(path.join('server', 'stripe.ts')));
       const usages = stripeFile ? (stripeFile.content.match(/resolveVerifiedIdentity\(/g) || []).length : 0;
@@ -295,6 +316,7 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'BIL-02', name: 'Stripe als Single Source of Truth', type: 'BILLING',
+    isoControls: ['A.5.33 Protection of records'],
     evaluate: (files) => {
       const stripeFile = files.find(f => f.relPath.endsWith(path.join('server', 'stripe.ts')));
       const ok = !!stripeFile && /sync_stripe_subscription_to_public/.test(stripeFile.content);
@@ -309,6 +331,9 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'BIL-03', name: 'Jahresrabatt über eigene Price-ID', type: 'BILLING',
+    // Reine Abrechnungskorrektheit (Geschaeftslogik), kein Informationssicherheits-
+    // Kontrollbezug - bewusst kein ISO-27001-Mapping erzwungen.
+    isoControls: [],
     evaluate: (files) => {
       const stripeFile = files.find(f => f.relPath.endsWith(path.join('server', 'stripe.ts')));
       // Der Jahresrabatt steckt im Betrag der separaten STRIPE_PRICE_ID_*_YEARLY
@@ -329,6 +354,7 @@ const SCANNERS: ScannerDef[] = [
   // --- CODE QUALITY (3) --------------------------------------------------
   {
     id: 'QUA-01', name: 'TODO/FIXME/HACK-Marker', type: 'CODE_QUALITY',
+    isoControls: ['A.8.28 Secure coding'],
     evaluate: (files) => {
       const pattern = /\b(TODO|FIXME|HACK)\b/;
       const hits = files.filter(f => pattern.test(f.content));
@@ -343,6 +369,9 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'QUA-02', name: 'Import-Integrität (server/ ↔ src/)', type: 'CODE_QUALITY',
+    // Build-/Typkorrektheit, kein Informationssicherheits-Kontrollbezug - bewusst kein
+    // ISO-27001-Mapping erzwungen.
+    isoControls: [],
     evaluate: (files) => {
       const importPattern = /from\s+['"](\.\.[\/\\][^'"]*server[\/\\][^'"]+)['"]/g;
       const broken: { file: RepoFile; target: string }[] = [];
@@ -370,6 +399,9 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'QUA-03', name: 'Unreferenzierte Komponenten', type: 'CODE_QUALITY',
+    // Wartbarkeit/toter Code, kein Informationssicherheits-Kontrollbezug - bewusst kein
+    // ISO-27001-Mapping erzwungen.
+    isoControls: [],
     evaluate: (files) => {
       const componentFiles = files.filter(f => f.relPath.startsWith(path.join('src', 'components')) && f.relPath.endsWith('.tsx'));
       const others = files.filter(f => !componentFiles.includes(f));
@@ -392,6 +424,7 @@ const SCANNERS: ScannerDef[] = [
   // --- GOVERNANCE (3) ----------------------------------------------------
   {
     id: 'GOV-01', name: 'ADR Implementation-Status Abdeckung', type: 'GOVERNANCE',
+    isoControls: ['A.5.37 Documented operating procedures', 'A.5.1 Policies for information security'],
     evaluate: () => {
       const adrDir = path.join(REPO_ROOT, 'docs', 'adr');
       let files: string[] = [];
@@ -408,6 +441,7 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'GOV-02', name: 'ESS-Registry Vollständigkeit', type: 'GOVERNANCE',
+    isoControls: ['A.5.37 Documented operating procedures'],
     evaluate: () => {
       const registryPath = path.join(REPO_ROOT, '.ai', 'registry', 'ess-registry.json');
       let missing = 0;
@@ -429,6 +463,7 @@ const SCANNERS: ScannerDef[] = [
   },
   {
     id: 'GOV-03', name: 'Governance-Verzeichnisstruktur', type: 'GOVERNANCE',
+    isoControls: ['A.5.37 Documented operating procedures'],
     evaluate: () => {
       const dirs = ['quality', 'release', 'knowledge', 'compliance'].map(d => path.join(REPO_ROOT, 'docs', d));
       const empty = dirs.filter(d => {
@@ -462,6 +497,7 @@ export function runAllScanners(): ScannerResult[] {
       findings,
       riskScore,
       executionTimeMs: Date.now() - start,
+      isoControls: def.isoControls,
     };
   });
 }
