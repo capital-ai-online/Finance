@@ -67,3 +67,25 @@ services:
       # deaktiviert (fail-closed) - kein Default, kein Fallback auf "offen".
       - key: METRICS_TOKEN
         sync: false
+      # ADR-0020 Social Media Direct Publishing: OAuth-2.0-Client-Credentials pro Plattform.
+      # Setup je Plattform: docs/runbooks/SOCIAL_MEDIA_OAUTH_SETUP.md
+      - key: YOUTUBE_CLIENT_ID
+        sync: false
+      - key: YOUTUBE_CLIENT_SECRET
+        sync: false
+      - key: TIKTOK_CLIENT_ID
+        sync: false
+      - key: TIKTOK_CLIENT_SECRET
+        sync: false
+      - key: INSTAGRAM_CLIENT_ID
+        sync: false
+      - key: INSTAGRAM_CLIENT_SECRET
+        sync: false
+      - key: X_CLIENT_ID
+        sync: false
+      - key: X_CLIENT_SECRET
+        sync: false
+      - key: FACEBOOK_CLIENT_ID
+        sync: false
+      - key: FACEBOOK_CLIENT_SECRET
+        sync: false

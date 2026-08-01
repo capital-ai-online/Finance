@@ -30,6 +30,7 @@ import { PriceAlert } from './PriceAlert';
 import { MarketSentiment } from './MarketSentiment';
 import { SentimentDashboard } from './SentimentDashboard';
 import { RawMaterialsDashboard } from './RawMaterialsDashboard';
+import { SocialAccountManager } from './SocialAccountManager';
 import { AssetUniverseDashboard } from './AssetUniverseDashboard';
 import { SystemLatencyMonitor } from './SystemLatencyMonitor';
 import { LandingPage } from './LandingPage';
@@ -72,7 +73,8 @@ import {
   FolderKanban,
   Eye,
   ArrowUpRight,
-  Award
+  Award,
+  Share2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -107,7 +109,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<string>('1std');
-  const [activeView, setActiveView] = useState<'dashboard' | 'myworkspace' | 'universe-scoring' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'defi-orchestration' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'myworkspace' | 'universe-scoring' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'defi-orchestration' | 'social-accounts' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
   const [adminTab, setAdminTab] = useState<'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor' | 'compliance'>('users');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>('hub');
@@ -707,6 +709,20 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                             >
                               <Orbit size={14} className={activeView === 'raw-materials' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
                               <span>Rohstoff-Bewertung</span>
+                            </button>
+                          </SidebarTooltip>
+
+                          <SidebarTooltip title="Social Media Accounts" text="Verknüpfe YouTube, TikTok, Instagram, X und Facebook per OAuth 2.0 für Direct Publishing und Terminierung (ADR-0020).">
+                            <button
+                              onClick={() => navigateTo('social-accounts')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'social-accounts'
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]'
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <Share2 size={14} className={activeView === 'social-accounts' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
+                              <span>Social Media Accounts</span>
                             </button>
                           </SidebarTooltip>
                         </motion.div>
@@ -1320,6 +1336,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                 {activeView === 'myworkspace' && 'Myworkspace – Persönlicher Radar'}
                 {activeView === 'universe-scoring' && 'Universum Best & Worst Asset Leaderboard'}
                 {activeView === 'raw-materials' && 'Rohstoff-Kategorisierung & AI-Scoring'}
+                {activeView === 'social-accounts' && 'Social Media Direct Publishing Hub'}
                 {activeView === 'asset-universe' && 'Multi-Asset-Klassen Cockpit'}
                 {activeView === 'defi-orchestration' && 'DeFi Token Orchestration & IL Radar'}
                 {activeView === 'buffet-value' && 'Buffet Value Check'}
@@ -1762,6 +1779,10 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
 
             {activeView === 'raw-materials' && (
               <RawMaterialsDashboard />
+            )}
+
+            {activeView === 'social-accounts' && (
+              <SocialAccountManager />
             )}
 
             {activeView === 'asset-universe' && (
