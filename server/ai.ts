@@ -3,9 +3,23 @@ import multer from 'multer';
 import fs from 'fs';
 import { GoogleGenAI } from '@google/genai';
 import { orchestrator } from '../src/lib/requestOrchestrator';
+import { resolveVerifiedIdentity } from './iam/authMiddleware';
 
 export const aiRouter = express.Router();
-const upload = multer({ dest: 'uploads/' });
+
+// Audit ARCH-AUDIT-0002 (AUD2-F-016): zuvor ohne Groessenbegrenzung und ohne MIME-Pruefung -
+// jeder beliebige Dateityp und jede Groesse konnte hochgeladen werden. 8 MB deckt uebliche
+// Foto-/Screenshot-Groessen ab; die Gemini-Vision-API akzeptiert ohnehin nur Bildformate.
+const upload = multer({
+  dest: 'uploads/',
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!/^image\/(png|jpe?g|webp|gif|heic|heif)$/i.test(file.mimetype)) {
+      return cb(new Error('Nur Bilddateien (PNG, JPEG, WebP, GIF, HEIC) sind erlaubt.'));
+    }
+    cb(null, true);
+  },
+});
 
 // Lazy-loaded Gemini Client instance (Complies with critical SDK lazy init and error prevention standards)
 let aiClient: GoogleGenAI | null = null;
@@ -64,7 +78,24 @@ aiRouter.post('/chat', orchestrator.handle('Gemini Chat'), async (req, res) => {
 });
 
 // 2. AI Image Analysis Endpoint
-aiRouter.post('/analyze-image', upload.single('image'), orchestrator.handle('Gemini Vision'), async (req, res) => {
+// Audit ARCH-AUDIT-0002 (AUD2-F-016): zuvor ohne jede Authentifizierung aufrufbar - jeder
+// unangemeldete Client konnte beliebig oft die kostenpflichtige Gemini-Vision-API auslösen.
+aiRouter.post(
+  '/analyze-image',
+  (req, res, next) => {
+    upload.single('image')(req, res, (err: any) => {
+      if (err) {
+        return res.status(400).json({ error: err.message || 'Datei-Upload fehlgeschlagen.' });
+      }
+      next();
+    });
+  },
+  orchestrator.handle('Gemini Vision'),
+  async (req, res) => {
+  const identity = await resolveVerifiedIdentity(req);
+  if (!identity) {
+    return res.status(401).json({ error: 'Authentifizierung erforderlich.' });
+  }
   if (!isGeminiConfigured()) {
     return res.status(500).json({ error: 'Gemini API key is missing or invalid' });
   }

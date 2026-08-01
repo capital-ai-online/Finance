@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { authFetch } from '../lib/authFetch';
+import { StepUpModal } from './StepUpModal';
 import {
   GitBranch,
   History,
@@ -57,6 +58,9 @@ export function VersionManagerPanel({ currentUserEmail }: VersionManagerPanelPro
   const [authorName, setAuthorName] = useState('Sven Kulessa');
   const [bumpNotes, setBumpNotes] = useState('');
   const [isBumping, setIsBumping] = useState(false);
+  // ADR-0003.5 / Audit ARCH-AUDIT-0002 (D9): Versions-Bump erfordert seit dem 31.07.2026
+  // einen frischen Step-Up-Nachweis (server/versionManager.ts requireFreshStepUp).
+  const [showStepUpModal, setShowStepUpModal] = useState(false);
 
   // Active document viewer
   const [viewedDoc, setViewedDoc] = useState<{ path: string; title: string } | null>(null);
@@ -93,14 +97,18 @@ export function VersionManagerPanel({ currentUserEmail }: VersionManagerPanelPro
     fetchVersionStatus();
   }, [currentUserEmail]);
 
-  // Execute manual event-driven version bump
-  const handleVersionBump = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Execute manual event-driven version bump. Erfordert seit ADR-0003.5-Erzwingung (D9) einen
+  // frischen Step-Up-Nachweis: ohne stepUpToken wird bei HTTP 428 der StepUpModal geöffnet,
+  // nach erfolgreicher Verifikation ruft sich diese Funktion mit dem Token erneut auf.
+  const performVersionBump = async (stepUpToken?: string) => {
     setIsBumping(true);
     try {
       const res = await authFetch('/api/admin/version/bump', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(stepUpToken ? { 'x-step-up-token': stepUpToken } : {})
+        },
         body: JSON.stringify({
           forceBump: bumpType,
           author: authorName,
@@ -108,6 +116,11 @@ export function VersionManagerPanel({ currentUserEmail }: VersionManagerPanelPro
         })
       });
 
+      if (res.status === 428) {
+        setIsBumping(false);
+        setShowStepUpModal(true);
+        return;
+      }
       if (res.status === 401 || res.status === 403) {
         throw new Error('Zugriff verweigert: Keine ausreichende Berechtigung für Versions-Bumps.');
       }
@@ -129,6 +142,16 @@ export function VersionManagerPanel({ currentUserEmail }: VersionManagerPanelPro
     } finally {
       setIsBumping(false);
     }
+  };
+
+  const handleVersionBumpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    void performVersionBump();
+  };
+
+  const handleStepUpSuccess = (stepUpToken: string) => {
+    setShowStepUpModal(false);
+    void performVersionBump(stepUpToken);
   };
 
   // Preview documentary file content (attempt real read from server, fallback to simulated)
@@ -277,7 +300,7 @@ export function VersionManagerPanel({ currentUserEmail }: VersionManagerPanelPro
 
         {/* Version control Trigger Manual Bump Form */}
         <div className="lg:col-span-2 bg-[#111114] border border-white/5 rounded-2xl p-5">
-          <form onSubmit={handleVersionBump} className="space-y-3.5 h-full flex flex-col justify-between">
+          <form onSubmit={handleVersionBumpSubmit} className="space-y-3.5 h-full flex flex-col justify-between">
             <div className="space-y-3">
               <div className="flex justify-between items-center border-b border-white/5 pb-2">
                 <h3 className="text-xs font-bold font-mono text-white uppercase tracking-wider flex items-center gap-1.5">
@@ -728,6 +751,14 @@ export function VersionManagerPanel({ currentUserEmail }: VersionManagerPanelPro
         )}
       </AnimatePresence>
 
+      {showStepUpModal && (
+        <StepUpModal
+          purpose="version-bump"
+          actionLabel="Versions-Bump"
+          onSuccess={handleStepUpSuccess}
+          onCancel={() => setShowStepUpModal(false)}
+        />
+      )}
     </div>
   );
 }

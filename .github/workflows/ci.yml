@@ -1,0 +1,34 @@
+name: CI
+
+# Audit ARCH-AUDIT-0002 (D6, Kapitel 4.9/11): Es gab bislang keine Continuous Integration -
+# .github/ existierte in der gesamten Codebasis nicht. Fuehrt genau die drei Pruefungen aus,
+# die zuvor manuell nach jeder Aenderung ausgefuehrt wurden (siehe Session-Historie dieses
+# Repos): tsc --noEmit, Testsuite (D5), Produktionsbuild.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck (tsc --noEmit)
+        run: npm run lint
+
+      - name: Unit tests (Vitest)
+        run: npm test
+
+      - name: Production build (vite + esbuild)
+        run: npm run build

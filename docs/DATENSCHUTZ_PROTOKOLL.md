@@ -47,15 +47,15 @@
 **Projekt**: CAPITAL-AI  
 **Dokumenttyp**: Konformitäts- & Beweisprotokoll für EU-Aufsichtsbehörden & Gerichte  
 **Klassifizierung**: Öffentlich / Audit-Ready  
-**Version**: 1.0.0 (Gerichtsfeste Fassung)  
-**Letzte Prüfung**: 29. Juni 2026  
+**Version**: 1.1.0 (Nachgeführt gemäß Enterprise-Architektur-Audit ARCH-AUDIT-0002)  
+**Letzte Prüfung**: 31. Juli 2026  
 
 ---
 
 ## 🏛️ Präambel
 Dieses Protokoll dient der rechtsverbindlichen Dokumentation aller datenverarbeitenden Prozesse, Datenflüsse und externen Schnittstellen der Anwendung **CAPITAL-AI**. Es wurde nach den strengen Standards der europäischen Datenschutz-Grundverordnung (**EU-DSGVO**), des Bundesdatenschutzgesetzes (**BDSG**) sowie des Telekommunikation-Telemedien-Datenschutz-Gesetzes (**TDDDG**) konzipiert. 
 
-Das System ist nach dem Grundsatz **„Privacy-by-Design“ (Art. 25 Abs. 1 DSGVO)** aufgebaut. Es stellt sicher, dass **keine unautorisierten IP-Adressen-Lecks** an US-amerikanische Drittanbieter stattfinden und sämtliche Berechnungsmodelle der gesetzlichen **No-Demo-Data-Policy** (Verbot von simulierten Täuschungsdaten ohne reale Historie) entsprechen.
+Das System ist nach dem Grundsatz **„Privacy-by-Design“ (Art. 25 Abs. 1 DSGVO)** aufgebaut. Es stellt sicher, dass **keine unautorisierten IP-Adressen-Lecks** an US-amerikanische Drittanbieter stattfinden. Die **No-Demo-Data-Policy** (Verbot von simulierten Täuschungsdaten ohne reale Historie, ohne dies dem Nutzer sichtbar offenzulegen) gilt für sämtliche Berechnungsmodelle; ihr aktueller Umsetzungsstand ist in Abschnitt 2.1 offengelegt, einschließlich einer bekannten, dokumentierten Abweichung bei den Krypto-Scoring-Eingangsgrößen.
 
 ---
 
@@ -88,6 +88,16 @@ Um die Einhaltung der gesetzlichen **No-Demo-Data Policy** zu garantieren, bezie
 | **Supabase / PostgreSQL** | Registrierungen, verschlüsselte Passwörter, historische Backtest-Historie. | **Infrastruktur-internes Netzwerk** (verschlüsselte TCP-Verbindung). | Speicherung des Premium-Abostatus und der systemweiten quantitativen Favoriten-Präferenzen. | IP-Adresse wird zur Missbrauchserkennung kurzzeitig protokolliert (Löschfrist: 7 Tage). | **Hoch**. Geregelt über AVV mit Supabase Inc. (Datenhaltung im Rechenzentrum Frankfurt, Deutschland). |
 | **Google GenAI (Gemini) API** | Intelligentes News-Scoring, regulatorische Analysen. | **Server-to-Server HTTPS** via Google Cloud SDK. | Generierung von Realtime AI Newsfeeds und Modell-Routing-Entscheidungen im CAPITAL-AI. | **Vollständig anonymisiert**. Keine Nutzerdaten oder IPs werden an Google-Modelle übermittelt. | Keine. |
 
+Die vorstehende Matrix betrifft ausschließlich die **Marktpreis-Rohdaten** (Kurse, Marktkapitalisierung, Handelsvolumen). Die Weiterverarbeitung dieser Rohdaten zu einem Bewertungs-Score ist gesondert in Abschnitt 2.1 dokumentiert.
+
+### 2.1 Bekannte Abweichung: Krypto-Scoring-Eingangsgrößen (Offenlegung)
+
+Das Enterprise-Architektur-Audit ARCH-AUDIT-0002 (`docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md`, Kapitel 6, Befund AUD2-F-001) hat festgestellt, dass der Krypto- und Meme-Coin-Bewertungs-Score seine Eingangsgrößen (u. a. Marktkapitalisierungs-Einordnung, Liquiditätsbewertung, Tokenomics, Sicherheits-Einschätzung, Entwickleraktivität, Umsatz, Adoption) **nicht** aus den in der obigen Matrix genannten Live-Datenquellen bezieht, sondern algorithmisch aus einem Zeichen-Hash des Tickersymbols ableitet (`src/services/scoring.service.ts`, `src/services/cryptoScoringService.ts`, `src/services/memeCoinScoringService.ts`).
+
+Diese Abweichung wird seit dem 31. Juli 2026 im Produktivsystem aktiv gegenüber dem Nutzer offengelegt: Betroffene API-Antworten führen ein Feld `scoreBasis: 'synthetic'`, und die konsumierenden Oberflächen (u. a. `CryptoScoringEnterprise.tsx`, `Screener.tsx`, `Watchlist.tsx`, `DeFiOrchestration.tsx`) zeigen einen sichtbaren Warnhinweis, dass der jeweilige Score **nicht marktdatenbasiert und nicht als Grundlage für Anlageentscheidungen geeignet** ist. Diese Kennzeichnung ist eine Sofortmaßnahme; die geplante Anbindung der Eingangsgrößen an reale Marktdaten ist als Maßnahme S1/S2 im 60-Tage-Horizont von ARCH-AUDIT-0002 (Kapitel 14.3) dokumentiert und noch nicht umgesetzt.
+
+Die übrigen in diesem Protokoll beschriebenen Datenflüsse (Marktpreis-Abfrage, Backtest-Historie, Portfolio-Analyse) sind von diesem Befund nicht betroffen; deren Herkunft wird bereits seit der No-Demo-Data-Bereinigung vom 31. Juli 2026 über ein `source`-Feld (`'live' | 'simulated'`) offengelegt.
+
 ---
 
 ## 🔒 3. Technische & Organisatorische Maßnahmen (TOMs - Art. 32 DSGVO)
@@ -98,7 +108,7 @@ Sämtliche Systeme werden nach dem aktuellen Stand der Technik geschützt, um Ve
 Zur Abwendung von Verbindungsunterbrechungen (welche im Finanzsektor zu Fehlentscheidungen führen können) nutzt das Backend eine **Request-Coalescing- & Caching-Architektur**:
 * **Cache-Dauer**: 60 Sekunden (`MARKET_DATA_CACHE_TTL = 60000`).
 * **Zusammenfassung von Anfragen**: Parallele Client-Anfragen werden im RAM zu einem einzigen Downstream-Fetch gebündelt (`activeMarketDataPromise`).
-* **Resiliente Fallbacks**: Bei API-Ausfällen werden verifizierte, dynamisch fluktuierende Fallbacks auf Basis historischer Daten geladen. Die Anwendung stürzt nie ab.
+* **Resiliente Fallbacks**: Bei API-Ausfällen wird auf einen statischen, klar als `dataSource: 'fallback'` gekennzeichneten Datenstand zurückgegriffen (`server.ts`). Es findet **keine** künstliche Kursfluktuation im Fallback-Fall statt (No-Demo-Data-Policy) — die Anwendung stürzt nie ab, meldet den Fallback-Zustand aber ehrlich statt ihn als Live-Daten zu tarnen.
 
 ### 3.2 Verschlüsselung (Art. 32 Abs. 1 lit. a DSGVO)
 * **Transportverschlüsselung**: Sämtliche Übertragungen erfolgen ausschließlich über HTTPS (TLS 1.3 standardmäßig erzwungen).

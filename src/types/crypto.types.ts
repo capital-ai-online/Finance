@@ -87,4 +87,8 @@ export interface CryptoAnalysisPayload {
     missing_fields?: string[];
   };
   reasoning?: string[];
+  // Audit ARCH-AUDIT-0002 (AUD2-F-001): legt pro Score-Feld offen, ob der Wert aus einer
+  // echten LLM-Agenten-Analyse, aus einem Zeichen-Hash-Generator (synthetisch, keine
+  // Marktdaten) oder aus einer Nutzereingabe stammt.
+  scoreFieldBasis?: Record<string, "agent-derived" | "synthetic" | "user-adjusted">;
 }

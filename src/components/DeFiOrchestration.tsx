@@ -51,7 +51,11 @@ export function DeFiOrchestration() {
   const [analyzing, setAnalyzing] = useState<boolean>(false);
   const [agentReasoning, setAgentReasoning] = useState<string[]>([]);
   const [scores, setScores] = useState<any>(null);
-  
+  // Audit ARCH-AUDIT-0002 (AUD2-F-001): loadTokenScores() nutzt generateCryptoScores() direkt
+  // (Zeichen-Hash, keine Marktdaten) -> 'synthetic'. handleAgentTrigger() ruft /api/crypto/analyze
+  // auf, das echte LLM-Agenten-Werte mit synthetischen Seed-Werten mischt -> 'mixed'.
+  const [scoreBasis, setScoreBasis] = useState<'synthetic' | 'mixed'>('synthetic');
+
   // IL Simulator State
   const [priceChangeA, setPriceChangeA] = useState<number>(25); // in % (e.g. +25%)
   const [priceChangeB, setPriceChangeB] = useState<number>(0);  // in % (e.g. 0%)
@@ -77,6 +81,7 @@ export function DeFiOrchestration() {
 
       const computed = calculateDefiScore(payload);
       setScores(computed);
+      setScoreBasis('synthetic');
 
       // Simulate Multi-Agent telemetry fetch
       setTimeout(() => {
@@ -107,6 +112,7 @@ export function DeFiOrchestration() {
         const data = await res.json();
         if (data.scores) {
           setScores(data.scores);
+          setScoreBasis('mixed');
         }
         if (data.reasoning) {
           setAgentReasoning(data.reasoning);
@@ -317,6 +323,20 @@ export function DeFiOrchestration() {
             </div>
           )}
         </div>
+
+        {/* No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md, AUD2-F-001) */}
+        {scores && (
+          <div className="lg:col-span-12 bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3">
+            <ShieldAlert className="text-amber-400 w-5 h-5 shrink-0 mt-0.5" />
+            <p className="text-xs text-white/70 leading-relaxed">
+              <span className="font-bold text-amber-400 uppercase tracking-widest">Nicht marktdatenbasiert</span> —{' '}
+              {scoreBasis === 'mixed'
+                ? 'ein Teil dieser Bewertung stammt aus echten Agenten-Analysen, der Rest (u. a. Marktkapitalisierung, Liquidität, Tokenomics) wurde algorithmisch aus dem Tickersymbol abgeleitet, nicht aus Marktdaten.'
+                : 'sämtliche Eingangsgrößen dieser Bewertung wurden algorithmisch aus dem Tickersymbol abgeleitet, nicht aus realen Markt- oder Fundamentaldaten.'}{' '}
+              <span className="font-bold">Nicht als Grundlage für Anlageentscheidungen geeignet.</span>
+            </p>
+          </div>
+        )}
 
         {/* Right: Live Simulator & Audit Log */}
         <div className="lg:col-span-5 space-y-6">

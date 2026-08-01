@@ -3,7 +3,7 @@ import path from 'path';
 import express from 'express';
 import { logSystemEvent } from './systemEvents';
 import { processFileEvent } from './documentHygiene';
-import { checkAdminAccess } from './iam/authMiddleware';
+import { checkAdminAccess, requireStepUp } from './iam/authMiddleware';
 import { SUPERVISOR_ZONE_ROLES } from './iam/types';
 
 export const versionManagerRouter = express.Router();
@@ -619,6 +619,23 @@ async function requireAdmin(req: express.Request, res: express.Response, next: e
   next();
 }
 
+// Audit ARCH-AUDIT-0002 (AUD2-F-013, D9): Der Versions-Bump generiert 11 Compliance-Dokumente,
+// erhoeht die verbindliche Plattformversion und schreibt Git-/Docker-Tags - genau die Art
+// kritischer Owner-Aktion, fuer die requireStepUp() (ADR-0003.5) urspruenglich konzipiert wurde,
+// aber bislang nirgends erzwungen war. 428 (Precondition Required) statt 403, damit das Frontend
+// zwischen "keine Berechtigung" und "zusaetzlicher TOTP-Nachweis noetig" unterscheiden und den
+// Step-Up-Dialog gezielt anzeigen kann.
+async function requireFreshStepUp(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const ok = await requireStepUp(req);
+  if (!ok) {
+    return res.status(428).json({
+      error: 'Diese Aktion erfordert einen frischen Step-Up-Nachweis (TOTP).',
+      code: 'step_up_required'
+    });
+  }
+  next();
+}
+
 // 1. GET Current Version Info
 versionManagerRouter.get('/version', requireAdmin, (req, res) => {
   const state = loadVersionState();
@@ -631,7 +648,7 @@ versionManagerRouter.get('/version', requireAdmin, (req, res) => {
 });
 
 // 2. POST Bump Version & Run Event Chain
-versionManagerRouter.post('/version/bump', requireAdmin, async (req, res) => {
+versionManagerRouter.post('/version/bump', requireAdmin, requireFreshStepUp, async (req, res) => {
   const { forceBump, email, notes, author } = req.body;
   try {
     const report = await executeEnterpriseEventChain({

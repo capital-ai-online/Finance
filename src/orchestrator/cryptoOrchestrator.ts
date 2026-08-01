@@ -124,6 +124,22 @@ export class CryptoOrchestrator {
       tvlQuality: customInput?.tvlQuality ?? seedScores.tvlQuality
     };
 
+    // Audit ARCH-AUDIT-0002 (AUD2-F-001, Kapitel 6): Von den 18 Score-Eingangsgroessen stammen
+    // 6 aus echten LLM-Agenten-Analysen (onChainAgent, sentimentAgent, riskAgent), die
+    // restlichen 12 aus seedScores = generateCryptoScores() (Zeichen-Hash des Symbols, keine
+    // Marktdaten) - sofern nicht per customInput ueberschrieben. Wird hier auf Feldebene
+    // offengelegt statt pauschal als "live" oder "synthetisch" zusammengefasst, da beide
+    // Kategorien tatsaechlich gemischt in einem Ergebnis vorkommen.
+    const AGENT_DERIVED_FIELDS = ['networkActivity', 'security', 'utility', 'adoption', 'risk', 'sentiment'] as const;
+    const SYNTHETIC_SEED_FIELDS = ['marketCap', 'liquidity', 'volumeQuality', 'tokenomics', 'supplyTransparency', 'developerActivity', 'feeGeneration', 'revenue', 'governanceStrength', 'volatility', 'compliance', 'tvlQuality'] as const;
+    const scoreFieldBasis: Record<string, 'agent-derived' | 'synthetic' | 'user-adjusted'> = {};
+    for (const field of AGENT_DERIVED_FIELDS) {
+      scoreFieldBasis[field] = (customInput && field in customInput) ? 'user-adjusted' : 'agent-derived';
+    }
+    for (const field of SYNTHETIC_SEED_FIELDS) {
+      scoreFieldBasis[field] = (customInput && field in customInput) ? 'user-adjusted' : 'synthetic';
+    }
+
     const payload: CryptoAnalysisPayload = {
       asset_name: assetName,
       symbol,
@@ -167,7 +183,8 @@ export class CryptoOrchestrator {
         level: classification.confidence >= 0.8 ? 'high' : 'medium',
         missing_fields: []
       },
-      reasoning: mergedReasoning
+      reasoning: mergedReasoning,
+      scoreFieldBasis
     };
   }
 }

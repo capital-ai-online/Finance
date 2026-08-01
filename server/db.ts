@@ -50,8 +50,10 @@ async function isOwnerIdentifier(rawIdentifier: string, lowerIdentifier: string)
     if (!error && data) {
       return data.iam_role === 'owner';
     }
-  } catch {
-    // Fail-closed bei Verbindungs-/Schemafehlern.
+  } catch (err: any) {
+    // Fail-closed bei Verbindungs-/Schemafehlern (Audit ARCH-AUDIT-0002, AUD2-F-020: jetzt
+    // sichtbar geloggt statt still verschluckt).
+    console.error(`[DB][ERROR] isOwnerIdentifier fehlgeschlagen: ${err?.message || err}`);
   }
   return false;
 }

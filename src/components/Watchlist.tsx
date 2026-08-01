@@ -23,6 +23,8 @@ export interface WatchlistAsset {
   price: number;
   change24h: number;
   score: number;
+  // Audit ARCH-AUDIT-0002 (AUD2-F-001): siehe Asset.scoreBasis in src/types.ts.
+  scoreBasis?: 'synthetic';
 }
 
 interface WatchlistProps {
@@ -263,7 +265,17 @@ export function Watchlist({
                       </div>
 
                       {/* Score display */}
-                      <div className={`font-mono text-[10px] py-1 px-1.5 rounded border text-center min-w-[32px] ${scoreColor}`} title={`Asset Scoring: ${score}/10`}>
+                      {/* Audit ARCH-AUDIT-0002 (AUD2-F-001): Tooltip legt bei synthetischen
+                          Scores (Crypto, algorithmisch aus dem Symbol abgeleitet) offen, dass
+                          keine Marktdaten zugrunde liegen (No-Demo-Data-Policy). */}
+                      <div
+                        className={`font-mono text-[10px] py-1 px-1.5 rounded border text-center min-w-[32px] ${scoreColor}`}
+                        title={
+                          asset.scoreBasis === 'synthetic'
+                            ? `Asset Scoring: ${score}/10 — nicht marktdatenbasiert (algorithmisch aus dem Symbol abgeleitet)`
+                            : `Asset Scoring: ${score}/10`
+                        }
+                      >
                         {score.toFixed(1)}
                       </div>
 

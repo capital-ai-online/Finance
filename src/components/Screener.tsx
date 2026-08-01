@@ -780,7 +780,18 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
                       </div>
                     </td>
                     <td className={`px-6 py-4 font-mono font-bold text-lg text-right ${getScoreColor(asset.score)}`}>
-                      {asset.score.toFixed(1)}
+                      <div className="flex items-center justify-end gap-1.5">
+                        {asset.scoreBasis === 'synthetic' && (
+                          <ShieldAlert
+                            size={13}
+                            className="text-amber-400"
+                            aria-label="Nicht marktdatenbasiert"
+                          >
+                            <title>Score nicht marktdatenbasiert (algorithmisch aus dem Symbol abgeleitet)</title>
+                          </ShieldAlert>
+                        )}
+                        {asset.score.toFixed(1)}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -855,7 +866,16 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
                   </div>
 
                   {/* Intelligent Score at the very end of the line */}
-                  <div className={`h-11 w-11 rounded-lg bg-black/60 border border-white/15 flex flex-col items-center justify-center font-mono font-black shrink-0 ${getScoreColor(asset.score)}`}>
+                  <div className={`relative h-11 w-11 rounded-lg bg-black/60 border border-white/15 flex flex-col items-center justify-center font-mono font-black shrink-0 ${getScoreColor(asset.score)}`}>
+                    {asset.scoreBasis === 'synthetic' && (
+                      <ShieldAlert
+                        size={11}
+                        className="absolute -top-1.5 -right-1.5 text-amber-400 bg-black/80 rounded-full p-0.5"
+                        aria-label="Nicht marktdatenbasiert"
+                      >
+                        <title>Score nicht marktdatenbasiert (algorithmisch aus dem Symbol abgeleitet)</title>
+                      </ShieldAlert>
+                    )}
                     <span className="text-[11px] text-white/60 scale-75 uppercase font-bold tracking-tight leading-none">SCORE</span>
                     <span className="text-xs leading-tight mt-0.5">{asset.score.toFixed(1)}</span>
                   </div>
