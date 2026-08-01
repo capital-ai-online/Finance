@@ -1933,12 +1933,65 @@ Implementierung: über das bereits lauffähige `EventMesh`-Modul (0.10, einzige 
 
 ---
 
+## 12. INTEGRITÄTSPRÜFUNG
+
+Abschließende Prüfung gemäß Arbeitsweise-Schritt 10 (Master-Prompt Abschnitt 13): Sind alle Querverweise korrekt? Fehlen Abhängigkeiten? Sind alle Gewichtungen normiert? Sind alle Übernahme-/Ersetzungs-Entscheidungen begründet?
+
+### 12.1 Gewichtungsnormierung — Prüfung aller definierten Modelle
+
+| Modell | Abschnitt | Gewichtssumme | Ergebnis |
+|---|---|---|---|
+| Crypto Base | 5.1.4 | 0.15+0.13+0.10+0.07+0.05+0.12+0.12+0.09+0.07+0.06+0.04 | **1.00** ✓ |
+| Crypto DeFi | 5.1.4 | 0.08+0.22+0.08+0.16+0.16+0.10+0.12+0.05+0.03 | **1.00** ✓ |
+| Crypto Stablecoin (neu) | 5.1.4 | 0.35+0.30+0.20+0.15 | **1.00** ✓ |
+| Crypto RWA/Yield (neu) | 5.1.4 | 0.30+0.25+0.25+0.20 | **1.00** ✓ |
+| Crypto Enterprise 9-Faktor | 0.4/0.20 | 0.20+0.16+0.12+0.10+0.12+0.12+0.08+0.06+0.04 | **1.00** ✓ |
+| Meme-Coin | 0.4/0.20 | 0.35+0.25+0.20+0.20 | **1.00** ✓ |
+| Rohstoffe | 5.6.4 | 0.35+0.20+0.15+0.20+0.10 | **1.00** ✓ |
+| Equity QualityValueModel | 5.2.4 | 0.25+0.30+0.20+0.15+0.10 | **1.00** ✓ |
+| Equity GrowthMomentumModel | 5.2.4 | 0.35+0.30+0.20+0.15 | **1.00** ✓ |
+| Equity DividendIncomeModel | 5.2.4 | 0.30+0.25+0.25+0.20 | **1.00** ✓ |
+| Equity DistressedRecoveryModel | 5.2.4 | 0.40+0.30+0.30 | **1.00** ✓ |
+| Forex MacroCarryModel | 5.3.4 | 0.30+0.25+0.20+0.15+0.10 | **1.00** ✓ |
+| Index BreadthRegimeModel | 5.4.4 | 0.30+0.25+0.20+0.15+0.10 | **1.00** ✓ |
+| Bond CreditDurationModel | 5.5.4 | 0.25+0.25+0.20+0.15+0.15 | **1.00** ✓ |
+| ETF ETFQualityModel | 5.7.4 | 0.25+0.20+0.20+0.20+0.15 | **1.00** ✓ |
+| Derivatives StructureModel | 5.8.4 | 0.30+0.25+0.20+0.15+0.10 | **1.00** ✓ |
+| Ranking-Formel (`RankScore`) | 6.4 | 0.70+0.15+0.10+0.05 | **1.00** ✓ |
+| DataQualityScore (neu vereinheitlicht) | 7.2 | 0.25+0.25+0.20+0.15+0.15 | **1.00** ✓ |
+
+**Ergebnis**: Alle 18 im Report definierten Gewichtsmodelle (10 Bestand + 8 neu/erweitert) summieren korrekt auf 1.0 — keine Abweichung gefunden. Anforderung „Gewichtungen müssen auf 1.0 normiert sein" (Abschnitt 6.6, 9.3) ist repo-weit erfüllt.
+
+### 12.2 Querverweis-Prüfung
+
+| Referenz | Ziel | Status |
+|---|---|---|
+| Abschnitt 3 (Komponentenregister) → Abschnitt 0.3 (Agenten-Bestand) | jede Zeile im Komponentenregister zitiert eine Bestandskomponente oder markiert `neu` | konsistent |
+| Abschnitt 5.X.0 (Bestand je Assetklasse) → Abschnitt 0.11/0.18 | jede Bestandsaussage deckt sich mit der Lücken-Analyse/Bewertungstabelle | konsistent |
+| Abschnitt 5.X.4 (Scoring-Formel) → Abschnitt 6.3 (Scoring-Kontrakt) | alle Modelle liefern einen `final`/`score`-Wert, der auf `base_score`/`asset_class_score` abbildbar ist | konsistent |
+| Abschnitt 4 (Universal Asset Interface) → Abschnitt 5.X.7 (Beispiel-JSON je Klasse) | jedes Beispiel-JSON enthält alle Pflichtfelder des UAI-Vertrags (`asset_id, symbol, asset_class, tier, data_quality, valuation_corridor, ranking_eligibility, model_used, audit_trail, calculation_version`) | konsistent — stichprobenartig für Krypto (5.1.7), Equity (5.2.7) und Derivate (5.8.7) geprüft |
+| Abschnitt 8 (Dependency-Inventar) → Abschnitt 5.X.2 (Datenquellen je Klasse) | jede in 5.X.2 genannte fehlende Datenquelle (Index/Bond/ETF/Derivate) erscheint in Abschnitt 8 als offene Abhängigkeit | konsistent |
+| Abschnitt 11 (Backlog) → Abschnitt 0.18 (Bewertungsrahmen) | jede `new`/`replace`-Bewertung aus 0.18 hat einen korrespondierenden Backlog-Eintrag (SCR-005/006/007 für Equity/Forex-Index-Bond/ETF-Derivate) | konsistent |
+
+### 12.3 Fehlende Abhängigkeiten (offene Blocker, nicht Teil dieses Reports als Implementierung)
+
+Wie in Abschnitt 8 dokumentiert, fehlen für die vollständige Lauffähigkeit der neu definierten Modelle folgende externe Abhängigkeiten: Fundamentaldaten-Feed für Aktien (Alpha-Vantage-Fundamentals ungenutzt), Makro-/Zinsdaten für Forex, Konstituenten-/Breadth-Daten für Indizes, Bond-Yield-Feed, Fonds-Holdings/AUM-Feed für ETFs, Funding-Rate/Open-Interest-Feed für Derivate, echte On-Chain-Anbindung für Krypto. Diese sind bewusst **nicht** als „fehlend/Blocker für diesen Report" zu werten, sondern als in Abschnitt 8 explizit erfasste, im Backlog (11) priorisierte Folgearbeiten — der Report selbst ist als Blaupause vollständig, auch wenn nachgelagerte Datenanbindungen offen sind.
+
+### 12.4 Begründungsabdeckung Übernahme-/Ersetzungs-Entscheidungen
+
+Jede der 27 Zeilen in Abschnitt 0.18 (Bewertungsrahmen) trägt eine Aktion (`keep_as_is/extend/refactor/replace/new`); jede Aktion ist in den zugehörigen Abschnitten 3–11 mit einer expliziten „Begründung"/„Quelle"-Angabe hinterlegt (z. B. 5.2.0: „Bewertung (0.18): replace für das Scoring, extend für die Graham/DCF-Logik"; 6.6: explizite Begründung der bewussten Abweichung vom Master-Prompt-Vorschlag „0 mit Confidence-Reduktion"; 7.3: Begründung der multiplikativen statt additiven Confidence-Formel). Keine Aktion ohne Begründung gefunden.
+
+**Gesamtergebnis der Integritätsprüfung**: Keine offenen Widersprüche zwischen den Abschnitten. Alle Pflichtanforderungen aus Abschnitt 1 (Arbeitsprinzipien), 4 (Universal Asset Interface) und 6.2/6.3 (Scoring-Kontrakt) sind erfüllt oder — wo im Bestand nicht erfüllbar — als offene Abhängigkeit (12.3) bzw. Backlog-Item (11) transparent gemacht, nicht stillschweigend übergangen.
+
+---
+
 ## Änderungsprotokoll (Changelog dieses Reports)
 
 | Version | Datum | Änderung |
 |---|---|---|
 | 1.0.0 | 2026-08-01 | Initiale Erstellung: vollständige Phase-1-Bestandsaufnahme (Abschnitt 0) + Phase-2-Erweiterungsarchitektur (Abschnitte 3–11) für alle 8 Assetklassen. |
 | 1.1.0 | 2026-08-01 | Abschnitt 0.20 ergänzt: vollständige maschinenlesbare Rohinventar-Tabellen für alle 15 Erfassungsschritte (Package-/Build-Dateien, Agenten-Inventar, Scoring-Modell-Blöcke, Ranking-/Tiering-/Wertkorridor-Rohdaten, DataQuality-/Confidence-Formeln, Datenquellen-/Konfigurations-/Skill-Layer-Inventar, Assetklassen-Lücken-Analyse, Typdefinitionen, API-Endpunkt-/Middleware-Tabelle, Audit-/Logging-/Compliance-Detail, Dokumentations- und Test-/Backtesting-/CI-CD-Inventar) im exakten, vom Master-Prompt vorgegebenen Ausgabeformat. |
+| 1.2.0 | 2026-08-01 | Abschnitt 12 (Integritätsprüfung) ergänzt: Gewichtsnormierungs-Check über alle 18 im Report definierten Scoring-Modelle (alle summieren korrekt zu 1.0), Querverweis-Prüfung zwischen Abschnitten, Abgleich offener Abhängigkeiten gegen Abschnitt 8, Bestätigung der Begründungsabdeckung aller Übernahme-/Ersetzungs-Entscheidungen aus 0.18. Damit sind alle 10 Schritte der Arbeitsweise (Master-Prompt Abschnitt 13) vollständig abgeschlossen. |
 
 ---
 
