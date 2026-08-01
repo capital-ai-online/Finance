@@ -18,5 +18,12 @@ export default defineConfig(() => {
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
+    // Audit ARCH-AUDIT-0002 (D5): wiederverwendet die bestehende Vite-Konfiguration
+    // (Plugins, Alias) statt eine separate Test-Toolchain aufzusetzen.
+    test: {
+      environment: 'node',
+      include: ['tests/unit/**/*.test.ts'],
+      globals: false,
+    },
   };
 });

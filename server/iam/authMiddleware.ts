@@ -100,7 +100,10 @@ async function resolveRoleFromToken(token: string): Promise<{ role: Role | null;
       return { role: null, userId: userData.user.id };
     }
     return { role: (profile.iam_role as Role) || 'user', userId: userData.user.id };
-  } catch {
+  } catch (err: any) {
+    // Audit ARCH-AUDIT-0002 (AUD2-F-020): zuvor stillschweigend verschluckt - ein
+    // Token-Aufloesungsfehler konnte damit unbemerkt bleiben statt im Log sichtbar zu sein.
+    console.error(`[IAM][ERROR] resolveRoleFromToken fehlgeschlagen: ${err?.message || err}`);
     return { role: null };
   }
 }
@@ -128,8 +131,11 @@ async function logAccess(
       ip_address: ctx.ip || null,
       user_agent: ctx.userAgent || null,
     });
-  } catch {
-    // iam_access_log existiert evtl. noch nicht (Migration ausstehend) -> Request nicht blockieren
+  } catch (err: any) {
+    // Audit ARCH-AUDIT-0002 (AUD2-F-020): Request bleibt bewusst unblockiert (Zugriffslog ist
+    // nicht sicherheitsentscheidend), aber der Fehler war zuvor komplett unsichtbar - genau das
+    // Muster, das AUD2-F-011 (Schema-Mismatch) unbemerkt liess.
+    console.error(`[IAM][ERROR] iam_access_log-Insert fehlgeschlagen: ${err?.message || err}`);
   }
 }
 
@@ -150,7 +156,9 @@ export async function resolveVerifiedIdentity(req: Request): Promise<{ userId: s
     const { data, error } = await supabase.auth.getUser(token);
     if (error || !data?.user) return null;
     return { userId: data.user.id, email: data.user.email ?? null };
-  } catch {
+  } catch (err: any) {
+    // Audit ARCH-AUDIT-0002 (AUD2-F-020)
+    console.error(`[IAM][ERROR] resolveVerifiedIdentity fehlgeschlagen: ${err?.message || err}`);
     return null;
   }
 }
@@ -241,8 +249,9 @@ export async function checkAdminAccess(
     console.error(`[IAM][ERROR] Unerwarteter Fehler in checkAdminAccess (Zone "${zone}"): ${err?.message || err}`);
     try {
       await logAccess('unknown', zone, 'DENIED', { ip: clientIp, userAgent, reason: `internal-error: ${err?.message || 'unknown'}` });
-    } catch {
-      // Logging selbst darf hier nicht nochmal fehlschlagen können.
+    } catch (logErr: any) {
+      // Logging selbst darf hier nicht nochmal fehlschlagen können - stdout als letzte Instanz.
+      console.error(`[IAM][ERROR] logAccess fehlgeschlagen waehrend internal-error-Behandlung (Zone "${zone}"): ${logErr?.message || logErr}`);
     }
     return { authorized: false, role: null, reason: 'internal-error', actorLabel: 'unknown' };
   }
@@ -278,7 +287,10 @@ export async function requireStepUp(req: Request): Promise<boolean> {
       .select('id')
       .maybeSingle();
     return !error && !!data;
-  } catch {
+  } catch (err: any) {
+    // Fail-closed korrekt (return false), aber der Fehler war zuvor unsichtbar - Audit
+    // ARCH-AUDIT-0002 (AUD2-F-020).
+    console.error(`[IAM][ERROR] requireStepUp fehlgeschlagen: ${err?.message || err}`);
     return false;
   }
 }
@@ -301,7 +313,9 @@ export async function logIamEvent(
       previous_value: previousValue ?? null,
       new_value: newValue ?? null,
     });
-  } catch {
-    // audit_logs_iam existiert evtl. noch nicht (Migration ausstehend)
+  } catch (err: any) {
+    // Audit ARCH-AUDIT-0002 (AUD2-F-020): audit_logs_iam existiert produktiv (siehe Kopf dieser
+    // Datei); ein Insert-Fehler hier verdient Sichtbarkeit statt stillem Verschlucken.
+    console.error(`[IAM][ERROR] logIamEvent-Insert fehlgeschlagen (action="${action}"): ${err?.message || err}`);
   }
 }

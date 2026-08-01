@@ -2,7 +2,6 @@ import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
-import multer from 'multer';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
@@ -113,8 +112,10 @@ async function logBlockedOrigin(origin: string, req: express.Request) {
       outcome: 'blocked',
       reason: `Blocked CORS Origin: ${origin}`,
     });
-  } catch {
-    // security_events-Logging ist best-effort und darf den Request nicht blockieren.
+  } catch (err: any) {
+    // Audit ARCH-AUDIT-0002 (AUD2-F-020): best-effort bleibt bewusst (Request nicht blockieren),
+    // aber der Fehler war zuvor unsichtbar.
+    console.error(`[SECURITY][ERROR] security_events-Insert fehlgeschlagen: ${err?.message || err}`);
   }
 }
 
@@ -219,8 +220,6 @@ app.post('/billing/webhook', express.raw({ type: 'application/json' }), webhookH
 
 app.use(express.json());
 
-const upload = multer({ dest: 'uploads/' });
-
 // Retrieve the modular Gemini client safely for use in downstream routes
 let ai: any = null;
 try {
@@ -231,9 +230,32 @@ try {
   console.warn("Failed to retrieve Gemini instance on boot:", e);
 }
 
+// Health-Check-Endpunkt fuer Deployment-Plattformen (Audit ARCH-AUDIT-0002, Befund AUD2-F: kein
+// Health-Check vorhanden). Bewusst ohne Netzwerkaufrufe an Drittanbieter - ein Health-Check muss
+// schnell und unabhaengig von externen Ausfaellen antworten. `configured` spiegelt nur, ob die
+// jeweilige Umgebungsvariable gesetzt ist, keine Live-Erreichbarkeit.
+app.get('/healthz', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptimeSeconds: Math.floor(process.uptime()),
+    configured: {
+      supabase: isSupabaseConfigured(),
+      gemini: isGeminiConfigured(),
+    },
+  });
+});
+
 // Mount Modular Router Sub-systems
-app.use('/api/raw-materials', createRawMaterialsRouter(getGeminiInstance()));
-app.use('/api/crypto', createCryptoRouter(getGeminiInstance()));
+//
+// WICHTIG: Hier wird die oben defensiv ermittelte Instanz `ai` weitergereicht und NICHT erneut
+// getGeminiInstance() aufgerufen. getGeminiInstance() wirft ohne GEMINI_API_KEY (server/ai.ts);
+// ein Aufruf an dieser Stelle liegt ausserhalb jedes try/catch und wuerde den Serverstart
+// komplett verhindern, statt den Betrieb ohne KI-Funktionen fortzusetzen. Beide Router und die
+// dahinterliegenden Orchestratoren akzeptieren `GoogleGenAI | null` und liefern ohne Client
+// ihre quantitativen Fallbacks.
+app.use('/api/raw-materials', createRawMaterialsRouter(ai));
+app.use('/api/crypto', createCryptoRouter(ai));
 app.use('/api/stripe', stripeRouter);
 app.use('/api/orchestrator', orchestratorRouter);
 app.use('/api/admin/hygiene', hygieneRouter);
@@ -281,6 +303,19 @@ function getApplicationAreaForSymbol(symbol: string, type: string): string {
     return 'Andere';
   }
   return 'Andere';
+}
+
+// Audit ARCH-AUDIT-0002 (Befund AUD2-F-001, Kapitel 6): Fuer Crypto-Assets erzeugen
+// generateCryptoScores()/generateMemeCoinInputs() saemtliche Bewertungs-Eingangsgroessen
+// (Marktkapitalisierung, Liquiditaet, Tokenomics, Security, Entwickleraktivitaet, Umsatz,
+// Adoption) deterministisch aus einem Zeichen-Hash des Tickersymbols - nicht aus echten
+// Marktdaten. Diese Funktion macht das im API-Response transparent, statt den Score
+// unmarkiert wie eine datenbasierte Bewertung erscheinen zu lassen (No-Demo-Data-Policy,
+// docs/DATENSCHUTZ_PROTOKOLL.md). Gilt ausschliesslich fuer Crypto/Meme-Coins - die
+// Commodity- und Stock/Forex-Pfade sind ein separater, nicht von diesem Befund betroffener
+// Bewertungsmechanismus.
+function isCryptoScoreBasisSynthetic(type: string): boolean {
+  return type === 'crypto';
 }
 
 function calculateAssetScore(symbol: string, type: string, change24h: number, baseScore?: number): number {
@@ -873,7 +908,8 @@ async function fetchLiveMarketData() {
       ...asset,
       pattern,
       applicationArea,
-      score
+      score,
+      scoreBasis: isCryptoScoreBasisSynthetic(asset.type) ? 'synthetic' as const : undefined
     };
   });
   return enriched;
@@ -942,7 +978,8 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
         dataSource: 'fallback' as const,
         pattern,
         applicationArea,
-        score
+        score,
+        scoreBasis: isCryptoScoreBasisSynthetic(asset.type) ? 'synthetic' as const : undefined
       };
     });
 
@@ -1328,13 +1365,16 @@ app.get('/api/crypto-scoring/:symbol', async (req, res) => {
   const change24h = asset ? asset.change24h : 0;
   const isMemeCoin = (asset && (asset as any).subtype === 'memecoin') || ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(symbol);
 
+  // Audit ARCH-AUDIT-0002 (AUD2-F-001): inputs stammen aus einem Zeichen-Hash des Symbols,
+  // nicht aus Marktdaten - siehe isCryptoScoreBasisSynthetic() weiter oben in dieser Datei.
   if (isMemeCoin) {
     const inputs = MemeCoinScoringService.generateMemeCoinInputs(symbol, change24h);
     const result = MemeCoinScoringService.scoreMemeCoin(inputs);
     res.json({
       inputs,
       result,
-      isMemeCoin: true
+      isMemeCoin: true,
+      scoreBasis: 'synthetic'
     });
   } else {
     const inputs = CryptoScoringService.generateCryptoInputs(symbol, change24h);
@@ -1342,7 +1382,8 @@ app.get('/api/crypto-scoring/:symbol', async (req, res) => {
     res.json({
       inputs,
       result,
-      isMemeCoin: false
+      isMemeCoin: false,
+      scoreBasis: 'synthetic'
     });
   }
 });
@@ -1363,6 +1404,10 @@ app.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
   const change24h = asset ? asset.change24h : 0;
   const isMemeCoin = (asset && (asset as any).subtype === 'memecoin') || ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(symbol);
 
+  // scoreBasis: 'user-adjusted', sobald der Aufrufer eigene Eingangsgroessen mitsendet (der
+  // bewusste Was-waere-wenn-Simulator im Frontend), sonst 'synthetic' fuer die aus dem
+  // Symbol-Hash erzeugten Default-Werte (AUD2-F-001).
+  const hasCustomInputs = customInputs && Object.keys(customInputs).length > 0;
   if (isMemeCoin) {
     const defaultInputs = MemeCoinScoringService.generateMemeCoinInputs(symbol, change24h);
     const mergedInputs = {
@@ -1374,7 +1419,8 @@ app.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
     res.json({
       inputs: mergedInputs,
       result,
-      isMemeCoin: true
+      isMemeCoin: true,
+      scoreBasis: hasCustomInputs ? 'user-adjusted' : 'synthetic'
     });
   } else {
     const defaultInputs = CryptoScoringService.generateCryptoInputs(symbol, change24h);
@@ -1387,7 +1433,8 @@ app.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
     res.json({
       inputs: mergedInputs,
       result,
-      isMemeCoin: false
+      isMemeCoin: false,
+      scoreBasis: hasCustomInputs ? 'user-adjusted' : 'synthetic'
     });
   }
 });

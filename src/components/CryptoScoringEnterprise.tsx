@@ -413,6 +413,10 @@ export function CryptoScoringEnterprise({
   const [inputs, setInputs] = useState<CryptoScoringInputs | null>(null);
   const [customInputs, setCustomInputs] = useState<Partial<CryptoScoringInputs>>({});
   const [loading, setLoading] = useState<boolean>(true);
+  // Audit ARCH-AUDIT-0002 (AUD2-F-001): /api/crypto-scoring/:symbol liefert scoreBasis mit
+  // ('synthetic' fuer aus dem Symbol-Hash generierte Default-Eingangsgroessen), damit hier
+  // sichtbar bleibt, dass der angezeigte Score nicht marktdatenbasiert ist.
+  const [scoreBasis, setScoreBasis] = useState<'synthetic' | 'user-adjusted' | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [registryAssets, setRegistryAssets] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -1033,6 +1037,7 @@ export function CryptoScoringEnterprise({
           : adjustInputsForTimeframe(data.inputs, timeframe);
         setInputs(adaptedInputs);
         setCustomInputs(adaptedInputs);
+        setScoreBasis(data.scoreBasis === 'user-adjusted' ? 'user-adjusted' : 'synthetic');
         setLoading(false);
       })
       .catch(err => {
@@ -1052,6 +1057,7 @@ export function CryptoScoringEnterprise({
           setInputs(adaptedInputs);
           setCustomInputs(adaptedInputs);
         }
+        setScoreBasis('synthetic');
         setLoading(false);
       });
   }, [activeSymbol, timeframe]);
@@ -1184,11 +1190,13 @@ export function CryptoScoringEnterprise({
   const handleSliderChange = (key: keyof CryptoScoringInputs, val: number) => {
     const updated = { ...customInputs, [key]: val };
     setCustomInputs(updated);
+    setScoreBasis('user-adjusted');
   };
 
   const handleResetInputs = () => {
     if (inputs) {
       setCustomInputs(inputs);
+      setScoreBasis('synthetic');
     }
   };
 
@@ -1694,6 +1702,31 @@ export function CryptoScoringEnterprise({
 
           {/* TAB 1: Live Score-Audit */}
           {activeTab === 'scoring' && scoringResult && (
+            <>
+            {/* No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md, AUD2-F-001): Die
+                Eingangsgroessen dieses Scores stammen aus einem deterministischen
+                Zeichen-Hash-Generator, nicht aus Marktdaten. */}
+            {scoreBasis === 'synthetic' && (
+              <div className="mb-6 bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3">
+                <ShieldAlert className="text-amber-400 w-5 h-5 shrink-0 mt-0.5" />
+                <p className="text-xs text-white/70 leading-relaxed">
+                  <span className="font-bold text-amber-400 uppercase tracking-widest">Nicht marktdatenbasiert</span> — die
+                  Eingangsgrößen dieser Bewertung wurden algorithmisch aus dem Tickersymbol abgeleitet, nicht aus
+                  realen Markt-, Fundamental- oder On-Chain-Daten. Dieser Score ist{' '}
+                  <span className="font-bold">nicht als Grundlage für Anlageentscheidungen geeignet</span>.
+                </p>
+              </div>
+            )}
+            {scoreBasis === 'user-adjusted' && (
+              <div className="mb-6 bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4 flex items-start gap-3">
+                <ShieldAlert className="text-cyan-400 w-5 h-5 shrink-0 mt-0.5" />
+                <p className="text-xs text-white/70 leading-relaxed">
+                  <span className="font-bold text-cyan-400 uppercase tracking-widest">Simulation</span> — dieser Score
+                  basiert auf manuell angepassten Eingangsgrößen (Was-wäre-wenn-Simulator), nicht auf Markt- oder
+                  Fundamentaldaten.
+                </p>
+              </div>
+            )}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column: KPI Ring & Classification */}
               <div className="space-y-6 lg:border-r lg:border-white/5 lg:pr-6">
@@ -1869,6 +1902,7 @@ export function CryptoScoringEnterprise({
                 </div>
               </div>
             </div>
+            </>
           )}
 
           {/* TAB 2: Interaktiver Simulator */}

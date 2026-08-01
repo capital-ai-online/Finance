@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import PasskeySettings from './PasskeySettings';
+import TotpSettings from './TotpSettings';
 import { 
   User, 
   Mail, 
@@ -484,6 +485,13 @@ export function ProfilePage({ profile, onUpdateProfile }: ProfilePageProps) {
           die im Admin-Panel unter "sicherheit_poc" versteckt war. */}
       <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5">
         <PasskeySettings />
+      </div>
+
+      {/* ADR-0003.5 / Audit ARCH-AUDIT-0002 (D9): TOTP-Setup fuer Step-Up-geschuetzte
+          Owner-Aktionen (z.B. Versions-Bump). Ohne diese Oberflaeche gab es keinen Weg,
+          jemals ein Step-Up-Token zu erzeugen. */}
+      <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+        <TotpSettings />
       </div>
     </div>
   );

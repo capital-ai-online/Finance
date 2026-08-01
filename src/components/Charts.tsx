@@ -57,6 +57,9 @@ export function Charts({ selectedSymbol, onSelectSymbol, userSession }: ChartsPr
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md): Herkunft der Kurshistorie, damit
+  // simulierte Ersatzdaten im Chart sichtbar bleiben und nie als reale Historie gelten.
+  const [historySource, setHistorySource] = useState<'live' | 'simulated' | null>(null);
 
   // Price Alert states
   const [activeAlerts, setActiveAlerts] = useState<PriceAlertItem[]>([]);
@@ -186,14 +189,20 @@ export function Charts({ selectedSymbol, onSelectSymbol, userSession }: ChartsPr
     setLoading(true);
     setError(null);
     setScoreResult(null);
+    setHistorySource(null);
     fetch(`/api/backtest-history?symbol=${activeSymbol}&range=${range === '1Y' ? '365' : '3Y'}`)
       .then(res => {
         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
         return res.json();
       })
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          setHistory(data);
+      .then(responseBody => {
+        // /api/backtest-history antwortet mit { data, source } (server.ts).
+        const points = responseBody?.data;
+        if (Array.isArray(points) && points.length > 0) {
+          setHistory(points);
+          // No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md): simulierte Notfall-Historie
+          // wird gekennzeichnet, statt unmarkiert als realer Kursverlauf dargestellt zu werden.
+          setHistorySource(responseBody?.source === 'simulated' ? 'simulated' : 'live');
         } else {
           throw new Error('Ungültiges Datenformat empfangen.');
         }
@@ -664,8 +673,21 @@ export function Charts({ selectedSymbol, onSelectSymbol, userSession }: ChartsPr
           </button>
         </div>
       ) : (
+        <div className="space-y-6">
+        {/* No-Demo-Data-Policy: simulierte Ersatzhistorie offenlegen (docs/DATENSCHUTZ_PROTOKOLL.md) */}
+        {historySource === 'simulated' && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3">
+            <ShieldAlert className="text-amber-400 w-5 h-5 shrink-0 mt-0.5" />
+            <p className="text-xs text-white/70 leading-relaxed">
+              <span className="font-bold text-amber-400 uppercase tracking-widest">Simulierte Kurshistorie</span> — für{' '}
+              {activeSymbol} lagen keine realen historischen Kurse vor. Die dargestellten Verläufe und alle daraus
+              abgeleiteten Indikatoren sind <span className="font-bold">nicht marktdatenbasiert</span> und nicht als
+              Grundlage für Anlageentscheidungen geeignet.
+            </p>
+          </div>
+        )}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          
+
           {/* CHART 1: Area Price Chart with Moving Averages & Bollinger Bands */}
           <div className="bg-black/40 border border-white/10 rounded-xl p-5 backdrop-blur-md relative flex flex-col justify-between">
             <div className="flex justify-between items-start mb-4">
@@ -842,6 +864,7 @@ export function Charts({ selectedSymbol, onSelectSymbol, userSession }: ChartsPr
             </div>
           </div>
 
+        </div>
         </div>
       )}
 

@@ -126,6 +126,11 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt, user
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [simResults, setSimResults] = useState<SimulatedResults | null>(null);
   const [errorState, setErrorState] = useState<string | null>(null);
+  // No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md): /api/backtest-history liefert je
+  // Symbol eine source-Kennzeichnung mit. Sobald auch nur ein Asset auf simulierte
+  // Notfall-Historie zurueckfaellt, wird das Ergebnis sichtbar als nicht marktdatenbasiert
+  // ausgewiesen, statt unmarkiert wie eine reale Portfolio-Historie zu wirken.
+  const [simulatedSymbols, setSimulatedSymbols] = useState<string[]>([]);
   const [activeChartRange, setActiveChartRange] = useState<'1Y' | '3Y' | '5Y'>('3Y');
 
   // AI review states
@@ -235,26 +240,34 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt, user
       setErrorState(null);
       setAIReview(null);
       setAIError(null);
+      setSimulatedSymbols([]);
 
       try {
         // Fetch historical data for all assets in the portfolio over the maximum range (5 years)
         // Using Promise.all for fast parallel execution
-        const fetchPromises = allocations.map(item => 
+        const fetchPromises = allocations.map(item =>
           fetch(`/api/backtest-history?symbol=${item.symbol}&range=5Y`)
             .then(res => {
               if (!res.ok) throw new Error(`HTTP_${res.status}`);
               return res.json();
             })
-            .then(data => {
-              if (data.status === 'NO_DATA' || !Array.isArray(data) || data.length === 0) {
+            .then(responseBody => {
+              // /api/backtest-history antwortet mit { data, source } (server.ts).
+              const points = responseBody?.data;
+              if (responseBody?.status === 'NO_DATA' || !Array.isArray(points) || points.length === 0) {
                 throw new Error(`Keine Verlaufsdaten für ${item.symbol}`);
               }
-              return { symbol: item.symbol, history: data };
+              return {
+                symbol: item.symbol,
+                history: points,
+                source: responseBody?.source as 'live' | 'simulated' | undefined,
+              };
             })
         );
 
         const fetchedHistories = await Promise.all(fetchPromises);
-        
+        setSimulatedSymbols(fetchedHistories.filter(h => h.source === 'simulated').map(h => h.symbol));
+
         // Align historical prices by date chronologically
         // Gather all unique dates
         const allDates = Array.from(new Set(
@@ -840,6 +853,22 @@ export function PortfolioBacktester({ userCapital = 150000, triggerAttempt, user
             >
               Schließen
             </button>
+          </div>
+        )}
+
+        {/* No-Demo-Data-Policy: simulierte Notfall-Historie offenlegen (docs/DATENSCHUTZ_PROTOKOLL.md) */}
+        {simulatedSymbols.length > 0 && simResults && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 space-y-2">
+            <div className="flex items-center gap-3 text-amber-400">
+              <AlertTriangle className="w-5 h-5" />
+              <span className="text-xs font-bold font-display uppercase tracking-widest">Simulierte Verlaufsdaten</span>
+            </div>
+            <p className="text-xs text-white/70 leading-relaxed">
+              Für {simulatedSymbols.join(', ')} lagen keine realen historischen Kurse vor. Für diese
+              Position{simulatedSymbols.length > 1 ? 'en' : ''} wurde eine simulierte Ersatzhistorie verwendet —
+              die Kennzahlen dieses Backtests sind insoweit <span className="font-bold">nicht marktdatenbasiert</span> und
+              nicht als Grundlage für Anlageentscheidungen geeignet.
+            </p>
           </div>
         )}
 

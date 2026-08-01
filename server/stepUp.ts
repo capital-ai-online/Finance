@@ -35,8 +35,11 @@ async function logSecurityEvent(fields: {
       outcome: fields.outcome,
       reason: fields.reason || null,
     });
-  } catch {
-    // security_events optional bis Migration bestätigt - Request nicht blockieren.
+  } catch (err: any) {
+    // security_events existiert produktiv (20260731000400_security_events_stepup_totp.sql);
+    // Request bleibt trotzdem unblockiert, aber der Fehler wird jetzt sichtbar geloggt
+    // (Audit ARCH-AUDIT-0002, AUD2-F-020).
+    console.error(`[STEP-UP][ERROR] security_events-Insert fehlgeschlagen: ${err?.message || err}`);
   }
 }
 

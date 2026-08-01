@@ -46,7 +46,10 @@ export function createCryptoRouter(aiClient: GoogleGenAI | null): express.Router
             ...payload,
             scores: finalScores,
             data_quality: { level: 'high' }
-          })
+          }),
+          // AUD2-F-001 (ARCH-AUDIT-0002 Kapitel 6): scores stammt aus generateCryptoScores(),
+          // einem Zeichen-Hash-Generator, nicht aus Marktdaten.
+          scoreBasis: 'synthetic' as const
         };
       });
 
@@ -89,6 +92,9 @@ export function createCryptoRouter(aiClient: GoogleGenAI | null): express.Router
       }
 
       const classification = payload.classification || ClassificationService.classifyAsset(payload.symbol);
+      // AUD2-F-001: ohne vom Aufrufer gelieferte scores wird auf generateCryptoScores()
+      // zurueckgefallen (Zeichen-Hash-Generator, keine Marktdaten).
+      const scoresProvidedByCaller = !!payload.scores;
       const inputScores = payload.scores || generateCryptoScores(payload.symbol, 0);
       const unifiedPayload = {
         ...payload,
@@ -111,7 +117,8 @@ export function createCryptoRouter(aiClient: GoogleGenAI | null): express.Router
         eligible_for_top10: isTop10Eligible({
           ...unifiedPayload,
           scores: finalScores
-        })
+        }),
+        scoreBasis: scoresProvidedByCaller ? 'user-adjusted' as const : 'synthetic' as const
       });
     } catch (error: any) {
       console.error('[CryptoRouter] Error calculating deterministic score:', error);
@@ -154,7 +161,9 @@ export function createCryptoRouter(aiClient: GoogleGenAI | null): express.Router
           classification,
           final_score: finalScores.final_score ?? 0,
           rank_score: rankScore,
-          eligible
+          eligible,
+          // AUD2-F-001: scores stammt aus generateCryptoScores() (Zeichen-Hash-Generator).
+          scoreBasis: 'synthetic' as const
         };
       });
 

@@ -20,11 +20,13 @@ import { checkRateLimit, getClientIp } from './iam/rateLimiter';
 export const STARTER_DAILY_LIMIT = 5;
 const UNLIMITED_TIERS = new Set(['PRO', 'ENTERPRISE', 'ENTERPRISE OS']);
 
-function isUnlimitedTier(tier: string): boolean {
+// Audit ARCH-AUDIT-0002 (D5): exportiert fuer direkte Testbarkeit (tests/unit/quota.test.ts),
+// ohne Supabase mocken zu muessen - reine, seiteneffektfreie Logik.
+export function isUnlimitedTier(tier: string): boolean {
   return UNLIMITED_TIERS.has(tier.trim().toUpperCase());
 }
 
-function isNewUtcDay(windowStart: string): boolean {
+export function isNewUtcDay(windowStart: string): boolean {
   const start = new Date(windowStart);
   const now = new Date();
   return (

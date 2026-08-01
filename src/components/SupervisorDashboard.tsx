@@ -155,49 +155,16 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
     `[${new Date().toISOString()}] File watcher attached to docs/adr directory. 1 revision recorded in index.`
   ]);
 
-  // 5. Initialise Prompt History
-  const [promptHistory, setPromptHistory] = useState<PromptLog[]>([
-    {
-      timestamp: new Date(Date.now() - 3 * 60000).toISOString(),
-      agentName: 'Portfolio Allocator',
-      model: 'GPT-4o',
-      prompt: 'Calculate Markowitz allocation for Universe: CRYPTO with historical 30-day covariance matrix.',
-      inputTokens: 1450,
-      outputTokens: 680,
-      cost: 0.045,
-      status: 'SUCCESS'
-    },
-    {
-      timestamp: new Date(Date.now() - 12 * 60000).toISOString(),
-      agentName: 'Risk Evaluator',
-      model: 'Gemini 2.5 Flash',
-      prompt: 'Analyze sentiment score correlation to BTC/USD price movements.',
-      inputTokens: 2500,
-      outputTokens: 410,
-      cost: 0.002,
-      status: 'SUCCESS'
-    },
-    {
-      timestamp: new Date(Date.now() - 25 * 60000).toISOString(),
-      agentName: 'Market Scanner',
-      model: 'Llama 3.3 (Local)',
-      prompt: 'Scrape top 10 breaking news headlines for financial impact analysis.',
-      inputTokens: 3800,
-      outputTokens: 150,
-      cost: 0.000,
-      status: 'SUCCESS'
-    },
-    {
-      timestamp: new Date(Date.now() - 40 * 60000).toISOString(),
-      agentName: 'SEC Compliance Auditor',
-      model: 'Claude 3.5 Sonnet',
-      prompt: 'Verify document hygiene for manual billing override bypass routes.',
-      inputTokens: 900,
-      outputTokens: 350,
-      cost: 0.012,
-      status: 'SUCCESS'
-    }
-  ]);
+  // 5. Prompt History
+  //
+  // Audit ARCH-AUDIT-0002 (Q7): Hier standen zuvor vier erfundene Prompt-Logs mit erfundenen
+  // Token-Zahlen und Kosten fuer Modelle (GPT-4o, Llama, Claude 3.5), die in dieser Codebasis
+  // gar nicht angebunden sind (nur Gemini ist real integriert, siehe server/orchestrator.ts).
+  // Es gibt keine Backend-Instrumentierung, die reale Prompt-Logs liefert - eine solche
+  // Prompt-Registry mit Token-/Kostenerfassung ist ein eigenes, hier nicht umgesetztes
+  // Vorhaben (Roadmap N2, ARCH-AUDIT-0002 Kapitel 14.4). Bis dahin bleibt die Liste leer,
+  // statt erfundene Eintraege als reale Nutzung darzustellen.
+  const [promptHistory, setPromptHistory] = useState<PromptLog[]>([]);
 
   // Die zuvor hier vorhandene "Simulated Fluctuation Engine" (setInterval mit
   // Math.random() fuer CPU/RAM/DB-Queries/DB-Latenz/Modell-Latenz/Kosten) wurde
@@ -752,12 +719,20 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
                   </button>
                 </div>
 
+                {/* No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md): Hier stand frueher ein
+                    hartkodiertes Fallback-Array mit erfundenen Latenzen (32/15/48 ms) und einem
+                    'memecoin_orchestrator', den es in dieser Codebasis nicht gibt. Solange
+                    /api/admin/orchestrators/status nichts geliefert hat, wird jetzt ein leerer
+                    Zustand angezeigt statt erfundener Betriebsdaten. */}
+                {orchestrators.length === 0 && !isLoadingOrchestrators && (
+                  <div className="bg-black/20 border border-white/5 rounded-xl p-6 text-center">
+                    <p className="text-[10px] text-white/40 font-mono uppercase tracking-widest">
+                      Keine Orchestrator-Statusdaten geladen
+                    </p>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {(orchestrators.length > 0 ? orchestrators : [
-                    { id: 'crypto_orchestrator', name: 'Crypto Orchestrator', status: 'CONNECTED', latency: 32, agentsCount: 4, lastActive: 'Aktiv', type: 'Crypto & DeFi Analytics' },
-                    { id: 'memecoin_orchestrator', name: 'MemeCoin Orchestrator', status: 'CONNECTED', latency: 15, agentsCount: 2, lastActive: 'Aktiv', type: 'Meme Token Sentiment & Rug-Pull Analysis' },
-                    { id: 'rawmaterials_orchestrator', name: 'Raw Materials Orchestrator', status: 'CONNECTED', latency: 48, agentsCount: 4, lastActive: 'Aktiv', type: 'Macroeconomic & Commodities Valuation' }
-                  ]).map((orch) => {
+                  {orchestrators.map((orch) => {
                     const isCrypto = orch.id.includes('crypto');
                     const isMeme = orch.id.includes('memecoin') || orch.id.includes('meme');
                     const colorClass = isCrypto ? 'text-emerald-400' : isMeme ? 'text-cyan-400' : 'text-aif-gold-DEFAULT';
@@ -1103,6 +1078,11 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
                   </p>
 
                   <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                    {promptHistory.length === 0 && (
+                      <p className="text-[10px] text-white/30 font-mono uppercase tracking-widest text-center py-4">
+                        Keine Prompt-Protokollierung verfügbar
+                      </p>
+                    )}
                     {promptHistory.map((log, idx) => (
                       <div
                         key={idx}
