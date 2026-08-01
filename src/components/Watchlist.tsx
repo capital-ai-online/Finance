@@ -50,6 +50,53 @@ export function Watchlist({
   const [loading, setLoading] = useState(true);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
+  // Audit ARCH-AUDIT-0002 (H2): Alert-Einrichtung je Watchlist-Asset. Server-seitig
+  // (server/alerts.ts, POST /api/alerts) - im Gegensatz zu onSimulateScoreEvent oben, das
+  // nur eine UI-Simulation ohne echten Versand ist, loest dies eine echte E-Mail-Zustellung
+  // aus (nach Bestaetigung per Double-Opt-In-Link).
+  const [alertFormSymbol, setAlertFormSymbol] = useState<string | null>(null);
+  const [alertEmail, setAlertEmail] = useState('');
+  const [alertCondition, setAlertCondition] = useState<'score_above' | 'score_below'>('score_below');
+  const [alertThreshold, setAlertThreshold] = useState('3');
+  const [alertStatus, setAlertStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [alertErrorMessage, setAlertErrorMessage] = useState('');
+
+  const openAlertForm = (asset: WatchlistAsset) => {
+    setAlertFormSymbol(prev => (prev === asset.symbol ? null : asset.symbol));
+    setAlertStatus('idle');
+    setAlertErrorMessage('');
+    setAlertCondition('score_below');
+    setAlertThreshold('3');
+  };
+
+  const submitAlert = async (asset: WatchlistAsset) => {
+    setAlertStatus('submitting');
+    setAlertErrorMessage('');
+    try {
+      const res = await fetch('/api/alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: alertEmail,
+          symbol: asset.symbol,
+          assetType: asset.type,
+          condition: alertCondition,
+          threshold: Number(alertThreshold),
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setAlertErrorMessage(body?.error || 'Alert konnte nicht angelegt werden.');
+        setAlertStatus('error');
+        return;
+      }
+      setAlertStatus('success');
+    } catch {
+      setAlertErrorMessage('Alert konnte nicht angelegt werden.');
+      setAlertStatus('error');
+    }
+  };
+
   // Fetch all assets for adding to watchlist
   useEffect(() => {
     fetch('/api/market-data')
@@ -228,14 +275,15 @@ export function Watchlist({
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className={`flex items-center justify-between p-2.5 rounded-lg border transition-all ${
-                      isSelected 
-                        ? 'bg-violet-950/20 border-violet-500/40 shadow-[0_0_12px_rgba(139,92,246,0.1)]' 
+                    className={`flex flex-col p-2.5 rounded-lg border transition-all ${
+                      isSelected
+                        ? 'bg-violet-950/20 border-violet-500/40 shadow-[0_0_12px_rgba(139,92,246,0.1)]'
                         : 'bg-white/5 border-white/5 hover:border-white/15'
                     }`}
                   >
+                  <div className="flex items-center justify-between">
                     {/* Left side: Logo & Meta clickable to select */}
-                    <div 
+                    <div
                       onClick={() => onSelectAsset(asset.symbol)}
                       className="flex items-center gap-2 cursor-pointer flex-1 min-w-0"
                     >
@@ -303,6 +351,19 @@ export function Watchlist({
                         </div>
                       )}
 
+                      {/* E-Mail-Alert einrichten (ARCH-AUDIT-0002 H2) */}
+                      <button
+                        onClick={() => openAlertForm(asset)}
+                        className={`p-1 rounded transition-colors cursor-pointer shrink-0 ${
+                          alertFormSymbol === asset.symbol
+                            ? 'bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT'
+                            : 'hover:bg-aif-gold-DEFAULT/10 hover:text-aif-gold-DEFAULT text-white/30'
+                        }`}
+                        title="E-Mail-Alert einrichten"
+                      >
+                        <Bell size={12} />
+                      </button>
+
                       {/* Remove Button */}
                       <button
                         onClick={() => onRemove(asset.symbol)}
@@ -312,6 +373,64 @@ export function Watchlist({
                         <Trash2 size={12} />
                       </button>
                     </div>
+                  </div>
+
+                    {/* Inline Alert-Einrichtungsformular */}
+                    <AnimatePresence>
+                      {alertFormSymbol === asset.symbol && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="w-full mt-2 pt-2 border-t border-white/10 space-y-2 overflow-hidden"
+                        >
+                          {alertStatus === 'success' ? (
+                            <p className="text-[10px] text-emerald-400 font-mono">
+                              Bestätigungsmail an {alertEmail} gesendet. Alert wird nach Bestätigung aktiv.
+                            </p>
+                          ) : (
+                            <>
+                              <input
+                                type="email"
+                                placeholder="E-Mail für Alert"
+                                value={alertEmail}
+                                onChange={(e) => setAlertEmail(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-[10px] text-white placeholder-white/30 focus:outline-none focus:border-aif-gold-DEFAULT/50"
+                              />
+                              <div className="flex items-center gap-1.5">
+                                <select
+                                  value={alertCondition}
+                                  onChange={(e) => setAlertCondition(e.target.value as 'score_above' | 'score_below')}
+                                  className="bg-white/5 border border-white/10 rounded px-1.5 py-1 text-[10px] text-white focus:outline-none"
+                                >
+                                  <option value="score_below">Score unter</option>
+                                  <option value="score_above">Score über</option>
+                                </select>
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  min="0"
+                                  max="10"
+                                  value={alertThreshold}
+                                  onChange={(e) => setAlertThreshold(e.target.value)}
+                                  className="w-14 bg-white/5 border border-white/10 rounded px-1.5 py-1 text-[10px] text-white focus:outline-none"
+                                />
+                                <button
+                                  onClick={() => submitAlert(asset)}
+                                  disabled={alertStatus === 'submitting' || !alertEmail}
+                                  className="ml-auto px-2 py-1 text-[10px] font-bold bg-aif-gold-DEFAULT/20 hover:bg-aif-gold-DEFAULT/30 disabled:opacity-40 text-aif-gold-DEFAULT rounded transition-colors"
+                                >
+                                  {alertStatus === 'submitting' ? '...' : 'Einrichten'}
+                                </button>
+                              </div>
+                              {alertStatus === 'error' && (
+                                <p className="text-[10px] text-rose-400 font-mono">{alertErrorMessage}</p>
+                              )}
+                            </>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 );
               })}

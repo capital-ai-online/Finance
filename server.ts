@@ -17,6 +17,7 @@ import { ClassificationService } from './src/services/classification.service';
 import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './src/services/scoring.service';
 import { trackedGenerateContent } from './src/services/aiUsageTracker';
 import { scoreValidationRouter, recordDailySnapshots } from './server/scoreValidation';
+import { alertsRouter, evaluateAlerts } from './server/alerts';
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
@@ -351,6 +352,7 @@ app.use('/api/admin', versionManagerRouter);
 app.use('/api/auth', stepUpRouter);
 app.use('/api/compliance', complianceRouter);
 app.use('/api/scoring', scoreValidationRouter);
+app.use('/api/alerts', alertsRouter);
 app.use('/api', aiRouter);
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
@@ -1030,6 +1032,13 @@ async function fetchLiveMarketData() {
     price: a.price,
   }))).catch(err => {
     console.warn('[ScoreValidation] recordDailySnapshots fehlgeschlagen:', err?.message || err);
+  });
+
+  // Audit ARCH-AUDIT-0002 (H2): Auswertung faelliger Alert-Abos gegen die soeben
+  // aktualisierten Scores. Best-effort und nicht abgewartet, gleiches Muster wie
+  // recordDailySnapshots() oben - ein Fehler hier darf /api/market-data nicht beeintraechtigen.
+  evaluateAlerts(enriched.map(a => ({ symbol: a.symbol, score: a.score }))).catch(err => {
+    console.warn('[Alerts] evaluateAlerts fehlgeschlagen:', err?.message || err);
   });
 
   return enriched;
