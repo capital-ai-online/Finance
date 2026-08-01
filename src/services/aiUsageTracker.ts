@@ -4,6 +4,7 @@
  */
 
 import type { GoogleGenAI } from '@google/genai';
+import type Anthropic from '@anthropic-ai/sdk';
 
 // Audit ARCH-AUDIT-0002 (N2, Kapitel 14.4): Prompt-Registry und Token-/Kostenerfassung fuer
 // alle Gemini-API-Aufrufe. Vor N2 gab es keine zentrale Uebersicht, welche Prompts das System
@@ -117,20 +118,50 @@ export async function trackedGenerateContent(
 ): ReturnType<GoogleGenAI['models']['generateContent']> {
   const response = await ai.models.generateContent(params);
   try {
-    recordUsage(response, String((params as any).model || 'unknown'), meta);
+    recordGeminiUsage(response, String((params as any).model || 'unknown'), meta);
   } catch {
     // Aufzeichnung ist best-effort und darf den eigentlichen KI-Aufruf nicht gefaehrden.
   }
   return response;
 }
 
-function recordUsage(response: any, model: string, meta: { promptId: string; requestId?: string }): void {
+function recordGeminiUsage(response: any, model: string, meta: { promptId: string; requestId?: string }): void {
   const usage = response?.usageMetadata;
   if (!usage) return;
   const promptTokens = typeof usage.promptTokenCount === 'number' ? usage.promptTokenCount : 0;
   const candidateTokens = typeof usage.candidatesTokenCount === 'number' ? usage.candidatesTokenCount : 0;
   const totalTokens = typeof usage.totalTokenCount === 'number' ? usage.totalTokenCount : promptTokens + candidateTokens;
+  pushUsageRecord(model, promptTokens, candidateTokens, totalTokens, meta);
+}
 
+// Audit ARCH-AUDIT-0002 (J3, Kapitel 14.6): providerübergreifender Rückfall auf Anthropic
+// Claude, wenn beide Gemini-Modelle fehlschlagen (src/services/agentModelRouting.ts). Der
+// Ledger bleibt EIN gemeinsames, providerübergreifendes Instrument - genau das macht J2s
+// Erfolgserkennung (Diff auf getUsageLedger() vor/nach einem Agentenaufruf) weiterhin
+// korrekt, unabhaengig davon, welcher Provider tatsaechlich geantwortet hat.
+export async function trackedAnthropicMessage(
+  anthropic: Anthropic,
+  params: Parameters<Anthropic['messages']['create']>[0],
+  meta: { promptId: string; requestId?: string }
+): Promise<Awaited<ReturnType<Anthropic['messages']['create']>>> {
+  const response = await anthropic.messages.create(params);
+  try {
+    recordAnthropicUsage(response, String((params as any).model || 'unknown'), meta);
+  } catch {
+    // Aufzeichnung ist best-effort und darf den eigentlichen KI-Aufruf nicht gefaehrden.
+  }
+  return response;
+}
+
+function recordAnthropicUsage(response: any, model: string, meta: { promptId: string; requestId?: string }): void {
+  const usage = response?.usage;
+  if (!usage) return;
+  const promptTokens = typeof usage.input_tokens === 'number' ? usage.input_tokens : 0;
+  const candidateTokens = typeof usage.output_tokens === 'number' ? usage.output_tokens : 0;
+  pushUsageRecord(model, promptTokens, candidateTokens, promptTokens + candidateTokens, meta);
+}
+
+function pushUsageRecord(model: string, promptTokens: number, candidateTokens: number, totalTokens: number, meta: { promptId: string; requestId?: string }): void {
   usageLedger.push({
     promptId: meta.promptId,
     model,

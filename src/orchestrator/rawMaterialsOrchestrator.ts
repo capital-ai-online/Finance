@@ -4,6 +4,7 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
+import type Anthropic from '@anthropic-ai/sdk';
 import { AnalysisPayload, RawMaterialInput } from '../types/rawMaterials';
 import { ClassificationAgent } from '../agents/classificationAgent';
 import { FundamentalsAgent } from '../agents/fundamentalsAgent';
@@ -20,12 +21,15 @@ export class RawMaterialsOrchestrator {
   private riskAgent: RiskAgent;
   private valuationAgent: ValuationAgent;
 
-  constructor(aiClient: GoogleGenAI | null) {
+  // Audit ARCH-AUDIT-0002 (J3, Kapitel 14.6): optionaler Anthropic-Client fuer den
+  // providerübergreifenden Rückfall - ohne konfigurierten Client (Standardwert null)
+  // verhalten sich die Agenten exakt wie vor J3.
+  constructor(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null) {
     this.ai = aiClient;
-    this.classificationAgent = new ClassificationAgent(aiClient);
-    this.fundamentalsAgent = new FundamentalsAgent(aiClient);
-    this.riskAgent = new RiskAgent(aiClient);
-    this.valuationAgent = new ValuationAgent(aiClient);
+    this.classificationAgent = new ClassificationAgent(aiClient, anthropicClient);
+    this.fundamentalsAgent = new FundamentalsAgent(aiClient, anthropicClient);
+    this.riskAgent = new RiskAgent(aiClient, anthropicClient);
+    this.valuationAgent = new ValuationAgent(aiClient, anthropicClient);
   }
 
   /**

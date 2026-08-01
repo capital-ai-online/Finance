@@ -28,6 +28,16 @@ services:
         sync: false
       - key: COINMARKETCAP_API_KEY
         sync: false
+      # ARCH-AUDIT-0002 (J1-Folge): echte Index-Kurse/-Historie (server/fmpIndices.ts) - ohne
+      # gesetzten Wert bleiben Indizes auf dem statischen Fallback-Snapshot (fail-open,
+      # dataSource:'fallback' bleibt korrekt bestehen, kein Fehler).
+      - key: FMP_API_KEY
+        sync: false
+      # ARCH-AUDIT-0002 (J3): providerübergreifender Rückfall auf Anthropic Claude, wenn beide
+      # Gemini-Modelle fehlschlagen (server/anthropicClient.ts). Ohne gesetzten Wert bleibt der
+      # Rückfall fail-open inaktiv - Agenten verhalten sich wie vor J3 (Gemini-only).
+      - key: ANTHROPIC_API_KEY
+        sync: false
       - key: STRIPE_PRICE_ID_STARTER
         sync: false
       - key: STRIPE_PRICE_ID_PRO

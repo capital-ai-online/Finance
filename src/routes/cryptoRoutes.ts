@@ -1,14 +1,15 @@
 import express from 'express';
 import { GoogleGenAI } from '@google/genai';
+import type Anthropic from '@anthropic-ai/sdk';
 import { CryptoOrchestrator } from '../orchestrator/cryptoOrchestrator';
 import { ClassificationService } from '../services/classification.service';
 import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from '../services/scoring.service';
 import { calculateRankScore, isTop10Eligible } from '../services/ranking.service';
 import { assetRegistry } from '../lib/assetRegistry';
 
-export function createCryptoRouter(aiClient: GoogleGenAI | null): express.Router {
+export function createCryptoRouter(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null): express.Router {
   const router = express.Router();
-  const orchestrator = new CryptoOrchestrator(aiClient);
+  const orchestrator = new CryptoOrchestrator(aiClient, anthropicClient);
 
   /**
    * GET /api/crypto/list

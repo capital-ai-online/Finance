@@ -18,12 +18,16 @@ import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './
 import { trackedGenerateContent } from './src/services/aiUsageTracker';
 import { scoreValidationRouter, recordDailySnapshots } from './server/scoreValidation';
 import { alertsRouter, evaluateAlerts } from './server/alerts';
-import { generateTraditionalAssetInputs, TraditionalAssetScoringService } from './src/services/traditionalAssetScoring';
+import { generateTraditionalAssetInputs, generateTraditionalAssetInputsFromCloses, TraditionalAssetScoringService } from './src/services/traditionalAssetScoring';
 import { ensureFundamentalsFresh, getCachedFundamentals } from './server/stockFundamentals';
+import { INDEX_FMP_TICKERS, ensureIndexQuoteFresh, getCachedIndexQuote, ensureIndexHistoryFresh, getCachedIndexHistory } from './server/fmpIndices';
 import { supervisorRouter } from './server/supervisorRouter';
+import { createAgentEvaluationRouter } from './server/agentEvaluationRouter';
+import { getAnthropicInstance, isAnthropicConfigured } from './server/anthropicClient';
 import { executeSupervised } from './src/platform/Supervisor/supervisor';
 import { newsRouter } from './src/features/news/newsRoutes';
 import { registryRouter } from './src/features/registry/registryRoutes';
+import { computeReturnStats, classifyTrendLabel } from './src/services/realMarketSignals';
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
@@ -305,6 +309,18 @@ try {
   console.warn("Failed to retrieve Gemini instance on boot:", e);
 }
 
+// Audit ARCH-AUDIT-0002 (J3, Kapitel 14.6): optionaler Anthropic-Client fuer den
+// providerübergreifenden Rückfall der 8 Gemini-Agenten. Ohne ANTHROPIC_API_KEY bleibt
+// anthropic === null - die Agenten verhalten sich dann exakt wie vor J3 (fail-open).
+let anthropic: any = null;
+try {
+  if (isAnthropicConfigured()) {
+    anthropic = getAnthropicInstance();
+  }
+} catch (e) {
+  console.warn("Failed to retrieve Anthropic instance on boot:", e);
+}
+
 // Health-Check-Endpunkt fuer Deployment-Plattformen (Audit ARCH-AUDIT-0002, Befund AUD2-F: kein
 // Health-Check vorhanden). Bewusst ohne Netzwerkaufrufe an Drittanbieter - ein Health-Check muss
 // schnell und unabhaengig von externen Ausfaellen antworten. `configured` spiegelt nur, ob die
@@ -317,6 +333,7 @@ app.get('/healthz', (req, res) => {
     configured: {
       supabase: isSupabaseConfigured(),
       gemini: isGeminiConfigured(),
+      anthropic: isAnthropicConfigured(),
     },
   });
 });
@@ -348,8 +365,8 @@ app.get('/metrics', (req, res) => {
 // komplett verhindern, statt den Betrieb ohne KI-Funktionen fortzusetzen. Beide Router und die
 // dahinterliegenden Orchestratoren akzeptieren `GoogleGenAI | null` und liefern ohne Client
 // ihre quantitativen Fallbacks.
-app.use('/api/raw-materials', createRawMaterialsRouter(ai));
-app.use('/api/crypto', createCryptoRouter(ai));
+app.use('/api/raw-materials', createRawMaterialsRouter(ai, anthropic));
+app.use('/api/crypto', createCryptoRouter(ai, anthropic));
 app.use('/api/stripe', stripeRouter);
 app.use('/api/orchestrator', orchestratorRouter);
 app.use('/api/admin/hygiene', hygieneRouter);
@@ -360,11 +377,26 @@ app.use('/api/compliance', complianceRouter);
 app.use('/api/scoring', scoreValidationRouter);
 app.use('/api/alerts', alertsRouter);
 app.use('/api/admin/supervisor', supervisorRouter);
+app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic));
 app.use('/api/news', newsRouter);
 app.use('/api/registry', registryRouter);
 app.use('/api', aiRouter);
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
+//
+// Audit ARCH-AUDIT-0002 (J1, Kapitel 10.1/14.6, Datenqualitaetsschicht): diese Funktion weist
+// JEDEM Symbol einen benannten Chart-Pattern zu, unabhaengig vom tatsaechlichen aktuellen
+// Kursverlauf - entweder hartkodiert (BTC ist IMMER "Bullish Engulfing", egal was der reale
+// Chart zeigt) oder ueber einen Zeichen-Hash-Fallback fuer alle anderen Symbole. Keine dieser
+// Zuweisungen basiert auf echter Mustererkennung. Bleibt NUR als interner Eingabewert fuer den
+// bestehenden Heuristik-Score-Pfad in calculateAssetScore() erhalten (Indizes/Anleihen und
+// Aktien/Forex ohne echte Datenquelle, siehe dort) - unveraendertes Verhalten, kein Regressions-
+// risiko fuer die bereits ehrlich als 'heuristic' gekennzeichneten Scores.
+//
+// Fuer das AN NUTZER AUSGELIEFERTE `pattern`-Feld (Watchlist, ComplianceExporter,
+// CryptoEnterpriseEvaluator) wird stattdessen computeDisplayTrendLabel() verwendet: eine echte,
+// aus tatsaechlicher Kurshistorie berechnete Trend-Klassifikation, oder undefined statt eines
+// erfundenen Namens, wenn keine echte Historie vorliegt.
 function getAssetPatternForSymbol(symbol: string): string {
   const s = symbol.toUpperCase().trim();
   if (s.startsWith('BTC')) return 'Bullish Engulfing';
@@ -374,7 +406,7 @@ function getAssetPatternForSymbol(symbol: string): string {
   if (s.startsWith('NVDA')) return 'Ascending Triangle';
   if (s.startsWith('GLD')) return 'Inverted Head & Shoulders';
   if (s.startsWith('EURUSD') || s.startsWith('EUR/USD')) return 'Bearish Harami';
-  
+
   // Deterministic fallback based on symbol characters
   const charSum = s.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const patterns = [
@@ -387,6 +419,28 @@ function getAssetPatternForSymbol(symbol: string): string {
     'Bull Flag'
   ];
   return patterns[charSum % patterns.length];
+}
+
+async function computeDisplayTrendLabel(symbol: string): Promise<string | undefined> {
+  const s = symbol.toUpperCase().trim();
+  try {
+    // Audit ARCH-AUDIT-0002 (J1-Folge): Indizes haben keine Historie in assetRegistry
+    // (das wuerde einen FMP-API-Key im client-gebuendelten assetRegistry.ts erfordern),
+    // sondern im serverseitigen FMP-Cache (server/fmpIndices.ts).
+    if (INDEX_FMP_TICKERS[s]) {
+      const points = getCachedIndexHistory(s);
+      if (!points || points.length < 2) return undefined;
+      const stats = computeReturnStats(points.map(p => p.close));
+      return stats ? classifyTrendLabel(stats) : undefined;
+    }
+    const history = await assetRegistry.getHistory(s, 30);
+    if (history.source !== 'live') return undefined;
+    const stats = computeReturnStats(history.points.map(p => p.close));
+    if (!stats) return undefined;
+    return classifyTrendLabel(stats);
+  } catch {
+    return undefined;
+  }
 }
 
 function getApplicationAreaForSymbol(symbol: string, type: string): string {
@@ -420,10 +474,13 @@ function getApplicationAreaForSymbol(symbol: string, type: string): string {
 //   (KGV/Dividendenrendite/Nettomarge von Alpha Vantage OVERVIEW, server/stockFundamentals.ts).
 //   Faellt fuer ein konkretes Symbol ohne jede reale Datenquelle auf die Heuristik zurueck
 //   (dann basis='heuristic', siehe calculateAssetScore()).
-// - 'heuristic': Indizes, Anleihen (keine Live-Kursquelle vorhanden) sowie Aktien/Forex im
-//   seltenen Fall ohne jede reale Datenquelle - eine Momentum-/Pattern-Heuristik auf Basis von
-//   change24h und einer ebenfalls deterministischen Mustererkennung (calculateAssetScore
-//   unterer Zweig).
+// - 'market-data' (Indizes, seit J1-Folge): dieselbe technische Bewertung wie Forex (keine
+//   Unternehmensbilanz), aus echter Kurshistorie von FMP (server/fmpIndices.ts, Rate-Limit-
+//   bewusst schrittweise befuellt) statt der zuvor vollstaendig fehlenden Live-Kursquelle.
+// - 'heuristic': Anleihen (keine Live-Kursquelle vorhanden) sowie Aktien/Forex/Indizes im
+//   Fall ohne (noch) verfuegbare reale Datenquelle - eine Momentum-/Pattern-Heuristik auf
+//   Basis von change24h und einer ebenfalls deterministischen Mustererkennung
+//   (calculateAssetScore unterer Zweig).
 // - undefined: Rohstoffe (RawMaterialsScoringService) haben eine dedizierte, konfigurierbare
 //   Fachengine und sind von diesem Befund nicht betroffen.
 const MEME_COIN_SYMBOLS = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'];
@@ -475,8 +532,8 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
   }
 
   // Audit ARCH-AUDIT-0002 (H1): echte technische (+ bei Aktien fundamentale) Bewertungslogik,
-  // ersetzt die Hash-Pattern-Heuristik unten fuer genau diese beiden Anlageklassen (Indizes/
-  // Anleihen bleiben auf der Heuristik - es existiert fuer sie aktuell keine Live-Kursquelle).
+  // ersetzt die Hash-Pattern-Heuristik unten fuer diese Anlageklassen (Anleihen bleiben auf
+  // der Heuristik - es existiert fuer sie aktuell keine Live-Kursquelle).
   if (type === 'stock' || type === 'forex') {
     try {
       let fundamentals: { peRatio?: number; dividendYieldPct?: number; profitMarginPct?: number } | undefined;
@@ -494,6 +551,26 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
       // korrekt 'heuristic', TROTZ Anlagetyp stock/forex.
     } catch (err: any) {
       console.warn(`[TraditionalAssetScoring Fallback] Failed for ${s}, using momentum fallback:`, err?.message || err);
+    }
+  }
+
+  // Audit ARCH-AUDIT-0002 (J1-Folge): echte technische Bewertung fuer Indizes ueber FMP
+  // (server/fmpIndices.ts) - rein technisch wie Forex (keine Unternehmensbilanz). Faellt auf
+  // die Heuristik zurueck, solange der FMP-Historie-Cache fuer dieses Symbol noch nicht
+  // gefuellt ist (Rate-Limit-bewusstes, schrittweises Befuellen, siehe fetchLiveMarketData()).
+  if (type === 'index' && INDEX_FMP_TICKERS[s]) {
+    try {
+      ensureIndexHistoryFresh(s).catch(() => {});
+      const points = getCachedIndexHistory(s);
+      if (points && points.length >= 2) {
+        const inputs = generateTraditionalAssetInputsFromCloses(s, 'index', points.map(p => p.close));
+        const result = TraditionalAssetScoringService.scoreTraditionalAsset(inputs);
+        if (result.usedFactors.length > 0) {
+          return { score: result.score, basis: 'market-data' };
+        }
+      }
+    } catch (err: any) {
+      console.warn(`[TraditionalAssetScoring Fallback] Failed for index ${s}, using momentum fallback:`, err?.message || err);
     }
   }
 
@@ -1038,10 +1115,35 @@ async function fetchLiveMarketData() {
     }));
   }
 
-  const merged = [...cryptoAssets, ...stooqAssets];
-  // Ensure all indices and other assets in the full asset registry are present in the final merged array.
-  // Indizes (S&P 500, DAX etc.) haben in diesem Projekt keine angebundene Live-Quelle
-  // und sind daher immer ein statischer Snapshot - ohne erfundene "Live-Fluktuation"
+  // Audit ARCH-AUDIT-0002 (J1-Folge): Indizes hatten bislang KEINE Live-Kursquelle (siehe
+  // Kommentar unten bei missingFallbackAssets, der bis hier unveraendert galt). FMP
+  // (server/fmpIndices.ts) liefert jetzt echte Kurse fuer die per INDEX_FMP_TICKERS
+  // abgebildeten Symbole. ensureIndexQuoteFresh() ist selbst rate-limit-bewusst (Cache +
+  // globaler Cooldown) - der Aufruf hier ist bewusst NICHT abgewartet-blockierend fuer alle
+  // 30 Indizes gleichzeitig, sondern best-effort: nur Symbole mit bereits frischem Cache-
+  // Stand liefern in diesem Zyklus ein 'live'-Ergebnis, der Rest bleibt (wie zuvor immer)
+  // ehrlich 'fallback', bis ihr Cache in einem der naechsten 60s-Zyklen aktualisiert wurde.
+  const indexAssets: any[] = [];
+  for (const indexSymbol of Object.keys(INDEX_FMP_TICKERS)) {
+    ensureIndexQuoteFresh(indexSymbol).catch(() => {});
+    const quote = getCachedIndexQuote(indexSymbol);
+    if (!quote) continue;
+    const fallbackAsset = FALLBACK_ASSETS.find(a => a.symbol === indexSymbol);
+    if (!fallbackAsset) continue;
+    indexAssets.push({
+      ...fallbackAsset,
+      price: quote.price,
+      change24h: quote.change24h,
+      status: 'Verifiziert',
+      dataSource: 'live' as const,
+    });
+    ensureIndexHistoryFresh(indexSymbol).catch(() => {});
+  }
+
+  const merged = [...cryptoAssets, ...stooqAssets, ...indexAssets];
+  // Ensure all remaining assets in the full asset registry are present in the final merged
+  // array. Indizes ohne (noch) frischen FMP-Cache-Stand sowie Anleihen haben keine angebundene
+  // Live-Quelle und sind daher ein statischer Snapshot - ohne erfundene "Live-Fluktuation"
   // (No-Demo-Data-Policy, docs/DATENSCHUTZ_PROTOKOLL.md), dafuer ehrlich als
   // dataSource: 'fallback' gekennzeichnet.
   const existingSymbols = new Set(merged.map(a => a.symbol.toUpperCase()));
@@ -1054,7 +1156,7 @@ async function fetchLiveMarketData() {
   const allMerged = [...merged, ...missingFallbackAssets];
 
   const enriched = await Promise.all(allMerged.map(async asset => {
-    const pattern = getAssetPatternForSymbol(asset.symbol);
+    const pattern = await computeDisplayTrendLabel(asset.symbol);
     const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
     const { score, basis } = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
     return {
@@ -1126,6 +1228,11 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
         marketCap: asset.marketCap,
         volume24h: asset.volume24h,
         score: asset.score,
+        // Audit ARCH-AUDIT-0002 (J1): pattern muss in die Registry zurueckgeschrieben
+        // werden, sonst liefert /api/registry/assets (ComplianceExporter.tsx,
+        // CryptoEnterpriseEvaluator.tsx) weiterhin den alten, beim Registry-Seed
+        // gesetzten Wert statt der hier berechneten ehrlichen Trend-Einordnung.
+        pattern: asset.pattern,
         // Audit ARCH-AUDIT-0002 (S1/S2/S5): reale Supply-Daten fuer Tokenomics-Scoring,
         // nur bei Krypto-Assets von CMC/CoinGecko geliefert (server: fetchLiveMarketData)
         ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
@@ -1150,7 +1257,7 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
     // die Registry dauerhaft mit erfundenen Werten ueberschreiben und faelschlich
     // zur Grundlage nachfolgender Requests werden.
     const dynamicFallback = await Promise.all(assetRegistry.getAssets().map(async asset => {
-      const pattern = getAssetPatternForSymbol(asset.symbol);
+      const pattern = await computeDisplayTrendLabel(asset.symbol);
       const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
       const { score, basis } = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
       return {
@@ -1986,6 +2093,9 @@ async function startServer() {
           marketCap: asset.marketCap,
           volume24h: asset.volume24h,
           score: asset.score,
+          // Audit ARCH-AUDIT-0002 (J1): siehe Kommentar bei der analogen Stelle in
+          // /api/market-data - sonst bleibt der Registry-Seed-Wert stehen.
+          pattern: asset.pattern,
           ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
           ...(asset.maxSupply !== undefined ? { maxSupply: asset.maxSupply } : {}),
           ...(asset.totalSupply !== undefined ? { totalSupply: asset.totalSupply } : {})
@@ -2007,6 +2117,9 @@ async function startServer() {
             marketCap: asset.marketCap,
             volume24h: asset.volume24h,
             score: asset.score,
+            // Audit ARCH-AUDIT-0002 (J1): siehe Kommentar bei der analogen Stelle in
+            // /api/market-data - sonst bleibt der Registry-Seed-Wert stehen.
+            pattern: asset.pattern,
             ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
             ...(asset.maxSupply !== undefined ? { maxSupply: asset.maxSupply } : {}),
             ...(asset.totalSupply !== undefined ? { totalSupply: asset.totalSupply } : {})

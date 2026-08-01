@@ -4,15 +4,18 @@
  */
 
 import { GoogleGenAI, Type } from '@google/genai';
+import type Anthropic from '@anthropic-ai/sdk';
 import { Classification, CategoryMain } from '../types/rawMaterials';
 import { findRawMaterialConfig } from '../config/rawMaterialsConfig';
-import { trackedGenerateContent } from '../services/aiUsageTracker';
+import { generateStructuredWithFallback } from '../services/agentModelRouting';
 
 export class ClassificationAgent {
   private ai: GoogleGenAI | null;
+  private anthropic: Anthropic | null;
 
-  constructor(aiClient: GoogleGenAI | null) {
+  constructor(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null) {
     this.ai = aiClient;
+    this.anthropic = anthropicClient;
   }
 
   /**
@@ -20,110 +23,56 @@ export class ClassificationAgent {
    */
   public async analyze(name: string): Promise<Classification> {
     const fallback = findRawMaterialConfig(name);
-    
-    if (!this.ai) {
-      return this.getFallback(name, fallback);
-    }
 
-    try {
-      try {
-        const response = await trackedGenerateContent(this.ai, {
-          model: 'gemini-3.1-pro-preview',
-          contents: `Klassifiziere den folgenden Rohstoff: "${name}".
+    const result = await generateStructuredWithFallback({
+      gemini: this.ai,
+      anthropic: this.anthropic,
+      promptId: 'raw-materials-classification',
+      geminiModels: ['gemini-3.1-pro-preview', 'gemini-3.5-flash'],
+      contents: `Klassifiziere den folgenden Rohstoff: "${name}".
 Bestimme die Hauptklasse (Metal, Energy, Agriculture, Industrial, Recycling, oder Unknown), eine präzise Subklasse (z.B. Batteriemetalle, Edelmetalle, Nuklearbrennstoffe), den Markttyp (z.B. LME, OTC, Physisch) und den Bewertungsmodus (z.B. Standard, Strategische Relevanz).
 Gib ein strukturiertes JSON zurück.`,
-          config: {
-            systemInstruction: `Du bist der "Classification Agent" der CAPITAL-AI Rohstoff-Bewertungsplattform.
+      systemInstruction: `Du bist der "Classification Agent" der CAPITAL-AI Rohstoff-Bewertungsplattform.
 Deine Aufgabe ist es, Rohstoffe präzise zu kategorisieren.
 Du musst dich strikt an die folgenden Hauptkategorien halten:
 "Metal" (Metalle / kritische Metalle), "Energy" (Energierohstoffe), "Agriculture" (Agrarrohstoffe), "Industrial" (Industrieminerale), "Recycling" (Recycling- & Sekundärrohstoffe) oder "Unknown".
 Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.`,
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                category_main: {
-                  type: Type.STRING,
-                  description: 'Metal, Energy, Agriculture, Industrial, Recycling, Unknown',
-                },
-                category_sub: { type: Type.STRING, description: 'Spezifische Unterklasse auf Deutsch' },
-                market_type: { type: Type.STRING, description: 'Markttyp, z.B. Börsennotiert (LME), OTC-Handel' },
-                valuation_mode: { type: Type.STRING, description: 'Bewertungsmodus, z.B. Kritikalität & ökonomischer Wert' },
-                confidence: { type: Type.NUMBER, description: 'Konfidenzlevel zwischen 0.0 und 1.0' },
-                reasoning: {
-                  type: Type.ARRAY,
-                  items: { type: Type.STRING },
-                  description: '3 prägnante Stichpunkte zur Begründung'
-                }
-              },
-              required: ['category_main', 'category_sub', 'market_type', 'valuation_mode', 'confidence', 'reasoning']
-            }
+      schema: {
+        type: Type.OBJECT,
+        properties: {
+          category_main: {
+            type: Type.STRING,
+            description: 'Metal, Energy, Agriculture, Industrial, Recycling, Unknown',
+          },
+          category_sub: { type: Type.STRING, description: 'Spezifische Unterklasse auf Deutsch' },
+          market_type: { type: Type.STRING, description: 'Markttyp, z.B. Börsennotiert (LME), OTC-Handel' },
+          valuation_mode: { type: Type.STRING, description: 'Bewertungsmodus, z.B. Kritikalität & ökonomischer Wert' },
+          confidence: { type: Type.NUMBER, description: 'Konfidenzlevel zwischen 0.0 und 1.0' },
+          reasoning: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+            description: '3 prägnante Stichpunkte zur Begründung'
           }
-        }, { promptId: 'raw-materials-classification' });
+        },
+        required: ['category_main', 'category_sub', 'market_type', 'valuation_mode', 'confidence', 'reasoning']
+      },
+    });
 
-        const data = JSON.parse(response.text || '{}');
-        const category_main = this.normalizeCategory(data.category_main);
-
-        return {
-          category_main,
-          category_sub: data.category_sub || fallback?.category_sub || 'Spezifischer Rohstoff / Sonderklasse',
-          market_type: data.market_type || fallback?.market_type || 'OTC oder Physischer Direktmarkt',
-          valuation_mode: data.valuation_mode || (fallback?.is_critical ? 'Kritikalität & Strategische Relevanz' : 'Standard-Marktbewertung'),
-          confidence: typeof data.confidence === 'number' ? Math.max(0.1, Math.min(1.0, data.confidence)) : 0.85,
-          reasoning: Array.isArray(data.reasoning) ? data.reasoning.slice(0, 3) : ['Klassifiziert durch CAPITAL-AI Klassifikator.']
-        };
-      } catch (e) {
-        console.warn(`[ClassificationAgent] Premium model 'gemini-3.1-pro-preview' failed or is rate-limited. Retrying with 'gemini-3.5-flash' fallback.`, e);
-        const response = await trackedGenerateContent(this.ai, {
-          model: 'gemini-3.5-flash',
-          contents: `Klassifiziere den folgenden Rohstoff: "${name}".
-Bestimme die Hauptklasse (Metal, Energy, Agriculture, Industrial, Recycling, oder Unknown), eine präzise Subklasse (z.B. Batteriemetalle, Edelmetalle, Nuklearbrennstoffe), den Markttyp (z.B. LME, OTC, Physisch) und den Bewertungsmodus (z.B. Standard, Strategische Relevanz).
-Gib ein strukturiertes JSON zurück.`,
-          config: {
-            systemInstruction: `Du bist der "Classification Agent" der CAPITAL-AI Rohstoff-Bewertungsplattform.
-Deine Aufgabe ist es, Rohstoffe präzise zu kategorisieren.
-Du musst dich strikt an die folgenden Hauptkategorien halten:
-"Metal" (Metalle / kritische Metalle), "Energy" (Energierohstoffe), "Agriculture" (Agrarrohstoffe), "Industrial" (Industrieminerale), "Recycling" (Recycling- & Sekundärrohstoffe) oder "Unknown".
-Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.`,
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                category_main: {
-                  type: Type.STRING,
-                  description: 'Metal, Energy, Agriculture, Industrial, Recycling, Unknown',
-                },
-                category_sub: { type: Type.STRING, description: 'Spezifische Unterklasse auf Deutsch' },
-                market_type: { type: Type.STRING, description: 'Markttyp, z.B. Börsennotiert (LME), OTC-Handel' },
-                valuation_mode: { type: Type.STRING, description: 'Bewertungsmodus, z.B. Kritikalität & ökonomischer Wert' },
-                confidence: { type: Type.NUMBER, description: 'Konfidenzlevel zwischen 0.0 und 1.0' },
-                reasoning: {
-                  type: Type.ARRAY,
-                  items: { type: Type.STRING },
-                  description: '3 prägnante Stichpunkte zur Begründung'
-                }
-              },
-              required: ['category_main', 'category_sub', 'market_type', 'valuation_mode', 'confidence', 'reasoning']
-            }
-          }
-        }, { promptId: 'raw-materials-classification' });
-
-        const data = JSON.parse(response.text || '{}');
-        const category_main = this.normalizeCategory(data.category_main);
-
-        return {
-          category_main,
-          category_sub: data.category_sub || fallback?.category_sub || 'Spezifischer Rohstoff / Sonderklasse',
-          market_type: data.market_type || fallback?.market_type || 'OTC oder Physischer Direktmarkt',
-          valuation_mode: data.valuation_mode || (fallback?.is_critical ? 'Kritikalität & Strategische Relevanz' : 'Standard-Marktbewertung'),
-          confidence: typeof data.confidence === 'number' ? Math.max(0.1, Math.min(1.0, data.confidence)) : 0.85,
-          reasoning: Array.isArray(data.reasoning) ? data.reasoning.slice(0, 3) : ['Klassifiziert durch CAPITAL-AI Klassifikator.']
-        };
-      }
-    } catch (e) {
-      console.warn(`[ClassificationAgent] Both Gemini models failed. Running quantitative database fallback.`, e);
+    if (!result) {
       return this.getFallback(name, fallback);
     }
+
+    const data = result.data;
+    const category_main = this.normalizeCategory(data.category_main);
+
+    return {
+      category_main,
+      category_sub: data.category_sub || fallback?.category_sub || 'Spezifischer Rohstoff / Sonderklasse',
+      market_type: data.market_type || fallback?.market_type || 'OTC oder Physischer Direktmarkt',
+      valuation_mode: data.valuation_mode || (fallback?.is_critical ? 'Kritikalität & Strategische Relevanz' : 'Standard-Marktbewertung'),
+      confidence: typeof data.confidence === 'number' ? Math.max(0.1, Math.min(1.0, data.confidence)) : 0.85,
+      reasoning: Array.isArray(data.reasoning) ? data.reasoning.slice(0, 3) : ['Klassifiziert durch CAPITAL-AI Klassifikator.']
+    };
   }
 
   private normalizeCategory(cat: string): CategoryMain {

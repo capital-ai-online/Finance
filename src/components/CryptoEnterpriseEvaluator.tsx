@@ -227,7 +227,11 @@ export function CryptoEnterpriseEvaluator({
             setAssetDetails({
               name: data.name || symbol,
               score: typeof data.score === 'number' ? data.score : 8.2,
-              pattern: data.pattern || 'Muster analysiert',
+              // Audit ARCH-AUDIT-0002 (J1): data.pattern ist seit server.ts'
+              // computeDisplayTrendLabel() eine echte Trend-Einordnung aus Kurshistorie
+              // oder undefined - der Fallback-Text behauptet entsprechend keine Analyse,
+              // die nicht stattgefunden hat.
+              pattern: data.pattern || 'Keine reale Kurshistorie verfügbar',
               risk: data.risk || 'Medium',
               change24h: typeof data.change24h === 'number' ? data.change24h : 0.0,
               expectedReturn: typeof data.expectedReturn === 'number' ? data.expectedReturn : 15,
@@ -917,7 +921,7 @@ export function CryptoEnterpriseEvaluator({
             <span className="text-white/50 text-[10px]">Scoring Architektur:</span>
             <span className="font-bold text-aif-gold-DEFAULT">{assetDetails.score ?? 8.2} / 10</span>
             <span className="text-white/30">|</span>
-            <span className="text-emerald-400 font-bold">{assetDetails.pattern || 'Muster analysiert'}</span>
+            <span className="text-emerald-400 font-bold">{assetDetails.pattern || 'Keine reale Kurshistorie verfügbar'}</span>
             <span className="text-white/30">|</span>
             <span className={(assetDetails.change24h ?? 0) >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
               {(assetDetails.change24h ?? 0) >= 0 ? `+${assetDetails.change24h}%` : `${assetDetails.change24h}%`}

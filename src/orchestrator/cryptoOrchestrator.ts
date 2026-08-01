@@ -4,6 +4,7 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
+import type Anthropic from '@anthropic-ai/sdk';
 import { CryptoClassificationAgent } from '../agents/cryptoClassificationAgent';
 import { CryptoOnChainAgent } from '../agents/cryptoOnChainAgent';
 import { CryptoSentimentAgent } from '../agents/cryptoSentimentAgent';
@@ -22,12 +23,15 @@ export class CryptoOrchestrator {
   private sentimentAgent: CryptoSentimentAgent;
   private riskAgent: CryptoRiskAgent;
 
-  constructor(aiClient: GoogleGenAI | null) {
+  // Audit ARCH-AUDIT-0002 (J3, Kapitel 14.6): optionaler Anthropic-Client fuer den
+  // providerübergreifenden Rückfall - ohne konfigurierten Client (Standardwert null)
+  // verhalten sich die Agenten exakt wie vor J3.
+  constructor(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null) {
     this.ai = aiClient;
-    this.classificationAgent = new CryptoClassificationAgent(aiClient);
-    this.onChainAgent = new CryptoOnChainAgent(aiClient);
-    this.sentimentAgent = new CryptoSentimentAgent(aiClient);
-    this.riskAgent = new CryptoRiskAgent(aiClient);
+    this.classificationAgent = new CryptoClassificationAgent(aiClient, anthropicClient);
+    this.onChainAgent = new CryptoOnChainAgent(aiClient, anthropicClient);
+    this.sentimentAgent = new CryptoSentimentAgent(aiClient, anthropicClient);
+    this.riskAgent = new CryptoRiskAgent(aiClient, anthropicClient);
   }
 
   /**

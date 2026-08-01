@@ -5,12 +5,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   trackedGenerateContent,
+  trackedAnthropicMessage,
   getUsageLedger,
   getUsageSummary,
   configureModelPricing,
   PROMPT_REGISTRY,
 } from '../../src/services/aiUsageTracker';
 import type { GoogleGenAI } from '@google/genai';
+import type Anthropic from '@anthropic-ai/sdk';
 
 function mockAiClient(response: any): GoogleGenAI {
   return {
@@ -18,6 +20,14 @@ function mockAiClient(response: any): GoogleGenAI {
       generateContent: async () => response,
     },
   } as unknown as GoogleGenAI;
+}
+
+function mockAnthropicClient(response: any): Anthropic {
+  return {
+    messages: {
+      create: async () => response,
+    },
+  } as unknown as Anthropic;
 }
 
 describe('aiUsageTracker', () => {
@@ -107,5 +117,38 @@ describe('aiUsageTracker', () => {
 
   it('PROMPT_REGISTRY deckt alle 15 bekannten Aufrufstellen ab', () => {
     expect(Object.keys(PROMPT_REGISTRY).length).toBe(15);
+  });
+
+  // Audit ARCH-AUDIT-0002 (J3): providerübergreifender Rückfall - derselbe Ledger muss auch
+  // Anthropic-Aufrufe aufzeichnen (input_tokens/output_tokens statt promptTokenCount/
+  // candidatesTokenCount), damit J2s Erfolgserkennung providerunabhaengig bleibt.
+  describe('trackedAnthropicMessage', () => {
+    it('zeichnet input_tokens/output_tokens aus einer realen usage-Antwort auf', async () => {
+      const before = getUsageLedger().length;
+      const anthropic = mockAnthropicClient({
+        content: [{ type: 'tool_use', name: 'submit_structured_result', input: { foo: 'bar' } }],
+        usage: { input_tokens: 200, output_tokens: 40 },
+      });
+
+      await trackedAnthropicMessage(anthropic, { model: 'test-anthropic-model', messages: [] } as any, { promptId: 'crypto-risk' });
+
+      const ledger = getUsageLedger();
+      expect(ledger.length).toBe(before + 1);
+      const last = ledger[ledger.length - 1];
+      expect(last.promptTokens).toBe(200);
+      expect(last.candidateTokens).toBe(40);
+      expect(last.totalTokens).toBe(240);
+      expect(last.model).toBe('test-anthropic-model');
+      expect(last.promptId).toBe('crypto-risk');
+    });
+
+    it('erzeugt keinen Ledger-Eintrag, wenn die Antwort kein usage-Feld enthaelt', async () => {
+      const before = getUsageLedger().length;
+      const anthropic = mockAnthropicClient({ content: [] });
+
+      await trackedAnthropicMessage(anthropic, { model: 'test-anthropic-model-2', messages: [] } as any, { promptId: 'crypto-onchain' });
+
+      expect(getUsageLedger().length).toBe(before);
+    });
   });
 });

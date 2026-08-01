@@ -59,7 +59,7 @@ export const FX_SCORING_WEIGHTS = {
 
 export interface TraditionalAssetScoringInputs {
   symbol: string;
-  assetType: 'stock' | 'forex';
+  assetType: 'stock' | 'forex' | 'index';
   trend?: number; // 0-1
   momentum?: number; // 0-1
   breakout_quality?: number; // 0-1
@@ -106,6 +106,28 @@ export interface FundamentalsInput {
 }
 
 /**
+ * Reine Funktion: berechnet die technischen Faktoren aus einer bereits vorliegenden Reihe
+ * echter Schlusskurse - unabhaengig davon, ob diese von assetRegistry.getHistory() (Stooq/
+ * CoinGecko, client-sicher) oder einer serverseitigen Quelle wie FMP (server/fmpIndices.ts,
+ * benoetigt einen API-Key und darf daher nicht in dieses client-gebuendelte Modul importiert
+ * werden) stammen. Wiederverwendet von generateTraditionalAssetInputs() (Aktien/Forex) und
+ * server.ts (Indizes, ARCH-AUDIT-0002 J1-Folge).
+ */
+export function computeTechnicalFactorsFromCloses(closes: number[]): Partial<TraditionalAssetScoringInputs> {
+  const factors: Partial<TraditionalAssetScoringInputs> = {};
+  const stats = computeReturnStats(closes);
+  if (stats) {
+    factors.trend = scoreTrend(stats.last, stats.sma) / 100;
+    factors.momentum = scoreMomentum(stats.rocPct) / 100;
+    factors.breakout_quality = scoreBreakout(stats.last, stats.high, stats.low) / 100;
+    factors.volatility_quality = (100 - scoreVolatility(stats.dailyStdevPct)) / 100;
+  }
+  const rsi = computeRsi(closes);
+  if (rsi !== undefined) factors.relative_strength = rsi / 100;
+  return factors;
+}
+
+/**
  * Bezieht die technischen Faktoren aus assetRegistry.getHistory() (echte Kurshistorie via
  * CoinGecko/Stooq, je nach Anlageklasse) - identisches Muster wie
  * CryptoScoringService.generateCryptoInputs(). Fundamentaldaten (nur Aktien) werden vom
@@ -124,16 +146,7 @@ export async function generateTraditionalAssetInputs(
   try {
     const history = await assetRegistry.getHistory(s, 30);
     if (history.source === 'live') {
-      const closes = history.points.map(p => p.close);
-      const stats = computeReturnStats(closes);
-      if (stats) {
-        inputs.trend = scoreTrend(stats.last, stats.sma) / 100;
-        inputs.momentum = scoreMomentum(stats.rocPct) / 100;
-        inputs.breakout_quality = scoreBreakout(stats.last, stats.high, stats.low) / 100;
-        inputs.volatility_quality = (100 - scoreVolatility(stats.dailyStdevPct)) / 100;
-      }
-      const rsi = computeRsi(closes);
-      if (rsi !== undefined) inputs.relative_strength = rsi / 100;
+      Object.assign(inputs, computeTechnicalFactorsFromCloses(history.points.map(p => p.close)));
     }
   } catch {
     // Keine echte Historie verfuegbar - alle historienbasierten Faktoren bleiben undefined.
@@ -145,6 +158,26 @@ export async function generateTraditionalAssetInputs(
     if (fundamentals.profitMarginPct !== undefined) inputs.quality = scoreQuality(fundamentals.profitMarginPct) / 100;
   }
 
+  return inputs;
+}
+
+/**
+ * Analog zu generateTraditionalAssetInputs(), aber fuer Anlageklassen, deren Kurshistorie
+ * NICHT ueber assetRegistry.getHistory() bezogen wird (aktuell: Indizes ueber FMP,
+ * server/fmpIndices.ts, ARCH-AUDIT-0002 J1-Folge). Der Aufrufer liefert die bereits echte,
+ * geordnete Schlusskursreihe direkt - kein Fundamentaldaten-Parameter, da Indizes keine
+ * Unternehmensbilanz haben (rein technische Bewertung, wie Forex).
+ */
+export function generateTraditionalAssetInputsFromCloses(
+  symbol: string,
+  assetType: 'index',
+  closes: number[]
+): TraditionalAssetScoringInputs {
+  const s = symbol.toUpperCase().trim();
+  const inputs: TraditionalAssetScoringInputs = { symbol: s, assetType };
+  if (closes.length >= 2) {
+    Object.assign(inputs, computeTechnicalFactorsFromCloses(closes));
+  }
   return inputs;
 }
 
