@@ -12,15 +12,19 @@
 //     tauscht den `code` echt gegen ein Access-Token (siehe oauthExchange.ts).
 //  4. `/publish` ruft echte Plattform-APIs auf (platformPublishers.ts) statt Fake-URLs zu
 //     konstruieren, und schreibt in social_media_publish_log statt in ein In-Memory-Array.
+//
+// ADR-0021 — zusaetzlich zur Auth-Pflicht (401 ohne gueltiges Token) verlangt jeder Endpunkt
+// mit echter Funktionalitaet Owner-IAM-Rolle ODER den 'Founder'-Abo-Tarif (403 sonst) - siehe
+// server/socialMedia/accessControl.ts.
 
 import { Router, Request, Response } from 'express';
-import { resolveVerifiedIdentity } from '../platform/Security/authMiddleware';
 import { checkRateLimit, getClientIp } from '../platform/Security/rateLimiter';
 import { createLogger } from '../../server/logger';
 import { createAuthorizationRequest, completeOAuthCallback, isProviderConfigured } from '../../server/socialMedia/oauthExchange';
 import { listAccountsForUser, disconnectAccount, getDecryptedAccount } from '../../server/socialMedia/tokenStore';
 import { publishToPlatform } from '../../server/socialMedia/platformPublishers';
 import { recordPublishLog, listPublishLogForUser } from '../../server/socialMedia/publishLog';
+import { checkSocialMediaAccess, accessDeniedMessage } from '../../server/socialMedia/accessControl';
 import type { SupportedAccountPlatform, PublishRequestPayload } from '../platform/SocialMediaEngine/types';
 
 export const socialMediaRouter = Router();
@@ -34,18 +38,30 @@ function getRedirectUri(req: Request): string {
   return `${protocol}://${host}/api/social-media/auth/callback`;
 }
 
-async function requireIdentity(req: Request, res: Response): Promise<{ userId: string; email: string | null } | null> {
-  const identity = await resolveVerifiedIdentity(req);
-  if (!identity) {
+/** Auth (401) + Autorisierung (403, ADR-0021: nur Owner-IAM-Rolle oder Founder-Abo). */
+async function requireAccess(req: Request, res: Response): Promise<{ userId: string; email: string | null } | null> {
+  const access = await checkSocialMediaAccess(req);
+  if (access.reason === 'unauthenticated') {
     res.status(401).json({ success: false, error: 'Anmeldung erforderlich - kein gueltiges Bearer-Token.' });
     return null;
   }
-  return identity;
+  if (!access.allowed) {
+    res.status(403).json({ success: false, error: accessDeniedMessage(access.reason), reason: access.reason });
+    return null;
+  }
+  return { userId: access.userId!, email: access.email ?? null };
 }
+
+// GET /api/social-media/access — liefert nur den Zugriffsstatus (immer 200), damit das
+// Frontend eine klare "kein Zugriff"-Ansicht statt eines rohen 401/403 rendern kann.
+socialMediaRouter.get('/access', async (req: Request, res: Response) => {
+  const access = await checkSocialMediaAccess(req);
+  res.json({ success: true, allowed: access.allowed, reason: access.reason });
+});
 
 // GET /api/social-media/accounts
 socialMediaRouter.get('/accounts', async (req: Request, res: Response) => {
-  const identity = await requireIdentity(req, res);
+  const identity = await requireAccess(req, res);
   if (!identity) return;
   const accounts = await listAccountsForUser(identity.userId);
   res.json({ success: true, accounts, timestamp: new Date().toISOString() });
@@ -54,7 +70,7 @@ socialMediaRouter.get('/accounts', async (req: Request, res: Response) => {
 // POST /api/social-media/accounts/toggle — nur zum Trennen. Verbinden laeuft ausschliesslich
 // ueber den echten OAuth-Handshake (/auth/url -> Provider -> /auth/callback).
 socialMediaRouter.post('/accounts/toggle', async (req: Request, res: Response) => {
-  const identity = await requireIdentity(req, res);
+  const identity = await requireAccess(req, res);
   if (!identity) return;
 
   const { platform, connect } = req.body || {};
@@ -78,7 +94,7 @@ socialMediaRouter.post('/accounts/toggle', async (req: Request, res: Response) =
 
 // GET /api/social-media/auth/url
 socialMediaRouter.get('/auth/url', async (req: Request, res: Response) => {
-  const identity = await requireIdentity(req, res);
+  const identity = await requireAccess(req, res);
   if (!identity) return;
 
   if (!checkRateLimit(`social-media-oauth:${getClientIp(req)}`, 20, 60_000)) {
@@ -161,7 +177,7 @@ function renderCallbackPage(platform: string | null, success: boolean, errorMess
 
 // POST /api/social-media/publish
 socialMediaRouter.post('/publish', async (req: Request, res: Response) => {
-  const identity = await requireIdentity(req, res);
+  const identity = await requireAccess(req, res);
   if (!identity) return;
 
   if (!checkRateLimit(`social-media-publish:${identity.userId}`, 10, 60_000)) {
@@ -242,7 +258,7 @@ socialMediaRouter.post('/publish', async (req: Request, res: Response) => {
 
 // GET /api/social-media/history
 socialMediaRouter.get('/history', async (req: Request, res: Response) => {
-  const identity = await requireIdentity(req, res);
+  const identity = await requireAccess(req, res);
   if (!identity) return;
   const history = await listPublishLogForUser(identity.userId);
   res.json({ success: true, history, count: history.length });

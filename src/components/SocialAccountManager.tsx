@@ -13,14 +13,16 @@ import {
   SocialAccount,
   SupportedAccountPlatform
 } from '../platform/SocialMediaEngine/types';
-import { SocialMediaGeneratorService } from '../platform/SocialMediaEngine/SocialMediaGeneratorService';
+import { SocialMediaGeneratorService, SocialMediaAccessStatus } from '../platform/SocialMediaEngine/SocialMediaGeneratorService';
 import {
   XCircle,
   RefreshCw,
   ExternalLink,
   ShieldCheck,
   Key,
-  AlertCircle
+  AlertCircle,
+  Lock,
+  Crown
 } from 'lucide-react';
 
 interface Props {
@@ -84,13 +86,27 @@ const PLATFORM_CONFIGS: {
 ];
 
 export function SocialAccountManager({ onAccountsUpdated }: Props) {
+  // ADR-0021: Zugriff auf dieses Tool ist auf Owner-IAM-Rolle oder 'Founder'-Abonnenten
+  // beschraenkt. Der Server erzwingt das ohnehin auf jedem echten Endpunkt (401/403) - diese
+  // clientseitige Pruefung ist reine UX (klare Meldung statt kaputter/leerer Ansicht), keine
+  // Sicherheitsgrenze.
+  const [access, setAccess] = useState<SocialMediaAccessStatus | null>(null);
+
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null);
   const [connectError, setConnectError] = useState<{ platform: string; message: string } | null>(null);
 
   useEffect(() => {
-    loadAccounts();
+    (async () => {
+      const status = await SocialMediaGeneratorService.checkAccess();
+      setAccess(status);
+      if (status.allowed) {
+        loadAccounts();
+      } else {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -154,6 +170,45 @@ export function SocialAccountManager({ onAccountsUpdated }: Props) {
       if (onAccountsUpdated) onAccountsUpdated(updatedAccs);
     }
   };
+
+  // Zugriffsstatus noch nicht geladen -> kurzer, unauffaelliger Ladezustand statt eines
+  // Flackerns zwischen "kein Zugriff" und dem eigentlichen Tool.
+  if (access === null) {
+    return (
+      <div className="flex items-center justify-center py-16 text-white/40 text-xs gap-2">
+        <RefreshCw size={14} className="animate-spin" />
+        <span>Zugriff wird geprüft...</span>
+      </div>
+    );
+  }
+
+  if (!access.allowed) {
+    const restrictedMessage =
+      access.reason === 'unauthenticated'
+        ? 'Bitte melde dich an, um auf das Social Media Direct Publishing Hub zuzugreifen.'
+        : access.reason === 'insufficient-tier'
+        ? 'Dieses Tool ist ausschließlich Owner-Accounts und Abonnenten des Founder-Tarifs vorbehalten.'
+        : 'Zugriffsprüfung derzeit nicht möglich. Bitte später erneut versuchen.';
+
+    return (
+      <div className="p-8 rounded-2xl bg-neutral-900 border border-white/10 shadow-xl text-center max-w-xl mx-auto space-y-4">
+        <div className="w-14 h-14 mx-auto rounded-2xl bg-aif-gold-DEFAULT/15 border border-aif-gold-DEFAULT/30 flex items-center justify-center">
+          {access.reason === 'insufficient-tier' ? (
+            <Crown size={24} className="text-aif-gold-DEFAULT" />
+          ) : (
+            <Lock size={24} className="text-aif-gold-DEFAULT" />
+          )}
+        </div>
+        <h3 className="text-base font-bold text-white">Zugriff beschränkt</h3>
+        <p className="text-xs text-white/60 leading-relaxed">{restrictedMessage}</p>
+        {access.reason === 'insufficient-tier' && (
+          <p className="text-[11px] text-white/40">
+            Das Social Media Direct Publishing Hub (YouTube/TikTok/Instagram/X/Facebook-Veröffentlichung) ist Teil des Founder-Tarifs.
+          </p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

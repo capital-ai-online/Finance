@@ -230,6 +230,17 @@
       "updatedBy": "Claude"
     }
   ],
+  "ADR-0021": [
+    {
+      "version": 1,
+      "title": "Social Media Direct Publishing Hub — Zugriffsbeschraenkung auf Owner-Rolle oder Founder-Abo",
+      "decision": "Zugriff auf das Social Media Direct Publishing Hub (ADR-0020) wird auf Nutzer mit IAM-Rolle 'owner' oder Abonnenten des 'Founder'-Tarifs beschraenkt. Serverseitig durchgesetzt auf jedem Endpunkt (401/403) inkl. Re-Pruefung im OAuth-Callback; clientseitig ergaenzt um eine klare 'Zugriff beschraenkt'-Ansicht statt eines rohen Fehlers.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-08-01T00:00:00.000Z",
+      "updatedBy": "Claude"
+    }
+  ],
   "documentaryMetadata": {
     "system": "Capital-AI Documentary",
     "founder": "Sven Kulessa",
