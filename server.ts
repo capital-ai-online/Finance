@@ -39,11 +39,20 @@ import { versionManagerRouter } from './server/versionManager';
 import { stepUpRouter } from './server/stepUp';
 import { enforceScreeningQuota } from './server/quota';
 import { complianceRouter } from './server/compliance/router';
+import { checkRateLimit, getClientIp } from './server/iam/rateLimiter';
+import { createLogger, requestContext } from './server/logger';
+
+const serverLogger = createLogger('server');
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
+
+// Audit ARCH-AUDIT-0002 (S4): weist als erste Middleware jedem Request eine Correlation-ID
+// zu, damit nachfolgende Logs (CORS-Block, Rate-Limit, IAM-Pruefung, Route-Handler,
+// Fehlerbehandlung) demselben Request zugeordnet werden koennen.
+app.use(requestContext);
 
 // ---------------------------------------------------------
 // Compliance-Review Punkt 1: Prozessweites Sicherheitsnetz gegen unbehandelte
@@ -98,7 +107,7 @@ function isOriginAllowed(origin: string): boolean {
 }
 
 async function logBlockedOrigin(origin: string, req: express.Request) {
-  console.warn(`[SECURITY] Blocked CORS Origin: ${origin}`);
+  serverLogger.warn('Blocked CORS Origin', { requestId: req.requestId, origin, path: req.originalUrl });
   if (!isSupabaseConfigured()) return;
   try {
     const supabase = getServerSupabase();
@@ -115,7 +124,7 @@ async function logBlockedOrigin(origin: string, req: express.Request) {
   } catch (err: any) {
     // Audit ARCH-AUDIT-0002 (AUD2-F-020): best-effort bleibt bewusst (Request nicht blockieren),
     // aber der Fehler war zuvor unsichtbar.
-    console.error(`[SECURITY][ERROR] security_events-Insert fehlgeschlagen: ${err?.message || err}`);
+    serverLogger.error('security_events-Insert fehlgeschlagen', { requestId: req.requestId, error: err?.message || String(err) });
   }
 }
 
@@ -218,6 +227,23 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), webhookHandler);
 app.post('/billing/webhook', express.raw({ type: 'application/json' }), webhookHandler);
 
+// Audit ARCH-AUDIT-0002 (AUD2-F-015, S3): zuvor gab es kein Rate-Limiting, das PAUSCHAL fuer
+// jede Route greift - nur einzelne Admin-/Auth-Zonen (server/iam/rateLimiter.ts) und die ueber
+// orchestrator.handle() gefuehrten Markt-/Scoring-Routen (src/lib/requestOrchestrator.ts) waren
+// begrenzt. Wiederverwendet denselben In-Memory-Limiter wie die Admin-Zonen statt eine weitere
+// Rate-Limiting-Implementierung einzufuehren. Grosszuegig genug fuer normale Nutzung, faengt
+// aber Endpunkte ab, die keine eigene Begrenzung haben (z.B. statische Registry-Reads).
+// Greift NICHT fuer die beiden Webhook-Routen oben, da diese als spezifische Routen bereits
+// VOR dieser globalen Middleware registriert sind und den Request-Zyklus selbst abschliessen.
+app.use((req, res, next) => {
+  const ip = getClientIp(req as any);
+  if (!checkRateLimit(`global:${ip}`, 300, 60_000)) {
+    serverLogger.warn('Globales Rate-Limit erreicht', { requestId: req.requestId, ip, path: req.originalUrl });
+    return res.status(429).json({ error: 'Zu viele Anfragen. Bitte kurz warten.' });
+  }
+  next();
+});
+
 app.use(express.json());
 
 // Retrieve the modular Gemini client safely for use in downstream routes
@@ -305,30 +331,44 @@ function getApplicationAreaForSymbol(symbol: string, type: string): string {
   return 'Andere';
 }
 
-// Audit ARCH-AUDIT-0002 (Befund AUD2-F-001, Kapitel 6): Fuer Crypto-Assets erzeugen
-// generateCryptoScores()/generateMemeCoinInputs() saemtliche Bewertungs-Eingangsgroessen
-// (Marktkapitalisierung, Liquiditaet, Tokenomics, Security, Entwickleraktivitaet, Umsatz,
-// Adoption) deterministisch aus einem Zeichen-Hash des Tickersymbols - nicht aus echten
-// Marktdaten. Diese Funktion macht das im API-Response transparent, statt den Score
-// unmarkiert wie eine datenbasierte Bewertung erscheinen zu lassen (No-Demo-Data-Policy,
-// docs/DATENSCHUTZ_PROTOKOLL.md). Gilt ausschliesslich fuer Crypto/Meme-Coins - die
-// Commodity- und Stock/Forex-Pfade sind ein separater, nicht von diesem Befund betroffener
-// Bewertungsmechanismus.
-function isCryptoScoreBasisSynthetic(type: string): boolean {
-  return type === 'crypto';
+// Audit ARCH-AUDIT-0002 (Befund AUD2-F-001, Kapitel 6, sowie S1/S2/S5, S6 Kapitel 14.3): Legt
+// die Herkunft des score-Feldes offen, statt es unmarkiert wie eine einheitlich datenbasierte
+// Bewertung erscheinen zu lassen (No-Demo-Data-Policy, docs/DATENSCHUTZ_PROTOKOLL.md).
+// - 'synthetic': Meme-Coins - generateMemeCoinInputs() erzeugt die Eingangsgroessen weiterhin
+//   deterministisch aus einem Zeichen-Hash des Tickersymbols (noch nicht auf S1/S2/S5
+//   umgestellt).
+// - 'market-data': uebrige Crypto-Assets - generateCryptoScores() bezieht seit S1/S2/S5 reale
+//   Marktdaten (Marktkapitalisierung/Volumen/Supply von CoinMarketCap/CoinGecko, echte
+//   Kurshistorie fuer Volatilitaet) aus der AssetRegistry; fehlende Faktoren werden dynamisch
+//   ausgeschlossen statt geschaetzt (renormalizeAndScore()). Enthaelt KEINE Agenten-Analyse
+//   (die gibt es nur ueber /api/crypto/analyze via CryptoOrchestrator) - daher weiterhin von
+//   einer vollstaendigen Multi-Agenten-Bewertung unterschieden statt als "live" bezeichnet.
+// - 'heuristic': Aktien, Forex, Indizes, Anleihen - keine eigene Fachengine (anders als
+//   Crypto/Meme/DeFi/Rohstoffe), stattdessen eine Momentum-/Pattern-Heuristik auf Basis von
+//   change24h und einer ebenfalls deterministischen Mustererkennung (calculateAssetScore
+//   unterer Zweig).
+// - undefined: Rohstoffe (RawMaterialsScoringService) haben eine dedizierte, konfigurierbare
+//   Fachengine und sind von diesem Befund nicht betroffen.
+const MEME_COIN_SYMBOLS = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'];
+function getScoreBasis(type: string, symbol?: string): 'synthetic' | 'market-data' | 'heuristic' | undefined {
+  if (type === 'crypto') {
+    return symbol && MEME_COIN_SYMBOLS.includes(symbol.toUpperCase().trim()) ? 'synthetic' : 'market-data';
+  }
+  if (type === 'stock' || type === 'forex' || type === 'index' || type === 'bond') return 'heuristic';
+  return undefined;
 }
 
-function calculateAssetScore(symbol: string, type: string, change24h: number, baseScore?: number): number {
+async function calculateAssetScore(symbol: string, type: string, change24h: number, baseScore?: number): Promise<number> {
   const s = symbol.toUpperCase().trim();
   if (type === 'crypto') {
-    const isMemeCoin = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(s);
+    const isMemeCoin = MEME_COIN_SYMBOLS.includes(s);
     if (isMemeCoin) {
       const inputs = MemeCoinScoringService.generateMemeCoinInputs(s, change24h);
       const result = MemeCoinScoringService.scoreMemeCoin(inputs);
       return result.score;
     } else {
       const classification = ClassificationService.classifyAsset(s);
-      const seedScores = generateCryptoScores(s, change24h);
+      const seedScores = await generateCryptoScores(s, change24h);
       const payload = {
         asset_name: s,
         symbol: s,
@@ -338,7 +378,7 @@ function calculateAssetScore(symbol: string, type: string, change24h: number, ba
       const finalScores = classification.category_main === 'DeFi'
         ? calculateDefiScore(payload)
         : calculateBaseScore(payload);
-      return Number((finalScores.final_score / 10).toFixed(1));
+      return Number(((finalScores.final_score ?? 0) / 10).toFixed(1));
     }
   }
 
@@ -514,7 +554,11 @@ async function fetchLiveMarketData() {
             marketCap: mcapBillions,
             dividendYield: 0.0,
             volume24h: volMillions,
-            score: scoreVal
+            score: scoreVal,
+            // Audit ARCH-AUDIT-0002 (S1/S2/S5): reale Supply-Daten fuer Tokenomics-Scoring
+            circulatingSupply: typeof coin.circulating_supply === 'number' ? coin.circulating_supply : undefined,
+            maxSupply: typeof coin.max_supply === 'number' ? coin.max_supply : null,
+            totalSupply: typeof coin.total_supply === 'number' ? coin.total_supply : undefined
           };
         });
         cmcFetchedSuccessfully = true;
@@ -570,7 +614,11 @@ async function fetchLiveMarketData() {
             dividendYield: 0.0,
             volume24h: volMillions,
             score: scoreVal,
-            dataSource: 'live'
+            dataSource: 'live',
+            // Audit ARCH-AUDIT-0002 (S1/S2/S5): reale Supply-Daten fuer Tokenomics-Scoring
+            circulatingSupply: typeof coin.circulating_supply === 'number' ? coin.circulating_supply : undefined,
+            maxSupply: typeof coin.max_supply === 'number' ? coin.max_supply : null,
+            totalSupply: typeof coin.total_supply === 'number' ? coin.total_supply : undefined
           };
         });
         coingeckoFetchedSuccessfully = true;
@@ -900,18 +948,18 @@ async function fetchLiveMarketData() {
 
   const allMerged = [...merged, ...missingFallbackAssets];
 
-  const enriched = allMerged.map(asset => {
+  const enriched = await Promise.all(allMerged.map(async asset => {
     const pattern = getAssetPatternForSymbol(asset.symbol);
     const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
-    const score = calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
+    const score = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
     return {
       ...asset,
       pattern,
       applicationArea,
       score,
-      scoreBasis: isCryptoScoreBasisSynthetic(asset.type) ? 'synthetic' as const : undefined
+      scoreBasis: getScoreBasis(asset.type, asset.symbol)
     };
-  });
+  }));
   return enriched;
 }
 
@@ -949,7 +997,12 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
         change24h: asset.change24h,
         marketCap: asset.marketCap,
         volume24h: asset.volume24h,
-        score: asset.score
+        score: asset.score,
+        // Audit ARCH-AUDIT-0002 (S1/S2/S5): reale Supply-Daten fuer Tokenomics-Scoring,
+        // nur bei Krypto-Assets von CMC/CoinGecko geliefert (server: fetchLiveMarketData)
+        ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
+        ...(asset.maxSupply !== undefined ? { maxSupply: asset.maxSupply } : {}),
+        ...(asset.totalSupply !== undefined ? { totalSupply: asset.totalSupply } : {})
       });
     }
 
@@ -968,10 +1021,10 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
     // assetRegistry zurueck - ein zufaellig gejitterter Fallback-Preis wuerde sonst
     // die Registry dauerhaft mit erfundenen Werten ueberschreiben und faelschlich
     // zur Grundlage nachfolgender Requests werden.
-    const dynamicFallback = assetRegistry.getAssets().map(asset => {
+    const dynamicFallback = await Promise.all(assetRegistry.getAssets().map(async asset => {
       const pattern = getAssetPatternForSymbol(asset.symbol);
       const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
-      const score = calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
+      const score = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
       return {
         ...asset,
         status: 'Fallback',
@@ -979,9 +1032,9 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
         pattern,
         applicationArea,
         score,
-        scoreBasis: isCryptoScoreBasisSynthetic(asset.type) ? 'synthetic' as const : undefined
+        scoreBasis: getScoreBasis(asset.type, asset.symbol)
       };
-    });
+    }));
 
     res.json(dynamicFallback);
   }
@@ -1366,7 +1419,7 @@ app.get('/api/crypto-scoring/:symbol', async (req, res) => {
   const isMemeCoin = (asset && (asset as any).subtype === 'memecoin') || ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(symbol);
 
   // Audit ARCH-AUDIT-0002 (AUD2-F-001): inputs stammen aus einem Zeichen-Hash des Symbols,
-  // nicht aus Marktdaten - siehe isCryptoScoreBasisSynthetic() weiter oben in dieser Datei.
+  // nicht aus Marktdaten - siehe getScoreBasis() weiter oben in dieser Datei.
   if (isMemeCoin) {
     const inputs = MemeCoinScoringService.generateMemeCoinInputs(symbol, change24h);
     const result = MemeCoinScoringService.scoreMemeCoin(inputs);
@@ -1873,11 +1926,16 @@ async function startServer() {
   // was über asyncHandler()/next(err) hierher durchgereicht wird, statt dass der
   // Request ohne Antwort hängen bleibt oder der Prozess abstürzt.
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error(`[SERVER][UNHANDLED ROUTE ERROR] ${req.method} ${req.originalUrl}:`, err);
+    serverLogger.error('Unbehandelter Route-Fehler', {
+      requestId: req.requestId,
+      method: req.method,
+      path: req.originalUrl,
+      error: err?.message || String(err),
+    });
     if (res.headersSent) {
       return next(err);
     }
-    res.status(500).json({ error: 'Interner Serverfehler.' });
+    res.status(500).json({ error: 'Interner Serverfehler.', requestId: req.requestId });
   });
 
   app.listen(PORT, "0.0.0.0", () => {
@@ -1898,7 +1956,10 @@ async function startServer() {
           change24h: asset.change24h,
           marketCap: asset.marketCap,
           volume24h: asset.volume24h,
-          score: asset.score
+          score: asset.score,
+          ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
+          ...(asset.maxSupply !== undefined ? { maxSupply: asset.maxSupply } : {}),
+          ...(asset.totalSupply !== undefined ? { totalSupply: asset.totalSupply } : {})
         });
       }
     }).catch(err => {
@@ -1916,7 +1977,10 @@ async function startServer() {
             change24h: asset.change24h,
             marketCap: asset.marketCap,
             volume24h: asset.volume24h,
-            score: asset.score
+            score: asset.score,
+            ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
+            ...(asset.maxSupply !== undefined ? { maxSupply: asset.maxSupply } : {}),
+            ...(asset.totalSupply !== undefined ? { totalSupply: asset.totalSupply } : {})
           });
         }
         console.log("[Market Data] Background cache refresh completed.");

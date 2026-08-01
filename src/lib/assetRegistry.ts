@@ -22,6 +22,14 @@ export interface RegistryAsset {
   debtToEquity?: number;
   dividendYield?: number;
   isLocked?: boolean;
+  /**
+   * Audit ARCH-AUDIT-0002 (S1/S2/S5): reale Supply-Daten von CoinMarketCap/CoinGecko fuer
+   * Tokenomics-/Verwaesserungs-/Transparenz-Scoring (src/services/realMarketSignals.ts).
+   * Nur bei Krypto-Assets belegt; undefined = keine Quelle geliefert, kein Schaetzwert.
+   */
+  circulatingSupply?: number;
+  maxSupply?: number | null;
+  totalSupply?: number;
 }
 
 export interface HistoryPoint {

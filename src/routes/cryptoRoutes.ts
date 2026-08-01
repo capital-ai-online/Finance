@@ -14,13 +14,13 @@ export function createCryptoRouter(aiClient: GoogleGenAI | null): express.Router
    * GET /api/crypto/list
    * Returns supported cryptocurrencies with dynamic evaluation using the new scoring system
    */
-  router.get('/list', (req, res) => {
+  router.get('/list', async (req, res) => {
     try {
       const cryptoAssets = assetRegistry.getAssets().filter(a => a.type === 'crypto');
-      const list = cryptoAssets.map(asset => {
+      const list = await Promise.all(cryptoAssets.map(async asset => {
         const classification = ClassificationService.classifyAsset(asset.symbol);
-        const scores = generateCryptoScores(asset.symbol, asset.change24h);
-        
+        const scores = await generateCryptoScores(asset.symbol, asset.change24h);
+
         const payload = {
           asset_name: asset.name,
           symbol: asset.symbol,
@@ -28,8 +28,8 @@ export function createCryptoRouter(aiClient: GoogleGenAI | null): express.Router
           scores
         };
 
-        const finalScores = classification.category_main === 'DeFi' 
-          ? calculateDefiScore(payload) 
+        const finalScores = classification.category_main === 'DeFi'
+          ? calculateDefiScore(payload)
           : calculateBaseScore(payload);
 
         const rankScore = calculateRankScore(payload, finalScores.final_score ?? 0);
@@ -47,11 +47,13 @@ export function createCryptoRouter(aiClient: GoogleGenAI | null): express.Router
             scores: finalScores,
             data_quality: { level: 'high' }
           }),
-          // AUD2-F-001 (ARCH-AUDIT-0002 Kapitel 6): scores stammt aus generateCryptoScores(),
-          // einem Zeichen-Hash-Generator, nicht aus Marktdaten.
-          scoreBasis: 'synthetic' as const
+          // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): scores stammt aus
+          // generateCryptoScores() - seit S1/S2/S5 reale Marktdaten (AssetRegistry/CMC/
+          // CoinGecko), aber ohne die vollstaendige Multi-Agenten-Analyse von
+          // /api/crypto/analyze.
+          scoreBasis: 'market-data' as const
         };
-      });
+      }));
 
       res.json(list);
     } catch (error: any) {
@@ -84,7 +86,7 @@ export function createCryptoRouter(aiClient: GoogleGenAI | null): express.Router
    * POST /api/crypto/score
    * Deterministic scoring on custom input parameters
    */
-  router.post('/score', (req, res) => {
+  router.post('/score', async (req, res) => {
     try {
       const payload = req.body;
       if (!payload.symbol || !payload.asset_name) {
@@ -92,10 +94,11 @@ export function createCryptoRouter(aiClient: GoogleGenAI | null): express.Router
       }
 
       const classification = payload.classification || ClassificationService.classifyAsset(payload.symbol);
-      // AUD2-F-001: ohne vom Aufrufer gelieferte scores wird auf generateCryptoScores()
-      // zurueckgefallen (Zeichen-Hash-Generator, keine Marktdaten).
+      // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): ohne vom Aufrufer gelieferte scores
+      // wird auf generateCryptoScores() zurueckgefallen - seit S1/S2/S5 reale Marktdaten
+      // (AssetRegistry/CMC/CoinGecko) statt eines Zeichen-Hash-Generators.
       const scoresProvidedByCaller = !!payload.scores;
-      const inputScores = payload.scores || generateCryptoScores(payload.symbol, 0);
+      const inputScores = payload.scores || await generateCryptoScores(payload.symbol, 0);
       const unifiedPayload = {
         ...payload,
         classification,
@@ -118,7 +121,7 @@ export function createCryptoRouter(aiClient: GoogleGenAI | null): express.Router
           ...unifiedPayload,
           scores: finalScores
         }),
-        scoreBasis: scoresProvidedByCaller ? 'user-adjusted' as const : 'synthetic' as const
+        scoreBasis: scoresProvidedByCaller ? 'user-adjusted' as const : 'market-data' as const
       });
     } catch (error: any) {
       console.error('[CryptoRouter] Error calculating deterministic score:', error);
@@ -130,13 +133,13 @@ export function createCryptoRouter(aiClient: GoogleGenAI | null): express.Router
    * GET /api/crypto/top10
    * Filter and sort standard and DeFi assets for the central Top 10 rankings
    */
-  router.get('/top10', (req, res) => {
+  router.get('/top10', async (req, res) => {
     try {
       const cryptoAssets = assetRegistry.getAssets().filter(a => a.type === 'crypto');
-      const evaluated = cryptoAssets.map(asset => {
+      const evaluated = await Promise.all(cryptoAssets.map(async asset => {
         const classification = ClassificationService.classifyAsset(asset.symbol);
-        const scores = generateCryptoScores(asset.symbol, asset.change24h);
-        
+        const scores = await generateCryptoScores(asset.symbol, asset.change24h);
+
         const payload = {
           asset_name: asset.name,
           symbol: asset.symbol,
@@ -145,8 +148,8 @@ export function createCryptoRouter(aiClient: GoogleGenAI | null): express.Router
           data_quality: { level: 'high' as const }
         };
 
-        const finalScores = classification.category_main === 'DeFi' 
-          ? calculateDefiScore(payload) 
+        const finalScores = classification.category_main === 'DeFi'
+          ? calculateDefiScore(payload)
           : calculateBaseScore(payload);
 
         const rankScore = calculateRankScore(payload, finalScores.final_score ?? 0);
@@ -162,10 +165,12 @@ export function createCryptoRouter(aiClient: GoogleGenAI | null): express.Router
           final_score: finalScores.final_score ?? 0,
           rank_score: rankScore,
           eligible,
-          // AUD2-F-001: scores stammt aus generateCryptoScores() (Zeichen-Hash-Generator).
-          scoreBasis: 'synthetic' as const
+          // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): scores stammt aus
+          // generateCryptoScores() - seit S1/S2/S5 reale Marktdaten statt eines
+          // Zeichen-Hash-Generators.
+          scoreBasis: 'market-data' as const
         };
-      });
+      }));
 
       const top10 = evaluated
         .filter(item => item.eligible)

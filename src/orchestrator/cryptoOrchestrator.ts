@@ -63,9 +63,9 @@ export class CryptoOrchestrator {
     const asset = assetRegistry.getAsset(symbol);
     const assetName = asset ? asset.name : symbol;
 
-    // 3. Resolve deterministic classification and seed scores
+    // 3. Resolve deterministic classification and real-data-backed seed scores
     const baseClassification = ClassificationService.classifyAsset(symbol);
-    const seedScores = generateCryptoScores(symbol, asset ? asset.change24h : 0.0);
+    const seedScores = await generateCryptoScores(symbol, asset ? asset.change24h : 0.0);
 
     // 4. Determine main category mapping
     let categoryMain: CryptoCategory = baseClassification.category_main;
@@ -96,48 +96,43 @@ export class CryptoOrchestrator {
       ]
     };
 
-    // 5. Construct composite scoring inputs, blending AI agent qualitative observations with seed and custom overrides
+    // 5. Construct composite scoring inputs, blending AI agent qualitative observations with
+    // real-data-backed market scores (seedScores) and custom overrides. Felder ohne reale
+    // Quelle fuer dieses Asset bleiben undefined (kein Fallback auf einen Schaetzwert) -
+    // renormalizeAndScore() in scoring.service.ts schliesst sie dynamisch aus der
+    // Gewichtung aus.
     const scores: CryptoScores = {
       marketCap: customInput?.marketCap ?? seedScores.marketCap,
       liquidity: customInput?.liquidity ?? seedScores.liquidity,
-      volumeQuality: customInput?.volumeQuality ?? seedScores.volumeQuality,
       tokenomics: customInput?.tokenomics ?? seedScores.tokenomics,
       supplyTransparency: customInput?.supplyTransparency ?? seedScores.supplyTransparency,
-      
-      // Inject On-Chain agent insights
+      volatility: customInput?.volatility ?? seedScores.volatility,
+
+      // Inject On-Chain / Risk agent insights
       networkActivity: customInput?.networkActivity ?? Math.round(onchain.active_addresses_growth * 100),
       security: customInput?.security ?? Math.round((1.0 - risk.manipulation_index) * 100),
-      developerActivity: customInput?.developerActivity ?? seedScores.developerActivity,
-      
-      // Inject Sentiment and utility metrics
-      utility: customInput?.utility ?? Math.round(sentiment.narrative_strength * 100),
-      feeGeneration: customInput?.feeGeneration ?? seedScores.feeGeneration,
-      revenue: customInput?.revenue ?? seedScores.revenue,
-      governanceStrength: customInput?.governanceStrength ?? seedScores.governanceStrength,
-      
+
       // Inject Sentiment agent insights
+      utility: customInput?.utility ?? Math.round(sentiment.narrative_strength * 100),
       adoption: customInput?.adoption ?? Math.round(sentiment.social_velocity * 100),
       risk: customInput?.risk ?? Math.round(risk.manipulation_index * 100),
-      volatility: customInput?.volatility ?? seedScores.volatility,
       sentiment: customInput?.sentiment ?? Math.round(sentiment.news_momentum * 100),
-      compliance: customInput?.compliance ?? seedScores.compliance,
-      tvlQuality: customInput?.tvlQuality ?? seedScores.tvlQuality
     };
 
-    // Audit ARCH-AUDIT-0002 (AUD2-F-001, Kapitel 6): Von den 18 Score-Eingangsgroessen stammen
-    // 6 aus echten LLM-Agenten-Analysen (onChainAgent, sentimentAgent, riskAgent), die
-    // restlichen 12 aus seedScores = generateCryptoScores() (Zeichen-Hash des Symbols, keine
-    // Marktdaten) - sofern nicht per customInput ueberschrieben. Wird hier auf Feldebene
-    // offengelegt statt pauschal als "live" oder "synthetisch" zusammengefasst, da beide
-    // Kategorien tatsaechlich gemischt in einem Ergebnis vorkommen.
+    // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5, Kapitel 6): von den 11 Score-
+    // Eingangsgroessen stammen 6 aus echten LLM-Agenten-Analysen (onChainAgent,
+    // sentimentAgent, riskAgent) und 5 aus realen Marktdaten (seedScores =
+    // generateCryptoScores(), AssetRegistry/CMC/CoinGecko) - sofern nicht per customInput
+    // ueberschrieben. Die vormals 12 Zeichen-Hash-Felder ohne belastbare Quelle wurden
+    // entfernt (siehe CryptoScores in types/crypto.types.ts).
     const AGENT_DERIVED_FIELDS = ['networkActivity', 'security', 'utility', 'adoption', 'risk', 'sentiment'] as const;
-    const SYNTHETIC_SEED_FIELDS = ['marketCap', 'liquidity', 'volumeQuality', 'tokenomics', 'supplyTransparency', 'developerActivity', 'feeGeneration', 'revenue', 'governanceStrength', 'volatility', 'compliance', 'tvlQuality'] as const;
-    const scoreFieldBasis: Record<string, 'agent-derived' | 'synthetic' | 'user-adjusted'> = {};
+    const REAL_MARKET_FIELDS = ['marketCap', 'liquidity', 'tokenomics', 'supplyTransparency', 'volatility'] as const;
+    const scoreFieldBasis: Record<string, 'agent-derived' | 'real' | 'user-adjusted'> = {};
     for (const field of AGENT_DERIVED_FIELDS) {
       scoreFieldBasis[field] = (customInput && field in customInput) ? 'user-adjusted' : 'agent-derived';
     }
-    for (const field of SYNTHETIC_SEED_FIELDS) {
-      scoreFieldBasis[field] = (customInput && field in customInput) ? 'user-adjusted' : 'synthetic';
+    for (const field of REAL_MARKET_FIELDS) {
+      scoreFieldBasis[field] = (customInput && field in customInput) ? 'user-adjusted' : 'real';
     }
 
     const payload: CryptoAnalysisPayload = {

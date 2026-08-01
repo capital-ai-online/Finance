@@ -790,6 +790,24 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
                             <title>Score nicht marktdatenbasiert (algorithmisch aus dem Symbol abgeleitet)</title>
                           </ShieldAlert>
                         )}
+                        {asset.scoreBasis === 'heuristic' && (
+                          <ShieldAlert
+                            size={13}
+                            className="text-cyan-400"
+                            aria-label="Momentum-Heuristik statt Fachengine"
+                          >
+                            <title>Momentum-/Muster-Heuristik statt dedizierter Fachengine (keine Fundamentalanalyse)</title>
+                          </ShieldAlert>
+                        )}
+                        {asset.scoreBasis === 'market-data' && (
+                          <CheckCircle
+                            size={13}
+                            className="text-emerald-400"
+                            aria-label="Marktdatenbasiert, ohne vollständige Multi-Agenten-Analyse"
+                          >
+                            <title>Score aus realen Marktdaten (Marktkapitalisierung, Volumen, Supply, Kurshistorie) - keine vollständige Multi-Agenten-Analyse wie in der Krypto-Detailansicht</title>
+                          </CheckCircle>
+                        )}
                         {asset.score.toFixed(1)}
                       </div>
                     </td>
@@ -875,6 +893,24 @@ export function Screener({ selectedSymbol, onSelectSymbol, timeframe, onChangeTi
                       >
                         <title>Score nicht marktdatenbasiert (algorithmisch aus dem Symbol abgeleitet)</title>
                       </ShieldAlert>
+                    )}
+                    {asset.scoreBasis === 'heuristic' && (
+                      <ShieldAlert
+                        size={11}
+                        className="absolute -top-1.5 -right-1.5 text-cyan-400 bg-black/80 rounded-full p-0.5"
+                        aria-label="Momentum-Heuristik statt Fachengine"
+                      >
+                        <title>Momentum-/Muster-Heuristik statt dedizierter Fachengine (keine Fundamentalanalyse)</title>
+                      </ShieldAlert>
+                    )}
+                    {asset.scoreBasis === 'market-data' && (
+                      <CheckCircle
+                        size={11}
+                        className="absolute -top-1.5 -right-1.5 text-emerald-400 bg-black/80 rounded-full p-0.5"
+                        aria-label="Marktdatenbasiert, ohne vollständige Multi-Agenten-Analyse"
+                      >
+                        <title>Score aus realen Marktdaten (Marktkapitalisierung, Volumen, Supply, Kurshistorie) - keine vollständige Multi-Agenten-Analyse wie in der Krypto-Detailansicht</title>
+                      </CheckCircle>
                     )}
                     <span className="text-[11px] text-white/60 scale-75 uppercase font-bold tracking-tight leading-none">SCORE</span>
                     <span className="text-xs leading-tight mt-0.5">{asset.score.toFixed(1)}</span>
