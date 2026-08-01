@@ -120,8 +120,9 @@ Unabhängig vom Plan-Tier kann jederzeit ein manueller Dump erstellt werden, z. 
 riskanten Migration oder als zusätzliche Absicherung neben den automatischen Backups:
 
 ```bash
-# Connection-String aus Supabase-Dashboard: Settings → Database → Connection string (URI)
-pg_dump "postgresql://postgres:<PASSWORT>@db.ryzywoktpmyhwzxmstyu.supabase.co:5432/postgres" \
+# SUPABASE_DB_URL vorher manuell und NUR lokal in der Shell setzen (nie in ein Skript oder
+# Dokument schreiben): Supabase-Dashboard → Settings → Database → Connection string (URI).
+pg_dump "$SUPABASE_DB_URL" \
   --format=custom \
   --file="capital-ai-backup-$(date +%Y%m%d-%H%M%S).dump"
 ```
@@ -130,7 +131,8 @@ Wiederherstellung eines solchen Dumps (z. B. in ein neues/leeres Projekt zur Unt
 zurück in das bestehende Projekt im Notfall):
 
 ```bash
-pg_restore --dbname="postgresql://postgres:<PASSWORT>@<ZIEL-HOST>:5432/postgres" \
+# SUPABASE_RESTORE_TARGET_URL analog zu SUPABASE_DB_URL nur lokal in der Shell setzen.
+pg_restore --dbname="$SUPABASE_RESTORE_TARGET_URL" \
   --clean --if-exists \
   capital-ai-backup-<ZEITSTEMPEL>.dump
 ```
@@ -150,8 +152,10 @@ Datenbankstruktur (nicht die Daten selbst) durch sequenzielles Einspielen aller 
 ein neues Supabase-Projekt rekonstruieren:
 
 ```bash
+# SUPABASE_DB_URL analog zu Abschnitt 2.4 nur lokal in der Shell setzen, hier fuer das neue
+# (leere) Projekt.
 for f in supabase/migrations/*.sql; do
-  psql "postgresql://postgres:<PASSWORT>@<NEUES-PROJEKT-HOST>:5432/postgres" -f "$f"
+  psql "$SUPABASE_DB_URL" -f "$f"
 done
 ```
 
