@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import nodemailer from 'nodemailer';
 import { getCleanEnv } from './env';
+import { getServerSupabase, isSupabaseConfigured } from './db';
 
 let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
 
@@ -130,9 +131,13 @@ function buildOwnerSubscriptionNotificationEmail(
 // Sperre wird auf der Stripe Checkout Session ID gefuehrt (stabil je Kauf,
 // anders als die Event-ID, die sich bei einem manuellen Resend aendern kann).
 //
-// Dateibasiert statt In-Memory, damit ein Prozess-Neustart (Deploy) keine
-// bereits gesendete Bestaetigung erneut versendet - konsistent mit dem
-// bestehenden Muster in systemEvents.ts (SYSTEM_EVENTS_FILE).
+// Audit ARCH-AUDIT-0002 (H3): primaer in Supabase (public.subscription_confirmations_sent,
+// service_role-only) statt einer Datei unter uploads/ - Renders Dateisystem ist ephemer
+// (jeder Deploy verwirft die Datei) und wird bei mehreren Instanzen nicht geteilt, beides
+// zerstoert die Idempotenzgarantie genau in den Situationen, fuer die sie gedacht ist
+// (Redeploy waehrend eines Stripe-Retries, horizontale Skalierung). Dateibasierter Fallback
+// bleibt NUR aktiv, wenn Supabase nicht konfiguriert ist (z.B. lokale Entwicklung ohne
+// Supabase-Zugangsdaten) - konsistent mit dem Fallback-Muster in server/db.ts.
 const SUBSCRIPTION_CONFIRMATIONS_FILE = path.join(process.cwd(), 'uploads', 'subscription_confirmations_sent.json');
 const MAX_TRACKED_CONFIRMATIONS = 1000;
 
@@ -141,7 +146,7 @@ interface TrackedConfirmation {
   sentAt: string;
 }
 
-function readTrackedConfirmations(): TrackedConfirmation[] {
+function readTrackedConfirmationsLocal(): TrackedConfirmation[] {
   try {
     if (!fs.existsSync(SUBSCRIPTION_CONFIRMATIONS_FILE)) return [];
     const raw = fs.readFileSync(SUBSCRIPTION_CONFIRMATIONS_FILE, 'utf8');
@@ -155,13 +160,9 @@ function readTrackedConfirmations(): TrackedConfirmation[] {
   }
 }
 
-function hasConfirmationBeenSent(sessionId: string): boolean {
-  return readTrackedConfirmations().some((entry) => entry.sessionId === sessionId);
-}
-
-function markConfirmationSent(sessionId: string): void {
+function markConfirmationSentLocal(sessionId: string): void {
   try {
-    const existing = readTrackedConfirmations();
+    const existing = readTrackedConfirmationsLocal();
     if (existing.some((entry) => entry.sessionId === sessionId)) return;
     const updated = [...existing, { sessionId, sentAt: new Date().toISOString() }].slice(-MAX_TRACKED_CONFIRMATIONS);
     fs.mkdirSync(path.dirname(SUBSCRIPTION_CONFIRMATIONS_FILE), { recursive: true });
@@ -172,6 +173,45 @@ function markConfirmationSent(sessionId: string): void {
     // loggen. Im schlimmsten Fall wird bei einem spaeteren Retry doppelt
     // versendet, was fuer eine Bestaetigungs-E-Mail unkritisch ist.
     console.error('[Mailer] Idempotenz-Speicher konnte nicht geschrieben werden:', err);
+  }
+}
+
+async function hasConfirmationBeenSent(sessionId: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) {
+    return readTrackedConfirmationsLocal().some((entry) => entry.sessionId === sessionId);
+  }
+  try {
+    const supabase = getServerSupabase();
+    const { data, error } = await supabase
+      .from('subscription_confirmations_sent')
+      .select('session_id')
+      .eq('session_id', sessionId)
+      .maybeSingle();
+    if (error) throw error;
+    return !!data;
+  } catch (err: any) {
+    console.error('[Mailer] Idempotenz-Pruefung in Supabase fehlgeschlagen, falle auf lokale Datei zurueck:', err?.message || err);
+    return readTrackedConfirmationsLocal().some((entry) => entry.sessionId === sessionId);
+  }
+}
+
+async function markConfirmationSent(sessionId: string): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    markConfirmationSentLocal(sessionId);
+    return;
+  }
+  try {
+    const supabase = getServerSupabase();
+    const { error } = await supabase
+      .from('subscription_confirmations_sent')
+      .upsert({ session_id: sessionId }, { onConflict: 'session_id', ignoreDuplicates: true });
+    if (error) throw error;
+  } catch (err: any) {
+    // Fehler beim Persistieren der Sperre darf den bereits erfolgten Versand nicht
+    // rueckgaengig machen - lokaler Fallback als zweite Absicherung, gleiche
+    // "im schlimmsten Fall doppelter Versand ist unkritisch"-Bewertung wie zuvor.
+    console.error('[Mailer] Idempotenz-Speicher konnte nicht in Supabase geschrieben werden, falle auf lokale Datei zurueck:', err?.message || err);
+    markConfirmationSentLocal(sessionId);
   }
 }
 
@@ -207,7 +247,7 @@ export async function sendSubscriptionConfirmation(
     };
   }
 
-  if (hasConfirmationBeenSent(sessionId)) {
+  if (await hasConfirmationBeenSent(sessionId)) {
     console.log(`[Mailer] Abo-Bestaetigung fuer Session ${sessionId} bereits versendet - Duplikat uebersprungen (Idempotenz).`);
     return {
       skippedAsDuplicate: true,
@@ -221,7 +261,7 @@ export async function sendSubscriptionConfirmation(
   // ueberlappend zustellen) soll den in-flight-Versand ebenfalls als bereits
   // laufend erkennen, statt in der Race Condition zwischen "Versand gestartet"
   // und "Versand geloggt" ein zweites Mal zuzuschlagen.
-  markConfirmationSent(sessionId);
+  await markConfirmationSent(sessionId);
 
   const customerAttempted = Boolean(customerEmail);
   const [customerOutcome, ownerOutcome] = await Promise.allSettled([
