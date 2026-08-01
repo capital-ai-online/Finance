@@ -24,6 +24,7 @@ import { supervisorRouter } from './server/supervisorRouter';
 import { executeSupervised } from './src/platform/Supervisor/supervisor';
 import { newsRouter } from './src/features/news/newsRoutes';
 import { registryRouter } from './src/features/registry/registryRoutes';
+import { computeReturnStats, classifyTrendLabel } from './src/services/realMarketSignals';
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
@@ -365,6 +366,20 @@ app.use('/api/registry', registryRouter);
 app.use('/api', aiRouter);
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
+//
+// Audit ARCH-AUDIT-0002 (J1, Kapitel 10.1/14.6, Datenqualitaetsschicht): diese Funktion weist
+// JEDEM Symbol einen benannten Chart-Pattern zu, unabhaengig vom tatsaechlichen aktuellen
+// Kursverlauf - entweder hartkodiert (BTC ist IMMER "Bullish Engulfing", egal was der reale
+// Chart zeigt) oder ueber einen Zeichen-Hash-Fallback fuer alle anderen Symbole. Keine dieser
+// Zuweisungen basiert auf echter Mustererkennung. Bleibt NUR als interner Eingabewert fuer den
+// bestehenden Heuristik-Score-Pfad in calculateAssetScore() erhalten (Indizes/Anleihen und
+// Aktien/Forex ohne echte Datenquelle, siehe dort) - unveraendertes Verhalten, kein Regressions-
+// risiko fuer die bereits ehrlich als 'heuristic' gekennzeichneten Scores.
+//
+// Fuer das AN NUTZER AUSGELIEFERTE `pattern`-Feld (Watchlist, ComplianceExporter,
+// CryptoEnterpriseEvaluator) wird stattdessen computeDisplayTrendLabel() verwendet: eine echte,
+// aus tatsaechlicher Kurshistorie berechnete Trend-Klassifikation, oder undefined statt eines
+// erfundenen Namens, wenn keine echte Historie vorliegt.
 function getAssetPatternForSymbol(symbol: string): string {
   const s = symbol.toUpperCase().trim();
   if (s.startsWith('BTC')) return 'Bullish Engulfing';
@@ -374,7 +389,7 @@ function getAssetPatternForSymbol(symbol: string): string {
   if (s.startsWith('NVDA')) return 'Ascending Triangle';
   if (s.startsWith('GLD')) return 'Inverted Head & Shoulders';
   if (s.startsWith('EURUSD') || s.startsWith('EUR/USD')) return 'Bearish Harami';
-  
+
   // Deterministic fallback based on symbol characters
   const charSum = s.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const patterns = [
@@ -387,6 +402,18 @@ function getAssetPatternForSymbol(symbol: string): string {
     'Bull Flag'
   ];
   return patterns[charSum % patterns.length];
+}
+
+async function computeDisplayTrendLabel(symbol: string): Promise<string | undefined> {
+  try {
+    const history = await assetRegistry.getHistory(symbol, 30);
+    if (history.source !== 'live') return undefined;
+    const stats = computeReturnStats(history.points.map(p => p.close));
+    if (!stats) return undefined;
+    return classifyTrendLabel(stats);
+  } catch {
+    return undefined;
+  }
 }
 
 function getApplicationAreaForSymbol(symbol: string, type: string): string {
@@ -1054,7 +1081,7 @@ async function fetchLiveMarketData() {
   const allMerged = [...merged, ...missingFallbackAssets];
 
   const enriched = await Promise.all(allMerged.map(async asset => {
-    const pattern = getAssetPatternForSymbol(asset.symbol);
+    const pattern = await computeDisplayTrendLabel(asset.symbol);
     const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
     const { score, basis } = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
     return {
@@ -1126,6 +1153,11 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
         marketCap: asset.marketCap,
         volume24h: asset.volume24h,
         score: asset.score,
+        // Audit ARCH-AUDIT-0002 (J1): pattern muss in die Registry zurueckgeschrieben
+        // werden, sonst liefert /api/registry/assets (ComplianceExporter.tsx,
+        // CryptoEnterpriseEvaluator.tsx) weiterhin den alten, beim Registry-Seed
+        // gesetzten Wert statt der hier berechneten ehrlichen Trend-Einordnung.
+        pattern: asset.pattern,
         // Audit ARCH-AUDIT-0002 (S1/S2/S5): reale Supply-Daten fuer Tokenomics-Scoring,
         // nur bei Krypto-Assets von CMC/CoinGecko geliefert (server: fetchLiveMarketData)
         ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
@@ -1150,7 +1182,7 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
     // die Registry dauerhaft mit erfundenen Werten ueberschreiben und faelschlich
     // zur Grundlage nachfolgender Requests werden.
     const dynamicFallback = await Promise.all(assetRegistry.getAssets().map(async asset => {
-      const pattern = getAssetPatternForSymbol(asset.symbol);
+      const pattern = await computeDisplayTrendLabel(asset.symbol);
       const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
       const { score, basis } = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
       return {
@@ -1986,6 +2018,9 @@ async function startServer() {
           marketCap: asset.marketCap,
           volume24h: asset.volume24h,
           score: asset.score,
+          // Audit ARCH-AUDIT-0002 (J1): siehe Kommentar bei der analogen Stelle in
+          // /api/market-data - sonst bleibt der Registry-Seed-Wert stehen.
+          pattern: asset.pattern,
           ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
           ...(asset.maxSupply !== undefined ? { maxSupply: asset.maxSupply } : {}),
           ...(asset.totalSupply !== undefined ? { totalSupply: asset.totalSupply } : {})
@@ -2007,6 +2042,9 @@ async function startServer() {
             marketCap: asset.marketCap,
             volume24h: asset.volume24h,
             score: asset.score,
+            // Audit ARCH-AUDIT-0002 (J1): siehe Kommentar bei der analogen Stelle in
+            // /api/market-data - sonst bleibt der Registry-Seed-Wert stehen.
+            pattern: asset.pattern,
             ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
             ...(asset.maxSupply !== undefined ? { maxSupply: asset.maxSupply } : {}),
             ...(asset.totalSupply !== undefined ? { totalSupply: asset.totalSupply } : {})

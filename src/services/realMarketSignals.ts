@@ -165,6 +165,24 @@ export function computeRsi(closes: number[]): number | undefined {
   return clamp(100 - 100 / (1 + rs));
 }
 
+// Audit ARCH-AUDIT-0002 (J1, Kapitel 10.1/14.6): Datenqualitaetsschicht - ersetzt
+// server.ts' getAssetPatternForSymbol(), das JEDEM Symbol einen benannten Chart-Pattern
+// ("Bullish Engulfing", "Cup & Handle" etc.) zuwies - entweder hartkodiert unabhaengig vom
+// tatsaechlichen aktuellen Kursverlauf, oder ueber einen Zeichen-Hash-Fallback fuer alle
+// anderen Symbole. Keine dieser Zuweisungen basierte auf einer echten Erkennung des
+// Kursmusters. Diese Funktion behauptet KEINEN benannten Chart-Pattern (das wuerde eine
+// tatsaechliche Mehrkerzen-Mustererkennung auf OHLC-Daten voraussetzen, die diese Codebasis
+// nicht hat) - sondern klassifiziert nur die bereits real berechnete Trend-Position
+// (scoreTrend()) in drei ehrliche, grobe Kategorien.
+export type TrendLabel = 'Aufwärtstrend' | 'Abwärtstrend' | 'Seitwärtsbewegung';
+
+export function classifyTrendLabel(stats: ReturnStats): TrendLabel {
+  const trendScore = scoreTrend(stats.last, stats.sma);
+  if (trendScore > 60) return 'Aufwärtstrend';
+  if (trendScore < 40) return 'Abwärtstrend';
+  return 'Seitwärtsbewegung';
+}
+
 /**
  * Rechnet einen gewichteten Gesamtscore aus einer Teilmenge tatsaechlich vorhandener
  * Faktoren aus. Faktoren ohne Wert (undefined) werden NICHT mit 0 oder einem Schaetzwert

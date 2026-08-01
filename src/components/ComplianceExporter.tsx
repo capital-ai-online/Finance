@@ -438,7 +438,10 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
       renderGridItem('Drift-Faktor (GBM):', selectedAsset.drift.toFixed(2), 130, 73);
 
       renderGridItem('Risiko-Einstufung:', selectedAsset.risk.toUpperCase(), 18, 85);
-      renderGridItem('Technisches Muster:', selectedAsset.pattern || 'Konsolidierung', 72, 85);
+      // Audit ARCH-AUDIT-0002 (J1): pattern ist seit server.ts' computeDisplayTrendLabel()
+      // eine echte, aus Kurshistorie berechnete Trend-Einordnung oder undefined - keine
+      // erfundene Musterbezeichnung mehr. Fallback-Text ist entsprechend ehrlich formuliert.
+      renderGridItem('Trend (Kurshistorie):', selectedAsset.pattern || 'Keine reale Kurshistorie verfügbar', 72, 85);
       renderGridItem('Regulatorischer Status:', selectedAsset.status, 130, 85);
 
       // Section 4 Compliance Framework Details
