@@ -219,6 +219,17 @@
       "updatedBy": "System"
     }
   ],
+  "ADR-0020": [
+    {
+      "version": 1,
+      "title": "Social Media Direct Publishing — Reale OAuth-2.0- und Plattform-API-Integration",
+      "decision": "Der aus Google AI Studio uebergebene Handover-Prototyp fuer Social-Media-Publishing war auf dem Publish-Pfad reine Mock-Funktionalitaet (erfundene Erfolgs-URLs, kein echter Token-Exchange, ungeprüfter OAuth-State, kein User-Scoping). Statt die Produktionskonfiguration des Mock-Codes durchzufuehren, wird der Publishing-Pfad vollstaendig neu mit echter OAuth-2.0-/Plattform-API-Funktionalitaet implementiert (Supabase-Persistenz, verschluesselte Tokens, echte YouTube/TikTok/Meta/X-API-Calls). Content-Generation (Podcast-/Video-Rendering) bleibt bewusst ausserhalb des Scopes, da der zugehoerige Service nie uebergeben wurde.",
+      "status": "ACCEPTED",
+      "author": "Sven Kulessa",
+      "updatedAt": "2026-08-01T00:00:00.000Z",
+      "updatedBy": "Claude"
+    }
+  ],
   "documentaryMetadata": {
     "system": "Capital-AI Documentary",
     "founder": "Sven Kulessa",

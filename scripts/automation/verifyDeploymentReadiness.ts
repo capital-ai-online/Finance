@@ -65,7 +65,16 @@ const ALTERNATE_NAME_GROUPS: string[][] = [
 
 function findEnvVarUsages(): Set<string> {
   const found = new Set<string>();
-  const pattern = /getCleanEnv\(\s*['"]([A-Z_0-9]+)['"]\s*\)/g;
+  const directPattern = /getCleanEnv\(\s*['"]([A-Z_0-9]+)['"]\s*\)/g;
+  // ADR-0020: server/socialMedia/oauthProviders.ts liest Client-ID/Secret NICHT per
+  // getCleanEnv('LITERAL'), sondern dynamisch ueber ein Config-Objekt
+  // (getCleanEnv(cfg.clientIdEnvVar)) - der obige Pattern kann das grundsaetzlich nicht
+  // erfassen, egal wie viele Plattformen noch dazukommen. Dieser zweite Pattern greift
+  // stattdessen die literalen Variablennamen an ihrer Deklarationsstelle ab
+  // (clientIdEnvVar: 'X', clientSecretEnvVar: 'Y'), damit neue Plattform-Eintraege in
+  // OAUTH_PROVIDERS automatisch mitgeprueft werden, ohne dieses Skript je wieder anfassen
+  // zu muessen.
+  const dynamicEnvVarPattern = /(?:clientIdEnvVar|clientSecretEnvVar):\s*['"]([A-Z_0-9]+)['"]/g;
   const files: string[] = [];
 
   const serverTs = path.join(REPO_ROOT, 'server.ts');
@@ -84,8 +93,10 @@ function findEnvVarUsages(): Set<string> {
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf8');
     let m: RegExpExecArray | null;
-    pattern.lastIndex = 0;
-    while ((m = pattern.exec(content))) found.add(m[1]);
+    directPattern.lastIndex = 0;
+    while ((m = directPattern.exec(content))) found.add(m[1]);
+    dynamicEnvVarPattern.lastIndex = 0;
+    while ((m = dynamicEnvVarPattern.exec(content))) found.add(m[1]);
   }
   return found;
 }

@@ -13,6 +13,7 @@ import { MemeCoinScoringService } from './src/services/memeCoinScoringService';
 import { createRawMaterialsRouter } from './src/routes/rawMaterialsRoutes';
 import { RawMaterialsScoringService } from './src/services/rawMaterialsScoring';
 import { createCryptoRouter } from './src/routes/cryptoRoutes';
+import { socialMediaRouter } from './src/routes/socialMediaRoutes';
 import { ClassificationService } from './src/services/classification.service';
 import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './src/services/scoring.service';
 import { trackedGenerateContent } from './src/services/aiUsageTracker';
@@ -380,6 +381,7 @@ app.use('/api/admin/supervisor', supervisorRouter);
 app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic));
 app.use('/api/news', newsRouter);
 app.use('/api/registry', registryRouter);
+app.use('/api/social-media', socialMediaRouter);
 app.use('/api', aiRouter);
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
