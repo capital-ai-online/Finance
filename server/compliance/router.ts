@@ -35,6 +35,15 @@ function generateReports(run: ComplianceRun) {
     ? '_Keine offenen Befunde._'
     : run.findings.map(f => `- **[${f.severity}] ${f.title}** — ${f.description} (${f.complianceReference})`).join('\n');
 
+  // Audit ARCH-AUDIT-0002 (N6): ISO/IEC 27001:2022 Annex-A-Kontrollzuordnung je Scanner,
+  // aus den in server/compliance/scanners.ts hinterlegten isoControls-Feldern - interne
+  // Selbsteinschaetzung, kein zertifiziertes Audit-Mapping (siehe Kommentar dort).
+  const scannersWithIso = Object.values(run.scannerResults).filter(s => s.isoControls.length > 0);
+  const isoLines = scannersWithIso.length === 0
+    ? '_Keine ISO-27001-Kontrollzuordnung im aktuellen Lauf._'
+    : scannersWithIso.map(s => `- **${s.id} ${s.name}** → ${s.isoControls.join(', ')}`).join('\n');
+  const isoControlCoverage = new Set(scannersWithIso.flatMap(s => s.isoControls)).size;
+
   const markdown = `# Compliance Report ${run.id}
 
 **Datum:** ${run.createdAt}
@@ -47,6 +56,14 @@ function generateReports(run: ComplianceRun) {
 ## Befunde
 
 ${findingLines}
+
+## ISO/IEC 27001:2022 Annex-A-Kontrollzuordnung
+
+Interne Selbsteinschaetzung (${scannersWithIso.length} von ${Object.keys(run.scannerResults).length} Scannern,
+${isoControlCoverage} unterschiedliche Kontrollen abgedeckt) - kein zertifiziertes Audit-Mapping,
+Startpunkt fuer eine spaetere ISO-27001-Zertifizierungsvorbereitung (Roadmap J6).
+
+${isoLines}
 `;
 
   const json = JSON.stringify(run, null, 2);

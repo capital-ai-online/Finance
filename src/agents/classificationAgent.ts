@@ -6,6 +6,7 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { Classification, CategoryMain } from '../types/rawMaterials';
 import { findRawMaterialConfig } from '../config/rawMaterialsConfig';
+import { trackedGenerateContent } from '../services/aiUsageTracker';
 
 export class ClassificationAgent {
   private ai: GoogleGenAI | null;
@@ -26,7 +27,7 @@ export class ClassificationAgent {
 
     try {
       try {
-        const response = await this.ai.models.generateContent({
+        const response = await trackedGenerateContent(this.ai, {
           model: 'gemini-3.1-pro-preview',
           contents: `Klassifiziere den folgenden Rohstoff: "${name}".
 Bestimme die Hauptklasse (Metal, Energy, Agriculture, Industrial, Recycling, oder Unknown), eine präzise Subklasse (z.B. Batteriemetalle, Edelmetalle, Nuklearbrennstoffe), den Markttyp (z.B. LME, OTC, Physisch) und den Bewertungsmodus (z.B. Standard, Strategische Relevanz).
@@ -58,7 +59,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
               required: ['category_main', 'category_sub', 'market_type', 'valuation_mode', 'confidence', 'reasoning']
             }
           }
-        });
+        }, { promptId: 'raw-materials-classification' });
 
         const data = JSON.parse(response.text || '{}');
         const category_main = this.normalizeCategory(data.category_main);
@@ -73,7 +74,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
         };
       } catch (e) {
         console.warn(`[ClassificationAgent] Premium model 'gemini-3.1-pro-preview' failed or is rate-limited. Retrying with 'gemini-3.5-flash' fallback.`, e);
-        const response = await this.ai.models.generateContent({
+        const response = await trackedGenerateContent(this.ai, {
           model: 'gemini-3.5-flash',
           contents: `Klassifiziere den folgenden Rohstoff: "${name}".
 Bestimme die Hauptklasse (Metal, Energy, Agriculture, Industrial, Recycling, oder Unknown), eine präzise Subklasse (z.B. Batteriemetalle, Edelmetalle, Nuklearbrennstoffe), den Markttyp (z.B. LME, OTC, Physisch) und den Bewertungsmodus (z.B. Standard, Strategische Relevanz).
@@ -105,7 +106,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
               required: ['category_main', 'category_sub', 'market_type', 'valuation_mode', 'confidence', 'reasoning']
             }
           }
-        });
+        }, { promptId: 'raw-materials-classification' });
 
         const data = JSON.parse(response.text || '{}');
         const category_main = this.normalizeCategory(data.category_main);

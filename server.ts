@@ -15,6 +15,8 @@ import { RawMaterialsScoringService } from './src/services/rawMaterialsScoring';
 import { createCryptoRouter } from './src/routes/cryptoRoutes';
 import { ClassificationService } from './src/services/classification.service';
 import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './src/services/scoring.service';
+import { trackedGenerateContent } from './src/services/aiUsageTracker';
+import { scoreValidationRouter, recordDailySnapshots } from './server/scoreValidation';
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
@@ -164,7 +166,14 @@ app.use((req, res, next) => {
     return res.sendStatus(200);
   }
 
-  // 2. HTTP Security Headers Hardening (OWASP Compliance)
+  // 2. HTTP Security Headers Hardening (OWASP Compliance). Audit ARCH-AUDIT-0002 (N7)
+  // nennt "Helmet" als Massnahme; bewusst kein zusaetzliches Paket eingefuehrt, weil
+  // dieser Block bereits alle sicherheitsrelevanten Header setzt, die Helmet default-
+  // maessig liefern wuerde (CSP, X-Content-Type-Options, Referrer-Policy, HSTS,
+  // Clickjacking-Schutz via frame-ancestors) - inklusive der projektspezifischen
+  // ADR-0009-Origin-Allowlist-Logik, die eine generische Helmet-Konfiguration erst
+  // wieder nachbilden muesste. Ein zweites Paket mit eigener Default-CSP wuerde mit
+  // dieser bestehenden Logik kollidieren statt sie wiederzuverwenden.
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -177,16 +186,44 @@ app.use((req, res, next) => {
     "'self'",
     ...(!isProductionEnv ? ["https://ai.studio", "http://localhost:*"] : []),
   ].join(' ');
+  // Audit ARCH-AUDIT-0002 (N7): script-src und style-src ohne 'unsafe-inline'/'unsafe-eval'
+  // in Produktion. Der Vite-Produktionsbuild enthaelt weder Inline-<script>- noch
+  // Inline-<style>-Tags (nur externe, gehashte Dateien unter /assets, siehe
+  // dist/index.html); React setzt Inline-Styles ueber die DOM-CSSOM-Eigenschaft
+  // (element.style.xxx), nicht ueber das style=""-Attribut, und ist von style-src
+  // nicht betroffen. Verifiziert per Playwright-Konsolen-Check (securitypolicyviolation-
+  // Events) gegen den echten Produktionsbuild ueber mehrere Navigationspfade - keine
+  // CSP-Violation-Reports (tiefere, nur eingeloggt erreichbare Ansichten wurden mangels
+  // Testzugangsdaten in dieser Umgebung nicht erreicht, sollten aber denselben
+  // externen-Assets-Build durchlaufen). Im Entwicklungsmodus benoetigt Vites HMR-Client
+  // weiterhin 'unsafe-inline'/'unsafe-eval', daher dort unveraendert gelockert.
+  const scriptSrc = isProductionEnv
+    ? "'self' https://*.stripe.com"
+    : "'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com";
   res.setHeader(
     'Content-Security-Policy',
     "default-src 'self' https:; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    `script-src ${scriptSrc}; ` +
+    "style-src 'self' https://fonts.googleapis.com; " +
     "img-src 'self' data: https: referrer; " +
     "font-src 'self' data: https://fonts.gstatic.com; " +
     "frame-src 'self' https://*.stripe.com; " +
     `frame-ancestors ${frameAncestors};`
   );
+
+  // Audit ARCH-AUDIT-0002 (N7, CSRF-Anteil): kein CSRF-Token-Mechanismus implementiert,
+  // weil er hier keine reale Schutzwirkung haette - dieses Ergebnis, nicht eine
+  // Unterlassung. Klassisches CSRF nutzt aus, dass Browser Session-Cookies automatisch
+  // an denselben Origin anhaengen; diese Anwendung setzt und liest an keiner Stelle
+  // Cookies (grep ueber src/ und server/ bestaetigt: 0 Treffer fuer res.cookie/
+  // req.cookies/document.cookie/cookie-parser), der Supabase-Client
+  // (src/supabaseClient.ts) nutzt die Standardkonfiguration mit localStorage-basierter
+  // Session, und jede geschuetzte Route verlangt einen expliziten
+  // `Authorization: Bearer <token>`-Header (server/iam/authMiddleware.ts), den ein
+  // fremder Origin nicht automatisch mitschicken kann. Ein CSRF-Token waere daher
+  // Security-Theater fuer ein Bedrohungsmodell, das hier nicht zutrifft. Sollte
+  // zukuenftig Cookie-basierte Session-Authentifizierung eingefuehrt werden, muss
+  // diese Einschaetzung neu bewertet werden.
 
   // Strict-Transport-Security (HSTS) in production
   if (isProductionEnv) {
@@ -289,6 +326,7 @@ app.use('/api/admin', systemEventsRouter);
 app.use('/api/admin', versionManagerRouter);
 app.use('/api/auth', stepUpRouter);
 app.use('/api/compliance', complianceRouter);
+app.use('/api/scoring', scoreValidationRouter);
 app.use('/api', aiRouter);
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
@@ -956,6 +994,20 @@ async function fetchLiveMarketData() {
       scoreBasis: getScoreBasis(asset.type, asset.symbol)
     };
   }));
+
+  // Audit ARCH-AUDIT-0002 (N1): taeglicher Score-/Preis-Snapshot fuer die rueckwirkende
+  // Score-Validierung (server/scoreValidation.ts). Best-effort und nicht abgewartet -
+  // ein Fehler oder eine Verzoegerung hier darf /api/market-data nicht beeintraechtigen.
+  recordDailySnapshots(enriched.map(a => ({
+    symbol: a.symbol,
+    assetType: a.type,
+    score: a.score,
+    scoreBasis: a.scoreBasis,
+    price: a.price,
+  }))).catch(err => {
+    console.warn('[ScoreValidation] recordDailySnapshots fehlgeschlagen:', err?.message || err);
+  });
+
   return enriched;
 }
 
@@ -1569,14 +1621,14 @@ app.get('/api/market-sentiment', orchestrator.handle('Market Sentiment'), async 
     
     Antworte AUSSCHLIESSLICH mit diesem JSON-Objekt. Verwende kein Markdown-Code-Highlighting wie \`\`\`json.`;
 
-    const response = await ai.models.generateContent({
+    const response = await trackedGenerateContent(ai, {
       model: 'gemini-3.5-flash',
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json"
       }
-    });
+    }, { promptId: 'server-market-sentiment', requestId: req.requestId });
 
     const text = response.text || '';
     let parsedData;
@@ -1739,13 +1791,13 @@ app.post('/api/market-sentiment/simulate-shock', express.json(), orchestrator.ha
   
   Antworte AUSSCHLIESSLICH mit diesem JSON-Objekt. Verwende kein Markdown-Code-Highlighting wie \`\`\`json.`;
 
-    const response = await ai.models.generateContent({
+    const response = await trackedGenerateContent(ai, {
       model: 'gemini-3.5-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json"
       }
-    });
+    }, { promptId: 'server-market-sentiment-shock', requestId: req.requestId });
 
     const text = response.text || '';
     let parsedData;
@@ -1818,13 +1870,13 @@ app.post('/api/portfolio-review', express.json(), orchestrator.handle('Portfolio
     
     Antworte AUSSCHLIESSLICH mit diesem JSON-Objekt. Verwende kein Markdown-Code-Highlighting wie \`\`\`json.`;
 
-    const response = await ai.models.generateContent({
+    const response = await trackedGenerateContent(ai, {
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json"
       }
-    });
+    }, { promptId: 'server-portfolio-review', requestId: req.requestId });
 
     const text = response.text || '';
     let parsedData;

@@ -26,6 +26,14 @@ export interface ScannerResult {
   findings: Finding[];
   riskScore: number;
   executionTimeMs: number;
+  // Audit ARCH-AUDIT-0002 (N6): ISO/IEC 27001:2022 Annex-A-Kontrollen, denen dieser
+  // Scanner fachlich zuzuordnen ist (Format "A.x.y Kurzbezeichnung"). Interne
+  // Selbsteinschaetzung, kein zertifiziertes Audit-Mapping - siehe isoControls-Konstante
+  // in server/compliance/scanners.ts fuer die Zuordnungsbegruendung. Leer, wenn der
+  // Scanner eine reine Code-Qualitaets-/Geschaeftslogik-Pruefung ohne direkten
+  // Informationssicherheits-Kontrollbezug ist (z.B. tote Komponenten, gebrochene
+  // Imports) - bewusst nicht erzwungen zugeordnet.
+  isoControls: string[];
 }
 
 export interface ComplianceRun {

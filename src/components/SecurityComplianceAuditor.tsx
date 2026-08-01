@@ -361,6 +361,11 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
                             <div>
                               <p className="text-xs font-bold font-mono text-white">{scanner.name}</p>
                               <p className="text-[9px] text-white/40 uppercase tracking-wider font-mono">{scanner.type} • v{scanner.version}</p>
+                              {scanner.isoControls && scanner.isoControls.length > 0 && (
+                                <p className="text-[9px] text-cyan-400/70 font-mono mt-0.5" title="ISO/IEC 27001:2022 Annex A - interne Selbsteinschätzung, kein zertifiziertes Mapping">
+                                  ISO 27001: {scanner.isoControls.map((c: string) => c.split(' ')[0]).join(', ')}
+                                </p>
+                              )}
                             </div>
                           </div>
 
@@ -394,6 +399,15 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
                                 <p className="text-white/40 uppercase text-[9px] tracking-wider">Prüfbericht & Nachweiserhebung:</p>
                                 <p className="mt-1 leading-relaxed text-white/90">{scanner.evidence}</p>
                               </div>
+
+                              {scanner.isoControls && scanner.isoControls.length > 0 && (
+                                <div>
+                                  <p className="text-cyan-400/80 uppercase text-[9px] tracking-wider">ISO/IEC 27001:2022 Annex A (interne Zuordnung, kein zertifiziertes Mapping):</p>
+                                  <ul className="mt-1 space-y-0.5 text-white/70 list-disc list-inside">
+                                    {scanner.isoControls.map((c: string) => <li key={c}>{c}</li>)}
+                                  </ul>
+                                </div>
+                              )}
 
                               {scanner.findings.length > 0 && (
                                 <div className="space-y-2">
