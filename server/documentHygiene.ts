@@ -1666,9 +1666,13 @@ export function startRecursiveFileWatcher() {
     console.error('[DocumentHygiene] Error pre-seeding ADRs on start:', err);
   }
 
-  // Pre-emptively apply the Capital-AI Documentary branding to all existing docs under /docs
-  console.log('[DocumentHygiene] Launching programmatic sweep for Capital-AI Documentary branding...');
-  applyBrandingToAllDocs();
+  // Audit ARCH-AUDIT-0002 (AUD2-F-014, S7): applyBrandingToAllDocs() lief hier zuvor bei
+  // JEDEM Serverstart unbedingt und mutierte dabei alle ~70 Dokumente unter docs/ (SVG-Header-
+  // Injektion), auch wenn keine Aenderung vorlag - das macht jeden Start zu einer Quelle von
+  // Dutzenden unbeabsichtigten Diffs und ist mit reproduzierbaren Builds unvereinbar. Der Sweep
+  // ist jetzt ein explizites Skript: `npm run hygiene:sweep` (scripts/automation/sweepDocumentaryBranding.ts).
+  // Der FileWatcher unten bleibt unveraendert - er reagiert nur auf tatsaechliche Datei-Events,
+  // er mutiert nicht proaktiv den gesamten Bestand.
 
   if (activeWatcher) {
     activeWatcher.stop();

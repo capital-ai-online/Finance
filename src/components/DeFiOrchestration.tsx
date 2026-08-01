@@ -51,10 +51,11 @@ export function DeFiOrchestration() {
   const [analyzing, setAnalyzing] = useState<boolean>(false);
   const [agentReasoning, setAgentReasoning] = useState<string[]>([]);
   const [scores, setScores] = useState<any>(null);
-  // Audit ARCH-AUDIT-0002 (AUD2-F-001): loadTokenScores() nutzt generateCryptoScores() direkt
-  // (Zeichen-Hash, keine Marktdaten) -> 'synthetic'. handleAgentTrigger() ruft /api/crypto/analyze
-  // auf, das echte LLM-Agenten-Werte mit synthetischen Seed-Werten mischt -> 'mixed'.
-  const [scoreBasis, setScoreBasis] = useState<'synthetic' | 'mixed'>('synthetic');
+  // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): loadTokenScores() nutzt generateCryptoScores()
+  // direkt -> 'market-data' (reale Marktdaten aus der AssetRegistry, aber ohne
+  // Multi-Agenten-Analyse). handleAgentTrigger() ruft /api/crypto/analyze auf, das echte
+  // LLM-Agenten-Werte mit den real-marktdatenbasierten Werten mischt -> 'mixed'.
+  const [scoreBasis, setScoreBasis] = useState<'market-data' | 'mixed'>('market-data');
 
   // IL Simulator State
   const [priceChangeA, setPriceChangeA] = useState<number>(25); // in % (e.g. +25%)
@@ -68,10 +69,10 @@ export function DeFiOrchestration() {
   const loadTokenScores = async (symbol: string) => {
     setAnalyzing(true);
     try {
-      // Fetch dynamic classification and generate composite base scores
+      // Fetch dynamic classification and generate composite base scores from real market data
       const classification = ClassificationService.classifyAsset(symbol);
-      const generated = generateCryptoScores(symbol, 4.2); // seed change
-      
+      const generated = await generateCryptoScores(symbol, 4.2);
+
       const payload = {
         asset_name: DEFI_TOKENS.find(t => t.symbol === symbol)?.name || symbol,
         symbol,
@@ -81,14 +82,14 @@ export function DeFiOrchestration() {
 
       const computed = calculateDefiScore(payload);
       setScores(computed);
-      setScoreBasis('synthetic');
+      setScoreBasis('market-data');
 
       // Simulate Multi-Agent telemetry fetch
       setTimeout(() => {
         setAgentReasoning([
           `[Master Orchestrator] Analysiere Liquiditäts-Parameter für "${symbol}"...`,
-          `[Risk Agent] Volatilität liegt bei ${generated.volatility}%. Smart-Contract Risiko ist durch Multi-Audits minimiert.`,
-          `[Fundamentals Agent] TVL-Qualität bewertet mit ${generated.tvlQuality}/100. Governance-Capture-Modus ist voll aktiv.`,
+          `[Risk Agent] Volatilität liegt bei ${generated.volatility ?? 'n/a'}%. Smart-Contract Risiko ist durch Multi-Audits minimiert.`,
+          `[Fundamentals Agent] Tokenomics-Score (Supply-Ratio) bewertet mit ${generated.tokenomics ?? 'n/a'}/100.`,
           `[Valuation Agent] Das DeFi-Cashflow-Modell liefert eine fundamentale Bewertung von ${(computed.final_score ?? 0).toFixed(1)}/100.`
         ]);
         setAnalyzing(false);
@@ -140,13 +141,16 @@ export function DeFiOrchestration() {
   const ilRiskScore = Math.min(100, Math.round(Math.abs(impermanentLossPct) * 4));
 
   // Build Radar Data
+  // Audit ARCH-AUDIT-0002 (S1/S2/S5): TVL-Qualitaet/Gebuehrengenerierung/Governance-Wert
+  // hatten keine reale Datenquelle und wurden aus CryptoScores entfernt (siehe
+  // types/crypto.types.ts); ersetzt durch die verbleibenden real- bzw. agentenbasierten
+  // Felder Tokenomics und Netzwerk-Aktivitaet.
   const radarData = scores ? [
-    { name: 'TVL Qualität', wert: scores.tvlQuality ?? 70, max: 100 },
-    { name: 'Gebührengenerierung', wert: scores.feeGeneration ?? 65, max: 100 },
+    { name: 'Tokenomics (Supply-Ratio)', wert: scores.tokenomics ?? 0, max: 100 },
+    { name: 'Netzwerk-Aktivität', wert: scores.networkActivity ?? 0, max: 100 },
     { name: 'Liquiditätstiefe', wert: scores.liquidity ?? 80, max: 100 },
     { name: 'Protokoll-Sicherheit', wert: scores.security ?? 85, max: 100 },
     { name: 'IL-Risiko (Simulator)', wert: ilRiskScore, max: 100 },
-    { name: 'Governance Wert', wert: scores.governanceStrength ?? 75, max: 100 },
     { name: 'Adoption & Nutzen', wert: scores.utility ?? 60, max: 100 }
   ] : [];
 
@@ -300,16 +304,16 @@ export function DeFiOrchestration() {
                 </span>
               </div>
               <div className="bg-white/2 border border-white/5 rounded-xl p-3 text-center">
-                <span className="text-[9px] font-mono text-white/40 uppercase block">TVL Qualität</span>
+                <span className="text-[9px] font-mono text-white/40 uppercase block">Tokenomics</span>
                 <span className="text-xl font-black text-emerald-400 font-display mt-1 block">
-                  {scores.tvlQuality ?? 0}
+                  {scores.tokenomics ?? 0}
                   <span className="text-xs text-white/50 font-normal">/100</span>
                 </span>
               </div>
               <div className="bg-white/2 border border-white/5 rounded-xl p-3 text-center">
-                <span className="text-[9px] font-mono text-white/40 uppercase block">Gebühren Note</span>
+                <span className="text-[9px] font-mono text-white/40 uppercase block">Liquidität</span>
                 <span className="text-xl font-black text-cyan-400 font-display mt-1 block">
-                  {scores.feeGeneration ?? 0}
+                  {scores.liquidity ?? 0}
                   <span className="text-xs text-white/50 font-normal">/100</span>
                 </span>
               </div>
@@ -324,16 +328,16 @@ export function DeFiOrchestration() {
           )}
         </div>
 
-        {/* No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md, AUD2-F-001) */}
+        {/* No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md, AUD2-F-001, S1/S2/S5) */}
         {scores && (
-          <div className="lg:col-span-12 bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3">
-            <ShieldAlert className="text-amber-400 w-5 h-5 shrink-0 mt-0.5" />
+          <div className="lg:col-span-12 bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4 flex items-start gap-3">
+            <Info className="text-cyan-400 w-5 h-5 shrink-0 mt-0.5" />
             <p className="text-xs text-white/70 leading-relaxed">
-              <span className="font-bold text-amber-400 uppercase tracking-widest">Nicht marktdatenbasiert</span> —{' '}
+              <span className="font-bold text-cyan-400 uppercase tracking-widest">Marktdatenbasiert, keine vollständige Analyse</span> —{' '}
               {scoreBasis === 'mixed'
-                ? 'ein Teil dieser Bewertung stammt aus echten Agenten-Analysen, der Rest (u. a. Marktkapitalisierung, Liquidität, Tokenomics) wurde algorithmisch aus dem Tickersymbol abgeleitet, nicht aus Marktdaten.'
-                : 'sämtliche Eingangsgrößen dieser Bewertung wurden algorithmisch aus dem Tickersymbol abgeleitet, nicht aus realen Markt- oder Fundamentaldaten.'}{' '}
-              <span className="font-bold">Nicht als Grundlage für Anlageentscheidungen geeignet.</span>
+                ? 'ein Teil dieser Bewertung stammt aus echten Agenten-Analysen, der Rest (Marktkapitalisierung, Liquidität, Tokenomics, Angebots-Transparenz, Volatilität) aus realen Marktdaten der AssetRegistry.'
+                : 'diese Bewertung stammt aus realen Marktdaten der AssetRegistry (Marktkapitalisierung, Liquidität, Tokenomics, Angebots-Transparenz, Volatilität), enthält aber keine Multi-Agenten-Analyse (Netzwerk-Aktivität, Sicherheit, Sentiment) - dafür "Live-Analyse starten" nutzen.'}{' '}
+              <span className="font-bold">Nicht als alleinige Grundlage für Anlageentscheidungen geeignet.</span>
             </p>
           </div>
         )}

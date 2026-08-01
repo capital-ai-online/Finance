@@ -23,8 +23,8 @@ export interface WatchlistAsset {
   price: number;
   change24h: number;
   score: number;
-  // Audit ARCH-AUDIT-0002 (AUD2-F-001): siehe Asset.scoreBasis in src/types.ts.
-  scoreBasis?: 'synthetic';
+  // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5, S6): siehe Asset.scoreBasis in src/types.ts.
+  scoreBasis?: 'synthetic' | 'market-data' | 'heuristic';
 }
 
 interface WatchlistProps {
@@ -265,14 +265,18 @@ export function Watchlist({
                       </div>
 
                       {/* Score display */}
-                      {/* Audit ARCH-AUDIT-0002 (AUD2-F-001): Tooltip legt bei synthetischen
-                          Scores (Crypto, algorithmisch aus dem Symbol abgeleitet) offen, dass
-                          keine Marktdaten zugrunde liegen (No-Demo-Data-Policy). */}
+                      {/* Audit ARCH-AUDIT-0002 (AUD2-F-001, S6): Tooltip legt die Herkunft
+                          des Scores offen, statt sie unmarkiert wie eine einheitlich
+                          datenbasierte Bewertung erscheinen zu lassen (No-Demo-Data-Policy). */}
                       <div
                         className={`font-mono text-[10px] py-1 px-1.5 rounded border text-center min-w-[32px] ${scoreColor}`}
                         title={
                           asset.scoreBasis === 'synthetic'
                             ? `Asset Scoring: ${score}/10 — nicht marktdatenbasiert (algorithmisch aus dem Symbol abgeleitet)`
+                            : asset.scoreBasis === 'heuristic'
+                            ? `Asset Scoring: ${score}/10 — Momentum-/Muster-Heuristik statt dedizierter Fachengine`
+                            : asset.scoreBasis === 'market-data'
+                            ? `Asset Scoring: ${score}/10 — reale Marktdaten (Marktkapitalisierung, Volumen, Supply, Kurshistorie), ohne vollständige Multi-Agenten-Analyse`
                             : `Asset Scoring: ${score}/10`
                         }
                       >

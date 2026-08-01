@@ -16,6 +16,11 @@ import type { Role } from './types';
 import { ADMIN_ZONE_ROLES } from './types';
 import { checkRateLimit, getClientIp } from './rateLimiter';
 import { hashOpaqueToken } from './secretCrypto';
+import { createLogger } from '../logger';
+
+// Audit ARCH-AUDIT-0002 (S4): strukturierte, Correlation-ID-tragende Logs fuer den
+// sicherheitskritischsten Modul dieser Codebasis statt Ad-hoc-console.error-Strings.
+const iamLogger = createLogger('iam');
 
 export interface AuthzResult {
   authorized: boolean;
@@ -135,7 +140,7 @@ async function logAccess(
     // Audit ARCH-AUDIT-0002 (AUD2-F-020): Request bleibt bewusst unblockiert (Zugriffslog ist
     // nicht sicherheitsentscheidend), aber der Fehler war zuvor komplett unsichtbar - genau das
     // Muster, das AUD2-F-011 (Schema-Mismatch) unbemerkt liess.
-    console.error(`[IAM][ERROR] iam_access_log-Insert fehlgeschlagen: ${err?.message || err}`);
+    iamLogger.error('iam_access_log-Insert fehlgeschlagen', { zone, error: err?.message || String(err) });
   }
 }
 
@@ -158,7 +163,7 @@ export async function resolveVerifiedIdentity(req: Request): Promise<{ userId: s
     return { userId: data.user.id, email: data.user.email ?? null };
   } catch (err: any) {
     // Audit ARCH-AUDIT-0002 (AUD2-F-020)
-    console.error(`[IAM][ERROR] resolveVerifiedIdentity fehlgeschlagen: ${err?.message || err}`);
+    iamLogger.error('resolveVerifiedIdentity fehlgeschlagen', { requestId: req.requestId, error: err?.message || String(err) });
     return null;
   }
 }
@@ -188,7 +193,7 @@ export async function checkAdminAccess(
   try {
     if (!isSupabaseConfigured()) {
       // Fail closed: ohne Supabase kann keine Rolle verifiziert werden. Kein Fallback.
-      console.error(`[IAM][BLOCKED] Zone "${zone}" — Supabase nicht konfiguriert, Zugriff verweigert (fail-closed).`);
+      iamLogger.error('Zugriff verweigert - Supabase nicht konfiguriert (fail-closed)', { requestId: req.requestId, zone });
       await logAccess('unknown', zone, 'DENIED', { ip: clientIp, userAgent, reason: 'supabase-not-configured' });
       return { authorized: false, role: null, reason: 'supabase-not-configured', actorLabel: 'unknown' };
     }
@@ -200,7 +205,7 @@ export async function checkAdminAccess(
       await runIamSchemaHealthCheck();
     }
     if (iamSchemaHealthy === false) {
-      console.error(`[IAM][BLOCKED] Zone "${zone}" — IAM-Schema nicht verfügbar (siehe Health-Check-Log), fail-closed.`);
+      iamLogger.error('Zugriff verweigert - IAM-Schema nicht verfuegbar (fail-closed)', { requestId: req.requestId, zone });
       await logAccess('unknown', zone, 'DENIED', { ip: clientIp, userAgent, reason: 'iam-schema-unavailable' });
       return { authorized: false, role: null, reason: 'iam-schema-unavailable', actorLabel: 'unknown' };
     }
@@ -246,12 +251,12 @@ export async function checkAdminAccess(
   } catch (err: any) {
     // Fängt JEDEN unerwarteten Fehler ab (z.B. Supabase-Netzwerkfehler) und garantiert
     // eine fail-closed Antwort statt einer unbehandelten Promise-Rejection.
-    console.error(`[IAM][ERROR] Unerwarteter Fehler in checkAdminAccess (Zone "${zone}"): ${err?.message || err}`);
+    iamLogger.error('Unerwarteter Fehler in checkAdminAccess', { requestId: req.requestId, zone, error: err?.message || String(err) });
     try {
       await logAccess('unknown', zone, 'DENIED', { ip: clientIp, userAgent, reason: `internal-error: ${err?.message || 'unknown'}` });
     } catch (logErr: any) {
       // Logging selbst darf hier nicht nochmal fehlschlagen können - stdout als letzte Instanz.
-      console.error(`[IAM][ERROR] logAccess fehlgeschlagen waehrend internal-error-Behandlung (Zone "${zone}"): ${logErr?.message || logErr}`);
+      iamLogger.error('logAccess fehlgeschlagen waehrend internal-error-Behandlung', { requestId: req.requestId, zone, error: logErr?.message || String(logErr) });
     }
     return { authorized: false, role: null, reason: 'internal-error', actorLabel: 'unknown' };
   }
@@ -290,7 +295,7 @@ export async function requireStepUp(req: Request): Promise<boolean> {
   } catch (err: any) {
     // Fail-closed korrekt (return false), aber der Fehler war zuvor unsichtbar - Audit
     // ARCH-AUDIT-0002 (AUD2-F-020).
-    console.error(`[IAM][ERROR] requireStepUp fehlgeschlagen: ${err?.message || err}`);
+    iamLogger.error('requireStepUp fehlgeschlagen', { requestId: req.requestId, error: err?.message || String(err) });
     return false;
   }
 }

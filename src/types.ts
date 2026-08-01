@@ -17,11 +17,14 @@ export interface Asset {
   volume24h?: number;
   pattern?: string;
   applicationArea?: string;
-  // Audit ARCH-AUDIT-0002 (AUD2-F-001): 'synthetic', wenn score aus einem Zeichen-Hash des
-  // Symbols abgeleitet wurde statt aus Marktdaten (aktuell alle Crypto-Assets betroffen,
-  // siehe isCryptoScoreBasisSynthetic() in server.ts). Fehlt das Feld, ist die Herkunft fuer
-  // diesen Asset-Typ nicht Gegenstand dieser Kennzeichnung (z.B. Aktien/Forex/Rohstoffe).
-  scoreBasis?: 'synthetic';
+  // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5, S6): Herkunft des score-Feldes, siehe
+  // getScoreBasis() in server.ts. 'synthetic' = aus Zeichen-Hash des Symbols abgeleitet
+  // (bisher nur noch Meme-Coins). 'market-data' = reale Marktdaten (Marktkapitalisierung/
+  // Volumen/Supply/Kurshistorie), aber ohne vollstaendige Multi-Agenten-Analyse (Crypto,
+  // Standard). 'heuristic' = Momentum-/Pattern-Heuristik statt eigener Fachengine (Aktien/
+  // Forex/Indizes/Anleihen). Fehlt das Feld (z.B. Rohstoffe), hat der Asset-Typ eine
+  // dedizierte Fachengine.
+  scoreBasis?: 'synthetic' | 'market-data' | 'heuristic';
 }
 
 export interface ChatMessage {
