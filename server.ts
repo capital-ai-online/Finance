@@ -16,6 +16,7 @@ import { createCryptoRouter } from './src/routes/cryptoRoutes';
 import { ClassificationService } from './src/services/classification.service';
 import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './src/services/scoring.service';
 import { trackedGenerateContent } from './src/services/aiUsageTracker';
+import { scoreValidationRouter, recordDailySnapshots } from './server/scoreValidation';
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
@@ -325,6 +326,7 @@ app.use('/api/admin', systemEventsRouter);
 app.use('/api/admin', versionManagerRouter);
 app.use('/api/auth', stepUpRouter);
 app.use('/api/compliance', complianceRouter);
+app.use('/api/scoring', scoreValidationRouter);
 app.use('/api', aiRouter);
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
@@ -992,6 +994,20 @@ async function fetchLiveMarketData() {
       scoreBasis: getScoreBasis(asset.type, asset.symbol)
     };
   }));
+
+  // Audit ARCH-AUDIT-0002 (N1): taeglicher Score-/Preis-Snapshot fuer die rueckwirkende
+  // Score-Validierung (server/scoreValidation.ts). Best-effort und nicht abgewartet -
+  // ein Fehler oder eine Verzoegerung hier darf /api/market-data nicht beeintraechtigen.
+  recordDailySnapshots(enriched.map(a => ({
+    symbol: a.symbol,
+    assetType: a.type,
+    score: a.score,
+    scoreBasis: a.scoreBasis,
+    price: a.price,
+  }))).catch(err => {
+    console.warn('[ScoreValidation] recordDailySnapshots fehlgeschlagen:', err?.message || err);
+  });
+
   return enriched;
 }
 
