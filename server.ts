@@ -23,6 +23,7 @@ import { ensureFundamentalsFresh, getCachedFundamentals } from './server/stockFu
 import { INDEX_FMP_TICKERS, ensureIndexQuoteFresh, getCachedIndexQuote, ensureIndexHistoryFresh, getCachedIndexHistory } from './server/fmpIndices';
 import { supervisorRouter } from './server/supervisorRouter';
 import { createAgentEvaluationRouter } from './server/agentEvaluationRouter';
+import { getAnthropicInstance, isAnthropicConfigured } from './server/anthropicClient';
 import { executeSupervised } from './src/platform/Supervisor/supervisor';
 import { newsRouter } from './src/features/news/newsRoutes';
 import { registryRouter } from './src/features/registry/registryRoutes';
@@ -308,6 +309,18 @@ try {
   console.warn("Failed to retrieve Gemini instance on boot:", e);
 }
 
+// Audit ARCH-AUDIT-0002 (J3, Kapitel 14.6): optionaler Anthropic-Client fuer den
+// providerübergreifenden Rückfall der 8 Gemini-Agenten. Ohne ANTHROPIC_API_KEY bleibt
+// anthropic === null - die Agenten verhalten sich dann exakt wie vor J3 (fail-open).
+let anthropic: any = null;
+try {
+  if (isAnthropicConfigured()) {
+    anthropic = getAnthropicInstance();
+  }
+} catch (e) {
+  console.warn("Failed to retrieve Anthropic instance on boot:", e);
+}
+
 // Health-Check-Endpunkt fuer Deployment-Plattformen (Audit ARCH-AUDIT-0002, Befund AUD2-F: kein
 // Health-Check vorhanden). Bewusst ohne Netzwerkaufrufe an Drittanbieter - ein Health-Check muss
 // schnell und unabhaengig von externen Ausfaellen antworten. `configured` spiegelt nur, ob die
@@ -320,6 +333,7 @@ app.get('/healthz', (req, res) => {
     configured: {
       supabase: isSupabaseConfigured(),
       gemini: isGeminiConfigured(),
+      anthropic: isAnthropicConfigured(),
     },
   });
 });
@@ -351,8 +365,8 @@ app.get('/metrics', (req, res) => {
 // komplett verhindern, statt den Betrieb ohne KI-Funktionen fortzusetzen. Beide Router und die
 // dahinterliegenden Orchestratoren akzeptieren `GoogleGenAI | null` und liefern ohne Client
 // ihre quantitativen Fallbacks.
-app.use('/api/raw-materials', createRawMaterialsRouter(ai));
-app.use('/api/crypto', createCryptoRouter(ai));
+app.use('/api/raw-materials', createRawMaterialsRouter(ai, anthropic));
+app.use('/api/crypto', createCryptoRouter(ai, anthropic));
 app.use('/api/stripe', stripeRouter);
 app.use('/api/orchestrator', orchestratorRouter);
 app.use('/api/admin/hygiene', hygieneRouter);
@@ -363,7 +377,7 @@ app.use('/api/compliance', complianceRouter);
 app.use('/api/scoring', scoreValidationRouter);
 app.use('/api/alerts', alertsRouter);
 app.use('/api/admin/supervisor', supervisorRouter);
-app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai));
+app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic));
 app.use('/api/news', newsRouter);
 app.use('/api/registry', registryRouter);
 app.use('/api', aiRouter);

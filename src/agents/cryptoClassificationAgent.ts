@@ -4,7 +4,8 @@
  */
 
 import { GoogleGenAI, Type } from '@google/genai';
-import { trackedGenerateContent } from '../services/aiUsageTracker';
+import type Anthropic from '@anthropic-ai/sdk';
+import { generateStructuredWithFallback } from '../services/agentModelRouting';
 
 export interface CryptoClassification {
   category: string; // e.g. L1, L2, DeFi, Oracle, Payment, Web3
@@ -17,58 +18,55 @@ export interface CryptoClassification {
 
 export class CryptoClassificationAgent {
   private ai: GoogleGenAI | null;
+  private anthropic: Anthropic | null;
 
-  constructor(aiClient: GoogleGenAI | null) {
+  constructor(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null) {
     this.ai = aiClient;
+    this.anthropic = anthropicClient;
   }
 
   public async analyze(coin: string): Promise<CryptoClassification> {
-    if (!this.ai) {
-      return this.getFallback(coin);
-    }
-
-    try {
-      const response = await trackedGenerateContent(this.ai, {
-        model: 'gemini-2.5-flash',
-        contents: `Analysiere und klassifiziere die folgende Kryptowährung: "${coin}".
+    const result = await generateStructuredWithFallback({
+      gemini: this.ai,
+      anthropic: this.anthropic,
+      promptId: 'crypto-classification',
+      geminiModels: ['gemini-2.5-flash'],
+      contents: `Analysiere und klassifiziere die folgende Kryptowährung: "${coin}".
 Bestimme die Kategorie (z.B. L1, L2, DeFi, Oracle, Payment, Web3, Meme), das Sub-Tier (z.B. Core Layer, Scaling), die Marktstruktur (z.B. High Liquidity) und die Ausrichtung des Hauptnarrativs (z.B. Digital Gold, AI Integration).
 Antworte strictly mit einem strukturierten JSON.`,
-        config: {
-          systemInstruction: `Du bist der "Crypto Classification Agent" der CAPITAL-AI Bewertungsplattform.
+      systemInstruction: `Du bist der "Crypto Classification Agent" der CAPITAL-AI Bewertungsplattform.
 Deine Aufgabe ist es, Krypto-Assets präzise zu kategorisieren.
 Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.`,
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              category: { type: Type.STRING },
-              sub_tier: { type: Type.STRING },
-              market_structure: { type: Type.STRING },
-              narrative_alignment: { type: Type.STRING },
-              confidence: { type: Type.NUMBER },
-              reasoning: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING }
-              }
-            },
-            required: ['category', 'sub_tier', 'market_structure', 'narrative_alignment', 'confidence', 'reasoning']
+      schema: {
+        type: Type.OBJECT,
+        properties: {
+          category: { type: Type.STRING },
+          sub_tier: { type: Type.STRING },
+          market_structure: { type: Type.STRING },
+          narrative_alignment: { type: Type.STRING },
+          confidence: { type: Type.NUMBER },
+          reasoning: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
           }
-        }
-      }, { promptId: 'crypto-classification' });
+        },
+        required: ['category', 'sub_tier', 'market_structure', 'narrative_alignment', 'confidence', 'reasoning']
+      },
+    });
 
-      const data = JSON.parse(response.text || '{}');
-      return {
-        category: data.category || 'L1',
-        sub_tier: data.sub_tier || 'Core Ecosystem',
-        market_structure: data.market_structure || 'Standard Liquidity',
-        narrative_alignment: data.narrative_alignment || 'Allgemeines Krypto-Asset',
-        confidence: typeof data.confidence === 'number' ? data.confidence : 0.85,
-        reasoning: Array.isArray(data.reasoning) ? data.reasoning.slice(0, 3) : ['Durch CAPITAL-AI Krypto-Klassifikator eingeteilt.']
-      };
-    } catch (e) {
-      console.warn(`[CryptoClassificationAgent] Agent execution failed. Falling back.`, e);
+    if (!result) {
       return this.getFallback(coin);
     }
+
+    const data = result.data;
+    return {
+      category: data.category || 'L1',
+      sub_tier: data.sub_tier || 'Core Ecosystem',
+      market_structure: data.market_structure || 'Standard Liquidity',
+      narrative_alignment: data.narrative_alignment || 'Allgemeines Krypto-Asset',
+      confidence: typeof data.confidence === 'number' ? data.confidence : 0.85,
+      reasoning: Array.isArray(data.reasoning) ? data.reasoning.slice(0, 3) : ['Durch CAPITAL-AI Krypto-Klassifikator eingeteilt.']
+    };
   }
 
   private getFallback(coin: string): CryptoClassification {
