@@ -53,6 +53,7 @@ const KNOWN_OPTIONAL_ENV_VARS = new Set([
   'RENDER_EXTERNAL_URL', // server/alerts.ts (H2): von Render automatisch gesetzt, lokaler Fallback auf localhost.
   'PORT', // server/alerts.ts (H2): hartkodierter Fallback '3000', identisch zu server.ts' eigener PORT-Konstante.
   'ANTHROPIC_MODEL', // server/anthropicClient.ts (J3): hartkodierter Fallback 'claude-haiku-4-5'.
+  'OPENAI_MODEL', // server/openaiClient.ts (J3-Folge): hartkodierter Fallback 'gpt-5.4-mini'.
 ]);
 
 // Gruppen von Variablen, die sich gegenseitig per `||` vertreten (server/db.ts, server/stripe.ts) -

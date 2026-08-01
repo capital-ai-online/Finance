@@ -5,6 +5,7 @@
 
 import { GoogleGenAI, Type } from '@google/genai';
 import type Anthropic from '@anthropic-ai/sdk';
+import type OpenAI from 'openai';
 import { findRawMaterialConfig } from '../config/rawMaterialsConfig';
 import { generateStructuredWithFallback } from '../services/agentModelRouting';
 
@@ -21,10 +22,12 @@ export interface RiskAnalysis {
 export class RiskAgent {
   private ai: GoogleGenAI | null;
   private anthropic: Anthropic | null;
+  private openai: OpenAI | null;
 
-  constructor(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null) {
+  constructor(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null) {
     this.ai = aiClient;
     this.anthropic = anthropicClient;
+    this.openai = openaiClient;
   }
 
   public async analyze(name: string): Promise<RiskAnalysis> {
@@ -33,6 +36,7 @@ export class RiskAgent {
     const result = await generateStructuredWithFallback({
       gemini: this.ai,
       anthropic: this.anthropic,
+      openai: this.openai,
       promptId: 'raw-materials-risk',
       geminiModels: ['gemini-3.1-pro-preview', 'gemini-3.5-flash'],
       contents: `Bewerte das geopolitische und Lieferkettenrisiko für: "${name}".

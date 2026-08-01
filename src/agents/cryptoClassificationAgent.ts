@@ -5,6 +5,7 @@
 
 import { GoogleGenAI, Type } from '@google/genai';
 import type Anthropic from '@anthropic-ai/sdk';
+import type OpenAI from 'openai';
 import { generateStructuredWithFallback } from '../services/agentModelRouting';
 
 export interface CryptoClassification {
@@ -19,16 +20,19 @@ export interface CryptoClassification {
 export class CryptoClassificationAgent {
   private ai: GoogleGenAI | null;
   private anthropic: Anthropic | null;
+  private openai: OpenAI | null;
 
-  constructor(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null) {
+  constructor(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null) {
     this.ai = aiClient;
     this.anthropic = anthropicClient;
+    this.openai = openaiClient;
   }
 
   public async analyze(coin: string): Promise<CryptoClassification> {
     const result = await generateStructuredWithFallback({
       gemini: this.ai,
       anthropic: this.anthropic,
+      openai: this.openai,
       promptId: 'crypto-classification',
       geminiModels: ['gemini-2.5-flash'],
       contents: `Analysiere und klassifiziere die folgende Kryptowährung: "${coin}".

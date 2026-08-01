@@ -17,6 +17,7 @@
 
 import crypto from 'crypto';
 import type Anthropic from '@anthropic-ai/sdk';
+import type OpenAI from 'openai';
 import { getServerSupabase, isSupabaseConfigured } from './db';
 import { getUsageLedger } from '../src/services/aiUsageTracker';
 import { ClassificationAgent } from '../src/agents/classificationAgent';
@@ -33,21 +34,22 @@ interface EvalCase {
   /** Reales, stabiles Eingabesymbol - kein fabriziertes Beispiel, dieselben Werte wie im
    * produktiven Pfad (rawMaterialsConfig.ts fuer "Gold", CRYPTO_SYMBOLS fuer "BTC"). */
   input: string;
-  createAgent: (ai: any, anthropic: Anthropic | null) => { analyze: (input: string) => Promise<unknown> };
+  createAgent: (ai: any, anthropic: Anthropic | null, openai: OpenAI | null) => { analyze: (input: string) => Promise<unknown> };
 }
 
-// Audit ARCH-AUDIT-0002 (J3, Kapitel 14.6): seit dem providerübergreifenden Rückfall zaehlt
-// eine ueber Anthropic erzielte Antwort ebenso als "echte KI-Antwort" wie eine Gemini-Antwort -
-// der Ledger-Eintrag (und damit die Erfolgserkennung unten) ist providerunabhaengig.
+// Audit ARCH-AUDIT-0002 (J3/J3-Folge, Kapitel 14.6): seit dem providerübergreifenden Rückfall
+// zaehlt eine ueber Anthropic ODER OpenAI erzielte Antwort ebenso als "echte KI-Antwort" wie
+// eine Gemini-Antwort - der Ledger-Eintrag (und damit die Erfolgserkennung unten) ist
+// providerunabhaengig.
 const EVAL_CASES: EvalCase[] = [
-  { promptId: 'raw-materials-classification', input: 'Gold', createAgent: (ai, anthropic) => new ClassificationAgent(ai, anthropic) },
-  { promptId: 'raw-materials-fundamentals', input: 'Gold', createAgent: (ai, anthropic) => new FundamentalsAgent(ai, anthropic) },
-  { promptId: 'raw-materials-risk', input: 'Gold', createAgent: (ai, anthropic) => new RiskAgent(ai, anthropic) },
-  { promptId: 'raw-materials-valuation', input: 'Gold', createAgent: (ai, anthropic) => new ValuationAgent(ai, anthropic) },
-  { promptId: 'crypto-classification', input: 'BTC', createAgent: (ai, anthropic) => new CryptoClassificationAgent(ai, anthropic) },
-  { promptId: 'crypto-sentiment', input: 'BTC', createAgent: (ai, anthropic) => new CryptoSentimentAgent(ai, anthropic) },
-  { promptId: 'crypto-onchain', input: 'BTC', createAgent: (ai, anthropic) => new CryptoOnChainAgent(ai, anthropic) },
-  { promptId: 'crypto-risk', input: 'BTC', createAgent: (ai, anthropic) => new CryptoRiskAgent(ai, anthropic) },
+  { promptId: 'raw-materials-classification', input: 'Gold', createAgent: (ai, anthropic, openai) => new ClassificationAgent(ai, anthropic, openai) },
+  { promptId: 'raw-materials-fundamentals', input: 'Gold', createAgent: (ai, anthropic, openai) => new FundamentalsAgent(ai, anthropic, openai) },
+  { promptId: 'raw-materials-risk', input: 'Gold', createAgent: (ai, anthropic, openai) => new RiskAgent(ai, anthropic, openai) },
+  { promptId: 'raw-materials-valuation', input: 'Gold', createAgent: (ai, anthropic, openai) => new ValuationAgent(ai, anthropic, openai) },
+  { promptId: 'crypto-classification', input: 'BTC', createAgent: (ai, anthropic, openai) => new CryptoClassificationAgent(ai, anthropic, openai) },
+  { promptId: 'crypto-sentiment', input: 'BTC', createAgent: (ai, anthropic, openai) => new CryptoSentimentAgent(ai, anthropic, openai) },
+  { promptId: 'crypto-onchain', input: 'BTC', createAgent: (ai, anthropic, openai) => new CryptoOnChainAgent(ai, anthropic, openai) },
+  { promptId: 'crypto-risk', input: 'BTC', createAgent: (ai, anthropic, openai) => new CryptoRiskAgent(ai, anthropic, openai) },
 ];
 
 export interface AgentEvalResult {
@@ -64,14 +66,14 @@ export interface AgentEvalResult {
  * Agenten dennoch durchgelassene Exception ab und wertet das ebenfalls als Fallback - ein
  * fehlerhafter Agent darf den restlichen Evaluationslauf nicht abbrechen.
  */
-export async function runAgentEvaluation(ai: any, anthropic: Anthropic | null = null): Promise<AgentEvalResult[]> {
+export async function runAgentEvaluation(ai: any, anthropic: Anthropic | null = null, openai: OpenAI | null = null): Promise<AgentEvalResult[]> {
   const results: AgentEvalResult[] = [];
 
   for (const evalCase of EVAL_CASES) {
     const ledgerBefore = getUsageLedger().length;
     const start = Date.now();
     try {
-      await evalCase.createAgent(ai, anthropic).analyze(evalCase.input);
+      await evalCase.createAgent(ai, anthropic, openai).analyze(evalCase.input);
     } catch {
       // Wird unten ueber den Ledger-Vergleich als Fallback erkannt - kein separater
       // Fehlerpfad noetig, ein Agent, der eine Exception durchlaesst, hat per Definition

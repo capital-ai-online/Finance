@@ -1,9 +1,9 @@
-// Audit ARCH-AUDIT-0002 (J3, Kapitel 14.6): Testabdeckung fuer die gemeinsame Modell-/
-// Provider-Routing-Kette (Gemini-Modelle in Reihenfolge, dann Anthropic-Rueckfall, dann null).
+// Audit ARCH-AUDIT-0002 (J3/J3-Folge, Kapitel 14.6): Testabdeckung fuer die gemeinsame Modell-/
+// Provider-Routing-Kette. Reihenfolge (Nutzerpriorisierung): Anthropic -> OpenAI -> Gemini.
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { Type } from '@google/genai';
-import { generateStructuredWithFallback, toAnthropicSchema } from '../../src/services/agentModelRouting';
+import { generateStructuredWithFallback, toJsonSchema } from '../../src/services/agentModelRouting';
 
 function mockGemini(behaviors: Array<'ok' | 'fail'>, data: any = { foo: 'gemini' }) {
   let call = 0;
@@ -34,6 +34,23 @@ function mockAnthropic(behavior: 'ok' | 'fail' | 'no-tool-use', data: any = { fo
   } as any;
 }
 
+function mockOpenAI(behavior: 'ok' | 'fail' | 'no-content', data: any = { foo: 'openai' }) {
+  return {
+    chat: {
+      completions: {
+        create: async () => {
+          if (behavior === 'fail') throw new Error('openai call failed');
+          if (behavior === 'no-content') return { choices: [{ message: { content: null } }], usage: { prompt_tokens: 1, completion_tokens: 1 } };
+          return {
+            choices: [{ message: { content: JSON.stringify(data) } }],
+            usage: { prompt_tokens: 30, completion_tokens: 15, total_tokens: 45 },
+          };
+        },
+      },
+    },
+  } as any;
+}
+
 const BASE_REQUEST = {
   promptId: 'crypto-risk',
   contents: 'analysiere',
@@ -46,9 +63,9 @@ const BASE_REQUEST = {
 };
 
 describe('agentModelRouting', () => {
-  describe('toAnthropicSchema', () => {
+  describe('toJsonSchema', () => {
     it('wandelt Gemini-Type-Enums (Grossschreibung) in JSON-Schema-Typen (Kleinschreibung) um', () => {
-      const schema = toAnthropicSchema({
+      const schema = toJsonSchema({
         type: Type.OBJECT,
         properties: {
           name: { type: Type.STRING, description: 'x' },
@@ -68,76 +85,94 @@ describe('agentModelRouting', () => {
   });
 
   describe('generateStructuredWithFallback', () => {
-    it('liefert null, wenn weder Gemini noch Anthropic konfiguriert sind', async () => {
+    it('liefert null, wenn kein Provider konfiguriert ist', async () => {
       const result = await generateStructuredWithFallback({
         ...BASE_REQUEST,
         gemini: null,
         anthropic: null,
+        openai: null,
         geminiModels: ['model-a', 'model-b'],
       });
       expect(result).toBeNull();
     });
 
-    it('verwendet das erste erfolgreiche Gemini-Modell in der uebergebenen Reihenfolge', async () => {
+    it('verwendet Anthropic, wenn konfiguriert, VOR OpenAI und Gemini', async () => {
       const result = await generateStructuredWithFallback({
         ...BASE_REQUEST,
         gemini: mockGemini(['ok']),
-        anthropic: null,
-        geminiModels: ['premium-model', 'flash-model'],
-      });
-      expect(result?.provider).toBe('premium-model');
-      expect(result?.data).toEqual({ foo: 'gemini' });
-    });
-
-    it('faellt bei einem fehlschlagenden ersten Gemini-Modell auf das zweite zurueck', async () => {
-      const result = await generateStructuredWithFallback({
-        ...BASE_REQUEST,
-        gemini: mockGemini(['fail', 'ok']),
-        anthropic: null,
-        geminiModels: ['premium-model', 'flash-model'],
-      });
-      expect(result?.provider).toBe('flash-model');
-    });
-
-    it('faellt auf Anthropic zurueck, wenn alle Gemini-Modelle fehlschlagen', async () => {
-      const result = await generateStructuredWithFallback({
-        ...BASE_REQUEST,
-        gemini: mockGemini(['fail', 'fail']),
         anthropic: mockAnthropic('ok'),
-        geminiModels: ['premium-model', 'flash-model'],
+        openai: mockOpenAI('ok'),
+        geminiModels: ['premium-model'],
       });
       expect(result?.provider).toMatch(/^anthropic:/);
       expect(result?.data).toEqual({ foo: 'anthropic' });
     });
 
-    it('liefert null, wenn sowohl Gemini als auch Anthropic fehlschlagen', async () => {
+    it('faellt auf OpenAI zurueck, wenn Anthropic fehlschlaegt oder nicht konfiguriert ist', async () => {
+      const result = await generateStructuredWithFallback({
+        ...BASE_REQUEST,
+        gemini: mockGemini(['ok']),
+        anthropic: null,
+        openai: mockOpenAI('ok'),
+        geminiModels: ['premium-model'],
+      });
+      expect(result?.provider).toMatch(/^openai:/);
+      expect(result?.data).toEqual({ foo: 'openai' });
+    });
+
+    it('faellt auf Gemini zurueck, wenn sowohl Anthropic als auch OpenAI fehlschlagen', async () => {
+      const result = await generateStructuredWithFallback({
+        ...BASE_REQUEST,
+        gemini: mockGemini(['fail', 'ok']),
+        anthropic: mockAnthropic('fail'),
+        openai: mockOpenAI('fail'),
+        geminiModels: ['premium-model', 'flash-model'],
+      });
+      expect(result?.provider).toBe('flash-model');
+    });
+
+    it('versucht Gemini-Modelle in der uebergebenen Reihenfolge, wenn es die einzige konfigurierte Stufe ist', async () => {
+      const result = await generateStructuredWithFallback({
+        ...BASE_REQUEST,
+        gemini: mockGemini(['fail', 'ok']),
+        anthropic: null,
+        openai: null,
+        geminiModels: ['premium-model', 'flash-model'],
+      });
+      expect(result?.provider).toBe('flash-model');
+    });
+
+    it('liefert null, wenn alle drei Provider fehlschlagen', async () => {
       const result = await generateStructuredWithFallback({
         ...BASE_REQUEST,
         gemini: mockGemini(['fail']),
         anthropic: mockAnthropic('fail'),
+        openai: mockOpenAI('fail'),
         geminiModels: ['premium-model'],
       });
       expect(result).toBeNull();
     });
 
-    it('liefert null, wenn Anthropic antwortet, aber keinen tool_use-Block liefert', async () => {
+    it('faellt weiter, wenn Anthropic antwortet, aber keinen tool_use-Block liefert', async () => {
       const result = await generateStructuredWithFallback({
         ...BASE_REQUEST,
         gemini: null,
         anthropic: mockAnthropic('no-tool-use'),
+        openai: mockOpenAI('ok'),
         geminiModels: [],
       });
-      expect(result).toBeNull();
+      expect(result?.provider).toMatch(/^openai:/);
     });
 
-    it('versucht Anthropic direkt, wenn kein Gemini-Client konfiguriert ist (kein Gemini-API-Key)', async () => {
+    it('faellt weiter, wenn OpenAI antwortet, aber keinen Inhalt liefert', async () => {
       const result = await generateStructuredWithFallback({
         ...BASE_REQUEST,
-        gemini: null,
-        anthropic: mockAnthropic('ok'),
+        gemini: mockGemini(['ok']),
+        anthropic: null,
+        openai: mockOpenAI('no-content'),
         geminiModels: ['premium-model'],
       });
-      expect(result?.provider).toMatch(/^anthropic:/);
+      expect(result?.provider).toBe('premium-model');
     });
   });
 });
