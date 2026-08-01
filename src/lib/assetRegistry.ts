@@ -85,6 +85,19 @@ const STOCK_STOOQ_TICKERS: Record<string, string> = {
   INTC: 'intc.us',
 };
 
+// Audit ARCH-AUDIT-0002 (H1): Stooq-Ticker fuer die Forex-Paare aus der Registry (dieselbe
+// Konvention wie im Live-Kurs-Pfad in server.ts, FOREX_TICKERS) - ermoeglicht echte
+// Kurshistorie fuer Forex ueber denselben fetchStooqHistory()-Pfad wie Aktien, statt einer
+// gesonderten Implementierung.
+const FOREX_STOOQ_TICKERS: Record<string, string> = {
+  EURUSD: 'eurusd',
+  GBPUSD: 'gbpusd',
+  USDJPY: 'usdjpy',
+  USDCAD: 'usdcad',
+  USDCHF: 'usdchf',
+  AUDUSD: 'audusd',
+};
+
 export class AssetRegistry {
   private assets: Map<string, RegistryAsset> = new Map();
   private historyCache: Map<string, HistoryResult> = new Map();
@@ -584,7 +597,7 @@ export class AssetRegistry {
     if (coingeckoId) {
       result = await this.fetchCoinGeckoHistory(coingeckoId, limit);
     } else {
-      const stooqTicker = STOCK_STOOQ_TICKERS[s];
+      const stooqTicker = STOCK_STOOQ_TICKERS[s] || FOREX_STOOQ_TICKERS[s];
       if (stooqTicker) {
         result = await this.fetchStooqHistory(stooqTicker, limit, s);
       }

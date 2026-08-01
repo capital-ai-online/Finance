@@ -18,6 +18,8 @@ import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './
 import { trackedGenerateContent } from './src/services/aiUsageTracker';
 import { scoreValidationRouter, recordDailySnapshots } from './server/scoreValidation';
 import { alertsRouter, evaluateAlerts } from './server/alerts';
+import { generateTraditionalAssetInputs, TraditionalAssetScoringService } from './src/services/traditionalAssetScoring';
+import { ensureFundamentalsFresh, getCachedFundamentals } from './server/stockFundamentals';
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
@@ -405,27 +407,39 @@ function getApplicationAreaForSymbol(symbol: string, type: string): string {
 //   ausgeschlossen statt geschaetzt (renormalizeAndScore()). Enthaelt KEINE Agenten-Analyse
 //   (die gibt es nur ueber /api/crypto/analyze via CryptoOrchestrator) - daher weiterhin von
 //   einer vollstaendigen Multi-Agenten-Bewertung unterschieden statt als "live" bezeichnet.
-// - 'heuristic': Aktien, Forex, Indizes, Anleihen - keine eigene Fachengine (anders als
-//   Crypto/Meme/DeFi/Rohstoffe), stattdessen eine Momentum-/Pattern-Heuristik auf Basis von
+// - 'market-data' (Aktien/Forex, seit H1): traditionalAssetScoring.ts kombiniert echte
+//   technische Faktoren (Trend/Momentum/Breakout/Volatilitaet/RSI aus assetRegistry.getHistory(),
+//   dieselben Primitive wie beim Krypto-Scoring) mit - nur bei Aktien - realen Fundamentaldaten
+//   (KGV/Dividendenrendite/Nettomarge von Alpha Vantage OVERVIEW, server/stockFundamentals.ts).
+//   Faellt fuer ein konkretes Symbol ohne jede reale Datenquelle auf die Heuristik zurueck
+//   (dann basis='heuristic', siehe calculateAssetScore()).
+// - 'heuristic': Indizes, Anleihen (keine Live-Kursquelle vorhanden) sowie Aktien/Forex im
+//   seltenen Fall ohne jede reale Datenquelle - eine Momentum-/Pattern-Heuristik auf Basis von
 //   change24h und einer ebenfalls deterministischen Mustererkennung (calculateAssetScore
 //   unterer Zweig).
 // - undefined: Rohstoffe (RawMaterialsScoringService) haben eine dedizierte, konfigurierbare
 //   Fachengine und sind von diesem Befund nicht betroffen.
 const MEME_COIN_SYMBOLS = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'];
-function getScoreBasis(type: string, _symbol?: string): 'market-data' | 'heuristic' | undefined {
-  if (type === 'crypto') return 'market-data';
-  if (type === 'stock' || type === 'forex' || type === 'index' || type === 'bond') return 'heuristic';
-  return undefined;
-}
 
-async function calculateAssetScore(symbol: string, type: string, change24h: number, baseScore?: number): Promise<number> {
+type ScoreBasis = 'market-data' | 'heuristic' | undefined;
+interface AssetScoreResult { score: number; basis: ScoreBasis }
+
+/**
+ * Audit ARCH-AUDIT-0002 (H1): basis spiegelt die TATSAECHLICH verwendete Berechnung wider,
+ * nicht nur den statischen Anlagetyp - Aktien/Forex fallen auf die alte Heuristik zurueck,
+ * wenn fuer ein konkretes Symbol weder reale Kurshistorie noch Fundamentaldaten vorliegen
+ * (siehe unten); in diesem Fall darf 'basis' NICHT 'market-data' behaupten, obwohl der
+ * Anlagetyp das normalerweise waere. Vorher war scoreBasis rein typbasiert (getScoreBasis())
+ * und konnte diesen Fall nicht abbilden.
+ */
+async function calculateAssetScore(symbol: string, type: string, change24h: number, baseScore?: number): Promise<AssetScoreResult> {
   const s = symbol.toUpperCase().trim();
   if (type === 'crypto') {
     const isMemeCoin = MEME_COIN_SYMBOLS.includes(s);
     if (isMemeCoin) {
       const inputs = await MemeCoinScoringService.generateMemeCoinInputs(s, change24h);
       const result = MemeCoinScoringService.scoreMemeCoin(inputs);
-      return result.score;
+      return { score: result.score, basis: 'market-data' };
     } else {
       const classification = ClassificationService.classifyAsset(s);
       const seedScores = await generateCryptoScores(s, change24h);
@@ -438,7 +452,7 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
       const finalScores = classification.category_main === 'DeFi'
         ? calculateDefiScore(payload)
         : calculateBaseScore(payload);
-      return Number(((finalScores.final_score ?? 0) / 10).toFixed(1));
+      return { score: Number(((finalScores.final_score ?? 0) / 10).toFixed(1)), basis: 'market-data' };
     }
   }
 
@@ -447,16 +461,39 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
       // Core raw material scoring utilizing the multi-agent/deterministic scoring service of the Rohstoff-Orchestrator
       // The scoring engine calculates a 0-100 score which we return directly for a unified 0-100 scale.
       const payload = RawMaterialsScoringService.scoreMaterial({ name: s });
-      return Math.min(100.0, Math.max(0.0, Number(payload.scores.final_score.toFixed(1))));
+      return { score: Math.min(100.0, Math.max(0.0, Number(payload.scores.final_score.toFixed(1)))), basis: undefined };
     } catch (err) {
       console.warn(`[Commodity Scoring Fallback] Failed to score via RawMaterialsScoringService for ${s}, using momentum fallback:`, err);
     }
   }
-  
+
+  // Audit ARCH-AUDIT-0002 (H1): echte technische (+ bei Aktien fundamentale) Bewertungslogik,
+  // ersetzt die Hash-Pattern-Heuristik unten fuer genau diese beiden Anlageklassen (Indizes/
+  // Anleihen bleiben auf der Heuristik - es existiert fuer sie aktuell keine Live-Kursquelle).
+  if (type === 'stock' || type === 'forex') {
+    try {
+      let fundamentals: { peRatio?: number; dividendYieldPct?: number; profitMarginPct?: number } | undefined;
+      if (type === 'stock') {
+        await ensureFundamentalsFresh(s);
+        fundamentals = getCachedFundamentals(s);
+      }
+      const inputs = await generateTraditionalAssetInputs(s, type, fundamentals);
+      const result = TraditionalAssetScoringService.scoreTraditionalAsset(inputs);
+      if (result.usedFactors.length > 0) {
+        return { score: result.score, basis: 'market-data' };
+      }
+      // Keine reale Datenquelle fuer dieses Symbol verfuegbar (weder Historie noch
+      // Fundamentaldaten) - auf die Heuristik unten zurueckfallen. basis bleibt unten
+      // korrekt 'heuristic', TROTZ Anlagetyp stock/forex.
+    } catch (err: any) {
+      console.warn(`[TraditionalAssetScoring Fallback] Failed for ${s}, using momentum fallback:`, err?.message || err);
+    }
+  }
+
   // 1. Calculate base momentum score (scaled to 10-100 scale)
   const normBaseScore = baseScore !== undefined ? (baseScore > 10.0 ? baseScore : baseScore * 10) : undefined;
   let baseMomentum = normBaseScore !== undefined ? normBaseScore : (50.0 + (change24h > 0 ? Math.min(40.0, change24h * 5) : Math.max(-40.0, change24h * 5)));
-  
+
   // 2. Adjust based on patterns (scaled to 10-100 scale)
   const pattern = getAssetPatternForSymbol(s);
   let patternBoost = 0;
@@ -478,7 +515,8 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
     }
   }
 
-  return Math.min(100.0, Math.max(1.0, Number(finalScore.toFixed(1))));
+  const clamped = Math.min(100.0, Math.max(1.0, Number(finalScore.toFixed(1))));
+  return { score: clamped, basis: (type === 'index' || type === 'bond' || type === 'stock' || type === 'forex') ? 'heuristic' : undefined };
 }
 
 // Fallback mock data with realistic slightly fluctuating stats on demand
@@ -1011,13 +1049,13 @@ async function fetchLiveMarketData() {
   const enriched = await Promise.all(allMerged.map(async asset => {
     const pattern = getAssetPatternForSymbol(asset.symbol);
     const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
-    const score = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
+    const { score, basis } = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
     return {
       ...asset,
       pattern,
       applicationArea,
       score,
-      scoreBasis: getScoreBasis(asset.type, asset.symbol)
+      scoreBasis: basis
     };
   }));
 
@@ -1105,7 +1143,7 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
     const dynamicFallback = await Promise.all(assetRegistry.getAssets().map(async asset => {
       const pattern = getAssetPatternForSymbol(asset.symbol);
       const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
-      const score = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
+      const { score, basis } = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
       return {
         ...asset,
         status: 'Fallback',
@@ -1113,7 +1151,7 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
         pattern,
         applicationArea,
         score,
-        scoreBasis: getScoreBasis(asset.type, asset.symbol)
+        scoreBasis: basis
       };
     }));
 
@@ -1500,7 +1538,7 @@ app.get('/api/crypto-scoring/:symbol', async (req, res) => {
   const isMemeCoin = (asset && (asset as any).subtype === 'memecoin') || ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(symbol);
 
   // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): inputs stammen aus realen Marktdaten der
-  // AssetRegistry (siehe getScoreBasis() weiter oben in dieser Datei) statt eines
+  // AssetRegistry (siehe calculateAssetScore() weiter oben in dieser Datei) statt eines
   // Zeichen-Hash-Generators; fehlende Faktoren werden dynamisch ausgeschlossen.
   if (isMemeCoin) {
     const inputs = await MemeCoinScoringService.generateMemeCoinInputs(symbol, change24h);
