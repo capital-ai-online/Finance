@@ -52,3 +52,8 @@ services:
       # ADR-0009 CORS Hardening: nur wirksam ausserhalb NODE_ENV=production.
       - key: AI_STUDIO_ORIGIN
         sync: false
+      # ARCH-AUDIT-0002 (H6): statisches Bearer-Token fuer GET /metrics (Prometheus-
+      # Exposition-Format, server/metrics.ts). Ohne gesetzten Wert ist /metrics
+      # deaktiviert (fail-closed) - kein Default, kein Fallback auf "offen".
+      - key: METRICS_TOKEN
+        sync: false
