@@ -334,12 +334,10 @@ function getApplicationAreaForSymbol(symbol: string, type: string): string {
 // Audit ARCH-AUDIT-0002 (Befund AUD2-F-001, Kapitel 6, sowie S1/S2/S5, S6 Kapitel 14.3): Legt
 // die Herkunft des score-Feldes offen, statt es unmarkiert wie eine einheitlich datenbasierte
 // Bewertung erscheinen zu lassen (No-Demo-Data-Policy, docs/DATENSCHUTZ_PROTOKOLL.md).
-// - 'synthetic': Meme-Coins - generateMemeCoinInputs() erzeugt die Eingangsgroessen weiterhin
-//   deterministisch aus einem Zeichen-Hash des Tickersymbols (noch nicht auf S1/S2/S5
-//   umgestellt).
-// - 'market-data': uebrige Crypto-Assets - generateCryptoScores() bezieht seit S1/S2/S5 reale
-//   Marktdaten (Marktkapitalisierung/Volumen/Supply von CoinMarketCap/CoinGecko, echte
-//   Kurshistorie fuer Volatilitaet) aus der AssetRegistry; fehlende Faktoren werden dynamisch
+// - 'market-data': alle Crypto-Assets (Standard und Meme) - generateCryptoScores() bzw.
+//   MemeCoinScoringService.generateMemeCoinInputs() beziehen seit S1/S2/S5 reale Marktdaten
+//   (Marktkapitalisierung/Volumen/Supply von CoinMarketCap/CoinGecko, echte Kurshistorie fuer
+//   Volatilitaet/Trend/Momentum) aus der AssetRegistry; fehlende Faktoren werden dynamisch
 //   ausgeschlossen statt geschaetzt (renormalizeAndScore()). Enthaelt KEINE Agenten-Analyse
 //   (die gibt es nur ueber /api/crypto/analyze via CryptoOrchestrator) - daher weiterhin von
 //   einer vollstaendigen Multi-Agenten-Bewertung unterschieden statt als "live" bezeichnet.
@@ -350,10 +348,8 @@ function getApplicationAreaForSymbol(symbol: string, type: string): string {
 // - undefined: Rohstoffe (RawMaterialsScoringService) haben eine dedizierte, konfigurierbare
 //   Fachengine und sind von diesem Befund nicht betroffen.
 const MEME_COIN_SYMBOLS = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'];
-function getScoreBasis(type: string, symbol?: string): 'synthetic' | 'market-data' | 'heuristic' | undefined {
-  if (type === 'crypto') {
-    return symbol && MEME_COIN_SYMBOLS.includes(symbol.toUpperCase().trim()) ? 'synthetic' : 'market-data';
-  }
+function getScoreBasis(type: string, _symbol?: string): 'market-data' | 'heuristic' | undefined {
+  if (type === 'crypto') return 'market-data';
   if (type === 'stock' || type === 'forex' || type === 'index' || type === 'bond') return 'heuristic';
   return undefined;
 }
@@ -363,7 +359,7 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
   if (type === 'crypto') {
     const isMemeCoin = MEME_COIN_SYMBOLS.includes(s);
     if (isMemeCoin) {
-      const inputs = MemeCoinScoringService.generateMemeCoinInputs(s, change24h);
+      const inputs = await MemeCoinScoringService.generateMemeCoinInputs(s, change24h);
       const result = MemeCoinScoringService.scoreMemeCoin(inputs);
       return result.score;
     } else {
@@ -1418,25 +1414,26 @@ app.get('/api/crypto-scoring/:symbol', async (req, res) => {
   const change24h = asset ? asset.change24h : 0;
   const isMemeCoin = (asset && (asset as any).subtype === 'memecoin') || ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(symbol);
 
-  // Audit ARCH-AUDIT-0002 (AUD2-F-001): inputs stammen aus einem Zeichen-Hash des Symbols,
-  // nicht aus Marktdaten - siehe getScoreBasis() weiter oben in dieser Datei.
+  // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): inputs stammen aus realen Marktdaten der
+  // AssetRegistry (siehe getScoreBasis() weiter oben in dieser Datei) statt eines
+  // Zeichen-Hash-Generators; fehlende Faktoren werden dynamisch ausgeschlossen.
   if (isMemeCoin) {
-    const inputs = MemeCoinScoringService.generateMemeCoinInputs(symbol, change24h);
+    const inputs = await MemeCoinScoringService.generateMemeCoinInputs(symbol, change24h);
     const result = MemeCoinScoringService.scoreMemeCoin(inputs);
     res.json({
       inputs,
       result,
       isMemeCoin: true,
-      scoreBasis: 'synthetic'
+      scoreBasis: 'market-data'
     });
   } else {
-    const inputs = CryptoScoringService.generateCryptoInputs(symbol, change24h);
+    const inputs = await CryptoScoringService.generateCryptoInputs(symbol, change24h);
     const result = CryptoScoringService.scoreCrypto(inputs);
     res.json({
       inputs,
       result,
       isMemeCoin: false,
-      scoreBasis: 'synthetic'
+      scoreBasis: 'market-data'
     });
   }
 });
@@ -1458,11 +1455,11 @@ app.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
   const isMemeCoin = (asset && (asset as any).subtype === 'memecoin') || ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(symbol);
 
   // scoreBasis: 'user-adjusted', sobald der Aufrufer eigene Eingangsgroessen mitsendet (der
-  // bewusste Was-waere-wenn-Simulator im Frontend), sonst 'synthetic' fuer die aus dem
-  // Symbol-Hash erzeugten Default-Werte (AUD2-F-001).
+  // bewusste Was-waere-wenn-Simulator im Frontend), sonst 'market-data' fuer die aus der
+  // AssetRegistry bezogenen Default-Werte (AUD2-F-001, S1/S2/S5).
   const hasCustomInputs = customInputs && Object.keys(customInputs).length > 0;
   if (isMemeCoin) {
-    const defaultInputs = MemeCoinScoringService.generateMemeCoinInputs(symbol, change24h);
+    const defaultInputs = await MemeCoinScoringService.generateMemeCoinInputs(symbol, change24h);
     const mergedInputs = {
       ...defaultInputs,
       ...customInputs,
@@ -1473,10 +1470,10 @@ app.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
       inputs: mergedInputs,
       result,
       isMemeCoin: true,
-      scoreBasis: hasCustomInputs ? 'user-adjusted' : 'synthetic'
+      scoreBasis: hasCustomInputs ? 'user-adjusted' : 'market-data'
     });
   } else {
-    const defaultInputs = CryptoScoringService.generateCryptoInputs(symbol, change24h);
+    const defaultInputs = await CryptoScoringService.generateCryptoInputs(symbol, change24h);
     const mergedInputs = {
       ...defaultInputs,
       ...customInputs,
@@ -1487,7 +1484,7 @@ app.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
       inputs: mergedInputs,
       result,
       isMemeCoin: false,
-      scoreBasis: hasCustomInputs ? 'user-adjusted' : 'synthetic'
+      scoreBasis: hasCustomInputs ? 'user-adjusted' : 'market-data'
     });
   }
 });

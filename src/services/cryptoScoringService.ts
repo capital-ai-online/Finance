@@ -4,33 +4,41 @@
  */
 
 import { CryptoScoringInputs, CryptoAnalysisPayload } from '../types/crypto';
+import { assetRegistry } from '../lib/assetRegistry';
+import {
+  scoreTrend,
+  scoreMomentum,
+  scoreBreakout,
+  scoreVolatility,
+  scoreRegime,
+  scoreLiquidity,
+  scoreTokenomics,
+  computeReturnStats,
+  computeRsi,
+  renormalizeAndScore,
+} from './realMarketSignals';
 
-// Weight config according to corporate standards (Version 0.5.4)
+// Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): konsolidierte, kanonische Nicht-Meme-
+// Krypto-Scoring-Engine. Ersetzt die zuvor parallel gepflegten, redundanten Implementierungen
+// in src/lib/cryptoScoring.ts (freie Funktionen, direkt im Scoring-Tab von
+// CryptoScoringEnterprise.tsx verwendet) und die hier zuvor eigene, hash-basierte
+// generateCryptoInputs()-Variante. Gewichte summieren auf 1.00; data_quality_risk ist
+// invertiert (hoeheres Risiko = schlechter). Fehlt ein Faktor fuer ein Symbol (keine reale
+// Kurshistorie/Supply-Daten), wird sein Gewichtsanteil dynamisch auf die vorhandenen Faktoren
+// umgelegt (renormalizeAndScore(), siehe realMarketSignals.ts) statt geschaetzt zu werden.
 export const CRYPTO_SCORING_WEIGHTS = {
-  trend: 14,
-  momentum: 12,
-  volatility_quality: 10,
-  breakout_quality: 8,
-  relative_strength: 8,
-  avg_daily_volume: 10,
-  spread: 8,
-  orderbook_depth: 8,
-  slippage_estimate: 6,
-  active_addresses: 5,
-  exchange_flows: 5,
-  whale_activity: 5,
-  supply_dynamics: 4,
-  social_velocity: 6,
-  narrative_strength: 5,
-  news_momentum: 5,
-  community_engagement: 4,
-  manipulation_risk: 5,
-  exchange_concentration: 4,
-  rugpull_risk: 3,
-  data_quality_risk: 2,
-  ai_confidence: 2,
-  regime_bonus: 6
-};
+  trend: 0.20,
+  momentum: 0.16,
+  volatility_quality: 0.12,
+  breakout_quality: 0.10,
+  relative_strength: 0.12,
+  avg_daily_volume: 0.12,
+  supply_dynamics: 0.08,
+  regime_bonus: 0.06,
+  data_quality_risk: 0.04,
+} as const;
+
+const INVERTED_FIELDS = new Set(['data_quality_risk']);
 
 export const CRYPTO_DECISION_THRESHOLDS = [
   { low: 90, high: 100, label: "A_setup", name: "A-Setup", desc: "Höchste Priorität. Enges Monitoring. Trade-Kandidat." },
@@ -42,77 +50,37 @@ export const CRYPTO_DECISION_THRESHOLDS = [
 
 export class CryptoScoringService {
   /**
-   * Safe clamp utility to ensure indicator values remain strictly inside bounds [0.0, 1.0].
+   * Berechnet den Enterprise-Score aus real anbindbaren Faktoren (dynamische Neugewichtung
+   * fehlender Faktoren statt fester 23-Faktoren-Formel).
    */
-  private static clamp(value: number, low: number = 0.0, high: number = 1.0): number {
-    return Math.max(low, Math.min(high, value));
-  }
-
-  /**
-   * Helper to normalize raw parameters [0, 1] relative to their assigned weight.
-   */
-  private static normalizeToScore(value: number, weight: number): number {
-    return this.clamp(value) * weight;
-  }
-
-  /**
-   * Main mathematical execution of the CAPITAL-AI Crypto Scoring Model (Version 0.5.4).
-   * Fully provable, with separated positive potential and negative risk factors.
-   */
-  public static scoreCrypto(inputs: CryptoScoringInputs, version: string = "0.5.4"): CryptoAnalysisPayload {
+  public static scoreCrypto(inputs: CryptoScoringInputs, version: string = "0.6.0"): CryptoAnalysisPayload {
     const x = inputs;
-    const w = CRYPTO_SCORING_WEIGHTS;
+    const values: Record<string, number | undefined> = {
+      trend: x.trend !== undefined ? x.trend * 100 : undefined,
+      momentum: x.momentum !== undefined ? x.momentum * 100 : undefined,
+      volatility_quality: x.volatility_quality !== undefined ? x.volatility_quality * 100 : undefined,
+      breakout_quality: x.breakout_quality !== undefined ? x.breakout_quality * 100 : undefined,
+      relative_strength: x.relative_strength !== undefined ? x.relative_strength * 100 : undefined,
+      avg_daily_volume: x.avg_daily_volume !== undefined ? x.avg_daily_volume * 100 : undefined,
+      supply_dynamics: x.supply_dynamics !== undefined ? x.supply_dynamics * 100 : undefined,
+      regime_bonus: x.regime_bonus !== undefined ? x.regime_bonus * 100 : undefined,
+      data_quality_risk: x.data_quality_risk !== undefined ? x.data_quality_risk * 100 : undefined,
+    };
 
-    // --- POSITIVE SCORING CONTRIBUTION ---
-    // Aggregates technical indicators, liquidity indicators, network/on-chain density,
-    // and sentiment momentum indicators. Total maximum weight of positive components is 111.
-    const base_pos = 
-      this.normalizeToScore(x.trend, w.trend) +                             // Tech: Trend strength
-      this.normalizeToScore(x.momentum, w.momentum) +                       // Tech: Momentum velocity
-      this.normalizeToScore(x.volatility_quality, w.volatility_quality) +   // Tech: Volatility quality
-      this.normalizeToScore(x.breakout_quality, w.breakout_quality) +       // Tech: Breakout confirmation
-      this.normalizeToScore(x.relative_strength, w.relative_strength) +     // Tech: RSI relative strength
-      this.normalizeToScore(x.avg_daily_volume, w.avg_daily_volume) +       // Liq: Average volume
-      this.normalizeToScore(x.orderbook_depth, w.orderbook_depth) +         // Liq: Depth thickness
-      this.normalizeToScore(x.active_addresses, w.active_addresses) +       // On-Chain: Active addresses growth
-      this.normalizeToScore(x.exchange_flows, w.exchange_flows) +           // On-Chain: Outflows/deposits
-      this.normalizeToScore(x.whale_activity, w.whale_activity) +           // On-Chain: Large transactions trace
-      this.normalizeToScore(x.supply_dynamics, w.supply_dynamics) +         // Tokenomics: Circulating supply factor
-      this.normalizeToScore(x.social_velocity, w.social_velocity) +         // Sentiment: Mention growth
-      this.normalizeToScore(x.narrative_strength, w.narrative_strength) +   // Sentiment: Theme alignment
-      this.normalizeToScore(x.news_momentum, w.news_momentum) +             // Sentiment: Positive press flow
-      this.normalizeToScore(x.community_engagement, w.community_engagement) + // Sentiment: Community chat density
-      this.normalizeToScore(x.ai_confidence, w.ai_confidence);              // AI: Agent certainty factor
+    const { score: final_score, usedFactors, missingFactors } = renormalizeAndScore(values, CRYPTO_SCORING_WEIGHTS, INVERTED_FIELDS);
 
-    // --- NEGATIVE SCORING PENALIZATION ---
-    // Aggregates liquidity risk (spread, slippage) and security/structural risks (manipulation,
-    // centralization, contract rugpull risk, oracle latency). Total maximum weight of negative components is 28.
-    const base_neg = 
-      this.normalizeToScore(x.spread, w.spread) +                           // Risk: Wide spreads
-      this.normalizeToScore(x.slippage_estimate, w.slippage_estimate) +     // Risk: Order execution cost
-      this.normalizeToScore(x.manipulation_risk, w.manipulation_risk) +     // Risk: Wash-trading suspicion
-      this.normalizeToScore(x.exchange_concentration, w.exchange_concentration) + // Risk: Custody centralization
-      this.normalizeToScore(x.rugpull_risk, w.rugpull_risk) +               // Risk: Contract security
-      this.normalizeToScore(x.data_quality_risk, w.data_quality_risk);      // Risk: Pricing feed stability
+    // base_score/risk_penalty als transparente Teilsummen der final_score-Berechnung, getrennt
+    // nach positiven und risikoinvertierten Faktoren (fuer die Breakdown-Anzeige im Frontend).
+    const positiveKeys = Object.keys(CRYPTO_SCORING_WEIGHTS).filter(k => !INVERTED_FIELDS.has(k));
+    const riskKeys = Object.keys(CRYPTO_SCORING_WEIGHTS).filter(k => INVERTED_FIELDS.has(k));
+    const positiveOnly = renormalizeAndScore(values, Object.fromEntries(positiveKeys.map(k => [k, CRYPTO_SCORING_WEIGHTS[k as keyof typeof CRYPTO_SCORING_WEIGHTS]])), new Set());
+    const riskOnly = riskKeys.length > 0
+      ? renormalizeAndScore(values, Object.fromEntries(riskKeys.map(k => [k, CRYPTO_SCORING_WEIGHTS[k as keyof typeof CRYPTO_SCORING_WEIGHTS]])), INVERTED_FIELDS)
+      : { score: 0, usedFactors: [] as string[] };
+    const base_score = Number(positiveOnly.score.toFixed(2));
+    const risk_penalty = Number((100 - riskOnly.score).toFixed(2));
+    const regime_bonus_val = x.regime_bonus !== undefined ? Number((x.regime_bonus * 20).toFixed(2)) : 0;
 
-    // --- NORMALIZATION AND BENCHMARK SCALES ---
-    // 1. Positive scale: Map 111 theoretical maximum positive points to 80 final base score points.
-    // Equation: BaseScore = (Sum(PositiveWeights) / 111) * 80
-    const base_score = Number(((base_pos / 111) * 80).toFixed(2));
-    
-    // 2. Risk penalty scale: Map 28 theoretical maximum risk points to 15 final risk penalty points.
-    // Equation: PenaltyScore = (Sum(NegativeWeights) / 28) * 15
-    const risk_penalty = Number(((base_neg / 28) * 15).toFixed(2));
-    
-    // 3. Regime bonus: Macro market alignment contributes up to 20 additional points.
-    // Equation: RegimeBonus = Clamp(regime_bonus) * 20
-    const regime_bonus_val = Number((this.clamp(x.regime_bonus) * 20).toFixed(2));
-    
-    // 4. Final Score calculation: Combined score clamped safely inside standard range [0.0, 100.0]
-    // Equation: FinalScore = Clamp(0, 100, BaseScore - PenaltyScore + RegimeBonus)
-    const final_score = Math.max(0.0, Math.min(100.0, base_score - risk_penalty + regime_bonus_val));
-
-    // --- DECISION LOGIC & METADATA BINDING ---
     let decision = "reject";
     let decisionName = "Reject";
     let decisionDesc = "Kein Trade. Ungenügende Qualität/Risiko-Profil.";
@@ -125,53 +93,49 @@ export class CryptoScoringService {
       }
     }
 
-    // Risk tier assignment based on the resolved risk penalty
     let risk_level = "Medium";
-    if (risk_penalty > 9) risk_level = "Extreme";
-    else if (risk_penalty > 5) risk_level = "High";
-    else if (risk_penalty < 2) risk_level = "Low";
+    if (riskOnly.usedFactors.length === 0) risk_level = "Unbekannt";
+    else if (risk_penalty > 60) risk_level = "Extreme";
+    else if (risk_penalty > 30) risk_level = "High";
+    else if (risk_penalty < 10) risk_level = "Low";
 
     const reasoning: string[] = [];
     const alerts: string[] = [];
 
-    // Construct detailed explanations dynamically based on input thresholds
-    if (x.trend > 0.7) reasoning.push("Starker technischer Aufwärtstrend vorhanden.");
-    if (x.momentum > 0.7) reasoning.push("Hohes bullisches Momentum wird durch Marktvolumen bestätigt.");
-    if (x.relative_strength > 0.7) reasoning.push("Überragende relative Stärke gegenüber dem breiten Markt.");
-    if (x.avg_daily_volume > 0.7) reasoning.push("Hervorragende tägliche Liquidität unterstützt größere Positionen.");
-    if (x.orderbook_depth > 0.7) reasoning.push("Geringe Marktauswirkung durch tiefe Orderbuch-Liquidität.");
-    if (x.active_addresses > 0.7) reasoning.push("Sehr hohe On-Chain-Netzwerkaktivität deutet auf organische Nutzung hin.");
-    if (x.whale_activity > 0.7) reasoning.push("Smart-Money-Akkumulation durch Wal-Aktivitäten bestätigt.");
-    if (x.social_velocity > 0.7) reasoning.push("Starke Dynamik in den sozialen Netzwerken verzeichnet.");
-    if (x.narrative_strength > 0.7) reasoning.push("Führende Rolle in einem stark trendenden Markt-Narrativ.");
-    
-    if (x.spread > 0.4) alerts.push("Warnung: Erhöhter Bid-Ask Spread kann Ausführungskosten treiben.");
-    if (x.slippage_estimate > 0.4) alerts.push("Achtung: Erhöhte Slippage bei Marktorders zu erwarten.");
-    if (x.manipulation_risk > 0.4) alerts.push("Risiko: Erhöhtes Manipulations- oder Wash-Trading-Risiko.");
-    if (x.exchange_concentration > 0.4) alerts.push("Sicherheitsrisiko: Hohe Konzentration auf wenigen Krypto-Börsen.");
-    if (x.rugpull_risk > 0.2) alerts.push("Kritisches Risiko: Signifikantes Rugpull- oder Smart-Contract-Risiko!");
-
+    if ((x.trend ?? 0) > 0.7) reasoning.push("Starker technischer Aufwärtstrend vorhanden (echte Kurshistorie).");
+    if ((x.momentum ?? 0) > 0.7) reasoning.push("Hohes bullisches Momentum (Rate-of-Change, echte Kurshistorie).");
+    if ((x.relative_strength ?? 0) > 0.7) reasoning.push("Überragende relative Stärke (RSI, echte Kurshistorie).");
+    if ((x.avg_daily_volume ?? 0) > 0.7) reasoning.push("Hervorragende reale Liquidität (Umschlagsrate Volumen/Marktkapitalisierung).");
+    if (missingFactors.length > 0) {
+      reasoning.push(`Ohne reale Datenquelle fuer dieses Symbol: ${missingFactors.join(', ')} (Gewichtsanteil dynamisch auf die vorhandenen Faktoren umgelegt).`);
+    }
     if (reasoning.length === 0) {
-      reasoning.push("Neutrale Markt- und On-Chain-Entwicklung.");
+      reasoning.push("Neutrale, real-marktdatenbasierte Entwicklung.");
     }
 
-    const avgLiq = Math.round((this.clamp(x.avg_daily_volume) + this.clamp(x.orderbook_depth)) / 2 * 100);
-    const avgStrat = Math.round((this.clamp(x.social_velocity) + this.clamp(x.narrative_strength) + this.clamp(x.news_momentum)) / 3 * 100);
-    const riskScoreValue = Math.round((risk_penalty / 15) * 100);
+    if (usedFactors.length === 0) {
+      alerts.push("Kritisch: keine reale Datenquelle fuer dieses Symbol verfuegbar - final_score ist 0.");
+    } else if (missingFactors.length > usedFactors.length) {
+      alerts.push("Achtung: fuer die Mehrheit der Faktoren liegt keine reale Datenquelle vor.");
+    }
 
     let catSub = "Alternative Cryptographic Protocol";
     if (x.coin === "BTC") catSub = "Decentralized Store of Value / Ledger Base";
     else if (x.coin === "ETH") catSub = "Smart Contract Platform / Layer-1";
     else if (x.coin === "SOL") catSub = "High-Throughput Smart Contract Network";
 
+    const dataCompletenessRatio = usedFactors.length / (usedFactors.length + missingFactors.length || 1);
+    const technicalStrength = Math.round((((x.trend ?? 0) + (x.momentum ?? 0)) / 2) * 100);
+    const liquidityPct = Math.round((x.avg_daily_volume ?? 0) * 100);
+    const riskScoreValue = Math.round(risk_penalty);
+
     return {
       coin: x.coin,
-      score: Number((final_score / 10).toFixed(1)), // 0-10 compatible score
+      score: Number((final_score / 10).toFixed(1)),
       final_score: Number(final_score.toFixed(2)),
-      base_score: Number(base_score.toFixed(2)),
-      risk_penalty: Number(risk_penalty.toFixed(2)),
-      regime_bonus: Number(regime_bonus_val.toFixed(2)),
-      ai_confidence_bonus: Number((this.clamp(x.ai_confidence) * w.ai_confidence * 10).toFixed(2)),
+      base_score,
+      risk_penalty,
+      regime_bonus: regime_bonus_val,
       decision,
       decisionName,
       decisionDesc,
@@ -182,139 +146,102 @@ export class CryptoScoringService {
         category_main: "Crypto",
         category_sub: catSub,
         market_type: "Spot & Futures Asset Exchange",
-        valuation_mode: "Multi-Dimensional On-Chain & Sentiment Metrics",
-        confidence: Number(this.clamp(x.ai_confidence).toFixed(2)),
+        valuation_mode: "Real-Marktdaten & Technische Analyse",
+        confidence: Number(dataCompletenessRatio.toFixed(2)),
         reasoning: reasoning.slice(0, 3)
       },
       scores: {
         fundamentals: Math.round(base_score),
         risk: riskScoreValue,
-        liquidity: avgLiq,
-        strategicValue: avgStrat,
+        liquidity: liquidityPct,
+        technicalStrength,
         final_score: Number(final_score.toFixed(1)),
-        market_liquidity: avgLiq,
-        processing_complexity: Math.round((1.0 - this.clamp(x.data_quality_risk)) * 100),
-        risk_resilience: 100 - riskScoreValue,
-        strategic_importance: avgStrat
       },
-      weights: w,
+      weights: CRYPTO_SCORING_WEIGHTS,
       data_quality: {
-        level: x.data_quality_risk > 0.15 ? "low" : x.data_quality_risk > 0.05 ? "medium" : "high"
+        level: dataCompletenessRatio >= 0.7 ? "high" : dataCompletenessRatio >= 0.4 ? "medium" : dataCompletenessRatio > 0 ? "low" : "unknown",
+        missing_fields: missingFactors,
       },
       inputs: x,
       metadata: {
         scoring_version: version,
-        data_quality: Number((1.0 - this.clamp(x.data_quality_risk)).toFixed(2))
+        data_quality: Number(dataCompletenessRatio.toFixed(2))
       }
     };
   }
 
   /**
-   * Programmatically generate realistic inputs based on coin symbol and 24h performance.
+   * Synchroner Anteil der real anbindbaren Faktoren: nur die ohne Netzwerkzugriff aus dem
+   * bereits geladenen AssetRegistry-Snapshot verfuegbaren Werte (Liquiditaet/Supply/Regime).
+   * Fuer Kontexte, in denen kein await moeglich ist (z.B. synchrone Karten-/Listen-Rendering-
+   * Pfade) - die Historie-basierten Faktoren (trend/momentum/breakout_quality/
+   * relative_strength/volatility_quality/data_quality_risk) bleiben hier undefined statt
+   * geschaetzt; fuer die vollstaendige Faktorenmenge siehe generateCryptoInputs().
    */
-  public static generateCryptoInputs(symbol: string, change24h: number): CryptoScoringInputs {
+  public static generateCryptoInputsSync(symbol: string, change24h: number): CryptoScoringInputs {
     const s = symbol.toUpperCase().trim();
-    let hash = 0;
-    for (let i = 0; i < s.length; i++) {
-      hash = (hash << 5) - hash + s.charCodeAt(i);
-      hash |= 0;
-    }
-    const seed = (Math.abs(hash) % 100) / 100;
+    const asset = assetRegistry.getAsset(s);
 
-    const momentumBase = this.clamp(0.5 + change24h / 15, 0.1, 0.95);
-    const trendBase = this.clamp(0.5 + change24h / 25 + seed * 0.1, 0.15, 0.95);
+    const marketCapUsd = asset?.marketCap !== undefined ? asset.marketCap * 1e9 : undefined;
+    const volumeUsd = asset?.volume24h !== undefined ? asset.volume24h * 1e6 : undefined;
+    const liquidityScore = (volumeUsd !== undefined && marketCapUsd !== undefined)
+      ? scoreLiquidity(volumeUsd, marketCapUsd)
+      : undefined;
+    const avg_daily_volume = liquidityScore !== undefined ? liquidityScore / 100 : undefined;
 
-    let trend = trendBase;
-    let momentum = momentumBase;
-    let volatility_quality = this.clamp(0.5 + (seed - 0.5) * 0.4);
-    let breakout_quality = this.clamp(change24h > 4 ? 0.8 : 0.4 + seed * 0.3);
-    let relative_strength = this.clamp(trendBase + (seed - 0.5) * 0.2);
-    let avg_daily_volume = 0.5;
-    let spread = 0.05;
-    let orderbook_depth = 0.6;
-    let slippage_estimate = 0.04;
-    let active_addresses = this.clamp(0.5 + (seed - 0.3) * 0.4);
-    let exchange_flows = this.clamp(0.5 + (0.5 - seed) * 0.3);
-    let whale_activity = this.clamp(0.4 + seed * 0.4);
-    let supply_dynamics = this.clamp(0.6 + (seed - 0.5) * 0.2);
-    let social_velocity = this.clamp(momentumBase + (seed - 0.5) * 0.3);
-    let narrative_strength = this.clamp(0.4 + seed * 0.5);
-    let news_momentum = this.clamp(0.5 + change24h / 30);
-    let community_engagement = this.clamp(0.5 + seed * 0.4);
-    let manipulation_risk = this.clamp(0.1 + (1.0 - seed) * 0.2);
-    let exchange_concentration = this.clamp(0.15 + seed * 0.2);
-    let rugpull_risk = 0.02;
-    let data_quality_risk = 0.01;
-    let ai_confidence = this.clamp(0.6 + seed * 0.3);
-    let regime_bonus = this.clamp(change24h > 1.5 ? 0.4 + seed * 0.3 : 0.2);
+    const tokenomicsScore = scoreTokenomics(asset?.circulatingSupply, asset?.maxSupply);
+    const supply_dynamics = tokenomicsScore !== undefined ? tokenomicsScore / 100 : undefined;
 
-    // Asset-specific calibration for bluechips
-    if (s === 'BTC') {
-      avg_daily_volume = 0.98;
-      spread = 0.01;
-      orderbook_depth = 0.95;
-      slippage_estimate = 0.01;
-      active_addresses = 0.92;
-      whale_activity = 0.85;
-      manipulation_risk = 0.03;
-      exchange_concentration = 0.08;
-      rugpull_risk = 0.01;
-      data_quality_risk = 0.01;
-      narrative_strength = 0.95;
-      community_engagement = 0.98;
-    } else if (s === 'ETH') {
-      avg_daily_volume = 0.88;
-      spread = 0.02;
-      orderbook_depth = 0.89;
-      slippage_estimate = 0.02;
-      active_addresses = 0.85;
-      whale_activity = 0.78;
-      manipulation_risk = 0.05;
-      exchange_concentration = 0.12;
-      rugpull_risk = 0.02;
-      data_quality_risk = 0.01;
-      narrative_strength = 0.90;
-      community_engagement = 0.92;
-    } else if (s === 'SOL') {
-      avg_daily_volume = 0.82;
-      spread = 0.04;
-      orderbook_depth = 0.78;
-      slippage_estimate = 0.05;
-      active_addresses = 0.88;
-      whale_activity = 0.72;
-      manipulation_risk = 0.12;
-      exchange_concentration = 0.22;
-      rugpull_risk = 0.03;
-      data_quality_risk = 0.02;
-      narrative_strength = 0.92;
-      community_engagement = 0.89;
+    const regime_bonus = scoreRegime(change24h) / 100;
+
+    return { coin: s, avg_daily_volume, supply_dynamics, regime_bonus };
+  }
+
+  /**
+   * Bezieht die real anbindbaren Score-Eingangsgroessen selbststaendig aus der AssetRegistry
+   * (Wiederverwendung der bestehenden Wertschoepfungskette statt neuer Parameter an allen
+   * Aufrufstellen), inklusive der historienbasierten Faktoren (echte Kurshistorie).
+   * Felder ohne reale Quelle fuer dieses Symbol bleiben undefined.
+   */
+  public static async generateCryptoInputs(symbol: string, change24h: number): Promise<CryptoScoringInputs> {
+    const s = symbol.toUpperCase().trim();
+    const base = this.generateCryptoInputsSync(symbol, change24h);
+
+    let trend: number | undefined;
+    let momentum: number | undefined;
+    let breakout_quality: number | undefined;
+    let volatility_quality: number | undefined;
+    let relative_strength: number | undefined;
+    let data_quality_risk: number | undefined;
+
+    try {
+      const history = await assetRegistry.getHistory(s, 30);
+      if (history.source === 'live') {
+        const closes = history.points.map(p => p.close);
+        const stats = computeReturnStats(closes);
+        if (stats) {
+          trend = scoreTrend(stats.last, stats.sma) / 100;
+          momentum = scoreMomentum(stats.rocPct) / 100;
+          breakout_quality = scoreBreakout(stats.last, stats.high, stats.low) / 100;
+          volatility_quality = (100 - scoreVolatility(stats.dailyStdevPct)) / 100;
+        }
+        const rsi = computeRsi(closes);
+        if (rsi !== undefined) relative_strength = rsi / 100;
+        // Reale Historie vorhanden -> geringes Datenrisiko, statt geschaetzt.
+        data_quality_risk = 0.05;
+      }
+    } catch {
+      // Keine echte Historie verfuegbar - alle historienbasierten Faktoren bleiben undefined.
     }
 
     return {
-      coin: s,
+      ...base,
       trend,
       momentum,
       volatility_quality,
       breakout_quality,
       relative_strength,
-      avg_daily_volume,
-      spread,
-      orderbook_depth,
-      slippage_estimate,
-      active_addresses,
-      exchange_flows,
-      whale_activity,
-      supply_dynamics,
-      social_velocity,
-      narrative_strength,
-      news_momentum,
-      community_engagement,
-      manipulation_risk,
-      exchange_concentration,
-      rugpull_risk,
       data_quality_risk,
-      ai_confidence,
-      regime_bonus
     };
   }
 }

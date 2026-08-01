@@ -42,18 +42,12 @@ import {
   STARTER_DAILY_LIMIT 
 } from '../lib/dailyScreeningTracker';
 import { isAuthorizedOwnerOrDevAdmin } from '../lib/ownerUtils';
-import { 
-  SCORING_WEIGHTS, 
-  DECISION_THRESHOLDS, 
-  CryptoScoringInputs, 
-  calculateCryptoEnterpriseScore, 
-  generateCryptoInputs,
-  MemeCoinInputs,
-  calculateMemeCoinScore,
-  generateMemeCoinInputs,
-  clamp
-} from '../lib/cryptoScoring';
+import type { CryptoScoringInputs } from '../types/crypto';
+import type { MemeCoinInputs } from '../types/memeCoin';
 import { RawMaterialsScoringService } from '../services/rawMaterialsScoring';
+// Audit ARCH-AUDIT-0002 (S1/S2/S5): konsolidiert auf die kanonischen Service-Klassen statt der
+// zuvor parallel gepflegten freien Funktionen in ../lib/cryptoScoring.ts (siehe ADR-Notiz dort;
+// die Datei wurde entfernt, da sie ausschliesslich von dieser Komponente verwendet wurde).
 import { CryptoScoringService } from '../services/cryptoScoringService';
 import { MemeCoinScoringService } from '../services/memeCoinScoringService';
 
@@ -101,32 +95,32 @@ const TIMEFRAMES = [
   { value: '1 woche', label: '1 Woche' }
 ];
 
-const adjustMemeInputsForTimeframe = (raw: any, tf: string): any => {
+// Audit ARCH-AUDIT-0002 (S1/S2/S5): Zeitfenster-Anpassung nur noch auf den real anbindbaren
+// Feldern (siehe MemeCoinInputs/CryptoScoringInputs) - undefined-Werte (keine reale Quelle
+// fuer dieses Symbol) bleiben undefined statt mit einem Skalierungsfaktor belegt zu werden.
+const scaleField = (v: number | undefined, factor: number, min = 0, max = 1): number | undefined =>
+  v === undefined ? undefined : Math.max(min, Math.min(max, v * factor));
+
+const adjustMemeInputsForTimeframe = (raw: MemeCoinInputs, tf: string): MemeCoinInputs => {
   const copy = { ...raw };
   switch (tf) {
     case '1m':
     case '5m':
-      copy.volatility_quality = Math.min(1.0, copy.volatility_quality * 1.5);
-      copy.spread_penalty = Math.min(1.0, copy.spread_penalty * 2.0);
-      copy.momentum = Math.min(1.0, copy.momentum * 1.3);
-      copy.manipulation_penalty = Math.min(1.0, copy.manipulation_penalty * 1.4);
+      copy.volatility_quality = scaleField(copy.volatility_quality, 0.5, 0.1);
+      copy.momentum = scaleField(copy.momentum, 1.3);
       break;
     case '15m':
     case '30m':
-      copy.volatility_quality = Math.min(1.0, copy.volatility_quality * 1.25);
-      copy.spread_penalty = Math.min(1.0, copy.spread_penalty * 1.5);
+      copy.volatility_quality = scaleField(copy.volatility_quality, 0.7, 0.1);
       break;
     case '1std':
     case '4std':
       break;
     case '1 tag':
-      copy.narrative_strength = Math.min(1.0, copy.narrative_strength * 1.1);
-      copy.decay_penalty = Math.min(1.0, copy.decay_penalty * 1.15);
+      copy.trend_structure = scaleField(copy.trend_structure, 1.1);
       break;
     case '1 woche':
-      copy.narrative_strength = Math.min(1.0, copy.narrative_strength * 1.2);
-      copy.decay_penalty = Math.min(1.0, copy.decay_penalty * 1.3);
-      copy.rugpull_penalty = Math.max(0.0, copy.rugpull_penalty * 0.75);
+      copy.trend_structure = scaleField(copy.trend_structure, 1.2);
       break;
   }
   return copy;
@@ -137,38 +131,25 @@ const adjustInputsForTimeframe = (raw: CryptoScoringInputs, tf: string): CryptoS
   switch (tf) {
     case '1m':
     case '5m':
-      copy.volatility_quality = Math.max(0.1, copy.volatility_quality * 0.4);
-      copy.spread = Math.min(1.0, copy.spread * 2.5);
-      copy.momentum = Math.min(1.0, copy.momentum * 1.25);
-      copy.ai_confidence = Math.max(0.2, copy.ai_confidence * 0.7);
-      copy.manipulation_risk = Math.min(1.0, copy.manipulation_risk * 1.5);
+      copy.volatility_quality = scaleField(copy.volatility_quality, 0.4, 0.1);
+      copy.momentum = scaleField(copy.momentum, 1.25);
+      copy.breakout_quality = scaleField(copy.breakout_quality, 0.8);
       break;
     case '15m':
     case '30m':
-      copy.volatility_quality = Math.max(0.1, copy.volatility_quality * 0.6);
-      copy.spread = Math.min(1.0, copy.spread * 1.8);
-      copy.momentum = Math.min(1.0, copy.momentum * 1.15);
-      copy.manipulation_risk = Math.min(1.0, copy.manipulation_risk * 1.25);
+      copy.volatility_quality = scaleField(copy.volatility_quality, 0.6, 0.1);
+      copy.momentum = scaleField(copy.momentum, 1.15);
       break;
     case '1std':
     case '4std':
       // Default standard values
       break;
     case '1 tag':
-      copy.trend = Math.min(1.0, copy.trend * 1.1);
-      copy.slippage_estimate = Math.max(0.01, copy.slippage_estimate * 0.8);
-      copy.active_addresses = Math.min(1.0, copy.active_addresses * 1.15);
-      copy.news_momentum = Math.min(1.0, copy.news_momentum * 1.2);
-      copy.manipulation_risk = Math.max(0.01, copy.manipulation_risk * 0.7);
+      copy.trend = scaleField(copy.trend, 1.1);
       break;
     case '1 woche':
-      copy.trend = Math.min(1.0, copy.trend * 1.25);
-      copy.spread = Math.max(0.01, copy.spread * 0.6);
-      copy.slippage_estimate = Math.max(0.01, copy.slippage_estimate * 0.5);
-      copy.active_addresses = Math.min(1.0, copy.active_addresses * 1.3);
-      copy.community_engagement = Math.min(1.0, copy.community_engagement * 1.2);
-      copy.manipulation_risk = Math.max(0.01, copy.manipulation_risk * 0.4);
-      copy.rugpull_risk = Math.max(0.001, copy.rugpull_risk * 0.2);
+      copy.trend = scaleField(copy.trend, 1.25);
+      copy.relative_strength = scaleField(copy.relative_strength, 1.1);
       break;
   }
   return copy;
@@ -241,122 +222,10 @@ const getTradingSetup = (sym: string, price: number, score: number, type: string
   };
 };
 
-const adjustCategoryLabelsForType = (cats: any[], type: string) => {
-  if (type === 'crypto') return cats;
-  
-  return cats.map(cat => {
-    const copyCat = { ...cat, fields: cat.fields.map((f: any) => ({ ...f })) };
-    
-    copyCat.fields = copyCat.fields.map((f: any) => {
-      if (f.key === 'whale_activity') {
-        if (type === 'stock') {
-          f.label = 'Institutional Ownership';
-          f.desc = 'Percentage of shares held by mutual funds, pension plans, and banks';
-        } else if (type === 'commodity') {
-          f.label = 'Commercial Hedgers (CoT)';
-          f.desc = 'Net positioning of commercial hedgers in the Commitments of Traders report';
-        } else if (type === 'index') {
-          f.label = 'Institutional ETF Inflows';
-          f.desc = 'Net capital inflows into index tracking mutual funds and ETFs';
-        }
-      } else if (f.key === 'rugpull_risk') {
-        if (type === 'stock') {
-          f.label = 'Bankruptcy Risk (Altman Z)';
-          f.desc = 'Z-score indicator of corporate financial distress and solvency';
-        } else if (type === 'commodity') {
-          f.label = 'Supply Disruption Risk';
-          f.desc = 'Geopolitical or physical risks to global production chains';
-        } else if (type === 'index') {
-          f.label = 'Systemic Index Rebalance Risk';
-          f.desc = 'Risk of structural component adjustments or liquidity shocks';
-        }
-      } else if (f.key === 'active_addresses') {
-        if (type === 'stock') {
-          f.label = 'Active Shareholder Accounts';
-          f.desc = 'Growth rate of unique brokerage holding accounts';
-        } else if (type === 'commodity') {
-          f.label = 'Active Futures Contracts';
-          f.desc = 'Open interest growth across standard mercantile exchanges';
-        } else if (type === 'index') {
-          f.label = 'Aggregate Component Accounts';
-          f.desc = 'Weighted sum of active shareholder accounts across all constituents';
-        }
-      } else if (f.key === 'exchange_flows') {
-        if (type === 'stock') {
-          f.label = 'Corporate Buyback Velocity';
-          f.desc = 'Company-directed share buybacks and treasury accumulation';
-        } else if (type === 'commodity') {
-          f.label = 'Physical Warehouse Stockpiles';
-          f.desc = 'LME/COMEX inventories (outflows are usually bullish)';
-        } else if (type === 'index') {
-          f.label = 'Constituent Liquidity Flows';
-          f.desc = 'Aggregated liquidity rotation inside and outside the index';
-        }
-      } else if (f.key === 'exchange_concentration') {
-        if (type === 'stock' || type === 'index') {
-          f.label = 'Sector Concentration Risk';
-          f.desc = 'Overweight status of the largest index sectors/components';
-        } else if (type === 'commodity') {
-          f.label = 'Regional Supply Concentration';
-          f.desc = 'Geographic concentration of the raw material mining/production';
-        }
-      }
-      return f;
-    });
-    return copyCat;
-  });
-};
-
-const generateUniversalInputs = (sym: string, type: string, change24h: number, assetData?: any) => {
-  const s = sym.toUpperCase().trim();
-  let hash = 0;
-  for (let i = 0; i < s.length; i++) {
-    hash = (hash << 5) - hash + s.charCodeAt(i);
-    hash |= 0;
-  }
-  const seed = (Math.abs(hash) % 100) / 100;
-
-  const actualChange = change24h !== undefined ? change24h : 1.5;
-
-  if (type === 'crypto') {
-    const isMeme = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(s);
-    if (isMeme) {
-      return generateMemeCoinInputs(s, actualChange);
-    } else {
-      return generateCryptoInputs(s, actualChange);
-    }
-  }
-
-  const trendBase = clamp(0.5 + actualChange / 25 + seed * 0.1, 0.15, 0.95);
-  const momentumBase = clamp(0.5 + actualChange / 15, 0.1, 0.95);
-
-  return {
-    coin: s,
-    trend: trendBase,
-    momentum: momentumBase,
-    volatility_quality: clamp(0.4 + (seed - 0.5) * 0.3),
-    breakout_quality: clamp(actualChange > 3 ? 0.8 : 0.4 + seed * 0.3),
-    relative_strength: clamp(trendBase + (seed - 0.5) * 0.15),
-    avg_daily_volume: type === 'index' ? 0.95 : type === 'stock' ? 0.85 : type === 'commodity' ? 0.75 : 0.60,
-    spread: type === 'forex' ? 0.01 : type === 'index' ? 0.02 : type === 'stock' ? 0.03 : 0.05,
-    orderbook_depth: type === 'index' ? 0.95 : type === 'stock' ? 0.85 : 0.70,
-    slippage_estimate: type === 'forex' ? 0.01 : type === 'index' ? 0.01 : type === 'stock' ? 0.02 : 0.04,
-    active_addresses: clamp(0.5 + seed * 0.3),
-    exchange_flows: clamp(0.5 + seed * 0.2),
-    whale_activity: type === 'stock' ? 0.75 : 0.60,
-    supply_dynamics: clamp(0.5 + seed * 0.2),
-    social_velocity: clamp(momentumBase + (seed - 0.5) * 0.2),
-    narrative_strength: clamp(0.4 + seed * 0.4),
-    news_momentum: clamp(0.5 + actualChange / 20),
-    community_engagement: clamp(0.5 + seed * 0.3),
-    manipulation_risk: type === 'index' ? 0.02 : type === 'stock' ? 0.05 : 0.10,
-    exchange_concentration: type === 'index' ? 0.01 : type === 'stock' ? 0.08 : 0.15,
-    rugpull_risk: type === 'index' ? 0.00 : type === 'stock' ? 0.01 : 0.02,
-    data_quality_risk: 0.01,
-    ai_confidence: clamp(0.7 + seed * 0.2),
-    regime_bonus: clamp(actualChange > 1.0 ? 0.4 + seed * 0.3 : 0.2)
-  };
-};
+// Audit ARCH-AUDIT-0002 (S1/S2/S5): die vormals hier umbenannten Faktoren (whale_activity,
+// rugpull_risk, active_addresses, exchange_flows, exchange_concentration) wurden aus
+// CryptoScoringInputs entfernt (keine reale Quelle) - keine Relabeling-Logik mehr noetig.
+const adjustCategoryLabelsForType = (cats: any[], _type: string) => cats;
 
 interface CryptoScoringEnterpriseProps {
   selectedSymbol: string;
@@ -413,10 +282,10 @@ export function CryptoScoringEnterprise({
   const [inputs, setInputs] = useState<CryptoScoringInputs | null>(null);
   const [customInputs, setCustomInputs] = useState<Partial<CryptoScoringInputs>>({});
   const [loading, setLoading] = useState<boolean>(true);
-  // Audit ARCH-AUDIT-0002 (AUD2-F-001): /api/crypto-scoring/:symbol liefert scoreBasis mit
-  // ('synthetic' fuer aus dem Symbol-Hash generierte Default-Eingangsgroessen), damit hier
-  // sichtbar bleibt, dass der angezeigte Score nicht marktdatenbasiert ist.
-  const [scoreBasis, setScoreBasis] = useState<'synthetic' | 'user-adjusted' | null>(null);
+  // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): /api/crypto-scoring/:symbol liefert
+  // scoreBasis mit ('market-data' fuer real-marktdatenbasierte Default-Eingangsgroessen aus
+  // der AssetRegistry, ohne vollstaendige Multi-Agenten-Analyse).
+  const [scoreBasis, setScoreBasis] = useState<'market-data' | 'user-adjusted' | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [registryAssets, setRegistryAssets] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -463,16 +332,19 @@ export function CryptoScoringEnterprise({
     if (type === 'crypto') {
       const isMeme = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'].includes(s);
       if (isMeme) {
-        // Prioritize the Specialized Meme-Coin Hype Engine
-        const fbInputs = MemeCoinScoringService.generateMemeCoinInputs(s, actualChange);
+        // Prioritize the Specialized Meme-Coin Hype Engine. Nutzt die synchrone Variante
+        // (nur Liquiditaet aus dem AssetRegistry-Snapshot, keine Historie-Faktoren) - dieser
+        // Pfad wird synchron in Listen-/Karten-Rendering aufgerufen; die vollstaendige,
+        // historienbasierte Bewertung liefert der /api/crypto-scoring/:symbol-Fetch im
+        // Haupt-Scoring-Tab (siehe useEffect weiter unten).
+        const fbInputs = MemeCoinScoringService.generateMemeCoinInputsSync(s);
         const adapted = adjustMemeInputsForTimeframe(fbInputs, timeframe);
         const result = MemeCoinScoringService.scoreMemeCoin(adapted);
         return {
           score: result.score,
           final_score: result.final_score,
-          base_score: result.base_score,
-          risk_penalty: result.risk_penalty,
-          ai_confidence_bonus: result.ai_confidence_bonus,
+          base_score: result.scores.fundamentals,
+          risk_penalty: 0,
           decision: result.decision,
           decisionName: result.decisionName,
           decisionDesc: result.decisionDesc,
@@ -481,8 +353,9 @@ export function CryptoScoringEnterprise({
           alerts: result.alerts
         };
       } else {
-        // Prioritize the Specialized Corporate Crypto Engine
-        const fbInputs = CryptoScoringService.generateCryptoInputs(s, actualChange);
+        // Prioritize the Specialized Corporate Crypto Engine. Synchrone Variante, siehe
+        // Kommentar oben bei der Meme-Coin-Engine.
+        const fbInputs = CryptoScoringService.generateCryptoInputsSync(s, actualChange);
         const adapted = adjustInputsForTimeframe(fbInputs, timeframe);
         const result = CryptoScoringService.scoreCrypto(adapted);
         return {
@@ -491,7 +364,6 @@ export function CryptoScoringEnterprise({
           base_score: result.base_score,
           risk_penalty: result.risk_penalty,
           regime_bonus: result.regime_bonus,
-          ai_confidence_bonus: result.ai_confidence_bonus,
           decision: result.decision,
           decisionName: result.decisionName,
           decisionDesc: result.decisionDesc,
@@ -1037,27 +909,28 @@ export function CryptoScoringEnterprise({
           : adjustInputsForTimeframe(data.inputs, timeframe);
         setInputs(adaptedInputs);
         setCustomInputs(adaptedInputs);
-        setScoreBasis(data.scoreBasis === 'user-adjusted' ? 'user-adjusted' : 'synthetic');
+        setScoreBasis(data.scoreBasis === 'user-adjusted' ? 'user-adjusted' : 'market-data');
         setLoading(false);
       })
-      .catch(err => {
+      .catch(async err => {
         console.error('Failed to fetch crypto scoring details:', err);
-        // Fallback local inputs generator
+        // Fallback: lokale Berechnung ueber dieselben real-datenbasierten Service-Klassen
+        // (Audit ARCH-AUDIT-0002 S1/S2/S5), nur ohne den serverseitigen Roundtrip.
         const dbAsset = CRYPTO_DATABASE.find(c => c.symbol === activeSymbol);
         const liveAsset = liveMarketData.find(a => a.symbol === activeSymbol);
         const change = liveAsset ? liveAsset.change24h : (dbAsset ? dbAsset.change24h : 2.5);
         if (isMeme) {
-          const fallback = generateMemeCoinInputs(activeSymbol, change);
+          const fallback = await MemeCoinScoringService.generateMemeCoinInputs(activeSymbol, change);
           const adaptedInputs = adjustMemeInputsForTimeframe(fallback, timeframe);
           setInputs(adaptedInputs);
           setCustomInputs(adaptedInputs);
         } else {
-          const fallback = generateCryptoInputs(activeSymbol, change);
+          const fallback = await CryptoScoringService.generateCryptoInputs(activeSymbol, change);
           const adaptedInputs = adjustInputsForTimeframe(fallback, timeframe);
           setInputs(adaptedInputs);
           setCustomInputs(adaptedInputs);
         }
-        setScoreBasis('synthetic');
+        setScoreBasis('market-data');
         setLoading(false);
       });
   }, [activeSymbol, timeframe]);
@@ -1196,7 +1069,7 @@ export function CryptoScoringEnterprise({
   const handleResetInputs = () => {
     if (inputs) {
       setCustomInputs(inputs);
-      setScoreBasis('synthetic');
+      setScoreBasis('market-data');
     }
   };
 
@@ -1204,139 +1077,76 @@ export function CryptoScoringEnterprise({
   const activeAssetType = getAssetDetails(activeSymbol).type || 'crypto';
 
   // Re-calculate the score using local logic based on custom slider overrides
-  const scoringResult = customInputs && (customInputs as any).coin 
+  const scoringResult = customInputs && (customInputs as any).coin
     ? (activeAssetType === 'crypto'
-        ? (isMemeCoin 
-            ? calculateMemeCoinScore(customInputs as MemeCoinInputs) 
-            : calculateCryptoEnterpriseScore(customInputs as CryptoScoringInputs))
+        ? (isMemeCoin
+            ? MemeCoinScoringService.scoreMemeCoin(customInputs as MemeCoinInputs)
+            : CryptoScoringService.scoreCrypto(customInputs as CryptoScoringInputs))
         : calculateUniversalScore(activeSymbol, activeAssetType, getAssetDetails(activeSymbol).change24h, customInputs))
     : null;
 
-  const originalResult = inputs 
+  const originalResult = inputs
     ? (activeAssetType === 'crypto'
-        ? (isMemeCoin 
-            ? calculateMemeCoinScore(inputs as unknown as MemeCoinInputs) 
-            : calculateCryptoEnterpriseScore(inputs)) 
+        ? (isMemeCoin
+            ? MemeCoinScoringService.scoreMemeCoin(inputs as unknown as MemeCoinInputs)
+            : CryptoScoringService.scoreCrypto(inputs))
         : calculateUniversalScore(activeSymbol, activeAssetType, getAssetDetails(activeSymbol).change24h, inputs))
     : null;
 
+  // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): von den vormals 14 Meme-Faktoren haben nur
+  // 4 eine reale Quelle (echte Kurshistorie/Volumen aus der AssetRegistry) - siehe
+  // MemeCoinInputs in types/memeCoin.ts. Die uebrigen 10 (Social-Sentiment, Narrativ,
+  // Katalysator, alle Penalty-Faktoren, KI-Konfidenz) hatten keine reale Quelle und wurden
+  // entfernt statt mit einem Zeichen-Hash weiterbetrieben zu werden.
   const memeCategories = [
     {
       id: 'meme_market',
-      title: 'Meme Market Structure (Base 40%)',
+      title: 'Reale Markt- & Kursstruktur (100%)',
       color: 'from-blue-500/20 to-indigo-500/10 border-blue-500/30 text-blue-400',
       fields: [
-        { key: 'liquidity', label: 'Liquidity Depth', desc: 'Pool thickness and slippage resistance on DEXs', weight: 15 },
-        { key: 'volume_trend', label: 'Volume Trend', desc: 'Handelsvolumen-Wachstum über die letzten 24h', weight: 10 },
-        { key: 'trend_structure', label: 'Trend Structure', desc: 'Saubere technische Aufwärtsstruktur auf Mikro-/Makro-Ebene', weight: 15 },
+        { key: 'liquidity', label: 'Liquidity Depth', desc: 'Reale Umschlagsrate aus Volumen/Marktkapitalisierung', weight: 35 },
+        { key: 'trend_structure', label: 'Trend Structure', desc: 'Kurs vs. gleitendem Durchschnitt (echte Kurshistorie, nur DOGE/SHIB)', weight: 25 },
+        { key: 'momentum', label: 'Momentum', desc: 'Rate-of-Change (echte Kurshistorie, nur DOGE/SHIB)', weight: 20 },
+        { key: 'volatility_quality', label: 'Volatility Quality', desc: 'Invertierte Volatilitaet (echte Kurshistorie, nur DOGE/SHIB)', weight: 20 },
       ]
     },
-    {
-      id: 'meme_momentum',
-      title: 'Hype & Momentum (Base 20%)',
-      color: 'from-amber-500/20 to-orange-500/10 border-amber-500/30 text-amber-400',
-      fields: [
-        { key: 'momentum', label: 'Momentum', desc: 'Extrem hohe Impulsgeschwindigkeit und RSI-Ausbruchsstärke', weight: 10 },
-        { key: 'volatility_quality', label: 'Volatility Quality', desc: 'Handelsspanne und gesunde Akkumulationswellen', weight: 10 },
-      ]
-    },
-    {
-      id: 'meme_social',
-      title: 'Social & Narrative (Base 40%)',
-      color: 'from-pink-500/20 to-rose-500/10 border-pink-500/30 text-pink-400',
-      fields: [
-        { key: 'social_sentiment', label: 'Social Sentiment', desc: 'Massiver Social-Media-Hype & Mention-Wachstum (X, Reddit, TikTok)', weight: 15 },
-        { key: 'narrative_strength', label: 'Narrative Strength', desc: 'Virale Kraft und Einzigartigkeit des Meme-Themas', weight: 10 },
-        { key: 'catalyst_strength', label: 'Catalyst Strength', desc: 'Exchange Listings, Influencer-Unterstützung oder bevorstehende Events', weight: 10 },
-      ]
-    },
-    {
-      id: 'meme_penalties',
-      title: 'Meme Risk Penalties (Reductions)',
-      color: 'from-rose-500/20 to-red-500/10 border-rose-500/30 text-rose-500',
-      fields: [
-        { key: 'spread_penalty', label: 'Spread Penalty', desc: 'Slippage-Abzug durch Bid-Ask Spreads (penalty)', weight: 20, isPenalty: true },
-        { key: 'liquidity_penalty', label: 'Liquidity Penalty', desc: 'Abzug für ungleichmäßige Liquiditätspools (penalty)', weight: 20, isPenalty: true },
-        { key: 'manipulation_penalty', label: 'Wash Trading / Manipulation Penalty', desc: 'Erkennungsrate für künstliches Handelsvolumen (penalty)', weight: 20, isPenalty: true },
-        { key: 'rugpull_penalty', label: 'Rugpull / Centralization Penalty', desc: 'Entwickler-Anteil, Contract-Sicherheit & Blacklist-Muster (penalty)', weight: 20, isPenalty: true },
-        { key: 'decay_penalty', label: 'Hype Decay Penalty', desc: 'Verfallsrate durch nachlassende virale Wellen (penalty)', weight: 20, isPenalty: true },
-      ]
-    },
-    {
-      id: 'meme_ai',
-      title: 'AI & Catalyst Confidence (Bonus)',
-      color: 'from-purple-500/20 to-fuchsia-500/10 border-purple-500/30 text-purple-400',
-      fields: [
-        { key: 'ai_confidence_bonus', label: 'AI Confidence Bonus', desc: 'Deep-Learning prognostizierte Haltezeit des Hypes', weight: 5 },
-      ]
-    }
   ];
 
-  // Categorized inputs mapping for rendering sliders beautifully
+  // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): von den vormals 23 Faktoren haben nur 9
+  // eine reale Quelle (echte Kurshistorie/Volumen/Supply aus der AssetRegistry) - siehe
+  // CryptoScoringInputs in types/crypto.ts. Die uebrigen 14 (Orderbuch, Spread, Slippage,
+  // On-Chain-Adressen/Wal-Aktivitaet, Social-/News-Metriken, Manipulations-/Rugpull-Risiko,
+  // KI-Konfidenz) hatten keine reale Quelle und wurden entfernt statt mit einem Zeichen-Hash
+  // weiterbetrieben zu werden.
   const categories = [
     {
       id: 'market',
-      title: 'Market Structure Module',
+      title: 'Technische Analyse (echte Kurshistorie)',
       color: 'from-blue-500/20 to-indigo-500/10 border-blue-500/30 text-blue-400',
       fields: [
-        { key: 'trend', label: 'Trend Quality', desc: 'EMA stacks & technically confirmed macro direction', weight: 14 },
-        { key: 'momentum', label: 'Momentum', desc: 'RSI / MACD impulse speed covered by volume', weight: 12 },
-        { key: 'volatility_quality', label: 'Volatility Quality', desc: 'Healthy expansion vs low-liquidity noise', weight: 10 },
-        { key: 'breakout_quality', label: 'Breakout Quality', desc: 'Clean level breaks vs false fakeouts', weight: 8 },
-        { key: 'relative_strength', label: 'Relative Strength', desc: 'Strength compared to BTC & Index', weight: 8 },
+        { key: 'trend', label: 'Trend Quality', desc: 'Kurs vs. gleitendem Durchschnitt im Beobachtungsfenster', weight: 20 },
+        { key: 'momentum', label: 'Momentum', desc: 'Rate-of-Change ueber das Beobachtungsfenster', weight: 16 },
+        { key: 'volatility_quality', label: 'Volatility Quality', desc: 'Invertierte Volatilitaet (niedrigere Volatilitaet = hoehere Qualitaet)', weight: 12 },
+        { key: 'breakout_quality', label: 'Breakout Quality', desc: 'Position im realen High/Low-Bereich des Fensters', weight: 10 },
+        { key: 'relative_strength', label: 'Relative Strength', desc: 'RSI (Wilder), berechnet aus echter Kurshistorie', weight: 12 },
       ]
     },
     {
       id: 'liquidity',
-      title: 'Execution & Liquidity Module',
+      title: 'Liquiditaet & Tokenomics (reale Marktdaten)',
       color: 'from-cyan-500/20 to-teal-500/10 border-cyan-500/30 text-cyan-400',
       fields: [
-        { key: 'avg_daily_volume', label: 'Daily Trading Volume', desc: 'Average spot/futures institutional volume', weight: 10 },
-        { key: 'spread', label: 'Bid-Ask Spread', desc: 'Bid-Ask narrowness (penalty factor)', weight: 8, isPenalty: true },
-        { key: 'orderbook_depth', label: 'Orderbook Depth', desc: 'Liquidity buffer size in order book +/- 2%', weight: 8 },
-        { key: 'slippage_estimate', label: 'Slippage Estimate', desc: 'Expected transaction impact cost (penalty factor)', weight: 6, isPenalty: true },
-      ]
-    },
-    {
-      id: 'onchain',
-      title: 'On-Chain Activity Module',
-      color: 'from-emerald-500/20 to-green-500/10 border-emerald-500/30 text-emerald-400',
-      fields: [
-        { key: 'active_addresses', label: 'Active Addresses', desc: 'Daily active addresses growth rate', weight: 5 },
-        { key: 'exchange_flows', label: 'Exchange Flows', desc: 'Outflows (bullish) vs inflows (bearish)', weight: 5 },
-        { key: 'whale_activity', label: 'Whale Accumulation', desc: 'Large wallet addresses accumulation rate', weight: 5 },
-        { key: 'supply_dynamics', label: 'Supply Dynamics', desc: 'Deflationary burning or lockups', weight: 4 },
-      ]
-    },
-    {
-      id: 'sentiment',
-      title: 'Sentiment & Narrative',
-      color: 'from-amber-500/20 to-orange-500/10 border-amber-500/30 text-amber-400',
-      fields: [
-        { key: 'social_velocity', label: 'Social Velocity', desc: 'Social mentions acceleration speed', weight: 6 },
-        { key: 'narrative_strength', label: 'Narrative Strength', desc: 'Macro market narrative index fit (AI/L2/RWA)', weight: 5 },
-        { key: 'news_momentum', label: 'News Momentum', desc: 'Positive sentiment ratio in media articles', weight: 5 },
-        { key: 'community_engagement', label: 'Community Engagement', desc: 'Discord, Telegram, X growth/retention', weight: 4 },
-      ]
-    },
-    {
-      id: 'risk',
-      title: 'Enterprise Risk & Compliance Module',
-      color: 'from-rose-500/20 to-pink-500/10 border-rose-500/30 text-rose-400',
-      fields: [
-        { key: 'manipulation_risk', label: 'Wash-Trading Risk', desc: 'Unusual exchange volumes or spikes (penalty)', weight: 5, isPenalty: true },
-        { key: 'exchange_concentration', label: 'Exchange Concentration', desc: 'Over-reliance on centralized platforms (penalty)', weight: 4, isPenalty: true },
-        { key: 'rugpull_risk', label: 'Smart Contract / Rugpull Risk', desc: 'Vulnerabilities or centralization of code (penalty)', weight: 3, isPenalty: true },
-        { key: 'data_quality_risk', label: 'Data Gaps Risk', desc: 'Signal missing or corrupted historical datasets (penalty)', weight: 2, isPenalty: true },
+        { key: 'avg_daily_volume', label: 'Daily Trading Volume', desc: 'Reale Umschlagsrate aus Volumen/Marktkapitalisierung', weight: 12 },
+        { key: 'supply_dynamics', label: 'Supply Dynamics', desc: 'Zirkulierendes vs. maximales Angebot (reale Supply-Daten)', weight: 8 },
       ]
     },
     {
       id: 'regime',
-      title: 'Regime & AI Confidence',
+      title: 'Regime & Datenqualitaet',
       color: 'from-purple-500/20 to-fuchsia-500/10 border-purple-500/30 text-purple-400',
       fields: [
-        { key: 'ai_confidence', label: 'AI Model Confidence', desc: 'Dynamic deep model trust quotient', weight: 2 },
-        { key: 'regime_bonus', label: 'Regime Context Bonus', desc: 'Bullish vs bearish market structure bonus', weight: 6 },
+        { key: 'regime_bonus', label: 'Regime Context Bonus', desc: 'Reale 24h-Preisaenderung', weight: 6 },
+        { key: 'data_quality_risk', label: 'Data Gaps Risk', desc: 'Nur belegt, wenn eine reale Kurshistorie vorlag (penalty)', weight: 4, isPenalty: true },
       ]
     }
   ];
@@ -1703,17 +1513,19 @@ export function CryptoScoringEnterprise({
           {/* TAB 1: Live Score-Audit */}
           {activeTab === 'scoring' && scoringResult && (
             <>
-            {/* No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md, AUD2-F-001): Die
-                Eingangsgroessen dieses Scores stammen aus einem deterministischen
-                Zeichen-Hash-Generator, nicht aus Marktdaten. */}
-            {scoreBasis === 'synthetic' && (
-              <div className="mb-6 bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3">
-                <ShieldAlert className="text-amber-400 w-5 h-5 shrink-0 mt-0.5" />
+            {/* No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md, AUD2-F-001, S1/S2/S5): Die
+                Eingangsgroessen dieses Scores stammen aus realen Marktdaten der AssetRegistry
+                (Marktkapitalisierung/Volumen/Supply/Kurshistorie), enthalten aber keine
+                vollstaendige Multi-Agenten-Analyse (On-Chain/Social/Risiko). */}
+            {scoreBasis === 'market-data' && (
+              <div className="mb-6 bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4 flex items-start gap-3">
+                <Info className="text-cyan-400 w-5 h-5 shrink-0 mt-0.5" />
                 <p className="text-xs text-white/70 leading-relaxed">
-                  <span className="font-bold text-amber-400 uppercase tracking-widest">Nicht marktdatenbasiert</span> — die
-                  Eingangsgrößen dieser Bewertung wurden algorithmisch aus dem Tickersymbol abgeleitet, nicht aus
-                  realen Markt-, Fundamental- oder On-Chain-Daten. Dieser Score ist{' '}
-                  <span className="font-bold">nicht als Grundlage für Anlageentscheidungen geeignet</span>.
+                  <span className="font-bold text-cyan-400 uppercase tracking-widest">Marktdatenbasiert, keine vollständige Analyse</span> — die
+                  Eingangsgrößen dieser Bewertung stammen aus realen Marktdaten (Marktkapitalisierung, Volumen, Supply,
+                  Kurshistorie), enthalten aber keine Multi-Agenten-Analyse (On-Chain/Social/Risiko-Agenten). Faktoren
+                  ohne reale Quelle für dieses Symbol sind aus der Gewichtung ausgeschlossen. Dieser Score ist{' '}
+                  <span className="font-bold">nicht als alleinige Grundlage für Anlageentscheidungen geeignet</span>.
                 </p>
               </div>
             )}
@@ -1780,35 +1592,27 @@ export function CryptoScoringEnterprise({
                     {isMemeCoin ? (
                       <>
                         <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">Base Score (+)</span>
-                          <span className="font-mono text-emerald-400 font-bold">+{scoringResult.base_score}</span>
+                          <span className="text-white/60">Reale Liquiditäts-/Trendstärke</span>
+                          <span className="font-mono text-emerald-400 font-bold">{(scoringResult as any).scores?.fundamentals ?? scoringResult.final_score}</span>
                         </div>
                         <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">Meme Risk Penalty (-)</span>
-                          <span className="font-mono text-rose-400 font-bold">-{scoringResult.risk_penalty}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">AI Hype Confidence Bonus (+)</span>
-                          <span className="font-mono text-purple-400 font-bold">+{scoringResult.ai_confidence_bonus}</span>
+                          <span className="text-white/60">Manipulations-/Rugpull-Risiko</span>
+                          <span className="font-mono text-amber-400 font-bold">Unbekannt (kein realer Risikofaktor)</span>
                         </div>
                       </>
                     ) : (
                       <>
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-white/60">Base Score (+)</span>
-                          <span className="font-mono text-emerald-400 font-bold">+{scoringResult.base_score}</span>
+                          <span className="font-mono text-emerald-400 font-bold">+{(scoringResult as any).base_score}</span>
                         </div>
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-white/60">Risk Penalty (-)</span>
-                          <span className="font-mono text-rose-400 font-bold">-{scoringResult.risk_penalty}</span>
+                          <span className="font-mono text-rose-400 font-bold">-{(scoringResult as any).risk_penalty}</span>
                         </div>
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-white/60">Regime Bonus (+)</span>
                           <span className="font-mono text-purple-400 font-bold">+{(scoringResult as any).regime_bonus}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-white/60">AI Confidence Bonus</span>
-                          <span className="font-mono text-blue-400 font-bold">+{scoringResult.ai_confidence_bonus}</span>
                         </div>
                       </>
                     )}
@@ -2139,12 +1943,12 @@ export function CryptoScoringEnterprise({
                     <p>COIN UNDER SCAN: {activeSymbol}</p>
                     <p>DECISION CLASS: {scoringResult.decisionName.toUpperCase()} ({scoringResult.decisionDesc})</p>
                     <p>FINAL SCORE: {scoringResult.final_score} / 100</p>
-                    <p>BASE SCORE (POS): {scoringResult.base_score}</p>
-                    <p>RISK PENALTY (NEG): {scoringResult.risk_penalty}</p>
-                    <p>REGIME BONUS: {(scoringResult as any).regime_bonus}</p>
+                    <p>BASE SCORE (POS): {(scoringResult as any).base_score ?? (scoringResult as any).scores?.fundamentals}</p>
+                    <p>RISK PENALTY (NEG): {(scoringResult as any).risk_penalty ?? 'Unbekannt (kein realer Risikofaktor)'}</p>
+                    <p>REGIME BONUS: {(scoringResult as any).regime_bonus ?? 'n/a'}</p>
                     <p className="text-zinc-600">------------------------------------</p>
                     <p>TIMEFRAME LEVEL: {timeframe.toUpperCase()}</p>
-                    <p>DATA INTEGRITY LEVEL: 100% COMPLETE</p>
+                    <p>DATA INTEGRITY LEVEL: {(scoringResult as any).data_quality?.level ? (scoringResult as any).data_quality.level.toUpperCase() : 'UNBEKANNT'}</p>
                     <p>COMPLIANCE CLASSIFICATION: VERIFIED</p>
                   </div>
                 </div>
