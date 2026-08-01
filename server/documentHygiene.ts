@@ -13,6 +13,7 @@ import {
 } from './documentSanitizer';
 import { checkAdminAccess } from './iam/authMiddleware';
 import { ADMIN_ZONE_ROLES } from './iam/types';
+import { trackedGenerateContent } from '../src/services/aiUsageTracker';
 
 export const hygieneRouter = express.Router();
 
@@ -326,7 +327,7 @@ Analysiere die Änderungen semantisch und liefere eine JSON-Antwort mit exakt fo
    - Nutze "propagate_dependencies" wenn die Änderung andere Dokumente beeinflussen könnte (die davon abhängen).
    - Nutze "manual_review" wenn Risiken, Widersprüche oder unklare Sachverhalte vorliegen.`;
 
-    const response = await ai.models.generateContent({
+    const response = await trackedGenerateContent(ai, {
       model: 'gemini-3.5-flash',
       contents: prompt,
       config: {
@@ -354,7 +355,7 @@ Analysiere die Änderungen semantisch und liefere eine JSON-Antwort mit exakt fo
           required: ['classification', 'confidence', 'reason', 'suggestedAction'],
         },
       },
-    });
+    }, { promptId: 'document-hygiene-change-classification' });
 
     const result = JSON.parse(response.text || '{}');
     return {
@@ -396,10 +397,10 @@ ${dependentContent}
 
 Bitte generiere den VOLLSTÄNDIGEN neuen Inhalt für das abhängige Dokument (${dependentFilePath}), der die oben stehenden Änderungen perfekt und fehlerfrei integriert. Behalte das ursprüngliche Format, Struktur und Metadaten (wie @depends on ...) bei. Gib ausschließlich den reinen, aktualisierten Dokumenteninhalt zurück (kein Markdown-Wrapping mit \`\`\`md oder Erklärungen).`;
 
-    const response = await ai.models.generateContent({
+    const response = await trackedGenerateContent(ai, {
       model: 'gemini-3.5-flash',
       contents: prompt,
-    });
+    }, { promptId: 'document-hygiene-propagation' });
 
     let text = response.text || dependentContent;
     // Strip potential markdown blocks if AI ignored instructions

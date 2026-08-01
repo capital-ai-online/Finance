@@ -4,6 +4,7 @@
  */
 
 import { GoogleGenAI, Type } from '@google/genai';
+import { trackedGenerateContent } from '../services/aiUsageTracker';
 
 export interface CryptoRiskAssessment {
   manipulation_index: number;       // 0.0 to 1.0 (Higher is higher risk)
@@ -25,7 +26,7 @@ export class CryptoRiskAgent {
     }
 
     try {
-      const response = await this.ai.models.generateContent({
+      const response = await trackedGenerateContent(this.ai, {
         model: 'gemini-2.5-flash',
         contents: `Analysiere die Risikoprofile für: "${coin}".
 Bestimme das geschätzte Manipulationsrisiko (Wash Trading), die Handelsplatzkonzentration und regulatorische Risiken.
@@ -46,7 +47,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
             required: ['manipulation_index', 'exchange_concentration_index', 'regulatory_risk_index', 'explanation']
           }
         }
-      });
+      }, { promptId: 'crypto-risk' });
 
       const data = JSON.parse(response.text || '{}');
       return {

@@ -5,6 +5,7 @@
 
 import { GoogleGenAI, Type } from '@google/genai';
 import { findRawMaterialConfig } from '../config/rawMaterialsConfig';
+import { trackedGenerateContent } from '../services/aiUsageTracker';
 
 export interface RiskAnalysis {
   geopolitical_risk: number;
@@ -32,7 +33,7 @@ export class RiskAgent {
 
     try {
       try {
-        const response = await this.ai.models.generateContent({
+        const response = await trackedGenerateContent(this.ai, {
           model: 'gemini-3.1-pro-preview',
           contents: `Bewerte das geopolitische und Lieferkettenrisiko für: "${name}".
 Schätze folgende Metriken auf einer Skala von 0 bis 100 ein (100 = extrem hohes Risiko, 0 = absolut risikofrei):
@@ -62,7 +63,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
               required: ['geopolitical_risk', 'supply_chain_risk', 'regulatory_risk', 'esg_risk', 'producer_concentration', 'volatility', 'explanation']
             }
           }
-        });
+        }, { promptId: 'raw-materials-risk' });
 
         const data = JSON.parse(response.text || '{}');
         return {
@@ -76,7 +77,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
         };
       } catch (e) {
         console.warn(`[RiskAgent] Premium model 'gemini-3.1-pro-preview' failed or is rate-limited. Retrying with 'gemini-3.5-flash' fallback.`, e);
-        const response = await this.ai.models.generateContent({
+        const response = await trackedGenerateContent(this.ai, {
           model: 'gemini-3.5-flash',
           contents: `Bewerte das geopolitische und Lieferkettenrisiko für: "${name}".
 Schätze folgende Metriken auf einer Skala von 0 bis 100 ein (100 = extrem hohes Risiko, 0 = absolut risikofrei):
@@ -106,7 +107,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
               required: ['geopolitical_risk', 'supply_chain_risk', 'regulatory_risk', 'esg_risk', 'producer_concentration', 'volatility', 'explanation']
             }
           }
-        });
+        }, { promptId: 'raw-materials-risk' });
 
         const data = JSON.parse(response.text || '{}');
         return {

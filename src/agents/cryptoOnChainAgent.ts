@@ -4,6 +4,7 @@
  */
 
 import { GoogleGenAI, Type } from '@google/genai';
+import { trackedGenerateContent } from '../services/aiUsageTracker';
 
 export interface CryptoOnChainMetrics {
   active_addresses_growth: number; // 0.0 to 1.0
@@ -25,7 +26,7 @@ export class CryptoOnChainAgent {
     }
 
     try {
-      const response = await this.ai.models.generateContent({
+      const response = await trackedGenerateContent(this.ai, {
         model: 'gemini-2.5-flash',
         contents: `Analysiere die hypothetischen On-Chain-Metriken für die Kryptowährung: "${coin}".
 Schätze das Wachstum aktiver Adressen, die Transaktionsgeschwindigkeit und die Akkumulation von Walen (Smart Money).
@@ -46,7 +47,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
             required: ['active_addresses_growth', 'transaction_velocity', 'whale_accumulation', 'explanation']
           }
         }
-      });
+      }, { promptId: 'crypto-onchain' });
 
       const data = JSON.parse(response.text || '{}');
       return {

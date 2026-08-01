@@ -4,6 +4,7 @@
  */
 
 import { GoogleGenAI, Type } from '@google/genai';
+import { trackedGenerateContent } from '../services/aiUsageTracker';
 
 export interface CryptoClassification {
   category: string; // e.g. L1, L2, DeFi, Oracle, Payment, Web3
@@ -27,7 +28,7 @@ export class CryptoClassificationAgent {
     }
 
     try {
-      const response = await this.ai.models.generateContent({
+      const response = await trackedGenerateContent(this.ai, {
         model: 'gemini-2.5-flash',
         contents: `Analysiere und klassifiziere die folgende Kryptowährung: "${coin}".
 Bestimme die Kategorie (z.B. L1, L2, DeFi, Oracle, Payment, Web3, Meme), das Sub-Tier (z.B. Core Layer, Scaling), die Marktstruktur (z.B. High Liquidity) und die Ausrichtung des Hauptnarrativs (z.B. Digital Gold, AI Integration).
@@ -53,7 +54,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
             required: ['category', 'sub_tier', 'market_structure', 'narrative_alignment', 'confidence', 'reasoning']
           }
         }
-      });
+      }, { promptId: 'crypto-classification' });
 
       const data = JSON.parse(response.text || '{}');
       return {

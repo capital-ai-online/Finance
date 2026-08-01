@@ -6,6 +6,7 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { RawMaterialInput } from '../types/rawMaterials';
 import { findRawMaterialConfig } from '../config/rawMaterialsConfig';
+import { trackedGenerateContent } from '../services/aiUsageTracker';
 
 export interface FundamentalsAnalysis {
   ore_grade: number;
@@ -32,7 +33,7 @@ export class FundamentalsAgent {
 
     try {
       try {
-        const response = await this.ai.models.generateContent({
+        const response = await trackedGenerateContent(this.ai, {
           model: 'gemini-3.1-pro-preview',
           contents: `Analysiere die geologischen und physischen Fundamentaldaten für: "${name}".
 Schätze folgende Metriken auf einer Skala von 0 bis 100 ein:
@@ -60,7 +61,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
               required: ['ore_grade', 'tonnage', 'tonnage_reserve', 'substitution_potential', 'recyclability', 'explanation']
             }
           }
-        });
+        }, { promptId: 'raw-materials-fundamentals' });
 
         const data = JSON.parse(response.text || '{}');
         return {
@@ -73,7 +74,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
         };
       } catch (e) {
         console.warn(`[FundamentalsAgent] Premium model 'gemini-3.1-pro-preview' failed or is rate-limited. Retrying with 'gemini-3.5-flash' fallback.`, e);
-        const response = await this.ai.models.generateContent({
+        const response = await trackedGenerateContent(this.ai, {
           model: 'gemini-3.5-flash',
           contents: `Analysiere die geologischen und physischen Fundamentaldaten für: "${name}".
 Schätze folgende Metriken auf einer Skala von 0 bis 100 ein:
@@ -101,7 +102,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
               required: ['ore_grade', 'tonnage', 'tonnage_reserve', 'substitution_potential', 'recyclability', 'explanation']
             }
           }
-        });
+        }, { promptId: 'raw-materials-fundamentals' });
 
         const data = JSON.parse(response.text || '{}');
         return {

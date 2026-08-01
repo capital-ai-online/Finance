@@ -4,6 +4,7 @@
  */
 
 import { GoogleGenAI, Type } from '@google/genai';
+import { trackedGenerateContent } from '../services/aiUsageTracker';
 
 export interface CryptoSentimentMetrics {
   social_velocity: number;      // 0.0 to 1.0
@@ -25,7 +26,7 @@ export class CryptoSentimentAgent {
     }
 
     try {
-      const response = await this.ai.models.generateContent({
+      const response = await trackedGenerateContent(this.ai, {
         model: 'gemini-2.5-flash',
         contents: `Analysiere die Marktstimmung und virale Dynamik für: "${coin}".
 Schätze die Social-Media-Geschwindigkeit, die fundamentale Narrativstärke und das Momentum aktueller Nachrichtenmeldungen ein.
@@ -46,7 +47,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
             required: ['social_velocity', 'narrative_strength', 'news_momentum', 'explanation']
           }
         }
-      });
+      }, { promptId: 'crypto-sentiment' });
 
       const data = JSON.parse(response.text || '{}');
       return {

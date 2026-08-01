@@ -3,7 +3,9 @@ import multer from 'multer';
 import fs from 'fs';
 import { GoogleGenAI } from '@google/genai';
 import { orchestrator } from '../src/lib/requestOrchestrator';
-import { resolveVerifiedIdentity } from './iam/authMiddleware';
+import { resolveVerifiedIdentity, checkAdminAccess } from './iam/authMiddleware';
+import { ADMIN_ZONE_ROLES } from './iam/types';
+import { trackedGenerateContent, getUsageSummary, getUsageLedger, PROMPT_REGISTRY } from '../src/services/aiUsageTracker';
 
 export const aiRouter = express.Router();
 
@@ -55,13 +57,13 @@ aiRouter.post('/chat', orchestrator.handle('Gemini Chat'), async (req, res) => {
     
     contents.push({ role: 'user', parts: [{ text: message }] });
 
-    const response = await ai.models.generateContent({
+    const response = await trackedGenerateContent(ai, {
       model: 'gemini-3.1-pro-preview',
       contents,
       config: {
         systemInstruction: "You are the CAPITAL-AI Assistant, a highly professional, technically precise expert partner in quantitative finance, Graham value investing, and market analysis. Use a professional, accessible tone. Do not use unnecessary jargon. Prioritize clarity and data-driven insights. Remember the user is using CAPITAL-AI v0.5.5 Enterprise Architecture."
       }
-    });
+    }, { promptId: 'chat-assistant', requestId: req.requestId });
 
     res.json({ reply: response.text });
   } catch (error: any) {
@@ -109,7 +111,7 @@ aiRouter.post(
     const ai = getGeminiInstance();
     const base64Data = fs.readFileSync(file.path, { encoding: 'base64' });
 
-    const response = await ai.models.generateContent({
+    const response = await trackedGenerateContent(ai, {
       model: 'gemini-3.1-pro-preview',
       contents: [
         {
@@ -125,7 +127,7 @@ aiRouter.post(
           ]
         }
       ]
-    });
+    }, { promptId: 'image-analysis', requestId: req.requestId });
 
     // Cleanup uploaded file asynchronously
     fs.unlink(file.path, () => {});
@@ -145,4 +147,18 @@ aiRouter.post(
     console.log("[System Info] Image analysis finished with warning");
     res.status(500).json({ error: "Dienst vorübergehend nicht verfügbar." });
   }
+});
+
+// 3. AI Usage Dashboard (Audit ARCH-AUDIT-0002, N2: Prompt-Registry und Token-/
+// Kostenerfassung). Admin-only, analog zum Muster in server/compliance/router.ts.
+aiRouter.get('/usage', async (req, res) => {
+  const authz = await checkAdminAccess(req, 'ai:usage', ADMIN_ZONE_ROLES);
+  if (!authz.authorized) {
+    return res.status(403).json({ error: 'Zugriff verweigert.', reason: authz.reason });
+  }
+  res.json({
+    summary: getUsageSummary(),
+    ledger: getUsageLedger(),
+    promptRegistry: PROMPT_REGISTRY,
+  });
 });

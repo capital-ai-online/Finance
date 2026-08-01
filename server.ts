@@ -15,6 +15,7 @@ import { RawMaterialsScoringService } from './src/services/rawMaterialsScoring';
 import { createCryptoRouter } from './src/routes/cryptoRoutes';
 import { ClassificationService } from './src/services/classification.service';
 import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './src/services/scoring.service';
+import { trackedGenerateContent } from './src/services/aiUsageTracker';
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
@@ -1604,14 +1605,14 @@ app.get('/api/market-sentiment', orchestrator.handle('Market Sentiment'), async 
     
     Antworte AUSSCHLIESSLICH mit diesem JSON-Objekt. Verwende kein Markdown-Code-Highlighting wie \`\`\`json.`;
 
-    const response = await ai.models.generateContent({
+    const response = await trackedGenerateContent(ai, {
       model: 'gemini-3.5-flash',
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: "application/json"
       }
-    });
+    }, { promptId: 'server-market-sentiment', requestId: req.requestId });
 
     const text = response.text || '';
     let parsedData;
@@ -1774,13 +1775,13 @@ app.post('/api/market-sentiment/simulate-shock', express.json(), orchestrator.ha
   
   Antworte AUSSCHLIESSLICH mit diesem JSON-Objekt. Verwende kein Markdown-Code-Highlighting wie \`\`\`json.`;
 
-    const response = await ai.models.generateContent({
+    const response = await trackedGenerateContent(ai, {
       model: 'gemini-3.5-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json"
       }
-    });
+    }, { promptId: 'server-market-sentiment-shock', requestId: req.requestId });
 
     const text = response.text || '';
     let parsedData;
@@ -1853,13 +1854,13 @@ app.post('/api/portfolio-review', express.json(), orchestrator.handle('Portfolio
     
     Antworte AUSSCHLIESSLICH mit diesem JSON-Objekt. Verwende kein Markdown-Code-Highlighting wie \`\`\`json.`;
 
-    const response = await ai.models.generateContent({
+    const response = await trackedGenerateContent(ai, {
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: "application/json"
       }
-    });
+    }, { promptId: 'server-portfolio-review', requestId: req.requestId });
 
     const text = response.text || '';
     let parsedData;

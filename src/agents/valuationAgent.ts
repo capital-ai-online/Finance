@@ -5,6 +5,7 @@
 
 import { GoogleGenAI, Type } from '@google/genai';
 import { findRawMaterialConfig } from '../config/rawMaterialsConfig';
+import { trackedGenerateContent } from '../services/aiUsageTracker';
 
 export interface StrategicAnalysis {
   military_importance: number;
@@ -28,7 +29,7 @@ export class ValuationAgent {
 
     try {
       try {
-        const response = await this.ai.models.generateContent({
+        const response = await trackedGenerateContent(this.ai, {
           model: 'gemini-3.1-pro-preview',
           contents: `Bewerte die strategische Bedeutung für: "${name}".
 Schätze folgende Metriken auf einer Skala von 0 bis 100 ein (100 = extrem hoch/unverzichtbar, 0 = irrelevant):
@@ -50,7 +51,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
               required: ['military_importance', 'industrial_importance', 'explanation']
             }
           }
-        });
+        }, { promptId: 'raw-materials-valuation' });
 
         const data = JSON.parse(response.text || '{}');
         return {
@@ -60,7 +61,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
         };
       } catch (e) {
         console.warn(`[ValuationAgent] Premium model 'gemini-3.1-pro-preview' failed or is rate-limited. Retrying with 'gemini-3.5-flash' fallback.`, e);
-        const response = await this.ai.models.generateContent({
+        const response = await trackedGenerateContent(this.ai, {
           model: 'gemini-3.5-flash',
           contents: `Bewerte die strategische Bedeutung für: "${name}".
 Schätze folgende Metriken auf einer Skala von 0 bis 100 ein (100 = extrem hoch/unverzichtbar, 0 = irrelevant):
@@ -82,7 +83,7 @@ Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema e
               required: ['military_importance', 'industrial_importance', 'explanation']
             }
           }
-        });
+        }, { promptId: 'raw-materials-valuation' });
 
         const data = JSON.parse(response.text || '{}');
         return {
