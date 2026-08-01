@@ -43,6 +43,7 @@ import { enforceScreeningQuota } from './server/quota';
 import { complianceRouter } from './server/compliance/router';
 import { checkRateLimit, getClientIp } from './server/iam/rateLimiter';
 import { createLogger, requestContext } from './server/logger';
+import { metricsMiddleware, renderMetrics } from './server/metrics';
 
 const serverLogger = createLogger('server');
 
@@ -55,6 +56,10 @@ const PORT = 3000;
 // zu, damit nachfolgende Logs (CORS-Block, Rate-Limit, IAM-Pruefung, Route-Handler,
 // Fehlerbehandlung) demselben Request zugeordnet werden koennen.
 app.use(requestContext);
+// Audit ARCH-AUDIT-0002 (H6): zeichnet Request-Zaehler/-Fehler/-Latenz fuer /metrics auf
+// (Prometheus-Exposition-Format, siehe server/metrics.ts). Frueh montiert, damit auch von
+// spaeteren Middlewares/Routen abgelehnte Requests (CORS-Block, Rate-Limit) erfasst werden.
+app.use(metricsMiddleware);
 
 // ---------------------------------------------------------
 // Compliance-Review Punkt 1: Prozessweites Sicherheitsnetz gegen unbehandelte
@@ -307,6 +312,25 @@ app.get('/healthz', (req, res) => {
       gemini: isGeminiConfigured(),
     },
   });
+});
+
+// Audit ARCH-AUDIT-0002 (H6): Prometheus-Exposition-Format, siehe server/metrics.ts.
+// Bewusst NICHT ueber checkAdminAccess/Supabase geschuetzt - Metrics-Scraper koennen in der
+// Regel keinen interaktiven Login durchfuehren, und die Metrik-Erfassung soll auch dann
+// funktionieren, wenn Supabase nicht erreichbar ist (das ist selbst ein moeglicher
+// Beobachtungsfall). Stattdessen ein statisches Token (METRICS_TOKEN) - fail-closed: ohne
+// gesetztes Token ist der Endpunkt gesperrt, kein Fallback auf "offen".
+app.get('/metrics', (req, res) => {
+  const expectedToken = getCleanEnv('METRICS_TOKEN');
+  if (!expectedToken) {
+    return res.status(403).json({ error: 'METRICS_TOKEN nicht konfiguriert - /metrics ist deaktiviert.' });
+  }
+  const providedToken = req.headers['x-metrics-token'];
+  if (providedToken !== expectedToken) {
+    return res.status(403).json({ error: 'Zugriff verweigert.' });
+  }
+  res.setHeader('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+  res.send(renderMetrics());
 });
 
 // Mount Modular Router Sub-systems
