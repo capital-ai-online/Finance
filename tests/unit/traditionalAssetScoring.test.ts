@@ -17,6 +17,7 @@ import {
   scoreDividend,
   scoreQuality,
   generateTraditionalAssetInputs,
+  generateTraditionalAssetInputsFromCloses,
   TraditionalAssetScoringService,
   STOCK_SCORING_WEIGHTS,
   FX_SCORING_WEIGHTS,
@@ -144,5 +145,31 @@ describe('traditionalAssetScoring', () => {
     const fxSum = Object.values(FX_SCORING_WEIGHTS).reduce((a, b) => a + b, 0);
     expect(stockSum).toBeCloseTo(1.0, 5);
     expect(fxSum).toBeCloseTo(1.0, 5);
+  });
+
+  // Audit ARCH-AUDIT-0002 (J1-Folge): Indizes ueber FMP (server/fmpIndices.ts) - andere
+  // Historienquelle als assetRegistry.getHistory(), daher eigener Eingangspfad.
+  describe('generateTraditionalAssetInputsFromCloses (Indizes, FMP-Quelle)', () => {
+    it('berechnet technische Faktoren aus einer direkt uebergebenen Schlusskursreihe', () => {
+      const closes = Array.from({ length: 30 }, (_, i) => 7000 + i * 5); // stetiger Anstieg
+      const inputs = generateTraditionalAssetInputsFromCloses('GSPC', 'index', closes);
+      expect(inputs.symbol).toBe('GSPC');
+      expect(inputs.assetType).toBe('index');
+      expect(inputs.trend).toBeDefined();
+      expect(inputs.momentum!).toBeGreaterThan(0.5);
+    });
+
+    it('laesst Faktoren undefined, wenn zu wenige Kurse uebergeben werden', () => {
+      const inputs = generateTraditionalAssetInputsFromCloses('GSPC', 'index', [7000]);
+      expect(inputs.trend).toBeUndefined();
+    });
+
+    it('scoreTraditionalAsset() nutzt fuer Indizes dieselben FX_SCORING_WEIGHTS (keine Fundamentaldaten)', () => {
+      const closes = Array.from({ length: 30 }, (_, i) => 7000 + i * 5);
+      const inputs = generateTraditionalAssetInputsFromCloses('GSPC', 'index', closes);
+      const result = TraditionalAssetScoringService.scoreTraditionalAsset(inputs);
+      expect(result.missingFactors).not.toEqual(expect.arrayContaining(['value', 'dividend', 'quality']));
+      expect(result.score).toBeGreaterThan(0);
+    });
   });
 });

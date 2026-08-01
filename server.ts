@@ -18,8 +18,9 @@ import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './
 import { trackedGenerateContent } from './src/services/aiUsageTracker';
 import { scoreValidationRouter, recordDailySnapshots } from './server/scoreValidation';
 import { alertsRouter, evaluateAlerts } from './server/alerts';
-import { generateTraditionalAssetInputs, TraditionalAssetScoringService } from './src/services/traditionalAssetScoring';
+import { generateTraditionalAssetInputs, generateTraditionalAssetInputsFromCloses, TraditionalAssetScoringService } from './src/services/traditionalAssetScoring';
 import { ensureFundamentalsFresh, getCachedFundamentals } from './server/stockFundamentals';
+import { INDEX_FMP_TICKERS, ensureIndexQuoteFresh, getCachedIndexQuote, ensureIndexHistoryFresh, getCachedIndexHistory } from './server/fmpIndices';
 import { supervisorRouter } from './server/supervisorRouter';
 import { executeSupervised } from './src/platform/Supervisor/supervisor';
 import { newsRouter } from './src/features/news/newsRoutes';
@@ -405,8 +406,18 @@ function getAssetPatternForSymbol(symbol: string): string {
 }
 
 async function computeDisplayTrendLabel(symbol: string): Promise<string | undefined> {
+  const s = symbol.toUpperCase().trim();
   try {
-    const history = await assetRegistry.getHistory(symbol, 30);
+    // Audit ARCH-AUDIT-0002 (J1-Folge): Indizes haben keine Historie in assetRegistry
+    // (das wuerde einen FMP-API-Key im client-gebuendelten assetRegistry.ts erfordern),
+    // sondern im serverseitigen FMP-Cache (server/fmpIndices.ts).
+    if (INDEX_FMP_TICKERS[s]) {
+      const points = getCachedIndexHistory(s);
+      if (!points || points.length < 2) return undefined;
+      const stats = computeReturnStats(points.map(p => p.close));
+      return stats ? classifyTrendLabel(stats) : undefined;
+    }
+    const history = await assetRegistry.getHistory(s, 30);
     if (history.source !== 'live') return undefined;
     const stats = computeReturnStats(history.points.map(p => p.close));
     if (!stats) return undefined;
@@ -447,10 +458,13 @@ function getApplicationAreaForSymbol(symbol: string, type: string): string {
 //   (KGV/Dividendenrendite/Nettomarge von Alpha Vantage OVERVIEW, server/stockFundamentals.ts).
 //   Faellt fuer ein konkretes Symbol ohne jede reale Datenquelle auf die Heuristik zurueck
 //   (dann basis='heuristic', siehe calculateAssetScore()).
-// - 'heuristic': Indizes, Anleihen (keine Live-Kursquelle vorhanden) sowie Aktien/Forex im
-//   seltenen Fall ohne jede reale Datenquelle - eine Momentum-/Pattern-Heuristik auf Basis von
-//   change24h und einer ebenfalls deterministischen Mustererkennung (calculateAssetScore
-//   unterer Zweig).
+// - 'market-data' (Indizes, seit J1-Folge): dieselbe technische Bewertung wie Forex (keine
+//   Unternehmensbilanz), aus echter Kurshistorie von FMP (server/fmpIndices.ts, Rate-Limit-
+//   bewusst schrittweise befuellt) statt der zuvor vollstaendig fehlenden Live-Kursquelle.
+// - 'heuristic': Anleihen (keine Live-Kursquelle vorhanden) sowie Aktien/Forex/Indizes im
+//   Fall ohne (noch) verfuegbare reale Datenquelle - eine Momentum-/Pattern-Heuristik auf
+//   Basis von change24h und einer ebenfalls deterministischen Mustererkennung
+//   (calculateAssetScore unterer Zweig).
 // - undefined: Rohstoffe (RawMaterialsScoringService) haben eine dedizierte, konfigurierbare
 //   Fachengine und sind von diesem Befund nicht betroffen.
 const MEME_COIN_SYMBOLS = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'];
@@ -502,8 +516,8 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
   }
 
   // Audit ARCH-AUDIT-0002 (H1): echte technische (+ bei Aktien fundamentale) Bewertungslogik,
-  // ersetzt die Hash-Pattern-Heuristik unten fuer genau diese beiden Anlageklassen (Indizes/
-  // Anleihen bleiben auf der Heuristik - es existiert fuer sie aktuell keine Live-Kursquelle).
+  // ersetzt die Hash-Pattern-Heuristik unten fuer diese Anlageklassen (Anleihen bleiben auf
+  // der Heuristik - es existiert fuer sie aktuell keine Live-Kursquelle).
   if (type === 'stock' || type === 'forex') {
     try {
       let fundamentals: { peRatio?: number; dividendYieldPct?: number; profitMarginPct?: number } | undefined;
@@ -521,6 +535,26 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
       // korrekt 'heuristic', TROTZ Anlagetyp stock/forex.
     } catch (err: any) {
       console.warn(`[TraditionalAssetScoring Fallback] Failed for ${s}, using momentum fallback:`, err?.message || err);
+    }
+  }
+
+  // Audit ARCH-AUDIT-0002 (J1-Folge): echte technische Bewertung fuer Indizes ueber FMP
+  // (server/fmpIndices.ts) - rein technisch wie Forex (keine Unternehmensbilanz). Faellt auf
+  // die Heuristik zurueck, solange der FMP-Historie-Cache fuer dieses Symbol noch nicht
+  // gefuellt ist (Rate-Limit-bewusstes, schrittweises Befuellen, siehe fetchLiveMarketData()).
+  if (type === 'index' && INDEX_FMP_TICKERS[s]) {
+    try {
+      ensureIndexHistoryFresh(s).catch(() => {});
+      const points = getCachedIndexHistory(s);
+      if (points && points.length >= 2) {
+        const inputs = generateTraditionalAssetInputsFromCloses(s, 'index', points.map(p => p.close));
+        const result = TraditionalAssetScoringService.scoreTraditionalAsset(inputs);
+        if (result.usedFactors.length > 0) {
+          return { score: result.score, basis: 'market-data' };
+        }
+      }
+    } catch (err: any) {
+      console.warn(`[TraditionalAssetScoring Fallback] Failed for index ${s}, using momentum fallback:`, err?.message || err);
     }
   }
 
@@ -1065,10 +1099,35 @@ async function fetchLiveMarketData() {
     }));
   }
 
-  const merged = [...cryptoAssets, ...stooqAssets];
-  // Ensure all indices and other assets in the full asset registry are present in the final merged array.
-  // Indizes (S&P 500, DAX etc.) haben in diesem Projekt keine angebundene Live-Quelle
-  // und sind daher immer ein statischer Snapshot - ohne erfundene "Live-Fluktuation"
+  // Audit ARCH-AUDIT-0002 (J1-Folge): Indizes hatten bislang KEINE Live-Kursquelle (siehe
+  // Kommentar unten bei missingFallbackAssets, der bis hier unveraendert galt). FMP
+  // (server/fmpIndices.ts) liefert jetzt echte Kurse fuer die per INDEX_FMP_TICKERS
+  // abgebildeten Symbole. ensureIndexQuoteFresh() ist selbst rate-limit-bewusst (Cache +
+  // globaler Cooldown) - der Aufruf hier ist bewusst NICHT abgewartet-blockierend fuer alle
+  // 30 Indizes gleichzeitig, sondern best-effort: nur Symbole mit bereits frischem Cache-
+  // Stand liefern in diesem Zyklus ein 'live'-Ergebnis, der Rest bleibt (wie zuvor immer)
+  // ehrlich 'fallback', bis ihr Cache in einem der naechsten 60s-Zyklen aktualisiert wurde.
+  const indexAssets: any[] = [];
+  for (const indexSymbol of Object.keys(INDEX_FMP_TICKERS)) {
+    ensureIndexQuoteFresh(indexSymbol).catch(() => {});
+    const quote = getCachedIndexQuote(indexSymbol);
+    if (!quote) continue;
+    const fallbackAsset = FALLBACK_ASSETS.find(a => a.symbol === indexSymbol);
+    if (!fallbackAsset) continue;
+    indexAssets.push({
+      ...fallbackAsset,
+      price: quote.price,
+      change24h: quote.change24h,
+      status: 'Verifiziert',
+      dataSource: 'live' as const,
+    });
+    ensureIndexHistoryFresh(indexSymbol).catch(() => {});
+  }
+
+  const merged = [...cryptoAssets, ...stooqAssets, ...indexAssets];
+  // Ensure all remaining assets in the full asset registry are present in the final merged
+  // array. Indizes ohne (noch) frischen FMP-Cache-Stand sowie Anleihen haben keine angebundene
+  // Live-Quelle und sind daher ein statischer Snapshot - ohne erfundene "Live-Fluktuation"
   // (No-Demo-Data-Policy, docs/DATENSCHUTZ_PROTOKOLL.md), dafuer ehrlich als
   // dataSource: 'fallback' gekennzeichnet.
   const existingSymbols = new Set(merged.map(a => a.symbol.toUpperCase()));

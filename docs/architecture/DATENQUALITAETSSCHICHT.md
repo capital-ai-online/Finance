@@ -53,10 +53,18 @@ Drei Felder, konsistent über die gesamte Codebasis verwendet:
 | Rohstoffe | ✅ live/fallback | — (dedizierte Fachengine, siehe S6) | n/a |
 | Aktien | ✅ live/fallback | ✅ `market-data`/`heuristic` (H1) | ✅ live/simulated (Stooq) |
 | Forex | ✅ live/fallback | ✅ `market-data`/`heuristic` (H1) | ✅ live/simulated (Stooq, seit H1) |
-| Indizes | ⚠️ **immer `fallback`** — keine Live-Kursquelle vorhanden (dokumentierte Lücke, siehe H1) | `heuristic` | ❌ nicht abgedeckt |
+| Indizes | ✅ live/fallback (seit J1-Folge, FMP) | ✅ `market-data`/`heuristic` | ✅ live (FMP, `server/fmpIndices.ts`) — schrittweise befüllt, rate-limit-bewusst |
 | Anleihen | ⚠️ **immer `fallback`** | `heuristic` | ❌ nicht abgedeckt |
 
-Die Indizes/Anleihen-Lücke ist eine fehlende **Datenanbindung** (keine Live-Kursquelle
+**Nachtrag (J1-Folge, 2026-08-01):** die Indizes-Lücke unten wurde geschlossen, nachdem der
+Nutzer einen eigenen FMP-API-Key bereitgestellt hat (`FMP_API_KEY`, `server/fmpIndices.ts`).
+FMPs Batch-Quote-Endpunkte erfordern einen Ultimate/Enterprise-Plan (nicht vorhanden) — Quotes
+und Historie werden daher einzeln je Symbol mit Cache + globalem Cooldown abgerufen (identisches
+Muster wie `server/stockFundamentals.ts`, H1), wodurch sich der volle Live-Zustand aller ~30
+Indizes über mehrere 60s-Zyklen hinweg aufbaut statt sofort. Ohne gesetzten Key bleibt der
+zuvor beschriebene Zustand (immer `fallback`) unverändert bestehen (fail-open, kein Fehler).
+
+Die Anleihen-Lücke ist weiterhin eine fehlende **Datenanbindung** (keine Live-Kursquelle
 angebunden), keine fehlende Herkunftskennzeichnung — sie ist bereits ehrlich als `fallback`
 markiert, nicht stillschweigend verborgen.
 
