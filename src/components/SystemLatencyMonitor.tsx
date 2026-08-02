@@ -1,142 +1,148 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
-import { Activity, Cpu, Database, CheckCircle2, RefreshCw } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Activity, AlertTriangle, CheckCircle2, Clock, Database, RefreshCw } from 'lucide-react';
 
-interface StreamLatency {
-  name: string;
-  category: 'crypto' | 'stock' | 'forex' | 'commodity' | 'bond';
-  latency: number;
-  status: 'optimal' | 'stable' | 'slow';
+interface RequestLogEntry {
+  id: string;
   endpoint: string;
+  timestamp: string;
+  status: 'COMPLETED' | 'QUEUED' | 'REJECTED' | 'TIMED_OUT' | 'RUNNING';
+  duration?: number;
+}
+
+interface OrchestratorStats {
+  activeRequests: number;
+  queueSize: number;
+  totalProcessed: number;
+  totalRejected: number;
+  rateLimitsHit: number;
+  concurrencyLimit: number;
+  maxQueueSize: number;
+  requestsLastMinute: number;
+  recentLogs: RequestLogEntry[];
 }
 
 export function SystemLatencyMonitor() {
-  const [streams, setStreams] = useState<StreamLatency[]>([
-    { name: 'Crypto Stream', category: 'crypto', latency: 45, status: 'optimal', endpoint: 'Coinbase WS Feed' },
-    { name: 'Equities Stream', category: 'stock', latency: 68, status: 'optimal', endpoint: 'S&P 500 Direct Feed' },
-    { name: 'Forex Stream', category: 'forex', latency: 112, status: 'stable', endpoint: 'LMAX Liquidity Feed' },
-    { name: 'Commodities Stream', category: 'commodity', latency: 95, status: 'stable', endpoint: 'COMEX Real-time' },
-    { name: 'Bonds Stream', category: 'bond', latency: 125, status: 'stable', endpoint: 'Fair Yield Feed' },
-  ]);
+  const [stats, setStats] = useState<OrchestratorStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string>('—');
 
-  const [routerLatency, setRouterLatency] = useState<number>(142);
-  const [selectedModel, setSelectedModel] = useState<string>('Gemini 2.5 Flash');
-  const [lastUpdated, setLastUpdated] = useState<string>('');
+  const refresh = async () => {
+    try {
+      const response = await fetch('/api/orchestrator/stats');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const body = await response.json();
+      setStats(body);
+      setError(null);
+      setLastUpdated(new Date().toLocaleTimeString('de-DE'));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Set initial timestamp
-    const now = new Date();
-    setLastUpdated(now.toLocaleTimeString('de-DE'));
-
-    const interval = setInterval(() => {
-      // Simulate real-time fluctuating latency metrics
-      setStreams(prevStreams =>
-        prevStreams.map(stream => {
-          // Add small random fluctuation (-5ms to +5ms)
-          const fluctuation = Math.floor(Math.random() * 11) - 5;
-          let newLatency = Math.max(20, stream.latency + fluctuation);
-
-          // Boundaries based on stream categories to look highly realistic
-          if (stream.category === 'crypto') newLatency = Math.max(15, Math.min(80, newLatency));
-          if (stream.category === 'stock') newLatency = Math.max(30, Math.min(120, newLatency));
-          if (stream.category === 'forex') newLatency = Math.max(60, Math.min(180, newLatency));
-          if (stream.category === 'commodity') newLatency = Math.max(50, Math.min(170, newLatency));
-          if (stream.category === 'bond') newLatency = Math.max(70, Math.min(220, newLatency));
-
-          const status = newLatency < 75 ? 'optimal' : newLatency < 150 ? 'stable' : 'slow';
-
-          return {
-            ...stream,
-            latency: newLatency,
-            status,
-          };
-        })
-      );
-
-      // Fluctuating AI Router latency
-      setRouterLatency(prev => {
-        const routeFluct = Math.floor(Math.random() * 15) - 7;
-        return Math.max(100, Math.min(250, prev + routeFluct));
-      });
-
-      // Update timestamp
-      const updatedTime = new Date();
-      setLastUpdated(updatedTime.toLocaleTimeString('de-DE'));
-    }, 4000);
-
-    return () => clearInterval(interval);
+    void refresh();
+    const interval = window.setInterval(() => void refresh(), 10_000);
+    return () => window.clearInterval(interval);
   }, []);
+
+  const latency = useMemo(() => {
+    const completed = (stats?.recentLogs ?? []).filter(
+      (entry) => entry.status === 'COMPLETED' && typeof entry.duration === 'number' && Number.isFinite(entry.duration),
+    );
+    if (completed.length === 0) return { average: null as number | null, p95: null as number | null, samples: 0 };
+    const values = completed.map((entry) => entry.duration as number).sort((a, b) => a - b);
+    const average = Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+    const p95Index = Math.min(values.length - 1, Math.ceil(values.length * 0.95) - 1);
+    return { average, p95: values[p95Index], samples: values.length };
+  }, [stats]);
+
+  const endpointRows = useMemo(() => {
+    const groups = new Map<string, number[]>();
+    for (const entry of stats?.recentLogs ?? []) {
+      if (entry.status !== 'COMPLETED' || typeof entry.duration !== 'number' || !Number.isFinite(entry.duration)) continue;
+      const list = groups.get(entry.endpoint) ?? [];
+      list.push(entry.duration);
+      groups.set(entry.endpoint, list);
+    }
+    return [...groups.entries()]
+      .map(([endpoint, values]) => ({
+        endpoint,
+        samples: values.length,
+        average: Math.round(values.reduce((sum, value) => sum + value, 0) / values.length),
+      }))
+      .sort((a, b) => b.samples - a.samples)
+      .slice(0, 5);
+  }, [stats]);
 
   return (
     <div className="w-full max-w-4xl mx-auto mt-6 p-5 bg-[#0D0E12]/80 border border-white/10 rounded-2xl backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.4)]">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-white/5 mb-4">
         <div>
           <div className="flex items-center gap-2 text-aif-gold-DEFAULT">
-            <Activity className="w-4 h-4 animate-pulse" />
-            <h3 className="text-xs font-mono font-bold uppercase tracking-widest">
-              Live System Latency Monitor
-            </h3>
+            <Activity className="w-4 h-4" />
+            <h3 className="text-xs font-mono font-bold uppercase tracking-widest">System Latency Monitor</h3>
           </div>
-          <p className="text-[10px] text-white/50 font-sans mt-0.5">
-            Echtzeit-Latenzüberwachung der angebundenen API-Datenströme & Modell-Router
-          </p>
+          <p className="text-[10px] text-white/50 mt-0.5">Gemessene Request-Orchestrator-Telemetrie · keine simulierten Latenzen</p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-4 text-[10px] font-mono">
-          <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Verbindung Stabil</span>
-          </div>
-          <div className="text-white/40">
-            Letztes Update: <span className="text-white/80">{lastUpdated}</span>
-          </div>
-        </div>
+        <button type="button" onClick={() => void refresh()} className="flex items-center gap-2 text-[10px] font-mono text-white/60 hover:text-white">
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          {lastUpdated}
+        </button>
       </div>
 
-      {/* Grid of streams */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-4">
-        {streams.map((stream, idx) => (
-          <div 
-            key={idx}
-            className="p-3 rounded-xl bg-black/40 border border-white/5 flex flex-col justify-between gap-2 hover:border-white/10 transition-colors"
-          >
-            <div className="flex items-start justify-between">
-              <span className="text-[10px] font-bold text-white/70 uppercase tracking-wide truncate">
-                {stream.name}
-              </span>
-              <span className={`w-1.5 h-1.5 rounded-full ${
-                stream.status === 'optimal' 
-                  ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)] animate-pulse' 
-                  : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]'
-              }`} />
-            </div>
+      {error && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-[11px] text-amber-200">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>Runtime-Telemetrie nicht verfügbar: {error}. Es werden keine Ersatzwerte erzeugt.</span>
+        </div>
+      )}
 
-            <div>
-              <div className="text-lg font-black font-mono tracking-tight text-white">
-                {stream.latency} <span className="text-[10px] font-normal text-white/40">ms</span>
-              </div>
-              <div className="text-[8px] font-mono text-white/40 truncate">
-                {stream.endpoint}
-              </div>
-            </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        {[
+          ['Ø Latenz', latency.average === null ? '—' : `${latency.average} ms`],
+          ['P95 Latenz', latency.p95 === null ? '—' : `${latency.p95} ms`],
+          ['Aktive Requests', stats?.activeRequests ?? '—'],
+          ['Queue', stats ? `${stats.queueSize}/${stats.maxQueueSize}` : '—'],
+        ].map(([label, value]) => (
+          <div key={String(label)} className="rounded-xl border border-white/5 bg-black/40 p-3">
+            <div className="text-[9px] uppercase tracking-wider text-white/40">{label}</div>
+            <div className="mt-1 text-lg font-black font-mono text-white">{value}</div>
           </div>
         ))}
       </div>
 
-      {/* Router telemetry summary */}
-      <div className="p-3 rounded-xl bg-gradient-to-r from-aif-gold-DEFAULT/5 to-purple-500/5 border border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] font-mono">
-        <div className="flex items-center gap-2">
-          <Cpu className="w-3.5 h-3.5 text-aif-gold-DEFAULT" />
-          <span className="text-white/60">Modell-Auto-Router:</span>
-          <span className="text-white font-bold">{selectedModel}</span>
-          <span className="text-white/20">|</span>
-          <span className="text-white/60">DSGVO-Vorfiltriert</span>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-xl border border-white/5 bg-black/40 p-4">
+          <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-white/60">
+            <Clock className="h-3.5 w-3.5" /> Endpoint Samples
+          </div>
+          {endpointRows.length === 0 ? (
+            <div className="text-[11px] text-white/35">Noch keine abgeschlossenen Request-Samples vorhanden.</div>
+          ) : endpointRows.map((row) => (
+            <div key={row.endpoint} className="flex items-center justify-between border-t border-white/5 py-2 text-[10px] first:border-t-0">
+              <span className="truncate pr-3 text-white/60">{row.endpoint}</span>
+              <span className="font-mono text-white">{row.average} ms · n={row.samples}</span>
+            </div>
+          ))}
         </div>
 
-        <div className="flex items-center gap-2 text-right">
-          <Database className="w-3.5 h-3.5 text-purple-400" />
-          <span className="text-white/60">Router-Latenz:</span>
-          <span className="text-[#0DDDDD] font-bold">{routerLatency} ms</span>
+        <div className="rounded-xl border border-white/5 bg-black/40 p-4 text-[10px]">
+          <div className="mb-3 flex items-center gap-2 font-bold uppercase tracking-wider text-white/60">
+            <Database className="h-3.5 w-3.5" /> Runtime Status
+          </div>
+          <div className="space-y-2 text-white/55">
+            <div className="flex justify-between"><span>Processed</span><span className="font-mono text-white">{stats?.totalProcessed ?? '—'}</span></div>
+            <div className="flex justify-between"><span>Rejected</span><span className="font-mono text-white">{stats?.totalRejected ?? '—'}</span></div>
+            <div className="flex justify-between"><span>Rate limits</span><span className="font-mono text-white">{stats?.rateLimitsHit ?? '—'}</span></div>
+            <div className="flex justify-between"><span>Requests / Minute</span><span className="font-mono text-white">{stats?.requestsLastMinute ?? '—'}</span></div>
+          </div>
+          <div className="mt-4 flex items-center gap-2 border-t border-white/5 pt-3 text-emerald-300">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            <span>{latency.samples} gemessene Latenz-Samples im Runtime-Fenster</span>
+          </div>
         </div>
       </div>
     </div>
