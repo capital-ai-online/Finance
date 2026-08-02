@@ -51,11 +51,12 @@ Dieser historische Snapshot bleibt erhalten, ist aber **nicht** der aktuelle Arb
 
 ## Verifizierter Nachtrag (2026-08-02)
 
-Die aktuelle ADR-Bearbeitung folgt strikt der obigen Ablagekonvention. Folgende neuere Entscheidungen
+Die aktuelle ADR-Bearbeitung folgt strikt der obigen Ablagekonvention. Folgende Entscheidungen
 wurden code- und CI-basiert abgeschlossen:
 
 | ADR | Ergebnis | Evidence |
 |---|---|---|
+| ADR-0018 — Enterprise Event Mesh | `resolved/` / ✅ COMPLETE | EventMesh Stufe 1–4, Manifest-Nachpflege, SystemAudit-Bridge, Event-Tests |
 | ADR-0030 — Platform Version and Release Lifecycle | `resolved/` / ✅ COMPLETE | `release-version-gate/1.0.0`, PR #57, vollständige CI PASS |
 | ADR-0032 — Asset Catalog / Market Evidence Separation | `resolved/` / ✅ COMPLETE | PR #54, 6×100 Asset-Expansion, Catalog-Integrity-Tests, CI PASS |
 | ADR-0033 — Index / Commodity / Sovereign Evidence Scoring | `resolved/` / ✅ COMPLETE | PR #56, Provider-Mapping- und Evidence-Scoring-Tests, CI PASS |
@@ -65,6 +66,7 @@ Bekannte Entscheidungen, die **bewusst nicht** als erledigt klassifiziert werden
 | ADR | Aktueller Grund |
 |---|---|
 | ADR-0011 | Time-Limited Exceptions `server/` und `server.ts` bestehen weiterhin; Zielmigration ist nicht abgeschlossen. |
+| ADR-0015 | Traceability Stufe 1–2 und Stufe 4 sind umgesetzt, Stufe 3 nur teilweise; vollständige Consume-/State-Transition-Integration sowie Teile der Knowledge-/Twin-Zielarchitektur bleiben offen. |
 | ADR-0022 | Allgemeines Individual-Bond-Scoring bleibt evidence-gated und gesperrt. |
 | ADR-0029 | Bond-Scoring-Gewichte sind weiterhin `Proposed / Pending Review`; Rating- und Liquidity/Spread-Evidence sowie fachliche Modellfreigabe fehlen. |
 | ADR-0031 | Supabase-Free-Tier-Leaked-Password-Protection ist eine aktive, planbedingte Risk Acceptance bis Pro+. |
@@ -80,6 +82,11 @@ gegen ihren exakten historischen Decision Scope aus `adr_history.json` neu gepr�
 nach `resolved/` verschoben oder als superseded/rejected klassifiziert werden. Insbesondere darf
 ADR-0005 (Module Federation/PostMessage/JWT-Sharing) nicht allein wegen eines inzwischen umfangreichen
 Frontends als umgesetzt gelten.
+
+Für ADR-0006 ist inzwischen zusätzlich belegt: `src/platform/PlatformDirector` ist weiterhin ohne
+Funktionscode, während ESS-0003 einen vollständigen Decision-/Release-/Exception-Contract definiert.
+Damit ist ADR-0006 ein echter Implementierungs-Backlog und darf nicht als abgeschlossen markiert
+werden.
 
 `IAM_IMPLEMENTATION_LOG.md` war vor der historischen Aktualisierung ausschließlich auf dem Stand von
 "Prompt 1" (Entwicklungsumgebung, vor Migration); für IAM gilt inzwischen die separate verifizierte
