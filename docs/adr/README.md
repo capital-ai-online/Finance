@@ -68,9 +68,20 @@ Bekannte Entscheidungen, die **bewusst nicht** als erledigt klassifiziert werden
 |---|---|
 | ADR-0011 | Time-Limited Exceptions `server/` und `server.ts` bestehen weiterhin; Zielmigration ist nicht abgeschlossen. |
 | ADR-0015 | Traceability Stufe 1–2 und Stufe 4 sind umgesetzt, Stufe 3 nur teilweise; vollständige Consume-/State-Transition-Integration sowie Teile der Knowledge-/Twin-Zielarchitektur bleiben offen. |
+| ADR-0017 | **Revalidierung 2026-08-02: offen.** Supabase-Migrationen `user_quota`, Service-Role-RLS-Härtung, `handle_new_user`-search_path und `compliance_runs` sind live angewendet; der Security Advisor zeigt für diesen Scope keine neue DB-Warnung. Der Stripe-Code nutzt korrekterweise separate `STRIPE_PRICE_ID_*_YEARLY` ohne serverseitige Rabattberechnung. Die aktuelle Live-Stripe-Konfiguration widerspricht jedoch der dokumentierten 10%-Jahresregel für PRO: 29,00 EUR/Monat = 348,00 EUR/Jahr; 10% rabattiert = 313,20 EUR, der aktive PRO-Jahrespreis beträgt 248,00 EUR. Bis die Preis-/Business-Rule-Abweichung bewusst entschieden und dokumentiert ist, darf ADR-0017 nicht nach `resolved/`. |
 | ADR-0022 | Allgemeines Individual-Bond-Scoring bleibt evidence-gated und gesperrt. |
 | ADR-0029 | Bond-Scoring-Gewichte sind weiterhin `Proposed / Pending Review`; Rating- und Liquidity/Spread-Evidence sowie fachliche Modellfreigabe fehlen. |
 | ADR-0031 | Supabase-Free-Tier-Leaked-Password-Protection ist eine aktive, planbedingte Risk Acceptance bis Pro+. |
+
+### ADR-0017 Revalidation Evidence — 2026-08-02
+
+Die erneute Prüfung trennt Code-, Datenbank- und Billing-Wahrheit:
+
+- **Supabase:** Die produktive Migration History enthält `user_quota`, `add_missing_service_role_rls_policies`, `harden_handle_new_user_search_path` und `compliance_runs`. Der verbleibende Auth-WARN `auth_leaked_password_protection` gehört zur separaten Free-Tier-Risk-Acceptance ADR-0031; `screening_slo_evidence` ohne Policy ist ein späterer, absichtlich fail-closed Service-Only-Befund.
+- **Stripe Runtime:** Aktive Live-Prices: STARTER 7,00 EUR monatlich / 75,60 EUR jährlich (exakt 10% Rabatt); PRO 29,00 EUR monatlich / 248,00 EUR jährlich (nicht 10%); zusätzlich existiert ein aktiver ENTERPRISE-Jahrespreis von 1.280,00 EUR.
+- **Backend:** `server/stripe.ts` wählt für STARTER und PRO bei `billingPeriod === 'yearly'` ausschließlich die konfigurierten `STRIPE_PRICE_ID_*_YEARLY`. Der Rabatt wird bewusst nicht im Backend berechnet. Damit muss die Price-Konfiguration selbst der freigegebenen Business Rule entsprechen.
+
+Diese Revalidierung ändert **keinen** Stripe-Preis. Eine Preisänderung ist ein finanziell wirksamer Production-Billing-Change und benötigt eine explizite Entscheidung im Billing-/Release-Lifecycle.
 
 ADR-0033 aktiviert ausschließlich den engeren **Sovereign Benchmark Yield** Contract. Das ist kein
 Abschluss von ADR-0022/ADR-0029 für allgemeine Einzel- oder Corporate Bonds.
