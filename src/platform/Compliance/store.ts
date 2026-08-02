@@ -3,6 +3,7 @@
 import { getServerSupabase, isSupabaseConfigured } from '../../../server/db';
 import { runAllScanners } from './scanners';
 import { buildRuntimeEvidenceScanner } from './runtimeEvidence';
+import { buildAiGovernanceEvidenceScanner } from './aiGovernanceEvidence';
 import type { ComplianceCertificate, ComplianceRun, Finding, ScannerResult, Severity } from './types';
 
 function avg(nums: number[]): number {
@@ -45,14 +46,16 @@ function rowToRun(row: RunRow): ComplianceRun {
 }
 
 /**
- * Führt die statischen Repository-Scanner und, sofern tatsächlich Runtime-Beobachtungen
- * vorliegen, zusätzlich den Runtime-Evidence-Scanner aus. Keine Providerbeobachtung wird als
- * Erfolg erfunden; ohne Runtime-Daten wird RUNTIME-01 nicht in den Lauf aufgenommen.
+ * Führt statische Repository-Scanner und ausschließlich tatsächlich beobachtete Runtime-
+ * Evidence-Scanner aus. Fehlende Runtime-Beobachtungen werden weder als Erfolg noch als Fehler
+ * erfunden. Das bestehende Persistenzschema wird unverändert wiederverwendet.
  */
 export async function executeComplianceRun(triggeredBy: string | undefined): Promise<ComplianceRun> {
   const scannerResultsList = runAllScanners();
   const runtimeScanner = buildRuntimeEvidenceScanner();
   if (runtimeScanner) scannerResultsList.push(runtimeScanner);
+  const aiGovernanceScanner = buildAiGovernanceEvidenceScanner();
+  if (aiGovernanceScanner) scannerResultsList.push(aiGovernanceScanner);
 
   const scannerResults: Record<string, ScannerResult> = {};
   for (const s of scannerResultsList) scannerResults[s.id] = s;
