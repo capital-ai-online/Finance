@@ -4,7 +4,7 @@ import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 import { CryptoOrchestrator } from '../orchestrator/cryptoOrchestrator';
 import { ClassificationService } from '../services/classification.service';
-import { calculateRankScore } from '../services/ranking.service';
+import { calculateRankScore, isTop10Eligible } from '../services/ranking.service';
 import { assetRegistry } from '../lib/assetRegistry';
 import { evaluateVerifiedCryptoTechnicalScore } from '../services/verifiedCryptoTechnicalScoring';
 
@@ -16,12 +16,6 @@ export function createCryptoRouter(
   const router = express.Router();
   const orchestrator = new CryptoOrchestrator(aiClient, anthropicClient, openaiClient);
 
-  /**
-   * GET /api/crypto/list
-   *
-   * Uses the same provenance-backed technical scoring path as /score. Assets without a live,
-   * sufficiently complete history remain visible with an explicit unavailable state.
-   */
   router.get('/list', async (_req, res) => {
     try {
       const cryptoAssets = assetRegistry.getAssets().filter((asset) => asset.type === 'crypto');
@@ -41,6 +35,8 @@ export function createCryptoRouter(
             ...canonical,
             rank_score: null,
             eligible_for_top10: false,
+            provenance: assessment.fieldProvenance,
+            providerState: assessment.providerState,
             scoreBasis: 'unavailable' as const,
           };
         }
@@ -49,9 +45,10 @@ export function createCryptoRouter(
           asset_name: asset.name,
           symbol: asset.symbol,
           classification,
-          scores: {},
+          scores: assessment.analysis.scores,
           data_quality: { level: canonical.integrity.dataQuality },
         } as any;
+        const eligible = assessment.rankingEvidenceReady && isTop10Eligible(rankPayload);
 
         return {
           symbol: asset.symbol,
@@ -67,10 +64,10 @@ export function createCryptoRouter(
           risk_level: assessment.analysis.risk_level,
           reasoning: assessment.analysis.reasoning,
           rank_score: calculateRankScore(rankPayload, canonical.final_score),
-          // Liquidity/supply snapshot fields still have no per-field provenance in this P1
-          // increment, therefore ranking eligibility remains fail-closed.
-          eligible_for_top10: false,
-          scoreBasis: 'market-history' as const,
+          eligible_for_top10: eligible,
+          provenance: assessment.fieldProvenance,
+          providerState: assessment.providerState,
+          scoreBasis: assessment.fieldProvenance.length > 0 ? 'market-data' as const : 'market-history' as const,
         };
       }));
 
@@ -81,11 +78,6 @@ export function createCryptoRouter(
     }
   });
 
-  /**
-   * POST /api/crypto/analyze
-   * Runs the full multi-agent CryptoOrchestrator analysis. This endpoint remains separate from
-   * deterministic market-history scoring and keeps the existing AI provider contracts.
-   */
   router.post('/analyze', async (req, res) => {
     try {
       const { symbol, customInput } = req.body;
@@ -102,15 +94,6 @@ export function createCryptoRouter(
     }
   });
 
-  /**
-   * POST /api/crypto/score
-   *
-   * Regression fix after P0 remediation:
-   * - caller-provided score fields remain rejected;
-   * - no bootstrap/default market values are promoted to evidence;
-   * - the score is calculated from multiple real CoinGecko-history factors rather than a
-   *   single volatility factor, so the data-quality coverage contract can legitimately pass.
-   */
   router.post('/score', async (req, res) => {
     try {
       const payload = req.body;
@@ -135,11 +118,13 @@ export function createCryptoRouter(
         return res.status(422).json({
           asset_name: payload.asset_name,
           symbol,
-          model: 'technical-history',
+          model: 'technical-provenance',
           classification,
           ...canonical,
           rank_score: null,
           eligible_for_top10: false,
+          provenance: assessment.fieldProvenance,
+          providerState: assessment.providerState,
           scoreBasis: 'unavailable' as const,
         });
       }
@@ -148,14 +133,15 @@ export function createCryptoRouter(
         asset_name: payload.asset_name,
         symbol,
         classification,
-        scores: {},
+        scores: assessment.analysis.scores,
         data_quality: { level: canonical.integrity.dataQuality },
       } as any;
+      const eligible = assessment.rankingEvidenceReady && isTop10Eligible(rankPayload);
 
       res.json({
         asset_name: payload.asset_name,
         symbol,
-        model: 'technical-history',
+        model: 'technical-provenance',
         classification,
         ...canonical,
         inputs: assessment.inputs,
@@ -167,8 +153,10 @@ export function createCryptoRouter(
         reasoning: assessment.analysis.reasoning,
         alerts: assessment.analysis.alerts,
         rank_score: calculateRankScore(rankPayload, canonical.final_score),
-        eligible_for_top10: false,
-        scoreBasis: 'market-history' as const,
+        eligible_for_top10: eligible,
+        provenance: assessment.fieldProvenance,
+        providerState: assessment.providerState,
+        scoreBasis: assessment.fieldProvenance.length > 0 ? 'market-data' as const : 'market-history' as const,
       });
     } catch (error: any) {
       console.error('[CryptoRouter] Error calculating deterministic score:', error);
@@ -177,11 +165,8 @@ export function createCryptoRouter(
   });
 
   /**
-   * GET /api/crypto/top10
-   *
-   * Scores are evaluated with the corrected verified-history pipeline. Top-10 admission remains
-   * fail-closed until liquidity/supply fields also carry server-side field provenance; a
-   * technical-history score alone must not silently satisfy liquidity-based ranking policy.
+   * Top-10 admission is now enabled only when the score is READY and the snapshot carries
+   * provenance for market-cap, volume and supply. Assets without that lineage remain excluded.
    */
   router.get('/top10', async (_req, res) => {
     try {
@@ -196,9 +181,10 @@ export function createCryptoRouter(
           asset_name: asset.name,
           symbol: asset.symbol,
           classification,
-          scores: {},
+          scores: assessment.analysis.scores,
           data_quality: { level: canonical.integrity.dataQuality },
         } as any;
+        const eligible = assessment.rankingEvidenceReady && isTop10Eligible(rankPayload);
 
         return {
           symbol: asset.symbol,
@@ -206,9 +192,11 @@ export function createCryptoRouter(
           classification,
           final_score: canonical.final_score,
           rank_score: calculateRankScore(rankPayload, canonical.final_score),
-          eligible: false,
+          eligible,
           integrity: canonical.integrity,
-          scoreBasis: 'market-history' as const,
+          provenance: assessment.fieldProvenance,
+          providerState: assessment.providerState,
+          scoreBasis: assessment.fieldProvenance.length > 0 ? 'market-data' as const : 'market-history' as const,
         };
       }));
 
