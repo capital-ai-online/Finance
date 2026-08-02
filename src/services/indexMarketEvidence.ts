@@ -5,6 +5,7 @@ import { computeTechnicalFactorsFromCloses, type TraditionalAssetScoringInputs }
 import type { FinancialFieldProvenance } from '../types/financialProvenance';
 
 export const INDEX_MARKET_EVIDENCE_VERSION = 'index-market-evidence/1.0.0' as const;
+const INDEX_MAX_EVIDENCE_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 export interface IndexHistoryEvidence {
   version: typeof INDEX_MARKET_EVIDENCE_VERSION;
@@ -20,6 +21,11 @@ export interface IndexHistoryEvidence {
 
 function observedAtForDay(day: string): string {
   return /^\d{4}-\d{2}-\d{2}$/.test(day) ? `${day}T23:59:59.000Z` : new Date().toISOString();
+}
+
+function freshEnough(day: string, nowMs = Date.now()): boolean {
+  const observed = Date.parse(observedAtForDay(day));
+  return Number.isFinite(observed) && observed <= nowMs + 60_000 && nowMs - observed <= INDEX_MAX_EVIDENCE_AGE_MS;
 }
 
 export async function getVerifiedIndexHistory(
@@ -41,6 +47,7 @@ export async function getVerifiedIndexHistory(
         if (points.length < 20) continue;
         const retrievedAt = new Date().toISOString();
         const last = points[points.length - 1];
+        if (!freshEnough(last.date)) continue;
         return {
           version: INDEX_MARKET_EVIDENCE_VERSION,
           symbol,
@@ -66,6 +73,7 @@ export async function getVerifiedIndexHistory(
         .slice(-boundedDays);
       if (points.length < 20) continue;
       const last = points[points.length - 1];
+      if (!freshEnough(last.date)) continue;
       return {
         version: INDEX_MARKET_EVIDENCE_VERSION,
         symbol,
