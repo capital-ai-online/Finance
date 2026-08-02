@@ -1,41 +1,16 @@
-name: Lockfile Remediation Artifact
+name: Lockfile Remediation Artifact (disabled)
 
+# One-shot remediation workflow retained only as an auditable record of the dependency
+# remediation process used in PR #30. It has no automatic trigger and no write permission.
 on:
-  push:
-    branches: [fix/crypto-provider-source-unavailable]
-    paths:
-      - '.github/workflows/lockfile-remediation.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  generate-fixed-lockfile:
+  disabled-record:
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: fix/crypto-provider-source-unavailable
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-      - name: Move Nodemailer to patched major
-        run: npm pkg set 'dependencies.nodemailer=^9.0.3'
-      - name: Resolve current dependency graph
-        run: npm install --package-lock-only --ignore-scripts
-      - name: Apply non-breaking advisory fixes
-        run: npm audit fix --package-lock-only --ignore-scripts
-      - name: Verify production HIGH/CRITICAL advisories are cleared
-        run: npm audit --omit=dev --audit-level=high
-      - name: Commit remediated manifest and lockfile to PR branch
-        run: |
-          if git diff --quiet -- package.json package-lock.json; then
-            echo 'No lockfile changes required.'
-            exit 0
-          fi
-          git config user.name 'capital-ai-security-bot'
-          git config user.email 'security-bot@capital-ai.online'
-          git add package.json package-lock.json
-          git commit -m 'fix(security): remediate production dependency advisories'
-          git push origin HEAD:fix/crypto-provider-source-unavailable
+      - run: echo 'One-shot lockfile remediation completed; workflow intentionally disabled.'
