@@ -1,0 +1,57 @@
+name: AUD4 Final Remediation
+
+on:
+  push:
+    branches:
+      - feature/audit4-final-screening-hardening
+
+permissions:
+  contents: write
+
+jobs:
+  remediate:
+    if: "!contains(github.event.head_commit.message, 'finalize AUD4-F-003 remediation')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/audit4-final-screening-hardening
+          fetch-depth: 0
+      - name: Apply targeted fail-closed fixes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          dashboard = Path('src/components/Dashboard.tsx')
+          text = dashboard.read_text()
+          start = text.index("  // Testauslösung Helper\n  const handleTriggerTestScoreEvent")
+          end = text.index("\n\n  // Unified global persistent user profile", start)
+          replacement = """  // ARCH-AUDIT-0004 / AUD4-F-003: produktive Test-Score-Fabrikation ist deaktiviert.\n  // Testevents dürfen keine erfundenen Finanzscores oder Marktbewegungen erzeugen.\n  const handleTriggerTestScoreEvent = (_symbol: string, _type: 'crash' | 'rally') => {\n    console.warn('Synthetic score test events are disabled in production. Use verified screening evidence instead.');\n  };"""
+          dashboard.write_text(text[:start] + replacement + text[end:])
+
+          charts = Path('src/components/Charts.tsx')
+          text = charts.read_text()
+          old_volume = """      // Simulate realistic daily trading volume based on price changes\n      const priceDiffRatio = i > 0 ? Math.abs((closes[i] - closes[i - 1]) / closes[i - 1]) : 0.01;\n      const baseVol = activeSymbol === 'BTC' ? 8000 : activeSymbol === 'ETH' ? 4000 : 250;\n      const simulatedVol = baseVol * (1 + priceDiffRatio * 15) * (0.8 + Math.random() * 0.4);\n\n"""
+          if old_volume not in text:
+              raise SystemExit('Charts synthetic volume block not found')
+          text = text.replace(old_volume, """      // AUD4-F-003: keine erfundene Trading-Volume-Evidence.\n      // Die aktuelle History-Evidence enthält belegte Close-Werte; Volume bleibt daher unbekannt.\n\n""", 1)
+          text = text.replace("        volume: Number(simulatedVol.toFixed(1))", "        volume: undefined", 1)
+
+          fallback_start = text.index("          .catch(err => {\n            console.error('Error fetching charts scoring:', err);")
+          fallback_end = text.index("          });", fallback_start) + len("          });")
+          fallback = """          .catch(err => {\n            console.error('Error fetching charts scoring:', err);\n            // Fail closed: kein Ersatzscore und keine erfundene Empfehlung.\n            setScoreResult(null);\n            setIsScoring(false);\n          });"""
+          charts.write_text(text[:fallback_start] + fallback + text[fallback_end:])
+          PY
+      - name: Commit remediation
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No remediation changes required"
+            exit 0
+          fi
+          git config user.name "capital-ai-ci"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/components/Dashboard.tsx src/components/Charts.tsx
+          git commit -m "fix: finalize AUD4-F-003 remediation"
+          git push origin HEAD:feature/audit4-final-screening-hardening
