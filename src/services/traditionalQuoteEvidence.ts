@@ -4,6 +4,7 @@ import { ensureIndexQuoteFresh, getCachedIndexQuote, INDEX_FMP_TICKERS } from '.
 
 export const TRADITIONAL_QUOTE_CONTRACT_VERSION = 'traditional-quote/1.0.0' as const;
 export type TraditionalQuoteAssetClass = 'stock' | 'forex' | 'index';
+const DEFAULT_MAX_QUOTE_AGE_MS = 15 * 60 * 1000;
 
 export interface VerifiedTraditionalQuote {
   contractVersion: typeof TRADITIONAL_QUOTE_CONTRACT_VERSION;
@@ -20,6 +21,8 @@ export interface VerifiedTraditionalQuote {
   sourcePath: string | null;
   alertEligible: boolean;
   executionPriceEligible: boolean;
+  evidenceAgeMs?: number | null;
+  maxAgeMs?: number;
   reason?: string;
 }
 
@@ -28,10 +31,15 @@ interface QuoteOptions {
   timeoutMs?: number;
   nowMs?: () => number;
   twelveDataApiKey?: string;
+  maxAgeMs?: number;
+}
+
+function nowMs(options: QuoteOptions): number {
+  return options.nowMs?.() ?? Date.now();
 }
 
 function nowIso(options: QuoteOptions): string {
-  return new Date(options.nowMs?.() ?? Date.now()).toISOString();
+  return new Date(nowMs(options)).toISOString();
 }
 
 function toTwelveSymbol(symbol: string, assetClass: TraditionalQuoteAssetClass): string {
@@ -41,6 +49,12 @@ function toTwelveSymbol(symbol: string, assetClass: TraditionalQuoteAssetClass):
     if (s.length === 6) return `${s.slice(0, 3)}/${s.slice(3)}`;
   }
   return s;
+}
+
+function freshness(observedAt: string, options: QuoteOptions): { ageMs: number; maxAgeMs: number; stale: boolean } {
+  const maxAgeMs = options.maxAgeMs ?? DEFAULT_MAX_QUOTE_AGE_MS;
+  const ageMs = Math.max(0, nowMs(options) - Date.parse(observedAt));
+  return { ageMs, maxAgeMs, stale: ageMs > maxAgeMs };
 }
 
 async function fetchTwelveDataQuote(symbol: string, assetClass: 'stock' | 'forex', options: QuoteOptions): Promise<VerifiedTraditionalQuote> {
@@ -76,14 +90,23 @@ async function fetchTwelveDataQuote(symbol: string, assetClass: 'stock' | 'forex
       : retrievedAt;
     const currency = typeof data?.currency === 'string' ? data.currency : assetClass === 'forex' ? providerSymbol.slice(-3) : null;
     const evidenceId = `quote:twelvedata:${providerSymbol}:${observedAt}`;
+    const freshnessState = freshness(observedAt, options);
     recordMarketDataProviderOutcome({ provider: 'TwelveData', success: true, latencyMs: Date.now() - startedAt });
-    recordProviderHealth({ provider: 'TwelveData', capability: 'traditional-quote', state: 'healthy', message: `Verified ${assetClass} quote received for ${symbol}.` });
+    recordProviderHealth({
+      provider: 'TwelveData', capability: 'traditional-quote',
+      state: freshnessState.stale ? 'degraded' : 'healthy',
+      message: freshnessState.stale ? `Stale ${assetClass} quote received for ${symbol}.` : `Verified ${assetClass} quote received for ${symbol}.`,
+    });
+
     return {
       contractVersion: TRADITIONAL_QUOTE_CONTRACT_VERSION,
-      status: 'READY', symbol, assetClass, price, currency,
+      status: freshnessState.stale ? 'STALE_EVIDENCE' : 'READY',
+      symbol, assetClass, price: freshnessState.stale ? null : price, currency,
       provider: 'TwelveData', providers: ['TwelveData'], observedAt, retrievedAt,
       evidenceIds: [evidenceId], sourcePath: 'https://api.twelvedata.com/quote',
-      alertEligible: true, executionPriceEligible: false,
+      alertEligible: !freshnessState.stale, executionPriceEligible: false,
+      evidenceAgeMs: freshnessState.ageMs, maxAgeMs: freshnessState.maxAgeMs,
+      reason: freshnessState.stale ? `Quote evidence is older than ${freshnessState.maxAgeMs} ms.` : undefined,
     };
   } catch (error) {
     recordMarketDataProviderOutcome({ provider: 'TwelveData', success: false });
@@ -127,13 +150,17 @@ async function fetchFmpIndexQuote(symbol: string, options: QuoteOptions): Promis
   }
 
   const observedAt = new Date(quote.fetchedAt).toISOString();
+  const freshnessState = freshness(observedAt, options);
   recordMarketDataProviderOutcome({ provider: 'FMP', success: true, latencyMs: Date.now() - startedAt });
   return {
     contractVersion: TRADITIONAL_QUOTE_CONTRACT_VERSION,
-    status: 'READY', symbol, assetClass: 'index', price: quote.price, currency: null,
+    status: freshnessState.stale ? 'STALE_EVIDENCE' : 'READY',
+    symbol, assetClass: 'index', price: freshnessState.stale ? null : quote.price, currency: null,
     provider: 'FMP', providers: ['FMP'], observedAt, retrievedAt,
     evidenceIds: [`quote:fmp:${symbol}:${observedAt}`], sourcePath: 'https://financialmodelingprep.com/stable/quote',
-    alertEligible: true, executionPriceEligible: false,
+    alertEligible: !freshnessState.stale, executionPriceEligible: false,
+    evidenceAgeMs: freshnessState.ageMs, maxAgeMs: freshnessState.maxAgeMs,
+    reason: freshnessState.stale ? `Quote evidence is older than ${freshnessState.maxAgeMs} ms.` : undefined,
   };
 }
 
