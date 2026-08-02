@@ -1,6 +1,8 @@
 import { ensureIndexHistoryFresh, getCachedIndexHistory } from '../../server/fmpIndices';
 import { fetchExternalHistory } from './externalMarketDataAdapters';
 import { getIndexProviderMapping, validateTwelveDataIndexIdentity } from './indexProviderMapping';
+import { computeTechnicalFactorsFromCloses, type TraditionalAssetScoringInputs } from './traditionalAssetScoring';
+import type { FinancialFieldProvenance } from '../types/financialProvenance';
 
 export const INDEX_MARKET_EVIDENCE_VERSION = 'index-market-evidence/1.0.0' as const;
 
@@ -81,4 +83,28 @@ export async function getVerifiedIndexHistory(
     }
   }
   return null;
+}
+
+export function buildIndexScoringInputsFromEvidence(evidence: IndexHistoryEvidence): TraditionalAssetScoringInputs {
+  const technical = computeTechnicalFactorsFromCloses(evidence.points.map(point => point.close));
+  const fields = ['trend', 'momentum', 'breakout_quality', 'volatility_quality', 'relative_strength'] as const;
+  const provenance: FinancialFieldProvenance[] = fields
+    .filter(field => typeof technical[field] === 'number')
+    .map(field => ({
+      field,
+      provider: evidence.provider,
+      sourcePath: evidence.sourcePath,
+      retrievedAt: evidence.retrievedAt,
+      observedAt: evidence.observedAt,
+      value: technical[field],
+      unit: 'normalized-0-1',
+      derivedFrom: ['close-history'],
+    }));
+
+  return {
+    symbol: evidence.symbol,
+    assetType: 'index',
+    ...technical,
+    provenance,
+  };
 }
