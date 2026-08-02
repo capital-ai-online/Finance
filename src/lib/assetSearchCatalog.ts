@@ -12,6 +12,9 @@ import {
 } from '../services/assetCatalogIntegrity';
 
 const TYPES: AssetCatalogType[] = ['crypto', 'stock', 'forex', 'commodity', 'index', 'bond'];
+const COMMODITY_EVIDENCE_CONTRACT = 'commodity-evidence-scoring/1.0.0';
+const SOVEREIGN_BENCHMARK_CONTRACT = 'sovereign-benchmark-yield-scoring/1.0.0';
+const INDEX_MAPPING_CONTRACT = 'index-provider-mapping/1.0.0';
 
 function emptyCounts(): Record<AssetCatalogType, number> {
   return { crypto: 0, stock: 0, forex: 0, commodity: 0, index: 0, bond: 0 };
@@ -32,6 +35,24 @@ function instrumentKindFor(type: AssetCatalogType): string {
   return 'bond-or-rate-benchmark';
 }
 
+function evidenceContracts(candidate: AssetCatalogCandidate, symbol: string): Pick<AssetCatalogEntry, 'evidenceScoringContract' | 'providerMappingContract'> {
+  if (candidate.type === 'commodity') {
+    return { evidenceScoringContract: COMMODITY_EVIDENCE_CONTRACT };
+  }
+  if (candidate.type === 'index') {
+    return { providerMappingContract: INDEX_MAPPING_CONTRACT };
+  }
+  const isSovereignBenchmark = candidate.type === 'bond'
+    && (candidate.instrumentKind === 'government-benchmark-yield' || symbol === 'US10Y' || symbol === 'DE10Y');
+  if (isSovereignBenchmark) {
+    return {
+      evidenceScoringContract: SOVEREIGN_BENCHMARK_CONTRACT,
+      providerMappingContract: 'sovereign-bond-provider-mapping/1.0.0',
+    };
+  }
+  return {};
+}
+
 function normalizeCandidate(candidate: AssetCatalogCandidate, origin: AssetCatalogEntry['origin']): AssetCatalogEntry {
   const symbol = candidate.symbol.toUpperCase().trim();
   const aliases = [...new Set((candidate.aliases ?? []).map(alias => alias.toUpperCase().trim()).filter(Boolean))];
@@ -41,6 +62,7 @@ function normalizeCandidate(candidate: AssetCatalogCandidate, origin: AssetCatal
     name: candidate.name.trim(),
     aliases,
     origin,
+    ...evidenceContracts(candidate, symbol),
   };
 }
 
