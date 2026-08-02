@@ -21,10 +21,11 @@ afterEach(() => {
 
 describe('cryptoHistoryProvider resilience', () => {
   it('returns verified CoinGecko history and serves a fresh cache hit without another request', async () => {
-    const fetchImpl = vi.fn(async () => new Response(JSON.stringify(coinGeckoPayload()), {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(coinGeckoPayload()), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
-    })) as unknown as typeof fetch;
+    }));
+    const fetchImpl = fetchMock as unknown as typeof fetch;
 
     const first = await getVerifiedCryptoHistory('ETH', 30, { fetchImpl });
     const second = await getVerifiedCryptoHistory('ETH', 30, { fetchImpl });
@@ -33,16 +34,17 @@ describe('cryptoHistoryProvider resilience', () => {
     expect(first?.degraded).toBe(false);
     expect(first?.points.length).toBeGreaterThanOrEqual(20);
     expect(second?.cacheMode).toBe('cache-hit');
-    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('retries a transient provider failure with bounded exponential backoff', async () => {
-    const fetchImpl = vi.fn()
+    const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response('temporary', { status: 503 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(coinGeckoPayload()), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-      })) as unknown as typeof fetch;
+      }));
+    const fetchImpl = fetchMock as unknown as typeof fetch;
     const sleep = vi.fn(async () => undefined);
 
     const result = await getVerifiedCryptoHistory('ETH', 30, {
@@ -53,12 +55,13 @@ describe('cryptoHistoryProvider resilience', () => {
     });
 
     expect(result?.cacheMode).toBe('fresh');
-    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(sleep).toHaveBeenCalledWith(200);
   });
 
   it('opens the circuit after the configured failure threshold', async () => {
-    const fetchImpl = vi.fn(async () => new Response('down', { status: 503 })) as unknown as typeof fetch;
+    const fetchMock = vi.fn(async () => new Response('down', { status: 503 }));
+    const fetchImpl = fetchMock as unknown as typeof fetch;
     const sleep = vi.fn(async () => undefined);
     let now = Date.UTC(2026, 7, 2, 6, 0, 0);
 
@@ -70,7 +73,7 @@ describe('cryptoHistoryProvider resilience', () => {
       circuitFailureThreshold: 1,
       circuitCooldownMs: 60_000,
     });
-    const callsAfterFirst = fetchImpl.mock.calls.length;
+    const callsAfterFirst = fetchMock.mock.calls.length;
     now += 1_000;
     const second = await getVerifiedCryptoHistory('ETH', 30, {
       fetchImpl,
@@ -83,17 +86,18 @@ describe('cryptoHistoryProvider resilience', () => {
 
     expect(first).toBeNull();
     expect(second).toBeNull();
-    expect(fetchImpl.mock.calls.length).toBe(callsAfterFirst);
+    expect(fetchMock.mock.calls.length).toBe(callsAfterFirst);
   });
 
   it('uses last-known-good data in degraded mode when refresh fails', async () => {
     let now = Date.UTC(2026, 7, 2, 6, 0, 0);
-    const fetchImpl = vi.fn()
+    const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify(coinGeckoPayload()), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       }))
-      .mockResolvedValue(new Response('down', { status: 503 })) as unknown as typeof fetch;
+      .mockResolvedValue(new Response('down', { status: 503 }));
+    const fetchImpl = fetchMock as unknown as typeof fetch;
     const sleep = vi.fn(async () => undefined);
 
     const first = await getVerifiedCryptoHistory('ETH', 30, {
