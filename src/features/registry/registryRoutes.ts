@@ -16,6 +16,7 @@ import {
   fetchFredSeries,
   type ApprovedFredSeriesId,
 } from '../../services/macroRateEvidence';
+import { buildMacroRiskRegime } from '../../services/macroRiskRegime';
 import { logSystemEvent } from '../../../server/systemEvents';
 import { ensureFundamentalsFresh, getCachedFundamentals } from '../../../server/stockFundamentals';
 import { ensureIndexHistoryFresh, getCachedIndexHistory, INDEX_FMP_TICKERS } from '../../../server/fmpIndices';
@@ -225,6 +226,14 @@ registryRouter.get('/macro/ecb/fx/:currency', async (req, res) => {
       reason,
     });
   }
+});
+
+registryRouter.get('/macro/risk-regime', async (req, res) => {
+  const correlationId = resolveCorrelationId(req);
+  res.setHeader('x-correlation-id', correlationId);
+  const evidence = await buildMacroRiskRegime();
+  const httpStatus = evidence.status === 'READY' ? 200 : 422;
+  return res.status(httpStatus).json({ correlationId, ...evidence });
 });
 
 /**
