@@ -435,16 +435,16 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
       // DOC-01: Legacy Versioning
       const hasLegacyVersion = /(version|v7\.5|v1\.0\.0|v1\.0|v2\.0)\s*[:=]?\s*['"`]?[0-9]+\.[0-9]+(\.[0-9]+)?['"`]?/i.test(line) || 
                                /version\s+7\.5/i.test(line) || /version\s+1\.0/i.test(line);
-      const isCorrectVersion = line.includes('0.5.4');
+      const isCorrectVersion = line.includes('0.7.0');
       if (hasLegacyVersion && !isCorrectVersion) {
         customDiags.push({
           line: lineNum,
           severity: 'warning',
           ruleId: 'DOC-01',
           ruleName: 'Veraltete Versionsangabe',
-          message: 'Veraltete Version referenziert. Die Plattform-Version muss fest auf 0.5.4 stehen.',
+          message: 'Veraltete Version referenziert. Die Plattform-Version muss fest auf 0.7.0 stehen.',
           evidence: line.trim(),
-          suggestion: 'Ändern Sie die Angabe auf Version 0.5.4 ab.'
+          suggestion: 'Ändern Sie die Angabe auf Version 0.7.0 ab.'
         });
       }
 
@@ -1373,7 +1373,7 @@ export function DocumentHygienePanel({ currentUserEmail }: DocumentHygienePanelP
                   <span>ARCHITECTURE DECISION RECORDS (ADR) MANAGER</span>
                 </h3>
                 <p className="text-[11px] text-white/50 leading-relaxed max-w-2xl font-sans">
-                  Revisionssichere Dokumentation wesentlicher technischer Design- und Architekturentscheidungen der CAPITAL-AI Plattform (Version 0.5.4) im standardisierten Markdown-Format.
+                  Revisionssichere Dokumentation wesentlicher technischer Design- und Architekturentscheidungen der CAPITAL-AI Plattform (Version 0.7.0) im standardisierten Markdown-Format.
                 </p>
               </div>
               <button

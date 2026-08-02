@@ -188,7 +188,7 @@ export function PdfExportModal({ isOpen, onClose, email, onSuccess }: PdfExportM
         {/* Content */}
         <div className="space-y-4">
           <p className="text-xs text-white/60 leading-relaxed">
-            Dieser Bericht ist Teil der exklusiven quantitativen Auswertungen von Capital-AI (Version 0.5.4).
+            Dieser Bericht ist Teil der exklusiven quantitativen Auswertungen von Capital-AI (Version 0.7.0).
           </p>
 
           {/* Credits Display */}

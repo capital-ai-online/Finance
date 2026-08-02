@@ -191,7 +191,7 @@ export function SocialAccountManager({ onAccountsUpdated }: Props) {
         : 'Zugriffsprüfung derzeit nicht möglich. Bitte später erneut versuchen.';
 
     return (
-      <div className="p-8 rounded-2xl bg-neutral-900 border border-white/10 shadow-xl text-center max-w-xl mx-auto space-y-4">
+      <div className="p-8 rounded-2xl bg-neutral-900/80 backdrop-blur-xl border border-white/10 shadow-xl text-center max-w-xl mx-auto space-y-4">
         <div className="w-14 h-14 mx-auto rounded-2xl bg-aif-gold-DEFAULT/15 border border-aif-gold-DEFAULT/30 flex items-center justify-center">
           {access.reason === 'insufficient-tier' ? (
             <Crown size={24} className="text-aif-gold-DEFAULT" />
@@ -214,7 +214,7 @@ export function SocialAccountManager({ onAccountsUpdated }: Props) {
     <div className="space-y-6">
 
       {/* Top Notice Banner */}
-      <div className="p-5 rounded-2xl bg-neutral-900 border border-white/10 space-y-2 shadow-xl">
+      <div className="p-5 rounded-2xl bg-neutral-900/80 backdrop-blur-xl border border-white/10 space-y-2 shadow-xl">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <ShieldCheck size={18} className="text-aif-gold-DEFAULT" />
@@ -242,7 +242,7 @@ export function SocialAccountManager({ onAccountsUpdated }: Props) {
           return (
             <div
               key={cfg.id}
-              className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
+              className={`p-5 rounded-2xl border backdrop-blur-xl transition-all flex flex-col justify-between ${
                 isConnected
                   ? 'bg-neutral-900/90 border-aif-gold-DEFAULT/40 shadow-lg shadow-aif-gold-DEFAULT/5'
                   : 'bg-neutral-900/50 border-white/10 opacity-90'

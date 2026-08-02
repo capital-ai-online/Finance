@@ -41,7 +41,7 @@ export function ComplianceNotifications({ currentUserEmail }: ComplianceNotifica
         return {
           adr: 'ADR-0004 & ADR-0007',
           title: 'Autonomous Documentary & Version Pinning',
-          description: 'Verwaltet Dokumentenhygiene, Version 0.5.4 und Rollbacks.'
+          description: 'Verwaltet Dokumentenhygiene, Version 0.7.0 und Rollbacks.'
         };
       default:
         return {

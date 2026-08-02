@@ -138,7 +138,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
         doc.setFontSize(7.5);
         doc.setTextColor(120, 120, 120);
         doc.text('Dieses Dokument wurde elektronisch generiert und bedarf keiner handschriftlichen Unterschrift.', 14, y);
-        doc.text('BaFin DSGVO-Gütebericht • Version 0.5.4 (Beta-Phase)', 196, y, { align: 'right' });
+        doc.text('Interner DSGVO-Selbstcheck-Bericht • Version 0.7.0 (Beta-Phase)', 196, y, { align: 'right' });
       };
 
       // ==========================================
@@ -482,8 +482,8 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
       );
 
       drawCompliancePoint(
-        'BaFin-Konformität & Risikodimensionierung im Gast-Modus',
-        'Der privilegierte Zugriff von Sven Kulessa (Eigentümer) über den Gast-Bypass wurde im System-Sicherheitsprotokoll erfasst und auditiert. Alle administrativen Kontrollschleifen sind nach den BaFin MaRisk Vorschriften gegen unbefugte Manipulation abgesichert.',
+        'Interne Zugriffskontrolle im Gast-Modus',
+        'Der privilegierte Zugriff von Sven Kulessa (Eigentümer) über den Gast-Bypass wird im System-Sicherheitsprotokoll erfasst. Dies ist eine interne Kontrolle und keine Zertifizierung nach den BaFin-MaRisk-Vorschriften.',
         159
       );
 
@@ -524,7 +524,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       doc.text('Kryptographisches Verifikationssystem', 120, 242);
-      doc.text('Digitale Signatur: APPROVED-OK-0.6.0', 120, 246);
+      doc.text('Interne Prüf-Referenz: OK-0.7.0', 120, 246);
 
       doc.setDrawColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       doc.setLineWidth(0.2);
@@ -555,19 +555,19 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-black tracking-widest bg-aif-neon-purple/20 text-aif-neon-purple border border-aif-neon-purple/30 uppercase">
-              Compliance-Modul 0.6.0
+              Compliance-Modul 0.7.0
             </span>
             <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-black tracking-widest bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 uppercase flex items-center gap-0.5">
               <ShieldCheck size={9} />
-              Rechtsgültig
+              Intern
             </span>
           </div>
           <h4 className="text-sm font-black font-display text-white uppercase tracking-wider flex items-center gap-2">
             <FileText className="text-aif-neon-purple shrink-0" size={16} />
-            <span>Offizieller BaFin &amp; DSGVO Compliance-Export</span>
+            <span>Interner Compliance-Export (DSGVO-Selbstcheck)</span>
           </h4>
           <p className="text-xs text-white/50 leading-normal max-w-xl">
-            Generieren und exportieren Sie ein formell geprüftes, zweiseitiges PDF-Compliance-Audit. Der Bericht erfasst das aktuelle Portfolio-Ranking, dezentrale MCP-Datenflüsse und detaillierte Risikokennzahlen für <strong className="text-white font-mono">{selectedSymbol}</strong>.
+            Generieren und exportieren Sie einen internen, zweiseitigen PDF-Compliance-Selbstcheck (kein externer Prüfnachweis). Der Bericht erfasst das aktuelle Portfolio-Ranking, dezentrale MCP-Datenflüsse und detaillierte Risikokennzahlen für <strong className="text-white font-mono">{selectedSymbol}</strong>.
           </p>
         </div>
 

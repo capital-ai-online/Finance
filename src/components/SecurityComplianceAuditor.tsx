@@ -90,7 +90,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setFeedback({ message: 'BaFin Compliance-Audit erfolgreich abgeschlossen!', type: 'success' });
+        setFeedback({ message: 'Interner Compliance-Selbstcheck erfolgreich abgeschlossen!', type: 'success' });
         await fetchDashboardData();
       } else {
         setFeedback({ message: data.error || 'Fehler während des Scans.', type: 'error' });
@@ -116,7 +116,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setFeedback({ message: `Regulatory Certificate ${data.certificate.id} erfolgreich ausgestellt!`, type: 'success' });
+        setFeedback({ message: `Interner Selbstcheck-Bericht ${data.certificate.id} erfolgreich erstellt!`, type: 'success' });
         // Refresh cert list
         const certsRes = await authFetch('/api/compliance/certificates');
         if (certsRes.ok) {
@@ -124,7 +124,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
           setCertificates(certsData.certificates || []);
         }
       } else {
-        setFeedback({ message: data.error || 'Zertifizierung abgelehnt.', type: 'error' });
+        setFeedback({ message: data.error || 'Selbstcheck-Bericht abgelehnt.', type: 'error' });
       }
     } catch (err: any) {
       setFeedback({ message: err.message || 'Verbindungsfehler.', type: 'error' });
@@ -150,7 +150,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-4">
         <RefreshCw className="animate-spin text-aif-gold-DEFAULT" size={32} />
-        <p className="text-xs font-mono text-white/50 uppercase tracking-widest">Lade BaFin Compliance Auditor Daten...</p>
+        <p className="text-xs font-mono text-white/50 uppercase tracking-widest">Lade Compliance-Selbstcheck-Daten...</p>
       </div>
     );
   }
@@ -260,7 +260,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
         <div className="space-y-1">
           <h3 className="text-lg font-black font-display text-white uppercase tracking-wider flex items-center gap-2">
             <ShieldCheck className="text-aif-gold-DEFAULT" size={18} />
-            <span>Zentrale BaFin-Governance-Instanz</span>
+            <span>Interne Compliance-Prüfinstanz (kein Aufsichtsorgan)</span>
           </h3>
           <p className="text-xs text-white/60 font-sans max-w-xl">
             Der Compliance Auditor agiert als automatisches Freigabetor. Er prüft systematisch 21 Schwachstellenklassen ab. Ein Deployment in die Live-Produktionsumgebung wird nur bei vollständiger Mängelfreiheit freigegeben.
@@ -304,7 +304,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
           { id: 'findings', label: `Ermittelte Mängel (${lastRun?.findings.length || 0})` },
           { id: 'remediations', label: 'Behebungspläne' },
           { id: 'policies', label: 'Sicherheitsrichtlinie' },
-          { id: 'certification', label: 'Regulatorische Zertifikate' }
+          { id: 'certification', label: 'Selbstcheck-Berichte' }
         ].map(tab => (
           <button
             key={tab.id}
@@ -496,7 +496,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
               <div className="p-8 text-center bg-[#1c1c21]/40 border border-white/5 rounded-2xl">
                 <CheckCircle2 size={36} className="mx-auto text-emerald-400 mb-2" />
                 <p className="text-xs font-mono text-emerald-400 uppercase font-bold tracking-wider">0 Mängel Identifiziert</p>
-                <p className="text-xs text-white/55 font-sans mt-1">Dieses Release erfüllt die strengen BaFin-Sicherheitsanforderungen vollständig.</p>
+                <p className="text-xs text-white/55 font-sans mt-1">Dieses Release erfüllt die intern definierten Sicherheitsanforderungen vollständig (kein regulatorischer Nachweis).</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -584,7 +584,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
         {activeTab === 'policies' && (
           <div className="bg-[#1c1c21]/80 border border-white/5 rounded-2xl p-6 space-y-6">
             <div className="space-y-1.5">
-              <h4 className="text-sm font-bold font-mono text-white uppercase tracking-wider">{activePolicy?.name || 'BaFin Compliance & GDPR Policy'}</h4>
+              <h4 className="text-sm font-bold font-mono text-white uppercase tracking-wider">{activePolicy?.name || 'Interne Compliance- & DSGVO-Richtlinie'}</h4>
               <p className="text-xs text-white/60 font-sans">{activePolicy?.description || 'Enforces strict secure data processing, transaction tracking, and release requirements.'}</p>
             </div>
 
@@ -641,30 +641,30 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
                     <div className="flex items-center gap-3">
                       <Award className="text-aif-gold-DEFAULT" size={32} />
                       <div>
-                        <h4 className="text-sm font-black font-mono text-white uppercase tracking-wider">CONFORMITY CERTIFICATE</h4>
-                        <p className="text-[9px] text-white/40 font-mono uppercase tracking-widest">BaFin Financial AI Regulatory Standard</p>
+                        <h4 className="text-sm font-black font-mono text-white uppercase tracking-wider">INTERNER SELBSTCHECK-BERICHT</h4>
+                        <p className="text-[9px] text-white/40 font-mono uppercase tracking-widest">Kein regulatorischer Nachweis · keine BaFin-Zertifizierung</p>
                       </div>
                     </div>
-                    <span className="text-[10px] font-mono text-aif-gold-DEFAULT font-bold uppercase border border-aif-gold-DEFAULT/30 rounded px-2.5 py-0.5">LEVEL 3 CERTIFIED</span>
+                    <span className="text-[10px] font-mono text-aif-gold-DEFAULT font-bold uppercase border border-aif-gold-DEFAULT/30 rounded px-2.5 py-0.5">INTERN GEPRÜFT</span>
                   </div>
 
                   <div className="space-y-4 text-xs font-sans text-white/80 leading-relaxed">
                     <p>
-                      Hiermit wird bescheinigt, dass der Build des Systems <span className="text-white font-bold font-mono">CAPITAL-AI (Version 0.5.4)</span> die Konformitätsprüfung für Hochsicherheitsumgebungen und Risikomanagement gemäß den Richtlinien der Bundesanstalt für Finanzdienstleistungsaufsicht (BaFin) bestanden hat.
+                      Dieser interne Selbstcheck bestätigt, dass der Build des Systems <span className="text-white font-bold font-mono">CAPITAL-AI (Version 0.7.0)</span> die intern definierten Prüfkriterien für Hochsicherheitsumgebungen und Risikomanagement zum Prüfzeitpunkt erfüllt hat. Dies ist <span className="text-white font-bold">keine Zertifizierung durch die BaFin oder eine andere Aufsichtsbehörde</span> — es handelt sich um ein automatisiertes, plattforminternes Prüfprotokoll.
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono text-[10px] text-white/60 bg-black/40 p-4 rounded-xl border border-white/5">
-                      <p>Release Status: <span className="text-emerald-400 font-bold">PRODUCTION APPROVED</span></p>
+                      <p>Interner Status: <span className="text-emerald-400 font-bold">PRODUCTION APPROVED (INTERN)</span></p>
                       <p>Prüfende Instanz: <span className="text-white">Supervisor Orchestration Engine</span></p>
-                      <p>Vorschriften: <span className="text-white">Art. 32 DSGVO & OWASP 2021</span></p>
-                      <p>Gültig bis: <span className="text-white">{new Date(Date.now() + 31536000000).toLocaleDateString('de-DE')}</span></p>
+                      <p>Referenzierte Standards: <span className="text-white">Art. 32 DSGVO & OWASP 2021 (intern angewendet)</span></p>
+                      <p>Nächste Prüfung fällig: <span className="text-white">{new Date(Date.now() + 31536000000).toLocaleDateString('de-DE')}</span></p>
                     </div>
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-white/5">
                     <div className="font-mono text-[9px] text-white/30 leading-snug">
-                      <p>Kryptografischer Signatur-Hash:</p>
-                      <p className="text-white/60">{lastRun ? lastRun.id : 'N/A'}-SIGN-SHA256</p>
+                      <p>Interne Prüf-Referenz-ID:</p>
+                      <p className="text-white/60">{lastRun ? lastRun.id : 'N/A'}-REF</p>
                     </div>
 
                     <button
@@ -673,7 +673,7 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
                       className="px-4 py-2 rounded-xl bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 hover:brightness-110 text-black font-mono font-bold uppercase text-[10px] tracking-wider flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all shrink-0"
                     >
                       <Award size={12} />
-                      <span>Certificate Ausstellen</span>
+                      <span>Selbstcheck-Bericht Erstellen</span>
                     </button>
                   </div>
                 </div>
@@ -682,10 +682,10 @@ export function SecurityComplianceAuditor({ currentUserEmail }: SecurityComplian
 
             <div className="lg:col-span-4 space-y-4">
               <div className="bg-[#1c1c21]/80 border border-white/5 rounded-2xl p-4 space-y-4">
-                <h4 className="text-xs font-bold font-mono text-white uppercase tracking-wider border-b border-white/5 pb-2">Ausgestellte Zertifikate ({certificates.length})</h4>
-                
+                <h4 className="text-xs font-bold font-mono text-white uppercase tracking-wider border-b border-white/5 pb-2">Erstellte Selbstcheck-Berichte ({certificates.length})</h4>
+
                 {certificates.length === 0 ? (
-                  <p className="text-xs font-mono text-white/40 text-center py-4">Noch keine Zertifikate ausgestellt.</p>
+                  <p className="text-xs font-mono text-white/40 text-center py-4">Noch keine Selbstcheck-Berichte erstellt.</p>
                 ) : (
                   <div className="space-y-2.5 max-h-[30vh] overflow-y-auto pr-1">
                     {certificates.map(cert => (

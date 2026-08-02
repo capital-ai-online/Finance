@@ -8,7 +8,7 @@ interface CapitalAiLogoProps {
   version?: string;
 }
 
-export function CapitalAiLogo({ className = '', size = 160, showText = true, version = '0.5.4' }: CapitalAiLogoProps) {
+export function CapitalAiLogo({ className = '', size = 160, showText = true, version = '0.7.0' }: CapitalAiLogoProps) {
   return (
     <div className={`flex flex-col items-center justify-center text-center ${className}`}>
       {/* 3D Network Node Emblem */}
