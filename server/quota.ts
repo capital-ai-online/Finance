@@ -28,7 +28,10 @@ export interface QuotaResult {
   reason?: 'quota-limit-reached' | 'authentication-required' | 'feature-not-entitled';
   nextEligibleAt?: string;
   windowDays?: number;
+  subjectKey?: string;
 }
+
+const fallbackSubjectReuse = new Map<string, { subjectKey: string; expiresAt: number }>();
 
 export function isUnlimitedTier(tier: string): boolean {
   return getWindowedFeatureLimit(tier, 'verified_screening') === 'unlimited';
@@ -65,8 +68,10 @@ async function consumeWindowedQuota(input: {
   tier: SubscriptionTier;
   identityKey: string;
   email?: string;
+  subjectKey?: string;
 }): Promise<QuotaResult> {
   const windowMs = input.limit.windowDays * 24 * 60 * 60 * 1000;
+  const normalizedSubject = input.subjectKey?.toUpperCase().trim() || undefined;
 
   if (input.email && isSupabaseConfigured()) {
     try {
@@ -76,6 +81,7 @@ async function consumeWindowedQuota(input: {
         p_quota_kind: input.quotaKind,
         p_limit: input.limit.limit,
         p_window_seconds: Math.round(windowMs / 1000),
+        p_subject_key: normalizedSubject ?? null,
       });
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
@@ -87,6 +93,7 @@ async function consumeWindowedQuota(input: {
           reason: row.allowed ? undefined : 'quota-limit-reached',
           nextEligibleAt: typeof row.next_eligible_at === 'string' ? row.next_eligible_at : undefined,
           windowDays: input.limit.windowDays,
+          subjectKey: typeof row.subject_key === 'string' ? row.subject_key : normalizedSubject,
         };
       }
     } catch (err: any) {
@@ -96,17 +103,37 @@ async function consumeWindowedQuota(input: {
     }
   }
 
-  const allowed = checkRateLimit(
-    `entitlement:${input.quotaKind}:${input.identityKey}`,
-    input.limit.limit,
-    windowMs,
-  );
+  const fallbackKey = `entitlement:${input.quotaKind}:${input.identityKey}`;
+  if (normalizedSubject) {
+    const existing = fallbackSubjectReuse.get(fallbackKey);
+    if (existing && existing.expiresAt > Date.now() && existing.subjectKey === normalizedSubject) {
+      return {
+        allowed: true,
+        remaining: 0,
+        tier: input.tier,
+        windowDays: input.limit.windowDays,
+        nextEligibleAt: new Date(existing.expiresAt).toISOString(),
+        subjectKey: normalizedSubject,
+      };
+    }
+  }
+
+  const allowed = checkRateLimit(fallbackKey, input.limit.limit, windowMs);
+  if (allowed && normalizedSubject) {
+    fallbackSubjectReuse.set(fallbackKey, {
+      subjectKey: normalizedSubject,
+      expiresAt: Date.now() + windowMs,
+    });
+  }
+  const cached = fallbackSubjectReuse.get(fallbackKey);
   return {
     allowed,
     remaining: allowed ? Math.max(input.limit.limit - 1, 0) : 0,
     tier: input.tier,
     reason: allowed ? undefined : 'quota-limit-reached',
     windowDays: input.limit.windowDays,
+    nextEligibleAt: cached ? new Date(cached.expiresAt).toISOString() : undefined,
+    subjectKey: cached?.subjectKey ?? normalizedSubject,
   };
 }
 
@@ -145,7 +172,7 @@ export async function enforceScreeningQuota(req: Request): Promise<QuotaResult> 
   });
 }
 
-export async function enforceBuffettValueCheckQuota(req: Request): Promise<QuotaResult> {
+export async function enforceBuffettValueCheckQuota(req: Request, subjectKey: string): Promise<QuotaResult> {
   const identity = await resolveVerifiedIdentity(req);
   if (!identity || !identity.email) {
     return {
@@ -158,7 +185,9 @@ export async function enforceBuffettValueCheckQuota(req: Request): Promise<Quota
 
   const tier = normalizeSubscriptionTier(await getSubscription(identity.userId));
   const limit = getWindowedFeatureLimit(tier, 'buffett_value_check');
-  if (limit === 'unlimited') return { allowed: true, remaining: 9999, tier };
+  if (limit === 'unlimited') {
+    return { allowed: true, remaining: 9999, tier, subjectKey: subjectKey.toUpperCase().trim() };
+  }
   if (limit === 'none' || limit === 'preview_only') {
     return { allowed: false, remaining: 0, tier, reason: 'feature-not-entitled' };
   }
@@ -170,6 +199,7 @@ export async function enforceBuffettValueCheckQuota(req: Request): Promise<Quota
     tier,
     identityKey: `user:${identity.userId}`,
     email: identity.email,
+    subjectKey,
   });
 }
 
