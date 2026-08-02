@@ -14,6 +14,14 @@ function coinGeckoPayload(count = 30) {
   };
 }
 
+function binancePayload(count = 30) {
+  const start = Date.UTC(2026, 6, 4);
+  return Array.from({ length: count }, (_, index) => [
+    start + index * 24 * 60 * 60 * 1000,
+    '3000', '3100', '2950', String(3050 + index * 10), '1000',
+  ]);
+}
+
 afterEach(() => {
   resetCryptoHistoryProviderState();
   vi.restoreAllMocks();
@@ -30,6 +38,7 @@ describe('cryptoHistoryProvider resilience', () => {
     const first = await getVerifiedCryptoHistory('ETH', 30, { fetchImpl });
     const second = await getVerifiedCryptoHistory('ETH', 30, { fetchImpl });
 
+    expect(first?.provider).toBe('CoinGecko');
     expect(first?.cacheMode).toBe('fresh');
     expect(first?.degraded).toBe(false);
     expect(first?.points.length).toBeGreaterThanOrEqual(20);
@@ -37,7 +46,7 @@ describe('cryptoHistoryProvider resilience', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('retries a transient provider failure with bounded exponential backoff', async () => {
+  it('retries a transient CoinGecko failure with bounded exponential backoff', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response('temporary', { status: 503 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(coinGeckoPayload()), {
@@ -54,12 +63,40 @@ describe('cryptoHistoryProvider resilience', () => {
       maxAttempts: 3,
     });
 
+    expect(result?.provider).toBe('CoinGecko');
     expect(result?.cacheMode).toBe('fresh');
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(sleep).toHaveBeenCalledWith(200);
   });
 
-  it('opens the circuit after the configured failure threshold', async () => {
+  it('falls back to verified Binance history when CoinGecko is unavailable on a cold start', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('coingecko.com')) return new Response('rate limited', { status: 429 });
+      if (url.includes('binance.com')) {
+        return new Response(JSON.stringify(binancePayload()), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response('unexpected', { status: 500 });
+    });
+    const fetchImpl = fetchMock as unknown as typeof fetch;
+
+    const result = await getVerifiedCryptoHistory('BTC', 30, {
+      fetchImpl,
+      sleep: async () => undefined,
+      random: () => 0,
+      maxAttempts: 1,
+    });
+
+    expect(result?.provider).toBe('Binance');
+    expect(result?.points).toHaveLength(30);
+    expect(result?.degraded).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('opens provider circuits after the configured failure threshold', async () => {
     const fetchMock = vi.fn(async () => new Response('down', { status: 503 }));
     const fetchImpl = fetchMock as unknown as typeof fetch;
     const sleep = vi.fn(async () => undefined);
@@ -86,10 +123,11 @@ describe('cryptoHistoryProvider resilience', () => {
 
     expect(first).toBeNull();
     expect(second).toBeNull();
+    expect(callsAfterFirst).toBeGreaterThanOrEqual(2);
     expect(fetchMock.mock.calls.length).toBe(callsAfterFirst);
   });
 
-  it('uses last-known-good data in degraded mode when refresh fails', async () => {
+  it('uses last-known-good data in degraded mode when all refresh providers fail', async () => {
     let now = Date.UTC(2026, 7, 2, 6, 0, 0);
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify(coinGeckoPayload()), {
