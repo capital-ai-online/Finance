@@ -9,27 +9,40 @@ function source(relativePath: string): string {
 }
 
 describe('frontend financial data contract regression gate', () => {
-  it('Best/Worst consumes verified scoring boundaries and guards nullable catalog values', () => {
+  it('Best/Worst renders progressively and uses only verified score boundaries', () => {
     const code = source('src/components/UniverseBestWorst.tsx');
-
-    expect(code).toContain('/api/crypto/list');
+    expect(code).toContain('/api/crypto/score');
     expect(code).toContain('/api/registry/assets/verified-scores');
-    expect(code).toContain("scoreStatus === 'READY'");
+    expect(code).toContain('Progressive Scoring');
+    expect(code).toContain('AbortController');
     expect(code).not.toMatch(/return\s+50(?:\.0)?\s*;/);
-    expect(code).toContain("if (price === null) return '—';");
-    expect(code).toContain("if (change24h === null) return '—';");
-    expect(code).not.toMatch(/asset\.change24h\.toFixed/);
+    expect(code).not.toContain('Math.random');
+    expect(code).not.toContain('charCodeAt');
   });
 
-  it('Enterprise scoring surface uses verified backend contracts and contains no symbol-hash/random finance path', () => {
+  it('Enterprise scorer supports all asset classes while canonical scoring stays backend-bound', () => {
     const code = source('src/components/CryptoScoringEnterprise.tsx');
-
     expect(code).toContain('/api/crypto/score');
     expect(code).toContain('/verified-score');
+    expect(code).toContain("'commodity'");
+    expect(code).toContain("'bond'");
+    expect(code).toContain('Asset-Suche');
     expect(code).not.toContain('charCodeAt');
     expect(code).not.toContain('Math.random');
     expect(code).not.toContain('getTradingSetup');
     expect(code).not.toMatch(/entryMin|entryMax|stopLoss|takeProfit/);
+  });
+
+  it('restored enterprise analysis panels are explicitly read-only to scoring', () => {
+    const code = source('src/components/EnterpriseAnalysisPanels.tsx');
+    expect(code).toContain('Ordertiefe / Market Depth');
+    expect(code).toContain('Arbitrage Radar');
+    expect(code).toContain('Intelligent Feed');
+    expect(code).toContain('AI Kurzanalyse');
+    expect(code).toContain('Read-only Spiegel des verifizierten kanonischen Scores');
+    expect(code).toContain('schreiben weder in den kanonischen Score noch in Ranking');
+    expect(code).not.toContain('localStorage.setItem');
+    expect(code).not.toContain('/api/registry/assets/');
   });
 
   it('Legacy P0 copy is not presented as current provider status', () => {
