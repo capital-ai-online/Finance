@@ -1008,17 +1008,15 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                           className="overflow-hidden mt-1 px-1 space-y-1"
                         >
                           <SidebarTooltip title="Datenschutz" text="Erfahre, wie wir Deine persönlichen Daten und Portfolio-Informationen nach DSGVO-Richtlinien schützen.">
-                            <button 
-                              onClick={() => navigateTo('datenschutz')}
-                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
-                                activeView === 'datenschutz' 
-                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
-                              }`}
+                            <a
+                              href="https://capital-ai.online/Datenschutz"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT text-white/70 hover:text-white hover:bg-white/5 border border-transparent"
                             >
                               <Shield size={14} />
                               <span>Datenschutz</span>
-                            </button>
+                            </a>
                           </SidebarTooltip>
 
                           <SidebarTooltip title="Impressum & AGB" text="Rechtliche Informationen über das Unternehmen, Nutzungsbedingungen und Allgemeine Geschäftsbedingungen.">
@@ -1889,11 +1887,11 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
               </div>
 
               <div className="flex justify-center gap-4 text-[11px] font-mono text-white/40">
-                <button onClick={() => navigateTo('datenschutz')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Datenschutz</button>
+                <a href="https://capital-ai.online/Datenschutz" target="_blank" rel="noopener noreferrer" className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Datenschutz</a>
                 <span>•</span>
                 <button onClick={() => navigateTo('impressum-agb')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Impressum</button>
                 <span>•</span>
-                <button onClick={() => navigateTo('impressum-agb')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">AGB</button>
+                <a href="https://capital-ai.online/agb" target="_blank" rel="noopener noreferrer" className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">AGB</a>
                 <span>•</span>
                 <button onClick={() => navigateTo('abonnements')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Abonnements</button>
               </div>
