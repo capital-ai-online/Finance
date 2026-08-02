@@ -74,7 +74,7 @@ export function AuditLog({ currentUserEmail }: AuditLogProps) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
       // email-Query bleibt als Übergangs-Fallback bestehen, bis die IAM-Migration
-      // produktiv läuft (siehe server/iam/authMiddleware.ts) - entscheidend ist der Token.
+      // produktiv läuft (siehe src/platform/Security/authMiddleware.ts) - entscheidend ist der Token.
       const res = await fetch(`/api/admin/system-events?email=${encodeURIComponent(currentUserEmail)}`, { headers });
       if (res.status === 401 || res.status === 403) {
         setAccessDenied(true);

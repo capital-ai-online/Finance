@@ -7,8 +7,8 @@ import express from 'express';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 import { runAgentEvaluation, persistAgentEvaluationRun, getAgentEvaluationHistory } from './agentEvaluation';
-import { checkAdminAccess } from './iam/authMiddleware';
-import { SUPERVISOR_ZONE_ROLES } from './iam/types';
+import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
+import { SUPERVISOR_ZONE_ROLES } from '../src/platform/Security/types';
 
 export function createAgentEvaluationRouter(ai: any, anthropic: Anthropic | null = null, openai: OpenAI | null = null) {
   const router = express.Router();

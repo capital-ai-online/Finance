@@ -60,6 +60,7 @@
       "owner": "Platform Director",
       "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
       "implementedBy": "src/platform/VersionManager",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): bis dahin zeigte dieses Feld auf einen leeren, vom Enterprise Bootstrapper generierten Ordner, waehrend der echte Code unter server/versionManager.ts lag - eine Governance-Inkonsistenz. Der Code wurde physisch nach src/platform/VersionManager/versionManager.ts verschoben, die Angabe ist jetzt korrekt.",
       "relatedAdr": [
         "ADR-0016"
       ]
@@ -88,6 +89,7 @@
       "owner": "Platform Director",
       "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
       "implementedBy": "src/platform/Security, src/platform/Compliance",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): bis dahin zeigten beide Pfade auf leere, vom Enterprise Bootstrapper generierte Ordner, waehrend der echte Code unter server/iam/ (Security) und server/compliance/ (Compliance) lag - eine Governance-Inkonsistenz. Beide wurden physisch nach src/platform/Security/ bzw. src/platform/Compliance/ verschoben, die Angabe ist jetzt korrekt.",
       "relatedAdr": [
         "ADR-0016"
       ]

@@ -4,7 +4,7 @@
 // Dies ist die erste ausfuehrbare Implementierung im gesamten src/platform-Baum
 // (ADR-0018, Folgeentscheidung 1 / Stufe 1-4 aus REPOSITORY_STRUCTURE_ANALYSIS.md).
 // In-Memory, ohne externe Abhaengigkeiten - konsistent mit der uebrigen
-// Repository-Konvention (vgl. server/iam/rateLimiter.ts).
+// Repository-Konvention (vgl. src/platform/Security/rateLimiter.ts).
 
 import type { IEventBus } from '../Interfaces/IEventBus';
 import type { IEventRegistry } from '../Interfaces/IEventRegistry';
@@ -64,6 +64,6 @@ export class EventBus implements IEventBus {
  * ESS-0013-CONTRACTS Abschnitt 5: es gibt keinen zweiten Zustellweg - ein einzelner,
  * geteilter Bus pro Prozess stellt das sicher. Mehrinstanz-Betrieb (mehrere Render-
  * Worker) teilt den Zustand NICHT, analog zur bereits dokumentierten Einschraenkung
- * von server/iam/rateLimiter.ts.
+ * von src/platform/Security/rateLimiter.ts.
  */
 export const eventMeshBus = new EventBus();

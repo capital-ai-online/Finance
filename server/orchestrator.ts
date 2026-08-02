@@ -2,8 +2,8 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { orchestrator } from '../src/lib/requestOrchestrator';
-import { checkAdminAccess } from './iam/authMiddleware';
-import { SUPERVISOR_ZONE_ROLES } from './iam/types';
+import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
+import { SUPERVISOR_ZONE_ROLES } from '../src/platform/Security/types';
 import { isGeminiConfigured } from './ai';
 import { getCleanEnv } from './env';
 

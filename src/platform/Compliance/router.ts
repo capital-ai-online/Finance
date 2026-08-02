@@ -11,8 +11,8 @@
 // Findings/Zertifikate, die nicht unauthentifiziert einsehbar sein dürfen.
 
 import express from 'express';
-import { checkAdminAccess } from '../iam/authMiddleware';
-import { ADMIN_ZONE_ROLES } from '../iam/types';
+import { checkAdminAccess } from '../Security/authMiddleware';
+import { ADMIN_ZONE_ROLES } from '../Security/types';
 import {
   buildRemediationPlans,
   createCertificate,

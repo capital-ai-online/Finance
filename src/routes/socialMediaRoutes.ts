@@ -14,8 +14,8 @@
 //     konstruieren, und schreibt in social_media_publish_log statt in ein In-Memory-Array.
 
 import { Router, Request, Response } from 'express';
-import { resolveVerifiedIdentity } from '../../server/iam/authMiddleware';
-import { checkRateLimit, getClientIp } from '../../server/iam/rateLimiter';
+import { resolveVerifiedIdentity } from '../platform/Security/authMiddleware';
+import { checkRateLimit, getClientIp } from '../platform/Security/rateLimiter';
 import { createLogger } from '../../server/logger';
 import { createAuthorizationRequest, completeOAuthCallback, isProviderConfigured } from '../../server/socialMedia/oauthExchange';
 import { listAccountsForUser, disconnectAccount, getDecryptedAccount } from '../../server/socialMedia/tokenStore';

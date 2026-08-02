@@ -1,6 +1,6 @@
 // ESS-0013, Core "EventSchema" — strukturelle Definition des Payloads zur
 // Validierung durch EventSchemaValidator. Bewusst minimal (kein externes
-// JSON-Schema-Paket), konsistent mit dem uebrigen Repository (server/iam/rateLimiter.ts
+// JSON-Schema-Paket), konsistent mit dem uebrigen Repository (src/platform/Security/rateLimiter.ts
 // etc. verzichten ebenfalls bewusst auf zusaetzliche Abhaengigkeiten).
 
 export type EventFieldType = 'string' | 'number' | 'boolean' | 'object' | 'array';

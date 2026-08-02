@@ -7,10 +7,10 @@
 
 import express from 'express';
 import { getServerSupabase, isSupabaseConfigured } from './db';
-import { resolveVerifiedIdentity, logIamEvent } from './iam/authMiddleware';
-import { checkRateLimit, getClientIp } from './iam/rateLimiter';
-import { encryptSecret, decryptSecret, hashOpaqueToken, generateOpaqueToken } from './iam/secretCrypto';
-import { generateBase32Secret, verifyTotp, buildOtpAuthUri } from './iam/totp';
+import { resolveVerifiedIdentity, logIamEvent } from '../src/platform/Security/authMiddleware';
+import { checkRateLimit, getClientIp } from '../src/platform/Security/rateLimiter';
+import { encryptSecret, decryptSecret, hashOpaqueToken, generateOpaqueToken } from '../src/platform/Security/secretCrypto';
+import { generateBase32Secret, verifyTotp, buildOtpAuthUri } from '../src/platform/Security/totp';
 
 export const stepUpRouter = express.Router();
 

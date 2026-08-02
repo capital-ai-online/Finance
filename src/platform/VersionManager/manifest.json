@@ -1,33 +1,32 @@
 {
   "name": "VersionManager",
   "version": "1.0.0",
-  "status": "development",
+  "status": "implemented",
   "owner": "CAPITAL-AI",
-  "description": "",
+  "description": "Enterprise Version Manager: verwaltet die verbindliche Plattformversion/Buildnummer (Persistenz in uploads/version_manager.json), fuehrt admin-getriggerte Versions-Bumps (patch/minor/major) aus und generiert dabei 11 Compliance-Markdown-Dokumente unter docs/. Admin- und Step-Up-geschuetzt (server/iam), REST-API unter /api/admin/version(/bump).",
   "category": "platform",
   "ess": [
     "ESS-0001",
-    "ESS-0001-CONTRACTS"
+    "ESS-0001-CONTRACTS",
+    "ESS-0004"
   ],
   "adr": [],
-  "dependencies": [],
+  "dependencies": [
+    "server/systemEvents.ts",
+    "server/documentHygiene.ts",
+    "server/iam/authMiddleware.ts",
+    "server/iam/types.ts"
+  ],
   "events": {
-    "produces": [
-      "VersionCalculatedEvent",
-      "VersionApprovedEvent",
-      "ReleasePreparedEvent",
-      "ReleasePublishedEvent"
-    ],
-    "consumes": [
-      "ContractViolationEvent",
-      "DocumentationValidatedEvent"
-    ],
-    "note": "Nachgepflegt gemaess ADR-0018 Folgeentscheidung 2 (Enterprise Event Mesh Manifest-Nachpflege)."
+    "produces": [],
+    "consumes": [],
+    "note": "ARCH-AUDIT-0002 (J5): das produktive Event-Feld wurde korrigiert - die vier zuvor genannten Events (VersionCalculatedEvent etc.) werden vom tatsaechlichen Code nicht ausgeloest. Die Komponente protokolliert stattdessen ueber das aeltere logSystemEvent()-Log (server/systemEvents.ts), nicht ueber den Enterprise Event Bus (ESS-0013)."
   },
   "knowledge": [],
   "interfaces": [],
   "contracts": [],
   "documentation": [
     "README.md"
-  ]
+  ],
+  "note": "ARCH-AUDIT-0002 (J5, Kapitel 14.6): physisch aus server/versionManager.ts hierher verschoben - vorher wies die ESS-Registry (implementedBy) auf diesen Ordner, obwohl er nur eine leere Huelle war und der Code unter server/ lag. Diese Verschiebung macht die Registry-Angabe korrekt."
 }

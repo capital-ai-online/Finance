@@ -26,8 +26,8 @@
 import express from 'express';
 import { getServerSupabase, isSupabaseConfigured } from './db';
 import { assetRegistry } from '../src/lib/assetRegistry';
-import { checkAdminAccess } from './iam/authMiddleware';
-import { ADMIN_ZONE_ROLES } from './iam/types';
+import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
+import { ADMIN_ZONE_ROLES } from '../src/platform/Security/types';
 
 export interface SnapshotInput {
   symbol: string;

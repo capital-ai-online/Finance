@@ -4,7 +4,7 @@
 // Zuordnung selbst - das bleibt eine bewusste Selbsteinschaetzung (siehe scanners.ts).
 
 import { describe, it, expect } from 'vitest';
-import { runAllScanners } from '../../server/compliance/scanners';
+import { runAllScanners } from '../../src/platform/Compliance/scanners';
 
 describe('compliance scanners', () => {
   it('liefert alle 21 registrierten Scanner', () => {

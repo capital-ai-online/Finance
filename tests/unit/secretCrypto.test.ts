@@ -1,9 +1,9 @@
 // Audit ARCH-AUDIT-0002 (D5, 30-Tage-Roadmap): Testabdeckung fuer den kritischen Auth-Pfad.
-// server/iam/secretCrypto.ts verschluesselt TOTP-Seeds ruhend (ADR-0003.5) - ein Fehler hier
+// src/platform/Security/secretCrypto.ts verschluesselt TOTP-Seeds ruhend (ADR-0003.5) - ein Fehler hier
 // wuerde entweder Secrets im Klartext exponieren oder Step-Up/Break-Glass komplett brechen.
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { encryptSecret, decryptSecret, hashOpaqueToken, generateOpaqueToken } from '../../server/iam/secretCrypto';
+import { encryptSecret, decryptSecret, hashOpaqueToken, generateOpaqueToken } from '../../src/platform/Security/secretCrypto';
 
 // getKey() liest TOTP_ENCRYPTION_KEY erst beim tatsaechlichen Aufruf von encryptSecret/
 // decryptSecret (kein Modul-Top-Level-Zugriff), daher genuegt es, die Variable vor den

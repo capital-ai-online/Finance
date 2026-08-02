@@ -1,31 +1,33 @@
 {
   "name": "Compliance",
   "version": "1.0.0",
-  "status": "development",
+  "status": "implemented",
   "owner": "CAPITAL-AI",
-  "description": "",
+  "description": "SecurityComplianceAuditor-Backend (ADR-0012): 20+ Scanner-Regeln (SEC-/DAT-/GOV-Praefixe) gegen den echten Repository-Code, ISO/IEC-27001-Annex-A-Zuordnung je Regel, Remediation-Plaene, Compliance-Zertifikate. REST-API unter /api/compliance/* (dashboard, run, certify, certificates, report, risk).",
   "category": "platform",
   "ess": [
     "ESS-0001",
-    "ESS-0001-CONTRACTS"
+    "ESS-0001-CONTRACTS",
+    "ESS-0006"
   ],
-  "adr": [],
-  "dependencies": [],
+  "adr": [
+    "ADR-0012"
+  ],
+  "dependencies": [
+    "server/db.ts",
+    "src/platform/Security/authMiddleware.ts",
+    "src/platform/Security/types.ts"
+  ],
   "events": {
-    "produces": [
-      "ComplianceValidatedEvent",
-      "LayerViolationEvent",
-      "ContractViolationEvent"
-    ],
-    "consumes": [
-      "ArchitectureValidatedEvent"
-    ],
-    "note": "Nachgepflegt gemaess ADR-0018 Folgeentscheidung 2 (Enterprise Event Mesh Manifest-Nachpflege)."
+    "produces": [],
+    "consumes": [],
+    "note": "ARCH-AUDIT-0002 (J5): das produktive Event-Feld wurde korrigiert - keines der zuvor genannten Events (ComplianceValidatedEvent, LayerViolationEvent, ContractViolationEvent, ArchitectureValidatedEvent) wird vom tatsaechlichen Code ausgeloest oder konsumiert."
   },
   "knowledge": [],
   "interfaces": [],
   "contracts": [],
   "documentation": [
     "README.md"
-  ]
+  ],
+  "note": "ARCH-AUDIT-0002 (J5, Kapitel 14.6): physisch aus server/compliance/ hierher verschoben - vorher wies die ESS-Registry (implementedBy von ESS-0006) auf diesen Ordner, obwohl er nur eine leere Huelle war und der Code unter server/compliance/ lag. Diese Verschiebung macht die Registry-Angabe korrekt."
 }

@@ -1,10 +1,16 @@
+// ARCH-AUDIT-0002 (J5, Kapitel 14.6): physisch aus server/versionManager.ts hierher verschoben -
+// diese Datei ist die reale Implementierung von ESS-0004 (Enterprise Version Manager). Vorher
+// deklarierte die ESS-Registry "implementedBy": "src/platform/VersionManager", obwohl der
+// Ordner nur eine leere Huelle (README.md/manifest.json) war und der Code tatsaechlich unter
+// server/ lag - eine Governance-Inkonsistenz, die mit dieser Verschiebung behoben wird.
+
 import fs from 'fs';
 import path from 'path';
 import express from 'express';
-import { logSystemEvent } from './systemEvents';
-import { processFileEvent } from './documentHygiene';
-import { checkAdminAccess, requireStepUp } from './iam/authMiddleware';
-import { SUPERVISOR_ZONE_ROLES } from './iam/types';
+import { logSystemEvent } from '../../../server/systemEvents';
+import { processFileEvent } from '../../../server/documentHygiene';
+import { checkAdminAccess, requireStepUp } from '../Security/authMiddleware';
+import { SUPERVISOR_ZONE_ROLES } from '../Security/types';
 
 export const versionManagerRouter = express.Router();
 

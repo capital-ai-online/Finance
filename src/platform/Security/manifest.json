@@ -1,29 +1,33 @@
 {
   "name": "Security",
   "version": "1.0.0",
-  "status": "development",
+  "status": "implemented",
   "owner": "CAPITAL-AI",
-  "description": "",
+  "description": "IAM-Kern: Identitaetsverifikation (E-Mail-basiert, konsistent mit Subscriptions), rollenbasierte Admin-/Supervisor-Autorisierung (fail-closed), In-Memory-Rate-Limiting fuer Admin-/Auth-Zonen, TOTP-Erzeugung/-Verifikation (RFC 6238) und AES-256-GCM-Verschluesselung ruhender Secrets.",
   "category": "platform",
   "ess": [
     "ESS-0001",
-    "ESS-0001-CONTRACTS"
+    "ESS-0001-CONTRACTS",
+    "ESS-0006"
   ],
-  "adr": [],
-  "dependencies": [],
+  "adr": [
+    "ADR-0003.5"
+  ],
+  "dependencies": [
+    "server/db.ts",
+    "server/env.ts",
+    "server/logger.ts"
+  ],
   "events": {
-    "produces": [
-      "SecurityViolationDetectedEvent"
-    ],
-    "consumes": [
-      "ComplianceValidatedEvent"
-    ],
-    "note": "Nachgepflegt gemaess ADR-0018 Folgeentscheidung 2 (Enterprise Event Mesh Manifest-Nachpflege)."
+    "produces": [],
+    "consumes": [],
+    "note": "ARCH-AUDIT-0002 (J5): das produktive Event-Feld wurde korrigiert - SecurityViolationDetectedEvent/ComplianceValidatedEvent wurden vom Code nie ausgeloest bzw. konsumiert. Sicherheitsereignisse werden aktuell ueber logSystemEvent() (server/systemEvents.ts) protokolliert, nicht ueber den Enterprise Event Bus (ESS-0013)."
   },
   "knowledge": [],
   "interfaces": [],
   "contracts": [],
   "documentation": [
     "README.md"
-  ]
+  ],
+  "note": "ARCH-AUDIT-0002 (J5, Kapitel 14.6): physisch aus server/iam/ hierher verschoben - vorher wies die ESS-Registry (implementedBy von ESS-0006) auf diesen Ordner, obwohl er nur eine leere Huelle war und der Code unter server/iam/ lag. Diese Verschiebung macht die Registry-Angabe korrekt."
 }

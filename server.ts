@@ -33,8 +33,8 @@ import { computeReturnStats, classifyTrendLabel } from './src/services/realMarke
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
-import { checkAdminAccess, runIamSchemaHealthCheck } from './server/iam/authMiddleware';
-import { SUPERVISOR_ZONE_ROLES } from './server/iam/types';
+import { checkAdminAccess, runIamSchemaHealthCheck } from './src/platform/Security/authMiddleware';
+import { SUPERVISOR_ZONE_ROLES } from './src/platform/Security/types';
 import {
   isSupabaseConfigured,
   getServerSupabase,
@@ -50,11 +50,11 @@ import { orchestratorRouter } from './server/orchestrator';
 import { aiRouter, getGeminiInstance, isGeminiConfigured } from './server/ai';
 import { systemEventsRouter, logSystemEvent } from './server/systemEvents';
 import { hygieneRouter, startRecursiveFileWatcher } from './server/documentHygiene';
-import { versionManagerRouter } from './server/versionManager';
+import { versionManagerRouter } from './src/platform/VersionManager/versionManager';
 import { stepUpRouter } from './server/stepUp';
 import { enforceScreeningQuota } from './server/quota';
-import { complianceRouter } from './server/compliance/router';
-import { checkRateLimit, getClientIp } from './server/iam/rateLimiter';
+import { complianceRouter } from './src/platform/Compliance/router';
+import { checkRateLimit, getClientIp } from './src/platform/Security/rateLimiter';
 import { createLogger, requestContext } from './server/logger';
 import { metricsMiddleware, renderMetrics } from './server/metrics';
 

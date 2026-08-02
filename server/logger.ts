@@ -3,7 +3,7 @@
 // ueber server/ und server.ts, jeder mit eigenem Ad-hoc-Format. Bewusst KEINE externe
 // Logging-Bibliothek (pino/winston) eingefuehrt: das Projekt hat an anderer Stelle bereits
 // bewusst gegen zusaetzliche Abhaengigkeiten fuer kleine, gut spezifizierte Probleme
-// entschieden (siehe server/iam/totp.ts). Dieses Modul strukturiert stattdessen die
+// entschieden (siehe src/platform/Security/totp.ts). Dieses Modul strukturiert stattdessen die
 // bestehende console.*-Ausgabe: einheitliches Format (Timestamp, Level, Scope, optionale
 // Request-ID, Message, Meta) plus eine Middleware, die jedem Request eine Correlation-ID
 // zuweist und als `x-request-id`-Header zurueckgibt.

@@ -8,7 +8,7 @@ import {
   isSupabaseConfigured,
   getServerSupabase
 } from './db';
-import { resolveVerifiedIdentity } from './iam/authMiddleware';
+import { resolveVerifiedIdentity } from '../src/platform/Security/authMiddleware';
 import { sendSubscriptionConfirmation } from './mailer';
 import { OWNER_NOTIFICATION_EMAIL } from './ownerConfig_server';
 

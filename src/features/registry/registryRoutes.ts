@@ -6,8 +6,8 @@
 
 import express from 'express';
 import { assetRegistry } from '../../lib/assetRegistry';
-import { checkAdminAccess } from '../../../server/iam/authMiddleware';
-import { SUPERVISOR_ZONE_ROLES } from '../../../server/iam/types';
+import { checkAdminAccess } from '../../platform/Security/authMiddleware';
+import { SUPERVISOR_ZONE_ROLES } from '../../platform/Security/types';
 import { logSystemEvent } from '../../../server/systemEvents';
 
 export interface AssetUpdatePayload {

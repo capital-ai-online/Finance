@@ -90,6 +90,15 @@ function findEnvVarUsages(): Set<string> {
     }
   };
   walk(path.join(REPO_ROOT, 'server'));
+  // ARCH-AUDIT-0002 (J5, 2026-08-02): server-seitiger Code lebt seitdem nicht mehr
+  // ausschliesslich unter server/ - src/platform/Security, src/platform/Compliance und
+  // src/platform/VersionManager enthalten physisch verschobenen, echten Backend-Code mit
+  // eigenen getCleanEnv()-Aufrufen (z.B. TOTP_ENCRYPTION_KEY in secretCrypto.ts). Ohne diesen
+  // zweiten Scan-Pfad wuerde die Env-Var-Abdeckungspruefung fuer neue getCleanEnv()-Aufrufe in
+  // diesen Dateien lautlos blind werden. src/ enthaelt auch Client-Code, aber getCleanEnv()
+  // ist eine server-only Hilfsfunktion (server/env.ts) - ein zusaetzlicher Scan schadet nicht,
+  // er findet nur zusaetzliche echte Treffer.
+  walk(path.join(REPO_ROOT, 'src'));
 
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf8');
