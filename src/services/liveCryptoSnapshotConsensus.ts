@@ -55,7 +55,13 @@ async function fetchCoinMarketCapProvenance(
       ['maxSupply', positive(row?.max_supply), 'token', 'data[].max_supply'],
       ['totalSupply', positive(row?.total_supply), 'token', 'data[].total_supply'],
     ];
-    recordProviderHealth({ provider: 'CoinMarketCap', capability: 'crypto-snapshot-consensus', state: 'healthy', consecutiveFailures: 0 });
+    recordProviderHealth({
+      provider: 'CoinMarketCap',
+      capability: 'crypto-snapshot-consensus',
+      state: 'healthy',
+      cacheMode: 'live',
+      message: `${symbol}: verified snapshot fields available for quorum evaluation.`,
+    });
     recordMarketDataProviderOutcome({ provider: 'CoinMarketCap', success: true, latencyMs: Math.max(0, Date.now() - started) });
     return values
       .filter(([, value]) => value !== null)
@@ -65,8 +71,7 @@ async function fetchCoinMarketCapProvenance(
       provider: 'CoinMarketCap',
       capability: 'crypto-snapshot-consensus',
       state: 'unavailable',
-      consecutiveFailures: 1,
-      error: error instanceof Error ? error.message : String(error),
+      message: error instanceof Error ? error.message : String(error),
     });
     recordMarketDataProviderOutcome({ provider: 'CoinMarketCap', success: false });
     return [];
