@@ -14,17 +14,20 @@ import { detectActivePatterns, type DetectedPattern, type OhlcCandle } from '../
 
 const STORAGE_KEY = 'capital_ai_favorite_pattern_slots_v1';
 const SLOT_COUNT = 3;
+// Default fuer neue Nutzer:innen ohne gespeicherte Slots: Slot 1 vorbelegt mit BTC (demselben
+// Default-Symbol wie der Enterprise Universum Scorer, siehe Dashboard.tsx `selectedSymbol`),
+// Slot 2/3 bewusst leer.
+const DEFAULT_SLOTS: Array<string | null> = ['BTC', null, null];
 
 function loadSlots(): Array<string | null> {
-  const empty = Array.from({ length: SLOT_COUNT }, () => null);
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return empty;
+    if (!raw) return [...DEFAULT_SLOTS];
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return empty;
-    return empty.map((_, index) => (typeof parsed[index] === 'string' ? parsed[index] : null));
+    if (!Array.isArray(parsed)) return [...DEFAULT_SLOTS];
+    return Array.from({ length: SLOT_COUNT }, (_, index) => (typeof parsed[index] === 'string' ? parsed[index] : null));
   } catch {
-    return empty;
+    return [...DEFAULT_SLOTS];
   }
 }
 
@@ -191,7 +194,7 @@ export function FavoriteAssetPatternSlots({ onSelectSymbol }: { onSelectSymbol?:
   }, [slots]);
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-neutral-950/60 p-5 sm:p-6 backdrop-blur-xl space-y-4">
+    <section id="favoriten-slots" className="scroll-mt-24 rounded-2xl border border-white/10 bg-neutral-950/60 p-5 sm:p-6 backdrop-blur-xl space-y-4">
       <div>
         <div className="flex items-center gap-2 text-sm font-black uppercase text-white"><Star size={16} className="text-aif-gold-DEFAULT" /> Favoriten-Slots · Live-Pattern 1H/4H</div>
         <p className="mt-1 text-[10px] font-mono text-white/40">3 fest zugeordnete Slots. Candlestick-Formationen werden live aus echten 1H-/4H-Kerzen (Binance) berechnet — read-only, kein Einfluss auf den kanonischen Score.</p>

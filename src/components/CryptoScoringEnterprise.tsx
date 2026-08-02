@@ -483,7 +483,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
   }, [result]);
 
   return (
-    <section className="bg-neutral-950/60 border border-white/10 rounded-2xl p-5 sm:p-6 backdrop-blur-xl relative overflow-hidden space-y-6">
+    <section id="enterprise-scorer" className="scroll-mt-24 bg-neutral-950/60 border border-white/10 rounded-2xl p-5 sm:p-6 backdrop-blur-xl relative overflow-hidden space-y-6">
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-purple-500/10 blur-[130px] rounded-full pointer-events-none" />
       <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-cyan-500/5 blur-[130px] rounded-full pointer-events-none" />
 
@@ -590,7 +590,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
             </div>
 
             {result.assetType === 'crypto' && (
-              <div className="rounded-2xl border border-white/10 bg-black/25 p-5">
+              <div id="trade-setup-grafik" className="scroll-mt-24 rounded-2xl border border-white/10 bg-black/25 p-5">
                 <div className="flex items-center gap-2 mb-1 text-sm font-black uppercase text-white"><Activity size={15} className="text-aif-gold-DEFAULT" /> Trade-Setup Grafik</div>
                 {result.tradeSetup ? (
                   <TradeSetupLadder setup={result.tradeSetup} />

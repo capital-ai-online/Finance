@@ -207,7 +207,7 @@ export function EnterpriseAnalysisPanels({
   const combinedSpreadBps = spreadBps(bidsLadder[0]?.price ?? null, asksLadder[0]?.price ?? null);
 
   return (
-    <div className="space-y-5">
+    <div id="tiefenanalyse" className="scroll-mt-24 space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="rounded-xl border border-white/10 bg-black/30 p-4">
           <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-cyan-300"><Search size={14} /> Pattern</div>

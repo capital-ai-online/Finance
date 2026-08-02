@@ -71,7 +71,9 @@ import {
   Eye,
   ArrowUpRight,
   Award,
-  Share2
+  Share2,
+  Star,
+  Database
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -1302,8 +1304,21 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
           >
             {activeView === 'dashboard' && (
               <>
+                  {/* Orientierungsleiste: kurzer Einstieg + Sprunglinks fuer neue Nutzer:innen (erster Eindruck der Hauptseite) */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/30 backdrop-blur-md px-5 py-3.5">
+                    <p className="text-xs text-white/60 font-mono leading-relaxed max-w-xl">
+                      <span className="text-white font-bold">Willkommen bei CAPITAL-AI.</span> Ihr Cockpit für Multi-Asset-Scoring, Trade-Setups und Live-Pattern-Analyse — alles auf dieser Seite.
+                    </p>
+                    <nav className="flex flex-wrap items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-wider" aria-label="Sprungnavigation Hauptseite">
+                      <a href="#enterprise-scorer" className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-white/70 hover:border-aif-gold-DEFAULT/40 hover:text-aif-gold-DEFAULT transition-colors"><Gauge size={12} /> Score</a>
+                      <a href="#trade-setup-grafik" className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-white/70 hover:border-aif-gold-DEFAULT/40 hover:text-aif-gold-DEFAULT transition-colors"><Activity size={12} /> Trade-Setup</a>
+                      <a href="#favoriten-slots" className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-white/70 hover:border-aif-gold-DEFAULT/40 hover:text-aif-gold-DEFAULT transition-colors"><Star size={12} /> Favoriten</a>
+                      <a href="#tiefenanalyse" className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-white/70 hover:border-aif-gold-DEFAULT/40 hover:text-aif-gold-DEFAULT transition-colors"><Database size={12} /> Tiefenanalyse</a>
+                    </nav>
+                  </div>
+
                   {/* Top Row: Universe Enterprise Scorer with all elements */}
-                  <CryptoScoringEnterprise 
+                  <CryptoScoringEnterprise
                      selectedSymbol={selectedSymbol} 
                      onSelectSymbol={setSelectedSymbol} 
                      timeframe={timeframe} 

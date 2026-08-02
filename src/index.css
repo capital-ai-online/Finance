@@ -59,6 +59,10 @@
   --foreground: #FFFFFF;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html,
 body,
 #root {
