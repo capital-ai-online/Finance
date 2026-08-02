@@ -9,14 +9,15 @@ function source(relativePath: string): string {
 }
 
 describe('frontend financial data contract regression gate', () => {
-  it('Best/Worst consumes verified scoring boundaries and has no synthetic missing-score fallback', () => {
+  it('Best/Worst consumes verified scoring boundaries and guards nullable catalog values', () => {
     const code = source('src/components/UniverseBestWorst.tsx');
 
     expect(code).toContain('/api/crypto/list');
     expect(code).toContain('/api/registry/assets/verified-scores');
     expect(code).toContain("scoreStatus === 'READY'");
     expect(code).not.toMatch(/return\s+50(?:\.0)?\s*;/);
-    expect(code).not.toMatch(/price\.toLocaleString/);
+    expect(code).toContain("if (price === null) return '—';");
+    expect(code).toContain("if (change24h === null) return '—';");
     expect(code).not.toMatch(/asset\.change24h\.toFixed/);
   });
 
