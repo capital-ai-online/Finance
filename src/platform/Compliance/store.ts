@@ -2,6 +2,7 @@
 
 import { getServerSupabase, isSupabaseConfigured } from '../../../server/db';
 import { runAllScanners } from './scanners';
+import { buildRuntimeEvidenceScanner } from './runtimeEvidence';
 import type { ComplianceCertificate, ComplianceRun, Finding, ScannerResult, Severity } from './types';
 
 function avg(nums: number[]): number {
@@ -44,12 +45,15 @@ function rowToRun(row: RunRow): ComplianceRun {
 }
 
 /**
- * Führt alle 21 Scanner-Module aus, aggregiert die Scores und persistiert
- * den Lauf. Wirft, wenn Supabase nicht konfiguriert ist - der Auditor ist
- * eine reine Admin-Funktion ohne sinnvollen lokalen Fallback-Modus.
+ * Führt die statischen Repository-Scanner und, sofern tatsächlich Runtime-Beobachtungen
+ * vorliegen, zusätzlich den Runtime-Evidence-Scanner aus. Keine Providerbeobachtung wird als
+ * Erfolg erfunden; ohne Runtime-Daten wird RUNTIME-01 nicht in den Lauf aufgenommen.
  */
 export async function executeComplianceRun(triggeredBy: string | undefined): Promise<ComplianceRun> {
   const scannerResultsList = runAllScanners();
+  const runtimeScanner = buildRuntimeEvidenceScanner();
+  if (runtimeScanner) scannerResultsList.push(runtimeScanner);
+
   const scannerResults: Record<string, ScannerResult> = {};
   for (const s of scannerResultsList) scannerResults[s.id] = s;
   const findings: Finding[] = scannerResultsList.flatMap(s => s.findings);
