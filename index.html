@@ -30,6 +30,19 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
+    <!-- Server-seitig sichtbare Rechtslinks: die App selbst ist eine React-SPA, die
+         Footer-Links zu AGB/Impressum/Datenschutz werden erst nach dem Hydratisieren
+         gerendert. Security-/Compliance-Scanner (und Crawler ohne JS) lesen nur die
+         rohe HTML-Antwort - dieser noscript-Block ist fuer Browser mit aktiviertem
+         JavaScript unsichtbar und ohne jede Laufzeitwirkung, macht die Rechtsseiten
+         aber im Response-Body direkt auffindbar. -->
+    <noscript>
+      <p>CAPITAL-AI Portal benötigt JavaScript. Rechtliche Informationen:
+        <a href="https://capital-ai.online/impressum">Impressum</a> ·
+        <a href="https://capital-ai.online/agb/">AGB</a> ·
+        <a href="https://capital-ai.online/datenschutz/">Datenschutzerklärung</a>
+      </p>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
