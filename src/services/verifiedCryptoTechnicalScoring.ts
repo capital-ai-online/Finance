@@ -25,6 +25,7 @@ import {
   type VerifiedCryptoSnapshot,
   type VerifiedFieldProvenance,
 } from './cryptoSnapshotProvider';
+import { recordProviderHealth } from '../platform/Supervisor/providerHealth';
 
 export interface VerifiedCryptoTechnicalAssessment {
   canonical: CanonicalScoreResult;
@@ -43,13 +44,11 @@ export interface VerifiedCryptoTechnicalScoringOptions {
   snapshotProvider?: (symbol: string) => Promise<VerifiedCryptoSnapshot | null>;
 }
 
-/** Normalize history dates at the scoring boundary. */
 export function normalizeHistoryDateToIso(rawDate: string): string | undefined {
   if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
     const value = Date.parse(`${rawDate}T00:00:00.000Z`);
     return Number.isFinite(value) ? new Date(value).toISOString() : undefined;
   }
-
   const shortMatch = /^(\d{2})\.(\d{2})\.(\d{2})$/.exec(rawDate);
   if (shortMatch) {
     const [, dd, mm, yy] = shortMatch;
@@ -57,7 +56,6 @@ export function normalizeHistoryDateToIso(rawDate: string): string | undefined {
     const value = Date.UTC(year, Number(mm) - 1, Number(dd));
     return Number.isFinite(value) ? new Date(value).toISOString() : undefined;
   }
-
   return undefined;
 }
 
@@ -84,12 +82,30 @@ function snapshotEvidence(snapshot: VerifiedCryptoSnapshot | null): ScoringEvide
     }));
 }
 
+function publishProviderHealth(history: VerifiedCryptoHistory | null, snapshot: VerifiedCryptoSnapshot | null): void {
+  const at = new Date().toISOString();
+  recordProviderHealth({
+    provider: 'CoinGecko',
+    capability: 'crypto-history',
+    state: !history ? 'unavailable' : history.degraded ? 'degraded' : 'healthy',
+    at,
+    cacheMode: history?.cacheMode,
+    message: !history ? 'No verified history available.' : history.degraded ? 'Serving verified last-known-good history.' : undefined,
+  });
+  recordProviderHealth({
+    provider: 'CoinGecko',
+    capability: 'crypto-snapshot',
+    state: !snapshot ? 'unavailable' : snapshot.degraded ? 'degraded' : 'healthy',
+    at,
+    cacheMode: snapshot?.cacheMode,
+    message: !snapshot ? 'No verified market snapshot available.' : snapshot.degraded ? 'Serving verified last-known-good market snapshot.' : undefined,
+  });
+}
+
 /**
  * Production-safe deterministic crypto scoring path.
- *
- * History factors come only from the verified history provider. Market-cap/volume/supply
- * factors come only from the verified snapshot provider and carry per-field provenance.
- * AssetRegistry bootstrap values and simulated observations are never accepted as evidence.
+ * History and snapshot factors are accepted only from verified providers. Bootstrap registry
+ * values and simulated observations are never promoted to scoring evidence.
  */
 export async function evaluateVerifiedCryptoTechnicalScore(
   symbol: string,
@@ -102,6 +118,7 @@ export async function evaluateVerifiedCryptoTechnicalScore(
     historyProvider(s, 30),
     snapshotProvider(s),
   ]);
+  publishProviderHealth(history, snapshot);
 
   const retrievedAt = oldestIso([history?.retrievedAt, snapshot?.retrievedAt]) ?? new Date().toISOString();
   let inputs: CryptoScoringInputs = { coin: s };
@@ -113,7 +130,6 @@ export async function evaluateVerifiedCryptoTechnicalScore(
     const stats = computeReturnStats(closes);
     const rsi = computeRsi(closes);
     const lastPoint = history.points[history.points.length - 1];
-
     historyObservedAt = normalizeHistoryDateToIso(lastPoint.date);
     if (historyObservedAt) {
       evidence.push({
@@ -124,7 +140,6 @@ export async function evaluateVerifiedCryptoTechnicalScore(
         kind: 'market-history',
       });
     }
-
     if (stats) {
       inputs = {
         ...inputs,
@@ -202,23 +217,9 @@ export async function evaluateVerifiedCryptoTechnicalScore(
   };
 
   if (!gate.ready) {
-    return {
-      canonical: buildUnavailableScore(gate),
-      inputs,
-      analysis: null,
-      fieldProvenance,
-      rankingEvidenceReady,
-      providerState,
-    };
+    return { canonical: buildUnavailableScore(gate), inputs, analysis: null, fieldProvenance, rankingEvidenceReady, providerState };
   }
 
   const analysis = CryptoScoringService.scoreCrypto(inputs, '0.6.2-verified-provenance');
-  return {
-    canonical: buildReadyScore(analysis.final_score, gate),
-    inputs,
-    analysis,
-    fieldProvenance,
-    rankingEvidenceReady,
-    providerState,
-  };
+  return { canonical: buildReadyScore(analysis.final_score, gate), inputs, analysis, fieldProvenance, rankingEvidenceReady, providerState };
 }
