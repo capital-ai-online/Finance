@@ -1,0 +1,29 @@
+{
+  "fixtureType": "CONTRACT_TEST_ONLY",
+  "financialEvidence": false,
+  "description": "Synthetic fixture for validating the bond evidence contract only. It MUST NOT be used as production financial evidence or as a benchmark for expected returns/scores.",
+  "instrument": {
+    "providerSymbol": "US10Y.TEST.GBOND",
+    "isin": "TEST00000001",
+    "issuer": "Synthetic Test Issuer",
+    "currency": "USD",
+    "maturityDate": "2036-08-02",
+    "couponRatePct": 3.5
+  },
+  "market": {
+    "priceHistoryEvidenceIds": ["test:eodhd:bond:price:1"],
+    "yieldHistoryEvidenceIds": ["test:eodhd:bond:yield:1"],
+    "observedAt": "2026-08-01T00:00:00.000Z",
+    "providers": ["EODHD"]
+  },
+  "curve": {
+    "seriesIds": ["DGS2", "DGS10"],
+    "evidenceIds": ["test:fred:DGS2:1", "test:fred:DGS10:1"],
+    "observedAt": "2026-08-01T00:00:00.000Z",
+    "providers": ["FRED"]
+  },
+  "modifiedDuration": 7.4,
+  "yieldToMaturityPct": 4.1,
+  "currentPrice": 98.5,
+  "faceValue": 100
+}
