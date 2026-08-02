@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest';
-import { NoopScreeningSloSink } from '../../src/services/screeningSloSink';
+import { beforeEach, describe, expect, it } from 'vitest';
+import {
+  NoopScreeningSloSink,
+  configureScreeningSloSink,
+  getScreeningSloSinkStatus,
+  persistScreeningSloEvidence,
+} from '../../src/services/screeningSloSink';
 
 const record = {
   contractVersion: 'screening-slo-evidence/1.0.0' as const,
@@ -22,11 +27,22 @@ const record = {
   },
 };
 
+beforeEach(() => {
+  configureScreeningSloSink(new NoopScreeningSloSink());
+});
+
 describe('screeningSloSink', () => {
   it('never claims persistence when no production sink is configured', async () => {
-    const result = await new NoopScreeningSloSink().write(record);
+    const result = await persistScreeningSloEvidence(record);
     expect(result.accepted).toBe(true);
     expect(result.persisted).toBe(false);
     expect(result.sink).toBe('noop-unpersisted');
+
+    const status = getScreeningSloSinkStatus();
+    expect(status.persistenceConfigured).toBe(false);
+    expect(status.writesAttempted).toBe(1);
+    expect(status.writesAccepted).toBe(1);
+    expect(status.writesPersisted).toBe(0);
+    expect(status.lastWrite?.persisted).toBe(false);
   });
 });
