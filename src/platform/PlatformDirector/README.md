@@ -2,7 +2,7 @@
 
 ## Enterprise Component
 
-Status: Unspecified
+Status: Development
 
 Version: 1.0.0
 
@@ -12,10 +12,10 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Fuer diese Komponente existiert keine funktionale Spezifikation. Der urspruengliche, vom
-Enterprise Bootstrapper generierte Platzhaltertext ("Describe the responsibility of the
-PlatformDirector component.") wurde entfernt, um keine nicht existierende Spezifikation vorzutaeuschen
-(No-Demo-Data-Policy, docs/DATENSCHUTZ_PROTOKOLL.md).
+Contracts/Typen fuer Platform-Entscheidungen (Architecture/Governance/Release/Exception/Risk/
+Priority/Emergency Decisions) sind spezifiziert (`Contracts/PlatformDecision.ts`). Die eigentliche
+PlatformDirector-Logik (Entscheidungsfindung anhand der Prerequisites, Persistenz der
+`PlatformDecisionRecord`s) ist noch nicht implementiert.
 
 ---
 
@@ -35,16 +35,21 @@ None
 
 ## Dependencies
 
-Keine - es existiert kein Code.
+Keine.
 
 ---
 
 ## Events
 
-Keine - es existiert kein Code.
+Keine.
 
 ---
 
 ## Notes
 
-ARCH-AUDIT-0002 (J5, 2026-08-02): fuer diese Komponente existiert ausser dem vom Enterprise Bootstrapper generierten Platzhaltertext keine funktionale Spezifikation und kein Code. Status auf 'unspecified' korrigiert, um den Zustand ehrlich abzubilden - vorher suggerierte 'development' aktive Arbeit, die nicht stattfindet. Die Komponente kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden.
+ARCH-AUDIT-0002 (J5, 2026-08-02): Status urspruenglich auf 'unspecified' korrigiert, da fuer diese
+Komponente ausser Platzhaltertext keine Spezifikation und kein Code existierte. cd5c931
+(feat(platform-director): add fail-closed decision contract) hat seitdem
+`Contracts/PlatformDecision.ts` ergaenzt, ohne Status/README nachzufuehren - hier auf 'development'
+korrigiert, um den tatsaechlichen Stand (Contracts vorhanden, Director-Logik offen) ehrlich
+abzubilden.
