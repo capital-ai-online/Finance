@@ -2,12 +2,14 @@
 
 import { getCleanEnv } from './env';
 import { recordProviderHealth } from '../src/platform/Supervisor/providerHealth';
+import type { FinancialFieldProvenance } from '../src/types/financialProvenance';
 
 export interface StockFundamentals {
   peRatio?: number;
   dividendYieldPct?: number;
   profitMarginPct?: number;
   fetchedAt: number;
+  provenance: FinancialFieldProvenance[];
 }
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -61,15 +63,41 @@ export async function ensureFundamentalsFresh(symbol: string): Promise<void> {
     const peRatio = parseFloat(data['PERatio']);
     const dividendYieldRaw = parseFloat(data['DividendYield']);
     const profitMarginRaw = parseFloat(data['ProfitMargin']);
+    const fetchedAt = Date.now();
+    const retrievedAt = new Date(fetchedAt).toISOString();
+    const observedAt = typeof data['LatestQuarter'] === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data['LatestQuarter'])
+      ? `${data['LatestQuarter']}T00:00:00.000Z`
+      : undefined;
+    const sourcePath = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${encodeURIComponent(s)}`;
+    const provenance: FinancialFieldProvenance[] = [];
+
+    const normalizedPe = Number.isFinite(peRatio) && peRatio > 0 ? peRatio : undefined;
+    const normalizedDividend = Number.isFinite(dividendYieldRaw) ? dividendYieldRaw * 100 : undefined;
+    const normalizedMargin = Number.isFinite(profitMarginRaw) ? profitMarginRaw * 100 : undefined;
+
+    if (normalizedPe !== undefined) provenance.push({
+      field: 'peRatio', provider: 'AlphaVantage', sourcePath, retrievedAt, observedAt,
+      value: normalizedPe, unit: 'ratio',
+    });
+    if (normalizedDividend !== undefined) provenance.push({
+      field: 'dividendYieldPct', provider: 'AlphaVantage', sourcePath, retrievedAt, observedAt,
+      value: normalizedDividend, unit: 'percent',
+    });
+    if (normalizedMargin !== undefined) provenance.push({
+      field: 'profitMarginPct', provider: 'AlphaVantage', sourcePath, retrievedAt, observedAt,
+      value: normalizedMargin, unit: 'percent',
+    });
+
     cache.set(s, {
-      peRatio: Number.isFinite(peRatio) && peRatio > 0 ? peRatio : undefined,
-      dividendYieldPct: Number.isFinite(dividendYieldRaw) ? dividendYieldRaw * 100 : undefined,
-      profitMarginPct: Number.isFinite(profitMarginRaw) ? profitMarginRaw * 100 : undefined,
-      fetchedAt: Date.now(),
+      peRatio: normalizedPe,
+      dividendYieldPct: normalizedDividend,
+      profitMarginPct: normalizedMargin,
+      fetchedAt,
+      provenance,
     });
     recordProviderHealth({
       provider: 'AlphaVantage', capability: 'stock-fundamentals', state: 'healthy', cacheMode: 'fresh',
-      message: `OVERVIEW received for ${s}.`,
+      message: `OVERVIEW received for ${s} with ${provenance.length} attributable fields.`,
     });
   } catch (err: any) {
     recordProviderHealth({
