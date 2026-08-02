@@ -1,10 +1,5 @@
 name: CI
 
-# Audit ARCH-AUDIT-0002 (D6, Kapitel 4.9/11): Es gab bislang keine Continuous Integration -
-# .github/ existierte in der gesamten Codebasis nicht. Fuehrt die Pruefungen aus, die zuvor
-# manuell nach jeder Aenderung ausgefuehrt wurden (siehe Session-Historie dieses Repos):
-# tsc --noEmit, Testsuite (D5), Produktionsbuild, sowie (H7) die Deployment-Readiness-Pruefung.
-
 on:
   push:
     branches: [main]
@@ -23,6 +18,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # External SCA/CVE gate backed by the npm advisory service. This complements the local
+      # CycloneDX/SBOM + lockfile policy in predeploy:check; it is intentionally fail-closed for
+      # HIGH/CRITICAL findings in production dependencies and does not silently suppress findings.
+      - name: Production dependency vulnerability gate (npm audit)
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Typecheck (tsc --noEmit)
         run: npm run lint
