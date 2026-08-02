@@ -4,16 +4,11 @@ import { fetchVerifiedTraditionalQuote, TRADITIONAL_QUOTE_CONTRACT_VERSION } fro
 describe('traditional quote evidence contract', () => {
   it('returns a provenance-backed Twelve Data stock quote', async () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify({
-      symbol: 'AAPL',
-      close: '213.42',
-      currency: 'USD',
-      datetime: '2026-08-02T10:30:00Z',
+      symbol: 'AAPL', close: '213.42', currency: 'USD', datetime: '2026-08-02T10:30:00Z',
     }), { status: 200, headers: { 'Content-Type': 'application/json' } })) as unknown as typeof fetch;
 
     const quote = await fetchVerifiedTraditionalQuote('AAPL', 'stock', {
-      fetchImpl,
-      twelveDataApiKey: 'test-key',
-      nowMs: () => Date.parse('2026-08-02T10:31:00Z'),
+      fetchImpl, twelveDataApiKey: 'test-key', nowMs: () => Date.parse('2026-08-02T10:31:00Z'),
     });
 
     expect(quote.contractVersion).toBe(TRADITIONAL_QUOTE_CONTRACT_VERSION);
@@ -31,21 +26,37 @@ describe('traditional quote evidence contract', () => {
     const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
       calledUrl = String(input);
       return new Response(JSON.stringify({ close: '1.0872', currency: 'USD', datetime: '2026-08-02T10:30:00Z' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        status: 200, headers: { 'Content-Type': 'application/json' },
       });
     }) as unknown as typeof fetch;
 
     const quote = await fetchVerifiedTraditionalQuote('EURUSD', 'forex', {
-      fetchImpl,
-      twelveDataApiKey: 'test-key',
-      nowMs: () => Date.parse('2026-08-02T10:31:00Z'),
+      fetchImpl, twelveDataApiKey: 'test-key', nowMs: () => Date.parse('2026-08-02T10:31:00Z'),
     });
 
     expect(calledUrl).toContain('EUR%2FUSD');
     expect(quote.status).toBe('READY');
     expect(quote.price).toBe(1.0872);
     expect(quote.currency).toBe('USD');
+  });
+
+  it('marks stale quotes non-alert-eligible instead of substituting a fresh value', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({
+      close: '213.42', currency: 'USD', datetime: '2026-08-02T09:00:00Z',
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } })) as unknown as typeof fetch;
+
+    const quote = await fetchVerifiedTraditionalQuote('AAPL', 'stock', {
+      fetchImpl,
+      twelveDataApiKey: 'test-key',
+      nowMs: () => Date.parse('2026-08-02T10:00:00Z'),
+      maxAgeMs: 15 * 60 * 1000,
+    });
+
+    expect(quote.status).toBe('STALE_EVIDENCE');
+    expect(quote.price).toBeNull();
+    expect(quote.alertEligible).toBe(false);
+    expect(quote.evidenceIds).toHaveLength(1);
+    expect(quote.evidenceAgeMs).toBe(60 * 60 * 1000);
   });
 
   it('fails closed when Twelve Data is not configured', async () => {
