@@ -16,7 +16,8 @@
     "test": "vitest run",
     "hygiene:sweep": "tsx scripts/automation/sweepDocumentaryBranding.ts",
     "predeploy:check": "tsx scripts/automation/verifyDeploymentReadiness.ts",
-    "traceability:build": "tsx src/platform/Traceability/Services/runTraceability.ts"
+    "traceability:build": "tsx src/platform/Traceability/Services/runTraceability.ts",
+    "rag:build-index": "tsx scripts/automation/buildRagIndex.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

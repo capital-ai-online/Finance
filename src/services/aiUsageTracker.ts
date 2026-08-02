@@ -41,6 +41,8 @@ export const PROMPT_REGISTRY: Record<string, PromptRegistryEntry> = {
   'crypto-sentiment': { id: 'crypto-sentiment', module: 'src/agents/cryptoSentimentAgent.ts', description: 'Sentiment-/Narrativ-Analyse eines Krypto-Assets.', version: '1.0.0' },
   'crypto-onchain': { id: 'crypto-onchain', module: 'src/agents/cryptoOnChainAgent.ts', description: 'On-Chain-Aktivitaets-Einschaetzung eines Krypto-Assets.', version: '1.0.0' },
   'crypto-risk': { id: 'crypto-risk', module: 'src/agents/cryptoRiskAgent.ts', description: 'Risiko-/Manipulationseinschaetzung eines Krypto-Assets.', version: '1.0.0' },
+  'rag-index-build': { id: 'rag-index-build', module: 'scripts/automation/buildRagIndex.ts', description: 'Bettet die interne Dokumentation (docs/, .ai/skills/) fuer den RAG-Vektorindex ein.', version: '1.0.0' },
+  'rag-retrieval-query': { id: 'rag-retrieval-query', module: 'src/services/rag/retrieval.ts', description: 'Bettet eine einzelne Nutzeranfrage fuer die Aehnlichkeitssuche gegen den RAG-Index ein.', version: '1.0.0' },
 };
 
 export interface AiUsageRecord {
@@ -186,6 +188,30 @@ function recordOpenAIUsage(response: any, model: string, meta: { promptId: strin
   const candidateTokens = typeof usage.completion_tokens === 'number' ? usage.completion_tokens : 0;
   const totalTokens = typeof usage.total_tokens === 'number' ? usage.total_tokens : promptTokens + candidateTokens;
   pushUsageRecord(model, promptTokens, candidateTokens, totalTokens, meta);
+}
+
+// ARCH-AUDIT-0002 (J4, Kapitel 14.6): Embeddings-Aufrufe fuer RAG (src/services/rag/). Nur fuer
+// OpenAI verkabelt: CreateEmbeddingResponse.usage liefert reale prompt_tokens/total_tokens.
+// Gemini embedContent() liefert in der oeffentlichen Developer API dagegen KEIN usageMetadata
+// (nur ein Enterprise-Platform-spezifisches metadata-Feld) - fuer diesen Fall wird bewusst kein
+// Ledger-Eintrag mit geschaetzten Werten erzeugt, statt Tokens zu raten.
+export async function trackedOpenAIEmbedding(
+  openai: OpenAI,
+  params: Parameters<OpenAI['embeddings']['create']>[0],
+  meta: { promptId: string; requestId?: string }
+): Promise<Awaited<ReturnType<OpenAI['embeddings']['create']>>> {
+  const response = await openai.embeddings.create(params);
+  try {
+    const usage = (response as any)?.usage;
+    if (usage) {
+      const promptTokens = typeof usage.prompt_tokens === 'number' ? usage.prompt_tokens : 0;
+      const totalTokens = typeof usage.total_tokens === 'number' ? usage.total_tokens : promptTokens;
+      pushUsageRecord(String((params as any).model || 'unknown'), promptTokens, 0, totalTokens, meta);
+    }
+  } catch {
+    // Aufzeichnung ist best-effort und darf den eigentlichen Embedding-Aufruf nicht gefaehrden.
+  }
+  return response;
 }
 
 function pushUsageRecord(model: string, promptTokens: number, candidateTokens: number, totalTokens: number, meta: { promptId: string; requestId?: string }): void {

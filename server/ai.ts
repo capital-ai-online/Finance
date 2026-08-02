@@ -6,6 +6,7 @@ import { orchestrator } from '../src/lib/requestOrchestrator';
 import { resolveVerifiedIdentity, checkAdminAccess } from '../src/platform/Security/authMiddleware';
 import { ADMIN_ZONE_ROLES } from '../src/platform/Security/types';
 import { trackedGenerateContent, getUsageSummary, getUsageLedger, PROMPT_REGISTRY } from '../src/services/aiUsageTracker';
+import { retrieveRelevantChunks, formatChunksForPrompt } from '../src/services/rag/retrieval';
 
 export const aiRouter = express.Router();
 
@@ -57,12 +58,21 @@ aiRouter.post('/chat', orchestrator.handle('Gemini Chat'), async (req, res) => {
     
     contents.push({ role: 'user', parts: [{ text: message }] });
 
+    let systemInstruction = "You are the CAPITAL-AI Assistant, a highly professional, technically precise expert partner in quantitative finance, Graham value investing, and market analysis. Use a professional, accessible tone. Do not use unnecessary jargon. Prioritize clarity and data-driven insights. Remember the user is using CAPITAL-AI v0.5.5 Enterprise Architecture.";
+    // ARCH-AUDIT-0002 (J4, Kapitel 14.6): erdet die Antwort in real indizierter interner
+    // Dokumentation (docs/, .ai/skills/), statt sich ausschliesslich auf Modellwissen zu
+    // verlassen. Ohne gebauten Index (npm run rag:build-index) oder ohne konfigurierten
+    // Embedding-Provider liefert retrieveRelevantChunks() eine leere Liste - das Verhalten
+    // bleibt dann exakt wie vor dieser Aenderung.
+    const relevantChunks = await retrieveRelevantChunks(message);
+    if (relevantChunks.length > 0) {
+      systemInstruction += `\n\nNutze bei Bedarf die folgenden Ausschnitte aus der internen CAPITAL-AI-Dokumentation als zusaetzlichen Kontext. Zitiere die Quelle, wenn du daraus etwas uebernimmst. Wenn die Ausschnitte die Frage nicht betreffen, ignoriere sie:\n\n${formatChunksForPrompt(relevantChunks)}`;
+    }
+
     const response = await trackedGenerateContent(ai, {
       model: 'gemini-3.1-pro-preview',
       contents,
-      config: {
-        systemInstruction: "You are the CAPITAL-AI Assistant, a highly professional, technically precise expert partner in quantitative finance, Graham value investing, and market analysis. Use a professional, accessible tone. Do not use unnecessary jargon. Prioritize clarity and data-driven insights. Remember the user is using CAPITAL-AI v0.5.5 Enterprise Architecture."
-      }
+      config: { systemInstruction }
     }, { promptId: 'chat-assistant', requestId: req.requestId });
 
     res.json({ reply: response.text });
