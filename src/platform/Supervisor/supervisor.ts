@@ -3,46 +3,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// ARCH-AUDIT-0002 (H4, Kapitel 4.4): "src/platform/Supervisor/ enthaelt in beiden Staenden
-// null TypeScript-Dateien. Was 'Supervisor' heisst, ist ein Frontend-Dashboard
-// (SupervisorDashboard.tsx), das vier Endpunkte liest [...]. Es enthaelt keine Steuerungslogik."
-// Dieses Modul ist die reale Komponente, die die Manifest-Beschreibung einloest.
-//
-// Der Befund nennt sieben erwartete Faehigkeiten: Task Routing, Execution Control, Retry,
-// Recovery, Conflict Resolution, Self Healing, Tool Selection. Ehrliche Bestandsaufnahme
-// statt Vollstaendigkeits-Behauptung (No-Demo-Data-Policy gilt hier genauso fuer
-// Architektur-Beschreibungen wie fuer Messwerte):
-//
-// ECHT IMPLEMENTIERT:
-// - Task Routing / Tool Selection: routeTask() bildet Anlageklasse -> zustaendige Engine
-//   strukturell ab (dieselbe Zuordnung, die bisher implizit in server.ts' calculateAssetScore()
-//   verstreut war, jetzt an einer Stelle abfragbar).
-// - Execution Control / Retry / Recovery / Self Healing: executeSupervised() fuehrt eine
-//   uebergebene asynchrone Aufgabe mit echtem Retry-mit-Backoff aus, statt (wie zuvor an allen
-//   Aufrufstellen in server.ts) bei einem einzelnen Fehlschlag sofort aufzugeben. Jede
-//   Ausfuehrung wird in einem beschraenkten Ringpuffer aufgezeichnet (Task, Versuche, Ergebnis,
-//   Dauer) - echte, aus tatsaechlichen Aufrufen entstandene Daten, keine Platzhalter.
-//
-// NICHT IMPLEMENTIERT (bewusst, mit Begruendung statt stillschweigend):
-// - Conflict Resolution: setzt mehrere konkurrierende Quellen fuer dieselbe Entscheidung
-//   voraus. Die aktuelle Architektur hat pro Anlageklasse genau EINE autoritative Engine
-//   (siehe routeTask()) - es gibt aktuell keinen echten Konflikt aufzuloesen. Wird erst
-//   relevant, wenn z.B. mehrere Scoring-Quellen fuer dieselbe Anlageklasse konkurrieren.
-
 import { eventMeshBus } from '../EventMesh/Core/EventBus';
 import { bootstrapEventMesh, isBootstrapped } from '../EventMesh/Services/EventMeshService';
+import { getProviderHealth, type ProviderHealthRecord } from './providerHealth';
 
 export type AssetClass = 'crypto' | 'commodity' | 'stock' | 'forex' | 'index' | 'bond';
 
 export interface TaskRoute {
   engineId: string;
   label: string;
-  /** true, wenn diese Anlageklasse aktuell auf eine reale Fachengine geroutet wird. */
   hasDedicatedEngine: boolean;
 }
 
-// Audit ARCH-AUDIT-0002 (S6, H1): dieselbe Einordnung wie assetRegistry/server.ts
-// getScoreBasis() - hier zentral als Routing-Tabelle statt an mehreren Stellen implizit.
 const TASK_ROUTING_TABLE: Record<AssetClass, TaskRoute> = {
   crypto: { engineId: 'crypto_orchestrator', label: 'Crypto/DeFi/Meme-Coin Scoring (real-marktdatenbasiert)', hasDedicatedEngine: true },
   commodity: { engineId: 'rawmaterials_orchestrator', label: 'Rohstoff-Scoring (dedizierte Fachengine)', hasDedicatedEngine: true },
@@ -86,19 +58,10 @@ function sleep(ms: number): Promise<void> {
 }
 
 export interface SupervisionOptions {
-  /** Zusaetzliche Versuche NACH dem ersten - 2 bedeutet insgesamt 3 Versuche. Default 2. */
   retries?: number;
-  /** Basis-Backoff in ms, verdoppelt sich je Versuch (Standard-Exponential-Backoff). Default 500. */
   backoffMs?: number;
 }
 
-/**
- * Fuehrt eine asynchrone Aufgabe mit echtem Retry-mit-Backoff aus (Execution Control/Retry/
- * Recovery/Self Healing). Wirft erst, wenn ALLE Versuche fehlgeschlagen sind. Jede Ausfuehrung
- * (erfolgreich oder nicht) wird im Ringpuffer aufgezeichnet; ein endgueltig fehlgeschlagener
- * Task veroeffentlicht zusaetzlich ein SupervisorAlertEvent ueber die Enterprise Event Mesh
- * (Manifest-Zusage src/platform/Supervisor/manifest.json: "produces": ["SupervisorAlertEvent"]).
- */
 export async function executeSupervised<T>(
   taskName: string,
   fn: () => Promise<T>,
@@ -122,9 +85,7 @@ export async function executeSupervised<T>(
       return result;
     } catch (err) {
       lastError = err;
-      if (attempt <= retries) {
-        await sleep(backoffMs * Math.pow(2, attempt - 1));
-      }
+      if (attempt <= retries) await sleep(backoffMs * Math.pow(2, attempt - 1));
     }
   }
 
@@ -150,8 +111,7 @@ export async function executeSupervised<T>(
       adrReferences: ['ADR-0018'],
     });
   } catch {
-    // Event-Mesh-Veroeffentlichung ist best-effort - darf den urspruenglichen Fehler
-    // nicht verschlucken oder einen zweiten, verwirrenden Fehler nach oben werfen.
+    // Best effort only; never hide the original execution error.
   }
 
   throw lastError;
@@ -160,6 +120,7 @@ export async function executeSupervised<T>(
 export interface SupervisorStatus {
   routingTable: Record<AssetClass, TaskRoute>;
   recentExecutions: SupervisedExecutionRecord[];
+  providerHealth: ProviderHealthRecord[];
   capabilities: {
     taskRouting: boolean;
     toolSelection: boolean;
@@ -168,6 +129,7 @@ export interface SupervisorStatus {
     recovery: boolean;
     selfHealing: boolean;
     conflictResolution: boolean;
+    providerHealth: boolean;
   };
   notes: string[];
 }
@@ -176,6 +138,7 @@ export function getSupervisorStatus(): SupervisorStatus {
   return {
     routingTable: getRoutingTable(),
     recentExecutions: getRecentExecutions(),
+    providerHealth: getProviderHealth(),
     capabilities: {
       taskRouting: true,
       toolSelection: true,
@@ -184,9 +147,11 @@ export function getSupervisorStatus(): SupervisorStatus {
       recovery: true,
       selfHealing: true,
       conflictResolution: false,
+      providerHealth: true,
     },
     notes: [
       'conflictResolution: nicht implementiert - die aktuelle Architektur hat pro Anlageklasse genau eine autoritative Engine, es gibt aktuell keinen echten Konflikt zwischen mehreren Quellen aufzuloesen.',
+      'providerHealth: runtime-basiert; nur tatsaechlich beobachtete Provider-Aufrufe erscheinen im Status.',
     ],
   };
 }
