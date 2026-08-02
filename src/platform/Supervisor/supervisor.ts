@@ -14,6 +14,7 @@ import {
   type MarketIntegrityCalibrationReport,
 } from '../../services/marketIntegrityCalibration';
 import { buildScreeningSlaReport, type ScreeningSlaReport } from '../../services/screeningSla';
+import { getLatestScoreConfidenceEvidence, type ScoreConfidenceEvidenceRecord } from '../../services/scoreConfidenceEvidence';
 
 export type AssetClass = 'crypto' | 'commodity' | 'stock' | 'forex' | 'index' | 'bond';
 
@@ -137,6 +138,11 @@ export interface SupervisorStatus {
   };
   marketIntegrity: MarketIntegrityCalibrationReport;
   screeningSla: ScreeningSlaReport;
+  scoreConfidence: {
+    latest: ScoreConfidenceEvidenceRecord | null;
+    observed: boolean;
+    calibrated: boolean;
+  };
   aiGovernance: {
     providerRoles: number;
     registeredPrompts: number;
@@ -156,6 +162,7 @@ export interface SupervisorStatus {
     marketDataRouting: boolean;
     marketIntegrityCalibration: boolean;
     screeningSla: boolean;
+    scoreConfidenceEvidence: boolean;
     aiGovernance: boolean;
   };
   notes: string[];
@@ -169,6 +176,7 @@ export function getSupervisorStatus(): SupervisorStatus {
   const marketIntegrity = buildMarketIntegrityCalibrationReport();
   const routingTelemetry = getMarketDataProviderTelemetry();
   const screeningSla = buildScreeningSlaReport(routingTelemetry);
+  const scoreConfidenceLatest = getLatestScoreConfidenceEvidence();
   return {
     routingTable: getRoutingTable(),
     recentExecutions: getRecentExecutions(),
@@ -181,6 +189,11 @@ export function getSupervisorStatus(): SupervisorStatus {
     },
     marketIntegrity,
     screeningSla,
+    scoreConfidence: {
+      latest: scoreConfidenceLatest,
+      observed: scoreConfidenceLatest !== null,
+      calibrated: scoreConfidenceLatest?.state === 'CALIBRATED',
+    },
     aiGovernance: {
       providerRoles: aiInventory.models.length,
       registeredPrompts: aiInventory.prompts.length,
@@ -200,12 +213,16 @@ export function getSupervisorStatus(): SupervisorStatus {
       marketDataRouting: true,
       marketIntegrityCalibration: true,
       screeningSla: true,
+      scoreConfidenceEvidence: true,
       aiGovernance: true,
     },
     notes: [
       'conflictResolution: evidence-preserving Spot-/Snapshot-Quorum erkennt SOURCE_CONFLICT und verweigert einen künstlichen kanonischen Wert; harte Score-/Ranking-Gates bleiben bis zur Kalibrierung deaktiviert.',
       `marketIntegrityCalibration: ${marketIntegrity.status}; ${marketIntegrity.observations}/${marketIntegrity.minimumSample} Runtime-Beobachtungen. Eine Hard-Gate-Aktivierung bleibt reviewed und ist nicht automatisch freigegeben.`,
       `screeningSla: ${screeningSla.state}; ${screeningSla.providersObserved} Provider mit Runtime-Evidence. Dieser Status ist observability-only und blockiert Screening nicht automatisch.`,
+      scoreConfidenceLatest
+        ? `scoreConfidence: ${scoreConfidenceLatest.state}; sampleSize=${scoreConfidenceLatest.sampleSize}; confidence=${scoreConfidenceLatest.confidencePct ?? 'null'}%. Evidence ist observability-only und keine Execution-Wahrscheinlichkeit.`
+        : 'scoreConfidence: NO_RUNTIME_EVIDENCE; eine Confidence wird erst nach einem real ausgeführten Score-Validation-Lauf angezeigt.',
       'providerHealth: runtime-basiert; nur tatsächlich beobachtete Provider-Aufrufe erscheinen im Status.',
       'marketDataRouting: adaptive Priorisierung nutzt Governance-Priorität, Failures/Cooldown und EWMA-Latenz; Candidate-Provider bleiben bis Production Handoff deaktiviert.',
       'aiGovernance: runtime-basiert; Evaluationen erscheinen erst, nachdem ein instrumentierter AI-Aufruf tatsächlich ausgeführt wurde.',
