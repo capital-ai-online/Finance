@@ -1,6 +1,7 @@
 # ADR-0033 — Index Provider Mapping and Evidence-Gated Commodity / Sovereign Benchmark Scoring
 
 - **Status:** Accepted
+- **Implementation-Status:** ✅ COMPLETE (verifiziert 2026-08-02)
 - **Date:** 2026-08-02
 - **Scope:** CAPITAL-AI Multi-Asset Screening / Registry / Market Evidence
 - **Platform Version:** `0.6.0`
@@ -9,7 +10,7 @@
 
 ## 1. Context
 
-ADR-0032 separated catalog membership from verified market evidence. The registry now contains substantially more index, commodity and bond catalog entries, but catalog presence alone must never create a price, a score or screening eligibility.
+ADR-0032 separated catalog membership from verified market evidence. The registry contains substantially more index, commodity and bond catalog entries, but catalog presence alone must never create a price, a score or screening eligibility.
 
 Three gaps remained:
 
@@ -130,7 +131,7 @@ This ADR does not approve:
 
 ## 4. Data integrity and lineage
 
-Every READY score under this ADR must carry:
+Every READY score under this ADR carries:
 
 - catalog symbol;
 - provider identity;
@@ -151,7 +152,7 @@ The existing Screening Eligibility / Operations / SLO evidence pipeline receives
 
 `RawMaterialsScoringService` remains available for explicitly labelled structural/sandbox research use.
 
-Its output must be marked:
+Its output is marked:
 
 - `scoreSemantic: legacy-structural-research`;
 - `canonical: false`;
@@ -185,11 +186,11 @@ Approved surfaces include:
 - `/api/registry/assets/verified-scores` — governed batch path with Screening SLO evidence;
 - `/api/raw-materials/verified-score/:symbol` — commodity canonical evidence score.
 
-Commodity and sovereign benchmark evidence do not create an execution-quote contract. `/verified-quote` remains limited to the asset classes with an approved quote path.
+Commodity and sovereign benchmark evidence do not create an execution-quote contract. `/verified-quote` remains limited to asset classes with an approved quote path.
 
-## 8. Acceptance criteria
+## 8. Acceptance criteria — verified
 
-The implementation is accepted only if tests prove:
+The implementation was verified to satisfy:
 
 1. every index catalog entry has a versioned provider mapping candidate;
 2. existing FMP mappings retain priority;
@@ -201,17 +202,30 @@ The implementation is accepted only if tests prove:
 8. negative sovereign yield observations are preserved as valid evidence;
 9. individual/corporate bond scoring remains locked;
 10. the expanded asset catalog remains unique and complete;
-11. TypeScript, unit tests, production build and deployment-readiness checks pass.
+11. dependency audit, TypeScript, Vitest, production build and H7 deployment-readiness all pass.
+
+Implementation evidence:
+
+- PR #56, merged as `4cb1dd6467ad36779f26049d0cbfc180774059c1`;
+- `src/services/indexProviderMapping.ts`;
+- `src/services/indexMarketEvidence.ts`;
+- `src/services/commodityMarketEvidence.ts`;
+- `src/services/commodityEvidenceScoring.ts`;
+- `src/services/sovereignBondProviderMapping.ts`;
+- `src/services/sovereignBenchmarkEvidenceScoring.ts`;
+- `src/services/eodhdBondEvidence.ts`;
+- registry and MarketScreener integration;
+- dedicated unit tests for index mappings, commodity evidence, sovereign mappings/scoring and negative yields.
 
 ## 9. Version lifecycle
 
 This ADR does not independently change the application version. ADR-0030 remains authoritative.
 
-The platform remains `0.6.0` until the formal Release Version Gate classifies the release scope. This capability is eligible for a future MINOR release classification because it materially expands production screening capability, but implementation merge alone is not a version bump.
+The platform stayed `0.6.0` during implementation. This capability is eligible for a future MINOR release classification because it materially expands production screening capability, but implementation merge alone is not a version bump.
 
 ## 10. Final decision
 
-The three runtime contracts are approved with strict semantic boundaries:
+The three runtime contracts are approved and implementation-verified with strict semantic boundaries:
 
 - `index-provider-mapping/1.0.0`
 - `commodity-evidence-scoring/1.0.0`
