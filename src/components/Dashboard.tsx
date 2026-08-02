@@ -6,7 +6,6 @@ import { UniverseBestWorst } from './UniverseBestWorst';
 import { PortfolioPerformance } from './PortfolioPerformance';
 import { ComplianceExporter } from './ComplianceExporter';
 import { ImageAnalyzer } from './ImageAnalyzer';
-import { CryptoEnterpriseEvaluator } from './CryptoEnterpriseEvaluator';
 import { ProfilePage, UserProfile } from './ProfilePage';
 import { BuffetValueCheck } from './BuffetValueCheck';
 import { Abonnements } from './Abonnements';
@@ -1378,19 +1377,11 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                      onUpgradeClick={() => navigateTo('abonnements')}
                    />
 
-                 {/* Middle Row: Enterprise Trading Evaluation Tool & Quantitative Ticker */}
-                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                   <div className="lg:col-span-2">
-                     <CryptoEnterpriseEvaluator 
-                       selectedSymbol={selectedSymbol} 
-                       onSelectSymbol={setSelectedSymbol}
-                       subscriptionTier={profile.subscriptionTier}
-                       onUpgradeClick={() => navigateTo('abonnements')}
-                     />
-                   </div>
-                   <div className="space-y-6">
+                 {/* Middle Row: Quantitative Ticker (Enterprise Trading Evaluation Tool lebt jetzt ausschliesslich im CryptoScoringEnterprise-Hero oben - keine doppelte Score-Anzeige mehr) */}
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                   <div className="sm:col-span-1">
                      {/* Strategie-Evidenz-Check Quick Card (Clickable to Buffett DCF check) */}
-                     <div 
+                     <div
                        onClick={() => navigateTo('buffet-value')}
                        className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md cursor-pointer hover:border-aif-gold-DEFAULT/50 hover:shadow-[0_0_20px_rgba(245,196,83,0.1)] transition-all group"
                        title="Klicke für BuffettValueCheck Graham-DCF Rechner"

@@ -9,6 +9,7 @@ import {
   scoreTokenomics,
   scoreTrend,
   scoreVolatility,
+  type ReturnStats,
 } from './realMarketSignals';
 import { CRYPTO_SCORING_WEIGHTS, CryptoScoringService } from './cryptoScoringService';
 import {
@@ -33,6 +34,8 @@ export interface VerifiedCryptoTechnicalAssessment {
   analysis: ReturnType<typeof CryptoScoringService.scoreCrypto> | null;
   fieldProvenance: VerifiedFieldProvenance[];
   rankingEvidenceReady: boolean;
+  /** Reale, verifizierte Kurshistorien-Kennzahlen (dieselbe Quelle wie trend/momentum/etc.); nur vorhanden, wenn eine echte Historie geladen werden konnte. */
+  priceStats: ReturnStats | null;
   providerState?: {
     history?: { cacheMode: VerifiedCryptoHistory['cacheMode']; degraded: boolean; provider: VerifiedCryptoHistory['provider'] };
     snapshot?: { cacheMode: VerifiedCryptoSnapshot['cacheMode']; degraded: boolean; provider: VerifiedCryptoSnapshot['provider'] };
@@ -140,11 +143,13 @@ export async function evaluateVerifiedCryptoTechnicalScore(
   const retrievedAt = oldestIso([history?.retrievedAt, snapshot?.retrievedAt]) ?? new Date().toISOString();
   let inputs: CryptoScoringInputs = { coin: s };
   let historyObservedAt: string | undefined;
+  let priceStats: ReturnStats | null = null;
   const evidence: ScoringEvidenceRef[] = [];
 
   if (history && history.points.length > 0) {
     const closes = history.points.map((point) => point.close);
     const stats = computeReturnStats(closes);
+    priceStats = stats ?? null;
     const rsi = computeRsi(closes);
     const lastPoint = history.points[history.points.length - 1];
     historyObservedAt = normalizeHistoryDateToIso(lastPoint.date);
@@ -234,9 +239,9 @@ export async function evaluateVerifiedCryptoTechnicalScore(
   };
 
   if (!gate.ready) {
-    return { canonical: buildUnavailableScore(gate), inputs, analysis: null, fieldProvenance, rankingEvidenceReady, providerState };
+    return { canonical: buildUnavailableScore(gate), inputs, analysis: null, fieldProvenance, rankingEvidenceReady, providerState, priceStats };
   }
 
   const analysis = CryptoScoringService.scoreCrypto(inputs, '0.6.3-verified-multiprovider');
-  return { canonical: buildReadyScore(analysis.final_score, gate), inputs, analysis, fieldProvenance, rankingEvidenceReady, providerState };
+  return { canonical: buildReadyScore(analysis.final_score, gate), inputs, analysis, fieldProvenance, rankingEvidenceReady, providerState, priceStats };
 }

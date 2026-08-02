@@ -13,6 +13,9 @@ import {
 } from 'recharts';
 import {
   AlertTriangle,
+  ArrowDownRight,
+  ArrowUpRight,
+  Award,
   Database,
   Gauge,
   RefreshCw,
@@ -27,6 +30,7 @@ import {
 import { AssetLogo } from './AssetLogo';
 import { assetRegistry } from '../lib/assetRegistry';
 import { EnterpriseAnalysisPanels } from './EnterpriseAnalysisPanels';
+import type { TradeSetupLevels } from '../services/tradeSetupLevels';
 
 export interface CryptoScoringEnterpriseProps {
   selectedSymbol: string;
@@ -60,6 +64,8 @@ type EnterpriseViewModel = {
   assetType: AssetType;
   score: number | null;
   rankScore: number | null;
+  eligibleForTop10: boolean;
+  tradeSetup: TradeSetupLevels | null;
   decision: string | null;
   decisionName: string | null;
   decisionDesc: string | null;
@@ -171,6 +177,13 @@ function prettifyFactorName(name: string): string {
     .join(' ');
 }
 
+function isTradeSetup(value: unknown): value is TradeSetupLevels {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  const numericFields = ['referencePrice', 'entryLow', 'entryHigh', 'stopLoss1', 'stopLoss2', 'takeProfit1', 'takeProfit2', 'volatilityAbs', 'volatilityPct'];
+  return (v.direction === 'long' || v.direction === 'short') && numericFields.every((field) => finite(v[field]) !== null);
+}
+
 function extractFactors(scores: unknown): Array<{ name: string; score: number }> {
   if (!scores || typeof scores !== 'object') return [];
   return Object.entries(scores as Record<string, unknown>)
@@ -199,6 +212,8 @@ function buildCryptoView(body: any, symbol: string, assetName: string): Enterpri
     assetType: 'crypto',
     score: finite(body?.final_score),
     rankScore: finite(body?.rank_score),
+    eligibleForTop10: body?.eligible_for_top10 === true,
+    tradeSetup: isTradeSetup(body?.tradeSetup) ? body.tradeSetup : null,
     decision: typeof body?.decision === 'string' ? body.decision : null,
     decisionName: typeof body?.decisionName === 'string' ? body.decisionName : null,
     decisionDesc: typeof body?.decisionDesc === 'string' ? body.decisionDesc : null,
@@ -235,6 +250,8 @@ function buildTraditionalView(body: any, symbol: string, assetName: string, asse
     assetType,
     score: finite(body?.score),
     rankScore: null,
+    eligibleForTop10: false,
+    tradeSetup: null,
     decision: null,
     decisionName: null,
     decisionDesc: null,
@@ -257,6 +274,7 @@ function buildTraditionalView(body: any, symbol: string, assetName: string, asse
 function unavailable(symbol: string, assetName: string, assetType: AssetType, reason: string): EnterpriseViewModel {
   return {
     status: 'SCORE_NOT_COMPUTABLE', symbol, assetName, assetType, score: null, rankScore: null,
+    eligibleForTop10: false, tradeSetup: null,
     decision: null, decisionName: null, decisionDesc: null, riskLevel: null, reasoning: [], alerts: [], factors: [],
     rawFactors: [], providers: [], evidenceIds: [], provenance: [], coverage: null, dataQuality: null,
     featureVersion: null, scoringVersion: null, reason,
@@ -302,6 +320,83 @@ function FactorRadar({ data, tier }: { data: RadarFactor[]; tier: TierStyle }) {
           />
         </RadarChart>
       </ResponsiveContainer>
+    </div>
+  );
+}
+
+function formatSetupPrice(value: number): string {
+  return value >= 1000
+    ? value.toLocaleString('de-DE', { maximumFractionDigits: 2 })
+    : value.toLocaleString('de-DE', { maximumFractionDigits: value >= 1 ? 4 : 8 });
+}
+
+type SetupMarker = { key: string; label: string; value: number; kind: 'stop' | 'target' };
+
+function TradeSetupLadder({ setup }: { setup: TradeSetupLevels }) {
+  const long = setup.direction === 'long';
+  const markers: SetupMarker[] = long
+    ? [
+      { key: 'sl2', label: 'SL2', value: setup.stopLoss2, kind: 'stop' },
+      { key: 'sl1', label: 'SL1', value: setup.stopLoss1, kind: 'stop' },
+      { key: 'tp1', label: 'TP1', value: setup.takeProfit1, kind: 'target' },
+      { key: 'tp2', label: 'TP2', value: setup.takeProfit2, kind: 'target' },
+    ]
+    : [
+      { key: 'tp2', label: 'TP2', value: setup.takeProfit2, kind: 'target' },
+      { key: 'tp1', label: 'TP1', value: setup.takeProfit1, kind: 'target' },
+      { key: 'sl1', label: 'SL1', value: setup.stopLoss1, kind: 'stop' },
+      { key: 'sl2', label: 'SL2', value: setup.stopLoss2, kind: 'stop' },
+    ];
+
+  const allValues = [...markers.map((m) => m.value), setup.entryLow, setup.entryHigh, setup.referencePrice];
+  const min = Math.min(...allValues);
+  const max = Math.max(...allValues);
+  const span = Math.max(max - min, 1e-9);
+  const pos = (value: number) => Math.max(2, Math.min(98, ((value - min) / span) * 100));
+
+  const entryLowPos = pos(setup.entryLow);
+  const entryHighPos = pos(setup.entryHigh);
+  const refPos = pos(setup.referencePrice);
+
+  return (
+    <div className="space-y-5">
+      <div className="relative h-24 sm:h-28">
+        <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-gradient-to-r from-rose-500/40 via-white/10 to-emerald-500/40" style={{ backgroundImage: long ? undefined : 'linear-gradient(to right, rgb(16 185 129 / 0.4), rgb(255 255 255 / 0.1), rgb(244 63 94 / 0.4))' }} />
+        <div
+          className="absolute top-1/2 h-3.5 -translate-y-1/2 rounded-full border border-aif-gold-DEFAULT/50 bg-aif-gold-DEFAULT/20"
+          style={{ left: `${Math.min(entryLowPos, entryHighPos)}%`, width: `${Math.max(1.5, Math.abs(entryHighPos - entryLowPos))}%` }}
+          title="Entry-Zone"
+        />
+        {markers.map((marker, index) => {
+          const left = pos(marker.value);
+          const above = index % 2 === 0;
+          const color = marker.kind === 'stop' ? 'text-rose-300 border-rose-500/40 bg-rose-500/10' : 'text-emerald-300 border-emerald-500/40 bg-emerald-500/10';
+          return (
+            <div key={marker.key} className="absolute top-1/2 -translate-y-1/2" style={{ left: `${left}%` }}>
+              <div className="absolute left-1/2 top-1/2 h-4 w-px -translate-x-1/2 -translate-y-1/2 bg-white/25" />
+              <div className={`absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[9px] font-mono font-bold ${color} ${above ? '-top-9' : 'top-4'}`}>
+                {marker.label} · {formatSetupPrice(marker.value)}
+              </div>
+            </div>
+          );
+        })}
+        <div className="absolute top-1/2 -translate-y-1/2" style={{ left: `${refPos}%` }}>
+          <div className="absolute left-1/2 top-1/2 h-8 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
+          <div className="absolute left-1/2 top-6 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/30 bg-black/70 px-1.5 py-0.5 text-[9px] font-mono font-bold text-white">
+            Kurs · {formatSetupPrice(setup.referencePrice)}
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] font-mono text-white/40">
+        <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 font-bold uppercase ${long ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-rose-500/30 bg-rose-500/10 text-rose-300'}`}>
+          {long ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />} {long ? 'Long-Setup' : 'Short-Setup'}
+        </span>
+        <span>Entry-Zone: {formatSetupPrice(Math.min(setup.entryLow, setup.entryHigh))} – {formatSetupPrice(Math.max(setup.entryLow, setup.entryHigh))}</span>
+        <span>Tagesvolatilität: {setup.volatilityPct.toFixed(2)}%</span>
+      </div>
+      <p className="text-[10px] leading-relaxed text-white/35">
+        Rein technische Strukturableitung aus verifizierter 30-Tage-Kurshistorie (SMA/letzter Kurs für Richtung &amp; Entry-Zone, 1×/2× Tagesvolatilität sowie 30-Tage-Hoch/-Tief für SL1/SL2 &amp; TP1/TP2 — tradeSetupLevels.ts, {setup.methodology}). Keine Anlageberatung, keine Ausführungsgarantie; Gebühren, Slippage und Spread sind nicht eingerechnet.
+      </p>
     </div>
   );
 }
@@ -464,7 +559,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
             transition={{ duration: 0.25 }}
             className="relative z-10 space-y-5"
           >
-            <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
+            <div className="grid grid-cols-1 xl:grid-cols-6 gap-5">
               <div className={`xl:col-span-2 rounded-2xl border p-6 flex flex-col items-center justify-center gap-3 ${tier.border} ${tier.bg}`}>
                 <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-white/50 font-mono"><Gauge size={13} /> Kanonischer Gesamt-Score</div>
                 <ScoreGauge score={result.score} tier={tier} />
@@ -473,6 +568,15 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
                 </div>
                 {result.decisionDesc && <p className="text-[10px] text-white/45 text-center font-mono leading-relaxed">{result.decisionDesc}</p>}
                 <p className="text-[9px] text-white/30 font-mono">Read-only · Backend Contract</p>
+              </div>
+
+              <div className="xl:col-span-1 rounded-2xl border border-purple-500/20 bg-purple-500/5 p-5 flex flex-col items-center justify-center gap-2 text-center">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-purple-200/70 font-mono"><Award size={13} /> Intelligent Score</div>
+                <div className="text-3xl font-black font-mono text-white tabular-nums">{result.rankScore !== null ? result.rankScore.toFixed(1) : '—'}</div>
+                {result.eligibleForTop10 && (
+                  <span className="rounded-full border border-purple-400/30 bg-purple-400/10 px-2 py-0.5 text-[9px] font-mono font-bold uppercase text-purple-200">Top-10 eligible</span>
+                )}
+                <p className="text-[9px] text-purple-100/40 font-mono leading-relaxed">Kompositscore aus Score, Datenqualität, Tier &amp; Liquidität (ranking.service.ts)</p>
               </div>
 
               <div className="xl:col-span-3 rounded-2xl border border-white/10 bg-black/25 p-5">
@@ -484,6 +588,17 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
                 <FactorRadar data={radarData} tier={tier} />
               </div>
             </div>
+
+            {result.assetType === 'crypto' && (
+              <div className="rounded-2xl border border-white/10 bg-black/25 p-5">
+                <div className="flex items-center gap-2 mb-1 text-sm font-black uppercase text-white"><Activity size={15} className="text-aif-gold-DEFAULT" /> Trade-Setup Grafik</div>
+                {result.tradeSetup ? (
+                  <TradeSetupLadder setup={result.tradeSetup} />
+                ) : (
+                  <p className="mt-3 text-xs text-white/40">Kein Setup ableitbar — keine ausreichende verifizierte 30-Tage-Kurshistorie für {symbol} vorhanden.</p>
+                )}
+              </div>
+            )}
 
             {aggregates.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

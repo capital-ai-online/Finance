@@ -8,6 +8,14 @@ function source(relativePath: string): string {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 }
 
+function allComponentSources(): string {
+  const dir = path.join(repoRoot, 'src/components');
+  return fs.readdirSync(dir)
+    .filter((name) => name.endsWith('.tsx'))
+    .map((name) => fs.readFileSync(path.join(dir, name), 'utf8'))
+    .join('\n');
+}
+
 describe('frontend financial data contract regression gate', () => {
   it('Best/Worst renders progressively and uses only verified score boundaries', () => {
     const code = source('src/components/UniverseBestWorst.tsx');
@@ -29,13 +37,23 @@ describe('frontend financial data contract regression gate', () => {
     expect(code).toContain('Asset-Suche');
     expect(code).not.toContain('charCodeAt');
     expect(code).not.toContain('Math.random');
+    // AUD3-F-001 removed a legacy `getTradingSetup(symbol, price, score, type)` helper that
+    // derived entry/SL/TP purely from hardcoded fixed multipliers (e.g. `price * 0.94`) applied
+    // to the (partly synthetic/bootstrap) registry price - fabricated, not evidence-gated.
+    // The current trade-setup panel is intentionally different: it renders `tradeSetup`/
+    // `priceStats` fields computed server-side by tradeSetupLevels.ts purely from verified
+    // ReturnStats (real 30d history), gated behind the same data-quality gate as the rest of
+    // the 9-factor model. These assertions guard against the legacy pattern reappearing while
+    // still allowing the new, evidence-gated feature.
     expect(code).not.toContain('getTradingSetup');
-    expect(code).not.toMatch(/entryMin|entryMax|stopLoss|takeProfit/);
+    expect(code).not.toMatch(/price \* 0\.\d/);
+    expect(code).not.toMatch(/\.price\s*\*/);
+    expect(code).toContain('tradeSetup');
   });
 
   it('restored enterprise analysis panels are explicitly read-only to scoring', () => {
     const code = source('src/components/EnterpriseAnalysisPanels.tsx');
-    expect(code).toContain('Ordertiefe / Market Depth');
+    expect(code).toContain('Order-Tree · Market Depth');
     expect(code).toContain('Arbitrage Radar');
     expect(code).toContain('Intelligent Feed');
     expect(code).toContain('AI Kurzanalyse');
@@ -71,9 +89,14 @@ describe('frontend financial data contract regression gate', () => {
     expect(code).not.toContain('isSimulationActive');
   });
 
-  it('Legacy P0 copy is not presented as current provider status', () => {
-    const code = source('src/components/CryptoEnterpriseEvaluator.tsx');
+  it('Legacy P0 copy is not presented as current provider status anywhere in the component tree', () => {
+    // CryptoEnterpriseEvaluator.tsx (a near-total visual/data duplicate of CryptoScoringEnterprise
+    // - same /api/crypto/score call, its own score gauge, its own EnterpriseAnalysisPanels
+    // instance) was removed so the dashboard renders exactly one enterprise scorer instead of two
+    // overlapping ones. This guard now scans every component for the banned legacy copy instead
+    // of one specific (now-deleted) file.
+    const code = allComponentSources();
     expect(code).not.toContain('P0-Sicherheitsmodus');
-    expect(code).toContain('Verifizierte Server-Provider');
+    expect(fs.existsSync(path.join(repoRoot, 'src/components/CryptoEnterpriseEvaluator.tsx'))).toBe(false);
   });
 });
