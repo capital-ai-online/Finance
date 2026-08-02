@@ -10,8 +10,8 @@ export interface MarketDataProviderRegistryEntry extends MarketDataProviderDescr
 }
 
 /**
- * Governance registry only. Candidate entries are NOT contacted until an explicit adapter is
- * implemented, licensing is approved and the required secret is configured in production.
+ * Governance registry. `active` means an adapter exists and the provider may participate when its
+ * required server-side secret is configured. Secrets are never exposed to browser code.
  */
 export const MARKET_DATA_PROVIDER_REGISTRY: MarketDataProviderRegistryEntry[] = [
   {
@@ -30,6 +30,24 @@ export const MARKET_DATA_PROVIDER_REGISTRY: MarketDataProviderRegistryEntry[] = 
     governanceNotes: 'Existing public venue fallback; venue-specific provenance must be preserved.',
   },
   {
+    id: 'CoinAPI', assetClasses: ['crypto'], capabilities: ['history', 'snapshot', 'quotes', 'orderbook'], basePriority: 2,
+    enabled: true, activation: 'active', environmentVariable: 'COIN_API_KEY', requiresApiKey: true,
+    purpose: 'Normalized multi-exchange crypto redundancy',
+    governanceNotes: 'Server-side adapter uses X-CoinAPI-Key. Venue/symbol provenance remains explicit; licensing/redistribution terms remain plan-dependent.',
+  },
+  {
+    id: 'TwelveData', assetClasses: ['stock', 'forex', 'index', 'crypto'], capabilities: ['history', 'snapshot', 'quotes'], basePriority: 3,
+    enabled: true, activation: 'active', environmentVariable: 'TWELVEDATA_API_KEY', requiresApiKey: true,
+    purpose: 'Global multi-asset redundancy',
+    governanceNotes: 'Server-side adapter only. Nulls/rate limits are fail-closed; exchange/timezone metadata must be retained where available.',
+  },
+  {
+    id: 'EODHD', assetClasses: ['stock', 'forex', 'index', 'crypto', 'bond'], capabilities: ['history', 'snapshot', 'fundamentals'], basePriority: 3,
+    enabled: true, activation: 'active', environmentVariable: 'EODHD_API_KEY', requiresApiKey: true,
+    purpose: 'Global EOD/historical multi-asset redundancy',
+    governanceNotes: 'Server-side EOD adapter. Symbol/exchange identity and adjustment semantics must remain explicit in provenance.',
+  },
+  {
     id: 'Stooq', assetClasses: ['stock', 'forex'], capabilities: ['history'], basePriority: 2,
     enabled: true, activation: 'active', purpose: 'Traditional market history',
     governanceNotes: 'Existing source. Keep fail-closed behavior when simulated/bootstrap history is detected.',
@@ -45,24 +63,14 @@ export const MARKET_DATA_PROVIDER_REGISTRY: MarketDataProviderRegistryEntry[] = 
     governanceNotes: 'Existing keyed source. Licensing/redistribution rules must be validated for customer-facing use.',
   },
   {
-    id: 'TwelveData', assetClasses: ['stock', 'forex', 'index', 'crypto'], capabilities: ['history', 'snapshot', 'quotes'], basePriority: 3,
-    enabled: false, activation: 'candidate', environmentVariable: 'TWELVE_DATA_API_KEY', purpose: 'Global multi-asset redundancy',
-    governanceNotes: 'Adapter pending. Evaluate commercial redistribution rights, entitlements, rate limits and WebSocket plan before activation.',
-  },
-  {
-    id: 'Finnhub', assetClasses: ['stock', 'forex', 'index', 'crypto'], capabilities: ['history', 'snapshot', 'quotes', 'fundamentals'], basePriority: 3,
+    id: 'Finnhub', assetClasses: ['stock', 'forex', 'index', 'crypto'], capabilities: ['history', 'snapshot', 'quotes', 'fundamentals'], basePriority: 4,
     enabled: false, activation: 'candidate', environmentVariable: 'FINNHUB_API_KEY', purpose: 'Global market/fundamental redundancy',
     governanceNotes: 'Adapter pending. Particularly useful as a second fundamentals/estimates source; licensing approval required.',
   },
   {
-    id: 'Massive', assetClasses: ['stock', 'forex', 'index', 'crypto'], capabilities: ['history', 'snapshot', 'quotes'], basePriority: 3,
+    id: 'Massive', assetClasses: ['stock', 'forex', 'index', 'crypto'], capabilities: ['history', 'snapshot', 'quotes'], basePriority: 4,
     enabled: false, activation: 'candidate', environmentVariable: 'MASSIVE_API_KEY', purpose: 'Low-latency US/multi-asset market data and future options coverage',
     governanceNotes: 'Adapter pending. Business market-data licensing and exchange entitlements must be approved before redistribution.',
-  },
-  {
-    id: 'CoinAPI', assetClasses: ['crypto'], capabilities: ['history', 'snapshot', 'quotes', 'orderbook'], basePriority: 3,
-    enabled: false, activation: 'candidate', environmentVariable: 'COINAPI_KEY', purpose: 'Normalized multi-exchange crypto redundancy',
-    governanceNotes: 'Adapter pending. Useful for consolidated exchange coverage and order-book evidence; commercial plan/licensing required.',
   },
   {
     id: 'FRED', assetClasses: ['macro', 'bond'], capabilities: ['macro-series'], basePriority: 1,
