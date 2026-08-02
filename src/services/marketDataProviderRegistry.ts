@@ -74,13 +74,14 @@ export const MARKET_DATA_PROVIDER_REGISTRY: MarketDataProviderRegistryEntry[] = 
   },
   {
     id: 'FRED', assetClasses: ['macro', 'bond'], capabilities: ['macro-series'], basePriority: 1,
-    enabled: false, activation: 'candidate', environmentVariable: 'FRED_API_KEY', purpose: 'Macroeconomic and interest-rate evidence',
-    governanceNotes: 'Suitable for macro/rate context and selected public series, not as a tradable-price execution feed.',
+    enabled: true, activation: 'active', environmentVariable: 'FRED_API_KEY', requiresApiKey: true,
+    purpose: 'Macroeconomic and interest-rate evidence',
+    governanceNotes: 'Adapter implemented for an allow-list of macro/rate series. It remains fail-closed until FRED_API_KEY is configured and is never treated as an execution-price feed.',
   },
   {
     id: 'ECB', assetClasses: ['macro', 'forex', 'bond'], capabilities: ['macro-series'], basePriority: 1,
-    enabled: false, activation: 'reference-only', purpose: 'Official EUR reference FX and euro-area macro/rate evidence',
-    governanceNotes: 'Reference rates are informational and should not be treated as executable transaction prices.',
+    enabled: true, activation: 'reference-only', purpose: 'Official EUR reference FX and euro-area reference evidence',
+    governanceNotes: 'Keyless ECB Data API adapter is implemented for approved EUR reference FX series. Reference rates are informational and never execution-price eligible.',
   },
 ];
 
