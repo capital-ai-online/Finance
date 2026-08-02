@@ -7,13 +7,15 @@ on:
       - '.github/workflows/lockfile-remediation.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   generate-fixed-lockfile:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: fix/crypto-provider-source-unavailable
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -26,11 +28,14 @@ jobs:
         run: npm audit fix --package-lock-only --ignore-scripts
       - name: Verify production HIGH/CRITICAL advisories are cleared
         run: npm audit --omit=dev --audit-level=high
-      - name: Upload remediated manifest and lockfile
-        uses: actions/upload-artifact@v4
-        with:
-          name: remediated-lockfile
-          path: |
-            package.json
-            package-lock.json
-          if-no-files-found: error
+      - name: Commit remediated manifest and lockfile to PR branch
+        run: |
+          if git diff --quiet -- package.json package-lock.json; then
+            echo 'No lockfile changes required.'
+            exit 0
+          fi
+          git config user.name 'capital-ai-security-bot'
+          git config user.email 'security-bot@capital-ai.online'
+          git add package.json package-lock.json
+          git commit -m 'fix(security): remediate production dependency advisories'
+          git push origin HEAD:fix/crypto-provider-source-unavailable
