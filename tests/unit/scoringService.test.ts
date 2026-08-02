@@ -1,11 +1,7 @@
-// Audit ARCH-AUDIT-0002 (D5, S1/S2/S5): Testabdeckung fuer den kritischen Scoring-Pfad.
-// Seit S1/S2/S5 (AUD2-F-001) bezieht generateCryptoScores() reale Marktdaten aus der
-// AssetRegistry statt eines Zeichen-Hash-Generators - assetRegistry.getAsset()/getHistory()
-// werden hier gemockt, damit die Tests deterministisch bleiben und keinen echten
-// Netzwerkzugriff (CoinGecko) benoetigen. calculateBaseScore/calculateDefiScore nutzen die
-// dynamische Neugewichtung (renormalizeAndScore, siehe realMarketSignals.ts): fehlende
-// Faktoren werden ausgeschlossen statt mit 0 bewertet, ihr Gewichtsanteil wird auf die
-// vorhandenen Faktoren umgelegt.
+// P0 Scoring Integrity tests for the critical deterministic scoring path.
+// Registry bootstrap values intentionally do not count as verified market observations unless
+// field-level provenance is available. At this stage generateCryptoScores() therefore accepts
+// only real history (`source: live`) and returns no fabricated substitutes.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { calculateBaseScore, calculateDefiScore, calculateValueCorridor, generateCryptoScores } from '../../src/services/scoring.service';
@@ -27,44 +23,27 @@ describe('scoring.service', () => {
       vi.restoreAllMocks();
     });
 
-    it('liefert alle Felder als undefined, wenn weder ein Registry-Asset noch reale Historie vorliegen', async () => {
+    it('liefert keine Faktoren, wenn keine reale Historie vorliegt', async () => {
       vi.spyOn(assetRegistry, 'getAsset').mockReturnValue(undefined);
       vi.spyOn(assetRegistry, 'getHistory').mockResolvedValue({ points: [], source: 'simulated' } as HistoryResult);
 
       const scores = await generateCryptoScores('UNKNOWNXYZ', 0);
-      expect(scores.marketCap).toBeUndefined();
-      expect(scores.liquidity).toBeUndefined();
-      expect(scores.tokenomics).toBeUndefined();
-      expect(scores.supplyTransparency).toBeUndefined();
-      expect(scores.volatility).toBeUndefined();
+      expect(scores).toEqual({});
     });
 
-    it('berechnet marketCap und liquidity aus realen Registry-Werten (Mrd./Mio. USD)', async () => {
+    it('verwendet Registry-Bootstrapwerte ohne Provenance nicht fuer marketCap/liquidity', async () => {
       vi.spyOn(assetRegistry, 'getAsset').mockReturnValue(makeAsset({ marketCap: 100, volume24h: 20 }));
       vi.spyOn(assetRegistry, 'getHistory').mockResolvedValue({ points: [], source: 'simulated' } as HistoryResult);
 
       const scores = await generateCryptoScores('TST', 0);
-      expect(scores.marketCap).toBeDefined();
-      expect(scores.marketCap!).toBeGreaterThan(0);
-      expect(scores.marketCap!).toBeLessThanOrEqual(100);
-      expect(scores.liquidity).toBeDefined();
-      expect(scores.liquidity!).toBeGreaterThanOrEqual(0);
-      expect(scores.liquidity!).toBeLessThanOrEqual(100);
+      expect(scores.marketCap).toBeUndefined();
+      expect(scores.liquidity).toBeUndefined();
     });
 
-    it('berechnet tokenomics und supplyTransparency nur, wenn Supply-Daten vorliegen', async () => {
+    it('verwendet Registry-Supplywerte ohne Provenance nicht fuer tokenomics/supplyTransparency', async () => {
       vi.spyOn(assetRegistry, 'getAsset').mockReturnValue(
         makeAsset({ circulatingSupply: 50_000_000, maxSupply: 100_000_000 })
       );
-      vi.spyOn(assetRegistry, 'getHistory').mockResolvedValue({ points: [], source: 'simulated' } as HistoryResult);
-
-      const scores = await generateCryptoScores('TST', 0);
-      expect(scores.tokenomics).toBe(50);
-      expect(scores.supplyTransparency).toBe(100);
-    });
-
-    it('laesst tokenomics/supplyTransparency undefined, wenn keine Supply-Daten geliefert wurden', async () => {
-      vi.spyOn(assetRegistry, 'getAsset').mockReturnValue(makeAsset({}));
       vi.spyOn(assetRegistry, 'getHistory').mockResolvedValue({ points: [], source: 'simulated' } as HistoryResult);
 
       const scores = await generateCryptoScores('TST', 0);
@@ -73,12 +52,11 @@ describe('scoring.service', () => {
     });
 
     it('berechnet volatility nur aus einer echten (source: live) Kurshistorie', async () => {
-      vi.spyOn(assetRegistry, 'getAsset').mockReturnValue(undefined);
       vi.spyOn(assetRegistry, 'getHistory').mockResolvedValue({
         points: [
-          { date: '01.01.24', close: 100 },
-          { date: '02.01.24', close: 105 },
-          { date: '03.01.24', close: 98 },
+          { date: '2026-07-30', close: 100 },
+          { date: '2026-07-31', close: 105 },
+          { date: '2026-08-01', close: 98 },
         ],
         source: 'live',
       } as HistoryResult);
@@ -89,10 +67,9 @@ describe('scoring.service', () => {
       expect(scores.volatility!).toBeLessThanOrEqual(100);
     });
 
-    it('laesst volatility undefined, wenn getHistory nur simulierte Daten liefert (No-Demo-Data-Policy)', async () => {
-      vi.spyOn(assetRegistry, 'getAsset').mockReturnValue(undefined);
+    it('laesst volatility undefined, wenn getHistory nur simulierte Daten liefert', async () => {
       vi.spyOn(assetRegistry, 'getHistory').mockResolvedValue({
-        points: [{ date: '01.01.24', close: 100 }, { date: '02.01.24', close: 105 }],
+        points: [{ date: '2026-07-31', close: 100 }, { date: '2026-08-01', close: 105 }],
         source: 'simulated',
       } as HistoryResult);
 
@@ -114,7 +91,7 @@ describe('scoring.service', () => {
       expect(result.final_score).toBe(100);
     });
 
-    it('liefert 0 fuer durchgehend minimale Eingangsgroessen (maximales Risiko/Volatilitaet)', () => {
+    it('liefert 0 fuer durchgehend minimale vorhandene Eingangsgroessen', () => {
       const minInputs: Partial<CryptoScores> = {
         marketCap: 0, liquidity: 0, tokenomics: 0, supplyTransparency: 0,
         networkActivity: 0, security: 0, utility: 0, adoption: 0,
@@ -124,22 +101,18 @@ describe('scoring.service', () => {
       expect(result.final_score).toBe(0);
     });
 
-    it('ein hoeherer risk-Wert senkt den final_score (risikoadjustierte Gewichtung wirkt in die richtige Richtung)', () => {
+    it('ein hoeherer risk-Wert senkt den final_score', () => {
       const low = calculateBaseScore({ asset_name: 'A', symbol: 'A', scores: { marketCap: 50, risk: 10 } });
       const high = calculateBaseScore({ asset_name: 'A', symbol: 'A', scores: { marketCap: 50, risk: 90 } });
       expect(low.final_score!).toBeGreaterThan(high.final_score!);
     });
 
-    it('liefert final_score 0 statt zu werfen, wenn keine Score-Faktoren vorhanden sind', () => {
-      expect(() => calculateBaseScore({ asset_name: 'Empty', symbol: 'EMPTY' })).not.toThrow();
-      const result = calculateBaseScore({ asset_name: 'Empty', symbol: 'EMPTY' });
-      expect(Number.isFinite(result.final_score)).toBe(true);
-      expect(result.final_score).toBe(0);
+    it('wirft SCORE_NOT_COMPUTABLE wenn keine verifizierten Score-Faktoren vorhanden sind', () => {
+      expect(() => calculateBaseScore({ asset_name: 'Empty', symbol: 'EMPTY' }))
+        .toThrow(/SCORE_NOT_COMPUTABLE/);
     });
 
-    it('schliesst fehlende Faktoren dynamisch aus der Gewichtung aus, statt sie als 0 zu werten', () => {
-      // Nur marketCap ist vorhanden -> dessen Gewichtsanteil wird auf 100% umgelegt,
-      // final_score muss dem Rohwert entsprechen statt marketCap-Gewicht * 100.
+    it('schliesst fehlende Faktoren dynamisch aus der Gewichtung aus', () => {
       const result = calculateBaseScore({ asset_name: 'A', symbol: 'A', scores: { marketCap: 60 } });
       expect(result.final_score).toBe(60);
     });
@@ -178,7 +151,6 @@ describe('scoring.service', () => {
 
     it('berechnet die prozentuale Abweichung korrekt, wenn eine Marktreferenz vorliegt', () => {
       const corridor = calculateValueCorridor(100, 50);
-      // neutral = clamp(100) = 100; gap = (100 - 50) / 50 * 100 = 100%
       expect(corridor.fairValueGapPct).toBeCloseTo(100, 5);
     });
   });

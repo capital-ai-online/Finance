@@ -1,11 +1,10 @@
-// ARCH-AUDIT-0002 (H5, Kapitel 14.5): zweiter Schritt der Zerlegung von server.ts entlang
-// der Fachdomaenen nach src/features/ (siehe src/features/news/newsRoutes.ts fuer den
-// ersten Schritt und die Begruendung der Zielstruktur). Verhalten 1:1 aus server.ts
-// uebernommen, keine funktionale Aenderung - lediglich buildAssetUpdatePayload() neu als
-// eigenstaendige, testbare Funktion herausgezogen (war zuvor inline im Route-Handler).
+// ARCH-AUDIT-0002 / P0 remediation: public registry responses are identity/catalog views,
+// not a source of trusted financial observations. Bootstrap values in AssetRegistry are useful
+// for local catalog/UI initialization but have no per-field provider provenance or observation
+// timestamp. They therefore MUST NOT be exposed as verified market data.
 
 import express from 'express';
-import { assetRegistry } from '../../lib/assetRegistry';
+import { assetRegistry, type RegistryAsset } from '../../lib/assetRegistry';
 import { checkAdminAccess } from '../../platform/Security/authMiddleware';
 import { SUPERVISOR_ZONE_ROLES } from '../../platform/Security/types';
 import { logSystemEvent } from '../../../server/systemEvents';
@@ -20,8 +19,7 @@ export interface AssetUpdatePayload {
   isLocked?: boolean;
 }
 
-/** Filtert den Request-Body auf die zulaessigen, korrekt typisierten Felder - unbekannte
- * oder falsch typisierte Werte werden stillschweigend ausgelassen statt geschrieben. */
+/** Filtert den Request-Body auf die zulaessigen, korrekt typisierten Felder. */
 export function buildAssetUpdatePayload(body: any): AssetUpdatePayload {
   return {
     expectedReturn: typeof body?.expectedReturn === 'number' ? body.expectedReturn : undefined,
@@ -34,10 +32,37 @@ export function buildAssetUpdatePayload(body: any): AssetUpdatePayload {
   };
 }
 
+function toPublicAssetView(asset: RegistryAsset) {
+  return {
+    symbol: asset.symbol,
+    name: asset.name,
+    type: asset.type,
+    subtype: asset.subtype,
+    applicationArea: asset.applicationArea,
+    isLocked: asset.isLocked,
+    marketDataStatus: 'DATA_UNAVAILABLE' as const,
+    scoreStatus: 'SCORE_NOT_COMPUTABLE' as const,
+    // P0: no plausible bootstrap/default financial numbers leave this public catalog route.
+    price: null,
+    change24h: null,
+    expectedReturn: null,
+    volatility: null,
+    risk: null,
+    marketCap: null,
+    volume24h: null,
+    score: null,
+    pattern: null,
+    observedAt: null,
+    providers: [],
+    evidence: [],
+    reason: 'AssetRegistry bootstrap values have no field-level provider provenance and are not exposed as verified market observations.',
+  };
+}
+
 export const registryRouter = express.Router();
 
-registryRouter.get('/assets', (req, res) => {
-  res.json(assetRegistry.getAssets());
+registryRouter.get('/assets', (_req, res) => {
+  res.json(assetRegistry.getAssets().map(toPublicAssetView));
 });
 
 registryRouter.get('/assets/:symbol', (req, res) => {
@@ -45,13 +70,11 @@ registryRouter.get('/assets/:symbol', (req, res) => {
   if (!asset) {
     return res.status(404).json({ error: 'Asset nicht in der Registry gefunden.' });
   }
-  res.json(asset);
+  res.json(toPublicAssetView(asset));
 });
 
 registryRouter.post('/assets/:symbol', express.json(), async (req, res) => {
-  // ADR-0003.5/0008: zuvor KEINE Zugriffsprüfung an dieser Stelle - jeder Aufrufer
-  // konnte Asset-Parameter unauthentifiziert ändern. Jetzt über IAM abgesichert
-  // (Master-Supervisor-/Orchestrator-Zone).
+  // ADR-0003.5/0008: Asset-Parameter-Aenderungen bleiben IAM-geschuetzt.
   const authz = await checkAdminAccess(req, 'registry:assets:update', SUPERVISOR_ZONE_ROLES);
   if (!authz.authorized) {
     return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.' });
@@ -73,5 +96,9 @@ registryRouter.post('/assets/:symbol', express.json(), async (req, res) => {
     'SUCCESS'
   );
 
-  res.json({ success: true, asset: assetRegistry.getAsset(symbol) });
+  // Even after an authenticated manual update the public response does not claim market-data
+  // provenance. A future provider ingestion path must attach evidence before these fields can
+  // be returned as READY.
+  const updated = assetRegistry.getAsset(symbol)!;
+  res.json({ success: true, asset: toPublicAssetView(updated) });
 });
