@@ -21,12 +21,11 @@ describe('screening governance runtime evidence', () => {
         contractVersion: 'score-confidence-calibration/1.0.0',
         state: 'INSUFFICIENT_DATA',
         sampleSize: 3,
-        minimumSample: 30,
         confidencePct: null,
         methodology: 'empirical-hit-rate',
         scoreImpactEnabled: false,
         recommendationImpactEnabled: false,
-        reasons: ['Minimum sample not reached.'],
+        reasons: ['minimum-sample-not-met:3/30'],
       },
     });
     const scanner = buildScreeningGovernanceEvidenceScanner();
