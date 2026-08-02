@@ -13,7 +13,11 @@ import {
 } from './documentSanitizer';
 import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
 import { ADMIN_ZONE_ROLES } from '../src/platform/Security/types';
-import { trackedGenerateContent } from '../src/services/aiUsageTracker';
+import { generateStructuredWithFallback, generateTextWithFallback } from '../src/services/agentModelRouting';
+import { getAnthropicInstance, isAnthropicConfigured } from './anthropicClient';
+import { getOpenAIInstance, isOpenAIConfigured } from './openaiClient';
+import { isGeminiConfigured } from './ai';
+import { retrieveRelevantChunks, formatChunksForPrompt } from '../src/services/rag/retrieval';
 
 export const hygieneRouter = express.Router();
 
@@ -284,7 +288,15 @@ export function applyBrandingToAllDocs(dir: string = DOCS_DIR) {
   console.log(`[DocumentHygiene] Capital-AI Documentary swept ${stats.total} files, updated/branded ${stats.modified} files.`);
 }
 
-// Call Gemini API to classify the file change and provide semantic confidence
+// ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): Nutzerentscheidung - dieselbe Anthropic ->
+// OpenAI -> Gemini-Kette wie bei den Scoring-Agenten, statt Gemini direkt anzusprechen. Kein
+// Gemini-spezifisches Feature haengt an dieser Klassifikation. Zusaetzlich (J4, zweiter echter
+// RAG-Verbraucher neben dem Chat-Assistenten): die Regel "conflict_candidate bei Widerspruch zu
+// Standardvorgaben wie DSGVO/OWASP" konnte das Modell bisher nur aus Trainingswissen einschaetzen
+// - es hatte keinen Zugriff auf die tatsaechlichen internen Richtliniendokumente
+// (docs/DATENSCHUTZ_PROTOKOLL.md, docs/compliance/, ESS-0001-CONTRACTS). retrieveRelevantChunks()
+// liefert jetzt die dazu passenden Ausschnitte als Kontext, wenn ein RAG-Index existiert -
+// andernfalls bleibt das Verhalten unveraendert (leere Liste, kein zusaetzlicher Kontext).
 async function analyzeChangeWithAI(
   filePath: string,
   oldContent: string,
@@ -297,9 +309,14 @@ async function analyzeChangeWithAI(
   suggestedAction: 'auto_override' | 'propagate_dependencies' | 'manual_review';
 }> {
   try {
-    const prompt = `Du bist der "Capital-AI Documentary" Service (der autonome KI-Dokumenten-Hygieniker von Gründer Sven Kulessa, sven.kulessa@capital-ai.online). Deine Aufgabe ist es, Änderungen in einem Dokument zu analysieren, semantisch einzuordnen und festzulegen, ob diese Änderung automatisch durchgeführt werden kann oder ein Review erfordert.
+    const systemInstruction = `Du bist der "Capital-AI Documentary" Service (der autonome KI-Dokumenten-Hygieniker von Gründer Sven Kulessa, sven.kulessa@capital-ai.online). Deine Aufgabe ist es, Änderungen in einem Dokument zu analysieren, semantisch einzuordnen und festzulegen, ob diese Änderung automatisch durchgeführt werden kann oder ein Review erfordert. Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.`;
 
-Hier sind die Details zur Datei:
+    const relevantChunks = await retrieveRelevantChunks(`${filePath}\n${diff.slice(0, 1000)}`);
+    const ragContext = relevantChunks.length > 0
+      ? `\n\n--- RELEVANTE INTERNE RICHTLINIEN (zur Einordnung von "conflict_candidate") ---\n${formatChunksForPrompt(relevantChunks)}`
+      : '';
+
+    const contents = `Hier sind die Details zur Datei:
 Pfad: ${filePath}
 
 --- ALTE VERSION ---
@@ -312,6 +329,7 @@ ${newContent.length > 4000 ? '... [trunkiert]' : ''}
 
 --- EFFEKTIVER DIFF ---
 ${diff.slice(0, 2000)}
+${ragContext}
 
 Analysiere die Änderungen semantisch und liefere eine JSON-Antwort mit exakt folgenden Feldern:
 1. "classification": Eines von "typo", "content_update", "structural_change", "new_section", "conflict_candidate".
@@ -319,7 +337,7 @@ Analysiere die Änderungen semantisch und liefere eine JSON-Antwort mit exakt fo
    - "content_update": Inhaltliche Ergänzungen oder Updates, die sachlich korrekt sind.
    - "structural_change": Große Umstrukturierungen oder fundamentale Textverschiebungen.
    - "new_section": Das Hinzufügen einer komplett neuen Sektion.
-   - "conflict_candidate": Wenn Widersprüche zu Standardvorgaben (z.B. DSGVO, OWASP, strict TS-Regeln) oder logische Konflikte entstehen könnten.
+   - "conflict_candidate": Wenn Widersprüche zu Standardvorgaben (z.B. DSGVO, OWASP, strict TS-Regeln) oder logische Konflikte entstehen könnten. Nutze dafür, wenn vorhanden, die oben aufgeführten internen Richtlinien-Ausschnitte statt allgemeinen Modellwissens.
 2. "confidence": Ein numerischer Wert zwischen 0.0 und 1.0, der angibt, wie sicher du dir bei der Einordnung bist.
 3. "reason": Eine prägnante, deutschsprachige Erklärung für deine Entscheidung.
 4. "suggestedAction": Eines von "auto_override", "propagate_dependencies", "manual_review".
@@ -327,55 +345,65 @@ Analysiere die Änderungen semantisch und liefere eine JSON-Antwort mit exakt fo
    - Nutze "propagate_dependencies" wenn die Änderung andere Dokumente beeinflussen könnte (die davon abhängen).
    - Nutze "manual_review" wenn Risiken, Widersprüche oder unklare Sachverhalte vorliegen.`;
 
-    const response = await trackedGenerateContent(ai, {
-      model: 'gemini-3.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            classification: {
-              type: Type.STRING,
-              description: 'Einordnung der Änderung',
-            },
-            confidence: {
-              type: Type.NUMBER,
-              description: 'Konfidenz-Score (0-1)',
-            },
-            reason: {
-              type: Type.STRING,
-              description: 'Präzise Begründung der Analyse auf Deutsch',
-            },
-            suggestedAction: {
-              type: Type.STRING,
-              description: 'Empfohlene Aktion für den State-Flow',
-            },
+    const result = await generateStructuredWithFallback({
+      anthropic: isAnthropicConfigured() ? getAnthropicInstance() : null,
+      openai: isOpenAIConfigured() ? getOpenAIInstance() : null,
+      gemini: isGeminiConfigured() ? ai : null,
+      promptId: 'document-hygiene-change-classification',
+      contents,
+      systemInstruction,
+      geminiModels: ['gemini-3.5-flash'],
+      schema: {
+        type: Type.OBJECT,
+        properties: {
+          classification: {
+            type: Type.STRING,
+            description: 'Einordnung der Änderung',
           },
-          required: ['classification', 'confidence', 'reason', 'suggestedAction'],
+          confidence: {
+            type: Type.NUMBER,
+            description: 'Konfidenz-Score (0-1)',
+          },
+          reason: {
+            type: Type.STRING,
+            description: 'Präzise Begründung der Analyse auf Deutsch',
+          },
+          suggestedAction: {
+            type: Type.STRING,
+            description: 'Empfohlene Aktion für den State-Flow',
+          },
         },
+        required: ['classification', 'confidence', 'reason', 'suggestedAction'],
       },
-    }, { promptId: 'document-hygiene-change-classification' });
+    });
 
-    const result = JSON.parse(response.text || '{}');
+    if (!result) {
+      throw new Error('Kein KI-Provider konfiguriert oder alle konfigurierten Provider fehlgeschlagen.');
+    }
+
+    const parsed = result.data;
     return {
-      classification: result.classification || 'content_update',
-      confidence: typeof result.confidence === 'number' ? result.confidence : 0.7,
-      reason: result.reason || 'Keine detaillierte Begründung geliefert.',
-      suggestedAction: result.suggestedAction || 'manual_review',
+      classification: parsed.classification || 'content_update',
+      confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.7,
+      reason: parsed.reason || 'Keine detaillierte Begründung geliefert.',
+      suggestedAction: parsed.suggestedAction || 'manual_review',
     };
   } catch (err: any) {
-    console.error('Gemini API analysis failure:', err);
+    console.error('KI-Analyse fehlgeschlagen:', err);
     return {
       classification: 'conflict_candidate',
       confidence: 0.0,
-      reason: `Gemini-Analyse fehlgeschlagen: ${err.message || err}. Fallback auf manuelles Review.`,
+      reason: `KI-Analyse fehlgeschlagen: ${err.message || err}. Fallback auf manuelles Review.`,
       suggestedAction: 'manual_review',
     };
   }
 }
 
-// Call Gemini API to automatically propagate changes to dependent files
+// ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): dieselbe Anthropic -> OpenAI -> Gemini-Kette wie
+// analyzeChangeWithAI() oben. maxTokens ist hier bewusst hoeher als der Chat-Default (8192 statt
+// 2048) - die Antwort ist der VOLLSTAENDIGE neue Dokumentinhalt, nicht eine kurze Chat-Antwort;
+// mit dem Default waeren laengere Dokumente bei Anthropic/OpenAI abgeschnitten worden (Gemini
+// war davon nicht betroffen, da dort ohnehin kein explizites Limit gesetzt wird).
 async function generatePropagatedContent(
   dependentFilePath: string,
   dependentContent: string,
@@ -383,10 +411,10 @@ async function generatePropagatedContent(
   sourceDiff: string
 ): Promise<string> {
   try {
-    const prompt = `Du bist der "Capital-AI Documentary" Service (die autonome Dokumenten-Synchronisations-Engine von Gründer Sven Kulessa, sven.kulessa@capital-ai.online).
-Ein übergeordnetes Dokument, von dem dieses Dokument abhängt, wurde geändert. Du musst diese Änderungen nun semantisch auf das abhängige Dokument übertragen, um Konsistenz zu wahren.
+    const systemInstruction = `Du bist der "Capital-AI Documentary" Service (die autonome Dokumenten-Synchronisations-Engine von Gründer Sven Kulessa, sven.kulessa@capital-ai.online).
+Ein übergeordnetes Dokument, von dem dieses Dokument abhängt, wurde geändert. Du musst diese Änderungen nun semantisch auf das abhängige Dokument übertragen, um Konsistenz zu wahren. Gib ausschließlich den reinen, aktualisierten Dokumenteninhalt zurück (kein Markdown-Wrapping mit \`\`\`md oder Erklärungen).`;
 
-Abhängiges Dokument: ${dependentFilePath}
+    const contents = `Abhängiges Dokument: ${dependentFilePath}
 Quelle des Updates: ${sourceFilePath}
 
 --- EFFEKTIVE ÄNDERUNGEN IN DER QUELLE ---
@@ -395,14 +423,25 @@ ${sourceDiff}
 --- AKTUELLER INHALT DES ABHÄNGIGEN DOKUMENTS ---
 ${dependentContent}
 
-Bitte generiere den VOLLSTÄNDIGEN neuen Inhalt für das abhängige Dokument (${dependentFilePath}), der die oben stehenden Änderungen perfekt und fehlerfrei integriert. Behalte das ursprüngliche Format, Struktur und Metadaten (wie @depends on ...) bei. Gib ausschließlich den reinen, aktualisierten Dokumenteninhalt zurück (kein Markdown-Wrapping mit \`\`\`md oder Erklärungen).`;
+Bitte generiere den VOLLSTÄNDIGEN neuen Inhalt für das abhängige Dokument (${dependentFilePath}), der die oben stehenden Änderungen perfekt und fehlerfrei integriert. Behalte das ursprüngliche Format, Struktur und Metadaten (wie @depends on ...) bei.`;
 
-    const response = await trackedGenerateContent(ai, {
-      model: 'gemini-3.5-flash',
-      contents: prompt,
-    }, { promptId: 'document-hygiene-propagation' });
+    const result = await generateTextWithFallback({
+      anthropic: isAnthropicConfigured() ? getAnthropicInstance() : null,
+      openai: isOpenAIConfigured() ? getOpenAIInstance() : null,
+      gemini: isGeminiConfigured() ? ai : null,
+      promptId: 'document-hygiene-propagation',
+      contents,
+      systemInstruction,
+      geminiModels: ['gemini-3.5-flash'],
+      maxTokens: 8192,
+    });
 
-    let text = response.text || dependentContent;
+    if (!result) {
+      console.error(`Kein KI-Provider verfuegbar fuer Propagation nach ${dependentFilePath}`);
+      return dependentContent;
+    }
+
+    let text = result.text;
     // Strip potential markdown blocks if AI ignored instructions
     if (text.startsWith('```')) {
       const lines = text.split('\n');

@@ -7,6 +7,9 @@ import { resolveVerifiedIdentity, checkAdminAccess } from '../src/platform/Secur
 import { ADMIN_ZONE_ROLES } from '../src/platform/Security/types';
 import { trackedGenerateContent, getUsageSummary, getUsageLedger, PROMPT_REGISTRY } from '../src/services/aiUsageTracker';
 import { retrieveRelevantChunks, formatChunksForPrompt } from '../src/services/rag/retrieval';
+import { generateTextWithFallback, type ChatTurn } from '../src/services/agentModelRouting';
+import { getAnthropicInstance, isAnthropicConfigured } from './anthropicClient';
+import { getOpenAIInstance, isOpenAIConfigured } from './openaiClient';
 
 export const aiRouter = express.Router();
 
@@ -43,20 +46,24 @@ export function isGeminiConfigured(): boolean {
 }
 
 // 1. AI Chat Endpoint
-aiRouter.post('/chat', orchestrator.handle('Gemini Chat'), async (req, res) => {
-  if (!isGeminiConfigured()) {
-    return res.status(500).json({ error: 'Gemini API key is missing or invalid' });
+// ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): Nutzerentscheidung - der Chat-Assistent nutzt
+// jetzt dieselbe Anthropic -> OpenAI -> Gemini-Rueckfallkette wie die Scoring-Agenten
+// (generateStructuredWithFallback in agentModelRouting.ts), statt wie zuvor ausschliesslich
+// Gemini direkt anzusprechen. Kein Gemini-spezifisches Feature (kein Search-Grounding, keine
+// Bildanalyse) haengt an diesem Endpunkt - anders als /api/market-sentiment und
+// /api/analyze-image, die deshalb bewusst bei Gemini bleiben (siehe dortige Kommentare).
+aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
+  const anthropic = isAnthropicConfigured() ? getAnthropicInstance() : null;
+  const openai = isOpenAIConfigured() ? getOpenAIInstance() : null;
+  const gemini = isGeminiConfigured() ? getGeminiInstance() : null;
+  if (!anthropic && !openai && !gemini) {
+    return res.status(500).json({ error: 'Kein KI-Provider konfiguriert (ANTHROPIC_API_KEY, OPENAI_API_KEY oder GEMINI_API_KEY erforderlich).' });
   }
   try {
     const { message, history } = req.body;
-    const ai = getGeminiInstance();
-    
-    const contents = history.map((msg: any) => ({
-      role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.text }]
-    }));
-    
-    contents.push({ role: 'user', parts: [{ text: message }] });
+    const chatHistory: ChatTurn[] = Array.isArray(history)
+      ? history.map((msg: any) => ({ role: msg.role === 'user' ? 'user' : 'assistant', text: msg.text }))
+      : [];
 
     let systemInstruction = "You are the CAPITAL-AI Assistant, a highly professional, technically precise expert partner in quantitative finance, Graham value investing, and market analysis. Use a professional, accessible tone. Do not use unnecessary jargon. Prioritize clarity and data-driven insights. Remember the user is using CAPITAL-AI v0.5.5 Enterprise Architecture.";
     // ARCH-AUDIT-0002 (J4, Kapitel 14.6): erdet die Antwort in real indizierter interner
@@ -69,22 +76,28 @@ aiRouter.post('/chat', orchestrator.handle('Gemini Chat'), async (req, res) => {
       systemInstruction += `\n\nNutze bei Bedarf die folgenden Ausschnitte aus der internen CAPITAL-AI-Dokumentation als zusaetzlichen Kontext. Zitiere die Quelle, wenn du daraus etwas uebernimmst. Wenn die Ausschnitte die Frage nicht betreffen, ignoriere sie:\n\n${formatChunksForPrompt(relevantChunks)}`;
     }
 
-    const response = await trackedGenerateContent(ai, {
-      model: 'gemini-3.1-pro-preview',
-      contents,
-      config: { systemInstruction }
-    }, { promptId: 'chat-assistant', requestId: req.requestId });
+    const result = await generateTextWithFallback({
+      anthropic,
+      openai,
+      gemini,
+      promptId: 'chat-assistant',
+      contents: message,
+      history: chatHistory,
+      systemInstruction,
+      geminiModels: ['gemini-3.1-pro-preview'],
+      requestId: req.requestId,
+    });
 
-    res.json({ reply: response.text });
-  } catch (error: any) {
-    const errMsg = error?.message || String(error || '');
-    if (errMsg.includes("429") || errMsg.includes("quota") || errMsg.includes("exhausted") || errMsg.includes("RESOURCE_EXHAUSTED")) {
-      console.log("[System Notice] Chat API: utilizing offline quantitative assistant fallback.");
+    if (!result) {
+      console.log("[System Notice] Chat API: alle konfigurierten Provider fehlgeschlagen, nutze Offline-Fallback.");
       return res.json({
-        reply: "Entschuldigung, der CAPITAL-AI-Dienst ist derzeit stark ausgelastet (Rate-Limit überschritten). Bitte versuchen Sie es in wenigen Augenblicken noch einmal. In der Zwischenzeit können Sie alle anderen quantitativen Analyse- und Backtesting-Tools vollumfänglich nutzen!"
+        reply: "Entschuldigung, der CAPITAL-AI-Dienst ist derzeit stark ausgelastet. Bitte versuchen Sie es in wenigen Augenblicken noch einmal. In der Zwischenzeit können Sie alle anderen quantitativen Analyse- und Backtesting-Tools vollumfänglich nutzen!"
       });
     }
-    console.log("[System Info] Chat finished with warning");
+
+    res.json({ reply: result.text });
+  } catch (error: any) {
+    console.log("[System Info] Chat finished with warning", error?.message || error);
     res.status(500).json({ error: "Dienst vorübergehend nicht verfügbar." });
   }
 });
@@ -92,6 +105,11 @@ aiRouter.post('/chat', orchestrator.handle('Gemini Chat'), async (req, res) => {
 // 2. AI Image Analysis Endpoint
 // Audit ARCH-AUDIT-0002 (AUD2-F-016): zuvor ohne jede Authentifizierung aufrufbar - jeder
 // unangemeldete Client konnte beliebig oft die kostenpflichtige Gemini-Vision-API auslösen.
+// ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): bewusst NICHT auf die Anthropic -> OpenAI ->
+// Gemini-Kette umgestellt, obwohl beide anderen Provider ebenfalls Vision-faehig sind - die
+// Bildkodierung (`inlineData`, Base64 + MIME-Type) ist hier Gemini-spezifisch verdrahtet, eine
+// providerübergreifende Umsetzung waere ein eigener Schritt mit eigenem Testbedarf, nicht Teil
+// dieser Aenderung.
 aiRouter.post(
   '/analyze-image',
   (req, res, next) => {
