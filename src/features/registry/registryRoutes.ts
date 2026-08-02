@@ -17,6 +17,7 @@ import {
   type ApprovedFredSeriesId,
 } from '../../services/macroRateEvidence';
 import { buildMacroRiskRegime } from '../../services/macroRiskRegime';
+import { buildCrossAssetRiskContext, type CrossAssetClass } from '../../services/crossAssetRiskContext';
 import { logSystemEvent } from '../../../server/systemEvents';
 import { ensureFundamentalsFresh, getCachedFundamentals } from '../../../server/stockFundamentals';
 import { ensureIndexHistoryFresh, getCachedIndexHistory, INDEX_FMP_TICKERS } from '../../../server/fmpIndices';
@@ -236,6 +237,25 @@ registryRouter.get('/macro/risk-regime', async (req, res) => {
   return res.status(httpStatus).json({ correlationId, ...evidence });
 });
 
+registryRouter.get('/macro/cross-asset/:assetClass', async (req, res) => {
+  const correlationId = resolveCorrelationId(req);
+  res.setHeader('x-correlation-id', correlationId);
+  const assetClass = req.params.assetClass.toLowerCase() as CrossAssetClass;
+  const allowed: CrossAssetClass[] = ['stock', 'forex', 'index', 'crypto', 'bond'];
+  if (!allowed.includes(assetClass)) {
+    return res.status(400).json({
+      correlationId,
+      status: 'UNSUPPORTED_ASSET_CLASS',
+      supportedAssetClasses: allowed,
+      scoreImpactEnabled: false,
+      recommendationEligible: false,
+    });
+  }
+  const context = await buildCrossAssetRiskContext(assetClass);
+  const httpStatus = context.status === 'READY' ? 200 : 422;
+  return res.status(httpStatus).json({ correlationId, ...context });
+});
+
 /**
  * Batch boundary for watchlists/server-side screening clients. Every item gets its own child
  * correlation id and the exact same verified provenance/lineage rules as the single endpoint.
@@ -263,6 +283,42 @@ registryRouter.get('/assets/verified-scores', async (req, res) => {
     requested: symbols.length,
     ready: results.filter(item => item.httpStatus === 200).length,
     results: results.map(item => ({ httpStatus: item.httpStatus, ...item.payload })),
+  });
+});
+
+registryRouter.get('/assets/:symbol/verified-context', async (req, res) => {
+  const correlationId = resolveCorrelationId(req);
+  res.setHeader('x-correlation-id', correlationId);
+  const symbol = req.params.symbol.toUpperCase().trim();
+  const asset = assetRegistry.getAsset(symbol);
+  if (!asset) return res.status(404).json({ correlationId, symbol, status: 'ASSET_NOT_FOUND' });
+  if (asset.type !== 'stock' && asset.type !== 'forex' && asset.type !== 'index') {
+    return res.status(400).json({
+      correlationId,
+      symbol,
+      assetType: asset.type,
+      status: 'UNSUPPORTED_ASSET_CLASS',
+      reason: 'Der kombinierte verifizierte Screening-Kontext ist derzeit für Stock/Forex/Index aktiviert.',
+    });
+  }
+
+  const [scoreResult, macroContext] = await Promise.all([
+    evaluateVerifiedTraditionalSymbol(symbol, `${correlationId}:score`),
+    buildCrossAssetRiskContext(asset.type),
+  ]);
+
+  return res.status(scoreResult.httpStatus === 200 ? 200 : 422).json({
+    correlationId,
+    symbol,
+    assetType: asset.type,
+    status: scoreResult.httpStatus === 200 ? 'READY' : 'PARTIAL',
+    scoreContext: scoreResult.payload,
+    macroContext,
+    integrationPolicy: {
+      scoreImpactEnabled: false,
+      recommendationEligible: false,
+      rule: 'Score-Lineage und Macro-Evidence werden korreliert ausgeliefert, aber nicht automatisch miteinander verrechnet.',
+    },
   });
 });
 

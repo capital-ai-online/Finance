@@ -12,6 +12,7 @@ import { buildScoringLineage } from '../services/scoringLineage';
 import { getCryptoSpotConsensus } from '../services/cryptoSpotConsensus';
 import { getLiveCryptoSnapshotConsensus } from '../services/liveCryptoSnapshotConsensus';
 import { evaluateCryptoSnapshotIntegrity } from '../services/cryptoSnapshotIntegrity';
+import { recordMarketIntegrityObservation } from '../platform/Supervisor/marketIntegrityRuntime';
 
 function requestCorrelationId(req: express.Request): string {
   const incoming = req.header('x-correlation-id');
@@ -108,6 +109,15 @@ export function createCryptoRouter(
       const symbol = String(req.params.symbol || '').toUpperCase().trim();
       if (!symbol) return res.status(400).json({ error: 'Cryptocurrency symbol is required.', correlationId });
       const consensus = await getCryptoSpotConsensus(symbol);
+      recordMarketIntegrityObservation({
+        symbol,
+        capability: 'spot-consensus',
+        state: consensus.status === 'CONSENSUS' ? 'consistent' : consensus.status === 'SOURCE_CONFLICT' ? 'conflict' : 'insufficient',
+        correlationId,
+        providers: consensus.providers,
+        evidenceIds: consensus.evidenceIds,
+        message: consensus.reason,
+      });
       const httpStatus = consensus.status === 'CONSENSUS'
         ? 200
         : consensus.status === 'SOURCE_CONFLICT'
@@ -124,11 +134,6 @@ export function createCryptoRouter(
     }
   });
 
-  /**
-   * Diagnostic multi-source quorum for critical snapshot fields. CoinGecko and CoinMarketCap are
-   * compared field-by-field. This remains observation-only until production divergence is measured
-   * and tolerances are calibrated; it does not hard-gate the existing score path yet.
-   */
   router.get('/snapshot-consensus/:symbol', async (req, res) => {
     const correlationId = requestCorrelationId(req);
     res.setHeader('x-correlation-id', correlationId);
@@ -137,6 +142,18 @@ export function createCryptoRouter(
 
     try {
       const consensus = await getLiveCryptoSnapshotConsensus(symbol);
+      recordMarketIntegrityObservation({
+        symbol,
+        capability: 'snapshot-consensus',
+        state: consensus.status === 'CONSENSUS' ? 'consistent'
+          : consensus.status === 'SOURCE_CONFLICT' ? 'conflict'
+            : consensus.status === 'NON_COMPARABLE_EVIDENCE' ? 'degraded'
+              : 'insufficient',
+        correlationId,
+        providers: consensus.providers,
+        evidenceIds: consensus.evidenceIds,
+        message: `Snapshot consensus status: ${consensus.status}`,
+      });
       const httpStatus = consensus.status === 'SOURCE_CONFLICT' || consensus.status === 'NON_COMPARABLE_EVIDENCE'
         ? 409
         : consensus.status === 'INSUFFICIENT_SOURCES'
@@ -160,11 +177,6 @@ export function createCryptoRouter(
     }
   });
 
-  /**
-   * Evidence-only integrity boundary. This endpoint never changes a score or ranking. It exposes
-   * supply invariants plus an independent market-cap cross-check against spot quorum × circulating
-   * supply so Supervisor/Compliance clients can observe conflicts before any future hard gate.
-   */
   router.get('/snapshot-integrity/:symbol', async (req, res) => {
     const correlationId = requestCorrelationId(req);
     res.setHeader('x-correlation-id', correlationId);
@@ -172,6 +184,17 @@ export function createCryptoRouter(
     if (!symbol) return res.status(400).json({ correlationId, status: 'INVALID_REQUEST', reason: 'Cryptocurrency symbol is required.' });
     try {
       const integrity = await evaluateCryptoSnapshotIntegrity(symbol);
+      recordMarketIntegrityObservation({
+        symbol,
+        capability: 'snapshot-integrity',
+        state: integrity.status === 'CONSISTENT' ? 'consistent'
+          : integrity.status === 'SOURCE_CONFLICT' || integrity.status === 'INVALID_SNAPSHOT' ? 'conflict'
+            : 'insufficient',
+        correlationId,
+        providers: integrity.providers,
+        evidenceIds: integrity.evidenceIds,
+        message: integrity.reason,
+      });
       const httpStatus = integrity.status === 'CONSISTENT'
         ? 200
         : integrity.status === 'SOURCE_CONFLICT' || integrity.status === 'INVALID_SNAPSHOT'
