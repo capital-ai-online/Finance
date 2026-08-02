@@ -1,5 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { assetRegistry } from '../../src/lib/assetRegistry';
+import { describe, expect, it } from 'vitest';
 import {
   evaluateVerifiedCryptoTechnicalScore,
   normalizeHistoryDateToIso,
@@ -18,23 +17,22 @@ function makeHistory(count = 30) {
   });
 }
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
 describe('verified crypto technical scoring regression', () => {
-  it('normalizes the AssetRegistry DD.MM.YY history format', () => {
+  it('normalizes both repository and provider date formats', () => {
     expect(normalizeHistoryDateToIso('02.08.26')).toBe('2026-08-02T00:00:00.000Z');
     expect(normalizeHistoryDateToIso('2026-08-02')).toBe('2026-08-02T00:00:00.000Z');
   });
 
   it('returns READY when a real 30-day history provides sufficient evidenced factors', async () => {
-    vi.spyOn(assetRegistry, 'getHistory').mockResolvedValue({
-      source: 'live',
-      points: makeHistory(),
+    const assessment = await evaluateVerifiedCryptoTechnicalScore('ETH', {
+      historyProvider: async () => ({
+        provider: 'CoinGecko',
+        points: makeHistory(),
+        retrievedAt: '2026-08-02T06:00:00.000Z',
+        cacheMode: 'fresh',
+        degraded: false,
+      }),
     });
-
-    const assessment = await evaluateVerifiedCryptoTechnicalScore('ETH');
 
     expect(assessment.canonical.status).toBe('READY');
     expect(assessment.canonical.final_score).not.toBeNull();
@@ -49,15 +47,13 @@ describe('verified crypto technical scoring regression', () => {
     expect(assessment.inputs.relative_strength).toBeTypeOf('number');
     expect(assessment.inputs.avg_daily_volume).toBeUndefined();
     expect(assessment.inputs.supply_dynamics).toBeUndefined();
+    expect(assessment.providerState).toEqual({ cacheMode: 'fresh', degraded: false });
   });
 
-  it('remains fail-closed when only simulated/unverified history is available', async () => {
-    vi.spyOn(assetRegistry, 'getHistory').mockResolvedValue({
-      source: 'simulated',
-      points: makeHistory(),
+  it('remains fail-closed when no verified provider history is available', async () => {
+    const assessment = await evaluateVerifiedCryptoTechnicalScore('ETH', {
+      historyProvider: async () => null,
     });
-
-    const assessment = await evaluateVerifiedCryptoTechnicalScore('ETH');
 
     expect(assessment.canonical.status).toBe('SOURCE_UNAVAILABLE');
     expect(assessment.canonical.final_score).toBeNull();
