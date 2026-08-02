@@ -22,6 +22,24 @@ export interface VerifiedCryptoTechnicalAssessment {
   analysis: ReturnType<typeof CryptoScoringService.scoreCrypto> | null;
 }
 
+/** Normalize the two history formats currently emitted inside the repository. */
+export function normalizeHistoryDateToIso(rawDate: string): string | undefined {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+    const value = Date.parse(`${rawDate}T00:00:00.000Z`);
+    return Number.isFinite(value) ? new Date(value).toISOString() : undefined;
+  }
+
+  const shortMatch = /^(\d{2})\.(\d{2})\.(\d{2})$/.exec(rawDate);
+  if (shortMatch) {
+    const [, dd, mm, yy] = shortMatch;
+    const year = 2000 + Number(yy);
+    const value = Date.UTC(year, Number(mm) - 1, Number(dd));
+    return Number.isFinite(value) ? new Date(value).toISOString() : undefined;
+  }
+
+  return undefined;
+}
+
 /**
  * Production-safe deterministic crypto scoring path.
  *
@@ -59,14 +77,16 @@ export async function evaluateVerifiedCryptoTechnicalScore(
     const rsi = computeRsi(closes);
     const lastPoint = history.points[history.points.length - 1];
 
-    observedAt = new Date(`${lastPoint.date}T00:00:00.000Z`).toISOString();
-    evidence = [{
-      id: `coingecko-history:${s}:${lastPoint.date}`,
-      source: 'CoinGecko',
-      observedAt,
-      retrievedAt,
-      kind: 'market-history',
-    }];
+    observedAt = normalizeHistoryDateToIso(lastPoint.date);
+    if (observedAt) {
+      evidence = [{
+        id: `coingecko-history:${s}:${lastPoint.date}`,
+        source: 'CoinGecko',
+        observedAt,
+        retrievedAt,
+        kind: 'market-history',
+      }];
+    }
 
     if (stats) {
       inputs = {
