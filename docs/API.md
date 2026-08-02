@@ -145,4 +145,4 @@ Performs immediate deterministic mathematical scoring based on manual slider par
 
 ---
 
-*Verified under CAPITAL-AI Platform Specification Version 0.5.4.*
+*Verified under CAPITAL-AI Platform Specification Version 0.6.0.*
