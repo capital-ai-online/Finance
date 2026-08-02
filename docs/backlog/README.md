@@ -16,3 +16,8 @@ The backlog is organized into the following specialized registers:
 ## ⚡ Active Milestone: Version 0.6.5 (Production & Enterprise Hardening)
 - All development tracks adhere strictly to the **Version 0.5.5 / 0.6.0** milestones.
 - Strictly enforcing single-point security loops and isolated server modules.
+
+### 🔎 Referenced Audit: ARCH-AUDIT-0005
+See `docs/architecture/ENTERPRISE_FINTECH_SCREENING_GOVERNANCE_AUDIT.md` for the current
+full status report and prioritized roadmap. One P0 remains open across two audit cycles
+(AUD5-F-001, `src/components/AuditLogs.tsx:215-216`) — see `03-compliance-security.md`.
