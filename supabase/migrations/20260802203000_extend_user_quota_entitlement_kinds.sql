@@ -34,34 +34,35 @@ security invoker
 set search_path = ''
 as $$
 declare
-  v_now timestamptz := clock_timestamp();
+  v_now timestamptz := pg_catalog.clock_timestamp();
   v_row public.user_quota%rowtype;
+  v_email text := pg_catalog.lower(pg_catalog.btrim(p_email));
 begin
-  if p_limit <= 0 or p_window_seconds <= 0 then
+  if p_limit <= 0 or p_window_seconds <= 0 or v_email = '' then
     raise exception 'Invalid quota configuration';
   end if;
 
   -- Serialize the same identity/quota-kind pair without requiring a second table.
   perform pg_catalog.pg_advisory_xact_lock(
-    pg_catalog.hashtext(pg_catalog.lower(pg_catalog.trim(p_email)) || ':' || p_quota_kind)
+    pg_catalog.hashtext(v_email || ':' || p_quota_kind)
   );
 
   select *
     into v_row
     from public.user_quota
-   where email = pg_catalog.lower(pg_catalog.trim(p_email))
+   where email = v_email
      and quota_kind = p_quota_kind
    for update;
 
   if not found or v_row.window_start + pg_catalog.make_interval(secs => p_window_seconds) <= v_now then
     insert into public.user_quota (email, quota_kind, window_start, count)
-    values (pg_catalog.lower(pg_catalog.trim(p_email)), p_quota_kind, v_now, 1)
+    values (v_email, p_quota_kind, v_now, 1)
     on conflict (email, quota_kind)
     do update set window_start = excluded.window_start, count = 1
     returning * into v_row;
 
     return query
-      select true, 1, pg_catalog.greatest(p_limit - 1, 0), v_row.window_start,
+      select true, 1, greatest(p_limit - 1, 0), v_row.window_start,
              v_row.window_start + pg_catalog.make_interval(secs => p_window_seconds);
     return;
   end if;
@@ -80,7 +81,7 @@ begin
    returning * into v_row;
 
   return query
-    select true, v_row.count, pg_catalog.greatest(p_limit - v_row.count, 0), v_row.window_start,
+    select true, v_row.count, greatest(p_limit - v_row.count, 0), v_row.window_start,
            v_row.window_start + pg_catalog.make_interval(secs => p_window_seconds);
 end;
 $$;
