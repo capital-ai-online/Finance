@@ -103,6 +103,7 @@
   "documentation": [
     "README.md"
   ],
+  "tests": [],
   "conformanceLevel": null,
   "note": "Manifest erfuellt den vollstaendigen Metadata Contract aus ESS-0001-CONTRACTS Chapter 7 einschliesslich layer, lifecycle, health, quality, security, ai und repository. Die 22 Bestandsmanifeste fuehren diese Felder noch nicht (GAP-015)."
 }

@@ -1,7 +1,7 @@
 {
   "name": "Traceability",
-  "version": "1.0.0",
-  "status": "specified",
+  "version": "1.1.0",
+  "status": "development",
   "owner": "Platform Director",
   "description": "Enterprise Traceability Matrix (ETM). Verwaltet die bidirektionalen Beziehungen zwischen ESS, ADR, Repository, Komponenten, Klassen, Interfaces, Events, Tests, Dokumentation, Knowledge Graph, Versionen und Releases. Erzeugt keine Artefakte und keine Regeln, sondern ausschliesslich Verknuepfungen, Kennzahlen und Berichte.",
   "category": "platform",
@@ -31,6 +31,7 @@
     "src/platform/Discovery",
     "src/platform/Documentary"
   ],
+  "dependenciesNote": "ARCH-AUDIT-0002 (N4, 2026-08-02): dies ist die im ESS-0011-README festgelegte Zielabhaengigkeitsliste (Cross-Cutting-Modul). Der tatsaechliche Code importiert davon nichts, weil Core, Shared, Registry, Knowledge und Discovery selbst unspecified sind (0 TS-Dateien, siehe deren Manifeste) - es gaebe nichts zu importieren. Die Implementierung liest ihre Quellen direkt (.ai/registry/ess-registry.json, docs/adr/adr_history.json, src/platform/*/manifest.json, tests/) statt ueber diese Module.",
   "forbiddenDependencies": [
     "src/platform/Supervisor",
     "src/platform/PlatformDirector"
@@ -52,7 +53,8 @@
       "ComponentRegisteredEvent",
       "ExceptionRegisteredEvent",
       "ReleasePreparedEvent"
-    ]
+    ],
+    "note": "ARCH-AUDIT-0002 (N4, 2026-08-02): keines der hier genannten Events wird vom tatsaechlichen Code unter Core/ ausgeloest oder konsumiert - der Lauf erfolgt ausschliesslich synchron ueber `npm run traceability:build` (Services/runTraceability.ts). Die Anbindung an den Enterprise Event Bus (src/platform/EventMesh/Core/EventBus.ts, real vorhanden seit ADR-0018) ist Stufe 3 der Implementierung und offen."
   },
   "interfaces": [
     "ITraceabilityBuilder",
@@ -108,6 +110,7 @@
     "component.yaml",
     "docs/traceability/"
   ],
+  "tests": [],
   "conformanceLevel": null,
-  "note": "Erste Komponente des Repositorys mit vollstaendigem Metadatensatz einschliesslich component.yaml und CHANGELOG.md. Erfuellt damit GOV-REPO-002 und GOV-REPO-004 aus ESS-0012-CONTRACTS. ARCH-AUDIT-0002 (J5, 2026-08-02): status von 'development' auf 'specified' korrigiert - diese Komponente ist die einzige der urspruenglich 22 leeren Plattformmodul-Verzeichnisse mit einer echten, vollstaendigen Spezifikation (ESS-0011), der jedoch bewusst keine Implementierung folgte (siehe README.md, Implementierungsstand)."
+  "note": "Erste Komponente des Repositorys mit vollstaendigem Metadatensatz einschliesslich component.yaml und CHANGELOG.md. Erfuellt damit GOV-REPO-002 und GOV-REPO-004 aus ESS-0012-CONTRACTS. ARCH-AUDIT-0002 (J5, 2026-08-02): status von 'development' auf 'specified' korrigiert, da bis dahin keine Implementierung vorlag. ARCH-AUDIT-0002 (N4, 2026-08-02): status zurueck auf 'development' - Discovery, Models, Interfaces, Core (Builder, CoverageAnalyzer, OrphanDetector), Registry und Reporter sind implementiert und lauffaehig (`npm run traceability:build`), gegen die real vorhandene ESS-Registry, ADR-Historie, 25 Komponenten-Manifeste und 21 Testdateien verifiziert (siehe docs/traceability/COVERAGE_REPORT.md). Von den vier Stufen in README.md 'Implementierungsstand' sind 1 und 2 umgesetzt; 3 (Event-Bus-Anbindung) und 4 (Validator-Basisklasse) bleiben offen, siehe events.note. Kein Knowledge Graph und kein Digital Twin vorausgesetzt - die urspruenglich als harte Voraussetzung genannte Blockade (README, Implementierungsstand) war fuer diesen ersten Ausbau nicht zutreffend: die verwendeten Quellen (ESS-Registry, docs/adr/, Manifeste, tests/) sind bereits real vorhanden."
 }

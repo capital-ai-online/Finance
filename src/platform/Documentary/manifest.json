@@ -23,5 +23,6 @@
   "documentation": [
     "README.md"
   ],
+  "tests": [],
   "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): als unspezifiziert markiert - description beschreibt eine Zielarchitektur gemaess ESS-0010, es existiert jedoch kein Code. Kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden."
 }

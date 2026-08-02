@@ -31,5 +31,8 @@
   "contracts": [],
   "documentation": [
     "README.md"
+  ],
+  "tests": [
+    "tests/unit/supervisor.test.ts"
   ]
 }

@@ -8,7 +8,7 @@
 component:
   name: Traceability
   displayName: Enterprise Traceability Matrix
-  version: 1.0.0
+  version: 1.1.0
   status: development
   lifecycle: Development
   health: Unknown
@@ -143,5 +143,8 @@ ai:
     - Future Enterprise AI
 
 implementationStatus: >
-  Spezifiziert, nicht implementiert. Die Umsetzung setzt die Stufen 1 bis 4 aus
-  docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md voraus.
+  ARCH-AUDIT-0002 (N4, 2026-08-02): Stufe 1 (Modelle) und Stufe 2 (Core, Interfaces, Registry)
+  umgesetzt und lauffaehig ueber `npm run traceability:build`. Stufe 3 (Event-Bus-Anbindung)
+  und Stufe 4 (Validator-Basisklasse) offen. Events unter `events:` sind Zielbeschreibung,
+  werden vom Code (noch) nicht ausgeloest oder konsumiert. Details: README.md,
+  "Implementierungsstand".

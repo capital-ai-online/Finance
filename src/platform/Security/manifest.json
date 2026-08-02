@@ -29,5 +29,9 @@
   "documentation": [
     "README.md"
   ],
+  "tests": [
+    "tests/unit/secretCrypto.test.ts",
+    "tests/unit/totp.test.ts"
+  ],
   "note": "ARCH-AUDIT-0002 (J5, Kapitel 14.6): physisch aus server/iam/ hierher verschoben - vorher wies die ESS-Registry (implementedBy von ESS-0006) auf diesen Ordner, obwohl er nur eine leere Huelle war und der Code unter server/iam/ lag. Diese Verschiebung macht die Registry-Angabe korrekt."
 }

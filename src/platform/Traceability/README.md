@@ -158,17 +158,29 @@ ADR-0014 — Documentation Governance Validator
 
 ## Implementierungsstand
 
-Diese Komponente ist **spezifiziert, nicht implementiert**.
+Diese Komponente ist **teilweise implementiert** (ARCH-AUDIT-0002, N4, 2026-08-02).
 
 | Stufe | Voraussetzung | Zustand |
 |---|---|---|
-| 1 | JSON-Schemata, vollständige Metadaten | offen |
-| 2 | Core, Interfaces, Models, Registry | offen |
-| 3 | Enterprise Event Bus | offen |
-| 4 | Validator-Basisklasse | offen |
+| 1 | JSON-Schemata, vollständige Metadaten | **umgesetzt** — `Models/traceabilityModels.ts` |
+| 2 | Core, Interfaces, Models, Registry | **umgesetzt** — `Core/`, `Interfaces/index.ts`, `Registry/traceabilityRegistry.ts` |
+| 3 | Enterprise Event Bus | offen — der Lauf ist rein synchron über `npm run traceability:build`, keine Anbindung an `src/platform/EventMesh/Core/EventBus.ts` |
+| 4 | Validator-Basisklasse | offen — es existiert im gesamten Repository noch keine `Validator`-Basisklasse, an die sich anschließen ließe |
 
-Ohne Knowledge Graph und Digital Twin besitzt die ETM keine Datengrundlage — ein Aufbau
-wäre nach ihren eigenen Regeln (`GOV-KG-001`, `GOV-TWIN-001`) nicht durchführbar.
+Aufruf: `npm run traceability:build` (`Services/runTraceability.ts`). Baut die Matrix, schreibt
+`matrix.json`/`coverage.json`/`orphans.json` unter `.ai/knowledge/traceability/` sowie
+`docs/traceability/COVERAGE_REPORT.md`, und führt das `tests`-Feld in allen
+Plattform-Manifesten anhand real gefundener Testdateien nach. Kein automatischer Lauf beim
+Serverstart — bewusst, siehe AUD2-F-014 (unerwünschte Dokumentmutation bei jedem Start).
+
+**Korrektur zur ursprünglichen Einschätzung:** Die zuvor hier genannte Blockade — ohne
+Knowledge Graph und Digital Twin keine Datengrundlage (`GOV-KG-001`, `GOV-TWIN-001`) — traf für
+diesen ersten Ausbau nicht zu. Die Achsen ESS↔Component und Component↔Test kommen ohne
+Knowledge Graph und Digital Twin aus; sie lesen direkt `.ai/registry/ess-registry.json`,
+`docs/adr/adr_history.json`, `src/platform/*/manifest.json` und `tests/`. Die ADR- und
+Event-/Interface-Achsen aus Kapitel „Traceability-Achsen" sind noch nicht als geprüfte
+Verknüpfung abgebildet (siehe `Core/traceabilityBuilder.ts`, Kommentar am Dateikopf) — dafür
+fehlt tatsächlich eine zweite, unabhängige Quelle je Achse.
 
 ---
 

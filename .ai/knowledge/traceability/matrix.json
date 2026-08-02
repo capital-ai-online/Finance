@@ -1,0 +1,859 @@
+{
+  "generatedAt": "2026-08-02T04:21:16.277Z",
+  "ess": [
+    {
+      "id": "ESS-0001",
+      "title": "Documentary & Code Intelligence Architect",
+      "status": "published",
+      "implementedBy": []
+    },
+    {
+      "id": "ESS-0001-CONTRACTS",
+      "title": "Enterprise Technical Contracts",
+      "status": "published",
+      "implementedBy": []
+    },
+    {
+      "id": "ESS-0002",
+      "title": "Supervisor Architect",
+      "status": "published",
+      "implementedBy": []
+    },
+    {
+      "id": "ESS-0003",
+      "title": "Platform Director",
+      "status": "published",
+      "implementedBy": []
+    },
+    {
+      "id": "ESS-0004",
+      "title": "Enterprise Version Manager",
+      "status": "published",
+      "implementedBy": [
+        "src/platform/VersionManager"
+      ]
+    },
+    {
+      "id": "ESS-0005",
+      "title": "Quality Center",
+      "status": "published",
+      "implementedBy": [
+        "src/platform/Quality"
+      ]
+    },
+    {
+      "id": "ESS-0006",
+      "title": "Security & Compliance",
+      "status": "published",
+      "implementedBy": [
+        "src/platform/Security",
+        "src/platform/Compliance"
+      ]
+    },
+    {
+      "id": "ESS-0007",
+      "title": "Enterprise Release Center",
+      "status": "published",
+      "implementedBy": [
+        "src/platform/Release"
+      ]
+    },
+    {
+      "id": "ESS-0008",
+      "title": "AI Agent Framework",
+      "status": "published",
+      "implementedBy": [
+        "src/agents",
+        "src/orchestrator"
+      ]
+    },
+    {
+      "id": "ESS-0009",
+      "title": "Enterprise Knowledge Platform",
+      "status": "published",
+      "implementedBy": [
+        "src/platform/Knowledge"
+      ]
+    },
+    {
+      "id": "ESS-0010",
+      "title": "Documentary Engine",
+      "status": "published",
+      "implementedBy": []
+    },
+    {
+      "id": "ESS-0011",
+      "title": "Enterprise Traceability",
+      "status": "published",
+      "implementedBy": [
+        "src/platform/Traceability"
+      ]
+    },
+    {
+      "id": "ESS-0011-CONTRACTS",
+      "title": "Enterprise Traceability Matrix Contracts",
+      "status": "published",
+      "implementedBy": [
+        "src/platform/Traceability"
+      ]
+    },
+    {
+      "id": "ESS-0012",
+      "title": "Documentation Governance",
+      "status": "published",
+      "implementedBy": [
+        "src/platform/Documentary/Governance"
+      ]
+    },
+    {
+      "id": "ESS-0012-CONTRACTS",
+      "title": "Documentation Governance Contracts",
+      "status": "published",
+      "implementedBy": [
+        "src/platform/Documentary/Governance"
+      ]
+    },
+    {
+      "id": "ESS-0013",
+      "title": "Enterprise Event Mesh",
+      "status": "published",
+      "implementedBy": [
+        "src/platform/EventMesh"
+      ]
+    },
+    {
+      "id": "ESS-0013-CONTRACTS",
+      "title": "Enterprise Event Mesh Contracts",
+      "status": "published",
+      "implementedBy": [
+        "src/platform/EventMesh"
+      ]
+    }
+  ],
+  "adr": [
+    {
+      "id": "ADR-0001",
+      "title": "Standardisierung der Plattform-Version auf 0.5.4",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0002",
+      "title": "Verwendung von Google Firestore für cloud-basierte Datenpersistenz",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0003",
+      "title": "Automatisierte Dokumenten-Hygiene-Engine",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0003.5",
+      "title": "Owner-IAM, Passkey/2FA-Absicherung & zugriffsbeschränkte Systemzonen",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0004",
+      "title": "Entfernung des \"Core\"-Schriftzugs und des aufklappbaren Profil-Panels",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0005",
+      "title": "Einbindung eines Capital-AI Front-End Moduls im Capital-AI FinTech Ökosystem",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0006",
+      "title": "Nächste architektonische Schritte zur Anbindung eines Plattform-Direktors innerhalb der Plattform",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0007",
+      "title": "Bereitstellung einer vollen Capital-AI Compliance Wertschöpfungskette",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0008",
+      "title": "Behebung des Reaktivitäts- & Lebenszyklus-Ausfalls im Document Hygiene Panel",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0009",
+      "title": "CORS Hardening für Entwicklungs- und Produktionsumgebung",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0010",
+      "title": "Erweiterung des Enterprise Standards um ESS-0001-CONTRACTS Chapter 11-20, ESS-0002, ESS-0003 und die ESS Registry",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0011",
+      "title": "Bestandsschutz und Zielstruktur für die Root-Abweichungen server/, sql/ und server.ts",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0012",
+      "title": "SecurityComplianceAuditor Integration",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0013",
+      "title": "Konsolidierung der ESS-Dokumentationsverantwortung, Vergabe von ESS-0010 und ESS-0011",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0014",
+      "title": "Documentation Governance Validator als Kernkomponente der Documentary Engine",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0015",
+      "title": "Einführung der Traceability-Komponente als Plattformmodul",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0016",
+      "title": "Nachvergabe der reservierten ESS-Nummern 0004 bis 0009 als Komponentenspezifikationen",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0017",
+      "title": "Produktions-Audit-Nachbesserungen — Quota-Durchsetzung, Supabase-Härtung, Stripe-Jahresrabatt, Compliance-Backend",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0018",
+      "title": "Einführung der Enterprise Event Mesh als Plattformmodul",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0019",
+      "title": "Fork-Divergenz zwischen Entwicklungs- und Produktivstand, Konsolidierung des ADR- und ESS-Nummernraums",
+      "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0020",
+      "title": "Social Media Direct Publishing — Reale OAuth-2.0- und Plattform-API-Integration",
+      "status": "ACCEPTED"
+    }
+  ],
+  "components": [
+    {
+      "name": "Architecture",
+      "path": "src/platform/Architecture",
+      "manifestPath": "src/platform/Architecture/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Compliance",
+      "path": "src/platform/Compliance",
+      "manifestPath": "src/platform/Compliance/manifest.json",
+      "status": "implemented",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS",
+        "ESS-0006"
+      ],
+      "adr": [
+        "ADR-0012"
+      ]
+    },
+    {
+      "name": "Contracts",
+      "path": "src/platform/Contracts",
+      "manifestPath": "src/platform/Contracts/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Core",
+      "path": "src/platform/Core",
+      "manifestPath": "src/platform/Core/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Discovery",
+      "path": "src/platform/Discovery",
+      "manifestPath": "src/platform/Discovery/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Documentary",
+      "path": "src/platform/Documentary",
+      "manifestPath": "src/platform/Documentary/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS",
+        "ESS-0010"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Documentary/Governance",
+      "path": "src/platform/Documentary/Governance",
+      "manifestPath": "src/platform/Documentary/Governance/manifest.json",
+      "status": "development",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS",
+        "ESS-0010",
+        "ESS-0011",
+        "ESS-0011-CONTRACTS",
+        "ESS-0012",
+        "ESS-0012-CONTRACTS"
+      ],
+      "adr": [
+        "ADR-0010",
+        "ADR-0013",
+        "ADR-0014"
+      ]
+    },
+    {
+      "name": "EventMesh",
+      "path": "src/platform/EventMesh",
+      "manifestPath": "src/platform/EventMesh/manifest.json",
+      "status": "development",
+      "ess": [
+        "ESS-0001-CONTRACTS",
+        "ESS-0013",
+        "ESS-0013-CONTRACTS",
+        "ESS-0010",
+        "ESS-0011"
+      ],
+      "adr": [
+        "ADR-0018"
+      ]
+    },
+    {
+      "name": "Events",
+      "path": "src/platform/Events",
+      "manifestPath": "src/platform/Events/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Generators",
+      "path": "src/platform/Generators",
+      "manifestPath": "src/platform/Generators/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Interfaces",
+      "path": "src/platform/Interfaces",
+      "manifestPath": "src/platform/Interfaces/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Knowledge",
+      "path": "src/platform/Knowledge",
+      "manifestPath": "src/platform/Knowledge/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Models",
+      "path": "src/platform/Models",
+      "manifestPath": "src/platform/Models/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "PlatformDirector",
+      "path": "src/platform/PlatformDirector",
+      "manifestPath": "src/platform/PlatformDirector/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Plugins",
+      "path": "src/platform/Plugins",
+      "manifestPath": "src/platform/Plugins/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Quality",
+      "path": "src/platform/Quality",
+      "manifestPath": "src/platform/Quality/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Registry",
+      "path": "src/platform/Registry",
+      "manifestPath": "src/platform/Registry/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Release",
+      "path": "src/platform/Release",
+      "manifestPath": "src/platform/Release/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Security",
+      "path": "src/platform/Security",
+      "manifestPath": "src/platform/Security/manifest.json",
+      "status": "implemented",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS",
+        "ESS-0006"
+      ],
+      "adr": [
+        "ADR-0003.5"
+      ]
+    },
+    {
+      "name": "Shared",
+      "path": "src/platform/Shared",
+      "manifestPath": "src/platform/Shared/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Supervisor",
+      "path": "src/platform/Supervisor",
+      "manifestPath": "src/platform/Supervisor/manifest.json",
+      "status": "implemented",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": [
+        "ADR-0018"
+      ]
+    },
+    {
+      "name": "Telemetry",
+      "path": "src/platform/Telemetry",
+      "manifestPath": "src/platform/Telemetry/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "Traceability",
+      "path": "src/platform/Traceability",
+      "manifestPath": "src/platform/Traceability/manifest.json",
+      "status": "development",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS",
+        "ESS-0010",
+        "ESS-0011",
+        "ESS-0011-CONTRACTS",
+        "ESS-0012"
+      ],
+      "adr": [
+        "ADR-0013",
+        "ADR-0014",
+        "ADR-0015"
+      ]
+    },
+    {
+      "name": "Validators",
+      "path": "src/platform/Validators",
+      "manifestPath": "src/platform/Validators/manifest.json",
+      "status": "unspecified",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS"
+      ],
+      "adr": []
+    },
+    {
+      "name": "VersionManager",
+      "path": "src/platform/VersionManager",
+      "manifestPath": "src/platform/VersionManager/manifest.json",
+      "status": "implemented",
+      "ess": [
+        "ESS-0001",
+        "ESS-0001-CONTRACTS",
+        "ESS-0004"
+      ],
+      "adr": []
+    }
+  ],
+  "tests": [
+    {
+      "path": "tests/unit/agentEvaluation.test.ts",
+      "targets": [
+        "server/agentEvaluation"
+      ]
+    },
+    {
+      "path": "tests/unit/agentModelRouting.test.ts",
+      "targets": [
+        "src/services/agentModelRouting"
+      ]
+    },
+    {
+      "path": "tests/unit/aiUsageTracker.test.ts",
+      "targets": [
+        "src/services/aiUsageTracker"
+      ]
+    },
+    {
+      "path": "tests/unit/alerts.test.ts",
+      "targets": [
+        "server/alerts",
+        "server/db"
+      ]
+    },
+    {
+      "path": "tests/unit/complianceScanners.test.ts",
+      "targets": [
+        "src/platform/Compliance/scanners"
+      ]
+    },
+    {
+      "path": "tests/unit/fmpIndices.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/unit/mailer.test.ts",
+      "targets": [
+        "server/mailer",
+        "server/db"
+      ]
+    },
+    {
+      "path": "tests/unit/memeCoinScoringService.test.ts",
+      "targets": [
+        "src/services/memeCoinScoringService",
+        "src/lib/assetRegistry",
+        "src/types/memeCoin"
+      ]
+    },
+    {
+      "path": "tests/unit/metrics.test.ts",
+      "targets": [
+        "server/metrics"
+      ]
+    },
+    {
+      "path": "tests/unit/newsRoutes.test.ts",
+      "targets": [
+        "src/features/news/newsRoutes"
+      ]
+    },
+    {
+      "path": "tests/unit/quota.test.ts",
+      "targets": [
+        "server/quota"
+      ]
+    },
+    {
+      "path": "tests/unit/rankingService.test.ts",
+      "targets": [
+        "src/services/ranking.service"
+      ]
+    },
+    {
+      "path": "tests/unit/realMarketSignals.test.ts",
+      "targets": [
+        "src/services/realMarketSignals"
+      ]
+    },
+    {
+      "path": "tests/unit/registryRoutes.test.ts",
+      "targets": [
+        "src/features/registry/registryRoutes"
+      ]
+    },
+    {
+      "path": "tests/unit/scoreValidation.test.ts",
+      "targets": [
+        "server/scoreValidation",
+        "server/db",
+        "src/lib/assetRegistry"
+      ]
+    },
+    {
+      "path": "tests/unit/scoringService.test.ts",
+      "targets": [
+        "src/services/scoring.service",
+        "src/lib/assetRegistry",
+        "src/types/crypto.types"
+      ]
+    },
+    {
+      "path": "tests/unit/secretCrypto.test.ts",
+      "targets": [
+        "src/platform/Security/secretCrypto"
+      ]
+    },
+    {
+      "path": "tests/unit/stockFundamentals.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/unit/supervisor.test.ts",
+      "targets": [
+        "src/platform/Supervisor/supervisor"
+      ]
+    },
+    {
+      "path": "tests/unit/totp.test.ts",
+      "targets": [
+        "src/platform/Security/totp"
+      ]
+    },
+    {
+      "path": "tests/unit/traditionalAssetScoring.test.ts",
+      "targets": [
+        "src/services/traditionalAssetScoring"
+      ]
+    }
+  ],
+  "links": [
+    {
+      "from": {
+        "type": "ess",
+        "id": "ESS-0004"
+      },
+      "to": {
+        "type": "component",
+        "id": "VersionManager"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "ess",
+        "id": "ESS-0005"
+      },
+      "to": {
+        "type": "component",
+        "id": "Quality"
+      },
+      "bidirectional": false
+    },
+    {
+      "from": {
+        "type": "ess",
+        "id": "ESS-0006"
+      },
+      "to": {
+        "type": "component",
+        "id": "Security"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "ess",
+        "id": "ESS-0006"
+      },
+      "to": {
+        "type": "component",
+        "id": "Compliance"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "ess",
+        "id": "ESS-0007"
+      },
+      "to": {
+        "type": "component",
+        "id": "Release"
+      },
+      "bidirectional": false
+    },
+    {
+      "from": {
+        "type": "ess",
+        "id": "ESS-0009"
+      },
+      "to": {
+        "type": "component",
+        "id": "Knowledge"
+      },
+      "bidirectional": false
+    },
+    {
+      "from": {
+        "type": "ess",
+        "id": "ESS-0011"
+      },
+      "to": {
+        "type": "component",
+        "id": "Traceability"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "ess",
+        "id": "ESS-0011-CONTRACTS"
+      },
+      "to": {
+        "type": "component",
+        "id": "Traceability"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "ess",
+        "id": "ESS-0012"
+      },
+      "to": {
+        "type": "component",
+        "id": "Documentary/Governance"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "ess",
+        "id": "ESS-0012-CONTRACTS"
+      },
+      "to": {
+        "type": "component",
+        "id": "Documentary/Governance"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "ess",
+        "id": "ESS-0013"
+      },
+      "to": {
+        "type": "component",
+        "id": "EventMesh"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "ess",
+        "id": "ESS-0013-CONTRACTS"
+      },
+      "to": {
+        "type": "component",
+        "id": "EventMesh"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Compliance"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/complianceScanners.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/secretCrypto.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/totp.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Supervisor"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/supervisor.test.ts"
+      },
+      "bidirectional": true
+    }
+  ]
+}

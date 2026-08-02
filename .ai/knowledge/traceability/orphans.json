@@ -1,0 +1,27 @@
+[
+  {
+    "type": "ess-without-component",
+    "id": "ESS-0001",
+    "detail": "ESS-0001 (\"Documentary & Code Intelligence Architect\") hat kein implementedBy in der ESS-Registry."
+  },
+  {
+    "type": "ess-without-component",
+    "id": "ESS-0001-CONTRACTS",
+    "detail": "ESS-0001-CONTRACTS (\"Enterprise Technical Contracts\") hat kein implementedBy in der ESS-Registry."
+  },
+  {
+    "type": "ess-without-component",
+    "id": "ESS-0002",
+    "detail": "ESS-0002 (\"Supervisor Architect\") hat kein implementedBy in der ESS-Registry."
+  },
+  {
+    "type": "ess-without-component",
+    "id": "ESS-0003",
+    "detail": "ESS-0003 (\"Platform Director\") hat kein implementedBy in der ESS-Registry."
+  },
+  {
+    "type": "ess-without-component",
+    "id": "ESS-0010",
+    "detail": "ESS-0010 (\"Documentary Engine\") hat kein implementedBy in der ESS-Registry."
+  }
+]

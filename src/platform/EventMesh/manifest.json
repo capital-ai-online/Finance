@@ -136,6 +136,7 @@
     "docs/architecture/ENTERPRISE_EVENT_READINESS_REPORT.md",
     "docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md"
   ],
+  "tests": [],
   "conformanceLevel": null,
   "implementationStatus": "Implementiert (Stufe 1-4). Erste Komponente im gesamten src/platform-Baum mit ausfuehrbarem Code (ADR-0018, Folgeentscheidung 1). In-Memory, ohne externe Abhaengigkeiten. Sieben Vertragstests unter Tests/eventBus.test.ts.",
   "note": "Zweite Komponente des Repositorys mit vollstaendigem Metadatensatz einschliesslich component.yaml und CHANGELOG.md, nach Traceability (ADR-0015) und in gleicher Weise wie dort etabliert."
