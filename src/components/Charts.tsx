@@ -391,8 +391,6 @@ export function Charts({ selectedSymbol, onSelectSymbol, userSession }: ChartsPr
             setScoreResult(null);
             setIsScoring(false);
           });
-            setIsScoring(false);
-          });
       }
     }, 700);
   };
