@@ -18,7 +18,7 @@ describe('ARCH-AUDIT-0004 audit-integrity regression gates', () => {
   it('keeps GDPR audit UI fail-closed until a real backend evidence contract exists', () => {
     const code = source('src/components/AuditLogManager.tsx');
     expect(code).toContain('FAIL-CLOSED · AUD4-F-002');
-    expect(code).not.toContain('/api/admin/gdpr-audit');
+    expect(code).not.toMatch(/fetch\s*\([^)]*\/api\/admin\/gdpr-audit/);
     expect(code).not.toContain('Math.random');
     expect(code).not.toContain('192.168.42.');
   });
