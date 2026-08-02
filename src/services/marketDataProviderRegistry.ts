@@ -42,10 +42,10 @@ export const MARKET_DATA_PROVIDER_REGISTRY: MarketDataProviderRegistryEntry[] = 
     governanceNotes: 'Server-side adapter only. Nulls/rate limits are fail-closed; exchange/timezone metadata must be retained where available.',
   },
   {
-    id: 'EODHD', assetClasses: ['stock', 'forex', 'index', 'crypto', 'bond'], capabilities: ['history', 'snapshot', 'fundamentals'], basePriority: 3,
+    id: 'EODHD', assetClasses: ['stock', 'forex', 'crypto'], capabilities: ['history', 'snapshot'], basePriority: 4,
     enabled: true, activation: 'active', environmentVariable: 'EODHD_API_KEY', requiresApiKey: true,
     purpose: 'Global EOD/historical multi-asset redundancy',
-    governanceNotes: 'Server-side EOD adapter. Symbol/exchange identity and adjustment semantics must remain explicit in provenance.',
+    governanceNotes: 'Active adapters currently cover stock/forex/crypto history/reference snapshots only. Bond/index activation requires an explicit symbol/entitlement contract. EOD data must not masquerade as current execution prices.',
   },
   {
     id: 'Stooq', assetClasses: ['stock', 'forex'], capabilities: ['history'], basePriority: 2,
