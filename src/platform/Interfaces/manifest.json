@@ -1,7 +1,7 @@
 {
   "name": "Interfaces",
   "version": "1.0.0",
-  "status": "development",
+  "status": "unspecified",
   "owner": "CAPITAL-AI",
   "description": "",
   "category": "platform",
@@ -11,11 +11,15 @@
   ],
   "adr": [],
   "dependencies": [],
-  "events": [],
+  "events": {
+    "produces": [],
+    "consumes": []
+  },
   "knowledge": [],
   "interfaces": [],
   "contracts": [],
   "documentation": [
     "README.md"
-  ]
+  ],
+  "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): fuer diese Komponente existiert ausser dem vom Enterprise Bootstrapper generierten Platzhaltertext keine funktionale Spezifikation und kein Code. Status auf 'unspecified' korrigiert, um den Zustand ehrlich abzubilden - vorher suggerierte 'development' aktive Arbeit, die nicht stattfindet. Die Komponente kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden."
 }
