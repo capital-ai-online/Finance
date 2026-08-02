@@ -1,7 +1,7 @@
 {
   "name": "PlatformDirector",
   "version": "1.0.0",
-  "status": "unspecified",
+  "status": "development",
   "owner": "CAPITAL-AI",
   "description": "",
   "category": "platform",
@@ -17,10 +17,12 @@
   },
   "knowledge": [],
   "interfaces": [],
-  "contracts": [],
+  "contracts": [
+    "Contracts/PlatformDecision.ts"
+  ],
   "documentation": [
     "README.md"
   ],
   "tests": [],
-  "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): fuer diese Komponente existiert ausser dem vom Enterprise Bootstrapper generierten Platzhaltertext keine funktionale Spezifikation und kein Code. Status auf 'unspecified' korrigiert, um den Zustand ehrlich abzubilden - vorher suggerierte 'development' aktive Arbeit, die nicht stattfindet. Die Komponente kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden."
+  "note": "cd5c931 (feat(platform-director): add fail-closed decision contract) fuegte Contracts/PlatformDecision.ts hinzu, ohne diesen Status nachzufuehren - platformManifestIntegrity.test.ts hat die daraus resultierende Diskrepanz (status:'unspecified' bei vorhandenem Code) erkannt. Status auf 'development' korrigiert: die Entscheidungs-Typen/-Contracts existieren, die eigentliche PlatformDirector-Logik (Entscheidungsfindung, Persistenz) ist noch nicht implementiert."
 }

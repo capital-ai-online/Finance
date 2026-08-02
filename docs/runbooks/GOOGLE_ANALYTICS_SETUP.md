@@ -13,9 +13,10 @@ RUNBOOK-0003
 
 Aktiv — Schritt 1 (Property/Measurement-ID) wurde vom Repository-Owner extern im Google-Konto
 durchgeführt. Die Consent-Verwaltung erfolgt über **CookieHub** (externe CMP, siehe Abschnitt 4)
-statt über eine selbstgebaute Banner-Komponente. Die Code-Integration (Abschnitt 3) ist
-implementiert (`src/services/googleAnalytics.ts`, `src/services/cookieHubConsentBridge.ts`).
-Tracking bleibt fail-closed: ohne gesetzte `VITE_GA_MEASUREMENT_ID` **und** ohne aktive
+statt über eine selbstgebaute Banner-Komponente. Die Code-Integration (Abschnitt 3) ist als
+Plain-JS-Inline-Script in `index.html` implementiert (bewusst nicht im React-Bundle, siehe
+Begründung dort). `src/services/cookieHubConsentBridge.ts` enthält nur noch die Settings-Öffnen-
+Funktion. Tracking bleibt fail-closed: ohne gesetzte `VITE_GA_MEASUREMENT_ID` **und** ohne aktive
 CookieHub-Einwilligung in der Kategorie `analytics` lädt kein Tracking-Script.
 
 **Bewusst NICHT genutzt:** Google Analytics' eigener „Einwilligungsmodus" (Consent Mode v2,
@@ -101,22 +102,25 @@ Analog zu den bestehenden `VITE_*`-Vars (siehe `.env.example`, z. B. `VITE_SUPAB
 
 ## 3. Code-Integration (nur nach Einwilligung laden) — implementiert
 
-Das GA-Script wird **nicht** fest in `index.html` eingetragen, sondern bedingt aus React heraus
-geladen, damit es niemals vor einer aktiven Einwilligung ausgeliefert wird:
+Das GA-Script wird **nicht** unconditioniert in `index.html` eingetragen, sondern über ein
+Plain-JavaScript-Inline-Script direkt im `<head>` geladen, das an CookieHubs Events hängt:
 
-- `src/services/googleAnalytics.ts`: `loadGoogleAnalytics()` injiziert `gtag.js` erst bei Aufruf
-  (`anonymize_ip: true`); `unloadGoogleAnalytics()` setzt das von Google dokumentierte
-  `ga-disable-<ID>`-Flag, falls der Nutzer ablehnt oder widerruft.
-- `src/services/cookieHubConsentBridge.ts`: hört auf die von CookieHub gefeuerten Events
-  (`cookiehub_onInitialise`, `cookiehub_onStatusChange`) und synct den Zustand über
-  `window.cookiehub.hasConsented('analytics')` → `loadGoogleAnalytics()`/`unloadGoogleAnalytics()`.
-  Kein eigenes UI, keine eigene Speicherung — CookieHub ist die alleinige Quelle der Wahrheit für
-  die Einwilligungsentscheidung.
-- In `src/App.tsx` wird die Bridge einmalig per `useEffect(() => initCookieHubAnalyticsBridge(), [])`
-  aktiviert.
-- `openCookieHubSettings()` (ebenfalls in `cookieHubConsentBridge.ts`) ruft
-  `window.cookiehub.openSettings()` auf und wird vom Button „Cookie-Einstellungen ändern" in
-  `Datenschutz.tsx` genutzt.
+- **Bewusst kein React/`useEffect`-Code für das Laden von GA**: Ein `useEffect` haengt seine
+  Listener erst an, nachdem React den ersten Render committed hat — das ist potenziell **später**
+  als der Zeitpunkt, an dem CookieHub bei `DOMContentLoaded` seinen initialen Status feuert
+  (`cookiehub_onInitialise`). Für wiederkehrende Besucher mit bereits gespeicherter Einwilligung
+  hätte das dazu geführt, dass dieses erste Event verpasst wird und GA nie lädt, obwohl der Nutzer
+  längst zugestimmt hat. Die Lade-Logik lebt deshalb als reines Inline-Script in `index.html`,
+  registriert **vor** dem CookieHub-`load()`-Aufruf.
+- Das Script definiert `loadGA()` (injiziert `gtag.js` erst bei Aufruf, `anonymize_ip: true`) und
+  `unloadGA()` (setzt das von Google dokumentierte `ga-disable-<ID>`-Flag), und hört auf
+  `cookiehub_onInitialise`/`cookiehub_onStatusChange`, um `window.cookiehub.hasConsented('analytics')`
+  zu prüfen.
+- Die Measurement-ID kommt über Vites **HTML-Env-Replacement** (`%VITE_GA_MEASUREMENT_ID%` in
+  `index.html`, ersetzt zur Build-Zeit) — ohne gesetzten Wert bleibt GA inaktiv (fail-closed).
+- `src/services/cookieHubConsentBridge.ts` enthält nur noch `openCookieHubSettings()` (ruft
+  `window.cookiehub.openSettings()` auf), genutzt vom Button „Cookie-Einstellungen ändern" in
+  `Datenschutz.tsx`.
 
 ---
 
@@ -149,8 +153,8 @@ Die eigentliche Konfiguration (Banner-Text, Sprache, Kategorien, Cookie-Deklarat
 - **Google Consent Mode v2 (CookieHub-Feature)**: **nicht aktivieren.** Dieses Feature setzt
   automatisch `gtag('consent', ...)`-Signale und ist für das alternative
   „Tag lädt immer, mit denied/granted-Signal"-Muster gedacht (siehe Hinweis in Abschnitt „Status").
-  Da `googleAnalytics.ts` das Skript ohnehin nie ohne Einwilligung injiziert, würde diese Option
-  nur unnötige Komplexität hinzufügen bzw. mit der bestehenden Logik konkurrieren.
+  Da das Inline-Script in `index.html` das Skript ohnehin nie ohne Einwilligung injiziert, würde
+  diese Option nur unnötige Komplexität hinzufügen bzw. mit der bestehenden Logik konkurrieren.
 - **Sprache**: Deutsch als Standard, passend zu `lang="de"` in `index.html`.
 - **Resurface/Settings-Link**: Nicht zwingend nötig, da `Datenschutz.tsx` bereits einen eigenen
   Button bereitstellt (`window.cookiehub.openSettings()`); optional zusätzlich das CookieHub-eigene
@@ -181,7 +185,7 @@ Compliance-Werkzeug, Art. 6 Abs. 1 lit. c DSGVO).
 |---|---|---|
 | 1. GA4-Property + Measurement-ID | Repository-Owner (Google-Konto) | Erledigt |
 | 2. `VITE_GA_MEASUREMENT_ID` in `.env`/Render setzen | Repository-Owner | Lokal gesetzt — Render wird gerade vom Repository-Owner gesetzt |
-| 3. `googleAnalytics.ts` + `cookieHubConsentBridge.ts` | Entwicklung | Erledigt |
+| 3. GA-Inline-Script in `index.html` (`%VITE_GA_MEASUREMENT_ID%`) | Entwicklung | Erledigt |
 | 4. CookieHub-Snippet in `index.html` | Entwicklung | Erledigt |
 | 4b. CookieHub-Dashboard konfigurieren (Domain, Kategorien, Analytics-Zuordnung) | Repository-Owner (CookieHub-Konto) | Offen — externer Vorgang, siehe Checkliste in Abschnitt 4 |
 | 4c. GA4 „Einwilligungsmodus" NICHT aktivieren | Repository-Owner | Hinweis beachten, keine Aktion nötig |

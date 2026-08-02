@@ -1,5 +1,3 @@
-import { loadGoogleAnalytics, unloadGoogleAnalytics } from './googleAnalytics';
-
 declare global {
   interface Window {
     cookiehub?: {
@@ -9,30 +7,11 @@ declare global {
   }
 }
 
-const ANALYTICS_CATEGORY = 'analytics';
-
-function syncGoogleAnalyticsConsent(): void {
-  if (!window.cookiehub) return;
-  if (window.cookiehub.hasConsented(ANALYTICS_CATEGORY)) {
-    loadGoogleAnalytics();
-  } else {
-    unloadGoogleAnalytics();
-  }
-}
-
-// CookieHub (siehe index.html) laedt asynchron und verwaltet Banner/Speicherung der Entscheidung
-// selbst. Wir reagieren nur auf dessen Events, statt GA jemals unconditioniert beim App-Start zu
-// laden - bleibt fail-closed, falls das CookieHub-Skript blockiert wird (Adblocker o.ae.).
-export function initCookieHubAnalyticsBridge(): () => void {
-  if (typeof window === 'undefined') return () => {};
-  window.addEventListener('cookiehub_onInitialise', syncGoogleAnalyticsConsent);
-  window.addEventListener('cookiehub_onStatusChange', syncGoogleAnalyticsConsent);
-  return () => {
-    window.removeEventListener('cookiehub_onInitialise', syncGoogleAnalyticsConsent);
-    window.removeEventListener('cookiehub_onStatusChange', syncGoogleAnalyticsConsent);
-  };
-}
-
+// Das eigentliche Laden/Entladen von Google Analytics anhand der CookieHub-Einwilligung passiert
+// als Inline-Script direkt in index.html (siehe dort) - nicht hier im React-Bundle. Grund: die
+// Consent-Listener muessen registriert sein, BEVOR CookieHub bei DOMContentLoaded seinen initialen
+// Status feuert; ein React `useEffect` haengt erst nach dem ersten Render+Commit an und wuerde
+// dieses erste Event fuer wiederkehrende Besucher mit bereits gespeicherter Einwilligung verpassen.
 export function openCookieHubSettings(): void {
   window.cookiehub?.openSettings();
 }
