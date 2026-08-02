@@ -1,42 +1,47 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Bell, 
-  BellRing, 
-  Plus, 
-  Trash, 
-  Volume2, 
-  VolumeX, 
-  TrendingUp, 
-  TrendingDown, 
-  Sparkles, 
-  Clock, 
-  Activity, 
-  CheckCircle, 
+import React, { useEffect, useMemo, useState } from 'react';
+import {
   AlertCircle,
-  Play,
-  Pause,
+  Bell,
+  BellRing,
+  CheckCircle2,
   RefreshCw,
-  Sliders,
-  DollarSign,
-  Layers
+  ShieldCheck,
+  Trash2,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { RegistryAsset } from '../lib/assetRegistry';
-
+import { AssetLogo } from './AssetLogo';
 import { UserSession } from '../App';
-import { 
-  getSessionAlerts, 
-  saveSessionAlerts, 
-  getSessionLogs, 
-  saveSessionLogs, 
-  PriceAlertItem 
+import {
+  getSessionAlerts,
+  saveSessionAlerts,
+  getSessionLogs,
+  saveSessionLogs,
 } from '../lib/alertStore';
+
+type AssetType = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';
+
+type CatalogAsset = {
+  symbol: string;
+  name: string;
+  type: AssetType;
+};
+
+type VerifiedQuote = {
+  status: 'READY' | 'DATA_UNAVAILABLE' | 'SOURCE_CONFLICT' | 'INSUFFICIENT_SOURCES';
+  symbol: string;
+  value: number | null;
+  unit: string | null;
+  providers: string[];
+  evidenceIds: string[];
+  observedAt: string | null;
+  correlationId: string | null;
+  reason?: string;
+};
 
 export interface PriceAlert {
   id: string;
   symbol: string;
   assetName: string;
-  type: 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';
+  type: AssetType;
   targetPrice: number;
   condition: 'above' | 'below';
   initialPrice: number;
@@ -45,6 +50,10 @@ export interface PriceAlert {
   triggeredAt?: string;
   isTriggered: boolean;
   soundEnabled: boolean;
+  quoteProvider?: string[];
+  quoteEvidenceIds?: string[];
+  quoteObservedAt?: string;
+  quoteCorrelationId?: string;
 }
 
 interface PriceAlertComponentProps {
@@ -52,732 +61,371 @@ interface PriceAlertComponentProps {
   userSession?: UserSession;
 }
 
-export function PriceAlert({ selectedSymbol, userSession }: PriceAlertComponentProps) {
-  const [assets, setAssets] = useState<RegistryAsset[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  
-  // Alert form inputs
-  const [selectedAssetSymbol, setSelectedAssetSymbol] = useState<string>('BTC');
-  const [targetPrice, setTargetPrice] = useState<string>('');
-  const [condition, setCondition] = useState<'above' | 'below'>('above');
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(false);
-  
-  // Active alerts lists
-  const [alerts, setAlerts] = useState<PriceAlert[]>([]);
-  const [notifications, setNotifications] = useState<Array<{
-    id: string;
-    alertId: string;
-    symbol: string;
-    assetName: string;
-    message: string;
-    time: string;
-  }>>([]);
-  
-  // Simulation config
-  const [isSimulationActive, setIsSimulationActive] = useState<boolean>(false);
-  const [simulationSpeed, setSimulationSpeed] = useState<number>(3000); // ms
-  const [toastNotification, setToastNotification] = useState<{
-    id: string;
-    title: string;
-    message: string;
-    type: 'success' | 'info' | 'warn';
-  } | null>(null);
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = 8_000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
 
-  // Load assets
+function finite(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null;
+}
+
+async function fetchVerifiedQuote(asset: CatalogAsset): Promise<VerifiedQuote> {
+  if (asset.type !== 'crypto') {
+    return {
+      status: 'DATA_UNAVAILABLE',
+      symbol: asset.symbol,
+      value: null,
+      unit: null,
+      providers: [],
+      evidenceIds: [],
+      observedAt: null,
+      correlationId: null,
+      reason: 'Für diese Assetklasse ist noch kein freigegebener verifizierter Quote-Contract für Preisalarme aktiv.',
+    };
+  }
+
+  const response = await fetchWithTimeout(`/api/crypto/price-consensus/${encodeURIComponent(asset.symbol)}`);
+  const body = await response.json().catch(() => ({}));
+  const consensusValue = finite(body?.canonicalValue);
+  const observations = Array.isArray(body?.observations) ? body.observations : [];
+  const providers = observations
+    .map((entry: any) => entry?.provider)
+    .filter((provider: unknown): provider is string => typeof provider === 'string');
+  const evidenceIds = observations
+    .map((entry: any) => entry?.evidenceId)
+    .filter((id: unknown): id is string => typeof id === 'string');
+  const observedTimes = observations
+    .map((entry: any) => entry?.observedAt)
+    .filter((value: unknown): value is string => typeof value === 'string' && Number.isFinite(Date.parse(value)));
+
+  if (response.ok && body?.status === 'CONSENSUS' && consensusValue !== null) {
+    return {
+      status: 'READY',
+      symbol: asset.symbol,
+      value: consensusValue,
+      unit: typeof body?.unit === 'string' ? body.unit : 'USD',
+      providers,
+      evidenceIds,
+      observedAt: observedTimes.sort().at(-1) ?? null,
+      correlationId: typeof body?.correlationId === 'string' ? body.correlationId : response.headers.get('x-correlation-id'),
+    };
+  }
+
+  return {
+    status: body?.status === 'SOURCE_CONFLICT'
+      ? 'SOURCE_CONFLICT'
+      : body?.status === 'INSUFFICIENT_SOURCES'
+        ? 'INSUFFICIENT_SOURCES'
+        : 'DATA_UNAVAILABLE',
+    symbol: asset.symbol,
+    value: null,
+    unit: typeof body?.unit === 'string' ? body.unit : null,
+    providers,
+    evidenceIds,
+    observedAt: observedTimes.sort().at(-1) ?? null,
+    correlationId: typeof body?.correlationId === 'string' ? body.correlationId : response.headers.get('x-correlation-id'),
+    reason: typeof body?.reason === 'string' ? body.reason : 'Keine verifizierte Preis-Evidence verfügbar.',
+  };
+}
+
+export function PriceAlert({ selectedSymbol, userSession }: PriceAlertComponentProps) {
+  const [assets, setAssets] = useState<CatalogAsset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedAssetSymbol, setSelectedAssetSymbol] = useState('BTC');
+  const [targetPrice, setTargetPrice] = useState('');
+  const [condition, setCondition] = useState<'above' | 'below'>('above');
+  const [alerts, setAlerts] = useState<PriceAlert[]>([]);
+  const [notifications, setNotifications] = useState<Array<{ id: string; alertId: string; symbol: string; assetName: string; message: string; time: string }>>([]);
+  const [quotes, setQuotes] = useState<Record<string, VerifiedQuote>>({});
+  const [checking, setChecking] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
   useEffect(() => {
     setLoading(true);
-    fetch('/api/registry/assets')
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load asset list');
-        return res.json();
+    fetchWithTimeout('/api/registry/assets', {}, 5_000)
+      .then((response) => {
+        if (!response.ok) throw new Error('Asset-Katalog konnte nicht geladen werden.');
+        return response.json();
       })
-      .then((data: RegistryAsset[]) => {
-        setAssets(data);
-        if (selectedSymbol && data.some(a => a.symbol.toUpperCase() === selectedSymbol.toUpperCase())) {
-          setSelectedAssetSymbol(selectedSymbol.toUpperCase());
-        } else if (data.length > 0) {
-          setSelectedAssetSymbol(data[0].symbol);
-        }
-        setLoading(false);
+      .then((data) => {
+        const catalog = Array.isArray(data)
+          ? data.filter((item): item is CatalogAsset =>
+              typeof item?.symbol === 'string' && typeof item?.name === 'string' && typeof item?.type === 'string')
+          : [];
+        setAssets(catalog);
+        const preferred = selectedSymbol?.toUpperCase();
+        if (preferred && catalog.some((asset) => asset.symbol === preferred)) setSelectedAssetSymbol(preferred);
+        else if (catalog.some((asset) => asset.symbol === 'BTC')) setSelectedAssetSymbol('BTC');
+        else if (catalog.length) setSelectedAssetSymbol(catalog[0].symbol);
       })
-      .catch(err => {
-        console.error('Error loading assets for price alerts:', err);
-        setLoading(false);
-      });
+      .catch((error) => setToast(error instanceof Error ? error.message : String(error)))
+      .finally(() => setLoading(false));
   }, [selectedSymbol]);
 
-  // Load saved alerts from localStorage on mount or user session change
   useEffect(() => {
     const email = userSession?.email;
     setAlerts(getSessionAlerts(email) as PriceAlert[]);
     setNotifications(getSessionLogs(email));
-
-    // Event handlers for background state synchronization
-    const handleAlertsUpdate = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      if (customEvent.detail && customEvent.detail.email === email) {
-        setAlerts(customEvent.detail.alerts);
-      }
-    };
-    const handleLogsUpdate = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      if (customEvent.detail && customEvent.detail.email === email) {
-        setNotifications(customEvent.detail.logs);
-      }
-    };
-
-    window.addEventListener('aif-alerts-updated', handleAlertsUpdate);
-    window.addEventListener('aif-logs-updated', handleLogsUpdate);
-
-    return () => {
-      window.removeEventListener('aif-alerts-updated', handleAlertsUpdate);
-      window.removeEventListener('aif-logs-updated', handleLogsUpdate);
-    };
   }, [userSession]);
 
-  // Save alerts to localStorage whenever they change
-  const saveAlerts = (updatedAlerts: PriceAlert[]) => {
-    setAlerts(updatedAlerts);
-    saveSessionAlerts(updatedAlerts as any, userSession?.email);
+  const saveAlerts = (next: PriceAlert[]) => {
+    setAlerts(next);
+    saveSessionAlerts(next as any, userSession?.email);
   };
 
-  const saveLogs = (updatedLogs: typeof notifications) => {
-    setNotifications(updatedLogs);
-    saveSessionLogs(updatedLogs, userSession?.email);
+  const saveLogs = (next: typeof notifications) => {
+    setNotifications(next);
+    saveSessionLogs(next, userSession?.email);
   };
 
-  // Play audio synth notification (disabled per site settings)
-  const playAlertSound = () => {
-    // Töne & Sound deaktiviert
-    return;
+  const selectedAsset = useMemo(
+    () => assets.find((asset) => asset.symbol === selectedAssetSymbol) ?? null,
+    [assets, selectedAssetSymbol],
+  );
+
+  const selectedQuote = selectedAsset ? quotes[selectedAsset.symbol] : undefined;
+
+  const refreshQuote = async (asset: CatalogAsset, silent = false): Promise<VerifiedQuote> => {
+    try {
+      const quote = await fetchVerifiedQuote(asset);
+      setQuotes((current) => ({ ...current, [asset.symbol]: quote }));
+      if (!silent && quote.status !== 'READY') setToast(quote.reason || quote.status);
+      return quote;
+    } catch (error) {
+      const quote: VerifiedQuote = {
+        status: 'DATA_UNAVAILABLE',
+        symbol: asset.symbol,
+        value: null,
+        unit: null,
+        providers: [],
+        evidenceIds: [],
+        observedAt: null,
+        correlationId: null,
+        reason: error instanceof Error ? error.message : String(error),
+      };
+      setQuotes((current) => ({ ...current, [asset.symbol]: quote }));
+      if (!silent) setToast(quote.reason || 'Quote nicht verfügbar.');
+      return quote;
+    }
   };
 
-  // Trigger notification
-  const triggerNotification = (alert: PriceAlert, actualPrice: number) => {
-    const timeStr = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  useEffect(() => {
+    if (selectedAsset) void refreshQuote(selectedAsset, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAssetSymbol, assets.length]);
+
+  const triggerNotification = (alert: PriceAlert, quote: VerifiedQuote) => {
+    if (quote.value === null) return;
+    const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const operator = alert.condition === 'above' ? 'überschritten' : 'unterschritten';
-    const relation = alert.condition === 'above' ? '≥' : '≤';
-    
-    const message = `${alert.assetName} (${alert.symbol}) hat die Zielschwelle von $${alert.targetPrice.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} ${operator}! Aktueller Kurs: $${actualPrice.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}.`;
+    const message = `${alert.assetName} (${alert.symbol}) hat die Zielschwelle ${operator}. Verifizierter Kurs: ${quote.value.toLocaleString('de-DE', { maximumFractionDigits: 8 })} ${quote.unit || ''}.`;
+    saveLogs([{ id: `log-${Date.now()}`, alertId: alert.id, symbol: alert.symbol, assetName: alert.assetName, message, time }, ...notifications].slice(0, 50));
+    setToast(message);
+  };
 
-    const newLog = {
-      id: `log-${Date.now()}-${Math.random()}`,
-      alertId: alert.id,
-      symbol: alert.symbol,
-      assetName: alert.assetName,
-      message,
-      time: timeStr
-    };
+  const checkAlerts = async () => {
+    if (checking || alerts.length === 0) return;
+    setChecking(true);
+    try {
+      const next = [...alerts];
+      for (let index = 0; index < next.length; index += 1) {
+        const alert = next[index];
+        if (alert.isTriggered) continue;
+        const asset = assets.find((item) => item.symbol === alert.symbol);
+        if (!asset) continue;
+        const quote = await refreshQuote(asset, true);
+        if (quote.status !== 'READY' || quote.value === null) continue;
 
-    saveLogs([newLog, ...notifications].slice(0, 50)); // Keep last 50 logs
+        const hit = alert.condition === 'above'
+          ? quote.value >= alert.targetPrice
+          : quote.value <= alert.targetPrice;
 
-    if (alert.soundEnabled) {
-      playAlertSound();
+        next[index] = {
+          ...alert,
+          currentPrice: quote.value,
+          quoteProvider: quote.providers,
+          quoteEvidenceIds: quote.evidenceIds,
+          quoteObservedAt: quote.observedAt ?? undefined,
+          quoteCorrelationId: quote.correlationId ?? undefined,
+          isTriggered: hit,
+          triggeredAt: hit ? new Date().toISOString() : alert.triggeredAt,
+        };
+        if (hit) triggerNotification(alert, quote);
+      }
+      saveAlerts(next);
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  useEffect(() => {
+    const timer = window.setInterval(() => void checkAlerts(), 60_000);
+    return () => window.clearInterval(timer);
+    // Poll interval is intentionally coarse; provider quotas and alert evidence matter more than pseudo-realtime browser polling.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alerts, assets]);
+
+  const createAlert = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selectedAsset) return;
+    const target = Number(targetPrice);
+    if (!Number.isFinite(target) || target <= 0) return;
+
+    const quote = selectedQuote?.status === 'READY' ? selectedQuote : await refreshQuote(selectedAsset);
+    if (quote.status !== 'READY' || quote.value === null) {
+      setToast('Preisalarm nicht erstellt: Es liegt keine verifizierte Quote-Evidence vor.');
+      return;
     }
 
-    // In-app Push Toast
-    setToastNotification({
-      id: `toast-${Date.now()}`,
-      title: `🔔 Preisalarm ausgelöst!`,
-      message,
-      type: 'warn'
-    });
-
-    // Auto dismiss toast
-    setTimeout(() => {
-      setToastNotification(null);
-    }, 6000);
-  };
-
-  // Form submit handler
-  const handleCreateAlert = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!targetPrice || isNaN(Number(targetPrice)) || Number(targetPrice) <= 0) return;
-
-    const asset = assets.find(a => a.symbol === selectedAssetSymbol);
-    if (!asset) return;
-
-    const newAlert: PriceAlert = {
+    const alert: PriceAlert = {
       id: `alert-${Date.now()}`,
-      symbol: asset.symbol,
-      assetName: asset.name,
-      type: asset.type,
-      targetPrice: Number(targetPrice),
+      symbol: selectedAsset.symbol,
+      assetName: selectedAsset.name,
+      type: selectedAsset.type,
+      targetPrice: target,
       condition,
-      initialPrice: asset.price,
-      currentPrice: asset.price,
-      createdAt: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+      initialPrice: quote.value,
+      currentPrice: quote.value,
+      createdAt: new Date().toISOString(),
       isTriggered: false,
-      soundEnabled
+      soundEnabled: false,
+      quoteProvider: quote.providers,
+      quoteEvidenceIds: quote.evidenceIds,
+      quoteObservedAt: quote.observedAt ?? undefined,
+      quoteCorrelationId: quote.correlationId ?? undefined,
     };
-
-    saveAlerts([newAlert, ...alerts]);
+    saveAlerts([alert, ...alerts]);
     setTargetPrice('');
-    
-    // Welcome message/success
-    setToastNotification({
-      id: `toast-${Date.now()}`,
-      title: `Preisalarm eingerichtet`,
-      message: `Wir benachrichtigen dich, sobald ${asset.name} die Schwelle von $${Number(targetPrice).toLocaleString('de-DE')} durchbricht.`,
-      type: 'success'
-    });
-    setTimeout(() => setToastNotification(null), 4000);
+    setToast(`Preisalarm für ${selectedAsset.symbol} mit verifizierter Quote-Evidence eingerichtet.`);
   };
 
-  // Quick preset helper
-  const handleApplyPreset = (percent: number) => {
-    const asset = assets.find(a => a.symbol === selectedAssetSymbol);
-    if (!asset) return;
-    const factor = 1 + percent / 100;
-    const target = asset.price * factor;
-    setTargetPrice(target.toFixed(asset.price < 5 ? 4 : 2));
+  const applyPreset = (percent: number) => {
+    if (!selectedQuote || selectedQuote.status !== 'READY' || selectedQuote.value === null) {
+      setToast('Preset benötigt zuerst eine verifizierte Quote.');
+      return;
+    }
+    const target = selectedQuote.value * (1 + percent / 100);
+    setTargetPrice(target.toFixed(target < 5 ? 6 : 2));
     setCondition(percent >= 0 ? 'above' : 'below');
   };
 
-  // Delete alarm
-  const handleDeleteAlert = (id: string) => {
-    saveAlerts(alerts.filter(a => a.id !== id));
-  };
-
-  // Clear all triggered alerts
-  const handleClearHistory = () => {
-    saveLogs([]);
-  };
-
-  // Reset active triggered status
-  const handleReactivateAlert = (id: string) => {
-    const updated = alerts.map(a => {
-      if (a.id === id) {
-        return { ...a, isTriggered: false, triggeredAt: undefined };
-      }
-      return a;
-    });
-    saveAlerts(updated);
-  };
-
-  // Simulate Instant Price Jump to Trigger the Alert
-  const handleSimulateAlertTrigger = (alert: PriceAlert) => {
-    if (alert.isTriggered) return;
-
-    // Determine a price that triggers the alert
-    const targetJumpPrice = alert.condition === 'above' 
-      ? alert.targetPrice * 1.005 
-      : alert.targetPrice * 0.995;
-
-    const updatedAlerts = alerts.map(a => {
-      if (a.id === alert.id) {
-        return {
-          ...a,
-          isTriggered: true,
-          triggeredAt: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-          currentPrice: targetJumpPrice
-        };
-      }
-      return a;
-    });
-
-    saveAlerts(updatedAlerts);
-    triggerNotification(alert, targetJumpPrice);
-  };
-
-  // Live Price Fluctuation Engine (Simulator)
-  useEffect(() => {
-    if (!isSimulationActive || assets.length === 0) return;
-
-    const timer = setInterval(() => {
-      // Create a map of fluctuated prices for all assets
-      const fluctuatedAssetsMap: { [symbol: string]: number } = {};
-      
-      const updatedAssets = assets.map(asset => {
-        // Random walk change between -0.4% and +0.4%
-        const pctChange = (Math.random() - 0.5) * 0.008; 
-        const newPrice = asset.price * (1 + pctChange);
-        
-        fluctuatedAssetsMap[asset.symbol] = Number(newPrice.toFixed(asset.price < 5 ? 4 : 2));
-        
-        return {
-          ...asset,
-          price: fluctuatedAssetsMap[asset.symbol],
-          change24h: asset.change24h + (pctChange * 100)
-        };
-      });
-
-      // Update local asset prices
-      setAssets(updatedAssets);
-
-      // Check alerts
-      let alertTriggered = false;
-      const updatedAlerts = alerts.map(alert => {
-        if (alert.isTriggered) return alert;
-
-        const currentAssetPrice = fluctuatedAssetsMap[alert.symbol];
-        if (currentAssetPrice === undefined) return alert;
-
-        const isTriggerConditionMet = alert.condition === 'above'
-          ? currentAssetPrice >= alert.targetPrice
-          : currentAssetPrice <= alert.targetPrice;
-
-        if (isTriggerConditionMet) {
-          alertTriggered = true;
-          // Trigger the notification!
-          setTimeout(() => triggerNotification(alert, currentAssetPrice), 10);
-          return {
-            ...alert,
-            isTriggered: true,
-            triggeredAt: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-            currentPrice: currentAssetPrice
-          };
-        }
-
-        // Just update current price tracker
-        return { ...alert, currentPrice: currentAssetPrice };
-      });
-
-      if (alertTriggered || JSON.stringify(alerts) !== JSON.stringify(updatedAlerts)) {
-        saveAlerts(updatedAlerts);
-      }
-
-    }, simulationSpeed);
-
-    return () => clearInterval(timer);
-  }, [isSimulationActive, assets, alerts, simulationSpeed]);
-
-  const activeAssetObj = assets.find(a => a.symbol === selectedAssetSymbol);
-
   return (
-    <div className="w-full space-y-6">
-      
-      {/* Dynamic Push Toast Notification Banner inside screen */}
-      <AnimatePresence>
-        {toastNotification && (
-          <motion.div
-            initial={{ opacity: 0, y: -50, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -30, scale: 0.95 }}
-            className="fixed top-24 right-4 z-50 w-full max-w-sm overflow-hidden rounded-xl bg-black/95 border-2 border-aif-gold-DEFAULT/50 shadow-[0_10px_50px_rgba(245,196,83,0.3)] backdrop-blur-2xl p-4 flex gap-3.5 items-start"
-          >
-            <div className="p-2.5 rounded-lg bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT flex-shrink-0 animate-bounce">
-              <BellRing size={20} />
+    <section className="space-y-6">
+      {toast && (
+        <div className="rounded-xl border border-aif-gold-DEFAULT/30 bg-black/90 p-4 text-xs text-white/80">
+          <div className="flex items-start gap-3">
+            <BellRing size={17} className="mt-0.5 text-aif-gold-DEFAULT" />
+            <div className="flex-1">{toast}</div>
+            <button type="button" onClick={() => setToast(null)} className="text-white/30">✕</button>
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="rounded-2xl border border-white/10 bg-black/40 p-5 lg:col-span-1">
+          <div className="flex items-center gap-2 border-b border-white/10 pb-4">
+            <Bell size={19} className="text-aif-gold-DEFAULT" />
+            <div>
+              <h3 className="text-sm font-black uppercase text-white">Evidence-backed Preisalarm</h3>
+              <p className="text-[10px] text-white/40">Keine Registry-Bootstrappreise · kein Random-Walk</p>
             </div>
-            <div className="flex-1 space-y-1">
-              <h4 className="text-sm font-black text-white uppercase font-display tracking-wider">
-                {toastNotification.title}
-              </h4>
-              <p className="text-xs text-white/85 leading-relaxed font-sans font-medium">
-                {toastNotification.message}
-              </p>
-              <div className="text-[10px] text-aif-gold-DEFAULT font-mono uppercase tracking-wider font-extrabold flex items-center gap-1 mt-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping inline-block" />
-                <span>System-Echtzeitsignal</span>
-              </div>
-            </div>
-            <button 
-              onClick={() => setToastNotification(null)}
-              className="text-white/40 hover:text-white text-xs font-bold"
-            >
-              ✕
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column: Form & Simulator Controls */}
-        <div className="lg:col-span-1 space-y-6">
-          
-          {/* Creator Form Card */}
-          <div className="bg-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-5">
-            <div className="flex items-center gap-2.5 border-b border-white/5 pb-4">
-              <div className="p-2 bg-gradient-to-br from-aif-gold-DEFAULT/10 to-amber-500/15 rounded-lg text-aif-gold-DEFAULT">
-                <Bell size={20} />
-              </div>
-              <div>
-                <h3 className="text-base font-black font-display text-white uppercase tracking-wider">
-                  Preisalarm Erstellen
-                </h3>
-                <p className="text-[11px] text-white/50 font-sans">
-                  Benachrichtigungen für beliebige Vermögenswerte festlegen
-                </p>
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="py-10 text-center text-white/40 flex flex-col items-center justify-center gap-3">
-                <RefreshCw size={24} className="animate-spin text-aif-gold-DEFAULT" />
-                <span className="text-xs font-mono">Lade Vermögenswerte...</span>
-              </div>
-            ) : (
-              <form onSubmit={handleCreateAlert} className="space-y-4">
-                {/* Select Asset */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-mono text-white/60 block uppercase tracking-wider">
-                    Vermögenswert wählen
-                  </label>
-                  <select
-                    value={selectedAssetSymbol}
-                    onChange={(e) => {
-                      setSelectedAssetSymbol(e.target.value);
-                      setTargetPrice('');
-                    }}
-                    className="w-full bg-[#18181b]/90 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-aif-gold-DEFAULT transition-all font-display font-bold uppercase tracking-wide cursor-pointer"
-                  >
-                    {assets.map((asset) => (
-                      <option key={asset.symbol} value={asset.symbol} className="bg-neutral-950 font-bold uppercase tracking-wide">
-                        {asset.symbol} - {asset.name} (${asset.price >= 1 ? asset.price.toLocaleString('de-DE', { minimumFractionDigits: 2 }) : asset.price.toFixed(4)})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Condition Trigger */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-mono text-white/60 block uppercase tracking-wider">
-                    Auslöser-Bedingung
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setCondition('above')}
-                      className={`py-2.5 px-3 rounded-xl border font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
-                        condition === 'above'
-                          ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400 font-extrabold shadow-[0_0_15px_rgba(16,185,129,0.15)]'
-                          : 'bg-black/30 border-white/10 text-white/60 hover:text-white hover:border-white/25'
-                      }`}
-                    >
-                      <TrendingUp size={14} />
-                      <span>Steigt Über (≥)</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCondition('below')}
-                      className={`py-2.5 px-3 rounded-xl border font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
-                        condition === 'below'
-                          ? 'bg-rose-500/10 border-rose-500/50 text-rose-400 font-extrabold shadow-[0_0_15px_rgba(244,63,94,0.15)]'
-                          : 'bg-black/30 border-white/10 text-white/60 hover:text-white hover:border-white/25'
-                      }`}
-                    >
-                      <TrendingDown size={14} />
-                      <span>Fällt Unter (≤)</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Target price input */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-mono text-white/60 block uppercase tracking-wider">
-                      Zielpreis ($)
-                    </label>
-                    {activeAssetObj && (
-                      <span className="text-[10px] font-mono text-white/40">
-                        Kurs: ${activeAssetObj.price >= 1 ? activeAssetObj.price.toLocaleString('de-DE', { minimumFractionDigits: 2 }) : activeAssetObj.price.toFixed(4)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-mono text-sm">$</div>
-                    <input
-                      type="number"
-                      step="any"
-                      placeholder="z.B. 72000"
-                      value={targetPrice}
-                      onChange={(e) => setTargetPrice(e.target.value)}
-                      className="w-full bg-[#18181b]/90 border border-white/10 rounded-xl pl-8 pr-4 py-3 text-sm text-white focus:outline-none focus:border-aif-gold-DEFAULT transition-all font-mono font-bold"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Presets Button Quick Options */}
-                {activeAssetObj && (
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest block">Schnell-Schwellen</span>
-                    <div className="grid grid-cols-4 gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleApplyPreset(-5)}
-                        className="py-1 px-1.5 bg-rose-500/10 border border-rose-500/20 rounded text-[10px] font-mono font-bold text-rose-400 hover:bg-rose-500/20 transition-all text-center"
-                      >
-                        -5%
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleApplyPreset(-2)}
-                        className="py-1 px-1.5 bg-rose-500/10 border border-rose-500/20 rounded text-[10px] font-mono font-bold text-rose-400 hover:bg-rose-500/20 transition-all text-center"
-                      >
-                        -2%
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleApplyPreset(2)}
-                        className="py-1 px-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded text-[10px] font-mono font-bold text-emerald-400 hover:bg-emerald-500/20 transition-all text-center"
-                      >
-                        +2%
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleApplyPreset(5)}
-                        className="py-1 px-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded text-[10px] font-mono font-bold text-emerald-400 hover:bg-emerald-500/20 transition-all text-center"
-                      >
-                        +5%
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Sound Settings switch */}
-                <div className="flex items-center justify-between py-1 border-t border-b border-white/5">
-                  <span className="text-xs font-mono text-white/70 uppercase tracking-wide">
-                    Soundeffekt abspielen
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setSoundEnabled(!soundEnabled)}
-                    className={`p-2 rounded-lg border transition-all ${
-                      soundEnabled 
-                        ? 'bg-aif-gold-DEFAULT/10 border-aif-gold-DEFAULT/30 text-aif-gold-DEFAULT' 
-                        : 'bg-black/30 border-white/10 text-white/30'
-                    }`}
-                  >
-                    {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                  </button>
-                </div>
-
-                {/* Create alarm button */}
-                <button
-                  type="submit"
-                  disabled={!targetPrice || isNaN(Number(targetPrice))}
-                  className="w-full py-3.5 px-4 bg-gradient-to-r from-aif-gold-DEFAULT to-amber-500 disabled:from-white/5 disabled:to-white/5 disabled:text-white/30 text-black font-black text-xs uppercase tracking-widest rounded-xl hover:brightness-110 shadow-[0_0_15px_rgba(245,196,83,0.2)] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Plus size={16} strokeWidth={3} />
-                  <span>Preisalarm einrichten</span>
-                </button>
-              </form>
-            )}
           </div>
 
+          {loading ? (
+            <div className="py-10 text-center text-xs text-white/40"><RefreshCw size={20} className="mx-auto mb-2 animate-spin" />Lade Asset-Katalog…</div>
+          ) : (
+            <form onSubmit={createAlert} className="mt-5 space-y-4">
+              <label className="block text-[10px] uppercase tracking-wider text-white/45">
+                Asset
+                <select value={selectedAssetSymbol} onChange={(event) => setSelectedAssetSymbol(event.target.value)} className="mt-1 w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-xs text-white">
+                  {assets.map((asset) => <option key={asset.symbol} value={asset.symbol}>{asset.symbol} · {asset.name} · {asset.type}</option>)}
+                </select>
+              </label>
 
-
-        </div>
-
-        {/* Right Columns: Active Price Alerts list & triggered history */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Active Alarms Container */}
-          <div className="bg-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-4 min-h-[300px] flex flex-col justify-between">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center border-b border-white/5 pb-4">
+              <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT">
-                    <Layers size={16} />
+                  {selectedAsset && <AssetLogo symbol={selectedAsset.symbol} size="sm" />}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-mono text-sm font-black text-white">{selectedAsset?.symbol || '—'}</div>
+                    <div className="text-[10px] text-white/40">{selectedQuote?.status || 'QUOTE_NOT_CHECKED'}</div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-black font-display text-white uppercase tracking-wider flex items-center gap-2">
-                      <span>Aktive Überwachungen</span>
-                      <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-white/10 text-white font-mono font-bold">
-                        {alerts.filter(a => !a.isTriggered).length}
-                      </span>
-                    </h3>
-                  </div>
+                  <button type="button" onClick={() => selectedAsset && void refreshQuote(selectedAsset)} className="rounded-lg border border-white/10 p-2 text-white/55 hover:text-white"><RefreshCw size={14} /></button>
                 </div>
-
-                <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Autonomer Wächter-Modus</span>
-                </div>
+                <div className="mt-3 font-mono text-xl font-black text-white">{selectedQuote?.value === null || selectedQuote?.value === undefined ? '—' : `${selectedQuote.value.toLocaleString('de-DE', { maximumFractionDigits: 8 })} ${selectedQuote.unit || ''}`}</div>
+                <div className="mt-1 text-[9px] text-white/35">Provider: {selectedQuote?.providers.join(', ') || '—'} · Evidence: {selectedQuote?.evidenceIds.length ?? 0}</div>
+                {selectedQuote?.reason && <div className="mt-2 text-[10px] text-amber-200/70">{selectedQuote.reason}</div>}
               </div>
 
-              {/* Alerts List */}
-              {alerts.length === 0 ? (
-                <div className="py-16 text-center text-white/30 flex flex-col items-center justify-center gap-3">
-                  <div className="w-12 h-12 rounded-full border border-dashed border-white/20 flex items-center justify-center text-white/20">
-                    <Bell size={20} />
-                  </div>
-                  <div className="space-y-1">
-                    <h4 className="text-xs font-bold text-white/50 uppercase tracking-wider">Keine aktiven Alarme</h4>
-                    <p className="text-[11px] text-white/40 max-w-sm leading-normal">
-                      Richte einen neuen Preisalarm ein, um sofort benachrichtigt zu werden, wenn der Markt deine Zielmarken erreicht.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 max-h-[460px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                  {alerts.map((alert) => (
-                    <motion.div
-                      layout
-                      key={alert.id}
-                      className={`relative border rounded-xl p-4 transition-all flex flex-col justify-between gap-3 ${
-                        alert.isTriggered 
-                          ? 'bg-neutral-950/80 border-white/5 opacity-60' 
-                          : 'bg-black/60 border-white/10 hover:border-aif-gold-DEFAULT/30 shadow-lg'
-                      }`}
-                    >
-                      <div className="space-y-2">
-                        {/* Title line */}
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <span className="text-[10px] font-mono font-extrabold uppercase bg-white/5 px-2 py-0.5 rounded text-white/70 border border-white/10">
-                              {alert.symbol}
-                            </span>
-                            <span className="text-xs text-white/45 ml-2 font-mono truncate max-w-[110px] inline-block align-middle">
-                              {alert.assetName}
-                            </span>
-                          </div>
+              <label className="block text-[10px] uppercase tracking-wider text-white/45">
+                Zielpreis
+                <input value={targetPrice} onChange={(event) => setTargetPrice(event.target.value)} inputMode="decimal" placeholder="0.00" className="mt-1 w-full rounded-lg border border-white/10 bg-neutral-950 px-3 py-2 text-sm text-white outline-none" />
+              </label>
 
-                          <div className="flex items-center gap-1.5">
-                            <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase ${
-                              alert.isTriggered 
-                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/10' 
-                                : alert.condition === 'above' 
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/10' 
-                                : 'bg-rose-500/10 text-rose-400 border border-rose-500/10'
-                            }`}>
-                              {alert.isTriggered 
-                                ? 'Ausgelöst' 
-                                : alert.condition === 'above' 
-                                ? 'Steigt Über' 
-                                : 'Fällt Unter'
-                              }
-                            </span>
-                            {alert.soundEnabled && <Volume2 size={12} className="text-white/40" />}
-                          </div>
-                        </div>
-
-                        {/* Visual trigger conditions */}
-                        <div className="grid grid-cols-2 gap-2 bg-[#18181b]/60 border border-white/5 p-2 rounded-lg">
-                          <div>
-                            <div className="text-[9px] font-mono text-white/40 uppercase">Ziel-Grenze</div>
-                            <div className="text-xs font-mono font-extrabold text-white flex items-center gap-0.5">
-                              <DollarSign size={10} className="text-aif-gold-DEFAULT" />
-                              <span>{alert.targetPrice.toLocaleString('de-DE', { minimumFractionDigits: alert.targetPrice < 10 ? 4 : 2 })}</span>
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-[9px] font-mono text-white/40 uppercase">Aktuell</div>
-                            <div className={`text-xs font-mono font-bold flex items-center gap-0.5 ${
-                              alert.isTriggered 
-                                ? 'text-white/40' 
-                                : (alert.condition === 'above' && alert.currentPrice >= alert.targetPrice) || (alert.condition === 'below' && alert.currentPrice <= alert.targetPrice)
-                                ? 'text-emerald-400 animate-pulse'
-                                : 'text-aif-gold-light'
-                            }`}>
-                              <DollarSign size={10} />
-                              <span>{alert.currentPrice.toLocaleString('de-DE', { minimumFractionDigits: alert.currentPrice < 10 ? 4 : 2 })}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Action trigger line */}
-                      <div className="flex justify-between items-center border-t border-white/5 pt-2 text-[10px] font-mono text-white/50">
-                        <span>Erstellt um {alert.createdAt} Uhr</span>
-
-                        <div className="flex items-center gap-1.5">
-                          {!alert.isTriggered ? (
-                            <button
-                              onClick={() => handleSimulateAlertTrigger(alert)}
-                              className="px-2 py-1 bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 hover:bg-aif-gold-DEFAULT/20 text-aif-gold-DEFAULT rounded font-mono text-[9px] font-bold uppercase transition-all flex items-center gap-1 cursor-pointer"
-                              title="Löst diesen Alarm sofort testweise mit einem künstlichen Kurssprung aus"
-                            >
-                              <Play size={8} fill="currentColor" />
-                              <span>Testauslösung</span>
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleReactivateAlert(alert.id)}
-                              className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 text-emerald-400 rounded font-mono text-[9px] font-bold uppercase transition-all flex items-center gap-1 cursor-pointer"
-                            >
-                              <RefreshCw size={8} />
-                              <span>Reaktivieren</span>
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleDeleteAlert(alert.id)}
-                            className="p-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 hover:border-rose-500/30 transition-all cursor-pointer"
-                            title="Alarm löschen"
-                          >
-                            <Trash size={12} />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Sparkles background overlay on triggered alarms */}
-                      {alert.isTriggered && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-purple-500/5 pointer-events-none rounded-xl" />
-                      )}
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {alerts.length > 0 && (
-              <div className="text-[10px] text-white/40 font-mono text-center pt-2 mt-4 border-t border-white/5">
-                💡 Tipp: Nutze die <strong>"Testauslösung"</strong>-Schaltfläche, um den Preisalarm-Empfang sofort zu verifizieren.
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setCondition('above')} className={`rounded-lg border px-3 py-2 text-xs ${condition === 'above' ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200' : 'border-white/10 text-white/45'}`}>Über Ziel</button>
+                <button type="button" onClick={() => setCondition('below')} className={`rounded-lg border px-3 py-2 text-xs ${condition === 'below' ? 'border-rose-500/40 bg-rose-500/10 text-rose-200' : 'border-white/10 text-white/45'}`}>Unter Ziel</button>
               </div>
-            )}
-          </div>
 
-          {/* Triggered History Notification logs */}
-          <div className="bg-black/40 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-4">
-            <div className="flex justify-between items-center border-b border-white/5 pb-4">
-              <div className="flex items-center gap-2">
-                <Clock className="text-white/50" size={16} />
-                <h3 className="text-sm font-black font-display text-white uppercase tracking-wider flex items-center gap-1.5">
-                  <span>Alarme-Historie (Protokoll)</span>
-                  <span className="text-[10px] font-mono text-white/40 normal-case">
-                    (letzte {notifications.length})
-                  </span>
-                </h3>
+              <div className="grid grid-cols-4 gap-2">
+                {[-5, -2, 2, 5].map((percent) => <button key={percent} type="button" onClick={() => applyPreset(percent)} className="rounded-lg border border-white/10 px-2 py-1.5 text-[10px] text-white/50">{percent > 0 ? '+' : ''}{percent}%</button>)}
               </div>
-              
-              {notifications.length > 0 && (
-                <button
-                  onClick={handleClearHistory}
-                  className="px-2.5 py-1 text-[10px] font-mono font-bold text-rose-400 hover:text-white bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/15 rounded-lg transition-all cursor-pointer"
-                >
-                  Protokoll leeren
-                </button>
-              )}
-            </div>
 
-            {notifications.length === 0 ? (
-              <div className="py-10 text-center text-white/30 text-xs font-mono">
-                Bisher wurden keine Preisalarme ausgelöst oder simulierte Signale empfangen.
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                {notifications.map((log) => (
-                  <div 
-                    key={log.id} 
-                    className="flex gap-3 items-start text-xs p-3 rounded-lg bg-black/30 border border-white/5 hover:bg-[#18181b]/50 transition-colors"
-                  >
-                    <div className="p-1 rounded bg-amber-500/10 text-amber-400 mt-0.5 flex-shrink-0">
-                      <AlertCircle size={12} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white/85 leading-relaxed font-sans font-medium">
-                        {log.message}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1 text-[10px] text-white/40 font-mono">
-                        <span>{log.time} Uhr</span>
-                        <span>•</span>
-                        <span className="text-aif-gold-DEFAULT font-extrabold">{log.symbol}</span>
-                        <span>•</span>
-                        <span>Dauerhaft im lokalen Cache gespeichert</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
+              <button type="submit" disabled={selectedQuote?.status !== 'READY'} className="w-full rounded-xl border border-aif-gold-DEFAULT/30 bg-aif-gold-DEFAULT/10 px-4 py-2.5 text-xs font-black text-aif-gold-DEFAULT disabled:cursor-not-allowed disabled:opacity-40">Preisalarm mit Evidence erstellen</button>
+            </form>
+          )}
         </div>
 
+        <div className="space-y-5 lg:col-span-2">
+          <div className="rounded-2xl border border-white/10 bg-black/40 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-black uppercase text-white">Aktive Preisalarme</h3>
+                <p className="text-[10px] text-white/40">Schwellen werden nur gegen verifizierte Quote-Evidence geprüft.</p>
+              </div>
+              <button type="button" onClick={() => void checkAlerts()} disabled={checking} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-[10px] text-white/60 disabled:opacity-50"><RefreshCw size={13} className={checking ? 'animate-spin' : ''} />Jetzt prüfen</button>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {alerts.length === 0 && <div className="rounded-xl border border-white/5 bg-white/[0.02] p-5 text-center text-xs text-white/35">Noch keine verifizierten Preisalarme.</div>}
+              {alerts.map((alert) => (
+                <div key={alert.id} className={`rounded-xl border p-4 ${alert.isTriggered ? 'border-emerald-500/25 bg-emerald-500/[0.05]' : 'border-white/10 bg-white/[0.02]'}`}>
+                  <div className="flex items-start gap-3">
+                    <AssetLogo symbol={alert.symbol} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-sm font-black text-white">{alert.symbol}</span>
+                        {alert.isTriggered ? <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-300"><CheckCircle2 size={11} />TRIGGERED</span> : <span className="inline-flex items-center gap-1 text-[9px] font-bold text-white/40"><ShieldCheck size={11} />EVIDENCE-GATED</span>}
+                      </div>
+                      <div className="mt-1 text-[10px] text-white/45">Ziel {alert.condition === 'above' ? '≥' : '≤'} {alert.targetPrice.toLocaleString('de-DE', { maximumFractionDigits: 8 })}</div>
+                      <div className="mt-2 text-[9px] text-white/30">Aktuell: {alert.currentPrice.toLocaleString('de-DE', { maximumFractionDigits: 8 })} · Provider: {alert.quoteProvider?.join(', ') || '—'} · Evidence: {alert.quoteEvidenceIds?.length ?? 0}</div>
+                    </div>
+                    <button type="button" onClick={() => saveAlerts(alerts.filter((item) => item.id !== alert.id))} className="text-white/30 hover:text-rose-300"><Trash2 size={15} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-black/40 p-5">
+            <h3 className="text-sm font-black uppercase text-white">Alert Evidence Log</h3>
+            <div className="mt-4 space-y-2">
+              {notifications.length === 0 && <div className="text-xs text-white/35">Noch keine ausgelösten Alarme.</div>}
+              {notifications.slice(0, 10).map((entry) => <div key={entry.id} className="rounded-lg border border-white/5 bg-white/[0.02] p-3 text-[10px] text-white/55"><span className="font-mono font-bold text-white/75">{entry.time} · {entry.symbol}</span><div className="mt-1">{entry.message}</div></div>)}
+            </div>
+          </div>
+        </div>
       </div>
 
-    </div>
+      <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4 text-[10px] text-amber-100/65">
+        <AlertCircle size={15} className="mt-0.5 shrink-0" />
+        <div><strong>FinTech Data Policy:</strong> Browser-Simulationen und Registry-Bootstrappreise sind keine Market Evidence. Solange für Stock/Forex/Index/Commodity/Bond kein expliziter Quote-Contract freigegeben ist, werden dort keine Preisalarme aktiviert.</div>
+      </div>
+    </section>
   );
 }
