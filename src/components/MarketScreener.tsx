@@ -35,6 +35,8 @@ type CatalogAsset = {
   aliases?: string[];
   origin?: 'legacy-registry' | 'catalog-expansion';
   screeningContract?: 'crypto-provenance' | 'traditional-provenance' | 'catalog-only';
+  evidenceScoringContract?: string | null;
+  providerMappingContract?: string | null;
 };
 
 type ScreeningResult = {
@@ -124,7 +126,7 @@ async function evaluateAsset(asset: CatalogAsset, rootCorrelationId: string): Pr
     const integrity = body?.integrity ?? {};
     const reasoning = reasoningArray(body?.reasoning);
     const evidenceIds = Array.isArray(integrity?.evidence)
-      ? integrity.evidence.map((entry: any) => entry?.evidenceId).filter((id: unknown): id is string => typeof id === 'string')
+      ? integrity.evidence.map((entry: any) => entry?.evidenceId ?? entry?.id).filter((id: unknown): id is string => typeof id === 'string')
       : stringArray(body?.evidenceIds);
     return {
       symbol: asset.symbol,
@@ -143,44 +145,26 @@ async function evaluateAsset(asset: CatalogAsset, rootCorrelationId: string): Pr
     };
   }
 
-  if (asset.type === 'stock' || asset.type === 'forex' || asset.type === 'index') {
-    const response = await fetchWithTimeout(`/api/registry/assets/${encodeURIComponent(asset.symbol)}/verified-context`, {
-      headers: { 'x-correlation-id': `${rootCorrelationId}:${asset.symbol}` },
-    });
-    const body = await response.json().catch(() => ({}));
-    const scoreContext = body?.scoreContext ?? {};
-    const macroContext = body?.macroContext ?? {};
-    const reasoning = reasoningArray(scoreContext?.reasoning);
-    return {
-      symbol: asset.symbol,
-      assetName: asset.name,
-      assetType: asset.type,
-      status: typeof scoreContext?.status === 'string' ? scoreContext.status : 'SCORE_NOT_COMPUTABLE',
-      score: finite(scoreContext?.score),
-      providers: stringArray(scoreContext?.providers),
-      evidenceIds: stringArray(scoreContext?.evidenceIds),
-      correlationId: typeof body?.correlationId === 'string' ? body.correlationId : response.headers.get('x-correlation-id'),
-      reasoning,
-      pattern: classifyVerifiedPattern(reasoning),
-      macroStatus: typeof macroContext?.status === 'string' ? macroContext.status : null,
-      macroRegime: typeof macroContext?.regime === 'string' ? macroContext.regime : null,
-      scoreImpactEnabled: false,
-    };
-  }
-
+  const response = await fetchWithTimeout(`/api/registry/assets/${encodeURIComponent(asset.symbol)}/verified-context`, {
+    headers: { 'x-correlation-id': `${rootCorrelationId}:${asset.symbol}` },
+  });
+  const body = await response.json().catch(() => ({}));
+  const scoreContext = body?.scoreContext ?? {};
+  const macroContext = body?.macroContext ?? {};
+  const reasoning = reasoningArray(scoreContext?.reasoning ?? scoreContext?.reason);
   return {
     symbol: asset.symbol,
     assetName: asset.name,
     assetType: asset.type,
-    status: 'SCORE_NOT_COMPUTABLE',
-    score: null,
-    providers: [],
-    evidenceIds: [],
-    correlationId: `${rootCorrelationId}:${asset.symbol}`,
-    reasoning: ['Für diese Assetklasse ist noch kein freigegebener provenance-backed Screening-Contract aktiv.'],
-    pattern: 'Kein verifiziertes Pattern ableitbar',
-    macroStatus: null,
-    macroRegime: null,
+    status: typeof scoreContext?.status === 'string' ? scoreContext.status : 'SCORE_NOT_COMPUTABLE',
+    score: finite(scoreContext?.score),
+    providers: stringArray(scoreContext?.providers),
+    evidenceIds: stringArray(scoreContext?.evidenceIds),
+    correlationId: typeof body?.correlationId === 'string' ? body.correlationId : response.headers.get('x-correlation-id'),
+    reasoning,
+    pattern: classifyVerifiedPattern(reasoning),
+    macroStatus: typeof macroContext?.status === 'string' ? macroContext.status : null,
+    macroRegime: typeof macroContext?.regime === 'string' ? macroContext.regime : null,
     scoreImpactEnabled: false,
   };
 }
@@ -474,7 +458,7 @@ export function MarketScreener({
       </div>
 
       <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4 text-[10px] text-emerald-100/65">
-        <strong>Data Integrity:</strong> Katalogbestand und Marktbeobachtung sind getrennt. Ein gelistetes Asset erhält weder Preis noch Score allein durch seine Registry-Zugehörigkeit; READY erfordert weiterhin Provider-Evidence und die bestehenden Provenance-/Freshness-Gates. Commodity- und Bond-Katalogeinträge bleiben bis zu einem freigegebenen Screening-Contract fail-closed.
+        <strong>Data Integrity:</strong> Katalogbestand und Marktbeobachtung sind getrennt. Ein gelistetes Asset erhält weder Preis noch Score allein durch seine Registry-Zugehörigkeit; READY erfordert Provider-Evidence und die jeweiligen Provenance-/Freshness-Gates. Indizes nutzen das versionierte Provider-Mapping, Rohstoffe den freigegebenen Commodity-Market-Evidence-Contract und Government-Benchmark-Anleihen ausschließlich den Sovereign-Yield-Contract; allgemeines Einzelanleihen-Scoring bleibt gesperrt.
         {effectiveEmail ? '' : ' Nutzerkontext ist derzeit nicht angemeldet.'}
       </div>
     </section>
