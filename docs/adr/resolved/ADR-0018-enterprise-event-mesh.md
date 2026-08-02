@@ -143,11 +143,10 @@ Kopplungspunkt würde, den sie auflösen soll.
 
 ### 6. Kein Eingriff in bestehenden Produktivcode
 
-`server/systemEvents.ts` (Audit-Log, 11 direkte Importabhängigkeiten) und die
-Frontend-`CustomEvent`-Nutzung (6 Fundstellen) bleiben unverändert. Beide sind
-funktionierender Code außerhalb von `src/platform/` und nicht Gegenstand dieser
-Erweiterung — eine Migration wäre eine eigene, hier nicht angeforderte Entscheidung mit
-Produktivauswirkung.
+Die Erstentscheidung änderte bestehenden Produktivcode noch nicht. Die später vom Platform
+Director freigegebene Folgeentscheidung erweiterte `server/systemEvents.ts` ausschließlich
+additiv: der bestehende Audit-Log-Mechanismus blieb erhalten, während zusätzlich ein
+Enterprise Event publiziert wird.
 
 ### 7. Vollständiger Metadatensatz als zweite Referenzimplementierung
 
@@ -178,9 +177,8 @@ einschließlich Documentary und Traceability selbst — eine Unterordnung unter 
 Komponenten, die sie bedient, wäre ein Zirkelbezug.
 
 **E) Bestehende Audit-Log-Funktion (`server/systemEvents.ts`) durch die Mesh ersetzen.**
-Verworfen als Teil dieser Entscheidung. Produktivcode-Änderung mit eigenem
-Migrationsaufwand, nicht durch die Anforderung gedeckt und nicht ohne gesonderte
-Risikoabwägung durchführbar.
+Verworfen. Die spätere Integration wurde additiv umgesetzt; der bestehende Audit-Log blieb
+bestehen.
 
 ---
 
@@ -188,29 +186,24 @@ Risikoabwägung durchführbar.
 
 ### Positiv
 
-- Die Enterprise Event Mesh besitzt erstmals einen eindeutigen Ort, eine definierte
-  Klassenstruktur und einen vollständigen Standard-Event-Ausgangskatalog.
-- Drei potenzielle Event-Namen-Duplikate wurden vor ihrer Entstehung erkannt und
-  aufgelöst.
-- Zweite Komponente mit vollständigem Metadatensatz — festigt das mit ADR-0015
-  begonnene Muster.
-- Chapter 8 bleibt vollständig unverändert; keine Doppelregelung entstanden.
+- Die Enterprise Event Mesh besitzt einen eindeutigen Ort, eine definierte Klassenstruktur
+  und einen vollständigen Standard-Event-Ausgangskatalog.
+- Potenzielle Event-Namen-Duplikate wurden vor ihrer Entstehung erkannt und aufgelöst.
+- Chapter 8 bleibt vollständig unverändert; keine Doppelregelung entstand.
+- Event Bus, Registry, Validatoren, Reports, Discovery und additive System-Audit-Bridge sind
+  real implementiert und getestet.
 
 ### Negativ / Aufwand
 
-- Ein weiteres Plattformmodul ohne Implementierung. Die Zahl der spezifizierten,
-  nicht implementierten Komponenten steigt weiter.
-- Acht der neun identifizierten potenziellen Producer-Komponenten führen weiterhin
-  leere `events`-Felder in ihrem `manifest.json` — ein Befund, den diese Entscheidung
-  sichtbar macht, aber nicht selbst behebt (fremde Komponentenverantwortung).
-- Die Mesh kann wie die ETM erst nach den vorgelagerten Umsetzungsstufen produktiv
-  funktionieren.
+- Der in-memory Bus teilt seinen Zustand nicht automatisch zwischen mehreren Prozessinstanzen;
+  dieser Betriebsaspekt bleibt bei horizontaler Skalierung gesondert zu behandeln.
+- Events dürfen weiterhin nur dann publiziert werden, wenn ein realer Producer und ein realer
+  Zustandsübergang existieren.
 
 ### Neutral
 
-- Kein produktiver Code verändert.
-- Kein bestehendes ESS- oder ADR-Dokument inhaltlich verändert.
-- Kein bestehendes Event umbenannt — ausschließlich neue, kollisionsfreie Registrierung.
+- Kein bestehender kanonischer Event-Name wurde umbenannt.
+- EventMesh ersetzt keine fachlichen Audit-, Security- oder Business-Datenbanken.
 
 ---
 
@@ -219,43 +212,33 @@ Risikoabwägung durchführbar.
 Alle vier wurden am 2026-07-31 vom Platform Director zur Ausführung freigegeben und
 sind umgesetzt:
 
-1. ✅ **Implementierung der Stufen 1 bis 4** (Schema/Metadata, Core/Contracts, Event
-   Bus, Validator-Kette) — `src/platform/EventMesh/`, siehe `CHANGELOG.md` [1.1.0].
-2. ✅ **Nachpflege der `events`-Felder** — in zwölf Komponenten befüllt
-   (`Documentary`, `Discovery`, `Knowledge`, `Compliance`, `Architecture`, `Security`,
-   `VersionManager`, `Release`, `Supervisor`, `PlatformDirector`, `Registry`,
-   `Quality`). Dabei einen Fehler in der Erstfassung dieses ADR korrigiert: die
-   Documentary Engine besaß entgegen der ursprünglichen Behauptung bereits ein
-   (leeres) `manifest.json`.
-3. ✅ **`server/systemEvents.ts` additiv erweitert** — `logSystemEvent()` publiziert
-   zusätzlich ein Enterprise Event über die neue Mesh; der bestehende, funktionierende
-   Audit-Log-Mechanismus bleibt vollständig erhalten und unveraendert im Erfolgsfall.
+1. ✅ **Implementierung der Stufen 1 bis 4** — `src/platform/EventMesh/`.
+2. ✅ **Nachpflege der `events`-Felder** in den betroffenen Plattformkomponenten.
+3. ✅ **`server/systemEvents.ts` additiv erweitert** — bestehender Audit-Log-Mechanismus
+   erhalten, EventMesh-Publikation ergänzt.
 4. ✅ **7 neu identifizierte Events registriert** (`VersionApprovedEvent`,
    `RoadmapUpdatedEvent`, `ArchitectureDecisionApprovedEvent`,
    `CriticalArchitectureViolationEvent`, `DependencyMappedEvent`,
-   `KnowledgeRelationCreatedEvent`, `KnowledgeValidationCompletedEvent` — sieben,
-   nicht acht wie in der Erstfassung fälschlich gezählt) — Teil von
-   `Events/StandardEventCatalog.ts`.
+   `KnowledgeRelationCreatedEvent`, `KnowledgeValidationCompletedEvent`).
 
-Details, Testergebnisse und der während der Umsetzung gefundene Registry-Bug:
-`docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md`, Nachtrag.
+Details und Testergebnisse:
+`docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md`.
 
 ---
 
 ## Referenzen
 
-- ESS-0001-CONTRACTS Chapter 8 — Enterprise Event & Messaging Contracts (Regelwerk,
-  unverändert)
-- ESS-0013 — Enterprise Event Mesh (Komponentenspezifikation)
+- ESS-0001-CONTRACTS Chapter 8 — Enterprise Event & Messaging Contracts
+- ESS-0013 — Enterprise Event Mesh
 - ESS-0013-CONTRACTS — Event-Katalog-, Kompatibilitäts-, Registry-, Routing-,
   Discovery-, Policy- und Report-Contracts
-- ESS-0011 — Enterprise Traceability (Event-Achse)
+- ESS-0011 — Enterprise Traceability
 - ESS-0012-CONTRACTS — Governance-Validator-Events
 - ADR-0013 — ESS Documentation Responsibility Consolidation
 - ADR-0014 — Documentation Governance Validator
-- ADR-0015 — Enterprise Traceability Component (Vorbild für Querschnittsmodul-Einordnung)
-- ADR-0016 — Vergabe ESS-0004 bis ESS-0009 (Vorbild für Komponente vs. Regelkapitel)
-- `docs/architecture/ENTERPRISE_EVENT_READINESS_REPORT.md` — ARCH-EVENT-READY-0001
+- ADR-0015 — Enterprise Traceability Component
+- ADR-0016 — Vergabe ESS-0004 bis ESS-0009
+- `docs/architecture/ENTERPRISE_EVENT_READINESS_REPORT.md`
 - `docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md`
-- `docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md` — Umsetzungsstufen
+- `docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md`
 - `.ai/registry/ess-registry.json`
