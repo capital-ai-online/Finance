@@ -1,4 +1,6 @@
-export const BOND_FEATURE_CONTRACT_VERSION = 'bond-features/1.0.0';
+import { BOND_FEATURE_CONTRACT_VERSION } from '../services/bondFeatureContract';
+
+export { BOND_FEATURE_CONTRACT_VERSION };
 export const BOND_SCORING_CONTRACT_VERSION = 'bond-scoring/locked-1.0.0';
 
 export type BondEvidenceStatus =
@@ -62,9 +64,13 @@ function positive(value: number | undefined): boolean {
 }
 
 /**
- * Evidence gate only. This function NEVER emits a bond score.
- * It defines the minimum contract that must be satisfied before a future model may enter
- * validation against a real, reviewed golden dataset.
+ * Locked model-activation gate layered on top of the canonical feature-contract version from
+ * `services/bondFeatureContract.ts`. This function NEVER emits a bond score.
+ *
+ * The service contract validates raw feature evidence/freshness. This activation contract adds
+ * issuer/curve/price/face-value requirements that must be met before a future model may enter
+ * reviewed golden-dataset validation. Keeping the feature-version import here prevents parallel
+ * version drift while preserving the deliberately separate activation gate.
  */
 export function evaluateBondEvidenceGate(input: BondFeatureInputs): BondEvidenceGateResult {
   const missing: string[] = [];
