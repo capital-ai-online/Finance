@@ -86,7 +86,7 @@ export function Newsticker({ selectedSymbol, timeframe }: NewstickerProps) {
           ]);
           const contextBody = await contextResponse.json().catch(() => ({}));
           const quoteBody = await quoteResponse.json().catch(() => ({}));
-          const scoreBody = contextBody?.score ?? contextBody;
+          const scoreBody = contextBody?.scoreContext ?? contextBody;
           score = scoreBody?.status === 'READY' ? finite(scoreBody?.score) : null;
           quote = quoteBody?.status === 'READY' ? finite(quoteBody?.price) : null;
           quoteUnit = typeof quoteBody?.currency === 'string' ? quoteBody.currency : null;
