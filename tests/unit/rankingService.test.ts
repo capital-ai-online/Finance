@@ -1,7 +1,7 @@
 // Audit ARCH-AUDIT-0002 (D5): Testabdeckung fuer den kritischen Scoring/Ranking-Pfad.
 
 import { describe, it, expect } from 'vitest';
-import { calculateRankScore, isTop10Eligible } from '../../src/services/ranking.service';
+import { calculateRankScore, isTop10Eligible, isTop10GovernanceEligible } from '../../src/services/ranking.service';
 
 describe('ranking.service', () => {
   describe('calculateRankScore', () => {
@@ -13,7 +13,6 @@ describe('ranking.service', () => {
         scores: { liquidity: 80 },
       };
       const score = calculateRankScore(payload, 90);
-      // 0.70*90 + 0.15*100 + 0.10*100 + 0.05*80 = 63 + 15 + 10 + 4 = 92
       expect(score).toBeCloseTo(92, 5);
     });
 
@@ -55,6 +54,14 @@ describe('ranking.service', () => {
 
     it('ist NICHT erfuellt ohne jede Angabe (sichere Default-Ablehnung)', () => {
       expect(isTop10Eligible({ asset_name: 'A', symbol: 'A' })).toBe(false);
+    });
+
+    it('governance-aware Zulassung verlangt explizite Eligibility und Runtime-Evidence', () => {
+      expect(isTop10GovernanceEligible(eligibleBase, { eligible: true, operationsState: 'HEALTHY' })).toBe(true);
+      expect(isTop10GovernanceEligible(eligibleBase)).toBe(false);
+      expect(isTop10GovernanceEligible(eligibleBase, { eligible: false, operationsState: 'HEALTHY' })).toBe(false);
+      expect(isTop10GovernanceEligible(eligibleBase, { eligible: true, operationsState: 'NO_RUNTIME_EVIDENCE' })).toBe(false);
+      expect(isTop10GovernanceEligible(eligibleBase, { eligible: true, operationsState: 'HEALTHY', sourceConflict: true })).toBe(false);
     });
   });
 });
