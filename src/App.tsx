@@ -9,7 +9,6 @@ import { Dashboard } from './components/Dashboard';
 import { supabase } from './supabaseClient';
 import { Datenschutz } from './components/Datenschutz';
 import { ImpressumAgb } from './components/ImpressumAgb';
-import { initCookieHubAnalyticsBridge } from './services/cookieHubConsentBridge';
 
 export interface UserSession {
   type: 'guest' | 'registered';
@@ -371,9 +370,6 @@ export default function App() {
     window.addEventListener('auth:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
-
-  // Bindet Google Analytics an die CookieHub-Einwilligungsentscheidung (siehe index.html).
-  useEffect(() => initCookieHubAnalyticsBridge(), []);
 
   if (loading) {
     return (
