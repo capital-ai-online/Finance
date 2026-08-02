@@ -5,6 +5,7 @@ import { runAllScanners } from './scanners';
 import { buildRuntimeEvidenceScanner } from './runtimeEvidence';
 import { buildMarketIntegrityEvidenceScanner } from './marketIntegrityEvidence';
 import { buildAiGovernanceEvidenceScanner } from './aiGovernanceEvidence';
+import { buildScreeningGovernanceEvidenceScanner } from './screeningGovernanceEvidence';
 import type { ComplianceCertificate, ComplianceRun, Finding, ScannerResult, Severity } from './types';
 
 function avg(nums: number[]): number {
@@ -59,6 +60,8 @@ export async function executeComplianceRun(triggeredBy: string | undefined): Pro
   if (marketIntegrityScanner) scannerResultsList.push(marketIntegrityScanner);
   const aiGovernanceScanner = buildAiGovernanceEvidenceScanner();
   if (aiGovernanceScanner) scannerResultsList.push(aiGovernanceScanner);
+  const screeningGovernanceScanner = buildScreeningGovernanceEvidenceScanner();
+  if (screeningGovernanceScanner) scannerResultsList.push(screeningGovernanceScanner);
 
   const scannerResults: Record<string, ScannerResult> = {};
   for (const s of scannerResultsList) scannerResults[s.id] = s;

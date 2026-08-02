@@ -15,6 +15,16 @@ export interface ScreeningSloSink {
   write(record: ScreeningSloEvidenceRecord): Promise<ScreeningSloSinkWriteResult>;
 }
 
+export interface ScreeningSloSinkStatus {
+  contractVersion: typeof SCREENING_SLO_SINK_VERSION;
+  sink: string;
+  writesAttempted: number;
+  writesAccepted: number;
+  writesPersisted: number;
+  lastWrite: ScreeningSloSinkWriteResult | null;
+  persistenceConfigured: boolean;
+}
+
 /**
  * Default development/runtime sink. It deliberately does not pretend to persist evidence.
  * Production must inject an append-only sink backed by Supabase or an observability store.
@@ -44,15 +54,40 @@ export class NoopScreeningSloSink implements ScreeningSloSink {
 }
 
 let activeSink: ScreeningSloSink = new NoopScreeningSloSink();
+let writesAttempted = 0;
+let writesAccepted = 0;
+let writesPersisted = 0;
+let lastWrite: ScreeningSloSinkWriteResult | null = null;
 
 export function configureScreeningSloSink(sink: ScreeningSloSink): void {
   activeSink = sink;
+  writesAttempted = 0;
+  writesAccepted = 0;
+  writesPersisted = 0;
+  lastWrite = null;
 }
 
 export function getScreeningSloSink(): ScreeningSloSink {
   return activeSink;
 }
 
+export function getScreeningSloSinkStatus(): ScreeningSloSinkStatus {
+  return {
+    contractVersion: SCREENING_SLO_SINK_VERSION,
+    sink: activeSink.id,
+    writesAttempted,
+    writesAccepted,
+    writesPersisted,
+    lastWrite: lastWrite ? { ...lastWrite } : null,
+    persistenceConfigured: activeSink.id !== 'noop-unpersisted',
+  };
+}
+
 export async function persistScreeningSloEvidence(record: ScreeningSloEvidenceRecord): Promise<ScreeningSloSinkWriteResult> {
-  return activeSink.write(record);
+  writesAttempted += 1;
+  const result = await activeSink.write(record);
+  if (result.accepted) writesAccepted += 1;
+  if (result.persisted) writesPersisted += 1;
+  lastWrite = { ...result };
+  return result;
 }
