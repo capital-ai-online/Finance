@@ -226,9 +226,13 @@ app.use((req, res, next) => {
   // Testzugangsdaten in dieser Umgebung nicht erreicht, sollten aber denselben
   // externen-Assets-Build durchlaufen). Im Entwicklungsmodus benoetigt Vites HMR-Client
   // weiterhin 'unsafe-inline'/'unsafe-eval', daher dort unveraendert gelockert.
+  // CookieHub (Cookie-Consent-Banner) und Google Analytics (gtag.js, nur nach Einwilligung
+  // geladen, siehe src/services/googleAnalytics.ts) muessen hier explizit erlaubt werden -
+  // ohne diese beiden Hosts blockiert der Browser die Skripte still per CSP-Violation, das
+  // Banner erscheint nie und GA erhaelt selbst nach Opt-in keine Daten.
   const scriptSrc = isProductionEnv
-    ? "'self' https://*.stripe.com"
-    : "'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com";
+    ? "'self' https://*.stripe.com https://cdn.cookiehub.eu https://www.googletagmanager.com"
+    : "'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com https://cdn.cookiehub.eu https://www.googletagmanager.com";
   res.setHeader(
     'Content-Security-Policy',
     "default-src 'self' https:; " +
