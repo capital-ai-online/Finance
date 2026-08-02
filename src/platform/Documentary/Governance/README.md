@@ -2,7 +2,7 @@
 
 ## Enterprise Component
 
-Status: Development
+Status: Unspecified (vollständig spezifiziert per ESS-0012, jedoch 0 Code-Dateien — siehe „Implementierungsstand" unten)
 
 Version: 1.0.0
 
