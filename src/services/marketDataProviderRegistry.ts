@@ -42,16 +42,16 @@ export const MARKET_DATA_PROVIDER_REGISTRY: MarketDataProviderRegistryEntry[] = 
     governanceNotes: 'Server-side adapter uses X-CoinAPI-Key. Venue/symbol provenance remains explicit; licensing/redistribution terms remain plan-dependent.',
   },
   {
-    id: 'TwelveData', assetClasses: ['stock', 'forex', 'index', 'crypto'], capabilities: ['history', 'snapshot', 'quotes'], basePriority: 3,
+    id: 'TwelveData', assetClasses: ['stock', 'forex', 'commodity', 'index', 'crypto'], capabilities: ['history', 'snapshot', 'quotes'], basePriority: 3,
     enabled: true, activation: 'active', environmentVariable: 'TWELVEDATA_API_KEY', requiresApiKey: true,
-    purpose: 'Global multi-asset redundancy',
-    governanceNotes: 'Server-side adapter only. Nulls/rate limits are fail-closed; exchange/timezone metadata must be retained where available.',
+    purpose: 'Global multi-asset redundancy including runtime-verified index and commodity evidence',
+    governanceNotes: 'Server-side adapter only. Index mappings require provider metadata identity confirmation. Commodity mappings are resolved against the provider commodity catalog and ambiguous matches fail closed. Nulls/rate limits are fail-closed; exchange/timezone metadata must be retained where available.',
   },
   {
     id: 'EODHD', assetClasses: ['stock', 'forex', 'crypto', 'bond'], capabilities: ['history', 'snapshot'], basePriority: 4,
     enabled: true, activation: 'active', environmentVariable: 'EODHD_API_KEY', requiresApiKey: true,
     purpose: 'Global EOD/historical multi-asset redundancy plus explicit government-bond evidence',
-    governanceNotes: 'Stock/forex/crypto adapters plus evidence-only *.GBOND history are implemented. Bond symbols are never guessed and no bond score is emitted by the evidence adapter. EOD data must not masquerade as current execution prices.',
+    governanceNotes: 'Stock/forex/crypto adapters plus evidence-only *.GBOND history are implemented. Sovereign benchmark mappings must be either approved-static or confirmed by the live GBOND symbol catalog. Individual-bond scoring remains governed separately by ADR-0022/ADR-0029. EOD data must not masquerade as current execution prices.',
   },
   {
     id: 'Stooq', assetClasses: ['stock', 'forex'], capabilities: ['history'], basePriority: 2,
@@ -65,8 +65,8 @@ export const MARKET_DATA_PROVIDER_REGISTRY: MarketDataProviderRegistryEntry[] = 
   },
   {
     id: 'FMP', assetClasses: ['stock', 'index'], capabilities: ['history', 'snapshot', 'fundamentals'], basePriority: 2,
-    enabled: true, activation: 'active', environmentVariable: 'FMP_API_KEY', purpose: 'Index and traditional-asset market data',
-    governanceNotes: 'Existing keyed source. Licensing/redistribution rules must be validated for customer-facing use.',
+    enabled: true, activation: 'active', environmentVariable: 'FMP_API_KEY', purpose: 'Primary approved mappings for established index symbols and traditional-asset market data',
+    governanceNotes: 'Existing static index mappings retain first priority. Licensing/redistribution rules must be validated for customer-facing use.',
   },
   {
     id: 'Finnhub', assetClasses: ['stock', 'forex', 'index', 'crypto'], capabilities: ['history', 'snapshot', 'quotes', 'fundamentals'], basePriority: 4,
