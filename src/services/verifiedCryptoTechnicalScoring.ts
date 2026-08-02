@@ -34,8 +34,8 @@ export interface VerifiedCryptoTechnicalAssessment {
   fieldProvenance: VerifiedFieldProvenance[];
   rankingEvidenceReady: boolean;
   providerState?: {
-    history?: { cacheMode: VerifiedCryptoHistory['cacheMode']; degraded: boolean };
-    snapshot?: { cacheMode: VerifiedCryptoSnapshot['cacheMode']; degraded: boolean };
+    history?: { cacheMode: VerifiedCryptoHistory['cacheMode']; degraded: boolean; provider: VerifiedCryptoHistory['provider'] };
+    snapshot?: { cacheMode: VerifiedCryptoSnapshot['cacheMode']; degraded: boolean; provider: VerifiedCryptoSnapshot['provider'] };
   };
 }
 
@@ -69,12 +69,16 @@ function oldestIso(values: Array<string | undefined>): string | undefined {
   return parsed[0].value;
 }
 
+function evidenceProviderSlug(provider: string): string {
+  return provider.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+}
+
 function snapshotEvidence(snapshot: VerifiedCryptoSnapshot | null): ScoringEvidenceRef[] {
   if (!snapshot) return [];
   return Object.values(snapshot.provenance)
     .filter((item): item is VerifiedFieldProvenance => Boolean(item))
     .map((item) => ({
-      id: `coingecko-snapshot:${snapshot.symbol}:${item.field}:${item.observedAt}`,
+      id: `${evidenceProviderSlug(item.provider)}-snapshot:${snapshot.symbol}:${item.field}:${item.observedAt}`,
       source: item.provider,
       observedAt: item.observedAt,
       retrievedAt: item.retrievedAt,
@@ -84,14 +88,27 @@ function snapshotEvidence(snapshot: VerifiedCryptoSnapshot | null): ScoringEvide
 
 function publishProviderHealth(history: VerifiedCryptoHistory | null, snapshot: VerifiedCryptoSnapshot | null): void {
   const at = new Date().toISOString();
-  recordProviderHealth({
-    provider: 'CoinGecko',
-    capability: 'crypto-history',
-    state: !history ? 'unavailable' : history.degraded ? 'degraded' : 'healthy',
-    at,
-    cacheMode: history?.cacheMode,
-    message: !history ? 'No verified history available.' : history.degraded ? 'Serving verified last-known-good history.' : undefined,
-  });
+  if (history) {
+    recordProviderHealth({
+      provider: history.provider,
+      capability: 'crypto-history',
+      state: history.degraded ? 'degraded' : 'healthy',
+      at,
+      cacheMode: history.cacheMode,
+      message: history.degraded
+        ? `Serving verified ${history.provider} history in degraded/fallback mode.`
+        : `Serving verified ${history.provider} history.`,
+    });
+  } else {
+    recordProviderHealth({
+      provider: 'CryptoHistoryProviderChain',
+      capability: 'crypto-history',
+      state: 'unavailable',
+      at,
+      message: 'CoinGecko, Binance and Kraken produced no verified history.',
+    });
+  }
+
   recordProviderHealth({
     provider: 'CoinGecko',
     capability: 'crypto-snapshot',
@@ -133,7 +150,7 @@ export async function evaluateVerifiedCryptoTechnicalScore(
     historyObservedAt = normalizeHistoryDateToIso(lastPoint.date);
     if (historyObservedAt) {
       evidence.push({
-        id: `coingecko-history:${s}:${lastPoint.date}`,
+        id: `${evidenceProviderSlug(history.provider)}-history:${s}:${lastPoint.date}`,
         source: history.provider,
         observedAt: historyObservedAt,
         retrievedAt: history.retrievedAt,
@@ -208,18 +225,18 @@ export async function evaluateVerifiedCryptoTechnicalScore(
     minimumHistoryPoints: 20,
     historyPoints: history?.points.length ?? 0,
     maxAgeMs: 4 * 24 * 60 * 60 * 1000,
-    scoringVersion: 'crypto-technical-provenance/0.6.2',
+    scoringVersion: 'crypto-technical-provenance/0.6.3',
   });
 
   const providerState = {
-    history: history ? { cacheMode: history.cacheMode, degraded: history.degraded } : undefined,
-    snapshot: snapshot ? { cacheMode: snapshot.cacheMode, degraded: snapshot.degraded } : undefined,
+    history: history ? { cacheMode: history.cacheMode, degraded: history.degraded, provider: history.provider } : undefined,
+    snapshot: snapshot ? { cacheMode: snapshot.cacheMode, degraded: snapshot.degraded, provider: snapshot.provider } : undefined,
   };
 
   if (!gate.ready) {
     return { canonical: buildUnavailableScore(gate), inputs, analysis: null, fieldProvenance, rankingEvidenceReady, providerState };
   }
 
-  const analysis = CryptoScoringService.scoreCrypto(inputs, '0.6.2-verified-provenance');
+  const analysis = CryptoScoringService.scoreCrypto(inputs, '0.6.3-verified-multiprovider');
   return { canonical: buildReadyScore(analysis.final_score, gate), inputs, analysis, fieldProvenance, rankingEvidenceReady, providerState };
 }

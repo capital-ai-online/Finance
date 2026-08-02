@@ -3,9 +3,11 @@ export interface VerifiedCryptoHistoryPoint {
   close: number;
 }
 
+export type VerifiedCryptoHistoryProvider = 'CoinGecko' | 'Binance' | 'Kraken';
+
 export interface VerifiedCryptoHistory {
   points: VerifiedCryptoHistoryPoint[];
-  provider: 'CoinGecko';
+  provider: VerifiedCryptoHistoryProvider;
   retrievedAt: string;
   cacheMode: 'fresh' | 'cache-hit' | 'last-known-good';
   degraded: boolean;
@@ -34,65 +36,138 @@ export interface CryptoHistoryProviderOptions {
 }
 
 const COINGECKO_IDS: Record<string, string> = {
-  BTC: 'bitcoin',
-  ETH: 'ethereum',
-  SOL: 'solana',
-  ADA: 'cardano',
-  XRP: 'ripple',
-  DOT: 'polkadot',
-  AVAX: 'avalanche-2',
-  LINK: 'chainlink',
-  BNB: 'binancecoin',
-  MATIC: 'matic-network',
-  DOGE: 'dogecoin',
-  SHIB: 'shiba-inu',
+  BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', ADA: 'cardano', XRP: 'ripple', DOT: 'polkadot',
+  AVAX: 'avalanche-2', LINK: 'chainlink', BNB: 'binancecoin', MATIC: 'matic-network',
+  DOGE: 'dogecoin', SHIB: 'shiba-inu',
+};
+
+const BINANCE_SYMBOLS: Record<string, string> = {
+  BTC: 'BTCUSDT', ETH: 'ETHUSDT', SOL: 'SOLUSDT', ADA: 'ADAUSDT', XRP: 'XRPUSDT', DOT: 'DOTUSDT',
+  AVAX: 'AVAXUSDT', LINK: 'LINKUSDT', BNB: 'BNBUSDT', MATIC: 'MATICUSDT', DOGE: 'DOGEUSDT', SHIB: 'SHIBUSDT',
+};
+
+const KRAKEN_SYMBOLS: Record<string, string> = {
+  BTC: 'XBTUSD', ETH: 'ETHUSD', SOL: 'SOLUSD', ADA: 'ADAUSD', XRP: 'XRPUSD', DOT: 'DOTUSD',
+  AVAX: 'AVAXUSD', LINK: 'LINKUSD', DOGE: 'DOGEUSD', SHIB: 'SHIBUSD',
 };
 
 const cache = new Map<string, CacheEntry>();
-const circuits = new Map<string, CircuitState>();
-
+const circuits = new Map<VerifiedCryptoHistoryProvider, CircuitState>();
 const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-function stateFor(providerKey: string): CircuitState {
-  let state = circuits.get(providerKey);
+function stateFor(provider: VerifiedCryptoHistoryProvider): CircuitState {
+  let state = circuits.get(provider);
   if (!state) {
     state = { consecutiveFailures: 0, openUntilMs: 0 };
-    circuits.set(providerKey, state);
+    circuits.set(provider, state);
   }
   return state;
 }
 
-async function fetchJsonWithTimeout(
-  fetchImpl: typeof fetch,
-  url: string,
-  timeoutMs: number,
-): Promise<any> {
+async function fetchResponseWithTimeout(fetchImpl: typeof fetch, url: string, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetchImpl(url, {
       signal: controller.signal,
-      headers: { Accept: 'application/json', 'User-Agent': 'CAPITAL-AI/0.6.1' },
+      headers: { Accept: 'application/json', 'User-Agent': 'CAPITAL-AI/0.6.2' },
     });
-    if (!response.ok) {
-      const error = new Error(`CoinGecko HTTP ${response.status}`);
-      (error as any).status = response.status;
-      throw error;
-    }
-    return await response.json();
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response;
   } finally {
     clearTimeout(timeout);
   }
 }
 
+function normalizePoints(points: VerifiedCryptoHistoryPoint[]): VerifiedCryptoHistoryPoint[] {
+  const deduplicated = new Map<string, number>();
+  for (const point of points) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(point.date) && Number.isFinite(point.close) && point.close > 0) {
+      deduplicated.set(point.date, point.close);
+    }
+  }
+  return [...deduplicated.entries()]
+    .map(([date, close]) => ({ date, close }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+async function fetchCoinGecko(
+  symbol: string,
+  days: number,
+  fetchImpl: typeof fetch,
+  timeoutMs: number,
+): Promise<VerifiedCryptoHistoryPoint[]> {
+  const id = COINGECKO_IDS[symbol];
+  if (!id) throw new Error(`CoinGecko mapping unavailable for ${symbol}.`);
+  const url = `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=${days}&interval=daily`;
+  const response = await fetchResponseWithTimeout(fetchImpl, url, timeoutMs);
+  const data: any = await response.json();
+  const prices: [number, number][] = data?.prices;
+  if (!Array.isArray(prices)) throw new Error('CoinGecko returned no prices array.');
+  return normalizePoints(prices.map(([timestampMs, close]) => ({
+    date: new Date(timestampMs).toISOString().slice(0, 10),
+    close: Number(close),
+  })));
+}
+
+async function fetchBinance(
+  symbol: string,
+  days: number,
+  fetchImpl: typeof fetch,
+  timeoutMs: number,
+): Promise<VerifiedCryptoHistoryPoint[]> {
+  const market = BINANCE_SYMBOLS[symbol];
+  if (!market) throw new Error(`Binance mapping unavailable for ${symbol}.`);
+  const url = `https://api.binance.com/api/v3/klines?symbol=${market}&interval=1d&limit=${Math.min(Math.max(days, 20), 365)}`;
+  const response = await fetchResponseWithTimeout(fetchImpl, url, timeoutMs);
+  const data: any = await response.json();
+  if (!Array.isArray(data)) throw new Error('Binance returned no kline array.');
+  return normalizePoints(data.map((item: any[]) => ({
+    date: new Date(Number(item?.[0])).toISOString().slice(0, 10),
+    close: Number(item?.[4]),
+  })));
+}
+
+async function fetchKraken(
+  symbol: string,
+  days: number,
+  fetchImpl: typeof fetch,
+  timeoutMs: number,
+): Promise<VerifiedCryptoHistoryPoint[]> {
+  const pair = KRAKEN_SYMBOLS[symbol];
+  if (!pair) throw new Error(`Kraken mapping unavailable for ${symbol}.`);
+  const since = Math.floor((Date.now() - Math.min(Math.max(days, 20), 365) * 24 * 60 * 60 * 1000) / 1000);
+  const url = `https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=1440&since=${since}`;
+  const response = await fetchResponseWithTimeout(fetchImpl, url, timeoutMs);
+  const data: any = await response.json();
+  if (Array.isArray(data?.error) && data.error.length > 0) throw new Error(`Kraken: ${data.error.join(', ')}`);
+  const result = data?.result;
+  const rows = result && typeof result === 'object'
+    ? Object.entries(result).find(([key, value]) => key !== 'last' && Array.isArray(value))?.[1]
+    : undefined;
+  if (!Array.isArray(rows)) throw new Error('Kraken returned no OHLC rows.');
+  return normalizePoints(rows.map((item: any[]) => ({
+    date: new Date(Number(item?.[0]) * 1000).toISOString().slice(0, 10),
+    close: Number(item?.[4]),
+  })));
+}
+
+const providerFetchers: Array<{
+  provider: VerifiedCryptoHistoryProvider;
+  fetcher: (symbol: string, days: number, fetchImpl: typeof fetch, timeoutMs: number) => Promise<VerifiedCryptoHistoryPoint[]>;
+}> = [
+  { provider: 'CoinGecko', fetcher: fetchCoinGecko },
+  { provider: 'Binance', fetcher: fetchBinance },
+  { provider: 'Kraken', fetcher: fetchKraken },
+];
+
 /**
- * Server-side verified history provider for financial scoring.
+ * Server-side verified crypto history with independent provider fallback.
  *
- * No simulated history is ever returned. Transient provider failures use bounded retries with
- * exponential backoff + jitter. After repeated failed calls a small in-memory circuit breaker
- * opens. A previously verified response may be used as Last-Known-Good; its market timestamp
- * is still validated later by the scoring DataQualityGate, so this cannot turn old data into
- * apparently fresh evidence.
+ * No simulated history is ever returned. CoinGecko remains the preferred source; Binance and
+ * Kraken are verified fallbacks so a cold deployment is not dependent on a single public API.
+ * Each provider has its own bounded retry/circuit state. A previously verified response may be
+ * served as last-known-good; freshness is still enforced by the downstream scoring gate.
  */
 export async function getVerifiedCryptoHistory(
   symbol: string,
@@ -100,22 +175,19 @@ export async function getVerifiedCryptoHistory(
   options: CryptoHistoryProviderOptions = {},
 ): Promise<VerifiedCryptoHistory | null> {
   const s = symbol.toUpperCase().trim();
-  const id = COINGECKO_IDS[s];
-  if (!id) return null;
+  if (!COINGECKO_IDS[s] && !BINANCE_SYMBOLS[s] && !KRAKEN_SYMBOLS[s]) return null;
 
   const fetchImpl = options.fetchImpl ?? fetch;
   const nowMs = options.nowMs ?? Date.now;
   const sleep = options.sleep ?? defaultSleep;
   const random = options.random ?? Math.random;
   const timeoutMs = options.timeoutMs ?? 5_000;
-  const maxAttempts = Math.max(1, options.maxAttempts ?? 3);
+  const maxAttempts = Math.max(1, options.maxAttempts ?? 2);
   const cacheTtlMs = options.cacheTtlMs ?? 5 * 60 * 1000;
   const circuitFailureThreshold = Math.max(1, options.circuitFailureThreshold ?? 3);
   const circuitCooldownMs = options.circuitCooldownMs ?? 60_000;
-
   const boundedDays = Math.min(Math.max(days, 20), 365);
   const key = `${s}:${boundedDays}`;
-  const providerKey = 'CoinGecko';
   const now = nowMs();
   const cached = cache.get(key);
 
@@ -123,61 +195,49 @@ export async function getVerifiedCryptoHistory(
     return { ...cached.value, cacheMode: 'cache-hit', degraded: false };
   }
 
-  const circuit = stateFor(providerKey);
-  if (circuit.openUntilMs > now) {
-    return cached ? { ...cached.value, cacheMode: 'last-known-good', degraded: true } : null;
-  }
+  const failures: string[] = [];
+  for (const candidate of providerFetchers) {
+    const circuit = stateFor(candidate.provider);
+    if (circuit.openUntilMs > now) {
+      failures.push(`${candidate.provider}: circuit open`);
+      continue;
+    }
 
-  const url = `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=${boundedDays}&interval=daily`;
-  let lastError: unknown;
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        const points = await candidate.fetcher(s, boundedDays, fetchImpl, timeoutMs);
+        if (points.length < 20) throw new Error(`${candidate.provider} returned only ${points.length} valid history points.`);
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    try {
-      const data = await fetchJsonWithTimeout(fetchImpl, url, timeoutMs);
-      const prices: [number, number][] = data?.prices;
-      if (!Array.isArray(prices) || prices.length < 20) {
-        throw new Error('CoinGecko returned insufficient history points.');
-      }
-
-      const points = prices
-        .filter((item) => Array.isArray(item) && Number.isFinite(item[0]) && Number.isFinite(item[1]))
-        .map(([timestampMs, close]) => ({
-          date: new Date(timestampMs).toISOString().slice(0, 10),
-          close: Number(close),
-        }));
-
-      if (points.length < 20) {
-        throw new Error('CoinGecko history contained insufficient valid observations.');
-      }
-
-      const value = {
-        points,
-        provider: 'CoinGecko' as const,
-        retrievedAt: new Date(nowMs()).toISOString(),
-      };
-      cache.set(key, { value, cachedAtMs: nowMs() });
-      circuit.consecutiveFailures = 0;
-      circuit.openUntilMs = 0;
-      return { ...value, cacheMode: 'fresh', degraded: false };
-    } catch (error) {
-      lastError = error;
-      if (attempt < maxAttempts) {
-        const exponential = 200 * 2 ** (attempt - 1);
-        const jitter = Math.floor(random() * 100);
-        await sleep(exponential + jitter);
+        const value = {
+          points,
+          provider: candidate.provider,
+          retrievedAt: new Date(nowMs()).toISOString(),
+        };
+        cache.set(key, { value, cachedAtMs: nowMs() });
+        circuit.consecutiveFailures = 0;
+        circuit.openUntilMs = 0;
+        return { ...value, cacheMode: 'fresh', degraded: candidate.provider !== 'CoinGecko' };
+      } catch (error) {
+        lastError = error;
+        if (attempt < maxAttempts) {
+          const exponential = 200 * 2 ** (attempt - 1);
+          const jitter = Math.floor(random() * 100);
+          await sleep(exponential + jitter);
+        }
       }
     }
+
+    circuit.consecutiveFailures += 1;
+    if (circuit.consecutiveFailures >= circuitFailureThreshold) {
+      circuit.openUntilMs = nowMs() + circuitCooldownMs;
+    }
+    failures.push(`${candidate.provider}: ${(lastError as Error)?.message || String(lastError)}`);
   }
 
-  circuit.consecutiveFailures += 1;
-  if (circuit.consecutiveFailures >= circuitFailureThreshold) {
-    circuit.openUntilMs = nowMs() + circuitCooldownMs;
+  if (failures.length > 0) {
+    console.warn(`[CryptoHistoryProvider] ${s}: no verified live history provider succeeded. ${failures.join(' | ')}`);
   }
-
-  if (lastError) {
-    console.warn(`[CryptoHistoryProvider] ${s}: verified CoinGecko history unavailable after ${maxAttempts} attempts.`, (lastError as Error)?.message || lastError);
-  }
-
   return cached ? { ...cached.value, cacheMode: 'last-known-good', degraded: true } : null;
 }
 
