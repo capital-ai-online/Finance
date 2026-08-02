@@ -9,6 +9,7 @@ import { Dashboard } from './components/Dashboard';
 import { supabase } from './supabaseClient';
 import { Datenschutz } from './components/Datenschutz';
 import { ImpressumAgb } from './components/ImpressumAgb';
+import { initCookieHubAnalyticsBridge } from './services/cookieHubConsentBridge';
 
 export interface UserSession {
   type: 'guest' | 'registered';
@@ -371,6 +372,9 @@ export default function App() {
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
+  // Bindet Google Analytics an die CookieHub-Einwilligungsentscheidung (siehe index.html).
+  useEffect(() => initCookieHubAnalyticsBridge(), []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
@@ -580,19 +584,19 @@ export default function App() {
   return (
     <>
       {userSession ? (
-        <Dashboard 
-          userSession={userSession} 
-          onLogout={handleLogout} 
+        <Dashboard
+          userSession={userSession}
+          onLogout={handleLogout}
           onRegister={(name, email) => {}}
           onLoginEmail={handleLogin}
           onRegisterEmail={handleRegister}
         />
       ) : (
-        <LandingPage 
+        <LandingPage
           onLoginEmail={async (email, pwd) => {
             setJustLoggedOut(false);
             await handleLogin(email, pwd);
-          }} 
+          }}
           onGuestLogin={async () => {
             setJustLoggedOut(false);
             await handleGuestLogin();

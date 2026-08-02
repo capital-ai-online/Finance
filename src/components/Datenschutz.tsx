@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Lock, Search, Scale, FileText, CheckCircle2, Check, HelpCircle, HardDrive, Cpu, AlertTriangle, RefreshCw } from 'lucide-react';
+import { ShieldCheck, Lock, Search, Scale, FileText, CheckCircle2, Check, HelpCircle, HardDrive, Cpu, AlertTriangle, RefreshCw, Cookie } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { openCookieHubSettings } from '../services/cookieHubConsentBridge';
 
 interface DataSource {
   name: string;
@@ -24,7 +25,7 @@ function AuditTrailFlowGraphic() {
       description: 'Der Client führt lokale Analysen durch. Schriften & Symbole werden lokal aus dem Cloud-Container ausgeliefert.',
       bulletPoints: [
         'Kein Drittland-Datenabfluss (IP-Isolation)',
-        'Keine Werbe- o. Tracking-Pixel',
+        'Tracking (Google Analytics) nur nach aktivem Opt-in',
         'Inter & JetBrains Mono lokal gehostet'
       ]
     },
@@ -183,6 +184,11 @@ export function Datenschutz() {
       id: '4',
       title: '4. Ihre Rechte (Auskunft, Löschung, Einschränkung)',
       content: 'Sie haben jederzeit das Recht, unentgeltlich Auskunft über Herkunft, Empfänger und Zweck Ihrer gespeicherten personenbezogenen Daten zu erhalten. Sie haben außerdem ein Recht, die Berichtigung oder Löschung dieser Daten zu verlangen. Wenn Sie eine Einwilligung zur Datenverarbeitung erteilt haben, können Sie diese jederzeit für die Zukunft widerrufen.'
+    },
+    {
+      id: '5',
+      title: '5. Cookies & Google Analytics',
+      content: 'Wir setzen Google Analytics (Google LLC, USA) zur statistischen Auswertung der Portalnutzung ein. Das zugehörige Skript wird ausschließlich geladen, wenn Sie im Cookie-Banner aktiv zustimmen (Opt-in, Art. 6 Abs. 1 lit. a DSGVO) – ohne Ihre Einwilligung findet keine Übertragung an Google statt. Sie können Ihre Entscheidung jederzeit über den Button "Cookie-Einstellungen ändern" unten widerrufen oder erneut treffen.'
     }
   ];
 
@@ -226,6 +232,22 @@ export function Datenschutz() {
       purpose: 'Intelligentes mathematisches News-Scoring zur Modell-Auswahl des Auto-Routers.',
       leakPrevention: 'Keine Übermittlung persönlicher Nutzerdaten (PII) oder Client-IPs an Google-Modelle.',
       gdprBasis: 'Art. 6 Abs. 1 lit. f DSGVO (Echtzeit-Analyse zur Risiko-Prävention).'
+    },
+    {
+      name: 'Google Analytics 4',
+      type: 'Reichweiten-/Nutzungsstatistik (Cookies)',
+      protocol: 'HTTPS REST (googletagmanager.com / google-analytics.com)',
+      purpose: 'Statistische Auswertung der Portalnutzung zur Produktverbesserung.',
+      leakPrevention: 'Skript lädt ausschließlich nach aktivem Opt-in; IP-Anonymisierung nativ in GA4.',
+      gdprBasis: 'Art. 6 Abs. 1 lit. a DSGVO (Einwilligung via Cookie-Banner, jederzeit widerrufbar).'
+    },
+    {
+      name: 'CookieHub (Consent-Management-Plattform)',
+      type: 'Einwilligungsentscheidung (Kategorie, Zeitstempel), kein Tracking-Zweck.',
+      protocol: 'HTTPS (cdn.cookiehub.eu) — lädt unconditioniert, da selbst kein Tracking-Tool.',
+      purpose: 'Einholung, Speicherung und Nachweis der Cookie-Einwilligung (u. a. für Google Analytics).',
+      leakPrevention: 'Verarbeitet ausschließlich die Einwilligungsentscheidung, keine Inhalts- oder Profildaten.',
+      gdprBasis: 'Art. 6 Abs. 1 lit. c DSGVO (gesetzliche Nachweispflicht der Einwilligung, § 25 TDDDG).'
     }
   ];
 
@@ -412,9 +434,17 @@ export function Datenschutz() {
 
       {/* Acceptance action block */}
       <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
-        <div className="text-xs text-white/40 font-mono flex items-center gap-1.5">
-          <FileText size={12} className="text-cyan-400" />
-          Zuletzt verifiziert: 29. Juni 2026 • Gerichtsfest
+        <div className="flex flex-col gap-2">
+          <div className="text-xs text-white/40 font-mono flex items-center gap-1.5">
+            <FileText size={12} className="text-cyan-400" />
+            Zuletzt verifiziert: 29. Juni 2026 • Gerichtsfest
+          </div>
+          <button
+            onClick={() => openCookieHubSettings()}
+            className="text-xs text-white/50 hover:text-aif-gold-DEFAULT font-mono flex items-center gap-1.5 underline underline-offset-2 cursor-pointer w-fit"
+          >
+            <Cookie size={12} /> Cookie-Einstellungen ändern
+          </button>
         </div>
 
         <div>
