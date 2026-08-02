@@ -87,6 +87,43 @@ Platform Director
 
 ---
 
+## [1.2.0] — 2026-08-02
+
+### Hinzugefügt
+
+- `Validators/baseValidator.ts` — erste generische Validator-Basisklasse im gesamten
+  Repository (`abstract class Validator<TTarget, TFinding>`)
+- `Validators/traceabilityMatrixValidator.ts` — erste konkrete Implementierung, wrappt
+  `Core/orphanDetector.ts` (Konstruktor-Injektion fuer Testbarkeit)
+- `Services/runTraceability.ts`: sechs reale Events ueber den Enterprise Event Bus
+  (`publishTraceabilityEvent()`, best-effort) - TraceabilityBuildStartedEvent,
+  TraceabilityBuildCompletedEvent, TraceabilityBuildFailedEvent, CoverageCalculatedEvent,
+  OrphanDetectedEvent, TraceabilityReportGeneratedEvent
+- `tests/unit/traceabilityValidator.test.ts`
+
+### Geändert
+
+- `src/platform/EventMesh/Events/StandardEventCatalog.ts`: vier fehlende
+  Traceability-Events ergaenzt (nur `TraceabilityBuildCompletedEvent` war zuvor katalogisiert)
+- `Services/runTraceability.ts` nutzt jetzt `TraceabilityMatrixValidator` statt
+  `OrphanDetector` direkt zu instanziieren
+- `manifest.json`, `README.md`, `component.yaml`: Implementierungsstand Stufe 3 (teilweise:
+  Publish-Seite umgesetzt, keine Subscriptions) und Stufe 4 (umgesetzt) aktualisiert
+
+### Referenzen
+
+- ARCH-AUDIT-0002, Kapitel 14.4, Massnahme N4 (Folgearbeit)
+
+### Breaking Changes
+
+Keine.
+
+### Autor
+
+Platform Director
+
+---
+
 ## Hinweis zur Erstfassung
 
 Diese Datei ist zusammen mit `component.yaml` die **erste ihrer Art im Repository**.

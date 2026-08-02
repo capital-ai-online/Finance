@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-02T04:21:16.277Z",
+  "generatedAt": "2026-08-02T05:05:42.282Z",
   "ess": [
     {
       "id": "ESS-0001",
@@ -616,6 +616,15 @@
       ]
     },
     {
+      "path": "tests/unit/rag.test.ts",
+      "targets": [
+        "src/services/rag/documentLoader",
+        "src/services/rag/embeddingsClient",
+        "src/services/rag/vectorStore",
+        "src/services/rag/retrieval"
+      ]
+    },
+    {
       "path": "tests/unit/rankingService.test.ts",
       "targets": [
         "src/services/ranking.service"
@@ -669,6 +678,15 @@
       "path": "tests/unit/totp.test.ts",
       "targets": [
         "src/platform/Security/totp"
+      ]
+    },
+    {
+      "path": "tests/unit/traceabilityValidator.test.ts",
+      "targets": [
+        "src/platform/Traceability/Validators/baseValidator",
+        "src/platform/Traceability/Validators/traceabilityMatrixValidator",
+        "src/platform/Traceability/Models/traceabilityModels",
+        "src/platform/Traceability/Interfaces"
       ]
     },
     {
@@ -852,6 +870,17 @@
       "to": {
         "type": "test",
         "id": "tests/unit/supervisor.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Traceability"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/traceabilityValidator.test.ts"
       },
       "bidirectional": true
     }
