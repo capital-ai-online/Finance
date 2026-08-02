@@ -8,6 +8,7 @@ import { ClassificationService } from '../services/classification.service';
 import { calculateRankScore, isTop10Eligible } from '../services/ranking.service';
 import { assetRegistry } from '../lib/assetRegistry';
 import { evaluateVerifiedCryptoTechnicalScore } from '../services/verifiedCryptoTechnicalScoring';
+import { computeTradeSetupLevels } from '../services/tradeSetupLevels';
 import { buildScoringLineage } from '../services/scoringLineage';
 import { getCryptoSpotConsensus } from '../services/cryptoSpotConsensus';
 import { getLiveCryptoSnapshotConsensus } from '../services/liveCryptoSnapshotConsensus';
@@ -282,6 +283,7 @@ export function createCryptoRouter(
         data_quality: { level: canonical.integrity.dataQuality },
       } as any;
       const eligible = assessment.rankingEvidenceReady && isTop10Eligible(rankPayload);
+      const tradeSetup = assessment.priceStats ? computeTradeSetupLevels(assessment.priceStats) : null;
 
       res.json({
         asset_name: payload.asset_name,
@@ -299,6 +301,8 @@ export function createCryptoRouter(
         alerts: assessment.analysis.alerts,
         rank_score: calculateRankScore(rankPayload, canonical.final_score),
         eligible_for_top10: eligible,
+        priceStats: assessment.priceStats,
+        tradeSetup,
         provenance: assessment.fieldProvenance,
         providerState: assessment.providerState,
         lineage,

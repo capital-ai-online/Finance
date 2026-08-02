@@ -87,6 +87,23 @@ function formatPrice(value: number | null): string {
   return value >= 1000 ? value.toLocaleString('de-DE', { maximumFractionDigits: 2 }) : value.toLocaleString('de-DE', { maximumFractionDigits: 6 });
 }
 
+type LadderRow = { price: number; quantity: number; venue: string; cumulative: number };
+
+const VENUE_DOT_COLOR: Record<string, string> = {
+  Binance: '#fbbf24',
+  Kraken: '#c084fc',
+};
+
+function buildLadder(books: VenueBook[], side: 'bids' | 'asks', limit = 7): LadderRow[] {
+  const merged = books.flatMap((book) => book[side].map((level) => ({ price: level.price, quantity: level.quantity, venue: book.provider })));
+  merged.sort((a, b) => (side === 'asks' ? a.price - b.price : b.price - a.price));
+  let running = 0;
+  return merged.slice(0, limit).map((row) => {
+    running += row.quantity;
+    return { ...row, cumulative: running };
+  });
+}
+
 export function EnterpriseAnalysisPanels({
   symbol,
   assetType,
@@ -184,10 +201,13 @@ export function EnterpriseAnalysisPanels({
     }
   }
 
-  const maxQty = Math.max(1, ...books.flatMap(book => [...book.bids, ...book.asks].map(level => level.quantity)));
+  const asksLadder = useMemo(() => buildLadder(books, 'asks'), [books]);
+  const bidsLadder = useMemo(() => buildLadder(books, 'bids'), [books]);
+  const ladderMaxCumulative = Math.max(1, ...asksLadder.map((row) => row.cumulative), ...bidsLadder.map((row) => row.cumulative));
+  const combinedSpreadBps = spreadBps(bidsLadder[0]?.price ?? null, asksLadder[0]?.price ?? null);
 
   return (
-    <div className="space-y-5">
+    <div id="tiefenanalyse" className="scroll-mt-24 space-y-5">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="rounded-xl border border-white/10 bg-black/30 p-4">
           <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-cyan-300"><Search size={14} /> Pattern</div>
@@ -215,8 +235,8 @@ export function EnterpriseAnalysisPanels({
         <div className="xl:col-span-2 rounded-2xl border border-white/10 bg-black/30 p-5">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div>
-              <div className="flex items-center gap-2 text-sm font-black text-white uppercase"><Layers3 size={16} className="text-cyan-300" /> Ordertiefe / Market Depth</div>
-              <p className="text-[10px] text-white/40 mt-1">Venue-beobachtend, keine Veränderung des Scorings.</p>
+              <div className="flex items-center gap-2 text-sm font-black text-white uppercase"><Layers3 size={16} className="text-cyan-300" /> Order-Tree · Market Depth</div>
+              <p className="text-[10px] text-white/40 mt-1">Venue-übergreifende Orderbuch-Leiter (Binance + Kraken), read-only beobachtend, keine Veränderung des Scorings.</p>
             </div>
             <button onClick={() => void loadMicrostructure()} disabled={microLoading || assetType !== 'crypto'} className="p-2 rounded-lg border border-white/10 bg-white/5 disabled:opacity-30" title="Microstructure neu laden">
               <RefreshCw size={14} className={microLoading ? 'animate-spin' : ''} />
@@ -224,23 +244,37 @@ export function EnterpriseAnalysisPanels({
           </div>
 
           {assetType !== 'crypto' ? (
-            <div className="rounded-xl border border-white/5 bg-white/[0.02] p-5 text-xs text-white/45">Ordertiefe wird nur für Assetklassen angezeigt, für die eine echte Venue-Orderbuchquelle vorhanden ist. Für {assetType} wird nichts simuliert.</div>
+            <div className="rounded-xl border border-white/5 bg-white/[0.02] p-5 text-xs text-white/45">Der Order-Tree wird nur für Assetklassen angezeigt, für die eine echte Venue-Orderbuchquelle vorhanden ist. Für {assetType} wird nichts simuliert.</div>
           ) : microError ? (
             <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs text-amber-100/70">{microError}</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {books.map(book => (
-                <div key={book.provider} className="rounded-xl border border-white/10 p-4">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="font-bold text-sm text-white">{book.provider}</span>
-                    <span className="text-[10px] font-mono text-white/40">Spread {book.spreadBps ?? '—'} bps</span>
+            <div className="rounded-xl border border-white/10 overflow-hidden">
+              <div>
+                {[...asksLadder].reverse().map((row, index) => (
+                  <div key={`ask-${index}`} className="relative flex items-center justify-between gap-3 border-b border-white/5 px-3 py-1.5 text-[10px] font-mono">
+                    <div className="absolute inset-y-0 right-0 bg-rose-500/10" style={{ width: `${Math.max(4, (row.cumulative / ladderMaxCumulative) * 100)}%` }} />
+                    <span className="relative flex items-center gap-1.5 text-rose-300"><span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: VENUE_DOT_COLOR[row.venue] ?? '#94a3b8' }} title={row.venue} />{formatPrice(row.price)}</span>
+                    <span className="relative text-white/55">{row.quantity.toFixed(4)}</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 text-[10px] font-mono">
-                    <div className="space-y-1"><div className="text-emerald-300 uppercase">Bids</div>{book.bids.slice(0, 6).map((level, index) => <div key={`${book.provider}-b-${index}`} className="relative overflow-hidden rounded bg-emerald-500/5 px-2 py-1"><div className="absolute inset-y-0 left-0 bg-emerald-500/10" style={{ width: `${Math.max(4, level.quantity / maxQty * 100)}%` }} /><span className="relative">{formatPrice(level.price)} · {level.quantity.toFixed(4)}</span></div>)}</div>
-                    <div className="space-y-1"><div className="text-rose-300 uppercase">Asks</div>{book.asks.slice(0, 6).map((level, index) => <div key={`${book.provider}-a-${index}`} className="relative overflow-hidden rounded bg-rose-500/5 px-2 py-1"><div className="absolute inset-y-0 right-0 bg-rose-500/10" style={{ width: `${Math.max(4, level.quantity / maxQty * 100)}%` }} /><span className="relative">{formatPrice(level.price)} · {level.quantity.toFixed(4)}</span></div>)}</div>
+                ))}
+              </div>
+              <div className="flex items-center justify-center gap-2 border-y border-white/10 bg-white/[0.03] px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-white/40">
+                <span>Spread</span><span className="font-bold text-white">{combinedSpreadBps ?? '—'} bps</span>
+              </div>
+              <div>
+                {bidsLadder.map((row, index) => (
+                  <div key={`bid-${index}`} className="relative flex items-center justify-between gap-3 border-b border-white/5 last:border-0 px-3 py-1.5 text-[10px] font-mono">
+                    <div className="absolute inset-y-0 left-0 bg-emerald-500/10" style={{ width: `${Math.max(4, (row.cumulative / ladderMaxCumulative) * 100)}%` }} />
+                    <span className="relative flex items-center gap-1.5 text-emerald-300"><span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: VENUE_DOT_COLOR[row.venue] ?? '#94a3b8' }} title={row.venue} />{formatPrice(row.price)}</span>
+                    <span className="relative text-white/55">{row.quantity.toFixed(4)}</span>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              <div className="flex items-center gap-3 bg-black/20 px-3 py-1.5 text-[9px] font-mono uppercase tracking-wider text-white/35">
+                <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: VENUE_DOT_COLOR.Binance }} /> Binance</span>
+                <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: VENUE_DOT_COLOR.Kraken }} /> Kraken</span>
+                <span className="ml-auto normal-case text-white/25">Balkenbreite = kumuliertes Volumen je Preisstufe</span>
+              </div>
             </div>
           )}
         </div>

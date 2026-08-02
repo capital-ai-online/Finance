@@ -6,7 +6,6 @@ import { UniverseBestWorst } from './UniverseBestWorst';
 import { PortfolioPerformance } from './PortfolioPerformance';
 import { ComplianceExporter } from './ComplianceExporter';
 import { ImageAnalyzer } from './ImageAnalyzer';
-import { CryptoEnterpriseEvaluator } from './CryptoEnterpriseEvaluator';
 import { ProfilePage, UserProfile } from './ProfilePage';
 import { BuffetValueCheck } from './BuffetValueCheck';
 import { Abonnements } from './Abonnements';
@@ -18,6 +17,7 @@ import { HeatmapCreator } from './HeatmapCreator';
 import { CapitalAiLogo } from './CapitalAiLogo';
 import { MarketScreener } from './MarketScreener';
 import { CryptoScoringEnterprise } from './CryptoScoringEnterprise';
+import { FavoriteAssetPatternSlots } from './FavoriteAssetPatternSlots';
 import { UserSession } from '../App';
 import { GuestCliffhangerModal } from './GuestCliffhangerModal';
 import { AdminPortal } from './AdminPortal';
@@ -71,7 +71,9 @@ import {
   Eye,
   ArrowUpRight,
   Award,
-  Share2
+  Share2,
+  Star,
+  Database
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -1280,8 +1282,21 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
           >
             {activeView === 'dashboard' && (
               <>
+                  {/* Orientierungsleiste: kurzer Einstieg + Sprunglinks fuer neue Nutzer:innen (erster Eindruck der Hauptseite) */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/30 backdrop-blur-md px-5 py-3.5">
+                    <p className="text-xs text-white/60 font-mono leading-relaxed max-w-xl">
+                      <span className="text-white font-bold">Willkommen bei CAPITAL-AI.</span> Ihr Cockpit für Multi-Asset-Scoring, Trade-Setups und Live-Pattern-Analyse — alles auf dieser Seite.
+                    </p>
+                    <nav className="flex flex-wrap items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-wider" aria-label="Sprungnavigation Hauptseite">
+                      <a href="#enterprise-scorer" className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-white/70 hover:border-aif-gold-DEFAULT/40 hover:text-aif-gold-DEFAULT transition-colors"><Gauge size={12} /> Score</a>
+                      <a href="#trade-setup-grafik" className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-white/70 hover:border-aif-gold-DEFAULT/40 hover:text-aif-gold-DEFAULT transition-colors"><Activity size={12} /> Trade-Setup</a>
+                      <a href="#favoriten-slots" className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-white/70 hover:border-aif-gold-DEFAULT/40 hover:text-aif-gold-DEFAULT transition-colors"><Star size={12} /> Favoriten</a>
+                      <a href="#tiefenanalyse" className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-white/70 hover:border-aif-gold-DEFAULT/40 hover:text-aif-gold-DEFAULT transition-colors"><Database size={12} /> Tiefenanalyse</a>
+                    </nav>
+                  </div>
+
                   {/* Top Row: Universe Enterprise Scorer with all elements */}
-                  <CryptoScoringEnterprise 
+                  <CryptoScoringEnterprise
                      selectedSymbol={selectedSymbol} 
                      onSelectSymbol={setSelectedSymbol} 
                      timeframe={timeframe} 
@@ -1290,6 +1305,9 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                      subscriptionTier={profile.subscriptionTier}
                      onUpgradeClick={() => navigateTo('abonnements')}
                   />
+
+                  {/* 3 Favoriten-Slots mit live 1H/4H Candlestick-Pattern-Erkennung */}
+                  <FavoriteAssetPatternSlots onSelectSymbol={setSelectedSymbol} />
 
                   {/* Free & Guest User Upgrade Banner & Support Link */}
                   {(profile.subscriptionTier === 'Free' || userSession?.type === 'guest') && (
@@ -1356,19 +1374,11 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                      onUpgradeClick={() => navigateTo('abonnements')}
                    />
 
-                 {/* Middle Row: Enterprise Trading Evaluation Tool & Quantitative Ticker */}
-                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                   <div className="lg:col-span-2">
-                     <CryptoEnterpriseEvaluator 
-                       selectedSymbol={selectedSymbol} 
-                       onSelectSymbol={setSelectedSymbol}
-                       subscriptionTier={profile.subscriptionTier}
-                       onUpgradeClick={() => navigateTo('abonnements')}
-                     />
-                   </div>
-                   <div className="space-y-6">
+                 {/* Middle Row: Quantitative Ticker (Enterprise Trading Evaluation Tool lebt jetzt ausschliesslich im CryptoScoringEnterprise-Hero oben - keine doppelte Score-Anzeige mehr) */}
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                   <div className="sm:col-span-1">
                      {/* Strategie-Evidenz-Check Quick Card (Clickable to Buffett DCF check) */}
-                     <div 
+                     <div
                        onClick={() => navigateTo('buffet-value')}
                        className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md cursor-pointer hover:border-aif-gold-DEFAULT/50 hover:shadow-[0_0_20px_rgba(245,196,83,0.1)] transition-all group"
                        title="Klicke für BuffettValueCheck Graham-DCF Rechner"
