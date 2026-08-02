@@ -97,6 +97,60 @@ kennzeichnet das Ergebnis entsprechend als `pending`, nicht als fertig veröffen
 öffentliches Direct-Posting muss der App-Review-Antrag bei TikTok gestellt und genehmigt werden
 (Beschreibung des Use-Case, Demo-Video des Flows).
 
+### 2.1 App-Review — Texte für das Einreichungsformular
+
+Fertige Textbausteine für die Pflichtfelder aus TikToks „App review criteria". Alle Aussagen
+sind an der tatsächlichen Implementierung (`server/socialMedia/`) ausgerichtet — nichts davon
+beschreibt eine Funktion, die es nicht gibt.
+
+**App-Beschreibung** (öffentliches Feld, erscheint auf der TikTok-Autorisierungsseite — kurz,
+beschreibt was die App/Website tut, nicht wie sie heißt):
+
+> DE: „CAPITAL-AI ist eine Enterprise-FinTech-Plattform für KI-gestützte Finanzanalysen und
+> automatisierte Marktberichte. Über die TikTok-Anbindung können Nutzer Kurzvideos, die aus
+> ihren Analysen entstanden sind, direkt aus ihrem CAPITAL-AI-Konto auf ihrem eigenen
+> TikTok-Profil veröffentlichen."
+>
+> EN: „CAPITAL-AI is an enterprise fintech platform for AI-assisted financial analysis and
+> automated market reporting. Through the TikTok integration, users can publish short-form
+> videos created from their analyses directly to their own TikTok profile from within their
+> CAPITAL-AI account."
+
+**Detaillierte Produkt-/Scope-Erklärung** (Pflichtfeld „detailed explanation of how each
+product and scope works within your app"):
+
+> „CAPITAL-AI integrates TikTok Login Kit and the Content Posting API to let users publish
+> short-form videos generated within CAPITAL-AI directly to their own TikTok account, from the
+> 'Social Media Accounts' section of the CAPITAL-AI dashboard.
+>
+> - **Login Kit** (scope `user.info.basic`): users connect their TikTok account via OAuth 2.0.
+>   We use `user.info.basic` solely to display the connected account's display name, avatar and
+>   follower count in the CAPITAL-AI dashboard, so the user can confirm which account is linked
+>   before publishing anything.
+> - **Content Posting API** (scopes `video.upload`, `video.publish`): once connected, the user
+>   can trigger publishing of a video from within CAPITAL-AI. The video is submitted via the
+>   `PULL_FROM_URL` method of `/v2/post/publish/video/init/`. Every publish action is an
+>   explicit, individual user action — no content is ever posted automatically or without the
+>   user actively selecting 'Sofort Veröffentlichen' (Publish Now) for that specific video."
+
+**Vorschlag für den Ablauf des Demo-Videos** (Pflichtanhang, von TikTok separat verlangt — muss
+tatsächlich aufgezeichnet werden, kein Text ersetzt das):
+1. CAPITAL-AI-Dashboard öffnen, zu „Social Media Accounts" navigieren (Domain im Video muss zur
+   angegebenen Website-URL passen).
+2. „Mit TikTok Verbinden" klicken → OAuth-Popup zeigen → Login/Consent auf der echten
+   TikTok-Seite → Popup schließt sich automatisch, Konto erscheint mit echtem Handle/Avatar/
+   Follower-Count.
+3. Ein Video zur Veröffentlichung auswählen, TikTok als Zielplattform wählen, Caption anpassen.
+4. „Sofort Veröffentlichen" klicken → Ergebnis-Ansicht zeigen (Status „Veröffentlicht"/„Geplant"
+   je nach Review-Stand).
+5. Optional: Konto-Trennung zeigen („Verbindung Trennen").
+
+**Noch offene Pflichtangaben, die dieser Text nicht abdecken kann** (siehe Guidelines-Abschnitte
+„Website URL" und „Privacy Policy and Terms of Service"): die angegebene Website-URL muss eine
+vollständig ausgebaute, öffentlich erreichbare Seite sein (keine reine Landing-/Login-Seite),
+mit ohne Menü sichtbaren, aktiven Links zu Datenschutzerklärung und Nutzungsbedingungen. Das
+muss vor Einreichung manuell auf der tatsächlichen Produktions-Domain geprüft werden.
+
 ---
 
 ## 3. Meta — Instagram & Facebook (ein gemeinsamer Meta-App-Eintrag)
