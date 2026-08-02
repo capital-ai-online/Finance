@@ -28,18 +28,20 @@ services:
         sync: false
       - key: COINMARKETCAP_API_KEY
         sync: false
-      # ARCH-AUDIT-0002 (J1-Folge): echte Index-Kurse/-Historie (server/fmpIndices.ts) - ohne
-      # gesetzten Wert bleiben Indizes auf dem statischen Fallback-Snapshot (fail-open,
-      # dataSource:'fallback' bleibt korrekt bestehen, kein Fehler).
       - key: FMP_API_KEY
         sync: false
-      # ARCH-AUDIT-0002 (J3): providerübergreifender Rückfall auf Anthropic Claude, wenn beide
-      # Gemini-Modelle fehlschlagen (server/anthropicClient.ts). Ohne gesetzten Wert bleibt der
-      # Rückfall fail-open inaktiv - Agenten verhalten sich wie vor J3 (Gemini-only).
+      # AUD4-F-005: active market-data providers declared in deployment manifest.
+      # Values remain managed in Render and are never committed to the repository.
+      - key: COIN_API_KEY
+        sync: false
+      - key: TWELVEDATA_API_KEY
+        sync: false
+      - key: EODHD_API_KEY
+        sync: false
+      - key: FRED_API_KEY
+        sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
-      # ARCH-AUDIT-0002 (J3-Folge): dritter Provider in der Kette (Anthropic -> OpenAI ->
-      # Gemini, Nutzerpriorisierung). Ohne gesetzten Wert bleibt die Stufe fail-open inaktiv.
       - key: OPENAI_API_KEY
         sync: false
       - key: STRIPE_PRICE_ID_STARTER
@@ -48,11 +50,8 @@ services:
         sync: false
       - key: STRIPE_PRICE_ID_ENTERPRISE
         sync: false
-      # ADR-0003.5 Step-Up-Authentication: ohne diesen Wert schlaegt jede
-      # TOTP-Ver-/Entschluesselung fehl (fail-closed, server/iam/secretCrypto.ts).
       - key: TOTP_ENCRYPTION_KEY
         sync: false
-      # SMTP fuer System-E-Mails (Abo-Aktivierungsbestaetigungen, server/mailer.ts).
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
@@ -63,16 +62,10 @@ services:
         sync: false
       - key: SMTP_FROM
         sync: false
-      # ADR-0009 CORS Hardening: nur wirksam ausserhalb NODE_ENV=production.
       - key: AI_STUDIO_ORIGIN
         sync: false
-      # ARCH-AUDIT-0002 (H6): statisches Bearer-Token fuer GET /metrics (Prometheus-
-      # Exposition-Format, server/metrics.ts). Ohne gesetzten Wert ist /metrics
-      # deaktiviert (fail-closed) - kein Default, kein Fallback auf "offen".
       - key: METRICS_TOKEN
         sync: false
-      # ADR-0020 Social Media Direct Publishing: OAuth-2.0-Client-Credentials pro Plattform.
-      # Setup je Plattform: docs/runbooks/SOCIAL_MEDIA_OAUTH_SETUP.md
       - key: YOUTUBE_CLIENT_ID
         sync: false
       - key: YOUTUBE_CLIENT_SECRET
