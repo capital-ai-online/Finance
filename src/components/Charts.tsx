@@ -315,10 +315,8 @@ export function Charts({ selectedSymbol, onSelectSymbol, userSession }: ChartsPr
       prevSignal9 = signal;
       const histogram = macd - signal;
 
-      // Simulate realistic daily trading volume based on price changes
-      const priceDiffRatio = i > 0 ? Math.abs((closes[i] - closes[i - 1]) / closes[i - 1]) : 0.01;
-      const baseVol = activeSymbol === 'BTC' ? 8000 : activeSymbol === 'ETH' ? 4000 : 250;
-      const simulatedVol = baseVol * (1 + priceDiffRatio * 15) * (0.8 + Math.random() * 0.4);
+      // AUD4-F-003: keine erfundene Trading-Volume-Evidence.
+      // Die aktuelle History-Evidence enthält belegte Close-Werte; Volume bleibt daher unbekannt.
 
       enriched.push({
         ...item,
@@ -330,7 +328,7 @@ export function Charts({ selectedSymbol, onSelectSymbol, userSession }: ChartsPr
         macd,
         signal,
         histogram,
-        volume: Number(simulatedVol.toFixed(1))
+        volume: undefined
       });
     }
 
@@ -389,16 +387,10 @@ export function Charts({ selectedSymbol, onSelectSymbol, userSession }: ChartsPr
           })
           .catch(err => {
             console.error('Error fetching charts scoring:', err);
-            // Fallback score
-            setScoreResult({
-              symbol: activeSymbol,
-              score: activeSymbol === 'BTC' ? 8.5 : 6.2,
-              recommendation: activeSymbol === 'BTC' ? 'BUY (BULLISH ENGULFING)' : 'HOLD',
-              rsiSignal: 'Neutral',
-              maSignal: 'Neutral',
-              summary: 'KI-Schnittstelle temporär im Fallback-Modus. Die Chartindikatoren deuten auf ein stabiles Niveau hin.',
-              timestamp: new Date().toISOString()
-            });
+            // Fail closed: kein Ersatzscore und keine erfundene Empfehlung.
+            setScoreResult(null);
+            setIsScoring(false);
+          });
             setIsScoring(false);
           });
       }

@@ -191,32 +191,10 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
     }, 8000);
   }, [watchlist]);
 
-  // Testauslösung Helper
-  const handleTriggerTestScoreEvent = (symbol: string, type: 'crash' | 'rally') => {
-    // Look up asset name or fallback
-    const mockNames: Record<string, string> = {
-      BTC: 'Bitcoin', ETH: 'Ethereum', TSLA: 'Tesla Inc.', AAPL: 'Apple Inc.', EURUSD: 'Euro / US Dollar', GLD: 'Gold Spot'
-    };
-    const name = mockNames[symbol] || symbol;
-    
-    const isRally = type === 'rally';
-    const score = isRally ? Number((7.1 + Math.random() * 2.5).toFixed(1)) : Number((1.2 + Math.random() * 1.5).toFixed(1));
-    const oldScore = isRally ? Number((5.5 + Math.random() * 1.2).toFixed(1)) : Number((4.5 + Math.random() * 1.5).toFixed(1));
-    const headline = isRally 
-      ? `📈 EILMELDUNG: Gewaltiger Momentum-Schub bei ${symbol}! Algorithmen melden Bullish Breakout.`
-      : `📉 WARNUNG: Starker Abwärtsdruck auf ${symbol}! Liquidations-Welle drückt Score in kritischen Bereich.`;
-    
-    triggerPushNotification({
-      symbol,
-      name,
-      score,
-      oldScore,
-      headline,
-      sentiment: isRally ? 'bullish' : 'bearish',
-      impact: 'high',
-      isOnWatchlist: watchlist.includes(symbol),
-      type: 'crypto'
-    });
+  // ARCH-AUDIT-0004 / AUD4-F-003: produktive Test-Score-Fabrikation ist deaktiviert.
+  // Testevents dürfen keine erfundenen Finanzscores oder Marktbewegungen erzeugen.
+  const handleTriggerTestScoreEvent = (_symbol: string, _type: 'crash' | 'rally') => {
+    console.warn('Synthetic score test events are disabled in production. Use verified screening evidence instead.');
   };
 
   // Unified global persistent user profile
