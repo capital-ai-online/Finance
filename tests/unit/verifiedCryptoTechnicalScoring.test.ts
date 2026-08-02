@@ -68,7 +68,26 @@ describe('verified crypto technical scoring regression', () => {
     expect(assessment.inputs.momentum).toBeTypeOf('number');
     expect(assessment.inputs.avg_daily_volume).toBeUndefined();
     expect(assessment.rankingEvidenceReady).toBe(false);
-    expect(assessment.providerState?.history).toEqual({ cacheMode: 'fresh', degraded: false });
+    expect(assessment.providerState?.history).toEqual({ cacheMode: 'fresh', degraded: false, provider: 'CoinGecko' });
+  });
+
+  it('accepts verified Binance history as evidence when CoinGecko is unavailable', async () => {
+    const assessment = await evaluateVerifiedCryptoTechnicalScore('BTC', {
+      historyProvider: async () => ({
+        provider: 'Binance' as const,
+        points: makeHistory().map((point) => ({ ...point, date: `20${point.date.slice(6)}-${point.date.slice(3, 5)}-${point.date.slice(0, 2)}` })),
+        retrievedAt: '2026-08-02T06:00:00.000Z',
+        cacheMode: 'fresh' as const,
+        degraded: true,
+      }),
+      snapshotProvider: async () => null,
+    });
+
+    expect(assessment.canonical.status).toBe('READY');
+    expect(assessment.canonical.integrity.providers).toEqual(['Binance']);
+    expect(assessment.canonical.integrity.evidence[0]?.source).toBe('Binance');
+    expect(assessment.canonical.integrity.evidence[0]?.id).toContain('binance-history:BTC:');
+    expect(assessment.providerState?.history?.provider).toBe('Binance');
   });
 
   it('adds field-level market-cap/volume/supply provenance and ranking evidence', async () => {
@@ -84,7 +103,7 @@ describe('verified crypto technical scoring regression', () => {
     expect(assessment.inputs.avg_daily_volume).toBeTypeOf('number');
     expect(assessment.rankingEvidenceReady).toBe(true);
     expect(assessment.canonical.integrity.evidence.length).toBeGreaterThanOrEqual(6);
-    expect(assessment.providerState?.snapshot).toEqual({ cacheMode: 'fresh', degraded: false });
+    expect(assessment.providerState?.snapshot).toEqual({ cacheMode: 'fresh', degraded: false, provider: 'CoinGecko' });
   });
 
   it('remains fail-closed when no verified provider history is available', async () => {
