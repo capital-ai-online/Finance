@@ -27,11 +27,29 @@ describe('cross asset risk context', () => {
     const result = buildCrossAssetRiskContextFromMacro('bond', macro('READY'));
     expect(result.contractVersion).toBe(CROSS_ASSET_RISK_CONTEXT_VERSION);
     expect(result.status).toBe('READY');
+    expect(result.supplementalStatus).toBe('PARTIAL');
     expect(result.macroSensitivity).toBe('HIGH');
     expect(result.scoreImpactEnabled).toBe(false);
     expect(result.recommendationEligible).toBe(false);
     expect(result.executionPriceEligible).toBe(false);
     expect(result.evidenceIds).toHaveLength(2);
+  });
+
+  it('adds policy-rate and CPI evidence without enabling score impact', () => {
+    const result = buildCrossAssetRiskContextFromMacro('forex', macro('READY'), {
+      fedFundsRate: 4.25,
+      fedFundsAsOf: '2026-08-01',
+      fedFundsEvidenceId: 'macro:fred:FEDFUNDS:2026-08-01',
+      cpiIndex: 325.4,
+      cpiAsOf: '2026-07-01',
+      cpiEvidenceId: 'macro:fred:CPIAUCSL:2026-07-01',
+    });
+    expect(result.supplementalStatus).toBe('COMPLETE');
+    expect(result.fedFundsRate).toBe(4.25);
+    expect(result.cpiIndex).toBe(325.4);
+    expect(result.evidenceIds).toHaveLength(4);
+    expect(result.scoreImpactEnabled).toBe(false);
+    expect(result.recommendationEligible).toBe(false);
   });
 
   it('propagates stale evidence fail-closed', () => {
