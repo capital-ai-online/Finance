@@ -1,7 +1,17 @@
 import { evaluateMarketConsensus, type MarketConsensusResult, type MarketObservation } from './marketDataConsensus';
-import type { CryptoSnapshotField, VerifiedFieldProvenance } from './cryptoSnapshotProvider';
+import type { CryptoSnapshotField } from './cryptoSnapshotProvider';
 
 export const CRYPTO_SNAPSHOT_CONSENSUS_VERSION = 'crypto-snapshot-consensus/1.0.0';
+
+export interface SnapshotFieldProvenance {
+  field: CryptoSnapshotField;
+  provider: string;
+  sourcePath: string;
+  observedAt: string;
+  retrievedAt: string;
+  value: number | null;
+  unit: 'USD' | 'token';
+}
 
 export interface CryptoSnapshotFieldConsensus {
   field: CryptoSnapshotField;
@@ -22,11 +32,11 @@ export interface CryptoSnapshotConsensusResult {
   evidenceIds: string[];
 }
 
-function evidenceId(symbol: string, item: VerifiedFieldProvenance): string {
+function evidenceId(symbol: string, item: SnapshotFieldProvenance): string {
   return `snapshot:${item.provider.toLowerCase()}:${symbol.toUpperCase()}:${item.field}:${item.observedAt.slice(0, 10)}`;
 }
 
-function toObservation(symbol: string, item: VerifiedFieldProvenance): MarketObservation | null {
+function toObservation(symbol: string, item: SnapshotFieldProvenance): MarketObservation | null {
   if (typeof item.value !== 'number' || !Number.isFinite(item.value) || item.value <= 0) return null;
   return {
     provider: item.provider,
@@ -47,7 +57,7 @@ function toObservation(symbol: string, item: VerifiedFieldProvenance): MarketObs
  */
 export function evaluateCryptoSnapshotConsensus(
   symbol: string,
-  provenance: VerifiedFieldProvenance[],
+  provenance: SnapshotFieldProvenance[],
   options: { minimumSources?: number; toleranceBps?: number; maxObservationSkewMs?: number } = {},
 ): CryptoSnapshotConsensusResult {
   const fields: CryptoSnapshotField[] = [
