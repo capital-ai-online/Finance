@@ -1,10 +1,12 @@
 import type { CryptoScoringInputs } from '../types/crypto';
-import type { CanonicalScoreResult } from '../types/scoringIntegrity';
+import type { CanonicalScoreResult, ScoringEvidenceRef } from '../types/scoringIntegrity';
 import {
   computeReturnStats,
   computeRsi,
   scoreBreakout,
+  scoreLiquidity,
   scoreMomentum,
+  scoreTokenomics,
   scoreTrend,
   scoreVolatility,
 } from './realMarketSignals';
@@ -18,19 +20,27 @@ import {
   getVerifiedCryptoHistory,
   type VerifiedCryptoHistory,
 } from './cryptoHistoryProvider';
+import {
+  getVerifiedCryptoSnapshot,
+  type VerifiedCryptoSnapshot,
+  type VerifiedFieldProvenance,
+} from './cryptoSnapshotProvider';
 
 export interface VerifiedCryptoTechnicalAssessment {
   canonical: CanonicalScoreResult;
   inputs: CryptoScoringInputs;
   analysis: ReturnType<typeof CryptoScoringService.scoreCrypto> | null;
+  fieldProvenance: VerifiedFieldProvenance[];
+  rankingEvidenceReady: boolean;
   providerState?: {
-    cacheMode: VerifiedCryptoHistory['cacheMode'];
-    degraded: boolean;
+    history?: { cacheMode: VerifiedCryptoHistory['cacheMode']; degraded: boolean };
+    snapshot?: { cacheMode: VerifiedCryptoSnapshot['cacheMode']; degraded: boolean };
   };
 }
 
 export interface VerifiedCryptoTechnicalScoringOptions {
   historyProvider?: (symbol: string, days?: number) => Promise<VerifiedCryptoHistory | null>;
+  snapshotProvider?: (symbol: string) => Promise<VerifiedCryptoSnapshot | null>;
 }
 
 /** Normalize history dates at the scoring boundary. */
@@ -51,12 +61,35 @@ export function normalizeHistoryDateToIso(rawDate: string): string | undefined {
   return undefined;
 }
 
+function oldestIso(values: Array<string | undefined>): string | undefined {
+  const parsed = values
+    .filter((value): value is string => Boolean(value))
+    .map((value) => ({ value, time: Date.parse(value) }))
+    .filter((entry) => Number.isFinite(entry.time));
+  if (parsed.length === 0) return undefined;
+  parsed.sort((a, b) => a.time - b.time);
+  return parsed[0].value;
+}
+
+function snapshotEvidence(snapshot: VerifiedCryptoSnapshot | null): ScoringEvidenceRef[] {
+  if (!snapshot) return [];
+  return Object.values(snapshot.provenance)
+    .filter((item): item is VerifiedFieldProvenance => Boolean(item))
+    .map((item) => ({
+      id: `coingecko-snapshot:${snapshot.symbol}:${item.field}:${item.observedAt}`,
+      source: item.provider,
+      observedAt: item.observedAt,
+      retrievedAt: item.retrievedAt,
+      kind: 'market-snapshot' as const,
+    }));
+}
+
 /**
  * Production-safe deterministic crypto scoring path.
  *
- * The scoring endpoint deliberately uses a dedicated verified provider instead of
- * AssetRegistry.getHistory(): AssetRegistry may return simulated history and may cache that
- * fallback after a transient provider outage. This path never accepts simulated observations.
+ * History factors come only from the verified history provider. Market-cap/volume/supply
+ * factors come only from the verified snapshot provider and carry per-field provenance.
+ * AssetRegistry bootstrap values and simulated observations are never accepted as evidence.
  */
 export async function evaluateVerifiedCryptoTechnicalScore(
   symbol: string,
@@ -64,18 +97,16 @@ export async function evaluateVerifiedCryptoTechnicalScore(
 ): Promise<VerifiedCryptoTechnicalAssessment> {
   const s = symbol.toUpperCase().trim();
   const historyProvider = options.historyProvider ?? getVerifiedCryptoHistory;
-  const history = await historyProvider(s, 30);
-  const retrievedAt = history?.retrievedAt ?? new Date().toISOString();
+  const snapshotProvider = options.snapshotProvider ?? getVerifiedCryptoSnapshot;
+  const [history, snapshot] = await Promise.all([
+    historyProvider(s, 30),
+    snapshotProvider(s),
+  ]);
 
+  const retrievedAt = oldestIso([history?.retrievedAt, snapshot?.retrievedAt]) ?? new Date().toISOString();
   let inputs: CryptoScoringInputs = { coin: s };
-  let observedAt: string | undefined;
-  let evidence: Array<{
-    id: string;
-    source: string;
-    observedAt: string;
-    retrievedAt: string;
-    kind: 'market-history';
-  }> = [];
+  let historyObservedAt: string | undefined;
+  const evidence: ScoringEvidenceRef[] = [];
 
   if (history && history.points.length > 0) {
     const closes = history.points.map((point) => point.close);
@@ -83,15 +114,15 @@ export async function evaluateVerifiedCryptoTechnicalScore(
     const rsi = computeRsi(closes);
     const lastPoint = history.points[history.points.length - 1];
 
-    observedAt = normalizeHistoryDateToIso(lastPoint.date);
-    if (observedAt) {
-      evidence = [{
+    historyObservedAt = normalizeHistoryDateToIso(lastPoint.date);
+    if (historyObservedAt) {
+      evidence.push({
         id: `coingecko-history:${s}:${lastPoint.date}`,
         source: history.provider,
-        observedAt,
-        retrievedAt,
+        observedAt: historyObservedAt,
+        retrievedAt: history.retrievedAt,
         kind: 'market-history',
-      }];
+      });
     }
 
     if (stats) {
@@ -104,11 +135,30 @@ export async function evaluateVerifiedCryptoTechnicalScore(
         data_quality_risk: history.degraded ? 0.15 : 0.05,
       };
     }
-
-    if (rsi !== undefined) {
-      inputs.relative_strength = rsi / 100;
-    }
+    if (rsi !== undefined) inputs.relative_strength = rsi / 100;
   }
+
+  const fieldProvenance = snapshot
+    ? Object.values(snapshot.provenance).filter((item): item is VerifiedFieldProvenance => Boolean(item))
+    : [];
+  evidence.push(...snapshotEvidence(snapshot));
+
+  if (snapshot?.marketCapUsd && snapshot?.volume24hUsd) {
+    const liquidity = scoreLiquidity(snapshot.volume24hUsd, snapshot.marketCapUsd);
+    if (liquidity !== undefined) inputs.avg_daily_volume = liquidity / 100;
+  }
+  if (snapshot?.circulatingSupply && snapshot.maxSupply) {
+    const tokenomics = scoreTokenomics(snapshot.circulatingSupply, snapshot.maxSupply);
+    if (tokenomics !== undefined) inputs.supply_dynamics = tokenomics / 100;
+  }
+
+  const rankingEvidenceReady = Boolean(
+    snapshot?.provenance.marketCapUsd
+      && snapshot?.provenance.volume24hUsd
+      && snapshot?.provenance.circulatingSupply
+      && (snapshot?.provenance.maxSupply || snapshot?.provenance.totalSupply)
+      && inputs.avg_daily_volume !== undefined,
+  );
 
   const values: Record<string, number | undefined> = {
     trend: inputs.trend !== undefined ? inputs.trend * 100 : undefined,
@@ -116,15 +166,24 @@ export async function evaluateVerifiedCryptoTechnicalScore(
     volatility_quality: inputs.volatility_quality !== undefined ? inputs.volatility_quality * 100 : undefined,
     breakout_quality: inputs.breakout_quality !== undefined ? inputs.breakout_quality * 100 : undefined,
     relative_strength: inputs.relative_strength !== undefined ? inputs.relative_strength * 100 : undefined,
-    avg_daily_volume: undefined,
-    supply_dynamics: undefined,
+    avg_daily_volume: inputs.avg_daily_volume !== undefined ? inputs.avg_daily_volume * 100 : undefined,
+    supply_dynamics: inputs.supply_dynamics !== undefined ? inputs.supply_dynamics * 100 : undefined,
     regime_bonus: undefined,
     data_quality_risk: inputs.data_quality_risk !== undefined ? inputs.data_quality_risk * 100 : undefined,
   };
 
+  const providers = Array.from(new Set([
+    ...(history ? [history.provider] : []),
+    ...(snapshot ? [snapshot.provider] : []),
+  ]));
+  const observedAt = oldestIso([
+    historyObservedAt,
+    snapshot && fieldProvenance.length > 0 ? snapshot.observedAt : undefined,
+  ]);
+
   const gate = evaluateDataQualityGate({
     assetId: s,
-    providers: history ? [history.provider] : [],
+    providers,
     featureNames: Object.keys(CRYPTO_SCORING_WEIGHTS),
     values,
     evidence,
@@ -134,23 +193,32 @@ export async function evaluateVerifiedCryptoTechnicalScore(
     minimumHistoryPoints: 20,
     historyPoints: history?.points.length ?? 0,
     maxAgeMs: 4 * 24 * 60 * 60 * 1000,
-    scoringVersion: 'crypto-technical-history/0.6.1',
+    scoringVersion: 'crypto-technical-provenance/0.6.2',
   });
+
+  const providerState = {
+    history: history ? { cacheMode: history.cacheMode, degraded: history.degraded } : undefined,
+    snapshot: snapshot ? { cacheMode: snapshot.cacheMode, degraded: snapshot.degraded } : undefined,
+  };
 
   if (!gate.ready) {
     return {
       canonical: buildUnavailableScore(gate),
       inputs,
       analysis: null,
-      providerState: history ? { cacheMode: history.cacheMode, degraded: history.degraded } : undefined,
+      fieldProvenance,
+      rankingEvidenceReady,
+      providerState,
     };
   }
 
-  const analysis = CryptoScoringService.scoreCrypto(inputs, '0.6.1-verified-history');
+  const analysis = CryptoScoringService.scoreCrypto(inputs, '0.6.2-verified-provenance');
   return {
     canonical: buildReadyScore(analysis.final_score, gate),
     inputs,
     analysis,
-    providerState: history ? { cacheMode: history.cacheMode, degraded: history.degraded } : undefined,
+    fieldProvenance,
+    rankingEvidenceReady,
+    providerState,
   };
 }
