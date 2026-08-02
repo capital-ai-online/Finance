@@ -1,4 +1,4 @@
-export type MarketDataAssetClass = 'crypto' | 'stock' | 'forex' | 'index' | 'bond' | 'macro';
+export type MarketDataAssetClass = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond' | 'macro';
 export type MarketDataCapability = 'history' | 'snapshot' | 'fundamentals' | 'quotes' | 'orderbook' | 'macro-series';
 
 export interface MarketDataProviderDescriptor {

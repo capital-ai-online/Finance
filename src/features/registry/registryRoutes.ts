@@ -14,7 +14,6 @@ import { checkAdminAccess } from '../../platform/Security/authMiddleware';
 import { SUPERVISOR_ZONE_ROLES } from '../../platform/Security/types';
 import {
   generateTraditionalAssetInputs,
-  generateTraditionalAssetInputsFromCloses,
   TraditionalAssetScoringService,
 } from '../../services/traditionalAssetScoring';
 import {
@@ -29,9 +28,15 @@ import { fetchVerifiedTraditionalQuote } from '../../services/traditionalQuoteEv
 import { decorateScreeningBatchWithGovernance, type ScreeningBatchItem } from '../../services/screeningBatchGovernance';
 import { getMarketDataProviderTelemetry } from '../../services/marketDataProviderRouter';
 import { getScreeningSloSinkStatus, persistScreeningSloEvidence } from '../../services/screeningSloSink';
+import { getAllIndexProviderMappings } from '../../services/indexProviderMapping';
+import { buildIndexScoringInputsFromEvidence, getVerifiedIndexHistory } from '../../services/indexMarketEvidence';
+import { getTwelveDataCommodityEvidence } from '../../services/commodityMarketEvidence';
+import { scoreCommodityMarketEvidence } from '../../services/commodityEvidenceScoring';
+import { resolveSovereignBondProviderMapping } from '../../services/sovereignBondProviderMapping';
+import { getEodhdBondEvidence } from '../../services/eodhdBondEvidence';
+import { scoreSovereignBenchmarkEvidence } from '../../services/sovereignBenchmarkEvidenceScoring';
 import { logSystemEvent } from '../../../server/systemEvents';
 import { ensureFundamentalsFresh, getCachedFundamentals } from '../../../server/stockFundamentals';
-import { ensureIndexHistoryFresh, getCachedIndexHistory, INDEX_FMP_TICKERS } from '../../../server/fmpIndices';
 
 export interface AssetUpdatePayload {
   expectedReturn?: number;
@@ -43,7 +48,7 @@ export interface AssetUpdatePayload {
   isLocked?: boolean;
 }
 
-interface VerifiedTraditionalEvaluation {
+interface VerifiedCatalogEvaluation {
   httpStatus: number;
   payload: Record<string, unknown>;
 }
@@ -72,6 +77,8 @@ function toPublicAssetView(asset: AssetCatalogEntry) {
     catalogSource: asset.catalogSource,
     instrumentKind: asset.instrumentKind,
     screeningContract: asset.screeningContract,
+    evidenceScoringContract: asset.evidenceScoringContract ?? null,
+    providerMappingContract: asset.providerMappingContract ?? null,
     applicationArea: legacy?.applicationArea,
     isLocked: legacy?.isLocked,
     marketDataStatus: 'DATA_UNAVAILABLE' as const,
@@ -89,7 +96,7 @@ function toPublicAssetView(asset: AssetCatalogEntry) {
     providers: [],
     evidence: [],
     reason: asset.origin === 'catalog-expansion'
-      ? 'Catalog metadata only. A market value or score becomes READY only after the approved provider and provenance gates succeed.'
+      ? 'Catalog metadata only. A market value or score becomes READY only after the approved provider, mapping, evidence and provenance gates succeed.'
       : 'AssetRegistry bootstrap values have no field-level provider provenance and are not exposed as verified market observations.',
   };
 }
@@ -110,23 +117,118 @@ function latestObservedAt(payload: Record<string, unknown>): string | null {
   return timestamps[0] ?? null;
 }
 
-async function evaluateVerifiedTraditionalSymbol(symbolInput: string, correlationId: string): Promise<VerifiedTraditionalEvaluation> {
+function canonicalEvidencePayload(input: {
+  correlationId: string;
+  symbol: string;
+  assetType: 'commodity' | 'bond';
+  result: ReturnType<typeof scoreCommodityMarketEvidence> | ReturnType<typeof scoreSovereignBenchmarkEvidence>;
+  lineageExtra?: Record<string, unknown>;
+}): VerifiedCatalogEvaluation {
+  const canonical = input.result.canonical;
+  const ready = canonical.status === 'READY';
+  return {
+    httpStatus: ready ? 200 : 422,
+    payload: {
+      correlationId: input.correlationId,
+      symbol: input.symbol,
+      assetType: input.assetType,
+      status: canonical.status,
+      score: canonical.final_score,
+      score10: canonical.score,
+      scoreSemantic: input.result.scoreSemantic,
+      contractVersion: input.result.contractVersion,
+      contractStatus: input.result.contractStatus,
+      providers: input.result.providers,
+      evidenceIds: input.result.evidenceIds,
+      usedFactors: input.result.usedFactors,
+      missingFactors: input.result.missingFactors,
+      factors: input.result.factors,
+      reasoning: input.result.reasoning,
+      integrity: canonical.integrity,
+      provenance: canonical.integrity.evidence,
+      lineage: {
+        correlationId: input.correlationId,
+        assetId: input.symbol,
+        assetClass: input.assetType,
+        providers: input.result.providers,
+        evidenceIds: input.result.evidenceIds,
+        scoringVersion: input.result.contractVersion,
+        generatedAt: new Date().toISOString(),
+        ...input.lineageExtra,
+      },
+    },
+  };
+}
+
+async function evaluateVerifiedCatalogSymbol(symbolInput: string, correlationId: string): Promise<VerifiedCatalogEvaluation> {
   const symbol = symbolInput.toUpperCase().trim();
   const asset = getAssetCatalogEntry(symbol);
   if (!asset) {
     return { httpStatus: 404, payload: { correlationId, symbol, status: 'ASSET_NOT_FOUND', score: null } };
   }
-  if (asset.type !== 'stock' && asset.type !== 'forex' && asset.type !== 'index') {
-    return {
-      httpStatus: 400,
-      payload: {
-        correlationId, symbol, assetType: asset.type, status: 'UNSUPPORTED_ASSET_CLASS', score: null,
-        reason: 'Dieser verifizierte Pfad ist ausschließlich für Stock/Forex/Index vorgesehen.',
-      },
-    };
-  }
 
   try {
+    if (asset.type === 'commodity') {
+      const evidence = await getTwelveDataCommodityEvidence(symbol, 90);
+      const result = scoreCommodityMarketEvidence(evidence);
+      return canonicalEvidencePayload({
+        correlationId,
+        symbol,
+        assetType: 'commodity',
+        result,
+        lineageExtra: {
+          marketEvidenceVersion: evidence.version,
+          providerSymbol: evidence.providerSymbol,
+          providerName: evidence.providerName,
+        },
+      });
+    }
+
+    if (asset.type === 'bond') {
+      const mapping = await resolveSovereignBondProviderMapping(symbol);
+      if (!mapping) {
+        return {
+          httpStatus: 422,
+          payload: {
+            correlationId,
+            symbol,
+            assetType: 'bond',
+            status: 'SCORE_NOT_COMPUTABLE',
+            score: null,
+            providers: [],
+            evidenceIds: [],
+            provenance: [],
+            lineage: null,
+            reason: 'Kein explizit freigegebenes oder durch den EODHD-GBOND-Katalog bestätigtes Sovereign-Benchmark-Mapping vorhanden. Einzelanleihen bleiben nach ADR-0022 gesperrt.',
+          },
+        };
+      }
+      const evidence = await getEodhdBondEvidence(mapping.providerSymbol, 90);
+      const result = scoreSovereignBenchmarkEvidence(symbol, evidence);
+      return canonicalEvidencePayload({
+        correlationId,
+        symbol,
+        assetType: 'bond',
+        result,
+        lineageExtra: {
+          providerMappingVersion: mapping.version,
+          providerMappingMode: mapping.mappingMode,
+          providerSymbol: mapping.providerSymbol,
+          individualBondScoringEligible: false,
+        },
+      });
+    }
+
+    if (asset.type !== 'stock' && asset.type !== 'forex' && asset.type !== 'index') {
+      return {
+        httpStatus: 400,
+        payload: {
+          correlationId, symbol, assetType: asset.type, status: 'UNSUPPORTED_ASSET_CLASS', score: null,
+          reason: 'Für diese Assetklasse ist kein freigegebener Evidence-Scoring-Contract aktiv.',
+        },
+      };
+    }
+
     let inputs;
     if (asset.type === 'stock') {
       await ensureFundamentalsFresh(symbol);
@@ -134,19 +236,25 @@ async function evaluateVerifiedTraditionalSymbol(symbolInput: string, correlatio
     } else if (asset.type === 'forex') {
       inputs = await generateTraditionalAssetInputs(symbol, 'forex');
     } else {
-      if (!INDEX_FMP_TICKERS[symbol]) {
+      const evidence = await getVerifiedIndexHistory(symbol, 45);
+      if (!evidence) {
         return {
           httpStatus: 422,
           payload: {
-            correlationId, symbol, assetType: asset.type, status: 'SCORE_NOT_COMPUTABLE', score: null,
-            reason: 'Keine freigegebene verifizierte Index-Historienquelle für dieses Katalogsymbol registriert.',
-            providers: [], evidenceIds: [], provenance: [], lineage: null,
+            correlationId,
+            symbol,
+            assetType: 'index',
+            status: 'SCORE_NOT_COMPUTABLE',
+            score: null,
+            reason: 'Weder das freigegebene FMP-Mapping noch ein durch Provider-Metadaten verifiziertes Twelve-Data-Mapping lieferte ausreichende reale Index-Historie.',
+            providers: [],
+            evidenceIds: [],
+            provenance: [],
+            lineage: null,
           },
         };
       }
-      await ensureIndexHistoryFresh(symbol);
-      const points = getCachedIndexHistory(symbol);
-      inputs = generateTraditionalAssetInputsFromCloses(symbol, 'index', points?.map(point => point.close) ?? []);
+      inputs = buildIndexScoringInputsFromEvidence(evidence);
     }
 
     const result = TraditionalAssetScoringService.scoreTraditionalAsset(inputs);
@@ -198,6 +306,16 @@ registryRouter.get('/assets/catalog-integrity', (_req, res) => {
     ...integrity,
     counts: getAssetClassCounts(),
     marketDataPolicy: 'Catalog presence never implies verified price, score or screening eligibility.',
+  });
+});
+
+registryRouter.get('/assets/index-provider-mappings', (_req, res) => {
+  const mappings = getAllIndexProviderMappings();
+  return res.json({
+    contractVersion: 'index-provider-mapping/1.0.0',
+    count: mappings.length,
+    policy: 'FMP static mappings retain first priority; TwelveData candidates require runtime provider-identity verification before evidence is accepted.',
+    mappings,
   });
 });
 
@@ -254,10 +372,10 @@ registryRouter.get('/assets/verified-scores', async (req, res) => {
   const raw = typeof req.query.symbols === 'string' ? req.query.symbols : '';
   const symbols = [...new Set(raw.split(',').map(item => item.trim().toUpperCase()).filter(Boolean))].slice(0, 50);
   if (symbols.length === 0) {
-    return res.status(400).json({ correlationId: rootCorrelationId, status: 'INVALID_REQUEST', reason: 'Query-Parameter symbols ist erforderlich, z. B. ?symbols=AAPL,EURUSD,GSPC.', results: [] });
+    return res.status(400).json({ correlationId: rootCorrelationId, status: 'INVALID_REQUEST', reason: 'Query-Parameter symbols ist erforderlich, z. B. ?symbols=AAPL,EURUSD,GSPC,CMD_GOLD_COMEX,GB_US_10Y.', results: [] });
   }
 
-  const evaluations = await Promise.all(symbols.map(symbol => evaluateVerifiedTraditionalSymbol(symbol, `${rootCorrelationId}:${symbol}`)));
+  const evaluations = await Promise.all(symbols.map(symbol => evaluateVerifiedCatalogSymbol(symbol, `${rootCorrelationId}:${symbol}`)));
   const items: ScreeningBatchItem[] = evaluations.map(item => ({
     httpStatus: item.httpStatus,
     ...item.payload,
@@ -296,14 +414,15 @@ registryRouter.get('/assets/:symbol/verified-context', async (req, res) => {
   const symbol = req.params.symbol.toUpperCase().trim();
   const asset = getAssetCatalogEntry(symbol);
   if (!asset) return res.status(404).json({ correlationId, symbol, status: 'ASSET_NOT_FOUND' });
-  if (asset.type !== 'stock' && asset.type !== 'forex' && asset.type !== 'index') {
-    return res.status(400).json({ correlationId, symbol, assetType: asset.type, status: 'UNSUPPORTED_ASSET_CLASS', reason: 'Der kombinierte verifizierte Screening-Kontext ist derzeit für Stock/Forex/Index aktiviert.' });
-  }
 
-  const [scoreResult, macroContext] = await Promise.all([
-    evaluateVerifiedTraditionalSymbol(symbol, `${correlationId}:score`),
-    buildCrossAssetRiskContext(asset.type),
-  ]);
+  const scoreResultPromise = evaluateVerifiedCatalogSymbol(symbol, `${correlationId}:score`);
+  const macroPromise = asset.type === 'commodity'
+    ? Promise.resolve(null)
+    : (['stock', 'forex', 'index', 'bond'] as string[]).includes(asset.type)
+      ? buildCrossAssetRiskContext(asset.type as CrossAssetClass)
+      : Promise.resolve(null);
+  const [scoreResult, macroContext] = await Promise.all([scoreResultPromise, macroPromise]);
+
   return res.status(scoreResult.httpStatus === 200 ? 200 : 422).json({
     correlationId,
     symbol,
@@ -314,7 +433,7 @@ registryRouter.get('/assets/:symbol/verified-context', async (req, res) => {
     integrationPolicy: {
       scoreImpactEnabled: false,
       recommendationEligible: false,
-      rule: 'Score-Lineage und Macro-Evidence werden korreliert ausgeliefert, aber nicht automatisch miteinander verrechnet.',
+      rule: 'Kanonischer Evidence-Score und Macro Context bleiben getrennte Lineage-Verträge und werden nicht automatisch miteinander verrechnet.',
     },
   });
 });
@@ -326,7 +445,15 @@ registryRouter.get('/assets/:symbol/verified-quote', async (req, res) => {
   const asset = getAssetCatalogEntry(symbol);
   if (!asset) return res.status(404).json({ correlationId, symbol, status: 'ASSET_NOT_FOUND' });
   if (asset.type !== 'stock' && asset.type !== 'forex' && asset.type !== 'index') {
-    return res.status(400).json({ correlationId, symbol, assetType: asset.type, status: 'UNSUPPORTED_ASSET_CLASS', price: null, alertEligible: false });
+    return res.status(400).json({
+      correlationId,
+      symbol,
+      assetType: asset.type,
+      status: 'UNSUPPORTED_ASSET_CLASS',
+      price: null,
+      alertEligible: false,
+      reason: 'Commodity- und Sovereign-Benchmark-Contracts verwenden Research-/History-Evidence und stellen keinen Execution-Quote-Contract dar.',
+    });
   }
   const quote = await fetchVerifiedTraditionalQuote(symbol, asset.type);
   return res.status(quote.status === 'READY' ? 200 : 422).json({ correlationId, ...quote });
@@ -341,7 +468,7 @@ registryRouter.get('/assets/:symbol', (req, res) => {
 registryRouter.get('/assets/:symbol/verified-score', async (req, res) => {
   const correlationId = resolveCorrelationId(req);
   res.setHeader('x-correlation-id', correlationId);
-  const result = await evaluateVerifiedTraditionalSymbol(req.params.symbol, correlationId);
+  const result = await evaluateVerifiedCatalogSymbol(req.params.symbol, correlationId);
   return res.status(result.httpStatus).json(result.payload);
 });
 

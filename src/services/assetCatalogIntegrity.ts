@@ -1,9 +1,13 @@
 import type { AssetCatalogCandidate, AssetCatalogType } from '../data/assetCatalogExpansion';
 
-export const ASSET_CATALOG_INTEGRITY_VERSION = 'asset-catalog-integrity/1.0.0' as const;
+export const ASSET_CATALOG_INTEGRITY_VERSION = 'asset-catalog-integrity/1.1.0' as const;
 
 export interface AssetCatalogEntry extends AssetCatalogCandidate {
   origin: 'legacy-registry' | 'catalog-expansion';
+  /** Approved runtime evidence/scoring contract layered on top of catalog metadata. */
+  evidenceScoringContract?: string;
+  /** Versioned provider-mapping contract where provider identity requires explicit mapping/verification. */
+  providerMappingContract?: string;
 }
 
 export interface AssetCatalogIntegrityResult {
@@ -20,6 +24,7 @@ export interface AssetCatalogIntegrityResult {
   unsupportedTypes: string[];
   catalogOnlyCount: number;
   providerVerificationRequired: number;
+  approvedEvidenceContractCount: number;
   scoreImpactEnabled: false;
   reason?: string;
 }
@@ -63,7 +68,8 @@ export function validateAssetCatalog(
     if (added < target) shortfalls[type] = target - added;
   }
 
-  const catalogOnlyCount = entries.filter(entry => entry.screeningContract === 'catalog-only').length;
+  const catalogOnlyCount = entries.filter(entry => entry.screeningContract === 'catalog-only' && !entry.evidenceScoringContract).length;
+  const approvedEvidenceContractCount = entries.filter(entry => Boolean(entry.evidenceScoringContract)).length;
   const providerVerificationRequired = entries.length - catalogOnlyCount;
   const issues = duplicateSymbols.length + invalidSymbols.length + invalidNames.length + missingSources.length + unsupportedTypes.length + Object.keys(shortfalls).length;
 
@@ -81,6 +87,7 @@ export function validateAssetCatalog(
     unsupportedTypes: [...new Set(unsupportedTypes)].sort(),
     catalogOnlyCount,
     providerVerificationRequired,
+    approvedEvidenceContractCount,
     scoreImpactEnabled: false,
     reason: issues === 0
       ? undefined

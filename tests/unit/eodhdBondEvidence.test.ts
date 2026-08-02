@@ -29,4 +29,19 @@ describe('EODHD bond evidence', () => {
     expect(result.sourcePath).not.toContain('test-secret');
     expect(result.evidenceIds[0]).toBe('bond:eodhd:DE10Y.GBOND:2026-07-30');
   });
+
+  it('preserves finite negative government-yield observations', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify([
+      { date: '2020-01-02', close: -0.31 },
+      { date: '2020-01-03', close: -0.29 },
+    ]), { status: 200, headers: { 'Content-Type': 'application/json' } })) as unknown as typeof fetch;
+
+    const result = await getEodhdBondEvidence('DE10Y.GBOND', 30, {
+      apiKey: 'test-secret',
+      fetchImpl,
+      nowMs: () => Date.parse('2020-01-04T08:00:00Z'),
+    });
+
+    expect(result.points.map(point => point.value)).toEqual([-0.31, -0.29]);
+  });
 });

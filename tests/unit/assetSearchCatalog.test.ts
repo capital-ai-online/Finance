@@ -66,9 +66,21 @@ describe('asset search catalog expansion and integrity', () => {
     }
   });
 
-  it('marks commodity and bond expansion assets catalog-only and resolves aliases', () => {
-    expect(getAssetCatalogEntry('CMD_GOLD_COMEX')?.screeningContract).toBe('catalog-only');
-    expect(getAssetCatalogEntry('GB_US_2Y')?.screeningContract).toBe('catalog-only');
+  it('binds commodity and sovereign benchmark assets to explicit evidence contracts without turning catalog metadata into evidence', () => {
+    expect(getAssetCatalogEntry('CMD_GOLD_COMEX')).toMatchObject({
+      screeningContract: 'catalog-only',
+      evidenceScoringContract: 'commodity-evidence-scoring/1.0.0',
+    });
+    expect(getAssetCatalogEntry('GB_US_2Y')).toMatchObject({
+      screeningContract: 'catalog-only',
+      evidenceScoringContract: 'sovereign-benchmark-yield-scoring/1.0.0',
+      providerMappingContract: 'sovereign-bond-provider-mapping/1.0.0',
+    });
+    expect(getAssetCatalogEntry('AAA-CORP')?.evidenceScoringContract).toBeUndefined();
+  });
+
+  it('binds every index to the versioned provider mapping and resolves aliases', () => {
+    expect(getAssetCatalogEntry('NDX')?.providerMappingContract).toBe('index-provider-mapping/1.0.0');
     expect(getAssetCatalogEntry('^NDX')?.symbol).toBe('NDX');
   });
 
