@@ -1,4 +1,4 @@
-import type { ScreeningOperationsReport } from './screeningOperations';
+import type { ScreeningOperationsResult } from './screeningOperations';
 
 export const SCREENING_SLO_EVIDENCE_VERSION = 'screening-slo-evidence/1.0.0' as const;
 
@@ -15,11 +15,9 @@ export interface ScreeningSloEvidenceRecord {
   eligibilityStatus: string;
   quoteStatus: string | null;
   quoteAgeMs: number | null;
+  quoteFresh: boolean | null;
   slaState: string;
-  providersObserved: number;
-  healthyProviders: number;
-  degradedProviders: number;
-  unavailableProviders: number;
+  reasons: string[];
   scoreImpactEnabled: false;
   hardScreeningBlockEnabled: false;
   persistencePolicy: {
@@ -31,7 +29,7 @@ export interface ScreeningSloEvidenceRecord {
 
 export function buildScreeningSloEvidenceRecord(input: {
   correlationId: string;
-  report: ScreeningOperationsReport;
+  report: ScreeningOperationsResult;
   symbol?: string;
   assetClass?: string;
   observedAt?: string;
@@ -44,15 +42,13 @@ export function buildScreeningSloEvidenceRecord(input: {
     symbol: input.symbol,
     assetClass: input.assetClass,
     state: report.state,
-    eligible: report.eligibility.eligible,
-    eligibilityStatus: report.eligibility.status,
-    quoteStatus: report.quote?.status ?? null,
-    quoteAgeMs: report.quote?.ageMs ?? null,
-    slaState: report.sla.state,
-    providersObserved: report.sla.providersObserved,
-    healthyProviders: report.sla.healthy,
-    degradedProviders: report.sla.degraded,
-    unavailableProviders: report.sla.unavailable,
+    eligible: report.screeningEligible,
+    eligibilityStatus: report.screeningEligibilityStatus,
+    quoteStatus: report.quote.status,
+    quoteAgeMs: report.quote.ageMs,
+    quoteFresh: report.quote.fresh,
+    slaState: report.providerSlaState,
+    reasons: [...report.reasons],
     scoreImpactEnabled: false,
     hardScreeningBlockEnabled: false,
     persistencePolicy: {
