@@ -1,15 +1,17 @@
 {
   "name": "PlatformDirector",
   "version": "1.0.0",
-  "status": "unspecified",
+  "status": "development",
   "owner": "CAPITAL-AI",
-  "description": "",
+  "description": "Fail-closed platform decision contract scaffold. The component now defines evidence-bearing architecture, governance, release, exception, risk, priority and emergency decision request/record types, but does not yet implement the full Platform Director runtime required by ADR-0006.",
   "category": "platform",
   "ess": [
     "ESS-0001",
     "ESS-0001-CONTRACTS"
   ],
-  "adr": [],
+  "adr": [
+    "ADR-0006"
+  ],
   "dependencies": [],
   "events": {
     "produces": [],
@@ -17,10 +19,12 @@
   },
   "knowledge": [],
   "interfaces": [],
-  "contracts": [],
+  "contracts": [
+    "platform-director-decision/0.1.0"
+  ],
   "documentation": [
     "README.md"
   ],
   "tests": [],
-  "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): fuer diese Komponente existiert ausser dem vom Enterprise Bootstrapper generierten Platzhaltertext keine funktionale Spezifikation und kein Code. Status auf 'unspecified' korrigiert, um den Zustand ehrlich abzubilden - vorher suggerierte 'development' aktive Arbeit, die nicht stattfindet. Die Komponente kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden."
+  "note": "2026-08-02 revalidation: commit cd5c93137074dc7f8a8ba562aff09ea7f54f6a70 introduced Contracts/PlatformDecision.ts. The previous status 'unspecified' and note claiming zero code became stale and broke platformManifestIntegrity. Status is therefore 'development'. This does not close ADR-0006: only the decision contract exists; executable decision orchestration, evidence collection, runtime policy enforcement, event integration and acceptance tests remain outstanding."
 }
