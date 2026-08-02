@@ -1,8 +1,9 @@
 export type FinancialAssetClass = 'stock' | 'forex' | 'index';
+export type FinancialDataProvider = 'Stooq' | 'AlphaVantage' | 'FMP' | 'TwelveData' | 'EODHD';
 
 export interface FinancialFieldProvenance {
   field: string;
-  provider: 'Stooq' | 'AlphaVantage' | 'FMP';
+  provider: FinancialDataProvider;
   sourcePath: string;
   retrievedAt: string;
   observedAt?: string;
@@ -23,8 +24,8 @@ export interface TraditionalScoringLineage {
   generatedAt: string;
 }
 
-export const TRADITIONAL_FEATURE_VERSION = 'traditional-features/2.0.0';
-export const TRADITIONAL_SCORING_VERSION = 'traditional-scoring/2.0.0';
+export const TRADITIONAL_FEATURE_VERSION = 'traditional-features/2.1.0';
+export const TRADITIONAL_SCORING_VERSION = 'traditional-scoring/2.1.0';
 
 export function buildFinancialEvidenceId(assetId: string, provenance: FinancialFieldProvenance): string {
   const source = provenance.provider.toLowerCase();
