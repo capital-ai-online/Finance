@@ -31,7 +31,7 @@ export interface HorizonExactScoreValidationResult {
   overall: HorizonExactValidationBucket;
   providerEvidence: Array<{
     symbol: string;
-    status: HorizonValidationProviderResult['status'];
+    status: HorizonValidationProviderResult['evidence']['status'];
     provider: string | null;
     evidenceId: string | null;
     targetAt: string | null;
@@ -75,14 +75,14 @@ export async function evaluateHorizonExactScoreValidation(input: {
     const selected = evidence.evidence.selected;
     providerEvidence.push({
       symbol: snapshot.symbol,
-      status: evidence.status,
-      provider: evidence.provider,
+      status: evidence.evidence.status,
+      provider: selected?.provider ?? null,
       evidenceId: selected?.evidenceId ?? null,
       targetAt: evidence.evidence.targetAt,
       observedAt: selected?.observedAt ?? null,
     });
 
-    if (evidence.status !== 'READY' || !selected) {
+    if (evidence.evidence.status !== 'READY' || !selected) {
       skippedNoEvidence += 1;
       continue;
     }
