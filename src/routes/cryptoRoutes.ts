@@ -9,6 +9,7 @@ import { calculateRankScore, isTop10Eligible } from '../services/ranking.service
 import { assetRegistry } from '../lib/assetRegistry';
 import { evaluateVerifiedCryptoTechnicalScore } from '../services/verifiedCryptoTechnicalScoring';
 import { buildScoringLineage } from '../services/scoringLineage';
+import { getCryptoSpotConsensus } from '../services/cryptoSpotConsensus';
 
 function requestCorrelationId(req: express.Request): string {
   const incoming = req.header('x-correlation-id');
@@ -95,6 +96,29 @@ export function createCryptoRouter(
     } catch (error: any) {
       console.error('[CryptoRouter] Error listing crypto assets:', error);
       res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
+  router.get('/price-consensus/:symbol', async (req, res) => {
+    try {
+      const correlationId = requestCorrelationId(req);
+      res.setHeader('x-correlation-id', correlationId);
+      const symbol = String(req.params.symbol || '').toUpperCase().trim();
+      if (!symbol) return res.status(400).json({ error: 'Cryptocurrency symbol is required.', correlationId });
+      const consensus = await getCryptoSpotConsensus(symbol);
+      const httpStatus = consensus.status === 'CONSENSUS'
+        ? 200
+        : consensus.status === 'SOURCE_CONFLICT'
+          ? 409
+          : 422;
+      return res.status(httpStatus).json({ symbol, correlationId, ...consensus });
+    } catch (error: any) {
+      console.error('[CryptoRouter] Error calculating spot-price consensus:', error);
+      return res.status(503).json({
+        status: 'INSUFFICIENT_SOURCES',
+        canonicalValue: null,
+        error: error?.message || 'Spot-price providers unavailable.',
+      });
     }
   });
 

@@ -17,7 +17,8 @@ import { generateStructuredWithFallback, generateTextWithFallback } from '../src
 import { getAnthropicInstance, isAnthropicConfigured } from './anthropicClient';
 import { getOpenAIInstance, isOpenAIConfigured } from './openaiClient';
 import { isGeminiConfigured } from './ai';
-import { retrieveRelevantChunks, formatChunksForPrompt } from '../src/services/rag/retrieval';
+import { retrieveRelevantChunksWithEvidence, formatChunksForPrompt } from '../src/services/rag/retrieval';
+import { getPromptGovernanceEntry, recordAiEvaluation, type AiProvider } from '../src/services/aiGovernance';
 
 export const hygieneRouter = express.Router();
 
@@ -311,7 +312,14 @@ async function analyzeChangeWithAI(
   try {
     const systemInstruction = `Du bist der "Capital-AI Documentary" Service (der autonome KI-Dokumenten-Hygieniker von Gründer Sven Kulessa, sven.kulessa@capital-ai.online). Deine Aufgabe ist es, Änderungen in einem Dokument zu analysieren, semantisch einzuordnen und festzulegen, ob diese Änderung automatisch durchgeführt werden kann oder ein Review erfordert. Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.`;
 
-    const relevantChunks = await retrieveRelevantChunks(`${filePath}\n${diff.slice(0, 1000)}`);
+    const promptEntry = getPromptGovernanceEntry('document-hygiene-change-classification');
+    const retrieval = await retrieveRelevantChunksWithEvidence(`${filePath}\n${diff.slice(0, 1000)}`, {
+      promptId: 'document-hygiene-change-classification',
+      promptVersion: promptEntry?.version,
+      topK: 5,
+      minScore: 0.5,
+    });
+    const relevantChunks = retrieval.chunks;
     const ragContext = relevantChunks.length > 0
       ? `\n\n--- RELEVANTE INTERNE RICHTLINIEN (zur Einordnung von "conflict_candidate") ---\n${formatChunksForPrompt(relevantChunks)}`
       : '';
@@ -382,6 +390,25 @@ Analysiere die Änderungen semantisch und liefere eine JSON-Antwort mit exakt fo
     }
 
     const parsed = result.data;
+    const modelProvider: AiProvider = result.provider.startsWith('anthropic:')
+      ? 'anthropic'
+      : result.provider.startsWith('openai:')
+        ? 'openai'
+        : 'gemini';
+    const model = result.provider.includes(':') ? result.provider.split(':').slice(1).join(':') : result.provider;
+    const evidenceIds = retrieval.evidence.evidence.map(item => item.evidenceId);
+    recordAiEvaluation({
+      promptId: 'document-hygiene-change-classification',
+      promptVersion: promptEntry?.version ?? 'unregistered',
+      modelProvider,
+      model,
+      evidenceIds,
+      checks: { schemaValid: true, grounded: evidenceIds.length > 0 },
+      outcome: evidenceIds.length > 0 ? 'PASS' : 'WARN',
+      notes: evidenceIds.length > 0
+        ? `Documentary RAG evidence quality: ${retrieval.evidence.evaluation.quality}.`
+        : 'Dokumenten-Hygiene-Klassifikation ohne Repository-RAG-Evidence; manuelle Review-Regeln bleiben maßgeblich.',
+    });
     return {
       classification: parsed.classification || 'content_update',
       confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.7,
