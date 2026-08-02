@@ -1,6 +1,6 @@
 # ⊞ CAPITAL-AI — Enterprise Financial AI & Quantitative Intelligence Platform
 
-[![Version](https://img.shields.io/badge/Version-0.5.4_Beta-00f0ff.svg?style=for-the-badge&logo=react)](https://capital-ai.online)
+[![Version](https://img.shields.io/badge/Version-0.6.0_Beta-00f0ff.svg?style=for-the-badge&logo=react)](https://capital-ai.online)
 [![Build Status](https://img.shields.io/badge/Build-Passing-10b981.svg?style=for-the-badge)](#)
 [![Node](https://img.shields.io/badge/Node.js-%3E%3D22.0.0-68a063.svg?style=for-the-badge&logo=nodedotjs)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org)
@@ -140,4 +140,4 @@ npm run start
 
 * **Gründer & Inhaber**: Sven Kulessa
 * **Kontakt**: [sven.kulessa@capital-ai.online](mailto:sven.kulessa@capital-ai.online)
-* **Plattform-Version**: `0.5.4 (Beta-Phase)` / Specification `v0.6.0`
+* **Plattform-Version**: `0.6.0 (Beta-Phase)` (einheitlich mit `package.json`/`metadata.json`)

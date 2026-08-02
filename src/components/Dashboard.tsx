@@ -18,6 +18,7 @@ import { CapitalAiLogo } from './CapitalAiLogo';
 import { MarketScreener } from './MarketScreener';
 import { CryptoScoringEnterprise } from './CryptoScoringEnterprise';
 import { FavoriteAssetPatternSlots } from './FavoriteAssetPatternSlots';
+import { SecurityRadarBadge } from './SecurityRadarBadge';
 import { UserSession } from '../App';
 import { GuestCliffhangerModal } from './GuestCliffhangerModal';
 import { AdminPortal } from './AdminPortal';
@@ -1718,13 +1719,16 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
           </motion.div>
         </AnimatePresence>
 
+        {/* Webscan Radar Sicherheits-Badge: webanwendungsweit direkt oberhalb des Footers, ueber alle activeView-Ansichten hinweg persistent (siehe SecurityRadarBadge.tsx) */}
+        <SecurityRadarBadge className="mt-12" />
+
         {/* Footer */}
         <footer className="pt-8 pb-12 text-center border-t border-white/10 mt-12 px-6">
           <div className="max-w-4xl mx-auto flex flex-col items-center gap-4">
             {/* Live System Latency Monitor for API Streams */}
             <SystemLatencyMonitor />
 
-            {/* Info Siegel: Version 0.5.0 mit dem Logo versehen */}
+            {/* Info Siegel: Version 0.6.0 mit dem Logo versehen */}
             <div className="flex flex-col sm:flex-row items-center gap-3 bg-gradient-to-r from-aif-gold-DEFAULT/10 via-black/40 to-aif-gold-DEFAULT/5 border border-aif-gold-DEFAULT/20 rounded-2xl px-5 py-2.5 backdrop-blur-md shadow-[0_0_25px_rgba(245,196,83,0.08)] mb-4">
               <div className="flex items-center gap-2">
                 <CapitalAiLogo size={24} showText={false} />

@@ -1,12 +1,12 @@
 {
   "name": "DocumentationGovernanceValidator",
   "version": "1.0.0",
-  "status": "development",
+  "status": "unspecified",
   "owner": "Documentary Engine",
   "description": "Documentation Governance Validator. Prueft saemtliche Dokumentation, ESS-Regeln, ADR-Bezuege, Contracts, Metadaten, Traceability, Knowledge Graph und Digital Twin automatisch auf Konsistenz, Vollstaendigkeit und Governance-Konformitaet. Erzeugt ausschliesslich Befunde und Berichte, niemals Entscheidungen.",
   "category": "platform",
   "layer": "Documentary",
-  "lifecycle": "Development",
+  "lifecycle": "Unspecified",
   "health": "Unknown",
   "repository": "Finance",
   "ess": [
@@ -105,5 +105,5 @@
   ],
   "tests": [],
   "conformanceLevel": null,
-  "note": "Manifest erfuellt den vollstaendigen Metadata Contract aus ESS-0001-CONTRACTS Chapter 7 einschliesslich layer, lifecycle, health, quality, security, ai und repository. Die 22 Bestandsmanifeste fuehren diese Felder noch nicht (GAP-015)."
+  "note": "Manifest erfuellt den vollstaendigen Metadata Contract aus ESS-0001-CONTRACTS Chapter 7 einschliesslich layer, lifecycle, health, quality, security, ai und repository. Die 22 Bestandsmanifeste fuehren diese Felder noch nicht (GAP-015). Korrektur: 'status'/'lifecycle' waren zuvor 'development' gesetzt, obwohl null Code existiert (0 .ts-Dateien unter src/platform/Documentary/Governance/, nur .gitkeep-Platzhalter) - das README dokumentiert bereits ehrlich 'spezifiziert, nicht implementiert'. Auf 'unspecified' korrigiert, analog zur Begruendung in src/platform/Core/manifest.json, um keinen aktiven Entwicklungsstand vorzutaeuschen. Die vollstaendige fachliche Spezifikation (ESS-0012, README.md) bleibt davon unberuehrt gueltig - 'unspecified' bezieht sich hier ausschliesslich auf den Code-/Implementierungsstand, nicht auf den Spezifikationsstand."
 }
