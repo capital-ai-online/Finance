@@ -2,7 +2,14 @@
 
 import express from 'express';
 import { randomUUID } from 'crypto';
-import { assetRegistry, type RegistryAsset } from '../../lib/assetRegistry';
+import { assetRegistry } from '../../lib/assetRegistry';
+import {
+  getAssetCatalogEntry,
+  getAssetCatalogIntegrity,
+  getAssetClassCounts,
+  getAssetSearchCatalog,
+} from '../../lib/assetSearchCatalog';
+import type { AssetCatalogEntry } from '../../services/assetCatalogIntegrity';
 import { checkAdminAccess } from '../../platform/Security/authMiddleware';
 import { SUPERVISOR_ZONE_ROLES } from '../../platform/Security/types';
 import {
@@ -53,14 +60,20 @@ export function buildAssetUpdatePayload(body: any): AssetUpdatePayload {
   };
 }
 
-function toPublicAssetView(asset: RegistryAsset) {
+function toPublicAssetView(asset: AssetCatalogEntry) {
+  const legacy = assetRegistry.getAsset(asset.symbol);
   return {
     symbol: asset.symbol,
     name: asset.name,
     type: asset.type,
     subtype: asset.subtype,
-    applicationArea: asset.applicationArea,
-    isLocked: asset.isLocked,
+    aliases: asset.aliases ?? [],
+    origin: asset.origin,
+    catalogSource: asset.catalogSource,
+    instrumentKind: asset.instrumentKind,
+    screeningContract: asset.screeningContract,
+    applicationArea: legacy?.applicationArea,
+    isLocked: legacy?.isLocked,
     marketDataStatus: 'DATA_UNAVAILABLE' as const,
     scoreStatus: 'SCORE_NOT_COMPUTABLE' as const,
     price: null,
@@ -75,7 +88,9 @@ function toPublicAssetView(asset: RegistryAsset) {
     observedAt: null,
     providers: [],
     evidence: [],
-    reason: 'AssetRegistry bootstrap values have no field-level provider provenance and are not exposed as verified market observations.',
+    reason: asset.origin === 'catalog-expansion'
+      ? 'Catalog metadata only. A market value or score becomes READY only after the approved provider and provenance gates succeed.'
+      : 'AssetRegistry bootstrap values have no field-level provider provenance and are not exposed as verified market observations.',
   };
 }
 
@@ -97,7 +112,7 @@ function latestObservedAt(payload: Record<string, unknown>): string | null {
 
 async function evaluateVerifiedTraditionalSymbol(symbolInput: string, correlationId: string): Promise<VerifiedTraditionalEvaluation> {
   const symbol = symbolInput.toUpperCase().trim();
-  const asset = assetRegistry.getAsset(symbol);
+  const asset = getAssetCatalogEntry(symbol);
   if (!asset) {
     return { httpStatus: 404, payload: { correlationId, symbol, status: 'ASSET_NOT_FOUND', score: null } };
   }
@@ -124,7 +139,7 @@ async function evaluateVerifiedTraditionalSymbol(symbolInput: string, correlatio
           httpStatus: 422,
           payload: {
             correlationId, symbol, assetType: asset.type, status: 'SCORE_NOT_COMPUTABLE', score: null,
-            reason: 'Keine verifizierte Index-Historienquelle für dieses Symbol registriert.',
+            reason: 'Keine freigegebene verifizierte Index-Historienquelle für dieses Katalogsymbol registriert.',
             providers: [], evidenceIds: [], provenance: [], lineage: null,
           },
         };
@@ -174,7 +189,16 @@ async function evaluateVerifiedTraditionalSymbol(symbolInput: string, correlatio
 export const registryRouter = express.Router();
 
 registryRouter.get('/assets', (_req, res) => {
-  res.json(assetRegistry.getAssets().map(toPublicAssetView));
+  res.json(getAssetSearchCatalog().map(toPublicAssetView));
+});
+
+registryRouter.get('/assets/catalog-integrity', (_req, res) => {
+  const integrity = getAssetCatalogIntegrity();
+  return res.status(integrity.status === 'READY' ? 200 : 503).json({
+    ...integrity,
+    counts: getAssetClassCounts(),
+    marketDataPolicy: 'Catalog presence never implies verified price, score or screening eligibility.',
+  });
 });
 
 registryRouter.get('/macro/fred/:seriesId', async (req, res) => {
@@ -270,7 +294,7 @@ registryRouter.get('/assets/:symbol/verified-context', async (req, res) => {
   const correlationId = resolveCorrelationId(req);
   res.setHeader('x-correlation-id', correlationId);
   const symbol = req.params.symbol.toUpperCase().trim();
-  const asset = assetRegistry.getAsset(symbol);
+  const asset = getAssetCatalogEntry(symbol);
   if (!asset) return res.status(404).json({ correlationId, symbol, status: 'ASSET_NOT_FOUND' });
   if (asset.type !== 'stock' && asset.type !== 'forex' && asset.type !== 'index') {
     return res.status(400).json({ correlationId, symbol, assetType: asset.type, status: 'UNSUPPORTED_ASSET_CLASS', reason: 'Der kombinierte verifizierte Screening-Kontext ist derzeit für Stock/Forex/Index aktiviert.' });
@@ -299,7 +323,7 @@ registryRouter.get('/assets/:symbol/verified-quote', async (req, res) => {
   const correlationId = resolveCorrelationId(req);
   res.setHeader('x-correlation-id', correlationId);
   const symbol = req.params.symbol.toUpperCase().trim();
-  const asset = assetRegistry.getAsset(symbol);
+  const asset = getAssetCatalogEntry(symbol);
   if (!asset) return res.status(404).json({ correlationId, symbol, status: 'ASSET_NOT_FOUND' });
   if (asset.type !== 'stock' && asset.type !== 'forex' && asset.type !== 'index') {
     return res.status(400).json({ correlationId, symbol, assetType: asset.type, status: 'UNSUPPORTED_ASSET_CLASS', price: null, alertEligible: false });
@@ -309,8 +333,8 @@ registryRouter.get('/assets/:symbol/verified-quote', async (req, res) => {
 });
 
 registryRouter.get('/assets/:symbol', (req, res) => {
-  const asset = assetRegistry.getAsset(req.params.symbol);
-  if (!asset) return res.status(404).json({ error: 'Asset nicht in der Registry gefunden.' });
+  const asset = getAssetCatalogEntry(req.params.symbol);
+  if (!asset) return res.status(404).json({ error: 'Asset nicht im Asset-Katalog gefunden.' });
   res.json(toPublicAssetView(asset));
 });
 
@@ -324,11 +348,17 @@ registryRouter.get('/assets/:symbol/verified-score', async (req, res) => {
 registryRouter.post('/assets/:symbol', express.json(), async (req, res) => {
   const authz = await checkAdminAccess(req, 'registry:assets:update', SUPERVISOR_ZONE_ROLES);
   if (!authz.authorized) return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.' });
-  const symbol = req.params.symbol;
-  if (!assetRegistry.getAsset(symbol)) return res.status(404).json({ error: 'Asset nicht in der Registry gefunden.' });
+  const symbol = req.params.symbol.toUpperCase().trim();
+  const catalogAsset = getAssetCatalogEntry(symbol);
+  if (!catalogAsset) return res.status(404).json({ error: 'Asset nicht im Asset-Katalog gefunden.' });
+  if (!assetRegistry.getAsset(symbol)) {
+    return res.status(409).json({
+      error: 'CATALOG_ONLY_ASSET',
+      reason: 'Katalog-only Assets besitzen keine vertrauenswürdigen Bootstrap-Marktdaten und dürfen nicht über den Legacy-Parameterpfad mit manuellen Finanzwerten angereichert werden.',
+    });
+  }
   const payload = buildAssetUpdatePayload(req.body);
   assetRegistry.updateAsset(symbol, payload, true);
   logSystemEvent('ORCHESTRATOR', 'Asset Parameter Update', authz.actorLabel, `Updated parameters for ${symbol}: Price=${payload.price}, 24h Change=${payload.change24h}%, Volatility=${payload.volatility}, Drift=${payload.drift}, expectedReturn=${payload.expectedReturn}`, 'SUCCESS');
-  const updated = assetRegistry.getAsset(symbol)!;
-  res.json({ success: true, asset: toPublicAssetView(updated) });
+  res.json({ success: true, asset: toPublicAssetView(catalogAsset) });
 });
