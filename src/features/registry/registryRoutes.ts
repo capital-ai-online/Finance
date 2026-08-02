@@ -18,6 +18,8 @@ import {
 } from '../../services/macroRateEvidence';
 import { buildMacroRiskRegime } from '../../services/macroRiskRegime';
 import { buildCrossAssetRiskContext, type CrossAssetClass } from '../../services/crossAssetRiskContext';
+import { fetchVerifiedTraditionalQuote } from '../../services/traditionalQuoteEvidence';
+import { evaluateScreeningEligibility } from '../../services/screeningEligibility';
 import { logSystemEvent } from '../../../server/systemEvents';
 import { ensureFundamentalsFresh, getCachedFundamentals } from '../../../server/stockFundamentals';
 import { ensureIndexHistoryFresh, getCachedIndexHistory, INDEX_FMP_TICKERS } from '../../../server/fmpIndices';
@@ -80,6 +82,15 @@ function resolveCorrelationId(req: express.Request): string {
   if (typeof supplied === 'string' && supplied.trim()) return supplied.trim().slice(0, 128);
   const requestId = (req as express.Request & { requestId?: string }).requestId;
   return requestId || randomUUID();
+}
+
+function latestObservedAt(payload: Record<string, unknown>): string | null {
+  const provenance = Array.isArray(payload.provenance) ? payload.provenance as Array<Record<string, unknown>> : [];
+  const timestamps = provenance
+    .map(item => typeof item.observedAt === 'string' ? item.observedAt : null)
+    .filter((value): value is string => Boolean(value) && Number.isFinite(Date.parse(value)))
+    .sort((a, b) => Date.parse(b) - Date.parse(a));
+  return timestamps[0] ?? null;
 }
 
 async function evaluateVerifiedTraditionalSymbol(symbolInput: string, correlationId: string): Promise<VerifiedTraditionalEvaluation> {
@@ -164,41 +175,18 @@ registryRouter.get('/assets', (_req, res) => {
   res.json(assetRegistry.getAssets().map(toPublicAssetView));
 });
 
-/**
- * Macro/rate evidence boundary. These endpoints expose provenance-rich reference evidence only.
- * They are never execution-price endpoints and they do not create asset scores.
- */
 registryRouter.get('/macro/fred/:seriesId', async (req, res) => {
   const correlationId = resolveCorrelationId(req);
   res.setHeader('x-correlation-id', correlationId);
   const seriesId = req.params.seriesId.toUpperCase() as ApprovedFredSeriesId;
   if (!(seriesId in APPROVED_FRED_SERIES)) {
-    return res.status(400).json({
-      correlationId,
-      status: 'SERIES_NOT_APPROVED',
-      seriesId,
-      approvedSeries: Object.keys(APPROVED_FRED_SERIES),
-    });
+    return res.status(400).json({ correlationId, status: 'SERIES_NOT_APPROVED', seriesId, approvedSeries: Object.keys(APPROVED_FRED_SERIES) });
   }
   try {
     const evidence = await fetchFredSeries(seriesId);
-    return res.json({
-      correlationId,
-      status: 'READY',
-      provider: evidence.provider,
-      executionPriceEligible: false,
-      evidenceIds: evidence.evidenceIds,
-      evidence,
-    });
+    return res.json({ correlationId, status: 'READY', provider: evidence.provider, executionPriceEligible: false, evidenceIds: evidence.evidenceIds, evidence });
   } catch (error) {
-    return res.status(503).json({
-      correlationId,
-      status: 'SOURCE_UNAVAILABLE',
-      provider: 'FRED',
-      executionPriceEligible: false,
-      evidenceIds: [],
-      reason: error instanceof Error ? error.message : String(error),
-    });
+    return res.status(503).json({ correlationId, status: 'SOURCE_UNAVAILABLE', provider: 'FRED', executionPriceEligible: false, evidenceIds: [], reason: error instanceof Error ? error.message : String(error) });
   }
 });
 
@@ -207,25 +195,11 @@ registryRouter.get('/macro/ecb/fx/:currency', async (req, res) => {
   res.setHeader('x-correlation-id', correlationId);
   try {
     const evidence = await fetchEcbEurReferenceFx(req.params.currency);
-    return res.json({
-      correlationId,
-      status: 'READY',
-      provider: evidence.provider,
-      executionPriceEligible: false,
-      evidenceIds: evidence.evidenceIds,
-      evidence,
-    });
+    return res.json({ correlationId, status: 'READY', provider: evidence.provider, executionPriceEligible: false, evidenceIds: evidence.evidenceIds, evidence });
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     const status = reason.includes('not approved') ? 400 : 503;
-    return res.status(status).json({
-      correlationId,
-      status: status === 400 ? 'SERIES_NOT_APPROVED' : 'SOURCE_UNAVAILABLE',
-      provider: 'ECB',
-      executionPriceEligible: false,
-      evidenceIds: [],
-      reason,
-    });
+    return res.status(status).json({ correlationId, status: status === 400 ? 'SERIES_NOT_APPROVED' : 'SOURCE_UNAVAILABLE', provider: 'ECB', executionPriceEligible: false, evidenceIds: [], reason });
   }
 });
 
@@ -233,8 +207,7 @@ registryRouter.get('/macro/risk-regime', async (req, res) => {
   const correlationId = resolveCorrelationId(req);
   res.setHeader('x-correlation-id', correlationId);
   const evidence = await buildMacroRiskRegime();
-  const httpStatus = evidence.status === 'READY' ? 200 : 422;
-  return res.status(httpStatus).json({ correlationId, ...evidence });
+  return res.status(evidence.status === 'READY' ? 200 : 422).json({ correlationId, ...evidence });
 });
 
 registryRouter.get('/macro/cross-asset/:assetClass', async (req, res) => {
@@ -243,46 +216,47 @@ registryRouter.get('/macro/cross-asset/:assetClass', async (req, res) => {
   const assetClass = req.params.assetClass.toLowerCase() as CrossAssetClass;
   const allowed: CrossAssetClass[] = ['stock', 'forex', 'index', 'crypto', 'bond'];
   if (!allowed.includes(assetClass)) {
-    return res.status(400).json({
-      correlationId,
-      status: 'UNSUPPORTED_ASSET_CLASS',
-      supportedAssetClasses: allowed,
-      scoreImpactEnabled: false,
-      recommendationEligible: false,
-    });
+    return res.status(400).json({ correlationId, status: 'UNSUPPORTED_ASSET_CLASS', supportedAssetClasses: allowed, scoreImpactEnabled: false, recommendationEligible: false });
   }
   const context = await buildCrossAssetRiskContext(assetClass);
-  const httpStatus = context.status === 'READY' ? 200 : 422;
-  return res.status(httpStatus).json({ correlationId, ...context });
+  return res.status(context.status === 'READY' ? 200 : 422).json({ correlationId, ...context });
 });
 
-/**
- * Batch boundary for watchlists/server-side screening clients. Every item gets its own child
- * correlation id and the exact same verified provenance/lineage rules as the single endpoint.
- */
 registryRouter.get('/assets/verified-scores', async (req, res) => {
   const rootCorrelationId = resolveCorrelationId(req);
   res.setHeader('x-correlation-id', rootCorrelationId);
   const raw = typeof req.query.symbols === 'string' ? req.query.symbols : '';
   const symbols = [...new Set(raw.split(',').map(item => item.trim().toUpperCase()).filter(Boolean))].slice(0, 50);
   if (symbols.length === 0) {
-    return res.status(400).json({
-      correlationId: rootCorrelationId,
-      status: 'INVALID_REQUEST',
-      reason: 'Query-Parameter symbols ist erforderlich, z. B. ?symbols=AAPL,EURUSD,GSPC.',
-      results: [],
-    });
+    return res.status(400).json({ correlationId: rootCorrelationId, status: 'INVALID_REQUEST', reason: 'Query-Parameter symbols ist erforderlich, z. B. ?symbols=AAPL,EURUSD,GSPC.', results: [] });
   }
 
-  const results = await Promise.all(symbols.map((symbol) =>
-    evaluateVerifiedTraditionalSymbol(symbol, `${rootCorrelationId}:${symbol}`)
-  ));
+  const evaluations = await Promise.all(symbols.map(symbol => evaluateVerifiedTraditionalSymbol(symbol, `${rootCorrelationId}:${symbol}`)));
+  const results = evaluations.map(item => {
+    const providers = Array.isArray(item.payload.providers) ? item.payload.providers.filter((v): v is string => typeof v === 'string') : [];
+    const evidenceIds = Array.isArray(item.payload.evidenceIds) ? item.payload.evidenceIds.filter((v): v is string => typeof v === 'string') : [];
+    const score = typeof item.payload.score === 'number' && Number.isFinite(item.payload.score) ? item.payload.score : null;
+    const scoreStatus = typeof item.payload.status === 'string' ? item.payload.status : 'SCORE_NOT_COMPUTABLE';
+    const eligibility = evaluateScreeningEligibility({
+      scoreStatus,
+      score,
+      providers,
+      evidenceIds,
+      observedAt: latestObservedAt(item.payload),
+      minimumEvidence: 1,
+      minimumProviders: 1,
+    });
+    return { httpStatus: item.httpStatus, ...item.payload, screeningEligibility: eligibility };
+  });
+
   return res.json({
     correlationId: rootCorrelationId,
     status: 'BATCH_COMPLETE',
     requested: symbols.length,
-    ready: results.filter(item => item.httpStatus === 200).length,
-    results: results.map(item => ({ httpStatus: item.httpStatus, ...item.payload })),
+    ready: evaluations.filter(item => item.httpStatus === 200).length,
+    eligible: results.filter(item => item.screeningEligibility.eligible).length,
+    eligibilityContractVersion: 'screening-eligibility/1.0.0',
+    results,
   });
 });
 
@@ -293,20 +267,13 @@ registryRouter.get('/assets/:symbol/verified-context', async (req, res) => {
   const asset = assetRegistry.getAsset(symbol);
   if (!asset) return res.status(404).json({ correlationId, symbol, status: 'ASSET_NOT_FOUND' });
   if (asset.type !== 'stock' && asset.type !== 'forex' && asset.type !== 'index') {
-    return res.status(400).json({
-      correlationId,
-      symbol,
-      assetType: asset.type,
-      status: 'UNSUPPORTED_ASSET_CLASS',
-      reason: 'Der kombinierte verifizierte Screening-Kontext ist derzeit für Stock/Forex/Index aktiviert.',
-    });
+    return res.status(400).json({ correlationId, symbol, assetType: asset.type, status: 'UNSUPPORTED_ASSET_CLASS', reason: 'Der kombinierte verifizierte Screening-Kontext ist derzeit für Stock/Forex/Index aktiviert.' });
   }
 
   const [scoreResult, macroContext] = await Promise.all([
     evaluateVerifiedTraditionalSymbol(symbol, `${correlationId}:score`),
     buildCrossAssetRiskContext(asset.type),
   ]);
-
   return res.status(scoreResult.httpStatus === 200 ? 200 : 422).json({
     correlationId,
     symbol,
@@ -320,6 +287,19 @@ registryRouter.get('/assets/:symbol/verified-context', async (req, res) => {
       rule: 'Score-Lineage und Macro-Evidence werden korreliert ausgeliefert, aber nicht automatisch miteinander verrechnet.',
     },
   });
+});
+
+registryRouter.get('/assets/:symbol/verified-quote', async (req, res) => {
+  const correlationId = resolveCorrelationId(req);
+  res.setHeader('x-correlation-id', correlationId);
+  const symbol = req.params.symbol.toUpperCase().trim();
+  const asset = assetRegistry.getAsset(symbol);
+  if (!asset) return res.status(404).json({ correlationId, symbol, status: 'ASSET_NOT_FOUND' });
+  if (asset.type !== 'stock' && asset.type !== 'forex' && asset.type !== 'index') {
+    return res.status(400).json({ correlationId, symbol, assetType: asset.type, status: 'UNSUPPORTED_ASSET_CLASS', price: null, alertEligible: false });
+  }
+  const quote = await fetchVerifiedTraditionalQuote(symbol, asset.type);
+  return res.status(quote.status === 'READY' ? 200 : 422).json({ correlationId, ...quote });
 });
 
 registryRouter.get('/assets/:symbol', (req, res) => {
@@ -337,24 +317,12 @@ registryRouter.get('/assets/:symbol/verified-score', async (req, res) => {
 
 registryRouter.post('/assets/:symbol', express.json(), async (req, res) => {
   const authz = await checkAdminAccess(req, 'registry:assets:update', SUPERVISOR_ZONE_ROLES);
-  if (!authz.authorized) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.' });
-  }
-
+  if (!authz.authorized) return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.' });
   const symbol = req.params.symbol;
   if (!assetRegistry.getAsset(symbol)) return res.status(404).json({ error: 'Asset nicht in der Registry gefunden.' });
-
   const payload = buildAssetUpdatePayload(req.body);
   assetRegistry.updateAsset(symbol, payload, true);
-
-  logSystemEvent(
-    'ORCHESTRATOR',
-    'Asset Parameter Update',
-    authz.actorLabel,
-    `Updated parameters for ${symbol}: Price=${payload.price}, 24h Change=${payload.change24h}%, Volatility=${payload.volatility}, Drift=${payload.drift}, expectedReturn=${payload.expectedReturn}`,
-    'SUCCESS'
-  );
-
+  logSystemEvent('ORCHESTRATOR', 'Asset Parameter Update', authz.actorLabel, `Updated parameters for ${symbol}: Price=${payload.price}, 24h Change=${payload.change24h}%, Volatility=${payload.volatility}, Drift=${payload.drift}, expectedReturn=${payload.expectedReturn}`, 'SUCCESS');
   const updated = assetRegistry.getAsset(symbol)!;
   res.json({ success: true, asset: toPublicAssetView(updated) });
 });
