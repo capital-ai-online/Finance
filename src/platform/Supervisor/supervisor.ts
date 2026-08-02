@@ -6,6 +6,7 @@
 import { eventMeshBus } from '../EventMesh/Core/EventBus';
 import { bootstrapEventMesh, isBootstrapped } from '../EventMesh/Services/EventMeshService';
 import { getProviderHealth, type ProviderHealthRecord } from './providerHealth';
+import { getAiGovernanceInventory } from '../../services/aiGovernance';
 
 export type AssetClass = 'crypto' | 'commodity' | 'stock' | 'forex' | 'index' | 'bond';
 
@@ -16,12 +17,12 @@ export interface TaskRoute {
 }
 
 const TASK_ROUTING_TABLE: Record<AssetClass, TaskRoute> = {
-  crypto: { engineId: 'crypto_orchestrator', label: 'Crypto/DeFi/Meme-Coin Scoring (real-marktdatenbasiert)', hasDedicatedEngine: true },
+  crypto: { engineId: 'crypto_orchestrator', label: 'Crypto/DeFi/Meme-Coin Scoring (verified market data + provenance)', hasDedicatedEngine: true },
   commodity: { engineId: 'rawmaterials_orchestrator', label: 'Rohstoff-Scoring (dedizierte Fachengine)', hasDedicatedEngine: true },
-  stock: { engineId: 'traditional_asset_engine', label: 'Aktien-Scoring (Technik + Alpha-Vantage-Fundamentaldaten, H1)', hasDedicatedEngine: true },
-  forex: { engineId: 'traditional_asset_engine', label: 'Forex-Scoring (rein technisch, H1)', hasDedicatedEngine: true },
-  index: { engineId: 'heuristic_fallback', label: 'Momentum-Heuristik (keine Live-Kursquelle fuer Indizes vorhanden)', hasDedicatedEngine: false },
-  bond: { engineId: 'heuristic_fallback', label: 'Momentum-Heuristik (kein Anleihen-Scoring implementiert)', hasDedicatedEngine: false },
+  stock: { engineId: 'traditional_asset_engine', label: 'Aktien-Scoring (Technik + Alpha-Vantage-Fundamentaldaten)', hasDedicatedEngine: true },
+  forex: { engineId: 'traditional_asset_engine', label: 'Forex-Scoring (reale Kurshistorie, rein technisch)', hasDedicatedEngine: true },
+  index: { engineId: 'traditional_asset_engine', label: 'Index-Scoring (FMP-Kurshistorie, rein technisch)', hasDedicatedEngine: true },
+  bond: { engineId: 'heuristic_fallback', label: 'Kein dediziertes Anleihen-Scoring implementiert', hasDedicatedEngine: false },
 };
 
 export function routeTask(assetClass: string): TaskRoute | undefined {
@@ -121,6 +122,13 @@ export interface SupervisorStatus {
   routingTable: Record<AssetClass, TaskRoute>;
   recentExecutions: SupervisedExecutionRecord[];
   providerHealth: ProviderHealthRecord[];
+  aiGovernance: {
+    providerRoles: number;
+    registeredPrompts: number;
+    recordedEvaluations: number;
+    warnings: number;
+    failures: number;
+  };
   capabilities: {
     taskRouting: boolean;
     toolSelection: boolean;
@@ -130,15 +138,26 @@ export interface SupervisorStatus {
     selfHealing: boolean;
     conflictResolution: boolean;
     providerHealth: boolean;
+    aiGovernance: boolean;
   };
   notes: string[];
 }
 
 export function getSupervisorStatus(): SupervisorStatus {
+  const aiInventory = getAiGovernanceInventory();
+  const warnings = aiInventory.recentEvaluations.filter(record => record.outcome === 'WARN').length;
+  const failures = aiInventory.recentEvaluations.filter(record => record.outcome === 'FAIL').length;
   return {
     routingTable: getRoutingTable(),
     recentExecutions: getRecentExecutions(),
     providerHealth: getProviderHealth(),
+    aiGovernance: {
+      providerRoles: aiInventory.models.length,
+      registeredPrompts: aiInventory.prompts.length,
+      recordedEvaluations: aiInventory.recentEvaluations.length,
+      warnings,
+      failures,
+    },
     capabilities: {
       taskRouting: true,
       toolSelection: true,
@@ -148,10 +167,12 @@ export function getSupervisorStatus(): SupervisorStatus {
       selfHealing: true,
       conflictResolution: false,
       providerHealth: true,
+      aiGovernance: true,
     },
     notes: [
-      'conflictResolution: nicht implementiert - die aktuelle Architektur hat pro Anlageklasse genau eine autoritative Engine, es gibt aktuell keinen echten Konflikt zwischen mehreren Quellen aufzuloesen.',
-      'providerHealth: runtime-basiert; nur tatsaechlich beobachtete Provider-Aufrufe erscheinen im Status.',
+      'conflictResolution: nicht implementiert - pro Anlageklasse existiert aktuell eine autoritative Scoring-Engine; echte konkurrierende Entscheidungsquellen liegen nicht vor.',
+      'providerHealth: runtime-basiert; nur tatsächlich beobachtete Provider-Aufrufe erscheinen im Status.',
+      'aiGovernance: runtime-basiert; Evaluationen erscheinen erst, nachdem ein instrumentierter AI-Aufruf tatsächlich ausgeführt wurde.',
     ],
   };
 }
