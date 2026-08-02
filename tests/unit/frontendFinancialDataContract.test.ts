@@ -45,6 +45,31 @@ describe('frontend financial data contract regression gate', () => {
     expect(code).not.toContain('/api/registry/assets/');
   });
 
+  it('MarketScreener consumes verified score/context contracts and has no symbol-hash finance logic', () => {
+    const code = source('src/components/MarketScreener.tsx');
+    expect(code).toContain('/api/crypto/score');
+    expect(code).toContain('/verified-context');
+    expect(code).toContain('scoreImpactEnabled: false');
+    expect(code).toContain('Kein verifiziertes Pattern ableitbar');
+    expect(code).not.toContain('charCodeAt');
+    expect(code).not.toContain('scanModifier');
+    expect(code).not.toContain('getTrafficLightData');
+    expect(code).not.toMatch(/entryMin|entryMax|stopLoss|takeProfit/);
+    expect(code).not.toContain('Simulate real calculations');
+  });
+
+  it('PriceAlert evaluates only verified quote evidence and contains no random-walk price engine', () => {
+    const code = source('src/components/PriceAlert.tsx');
+    expect(code).toContain('/api/crypto/price-consensus/');
+    expect(code).toContain("status: 'READY'");
+    expect(code).toContain('quoteEvidenceIds');
+    expect(code).toContain('quoteObservedAt');
+    expect(code).not.toContain('Math.random');
+    expect(code).not.toContain('Random walk');
+    expect(code).not.toContain('handleSimulateAlertTrigger');
+    expect(code).not.toContain('isSimulationActive');
+  });
+
   it('Legacy P0 copy is not presented as current provider status', () => {
     const code = source('src/components/CryptoEnterpriseEvaluator.tsx');
     expect(code).not.toContain('P0-Sicherheitsmodus');
