@@ -13,6 +13,7 @@ import {
   buildMarketIntegrityCalibrationReport,
   type MarketIntegrityCalibrationReport,
 } from '../../services/marketIntegrityCalibration';
+import { buildScreeningSlaReport, type ScreeningSlaReport } from '../../services/screeningSla';
 
 export type AssetClass = 'crypto' | 'commodity' | 'stock' | 'forex' | 'index' | 'bond';
 
@@ -135,6 +136,7 @@ export interface SupervisorStatus {
     telemetry: ProviderRoutingTelemetry[];
   };
   marketIntegrity: MarketIntegrityCalibrationReport;
+  screeningSla: ScreeningSlaReport;
   aiGovernance: {
     providerRoles: number;
     registeredPrompts: number;
@@ -153,6 +155,7 @@ export interface SupervisorStatus {
     providerHealth: boolean;
     marketDataRouting: boolean;
     marketIntegrityCalibration: boolean;
+    screeningSla: boolean;
     aiGovernance: boolean;
   };
   notes: string[];
@@ -164,6 +167,8 @@ export function getSupervisorStatus(): SupervisorStatus {
   const failures = aiInventory.recentEvaluations.filter(record => record.outcome === 'FAIL').length;
   const marketProviders = getMarketDataProviderRegistry();
   const marketIntegrity = buildMarketIntegrityCalibrationReport();
+  const routingTelemetry = getMarketDataProviderTelemetry();
+  const screeningSla = buildScreeningSlaReport(routingTelemetry);
   return {
     routingTable: getRoutingTable(),
     recentExecutions: getRecentExecutions(),
@@ -172,9 +177,10 @@ export function getSupervisorStatus(): SupervisorStatus {
       registeredProviders: marketProviders.length,
       activeProviders: marketProviders.filter(provider => provider.activation === 'active').length,
       candidateProviders: marketProviders.filter(provider => provider.activation === 'candidate').length,
-      telemetry: getMarketDataProviderTelemetry(),
+      telemetry: routingTelemetry,
     },
     marketIntegrity,
+    screeningSla,
     aiGovernance: {
       providerRoles: aiInventory.models.length,
       registeredPrompts: aiInventory.prompts.length,
@@ -193,11 +199,13 @@ export function getSupervisorStatus(): SupervisorStatus {
       providerHealth: true,
       marketDataRouting: true,
       marketIntegrityCalibration: true,
+      screeningSla: true,
       aiGovernance: true,
     },
     notes: [
       'conflictResolution: evidence-preserving Spot-/Snapshot-Quorum erkennt SOURCE_CONFLICT und verweigert einen künstlichen kanonischen Wert; harte Score-/Ranking-Gates bleiben bis zur Kalibrierung deaktiviert.',
       `marketIntegrityCalibration: ${marketIntegrity.status}; ${marketIntegrity.observations}/${marketIntegrity.minimumSample} Runtime-Beobachtungen. Eine Hard-Gate-Aktivierung bleibt reviewed und ist nicht automatisch freigegeben.`,
+      `screeningSla: ${screeningSla.state}; ${screeningSla.providersObserved} Provider mit Runtime-Evidence. Dieser Status ist observability-only und blockiert Screening nicht automatisch.`,
       'providerHealth: runtime-basiert; nur tatsächlich beobachtete Provider-Aufrufe erscheinen im Status.',
       'marketDataRouting: adaptive Priorisierung nutzt Governance-Priorität, Failures/Cooldown und EWMA-Latenz; Candidate-Provider bleiben bis Production Handoff deaktiviert.',
       'aiGovernance: runtime-basiert; Evaluationen erscheinen erst, nachdem ein instrumentierter AI-Aufruf tatsächlich ausgeführt wurde.',
