@@ -227,17 +227,22 @@ app.use((req, res, next) => {
   // externen-Assets-Build durchlaufen). Im Entwicklungsmodus benoetigt Vites HMR-Client
   // weiterhin 'unsafe-inline'/'unsafe-eval', daher dort unveraendert gelockert.
   // CookieHub (Cookie-Consent-Banner) und Google Analytics (gtag.js, nur nach Einwilligung
-  // geladen, siehe src/services/googleAnalytics.ts) muessen hier explizit erlaubt werden -
-  // ohne diese beiden Hosts blockiert der Browser die Skripte still per CSP-Violation, das
-  // Banner erscheint nie und GA erhaelt selbst nach Opt-in keine Daten.
+  // geladen, siehe Inline-Script in index.html) muessen hier explizit erlaubt werden - ohne
+  // diese beiden Hosts blockiert der Browser die Skripte still per CSP-Violation, das Banner
+  // erscheint nie und GA erhaelt selbst nach Opt-in keine Daten.
   const scriptSrc = isProductionEnv
     ? "'self' https://*.stripe.com https://cdn.cookiehub.eu https://www.googletagmanager.com"
     : "'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com https://cdn.cookiehub.eu https://www.googletagmanager.com";
+  // CookieHub laedt sein eigenes Stylesheet von cdn.cookiehub.eu (siehe window.__cookiehub.css
+  // im ausgelieferten Snippet) - ohne diesen Host in style-src blockiert der Browser das
+  // Stylesheet per CSP (Konsolen-Meldung "Refused to apply style..."), das Banner-Markup wird
+  // zwar ins DOM injiziert, bleibt aber komplett unformatiert/unsichtbar, obwohl weder Skript-
+  // Laden noch die vom Server ausgelieferte Konfiguration selbst einen Fehler zeigen.
   res.setHeader(
     'Content-Security-Policy',
     "default-src 'self' https:; " +
     `script-src ${scriptSrc}; ` +
-    "style-src 'self' https://fonts.googleapis.com; " +
+    "style-src 'self' https://fonts.googleapis.com https://cdn.cookiehub.eu; " +
     "img-src 'self' data: https: referrer; " +
     "font-src 'self' data: https://fonts.gstatic.com; " +
     "frame-src 'self' https://*.stripe.com; " +
