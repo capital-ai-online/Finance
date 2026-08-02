@@ -11,8 +11,14 @@ import { generateTextWithFallback, type ChatTurn } from '../src/services/agentMo
 import { getPromptGovernanceEntry, recordAiEvaluation, getAiGovernanceInventory, type AiProvider } from '../src/services/aiGovernance';
 import { getAnthropicInstance, isAnthropicConfigured } from './anthropicClient';
 import { getOpenAIInstance, isOpenAIConfigured } from './openaiClient';
+import { entitlementsRouter } from './entitlements';
 
 export const aiRouter = express.Router();
+
+// ADR-0034: aiRouter is mounted at /api in server.ts. Keep entitlement runtime logic in
+// its own router while exposing the stable /api/entitlements/* contract without adding
+// another top-level mount point to the monolithic server bootstrap.
+aiRouter.use('/entitlements', entitlementsRouter);
 
 const upload = multer({
   dest: 'uploads/',
