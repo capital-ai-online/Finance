@@ -3,6 +3,7 @@
 import { getServerSupabase, isSupabaseConfigured } from '../../../server/db';
 import { runAllScanners } from './scanners';
 import { buildRuntimeEvidenceScanner } from './runtimeEvidence';
+import { buildMarketIntegrityEvidenceScanner } from './marketIntegrityEvidence';
 import { buildAiGovernanceEvidenceScanner } from './aiGovernanceEvidence';
 import type { ComplianceCertificate, ComplianceRun, Finding, ScannerResult, Severity } from './types';
 
@@ -54,6 +55,8 @@ export async function executeComplianceRun(triggeredBy: string | undefined): Pro
   const scannerResultsList = runAllScanners();
   const runtimeScanner = buildRuntimeEvidenceScanner();
   if (runtimeScanner) scannerResultsList.push(runtimeScanner);
+  const marketIntegrityScanner = buildMarketIntegrityEvidenceScanner();
+  if (marketIntegrityScanner) scannerResultsList.push(marketIntegrityScanner);
   const aiGovernanceScanner = buildAiGovernanceEvidenceScanner();
   if (aiGovernanceScanner) scannerResultsList.push(aiGovernanceScanner);
 
