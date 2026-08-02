@@ -1420,7 +1420,7 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
               </p>
               <div className="text-[10px] font-mono space-y-1 pt-1">
                 <div className="flex justify-between text-white/30"><span className="uppercase">Scoring-Modell:</span> <span className="text-white/60">Dex Screener Ratio</span></div>
-                <div className="flex justify-between text-white/30"><span className="uppercase">Validierung:</span> <span className="text-white/60">RugPull Audit v0.6.0</span></div>
+                <div className="flex justify-between text-white/30"><span className="uppercase">Validierung:</span> <span className="text-white/60">RugPull Audit v0.7.0</span></div>
                 <div className="flex justify-between text-white/30"><span className="uppercase">Gewichtung:</span> <span className="text-white/50">50% Social / 50% LP</span></div>
               </div>
             </div>
@@ -1432,7 +1432,7 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
               <span>Alle Scoring-Mechanismen sind DSGVO-konform und werden lokal oder verschlüsselt ausgeführt.</span>
             </div>
             <button
-              onClick={() => alert("Scoring-Modell Matrix synchronisiert. Version 0.5.4 Beta aktiv.")}
+              onClick={() => alert("Scoring-Modell Matrix synchronisiert. Version 0.7.0 Beta aktiv.")}
               className="px-4 py-2 bg-aif-neon-purple hover:bg-aif-neon-purple/80 text-white font-black uppercase text-[10px] tracking-widest rounded-xl transition-all shadow-[0_0_15px_rgba(176,38,255,0.3)] cursor-pointer"
             >
               Sichern &amp; Syncen
@@ -1460,7 +1460,7 @@ export function AdminPanel({ currentUserEmail }: AdminPanelProps) {
             </div>
             <div>
               <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-black tracking-widest bg-aif-neon-purple/10 text-aif-neon-purple border border-aif-neon-purple/30 uppercase">
-                DEVSYNC OVERVIEW • BETA-PHASE 0.6.0
+                DEVSYNC OVERVIEW • BETA-PHASE 0.7.0
               </span>
               <h3 className="font-display font-black text-white text-base tracking-wide uppercase mt-1">
                 CAPITAL-AI Dev Station &amp; Datenbank-Architektur

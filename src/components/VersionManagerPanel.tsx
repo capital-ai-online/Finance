@@ -30,15 +30,15 @@ interface VersionManagerPanelProps {
 }
 
 const DEFAULT_STATE = {
-  version: '0.5.4',
+  version: '0.7.0',
   buildNumber: 1245,
   releaseDate: new Date('2026-07-10T03:16:12Z').toISOString(),
-  gitTag: 'v0.5.4-beta',
-  dockerTag: 'capitalai:0.5.4-build1245',
+  gitTag: 'v0.7.0-beta',
+  dockerTag: 'capitalai:0.7.0-build1245',
   releaseNotes: 'Inbetriebnahme der dezentralen Agenten-Architektur, Live-Telemetrie und des automatisierten Document Hygiene Systems.',
   history: [
     {
-      version: '0.5.4',
+      version: '0.7.0',
       buildNumber: 1245,
       date: new Date('2026-07-10T03:16:12Z').toISOString(),
       type: 'minor',
@@ -171,7 +171,7 @@ export function VersionManagerPanel({ currentUserEmail }: VersionManagerPanelPro
         }
       }
 
-      const stateVer = versionData?.state?.version || '0.5.4';
+      const stateVer = versionData?.state?.version || '0.7.0';
       const stateBuild = versionData?.state?.buildNumber || '1245';
 
       // We simulate reading the markdown content dynamically based on current version data

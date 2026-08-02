@@ -122,7 +122,7 @@ export function SocialDirectPublisherModal({ item, isOpen, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="bg-neutral-900 border border-white/15 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 space-y-6 text-white shadow-2xl relative">
+      <div className="bg-neutral-900/80 backdrop-blur-xl border border-white/15 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 space-y-6 text-white shadow-2xl relative">
 
         <button
           onClick={onClose}

@@ -144,7 +144,7 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
       compliance: {
         adr: 'ADR-0004, ADR-0007 & ADR-0008',
         title: 'Autonomous Documentary, Version Pinning & Reactivity Lifecycle Fix',
-        description: 'Wacht über Dokumentenhygiene und Branding-Vorgaben gem. Version 0.5.4, behebt Lebenszyklus- & Reaktivitätsprobleme (ADR-0008), führt Linters aus und verwaltet Rollbacks.'
+        description: 'Wacht über Dokumentenhygiene und Branding-Vorgaben gem. Version 0.7.0, behebt Lebenszyklus- & Reaktivitätsprobleme (ADR-0008), führt Linters aus und verwaltet Rollbacks.'
       }
     },
     {
@@ -161,7 +161,7 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
     {
       id: 'compliance' as const,
       label: 'Compliance Auditor',
-      description: 'Regulatorischer BaFin- & DSGVO-Auditor (v0.5.4)',
+      description: 'Regulatorischer BaFin- & DSGVO-Auditor (v0.7.0)',
       icon: ShieldCheck,
       compliance: {
         adr: 'ADR-015',
@@ -194,7 +194,7 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
             
             <h2 className="text-2xl font-black font-display text-white tracking-tight uppercase flex items-center gap-2">
               <span>ADMINISTRATOR PORTAL</span>
-              <span className="text-xs font-mono font-bold bg-white/10 px-2 py-0.5 rounded border border-white/10 text-white/80">v0.5.4</span>
+              <span className="text-xs font-mono font-bold bg-white/10 px-2 py-0.5 rounded border border-white/10 text-white/80">v0.7.0</span>
             </h2>
             <p className="text-xs text-white/55 leading-relaxed font-sans max-w-2xl">
               Echtzeit-Verwaltung, Datenstrom-Orchestrierung und kryptografische Protokollanalyse für das CAPITAL-AI Ökosystem.

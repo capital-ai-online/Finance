@@ -154,7 +154,7 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
 
   // 4. Initialise Terminal Lines
   const [terminalLines, setTerminalLines] = useState<string[]>([
-    `[${new Date().toISOString()}] CAPITAL-AI Supervisor v0.5.4 initialized on Cloud Run.`,
+    `[${new Date().toISOString()}] CAPITAL-AI Supervisor v0.7.0 initialized on Cloud Run.`,
     `[${new Date().toISOString()}] Connection pool established to Firestore database. Status: 100% Healthy.`,
     `[${new Date().toISOString()}] Model auto-router active. Priority: Speed and GDPR Compliance.`,
     `[${new Date().toISOString()}] File watcher attached to docs/adr directory. 1 revision recorded in index.`
@@ -274,7 +274,7 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
         body: JSON.stringify({
           type: 'ORCHESTRATOR',
           action: 'Manual Database Backup',
-          details: 'Durable backup snapshot triggered manually via CAPITAL-AI Supervisor Terminal. Version 0.5.4.',
+          details: 'Durable backup snapshot triggered manually via CAPITAL-AI Supervisor Terminal. Version 0.7.0.',
           status: 'SUCCESS'
         })
       });
@@ -511,7 +511,7 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
           </div>
           <h2 className="text-base font-black font-mono text-white flex items-center gap-2 uppercase">
             <span>CAPITAL-AI PLATFORM SUPERVISOR Dashboard</span>
-            <span className="text-[9px] bg-white/10 px-2 py-0.5 rounded border border-white/10 font-bold text-aif-gold-DEFAULT">v0.5.4 Blueprint</span>
+            <span className="text-[9px] bg-white/10 px-2 py-0.5 rounded border border-white/10 font-bold text-aif-gold-DEFAULT">v0.7.0 Blueprint</span>
           </h2>
           <p className="text-xs text-white/50 leading-relaxed max-w-2xl font-sans">
             Zentralisierte, revisionssichere Überwachung aller Plattformkomponenten. Visualisiert Latenzen, LLM-Routen, Circuit Breaker, asynchrone Queues und Container-Ressourcen der Live-Plattform.
@@ -638,7 +638,7 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
                   <div className="border-t border-white/5 pt-3">
                     <div className="flex justify-between text-[9px] font-mono text-white/30">
                       <span>Modell: Gemini 2.5 Flash</span>
-                      <span>v0.5.4 Autopilot</span>
+                      <span>v0.7.0 Autopilot</span>
                     </div>
                     <div className="w-full bg-white/5 h-1.5 rounded-full mt-1.5 overflow-hidden">
                       <div className="bg-emerald-500 h-full rounded-full transition-all duration-1000" style={{ width: '22.5%' }} />
@@ -1084,7 +1084,7 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
                         <span>NEUE KOMPETENZ ANBINDEN (AGENTEN-INTEGRATION)</span>
                       </h3>
                       <p className="text-[10px] text-white/40 leading-normal font-sans mt-1">
-                        Integrieren Sie neue AI-Modul-Fähigkeiten direkt in das dezentrale Master-Supervisor Netzwerk der CAPITAL-AI Plattform (Version 0.5.4).
+                        Integrieren Sie neue AI-Modul-Fähigkeiten direkt in das dezentrale Master-Supervisor Netzwerk der CAPITAL-AI Plattform (Version 0.7.0).
                       </p>
                     </div>
 
@@ -1224,7 +1224,7 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
                   </div>
 
                   <p className="text-[10px] text-white/40 leading-normal font-sans">
-                    Überwachung der Server-Ressourcenauslastung in der Cloud Run Container-Sandbox (Version 0.5.4).
+                    Überwachung der Server-Ressourcenauslastung in der Cloud Run Container-Sandbox (Version 0.7.0).
                   </p>
 
                   <div className="space-y-4 pt-2">
@@ -1259,7 +1259,7 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
                     <div className="bg-black/30 rounded-xl p-3 border border-white/5 text-[10px] font-mono space-y-1.5">
                       <div className="flex justify-between">
                         <span className="text-white/45">Docker Image:</span>
-                        <span className="text-white">capital-ai-prod:0.5.4</span>
+                        <span className="text-white">capital-ai-prod:0.7.0</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-white/45">Nginx Proxy Port:</span>

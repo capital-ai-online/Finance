@@ -218,7 +218,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
   const coveragePct = result?.coverage === null || result?.coverage === undefined ? null : Math.round(result.coverage * 100);
 
   return (
-    <section className="bg-neutral-950/60 border border-white/10 rounded-2xl p-5 sm:p-6 backdrop-blur-md relative overflow-hidden space-y-6">
+    <section className="bg-neutral-950/60 border border-white/10 rounded-2xl p-5 sm:p-6 backdrop-blur-xl relative overflow-hidden space-y-6">
       <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/5 blur-[110px] rounded-full pointer-events-none" />
 
       <div className="relative z-20 flex flex-col xl:flex-row xl:items-start justify-between gap-5 border-b border-white/10 pb-5">

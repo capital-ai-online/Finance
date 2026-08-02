@@ -45,7 +45,7 @@ const TEMPLATES = [
     name: 'Standard-Architekturvorlage (Leer)',
     icon: FileText,
     description: 'Eine leere Standard-Struktur nach dem Nygard-Schema.',
-    context: 'Im Rahmen des Aufbaus der CAPITAL-AI Plattform (v0.5.4) stehen wir vor der Herausforderung, [Problem/Herausforderung einfügen] zu implementieren. Die aktuellen Rahmenbedingungen erfordern eine Entscheidung bezüglich...',
+    context: 'Im Rahmen des Aufbaus der CAPITAL-AI Plattform (v0.7.0) stehen wir vor der Herausforderung, [Problem/Herausforderung einfügen] zu implementieren. Die aktuellen Rahmenbedingungen erfordern eine Entscheidung bezüglich...',
     decision: 'Wir entscheiden uns dafür, [die gewählte Lösung einfügen], weil dies die folgenden Vorteile bietet:\n- \n- \n\nFolgende Alternativen wurden evaluiert und aus folgenden Gründen verworfen:\n- Alternative A: ...',
     consequences: 'Durch diesen Entscheid ergeben sich folgende Konsequenzen:\n- Positiv: ...\n- Negativ / Risiken: ...\n- Nächste Schritte: ...'
   },
@@ -54,7 +54,7 @@ const TEMPLATES = [
     icon: Sparkles,
     description: 'Für Entscheidungen bezüglich Datenbanktyp, Datensynchronisation und Indizes.',
     context: 'Für die dauerhafte Speicherung von Benutzerkonfigurationen, historischen Portfolios und Revisionsprotokollen ist eine hochverfügbare, latenzarme Persistenzschicht erforderlich. Es muss entschieden werden, ob Firestore (NoSQL mit Echtzeitsynchronisation) oder Cloud SQL (PostgreSQL für relationale Konsistenz) verwendet wird.',
-    decision: 'Wir entscheiden uns für die Verwendung von Google Cloud Firestore als primäre NoSQL-Datenbank für dynamische Benutzerprofile und Dokumenten-Hygiene, während kritische relationale Scoring-Pipelines optional über Cloud SQL PostgreSQL angebunden werden können. Firestore wird gewählt, weil:\n- Es out-of-the-box Echtzeit-Updates für das User Interface bereitstellt.\n- Die schemalose Struktur schnelle Iterationen in der Beta-Phase (v0.5.4) zulässt.\n- Es über eingebaute Offline-Persistenz im Web-SDK verfügt.',
+    decision: 'Wir entscheiden uns für die Verwendung von Google Cloud Firestore als primäre NoSQL-Datenbank für dynamische Benutzerprofile und Dokumenten-Hygiene, während kritische relationale Scoring-Pipelines optional über Cloud SQL PostgreSQL angebunden werden können. Firestore wird gewählt, weil:\n- Es out-of-the-box Echtzeit-Updates für das User Interface bereitstellt.\n- Die schemalose Struktur schnelle Iterationen in der Beta-Phase (v0.7.0) zulässt.\n- Es über eingebaute Offline-Persistenz im Web-SDK verfügt.',
     consequences: 'Konsequenzen:\n- Positiv: Extrem niedrige Time-to-Market, minimale DevOps-Kosten und automatische Skalierung.\n- Negativ: Komplexe relationale Abfragen und aggregierte Finanzstatistiken müssen clientseitig oder über isolierte Cloud Functions aggregiert werden.\n- Risiken: Datenintegrität muss durch strenge Firestore Security Rules abgesichert werden.'
   },
   {
@@ -142,7 +142,7 @@ ${formDecision || '*Keine Entscheidung definiert.*'}
 ${formConsequences || '*Keine Konsequenzen definiert.*'}
 
 ---
-*Generiert am ${new Date().toLocaleDateString('de-DE')} via CAPITAL-AI ADR-Manager v0.5.4.*`;
+*Generiert am ${new Date().toLocaleDateString('de-DE')} via CAPITAL-AI ADR-Manager v0.7.0.*`;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -174,7 +174,7 @@ ${formConsequences || '*Keine Konsequenzen definiert.*'}
             <span className="px-2 py-0.5 rounded bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT text-[9px] font-mono font-bold uppercase tracking-wider border border-aif-gold-DEFAULT/20">
               {mode === 'create' ? 'Neues ADR-Dokument' : 'ADR Bearbeiten'}
             </span>
-            <span className="text-[10px] text-white/40 font-mono">v0.5.4 Standards</span>
+            <span className="text-[10px] text-white/40 font-mono">v0.7.0 Standards</span>
           </div>
           <h3 className="text-sm font-black font-mono text-white tracking-wide uppercase">
             {mode === 'create' ? 'Architektur-Entscheid entwerfen' : `Revisionsdokument ${formId}`}

@@ -206,7 +206,7 @@ export function DeFiOrchestration() {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-black uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                Enterprise DeFi v0.5.4
+                Enterprise DeFi v0.7.0
               </span>
               <span className="flex h-2 w-2 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
