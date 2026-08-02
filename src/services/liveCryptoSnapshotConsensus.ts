@@ -15,6 +15,14 @@ function positive(value: unknown): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+function semanticScopeFor(field: SnapshotFieldProvenance['field']): string {
+  if (field === 'marketCapUsd') return 'global-circulating-supply-market-cap-usd';
+  if (field === 'volume24hUsd') return 'global-aggregate-24h-volume-usd';
+  if (field === 'circulatingSupply') return 'circulating-token-supply';
+  if (field === 'maxSupply') return 'maximum-token-supply';
+  return 'total-token-supply';
+}
+
 async function fetchCoinMarketCapProvenance(
   symbol: string,
   options: LiveCryptoSnapshotConsensusOptions,
@@ -65,7 +73,16 @@ async function fetchCoinMarketCapProvenance(
     recordMarketDataProviderOutcome({ provider: 'CoinMarketCap', success: true, latencyMs: Math.max(0, Date.now() - started) });
     return values
       .filter(([, value]) => value !== null)
-      .map(([field, value, unit, sourcePath]) => ({ field, provider: 'CoinMarketCap', sourcePath, observedAt, retrievedAt, value, unit }));
+      .map(([field, value, unit, sourcePath]) => ({
+        field,
+        provider: 'CoinMarketCap',
+        sourcePath,
+        observedAt,
+        retrievedAt,
+        value,
+        unit,
+        semanticScope: semanticScopeFor(field),
+      }));
   } catch (error) {
     recordProviderHealth({
       provider: 'CoinMarketCap',
@@ -98,11 +115,12 @@ export async function getLiveCryptoSnapshotConsensus(
   if (coinGecko) {
     for (const item of Object.values(coinGecko.provenance)) {
       if (!item) continue;
-      provenance.push({ ...item, provider: 'CoinGecko' });
+      provenance.push({
+        ...item,
+        provider: 'CoinGecko',
+        semanticScope: semanticScopeFor(item.field),
+      });
     }
   }
-  return evaluateCryptoSnapshotConsensus(s, provenance, {
-    minimumSources: 2,
-    maxObservationSkewMs: 15 * 60 * 1000,
-  });
+  return evaluateCryptoSnapshotConsensus(s, provenance);
 }
