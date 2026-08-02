@@ -1,6 +1,7 @@
 // Public registry is a catalog view; bootstrap numbers are never exposed as verified market data.
 
 import express from 'express';
+import { randomUUID } from 'crypto';
 import { assetRegistry, type RegistryAsset } from '../../lib/assetRegistry';
 import { checkAdminAccess } from '../../platform/Security/authMiddleware';
 import { SUPERVISOR_ZONE_ROLES } from '../../platform/Security/types';
@@ -61,6 +62,13 @@ function toPublicAssetView(asset: RegistryAsset) {
   };
 }
 
+function resolveCorrelationId(req: express.Request): string {
+  const supplied = req.headers['x-correlation-id'];
+  if (typeof supplied === 'string' && supplied.trim()) return supplied.trim().slice(0, 128);
+  const requestId = (req as express.Request & { requestId?: string }).requestId;
+  return requestId || randomUUID();
+}
+
 export const registryRouter = express.Router();
 
 registryRouter.get('/assets', (_req, res) => {
@@ -79,11 +87,14 @@ registryRouter.get('/assets/:symbol', (req, res) => {
  * verified provenance the endpoint returns SCORE_NOT_COMPUTABLE instead of the legacy heuristic.
  */
 registryRouter.get('/assets/:symbol/verified-score', async (req, res) => {
+  const correlationId = resolveCorrelationId(req);
+  res.setHeader('x-correlation-id', correlationId);
+
   const symbol = req.params.symbol.toUpperCase().trim();
   const asset = assetRegistry.getAsset(symbol);
-  if (!asset) return res.status(404).json({ error: 'Asset nicht in der Registry gefunden.' });
+  if (!asset) return res.status(404).json({ error: 'Asset nicht in der Registry gefunden.', correlationId });
   if (asset.type !== 'stock' && asset.type !== 'forex' && asset.type !== 'index') {
-    return res.status(400).json({ error: 'Dieser Endpunkt ist ausschließlich für Stock/Forex/Index vorgesehen.' });
+    return res.status(400).json({ error: 'Dieser Endpunkt ist ausschließlich für Stock/Forex/Index vorgesehen.', correlationId });
   }
 
   try {
@@ -96,11 +107,14 @@ registryRouter.get('/assets/:symbol/verified-score', async (req, res) => {
     } else {
       if (!INDEX_FMP_TICKERS[symbol]) {
         return res.status(422).json({
+          correlationId,
           symbol,
           assetType: asset.type,
           status: 'SCORE_NOT_COMPUTABLE',
           score: null,
           reason: 'Keine verifizierte Index-Historienquelle für dieses Symbol registriert.',
+          providers: [],
+          evidenceIds: [],
           provenance: [],
           lineage: null,
         });
@@ -111,37 +125,50 @@ registryRouter.get('/assets/:symbol/verified-score', async (req, res) => {
     }
 
     const result = TraditionalAssetScoringService.scoreTraditionalAsset(inputs);
+    const providers = result.lineage?.providers ?? [];
+    const evidenceIds = result.lineage?.evidenceIds ?? [];
+    const correlatedLineage = result.lineage ? { ...result.lineage, correlationId } : null;
+
     if (result.usedFactors.length === 0 || result.provenance.length === 0) {
       return res.status(422).json({
+        correlationId,
         symbol,
         assetType: asset.type,
         status: 'SCORE_NOT_COMPUTABLE',
         score: null,
         reason: 'Keine ausreichend belegten Scoring-Faktoren verfügbar.',
+        providers,
+        evidenceIds,
         missingFactors: result.missingFactors,
         provenance: result.provenance,
-        lineage: result.lineage,
+        lineage: correlatedLineage,
       });
     }
 
     return res.json({
+      correlationId,
       symbol,
       assetType: asset.type,
       status: 'READY',
       score: result.score,
+      providers,
+      evidenceIds,
       usedFactors: result.usedFactors,
       missingFactors: result.missingFactors,
       reasoning: result.reasoning,
       provenance: result.provenance,
-      lineage: result.lineage,
+      lineage: correlatedLineage,
     });
   } catch (error) {
     return res.status(503).json({
+      correlationId,
       symbol,
       assetType: asset.type,
       status: 'SCORE_NOT_COMPUTABLE',
       score: null,
       reason: error instanceof Error ? error.message : String(error),
+      providers: [],
+      evidenceIds: [],
       provenance: [],
       lineage: null,
     });
