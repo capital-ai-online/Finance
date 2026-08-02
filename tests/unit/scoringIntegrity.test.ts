@@ -6,11 +6,12 @@ import {
   FEATURE_VERSION,
   SCORING_INTEGRITY_VERSION,
 } from '../../src/services/scoringIntegrity';
+import type { ScoringEvidenceRef } from '../../src/types/scoringIntegrity';
 
-const evidence = [{
-  evidenceId: 'ev-test-1',
-  provider: 'test-provider',
-  sourceType: 'market-data' as const,
+const evidence: ScoringEvidenceRef[] = [{
+  id: 'ev-test-1',
+  source: 'test-provider',
+  kind: 'market-snapshot',
   observedAt: '2026-08-02T05:00:00.000Z',
   retrievedAt: '2026-08-02T05:00:01.000Z',
 }];
