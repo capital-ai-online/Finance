@@ -1,14 +1,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { assetRegistry } from '../../src/lib/assetRegistry';
-import { evaluateVerifiedCryptoTechnicalScore } from '../../src/services/verifiedCryptoTechnicalScoring';
+import {
+  evaluateVerifiedCryptoTechnicalScore,
+  normalizeHistoryDateToIso,
+} from '../../src/services/verifiedCryptoTechnicalScoring';
 
 function makeHistory(count = 30) {
   const start = Date.UTC(2026, 6, 4);
   return Array.from({ length: count }, (_, index) => {
-    const date = new Date(start + index * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const date = new Date(start + index * 24 * 60 * 60 * 1000);
+    const dd = String(date.getUTCDate()).padStart(2, '0');
+    const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const yy = String(date.getUTCFullYear()).slice(-2);
     const trend = 3000 + index * 18;
     const wave = Math.sin(index / 3) * 35;
-    return { date, close: Number((trend + wave).toFixed(2)) };
+    return { date: `${dd}.${mm}.${yy}`, close: Number((trend + wave).toFixed(2)) };
   });
 }
 
@@ -17,6 +23,11 @@ afterEach(() => {
 });
 
 describe('verified crypto technical scoring regression', () => {
+  it('normalizes the AssetRegistry DD.MM.YY history format', () => {
+    expect(normalizeHistoryDateToIso('02.08.26')).toBe('2026-08-02T00:00:00.000Z');
+    expect(normalizeHistoryDateToIso('2026-08-02')).toBe('2026-08-02T00:00:00.000Z');
+  });
+
   it('returns READY when a real 30-day history provides sufficient evidenced factors', async () => {
     vi.spyOn(assetRegistry, 'getHistory').mockResolvedValue({
       source: 'live',
