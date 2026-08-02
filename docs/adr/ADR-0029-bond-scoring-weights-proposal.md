@@ -1,4 +1,4 @@
-# ADR-0028 — Bond Scoring Weights Proposal (ADR-0022 Follow-up)
+# ADR-0029 — Bond Scoring Weights Proposal (ADR-0022 Follow-up)
 
 - Status: Proposed / Pending Review — **kein produktiver Scoring-Pfad, keine Freigabe**
 - Date: 2026-08-02

@@ -49,7 +49,7 @@ export interface BondScoringWeightsProposal {
 
 /**
  * Entwurf gemaess ADR-0022 "Proposed scoring dimensions"-Tabelle. status:'proposed' bis eine
- * reviewende Person (siehe docs/adr/ADR-0028-bond-scoring-weights-proposal.md) reviewedBy/
+ * reviewende Person (siehe docs/adr/ADR-0029-bond-scoring-weights-proposal.md) reviewedBy/
  * reviewedAt setzt und den Status manuell auf 'approved' aendert - das geschieht bewusst nicht
  * automatisiert.
  */
@@ -81,7 +81,7 @@ export const DRAFT_BOND_SCORING_WEIGHTS: BondScoringWeightsProposal = {
       dimension: 'Credit quality',
       featureKey: 'creditQuality',
       weight: 0.20,
-      evidenceBasis: 'Rating-Evidence einer anerkannten Ratingagentur (noch nicht als Provider integriert - siehe missingFields in ADR-0028)',
+      evidenceBasis: 'Rating-Evidence einer anerkannten Ratingagentur (noch nicht als Provider integriert - siehe ADR-0029)',
       rationale: 'Kreditrisiko ist bei Nicht-Staatsanleihen (z.B. AAA-CORP) ein Hauptfaktor; hohes Gewicht trotz aktuell fehlender Ratingquelle, um dessen Bedeutung nicht durch ein niedriges Gewicht zu verschleiern.',
     },
     {
@@ -169,7 +169,7 @@ export function previewHypotheticalBondScore(
 ): HypotheticalBondScorePreview {
   if (proposal.status !== 'approved') {
     throw new Error(
-      `Bond-Scoring-Gewichte sind status="${proposal.status}", nicht "approved". previewHypotheticalBondScore() ist ausschliesslich fuer die Review-/Backtesting-Phase nach formaler Freigabe bestimmt, siehe docs/adr/ADR-0028-bond-scoring-weights-proposal.md.`,
+      `Bond-Scoring-Gewichte sind status="${proposal.status}", nicht "approved". previewHypotheticalBondScore() ist ausschliesslich fuer die Review-/Backtesting-Phase nach formaler Freigabe bestimmt, siehe docs/adr/ADR-0029-bond-scoring-weights-proposal.md.`,
     );
   }
 

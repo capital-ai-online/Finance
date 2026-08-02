@@ -24,7 +24,7 @@ function walkSourceFiles(dir: string, results: string[] = []): string[] {
   return results;
 }
 
-describe('ADR-0028 bond scoring weights proposal (evaluation artifact, not a live scoring path)', () => {
+describe('ADR-0029 bond scoring weights proposal (evaluation artifact, not a live scoring path)', () => {
   it('is a well-formed proposal: weights sum to 1.0, every dimension documented, status starts unapproved', () => {
     const validation = validateBondScoringWeightsProposal(DRAFT_BOND_SCORING_WEIGHTS);
     expect(validation.errors).toEqual([]);
