@@ -16,7 +16,7 @@ function p(input: Partial<SnapshotFieldProvenance> & Pick<SnapshotFieldProvenanc
 describe('crypto snapshot field consensus', () => {
   it('does not treat a single provider as quorum', () => {
     const result = evaluateCryptoSnapshotConsensus('BTC', [
-      p({ field: 'marketCapUsd', provider: 'CoinGecko', value: 1_000_000, unit: 'USD' }),
+      p({ field: 'marketCapUsd', provider: 'CoinGecko', value: 1_000_000, unit: 'USD', semanticScope: 'global-circulating-supply' }),
     ]);
 
     expect(result.status).toBe('INSUFFICIENT_SOURCES');
@@ -25,9 +25,9 @@ describe('crypto snapshot field consensus', () => {
 
   it('returns consensus only for compatible independent observations', () => {
     const result = evaluateCryptoSnapshotConsensus('BTC', [
-      p({ field: 'marketCapUsd', provider: 'CoinGecko', value: 1_000_000, unit: 'USD' }),
-      p({ field: 'marketCapUsd', provider: 'TwelveData', value: 1_005_000, unit: 'USD' }),
-    ], { toleranceBps: 100 });
+      p({ field: 'marketCapUsd', provider: 'CoinGecko', value: 1_000_000, unit: 'USD', semanticScope: 'global-circulating-supply' }),
+      p({ field: 'marketCapUsd', provider: 'TwelveData', value: 1_005_000, unit: 'USD', semanticScope: 'global-circulating-supply' }),
+    ]);
 
     const field = result.fields.find(item => item.field === 'marketCapUsd');
     expect(field?.status).toBe('CONSENSUS');
@@ -38,13 +38,25 @@ describe('crypto snapshot field consensus', () => {
 
   it('fails closed on material disagreement', () => {
     const result = evaluateCryptoSnapshotConsensus('BTC', [
-      p({ field: 'marketCapUsd', provider: 'CoinGecko', value: 1_000_000, unit: 'USD' }),
-      p({ field: 'marketCapUsd', provider: 'EODHD', value: 1_250_000, unit: 'USD' }),
-    ], { toleranceBps: 100 });
+      p({ field: 'marketCapUsd', provider: 'CoinGecko', value: 1_000_000, unit: 'USD', semanticScope: 'global-circulating-supply' }),
+      p({ field: 'marketCapUsd', provider: 'EODHD', value: 1_250_000, unit: 'USD', semanticScope: 'global-circulating-supply' }),
+    ]);
 
     const field = result.fields.find(item => item.field === 'marketCapUsd');
     expect(field?.status).toBe('SOURCE_CONFLICT');
     expect(field?.canonicalValue).toBeNull();
     expect(result.status).toBe('SOURCE_CONFLICT');
+  });
+
+  it('rejects apparently similar volume observations with incompatible aggregation scope', () => {
+    const result = evaluateCryptoSnapshotConsensus('BTC', [
+      p({ field: 'volume24hUsd', provider: 'CoinGecko', value: 10_000_000, unit: 'USD', semanticScope: 'global-aggregate-24h' }),
+      p({ field: 'volume24hUsd', provider: 'CoinAPI', value: 9_950_000, unit: 'USD', semanticScope: 'single-exchange-24h' }),
+    ]);
+
+    const field = result.fields.find(item => item.field === 'volume24hUsd');
+    expect(field?.status).toBe('NON_COMPARABLE_EVIDENCE');
+    expect(field?.canonicalValue).toBeNull();
+    expect(result.status).toBe('NON_COMPARABLE_EVIDENCE');
   });
 });
