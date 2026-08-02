@@ -1,12 +1,14 @@
 # ADR-0030 — Platform Version and Release Lifecycle
 
 - **Status:** Accepted
+- **Implementation-Status:** ✅ COMPLETE (verifiziert 2026-08-02)
 - **Date:** 2026-08-02
 - **Scope:** CAPITAL-AI Web Application / Production Release Lifecycle
-- **Current Platform Version:** `0.6.0` (Beta)
+- **Current Platform Version at decision:** `0.6.0` (Beta)
 - **Governance ID:** `GOV-VER-002`
 - **Builds on:** `GOV-VER-001` / `tests/unit/platformVersionConsistency.test.ts`
 - **Single Source of Truth:** `package.json#version`
+- **Implementation Contract:** `release-version-gate/1.0.0`
 
 ## 1. Context
 
@@ -35,7 +37,7 @@ While the product remains in Beta (`0.x.y`), CAPITAL-AI applies stricter interna
 rules than SemVer requires. A version number represents a **released, identifiable production
 platform state**, not the number of completed tasks, commits, ADRs or migrations.
 
-The current version remains:
+The version at the time of this decision remains:
 
 `0.6.0`
 
@@ -76,7 +78,7 @@ Typical MINOR triggers:
 - a coherent release train containing multiple accepted work packages that together represent a
   new platform capability level
 
-The next MINOR after the current release line is `0.7.0`.
+The next MINOR after the `0.6.x` release line is `0.7.0`.
 
 ### 3.3 MAJOR — `1.0.0`
 
@@ -204,7 +206,7 @@ Output: **Released Platform Version**.
 
 `package.json#version` is the authoritative platform version.
 
-The release procedure must synchronize at least:
+The release procedure synchronizes at least:
 
 1. `package.json`
 2. root package version in `package-lock.json`
@@ -217,7 +219,7 @@ The release procedure must synchronize at least:
 9. `docs/API.md`
 10. `index.html`
 
-`tests/unit/platformVersionConsistency.test.ts` remains a mandatory regression gate and should be
+`tests/unit/platformVersionConsistency.test.ts` remains a mandatory regression gate and must be
 extended whenever another file becomes an official platform-version declaration.
 
 No component may invent a separate current platform version.
@@ -240,40 +242,36 @@ Create a release decision containing:
 
 ### Step 2 — Update the source of truth
 
-Change `package.json#version` first.
-
-For Node package metadata, use a controlled mechanism that also updates the lockfile, for example a
-release automation based on:
-
-`npm version <target> --no-git-tag-version`
-
-The actual Git tag is deliberately created only after production acceptance.
+Use the controlled Release component. The command is dry-run by default and requires explicit
+`--apply` before any governed version file is changed.
 
 ### Step 3 — Synchronize declared versions
 
-Update all governed mirror declarations from Section 6 to the same value.
+The Release component updates all governed declarations from Section 6 atomically as one
+version-gate operation.
 
 ### Step 4 — Run version governance gate
 
-At minimum:
+The implementation runs at minimum:
 
 - `npm run lint`
-- `npm test -- platformVersionConsistency` or the equivalent targeted Vitest invocation
+- `npx vitest run tests/unit/platformVersionConsistency.test.ts`
 - `npm run build`
 - `npm run predeploy:check`
 
-A version mismatch is release-blocking.
+A version mismatch or failed gate is release-blocking and restores the governed version files.
 
 ### Step 5 — Create release candidate evidence
 
-Record:
+Only after those checks pass, create the versioned candidate record containing:
 
 - target version
-- release commit SHA
-- test/build status
-- deployment scope
-- migration scope
+- release scope
+- ADR / migration scope
+- test/build gate definition
+- rollback boundary
 - acceptance requirements
+- explicit pending-production-acceptance state
 
 ### Step 6 — Production acceptance
 
@@ -285,11 +283,12 @@ After acceptance, create:
 
 `v<package.json version>`
 
-The tag must point to the exact accepted production commit.
+The tag must point to the exact accepted production commit. The implemented release-version tool
+intentionally contains no final-tag operation.
 
 ## 8. Release Artifact and Evidence Model
 
-Every released platform version should be reconstructable through this chain:
+Every released platform version must be reconstructable through this chain:
 
 `Platform Version`
 → `Git Tag`
@@ -329,32 +328,39 @@ A successful migration such as Screening SLO Persistence can therefore be accept
 If a migration enables a material new product capability that is actually released to users, that
 release will normally qualify as a MINOR increment.
 
-## 11. Automation Target
+## 11. Automation Target — Implemented
 
-Before or as part of the next platform version increment, CAPITAL-AI should provide a controlled
-release-version automation that:
+CAPITAL-AI now provides `release-version-gate/1.0.0` through:
 
-1. validates the requested SemVer target;
-2. verifies it is greater than the current version;
-3. updates `package.json` and `package-lock.json` together;
-4. updates governed mirror declarations;
-5. runs `platformVersionConsistency.test.ts`;
-6. refuses release on mismatch;
-7. produces a release-candidate evidence file;
-8. does **not** create the final Git tag until production acceptance is recorded.
+- `src/platform/Release/Services/releaseVersionGate.ts`
+- `scripts/automation/releaseVersion.ts`
+- `npm run release:version`
 
-This automation must fail closed.
+The automation:
+
+1. validates the requested strict SemVer target;
+2. verifies it is greater than and is the exact permitted next version;
+3. validates PATCH/MINOR/MAJOR classification;
+4. validates work-package, ADR, risk, rollback and acceptance metadata;
+5. requires a dedicated GA ADR for MAJOR;
+6. updates `package.json` and both governed `package-lock.json` version fields together;
+7. updates governed mirror declarations;
+8. runs the mandatory version/build/readiness gates;
+9. refuses release on mismatch or failed gates and restores governed version files;
+10. produces a release-candidate evidence file only after successful apply-stage gates;
+11. does **not** create the final Git tag.
+
+Dry-run is the default. File mutation requires explicit `--apply`.
 
 ## 12. Current Decision for the Next Version
 
-As of this ADR:
+As of implementation verification:
 
-- released/current platform version: **`0.6.0`**
-- Production SLO Persistence: accepted within **`0.6.0`**
-- no automatic increment is performed by this ADR
-- next fix-only release candidate: **`0.6.1`**
-- next capability release candidate: **`0.7.0`**
-- `1.0.0`: blocked until a dedicated GA decision and its acceptance gates are complete
+- current platform version remains **`0.6.0`**;
+- no automatic increment is performed by implementation of this ADR;
+- next fix-only candidate from `0.6.0`: **`0.6.1`**;
+- next capability release candidate: **`0.7.0`**;
+- `1.0.0`: blocked until a dedicated GA decision and its acceptance gates are complete.
 
 ## 13. Consequences
 
@@ -365,7 +371,8 @@ As of this ADR:
 - release acceptance becomes part of version governance;
 - database migrations and feature completion can be traced without causing version churn;
 - tags, acceptance records and traceability form an auditable release chain;
-- stale version declarations become release-blocking rather than cosmetic debt.
+- stale version declarations become release-blocking rather than cosmetic debt;
+- a failed local release gate cannot leave a partial governed version bump behind.
 
 ### Trade-offs
 
@@ -377,11 +384,33 @@ These costs are intentional for an Enterprise FinTech production lifecycle.
 
 ## 14. Acceptance Criteria for GOV-VER-002
 
-This ADR is considered implemented as governance when:
+Implementation is verified because:
 
 - `package.json` remains the platform-version source of truth;
-- version increments are performed only at the Release Version Gate;
-- future release records classify PATCH/MINOR/MAJOR explicitly;
-- the version-consistency regression test is mandatory for release;
-- final Git tags are created only for production-accepted commits;
-- release traceability references acceptance evidence and migrations where applicable.
+- strict transition classification is encoded and unit-tested;
+- the package-lock root metadata is now independently covered by regression tests;
+- a controlled version command exists and is dry-run by default;
+- governed version files are synchronized by a single fail-closed operation;
+- local release gates are executed after synchronization;
+- failed gates restore the governed version files;
+- a versioned release-candidate evidence artifact is generated only after successful gates;
+- the implementation deliberately has no final Git-tag operation;
+- repository CI on PR #57 passed dependency audit, TypeScript, Vitest, production build and H7 deployment readiness.
+
+Actual future releases still require their own scope classification, Release Version Gate invocation,
+production deployment, acceptance record and immutable final tag.
+
+## 15. Implementation Evidence
+
+Verified on 2026-08-02 against the production repository codebase:
+
+- `src/platform/Release/Services/releaseVersionGate.ts`
+- `scripts/automation/releaseVersion.ts`
+- `src/platform/Release/manifest.json`
+- `src/platform/Release/README.md`
+- `tests/unit/releaseVersionGate.test.ts`
+- `tests/unit/platformVersionConsistency.test.ts`
+- `package.json#scripts.release:version`
+- GitHub PR #57 CI: PASS
+
+No platform version bump and no final Git tag were performed as part of this implementation closure.

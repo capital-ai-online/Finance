@@ -16,6 +16,7 @@
     "test": "vitest run",
     "hygiene:sweep": "tsx scripts/automation/sweepDocumentaryBranding.ts",
     "predeploy:check": "tsx scripts/automation/verifyDeploymentReadiness.ts",
+    "release:version": "tsx scripts/automation/releaseVersion.ts",
     "traceability:build": "tsx src/platform/Traceability/Services/runTraceability.ts",
     "rag:build-index": "tsx scripts/automation/buildRagIndex.ts"
   },

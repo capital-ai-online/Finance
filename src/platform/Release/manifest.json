@@ -1,26 +1,51 @@
 {
   "name": "Release",
-  "version": "1.0.0",
-  "status": "unspecified",
-  "owner": "CAPITAL-AI",
-  "description": "",
+  "version": "1.1.0",
+  "status": "development",
+  "owner": "Platform Director",
+  "description": "Controlled CAPITAL-AI release lifecycle and fail-closed platform-version gate. package.json remains the platform-version source of truth; final Git tags are prohibited until production acceptance.",
   "category": "platform",
+  "layer": "CrossCutting",
+  "lifecycle": "Development",
+  "health": "CI-validated",
+  "repository": "Finance",
   "ess": [
     "ESS-0001",
-    "ESS-0001-CONTRACTS"
+    "ESS-0001-CONTRACTS",
+    "ESS-0007"
   ],
-  "adr": [],
-  "dependencies": [],
+  "adr": [
+    "ADR-0030"
+  ],
+  "dependencies": [
+    "package.json",
+    "package-lock.json",
+    "metadata.json",
+    "src/platform/Traceability"
+  ],
   "events": {
     "produces": [],
-    "consumes": []
+    "consumes": [],
+    "note": "The version gate does not emit synthetic release events. EventMesh publication may be added only when a real release state transition is persisted."
   },
-  "knowledge": [],
-  "interfaces": [],
-  "contracts": [],
-  "documentation": [
-    "README.md"
+  "knowledge": [
+    "docs/releases/candidates/"
   ],
-  "tests": [],
-  "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): fuer diese Komponente existiert ausser dem vom Enterprise Bootstrapper generierten Platzhaltertext keine funktionale Spezifikation und kein Code. Status auf 'unspecified' korrigiert, um den Zustand ehrlich abzubilden - vorher suggerierte 'development' aktive Arbeit, die nicht stattfindet. Die Komponente kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden."
+  "interfaces": [
+    "ReleaseVersionRequest",
+    "ReleaseVersionPlan"
+  ],
+  "contracts": [
+    "release-version-gate/1.0.0",
+    "GOV-VER-002"
+  ],
+  "documentation": [
+    "README.md",
+    "docs/adr/resolved/ADR-0030-platform-version-release-lifecycle.md"
+  ],
+  "tests": [
+    "tests/unit/releaseVersionGate.test.ts",
+    "tests/unit/platformVersionConsistency.test.ts"
+  ],
+  "note": "ADR-0030 implementation: scripts/automation/releaseVersion.ts provides dry-run by default and requires explicit --apply for mutations. It validates exact next SemVer transitions, classification, work-package/ADR traceability, rollback and acceptance requirements; synchronizes package/lock/metadata/governed mirrors; runs lint, version consistency, build and predeploy gates; restores version files on failure; writes release-candidate evidence only after gates pass; and never creates a final Git tag."
 }
