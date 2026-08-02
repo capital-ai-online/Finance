@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
@@ -17,6 +17,7 @@ import { socialMediaRouter } from './src/routes/socialMediaRoutes';
 import { ClassificationService } from './src/services/classification.service';
 import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './src/services/scoring.service';
 import { trackedGenerateContent } from './src/services/aiUsageTracker';
+import { generateStructuredWithFallback } from './src/services/agentModelRouting';
 import { scoreValidationRouter, recordDailySnapshots } from './server/scoreValidation';
 import { alertsRouter, evaluateAlerts } from './server/alerts';
 import { generateTraditionalAssetInputs, generateTraditionalAssetInputsFromCloses, TraditionalAssetScoringService } from './src/services/traditionalAssetScoring';
@@ -1897,53 +1898,62 @@ app.get('/api/market-sentiment', orchestrator.handle('Market Sentiment'), async 
 });
 
 
-// POST Simulate real-time market sentiment shock scenarios via Gemini 3.5 Flash
+// POST Simulate real-time market sentiment shock scenarios
+// ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): Nutzerentscheidung - auf die Anthropic -> OpenAI
+// -> Gemini-Kette umgestellt (kein Google-Search-Grounding hier, anders als /api/market-sentiment
+// oben - reine Reasoning-Aufgabe ohne Gemini-spezifische Abhaengigkeit). Ueber
+// generateStructuredWithFallback statt responseMimeType: der bisherige Ansatz (JSON-Format nur
+// im Prompt beschrieben) funktioniert bei Gemini leidlich, bei Anthropic/OpenAI unzuverlaessig
+// ohne echtes Schema - responseSchema/tool_choice/response_format erzwingen die Form strukturell.
 app.post('/api/market-sentiment/simulate-shock', express.json(), orchestrator.handle('Market Sentiment Simulator'), async (req, res) => {
-  if (!ai) {
-    return res.status(500).json({ error: 'Gemini API-Schlüssel fehlt oder ist ungültig' });
+  if (!anthropic && !openai && !ai) {
+    return res.status(500).json({ error: 'Kein KI-Provider konfiguriert (ANTHROPIC_API_KEY, OPENAI_API_KEY oder GEMINI_API_KEY erforderlich).' });
   }
   const symbol = (req.body.symbol as string || 'BTC').toUpperCase();
   const assetClass = (req.body.assetClass as string || 'Crypto');
   const shockScenario = (req.body.shockScenario as string || 'Fed-Zinsanhebung');
 
   try {
-    const prompt = `Analysiere den theoretischen Einfluss eines makroökonomischen Schocks oder Finanzereignisses auf ein Asset.
-  
-  Asset: "${symbol}" (Kategorie: ${assetClass})
-  Simulierter Schock / Ereignis: "${shockScenario}"
-  
-  Berechne den potenziellen Einfluss im folgenden JSON-Format:
-  {
-    "originalScore": <Zahl von 0 bis 100, das normale Sentiment des Assets vor dem Schock>,
-    "newScore": <Zahl von 0 bis 100, das projizierte Sentiment nach dem Schock>,
-    "impactLabel": "<Stark Negativ | Negativ | Neutral | Positiv | Stark Positiv>",
-    "transmissionMechanism": "<Eine professionelle Erklärung der Übertragungskanäle in deutscher Sprache, max. 3 Sätze>",
-    "predictedDrivers": [
-      { "text": "<Ein potenzieller Markttreiber nach dem Schock in deutscher Sprache>", "impact": "<Bullisch | Bearisch | Neutral>" }
-    ],
-    "riskLevel": "<Niedrig | Mittel | Hoch | Extrem>"
-  }
-  
-  Antworte AUSSCHLIESSLICH mit diesem JSON-Objekt. Verwende kein Markdown-Code-Highlighting wie \`\`\`json.`;
+    const result = await generateStructuredWithFallback({
+      anthropic,
+      openai,
+      gemini: ai,
+      promptId: 'server-market-sentiment-shock',
+      geminiModels: ['gemini-3.5-flash'],
+      systemInstruction: 'Du bist ein hochprofessioneller Quant-Analyst. Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.',
+      contents: `Analysiere den theoretischen Einfluss eines makroökonomischen Schocks oder Finanzereignisses auf ein Asset.
 
-    const response = await trackedGenerateContent(ai, {
-      model: 'gemini-3.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json"
-      }
-    }, { promptId: 'server-market-sentiment-shock', requestId: req.requestId });
+Asset: "${symbol}" (Kategorie: ${assetClass})
+Simulierter Schock / Ereignis: "${shockScenario}"
 
-    const text = response.text || '';
-    let parsedData;
-    try {
-      parsedData = JSON.parse(text);
-    } catch (parseErr) {
-      const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      parsedData = JSON.parse(cleanedText);
+Berechne den potenziellen Einfluss: originalScore (0-100, normales Sentiment vor dem Schock), newScore (0-100, projiziertes Sentiment nach dem Schock), impactLabel (Stark Negativ | Negativ | Neutral | Positiv | Stark Positiv), transmissionMechanism (professionelle Erklärung der Übertragungskanäle in deutscher Sprache, max. 3 Sätze), predictedDrivers (potenzielle Markttreiber nach dem Schock, je mit text und impact Bullisch|Bearisch|Neutral), riskLevel (Niedrig | Mittel | Hoch | Extrem).`,
+      schema: {
+        type: Type.OBJECT,
+        properties: {
+          originalScore: { type: Type.NUMBER },
+          newScore: { type: Type.NUMBER },
+          impactLabel: { type: Type.STRING },
+          transmissionMechanism: { type: Type.STRING },
+          predictedDrivers: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: { text: { type: Type.STRING }, impact: { type: Type.STRING } },
+              required: ['text', 'impact'],
+            },
+          },
+          riskLevel: { type: Type.STRING },
+        },
+        required: ['originalScore', 'newScore', 'impactLabel', 'transmissionMechanism', 'predictedDrivers', 'riskLevel'],
+      },
+      requestId: req.requestId,
+    });
+
+    if (!result) {
+      throw new Error('Kein KI-Provider konfiguriert oder alle konfigurierten Provider fehlgeschlagen.');
     }
 
-    res.json(parsedData);
+    res.json(result.data);
   } catch (error: any) {
     console.error('Error simulating market sentiment shock:', error);
     
@@ -1974,55 +1984,53 @@ app.post('/api/market-sentiment/simulate-shock', express.json(), orchestrator.ha
 });
 
 
-// POST AI-driven portfolio allocation analysis using Gemini 2.5 Flash
+// POST AI-driven portfolio allocation analysis
+// ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): Nutzerentscheidung - auf die Anthropic -> OpenAI
+// -> Gemini-Kette umgestellt, aus denselben Gruenden wie beim Sentiment-Schock-Endpunkt oben
+// (reine Reasoning-Aufgabe, kein Gemini-spezifisches Feature, echtes Schema statt
+// responseMimeType-Konvention).
 app.post('/api/portfolio-review', express.json(), orchestrator.handle('Portfolio Review'), async (req, res) => {
-  if (!ai) {
-    return res.status(500).json({ error: 'Gemini API-Schlüssel fehlt oder ist ungültig' });
+  if (!anthropic && !openai && !ai) {
+    return res.status(500).json({ error: 'Kein KI-Provider konfiguriert (ANTHROPIC_API_KEY, OPENAI_API_KEY oder GEMINI_API_KEY erforderlich).' });
   }
   const { allocation, metrics1Y, metrics3Y, metrics5Y } = req.body;
 
   try {
-    const prompt = `Du bist ein hochprofessioneller Quant-Portfolio-Analyst und Risk-Officer bei CAPITAL-AI.
-    Analysiere die folgende Portfolio-Allokation und deren historische Backtest-Ergebnisse (1, 3 und 5 Jahre):
-    
-    Allokation:
-    ${JSON.stringify(allocation, null, 2)}
-    
-    Performance-Metriken:
-    - 1-Jahr-Zeitraum: Rendite: ${metrics1Y?.strategyReturn?.toFixed(2)}%, Max Drawdown: -${metrics1Y?.maxDrawdown?.toFixed(2)}%, Sharpe Ratio: ${metrics1Y?.sharpeRatio?.toFixed(2)}
-    - 3-Jahre-Zeitraum: Rendite: ${metrics3Y?.strategyReturn?.toFixed(2)}%, Max Drawdown: -${metrics3Y?.maxDrawdown?.toFixed(2)}%, Sharpe Ratio: ${metrics3Y?.sharpeRatio?.toFixed(2)}
-    - 5-Jahre-Zeitraum: Rendite: ${metrics5Y?.strategyReturn?.toFixed(2)}%, Max Drawdown: -${metrics5Y?.maxDrawdown?.toFixed(2)}%, Sharpe Ratio: ${metrics5Y?.sharpeRatio?.toFixed(2)}
-    
-    Generiere ein professionelles, fundiertes Review (in deutscher Sprache) mit folgenden Punkten im JSON-Format:
-    {
-      "executiveSummary": "<Ein prägnanter Absatz (2-3 Sätze), der das Risiko-Rendite-Profil dieser Allokation zusammenfasst.>",
-      "riskAssessment": "<Spezifische Risikobetrachtung der Kombination aus den gewählten Assets, z.B. Diversifikation, Korrelationen, Volatilität.>",
-      "optimizations": [
-        "<Ein konkreter Verbesserungsvorschlag (z.B. Erhöhung von Gold zur Reduktion von Drawdowns oder Reduktion von Krypto bei hoher Volatilität).>",
-        "<Ein weiterer konstruktiver Optimierungsschlag.>"
-      ]
-    }
-    
-    Antworte AUSSCHLIESSLICH mit diesem JSON-Objekt. Verwende kein Markdown-Code-Highlighting wie \`\`\`json.`;
+    const result = await generateStructuredWithFallback({
+      anthropic,
+      openai,
+      gemini: ai,
+      promptId: 'server-portfolio-review',
+      geminiModels: ['gemini-2.5-flash'],
+      systemInstruction: 'Du bist ein hochprofessioneller Quant-Portfolio-Analyst und Risk-Officer bei CAPITAL-AI. Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.',
+      contents: `Analysiere die folgende Portfolio-Allokation und deren historische Backtest-Ergebnisse (1, 3 und 5 Jahre):
 
-    const response = await trackedGenerateContent(ai, {
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json"
-      }
-    }, { promptId: 'server-portfolio-review', requestId: req.requestId });
+Allokation:
+${JSON.stringify(allocation, null, 2)}
 
-    const text = response.text || '';
-    let parsedData;
-    try {
-      parsedData = JSON.parse(text);
-    } catch (parseErr) {
-      const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      parsedData = JSON.parse(cleanedText);
+Performance-Metriken:
+- 1-Jahr-Zeitraum: Rendite: ${metrics1Y?.strategyReturn?.toFixed(2)}%, Max Drawdown: -${metrics1Y?.maxDrawdown?.toFixed(2)}%, Sharpe Ratio: ${metrics1Y?.sharpeRatio?.toFixed(2)}
+- 3-Jahre-Zeitraum: Rendite: ${metrics3Y?.strategyReturn?.toFixed(2)}%, Max Drawdown: -${metrics3Y?.maxDrawdown?.toFixed(2)}%, Sharpe Ratio: ${metrics3Y?.sharpeRatio?.toFixed(2)}
+- 5-Jahre-Zeitraum: Rendite: ${metrics5Y?.strategyReturn?.toFixed(2)}%, Max Drawdown: -${metrics5Y?.maxDrawdown?.toFixed(2)}%, Sharpe Ratio: ${metrics5Y?.sharpeRatio?.toFixed(2)}
+
+Generiere ein professionelles, fundiertes Review in deutscher Sprache: executiveSummary (prägnanter Absatz, 2-3 Sätze, der das Risiko-Rendite-Profil dieser Allokation zusammenfasst), riskAssessment (spezifische Risikobetrachtung der Kombination aus den gewählten Assets, z.B. Diversifikation, Korrelationen, Volatilität), optimizations (Liste konkreter Verbesserungsvorschläge, z.B. Erhöhung von Gold zur Reduktion von Drawdowns oder Reduktion von Krypto bei hoher Volatilität).`,
+      schema: {
+        type: Type.OBJECT,
+        properties: {
+          executiveSummary: { type: Type.STRING },
+          riskAssessment: { type: Type.STRING },
+          optimizations: { type: Type.ARRAY, items: { type: Type.STRING } },
+        },
+        required: ['executiveSummary', 'riskAssessment', 'optimizations'],
+      },
+      requestId: req.requestId,
+    });
+
+    if (!result) {
+      throw new Error('Kein KI-Provider konfiguriert oder alle konfigurierten Provider fehlgeschlagen.');
     }
 
-    res.json(parsedData);
+    res.json(result.data);
   } catch (error: any) {
     console.log("[System Notice] Portfolio Review generator: utilizing quantitative dynamic metrics.");
     

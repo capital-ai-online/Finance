@@ -21,6 +21,17 @@ export const STANDARD_EVENT_CATALOG: StandardEventDefinition[] = [
   { name: 'DocumentationGeneratedEvent', category: 'Documentation Events', essReferences: ['ESS-0001-CONTRACTS', 'ESS-0010'], adrReferences: ['ADR-0018'] },
   { name: 'DocumentationValidatedEvent', category: 'Documentation Events', essReferences: ['ESS-0001-CONTRACTS', 'ESS-0012-CONTRACTS'], adrReferences: ['ADR-0014', 'ADR-0018'] },
   { name: 'TraceabilityBuildCompletedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
+  // ARCH-AUDIT-0002 (N4-Folge, Kapitel 14.4, Traceability Stufe 3): vier weitere Traceability-
+  // Events, real ausgeloest von src/platform/Traceability/Services/runTraceability.ts. Nicht
+  // aufgenommen: CoverageThresholdViolatedEvent (kein Schwellenwert konfiguriert - es gibt
+  // nichts zu ueberschreiten) und OrphanResolvedEvent (erfordert einen Vergleich zweier Laeufe,
+  // den es noch nicht gibt) - beide bleiben in den Manifesten als offene Zielereignisse
+  // gekennzeichnet, statt einen Katalogeintrag ohne Producer vorzutaeuschen.
+  { name: 'TraceabilityBuildStartedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
+  { name: 'TraceabilityBuildFailedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
+  { name: 'CoverageCalculatedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
+  { name: 'OrphanDetectedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
+  { name: 'TraceabilityReportGeneratedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
   { name: 'KnowledgeUpdatedEvent', category: 'Knowledge Events', essReferences: ['ESS-0001-CONTRACTS', 'ESS-0009'], adrReferences: ['ADR-0018'] },
   { name: 'ComplianceValidatedEvent', category: 'Compliance Events', essReferences: ['ESS-0001-CONTRACTS'], adrReferences: ['ADR-0018'] },
   { name: 'ArchitectureValidatedEvent', category: 'Compliance Events', essReferences: ['ESS-0001-CONTRACTS'], adrReferences: ['ADR-0018'] },

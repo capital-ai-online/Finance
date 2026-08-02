@@ -1,6 +1,6 @@
 {
   "name": "Traceability",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "status": "development",
   "owner": "Platform Director",
   "description": "Enterprise Traceability Matrix (ETM). Verwaltet die bidirektionalen Beziehungen zwischen ESS, ADR, Repository, Komponenten, Klassen, Interfaces, Events, Tests, Dokumentation, Knowledge Graph, Versionen und Releases. Erzeugt keine Artefakte und keine Regeln, sondern ausschliesslich Verknuepfungen, Kennzahlen und Berichte.",
@@ -54,7 +54,7 @@
       "ExceptionRegisteredEvent",
       "ReleasePreparedEvent"
     ],
-    "note": "ARCH-AUDIT-0002 (N4, 2026-08-02): keines der hier genannten Events wird vom tatsaechlichen Code unter Core/ ausgeloest oder konsumiert - der Lauf erfolgt ausschliesslich synchron ueber `npm run traceability:build` (Services/runTraceability.ts). Die Anbindung an den Enterprise Event Bus (src/platform/EventMesh/Core/EventBus.ts, real vorhanden seit ADR-0018) ist Stufe 3 der Implementierung und offen."
+    "note": "ARCH-AUDIT-0002 (N4-Folge, 2026-08-02, Traceability Stufe 3): sechs der acht produces-Events werden jetzt real ueber den Enterprise Event Bus veroeffentlicht (Services/runTraceability.ts, publishTraceabilityEvent(), best-effort wie bei src/platform/Supervisor/supervisor.ts) - TraceabilityBuildStartedEvent, TraceabilityBuildCompletedEvent, TraceabilityBuildFailedEvent, CoverageCalculatedEvent, OrphanDetectedEvent, TraceabilityReportGeneratedEvent. Verifiziert per eventMeshBus.getDeliveryLog() nach einem Lauf. CoverageThresholdViolatedEvent und OrphanResolvedEvent bleiben unveroeffentlicht - es gibt weder einen konfigurierten Schwellenwert noch einen Vergleich zwischen zwei Laeufen; beide waeren sonst vorgetaeuschte Ereignisse. Keines der consumes-Events wird abonniert - Traceability reagiert auf nichts, nur der Publish-Pfad ist umgesetzt."
   },
   "interfaces": [
     "ITraceabilityBuilder",
@@ -110,7 +110,9 @@
     "component.yaml",
     "docs/traceability/"
   ],
-  "tests": [],
+  "tests": [
+    "tests/unit/traceabilityValidator.test.ts"
+  ],
   "conformanceLevel": null,
-  "note": "Erste Komponente des Repositorys mit vollstaendigem Metadatensatz einschliesslich component.yaml und CHANGELOG.md. Erfuellt damit GOV-REPO-002 und GOV-REPO-004 aus ESS-0012-CONTRACTS. ARCH-AUDIT-0002 (J5, 2026-08-02): status von 'development' auf 'specified' korrigiert, da bis dahin keine Implementierung vorlag. ARCH-AUDIT-0002 (N4, 2026-08-02): status zurueck auf 'development' - Discovery, Models, Interfaces, Core (Builder, CoverageAnalyzer, OrphanDetector), Registry und Reporter sind implementiert und lauffaehig (`npm run traceability:build`), gegen die real vorhandene ESS-Registry, ADR-Historie, 25 Komponenten-Manifeste und 21 Testdateien verifiziert (siehe docs/traceability/COVERAGE_REPORT.md). Von den vier Stufen in README.md 'Implementierungsstand' sind 1 und 2 umgesetzt; 3 (Event-Bus-Anbindung) und 4 (Validator-Basisklasse) bleiben offen, siehe events.note. Kein Knowledge Graph und kein Digital Twin vorausgesetzt - die urspruenglich als harte Voraussetzung genannte Blockade (README, Implementierungsstand) war fuer diesen ersten Ausbau nicht zutreffend: die verwendeten Quellen (ESS-Registry, docs/adr/, Manifeste, tests/) sind bereits real vorhanden."
+  "note": "Erste Komponente des Repositorys mit vollstaendigem Metadatensatz einschliesslich component.yaml und CHANGELOG.md. Erfuellt damit GOV-REPO-002 und GOV-REPO-004 aus ESS-0012-CONTRACTS. ARCH-AUDIT-0002 (J5, 2026-08-02): status von 'development' auf 'specified' korrigiert, da bis dahin keine Implementierung vorlag. ARCH-AUDIT-0002 (N4, 2026-08-02): status zurueck auf 'development' - Discovery, Models, Interfaces, Core (Builder, CoverageAnalyzer, OrphanDetector), Registry und Reporter sind implementiert und lauffaehig (`npm run traceability:build`), gegen die real vorhandene ESS-Registry, ADR-Historie, 25 Komponenten-Manifeste und Testdateien verifiziert (siehe docs/traceability/COVERAGE_REPORT.md). ARCH-AUDIT-0002 (N4-Folge, 2026-08-02): Stufe 3 (Event-Bus-Anbindung) teilweise umgesetzt - sechs reale Publish-Events, keine Subscriptions - und Stufe 4 (Validator-Basisklasse, `Validators/baseValidator.ts` + `Validators/traceabilityMatrixValidator.ts`, erste generische Validator-Implementierung im Repository) umgesetzt. Details je Stufe: README.md 'Implementierungsstand'. Kein Knowledge Graph und kein Digital Twin vorausgesetzt - die urspruenglich als harte Voraussetzung genannte Blockade (README, Implementierungsstand) war fuer diesen ersten Ausbau nicht zutreffend: die verwendeten Quellen (ESS-Registry, docs/adr/, Manifeste, tests/) sind bereits real vorhanden."
 }

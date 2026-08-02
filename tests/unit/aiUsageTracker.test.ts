@@ -7,6 +7,7 @@ import {
   trackedGenerateContent,
   trackedAnthropicMessage,
   trackedOpenAIMessage,
+  trackedOpenAIEmbedding,
   getUsageLedger,
   getUsageSummary,
   configureModelPricing,
@@ -38,6 +39,14 @@ function mockOpenAIClient(response: any): OpenAI {
       completions: {
         create: async () => response,
       },
+    },
+  } as unknown as OpenAI;
+}
+
+function mockOpenAIEmbeddingsClient(response: any): OpenAI {
+  return {
+    embeddings: {
+      create: async () => response,
     },
   } as unknown as OpenAI;
 }
@@ -127,8 +136,8 @@ describe('aiUsageTracker', () => {
     }
   });
 
-  it('PROMPT_REGISTRY deckt alle 15 bekannten Aufrufstellen ab', () => {
-    expect(Object.keys(PROMPT_REGISTRY).length).toBe(15);
+  it('PROMPT_REGISTRY deckt alle 17 bekannten Aufrufstellen ab', () => {
+    expect(Object.keys(PROMPT_REGISTRY).length).toBe(17);
   });
 
   // Audit ARCH-AUDIT-0002 (J3): providerübergreifender Rückfall - derselbe Ledger muss auch
@@ -191,6 +200,36 @@ describe('aiUsageTracker', () => {
       const openai = mockOpenAIClient({ choices: [{ message: { content: '{}' } }] });
 
       await trackedOpenAIMessage(openai, { model: 'test-openai-model-2', messages: [] } as any, { promptId: 'crypto-sentiment' });
+
+      expect(getUsageLedger().length).toBe(before);
+    });
+  });
+
+  describe('trackedOpenAIEmbedding', () => {
+    it('zeichnet prompt_tokens/total_tokens aus einer realen Embeddings-usage-Antwort auf (candidateTokens=0)', async () => {
+      const before = getUsageLedger().length;
+      const openai = mockOpenAIEmbeddingsClient({
+        data: [{ embedding: [0.1, 0.2] }],
+        usage: { prompt_tokens: 42, total_tokens: 42 },
+      });
+
+      await trackedOpenAIEmbedding(openai, { model: 'test-embedding-model', input: ['x'] } as any, { promptId: 'rag-index-build' });
+
+      const ledger = getUsageLedger();
+      expect(ledger.length).toBe(before + 1);
+      const last = ledger[ledger.length - 1];
+      expect(last.promptTokens).toBe(42);
+      expect(last.candidateTokens).toBe(0);
+      expect(last.totalTokens).toBe(42);
+      expect(last.model).toBe('test-embedding-model');
+      expect(last.promptId).toBe('rag-index-build');
+    });
+
+    it('erzeugt keinen Ledger-Eintrag, wenn die Antwort kein usage-Feld enthaelt', async () => {
+      const before = getUsageLedger().length;
+      const openai = mockOpenAIEmbeddingsClient({ data: [{ embedding: [0.1] }] });
+
+      await trackedOpenAIEmbedding(openai, { model: 'test-embedding-model-2', input: ['x'] } as any, { promptId: 'rag-retrieval-query' });
 
       expect(getUsageLedger().length).toBe(before);
     });

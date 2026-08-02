@@ -158,14 +158,14 @@ ADR-0014 — Documentation Governance Validator
 
 ## Implementierungsstand
 
-Diese Komponente ist **teilweise implementiert** (ARCH-AUDIT-0002, N4, 2026-08-02).
+Diese Komponente ist **teilweise implementiert** (ARCH-AUDIT-0002, N4/N4-Folge, 2026-08-02).
 
 | Stufe | Voraussetzung | Zustand |
 |---|---|---|
 | 1 | JSON-Schemata, vollständige Metadaten | **umgesetzt** — `Models/traceabilityModels.ts` |
 | 2 | Core, Interfaces, Models, Registry | **umgesetzt** — `Core/`, `Interfaces/index.ts`, `Registry/traceabilityRegistry.ts` |
-| 3 | Enterprise Event Bus | offen — der Lauf ist rein synchron über `npm run traceability:build`, keine Anbindung an `src/platform/EventMesh/Core/EventBus.ts` |
-| 4 | Validator-Basisklasse | offen — es existiert im gesamten Repository noch keine `Validator`-Basisklasse, an die sich anschließen ließe |
+| 3 | Enterprise Event Bus | **teilweise umgesetzt** — jeder Lauf veröffentlicht sechs reale Events über `src/platform/EventMesh/Core/EventBus.ts` (`publishTraceabilityEvent()` in `Services/runTraceability.ts`, best-effort). Nur die Publish-Seite; die fünf `consumes`-Events aus dem Manifest werden nicht abonniert. |
+| 4 | Validator-Basisklasse | **umgesetzt** — `Validators/baseValidator.ts` (`abstract class Validator<TTarget, TFinding>`), erste generische Validator-Basis im gesamten Repository. `Validators/traceabilityMatrixValidator.ts` ist die erste konkrete Implementierung und wrappt `Core/orphanDetector.ts`; `Services/runTraceability.ts` nutzt sie jetzt statt `OrphanDetector` direkt zu instanziieren. |
 
 Aufruf: `npm run traceability:build` (`Services/runTraceability.ts`). Baut die Matrix, schreibt
 `matrix.json`/`coverage.json`/`orphans.json` unter `.ai/knowledge/traceability/` sowie

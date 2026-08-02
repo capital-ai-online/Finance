@@ -2,7 +2,7 @@
 
 Automatisch generiert von `src/platform/Traceability`. Nicht manuell bearbeiten.
 
-Generiert am: 2026-08-02T04:21:16.277Z
+Generiert am: 2026-08-02T05:05:42.282Z
 
 ## Kennzahlen
 
@@ -14,7 +14,7 @@ Generiert am: 2026-08-02T04:21:16.277Z
 | davon implementiert/in Entwicklung | 7 |
 | davon mit ESS-Referenz | 25 |
 | davon mit ADR-Referenz | 6 |
-| davon mit Testabdeckung | 3 (12 %) |
+| davon mit Testabdeckung | 4 (16 %) |
 
 ## Komponenten im Detail
 
@@ -42,7 +42,7 @@ Generiert am: 2026-08-02T04:21:16.277Z
 | Shared | unspecified | 2 | 0 | 0 |
 | Supervisor | implemented | 2 | 1 | 1 |
 | Telemetry | unspecified | 2 | 0 | 0 |
-| Traceability | development | 6 | 3 | 0 |
+| Traceability | development | 6 | 3 | 1 |
 | Validators | unspecified | 2 | 0 | 0 |
 | VersionManager | implemented | 3 | 0 | 0 |
 

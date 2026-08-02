@@ -191,3 +191,144 @@ export async function generateStructuredWithFallback(
 
   return null;
 }
+
+// ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): Nutzerentscheidung, dieselbe
+// Anthropic -> OpenAI -> Gemini-Priorisierung auch fuer freie Textantworten (nicht nur
+// schema-gebundene Agentenausgaben) anzuwenden, je nach Anwendungsfall. Zwei Anwendungsfaelle
+// bleiben davon bewusst ausgenommen und weiterhin direkt an Gemini gebunden, weil sie eine
+// Gemini-spezifische Faehigkeit voraussetzen, die die anderen beiden Provider hier nicht
+// gleichwertig ersetzen: /api/market-sentiment (Google-Suche-Grounding ueber
+// `tools: [{ googleSearch: {} }]`) und /api/analyze-image (Vision ueber Gemini-`inlineData`).
+
+export interface ChatTurn {
+  role: 'user' | 'assistant';
+  text: string;
+}
+
+export interface TextGenerationRequest {
+  promptId: string;
+  /** Aktuelle Nutzeranfrage. */
+  contents: string;
+  /** Vorherige Gespraechsrunden, aelteste zuerst. Fehlt sie, ist die Anfrage einzelstehend. */
+  history?: ChatTurn[];
+  systemInstruction: string;
+  /** Gemini-Modelle in Versuchsreihenfolge (letzte Stufe der Kette). */
+  geminiModels: string[];
+  /** Anthropic/OpenAI verlangen ein explizites Token-Limit (anders als Gemini, das ohne
+   *  Angabe seinen eigenen, i.d.R. grossen Default nutzt - hier unveraendert gelassen).
+   *  Default DEFAULT_TEXT_MAX_TOKENS passt fuer Chat-Antworten; Anwendungsfaelle mit groesserem
+   *  Ausgabebedarf (z.B. vollstaendige Dokumentregeneration) setzen einen hoeheren Wert. */
+  maxTokens?: number;
+  requestId?: string;
+}
+
+export interface TextGenerationResult {
+  text: string;
+  provider: string;
+}
+
+const DEFAULT_TEXT_MAX_TOKENS = 2048;
+
+async function tryAnthropicText(anthropic: Anthropic, req: TextGenerationRequest): Promise<TextGenerationResult | null> {
+  const model = getAnthropicModel();
+  try {
+    const messages = [
+      ...(req.history ?? []).map(turn => ({ role: turn.role, content: turn.text })),
+      { role: 'user' as const, content: req.contents },
+    ];
+    const response: any = await trackedAnthropicMessage(anthropic, {
+      model,
+      max_tokens: req.maxTokens ?? DEFAULT_TEXT_MAX_TOKENS,
+      system: req.systemInstruction,
+      messages,
+    } as any, { promptId: req.promptId, requestId: req.requestId });
+
+    const textBlock = Array.isArray(response?.content)
+      ? response.content.find((block: any) => block?.type === 'text')
+      : undefined;
+    if (typeof textBlock?.text === 'string' && textBlock.text.length > 0) {
+      return { text: textBlock.text, provider: `anthropic:${model}` };
+    }
+    console.warn(`[AgentModelRouting] Anthropic-Antwort ohne Textblock fuer '${req.promptId}'.`);
+  } catch (e) {
+    console.warn(`[AgentModelRouting] Anthropic (${model}) fehlgeschlagen fuer '${req.promptId}'.`, e);
+  }
+  return null;
+}
+
+async function tryOpenAIText(openai: OpenAI, req: TextGenerationRequest): Promise<TextGenerationResult | null> {
+  const model = getOpenAIModel();
+  try {
+    const response = await trackedOpenAIMessage(openai, {
+      model,
+      max_completion_tokens: req.maxTokens ?? DEFAULT_TEXT_MAX_TOKENS,
+      messages: [
+        { role: 'system', content: req.systemInstruction },
+        ...(req.history ?? []).map(turn => ({ role: turn.role, content: turn.text })),
+        { role: 'user', content: req.contents },
+      ],
+    } as any, { promptId: req.promptId, requestId: req.requestId });
+
+    const content = (response as any)?.choices?.[0]?.message?.content;
+    if (typeof content === 'string' && content.length > 0) {
+      return { text: content, provider: `openai:${model}` };
+    }
+    console.warn(`[AgentModelRouting] OpenAI-Antwort ohne Inhalt fuer '${req.promptId}'.`);
+  } catch (e) {
+    console.warn(`[AgentModelRouting] OpenAI (${model}) fehlgeschlagen fuer '${req.promptId}'.`, e);
+  }
+  return null;
+}
+
+async function tryGeminiText(gemini: GoogleGenAI, req: TextGenerationRequest): Promise<TextGenerationResult | null> {
+  const contents = [
+    ...(req.history ?? []).map(turn => ({ role: turn.role === 'user' ? 'user' : 'model', parts: [{ text: turn.text }] })),
+    { role: 'user', parts: [{ text: req.contents }] },
+  ];
+  for (const model of req.geminiModels) {
+    try {
+      const response = await trackedGenerateContent(gemini, {
+        model,
+        contents,
+        config: { systemInstruction: req.systemInstruction },
+      }, { promptId: req.promptId, requestId: req.requestId });
+      if (typeof response.text === 'string' && response.text.length > 0) {
+        return { text: response.text, provider: model };
+      }
+      console.warn(`[AgentModelRouting] Gemini-Modell '${model}' ohne Textinhalt fuer '${req.promptId}'.`);
+    } catch (e) {
+      console.warn(`[AgentModelRouting] Gemini-Modell '${model}' fehlgeschlagen fuer '${req.promptId}'.`, e);
+    }
+  }
+  return null;
+}
+
+/**
+ * Freitext-Gegenstueck zu generateStructuredWithFallback(): dieselbe Provider-Kette
+ * (Anthropic -> OpenAI -> Gemini), aber ohne Response-Schema - fuer Anwendungsfaelle wie den
+ * Chat-Assistenten oder die Dokumenten-Propagation, die volltextliche statt strukturierte
+ * Antworten benoetigen. Liefert `null`, wenn kein Provider konfiguriert ist ODER alle
+ * konfigurierten Provider fehlschlagen.
+ */
+export async function generateTextWithFallback(
+  req: TextGenerationRequest & { gemini: GoogleGenAI | null; anthropic: Anthropic | null; openai: OpenAI | null }
+): Promise<TextGenerationResult | null> {
+  const { gemini, anthropic, openai, ...rest } = req;
+
+  if (anthropic) {
+    const result = await tryAnthropicText(anthropic, rest);
+    if (result) return result;
+  }
+
+  if (openai) {
+    const result = await tryOpenAIText(openai, rest);
+    if (result) return result;
+  }
+
+  if (gemini) {
+    const result = await tryGeminiText(gemini, rest);
+    if (result) return result;
+  }
+
+  return null;
+}

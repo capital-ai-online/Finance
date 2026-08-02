@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-02T04:21:16.277Z",
+  "generatedAt": "2026-08-02T05:05:42.282Z",
   "ess": {
     "total": 17,
     "withComponent": 11,
@@ -10,8 +10,8 @@
     "implemented": 7,
     "withEss": 25,
     "withAdr": 6,
-    "withTests": 3,
-    "testRatio": 0.12
+    "withTests": 4,
+    "testRatio": 0.16
   },
   "perComponent": [
     {
@@ -173,7 +173,7 @@
       "status": "development",
       "essCount": 6,
       "adrCount": 3,
-      "testCount": 0
+      "testCount": 1
     },
     {
       "name": "Validators",
