@@ -20,7 +20,7 @@ import {
   FileCode,
   ArrowRight
 } from 'lucide-react';
-import { ComplianceRun, ScannerResult, Finding, RemediationPlan, ComplianceCertificate } from '../../server/compliance/types';
+import { ComplianceRun, ScannerResult, Finding, RemediationPlan, ComplianceCertificate } from '../platform/Compliance/types';
 import { authFetch } from '../lib/authFetch';
 
 interface SecurityComplianceAuditorProps {

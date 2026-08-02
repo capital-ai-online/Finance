@@ -5,6 +5,7 @@
 
 import type { GoogleGenAI } from '@google/genai';
 import type Anthropic from '@anthropic-ai/sdk';
+import type OpenAI from 'openai';
 
 // Audit ARCH-AUDIT-0002 (N2, Kapitel 14.4): Prompt-Registry und Token-/Kostenerfassung fuer
 // alle Gemini-API-Aufrufe. Vor N2 gab es keine zentrale Uebersicht, welche Prompts das System
@@ -159,6 +160,32 @@ function recordAnthropicUsage(response: any, model: string, meta: { promptId: st
   const promptTokens = typeof usage.input_tokens === 'number' ? usage.input_tokens : 0;
   const candidateTokens = typeof usage.output_tokens === 'number' ? usage.output_tokens : 0;
   pushUsageRecord(model, promptTokens, candidateTokens, promptTokens + candidateTokens, meta);
+}
+
+// Audit ARCH-AUDIT-0002 (J3-Folge): dritter Provider in der Kette (Anthropic -> OpenAI ->
+// Gemini, Nutzerpriorisierung). Derselbe gemeinsame, providerunabhaengige Ledger wie bei
+// trackedAnthropicMessage() - J2s Erfolgserkennung bleibt unveraendert korrekt.
+export async function trackedOpenAIMessage(
+  openai: OpenAI,
+  params: Parameters<OpenAI['chat']['completions']['create']>[0],
+  meta: { promptId: string; requestId?: string }
+): Promise<Awaited<ReturnType<OpenAI['chat']['completions']['create']>>> {
+  const response = await openai.chat.completions.create(params);
+  try {
+    recordOpenAIUsage(response, String((params as any).model || 'unknown'), meta);
+  } catch {
+    // Aufzeichnung ist best-effort und darf den eigentlichen KI-Aufruf nicht gefaehrden.
+  }
+  return response;
+}
+
+function recordOpenAIUsage(response: any, model: string, meta: { promptId: string; requestId?: string }): void {
+  const usage = response?.usage;
+  if (!usage) return;
+  const promptTokens = typeof usage.prompt_tokens === 'number' ? usage.prompt_tokens : 0;
+  const candidateTokens = typeof usage.completion_tokens === 'number' ? usage.completion_tokens : 0;
+  const totalTokens = typeof usage.total_tokens === 'number' ? usage.total_tokens : promptTokens + candidateTokens;
+  pushUsageRecord(model, promptTokens, candidateTokens, totalTokens, meta);
 }
 
 function pushUsageRecord(model: string, promptTokens: number, candidateTokens: number, totalTokens: number, meta: { promptId: string; requestId?: string }): void {

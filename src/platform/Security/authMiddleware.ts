@@ -11,12 +11,12 @@
 // verifizierte Supabase-Session-Tokens gegen profiles.iam_role.
 
 import type { Request } from 'express';
-import { getServerSupabase, isSupabaseConfigured } from '../db';
+import { getServerSupabase, isSupabaseConfigured } from '../../../server/db';
 import type { Role } from './types';
 import { ADMIN_ZONE_ROLES } from './types';
 import { checkRateLimit, getClientIp } from './rateLimiter';
 import { hashOpaqueToken } from './secretCrypto';
-import { createLogger } from '../logger';
+import { createLogger } from '../../../server/logger';
 
 // Audit ARCH-AUDIT-0002 (S4): strukturierte, Correlation-ID-tragende Logs fuer den
 // sicherheitskritischsten Modul dieser Codebasis statt Ad-hoc-console.error-Strings.

@@ -13,41 +13,45 @@
 // die Zuordnung der JSON-Antwort auf sein Domänen-Objekt zuständig - nur die Ausführung der
 // Modellkette ist zentralisiert.
 //
-// Reihenfolge: 1) Gemini-Modelle in der vom Agenten übergebenen Reihenfolge (i.d.R.
-// Premium -> Flash), 2) Anthropic Claude NUR wenn ein Client konfiguriert ist (J3) - das ist
-// der providerübergreifende Teil. Ohne konfigurierten Anthropic-Client (kein ANTHROPIC_API_KEY)
-// bleibt der Rückfall fail-open inaktiv, exakt wie vor J3.
+// Reihenfolge (J3-Folge, explizite Nutzerpriorisierung nach Bereitstellung aller drei Keys):
+// 1) Anthropic Claude, 2) OpenAI, 3) Gemini-Modelle in der vom Agenten übergebenen Reihenfolge
+// (i.d.R. Premium -> Flash) als letzter Rückfall. Jede Stufe wird NUR versucht, wenn ein
+// Client dafür konfiguriert ist - ohne einen der drei Keys bleibt die jeweilige Stufe fail-open
+// inaktiv, die Kette rutscht einfach zur naechsten Stufe durch.
 
 import { GoogleGenAI } from '@google/genai';
 import type Anthropic from '@anthropic-ai/sdk';
-import { trackedGenerateContent, trackedAnthropicMessage } from './aiUsageTracker';
+import type OpenAI from 'openai';
+import { trackedGenerateContent, trackedAnthropicMessage, trackedOpenAIMessage } from './aiUsageTracker';
 import { getAnthropicModel } from '../../server/anthropicClient';
+import { getOpenAIModel } from '../../server/openaiClient';
 
 export interface StructuredGenerationRequest {
   promptId: string;
   contents: string;
   systemInstruction: string;
-  /** Gemini-responseSchema (Type.OBJECT/STRING/NUMBER/...) - fuer Anthropic in ein JSON-Schema konvertiert. */
+  /** Gemini-responseSchema (Type.OBJECT/STRING/NUMBER/...) - fuer Anthropic/OpenAI in ein JSON-Schema konvertiert. */
   schema: Record<string, unknown>;
-  /** Modelle in Versuchsreihenfolge, z.B. ['gemini-3.1-pro-preview', 'gemini-3.5-flash']. */
+  /** Gemini-Modelle in Versuchsreihenfolge (letzte Stufe der Kette), z.B. ['gemini-3.1-pro-preview', 'gemini-3.5-flash']. */
   geminiModels: string[];
   requestId?: string;
 }
 
 export interface StructuredGenerationResult {
   data: any;
-  /** Tatsaechlich erfolgreich verwendetes Modell, z.B. 'gemini-3.1-pro-preview' oder 'anthropic:claude-haiku-4-5'. */
+  /** Tatsaechlich erfolgreich verwendetes Modell, z.B. 'anthropic:claude-haiku-4-5', 'openai:gpt-5.4-mini' oder 'gemini-3.1-pro-preview'. */
   provider: string;
 }
 
 /**
  * Wandelt ein Gemini-`Type`-Schema (Enum-Werte wie 'OBJECT'/'STRING'/'NUMBER'/'INTEGER'/'ARRAY',
- * Grossschreibung) in ein Standard-JSON-Schema (Kleinschreibung) fuer Anthropics
- * `tools[].input_schema` um. INTEGER existiert in JSON Schema nicht als eigener `type`-Wert
- * neben `number` - es wird auf `number` abgebildet, die Ganzzahligkeit ist ohnehin nur eine
- * Beschreibungs-Konvention der Agenten-Prompts, keine harte Validierung.
+ * Grossschreibung) in ein Standard-JSON-Schema (Kleinschreibung) um - fuer Anthropics
+ * `tools[].input_schema` und OpenAIs `response_format.json_schema.schema` gleichermassen
+ * verwendbar (beide erwarten Standard-JSON-Schema). INTEGER existiert in JSON Schema nicht als
+ * eigener `type`-Wert neben `number` - es wird auf `number` abgebildet, die Ganzzahligkeit ist
+ * ohnehin nur eine Beschreibungs-Konvention der Agenten-Prompts, keine harte Validierung.
  */
-export function toAnthropicSchema(schema: any): any {
+export function toJsonSchema(schema: any): any {
   if (!schema || typeof schema !== 'object') return schema;
   const out: Record<string, unknown> = {};
   if (typeof schema.type === 'string') {
@@ -58,74 +62,131 @@ export function toAnthropicSchema(schema: any): any {
   if (schema.properties && typeof schema.properties === 'object') {
     const props: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(schema.properties)) {
-      props[key] = toAnthropicSchema(val);
+      props[key] = toJsonSchema(val);
     }
     out.properties = props;
   }
-  if (schema.items) out.items = toAnthropicSchema(schema.items);
+  if (schema.items) out.items = toJsonSchema(schema.items);
   if (Array.isArray(schema.required)) out.required = schema.required;
   return out;
 }
 
 const ANTHROPIC_TOOL_NAME = 'submit_structured_result';
 
-/**
- * Fuehrt die Modell-/Provider-Kette fuer eine einzelne strukturierte Agentenanfrage aus.
- * Liefert `null`, wenn kein Provider konfiguriert ist ODER alle konfigurierten Provider
- * fehlschlagen - der Aufrufer (Agent) faellt dann auf seinen eigenen, hartkodierten
- * getFallback() zurueck, exakt wie vor J3.
- */
-export async function generateStructuredWithFallback(
-  req: StructuredGenerationRequest & { gemini: GoogleGenAI | null; anthropic: Anthropic | null }
+async function tryAnthropic(
+  anthropic: Anthropic,
+  req: StructuredGenerationRequest
 ): Promise<StructuredGenerationResult | null> {
-  const { gemini, anthropic, promptId, contents, systemInstruction, schema, geminiModels, requestId } = req;
+  const model = getAnthropicModel();
+  try {
+    const response: any = await trackedAnthropicMessage(anthropic, {
+      model,
+      max_tokens: 1024,
+      system: req.systemInstruction,
+      messages: [{ role: 'user', content: req.contents }],
+      tools: [{
+        name: ANTHROPIC_TOOL_NAME,
+        description: 'Liefert das angeforderte strukturierte Analyseergebnis.',
+        input_schema: toJsonSchema(req.schema),
+      }],
+      tool_choice: { type: 'tool', name: ANTHROPIC_TOOL_NAME },
+    } as any, { promptId: req.promptId, requestId: req.requestId });
 
-  if (gemini) {
-    for (const model of geminiModels) {
-      try {
-        const response = await trackedGenerateContent(gemini, {
-          model,
-          contents,
-          config: {
-            systemInstruction,
-            responseMimeType: 'application/json',
-            responseSchema: schema as any,
-          },
-        }, { promptId, requestId });
-        const data = JSON.parse(response.text || '{}');
-        return { data, provider: model };
-      } catch (e) {
-        console.warn(`[AgentModelRouting] Gemini-Modell '${model}' fehlgeschlagen fuer '${promptId}'.`, e);
-      }
+    const toolUse = Array.isArray(response?.content)
+      ? response.content.find((block: any) => block?.type === 'tool_use')
+      : undefined;
+    if (toolUse?.input) {
+      return { data: toolUse.input, provider: `anthropic:${model}` };
+    }
+    console.warn(`[AgentModelRouting] Anthropic-Antwort ohne tool_use-Block fuer '${req.promptId}'.`);
+  } catch (e) {
+    console.warn(`[AgentModelRouting] Anthropic (${model}) fehlgeschlagen fuer '${req.promptId}'.`, e);
+  }
+  return null;
+}
+
+async function tryOpenAI(
+  openai: OpenAI,
+  req: StructuredGenerationRequest
+): Promise<StructuredGenerationResult | null> {
+  const model = getOpenAIModel();
+  try {
+    const response = await trackedOpenAIMessage(openai, {
+      model,
+      max_completion_tokens: 1024,
+      messages: [
+        { role: 'system', content: req.systemInstruction },
+        { role: 'user', content: req.contents },
+      ],
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          // OpenAI erlaubt nur [a-zA-Z0-9_-], max. 64 Zeichen.
+          name: req.promptId.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64),
+          schema: toJsonSchema(req.schema),
+        },
+      },
+    } as any, { promptId: req.promptId, requestId: req.requestId });
+
+    const content = (response as any)?.choices?.[0]?.message?.content;
+    if (typeof content === 'string' && content.length > 0) {
+      return { data: JSON.parse(content), provider: `openai:${model}` };
+    }
+    console.warn(`[AgentModelRouting] OpenAI-Antwort ohne Inhalt fuer '${req.promptId}'.`);
+  } catch (e) {
+    console.warn(`[AgentModelRouting] OpenAI (${model}) fehlgeschlagen fuer '${req.promptId}'.`, e);
+  }
+  return null;
+}
+
+async function tryGemini(
+  gemini: GoogleGenAI,
+  req: StructuredGenerationRequest
+): Promise<StructuredGenerationResult | null> {
+  for (const model of req.geminiModels) {
+    try {
+      const response = await trackedGenerateContent(gemini, {
+        model,
+        contents: req.contents,
+        config: {
+          systemInstruction: req.systemInstruction,
+          responseMimeType: 'application/json',
+          responseSchema: req.schema as any,
+        },
+      }, { promptId: req.promptId, requestId: req.requestId });
+      const data = JSON.parse(response.text || '{}');
+      return { data, provider: model };
+    } catch (e) {
+      console.warn(`[AgentModelRouting] Gemini-Modell '${model}' fehlgeschlagen fuer '${req.promptId}'.`, e);
     }
   }
+  return null;
+}
+
+/**
+ * Fuehrt die Modell-/Provider-Kette fuer eine einzelne strukturierte Agentenanfrage aus, in
+ * der Reihenfolge Anthropic -> OpenAI -> Gemini. Liefert `null`, wenn kein Provider
+ * konfiguriert ist ODER alle konfigurierten Provider fehlschlagen - der Aufrufer (Agent)
+ * faellt dann auf seinen eigenen, hartkodierten getFallback() zurueck.
+ */
+export async function generateStructuredWithFallback(
+  req: StructuredGenerationRequest & { gemini: GoogleGenAI | null; anthropic: Anthropic | null; openai: OpenAI | null }
+): Promise<StructuredGenerationResult | null> {
+  const { gemini, anthropic, openai, ...rest } = req;
 
   if (anthropic) {
-    const model = getAnthropicModel();
-    try {
-      const response: any = await trackedAnthropicMessage(anthropic, {
-        model,
-        max_tokens: 1024,
-        system: systemInstruction,
-        messages: [{ role: 'user', content: contents }],
-        tools: [{
-          name: ANTHROPIC_TOOL_NAME,
-          description: 'Liefert das angeforderte strukturierte Analyseergebnis.',
-          input_schema: toAnthropicSchema(schema),
-        }],
-        tool_choice: { type: 'tool', name: ANTHROPIC_TOOL_NAME },
-      } as any, { promptId, requestId });
+    const result = await tryAnthropic(anthropic, rest);
+    if (result) return result;
+  }
 
-      const toolUse = Array.isArray(response?.content)
-        ? response.content.find((block: any) => block?.type === 'tool_use')
-        : undefined;
-      if (toolUse?.input) {
-        return { data: toolUse.input, provider: `anthropic:${model}` };
-      }
-      console.warn(`[AgentModelRouting] Anthropic-Antwort ohne tool_use-Block fuer '${promptId}'.`);
-    } catch (e) {
-      console.warn(`[AgentModelRouting] Anthropic-Rueckfall (${model}) fehlgeschlagen fuer '${promptId}'.`, e);
-    }
+  if (openai) {
+    const result = await tryOpenAI(openai, rest);
+    if (result) return result;
+  }
+
+  if (gemini) {
+    const result = await tryGemini(gemini, rest);
+    if (result) return result;
   }
 
   return null;

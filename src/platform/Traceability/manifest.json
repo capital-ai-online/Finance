@@ -1,7 +1,7 @@
 {
   "name": "Traceability",
   "version": "1.0.0",
-  "status": "development",
+  "status": "specified",
   "owner": "Platform Director",
   "description": "Enterprise Traceability Matrix (ETM). Verwaltet die bidirektionalen Beziehungen zwischen ESS, ADR, Repository, Komponenten, Klassen, Interfaces, Events, Tests, Dokumentation, Knowledge Graph, Versionen und Releases. Erzeugt keine Artefakte und keine Regeln, sondern ausschliesslich Verknuepfungen, Kennzahlen und Berichte.",
   "category": "platform",
@@ -109,5 +109,5 @@
     "docs/traceability/"
   ],
   "conformanceLevel": null,
-  "note": "Erste Komponente des Repositorys mit vollstaendigem Metadatensatz einschliesslich component.yaml und CHANGELOG.md. Erfuellt damit GOV-REPO-002 und GOV-REPO-004 aus ESS-0012-CONTRACTS."
+  "note": "Erste Komponente des Repositorys mit vollstaendigem Metadatensatz einschliesslich component.yaml und CHANGELOG.md. Erfuellt damit GOV-REPO-002 und GOV-REPO-004 aus ESS-0012-CONTRACTS. ARCH-AUDIT-0002 (J5, 2026-08-02): status von 'development' auf 'specified' korrigiert - diese Komponente ist die einzige der urspruenglich 22 leeren Plattformmodul-Verzeichnisse mit einer echten, vollstaendigen Spezifikation (ESS-0011), der jedoch bewusst keine Implementierung folgte (siehe README.md, Implementierungsstand)."
 }

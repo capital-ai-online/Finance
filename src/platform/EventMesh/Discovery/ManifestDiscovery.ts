@@ -5,7 +5,7 @@
 //
 // Node-only (fs/path) - unproblematisch, da src/platform/EventMesh von keiner
 // Frontend-Komponente importiert wird und daher nicht Teil des Vite-Browser-Bundles
-// ist (vgl. server/compliance/scanners.ts fuer dasselbe Muster).
+// ist (vgl. src/platform/Compliance/scanners.ts fuer dasselbe Muster).
 
 import fs from 'fs';
 import path from 'path';

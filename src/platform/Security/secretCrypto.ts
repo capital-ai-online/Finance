@@ -5,7 +5,7 @@
 // im Klartext in der Datenbank.
 
 import crypto from 'crypto';
-import { getCleanEnv } from '../env';
+import { getCleanEnv } from '../../../server/env';
 
 function getKey(): Buffer {
   const raw = getCleanEnv('TOTP_ENCRYPTION_KEY');

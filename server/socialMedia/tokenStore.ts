@@ -8,7 +8,7 @@
 // DB-Zeile nach aussen sichtbar macht, und sie laesst beide *_encrypted-Spalten konsequent weg.
 
 import { getServerSupabase, isSupabaseConfigured } from '../db';
-import { encryptSecret, decryptSecret } from '../iam/secretCrypto';
+import { encryptSecret, decryptSecret } from '../../src/platform/Security/secretCrypto';
 import { createLogger } from '../logger';
 import type { SocialAccount, SupportedAccountPlatform } from '../../src/platform/SocialMediaEngine/types';
 

@@ -116,7 +116,7 @@ const SCANNERS: ScannerDef[] = [
         title: 'Kein globales Rate-Limiting auf /api/*',
         severity: 'HIGH', complianceReference: 'ESS-0001-CONTRACTS Chapter 11 (S-03)',
         risk: 'Unbegrenzte automatisierte Anfragen gegen alle API-Endpunkte möglich (Scraping, Kostenexplosion bei AI-Endpunkten).',
-        description: 'server/iam/rateLimiter.ts wird nur punktuell (Admin-Zonen, Step-Up) verwendet, nicht als globale Middleware.',
+        description: 'src/platform/Security/rateLimiter.ts wird nur punktuell (Admin-Zonen, Step-Up) verwendet, nicht als globale Middleware.',
         filePath: 'server.ts',
       })];
       return { findings, evidence: hasGlobal ? 'Globale Rate-Limit-Middleware gefunden.' : 'Keine globale Rate-Limit-Middleware in server.ts gefunden.' };
@@ -145,14 +145,14 @@ const SCANNERS: ScannerDef[] = [
     id: 'SEC-04', name: 'IAM Fail-Closed Verhalten', type: 'SECURITY',
     isoControls: ['A.5.15 Access control', 'A.8.2 Privileged access rights'],
     evaluate: (files) => {
-      const authMw = files.find(f => f.relPath.endsWith(path.join('iam', 'authMiddleware.ts')));
+      const authMw = files.find(f => f.relPath.endsWith(path.join('Security', 'authMiddleware.ts')));
       const failClosed = !!authMw && /authorized:\s*false/.test(authMw.content) && /supabase-not-configured/.test(authMw.content);
       const findings: Finding[] = failClosed ? [] : [mkFinding({
         title: 'IAM-Autorisierung nicht eindeutig fail-closed',
         severity: 'CRITICAL', complianceReference: 'ADR-0003.5 / ADR-0008',
         risk: 'Ausfall der Rollenprüfung könnte fälschlich zu gewährtem Zugriff statt Sperrung führen.',
-        description: 'server/iam/authMiddleware.ts fehlt oder enthält kein erkennbares fail-closed-Muster.',
-        filePath: 'server/iam/authMiddleware.ts',
+        description: 'src/platform/Security/authMiddleware.ts fehlt oder enthält kein erkennbares fail-closed-Muster.',
+        filePath: 'src/platform/Security/authMiddleware.ts',
       })];
       return { findings, evidence: failClosed ? 'checkAdminAccess() liefert bei jedem Fehlerpfad authorized:false.' : 'Fail-closed-Muster nicht gefunden.' };
     },
@@ -161,7 +161,7 @@ const SCANNERS: ScannerDef[] = [
     id: 'SEC-05', name: 'Step-Up-Erzwingung für Owner-Aktionen', type: 'SECURITY',
     isoControls: ['A.8.5 Secure authentication', 'A.8.2 Privileged access rights'],
     evaluate: (files) => {
-      const usages = files.filter(f => !f.relPath.endsWith(path.join('iam', 'authMiddleware.ts')) && /requireStepUp\(/.test(f.content));
+      const usages = files.filter(f => !f.relPath.endsWith(path.join('Security', 'authMiddleware.ts')) && /requireStepUp\(/.test(f.content));
       const findings: Finding[] = usages.length > 0 ? [] : [mkFinding({
         title: 'Step-Up-Mechanismus implementiert, aber nirgends erzwungen',
         severity: 'MEDIUM', complianceReference: 'ADR-0003.5',
@@ -252,7 +252,7 @@ const SCANNERS: ScannerDef[] = [
     id: 'DAT-03', name: 'IAM Audit-Trail-Abdeckung', type: 'DATA',
     isoControls: ['A.8.15 Logging'],
     evaluate: (files) => {
-      const usages = files.filter(f => !f.relPath.endsWith(path.join('iam', 'authMiddleware.ts')) && /logIamEvent\(/.test(f.content));
+      const usages = files.filter(f => !f.relPath.endsWith(path.join('Security', 'authMiddleware.ts')) && /logIamEvent\(/.test(f.content));
       const findings: Finding[] = usages.length > 0 ? [] : [mkFinding({
         title: 'logIamEvent() wird von keiner Owner-/Admin-Aktion aufgerufen',
         severity: 'MEDIUM', complianceReference: 'ADR-0003.5',

@@ -24,7 +24,7 @@ import crypto from 'crypto';
 import { getServerSupabase, isSupabaseConfigured } from './db';
 import { getCleanEnv } from './env';
 import { sendMail } from './mailer';
-import { checkRateLimit, getClientIp } from './iam/rateLimiter';
+import { checkRateLimit, getClientIp } from '../src/platform/Security/rateLimiter';
 import { createLogger } from './logger';
 
 const alertsLogger = createLogger('alerts');

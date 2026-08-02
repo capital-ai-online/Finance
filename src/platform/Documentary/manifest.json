@@ -1,9 +1,9 @@
 {
   "name": "Documentary",
   "version": "1.0.0",
-  "status": "development",
+  "status": "unspecified",
   "owner": "CAPITAL-AI",
-  "description": "Documentary Engine. Zentrale Dokumentationsinstanz des CAPITAL-AI Core gemaess ESS-0010.",
+  "description": "Documentary Engine. Zentrale Dokumentationsinstanz des CAPITAL-AI Core gemaess ESS-0010 - Zielbeschreibung, nicht implementiert.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -13,22 +13,15 @@
   "adr": [],
   "dependencies": [],
   "events": {
-    "produces": [
-      "DocumentationGeneratedEvent",
-      "DocumentationValidatedEvent",
-      "TwinSynchronizedEvent"
-    ],
-    "consumes": [
-      "RepositoryScannedEvent",
-      "VersionChangedEvent",
-      "ReleasePublishedEvent"
-    ],
-    "note": "Nachgepflegt gemaess ADR-0018 Folgeentscheidung 2 (Enterprise Event Mesh Manifest-Nachpflege)."
+    "produces": [],
+    "consumes": [],
+    "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): die zuvor hier genannten Events (DocumentationGeneratedEvent, DocumentationValidatedEvent, TwinSynchronizedEvent, RepositoryScannedEvent, VersionChangedEvent, ReleasePublishedEvent) sind reservierte Namen im Enterprise-Event-Katalog (ADR-0018), werden aber von keinem existierenden Code ausgeloest oder konsumiert, da diese Komponente nicht implementiert ist."
   },
   "knowledge": [],
   "interfaces": [],
   "contracts": [],
   "documentation": [
     "README.md"
-  ]
+  ],
+  "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): als unspezifiziert markiert - description beschreibt eine Zielarchitektur gemaess ESS-0010, es existiert jedoch kein Code. Kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden."
 }

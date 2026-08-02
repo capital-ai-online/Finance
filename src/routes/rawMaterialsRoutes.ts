@@ -6,14 +6,15 @@
 import express from 'express';
 import { GoogleGenAI } from '@google/genai';
 import type Anthropic from '@anthropic-ai/sdk';
+import type OpenAI from 'openai';
 import { RawMaterialsOrchestrator } from '../orchestrator/rawMaterialsOrchestrator';
 import { RawMaterialsScoringService } from '../services/rawMaterialsScoring';
 import { validateRawMaterialInput } from '../schemas/rawMaterialsValidation';
 import { RAW_MATERIALS_DATABASE } from '../config/rawMaterialsConfig';
 
-export function createRawMaterialsRouter(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null): express.Router {
+export function createRawMaterialsRouter(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null): express.Router {
   const router = express.Router();
-  const orchestrator = new RawMaterialsOrchestrator(aiClient, anthropicClient);
+  const orchestrator = new RawMaterialsOrchestrator(aiClient, anthropicClient, openaiClient);
 
   /**
    * GET /api/raw-materials/list

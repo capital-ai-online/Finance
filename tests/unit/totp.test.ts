@@ -1,9 +1,9 @@
 // Audit ARCH-AUDIT-0002 (D5): Testabdeckung fuer den kritischen Auth-Pfad.
-// server/iam/totp.ts implementiert RFC 6238 (TOTP) ohne externe Abhaengigkeit - ein Fehler
+// src/platform/Security/totp.ts implementiert RFC 6238 (TOTP) ohne externe Abhaengigkeit - ein Fehler
 // hier wuerde entweder legitime Codes ablehnen (Owner ausgesperrt) oder falsche akzeptieren.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { generateBase32Secret, verifyTotp, buildOtpAuthUri } from '../../server/iam/totp';
+import { generateBase32Secret, verifyTotp, buildOtpAuthUri } from '../../src/platform/Security/totp';
 
 describe('totp', () => {
   afterEach(() => {

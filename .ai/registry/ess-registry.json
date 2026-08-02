@@ -60,6 +60,7 @@
       "owner": "Platform Director",
       "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
       "implementedBy": "src/platform/VersionManager",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): bis dahin zeigte dieses Feld auf einen leeren, vom Enterprise Bootstrapper generierten Ordner, waehrend der echte Code unter server/versionManager.ts lag - eine Governance-Inkonsistenz. Der Code wurde physisch nach src/platform/VersionManager/versionManager.ts verschoben, die Angabe ist jetzt korrekt.",
       "relatedAdr": [
         "ADR-0016"
       ]
@@ -74,6 +75,7 @@
       "owner": "Platform Director",
       "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
       "implementedBy": "src/platform/Quality",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): src/platform/Quality ist als unspezifiziert markiert (manifest.json status='unspecified') - es existiert kein Code, nur die Verzeichnisstruktur. Kann bei Bedarf zu einem spaeteren Zeitpunkt implementiert werden.",
       "relatedAdr": [
         "ADR-0016"
       ]
@@ -88,6 +90,7 @@
       "owner": "Platform Director",
       "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
       "implementedBy": "src/platform/Security, src/platform/Compliance",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): bis dahin zeigten beide Pfade auf leere, vom Enterprise Bootstrapper generierte Ordner, waehrend der echte Code unter server/iam/ (Security) und server/compliance/ (Compliance) lag - eine Governance-Inkonsistenz. Beide wurden physisch nach src/platform/Security/ bzw. src/platform/Compliance/ verschoben, die Angabe ist jetzt korrekt.",
       "relatedAdr": [
         "ADR-0016"
       ]
@@ -102,6 +105,7 @@
       "owner": "Platform Director",
       "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
       "implementedBy": "src/platform/Release",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): src/platform/Release ist als unspezifiziert markiert (manifest.json status='unspecified') - es existiert kein Code, nur die Verzeichnisstruktur. Kann bei Bedarf zu einem spaeteren Zeitpunkt implementiert werden.",
       "relatedAdr": [
         "ADR-0016"
       ]
@@ -130,6 +134,7 @@
       "owner": "Platform Director",
       "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
       "implementedBy": "src/platform/Knowledge",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): src/platform/Knowledge ist als unspezifiziert markiert (manifest.json status='unspecified') - es existiert kein Code, nur die Verzeichnisstruktur. Kann bei Bedarf zu einem spaeteren Zeitpunkt implementiert werden.",
       "relatedAdr": [
         "ADR-0016"
       ]
@@ -162,6 +167,7 @@
       ],
       "rationale": "Spezifikation der Enterprise Traceability Matrix. Verknuepft ESS, ADR, Exceptions, Komponenten, Interfaces, Events und Tests bidirektional.",
       "implementedBy": "src/platform/Traceability",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): src/platform/Traceability ist manifest.json status='specified' - die einzige der urspruenglich 22 leeren Plattformmodul-Verzeichnisse mit vollstaendiger Spezifikation, aber ohne Code (siehe README.md, Implementierungsstand).",
       "operationalDocs": "docs/traceability/"
     },
     {
@@ -177,7 +183,8 @@
         "ADR-0015"
       ],
       "note": "Vertragsteil von ESS-0011. Belegt keine eigene Nummer. Besitzt ausschliesslich ETM-Geltung, niemals globale Wirkung.",
-      "implementedBy": "src/platform/Traceability"
+      "implementedBy": "src/platform/Traceability",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): siehe implementationNote von ESS-0011 - spezifiziert, nicht implementiert."
     },
     {
       "id": "ESS-0012",

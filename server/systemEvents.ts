@@ -2,8 +2,8 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { getHygieneStatusData, processFileEvent } from './documentHygiene';
-import { checkAdminAccess } from './iam/authMiddleware';
-import { SUPERVISOR_ZONE_ROLES } from './iam/types';
+import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
+import { SUPERVISOR_ZONE_ROLES } from '../src/platform/Security/types';
 import { publishSystemAuditEvent } from '../src/platform/EventMesh/Services/SystemAuditBridge';
 
 export const systemEventsRouter = express.Router();

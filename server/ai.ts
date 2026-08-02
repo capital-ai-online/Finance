@@ -3,8 +3,8 @@ import multer from 'multer';
 import fs from 'fs';
 import { GoogleGenAI } from '@google/genai';
 import { orchestrator } from '../src/lib/requestOrchestrator';
-import { resolveVerifiedIdentity, checkAdminAccess } from './iam/authMiddleware';
-import { ADMIN_ZONE_ROLES } from './iam/types';
+import { resolveVerifiedIdentity, checkAdminAccess } from '../src/platform/Security/authMiddleware';
+import { ADMIN_ZONE_ROLES } from '../src/platform/Security/types';
 import { trackedGenerateContent, getUsageSummary, getUsageLedger, PROMPT_REGISTRY } from '../src/services/aiUsageTracker';
 
 export const aiRouter = express.Router();
@@ -150,7 +150,7 @@ aiRouter.post(
 });
 
 // 3. AI Usage Dashboard (Audit ARCH-AUDIT-0002, N2: Prompt-Registry und Token-/
-// Kostenerfassung). Admin-only, analog zum Muster in server/compliance/router.ts.
+// Kostenerfassung). Admin-only, analog zum Muster in src/platform/Compliance/router.ts.
 aiRouter.get('/usage', async (req, res) => {
   const authz = await checkAdminAccess(req, 'ai:usage', ADMIN_ZONE_ROLES);
   if (!authz.authorized) {

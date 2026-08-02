@@ -25,6 +25,7 @@ import { INDEX_FMP_TICKERS, ensureIndexQuoteFresh, getCachedIndexQuote, ensureIn
 import { supervisorRouter } from './server/supervisorRouter';
 import { createAgentEvaluationRouter } from './server/agentEvaluationRouter';
 import { getAnthropicInstance, isAnthropicConfigured } from './server/anthropicClient';
+import { getOpenAIInstance, isOpenAIConfigured } from './server/openaiClient';
 import { executeSupervised } from './src/platform/Supervisor/supervisor';
 import { newsRouter } from './src/features/news/newsRoutes';
 import { registryRouter } from './src/features/registry/registryRoutes';
@@ -32,8 +33,8 @@ import { computeReturnStats, classifyTrendLabel } from './src/services/realMarke
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
-import { checkAdminAccess, runIamSchemaHealthCheck } from './server/iam/authMiddleware';
-import { SUPERVISOR_ZONE_ROLES } from './server/iam/types';
+import { checkAdminAccess, runIamSchemaHealthCheck } from './src/platform/Security/authMiddleware';
+import { SUPERVISOR_ZONE_ROLES } from './src/platform/Security/types';
 import {
   isSupabaseConfigured,
   getServerSupabase,
@@ -49,11 +50,11 @@ import { orchestratorRouter } from './server/orchestrator';
 import { aiRouter, getGeminiInstance, isGeminiConfigured } from './server/ai';
 import { systemEventsRouter, logSystemEvent } from './server/systemEvents';
 import { hygieneRouter, startRecursiveFileWatcher } from './server/documentHygiene';
-import { versionManagerRouter } from './server/versionManager';
+import { versionManagerRouter } from './src/platform/VersionManager/versionManager';
 import { stepUpRouter } from './server/stepUp';
 import { enforceScreeningQuota } from './server/quota';
-import { complianceRouter } from './server/compliance/router';
-import { checkRateLimit, getClientIp } from './server/iam/rateLimiter';
+import { complianceRouter } from './src/platform/Compliance/router';
+import { checkRateLimit, getClientIp } from './src/platform/Security/rateLimiter';
 import { createLogger, requestContext } from './server/logger';
 import { metricsMiddleware, renderMetrics } from './server/metrics';
 
@@ -322,6 +323,18 @@ try {
   console.warn("Failed to retrieve Anthropic instance on boot:", e);
 }
 
+// Audit ARCH-AUDIT-0002 (J3-Folge, Kapitel 14.6): dritter Provider in der Kette. Reihenfolge
+// (Nutzerpriorisierung nach Bereitstellung aller drei Keys): Anthropic -> OpenAI -> Gemini
+// (agentModelRouting.ts). Ohne OPENAI_API_KEY bleibt openai === null - fail-open.
+let openai: any = null;
+try {
+  if (isOpenAIConfigured()) {
+    openai = getOpenAIInstance();
+  }
+} catch (e) {
+  console.warn("Failed to retrieve OpenAI instance on boot:", e);
+}
+
 // Health-Check-Endpunkt fuer Deployment-Plattformen (Audit ARCH-AUDIT-0002, Befund AUD2-F: kein
 // Health-Check vorhanden). Bewusst ohne Netzwerkaufrufe an Drittanbieter - ein Health-Check muss
 // schnell und unabhaengig von externen Ausfaellen antworten. `configured` spiegelt nur, ob die
@@ -335,6 +348,7 @@ app.get('/healthz', (req, res) => {
       supabase: isSupabaseConfigured(),
       gemini: isGeminiConfigured(),
       anthropic: isAnthropicConfigured(),
+      openai: isOpenAIConfigured(),
     },
   });
 });
@@ -366,8 +380,8 @@ app.get('/metrics', (req, res) => {
 // komplett verhindern, statt den Betrieb ohne KI-Funktionen fortzusetzen. Beide Router und die
 // dahinterliegenden Orchestratoren akzeptieren `GoogleGenAI | null` und liefern ohne Client
 // ihre quantitativen Fallbacks.
-app.use('/api/raw-materials', createRawMaterialsRouter(ai, anthropic));
-app.use('/api/crypto', createCryptoRouter(ai, anthropic));
+app.use('/api/raw-materials', createRawMaterialsRouter(ai, anthropic, openai));
+app.use('/api/crypto', createCryptoRouter(ai, anthropic, openai));
 app.use('/api/stripe', stripeRouter);
 app.use('/api/orchestrator', orchestratorRouter);
 app.use('/api/admin/hygiene', hygieneRouter);
@@ -378,7 +392,7 @@ app.use('/api/compliance', complianceRouter);
 app.use('/api/scoring', scoreValidationRouter);
 app.use('/api/alerts', alertsRouter);
 app.use('/api/admin/supervisor', supervisorRouter);
-app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic));
+app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic, openai));
 app.use('/api/news', newsRouter);
 app.use('/api/registry', registryRouter);
 app.use('/api/social-media', socialMediaRouter);

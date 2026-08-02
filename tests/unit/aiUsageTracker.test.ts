@@ -6,6 +6,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   trackedGenerateContent,
   trackedAnthropicMessage,
+  trackedOpenAIMessage,
   getUsageLedger,
   getUsageSummary,
   configureModelPricing,
@@ -13,6 +14,7 @@ import {
 } from '../../src/services/aiUsageTracker';
 import type { GoogleGenAI } from '@google/genai';
 import type Anthropic from '@anthropic-ai/sdk';
+import type OpenAI from 'openai';
 
 function mockAiClient(response: any): GoogleGenAI {
   return {
@@ -28,6 +30,16 @@ function mockAnthropicClient(response: any): Anthropic {
       create: async () => response,
     },
   } as unknown as Anthropic;
+}
+
+function mockOpenAIClient(response: any): OpenAI {
+  return {
+    chat: {
+      completions: {
+        create: async () => response,
+      },
+    },
+  } as unknown as OpenAI;
 }
 
 describe('aiUsageTracker', () => {
@@ -147,6 +159,38 @@ describe('aiUsageTracker', () => {
       const anthropic = mockAnthropicClient({ content: [] });
 
       await trackedAnthropicMessage(anthropic, { model: 'test-anthropic-model-2', messages: [] } as any, { promptId: 'crypto-onchain' });
+
+      expect(getUsageLedger().length).toBe(before);
+    });
+  });
+
+  // Audit ARCH-AUDIT-0002 (J3-Folge): dritter Provider (Anthropic -> OpenAI -> Gemini) - auch
+  // OpenAI-Aufrufe muessen im selben providerunabhaengigen Ledger landen.
+  describe('trackedOpenAIMessage', () => {
+    it('zeichnet prompt_tokens/completion_tokens aus einer realen usage-Antwort auf', async () => {
+      const before = getUsageLedger().length;
+      const openai = mockOpenAIClient({
+        choices: [{ message: { content: '{}' } }],
+        usage: { prompt_tokens: 300, completion_tokens: 60, total_tokens: 360 },
+      });
+
+      await trackedOpenAIMessage(openai, { model: 'test-openai-model', messages: [] } as any, { promptId: 'crypto-classification' });
+
+      const ledger = getUsageLedger();
+      expect(ledger.length).toBe(before + 1);
+      const last = ledger[ledger.length - 1];
+      expect(last.promptTokens).toBe(300);
+      expect(last.candidateTokens).toBe(60);
+      expect(last.totalTokens).toBe(360);
+      expect(last.model).toBe('test-openai-model');
+      expect(last.promptId).toBe('crypto-classification');
+    });
+
+    it('erzeugt keinen Ledger-Eintrag, wenn die Antwort kein usage-Feld enthaelt', async () => {
+      const before = getUsageLedger().length;
+      const openai = mockOpenAIClient({ choices: [{ message: { content: '{}' } }] });
+
+      await trackedOpenAIMessage(openai, { model: 'test-openai-model-2', messages: [] } as any, { promptId: 'crypto-sentiment' });
 
       expect(getUsageLedger().length).toBe(before);
     });

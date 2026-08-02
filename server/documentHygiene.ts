@@ -11,8 +11,8 @@ import {
   sanitizeJsonContent, 
   sanitizeAllDocs 
 } from './documentSanitizer';
-import { checkAdminAccess } from './iam/authMiddleware';
-import { ADMIN_ZONE_ROLES } from './iam/types';
+import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
+import { ADMIN_ZONE_ROLES } from '../src/platform/Security/types';
 import { trackedGenerateContent } from '../src/services/aiUsageTracker';
 
 export const hygieneRouter = express.Router();

@@ -5,8 +5,8 @@
 
 import express from 'express';
 import { getSupervisorStatus } from '../src/platform/Supervisor/supervisor';
-import { checkAdminAccess } from './iam/authMiddleware';
-import { SUPERVISOR_ZONE_ROLES } from './iam/types';
+import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
+import { SUPERVISOR_ZONE_ROLES } from '../src/platform/Security/types';
 
 export const supervisorRouter = express.Router();
 

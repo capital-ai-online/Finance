@@ -38,6 +38,10 @@ services:
       # Rückfall fail-open inaktiv - Agenten verhalten sich wie vor J3 (Gemini-only).
       - key: ANTHROPIC_API_KEY
         sync: false
+      # ARCH-AUDIT-0002 (J3-Folge): dritter Provider in der Kette (Anthropic -> OpenAI ->
+      # Gemini, Nutzerpriorisierung). Ohne gesetzten Wert bleibt die Stufe fail-open inaktiv.
+      - key: OPENAI_API_KEY
+        sync: false
       - key: STRIPE_PRICE_ID_STARTER
         sync: false
       - key: STRIPE_PRICE_ID_PRO

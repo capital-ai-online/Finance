@@ -1,6 +1,6 @@
 // ADR-0012 — Persistenz- und Aggregationsschicht des SecurityComplianceAuditor.
 
-import { getServerSupabase, isSupabaseConfigured } from '../db';
+import { getServerSupabase, isSupabaseConfigured } from '../../../server/db';
 import { runAllScanners } from './scanners';
 import type { ComplianceCertificate, ComplianceRun, Finding, ScannerResult, Severity } from './types';
 

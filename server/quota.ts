@@ -14,8 +14,8 @@
 
 import type { Request } from 'express';
 import { getServerSupabase, isSupabaseConfigured, getSubscription } from './db';
-import { resolveVerifiedIdentity } from './iam/authMiddleware';
-import { checkRateLimit, getClientIp } from './iam/rateLimiter';
+import { resolveVerifiedIdentity } from '../src/platform/Security/authMiddleware';
+import { checkRateLimit, getClientIp } from '../src/platform/Security/rateLimiter';
 
 export const STARTER_DAILY_LIMIT = 5;
 const UNLIMITED_TIERS = new Set(['PRO', 'ENTERPRISE', 'ENTERPRISE OS']);
@@ -47,7 +47,7 @@ export async function enforceScreeningQuota(req: Request): Promise<QuotaResult> 
 
   // Keine verifizierte Identitaet -> Free/Gast-Aufruf ohne Session.
   // IP-basiertes Fallback-Limit, konsistent mit dem bereits bestehenden
-  // In-Memory-Limiter aus server/iam/rateLimiter.ts.
+  // In-Memory-Limiter aus src/platform/Security/rateLimiter.ts.
   if (!identity || !identity.email) {
     const ip = getClientIp(req as any);
     const allowed = checkRateLimit(`screening:${ip}`, STARTER_DAILY_LIMIT, 24 * 60 * 60 * 1000);
