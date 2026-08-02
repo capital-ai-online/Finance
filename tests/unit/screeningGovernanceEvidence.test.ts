@@ -23,7 +23,7 @@ describe('screening governance runtime evidence', () => {
         sampleSize: 3,
         minimumSample: 30,
         confidencePct: null,
-        methodology: 'EMPIRICAL_HIT_RATE',
+        methodology: 'empirical-hit-rate',
         scoreImpactEnabled: false,
         recommendationImpactEnabled: false,
         reasons: ['Minimum sample not reached.'],
