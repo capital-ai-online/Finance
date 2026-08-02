@@ -15,8 +15,10 @@ import {
 } from './realMarketSignals';
 import { assetRegistry } from '../lib/assetRegistry';
 import { recordProviderHealth } from '../platform/Supervisor/providerHealth';
+import { getVerifiedTraditionalFallbackHistory } from './traditionalHistoryFallback';
 import {
   buildTraditionalScoringLineage,
+  type FinancialDataProvider,
   type FinancialFieldProvenance,
   type TraditionalScoringLineage,
 } from '../types/financialProvenance';
@@ -97,12 +99,11 @@ export function computeTechnicalFactorsFromCloses(closes: number[]): Partial<Tra
 }
 
 function technicalProvenance(
-  symbol: string,
-  provider: 'Stooq' | 'FMP',
+  provider: FinancialDataProvider,
   sourcePath: string,
   factors: Partial<TraditionalAssetScoringInputs>,
+  retrievedAt = new Date().toISOString(),
 ): FinancialFieldProvenance[] {
-  const retrievedAt = new Date().toISOString();
   const fields = ['trend', 'momentum', 'breakout_quality', 'volatility_quality', 'relative_strength'] as const;
   return fields
     .filter(field => typeof factors[field] === 'number')
@@ -148,6 +149,7 @@ export async function generateTraditionalAssetInputs(
 ): Promise<TraditionalAssetScoringInputs> {
   const s = symbol.toUpperCase().trim();
   const inputs: TraditionalAssetScoringInputs = { symbol: s, assetType, provenance: [] };
+  let verifiedTechnicalHistory = false;
 
   try {
     const history = await assetRegistry.getHistory(s, 30);
@@ -155,11 +157,11 @@ export async function generateTraditionalAssetInputs(
       const technical = computeTechnicalFactorsFromCloses(history.points.map(point => point.close));
       Object.assign(inputs, technical);
       inputs.provenance!.push(...technicalProvenance(
-        s,
         'Stooq',
         `https://stooq.com/q/d/l/?s=${encodeURIComponent(s)}&i=d`,
         technical,
       ));
+      verifiedTechnicalHistory = true;
       recordProviderHealth({
         provider: 'Stooq', capability: `${assetType}-history`, state: 'healthy', cacheMode: 'live',
         message: `${history.points.length} verified history points used for ${s}.`,
@@ -175,6 +177,20 @@ export async function generateTraditionalAssetInputs(
       provider: 'Stooq', capability: `${assetType}-history`, state: 'unavailable',
       message: error instanceof Error ? error.message : String(error),
     });
+  }
+
+  if (!verifiedTechnicalHistory) {
+    const fallback = await getVerifiedTraditionalFallbackHistory(s, assetType, 30);
+    if (fallback) {
+      const technical = computeTechnicalFactorsFromCloses(fallback.closes);
+      Object.assign(inputs, technical);
+      inputs.provenance!.push(...technicalProvenance(
+        fallback.provider,
+        fallback.sourcePath,
+        technical,
+        fallback.retrievedAt,
+      ));
+    }
   }
 
   if (assetType === 'stock' && fundamentals) {
@@ -209,7 +225,6 @@ export function generateTraditionalAssetInputsFromCloses(
     const technical = computeTechnicalFactorsFromCloses(closes);
     Object.assign(inputs, technical);
     inputs.provenance!.push(...technicalProvenance(
-      s,
       'FMP',
       `https://financialmodelingprep.com/stable/historical-price-eod/light?symbol=${encodeURIComponent(s)}`,
       technical,
@@ -241,7 +256,7 @@ export class TraditionalAssetScoringService {
       reasoning.push('Keine verifizierte Kurshistorie/Fundamentaldaten verfügbar; keine belegten Faktoren für das Scoring.');
     } else {
       if ((inputs.trend ?? 0) > 0.7) reasoning.push('Starker technischer Aufwärtstrend aus verifizierter Kurshistorie.');
-      if (inputs.assetType === 'stock' && (inputs.value ?? 0) > 0.7) reasoning.push('Günstige KGV-basierte Bewertung aus Alpha-Vantage-Daten.');
+      if (inputs.assetType === 'stock' && (inputs.value ?? 0) > 0.7) reasoning.push('Günstige KGV-basierte Bewertung aus belegten Fundamentaldaten.');
       if (missingFactors.length > 0) reasoning.push(`Nicht belegte Faktoren ausgeschlossen: ${missingFactors.join(', ')}.`);
     }
 
