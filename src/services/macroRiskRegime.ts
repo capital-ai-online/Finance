@@ -1,8 +1,8 @@
 import { fetchFredSeries, type MacroEvidenceSeries } from './macroRateEvidence';
 
-export const MACRO_RISK_REGIME_CONTRACT_VERSION = '1.0.0';
+export const MACRO_RISK_REGIME_CONTRACT_VERSION = '1.1.0';
 
-export type MacroRiskRegimeStatus = 'READY' | 'EVIDENCE_INCOMPLETE';
+export type MacroRiskRegimeStatus = 'READY' | 'EVIDENCE_INCOMPLETE' | 'STALE_EVIDENCE';
 export type MacroRiskRegime = 'INVERTED_CURVE' | 'NORMAL_CURVE' | 'FLAT_CURVE' | 'UNKNOWN';
 
 export interface MacroRiskRegimeEvidence {
@@ -30,12 +30,21 @@ function latestCommonObservation(a: MacroEvidenceSeries, b: MacroEvidenceSeries)
   return null;
 }
 
+function observationAgeMs(date: string, nowMs: number): number {
+  const observed = Date.parse(`${date}T23:59:59.999Z`);
+  return Number.isFinite(observed) ? Math.max(0, nowMs - observed) : Number.POSITIVE_INFINITY;
+}
+
 /**
  * Versioned cross-asset macro evidence contract. This is context/evidence only: it does not
  * produce a tradable price, investment recommendation or asset score. The curve regime is emitted
- * only when DGS2 and DGS10 have an observation for the same date; otherwise it fails closed.
+ * only when DGS2 and DGS10 have an observation for the same sufficiently fresh date; otherwise it
+ * fails closed.
  */
-export async function buildMacroRiskRegime(): Promise<MacroRiskRegimeEvidence> {
+export async function buildMacroRiskRegime(options: {
+  nowMs?: number;
+  maxObservationAgeMs?: number;
+} = {}): Promise<MacroRiskRegimeEvidence> {
   try {
     const [twoYear, tenYear] = await Promise.all([
       fetchFredSeries('DGS2'),
@@ -59,16 +68,35 @@ export async function buildMacroRiskRegime(): Promise<MacroRiskRegimeEvidence> {
       };
     }
 
+    const nowMs = options.nowMs ?? Date.now();
+    const maxObservationAgeMs = options.maxObservationAgeMs ?? 7 * 24 * 60 * 60 * 1000;
+    const evidenceIds = [
+      `macro:fred:DGS2:${common.date}`,
+      `macro:fred:DGS10:${common.date}`,
+    ];
+    if (observationAgeMs(common.date, nowMs) > maxObservationAgeMs) {
+      return {
+        contractVersion: MACRO_RISK_REGIME_CONTRACT_VERSION,
+        status: 'STALE_EVIDENCE',
+        regime: 'UNKNOWN',
+        asOf: common.date,
+        treasury2y: common.a,
+        treasury10y: common.b,
+        spread10y2yBps: null,
+        providers: ['FRED'],
+        evidenceIds,
+        sourceSeries: ['DGS2', 'DGS10'],
+        executionPriceEligible: false,
+        reason: `Gemeinsame DGS2/DGS10-Evidence vom ${common.date} überschreitet das zulässige Freshness-Fenster.`,
+      };
+    }
+
     const spreadBps = Number(((common.b - common.a) * 100).toFixed(2));
     const regime: MacroRiskRegime = spreadBps < -10
       ? 'INVERTED_CURVE'
       : spreadBps > 10
         ? 'NORMAL_CURVE'
         : 'FLAT_CURVE';
-    const evidenceIds = [
-      `macro:fred:DGS2:${common.date}`,
-      `macro:fred:DGS10:${common.date}`,
-    ];
 
     return {
       contractVersion: MACRO_RISK_REGIME_CONTRACT_VERSION,
@@ -82,7 +110,7 @@ export async function buildMacroRiskRegime(): Promise<MacroRiskRegimeEvidence> {
       evidenceIds,
       sourceSeries: ['DGS2', 'DGS10'],
       executionPriceEligible: false,
-      reason: 'Regime basiert ausschließlich auf gleichdatierten FRED DGS2/DGS10 Treasury-Rate-Evidence.',
+      reason: 'Regime basiert ausschließlich auf gleichdatierten, frischen FRED DGS2/DGS10 Treasury-Rate-Evidence.',
     };
   } catch (error) {
     return {
