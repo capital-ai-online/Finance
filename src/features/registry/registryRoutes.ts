@@ -19,7 +19,9 @@ import {
 import { buildMacroRiskRegime } from '../../services/macroRiskRegime';
 import { buildCrossAssetRiskContext, type CrossAssetClass } from '../../services/crossAssetRiskContext';
 import { fetchVerifiedTraditionalQuote } from '../../services/traditionalQuoteEvidence';
-import { evaluateScreeningEligibility } from '../../services/screeningEligibility';
+import { decorateScreeningBatchWithGovernance, type ScreeningBatchItem } from '../../services/screeningBatchGovernance';
+import { getMarketDataProviderTelemetry } from '../../services/marketDataProviderRouter';
+import { getScreeningSloSinkStatus, persistScreeningSloEvidence } from '../../services/screeningSloSink';
 import { logSystemEvent } from '../../../server/systemEvents';
 import { ensureFundamentalsFresh, getCachedFundamentals } from '../../../server/stockFundamentals';
 import { ensureIndexHistoryFresh, getCachedIndexHistory, INDEX_FMP_TICKERS } from '../../../server/fmpIndices';
@@ -232,30 +234,34 @@ registryRouter.get('/assets/verified-scores', async (req, res) => {
   }
 
   const evaluations = await Promise.all(symbols.map(symbol => evaluateVerifiedTraditionalSymbol(symbol, `${rootCorrelationId}:${symbol}`)));
-  const results = evaluations.map(item => {
-    const providers = Array.isArray(item.payload.providers) ? item.payload.providers.filter((v): v is string => typeof v === 'string') : [];
-    const evidenceIds = Array.isArray(item.payload.evidenceIds) ? item.payload.evidenceIds.filter((v): v is string => typeof v === 'string') : [];
-    const score = typeof item.payload.score === 'number' && Number.isFinite(item.payload.score) ? item.payload.score : null;
-    const scoreStatus = typeof item.payload.status === 'string' ? item.payload.status : 'SCORE_NOT_COMPUTABLE';
-    const eligibility = evaluateScreeningEligibility({
-      scoreStatus,
-      score,
-      providers,
-      evidenceIds,
-      observedAt: latestObservedAt(item.payload),
-      minimumEvidence: 1,
-      minimumProviders: 1,
-    });
-    return { httpStatus: item.httpStatus, ...item.payload, screeningEligibility: eligibility };
-  });
+  const items: ScreeningBatchItem[] = evaluations.map(item => ({
+    httpStatus: item.httpStatus,
+    ...item.payload,
+    correlationId: typeof item.payload.correlationId === 'string' ? item.payload.correlationId : rootCorrelationId,
+    observedAt: latestObservedAt(item.payload),
+  }));
+  const governed = decorateScreeningBatchWithGovernance(items, getMarketDataProviderTelemetry());
+  const persistence = await Promise.all(governed.results.map(async item => ({
+    correlationId: item.correlationId,
+    result: await persistScreeningSloEvidence(item.screeningSloEvidence),
+  })));
+  const persistenceByCorrelationId = new Map(persistence.map(entry => [entry.correlationId, entry.result]));
+  const results = governed.results.map(item => ({
+    ...item,
+    sloPersistence: persistenceByCorrelationId.get(item.correlationId) ?? null,
+  }));
 
   return res.json({
     correlationId: rootCorrelationId,
     status: 'BATCH_COMPLETE',
     requested: symbols.length,
     ready: evaluations.filter(item => item.httpStatus === 200).length,
-    eligible: results.filter(item => item.screeningEligibility.eligible).length,
+    eligible: governed.eligible,
     eligibilityContractVersion: 'screening-eligibility/1.0.0',
+    screeningOperationsContractVersion: governed.screeningOperationsContractVersion,
+    screeningSloEvidenceContractVersion: governed.screeningSloEvidenceContractVersion,
+    providerSlaState: governed.providerSlaState,
+    sloSink: getScreeningSloSinkStatus(),
     results,
   });
 });
