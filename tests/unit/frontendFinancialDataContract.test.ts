@@ -58,10 +58,11 @@ describe('frontend financial data contract regression gate', () => {
     expect(code).not.toContain('Simulate real calculations');
   });
 
-  it('PriceAlert evaluates only verified quote evidence and contains no random-walk price engine', () => {
+  it('PriceAlert evaluates crypto and traditional assets only through verified quote evidence', () => {
     const code = source('src/components/PriceAlert.tsx');
     expect(code).toContain('/api/crypto/price-consensus/');
-    expect(code).toContain("status: 'READY'");
+    expect(code).toContain('/verified-quote');
+    expect(code).toContain("body?.alertEligible === true");
     expect(code).toContain('quoteEvidenceIds');
     expect(code).toContain('quoteObservedAt');
     expect(code).not.toContain('Math.random');
