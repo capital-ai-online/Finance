@@ -13,6 +13,7 @@ export interface CryptoSnapshotIntegrityResult {
   status: CryptoSnapshotIntegrityStatus;
   snapshotProvider: string | null;
   spotProviders: string[];
+  providers: string[];
   evidenceIds: string[];
   impliedMarketCapUsd: number | null;
   marketCapDeviationBps: number | null;
@@ -43,13 +44,10 @@ function supplyOrderingValid(snapshot: VerifiedCryptoSnapshot): boolean | null {
   return true;
 }
 
-/**
- * Runtime integrity control for verified crypto snapshots.
- *
- * It does not create or alter an asset score. It validates supply invariants first and then, when
- * independent spot-price consensus exists, checks whether reported market cap is plausible against
- * spot consensus × circulating supply. Material disagreement stays fail-closed as SOURCE_CONFLICT.
- */
+function providerSet(snapshotProvider: string | null, spotProviders: string[]): string[] {
+  return [...new Set([...(snapshotProvider ? [snapshotProvider] : []), ...spotProviders])].sort();
+}
+
 export async function evaluateCryptoSnapshotIntegrity(
   symbol: string,
   options: CryptoSnapshotIntegrityOptions = {},
@@ -66,6 +64,7 @@ export async function evaluateCryptoSnapshotIntegrity(
       status: 'SOURCE_UNAVAILABLE',
       snapshotProvider: null,
       spotProviders: [],
+      providers: [],
       evidenceIds: [],
       impliedMarketCapUsd: null,
       marketCapDeviationBps: null,
@@ -85,6 +84,7 @@ export async function evaluateCryptoSnapshotIntegrity(
       status: 'INVALID_SNAPSHOT',
       snapshotProvider: snapshot.provider,
       spotProviders: [],
+      providers: providerSet(snapshot.provider, []),
       evidenceIds: snapshotEvidenceIds,
       impliedMarketCapUsd: null,
       marketCapDeviationBps: null,
@@ -99,6 +99,7 @@ export async function evaluateCryptoSnapshotIntegrity(
       status: 'INSUFFICIENT_EVIDENCE',
       snapshotProvider: snapshot.provider,
       spotProviders: [],
+      providers: providerSet(snapshot.provider, []),
       evidenceIds: snapshotEvidenceIds,
       impliedMarketCapUsd: null,
       marketCapDeviationBps: null,
@@ -109,11 +110,13 @@ export async function evaluateCryptoSnapshotIntegrity(
 
   const spot = await spotConsensusProvider(s);
   if (spot.status !== 'CONSENSUS' || typeof spot.canonicalValue !== 'number' || !Number.isFinite(spot.canonicalValue) || spot.canonicalValue <= 0) {
+    const spotProviders = spot.providers ?? [];
     return {
       symbol: s,
       status: 'INSUFFICIENT_EVIDENCE',
       snapshotProvider: snapshot.provider,
-      spotProviders: spot.providers ?? [],
+      spotProviders,
+      providers: providerSet(snapshot.provider, spotProviders),
       evidenceIds: [...snapshotEvidenceIds, ...(spot.evidenceIds ?? [])],
       impliedMarketCapUsd: null,
       marketCapDeviationBps: null,
@@ -131,6 +134,7 @@ export async function evaluateCryptoSnapshotIntegrity(
     status: consistent ? 'CONSISTENT' : 'SOURCE_CONFLICT',
     snapshotProvider: snapshot.provider,
     spotProviders: spot.providers,
+    providers: providerSet(snapshot.provider, spot.providers),
     evidenceIds: [...new Set([...snapshotEvidenceIds, ...spot.evidenceIds])],
     impliedMarketCapUsd: Number(impliedMarketCapUsd.toPrecision(15)),
     marketCapDeviationBps: Number(deviationBps.toFixed(2)),
