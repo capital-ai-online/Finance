@@ -1,0 +1,230 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+export type ReleaseClassification = 'PATCH' | 'MINOR' | 'MAJOR';
+
+export interface ReleaseVersionRequest {
+  targetVersion: string;
+  classification: ReleaseClassification;
+  workPackages: string[];
+  adrs: string[];
+  migrations: string[];
+  risks: string[];
+  rollbackBoundary: string;
+  acceptanceRequirements: string[];
+  gaAdr?: string;
+}
+
+export interface ReleaseVersionPlan {
+  currentVersion: string;
+  targetVersion: string;
+  classification: ReleaseClassification;
+  updatedFiles: string[];
+  request: ReleaseVersionRequest;
+}
+
+export const RELEASE_VERSION_GATE_VERSION = 'release-version-gate/1.0.0' as const;
+
+const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+
+const GOVERNED_MIRRORS = [
+  'metadata.json',
+  'README.md',
+  'AGENTS.md',
+  'docs/code-quality/CODE_QUALITY_STANDARDS.md',
+  'docs/ceo/EXECUTIVE_SUMMARY.md',
+  'docs/API.md',
+  'index.html',
+] as const;
+
+function parseSemver(value: string): [number, number, number] {
+  const match = SEMVER.exec(value.trim());
+  if (!match) throw new Error(`Ungültige SemVer-Version: ${value}`);
+  return [Number(match[1]), Number(match[2]), Number(match[3])];
+}
+
+function compareSemver(left: string, right: string): number {
+  const a = parseSemver(left);
+  const b = parseSemver(right);
+  for (let index = 0; index < 3; index += 1) {
+    if (a[index] !== b[index]) return a[index] < b[index] ? -1 : 1;
+  }
+  return 0;
+}
+
+export function expectedClassification(currentVersion: string, targetVersion: string): ReleaseClassification {
+  const [currentMajor, currentMinor, currentPatch] = parseSemver(currentVersion);
+  const [targetMajor, targetMinor, targetPatch] = parseSemver(targetVersion);
+
+  if (compareSemver(currentVersion, targetVersion) >= 0) {
+    throw new Error(`Zielversion ${targetVersion} muss größer als ${currentVersion} sein.`);
+  }
+  if (targetMajor > currentMajor) {
+    if (targetMajor !== currentMajor + 1 || targetMinor !== 0 || targetPatch !== 0) {
+      throw new Error('MAJOR-Releases müssen auf die nächste Hauptversion mit .0.0 wechseln.');
+    }
+    return 'MAJOR';
+  }
+  if (targetMinor > currentMinor) {
+    if (targetMajor !== currentMajor || targetMinor !== currentMinor + 1 || targetPatch !== 0) {
+      throw new Error('MINOR-Releases müssen auf die nächste Minor-Version mit Patch 0 wechseln.');
+    }
+    return 'MINOR';
+  }
+  if (targetMajor !== currentMajor || targetMinor !== currentMinor || targetPatch !== currentPatch + 1) {
+    throw new Error('PATCH-Releases müssen exakt den nächsten Patch erhöhen.');
+  }
+  return 'PATCH';
+}
+
+function assertRequest(currentVersion: string, request: ReleaseVersionRequest): void {
+  const expected = expectedClassification(currentVersion, request.targetVersion);
+  if (expected !== request.classification) {
+    throw new Error(`Release-Klassifizierung ${request.classification} passt nicht zum Versionssprung; erwartet wird ${expected}.`);
+  }
+  if (request.workPackages.length === 0) throw new Error('Mindestens ein Work Package / PR ist erforderlich.');
+  if (request.rollbackBoundary.trim().length < 3) throw new Error('Rollback Boundary fehlt.');
+  if (request.acceptanceRequirements.length === 0) throw new Error('Mindestens eine Production-Acceptance-Anforderung ist erforderlich.');
+  if (request.risks.length === 0) throw new Error('Known Risks müssen angegeben werden; für keine bekannten Risiken explizit "none" verwenden.');
+  if (request.classification !== 'PATCH' && request.adrs.length === 0) {
+    throw new Error('MINOR/MAJOR-Releases benötigen mindestens eine ADR-Referenz.');
+  }
+  if (request.classification === 'MAJOR' && !request.gaAdr?.trim()) {
+    throw new Error('MAJOR/GA benötigt eine explizite GA-ADR.');
+  }
+}
+
+function readJson(filePath: string): any {
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+function replaceRequired(content: string, pattern: RegExp, replacement: string, label: string): string {
+  if (!pattern.test(content)) throw new Error(`${label}: erwartete aktuelle Versionsdeklaration wurde nicht gefunden.`);
+  pattern.lastIndex = 0;
+  return content.replace(pattern, replacement);
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function updateLockfile(content: string, currentVersion: string, targetVersion: string): string {
+  const parsed = JSON.parse(content);
+  if (parsed?.version !== currentVersion || parsed?.packages?.['']?.version !== currentVersion) {
+    throw new Error('package-lock.json stimmt vor dem Release Gate nicht mit package.json überein.');
+  }
+
+  const escaped = escapeRegex(currentVersion);
+  let next = replaceRequired(
+    content,
+    new RegExp(`^(\\s*"version"\\s*:\\s*)"${escaped}"`, 'm'),
+    `$1"${targetVersion}"`,
+    'package-lock.json root version',
+  );
+  next = replaceRequired(
+    next,
+    new RegExp(`(""\\s*:\\s*\\{[\\s\\S]*?"version"\\s*:\\s*)"${escaped}"`),
+    `$1"${targetVersion}"`,
+    'package-lock.json packages[""] version',
+  );
+  return next;
+}
+
+function updateMirror(relativePath: string, content: string, currentVersion: string, targetVersion: string): string {
+  const current = escapeRegex(currentVersion);
+  switch (relativePath) {
+    case 'metadata.json': {
+      const metadata = JSON.parse(content);
+      if (metadata.version !== currentVersion) throw new Error('metadata.json divergiert vor dem Release Gate.');
+      metadata.version = targetVersion;
+      return `${JSON.stringify(metadata, null, 2)}\n`;
+    }
+    case 'README.md':
+      return replaceRequired(content, new RegExp(`Version-${current}_Beta`, 'g'), `Version-${targetVersion}_Beta`, relativePath);
+    case 'AGENTS.md':
+      return replaceRequired(content, new RegExp(`Version ${current}`, 'g'), `Version ${targetVersion}`, relativePath);
+    case 'docs/code-quality/CODE_QUALITY_STANDARDS.md':
+      return replaceRequired(content, new RegExp(current, 'g'), targetVersion, relativePath);
+    case 'docs/ceo/EXECUTIVE_SUMMARY.md':
+      return replaceRequired(content, new RegExp(`(\\*\\*Version:\\*\\*\\s*)${current}`), `$1${targetVersion}`, relativePath);
+    case 'docs/API.md':
+      return replaceRequired(content, new RegExp(`(Platform Specification Version\\s+)${current}`), `$1${targetVersion}`, relativePath);
+    case 'index.html':
+      return replaceRequired(content, new RegExp(`Version ${current}`, 'g'), `Version ${targetVersion}`, relativePath);
+    default:
+      throw new Error(`Nicht governte Mirror-Datei: ${relativePath}`);
+  }
+}
+
+export function buildReleaseVersionPlan(repoRoot: string, request: ReleaseVersionRequest): ReleaseVersionPlan {
+  const packagePath = path.join(repoRoot, 'package.json');
+  const lockPath = path.join(repoRoot, 'package-lock.json');
+  if (!fs.existsSync(packagePath) || !fs.existsSync(lockPath)) throw new Error('package.json oder package-lock.json fehlt.');
+
+  const pkg = readJson(packagePath);
+  const currentVersion = String(pkg?.version ?? '');
+  parseSemver(currentVersion);
+  assertRequest(currentVersion, request);
+
+  const lock = readJson(lockPath);
+  if (lock?.version !== currentVersion || lock?.packages?.['']?.version !== currentVersion) {
+    throw new Error('Precondition fehlgeschlagen: package-lock.json ist nicht versionskonsistent.');
+  }
+
+  for (const relativePath of GOVERNED_MIRRORS) {
+    const filePath = path.join(repoRoot, relativePath);
+    if (!fs.existsSync(filePath)) throw new Error(`Governed mirror fehlt: ${relativePath}`);
+    const content = fs.readFileSync(filePath, 'utf8');
+    updateMirror(relativePath, content, currentVersion, request.targetVersion);
+  }
+
+  return {
+    currentVersion,
+    targetVersion: request.targetVersion,
+    classification: request.classification,
+    updatedFiles: ['package.json', 'package-lock.json', ...GOVERNED_MIRRORS],
+    request,
+  };
+}
+
+export function applyReleaseVersionPlan(repoRoot: string, plan: ReleaseVersionPlan): Map<string, string> {
+  const originals = new Map<string, string>();
+  const remember = (relativePath: string) => {
+    const filePath = path.join(repoRoot, relativePath);
+    originals.set(relativePath, fs.readFileSync(filePath, 'utf8'));
+  };
+
+  for (const relativePath of plan.updatedFiles) remember(relativePath);
+
+  const packagePath = path.join(repoRoot, 'package.json');
+  const pkg = readJson(packagePath);
+  if (pkg.version !== plan.currentVersion) throw new Error('package.json hat sich seit der Planung verändert.');
+  pkg.version = plan.targetVersion;
+  fs.writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
+
+  const lockPath = path.join(repoRoot, 'package-lock.json');
+  fs.writeFileSync(lockPath, updateLockfile(originals.get('package-lock.json')!, plan.currentVersion, plan.targetVersion));
+
+  for (const relativePath of GOVERNED_MIRRORS) {
+    const content = originals.get(relativePath)!;
+    fs.writeFileSync(path.join(repoRoot, relativePath), updateMirror(relativePath, content, plan.currentVersion, plan.targetVersion));
+  }
+  return originals;
+}
+
+export function restoreReleaseVersionFiles(repoRoot: string, originals: Map<string, string>): void {
+  for (const [relativePath, content] of originals) fs.writeFileSync(path.join(repoRoot, relativePath), content);
+}
+
+export function assertAppliedVersionConsistency(repoRoot: string, targetVersion: string): void {
+  const pkg = readJson(path.join(repoRoot, 'package.json'));
+  const lock = readJson(path.join(repoRoot, 'package-lock.json'));
+  const metadata = readJson(path.join(repoRoot, 'metadata.json'));
+  if (pkg.version !== targetVersion) throw new Error('package.json target version mismatch.');
+  if (lock.version !== targetVersion || lock?.packages?.['']?.version !== targetVersion) throw new Error('package-lock target version mismatch.');
+  if (metadata.version !== targetVersion) throw new Error('metadata.json target version mismatch.');
+  for (const relativePath of GOVERNED_MIRRORS.filter(item => item !== 'metadata.json')) {
+    const content = fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
+    if (!content.includes(targetVersion)) throw new Error(`${relativePath} enthält die Zielversion nicht.`);
+  }
+}
