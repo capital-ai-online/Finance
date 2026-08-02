@@ -1,3 +1,4 @@
+import { recordProviderHealth } from '../platform/Supervisor/providerHealth';
 import { fetchFredSeries, type MacroEvidenceSeries } from './macroRateEvidence';
 
 export const MACRO_RISK_REGIME_CONTRACT_VERSION = '1.1.0';
@@ -40,6 +41,10 @@ function observationAgeMs(date: string, nowMs: number): number {
  * produce a tradable price, investment recommendation or asset score. The curve regime is emitted
  * only when DGS2 and DGS10 have an observation for the same sufficiently fresh date; otherwise it
  * fails closed.
+ *
+ * FRED transport health and regime-evidence quality are recorded as distinct capabilities so that
+ * an HTTP-successful provider with stale/incompatible observations is not represented as a healthy
+ * current regime signal.
  */
 export async function buildMacroRiskRegime(options: {
   nowMs?: number;
@@ -52,6 +57,10 @@ export async function buildMacroRiskRegime(options: {
     ]);
     const common = latestCommonObservation(twoYear, tenYear);
     if (!common) {
+      recordProviderHealth({
+        provider: 'FRED', capability: 'macro-risk-regime', state: 'degraded',
+        message: 'DGS2/DGS10 besitzen keinen gemeinsamen Beobachtungstag im Evidence-Fenster.',
+      });
       return {
         contractVersion: MACRO_RISK_REGIME_CONTRACT_VERSION,
         status: 'EVIDENCE_INCOMPLETE',
@@ -75,6 +84,10 @@ export async function buildMacroRiskRegime(options: {
       `macro:fred:DGS10:${common.date}`,
     ];
     if (observationAgeMs(common.date, nowMs) > maxObservationAgeMs) {
+      recordProviderHealth({
+        provider: 'FRED', capability: 'macro-risk-regime', state: 'degraded',
+        message: `Gemeinsame DGS2/DGS10-Evidence vom ${common.date} ist veraltet.`,
+      });
       return {
         contractVersion: MACRO_RISK_REGIME_CONTRACT_VERSION,
         status: 'STALE_EVIDENCE',
@@ -98,6 +111,10 @@ export async function buildMacroRiskRegime(options: {
         ? 'NORMAL_CURVE'
         : 'FLAT_CURVE';
 
+    recordProviderHealth({
+      provider: 'FRED', capability: 'macro-risk-regime', state: 'healthy',
+      message: `DGS2/DGS10-Regime READY as of ${common.date}; spread ${spreadBps} bps.`,
+    });
     return {
       contractVersion: MACRO_RISK_REGIME_CONTRACT_VERSION,
       status: 'READY',
@@ -113,6 +130,10 @@ export async function buildMacroRiskRegime(options: {
       reason: 'Regime basiert ausschließlich auf gleichdatierten, frischen FRED DGS2/DGS10 Treasury-Rate-Evidence.',
     };
   } catch (error) {
+    recordProviderHealth({
+      provider: 'FRED', capability: 'macro-risk-regime', state: 'unavailable',
+      message: error instanceof Error ? error.message : String(error),
+    });
     return {
       contractVersion: MACRO_RISK_REGIME_CONTRACT_VERSION,
       status: 'EVIDENCE_INCOMPLETE',
