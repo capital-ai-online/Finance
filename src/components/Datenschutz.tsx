@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Lock, Search, Scale, FileText, CheckCircle2, Check, HelpCircle, HardDrive, Cpu, AlertTriangle, RefreshCw, Cookie } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { reopenCookieBanner } from '../services/cookieConsent';
+import { openCookieHubSettings } from '../services/cookieHubConsentBridge';
 
 interface DataSource {
   name: string;
@@ -240,6 +240,14 @@ export function Datenschutz() {
       purpose: 'Statistische Auswertung der Portalnutzung zur Produktverbesserung.',
       leakPrevention: 'Skript lädt ausschließlich nach aktivem Opt-in; IP-Anonymisierung nativ in GA4.',
       gdprBasis: 'Art. 6 Abs. 1 lit. a DSGVO (Einwilligung via Cookie-Banner, jederzeit widerrufbar).'
+    },
+    {
+      name: 'CookieHub (Consent-Management-Plattform)',
+      type: 'Einwilligungsentscheidung (Kategorie, Zeitstempel), kein Tracking-Zweck.',
+      protocol: 'HTTPS (cdn.cookiehub.eu) — lädt unconditioniert, da selbst kein Tracking-Tool.',
+      purpose: 'Einholung, Speicherung und Nachweis der Cookie-Einwilligung (u. a. für Google Analytics).',
+      leakPrevention: 'Verarbeitet ausschließlich die Einwilligungsentscheidung, keine Inhalts- oder Profildaten.',
+      gdprBasis: 'Art. 6 Abs. 1 lit. c DSGVO (gesetzliche Nachweispflicht der Einwilligung, § 25 TDDDG).'
     }
   ];
 
@@ -432,7 +440,7 @@ export function Datenschutz() {
             Zuletzt verifiziert: 29. Juni 2026 • Gerichtsfest
           </div>
           <button
-            onClick={() => reopenCookieBanner()}
+            onClick={() => openCookieHubSettings()}
             className="text-xs text-white/50 hover:text-aif-gold-DEFAULT font-mono flex items-center gap-1.5 underline underline-offset-2 cursor-pointer w-fit"
           >
             <Cookie size={12} /> Cookie-Einstellungen ändern

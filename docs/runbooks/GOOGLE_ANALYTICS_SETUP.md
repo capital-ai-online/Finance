@@ -12,10 +12,18 @@ RUNBOOK-0003
 ## Status
 
 Aktiv — Schritt 1 (Property/Measurement-ID) wurde vom Repository-Owner extern im Google-Konto
-durchgeführt. Die Code-Integration (Abschnitt 3) und der Cookie-Consent-Banner (Abschnitt 4) sind
-implementiert (`src/services/googleAnalytics.ts`, `src/services/cookieConsent.ts`,
-`src/components/CookieConsentBanner.tsx`). Tracking bleibt weiterhin fail-closed: ohne gesetzte
-`VITE_GA_MEASUREMENT_ID` **und** ohne aktive Nutzer-Einwilligung lädt kein Tracking-Script.
+durchgeführt. Die Consent-Verwaltung erfolgt über **CookieHub** (externe CMP, siehe Abschnitt 4)
+statt über eine selbstgebaute Banner-Komponente. Die Code-Integration (Abschnitt 3) ist
+implementiert (`src/services/googleAnalytics.ts`, `src/services/cookieHubConsentBridge.ts`).
+Tracking bleibt fail-closed: ohne gesetzte `VITE_GA_MEASUREMENT_ID` **und** ohne aktive
+CookieHub-Einwilligung in der Kategorie `analytics` lädt kein Tracking-Script.
+
+**Bewusst NICHT genutzt:** Google Analytics' eigener „Einwilligungsmodus" (Consent Mode v2,
+GA4-Verwaltung → Datenerfassung), der den GA-Tag *immer* mit Status „denied" lädt und dabei bereits
+vor Einwilligung anonymisierte „Cookieless Pings" an Google sendet. Das ist ein gültiges, von Google
+empfohlenes Muster, widerspricht aber der hier gewählten, strikteren Variante (Skript wird technisch
+gar nicht in den DOM injiziert, solange keine Einwilligung vorliegt) und ist für reines GA4-Tracking
+ohne verknüpfte Google-Ads-Conversions nicht erforderlich.
 
 ## Geltungsbereich
 
@@ -99,27 +107,60 @@ geladen, damit es niemals vor einer aktiven Einwilligung ausgeliefert wird:
 - `src/services/googleAnalytics.ts`: `loadGoogleAnalytics()` injiziert `gtag.js` erst bei Aufruf
   (`anonymize_ip: true`); `unloadGoogleAnalytics()` setzt das von Google dokumentierte
   `ga-disable-<ID>`-Flag, falls der Nutzer ablehnt oder widerruft.
-- `src/services/cookieConsent.ts`: persistiert die Entscheidung (`localStorage`-Key
-  `capital_ai_cookie_consent`) und stellt ein Event bereit, über das die Einwilligung an anderer
-  Stelle erneut angezeigt werden kann (`reopenCookieBanner()`).
-- `src/components/CookieConsentBanner.tsx`: zeigt das Banner nur, solange keine Entscheidung
-  gespeichert ist; ruft `loadGoogleAnalytics()`/`unloadGoogleAnalytics()` je nach Klick auf.
-- In `src/App.tsx` wird `<CookieConsentBanner />` auf allen reell besuchten Ansichten gerendert
-  (Dashboard/Landing, `/datenschutz`, `/impressum`, `/agb`).
+- `src/services/cookieHubConsentBridge.ts`: hört auf die von CookieHub gefeuerten Events
+  (`cookiehub_onInitialise`, `cookiehub_onStatusChange`) und synct den Zustand über
+  `window.cookiehub.hasConsented('analytics')` → `loadGoogleAnalytics()`/`unloadGoogleAnalytics()`.
+  Kein eigenes UI, keine eigene Speicherung — CookieHub ist die alleinige Quelle der Wahrheit für
+  die Einwilligungsentscheidung.
+- In `src/App.tsx` wird die Bridge einmalig per `useEffect(() => initCookieHubAnalyticsBridge(), [])`
+  aktiviert.
+- `openCookieHubSettings()` (ebenfalls in `cookieHubConsentBridge.ts`) ruft
+  `window.cookiehub.openSettings()` auf und wird vom Button „Cookie-Einstellungen ändern" in
+  `Datenschutz.tsx` genutzt.
 
 ---
 
-## 4. Cookie-Consent-Banner — implementiert
+## 4. CookieHub als Consent-Management-Plattform — implementiert
 
-Der Banner erfüllt die zuvor hier benannten Anforderungen:
+Statt einer selbstgebauten Banner-Komponente wird **CookieHub** eingebunden
+(`index.html`, unmittelbar nach dem öffnenden `<head>`-Tag, damit es so früh wie möglich lädt und
+alle nachfolgenden Skripte potenziell blockieren/gaten kann):
 
-- Zeigt sich nur, wenn noch keine Entscheidung in `localStorage` vorliegt — kein vorangehakter
-  Haken, kein implizites „Weiter-Nutzen-gilt-als-Zustimmung".
-- Persistiert die Entscheidung, damit sie nicht bei jedem Seitenaufruf erneut abgefragt wird.
-- Bietet über den Button „Cookie-Einstellungen ändern" in `Datenschutz.tsx` (Abschnitt „Cookies &
-  Google Analytics") einen jederzeit erreichbaren Widerrufsweg.
-- `docs/DATENSCHUTZ_PROTOKOLL.md` (Abschnitt 2 und 3.3) sowie die Datenschutzerklärung
-  (`/datenschutz/`-Route, Klausel 5 und Datenquellen-Tabelle) wurden entsprechend aktualisiert.
+```html
+<script src="https://cdn.cookiehub.eu/c2/75f66920.js"></script>
+<script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function(event) {
+    var cpm = {};
+    window.cookiehub.load(cpm);
+  });
+</script>
+```
+
+Die eigentliche Konfiguration (Banner-Text, Sprache, Kategorien, Cookie-Deklarationen) erfolgt im
+**CookieHub-Dashboard** (nicht im Code) unter der zur Snippet-ID `75f66920` gehörenden Property:
+
+- **Domain-Verifizierung**: `capital-ai.online` als verifizierte Domain hinterlegen.
+- **Kategorien**: „Notwendig" (immer aktiv) und „Analytics" (Opt-in) aktivieren; „Marketing"/
+  „Präferenzen" nur, falls tatsächlich weitere Dienste dieser Art eingesetzt werden — sonst
+  unnötige Kategorien vermeiden (Datenminimierung).
+- **Dienste/Cookies pro Kategorie**: Google Analytics 4 der Kategorie **„Analytics"** zuordnen
+  (Cookie-Namen `_ga`, `_ga_*`), inkl. Zweckbeschreibung und Verweis auf Google LLC (USA) als
+  Empfänger.
+- **Google Consent Mode v2 (CookieHub-Feature)**: **nicht aktivieren.** Dieses Feature setzt
+  automatisch `gtag('consent', ...)`-Signale und ist für das alternative
+  „Tag lädt immer, mit denied/granted-Signal"-Muster gedacht (siehe Hinweis in Abschnitt „Status").
+  Da `googleAnalytics.ts` das Skript ohnehin nie ohne Einwilligung injiziert, würde diese Option
+  nur unnötige Komplexität hinzufügen bzw. mit der bestehenden Logik konkurrieren.
+- **Sprache**: Deutsch als Standard, passend zu `lang="de"` in `index.html`.
+- **Resurface/Settings-Link**: Nicht zwingend nötig, da `Datenschutz.tsx` bereits einen eigenen
+  Button bereitstellt (`window.cookiehub.openSettings()`); optional zusätzlich das CookieHub-eigene
+  Settings-Icon aktivieren, falls gewünscht.
+
+Ergänzend wurde CookieHub selbst als Verarbeitungstätigkeit in `docs/DATENSCHUTZ_PROTOKOLL.md`
+(Abschnitt 2) und in der Datenquellen-Tabelle der Datenschutzerklärung (`Datenschutz.tsx`)
+dokumentiert — es verarbeitet ausschließlich die Einwilligungsentscheidung selbst, keine
+Tracking-Daten, und benötigt daher keine eigene Nutzereinwilligung (funktional notwendiges
+Compliance-Werkzeug, Art. 6 Abs. 1 lit. c DSGVO).
 
 ---
 
@@ -139,7 +180,9 @@ Der Banner erfüllt die zuvor hier benannten Anforderungen:
 | Schritt | Wer | Status |
 |---|---|---|
 | 1. GA4-Property + Measurement-ID | Repository-Owner (Google-Konto) | Erledigt |
-| 2. `VITE_GA_MEASUREMENT_ID` in `.env`/Render setzen | Repository-Owner | Lokal gesetzt — **Render-Env-Var für Produktion noch zu setzen** |
-| 3. `googleAnalytics.ts` Service | Entwicklung | Erledigt |
-| 4. Cookie-Consent-Banner | Entwicklung | Erledigt |
+| 2. `VITE_GA_MEASUREMENT_ID` in `.env`/Render setzen | Repository-Owner | Lokal gesetzt — Render wird gerade vom Repository-Owner gesetzt |
+| 3. `googleAnalytics.ts` + `cookieHubConsentBridge.ts` | Entwicklung | Erledigt |
+| 4. CookieHub-Snippet in `index.html` | Entwicklung | Erledigt |
+| 4b. CookieHub-Dashboard konfigurieren (Domain, Kategorien, Analytics-Zuordnung) | Repository-Owner (CookieHub-Konto) | Offen — externer Vorgang, siehe Checkliste in Abschnitt 4 |
+| 4c. GA4 „Einwilligungsmodus" NICHT aktivieren | Repository-Owner | Hinweis beachten, keine Aktion nötig |
 | 5. Datenschutzerklärung/Protokoll aktualisieren | Entwicklung/Recht | Erledigt |
