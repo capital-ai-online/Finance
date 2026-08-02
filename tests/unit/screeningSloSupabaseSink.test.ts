@@ -26,7 +26,11 @@ const record = {
 
 describe('SupabaseScreeningSloSink', () => {
   it('persists a valid record with a privileged configured backend', async () => {
-    const insert = vi.fn(async () => ({ error: null }));
+    let insertedRow: Record<string, unknown> | null = null;
+    const insert = vi.fn(async (row: Record<string, unknown>) => {
+      insertedRow = row;
+      return { error: null };
+    });
     const sink = new SupabaseScreeningSloSink({
       isConfigured: () => true,
       hasPrivilegedKey: () => true,
@@ -38,7 +42,7 @@ describe('SupabaseScreeningSloSink', () => {
     expect(result.persisted).toBe(true);
     expect(result.sink).toBe('supabase-screening-slo-append-only');
     expect(insert).toHaveBeenCalledOnce();
-    expect(insert.mock.calls[0][0]).toMatchObject({
+    expect(insertedRow).toMatchObject({
       correlation_id: 'corr-prod-1',
       symbol: 'AAPL',
       state: 'HEALTHY',
@@ -48,7 +52,7 @@ describe('SupabaseScreeningSloSink', () => {
   });
 
   it('fails closed without a privileged server key', async () => {
-    const insert = vi.fn(async () => ({ error: null }));
+    const insert = vi.fn(async (_row: Record<string, unknown>) => ({ error: null }));
     const sink = new SupabaseScreeningSloSink({
       isConfigured: () => true,
       hasPrivilegedKey: () => false,
@@ -65,7 +69,7 @@ describe('SupabaseScreeningSloSink', () => {
     const sink = new SupabaseScreeningSloSink({
       isConfigured: () => true,
       hasPrivilegedKey: () => true,
-      insert: async () => ({ error: { message: 'relation missing' } }),
+      insert: async (_row: Record<string, unknown>) => ({ error: { message: 'relation missing' } }),
     });
 
     const result = await sink.write(record);
