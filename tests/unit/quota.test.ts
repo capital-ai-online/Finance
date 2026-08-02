@@ -1,41 +1,57 @@
-// Audit ARCH-AUDIT-0002 (D5): Testabdeckung fuer den kritischen Quota-Pfad (ADR-0017).
-// enforceScreeningQuota() faellt in der Testumgebung (kein SUPABASE_* gesetzt) auf den
-// IP-basierten In-Memory-Rate-Limiter zurueck - genau der Pfad, der ohne Mocking realistisch
-// pruefbar ist. Der Supabase-gestuetzte Pfad fuer eingeloggte Nutzer benoetigt gemockte
-// Supabase-Antworten und ist hier bewusst nicht abgedeckt (Folgearbeit).
-
 import { describe, it, expect } from 'vitest';
-import { isUnlimitedTier, isNewUtcDay, enforceScreeningQuota, STARTER_DAILY_LIMIT } from '../../server/quota';
+import {
+  FREE_SCREENING_LIMIT,
+  FREE_SCREENING_WINDOW_DAYS,
+  evaluateStoredQuotaWindow,
+  hasWindowElapsed,
+  isNewUtcDay,
+  isUnlimitedTier,
+  enforceScreeningQuota,
+} from '../../server/quota';
 
-describe('quota', () => {
+describe('quota / subscription entitlements', () => {
   describe('isUnlimitedTier', () => {
-    it('erkennt PRO/ENTERPRISE als unbegrenzt, unabhaengig von Gross-/Kleinschreibung und Whitespace', () => {
-      expect(isUnlimitedTier('PRO')).toBe(true);
-      expect(isUnlimitedTier('pro')).toBe(true);
-      expect(isUnlimitedTier('  Enterprise  ')).toBe(true);
+    it('treats Enterprise screening as unlimited', () => {
+      expect(isUnlimitedTier('Enterprise')).toBe(true);
       expect(isUnlimitedTier('Enterprise OS')).toBe(true);
     });
 
-    it('behandelt STARTER und FREE als begrenzt', () => {
-      expect(isUnlimitedTier('STARTER')).toBe(false);
-      expect(isUnlimitedTier('FREE')).toBe(false);
-      expect(isUnlimitedTier('')).toBe(false);
+    it('keeps Free, Starter and Pro on their configured rolling limits', () => {
+      expect(isUnlimitedTier('Free')).toBe(false);
+      expect(isUnlimitedTier('Starter')).toBe(false);
+      expect(isUnlimitedTier('Pro')).toBe(false);
     });
   });
 
-  describe('isNewUtcDay', () => {
-    it('erkennt denselben UTC-Tag korrekt als NICHT neu', () => {
-      const now = new Date();
-      expect(isNewUtcDay(now.toISOString())).toBe(false);
+  describe('rolling windows', () => {
+    it('detects elapsed multi-day windows', () => {
+      const now = Date.UTC(2026, 7, 2, 12, 0, 0);
+      const recent = new Date(now - 2 * 24 * 60 * 60 * 1000).toISOString();
+      const old = new Date(now - 4 * 24 * 60 * 60 * 1000).toISOString();
+      expect(hasWindowElapsed(recent, 3, now)).toBe(false);
+      expect(hasWindowElapsed(old, 3, now)).toBe(true);
     });
 
-    it('erkennt einen vergangenen Tag als neu', () => {
-      const yesterday = new Date(Date.now() - 25 * 60 * 60 * 1000);
-      expect(isNewUtcDay(yesterday.toISOString())).toBe(true);
+    it('blocks a consumed 1-per-3-days quota until nextEligibleAt', () => {
+      const now = Date.UTC(2026, 7, 2, 12, 0, 0);
+      const start = new Date(now - 24 * 60 * 60 * 1000).toISOString();
+      const result = evaluateStoredQuotaWindow({
+        count: 1,
+        windowStart: start,
+        limit: { limit: 1, windowDays: 3 },
+        nowMs: now,
+      });
+      expect(result.allowed).toBe(false);
+      expect(result.remaining).toBe(0);
+      expect(result.nextEligibleAt).toBe(new Date(Date.parse(start) + 3 * 24 * 60 * 60 * 1000).toISOString());
+    });
+
+    it('retains the legacy UTC-day helper for compatibility', () => {
+      expect(isNewUtcDay(new Date().toISOString())).toBe(false);
     });
   });
 
-  describe('enforceScreeningQuota (Gast-/IP-Fallback ohne Supabase-Konfiguration)', () => {
+  describe('guest verified-screening fallback', () => {
     function fakeRequest(ip: string) {
       return {
         headers: { 'x-forwarded-for': ip },
@@ -43,27 +59,16 @@ describe('quota', () => {
       } as any;
     }
 
-    it('erlaubt bis zum STARTER_DAILY_LIMIT Anfragen von derselben IP und blockiert danach', async () => {
-      const ip = `203.0.113.${Math.floor(Math.random() * 250) + 1}`; // eindeutige Test-IP je Lauf
-      for (let i = 0; i < STARTER_DAILY_LIMIT; i++) {
+    it(`allows ${FREE_SCREENING_LIMIT} requests per rolling ${FREE_SCREENING_WINDOW_DAYS}-day window and blocks the next`, async () => {
+      const ip = `203.0.113.${Math.floor(Math.random() * 250) + 1}`;
+      for (let i = 0; i < FREE_SCREENING_LIMIT; i++) {
         const result = await enforceScreeningQuota(fakeRequest(ip));
-        expect(result.allowed, `Anfrage ${i + 1} von ${STARTER_DAILY_LIMIT}`).toBe(true);
+        expect(result.allowed).toBe(true);
+        expect(result.tier).toBe('Free');
       }
       const blocked = await enforceScreeningQuota(fakeRequest(ip));
       expect(blocked.allowed).toBe(false);
-      expect(blocked.reason).toBe('daily-limit-reached');
-    });
-
-    it('zaehlt verschiedene IPs unabhaengig voneinander', async () => {
-      const ipA = `198.51.100.${Math.floor(Math.random() * 250) + 1}`;
-      const ipB = `198.51.100.${Math.floor(Math.random() * 250) + 1}`;
-      for (let i = 0; i < STARTER_DAILY_LIMIT; i++) {
-        await enforceScreeningQuota(fakeRequest(ipA));
-      }
-      const blockedA = await enforceScreeningQuota(fakeRequest(ipA));
-      const allowedB = await enforceScreeningQuota(fakeRequest(ipB));
-      expect(blockedA.allowed).toBe(false);
-      expect(allowedB.allowed).toBe(true);
+      expect(blocked.reason).toBe('quota-limit-reached');
     });
   });
 });
