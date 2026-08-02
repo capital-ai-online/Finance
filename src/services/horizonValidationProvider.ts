@@ -56,7 +56,8 @@ export async function resolveHorizonValidationEvidence(
   options: HorizonValidationProviderOptions = {},
 ): Promise<HorizonValidationProviderResult> {
   const allConfigured = providersFor(request.assetClass).filter(provider => isExternalProviderConfigured(provider, options));
-  const maxProvidersPerSnapshot = Math.max(1, Math.min(3, Math.floor(options.maxProvidersPerSnapshot ?? allConfigured.length || 1)));
+  const requestedProviderBudget = options.maxProvidersPerSnapshot ?? (allConfigured.length || 1);
+  const maxProvidersPerSnapshot = Math.max(1, Math.min(3, Math.floor(requestedProviderBudget)));
   const configured = allConfigured.slice(0, maxProvidersPerSnapshot);
   const stopAfterFirstReady = options.stopAfterFirstReady ?? false;
   const providersAttempted: ExternalMarketDataProvider[] = [];
