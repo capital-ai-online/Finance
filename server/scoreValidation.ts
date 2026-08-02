@@ -29,6 +29,7 @@ import { assetRegistry } from '../src/lib/assetRegistry';
 import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
 import { ADMIN_ZONE_ROLES } from '../src/platform/Security/types';
 import { calibrateScoreConfidence } from '../src/services/scoreConfidenceCalibration';
+import { recordScoreConfidenceEvidence } from '../src/services/scoreConfidenceEvidence';
 
 export interface SnapshotInput {
   symbol: string;
@@ -185,9 +186,11 @@ scoreValidationRouter.get('/validation', async (req, res) => {
   const minimumConfidenceSample = Math.max(5, Math.min(1000, Number(req.query.minimumConfidenceSample) || 30));
   const result = await evaluateScoreValidation(horizonDays, threshold);
   const confidence = calibrateScoreConfidence(result.overall, minimumConfidenceSample);
+  const confidenceEvidence = recordScoreConfidenceEvidence({ calibration: confidence, horizonDays, threshold, scoreBasis: 'all' });
   res.json({
     ...result,
     confidence,
+    confidenceEvidence,
     confidencePolicy: {
       empiricalOnly: true,
       minimumSample: minimumConfidenceSample,
