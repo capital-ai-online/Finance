@@ -179,7 +179,7 @@ Historical final tags must never be moved to different commits.
 
 ## Enterprise References
 
-- `docs/adr/ADR-0030-platform-version-release-lifecycle.md`
+- `docs/adr/resolved/ADR-0030-platform-version-release-lifecycle.md`
 - `ESS-0001`
 - `ESS-0001-CONTRACTS`
 - `ESS-0007` — Enterprise Release Center
