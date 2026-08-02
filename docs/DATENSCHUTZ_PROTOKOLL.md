@@ -47,8 +47,8 @@
 **Projekt**: CAPITAL-AI  
 **Dokumenttyp**: Konformitäts- & Beweisprotokoll für EU-Aufsichtsbehörden & Gerichte  
 **Klassifizierung**: Öffentlich / Audit-Ready  
-**Version**: 1.1.0 (Nachgeführt gemäß Enterprise-Architektur-Audit ARCH-AUDIT-0002)  
-**Letzte Prüfung**: 31. Juli 2026  
+**Version**: 1.2.0 (Ergänzt um Google Analytics 4 als einwilligungspflichtige Verarbeitungstätigkeit)  
+**Letzte Prüfung**: 2. August 2026  
 
 ---
 
@@ -87,6 +87,7 @@ Um die Einhaltung der gesetzlichen **No-Demo-Data Policy** zu garantieren, bezie
 | **Stripe Gateway** | Zahlungsabwicklung, PCI-DSS-konforme Transaktionsdaten. | **Sichere API-Verbindung** via verschlüsselte Stripe-Tokens (Lazy-loaded im Server-Backend). | Bereitstellung und Verifizierung von Premium-Funktionen (Stripe Checkout). | IP-Adresse wird verschlüsselt für Betrugsprävention auf Stripe-Servern verarbeitet (EU-Standardvertragsklauseln aktiv). | **Hoch** (Zahlungsdaten). Geregelt über Auftragsverarbeitungsvertrag (AVV) mit Stripe Payments Europe Ltd. |
 | **Supabase / PostgreSQL** | Registrierungen, verschlüsselte Passwörter, historische Backtest-Historie. | **Infrastruktur-internes Netzwerk** (verschlüsselte TCP-Verbindung). | Speicherung des Premium-Abostatus und der systemweiten quantitativen Favoriten-Präferenzen. | IP-Adresse wird zur Missbrauchserkennung kurzzeitig protokolliert (Löschfrist: 7 Tage). | **Hoch**. Geregelt über AVV mit Supabase Inc. (Datenhaltung im Rechenzentrum Frankfurt, Deutschland). |
 | **Google GenAI (Gemini) API** | Intelligentes News-Scoring, regulatorische Analysen. | **Server-to-Server HTTPS** via Google Cloud SDK. | Generierung von Realtime AI Newsfeeds und Modell-Routing-Entscheidungen im CAPITAL-AI. | **Vollständig anonymisiert**. Keine Nutzerdaten oder IPs werden an Google-Modelle übermittelt. | Keine. |
+| **Google Analytics 4** | Reichweiten-/Nutzungsstatistik (Cookies, IP-Adresse nativ von GA4 nicht vollständig gespeichert). | **Client-seitig, HTTPS** (googletagmanager.com / google-analytics.com) — nur nach Einwilligung geladen. | Statistische Auswertung der Portalnutzung zur Produktverbesserung (`CookieConsentBanner`, `src/services/googleAnalytics.ts`). | Skript wird ausschließlich nach aktivem Opt-in im Cookie-Banner geladen; Ereignisdaten-Aufbewahrung in GA4 auf 2 Monate begrenzt. Widerruf jederzeit über „Cookie-Einstellungen ändern" (`Datenschutz.tsx`). | **Mittel** (Nutzungsdaten). Rechtsgrundlage: Art. 6 Abs. 1 lit. a DSGVO (Einwilligung), kein AVV-Erfordernis ohne Auftragsverarbeitung von Bestandsdaten. |
 
 Die vorstehende Matrix betrifft ausschließlich die **Marktpreis-Rohdaten** (Kurse, Marktkapitalisierung, Handelsvolumen). Die Weiterverarbeitung dieser Rohdaten zu einem Bewertungs-Score ist gesondert in Abschnitt 2.1 dokumentiert.
 
@@ -117,7 +118,7 @@ Zur Abwendung von Verbindungsunterbrechungen (welche im Finanzsektor zu Fehlents
 
 ### 3.3 Lokale Datenminimierung (Privacy-by-Default)
 * **Keine Drittanbieter-CDNs**: Es werden keine Google Fonts oder externen Bibliotheken von Drittanbieter-Servern nachgeladen. Alle Fonts (Inter, JetBrains Mono) und Icons (Lucide-React) werden lokal kompiliert und direkt aus dem eigenen Container ausgeliefert.
-* **Vermeidung von Tracking-Pixeln**: Das System verzichtet vollständig auf Werbe- und Tracking-Pixel (wie Google Analytics oder Meta Pixel), um Nutzerprofile vor externen Zugriffen zu schützen.
+* **Kein Tracking ohne Einwilligung**: Das System verzichtet vollständig auf Werbe-Pixel (z. B. Meta Pixel). Google Analytics wird seit dem 2. August 2026 optional eingesetzt, aber technisch ausschließlich nach aktivem Opt-in des Nutzers geladen (`CookieConsentBanner`, siehe Abschnitt 2 und `docs/runbooks/GOOGLE_ANALYTICS_SETUP.md`) — ohne Einwilligung findet keinerlei Übertragung an Google statt.
 
 ---
 

@@ -9,6 +9,7 @@ import { Dashboard } from './components/Dashboard';
 import { supabase } from './supabaseClient';
 import { Datenschutz } from './components/Datenschutz';
 import { ImpressumAgb } from './components/ImpressumAgb';
+import { CookieConsentBanner } from './components/CookieConsentBanner';
 
 export interface UserSession {
   type: 'guest' | 'registered';
@@ -537,6 +538,7 @@ export default function App() {
           </div>
           <Datenschutz />
         </div>
+        <CookieConsentBanner />
       </div>
     );
   }
@@ -555,6 +557,7 @@ export default function App() {
           </div>
           <ImpressumAgb />
         </div>
+        <CookieConsentBanner />
       </div>
     );
   }
@@ -573,6 +576,7 @@ export default function App() {
           </div>
           <ImpressumAgb initialTab="agb" />
         </div>
+        <CookieConsentBanner />
       </div>
     );
   }
@@ -580,19 +584,19 @@ export default function App() {
   return (
     <>
       {userSession ? (
-        <Dashboard 
-          userSession={userSession} 
-          onLogout={handleLogout} 
+        <Dashboard
+          userSession={userSession}
+          onLogout={handleLogout}
           onRegister={(name, email) => {}}
           onLoginEmail={handleLogin}
           onRegisterEmail={handleRegister}
         />
       ) : (
-        <LandingPage 
+        <LandingPage
           onLoginEmail={async (email, pwd) => {
             setJustLoggedOut(false);
             await handleLogin(email, pwd);
-          }} 
+          }}
           onGuestLogin={async () => {
             setJustLoggedOut(false);
             await handleGuestLogin();
@@ -604,6 +608,7 @@ export default function App() {
           justLoggedOut={justLoggedOut}
         />
       )}
+      <CookieConsentBanner />
     </>
   );
 }

@@ -11,10 +11,11 @@ RUNBOOK-0003
 
 ## Status
 
-Entwurf — Schritt 1 (Property/Measurement-ID) ist ein externer Vorgang im Google-Konto des
-Repository-Owners und kann nicht durch einen KI-Agenten automatisiert werden. Die Code-Integration
-(Abschnitt 3) ist vorbereitet, aber **nicht** aktiv, solange keine echte Measurement-ID in der
-Umgebung gesetzt ist (fail-closed: ohne `VITE_GA_MEASUREMENT_ID` lädt kein Tracking-Script).
+Aktiv — Schritt 1 (Property/Measurement-ID) wurde vom Repository-Owner extern im Google-Konto
+durchgeführt. Die Code-Integration (Abschnitt 3) und der Cookie-Consent-Banner (Abschnitt 4) sind
+implementiert (`src/services/googleAnalytics.ts`, `src/services/cookieConsent.ts`,
+`src/components/CookieConsentBanner.tsx`). Tracking bleibt weiterhin fail-closed: ohne gesetzte
+`VITE_GA_MEASUREMENT_ID` **und** ohne aktive Nutzer-Einwilligung lädt kein Tracking-Script.
 
 ## Geltungsbereich
 
@@ -90,57 +91,35 @@ Analog zu den bestehenden `VITE_*`-Vars (siehe `.env.example`, z. B. `VITE_SUPAB
 
 ---
 
-## 3. Code-Integration (nur nach Einwilligung laden)
+## 3. Code-Integration (nur nach Einwilligung laden) — implementiert
 
-Da das Script erst nach Opt-in laden darf (siehe Abschnitt 4), **nicht** einfach ein
-`<script async src="https://www.googletagmanager.com/gtag/js?id=G-...">` fest in `index.html`
-eintragen. Stattdessen bedingt aus React heraus laden, z. B. in einer neuen Datei
-`src/services/analytics/googleAnalytics.ts`:
+Das GA-Script wird **nicht** fest in `index.html` eingetragen, sondern bedingt aus React heraus
+geladen, damit es niemals vor einer aktiven Einwilligung ausgeliefert wird:
 
-```ts
-const MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined;
-
-let loaded = false;
-
-export function loadGoogleAnalytics(): void {
-  if (loaded || !MEASUREMENT_ID) return;
-  loaded = true;
-
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${MEASUREMENT_ID}`;
-  document.head.appendChild(script);
-
-  window.dataLayer = window.dataLayer || [];
-  function gtag(...args: unknown[]) {
-    window.dataLayer.push(args);
-  }
-  gtag('js', new Date());
-  gtag('config', MEASUREMENT_ID, { anonymize_ip: true });
-}
-```
-
-Aufruf von `loadGoogleAnalytics()` ausschließlich aus dem `onAccept`-Handler des
-Cookie-Consent-Banners (Abschnitt 4) — **nicht** aus `main.tsx` oder `App.tsx` beim Start.
+- `src/services/googleAnalytics.ts`: `loadGoogleAnalytics()` injiziert `gtag.js` erst bei Aufruf
+  (`anonymize_ip: true`); `unloadGoogleAnalytics()` setzt das von Google dokumentierte
+  `ga-disable-<ID>`-Flag, falls der Nutzer ablehnt oder widerruft.
+- `src/services/cookieConsent.ts`: persistiert die Entscheidung (`localStorage`-Key
+  `capital_ai_cookie_consent`) und stellt ein Event bereit, über das die Einwilligung an anderer
+  Stelle erneut angezeigt werden kann (`reopenCookieBanner()`).
+- `src/components/CookieConsentBanner.tsx`: zeigt das Banner nur, solange keine Entscheidung
+  gespeichert ist; ruft `loadGoogleAnalytics()`/`unloadGoogleAnalytics()` je nach Klick auf.
+- In `src/App.tsx` wird `<CookieConsentBanner />` auf allen reell besuchten Ansichten gerendert
+  (Dashboard/Landing, `/datenschutz`, `/impressum`, `/agb`).
 
 ---
 
-## 4. Voraussetzung: Cookie-Consent-Banner
+## 4. Cookie-Consent-Banner — implementiert
 
-Im Repository existiert aktuell **kein** Cookie-Consent-Mechanismus für Tracking (die vorhandene
-`ComplianceConsentModal` betrifft Compliance-Datenfreigaben, nicht Website-Tracking-Cookies).
-Vor dem produktiven Einsatz von GA muss ein Banner ergänzt werden, das:
+Der Banner erfüllt die zuvor hier benannten Anforderungen:
 
-- vor jeglichem GA-Laden eine explizite Opt-in-Entscheidung einholt (kein vorangehakter Haken,
-  kein reines „Weiter-Nutzen-gilt-als-Zustimmung"),
-- die Entscheidung persistiert (z. B. `localStorage`), damit sie nicht bei jedem Seitenaufruf
-  erneut abgefragt wird,
-- einen jederzeit erreichbaren Weg bietet, die Einwilligung zu widerrufen,
-- in `docs/DATENSCHUTZ_PROTOKOLL.md` und der öffentlichen Datenschutzerklärung
-  (`/datenschutz/`-Route) als neue Datenkategorie/Drittanbieter (Google LLC, USA) dokumentiert wird.
-
-Dieser Banner ist ein eigenständiges Implementierungs-Ticket und nicht Teil dieses Runbooks — er
-wird hier nur als **Blocker** für den produktiven GA-Einsatz benannt.
+- Zeigt sich nur, wenn noch keine Entscheidung in `localStorage` vorliegt — kein vorangehakter
+  Haken, kein implizites „Weiter-Nutzen-gilt-als-Zustimmung".
+- Persistiert die Entscheidung, damit sie nicht bei jedem Seitenaufruf erneut abgefragt wird.
+- Bietet über den Button „Cookie-Einstellungen ändern" in `Datenschutz.tsx` (Abschnitt „Cookies &
+  Google Analytics") einen jederzeit erreichbaren Widerrufsweg.
+- `docs/DATENSCHUTZ_PROTOKOLL.md` (Abschnitt 2 und 3.3) sowie die Datenschutzerklärung
+  (`/datenschutz/`-Route, Klausel 5 und Datenquellen-Tabelle) wurden entsprechend aktualisiert.
 
 ---
 
@@ -159,8 +138,8 @@ wird hier nur als **Blocker** für den produktiven GA-Einsatz benannt.
 
 | Schritt | Wer | Status |
 |---|---|---|
-| 1. GA4-Property + Measurement-ID | Repository-Owner (Google-Konto) | Offen — externer Vorgang |
-| 2. `VITE_GA_MEASUREMENT_ID` in `.env`/Render setzen | Repository-Owner | Offen, sobald ID vorliegt |
-| 3. `googleAnalytics.ts` Service | Entwicklung | Vorbereitet in diesem Runbook |
-| 4. Cookie-Consent-Banner | Entwicklung | Fehlt — Blocker für Go-Live |
-| 5. Datenschutzerklärung/Protokoll aktualisieren | Entwicklung/Recht | Fehlt — Blocker für Go-Live |
+| 1. GA4-Property + Measurement-ID | Repository-Owner (Google-Konto) | Erledigt |
+| 2. `VITE_GA_MEASUREMENT_ID` in `.env`/Render setzen | Repository-Owner | Lokal gesetzt — **Render-Env-Var für Produktion noch zu setzen** |
+| 3. `googleAnalytics.ts` Service | Entwicklung | Erledigt |
+| 4. Cookie-Consent-Banner | Entwicklung | Erledigt |
+| 5. Datenschutzerklärung/Protokoll aktualisieren | Entwicklung/Recht | Erledigt |
