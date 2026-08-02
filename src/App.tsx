@@ -559,6 +559,24 @@ export default function App() {
     );
   }
 
+  if (currentPath === '/agb' || currentPath === '/agb/') {
+    return (
+      <div className="min-h-screen bg-black text-white py-12 px-4 relative overflow-y-auto selection:bg-aif-gold-DEFAULT/30 selection:text-white">
+        {/* Subtle decorative mesh background */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(245,196,83,0.08),rgba(0,0,0,0))]" />
+        <div className="max-w-4xl mx-auto space-y-6 relative z-10">
+          <div className="flex justify-between items-center bg-[#0d0e12]/80 border border-white/10 rounded-xl p-4 backdrop-blur-md">
+            <a href="/" className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold font-mono rounded-lg transition-all flex items-center gap-2 text-white">
+              ← Zurück zum Portal
+            </a>
+            <span className="text-[10px] font-mono text-white/40 font-bold uppercase tracking-widest hidden sm:inline">Allgemeine Geschäftsbedingungen</span>
+          </div>
+          <ImpressumAgb initialTab="agb" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {userSession ? (

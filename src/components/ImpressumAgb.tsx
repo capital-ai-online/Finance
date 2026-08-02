@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Scale, HelpCircle, CheckCircle2, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-export function ImpressumAgb() {
-  const [activeTab, setActiveTab] = useState<'impressum' | 'agb'>('impressum');
+export function ImpressumAgb({ initialTab = 'impressum' }: { initialTab?: 'impressum' | 'agb' }) {
+  const [activeTab, setActiveTab] = useState<'impressum' | 'agb'>(initialTab);
 
   return (
     <div className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md max-w-4xl mx-auto relative overflow-hidden">

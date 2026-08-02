@@ -499,9 +499,9 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
                   />
                   <label htmlFor="terms-check" className="text-[10px] text-white/50 leading-tight cursor-pointer">
                     Ich erkläre mich mit den{' '}
-                    <a href="https://capital-ai.online/agb" target="_blank" rel="noopener noreferrer" className="text-aif-gold-DEFAULT hover:underline font-bold">Nutzungsbedingungen (AGB)</a>{' '}
+                    <a href="https://capital-ai.online/agb/" target="_blank" rel="noopener noreferrer" className="text-aif-gold-DEFAULT hover:underline font-bold">Nutzungsbedingungen (AGB)</a>{' '}
                     und{' '}
-                    <a href="https://capital-ai.online/Datenschutz" target="_blank" rel="noopener noreferrer" className="text-aif-gold-DEFAULT hover:underline font-bold">Datenschutzbestimmungen</a>{' '}
+                    <a href="https://capital-ai.online/datenschutz/" target="_blank" rel="noopener noreferrer" className="text-aif-gold-DEFAULT hover:underline font-bold">Datenschutzbestimmungen</a>{' '}
                     des CAPITAL-AI Netzwerks einverstanden.
                   </label>
                 </div>
@@ -556,15 +556,26 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
       <footer className="relative z-10 mt-8 mb-4 w-full max-w-md text-center space-y-4">
         {/* Compliance Links */}
         <div className="flex items-center justify-center gap-4 text-[11px] font-mono">
-          <a 
-            href="/impressum" 
+          <a
+            href="https://capital-ai.online/impressum"
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-white/40 hover:text-aif-gold-DEFAULT transition-colors hover:underline tracking-wider uppercase font-bold"
           >
             Impressum
           </a>
           <span className="text-white/20">•</span>
           <a
-            href="https://capital-ai.online/Datenschutz"
+            href="https://capital-ai.online/agb/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/40 hover:text-aif-gold-DEFAULT transition-colors hover:underline tracking-wider uppercase font-bold"
+          >
+            AGB
+          </a>
+          <span className="text-white/20">•</span>
+          <a
+            href="https://capital-ai.online/datenschutz/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-white/40 hover:text-aif-gold-DEFAULT transition-colors hover:underline tracking-wider uppercase font-bold"

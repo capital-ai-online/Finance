@@ -11,8 +11,6 @@ import { ProfilePage, UserProfile } from './ProfilePage';
 import { BuffetValueCheck } from './BuffetValueCheck';
 import { Abonnements } from './Abonnements';
 import { SubscriptionModal } from './SubscriptionModal';
-import { Datenschutz } from './Datenschutz';
-import { ImpressumAgb } from './ImpressumAgb';
 import { RealtimeAiNewsfeed } from './RealtimeAiNewsfeed';
 import { Watchlist } from './Watchlist';
 import { BacktestEngine } from './BacktestEngine';
@@ -48,9 +46,8 @@ import {
   CreditCard, 
   Activity, 
   Menu, 
-  X, 
-  Scale, 
-  Shield, 
+  X,
+  Shield,
   Percent, 
   HelpCircle, 
   LogIn, 
@@ -109,7 +106,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<string>('1std');
-  const [activeView, setActiveView] = useState<'dashboard' | 'myworkspace' | 'universe-scoring' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'datenschutz' | 'impressum-agb' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'defi-orchestration' | 'social-accounts' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'myworkspace' | 'universe-scoring' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'defi-orchestration' | 'social-accounts' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
   const [adminTab, setAdminTab] = useState<'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor' | 'compliance'>('users');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>('hub');
@@ -120,7 +117,6 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
     const getViewCategory = (view: string) => {
       if (['dashboard', 'myworkspace', 'universe-scoring', 'abonnements', 'profil'].includes(view)) return 'hub';
       if (['market-screener', 'charts', 'preis-alarme', 'buffet-value', 'backtest', 'heatmap', 'risiko-assessment', 'sentiment-dashboard', 'raw-materials', 'asset-universe'].includes(view)) return 'analysis';
-      if (['datenschutz', 'impressum-agb'].includes(view)) return 'compliance';
       if (['admin-panel', 'auth-debugger', 'markdown-orchestrator', 'request-orchestrator', 'performance', 'audit-logs', 'admin-portal'].includes(view)) return 'system_admin';
       return 'hub';
     };
@@ -977,75 +973,6 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
 
 
 
-                  {/* Category 4: Rechtliches & Compliance */}
-                  <div className="border-b border-white/5 pb-2">
-                    <button
-                      onClick={() => setExpandedSection(expandedSection === 'compliance' ? null : 'compliance')}
-                      className="w-full px-3 py-2.5 flex items-center justify-between text-xs font-mono font-bold uppercase tracking-wider text-white/80 hover:text-white transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
-                      aria-expanded={expandedSection === 'compliance'}
-                      aria-controls="nav-sec-compliance"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Shield size={14} className="text-aif-gold-DEFAULT group-hover:scale-105 transition-transform" />
-                        <span>Compliance & Support</span>
-                      </div>
-                      <motion.div
-                        animate={{ rotate: expandedSection === 'compliance' ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <ChevronDown size={14} className="text-white/40 group-hover:text-white/80" />
-                      </motion.div>
-                    </button>
-
-                    <AnimatePresence initial={false}>
-                      {expandedSection === 'compliance' && (
-                        <motion.div
-                          id="nav-sec-compliance"
-                          role="region"
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                                                transition={{ duration: 0.25, ease: 'easeInOut' }}
-                          className="overflow-hidden mt-1 px-1 space-y-1"
-                        >
-                          <SidebarTooltip title="Datenschutz" text="Erfahre, wie wir Deine persönlichen Daten und Portfolio-Informationen nach DSGVO-Richtlinien schützen.">
-                            <a
-                              href="https://capital-ai.online/Datenschutz"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT text-white/70 hover:text-white hover:bg-white/5 border border-transparent"
-                            >
-                              <Shield size={14} />
-                              <span>Datenschutz</span>
-                            </a>
-                          </SidebarTooltip>
-
-                          <SidebarTooltip title="Impressum & AGB" text="Rechtliche Informationen über das Unternehmen, Nutzungsbedingungen und Allgemeine Geschäftsbedingungen.">
-                            <button 
-                              onClick={() => navigateTo('impressum-agb')}
-                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
-                                activeView === 'impressum-agb' 
-                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
-                              }`}
-                            >
-                              <Scale size={14} />
-                              <span>Impressum & AGB</span>
-                            </button>
-                          </SidebarTooltip>
-
-                          <SidebarTooltip title="E-Mail Support" text="Bei Fragen oder Problemen erreichst Du unseren Support rund um die Uhr per E-Mail unter support@capital-ai.online.">
-                            <a 
-                              href="mailto:support@capital-ai.online"
-                              className="w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all border border-transparent text-white/70 hover:text-white hover:bg-white/5 font-sans"
-                            >
-                              <Mail size={14} className="text-aif-gold-DEFAULT" />
-                              <span className="truncate">support@capital-ai.online</span>
-                            </a>
-                          </SidebarTooltip>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
 
                   {/* Category 5: Admin-Portal (if user is Sven Kulessa) */}
                   {(profile.email === 'sven.kulessa@gmail.com' || profile.email === 'sven.kulessa@gmx.net') && (
@@ -1341,8 +1268,6 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                 {activeView === 'backtest' && 'Quantitative Backtest Engine'}
                 {activeView === 'market-screener' && 'Profi Markt-Screener'}
                 {activeView === 'abonnements' && 'Abonnements & Tarife'}
-                {activeView === 'datenschutz' && 'Datenschutzbestimmungen'}
-                {activeView === 'impressum-agb' && 'Impressum & AGB'}
                 {activeView === 'profil' && 'Profilseite'}
                 {activeView === 'admin-portal' && 'Admin-Portal & DevOps-Zentrale'}
                 {activeView === 'interact' && 'Interact Workspace (Modul 2)'}
@@ -1703,16 +1628,8 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
               />
             )}
 
-            {activeView === 'datenschutz' && (
-              <Datenschutz />
-            )}
-
             {activeView === 'sentiment-dashboard' && (
               <SentimentDashboard />
-            )}
-
-            {activeView === 'impressum-agb' && (
-              <ImpressumAgb />
             )}
 
             {activeView === 'profil' && (
@@ -1887,11 +1804,11 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
               </div>
 
               <div className="flex justify-center gap-4 text-[11px] font-mono text-white/40">
-                <a href="https://capital-ai.online/Datenschutz" target="_blank" rel="noopener noreferrer" className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Datenschutz</a>
+                <a href="https://capital-ai.online/datenschutz/" target="_blank" rel="noopener noreferrer" className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Datenschutz</a>
                 <span>•</span>
-                <button onClick={() => navigateTo('impressum-agb')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Impressum</button>
+                <a href="https://capital-ai.online/impressum" target="_blank" rel="noopener noreferrer" className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Impressum</a>
                 <span>•</span>
-                <a href="https://capital-ai.online/agb" target="_blank" rel="noopener noreferrer" className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">AGB</a>
+                <a href="https://capital-ai.online/agb/" target="_blank" rel="noopener noreferrer" className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">AGB</a>
                 <span>•</span>
                 <button onClick={() => navigateTo('abonnements')} className="hover:text-aif-gold-DEFAULT hover:underline transition-colors cursor-pointer">Abonnements</button>
               </div>
