@@ -56,6 +56,7 @@ wurden code- und CI-basiert abgeschlossen:
 
 | ADR | Ergebnis | Evidence |
 |---|---|---|
+| ADR-0012 — SecurityComplianceAuditor Integration | `resolved/` / ✅ COMPLETE | Compliance UI + autorisierte `/api/compliance/*`-Routen, `src/platform/Compliance`, Scanner-/Persistenz-Tests |
 | ADR-0018 — Enterprise Event Mesh | `resolved/` / ✅ COMPLETE | EventMesh Stufe 1–4, Manifest-Nachpflege, SystemAudit-Bridge, Event-Tests |
 | ADR-0030 — Platform Version and Release Lifecycle | `resolved/` / ✅ COMPLETE | `release-version-gate/1.0.0`, PR #57, vollständige CI PASS |
 | ADR-0032 — Asset Catalog / Market Evidence Separation | `resolved/` / ✅ COMPLETE | PR #54, 6×100 Asset-Expansion, Catalog-Integrity-Tests, CI PASS |
