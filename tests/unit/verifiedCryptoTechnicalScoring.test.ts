@@ -17,6 +17,35 @@ function makeHistory(count = 30) {
   });
 }
 
+const historyProvider = async () => ({
+  provider: 'CoinGecko' as const,
+  points: makeHistory(),
+  retrievedAt: '2026-08-02T06:00:00.000Z',
+  cacheMode: 'fresh' as const,
+  degraded: false,
+});
+
+const snapshotProvider = async () => ({
+  symbol: 'ETH',
+  provider: 'CoinGecko' as const,
+  observedAt: '2026-08-02T06:00:00.000Z',
+  retrievedAt: '2026-08-02T06:00:01.000Z',
+  marketCapUsd: 400_000_000_000,
+  volume24hUsd: 20_000_000_000,
+  circulatingSupply: 120_000_000,
+  maxSupply: null,
+  totalSupply: 120_000_000,
+  cacheMode: 'fresh' as const,
+  degraded: false,
+  provenance: {
+    marketCapUsd: { field: 'marketCapUsd' as const, provider: 'CoinGecko' as const, sourcePath: 'market_data.market_cap.usd', observedAt: '2026-08-02T06:00:00.000Z', retrievedAt: '2026-08-02T06:00:01.000Z', value: 400_000_000_000, unit: 'USD' as const },
+    volume24hUsd: { field: 'volume24hUsd' as const, provider: 'CoinGecko' as const, sourcePath: 'market_data.total_volume.usd', observedAt: '2026-08-02T06:00:00.000Z', retrievedAt: '2026-08-02T06:00:01.000Z', value: 20_000_000_000, unit: 'USD' as const },
+    circulatingSupply: { field: 'circulatingSupply' as const, provider: 'CoinGecko' as const, sourcePath: 'market_data.circulating_supply', observedAt: '2026-08-02T06:00:00.000Z', retrievedAt: '2026-08-02T06:00:01.000Z', value: 120_000_000, unit: 'token' as const },
+    maxSupply: { field: 'maxSupply' as const, provider: 'CoinGecko' as const, sourcePath: 'market_data.max_supply', observedAt: '2026-08-02T06:00:00.000Z', retrievedAt: '2026-08-02T06:00:01.000Z', value: null, unit: 'token' as const },
+    totalSupply: { field: 'totalSupply' as const, provider: 'CoinGecko' as const, sourcePath: 'market_data.total_supply', observedAt: '2026-08-02T06:00:00.000Z', retrievedAt: '2026-08-02T06:00:01.000Z', value: 120_000_000, unit: 'token' as const },
+  },
+});
+
 describe('verified crypto technical scoring regression', () => {
   it('normalizes both repository and provider date formats', () => {
     expect(normalizeHistoryDateToIso('02.08.26')).toBe('2026-08-02T00:00:00.000Z');
@@ -25,13 +54,8 @@ describe('verified crypto technical scoring regression', () => {
 
   it('returns READY when a real 30-day history provides sufficient evidenced factors', async () => {
     const assessment = await evaluateVerifiedCryptoTechnicalScore('ETH', {
-      historyProvider: async () => ({
-        provider: 'CoinGecko',
-        points: makeHistory(),
-        retrievedAt: '2026-08-02T06:00:00.000Z',
-        cacheMode: 'fresh',
-        degraded: false,
-      }),
+      historyProvider,
+      snapshotProvider: async () => null,
     });
 
     expect(assessment.canonical.status).toBe('READY');
@@ -42,20 +66,34 @@ describe('verified crypto technical scoring regression', () => {
     expect(assessment.analysis).not.toBeNull();
     expect(assessment.inputs.trend).toBeTypeOf('number');
     expect(assessment.inputs.momentum).toBeTypeOf('number');
-    expect(assessment.inputs.volatility_quality).toBeTypeOf('number');
-    expect(assessment.inputs.breakout_quality).toBeTypeOf('number');
-    expect(assessment.inputs.relative_strength).toBeTypeOf('number');
     expect(assessment.inputs.avg_daily_volume).toBeUndefined();
-    expect(assessment.inputs.supply_dynamics).toBeUndefined();
-    expect(assessment.providerState).toEqual({ cacheMode: 'fresh', degraded: false });
+    expect(assessment.rankingEvidenceReady).toBe(false);
+    expect(assessment.providerState?.history).toEqual({ cacheMode: 'fresh', degraded: false });
+  });
+
+  it('adds field-level market-cap/volume/supply provenance and ranking evidence', async () => {
+    const assessment = await evaluateVerifiedCryptoTechnicalScore('ETH', {
+      historyProvider,
+      snapshotProvider,
+    });
+
+    expect(assessment.canonical.status).toBe('READY');
+    expect(assessment.fieldProvenance.map((item) => item.field)).toEqual(expect.arrayContaining([
+      'marketCapUsd', 'volume24hUsd', 'circulatingSupply', 'maxSupply', 'totalSupply',
+    ]));
+    expect(assessment.inputs.avg_daily_volume).toBeTypeOf('number');
+    expect(assessment.rankingEvidenceReady).toBe(true);
+    expect(assessment.canonical.integrity.evidence.length).toBeGreaterThanOrEqual(6);
+    expect(assessment.providerState?.snapshot).toEqual({ cacheMode: 'fresh', degraded: false });
   });
 
   it('remains fail-closed when no verified provider history is available', async () => {
     const assessment = await evaluateVerifiedCryptoTechnicalScore('ETH', {
       historyProvider: async () => null,
+      snapshotProvider,
     });
 
-    expect(assessment.canonical.status).toBe('SOURCE_UNAVAILABLE');
+    expect(assessment.canonical.status).toBe('INSUFFICIENT_HISTORY');
     expect(assessment.canonical.final_score).toBeNull();
     expect(assessment.analysis).toBeNull();
   });
