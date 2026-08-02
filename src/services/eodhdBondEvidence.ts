@@ -24,7 +24,8 @@ export interface BondEvidenceOptions {
 
 /**
  * Evidence-only adapter for explicitly known EODHD government-bond tickers (e.g. *.GBOND).
- * No ticker guessing and no bond score is produced here.
+ * No ticker guessing and no bond score is produced here. Government yields may legitimately be
+ * negative, therefore any finite observation is preserved instead of applying a positive-price gate.
  */
 export async function getEodhdBondEvidence(
   providerSymbol: string,
@@ -58,7 +59,7 @@ export async function getEodhdBondEvidence(
         date: typeof row?.date === 'string' ? row.date.slice(0, 10) : '',
         value: Number(row?.adjusted_close ?? row?.close),
       }))
-      .filter((point: BondEvidencePoint) => /^\d{4}-\d{2}-\d{2}$/.test(point.date) && Number.isFinite(point.value) && point.value > 0)
+      .filter((point: BondEvidencePoint) => /^\d{4}-\d{2}-\d{2}$/.test(point.date) && Number.isFinite(point.value))
       .slice(-boundedDays);
     if (points.length < 2) throw new Error(`EODHD returned only ${points.length} usable bond observations.`);
     const retrievedAt = new Date(nowMs()).toISOString();
