@@ -74,9 +74,11 @@ describe('supervisor', () => {
   });
 
   describe('getSupervisorStatus', () => {
-    it('meldet conflictResolution ehrlich als nicht implementiert und AI Governance als aktiv', () => {
+    it('meldet evidence-preserving Conflict Resolution und Market-Integrity-Kalibrierung als aktiv', () => {
       const status = getSupervisorStatus();
-      expect(status.capabilities.conflictResolution).toBe(false);
+      expect(status.capabilities.conflictResolution).toBe(true);
+      expect(status.capabilities.marketIntegrityCalibration).toBe(true);
+      expect(status.marketIntegrity.hardGateEnabled).toBe(false);
       expect(status.capabilities.taskRouting).toBe(true);
       expect(status.capabilities.retry).toBe(true);
       expect(status.capabilities.aiGovernance).toBe(true);

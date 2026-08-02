@@ -1,34 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Orbit, 
-  TrendingUp, 
-  Compass, 
-  Layers, 
-  ArrowUpRight, 
-  ArrowDownRight, 
-  Sparkles, 
+import {
+  Orbit,
+  TrendingUp,
+  Compass,
+  Layers,
   AlertTriangle,
   Award,
-  TrendingDown,
-  Activity
+  Activity,
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { AssetLogo } from './AssetLogo';
 
 interface RegistryAsset {
   symbol: string;
   name: string;
   type: 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';
-  price: number;
-  change24h: number;
-  expectedReturn: number;
-  volatility: number;
-  drift: number;
-  risk: 'High' | 'Medium' | 'Low';
-  status: string;
-  score: number;
-  peRatio?: number;
-  dividendYield?: number;
+  price: number | null;
+  change24h: number | null;
+  score: number | null;
+  scoreStatus: string;
+  providers: string[];
 }
 
 interface UniverseGroup {
@@ -47,33 +37,145 @@ interface UniverseBestWorstProps {
   onSelectAsset?: (symbol: string) => void;
 }
 
+type CatalogAsset = {
+  symbol?: string;
+  name?: string;
+  type?: RegistryAsset['type'];
+  price?: number | null;
+  change24h?: number | null;
+};
+
+type VerifiedTraditionalBatch = {
+  results?: Array<{
+    symbol?: string;
+    status?: string;
+    score?: number | null;
+    providers?: string[];
+  }>;
+};
+
+type VerifiedCryptoListItem = {
+  symbol?: string;
+  status?: string;
+  final_score?: number | null;
+  providers?: string[];
+  integrity?: { providers?: string[] };
+};
+
+function finiteNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function normalizeVerifiedScore(value: unknown): number | null {
+  const score = finiteNumber(value);
+  if (score === null) return null;
+  if (score < 0) return null;
+  return Number((score <= 10 ? score * 10 : score).toFixed(1));
+}
+
 export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
   const [assets, setAssets] = useState<RegistryAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchAssets() {
       try {
         setLoading(true);
-        const response = await fetch('/api/registry/assets');
-        if (!response.ok) {
-          throw new Error('Fehler beim Laden der Asset-Daten.');
+        setError(null);
+
+        const catalogResponse = await fetch('/api/registry/assets');
+        if (!catalogResponse.ok) throw new Error('Fehler beim Laden des Asset-Katalogs.');
+        const catalog = await catalogResponse.json();
+        if (!Array.isArray(catalog)) throw new Error('Ungültiges Datenformat vom Asset-Katalog.');
+
+        const catalogAssets = (catalog as CatalogAsset[]).filter(
+          (item): item is CatalogAsset & { symbol: string; name: string; type: RegistryAsset['type'] } =>
+            typeof item.symbol === 'string' && typeof item.name === 'string' && typeof item.type === 'string',
+        );
+
+        const traditionalSymbols = catalogAssets
+          .filter((asset) => asset.type === 'stock' || asset.type === 'forex' || asset.type === 'index')
+          .map((asset) => asset.symbol)
+          .join(',');
+
+        const [traditionalResponse, cryptoResponse] = await Promise.all([
+          traditionalSymbols
+            ? fetch(`/api/registry/assets/verified-scores?symbols=${encodeURIComponent(traditionalSymbols)}`)
+            : Promise.resolve(null),
+          fetch('/api/crypto/list'),
+        ]);
+
+        const traditionalBody: VerifiedTraditionalBatch = traditionalResponse?.ok
+          ? await traditionalResponse.json().catch(() => ({}))
+          : {};
+        const cryptoBody: VerifiedCryptoListItem[] = cryptoResponse.ok
+          ? await cryptoResponse.json().catch(() => [])
+          : [];
+
+        const verifiedBySymbol = new Map<string, { score: number; status: string; providers: string[] }>();
+
+        for (const row of traditionalBody.results ?? []) {
+          const symbol = typeof row.symbol === 'string' ? row.symbol.toUpperCase() : '';
+          const score = normalizeVerifiedScore(row.score);
+          if (symbol && row.status === 'READY' && score !== null) {
+            verifiedBySymbol.set(symbol, {
+              score,
+              status: 'READY',
+              providers: Array.isArray(row.providers) ? row.providers : [],
+            });
+          }
         }
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          setAssets(data);
-        } else {
-          throw new Error('Ungültiges Datenformat vom Server.');
+
+        if (Array.isArray(cryptoBody)) {
+          for (const row of cryptoBody) {
+            const symbol = typeof row.symbol === 'string' ? row.symbol.toUpperCase() : '';
+            const score = normalizeVerifiedScore(row.final_score);
+            if (symbol && row.status === 'READY' && score !== null) {
+              verifiedBySymbol.set(symbol, {
+                score,
+                status: 'READY',
+                providers: Array.isArray(row.providers)
+                  ? row.providers
+                  : Array.isArray(row.integrity?.providers)
+                    ? row.integrity.providers
+                    : [],
+              });
+            }
+          }
         }
+
+        const merged: RegistryAsset[] = catalogAssets.map((asset) => {
+          const verified = verifiedBySymbol.get(asset.symbol.toUpperCase());
+          return {
+            symbol: asset.symbol,
+            name: asset.name,
+            type: asset.type,
+            // /api/registry/assets intentionally returns null for unverified bootstrap market values.
+            // Keep them unavailable instead of recreating the pre-P0 demo/fallback behavior.
+            price: finiteNumber(asset.price),
+            change24h: finiteNumber(asset.change24h),
+            score: verified?.score ?? null,
+            scoreStatus: verified?.status ?? 'SCORE_NOT_COMPUTABLE',
+            providers: verified?.providers ?? [],
+          };
+        });
+
+        if (!cancelled) setAssets(merged);
       } catch (err: any) {
-        console.error('Error fetching assets for best/worst list:', err);
-        setError(err.message || 'Verbindungsfehler zum Backend.');
+        console.error('Error fetching verified assets for best/worst list:', err);
+        if (!cancelled) setError(err?.message || 'Verbindungsfehler zum Backend.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
-    fetchAssets();
+
+    void fetchAssets();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading) {
@@ -115,41 +217,23 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
     );
   }
 
-  // Helper function for score normalization & data integrity check (0-100 scale)
-  const normalizeScore = (rawScore: number | undefined): number => {
-    if (typeof rawScore !== 'number' || isNaN(rawScore)) return 50.0;
-    // If score is on 0-10 scale (e.g. 8.5), scale to 0-100 (85.0)
-    if (rawScore <= 10.0) {
-      return Number((rawScore * 10).toFixed(1));
-    }
-    return Number(rawScore.toFixed(1));
-  };
-
-  // Group assets into the 5 universes
-  const cryptoGroup = assets.filter(a => a.type === 'crypto');
-  const stockGroup = assets.filter(a => a.type === 'stock');
-  const forexGroup = assets.filter(a => a.type === 'forex');
-  const commodityGroup = assets.filter(a => a.type === 'commodity');
-  const indexGroup = assets.filter(a => a.type === 'index');
+  const cryptoGroup = assets.filter((a) => a.type === 'crypto');
+  const stockGroup = assets.filter((a) => a.type === 'stock');
+  const forexGroup = assets.filter((a) => a.type === 'forex');
+  const commodityGroup = assets.filter((a) => a.type === 'commodity');
+  const indexGroup = assets.filter((a) => a.type === 'index');
 
   const getBestAndWorst = (groupAssets: RegistryAsset[]) => {
-    if (groupAssets.length === 0) return { best: [], worst: [] };
-    
-    // Sort by normalized score descending with data integrity guard
-    const sorted = [...groupAssets]
-      .map(a => ({
-        ...a,
-        score: normalizeScore(a.score)
-      }))
+    const sorted = groupAssets
+      .filter((asset): asset is RegistryAsset & { score: number } =>
+        asset.scoreStatus === 'READY' && typeof asset.score === 'number' && Number.isFinite(asset.score),
+      )
       .sort((a, b) => b.score - a.score);
-    
-    // Top 3 Outperformer
+
     const best = sorted.slice(0, 3);
-    // Top 3 Underperformer (sliced from lowest score assets)
-    const worst = sorted.length >= 6 
-      ? sorted.slice(-3).reverse() 
+    const worst = sorted.length >= 6
+      ? sorted.slice(-3).reverse()
       : sorted.slice(Math.min(3, sorted.length)).reverse();
-    
     return { best, worst };
   };
 
@@ -162,7 +246,7 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
       accentColor: '#a855f7',
       bgGlow: 'rgba(168,85,247,0.15)',
       description: 'Digitale Leitwährungen & Token',
-      ...getBestAndWorst(cryptoGroup)
+      ...getBestAndWorst(cryptoGroup),
     },
     {
       id: 'stock',
@@ -172,7 +256,7 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
       accentColor: '#06b6d4',
       bgGlow: 'rgba(6,182,212,0.15)',
       description: 'Tech-Giganten & Bluechips',
-      ...getBestAndWorst(stockGroup)
+      ...getBestAndWorst(stockGroup),
     },
     {
       id: 'index',
@@ -182,7 +266,7 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
       accentColor: '#3b82f6',
       bgGlow: 'rgba(59,130,246,0.15)',
       description: 'Top 30 Globale Indizes',
-      ...getBestAndWorst(indexGroup)
+      ...getBestAndWorst(indexGroup),
     },
     {
       id: 'forex',
@@ -192,7 +276,7 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
       accentColor: '#f59e0b',
       bgGlow: 'rgba(245,158,11,0.15)',
       description: 'Globale Währungspaare',
-      ...getBestAndWorst(forexGroup)
+      ...getBestAndWorst(forexGroup),
     },
     {
       id: 'commodity',
@@ -202,24 +286,81 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
       accentColor: '#f43f5e',
       bgGlow: 'rgba(244,63,94,0.15)',
       description: 'Edelmetalle & Ressourcen',
-      ...getBestAndWorst(commodityGroup)
-    }
+      ...getBestAndWorst(commodityGroup),
+    },
   ];
 
-  const formatPrice = (price: number, type: string) => {
+  const formatPrice = (price: number | null, type: string) => {
+    if (price === null) return '—';
     if (type === 'forex') {
       return price.toLocaleString('de-DE', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
     }
     return price.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  const formatChange = (change24h: number | null) => {
+    if (change24h === null) return '—';
+    return `${change24h >= 0 ? '+' : ''}${change24h.toFixed(2)}%`;
+  };
+
+  const renderAssetRows = (rows: RegistryAsset[], tone: 'best' | 'worst') => {
+    if (rows.length === 0) {
+      return (
+        <div className="rounded-lg border border-white/5 bg-white/[0.02] p-2 text-[9px] font-mono text-white/35">
+          Keine verifizierten Scores verfügbar
+        </div>
+      );
+    }
+
+    const isBest = tone === 'best';
+    return rows.map((asset) => (
+      <div
+        key={asset.symbol}
+        onClick={() => onSelectAsset?.(asset.symbol)}
+        className={`border rounded-lg p-2 flex items-center justify-between text-xs transition-all duration-200 ${
+          onSelectAsset
+            ? isBest
+              ? 'bg-emerald-500/5 hover:bg-emerald-500/15 border-emerald-500/20 hover:border-emerald-500/40 cursor-pointer active:scale-[0.98]'
+              : 'bg-rose-500/5 hover:bg-rose-500/15 border-rose-500/20 hover:border-rose-500/40 cursor-pointer active:scale-[0.98]'
+            : isBest
+              ? 'bg-emerald-500/5 border-emerald-500/10'
+              : 'bg-rose-500/5 border-rose-500/10'
+        }`}
+        title={onSelectAsset ? `Analysiere ${asset.symbol} im Livechart` : undefined}
+      >
+        <div className="flex items-center gap-2 overflow-hidden mr-2">
+          <AssetLogo symbol={asset.symbol} size="xs" className="shrink-0" />
+          <div className="overflow-hidden">
+            <div className="font-mono font-bold text-white leading-none">{asset.symbol}</div>
+            <div className="text-[9px] text-white/40 truncate mt-0.5">{asset.name}</div>
+          </div>
+        </div>
+        <div className="text-right flex items-center gap-2 shrink-0">
+          <div>
+            <div className="font-mono font-bold text-white text-[11px]">{formatPrice(asset.price, asset.type)}</div>
+            <div className={`text-[9px] font-mono font-bold ${
+              asset.change24h === null ? 'text-white/35' : asset.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'
+            }`}>
+              {formatChange(asset.change24h)}
+            </div>
+          </div>
+          <div className={`px-1.5 py-0.5 rounded font-mono font-black text-[10px] min-w-[28px] text-center ${
+            isBest
+              ? 'bg-emerald-400 text-black shadow-[0_0_8px_rgba(52,211,153,0.3)]'
+              : 'bg-rose-500 text-white border border-rose-500/30'
+          }`}>
+            {asset.score?.toFixed(1) ?? '—'}
+          </div>
+        </div>
+      </div>
+    ));
+  };
+
   return (
     <div className="bg-neutral-950/60 border border-white/10 rounded-2xl p-6 backdrop-blur-md relative overflow-hidden" id="universe-scoring-root">
-      {/* Background visual styling */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-5 mb-6 relative z-10">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -236,24 +377,20 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
             <span>Universum Best- &amp; Worst-Assets</span>
           </h2>
           <p className="text-xs text-white/50 mt-1 max-w-2xl leading-relaxed">
-            Echtzeit-Performance-Leaderboards aller fünf quantitativen Handelsuniversen. Die Einstufung erfolgt streng algorithmisch basierend auf unserem Backend-Multi-Faktor-Scoringsystem (Bewertungsskala 0-100).
+            Leaderboards ausschließlich aus verifizierten Backend-Scores. Nicht belegte Marktwerte bleiben sichtbar als nicht verfügbar statt durch Ersatzwerte ersetzt zu werden.
           </p>
         </div>
       </div>
 
-      {/* Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 relative z-10">
         {universes.map((univ) => {
           const UnivIcon = univ.icon;
           return (
-            <div 
-              key={univ.id} 
+            <div
+              key={univ.id}
               className="bg-black/40 border border-white/5 hover:border-white/15 rounded-xl p-4 flex flex-col justify-between transition-all duration-300 relative group"
-              style={{
-                boxShadow: `0 0 30px rgba(0,0,0,0.5), inset 0 0 20px ${univ.bgGlow}`
-              }}
+              style={{ boxShadow: `0 0 30px rgba(0,0,0,0.5), inset 0 0 20px ${univ.bgGlow}` }}
             >
-              {/* Universe Header */}
               <div className="flex items-center gap-3 border-b border-white/10 pb-3 mb-4">
                 <div className={`p-2 rounded-lg bg-gradient-to-br ${univ.color} flex items-center justify-center border shrink-0 shadow-lg`}>
                   <UnivIcon size={16} />
@@ -266,88 +403,21 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
                 </div>
               </div>
 
-              {/* Leaderboards */}
               <div className="space-y-5">
-                {/* Best Assets (Top 3) */}
                 <div>
                   <h4 className="text-[9px] font-mono font-black text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                     Top 3 Outperformer (Best)
                   </h4>
-                  <div className="space-y-1.5">
-                    {univ.best.map((asset) => (
-                      <div 
-                        key={asset.symbol} 
-                        onClick={() => onSelectAsset?.(asset.symbol)}
-                        className={`border rounded-lg p-2 flex items-center justify-between text-xs transition-all duration-200 ${
-                          onSelectAsset 
-                            ? 'bg-emerald-500/5 hover:bg-emerald-500/15 border-emerald-500/20 hover:border-emerald-500/40 cursor-pointer active:scale-[0.98]' 
-                            : 'bg-emerald-500/5 border-emerald-500/10'
-                        }`}
-                        title={onSelectAsset ? `Analysiere ${asset.symbol} im Livechart` : undefined}
-                      >
-                        <div className="flex items-center gap-2 overflow-hidden mr-2">
-                          <AssetLogo symbol={asset.symbol} size="xs" className="shrink-0" />
-                          <div className="overflow-hidden">
-                            <div className="font-mono font-bold text-white leading-none">{asset.symbol}</div>
-                            <div className="text-[9px] text-white/40 truncate mt-0.5">{asset.name}</div>
-                          </div>
-                        </div>
-                        <div className="text-right flex items-center gap-2 shrink-0">
-                          <div>
-                            <div className="font-mono font-bold text-white text-[11px]">{formatPrice(asset.price, asset.type)}</div>
-                            <div className={`text-[9px] font-mono font-bold ${asset.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {asset.change24h >= 0 ? '+' : ''}{asset.change24h.toFixed(2)}%
-                            </div>
-                          </div>
-                          <div className="px-1.5 py-0.5 rounded bg-emerald-400 text-black font-mono font-black text-[10px] min-w-[28px] text-center shadow-[0_0_8px_rgba(52,211,153,0.3)]">
-                            {asset.score.toFixed(1)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <div className="space-y-1.5">{renderAssetRows(univ.best, 'best')}</div>
                 </div>
 
-                {/* Worst Assets (Top 3 Worst) */}
                 <div>
                   <h4 className="text-[9px] font-mono font-black text-rose-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
                     Top 3 Underperformer (Worst)
                   </h4>
-                  <div className="space-y-1.5">
-                    {univ.worst.map((asset) => (
-                      <div 
-                        key={asset.symbol} 
-                        onClick={() => onSelectAsset?.(asset.symbol)}
-                        className={`border rounded-lg p-2 flex items-center justify-between text-xs transition-all duration-200 ${
-                          onSelectAsset 
-                            ? 'bg-rose-500/5 hover:bg-rose-500/15 border-rose-500/20 hover:border-rose-500/40 cursor-pointer active:scale-[0.98]' 
-                            : 'bg-rose-500/5 border-rose-500/10'
-                        }`}
-                        title={onSelectAsset ? `Analysiere ${asset.symbol} im Livechart` : undefined}
-                      >
-                        <div className="flex items-center gap-2 overflow-hidden mr-2">
-                          <AssetLogo symbol={asset.symbol} size="xs" className="shrink-0" />
-                          <div className="overflow-hidden">
-                            <div className="font-mono font-bold text-white leading-none">{asset.symbol}</div>
-                            <div className="text-[9px] text-white/40 truncate mt-0.5">{asset.name}</div>
-                          </div>
-                        </div>
-                        <div className="text-right flex items-center gap-2 shrink-0">
-                          <div>
-                            <div className="font-mono font-bold text-white text-[11px]">{formatPrice(asset.price, asset.type)}</div>
-                            <div className={`text-[9px] font-mono font-bold ${asset.change24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {asset.change24h >= 0 ? '+' : ''}{asset.change24h.toFixed(2)}%
-                            </div>
-                          </div>
-                          <div className="px-1.5 py-0.5 rounded bg-rose-500 text-white font-mono font-black text-[10px] min-w-[28px] text-center border border-rose-500/30">
-                            {asset.score.toFixed(1)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <div className="space-y-1.5">{renderAssetRows(univ.worst, 'worst')}</div>
                 </div>
               </div>
             </div>

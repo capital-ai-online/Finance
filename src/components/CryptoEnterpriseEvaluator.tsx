@@ -22,14 +22,11 @@ type ScoreApiResponse = CanonicalScoreResult & {
 };
 
 /**
- * P0 Scoring Integrity UI.
+ * Evidence-gated scoring UI.
  *
- * The former evaluator contained plausible financial fallback values (price, score,
- * expected return, volatility and risk) when the API did not provide verified values.
- * That violated the No-Demo-Data policy. Until every advanced evaluator tool has a
- * source-aware backend contract, this component deliberately exposes only verified
- * deterministic scoring state from /api/crypto/score. Missing data is rendered as an
- * explicit unavailable state. No numeric fallback is generated in the browser.
+ * Financial values are rendered only when the server-side scoring contract returns verified
+ * evidence. Missing or insufficient data stays explicit; the browser does not manufacture
+ * score, expected-return, volatility or risk fallbacks.
  */
 export function CryptoEnterpriseEvaluator({
   selectedSymbol,
@@ -170,9 +167,9 @@ export function CryptoEnterpriseEvaluator({
       )}
 
       <p className="text-xs leading-relaxed text-white/40">
-        P0-Sicherheitsmodus: Order-Book-, Arbitrage-, On-Chain- und vergleichbare quantitative Ausgaben bleiben
-        deaktiviert, solange keine verifizierte serverseitige Quelle mit Provenance- und Data-Quality-Contract
-        angebunden ist.
+        Datenintegritätsmodus: Verifizierte Server-Provider und Provenance-Contracts werden aktiv genutzt.
+        Erweiterte quantitative Ausgaben werden nur dort freigeschaltet, wo der jeweilige Datenvertrag
+        ausreichend aktuelle und nachvollziehbare Evidence bestätigt.
       </p>
     </section>
   );

@@ -9,6 +9,10 @@ import { getProviderHealth, type ProviderHealthRecord } from './providerHealth';
 import { getAiGovernanceInventory } from '../../services/aiGovernance';
 import { getMarketDataProviderTelemetry, type ProviderRoutingTelemetry } from '../../services/marketDataProviderRouter';
 import { getMarketDataProviderRegistry } from '../../services/marketDataProviderRegistry';
+import {
+  buildMarketIntegrityCalibrationReport,
+  type MarketIntegrityCalibrationReport,
+} from '../../services/marketIntegrityCalibration';
 
 export type AssetClass = 'crypto' | 'commodity' | 'stock' | 'forex' | 'index' | 'bond';
 
@@ -130,6 +134,7 @@ export interface SupervisorStatus {
     candidateProviders: number;
     telemetry: ProviderRoutingTelemetry[];
   };
+  marketIntegrity: MarketIntegrityCalibrationReport;
   aiGovernance: {
     providerRoles: number;
     registeredPrompts: number;
@@ -147,6 +152,7 @@ export interface SupervisorStatus {
     conflictResolution: boolean;
     providerHealth: boolean;
     marketDataRouting: boolean;
+    marketIntegrityCalibration: boolean;
     aiGovernance: boolean;
   };
   notes: string[];
@@ -157,6 +163,7 @@ export function getSupervisorStatus(): SupervisorStatus {
   const warnings = aiInventory.recentEvaluations.filter(record => record.outcome === 'WARN').length;
   const failures = aiInventory.recentEvaluations.filter(record => record.outcome === 'FAIL').length;
   const marketProviders = getMarketDataProviderRegistry();
+  const marketIntegrity = buildMarketIntegrityCalibrationReport();
   return {
     routingTable: getRoutingTable(),
     recentExecutions: getRecentExecutions(),
@@ -167,6 +174,7 @@ export function getSupervisorStatus(): SupervisorStatus {
       candidateProviders: marketProviders.filter(provider => provider.activation === 'candidate').length,
       telemetry: getMarketDataProviderTelemetry(),
     },
+    marketIntegrity,
     aiGovernance: {
       providerRoles: aiInventory.models.length,
       registeredPrompts: aiInventory.prompts.length,
@@ -181,13 +189,15 @@ export function getSupervisorStatus(): SupervisorStatus {
       retry: true,
       recovery: true,
       selfHealing: true,
-      conflictResolution: false,
+      conflictResolution: true,
       providerHealth: true,
       marketDataRouting: true,
+      marketIntegrityCalibration: true,
       aiGovernance: true,
     },
     notes: [
-      'conflictResolution: Quorum-/Source-Conflict-Contract ist noch nicht aktiv; bei widersprüchlichen Quellen darf kein erfundener Mittelwert entstehen.',
+      'conflictResolution: evidence-preserving Spot-/Snapshot-Quorum erkennt SOURCE_CONFLICT und verweigert einen künstlichen kanonischen Wert; harte Score-/Ranking-Gates bleiben bis zur Kalibrierung deaktiviert.',
+      `marketIntegrityCalibration: ${marketIntegrity.status}; ${marketIntegrity.observations}/${marketIntegrity.minimumSample} Runtime-Beobachtungen. Eine Hard-Gate-Aktivierung bleibt reviewed und ist nicht automatisch freigegeben.`,
       'providerHealth: runtime-basiert; nur tatsächlich beobachtete Provider-Aufrufe erscheinen im Status.',
       'marketDataRouting: adaptive Priorisierung nutzt Governance-Priorität, Failures/Cooldown und EWMA-Latenz; Candidate-Provider bleiben bis Production Handoff deaktiviert.',
       'aiGovernance: runtime-basiert; Evaluationen erscheinen erst, nachdem ein instrumentierter AI-Aufruf tatsächlich ausgeführt wurde.',
