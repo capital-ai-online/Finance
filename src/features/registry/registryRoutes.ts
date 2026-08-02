@@ -1,13 +1,17 @@
-// ARCH-AUDIT-0002 / P0 remediation: public registry responses are identity/catalog views,
-// not a source of trusted financial observations. Bootstrap values in AssetRegistry are useful
-// for local catalog/UI initialization but have no per-field provider provenance or observation
-// timestamp. They therefore MUST NOT be exposed as verified market data.
+// Public registry is a catalog view; bootstrap numbers are never exposed as verified market data.
 
 import express from 'express';
 import { assetRegistry, type RegistryAsset } from '../../lib/assetRegistry';
 import { checkAdminAccess } from '../../platform/Security/authMiddleware';
 import { SUPERVISOR_ZONE_ROLES } from '../../platform/Security/types';
+import {
+  generateTraditionalAssetInputs,
+  generateTraditionalAssetInputsFromCloses,
+  TraditionalAssetScoringService,
+} from '../../services/traditionalAssetScoring';
 import { logSystemEvent } from '../../../server/systemEvents';
+import { ensureFundamentalsFresh, getCachedFundamentals } from '../../../server/stockFundamentals';
+import { ensureIndexHistoryFresh, getCachedIndexHistory, INDEX_FMP_TICKERS } from '../../../server/fmpIndices';
 
 export interface AssetUpdatePayload {
   expectedReturn?: number;
@@ -19,7 +23,6 @@ export interface AssetUpdatePayload {
   isLocked?: boolean;
 }
 
-/** Filtert den Request-Body auf die zulaessigen, korrekt typisierten Felder. */
 export function buildAssetUpdatePayload(body: any): AssetUpdatePayload {
   return {
     expectedReturn: typeof body?.expectedReturn === 'number' ? body.expectedReturn : undefined,
@@ -42,7 +45,6 @@ function toPublicAssetView(asset: RegistryAsset) {
     isLocked: asset.isLocked,
     marketDataStatus: 'DATA_UNAVAILABLE' as const,
     scoreStatus: 'SCORE_NOT_COMPUTABLE' as const,
-    // P0: no plausible bootstrap/default financial numbers leave this public catalog route.
     price: null,
     change24h: null,
     expectedReturn: null,
@@ -67,23 +69,93 @@ registryRouter.get('/assets', (_req, res) => {
 
 registryRouter.get('/assets/:symbol', (req, res) => {
   const asset = assetRegistry.getAsset(req.params.symbol);
-  if (!asset) {
-    return res.status(404).json({ error: 'Asset nicht in der Registry gefunden.' });
-  }
+  if (!asset) return res.status(404).json({ error: 'Asset nicht in der Registry gefunden.' });
   res.json(toPublicAssetView(asset));
 });
 
+/**
+ * Verified traditional-asset score boundary.
+ * Stocks/forex/indices are evaluated only from provider-attributed factors. If no factor has
+ * verified provenance the endpoint returns SCORE_NOT_COMPUTABLE instead of the legacy heuristic.
+ */
+registryRouter.get('/assets/:symbol/verified-score', async (req, res) => {
+  const symbol = req.params.symbol.toUpperCase().trim();
+  const asset = assetRegistry.getAsset(symbol);
+  if (!asset) return res.status(404).json({ error: 'Asset nicht in der Registry gefunden.' });
+  if (asset.type !== 'stock' && asset.type !== 'forex' && asset.type !== 'index') {
+    return res.status(400).json({ error: 'Dieser Endpunkt ist ausschließlich für Stock/Forex/Index vorgesehen.' });
+  }
+
+  try {
+    let inputs;
+    if (asset.type === 'stock') {
+      await ensureFundamentalsFresh(symbol);
+      inputs = await generateTraditionalAssetInputs(symbol, 'stock', getCachedFundamentals(symbol));
+    } else if (asset.type === 'forex') {
+      inputs = await generateTraditionalAssetInputs(symbol, 'forex');
+    } else {
+      if (!INDEX_FMP_TICKERS[symbol]) {
+        return res.status(422).json({
+          symbol,
+          assetType: asset.type,
+          status: 'SCORE_NOT_COMPUTABLE',
+          score: null,
+          reason: 'Keine verifizierte Index-Historienquelle für dieses Symbol registriert.',
+          provenance: [],
+          lineage: null,
+        });
+      }
+      await ensureIndexHistoryFresh(symbol);
+      const points = getCachedIndexHistory(symbol);
+      inputs = generateTraditionalAssetInputsFromCloses(symbol, 'index', points?.map(point => point.close) ?? []);
+    }
+
+    const result = TraditionalAssetScoringService.scoreTraditionalAsset(inputs);
+    if (result.usedFactors.length === 0 || result.provenance.length === 0) {
+      return res.status(422).json({
+        symbol,
+        assetType: asset.type,
+        status: 'SCORE_NOT_COMPUTABLE',
+        score: null,
+        reason: 'Keine ausreichend belegten Scoring-Faktoren verfügbar.',
+        missingFactors: result.missingFactors,
+        provenance: result.provenance,
+        lineage: result.lineage,
+      });
+    }
+
+    return res.json({
+      symbol,
+      assetType: asset.type,
+      status: 'READY',
+      score: result.score,
+      usedFactors: result.usedFactors,
+      missingFactors: result.missingFactors,
+      reasoning: result.reasoning,
+      provenance: result.provenance,
+      lineage: result.lineage,
+    });
+  } catch (error) {
+    return res.status(503).json({
+      symbol,
+      assetType: asset.type,
+      status: 'SCORE_NOT_COMPUTABLE',
+      score: null,
+      reason: error instanceof Error ? error.message : String(error),
+      provenance: [],
+      lineage: null,
+    });
+  }
+});
+
 registryRouter.post('/assets/:symbol', express.json(), async (req, res) => {
-  // ADR-0003.5/0008: Asset-Parameter-Aenderungen bleiben IAM-geschuetzt.
   const authz = await checkAdminAccess(req, 'registry:assets:update', SUPERVISOR_ZONE_ROLES);
   if (!authz.authorized) {
     return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.' });
   }
 
   const symbol = req.params.symbol;
-  if (!assetRegistry.getAsset(symbol)) {
-    return res.status(404).json({ error: 'Asset nicht in der Registry gefunden.' });
-  }
+  if (!assetRegistry.getAsset(symbol)) return res.status(404).json({ error: 'Asset nicht in der Registry gefunden.' });
 
   const payload = buildAssetUpdatePayload(req.body);
   assetRegistry.updateAsset(symbol, payload, true);
@@ -96,9 +168,6 @@ registryRouter.post('/assets/:symbol', express.json(), async (req, res) => {
     'SUCCESS'
   );
 
-  // Even after an authenticated manual update the public response does not claim market-data
-  // provenance. A future provider ingestion path must attach evidence before these fields can
-  // be returned as READY.
   const updated = assetRegistry.getAsset(symbol)!;
   res.json({ success: true, asset: toPublicAssetView(updated) });
 });
