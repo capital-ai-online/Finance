@@ -10,6 +10,12 @@ import {
   generateTraditionalAssetInputsFromCloses,
   TraditionalAssetScoringService,
 } from '../../services/traditionalAssetScoring';
+import {
+  APPROVED_FRED_SERIES,
+  fetchEcbEurReferenceFx,
+  fetchFredSeries,
+  type ApprovedFredSeriesId,
+} from '../../services/macroRateEvidence';
 import { logSystemEvent } from '../../../server/systemEvents';
 import { ensureFundamentalsFresh, getCachedFundamentals } from '../../../server/stockFundamentals';
 import { ensureIndexHistoryFresh, getCachedIndexHistory, INDEX_FMP_TICKERS } from '../../../server/fmpIndices';
@@ -73,6 +79,71 @@ export const registryRouter = express.Router();
 
 registryRouter.get('/assets', (_req, res) => {
   res.json(assetRegistry.getAssets().map(toPublicAssetView));
+});
+
+/**
+ * Macro/rate evidence boundary. These endpoints expose provenance-rich reference evidence only.
+ * They are never execution-price endpoints and they do not create asset scores.
+ */
+registryRouter.get('/macro/fred/:seriesId', async (req, res) => {
+  const correlationId = resolveCorrelationId(req);
+  res.setHeader('x-correlation-id', correlationId);
+  const seriesId = req.params.seriesId.toUpperCase() as ApprovedFredSeriesId;
+  if (!(seriesId in APPROVED_FRED_SERIES)) {
+    return res.status(400).json({
+      correlationId,
+      status: 'SERIES_NOT_APPROVED',
+      seriesId,
+      approvedSeries: Object.keys(APPROVED_FRED_SERIES),
+    });
+  }
+  try {
+    const evidence = await fetchFredSeries(seriesId);
+    return res.json({
+      correlationId,
+      status: 'READY',
+      provider: evidence.provider,
+      executionPriceEligible: false,
+      evidenceIds: evidence.evidenceIds,
+      evidence,
+    });
+  } catch (error) {
+    return res.status(503).json({
+      correlationId,
+      status: 'SOURCE_UNAVAILABLE',
+      provider: 'FRED',
+      executionPriceEligible: false,
+      evidenceIds: [],
+      reason: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+registryRouter.get('/macro/ecb/fx/:currency', async (req, res) => {
+  const correlationId = resolveCorrelationId(req);
+  res.setHeader('x-correlation-id', correlationId);
+  try {
+    const evidence = await fetchEcbEurReferenceFx(req.params.currency);
+    return res.json({
+      correlationId,
+      status: 'READY',
+      provider: evidence.provider,
+      executionPriceEligible: false,
+      evidenceIds: evidence.evidenceIds,
+      evidence,
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    const status = reason.includes('not approved') ? 400 : 503;
+    return res.status(status).json({
+      correlationId,
+      status: status === 400 ? 'SERIES_NOT_APPROVED' : 'SOURCE_UNAVAILABLE',
+      provider: 'ECB',
+      executionPriceEligible: false,
+      evidenceIds: [],
+      reason,
+    });
+  }
 });
 
 registryRouter.get('/assets/:symbol', (req, res) => {
