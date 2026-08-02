@@ -63,6 +63,11 @@ const serverLogger = createLogger('server');
 dotenv.config();
 
 const app = express();
+// Security-Audit (WebscanRadar, 02.08.2026): "Server-Versions-Disclosure" - Express setzte
+// standardmaessig den Header X-Powered-By: Express, was Angreifern das Suchen nach
+// versions-spezifischen Exploits erleichtert. disable('x-powered-by') unterdrueckt den Header
+// vollstaendig (Aequivalent zu Nginx' server_tokens off; / PHPs expose_php = Off).
+app.disable('x-powered-by');
 const PORT = 3000;
 
 // Audit ARCH-AUDIT-0002 (S4): weist als erste Middleware jedem Request eine Correlation-ID
@@ -195,6 +200,11 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // Security-Audit (WebscanRadar, 02.08.2026): "X-Frame-Options fehlt" (MEDIUM, -10 Punkte) -
+  // ohne diesen Header war die Seite per <iframe> einbettbar (Clickjacking). SAMEORIGIN passt
+  // zur bereits gesetzten CSP frame-ancestors 'self'-Regel weiter unten (redundante, aber von
+  // aelteren Browsern ohne CSP-Unterstuetzung benoetigte Absicherung).
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
 
   // Content-Security-Policy: frame-ancestors an dieselbe Allowlist-Logik wie CORS
   // angeglichen (dieselbe `*.run.app`-Wildcard-Schwäche betraf zuvor auch hier
@@ -248,6 +258,28 @@ app.use((req, res, next) => {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
 
+  next();
+});
+
+// Security-Audit (WebscanRadar, 02.08.2026): "Standard-Pfade erreichbar" (LOW) - die App ist
+// eine reine React-SPA (kein PHP/WordPress-Backend), aber der SPA-Catch-all am Ende der Route-
+// Kette (app.get('*', ...) -> index.html) beantwortete JEDE URL mit HTTP 200, auch klassische
+// Scanner-Koeder-Pfade wie /wp-config.php. Das ist kein echter Leak (keine Secrets im Inhalt),
+// verschleiert aber gegenueber automatisierten Scans nicht, dass hier nichts dergleichen
+// existiert. Diese Pfade jetzt frueh und explizit mit 404 beantworten, statt sie durch die
+// gesamte Middleware-Kette bis zum SPA-Fallback laufen zu lassen.
+const PROBE_PATH_PATTERNS = [
+  /\.php$/i,
+  /^\/wp-(admin|login|content|includes|json)(\/|$)/i,
+  /^\/(config|wp-config)\.(php|json|ya?ml|ini)$/i,
+  /^\/\.env(\.|$)/i,
+  /^\/\.git(\/|$)/i,
+  /^\/(phpinfo|info|test)\.php$/i,
+];
+app.use((req, res, next) => {
+  if (PROBE_PATH_PATTERNS.some((pattern) => pattern.test(req.path))) {
+    return res.status(404).end();
+  }
   next();
 });
 
