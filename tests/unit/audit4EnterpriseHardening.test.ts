@@ -13,6 +13,14 @@ describe('ARCH-AUDIT-0004 enterprise hardening', () => {
     expect(code).toContain('keine simulierten Latenzen');
   });
 
+  it('uses measured runtime evidence in PerformanceDashboard', () => {
+    const code = source('src/components/PerformanceDashboard.tsx');
+    expect(code).not.toContain('Math.random');
+    expect(code).not.toContain('isSimulatingLoad');
+    expect(code).toContain('/api/orchestrator/stats');
+    expect(code).toContain('keine Demo-, Seed- oder Random-Metriken');
+  });
+
   it('removes fabricated market metrics and headlines from Newsticker', () => {
     const code = source('src/components/Newsticker.tsx');
     expect(code).not.toContain('Math.random');
