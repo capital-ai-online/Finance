@@ -30,6 +30,7 @@ describe('horizon exact score validation', () => {
               reason: 'verified',
             },
             sourceErrors: [],
+            requestBudget: { maxProvidersPerSnapshot: 1, stopAfterFirstReady: true, exhausted: false },
             syntheticEvidenceAllowed: false,
           }
         : {
@@ -48,6 +49,7 @@ describe('horizon exact score validation', () => {
               reason: 'none',
             },
             sourceErrors: [],
+            requestBudget: { maxProvidersPerSnapshot: 1, stopAfterFirstReady: true, exhausted: false },
             syntheticEvidenceAllowed: false,
           },
     });

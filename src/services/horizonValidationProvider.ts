@@ -17,7 +17,21 @@ export interface HorizonValidationProviderResult {
   providersAttempted: ExternalMarketDataProvider[];
   providersSucceeded: ExternalMarketDataProvider[];
   sourceErrors: Array<{ provider: ExternalMarketDataProvider; reason: string }>;
+  requestBudget: {
+    maxProvidersPerSnapshot: number;
+    stopAfterFirstReady: boolean;
+    exhausted: boolean;
+  };
   syntheticEvidenceAllowed: false;
+}
+
+export interface HorizonValidationProviderOptions {
+  apiKeys?: Partial<Record<ExternalMarketDataProvider, string>>;
+  fetchImpl?: typeof fetch;
+  timeoutMs?: number;
+  nowMs?: () => number;
+  maxProvidersPerSnapshot?: number;
+  stopAfterFirstReady?: boolean;
 }
 
 function providersFor(assetClass: ExternalHistoryAssetClass): ExternalMarketDataProvider[] {
@@ -39,9 +53,13 @@ function toVerifiedPoints(provider: ExternalMarketDataProvider, points: Array<{ 
 
 export async function resolveHorizonValidationEvidence(
   request: HorizonValidationProviderRequest,
-  options: { apiKeys?: Partial<Record<ExternalMarketDataProvider, string>>; fetchImpl?: typeof fetch; timeoutMs?: number; nowMs?: () => number } = {},
+  options: HorizonValidationProviderOptions = {},
 ): Promise<HorizonValidationProviderResult> {
-  const configured = providersFor(request.assetClass).filter(provider => isExternalProviderConfigured(provider, options));
+  const allConfigured = providersFor(request.assetClass).filter(provider => isExternalProviderConfigured(provider, options));
+  const requestedProviderBudget = options.maxProvidersPerSnapshot ?? (allConfigured.length || 1);
+  const maxProvidersPerSnapshot = Math.max(1, Math.min(3, Math.floor(requestedProviderBudget)));
+  const configured = allConfigured.slice(0, maxProvidersPerSnapshot);
+  const stopAfterFirstReady = options.stopAfterFirstReady ?? false;
   const providersAttempted: ExternalMarketDataProvider[] = [];
   const providersSucceeded: ExternalMarketDataProvider[] = [];
   const sourceErrors: Array<{ provider: ExternalMarketDataProvider; reason: string }> = [];
@@ -59,6 +77,16 @@ export async function resolveHorizonValidationEvidence(
       }, options);
       providersSucceeded.push(provider);
       verifiedPoints.push(...toVerifiedPoints(provider, history.points));
+
+      if (stopAfterFirstReady) {
+        const partial = selectHorizonValidationEvidence({
+          snapshotDate: request.snapshotDate,
+          horizonDays: request.horizonDays,
+          points: verifiedPoints,
+          maxDistanceMs: request.maxDistanceMs,
+        });
+        if (partial.status === 'READY') break;
+      }
     } catch (error) {
       sourceErrors.push({ provider, reason: error instanceof Error ? error.message : String(error) });
     }
@@ -77,6 +105,11 @@ export async function resolveHorizonValidationEvidence(
     providersAttempted,
     providersSucceeded,
     sourceErrors,
+    requestBudget: {
+      maxProvidersPerSnapshot,
+      stopAfterFirstReady,
+      exhausted: allConfigured.length > providersAttempted.length && evidence.status !== 'READY',
+    },
     syntheticEvidenceAllowed: false,
   };
 }
