@@ -286,6 +286,42 @@ registryRouter.get('/assets/verified-scores', async (req, res) => {
   });
 });
 
+registryRouter.get('/assets/:symbol/verified-context', async (req, res) => {
+  const correlationId = resolveCorrelationId(req);
+  res.setHeader('x-correlation-id', correlationId);
+  const symbol = req.params.symbol.toUpperCase().trim();
+  const asset = assetRegistry.getAsset(symbol);
+  if (!asset) return res.status(404).json({ correlationId, symbol, status: 'ASSET_NOT_FOUND' });
+  if (asset.type !== 'stock' && asset.type !== 'forex' && asset.type !== 'index') {
+    return res.status(400).json({
+      correlationId,
+      symbol,
+      assetType: asset.type,
+      status: 'UNSUPPORTED_ASSET_CLASS',
+      reason: 'Der kombinierte verifizierte Screening-Kontext ist derzeit für Stock/Forex/Index aktiviert.',
+    });
+  }
+
+  const [scoreResult, macroContext] = await Promise.all([
+    evaluateVerifiedTraditionalSymbol(symbol, `${correlationId}:score`),
+    buildCrossAssetRiskContext(asset.type),
+  ]);
+
+  return res.status(scoreResult.httpStatus === 200 ? 200 : 422).json({
+    correlationId,
+    symbol,
+    assetType: asset.type,
+    status: scoreResult.httpStatus === 200 ? 'READY' : 'PARTIAL',
+    scoreContext: scoreResult.payload,
+    macroContext,
+    integrationPolicy: {
+      scoreImpactEnabled: false,
+      recommendationEligible: false,
+      rule: 'Score-Lineage und Macro-Evidence werden korreliert ausgeliefert, aber nicht automatisch miteinander verrechnet.',
+    },
+  });
+});
+
 registryRouter.get('/assets/:symbol', (req, res) => {
   const asset = assetRegistry.getAsset(req.params.symbol);
   if (!asset) return res.status(404).json({ error: 'Asset nicht in der Registry gefunden.' });
