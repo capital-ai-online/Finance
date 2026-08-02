@@ -10,6 +10,8 @@ import { assetRegistry } from '../lib/assetRegistry';
 import { evaluateVerifiedCryptoTechnicalScore } from '../services/verifiedCryptoTechnicalScoring';
 import { buildScoringLineage } from '../services/scoringLineage';
 import { getCryptoSpotConsensus } from '../services/cryptoSpotConsensus';
+import { getVerifiedCryptoSnapshot } from '../services/cryptoSnapshotProvider';
+import { evaluateCryptoSnapshotConsensus } from '../services/cryptoSnapshotConsensus';
 
 function requestCorrelationId(req: express.Request): string {
   const incoming = req.header('x-correlation-id');
@@ -118,6 +120,47 @@ export function createCryptoRouter(
         status: 'INSUFFICIENT_SOURCES',
         canonicalValue: null,
         error: error?.message || 'Spot-price providers unavailable.',
+      });
+    }
+  });
+
+  /**
+   * Diagnostic multi-source quorum for critical snapshot fields. This endpoint is deliberately
+   * non-blocking for the existing score path: one verified provider remains valid evidence, but it
+   * is not mislabeled as cross-provider consensus. Canonical field values are emitted only when at
+   * least two semantically comparable providers satisfy the field policy.
+   */
+  router.get('/snapshot-consensus/:symbol', async (req, res) => {
+    const correlationId = requestCorrelationId(req);
+    res.setHeader('x-correlation-id', correlationId);
+    const symbol = String(req.params.symbol || '').toUpperCase().trim();
+    if (!symbol) return res.status(400).json({ correlationId, status: 'INVALID_REQUEST', error: 'Cryptocurrency symbol is required.' });
+
+    try {
+      const snapshot = await getVerifiedCryptoSnapshot(symbol);
+      const provenance = snapshot
+        ? Object.values(snapshot.provenance).filter((item): item is NonNullable<typeof item> => Boolean(item))
+        : [];
+      const consensus = evaluateCryptoSnapshotConsensus(symbol, provenance);
+      const httpStatus = consensus.status === 'SOURCE_CONFLICT'
+        ? 409
+        : consensus.status === 'INSUFFICIENT_SOURCES'
+          ? 422
+          : 200;
+      return res.status(httpStatus).json({
+        correlationId,
+        symbol,
+        snapshotProvider: snapshot?.provider ?? null,
+        snapshotCacheMode: snapshot?.cacheMode ?? null,
+        ...consensus,
+      });
+    } catch (error: any) {
+      return res.status(503).json({
+        correlationId,
+        symbol,
+        status: 'INSUFFICIENT_SOURCES',
+        canonicalValue: null,
+        error: error?.message || 'Snapshot providers unavailable.',
       });
     }
   });
