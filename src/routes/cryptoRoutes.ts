@@ -10,6 +10,8 @@ import { assetRegistry } from '../lib/assetRegistry';
 import { evaluateVerifiedCryptoTechnicalScore } from '../services/verifiedCryptoTechnicalScoring';
 import { buildScoringLineage } from '../services/scoringLineage';
 import { getCryptoSpotConsensus } from '../services/cryptoSpotConsensus';
+import { getLiveCryptoSnapshotConsensus } from '../services/liveCryptoSnapshotConsensus';
+import { evaluateCryptoSnapshotIntegrity } from '../services/cryptoSnapshotIntegrity';
 
 function requestCorrelationId(req: express.Request): string {
   const incoming = req.header('x-correlation-id');
@@ -118,6 +120,71 @@ export function createCryptoRouter(
         status: 'INSUFFICIENT_SOURCES',
         canonicalValue: null,
         error: error?.message || 'Spot-price providers unavailable.',
+      });
+    }
+  });
+
+  /**
+   * Diagnostic multi-source quorum for critical snapshot fields. CoinGecko and CoinMarketCap are
+   * compared field-by-field. This remains observation-only until production divergence is measured
+   * and tolerances are calibrated; it does not hard-gate the existing score path yet.
+   */
+  router.get('/snapshot-consensus/:symbol', async (req, res) => {
+    const correlationId = requestCorrelationId(req);
+    res.setHeader('x-correlation-id', correlationId);
+    const symbol = String(req.params.symbol || '').toUpperCase().trim();
+    if (!symbol) return res.status(400).json({ correlationId, status: 'INVALID_REQUEST', error: 'Cryptocurrency symbol is required.' });
+
+    try {
+      const consensus = await getLiveCryptoSnapshotConsensus(symbol);
+      const httpStatus = consensus.status === 'SOURCE_CONFLICT' || consensus.status === 'NON_COMPARABLE_EVIDENCE'
+        ? 409
+        : consensus.status === 'INSUFFICIENT_SOURCES'
+          ? 422
+          : 200;
+      return res.status(httpStatus).json({
+        correlationId,
+        symbol,
+        ...consensus,
+        scoringGateActive: false,
+      });
+    } catch (error: any) {
+      return res.status(503).json({
+        correlationId,
+        symbol,
+        status: 'INSUFFICIENT_SOURCES',
+        scoringGateActive: false,
+        canonicalValue: null,
+        error: error?.message || 'Snapshot providers unavailable.',
+      });
+    }
+  });
+
+  /**
+   * Evidence-only integrity boundary. This endpoint never changes a score or ranking. It exposes
+   * supply invariants plus an independent market-cap cross-check against spot quorum × circulating
+   * supply so Supervisor/Compliance clients can observe conflicts before any future hard gate.
+   */
+  router.get('/snapshot-integrity/:symbol', async (req, res) => {
+    const correlationId = requestCorrelationId(req);
+    res.setHeader('x-correlation-id', correlationId);
+    const symbol = String(req.params.symbol || '').toUpperCase().trim();
+    if (!symbol) return res.status(400).json({ correlationId, status: 'INVALID_REQUEST', reason: 'Cryptocurrency symbol is required.' });
+    try {
+      const integrity = await evaluateCryptoSnapshotIntegrity(symbol);
+      const httpStatus = integrity.status === 'CONSISTENT'
+        ? 200
+        : integrity.status === 'SOURCE_CONFLICT' || integrity.status === 'INVALID_SNAPSHOT'
+          ? 409
+          : 422;
+      return res.status(httpStatus).json({ correlationId, scoringImpact: 'OBSERVATION_ONLY', ...integrity });
+    } catch (error: any) {
+      return res.status(503).json({
+        correlationId,
+        symbol,
+        status: 'INSUFFICIENT_EVIDENCE',
+        scoringImpact: 'OBSERVATION_ONLY',
+        reason: error?.message || 'Snapshot integrity evidence unavailable.',
       });
     }
   });

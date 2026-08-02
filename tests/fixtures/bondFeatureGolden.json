@@ -1,0 +1,33 @@
+{
+  "contractVersion": "bond-features/1.0.0",
+  "note": "TEST-ONLY golden fixtures. These values are not production market evidence and must never be emitted to users.",
+  "readyCandidate": {
+    "identity": {
+      "providerSymbol": "US10Y.TEST.GBOND",
+      "isin": "TEST00000001",
+      "currency": "USD",
+      "maturityDate": "2036-08-02",
+      "couponRatePct": 4.25
+    },
+    "priceHistoryPoints": 60,
+    "yieldHistoryPoints": 60,
+    "modifiedDuration": 7.4,
+    "yieldToMaturityPct": 4.1,
+    "treasury2yPct": 3.8,
+    "treasury10yPct": 4.2,
+    "sourceConflict": false
+  },
+  "incompleteCandidate": {
+    "identity": {
+      "providerSymbol": "US10Y.TEST.GBOND",
+      "currency": "USD",
+      "maturityDate": "2036-08-02",
+      "couponRatePct": 4.25
+    },
+    "priceHistoryPoints": 5,
+    "yieldHistoryPoints": 0,
+    "treasury2yPct": 3.8,
+    "treasury10yPct": 4.2,
+    "sourceConflict": false
+  }
+}
