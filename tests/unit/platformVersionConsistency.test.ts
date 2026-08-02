@@ -23,19 +23,22 @@ describe('GOV-VER-001 platform version consistency', () => {
     expect(metadata.version).toBe(currentVersion);
   });
 
-  it.each([
-    ['README.md', 'README.md'],
-    ['AGENTS.md', 'AGENTS.md'],
-    ['docs/code-quality/CODE_QUALITY_STANDARDS.md', 'CODE_QUALITY_STANDARDS.md'],
-    ['docs/ceo/EXECUTIVE_SUMMARY.md', 'EXECUTIVE_SUMMARY.md'],
-    ['docs/API.md', 'API.md'],
-  ])('%s declares the current package.json version (%s)', (relativePath) => {
+  const declarationFiles = [
+    'README.md',
+    'AGENTS.md',
+    'docs/code-quality/CODE_QUALITY_STANDARDS.md',
+    'docs/ceo/EXECUTIVE_SUMMARY.md',
+    'docs/API.md',
+    'index.html',
+  ];
+
+  it.each(declarationFiles.map((relativePath) => [relativePath]))('%s declares the current package.json version', (relativePath) => {
     const code = read(relativePath);
     expect(code).toContain(currentVersion);
   });
 
   it('does not declare a stale pre-0.6.0 platform version as the current release', () => {
-    for (const relativePath of ['README.md', 'AGENTS.md', 'docs/code-quality/CODE_QUALITY_STANDARDS.md', 'docs/ceo/EXECUTIVE_SUMMARY.md', 'docs/API.md']) {
+    for (const relativePath of declarationFiles) {
       const code = read(relativePath);
       expect(code).not.toMatch(/\b0\.5\.\d\b/);
     }

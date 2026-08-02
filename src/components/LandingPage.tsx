@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldAlert, Mail, User, Lock, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, X } from 'lucide-react';
 import { CapitalAiLogo } from './CapitalAiLogo';
+import { SecurityRadarBadge } from './SecurityRadarBadge';
 import { supabase } from '../supabaseClient';
 
 interface LandingPageProps {
@@ -584,25 +585,8 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
           </a>
         </div>
 
-        {/* Webscan Radar Badge */}
-        <div className="flex flex-col items-center justify-center gap-2">
-          <span className="text-[9px] font-mono text-white/30 uppercase tracking-widest block">
-            System Security Verified By
-          </span>
-          <a 
-            href="https://webscan-radar.com" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="inline-block transition-all hover:scale-105 active:scale-95 duration-200"
-          >
-            <img 
-              src="https://webscan-radar.com/badge/capital-ai.online" 
-              alt="Sicherheits-Score von Webscan Radar" 
-              className="h-9 w-auto rounded border border-white/10 shadow-lg"
-              referrerPolicy="no-referrer"
-            />
-          </a>
-        </div>
+        {/* Webscan Radar Badge (shared, siehe SecurityRadarBadge.tsx) */}
+        <SecurityRadarBadge />
       </footer>
 
 
