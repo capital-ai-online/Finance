@@ -10,8 +10,7 @@ import { assetRegistry } from '../lib/assetRegistry';
 import { evaluateVerifiedCryptoTechnicalScore } from '../services/verifiedCryptoTechnicalScoring';
 import { buildScoringLineage } from '../services/scoringLineage';
 import { getCryptoSpotConsensus } from '../services/cryptoSpotConsensus';
-import { getVerifiedCryptoSnapshot } from '../services/cryptoSnapshotProvider';
-import { evaluateCryptoSnapshotConsensus } from '../services/cryptoSnapshotConsensus';
+import { getLiveCryptoSnapshotConsensus } from '../services/liveCryptoSnapshotConsensus';
 
 function requestCorrelationId(req: express.Request): string {
   const incoming = req.header('x-correlation-id');
@@ -125,10 +124,9 @@ export function createCryptoRouter(
   });
 
   /**
-   * Diagnostic multi-source quorum for critical snapshot fields. This endpoint is deliberately
-   * non-blocking for the existing score path: one verified provider remains valid evidence, but it
-   * is not mislabeled as cross-provider consensus. Canonical field values are emitted only when at
-   * least two semantically comparable providers satisfy the field policy.
+   * Diagnostic multi-source quorum for critical snapshot fields. CoinGecko and CoinMarketCap are
+   * compared field-by-field. This remains observation-only until production divergence is measured
+   * and tolerances are calibrated; it does not hard-gate the existing score path yet.
    */
   router.get('/snapshot-consensus/:symbol', async (req, res) => {
     const correlationId = requestCorrelationId(req);
@@ -137,11 +135,7 @@ export function createCryptoRouter(
     if (!symbol) return res.status(400).json({ correlationId, status: 'INVALID_REQUEST', error: 'Cryptocurrency symbol is required.' });
 
     try {
-      const snapshot = await getVerifiedCryptoSnapshot(symbol);
-      const provenance = snapshot
-        ? Object.values(snapshot.provenance).filter((item): item is NonNullable<typeof item> => Boolean(item))
-        : [];
-      const consensus = evaluateCryptoSnapshotConsensus(symbol, provenance);
+      const consensus = await getLiveCryptoSnapshotConsensus(symbol);
       const httpStatus = consensus.status === 'SOURCE_CONFLICT'
         ? 409
         : consensus.status === 'INSUFFICIENT_SOURCES'
@@ -150,15 +144,15 @@ export function createCryptoRouter(
       return res.status(httpStatus).json({
         correlationId,
         symbol,
-        snapshotProvider: snapshot?.provider ?? null,
-        snapshotCacheMode: snapshot?.cacheMode ?? null,
         ...consensus,
+        scoringGateActive: false,
       });
     } catch (error: any) {
       return res.status(503).json({
         correlationId,
         symbol,
         status: 'INSUFFICIENT_SOURCES',
+        scoringGateActive: false,
         canonicalValue: null,
         error: error?.message || 'Snapshot providers unavailable.',
       });
