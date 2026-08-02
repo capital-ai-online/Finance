@@ -32,6 +32,9 @@ type CatalogAsset = {
   name: string;
   type: AssetType;
   subtype?: string;
+  aliases?: string[];
+  origin?: 'legacy-registry' | 'catalog-expansion';
+  screeningContract?: 'crypto-provenance' | 'traditional-provenance' | 'catalog-only';
 };
 
 type ScreeningResult = {
@@ -58,6 +61,20 @@ const INTERVAL_OPTIONS = [
   { value: '1M', label: 'Monatlich' },
   { value: '1Y', label: '1 Jahr' },
 ];
+
+const ASSET_TYPE_ORDER: AssetType[] = ['crypto', 'stock', 'forex', 'commodity', 'index', 'bond'];
+const ASSET_TYPE_LABELS: Record<AssetType, string> = {
+  crypto: 'Krypto',
+  stock: 'Aktien',
+  forex: 'Forex',
+  commodity: 'Rohstoffe',
+  index: 'Indizes',
+  bond: 'Anleihen',
+};
+
+function emptyAssetCounts(): Record<AssetType, number> {
+  return { crypto: 0, stock: 0, forex: 0, commodity: 0, index: 0, bond: 0 };
+}
 
 function finite(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
@@ -208,11 +225,22 @@ export function MarketScreener({
       .catch((error) => setScanError(error instanceof Error ? error.message : String(error)));
   }, []);
 
+  const assetCounts = useMemo(() => {
+    const counts = emptyAssetCounts();
+    for (const asset of assets) {
+      if (ASSET_TYPE_ORDER.includes(asset.type)) counts[asset.type] += 1;
+    }
+    return counts;
+  }, [assets]);
+
   const searchResults = useMemo(() => {
     const query = searchVal.trim().toLowerCase();
     if (!query) return [];
     return assets
-      .filter((asset) => asset.symbol.toLowerCase().includes(query) || asset.name.toLowerCase().includes(query))
+      .filter((asset) =>
+        asset.symbol.toLowerCase().includes(query)
+        || asset.name.toLowerCase().includes(query)
+        || (asset.aliases ?? []).some((alias) => alias.toLowerCase().includes(query)))
       .slice(0, 12);
   }, [assets, searchVal]);
 
@@ -325,6 +353,17 @@ export function MarketScreener({
             />
             <ChevronDown size={14} className="text-white/25" />
           </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 px-1 text-[9px] font-mono text-white/35" data-testid="asset-class-counts">
+            <span className="font-bold uppercase tracking-wider text-white/45">Assetbestand</span>
+            {ASSET_TYPE_ORDER.map((type) => (
+              <span key={type}>
+                {ASSET_TYPE_LABELS[type]} <strong className="text-white/65">{assetCounts[type]}</strong>
+              </span>
+            ))}
+            <span className="ml-auto text-white/45">Gesamt <strong className="text-white/70">{assets.length}</strong></span>
+          </div>
+
           {showDropdown && searchResults.length > 0 && (
             <div className="absolute z-30 mt-2 max-h-72 w-full overflow-auto rounded-xl border border-white/10 bg-neutral-950 p-2 shadow-2xl">
               {searchResults.map((asset) => (
@@ -435,7 +474,7 @@ export function MarketScreener({
       </div>
 
       <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4 text-[10px] text-emerald-100/65">
-        <strong>Data Integrity:</strong> Dieser Screener erzeugt keine browserseitigen Ersatzscores, keine Symbol-Hash-Pattern und keine synthetischen Trading-Level. Macro Context und AI-Sidecar haben keinen automatischen Score-Impact.
+        <strong>Data Integrity:</strong> Katalogbestand und Marktbeobachtung sind getrennt. Ein gelistetes Asset erhält weder Preis noch Score allein durch seine Registry-Zugehörigkeit; READY erfordert weiterhin Provider-Evidence und die bestehenden Provenance-/Freshness-Gates. Commodity- und Bond-Katalogeinträge bleiben bis zu einem freigegebenen Screening-Contract fail-closed.
         {effectiveEmail ? '' : ' Nutzerkontext ist derzeit nicht angemeldet.'}
       </div>
     </section>
