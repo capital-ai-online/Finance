@@ -1,4 +1,5 @@
 import express from 'express';
+import { randomUUID } from 'node:crypto';
 import { GoogleGenAI } from '@google/genai';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
@@ -7,6 +8,12 @@ import { ClassificationService } from '../services/classification.service';
 import { calculateRankScore, isTop10Eligible } from '../services/ranking.service';
 import { assetRegistry } from '../lib/assetRegistry';
 import { evaluateVerifiedCryptoTechnicalScore } from '../services/verifiedCryptoTechnicalScoring';
+import { buildScoringLineage } from '../services/scoringLineage';
+
+function requestCorrelationId(req: express.Request): string {
+  const incoming = req.header('x-correlation-id');
+  return incoming && incoming.trim() ? incoming.trim().slice(0, 128) : randomUUID();
+}
 
 export function createCryptoRouter(
   aiClient: GoogleGenAI | null,
@@ -16,13 +23,24 @@ export function createCryptoRouter(
   const router = express.Router();
   const orchestrator = new CryptoOrchestrator(aiClient, anthropicClient, openaiClient);
 
-  router.get('/list', async (_req, res) => {
+  router.get('/list', async (req, res) => {
     try {
+      const rootCorrelationId = requestCorrelationId(req);
+      res.setHeader('x-correlation-id', rootCorrelationId);
       const cryptoAssets = assetRegistry.getAssets().filter((asset) => asset.type === 'crypto');
       const list = await Promise.all(cryptoAssets.map(async (asset) => {
+        const correlationId = `${rootCorrelationId}:${asset.symbol}`;
         const classification = ClassificationService.classifyAsset(asset.symbol);
         const assessment = await evaluateVerifiedCryptoTechnicalScore(asset.symbol);
         const canonical = assessment.canonical;
+        const lineage = buildScoringLineage({
+          correlationId,
+          assetId: asset.symbol,
+          canonical,
+          scoringInputs: assessment.inputs,
+          fieldProvenance: assessment.fieldProvenance,
+          providerState: assessment.providerState,
+        });
 
         if (canonical.status !== 'READY' || !assessment.analysis) {
           return {
@@ -37,6 +55,7 @@ export function createCryptoRouter(
             eligible_for_top10: false,
             provenance: assessment.fieldProvenance,
             providerState: assessment.providerState,
+            lineage,
             scoreBasis: 'unavailable' as const,
           };
         }
@@ -67,6 +86,7 @@ export function createCryptoRouter(
           eligible_for_top10: eligible,
           provenance: assessment.fieldProvenance,
           providerState: assessment.providerState,
+          lineage,
           scoreBasis: assessment.fieldProvenance.length > 0 ? 'market-data' as const : 'market-history' as const,
         };
       }));
@@ -85,7 +105,6 @@ export function createCryptoRouter(
       if (!targetSymbol || typeof targetSymbol !== 'string' || targetSymbol.trim() === '') {
         return res.status(400).json({ error: 'Cryptocurrency "symbol" is required.' });
       }
-
       const payload = await orchestrator.analyzeCrypto(targetSymbol.toUpperCase().trim(), customInput);
       res.json(payload);
     } catch (error: any) {
@@ -96,6 +115,8 @@ export function createCryptoRouter(
 
   router.post('/score', async (req, res) => {
     try {
+      const correlationId = requestCorrelationId(req);
+      res.setHeader('x-correlation-id', correlationId);
       const payload = req.body;
       if (!payload.symbol || !payload.asset_name) {
         return res.status(400).json({ error: '"symbol" and "asset_name" are required in payload.' });
@@ -105,6 +126,7 @@ export function createCryptoRouter(
           status: 'SOURCE_UNAVAILABLE',
           score: null,
           final_score: null,
+          correlationId,
           error: 'Caller-provided financial scores are not accepted by the production scoring endpoint because provenance cannot be verified.',
         });
       }
@@ -113,6 +135,14 @@ export function createCryptoRouter(
       const classification = payload.classification || ClassificationService.classifyAsset(symbol);
       const assessment = await evaluateVerifiedCryptoTechnicalScore(symbol);
       const canonical = assessment.canonical;
+      const lineage = buildScoringLineage({
+        correlationId,
+        assetId: symbol,
+        canonical,
+        scoringInputs: assessment.inputs,
+        fieldProvenance: assessment.fieldProvenance,
+        providerState: assessment.providerState,
+      });
 
       if (canonical.status !== 'READY' || !assessment.analysis) {
         return res.status(422).json({
@@ -125,6 +155,7 @@ export function createCryptoRouter(
           eligible_for_top10: false,
           provenance: assessment.fieldProvenance,
           providerState: assessment.providerState,
+          lineage,
           scoreBasis: 'unavailable' as const,
         });
       }
@@ -156,6 +187,7 @@ export function createCryptoRouter(
         eligible_for_top10: eligible,
         provenance: assessment.fieldProvenance,
         providerState: assessment.providerState,
+        lineage,
         scoreBasis: assessment.fieldProvenance.length > 0 ? 'market-data' as const : 'market-history' as const,
       });
     } catch (error: any) {
@@ -164,14 +196,13 @@ export function createCryptoRouter(
     }
   });
 
-  /**
-   * Top-10 admission is now enabled only when the score is READY and the snapshot carries
-   * provenance for market-cap, volume and supply. Assets without that lineage remain excluded.
-   */
-  router.get('/top10', async (_req, res) => {
+  router.get('/top10', async (req, res) => {
     try {
+      const rootCorrelationId = requestCorrelationId(req);
+      res.setHeader('x-correlation-id', rootCorrelationId);
       const cryptoAssets = assetRegistry.getAssets().filter((asset) => asset.type === 'crypto');
       const evaluated = await Promise.all(cryptoAssets.map(async (asset) => {
+        const correlationId = `${rootCorrelationId}:${asset.symbol}`;
         const classification = ClassificationService.classifyAsset(asset.symbol);
         const assessment = await evaluateVerifiedCryptoTechnicalScore(asset.symbol);
         const canonical = assessment.canonical;
@@ -185,6 +216,14 @@ export function createCryptoRouter(
           data_quality: { level: canonical.integrity.dataQuality },
         } as any;
         const eligible = assessment.rankingEvidenceReady && isTop10Eligible(rankPayload);
+        const lineage = buildScoringLineage({
+          correlationId,
+          assetId: asset.symbol,
+          canonical,
+          scoringInputs: assessment.inputs,
+          fieldProvenance: assessment.fieldProvenance,
+          providerState: assessment.providerState,
+        });
 
         return {
           symbol: asset.symbol,
@@ -196,6 +235,7 @@ export function createCryptoRouter(
           integrity: canonical.integrity,
           provenance: assessment.fieldProvenance,
           providerState: assessment.providerState,
+          lineage,
           scoreBasis: assessment.fieldProvenance.length > 0 ? 'market-data' as const : 'market-history' as const,
         };
       }));
