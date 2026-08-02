@@ -1,0 +1,36 @@
+name: Lockfile Remediation Artifact
+
+on:
+  push:
+    branches: [fix/crypto-provider-source-unavailable]
+    paths:
+      - '.github/workflows/lockfile-remediation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  generate-fixed-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Move Nodemailer to patched major
+        run: npm pkg set 'dependencies.nodemailer=^9.0.3'
+      - name: Resolve current dependency graph
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Apply non-breaking advisory fixes
+        run: npm audit fix --package-lock-only --ignore-scripts
+      - name: Verify production HIGH/CRITICAL advisories are cleared
+        run: npm audit --omit=dev --audit-level=high
+      - name: Upload remediated manifest and lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: remediated-lockfile
+          path: |
+            package.json
+            package-lock.json
+          if-no-files-found: error
