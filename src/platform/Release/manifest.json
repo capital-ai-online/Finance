@@ -41,7 +41,7 @@
   ],
   "documentation": [
     "README.md",
-    "docs/adr/ADR-0030-platform-version-release-lifecycle.md"
+    "docs/adr/resolved/ADR-0030-platform-version-release-lifecycle.md"
   ],
   "tests": [
     "tests/unit/releaseVersionGate.test.ts",
