@@ -1,31 +1,44 @@
-// ADR-0017 — Serverseitige Durchsetzung des Screening-Limits.
+// ADR-0017 / ADR-0034 — server-side entitlement and quota enforcement.
 //
-// Ergaenzt, ersetzt aber nicht, den bestehenden client-seitigen Zaehler in
-// src/lib/dailyScreeningTracker.ts, der weiterhin fuer sofortiges UI-Feedback
-// zustaendig bleibt (Anzeige "X von 5 Screenings verbleibend" ohne Server-
-// Roundtrip). Dieser Zaehler war bislang die EINZIGE Kontrolle - trivial
-// per DevTools/curl/Inkognito-Fenster umgehbar (Audit-Befund S-04).
-//
-// Eingeloggte User werden per E-Mail in public.user_quota gezaehlt
-// (persistent, geraeteuebergreifend, Service-Role-only via RLS). Nicht
-// eingeloggte Free/Gast-Aufrufe ohne verifizierte Identitaet fallen auf den
-// bestehenden In-Memory IP-Rate-Limiter zurueck, weil fuer sie keine stabile
-// Identitaet existiert, gegen die serverseitig gezaehlt werden koennte.
+// Subscription limits are defined once in src/config/subscriptionEntitlements.ts.
+// Persistent quota consumption uses public.consume_user_quota() when the production
+// migration is available; otherwise the server falls back to the existing in-memory
+// limiter so a missing DB function never becomes an entitlement bypass.
 
 import type { Request } from 'express';
 import { getServerSupabase, isSupabaseConfigured, getSubscription } from './db';
 import { resolveVerifiedIdentity } from '../src/platform/Security/authMiddleware';
 import { checkRateLimit, getClientIp } from '../src/platform/Security/rateLimiter';
+import {
+  getWindowedFeatureLimit,
+  normalizeSubscriptionTier,
+  type SubscriptionTier,
+  type WindowedLimit,
+} from '../src/config/subscriptionEntitlements';
 
 export const STARTER_DAILY_LIMIT = 5;
-const UNLIMITED_TIERS = new Set(['PRO', 'ENTERPRISE', 'ENTERPRISE OS']);
+export const FREE_SCREENING_LIMIT = 3;
+export const FREE_SCREENING_WINDOW_DAYS = 5;
+export const BUFFETT_LIMITED_WINDOW_DAYS = 3;
 
-// Audit ARCH-AUDIT-0002 (D5): exportiert fuer direkte Testbarkeit (tests/unit/quota.test.ts),
-// ohne Supabase mocken zu muessen - reine, seiteneffektfreie Logik.
-export function isUnlimitedTier(tier: string): boolean {
-  return UNLIMITED_TIERS.has(tier.trim().toUpperCase());
+export interface QuotaResult {
+  allowed: boolean;
+  remaining: number;
+  tier: SubscriptionTier;
+  reason?: 'quota-limit-reached' | 'authentication-required' | 'feature-not-entitled';
+  nextEligibleAt?: string;
+  windowDays?: number;
+  subjectKey?: string;
 }
 
+const fallbackSubjectReuse = new Map<string, { subjectKey: string; expiresAt: number }>();
+
+export function isUnlimitedTier(tier: string): boolean {
+  return getWindowedFeatureLimit(tier, 'verified_screening') === 'unlimited';
+}
+
+// Retained for backwards-compatible test/import surfaces. New quota decisions use rolling
+// windows from the entitlement contract instead of resetting at UTC midnight.
 export function isNewUtcDay(windowStart: string): boolean {
   const start = new Date(windowStart);
   const now = new Date();
@@ -36,75 +49,173 @@ export function isNewUtcDay(windowStart: string): boolean {
   );
 }
 
-export interface QuotaResult {
-  allowed: boolean;
-  remaining: number;
-  reason?: string;
+export function hasWindowElapsed(windowStart: string, windowDays: number, nowMs = Date.now()): boolean {
+  const startMs = Date.parse(windowStart);
+  if (!Number.isFinite(startMs)) return true;
+  return startMs + windowDays * 24 * 60 * 60 * 1000 <= nowMs;
+}
+
+function nextEligibleIso(windowStart: string, windowDays: number): string | undefined {
+  const startMs = Date.parse(windowStart);
+  if (!Number.isFinite(startMs)) return undefined;
+  return new Date(startMs + windowDays * 24 * 60 * 60 * 1000).toISOString();
+}
+
+async function consumeWindowedQuota(input: {
+  req: Request;
+  quotaKind: 'screening' | 'buffett_value_check';
+  limit: WindowedLimit;
+  tier: SubscriptionTier;
+  identityKey: string;
+  email?: string;
+  subjectKey?: string;
+}): Promise<QuotaResult> {
+  const windowMs = input.limit.windowDays * 24 * 60 * 60 * 1000;
+  const normalizedSubject = input.subjectKey?.toUpperCase().trim() || undefined;
+
+  if (input.email && isSupabaseConfigured()) {
+    try {
+      const supabase = getServerSupabase();
+      const { data, error } = await supabase.rpc('consume_user_quota', {
+        p_email: input.email.toLowerCase().trim(),
+        p_quota_kind: input.quotaKind,
+        p_limit: input.limit.limit,
+        p_window_seconds: Math.round(windowMs / 1000),
+        p_subject_key: normalizedSubject ?? null,
+      });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row && typeof row.allowed === 'boolean') {
+        return {
+          allowed: row.allowed,
+          remaining: Number(row.remaining ?? 0),
+          tier: input.tier,
+          reason: row.allowed ? undefined : 'quota-limit-reached',
+          nextEligibleAt: typeof row.next_eligible_at === 'string' ? row.next_eligible_at : undefined,
+          windowDays: input.limit.windowDays,
+          subjectKey: typeof row.subject_key === 'string' ? row.subject_key : normalizedSubject,
+        };
+      }
+    } catch (err: any) {
+      console.warn(`[Quota] Persistent ${input.quotaKind} quota unavailable; using in-memory enforcement:`, err?.message || err);
+    }
+  }
+
+  const fallbackKey = `entitlement:${input.quotaKind}:${input.identityKey}`;
+  if (normalizedSubject) {
+    const existing = fallbackSubjectReuse.get(fallbackKey);
+    if (existing && existing.expiresAt > Date.now() && existing.subjectKey === normalizedSubject) {
+      return {
+        allowed: true,
+        remaining: 0,
+        tier: input.tier,
+        windowDays: input.limit.windowDays,
+        nextEligibleAt: new Date(existing.expiresAt).toISOString(),
+        subjectKey: normalizedSubject,
+      };
+    }
+  }
+
+  const allowed = checkRateLimit(fallbackKey, input.limit.limit, windowMs);
+  if (allowed && normalizedSubject) {
+    fallbackSubjectReuse.set(fallbackKey, {
+      subjectKey: normalizedSubject,
+      expiresAt: Date.now() + windowMs,
+    });
+  }
+  const cached = fallbackSubjectReuse.get(fallbackKey);
+  return {
+    allowed,
+    remaining: allowed ? Math.max(input.limit.limit - 1, 0) : 0,
+    tier: input.tier,
+    reason: allowed ? undefined : 'quota-limit-reached',
+    windowDays: input.limit.windowDays,
+    nextEligibleAt: cached ? new Date(cached.expiresAt).toISOString() : undefined,
+    subjectKey: cached?.subjectKey ?? normalizedSubject,
+  };
 }
 
 export async function enforceScreeningQuota(req: Request): Promise<QuotaResult> {
   const identity = await resolveVerifiedIdentity(req);
 
-  // Keine verifizierte Identitaet -> Free/Gast-Aufruf ohne Session.
-  // IP-basiertes Fallback-Limit, konsistent mit dem bereits bestehenden
-  // In-Memory-Limiter aus src/platform/Security/rateLimiter.ts.
   if (!identity || !identity.email) {
-    const ip = getClientIp(req as any);
-    const allowed = checkRateLimit(`screening:${ip}`, STARTER_DAILY_LIMIT, 24 * 60 * 60 * 1000);
+    const tier: SubscriptionTier = 'Free';
+    const limit = getWindowedFeatureLimit(tier, 'verified_screening');
+    if (limit === 'unlimited' || limit === 'none' || limit === 'preview_only') {
+      return { allowed: false, remaining: 0, tier, reason: 'feature-not-entitled' };
+    }
+    return consumeWindowedQuota({
+      req,
+      quotaKind: 'screening',
+      limit,
+      tier,
+      identityKey: `guest:${getClientIp(req as any)}`,
+    });
+  }
+
+  const tier = normalizeSubscriptionTier(await getSubscription(identity.userId));
+  const limit = getWindowedFeatureLimit(tier, 'verified_screening');
+  if (limit === 'unlimited') return { allowed: true, remaining: 9999, tier };
+  if (limit === 'none' || limit === 'preview_only') {
+    return { allowed: false, remaining: 0, tier, reason: 'feature-not-entitled' };
+  }
+
+  return consumeWindowedQuota({
+    req,
+    quotaKind: 'screening',
+    limit,
+    tier,
+    identityKey: `user:${identity.userId}`,
+    email: identity.email,
+  });
+}
+
+export async function enforceBuffettValueCheckQuota(req: Request, subjectKey: string): Promise<QuotaResult> {
+  const identity = await resolveVerifiedIdentity(req);
+  if (!identity || !identity.email) {
     return {
-      allowed,
-      remaining: allowed ? STARTER_DAILY_LIMIT : 0,
-      reason: allowed ? undefined : 'daily-limit-reached',
+      allowed: false,
+      remaining: 0,
+      tier: 'Free',
+      reason: 'authentication-required',
     };
   }
 
-  const tier = await getSubscription(identity.userId);
-  if (isUnlimitedTier(tier)) {
-    return { allowed: true, remaining: 9999 };
+  const tier = normalizeSubscriptionTier(await getSubscription(identity.userId));
+  const limit = getWindowedFeatureLimit(tier, 'buffett_value_check');
+  if (limit === 'unlimited') {
+    return { allowed: true, remaining: 9999, tier, subjectKey: subjectKey.toUpperCase().trim() };
+  }
+  if (limit === 'none' || limit === 'preview_only') {
+    return { allowed: false, remaining: 0, tier, reason: 'feature-not-entitled' };
   }
 
-  if (!isSupabaseConfigured()) {
-    // Ohne Supabase kann serverseitig nicht persistent gezaehlt werden - die
-    // App muss im lokalen Fallback-Modus (siehe db.ts) trotzdem funktionieren.
-    // Der client-seitige Tracker bleibt in diesem Fall die einzige Kontrolle.
-    return { allowed: true, remaining: STARTER_DAILY_LIMIT };
+  return consumeWindowedQuota({
+    req,
+    quotaKind: 'buffett_value_check',
+    limit,
+    tier,
+    identityKey: `user:${identity.userId}`,
+    email: identity.email,
+    subjectKey,
+  });
+}
+
+export function evaluateStoredQuotaWindow(input: {
+  count: number;
+  windowStart: string;
+  limit: WindowedLimit;
+  nowMs?: number;
+}): { allowed: boolean; remaining: number; nextEligibleAt?: string } {
+  if (hasWindowElapsed(input.windowStart, input.limit.windowDays, input.nowMs)) {
+    return { allowed: true, remaining: Math.max(input.limit.limit - 1, 0) };
   }
-
-  const email = identity.email.toLowerCase().trim();
-  const supabase = getServerSupabase();
-
-  try {
-    const { data: existing } = await supabase
-      .from('user_quota')
-      .select('window_start, count')
-      .eq('email', email)
-      .eq('quota_kind', 'screening')
-      .maybeSingle();
-
-    if (!existing || isNewUtcDay(existing.window_start)) {
-      await supabase.from('user_quota').upsert(
-        { email, quota_kind: 'screening', window_start: new Date().toISOString(), count: 1 },
-        { onConflict: 'email,quota_kind' }
-      );
-      return { allowed: true, remaining: STARTER_DAILY_LIMIT - 1 };
-    }
-
-    if (existing.count >= STARTER_DAILY_LIMIT) {
-      return { allowed: false, remaining: 0, reason: 'daily-limit-reached' };
-    }
-
-    await supabase
-      .from('user_quota')
-      .update({ count: existing.count + 1 })
-      .eq('email', email)
-      .eq('quota_kind', 'screening');
-
-    return { allowed: true, remaining: STARTER_DAILY_LIMIT - (existing.count + 1) };
-  } catch (err: any) {
-    // Fail-open: ein Datenbankfehler in einem Rate-Limit-Pfad soll zahlende
-    // Kunden nicht aussperren. Anders als bei checkAdminAccess() (fail-closed,
-    // sicherheitskritisch) ist dies eine Verfuegbarkeits-/Kulanzentscheidung.
-    console.warn('[Quota] Fehler bei serverseitiger Quota-Pruefung, fail-open:', err?.message || err);
-    return { allowed: true, remaining: STARTER_DAILY_LIMIT };
+  if (input.count >= input.limit.limit) {
+    return {
+      allowed: false,
+      remaining: 0,
+      nextEligibleAt: nextEligibleIso(input.windowStart, input.limit.windowDays),
+    };
   }
+  return { allowed: true, remaining: Math.max(input.limit.limit - input.count - 1, 0) };
 }
