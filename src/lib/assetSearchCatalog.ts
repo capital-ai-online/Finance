@@ -44,6 +44,19 @@ function normalizeCandidate(candidate: AssetCatalogCandidate, origin: AssetCatal
   };
 }
 
+/**
+ * The expansion source intentionally contains more candidates than the required target so legacy
+ * duplicates can be skipped. Alias-like compatibility identifiers must never count as new assets:
+ * crypto provider symbols use the canonical market symbol, while equities may use a real exchange
+ * suffix (e.g. AIR.PA) but never an invented numeric suffix such as AMT2.
+ */
+function isCanonicalExpansionCandidate(candidate: AssetCatalogCandidate): boolean {
+  const symbol = candidate.symbol.toUpperCase().trim();
+  if (candidate.type === 'crypto' && symbol.includes('_')) return false;
+  if (candidate.type === 'stock' && /\d$/.test(symbol)) return false;
+  return true;
+}
+
 function buildCatalog(): {
   entries: AssetCatalogEntry[];
   expansionAdded: Record<AssetCatalogType, number>;
@@ -70,6 +83,7 @@ function buildCatalog(): {
     const target = ASSET_CATALOG_TARGET_ADDITIONS[type];
     for (const candidate of ASSET_CATALOG_EXPANSION[type]) {
       if (expansionAdded[type] >= target) break;
+      if (!isCanonicalExpansionCandidate(candidate)) continue;
       const normalized = normalizeCandidate(candidate, 'catalog-expansion');
       if (bySymbol.has(normalized.symbol)) continue;
       bySymbol.set(normalized.symbol, normalized);
