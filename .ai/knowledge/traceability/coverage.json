@@ -1,0 +1,193 @@
+{
+  "generatedAt": "2026-08-02T04:21:16.277Z",
+  "ess": {
+    "total": 17,
+    "withComponent": 11,
+    "ratio": 0.6470588235294118
+  },
+  "components": {
+    "total": 25,
+    "implemented": 7,
+    "withEss": 25,
+    "withAdr": 6,
+    "withTests": 3,
+    "testRatio": 0.12
+  },
+  "perComponent": [
+    {
+      "name": "Architecture",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Compliance",
+      "status": "implemented",
+      "essCount": 3,
+      "adrCount": 1,
+      "testCount": 1
+    },
+    {
+      "name": "Contracts",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Core",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Discovery",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Documentary",
+      "status": "unspecified",
+      "essCount": 3,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Documentary/Governance",
+      "status": "development",
+      "essCount": 7,
+      "adrCount": 3,
+      "testCount": 0
+    },
+    {
+      "name": "EventMesh",
+      "status": "development",
+      "essCount": 5,
+      "adrCount": 1,
+      "testCount": 0
+    },
+    {
+      "name": "Events",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Generators",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Interfaces",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Knowledge",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Models",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "PlatformDirector",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Plugins",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Quality",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Registry",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Release",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Security",
+      "status": "implemented",
+      "essCount": 3,
+      "adrCount": 1,
+      "testCount": 2
+    },
+    {
+      "name": "Shared",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Supervisor",
+      "status": "implemented",
+      "essCount": 2,
+      "adrCount": 1,
+      "testCount": 1
+    },
+    {
+      "name": "Telemetry",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "Traceability",
+      "status": "development",
+      "essCount": 6,
+      "adrCount": 3,
+      "testCount": 0
+    },
+    {
+      "name": "Validators",
+      "status": "unspecified",
+      "essCount": 2,
+      "adrCount": 0,
+      "testCount": 0
+    },
+    {
+      "name": "VersionManager",
+      "status": "implemented",
+      "essCount": 3,
+      "adrCount": 0,
+      "testCount": 0
+    }
+  ]
+}

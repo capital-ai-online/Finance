@@ -1,0 +1,79 @@
+// ESS-0011. CLI-Einstiegspunkt der Enterprise Traceability Matrix.
+// ARCH-AUDIT-0002 (N4, Kapitel 14.4): baut die Matrix, schreibt die Berichte unter
+// .ai/knowledge/traceability/ und docs/traceability/, und fuehrt das `tests`-Feld in allen
+// Komponenten-Manifesten nach - berechnet aus den tatsaechlich gefundenen Testdateien, nicht
+// manuell gesetzt (ESS-0001-CONTRACTS Chapter 12). Aufruf: `npm run traceability:build`.
+
+import fs from 'fs';
+import path from 'path';
+import { CoverageAnalyzer } from '../Core/coverageAnalyzer';
+import { OrphanDetector } from '../Core/orphanDetector';
+import { TraceabilityBuilder } from '../Core/traceabilityBuilder';
+import { TraceabilityReporter } from '../Reports/traceabilityReporter';
+import { registerMatrix } from '../Registry/traceabilityRegistry';
+
+const REPO_ROOT = process.cwd();
+
+// Befundtypen, die auf eine tatsaechlich falsche Angabe hindeuten (dangling Referenz), nicht
+// nur auf eine noch unspezifizierte Komponente - nur diese lassen den Lauf fehlschlagen.
+const HARD_FAILURE_TYPES = new Set(['implementedBy-path-missing', 'adr-without-component']);
+
+function updateManifestTestsField(componentPath: string, testPaths: string[]): boolean {
+  const manifestPath = path.join(REPO_ROOT, componentPath, 'manifest.json');
+  const raw = fs.readFileSync(manifestPath, 'utf8');
+  const manifest = JSON.parse(raw) as Record<string, unknown>;
+  const sorted = [...testPaths].sort();
+  if (JSON.stringify(manifest.tests) === JSON.stringify(sorted)) return false;
+
+  const ordered: Record<string, unknown> = {};
+  let inserted = false;
+  for (const [key, value] of Object.entries(manifest)) {
+    if (key === 'tests') continue; // wird unten neu gesetzt
+    ordered[key] = value;
+    if (key === 'documentation') {
+      ordered.tests = sorted;
+      inserted = true;
+    }
+  }
+  if (!inserted) ordered.tests = sorted;
+
+  fs.writeFileSync(manifestPath, `${JSON.stringify(ordered, null, 2)}\n`, 'utf8');
+  return true;
+}
+
+function main() {
+  const builder = new TraceabilityBuilder();
+  const matrix = builder.build();
+  registerMatrix(matrix);
+
+  const coverage = new CoverageAnalyzer().analyze(matrix);
+  const orphans = new OrphanDetector().detect(matrix);
+  new TraceabilityReporter().write(matrix, coverage, orphans);
+
+  const testsByComponent = new Map<string, string[]>();
+  for (const link of matrix.links) {
+    if (link.from.type !== 'component' || link.to.type !== 'test') continue;
+    const list = testsByComponent.get(link.from.id) ?? [];
+    list.push(link.to.id);
+    testsByComponent.set(link.from.id, list);
+  }
+
+  let manifestsUpdated = 0;
+  for (const component of matrix.components) {
+    const changed = updateManifestTestsField(component.path, testsByComponent.get(component.name) ?? []);
+    if (changed) manifestsUpdated += 1;
+  }
+
+  console.log(`[traceability] ${matrix.ess.length} ESS-Eintraege, ${matrix.components.length} Komponenten, ${matrix.tests.length} Testdateien, ${matrix.links.length} Verknuepfungen.`);
+  console.log(`[traceability] ESS-Abdeckung: ${coverage.ess.withComponent}/${coverage.ess.total}. Testabdeckung: ${coverage.components.withTests}/${coverage.components.total} Komponenten.`);
+  console.log(`[traceability] ${manifestsUpdated} Manifest(e) mit aktualisiertem tests-Feld beschrieben.`);
+  console.log(`[traceability] ${orphans.length} Befund(e), davon ${orphans.filter(o => HARD_FAILURE_TYPES.has(o.type)).length} hart.`);
+
+  const hardFailures = orphans.filter(o => HARD_FAILURE_TYPES.has(o.type));
+  if (hardFailures.length > 0) {
+    for (const f of hardFailures) console.error(`[FEHLER] ${f.type}: ${f.detail}`);
+    process.exit(1);
+  }
+}
+
+main();

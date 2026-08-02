@@ -28,5 +28,6 @@
   "documentation": [
     "README.md"
   ],
+  "tests": [],
   "note": "ARCH-AUDIT-0002 (J5, Kapitel 14.6): physisch aus server/versionManager.ts hierher verschoben - vorher wies die ESS-Registry (implementedBy) auf diesen Ordner, obwohl er nur eine leere Huelle war und der Code unter server/ lag. Diese Verschiebung macht die Registry-Angabe korrekt."
 }

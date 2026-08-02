@@ -46,6 +46,47 @@ Platform Director
 
 ---
 
+## [1.1.0] — 2026-08-02
+
+### Hinzugefügt
+
+- `Models/traceabilityModels.ts` — Datenmodelle (EssArtifact, AdrArtifact, ComponentArtifact,
+  TestArtifact, TraceabilityLink, TraceabilityMatrix, CoverageReport, OrphanFinding)
+- `Interfaces/index.ts` — `ITraceabilityBuilder`, `ICoverageAnalyzer`, `IOrphanDetector`,
+  `ITraceabilityReporter`, `ITraceabilityLink`
+- `Discovery/artifactDiscovery.ts` — liest ESS-Registry, ADR-Historie, alle
+  Plattform-Manifeste (rekursiv) und alle Testdateien unter `tests/`
+- `Core/traceabilityBuilder.ts` — baut die Achsen ESS↔Component und Component↔Test
+- `Core/coverageAnalyzer.ts`, `Core/orphanDetector.ts`
+- `Registry/traceabilityRegistry.ts` — Prozessregistrierung des zuletzt gebauten Standes
+- `Reports/traceabilityReporter.ts` — schreibt `matrix.json`/`coverage.json`/`orphans.json`
+  unter `.ai/knowledge/traceability/` und `docs/traceability/COVERAGE_REPORT.md`
+- `Services/runTraceability.ts` — CLI, `npm run traceability:build`; führt zusätzlich das
+  `tests`-Feld in allen 25 Plattform-Manifesten anhand real gefundener Testdateien nach
+
+### Geändert
+
+- `manifest.json`: `status` von `specified` auf `development`; Klarstellung, dass die
+  deklarierten Events (noch) nicht ausgelöst/konsumiert werden und die deklarierten
+  Abhängigkeiten (Core, Shared, Registry, Knowledge, Discovery) mangels eigenen Codes nicht
+  importiert werden
+- `README.md`: Implementierungsstand aktualisiert (Stufe 1–2 umgesetzt, 3–4 offen); die
+  zuvor genannte KG-/Digital-Twin-Blockade als für diesen Ausbau nicht zutreffend korrigiert
+
+### Referenzen
+
+- ARCH-AUDIT-0002, Kapitel 14.4, Maßnahme N4
+
+### Breaking Changes
+
+Keine.
+
+### Autor
+
+Platform Director
+
+---
+
 ## Hinweis zur Erstfassung
 
 Diese Datei ist zusammen mit `component.yaml` die **erste ihrer Art im Repository**.
