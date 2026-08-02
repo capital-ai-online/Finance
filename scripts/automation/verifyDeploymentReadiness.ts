@@ -5,6 +5,7 @@
 import fs from 'fs';
 import path from 'path';
 import { PROMPT_REGISTRY } from '../../src/services/aiUsageTracker';
+import { evaluateDependencyPolicy, writeCycloneDxSbom } from './dependencySecurity';
 
 const REPO_ROOT = process.cwd();
 let hasErrors = false;
@@ -111,7 +112,7 @@ if (!fs.existsSync(migrationsDir)) {
   else ok(`${migrationFiles.length} Migrationsdateien vorhanden und korrekt benannt.`);
 }
 
-// --- 4. Dependency / Lockfile Integrity ---------------------------------------------------
+// --- 4. Dependency / Supply-Chain Integrity -----------------------------------------------
 const packageJsonPath = path.join(REPO_ROOT, 'package.json');
 const packageLockPath = path.join(REPO_ROOT, 'package-lock.json');
 if (!fs.existsSync(packageLockPath)) {
@@ -123,7 +124,23 @@ if (!fs.existsSync(packageLockPath)) {
   if (pkg && lock && rootLock) {
     if (rootLock.name !== pkg.name || rootLock.version !== pkg.version) {
       fail(`package.json und package-lock.json Root-Metadaten divergieren (${pkg.name}@${pkg.version} vs ${rootLock.name}@${rootLock.version}).`);
-    } else ok(`Lockfile stimmt mit ${pkg.name}@${pkg.version} überein.`);
+    } else {
+      ok(`Lockfile stimmt mit ${pkg.name}@${pkg.version} überein.`);
+    }
+
+    const policy = evaluateDependencyPolicy(pkg, lock);
+    if (policy.violations.length > 0) {
+      for (const violation of policy.violations) fail(`Dependency Policy: ${violation}`);
+    } else {
+      ok(`${policy.productionDependencyCount} direkte Production-Dependencies erfüllen die Supply-Chain-Policy.`);
+    }
+
+    try {
+      const sbomPath = writeCycloneDxSbom(REPO_ROOT, pkg, lock);
+      ok(`CycloneDX-SBOM erzeugt: ${path.relative(REPO_ROOT, sbomPath)}.`);
+    } catch (error) {
+      fail(`CycloneDX-SBOM konnte nicht erzeugt werden: ${error instanceof Error ? error.message : String(error)}`);
+    }
   } else if (lock) {
     fail('package-lock.json enthält keinen Root-Package-Eintrag.');
   }
