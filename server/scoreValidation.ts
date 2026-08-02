@@ -28,6 +28,7 @@ import { getServerSupabase, isSupabaseConfigured } from './db';
 import { assetRegistry } from '../src/lib/assetRegistry';
 import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
 import { ADMIN_ZONE_ROLES } from '../src/platform/Security/types';
+import { calibrateScoreConfidence } from '../src/services/scoreConfidenceCalibration';
 
 export interface SnapshotInput {
   symbol: string;
@@ -181,6 +182,18 @@ scoreValidationRouter.get('/validation', async (req, res) => {
   }
   const horizonDays = Math.max(1, Math.min(365, Number(req.query.horizonDays) || 30));
   const threshold = Math.max(0, Math.min(10, Number(req.query.threshold) || 6.5));
+  const minimumConfidenceSample = Math.max(5, Math.min(1000, Number(req.query.minimumConfidenceSample) || 30));
   const result = await evaluateScoreValidation(horizonDays, threshold);
-  res.json(result);
+  const confidence = calibrateScoreConfidence(result.overall, minimumConfidenceSample);
+  res.json({
+    ...result,
+    confidence,
+    confidencePolicy: {
+      empiricalOnly: true,
+      minimumSample: minimumConfidenceSample,
+      scoreImpactEnabled: false,
+      recommendationImpactEnabled: false,
+      methodologyLimitation: 'Validation currently compares historical snapshots with the current AssetRegistry price; confidence must not be interpreted as execution-grade probability until horizon-exact verified price evidence is used.',
+    },
+  });
 });
