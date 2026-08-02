@@ -14,6 +14,7 @@ import { createLogger } from '../logger';
 import { getProviderConfig } from './oauthProviders';
 import { generateCodeVerifier, deriveCodeChallenge } from './pkce';
 import { upsertConnectedAccount } from './tokenStore';
+import { checkSocialMediaAccessForUserId, accessDeniedMessage } from './accessControl';
 import type { SupportedAccountPlatform, SocialAccount } from '../../src/platform/SocialMediaEngine/types';
 
 const logger = createLogger('social-media:oauth');
@@ -317,6 +318,17 @@ export async function completeOAuthCallback(code: string, stateToken: string): P
   const state = await consumeOAuthState(stateToken);
   if (!state) {
     return { success: false, platform: 'unknown', error: 'Ungueltiger, bereits verwendeter oder abgelaufener OAuth-State.' };
+  }
+
+  // ADR-0021: Zugriff erneut pruefen (nicht nur beim Erzeugen der Auth-URL) - zwischen
+  // /auth/url und diesem Callback koennen mehrere Minuten liegen, in denen z.B. ein
+  // Founder-Abo ablaufen oder ein Owner-Status entzogen werden koennte. Ohne diesen
+  // Re-Check koennte ein zwischenzeitlich ungueltig gewordener Zugriff trotzdem noch ein
+  // Konto verbinden.
+  const access = await checkSocialMediaAccessForUserId(state.user_id);
+  if (!access.allowed) {
+    logger.error('OAuth-Callback abgelehnt: Zugriff nicht (mehr) berechtigt', { platform: state.platform, userId: state.user_id, reason: access.reason });
+    return { success: false, platform: state.platform, error: accessDeniedMessage(access.reason) };
   }
 
   try {

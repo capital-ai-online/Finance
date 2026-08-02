@@ -31,7 +31,26 @@ async function parseOrThrow<T>(res: Response): Promise<T> {
   return json as T;
 }
 
+export interface SocialMediaAccessStatus {
+  allowed: boolean;
+  reason: 'owner' | 'founder-tier' | 'unauthenticated' | 'insufficient-tier' | 'supabase-not-configured' | 'internal-error';
+}
+
 export const SocialMediaGeneratorService = {
+  /** ADR-0021: Zugriff ist auf Owner-IAM-Rolle oder 'Founder'-Abonnenten beschraenkt. Immer
+   *  200 mit {allowed, reason} statt 401/403, damit das Frontend eine passende Meldung
+   *  rendern kann statt eines rohen Fehlers. */
+  async checkAccess(): Promise<SocialMediaAccessStatus> {
+    try {
+      const res = await authFetch('/api/social-media/access');
+      const json = await parseOrThrow<ApiResponse<never> & { allowed: boolean; reason: SocialMediaAccessStatus['reason'] }>(res);
+      return { allowed: !!json.allowed, reason: json.reason };
+    } catch (err) {
+      console.error('[SocialMediaGeneratorService] checkAccess fehlgeschlagen:', err);
+      return { allowed: false, reason: 'internal-error' };
+    }
+  },
+
   async fetchConnectedAccounts(): Promise<SocialAccount[]> {
     try {
       const res = await authFetch('/api/social-media/accounts');
