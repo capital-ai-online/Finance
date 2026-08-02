@@ -1,60 +1,13 @@
-name: Document Hygiene Evidence Migration
+name: Document Hygiene Evidence Migration (disabled)
 
 on:
-  push:
-    branches: [feature/multi-provider-financial-data-router]
-    paths:
-      - '.github/workflows/document-hygiene-evidence-migration.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  migrate:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: feature/multi-provider-financial-data-router
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Migrate document hygiene classification to evidence contract
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          path = Path('server/documentHygiene.ts')
-          text = path.read_text()
-
-          old_import = "import { retrieveRelevantChunks, formatChunksForPrompt } from '../src/services/rag/retrieval';"
-          new_import = "import { retrieveRelevantChunksWithEvidence, formatChunksForPrompt } from '../src/services/rag/retrieval';\nimport { getPromptGovernanceEntry, recordAiEvaluation, type AiProvider } from '../src/services/aiGovernance';"
-          if old_import not in text:
-              raise SystemExit('Expected retrieval import not found')
-          text = text.replace(old_import, new_import, 1)
-
-          old_retrieval = """    const relevantChunks = await retrieveRelevantChunks(`${filePath}\\n${diff.slice(0, 1000)}`);\n    const ragContext = relevantChunks.length > 0\n      ? `\\n\\n--- RELEVANTE INTERNE RICHTLINIEN (zur Einordnung von \\\"conflict_candidate\\\") ---\\n${formatChunksForPrompt(relevantChunks)}`\n      : '';"""
-          new_retrieval = """    const promptEntry = getPromptGovernanceEntry('document-hygiene-change-classification');\n    const retrieval = await retrieveRelevantChunksWithEvidence(`${filePath}\\n${diff.slice(0, 1000)}`, {\n      promptId: 'document-hygiene-change-classification',\n      promptVersion: promptEntry?.version,\n      topK: 5,\n      minScore: 0.5,\n    });\n    const relevantChunks = retrieval.chunks;\n    const ragContext = relevantChunks.length > 0\n      ? `\\n\\n--- RELEVANTE INTERNE RICHTLINIEN (zur Einordnung von \\\"conflict_candidate\\\") ---\\n${formatChunksForPrompt(relevantChunks)}`\n      : '';"""
-          if old_retrieval not in text:
-              raise SystemExit('Expected document-hygiene retrieval block not found')
-          text = text.replace(old_retrieval, new_retrieval, 1)
-
-          marker = """    const parsed = result.data;\n    return {"""
-          replacement = """    const parsed = result.data;\n    const providerPrefix = result.provider.startsWith('anthropic:')\n      ? 'anthropic'\n      : result.provider.startsWith('openai:')\n        ? 'openai'\n        : 'gemini';\n    const model = result.provider.includes(':') ? result.provider.split(':').slice(1).join(':') : result.provider;\n    const evidenceIds = retrieval.evidence.evidence.map(item => item.evidenceId);\n    recordAiEvaluation({\n      promptId: 'document-hygiene-change-classification',\n      promptVersion: promptEntry?.version ?? 'unregistered',\n      modelProvider: providerPrefix as AiProvider,\n      model,\n      evidenceIds,\n      checks: { schemaValid: true, grounded: evidenceIds.length > 0 },\n      outcome: evidenceIds.length > 0 ? 'PASS' : 'WARN',\n      notes: evidenceIds.length > 0\n        ? `Documentary RAG evidence quality: ${retrieval.evidence.evaluation.quality}.`\n        : 'Dokumenten-Hygiene-Klassifikation ohne Repository-RAG-Evidence; manuelle Review-Regeln bleiben maßgeblich.',\n    });\n    return {"""
-          if marker not in text:
-              raise SystemExit('Expected parsed-result marker not found')
-          text = text.replace(marker, replacement, 1)
-
-          path.write_text(text)
-          PY
-      - name: Commit migration
-        run: |
-          if git diff --quiet -- server/documentHygiene.ts; then
-            echo 'No changes required.'
-            exit 0
-          fi
-          git config user.name 'capital-ai-documentary-bot'
-          git config user.email 'documentary-bot@capital-ai.online'
-          git add server/documentHygiene.ts
-          git commit -m 'feat(documentary): add RAG evidence and AI evaluation to hygiene classification'
-          git push origin HEAD:feature/multi-provider-financial-data-router
+      - run: echo 'One-shot migration intentionally disabled. Apply documentHygiene evidence migration through a reviewed code change.'
