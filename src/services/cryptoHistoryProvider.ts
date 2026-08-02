@@ -1,3 +1,10 @@
+import {
+  rankMarketDataProviders,
+  recordMarketDataProviderOutcome,
+  type MarketDataProviderDescriptor,
+} from './marketDataProviderRouter';
+import { MARKET_DATA_PROVIDER_REGISTRY } from './marketDataProviderRegistry';
+
 export interface VerifiedCryptoHistoryPoint {
   date: string; // YYYY-MM-DD
   close: number;
@@ -70,7 +77,7 @@ async function fetchResponseWithTimeout(fetchImpl: typeof fetch, url: string, ti
   try {
     const response = await fetchImpl(url, {
       signal: controller.signal,
-      headers: { Accept: 'application/json', 'User-Agent': 'CAPITAL-AI/0.6.2' },
+      headers: { Accept: 'application/json', 'User-Agent': 'CAPITAL-AI/0.6.3' },
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response;
@@ -161,13 +168,34 @@ const providerFetchers: Array<{
   { provider: 'Kraken', fetcher: fetchKraken },
 ];
 
+function getRankedCryptoHistoryCandidates(nowMs: number) {
+  const descriptors = providerFetchers.map(candidate => {
+    const registry = MARKET_DATA_PROVIDER_REGISTRY.find(entry => entry.id === candidate.provider);
+    const descriptor: MarketDataProviderDescriptor = registry ?? {
+      id: candidate.provider,
+      assetClasses: ['crypto'],
+      capabilities: ['history'],
+      basePriority: candidate.provider === 'CoinGecko' ? 1 : candidate.provider === 'Binance' ? 2 : 3,
+      enabled: true,
+    };
+    return { candidate, descriptor };
+  });
+  const ranked = rankMarketDataProviders(descriptors.map(item => item.descriptor), {
+    nowMs,
+    assetClass: 'crypto',
+    capability: 'history',
+  });
+  return ranked
+    .map(item => descriptors.find(candidate => candidate.descriptor.id === item.provider.id)?.candidate)
+    .filter((candidate): candidate is (typeof providerFetchers)[number] => Boolean(candidate));
+}
+
 /**
- * Server-side verified crypto history with independent provider fallback.
+ * Server-side verified crypto history with adaptive provider routing.
  *
- * No simulated history is ever returned. CoinGecko remains the preferred source; Binance and
- * Kraken are verified fallbacks so a cold deployment is not dependent on a single public API.
- * Each provider has its own bounded retry/circuit state. A previously verified response may be
- * served as last-known-good; freshness is still enforced by the downstream scoring gate.
+ * No simulated history is ever returned. Governance base-priority still prefers CoinGecko, but
+ * observed failures/cooldowns/latency can move Binance or Kraken ahead temporarily. This behaves
+ * like an application-level market-data load balancer while preserving provider provenance.
  */
 export async function getVerifiedCryptoHistory(
   symbol: string,
@@ -196,14 +224,17 @@ export async function getVerifiedCryptoHistory(
   }
 
   const failures: string[] = [];
-  for (const candidate of providerFetchers) {
+  const candidates = getRankedCryptoHistoryCandidates(now);
+  for (const candidate of candidates) {
     const circuit = stateFor(candidate.provider);
     if (circuit.openUntilMs > now) {
       failures.push(`${candidate.provider}: circuit open`);
+      recordMarketDataProviderOutcome({ provider: candidate.provider, success: false, nowMs: now, failureCooldownMs: circuit.openUntilMs - now });
       continue;
     }
 
     let lastError: unknown;
+    const providerStartedAt = Date.now();
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       try {
         const points = await candidate.fetcher(s, boundedDays, fetchImpl, timeoutMs);
@@ -217,6 +248,12 @@ export async function getVerifiedCryptoHistory(
         cache.set(key, { value, cachedAtMs: nowMs() });
         circuit.consecutiveFailures = 0;
         circuit.openUntilMs = 0;
+        recordMarketDataProviderOutcome({
+          provider: candidate.provider,
+          success: true,
+          latencyMs: Math.max(0, Date.now() - providerStartedAt),
+          nowMs: nowMs(),
+        });
         return { ...value, cacheMode: 'fresh', degraded: candidate.provider !== 'CoinGecko' };
       } catch (error) {
         lastError = error;
@@ -232,6 +269,12 @@ export async function getVerifiedCryptoHistory(
     if (circuit.consecutiveFailures >= circuitFailureThreshold) {
       circuit.openUntilMs = nowMs() + circuitCooldownMs;
     }
+    recordMarketDataProviderOutcome({
+      provider: candidate.provider,
+      success: false,
+      nowMs: nowMs(),
+      failureCooldownMs: circuit.consecutiveFailures >= circuitFailureThreshold ? circuitCooldownMs : undefined,
+    });
     failures.push(`${candidate.provider}: ${(lastError as Error)?.message || String(lastError)}`);
   }
 

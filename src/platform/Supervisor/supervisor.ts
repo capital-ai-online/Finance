@@ -7,6 +7,8 @@ import { eventMeshBus } from '../EventMesh/Core/EventBus';
 import { bootstrapEventMesh, isBootstrapped } from '../EventMesh/Services/EventMeshService';
 import { getProviderHealth, type ProviderHealthRecord } from './providerHealth';
 import { getAiGovernanceInventory } from '../../services/aiGovernance';
+import { getMarketDataProviderTelemetry, type ProviderRoutingTelemetry } from '../../services/marketDataProviderRouter';
+import { getMarketDataProviderRegistry } from '../../services/marketDataProviderRegistry';
 
 export type AssetClass = 'crypto' | 'commodity' | 'stock' | 'forex' | 'index' | 'bond';
 
@@ -122,6 +124,12 @@ export interface SupervisorStatus {
   routingTable: Record<AssetClass, TaskRoute>;
   recentExecutions: SupervisedExecutionRecord[];
   providerHealth: ProviderHealthRecord[];
+  marketDataRouting: {
+    registeredProviders: number;
+    activeProviders: number;
+    candidateProviders: number;
+    telemetry: ProviderRoutingTelemetry[];
+  };
   aiGovernance: {
     providerRoles: number;
     registeredPrompts: number;
@@ -138,6 +146,7 @@ export interface SupervisorStatus {
     selfHealing: boolean;
     conflictResolution: boolean;
     providerHealth: boolean;
+    marketDataRouting: boolean;
     aiGovernance: boolean;
   };
   notes: string[];
@@ -147,10 +156,17 @@ export function getSupervisorStatus(): SupervisorStatus {
   const aiInventory = getAiGovernanceInventory();
   const warnings = aiInventory.recentEvaluations.filter(record => record.outcome === 'WARN').length;
   const failures = aiInventory.recentEvaluations.filter(record => record.outcome === 'FAIL').length;
+  const marketProviders = getMarketDataProviderRegistry();
   return {
     routingTable: getRoutingTable(),
     recentExecutions: getRecentExecutions(),
     providerHealth: getProviderHealth(),
+    marketDataRouting: {
+      registeredProviders: marketProviders.length,
+      activeProviders: marketProviders.filter(provider => provider.activation === 'active').length,
+      candidateProviders: marketProviders.filter(provider => provider.activation === 'candidate').length,
+      telemetry: getMarketDataProviderTelemetry(),
+    },
     aiGovernance: {
       providerRoles: aiInventory.models.length,
       registeredPrompts: aiInventory.prompts.length,
@@ -167,11 +183,13 @@ export function getSupervisorStatus(): SupervisorStatus {
       selfHealing: true,
       conflictResolution: false,
       providerHealth: true,
+      marketDataRouting: true,
       aiGovernance: true,
     },
     notes: [
-      'conflictResolution: nicht implementiert - pro Anlageklasse existiert aktuell eine autoritative Scoring-Engine; echte konkurrierende Entscheidungsquellen liegen nicht vor.',
+      'conflictResolution: Quorum-/Source-Conflict-Contract ist noch nicht aktiv; bei widersprüchlichen Quellen darf kein erfundener Mittelwert entstehen.',
       'providerHealth: runtime-basiert; nur tatsächlich beobachtete Provider-Aufrufe erscheinen im Status.',
+      'marketDataRouting: adaptive Priorisierung nutzt Governance-Priorität, Failures/Cooldown und EWMA-Latenz; Candidate-Provider bleiben bis Production Handoff deaktiviert.',
       'aiGovernance: runtime-basiert; Evaluationen erscheinen erst, nachdem ein instrumentierter AI-Aufruf tatsächlich ausgeführt wurde.',
     ],
   };
