@@ -16,9 +16,8 @@ describe('horizon exact score validation', () => {
       resolveEvidence: async (snapshot) => snapshot.symbol === 'AAA'
         ? {
             contractVersion: 'horizon-validation-provider/1.0.0',
-            status: 'READY',
-            provider: 'TwelveData',
-            attemptedProviders: ['TwelveData'],
+            providersAttempted: ['TwelveData'],
+            providersSucceeded: ['TwelveData'],
             evidence: {
               contractVersion: 'horizon-validation-evidence/1.0.0',
               status: 'READY',
@@ -30,13 +29,13 @@ describe('horizon exact score validation', () => {
               syntheticEvidenceAllowed: false,
               reason: 'verified',
             },
-            errors: [],
+            sourceErrors: [],
+            syntheticEvidenceAllowed: false,
           }
         : {
             contractVersion: 'horizon-validation-provider/1.0.0',
-            status: 'NO_VERIFIED_POINT_IN_WINDOW',
-            provider: null,
-            attemptedProviders: ['TwelveData'],
+            providersAttempted: ['TwelveData'],
+            providersSucceeded: [],
             evidence: {
               contractVersion: 'horizon-validation-evidence/1.0.0',
               status: 'NO_VERIFIED_POINT_IN_WINDOW',
@@ -48,7 +47,8 @@ describe('horizon exact score validation', () => {
               syntheticEvidenceAllowed: false,
               reason: 'none',
             },
-            errors: [],
+            sourceErrors: [],
+            syntheticEvidenceAllowed: false,
           },
     });
 
