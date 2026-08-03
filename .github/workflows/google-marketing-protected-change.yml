@@ -1,0 +1,71 @@
+name: Google Marketing Protected Change Guard
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'public/cookiehub-init.js'
+      - 'public/google-analytics-consent.js'
+      - 'server/securityResponse.ts'
+      - 'server/logger.ts'
+      - 'src/platform/Security/**'
+      - 'scripts/security/verifyGoogleMarketingInvariants.ts'
+      - '.ai/skills/ESS-0014-*'
+      - '.ai/registry/ess-registry.json'
+      - 'docs/adr/ADR-0035-*'
+      - 'docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md'
+      - 'package.json'
+      - 'package-lock.json'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'public/cookiehub-init.js'
+      - 'public/google-analytics-consent.js'
+      - 'server/securityResponse.ts'
+      - 'server/logger.ts'
+      - 'src/platform/Security/**'
+      - 'scripts/security/verifyGoogleMarketingInvariants.ts'
+      - '.ai/skills/ESS-0014-*'
+      - '.ai/registry/ess-registry.json'
+      - 'docs/adr/ADR-0035-*'
+      - 'docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: google-marketing-guard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  protected-change-guard:
+    name: Protected Marketing Guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify protected invariants
+        run: npx tsx scripts/security/verifyGoogleMarketingInvariants.ts
+
+      - name: Type check
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
