@@ -34,7 +34,7 @@ export function resolveHeuristicCryptoScore(baseScore: number | undefined): numb
   return Math.min(10, Math.max(1, Number(baseScore.toFixed(1))));
 }
 
-export interface StripeConfigurationStatus {
+export interface StripeConfigurationStatus extends Record<string, boolean> {
   secretKeyConfigured: boolean;
   publishableKeyConfigured: boolean;
   webhookSecretConfigured: boolean;
