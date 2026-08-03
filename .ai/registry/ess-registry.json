@@ -7,8 +7,8 @@
   "generated": false,
   "seed": true,
   "note": "Dieser Registry-Eintrag ist ein Knowledge Seed. Nach Bereitstellung des Enterprise Bootstrappers wird die Registry generatorgestuetzt fortgeschrieben.",
-  "updatedAt": "2026-07-31",
-  "freeNumberSpaceStartsAt": "ESS-0014",
+  "updatedAt": "2026-08-03",
+  "freeNumberSpaceStartsAt": "ESS-0015",
   "entries": [
     {
       "id": "ESS-0001",
@@ -241,6 +241,34 @@
       ],
       "note": "Vertragsteil von ESS-0013. Belegt keine eigene Nummer. Definiert Event-Katalog-, Kompatibilitaets-, Registry-, Routing-, Discovery-, Policy- und Report-Contracts. Wiederholt keine Regel aus ESS-0001-CONTRACTS Chapter 8.",
       "implementedBy": "src/platform/EventMesh"
+    },
+    {
+      "id": "ESS-0014",
+      "title": "Google Marketing MCP Governance",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0014-Google-Marketing-MCP-Governance.md",
+      "reservedBy": null,
+      "owner": "Platform Director",
+      "relatedAdr": [
+        "ADR-0035"
+      ],
+      "rationale": "Definiert die Google-Marketing-Systemintegration als modell- und transportneutrale Enterprise-Spezifikation: CookieHub/Consent, Analytics, Ads, AdSense, GTM, Google MCP Read Plane, API Write Plane, Protected-Change/Rollback-Governance sowie OWNER-delegierte Service-Account-Capabilities. Claude bleibt Implementierungs-/Host-Profil und ist nicht die Trust Root.",
+      "implementationProfile": "docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md",
+      "implementationStatus": "IN PROGRESS"
+    },
+    {
+      "id": "ESS-0014-CONTRACTS",
+      "title": "Google Marketing Integration & Protected Change Contracts",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0014-Contracts.md",
+      "reservedBy": null,
+      "owner": "Platform Director",
+      "relatedAdr": [
+        "ADR-0035"
+      ],
+      "note": "Vertragsteil von ESS-0014. Belegt keine eigene Nummer. Definiert Principal-, Capability-, Approval-, Rollback-, CSP-Nonce-, Consent-, MCP-Separation-, Audit- und Test-Contracts."
     }
   ],
   "rules": [
@@ -307,7 +335,7 @@
         "ESS-0014-CONTRACTS"
       ]
     },
-    "freeNumberSpaceUnchanged": "ESS-0014 bleibt frei. Die abweichende Belegung im Entwicklungsstand begruendet keine Vergabe.",
+    "freeNumberSpaceUnchanged": "Die frühere abweichende ESS-0014-Belegung im Entwicklungsstand bleibt ungültig. Im führenden Produktionsrepository ist ESS-0014 am 2026-08-03 regulär an Google Marketing MCP Governance vergeben; nächster freier Nummernraum beginnt bei ESS-0015.",
     "auditReference": "docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md (ARCH-AUDIT-0002)"
   }
 }
