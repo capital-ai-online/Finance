@@ -6,25 +6,15 @@ Angenommen — 2026-08-03
 
 ## Kontext
 
-CAPITAL-AI besitzt mit ESS-0004 bereits einen Enterprise Version Manager als verantwortliche
-Plattformkomponente fuer Versionskonsistenz, Release-Vorbereitung und Rollback-Planung.
-Gleichzeitig existieren verbindliche Naming-, Repository- und Exception-Regeln in
-ESS-0001-CONTRACTS sowie die Enterprise Exception Registry aus ADR-0011.
+CAPITAL-AI besitzt mit ESS-0004 bereits einen Enterprise Version Manager als verantwortliche Plattformkomponente fuer Versionskonsistenz, Release-Vorbereitung und Rollback-Planung. Gleichzeitig existieren verbindliche Naming-, Repository- und Exception-Regeln in ESS-0001-CONTRACTS sowie die Enterprise Exception Registry aus ADR-0011.
 
-Ein vorangegangener Produktions-Build machte sichtbar, dass Legacy-Projektidentitaeten wie
-`react-example@0.0.0` bis in Build-Metadaten gelangen koennen, wenn Projektname und Version nicht
-systematisch gegen Lockfile und Governance-Artefakte validiert werden. Zudem dokumentiert
-ADR-0019 konkrete Risiken durch case-sensitive/case-insensitive Pfadabweichungen zwischen
-Entwicklungs- und Produktivstaenden.
+Ein vorangegangener Produktions-Build machte sichtbar, dass Legacy-Projektidentitaeten wie `react-example@0.0.0` bis in Build-Metadaten gelangen koennen, wenn Projektname und Version nicht systematisch gegen Lockfile und Governance-Artefakte validiert werden. Zudem dokumentiert ADR-0019 Risiken durch case-sensitive/case-insensitive Pfadabweichungen.
 
-Ein separater NameConvention-Agent wuerde die Verantwortung fuer Version-, Naming- und
-Repository-Konformitaet auf eine weitere Komponente verteilen und damit die bestehende
-ESS-0004-Verantwortung duplizieren.
+Die technische Deployment-Pipeline verfolgt jedoch einen anderen Zweck: Sie soll feststellen, ob ein konkreter Build technisch und sicher in der Live-Umgebung betrieben werden kann. Allgemeine Governance-, Naming-, ADR-/ESS- oder Repository-Policy-Regeln sind deshalb dort nicht als hartes Deployment-Gate zu adressieren.
 
 ## Entscheidung
 
-Der Enterprise Version Manager wird um eine **Naming & Repository Convention Validator**-
-Capability erweitert. Es wird kein separater Agent eingefuehrt.
+Der Enterprise Version Manager wird um eine **Naming & Repository Convention Validator**-Capability erweitert. Es wird kein separater Agent eingefuehrt.
 
 Die Implementierung liegt unter:
 
@@ -38,8 +28,7 @@ und ist ueber folgenden Lifecycle-Entry-Point aufrufbar:
 scripts/automation/validateRepositoryConventions.ts
 ```
 
-Die Capability ist **read-only**. Sie darf Quellcode, Dokumentation, Registry-Eintraege,
-Versionsstaende oder Ausnahmegenehmigungen nicht selbsttaetig veraendern.
+Die Capability ist **read-only**. Sie darf Quellcode, Dokumentation, Registry-Eintraege, Versionsstaende oder Ausnahmegenehmigungen nicht selbsttaetig veraendern.
 
 ## Validierungsumfang
 
@@ -64,8 +53,7 @@ Der Validator prueft deterministisch:
 npm run repository:validate:advisory
 ```
 
-Alle Findings werden ausgegeben. Auch Fehler blockieren den Prozess nicht. Dieser Modus dient
-Migration, Bestandsanalyse und schrittweiser Bereinigung.
+Alle Findings werden ausgegeben. Fehler blockieren den Prozess nicht. Dieser Modus dient Bestandsanalyse, Migration und Review.
 
 ### Strict
 
@@ -73,34 +61,38 @@ Migration, Bestandsanalyse und schrittweiser Bereinigung.
 npm run repository:validate
 ```
 
-Findings der Severity `error` beenden den Prozess mit Exit Code 1. Warnungen bleiben sichtbar,
-blockieren aber nicht.
+Findings der Severity `error` beenden diesen gezielt gestarteten Governance-/Quality-Check mit Exit Code 1. Dieser Strict Mode ist **kein Bestandteil des technischen Deployment-Gates**.
 
-## Einbindung in die Wertschöpfungskette
+## Trennung von Governance und Deployment-Readiness
 
-Der Strict Validator wird in `predeploy:check` vor der Deployment-Readiness-Pruefung ausgefuehrt:
+Die Wertschöpfungskette wird in zwei getrennte Kontrollachsen aufgeteilt:
 
 ```text
-Code / Dokumentation
+Code / Architektur / Dokumentation
         |
-        v
-Enterprise Version Manager
-        |
-        +--> Naming & Repository Convention Validator
-        |       |
-        |       +--> package identity / version sync
-        |       +--> naming contracts
-        |       +--> case-collision detection
-        |       +--> exception expiry
-        |
-        v
-Predeploy Readiness
-        |
-        v
-Release / Production Handoff
+        +-------------------------------+
+        |                               |
+        v                               v
+Governance & Quality                Deployment Readiness
+        |                               |
+        +--> Naming Validator           +--> Build / Compile
+        +--> ADR / ESS Compliance       +--> produktionsrelevante Tests
+        +--> Repository Governance      +--> Security Invariants
+        +--> Traceability               +--> Env / Container Readiness
+        +--> Candidate Review           +--> Runtime / Health Readiness
+        |                               |
+        v                               v
+Findings / Review                  Deployable / Not Deployable
+        |                               |
+        +---------------+---------------+
+                        |
+                        v
+                 Release / Handoff
 ```
 
-Damit wird eine blockierende Repository-Inkonsistenz vor der Produktionsuebergabe sichtbar.
+`predeploy:check` darf den Repository Convention Validator deshalb nicht aufrufen. Die Deployment-Pipeline beantwortet ausschliesslich die Frage, ob der konkrete Build technisch und sicher in der Live-Umgebung betrieben werden kann.
+
+Governance- und Repository-Policy-Findings bleiben wirksam und nachvollziehbar, werden aber in der Governance-/Quality-Schicht behandelt und nicht als technische Deployability-Fehler fehladressiert.
 
 ## Governance-Grenzen
 
@@ -111,23 +103,16 @@ Der Validator:
 - vergibt keine ADR- oder ESS-Nummern;
 - fuehrt keine Versions-Bumps aus;
 - ersetzt weder Supervisor noch Platform Director;
-- trifft keine Release-Freigabeentscheidung.
-
-Die Entscheidung ueber Ausnahmen und Release-Freigaben bleibt bei den in ESS-0001-CONTRACTS
-festgelegten Governance-Instanzen.
+- trifft keine Release-Freigabeentscheidung;
+- entscheidet nicht ueber technische Live-Deployability.
 
 ## Fehlerklassifikation
 
-`error` ist fuer objektiv blockierende Inkonsistenzen vorgesehen, beispielsweise:
+`error` bezeichnet innerhalb eines gezielt gestarteten Governance-Checks objektive Regelverletzungen, beispielsweise falsche Projektidentitaet, ungueltige Semantic Version, package/package-lock Drift, case-insensitive Pfadkollisionen oder abgelaufene Enterprise Exceptions.
 
-- falsche Projektidentitaet;
-- ungueltige Semantic Version;
-- package/package-lock Drift;
-- case-insensitive Pfadkollision;
-- abgelaufene zeitlich begrenzte Enterprise Exception.
+Diese Klassifikation ist nicht gleichbedeutend mit einem Deployment-Fehler. Ein Governance-Error darf nur dann einen technischen Deploy verhindern, wenn dieselbe Abweichung zugleich eine nachweisbare technische oder sicherheitsrelevante Deployment-Voraussetzung verletzt.
 
-`warning` kennzeichnet Naming- oder Governance-Abweichungen, die sichtbar gemacht werden muessen,
-aber fuer eine kontrollierte Bestandstransition nicht automatisch einen Release-Abbruch erzeugen.
+`warning` kennzeichnet Naming- oder Governance-Abweichungen, die sichtbar gemacht werden muessen, aber keinen technischen Release-Abbruch erzeugen.
 
 ## Konsequenzen
 
@@ -137,20 +122,19 @@ aber fuer eine kontrollierte Bestandstransition nicht automatisch einen Release-
 - fruehe Erkennung von package-/lockfile-Drift;
 - Schutz vor Rueckkehr der Legacy-Identitaet `react-example`;
 - plattformuebergreifende Erkennung von Case-Kollisionen;
-- maschinenlesbare Findings fuer spaetere Supervisor-/Release-Center-Integration;
+- maschinenlesbare Findings fuer Supervisor, Quality Center und Release Review;
+- klare Trennung zwischen Governance-Konformitaet und technischer Deployability;
 - keine neue Runtime-Abhaengigkeit.
 
 ### Negativ
 
-- der initiale Regelumfang ist bewusst konservativ und deckt nicht jede moegliche
-  Repository-Konvention ab;
-- bestehende Naming-Abweichungen koennen Advisory-Warnungen erzeugen;
-- neue blockierende Regeln duerfen nicht ohne Governance-Review hinzugefuegt werden.
+- Governance-Findings muessen ausserhalb der Deployment-Pipeline ausgewertet werden;
+- bestehende Naming-Abweichungen koennen weiterhin Review-Aufwand erzeugen;
+- eine technische Pipeline allein kann keine vollstaendige Architekturkonformitaet garantieren.
 
 ## Rollback
 
-Die Erweiterung ist ohne Datenmigration und ohne externen Infrastrukturzustand implementiert.
-Rollback erfolgt durch Ruecknahme von:
+Die Erweiterung ist ohne Datenmigration und ohne externen Infrastrukturzustand implementiert. Rollback erfolgt durch Ruecknahme von:
 
 ```text
 src/platform/VersionManager/repositoryConventionValidator.ts
@@ -158,21 +142,20 @@ scripts/automation/validateRepositoryConventions.ts
 src/platform/VersionManager/repositoryConventionValidator.test.ts
 ```
 
-sowie durch Entfernung der `repository:validate*`-Scripts und des Validator-Aufrufs aus
-`predeploy:check`.
+sowie durch Entfernung der `repository:validate*`-Scripts. `predeploy:check` bleibt von dieser Capability unabhaengig.
 
-Keine Supabase-, Stripe-, Render- oder sonstige Backend-Konfiguration ist fuer den Rollback
-anzupassen.
+Keine Supabase-, Stripe-, Render- oder sonstige Backend-Konfiguration ist fuer den Rollback anzupassen.
 
 ## Verifikation
 
 Die Capability muss folgende Nachweise erbringen:
 
-- Unit Test: konformes Repository wird in Strict Mode nicht blockiert.
-- Unit Test: falsche Projektidentitaet wird blockiert.
-- Unit Test: package-lock Versionsdrift wird blockiert.
-- Unit Test: dieselben Fehler bleiben in Advisory Mode nicht-blockierend.
-- `npm run repository:validate` gegen den Repository-Stand.
+- Unit Test: konformes Repository wird im Strict Mode nicht blockiert.
+- Unit Test: falsche Projektidentitaet wird erkannt.
+- Unit Test: package-lock Versionsdrift wird erkannt.
+- Unit Test: dieselben Fehler bleiben im Advisory Mode nicht-blockierend.
+- `npm run repository:validate` als separater Governance-/Quality-Check.
+- `npm run predeploy:check` ohne Repository-Governance-Gate.
 - `npm run lint`.
 - `npm test`.
 - `npm run build` bzw. bestehende CI-Pipeline.
