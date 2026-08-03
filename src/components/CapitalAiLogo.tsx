@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import { LandingBinanceQuickAnalysis } from './LandingBinanceQuickAnalysis';
 
 interface CapitalAiLogoProps {
   className?: string;
@@ -9,6 +10,11 @@ interface CapitalAiLogoProps {
 }
 
 export function CapitalAiLogo({ className = '', size = 160, showText = true, version = '0.7.0' }: CapitalAiLogoProps) {
+  // LandingPage.tsx is currently the only caller using the 120px + showText hero signature.
+  // Keeping the public quick-analysis directly below this hero avoids widening the already large
+  // LandingPage component while preserving the existing authenticated Dashboard logo variants.
+  const isLandingHero = size === 120 && showText;
+
   return (
     <div className={`flex flex-col items-center justify-center text-center ${className}`}>
       {/* 3D Network Node Emblem */}
@@ -101,6 +107,8 @@ export function CapitalAiLogo({ className = '', size = 160, showText = true, ver
           </p>
         </div>
       )}
+
+      {isLandingHero && <LandingBinanceQuickAnalysis />}
     </div>
   );
 }
