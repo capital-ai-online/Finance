@@ -11,6 +11,7 @@ on:
       - 'server/logger.ts'
       - 'src/platform/Security/**'
       - 'scripts/security/verifyGoogleMarketingInvariants.ts'
+      - 'tests/unit/securityResponse.test.ts'
       - '.github/workflows/google-marketing-protected-change.yml'
       - '.github/CODEOWNERS'
       - 'CLAUDE.md'
@@ -30,6 +31,7 @@ on:
       - 'server/logger.ts'
       - 'src/platform/Security/**'
       - 'scripts/security/verifyGoogleMarketingInvariants.ts'
+      - 'tests/unit/securityResponse.test.ts'
       - '.github/workflows/google-marketing-protected-change.yml'
       - '.github/CODEOWNERS'
       - 'CLAUDE.md'
@@ -69,6 +71,9 @@ jobs:
 
       - name: Verify protected invariants
         run: npx tsx scripts/security/verifyGoogleMarketingInvariants.ts
+
+      - name: Test CSP nonce behavior
+        run: npx vitest run tests/unit/securityResponse.test.ts
 
       - name: Type check
         run: npm run lint
