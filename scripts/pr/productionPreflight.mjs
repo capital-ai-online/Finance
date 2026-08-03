@@ -7,7 +7,7 @@ import {
   compareSemver,
   fail,
   git,
-  tryGit,
+  gitSucceeds,
   writeJsonFile,
 } from './lib.mjs';
 
@@ -20,19 +20,21 @@ const prNumber = String(process.env.PR_NUMBER || '');
 const bootstrapPr75 = process.env.ALLOW_PR75_BOOTSTRAP === 'true' && prNumber === '75';
 
 function ensureRef(ref) {
-  if (!tryGit(['rev-parse', '--verify', ref])) {
+  if (!gitSucceeds(['rev-parse', '--verify', `${ref}^{commit}`])) {
     fail(`Git ref is unavailable: ${ref}. Fetch full history/current main before PR preflight.`);
   }
 }
 
 function ensureCommitAvailable(sha) {
-  if (tryGit(['cat-file', '-e', `${sha}^{commit}`])) return;
+  // `git cat-file -e` intentionally emits no stdout on success. The governance decision must
+  // therefore use the command exit status rather than truthiness of captured output.
+  if (gitSucceeds(['cat-file', '-e', `${sha}^{commit}`])) return;
   try {
     git(['fetch', '--no-tags', 'origin', sha]);
   } catch {
     fail(`Production commit ${sha} is not available from the repository origin.`);
   }
-  if (!tryGit(['cat-file', '-e', `${sha}^{commit}`])) {
+  if (!gitSucceeds(['cat-file', '-e', `${sha}^{commit}`])) {
     fail(`Production commit ${sha} could not be resolved after fetch.`);
   }
 }
