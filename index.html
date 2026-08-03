@@ -1,52 +1,10 @@
 <!doctype html>
 <html lang="de">
   <head>
-<script src="https://cdn.cookiehub.eu/c2/75f66920.js"></script>
-<script type="text/javascript">
-document.addEventListener("DOMContentLoaded", function(event) {
-var cpm = {};
-window.cookiehub.load(cpm);
-});
-</script>
-    <!-- Google Analytics 4, consent-gated durch CookieHub (Kategorie "analytics"). Bewusst als
-         Plain-Script direkt hier statt im React-Bundle: die Listener muessen registriert sein,
-         BEVOR CookieHub bei DOMContentLoaded seinen initialen Status feuert (fuer wiederkehrende
-         Besucher mit bereits gespeicherter Einwilligung) - ein `useEffect` im React-Code haette
-         erst nach dem ersten Render+Commit angehaengt, also potenziell zu spaet fuer dieses erste
-         Event. Ohne gesetzte Measurement-ID (Vite-HTML-Env-Replacement) bleibt GA inaktiv.
-         Siehe docs/runbooks/GOOGLE_ANALYTICS_SETUP.md. -->
-    <script type="text/javascript">
-      (function () {
-        var GA_MEASUREMENT_ID = "%VITE_GA_MEASUREMENT_ID%";
-        if (!GA_MEASUREMENT_ID || GA_MEASUREMENT_ID.indexOf("%") === 0) return;
-
-        var gaLoaded = false;
-        function loadGA() {
-          if (gaLoaded) return;
-          gaLoaded = true;
-          var script = document.createElement("script");
-          script.async = true;
-          script.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_MEASUREMENT_ID;
-          document.head.appendChild(script);
-          window.dataLayer = window.dataLayer || [];
-          function gtag() { window.dataLayer.push(arguments); }
-          gtag("js", new Date());
-          gtag("config", GA_MEASUREMENT_ID, { anonymize_ip: true });
-        }
-        function unloadGA() {
-          window["ga-disable-" + GA_MEASUREMENT_ID] = true;
-        }
-        function syncConsent() {
-          if (window.cookiehub && window.cookiehub.hasConsented("analytics")) {
-            loadGA();
-          } else {
-            unloadGA();
-          }
-        }
-        window.addEventListener("cookiehub_onInitialise", syncConsent);
-        window.addEventListener("cookiehub_onStatusChange", syncConsent);
-      })();
-    </script>
+    <script src="https://cdn.cookiehub.eu/c2/75f66920.js"></script>
+    <script src="/cookiehub-init.js"></script>
+    <meta name="ga-measurement-id" content="%VITE_GA_MEASUREMENT_ID%" />
+    <script src="/google-analytics-consent.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
