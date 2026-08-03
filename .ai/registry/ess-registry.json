@@ -56,7 +56,9 @@
       "document": ".ai/skills/ESS-0004-Enterprise-Version-Manager.md",
       "reservedBy": "ESS-0001",
       "owner": "Platform Director",
+      "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
       "implementedBy": "src/platform/VersionManager",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): bis dahin zeigte dieses Feld auf einen leeren, vom Enterprise Bootstrapper generierten Ordner, waehrend der echte Code unter server/versionManager.ts lag - eine Governance-Inkonsistenz. Der Code wurde physisch nach src/platform/VersionManager/versionManager.ts verschoben, die Angabe ist jetzt korrekt.",
       "relatedAdr": ["ADR-0016"]
     },
     {
@@ -67,7 +69,9 @@
       "document": ".ai/skills/ESS-0005-Quality-Center.md",
       "reservedBy": "ESS-0001",
       "owner": "Platform Director",
+      "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
       "implementedBy": "src/platform/Quality",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): src/platform/Quality ist als unspezifiziert markiert (manifest.json status='unspecified') - es existiert kein Code, nur die Verzeichnisstruktur. Kann bei Bedarf zu einem spaeteren Zeitpunkt implementiert werden.",
       "relatedAdr": ["ADR-0016"]
     },
     {
@@ -78,7 +82,9 @@
       "document": ".ai/skills/ESS-0006-Security-Compliance.md",
       "reservedBy": "ESS-0001",
       "owner": "Platform Director",
+      "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
       "implementedBy": "src/platform/Security, src/platform/Compliance",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): bis dahin zeigten beide Pfade auf leere, vom Enterprise Bootstrapper generierte Ordner, waehrend der echte Code unter server/iam/ (Security) und server/compliance/ (Compliance) lag - eine Governance-Inkonsistenz. Beide wurden physisch nach src/platform/Security/ bzw. src/platform/Compliance/ verschoben, die Angabe ist jetzt korrekt.",
       "relatedAdr": ["ADR-0016"]
     },
     {
@@ -89,7 +95,9 @@
       "document": ".ai/skills/ESS-0007-Enterprise-Release-Center.md",
       "reservedBy": "ESS-0001",
       "owner": "Platform Director",
+      "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
       "implementedBy": "src/platform/Release",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): src/platform/Release ist als unspezifiziert markiert (manifest.json status='unspecified') - es existiert kein Code, nur die Verzeichnisstruktur. Kann bei Bedarf zu einem spaeteren Zeitpunkt implementiert werden.",
       "relatedAdr": ["ADR-0016"]
     },
     {
@@ -100,6 +108,7 @@
       "document": ".ai/skills/ESS-0008-AI-Agent-Framework.md",
       "reservedBy": "ESS-0001",
       "owner": "Platform Director",
+      "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
       "implementedBy": "src/agents, src/orchestrator",
       "relatedAdr": ["ADR-0016"]
     },
@@ -111,7 +120,9 @@
       "document": ".ai/skills/ESS-0009-Enterprise-Knowledge-Platform.md",
       "reservedBy": "ESS-0001",
       "owner": "Platform Director",
+      "rationale": "Komponentenspezifikation, angelegt auf ausdrueckliche Anforderung des Platform Director. Abgrenzung: spezifiziert ausschliesslich die Komponente, nicht die globalen Regeln - diese verbleiben in ESS-0001-CONTRACTS. Muster entspricht ESS-0002 und ESS-0003.",
       "implementedBy": "src/platform/Knowledge",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): src/platform/Knowledge ist als unspezifiziert markiert (manifest.json status='unspecified') - es existiert kein Code, nur die Verzeichnisstruktur. Kann bei Bedarf zu einem spaeteren Zeitpunkt implementiert werden.",
       "relatedAdr": ["ADR-0016"]
     },
     {
@@ -122,7 +133,9 @@
       "document": ".ai/skills/ESS-0010-Documentary-Engine.md",
       "reservedBy": null,
       "owner": "Platform Director",
-      "relatedAdr": ["ADR-0013"]
+      "relatedAdr": ["ADR-0013"],
+      "rationale": "Erste Vergabe aus dem freien Nummernraum. Schliesst die in ARCH-CONSOL-0001 als K-10 dokumentierte Luecke: die Documentary Engine war ueber vier Dokumente verteilt beschrieben und besass als einzige Kernkomponente keine eigene technische Spezifikation.",
+      "supersededTopic": "Repository Governance war urspruenglich fuer ESS-0010 vorgesehen, wurde jedoch als not_required eingestuft, da ESS-0001-CONTRACTS Chapter 16 den Bereich vollstaendig und normativ abdeckt. Die Nummer war damit frei und wurde regulaer weitervergeben."
     },
     {
       "id": "ESS-0011",
@@ -133,7 +146,9 @@
       "reservedBy": null,
       "owner": "Platform Director",
       "relatedAdr": ["ADR-0013", "ADR-0015"],
+      "rationale": "Spezifikation der Enterprise Traceability Matrix. Verknuepft ESS, ADR, Exceptions, Komponenten, Interfaces, Events und Tests bidirektional.",
       "implementedBy": "src/platform/Traceability",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): src/platform/Traceability ist manifest.json status='specified' - die einzige der urspruenglich 22 leeren Plattformmodul-Verzeichnisse mit vollstaendiger Spezifikation, aber ohne Code (siehe README.md, Implementierungsstand).",
       "operationalDocs": "docs/traceability/"
     },
     {
@@ -145,7 +160,9 @@
       "reservedBy": null,
       "owner": "Platform Director",
       "relatedAdr": ["ADR-0013", "ADR-0015"],
-      "implementedBy": "src/platform/Traceability"
+      "note": "Vertragsteil von ESS-0011. Belegt keine eigene Nummer. Besitzt ausschliesslich ETM-Geltung, niemals globale Wirkung.",
+      "implementedBy": "src/platform/Traceability",
+      "implementationNote": "ARCH-AUDIT-0002 (J5, 2026-08-02): siehe implementationNote von ESS-0011 - spezifiziert, nicht implementiert."
     },
     {
       "id": "ESS-0012",
@@ -156,6 +173,7 @@
       "reservedBy": null,
       "owner": "Platform Director",
       "relatedAdr": ["ADR-0014"],
+      "rationale": "Spezifikation des Documentation Governance Validator. Notwendigkeitsnachweis gemaess Pruefliste ARCH-RESP-0001 im Dokument selbst gefuehrt: die semantische, dokumentuebergreifende Governance-Pruefung (doppelte und widerspruechliche ESS-Regeln, widerspruechliche ADRs, doppelte Contracts, Breaking Changes ohne ADR) ist von keinem bestehenden Dokument abgedeckt. Chapter 12 prueft Struktur und Schema, ESS-0011 prueft Verknuepfungen.",
       "implementedBy": "src/platform/Documentary/Governance"
     },
     {
@@ -167,6 +185,7 @@
       "reservedBy": null,
       "owner": "Platform Director",
       "relatedAdr": ["ADR-0014"],
+      "note": "Vertragsteil von ESS-0012. Belegt keine eigene Nummer. Definiert 57 Regeln in neun Bereichen mit stabilen IDs im Format GOV-<AREA>-<NNN>. Besitzt ausschliesslich Governance-Geltung, niemals globale Wirkung.",
       "implementedBy": "src/platform/Documentary/Governance"
     },
     {
@@ -178,6 +197,7 @@
       "reservedBy": null,
       "owner": "Platform Director",
       "relatedAdr": ["ADR-0018"],
+      "rationale": "Erste Vergabe aus dem freien Nummernraum nach ESS-0012. Komponentenspezifikation der bereits in ESS-0001-CONTRACTS Chapter 8 normativ definierten Enterprise Event Mesh - Chapter 8 bleibt unveraendert; ESS-0013 beschreibt ausschliesslich die umsetzende Komponente (Core-Klassen, Registry-Mechanik, Validator-Kette, Report-Typen, Standard Event Catalog). Dasselbe Muster wie ESS-0004 bis ESS-0009 gegenueber ihren jeweiligen Regelkapiteln.",
       "implementedBy": "src/platform/EventMesh"
     },
     {
@@ -189,6 +209,7 @@
       "reservedBy": null,
       "owner": "Platform Director",
       "relatedAdr": ["ADR-0018"],
+      "note": "Vertragsteil von ESS-0013. Belegt keine eigene Nummer. Definiert Event-Katalog-, Kompatibilitaets-, Registry-, Routing-, Discovery-, Policy- und Report-Contracts. Wiederholt keine Regel aus ESS-0001-CONTRACTS Chapter 8.",
       "implementedBy": "src/platform/EventMesh"
     },
     {
@@ -200,6 +221,7 @@
       "reservedBy": null,
       "owner": "Platform Director",
       "relatedAdr": ["ADR-0035"],
+      "rationale": "Definiert die Google-Marketing-Systemintegration als modell- und transportneutrale Enterprise-Spezifikation: CookieHub/Consent, Analytics, Ads, AdSense, GTM, Google MCP Read Plane, API Write Plane, Protected-Change/Rollback-Governance sowie OWNER-delegierte Service-Account-Capabilities. Claude bleibt Implementierungs-/Host-Profil und ist nicht die Trust Root.",
       "implementationProfile": "docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md",
       "implementationStatus": "IN PROGRESS"
     },
@@ -211,7 +233,8 @@
       "document": ".ai/skills/ESS-0014-Contracts.md",
       "reservedBy": null,
       "owner": "Platform Director",
-      "relatedAdr": ["ADR-0035"]
+      "relatedAdr": ["ADR-0035"],
+      "note": "Vertragsteil von ESS-0014. Belegt keine eigene Nummer. Definiert Principal-, Capability-, Approval-, Rollback-, CSP-Nonce-, Consent-, MCP-Separation-, Audit- und Test-Contracts."
     },
     {
       "id": "ESS-0015",
@@ -235,14 +258,36 @@
     "Kein KI-System vergibt ESS-Nummern eigenstaendig."
   ],
   "externalAdrIntegration": {
-    "note": "Extern eingebrachte ADRs, die nachtraeglich in die Governance-Struktur eingebunden wurden.",
-    "entries": []
+    "note": "Extern eingebrachte ADRs, die nachtraeglich in die Governance-Struktur eingebunden wurden. Der Entscheidungsinhalt wurde nicht veraendert.",
+    "entries": [
+      {
+        "adr": "ADR-0012",
+        "title": "SecurityComplianceAuditor Integration",
+        "document": "docs/adr/ADR-0012-SecurityComplianceAuditor.md",
+        "origin": "manuell angelegt, gemergt ueber main (04de42a, d1348c7)",
+        "integratedAt": "2026-07-31",
+        "integratedBy": "ADR-0013 Nummernaufloesung und nachtraegliche Formatangleichung",
+        "component": "src/components/SecurityComplianceAuditor.tsx",
+        "relatedEss": ["ESS-0001-CONTRACTS", "ESS-0002", "ESS-0011", "ESS-0012"],
+        "relatedAdr": ["ADR-0003.5"],
+        "implementationStatus": "IN PROGRESS",
+        "openFinding": "FND-ADR-0012-01 - Die Komponente ruft sieben Endpunkte unter /api/compliance/* auf, von denen keiner im Backend existiert. Die im ADR genannten Datenquellen audit_logs_iam und iam_access_log werden von der Komponente nicht referenziert. Die beschriebene aktive Produktionsintegration ist damit nicht gegeben.",
+        "parserFix": "Das Dokument besass keine Markdown-Struktur und war fuer die ADR-Auto-Migration in server/documentHygiene.ts nicht parsebar. Titel, Metadatenfelder und Abschnittsueberschriften wurden formatangeglichen, der Inhalt blieb unveraendert."
+      }
+    ]
   },
   "forkDivergence": {
     "adr": "ADR-0019",
     "document": "docs/adr/ADR-0019-fork-divergenz-und-nummernraum-konsolidierung.md",
     "decidedAt": "2026-07-31",
+    "note": "Der Entwicklungsstand CAPITAL-AI-Dev-main hat ADR- und ESS-Nummern abweichend belegt. ADR-0019 erklaert die Belegung dieses Repositorys fuer verbindlich und die abweichende Belegung des Entwicklungsstands fuer ungueltig.",
     "leadingEnvironment": "Produktivstand dieses Repositorys",
-    "freeNumberSpaceUnchanged": "Nach Vergabe von ESS-0015 beginnt der freie Nummernraum bei ESS-0016."
+    "invalidatedExternalAssignments": {
+      "source": "CAPITAL-AI-Dev-main",
+      "adr": ["ADR-0010", "ADR-0011", "ADR-0012", "ADR-0013"],
+      "ess": ["ESS-0002", "ESS-0003", "ESS-0004", "ESS-0005", "ESS-0006", "ESS-0007", "ESS-0008", "ESS-0009", "ESS-0010", "ESS-0013", "ESS-0013-CONTRACTS", "ESS-0014", "ESS-0014-CONTRACTS"]
+    },
+    "freeNumberSpaceUnchanged": "Die frühere abweichende ESS-0014-Belegung im Entwicklungsstand bleibt ungültig. Im führenden Produktionsrepository ist ESS-0014 am 2026-08-03 regulär an Google Marketing MCP Governance vergeben; ESS-0015 ist an API Interface Inventory & QA Governance vergeben; nächster freier Nummernraum beginnt bei ESS-0016.",
+    "auditReference": "docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md (ARCH-AUDIT-0002)"
   }
 }
