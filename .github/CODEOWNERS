@@ -10,6 +10,9 @@
 /server/securityResponse.ts @SvenKulessa
 /server/logger.ts @SvenKulessa
 /scripts/security/verifyGoogleMarketingInvariants.ts @SvenKulessa
+/.github/workflows/google-marketing-protected-change.yml @SvenKulessa
+/CLAUDE.md @SvenKulessa
+/package.json @SvenKulessa
 /.ai/skills/ESS-0014-Google-Marketing-MCP-Governance.md @SvenKulessa
 /.ai/skills/ESS-0014-Contracts.md @SvenKulessa
 /.ai/registry/ess-registry.json @SvenKulessa
