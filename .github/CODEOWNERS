@@ -10,6 +10,7 @@
 /server/securityResponse.ts @SvenKulessa
 /server/logger.ts @SvenKulessa
 /scripts/security/verifyGoogleMarketingInvariants.ts @SvenKulessa
+/tests/unit/securityResponse.test.ts @SvenKulessa
 /.github/workflows/google-marketing-protected-change.yml @SvenKulessa
 /CLAUDE.md @SvenKulessa
 /package.json @SvenKulessa
