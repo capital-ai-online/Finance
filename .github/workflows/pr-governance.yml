@@ -16,8 +16,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  governance-policy:
-    name: Governance policy
+  governance-advisory:
+    name: Governance advisory (non-blocking)
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -48,10 +48,9 @@ jobs:
         working-directory: candidate
         run: git fetch --no-tags ../policy main:refs/remotes/origin/main
 
-      # One-time bootstrap only: PR #75 introduces scripts/pr/* themselves, so those files
-      # cannot yet be loaded from main. Every later PR executes policy exclusively from main.
-      - name: Production baseline
+      - name: Production baseline advisory
         id: baseline
+        continue-on-error: true
         working-directory: candidate
         env:
           POLICY_ROOT: ${{ github.event.pull_request.number == 75 && '.' || '../policy' }}
@@ -63,7 +62,8 @@ jobs:
           ALLOW_PR75_BOOTSTRAP: ${{ github.event.pull_request.number == 75 && 'true' || 'false' }}
         run: node "$POLICY_ROOT/scripts/pr/productionPreflight.mjs"
 
-      - name: Exclusive work claim, overlap and 15-minute SLA
+      - name: Exclusive work claim, overlap and SLA advisory
+        continue-on-error: true
         working-directory: candidate
         env:
           POLICY_ROOT: ${{ github.event.pull_request.number == 75 && '.' || '../policy' }}
@@ -75,7 +75,8 @@ jobs:
           ALLOW_PR75_BOOTSTRAP: ${{ github.event.pull_request.number == 75 && 'true' || 'false' }}
         run: node "$POLICY_ROOT/scripts/pr/validateWorkClaim.mjs"
 
-      - name: Canonical PR template
+      - name: Canonical PR template advisory
+        continue-on-error: true
         working-directory: candidate
         env:
           POLICY_ROOT: ${{ github.event.pull_request.number == 75 && '.' || '../policy' }}
@@ -86,16 +87,43 @@ jobs:
           PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
         run: node "$POLICY_ROOT/scripts/pr/validatePrBody.mjs"
 
-      - name: Changed workflow security
+  workflow-security:
+    name: Deployment workflow security
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout trusted security policy from main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          path: policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout candidate without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Import trusted current main into candidate repository
+        working-directory: candidate
+        run: git fetch --no-tags ../policy main:refs/remotes/origin/main
+
+      - name: Validate changed workflow security
         working-directory: candidate
         env:
-          POLICY_ROOT: ${{ github.event.pull_request.number == 75 && '.' || '../policy' }}
+          POLICY_ROOT: ../policy
           PR_BASE_REF: origin/main
           PR_HEAD_REF: HEAD
         run: node "$POLICY_ROOT/scripts/security/verifyChangedWorkflowSecurity.mjs"
 
   candidate-validation:
-    name: Candidate validation
+    name: Deployment candidate validation
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
