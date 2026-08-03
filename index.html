@@ -1,12 +1,15 @@
 <!doctype html>
 <html lang="de">
   <head>
-    <script src="https://cdn.cookiehub.eu/c2/75f66920.js"></script>
-    <script src="/cookiehub-init.js"></script>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1353017943074018"
+    <script nonce="__CSP_NONCE__" src="https://cdn.cookiehub.eu/c2/75f66920.js"></script>
+    <script nonce="__CSP_NONCE__" src="/cookiehub-init.js"></script>
+    <script nonce="__CSP_NONCE__" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1353017943074018"
      crossorigin="anonymous"></script>
+    <script nonce="__CSP_NONCE__" async custom-element="amp-auto-ads"
+        src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js">
+    </script>
     <meta name="ga-measurement-id" content="%VITE_GA_MEASUREMENT_ID%" />
-    <script src="/google-analytics-consent.js"></script>
+    <script nonce="__CSP_NONCE__" src="/google-analytics-consent.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
@@ -36,6 +39,9 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
+    <amp-auto-ads type="adsense"
+        data-ad-client="ca-pub-1353017943074018">
+    </amp-auto-ads>
     <!-- Server-seitig sichtbare Rechtslinks: die App selbst ist eine React-SPA, die
          Footer-Links zu AGB/Impressum/Datenschutz werden erst nach dem Hydratisieren
          gerendert. Security-/Compliance-Scanner (und Crawler ohne JS) lesen nur die
@@ -50,7 +56,7 @@
       </p>
     </noscript>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script nonce="__CSP_NONCE__" type="module" src="/src/main.tsx"></script>
   </body>
 </html>
 
