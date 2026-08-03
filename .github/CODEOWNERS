@@ -1,0 +1,17 @@
+# ADR-0035 / ESS-0014 — repository review ownership for protected marketing assets.
+#
+# This is an additional GitHub-layer guard. CAPITAL-AI IAM OWNER + TOTP / delegated service
+# account approval remains the authoritative application-level authorization contract.
+# CODEOWNERS becomes merge-enforcing when the default branch requires Code Owner reviews.
+
+/index.html @SvenKulessa
+/public/cookiehub-init.js @SvenKulessa
+/public/google-analytics-consent.js @SvenKulessa
+/server/securityResponse.ts @SvenKulessa
+/server/logger.ts @SvenKulessa
+/scripts/security/verifyGoogleMarketingInvariants.ts @SvenKulessa
+/.ai/skills/ESS-0014-Google-Marketing-MCP-Governance.md @SvenKulessa
+/.ai/skills/ESS-0014-Contracts.md @SvenKulessa
+/.ai/registry/ess-registry.json @SvenKulessa
+/docs/adr/ADR-0035-protected-google-marketing-integration-strict-csp.md @SvenKulessa
+/docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md @SvenKulessa
