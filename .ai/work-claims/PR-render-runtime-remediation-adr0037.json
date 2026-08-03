@@ -23,7 +23,6 @@
   },
   "claimedPaths": [
     ".ai/work-claims/**",
-    ".github/workflows/render-runtime-remediation-apply.yml",
     "server.ts",
     "server/runtime/**",
     "server/stripe.ts",
@@ -31,6 +30,7 @@
     "tests/unit/renderRuntimeRemediation.test.ts",
     "docs/adr/ADR-0037-render-production-configuration-governance.md",
     "docs/architecture/RENDER_PRODUCTION_CONFIGURATION_AUDIT.md",
+    "docs/architecture/RENDER_RUNTIME_REMEDIATION_2026-08-03.md",
     "docs/runbooks/RENDER_PRODUCTION_EVIDENCE_HANDOFF.md"
   ],
   "releaseCondition": "Claim is released only when the remediation PR is merged or closed."
