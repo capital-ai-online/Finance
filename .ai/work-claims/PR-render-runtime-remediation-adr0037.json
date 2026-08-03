@@ -15,8 +15,8 @@
   "productionBaseline": {
     "mode": "verified",
     "productionUrl": "https://capital-ai.online/healthz",
-    "productionVersion": "0.6.0",
-    "productionCommit": "24d9daecaf4100ef7dccd3c3c375ac6b0ae8bd43",
+    "version": "0.6.0",
+    "commitSha": "24d9daecaf4100ef7dccd3c3c375ac6b0ae8bd43",
     "productionBranch": "main",
     "renderServiceId": "srv-d91o1o9o3t8c73edi55g"
   },
