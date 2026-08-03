@@ -14,6 +14,7 @@
 
 import crypto from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
+import { attachSecurityResponseContext } from './securityResponse';
 
 declare global {
   namespace Express {
@@ -58,10 +59,16 @@ export function createLogger(scope: string, requestId?: string) {
  * vorgelagerten Proxy/Load-Balancer bereits gesetzt, sonst neu generiert) und spiegelt sie im
  * Response-Header - damit laesst sich ein Request ueber Logzeilen mehrerer Module hinweg
  * (CORS-Block, IAM-Pruefung, Route-Handler, Fehlerbehandlung) zusammenfuehren.
+ *
+ * ADR-0035: dieselbe fruehe Request-Schicht initialisiert zusaetzlich den pro-Response
+ * Security-Context (CSP-Nonce + HTML-Nonce-Injection). Die eigentliche Security-Logik bleibt
+ * in server/securityResponse.ts gekapselt; dieses Modul ist nur der bereits vorhandene,
+ * garantiert fruehe Hook in die Express-Pipeline.
  */
 export function requestContext(req: Request, res: Response, next: NextFunction) {
   const incoming = req.headers['x-request-id'];
   req.requestId = (typeof incoming === 'string' && incoming.length > 0) ? incoming : crypto.randomUUID();
   res.setHeader('x-request-id', req.requestId);
+  attachSecurityResponseContext(req, res);
   next();
 }
