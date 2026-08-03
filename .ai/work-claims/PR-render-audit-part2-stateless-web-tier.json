@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "PR-render-audit-part2-stateless-web-tier",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Thinking",
+    "executionSurface": "ChatGPT GitHub + Render + Supabase connectors"
+  },
+  "workItem": "Render production audit part 2: stateless web tier, durable state, background job ownership, idempotency and scale-out safety",
+  "startedAt": "2026-08-03T07:02:00Z",
+  "baseBranch": "main",
+  "baseSha": "24d9daecaf4100ef7dccd3c3c375ac6b0ae8bd43",
+  "productionBaseline": {
+    "mode": "verified",
+    "productionUrl": "https://capital-ai.online/healthz",
+    "productionVersion": "0.6.0",
+    "productionCommit": "24d9daecaf4100ef7dccd3c3c375ac6b0ae8bd43",
+    "productionBranch": "main",
+    "renderServiceId": "srv-d91o1o9o3t8c73edi55g",
+    "renderDeployId": "dep-d9o3sovk4qsc73b4vl80"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/PR-render-audit-part2-stateless-web-tier.json",
+    "docs/architecture/RENDER_STATELESS_WEB_TIER_AUDIT_2026-08-03.md"
+  ],
+  "releaseCondition": "Claim is released only when the audit PR is merged or closed."
+}
