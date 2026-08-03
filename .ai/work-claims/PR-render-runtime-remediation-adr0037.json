@@ -11,15 +11,14 @@
   "workItem": "Remediate verified Render production runtime and configuration findings from ADR-0037 audit",
   "startedAt": "2026-08-03T05:37:32Z",
   "baseBranch": "main",
-  "baseSha": "770f14632086722fa2fe7a7286ce82bfcb90c83c",
+  "baseSha": "24d9daecaf4100ef7dccd3c3c375ac6b0ae8bd43",
   "productionBaseline": {
     "mode": "verified",
     "productionUrl": "https://capital-ai.online/healthz",
     "productionVersion": "0.6.0",
-    "productionCommit": "770f14632086722fa2fe7a7286ce82bfcb90c83c",
+    "productionCommit": "24d9daecaf4100ef7dccd3c3c375ac6b0ae8bd43",
     "productionBranch": "main",
-    "renderServiceId": "srv-d91o1o9o3t8c73edi55g",
-    "renderDeployId": "dep-d9o23hoae00c73fli0ag"
+    "renderServiceId": "srv-d91o1o9o3t8c73edi55g"
   },
   "claimedPaths": [
     ".ai/work-claims/**",
