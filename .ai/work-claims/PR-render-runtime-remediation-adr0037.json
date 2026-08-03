@@ -23,6 +23,7 @@
   },
   "claimedPaths": [
     ".ai/work-claims/**",
+    ".github/workflows/render-runtime-remediation-apply.yml",
     "server.ts",
     "server/runtime/**",
     "server/stripe.ts",
