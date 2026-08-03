@@ -1,0 +1,113 @@
+name: Open Agent Draft PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_branch:
+        description: 'Agent work branch containing exactly one new .ai/work-claims/*.json claim'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: open-agent-draft-pr-${{ inputs.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  preflight-and-open:
+    name: Trusted preflight and draft PR creation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout trusted policy from main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          path: policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+
+      - name: Validate requested agent branch name
+        working-directory: policy
+        env:
+          HEAD_BRANCH: ${{ inputs.head_branch }}
+        run: |
+          set -euo pipefail
+          git check-ref-format --branch "$HEAD_BRANCH" >/dev/null
+          case "$HEAD_BRANCH" in
+            agent/*|claude/*|gemini/*|copilot/*|ai/*) ;;
+            *) echo "Agent branch must use an approved prefix: agent/, claude/, gemini/, copilot/, ai/" >&2; exit 1 ;;
+          esac
+
+      - name: Checkout candidate without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.head_branch }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Import trusted current main into candidate repository
+        working-directory: candidate
+        run: git fetch --no-tags ../policy main:refs/remotes/origin/main
+
+      - name: Verify current production baseline before PR creation
+        id: baseline
+        working-directory: candidate
+        env:
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
+        run: node ../policy/scripts/pr/productionPreflight.mjs
+
+      - name: Verify exclusive work claim and open-PR overlap
+        working-directory: candidate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+        run: node ../policy/scripts/pr/validateWorkClaim.mjs
+
+      - name: Render canonical PR body
+        id: render
+        working-directory: candidate
+        env:
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+          PR_HEAD_BRANCH: ${{ inputs.head_branch }}
+          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          PR_BODY_OUTPUT: artifacts/pr/pull-request-body.md
+        run: node ../policy/scripts/pr/renderPullRequestBody.mjs
+
+      - name: Open draft PR if none exists
+        working-directory: candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_BRANCH: ${{ inputs.head_branch }}
+          PR_TITLE: ${{ steps.render.outputs.pr_title }}
+        run: |
+          set -euo pipefail
+          existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --head "$HEAD_BRANCH" --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            echo "Open PR #$existing already exists for $HEAD_BRANCH; not creating a duplicate."
+            exit 0
+          fi
+
+          gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --draft \
+            --base main \
+            --head "$HEAD_BRANCH" \
+            --title "$PR_TITLE" \
+            --body-file artifacts/pr/pull-request-body.md

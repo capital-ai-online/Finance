@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "PR-75-pr-governance",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Thinking",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "Enforce PR-first multi-agent development governance",
+  "startedAt": "2026-08-03T02:45:09Z",
+  "baseBranch": "main",
+  "baseSha": "6933bcbe1d7d29684e00a161b3f16162a50ddc7a",
+  "pullRequest": 75,
+  "productionBaseline": {
+    "mode": "bootstrap",
+    "reason": "Current production contract predates ADR-0036 deployment identity. PR #75 is the one-time bootstrap that introduces immutable deployment identity and trusted PR governance."
+  },
+  "claimedPaths": [
+    ".ai/work-claims/**",
+    ".github/pull_request_template.md",
+    ".github/CODEOWNERS",
+    ".github/workflows/agent-branch-preflight.yml",
+    ".github/workflows/open-agent-draft-pr.yml",
+    ".github/workflows/pr-governance.yml",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "scripts/pr/**",
+    "scripts/security/verifyChangedWorkflowSecurity.mjs",
+    "server/deploymentIdentity.ts",
+    "server/logger.ts",
+    "package.json",
+    "docs/architecture/PR_MULTI_AGENT_GOVERNANCE.md",
+    "docs/adr/ADR-0036-*"
+  ],
+  "releaseCondition": "Claim is released only when PR #75 is merged or closed."
+}
