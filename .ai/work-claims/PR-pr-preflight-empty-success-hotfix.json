@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "PR-pr-preflight-empty-success-hotfix",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Thinking",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "Fix PR production preflight false-negative for successful silent git commands",
+  "startedAt": "2026-08-03T06:08:00Z",
+  "baseBranch": "main",
+  "baseSha": "770f14632086722fa2fe7a7286ce82bfcb90c83c",
+  "productionBaseline": {
+    "mode": "verified",
+    "productionUrl": "https://capital-ai.online/healthz",
+    "productionVersion": "0.6.0",
+    "productionCommit": "770f14632086722fa2fe7a7286ce82bfcb90c83c",
+    "productionBranch": "main"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/**",
+    "scripts/pr/lib.mjs",
+    "scripts/pr/lib.test.mjs",
+    "scripts/pr/productionPreflight.mjs"
+  ],
+  "releaseCondition": "Claim is released only when the hotfix PR is merged or closed."
+}

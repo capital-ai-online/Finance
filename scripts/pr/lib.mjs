@@ -27,6 +27,19 @@ export function tryGit(args) {
   }
 }
 
+// Some successful Git commands (for example `git cat-file -e`) intentionally write no
+// stdout. `tryGit()` therefore returns an empty string on success, which MUST NOT be tested by
+// truthiness. Use this helper whenever the contract is command success/failure rather than
+// command output.
+export function gitSucceeds(args, options = {}) {
+  try {
+    git(args, options);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function normalizeRepoPath(value) {
   return String(value || '')
     .replace(/\\/g, '/')
