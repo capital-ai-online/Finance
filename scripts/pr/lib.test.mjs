@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   claimScopesOverlap,
   findClaimConflicts,
+  gitSucceeds,
   globToRegExp,
   pathMatchesClaim,
   validateClaimShape,
@@ -47,4 +48,9 @@ test('work claim rejects repository-wide wildcard ownership', () => {
   }, '.ai/work-claims/test.json');
 
   assert.equal(errors.some((error) => error.includes('repository-wide wildcard')), true);
+});
+
+test('silent git commands report success independently of stdout', () => {
+  assert.equal(gitSucceeds(['cat-file', '-e', 'HEAD^{commit}']), true);
+  assert.equal(gitSucceeds(['cat-file', '-e', '0000000000000000000000000000000000000000^{commit}']), false);
 });
