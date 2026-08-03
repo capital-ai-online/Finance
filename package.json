@@ -19,8 +19,10 @@
     "pr:validate-template": "node scripts/pr/validatePrBody.mjs",
     "pr:workflow-security": "node scripts/security/verifyChangedWorkflowSecurity.mjs",
     "pr:governance:test": "node --test scripts/pr/*.test.mjs",
+    "repository:validate": "tsx scripts/automation/validateRepositoryConventions.ts",
+    "repository:validate:advisory": "tsx scripts/automation/validateRepositoryConventions.ts --advisory",
     "hygiene:sweep": "tsx scripts/automation/sweepDocumentaryBranding.ts",
-    "predeploy:check": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/verifyDeploymentReadiness.ts",
+    "predeploy:check": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && npm run repository:validate && tsx scripts/automation/verifyDeploymentReadiness.ts",
     "release:version": "tsx scripts/automation/releaseVersion.ts",
     "traceability:build": "tsx src/platform/Traceability/Services/runTraceability.ts",
     "rag:build-index": "tsx scripts/automation/buildRagIndex.ts"
