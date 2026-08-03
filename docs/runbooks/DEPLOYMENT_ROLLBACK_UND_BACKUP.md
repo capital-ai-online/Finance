@@ -9,6 +9,14 @@ RUNBOOK-0001
 ARCH-AUDIT-0002 (Enterprise FinTech Architecture Audit), Kapitel 14.5, Maßnahme H7
 „Deployment-Rollback und Backup-Verfahren".
 
+Zusätzliche Render-Governance seit 03.08.2026:
+
+- `docs/architecture/RENDER_PRODUCTION_CONFIGURATION_AUDIT.md` (RENDER-AUDIT-0001)
+- `docs/adr/ADR-0037-render-production-configuration-governance.md`
+- `docs/runbooks/RENDER_PRODUCTION_EVIDENCE_HANDOFF.md`
+
+Für aktuelle Render-Dashboard-/Service-Konfigurationsdetails ist `RENDER_PRODUCTION_EVIDENCE_HANDOFF.md` maßgeblich. Dieses Runbook behandelt den Recovery-Ablauf.
+
 ## Status
 
 Aktiv
@@ -32,31 +40,59 @@ eine Teilmenge der Fehler, die sonst erst nach dem Deploy sichtbar würden.
 ## 1. Anwendungsebene: Rollback eines Render-Deployments
 
 CAPITAL-AI läuft auf Render.com als Docker-Service (`render.yaml`, `runtime: docker`) mit
-`healthCheckPath: /healthz`. Render nutzt diesen Health-Check für automatisches
-Zero-Downtime-Deployment: ein neuer Deploy wird erst dann live geschaltet, wenn der neue
-Container innerhalb der Render-eigenen Frist erfolgreich auf `/healthz` antwortet. Schlägt der
-Health-Check fehl, bleibt die vorherige Version aktiv und der fehlerhafte Deploy wird nicht
-ausgerollt — das ist der Regelfall und erfordert **kein manuelles Eingreifen**.
+`healthCheckPath: /healthz`. Render nutzt diesen Health-Check für Deployment Readiness: ein neuer
+Deploy wird erst dann live geschaltet, wenn die neue Instanz erfolgreich auf den konfigurierten
+Health-Check antwortet. Schlägt der neue Deploy vor dem Traffic-Switch fehl, bleibt die vorherige
+funktionierende Version aktiv.
 
-Manuelles Eingreifen ist nur nötig, wenn ein Deploy zwar den Health-Check besteht, sich aber im
+**Wichtig:** `/healthz` bestätigt derzeit vor allem Prozess-Liveness und keine vollständige
+fachliche Readiness aller externen Abhängigkeiten. ADR-0037 definiert deshalb die Weiterentwicklung
+zu einem expliziten Readiness Contract.
+
+Manuelles Eingreifen ist nötig, wenn ein Deploy zwar den Health-Check besteht, sich aber im
 Betrieb als fehlerhaft herausstellt (z. B. ein Bug, der erst bei echtem Nutzerverkehr auftritt,
 oder ein funktionaler Regressionsfehler wie die in ARCH-AUDIT-0002 dokumentierten P0-Vorfälle).
 
 ### 1.1 Manueller Rollback über das Render-Dashboard
 
-1. Render-Dashboard öffnen → Service `capital-ai` → Tab **Events** bzw. **Deploys**.
-2. Den letzten bekannten funktionierenden Deploy identifizieren (Commit-Hash mit dem
-   Produktiv-Code vor der fehlerhaften Änderung abgleichen, z. B. über `git log`).
-3. Bei diesem Deploy-Eintrag **„Rollback to this deploy"** auswählen (Render führt dafür einen
-   erneuten Build/Deploy des historischen Commits aus — es wird kein Container-Image
-   zwischengespeichert und wiederverwendet).
-4. Nach dem Rollback: `GET /healthz` gegen die Produktions-URL prüfen, danach die
-   ursprünglich vom Vorfall betroffene Funktion manuell verifizieren.
+Aktuelle Render-Semantik (erneut verifiziert 03.08.2026): Render kann bei einem Rollback auf einen
+vorherigen erfolgreichen Deploy dessen vorhandenes Build-Artefakt wiederverwenden. Ein Rollback
+ist deshalb nicht mit einem vollständigen Neu-Build des historischen Commits gleichzusetzen.
 
-### 1.2 Rollback per Git, falls das Dashboard nicht verfügbar ist
+Ablauf:
 
-Da Render bei `push`-Trigger auf `main` automatisch deployt (`.github/workflows/ci.yml`
-läuft für denselben Branch), ist ein Rollback auch über einen Revert-Commit möglich:
+1. Render-Dashboard öffnen → Service `capital-ai` → Tab **Deploys**.
+2. Den letzten bekannten funktionierenden Deploy anhand von Commit-SHA, Zeitpunkt und Incident-
+   Evidence identifizieren.
+3. Bei diesem erfolgreichen Deploy **Rollback** auswählen.
+4. Vor Bestätigung prüfen, dass der Ziel-Deploy tatsächlich die gewünschte Code-/Build-Version
+   enthält und keine Datenbank-Rücksetzung erwartet wird.
+5. Rollback ausführen.
+6. Nach dem Rollback: Render Health Check und die ursprünglich betroffene Funktion gezielt
+   verifizieren; ein grüner `/healthz` allein ist kein fachlicher Regressionstest.
+
+#### Auto-Deploy-Schutz nach Dashboard-Rollback
+
+Render deaktiviert beim Rollback über das Dashboard automatische Deploys. Das schützt davor,
+dass ein nachfolgender Push den fehlerhaften Zustand unmittelbar wieder einführt.
+
+Nach erfolgreicher Ursachenbehebung muss Auto-Deploy bewusst wieder auf den gemäß ADR-0037
+freigegebenen Zustand gesetzt werden. Zielzustand für Production ist `After CI Checks Pass`
+(`autoDeployTrigger: checksPass`), sobald Dashboard Evidence und GitHub Required Checks dies
+bestätigen.
+
+#### Was beim Render-Rollback nicht pauschal auf den historischen Zustand zurückkehrt
+
+Ein Render-Rollback ist kein vollständiger Infrastruktur-Zeitmaschinen-Snapshot. Je nach
+Konfiguration verwenden einzelne Service-Einstellungen weiterhin den aktuellen Zustand.
+Insbesondere sind Persistent Disks und bestimmte gemeinsam genutzte Environment-Group-Zustände
+separat zu betrachten. Vor einem Rollback mit Configuration Drift daher immer
+`RENDER_PRODUCTION_EVIDENCE_HANDOFF.md` heranziehen.
+
+### 1.2 Rollback per Git, falls ein nachvollziehbarer Revert gewünscht ist
+
+Ein `git revert` ist eine **andere Recovery-Methode** als ein Render Instant Rollback. Er erzeugt
+einen neuen Git-Commit, der die fehlerhafte Codeänderung zurücknimmt.
 
 ```bash
 git fetch origin main
@@ -64,16 +100,34 @@ git revert <fehlerhafter-commit-hash> --no-edit
 git push origin main
 ```
 
-Dies löst denselben CI-Pipeline-Lauf und denselben Render-Auto-Deploy-Mechanismus wie jeder
-reguläre Merge aus. Dieser Weg ist vorzuziehen, wenn der Fehler bereits genau einem Commit
-zugeordnet werden kann, weil er im Git-Verlauf nachvollziehbar bleibt (im Gegensatz zum
-Dashboard-Rollback, der keinen neuen Commit erzeugt).
+Ob und wann Render diesen Revert deployt, hängt von der tatsächlichen Auto-Deploy-Konfiguration
+ab. Nach ADR-0037 soll Production erst nach bestandenen CI Checks deployen. Daher darf dieses
+Runbook nicht mehr pauschal voraussetzen, dass jeder Push auf `main` sofort einen Render-Deploy
+auslöst.
+
+Dieser Weg ist sinnvoll, wenn:
+
+- die Ursache klar einem Commit zugeordnet ist;
+- der Revert selbst CI-/Security-Gates durchlaufen soll;
+- der Git-Verlauf den Recovery-Schritt dauerhaft abbilden soll.
+
+Ein Render Dashboard Rollback ist dagegen sinnvoll, wenn Time-to-Recovery wichtiger ist und ein
+bekannter guter Build sofort wiederhergestellt werden soll.
 
 ### 1.3 Was ein Rollback NICHT abdeckt
 
 Ein Rollback auf Anwendungsebene macht keine Datenbankänderungen rückgängig. Wenn der
 fehlerhafte Deploy bereits Schreibzugriffe mit falscher Logik ausgeführt hat (z. B. fehlerhafte
 Daten in Supabase geschrieben), muss das getrennt behandelt werden — siehe Abschnitt 2.
+
+Zusätzlich gilt nach ADR-0037:
+
+- lokaler Render-Dateisystemzustand ist ohne verifizierten Persistent Disk als ephemeral zu
+  behandeln;
+- ein Code-Rollback darf nicht als Wiederherstellung von Subscription-/Credit-Dateien betrachtet
+  werden;
+- Secret-Rotation wird niemals durch Rückkehr zu einem möglicherweise kompromittierten alten
+  Secret ersetzt.
 
 ---
 
@@ -84,17 +138,15 @@ Das aktive Supabase-Projekt ist `ryzywoktpmyhwzxmstyu` (Postgres 17, Region `eu-
 ### 2.1 Wichtiger Hinweis zur tatsächlichen Backup-Konfiguration
 
 **Dieses Runbook kann die tatsächlich aktive Backup-Stufe (Plan-Tier, Retention-Zeitraum,
-Point-in-Time-Recovery-Fenster) nicht angeben.** Die dafür verfügbaren Werkzeuge in dieser
-Session (`mcp__Supabase__get_project`) liefern Projekt-Metadaten (Region, Postgres-Version,
-Status), aber keine Backup-/Retention-Konfiguration. Gemäß der No-Demo-Data-Policy
-(`docs/DATENSCHUTZ_PROTOKOLL.md`) wird dieser Wert hier bewusst **nicht** geschätzt oder
-angenommen.
+Point-in-Time-Recovery-Fenster) nicht angeben.** Die dafür verfügbaren Werkzeuge in der
+ursprünglichen Audit-Session lieferten Projekt-Metadaten, aber keine vollständige
+Backup-/Retention-Konfiguration. Gemäß der No-Demo-Data-Policy wird dieser Wert bewusst **nicht**
+geschätzt oder angenommen.
 
 **Vor dem ersten Ernstfall muss der Betreiber daher manuell verifizieren:**
-Supabase-Dashboard → Projekt `AIFINANCIAL` → **Settings → Database → Backups**. Dort steht die
-tatsächliche Backup-Frequenz und Aufbewahrungsdauer des aktuellen Plans. Dieser Wert sollte
-nach Prüfung als Ergänzung in dieses Runbook eingetragen werden (Abschnitt 2.2), damit er beim
-nächsten Vorfall sofort verfügbar ist, statt erneut nachgeschlagen werden zu müssen.
+Supabase-Dashboard → Projekt → **Settings/Database/Backups** entsprechend der aktuellen Supabase-
+UI. Dort steht die tatsächliche Backup-Frequenz und Aufbewahrungsdauer des aktuellen Plans.
+Dieser Wert sollte nach Prüfung als Evidence ergänzt werden.
 
 ### 2.2 Verifizierte Backup-Konfiguration
 
@@ -109,105 +161,136 @@ Abschnitt leer ist, gilt: Backup-Konfiguration nicht verifiziert.)*
 ### 2.3 Wiederherstellung über die Supabase-eigene Backup-Funktion
 
 Sofern laut Abschnitt 2.2 automatische Backups aktiv sind, ist die Supabase-eigene
-Wiederherstellung der bevorzugte Weg (Dashboard → Database → Backups → gewünschten Zeitpunkt
-auswählen → Restore). Dies überschreibt den aktuellen Datenbankzustand mit dem gewählten
-historischen Stand für das gesamte Projekt — es gibt keine tabellen- oder zeilenweise
-Teilwiederherstellung über diesen Weg.
+Wiederherstellung der bevorzugte Weg. Vor jeder produktiven Wiederherstellung sind die aktuelle
+Supabase-Dokumentation, der genaue Restore-Scope und der erwartete Datenverlust seit dem
+Wiederherstellungspunkt zu prüfen.
 
 ### 2.4 Manuelle Sicherung per `pg_dump` (planunabhängiger Fallback)
 
-Unabhängig vom Plan-Tier kann jederzeit ein manueller Dump erstellt werden, z. B. vor einer
-riskanten Migration oder als zusätzliche Absicherung neben den automatischen Backups:
+Unabhängig vom Plan-Tier kann ein manueller Dump vor einer riskanten Migration als zusätzliche
+Absicherung verwendet werden:
 
 ```bash
-# SUPABASE_DB_URL vorher manuell und NUR lokal in der Shell setzen (nie in ein Skript oder
-# Dokument schreiben): Supabase-Dashboard → Settings → Database → Connection string (URI).
+# SUPABASE_DB_URL vorher manuell und NUR lokal in der Shell setzen.
 pg_dump "$SUPABASE_DB_URL" \
   --format=custom \
   --file="capital-ai-backup-$(date +%Y%m%d-%H%M%S).dump"
 ```
 
-Wiederherstellung eines solchen Dumps (z. B. in ein neues/leeres Projekt zur Untersuchung, oder
-zurück in das bestehende Projekt im Notfall):
+Wiederherstellung eines solchen Dumps:
 
 ```bash
-# SUPABASE_RESTORE_TARGET_URL analog zu SUPABASE_DB_URL nur lokal in der Shell setzen.
+# SUPABASE_RESTORE_TARGET_URL nur lokal in der Shell setzen.
 pg_restore --dbname="$SUPABASE_RESTORE_TARGET_URL" \
   --clean --if-exists \
   capital-ai-backup-<ZEITSTEMPEL>.dump
 ```
 
-`--clean --if-exists` lässt `pg_restore` bestehende Objekte vor der Wiederherstellung löschen,
-statt bei bereits existierenden Tabellen abzubrechen. Diese Flags sind bei einer
-Wiederherstellung in ein produktives, bereits befülltes Projekt entsprechend riskant und nur im
-Notfall mit vorheriger Bestätigung zu verwenden — sie überschreiben den Zielstand vollständig.
+`--clean --if-exists` kann bestehende Objekte löschen. Eine Anwendung gegen ein produktives,
+befülltes Ziel ist deshalb ein destruktiver Datenbankvorgang und nur mit expliziter Production-
+Freigabe zulässig.
 
 ### 2.5 Strukturelle Wiederherstellung aus `supabase/migrations/`
 
-Unabhängig von jedem Backup ist das vollständige Datenbankschema (Tabellen, Indizes, RLS
-Policies) als Sequenz versionierter Migrationsdateien im Repository nachvollziehbar
-(`supabase/migrations/*.sql`, Namenskonvention `YYYYMMDDHHMMSS_beschreibung.sql`). Im
-Extremfall — vollständiger Datenverlust ohne nutzbares Backup — lässt sich damit die
-Datenbankstruktur (nicht die Daten selbst) durch sequenzielles Einspielen aller Migrationen in
-ein neues Supabase-Projekt rekonstruieren:
+Unabhängig von jedem Backup ist das Datenbankschema als Sequenz versionierter Migrationen im
+Repository nachvollziehbar (`supabase/migrations/*.sql`). Im Extremfall lässt sich damit die
+Struktur — nicht die Nutzdaten — rekonstruieren.
 
 ```bash
-# SUPABASE_DB_URL analog zu Abschnitt 2.4 nur lokal in der Shell setzen, hier fuer das neue
-# (leere) Projekt.
 for f in supabase/migrations/*.sql; do
   psql "$SUPABASE_DB_URL" -f "$f"
 done
 ```
 
-Dies ersetzt kein Daten-Backup — nach der Strukturwiederherstellung sind alle Tabellen leer.
-Es begrenzt aber den Schaden eines Totalverlusts auf reine Nutzdaten statt auf die gesamte
-Anwendung.
+Dies ersetzt kein Daten-Backup.
 
 ---
 
-## 3. Ablauf im Vorfall (Kurzfassung)
+## 3. Ablauf im Vorfall
 
-1. Vorfall eingrenzen: betrifft er die Anwendung (fehlerhafter Code/Deploy) oder die Daten
-   (fehlerhafte/verlorene Datenbankinhalte) oder beides?
-2. Anwendungsebene: Abschnitt 1.1 oder 1.2 — Rollback auf den letzten bekannten guten Deploy.
-3. Datenebene, falls betroffen: Abschnitt 2.2 prüfen (welche Wiederherstellung steht laut
-   verifizierter Konfiguration zur Verfügung), dann 2.3 oder 2.4 anwenden.
-4. Nach jeder Wiederherstellung: `/healthz` prüfen, danach die ursprünglich betroffene Funktion
-   gezielt manuell nachvollziehen (nicht nur den Health-Check als ausreichend werten — er prüft
-   nur Prozess-Erreichbarkeit, keine fachliche Korrektheit).
-5. Vorfall im Nachgang dokumentieren (Ursache, Zeitpunkt, betroffener Umfang, Behebung) —
-   dieses Runbook selbst nennt keinen festen Ablageort dafür; bis ein solcher Prozess etabliert
-   ist, genügt ein Eintrag im entsprechenden PR oder Issue.
+1. Incident klassifizieren: Code/Deploy, Render Configuration, Daten, Secret oder Kombination?
+2. Aktuellen Production Commit und Service Configuration Evidence erfassen.
+3. Time-to-Recovery entscheiden:
+   - Render Instant Rollback für schnellen bekannten guten Build;
+   - Git Revert für nachvollziehbaren Code-Recovery-Pfad.
+4. Wenn Daten betroffen sind: Anwendung und Datenbank getrennt behandeln.
+5. Nach Recovery:
+   - Health;
+   - betroffene fachliche Funktion;
+   - Auth/IAM;
+   - relevante externe Provider;
+   - Logs/Alerts
+   prüfen.
+6. Auto-Deploy-Zustand nach Render Dashboard Rollback bewusst kontrollieren.
+7. Incident Evidence und Root Cause dokumentieren.
 
 ---
 
 ## 4. Automatisierte Pre-Deploy-Prüfung
 
-`npm run predeploy:check` (`scripts/automation/verifyDeploymentReadiness.ts`) prüft vor jedem
-Deploy automatisiert:
+`npm run predeploy:check` (`scripts/automation/verifyDeploymentReadiness.ts`) prüft vor Deploys
+unter anderem:
 
-1. `render.yaml` definiert `healthCheckPath` (Voraussetzung für Abschnitt 1 dieses Runbooks —
-   ohne Health-Check kann Render einen fehlgeschlagenen Deploy nicht automatisch erkennen).
-2. Jede im Server-Code über `getCleanEnv()` referenzierte Umgebungsvariable ist entweder in
-   `render.yaml` gelistet, Teil einer bekannten Alternativnamen-Gruppe, oder auf der bekannten
-   Optional-Liste (hartkodierter Fallback im Code) — verhindert einen Deploy, der wegen einer
-   fehlenden Pflichtvariable zur Laufzeit fehlschlägt oder eine Funktion fail-closed
-   deaktiviert, ohne dass das vor dem Deploy auffällt.
-3. `supabase/migrations/` ist nicht leer und jede Datei folgt der Zeitstempel-Namenskonvention
-   (Voraussetzung für Abschnitt 2.5 dieses Runbooks).
+1. `render.yaml` definiert `healthCheckPath`.
+2. Statisch erkennbare serverseitige Environment-Variablen sind gegen Blueprint-/Alias-Listen
+   geprüft.
+3. `supabase/migrations/` besitzt gültige Migrationsdateien.
+4. Dependency-/Lockfile-/SBOM-Policy.
+5. Traceability, RAG Evidence und Prompt Registry.
 
-Das Skript läuft als eigener Schritt in `.github/workflows/ci.yml` und bricht den CI-Lauf bei
-einem Fehler ab (`process.exit(1)`). Es ist bewusst auf strukturelle, automatisierbare
-Vorbedingungen begrenzt — es ersetzt weder die manuelle Backup-Verifikation aus Abschnitt 2.1
-noch den fachlichen Nachvollzug aus Abschnitt 3, Schritt 4.
+### Bekannte Grenze seit RENDER-AUDIT-0001
+
+Die Environment-Abdeckung ist **nicht vollständig**, wenn Schlüssel dynamisch zusammengesetzt
+oder über Wrapper wie `getStripeVar(key)` an `getCleanEnv(key)` weitergegeben werden.
+
+Beispiele, die daher separat durch ADR-0037 / Production Env Contract abgedeckt werden müssen:
+
+```text
+STRIPE_PRICE_ID_STARTER_MONTHLY
+STRIPE_PRICE_ID_STARTER_YEARLY
+STRIPE_PRICE_ID_PRO_MONTHLY
+STRIPE_PRICE_ID_PRO_YEARLY
+STRIPE_ID_FOUNDER / STRIPE_PRICE_ID_FOUNDER
+STRIPE_PRICE_ID_EXPORT_PDF
+```
+
+Der bestehende Gate ist weiterhin wertvoll, darf aber bis zur zentralen Env-Contract-
+Implementierung nicht als vollständiger Beweis der Render-Environment-Konfiguration gelten.
+
+---
+
+## 5. Render Configuration Recovery
+
+Bei einer fehlerhaften Dashboard-/Blueprint-Konfigurationsänderung:
+
+1. keine Secret-Werte in Tickets/PRs kopieren;
+2. vorherigen Setting-Fingerprint/Evidence verwenden;
+3. dokumentieren, welche Änderung einen Deploy/Restart ausgelöst hat;
+4. Konfiguration zurücksetzen oder via verifiziertem Blueprint korrigieren;
+5. neuen Deploy/Health/Smoke-Test abwarten;
+6. Secret nur dann auf alten Wert setzen, wenn ausdrücklich bestätigt ist, dass es nicht
+   kompromittiert wurde — bei Credential Incidents stattdessen rotieren/revoken;
+7. Audit/ADR/Runbook aktualisieren.
 
 ---
 
 ## Verwandte Dokumente
 
-- `docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md` (ARCH-AUDIT-0002), Kapitel 14.5
+- `docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md`
+- `docs/architecture/RENDER_PRODUCTION_CONFIGURATION_AUDIT.md`
+- `docs/adr/ADR-0037-render-production-configuration-governance.md`
+- `docs/runbooks/RENDER_PRODUCTION_EVIDENCE_HANDOFF.md`
 - `render.yaml`
+- `Dockerfile`
 - `scripts/automation/verifyDeploymentReadiness.ts`
 - `.github/workflows/ci.yml`
-- `docs/DATENSCHUTZ_PROTOKOLL.md` — No-Demo-Data-Policy, Grund für den expliziten
-  Nicht-Verifizierbar-Hinweis in Abschnitt 2.1
+- `docs/DATENSCHUTZ_PROTOKOLL.md`
+
+## Provider-Referenzen
+
+- Render Deploys: `https://render.com/docs/deploys`
+- Render Rollbacks: `https://render.com/docs/rollbacks`
+- Render Health Checks: `https://render.com/docs/health-checks`
+- Render Persistent Disks: `https://render.com/docs/disks`
+
+Provider-Verhalten ist bei jedem relevanten Recovery-Prozess erneut gegen den aktuellen Stand zu prüfen.
