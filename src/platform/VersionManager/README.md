@@ -28,9 +28,14 @@ Persistenz: `uploads/version_manager.json`. REST-API: `GET /api/admin/version`,
 
 Repository-Validation:
 
-- `npm run repository:validate` — Strict Mode; Errors blockieren den Prozess.
+- `npm run repository:validate` — Strict Mode fuer gezielte Governance-/Quality-Pruefungen.
 - `npm run repository:validate:advisory` — Advisory Mode; Findings werden gemeldet, aber nicht blockiert.
-- `npm run predeploy:check` — fuehrt den Strict Validator automatisch vor dem Deployment-Readiness-Check aus.
+- `npm run predeploy:check` — prueft ausschliesslich technische und sicherheitsrelevante Deployment-Readiness und ruft den Repository Convention Validator bewusst nicht auf.
+
+Der Repository Convention Validator ist damit **kein Deployment-Gate**. Governance-, Naming-,
+ADR-/ESS- und Repository-Policy-Findings werden ausserhalb der technischen Live-Deployability-
+Pipeline behandelt. Die Deployment-Pipeline beantwortet ausschliesslich, ob ein Build technisch
+und sicher in der Live-Umgebung betrieben werden kann.
 
 Der Validator veraendert keine Dateien und genehmigt keine Ausnahmen. Abweichungen werden nur
 als Findings ausgegeben; Ausnahmen bleiben ausschliesslich der Governance bzw. dem Platform
@@ -83,4 +88,5 @@ eine leere, vom Enterprise Bootstrapper generierte Huelle war und der tatsaechli
 
 ADR-0020 erweitert die bestehende Komponente bewusst um eine Validator-Capability statt einen
 parallelen Naming-Agenten einzufuehren. Damit bleibt Versionierungs- und Repository-Konformitaet
-in einer verantwortlichen Enterprise-Komponente gebuendelt.
+in einer verantwortlichen Enterprise-Komponente gebuendelt, ohne das technische Deployment-Gate
+mit Governance-Policies zu vermischen.
