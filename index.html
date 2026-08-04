@@ -1,14 +1,22 @@
 <!doctype html>
 <html lang="de">
   <head>
-    <script nonce="__CSP_NONCE__" src="https://cdn.cookiehub.eu/c2/75f66920.js"></script>
-    <script nonce="__CSP_NONCE__" src="/cookiehub-init.js"></script>
-    <script nonce="__CSP_NONCE__" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1353017943074018"
-     crossorigin="anonymous"></script>
-    <!-- ADR-0040: AMP Auto Ads belongs only on a separately validated AMP document.
-         This React/Vite SPA uses the normal AdSense loader above. -->
+    <!-- ADR-0042: CookieHub remains the consent source of truth. The first-party
+         bridge sets Google Consent Mode v2 defaults to denied before CookieHub is
+         initialized and injects GA4/AdSense only after the matching opt-in. -->
+    <script
+      nonce="__CSP_NONCE__"
+      src="https://cdn.cookiehub.eu/c2/75f66920.js"
+      data-consent-platform="CookieHub"
+    ></script>
+    <meta name="privacy-consent-manager" content="CookieHub" />
+    <meta name="google-consent-mode" content="basic-v2" />
     <meta name="ga-measurement-id" content="%VITE_GA_MEASUREMENT_ID%" />
+    <meta name="adsense-publisher-id" content="ca-pub-1353017943074018" />
     <script nonce="__CSP_NONCE__" src="/google-analytics-consent.js"></script>
+    <script nonce="__CSP_NONCE__" src="/cookiehub-init.js"></script>
+    <!-- ADR-0040: AMP Auto Ads belongs only on a separately validated AMP document.
+         This React/Vite SPA uses the consent-gated normal AdSense loader above. -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
@@ -55,4 +63,3 @@
     <script nonce="__CSP_NONCE__" type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

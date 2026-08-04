@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "WEBSCAN-GA-CONSENT-2026-08-04",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Thinking",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "Remediate WebscanRadar Google Analytics and consent findings with Basic Consent Mode v2",
+  "startedAt": "2026-08-04T18:09:00Z",
+  "baseBranch": "main",
+  "baseSha": "d3d50101762ffaab8286f84b6d41c7abfae3d19f",
+  "claimedPaths": [
+    "index.html",
+    "public/google-analytics-consent.js",
+    "src/services/cookieHubConsentBridge.ts",
+    "scripts/security/verifyGoogleMarketingInvariants.ts",
+    "tests/unit/googleMarketingConsent.test.ts",
+    ".github/workflows/google-marketing-protected-change.yml",
+    "docs/adr/ADR-0042-basic-consent-mode-v2-google-tag-gating.md",
+    "docs/runbooks/GOOGLE_ANALYTICS_SETUP.md",
+    ".ai/work-claims/WEBSCAN-GA-CONSENT-2026-08-04.json"
+  ],
+  "releaseCondition": "Claim is released only when the remediation pull request is merged or closed."
+}

@@ -11,6 +11,7 @@ on:
       - 'server/logger.ts'
       - 'src/platform/Security/**'
       - 'scripts/security/verifyGoogleMarketingInvariants.ts'
+      - 'tests/unit/googleMarketingConsent.test.ts'
       - 'tests/unit/securityResponse.test.ts'
       - 'tests/unit/securityResponse.production.test.ts'
       - '.github/workflows/google-marketing-protected-change.yml'
@@ -20,7 +21,9 @@ on:
       - '.ai/registry/ess-registry.json'
       - 'docs/adr/ADR-0035-*'
       - 'docs/adr/ADR-0040-*'
+      - 'docs/adr/ADR-0042-*'
       - 'docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md'
+      - 'docs/runbooks/GOOGLE_ANALYTICS_SETUP.md'
       - 'package.json'
       - 'package-lock.json'
   push:
@@ -33,6 +36,7 @@ on:
       - 'server/logger.ts'
       - 'src/platform/Security/**'
       - 'scripts/security/verifyGoogleMarketingInvariants.ts'
+      - 'tests/unit/googleMarketingConsent.test.ts'
       - 'tests/unit/securityResponse.test.ts'
       - 'tests/unit/securityResponse.production.test.ts'
       - '.github/workflows/google-marketing-protected-change.yml'
@@ -42,7 +46,9 @@ on:
       - '.ai/registry/ess-registry.json'
       - 'docs/adr/ADR-0035-*'
       - 'docs/adr/ADR-0040-*'
+      - 'docs/adr/ADR-0042-*'
       - 'docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md'
+      - 'docs/runbooks/GOOGLE_ANALYTICS_SETUP.md'
       - 'package.json'
       - 'package-lock.json'
   workflow_dispatch:
@@ -79,8 +85,8 @@ jobs:
       - name: Verify protected invariants
         run: npx tsx scripts/security/verifyGoogleMarketingInvariants.ts
 
-      - name: Test CSP policy and nonce modes
-        run: npx vitest run tests/unit/securityResponse.test.ts
+      - name: Test CSP policy and consent runtime
+        run: npx vitest run tests/unit/securityResponse.test.ts tests/unit/googleMarketingConsent.test.ts
 
       - name: Type check
         run: npm run lint
