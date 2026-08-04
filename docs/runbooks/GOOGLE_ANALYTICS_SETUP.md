@@ -1,192 +1,259 @@
-# CAPITAL-AI Runbook: Google Analytics (GA4) Einbindung
+# CAPITAL-AI Runbook: Google Analytics, AdSense und CookieHub
 
 ## Document ID
 
 RUNBOOK-0003
 
-## Bezug
-
-`docs/DATENSCHUTZ_PROTOKOLL.md` (Verzeichnis von Verarbeitungstätigkeiten, Art. 30 DSGVO),
-`docs/seo/SEO_CHECKLIST.md`.
-
 ## Status
 
-Aktiv — Schritt 1 (Property/Measurement-ID) wurde vom Repository-Owner extern im Google-Konto
-durchgeführt. Die Consent-Verwaltung erfolgt über **CookieHub** (externe CMP, siehe Abschnitt 4)
-statt über eine selbstgebaute Banner-Komponente. Die Code-Integration (Abschnitt 3) ist als
-Plain-JS-Inline-Script in `index.html` implementiert (bewusst nicht im React-Bundle, siehe
-Begründung dort). `src/services/cookieHubConsentBridge.ts` enthält nur noch die Settings-Öffnen-
-Funktion. Tracking bleibt fail-closed: ohne gesetzte `VITE_GA_MEASUREMENT_ID` **und** ohne aktive
-CookieHub-Einwilligung in der Kategorie `analytics` lädt kein Tracking-Script.
+Aktiv — Repository-Implementierung gemäß **ESS-0014** und **ADR-0042**.
 
-**Bewusst NICHT genutzt:** Google Analytics' eigener „Einwilligungsmodus" (Consent Mode v2,
-GA4-Verwaltung → Datenerfassung), der den GA-Tag *immer* mit Status „denied" lädt und dabei bereits
-vor Einwilligung anonymisierte „Cookieless Pings" an Google sendet. Das ist ein gültiges, von Google
-empfohlenes Muster, widerspricht aber der hier gewählten, strikteren Variante (Skript wird technisch
-gar nicht in den DOM injiziert, solange keine Einwilligung vorliegt) und ist für reines GA4-Tracking
-ohne verknüpfte Google-Ads-Conversions nicht erforderlich.
+CAPITAL-AI verwendet **Google Consent Mode v2 im Basic Mode**:
 
-## Geltungsbereich
+- CookieHub ist Consent Source of Truth;
+- ohne Opt-in wird kein Google-Tag geladen und kein Google-Netzwerkrequest ausgelöst;
+- GA4 wird nur durch die Kategorie `analytics` aktiviert;
+- AdSense wird nur durch die Kategorie `marketing` aktiviert;
+- alle Consent-Mode-v2-Felder starten fail-closed mit `denied`;
+- ein Widerruf setzt die Signale zurück, deaktiviert GA und lädt die Seite neu.
 
-CAPITAL-AI ist eine Vite/React-SPA (`index.html` → `src/main.tsx`), deployt über Render
-(`render.yaml`). Client-seitige Env-Vars mit `VITE_`-Prefix werden **zur Build-Zeit** eingebacken
-(siehe Kommentar in `.env.example`), nicht dynamisch zur Laufzeit injiziert.
+Die frühere Runbook-Aussage, Consent Mode v2 solle nicht verwendet werden, ist durch ESS-0014 und
+ADR-0042 ersetzt. Advanced Consent Mode mit cookieless pings bleibt ausdrücklich ausgeschlossen.
 
-**Wichtiger Compliance-Hinweis:** `docs/DATENSCHUTZ_PROTOKOLL.md` (Präambel) verpflichtet das
-Projekt explizit auf „keine unautorisierten IP-Adressen-Lecks an US-amerikanische Drittanbieter".
-Google Analytics überträgt Nutzungsdaten an Google LLC (USA). Das ist nicht per se unzulässig,
-macht GA aber **einwilligungspflichtig** nach § 25 TDDDG / Art. 6 Abs. 1 lit. a DSGVO — das Script
-darf technisch **erst nach aktiver Opt-in-Einwilligung** geladen werden (kein Opt-out-Cookie-Banner,
-kein Laden „im Hintergrund" vor Einwilligung). Abschnitt 4 dieses Runbooks ist deshalb kein
-optionaler Zusatz, sondern Voraussetzung für eine rechtskonforme Einbindung.
+## Bezug
+
+- `.ai/skills/ESS-0014-Google-Marketing-MCP-Governance.md`
+- `docs/adr/ADR-0035-protected-google-marketing-integration-strict-csp.md`
+- `docs/adr/ADR-0040-csp-runtime-remediation-safe-rollout.md`
+- `docs/adr/ADR-0042-basic-consent-mode-v2-google-tag-gating.md`
+- `docs/DATENSCHUTZ_PROTOKOLL.md`
 
 ---
 
-## 1. GA4-Property anlegen & Measurement-ID beschaffen
+## 1. Architektur
 
-Dieser Schritt erfordert Login mit einem echten Google-Konto und kann nur vom Repository-Owner
-durchgeführt werden.
+### 1.1 HTML Shell
 
-1. [analytics.google.com](https://analytics.google.com) öffnen → mit dem Google-Konto anmelden,
-   das die Property verwalten soll.
-2. **Verwaltung** (Zahnrad unten links) → Spalte **Konto** → **Konto erstellen** (falls noch kein
-   GA-Konto existiert), z. B. „AIFinancial GmbH" als Kontoname.
-   - Bei den Daten­freigabe-Einstellungen die Optionen für Benchmarking/Support/Produktentwicklung
-     bewusst prüfen und ggf. deaktivieren, um die Datenweitergabe an Google zu minimieren
-     (Datenminimierung, Art. 5 Abs. 1 lit. c DSGVO).
-3. Spalte **Property** → **Property erstellen**:
-   - Property-Name: z. B. „CAPITAL-AI Portal".
-   - Zeitzone: `Deutschland` / Berlin, Währung: `EUR`.
-4. **Property → Datenstreams → Web** → neuen Webstream anlegen:
-   - Website-URL: `https://capital-ai.online`
-   - Stream-Name: „CAPITAL-AI Production"
-   - **Erweiterte Messung** (Enhanced Measurement) prüfen: Scroll-Tracking, Outbound-Klicks etc.
-     sind standardmäßig aktiv — ggf. deaktivieren, was nicht benötigt wird, um die erfassten
-     Datenkategorien schlank zu halten.
-5. Nach dem Anlegen zeigt GA4 die **Measurement-ID** im Format `G-XXXXXXXXXX` direkt im
-   Stream-Detail an. Diese ID kopieren — sie ist **nicht geheim** (sie steht später öffentlich im
-   HTML-Quelltext), muss also nicht wie ein Secret behandelt werden, sollte aber dennoch nicht
-   versehentlich mit einer falschen/fremden Property verwechselt werden.
-6. **Datenaufbewahrung einschränken** (empfohlen für DSGVO-Minimierung): **Verwaltung → Property →
-   Datenaufbewahrung** → Ereignisdaten-Aufbewahrung auf **2 Monate** setzen (kürzeste von Google
-   angebotene Option) statt der Voreinstellung von 14 Monaten.
-7. **IP-Anonymisierung**: In GA4 ist die IP-Maskierung anders als in Universal Analytics
-   standardmäßig Teil der Verarbeitung und nicht separat konfigurierbar — GA4 speichert generell
-   keine vollständige IP-Adresse. Das sollte dennoch als Fakt in `DATENSCHUTZ_PROTOKOLL.md`
-   dokumentiert werden (siehe Abschnitt 4).
+`index.html` enthält nur:
 
-Ergebnis dieses Schritts: eine Measurement-ID der Form `G-XXXXXXXXXX`.
+- CookieHub Production SDK;
+- inerte öffentliche IDs als Meta-Tags;
+- den First-Party-Consent-Bridge;
+- den CookieHub-Initializer.
 
----
-
-## 2. Measurement-ID in die Umgebung eintragen
-
-Analog zu den bestehenden `VITE_*`-Vars (siehe `.env.example`, z. B. `VITE_SUPABASE_URL`):
-
-1. Lokal: in `.env` (nicht `.env.example`, die Datei ist nur eine Vorlage) eintragen:
-   ```
-   VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
-   ```
-2. Produktion (Render): **Dashboard → Service → Environment** → Env-Var
-   `VITE_GA_MEASUREMENT_ID` mit dem Wert aus Schritt 1 anlegen. Da `VITE_*`-Vars zur Build-Zeit
-   eingebacken werden, ist nach dem Setzen ein **Re-Deploy** nötig, damit die ID im Bundle landet.
-3. Ergänze in `.env.example` (nur als dokumentierender Platzhalter, kein echter Wert):
-   ```
-   # Google Analytics 4 Measurement-ID (siehe docs/runbooks/GOOGLE_ANALYTICS_SETUP.md).
-   # Öffentlich sichtbar im HTML-Quelltext, kein Secret. Ohne diesen Wert bleibt GA4 deaktiviert
-   # (fail-closed) — es gibt keinen funktionierenden Tracking-Fallback ohne echte ID.
-   VITE_GA_MEASUREMENT_ID=
-   ```
-
----
-
-## 3. Code-Integration (nur nach Einwilligung laden) — implementiert
-
-Das GA-Script wird **nicht** unconditioniert in `index.html` eingetragen, sondern über ein
-Plain-JavaScript-Inline-Script direkt im `<head>` geladen, das an CookieHubs Events hängt:
-
-- **Bewusst kein React/`useEffect`-Code für das Laden von GA**: Ein `useEffect` haengt seine
-  Listener erst an, nachdem React den ersten Render committed hat — das ist potenziell **später**
-  als der Zeitpunkt, an dem CookieHub bei `DOMContentLoaded` seinen initialen Status feuert
-  (`cookiehub_onInitialise`). Für wiederkehrende Besucher mit bereits gespeicherter Einwilligung
-  hätte das dazu geführt, dass dieses erste Event verpasst wird und GA nie lädt, obwohl der Nutzer
-  längst zugestimmt hat. Die Lade-Logik lebt deshalb als reines Inline-Script in `index.html`,
-  registriert **vor** dem CookieHub-`load()`-Aufruf.
-- Das Script definiert `loadGA()` (injiziert `gtag.js` erst bei Aufruf, `anonymize_ip: true`) und
-  `unloadGA()` (setzt das von Google dokumentierte `ga-disable-<ID>`-Flag), und hört auf
-  `cookiehub_onInitialise`/`cookiehub_onStatusChange`, um `window.cookiehub.hasConsented('analytics')`
-  zu prüfen.
-- Die Measurement-ID kommt über Vites **HTML-Env-Replacement** (`%VITE_GA_MEASUREMENT_ID%` in
-  `index.html`, ersetzt zur Build-Zeit) — ohne gesetzten Wert bleibt GA inaktiv (fail-closed).
-- `src/services/cookieHubConsentBridge.ts` enthält nur noch `openCookieHubSettings()` (ruft
-  `window.cookiehub.openSettings()` auf), genutzt vom Button „Cookie-Einstellungen ändern" in
-  `Datenschutz.tsx`.
-
----
-
-## 4. CookieHub als Consent-Management-Plattform — implementiert
-
-Statt einer selbstgebauten Banner-Komponente wird **CookieHub** eingebunden
-(`index.html`, unmittelbar nach dem öffnenden `<head>`-Tag, damit es so früh wie möglich lädt und
-alle nachfolgenden Skripte potenziell blockieren/gaten kann):
+Es gibt **keinen** direkt ausführbaren GA4- oder AdSense-Third-Party-Loader im HTML.
 
 ```html
 <script src="https://cdn.cookiehub.eu/c2/75f66920.js"></script>
-<script type="text/javascript">
-  document.addEventListener("DOMContentLoaded", function(event) {
-    var cpm = {};
-    window.cookiehub.load(cpm);
-  });
-</script>
+<meta name="ga-measurement-id" content="%VITE_GA_MEASUREMENT_ID%" />
+<meta name="adsense-publisher-id" content="ca-pub-1353017943074018" />
+<script src="/google-analytics-consent.js"></script>
+<script src="/cookiehub-init.js"></script>
 ```
 
-Die eigentliche Konfiguration (Banner-Text, Sprache, Kategorien, Cookie-Deklarationen) erfolgt im
-**CookieHub-Dashboard** (nicht im Code) unter der zur Snippet-ID `75f66920` gehörenden Property:
+Alle produktiven Script-Tags erhalten serverseitig denselben Request-Nonce gemäß ADR-0035/
+ADR-0040.
 
-- **Domain-Verifizierung**: `capital-ai.online` als verifizierte Domain hinterlegen.
-- **Kategorien**: „Notwendig" (immer aktiv) und „Analytics" (Opt-in) aktivieren; „Marketing"/
-  „Präferenzen" nur, falls tatsächlich weitere Dienste dieser Art eingesetzt werden — sonst
-  unnötige Kategorien vermeiden (Datenminimierung).
-- **Dienste/Cookies pro Kategorie**: Google Analytics 4 der Kategorie **„Analytics"** zuordnen
-  (Cookie-Namen `_ga`, `_ga_*`), inkl. Zweckbeschreibung und Verweis auf Google LLC (USA) als
-  Empfänger.
-- **Google Consent Mode v2 (CookieHub-Feature)**: **nicht aktivieren.** Dieses Feature setzt
-  automatisch `gtag('consent', ...)`-Signale und ist für das alternative
-  „Tag lädt immer, mit denied/granted-Signal"-Muster gedacht (siehe Hinweis in Abschnitt „Status").
-  Da das Inline-Script in `index.html` das Skript ohnehin nie ohne Einwilligung injiziert, würde
-  diese Option nur unnötige Komplexität hinzufügen bzw. mit der bestehenden Logik konkurrieren.
-- **Sprache**: Deutsch als Standard, passend zu `lang="de"` in `index.html`.
-- **Resurface/Settings-Link**: Nicht zwingend nötig, da `Datenschutz.tsx` bereits einen eigenen
-  Button bereitstellt (`window.cookiehub.openSettings()`); optional zusätzlich das CookieHub-eigene
-  Settings-Icon aktivieren, falls gewünscht.
+### 1.2 First-Party Bridge
 
-Ergänzend wurde CookieHub selbst als Verarbeitungstätigkeit in `docs/DATENSCHUTZ_PROTOKOLL.md`
-(Abschnitt 2) und in der Datenquellen-Tabelle der Datenschutzerklärung (`Datenschutz.tsx`)
-dokumentiert — es verarbeitet ausschließlich die Einwilligungsentscheidung selbst, keine
-Tracking-Daten, und benötigt daher keine eigene Nutzereinwilligung (funktional notwendiges
-Compliance-Werkzeug, Art. 6 Abs. 1 lit. c DSGVO).
+`public/google-analytics-consent.js`:
+
+1. erzeugt lokal `dataLayer`/`gtag`;
+2. setzt Consent Mode v2 auf denied, ohne ein Google-Script zu laden;
+3. registriert CookieHub-Events auf `document`;
+4. liest `analytics` und `marketing` aus CookieHub;
+5. injiziert die jeweiligen Google-Tags erst nach Opt-in;
+6. verhindert Mehrfachinjektion;
+7. behandelt Fehler fail-closed;
+8. löscht bei Analytics-Widerruf erreichbare `_ga`-/`_ga_*`-Cookies;
+9. lädt nach einem Widerruf neu, weil ausgeführte Third-Party-Skripte nicht sicher entladen werden
+   können.
+
+### 1.3 Consent Mapping
+
+| CookieHub-Kategorie | Google-Signal / Dienst | Verhalten |
+|---|---|---|
+| `necessary` | `security_storage=granted` | Immer aktiv, nur Sicherheits-/Consent-Funktion |
+| `analytics` | `analytics_storage` + GA4 | GA4 erst nach Opt-in |
+| `marketing` | `ad_storage`, `ad_user_data`, `ad_personalization` + AdSense | AdSense erst nach Opt-in |
+| `preferences` | derzeit nicht genutzt | Bleibt denied |
+
+`allow_google_signals` und `allow_ad_personalization_signals` bleiben in der GA4-Konfiguration
+bewusst deaktiviert. AdSense wird getrennt über `marketing` gesteuert.
+
+---
+
+## 2. GA4 Property und Measurement-ID
+
+1. Google Analytics öffnen und die Produktions-Property auswählen.
+2. Web-Datenstream für `https://capital-ai.online` prüfen.
+3. Measurement-ID im Format `G-XXXXXXXXXX` kopieren.
+4. Erweiterte Messung nur für tatsächlich benötigte Events aktivieren.
+5. Datenaufbewahrung auf den fachlich/rechtlich erforderlichen Mindestzeitraum reduzieren.
+6. Google-Signals, Ads-Verknüpfungen und Remarketing nur nach eigener Freigabe aktivieren.
+
+Die Measurement-ID ist öffentlich, aber ihre Zuordnung zur korrekten Property muss kontrolliert
+werden.
+
+---
+
+## 3. Build-Time Environment
+
+Vite ersetzt `VITE_*`-Variablen zur Build-Zeit.
+
+```text
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+```
+
+### Entwicklung
+
+Wert in `.env` setzen. `.env` darf nicht committed werden.
+
+### Produktion / Render
+
+1. Environment Variable in Render setzen oder prüfen;
+2. neuen Build/Deploy auslösen;
+3. im ausgelieferten HTML prüfen, dass der Meta-Tag eine gültige `G-...`-ID enthält.
+
+Fehlt die Variable oder bleibt `%VITE_GA_MEASUREMENT_ID%` unverarbeitet, lädt GA4 fail-closed nicht.
+
+---
+
+## 4. CookieHub Production Configuration
+
+Repository-Code kann das externe CookieHub-Dashboard nicht verändern. Der Repository-Owner prüft:
+
+1. Domain-Code `75f66920` gehört zu `capital-ai.online`;
+2. Production-Domain ist verifiziert;
+3. Kategorie-IDs heißen exakt `analytics` und `marketing`;
+4. Google Analytics 4 ist `analytics` zugeordnet;
+5. Google AdSense ist `marketing` zugeordnet;
+6. Ablehnen ist auf derselben Ebene und ebenso leicht erreichbar wie Akzeptieren;
+7. Einwilligungen werden mit Zeitstempel/Version protokolliert;
+8. Preference Center ist dauerhaft erreichbar;
+9. Deutsch ist aktiviert;
+10. die aktuellen Google-CMP-/IAB-TCF-Anforderungen für AdSense in EWR/UK/CH sind erfüllt.
+
+### Keine doppelte Consent-Implementierung
+
+Der First-Party-Bridge sendet die Consent-Mode-v2-Signale. Während dieser aktiv ist:
+
+- keine zusätzliche manuelle `gtag('consent', ...)`-Implementierung;
+- kein zweiter Cookie-Banner;
+- kein paralleler GTM-Consent-Tag;
+- CookieHub-GCM-Automatik nur aktivieren, wenn die First-Party-Bridge in einem eigenen ADR ersetzt
+  und die doppelte Signalgebung ausgeschlossen wurde.
 
 ---
 
 ## 5. Verifikation
 
-1. Nach Deploy mit gesetzter `VITE_GA_MEASUREMENT_ID`: GA4 → **Berichte → Echtzeit** öffnen.
-2. Seite im Browser aufrufen, Cookie-Banner akzeptieren → innerhalb weniger Sekunden sollte ein
-   aktiver Nutzer im Echtzeit-Bericht erscheinen.
-3. Ohne Einwilligung darf **kein** Request an `googletagmanager.com` oder `google-analytics.com`
-   im Netzwerk-Tab der Browser-DevTools auftauchen — das ist der funktionale Nachweis, dass das
-   Opt-in tatsächlich greift.
+Tests immer in einem neuen privaten Browserprofil oder nach Löschen der Site-Daten durchführen.
+
+### 5.1 Vor jeder Einwilligung
+
+Im Network-Tab darf kein Request an folgende Ziele erscheinen:
+
+```text
+www.googletagmanager.com
+google-analytics.com
+pagead2.googlesyndication.com
+doubleclick.net
+```
+
+Zusätzlich:
+
+- keine `_ga`-/`_ga_*`-Cookies;
+- `dataLayer` enthält Consent Default `denied`;
+- CookieHub-Banner/Preference Center ist sichtbar oder erreichbar.
+
+### 5.2 Nur Analytics akzeptiert
+
+- genau ein `gtag/js?id=G-...`-Request;
+- GA4 Realtime zeigt den Testbesuch;
+- kein AdSense-Loader;
+- `analytics_storage=granted`;
+- alle Ad-Signale bleiben `denied`.
+
+### 5.3 Marketing akzeptiert
+
+- AdSense-Loader wird genau einmal geladen;
+- `ad_storage`, `ad_user_data`, `ad_personalization` sind `granted`;
+- keine doppelte Script-Injektion nach erneutem Speichern der Einstellungen.
+
+### 5.4 Widerruf
+
+1. Datenschutzseite öffnen;
+2. `Cookie-Einstellungen ändern` wählen;
+3. Analytics/Marketing widerrufen;
+4. nach Reload prüfen, dass keine Google-Tags mehr im neuen Dokument geladen werden;
+5. `_ga`-/`_ga_*`-Cookies prüfen.
 
 ---
 
-## Zusammenfassung der offenen Schritte
+## 6. Repository-Gates
 
-| Schritt | Wer | Status |
+```text
+npx tsx scripts/security/verifyGoogleMarketingInvariants.ts
+npx vitest run tests/unit/securityResponse.test.ts tests/unit/googleMarketingConsent.test.ts
+npm run lint
+npm run build
+NODE_ENV=production CSP_MODE=report-only npx vitest run tests/unit/securityResponse.production.test.ts
+```
+
+Der Protected Marketing Workflow führt diese Prüfungen bei relevanten Änderungen aus.
+
+---
+
+## 7. Webscan-Nachprüfung
+
+Nach Merge und produktivem Deploy:
+
+1. Cloudflare-/Browser-Cache leeren, falls erforderlich;
+2. Scan ohne vorhandene CookieHub-Einwilligung starten;
+3. Findings `Kein Cookie-Consent-Tool` und `Google Analytics ohne Consent-Gate` erneut prüfen;
+4. Browser-Network-Evidence zusätzlich dokumentieren;
+5. falls der Scanner trotz nachgewiesener Netzwerksperre nur Quelltext-Heuristiken nutzt, den
+   Befund als Scanner-False-Positive dokumentieren — nicht die Implementierung verschleiern.
+
+Ein Score von 100 ist ein Sekundärziel. Primär gilt das reale Netzwerk- und Consent-Verhalten.
+
+---
+
+## 8. Troubleshooting
+
+### CookieHub-Banner erscheint nicht
+
+- Domain-Code und Produktionsdomain im CookieHub-Dashboard prüfen;
+- Browser-Konsole auf CSP-/Hostname-Fehler prüfen;
+- `window.cookiehub.isReady()` prüfen;
+- sicherstellen, dass CookieHub nur einmal geladen wird;
+- Cloudflare-/Browser-Cache leeren.
+
+### GA4 lädt trotz Opt-in nicht
+
+- `VITE_GA_MEASUREMENT_ID` wurde beim Build gesetzt;
+- ID entspricht `G-[A-Z0-9]+`;
+- CookieHub-Kategorie heißt exakt `analytics`;
+- `cookiehub_onStatusChange` wird auf `document` ausgelöst;
+- CSP blockiert `www.googletagmanager.com` nicht.
+
+### Google-Request vor Opt-in
+
+- nach weiteren GA/GTM/AdSense-Snippets im Repository suchen;
+- Browser-Erweiterungen ausschließen;
+- CookieHub-/GTM-Doppelinstallation ausschließen;
+- ausgeliefertes Produktions-HTML statt nur den Main-Branch prüfen;
+- Deploy-Commit gegen `/healthz`/Deployment Identity abgleichen.
+
+---
+
+## 9. Offene externe Schritte
+
+| Schritt | Verantwortlich | Status |
 |---|---|---|
-| 1. GA4-Property + Measurement-ID | Repository-Owner (Google-Konto) | Erledigt |
-| 2. `VITE_GA_MEASUREMENT_ID` in `.env`/Render setzen | Repository-Owner | Lokal gesetzt — Render wird gerade vom Repository-Owner gesetzt |
-| 3. GA-Inline-Script in `index.html` (`%VITE_GA_MEASUREMENT_ID%`) | Entwicklung | Erledigt |
-| 4. CookieHub-Snippet in `index.html` | Entwicklung | Erledigt |
-| 4b. CookieHub-Dashboard konfigurieren (Domain, Kategorien, Analytics-Zuordnung) | Repository-Owner (CookieHub-Konto) | Offen — externer Vorgang, siehe Checkliste in Abschnitt 4 |
-| 4c. GA4 „Einwilligungsmodus" NICHT aktivieren | Repository-Owner | Hinweis beachten, keine Aktion nötig |
-| 5. Datenschutzerklärung/Protokoll aktualisieren | Entwicklung/Recht | Erledigt |
+| CookieHub-Domain/Category Mapping prüfen | Repository-Owner | Production Handoff |
+| Google-CMP-/TCF-Anforderungen für AdSense prüfen | Repository-Owner / Compliance | Production Handoff |
+| Render Build mit gültiger Measurement-ID | Repository-Owner | Nach Merge |
+| Browser-Network-Evidence erstellen | Reviewer / Owner | Nach Deploy |
+| Webscan wiederholen | Reviewer / Owner | Nach Deploy |
