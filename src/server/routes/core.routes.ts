@@ -16,12 +16,16 @@ import { stepUpRouter } from '../../../server/stepUp';
 import { complianceRouter } from '../../platform/Compliance/router';
 import { newsRouter } from '../../features/news/newsRoutes';
 import { registryRouter } from '../../features/registry/registryRoutes';
-import { RawMaterialsScoringService } from '../../services/rawMaterialsScoring';
 import type { AiProviders } from '../integrations/ai/providers';
 
+/**
+ * Registers the existing production routers against the modular application scaffold.
+ *
+ * The route factories accept the real provider clients, not scoring services. Keeping the
+ * constructor boundary identical to the production monolith prevents this scaffold from
+ * silently diverging while it remains inactive until a separately reviewed bootstrap cutover.
+ */
 export function registerCoreRoutes(app: express.Express, providers: AiProviders): void {
-  const rawMaterialsScoringService = new RawMaterialsScoringService();
-
   app.use('/api/stripe', stripeRouter);
   app.use('/api/orchestrator', orchestratorRouter);
   app.use('/api/ai', aiRouter);
@@ -37,6 +41,6 @@ export function registerCoreRoutes(app: express.Express, providers: AiProviders)
   app.use(alertsRouter);
   app.use(supervisorRouter);
   app.use(createAgentEvaluationRouter(providers.ai));
-  app.use(createRawMaterialsRouter(rawMaterialsScoringService));
-  app.use(createCryptoRouter());
+  app.use('/api/raw-materials', createRawMaterialsRouter(providers.ai, providers.anthropic, providers.openai));
+  app.use('/api/crypto', createCryptoRouter(providers.ai, providers.anthropic, providers.openai));
 }
