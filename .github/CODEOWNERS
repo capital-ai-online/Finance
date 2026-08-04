@@ -16,6 +16,7 @@
 /render.yaml @SvenKulessa
 /supabase/migrations/ @SvenKulessa
 /scripts/security/verifyGoogleMarketingInvariants.ts @SvenKulessa
+/scripts/security/verifyProductionConfigInvariants.ts @SvenKulessa
 /scripts/security/verifyChangedWorkflowSecurity.mjs @SvenKulessa
 /scripts/pr/ @SvenKulessa
 /tests/unit/securityResponse.test.ts @SvenKulessa
@@ -24,6 +25,7 @@
 /.dockerignore @SvenKulessa
 /.github/pull_request_template.md @SvenKulessa
 /.github/CODEOWNERS @SvenKulessa
+/.github/workflows/ci.yml @SvenKulessa
 /.github/workflows/google-marketing-protected-change.yml @SvenKulessa
 /.github/workflows/open-agent-draft-pr.yml @SvenKulessa
 /.github/workflows/pr-governance.yml @SvenKulessa
