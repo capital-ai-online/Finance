@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { attachSecurityResponseContext } from '../../server/securityResponse';
+import {
+  attachSecurityResponseContext,
+  buildBaselineProductionCsp,
+  buildStrictProductionCsp,
+  resolveProductionCspMode,
+} from '../../server/securityResponse';
 
 function createMockResponse() {
   const headers = new Map<string, unknown>();
@@ -44,54 +49,124 @@ function createHtmlRequest() {
       accept: 'text/html',
       'if-none-match': 'old-etag',
       'if-modified-since': 'yesterday',
+      range: 'bytes=0-100',
     },
   } as any;
 }
 
 const originalNodeEnv = process.env.NODE_ENV;
+const originalCspMode = process.env.CSP_MODE;
 
 afterEach(() => {
   process.env.NODE_ENV = originalNodeEnv;
+  if (originalCspMode === undefined) delete process.env.CSP_MODE;
+  else process.env.CSP_MODE = originalCspMode;
 });
 
-describe('ADR-0035 security response context', () => {
-  it('injects the same cryptographic nonce into CSP and HTML and disables HTML caching', () => {
+describe('ADR-0035 / ADR-0040 security response context', () => {
+  it('defaults production to enforced baseline plus strict report-only evaluation', () => {
     process.env.NODE_ENV = 'production';
+    delete process.env.CSP_MODE;
     const req = createHtmlRequest();
     const mock = createMockResponse();
 
     attachSecurityResponseContext(req, mock.res);
     mock.res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    mock.res.end('<html><head><script nonce="__CSP_NONCE__" src="/app.js"></script></head></html>');
+    mock.res.end('<html><head><script nonce="__CSP_NONCE__" src="/assets/app.js"></script></head></html>');
 
-    const csp = String(mock.headers.get('content-security-policy'));
-    const nonceMatch = csp.match(/'nonce-([^']+)'/);
+    const enforced = String(mock.headers.get('content-security-policy'));
+    const reportOnly = String(mock.headers.get('content-security-policy-report-only'));
+    const nonce = reportOnly.match(/'nonce-([^']+)'/)?.[1];
 
-    expect(nonceMatch).not.toBeNull();
-    const nonce = nonceMatch![1];
-    expect(nonce.length).toBeGreaterThanOrEqual(20);
+    expect(enforced).toContain("script-src 'self'");
+    expect(enforced).not.toContain("'strict-dynamic'");
+    expect(reportOnly).toContain("'strict-dynamic'");
+    expect(nonce).toBeTruthy();
     expect(mock.body()).toContain(`nonce="${nonce}"`);
     expect(mock.body()).not.toContain('__CSP_NONCE__');
-    expect(csp).toContain("'strict-dynamic'");
-    expect(csp).toContain("object-src 'none'");
-    expect(csp).toContain("base-uri 'none'");
+    expect(mock.headers.get('x-csp-mode')).toBe('report-only');
+    expect(mock.headers.get('x-csp-policy')).toBe('ADR-0035+ADR-0040');
     expect(mock.headers.get('cache-control')).toBe('no-store, max-age=0');
     expect(req.headers['if-none-match']).toBeUndefined();
     expect(req.headers['if-modified-since']).toBeUndefined();
+    expect(req.headers.range).toBeUndefined();
   });
 
-  it('generates a different nonce for separate HTML responses', () => {
+  it('enforces strict-dynamic only when strict mode is explicitly selected', () => {
     process.env.NODE_ENV = 'production';
+    process.env.CSP_MODE = 'strict';
+    const mock = createMockResponse();
+
+    attachSecurityResponseContext(createHtmlRequest(), mock.res);
+    mock.res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    mock.res.end('<script nonce="__CSP_NONCE__" src="/assets/app.js"></script>');
+
+    const enforced = String(mock.headers.get('content-security-policy'));
+    expect(enforced).toContain("'strict-dynamic'");
+    expect(mock.headers.has('content-security-policy-report-only')).toBe(false);
+    expect(mock.headers.get('x-csp-mode')).toBe('strict');
+  });
+
+  it('supports an explicit baseline recovery mode without a report-only policy', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.CSP_MODE = 'baseline';
+    const mock = createMockResponse();
+
+    attachSecurityResponseContext(createHtmlRequest(), mock.res);
+
+    const enforced = String(mock.headers.get('content-security-policy'));
+    expect(enforced).toContain("script-src 'self'");
+    expect(enforced).not.toContain("'strict-dynamic'");
+    expect(mock.headers.has('content-security-policy-report-only')).toBe(false);
+    expect(mock.headers.get('x-csp-mode')).toBe('baseline');
+  });
+
+  it('fails safely to report-only mode for an unknown CSP_MODE value', () => {
+    expect(resolveProductionCspMode('unexpected')).toBe('report-only');
+    expect(resolveProductionCspMode('STRICT')).toBe('strict');
+  });
+
+  it('keeps the baseline and strict policy builders independently testable', () => {
+    const baseline = buildBaselineProductionCsp('nonce-value');
+    const strict = buildStrictProductionCsp('nonce-value');
+
+    expect(baseline).toContain("script-src 'self' 'nonce-nonce-value'");
+    expect(baseline).not.toContain("'strict-dynamic'");
+    expect(strict).toContain("'nonce-nonce-value'");
+    expect(strict).toContain("'strict-dynamic'");
+    expect(strict).toContain("object-src 'none'");
+    expect(strict).toContain("base-uri 'none'");
+  });
+
+  it('prevents a later legacy CSP setter from replacing the authoritative policy', () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.CSP_MODE;
+    const mock = createMockResponse();
+
+    attachSecurityResponseContext(createHtmlRequest(), mock.res);
+    const expectedEnforced = mock.headers.get('content-security-policy');
+    const expectedReportOnly = mock.headers.get('content-security-policy-report-only');
+
+    mock.res.setHeader('Content-Security-Policy', "default-src 'none'");
+    mock.res.setHeader('Content-Security-Policy-Report-Only', "default-src 'none'");
+
+    expect(mock.headers.get('content-security-policy')).toBe(expectedEnforced);
+    expect(mock.headers.get('content-security-policy-report-only')).toBe(expectedReportOnly);
+  });
+
+  it('generates a different nonce for separate production responses', () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.CSP_MODE;
 
     const first = createMockResponse();
     attachSecurityResponseContext(createHtmlRequest(), first.res);
-    const firstCsp = String(first.headers.get('content-security-policy'));
-    const firstNonce = firstCsp.match(/'nonce-([^']+)'/)?.[1];
+    const firstNonce = String(first.headers.get('content-security-policy-report-only'))
+      .match(/'nonce-([^']+)'/)?.[1];
 
     const second = createMockResponse();
     attachSecurityResponseContext(createHtmlRequest(), second.res);
-    const secondCsp = String(second.headers.get('content-security-policy'));
-    const secondNonce = secondCsp.match(/'nonce-([^']+)'/)?.[1];
+    const secondNonce = String(second.headers.get('content-security-policy-report-only'))
+      .match(/'nonce-([^']+)'/)?.[1];
 
     expect(firstNonce).toBeTruthy();
     expect(secondNonce).toBeTruthy();
