@@ -195,7 +195,7 @@ const checks: InvariantCheck[] = [
     id: 'GMG-028',
     file: 'public/google-analytics-consent.js',
     description: 'Consent Mode v2 must default analytics and advertising storage to denied',
-    pattern: /consent', 'default'[\s\S]*?analytics_storage: 'denied'[\s\S]*?ad_storage: 'denied'/,
+    pattern: /consent', 'default'[\s\S]*?ad_storage: 'denied'[\s\S]*?analytics_storage: 'denied'/,
   },
   {
     id: 'GMG-029',
