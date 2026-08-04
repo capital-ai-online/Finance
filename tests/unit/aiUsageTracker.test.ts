@@ -136,8 +136,13 @@ describe('aiUsageTracker', () => {
     }
   });
 
-  it('PROMPT_REGISTRY deckt alle 17 bekannten Aufrufstellen ab', () => {
-    expect(Object.keys(PROMPT_REGISTRY).length).toBe(17);
+  it('PROMPT_REGISTRY deckt alle 18 bekannten Aufrufstellen einschliesslich Binance Landing ab', () => {
+    expect(Object.keys(PROMPT_REGISTRY).length).toBe(18);
+    expect(PROMPT_REGISTRY['landing-binance-quick-analysis']).toMatchObject({
+      id: 'landing-binance-quick-analysis',
+      module: 'server/binanceLandingQuickAnalysis.ts (/api/ai/landing/quick-analysis)',
+      version: '1.0.0',
+    });
   });
 
   // Audit ARCH-AUDIT-0002 (J3): providerübergreifender Rückfall - derselbe Ledger muss auch
