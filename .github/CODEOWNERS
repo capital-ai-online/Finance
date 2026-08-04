@@ -1,4 +1,4 @@
-# ADR-0035 / ESS-0014 — repository review ownership for protected marketing assets.
+# ADR-0035 / ESS-0014 / ADR-0040 — repository review ownership for protected marketing assets.
 # ADR-0036 — PR-first multi-agent single-writer governance.
 #
 # This is an additional GitHub-layer guard. CAPITAL-AI IAM / protected-change approval remains
@@ -15,6 +15,7 @@
 /scripts/security/verifyChangedWorkflowSecurity.mjs @SvenKulessa
 /scripts/pr/ @SvenKulessa
 /tests/unit/securityResponse.test.ts @SvenKulessa
+/tests/unit/securityResponse.production.test.ts @SvenKulessa
 /.github/pull_request_template.md @SvenKulessa
 /.github/CODEOWNERS @SvenKulessa
 /.github/workflows/google-marketing-protected-change.yml @SvenKulessa
@@ -29,5 +30,6 @@
 /.ai/registry/ess-registry.json @SvenKulessa
 /docs/adr/ADR-0035-protected-google-marketing-integration-strict-csp.md @SvenKulessa
 /docs/adr/ADR-0036-* @SvenKulessa
+/docs/adr/ADR-0040-* @SvenKulessa
 /docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md @SvenKulessa
 /docs/architecture/PR_MULTI_AGENT_GOVERNANCE.md @SvenKulessa

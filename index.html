@@ -5,9 +5,8 @@
     <script nonce="__CSP_NONCE__" src="/cookiehub-init.js"></script>
     <script nonce="__CSP_NONCE__" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1353017943074018"
      crossorigin="anonymous"></script>
-    <script nonce="__CSP_NONCE__" async custom-element="amp-auto-ads"
-        src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js">
-    </script>
+    <!-- ADR-0040: AMP Auto Ads belongs only on a separately validated AMP document.
+         This React/Vite SPA uses the normal AdSense loader above. -->
     <meta name="ga-measurement-id" content="%VITE_GA_MEASUREMENT_ID%" />
     <script nonce="__CSP_NONCE__" src="/google-analytics-consent.js"></script>
     <meta charset="UTF-8" />
@@ -39,9 +38,6 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
-    <amp-auto-ads type="adsense"
-        data-ad-client="ca-pub-1353017943074018">
-    </amp-auto-ads>
     <!-- Server-seitig sichtbare Rechtslinks: die App selbst ist eine React-SPA, die
          Footer-Links zu AGB/Impressum/Datenschutz werden erst nach dem Hydratisieren
          gerendert. Security-/Compliance-Scanner (und Crawler ohne JS) lesen nur die

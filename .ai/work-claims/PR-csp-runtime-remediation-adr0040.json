@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "PR-csp-runtime-remediation-adr0040",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Thinking",
+    "executionSurface": "ChatGPT GitHub + Render connectors"
+  },
+  "workItem": "Restore CAPITAL-AI frontend availability by remediating ADR-0035 CSP runtime delivery and introducing a governed report-only-to-strict rollout",
+  "startedAt": "2026-08-04T16:18:00Z",
+  "baseBranch": "main",
+  "baseSha": "24d9daecaf4100ef7dccd3c3c375ac6b0ae8bd43",
+  "productionBaseline": {
+    "mode": "verified",
+    "productionUrl": "https://capital-ai.online/healthz",
+    "version": "0.6.0",
+    "commitSha": "24d9daecaf4100ef7dccd3c3c375ac6b0ae8bd43",
+    "productionBranch": "main",
+    "renderServiceId": "srv-d91o1o9o3t8c73edi55g"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/PR-csp-runtime-remediation-adr0040.json",
+    "server/securityResponse.ts",
+    "index.html",
+    "scripts/security/verifyGoogleMarketingInvariants.ts",
+    "tests/unit/securityResponse.test.ts",
+    "tests/unit/securityResponse.production.test.ts",
+    ".github/workflows/google-marketing-protected-change.yml",
+    ".github/CODEOWNERS",
+    "docs/adr/ADR-0040-csp-runtime-remediation-safe-rollout.md"
+  ],
+  "releaseCondition": "Claim is released only when the CSP remediation PR is merged or closed."
+}
