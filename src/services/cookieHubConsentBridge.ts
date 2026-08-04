@@ -7,11 +7,11 @@ declare global {
   }
 }
 
-// Das eigentliche Laden/Entladen von Google Analytics anhand der CookieHub-Einwilligung passiert
-// als Inline-Script direkt in index.html (siehe dort) - nicht hier im React-Bundle. Grund: die
-// Consent-Listener muessen registriert sein, BEVOR CookieHub bei DOMContentLoaded seinen initialen
-// Status feuert; ein React `useEffect` haengt erst nach dem ersten Render+Commit an und wuerde
-// dieses erste Event fuer wiederkehrende Besucher mit bereits gespeicherter Einwilligung verpassen.
+// Das Laden von GA4/AdSense sowie das Mapping auf Google Consent Mode v2 erfolgt bewusst
+// ausserhalb des React-Bundles in public/google-analytics-consent.js. Dort werden die
+// CookieHub-Listener bereits waehrend der <head>-Verarbeitung am document registriert, bevor
+// CookieHub bei DOMContentLoaded initialisiert wird. Ein React useEffect waere dafuer zu spaet
+// und koennte den gespeicherten Initialstatus wiederkehrender Besucher verpassen.
 export function openCookieHubSettings(): void {
   window.cookiehub?.openSettings();
 }
