@@ -34,8 +34,15 @@ async function startProductionFixture() {
   return {
     baseUrl: `http://127.0.0.1:${address.port}`,
     close: async () => {
-      server.close();
-      await once(server, 'close');
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) reject(error);
+          else resolve();
+        });
+        // Node's fetch client keeps HTTP connections alive. Terminate fixture-only sockets so
+        // test cleanup cannot wait for the keep-alive timeout after all response bodies were read.
+        server.closeAllConnections();
+      });
     },
   };
 }
@@ -81,8 +88,10 @@ describe.skipIf(!productionBuildExists)('ADR-0040 production CSP delivery', () =
       expect(assetPath).toBeTruthy();
 
       const assetResponse = await fetch(`${fixture.baseUrl}${assetPath}`);
+      const assetBody = await assetResponse.arrayBuffer();
       expect(assetResponse.status).toBe(200);
       expect(assetResponse.headers.get('content-type')).toMatch(/javascript/);
+      expect(assetBody.byteLength).toBeGreaterThan(0);
     } finally {
       await fixture.close();
     }
