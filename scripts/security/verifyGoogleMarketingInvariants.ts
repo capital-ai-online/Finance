@@ -1,14 +1,11 @@
-// ADR-0035 / ESS-0014 — deployment-time protected-change guard.
+// ADR-0035 / ESS-0014 / ADR-0040 — deployment-time protected-change guard.
 //
-// Zweck: Ein versehentlicher Rueckbau der funktionierenden CookieHub-/Google-Marketing-
-// Security-Invarianten darf nicht unbemerkt deployen. Der Guard wird vor jedem `npm run build`
-// ausgefuehrt und blockiert den Build fail-closed, wenn eine geschuetzte Invariante fehlt.
+// The guard protects both security intent and availability. It must reject silent removal of
+// CookieHub/consent/nonce controls, but it must also reject reintroducing AMP hooks into the
+// non-AMP SPA or removing the report-only promotion boundary added after the black-screen
+// incident.
 //
-// WICHTIG: Dieser Guard ersetzt NICHT die IAM-Autorisierung. Ein absichtlicher Rueckbau ist
-// ausschliesslich ueber den in ESS-0014 definierten Protected-Change-Prozess zulaessig
-// (Human OWNER + TOTP Step-up oder OWNER-delegierter Service Account + one-time Approval).
-// Die spaetere MCP/Service-Account-Implementierung darf diesen Guard erweitern, aber nicht
-// still umgehen.
+// This repository guard does not replace IAM authorization or human/CODEOWNER approval.
 
 import fs from 'fs';
 import path from 'path';
@@ -19,6 +16,7 @@ interface InvariantCheck {
   description: string;
   pattern?: RegExp;
   includes?: string;
+  excludes?: string;
 }
 
 const root = process.cwd();
@@ -53,14 +51,14 @@ const checks: InvariantCheck[] = [
   {
     id: 'GMG-004',
     file: 'index.html',
-    description: 'AMP Auto Ads extension hook requested by architecture must remain present',
-    includes: 'https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js',
+    description: 'Non-AMP React/Vite document must not contain amp-auto-ads hooks',
+    excludes: 'amp-auto-ads',
   },
   {
     id: 'GMG-005',
-    file: 'index.html',
-    description: 'AMP Auto Ads body hook requested by architecture must remain present',
-    pattern: /<amp-auto-ads[\s\S]*?data-ad-client="ca-pub-1353017943074018"[\s\S]*?<\/amp-auto-ads>/,
+    file: 'server/securityResponse.ts',
+    description: 'Production must default to report-only strict-policy evaluation',
+    includes: "DEFAULT_PRODUCTION_CSP_MODE: ProductionCspMode = 'report-only'",
   },
   {
     id: 'GMG-006',
@@ -77,7 +75,7 @@ const checks: InvariantCheck[] = [
   {
     id: 'GMG-008',
     file: 'server/securityResponse.ts',
-    description: 'Production CSP must keep strict-dynamic',
+    description: 'Strict target CSP must keep strict-dynamic',
     includes: "'strict-dynamic'",
   },
   {
@@ -101,25 +99,25 @@ const checks: InvariantCheck[] = [
   {
     id: 'GMG-012',
     file: 'server/securityResponse.ts',
-    description: 'CookieHub data endpoint must remain allowed by CSP',
+    description: 'CookieHub data endpoint must remain allowed by the strict CSP',
     includes: 'https://ds.cookiehub.net',
   },
   {
     id: 'GMG-013',
     file: 'server/securityResponse.ts',
-    description: 'CookieHub consent endpoint must remain allowed by CSP',
+    description: 'CookieHub consent endpoint must remain allowed by the strict CSP',
     includes: 'https://consent.cookiehub.net',
   },
   {
     id: 'GMG-014',
     file: 'server/securityResponse.ts',
-    description: 'CookieHub EU region endpoint must remain allowed by CSP',
+    description: 'CookieHub EU region endpoint must remain allowed by the strict CSP',
     includes: 'https://region-eu.cookiehub.net',
   },
   {
     id: 'GMG-015',
     file: 'server/securityResponse.ts',
-    description: 'CookieHub EU consent endpoint must remain allowed by CSP',
+    description: 'CookieHub EU consent endpoint must remain allowed by the strict CSP',
     includes: 'https://consent-eu.cookiehub.net',
   },
   {
@@ -158,6 +156,36 @@ const checks: InvariantCheck[] = [
     description: 'ADR-0035 protected-change decision must remain present',
     includes: 'Mandatory Impact Confirmation',
   },
+  {
+    id: 'GMG-022',
+    file: 'server/securityResponse.ts',
+    description: 'Enforced baseline must explicitly allow the first-party Vite application bundle',
+    pattern: /buildBaselineProductionCsp[\s\S]*?script-src 'self'/,
+  },
+  {
+    id: 'GMG-023',
+    file: 'server/securityResponse.ts',
+    description: 'Strict target policy must be emitted through CSP Report-Only before promotion',
+    includes: 'Content-Security-Policy-Report-Only',
+  },
+  {
+    id: 'GMG-024',
+    file: 'tests/unit/securityResponse.production.test.ts',
+    description: 'Built SPA delivery path must be covered by a production-response test',
+    includes: 'express.static(distPath)',
+  },
+  {
+    id: 'GMG-025',
+    file: 'tests/unit/securityResponse.production.test.ts',
+    description: 'Built Vite JavaScript asset must be fetched and verified',
+    pattern: /\/assets\\\/[\s\S]*?assetResponse/,
+  },
+  {
+    id: 'GMG-026',
+    file: 'docs/adr/ADR-0040-csp-runtime-remediation-safe-rollout.md',
+    description: 'ADR-0040 safe CSP rollout decision must remain present',
+    includes: 'Report-Only Promotion Gate',
+  },
 ];
 
 const failures: Array<{ id: string; file: string; description: string }> = [];
@@ -171,9 +199,10 @@ for (const check of checks) {
     continue;
   }
 
-  const valid = check.includes !== undefined
-    ? content.includes(check.includes)
-    : check.pattern?.test(content) === true;
+  let valid = false;
+  if (check.includes !== undefined) valid = content.includes(check.includes);
+  else if (check.excludes !== undefined) valid = !content.includes(check.excludes);
+  else valid = check.pattern?.test(content) === true;
 
   if (!valid) {
     failures.push({ id: check.id, file: check.file, description: check.description });
@@ -182,12 +211,9 @@ for (const check of checks) {
 
 if (failures.length > 0) {
   console.error('\n[PROTECTED_CHANGE_GUARD] DEPLOYMENT BLOCKED\n');
-  console.error('A protected CookieHub / Google Marketing / CSP invariant was removed or changed.');
-  console.error('Do NOT bypass this guard as a generic build fix.');
-  console.error('A rollback requires ESS-0014 impact disclosure and explicit approval:');
-  console.error('- Human principal: CAPITAL-AI IAM role OWNER + fresh TOTP step-up');
-  console.error('- Service account: OWNER-delegated exact capability + one-time OWNER rollback approval');
-  console.error('- Dry-run, expected fingerprint, audit evidence and post-change verification are mandatory.\n');
+  console.error('A protected CookieHub / Google Marketing / CSP invariant is missing or unsafe.');
+  console.error('Do not bypass this guard as a generic build fix.');
+  console.error('Changes require ESS-0014 / ADR-0035 / ADR-0040 impact disclosure, review and evidence.\n');
 
   for (const failure of failures) {
     console.error(`- ${failure.id} ${failure.file}: ${failure.description}`);
