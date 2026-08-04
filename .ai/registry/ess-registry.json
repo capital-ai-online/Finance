@@ -7,8 +7,8 @@
   "generated": false,
   "seed": true,
   "note": "Dieser Registry-Eintrag ist ein Knowledge Seed. Nach Bereitstellung des Enterprise Bootstrappers wird die Registry generatorgestuetzt fortgeschrieben.",
-  "updatedAt": "2026-08-03",
-  "freeNumberSpaceStartsAt": "ESS-0016",
+  "updatedAt": "2026-08-04",
+  "freeNumberSpaceStartsAt": "ESS-0017",
   "entries": [
     {
       "id": "ESS-0001",
@@ -247,6 +247,18 @@
       "operationalDocs": "docs/architecture/api/",
       "implementationStatus": "IN PROGRESS",
       "rationale": "Fuehrt eine verbindliche API-/Webhook-/SDK-/MCP-/SMTP-/Data-API-Inventarisierung mit QA-Evidence-Gates ein. Die daraus resultierende Provider Decision Matrix ist Voraussetzung fuer eine neue ADR zur zukuenftigen FinTech-API- und Market-Data-Routing-Architektur."
+    },
+    {
+      "id": "ESS-0016",
+      "title": "Enterprise Market Data Provider & MCP Governance",
+      "status": "published",
+      "version": "1.0.0",
+      "document": ".ai/skills/ESS-0016-Enterprise-Market-Data-Provider-MCP-Governance.md",
+      "reservedBy": null,
+      "owner": "Platform Director",
+      "relatedAdr": ["ADR-0041"],
+      "implementationStatus": "SPECIFIED / NOT YET IMPLEMENTED",
+      "rationale": "Definiert die providerneutrale Market-Data-Gateway-Architektur und trennt die deterministische Runtime Data Plane von einer read-only, policy-gesteuerten MCP Agent Plane."
     }
   ],
   "rules": [
@@ -287,7 +299,7 @@
       "adr": ["ADR-0010", "ADR-0011", "ADR-0012", "ADR-0013"],
       "ess": ["ESS-0002", "ESS-0003", "ESS-0004", "ESS-0005", "ESS-0006", "ESS-0007", "ESS-0008", "ESS-0009", "ESS-0010", "ESS-0013", "ESS-0013-CONTRACTS", "ESS-0014", "ESS-0014-CONTRACTS"]
     },
-    "freeNumberSpaceUnchanged": "Die frühere abweichende ESS-0014-Belegung im Entwicklungsstand bleibt ungültig. Im führenden Produktionsrepository ist ESS-0014 am 2026-08-03 regulär an Google Marketing MCP Governance vergeben; ESS-0015 ist an API Interface Inventory & QA Governance vergeben; nächster freier Nummernraum beginnt bei ESS-0016.",
+    "freeNumberSpaceUnchanged": "Die frühere abweichende ESS-0014-Belegung im Entwicklungsstand bleibt ungültig. Im führenden Produktionsrepository ist ESS-0014 an Google Marketing MCP Governance vergeben, ESS-0015 an API Interface Inventory & QA Governance und ESS-0016 an Enterprise Market Data Provider & MCP Governance; der nächste freie Nummernraum beginnt bei ESS-0017.",
     "auditReference": "docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md (ARCH-AUDIT-0002)"
   }
 }
