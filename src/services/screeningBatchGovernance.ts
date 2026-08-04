@@ -16,9 +16,20 @@ export interface ScreeningBatchItem {
   [key: string]: unknown;
 }
 
+export interface ScreeningBatchGovernanceOptions {
+  /**
+   * Optional evaluation clock for deterministic tests and replayable governance evidence.
+   * Production callers normally omit this so the current wall clock remains authoritative.
+   */
+  nowMs?: number;
+  /** Optional policy override; defaults to the screening-eligibility contract's 24-hour limit. */
+  maxEvidenceAgeMs?: number;
+}
+
 export function decorateScreeningBatchWithGovernance(
   items: ScreeningBatchItem[],
   telemetry: ProviderRoutingTelemetry[],
+  options: ScreeningBatchGovernanceOptions = {},
 ) {
   const sla = buildScreeningSlaReport(telemetry);
   const results = items.map(item => {
@@ -32,6 +43,8 @@ export function decorateScreeningBatchWithGovernance(
       providers,
       evidenceIds,
       observedAt: item.observedAt ?? null,
+      nowMs: options.nowMs,
+      maxAgeMs: options.maxEvidenceAgeMs,
       minimumEvidence: 1,
       minimumProviders: 1,
     });
