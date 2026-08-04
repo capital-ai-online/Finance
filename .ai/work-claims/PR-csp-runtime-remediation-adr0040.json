@@ -26,7 +26,7 @@
     "index.html",
     "scripts/security/verifyGoogleMarketingInvariants.ts",
     "tests/unit/securityResponse.test.ts",
-    "tests/integration/securityResponse.production.test.ts",
+    "tests/unit/securityResponse.production.test.ts",
     ".github/workflows/google-marketing-protected-change.yml",
     ".github/CODEOWNERS",
     "docs/adr/ADR-0040-csp-runtime-remediation-safe-rollout.md"
