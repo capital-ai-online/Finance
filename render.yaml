@@ -1,8 +1,17 @@
 services:
   - type: web
-    name: capital-ai
+    name: Finance
     runtime: docker
+    repo: https://github.com/SvenKulessa/Finance
+    branch: main
+    region: frankfurt
+    plan: starter
+    numInstances: 1
+    autoDeployTrigger: checksPass
     healthCheckPath: /healthz
+    # ADR-0037: stay below Render's 30s default termination window so the application can
+    # stop scheduling work, drain HTTP requests and exit before a forced termination.
+    maxShutdownDelaySeconds: 30
     envVars:
       - key: VITE_GA_MEASUREMENT_ID
         sync: false
@@ -45,6 +54,21 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: OPENAI_API_KEY
+        sync: false
+      # Canonical production billing contract. Monthly/yearly variables are the authoritative
+      # keys used by server/stripe.ts. Legacy monthly aliases remain declared temporarily for
+      # backwards compatibility and can be retired in a separately reviewed cleanup.
+      - key: STRIPE_PRICE_ID_STARTER_MONTHLY
+        sync: false
+      - key: STRIPE_PRICE_ID_STARTER_YEARLY
+        sync: false
+      - key: STRIPE_PRICE_ID_PRO_MONTHLY
+        sync: false
+      - key: STRIPE_PRICE_ID_PRO_YEARLY
+        sync: false
+      - key: STRIPE_ID_FOUNDER
+        sync: false
+      - key: STRIPE_PRICE_ID_EXPORT_PDF
         sync: false
       - key: STRIPE_PRICE_ID_STARTER
         sync: false

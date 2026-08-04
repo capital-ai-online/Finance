@@ -68,11 +68,11 @@ const claim = {
     repoSlug: baseline.production.repoSlug,
   },
   claimedPaths: [...new Set(args.paths)],
-  releaseCondition: 'Claim is released only when the associated Pull Request is merged or closed.',
+  releaseCondition: 'Coordination metadata is released when the associated work is merged, closed, superseded or abandoned.',
 };
 
 const errors = validateClaimShape(claim, claimPath);
 if (errors.length > 0) fail(`Generated claim is invalid:\n- ${errors.join('\n- ')}`);
 
 writeJsonFile(claimPath, claim);
-console.log(`[PR-CLAIM] Created ${claimPath}. Commit/push this claim before application edits and open the draft PR within 15 minutes.`);
+console.log(`[PR-CLAIM] Created advisory coordination metadata at ${claimPath}. No Pull Request creation deadline applies.`);

@@ -1,33 +1,51 @@
 {
   "name": "VersionManager",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "implemented",
   "owner": "CAPITAL-AI",
-  "description": "Enterprise Version Manager: verwaltet die verbindliche Plattformversion/Buildnummer (Persistenz in uploads/version_manager.json), fuehrt admin-getriggerte Versions-Bumps (patch/minor/major) aus und generiert dabei 11 Compliance-Markdown-Dokumente unter docs/. Admin- und Step-Up-geschuetzt (server/iam), REST-API unter /api/admin/version(/bump).",
+  "description": "Enterprise Version Manager: verwaltet Plattformversion/Buildnummer und erweitert die Release-Governance um einen Naming & Repository Convention Validator fuer Projektidentitaet, Version-Synchronitaet, Namenskonventionen, Case-Kollisionen und Enterprise Exceptions.",
   "category": "platform",
   "ess": [
     "ESS-0001",
     "ESS-0001-CONTRACTS",
     "ESS-0004"
   ],
-  "adr": [],
+  "adr": [
+    "ADR-0011",
+    "ADR-0020"
+  ],
   "dependencies": [
     "server/systemEvents.ts",
     "server/documentHygiene.ts",
     "server/iam/authMiddleware.ts",
     "server/iam/types.ts"
   ],
+  "capabilities": [
+    "version-state-management",
+    "release-document-generation",
+    "naming-repository-convention-validation"
+  ],
+  "interfaces": [
+    "scripts/automation/validateRepositoryConventions.ts"
+  ],
   "events": {
     "produces": [],
     "consumes": [],
-    "note": "ARCH-AUDIT-0002 (J5): das produktive Event-Feld wurde korrigiert - die vier zuvor genannten Events (VersionCalculatedEvent etc.) werden vom tatsaechlichen Code nicht ausgeloest. Die Komponente protokolliert stattdessen ueber das aeltere logSystemEvent()-Log (server/systemEvents.ts), nicht ueber den Enterprise Event Bus (ESS-0013)."
+    "note": "ARCH-AUDIT-0002 (J5): die Komponente protokolliert ueber logSystemEvent(); ein Enterprise-Event-Bus-Adapter ist weiterhin nicht implementiert."
   },
-  "knowledge": [],
-  "interfaces": [],
-  "contracts": [],
-  "documentation": [
-    "README.md"
+  "knowledge": [
+    ".ai/registry/exception-registry.json"
   ],
-  "tests": [],
-  "note": "ARCH-AUDIT-0002 (J5, Kapitel 14.6): physisch aus server/versionManager.ts hierher verschoben - vorher wies die ESS-Registry (implementedBy) auf diesen Ordner, obwohl er nur eine leere Huelle war und der Code unter server/ lag. Diese Verschiebung macht die Registry-Angabe korrekt."
+  "contracts": [
+    "ESS-0001-CONTRACTS Chapter 8 — Naming Contract",
+    "ESS-0001-CONTRACTS Chapter 16 — Exception Contract / Repository Governance"
+  ],
+  "documentation": [
+    "README.md",
+    "docs/adr/ADR-0020-version-manager-repository-convention-validator.md"
+  ],
+  "tests": [
+    "repositoryConventionValidator.test.ts"
+  ],
+  "note": "ADR-0020: Der Validator ist read-only. Strict Mode blockiert nur bei Severity=error; Advisory Mode meldet alle Findings ohne Blockade. Ausnahmegenehmigungen bleiben ausserhalb der Komponente."
 }

@@ -1,4 +1,4 @@
-name: PR Governance
+name: PR Technical Validation
 
 on:
   pull_request:
@@ -9,91 +9,15 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
 
 concurrency:
-  group: pr-governance-${{ github.event.pull_request.number || github.ref }}
+  group: pr-technical-validation-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# ADR-0039: this workflow proves technical candidate integrity only.
+# Production drift, PR creation authority and concurrent-work coordination are
+# human process decisions and MUST NOT be inferred from a green build.
 jobs:
-  governance-policy:
-    name: Governance policy
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout trusted policy from main
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          ref: main
-          path: policy
-          fetch-depth: 1
-          persist-credentials: false
-
-      - name: Checkout candidate without persisted credentials
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: candidate
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: '22'
-
-      - name: Import trusted current main into candidate repository
-        working-directory: candidate
-        run: git fetch --no-tags ../policy main:refs/remotes/origin/main
-
-      # One-time bootstrap only: PR #75 introduces scripts/pr/* themselves, so those files
-      # cannot yet be loaded from main. Every later PR executes policy exclusively from main.
-      - name: Production baseline
-        id: baseline
-        working-directory: candidate
-        env:
-          POLICY_ROOT: ${{ github.event.pull_request.number == 75 && '.' || '../policy' }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_BASE_REF: origin/main
-          PR_HEAD_REF: HEAD
-          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
-          CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
-          ALLOW_PR75_BOOTSTRAP: ${{ github.event.pull_request.number == 75 && 'true' || 'false' }}
-        run: node "$POLICY_ROOT/scripts/pr/productionPreflight.mjs"
-
-      - name: Exclusive work claim, overlap and 15-minute SLA
-        working-directory: candidate
-        env:
-          POLICY_ROOT: ${{ github.event.pull_request.number == 75 && '.' || '../policy' }}
-          GITHUB_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_BASE_REF: origin/main
-          PR_HEAD_REF: HEAD
-          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
-          ALLOW_PR75_BOOTSTRAP: ${{ github.event.pull_request.number == 75 && 'true' || 'false' }}
-        run: node "$POLICY_ROOT/scripts/pr/validateWorkClaim.mjs"
-
-      - name: Canonical PR template
-        working-directory: candidate
-        env:
-          POLICY_ROOT: ${{ github.event.pull_request.number == 75 && '.' || '../policy' }}
-          GITHUB_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_BASE_REF: origin/main
-          PR_HEAD_REF: HEAD
-          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
-        run: node "$POLICY_ROOT/scripts/pr/validatePrBody.mjs"
-
-      - name: Changed workflow security
-        working-directory: candidate
-        env:
-          POLICY_ROOT: ${{ github.event.pull_request.number == 75 && '.' || '../policy' }}
-          PR_BASE_REF: origin/main
-          PR_HEAD_REF: HEAD
-        run: node "$POLICY_ROOT/scripts/security/verifyChangedWorkflowSecurity.mjs"
-
   candidate-validation:
     name: Candidate validation
     runs-on: ubuntu-latest
@@ -119,6 +43,12 @@ jobs:
           GH_TOKEN: ''
         run: npm ci
 
+      - name: Production dependency vulnerability gate
+        env:
+          GITHUB_TOKEN: ''
+          GH_TOKEN: ''
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Type check
         env:
           GITHUB_TOKEN: ''
@@ -136,3 +66,77 @@ jobs:
           GITHUB_TOKEN: ''
           GH_TOKEN: ''
         run: npm run build
+
+      - name: Deployment readiness
+        env:
+          GITHUB_TOKEN: ''
+          GH_TOKEN: ''
+        run: npm run predeploy:check
+
+  repository-conventions-advisory:
+    name: Repository conventions advisory
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout candidate without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        env:
+          GITHUB_TOKEN: ''
+          GH_TOKEN: ''
+        run: npm ci
+
+      - name: Evaluate repository conventions without blocking deployment
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ''
+          GH_TOKEN: ''
+        run: npm run repository:validate:advisory
+
+  workflow-security:
+    name: Changed workflow security
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout trusted security policy from main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          path: policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Checkout candidate without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Import trusted current main into candidate repository
+        working-directory: candidate
+        run: git fetch --no-tags ../policy main:refs/remotes/origin/main
+
+      - name: Validate changed workflow security
+        working-directory: candidate
+        env:
+          POLICY_ROOT: ../policy
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+        run: node "$POLICY_ROOT/scripts/security/verifyChangedWorkflowSecurity.mjs"

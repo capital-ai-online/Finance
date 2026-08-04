@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "PR-governance-human-pr-authorization",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Thinking",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "Separate technical sandbox/build validation from human PR-creation authority; remove the 15-minute PR SLA and move production-baseline and multi-agent overlap controls out of blocking build CI.",
+  "startedAt": "2026-08-03T08:30:00Z",
+  "baseBranch": "main",
+  "baseSha": "24d9daecaf4100ef7dccd3c3c375ac6b0ae8bd43",
+  "pullRequest": null,
+  "prCreationApproval": {
+    "status": "approved",
+    "approvedBy": "human-user",
+    "approvedAt": "2026-08-03T08:29:00Z",
+    "scope": "Create one governance PR containing the prepared human-authorization and non-blocking governance-pipeline changes."
+  },
+  "productionBaseline": {
+    "checkedAt": "2026-08-03T08:29:00Z",
+    "version": "0.6.0",
+    "commitSha": "24d9daecaf4100ef7dccd3c3c375ac6b0ae8bd43",
+    "branch": "main",
+    "repoSlug": "SvenKulessa/Finance"
+  },
+  "claimedPaths": [
+    ".github/workflows/pr-governance.yml",
+    ".github/pull_request_template.md",
+    "AGENTS.md",
+    "scripts/pr/createWorkClaim.mjs",
+    "scripts/pr/validateWorkClaim.mjs",
+    "docs/adr/ADR-0039-human-authorized-pr-creation-and-advisory-governance.md"
+  ],
+  "releaseCondition": "Coordination metadata is released when this governance PR is merged, closed, superseded or abandoned."
+}

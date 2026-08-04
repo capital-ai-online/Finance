@@ -12,6 +12,7 @@ import { getPromptGovernanceEntry, recordAiEvaluation, getAiGovernanceInventory,
 import { getAnthropicInstance, isAnthropicConfigured } from './anthropicClient';
 import { getOpenAIInstance, isOpenAIConfigured } from './openaiClient';
 import { entitlementsRouter } from './entitlements';
+import { binanceLandingQuickAnalysisRouter } from './binanceLandingQuickAnalysis';
 
 export const aiRouter = express.Router();
 
@@ -19,6 +20,9 @@ export const aiRouter = express.Router();
 // its own router while exposing the stable /api/entitlements/* contract without adding
 // another top-level mount point to the monolithic server bootstrap.
 aiRouter.use('/entitlements', entitlementsRouter);
+// ADR-0038: public landing-page market intelligence stays inside the existing /api AI
+// boundary while the Binance adapter remains isolated in its own server-side module.
+aiRouter.use('/landing', binanceLandingQuickAnalysisRouter);
 
 const upload = multer({
   dest: 'uploads/',
