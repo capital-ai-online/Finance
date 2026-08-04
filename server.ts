@@ -58,6 +58,7 @@ import { complianceRouter } from './src/platform/Compliance/router';
 import { checkRateLimit, getClientIp } from './src/platform/Security/rateLimiter';
 import { createLogger, requestContext } from './server/logger';
 import { metricsMiddleware, renderMetrics } from './server/metrics';
+import { getStripeConfigurationStatus, hasFiniteScoreValues, resolveHeuristicCryptoScore, resolveRuntimePort } from './server/runtime/renderRuntimeSafety';
 
 const serverLogger = createLogger('server');
 
@@ -69,7 +70,7 @@ const app = express();
 // versions-spezifischen Exploits erleichtert. disable('x-powered-by') unterdrueckt den Header
 // vollstaendig (Aequivalent zu Nginx' server_tokens off; / PHPs expose_php = Off).
 app.disable('x-powered-by');
-const PORT = 3000;
+const PORT = resolveRuntimePort(getCleanEnv('PORT'));
 
 // Audit ARCH-AUDIT-0002 (S4): weist als erste Middleware jedem Request eine Correlation-ID
 // zu, damit nachfolgende Logs (CORS-Block, Rate-Limit, IAM-Pruefung, Route-Handler,
@@ -519,13 +520,11 @@ function getApplicationAreaForSymbol(symbol: string, type: string): string {
 // Audit ARCH-AUDIT-0002 (Befund AUD2-F-001, Kapitel 6, sowie S1/S2/S5, S6 Kapitel 14.3): Legt
 // die Herkunft des score-Feldes offen, statt es unmarkiert wie eine einheitlich datenbasierte
 // Bewertung erscheinen zu lassen (No-Demo-Data-Policy, docs/DATENSCHUTZ_PROTOKOLL.md).
-// - 'market-data': alle Crypto-Assets (Standard und Meme) - generateCryptoScores() bzw.
-//   MemeCoinScoringService.generateMemeCoinInputs() beziehen seit S1/S2/S5 reale Marktdaten
-//   (Marktkapitalisierung/Volumen/Supply von CoinMarketCap/CoinGecko, echte Kurshistorie fuer
-//   Volatilitaet/Trend/Momentum) aus der AssetRegistry; fehlende Faktoren werden dynamisch
-//   ausgeschlossen statt geschaetzt (renormalizeAndScore()). Enthaelt KEINE Agenten-Analyse
-//   (die gibt es nur ueber /api/crypto/analyze via CryptoOrchestrator) - daher weiterhin von
-//   einer vollstaendigen Multi-Agenten-Bewertung unterschieden statt als "live" bezeichnet.
+// - 'market-data': Crypto-Assets, wenn generateCryptoScores() bzw.
+//   MemeCoinScoringService.generateMemeCoinInputs() verifizierte Marktdaten liefern. Fehlt fuer
+//   ein Standard-Crypto die benoetigte Live-Historie, darf der Market-Data-Batch einen bereits
+//   vorhandenen endlichen Upstream-/Provider-Score nur explizit als 'heuristic' weiterfuehren;
+//   die deterministische Scoring-Engine selbst bleibt fail-closed und erfindet keine Features.
 // - 'market-data' (Aktien/Forex, seit H1): traditionalAssetScoring.ts kombiniert echte
 //   technische Faktoren (Trend/Momentum/Breakout/Volatilitaet/RSI aus assetRegistry.getHistory(),
 //   dieselben Primitive wie beim Krypto-Scoring) mit - nur bei Aktien - realen Fundamentaldaten
@@ -565,6 +564,18 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
     } else {
       const classification = ClassificationService.classifyAsset(s);
       const seedScores = await generateCryptoScores(s, change24h);
+
+      // ADR-0037 runtime remediation: the scoring engine remains fail-closed when no
+      // verified feature set exists. The market-data aggregator may retain an already
+      // finite upstream/base score only as an explicitly labelled heuristic result, so one
+      // unsupported CMC symbol cannot reject the entire Promise.all refresh batch.
+      if (!hasFiniteScoreValues(seedScores as Record<string, unknown>)) {
+        const heuristicScore = resolveHeuristicCryptoScore(baseScore);
+        if (heuristicScore !== null) {
+          return { score: heuristicScore, basis: 'heuristic' };
+        }
+      }
+
       const payload = {
         asset_name: s,
         symbol: s,
@@ -2139,7 +2150,10 @@ async function startServer() {
     res.status(500).json({ error: 'Interner Serverfehler.', requestId: req.requestId });
   });
 
-  app.listen(PORT, "0.0.0.0", () => {
+  let marketDataRefreshTimer: NodeJS.Timeout | null = null;
+  let shutdownStarted = false;
+
+  const httpServer = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
     
     // Start Recursive Document Hygiene File Watcher
@@ -2170,7 +2184,7 @@ async function startServer() {
       console.warn("[Market Data] Pre-cache on startup failed:", err.message || err);
     });
 
-    setInterval(async () => {
+    marketDataRefreshTimer = setInterval(async () => {
       try {
         const data = await fetchLiveMarketData();
         cachedMarketData = data;
@@ -2196,23 +2210,43 @@ async function startServer() {
       }
     }, 60 * 1000); // refresh every 60s
 
-    // Secure run-time diagnostics for Stripe integration
-    const sk = getCleanEnv('STRIPE_SECRET_KEY');
-    const pk = getCleanEnv('STRIPE_PUBLISHABLE_KEY');
-    const wh = getCleanEnv('STRIPE_WEBHOOK_SECRET');
-    const priceStarter = getCleanEnv('STRIPE_PRICE_ID_STARTER');
-    const pricePro = getCleanEnv('STRIPE_PRICE_ID_PRO');
-    const priceEnterprise = getCleanEnv('STRIPE_PRICE_ID_ENTERPRISE');
-
-    console.log("=== [Stripe Server Diagnostics] ===");
-    console.log(`STRIPE_SECRET_KEY: ${sk ? `Configured (Length: ${sk.length}, Prefix: ${sk.substring(0, 7)})` : 'Missing'}`);
-    console.log(`STRIPE_PUBLISHABLE_KEY: ${pk ? `Configured (Length: ${pk.length}, Prefix: ${pk.substring(0, 7)})` : 'Missing'}`);
-    console.log(`STRIPE_WEBHOOK_SECRET: ${wh ? `Configured (Length: ${wh.length}, Prefix: ${wh.substring(0, 6)})` : 'Missing'}`);
-    console.log(`STRIPE_PRICE_ID_STARTER: ${priceStarter ? `Configured (Length: ${priceStarter.length}, Val: ${priceStarter.substring(0, 10)}...)` : 'Missing'}`);
-    console.log(`STRIPE_PRICE_ID_PRO: ${pricePro ? `Configured (Length: ${pricePro.length}, Val: ${pricePro.substring(0, 10)}...)` : 'Missing'}`);
-    console.log(`STRIPE_PRICE_ID_ENTERPRISE: ${priceEnterprise ? `Configured (Length: ${priceEnterprise.length}, Val: ${priceEnterprise.substring(0, 10)}...)` : 'Missing'}`);
-    console.log("====================================");
+    // ADR-0037 / security hardening: diagnostics expose configuration presence only.
+    // Never log key prefixes, lengths or partial Price IDs in production telemetry.
+    serverLogger.info('Stripe configuration validation', getStripeConfigurationStatus(getCleanEnv));
   });
+
+  // ADR-0037: Render sends SIGTERM during deploy/restart. Stop periodic work first, then
+  // drain the HTTP server. A bounded force-exit stays below Render's 30 second shutdown
+  // window so the old instance cannot linger indefinitely.
+  const shutdown = (signal: 'SIGTERM' | 'SIGINT') => {
+    if (shutdownStarted) return;
+    shutdownStarted = true;
+    serverLogger.info('Graceful shutdown initiated', { signal });
+
+    if (marketDataRefreshTimer) {
+      clearInterval(marketDataRefreshTimer);
+      marketDataRefreshTimer = null;
+    }
+
+    const forceExitTimer = setTimeout(() => {
+      serverLogger.error('Graceful shutdown timeout exceeded', { signal, timeoutMs: 25_000 });
+      process.exit(1);
+    }, 25_000);
+    forceExitTimer.unref();
+
+    httpServer.close((error?: Error) => {
+      clearTimeout(forceExitTimer);
+      if (error) {
+        serverLogger.error('HTTP server close failed during shutdown', { signal, error: error.message });
+        process.exit(1);
+      }
+      serverLogger.info('Graceful shutdown completed', { signal });
+      process.exit(0);
+    });
+  };
+
+  process.once('SIGTERM', () => shutdown('SIGTERM'));
+  process.once('SIGINT', () => shutdown('SIGINT'));
 }
 
 startServer();
