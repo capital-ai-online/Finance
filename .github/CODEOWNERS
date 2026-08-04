@@ -1,5 +1,6 @@
 # ADR-0035 / ESS-0014 / ADR-0040 — repository review ownership for protected marketing assets.
 # ADR-0036 — PR-first multi-agent single-writer governance.
+# ADR-0043 — Supabase privilege separation and production configuration hardening.
 #
 # This is an additional GitHub-layer guard. CAPITAL-AI IAM / protected-change approval remains
 # the authoritative application-level authorization contract where applicable. CODEOWNERS
@@ -11,11 +12,15 @@
 /server/securityResponse.ts @SvenKulessa
 /server/logger.ts @SvenKulessa
 /server/deploymentIdentity.ts @SvenKulessa
+/server/db.ts @SvenKulessa
+/render.yaml @SvenKulessa
+/supabase/migrations/ @SvenKulessa
 /scripts/security/verifyGoogleMarketingInvariants.ts @SvenKulessa
 /scripts/security/verifyChangedWorkflowSecurity.mjs @SvenKulessa
 /scripts/pr/ @SvenKulessa
 /tests/unit/securityResponse.test.ts @SvenKulessa
 /tests/unit/securityResponse.production.test.ts @SvenKulessa
+/tests/unit/supabasePrivilegeSeparation.test.ts @SvenKulessa
 /.dockerignore @SvenKulessa
 /.github/pull_request_template.md @SvenKulessa
 /.github/CODEOWNERS @SvenKulessa
@@ -32,5 +37,6 @@
 /docs/adr/ADR-0035-protected-google-marketing-integration-strict-csp.md @SvenKulessa
 /docs/adr/ADR-0036-* @SvenKulessa
 /docs/adr/ADR-0040-* @SvenKulessa
+/docs/adr/ADR-0043-* @SvenKulessa
 /docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md @SvenKulessa
 /docs/architecture/PR_MULTI_AGENT_GOVERNANCE.md @SvenKulessa
