@@ -2,7 +2,12 @@ node_modules
 dist
 .env
 .git
-.github
+# Keep GitHub metadata out of the Docker context by default, but include the single
+# protected-change workflow required by scripts/security/verifyGoogleMarketingInvariants.ts.
+.github/*
+!.github/workflows/
+.github/workflows/*
+!.github/workflows/google-marketing-protected-change.yml
 Dockerfile
 .dockerignore
 README.md

@@ -16,6 +16,7 @@ on:
       - 'tests/unit/securityResponse.production.test.ts'
       - '.github/workflows/google-marketing-protected-change.yml'
       - '.github/CODEOWNERS'
+      - '.dockerignore'
       - 'CLAUDE.md'
       - '.ai/skills/ESS-0014-*'
       - '.ai/registry/ess-registry.json'
@@ -41,6 +42,7 @@ on:
       - 'tests/unit/securityResponse.production.test.ts'
       - '.github/workflows/google-marketing-protected-change.yml'
       - '.github/CODEOWNERS'
+      - '.dockerignore'
       - 'CLAUDE.md'
       - '.ai/skills/ESS-0014-*'
       - '.ai/registry/ess-registry.json'
@@ -81,6 +83,14 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Verify Docker build-context contract
+        shell: bash
+        run: |
+          grep -Fxq '.github/*' .dockerignore
+          grep -Fxq '!.github/workflows/' .dockerignore
+          grep -Fxq '.github/workflows/*' .dockerignore
+          grep -Fxq '!.github/workflows/google-marketing-protected-change.yml' .dockerignore
 
       - name: Verify protected invariants
         run: npx tsx scripts/security/verifyGoogleMarketingInvariants.ts
