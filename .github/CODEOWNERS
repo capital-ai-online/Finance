@@ -16,6 +16,7 @@
 /scripts/pr/ @SvenKulessa
 /tests/unit/securityResponse.test.ts @SvenKulessa
 /tests/unit/securityResponse.production.test.ts @SvenKulessa
+/.dockerignore @SvenKulessa
 /.github/pull_request_template.md @SvenKulessa
 /.github/CODEOWNERS @SvenKulessa
 /.github/workflows/google-marketing-protected-change.yml @SvenKulessa
