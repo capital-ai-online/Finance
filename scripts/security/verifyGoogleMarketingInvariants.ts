@@ -1,9 +1,8 @@
-// ADR-0035 / ESS-0014 / ADR-0040 — deployment-time protected-change guard.
+// ADR-0035 / ESS-0014 / ADR-0040 / ADR-0042 — deployment-time protected-change guard.
 //
 // The guard protects both security intent and availability. It must reject silent removal of
 // CookieHub/consent/nonce controls, but it must also reject reintroducing AMP hooks into the
-// non-AMP SPA or removing the report-only promotion boundary added after the black-screen
-// incident.
+// non-AMP SPA, loading Google tags before opt-in, or removing the report-only promotion boundary.
 //
 // This repository guard does not replace IAM authorization or human/CODEOWNER approval.
 
@@ -45,8 +44,8 @@ const checks: InvariantCheck[] = [
   {
     id: 'GMG-003',
     file: 'index.html',
-    description: 'Google AdSense publisher loader must remain present',
-    includes: 'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1353017943074018',
+    description: 'AdSense must not be loaded unconditionally from the HTML shell',
+    excludes: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=',
   },
   {
     id: 'GMG-004',
@@ -186,6 +185,54 @@ const checks: InvariantCheck[] = [
     description: 'ADR-0040 safe CSP rollout decision must remain present',
     includes: 'Report-Only Promotion Gate',
   },
+  {
+    id: 'GMG-027',
+    file: 'public/google-analytics-consent.js',
+    description: 'CookieHub runtime events must be observed on document, per vendor API',
+    includes: 'document.addEventListener(eventName, syncConsent)',
+  },
+  {
+    id: 'GMG-028',
+    file: 'public/google-analytics-consent.js',
+    description: 'Consent Mode v2 must default analytics and advertising storage to denied',
+    pattern: /consent', 'default'[\s\S]*?analytics_storage: 'denied'[\s\S]*?ad_storage: 'denied'/,
+  },
+  {
+    id: 'GMG-029',
+    file: 'public/google-analytics-consent.js',
+    description: 'AdSense must remain gated by CookieHub marketing consent',
+    pattern: /hasConsented\('marketing'\)[\s\S]*?if \(marketingAllowed\) loadAdSense\(\)/,
+  },
+  {
+    id: 'GMG-030',
+    file: 'index.html',
+    description: 'The public AdSense publisher ID must be supplied as inert metadata',
+    includes: '<meta name="adsense-publisher-id" content="ca-pub-1353017943074018" />',
+  },
+  {
+    id: 'GMG-031',
+    file: 'index.html',
+    description: 'GA4 must not be loaded unconditionally from the HTML shell',
+    excludes: 'https://www.googletagmanager.com/gtag/js',
+  },
+  {
+    id: 'GMG-032',
+    file: 'tests/unit/googleMarketingConsent.test.ts',
+    description: 'Consent runtime must have fail-closed behavioral tests',
+    includes: 'loads no Google tag before opt-in',
+  },
+  {
+    id: 'GMG-033',
+    file: 'docs/adr/ADR-0042-basic-consent-mode-v2-google-tag-gating.md',
+    description: 'ADR-0042 must document the Basic Consent Mode v2 remediation',
+    includes: 'Zero Google network before opt-in',
+  },
+  {
+    id: 'GMG-034',
+    file: '.github/workflows/google-marketing-protected-change.yml',
+    description: 'Protected-change CI must execute the consent runtime test',
+    includes: 'tests/unit/googleMarketingConsent.test.ts',
+  },
 ];
 
 const failures: Array<{ id: string; file: string; description: string }> = [];
@@ -213,7 +260,7 @@ if (failures.length > 0) {
   console.error('\n[PROTECTED_CHANGE_GUARD] DEPLOYMENT BLOCKED\n');
   console.error('A protected CookieHub / Google Marketing / CSP invariant is missing or unsafe.');
   console.error('Do not bypass this guard as a generic build fix.');
-  console.error('Changes require ESS-0014 / ADR-0035 / ADR-0040 impact disclosure, review and evidence.\n');
+  console.error('Changes require ESS-0014 / ADR-0035 / ADR-0040 / ADR-0042 impact disclosure, review and evidence.\n');
 
   for (const failure of failures) {
     console.error(`- ${failure.id} ${failure.file}: ${failure.description}`);
