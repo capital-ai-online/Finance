@@ -19,6 +19,8 @@
     "pr:validate-template": "node scripts/pr/validatePrBody.mjs",
     "pr:workflow-security": "node scripts/security/verifyChangedWorkflowSecurity.mjs",
     "pr:governance:test": "node --test scripts/pr/*.test.mjs",
+    "repository:validate": "tsx scripts/automation/validateRepositoryConventions.ts",
+    "repository:validate:advisory": "tsx scripts/automation/validateRepositoryConventions.ts --advisory",
     "hygiene:sweep": "tsx scripts/automation/sweepDocumentaryBranding.ts",
     "predeploy:check": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/verifyDeploymentReadiness.ts",
     "release:version": "tsx scripts/automation/releaseVersion.ts",
