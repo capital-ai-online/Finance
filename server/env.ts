@@ -1,9 +1,12 @@
 import dotenv from 'dotenv';
 
-dotenv.config();
+// Load local .env values without emitting dotenv startup banners/tips.
+// Render injects production configuration through process.env, so this keeps
+// production logs deterministic while preserving local development support.
+dotenv.config({ quiet: true });
 
 /**
- * Helper to normalize, clean and safely resolve environment variables 
+ * Helper to normalize, clean and safely resolve environment variables
  * (stripping quotes, whitespaces, and resolving VITE_ prefix mismatch)
  */
 export function getCleanEnv(key: string): string {
