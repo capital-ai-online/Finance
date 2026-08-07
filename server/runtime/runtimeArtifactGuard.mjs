@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { EventEmitter } from 'node:events';
 import { syncBuiltinESMExports } from 'node:module';
 
 /**
@@ -73,6 +74,38 @@ function wrapPromise(name, targetArg = 0) {
   };
 }
 
+function createInertWatcher() {
+  const watcher = new EventEmitter();
+  watcher.close = () => {};
+  watcher.ref = () => watcher;
+  watcher.unref = () => watcher;
+  return watcher;
+}
+
+function installProtectedPathWatcherBoundary() {
+  const originalWatch = fs.watch;
+  if (typeof originalWatch === 'function') {
+    fs.watch = function guardedWatch(filename, ...rest) {
+      if (isProtectedRuntimeArtifactPath(filename)) {
+        console.info(`[RuntimeArtifactGuard] R-002 suppressed production watcher for ${resolveFsPath(filename)}.`);
+        return createInertWatcher();
+      }
+      return originalWatch.call(this, filename, ...rest);
+    };
+  }
+
+  const originalWatchFile = fs.watchFile;
+  if (typeof originalWatchFile === 'function') {
+    fs.watchFile = function guardedWatchFile(filename, ...rest) {
+      if (isProtectedRuntimeArtifactPath(filename)) {
+        console.info(`[RuntimeArtifactGuard] R-002 suppressed production watchFile for ${resolveFsPath(filename)}.`);
+        return createInertWatcher();
+      }
+      return originalWatchFile.call(this, filename, ...rest);
+    };
+  }
+}
+
 function installGuard() {
   const enabled = process.env.NODE_ENV === 'production' && process.env.CAPITAL_AI_RUNTIME_ARTIFACT_MODE === 'readonly';
   if (!enabled) return;
@@ -88,6 +121,7 @@ function installGuard() {
   }
   wrapPromise('copyFile', 1);
 
+  installProtectedPathWatcherBoundary();
   syncBuiltinESMExports();
   console.info('[RuntimeArtifactGuard] R-002 production read-only artifact boundary enabled.');
 }
