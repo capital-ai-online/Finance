@@ -10,9 +10,6 @@ import {
   scoreMomentum,
   scoreBreakout,
   scoreVolatility,
-  scoreRegime,
-  scoreLiquidity,
-  scoreTokenomics,
   computeReturnStats,
   computeRsi,
   renormalizeAndScore,
@@ -24,7 +21,7 @@ import {
 // CryptoScoringEnterprise.tsx verwendet) und die hier zuvor eigene, hash-basierte
 // generateCryptoInputs()-Variante. Gewichte summieren auf 1.00; data_quality_risk ist
 // invertiert (hoeheres Risiko = schlechter). Fehlt ein Faktor fuer ein Symbol (keine reale
-// Kurshistorie/Supply-Daten), wird sein Gewichtsanteil dynamisch auf die vorhandenen Faktoren
+// Kurshistorie/Provider-Evidence), wird sein Gewichtsanteil dynamisch auf die vorhandenen Faktoren
 // umgelegt (renormalizeAndScore(), siehe realMarketSignals.ts) statt geschaetzt zu werden.
 export const CRYPTO_SCORING_WEIGHTS = {
   trend: 0.20,
@@ -69,8 +66,6 @@ export class CryptoScoringService {
 
     const { score: final_score, usedFactors, missingFactors } = renormalizeAndScore(values, CRYPTO_SCORING_WEIGHTS, INVERTED_FIELDS);
 
-    // base_score/risk_penalty als transparente Teilsummen der final_score-Berechnung, getrennt
-    // nach positiven und risikoinvertierten Faktoren (fuer die Breakdown-Anzeige im Frontend).
     const positiveKeys = Object.keys(CRYPTO_SCORING_WEIGHTS).filter(k => !INVERTED_FIELDS.has(k));
     const riskKeys = Object.keys(CRYPTO_SCORING_WEIGHTS).filter(k => INVERTED_FIELDS.has(k));
     const positiveOnly = renormalizeAndScore(values, Object.fromEntries(positiveKeys.map(k => [k, CRYPTO_SCORING_WEIGHTS[k as keyof typeof CRYPTO_SCORING_WEIGHTS]])), new Set());
@@ -105,12 +100,12 @@ export class CryptoScoringService {
     if ((x.trend ?? 0) > 0.7) reasoning.push("Starker technischer Aufwärtstrend vorhanden (echte Kurshistorie).");
     if ((x.momentum ?? 0) > 0.7) reasoning.push("Hohes bullisches Momentum (Rate-of-Change, echte Kurshistorie).");
     if ((x.relative_strength ?? 0) > 0.7) reasoning.push("Überragende relative Stärke (RSI, echte Kurshistorie).");
-    if ((x.avg_daily_volume ?? 0) > 0.7) reasoning.push("Hervorragende reale Liquidität (Umschlagsrate Volumen/Marktkapitalisierung).");
+    if ((x.avg_daily_volume ?? 0) > 0.7) reasoning.push("Hervorragende reale Liquidität (nur mit verifizierter Provider-Evidence).");
     if (missingFactors.length > 0) {
       reasoning.push(`Ohne reale Datenquelle fuer dieses Symbol: ${missingFactors.join(', ')} (Gewichtsanteil dynamisch auf die vorhandenen Faktoren umgelegt).`);
     }
     if (reasoning.length === 0) {
-      reasoning.push("Neutrale, real-marktdatenbasierte Entwicklung.");
+      reasoning.push("Keine zusätzliche unbelegte Marktannahme; nur vorhandene verifizierte Faktoren werden bewertet.");
     }
 
     if (usedFactors.length === 0) {
@@ -146,7 +141,7 @@ export class CryptoScoringService {
         category_main: "Crypto",
         category_sub: catSub,
         market_type: "Spot & Futures Asset Exchange",
-        valuation_mode: "Real-Marktdaten & Technische Analyse",
+        valuation_mode: "Verifizierte Marktdaten & Technische Analyse",
         confidence: Number(dataCompletenessRatio.toFixed(2)),
         reasoning: reasoning.slice(0, 3)
       },
@@ -171,37 +166,20 @@ export class CryptoScoringService {
   }
 
   /**
-   * Synchroner Anteil der real anbindbaren Faktoren: nur die ohne Netzwerkzugriff aus dem
-   * bereits geladenen AssetRegistry-Snapshot verfuegbaren Werte (Liquiditaet/Supply/Regime).
-   * Fuer Kontexte, in denen kein await moeglich ist (z.B. synchrone Karten-/Listen-Rendering-
-   * Pfade) - die Historie-basierten Faktoren (trend/momentum/breakout_quality/
-   * relative_strength/volatility_quality/data_quality_risk) bleiben hier undefined statt
-   * geschaetzt; fuer die vollstaendige Faktorenmenge siehe generateCryptoInputs().
+   * R-001 / ADR-0032: Der synchrone Pfad darf keine Legacy-AssetRegistry-Finanzwerte
+   * (marketCap, volume24h, Supply, change24h) in scorefaehige Evidence umwandeln.
+   * Ohne einen expliziten Provider-Evidence-Contract bleiben diese Faktoren undefined.
    */
-  public static generateCryptoInputsSync(symbol: string, change24h: number): CryptoScoringInputs {
+  public static generateCryptoInputsSync(symbol: string, _change24h: number): CryptoScoringInputs {
     const s = symbol.toUpperCase().trim();
-    const asset = assetRegistry.getAsset(s);
-
-    const marketCapUsd = asset?.marketCap !== undefined ? asset.marketCap * 1e9 : undefined;
-    const volumeUsd = asset?.volume24h !== undefined ? asset.volume24h * 1e6 : undefined;
-    const liquidityScore = (volumeUsd !== undefined && marketCapUsd !== undefined)
-      ? scoreLiquidity(volumeUsd, marketCapUsd)
-      : undefined;
-    const avg_daily_volume = liquidityScore !== undefined ? liquidityScore / 100 : undefined;
-
-    const tokenomicsScore = scoreTokenomics(asset?.circulatingSupply, asset?.maxSupply);
-    const supply_dynamics = tokenomicsScore !== undefined ? tokenomicsScore / 100 : undefined;
-
-    const regime_bonus = scoreRegime(change24h) / 100;
-
-    return { coin: s, avg_daily_volume, supply_dynamics, regime_bonus };
+    return { coin: s };
   }
 
   /**
-   * Bezieht die real anbindbaren Score-Eingangsgroessen selbststaendig aus der AssetRegistry
-   * (Wiederverwendung der bestehenden Wertschoepfungskette statt neuer Parameter an allen
-   * Aufrufstellen), inklusive der historienbasierten Faktoren (echte Kurshistorie).
-   * Felder ohne reale Quelle fuer dieses Symbol bleiben undefined.
+   * Bezieht ausschliesslich historienbasierte Faktoren aus einer als `live` markierten
+   * Kurshistorie. Registry-/Bootstrap-Finanzwerte werden nicht als Scoring-Evidence verwendet.
+   * Weitere Faktoren (Liquiditaet, Supply, Regime) bleiben bis zu einem eigenen
+   * Provider-Evidence-Contract undefined.
    */
   public static async generateCryptoInputs(symbol: string, change24h: number): Promise<CryptoScoringInputs> {
     const s = symbol.toUpperCase().trim();
@@ -227,11 +205,10 @@ export class CryptoScoringService {
         }
         const rsi = computeRsi(closes);
         if (rsi !== undefined) relative_strength = rsi / 100;
-        // Reale Historie vorhanden -> geringes Datenrisiko, statt geschaetzt.
         data_quality_risk = 0.05;
       }
     } catch {
-      // Keine echte Historie verfuegbar - alle historienbasierten Faktoren bleiben undefined.
+      // Fail closed: keine echte Historie -> keine historienbasierten Faktoren.
     }
 
     return {
