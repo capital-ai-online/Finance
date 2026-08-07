@@ -1,8 +1,27 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   evaluateVerifiedCryptoTechnicalScore,
   normalizeHistoryDateToIso,
 } from '../../src/services/verifiedCryptoTechnicalScoring';
+
+// Die Fixtures unten sind auf feste Zeitstempel (2026-08-02T06:00:00Z) fixiert, waehrend
+// evaluateVerifiedCryptoTechnicalScore die Frische ueber `maxAgeMs: 4 Tage` gegen Date.now()
+// prueft. Ohne fixierte Testzeit laufen die Fixtures nach vier realen Tagen aus dem Fenster
+// und der Test kippt von READY auf STALE_DATA - unabhaengig von jeder Codeaenderung.
+//
+// Die Systemzeit wird deshalb auf einen Zeitpunkt innerhalb des Frischefensters eingefroren.
+// Die produktive Staleness-Regel bleibt dabei unveraendert und voll wirksam; fixiert wird
+// ausschliesslich die Referenzzeit des Tests.
+const FROZEN_NOW = new Date('2026-08-02T12:00:00.000Z');
+
+beforeAll(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(FROZEN_NOW);
+});
+
+afterAll(() => {
+  vi.useRealTimers();
+});
 
 function makeHistory(count = 30) {
   const start = Date.UTC(2026, 6, 4);
