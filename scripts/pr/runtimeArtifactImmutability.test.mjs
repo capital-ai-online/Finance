@@ -39,6 +39,36 @@ function runGuardProbe(targetRelativePath) {
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
 
+function runWatcherProbe(targetRelativePath) {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'capital-ai-r002-watch-'));
+  fs.mkdirSync(path.join(tempRoot, 'docs'), { recursive: true });
+  fs.mkdirSync(path.join(tempRoot, 'uploads'), { recursive: true });
+
+  const script = `
+    const fs = require('node:fs');
+    const watcher = fs.watch(${JSON.stringify(targetRelativePath)}, () => {
+      process.stdout.write('WATCH_EVENT');
+    });
+    const hasContract = watcher && typeof watcher.close === 'function' && typeof watcher.unref === 'function';
+    if (hasContract) watcher.close();
+    process.stdout.write(hasContract ? 'WATCH_SUPPRESSED' : 'WATCH_INVALID');
+  `;
+
+  const result = spawnSync(process.execPath, ['-e', script], {
+    cwd: tempRoot,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      NODE_ENV: 'production',
+      CAPITAL_AI_RUNTIME_ARTIFACT_MODE: 'readonly',
+      NODE_OPTIONS: `--import=${guardPath}`,
+    },
+  });
+
+  fs.rmSync(tempRoot, { recursive: true, force: true });
+  return { status: result.status, stdout: result.stdout, stderr: result.stderr };
+}
+
 test('R-002 blocks production writes to repository-style docs', () => {
   const result = runGuardProbe('docs/runtime-mutation.md');
   assert.equal(result.status, 0);
@@ -61,6 +91,13 @@ test('R-002 does not block ordinary application uploads', () => {
   const result = runGuardProbe('uploads/ordinary-runtime-file.txt');
   assert.equal(result.status, 0);
   assert.match(result.stdout, /WRITE_OK/);
+});
+
+test('R-002 suppresses production file watchers on docs', () => {
+  const result = runWatcherProbe('docs');
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /WATCH_SUPPRESSED/);
+  assert.doesNotMatch(result.stdout, /WATCH_EVENT/);
 });
 
 test('production Docker image preloads the R-002 guard and makes docs OS-level read-only', () => {
