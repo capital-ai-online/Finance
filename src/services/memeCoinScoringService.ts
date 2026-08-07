@@ -9,7 +9,6 @@ import {
   scoreTrend,
   scoreMomentum,
   scoreVolatility,
-  scoreLiquidity,
   computeReturnStats,
   renormalizeAndScore,
 } from './realMarketSignals';
@@ -27,10 +26,9 @@ export const MEME_COIN_WEIGHTS = {
 
 export class MemeCoinScoringService {
   /**
-   * Berechnet den Meme-Coin-Score aus real anbindbaren Faktoren (dynamische Neugewichtung
-   * fehlender Faktoren statt fester 14-Faktoren-Formel). Fuer die meisten Meme-Coins (ausser
-   * DOGE/SHIB, die eine CoinGecko-ID besitzen) liegt keine reale Kurshistorie vor - dann
-   * fliesst nur `liquidity` (reales Volumen/Marktkapitalisierung) in den Score ein.
+   * Berechnet den Meme-Coin-Score aus real anbindbaren Faktoren. Fehlende Faktoren werden
+   * dynamisch ausgeklammert statt aus Registry-/Bootstrapwerten oder neutralen Defaults
+   * abgeleitet zu werden.
    */
   public static scoreMemeCoin(inputs: MemeCoinInputs, version: string = "0.6.0"): MemeCoinAnalysisPayload {
     const x = inputs;
@@ -50,23 +48,21 @@ export class MemeCoinScoringService {
     if (final_score >= 90) {
       decision = "A_setup";
       decisionName = "A-Setup";
-      decisionDesc = "Sehr starke reale Liquiditäts- und Trendlage.";
+      decisionDesc = "Sehr starke verifizierte Markt- und Trendlage.";
     } else if (final_score >= 80) {
       decision = "tradeable_watch";
       decisionName = "Tradeable Watch";
-      decisionDesc = "Trendstarker Memecoin mit stabiler realer Handelsaktivität.";
+      decisionDesc = "Trendstarker Memecoin mit verifizierter Marktaktivität.";
     } else if (final_score >= 70) {
       decision = "speculative_watch";
       decisionName = "Speculative Watch";
-      decisionDesc = "Solide reale Marktdaten, aber weiterhin hohes Meme-Coin-Risiko.";
+      decisionDesc = "Solide verifizierte Marktdaten, aber weiterhin hohes Meme-Coin-Risiko.";
     } else if (final_score >= 60) {
       decision = "high_risk_speculation";
       decisionName = "High Risk Speculation";
       decisionDesc = "Hohes Risiko von Kursrückgängen und Liquidationen.";
     }
 
-    // Audit ARCH-AUDIT-0002 (S1/S2/S5): kein real anbindbarer Manipulations-/Rugpull-/
-    // Liquiditaets-Risikofaktor mehr vorhanden - "Unbekannt" statt eines erfundenen Werts.
     const risk_level = "Unbekannt (kein realer Risikofaktor verfügbar)";
 
     const reasoning: string[] = [];
@@ -74,14 +70,14 @@ export class MemeCoinScoringService {
       "Kein realer Manipulations-, Rugpull- oder Liquiditäts-Risikofaktor verfügbar (kein On-Chain-/Order-Book-Anbieter angebunden) - Risiko separat prüfen.",
     ];
 
-    if ((x.liquidity ?? 0) > 0.7) reasoning.push("Solide reale Liquidität (Umschlagsrate Volumen/Marktkapitalisierung) verhindert extreme Slippage.");
+    if ((x.liquidity ?? 0) > 0.7) reasoning.push("Solide reale Liquidität aus verifizierter Provider-Evidence.");
     if ((x.trend_structure ?? 0) > 0.7) reasoning.push("Saubere technische Aufwärtsstruktur (echte Kurshistorie).");
     if ((x.momentum ?? 0) > 0.7) reasoning.push("Hohe reale Kursdynamik (Rate-of-Change, echte Kurshistorie).");
     if (missingFactors.length > 0) {
       reasoning.push(`Ohne reale Datenquelle fuer dieses Symbol: ${missingFactors.join(', ')} (Gewichtsanteil dynamisch auf die vorhandenen Faktoren umgelegt).`);
     }
     if (reasoning.length === 0) {
-      reasoning.push("Neutrale, real-marktdatenbasierte Entwicklung.");
+      reasoning.push("Keine zusätzliche unbelegte Marktannahme; nur vorhandene verifizierte Faktoren werden bewertet.");
     }
     if (usedFactors.length === 0) {
       alerts.push("Kritisch: keine reale Datenquelle fuer dieses Symbol verfuegbar - final_score ist 0.");
@@ -110,7 +106,7 @@ export class MemeCoinScoringService {
         category_main: "MemeCoin",
         category_sub: catSub,
         market_type: "Speculative High-Velocity Exchange",
-        valuation_mode: "Reale Liquiditäts- und Kursdaten (kein Social-/On-Chain-Risikosignal)",
+        valuation_mode: "Verifizierte Kursdaten; Liquidität nur mit Provider-Evidence",
         confidence: Number(dataCompletenessRatio.toFixed(2)),
         reasoning: reasoning.slice(0, 3)
       },
@@ -134,30 +130,19 @@ export class MemeCoinScoringService {
   }
 
   /**
-   * Bezieht die real anbindbaren Score-Eingangsgroessen selbststaendig aus der AssetRegistry.
-   * trend_structure/momentum/volatility_quality bleiben undefined, wenn keine reale
-   * Kurshistorie fuer dieses Symbol vorliegt (nur DOGE/SHIB haben derzeit eine CoinGecko-ID).
-   */
-  /**
-   * Synchroner Anteil: nur die ohne Netzwerkzugriff aus dem bereits geladenen
-   * AssetRegistry-Snapshot verfuegbare Liquiditaet. Fuer synchrone Karten-/Listen-
-   * Rendering-Pfade - trend_structure/momentum/volatility_quality bleiben hier undefined;
-   * fuer die vollstaendige Faktorenmenge siehe generateMemeCoinInputs().
+   * R-001 / ADR-0032: Der synchrone Pfad darf keine Legacy-AssetRegistry-Finanzwerte
+   * (marketCap/volume24h) als reale Liquiditaets-Evidence verwenden.
    */
   public static generateMemeCoinInputsSync(symbol: string): MemeCoinInputs {
     const s = symbol.toUpperCase().trim();
-    const asset = assetRegistry.getAsset(s);
-
-    const marketCapUsd = asset?.marketCap !== undefined ? asset.marketCap * 1e9 : undefined;
-    const volumeUsd = asset?.volume24h !== undefined ? asset.volume24h * 1e6 : undefined;
-    const liquidityScore = (volumeUsd !== undefined && marketCapUsd !== undefined)
-      ? scoreLiquidity(volumeUsd, marketCapUsd)
-      : undefined;
-    const liquidity = liquidityScore !== undefined ? liquidityScore / 100 : undefined;
-
-    return { coin: s, liquidity };
+    return { coin: s };
   }
 
+  /**
+   * Historienbasierte Faktoren werden nur aus einer als `live` markierten Kurshistorie
+   * erzeugt. Liquiditaet bleibt undefined, bis ein eigener verifizierter Provider-
+   * Observation-Contract fuer Market Cap/Volume angebunden ist.
+   */
   public static async generateMemeCoinInputs(symbol: string, _change24h: number): Promise<MemeCoinInputs> {
     const s = symbol.toUpperCase().trim();
     const base = this.generateMemeCoinInputsSync(symbol);
@@ -177,7 +162,7 @@ export class MemeCoinScoringService {
         }
       }
     } catch {
-      // Keine echte Historie verfuegbar - historienbasierte Faktoren bleiben undefined.
+      // Fail closed: keine echte Historie -> keine historienbasierten Faktoren.
     }
 
     return { ...base, trend_structure, momentum, volatility_quality };
