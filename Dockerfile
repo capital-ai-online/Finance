@@ -40,13 +40,21 @@ RUN npm ci --only=production
 # Copy built application assets from the builder stage
 COPY --from=builder /app/dist ./dist
 
-# Audit ARCH-AUDIT-0002 (AUD2-F-018): Container lief zuvor als root. Non-root-User anlegen und
-# die zur Laufzeit beschriebenen Verzeichnisse (uploads/, docs/ - documentHygiene.ts legt beide
-# per mkdirSync selbst an, falls sie fehlen) vorab mit passendem Besitzer bereitstellen, damit
-# der Prozess unter diesem User weiterhin schreiben kann.
+# R-002: preload the production artifact immutability guard outside of the bundled server.
+# This keeps repository-style documentation and legacy release-governance state read-only even
+# when older runtime routes are still reachable during the staged migration to CI/control-plane ownership.
+COPY --from=builder /app/server/runtime/runtimeArtifactGuard.mjs ./server/runtime/runtimeArtifactGuard.mjs
+ENV CAPITAL_AI_RUNTIME_ARTIFACT_MODE=readonly
+ENV NODE_OPTIONS=--import=/app/server/runtime/runtimeArtifactGuard.mjs
+
+# Audit ARCH-AUDIT-0002 (AUD2-F-018): Container lief zuvor als root. Non-root-User anlegen.
+# R-002 narrows filesystem authority further: docs/ is OS-level read-only for the web runtime;
+# uploads/ remains writable for normal application data, while the preload guard blocks the two
+# legacy governance files document_hygiene.json and version_manager.json specifically.
 RUN addgroup -S capitalai && adduser -S capitalai -G capitalai \
   && mkdir -p /app/uploads /app/docs \
-  && chown -R capitalai:capitalai /app
+  && chown -R capitalai:capitalai /app \
+  && chmod 0555 /app/docs
 USER capitalai
 
 # Expose port 3000
