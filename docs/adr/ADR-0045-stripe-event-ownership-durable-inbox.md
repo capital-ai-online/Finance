@@ -125,18 +125,30 @@ SMTP delivery itself remains best-effort. This ADR guarantees reservation/idempo
 
 The production application continues using the privileged server Supabase client defined by ADR-0043. No publishable/anon fallback is permitted for billing persistence.
 
-## 7. Deployment order
+## 7. Production handoff and deployment order
 
-This change has a strict production handoff order:
+The Render production service currently deploys branch `main` automatically with:
 
-1. merge reviewed repository change;
-2. apply `supabase/migrations/20260808013000_stripe_event_inbox.sql` in the production Supabase project;
-3. verify `stripe_event_inbox`, `claim_stripe_event(...)` and `claim_subscription_confirmation(...)` exist with service-role-only access;
-4. deploy the application build;
-5. execute controlled Stripe webhook replay/duplicate tests;
-6. verify duplicate delivery does not re-run application-owned side effects.
+- `autoDeploy = yes`;
+- `autoDeployTrigger = checksPass`.
 
-Application deployment before the database migration is not supported because the new production code intentionally fails closed when the durable claim contract is unavailable.
+Therefore the database migration MUST be installed before the PR is merged. A merge-first procedure is unsafe because the successful merge checks can trigger the application deployment before the required RPC/table contract exists.
+
+The safe handoff sequence is:
+
+1. obtain human/code-owner approval for the reviewed PR, but keep the PR unmerged;
+2. apply the additive migration `supabase/migrations/20260808013000_stripe_event_inbox.sql` to the production Supabase project through the controlled production handoff;
+3. verify `stripe_event_inbox`, `claim_stripe_event(...)` and `claim_subscription_confirmation(...)` exist and remain service-role-only;
+4. verify the currently deployed application remains healthy against the additive, unused database objects;
+5. merge the reviewed PR;
+6. allow Render `checksPass` auto-deploy from `main` to deploy the merged application;
+7. verify `/healthz` and deployment identity after the Render deploy becomes live;
+8. execute controlled Stripe webhook replay/duplicate tests;
+9. verify duplicate delivery does not re-run application-owned side effects and inspect inbox state/evidence.
+
+No live Supabase, Render or Stripe mutation is performed by the development branch or by this ADR. The pre-merge migration is a production-handoff operation requiring explicit protected-change authorization.
+
+If the migration cannot be installed before merge, the PR MUST remain unmerged unless Render auto-deploy is deliberately disabled through an independently approved production change. Application deployment before the database migration is intentionally unsupported because the new production code fails closed when the durable claim contract is unavailable.
 
 ## 8. Explicit non-goals
 
@@ -169,7 +181,7 @@ Repository implementation and CI are necessary but not sufficient to close R-003
 
 R-003 becomes **COMPLETE** only after:
 
-- the migration is applied to production Supabase;
+- the migration is applied to production Supabase before the merge-triggered Render deploy;
 - the application version containing this handler is deployed;
 - a controlled duplicate/replay verification demonstrates durable event-ID deduplication;
 - subscription projection remains owned by Supabase;
@@ -181,4 +193,4 @@ Until then the roadmap state is:
 
 ## 11. Decision
 
-Accepted. Stripe subscription state remains owned by the Supabase projection, while application-owned checkout side effects are gated by a durable service-role-only Stripe Event Inbox. Checkout confirmation mail uses an independent atomic Checkout Session reservation. Generic worker durability and transactional PDF credits remain separate roadmap items R-101 and R-004.
+Accepted. Stripe subscription state remains owned by the Supabase projection, while application-owned checkout side effects are gated by a durable service-role-only Stripe Event Inbox. Checkout confirmation mail uses an independent atomic Checkout Session reservation. Because Render auto-deploys passing `main` changes, the additive Supabase migration is a mandatory pre-merge production gate. Generic worker durability and transactional PDF credits remain separate roadmap items R-101 and R-004.
