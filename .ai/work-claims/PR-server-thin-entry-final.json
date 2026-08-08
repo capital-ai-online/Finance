@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "PR-server-thin-entry-final",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Thinking",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "Complete server.ts extraction by reducing the repository entry point to a thin import-only shell while preserving the exact current application implementation byte-for-byte in server.application.ts",
+  "startedAt": "2026-08-08T01:25:00Z",
+  "baseBranch": "main",
+  "baseSha": "a0da4620fffb9bb315da0ba216b9aa2204a8b103",
+  "claimedPaths": [
+    "server.ts",
+    "server.application.ts",
+    "docs/architecture/adr/ADR-0013-server-composition-root-and-modular-bootstrap.md",
+    ".ai/work-claims/PR-server-thin-entry-final.json"
+  ],
+  "releaseCondition": "Claim is released when the PR is merged or closed. No Render, Supabase or Stripe configuration mutation is included."
+}
