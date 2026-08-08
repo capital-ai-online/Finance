@@ -23,9 +23,30 @@ const checks: Check[] = [
   },
   {
     id: 'PCG-003',
-    file: 'render.yaml',
+    // Deploy-Härtung: SUPABASE_SECRET_KEY kommt seit der Secret-File-Migration nicht mehr
+    // als einzelne render.yaml-envVar, sondern über die Render Secret File - deklariert in
+    // scripts/security/secretFileManifest.ts (Single Source of Truth, siehe dort).
+    file: 'scripts/security/secretFileManifest.ts',
     description: 'A dedicated Supabase secret key must be declared for privileged backend access',
-    includes: '- key: SUPABASE_SECRET_KEY',
+    includes: "'SUPABASE_SECRET_KEY',",
+  },
+  {
+    id: 'PCG-009',
+    file: 'render.yaml',
+    description: 'Secrets must be sourced from the Render Secret File, not individual envVars',
+    includes: 'secretFiles:',
+  },
+  {
+    id: 'PCG-010',
+    file: 'render.yaml',
+    description: 'Stripe secret key must not be redeclared as a plain envVar (belongs in the Secret File)',
+    excludes: '- key: STRIPE_SECRET_KEY',
+  },
+  {
+    id: 'PCG-011',
+    file: 'render.yaml',
+    description: 'TOTP encryption key must not be redeclared as a plain envVar (belongs in the Secret File)',
+    excludes: '- key: TOTP_ENCRYPTION_KEY',
   },
   {
     id: 'PCG-004',

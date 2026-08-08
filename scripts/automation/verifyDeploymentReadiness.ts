@@ -6,6 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import { PROMPT_REGISTRY } from '../../src/services/aiUsageTracker';
 import { evaluateDependencyPolicy, writeCycloneDxSbom } from './dependencySecurity';
+import { SECRET_FILE_KEYS } from '../security/secretFileManifest';
 
 const REPO_ROOT = process.cwd();
 let hasErrors = false;
@@ -89,7 +90,11 @@ function findRenderYamlKeys(): Set<string> {
 }
 
 const usedVars = findEnvVarUsages();
-const renderYamlKeys = findRenderYamlKeys();
+// Deploy-Härtung: echte Secrets kommen seit der Secret-File-Migration nicht mehr über
+// render.yaml `envVars`, sondern über die Render Secret File (siehe render.yaml
+// `secretFiles` + scripts/security/secretFileManifest.ts). Ohne diese Ergänzung würde
+// dieses Gate jeden migrierten Secret-Key fälschlich als "ohne Deployment-Abdeckung" melden.
+const renderYamlKeys = new Set([...findRenderYamlKeys(), ...SECRET_FILE_KEYS]);
 const alternateGroupOf = new Map<string, string[]>();
 for (const group of ALTERNATE_NAME_GROUPS) for (const name of group) alternateGroupOf.set(name, group);
 const uncoveredVars = [...usedVars].filter(name => {

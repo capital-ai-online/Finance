@@ -35,6 +35,7 @@ import { computeReturnStats, classifyTrendLabel } from './src/services/realMarke
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
 import { getCleanEnv } from './server/env';
 import { checkAdminAccess, runIamSchemaHealthCheck } from './src/platform/Security/authMiddleware';
+import { validateRuntimeSecrets } from './server/validateRuntimeSecrets';
 import { SUPERVISOR_ZONE_ROLES } from './src/platform/Security/types';
 import {
   isSupabaseConfigured,
@@ -2112,6 +2113,12 @@ Generiere ein professionelles, fundiertes Review in deutscher Sprache: executive
 
 
 async function startServer() {
+  // Deploy-Härtung: Secrets VOR jedem anderen Startup-Schritt prüfen. Bewusst
+  // synchron und ganz am Anfang, weil validateRuntimeSecrets() in Produktion bei
+  // fehlenden/unplausiblen kritischen Secrets process.exit(1) auslöst - der Server
+  // soll dann gar nicht erst anfangen, Verbindungen anzunehmen.
+  validateRuntimeSecrets(isProductionEnv);
+
   // Compliance-Review Punkt 2: IAM-Schema-Health-Check EINMALIG beim Start, statt
   // stillschweigend erst beim ersten Admin-Request zu bemerken, dass profiles.iam_role
   // fehlt. Blockiert den Start nicht (ein vorübergehend nicht erreichbares Supabase soll

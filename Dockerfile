@@ -1,5 +1,10 @@
+# Deploy-Härtung (Supply-Chain): beide Stages auf das Image-Digest statt den floating
+# "22-alpine"-Tag gepinnt, damit derselbe Tag nicht unbemerkt auf ein neues (kompromittiertes
+# oder schlicht anderes) Image zeigen kann. Digest verifiziert am 08.08.2026 gegen
+# registry-1.docker.io/library/node:22-alpine (multi-arch Index, deckt weiterhin alle von
+# Docker Hub unterstützten Plattformen ab). Bump bewusst manuell/reviewed statt automatisch.
 # Stage 1: Build the client assets and server bundle
-FROM node:22-alpine AS builder
+FROM node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 AS builder
 WORKDIR /app
 
 # Copy dependency files
@@ -26,7 +31,7 @@ ENV VITE_GA_MEASUREMENT_ID=$VITE_GA_MEASUREMENT_ID
 RUN npm run build
 
 # Stage 2: Production runtime image
-FROM node:22-alpine AS runner
+FROM node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
