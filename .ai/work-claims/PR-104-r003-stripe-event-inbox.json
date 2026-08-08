@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "PR-104-r003-stripe-event-inbox",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Thinking",
+    "executionSurface": "ChatGPT GitHub + Render connectors"
+  },
+  "workItem": "Implement R-003 single Stripe application-side event ownership with durable event inbox and atomic confirmation reservation",
+  "startedAt": "2026-08-08T00:56:00Z",
+  "baseBranch": "main",
+  "baseSha": "a52c5ac52935f170e7781340e947990bdd34ded9",
+  "productionBaseline": {
+    "mode": "verified",
+    "productionUrl": "https://capital-ai.online/healthz",
+    "version": "0.6.0",
+    "commitSha": "a52c5ac52935f170e7781340e947990bdd34ded9",
+    "productionBranch": "main",
+    "renderServiceId": "srv-d91o1o9o3t8c73edi55g"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/**",
+    "docs/adr/ADR-0045-stripe-event-ownership-durable-inbox.md",
+    "server/mailer.ts",
+    "server/stripe.ts",
+    "server/stripeEventInbox.ts",
+    "src/server/integrations/stripe/webhook.ts",
+    "supabase/migrations/20260808013000_stripe_event_inbox.sql",
+    "tests/unit/mailer.test.ts",
+    "tests/unit/stripeWebhookInbox.test.ts"
+  ],
+  "releaseCondition": "Claim is released only when PR #104 is merged or closed. Production R-003 closure additionally requires Supabase migration, application deployment and controlled Stripe replay evidence."
+}

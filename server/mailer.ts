@@ -42,9 +42,8 @@ export interface SendMailParams {
 
 /**
  * Versendet eine System-E-Mail ueber das konfigurierte SMTP-Konto. Wirft NIE eine
- * Exception nach aussen (Fire-and-forget-Charakter fuer Aufrufer wie den Stripe-
- * Webhook-Handler) - ein fehlgeschlagener E-Mail-Versand darf niemals die eigentliche
- * Webhook-Verarbeitung (Freischaltung des Abos) blockieren oder zum Scheitern bringen.
+ * Exception nach aussen - ein fehlgeschlagener E-Mail-Versand darf niemals die
+ * Subscription-Projektion in Supabase beeinflussen.
  */
 export async function sendMail(params: SendMailParams): Promise<{ success: boolean; error?: string }> {
   if (!isMailerConfigured()) {
@@ -90,7 +89,7 @@ export interface SubscriptionConfirmationData {
   /**
    * Stripe Checkout Session ID (session.id). Dient als Idempotenz-Schluessel -
    * derselbe Checkout-Abschluss darf niemals zwei E-Mail-Paare ausloesen, auch
-   * wenn Stripe denselben Webhook mehrfach zustellt (at-least-once delivery).
+   * wenn Stripe denselben Webhook mehrfach zustellt oder manuell erneut sendet.
    */
   sessionId: string;
   userId?: string;
@@ -123,21 +122,18 @@ function buildOwnerSubscriptionNotificationEmail(
   };
 }
 
-// --- Idempotenz-Speicher fuer sendSubscriptionConfirmation() ------------------
+// --- Atomic reservation fuer sendSubscriptionConfirmation() -------------------
 //
-// Stripe stellt Webhooks mit "at-least-once"-Semantik zu - ein und dasselbe Event
-// kann mehrfach eintreffen (Retry nach Timeout, manueller Resend im Dashboard,
-// etc.). Ohne Sperre wuerde jede Zustellung ein neues E-Mail-Paar auslösen. Die
-// Sperre wird auf der Stripe Checkout Session ID gefuehrt (stabil je Kauf,
-// anders als die Event-ID, die sich bei einem manuellen Resend aendern kann).
+// ADR-0045 / R-003: Die fruehere Supabase-Sequenz SELECT -> UPSERT war nicht atomar.
+// Zwei parallele Webhook-Aufrufe konnten beide "noch nicht gesendet" lesen und danach
+// beide senden. public.claim_subscription_confirmation(session_id) fuehrt jetzt ein
+// einziges INSERT ... ON CONFLICT DO NOTHING in PostgreSQL aus und liefert zurueck,
+// welcher Aufrufer die Reservation gewonnen hat.
 //
-// Audit ARCH-AUDIT-0002 (H3): primaer in Supabase (public.subscription_confirmations_sent,
-// service_role-only) statt einer Datei unter uploads/ - Renders Dateisystem ist ephemer
-// (jeder Deploy verwirft die Datei) und wird bei mehreren Instanzen nicht geteilt, beides
-// zerstoert die Idempotenzgarantie genau in den Situationen, fuer die sie gedacht ist
-// (Redeploy waehrend eines Stripe-Retries, horizontale Skalierung). Dateibasierter Fallback
-// bleibt NUR aktiv, wenn Supabase nicht konfiguriert ist (z.B. lokale Entwicklung ohne
-// Supabase-Zugangsdaten) - konsistent mit dem Fallback-Muster in server/db.ts.
+// Die lokale Datei bleibt ausschliesslich fuer Entwicklung ohne Supabase erhalten.
+// In Produktion darf ein fehlender/fehlerhafter Supabase-Claim NICHT auf Renders
+// ephemeres Dateisystem zurueckfallen, weil dadurch horizontale/redeploy-sichere
+// Idempotenz wieder verloren ginge.
 const SUBSCRIPTION_CONFIRMATIONS_FILE = path.join(process.cwd(), 'uploads', 'subscription_confirmations_sent.json');
 const MAX_TRACKED_CONFIRMATIONS = 1000;
 
@@ -153,70 +149,54 @@ function readTrackedConfirmationsLocal(): TrackedConfirmation[] {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
-    // Ein beschaedigter/nicht lesbarer Idempotenz-Speicher darf den Versand
-    // niemals blockieren - im Zweifel wird als "noch nicht gesendet" behandelt.
-    console.error('[Mailer] Idempotenz-Speicher nicht lesbar, fahre ohne Sperre fort:', err);
+    console.error('[Mailer] Lokaler Idempotenz-Speicher nicht lesbar:', err);
     return [];
   }
 }
 
-function markConfirmationSentLocal(sessionId: string): void {
+function claimConfirmationLocal(sessionId: string): boolean {
   try {
     const existing = readTrackedConfirmationsLocal();
-    if (existing.some((entry) => entry.sessionId === sessionId)) return;
+    if (existing.some((entry) => entry.sessionId === sessionId)) return false;
     const updated = [...existing, { sessionId, sentAt: new Date().toISOString() }].slice(-MAX_TRACKED_CONFIRMATIONS);
     fs.mkdirSync(path.dirname(SUBSCRIPTION_CONFIRMATIONS_FILE), { recursive: true });
     fs.writeFileSync(SUBSCRIPTION_CONFIRMATIONS_FILE, JSON.stringify(updated, null, 2), 'utf8');
+    return true;
   } catch (err) {
-    // Fehler beim Persistieren der Sperre darf den bereits erfolgten Versand
-    // nicht rueckgaengig machen oder den Aufrufer scheitern lassen - lediglich
-    // loggen. Im schlimmsten Fall wird bei einem spaeteren Retry doppelt
-    // versendet, was fuer eine Bestaetigungs-E-Mail unkritisch ist.
-    console.error('[Mailer] Idempotenz-Speicher konnte nicht geschrieben werden:', err);
+    console.error('[Mailer] Lokale Confirmation-Reservation fehlgeschlagen:', err);
+    return false;
   }
 }
 
-async function hasConfirmationBeenSent(sessionId: string): Promise<boolean> {
-  if (!isSupabaseConfigured()) {
-    return readTrackedConfirmationsLocal().some((entry) => entry.sessionId === sessionId);
-  }
-  try {
-    const supabase = getServerSupabase();
-    const { data, error } = await supabase
-      .from('subscription_confirmations_sent')
-      .select('session_id')
-      .eq('session_id', sessionId)
-      .maybeSingle();
-    if (error) throw error;
-    return !!data;
-  } catch (err: any) {
-    console.error('[Mailer] Idempotenz-Pruefung in Supabase fehlgeschlagen, falle auf lokale Datei zurueck:', err?.message || err);
-    return readTrackedConfirmationsLocal().some((entry) => entry.sessionId === sessionId);
-  }
-}
+type ConfirmationClaim =
+  | { status: 'claimed' }
+  | { status: 'duplicate' }
+  | { status: 'unavailable'; error: string };
 
-async function markConfirmationSent(sessionId: string): Promise<void> {
+async function claimSubscriptionConfirmation(sessionId: string): Promise<ConfirmationClaim> {
   if (!isSupabaseConfigured()) {
-    markConfirmationSentLocal(sessionId);
-    return;
+    if (getCleanEnv('NODE_ENV') === 'production') {
+      console.error('[Mailer] Production confirmation claim blocked: privileged Supabase is unavailable.');
+      return { status: 'unavailable', error: 'confirmation-reservation-unavailable' };
+    }
+    return claimConfirmationLocal(sessionId) ? { status: 'claimed' } : { status: 'duplicate' };
   }
+
   try {
     const supabase = getServerSupabase();
-    const { error } = await supabase
-      .from('subscription_confirmations_sent')
-      .upsert({ session_id: sessionId }, { onConflict: 'session_id', ignoreDuplicates: true });
+    const { data, error } = await supabase.rpc('claim_subscription_confirmation', {
+      p_session_id: sessionId,
+    });
     if (error) throw error;
+    return data === true ? { status: 'claimed' } : { status: 'duplicate' };
   } catch (err: any) {
-    // Fehler beim Persistieren der Sperre darf den bereits erfolgten Versand nicht
-    // rueckgaengig machen - lokaler Fallback als zweite Absicherung, gleiche
-    // "im schlimmsten Fall doppelter Versand ist unkritisch"-Bewertung wie zuvor.
-    console.error('[Mailer] Idempotenz-Speicher konnte nicht in Supabase geschrieben werden, falle auf lokale Datei zurueck:', err?.message || err);
-    markConfirmationSentLocal(sessionId);
+    console.error('[Mailer] Atomic confirmation reservation in Supabase failed; mail send blocked:', err?.message || err);
+    return { status: 'unavailable', error: 'confirmation-reservation-failed' };
   }
 }
 
 export interface SubscriptionConfirmationResult {
-  /** true, wenn dieser Aufruf wegen bereits erfolgter Zustellung uebersprungen wurde. */
+  /** true, wenn dieser Aufruf wegen bereits erfolgter/in-flight Zustellung uebersprungen wurde. */
   skippedAsDuplicate: boolean;
   customer: { attempted: boolean; success: boolean; error?: string };
   owner: { attempted: boolean; success: boolean; error?: string };
@@ -224,12 +204,8 @@ export interface SubscriptionConfirmationResult {
 
 /**
  * Versendet die Abo-Bestaetigung an den Kunden und die interne Benachrichtigung
- * an den Owner. Deterministisch, idempotent (pro Stripe Checkout Session genau
- * einmal) und side-effect-safe: wirft NIEMALS eine Exception, unabhaengig davon
- * ob SMTP nicht konfiguriert ist, der Versand fehlschlaegt oder der
- * Idempotenz-Speicher nicht verfuegbar ist. Aufrufer (z.B. der Stripe-Webhook-
- * Handler) koennen das Ergebnis fuer Logging/Diagnose auswerten, muessen es aber
- * nicht - der Webhook darf in jedem Fall mit 200 OK antworten.
+ * an den Owner. Die Reservation erfolgt VOR SMTP und atomar je Checkout Session.
+ * SMTP-Fehler werden als Ergebnis zurueckgegeben, aber nicht geworfen.
  */
 export async function sendSubscriptionConfirmation(
   customerEmail: string,
@@ -247,21 +223,22 @@ export async function sendSubscriptionConfirmation(
     };
   }
 
-  if (await hasConfirmationBeenSent(sessionId)) {
-    console.log(`[Mailer] Abo-Bestaetigung fuer Session ${sessionId} bereits versendet - Duplikat uebersprungen (Idempotenz).`);
+  const reservation = await claimSubscriptionConfirmation(sessionId);
+  if (reservation.status === 'duplicate') {
+    console.log(`[Mailer] Abo-Bestaetigung fuer Session ${sessionId} bereits reserviert/versendet - Duplikat uebersprungen.`);
     return {
       skippedAsDuplicate: true,
       customer: { attempted: false, success: false },
       owner: { attempted: false, success: false },
     };
   }
-
-  // Sperre VOR dem eigentlichen Versand setzen, nicht danach: ein paralleler
-  // zweiter Webhook-Aufruf fuer dieselbe Session (Stripe kann Retries auch
-  // ueberlappend zustellen) soll den in-flight-Versand ebenfalls als bereits
-  // laufend erkennen, statt in der Race Condition zwischen "Versand gestartet"
-  // und "Versand geloggt" ein zweites Mal zuzuschlagen.
-  await markConfirmationSent(sessionId);
+  if (reservation.status === 'unavailable') {
+    return {
+      skippedAsDuplicate: false,
+      customer: { attempted: false, success: false, error: reservation.error },
+      owner: { attempted: false, success: false, error: reservation.error },
+    };
+  }
 
   const customerAttempted = Boolean(customerEmail);
   const [customerOutcome, ownerOutcome] = await Promise.allSettled([
