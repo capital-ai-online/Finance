@@ -14,6 +14,7 @@
   "baseSha": "5c05ce9849d310ee0c09a61fa687414f38feaefe",
   "pullRequest": null,
   "claimedPaths": [
+    ".mcp.json",
     ".claude/hooks/ga4-mcp-credentials.sh",
     ".claude/settings.json",
     "docs/runbooks/GA4_MCP_SERVER_SETUP.md",
