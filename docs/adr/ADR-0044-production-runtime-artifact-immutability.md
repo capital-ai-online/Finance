@@ -1,7 +1,7 @@
 # ADR-0044 — Production Runtime Artifact Immutability
 
 - **Status:** Accepted
-- **Implementation-Status:** IN VALIDATION — Phase 3
+- **Implementation-Status:** IN VALIDATION — Phase 4 / R-002 closure candidate
 - **Date:** 2026-08-08
 - **Scope:** CAPITAL-AI production web runtime / Documentary / Version Manager / release governance
 - **Platform Version:** `0.6.0`
@@ -10,155 +10,149 @@
 
 ## 1. Context
 
-The production Node/Express composition root still imports and exposes the legacy Document Hygiene and Version Manager modules. Those modules retain local filesystem mutation capabilities, including:
+The legacy production composition root still contains Document Hygiene and Version Manager implementation that historically could mutate repository-style documentation, local governance JSON state, generated release documents and runtime version state. It also starts a recursive Documentary watcher.
 
-- `docs/**` document creation, rewrite, backup and sanitation;
-- `docs/.history/**` backup mutation;
-- `uploads/document_hygiene.json` as mutable governance state;
-- `uploads/version_manager.json` as mutable release/version state;
-- runtime-triggered version bumps and generated documentation;
-- recursive document watcher startup from the production web process.
-
-The legacy Version Manager also embeds a `0.5.4` default state. Once local persistence is blocked, allowing `/api/admin/version` to keep reading that fallback would expose a false release identity for the `0.6.0` deployment.
-
-These capabilities conflict with the roadmap invariant that repository-style documentation and release identity are immutable deployment inputs. A production web process must not act as a repository writer, documentary watcher authority, or release-authority process.
+The legacy Version Manager embeds a `0.5.4` default state, while the governed package version is `0.6.0`. Therefore blocking local persistence alone is insufficient: production release identity must be derived from immutable build evidence rather than mutable or fallback runtime state.
 
 ## 2. Decision
 
 CAPITAL-AI establishes a fail-closed production runtime artifact and control-plane boundary.
 
-The production web container MUST NOT mutate:
+The production web runtime MUST NOT:
 
-1. any path under `docs/**`;
-2. `uploads/document_hygiene.json`;
-3. `uploads/version_manager.json`.
+1. mutate any path under `docs/**`;
+2. mutate `uploads/document_hygiene.json`;
+3. mutate `uploads/version_manager.json`;
+4. establish an active filesystem watcher over `docs/**`;
+5. execute legacy Documentary or release-governance mutation routes;
+6. use local Version Manager JSON/default state as production release authority.
 
-The production web process MUST NOT establish an active filesystem watcher over `docs/**`.
+Protected production mutations return HTTP `409` with code:
 
-The production web process MUST NOT execute legacy Documentary or release-governance mutation endpoints. Those requests are rejected before Express executes their handlers with:
+`READ_ONLY_CONTROL_PLANE_REQUIRED`
 
-- HTTP `409`;
-- code `READ_ONLY_CONTROL_PLANE_REQUIRED`;
-- authoritative mutation owner `ci-or-authenticated-control-plane`.
+Filesystem mutations on protected artifacts throw:
 
-The guarded mutation routes include:
+`CAPITAL_AI_RUNTIME_ARTIFACT_READ_ONLY`
 
-- `POST /api/docs-file`;
-- non-read operations under `/api/admin/hygiene/**`;
-- `POST /api/admin/version/bump`.
+The authoritative mutation owner is:
 
-`GET /api/admin/version` remains available for compatibility, but its production response MUST be derived from immutable package/deploy metadata. It MUST NOT read `uploads/version_manager.json` as the production release source of truth.
+`ci-or-authenticated-control-plane`
 
-The runtime version contract uses:
+## 3. Production enforcement
 
-- `package.json.version` as the application version;
-- deployment commit metadata such as `RENDER_GIT_COMMIT` when available;
-- optional immutable Render service/instance/hostname metadata;
-- `source: immutable-build-metadata` and `readOnly: true`.
-
-The production Docker image preloads `server/runtime/runtimeArtifactGuard.mjs` before `dist/server.cjs`. The guard is enabled only when both conditions are true:
+The production Docker image preloads `server/runtime/runtimeArtifactGuard.mjs` before `dist/server.cjs` when:
 
 - `NODE_ENV=production`;
 - `CAPITAL_AI_RUNTIME_ARTIFACT_MODE=readonly`.
 
 The guard:
 
-- denies synchronous and promise-based filesystem mutations targeting protected artifacts;
-- denies rename/copy operations when a protected artifact is a source or destination as applicable;
-- suppresses `fs.watch()` / `fs.watchFile()` on protected paths by returning an inert watcher contract;
-- rejects protected HTTP mutation contracts before legacy Express handlers execute;
-- serves immutable production release identity for `GET /api/admin/version`;
-- leaves non-protected runtime uploads and ordinary application routes untouched.
+- blocks synchronous and promise-based filesystem mutations on protected paths;
+- blocks protected rename/copy targets;
+- suppresses `fs.watch()` / `fs.watchFile()` on `docs/**` with an inert watcher contract;
+- rejects protected HTTP mutation routes before legacy Express handlers execute;
+- serves read-only release identity for `GET /api/admin/version`;
+- leaves ordinary application uploads and unrelated runtime routes untouched.
 
-`/app/docs` is additionally made read-only at the OS permission layer (`0555`) for the non-root production user.
+`/app/docs` is additionally permissioned `0555` for the non-root production user.
 
-## 3. Ownership model
+## 4. Immutable build evidence
 
-| Artifact / capability | Production web runtime | CI / control plane / reviewed Git workflow |
+Every production `npm run build` now executes:
+
+`scripts/automation/buildRuntimeReleaseManifest.ts`
+
+and emits:
+
+`dist/control-plane/release-manifest.json`
+
+Contract:
+
+`capital-ai-runtime-release-manifest/1.0.0`
+
+The manifest records:
+
+- governed `package.json.version`;
+- source commit when available from controlled build/deploy metadata;
+- SHA-256 of `package.json`;
+- SHA-256 of `package-lock.json`;
+- deterministic SHA-256 over the sorted Documentary tree under `docs/**` excluding `.history`;
+- Documentary file count;
+- deterministic `buildIdentity` derived from the release inputs;
+- `authority: ci-or-controlled-build`;
+- `mutable: false`.
+
+If the manifest exists but violates its contract, production startup fails closed rather than silently trusting fallback release state.
+
+`GET /api/admin/version` uses this manifest as the primary production release identity. Package/deploy metadata is retained only as a compatibility fallback when no manifest exists, for example in development probes or older deployment artifacts.
+
+## 5. Existing controlled release workflow
+
+The repository already contains the controlled `release:version` workflow in `scripts/automation/releaseVersion.ts`. It performs governed version planning/application, mandatory gates and versioned release-candidate evidence generation. It does not create a final immutable Git tag before production acceptance.
+
+R-002 therefore does not introduce a competing runtime release engine. The ownership split is:
+
+| Capability | Production web runtime | Controlled build / CI / reviewed Git workflow |
 |---|---|---|
 | Repository documentation | read-only | authoritative writer |
-| ADRs / ESS / architecture docs | read-only | authoritative writer |
-| Documentary filesystem watcher | disabled/inert | CI/control-plane observation only |
-| Documentary mutation endpoints | reject with control-plane contract | authoritative mutation workflow |
-| Release identity | immutable package/deploy metadata | release pipeline |
-| Version bump / release document generation | rejected | authoritative release workflow |
-| Documentary proposals/evidence | emit event/evidence only | reviewed persistence workflow |
-| Normal application uploads | permitted by application contract | not governed by this ADR |
+| ADR / ESS / architecture changes | read-only | reviewed Git mutation |
+| Documentary watcher | disabled/inert | offline/CI tooling only |
+| Documentary mutation routes | rejected | control-plane/review workflow |
+| Version bump | rejected | `release:version` |
+| Release candidate evidence | consume only | `release:version` |
+| Runtime release manifest | consume only | production build |
+| Release identity | manifest-backed read-only | controlled build/release pipeline |
 
-The legacy Document Hygiene and Version Manager modules may remain temporarily importable for compatibility, but they no longer hold production filesystem, watcher, mutation-route, or release-identity authority.
+## 6. Failure semantics
 
-## 4. Migration order
+No protected mutation may silently fall back to another local path, JSON state file or mutation endpoint.
 
-R-002 is a P0 integrity item. The migration order is therefore:
+A corrupted or structurally invalid immutable release manifest is an integrity failure and must not be replaced by the legacy `0.5.4` state.
 
-1. remove production filesystem write authority;
-2. remove production watcher authority over protected artifacts;
-3. reject legacy mutation HTTP contracts before handler execution;
-4. replace mutable local production version state with immutable build/release identity;
-5. prove all boundaries with regression tests;
-6. migrate Documentary proposals and release generation to CI/control-plane workflows;
-7. remove obsolete legacy mutator code after consumers have migrated.
+The production web process is an evidence consumer/emitter, not a repository or release writer.
 
-## 5. Failure semantics
+## 7. Validation contract
 
-A denied filesystem mutation throws:
+Automated tests MUST prove:
 
-`CAPITAL_AI_RUNTIME_ARTIFACT_READ_ONLY`
+1. `docs/**` writes are denied;
+2. Document Hygiene local authority is denied;
+3. Version Manager local JSON authority is denied;
+4. ordinary application uploads remain writable;
+5. production Documentary watchers are suppressed;
+6. protected Documentary/version mutation routes return `409 READ_ONLY_CONTROL_PLANE_REQUIRED` before legacy handlers execute;
+7. the controlled build emits a valid immutable release manifest;
+8. the manifest contains version, source commit, dependency-lock hash and Documentary-tree hash evidence;
+9. `GET /api/admin/version` prefers the immutable build manifest;
+10. package/deploy metadata remains compatibility fallback only;
+11. the Docker production runtime preloads the guard and keeps `/app/docs` OS-level read-only;
+12. repository TypeScript, tests, production build and PR technical validation remain green.
 
-A denied production HTTP mutation returns:
-
-`READ_ONLY_CONTROL_PLANE_REQUIRED`
-
-No denied operation may silently fall back to another local file or mutation path.
-
-Protected-path watchers are suppressed rather than allowed to observe and trigger mutation chains. The inert watcher preserves the minimal `close/ref/unref` interface required by legacy startup code without establishing production filesystem authority.
-
-## 6. Security and reliability consequences
+## 8. Consequences
 
 Positive consequences:
 
 - deploy instances cannot rewrite Git-style documentation;
-- rolling deploy overlap cannot race on local documentary/version files;
-- production Document Hygiene cannot react to `docs/**` changes through an active filesystem watcher;
-- mutating admin endpoints fail explicitly before legacy handlers execute;
-- container restarts cannot create a false release source of truth;
-- the embedded legacy `0.5.4` fallback cannot override the immutable `0.6.0` package identity;
-- deploy commit identity can be surfaced without mutable local release state.
+- rolling instances cannot race on Documentary/version files;
+- the production watcher cannot trigger autonomous document mutation chains;
+- legacy admin mutations fail explicitly;
+- the embedded `0.5.4` fallback cannot override release `0.6.0`;
+- each build carries a content-addressable release/Documentary evidence record;
+- runtime release identity can be correlated to source commit, dependency lock and Documentary state.
 
 Trade-offs:
 
-- legacy admin mutation operations are unavailable in production until a control-plane replacement is implemented;
-- Document Hygiene local state does not persist as production authority;
-- the legacy watcher startup call may still execute, but cannot establish an active protected-path watcher;
-- development/CI workflows remain unaffected unless they explicitly enable the production read-only mode.
+- legacy production admin mutation UI paths require migration to a control-plane workflow;
+- legacy mutator implementation remains in the repository until consumer cleanup;
+- older artifacts without the new manifest use the compatibility package/deploy fallback.
 
-## 7. Validation contract
+## 9. R-002 closure boundary
 
-Automated process tests MUST prove:
+R-002 is considered technically complete when the Phase-4 head passes the repository CI and PR Technical Validation gates.
 
-1. `docs/**` writes are denied;
-2. `uploads/document_hygiene.json` writes are denied;
-3. `uploads/version_manager.json` writes are denied;
-4. ordinary application uploads remain writable;
-5. production watchers over `docs/**` are suppressed;
-6. Documentary/version mutation endpoints return `409 READ_ONLY_CONTROL_PLANE_REQUIRED` before fallback handlers execute;
-7. `GET /api/admin/version` returns package version `0.6.0` and immutable deploy commit metadata when provided;
-8. the production Docker image preloads the guard;
-9. `/app/docs` is OS-level read-only.
+Removal of now-inert legacy implementation and UI cleanup is follow-up technical debt, not a prerequisite for the R-002 integrity invariant, because production mutation, watcher and release-authority capabilities are already fail-closed and release identity is build-evidence-backed.
 
-## 8. Follow-up work
+## 10. Decision
 
-Phase 3 closes the production authority boundary, but does not remove the legacy implementation from the repository.
-
-Open follow-ups:
-
-- define the durable proposal/evidence handoff contract for Documentary changes;
-- move release bump/document generation to CI or an explicit authenticated control plane;
-- migrate any UI consumers from legacy mutable Version Manager assumptions to the immutable runtime contract;
-- remove obsolete runtime-generated ADR/changelog/release-document code after migration;
-- persist review state only in a durable store governed by an accepted contract;
-- remove obsolete legacy watcher/mutator code after consumer migration.
-
-## 9. Decision
-
-Accepted. Production repository-style artifacts and release-governance state are immutable deployment inputs. The web runtime is a read-only consumer and evidence emitter; CI or an authenticated control plane is the authoritative mutation owner.
+Accepted. Production Documentary and release artifacts are immutable deployment inputs. The production web runtime is a read-only consumer and evidence emitter; controlled build/CI/review workflows are the authoritative mutation and release owners.
