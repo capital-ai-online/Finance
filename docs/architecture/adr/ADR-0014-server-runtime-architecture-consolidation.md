@@ -75,20 +75,33 @@ The module deliberately does **not** own:
 - scoring implementation or evidence semantics;
 - runtime startup, background refresh or graceful shutdown.
 
-This separation prevents route composition from becoming another application monolith.
+The route-composition contract is gated independently before the high-contention compatibility module is changed.
 
-The actual cutover from the inline route-mount block in `server.application.ts` is performed only after a fresh `main` overlap check because that compatibility module remains a high-contention file during parallel roadmap work.
+#### Phase 3.2 — documentation and history boundaries
+
+`server/routes/documentationRoutes.ts` establishes a canonical **read-only** documentation boundary for `GET /api/docs-file`.
+
+The historic compatibility handler `POST /api/docs-file` is intentionally not migrated because it performs runtime writes into `docs/**`. That behavior conflicts with R-002 / ADR-0044 immutable production-runtime direction. It remains visible in `server.application.ts` as an explicit governance gap until a separately reviewed retirement or privileged non-production replacement is implemented.
+
+`server/routes/historyRoutes.ts` extracts the registry-backed `GET /api/backtest-history` contract while preserving:
+
+- `orchestrator.handle('Backtest Download')` governance;
+- the existing 1Y/3Y/5Y/range limit behavior;
+- `assetRegistry.getHistory()` as the authoritative source;
+- explicit `history.source` propagation required by the No-Demo-Data policy.
+
+Alpha Vantage quote/history provider logic remains in the compatibility module for now and moves later with the provider-adapter workstream. This prevents external-provider normalization, rate-limit semantics and route composition from being mixed prematurely.
 
 #### Remaining Phase 3 order
 
 1. wire the canonical route composer and remove the equivalent inline mount block;
-2. documentation and history endpoints;
+2. wire read-only documentation and registry-backed history boundaries, then retire the incompatible runtime docs-write path;
 3. AI sentiment and portfolio analysis routes;
-4. market-data aggregation/provider adapters;
+4. market-data aggregation/provider adapters, including Alpha Vantage history/quote ownership;
 5. scoring route boundaries;
 6. startup/background refresh lifecycle.
 
-Each extraction must be behavior-preserving and independently gated by TypeScript, unit tests, production build and deployment-readiness checks.
+Each extraction must be behavior-preserving unless an existing behavior conflicts with an already accepted production invariant. Such conflicts must be surfaced explicitly and retired through a separately gated change rather than silently normalized into the new architecture.
 
 ## Consequences
 
