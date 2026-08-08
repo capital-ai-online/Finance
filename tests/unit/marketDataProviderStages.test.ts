@@ -16,7 +16,7 @@ describe('market-data provider stage composition', () => {
       forexTickers: [],
       commodityTickers: ['XAUUSD'],
     });
-    expect(stages.map(stage => stage.name)).toEqual(['crypto-live-chain', 'stooq', 'fmp-indices']);
+    expect(stages.map(stage => stage.name)).toEqual(['crypto-market-data', 'stooq', 'fmp-indices']);
   });
 
   it('appends custom provider stages after the canonical providers', () => {
@@ -28,7 +28,7 @@ describe('market-data provider stage composition', () => {
       additionalStages: [{ name: 'custom-provider', load: async () => [] }],
     });
     expect(stages.map(stage => stage.name)).toEqual([
-      'crypto-live-chain',
+      'crypto-market-data',
       'stooq',
       'fmp-indices',
       'custom-provider',
