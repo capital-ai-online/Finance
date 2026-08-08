@@ -1,7 +1,7 @@
 # ADR-0044 — Production Runtime Artifact Immutability
 
 - **Status:** Accepted
-- **Implementation-Status:** IN VALIDATION — Phase 4 / R-002 closure candidate
+- **Implementation-Status:** COMPLETE — R-002 validated
 - **Date:** 2026-08-08
 - **Scope:** CAPITAL-AI production web runtime / Documentary / Version Manager / release governance
 - **Platform Version:** `0.6.0`
@@ -59,7 +59,7 @@ The guard:
 
 ## 4. Immutable build evidence
 
-Every production `npm run build` now executes:
+Every production `npm run build` executes:
 
 `scripts/automation/buildRuntimeReleaseManifest.ts`
 
@@ -129,7 +129,19 @@ Automated tests MUST prove:
 11. the Docker production runtime preloads the guard and keeps `/app/docs` OS-level read-only;
 12. repository TypeScript, tests, production build and PR technical validation remain green.
 
-## 8. Consequences
+## 8. Validation evidence
+
+R-002 Phase 4 was validated on the branch synchronized with current `main` at merge-base `066d329558e77ffecc5064ce7c0daa037317ad4c`.
+
+Successful gates before this status-only documentation commit:
+
+- CI run `#482`: dependency audit, production invariants, TypeScript, Vitest, production build including immutable release-manifest generation, and deployment-readiness all succeeded;
+- PR Technical Validation run `#133`: repository conventions, changed-workflow security, dependency vulnerability gate, TypeScript, tests, production build and deployment-readiness all succeeded;
+- Google Marketing Protected Change Guard run `#63`: Docker-context contract, protected invariants, CSP/consent tests, TypeScript, production build and built-SPA CSP delivery all succeeded.
+
+The final documentation-only head must retain these gates before merge.
+
+## 9. Consequences
 
 Positive consequences:
 
@@ -147,12 +159,12 @@ Trade-offs:
 - legacy mutator implementation remains in the repository until consumer cleanup;
 - older artifacts without the new manifest use the compatibility package/deploy fallback.
 
-## 9. R-002 closure boundary
+## 10. R-002 closure boundary
 
-R-002 is considered technically complete when the Phase-4 head passes the repository CI and PR Technical Validation gates.
+R-002 is technically complete. Production mutation, watcher and release-authority capabilities are fail-closed and release identity is build-evidence-backed.
 
-Removal of now-inert legacy implementation and UI cleanup is follow-up technical debt, not a prerequisite for the R-002 integrity invariant, because production mutation, watcher and release-authority capabilities are already fail-closed and release identity is build-evidence-backed.
+Removal of now-inert legacy implementation and UI cleanup is follow-up technical debt rather than a prerequisite for the R-002 integrity invariant.
 
-## 10. Decision
+## 11. Decision
 
-Accepted. Production Documentary and release artifacts are immutable deployment inputs. The production web runtime is a read-only consumer and evidence emitter; controlled build/CI/review workflows are the authoritative mutation and release owners.
+Accepted and validated. Production Documentary and release artifacts are immutable deployment inputs. The production web runtime is a read-only consumer and evidence emitter; controlled build/CI/review workflows are the authoritative mutation and release owners.
