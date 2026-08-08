@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "PR-server-domain-decomposition-phase3",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Thinking",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "Decompose server.application.ts against the canonical runtime after ADR-0014, beginning with route composition while preserving all roadmap invariants.",
+  "startedAt": "2026-08-08T02:00:00Z",
+  "baseBranch": "main",
+  "baseSha": "9e690f8a06de788a87e8980fdac17636960eaf6a",
+  "claimedPaths": [
+    "server/routes/registerApplicationRoutes.ts",
+    "docs/architecture/adr/ADR-0014-server-runtime-architecture-consolidation.md",
+    ".ai/work-claims/PR-server-domain-decomposition-phase3.json"
+  ],
+  "protectedPaths": [
+    "server.application.ts",
+    "server/stripe.ts",
+    "server/securityResponse.ts",
+    "server/runtime/**",
+    "src/services/cryptoScoringService.ts",
+    "src/services/memeCoinScoringService.ts"
+  ],
+  "releaseCondition": "Claim is released when the PR is merged or closed. Wiring into server.application.ts occurs only after a fresh main-head and overlap check."
+}
