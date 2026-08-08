@@ -9,15 +9,30 @@ const fallbackAssets = [
 ];
 
 describe('market-data provider stage composition', () => {
-  it('keeps crypto before stooq and appends later provider stages', () => {
+  it('keeps the canonical provider order crypto -> stooq -> fmp', () => {
     const stages = createMarketDataProviderStages({
       fallbackAssets,
       stockTickers: ['AAPL.US'],
       forexTickers: [],
       commodityTickers: ['XAUUSD'],
-      additionalStages: [{ name: 'fmp-indices', load: async () => [] }],
     });
     expect(stages.map(stage => stage.name)).toEqual(['crypto-live-chain', 'stooq', 'fmp-indices']);
+  });
+
+  it('appends custom provider stages after the canonical providers', () => {
+    const stages = createMarketDataProviderStages({
+      fallbackAssets,
+      stockTickers: ['AAPL.US'],
+      forexTickers: [],
+      commodityTickers: ['XAUUSD'],
+      additionalStages: [{ name: 'custom-provider', load: async () => [] }],
+    });
+    expect(stages.map(stage => stage.name)).toEqual([
+      'crypto-live-chain',
+      'stooq',
+      'fmp-indices',
+      'custom-provider',
+    ]);
   });
 
   it('marks stooq fallback data honestly when the provider fails', async () => {
