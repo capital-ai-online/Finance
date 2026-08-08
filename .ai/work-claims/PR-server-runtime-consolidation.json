@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "PR-server-runtime-consolidation",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Thinking",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "Reconcile duplicate CAPITAL-AI server architectures after ADR-0013 and establish one canonical production runtime module tree.",
+  "startedAt": "2026-08-08T01:45:00Z",
+  "baseBranch": "main",
+  "baseSha": "ad8de996094e62126262065f5b30c81f90ffb825",
+  "claimedPaths": [
+    "src/server/app.ts",
+    "docs/architecture/SERVER_MODULARIZATION.md",
+    "docs/architecture/adr/ADR-0014-server-runtime-architecture-consolidation.md",
+    ".ai/work-claims/PR-server-runtime-consolidation.json"
+  ],
+  "releaseCondition": "Claim is released when the PR is merged or closed. No production configuration, Stripe, Supabase or Render mutation is included."
+}
