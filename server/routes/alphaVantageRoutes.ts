@@ -1,0 +1,71 @@
+import { Router } from 'express';
+import { orchestrator } from '../../src/lib/requestOrchestrator';
+
+const CRYPTO_SYMBOLS = ['BTC', 'ETH', 'SOL', 'ADA', 'XRP'];
+
+export const alphaVantageRouter = Router();
+
+alphaVantageRouter.get('/alpha-vantage-quote', orchestrator.handle('Alpha Vantage Quote'), async (req, res) => {
+  const { symbol } = req.query;
+  const key = process.env.ALPHA_VANTAGE_KEY;
+  if (!key) {
+    return res.status(400).json({ error: 'ALPHA_VANTAGE_KEY is not configured.' });
+  }
+  if (!symbol) {
+    return res.status(400).json({ error: 'Symbol parameter is required.' });
+  }
+
+  const rawSymbol = String(symbol).toUpperCase().trim();
+  const isCrypto = CRYPTO_SYMBOLS.includes(rawSymbol);
+
+  try {
+    const url = isCrypto
+      ? `https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=${rawSymbol}&to_currency=USD&apikey=${key}`
+      : `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${rawSymbol}&apikey=${key}`;
+
+    console.log(`[Alpha Vantage Quote] Requesting URL: ${url.replace(key, 'REDACTED')}`);
+    const response = await fetch(url);
+    if (!response.ok) {
+      return res.status(500).json({ error: `Alpha Vantage returned HTTP status ${response.status}` });
+    }
+
+    const data: any = await response.json();
+    if (data['Note']) {
+      return res.status(429).json({ error: 'Alpha Vantage Rate-Limit erreicht (5 Anfragen pro Minute). Bitte kurz warten.' });
+    }
+    if (data['Error Message']) {
+      return res.status(400).json({ error: `Fehler von Alpha Vantage: ${data['Error Message']}` });
+    }
+
+    if (isCrypto) {
+      const rateObj = data['Realtime Currency Exchange Rate'];
+      if (!rateObj) {
+        return res.status(444).json({ error: 'Keine Wechselkursdaten gefunden.', raw: data });
+      }
+      return res.json({
+        symbol: rawSymbol,
+        price: parseFloat(rateObj['5. Exchange Rate']),
+        change24h: 0.0,
+        source: 'Alpha Vantage',
+        timestamp: rateObj['6. Last Refreshed'],
+      });
+    }
+
+    const quoteObj = data['Global Quote'];
+    if (!quoteObj || Object.keys(quoteObj).length === 0) {
+      return res.status(444).json({ error: 'Keine Kursdaten für dieses Symbol gefunden.', raw: data });
+    }
+    const change24h = parseFloat((quoteObj['10. change percent'] || '0%').replace('%', ''));
+    const volume = parseFloat(quoteObj['06. volume']);
+    return res.json({
+      symbol: rawSymbol,
+      price: parseFloat(quoteObj['05. price']),
+      change24h: Number.isNaN(change24h) ? 0.0 : change24h,
+      volume: Number.isNaN(volume) ? undefined : volume,
+      source: 'Alpha Vantage',
+      timestamp: quoteObj['07. latest trading day'],
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Interner Serverfehler beim Abruf von Alpha Vantage.' });
+  }
+});
