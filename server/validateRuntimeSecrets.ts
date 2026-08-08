@@ -43,7 +43,17 @@ const CRITICAL_SECRETS: SecretRule[] = [
   },
   {
     key: 'TOTP_ENCRYPTION_KEY',
-    validate: (v) => (HEX_64.test(v) ? null : 'muss exakt 64 Hex-Zeichen (32 Byte) lang sein'),
+    // Zeichenzahl und Anzahl ungültiger Zeichen mit ausgeben (nie den Wert selbst) -
+    // deutlich schneller zu debuggen als "falsche Länge" ohne jeden Anhaltspunkt,
+    // ohne das Secret dabei preiszugeben.
+    validate: (v) => {
+      if (HEX_64.test(v)) return null;
+      const invalidCount = (v.match(/[^0-9a-fA-F]/g) || []).length;
+      const detail = invalidCount > 0
+        ? `${invalidCount} ungültige(s) Zeichen enthalten (nur 0-9/a-f/A-F erlaubt)`
+        : 'nur gültige Hex-Zeichen, aber falsche Länge';
+      return `muss exakt 64 Hex-Zeichen (32 Byte) lang sein - aktuell ${v.length} Zeichen, ${detail}`;
+    },
   },
 ];
 
