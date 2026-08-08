@@ -1,3 +1,7 @@
+// @deprecated ADR-0014: inactive legacy scaffold. The production runtime is composed by
+// server.ts -> server.application.ts using the canonical root-level server/ modules.
+// Do not add new production dependencies on this file. Useful behavior must be reconciled
+// into the canonical runtime tree before this scaffold is retired.
 import express from 'express';
 import { requestContext } from '../../server/logger';
 import { metricsMiddleware } from '../../server/metrics';
@@ -13,6 +17,7 @@ export interface ApplicationContext {
   providers: AiProviders;
 }
 
+/** @deprecated ADR-0014 — no production caller; retained temporarily for reconciliation. */
 export function createApplication(): ApplicationContext {
   const app = express();
   app.use(requestContext);
