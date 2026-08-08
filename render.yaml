@@ -12,7 +12,19 @@ services:
     # ADR-0037: stay below Render's 30s default termination window so the application can
     # stop scheduling work, drain HTTP requests and exit before a forced termination.
     maxShutdownDelaySeconds: 30
+    # Deploy-Härtung: echte Secrets (API-Keys, Service-Role-Key, Stripe-Secret/Webhook-Key,
+    # TOTP-Verschlüsselungsschlüssel, SMTP-Passwort, OAuth-Client-Secrets ...) leben NICHT
+    # mehr als einzelne `envVars`, sondern gebündelt in dieser Secret File. Der Inhalt wird
+    # ausschließlich im Render-Dashboard gepflegt (Environment -> Secret Files), niemals hier
+    # im Repo. Vollständige Schlüsselliste: scripts/security/secretFileManifest.ts
+    # (Single Source of Truth, auch für den Boot-Validator server/validateRuntimeSecrets.ts
+    # und das Env-Var-Abdeckungs-Gate in scripts/automation/verifyDeploymentReadiness.ts).
+    secretFiles:
+      - name: finance-secrets.env
     envVars:
+      # Nur nicht-vertrauliche Konfiguration: clientseitig ohnehin sichtbare VITE_*-Werte,
+      # öffentliche Publishable/Anon-Keys, OAuth-Client-IDs (das *_SECRET-Gegenstück liegt in
+      # der Secret File oben) sowie reine Kennungen/Konfigurationswerte ohne Geheimnischarakter.
       - key: VITE_GA_MEASUREMENT_ID
         sync: false
       - key: VITE_SUPABASE_URL
@@ -21,39 +33,7 @@ services:
         sync: false
       - key: VITE_SUPABASE_ANON_KEY
         sync: false
-      - key: SUPABASE_SECRET_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
       - key: STRIPE_PUBLISHABLE_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: ALPHA_VANTAGE_KEY
-        sync: false
-      - key: NEWS_API_KEY
-        sync: false
-      - key: COINMARKETCAP_API_KEY
-        sync: false
-      - key: FMP_API_KEY
-        sync: false
-      # AUD4-F-005: active market-data providers declared in deployment manifest.
-      # Values remain managed in Render and are never committed to the repository.
-      - key: COIN_API_KEY
-        sync: false
-      - key: TWELVEDATA_API_KEY
-        sync: false
-      - key: EODHD_API_KEY
-        sync: false
-      - key: FRED_API_KEY
-        sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: OPENAI_API_KEY
         sync: false
       # Canonical production billing contract. Monthly/yearly variables are the authoritative
       # keys used by server/stripe.ts. Legacy monthly aliases remain declared temporarily for
@@ -76,39 +56,23 @@ services:
         sync: false
       - key: STRIPE_PRICE_ID_ENTERPRISE
         sync: false
-      - key: TOTP_ENCRYPTION_KEY
-        sync: false
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
         sync: false
       - key: SMTP_USER
         sync: false
-      - key: SMTP_PASSWORD
-        sync: false
       - key: SMTP_FROM
         sync: false
       - key: AI_STUDIO_ORIGIN
         sync: false
-      - key: METRICS_TOKEN
-        sync: false
       - key: YOUTUBE_CLIENT_ID
-        sync: false
-      - key: YOUTUBE_CLIENT_SECRET
         sync: false
       - key: TIKTOK_CLIENT_ID
         sync: false
-      - key: TIKTOK_CLIENT_SECRET
-        sync: false
       - key: INSTAGRAM_CLIENT_ID
-        sync: false
-      - key: INSTAGRAM_CLIENT_SECRET
         sync: false
       - key: X_CLIENT_ID
         sync: false
-      - key: X_CLIENT_SECRET
-        sync: false
       - key: FACEBOOK_CLIENT_ID
-        sync: false
-      - key: FACEBOOK_CLIENT_SECRET
         sync: false
