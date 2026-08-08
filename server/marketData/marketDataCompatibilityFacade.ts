@@ -1,9 +1,12 @@
 import type { MarketDataAsset, MarketDataProviderStage } from './marketDataCoordinator';
 import { refreshMarketData } from './marketDataCoordinator';
 import { createMarketDataProviderStages } from './createMarketDataProviderStages';
+import type { StooqFallbackAsset } from './stooqProviderStage';
 
 export interface MarketDataCompatibilityFacadeOptions {
-  fallbackAssets: MarketDataAsset[];
+  // Provider stages require concrete fallback market values. Keep this contract explicit
+  // instead of widening to MarketDataAsset[], where price/change24h may be absent.
+  fallbackAssets: StooqFallbackAsset[];
   stockTickers: string[];
   forexTickers: string[];
   commodityTickers: string[];
