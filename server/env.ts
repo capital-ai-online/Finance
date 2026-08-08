@@ -1,8 +1,10 @@
 import dotenv from 'dotenv';
 
-// Load local .env values without emitting dotenv startup banners/tips.
-// Render injects production configuration through process.env, so this keeps
-// production logs deterministic while preserving local development support.
+// Silence dotenv startup banners/tips process-wide before any later dotenv.config()
+// call executes (server.ts currently contains a second, redundant initialization).
+// Render injects production configuration through process.env; local .env loading
+// remains available for development without third-party promotional log noise.
+process.env.DOTENV_CONFIG_QUIET = process.env.DOTENV_CONFIG_QUIET || 'true';
 dotenv.config({ quiet: true });
 
 /**
