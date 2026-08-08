@@ -27,20 +27,31 @@ export function createMarketDataRuntimeFacade(options: MarketDataRuntimeFacadeOp
     for (const asset of assets) options.syncAsset(asset);
   };
 
-  const refreshAndSync = async (): Promise<MarketDataAsset[]> => {
-    if (!activeRefresh) {
-      activeRefresh = options.refresh();
-    }
+  const refreshAndSync = (): Promise<MarketDataAsset[]> => {
+    if (activeRefresh) return activeRefresh;
 
-    try {
-      const assets = await activeRefresh;
+    // Coalesce the complete refresh transaction, not only provider I/O. Cache mutation and
+    // registry synchronization must therefore execute exactly once for all concurrent callers.
+    const transaction = (async (): Promise<MarketDataAsset[]> => {
+      const assets = await options.refresh();
       cached = assets;
       lastRefreshAt = now();
       syncAll(assets);
       return assets;
-    } finally {
-      activeRefresh = null;
-    }
+    })();
+
+    activeRefresh = transaction;
+
+    void transaction.finally(() => {
+      // Do not let an older transaction clear a newer one if execution is extended later.
+      if (activeRefresh === transaction) activeRefresh = null;
+    }).catch(() => {
+      // The original transaction remains the error source consumed by get/backgroundRefresh.
+      // This catch prevents the cleanup-only promise returned by finally() from becoming an
+      // unhandled rejection.
+    });
+
+    return transaction;
   };
 
   const get = async (): Promise<MarketDataAsset[]> => {
