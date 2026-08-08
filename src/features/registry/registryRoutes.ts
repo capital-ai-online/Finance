@@ -37,6 +37,8 @@ import { getEodhdBondEvidence } from '../../services/eodhdBondEvidence';
 import { scoreSovereignBenchmarkEvidence } from '../../services/sovereignBenchmarkEvidenceScoring';
 import { logSystemEvent } from '../../../server/systemEvents';
 import { ensureFundamentalsFresh, getCachedFundamentals } from '../../../server/stockFundamentals';
+import { computeBinanceQuickAnalysis, normalizeSpotSymbol, QuickAnalysisError } from '../../../server/binanceLandingQuickAnalysis';
+import { checkRateLimit, getClientIp } from '../../platform/Security/rateLimiter';
 
 export interface AssetUpdatePayload {
   expectedReturn?: number;
@@ -470,6 +472,32 @@ registryRouter.get('/assets/:symbol/verified-score', async (req, res) => {
   res.setHeader('x-correlation-id', correlationId);
   const result = await evaluateVerifiedCatalogSymbol(req.params.symbol, correlationId);
   return res.status(result.httpStatus).json(result.payload);
+});
+
+// ADR-0038-Nachtrag: geteilte Binance-Kurzanalyse-Kernlogik, hier fuer den authentifizierten
+// Enterprise-Scorer-Kontext bereitgestellt (eigener Rate-Limit- und Prompt-Namespace, damit sie
+// nicht mit der oeffentlichen Landing-Nutzung vermischt wird). Der oeffentliche Landing-Endpunkt
+// (/api/landing/quick-analysis, server/binanceLandingQuickAnalysis.ts) bleibt unveraendert die
+// einzige Instanz im nicht angemeldeten Bereich.
+registryRouter.post('/assets/:symbol/quick-analysis', async (req, res) => {
+  const ip = getClientIp(req as any);
+  if (!checkRateLimit(`registry-binance-ai:${ip}`, 6, 60_000)) {
+    return res.status(429).json({ error: 'Zu viele Kurzanalyse-Anfragen. Bitte kurz warten.' });
+  }
+  const symbol = normalizeSpotSymbol(req.params.symbol);
+  if (!symbol) {
+    return res.status(400).json({ error: 'Ungültiges Symbol. Beispiel: BTC, ETH oder SOL.' });
+  }
+  try {
+    const result = await computeBinanceQuickAnalysis(symbol, { promptId: 'enterprise-binance-quick-analysis', requestId: req.requestId });
+    return res.json(result);
+  } catch (error: any) {
+    if (error instanceof QuickAnalysisError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+    console.warn('[Registry Binance Quick Analysis]', error?.message || error);
+    return res.status(502).json({ error: 'Binance-Marktdaten sind derzeit nicht verfügbar.' });
+  }
 });
 
 registryRouter.post('/assets/:symbol', express.json(), async (req, res) => {

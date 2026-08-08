@@ -56,6 +56,36 @@ Der bestehende 120px-Landing-Hero des `CapitalAiLogo` ist aktuell die einzige Ve
 - Öffentliche AI-Aufrufe erzeugen Providerkosten; Rate-Limits bleiben verpflichtend.
 - USDT-Normalisierung deckt absichtlich nicht alle möglichen Binance-Handelspaare ab.
 
+## Nachtrag 2026-08-08 — Wiederverwendung im Enterprise Scorer
+
+Die Kernlogik (Binance-Marktdaten laden + AI-Kurzanalyse erzeugen) wurde aus dem Route-Handler
+in eine geteilte Funktion `computeBinanceQuickAnalysis()` (`server/binanceLandingQuickAnalysis.ts`)
+extrahiert und zusätzlich zum bestehenden öffentlichen Endpunkt von einem zweiten,
+**authentifizierten** Endpunkt verwendet: `POST /api/registry/assets/:symbol/quick-analysis`
+(`src/features/registry/registryRoutes.ts`), konsumiert von der neuen Komponente
+`src/components/EnterpriseBinanceQuickAnalysis.tsx`. Sie ersetzt die vormals im Enterprise
+Scorer (`EnterpriseAnalysisPanels.tsx`) gezeigte, ausschließlich auf bereits verifizierten
+internen Scoring-Fakten basierende "AI Kurzanalyse" (kein Live-Marktdaten-Zugriff) durch eine
+Live-Binance-Marktdaten-Variante, positioniert als erste Komponente des Enterprise Scorers,
+oberhalb der Asset-Suche, angetrieben vom dort bereits ausgewählten Symbol (kein eigenes
+Suchfeld).
+
+Diese Erweiterung ändert die ursprünglichen Entscheidungen 1–8 nicht, ergänzt sie aber:
+
+- Der öffentliche Landing-Endpunkt (`/api/landing/quick-analysis`) bleibt unverändert bestehen,
+  weiterhin ohne Login erreichbar, weiterhin separat per IP rate-limitiert
+  (`landing-binance-ai:<ip>`, 6/min) und weiterhin die einzige Instanz im nicht angemeldeten
+  Landing-Hero — die Verifikationsaussage "Landing-Widget erscheint ausschließlich im
+  öffentlichen Landing-Hero" bezieht sich unverändert auf `LandingBinanceQuickAnalysis.tsx`
+  und bleibt zutreffend.
+- Der neue authentifizierte Endpunkt nutzt einen eigenen Rate-Limit-Namespace
+  (`registry-binance-ai:<ip>`, ebenfalls 6/min) und eine eigene Prompt-Registry-ID
+  (`enterprise-binance-quick-analysis`), damit Kosten/Nutzung beider Aufrufkontexte getrennt
+  auswertbar bleiben und keiner der beiden Kontexte den Rate-Limit-Kontingent des anderen
+  verbraucht.
+- Fail-Closed-/No-Demo-Data-Eigenschaften (Punkte 5–8 der ursprünglichen Entscheidung) gelten
+  identisch für beide Aufrufkontexte, da beide dieselbe Kernfunktion verwenden.
+
 ## Verifikation vor `resolved/`
 
 - TypeScript-/Vite-Build erfolgreich.
