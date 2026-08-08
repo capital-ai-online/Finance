@@ -9,6 +9,16 @@ import { fileURLToPath } from 'node:url';
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const guardPath = path.join(repoRoot, 'server', 'runtime', 'runtimeArtifactGuard.mjs');
 
+function productionProbeEnv(extra = {}) {
+  return {
+    ...process.env,
+    NODE_ENV: 'production',
+    CAPITAL_AI_RUNTIME_ARTIFACT_MODE: 'readonly',
+    NODE_OPTIONS: `--import=${guardPath}`,
+    ...extra,
+  };
+}
+
 function runGuardProbe(targetRelativePath) {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'capital-ai-r002-'));
   fs.mkdirSync(path.join(tempRoot, 'docs'), { recursive: true });
@@ -27,12 +37,7 @@ function runGuardProbe(targetRelativePath) {
   const result = spawnSync(process.execPath, ['-e', script], {
     cwd: tempRoot,
     encoding: 'utf8',
-    env: {
-      ...process.env,
-      NODE_ENV: 'production',
-      CAPITAL_AI_RUNTIME_ARTIFACT_MODE: 'readonly',
-      NODE_OPTIONS: `--import=${guardPath}`,
-    },
+    env: productionProbeEnv(),
   });
 
   fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -57,16 +62,49 @@ function runWatcherProbe(targetRelativePath) {
   const result = spawnSync(process.execPath, ['-e', script], {
     cwd: tempRoot,
     encoding: 'utf8',
-    env: {
-      ...process.env,
-      NODE_ENV: 'production',
-      CAPITAL_AI_RUNTIME_ARTIFACT_MODE: 'readonly',
-      NODE_OPTIONS: `--import=${guardPath}`,
-    },
+    env: productionProbeEnv(),
   });
 
   fs.rmSync(tempRoot, { recursive: true, force: true });
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
+}
+
+function runHttpProbe(method, requestPath, extraEnv = {}) {
+  const script = `
+    const http = require('node:http');
+    const server = http.createServer((req, res) => {
+      res.statusCode = 599;
+      res.end(JSON.stringify({ fallbackHandlerReached: true }));
+    });
+    server.listen(0, '127.0.0.1', async () => {
+      const address = server.address();
+      try {
+        const response = await fetch('http://127.0.0.1:' + address.port + ${JSON.stringify(requestPath)}, {
+          method: ${JSON.stringify(method)},
+          headers: { 'content-type': 'application/json' },
+          body: ${JSON.stringify(method === 'GET' || method === 'HEAD' ? null : '{}')},
+        });
+        const text = await response.text();
+        process.stdout.write(JSON.stringify({ status: response.status, body: text }));
+      } catch (error) {
+        process.stdout.write(JSON.stringify({ status: 0, error: String(error) }));
+      } finally {
+        server.close();
+      }
+    });
+  `;
+
+  return spawnSync(process.execPath, ['-e', script], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    env: productionProbeEnv(extraEnv),
+  });
+}
+
+function parseLastJsonObject(stdout) {
+  const start = stdout.lastIndexOf('{"status"');
+  assert.notEqual(start, -1, `Expected probe JSON in stdout: ${stdout}`);
+  return JSON.parse(stdout.slice(start));
 }
 
 test('R-002 blocks production writes to repository-style docs', () => {
@@ -98,6 +136,37 @@ test('R-002 suppresses production file watchers on docs', () => {
   assert.equal(result.status, 0);
   assert.match(result.stdout, /WATCH_SUPPRESSED/);
   assert.doesNotMatch(result.stdout, /WATCH_EVENT/);
+});
+
+test('R-002 rejects legacy production Documentary mutations with a control-plane contract', () => {
+  for (const requestPath of [
+    '/api/docs-file',
+    '/api/admin/hygiene/review',
+    '/api/admin/hygiene/rollback',
+    '/api/admin/hygiene/lint-fix',
+    '/api/admin/version/bump',
+  ]) {
+    const result = runHttpProbe('POST', requestPath);
+    assert.equal(result.status, 0);
+    const probe = parseLastJsonObject(result.stdout);
+    assert.equal(probe.status, 409);
+    assert.match(probe.body, /READ_ONLY_CONTROL_PLANE_REQUIRED/);
+    assert.doesNotMatch(probe.body, /fallbackHandlerReached/);
+  }
+});
+
+test('R-002 serves production version identity from immutable package/deploy metadata', () => {
+  const commitSha = '0123456789abcdef0123456789abcdef01234567';
+  const result = runHttpProbe('GET', '/api/admin/version', { RENDER_GIT_COMMIT: commitSha });
+  assert.equal(result.status, 0);
+  const probe = parseLastJsonObject(result.stdout);
+  assert.equal(probe.status, 200);
+  const payload = JSON.parse(probe.body);
+  assert.equal(payload.state.version, '0.6.0');
+  assert.equal(payload.state.commitSha, commitSha);
+  assert.equal(payload.state.source, 'immutable-build-metadata');
+  assert.equal(payload.state.readOnly, true);
+  assert.equal(payload.workspace.mutationAuthority, 'ci-or-authenticated-control-plane');
 });
 
 test('production Docker image preloads the R-002 guard and makes docs OS-level read-only', () => {
