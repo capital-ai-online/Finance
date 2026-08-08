@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "PR-server-domain-decomposition-phase3-3",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Thinking",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "ADR-0014 Phase 3.3: extract market sentiment and portfolio review route boundaries without changing shared server.application.ts or roadmap-critical runtime paths.",
+  "startedAt": "2026-08-08T03:00:00Z",
+  "baseBranch": "main",
+  "baseSha": "d20653ced6460a38583adcaeb8cf753dc0a1fff4",
+  "claimedPaths": [
+    "server/routes/marketSentimentRoutes.ts",
+    "server/routes/portfolioReviewRoutes.ts",
+    "tests/server/analysisRouteExtraction.contract.test.ts",
+    ".ai/work-claims/PR-server-domain-decomposition-phase3-3.json"
+  ],
+  "protectedPaths": [
+    "server.application.ts",
+    "server/validateRuntimeSecrets.ts",
+    "server/runtime/**",
+    "server/stripe.ts",
+    "Dockerfile",
+    "render.yaml",
+    "src/services/cryptoScoringService.ts",
+    "src/services/memeCoinScoringService.ts"
+  ],
+  "releaseCondition": "Claim is released when the PR is merged or closed."
+}
