@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "SEO-MGMT-PROGRAM-2026-08-08",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "Anthropic",
+    "model": "Claude",
+    "executionSurface": "Claude Code (Remote/Web)"
+  },
+  "workItem": "SEO-Management-Programm PR 0 (Dokumentation): Programm-Roadmap fuer das Capital-AI SEO Management, Documentary-Topologie des Google Marketing MCP (Mermaid), kompakte Architektur-Bewertungsmatrix zum Stand 2026-08-08, Korrektur nicht zutreffender Aussagen in der SEO-Checklist und der obsoleten Google-AI-Studio-Angaben in .env.example.",
+  "startedAt": "2026-08-08T08:50:05Z",
+  "baseBranch": "main",
+  "baseSha": "1809f03c3e7bc4a01e8922b35db00774936fecc4",
+  "pullRequest": null,
+  "claimedPaths": [
+    "docs/seo/SEO_MANAGEMENT_ROADMAP.md",
+    "docs/seo/SEO_CHECKLIST.md",
+    "docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_TOPOLOGY.md",
+    "docs/architecture/CAPITAL_AI_ARCHITEKTUR_BEWERTUNGSMATRIX_2026-08-08.md",
+    ".env.example",
+    ".ai/work-claims/SEO-MGMT-PROGRAM-2026-08-08.json"
+  ],
+  "releaseCondition": "Claim is released when the associated pull request is merged, closed, superseded or abandoned."
+}
