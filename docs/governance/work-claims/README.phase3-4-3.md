@@ -1,0 +1,1 @@
+Phase 3.4.3 reserves only the crypto provider extraction files listed in `phase3-4-3-crypto-provider-chain.md`. Shared runtime and provider files remain protected from mutation until the separate cutover step.
