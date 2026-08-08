@@ -1,0 +1,81 @@
+import { describe, expect, it, vi } from 'vitest';
+import { createMarketDataRuntimeFacade } from '../../server/marketData/marketDataRuntimeFacade';
+
+const asset = (symbol: string, price = 1) => ({
+  symbol,
+  type: 'crypto',
+  price,
+  change24h: 0,
+  dataSource: 'live' as const,
+});
+
+describe('market-data runtime facade', () => {
+  it('coalesces concurrent refresh requests and synchronizes each returned asset once per refresh', async () => {
+    let resolveRefresh!: (value: ReturnType<typeof asset>[]) => void;
+    const refresh = vi.fn(() => new Promise<ReturnType<typeof asset>[]>((resolve) => { resolveRefresh = resolve; }));
+    const syncAsset = vi.fn();
+    const runtime = createMarketDataRuntimeFacade({ refresh, syncAsset });
+
+    const first = runtime.get();
+    const second = runtime.get();
+    expect(refresh).toHaveBeenCalledTimes(1);
+
+    resolveRefresh([asset('BTC'), asset('ETH')]);
+    const [a, b] = await Promise.all([first, second]);
+
+    expect(a).toEqual(b);
+    expect(syncAsset).toHaveBeenCalledTimes(2);
+  });
+
+  it('serves the valid cache without triggering another provider refresh', async () => {
+    let clock = 1_000;
+    const refresh = vi.fn(async () => [asset('BTC', 10)]);
+    const runtime = createMarketDataRuntimeFacade({
+      refresh,
+      syncAsset: vi.fn(),
+      ttlMs: 60_000,
+      now: () => clock,
+    });
+
+    expect(await runtime.get()).toEqual([asset('BTC', 10)]);
+    clock += 1_000;
+    expect(await runtime.get()).toEqual([asset('BTC', 10)]);
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns stale cache when a later refresh fails', async () => {
+    let clock = 1_000;
+    const refresh = vi.fn()
+      .mockResolvedValueOnce([asset('BTC', 10)])
+      .mockRejectedValueOnce(new Error('provider outage'));
+    const onRefreshFailure = vi.fn();
+    const runtime = createMarketDataRuntimeFacade({
+      refresh,
+      syncAsset: vi.fn(),
+      ttlMs: 100,
+      now: () => clock,
+      onRefreshFailure,
+    });
+
+    await runtime.get();
+    clock += 1_000;
+
+    expect(await runtime.get()).toEqual([asset('BTC', 10)]);
+    expect(onRefreshFailure).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps background refresh fail-open and preserves the previous cache', async () => {
+    const refresh = vi.fn()
+      .mockResolvedValueOnce([asset('BTC', 10)])
+      .mockRejectedValueOnce(new Error('offline'));
+    const runtime = createMarketDataRuntimeFacade({
+      refresh,
+      syncAsset: vi.fn(),
+      onRefreshFailure: vi.fn(),
+    });
+
+    await runtime.backgroundRefresh();
+    expect(await runtime.backgroundRefresh()).toBeNull();
+    expect(runtime.getCached()).toEqual([asset('BTC', 10)]);
+  });
+});
