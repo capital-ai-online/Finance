@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const guardPath = path.join(repoRoot, 'server', 'runtime', 'runtimeArtifactGuard.mjs');
+const releaseManifestBuilder = path.join(repoRoot, 'scripts', 'automation', 'buildRuntimeReleaseManifest.ts');
+const tsxBin = path.join(repoRoot, 'node_modules', '.bin', process.platform === 'win32' ? 'tsx.cmd' : 'tsx');
 
 function productionProbeEnv(extra = {}) {
   return {
@@ -69,7 +71,7 @@ function runWatcherProbe(targetRelativePath) {
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
 
-function runHttpProbe(method, requestPath, extraEnv = {}) {
+function runHttpProbe(method, requestPath, extraEnv = {}, cwd = repoRoot) {
   const script = `
     const http = require('node:http');
     const server = http.createServer((req, res) => {
@@ -95,7 +97,7 @@ function runHttpProbe(method, requestPath, extraEnv = {}) {
   `;
 
   return spawnSync(process.execPath, ['-e', script], {
-    cwd: repoRoot,
+    cwd,
     encoding: 'utf8',
     env: productionProbeEnv(extraEnv),
   });
@@ -105,6 +107,32 @@ function parseLastJsonObject(stdout) {
   const start = stdout.lastIndexOf('{"status"');
   assert.notEqual(start, -1, `Expected probe JSON in stdout: ${stdout}`);
   return JSON.parse(stdout.slice(start));
+}
+
+function buildReleaseManifestFixture() {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'capital-ai-r002-release-'));
+  fs.mkdirSync(path.join(tempRoot, 'docs', 'architecture'), { recursive: true });
+  fs.copyFileSync(path.join(repoRoot, 'package.json'), path.join(tempRoot, 'package.json'));
+  fs.copyFileSync(path.join(repoRoot, 'package-lock.json'), path.join(tempRoot, 'package-lock.json'));
+  fs.writeFileSync(path.join(tempRoot, 'docs', 'architecture', 'fixture.md'), '# Immutable Documentary Fixture\n', 'utf8');
+
+  const commitSha = 'fedcba9876543210fedcba9876543210fedcba98';
+  const result = spawnSync(tsxBin, [releaseManifestBuilder], {
+    cwd: tempRoot,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      RELEASE_SOURCE_COMMIT: commitSha,
+      SOURCE_DATE_EPOCH: '1786147200',
+    },
+  });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+
+  return {
+    tempRoot,
+    commitSha,
+    manifestPath: path.join(tempRoot, 'dist', 'control-plane', 'release-manifest.json'),
+  };
 }
 
 test('R-002 blocks production writes to repository-style docs', () => {
@@ -155,7 +183,46 @@ test('R-002 rejects legacy production Documentary mutations with a control-plane
   }
 });
 
-test('R-002 serves production version identity from immutable package/deploy metadata', () => {
+test('R-002 build step emits immutable release and Documentary evidence', () => {
+  const fixture = buildReleaseManifestFixture();
+  try {
+    const manifest = JSON.parse(fs.readFileSync(fixture.manifestPath, 'utf8'));
+    assert.equal(manifest.contract, 'capital-ai-runtime-release-manifest/1.0.0');
+    assert.equal(manifest.authority, 'ci-or-controlled-build');
+    assert.equal(manifest.mutable, false);
+    assert.equal(manifest.version, '0.6.0');
+    assert.equal(manifest.sourceCommit, fixture.commitSha);
+    assert.match(manifest.buildIdentity, /^[a-f0-9]{64}$/);
+    assert.match(manifest.inputs.packageLockSha256, /^[a-f0-9]{64}$/);
+    assert.match(manifest.inputs.documentaryTreeSha256, /^[a-f0-9]{64}$/);
+    assert.equal(manifest.inputs.documentaryFileCount, 1);
+  } finally {
+    fs.rmSync(fixture.tempRoot, { recursive: true, force: true });
+  }
+});
+
+test('R-002 serves production version identity from immutable build manifest', () => {
+  const fixture = buildReleaseManifestFixture();
+  try {
+    const manifest = JSON.parse(fs.readFileSync(fixture.manifestPath, 'utf8'));
+    const result = runHttpProbe('GET', '/api/admin/version', {}, fixture.tempRoot);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const probe = parseLastJsonObject(result.stdout);
+    assert.equal(probe.status, 200);
+    const payload = JSON.parse(probe.body);
+    assert.equal(payload.state.version, '0.6.0');
+    assert.equal(payload.state.commitSha, fixture.commitSha);
+    assert.equal(payload.state.buildIdentity, manifest.buildIdentity);
+    assert.equal(payload.state.documentaryTreeSha256, manifest.inputs.documentaryTreeSha256);
+    assert.equal(payload.state.source, 'immutable-build-manifest');
+    assert.equal(payload.state.readOnly, true);
+    assert.equal(payload.workspace.mutationAuthority, 'ci-or-authenticated-control-plane');
+  } finally {
+    fs.rmSync(fixture.tempRoot, { recursive: true, force: true });
+  }
+});
+
+test('R-002 keeps package/deploy metadata only as compatibility fallback when no manifest exists', () => {
   const commitSha = '0123456789abcdef0123456789abcdef01234567';
   const result = runHttpProbe('GET', '/api/admin/version', { RENDER_GIT_COMMIT: commitSha });
   assert.equal(result.status, 0);
@@ -164,12 +231,13 @@ test('R-002 serves production version identity from immutable package/deploy met
   const payload = JSON.parse(probe.body);
   assert.equal(payload.state.version, '0.6.0');
   assert.equal(payload.state.commitSha, commitSha);
-  assert.equal(payload.state.source, 'immutable-build-metadata');
-  assert.equal(payload.state.readOnly, true);
-  assert.equal(payload.workspace.mutationAuthority, 'ci-or-authenticated-control-plane');
+  assert.equal(payload.state.source, 'immutable-package-runtime-fallback');
 });
 
-test('production Docker image preloads the R-002 guard and makes docs OS-level read-only', () => {
+test('production build emits the immutable manifest and Docker preloads the R-002 guard', () => {
+  const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
+  assert.match(packageJson.scripts.build, /buildRuntimeReleaseManifest\.ts/);
+
   const dockerfile = fs.readFileSync(path.join(repoRoot, 'Dockerfile'), 'utf8');
   assert.match(dockerfile, /CAPITAL_AI_RUNTIME_ARTIFACT_MODE=readonly/);
   assert.match(dockerfile, /NODE_OPTIONS=--import=\/app\/server\/runtime\/runtimeArtifactGuard\.mjs/);
