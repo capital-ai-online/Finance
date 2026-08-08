@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import http from 'node:http';
 import { EventEmitter } from 'node:events';
 import { syncBuiltinESMExports } from 'node:module';
 
@@ -10,6 +11,11 @@ import { syncBuiltinESMExports } from 'node:module';
  * local release-governance state. The guard is intentionally narrow: uploads
  * that belong to normal application workflows remain writable, while docs/**
  * and the two legacy governance JSON files are fail-closed.
+ *
+ * The same production boundary also owns the compatibility contract for legacy
+ * Documentary / Version Manager HTTP routes. Mutations are rejected before
+ * Express can execute filesystem-writing handlers, while GET /api/admin/version
+ * is served from immutable package/deploy metadata instead of version_manager.json.
  */
 
 const cwd = path.resolve(process.cwd());
@@ -18,6 +24,28 @@ const protectedFiles = new Set([
   path.resolve(cwd, 'uploads', 'document_hygiene.json'),
   path.resolve(cwd, 'uploads', 'version_manager.json'),
 ]);
+
+function readPackageVersion() {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.resolve(cwd, 'package.json'), 'utf8'));
+    return typeof pkg.version === 'string' && pkg.version.trim() ? pkg.version.trim() : 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
+const immutableReleaseIdentity = Object.freeze({
+  version: readPackageVersion(),
+  commitSha:
+    process.env.RENDER_GIT_COMMIT ||
+    process.env.GIT_COMMIT ||
+    process.env.SOURCE_VERSION ||
+    null,
+  serviceId: process.env.RENDER_SERVICE_ID || null,
+  instanceId: process.env.RENDER_INSTANCE_ID || null,
+  hostname: process.env.RENDER_EXTERNAL_HOSTNAME || null,
+  source: 'immutable-build-metadata',
+});
 
 function resolveFsPath(value) {
   if (typeof value === 'string' || Buffer.isBuffer(value)) {
@@ -106,6 +134,82 @@ function installProtectedPathWatcherBoundary() {
   }
 }
 
+function writeJsonResponse(res, statusCode, payload) {
+  if (res.headersSent || res.writableEnded) return;
+  const body = JSON.stringify(payload);
+  res.statusCode = statusCode;
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Content-Length', Buffer.byteLength(body));
+  res.end(body);
+}
+
+function getRequestPath(req) {
+  try {
+    return new URL(req.url || '/', 'http://capital-ai.runtime').pathname;
+  } catch {
+    return req.url || '/';
+  }
+}
+
+function isControlPlaneMutation(method, pathname) {
+  if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') return false;
+  if (pathname === '/api/docs-file') return true;
+  if (pathname === '/api/admin/version/bump') return true;
+  if (pathname.startsWith('/api/admin/hygiene/')) return true;
+  return false;
+}
+
+function installControlPlaneHttpBoundary() {
+  const originalEmit = http.Server.prototype.emit;
+  http.Server.prototype.emit = function guardedServerEmit(eventName, ...args) {
+    if (eventName !== 'request') {
+      return originalEmit.call(this, eventName, ...args);
+    }
+
+    const [req, res] = args;
+    const method = String(req?.method || 'GET').toUpperCase();
+    const pathname = getRequestPath(req);
+
+    if (method === 'GET' && pathname === '/api/admin/version') {
+      writeJsonResponse(res, 200, {
+        success: true,
+        state: {
+          version: immutableReleaseIdentity.version,
+          buildNumber: null,
+          releaseDate: null,
+          gitTag: immutableReleaseIdentity.commitSha ? `git:${immutableReleaseIdentity.commitSha}` : null,
+          dockerTag: null,
+          releaseNotes: 'Immutable production release identity derived from package/deploy metadata.',
+          history: [],
+          source: immutableReleaseIdentity.source,
+          commitSha: immutableReleaseIdentity.commitSha,
+          serviceId: immutableReleaseIdentity.serviceId,
+          instanceId: immutableReleaseIdentity.instanceId,
+          hostname: immutableReleaseIdentity.hostname,
+          readOnly: true,
+        },
+        workspace: {
+          source: 'production-runtime-read-only',
+          mutationAuthority: 'ci-or-authenticated-control-plane',
+        },
+      });
+      return true;
+    }
+
+    if (isControlPlaneMutation(method, pathname)) {
+      writeJsonResponse(res, 409, {
+        error: 'Production runtime is read-only for Documentary and release-governance mutations.',
+        code: 'READ_ONLY_CONTROL_PLANE_REQUIRED',
+        mutationAuthority: 'ci-or-authenticated-control-plane',
+        path: pathname,
+      });
+      return true;
+    }
+
+    return originalEmit.call(this, eventName, ...args);
+  };
+}
+
 function installGuard() {
   const enabled = process.env.NODE_ENV === 'production' && process.env.CAPITAL_AI_RUNTIME_ARTIFACT_MODE === 'readonly';
   if (!enabled) return;
@@ -122,8 +226,11 @@ function installGuard() {
   wrapPromise('copyFile', 1);
 
   installProtectedPathWatcherBoundary();
+  installControlPlaneHttpBoundary();
   syncBuiltinESMExports();
-  console.info('[RuntimeArtifactGuard] R-002 production read-only artifact boundary enabled.');
+  console.info(
+    `[RuntimeArtifactGuard] R-002 production read-only boundary enabled for release ${immutableReleaseIdentity.version}.`,
+  );
 }
 
 installGuard();
