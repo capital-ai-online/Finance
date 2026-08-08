@@ -1,6 +1,7 @@
 import type { MarketDataProviderStage } from './marketDataCoordinator';
 import { createCryptoProviderStage } from './cryptoProviderStage';
 import { createStooqProviderStage, type StooqFallbackAsset } from './stooqProviderStage';
+import { createFmpIndexProviderStage } from './fmpIndexProviderStage';
 
 export function createMarketDataProviderStages(options: {
   fallbackAssets: StooqFallbackAsset[];
@@ -24,6 +25,9 @@ export function createMarketDataProviderStages(options: {
       fallbackAssets: options.fallbackAssets,
       fetchImpl: options.fetchImpl,
       logger: options.logger,
+    }),
+    createFmpIndexProviderStage({
+      fallbackAssets: options.fallbackAssets,
     }),
     ...(options.additionalStages ?? []),
   ];
