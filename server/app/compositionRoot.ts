@@ -13,9 +13,9 @@ export interface ServerRuntimeContext {
 /**
  * Central composition root for process-scoped runtime dependencies.
  *
- * Phase 1 deliberately does not replace the existing server.ts bootstrap yet.
- * Follow-up phases will move middleware, route registration and lifecycle startup
- * behind this boundary in small, independently deployable steps.
+ * Phase 2 consumes this boundary through bootstrapServerRuntime(). Express
+ * middleware, routers and domain services are intentionally composed in later
+ * phases so ordering-sensitive behavior remains independently reviewable.
  */
 export function createServerRuntimeContext(): ServerRuntimeContext {
   const logger = createLogger('server');
