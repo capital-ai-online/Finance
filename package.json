@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "build": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs && tsx scripts/automation/buildRuntimeReleaseManifest.ts",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
@@ -24,6 +24,7 @@
     "hygiene:sweep": "tsx scripts/automation/sweepDocumentaryBranding.ts",
     "predeploy:check": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/verifyDeploymentReadiness.ts",
     "release:version": "tsx scripts/automation/releaseVersion.ts",
+    "release:manifest": "tsx scripts/automation/buildRuntimeReleaseManifest.ts",
     "traceability:build": "tsx src/platform/Traceability/Services/runTraceability.ts",
     "rag:build-index": "tsx scripts/automation/buildRagIndex.ts"
   },
