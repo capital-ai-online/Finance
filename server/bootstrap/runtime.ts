@@ -2,16 +2,16 @@ import { createServerRuntimeContext, type ServerRuntimeContext } from '../app/co
 import { installProcessLifecycleHandlers } from './processLifecycle';
 
 /**
- * Phase 2 bootstrap boundary.
+ * Single process-level bootstrap boundary introduced by ADR-0013 Phase 2.
  *
- * This is the single process-level entry point for runtime dependency creation.
- * It composes environment/runtime configuration, optional AI providers and the
- * process lifecycle safety net without leaking those concerns into Express route
- * registration.
+ * Responsibilities:
+ * - create normalized runtime configuration
+ * - initialize optional AI providers once through the composition root
+ * - install process-level safety handlers
  *
- * The function is intentionally explicit and side-effect free until invoked by
- * the process entry point. This keeps tests/imports deterministic and prevents
- * duplicate process listeners during module discovery.
+ * Express middleware and route registration intentionally remain outside this
+ * boundary until later migration phases so ordering-sensitive behavior stays
+ * independently reviewable.
  */
 export function bootstrapServerRuntime(): ServerRuntimeContext {
   const runtime = createServerRuntimeContext();
