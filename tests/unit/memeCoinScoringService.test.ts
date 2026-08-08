@@ -1,9 +1,7 @@
-// Audit ARCH-AUDIT-0002 (D5, S1/S2/S5): Testabdeckung fuer den kritischen Scoring-Pfad.
-// Seit S1/S2/S5 (AUD2-F-001) bezieht generateMemeCoinInputs() reale Marktdaten aus der
-// AssetRegistry statt eines Zeichen-Hash-Generators - assetRegistry.getAsset()/getHistory()
-// werden hier gemockt, damit die Tests deterministisch bleiben und keinen echten
-// Netzwerkzugriff benoetigen. scoreMemeCoin() nutzt die dynamische Neugewichtung
-// (renormalizeAndScore): fehlende Faktoren werden ausgeschlossen statt mit 0 bewertet.
+// Audit ARCH-AUDIT-0002 (D5, S1/S2/S5) + Roadmap R-001: Testabdeckung fuer den kritischen Scoring-Pfad.
+// generateMemeCoinInputs() darf Registry-Bootstrapwerte nicht als verifizierte Marktevidence
+// interpretieren. Nur explizit als `source: live` gekennzeichnete Kurshistorie erzeugt
+// scorefaehige technische Faktoren; fehlende Faktoren werden ausgeschlossen statt geschaetzt.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { MemeCoinScoringService, MEME_COIN_WEIGHTS } from '../../src/services/memeCoinScoringService';
@@ -39,8 +37,6 @@ describe('memeCoinScoringService', () => {
     });
 
     it('schliesst fehlende Faktoren dynamisch aus der Gewichtung aus, statt sie als 0 zu werten', () => {
-      // Nur liquidity vorhanden (typischer Fall fuer Meme-Coins ohne reale Kurshistorie) ->
-      // dessen Gewichtsanteil wird auf 100% umgelegt, final_score muss dem Rohwert entsprechen.
       const result = MemeCoinScoringService.scoreMemeCoin({ coin: 'TEST', liquidity: 0.8 });
       expect(result.final_score).toBeCloseTo(80, 5);
       expect(result.data_quality.missing_fields).toEqual(
@@ -93,14 +89,12 @@ describe('memeCoinScoringService', () => {
       vi.restoreAllMocks();
     });
 
-    it('berechnet liquidity aus realen Registry-Werten (Mrd./Mio. USD)', async () => {
+    it('verwirft Registry-Bootstrapwerte fuer marketCap/volume24h und laesst liquidity ohne Provider-Evidence undefined', async () => {
       vi.spyOn(assetRegistry, 'getAsset').mockReturnValue(makeAsset({ marketCap: 100, volume24h: 20 }));
       vi.spyOn(assetRegistry, 'getHistory').mockResolvedValue({ points: [], source: 'simulated' } as HistoryResult);
 
       const inputs = await MemeCoinScoringService.generateMemeCoinInputs('DOGE', 5);
-      expect(inputs.liquidity).toBeDefined();
-      expect(inputs.liquidity!).toBeGreaterThanOrEqual(0);
-      expect(inputs.liquidity!).toBeLessThanOrEqual(1);
+      expect(inputs.liquidity).toBeUndefined();
     });
 
     it('laesst trend_structure/momentum/volatility_quality undefined, wenn getHistory nur simulierte Daten liefert', async () => {

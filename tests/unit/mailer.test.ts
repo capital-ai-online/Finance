@@ -1,57 +1,55 @@
-// Audit ARCH-AUDIT-0002 (H3): Testabdeckung fuer die Supabase-basierte Idempotenzsperre in
-// server/mailer.ts (vorher ausschliesslich Datei unter uploads/). server/db.ts und server/env.ts
-// werden gemockt, kein echtes Supabase/SMTP im Test.
+// ADR-0045 / R-003: Regression tests for the atomic Checkout Session mail reservation.
+// No real Supabase/SMTP access is used.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../../server/env', () => ({
-  getCleanEnv: vi.fn(() => ''), // SMTP nicht konfiguriert -> sendMail() versucht nie echten Versand
+const state = vi.hoisted(() => ({
+  confirmations: new Set<string>(),
+  supabaseConfigured: true,
+  rpcError: null as null | { message: string },
 }));
 
-const confirmationsStore = new Map<string, true>();
+vi.mock('../../server/env', () => ({
+  getCleanEnv: vi.fn((key: string) => key === 'NODE_ENV' ? 'test' : ''),
+}));
 
 vi.mock('../../server/db', () => ({
-  isSupabaseConfigured: vi.fn(() => true),
+  isSupabaseConfigured: vi.fn(() => state.supabaseConfigured),
   getServerSupabase: vi.fn(() => ({
-    from: (table: string) => {
-      if (table !== 'subscription_confirmations_sent') throw new Error(`Unerwartete Tabelle im Test: ${table}`);
-      return {
-        select: () => ({
-          eq: (_col: string, sessionId: string) => ({
-            maybeSingle: async () => ({
-              data: confirmationsStore.has(sessionId) ? { session_id: sessionId } : null,
-              error: null,
-            }),
-          }),
-        }),
-        upsert: async (row: { session_id: string }) => {
-          confirmationsStore.set(row.session_id, true);
-          return { error: null };
-        },
-      };
-    },
+    rpc: vi.fn(async (name: string, args: { p_session_id: string }) => {
+      if (name !== 'claim_subscription_confirmation') {
+        return { data: null, error: { message: `unexpected rpc: ${name}` } };
+      }
+      if (state.rpcError) return { data: null, error: state.rpcError };
+      if (state.confirmations.has(args.p_session_id)) {
+        return { data: false, error: null };
+      }
+      state.confirmations.add(args.p_session_id);
+      return { data: true, error: null };
+    }),
   })),
 }));
 
 import { sendSubscriptionConfirmation } from '../../server/mailer';
-import { isSupabaseConfigured } from '../../server/db';
 
-describe('mailer idempotency (H3: Supabase statt uploads/-Datei)', () => {
+describe('mailer atomic confirmation reservation (ADR-0045)', () => {
   beforeEach(() => {
-    confirmationsStore.clear();
-    (isSupabaseConfigured as any).mockReturnValue(true);
+    state.confirmations.clear();
+    state.supabaseConfigured = true;
+    state.rpcError = null;
   });
 
-  it('versendet beim ersten Aufruf und markiert die Session in Supabase als gesendet', async () => {
+  it('claims the Checkout Session before the first send attempt', async () => {
     const result = await sendSubscriptionConfirmation('kunde@example.com', 'owner@example.com', {
       planId: 'pro',
       sessionId: 'cs_test_1',
     });
+
     expect(result.skippedAsDuplicate).toBe(false);
-    expect(confirmationsStore.has('cs_test_1')).toBe(true);
+    expect(state.confirmations.has('cs_test_1')).toBe(true);
   });
 
-  it('ueberspringt einen zweiten Aufruf mit derselben Session-ID als Duplikat', async () => {
+  it('skips a later call with the same Checkout Session', async () => {
     await sendSubscriptionConfirmation('kunde@example.com', 'owner@example.com', {
       planId: 'pro',
       sessionId: 'cs_test_2',
@@ -60,18 +58,59 @@ describe('mailer idempotency (H3: Supabase statt uploads/-Datei)', () => {
       planId: 'pro',
       sessionId: 'cs_test_2',
     });
+
     expect(second.skippedAsDuplicate).toBe(true);
   });
 
-  it('behandelt unterschiedliche Session-IDs unabhaengig voneinander', async () => {
-    await sendSubscriptionConfirmation('a@example.com', 'owner@example.com', { planId: 'starter', sessionId: 'cs_a' });
-    const resultB = await sendSubscriptionConfirmation('b@example.com', 'owner@example.com', { planId: 'starter', sessionId: 'cs_b' });
-    expect(resultB.skippedAsDuplicate).toBe(false);
+  it('allows exactly one winner for concurrent calls with the same session ID', async () => {
+    const [a, b] = await Promise.all([
+      sendSubscriptionConfirmation('kunde@example.com', 'owner@example.com', {
+        planId: 'pro',
+        sessionId: 'cs_concurrent',
+      }),
+      sendSubscriptionConfirmation('kunde@example.com', 'owner@example.com', {
+        planId: 'pro',
+        sessionId: 'cs_concurrent',
+      }),
+    ]);
+
+    expect([a.skippedAsDuplicate, b.skippedAsDuplicate].sort()).toEqual([false, true]);
+    expect(state.confirmations.size).toBe(1);
   });
 
-  it('bricht ohne sessionId sicher ab, ohne die Idempotenzsperre zu beruehren', async () => {
-    const result = await sendSubscriptionConfirmation('a@example.com', 'owner@example.com', { planId: 'starter', sessionId: '' });
+  it('treats different Checkout Sessions independently', async () => {
+    const [a, b] = await Promise.all([
+      sendSubscriptionConfirmation('a@example.com', 'owner@example.com', { planId: 'starter', sessionId: 'cs_a' }),
+      sendSubscriptionConfirmation('b@example.com', 'owner@example.com', { planId: 'starter', sessionId: 'cs_b' }),
+    ]);
+
+    expect(a.skippedAsDuplicate).toBe(false);
+    expect(b.skippedAsDuplicate).toBe(false);
+    expect(state.confirmations.size).toBe(2);
+  });
+
+  it('blocks sending when the durable reservation RPC is unavailable', async () => {
+    state.rpcError = { message: 'database unavailable' };
+
+    const result = await sendSubscriptionConfirmation('a@example.com', 'owner@example.com', {
+      planId: 'starter',
+      sessionId: 'cs_db_failure',
+    });
+
+    expect(result.skippedAsDuplicate).toBe(false);
+    expect(result.customer.attempted).toBe(false);
+    expect(result.customer.error).toBe('confirmation-reservation-failed');
+    expect(result.owner.attempted).toBe(false);
+  });
+
+  it('fails safely without a session ID', async () => {
+    const result = await sendSubscriptionConfirmation('a@example.com', 'owner@example.com', {
+      planId: 'starter',
+      sessionId: '',
+    });
+
     expect(result.skippedAsDuplicate).toBe(false);
     expect(result.customer.error).toBe('missing-session-id');
+    expect(state.confirmations.size).toBe(0);
   });
 });
