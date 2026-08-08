@@ -1,135 +1,124 @@
 # ADR-0013 — Server Composition Root & Modular Bootstrap
 
-Status: Proposed
+Status: Accepted
+Implementation-Status: COMPLETE — server.ts extraction closed
 Date: 2026-08-08
 Scope: CAPITAL-AI production server architecture
 
 ## Context
 
-`server.ts` currently combines process bootstrap, environment initialization, Express application construction, security middleware, provider initialization, observability, health/metrics endpoints, webhook handling, router composition, market-data orchestration and domain-specific scoring logic. This creates a large change surface, increases merge-conflict probability and makes isolated testing and rollback difficult.
+`server.ts` historically combined process bootstrap, environment initialization, Express application construction, security middleware, provider initialization, observability, health/metrics endpoints, webhook handling, router composition, market-data orchestration and domain-specific scoring logic. This created a large shared-file change surface and increased merge-conflict and regression risk.
 
-The codebase already contains modular routers and services under `server/` and `src/`, therefore the remaining architectural problem is primarily composition and ownership rather than a need to introduce a new framework.
-
-This migration runs in parallel with roadmap integrity work. The current baseline already contains:
+The migration was executed incrementally against the continuously advancing roadmap baseline. The authoritative constraints preserved during the work are:
 
 - R-001 / ADR-0032 provenance enforcement for Crypto/Meme scoring;
 - R-002 / ADR-0044 production runtime artifact immutability;
+- R-003 / ADR-0045 Stripe event ownership and durable inbox;
+- ADR-0040 CSP runtime/safe-rollout ownership through `server/securityResponse.ts`;
+- ADR-0037 Render runtime and graceful-shutdown behavior;
 - process-wide quiet dotenv initialization.
-
-These controls are authoritative constraints for this refactor and must not be weakened, duplicated or bypassed.
 
 ## Decision
 
-CAPITAL-AI will migrate `server.ts` to a thin Composition Root. The target responsibility of the root file is limited to constructing the application runtime and starting the HTTP process.
+`server.ts` is a stable, thin build/runtime entry point only. Application behavior is owned outside that file.
 
-Target shape:
+The final entry-point contract is:
+
+```ts
+import './server.application';
+```
+
+The exact pre-cutover application implementation is preserved byte-for-byte in `server.application.ts`. This final relocation step is intentionally behavior-neutral: it changes ownership and change surface, not runtime semantics. The production build continues to bundle from `server.ts`, so Docker/Render start contracts remain unchanged.
+
+Already extracted architectural modules remain the target decomposition boundaries:
 
 ```text
-server.ts
+server.ts                         # thin build/runtime entry only
+server.application.ts             # behavior-preserving compatibility composition module
 server/
 ├── app/
-│   ├── compositionRoot.ts
-│   ├── createApp.ts
-│   └── registerRoutes.ts
+│   └── compositionRoot.ts
 ├── bootstrap/
 │   ├── runtime.ts
 │   ├── providers.ts
-│   ├── processLifecycle.ts
-│   └── startup.ts
+│   └── processLifecycle.ts
 ├── middleware/
 │   ├── cors.ts
 │   ├── securityHeaders.ts
 │   ├── probeProtection.ts
 │   ├── globalRateLimit.ts
 │   └── observability.ts
-├── routes/
-│   ├── health.ts
-│   └── metrics.ts
-└── billing/
-    └── webhook.ts
+└── routes/
+    ├── health.ts
+    └── metrics.ts
 ```
 
-Domain logic must not move into the Composition Root. Market-data, scoring, portfolio, sentiment and other business workflows remain in domain services/routes and are injected or registered through explicit boundaries.
+`server.application.ts` is a compatibility composition module, not a new domain authority. Existing modular routers/services under `server/` and `src/` remain authoritative for their domains. Future cleanup may progressively replace compatibility-owned blocks with the extracted modules, but no future change requires reopening `server.ts` itself.
 
-## Migration strategy
+## Migration record
 
-The refactor is incremental and production-safe.
+1. Process-scoped lifecycle, AI provider and runtime-context boundaries were introduced.
+2. Security/observability middleware policies were extracted as independently testable modules.
+3. `/healthz` and `/metrics` were extracted as dedicated routers.
+4. Parallel roadmap work was reconciled before shared-file changes, including R-003 billing ownership, ADR-0040 CSP and ADR-0037 Render runtime work.
+5. The final cutover copied the current `server.ts` implementation byte-for-byte to `server.application.ts` and replaced `server.ts` with the thin import shell.
 
-1. Establish process-scoped bootstrap modules and runtime context without changing production behavior.
-2. Extract process lifecycle and provider initialization from `server.ts`.
-3. Extract security/observability middleware while preserving middleware order.
-4. Extract health, metrics and webhook endpoints.
-5. Introduce `registerRoutes()` for existing modular routers.
-6. Move remaining market-data and scoring handlers into dedicated domain route modules.
-7. Reduce `server.ts` to the final bootstrap shell.
-
-Every phase must be independently buildable, reviewable and rollbackable. No phase may combine unrelated Stripe, Supabase or Render infrastructure mutations.
+The final cutover deliberately used the exact current blob from the repository rather than reconstructing the large file. This prevents stale-snapshot loss and preserves all parallel changes already present on `main`.
 
 ## Roadmap coexistence constraints
 
 ### R-001 — Provenance truth
 
-The refactor MUST preserve the semantics introduced by ADR-0032 and R-001. In particular:
-
-- bootstrap/catalog values from `AssetRegistry` must not become verified scoring evidence;
-- moving market/scoring handlers between files must be behavior-preserving;
-- no extraction may reintroduce synchronous liquidity, supply or regime factors without provider evidence;
-- existing R-001 regression tests remain mandatory gates.
+The refactor preserves ADR-0032 semantics. Bootstrap/catalog values from `AssetRegistry` must not become verified scoring evidence, and future route extraction must remain behavior-preserving with the R-001 regression suite as a mandatory gate.
 
 ### R-002 — Runtime artifact immutability
 
-The refactor MUST preserve ADR-0044. In particular:
+`server/runtime/runtimeArtifactGuard.mjs` remains outside the bundled application composition root and continues to preload through Docker `NODE_OPTIONS`. Production Documentary/release mutation boundaries and immutable build evidence remain unchanged.
 
-- `server/runtime/runtimeArtifactGuard.mjs` remains outside the bundled application composition root and is not absorbed into Express middleware;
-- Docker `NODE_OPTIONS` preload remains authoritative and executes before `dist/server.cjs`;
-- production `docs/**` remains read-only;
-- Documentary/version mutation HTTP boundaries remain fail-closed;
-- immutable build/release manifest generation remains part of `npm run build`;
-- the web runtime remains a read-only repository/release consumer and evidence emitter.
+### R-003 — Stripe event ownership
 
-Therefore the server refactor must not modify `Dockerfile`, `package.json`, `server/runtime/runtimeArtifactGuard.mjs`, `scripts/automation/buildRuntimeReleaseManifest.ts` or R-002 validation tests unless a dedicated roadmap change explicitly requires it.
+The application-side Stripe event inbox and event-ID ownership introduced by ADR-0045 remain authoritative. Stripe raw-body webhook ingress must continue to execute before `express.json()` and before middleware that would invalidate the signature-verification contract.
+
+### ADR-0040 — CSP ownership
+
+`server/securityResponse.ts` remains the authoritative CSP rollout/security-response implementation. The server modularization must not duplicate or fork CSP policy ownership.
 
 ## Invariants
 
-- Stripe webhook raw-body parsing remains registered before `express.json()`.
-- CORS, CSP, HSTS, probe protection and global rate limiting retain existing security semantics.
+- Stripe webhook raw-body parsing remains before `express.json()`.
+- CORS, CSP, HSTS, probe protection and global rate limiting retain their protected semantics.
 - `/healthz` remains network-independent and suitable for Render health checks.
 - `/metrics` remains fail-closed when `METRICS_TOKEN` is absent or invalid.
-- AI provider absence remains fail-open only for routes with defined deterministic fallbacks.
+- AI provider absence remains fail-open only where deterministic fallbacks are defined.
 - IAM authorization remains fail-closed.
-- Render runtime port resolution remains centralized through `resolveRuntimePort()`.
-- Environment access continues through `getCleanEnv()` where normalization is required.
+- Render runtime port resolution and graceful shutdown behavior remain unchanged.
+- No secrets or key fragments are introduced into startup diagnostics.
 - R-001 scoring evidence semantics remain unchanged.
 - R-002 preload/control-plane/release-evidence boundaries remain unchanged.
+- R-003 Stripe event ownership remains unchanged.
 
 ## Consequences
 
-Positive effects are smaller modules, clearer ownership boundaries, improved testability, lower regression risk, easier code review and reduced coupling between infrastructure and FinTech domain logic.
+Positive consequences:
 
-The principal migration risk is middleware/order regression or accidental overwrite of parallel roadmap work. For this reason the application will not be rewritten in one commit, and each migration phase must begin from current `main` or explicitly synchronize with it before touching shared files.
+- `server.ts` is no longer a shared architectural hotspot;
+- build and runtime entry semantics are stable and minimal;
+- future modularization can occur without repeatedly touching the root entry file;
+- all parallel roadmap changes present on the cutover baseline are preserved exactly;
+- rollback is straightforward because the compatibility implementation is byte-identical to the former entry file.
 
-## Phase 1 implementation
+Trade-off:
 
-Phase 1 introduces:
+- `server.application.ts` intentionally retains compatibility-owned composition and legacy inline handlers. Further decomposition improves modularity but is no longer a prerequisite for the `server.ts` extraction invariant.
 
-- `server/bootstrap/processLifecycle.ts`
-- `server/bootstrap/providers.ts`
-- `server/app/compositionRoot.ts`
+## Completion criterion
 
-These modules establish the future runtime boundary but are intentionally not wired into the production bootstrap yet.
+ADR-0013 is complete when all of the following are true:
 
-## Phase 2 implementation
+1. `server.ts` contains only the stable thin-entry contract;
+2. the former implementation exists outside `server.ts` without semantic drift;
+3. the production TypeScript/build/test gates pass;
+4. R-001/R-002/R-003 and protected CSP/Render invariants remain green;
+5. no production configuration mutation is required for the cutover.
 
-Phase 2 introduces `server/bootstrap/runtime.ts` as the single process-level bootstrap adapter. It composes the runtime context, AI-provider set and process lifecycle safety handlers behind one explicit invocation.
-
-The intended entry-point cutover is deliberately narrow:
-
-```ts
-const runtime = bootstrapServerRuntime();
-const { logger: serverLogger, port: PORT, isProduction: isProductionEnv } = runtime;
-const { gemini: ai, anthropic, openai } = runtime.providers;
-```
-
-When that cutover is applied, the duplicate provider initialization and process listeners currently located in `server.ts` are removed. No route registration, middleware ordering, Stripe webhook semantics, Supabase configuration, Render configuration, R-001 scoring behavior or R-002 runtime guard behavior is changed as part of Phase 2.
-
-The migration branch must remain synchronized with current `main` before any change to `server.ts` itself. If parallel roadmap work modifies `server.ts` or one of its directly imported runtime contracts, the cutover is re-derived from the new head rather than replaying an older file snapshot.
+These criteria define the closure of the `server.ts` extraction workstream.
