@@ -20,8 +20,11 @@ export function registerStripeWebhookRoutes(app: express.Express): void {
     }
 
     try {
-      await handleWebhookEvent(event);
-      return res.json({ received: true });
+      const result = await handleWebhookEvent(event, {
+        ingressSource: req.path,
+        rawBody: req.body,
+      });
+      return res.json(result);
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
