@@ -66,9 +66,10 @@ extrahiert und zusätzlich zum bestehenden öffentlichen Endpunkt von einem zwei
 `src/components/EnterpriseBinanceQuickAnalysis.tsx`. Sie ersetzt die vormals im Enterprise
 Scorer (`EnterpriseAnalysisPanels.tsx`) gezeigte, ausschließlich auf bereits verifizierten
 internen Scoring-Fakten basierende "AI Kurzanalyse" (kein Live-Marktdaten-Zugriff) durch eine
-Live-Binance-Marktdaten-Variante, positioniert als erste Komponente des Enterprise Scorers,
-oberhalb der Asset-Suche, angetrieben vom dort bereits ausgewählten Symbol (kein eigenes
-Suchfeld).
+Live-Binance-Marktdaten-Variante, angetrieben vom im Enterprise Scorer bereits ausgewählten
+Symbol (kein eigenes Suchfeld). Darstellungsreihenfolge im Enterprise Scorer von oben nach
+unten: Asset-Suche (mit Assetklassen-Filtern und Registry-Bestand) → Kopfbereich des aktuell
+ausgewählten Assets (Standard: BTC) → Binance-Kurzanalyse.
 
 Diese Erweiterung ändert die ursprünglichen Entscheidungen 1–8 nicht, ergänzt sie aber:
 

@@ -77,12 +77,16 @@ describe('frontend financial data contract regression gate', () => {
 
     const enterpriseScorerCode = source('src/components/CryptoScoringEnterprise.tsx');
     expect(enterpriseScorerCode).toContain('EnterpriseBinanceQuickAnalysis');
-    // Must render before the "Asset-Suche" block, i.e. as the first component of the scorer.
-    const quickAnalysisIndex = enterpriseScorerCode.indexOf('<EnterpriseBinanceQuickAnalysis');
+    // Display order top to bottom: Asset-Suche (with class filters), then the currently
+    // selected asset header, then the Binance quick analysis.
     const assetSearchIndex = enterpriseScorerCode.indexOf('Asset-Suche');
-    expect(quickAnalysisIndex).toBeGreaterThan(-1);
+    const selectedAssetHeaderIndex = enterpriseScorerCode.indexOf('Enterprise Universum Scorer');
+    const quickAnalysisIndex = enterpriseScorerCode.indexOf('<EnterpriseBinanceQuickAnalysis');
     expect(assetSearchIndex).toBeGreaterThan(-1);
-    expect(quickAnalysisIndex).toBeLessThan(assetSearchIndex);
+    expect(selectedAssetHeaderIndex).toBeGreaterThan(-1);
+    expect(quickAnalysisIndex).toBeGreaterThan(-1);
+    expect(assetSearchIndex).toBeLessThan(selectedAssetHeaderIndex);
+    expect(selectedAssetHeaderIndex).toBeLessThan(quickAnalysisIndex);
   });
 
   it('MarketScreener consumes verified score/context contracts and has no symbol-hash finance logic', () => {
