@@ -56,11 +56,33 @@ describe('frontend financial data contract regression gate', () => {
     expect(code).toContain('Order-Tree · Market Depth');
     expect(code).toContain('Arbitrage Radar');
     expect(code).toContain('Intelligent Feed');
-    expect(code).toContain('AI Kurzanalyse');
     expect(code).toContain('Read-only Spiegel des verifizierten kanonischen Scores');
     expect(code).toContain('schreiben weder in den kanonischen Score noch in Ranking');
     expect(code).not.toContain('localStorage.setItem');
     expect(code).not.toContain('/api/registry/assets/');
+    // AI Kurzanalyse moved out to EnterpriseBinanceQuickAnalysis.tsx (see below) - it used to
+    // live inline here bound only to already-verified scoring facts, no live market data.
+    expect(code).not.toContain('AI Kurzanalyse');
+  });
+
+  it('enterprise scorer AI Kurzanalyse is Binance-live-data-backed and reuses the scorer asset selection', () => {
+    const quickAnalysisCode = source('src/components/EnterpriseBinanceQuickAnalysis.tsx');
+    expect(quickAnalysisCode).toContain('AI Kurzanalyse mit Binance Spot');
+    expect(quickAnalysisCode).toContain('/api/registry/assets/');
+    expect(quickAnalysisCode).toContain('/quick-analysis');
+    // Driven purely by the `symbol` prop from CryptoScoringEnterprise - no independent
+    // free-text search input duplicating the Enterprise Scorer's own Asset-Suche.
+    expect(quickAnalysisCode).not.toContain('useState(\'BTC\')');
+    expect(quickAnalysisCode).not.toContain('placeholder="BTC, ETH, SOL ...."');
+
+    const enterpriseScorerCode = source('src/components/CryptoScoringEnterprise.tsx');
+    expect(enterpriseScorerCode).toContain('EnterpriseBinanceQuickAnalysis');
+    // Must render before the "Asset-Suche" block, i.e. as the first component of the scorer.
+    const quickAnalysisIndex = enterpriseScorerCode.indexOf('<EnterpriseBinanceQuickAnalysis');
+    const assetSearchIndex = enterpriseScorerCode.indexOf('Asset-Suche');
+    expect(quickAnalysisIndex).toBeGreaterThan(-1);
+    expect(assetSearchIndex).toBeGreaterThan(-1);
+    expect(quickAnalysisIndex).toBeLessThan(assetSearchIndex);
   });
 
   it('MarketScreener consumes verified score/context contracts and has no symbol-hash finance logic', () => {

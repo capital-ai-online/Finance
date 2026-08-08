@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Activity, Bot, Database, Gauge, Layers3, Network, RefreshCw, Search, ShieldCheck, Sparkles, TrendingUp, Zap } from 'lucide-react';
+import { Activity, Database, Gauge, Layers3, Network, RefreshCw, Search, ShieldCheck, TrendingUp } from 'lucide-react';
 
 type AssetType = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';
 
@@ -118,8 +118,6 @@ export function EnterpriseAnalysisPanels({
   const [books, setBooks] = useState<VenueBook[]>([]);
   const [microLoading, setMicroLoading] = useState(false);
   const [microError, setMicroError] = useState<string | null>(null);
-  const [aiText, setAiText] = useState<string>('');
-  const [aiLoading, setAiLoading] = useState(false);
 
   const upper = symbol.toUpperCase().trim();
 
@@ -140,7 +138,6 @@ export function EnterpriseAnalysisPanels({
 
   useEffect(() => {
     void loadMicrostructure();
-    setAiText('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [upper, assetType]);
 
@@ -173,33 +170,6 @@ export function EnterpriseAnalysisPanels({
     if (/volatil/.test(text)) return 'Volatilitäts-Regime';
     return 'Kein verifiziertes Pattern ableitbar';
   }, [reasoning]);
-
-  async function requestAiSummary() {
-    setAiLoading(true);
-    setAiText('');
-    try {
-      const message = [
-        `Erstelle eine sehr kurze, nüchterne CAPITAL-AI Kurzanalyse für ${upper} (${assetType}).`,
-        `Verifizierter kanonischer Score: ${canonicalScore ?? 'nicht verfügbar'}.`,
-        `Decision: ${decision ?? 'nicht verfügbar'}. Risiko: ${riskLevel ?? 'nicht verfügbar'}.`,
-        `Coverage: ${coverage ?? 'nicht verfügbar'}. Provider: ${providers.join(', ') || 'keine'}.`,
-        `Reasoning: ${reasoning.slice(0, 5).join(' | ') || 'keines'}.`,
-        'Nutze ausschließlich diese gelieferten Fakten. Erfinde keine Preise, Renditen, Pattern, Stop-Loss- oder Take-Profit-Werte. Maximal 4 Sätze.',
-      ].join('\n');
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history: [] }),
-      });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body?.error || 'AI-Analyse nicht verfügbar');
-      setAiText(typeof body?.reply === 'string' ? body.reply : 'Keine AI-Antwort verfügbar.');
-    } catch (error: any) {
-      setAiText(`AI-Kurzanalyse derzeit nicht verfügbar: ${error?.message || 'unbekannter Fehler'}`);
-    } finally {
-      setAiLoading(false);
-    }
-  }
 
   const asksLadder = useMemo(() => buildLadder(books, 'asks'), [books]);
   const bidsLadder = useMemo(() => buildLadder(books, 'bids'), [books]);
@@ -293,32 +263,20 @@ export function EnterpriseAnalysisPanels({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-          <div className="flex items-center gap-2 text-sm font-black text-white uppercase"><Activity size={16} className="text-emerald-300" /> Intelligent Feed</div>
-          <div className="mt-4 space-y-2 text-xs">
-            <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3"><span className="text-white/45">Score:</span> <span className="text-white">{canonicalScore?.toFixed(1) ?? 'DATA_UNAVAILABLE'}</span></div>
-            <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3"><span className="text-white/45">Decision:</span> <span className="text-white">{decision ?? 'nicht verfügbar'}</span></div>
-            <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3"><span className="text-white/45">Risk:</span> <span className="text-white">{riskLevel ?? 'nicht verfügbar'}</span></div>
-            <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3"><span className="text-white/45">Microstructure:</span> <span className="text-white">{assetType === 'crypto' ? `${books.length} Venue(s) beobachtet` : 'für diese Assetklasse nicht aktiviert'}</span></div>
-            <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3"><span className="text-white/45">Pattern:</span> <span className="text-white">{pattern}</span></div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-black/40 to-purple-950/10 p-5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-sm font-black text-white uppercase"><Bot size={16} className="text-purple-300" /> AI Kurzanalyse</div>
-            <button onClick={() => void requestAiSummary()} disabled={aiLoading} className="inline-flex items-center gap-2 rounded-lg border border-purple-500/20 bg-purple-500/10 px-3 py-1.5 text-[10px] font-bold text-purple-100 disabled:opacity-50"><Sparkles size={12} /> Analysieren</button>
-          </div>
-          <div className="mt-4 min-h-24 rounded-xl border border-white/5 bg-black/25 p-4 text-xs leading-relaxed text-white/65">
-            {aiLoading ? <span className="inline-flex items-center gap-2"><RefreshCw size={13} className="animate-spin" /> Kurzanalyse wird aus verifizierten Scoring-Fakten erzeugt…</span> : aiText || 'Die AI-Kurzanalyse wird nur auf Anforderung ausgeführt und erhält ausschließlich die bereits verifizierten Scoring-Fakten.'}
-          </div>
+      <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+        <div className="flex items-center gap-2 text-sm font-black text-white uppercase"><Activity size={16} className="text-emerald-300" /> Intelligent Feed</div>
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2 text-xs">
+          <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3"><span className="text-white/45">Score:</span> <span className="text-white">{canonicalScore?.toFixed(1) ?? 'DATA_UNAVAILABLE'}</span></div>
+          <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3"><span className="text-white/45">Decision:</span> <span className="text-white">{decision ?? 'nicht verfügbar'}</span></div>
+          <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3"><span className="text-white/45">Risk:</span> <span className="text-white">{riskLevel ?? 'nicht verfügbar'}</span></div>
+          <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3"><span className="text-white/45">Microstructure:</span> <span className="text-white">{assetType === 'crypto' ? `${books.length} Venue(s) beobachtet` : 'für diese Assetklasse nicht aktiviert'}</span></div>
+          <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3"><span className="text-white/45">Pattern:</span> <span className="text-white">{pattern}</span></div>
         </div>
       </div>
 
       <div className="flex items-start gap-2 rounded-xl border border-cyan-500/15 bg-cyan-500/5 p-3 text-[10px] text-cyan-100/55">
         <Database size={13} className="mt-0.5 shrink-0" />
-        <span>Architektur-Isolation: Pattern, Setup Confidence, Ordertiefe, Arbitrage, Intelligent Feed und AI-Kurzanalyse sind read-only Analyse-/Presentation-Module. Sie schreiben weder in den kanonischen Score noch in Ranking, Scoring-Lineage oder Provider-Evidence zurück.</span>
+        <span>Architektur-Isolation: Pattern, Setup Confidence, Ordertiefe, Arbitrage und Intelligent Feed sind read-only Analyse-/Presentation-Module. Sie schreiben weder in den kanonischen Score noch in Ranking, Scoring-Lineage oder Provider-Evidence zurück.</span>
       </div>
     </div>
   );

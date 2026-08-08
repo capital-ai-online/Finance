@@ -30,6 +30,7 @@ import {
 import { AssetLogo } from './AssetLogo';
 import { assetRegistry } from '../lib/assetRegistry';
 import { EnterpriseAnalysisPanels } from './EnterpriseAnalysisPanels';
+import { EnterpriseBinanceQuickAnalysis } from './EnterpriseBinanceQuickAnalysis';
 import type { TradeSetupLevels } from '../services/tradeSetupLevels';
 
 export interface CryptoScoringEnterpriseProps {
@@ -486,6 +487,10 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
     <section id="enterprise-scorer" className="scroll-mt-24 bg-neutral-950/60 border border-white/10 rounded-2xl p-5 sm:p-6 backdrop-blur-xl relative overflow-hidden space-y-6">
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-purple-500/10 blur-[130px] rounded-full pointer-events-none" />
       <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-cyan-500/5 blur-[130px] rounded-full pointer-events-none" />
+
+      <div className="relative z-20">
+        <EnterpriseBinanceQuickAnalysis symbol={symbol} />
+      </div>
 
       <div className="relative z-20 flex flex-col xl:flex-row xl:items-start justify-between gap-5 border-b border-white/10 pb-5">
         <div className="flex items-center gap-3">
