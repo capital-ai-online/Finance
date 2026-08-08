@@ -12,14 +12,17 @@ import { syncBuiltinESMExports } from 'node:module';
  * that belong to normal application workflows remain writable, while docs/**
  * and the two legacy governance JSON files are fail-closed.
  *
- * The same production boundary also owns the compatibility contract for legacy
+ * The same production boundary owns the compatibility contract for legacy
  * Documentary / Version Manager HTTP routes. Mutations are rejected before
- * Express can execute filesystem-writing handlers, while GET /api/admin/version
- * is served from immutable package/deploy metadata instead of version_manager.json.
+ * Express can execute filesystem-writing handlers. GET /api/admin/version is
+ * served from an immutable build manifest when present, with package/deploy
+ * metadata retained only as a compatibility fallback.
  */
 
+const RELEASE_MANIFEST_CONTRACT = 'capital-ai-runtime-release-manifest/1.0.0';
 const cwd = path.resolve(process.cwd());
 const docsRoot = path.resolve(cwd, 'docs');
+const releaseManifestPath = path.resolve(cwd, 'dist', 'control-plane', 'release-manifest.json');
 const protectedFiles = new Set([
   path.resolve(cwd, 'uploads', 'document_hygiene.json'),
   path.resolve(cwd, 'uploads', 'version_manager.json'),
@@ -34,17 +37,38 @@ function readPackageVersion() {
   }
 }
 
+function readImmutableReleaseManifest() {
+  if (!fs.existsSync(releaseManifestPath)) return null;
+  const parsed = JSON.parse(fs.readFileSync(releaseManifestPath, 'utf8'));
+  if (
+    parsed?.contract !== RELEASE_MANIFEST_CONTRACT ||
+    parsed?.mutable !== false ||
+    typeof parsed?.version !== 'string' ||
+    typeof parsed?.buildIdentity !== 'string'
+  ) {
+    throw new Error('R-002 invalid immutable release manifest. Production release identity cannot be trusted.');
+  }
+  return parsed;
+}
+
+const releaseManifest = readImmutableReleaseManifest();
 const immutableReleaseIdentity = Object.freeze({
-  version: readPackageVersion(),
+  version: releaseManifest?.version ?? readPackageVersion(),
   commitSha:
+    releaseManifest?.sourceCommit ||
     process.env.RENDER_GIT_COMMIT ||
     process.env.GIT_COMMIT ||
     process.env.SOURCE_VERSION ||
     null,
+  buildIdentity: releaseManifest?.buildIdentity ?? null,
+  manifestContract: releaseManifest?.contract ?? null,
+  packageLockSha256: releaseManifest?.inputs?.packageLockSha256 ?? null,
+  documentaryTreeSha256: releaseManifest?.inputs?.documentaryTreeSha256 ?? null,
+  documentaryFileCount: releaseManifest?.inputs?.documentaryFileCount ?? null,
   serviceId: process.env.RENDER_SERVICE_ID || null,
   instanceId: process.env.RENDER_INSTANCE_ID || null,
   hostname: process.env.RENDER_EXTERNAL_HOSTNAME || null,
-  source: 'immutable-build-metadata',
+  source: releaseManifest ? 'immutable-build-manifest' : 'immutable-package-runtime-fallback',
 });
 
 function resolveFsPath(value) {
@@ -179,10 +203,15 @@ function installControlPlaneHttpBoundary() {
           releaseDate: null,
           gitTag: immutableReleaseIdentity.commitSha ? `git:${immutableReleaseIdentity.commitSha}` : null,
           dockerTag: null,
-          releaseNotes: 'Immutable production release identity derived from package/deploy metadata.',
+          releaseNotes: 'Immutable production release identity derived from controlled build evidence.',
           history: [],
           source: immutableReleaseIdentity.source,
           commitSha: immutableReleaseIdentity.commitSha,
+          buildIdentity: immutableReleaseIdentity.buildIdentity,
+          manifestContract: immutableReleaseIdentity.manifestContract,
+          packageLockSha256: immutableReleaseIdentity.packageLockSha256,
+          documentaryTreeSha256: immutableReleaseIdentity.documentaryTreeSha256,
+          documentaryFileCount: immutableReleaseIdentity.documentaryFileCount,
           serviceId: immutableReleaseIdentity.serviceId,
           instanceId: immutableReleaseIdentity.instanceId,
           hostname: immutableReleaseIdentity.hostname,
@@ -229,7 +258,7 @@ function installGuard() {
   installControlPlaneHttpBoundary();
   syncBuiltinESMExports();
   console.info(
-    `[RuntimeArtifactGuard] R-002 production read-only boundary enabled for release ${immutableReleaseIdentity.version}.`,
+    `[RuntimeArtifactGuard] R-002 production read-only boundary enabled for release ${immutableReleaseIdentity.version} (${immutableReleaseIdentity.source}).`,
   );
 }
 
