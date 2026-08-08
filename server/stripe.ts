@@ -11,6 +11,12 @@ import {
 import { resolveVerifiedIdentity } from '../src/platform/Security/authMiddleware';
 import { sendSubscriptionConfirmation } from './mailer';
 import { OWNER_NOTIFICATION_EMAIL } from './ownerConfig_server';
+import {
+  claimStripeEvent,
+  markStripeEventFailed,
+  markStripeEventProcessed,
+  type StripeWebhookProcessingContext,
+} from './stripeEventInbox';
 
 export const stripeRouter = express.Router();
 
@@ -391,10 +397,13 @@ async function resolveUserIdByEmail(email: string): Promise<string | null> {
   }
 }
 
-// 7. Core Webhook handling logic
-export const handleWebhookEvent = async (event: Stripe.Event) => {
-  console.log(`ℹ️ [Webhook Router] Received Stripe event: ${event.type}`);
-  
+export interface StripeWebhookHandlingResult {
+  received: true;
+  duplicate: boolean;
+  claimStatus: string;
+}
+
+async function processStripeEventSideEffects(event: Stripe.Event): Promise<void> {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
     const planId = session.metadata?.plan_id || session.metadata?.planId || 'Free';
@@ -413,7 +422,7 @@ export const handleWebhookEvent = async (event: Stripe.Event) => {
         console.warn(`⚠️ [Webhook Router] Gast-Checkout: keine passende User-ID für ${email} gefunden (Konto evtl. noch nicht registriert).`);
       }
     }
-    
+
     if (userId && planId) {
       const planUpper = String(planId).toUpperCase();
       if (planUpper === 'PDF' || planUpper === 'PDF_EXPORT' || planUpper === 'EXPORT_PDF') {
@@ -427,27 +436,23 @@ export const handleWebhookEvent = async (event: Stripe.Event) => {
         // seit der Supabase-Stripe-Synchronisation der DB-Trigger
         // sync_stripe_subscription_to_public() auf stripe.subscriptions (Single
         // Source of Truth, siehe COMPLIANCE_REVIEW.md). Dieser Zweig löst nur noch
-        // die Bestätigungs-/Benachrichtigungs-E-Mails aus - sendSubscriptionConfirmation()
-        // ist deterministisch, idempotent (pro Checkout Session) und wirft niemals,
-        // blockiert die Webhook-Antwort also nicht und lässt sie bei E-Mail-Fehlschlag
-        // nicht scheitern (200 OK unabhängig vom E-Mail-Ergebnis).
+        // Bestätigungs-/Benachrichtigungs-E-Mails aus. Die Mail-Reservation erfolgt
+        // atomar pro Checkout Session; SMTP-Fehler ändern weiterhin NICHT den
+        // Subscription-Status und führen nicht zu einer Tarif-Mutation in Express.
         console.log(`✅ [Webhook Router] Checkout abgeschlossen für ${userId} (${email}), Plan ${planId}. Tarif-Synchronisation läuft über stripe.subscriptions-Trigger.`);
-        sendSubscriptionConfirmation(email, OWNER_NOTIFICATION_EMAIL, {
+        await sendSubscriptionConfirmation(email, OWNER_NOTIFICATION_EMAIL, {
           planId,
           sessionId: session.id,
           userId,
           amountTotal: session.amount_total,
           currency: session.currency,
-        }).catch((err) => {
-          // sendSubscriptionConfirmation() wirft laut eigenem Contract nie - dieser
-          // catch ist ausschliesslich ein Sicherheitsnetz gegen zukünftige Regressionen.
-          console.error('[Webhook Router] sendSubscriptionConfirmation unerwartet fehlgeschlagen:', err);
         });
       }
     } else {
       console.warn('⚠️ [Webhook Router] checkout.session.completed received but missing user_id or plan_id in metadata:', session.metadata);
     }
   }
+
   // customer.subscription.updated / customer.subscription.deleted werden nicht mehr
   // hier verarbeitet. Diese Zweige riefen zuvor saveSubscription() mit
   // subscription.metadata.user_id auf - das erforderte, dass Stripe-Metadata
@@ -459,4 +464,53 @@ export const handleWebhookEvent = async (event: Stripe.Event) => {
   // ist jetzt die alleinige, zuverlässigere Quelle für Tarif-Änderungen und
   // Kündigungen. Dieser Express-Webhook bleibt nur noch für Checkout-Abschluss
   // (PDF-Credits, Aktivierungs-E-Mail) zuständig.
+}
+
+// 7. Core Webhook handling logic — ADR-0045 / R-003
+// Every signature-verified Stripe event is claimed by event.id BEFORE application-owned
+// side effects run. Processing/processed duplicates return successfully without re-entry.
+// Integrity conflicts fail closed. Failed side effects are retryable via the durable inbox.
+//
+// IMPORTANT: if side effects completed but marking the inbox row as processed fails, the row
+// is intentionally left in processing. We do NOT mark it failed because an automatic retry
+// could duplicate a side effect whose own transactional ledger is not yet implemented
+// (PDF credits remain R-004). This gives operators a visible reconciliation state instead of
+// guessing whether replay is safe.
+export const handleWebhookEvent = async (
+  event: Stripe.Event,
+  context: StripeWebhookProcessingContext = {},
+): Promise<StripeWebhookHandlingResult> => {
+  console.log(`ℹ️ [Webhook Router] Received Stripe event: ${event.type} (${event.id})`);
+
+  const claim = await claimStripeEvent(event, context);
+  if (!claim.integrityMatches || claim.claimStatus === 'integrity_conflict') {
+    throw new Error(`[Stripe Inbox] integrity conflict for event ${event.id}; side effects blocked.`);
+  }
+
+  if (!claim.claimed) {
+    console.log(`[Stripe Inbox] Duplicate ${event.id} skipped (${claim.claimStatus}, attempts=${claim.attempts}).`);
+    return { received: true, duplicate: true, claimStatus: claim.claimStatus };
+  }
+
+  let sideEffectsCompleted = false;
+  try {
+    await processStripeEventSideEffects(event);
+    sideEffectsCompleted = true;
+    await markStripeEventProcessed(event.id);
+    return { received: true, duplicate: false, claimStatus: claim.claimStatus };
+  } catch (err) {
+    if (!sideEffectsCompleted) {
+      try {
+        await markStripeEventFailed(event.id, err);
+      } catch (markErr) {
+        console.error('[Stripe Inbox] Failed to persist failed status:', markErr);
+      }
+    } else {
+      console.error(
+        `[Stripe Inbox] Side effects for ${event.id} completed, but finalization failed. ` +
+        'Row intentionally remains processing for manual reconciliation; automatic replay is blocked.',
+      );
+    }
+    throw err;
+  }
 };
