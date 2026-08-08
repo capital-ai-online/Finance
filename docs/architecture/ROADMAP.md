@@ -21,10 +21,23 @@ This document is the canonical roadmap status index for CAPITAL-AI. Detailed arc
 |---|---|---|---|---|
 | R-001 — No-Demo-Data + scoring provenance | TECHNICALLY COMPLETE | ADR-0032 | `docs/adr/evidence/ADR-0032-REVALIDATION-2026-08-08-R001.md` | Preserve provenance invariants in all later provider/scoring work |
 | R-002 — Production runtime artifact immutability | COMPLETE | ADR-0044 | Runtime Artifact Guard, immutable release manifest, read-only production Documentary boundary, validated CI | Remove inert legacy compatibility code opportunistically without weakening guard |
-| R-003 — Single Stripe owner + durable event inbox | IMPLEMENTED / PRODUCTION HANDOFF PENDING | ADR-0045 | Repository implementation and CI validated; migration exists at `supabase/migrations/20260808013000_stripe_event_inbox.sql` | Apply production migration, deploy merged handler, run controlled duplicate/replay verification, capture evidence |
+| R-003 — Single Stripe owner + durable event inbox | IMPLEMENTED / PRODUCTION HANDOFF PENDING | ADR-0045 | Repository implementation and CI validated; production read-only probe on 2026-08-08 confirms required Supabase inbox/RPC objects are not installed yet | Apply production migration, deploy merged handler, run controlled duplicate/replay verification, capture evidence |
 | R-004 — Transactional PDF-credit ledger | OPEN | Follow-up from ADR-0045 | Current PDF-credit mutation is explicitly outside the R-003 durable event transaction boundary | Design ADR, define idempotent credit ledger, migration contract, transactional grant semantics and replay tests |
 | R-101 — Durable worker/outbox/lease | OPEN | Follow-up from ADR-0045 | Explicitly deferred from R-003 | Start only after R-004 transaction boundary is defined; design lease/retry/dead-letter/reconciliation semantics |
 | ADR-0014 Phase 3 — `server.application.ts` decomposition | IN PROGRESS | ADR-0014 | Duplicate `src/server/**` retired; route, docs/history, AI and market-data boundaries progressively extracted | Complete compatibility cutovers, then scoring and lifecycle extraction |
+
+## Production evidence snapshot — 2026-08-08
+
+Read-only production inspection established the following closure facts:
+
+- Supabase project `AIFINANCIAL` is `ACTIVE_HEALTHY`.
+- `public.stripe_event_inbox` is not present in production.
+- `public.claim_stripe_event(...)` is not present in production.
+- `public.claim_subscription_confirmation(text)` is not present in production.
+- Render production service `Finance` tracks repository `SvenKulessa/Finance`, branch `main`, with `autoDeploy=yes` and `autoDeployTrigger=checksPass`.
+- Render reports commit `1809f03c3e7bc4a01e8922b35db00774936fecc4` as the current live deployment.
+
+Consequence: R-003 is not production-complete. The ADR-0045 migration remains a mandatory production handoff gate before any application revision that depends on the durable inbox/RPC contract. No Supabase, Render or Stripe mutation was performed during this inspection.
 
 ## ADR-0014 execution order
 
