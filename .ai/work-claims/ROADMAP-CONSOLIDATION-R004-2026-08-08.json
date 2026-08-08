@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "ROADMAP-CONSOLIDATION-R004-2026-08-08",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Thinking",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "Establish a canonical enterprise roadmap status document and define the next closure order after R-001/R-002, including ADR-0014 server cutover, R-003 production evidence, R-004 transactional PDF-credit ledger and R-101 durable worker/outbox/lease.",
+  "startedAt": "2026-08-08T08:21:00Z",
+  "baseBranch": "main",
+  "baseSha": "1809f03c3e7bc4a01e8922b35db00774936fecc4",
+  "pullRequest": null,
+  "claimedPaths": [
+    "docs/architecture/ROADMAP.md",
+    ".ai/work-claims/ROADMAP-CONSOLIDATION-R004-2026-08-08.json"
+  ],
+  "releaseCondition": "Claim is released when the associated roadmap consolidation change is merged, closed, superseded or abandoned."
+}
