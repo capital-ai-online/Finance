@@ -1,6 +1,6 @@
 # ADR-0014 — Server Runtime Architecture Consolidation
 
-Status: Proposed
+Status: Accepted
 Date: 2026-08-08
 Scope: CAPITAL-AI production server architecture
 
@@ -26,9 +26,9 @@ src/services/              # domain services and scoring engines
 src/platform/              # governance, IAM, compliance and platform services
 ```
 
-`src/server/` is classified as a legacy/incomplete scaffold and MUST NOT become a second production composition root.
+`src/server/` is retired and MUST NOT become a second production composition root.
 
-No new server infrastructure module may be added under `src/server/` unless this ADR is superseded. Existing useful implementation ideas from that scaffold may be migrated into the canonical `server/`, `src/routes/`, `src/features/` or `src/services/` boundaries only after their behavior is reconciled against current production invariants.
+No new server infrastructure module may be added under `src/server/` unless this ADR is superseded. Useful behavior must live in the canonical `server/`, `src/routes/`, `src/features/`, `src/services/` or `src/platform/` boundaries.
 
 ## Production invariants
 
@@ -55,39 +55,33 @@ Completed in PR #108:
 
 ### Phase 2 — dead scaffold retirement
 
-Completed on the PR #108 branch after reference analysis.
+Completed in PR #108 after reference analysis.
 
-The following twelve files formed a closed, inactive dependency island and were removed together:
-
-- `src/server/app.ts`
-- `src/server/config/security.ts`
-- `src/server/integrations/ai/providers.ts`
-- `src/server/integrations/stripe/webhook.ts`
-- `src/server/middleware/errorHandler.ts`
-- `src/server/middleware/globalRateLimit.ts`
-- `src/server/middleware/processSafety.ts`
-- `src/server/routes/core.routes.ts`
-- `src/server/routes/documentation.routes.ts`
-- `src/server/routes/marketData.routes.ts`
-- `src/server/routes/marketHistory.routes.ts`
-- `src/server/routes/system.routes.ts`
-
-Reference searches for the exported composition/route symbols resolved only inside that scaffold. No production import was found.
-
-The retirement also removes known semantic drift rather than losing production behavior. Examples include:
-
-- the legacy security module carried its own CSP implementation and therefore did not represent ADR-0040 safe-rollout ownership;
-- the legacy documentation router exposed a direct runtime write path to `docs/**`, conflicting with the R-002 immutable production-runtime direction;
-- the legacy Stripe wrapper was a second webhook composition path rather than the authoritative R-003 production ingress;
-- the legacy AI provider factory duplicated provider bootstrap already established under the canonical runtime architecture.
-
-No active production runtime file is deleted by Phase 2.
+Twelve files under `src/server/**` formed a closed, inactive dependency island and were retired together. This removed duplicate CSP, Stripe webhook, AI-provider, middleware and route-composition implementations without deleting active runtime behavior.
 
 ### Phase 3 — `server.application.ts` domain decomposition
 
-Next, progressively move compatibility-owned blocks out of `server.application.ts` into canonical modules. Recommended order:
+Phase 3 proceeds only against the canonical runtime and is split into independently gated steps.
 
-1. route registration/composition;
+#### Phase 3.1 — route composition boundary
+
+`server/routes/registerApplicationRoutes.ts` is the canonical route-mounting boundary. It preserves the exact production URL prefixes and provider arguments currently owned inline by `server.application.ts`.
+
+The module deliberately does **not** own:
+
+- Stripe raw-body webhook ingress or its ordering before `express.json()`;
+- global middleware or CSP ordering;
+- AI provider creation;
+- scoring implementation or evidence semantics;
+- runtime startup, background refresh or graceful shutdown.
+
+This separation prevents route composition from becoming another application monolith.
+
+The actual cutover from the inline route-mount block in `server.application.ts` is performed only after a fresh `main` overlap check because that compatibility module remains a high-contention file during parallel roadmap work.
+
+#### Remaining Phase 3 order
+
+1. wire the canonical route composer and remove the equivalent inline mount block;
 2. documentation and history endpoints;
 3. AI sentiment and portfolio analysis routes;
 4. market-data aggregation/provider adapters;
@@ -98,6 +92,4 @@ Each extraction must be behavior-preserving and independently gated by TypeScrip
 
 ## Consequences
 
-Positive consequences are a single source of architectural truth, lower merge-conflict probability, clearer ownership and a safer path for continued decomposition of `server.application.ts`.
-
-The primary cost is that earlier incomplete modularization work under `src/server/` is retired rather than promoted directly. This is intentional because runtime correctness and preservation of current roadmap invariants take precedence over preserving an inactive scaffold.
+There is now one source of server architecture truth. `server.application.ts` is treated strictly as a temporary compatibility composition module whose responsibilities shrink monotonically. New domain logic must not be added there when an existing canonical domain boundary is available.
