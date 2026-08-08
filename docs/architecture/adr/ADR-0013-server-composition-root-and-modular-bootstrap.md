@@ -24,6 +24,7 @@ server/
 │   ├── createApp.ts
 │   └── registerRoutes.ts
 ├── bootstrap/
+│   ├── runtime.ts
 │   ├── providers.ts
 │   ├── processLifecycle.ts
 │   └── startup.ts
@@ -81,4 +82,20 @@ Phase 1 introduces:
 - `server/bootstrap/providers.ts`
 - `server/app/compositionRoot.ts`
 
-These modules establish the future runtime boundary but are intentionally not wired into the production bootstrap yet. Wiring is performed in the next phase after compile/type validation of the isolated modules.
+These modules establish the future runtime boundary but are intentionally not wired into the production bootstrap yet.
+
+## Phase 2 implementation
+
+Phase 2 introduces `server/bootstrap/runtime.ts` as the single process-level bootstrap adapter. It composes the runtime context, AI-provider set and process lifecycle safety handlers behind one explicit invocation.
+
+The intended entry-point cutover is deliberately narrow:
+
+```ts
+const runtime = bootstrapServerRuntime();
+const { logger: serverLogger, port: PORT, isProduction: isProductionEnv } = runtime;
+const { gemini: ai, anthropic, openai } = runtime.providers;
+```
+
+When that cutover is applied, the duplicate provider initialization and process listeners currently located in `server.ts` are removed. No route registration, middleware ordering, Stripe webhook semantics, Supabase configuration or Render configuration is changed as part of Phase 2.
+
+The migration branch keeps the cutover isolated from the module introduction so the large entry-point file is not replaced wholesale through an unsafe repository-content operation. The next atomic commit applies only the required import/bootstrap substitutions to `server.ts` and validates type/build behavior before Phase 3 starts.
