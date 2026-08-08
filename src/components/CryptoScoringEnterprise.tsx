@@ -488,30 +488,6 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-purple-500/10 blur-[130px] rounded-full pointer-events-none" />
       <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-cyan-500/5 blur-[130px] rounded-full pointer-events-none" />
 
-      <div className="relative z-20">
-        <EnterpriseBinanceQuickAnalysis symbol={symbol} />
-      </div>
-
-      <div className="relative z-20 flex flex-col xl:flex-row xl:items-start justify-between gap-5 border-b border-white/10 pb-5">
-        <div className="flex items-center gap-3">
-          <AssetLogo symbol={symbol} size={48} />
-          <div>
-            <div className="flex flex-wrap items-center gap-2 mb-1.5">
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-gradient-to-r from-aif-gold-DEFAULT/20 to-purple-500/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/25 uppercase">
-                <Sparkles size={10} /> Enterprise Universum Scorer
-              </span>
-              <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest uppercase border ${ready ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25' : 'bg-amber-500/10 text-amber-200 border-amber-500/25'}`}>{result?.status ?? (loading ? 'LOADING' : 'DATA_UNAVAILABLE')}</span>
-              {result?.decisionName && (
-                <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest uppercase border ${tier.bg} ${tier.text} ${tier.border}`}>{result.decisionName}</span>
-              )}
-            </div>
-            <h2 className="text-xl sm:text-2xl font-black text-white font-display">{selectedAsset?.name ?? symbol} <span className="text-white/45">({symbol})</span></h2>
-            <p className="text-xs text-white/45 mt-1 font-mono">Multi-Faktor Institutional-Grade Scoring · alle Assetklassen durchsuchbar · evidence-gated</p>
-          </div>
-        </div>
-        <button type="button" onClick={() => void loadEvaluation()} disabled={loading} className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-white/15 bg-white/5 text-xs font-bold text-white/80 hover:bg-white/10 disabled:opacity-50"><RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Neu prüfen</button>
-      </div>
-
       <div className="relative z-30 rounded-2xl border border-aif-gold-DEFAULT/20 bg-black/35 p-4 space-y-3">
         <div className="flex items-center gap-2 text-[10px] font-mono font-black uppercase tracking-widest text-aif-gold-DEFAULT"><Search size={14} /> Asset-Suche</div>
         <div className="flex flex-col lg:flex-row gap-3">
@@ -546,6 +522,30 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="relative z-20 flex flex-col xl:flex-row xl:items-start justify-between gap-5 border-b border-white/10 pb-5">
+        <div className="flex items-center gap-3">
+          <AssetLogo symbol={symbol} size={48} />
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-gradient-to-r from-aif-gold-DEFAULT/20 to-purple-500/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/25 uppercase">
+                <Sparkles size={10} /> Enterprise Universum Scorer
+              </span>
+              <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest uppercase border ${ready ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25' : 'bg-amber-500/10 text-amber-200 border-amber-500/25'}`}>{result?.status ?? (loading ? 'LOADING' : 'DATA_UNAVAILABLE')}</span>
+              {result?.decisionName && (
+                <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest uppercase border ${tier.bg} ${tier.text} ${tier.border}`}>{result.decisionName}</span>
+              )}
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-white font-display">{selectedAsset?.name ?? symbol} <span className="text-white/45">({symbol})</span></h2>
+            <p className="text-xs text-white/45 mt-1 font-mono">Multi-Faktor Institutional-Grade Scoring · alle Assetklassen durchsuchbar · evidence-gated</p>
+          </div>
+        </div>
+        <button type="button" onClick={() => void loadEvaluation()} disabled={loading} className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-white/15 bg-white/5 text-xs font-bold text-white/80 hover:bg-white/10 disabled:opacity-50"><RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Neu prüfen</button>
+      </div>
+
+      <div className="relative z-20">
+        <EnterpriseBinanceQuickAnalysis symbol={symbol} />
       </div>
 
       <div className="relative z-10 flex flex-wrap gap-1.5">{TIMEFRAMES.map((item) => <button type="button" key={item.value} onClick={() => onChangeTimeframe?.(item.value)} className={`rounded-md px-2 py-1 text-[9px] font-mono border transition-all ${timeframe === item.value ? 'border-white/30 bg-white/10 text-white' : 'border-white/5 text-white/35 hover:text-white/60'}`} title="Zeitrahmen ist Analysekontext und verändert keinen kanonischen Score im Browser.">{item.label}</button>)}</div>
