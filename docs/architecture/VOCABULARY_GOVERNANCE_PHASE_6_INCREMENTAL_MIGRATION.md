@@ -1,79 +1,64 @@
 # CAPITAL-AI Vocabulary Governance — Phase 6 Incremental Existing-Code Migration
 
-Status: IN PROGRESS  
+Status: IMPLEMENTATION COMPLETE — DRAFT REVIEW PENDING  
 Date: 2026-08-10  
 Authority: ESS-0017 / ESS-0017-CONTRACTS  
-Baseline: `04c0e5957aca7025b07f55439e052cef8e070571`  
-Mode: READ ONLY for Phase 6.0 / 6.1
+Verified foundation: PR #154 / `77cf6ed3143dc39120c55f7c767d4a758bc9735d` / main CI #658  
 
 ## Deutsch
 
-### Ziel
+### Ziel und Ergebnis
 
-Phase 6 überführt bestehende technische Naming-Schulden schrittweise in die Canonical Vocabulary Governance. Es gibt keine Big-Bang-Renaming-Migration. Jeder Kandidat wird zuerst inventarisiert, gegen die Vocabulary Registry auf einen freigegebenen Zielbegriff gebunden und anschließend durch den bestehenden Phase-3-Analyzer `analyzeRenameImpact` klassifiziert.
+Phase 6 migriert bestehende Naming-Schulden ausschließlich dann, wenn der Phase-3-Analyzer einen Kandidaten nachweislich als `SAFE` klassifiziert. Die vollständige Phase-6-Auswertung ergab für das aktuelle Inventar **0 SAFE-Kandidaten**. Deshalb wurde bewusst kein aktiver Code-Rename durchgeführt. Das ist ein gültiger fail-closed Abschluss und verhindert eine erzwungene Migration über Runtime-, Billing- oder Contract-Grenzen.
 
-### Phase 6.0 — Naming Debt Inventory
+### Phase 6.0 — Naming Debt Inventory — COMPLETE
 
-Die maschinenlesbare Quelle ist `docs/governance/vocabulary/rename-candidates.json`.
+PR #154 führte `docs/governance/vocabulary/rename-candidates.json` mit stabilen `REN-*`-IDs, Vocabulary Concept-IDs, kanonischen Zielbegriffen, Priorität, Begründung und beobachteten Repository-Flächen ein. Die Policy bleibt `CLASSIFY_ONLY`.
 
-Pflichtfelder je Kandidat:
-- stabile `REN-*`-ID;
-- aktueller Begriff;
-- freigegebener kanonischer Zielbegriff;
-- Vocabulary Concept-ID;
-- Priorität;
-- fachliche Begründung;
-- beobachtete Repository-Flächen;
-- `migrationPolicy: CLASSIFY_ONLY`.
+### Phase 6.1 — Evidence Classification — COMPLETE
 
-Der Contract ist absichtlich fail-closed. Phase 6.0/6.1 akzeptiert keine Mutation Policy.
+`scripts/automation/classifyRenameCandidates.ts` delegiert an den bestehenden Phase-3-Analyzer `analyzeRenameImpact`. Die materialisierte Evidence liegt in `docs/governance/vocabulary/rename-classification-evidence.json` und wird durch Tests gegen den Live-Analyzer validiert.
 
-### Phase 6.1 — Evidence Classification
+Ergebnis:
+- `REN-0001 — Plan -> SubscriptionTier`: `BLOCKED`. `Plan` ist Bestandteil von Billing-/Entitlement-Contracts; insbesondere existiert `PlanEntitlements` als TypeScript-Interface.
+- `REN-0002 — Screener -> Screening`: `BLOCKED`. `Screener` ist Bestandteil eines Frontend-Runtime-Contracts; insbesondere existiert `ScreenerProps` und der exportierte React-Component-Name `Screener`.
 
-`scripts/automation/classifyRenameCandidates.ts` lädt das Inventar und delegiert jede Bewertung an den bereits etablierten `validateRenameImpact`-Analyzer. Die möglichen Evidence-Zustände bleiben:
+### Phase 6.2 — SAFE Migration Batch — COMPLETE, NO-OP
 
-- `SAFE`: keine Blocker und keine Runtime-Referenzen;
-- `CONDITIONAL`: Runtime-Referenzen vorhanden, aber kein harter Blocker;
-- `BLOCKED`: API/Route, Schema/Contract, Env/Config, Dynamic Import, ungültiger Zielbegriff oder andere harte Governance-Grenze.
+`safeMigrationCount` ist `0`. Daher ist keine automatische oder manuell vorbereitete Rename-Mutation zulässig. Phase 6.2 ist als kontrollierter No-op abgeschlossen. Ein künstlicher Rename nur zum Erzeugen einer Änderung würde die Governance verletzen.
 
-Ein `BLOCKED`-Kandidat ist ein gültiges Analyseergebnis und darf die Inventarisierung nicht als technischen Fehler behandeln. Nur ein ungültiger Inventory-Contract stoppt den Lauf.
+### Phase 6.3 — Dependency Validation — COMPLETE FOR FOUNDATION; FINAL DRAFT GATE REQUIRED
 
-### Initiale Kandidaten
+Main CI #658 für die gemergte Phase-6.0/6.1-Basis war vollständig grün, einschließlich TypeScript, Tests, Production Build, CSP, Deployment Readiness, Docker Build, Runtime-Metadaten und Render Production Deploy. Der Abschluss-Draft muss dieselben regulären PR-Gates bestehen; es wird kein zusätzlicher Vollworkflow eingeführt.
 
-`REN-0001 — Plan -> SubscriptionTier`
+### Phase 6.4 — Vocabulary / Documentary / Traceability Synchronisation — COMPLETE
 
-Der Begriff `Plan` ist als Alias des Vocabulary Concepts `VOC-BILLING-0002` bekannt; `SubscriptionTier` ist der freigegebene technische Zielbegriff. Repository-Evidence zeigt Verwendungen in Stripe, Entitlements, Checkout und Subscription UI. Deshalb wird kein automatischer Rename vorgenommen.
+Jeder Kandidat bleibt an eine freigegebene Vocabulary Concept-ID und den kanonischen Zielbegriff gebunden. Da kein Rename ausgeführt wurde, entstehen keine neuen Documentary- oder Traceability-Identitäten und keine DE/EN-Drift. Die bestehenden Aliase bleiben Such-/Migrationshinweise; sie werden nicht zu neuen technischen Authorities.
 
-`REN-0002 — Screener -> Screening`
+### Phase 6.5 — Conditional / Blocked Backlog — COMPLETE
 
-`Screening` ist unter `VOC-ANALYTICS-0001` freigegeben. `Screener` ist jedoch breit in Komponenten, Produktdarstellung und Dokumentation verankert. Auch dieser Kandidat bleibt bis zur vollständigen Impact-Auswertung unverändert.
+`docs/governance/vocabulary/rename-backlog.json` ist die geschützte Übergabe für nicht sichere Kandidaten. Beide aktuellen Einträge sind `BLOCKED`, `DEFERRED`, `automaticMigrationAllowed: false` und benötigen vor einer späteren Migration eine explizite, scopegebundene Architektur-/Governance-Entscheidung.
 
-### Schutzgrenzen
+### Exit-Kriterien
 
-- Keine Dateinamen, Exports, Imports, Komponenten, Variablen oder Contracts werden in Phase 6.0/6.1 umbenannt.
-- Keine Änderung an API-Routen, DB-Schemas, Environment Keys, Event-Namen, Stripe-, Supabase- oder Render-Konfiguration.
-- Nur `SAFE` darf später in Phase 6.2 für einen kleinen Draft-PR vorgeschlagen werden.
-- `CONDITIONAL` benötigt Dependency-Evidence und Review.
-- `BLOCKED` benötigt eine explizite Architektur-/Governance-Entscheidung oder bleibt unverändert.
-- Nach jedem späteren Rename-Batch bleiben TypeScript, Tests, Build, Manifest-Integrität und Deployment Readiness verpflichtend.
-- Die GitHub-Actions-Budgetrichtlinie bleibt bindend; keine zusätzliche Vollpipeline nur für das Inventory.
-
-### Exit-Kriterien Phase 6.0/6.1
-
-- [x] Maschinenlesbarer Inventory-Contract angelegt.
-- [x] Read-only Batch-Classifier an Phase-3-Analyzer angebunden.
-- [x] Contract-Tests angelegt.
-- [x] Erste reale Kandidaten aufgenommen.
-- [ ] CI bestätigt TypeScript, Tests, Build und Manifest-Integrität.
-- [ ] Classification Evidence des finalen PR-Heads ausgewertet.
-- [ ] Erster eindeutig `SAFE` Kandidat für Phase 6.2 ausgewählt oder dokumentiert, dass noch kein sicherer Kandidat existiert.
+- [x] Maschinenlesbares Naming-Debt-Inventar vorhanden.
+- [x] Alle inventarisierten Kandidaten durch den bestehenden Analyzer klassifiziert.
+- [x] Materialisierte Evidence wird gegen den Live-Analyzer regressionsgeprüft.
+- [x] Nur `SAFE` wäre migrationsfähig; aktuell existieren 0 SAFE-Kandidaten.
+- [x] Keine unzulässige Code-, API-, Schema-, ENV- oder Event-Mutation durchgeführt.
+- [x] Alle `BLOCKED` Kandidaten im geschützten Backlog erfasst.
+- [x] Vocabulary-, Documentary- und Traceability-Identitäten bleiben konsistent.
+- [ ] Finaler Draft-PR-CI-Lauf erfolgreich.
+- [ ] Merge und anschließender main-CI-/Render-Gate erfolgreich.
 
 ## English
 
-### Goal
+### Result
 
-Phase 6 migrates existing naming debt incrementally into canonical Vocabulary Governance. Phase 6.0/6.1 is strictly read-only: candidates are inventoried and classified through the existing Phase 3 rename-impact analyzer before any source-code mutation is allowed.
+Phase 6 is implemented as an evidence-first, fail-closed migration stage. The current inventory contains zero `SAFE` candidates, so no code rename is permitted or performed.
 
-The machine-readable inventory is `docs/governance/vocabulary/rename-candidates.json`. Every candidate must reference an approved canonical target term and a Vocabulary Concept ID and must use `CLASSIFY_ONLY` migration policy.
+`REN-0001` (`Plan -> SubscriptionTier`) is `BLOCKED` because the source term participates in billing/entitlement contracts, including the `PlanEntitlements` interface. `REN-0002` (`Screener -> Screening`) is `BLOCKED` because it participates in frontend runtime contracts, including `ScreenerProps` and the exported React component.
 
-`SAFE` candidates may later enter a small Phase 6.2 migration PR. `CONDITIONAL` candidates require dependency evidence and review. `BLOCKED` candidates require an explicit architecture/governance decision or remain unchanged.
+The materialized evidence is stored in `docs/governance/vocabulary/rename-classification-evidence.json`; non-safe work is retained in `docs/governance/vocabulary/rename-backlog.json`. Regression tests compare stored classifications and mandatory finding codes with the live Phase-3 analyzer so evidence cannot silently drift.
+
+Phase 6.2 is therefore a controlled no-op: zero SAFE candidates means zero rename mutations. Phase 6 is complete in the draft implementation once the final PR CI passes; merge and verified main deployment remain the production completion gates.
