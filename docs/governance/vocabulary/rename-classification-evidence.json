@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "authority": "ESS-0017",
+  "baselineCommit": "77cf6ed3143dc39120c55f7c767d4a758bc9735d",
+  "phase": "6.1-6.4",
+  "safeMigrationCount": 0,
+  "candidates": [
+    {
+      "id": "REN-0001",
+      "sourceTerm": "Plan",
+      "targetTerm": "SubscriptionTier",
+      "vocabularyConceptId": "VOC-BILLING-0002",
+      "classification": "BLOCKED",
+      "mandatoryFindingCodes": ["SCHEMA_OR_CONTRACT_REFERENCE"],
+      "decision": "DO_NOT_RENAME",
+      "evidenceSurfaces": [
+        "src/config/subscriptionEntitlements.ts",
+        "server/stripe.ts",
+        "server/entitlements.ts",
+        "src/components/Checkout.tsx",
+        "src/components/SubscriptionModal.tsx"
+      ],
+      "rationale": "Plan participates in billing and entitlement runtime contracts. In src/config/subscriptionEntitlements.ts the identifier is part of the PlanEntitlements interface, so the Phase-3 analyzer blocks automatic migration."
+    },
+    {
+      "id": "REN-0002",
+      "sourceTerm": "Screener",
+      "targetTerm": "Screening",
+      "vocabularyConceptId": "VOC-ANALYTICS-0001",
+      "classification": "BLOCKED",
+      "mandatoryFindingCodes": ["SCHEMA_OR_CONTRACT_REFERENCE"],
+      "decision": "DO_NOT_RENAME",
+      "evidenceSurfaces": [
+        "src/components/Screener.tsx",
+        "src/components/MarketScreener.tsx",
+        "src/components/Dashboard.tsx",
+        "server.application.ts"
+      ],
+      "rationale": "Screener is a runtime component contract. src/components/Screener.tsx declares ScreenerProps and exports Screener, so an automated rename is blocked until a dedicated dependency-aware migration is approved."
+    }
+  ],
+  "phase6Conclusion": "NO_SAFE_CANDIDATES",
+  "migrationPerformed": false
+}
