@@ -1,4 +1,4 @@
-# ADR-0047 — Render Docker Image Hardening
+# ADR-0048 — Render Docker Image Hardening
 
 Status: Proposed
 Date: 2026-08-09
@@ -57,3 +57,7 @@ Implementation is accepted when:
 - image healthcheck contains `/healthz`;
 - application CI remains green;
 - after merge, the GitHub deploy-hook job deploys the exact verified commit to Render and the service reaches `live`.
+
+## Numbering note
+
+This decision uses ADR-0048 because ADR-0047 is already authoritative on `main` for the GitHub Actions / Render deploy-gate architecture after PR #147 corrected the earlier ADR-number collision.
