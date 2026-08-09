@@ -1,114 +1,114 @@
 <!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.0.0 -->
 # CAPITAL-AI Pull Request
 
-> This template is mandatory. Machine-managed baseline fields MUST NOT be deleted. Keep the PR as **Draft** until every required technical gate is green.
+> Dieses Template ist verbindlich. Maschinenverwaltete Baseline-Felder dürfen nicht gelöscht werden. Der PR bleibt **Draft**, bis alle erforderlichen technischen Prüfungen erfolgreich sind.
 
-## 1. Work Item
+## 1. Arbeitsauftrag
 
-- **Purpose:** {{WORK_ITEM}}
-- **Claim ID:** `{{CLAIM_ID}}`
-- **Claim file:** `{{CLAIM_FILE}}`
+- **Zweck:** {{WORK_ITEM}}
+- **Claim-ID:** `{{CLAIM_ID}}`
+- **Claim-Datei:** `{{CLAIM_FILE}}`
 - **Branch:** `{{HEAD_BRANCH}}`
-- **Base:** `main`
+- **Basis:** `main`
 
-## 2. Agent / Principal Identity & PR Creation Authorization
+## 2. Agenten-/Principal-Identität und PR-Erstellungsfreigabe
 
 - **Provider:** {{AGENT_PROVIDER}}
-- **Model:** {{AGENT_MODEL}}
-- **Execution surface / MCP host:** {{AGENT_SURFACE}}
-- **PR creation explicitly authorized by user:** Yes
-- **Authorization scope matches this PR:** Yes
-- **Human/code-owner approval required for merge where applicable:** Yes
+- **Modell:** {{AGENT_MODEL}}
+- **Ausführungsoberfläche / MCP-Host:** {{AGENT_SURFACE}}
+- **PR-Erstellung ausdrücklich durch Benutzer autorisiert:** Ja
+- **Autorisierungsscope entspricht diesem PR:** Ja
+- **Human-/CODEOWNER-Freigabe für Merge erforderlich, sofern anwendbar:** Ja
 
-A green sandbox build, CI run, preflight or test result is technical evidence only and MUST NOT be interpreted as PR-creation or merge authorization.
+Ein erfolgreicher Sandbox-Build, CI-Lauf, Preflight oder Test ist ausschließlich technische Evidence und darf nicht als Autorisierung zur PR-Erstellung oder zum Merge interpretiert werden.
 
-## 3. Production Baseline — machine managed / advisory evidence
+## 3. Produktions-Baseline — maschinenverwaltete / beratende Evidence
 
 <!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->
-- **Production URL:** `https://capital-ai.online/healthz`
-- **Production version:** `{{PRODUCTION_VERSION}}`
-- **Production commit:** `{{PRODUCTION_SHA}}`
-- **Production branch:** `{{PRODUCTION_BRANCH}}`
-- **Current main commit:** `{{MAIN_SHA}}`
-- **PR head commit:** `{{HEAD_SHA}}`
-- **Production → main drift:** `{{PROD_TO_MAIN_COMMITS}}` commit(s)
-- **Main → PR head drift:** `{{MAIN_TO_HEAD_COMMITS}}` commit(s)
-- **Baseline generated at:** `{{BASELINE_GENERATED_AT}}`
+- **Produktions-URL:** `https://capital-ai.online/healthz`
+- **Produktionsversion:** `{{PRODUCTION_VERSION}}`
+- **Produktions-Commit:** `{{PRODUCTION_SHA}}`
+- **Produktions-Branch:** `{{PRODUCTION_BRANCH}}`
+- **Aktueller main-Commit:** `{{MAIN_SHA}}`
+- **PR-Head-Commit:** `{{HEAD_SHA}}`
+- **Drift Produktion → main:** `{{PROD_TO_MAIN_COMMITS}}` Commit(s)
+- **Drift main → PR-Head:** `{{MAIN_TO_HEAD_COMMITS}}` Commit(s)
+- **Baseline erzeugt am:** `{{BASELINE_GENERATED_AT}}`
 <!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->
 
-Production drift is advisory process evidence. It is not a sandbox/build authorization gate.
+Produktionsdrift ist beratende Prozess-Evidence und kein Autorisierungs-Gate für Sandbox oder Build.
 
-## 4. Scope / Multi-Agent Coordination
+## 4. Scope / Multi-Agent-Koordination
 
-- [ ] Intended scope is documented.
-- [ ] Open PR changed-file overlap was inspected where available.
-- [ ] Detected overlap/conflict risk was disclosed to the user before PR creation.
-- [ ] Any work-claim metadata is treated as advisory coordination evidence, not as a technical CI prerequisite.
-- [ ] No other agent's metadata or work was silently taken over.
+- [ ] Der vorgesehene Scope ist dokumentiert.
+- [ ] Überschneidungen mit geänderten Dateien offener PRs wurden geprüft, sofern verfügbar.
+- [ ] Erkannte Überschneidungen oder Konfliktrisiken wurden vor PR-Erstellung offengelegt.
+- [ ] Work-Claim-Metadaten werden als beratende Koordinationsevidence und nicht als technische CI-Voraussetzung behandelt.
+- [ ] Metadaten oder Arbeiten anderer Agenten wurden nicht stillschweigend übernommen.
 
-There is **no PR creation deadline or 15-minute SLA**.
+Es gibt **keine PR-Erstellungsfrist und keine 15-Minuten-SLA**.
 
-## 5. Change Summary
+## 5. Änderungszusammenfassung
 
-Describe exactly what changed and why. Keep unrelated work out of this PR.
+Beschreibe präzise, was geändert wurde und warum. Nicht zusammenhängende Änderungen gehören nicht in diesen PR.
 
-## 6. Architecture / Governance Impact
+## 6. Architektur- / Governance-Auswirkungen
 
-- **ADR required?** Yes / No — reference:
-- **ESS/contract impact?** Yes / No — reference:
-- **Traceability/documentation updated?** Yes / No / N/A
-- **Existing protected invariant affected?** Yes / No — reference:
+- **ADR erforderlich?** Ja / Nein — Referenz:
+- **ESS-/Contract-Auswirkung?** Ja / Nein — Referenz:
+- **Traceability/Dokumentation aktualisiert?** Ja / Nein / N/A
+- **Geschützte bestehende Invariante betroffen?** Ja / Nein — Referenz:
 
-## 7. Security Review
+## 7. Sicherheitsprüfung
 
-- [ ] Least privilege preserved.
-- [ ] No credentials/secrets/tokens added to source, logs, PR body or model context.
-- [ ] Authentication/authorization remains fail-closed where required.
-- [ ] External/tool/retrieved content is treated as untrusted input.
-- [ ] High-impact/destructive actions retain human approval gates.
-- [ ] New/modified workflows use immutable Action SHAs and explicit minimum permissions.
+- [ ] Least Privilege bleibt erhalten.
+- [ ] Keine Credentials, Secrets oder Tokens wurden in Source, Logs, PR-Body oder Modellkontext aufgenommen.
+- [ ] Authentifizierung/Autorisierung bleibt, wo erforderlich, fail-closed.
+- [ ] Externe, Tool- und Retrieval-Inhalte werden als nicht vertrauenswürdige Eingaben behandelt.
+- [ ] Hochriskante oder destruktive Aktionen behalten Human-Approval-Gates.
+- [ ] Neue/geänderte Workflows verwenden immutable Action-SHAs und explizite Minimalberechtigungen.
 
-### MCP / LLM Gateway changes
+### MCP- / LLM-Gateway-Änderungen
 
-Complete when applicable; otherwise state `N/A`.
+Wenn anwendbar vollständig ausfüllen, andernfalls `N/A` angeben.
 
-- Token audience/resource validation:
-- Token passthrough avoided:
-- Per-tool/capability authorization:
-- Idempotency / replay protection:
-- Agent/session/request correlation:
-- Human-in-the-loop boundary:
+- Token-Audience-/Resource-Validierung:
+- Token-Passthrough vermieden:
+- Per-Tool-/Capability-Autorisierung:
+- Idempotenz / Replay-Schutz:
+- Agent-/Session-/Request-Korrelation:
+- Human-in-the-loop-Grenze:
 
-## 8. Technical Validation Evidence
+## 8. Technische Validierungsevidence
 
-- [ ] Dependency installation / vulnerability check
-- [ ] Type check / lint
+- [ ] Dependency-Installation / Vulnerability-Check
+- [ ] Type Check / Lint
 - [ ] Tests
-- [ ] Production build
-- [ ] Deployment readiness
-- [ ] Workflow security validation
-- [ ] Relevant security/compliance checks
+- [ ] Production Build
+- [ ] Deployment Readiness
+- [ ] Workflow-Security-Validierung
+- [ ] Relevante Security-/Compliance-Prüfungen
 
-Commands / evidence:
+Befehle / Evidence:
 
 ```text
-<insert concise evidence; do not paste secrets>
+<knappe Evidence einfügen; keine Secrets einfügen>
 ```
 
-## 9. Risk & Rollback
+## 9. Risiko und Rollback
 
-- **Blast radius:** Low / Medium / High / Critical
-- **User impact:**
-- **Data / billing / IAM impact:**
-- **Rollback approach:**
-- **Rollback requires protected-change approval?** Yes / No — reference:
+- **Blast Radius:** Niedrig / Mittel / Hoch / Kritisch
+- **Auswirkungen auf Benutzer:**
+- **Auswirkungen auf Daten / Billing / IAM:**
+- **Rollback-Vorgehen:**
+- **Rollback benötigt Freigabe für geschützte Änderung?** Ja / Nein — Referenz:
 
-## 10. Review Readiness
+## 10. Review-Bereitschaft
 
-- [ ] PR creation was explicitly authorized by the user before this PR was opened.
-- [ ] Technical CI status is understood as validation only.
-- [ ] Production drift and concurrent-work warnings have been reviewed as advisory evidence.
-- [ ] All merge-blocking conversations/findings are resolved.
-- [ ] CODEOWNER/human review obtained where applicable.
-- [ ] PR remains Draft until review-ready.
-- [ ] No agent/model self-approval is being treated as human approval.
+- [ ] Die PR-Erstellung wurde vor Öffnung dieses PR ausdrücklich durch den Benutzer autorisiert.
+- [ ] Technischer CI-Status wird ausschließlich als Validierung verstanden.
+- [ ] Produktionsdrift und Warnungen zu parallelen Arbeiten wurden als beratende Evidence geprüft.
+- [ ] Alle merge-blockierenden Diskussionen/Funde sind gelöst.
+- [ ] CODEOWNER-/Human-Review wurde eingeholt, sofern anwendbar.
+- [ ] Der PR bleibt Draft, bis er reviewbereit ist.
+- [ ] Keine Agenten-/Modell-Selbstfreigabe wird als Human-Freigabe behandelt.
