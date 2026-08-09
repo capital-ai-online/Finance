@@ -2,9 +2,9 @@
 
 ## Enterprise Component
 
-Status: Unspecified
+Status: Partial Implementation
 
-Version: 1.0.0
+Version: 1.1.0
 
 Owner: CAPITAL-AI
 
@@ -12,9 +12,22 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-`manifest.json` beschreibt eine Zielarchitektur ("Documentary Engine. Zentrale
-Dokumentationsinstanz des CAPITAL-AI Core gemaess ESS-0010") - das ist eine Absichtserklaerung,
-keine Spezifikation und keine Implementierung. Es existiert kein Code fuer diese Komponente.
+`manifest.json` beschreibt weiterhin die Zielarchitektur der Documentary Engine gemäß ESS-0010. Die vollständige Engine ist noch nicht implementiert.
+
+Seit Phase 4 existiert jedoch ein erster ausführbarer Integrationskern: ein Bilingual-Contract-/Projection-Layer, der deutsche und englische Dokumentationsansichten aus derselben freigegebenen `VocabularyConcept.id` ableitet.
+
+---
+
+## Implemented Scope
+
+- `Contracts/BilingualDocumentReference.ts`
+- `Documentation/BilingualDocumentaryProjection.ts`
+- Contract-Tests unter `tests/unit/bilingualDocumentaryProjection.test.ts`
+- DE und EN teilen dieselbe Concept-ID und denselben `canonicalCodeTerm`
+- ESS-/ADR-/Traceability-Referenzen bleiben sprachneutral identisch
+- unbekannte, nicht freigegebene oder unvollständig übersetzte Concepts werden fail-closed abgewiesen
+
+Dieser Scope implementiert nicht die vollständige Documentary Engine.
 
 ---
 
@@ -24,33 +37,36 @@ ESS-0001
 
 ESS-0001-CONTRACTS
 
-ESS-0010 — Documentary Engine (als Zielbeschreibung referenziert, nicht implementiert)
+ESS-0010 — Documentary Engine
+
+ESS-0012 — Documentation Governance
+
+ESS-0017 / ESS-0017-CONTRACTS — Vocabulary Governance
 
 ---
 
 ## ADR References
 
-None
+ADR-0046 — Vocabulary Governance Authority and Namespace
 
 ---
 
 ## Dependencies
 
-Keine - es existiert kein Code.
+Der implementierte Bilingual-Layer hängt ausschließlich von der öffentlichen Vocabulary-Registry-Schnittstelle und dem `VocabularyConcept`-Contract ab.
+
+Keine Abhängigkeit auf Supervisor, Platform Director, Version Manager, EventMesh Runtime oder produktive Datenquellen.
 
 ---
 
 ## Events
 
-Keine. Die zuvor im manifest.json genannten Events (`DocumentationGeneratedEvent`,
-`DocumentationValidatedEvent`, `TwinSynchronizedEvent`, `RepositoryScannedEvent`,
-`VersionChangedEvent`, `ReleasePublishedEvent`) sind reservierte Namen im Enterprise-Event-
-Katalog (ADR-0018), werden aber von keinem existierenden Code ausgeloest oder konsumiert.
+Phase 4 führt keine neuen Events ein. Fehlende Übersetzungen werden noch nicht als Events publiziert; diese Integration ist Bestandteil der nachfolgenden Event-Driven-Value-Chain-Phase.
+
+Die bereits reservierten Documentary-Event-Namen bleiben unverändert und werden durch diesen Layer nicht ausgelöst.
 
 ---
 
 ## Notes
 
-ARCH-AUDIT-0002 (J5, 2026-08-02): als unspezifiziert markiert, um den Zustand ehrlich
-abzubilden - vorher suggerierte "development" aktive Arbeit, die nicht stattfindet. Die
-Komponente kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden.
+ARCH-AUDIT-0002 (J5, 2026-08-02) hatte die Documentary-Komponente korrekt als nicht implementiert markiert. Phase 4 ändert diesen Zustand auf `Partial Implementation`, ohne eine vollständige Engine vorzutäuschen.
