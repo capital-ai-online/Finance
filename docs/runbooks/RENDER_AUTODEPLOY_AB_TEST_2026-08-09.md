@@ -36,29 +36,41 @@ PR #141 was merged while Render remained on `On Commit`.
 
 Result: **checksPass-specific fault domain confirmed**.
 
-The following paths are proven functional:
+The following path is proven functional:
 
 `GitHub PR merge → main commit → Render On Commit → trigger:new_commit → live`
 
-Therefore the PR merge mechanism itself is not the cause. GitHub repository access, Git deployment credentials, Render repository binding, and recognition of merge commits are all functional. The unreliable component is Render's `After CI Checks Pass` / GitHub Check Suite correlation path.
+Therefore the PR merge mechanism itself is not the cause. GitHub repository access, Git deployment credentials, Render repository binding, and recognition of merge commits are functional. The unreliable component is Render's `After CI Checks Pass` / GitHub Check Suite correlation path.
 
-## Production decision
+## GitHub plan constraint
 
-Render may use `On Commit` only if GitHub itself becomes the authoritative pre-merge deployment gate. `main` must be protected and merges must be blocked until the required CI check succeeds.
+GitHub reports `main` as `protected: false` with required status-check enforcement off. The current account/repository plan does not provide the required private-repository ruleset enforcement without an upgrade, and no upgrade is planned at this time.
 
-Required GitHub policy:
+This makes permanent `Render: On Commit` unsuitable as the production gate because Render can begin deployment before the push-triggered CI has validated that commit.
 
-- protect branch `main`;
-- require a pull request before merging;
-- require status check `CI / build-and-test` to pass before merging;
-- require branches to be up to date before merging, where operationally acceptable;
-- block direct pushes to `main` except explicitly governed break-glass paths;
-- do not use Render `checksPass` as an authoritative safety control while this defect remains unresolved.
+## Selected free-plan production architecture
 
-## Current governance gap
+ADR-0046 therefore replaces both Render `checksPass` and permanent `On Commit` with an explicit GitHub Actions deployment gate:
 
-At the time of this evidence capture, GitHub reports `main` as `protected: false` with required status-check enforcement off. Therefore `On Commit` must not be considered fully production-hardened until branch protection/rulesets are enabled.
+`main update → GitHub build-and-test → success → deploy-production → Render Deploy Hook → exact verified SHA`
 
-## Follow-up
+Required operational state:
 
-ADR-0046 defines the target deployment-gate ownership model. Once GitHub branch protection is active and verified, the legacy `capital-ai/ci-gate` compatibility status can be retired because Render no longer consumes it.
+- Render Auto-Deploy: **Off**;
+- GitHub repository secret: `RENDER_DEPLOY_HOOK_URL`;
+- deploy job runs only for `push` to `main`;
+- deploy job depends on successful `build-and-test`;
+- deploy hook receives the exact `github.sha` through its `ref` parameter;
+- failed CI therefore cannot invoke the production deploy.
+
+## Transition controls
+
+Until the deploy-hook secret is configured and Render Auto-Deploy is Off, PR #144 remains a Draft and MUST NOT be merged.
+
+After the transition is complete, validate a documentation-only `main` update and confirm:
+
+1. pull-request CI does not deploy;
+2. successful push CI invokes `Deploy verified commit to Render`;
+3. Render deploys the same commit SHA;
+4. the deploy reaches `live`;
+5. no Render `new_commit` auto-deploy is generated independently.
