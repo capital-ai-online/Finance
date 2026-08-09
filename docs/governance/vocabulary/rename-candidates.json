@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "authority": "ESS-0017",
+  "baselineCommit": "04c0e5957aca7025b07f55439e052cef8e070571",
+  "mode": "READ_ONLY",
+  "candidates": [
+    {
+      "id": "REN-0001",
+      "sourceTerm": "Plan",
+      "targetTerm": "SubscriptionTier",
+      "vocabularyConceptId": "VOC-BILLING-0002",
+      "priority": "HIGH",
+      "reason": "The repository uses Plan in billing, Stripe, entitlement and checkout surfaces while SubscriptionTier is the approved canonical technical term.",
+      "observedSurfaces": [
+        "server/stripe.ts",
+        "server/entitlements.ts",
+        "src/config/subscriptionEntitlements.ts",
+        "src/components/Checkout.tsx",
+        "src/components/SubscriptionModal.tsx"
+      ],
+      "migrationPolicy": "CLASSIFY_ONLY"
+    },
+    {
+      "id": "REN-0002",
+      "sourceTerm": "Screener",
+      "targetTerm": "Screening",
+      "vocabularyConceptId": "VOC-ANALYTICS-0001",
+      "priority": "MEDIUM",
+      "reason": "Screener is broadly used as a component and product-facing noun while Screening is the approved canonical technical concept. The candidate requires blast-radius evidence before any rename.",
+      "observedSurfaces": [
+        "src/components/Screener.tsx",
+        "src/components/MarketScreener.tsx",
+        "src/components/Dashboard.tsx",
+        "server.application.ts"
+      ],
+      "migrationPolicy": "CLASSIFY_ONLY"
+    }
+  ]
+}
