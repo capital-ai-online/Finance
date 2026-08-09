@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "authority": "ESS-0017",
+  "baselineCommit": "77cf6ed3143dc39120c55f7c767d4a758bc9735d",
+  "policy": "HUMAN_APPROVAL_REQUIRED",
+  "items": [
+    {
+      "id": "REN-0001",
+      "classification": "BLOCKED",
+      "status": "DEFERRED",
+      "requiredNextDecision": "Dedicated billing-contract migration approval",
+      "protectedSurfaces": ["billing", "stripe", "entitlements", "checkout", "runtime-contracts"],
+      "automaticMigrationAllowed": false
+    },
+    {
+      "id": "REN-0002",
+      "classification": "BLOCKED",
+      "status": "DEFERRED",
+      "requiredNextDecision": "Dedicated frontend-component migration approval",
+      "protectedSurfaces": ["frontend-components", "imports-exports", "runtime-contracts", "product-wording"],
+      "automaticMigrationAllowed": false
+    }
+  ]
+}
