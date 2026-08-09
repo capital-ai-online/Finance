@@ -70,6 +70,11 @@ jobs:
             exit 1
           fi
 
+          separator='?'
+          case "$RENDER_DEPLOY_HOOK_URL" in
+            *\?*) separator='&' ;;
+          esac
+
           curl --fail-with-body --silent --show-error --location \
             --request POST \
-            "${RENDER_DEPLOY_HOOK_URL}&ref=${VERIFIED_COMMIT_SHA}"
+            "${RENDER_DEPLOY_HOOK_URL}${separator}ref=${VERIFIED_COMMIT_SHA}"
