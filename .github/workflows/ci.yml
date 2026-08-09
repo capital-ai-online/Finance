@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -52,3 +53,40 @@ jobs:
 
       - name: Deployment-Readiness-Pruefung (H7)
         run: npm run predeploy:check
+
+  render-deploy-gate:
+    name: Render deployment gate
+    if: ${{ always() }}
+    needs: [build-and-test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: write
+    steps:
+      - name: Publish explicit commit status for Render checksPass
+        env:
+          CI_RESULT: ${{ needs.build-and-test.result }}
+          COMMIT_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$CI_RESULT" = "success" ]; then
+            state="success"
+            description="CAPITAL-AI CI gate passed; commit is deployable"
+          else
+            state="failure"
+            description="CAPITAL-AI CI gate failed; deployment blocked"
+          fi
+
+          payload=$(printf '{"state":"%s","context":"capital-ai/ci-gate","description":"%s"}' "$state" "$description")
+
+          curl --fail-with-body --silent --show-error --location \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${COMMIT_SHA}" \
+            --data "$payload"
+
+          if [ "$state" != "success" ]; then
+            exit 1
+          fi

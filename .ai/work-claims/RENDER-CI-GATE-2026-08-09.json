@@ -1,0 +1,13 @@
+{
+  "id": "RENDER-CI-GATE-2026-08-09",
+  "purpose": "Restore reliable CI-gated Render deployments after merges to main by publishing an explicit commit status from the final CI gate.",
+  "scope": [
+    ".github/workflows/ci.yml",
+    "docs/runbooks/RENDER_CI_DEPLOY_GATE.md",
+    ".ai/work-claims/RENDER-CI-GATE-2026-08-09.json"
+  ],
+  "base": "main",
+  "branch": "agent/fix-render-ci-gate-status",
+  "risk": "low",
+  "productionMutation": false
+}
