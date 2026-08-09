@@ -9,7 +9,13 @@ const requirements = [
   ['multi-stage runner', /AS\s+runner/i],
   ['production-only dependencies', /npm\s+ci\s+--omit=dev/],
   ['non-root runtime user', /USER\s+capitalai/],
-  ['explicit ownership during copy', /COPY\s+--from=builder\s+--chown=capitalai:capitalai/],
+  ['root-owned runtime build artifacts', /COPY\s+--from=builder\s+--chown=root:root\s+\/app\/dist/],
+  ['root-owned runtime guard', /COPY\s+--from=builder\s+--chown=root:root\s+\/app\/server\/runtime\/runtimeArtifactGuard\.mjs/],
+  ['read-only application artifacts', /chmod\s+-R\s+a-w\s+\/app\/dist\s+\/app\/server/],
+  ['read-only runtime dependencies', /chmod\s+-R\s+a-w\s+\/app\/node_modules/],
+  ['explicit writable uploads path', /chown\s+capitalai:capitalai\s+\/app\/uploads/],
+  ['isolated runtime temp directory', /TMPDIR=\/tmp\/capitalai/],
+  ['private runtime temp permissions', /chmod\s+0700\s+\/tmp\/capitalai/],
   ['container healthcheck', /HEALTHCHECK[\s\S]*\/healthz/],
   ['direct node PID 1 command', /CMD\s*\[\s*"node"\s*,\s*"dist\/server\.cjs"\s*\]/],
 ];
@@ -18,6 +24,7 @@ const forbidden = [
   ['floating base tag without digest', /^FROM\s+node:22-alpine(?:\s|$)/m],
   ['root runtime user', /^USER\s+root\s*$/m],
   ['production npm shim command', /CMD\s*\[\s*"npm"/],
+  ['runtime artifacts owned by application user', /COPY\s+--from=builder\s+--chown=capitalai:capitalai/],
 ];
 
 const ignoreRequirements = [
