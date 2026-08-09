@@ -29,17 +29,17 @@ if (!body.includes(PR_TEMPLATE_MARKER)) {
 }
 
 const requiredSections = [
-  '## 1. Work Item',
-  '## 2. Agent / Principal Identity',
-  '## 3. Production Baseline — machine managed',
-  '## 4. Claimed Scope / Multi-Agent Isolation',
-  '## 5. Change Summary',
-  '## 6. Architecture / Governance Impact',
-  '## 7. Security Review',
-  '### MCP / LLM Gateway changes',
-  '## 8. Validation Evidence',
-  '## 9. Risk & Rollback',
-  '## 10. Review Readiness',
+  '## 1. Arbeitsauftrag',
+  '## 2. Agenten-/Principal-Identität und PR-Erstellungsfreigabe',
+  '## 3. Produktions-Baseline — maschinenverwaltete / beratende Evidence',
+  '## 4. Scope / Multi-Agent-Koordination',
+  '## 5. Änderungszusammenfassung',
+  '## 6. Architektur- / Governance-Auswirkungen',
+  '## 7. Sicherheitsprüfung',
+  '### MCP- / LLM-Gateway-Änderungen',
+  '## 8. Technische Validierungsevidence',
+  '## 9. Risiko und Rollback',
+  '## 10. Review-Bereitschaft',
 ];
 
 const missingSections = requiredSections.filter((heading) => !body.includes(heading));
@@ -72,8 +72,8 @@ if (missingEvidence.length > 0) {
   fail(`PR #${prNumber} template is stale or not machine-rendered; missing claim/baseline evidence: ${missingEvidence.join(', ')}`);
 }
 
-if (!body.includes('Human/code-owner approval required:** Yes')) {
-  fail('Canonical PR must explicitly retain human/code-owner approval requirement.');
+if (!body.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich, sofern anwendbar:** Ja')) {
+  fail('Canonical PR must explicitly retain the human/CODEOWNER approval requirement.');
 }
 
-console.log(`[PR-TEMPLATE] PR #${prNumber} uses canonical template v1.0.0 and matches current work-claim/production baseline evidence.`);
+console.log(`[PR-TEMPLATE] PR #${prNumber} uses the canonical German human-facing template and matches current work-claim/production baseline evidence.`);
