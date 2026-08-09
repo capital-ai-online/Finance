@@ -1,4 +1,8 @@
-name: PR Technical Validation
+name: PR Governance
+run-name: >-
+  ${{ github.event_name == 'pull_request'
+      && format('PR #{0} – Governance-Prüfung', github.event.pull_request.number)
+      || 'Merge-Gruppe – Governance-Prüfung' }}
 
 on:
   pull_request:
@@ -11,95 +15,39 @@ permissions:
   contents: read
 
 concurrency:
-  group: pr-technical-validation-${{ github.event.pull_request.number || github.ref }}
+  group: pr-governance-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-# ADR-0039: this workflow proves technical candidate integrity only.
-# Production drift, PR creation authority and concurrent-work coordination are
-# human process decisions and MUST NOT be inferred from a green build.
+# Kostenrichtlinie: Der vollständige Build/Test-Lauf liegt ausschließlich in ci.yml.
+# Dieser Workflow darf keine zweite npm-ci/Test/Build-Pipeline für denselben PR-SHA erzeugen.
 jobs:
-  candidate-validation:
-    name: Candidate validation
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-
-    steps:
-      - name: Checkout candidate
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: '22'
-          cache: npm
-
-      - name: Install dependencies
-        env:
-          GITHUB_TOKEN: ''
-          GH_TOKEN: ''
-        run: npm ci
-
-      - name: Production dependency vulnerability gate
-        env:
-          GITHUB_TOKEN: ''
-          GH_TOKEN: ''
-        run: npm audit --omit=dev --audit-level=high
-
-      - name: Type check
-        env:
-          GITHUB_TOKEN: ''
-          GH_TOKEN: ''
-        run: npm run lint
-
-      - name: Tests
-        env:
-          GITHUB_TOKEN: ''
-          GH_TOKEN: ''
-        run: npm test
-
-      - name: Production build
-        env:
-          GITHUB_TOKEN: ''
-          GH_TOKEN: ''
-        run: npm run build
-
-      - name: Deployment readiness
-        env:
-          GITHUB_TOKEN: ''
-          GH_TOKEN: ''
-        run: npm run predeploy:check
-
   repository-conventions-advisory:
-    name: Repository conventions advisory
+    name: Repository-Konventionen – Hinweis
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
 
     steps:
-      - name: Checkout candidate without persisted credentials
+      - name: Kandidaten ohne persistierte Zugangsdaten auschecken
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Set up Node.js
+      - name: Node.js einrichten
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           cache: npm
 
-      - name: Install dependencies
+      - name: Abhängigkeiten installieren
         env:
           GITHUB_TOKEN: ''
           GH_TOKEN: ''
-        run: npm ci
+        run: npm ci --ignore-scripts
 
-      - name: Evaluate repository conventions without blocking deployment
+      - name: Repository-Konventionen beratend prüfen
         continue-on-error: true
         env:
           GITHUB_TOKEN: ''
@@ -107,13 +55,13 @@ jobs:
         run: npm run repository:validate:advisory
 
   workflow-security:
-    name: Changed workflow security
+    name: Sicherheit geänderter Workflows
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
 
     steps:
-      - name: Checkout trusted security policy from main
+      - name: Vertrauenswürdige Sicherheitsrichtlinie aus main auschecken
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: main
@@ -121,7 +69,7 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Checkout candidate without persisted credentials
+      - name: Kandidaten ohne persistierte Zugangsdaten auschecken
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -129,11 +77,11 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Import trusted current main into candidate repository
+      - name: Aktuellen vertrauenswürdigen main-Stand importieren
         working-directory: candidate
         run: git fetch --no-tags ../policy main:refs/remotes/origin/main
 
-      - name: Validate changed workflow security
+      - name: Sicherheit geänderter Workflows validieren
         working-directory: candidate
         env:
           POLICY_ROOT: ../policy
