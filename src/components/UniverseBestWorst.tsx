@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Activity, AlertTriangle, Award, Compass, Layers, Orbit, Percent, RefreshCw, TrendingUp } from 'lucide-react';
+import { Activity, AlertTriangle, Award, Clock, Compass, Layers, Orbit, Percent, RefreshCw, ShieldCheck, TrendingUp } from 'lucide-react';
 import { AssetLogo } from './AssetLogo';
 
 type AssetType = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';
-type AssetRow = { symbol: string; name: string; type: AssetType; score: number | null; status: string; providers: string[] };
+type AssetRow = { symbol: string; name: string; type: AssetType; score: number | null; status: string; providers: string[]; reasoning: string[] };
 type CatalogAsset = { symbol?: string; name?: string; type?: AssetType };
 
 interface UniverseBestWorstProps { onSelectAsset?: (symbol: string) => void; }
@@ -22,6 +22,11 @@ function finiteScore(value: unknown): number | null {
   return Number((value <= 10 ? value * 10 : value).toFixed(1));
 }
 
+function reasoningList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).slice(0, 3);
+}
+
 async function fetchJson(url: string, init?: RequestInit, timeoutMs = 6500): Promise<any> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -34,12 +39,25 @@ async function fetchJson(url: string, init?: RequestInit, timeoutMs = 6500): Pro
   }
 }
 
+function relativeTime(date: Date | null): string {
+  if (!date) return 'noch nie';
+  const seconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000));
+  if (seconds < 5) return 'gerade eben';
+  if (seconds < 60) return `vor ${seconds}s`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `vor ${minutes}min`;
+  const hours = Math.round(minutes / 60);
+  return `vor ${hours}h`;
+}
+
 export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
   const [catalog, setCatalog] = useState<CatalogAsset[]>([]);
   const [scores, setScores] = useState<Record<string, AssetRow>>({});
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [scoreLoading, setScoreLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [, forceTick] = useState(0);
 
   async function loadCatalog() {
     setCatalogLoading(true);
@@ -69,7 +87,11 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
       });
       const score = finiteScore(body?.final_score);
       if (body?.status === 'READY' && score !== null && asset.symbol && asset.name) {
-        next[asset.symbol] = { symbol: asset.symbol, name: asset.name, type: 'crypto', score, status: 'READY', providers: body?.integrity?.providers ?? [] };
+        next[asset.symbol] = {
+          symbol: asset.symbol, name: asset.name, type: 'crypto', score, status: 'READY',
+          providers: body?.integrity?.providers ?? [],
+          reasoning: reasoningList(body?.reasoning),
+        };
       }
     }));
 
@@ -81,7 +103,11 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
           const asset = traditional.find(item => item.symbol === row?.symbol);
           const score = finiteScore(row?.score);
           if (asset?.symbol && asset.name && asset.type && row?.status === 'READY' && score !== null) {
-            next[asset.symbol] = { symbol: asset.symbol, name: asset.name, type: asset.type, score, status: 'READY', providers: Array.isArray(row?.providers) ? row.providers : [] };
+            next[asset.symbol] = {
+              symbol: asset.symbol, name: asset.name, type: asset.type, score, status: 'READY',
+              providers: Array.isArray(row?.providers) ? row.providers : [],
+              reasoning: reasoningList(row?.reasoning),
+            };
           }
         }
       } catch {
@@ -91,27 +117,67 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
 
     setScores(next);
     setScoreLoading(false);
+    setLastUpdated(new Date());
   }
 
   useEffect(() => { void loadCatalog(); }, []);
   useEffect(() => { if (catalog.length) void refreshScores(catalog); }, [catalog]);
 
+  // Keeps the "vor Xs/min" freshness label live without re-fetching anything.
+  useEffect(() => {
+    const interval = setInterval(() => forceTick(tick => tick + 1), 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   const grouped = useMemo(() => GROUPS.map(group => {
+    const candidatesInGroup = catalog.filter(asset => asset.type === group.type).slice(0, 8).length;
     const rows = Object.values(scores).filter(row => row.type === group.type && row.status === 'READY' && row.score !== null).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-    return { ...group, best: rows.slice(0, 3), worst: rows.length >= 6 ? rows.slice(-3).reverse() : rows.slice(3, 6).reverse() };
-  }), [scores]);
+    return { ...group, best: rows.slice(0, 3), worst: rows.length >= 6 ? rows.slice(-3).reverse() : rows.slice(3, 6).reverse(), readyCount: rows.length, candidatesInGroup };
+  }), [scores, catalog]);
+
+  const totalReady = grouped.reduce((sum, group) => sum + group.readyCount, 0);
+  const totalCandidates = grouped.reduce((sum, group) => sum + group.candidatesInGroup, 0);
 
   if (error) return <div className="rounded-2xl border border-red-500/20 bg-neutral-950/60 p-6 text-center"><AlertTriangle className="mx-auto text-red-400" size={30} /><p className="mt-3 text-sm font-bold text-white">Ladefehler</p><p className="mt-1 text-xs text-white/50">{error}</p></div>;
 
   return (
     <div className="bg-neutral-950/60 border border-white/10 rounded-2xl p-6 backdrop-blur-md relative overflow-hidden" id="universe-scoring-root">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-5 mb-6">
-        <div><div className="flex items-center gap-2 mb-1"><span className="px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-purple-500/15 text-purple-400 border border-purple-500/25 uppercase">CAPITAL-AI QUANT-SYSTEM</span><span className="px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 uppercase flex items-center gap-1"><Activity size={10} /> Progressive Scoring</span></div><h2 className="text-lg font-black font-display text-white uppercase tracking-wider flex items-center gap-2"><Award className="text-purple-400" size={18} /> Universum Best- & Worst-Assets</h2><p className="text-xs text-white/50 mt-1 max-w-2xl">Die Oberfläche wird sofort aus dem Asset-Katalog aufgebaut. Verifizierte Scores werden danach zeitlich begrenzt nachgeladen; ein langsamer Provider blockiert die Grafik nicht mehr.</p></div>
-        <button onClick={() => void refreshScores(catalog)} disabled={!catalog.length || scoreLoading} className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70 disabled:opacity-40"><RefreshCw size={13} className={scoreLoading ? 'animate-spin' : ''} /> Aktualisieren</button>
+        <div>
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-purple-500/15 text-purple-400 border border-purple-500/25 uppercase">CAPITAL-AI QUANT-SYSTEM</span>
+            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 uppercase flex items-center gap-1"><Activity size={10} /> Progressive Scoring</span>
+            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-white/5 text-white/60 border border-white/10 uppercase flex items-center gap-1"><ShieldCheck size={10} /> {totalReady}/{totalCandidates || '–'} verifiziert</span>
+          </div>
+          <h2 className="text-lg font-black font-display text-white uppercase tracking-wider flex items-center gap-2"><Award className="text-purple-400" size={18} /> Universe TOP Rankings</h2>
+          <p className="text-xs text-white/50 mt-1 max-w-2xl">Die Oberfläche wird sofort aus dem Asset-Katalog aufgebaut. Verifizierte Scores werden danach zeitlich begrenzt nachgeladen; ein langsamer Provider blockiert die Grafik nicht mehr.</p>
+        </div>
+        <div className="flex flex-col items-start sm:items-end gap-1.5">
+          <button onClick={() => void refreshScores(catalog)} disabled={!catalog.length || scoreLoading} className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70 disabled:opacity-40 hover:bg-white/10 transition-colors"><RefreshCw size={13} className={scoreLoading ? 'animate-spin' : ''} /> Aktualisieren</button>
+          <span className="text-[9px] font-mono text-white/35 flex items-center gap-1"><Clock size={10} /> {scoreLoading ? 'lädt…' : `Stand: ${relativeTime(lastUpdated)}`}</span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
-        {grouped.map(group => { const Icon = group.icon; return <div key={group.id} className="rounded-xl border border-white/10 bg-black/30 p-4 min-h-72"><div className="flex items-center gap-3 border-b border-white/10 pb-3"><div className="p-2 rounded-lg bg-white/5"><Icon size={16} /></div><div><h3 className="text-xs font-black uppercase text-white">{group.name}</h3><p className="text-[10px] text-white/40">{group.description}</p></div></div><div className="mt-4 space-y-4"><AssetBlock title="Top 3 Best" rows={group.best} tone="best" onSelectAsset={onSelectAsset} pending={scoreLoading} /><AssetBlock title="Top 3 Worst" rows={group.worst} tone="worst" onSelectAsset={onSelectAsset} pending={scoreLoading} /></div></div>; })}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {grouped.map(group => {
+          const Icon = group.icon;
+          return (
+            <div key={group.id} className="rounded-xl border border-white/10 bg-black/30 p-4 min-h-72 flex flex-col">
+              <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+                <div className="p-2 rounded-lg bg-white/5"><Icon size={16} /></div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-xs font-black uppercase text-white">{group.name}</h3>
+                  <p className="text-[10px] text-white/40">{group.description}</p>
+                </div>
+                <span className="shrink-0 text-[9px] font-mono font-bold text-white/40 bg-white/5 rounded px-1.5 py-0.5">{group.readyCount}/{group.candidatesInGroup || '–'}</span>
+              </div>
+              <div className="mt-4 space-y-4 flex-1">
+                <AssetBlock title="Top 3 Best" rows={group.best} tone="best" onSelectAsset={onSelectAsset} pending={scoreLoading} />
+                <AssetBlock title="Top 3 Worst" rows={group.worst} tone="worst" onSelectAsset={onSelectAsset} pending={scoreLoading} />
+              </div>
+            </div>
+          );
+        })}
       </div>
       {catalogLoading && <div className="mt-4 text-[10px] font-mono text-white/35">Asset-Katalog wird geladen…</div>}
     </div>
@@ -119,5 +185,44 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
 }
 
 function AssetBlock({ title, rows, tone, onSelectAsset, pending }: { title: string; rows: AssetRow[]; tone: 'best' | 'worst'; onSelectAsset?: (symbol: string) => void; pending: boolean }) {
-  return <div><div className={`mb-2 text-[9px] font-mono font-black uppercase ${tone === 'best' ? 'text-emerald-400' : 'text-rose-400'}`}>{title}</div><div className="space-y-1.5">{rows.length ? rows.map(row => <button type="button" key={row.symbol} onClick={() => onSelectAsset?.(row.symbol)} className="w-full flex items-center justify-between gap-2 rounded-lg border border-white/5 bg-white/[0.02] p-2 text-left hover:bg-white/5"><div className="flex items-center gap-2 min-w-0"><AssetLogo symbol={row.symbol} size="xs" /><div className="min-w-0"><div className="text-[11px] font-bold text-white">{row.symbol}</div><div className="truncate text-[9px] text-white/35">{row.name}</div></div></div><div className={`rounded px-1.5 py-0.5 text-[10px] font-black font-mono ${tone === 'best' ? 'bg-emerald-400 text-black' : 'bg-rose-500 text-white'}`}>{row.score?.toFixed(1) ?? '—'}</div></button>) : <div className="rounded-lg border border-white/5 bg-white/[0.02] p-2 text-[9px] text-white/35">{pending ? 'Verifizierte Scores werden nachgeladen…' : 'Keine verifizierten Scores verfügbar'}</div>}</div></div>;
+  return (
+    <div>
+      <div className={`mb-2 text-[9px] font-mono font-black uppercase ${tone === 'best' ? 'text-emerald-400' : 'text-rose-400'}`}>{title}</div>
+      <div className="space-y-1.5">
+        {rows.length
+          ? rows.map(row => <AssetRowItem key={row.symbol} row={row} tone={tone} onSelectAsset={onSelectAsset} />)
+          : <div className="rounded-lg border border-white/5 bg-white/[0.02] p-2 text-[9px] text-white/35">{pending ? 'Verifizierte Scores werden nachgeladen…' : 'Keine verifizierten Scores verfügbar'}</div>}
+      </div>
+    </div>
+  );
+}
+
+function AssetRowItem({ row, tone, onSelectAsset }: { row: AssetRow; tone: 'best' | 'worst'; onSelectAsset?: (symbol: string) => void }) {
+  const score = row.score ?? 0;
+  const gaugeColor = tone === 'best' ? 'bg-emerald-400' : 'bg-rose-500';
+  const reasoning = row.reasoning[0];
+  return (
+    <button
+      type="button"
+      onClick={() => onSelectAsset?.(row.symbol)}
+      title={row.reasoning.join(' ') || undefined}
+      className="w-full relative overflow-hidden rounded-lg border border-white/5 bg-white/[0.02] p-2 pb-2.5 text-left hover:bg-white/5 transition-colors group"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <AssetLogo symbol={row.symbol} size="xs" />
+          <div className="min-w-0">
+            <div className="text-[11px] font-bold text-white">{row.symbol}</div>
+            <div className="truncate text-[9px] text-white/35">{row.name}</div>
+          </div>
+        </div>
+        <div className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-black font-mono ${tone === 'best' ? 'bg-emerald-400 text-black' : 'bg-rose-500 text-white'}`}>{row.score?.toFixed(1) ?? '—'}</div>
+      </div>
+      {reasoning && <div className="mt-1 truncate text-[9px] text-white/30 italic">{reasoning}</div>}
+      <div className="mt-1.5 flex items-center justify-between gap-2">
+        <div className="h-1 flex-1 rounded-full bg-white/5 overflow-hidden"><div className={`h-full rounded-full ${gaugeColor} opacity-70 group-hover:opacity-100 transition-opacity`} style={{ width: `${Math.min(100, Math.max(2, score))}%` }} /></div>
+        {row.providers.length > 0 && <span className="shrink-0 text-[8px] font-mono text-white/25">{row.providers.length} Quelle{row.providers.length === 1 ? '' : 'n'}</span>}
+      </div>
+    </button>
+  );
 }
