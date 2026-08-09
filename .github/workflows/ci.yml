@@ -52,3 +52,25 @@ jobs:
 
       - name: Deployment-Readiness-Pruefung (H7)
         run: npm run predeploy:check
+
+  deploy-production:
+    name: Deploy verified commit to Render
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: [build-and-test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    steps:
+      - name: Trigger Render deploy for exact verified commit
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          VERIFIED_COMMIT_SHA: ${{ github.sha }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL is not configured" >&2
+            exit 1
+          fi
+
+          curl --fail-with-body --silent --show-error --location \
+            --request POST \
+            "${RENDER_DEPLOY_HOOK_URL}&ref=${VERIFIED_COMMIT_SHA}"
