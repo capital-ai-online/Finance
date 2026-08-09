@@ -1,0 +1,22 @@
+{
+  "name": "Vocabulary",
+  "version": "1.0.0",
+  "status": "implemented",
+  "owner": "Platform Director",
+  "description": "Canonical Vocabulary Registry for terminology, naming, bilingual wording and controlled alias governance across CAPITAL-AI.",
+  "category": "platform",
+  "layer": "CrossCutting",
+  "lifecycle": "Operational",
+  "health": "Unknown",
+  "repository": "Finance",
+  "ess": ["ESS-0001-CONTRACTS", "ESS-0017", "ESS-0017-CONTRACTS", "ESS-0012", "ESS-0013"],
+  "adr": ["ADR-0046"],
+  "dependencies": [],
+  "forbiddenDependencies": ["src/platform/EventMesh/Core", "src/platform/Knowledge", "src/platform/Traceability", "src/platform/Documentary"],
+  "interfaces": ["IVocabularyRegistry"],
+  "contracts": ["ESS-0017-CONTRACTS"],
+  "events": {"produces": [], "consumes": [], "note": "Phase 2 registers no new event names. Event integration follows only after EventCatalog compatibility validation."},
+  "documentation": ["README.md", "CHANGELOG.md", "component.yaml", "docs/architecture/VOCABULARY_GOVERNANCE_MIGRATION_ROADMAP.md"],
+  "tests": ["Tests/vocabularyRegistry.test.ts"],
+  "implementationStatus": "Phase 2 core implemented: typed canonical concepts, deterministic validation, collision detection, bilingual mappings, immutable registry snapshots and initial seed concepts. No active code rename and no EventMesh runtime coupling."
+}

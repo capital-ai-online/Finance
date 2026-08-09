@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  statuses: write
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -54,39 +53,28 @@ jobs:
       - name: Deployment-Readiness-Pruefung (H7)
         run: npm run predeploy:check
 
-  render-deploy-gate:
-    name: Render deployment gate
-    if: ${{ always() }}
+  deploy-production:
+    name: Deploy verified commit to Render
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     needs: [build-and-test]
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      statuses: write
+    timeout-minutes: 5
     steps:
-      - name: Publish explicit commit status for Render checksPass
+      - name: Trigger Render deploy for exact verified commit
         env:
-          CI_RESULT: ${{ needs.build-and-test.result }}
-          COMMIT_SHA: ${{ github.sha }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          VERIFIED_COMMIT_SHA: ${{ github.sha }}
         run: |
-          if [ "$CI_RESULT" = "success" ]; then
-            state="success"
-            description="CAPITAL-AI CI gate passed; commit is deployable"
-          else
-            state="failure"
-            description="CAPITAL-AI CI gate failed; deployment blocked"
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL is not configured" >&2
+            exit 1
           fi
 
-          payload=$(printf '{"state":"%s","context":"capital-ai/ci-gate","description":"%s"}' "$state" "$description")
+          separator='?'
+          case "$RENDER_DEPLOY_HOOK_URL" in
+            *\?*) separator='&' ;;
+          esac
 
           curl --fail-with-body --silent --show-error --location \
             --request POST \
-            --header "Accept: application/vnd.github+json" \
-            --header "Authorization: Bearer ${GH_TOKEN}" \
-            --header "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${COMMIT_SHA}" \
-            --data "$payload"
-
-          if [ "$state" != "success" ]; then
-            exit 1
-          fi
+            "${RENDER_DEPLOY_HOOK_URL}${separator}ref=${VERIFIED_COMMIT_SHA}"
