@@ -21,7 +21,7 @@ Phase 1.5 stellt vor der Implementierung der Canonical Vocabulary Registry einen
 6. Die frühere Vocabulary-Roadmap referenzierte `ESS-0012`, `ADR-0044` und `ADR-0045` als Vocabulary-Authorities; diese Zuordnung wurde verworfen, weil die IDs bereits belegt sind.
 7. `ESS-0017-Vocabulary-Governance.md`, `ESS-0017-CONTRACTS` und `ADR-0046` sind angelegt.
 8. Die Vocabulary-Roadmap ist auf die eindeutigen Authorities `ESS-0017`, `ESS-0017-CONTRACTS` und `ADR-0046` umgestellt.
-9. Die ESS Registry führt `ESS-0017` und `ESS-0017-CONTRACTS` und setzt den nächsten freien Nummernraum auf `ESS-0018`.
+9. Die ESS Registry führt `ESS-0017` und `ESS-0017-CONTRACTS`; `freeNumberSpaceStartsAt` ist auf `ESS-0018` gesetzt.
 10. Die Cross-Reference-Prüfung unterscheidet zwischen zulässiger Abhängigkeit zu `ESS-0012` (Documentation Governance) und unzulässiger Verwendung von `ESS-0012` als Vocabulary-Authority.
 
 ### Entscheidung für Phase 1.5
@@ -52,7 +52,7 @@ ESS-0001-CONTRACTS
 
 ### Cross-Reference-Prüfung
 
-Geprüft wurden die Phase-1.5-Dokumente, die Registry und repository-weite Suchtreffer für die früher kollidierenden IDs.
+Geprüft wurden die Phase-1.5-Dokumente, die ESS Registry, der vollständige PR-Diff und repository-weite Suchtreffer für die früher kollidierenden IDs.
 
 Ergebnis:
 
@@ -61,7 +61,8 @@ Ergebnis:
 - `ESS-0012` bleibt Documentation Governance und wird in ESS-0017 ausschließlich als Abhängigkeit/Related Authority referenziert.
 - Für `ADR-0044 + Vocabulary` und `ADR-0045 + Vocabulary` bestehen keine aktiven repository-weiten Treffer als Vocabulary-Authority.
 - Vorkommen von `ADR-0044`, `ADR-0045` oder der früheren `ESS-0012`-Vocabulary-Zuordnung innerhalb ADR-0046, Roadmap und Baseline sind ausschließlich historische Korrekturhinweise.
-- Die Phase-1.5-Diffs führen keine alternative Vocabulary-Authority ein.
+- Der PR-Diff führt keine alternative Vocabulary-Authority ein.
+- Die Registry weist nach der Änderung `ESS-0018` als nächsten freien Nummernraum aus.
 
 ### Schutzregeln
 
