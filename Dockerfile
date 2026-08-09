@@ -28,29 +28,35 @@ WORKDIR /app
 # Keep build-time Node invocations free of runtime preload hooks.
 ENV NODE_ENV=production
 
-# Create the runtime identity before copying application artifacts so ownership is explicit.
+# Create the runtime identity before installing/copying artifacts.
 RUN addgroup -S capitalai && adduser -S capitalai -G capitalai
 
-COPY --chown=capitalai:capitalai package*.json ./
+COPY package*.json ./
 
-# Install runtime dependencies only and remove npm cache from the image layer.
+# Install runtime dependencies only. Application code and dependencies remain root-owned/read-only.
 RUN npm ci --omit=dev \
   && npm cache clean --force \
-  && chown -R capitalai:capitalai /app/node_modules
+  && chown -R root:root /app/node_modules /app/package*.json \
+  && chmod -R a-w /app/node_modules \
+  && chmod a-w /app/package*.json
 
-COPY --from=builder --chown=capitalai:capitalai /app/dist ./dist
-COPY --from=builder --chown=capitalai:capitalai /app/server/runtime/runtimeArtifactGuard.mjs ./server/runtime/runtimeArtifactGuard.mjs
+COPY --from=builder --chown=root:root /app/dist ./dist
+COPY --from=builder --chown=root:root /app/server/runtime/runtimeArtifactGuard.mjs ./server/runtime/runtimeArtifactGuard.mjs
 
 # Activate runtime-only governance controls only after the preload artifact exists.
 ENV CAPITAL_AI_RUNTIME_ARTIFACT_MODE=readonly \
-    NODE_OPTIONS=--import=/app/server/runtime/runtimeArtifactGuard.mjs
+    NODE_OPTIONS=--import=/app/server/runtime/runtimeArtifactGuard.mjs \
+    HOME=/tmp/capitalai \
+    TMPDIR=/tmp/capitalai
 
-# Deny writes by default for governance content; uploads is the explicit writable application path.
-RUN mkdir -p /app/uploads /app/docs \
-  && chown capitalai:capitalai /app/uploads \
+# Deny writes to application artifacts. Only uploads and the dedicated temp/home directory are writable.
+RUN mkdir -p /app/uploads /app/docs /tmp/capitalai \
+  && chown root:root /app/dist /app/server /app/docs \
+  && chmod -R a-w /app/dist /app/server \
+  && chmod 0555 /app/docs \
+  && chown capitalai:capitalai /app/uploads /tmp/capitalai \
   && chmod 0750 /app/uploads \
-  && chown root:root /app/docs \
-  && chmod 0555 /app/docs
+  && chmod 0700 /tmp/capitalai
 
 USER capitalai
 
