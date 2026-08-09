@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "authority": "ESS-0017",
+  "baselineCommit": "77cf6ed3143dc39120c55f7c767d4a758bc9735d",
+  "phase": "6.1-6.4",
+  "safeMigrationCount": 0,
+  "candidates": [
+    {
+      "id": "REN-0001",
+      "sourceTerm": "Plan",
+      "targetTerm": "SubscriptionTier",
+      "vocabularyConceptId": "VOC-BILLING-0002",
+      "classification": "CONDITIONAL",
+      "mandatoryFindingCodes": ["RUNTIME_REFERENCE"],
+      "decision": "DO_NOT_RENAME",
+      "evidenceSurfaces": ["server/stripe.ts", "server/entitlements.ts", "src/config/subscriptionEntitlements.ts", "src/components/Checkout.tsx", "src/components/SubscriptionModal.tsx"],
+      "rationale": "Exact Plan references occur in billing and entitlement runtime surfaces and require a dependency-aware migration."
+    },
+    {
+      "id": "REN-0002",
+      "sourceTerm": "Screener",
+      "targetTerm": "Screening",
+      "vocabularyConceptId": "VOC-ANALYTICS-0001",
+      "classification": "BLOCKED",
+      "mandatoryFindingCodes": ["SCHEMA_OR_CONTRACT_REFERENCE"],
+      "decision": "DO_NOT_RENAME",
+      "evidenceSurfaces": ["src/components/Screener.tsx", "src/components/MarketScreener.tsx", "src/components/Dashboard.tsx", "server.application.ts"],
+      "rationale": "src/components/Screener.tsx contains exact Screener runtime references and an interface ScreenerProps contract surface; the Phase-3 analyzer therefore blocks automatic migration."
+    }
+  ],
+  "phase6Conclusion": "NO_SAFE_CANDIDATES",
+  "migrationPerformed": false
+}
