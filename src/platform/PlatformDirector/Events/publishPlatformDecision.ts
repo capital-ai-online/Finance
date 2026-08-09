@@ -1,7 +1,8 @@
+import type { EventPayload } from '../../EventMesh/Contracts/EventPayload';
 import type { IEventBus } from '../../EventMesh/Interfaces/IEventBus';
 import type { PlatformDecisionRecord } from '../Contracts/PlatformDecision';
 
-export interface PlatformDecisionEventPayload {
+export interface PlatformDecisionEventPayload extends EventPayload {
   decisionId: string;
   type: PlatformDecisionRecord['type'];
   subject: string;
