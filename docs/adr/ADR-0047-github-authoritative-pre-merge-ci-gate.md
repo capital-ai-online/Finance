@@ -1,7 +1,11 @@
-# ADR-0046 — GitHub Actions as authoritative Render production deploy gate
+# ADR-0047 — GitHub Actions as authoritative Render production deploy gate
 
 Status: Proposed
 Date: 2026-08-09
+
+## Retrospective correction
+
+This ADR was originally merged by PR #144 under the identifier `ADR-0046`. That identifier was already assigned to Vocabulary Governance by PR #143. To restore deterministic ADR numbering, the deployment-gate decision is reassigned to `ADR-0047`. The architectural decision itself is unchanged.
 
 ## Context
 
