@@ -1,9 +1,10 @@
 # CAPITAL-AI Vocabulary Governance Migration Roadmap
 
 Status: Active  
-Datum / Date: 2026-08-09  
+Datum / Date: 2026-08-10  
 Authority: ESS-0001-CONTRACTS  
-Related: ESS-0012, ESS-0017, ESS-0017-CONTRACTS, ADR-0046
+Related: ESS-0012, ESS-0017, ESS-0017-CONTRACTS, ADR-0046  
+CI Cost Governance: `docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md`
 
 ## Deutsch
 
@@ -39,46 +40,37 @@ Exit-Kriterium: PR-Governance und Vocabulary-Regeln sind deterministisch validie
 
 Exit-Kriterium: Documentation Governance und Vocabulary Governance besitzen eindeutige Authorities und Cross-References. Erfüllt.
 
-### Phase 2 — Canonical Vocabulary Registry — NEXT
+### Phase 2 — Canonical Vocabulary Registry — COMPLETE
 Authority: `ESS-0017` / `ESS-0017-CONTRACTS`.
 
-Vorgesehene Struktur:
+Implementiert unter `src/platform/Vocabulary/` mit typed Concepts, stabilen Concept IDs, englischen `canonicalCodeTerm`-Werten, gemeinsamen DE/EN-Bezeichnungen, Alias-/Forbidden-Term-Governance, Collision Detection, immutable Registry Snapshots, öffentlicher Registry-Schnittstelle und Contract-Tests.
 
-```text
-src/platform/Vocabulary/
-  Domain/
-  Registry/
-  Services/
-  Validators/
-  Events/
-  Interfaces/
-  Types/
-  Tests/
-```
+Die Registry integriert sich in die bestehende Architektur und führt keinen zweiten Event Bus, Knowledge Graph oder Traceability Store ein.
 
-Jeder Concept-Eintrag enthält mindestens ID, canonicalCodeTerm, displayNameDE, displayNameEN, Definition DE/EN, aliases, forbiddenTerms, category, status und Traceability-Referenzen.
+Exit-Kriterium: Registry ist Single Source of Truth und besitzt Contract-Tests. Erfüllt durch Merge von PR #145 und erfolgreichen main-CI-/Deploy-Gate.
 
-Die Registry integriert sich in die bestehende Architektur und führt insbesondere keinen zweiten Event Bus, Knowledge Graph oder Traceability Store ein.
-
-Exit-Kriterium: Registry ist Single Source of Truth und besitzt Contract-Tests.
-
-### Phase 3 — Safe Rename Gate
+### Phase 3 — Safe Rename Gate — IN PROGRESS
 Ein `validateRenameImpact`-Prozess prüft vor jedem aktiven Rename:
 1. Repository references,
-2. Import-/Export-Graph,
+2. Import-/Export- und Runtime-Referenzen,
 3. dynamic imports/lazy loading,
 4. routes/APIs/schemas,
 5. config/env references,
 6. regex/naming policies,
 7. filesystem casing,
-8. TypeScript/lint,
-9. tests,
-10. production build,
-11. deployment readiness.
+8. Canonical Vocabulary Registry,
+9. TypeScript/lint,
+10. tests,
+11. production build,
+12. deployment readiness.
 
-Klassifikation: SAFE / CONDITIONAL / BLOCKED.
+Klassifikation: `SAFE` / `CONDITIONAL` / `BLOCKED`.
 
-Exit-Kriterium: Kein Rename kann Governance umgehen.
+Der Phase-3-Analyzer ist read-only: Er erzeugt Evidence und führt keine aktiven Renames aus. Zielbegriffe müssen als `approved canonicalCodeTerm` in der Vocabulary Registry registriert sein. Case-only-Renames und sensitive API/Schema/Environment/Dynamic-Import-Flächen werden fail-closed blockiert. Die technische Folgevalidierung bleibt über lint, tests, build und predeploy verpflichtend.
+
+Kosten-/Pipeline-Grenze: Phase 3 führt keinen zusätzlichen Actions-Workflow ein. `rename:validate` läuft als lokaler/read-only Preflight; bestehende CI-Evidence wird gemäß `GITHUB_ACTIONS_BUDGET_POLICY.md` wiederverwendet. Pro PR-Head-SHA bleibt genau ein vollständiger technischer Linux-Lauf zulässig; keine duplizierte npm/Test/Build-Pipeline und keine kosmetischen Re-Runs.
+
+Exit-Kriterium: Kein Rename kann Governance umgehen; Analyzer, Tests und technische Gates sind erfolgreich validiert, ohne die CI-Kostenrichtlinie zu verletzen.
 
 ### Phase 4 — Bilingual Documentary Integration
 - kanonische Concepts mit Documentary Engine verbinden;
@@ -122,9 +114,10 @@ Exit-Kriterium: Naming Debt wird kontrolliert reduziert, ohne Deploy- oder Depen
 - neue Concepts/Event Types automatisch registrieren und validieren;
 - Documentary/Knowledge/Traceability bei Änderungen aktualisieren;
 - Drift-Reports und Governance-Evidence erzeugen;
-- nicht-kanonische Root-Dokumentation als Drift-Signal prüfen.
+- nicht-kanonische Root-Dokumentation als Drift-Signal prüfen;
+- CI-/Actions-Automation muss die zentrale 15-EUR-Budgetrichtlinie einhalten und bestehende Evidence wiederverwenden.
 
-Exit-Kriterium: Neue Ereignisse greifen autonom über die gesamte CAPITAL-AI Wertschöpfungskette ineinander, ohne bestehende Human-Approval-Gates zu umgehen.
+Exit-Kriterium: Neue Ereignisse greifen autonom über die gesamte CAPITAL-AI Wertschöpfungskette ineinander, ohne bestehende Human-Approval-Gates oder CI-Kostengrenzen zu umgehen.
 
 ## English
 
@@ -135,12 +128,12 @@ Naming, wording, documentation, traceability, and governance operate as one even
 0. Baseline and protection — complete.
 1. Governance foundation — complete.
 1.5. Authority and namespace reconciliation — complete: ESS-0012 remains Documentation Governance; ESS-0017/ESS-0017-CONTRACTS define Vocabulary Governance; ADR-0046 records the decision; the next free ESS number is ESS-0018.
-2. Canonical Vocabulary Registry — next: implement a typed registry under ESS-0017 as the single terminology source without creating parallel EventMesh, Knowledge or Traceability infrastructure.
-3. Safe Rename Gate: require dependency, regex, casing, type, test, build, and deployment-readiness evidence before renames.
+2. Canonical Vocabulary Registry — complete: typed registry merged through PR #145 and validated through the main CI/deploy gate.
+3. Safe Rename Gate — in progress: a read-only impact analyzer classifies proposed renames as SAFE, CONDITIONAL or BLOCKED, validates targets against the Canonical Vocabulary Registry, detects sensitive runtime surfaces and preserves mandatory lint/test/build/predeploy evidence. It adds no duplicate Actions workflow and reuses the single CI run permitted by the GitHub Actions budget policy.
 4. Bilingual Documentary Integration: derive DE/EN documentation from shared concept identities and migrate PR #142 legacy content file-by-file after revalidation.
 5. Event-Driven Value Chain: propagate standardized lifecycle events through the existing Enterprise Event Mesh to Supervisor, Platform Director boundaries, Vocabulary, Knowledge, Documentary, Traceability, Quality, Security, Compliance, Versioning, and Release.
 6. Incremental Existing-Code Migration: migrate only evidence-classified SAFE names; avoid big-bang renames.
-7. Continuous Governance: enforce terminology and lifecycle consistency through repository validation, CI, events, evidence and legacy-document drift detection.
+7. Continuous Governance: enforce terminology and lifecycle consistency through repository validation, CI, events, evidence, legacy-document drift detection and the central CI cost policy.
 
 ### Success criteria
 - English-only technical naming is enforced for new code.
@@ -150,4 +143,4 @@ Naming, wording, documentation, traceability, and governance operate as one even
 - Vocabulary Governance is unambiguously ESS-0017.
 - active renames cannot bypass impact validation.
 - terminology and lifecycle events update all relevant governance components through the existing EventMesh.
-- automation remains subordinate to existing human approval and protected-change boundaries.
+- automation remains subordinate to existing human approval, protected-change boundaries and CI budget limits.
