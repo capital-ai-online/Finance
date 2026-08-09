@@ -1,19 +1,30 @@
 {
   "name": "PlatformDirector",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "development",
   "owner": "CAPITAL-AI",
-  "description": "",
+  "description": "Fail-closed Platform-Decision-Contract plus EventMesh-Bridge fuer explizit freigegebene Entscheidungen. Die Bridge erzeugt oder genehmigt keine Entscheidung selbst.",
   "category": "platform",
   "ess": [
     "ESS-0001",
-    "ESS-0001-CONTRACTS"
+    "ESS-0001-CONTRACTS",
+    "ESS-0013",
+    "ESS-0017"
   ],
-  "adr": [],
-  "dependencies": [],
+  "adr": [
+    "ADR-0018"
+  ],
+  "dependencies": [
+    "EventMesh"
+  ],
   "events": {
-    "produces": [],
-    "consumes": []
+    "produces": [
+      "PlatformDecisionEvent"
+    ],
+    "consumes": [
+      "SupervisorAlertEvent"
+    ],
+    "note": "Phase 5: nur explizit APPROVED PlatformDecisionRecord-Instanzen duerfen als PlatformDecisionEvent ueber den bestehenden Enterprise Event Mesh propagiert werden. Keine automatische Freigabe."
   },
   "knowledge": [],
   "interfaces": [],
@@ -23,6 +34,8 @@
   "documentation": [
     "README.md"
   ],
-  "tests": [],
-  "note": "cd5c931 (feat(platform-director): add fail-closed decision contract) fuegte Contracts/PlatformDecision.ts hinzu, ohne diesen Status nachzufuehren - platformManifestIntegrity.test.ts hat die daraus resultierende Diskrepanz (status:'unspecified' bei vorhandenem Code) erkannt. Status auf 'development' korrigiert: die Entscheidungs-Typen/-Contracts existieren, die eigentliche PlatformDirector-Logik (Entscheidungsfindung, Persistenz) ist noch nicht implementiert."
+  "tests": [
+    "tests/unit/platformDecisionEventBridge.test.ts"
+  ],
+  "note": "Die Entscheidungsfindung und Persistenz bleiben ausserhalb dieses Schritts. Implementiert ist ausschliesslich die fail-closed Event-Propagation bereits genehmigter Decisions."
 }
