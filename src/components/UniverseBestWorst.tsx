@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Activity, AlertTriangle, Award, Compass, Layers, Orbit, RefreshCw, TrendingUp } from 'lucide-react';
+import { Activity, AlertTriangle, Award, Compass, Layers, Orbit, Percent, RefreshCw, TrendingUp } from 'lucide-react';
 import { AssetLogo } from './AssetLogo';
 
 type AssetType = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';
@@ -14,6 +14,7 @@ const GROUPS = [
   { id: 'index', name: 'Index World', type: 'index' as const, icon: Compass, description: 'Globale Indizes' },
   { id: 'forex', name: 'Forex Nebula', type: 'forex' as const, icon: Compass, description: 'Globale Währungspaare' },
   { id: 'commodity', name: 'Commodity Nebula', type: 'commodity' as const, icon: Layers, description: 'Edelmetalle & Ressourcen' },
+  { id: 'bond', name: 'Bond Horizon', type: 'bond' as const, icon: Percent, description: 'Staatsanleihen & Sovereign-Benchmarks' },
 ];
 
 function finiteScore(value: unknown): number | null {
@@ -58,7 +59,7 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
     setScoreLoading(true);
     const candidates = GROUPS.flatMap(group => sourceCatalog.filter(asset => asset.type === group.type).slice(0, 8));
     const crypto = candidates.filter(asset => asset.type === 'crypto');
-    const traditional = candidates.filter(asset => asset.type === 'stock' || asset.type === 'forex' || asset.type === 'index');
+    const traditional = candidates.filter(asset => asset.type !== 'crypto');
     const next: Record<string, AssetRow> = {};
 
     await Promise.allSettled(crypto.map(async asset => {

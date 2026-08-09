@@ -514,17 +514,17 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                             </button>
                           </SidebarTooltip>
 
-                          <SidebarTooltip title="Best & Worst Scoring" text="Live-Performance-Leaderboards & Top 3 / Flop 3 Grafik-Analysen aller 5 quantitativen Handelsuniversen.">
-                            <button 
+                          <SidebarTooltip title="Best & Worst Scoring" text="Live-Performance-Leaderboards & Top 3 / Flop 3 Grafik-Analysen aller 6 quantitativen Handelsuniversen.">
+                            <button
                               onClick={() => navigateTo('universe-scoring')}
                               className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
-                                activeView === 'universe-scoring' 
-                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                activeView === 'universe-scoring'
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]'
                                   : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
                               }`}
                             >
                               <Award size={14} className={activeView === 'universe-scoring' ? 'text-black' : 'text-aif-gold-DEFAULT'} />
-                              <span>Best & Worst Assets</span>
+                              <span>Universe TOP Rankings</span>
                             </button>
                           </SidebarTooltip>
 
@@ -1240,7 +1240,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
               <span>/</span>
               <span className="text-aif-gold-DEFAULT uppercase tracking-wider font-bold">
                 {activeView === 'myworkspace' && 'Myworkspace – Persönlicher Radar'}
-                {activeView === 'universe-scoring' && 'Universum Best & Worst Asset Leaderboard'}
+                {activeView === 'universe-scoring' && 'Universe TOP Rankings'}
                 {activeView === 'raw-materials' && 'Rohstoff-Kategorisierung & AI-Scoring'}
                 {activeView === 'social-accounts' && 'Social Media Direct Publishing Hub'}
                 {activeView === 'asset-universe' && 'Multi-Asset-Klassen Cockpit'}
