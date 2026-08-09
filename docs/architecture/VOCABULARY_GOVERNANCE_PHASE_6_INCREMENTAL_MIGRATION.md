@@ -17,9 +17,7 @@ PR #154 etablierte `rename-candidates.json` mit stabilen `REN-*`-IDs, Vocabulary
 Die materialisierte Evidence liegt in `docs/governance/vocabulary/rename-classification-evidence.json` und wird gegen den Live-Analyzer regressionsgeprüft.
 
 - `REN-0001 — Plan -> SubscriptionTier`: `CONDITIONAL`. Exakte `Plan`-Referenzen liegen in Billing-/Entitlement-Runtime-Flächen. Ein dependency-aware Migrationsplan ist erforderlich.
-- `REN-0002 — Screener -> Screening`: `CONDITIONAL`. Exakte `Screener`-Referenzen liegen in Frontend-Runtime-Flächen. Ein dependency-aware Migrationsplan ist erforderlich.
-
-Wichtig: zusammengesetzte Identifier wie `PlanEntitlements` bzw. `ScreenerProps` sind beim exakten Source-Term-Matcher keine eigenständigen `Plan`-/`Screener`-Tokens. Die Live-Klassifikation ist deshalb `CONDITIONAL`, nicht `BLOCKED`.
+- `REN-0002 — Screener -> Screening`: `BLOCKED`. `src/components/Screener.tsx` enthält exakte `Screener`-Runtime-Referenzen und mit `interface ScreenerProps` zugleich eine Contract-Fläche; der Phase-3-Analyzer meldet `SCHEMA_OR_CONTRACT_REFERENCE`.
 
 ### 6.2 SAFE Migration Batch — COMPLETE, NO-OP
 `safeMigrationCount = 0`. Ohne SAFE-Kandidat ist keine Rename-Mutation zulässig. Der No-op ist der korrekte fail-closed Abschluss.
@@ -31,7 +29,7 @@ PR #154 / main CI #658 ist vollständig verifiziert, einschließlich Docker und 
 Alle Kandidaten bleiben an freigegebene Vocabulary Concept-IDs gebunden. Da keine Mutation ausgeführt wurde, entstehen keine neuen Documentary-/Traceability-Identitäten und keine DE/EN-Drift.
 
 ### 6.5 Conditional / Blocked Backlog — COMPLETE
-`docs/governance/vocabulary/rename-backlog.json` enthält alle nicht sicheren Kandidaten. Die aktuellen Einträge sind `CONDITIONAL`, `DEFERRED` und `automaticMigrationAllowed: false`; eine spätere Migration benötigt explizite scopegebundene Freigabe und Dependency-Evidence.
+`docs/governance/vocabulary/rename-backlog.json` enthält alle nicht sicheren Kandidaten. REN-0001 ist `CONDITIONAL`, REN-0002 `BLOCKED`; beide sind `DEFERRED` und `automaticMigrationAllowed: false`. Eine spätere Migration benötigt explizite scopegebundene Freigabe und die jeweils erforderliche Dependency-/Architektur-Evidence.
 
 ### Exit-Kriterien
 - [x] Inventory vollständig und maschinenlesbar.
@@ -44,4 +42,4 @@ Alle Kandidaten bleiben an freigegebene Vocabulary Concept-IDs gebunden. Da kein
 - [ ] Merge und anschließender main-CI-/Render-Gate erfolgreich.
 
 ## English
-Phase 6 is evidence-first and fail-closed. The current inventory contains zero SAFE candidates, so no code rename is permitted or performed. `REN-0001` and `REN-0002` are both `CONDITIONAL` because exact source-term references occur in runtime surfaces and require dependency-aware migrations. Stored evidence and mandatory finding codes are regression-checked against the live Phase-3 analyzer. Production completion requires successful draft CI, merge, and verified main deployment.
+Phase 6 is evidence-first and fail-closed. The current inventory contains zero SAFE candidates, so no code rename is permitted or performed. REN-0001 is CONDITIONAL because exact `Plan` references occur on billing/entitlement runtime surfaces. REN-0002 is BLOCKED because `src/components/Screener.tsx` combines exact `Screener` runtime references with the `interface ScreenerProps` contract surface, producing `SCHEMA_OR_CONTRACT_REFERENCE`. Stored evidence is regression-checked against the live Phase-3 analyzer. Production completion requires successful draft CI, merge, and verified main deployment.

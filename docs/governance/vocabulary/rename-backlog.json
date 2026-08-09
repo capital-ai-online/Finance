@@ -14,10 +14,10 @@
     },
     {
       "id": "REN-0002",
-      "classification": "CONDITIONAL",
+      "classification": "BLOCKED",
       "status": "DEFERRED",
-      "requiredNextDecision": "Dedicated frontend runtime dependency migration approval",
-      "protectedSurfaces": ["frontend-components", "imports-exports", "runtime", "product-wording"],
+      "requiredNextDecision": "Dedicated frontend contract migration architecture approval",
+      "protectedSurfaces": ["frontend-components", "imports-exports", "runtime-contracts", "product-wording"],
       "automaticMigrationAllowed": false
     }
   ]

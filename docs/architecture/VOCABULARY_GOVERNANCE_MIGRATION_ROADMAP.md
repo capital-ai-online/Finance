@@ -41,9 +41,9 @@ Abschlussstand:
 
 Aktuelle Evidence:
 1. `REN-0001: Plan -> SubscriptionTier` — `CONDITIONAL`; exakte Runtime-Referenzen in Billing-/Entitlement-Flächen.
-2. `REN-0002: Screener -> Screening` — `CONDITIONAL`; exakte Runtime-Referenzen in Frontend-Flächen.
+2. `REN-0002: Screener -> Screening` — `BLOCKED`; `src/components/Screener.tsx` enthält exakte Runtime-Referenzen und `interface ScreenerProps`, wodurch der Phase-3-Analyzer `SCHEMA_OR_CONTRACT_REFERENCE` meldet.
 
-Beide Kandidaten sind `DEFERRED` und `automaticMigrationAllowed: false`. Ein Regressionstest vergleicht die materialisierte Evidence mit dem Live-Phase-3-Analyzer. Es wurden keine aktiven Renames durchgeführt.
+REN-0001 und REN-0002 sind `DEFERRED` und `automaticMigrationAllowed: false`. Ein Regressionstest vergleicht die materialisierte Evidence mit dem Live-Phase-3-Analyzer. Es wurden keine aktiven Renames durchgeführt.
 
 Produktionsabschluss Phase 6: Abschluss-Draft mergen und anschließend main-CI-/Docker-/Render-Gate erfolgreich verifizieren.
 
@@ -60,7 +60,7 @@ Repository-Validator, CI, Documentary, Knowledge und Traceability werden termino
 3. Safe Rename Gate — complete through PR #151 / main CI #649.  
 4. Bilingual Documentary Integration — complete through PR #152.  
 5. Event-Driven Value Chain — complete through PR #153 / main CI #656.  
-6. Incremental Existing-Code Migration — implementation complete in draft. PR #154 established the inventory/classifier and main CI #658 verified it. Both current candidates are CONDITIONAL, zero are SAFE, no rename mutation was performed, and all non-safe candidates are retained in the protected backlog. Production completion requires merge plus successful main CI/Render verification.  
+6. Incremental Existing-Code Migration — implementation complete in draft. PR #154 established the inventory/classifier and main CI #658 verified it. REN-0001 is CONDITIONAL, REN-0002 is BLOCKED, zero candidates are SAFE, no rename mutation was performed, and all non-safe candidates are retained in the protected backlog. Production completion requires merge plus successful main CI/Render verification.  
 7. Continuous Governance — next.
 
 ### Success criteria
