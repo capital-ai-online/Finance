@@ -10,65 +10,55 @@ Determine whether the intermittent deployment failure is specific to Render's `A
 - Repository: `SvenKulessa/Finance`
 - Branch: `main`
 - Runtime: Docker
-- Normal production policy: `After CI Checks Pass`
+- Baseline policy: `After CI Checks Pass`
+- Diagnostic policy: `On Commit`
 
 ## Evidence before test
 
-- PR #136 merge commit `584d8d4f67af1ab0c8f063e71bcd3db530771bff` completed GitHub CI successfully and published `capital-ai/ci-gate: success`.
-- PR #138 merge commit `a586e314de5ca0defc2686c2573e02833f84feae` also completed GitHub CI successfully and published `capital-ai/ci-gate: success`, but no corresponding Render deploy was observed at the time of validation.
-- Render later produced an automatic `trigger: new_commit` deploy for commit `584d8d4f67af1ab0c8f063e71bcd3db530771bff`, indicating that GitHub repository events are reaching Render at least intermittently.
+- PR #136 merge commit `584d8d4f67af1ab0c8f063e71bcd3db530771bff` completed GitHub CI successfully and published `capital-ai/ci-gate: success`; Render did not create the expected deploy in the normal observation window.
+- PR #138 merge commit `a586e314de5ca0defc2686c2573e02833f84feae` completed GitHub CI successfully and published `capital-ai/ci-gate: success`; Render did not immediately create the expected `checksPass` deploy.
+- After the Render policy was switched to `On Commit`, Render created deploy `dep-d9sbffpt0dsc73bl4qqg` for PR #138's merge commit with `trigger: new_commit`; final status was `live`.
 
-## A/B design
+## B-test confirmation
 
-### A — checksPass baseline
+PR #141 was merged while Render remained on `On Commit`.
 
-Normal production configuration:
+- Merge commit: `ae35d4e57dbf06eadf5776c0e9d6353978f03f38`
+- Merge timestamp: `2026-08-09T17:38:02Z`
+- Render deploy ID: `dep-d9sbnugu01pc73e2mjq0`
+- Render deploy created: `2026-08-09T17:42:19Z`
+- Render deploy finished: `2026-08-09T17:43:27Z`
+- Render trigger: `new_commit`
+- Final status: `live`
+- Observed merge-to-deploy-creation latency: approximately 4 minutes 17 seconds
 
-`GitHub merge → main CI → capital-ai/ci-gate success → Render checksPass → deploy`
+## Conclusion
 
-Observed behavior has been delayed/intermittent.
+Result: **checksPass-specific fault domain confirmed**.
 
-### B — On Commit diagnostic
+The following paths are proven functional:
 
-Temporarily set the Render `Finance` service Auto-Deploy policy to **On Commit**.
+`GitHub PR merge → main commit → Render On Commit → trigger:new_commit → live`
 
-Then merge this documentation-only PR into `main`.
+Therefore the PR merge mechanism itself is not the cause. GitHub repository access, Git deployment credentials, Render repository binding, and recognition of merge commits are all functional. The unreliable component is Render's `After CI Checks Pass` / GitHub Check Suite correlation path.
 
-Expected sequence:
+## Production decision
 
-`GitHub merge → push to main → Render trigger:new_commit`
+Render may use `On Commit` only if GitHub itself becomes the authoritative pre-merge deployment gate. `main` must be protected and merges must be blocked until the required CI check succeeds.
 
-GitHub CI should continue to run independently, but Render must not wait for `capital-ai/ci-gate` during this diagnostic phase.
+Required GitHub policy:
 
-## Success criteria
+- protect branch `main`;
+- require a pull request before merging;
+- require status check `CI / build-and-test` to pass before merging;
+- require branches to be up to date before merging, where operationally acceptable;
+- block direct pushes to `main` except explicitly governed break-glass paths;
+- do not use Render `checksPass` as an authoritative safety control while this defect remains unresolved.
 
-The B-test passes if Render creates a deploy for this PR's exact merge commit with:
+## Current governance gap
 
-- `trigger: new_commit`
-- final `status: live`
+At the time of this evidence capture, GitHub reports `main` as `protected: false` with required status-check enforcement off. Therefore `On Commit` must not be considered fully production-hardened until branch protection/rulesets are enabled.
 
-within the normal Render event-processing window.
+## Follow-up
 
-If B passes while A remains unreliable, the fault domain is Render's `checksPass` / GitHub Check Suite correlation rather than repository access or push-event delivery.
-
-If B also fails, investigate Render Git Deployment Credentials, GitHub App installation/repository access, and webhook/event delivery.
-
-## Safety constraints
-
-- Documentation-only repository change.
-- No application/runtime/database/IAM/billing changes.
-- No manual Render deploy during the test, because that would invalidate the observation.
-- After evidence is captured, restore the Render Auto-Deploy policy to **After CI Checks Pass** unless a separate architecture decision explicitly replaces it.
-
-## Required evidence after merge
-
-Record:
-
-1. exact GitHub merge commit SHA;
-2. GitHub CI run result;
-3. `capital-ai/ci-gate` result;
-4. Render deploy ID;
-5. Render deploy trigger (`new_commit` expected);
-6. Render final status;
-7. timestamps for merge, CI completion, Render deploy creation, and Render live state;
-8. conclusion: `checksPass-specific`, `general Git integration`, or `inconclusive`.
+ADR-0046 defines the target deployment-gate ownership model. Once GitHub branch protection is active and verified, the legacy `capital-ai/ci-gate` compatibility status can be retired because Render no longer consumes it.
