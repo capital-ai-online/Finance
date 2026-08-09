@@ -36,8 +36,9 @@ Before this ADR is considered implemented:
 1. In Render `Finance → Settings → Auto-Deploy`, set Auto-Deploy to **Off**.
 2. Copy the service's secret Deploy Hook URL from Render `Finance → Settings`.
 3. In GitHub `Finance → Settings → Secrets and variables → Actions`, create repository secret `RENDER_DEPLOY_HOOK_URL` containing that URL.
-4. Merge the workflow change only after steps 1–3 are complete.
-5. Validate one documentation-only test merge end to end.
+4. Keep PR #144 in Draft state until steps 1–3 are complete.
+5. Merge the workflow change only after steps 1–3 are complete.
+6. Validate one documentation-only test merge end to end.
 
 ## Security properties
 
