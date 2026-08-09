@@ -1,6 +1,6 @@
 # CAPITAL-AI Vocabulary Governance Migration Roadmap
 
-Status: Proposed  
+Status: Active  
 Datum / Date: 2026-08-09  
 Authority: ESS-0001-CONTRACTS  
 Related: ESS-0012, ESS-0017, ESS-0017-CONTRACTS, ADR-0046
@@ -10,7 +10,7 @@ Related: ESS-0012, ESS-0017, ESS-0017-CONTRACTS, ADR-0046
 ### Zielbild
 Naming, Wording, Dokumentation, Traceability und Governance werden als zusammenhängender, ereignisbasierter Teil der CAPITAL-AI Wertschöpfungskette betrieben. Code bleibt Englisch; Enterprise-Dokumentation wird Deutsch und Englisch geführt; menschlich sichtbare Pull-Request-Informationen werden Deutsch geführt.
 
-### Phase 0 — Baseline und Schutz
+### Phase 0 — Baseline und Schutz — COMPLETE
 - aktuellen main-Stand, offene PRs und Production Baseline prüfen;
 - bestehende ESS/ADR/Events/Knowledge/Documentary/Traceability/Validatoren inventarisieren;
 - keine aktiven Renames;
@@ -18,7 +18,7 @@ Naming, Wording, Dokumentation, Traceability und Governance werden als zusammenh
 
 Exit-Kriterium: Baseline dokumentiert, Scope konfliktfrei, technische Governance konsistent.
 
-### Phase 1 — Governance Foundation
+### Phase 1 — Governance Foundation — COMPLETE
 - PR-Template auf deutsche sichtbare Informationen umstellen;
 - PR-Validator atomar auf dieselben Überschriften/Marker aktualisieren;
 - maschinenlesbare Keys stabil halten;
@@ -26,18 +26,20 @@ Exit-Kriterium: Baseline dokumentiert, Scope konfliktfrei, technische Governance
 
 Exit-Kriterium: PR-Governance und Vocabulary-Regeln sind deterministisch validierbar.
 
-### Phase 1.5 — Authority- und Nummernraum-Konsolidierung
+### Phase 1.5 — Authority- und Nummernraum-Konsolidierung — COMPLETE
 - PR #142 als Dokumentationsbaseline übernehmen;
 - `ESS-0012` und `ESS-0012-CONTRACTS` unverändert als Documentation Governance erhalten;
-- `ESS-0017` als eigenständige Vocabulary Governance einführen;
-- `ESS-0017-CONTRACTS` als Vocabulary-spezifischen Contract-Teil einführen;
+- `ESS-0017` als eigenständige Vocabulary Governance einführen und registrieren;
+- `ESS-0017-CONTRACTS` als Vocabulary-spezifischen Contract-Teil einführen und registrieren;
 - `ADR-0046` als Authority-/Nummernraumentscheidung verwenden;
-- alle früheren Vocabulary-Verweise auf die bereits belegten IDs `ESS-0012`, `ADR-0044` und `ADR-0045` korrigieren;
+- nächsten freien ESS-Nummernraum auf `ESS-0018` setzen;
+- frühere Vocabulary-Verwendungen der bereits belegten IDs `ESS-0012`, `ADR-0044` und `ADR-0045` als Authority korrigieren;
+- zulässige `ESS-0012`-Referenzen ausschließlich als Documentation-Governance-Abhängigkeit beibehalten;
 - Legacy-Dokumente aus PR #142 nicht als kanonische Vocabulary-Quelle verwenden, solange sie nicht gegen aktuellen Code und Authorities revalidiert wurden.
 
-Exit-Kriterium: Documentation Governance und Vocabulary Governance besitzen eindeutige Authorities und Cross-References.
+Exit-Kriterium: Documentation Governance und Vocabulary Governance besitzen eindeutige Authorities und Cross-References. Erfüllt.
 
-### Phase 2 — Canonical Vocabulary Registry
+### Phase 2 — Canonical Vocabulary Registry — NEXT
 Authority: `ESS-0017` / `ESS-0017-CONTRACTS`.
 
 Vorgesehene Struktur:
@@ -130,10 +132,10 @@ Exit-Kriterium: Neue Ereignisse greifen autonom über die gesamte CAPITAL-AI Wer
 Naming, wording, documentation, traceability, and governance operate as one event-driven part of the CAPITAL-AI value chain. Code remains English; enterprise documentation is maintained in German and English; human-facing pull request information is German.
 
 ### Migration sequence
-0. Baseline and protection: inventory current contracts, components, PR state, production baseline, and validators; do not rename active code.
-1. Governance foundation: establish synchronized German PR information and deterministic validation while separating Vocabulary Governance from existing Documentation Governance.
-1.5. Authority and namespace reconciliation: retain ESS-0012 for Documentation Governance, establish ESS-0017/ESS-0017-CONTRACTS for Vocabulary Governance, use ADR-0046, and revalidate PR #142 legacy sources before terminology adoption.
-2. Canonical Vocabulary Registry: implement a typed registry under ESS-0017 as the single terminology source without creating parallel EventMesh, Knowledge or Traceability infrastructure.
+0. Baseline and protection — complete.
+1. Governance foundation — complete.
+1.5. Authority and namespace reconciliation — complete: ESS-0012 remains Documentation Governance; ESS-0017/ESS-0017-CONTRACTS define Vocabulary Governance; ADR-0046 records the decision; the next free ESS number is ESS-0018.
+2. Canonical Vocabulary Registry — next: implement a typed registry under ESS-0017 as the single terminology source without creating parallel EventMesh, Knowledge or Traceability infrastructure.
 3. Safe Rename Gate: require dependency, regex, casing, type, test, build, and deployment-readiness evidence before renames.
 4. Bilingual Documentary Integration: derive DE/EN documentation from shared concept identities and migrate PR #142 legacy content file-by-file after revalidation.
 5. Event-Driven Value Chain: propagate standardized lifecycle events through the existing Enterprise Event Mesh to Supervisor, Platform Director boundaries, Vocabulary, Knowledge, Documentary, Traceability, Quality, Security, Compliance, Versioning, and Release.
