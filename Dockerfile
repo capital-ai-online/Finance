@@ -25,9 +25,8 @@ RUN npm run build
 FROM node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 AS runner
 WORKDIR /app
 
-ENV NODE_ENV=production \
-    CAPITAL_AI_RUNTIME_ARTIFACT_MODE=readonly \
-    NODE_OPTIONS=--import=/app/server/runtime/runtimeArtifactGuard.mjs
+# Keep build-time Node invocations free of runtime preload hooks.
+ENV NODE_ENV=production
 
 # Create the runtime identity before copying application artifacts so ownership is explicit.
 RUN addgroup -S capitalai && adduser -S capitalai -G capitalai
@@ -41,6 +40,10 @@ RUN npm ci --omit=dev \
 
 COPY --from=builder --chown=capitalai:capitalai /app/dist ./dist
 COPY --from=builder --chown=capitalai:capitalai /app/server/runtime/runtimeArtifactGuard.mjs ./server/runtime/runtimeArtifactGuard.mjs
+
+# Activate runtime-only governance controls only after the preload artifact exists.
+ENV CAPITAL_AI_RUNTIME_ARTIFACT_MODE=readonly \
+    NODE_OPTIONS=--import=/app/server/runtime/runtimeArtifactGuard.mjs
 
 # Deny writes by default for governance content; uploads is the explicit writable application path.
 RUN mkdir -p /app/uploads /app/docs \
