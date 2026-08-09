@@ -40,8 +40,8 @@ Positive Konsequenzen:
 
 Kosten:
 
-- Roadmap und Cross-References müssen von den kollidierenden Authority-IDs auf ESS-0017/ADR-0046 umgestellt werden;
-- ESS-0017 und ESS-0017-CONTRACTS müssen formal angelegt und registriert werden.
+- Roadmap und Cross-References mussten von den kollidierenden Authority-IDs auf ESS-0017/ADR-0046 umgestellt werden;
+- ESS-0017 und ESS-0017-CONTRACTS wurden formal angelegt und registriert.
 
 ## Runtime- und Deploy-Auswirkung
 
@@ -49,7 +49,7 @@ Keine unmittelbare Runtime-Auswirkung. Dieser ADR verändert keine Imports, Expo
 
 ## Validation
 
-Vor Abschluss von Phase 1.5 muss eine Repository-weite Referenzprüfung bestätigen:
+Die Phase-1.5-Prüfung bestätigt:
 
 - keine Vocabulary-Spezifikation verwendet `ESS-0012` oder `ESS-0012-CONTRACTS` als eigene Vocabulary-Authority;
 - `ESS-0012`-Referenzen innerhalb des Vocabulary-Scope sind ausschließlich als Documentation-Governance-Abhängigkeit/Related Authority klassifiziert;
@@ -57,4 +57,5 @@ Vor Abschluss von Phase 1.5 muss eine Repository-weite Referenzprüfung bestäti
 - historische Hinweise auf die verworfenen Zuordnungen sind eindeutig als Historie/Korrektur markiert;
 - `ESS-0017` ist genau einmal in der ESS Registry vergeben;
 - `ESS-0017-CONTRACTS` ist eindeutig ESS-0017 zugeordnet;
-- Documentation Governance bleibt vollständig unter ESS-0012/ESS-0012-CONTRACTS erhalten.
+- Documentation Governance bleibt vollständig unter ESS-0012/ESS-0012-CONTRACTS erhalten;
+- der nächste freie ESS-Nummernraum ist `ESS-0018`.
