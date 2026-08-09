@@ -18,21 +18,20 @@ Phase 1.5 stellt vor der Implementierung der Canonical Vocabulary Registry einen
 3. `.ai/skills/ESS-0012-Documentation-Governance.md` deklariert `skill.id: ESS-0012` und `ownContracts: ESS-0012-CONTRACTS`.
 4. `.ai/skills/ESS-0012-Contracts.md` definiert ausschließlich Documentation Governance Contracts.
 5. `ESS-0013`, `ESS-0014`, `ESS-0015` und `ESS-0016` sind bereits anderweitig belegt. Die Registry weist den freien Nummernraum ab `ESS-0017` aus.
-6. Die Vocabulary-Roadmap referenziert derzeit `ESS-0012`, `ADR-0044` und `ADR-0045` für Vocabulary Governance. Diese Referenzen sind nicht verwendbar: `ESS-0012` gehört bereits Documentation Governance; ADR-0044 und ADR-0045 sind bereits anderen Architekturentscheidungen zugeordnet.
-7. Im aktuellen Repository wurde keine eigenständige veröffentlichte Vocabulary-/Terminology-ESS gefunden. Phase 2 ist daher noch nicht durch eine eindeutige Vocabulary-ESS autorisiert.
+6. Die frühere Vocabulary-Roadmap referenzierte `ESS-0012`, `ADR-0044` und `ADR-0045`; diese IDs waren bereits belegt und wurden deshalb als Vocabulary-Authority verworfen.
+7. `ESS-0017-Vocabulary-Governance.md`, `ESS-0017-CONTRACTS` und `ADR-0046` sind auf dem Phase-1.5-Branch angelegt.
+8. Die Vocabulary-Roadmap ist auf die eindeutigen Authorities `ESS-0017`, `ESS-0017-CONTRACTS` und `ADR-0046` umgestellt.
 
 ### Entscheidung für Phase 1.5
 
 - `ESS-0012` bleibt unverändert **Documentation Governance**. Bestehende Dokumente, Contracts, Validatoren und Implementierungspfade werden nicht umnummeriert.
-- Vocabulary Governance erhält die nächste freie ESS-ID `ESS-0017`.
-- Die zugehörigen Vocabulary Contracts erhalten `ESS-0017-CONTRACTS`; dieser Contract-Teil belegt analog zu bestehenden `*-CONTRACTS`-Dokumenten keine zusätzliche ESS-Nummer.
-- Die Architekturentscheidungen für Vocabulary Governance dürfen nicht `ADR-0044` oder `ADR-0045` verwenden. Die nächste freie ADR-ID ist vor Anlage erneut gegen `main` zu validieren; zum Zeitpunkt dieser Baseline ist `ADR-0046` nicht belegt.
-- Bis `ESS-0017` und der zugehörige ADR formal angelegt und registriert sind, bleibt Phase 2 **BLOCKED** für Runtime-Implementierung und aktive Renames.
+- Vocabulary Governance verwendet `ESS-0017`.
+- Die zugehörigen Vocabulary Contracts verwenden `ESS-0017-CONTRACTS`; dieser Contract-Teil belegt analog zu bestehenden `*-CONTRACTS`-Dokumenten keine zusätzliche ESS-Nummer.
+- `ADR-0046` definiert die Trennung der Documentation- und Vocabulary-Authorities sowie die Nummernraumkorrektur.
+- Bis `ESS-0017` und `ESS-0017-CONTRACTS` in der kanonischen `.ai/registry/ess-registry.json` registriert sind, bleibt Phase 2 **BLOCKED** für Runtime-Implementierung und aktive Renames.
 - Dokumentations- und Inventarisierungsarbeiten dürfen fortgeführt werden, sofern sie keine bestehende Authority semantisch überschreiben.
 
 ### Integrationsgrenzen
-
-Die Authority-Kette lautet künftig:
 
 ```text
 ESS-0001-CONTRACTS
@@ -40,8 +39,9 @@ ESS-0001-CONTRACTS
   -> ESS-0017 Vocabulary Governance
   -> Canonical Vocabulary Registry
   -> Documentary / Knowledge / Traceability
-  -> Event Mesh
+  -> Enterprise Event Mesh
   -> Quality / Security / Compliance
+  -> Supervisor / Platform Director
   -> Version Manager / Release
 ```
 
@@ -55,21 +55,21 @@ ESS-0001-CONTRACTS
 - Kein aktiver Rename ohne späteren Safe Rename Gate.
 - Keine Änderung von Import-/Export-Namen, API-Routen, Schemas, Environment Keys oder Event-Namen in Phase 1.5.
 - Keine Big-Bang-Migration.
+- Keine parallele EventMesh-, Knowledge- oder Traceability-Infrastruktur.
 - Legacy-Dokumente aus PR #142 sind keine kanonische Vocabulary-Quelle, bis ihre Aussagen gegen aktuellen Code und aktuelle Authorities revalidiert wurden.
 
 ### Exit-Kriterien Phase 1.5
 
-Phase 1.5 ist abgeschlossen, wenn:
-
-- [x] PR #142 als Baseline verifiziert ist.
-- [x] ESS-0012-Authority gegen Registry, Skill und Contracts verifiziert ist.
-- [x] belegte ESS-IDs und freier Nummernraum verifiziert sind.
-- [x] kollidierende ADR-0044/ADR-0045-Referenzen identifiziert sind.
-- [ ] ESS-0017 Vocabulary Governance angelegt und in der ESS Registry registriert ist.
-- [ ] ESS-0017-CONTRACTS angelegt ist.
-- [ ] Vocabulary-ADR unter einer freien ADR-ID angelegt ist.
-- [ ] Roadmap und Cross-References auf ESS-0017 und den neuen ADR aktualisiert sind.
-- [ ] Repository-Suche bestätigt, dass keine Vocabulary-Authority mehr fälschlich ESS-0012, ADR-0044 oder ADR-0045 verwendet.
+- [x] PR #142 als Baseline verifiziert.
+- [x] ESS-0012-Authority gegen Registry, Skill und Contracts verifiziert.
+- [x] belegte ESS-IDs und freier Nummernraum verifiziert.
+- [x] kollidierende ADR-0044/ADR-0045-Referenzen identifiziert.
+- [x] ESS-0017 Vocabulary Governance angelegt.
+- [x] ESS-0017-CONTRACTS angelegt.
+- [x] ADR-0046 angelegt.
+- [x] Roadmap auf ESS-0017 / ESS-0017-CONTRACTS / ADR-0046 aktualisiert.
+- [ ] ESS-0017 und ESS-0017-CONTRACTS in `.ai/registry/ess-registry.json` registriert und `freeNumberSpaceStartsAt` auf den nächsten freien Wert gesetzt.
+- [ ] Repository-weite Referenzprüfung bestätigt, dass keine Vocabulary-Authority mehr fälschlich ESS-0012, ADR-0044 oder ADR-0045 verwendet.
 
 ## English
 
@@ -77,9 +77,9 @@ Phase 1.5 ist abgeschlossen, wenn:
 
 Phase 1.5 establishes an unambiguous governance and namespace baseline before implementation of the Canonical Vocabulary Registry. It performs no active code renames and changes no runtime dependencies.
 
-### Decision
+### Current decision
 
-`ESS-0012` remains Documentation Governance. Vocabulary Governance receives the next free identifier, `ESS-0017`, with `ESS-0017-CONTRACTS` as its scoped contract document. Existing ADR-0044 and ADR-0045 identifiers cannot be reused for Vocabulary Governance. Phase 2 runtime implementation remains blocked until the new Vocabulary authority and ADR are registered and all roadmap cross-references are reconciled.
+`ESS-0012` remains Documentation Governance. Vocabulary Governance is defined by `ESS-0017` with `ESS-0017-CONTRACTS`; `ADR-0046` records the authority and namespace decision. Runtime Phase 2 remains blocked until the canonical ESS Registry is updated and a repository-wide reference scan confirms that the superseded Vocabulary references are gone.
 
 ### Safety boundary
 
