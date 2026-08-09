@@ -1,4 +1,8 @@
-name: Google Marketing Protected Change Guard
+name: Google-Marketing-Schutzprüfung
+run-name: >-
+  ${{ github.event_name == 'pull_request'
+      && format('PR #{0} – Google-Marketing-Schutzprüfung', github.event.pull_request.number)
+      || 'Google-Marketing-Schutzprüfung' }}
 
 on:
   pull_request:
@@ -25,8 +29,6 @@ on:
       - 'docs/adr/ADR-0042-*'
       - 'docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md'
       - 'docs/runbooks/GOOGLE_ANALYTICS_SETUP.md'
-      - 'package.json'
-      - 'package-lock.json'
   push:
     branches: [main]
     paths:
@@ -51,8 +53,6 @@ on:
       - 'docs/adr/ADR-0042-*'
       - 'docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md'
       - 'docs/runbooks/GOOGLE_ANALYTICS_SETUP.md'
-      - 'package.json'
-      - 'package-lock.json'
   workflow_dispatch:
 
 permissions:
@@ -62,50 +62,29 @@ concurrency:
   group: google-marketing-guard-${{ github.ref }}
   cancel-in-progress: true
 
+# Die vollständige technische Validierung liegt ausschließlich in ci.yml.
+# Dieser spezialisierte Guard darf keine zweite npm-ci/Test/Build-Pipeline erzeugen.
 jobs:
   protected-change-guard:
-    name: Protected Marketing Guard
+    name: Geschützte Marketing-Konfiguration prüfen
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
 
     steps:
-      - name: Checkout without persisted credentials
+      - name: Quellcode ohne persistierte Zugangsdaten auschecken
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: '22'
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Verify Docker build-context contract
+      - name: Schutzvertrag und zentrale CI-Evidence statisch prüfen
         shell: bash
         run: |
+          set -euo pipefail
           grep -Fxq '.github/*' .dockerignore
           grep -Fxq '!.github/workflows/' .dockerignore
           grep -Fxq '.github/workflows/*' .dockerignore
           grep -Fxq '!.github/workflows/google-marketing-protected-change.yml' .dockerignore
-
-      - name: Verify protected invariants
-        run: npx tsx scripts/security/verifyGoogleMarketingInvariants.ts
-
-      - name: Test CSP policy and consent runtime
-        run: npx vitest run tests/unit/securityResponse.test.ts tests/unit/googleMarketingConsent.test.ts
-
-      - name: Type check
-        run: npm run lint
-
-      - name: Production build
-        run: npm run build
-
-      - name: Test built SPA CSP delivery path
-        env:
-          NODE_ENV: production
-          CSP_MODE: report-only
-        run: npx vitest run tests/unit/securityResponse.production.test.ts
+          grep -Fq 'verifyGoogleMarketingInvariants.ts' package.json
+          grep -Fq 'tests/unit/securityResponse.production.test.ts' .github/workflows/ci.yml
+          grep -Fq 'npm run predeploy:check' .github/workflows/ci.yml

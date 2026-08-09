@@ -25,7 +25,7 @@ jobs:
       - name: Quellcode ohne persistierte Zugangsdaten auschecken
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          fetch-depth: 1
+          fetch-depth: 2
           persist-credentials: false
 
       - name: Node.js einrichten
@@ -55,13 +55,59 @@ jobs:
       - name: Produktions-Build erstellen
         run: npm run build
 
+      - name: Gebauten CSP-Auslieferungspfad prüfen
+        env:
+          NODE_ENV: production
+          CSP_MODE: report-only
+        run: npx vitest run tests/unit/securityResponse.production.test.ts
+
       - name: Deployment-Bereitschaft prüfen (H7)
         run: npm run predeploy:check
 
+      - name: Docker-Relevanz für diesen Lauf bestimmen
+        id: docker-scope
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "push" ]; then
+            echo "required=true" >> "$GITHUB_OUTPUT"
+            echo "main-Push: Docker-Build ist vor Production-Deploy verpflichtend."
+            exit 0
+          fi
+
+          # actions/checkout checks out GitHub's PR merge commit. With fetch-depth: 2,
+          # both parents are available locally: parent 1 = main base, parent 2 = PR head.
+          # This avoids any authenticated follow-up fetch while persist-credentials=false.
+          base_sha="$(git rev-parse HEAD^1)"
+          head_sha="$(git rev-parse HEAD^2)"
+          changed_files="$(git diff --name-only "$base_sha" "$head_sha")"
+          printf '%s\n' "$changed_files"
+
+          required=false
+          while IFS= read -r file; do
+            case "$file" in
+              Dockerfile|.dockerignore|package.json|package-lock.json|server.ts|server/*|render.yaml|render.yml|scripts/security/*Docker*|scripts/security/*docker*|scripts/security/*Runtime*|scripts/security/*runtime*|.github/workflows/ci.yml|.github/workflows/*render*)
+                required=true
+                break
+                ;;
+            esac
+          done <<< "$changed_files"
+
+          echo "required=$required" >> "$GITHUB_OUTPUT"
+          if [ "$required" = "true" ]; then
+            echo "Docker-/Runtime-/Dependency-/Deployment-relevante Änderung erkannt."
+          else
+            echo "Kein Docker-relevanter PR-Scope; teurer Image-Build wird gemäß Budgetrichtlinie übersprungen."
+          fi
+
       - name: Produktions-Docker-Image bauen
+        if: steps.docker-scope.outputs.required == 'true'
         run: docker build --tag capital-ai-ci:${{ github.sha }} .
 
       - name: Laufzeit-Metadaten des Images prüfen
+        if: steps.docker-scope.outputs.required == 'true'
         run: |
           test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{.Config.User}}')" = "capitalai"
           test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
