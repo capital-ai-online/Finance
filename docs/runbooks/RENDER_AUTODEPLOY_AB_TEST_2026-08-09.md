@@ -50,7 +50,7 @@ This makes permanent `Render: On Commit` unsuitable as the production gate becau
 
 ## Selected free-plan production architecture
 
-ADR-0046 therefore replaces both Render `checksPass` and permanent `On Commit` with an explicit GitHub Actions deployment gate:
+ADR-0047 replaces both Render `checksPass` and permanent `On Commit` with an explicit GitHub Actions deployment gate:
 
 `main update → GitHub build-and-test → success → deploy-production → Render Deploy Hook → exact verified SHA`
 
@@ -65,9 +65,9 @@ Required operational state:
 
 ## Transition controls
 
-Until the deploy-hook secret is configured and Render Auto-Deploy is Off, PR #144 remains a Draft and MUST NOT be merged.
+PR #144 was merged on 2026-08-09 after the operational transition. The deployment decision was initially recorded under the colliding identifier `ADR-0046`; this was corrected retrospectively to `ADR-0047` without changing the deployment architecture.
 
-After the transition is complete, validate a documentation-only `main` update and confirm:
+Validate the resulting production path and confirm:
 
 1. pull-request CI does not deploy;
 2. successful push CI invokes `Deploy verified commit to Render`;
