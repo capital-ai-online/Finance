@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldAlert, Mail, User, Lock, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, X } from 'lucide-react';
 import { CapitalAiLogo } from './CapitalAiLogo';
-import { LandingBinanceQuickAnalysis } from './LandingBinanceQuickAnalysis';
 import { SecurityRadarBadge } from './SecurityRadarBadge';
 import { supabase } from '../supabaseClient';
 
@@ -210,11 +209,6 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
             <CapitalAiLogo size={120} showText={true} />
             <p className="text-white/40 font-mono text-[9px] uppercase tracking-wider mt-3">Smarter Tools. Better Systems.</p>
           </div>
-
-          <section aria-labelledby="landing-quick-analysis-title" className="mb-6">
-            <h2 id="landing-quick-analysis-title" className="sr-only">Öffentliche Binance AI Kurzanalyse</h2>
-            <LandingBinanceQuickAnalysis />
-          </section>
 
           {justLoggedOut && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center justify-center gap-2 font-mono">
