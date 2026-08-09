@@ -38,6 +38,7 @@ export const PROMPT_REGISTRY: Record<string, PromptRegistryEntry> = {
   'raw-materials-classification': { id: 'raw-materials-classification', module: 'src/agents/classificationAgent.ts', description: 'Klassifiziert einen Rohstoffnamen (Hauptklasse/Unterklasse/Markttyp/Bewertungsmodus).', version: '1.0.0' },
   'raw-materials-fundamentals': { id: 'raw-materials-fundamentals', module: 'src/agents/fundamentalsAgent.ts', description: 'Fundamentalanalyse eines Rohstoffs (Angebot/Nachfrage).', version: '1.0.0' },
   'raw-materials-risk': { id: 'raw-materials-risk', module: 'src/agents/riskAgent.ts', description: 'Risikoanalyse eines Rohstoffs (geopolitisch/Lieferkette).', version: '1.0.0' },
+  'score-explainability': { id: 'score-explainability', module: 'src/agents/scoreExplainabilityAgent.ts', description: 'Erklaert einen persistierten Score-Snapshot anhand zitierter score_snapshots-Historie (ESS-0017 Phase 1, read-only).', version: '1.0.0' },
   'raw-materials-valuation': { id: 'raw-materials-valuation', module: 'src/agents/valuationAgent.ts', description: 'Bewertungsmodell/Preiskorridor eines Rohstoffs.', version: '1.0.0' },
   'crypto-classification': { id: 'crypto-classification', module: 'src/agents/cryptoClassificationAgent.ts', description: 'Klassifiziert ein Krypto-Asset (Kategorie/Tier).', version: '1.0.0' },
   'crypto-sentiment': { id: 'crypto-sentiment', module: 'src/agents/cryptoSentimentAgent.ts', description: 'Sentiment-/Narrativ-Analyse eines Krypto-Assets.', version: '1.0.0' },

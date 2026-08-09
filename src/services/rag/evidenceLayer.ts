@@ -81,6 +81,38 @@ export function evaluateTemporalValidity(indexGeneratedAt: string | undefined, p
   return nowMs - generatedMs <= policy.maxAgeMs ? 'CURRENT' : 'STALE';
 }
 
+/**
+ * Shared quality-verdict computation, extracted so vector-chunk evidence
+ * (buildRagEvidenceBundle) and database-row evidence (buildRowEvidenceBundle) apply the same
+ * auditable, fail-closed thresholds instead of two divergent copies.
+ */
+function evaluateRetrievalQuality(evidence: RagEvidenceItem[]): RagRetrievalEvaluation {
+  const scores = evidence.map(item => item.similarity);
+  const currentEvidenceCount = evidence.filter(item => item.temporalStatus === 'CURRENT').length;
+  const staleEvidenceCount = evidence.filter(item => item.temporalStatus === 'STALE').length;
+  const citationRequired = evidence.filter(item => item.sourcePolicy.citationRequired).length;
+  const citationCoverage = evidence.length === 0 ? 0 : citationRequired / evidence.length;
+  const topScore = scores.length ? Math.max(...scores) : null;
+  const meanScore = scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : null;
+
+  let quality: RagRetrievalEvaluation['quality'] = 'NO_EVIDENCE';
+  if (evidence.length > 0) {
+    if ((topScore ?? 0) >= 0.75 && staleEvidenceCount === 0 && currentEvidenceCount > 0) quality = 'HIGH';
+    else if ((topScore ?? 0) >= 0.6 && staleEvidenceCount < evidence.length) quality = 'MEDIUM';
+    else quality = 'LOW';
+  }
+
+  return {
+    resultCount: evidence.length,
+    topScore,
+    meanScore: meanScore === null ? null : Number(meanScore.toFixed(6)),
+    currentEvidenceCount,
+    staleEvidenceCount,
+    citationCoverage: Number(citationCoverage.toFixed(4)),
+    quality,
+  };
+}
+
 export function buildRagEvidenceBundle(input: {
   retrievalId: string;
   query: string;
@@ -109,21 +141,6 @@ export function buildRagEvidenceBundle(input: {
     } satisfies RagEvidenceItem;
   });
 
-  const scores = evidence.map(item => item.similarity);
-  const currentEvidenceCount = evidence.filter(item => item.temporalStatus === 'CURRENT').length;
-  const staleEvidenceCount = evidence.filter(item => item.temporalStatus === 'STALE').length;
-  const citationRequired = evidence.filter(item => item.sourcePolicy.citationRequired).length;
-  const citationCoverage = evidence.length === 0 ? 0 : citationRequired / evidence.length;
-  const topScore = scores.length ? Math.max(...scores) : null;
-  const meanScore = scores.length ? scores.reduce((sum, value) => sum + value, 0) / scores.length : null;
-
-  let quality: RagRetrievalEvaluation['quality'] = 'NO_EVIDENCE';
-  if (evidence.length > 0) {
-    if ((topScore ?? 0) >= 0.75 && staleEvidenceCount === 0 && currentEvidenceCount > 0) quality = 'HIGH';
-    else if ((topScore ?? 0) >= 0.6 && staleEvidenceCount < evidence.length) quality = 'MEDIUM';
-    else quality = 'LOW';
-  }
-
   return {
     attribution: {
       retrievalId: input.retrievalId,
@@ -137,14 +154,60 @@ export function buildRagEvidenceBundle(input: {
       model: input.model,
     },
     evidence,
-    evaluation: {
-      resultCount: evidence.length,
-      topScore,
-      meanScore: meanScore === null ? null : Number(meanScore.toFixed(6)),
-      currentEvidenceCount,
-      staleEvidenceCount,
-      citationCoverage: Number(citationCoverage.toFixed(4)),
-      quality,
+    evaluation: evaluateRetrievalQuality(evidence),
+  };
+}
+
+/**
+ * ESS-0017 Phase 1: evidence bundle for database-row evidence (e.g. score_snapshots rows) rather
+ * than vector-chunk retrieval. Each record is an exact, already-persisted fact - there is no
+ * fuzzy-match similarity score, so similarity is fixed at 1 and quality degrades only through
+ * staleness (evaluateTemporalValidity), reusing the same fail-closed verdict thresholds as
+ * buildRagEvidenceBundle via evaluateRetrievalQuality.
+ */
+export interface RowEvidenceRecord {
+  id: string;
+  sourcePath: string;
+  heading: string;
+  sourcePolicy: RagSourcePolicy;
+  /** ISO timestamp the underlying row represents (e.g. snapshot_date), used for staleness. */
+  recordedAt: string;
+}
+
+export function buildRowEvidenceBundle(input: {
+  retrievalId: string;
+  query: string;
+  records: RowEvidenceRecord[];
+  retrievedAt?: string;
+  promptId?: string;
+  promptVersion?: string;
+  modelProvider?: string;
+  model?: string;
+  nowMs?: number;
+}): RagEvidenceBundle {
+  const retrievedAt = input.retrievedAt ?? new Date(input.nowMs ?? Date.now()).toISOString();
+  const nowMs = input.nowMs ?? Date.parse(retrievedAt);
+  const evidence = input.records.map(record => ({
+    evidenceId: `row:${input.retrievalId}:${record.id}`,
+    chunkId: record.id,
+    sourcePath: record.sourcePath,
+    heading: record.heading,
+    similarity: 1,
+    sourcePolicy: record.sourcePolicy,
+    temporalStatus: evaluateTemporalValidity(record.recordedAt, record.sourcePolicy, nowMs),
+  } satisfies RagEvidenceItem));
+
+  return {
+    attribution: {
+      retrievalId: input.retrievalId,
+      query: input.query,
+      retrievedAt,
+      promptId: input.promptId,
+      promptVersion: input.promptVersion,
+      modelProvider: input.modelProvider,
+      model: input.model,
     },
+    evidence,
+    evaluation: evaluateRetrievalQuality(evidence),
   };
 }

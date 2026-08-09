@@ -136,8 +136,8 @@ describe('aiUsageTracker', () => {
     }
   });
 
-  it('PROMPT_REGISTRY deckt alle 19 bekannten Aufrufstellen einschliesslich Binance Landing und Enterprise-Scorer ab', () => {
-    expect(Object.keys(PROMPT_REGISTRY).length).toBe(19);
+  it('PROMPT_REGISTRY deckt alle 20 bekannten Aufrufstellen einschliesslich Binance Landing, Enterprise-Scorer und Score-Explainability ab', () => {
+    expect(Object.keys(PROMPT_REGISTRY).length).toBe(20);
     expect(PROMPT_REGISTRY['landing-binance-quick-analysis']).toMatchObject({
       id: 'landing-binance-quick-analysis',
       module: 'server/binanceLandingQuickAnalysis.ts (/api/ai/landing/quick-analysis)',
@@ -146,6 +146,12 @@ describe('aiUsageTracker', () => {
     expect(PROMPT_REGISTRY['enterprise-binance-quick-analysis']).toMatchObject({
       id: 'enterprise-binance-quick-analysis',
       module: 'server/binanceLandingQuickAnalysis.ts (/api/registry/assets/:symbol/quick-analysis)',
+      version: '1.0.0',
+    });
+    // ESS-0017 Phase 1: Score-Explainability-Agent (src/agents/scoreExplainabilityAgent.ts)
+    expect(PROMPT_REGISTRY['score-explainability']).toMatchObject({
+      id: 'score-explainability',
+      module: 'src/agents/scoreExplainabilityAgent.ts',
       version: '1.0.0',
     });
   });
