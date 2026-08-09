@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { VocabularyRegistry } from '../../src/platform/Vocabulary/Registry/VocabularyRegistry';
-import { seedVocabularyConcepts } from '../../src/platform/Vocabulary/Registry/seedConcepts';
+import { seedConcepts } from '../../src/platform/Vocabulary/Registry/seedConcepts';
 import { createBilingualDocumentPair, createDocumentReference } from '../../src/platform/Documentary/Documentation/BilingualDocumentaryProjection';
 
 function createRegistry(): VocabularyRegistry {
   const registry = new VocabularyRegistry();
-  registry.registerAll(seedVocabularyConcepts);
+  registry.registerAll(seedConcepts);
   return registry;
 }
 
 describe('BilingualDocumentaryProjection', () => {
   it('derives DE and EN from the same approved concept identity', () => {
-    const pair = createBilingualDocumentPair(createRegistry(), 'VOC-PRODUCT-0001');
+    const pair = createBilingualDocumentPair(createRegistry(), 'VOC-BILLING-0001');
 
     expect(pair.de.conceptId).toBe(pair.en.conceptId);
     expect(pair.de.canonicalCodeTerm).toBe(pair.en.canonicalCodeTerm);
@@ -21,7 +21,7 @@ describe('BilingualDocumentaryProjection', () => {
   });
 
   it('preserves language-neutral governance references', () => {
-    const pair = createBilingualDocumentPair(createRegistry(), 'VOC-PRODUCT-0001');
+    const pair = createBilingualDocumentPair(createRegistry(), 'VOC-BILLING-0001');
 
     expect(pair.de.essReferences).toEqual(pair.en.essReferences);
     expect(pair.de.adrReferences).toEqual(pair.en.adrReferences);
