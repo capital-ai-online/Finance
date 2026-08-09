@@ -13,7 +13,7 @@ import { SCORING_VERSIONS, ACTIVE_VERSION, findRawMaterialConfig } from '../conf
 export class RawMaterialsScoringService {
   /**
    * Calculates the raw material score payload based on active version.
-   * Logs events and handles missing data gracefully.
+   * Handles missing data gracefully without emitting per-score runtime logs.
    */
   public static scoreMaterial(input: RawMaterialInput, requestedVersion: string = ACTIVE_VERSION): AnalysisPayload {
     const configVersion = SCORING_VERSIONS[requestedVersion] || SCORING_VERSIONS[ACTIVE_VERSION];
@@ -202,9 +202,6 @@ export class RawMaterialsScoringService {
         data_quality: Number((1 - missingCount / totalPossibleFields).toFixed(2))
       }
     };
-
-    // Logging simulation in accordance with CAPITAL-AI directives
-    console.log(`[CAPITAL-AI Scoring Engine] Evaluated ${merged.name} (Score: ${final_score}, Level: ${dataQualityLevel}, Version: ${requestedVersion})`);
 
     return payload;
   }
