@@ -41,41 +41,36 @@ Implementiert durch PR #152:
 
 Exit-Kriterium erfüllt: DE und EN können nicht unabhängig semantisch auseinanderlaufen. PR #152 wurde erfolgreich deployed.
 
-### Phase 5 — Event-Driven Value Chain — IN PROGRESS
-```text
-Change/Event
-  -> Supervisor
-  -> Impact Analysis
-  -> Platform Director decision boundary
-  -> Vocabulary / Knowledge / Documentary / Traceability
-  -> Quality / Security / Compliance
-  -> Version Manager
-  -> Release validation
-```
+### Phase 5 — Event-Driven Value Chain — COMPLETE
+Phase 5 wurde durch PR #153 auf dem bestehenden Enterprise Event Mesh umgesetzt. Die Approval Bridge propagiert ausschließlich explizit `APPROVED` `PlatformDecisionRecord`-Instanzen als kanonisches `PlatformDecisionEvent`; andere Decision-Status werden fail-closed blockiert. Die `correlationId` bleibt erhalten, und es wurde keine zweite Event-Registry oder automatische Entscheidungslogik eingeführt.
 
-Vocabulary-/Documentary-Events werden ausschließlich über die bestehende Enterprise Event Mesh geführt. Handler müssen idempotent sein; Correlation und Causation werden durchgängig propagiert.
+Der Main-Commit `04c0e5957aca7025b07f55439e052cef8e070571` wurde in CI #656 vollständig verifiziert: TypeScript, Unit-Tests, Production Build, CSP, Deployment Readiness, Docker Build, Runtime-Metadaten und `Deployment verifiziert / Render-Produktion` waren erfolgreich.
 
-Aktueller Programmscope — Step 1 Approval Bridge:
-- `PlatformDirector` wird als Producer des bestehenden `PlatformDecisionEvent` registriert;
-- `SupervisorAlertEvent` ist vorgelagerter Input der Entscheidungsgrenze;
-- nur bereits explizit `APPROVED` `PlatformDecisionRecord`-Instanzen dürfen propagiert werden;
-- `REJECTED`, `DEFERRED` und `REVOKED` werden fail-closed blockiert;
-- `correlationId` ist verpflichtend und wird unverändert weitergegeben;
-- keine automatische Entscheidung oder Freigabe;
-- keine neuen Event-Namen und keine zweite Event-Registry.
+### Phase 6 — Incremental Existing-Code Migration — IN PROGRESS
+Phase 6 beginnt bewusst mit einer read-only Inventarisierungs- und Evidence-Stufe.
 
-Nächste Schritte innerhalb Phase 5:
-1. Supervisor-Evidence und Impact Analysis an Decision-Prerequisites binden;
-2. Approved PlatformDecisionEvent an idempotente Downstream-Handler koppeln;
-3. Vocabulary, Knowledge, Documentary und Traceability über öffentliche Interfaces aktualisieren;
-4. Quality, Security und Compliance als Validierungsstufe ergänzen;
-5. Version Manager und Release erst nach erfolgreichen Gates auslösen;
-6. Correlation/Causation und Replay-Sicherheit über die komplette Kette nachweisen.
+#### Phase 6.0 — Naming Debt Inventory
+- maschinenlesbare Quelle: `docs/governance/vocabulary/rename-candidates.json`;
+- jeder Kandidat besitzt stabile `REN-*`-ID, aktuellen Begriff, freigegebenen kanonischen Zielbegriff, Vocabulary Concept-ID, Priorität, Begründung und beobachtete Repository-Flächen;
+- `migrationPolicy` ist in Phase 6.0/6.1 zwingend `CLASSIFY_ONLY`;
+- keine aktive Codeänderung.
 
-Exit-Kriterium: Relevante Lifecycle-Ereignisse lösen deterministische Folgeaktionen aus, ohne Human-Approval-, Protected-Change- oder CI-Kostengrenzen zu umgehen.
+#### Phase 6.1 — Rename Classification
+- `scripts/automation/classifyRenameCandidates.ts` delegiert jeden Kandidaten an den bestehenden Phase-3-Analyzer `analyzeRenameImpact`;
+- Ergebnis bleibt `SAFE`, `CONDITIONAL` oder `BLOCKED`;
+- `BLOCKED` ist gültige Evidence und kein Fehler des Inventarisierungslaufs;
+- nur ein ungültiger Inventory-Contract stoppt fail-closed.
 
-### Phase 6 — Incremental Existing-Code Migration
-Bestehende inkonsistente technische Namen werden inventarisiert und nach Blast Radius priorisiert. Nur `SAFE`-Renames dürfen automatisiert vorbereitet werden; `CONDITIONAL` und `BLOCKED` werden als Evidence eskaliert. Keine Big-Bang-Renaming-Migration.
+Initiale Kandidaten:
+1. `REN-0001`: `Plan -> SubscriptionTier` (`VOC-BILLING-0002`), aufgrund von Billing-/Stripe-/Entitlement-Flächen kein Blind-Rename.
+2. `REN-0002`: `Screener -> Screening` (`VOC-ANALYTICS-0001`), aufgrund breiter Frontend-/Produkt-/Dokumentationsreferenzen kein Blind-Rename.
+
+Nächste Schritte:
+1. CI für den Phase-6.0/6.1-Draft verifizieren;
+2. Classification Evidence der Kandidaten auswerten;
+3. nur einen eindeutig `SAFE` Kandidaten für Phase 6.2 auswählen;
+4. `CONDITIONAL` und `BLOCKED` als Evidence-Backlog führen;
+5. keine Big-Bang-Renaming-Migration.
 
 ### Phase 7 — Continuous Governance
 Repository-Validator, CI, Documentary, Knowledge und Traceability werden terminologiebewusst verbunden. Neue Concepts und relevante Lifecycle-Ereignisse werden deterministisch verarbeitet, ohne Human-Approval-Gates oder die zentrale CI-Kostenrichtlinie zu umgehen.
@@ -91,9 +86,9 @@ Naming, wording, documentation, traceability and governance operate as one event
 1.5. Authority and namespace reconciliation — complete.  
 2. Canonical Vocabulary Registry — complete through PR #145.  
 3. Safe Rename Gate — complete through PR #151 and verified main CI #649.  
-4. Bilingual Documentary Integration — complete through PR #152 and successful deployment. DE/EN projections derive from the same approved Vocabulary Concept identity.  
-5. Event-Driven Value Chain — in progress. Step 1 introduces a fail-closed approval bridge that propagates only explicit APPROVED Platform Director decisions through the existing Enterprise Event Mesh while preserving correlation IDs.  
-6. Incremental Existing-Code Migration — migrate only evidence-classified SAFE names.  
+4. Bilingual Documentary Integration — complete through PR #152 and successful deployment.  
+5. Event-Driven Value Chain — complete through PR #153 and verified main CI #656 / Render deployment of commit `04c0e5957aca7025b07f55439e052cef8e070571`.  
+6. Incremental Existing-Code Migration — in progress. Phase 6.0/6.1 inventories naming debt and classifies every candidate through the existing Phase 3 analyzer without mutating source code.  
 7. Continuous Governance — enforce terminology and lifecycle consistency while preserving human approvals and CI cost limits.
 
 ### Success criteria
