@@ -3,62 +3,45 @@
 Status: IMPLEMENTATION COMPLETE — DRAFT REVIEW PENDING  
 Date: 2026-08-10  
 Authority: ESS-0017 / ESS-0017-CONTRACTS  
-Verified foundation: PR #154 / `77cf6ed3143dc39120c55f7c767d4a758bc9735d` / main CI #658  
+Verified foundation: PR #154 / `77cf6ed3143dc39120c55f7c767d4a758bc9735d` / main CI #658
 
 ## Deutsch
 
 ### Ziel und Ergebnis
+Phase 6 migriert Naming-Schulden ausschließlich bei nachgewiesenem `SAFE`. Die vollständige Auswertung des aktuellen Inventars ergibt **0 SAFE-Kandidaten**. Daher wurde kein aktiver Code-Rename durchgeführt.
 
-Phase 6 migriert bestehende Naming-Schulden ausschließlich dann, wenn der Phase-3-Analyzer einen Kandidaten nachweislich als `SAFE` klassifiziert. Die vollständige Phase-6-Auswertung ergab für das aktuelle Inventar **0 SAFE-Kandidaten**. Deshalb wurde bewusst kein aktiver Code-Rename durchgeführt. Das ist ein gültiger fail-closed Abschluss und verhindert eine erzwungene Migration über Runtime-, Billing- oder Contract-Grenzen.
+### 6.0 Naming Debt Inventory — COMPLETE
+PR #154 etablierte `rename-candidates.json` mit stabilen `REN-*`-IDs, Vocabulary Concept-IDs, kanonischen Zielbegriffen und `CLASSIFY_ONLY`.
 
-### Phase 6.0 — Naming Debt Inventory — COMPLETE
+### 6.1 Evidence Classification — COMPLETE
+Die materialisierte Evidence liegt in `docs/governance/vocabulary/rename-classification-evidence.json` und wird gegen den Live-Analyzer regressionsgeprüft.
 
-PR #154 führte `docs/governance/vocabulary/rename-candidates.json` mit stabilen `REN-*`-IDs, Vocabulary Concept-IDs, kanonischen Zielbegriffen, Priorität, Begründung und beobachteten Repository-Flächen ein. Die Policy bleibt `CLASSIFY_ONLY`.
+- `REN-0001 — Plan -> SubscriptionTier`: `CONDITIONAL`. Exakte `Plan`-Referenzen liegen in Billing-/Entitlement-Runtime-Flächen. Ein dependency-aware Migrationsplan ist erforderlich.
+- `REN-0002 — Screener -> Screening`: `CONDITIONAL`. Exakte `Screener`-Referenzen liegen in Frontend-Runtime-Flächen. Ein dependency-aware Migrationsplan ist erforderlich.
 
-### Phase 6.1 — Evidence Classification — COMPLETE
+Wichtig: zusammengesetzte Identifier wie `PlanEntitlements` bzw. `ScreenerProps` sind beim exakten Source-Term-Matcher keine eigenständigen `Plan`-/`Screener`-Tokens. Die Live-Klassifikation ist deshalb `CONDITIONAL`, nicht `BLOCKED`.
 
-`scripts/automation/classifyRenameCandidates.ts` delegiert an den bestehenden Phase-3-Analyzer `analyzeRenameImpact`. Die materialisierte Evidence liegt in `docs/governance/vocabulary/rename-classification-evidence.json` und wird durch Tests gegen den Live-Analyzer validiert.
+### 6.2 SAFE Migration Batch — COMPLETE, NO-OP
+`safeMigrationCount = 0`. Ohne SAFE-Kandidat ist keine Rename-Mutation zulässig. Der No-op ist der korrekte fail-closed Abschluss.
 
-Ergebnis:
-- `REN-0001 — Plan -> SubscriptionTier`: `BLOCKED`. `Plan` ist Bestandteil von Billing-/Entitlement-Contracts; insbesondere existiert `PlanEntitlements` als TypeScript-Interface.
-- `REN-0002 — Screener -> Screening`: `BLOCKED`. `Screener` ist Bestandteil eines Frontend-Runtime-Contracts; insbesondere existiert `ScreenerProps` und der exportierte React-Component-Name `Screener`.
+### 6.3 Dependency Validation — FINAL DRAFT GATE
+PR #154 / main CI #658 ist vollständig verifiziert, einschließlich Docker und Render. Der Abschluss-Draft muss TypeScript, Tests, Build, Manifest-Integrität und Deployment Readiness bestehen.
 
-### Phase 6.2 — SAFE Migration Batch — COMPLETE, NO-OP
+### 6.4 Vocabulary / Documentary / Traceability Synchronisation — COMPLETE
+Alle Kandidaten bleiben an freigegebene Vocabulary Concept-IDs gebunden. Da keine Mutation ausgeführt wurde, entstehen keine neuen Documentary-/Traceability-Identitäten und keine DE/EN-Drift.
 
-`safeMigrationCount` ist `0`. Daher ist keine automatische oder manuell vorbereitete Rename-Mutation zulässig. Phase 6.2 ist als kontrollierter No-op abgeschlossen. Ein künstlicher Rename nur zum Erzeugen einer Änderung würde die Governance verletzen.
-
-### Phase 6.3 — Dependency Validation — COMPLETE FOR FOUNDATION; FINAL DRAFT GATE REQUIRED
-
-Main CI #658 für die gemergte Phase-6.0/6.1-Basis war vollständig grün, einschließlich TypeScript, Tests, Production Build, CSP, Deployment Readiness, Docker Build, Runtime-Metadaten und Render Production Deploy. Der Abschluss-Draft muss dieselben regulären PR-Gates bestehen; es wird kein zusätzlicher Vollworkflow eingeführt.
-
-### Phase 6.4 — Vocabulary / Documentary / Traceability Synchronisation — COMPLETE
-
-Jeder Kandidat bleibt an eine freigegebene Vocabulary Concept-ID und den kanonischen Zielbegriff gebunden. Da kein Rename ausgeführt wurde, entstehen keine neuen Documentary- oder Traceability-Identitäten und keine DE/EN-Drift. Die bestehenden Aliase bleiben Such-/Migrationshinweise; sie werden nicht zu neuen technischen Authorities.
-
-### Phase 6.5 — Conditional / Blocked Backlog — COMPLETE
-
-`docs/governance/vocabulary/rename-backlog.json` ist die geschützte Übergabe für nicht sichere Kandidaten. Beide aktuellen Einträge sind `BLOCKED`, `DEFERRED`, `automaticMigrationAllowed: false` und benötigen vor einer späteren Migration eine explizite, scopegebundene Architektur-/Governance-Entscheidung.
+### 6.5 Conditional / Blocked Backlog — COMPLETE
+`docs/governance/vocabulary/rename-backlog.json` enthält alle nicht sicheren Kandidaten. Die aktuellen Einträge sind `CONDITIONAL`, `DEFERRED` und `automaticMigrationAllowed: false`; eine spätere Migration benötigt explizite scopegebundene Freigabe und Dependency-Evidence.
 
 ### Exit-Kriterien
-
-- [x] Maschinenlesbares Naming-Debt-Inventar vorhanden.
-- [x] Alle inventarisierten Kandidaten durch den bestehenden Analyzer klassifiziert.
-- [x] Materialisierte Evidence wird gegen den Live-Analyzer regressionsgeprüft.
-- [x] Nur `SAFE` wäre migrationsfähig; aktuell existieren 0 SAFE-Kandidaten.
-- [x] Keine unzulässige Code-, API-, Schema-, ENV- oder Event-Mutation durchgeführt.
-- [x] Alle `BLOCKED` Kandidaten im geschützten Backlog erfasst.
-- [x] Vocabulary-, Documentary- und Traceability-Identitäten bleiben konsistent.
+- [x] Inventory vollständig und maschinenlesbar.
+- [x] Alle Kandidaten durch den bestehenden Phase-3-Analyzer klassifiziert.
+- [x] Evidence wird gegen den Live-Analyzer regressionsgeprüft.
+- [x] 0 SAFE-Kandidaten dokumentiert; keine unzulässige Mutation.
+- [x] Alle CONDITIONAL/BLOCKED-Kandidaten im geschützten Backlog.
+- [x] Vocabulary/Documentary/Traceability bleiben konsistent.
 - [ ] Finaler Draft-PR-CI-Lauf erfolgreich.
 - [ ] Merge und anschließender main-CI-/Render-Gate erfolgreich.
 
 ## English
-
-### Result
-
-Phase 6 is implemented as an evidence-first, fail-closed migration stage. The current inventory contains zero `SAFE` candidates, so no code rename is permitted or performed.
-
-`REN-0001` (`Plan -> SubscriptionTier`) is `BLOCKED` because the source term participates in billing/entitlement contracts, including the `PlanEntitlements` interface. `REN-0002` (`Screener -> Screening`) is `BLOCKED` because it participates in frontend runtime contracts, including `ScreenerProps` and the exported React component.
-
-The materialized evidence is stored in `docs/governance/vocabulary/rename-classification-evidence.json`; non-safe work is retained in `docs/governance/vocabulary/rename-backlog.json`. Regression tests compare stored classifications and mandatory finding codes with the live Phase-3 analyzer so evidence cannot silently drift.
-
-Phase 6.2 is therefore a controlled no-op: zero SAFE candidates means zero rename mutations. Phase 6 is complete in the draft implementation once the final PR CI passes; merge and verified main deployment remain the production completion gates.
+Phase 6 is evidence-first and fail-closed. The current inventory contains zero SAFE candidates, so no code rename is permitted or performed. `REN-0001` and `REN-0002` are both `CONDITIONAL` because exact source-term references occur in runtime surfaces and require dependency-aware migrations. Stored evidence and mandatory finding codes are regression-checked against the live Phase-3 analyzer. Production completion requires successful draft CI, merge, and verified main deployment.

@@ -6,18 +6,18 @@
   "items": [
     {
       "id": "REN-0001",
-      "classification": "BLOCKED",
+      "classification": "CONDITIONAL",
       "status": "DEFERRED",
-      "requiredNextDecision": "Dedicated billing-contract migration approval",
-      "protectedSurfaces": ["billing", "stripe", "entitlements", "checkout", "runtime-contracts"],
+      "requiredNextDecision": "Dedicated billing/runtime dependency migration approval",
+      "protectedSurfaces": ["billing", "stripe", "entitlements", "checkout", "runtime"],
       "automaticMigrationAllowed": false
     },
     {
       "id": "REN-0002",
-      "classification": "BLOCKED",
+      "classification": "CONDITIONAL",
       "status": "DEFERRED",
-      "requiredNextDecision": "Dedicated frontend-component migration approval",
-      "protectedSurfaces": ["frontend-components", "imports-exports", "runtime-contracts", "product-wording"],
+      "requiredNextDecision": "Dedicated frontend runtime dependency migration approval",
+      "protectedSurfaces": ["frontend-components", "imports-exports", "runtime", "product-wording"],
       "automaticMigrationAllowed": false
     }
   ]
