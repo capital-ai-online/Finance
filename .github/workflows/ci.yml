@@ -15,7 +15,7 @@ concurrency:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout without persisted credentials
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -32,14 +32,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # External SCA/CVE gate backed by the npm advisory service. This complements the local
-      # CycloneDX/SBOM + lockfile policy in predeploy:check; it is intentionally fail-closed for
-      # HIGH/CRITICAL findings in production dependencies and does not silently suppress findings.
       - name: Production dependency vulnerability gate (npm audit)
         run: npm audit --omit=dev --audit-level=high
 
       - name: Verify production configuration invariants
         run: npx tsx scripts/security/verifyProductionConfigInvariants.ts
+
+      - name: Docker hardening policy gate
+        run: node scripts/security/verifyDockerHardening.mjs
 
       - name: Typecheck (tsc --noEmit)
         run: npm run lint
@@ -52,6 +52,15 @@ jobs:
 
       - name: Deployment-Readiness-Pruefung (H7)
         run: npm run predeploy:check
+
+      - name: Build production Docker image
+        run: docker build --tag capital-ai-ci:${{ github.sha }} .
+
+      - name: Verify runtime image metadata
+        run: |
+          test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{.Config.User}}')" = "capitalai"
+          test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
+          docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
 
   deploy-production:
     name: Deploy verified commit to Render
