@@ -1,6 +1,6 @@
 # CAPITAL-AI Vocabulary Governance — Phase 1.5 Baseline
 
-Status: In Progress  
+Status: Completed  
 Datum / Date: 2026-08-09  
 Authority: ESS-0001-CONTRACTS  
 Scope: ESS namespace reconciliation and documentation baseline before Phase 2
@@ -17,19 +17,22 @@ Phase 1.5 stellt vor der Implementierung der Canonical Vocabulary Registry einen
 2. Die verbindliche `.ai/registry/ess-registry.json` führt `ESS-0012` eindeutig als **Documentation Governance** und `ESS-0012-CONTRACTS` als zugehörigen Contract-Teil.
 3. `.ai/skills/ESS-0012-Documentation-Governance.md` deklariert `skill.id: ESS-0012` und `ownContracts: ESS-0012-CONTRACTS`.
 4. `.ai/skills/ESS-0012-Contracts.md` definiert ausschließlich Documentation Governance Contracts.
-5. `ESS-0013`, `ESS-0014`, `ESS-0015` und `ESS-0016` sind bereits anderweitig belegt. Die Registry weist den freien Nummernraum ab `ESS-0017` aus.
-6. Die frühere Vocabulary-Roadmap referenzierte `ESS-0012`, `ADR-0044` und `ADR-0045`; diese IDs waren bereits belegt und wurden deshalb als Vocabulary-Authority verworfen.
-7. `ESS-0017-Vocabulary-Governance.md`, `ESS-0017-CONTRACTS` und `ADR-0046` sind auf dem Phase-1.5-Branch angelegt.
+5. `ESS-0013`, `ESS-0014`, `ESS-0015` und `ESS-0016` sind anderweitig belegt.
+6. Die frühere Vocabulary-Roadmap referenzierte `ESS-0012`, `ADR-0044` und `ADR-0045` als Vocabulary-Authorities; diese Zuordnung wurde verworfen, weil die IDs bereits belegt sind.
+7. `ESS-0017-Vocabulary-Governance.md`, `ESS-0017-CONTRACTS` und `ADR-0046` sind angelegt.
 8. Die Vocabulary-Roadmap ist auf die eindeutigen Authorities `ESS-0017`, `ESS-0017-CONTRACTS` und `ADR-0046` umgestellt.
+9. Die ESS Registry führt `ESS-0017` und `ESS-0017-CONTRACTS` und setzt den nächsten freien Nummernraum auf `ESS-0018`.
+10. Die Cross-Reference-Prüfung unterscheidet zwischen zulässiger Abhängigkeit zu `ESS-0012` (Documentation Governance) und unzulässiger Verwendung von `ESS-0012` als Vocabulary-Authority.
 
 ### Entscheidung für Phase 1.5
 
-- `ESS-0012` bleibt unverändert **Documentation Governance**. Bestehende Dokumente, Contracts, Validatoren und Implementierungspfade werden nicht umnummeriert.
+- `ESS-0012` bleibt unverändert **Documentation Governance**.
 - Vocabulary Governance verwendet `ESS-0017`.
-- Die zugehörigen Vocabulary Contracts verwenden `ESS-0017-CONTRACTS`; dieser Contract-Teil belegt analog zu bestehenden `*-CONTRACTS`-Dokumenten keine zusätzliche ESS-Nummer.
+- Die zugehörigen Vocabulary Contracts verwenden `ESS-0017-CONTRACTS`; dieser Contract-Teil belegt keine zusätzliche ESS-Nummer.
 - `ADR-0046` definiert die Trennung der Documentation- und Vocabulary-Authorities sowie die Nummernraumkorrektur.
-- Bis `ESS-0017` und `ESS-0017-CONTRACTS` in der kanonischen `.ai/registry/ess-registry.json` registriert sind, bleibt Phase 2 **BLOCKED** für Runtime-Implementierung und aktive Renames.
-- Dokumentations- und Inventarisierungsarbeiten dürfen fortgeführt werden, sofern sie keine bestehende Authority semantisch überschreiben.
+- `ESS-0012`/`ESS-0012-CONTRACTS` dürfen im Vocabulary-Scope nur als Documentation-Governance-Abhängigkeit oder Related Authority referenziert werden.
+- `ADR-0044` und `ADR-0045` dürfen nicht als Vocabulary-Entscheidungen verwendet werden; historische Hinweise auf die frühere Fehlzuordnung bleiben als Korrektur-Evidence zulässig.
+- Phase 2 darf nach Merge dieser Phase auf der eindeutigen Authority-Baseline beginnen.
 
 ### Integrationsgrenzen
 
@@ -47,12 +50,25 @@ ESS-0001-CONTRACTS
 
 `ESS-0012` validiert Dokumentations-Governance. `ESS-0017` definiert Terminologie, Naming und Vocabulary-spezifische Regeln. Globale Enterprise Contracts verbleiben in `ESS-0001-CONTRACTS`.
 
+### Cross-Reference-Prüfung
+
+Geprüft wurden die Phase-1.5-Dokumente, die Registry und repository-weite Suchtreffer für die früher kollidierenden IDs.
+
+Ergebnis:
+
+- `ESS-0017` ist die einzige neue Vocabulary-ESS im Phase-1.5-Scope.
+- `ESS-0017-CONTRACTS` ist eindeutig `ESS-0017` zugeordnet.
+- `ESS-0012` bleibt Documentation Governance und wird in ESS-0017 ausschließlich als Abhängigkeit/Related Authority referenziert.
+- Für `ADR-0044 + Vocabulary` und `ADR-0045 + Vocabulary` bestehen keine aktiven repository-weiten Treffer als Vocabulary-Authority.
+- Vorkommen von `ADR-0044`, `ADR-0045` oder der früheren `ESS-0012`-Vocabulary-Zuordnung innerhalb ADR-0046, Roadmap und Baseline sind ausschließlich historische Korrekturhinweise.
+- Die Phase-1.5-Diffs führen keine alternative Vocabulary-Authority ein.
+
 ### Schutzregeln
 
 - Code bleibt Englisch.
 - Enterprise-Dokumentation wird Deutsch und Englisch geführt.
 - Menschlich sichtbare Pull-Request-Informationen bleiben Deutsch.
-- Kein aktiver Rename ohne späteren Safe Rename Gate.
+- Kein aktiver Rename ohne Safe Rename Gate.
 - Keine Änderung von Import-/Export-Namen, API-Routen, Schemas, Environment Keys oder Event-Namen in Phase 1.5.
 - Keine Big-Bang-Migration.
 - Keine parallele EventMesh-, Knowledge- oder Traceability-Infrastruktur.
@@ -68,8 +84,8 @@ ESS-0001-CONTRACTS
 - [x] ESS-0017-CONTRACTS angelegt.
 - [x] ADR-0046 angelegt.
 - [x] Roadmap auf ESS-0017 / ESS-0017-CONTRACTS / ADR-0046 aktualisiert.
-- [ ] ESS-0017 und ESS-0017-CONTRACTS in `.ai/registry/ess-registry.json` registriert und `freeNumberSpaceStartsAt` auf den nächsten freien Wert gesetzt.
-- [ ] Repository-weite Referenzprüfung bestätigt, dass keine Vocabulary-Authority mehr fälschlich ESS-0012, ADR-0044 oder ADR-0045 verwendet.
+- [x] ESS-0017 und ESS-0017-CONTRACTS in `.ai/registry/ess-registry.json` registriert; nächster freier Nummernraum `ESS-0018`.
+- [x] Cross-Reference-Prüfung bestätigt eine eindeutige Vocabulary-Authority unter ESS-0017/ADR-0046.
 
 ## English
 
@@ -77,9 +93,11 @@ ESS-0001-CONTRACTS
 
 Phase 1.5 establishes an unambiguous governance and namespace baseline before implementation of the Canonical Vocabulary Registry. It performs no active code renames and changes no runtime dependencies.
 
-### Current decision
+### Completed decision
 
-`ESS-0012` remains Documentation Governance. Vocabulary Governance is defined by `ESS-0017` with `ESS-0017-CONTRACTS`; `ADR-0046` records the authority and namespace decision. Runtime Phase 2 remains blocked until the canonical ESS Registry is updated and a repository-wide reference scan confirms that the superseded Vocabulary references are gone.
+`ESS-0012` remains Documentation Governance. Vocabulary Governance is defined by `ESS-0017` with `ESS-0017-CONTRACTS`; `ADR-0046` records the authority and namespace decision. The ESS Registry now allocates ESS-0017 to Vocabulary Governance and advances the next free number to ESS-0018.
+
+Cross-reference validation confirms that ESS-0012 references in Vocabulary artifacts are dependency references to Documentation Governance, not Vocabulary authority assignments. ADR-0044 and ADR-0045 are not used as active Vocabulary decisions.
 
 ### Safety boundary
 
