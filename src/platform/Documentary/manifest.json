@@ -1,28 +1,40 @@
 {
   "name": "Documentary",
   "version": "1.0.0",
-  "status": "unspecified",
+  "status": "development",
   "owner": "CAPITAL-AI",
-  "description": "Documentary Engine. Zentrale Dokumentationsinstanz des CAPITAL-AI Core gemaess ESS-0010 - Zielbeschreibung, nicht implementiert.",
+  "description": "Documentary-Komponente mit implementiertem bilingualem Contract-/Projection-Layer gemaess ESS-0010, ESS-0012 und ESS-0017. Die vollstaendige Documentary Engine ist weiterhin nicht implementiert.",
   "category": "platform",
   "ess": [
     "ESS-0001",
     "ESS-0001-CONTRACTS",
-    "ESS-0010"
+    "ESS-0010",
+    "ESS-0012",
+    "ESS-0017",
+    "ESS-0017-CONTRACTS"
   ],
-  "adr": [],
-  "dependencies": [],
+  "adr": [
+    "ADR-0046"
+  ],
+  "dependencies": [
+    "src/platform/Vocabulary"
+  ],
   "events": {
     "produces": [],
     "consumes": [],
-    "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): die zuvor hier genannten Events (DocumentationGeneratedEvent, DocumentationValidatedEvent, TwinSynchronizedEvent, RepositoryScannedEvent, VersionChangedEvent, ReleasePublishedEvent) sind reservierte Namen im Enterprise-Event-Katalog (ADR-0018), werden aber von keinem existierenden Code ausgeloest oder konsumiert, da diese Komponente nicht implementiert ist."
+    "note": "Phase 4 fuehrt keine neuen Event-Typen ein. Fehlende Uebersetzungen und Lifecycle-Folgeaktionen werden erst in Phase 5 ueber die bestehende Enterprise Event Mesh integriert."
   },
   "knowledge": [],
   "interfaces": [],
-  "contracts": [],
-  "documentation": [
-    "README.md"
+  "contracts": [
+    "Contracts/BilingualDocumentReference.ts"
   ],
-  "tests": [],
-  "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): als unspezifiziert markiert - description beschreibt eine Zielarchitektur gemaess ESS-0010, es existiert jedoch kein Code. Kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden."
+  "documentation": [
+    "README.md",
+    "../../../../docs/architecture/VOCABULARY_GOVERNANCE_PHASE_4_BILINGUAL_DOCUMENTARY.md"
+  ],
+  "tests": [
+    "../../../tests/unit/bilingualDocumentaryProjection.test.ts"
+  ],
+  "note": "Phase 4: Teilimplementierung. Implementiert sind ausschliesslich der bilinguale Documentary-Contract-Layer und die Vocabulary-basierte DE/EN-Projektion. Die vollstaendige Documentary Engine gemaess ESS-0010 bleibt ausstehend."
 }
