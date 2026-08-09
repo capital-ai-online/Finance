@@ -1,4 +1,8 @@
 name: CI
+run-name: >-
+  ${{ github.event_name == 'pull_request'
+      && format('PR #{0} – CI-Prüfung', github.event.pull_request.number)
+      || format('main – CI-Prüfung für {0}', github.sha) }}
 
 on:
   push:
@@ -14,59 +18,74 @@ concurrency:
 
 jobs:
   build-and-test:
+    name: Build und Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
-      - name: Checkout without persisted credentials
+      - name: Quellcode ohne persistierte Zugangsdaten auschecken
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Set up Node.js
+      - name: Node.js einrichten
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Abhängigkeiten installieren
         run: npm ci
 
-      # External SCA/CVE gate backed by the npm advisory service. This complements the local
-      # CycloneDX/SBOM + lockfile policy in predeploy:check; it is intentionally fail-closed for
-      # HIGH/CRITICAL findings in production dependencies and does not silently suppress findings.
-      - name: Production dependency vulnerability gate (npm audit)
+      - name: Produktionsabhängigkeiten auf Schwachstellen prüfen
         run: npm audit --omit=dev --audit-level=high
 
-      - name: Verify production configuration invariants
+      - name: Produktionskonfiguration prüfen
         run: npx tsx scripts/security/verifyProductionConfigInvariants.ts
 
-      - name: Typecheck (tsc --noEmit)
+      - name: Docker-Hardening-Richtlinie prüfen
+        run: node scripts/security/verifyDockerHardening.mjs
+
+      - name: TypeScript prüfen
         run: npm run lint
 
-      - name: Unit tests (Vitest)
+      - name: Unit-Tests ausführen
         run: npm test
 
-      - name: Production build (vite + esbuild)
+      - name: Produktions-Build erstellen
         run: npm run build
 
-      - name: Deployment-Readiness-Pruefung (H7)
+      - name: Deployment-Bereitschaft prüfen (H7)
         run: npm run predeploy:check
 
+      - name: Produktions-Docker-Image bauen
+        run: docker build --tag capital-ai-ci:${{ github.sha }} .
+
+      - name: Laufzeit-Metadaten des Images prüfen
+        run: |
+          test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{.Config.User}}')" = "capitalai"
+          test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
+          docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
+
   deploy-production:
-    name: Deploy verified commit to Render
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    name: Deployment verifiziert / Render-Produktion
     needs: [build-and-test]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Trigger Render deploy for exact verified commit
+      - name: Bestätigen, dass Pull Requests nicht produktiv deployen
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          echo "Die Pull-Request-CI ist erfolgreich. Ein Produktions-Deployment ist absichtlich deaktiviert, bis der verifizierte Commit nach main übernommen wurde."
+
+      - name: Render-Deployment für den exakt verifizierten Commit auslösen
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
           VERIFIED_COMMIT_SHA: ${{ github.sha }}
         run: |
           if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
-            echo "RENDER_DEPLOY_HOOK_URL is not configured" >&2
+            echo "RENDER_DEPLOY_HOOK_URL ist nicht konfiguriert" >&2
             exit 1
           fi
 
