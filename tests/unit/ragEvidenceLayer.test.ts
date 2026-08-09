@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildRagEvidenceBundle,
+  buildRowEvidenceBundle,
   evaluateTemporalValidity,
   getRagSourcePolicy,
+  type RagSourcePolicy,
 } from '../../src/services/rag/evidenceLayer';
 
 describe('Financial RAG evidence layer', () => {
@@ -79,6 +81,52 @@ describe('Financial RAG evidence layer', () => {
     const bundle = buildRagEvidenceBundle({ retrievalId: 'empty', query: 'x', chunks: [] });
     expect(bundle.evaluation.quality).toBe('NO_EVIDENCE');
     expect(bundle.evaluation.topScore).toBeNull();
+    expect(bundle.evidence).toEqual([]);
+  });
+});
+
+describe('Row evidence bundle (ESS-0017 Phase 1 - database-backed agent evidence)', () => {
+  const policy: RagSourcePolicy = {
+    sourceClass: 'financial-research',
+    authoritative: true,
+    maxAgeMs: 7 * 24 * 60 * 60 * 1000,
+    citationRequired: true,
+  };
+  const now = Date.UTC(2026, 7, 9);
+
+  it('cites database rows with fixed exact-match similarity and shares the RAG quality thresholds', () => {
+    const bundle = buildRowEvidenceBundle({
+      retrievalId: 'score:AAPL:1',
+      query: 'AAPL',
+      nowMs: now,
+      records: [
+        { id: 'AAPL:2026-08-08', sourcePath: 'supabase:score_snapshots', heading: 'AAPL @ 2026-08-08', sourcePolicy: policy, recordedAt: '2026-08-08T00:00:00.000Z' },
+        { id: 'AAPL:2026-08-07', sourcePath: 'supabase:score_snapshots', heading: 'AAPL @ 2026-08-07', sourcePolicy: policy, recordedAt: '2026-08-07T00:00:00.000Z' },
+      ],
+    });
+    expect(bundle.evidence).toHaveLength(2);
+    expect(bundle.evidence[0].similarity).toBe(1);
+    expect(bundle.evidence.every(item => item.temporalStatus === 'CURRENT')).toBe(true);
+    expect(bundle.evaluation.quality).toBe('HIGH');
+    expect(bundle.evaluation.resultCount).toBe(2);
+  });
+
+  it('degrades quality when the only stored row is stale, never inventing a fresher one', () => {
+    const bundle = buildRowEvidenceBundle({
+      retrievalId: 'score:ZZZZ:1',
+      query: 'ZZZZ',
+      nowMs: now,
+      records: [
+        { id: 'ZZZZ:2026-07-01', sourcePath: 'supabase:score_snapshots', heading: 'ZZZZ @ 2026-07-01', sourcePolicy: policy, recordedAt: '2026-07-01T00:00:00.000Z' },
+      ],
+    });
+    expect(bundle.evidence[0].temporalStatus).toBe('STALE');
+    expect(bundle.evaluation.quality).not.toBe('HIGH');
+  });
+
+  it('fails closed to NO_EVIDENCE rather than fabricating an explanation when no rows exist', () => {
+    const bundle = buildRowEvidenceBundle({ retrievalId: 'score:EMPTY:1', query: 'EMPTY', records: [] });
+    expect(bundle.evaluation.quality).toBe('NO_EVIDENCE');
     expect(bundle.evidence).toEqual([]);
   });
 });
