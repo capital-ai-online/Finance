@@ -28,33 +28,20 @@ Der read-only `validateRenameImpact`-Analyzer klassifiziert Rename-Vorschläge a
 
 Phase 3 wurde durch PR #151 gemerged. Der Main-Commit `a41c85bc24d4ada79bb9c47c5f01693bbcb2857e` wurde in CI #649 vollständig verifiziert: TypeScript, Tests, Production Build, CSP-Auslieferung, Deployment Readiness, Docker Build, Runtime-Metadaten und `Deployment verifiziert / Render-Produktion` waren erfolgreich.
 
-Exit-Kriterium erfüllt: Kein aktiver Rename kann den vorgelagerten Impact-Gate umgehen; technische Folgevalidierung und CI-Kostenrichtlinie bleiben erhalten.
-
-### Phase 4 — Bilingual Documentary Integration — IN PROGRESS
+### Phase 4 — Bilingual Documentary Integration — COMPLETE
 Authority: ESS-0010, ESS-0012, ESS-0017 / ESS-0017-CONTRACTS.
 
-Umsetzung erfolgt inkrementell, da die vollständige Documentary Engine aktuell noch nicht implementiert ist.
+Implementiert durch PR #152:
+- `BilingualDocumentReference` und `BilingualDocumentPair`;
+- DE/EN-Projektionen aus derselben `VocabularyConcept.id`;
+- identischer `canonicalCodeTerm` und identische ESS-/ADR-/Traceability-Referenzen;
+- fail-closed bei unbekannten, nicht freigegebenen oder unvollständig übersetzten Concepts;
+- Documentary-Manifest auf ehrlichen Teilimplementierungsstatus angehoben;
+- Contract-Tests und erfolgreiche CI-/Deploy-Validierung.
 
-Aktueller Programmscope:
-- `BilingualDocumentReference` als sprachgebundene Sicht einer gemeinsamen `VocabularyConcept.id`;
-- `BilingualDocumentPair` für gekoppelte DE/EN-Sichten derselben Concept-ID;
-- Projektion ausschließlich aus `approved` Vocabulary Concepts;
-- identischer `canonicalCodeTerm` in DE und EN;
-- identische ESS-/ADR-/Traceability-Referenzen über beide Sprachen;
-- fail-closed bei unbekannten Concepts, fehlender Freigabe oder fehlender Übersetzung;
-- Vitest-Contract-Tests;
-- keine neuen Event-Typen in Phase 4.
+Exit-Kriterium erfüllt: DE und EN können nicht unabhängig semantisch auseinanderlaufen. PR #152 wurde erfolgreich deployed.
 
-Nächste Schritte innerhalb Phase 4:
-1. Documentary-Consumer schrittweise auf gemeinsame Concept-IDs ausrichten;
-2. Revalidierungsregeln für Legacy-Dokumente aus PR #142 definieren;
-3. file-by-file DE/EN-Zielstruktur vorbereiten;
-4. fehlende Übersetzungen als Event-Anforderung für Phase 5 spezifizieren;
-5. keine Big-Bang-Dokumentmigration.
-
-Exit-Kriterium: DE und EN können nicht unabhängig semantisch auseinanderlaufen; Documentary-Artefakte referenzieren dieselben Concept- und Governance-Identitäten.
-
-### Phase 5 — Event-Driven Value Chain
+### Phase 5 — Event-Driven Value Chain — IN PROGRESS
 ```text
 Change/Event
   -> Supervisor
@@ -65,7 +52,27 @@ Change/Event
   -> Version Manager
   -> Release validation
 ```
+
 Vocabulary-/Documentary-Events werden ausschließlich über die bestehende Enterprise Event Mesh geführt. Handler müssen idempotent sein; Correlation und Causation werden durchgängig propagiert.
+
+Aktueller Programmscope — Step 1 Approval Bridge:
+- `PlatformDirector` wird als Producer des bestehenden `PlatformDecisionEvent` registriert;
+- `SupervisorAlertEvent` ist vorgelagerter Input der Entscheidungsgrenze;
+- nur bereits explizit `APPROVED` `PlatformDecisionRecord`-Instanzen dürfen propagiert werden;
+- `REJECTED`, `DEFERRED` und `REVOKED` werden fail-closed blockiert;
+- `correlationId` ist verpflichtend und wird unverändert weitergegeben;
+- keine automatische Entscheidung oder Freigabe;
+- keine neuen Event-Namen und keine zweite Event-Registry.
+
+Nächste Schritte innerhalb Phase 5:
+1. Supervisor-Evidence und Impact Analysis an Decision-Prerequisites binden;
+2. Approved PlatformDecisionEvent an idempotente Downstream-Handler koppeln;
+3. Vocabulary, Knowledge, Documentary und Traceability über öffentliche Interfaces aktualisieren;
+4. Quality, Security und Compliance als Validierungsstufe ergänzen;
+5. Version Manager und Release erst nach erfolgreichen Gates auslösen;
+6. Correlation/Causation und Replay-Sicherheit über die komplette Kette nachweisen.
+
+Exit-Kriterium: Relevante Lifecycle-Ereignisse lösen deterministische Folgeaktionen aus, ohne Human-Approval-, Protected-Change- oder CI-Kostengrenzen zu umgehen.
 
 ### Phase 6 — Incremental Existing-Code Migration
 Bestehende inkonsistente technische Namen werden inventarisiert und nach Blast Radius priorisiert. Nur `SAFE`-Renames dürfen automatisiert vorbereitet werden; `CONDITIONAL` und `BLOCKED` werden als Evidence eskaliert. Keine Big-Bang-Renaming-Migration.
@@ -83,9 +90,9 @@ Naming, wording, documentation, traceability and governance operate as one event
 1. Governance foundation — complete.  
 1.5. Authority and namespace reconciliation — complete.  
 2. Canonical Vocabulary Registry — complete through PR #145.  
-3. Safe Rename Gate — complete through PR #151 and verified main CI #649 including Docker and Render deployment of commit `a41c85bc24d4ada79bb9c47c5f01693bbcb2857e`.  
-4. Bilingual Documentary Integration — in progress: DE/EN documentary projections derive from the same approved Vocabulary Concept identity and retain identical language-neutral governance references. The full Documentary Engine is not yet implemented, so integration remains incremental and explicit.  
-5. Event-Driven Value Chain — propagate standardized events through the existing Enterprise Event Mesh.  
+3. Safe Rename Gate — complete through PR #151 and verified main CI #649.  
+4. Bilingual Documentary Integration — complete through PR #152 and successful deployment. DE/EN projections derive from the same approved Vocabulary Concept identity.  
+5. Event-Driven Value Chain — in progress. Step 1 introduces a fail-closed approval bridge that propagates only explicit APPROVED Platform Director decisions through the existing Enterprise Event Mesh while preserving correlation IDs.  
 6. Incremental Existing-Code Migration — migrate only evidence-classified SAFE names.  
 7. Continuous Governance — enforce terminology and lifecycle consistency while preserving human approvals and CI cost limits.
 
