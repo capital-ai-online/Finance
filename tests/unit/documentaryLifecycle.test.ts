@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDocumentaryDocument } from '../../src/platform/Documentary/Models/DocumentaryDocument';
-import { transitionDocumentaryDocument } from '../../src/platform/Documentary/Governance/DocumentaryLifecycle';
+import { transitionDocumentaryDocument } from '../../src/platform/Documentary/Lifecycle/DocumentaryLifecycle';
 
 const versions = { componentVersion: '1.6.0', documentSchemaVersion: '1.0.0', platformVersion: '0.6.0' };
 const sourceCommit = 'a'.repeat(40);
