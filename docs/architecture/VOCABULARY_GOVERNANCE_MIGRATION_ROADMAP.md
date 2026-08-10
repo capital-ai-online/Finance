@@ -1,6 +1,6 @@
 # CAPITAL-AI Vocabulary Governance Migration Roadmap
 
-Status: Active  
+Status: COMPLETE / OPERATIONAL  
 Datum / Date: 2026-08-10  
 Authority: ESS-0001-CONTRACTS  
 Related: ESS-0010, ESS-0012, ESS-0017, ESS-0017-CONTRACTS, ADR-0046  
@@ -28,27 +28,14 @@ Abschluss durch PR #152 und erfolgreichen Deploy.
 ### Phase 5 — Event-Driven Value Chain — COMPLETE
 Abschluss durch PR #153 / main CI #656 / verifiziertes Render-Deployment.
 
-### Phase 6 — Incremental Existing-Code Migration — IMPLEMENTATION COMPLETE IN DRAFT
-Phase 6.0/6.1 wurde mit PR #154 auf `main` etabliert. Merge-Commit `77cf6ed3143dc39120c55f7c767d4a758bc9735d` wurde in main CI #658 vollständig verifiziert und an Render deployed.
+### Phase 6 — Incremental Existing-Code Migration — COMPLETE
+PR #154 etablierte Naming-Debt-Inventar und Klassifizierung. PR #155 schloss Phase 6 produktiv ab. `REN-0001: Plan -> SubscriptionTier` bleibt `CONDITIONAL`, `REN-0002: Screener -> Screening` bleibt `BLOCKED`. Es existierten keine `SAFE`-Kandidaten; deshalb wurde korrekt keine Rename-Mutation erzwungen. Nicht sichere Kandidaten verbleiben mit `automaticMigrationAllowed: false` im geschützten Backlog.
 
-Abschlussstand:
-- 6.0 Naming Debt Inventory — COMPLETE;
-- 6.1 Evidence Classification — COMPLETE;
-- 6.2 SAFE Migration Batch — COMPLETE als kontrollierter No-op, da `safeMigrationCount = 0`;
-- 6.3 Dependency Validation — finaler Draft-CI ist noch das verbleibende Review-Gate;
-- 6.4 Vocabulary / Documentary / Traceability Synchronisation — COMPLETE ohne Mutation;
-- 6.5 Conditional / Blocked Backlog — COMPLETE.
+### Phase 7 — Continuous Governance — COMPLETE
+Abschluss durch PR #156. Implementiert sind Continuous Repository Vocabulary Validation, kostengünstiger CI-Einstiegspunkt, Lifecycle Evidence sowie Regression Protection. Die Canonical Vocabulary Registry bleibt Single Source of Truth; Human Approval, Safe-Rename-Gate, EventMesh und CI-Budgetgrenzen bleiben übergeordnet.
 
-Aktuelle Evidence:
-1. `REN-0001: Plan -> SubscriptionTier` — `CONDITIONAL`; exakte Runtime-Referenzen in Billing-/Entitlement-Flächen.
-2. `REN-0002: Screener -> Screening` — `BLOCKED`; `src/components/Screener.tsx` enthält exakte Runtime-Referenzen und `interface ScreenerProps`, wodurch der Phase-3-Analyzer `SCHEMA_OR_CONTRACT_REFERENCE` meldet.
-
-REN-0001 und REN-0002 sind `DEFERRED` und `automaticMigrationAllowed: false`. Ein Regressionstest vergleicht die materialisierte Evidence mit dem Live-Phase-3-Analyzer. Es wurden keine aktiven Renames durchgeführt.
-
-Produktionsabschluss Phase 6: Abschluss-Draft mergen und anschließend main-CI-/Docker-/Render-Gate erfolgreich verifizieren.
-
-### Phase 7 — Continuous Governance — NEXT
-Repository-Validator, CI, Documentary, Knowledge und Traceability werden terminologiebewusst verbunden. Neue Concepts und relevante Lifecycle-Ereignisse werden deterministisch verarbeitet, ohne Human-Approval-Gates oder die zentrale CI-Kostenrichtlinie zu umgehen.
+### Migrationsabschluss
+Die Vocabulary-Governance-Migration ist abgeschlossen und geht in den operativen Governance-Betrieb über. Weitere Verbesserungen an Documentary Engine, Event-Driven Value Chain und Documentation Hygiene werden in `DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` geführt.
 
 ## English
 
@@ -60,8 +47,8 @@ Repository-Validator, CI, Documentary, Knowledge und Traceability werden termino
 3. Safe Rename Gate — complete through PR #151 / main CI #649.  
 4. Bilingual Documentary Integration — complete through PR #152.  
 5. Event-Driven Value Chain — complete through PR #153 / main CI #656.  
-6. Incremental Existing-Code Migration — implementation complete in draft. PR #154 established the inventory/classifier and main CI #658 verified it. REN-0001 is CONDITIONAL, REN-0002 is BLOCKED, zero candidates are SAFE, no rename mutation was performed, and all non-safe candidates are retained in the protected backlog. Production completion requires merge plus successful main CI/Render verification.  
-7. Continuous Governance — next.
+6. Incremental Existing-Code Migration — complete through PRs #154 and #155; no unsafe rename was forced.  
+7. Continuous Governance — complete through PR #156.
 
 ### Success criteria
 - English-only technical naming for new code.
