@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.7.0
+Version: 1.8.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,7 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance und D6 Generatoren/Renderer.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer und D7 Knowledge Projection.
 
 ## Implemented Scope
 
@@ -36,7 +36,14 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Traceability/DocumentaryTraceability.ts`
 - `Lifecycle/DocumentaryLifecycle.ts`
 - `Generators/DocumentaryRenderer.ts`
+- `Knowledge/DocumentaryKnowledgeProjection.ts`
 - `Architecture/documentary-baseline.json`
+
+## D7 Knowledge Integration
+
+D7 erzeugt aus einem bereits gouvernierten `DocumentaryDocument` eine deterministische Knowledge-Projektion mit Dokumentknoten, gerichteten Beziehungen, Source Commit, Dokument-Fingerprint, Concept-IDs, Traceability-IDs, Provenance-Referenzen und SHA-256-Prüfsumme.
+
+Die Projektion ist ausschließlich ein Übergabevertrag an die in ESS-0009 spezifizierte zentrale Knowledge Engine. Sie persistiert keine Daten in `.ai/knowledge/`, startet keinen Knowledge Build und führt keine zweite Knowledge Registry ein. `src/platform/Knowledge` bleibt eine eigenständige Authority und ist bis zu einem separaten Implementierungsscope weiterhin specification-only.
 
 ## D6 Generators & Renderer
 
@@ -68,16 +75,17 @@ Der separate Namespace `Governance/` bleibt dem in ESS-0012 spezifizierten Docum
 
 ## Implementation Baseline
 
-Aktuell implementiert: `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Interfaces`, `Lifecycle`, `Models`, `Traceability`, `Versioning`.
+Aktuell implementiert: `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Interfaces`, `Knowledge`, `Lifecycle`, `Models`, `Traceability`, `Versioning`.
 
-Weiterhin geplant: `Governance` (Documentation Governance Validator), `Knowledge`, `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen.
+Weiterhin geplant: `Governance` (Documentation Governance Validator), `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen.
 
 ## Boundaries
 
-Keine autonome Approval-Transition, keine Source-Code-Mutation, keine zweite Event-Infrastruktur. IAM-Step-Up/Persistenz, Governance Validator Runtime und Knowledge Projection folgen separat.
+Keine autonome Approval-Transition, keine Source-Code-Mutation, keine zweite Event- oder Knowledge-Infrastruktur. IAM-Step-Up/Persistenz, Governance Validator Runtime und der zentrale ESS-0009 KnowledgeBuilder bleiben separate Scopes.
 
 ## ESS / ADR
 
+- ESS-0009 — Enterprise Knowledge Platform
 - ESS-0010 — Documentary Engine
 - ESS-0011 — Enterprise Traceability
 - ESS-0012 — Documentation Governance
