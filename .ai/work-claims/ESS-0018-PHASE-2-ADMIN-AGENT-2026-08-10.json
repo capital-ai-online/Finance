@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "ESS-0018-PHASE-2-ADMIN-AGENT-2026-08-10",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "Anthropic",
+    "model": "Claude",
+    "executionSurface": "Claude Code (Remote/Web)"
+  },
+  "workItem": "ESS-0018 Phase 2: capability/grant IAM extension, approval-artifact implementation, real Compliance/Supervisor gating, and a narrowly-scoped write-capable Admin/Support/Diagnostics agent for Supabase.",
+  "startedAt": "2026-08-10T00:00:00Z",
+  "baseBranch": "main",
+  "baseSha": "69d6315",
+  "claimedPaths": [
+    ".ai/work-claims/ESS-0018-PHASE-2-ADMIN-AGENT-2026-08-10.json",
+    ".ai/skills/ESS-0018-Agentic-Supabase-Tool-Governance.md",
+    "docs/adr/ADR-0050-agent-tool-capability-iam-foundation.md",
+    "src/platform/Security/",
+    "src/platform/Compliance/",
+    "src/platform/Supervisor/",
+    "src/services/agentTools/",
+    "src/agents/adminDiagnosticsAgent.ts",
+    "server/adminDiagnostics.ts"
+  ],
+  "releaseCondition": "Claim is released when the ESS-0018 Phase 2 PR is merged, closed, or abandoned."
+}
