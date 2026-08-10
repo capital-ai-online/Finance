@@ -22,8 +22,8 @@ This document is the canonical roadmap status index for CAPITAL-AI. Detailed arc
 | R-001 — No-Demo-Data + scoring provenance | TECHNICALLY COMPLETE | ADR-0032 | `docs/adr/evidence/ADR-0032-REVALIDATION-2026-08-08-R001.md` | Preserve provenance invariants in all later provider/scoring work |
 | R-002 — Production runtime artifact immutability | COMPLETE | ADR-0044 | Runtime Artifact Guard, immutable release manifest, read-only production Documentary boundary, validated CI | Remove inert legacy compatibility code opportunistically without weakening guard |
 | R-003 — Single Stripe owner + durable event inbox | COMPLETE | ADR-0045 | Owner-run production replay 2026-08-10 of a real Stripe redelivery (`evt_1TytDVPKr4joNbEcKgxL0mdK`, `checkout.session.completed`), independently re-verified read-only against Supabase: `status=processed`, `attempts=1`, `last_error=NULL`; Render logs show the second delivery classified `duplicate_processed` with no re-entry into checkout side effects (no second confirmation-mail attempt, no second PDF-credit grant). `attempts` staying at `1` is the **correct**, ADR-0045 §3-conformant result, not a defect — see "R-003 attempts-semantics clarification" below | None — R-003 is closed. Preserve the durable-inbox invariant in all future billing changes |
-| R-004 — Transactional PDF-credit ledger | OPEN | Follow-up from ADR-0045 | Current PDF-credit mutation is explicitly outside the R-003 durable event transaction boundary | Design ADR, define idempotent credit ledger, migration contract, transactional grant semantics and replay tests |
-| R-101 — Durable worker/outbox/lease | OPEN | Follow-up from ADR-0045 | Explicitly deferred from R-003 | Start only after R-004 transaction boundary is defined; design lease/retry/dead-letter/reconciliation semantics |
+| R-004 — Transactional PDF-credit ledger | IMPLEMENTED / PRODUCTION HANDOFF PENDING | ADR-0052 | `public.pdf_credits`/`public.pdf_credit_grants` + `consume_pdf_credit(...)`/`grant_pdf_credits(...)` (migration `20260810110642_pdf_credit_ledger.sql`), `server/pdfCreditLedger.ts`, call sites in `server/stripe.ts` rewired, unit tests for atomic consume/idempotent grant/production fail-closed, lint/test/build/predeploy green | Apply the migration to production Supabase before merge (same deploy-order constraint as ADR-0045 §7, adapted to the current `deploy_hook` trigger), then verify a real purchase/consumption round-trip |
+| R-101 — Durable worker/outbox/lease | OPEN | Follow-up from ADR-0045 | Explicitly deferred from R-003 | Start now that R-004 has defined the durable side-effect transaction boundary; design lease/retry/dead-letter/reconciliation semantics |
 | ADR-0014 Phase 3 — `server.application.ts` decomposition | IN PROGRESS | ADR-0014 | Duplicate `src/server/**` retired; route, docs/history, AI and market-data boundaries progressively extracted | Complete compatibility cutovers, then scoring and lifecycle extraction |
 | OPS-001 — Production SMTP authentication failing | OPEN | n/a (ops finding, not an ADR-governed workstream) | Real production log during the 2026-08-10 R-003 replay showed `Invalid login: 535 Authentication credentials invalid` for the checkout-confirmation SMTP attempt (`server/mailer.ts` -> `sendMail`). Independent of R-003: the durable-inbox/reservation logic behaved correctly (single attempted send, no duplicate), the send itself just failed at the SMTP layer, most likely rotated/expired `SMTP_PASSWORD` or provider-side credential change | Owner to verify/rotate `SMTP_USER`/`SMTP_PASSWORD` in Render env vars and confirm a real send succeeds; no code change expected. Do not action from a dev branch — production credential rotation requires the owner's direct authorization |
 
@@ -219,16 +219,19 @@ Already protected behavior includes Render port resolution, runtime-secret valid
 ## Priority queue
 
 1. Resolve OPS-001 (production SMTP authentication) — owner action, not a dev-branch code change.
-2. Start R-004 with a dedicated ADR and additive database design for transactional, idempotent PDF-credit grants.
-3. Implement R-004 and prove replay-safe credit accounting.
-4. Start R-101 durable worker/outbox/lease only after R-004 establishes the durable side-effect transaction boundary.
-5. Finish ADR-0014 Phase 3.3 (AI sentiment/portfolio — `PARTIALLY EXTRACTED / CUTOVER REMAINS`,
+2. Apply the R-004 migration (`supabase/migrations/20260810110642_pdf_credit_ledger.sql`) to
+   production Supabase before merge and verify a real purchase/consumption round-trip, closing
+   R-004 per ADR-0052 §5.
+3. Start R-101 durable worker/outbox/lease, now that R-004 has established the durable
+   side-effect transaction boundary; design lease/retry/dead-letter/reconciliation semantics.
+4. Finish ADR-0014 Phase 3.3 (AI sentiment/portfolio — `PARTIALLY EXTRACTED / CUTOVER REMAINS`,
    not yet tracked as its own queue item before this update), then Phase 3.5 (scoring routes) and
    Phase 3.6 (startup/lifecycle).
 
 R-003 (2026-08-10), ADR-0014 Phase 3.4 (2026-08-10), and ADR-0014 Phase 3.1/3.2 (2026-08-10, write-path
 retirement of `POST /api/docs-file` intentionally excluded — tracked separately, not in this queue
-yet) are closed and have been removed from this queue.
+yet) are closed and have been removed from this queue. R-004's design/implementation step (this
+update) is likewise removed from the queue; only its production handoff remains open above.
 
 ## Protected invariants for all remaining work
 
@@ -237,6 +240,7 @@ All future roadmap changes must preserve:
 - ADR-0032 / R-001 market-evidence provenance;
 - ADR-0044 / R-002 production runtime immutability;
 - ADR-0045 / R-003 single subscription-state ownership and Stripe ingress semantics;
+- ADR-0052 / R-004 durable, idempotent PDF-credit ledger (no reintroduction of the ephemeral local-file balance path);
 - ADR-0037 Render runtime port and graceful shutdown behavior;
 - ADR-0040 CSP/security-response ownership;
 - fail-closed IAM, runtime-secret and metrics contracts;
