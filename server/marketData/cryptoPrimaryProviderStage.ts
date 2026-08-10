@@ -4,9 +4,29 @@ import type { CryptoFallbackAsset } from './cryptoProviderChain';
 let cmcCoolDownUntil = 0;
 let coingeckoCoolDownUntil = 0;
 
+const DEFAULT_PROVIDER_ERROR_COOLDOWN_MS = 5 * 60_000;
+const MIN_RATE_LIMIT_COOLDOWN_MS = 60 * 60_000;
+
 function toFiniteNumber(value: unknown, fallback = 0): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function retryAfterMs(response: Response, nowMs: number): number {
+  const raw = response.headers.get('retry-after');
+  if (!raw) return MIN_RATE_LIMIT_COOLDOWN_MS;
+
+  const seconds = Number(raw);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.max(MIN_RATE_LIMIT_COOLDOWN_MS, seconds * 1000);
+  }
+
+  const retryAt = Date.parse(raw);
+  if (Number.isFinite(retryAt)) {
+    return Math.max(MIN_RATE_LIMIT_COOLDOWN_MS, retryAt - nowMs);
+  }
+
+  return MIN_RATE_LIMIT_COOLDOWN_MS;
 }
 
 function normalizeCryptoAsset(asset: {
@@ -66,25 +86,34 @@ export function createCryptoPrimaryProviderStage(options: {
             headers: { 'X-CMC_PRO_API_KEY': cmcKey, Accept: 'application/json' },
           });
           if (!response.ok) {
-            cmcCoolDownUntil = now() + (response.status === 429 ? 15 * 60_000 : 5 * 60_000);
-            throw new Error(`CoinMarketCap API returned status ${response.status}`);
+            const nowMs = now();
+            if (response.status === 429) {
+              const cooldownMs = retryAfterMs(response, nowMs);
+              cmcCoolDownUntil = nowMs + cooldownMs;
+              logger.info(`[Crypto Live API] CoinMarketCap rate-limited; provider paused for ${Math.ceil(cooldownMs / 60_000)} minutes.`);
+            } else {
+              cmcCoolDownUntil = nowMs + DEFAULT_PROVIDER_ERROR_COOLDOWN_MS;
+              logger.warn(`[Crypto Live API Warning] CoinMarketCap returned status ${response.status}; fallback provider will be used.`);
+            }
+          } else {
+            const payload = await response.json() as any;
+            if (!Array.isArray(payload?.data)) throw new Error('CoinMarketCap API returned invalid format');
+            logger.info(`[Crypto Live API] CoinMarketCap loaded ${payload.data.length} assets`);
+            return payload.data.map((coin: any) => normalizeCryptoAsset({
+              symbol: coin.symbol,
+              name: coin.name,
+              price: coin.quote?.USD?.price,
+              change24h: coin.quote?.USD?.percent_change_24h,
+              marketCap: coin.quote?.USD?.market_cap,
+              volume24h: coin.quote?.USD?.volume_24h,
+              circulatingSupply: coin.circulating_supply,
+              maxSupply: coin.max_supply,
+              totalSupply: coin.total_supply,
+            }));
           }
-          const payload = await response.json() as any;
-          if (!Array.isArray(payload?.data)) throw new Error('CoinMarketCap API returned invalid format');
-          logger.info(`[Crypto Live API] CoinMarketCap loaded ${payload.data.length} assets`);
-          return payload.data.map((coin: any) => normalizeCryptoAsset({
-            symbol: coin.symbol,
-            name: coin.name,
-            price: coin.quote?.USD?.price,
-            change24h: coin.quote?.USD?.percent_change_24h,
-            marketCap: coin.quote?.USD?.market_cap,
-            volume24h: coin.quote?.USD?.volume_24h,
-            circulatingSupply: coin.circulating_supply,
-            maxSupply: coin.max_supply,
-            totalSupply: coin.total_supply,
-          }));
         } catch (error: any) {
-          logger.warn('[Crypto Live API Warning] CoinMarketCap failed:', error?.message || error);
+          cmcCoolDownUntil = Math.max(cmcCoolDownUntil, now() + DEFAULT_PROVIDER_ERROR_COOLDOWN_MS);
+          logger.warn('[Crypto Live API Warning] CoinMarketCap request failed:', error?.message || error);
         }
       }
 
@@ -92,25 +121,34 @@ export function createCryptoPrimaryProviderStage(options: {
         try {
           const response = await fetchImpl('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false');
           if (!response.ok) {
-            coingeckoCoolDownUntil = now() + (response.status === 429 ? 15 * 60_000 : 5 * 60_000);
-            throw new Error(`CoinGecko API returned status ${response.status}`);
+            const nowMs = now();
+            if (response.status === 429) {
+              const cooldownMs = retryAfterMs(response, nowMs);
+              coingeckoCoolDownUntil = nowMs + cooldownMs;
+              logger.info(`[Crypto Live API] CoinGecko rate-limited; provider paused for ${Math.ceil(cooldownMs / 60_000)} minutes.`);
+            } else {
+              coingeckoCoolDownUntil = nowMs + DEFAULT_PROVIDER_ERROR_COOLDOWN_MS;
+              logger.warn(`[Crypto Live API Warning] CoinGecko returned status ${response.status}; fallback provider will be used.`);
+            }
+          } else {
+            const payload = await response.json() as any;
+            if (!Array.isArray(payload)) throw new Error('CoinGecko API returned invalid format');
+            logger.info(`[Crypto Live API] CoinGecko loaded ${payload.length} assets`);
+            return payload.map((coin: any) => normalizeCryptoAsset({
+              symbol: coin.symbol,
+              name: coin.name,
+              price: coin.current_price,
+              change24h: coin.price_change_percentage_24h,
+              marketCap: coin.market_cap,
+              volume24h: coin.total_volume,
+              circulatingSupply: coin.circulating_supply,
+              maxSupply: coin.max_supply,
+              totalSupply: coin.total_supply,
+            }));
           }
-          const payload = await response.json() as any;
-          if (!Array.isArray(payload)) throw new Error('CoinGecko API returned invalid format');
-          logger.info(`[Crypto Live API] CoinGecko loaded ${payload.length} assets`);
-          return payload.map((coin: any) => normalizeCryptoAsset({
-            symbol: coin.symbol,
-            name: coin.name,
-            price: coin.current_price,
-            change24h: coin.price_change_percentage_24h,
-            marketCap: coin.market_cap,
-            volume24h: coin.total_volume,
-            circulatingSupply: coin.circulating_supply,
-            maxSupply: coin.max_supply,
-            totalSupply: coin.total_supply,
-          }));
         } catch (error: any) {
-          logger.warn('[Crypto Live API Warning] CoinGecko failed:', error?.message || error);
+          coingeckoCoolDownUntil = Math.max(coingeckoCoolDownUntil, now() + DEFAULT_PROVIDER_ERROR_COOLDOWN_MS);
+          logger.warn('[Crypto Live API Warning] CoinGecko request failed:', error?.message || error);
         }
       }
 
