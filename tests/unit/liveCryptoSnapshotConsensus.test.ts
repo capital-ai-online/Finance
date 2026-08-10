@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { getLiveCryptoSnapshotConsensus } from '../../src/services/liveCryptoSnapshotConsensus';
+import { getLiveCryptoSnapshotConsensus, resetLiveCryptoSnapshotConsensusState } from '../../src/services/liveCryptoSnapshotConsensus';
 import { resetCryptoSnapshotProviderState } from '../../src/services/cryptoSnapshotProvider';
 
 function jsonResponse(payload: unknown): Response {
   return new Response(JSON.stringify(payload), { status: 200, headers: { 'Content-Type': 'application/json' } });
 }
 
+function resetProviders(): void {
+  resetCryptoSnapshotProviderState();
+  resetLiveCryptoSnapshotConsensusState();
+}
+
 describe('live crypto snapshot consensus', () => {
   it('produces cross-provider consensus for compatible CoinGecko and CoinMarketCap fields', async () => {
-    resetCryptoSnapshotProviderState();
+    resetProviders();
     const observedAt = '2026-08-02T08:00:00.000Z';
     const fetchImpl = (async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -26,14 +31,14 @@ describe('live crypto snapshot consensus', () => {
       }
       if (url.includes('pro-api.coinmarketcap.com')) {
         return jsonResponse({
-          data: {
-            BTC: [{
-              circulating_supply: 19_010_000,
-              max_supply: 21_000_000,
-              total_supply: 20_005_000,
-              quote: { USD: { market_cap: 1_003_000, volume_24h: 102_000, last_updated: observedAt } },
-            }],
-          },
+          data: [{
+            symbol: 'BTC',
+            circulating_supply: 19_010_000,
+            max_supply: 21_000_000,
+            total_supply: 20_005_000,
+            quote: { USD: { market_cap: 1_003_000, volume_24h: 102_000, last_updated: observedAt } },
+          }],
+          status: { error_code: 0 },
         });
       }
       throw new Error(`Unexpected URL: ${url}`);
@@ -52,7 +57,7 @@ describe('live crypto snapshot consensus', () => {
   });
 
   it('returns SOURCE_CONFLICT instead of a canonical value when critical fields diverge', async () => {
-    resetCryptoSnapshotProviderState();
+    resetProviders();
     const observedAt = '2026-08-02T08:00:00.000Z';
     const fetchImpl = (async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -69,14 +74,14 @@ describe('live crypto snapshot consensus', () => {
         });
       }
       return jsonResponse({
-        data: {
-          BTC: [{
-            circulating_supply: 15_000_000,
-            max_supply: 21_000_000,
-            total_supply: 16_000_000,
-            quote: { USD: { market_cap: 1_500_000, volume_24h: 250_000, last_updated: observedAt } },
-          }],
-        },
+        data: [{
+          symbol: 'BTC',
+          circulating_supply: 15_000_000,
+          max_supply: 21_000_000,
+          total_supply: 16_000_000,
+          quote: { USD: { market_cap: 1_500_000, volume_24h: 250_000, last_updated: observedAt } },
+        }],
+        status: { error_code: 0 },
       });
     }) as typeof fetch;
 
