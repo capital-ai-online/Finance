@@ -2,7 +2,7 @@ import type { PlatformDecisionRecord } from '../Contracts/PlatformDecision';
 
 export interface ProtectedDecisionBoundaryResult {
   valid: boolean;
-  errors: string[];
+  errors: readonly string[];
 }
 
 const RELEASE_GATE_NAMES = ['qualityGate', 'securityGate', 'complianceGate', 'versionGate'] as const;
@@ -52,7 +52,10 @@ export function validateProtectedDecisionBoundary(
     }
   }
 
-  return Object.freeze({ valid: errors.length === 0, errors: Object.freeze([...errors]) as unknown as string[] });
+  return Object.freeze({
+    valid: errors.length === 0,
+    errors: Object.freeze([...errors]),
+  });
 }
 
 export function assertProtectedDecisionBoundary(decision: PlatformDecisionRecord): void {
