@@ -1,24 +1,28 @@
 {
   "name": "Documentary",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "status": "development",
   "owner": "CAPITAL-AI",
-  "description": "Documentary-Komponente mit bilingualem Projection-Layer, D0-Versionierungsbaseline, D1 Code Discovery, D3 Document Models/Provenance und D2 Core Engine gemaess ESS-0010, ESS-0011, ESS-0012 und ESS-0017.",
+  "description": "Documentary-Komponente mit bilingualem Projection-Layer, D0-Versionierungsbaseline, D1 Code Discovery, D3 Document Models/Provenance, D2 Core Engine sowie D5/E1/E4 Traceability- und Event-Integration gemaess ESS-0010, ESS-0011, ESS-0012, ESS-0013 und ESS-0017.",
   "category": "platform",
-  "ess": ["ESS-0001", "ESS-0001-CONTRACTS", "ESS-0010", "ESS-0011", "ESS-0012", "ESS-0017", "ESS-0017-CONTRACTS"],
-  "adr": ["ADR-0046"],
-  "dependencies": ["src/platform/Vocabulary", "src/platform/VersionManager"],
-  "events": {"produces": [], "consumes": [], "note": "D2 orchestrates document-model creation but does not publish or consume Documentary events."},
+  "ess": ["ESS-0001", "ESS-0001-CONTRACTS", "ESS-0010", "ESS-0011", "ESS-0012", "ESS-0013", "ESS-0013-CONTRACTS", "ESS-0017", "ESS-0017-CONTRACTS"],
+  "adr": ["ADR-0018", "ADR-0046"],
+  "dependencies": ["src/platform/Vocabulary", "src/platform/VersionManager", "src/platform/EventMesh"],
+  "events": {
+    "produces": ["DocumentationGeneratedEvent", "DocumentationValidatedEvent"],
+    "consumes": ["RepositoryScannedEvent", "PlatformDecisionEvent"],
+    "note": "D5/E1/E4 uses only canonical EventMesh contracts. correlationId is preserved; source eventId becomes causationId in Documentary traceability evidence."
+  },
   "knowledge": [],
   "interfaces": ["Interfaces/IDocumentaryEngine.ts"],
-  "contracts": ["Contracts/BilingualDocumentReference.ts", "Versioning/DocumentaryVersion.ts", "Discovery/CodeEvidence.ts", "Models/DocumentaryDocument.ts", "Models/DocumentaryProvenance.ts", "Interfaces/IDocumentaryEngine.ts"],
-  "documentation": ["README.md", "Architecture/documentary-baseline.json", "../../../../docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md", "../../../../docs/architecture/DOCUMENTARY_D1_CODE_INTEGRATION_DISCOVERY.md", "../../../../docs/architecture/DOCUMENTARY_D3_DOCUMENT_MODELS_PROVENANCE.md", "../../../../docs/architecture/DOCUMENTARY_D2_CORE_ENGINE.md"],
-  "tests": ["../../../tests/unit/bilingualDocumentaryProjection.test.ts", "../../../tests/unit/documentaryVersionAuthority.test.ts", "../../../tests/unit/documentaryCodeDiscovery.test.ts", "../../../tests/unit/documentaryDocumentModel.test.ts", "../../../tests/unit/documentaryCoreEngine.test.ts"],
+  "contracts": ["Contracts/BilingualDocumentReference.ts", "Versioning/DocumentaryVersion.ts", "Discovery/CodeEvidence.ts", "Models/DocumentaryDocument.ts", "Models/DocumentaryProvenance.ts", "Interfaces/IDocumentaryEngine.ts", "Traceability/DocumentaryTraceability.ts", "Events/DocumentaryEvents.ts"],
+  "documentation": ["README.md", "Architecture/documentary-baseline.json", "../../../../docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md", "../../../../docs/architecture/DOCUMENTARY_D1_CODE_INTEGRATION_DISCOVERY.md", "../../../../docs/architecture/DOCUMENTARY_D3_DOCUMENT_MODELS_PROVENANCE.md", "../../../../docs/architecture/DOCUMENTARY_D2_CORE_ENGINE.md", "../../../../docs/architecture/DOCUMENTARY_D5_E1_E4_TRACEABILITY_EVENTS.md"],
+  "tests": ["../../../tests/unit/bilingualDocumentaryProjection.test.ts", "../../../tests/unit/documentaryVersionAuthority.test.ts", "../../../tests/unit/documentaryCodeDiscovery.test.ts", "../../../tests/unit/documentaryDocumentModel.test.ts", "../../../tests/unit/documentaryCoreEngine.test.ts", "../../../tests/unit/documentaryTraceabilityEvents.test.ts"],
   "implementation": {
     "level": "partial",
-    "implementedAreas": ["Contracts", "Discovery", "Documentation", "Engine", "Interfaces", "Models", "Versioning"],
-    "plannedAreas": ["Architecture", "Events", "Generators", "Governance", "Knowledge", "Mermaid", "Migration", "Plugins"]
+    "implementedAreas": ["Contracts", "Discovery", "Documentation", "Engine", "Events", "Interfaces", "Models", "Traceability", "Versioning"],
+    "plannedAreas": ["Architecture", "Generators", "Governance", "Knowledge", "Mermaid", "Migration", "Plugins"]
   },
   "versionAuthority": {"componentVersion": "manifest.json#version", "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION", "platformVersion": "../../../package.json#version"},
-  "note": "D2: Core Engine creates governed DocumentaryDocument models from D1 code evidence + D3 provenance/version contracts. Correlation IDs are idempotent and fail closed on conflicting reuse. Rendering, event publishing and approval transitions remain outside D2."
+  "note": "D5/E1/E4 closes the evidence chain between canonical upstream events, Documentary documents and Traceability using correlationId, causationId, source commit, fingerprint and traceability IDs. No second EventBus or registry is introduced."
 }
