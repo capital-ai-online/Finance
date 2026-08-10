@@ -1,6 +1,6 @@
 # Production Docker hardening for Render.
-# Both stages are pinned to the same immutable Node 22 Alpine digest.
-FROM node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 AS builder
+# Both stages are pinned to the same immutable Node 24.18.0 Alpine multi-platform image digest.
+FROM node:24.18.0-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS builder
 WORKDIR /app
 
 COPY package*.json ./
@@ -22,7 +22,7 @@ ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
 
 RUN npm run build
 
-FROM node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 AS runner
+FROM node:24.18.0-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS runner
 WORKDIR /app
 
 # Keep build-time Node invocations free of runtime preload hooks.
