@@ -34,14 +34,16 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Events/DocumentaryEventConsumer.ts`
 - `Events/DocumentaryEventPublisher.ts`
 - `Traceability/DocumentaryTraceability.ts`
-- `Governance/DocumentaryLifecycle.ts`
+- `Lifecycle/DocumentaryLifecycle.ts`
 - `Architecture/documentary-baseline.json`
 
 ## D4 Review & Lifecycle Governance
 
 Der kontrollierte Lifecycle lautet `generated -> reviewed -> approved`. Nach Approval sind `approved -> superseded`, `approved -> archived` und `superseded -> archived` zulässig. Jeder Übergang benötigt eine explizite Actor-ID, passende Aktion, einen Zeitpunkt und mindestens eine Evidence-Referenz. Status-Sprünge, falsche Aktionen und evidence-freie Übergänge werden fail-closed blockiert.
 
-D4 führt keine autonome Freigabe durch. Die Governance-Schicht validiert lediglich explizit angeforderte Lifecycle-Transitions. Der Dokument-Fingerprint bleibt bei Lifecycle-only-Änderungen stabil.
+D4 führt keine autonome Freigabe durch. Die Lifecycle-Schicht validiert lediglich explizit angeforderte Lifecycle-Transitions. Der Dokument-Fingerprint bleibt bei Lifecycle-only-Änderungen stabil.
+
+Der separate Namespace `Governance/` bleibt dem in ESS-0012 spezifizierten Documentation Governance Validator vorbehalten. Dieser Validator ist weiterhin spezifiziert, aber nicht implementiert; D4 ändert diesen Implementierungsstatus nicht.
 
 ## D5 / E1 / E4 Traceability & Event Value Chain
 
@@ -59,13 +61,13 @@ D4 führt keine autonome Freigabe durch. Die Governance-Schicht validiert ledigl
 
 ## Implementation Baseline
 
-Aktuell implementiert: `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Governance`, `Interfaces`, `Models`, `Traceability`, `Versioning`.
+Aktuell implementiert: `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Interfaces`, `Lifecycle`, `Models`, `Traceability`, `Versioning`.
 
-Weiterhin geplant: `Generators`, `Knowledge`, `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen.
+Weiterhin geplant: `Governance` (Documentation Governance Validator), `Generators`, `Knowledge`, `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen.
 
 ## Boundaries
 
-Keine autonome Approval-Transition, keine Source-Code-Mutation, keine zweite Event-Infrastruktur. IAM-Step-Up/Persistenz, Generatoren/Renderer und Knowledge Projection folgen separat.
+Keine autonome Approval-Transition, keine Source-Code-Mutation, keine zweite Event-Infrastruktur. IAM-Step-Up/Persistenz, Governance Validator Runtime, Generatoren/Renderer und Knowledge Projection folgen separat.
 
 ## ESS / ADR
 
