@@ -1,40 +1,28 @@
 {
   "name": "Documentary",
-  "version": "1.0.0",
+  "version": "1.8.0",
   "status": "development",
   "owner": "CAPITAL-AI",
-  "description": "Documentary-Komponente mit implementiertem bilingualem Contract-/Projection-Layer gemaess ESS-0010, ESS-0012 und ESS-0017. Die vollstaendige Documentary Engine ist weiterhin nicht implementiert.",
+  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Generatoren/Renderer und D7 Knowledge Projection.",
   "category": "platform",
-  "ess": [
-    "ESS-0001",
-    "ESS-0001-CONTRACTS",
-    "ESS-0010",
-    "ESS-0012",
-    "ESS-0017",
-    "ESS-0017-CONTRACTS"
-  ],
-  "adr": [
-    "ADR-0046"
-  ],
-  "dependencies": [
-    "src/platform/Vocabulary"
-  ],
+  "ess": ["ESS-0001", "ESS-0001-CONTRACTS", "ESS-0009", "ESS-0010", "ESS-0011", "ESS-0012", "ESS-0013", "ESS-0013-CONTRACTS", "ESS-0017", "ESS-0017-CONTRACTS"],
+  "adr": ["ADR-0018", "ADR-0046"],
+  "dependencies": ["src/platform/Vocabulary", "src/platform/VersionManager", "src/platform/EventMesh"],
   "events": {
-    "produces": [],
-    "consumes": [],
-    "note": "Phase 4 fuehrt keine neuen Event-Typen ein. Fehlende Uebersetzungen und Lifecycle-Folgeaktionen werden erst in Phase 5 ueber die bestehende Enterprise Event Mesh integriert."
+    "produces": ["DocumentationGeneratedEvent", "DocumentationValidatedEvent"],
+    "consumes": ["RepositoryScannedEvent", "PlatformDecisionEvent"],
+    "note": "D7 adds a deterministic Documentary-to-Knowledge projection contract only; it does not introduce a second Knowledge engine or autonomous Knowledge build."
   },
-  "knowledge": [],
-  "interfaces": [],
-  "contracts": [
-    "Contracts/BilingualDocumentReference.ts"
-  ],
-  "documentation": [
-    "README.md",
-    "../../../../docs/architecture/VOCABULARY_GOVERNANCE_PHASE_4_BILINGUAL_DOCUMENTARY.md"
-  ],
-  "tests": [
-    "../../../tests/unit/bilingualDocumentaryProjection.test.ts"
-  ],
-  "note": "Phase 4: Teilimplementierung. Implementiert sind ausschliesslich der bilinguale Documentary-Contract-Layer und die Vocabulary-basierte DE/EN-Projektion. Die vollstaendige Documentary Engine gemaess ESS-0010 bleibt ausstehend."
+  "knowledge": ["Knowledge/DocumentaryKnowledgeProjection.ts"],
+  "interfaces": ["Interfaces/IDocumentaryEngine.ts"],
+  "contracts": ["Contracts/BilingualDocumentReference.ts", "Versioning/DocumentaryVersion.ts", "Discovery/CodeEvidence.ts", "Models/DocumentaryDocument.ts", "Models/DocumentaryProvenance.ts", "Interfaces/IDocumentaryEngine.ts", "Traceability/DocumentaryTraceability.ts", "Events/DocumentaryEvents.ts", "Lifecycle/DocumentaryLifecycle.ts", "Generators/DocumentaryRenderer.ts", "Knowledge/DocumentaryKnowledgeProjection.ts"],
+  "documentation": ["README.md", "Architecture/documentary-baseline.json", "../../../../docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md", "../../../../docs/architecture/DOCUMENTARY_D1_CODE_INTEGRATION_DISCOVERY.md", "../../../../docs/architecture/DOCUMENTARY_D3_DOCUMENT_MODELS_PROVENANCE.md", "../../../../docs/architecture/DOCUMENTARY_D2_CORE_ENGINE.md", "../../../../docs/architecture/DOCUMENTARY_D5_E1_E4_TRACEABILITY_EVENTS.md", "../../../../docs/architecture/DOCUMENTARY_D4_REVIEW_LIFECYCLE_GOVERNANCE.md", "../../../../docs/architecture/DOCUMENTARY_D6_GENERATORS_RENDERERS.md", "../../../../docs/architecture/DOCUMENTARY_D7_KNOWLEDGE_INTEGRATION.md"],
+  "tests": ["../../../tests/unit/bilingualDocumentaryProjection.test.ts", "../../../tests/unit/documentaryVersionAuthority.test.ts", "../../../tests/unit/documentaryCodeDiscovery.test.ts", "../../../tests/unit/documentaryDocumentModel.test.ts", "../../../tests/unit/documentaryCoreEngine.test.ts", "../../../tests/unit/documentaryTraceabilityEvents.test.ts", "../../../tests/unit/documentaryLifecycle.test.ts", "../../../tests/unit/documentaryRenderer.test.ts", "../../../tests/unit/documentaryKnowledgeProjection.test.ts"],
+  "implementation": {
+    "level": "partial",
+    "implementedAreas": ["Contracts", "Discovery", "Documentation", "Engine", "Events", "Generators", "Interfaces", "Knowledge", "Lifecycle", "Models", "Traceability", "Versioning"],
+    "plannedAreas": ["Architecture", "Governance", "Mermaid", "Migration", "Plugins"]
+  },
+  "versionAuthority": {"componentVersion": "manifest.json#version", "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION", "platformVersion": "../../../package.json#version"},
+  "note": "D7 derives deterministic Knowledge projection evidence from governed DocumentaryDocument models. The authoritative ESS-0009 Knowledge Engine remains separate and specification-only until its own implementation scope."
 }

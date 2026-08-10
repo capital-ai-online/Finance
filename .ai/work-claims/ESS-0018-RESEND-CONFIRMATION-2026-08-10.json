@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "ESS-0018-RESEND-CONFIRMATION-2026-08-10",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "Anthropic",
+    "model": "Claude",
+    "executionSurface": "Claude Code (Remote/Web)"
+  },
+  "workItem": "ESS-0018 follow-up: implement the second and remaining specified write capability, supabase.admin.alert_subscription.resend_confirmation, following the same Policy -> IAM/Grant -> Approval -> Dry-run -> Fingerprint -> Apply -> Verify -> Audit chain already proven for supabase.admin.alert_subscription.disable (ADR-0051).",
+  "startedAt": "2026-08-10T02:00:00Z",
+  "baseBranch": "main",
+  "baseSha": "b15e9ab",
+  "claimedPaths": [
+    ".ai/work-claims/ESS-0018-RESEND-CONFIRMATION-2026-08-10.json",
+    ".ai/skills/ESS-0018-Agentic-Supabase-Tool-Governance.md",
+    "src/platform/Security/capabilities.ts",
+    "src/platform/Compliance/PolicyGate.ts",
+    "src/services/agentTools/supabaseAdminDiagnosticsTool.ts",
+    "src/agents/adminDiagnosticsAgent.ts",
+    "server/adminDiagnostics.ts",
+    "server/alerts.ts"
+  ],
+  "releaseCondition": "Claim is released when this PR is merged, closed, or abandoned."
+}

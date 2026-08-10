@@ -7,8 +7,9 @@ const mocks = vi.hoisted(() => ({
   claimStripeEvent: vi.fn(),
   markStripeEventProcessed: vi.fn(),
   markStripeEventFailed: vi.fn(),
-  getLocalPdfCredits: vi.fn(),
-  saveLocalPdfCredits: vi.fn(),
+  getPdfCredits: vi.fn(),
+  consumePdfCredit: vi.fn(),
+  grantPdfCredits: vi.fn(),
   sendSubscriptionConfirmation: vi.fn(),
 }));
 
@@ -18,12 +19,16 @@ vi.mock('../../server/env', () => ({
 
 vi.mock('../../server/db', () => ({
   getSubscription: vi.fn(async () => 'Free'),
-  getLocalPdfCredits: mocks.getLocalPdfCredits,
-  saveLocalPdfCredits: mocks.saveLocalPdfCredits,
   isSupabaseConfigured: vi.fn(() => false),
   getServerSupabase: vi.fn(() => ({
     from: vi.fn(),
   })),
+}));
+
+vi.mock('../../server/pdfCreditLedger', () => ({
+  getPdfCredits: mocks.getPdfCredits,
+  consumePdfCredit: mocks.consumePdfCredit,
+  grantPdfCredits: mocks.grantPdfCredits,
 }));
 
 vi.mock('../../src/platform/Security/authMiddleware', () => ({
@@ -85,8 +90,7 @@ describe('Stripe webhook durable inbox gate (ADR-0045)', () => {
     });
     mocks.markStripeEventProcessed.mockResolvedValue(undefined);
     mocks.markStripeEventFailed.mockResolvedValue(undefined);
-    mocks.getLocalPdfCredits.mockResolvedValue(3);
-    mocks.saveLocalPdfCredits.mockReturnValue(undefined);
+    mocks.grantPdfCredits.mockResolvedValue({ granted: true, credits: 6 });
     mocks.sendSubscriptionConfirmation.mockResolvedValue({
       skippedAsDuplicate: false,
       customer: { attempted: true, success: true },
@@ -100,8 +104,14 @@ describe('Stripe webhook durable inbox gate (ADR-0045)', () => {
     const result = await handleWebhookEvent(event);
 
     expect(result.duplicate).toBe(false);
-    expect(mocks.getLocalPdfCredits).toHaveBeenCalledTimes(1);
-    expect(mocks.saveLocalPdfCredits).toHaveBeenCalledWith('11111111-1111-1111-1111-111111111111', 6);
+    expect(mocks.grantPdfCredits).toHaveBeenCalledTimes(1);
+    expect(mocks.grantPdfCredits).toHaveBeenCalledWith({
+      grantKey: 'evt_checkout_1',
+      userIdentifier: '11111111-1111-1111-1111-111111111111',
+      credits: 3,
+      source: 'stripe_checkout.session.completed',
+      reference: 'cs_1',
+    });
     expect(mocks.markStripeEventProcessed).toHaveBeenCalledWith('evt_checkout_1');
     expect(mocks.markStripeEventFailed).not.toHaveBeenCalled();
   });
@@ -117,10 +127,30 @@ describe('Stripe webhook durable inbox gate (ADR-0045)', () => {
     const result = await handleWebhookEvent(checkoutEvent());
 
     expect(result.duplicate).toBe(true);
-    expect(mocks.getLocalPdfCredits).not.toHaveBeenCalled();
-    expect(mocks.saveLocalPdfCredits).not.toHaveBeenCalled();
+    expect(mocks.grantPdfCredits).not.toHaveBeenCalled();
     expect(mocks.sendSubscriptionConfirmation).not.toHaveBeenCalled();
     expect(mocks.markStripeEventProcessed).not.toHaveBeenCalled();
+  });
+
+  // ADR-0045 §3 rule 2/3, confirmed against production evidence 2026-08-10 (see
+  // docs/architecture/ROADMAP.md, "R-003 attempts-semantics clarification"): `attempts` is a
+  // processing/claim-attempt counter, incremented ONLY when a `failed` event is reclaimed for
+  // retry - a `processed`/`processing` duplicate MUST NOT increment it. A real Stripe redelivery
+  // of an already-`processed` event correctly reported `attempts` unchanged; treating that as a
+  // bug (e.g. "expected attempts >= 2 on any redelivery") contradicts the ADR and must not be
+  // "fixed" in the claim SQL/TS wrapper.
+  it('reports attempts unchanged (not incremented) for a duplicate of an already-processed event', async () => {
+    mocks.claimStripeEvent.mockResolvedValue({
+      claimed: false,
+      claimStatus: 'duplicate_processed',
+      attempts: 1, // unchanged from the original claim - this is correct, not stale data
+      integrityMatches: true,
+    });
+
+    const result = await handleWebhookEvent(checkoutEvent());
+
+    expect(result.claimStatus).toBe('duplicate_processed');
+    expect(result.duplicate).toBe(true);
   });
 
   it('fails closed on an event-id/payload integrity conflict', async () => {
@@ -132,15 +162,14 @@ describe('Stripe webhook durable inbox gate (ADR-0045)', () => {
     });
 
     await expect(handleWebhookEvent(checkoutEvent())).rejects.toThrow('integrity conflict');
-    expect(mocks.getLocalPdfCredits).not.toHaveBeenCalled();
-    expect(mocks.saveLocalPdfCredits).not.toHaveBeenCalled();
+    expect(mocks.grantPdfCredits).not.toHaveBeenCalled();
     expect(mocks.markStripeEventProcessed).not.toHaveBeenCalled();
   });
 
   it('records a failed event when application side effects fail before completion', async () => {
-    mocks.getLocalPdfCredits.mockRejectedValue(new Error('credit read failed'));
+    mocks.grantPdfCredits.mockRejectedValue(new Error('credit grant failed'));
 
-    await expect(handleWebhookEvent(checkoutEvent())).rejects.toThrow('credit read failed');
+    await expect(handleWebhookEvent(checkoutEvent())).rejects.toThrow('credit grant failed');
 
     expect(mocks.markStripeEventFailed).toHaveBeenCalledWith('evt_checkout_1', expect.any(Error));
     expect(mocks.markStripeEventProcessed).not.toHaveBeenCalled();
@@ -151,7 +180,7 @@ describe('Stripe webhook durable inbox gate (ADR-0045)', () => {
 
     await expect(handleWebhookEvent(checkoutEvent())).rejects.toThrow('finalization unavailable');
 
-    expect(mocks.saveLocalPdfCredits).toHaveBeenCalledTimes(1);
+    expect(mocks.grantPdfCredits).toHaveBeenCalledTimes(1);
     expect(mocks.markStripeEventFailed).not.toHaveBeenCalled();
   });
 

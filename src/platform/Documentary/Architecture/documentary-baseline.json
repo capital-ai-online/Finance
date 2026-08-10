@@ -1,0 +1,24 @@
+{
+  "component": "Documentary",
+  "status": "partial-implementation",
+  "implementedAreas": ["Contracts", "Discovery", "Documentation", "Engine", "Events", "Generators", "Interfaces", "Knowledge", "Lifecycle", "Models", "Traceability", "Versioning"],
+  "plannedAreas": ["Architecture", "Governance", "Mermaid", "Migration", "Plugins"],
+  "versionAuthorities": {
+    "componentVersion": "src/platform/Documentary/manifest.json#version",
+    "documentSchemaVersion": "src/platform/Documentary/Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
+    "platformVersion": "src/platform/VersionManager/platformVersionAuthority.ts#getPlatformVersion -> package.json#version"
+  },
+  "notes": [
+    "The bilingual vocabulary projection is implemented.",
+    "D1 read-only repository code discovery is implemented and binds evidence to a source commit.",
+    "D3 typed Document Models and provenance/fingerprint contracts are implemented.",
+    "D2 Core Engine orchestrates governed Document Model creation and correlation-id idempotency.",
+    "D5/E1/E4 implement Traceability records and controlled EventMesh consumer/producer bridges with correlation/causation evidence.",
+    "D4 implements evidence-backed review/lifecycle transition governance in the dedicated Lifecycle namespace without autonomous approval.",
+    "D6 implements deterministic document-type-specific DE/EN Markdown artifact rendering from DocumentaryDocument models.",
+    "D7 implements deterministic Documentary-to-Knowledge projection evidence with origin, relationships and checksum.",
+    "The authoritative ESS-0009 Knowledge Engine remains a separate specification-only component; D7 does not persist or build the central graph.",
+    "The DocumentationGovernanceValidator namespace remains specification-only.",
+    "Planned areas must not be treated as implemented solely because their directories exist."
+  ]
+}

@@ -11,6 +11,7 @@
 
 import crypto from 'crypto';
 import { getPrivilegedServerSupabase, isPrivilegedSupabaseConfigured } from '../../../server/db';
+import { sendAlertConfirmationEmail, type AlertCondition } from '../../../server/alerts';
 
 function assertValidUuid(value: string, label: string): string {
   const cleaned = (value || '').trim();
@@ -148,4 +149,112 @@ export async function disableAlertSubscription(request: DisableAlertSubscription
     throw new Error(`[AdminDiagnosticsTool] Update fehlgeschlagen fuer "${id}": ${error?.message || 'keine Zeile aktualisiert'}`);
   }
   return { id: data.id, active: data.active };
+}
+
+// ---- Read/preview + write: alert-subscription resend confirmation ----------------------------
+//
+// Support-Anwendungsfall: ein Nutzer meldet, die Bestaetigungsmail fuer sein Alert-Abo nie
+// erhalten (oder verloren) zu haben. Double-Opt-In (server/alerts.ts) belaesst confirm_token
+// gesetzt, bis bestaetigt wird - daher genuegt ein erneuter Versand derselben Mail mit dem
+// bestehenden Token, ohne die Zeile zu mutieren. Trotzdem volle Governance-Kette wie bei
+// disableAlertSubscription: ein Admin-Agent, der beliebige E-Mail-Adressen erneut anschreiben
+// kann, ist derselbe Missbrauchsvektor, den die Rate-Begrenzung beim urspruenglichen Anlegen
+// bereits adressiert (server/alerts.ts, POST /).
+
+export interface AlertSubscriptionConfirmationPreview {
+  id: string;
+  email: string;
+  symbol: string;
+  confirmed: boolean;
+  fingerprint: string;
+}
+
+function computeConfirmationFingerprint(id: string, confirmed: boolean): string {
+  return crypto.createHash('sha256').update(`confirmation:${id}:${confirmed}`).digest('hex');
+}
+
+/** Read-only preview - no approval required. Also used to obtain the expectedFingerprint an
+ * approval request must cite. */
+export async function getAlertSubscriptionConfirmationPreview(id: string): Promise<AlertSubscriptionConfirmationPreview | null> {
+  const cleanId = assertValidUuid(id, 'id');
+  if (!isPrivilegedSupabaseConfigured()) return null;
+
+  const supabase = getPrivilegedServerSupabase();
+  const { data, error } = await supabase
+    .from('alert_subscriptions')
+    .select('id, email, symbol, confirmed')
+    .eq('id', cleanId)
+    .maybeSingle();
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    email: data.email,
+    symbol: data.symbol,
+    confirmed: data.confirmed,
+    fingerprint: computeConfirmationFingerprint(data.id, data.confirmed),
+  };
+}
+
+export interface ResendAlertSubscriptionConfirmationRequest {
+  id: string;
+  expectedFingerprint: string;
+}
+
+export interface ResendAlertSubscriptionConfirmationResult {
+  id: string;
+  resent: boolean;
+  alreadyConfirmed: boolean;
+}
+
+/**
+ * The actual write (re-send is a real side effect - an email to an external address - even
+ * though no DB row is mutated on the happy path). MUST only ever be invoked from inside
+ * executeApprovedSupervisedAction()'s `fn`, same contract as disableAlertSubscription(): this
+ * function does not check capability or approval itself, it only re-verifies the fingerprint
+ * against current DB state immediately before sending and fails closed on mismatch.
+ */
+export async function resendAlertSubscriptionConfirmation(
+  request: ResendAlertSubscriptionConfirmationRequest
+): Promise<ResendAlertSubscriptionConfirmationResult> {
+  const id = assertValidUuid(request.id, 'id');
+  if (!isPrivilegedSupabaseConfigured()) {
+    throw new Error('[AdminDiagnosticsTool] Supabase nicht konfiguriert.');
+  }
+
+  const current = await getAlertSubscriptionConfirmationPreview(id);
+  if (!current) {
+    throw new Error(`[AdminDiagnosticsTool] alert_subscriptions-Zeile "${id}" nicht gefunden.`);
+  }
+  if (current.fingerprint !== request.expectedFingerprint) {
+    throw new Error(
+      `[AdminDiagnosticsTool] Fingerprint-Mismatch fuer "${id}" - Zeile hat sich seit der Genehmigung geaendert, Apply abgelehnt.`
+    );
+  }
+  if (current.confirmed) {
+    return { id, resent: false, alreadyConfirmed: true };
+  }
+
+  const supabase = getPrivilegedServerSupabase();
+  const { data, error } = await supabase
+    .from('alert_subscriptions')
+    .select('confirm_token, condition, threshold')
+    .eq('id', id)
+    .maybeSingle();
+  if (error || !data?.confirm_token) {
+    throw new Error(`[AdminDiagnosticsTool] Kein aktiver Bestaetigungs-Token fuer "${id}" gefunden.`);
+  }
+
+  const mailResult = await sendAlertConfirmationEmail({
+    email: current.email,
+    symbol: current.symbol,
+    condition: data.condition as AlertCondition,
+    threshold: data.threshold,
+    confirmToken: data.confirm_token,
+  });
+  if (!mailResult.success) {
+    throw new Error(`[AdminDiagnosticsTool] Bestaetigungsmail fuer "${id}" konnte nicht versendet werden: ${mailResult.error || 'unbekannter Fehler'}`);
+  }
+
+  return { id, resent: true, alreadyConfirmed: false };
 }

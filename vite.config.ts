@@ -22,7 +22,7 @@ export default defineConfig(() => {
     // (Plugins, Alias) statt eine separate Test-Toolchain aufzusetzen.
     test: {
       environment: 'node',
-      include: ['tests/unit/**/*.test.ts'],
+      include: ['tests/unit/**/*.test.ts', 'tests/server/**/*.test.ts'],
       globals: false,
     },
   };

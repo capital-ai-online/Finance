@@ -259,18 +259,35 @@ stepUpRouter.post('/break-glass/redeem', requireAuth(async (req, res, identity) 
     .update({ totp_enabled: false, totp_secret_encrypted: null, totp_pending_secret_encrypted: null })
     .eq('id', identity.userId);
 
+  // Login-Step-Up-Erweiterung: Passkey hat beim Login Vorrang vor 2FA (LoginStepUpGate). Ein
+  // Nutzer, der seinen Passkey verloren hat, braeuchte sonst trotz erfolgreicher Break-Glass-
+  // Loesung fuer TOTP weiterhin einen (verlorenen) Passkey zur Anmeldung. Da Break-Glass-Codes
+  // ausschliesslich bei aktivierter TOTP existieren, ist diese Bereinigung nur fuer Konten mit
+  // BEIDEN Faktoren erreichbar - fuer Passkey-only-Konten gibt es bewusst keinen Self-Service-Weg
+  // (kein secret-gated Recovery-Mechanismus vorhanden, siehe ADR/PR-Beschreibung).
+  let passkeysRemoved = 0;
+  try {
+    const { data: passkeys } = await supabase.auth.admin.passkey.listPasskeys({ userId: identity.userId });
+    for (const pk of passkeys || []) {
+      const { error: delErr } = await supabase.auth.admin.passkey.deletePasskey({ userId: identity.userId, passkeyId: pk.id });
+      if (!delErr) passkeysRemoved++;
+    }
+  } catch (err: any) {
+    console.error(`[STEP-UP][ERROR] Break-Glass-Passkey-Bereinigung fehlgeschlagen: ${err?.message || err}`);
+  }
+
   await logSecurityEvent({
     event_type: 'unauthorized_access',
     actor_user_id: identity.userId,
     ip_address: ip,
     outcome: 'CRITICAL_BREAK_GLASS_USED',
-    reason: 'Break-Glass-Recovery erfolgreich eingelöst - TOTP zurückgesetzt, Neueinrichtung erforderlich',
+    reason: `Break-Glass-Recovery erfolgreich eingelöst - TOTP zurückgesetzt, ${passkeysRemoved} Passkey(s) entfernt, Neueinrichtung erforderlich`,
     endpoint: '/api/auth/break-glass/redeem',
   });
-  await logIamEvent(identity.userId, identity.userId, 'break-glass.redeemed', null, { reset: 'totp+step-up-tokens' });
+  await logIamEvent(identity.userId, identity.userId, 'break-glass.redeemed', null, { reset: 'totp+step-up-tokens+passkeys', passkeysRemoved });
 
   res.json({
     success: true,
-    message: 'Break-Glass erfolgreich. TOTP wurde zurückgesetzt - bitte richten Sie 2FA über /totp/setup neu ein.',
+    message: 'Break-Glass erfolgreich. TOTP und alle Passkeys wurden zurückgesetzt - bitte richten Sie diese in den Profil-Einstellungen neu ein.',
   });
 }));

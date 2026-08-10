@@ -1,7 +1,9 @@
 # ADR-0045 — Stripe Event Ownership & Durable Inbox
 
 - **Status:** Accepted
-- **Implementation-Status:** IN PR — production migration/deploy pending
+- **Implementation-Status:** COMPLETE — production migration applied, handler deployed, duplicate/replay
+  verified against a real Stripe redelivery on 2026-08-10 (see `docs/architecture/ROADMAP.md`, R-003
+  row and "R-003 attempts-semantics clarification")
 - **Date:** 2026-08-08
 - **Scope:** CAPITAL-AI billing ingress / Stripe webhook / Supabase / application-owned checkout side effects
 - **Platform Version:** `0.6.0`
@@ -190,6 +192,15 @@ R-003 becomes **COMPLETE** only after:
 Until then the roadmap state is:
 
 `IMPLEMENTED IN PR -> PRODUCTION HANDOFF PENDING`
+
+**Closure confirmed 2026-08-10:** all five conditions above are met. Migration
+`20260808013000_stripe_event_inbox.sql` is applied to production (verified read-only:
+`stripe_event_inbox` RLS-enabled and `service_role`-only, both RPC functions present with the
+signatures specified in §3); the application version containing `handleWebhookEvent()` is deployed
+and live; a real Stripe redelivery of `evt_1TytDVPKr4joNbEcKgxL0mdK` was independently verified to
+be classified `duplicate_processed` with no re-entry into checkout side effects; subscription
+projection remains owned by the Supabase Stripe synchronization (unchanged); no production-local
+fallback was used (the row exists in `stripe_event_inbox`, not a local file). R-003 is `COMPLETE`.
 
 ## 11. Decision
 

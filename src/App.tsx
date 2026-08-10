@@ -9,6 +9,8 @@ import { Dashboard } from './components/Dashboard';
 import { supabase } from './supabaseClient';
 import { Datenschutz } from './components/Datenschutz';
 import { ImpressumAgb } from './components/ImpressumAgb';
+import { LoginStepUpGate } from './components/LoginStepUpGate';
+import { loginStepUpRequirement, hasPassedLoginStepUpThisTab, clearLoginStepUpMarkers } from './lib/loginStepUp';
 
 export interface UserSession {
   type: 'guest' | 'registered';
@@ -35,6 +37,11 @@ export default function App() {
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [passwordRecoveryError, setPasswordRecoveryError] = useState<string | null>(null);
   const [passwordRecoverySubmitting, setPasswordRecoverySubmitting] = useState(false);
+  // Login-Step-Up (Passkey/2FA werden nur aktiviert, aber nie beim Login abgefragt): eine
+  // Session, die einen ausstehenden Passkey-/2FA-Nachweis benötigt, bevor handleSupabaseSession()
+  // (und damit Dashboard-Zugriff) ausgelöst wird. Siehe src/lib/loginStepUp.ts und
+  // src/components/LoginStepUpGate.tsx.
+  const [pendingStepUpSession, setPendingStepUpSession] = useState<any | null>(null);
 
   const updateUserSession = (session: UserSession | null) => {
     setUserSession(session);
@@ -116,6 +123,22 @@ export default function App() {
     }
   };
 
+  // Einziger Aufrufer von handleSupabaseSession() für jede neu etablierte Session (Mount-Restore,
+  // onAuthStateChange, Passwort-Reset-Abschluss). Prüft zuerst, ob Passkey/2FA-Step-Up nötig ist -
+  // handleSupabaseSession() (und damit Dashboard-Zugriff) wird erst danach ausgelöst. Bewusst ohne
+  // Event-Namen-Filter: der sessionStorage-Marker in loginStepUpRequirement() macht wiederholte
+  // Aufrufe für bereits verifizierte Tabs billig, verhindert aber zuverlässig, dass z.B. der
+  // USER_UPDATED-Event eines Passwort-Resets die Sperre umgeht.
+  const establishSession = async (session: any) => {
+    const required = await loginStepUpRequirement(session);
+    if (required === 'none') {
+      await handleSupabaseSession(session);
+    } else {
+      setPendingStepUpSession(session);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Load cached session from localStorage (robust compliance with EinwVO/DSGVO & standalone readiness when JWT is deactivated)
     let hasLocalSession = false;
@@ -156,7 +179,11 @@ export default function App() {
     if (localSessionJson) {
       try {
         const parsed = JSON.parse(localSessionJson);
-        if (parsed && parsed.email) {
+        // Der optimistische Cache-Fast-Path darf einen registrierten Nutzer mit Passkey/2FA nicht
+        // an loginStepUpRequirement() vorbei direkt ins Dashboard lassen (sonst wirkt die Sperre
+        // nur beim allerersten Login und wird bei jedem weiteren Reload/neuen Tab umgangen). Ist
+        // dieser Tab für diesen Nutzer bereits verifiziert, bleibt der Fast-Path unverändert schnell.
+        if (parsed && parsed.email && (parsed.type !== 'registered' || !parsed.id || hasPassedLoginStepUpThisTab(parsed.id))) {
           setUserSession(parsed);
           setLoading(false);
           hasLocalSession = true;
@@ -183,7 +210,7 @@ export default function App() {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        handleSupabaseSession(session);
+        establishSession(session);
       } else {
         if (!hasLocalSession) {
           updateUserSession({
@@ -221,7 +248,7 @@ export default function App() {
           return;
         }
         if (session) {
-          handleSupabaseSession(session);
+          establishSession(session);
         } else {
           // If we manually logged out, clear it, but otherwise keep local state if JWT is deactivated
           if (event === 'SIGNED_OUT') {
@@ -324,10 +351,12 @@ export default function App() {
       setIsPasswordRecovery(false);
       setPasswordRecoveryError(null);
       // Nach erfolgreichem Zurücksetzen ist die (temporäre) Recovery-Session bereits
-      // eine gültige, vollwertige Session mit dem neuen Passwort - normal einloggen.
+      // eine gültige, vollwertige Session mit dem neuen Passwort - normal einloggen (inkl.
+      // Login-Step-Up-Prüfung: ein Passwort-Reset ist ein typischer Account-Takeover-Vektor und
+      // darf die Passkey-/2FA-Sperre nicht umgehen).
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        await handleSupabaseSession(session);
+        await establishSession(session);
       }
     } catch (err: any) {
       setPasswordRecoveryError(err.message || 'Das Passwort konnte nicht aktualisiert werden.');
@@ -344,6 +373,8 @@ export default function App() {
         console.warn("Supabase signOut error:", e);
       }
     }
+    clearLoginStepUpMarkers();
+    setPendingStepUpSession(null);
     updateUserSession({
       type: 'guest',
       name: 'Gast-User',
@@ -379,6 +410,24 @@ export default function App() {
           <p className="text-xs text-white/40 font-mono uppercase tracking-widest animate-pulse">Lade Sicherheits-Modul...</p>
         </div>
       </div>
+    );
+  }
+
+  if (pendingStepUpSession) {
+    return (
+      <LoginStepUpGate
+        session={pendingStepUpSession}
+        onVerified={async () => {
+          const session = pendingStepUpSession;
+          setPendingStepUpSession(null);
+          setLoading(true);
+          await handleSupabaseSession(session);
+        }}
+        onAbort={async () => {
+          setPendingStepUpSession(null);
+          await handleLogout();
+        }}
+      />
     );
   }
 
@@ -490,7 +539,7 @@ export default function App() {
                     try {
                       const { data: { session } } = await supabase.auth.getSession();
                       if (session) {
-                        await handleSupabaseSession(session);
+                        await establishSession(session);
                       } else {
                         setLoading(false);
                       }
