@@ -163,3 +163,8 @@ export async function getLiveCryptoSnapshotConsensus(
   }
   return evaluateCryptoSnapshotConsensus(s, provenance);
 }
+
+export function resetLiveCryptoSnapshotConsensusState(): void {
+  cmcCache.clear();
+  cmcCooldownUntil = 0;
+}
