@@ -15,6 +15,7 @@ export function evaluateDependencyPolicy(pkg: any, lock: any): DependencyPolicyR
   const violations: string[] = [];
   const dependencies: Record<string, string> = pkg?.dependencies ?? {};
   const rootLock = lock?.packages?.[''];
+  const rootLockDependencies: Record<string, string> = rootLock?.dependencies ?? {};
 
   for (const [name, specifier] of Object.entries(dependencies)) {
     if (typeof specifier !== 'string' || isDisallowedSpecifier(specifier)) {
@@ -22,7 +23,7 @@ export function evaluateDependencyPolicy(pkg: any, lock: any): DependencyPolicyR
       continue;
     }
 
-    const rootSpecifier = rootLock?.dependencies?.[name];
+    const rootSpecifier = rootLockDependencies[name];
     if (rootSpecifier !== specifier) {
       violations.push(`${name}: package.json und package-lock Root-Specifier divergieren`);
     }
@@ -34,6 +35,12 @@ export function evaluateDependencyPolicy(pkg: any, lock: any): DependencyPolicyR
     }
     if (!locked.integrity && !locked.resolved?.startsWith('https://registry.npmjs.org/')) {
       violations.push(`${name}@${locked.version}: weder Integrity-Hash noch verifizierbarer npm-Registry-Ursprung im Lockfile`);
+    }
+  }
+
+  for (const name of Object.keys(rootLockDependencies)) {
+    if (!(name in dependencies)) {
+      violations.push(`${name}: veralteter package-lock Root-Dependency-Eintrag ohne package.json-Entsprechung`);
     }
   }
 
@@ -69,7 +76,7 @@ export function buildCycloneDxSbom(pkg: any, lock: any, serialNumber = 'urn:uuid
         name: pkg?.name ?? 'unknown',
         version: pkg?.version ?? 'unknown',
       },
-      tools: [{ vendor: 'CAPITAL-AI', name: 'dependencySecurity.ts', version: '1.0.0' }],
+      tools: [{ vendor: 'CAPITAL-AI', name: 'dependencySecurity.ts', version: '1.1.0' }],
     },
     components,
   };
