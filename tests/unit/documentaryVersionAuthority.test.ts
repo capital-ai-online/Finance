@@ -38,8 +38,8 @@ describe('Documentary D0 version authority and baseline', () => {
     expect(context.documentSchemaVersion).toBe(DOCUMENTARY_DOCUMENT_SCHEMA_VERSION);
     expect(context.platformVersion).toBe(packageJson.version);
     expect(context).toEqual({
-      componentVersion: '1.1.0',
-      documentSchemaVersion: '1.0.0',
+      componentVersion: manifest.version,
+      documentSchemaVersion: DOCUMENTARY_DOCUMENT_SCHEMA_VERSION,
       platformVersion: packageJson.version,
     });
   });
