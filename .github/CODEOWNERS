@@ -1,6 +1,7 @@
 # ADR-0035 / ESS-0014 / ADR-0040 — repository review ownership for protected marketing assets.
 # ADR-0036 — PR-first multi-agent single-writer governance.
 # ADR-0043 — Supabase privilege separation and production configuration hardening.
+# M1 — provider-neutral AI-agent, telemetry and supply-chain governance surfaces.
 #
 # This is an additional GitHub-layer guard. CAPITAL-AI IAM / protected-change approval remains
 # the authoritative application-level authorization contract where applicable. CODEOWNERS
@@ -25,17 +26,24 @@
 /.dockerignore @SvenKulessa
 /.github/pull_request_template.md @SvenKulessa
 /.github/CODEOWNERS @SvenKulessa
-/.github/workflows/ci.yml @SvenKulessa
-/.github/workflows/google-marketing-protected-change.yml @SvenKulessa
-/.github/workflows/open-agent-draft-pr.yml @SvenKulessa
-/.github/workflows/pr-governance.yml @SvenKulessa
+/.github/policies/ @SvenKulessa
+/.github/workflows/ @SvenKulessa
 /AGENTS.md @SvenKulessa
 /CLAUDE.md @SvenKulessa
 /package.json @SvenKulessa
 /.ai/work-claims/ @SvenKulessa
-/.ai/skills/ESS-0014-Google-Marketing-MCP-Governance.md @SvenKulessa
-/.ai/skills/ESS-0014-Contracts.md @SvenKulessa
+/.ai/skills/ @SvenKulessa
 /.ai/registry/ess-registry.json @SvenKulessa
+/src/services/agentTools/ @SvenKulessa
+/src/platform/Telemetry/ @SvenKulessa
+/src/platform/Traceability/ @SvenKulessa
+/src/platform/Release/ @SvenKulessa
+/src/platform/VersionManager/ @SvenKulessa
+/docs/evidence/ @SvenKulessa
+/docs/governance/ @SvenKulessa
+/docs/adr/ADR-0050-* @SvenKulessa
+/docs/adr/ADR-0051-* @SvenKulessa
+/docs/adr/ADR-0053-* @SvenKulessa
 /docs/adr/ADR-0035-protected-google-marketing-integration-strict-csp.md @SvenKulessa
 /docs/adr/ADR-0036-* @SvenKulessa
 /docs/adr/ADR-0040-* @SvenKulessa
