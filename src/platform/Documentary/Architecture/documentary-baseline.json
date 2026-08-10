@@ -3,12 +3,12 @@
   "status": "partial-implementation",
   "implementedAreas": [
     "Contracts",
+    "Discovery",
     "Documentation",
     "Versioning"
   ],
   "plannedAreas": [
     "Architecture",
-    "Discovery",
     "Engine",
     "Events",
     "Generators",
@@ -27,6 +27,7 @@
   },
   "notes": [
     "The bilingual vocabulary projection is implemented.",
+    "D1 read-only repository code discovery is implemented and binds evidence to a source commit.",
     "The full Documentary Engine is not implemented yet.",
     "Planned areas must not be treated as implemented solely because their directories exist.",
     "Platform version resolution is delegated to the existing Version Manager authority and does not create a Documentary-local platform version."
