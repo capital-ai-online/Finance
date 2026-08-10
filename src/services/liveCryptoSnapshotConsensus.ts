@@ -10,6 +10,11 @@ export interface LiveCryptoSnapshotConsensusOptions {
   coinMarketCapApiKey?: string;
 }
 
+const QUORUM_SYMBOLS = new Set(['BTC', 'ETH', 'SOL', 'ADA', 'XRP', 'DOT', 'AVAX', 'LINK', 'BNB', 'MATIC', 'DOGE', 'SHIB']);
+const CMC_CACHE_TTL_MS = 2 * 60_000;
+const cmcCache = new Map<string, { expiresAt: number; value: SnapshotFieldProvenance[] }>();
+let cmcCooldownUntil = 0;
+
 function positive(value: unknown): number | null {
   const n = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(n) && n > 0 ? n : null;
@@ -34,19 +39,32 @@ function resolveCoinMarketCapRow(payload: any, symbol: string): any | null {
   return null;
 }
 
+function parseRetryAfterMs(response: Response): number {
+  const retryAfter = response.headers?.get?.('retry-after');
+  if (!retryAfter) return 60 * 60_000;
+  const seconds = Number(retryAfter);
+  if (Number.isFinite(seconds) && seconds > 0) return Math.max(60_000, seconds * 1000);
+  const timestamp = Date.parse(retryAfter);
+  if (Number.isFinite(timestamp)) return Math.max(60_000, timestamp - Date.now());
+  return 60 * 60_000;
+}
+
 async function fetchCoinMarketCapProvenance(
   symbol: string,
   options: LiveCryptoSnapshotConsensusOptions,
 ): Promise<SnapshotFieldProvenance[]> {
   const apiKey = options.coinMarketCapApiKey ?? process.env.COINMARKETCAP_API_KEY;
-  if (!apiKey) return [];
+  if (!apiKey || !QUORUM_SYMBOLS.has(symbol)) return [];
+  const now = options.nowMs?.() ?? Date.now();
+  const cached = cmcCache.get(symbol);
+  if (cached && cached.expiresAt > now) return cached.value;
+  if (cmcCooldownUntil > now) return [];
+
   const fetchImpl = options.fetchImpl ?? fetch;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 5_000);
   const started = Date.now();
   try {
-    // Current CMC contract. v2 quotes are legacy; keep the parser tolerant of both response
-    // shapes so a provider-side format transition cannot silently turn a 200 into no evidence.
     const response = await fetchImpl(
       `https://pro-api.coinmarketcap.com/v3/cryptocurrency/quotes/latest?symbol=${encodeURIComponent(symbol)}&convert=USD`,
       {
@@ -58,7 +76,10 @@ async function fetchCoinMarketCapProvenance(
         },
       },
     );
-    if (!response.ok) throw new Error(`CoinMarketCap HTTP ${response.status}`);
+    if (!response.ok) {
+      if (response.status === 429) cmcCooldownUntil = now + parseRetryAfterMs(response);
+      throw new Error(`CoinMarketCap HTTP ${response.status}`);
+    }
     const payload: any = await response.json();
     if (payload?.status?.error_code && payload.status.error_code !== 0) {
       throw new Error(`CoinMarketCap API ${payload.status.error_code}: ${payload.status.error_message || 'unknown error'}`);
@@ -66,7 +87,7 @@ async function fetchCoinMarketCapProvenance(
     const row = resolveCoinMarketCapRow(payload, symbol);
     if (!row) throw new Error('CoinMarketCap returned no symbol snapshot.');
     const quote = row?.quote?.USD ?? (Array.isArray(row?.quote) ? row.quote.find((q: any) => q?.symbol === 'USD') : undefined) ?? {};
-    const retrievedAt = new Date(options.nowMs?.() ?? Date.now()).toISOString();
+    const retrievedAt = new Date(now).toISOString();
     const observedRaw = quote?.last_updated ?? row?.last_updated;
     const observedAt = typeof observedRaw === 'string' && Number.isFinite(Date.parse(observedRaw))
       ? new Date(observedRaw).toISOString()
@@ -78,15 +99,7 @@ async function fetchCoinMarketCapProvenance(
       ['maxSupply', positive(row?.max_supply), 'token', 'data[].max_supply'],
       ['totalSupply', positive(row?.total_supply), 'token', 'data[].total_supply'],
     ];
-    recordProviderHealth({
-      provider: 'CoinMarketCap',
-      capability: 'crypto-snapshot-consensus',
-      state: 'healthy',
-      cacheMode: 'live',
-      message: `${symbol}: verified snapshot fields available for quorum evaluation.`,
-    });
-    recordMarketDataProviderOutcome({ provider: 'CoinMarketCap', success: true, latencyMs: Math.max(0, Date.now() - started) });
-    return values
+    const provenance = values
       .filter(([, value]) => value !== null)
       .map(([field, value, unit, sourcePath]) => ({
         field,
@@ -97,7 +110,17 @@ async function fetchCoinMarketCapProvenance(
         value,
         unit,
         semanticScope: semanticScopeFor(field),
-      }));
+      } satisfies SnapshotFieldProvenance));
+    cmcCache.set(symbol, { expiresAt: now + CMC_CACHE_TTL_MS, value: provenance });
+    recordProviderHealth({
+      provider: 'CoinMarketCap',
+      capability: 'crypto-snapshot-consensus',
+      state: 'healthy',
+      cacheMode: 'live',
+      message: `${symbol}: verified snapshot fields available for quorum evaluation.`,
+    });
+    recordMarketDataProviderOutcome({ provider: 'CoinMarketCap', success: true, latencyMs: Math.max(0, Date.now() - started) });
+    return provenance;
   } catch (error) {
     recordProviderHealth({
       provider: 'CoinMarketCap',
