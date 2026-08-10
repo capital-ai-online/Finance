@@ -14,22 +14,19 @@ import {
   computeRsi,
   renormalizeAndScore,
 } from './realMarketSignals';
+import { getKrakenSpotMarketEvidence } from './krakenSpotMarketEvidence';
+import { getLiveCryptoSnapshotConsensus } from './liveCryptoSnapshotConsensus';
 
-// Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): konsolidierte, kanonische Nicht-Meme-
-// Krypto-Scoring-Engine. Ersetzt die zuvor parallel gepflegten, redundanten Implementierungen
-// in src/lib/cryptoScoring.ts (freie Funktionen, direkt im Scoring-Tab von
-// CryptoScoringEnterprise.tsx verwendet) und die hier zuvor eigene, hash-basierte
-// generateCryptoInputs()-Variante. Gewichte summieren auf 1.00; data_quality_risk ist
-// invertiert (hoeheres Risiko = schlechter). Fehlt ein Faktor fuer ein Symbol (keine reale
-// Kurshistorie/Provider-Evidence), wird sein Gewichtsanteil dynamisch auf die vorhandenen Faktoren
-// umgelegt (renormalizeAndScore(), siehe realMarketSignals.ts) statt geschaetzt zu werden.
+// Audit ARCH-AUDIT-0002 / R-001: only evidence-backed factors enter the scorer. Missing
+// provider evidence is dynamically renormalized instead of guessed. Weights remain exactly 1.00.
 export const CRYPTO_SCORING_WEIGHTS = {
   trend: 0.20,
   momentum: 0.16,
   volatility_quality: 0.12,
   breakout_quality: 0.10,
   relative_strength: 0.12,
-  avg_daily_volume: 0.12,
+  avg_daily_volume: 0.08,
+  exchange_liquidity: 0.04,
   supply_dynamics: 0.08,
   regime_bonus: 0.06,
   data_quality_risk: 0.04,
@@ -45,11 +42,13 @@ export const CRYPTO_DECISION_THRESHOLDS = [
   { low: 0, high: 59.99, label: "reject", name: "Reject", desc: "Kein Trade. Ungenügende Qualität/Risiko-Profil." }
 ];
 
+function scoreUsdLiquidity(volumeUsd: number | null | undefined): number | undefined {
+  if (typeof volumeUsd !== 'number' || !Number.isFinite(volumeUsd) || volumeUsd <= 0) return undefined;
+  // Deterministic log scale, not a fabricated observation: <= $1m => 0, >= $1bn => 1.
+  return Math.max(0, Math.min(1, Number(((Math.log10(volumeUsd) - 6) / 3).toFixed(4))));
+}
+
 export class CryptoScoringService {
-  /**
-   * Berechnet den Enterprise-Score aus real anbindbaren Faktoren (dynamische Neugewichtung
-   * fehlender Faktoren statt fester 23-Faktoren-Formel).
-   */
   public static scoreCrypto(inputs: CryptoScoringInputs, version: string = "0.6.0"): CryptoAnalysisPayload {
     const x = inputs;
     const values: Record<string, number | undefined> = {
@@ -59,6 +58,7 @@ export class CryptoScoringService {
       breakout_quality: x.breakout_quality !== undefined ? x.breakout_quality * 100 : undefined,
       relative_strength: x.relative_strength !== undefined ? x.relative_strength * 100 : undefined,
       avg_daily_volume: x.avg_daily_volume !== undefined ? x.avg_daily_volume * 100 : undefined,
+      exchange_liquidity: x.exchange_liquidity !== undefined ? x.exchange_liquidity * 100 : undefined,
       supply_dynamics: x.supply_dynamics !== undefined ? x.supply_dynamics * 100 : undefined,
       regime_bonus: x.regime_bonus !== undefined ? x.regime_bonus * 100 : undefined,
       data_quality_risk: x.data_quality_risk !== undefined ? x.data_quality_risk * 100 : undefined,
@@ -100,7 +100,8 @@ export class CryptoScoringService {
     if ((x.trend ?? 0) > 0.7) reasoning.push("Starker technischer Aufwärtstrend vorhanden (echte Kurshistorie).");
     if ((x.momentum ?? 0) > 0.7) reasoning.push("Hohes bullisches Momentum (Rate-of-Change, echte Kurshistorie).");
     if ((x.relative_strength ?? 0) > 0.7) reasoning.push("Überragende relative Stärke (RSI, echte Kurshistorie).");
-    if ((x.avg_daily_volume ?? 0) > 0.7) reasoning.push("Hervorragende reale Liquidität (nur mit verifizierter Provider-Evidence).");
+    if ((x.avg_daily_volume ?? 0) > 0.7) reasoning.push("Hohe globale Liquidität aus CoinGecko/CoinMarketCap-Consensus.");
+    if ((x.exchange_liquidity ?? 0) > 0.7) reasoning.push("Hohe verifizierte Kraken-Spot-Liquidität (exchange-lokale Evidence).");
     if (missingFactors.length > 0) {
       reasoning.push(`Ohne reale Datenquelle fuer dieses Symbol: ${missingFactors.join(', ')} (Gewichtsanteil dynamisch auf die vorhandenen Faktoren umgelegt).`);
     }
@@ -121,7 +122,11 @@ export class CryptoScoringService {
 
     const dataCompletenessRatio = usedFactors.length / (usedFactors.length + missingFactors.length || 1);
     const technicalStrength = Math.round((((x.trend ?? 0) + (x.momentum ?? 0)) / 2) * 100);
-    const liquidityPct = Math.round((x.avg_daily_volume ?? 0) * 100);
+    const availableLiquidity = [x.avg_daily_volume, x.exchange_liquidity]
+      .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+    const liquidityPct = availableLiquidity.length > 0
+      ? Math.round((availableLiquidity.reduce((sum, value) => sum + value, 0) / availableLiquidity.length) * 100)
+      : 0;
     const riskScoreValue = Math.round(risk_penalty);
 
     return {
@@ -165,21 +170,18 @@ export class CryptoScoringService {
     };
   }
 
-  /**
-   * R-001 / ADR-0032: Der synchrone Pfad darf keine Legacy-AssetRegistry-Finanzwerte
-   * (marketCap, volume24h, Supply, change24h) in scorefaehige Evidence umwandeln.
-   * Ohne einen expliziten Provider-Evidence-Contract bleiben diese Faktoren undefined.
-   */
+  /** R-001 / ADR-0032: no registry/bootstrap financial values become score evidence. */
   public static generateCryptoInputsSync(symbol: string, _change24h: number): CryptoScoringInputs {
     const s = symbol.toUpperCase().trim();
     return { coin: s };
   }
 
   /**
-   * Bezieht ausschliesslich historienbasierte Faktoren aus einer als `live` markierten
-   * Kurshistorie. Registry-/Bootstrap-Finanzwerte werden nicht als Scoring-Evidence verwendet.
-   * Weitere Faktoren (Liquiditaet, Supply, Regime) bleiben bis zu einem eigenen
-   * Provider-Evidence-Contract undefined.
+   * Uses three independent evidence channels:
+   * 1) verified live history for technical factors,
+   * 2) CoinGecko + CoinMarketCap quorum for global volume/supply,
+   * 3) Kraken public spot ticker for exchange-local liquidity.
+   * Missing/unavailable providers remain undefined and are never replaced by catalog values.
    */
   public static async generateCryptoInputs(symbol: string, change24h: number): Promise<CryptoScoringInputs> {
     const s = symbol.toUpperCase().trim();
@@ -191,25 +193,45 @@ export class CryptoScoringService {
     let volatility_quality: number | undefined;
     let relative_strength: number | undefined;
     let data_quality_risk: number | undefined;
+    let avg_daily_volume: number | undefined;
+    let exchange_liquidity: number | undefined;
+    let supply_dynamics: number | undefined;
 
-    try {
-      const history = await assetRegistry.getHistory(s, 30);
-      if (history.source === 'live') {
-        const closes = history.points.map(p => p.close);
-        const stats = computeReturnStats(closes);
-        if (stats) {
-          trend = scoreTrend(stats.last, stats.sma) / 100;
-          momentum = scoreMomentum(stats.rocPct) / 100;
-          breakout_quality = scoreBreakout(stats.last, stats.high, stats.low) / 100;
-          volatility_quality = (100 - scoreVolatility(stats.dailyStdevPct)) / 100;
-        }
-        const rsi = computeRsi(closes);
-        if (rsi !== undefined) relative_strength = rsi / 100;
-        data_quality_risk = 0.05;
+    const [historyResult, consensus, kraken] = await Promise.all([
+      assetRegistry.getHistory(s, 30).catch(() => null),
+      getLiveCryptoSnapshotConsensus(s).catch(() => null),
+      getKrakenSpotMarketEvidence(s).catch(() => null),
+    ]);
+
+    if (historyResult?.source === 'live') {
+      const closes = historyResult.points.map(p => p.close);
+      const stats = computeReturnStats(closes);
+      if (stats) {
+        trend = scoreTrend(stats.last, stats.sma) / 100;
+        momentum = scoreMomentum(stats.rocPct) / 100;
+        breakout_quality = scoreBreakout(stats.last, stats.high, stats.low) / 100;
+        volatility_quality = (100 - scoreVolatility(stats.dailyStdevPct)) / 100;
       }
-    } catch {
-      // Fail closed: keine echte Historie -> keine historienbasierten Faktoren.
+      const rsi = computeRsi(closes);
+      if (rsi !== undefined) relative_strength = rsi / 100;
+      data_quality_risk = 0.05;
     }
+
+    if (consensus) {
+      const volume = consensus.fields.find(field => field.field === 'volume24hUsd' && field.status === 'CONSENSUS');
+      avg_daily_volume = scoreUsdLiquidity(volume?.canonicalValue);
+
+      const circulating = consensus.fields.find(field => field.field === 'circulatingSupply' && field.status === 'CONSENSUS');
+      const maxSupply = consensus.fields.find(field => field.field === 'maxSupply' && field.status === 'CONSENSUS');
+      if (
+        typeof circulating?.canonicalValue === 'number' && circulating.canonicalValue > 0 &&
+        typeof maxSupply?.canonicalValue === 'number' && maxSupply.canonicalValue > 0
+      ) {
+        supply_dynamics = Math.max(0, Math.min(1, Number((circulating.canonicalValue / maxSupply.canonicalValue).toFixed(4))));
+      }
+    }
+
+    if (kraken) exchange_liquidity = kraken.liquidityScore;
 
     return {
       ...base,
@@ -218,6 +240,9 @@ export class CryptoScoringService {
       volatility_quality,
       breakout_quality,
       relative_strength,
+      avg_daily_volume,
+      exchange_liquidity,
+      supply_dynamics,
       data_quality_risk,
     };
   }
