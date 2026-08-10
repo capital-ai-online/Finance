@@ -4,7 +4,7 @@ const dockerfile = fs.readFileSync('Dockerfile', 'utf8');
 const dockerignore = fs.readFileSync('.dockerignore', 'utf8');
 
 const requirements = [
-  ['immutable base image digest', /FROM\s+node:22-alpine@sha256:[a-f0-9]{64}/],
+  ['immutable Node 24.18 LTS base image digest', /FROM\s+node:24\.18\.0-alpine@sha256:[a-f0-9]{64}/],
   ['multi-stage builder', /AS\s+builder/i],
   ['multi-stage runner', /AS\s+runner/i],
   ['production-only dependencies', /npm\s+ci\s+--omit=dev/],
@@ -21,7 +21,8 @@ const requirements = [
 ];
 
 const forbidden = [
-  ['floating base tag without digest', /^FROM\s+node:22-alpine(?:\s|$)/m],
+  ['floating Node 24.18 base tag without digest', /^FROM\s+node:24\.18\.0-alpine(?:\s|$)/m],
+  ['legacy Node 22 production base', /^FROM\s+node:22(?:[.-]|\s|$)/m],
   ['root runtime user', /^USER\s+root\s*$/m],
   ['production npm shim command', /CMD\s*\[\s*"npm"/],
   ['runtime artifacts owned by application user', /COPY\s+--from=builder\s+--chown=capitalai:capitalai/],
