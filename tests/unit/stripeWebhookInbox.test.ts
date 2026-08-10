@@ -123,6 +123,27 @@ describe('Stripe webhook durable inbox gate (ADR-0045)', () => {
     expect(mocks.markStripeEventProcessed).not.toHaveBeenCalled();
   });
 
+  // ADR-0045 §3 rule 2/3, confirmed against production evidence 2026-08-10 (see
+  // docs/architecture/ROADMAP.md, "R-003 attempts-semantics clarification"): `attempts` is a
+  // processing/claim-attempt counter, incremented ONLY when a `failed` event is reclaimed for
+  // retry - a `processed`/`processing` duplicate MUST NOT increment it. A real Stripe redelivery
+  // of an already-`processed` event correctly reported `attempts` unchanged; treating that as a
+  // bug (e.g. "expected attempts >= 2 on any redelivery") contradicts the ADR and must not be
+  // "fixed" in the claim SQL/TS wrapper.
+  it('reports attempts unchanged (not incremented) for a duplicate of an already-processed event', async () => {
+    mocks.claimStripeEvent.mockResolvedValue({
+      claimed: false,
+      claimStatus: 'duplicate_processed',
+      attempts: 1, // unchanged from the original claim - this is correct, not stale data
+      integrityMatches: true,
+    });
+
+    const result = await handleWebhookEvent(checkoutEvent());
+
+    expect(result.claimStatus).toBe('duplicate_processed');
+    expect(result.duplicate).toBe(true);
+  });
+
   it('fails closed on an event-id/payload integrity conflict', async () => {
     mocks.claimStripeEvent.mockResolvedValue({
       claimed: false,
