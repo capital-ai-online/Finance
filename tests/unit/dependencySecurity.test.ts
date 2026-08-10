@@ -33,6 +33,31 @@ describe('dependency security policy', () => {
     expect(result.violations.some(item => item.includes('unsicherer/nicht reproduzierbarer'))).toBe(true);
   });
 
+  it('rejects stale root dependencies that no longer exist in package.json', () => {
+    const result = evaluateDependencyPolicy(pkg, {
+      packages: {
+        ...lock.packages,
+        '': {
+          name: 'capital-ai',
+          version: '0.6.0',
+          dependencies: {
+            express: '^5.0.0',
+            'kraken-api': '^1.0.2',
+          },
+        },
+        'node_modules/kraken-api': {
+          version: '1.0.2',
+          resolved: 'https://registry.npmjs.org/kraken-api/-/kraken-api-1.0.2.tgz',
+          integrity: 'sha512-stale',
+        },
+      },
+    });
+
+    expect(result.violations).toContain(
+      'kraken-api: veralteter package-lock Root-Dependency-Eintrag ohne package.json-Entsprechung',
+    );
+  });
+
   it('builds a CycloneDX 1.5 production SBOM without dev-only components', () => {
     const sbom = buildCycloneDxSbom(pkg, lock, 'urn:uuid:test');
     expect(sbom.bomFormat).toBe('CycloneDX');
