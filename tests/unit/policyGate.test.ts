@@ -3,8 +3,9 @@ import { evaluateReadPolicy, evaluateWritePolicy } from '../../src/platform/Comp
 import { CAPABILITIES } from '../../src/platform/Security/capabilities';
 
 describe('Compliance PolicyGate (ESS-0018 Phase 2)', () => {
-  it('allows only the explicitly allowlisted write capability', () => {
+  it('allows only the explicitly allowlisted write capabilities', () => {
     expect(evaluateWritePolicy(CAPABILITIES.ADMIN_ALERT_SUBSCRIPTION_DISABLE).verdict).toBe('ALLOW');
+    expect(evaluateWritePolicy(CAPABILITIES.ADMIN_ALERT_SUBSCRIPTION_RESEND_CONFIRMATION).verdict).toBe('ALLOW');
   });
 
   it('denies a read capability when evaluated as a write (no cross-allowlist leakage)', () => {

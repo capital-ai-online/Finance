@@ -17,9 +17,13 @@ import {
   getAdminDiagnostics,
   getAlertSubscriptionPreview,
   disableAlertSubscription,
+  getAlertSubscriptionConfirmationPreview,
+  resendAlertSubscriptionConfirmation,
   type AdminDiagnosticsRequest,
   type AdminDiagnosticsResult,
   type AlertSubscriptionPreview,
+  type AlertSubscriptionConfirmationPreview,
+  type ResendAlertSubscriptionConfirmationResult,
 } from '../services/agentTools/supabaseAdminDiagnosticsTool';
 
 export type CapabilityDeniedResult = { authorized: false; capability: string };
@@ -90,6 +94,63 @@ export class AdminDiagnosticsAgent {
       actorUserId,
       targetResource: `alert_subscriptions:${request.id}`,
       fn: () => disableAlertSubscription({ id: request.id, expectedFingerprint: request.expectedFingerprint }),
+    });
+
+    return { authorized: true as const, outcome };
+  }
+
+  /** Read-only preview of a proposed confirmation resend + the plan hash an owner must cite when
+   * issuing an approval for it. No approval consumed here. */
+  public async previewAlertSubscriptionResendConfirmation(
+    actorUserId: string,
+    id: string
+  ): Promise<
+    | { authorized: true; preview: AlertSubscriptionConfirmationPreview; action: string; planHash: string }
+    | CapabilityDeniedResult
+    | { authorized: true; preview: null }
+  > {
+    const allowed = await checkCapability(actorUserId, CAPABILITIES.ADMIN_ALERT_SUBSCRIPTION_RESEND_CONFIRMATION);
+    if (!allowed) {
+      const denied: CapabilityDeniedResult = { authorized: false, capability: CAPABILITIES.ADMIN_ALERT_SUBSCRIPTION_RESEND_CONFIRMATION };
+      return denied;
+    }
+
+    const preview = await getAlertSubscriptionConfirmationPreview(id);
+    if (!preview) return { authorized: true as const, preview: null };
+
+    const action = 'supabase.admin.alert_subscription.resend_confirmation';
+    const planHash = computePlanHash({ action, id: preview.id, expectedFingerprint: preview.fingerprint });
+    return { authorized: true as const, preview, action, planHash };
+  }
+
+  /** Apply. Requires a caller-supplied, already-issued approvalId bound to exactly this
+   * action+planHash (issued via POST /api/admin/approvals after an owner reviewed the preview
+   * above). */
+  public async applyAlertSubscriptionResendConfirmation(
+    actorUserId: string,
+    request: { id: string; expectedFingerprint: string; approvalId: string }
+  ): Promise<
+    | { authorized: true; outcome: Awaited<ReturnType<typeof executeApprovedSupervisedAction<ResendAlertSubscriptionConfirmationResult>>> }
+    | CapabilityDeniedResult
+  > {
+    const allowed = await checkCapability(actorUserId, CAPABILITIES.ADMIN_ALERT_SUBSCRIPTION_RESEND_CONFIRMATION);
+    if (!allowed) {
+      const denied: CapabilityDeniedResult = { authorized: false, capability: CAPABILITIES.ADMIN_ALERT_SUBSCRIPTION_RESEND_CONFIRMATION };
+      return denied;
+    }
+
+    const action = 'supabase.admin.alert_subscription.resend_confirmation';
+    const planHash = computePlanHash({ action, id: request.id, expectedFingerprint: request.expectedFingerprint });
+
+    const outcome = await executeApprovedSupervisedAction({
+      taskName: 'admin-diagnostics:alert-subscription-resend-confirmation',
+      action,
+      capability: CAPABILITIES.ADMIN_ALERT_SUBSCRIPTION_RESEND_CONFIRMATION,
+      planHash,
+      approvalId: request.approvalId,
+      actorUserId,
+      targetResource: `alert_subscriptions:${request.id}`,
+      fn: () => resendAlertSubscriptionConfirmation({ id: request.id, expectedFingerprint: request.expectedFingerprint }),
     });
 
     return { authorized: true as const, outcome };

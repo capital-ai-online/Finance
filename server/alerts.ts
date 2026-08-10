@@ -31,7 +31,7 @@ const alertsLogger = createLogger('alerts');
 
 const ALERT_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6 Stunden
 const ALLOWED_CONDITIONS = ['score_above', 'score_below'] as const;
-type AlertCondition = (typeof ALLOWED_CONDITIONS)[number];
+export type AlertCondition = (typeof ALLOWED_CONDITIONS)[number];
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -45,6 +45,38 @@ function getBaseUrl(): string {
 
 function isValidCondition(value: unknown): value is AlertCondition {
   return typeof value === 'string' && (ALLOWED_CONDITIONS as readonly string[]).includes(value);
+}
+
+export interface AlertConfirmationEmailInput {
+  email: string;
+  symbol: string;
+  condition: AlertCondition;
+  threshold: number;
+  confirmToken: string;
+}
+
+/**
+ * Extracted so ESS-0018's admin resend-confirmation write capability
+ * (src/services/agentTools/supabaseAdminDiagnosticsTool.ts) can re-send the identical
+ * confirmation mail for an existing, still-unconfirmed subscription without duplicating this
+ * template. Behavior-preserving refactor - the original POST / handler below now calls this
+ * instead of building the mail inline.
+ */
+export async function sendAlertConfirmationEmail(input: AlertConfirmationEmailInput): Promise<{ success: boolean; error?: string }> {
+  const confirmUrl = `${getBaseUrl()}/api/alerts/confirm?token=${input.confirmToken}`;
+  const conditionLabel = input.condition === 'score_above' ? `über ${input.threshold}` : `unter ${input.threshold}`;
+  return sendMail({
+    to: input.email,
+    subject: `Bitte bestätigen: Alert für ${input.symbol}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2>Alert-Anmeldung bestätigen</h2>
+        <p>Sie (oder jemand mit dieser E-Mail-Adresse) haben einen Alert für <strong>${input.symbol}</strong> eingerichtet: Benachrichtigung, wenn der Score ${conditionLabel} liegt.</p>
+        <p><a href="${confirmUrl}" style="display:inline-block;padding:10px 20px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">Alert bestätigen</a></p>
+        <p style="color:#666;font-size:12px;">Falls Sie diesen Alert nicht angefordert haben, ignorieren Sie diese E-Mail einfach - ohne Bestätigung wird kein Alert aktiv.</p>
+      </div>
+    `,
+  });
 }
 
 // --- Erstellung + Double-Opt-In -----------------------------------------------------------
@@ -108,19 +140,12 @@ alertsRouter.post('/', async (req, res) => {
     return res.status(500).json({ error: 'Alert-Abo konnte nicht angelegt werden.' });
   }
 
-  const confirmUrl = `${getBaseUrl()}/api/alerts/confirm?token=${confirmToken}`;
-  const conditionLabel = condition === 'score_above' ? `über ${thresholdRaw}` : `unter ${thresholdRaw}`;
-  const mailResult = await sendMail({
-    to: email,
-    subject: `Bitte bestätigen: Alert für ${symbol}`,
-    html: `
-      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-        <h2>Alert-Anmeldung bestätigen</h2>
-        <p>Sie (oder jemand mit dieser E-Mail-Adresse) haben einen Alert für <strong>${symbol}</strong> eingerichtet: Benachrichtigung, wenn der Score ${conditionLabel} liegt.</p>
-        <p><a href="${confirmUrl}" style="display:inline-block;padding:10px 20px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">Alert bestätigen</a></p>
-        <p style="color:#666;font-size:12px;">Falls Sie diesen Alert nicht angefordert haben, ignorieren Sie diese E-Mail einfach - ohne Bestätigung wird kein Alert aktiv.</p>
-      </div>
-    `,
+  const mailResult = await sendAlertConfirmationEmail({
+    email,
+    symbol,
+    condition,
+    threshold: thresholdRaw,
+    confirmToken,
   });
 
   alertsLogger.info('Alert-Abo angelegt, Bestaetigungsmail ausgeloest', {

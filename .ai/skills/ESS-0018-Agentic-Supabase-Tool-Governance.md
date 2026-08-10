@@ -4,7 +4,7 @@
 
 **Version:** 1.0.0
 **Status:** Enterprise Specification
-**Implementation Status:** PHASE 1 IMPLEMENTED / PHASE 2 FOUNDATION + ERSTE SCHREIB-CAPABILITY IMPLEMENTIERT (weitere Schreib-Capabilities aus §4.2 offen)
+**Implementation Status:** PHASE 1 IMPLEMENTED / PHASE 2 VOLLSTAENDIG UMGESETZT (Foundation + beide in §4.2 spezifizierten Schreib-Capabilities)
 **Owner:** Platform Director
 **Security Authority:** CAPITAL-AI IAM / Security & Compliance
 **Related ADR:** ADR-0043 (Supabase Privilege Separation), ADR-0050 (Agent Tool & Capability IAM Foundation, Phase 1), ADR-0051 (Capability/Grant IAM & Approval Workflow, Phase 2)
@@ -26,8 +26,9 @@ Diese Spezifikation deckt zwei konkrete Agenten ab:
    Scoring-Ergebnisse anhand zitierter Datenbank-Evidenz. **Phase 1, implementiert.**
 2. **Admin/Support/Diagnose-Agent** — für CAPITAL-AI-Systemadministratoren, lesend plus eng
    umrissene, freigegebene Schreiboperationen, gekoppelt an Compliance (Policy-Oberfläche) und
-   Supervisor (Ausführungs-Wrapper). **Phase 2, Foundation + erste Schreib-Capability
-   implementiert (ADR-0051); weitere Schreib-Capabilities offen.**
+   Supervisor (Ausführungs-Wrapper). **Phase 2, Foundation implementiert (ADR-0051); beide in
+   §4.2 spezifizierten Schreib-Capabilities (`alert_subscription.disable`,
+   `alert_subscription.resend_confirmation`) implementiert.**
 
 ## 2. Ausgangslage (Stand 2026-08-09, verifiziert im Code)
 
@@ -116,17 +117,24 @@ supabase.alert_subscriptions.*   (kein Anwendungsfall in Phase 1)
 Implementierte Capability-Namen (`src/platform/Security/capabilities.ts`, `CAPABILITIES`):
 
 ```text
-supabase.admin.diagnostics.read              (Lesen, implementiert)
-supabase.admin.subscription_status.read      (Lesen, implementiert)
-supabase.admin.alert_subscription.disable    (Schreiben, implementiert — erste reale Schreib-Capability)
+supabase.admin.diagnostics.read                          (Lesen, implementiert — inkl. Quota-Auswertung
+                                                            fuer eine E-Mail; eine gesonderte
+                                                            supabase.admin.quota.read-Capability wurde
+                                                            NICHT angelegt, siehe Anmerkung unten)
+supabase.admin.subscription_status.read                  (Lesen, implementiert)
+supabase.admin.alert_subscription.disable                (Schreiben, implementiert — erste reale Schreib-Capability, ADR-0051)
+supabase.admin.alert_subscription.resend_confirmation    (Schreiben, implementiert — zweite Schreib-Capability, demselben Muster folgend)
 ```
 
-Noch offen (spezifiziert, nicht implementiert — eigene Folge-PRs nach demselben Muster):
+**Anmerkung zu `quota.read`:** §4.2 hatte urspruenglich eine eigene `supabase.admin.quota.read`-Capability
+vorgesehen. In der tatsaechlichen Implementierung (`getAdminDiagnostics()`,
+`src/services/agentTools/supabaseAdminDiagnosticsTool.ts`) liefert der bereits bestehende
+`ADMIN_DIAGNOSTICS_READ`-Aufruf Subscription-Tier UND Quota in einem Aufruf zurueck — eine separate
+Capability haette hier nur denselben, bereits gelesenen Datensatz nochmal gated, ohne einen
+zusaetzlichen Angriffsflaechen- oder Autorisierungsgewinn. Diese Spezifikation wird daher als durch
+`ADMIN_DIAGNOSTICS_READ` erfuellt betrachtet, nicht als separat offener Punkt.
 
-```text
-supabase.admin.quota.read
-supabase.admin.alert_subscription.resend_confirmation
-```
+Keine weiteren offenen Schreib-Capabilities aus §4.2.
 
 Explizit **nicht** Bestandteil dieser ESS und in keiner Phase vorgesehen:
 
@@ -150,9 +158,11 @@ mit `Compliance` (`src/platform/Compliance/PolicyGate.ts`, additiv neben dem unv
 Ganz-App-Auditor) als Policy-Oberfläche und `Supervisor`
 (`executeApprovedSupervisedAction()`, additiv neben dem unveränderten `executeSupervised()`) als
 Ausführungs-Wrapper, der Approval-Konsum vor jedem Apply erzwingt. Fingerprint-Prüfung ist Aufgabe
-des jeweiligen Schreib-Tools (siehe ADR-0051). Für `supabase.admin.alert_subscription.disable` ist
-diese Kette jetzt real implementiert; weitere Schreib-Capabilities folgen demselben, bereits
-bewiesenen Muster.
+des jeweiligen Schreib-Tools (siehe ADR-0051). Für `supabase.admin.alert_subscription.disable` UND
+`supabase.admin.alert_subscription.resend_confirmation` ist diese Kette jetzt real implementiert,
+jeweils mit eigenem, auf die konkrete Mutation zugeschnittenem Fingerprint (Zeilen-Zustand bei
+`disable`, `confirmed`-Flag bei `resend_confirmation` — ein erneuter Versand ist ein realer
+Seiteneffekt, auch wenn er im Regelfall keine Zeile mutiert).
 
 ## 5. MCP-Ebene
 
@@ -209,14 +219,16 @@ Provisioner-Architektur) den Aufwand rechtfertigt.
   erst.
 - `disableAlertSubscription()` verweigert Apply bei Fingerprint-Mismatch (fail-closed statt
   stillem Überschreiben) und ist bei bereits inaktiver Zeile idempotent.
+- `resendAlertSubscriptionConfirmation()` verweigert Apply bei Fingerprint-Mismatch, ist bei
+  bereits bestätigtem Abo idempotent (kein Mailversand) und wirft statt still zu "erfolgreich"
+  zu werden, wenn der Mailversand selbst fehlschlägt.
 - Grant-/Approval-Ausstellung ist ausschließlich hinter Owner-Rolle + frischem TOTP-Step-up
   erreichbar (`428` ohne Step-up, analog `VersionManager`).
 - `npm run lint`, `npm test`, `npm run build`, `npm run predeploy:check` sind grün.
 
-**Weiterhin offen (spezifiziert, NICHT umgesetzt):** die übrigen Schreib-Capabilities aus §4.2
-(z. B. `resend_confirmation`), ein UI für Grant-/Approval-Verwaltung, und die produktive
-Anwendung der beiden neuen Migrationen gegen die echte Supabase-Instanz (bleibt kontrolliertes
-Handoff, CLAUDE.md).
+**Weiterhin offen:** ein UI für Grant-/Approval-Verwaltung, und die produktive Anwendung der
+beiden Phase-2-Migrationen gegen die echte Supabase-Instanz (bleibt kontrolliertes Handoff,
+CLAUDE.md). Keine offenen Schreib-Capabilities aus §4.2 mehr.
 
 ## 8. Externe Referenzen
 

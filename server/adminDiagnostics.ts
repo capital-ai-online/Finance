@@ -72,6 +72,25 @@ adminDiagnosticsRouter.get('/alert-subscriptions/:id/preview', async (req, res) 
   }
 });
 
+adminDiagnosticsRouter.get('/alert-subscriptions/:id/confirmation-preview', async (req, res) => {
+  const authz = await checkAdminAccess(req, 'admin-diagnostics:alert-subscription-confirmation-preview', SUPERVISOR_ZONE_ROLES);
+  if (!authz.authorized || !authz.userId) {
+    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.', reason: authz.reason });
+  }
+  try {
+    const result = await agent.previewAlertSubscriptionResendConfirmation(authz.userId, req.params.id);
+    if (result.authorized === false) {
+      return res.status(403).json({ error: 'Capability nicht erteilt.', capability: result.capability });
+    }
+    if (!result.preview) {
+      return res.status(404).json({ error: 'Alert-Abo nicht gefunden.' });
+    }
+    res.json(result);
+  } catch (err: any) {
+    res.status(400).json({ error: 'Preview fehlgeschlagen', message: err?.message || String(err) });
+  }
+});
+
 // ---- Capability grant/revoke (OWNER + fresh Step-up) -------------------------------------------
 
 adminDiagnosticsRouter.post('/capabilities/grant', async (req, res) => {
@@ -163,5 +182,43 @@ adminDiagnosticsRouter.post('/alert-subscriptions/:id/disable', async (req, res)
     res.json(result.outcome);
   } catch (err: any) {
     res.status(400).json({ error: 'Disable fehlgeschlagen', message: err?.message || String(err) });
+  }
+});
+
+// ---- Write: alert-subscription resend confirmation (capability + consumed approval) -----------
+
+adminDiagnosticsRouter.post('/alert-subscriptions/:id/resend-confirmation', async (req, res) => {
+  const authz = await checkAdminAccess(req, 'admin-diagnostics:alert-subscription-resend-confirmation', SUPERVISOR_ZONE_ROLES);
+  if (!authz.authorized || !authz.userId) {
+    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.', reason: authz.reason });
+  }
+
+  const { approvalId, expectedFingerprint } = req.body || {};
+  if (typeof approvalId !== 'string' || !approvalId || typeof expectedFingerprint !== 'string' || !expectedFingerprint) {
+    return res.status(400).json({
+      error: 'approvalId und expectedFingerprint erforderlich - zuerst GET .../confirmation-preview aufrufen und ein Approval ueber POST /api/admin/approvals einholen.',
+    });
+  }
+
+  try {
+    const result = await agent.applyAlertSubscriptionResendConfirmation(authz.userId, { id: req.params.id, expectedFingerprint, approvalId });
+    if (result.authorized === false) {
+      return res.status(403).json({ error: 'Capability nicht erteilt.', capability: result.capability });
+    }
+
+    logSystemEvent(
+      'ORCHESTRATOR',
+      'Alert Subscription Resend Confirmation',
+      authz.actorLabel || 'unknown',
+      `id=${req.params.id} outcome=${result.outcome.status}`,
+      result.outcome.status === 'APPLIED' ? 'SUCCESS' : 'WARNING'
+    );
+
+    if (result.outcome.status === 'DENIED_POLICY' || result.outcome.status === 'DENIED_APPROVAL') {
+      return res.status(403).json(result.outcome);
+    }
+    res.json(result.outcome);
+  } catch (err: any) {
+    res.status(400).json({ error: 'Resend fehlgeschlagen', message: err?.message || String(err) });
   }
 });
