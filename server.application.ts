@@ -41,8 +41,6 @@ import {
   getLocalSubscriptions,
   saveSubscription,
   getSubscription,
-  getLocalPdfCredits,
-  saveLocalPdfCredits
 } from './server/db';
 import { handleWebhookEvent, getStripeInstance } from './server/stripe';
 import { getGeminiInstance, isGeminiConfigured } from './server/ai';

@@ -116,7 +116,7 @@ export function getServerSupabase() {
 // Owner-Prüfung läuft jetzt ausschließlich über profiles.id (verifizierte User-ID aus
 // einer echten Supabase-Session), nie mehr über einen client-gelieferten E-Mail-String.
 
-async function isOwnerIdentifier(rawIdentifier: string, lowerIdentifier: string): Promise<boolean> {
+export async function isOwnerIdentifier(rawIdentifier: string, lowerIdentifier: string): Promise<boolean> {
   const isEmail = rawIdentifier.includes('@');
   if (isEmail) {
     // profiles hat keine email-Spalte - Owner-Prüfung per E-Mail wird nicht unterstützt.
@@ -301,43 +301,5 @@ export async function getSubscription(userIdOrEmail: string): Promise<string> {
   return isProduction() ? 'Free' : (localTier || 'Free');
 }
 
-// PDF Export Credits Tracking & Management APIs
-const LOCAL_PDF_CREDITS_FILE = path.join(process.cwd(), 'uploads', 'pdf_credits.json');
-
-export async function getLocalPdfCredits(userIdentifier: string): Promise<number> {
-  try {
-    const cleanId = userIdentifier.toLowerCase().trim();
-    if (await isOwnerIdentifier(userIdentifier.trim(), cleanId)) {
-      return 999999; // Admin/Owner unlimited credits bypass
-    }
-    if (fs.existsSync(LOCAL_PDF_CREDITS_FILE)) {
-      const data = fs.readFileSync(LOCAL_PDF_CREDITS_FILE, 'utf8');
-      const creditsObj = JSON.parse(data) || {};
-      if (creditsObj[cleanId] !== undefined) {
-        return Number(creditsObj[cleanId]);
-      }
-    }
-  } catch (e) {
-    console.warn("[Local PDF Credits] Error reading PDF credits:", e);
-  }
-  return 3; // Default initial credits is 3
-}
-
-export function saveLocalPdfCredits(userIdentifier: string, credits: number) {
-  try {
-    const cleanId = userIdentifier.toLowerCase().trim();
-    const dir = path.dirname(LOCAL_PDF_CREDITS_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    let creditsObj: Record<string, number> = {};
-    if (fs.existsSync(LOCAL_PDF_CREDITS_FILE)) {
-      const data = fs.readFileSync(LOCAL_PDF_CREDITS_FILE, 'utf8');
-      creditsObj = JSON.parse(data) || {};
-    }
-    creditsObj[cleanId] = credits;
-    fs.writeFileSync(LOCAL_PDF_CREDITS_FILE, JSON.stringify(creditsObj, null, 2), 'utf8');
-  } catch (e) {
-    console.error("[Local PDF Credits] Error saving PDF credits:", e);
-  }
-}
+// PDF export credits: relocated to server/pdfCreditLedger.ts (ADR-0052 / R-004) — the
+// Supabase-backed durable ledger replacing this file's former ephemeral JSON storage.

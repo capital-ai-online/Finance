@@ -3,11 +3,10 @@ import Stripe from 'stripe';
 import { getCleanEnv } from './env';
 import {
   getSubscription,
-  getLocalPdfCredits,
-  saveLocalPdfCredits,
   isSupabaseConfigured,
   getServerSupabase
 } from './db';
+import { getPdfCredits, consumePdfCredit, grantPdfCredits } from './pdfCreditLedger';
 import { resolveVerifiedIdentity } from '../src/platform/Security/authMiddleware';
 import { sendSubscriptionConfirmation } from './mailer';
 import { OWNER_NOTIFICATION_EMAIL } from './ownerConfig_server';
@@ -347,7 +346,7 @@ stripeRouter.get('/pdf-credits', async (req, res) => {
 
   const tier = await getSubscription(identity.userId);
   const isUnlimited = tier === 'Enterprise';
-  const credits = await getLocalPdfCredits(identity.userId);
+  const credits = await getPdfCredits(identity.userId);
   res.json({ credits, unlimited: isUnlimited });
 });
 
@@ -364,15 +363,13 @@ stripeRouter.post('/consume-pdf-credit', async (req, res) => {
   if (isUnlimited) {
     return res.json({ success: true, credits: 9999, unlimited: true });
   }
-  
-  const current = await getLocalPdfCredits(identifier);
-  if (current <= 0) {
+
+  const { success, credits } = await consumePdfCredit(identifier);
+  if (!success) {
     return res.status(402).json({ error: 'Sie haben keine PDF-Export-Credits mehr übrig. Bitte erwerben Sie neue Credits oder wechseln Sie zum Pro/Enterprise-Plan.' });
   }
-  
-  const newCredits = current - 1;
-  saveLocalPdfCredits(identifier, newCredits);
-  res.json({ success: true, credits: newCredits, unlimited: false });
+
+  res.json({ success: true, credits, unlimited: false });
 });
 
 
@@ -427,10 +424,18 @@ async function processStripeEventSideEffects(event: Stripe.Event): Promise<void>
       const planUpper = String(planId).toUpperCase();
       if (planUpper === 'PDF' || planUpper === 'PDF_EXPORT' || planUpper === 'EXPORT_PDF') {
         const identifier = userId || email;
-        const currentCredits = await getLocalPdfCredits(identifier);
-        const newCredits = currentCredits + 3;
-        saveLocalPdfCredits(identifier, newCredits);
-        console.log(`✅ [Webhook Router] PDF Export Purchase complete for ${identifier}. Added 3 credits (total: ${newCredits}).`);
+        const { granted, credits } = await grantPdfCredits({
+          grantKey: event.id,
+          userIdentifier: identifier,
+          credits: 3,
+          source: 'stripe_checkout.session.completed',
+          reference: session.id,
+        });
+        if (granted) {
+          console.log(`✅ [Webhook Router] PDF Export Purchase complete for ${identifier}. Added 3 credits (total: ${credits}).`);
+        } else {
+          console.log(`ℹ️ [Webhook Router] PDF Export Purchase for ${identifier} already granted for event ${event.id} (current balance: ${credits}).`);
+        }
       } else {
         // Der eigentliche Abo-Tarif wird NICHT mehr hier gesetzt - das übernimmt
         // seit der Supabase-Stripe-Synchronisation der DB-Trigger
