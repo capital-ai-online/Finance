@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.4.0
+Version: 1.5.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,7 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind inzwischen der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, D3 Document Models/Provenance und D2 Core Engine.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind inzwischen der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, D3 Document Models/Provenance, D2 Core Engine sowie D5/E1/E4 Traceability- und Event-Value-Chain-Integration.
 
 ## Implemented Scope
 
@@ -31,8 +31,22 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Models/DocumentaryProvenance.ts`
 - `Interfaces/IDocumentaryEngine.ts`
 - `Engine/DocumentaryEngine.ts`
+- `Events/DocumentaryEvents.ts`
+- `Events/DocumentaryEventConsumer.ts`
+- `Events/DocumentaryEventPublisher.ts`
+- `Traceability/DocumentaryTraceability.ts`
 - `Architecture/documentary-baseline.json`
 - zugehörige Unit-/Contract-Tests
+
+## D5 / E1 / E4 Traceability & Event Value Chain
+
+`DocumentaryTraceabilityRecord` verbindet Dokumente mit `correlationId`, `causationId`, Dokument-Fingerprint, Source Commit, Concept IDs, Traceability IDs und Provenance-Referenzen.
+
+Documentary konsumiert ausschließlich die kanonischen vorgelagerten Events `RepositoryScannedEvent` und `PlatformDecisionEvent`. Die Event-ID des auslösenden Events wird als `causationId` übernommen. Unbekannte Event-Typen werden fail-closed abgewiesen.
+
+Documentary publiziert ausschließlich über den bestehenden `IEventPublisher` die kanonischen Events `DocumentationGeneratedEvent` und `DocumentationValidatedEvent`. Es wird kein zweiter EventBus und keine zweite Registry eingeführt.
+
+Die End-to-End-Evidence-Kette erhält `correlationId`, direkte `causationId`, Source Commit, Dokument-Fingerprint und Traceability IDs über die Documentary-Grenze hinweg.
 
 ## D2 Core Engine
 
@@ -63,13 +77,13 @@ Diese drei Versionen bleiben semantisch unabhängig.
 
 ## Implementation Baseline
 
-Aktuell implementiert: `Contracts`, `Discovery`, `Documentation`, `Engine`, `Interfaces`, `Models`, `Versioning`.
+Aktuell implementiert: `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Interfaces`, `Models`, `Traceability`, `Versioning`.
 
-Weiterhin geplant: `Events`, `Generators`, `Governance`, `Knowledge`, `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen.
+Weiterhin geplant: `Generators`, `Governance`, `Knowledge`, `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen.
 
 ## Boundaries
 
-D2 rendert keine Markdown-/Diagramm-Ausgaben, publiziert keine Events, mutiert keinen Source Code und genehmigt keine geschützten Dokumente. Event-Integration, Governance/Approval, Generatoren und Knowledge Projection folgen in separaten Roadmap-Schritten.
+D5/E1/E4 führt keine automatische Review-/Approval-Transition durch, mutiert keinen Source Code und führt keine zweite Event-Infrastruktur ein. Generatoren/Renderer, Governance/Approval und Knowledge Projection folgen in separaten Roadmap-Schritten.
 
 ## ESS / ADR
 
