@@ -15,14 +15,14 @@
   },
   "knowledge": [],
   "interfaces": ["Interfaces/IDocumentaryEngine.ts"],
-  "contracts": ["Contracts/BilingualDocumentReference.ts", "Versioning/DocumentaryVersion.ts", "Discovery/CodeEvidence.ts", "Models/DocumentaryDocument.ts", "Models/DocumentaryProvenance.ts", "Interfaces/IDocumentaryEngine.ts", "Traceability/DocumentaryTraceability.ts", "Events/DocumentaryEvents.ts", "Governance/DocumentaryLifecycle.ts"],
+  "contracts": ["Contracts/BilingualDocumentReference.ts", "Versioning/DocumentaryVersion.ts", "Discovery/CodeEvidence.ts", "Models/DocumentaryDocument.ts", "Models/DocumentaryProvenance.ts", "Interfaces/IDocumentaryEngine.ts", "Traceability/DocumentaryTraceability.ts", "Events/DocumentaryEvents.ts", "Lifecycle/DocumentaryLifecycle.ts"],
   "documentation": ["README.md", "Architecture/documentary-baseline.json", "../../../../docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md", "../../../../docs/architecture/DOCUMENTARY_D1_CODE_INTEGRATION_DISCOVERY.md", "../../../../docs/architecture/DOCUMENTARY_D3_DOCUMENT_MODELS_PROVENANCE.md", "../../../../docs/architecture/DOCUMENTARY_D2_CORE_ENGINE.md", "../../../../docs/architecture/DOCUMENTARY_D5_E1_E4_TRACEABILITY_EVENTS.md", "../../../../docs/architecture/DOCUMENTARY_D4_REVIEW_LIFECYCLE_GOVERNANCE.md"],
-  "tests": ["../../../tests/unit/bilingualDocumentaryProjection.test.ts", "../../../tests/unit/documentaryVersionAuthority.test.ts", "../../../tests/unit/documentaryCodeDiscovery.test.ts", "../../../tests/unit/documentaryDocumentModel.test.ts", "../../../tests/unit/documentaryCoreEngine.test.ts", "../../../tests/unit/documentaryTraceabilityEvents.test.ts", "Tests/documentaryLifecycle.test.ts"],
+  "tests": ["../../../tests/unit/bilingualDocumentaryProjection.test.ts", "../../../tests/unit/documentaryVersionAuthority.test.ts", "../../../tests/unit/documentaryCodeDiscovery.test.ts", "../../../tests/unit/documentaryDocumentModel.test.ts", "../../../tests/unit/documentaryCoreEngine.test.ts", "../../../tests/unit/documentaryTraceabilityEvents.test.ts", "../../../tests/unit/documentaryLifecycle.test.ts"],
   "implementation": {
     "level": "partial",
-    "implementedAreas": ["Contracts", "Discovery", "Documentation", "Engine", "Events", "Governance", "Interfaces", "Models", "Traceability", "Versioning"],
-    "plannedAreas": ["Architecture", "Generators", "Knowledge", "Mermaid", "Migration", "Plugins"]
+    "implementedAreas": ["Contracts", "Discovery", "Documentation", "Engine", "Events", "Interfaces", "Lifecycle", "Models", "Traceability", "Versioning"],
+    "plannedAreas": ["Architecture", "Generators", "Governance", "Knowledge", "Mermaid", "Migration", "Plugins"]
   },
   "versionAuthority": {"componentVersion": "manifest.json#version", "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION", "platformVersion": "../../../package.json#version"},
-  "note": "D4 validates explicit evidence-backed lifecycle transitions and does not autonomously approve documents."
+  "note": "D4 validates explicit evidence-backed lifecycle transitions in the dedicated Lifecycle namespace. The separate DocumentationGovernanceValidator remains specification-only."
 }
