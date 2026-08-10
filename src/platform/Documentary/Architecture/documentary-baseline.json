@@ -1,7 +1,7 @@
 {
   "component": "Documentary",
   "status": "partial-implementation",
-  "implementedAreas": ["Contracts", "Discovery", "Documentation", "Engine", "Events", "Interfaces", "Models", "Traceability", "Versioning"],
+  "implementedAreas": ["Contracts", "Discovery", "Documentation", "Engine", "Events", "Interfaces", "Lifecycle", "Models", "Traceability", "Versioning"],
   "plannedAreas": ["Architecture", "Generators", "Governance", "Knowledge", "Mermaid", "Migration", "Plugins"],
   "versionAuthorities": {
     "componentVersion": "src/platform/Documentary/manifest.json#version",
@@ -14,7 +14,9 @@
     "D3 typed Document Models and provenance/fingerprint contracts are implemented.",
     "D2 Core Engine orchestrates governed Document Model creation and correlation-id idempotency.",
     "D5/E1/E4 implement Traceability records and controlled EventMesh consumer/producer bridges with correlation/causation evidence.",
-    "Rendering, governance approval transitions and Knowledge projection remain planned.",
+    "D4 implements evidence-backed review/lifecycle transition governance in the dedicated Lifecycle namespace without autonomous approval.",
+    "The DocumentationGovernanceValidator namespace remains specification-only and is not marked implemented by D4.",
+    "Rendering, Governance Validator runtime and Knowledge projection remain planned.",
     "Planned areas must not be treated as implemented solely because their directories exist."
   ]
 }

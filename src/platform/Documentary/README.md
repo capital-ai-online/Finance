@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.5.0
+Version: 1.6.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,7 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind inzwischen der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, D3 Document Models/Provenance, D2 Core Engine sowie D5/E1/E4 Traceability- und Event-Value-Chain-Integration.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration und D4 Review/Lifecycle Governance.
 
 ## Implemented Scope
 
@@ -26,7 +26,6 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Documentation/BilingualDocumentaryProjection.ts`
 - `Versioning/DocumentaryVersion.ts`
 - `Discovery/CodeEvidence.ts`
-- `Discovery/RepositoryCodeDiscovery.ts`
 - `Models/DocumentaryDocument.ts`
 - `Models/DocumentaryProvenance.ts`
 - `Interfaces/IDocumentaryEngine.ts`
@@ -35,37 +34,24 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Events/DocumentaryEventConsumer.ts`
 - `Events/DocumentaryEventPublisher.ts`
 - `Traceability/DocumentaryTraceability.ts`
+- `Lifecycle/DocumentaryLifecycle.ts`
 - `Architecture/documentary-baseline.json`
-- zugehörige Unit-/Contract-Tests
+
+## D4 Review & Lifecycle Governance
+
+Der kontrollierte Lifecycle lautet `generated -> reviewed -> approved`. Nach Approval sind `approved -> superseded`, `approved -> archived` und `superseded -> archived` zulässig. Jeder Übergang benötigt eine explizite Actor-ID, passende Aktion, einen Zeitpunkt und mindestens eine Evidence-Referenz. Status-Sprünge, falsche Aktionen und evidence-freie Übergänge werden fail-closed blockiert.
+
+D4 führt keine autonome Freigabe durch. Die Lifecycle-Schicht validiert lediglich explizit angeforderte Lifecycle-Transitions. Der Dokument-Fingerprint bleibt bei Lifecycle-only-Änderungen stabil.
+
+Der separate Namespace `Governance/` bleibt dem in ESS-0012 spezifizierten Documentation Governance Validator vorbehalten. Dieser Validator ist weiterhin spezifiziert, aber nicht implementiert; D4 ändert diesen Implementierungsstatus nicht.
 
 ## D5 / E1 / E4 Traceability & Event Value Chain
 
-`DocumentaryTraceabilityRecord` verbindet Dokumente mit `correlationId`, `causationId`, Dokument-Fingerprint, Source Commit, Concept IDs, Traceability IDs und Provenance-Referenzen.
-
-Documentary konsumiert ausschließlich die kanonischen vorgelagerten Events `RepositoryScannedEvent` und `PlatformDecisionEvent`. Die Event-ID des auslösenden Events wird als `causationId` übernommen. Unbekannte Event-Typen werden fail-closed abgewiesen.
-
-Documentary publiziert ausschließlich über den bestehenden `IEventPublisher` die kanonischen Events `DocumentationGeneratedEvent` und `DocumentationValidatedEvent`. Es wird kein zweiter EventBus und keine zweite Registry eingeführt.
-
-Die End-to-End-Evidence-Kette erhält `correlationId`, direkte `causationId`, Source Commit, Dokument-Fingerprint und Traceability IDs über die Documentary-Grenze hinweg.
+`DocumentaryTraceabilityRecord` verbindet Dokumente mit `correlationId`, `causationId`, Dokument-Fingerprint, Source Commit, Concept IDs, Traceability IDs und Provenance-Referenzen. Documentary nutzt ausschließlich den bestehenden EventMesh.
 
 ## D2 Core Engine
 
-`DocumentaryEngine` orchestriert die Erzeugung strukturierter `DocumentaryDocument`-Models aus D1-Code-Evidence, D3-Provenance-/Version-Contracts, Vocabulary Concept IDs und Traceability IDs.
-
-Die Engine arbeitet fail-closed:
-- vollständiger 40-stelliger `sourceCommit` ist verpflichtend;
-- Evidence Map und jedes Evidence-Element müssen denselben Source Commit tragen;
-- mindestens eine Code-Evidence, Concept-ID und Traceability-ID sind Pflicht;
-- vollständiger Documentary Version Context ist Pflicht;
-- eine `correlationId` darf idempotent wiederholt werden, aber nicht für einen abweichenden Request wiederverwendet werden.
-
-Die Engine erzeugt ausschließlich den Lifecycle-Status `generated`. Sie führt keine autonome Review-/Approval-Transition durch.
-
-## D3 Document Model
-
-Jedes Documentary Document trägt `documentId`, `documentType`, `schemaVersion`, `componentVersion`, `platformVersion`, `sourceCommit`, `generatedAt`, `reviewStatus`, semantische Concept-/Traceability-IDs, Provenance und einen SHA-256-Fingerprint.
-
-Der Reproduzierbarkeits-Fingerprint basiert auf stabilen Inhalts-, Versions- und Evidence-Feldern. `generatedAt` und `reviewStatus` sind Lifecycle-Metadaten und ändern den Fingerprint nicht.
+`DocumentaryEngine` orchestriert die Erzeugung strukturierter `DocumentaryDocument`-Models und erzeugt ausschließlich den Lifecycle-Status `generated`.
 
 ## Version Model
 
@@ -73,17 +59,15 @@ Der Reproduzierbarkeits-Fingerprint basiert auf stabilen Inhalts-, Versions- und
 - Document Schema Version: `DOCUMENTARY_DOCUMENT_SCHEMA_VERSION`.
 - Platform Version: zentrale Version-Manager-/`package.json`-Authority.
 
-Diese drei Versionen bleiben semantisch unabhängig.
-
 ## Implementation Baseline
 
-Aktuell implementiert: `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Interfaces`, `Models`, `Traceability`, `Versioning`.
+Aktuell implementiert: `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Interfaces`, `Lifecycle`, `Models`, `Traceability`, `Versioning`.
 
-Weiterhin geplant: `Generators`, `Governance`, `Knowledge`, `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen.
+Weiterhin geplant: `Governance` (Documentation Governance Validator), `Generators`, `Knowledge`, `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen.
 
 ## Boundaries
 
-D5/E1/E4 führt keine automatische Review-/Approval-Transition durch, mutiert keinen Source Code und führt keine zweite Event-Infrastruktur ein. Generatoren/Renderer, Governance/Approval und Knowledge Projection folgen in separaten Roadmap-Schritten.
+Keine autonome Approval-Transition, keine Source-Code-Mutation, keine zweite Event-Infrastruktur. IAM-Step-Up/Persistenz, Governance Validator Runtime, Generatoren/Renderer und Knowledge Projection folgen separat.
 
 ## ESS / ADR
 
