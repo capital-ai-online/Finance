@@ -6,6 +6,9 @@
 import { eventMeshBus } from '../EventMesh/Core/EventBus';
 import { bootstrapEventMesh, isBootstrapped } from '../EventMesh/Services/EventMeshService';
 import { getProviderHealth, type ProviderHealthRecord } from './providerHealth';
+import { evaluateWritePolicy } from '../Compliance/PolicyGate';
+import { consumeApproval } from '../Security/approvals';
+import type { Capability } from '../Security/capabilities';
 import { getAiGovernanceInventory } from '../../services/aiGovernance';
 import { getMarketDataProviderTelemetry, type ProviderRoutingTelemetry } from '../../services/marketDataProviderRouter';
 import { getMarketDataProviderRegistry } from '../../services/marketDataProviderRegistry';
@@ -124,6 +127,66 @@ export async function executeSupervised<T>(
   }
 
   throw lastError;
+}
+
+// ESS-0018 Phase 2 / ADR-0051: governed write-action execution, additive alongside
+// executeSupervised() rather than a change to its signature (executeSupervised has exactly one
+// other call site today, so this keeps that path entirely unaffected). This function is Apply
+// only - dry-run/preview is a separate, unauthorized-safe read that happens before a caller ever
+// requests an approval. Enforces Policy (Compliance PolicyGate) -> Approval (single-use,
+// plan-hash-bound consumption, src/platform/Security/approvals.ts) -> Apply (executeSupervised)
+// -> Audit (EventMesh). Fingerprint verification against current DB state is the write tool's
+// own responsibility inside `fn` (Supervisor has no DB-specific knowledge) - a mismatch there
+// should throw, which this function reports as a thrown error, never as a silent no-op success.
+
+export interface ApprovedActionRequest<T> {
+  taskName: string;
+  action: string;
+  capability: Capability;
+  planHash: string;
+  approvalId: string;
+  actorUserId: string;
+  targetResource: string;
+  fn: () => Promise<T>;
+}
+
+export type ApprovedActionOutcome<T> =
+  | { status: 'DENIED_POLICY'; reason: string }
+  | { status: 'DENIED_APPROVAL'; reason: string }
+  | { status: 'APPLIED'; result: T };
+
+export async function executeApprovedSupervisedAction<T>(
+  req: ApprovedActionRequest<T>
+): Promise<ApprovedActionOutcome<T>> {
+  const policy = evaluateWritePolicy(req.capability);
+  if (policy.verdict === 'DENY') {
+    return { status: 'DENIED_POLICY', reason: policy.reason };
+  }
+
+  const consumption = await consumeApproval(req.approvalId, req.action, req.planHash);
+  if (consumption !== 'CONSUMED') {
+    return { status: 'DENIED_APPROVAL', reason: `Approval-Status: ${consumption}` };
+  }
+
+  const result = await executeSupervised(req.taskName, req.fn);
+
+  try {
+    if (!isBootstrapped()) bootstrapEventMesh(eventMeshBus);
+    eventMeshBus.publish('SupervisorApprovedActionApplied', {
+      taskName: req.taskName,
+      action: req.action,
+      actorUserId: req.actorUserId,
+      targetResource: req.targetResource,
+    }, {
+      sourceComponent: 'src/platform/Supervisor',
+      essReferences: ['ESS-0018'],
+      adrReferences: ['ADR-0051'],
+    });
+  } catch {
+    // Best effort only; never hide the underlying Apply result.
+  }
+
+  return { status: 'APPLIED', result };
 }
 
 export interface SupervisorStatus {

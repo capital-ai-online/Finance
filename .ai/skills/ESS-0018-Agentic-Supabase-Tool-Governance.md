@@ -4,10 +4,10 @@
 
 **Version:** 1.0.0
 **Status:** Enterprise Specification
-**Implementation Status:** PHASE 1 IMPLEMENTED / PHASE 2 SPECIFIED, NOT YET IMPLEMENTED
+**Implementation Status:** PHASE 1 IMPLEMENTED / PHASE 2 FOUNDATION + ERSTE SCHREIB-CAPABILITY IMPLEMENTIERT (weitere Schreib-Capabilities aus §4.2 offen)
 **Owner:** Platform Director
 **Security Authority:** CAPITAL-AI IAM / Security & Compliance
-**Related ADR:** ADR-0043 (Supabase Privilege Separation), ADR-0050 (Agent Tool & Capability IAM Foundation)
+**Related ADR:** ADR-0043 (Supabase Privilege Separation), ADR-0050 (Agent Tool & Capability IAM Foundation, Phase 1), ADR-0051 (Capability/Grant IAM & Approval Workflow, Phase 2)
 **Related ESS:** ESS-0001-CONTRACTS, ESS-0014, ESS-0016
 
 ---
@@ -25,8 +25,9 @@ Diese Spezifikation deckt zwei konkrete Agenten ab:
 1. **Screening/Scoring-Erklärbarkeits-Agent** — lesend, erklärt bereits persistierte
    Scoring-Ergebnisse anhand zitierter Datenbank-Evidenz. **Phase 1, implementiert.**
 2. **Admin/Support/Diagnose-Agent** — für CAPITAL-AI-Systemadministratoren, lesend plus eng
-   umrissene, freigegebene Schreiboperationen, gekoppelt an Compliance (Policy-/Audit-Oberfläche)
-   und Supervisor (Ausführungs-Wrapper). **Phase 2, spezifiziert, nicht implementiert.**
+   umrissene, freigegebene Schreiboperationen, gekoppelt an Compliance (Policy-Oberfläche) und
+   Supervisor (Ausführungs-Wrapper). **Phase 2, Foundation + erste Schreib-Capability
+   implementiert (ADR-0051); weitere Schreib-Capabilities offen.**
 
 ## 2. Ausgangslage (Stand 2026-08-09, verifiziert im Code)
 
@@ -52,9 +53,11 @@ Diese Spezifikation deckt zwei konkrete Agenten ab:
   RLS-Policy, die ausschließlich `service_role`-Zugriff erlaubt — das ist gewollt (globale
   Symbol-/Betriebsdaten, keine personenbezogenen Datensätze).
 
-**Konsequenz:** Phase 1 baut die kleinstmögliche echte, sichere Scheibe (ein lesendes Tool, ein
-Agent, ein Endpunkt). Phase 2 (Capability-IAM, Approval-Artefakt, echte Compliance/Supervisor-Gates,
-Schreibrechte) wird hier vollständig spezifiziert, aber erst nach eigenem ADR-Amendment gebaut.
+**Konsequenz:** Phase 1 baute die kleinstmögliche echte, sichere Scheibe (ein lesendes Tool, ein
+Agent, ein Endpunkt). Phase 2 (ADR-0051) hat die Capability-IAM, das Approval-Artefakt und die
+Compliance/Supervisor-Gates additiv nachgezogen und an einer real angebundenen, bewusst
+risikoarmen Schreib-Capability bewiesen — ohne einen der oben genannten, damals als
+sicherheitskritisch identifizierten Bestandteile zu verändern.
 
 ## 3. Systemgrenzen
 
@@ -108,15 +111,20 @@ supabase.project.*
 supabase.alert_subscriptions.*   (kein Anwendungsfall in Phase 1)
 ```
 
-### 4.2 Phase 2 — Admin/Support/Diagnose-Agent (spezifiziert, NICHT implementiert)
+### 4.2 Phase 2 — Admin/Support/Diagnose-Agent (Foundation + eine Schreib-Capability implementiert, ADR-0051)
 
-Vorgesehene Capability-Namen (Beispiele, endgültige Liste erst mit dem Phase-2-ADR-Amendment):
+Implementierte Capability-Namen (`src/platform/Security/capabilities.ts`, `CAPABILITIES`):
 
 ```text
-supabase.admin.diagnostics.read
-supabase.admin.subscription_status.read
+supabase.admin.diagnostics.read              (Lesen, implementiert)
+supabase.admin.subscription_status.read      (Lesen, implementiert)
+supabase.admin.alert_subscription.disable    (Schreiben, implementiert — erste reale Schreib-Capability)
+```
+
+Noch offen (spezifiziert, nicht implementiert — eigene Folge-PRs nach demselben Muster):
+
+```text
 supabase.admin.quota.read
-supabase.admin.alert_subscription.disable
 supabase.admin.alert_subscription.resend_confirmation
 ```
 
@@ -138,10 +146,13 @@ Kette gebunden sein:
 Policy -> IAM/Grant -> Approval -> Dry-run -> Fingerprint -> Apply -> Verify -> Audit
 ```
 
-mit `Compliance` (`src/platform/Compliance/`) als Policy-/Audit-Oberfläche und `Supervisor`
-(`executeSupervised()`) als Ausführungs-Wrapper, der Approval+Dry-run+Fingerprint vor jedem Apply
-erzwingt. Keine dieser Komponenten gewährt heute Laufzeit-Autorität — das muss Phase 2 erst bauen
-(siehe ADR-0050).
+mit `Compliance` (`src/platform/Compliance/PolicyGate.ts`, additiv neben dem unveränderten
+Ganz-App-Auditor) als Policy-Oberfläche und `Supervisor`
+(`executeApprovedSupervisedAction()`, additiv neben dem unveränderten `executeSupervised()`) als
+Ausführungs-Wrapper, der Approval-Konsum vor jedem Apply erzwingt. Fingerprint-Prüfung ist Aufgabe
+des jeweiligen Schreib-Tools (siehe ADR-0051). Für `supabase.admin.alert_subscription.disable` ist
+diese Kette jetzt real implementiert; weitere Schreib-Capabilities folgen demselben, bereits
+bewiesenen Muster.
 
 ## 5. MCP-Ebene
 
@@ -185,9 +196,27 @@ Provisioner-Architektur) den Aufwand rechtfertigt.
   Query-Builder-Aufrufform ab.
 - `npm run lint`, `npm test`, `npm run build`, `npm run predeploy:check` sind grün.
 
-**Phase 2 gilt als spezifiziert, aber explizit NICHT als umgesetzt**, bis ein eigenes ADR-Amendment
-plus Capability-/Grant-IAM-Implementierung, Approval-Artefakt, echte Compliance/Supervisor-Gates und
-ein eng umrissenes Schreib-Capability-Register existieren.
+**Phase 2 — Foundation + erste Schreib-Capability (ADR-0051, umgesetzt, wenn:)**
+
+- `checkCapability()` fail-closed bei jedem DB-/Verbindungsfehler, keine Wildcard-Capability
+  erreichbar.
+- `consumeApproval()` verweigert fehlende, abgelaufene, bereits verbrauchte und
+  plan-/aktions-fremde Genehmigungen; Konsum ist atomar/race-sicher (Single-Use).
+- `evaluateWritePolicy()`/`evaluateReadPolicy()` lassen ausschließlich die dokumentierte Allowlist
+  zu, jede Raw-SQL-förmige Capability erhält `DENY`.
+- `executeApprovedSupervisedAction()` ruft die eigentliche Aktion niemals ohne konsumiertes,
+  passendes Approval auf; ein `DENY` an der Policy-Stufe erreicht die Approval-Stufe gar nicht
+  erst.
+- `disableAlertSubscription()` verweigert Apply bei Fingerprint-Mismatch (fail-closed statt
+  stillem Überschreiben) und ist bei bereits inaktiver Zeile idempotent.
+- Grant-/Approval-Ausstellung ist ausschließlich hinter Owner-Rolle + frischem TOTP-Step-up
+  erreichbar (`428` ohne Step-up, analog `VersionManager`).
+- `npm run lint`, `npm test`, `npm run build`, `npm run predeploy:check` sind grün.
+
+**Weiterhin offen (spezifiziert, NICHT umgesetzt):** die übrigen Schreib-Capabilities aus §4.2
+(z. B. `resend_confirmation`), ein UI für Grant-/Approval-Verwaltung, und die produktive
+Anwendung der beiden neuen Migrationen gegen die echte Supabase-Instanz (bleibt kontrolliertes
+Handoff, CLAUDE.md).
 
 ## 8. Externe Referenzen
 
