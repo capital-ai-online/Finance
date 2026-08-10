@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import fs from 'fs';
-import { SECRET_FILE_MOUNT_PATH } from '../scripts/security/secretFileManifest';
+import { SECRET_FILE_KEYS, SECRET_FILE_MOUNT_PATH } from '../scripts/security/secretFileManifest';
 
 // Silence dotenv startup banners/tips process-wide before any later dotenv.config()
 // call executes (server.application.ts currently contains a second, redundant
@@ -9,28 +9,22 @@ import { SECRET_FILE_MOUNT_PATH } from '../scripts/security/secretFileManifest';
 // promotional log noise.
 process.env.DOTENV_CONFIG_QUIET = process.env.DOTENV_CONFIG_QUIET || 'true';
 
+const secretFileKeySet = new Set<string>(SECRET_FILE_KEYS as readonly string[]);
+let secretFileValues: Record<string, string> = {};
+
 // Deploy-Härtung: Render mountet eine konfigurierte Secret File read-only unter einem
-// festen Pfad (siehe render.yaml `secretFiles` + scripts/security/secretFileManifest.ts).
-// Lokal/CI existiert diese Datei nicht - dort liefert die normale .env unten dieselben
-// Keys. dotenv.config() überschreibt NIE einen bereits gesetzten process.env-Wert, daher
-// gewinnt eine während der Migration übergangsweise noch einzeln in Render gesetzte
-// ENV-Var weiterhin gegenüber dem Wert aus der Secret File.
+// festen Pfad. Für Keys aus SECRET_FILE_KEYS ist diese Datei in Production die kanonische
+// Secret-Authority. Das verhindert, dass ein alter gleichnamiger Render-envVar-Wert einen
+// frisch rotierten Secret-File-Wert still überschreibt. process.env bleibt nur Fallback,
+// wenn die Secret-Datei nicht existiert oder den konkreten Key nicht enthält (lokal/CI).
 if (fs.existsSync(SECRET_FILE_MOUNT_PATH)) {
+  const rawSecretFile = fs.readFileSync(SECRET_FILE_MOUNT_PATH, 'utf8');
+  secretFileValues = dotenv.parse(rawSecretFile);
   dotenv.config({ path: SECRET_FILE_MOUNT_PATH, quiet: true });
 }
 dotenv.config({ quiet: true });
 
-/**
- * Helper to normalize, clean and safely resolve environment variables
- * (stripping quotes, whitespaces, and resolving VITE_ prefix mismatch)
- */
-export function getCleanEnv(key: string): string {
-  let val = process.env[key];
-  if (!val && key.startsWith('VITE_')) {
-    val = process.env[key.substring(5)];
-  } else if (!val && !key.startsWith('VITE_')) {
-    val = process.env[`VITE_${key}`];
-  }
+function cleanValue(val: string | undefined): string {
   if (!val) return '';
   let cleaned = val.trim();
   if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
@@ -40,4 +34,28 @@ export function getCleanEnv(key: string): string {
     cleaned = cleaned.slice(1, -1);
   }
   return cleaned.trim();
+}
+
+/**
+ * Helper to normalize, clean and safely resolve environment variables.
+ *
+ * Secret precedence:
+ *   1. /etc/secrets/finance-secrets.env for canonical SECRET_FILE_KEYS
+ *   2. process.env fallback (local/CI or migration fallback)
+ *
+ * Non-secret/public configuration keeps the normal process.env/VITE_ resolution.
+ */
+export function getCleanEnv(key: string): string {
+  if (secretFileKeySet.has(key)) {
+    const secretFileValue = cleanValue(secretFileValues[key]);
+    if (secretFileValue) return secretFileValue;
+  }
+
+  let val = process.env[key];
+  if (!val && key.startsWith('VITE_')) {
+    val = process.env[key.substring(5)];
+  } else if (!val && !key.startsWith('VITE_')) {
+    val = process.env[`VITE_${key}`];
+  }
+  return cleanValue(val);
 }
