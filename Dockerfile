@@ -34,8 +34,10 @@ RUN addgroup -S capitalai && adduser -S capitalai -G capitalai
 COPY package*.json ./
 
 # Install runtime dependencies only. Application code and dependencies remain root-owned/read-only.
+# Remove npm's root cache directly instead of `npm cache clean --force`; the latter emits a
+# misleading "recommended protections disabled" warning even though this layer is only cleanup.
 RUN npm ci --omit=dev \
-  && npm cache clean --force \
+  && rm -rf /root/.npm \
   && chown -R root:root /app/node_modules /app/package*.json \
   && chmod -R a-w /app/node_modules \
   && chmod a-w /app/package*.json
