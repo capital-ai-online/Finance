@@ -50,6 +50,24 @@ adminDiagnosticsRouter.get('/', async (req, res) => {
   }
 });
 
+adminDiagnosticsRouter.get('/providers', async (req, res) => {
+  const authz = await checkAdminAccess(req, 'admin-diagnostics:providers-read', DIAGNOSTIC_ZONE_ROLES);
+  if (!authz.authorized || !authz.userId) {
+    return res.status(403).json({ error: 'Access Denied: Diagnose-Rolle erforderlich.', reason: authz.reason });
+  }
+
+  try {
+    const result = await agent.readProviderHealth(authz.userId);
+    if (result.authorized === false) {
+      return res.status(403).json({ error: 'Capability nicht erteilt.', capability: result.capability });
+    }
+    logSystemEvent('ORCHESTRATOR', 'Provider Diagnostics Read', authz.actorLabel || 'unknown', `providers=${result.data.length}`, 'SUCCESS');
+    res.json({ providers: result.data });
+  } catch (err: any) {
+    res.status(400).json({ error: 'Provider-Diagnose fehlgeschlagen', message: err?.message || String(err) });
+  }
+});
+
 adminDiagnosticsRouter.get('/alert-subscriptions/:id/preview', async (req, res) => {
   const authz = await checkAdminAccess(req, 'admin-diagnostics:alert-subscription-preview', DIAGNOSTIC_ZONE_ROLES);
   if (!authz.authorized || !authz.userId) {
