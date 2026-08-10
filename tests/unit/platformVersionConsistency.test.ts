@@ -3,7 +3,8 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 // GOV-VER-001 / GOV-VER-002: package.json is the platform-version source of truth.
-// The release gate must keep the lockfile, metadata and all governed declarations aligned.
+// The release gate keeps current, canonical release declarations aligned.
+// Historical evidence under docs/archive/ intentionally preserves its original versions.
 
 const repoRoot = process.cwd();
 const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
@@ -26,24 +27,32 @@ describe('GOV-VER-001/GOV-VER-002 platform version consistency', () => {
     expect(lock.packages?.['']?.version).toBe(currentVersion);
   });
 
-  const declarationFiles = [
+  const currentDeclarationFiles = [
     'README.md',
     'AGENTS.md',
     'docs/code-quality/CODE_QUALITY_STANDARDS.md',
     'docs/ceo/EXECUTIVE_SUMMARY.md',
-    'docs/API.md',
     'index.html',
   ];
 
-  it.each(declarationFiles.map((relativePath) => [relativePath]))('%s declares the current package.json version', (relativePath) => {
-    const code = read(relativePath);
-    expect(code).toContain(currentVersion);
-  });
+  it.each(currentDeclarationFiles.map((relativePath) => [relativePath]))(
+    '%s declares the current package.json version',
+    (relativePath) => {
+      const code = read(relativePath);
+      expect(code).toContain(currentVersion);
+    },
+  );
 
-  it('does not declare a stale pre-0.6.0 platform version as the current release', () => {
-    for (const relativePath of declarationFiles) {
+  it('does not declare a stale pre-0.6.0 platform version in current release declarations', () => {
+    for (const relativePath of currentDeclarationFiles) {
       const code = read(relativePath);
       expect(code).not.toMatch(/\b0\.5\.\d\b/);
     }
+  });
+
+  it('keeps archived historical documentation outside the current-release version contract', () => {
+    const archivedApiPath = path.join(repoRoot, 'docs', 'archive', 'raw-materials', 'API.md');
+    expect(fs.existsSync(archivedApiPath)).toBe(true);
+    expect(currentDeclarationFiles).not.toContain('docs/archive/raw-materials/API.md');
   });
 });

@@ -26,6 +26,7 @@ const LEGACY_EVIDENCE_PATHS = new Set([
   'docs/governance/vocabulary/rename-classification-evidence.json',
   'docs/governance/vocabulary/rename-backlog.json',
 ]);
+const NON_CANONICAL_PATH_PREFIXES = ['docs/archive/'];
 
 function walk(root: string, current = root, result: string[] = []): string[] {
   if (!fs.existsSync(current)) return result;
@@ -47,6 +48,10 @@ function containsTerm(content: string, term: string): boolean {
   return pattern.test(content);
 }
 
+function isNonCanonicalEvidencePath(relative: string): boolean {
+  return NON_CANONICAL_PATH_PREFIXES.some((prefix) => relative.startsWith(prefix));
+}
+
 export function validateContinuousVocabularyGovernance(root: string = process.cwd()): ContinuousGovernanceReport {
   const registry = createDefaultVocabularyRegistry();
   const concepts = registry.list();
@@ -55,7 +60,7 @@ export function validateContinuousVocabularyGovernance(root: string = process.cw
 
   for (const absolute of files) {
     const relative = path.relative(root, absolute).replace(/\\/g, '/');
-    if (LEGACY_EVIDENCE_PATHS.has(relative)) continue;
+    if (LEGACY_EVIDENCE_PATHS.has(relative) || isNonCanonicalEvidencePath(relative)) continue;
     const content = fs.readFileSync(absolute, 'utf8');
 
     for (const concept of concepts) {
