@@ -25,6 +25,19 @@ describe('Continuous Vocabulary Governance', () => {
     expect(report.blocking).toBe(false);
   });
 
+  it('ignores forbidden terminology inside explicitly non-canonical archive evidence', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'capital-ai-vocabulary-'));
+    fs.mkdirSync(path.join(root, 'docs', 'archive', 'legacy'), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, 'docs', 'archive', 'legacy', 'snapshot.md'),
+      'Historic terminology: Membership and PremiumPackage.',
+    );
+
+    const report = validateContinuousVocabularyGovernance(root);
+    expect(report.blocking).toBe(false);
+    expect(report.findings).toHaveLength(0);
+  });
+
   it('keeps lifecycle evidence deterministic and immutable', () => {
     const sink = new InMemoryGovernanceLifecycleSink();
     sink.publish({
