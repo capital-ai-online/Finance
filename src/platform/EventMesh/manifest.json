@@ -1,143 +1,49 @@
 {
   "name": "EventMesh",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "status": "implemented",
   "owner": "Platform Director",
-  "description": "Enterprise Event Mesh (EEM). Zentrale Kommunikationsschicht der CAPITAL-AI Plattform. Registriert, validiert, routet und protokolliert Enterprise Events zwischen Fachkomponenten. Erzeugt selbst keine fachlichen Events und keine Geschaeftslogik, sondern ausschliesslich Registrierung, Routing und Reports. Implementiert das in ESS-0001-CONTRACTS Chapter 8 bereits normativ definierte Event- und Messaging-Regelwerk.",
+  "description": "Enterprise Event Mesh (EEM). Zentrale Kommunikationsschicht der CAPITAL-AI Plattform. Registriert, validiert, routet und protokolliert Enterprise Events zwischen Fachkomponenten und stellt Replay-/Reliability-Evidence bereit.",
   "category": "platform",
   "layer": "CrossCutting",
-  "layerNote": "Querschnittsmodul mit erweitertem Zugriff, siehe ESS-0001-CONTRACTS Chapter 16 (Cross Cutting Modules). Abhaengigkeitsrichtung ist umgekehrt zu ueblichen Querschnittsmodulen: keine Fachkomponente darf die Implementierung direkt importieren.",
+  "layerNote": "Querschnittsmodul mit erweitertem Zugriff, siehe ESS-0001-CONTRACTS Chapter 16. Keine Fachkomponente darf die EventMesh-Implementierung direkt als alternativen Zustellweg umgehen.",
   "lifecycle": "Operational",
   "health": "Unknown",
   "repository": "Finance",
-  "ess": [
-    "ESS-0001-CONTRACTS",
-    "ESS-0013",
-    "ESS-0013-CONTRACTS",
-    "ESS-0010",
-    "ESS-0011"
-  ],
-  "adr": [
-    "ADR-0018"
-  ],
-  "dependencies": [
-    "src/platform/Core",
-    "src/platform/Shared",
-    "src/platform/Registry",
-    "src/platform/Discovery"
-  ],
-  "forbiddenDependencies": [
-    "src/platform/Supervisor",
-    "src/platform/PlatformDirector",
-    "src/platform/Documentary",
-    "src/platform/Traceability",
-    "src/platform/Knowledge",
-    "src/platform/Compliance",
-    "src/platform/VersionManager",
-    "src/platform/Security",
-    "src/platform/Release",
-    "src/platform/Quality"
-  ],
-  "eventCategories": [
-    "Repository Events",
-    "Documentation Events",
-    "Traceability Events",
-    "Knowledge Events",
-    "Compliance Events",
-    "Security Events",
-    "Versioning Events",
-    "Release Events",
-    "Supervisor Events",
-    "Platform Director Events",
-    "AI Events",
-    "System Events"
-  ],
+  "ess": ["ESS-0001-CONTRACTS", "ESS-0013", "ESS-0013-CONTRACTS", "ESS-0010", "ESS-0011"],
+  "adr": ["ADR-0018"],
+  "dependencies": ["src/platform/Core", "src/platform/Shared", "src/platform/Registry", "src/platform/Discovery"],
+  "forbiddenDependencies": ["src/platform/Supervisor", "src/platform/PlatformDirector", "src/platform/Documentary", "src/platform/Traceability", "src/platform/Knowledge", "src/platform/Compliance", "src/platform/VersionManager", "src/platform/Security", "src/platform/Release", "src/platform/Quality"],
+  "eventCategories": ["Repository Events", "Documentation Events", "Traceability Events", "Knowledge Events", "Compliance Events", "Security Events", "Versioning Events", "Release Events", "Supervisor Events", "Platform Director Events", "AI Events", "System Events"],
   "events": {
-    "produces": [
-      "EventRegisteredEvent",
-      "EventRoutingFailedEvent",
-      "EventValidationFailedEvent",
-      "ConsumerSubscribedEvent",
-      "ConsumerUnsubscribedEvent",
-      "EventSchemaIncompatibleEvent"
-    ],
-    "producesNote": "Ausschliesslich operative Meta-Events ueber den Zustand der Mesh selbst - keine fachlichen Events. Fachliche Events werden von den jeweiligen Fachkomponenten erzeugt und ausschliesslich von der Mesh geroutet.",
+    "produces": ["EventRegisteredEvent", "EventRoutingFailedEvent", "EventValidationFailedEvent", "ConsumerSubscribedEvent", "ConsumerUnsubscribedEvent", "EventSchemaIncompatibleEvent"],
+    "producesNote": "Ausschliesslich operative Meta-Events ueber den Zustand der Mesh selbst.",
     "consumes": [],
-    "consumesNote": "Die Mesh konsumiert keine Events im fachlichen Sinn - sie empfaengt alle registrierten Events zum Zweck des Routings, nicht zur eigenen Geschaeftslogik.",
-    "routes": [
-      "RepositoryScannedEvent",
-      "DocumentationGeneratedEvent",
-      "DocumentationValidatedEvent",
-      "TraceabilityBuildCompletedEvent",
-      "KnowledgeUpdatedEvent",
-      "ComplianceValidatedEvent",
-      "ArchitectureValidatedEvent",
-      "VersionCalculatedEvent",
-      "ReleasePreparedEvent",
-      "ReleasePublishedEvent",
-      "SupervisorAlertEvent",
-      "PlatformDecisionEvent",
-      "SecurityViolationDetectedEvent",
-      "GovernanceViolationDetectedEvent",
-      "TwinSynchronizedEvent"
-    ],
-    "routesNote": "Ausgangsbestand der 15 in der auslösenden Anforderung genannten Standardereignisse, mit auf bereits kanonische Namen aus Chapter 8/15/18 und ESS-0011/ESS-0012-CONTRACTS korrigierten Bezeichnungen. Vollstaendige Zuordnungstabelle in ESS-0013."
+    "consumesNote": "Die Mesh konsumiert keine Events im fachlichen Sinn; sie routet registrierte Events.",
+    "routes": ["RepositoryScannedEvent", "DocumentationGeneratedEvent", "DocumentationValidatedEvent", "TraceabilityBuildCompletedEvent", "KnowledgeUpdatedEvent", "ComplianceValidatedEvent", "ArchitectureValidatedEvent", "VersionCalculatedEvent", "ReleasePreparedEvent", "ReleasePublishedEvent", "SupervisorAlertEvent", "PlatformDecisionEvent", "SecurityViolationDetectedEvent", "GovernanceViolationDetectedEvent", "TwinSynchronizedEvent"]
   },
-  "interfaces": [
-    "IEventBus",
-    "IEventPublisher",
-    "IEventSubscriber",
-    "IEventRouter",
-    "IEventRegistry"
-  ],
-  "contracts": [
-    "ESS-0013-CONTRACTS"
-  ],
+  "interfaces": ["IEventBus", "IEventPublisher", "IEventSubscriber", "IEventRouter", "IEventRegistry"],
+  "contracts": ["ESS-0013-CONTRACTS"],
   "quality": {
-    "documentationScore": null,
-    "testScore": null,
-    "architectureScore": null,
-    "securityScore": null,
-    "knowledgeScore": null,
-    "metadataScore": null,
-    "twinScore": null,
-    "note": "Kennzahlen werden ausschliesslich berechnet, niemals manuell gesetzt (ESS-0001-CONTRACTS Chapter 12)."
+    "documentationScore": null, "testScore": null, "architectureScore": null, "securityScore": null,
+    "knowledgeScore": null, "metadataScore": null, "twinScore": null,
+    "note": "Kennzahlen werden ausschliesslich berechnet, niemals manuell gesetzt."
   },
   "security": {
     "classification": "Internal",
-    "sensitivity": "Event-Payloads enthalten ausschliesslich fachliche Informationen (Chapter 8, Event Payload). Keine personenbezogenen Daten in Registry oder Routing-Metadaten.",
-    "authentication": "nicht anwendbar",
-    "authorization": "nicht anwendbar",
-    "encryption": "nicht anwendbar",
-    "audit": "Saemtliche Events werden revisionssicher protokolliert (Chapter 8, Event Audit Trail)",
-    "compliance": [
-      "ESS-0001-CONTRACTS Chapter 8",
-      "ESS-0001-CONTRACTS Chapter 11"
-    ],
+    "sensitivity": "Event-Payloads enthalten fachliche Informationen; keine personenbezogenen Daten in Registry oder Routing-Metadaten.",
+    "authentication": "nicht anwendbar", "authorization": "nicht anwendbar", "encryption": "nicht anwendbar",
+    "audit": "Event-Zustellung und Failure-Evidence werden strukturiert auswertbar gehalten.",
+    "compliance": ["ESS-0001-CONTRACTS Chapter 8", "ESS-0001-CONTRACTS Chapter 11"],
     "lastSecurityReview": null
   },
   "ai": {
-    "aiOwner": "Platform Director",
-    "aiGenerated": true,
-    "aiReviewed": false,
-    "aiValidated": false,
-    "aiCompatible": true,
-    "supportedAiSystems": [
-      "Claude Code",
-      "Google AI Studio",
-      "ChatGPT",
-      "Future Enterprise AI"
-    ]
+    "aiOwner": "Platform Director", "aiGenerated": true, "aiReviewed": false, "aiValidated": false, "aiCompatible": true,
+    "supportedAiSystems": ["Claude Code", "Google AI Studio", "ChatGPT", "Future Enterprise AI"]
   },
-  "documentation": [
-    "README.md",
-    "CHANGELOG.md",
-    "component.yaml",
-    "docs/architecture/ENTERPRISE_EVENT_READINESS_REPORT.md",
-    "docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md"
-  ],
-  "tests": ["Tests/eventBus.test.ts"],
+  "documentation": ["README.md", "CHANGELOG.md", "component.yaml", "docs/architecture/ENTERPRISE_EVENT_READINESS_REPORT.md", "docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md", "docs/architecture/EVENTMESH_E2_E5_REPLAY_RELIABILITY.md"],
+  "tests": ["Tests/eventBus.test.ts", "../../../tests/unit/eventMeshReplayReliability.test.ts"],
   "conformanceLevel": null,
-  "implementationStatus": "Implementiert (Stufe 1-4). Erste Komponente im gesamten src/platform-Baum mit ausfuehrbarem Code (ADR-0018, Folgeentscheidung 1). In-Memory, ohne externe Abhaengigkeiten. Sieben Vertragstests unter Tests/eventBus.test.ts.",
-  "note": "Zweite Komponente des Repositorys mit vollstaendigem Metadatensatz einschliesslich component.yaml und CHANGELOG.md, nach Traceability (ADR-0015) und in gleicher Weise wie dort etabliert. Korrektur: 'status'/'lifecycle' waren trotz vollstaendiger Implementierung (siehe 'implementationStatus' oben, 35 Code-Dateien) weiterhin auf 'development' gesetzt - das unterschaetzte den tatsaechlichen Reifegrad. Auf 'implemented'/'Operational' korrigiert, konsistent mit den anderen tatsaechlich implementierten Modulen (Compliance, Security, Supervisor, VersionManager)."
+  "implementationStatus": "Implementiert. E2 ergaenzt Event-ID-basierte Idempotency und correlation-spezifische Ordering-Evidence; E5 ergaenzt Failure-, Consumer-Health- und Poison-Event-Evidence. Die In-Memory-Grenze bleibt explizit bestehen.",
+  "note": "E2/E5 fuehren keine zweite EventMesh, keine fachliche Entscheidung und keine persistente Durable Queue ein. Durable Multi-Instance-Replay bleibt ein separater Infrastruktur-Scope."
 }
