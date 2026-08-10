@@ -21,6 +21,36 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
+      - name: Git 2.55.0 aus offizieller Quelle bereitstellen
+        shell: bash
+        run: |
+          set -euo pipefail
+          current="$(git --version | awk '{print $3}')"
+          required="2.55.0"
+          if [ "$current" != "$required" ]; then
+            sudo apt-get update
+            sudo apt-get install --yes build-essential libssl-dev libcurl4-gnutls-dev libexpat1-dev gettext zlib1g-dev
+            curl --fail --silent --show-error --location \
+              "https://www.kernel.org/pub/software/scm/git/git-${required}.tar.xz" \
+              --output "/tmp/git-${required}.tar.xz"
+            xz --test "/tmp/git-${required}.tar.xz"
+            tar -xJf "/tmp/git-${required}.tar.xz" -C /tmp
+            make -C "/tmp/git-${required}" -j2 \
+              prefix=/opt/git-${required} \
+              NO_TCLTK=YesPlease \
+              NO_RUST=YesPlease \
+              all
+            sudo make -C "/tmp/git-${required}" \
+              prefix=/opt/git-${required} \
+              NO_TCLTK=YesPlease \
+              NO_RUST=YesPlease \
+              install
+            echo "/opt/git-${required}/bin" >> "$GITHUB_PATH"
+            export PATH="/opt/git-${required}/bin:$PATH"
+          fi
+          test "$(git --version | awk '{print $3}')" = "$required"
+          git --version
+
       - name: Quellcode ohne persistierte Zugangsdaten auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
         with:
@@ -30,8 +60,25 @@ jobs:
       - name: Node.js einrichten
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
         with:
-          node-version: '22'
+          node-version: '24.18.0'
           cache: 'npm'
+
+      - name: Toolchain-Versionen verifizieren
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git --version | awk '{print $3}')" = "2.55.0"
+          test "$(node --version)" = "v24.18.0"
+          git --version
+          node --version
+          npm --version
+
+      - name: Git-Repository-Integrität verifizieren
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rev-parse --verify 'HEAD^{commit}' >/dev/null
+          git fsck --strict --no-dangling
 
       - name: Abhängigkeiten installieren
         run: npm ci

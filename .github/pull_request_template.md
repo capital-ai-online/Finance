@@ -2,6 +2,8 @@
 # CAPITAL-AI Pull Request
 
 > Dieses Template ist verbindlich. Maschinenverwaltete Baseline-Felder dürfen nicht gelöscht werden. Der PR bleibt **Draft**, bis alle erforderlichen technischen Prüfungen erfolgreich sind.
+>
+> **Statussemantik:** GitHubs nativer Status **Open** bedeutet ausschließlich, dass der Pull Request noch nicht geschlossen oder gemerged wurde. `Open` ist kein Fehler- und kein Merge-Bereitschaftsstatus. Die Merge-Bereitschaft wird ausschließlich durch den Required Check `build-and-test`, Governance-Prüfungen, Konfliktfreiheit und die geltenden Repository-Rulesets bestimmt.
 
 ## 1. Arbeitsauftrag
 
@@ -103,10 +105,13 @@ Befehle / Evidence:
 - **Rollback-Vorgehen:**
 - **Rollback benötigt Freigabe für geschützte Änderung?** Ja / Nein — Referenz:
 
-## 10. Review-Bereitschaft
+## 10. Review- und Merge-Bereitschaft
 
 - [ ] Die PR-Erstellung wurde vor Öffnung dieses PR ausdrücklich durch den Benutzer autorisiert.
 - [ ] Technischer CI-Status wird ausschließlich als Validierung verstanden.
+- [ ] Required Check `build-and-test` ist erfolgreich.
+- [ ] Governance-Prüfungen sind erfolgreich.
+- [ ] Der Branch ist konfliktfrei und gegen den aktuellen `main` geprüft.
 - [ ] Produktionsdrift und Warnungen zu parallelen Arbeiten wurden als beratende Evidence geprüft.
 - [ ] Alle merge-blockierenden Diskussionen/Funde sind gelöst.
 - [ ] CODEOWNER-/Human-Review wurde eingeholt, sofern anwendbar.
