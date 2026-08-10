@@ -23,11 +23,12 @@
   "versionAuthorities": {
     "componentVersion": "src/platform/Documentary/manifest.json#version",
     "documentSchemaVersion": "src/platform/Documentary/Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
-    "platformVersion": "package.json#version"
+    "platformVersion": "src/platform/VersionManager/platformVersionAuthority.ts#getPlatformVersion -> package.json#version"
   },
   "notes": [
     "The bilingual vocabulary projection is implemented.",
     "The full Documentary Engine is not implemented yet.",
-    "Planned areas must not be treated as implemented solely because their directories exist."
+    "Planned areas must not be treated as implemented solely because their directories exist.",
+    "Platform version resolution is delegated to the existing Version Manager authority and does not create a Documentary-local platform version."
   ]
 }
