@@ -12,6 +12,5 @@ export interface CodeEvidence {
 
 export interface CodeEvidenceMap {
   sourceCommit: string;
-  generatedAt: string;
   evidence: CodeEvidence[];
 }
