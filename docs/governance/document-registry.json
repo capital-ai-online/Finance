@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0.0",
+  "authority": "docs/governance/DOCUMENTATION_HYGIENE_POLICY.md",
+  "entries": [
+    {
+      "documentId": "DOC-ROOT-README",
+      "type": "repository-overview",
+      "owner": "CAPITAL-AI",
+      "authority": "Repository",
+      "version": "0.6.0",
+      "language": "mixed",
+      "lifecycle": "approved",
+      "path": "README.md"
+    },
+    {
+      "documentId": "DOC-GOV-AGENTS",
+      "type": "governance",
+      "owner": "CAPITAL-AI",
+      "authority": "ADR-0039",
+      "version": "1.0.0",
+      "language": "en",
+      "lifecycle": "approved",
+      "path": "AGENTS.md"
+    },
+    {
+      "documentId": "DOC-GOV-CLAUDE",
+      "type": "agent-governance",
+      "owner": "CAPITAL-AI",
+      "authority": "Repository",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "approved",
+      "path": "CLAUDE.md"
+    },
+    {
+      "documentId": "DOC-ROADMAP-DOCUMENTARY-EVENT-VALUE-CHAIN",
+      "type": "roadmap",
+      "owner": "CAPITAL-AI",
+      "authority": "ESS-0010",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md"
+    },
+    {
+      "documentId": "DOC-GOV-DOCUMENTATION-HYGIENE",
+      "type": "governance-policy",
+      "owner": "CAPITAL-AI",
+      "authority": "H0-H4-H5",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "generated",
+      "path": "docs/governance/DOCUMENTATION_HYGIENE_POLICY.md"
+    }
+  ]
+}
