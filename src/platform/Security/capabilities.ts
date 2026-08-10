@@ -15,6 +15,7 @@ export const CAPABILITIES = {
   ADMIN_DIAGNOSTICS_READ: 'supabase.admin.diagnostics.read',
   ADMIN_SUBSCRIPTION_STATUS_READ: 'supabase.admin.subscription_status.read',
   ADMIN_ALERT_SUBSCRIPTION_DISABLE: 'supabase.admin.alert_subscription.disable',
+  ADMIN_ALERT_SUBSCRIPTION_RESEND_CONFIRMATION: 'supabase.admin.alert_subscription.resend_confirmation',
 } as const;
 
 export type Capability = typeof CAPABILITIES[keyof typeof CAPABILITIES];

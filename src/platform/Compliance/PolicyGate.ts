@@ -21,6 +21,7 @@ export interface PolicyVerdict {
  */
 const WRITE_CAPABILITY_ALLOWLIST: ReadonlySet<Capability> = new Set([
   CAPABILITIES.ADMIN_ALERT_SUBSCRIPTION_DISABLE,
+  CAPABILITIES.ADMIN_ALERT_SUBSCRIPTION_RESEND_CONFIRMATION,
 ]);
 
 const READ_CAPABILITY_ALLOWLIST: ReadonlySet<Capability> = new Set([
