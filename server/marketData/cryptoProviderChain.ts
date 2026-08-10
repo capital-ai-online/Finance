@@ -28,6 +28,19 @@ const COINBASE_SYMBOLS = [
   ['ADAUSDT', 'ADA-USD'],
 ] as const;
 
+const KRAKEN_PAIRS: Record<string, string> = {
+  BTC: 'XBTUSD',
+  ETH: 'ETHUSD',
+  SOL: 'SOLUSD',
+  ADA: 'ADAUSD',
+  DOGE: 'DOGEUSD',
+  XRP: 'XRPUSD',
+  DOT: 'DOTUSD',
+  LTC: 'LTCUSD',
+  LINK: 'LINKUSD',
+  AVAX: 'AVAXUSD',
+};
+
 function toFiniteNumber(value: unknown, fallback = 0): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -81,19 +94,26 @@ async function fetchBinance(fetchImpl: FetchLike): Promise<Map<string, CryptoMar
 }
 
 async function fetchKraken(fetchImpl: FetchLike): Promise<Map<string, CryptoMarketPoint>> {
-  const response = await fetchImpl('https://api.kraken.com/0/public/Ticker?pair=XBTUSD,ETHUSD,SOLUSD,ADAUSD');
+  const requested = Object.values(KRAKEN_PAIRS).join(',');
+  const response = await fetchImpl(`https://api.kraken.com/0/public/Ticker?pair=${encodeURIComponent(requested)}&assetVersion=1`);
   if (!response.ok) throw new Error(`Kraken API returned status ${response.status}`);
   const payload = await response.json() as any;
+  if (Array.isArray(payload?.error) && payload.error.length > 0) {
+    throw new Error(`Kraken API error: ${payload.error.join(', ')}`);
+  }
   const result = payload?.result || {};
-  const aliases: Record<string, string> = {
+  const requestedByCanonical = new Map(Object.entries(KRAKEN_PAIRS).map(([symbol, pair]) => [pair.replace('XBT', 'BTC'), `${symbol}USDT`]));
+  const legacyAliases: Record<string, string> = {
     XXBTZUSD: 'BTCUSDT',
     XETHZUSD: 'ETHUSDT',
-    SOLUSD: 'SOLUSDT',
-    ADAUSD: 'ADAUSDT',
+    SOLUSD: 'SOLUSDT', ADAUSD: 'ADAUSDT', XDGUSD: 'DOGEUSDT', DOGEUSD: 'DOGEUSDT',
+    XXRPZUSD: 'XRPUSDT', XRPUSD: 'XRPUSDT', DOTUSD: 'DOTUSDT', XLTCZUSD: 'LTCUSDT',
+    LTCUSD: 'LTCUSDT', LINKUSD: 'LINKUSDT', AVAXUSD: 'AVAXUSDT',
   };
   const map = new Map<string, CryptoMarketPoint>();
   for (const [rawKey, item] of Object.entries(result) as Array<[string, any]>) {
-    const symbol = aliases[rawKey];
+    const normalizedKey = rawKey.replace('/', '').toUpperCase();
+    const symbol = legacyAliases[rawKey] || requestedByCanonical.get(normalizedKey) || legacyAliases[normalizedKey];
     if (!symbol) continue;
     const price = toFiniteNumber(item?.c?.[0], NaN);
     if (!Number.isFinite(price) || price <= 0) continue;
@@ -112,7 +132,7 @@ async function fetchCoinbase(fetchImpl: FetchLike): Promise<Map<string, CryptoMa
   const map = new Map<string, CryptoMarketPoint>();
   await Promise.all(COINBASE_SYMBOLS.map(async ([symbol, pair]) => {
     const response = await fetchImpl(`https://api.coinbase.com/v2/prices/${pair}/spot`, {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
+      headers: { 'User-Agent': 'CAPITAL-AI/0.6.0' },
     });
     if (!response.ok) return;
     const payload = await response.json() as any;
