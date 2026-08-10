@@ -98,5 +98,5 @@ export function discoverRepositoryCodeEvidence(repoRoot: string, sourceCommit: s
   }
 
   evidence.sort((a, b) => `${a.kind}|${a.path}|${a.symbol ?? ''}`.localeCompare(`${b.kind}|${b.path}|${b.symbol ?? ''}`));
-  return Object.freeze({ sourceCommit, generatedAt: new Date().toISOString(), evidence });
+  return Object.freeze({ sourceCommit, evidence: Object.freeze([...evidence]) as CodeEvidence[] });
 }
