@@ -30,6 +30,7 @@ import { createAgentEvaluationRouter } from './server/agentEvaluationRouter';
 import { getAnthropicInstance, isAnthropicConfigured } from './server/anthropicClient';
 import { getOpenAIInstance, isOpenAIConfigured } from './server/openaiClient';
 import { executeSupervised } from './src/platform/Supervisor/supervisor';
+import { createApplicationMarketDataRuntime } from './server/marketData/createApplicationMarketDataRuntime';
 import { newsRouter } from './src/features/news/newsRoutes';
 import { registryRouter } from './src/features/registry/registryRoutes';
 import { computeReturnStats, classifyTrendLabel } from './src/services/realMarketSignals';
@@ -631,7 +632,8 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
   // Audit ARCH-AUDIT-0002 (J1-Folge): echte technische Bewertung fuer Indizes ueber FMP
   // (server/fmpIndices.ts) - rein technisch wie Forex (keine Unternehmensbilanz). Faellt auf
   // die Heuristik zurueck, solange der FMP-Historie-Cache fuer dieses Symbol noch nicht
-  // gefuellt ist (Rate-Limit-bewusstes, schrittweises Befuellen, siehe fetchLiveMarketData()).
+  // gefuellt ist (Rate-Limit-bewusstes, schrittweises Befuellen, siehe
+  // server/marketData/fmpIndexProviderStage.ts).
   if (type === 'index' && INDEX_FMP_TICKERS[s]) {
     try {
       ensureIndexHistoryFresh(s).catch(() => {});
@@ -746,605 +748,83 @@ const FALLBACK_ASSETS = [
   { symbol: 'STOXX50E', name: 'EURO STOXX 50', type: 'index', price: 4950.20, change24h: 0.28, grahamScore: 0, momentum: 4.9, risk: 'Low', status: 'Verifiziert', marketCap: 3800.0, dividendYield: 3.15, volume24h: 1100.0, score: 6.4, pattern: 'Ascending Channel', applicationArea: 'Europäische Blue Chips' }
 ];
 
-// Server-side cache and request coalescing for live market data to prevent rate-limiting (e.g. 429 Too Many Requests)
-let cachedMarketData: any = null;
-let lastMarketDataFetch = 0;
+// ADR-0014 Phase 3.4: canonical application-level market-data composition. Provider ordering,
+// cache/TTL/request-coalescing and background-refresh mechanics live in the extracted
+// server/marketData/** architecture (createApplicationMarketDataRuntime and its dependency chain,
+// each already covered by dedicated unit tests). This composition root supplies only the
+// domain-specific callbacks that were previously inline in fetchLiveMarketData()/the route/the
+// startup+timer blocks below: registry synchronization, scoring/pattern enrichment, and the
+// best-effort score-snapshot/alert side effects (still Supervisor-wrapped, still fire-and-forget,
+// exactly as before).
 const MARKET_DATA_CACHE_TTL = 60 * 1000; // Cache live prices for 60 seconds
-let activeMarketDataPromise: Promise<any> | null = null;
-let cmcCoolDownUntil = 0;
-let coingeckoCoolDownUntil = 0;
 
-async function fetchLiveMarketData() {
-  const STOCK_TICKERS = ['AAPL.US', 'MSFT.US', 'GOOGL.US', 'AMZN.US', 'NVDA.US', 'TSLA.US', 'META.US', 'NFLX.US', 'AMD.US', 'INTC.US'];
-  const FOREX_TICKERS = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCAD', 'USDCHF', 'AUDUSD'];
-  const COMMODITY_TICKERS = ['XAUUSD', 'XAGUSD', 'CL.F', 'NG.F', 'CO.F'];
-
-  let cryptoAssets = [];
-  const cmcKey = getCleanEnv('COINMARKETCAP_API_KEY');
-  let cmcFetchedSuccessfully = false;
-
-  if (cmcKey && Date.now() >= cmcCoolDownUntil) {
-    try {
-      console.log('[Crypto Live API] Fetching cryptocurrency data from CoinMarketCap API (Primary Source)...');
-      // CoinMarketCap lists 100 assets on free tier by default, which perfectly covers the top market caps
-      const cmcUrl = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?limit=100&convert=USD';
-      const cmcRes = await fetch(cmcUrl, {
-        headers: {
-          'X-CMC_PRO_API_KEY': cmcKey,
-          'Accept': 'application/json'
-        }
-      });
-      if (!cmcRes.ok) {
-        if (cmcRes.status === 429) {
-          cmcCoolDownUntil = Date.now() + 15 * 60 * 1000; // Cool down for 15 minutes
-          console.log('[Crypto Live API] CoinMarketCap API rate limited (429). Cooling down for 15 minutes.');
-        } else {
-          cmcCoolDownUntil = Date.now() + 5 * 60 * 1000; // Cool down for 5 minutes on other errors
-        }
-        throw new Error(`CoinMarketCap API returned status ${cmcRes.status}`);
-      }
-      const cmcData: any = await cmcRes.json();
-      if (cmcData && cmcData.data && Array.isArray(cmcData.data)) {
-        cryptoAssets = cmcData.data.map((coin: any) => {
-          const usdQuote = coin.quote?.USD || {};
-          const price = usdQuote.price || 0;
-          const change24h = usdQuote.percent_change_24h || 0;
-          const marketCap = usdQuote.market_cap || 0;
-          const volume24h = usdQuote.volume_24h || 0;
-
-          const mcapBillions = Number((marketCap / 1e9).toFixed(1));
-          const volMillions = Number((volume24h / 1e6).toFixed(2));
-          const baseMomentum = 5.0 + (change24h > 0 ? Math.min(4, change24h / 2) : Math.max(-4, change24h / 2));
-          const scoreVal = Math.min(10.0, Math.max(1.0, Number((baseMomentum * 0.75 + 0.4).toFixed(1))));
-
-          return {
-            symbol: coin.symbol.toUpperCase(),
-            name: coin.name,
-            type: 'crypto',
-            price: price,
-            change24h: Number(change24h.toFixed(2)),
-            grahamScore: 0,
-            momentum: Number(baseMomentum.toFixed(1)),
-            risk: 'High',
-            status: 'Verifiziert',
-            marketCap: mcapBillions,
-            dividendYield: 0.0,
-            volume24h: volMillions,
-            score: scoreVal,
-            // Audit ARCH-AUDIT-0002 (S1/S2/S5): reale Supply-Daten fuer Tokenomics-Scoring
-            circulatingSupply: typeof coin.circulating_supply === 'number' ? coin.circulating_supply : undefined,
-            maxSupply: typeof coin.max_supply === 'number' ? coin.max_supply : null,
-            totalSupply: typeof coin.total_supply === 'number' ? coin.total_supply : undefined
-          };
-        });
-        cmcFetchedSuccessfully = true;
-        console.log(`[Crypto Live API] Successfully loaded ${cryptoAssets.length} assets from CoinMarketCap!`);
-      } else {
-        throw new Error('CoinMarketCap API returned invalid format or empty data');
-      }
-    } catch (cmcErr: any) {
-      console.log('[Crypto Live API] CoinMarketCap API rate-limited or inactive; smoothly transitioning to secondary sources.');
-    }
-  } else if (cmcKey) {
-    console.log(`[Crypto Live API] Skipping CoinMarketCap (under active rate-limit cooling for another ${Math.ceil((cmcCoolDownUntil - Date.now()) / 1000)}s)...`);
-  }
-
-  if (!cmcFetchedSuccessfully) {
-    let coingeckoFetchedSuccessfully = false;
-
-    if (Date.now() >= coingeckoCoolDownUntil) {
-      try {
-        const coingeckoUrl = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false';
-        const coingeckoRes = await fetch(coingeckoUrl);
-        if (!coingeckoRes.ok) {
-          if (coingeckoRes.status === 429) {
-            coingeckoCoolDownUntil = Date.now() + 15 * 60 * 1000; // Cool down for 15 minutes
-            console.log('[Crypto Live API] CoinGecko API rate limited (429). Cooling down for 15 minutes.');
-          } else {
-            coingeckoCoolDownUntil = Date.now() + 5 * 60 * 1000; // Cool down for 5 minutes on other errors
-          }
-          throw new Error(`CoinGecko API returned status ${coingeckoRes.status}`);
-        }
-        const coingeckoData: any = await coingeckoRes.json();
-        if (!coingeckoData || !Array.isArray(coingeckoData)) {
-          throw new Error('CoinGecko API returned invalid non-array data');
-        }
-        cryptoAssets = coingeckoData.map((coin: any) => {
-          const mcapBillions = coin.market_cap ? Number((coin.market_cap / 1e9).toFixed(1)) : 0;
-          const volMillions = coin.total_volume ? Number((coin.total_volume / 1e6).toFixed(2)) : 0;
-          const change24h = coin.price_change_percentage_24h || 0;
-          const baseMomentum = 5.0 + (change24h > 0 ? Math.min(4, change24h / 2) : Math.max(-4, change24h / 2));
-          const scoreVal = Math.min(10.0, Math.max(1.0, Number((baseMomentum * 0.75 + 0.4).toFixed(1))));
-
-          return {
-            symbol: coin.symbol.toUpperCase(),
-            name: coin.name,
-            type: 'crypto',
-            price: coin.current_price,
-            change24h: Number(change24h.toFixed(2)),
-            grahamScore: 0,
-            momentum: Number(baseMomentum.toFixed(1)),
-            risk: 'High',
-            status: 'Verifiziert',
-            marketCap: mcapBillions,
-            dividendYield: 0.0,
-            volume24h: volMillions,
-            score: scoreVal,
-            dataSource: 'live',
-            // Audit ARCH-AUDIT-0002 (S1/S2/S5): reale Supply-Daten fuer Tokenomics-Scoring
-            circulatingSupply: typeof coin.circulating_supply === 'number' ? coin.circulating_supply : undefined,
-            maxSupply: typeof coin.max_supply === 'number' ? coin.max_supply : null,
-            totalSupply: typeof coin.total_supply === 'number' ? coin.total_supply : undefined
-          };
-        });
-        coingeckoFetchedSuccessfully = true;
-      } catch (err: any) {
-        console.log('[Crypto Live API] CoinGecko inactive or failed (attempting resilient multi-source fallback):', err.message || err);
-      }
-    } else {
-      console.log(`[Crypto Live API] Skipping CoinGecko (under active rate-limit cooling for another ${Math.ceil((coingeckoCoolDownUntil - Date.now()) / 1000)}s)...`);
-    }
-
-    if (!coingeckoFetchedSuccessfully) {
-      let livePricesFound = false;
-      const binanceMap = new Map();
-
-      // FALLBACK SOURCE 1: Individual Binance ticker queries (simple symbol format to bypass WAF blocks)
-      try {
-      console.log('[Crypto Live API] Trying Fallback Source 1: Binance single-symbol tickers');
-      const symbolsToFetch = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'ADAUSDT'];
-      await Promise.all(symbolsToFetch.map(async (sym) => {
-        try {
-          const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${sym}`, {
-            headers: { 'User-Agent': 'Mozilla/5.0' }
-          });
-          if (res.ok) {
-            const data: any = await res.json();
-            if (data && data.lastPrice) {
-              binanceMap.set(sym, {
-                price: parseFloat(data.lastPrice),
-                change24h: parseFloat(data.priceChangePercent || '0'),
-                volume: parseFloat(data.volume || '0')
-              });
-            }
-          }
-        } catch (singleErr) {
-          console.warn(`[Crypto Live API] Binance single-symbol fetch failed for ${sym}:`, singleErr);
-        }
-      }));
-
-      if (binanceMap.has('BTCUSDT') || binanceMap.has('ETHUSDT')) {
-        livePricesFound = true;
-        console.log('[Crypto Live API] Fallback Source 1 (Binance) successfully retrieved live prices!');
-      }
-    } catch (binanceErr: any) {
-      console.warn('[Crypto Live API Warning] Binance fallback failed:', binanceErr.message || binanceErr);
-    }
-
-    // FALLBACK SOURCE 2: Kraken Public Ticker API
-    if (!livePricesFound) {
-      try {
-        console.log('[Crypto Live API] Trying Fallback Source 2: Kraken Public API');
-        const krakenUrl = 'https://api.kraken.com/0/public/Ticker?pair=XBTUSD,ETHUSD,SOLUSD,ADAUSD';
-        const krakenRes = await fetch(krakenUrl, {
-          headers: { 'User-Agent': 'Mozilla/5.0' }
-        });
-        if (krakenRes.ok) {
-          const krakenData: any = await krakenRes.json();
-          if (krakenData && krakenData.result) {
-            const r = krakenData.result;
-            // Map Kraken key names to standard keys
-            const pairsMap: { [key: string]: string } = {
-              'XXBTZUSD': 'BTCUSDT',
-              'XETHZUSD': 'ETHUSDT',
-              'XSOLZUSD': 'SOLUSDT',
-              'SOLUSD': 'SOLUSDT',
-              'XADAZUSD': 'ADAUSDT',
-              'ADAUSD': 'ADAUSDT'
-            };
-
-            for (const krakenKey of Object.keys(r)) {
-              const standardKey = pairsMap[krakenKey];
-              if (standardKey) {
-                const item = r[krakenKey];
-                const lastPrice = parseFloat(item.c[0]);
-                const openPrice = parseFloat(item.o);
-                const change24h = openPrice > 0 ? ((lastPrice - openPrice) / openPrice) * 100 : 0;
-                binanceMap.set(standardKey, {
-                  price: lastPrice,
-                  change24h: change24h,
-                  volume: parseFloat(item.v[1] || '0')
-                });
-              }
-            }
-            if (binanceMap.has('BTCUSDT') || binanceMap.has('ETHUSDT')) {
-              livePricesFound = true;
-              console.log('[Crypto Live API] Fallback Source 2 (Kraken) successfully retrieved live prices!');
-            }
-          }
-        }
-      } catch (krakenErr: any) {
-        console.warn('[Crypto Live API Warning] Kraken fallback failed:', krakenErr.message || krakenErr);
-      }
-    }
-
-    // FALLBACK SOURCE 3: Coinbase Public Spot API
-    if (!livePricesFound) {
-      try {
-        console.log('[Crypto Live API] Trying Fallback Source 3: Coinbase Spot API');
-        const coinbases = [
-          { symbol: 'BTCUSDT', url: 'https://api.coinbase.com/v2/prices/BTC-USD/spot' },
-          { symbol: 'ETHUSDT', url: 'https://api.coinbase.com/v2/prices/ETH-USD/spot' },
-          { symbol: 'SOLUSDT', url: 'https://api.coinbase.com/v2/prices/SOL-USD/spot' },
-          { symbol: 'ADAUSDT', url: 'https://api.coinbase.com/v2/prices/ADA-USD/spot' }
-        ];
-
-        await Promise.all(coinbases.map(async (cb) => {
-          try {
-            const res = await fetch(cb.url, {
-              headers: { 'User-Agent': 'Mozilla/5.0' }
-            });
-            if (res.ok) {
-              const data: any = await res.json();
-              if (data && data.data && data.data.amount) {
-                // Coinbase Spot API liefert nur den aktuellen Preis, keine 24h-
-                // Aenderung/kein Volumen. Frueher wurde hier ein zufaelliger
-                // change24h-Wert erfunden (No-Demo-Data-Policy-Verstoss, siehe
-                // docs/DATENSCHUTZ_PROTOKOLL.md) - jetzt explizit 0 statt einer
-                // erfundenen Zahl, da der reale Wert aus dieser Quelle unbekannt ist.
-                binanceMap.set(cb.symbol, {
-                  price: parseFloat(data.data.amount),
-                  change24h: 0,
-                  volume: 0
-                });
-              }
-            }
-          } catch (cbErr) {
-            console.warn(`[Crypto Live API] Coinbase single-symbol fetch failed for ${cb.symbol}:`, cbErr);
-          }
-        }));
-
-        if (binanceMap.has('BTCUSDT') || binanceMap.has('ETHUSDT')) {
-          livePricesFound = true;
-          console.log('[Crypto Live API] Fallback Source 3 (Coinbase) successfully retrieved live prices!');
-        }
-      } catch (coinbaseErr: any) {
-        console.warn('[Crypto Live API Warning] Coinbase fallback failed:', coinbaseErr.message || coinbaseErr);
-      }
-    }
-
-    // Map fetched results, oder als letzte Stufe der Resilienzkette den statischen
-    // Fallback-Bestand verwenden - explizit ohne erfundene "Live-Fluktuation"
-    // (No-Demo-Data-Policy, docs/DATENSCHUTZ_PROTOKOLL.md): eine zufaellige
-    // Preisbewegung auf einem statischen Snapshot zu simulieren wuerde genau die
-    // "simulierten Taeuschungsdaten" erzeugen, die die Policy verbietet. dataSource
-    // markiert stattdessen ehrlich, ob der jeweilige Wert live oder Fallback ist.
-    cryptoAssets = FALLBACK_ASSETS.filter(a => a.type === 'crypto').map(asset => {
-      const binanceKey = `${asset.symbol}USDT`;
-      const liveData = binanceMap.get(binanceKey);
-      if (liveData && !isNaN(liveData.price) && liveData.price > 0) {
-        const change24h = liveData.change24h;
-        const baseMomentum = 5.0 + (change24h > 0 ? Math.min(4, change24h / 2) : Math.max(-4, change24h / 2));
-        const scoreVal = Math.min(10.0, Math.max(1.0, Number((baseMomentum * 0.75 + 0.4).toFixed(1))));
-        return {
-          ...asset,
-          price: liveData.price,
-          change24h: Number(change24h.toFixed(2)),
-          momentum: Number(baseMomentum.toFixed(1)),
-          score: scoreVal,
-          volume24h: liveData.volume > 0 ? Number(((liveData.volume * liveData.price) / 1e6).toFixed(2)) : asset.volume24h,
-          dataSource: 'live'
-        };
-      } else {
-        return {
-          ...asset,
-          status: 'Fallback',
-          dataSource: 'fallback'
-        };
-      }
-    });
-  }
+function syncAssetToRegistry(asset: any) {
+  assetRegistry.updateAsset(asset.symbol, {
+    price: asset.price,
+    change24h: asset.change24h,
+    marketCap: asset.marketCap,
+    volume24h: asset.volume24h,
+    score: asset.score,
+    // Audit ARCH-AUDIT-0002 (J1): pattern muss in die Registry zurueckgeschrieben werden, sonst
+    // liefert /api/registry/assets weiterhin den alten, beim Registry-Seed gesetzten Wert.
+    pattern: asset.pattern,
+    // Audit ARCH-AUDIT-0002 (S1/S2/S5): reale Supply-Daten fuer Tokenomics-Scoring, nur bei
+    // Krypto-Assets von CMC/CoinGecko geliefert.
+    ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
+    ...(asset.maxSupply !== undefined ? { maxSupply: asset.maxSupply } : {}),
+    ...(asset.totalSupply !== undefined ? { totalSupply: asset.totalSupply } : {}),
+  });
 }
 
-  let stooqAssets = [];
-  try {
-    const stooqUrl = `https://stooq.com/q/d/l/?s=${[...STOCK_TICKERS, ...FOREX_TICKERS, ...COMMODITY_TICKERS].join('+')}&f=sdnjg1v`;
-    const stooqRes = await fetch(stooqUrl);
-    if (!stooqRes.ok) {
-      throw new Error(`Stooq API returned status ${stooqRes.status}`);
-    }
-    const stooqText = await stooqRes.text();
-    const lines = stooqText.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length <= 1) {
-      throw new Error('Stooq API returned empty data');
-    }
-
-    const headers = lines[0].split(',').map(h => h.toLowerCase().trim());
-    let symbolIdx = headers.findIndex(h => h === 'symbol' || h === 'skrót' || h === 'skrot');
-    let nameIdx = headers.findIndex(h => h === 'name' || h === 'nazwa');
-    let closeIdx = headers.findIndex(h => h === 'close' || h === 'kurs' || h === 'cena' || h === 'price');
-    let changePercentIdx = headers.findIndex(h => h === 'change%' || h === 'zmiana%' || h === 'changepercent');
-    let volumeIdx = headers.findIndex(h => h === 'volume' || h === 'obrót' || h === 'obrot');
-
-    if (symbolIdx === -1) symbolIdx = 0;
-    if (nameIdx === -1) nameIdx = 3;
-    if (closeIdx === -1) closeIdx = 4;
-    if (changePercentIdx === -1) changePercentIdx = 6;
-    if (volumeIdx === -1) volumeIdx = 7;
-
-    for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(',');
-      if (cols.length <= Math.max(symbolIdx, nameIdx, closeIdx, changePercentIdx)) continue;
-
-      const rawSymbol = cols[symbolIdx].trim();
-      if (!rawSymbol) continue;
-
-      const rawName = cols[nameIdx]?.trim() || rawSymbol;
-      const price = parseFloat(cols[closeIdx]?.trim() || '');
-      let change24h = parseFloat((cols[changePercentIdx]?.trim() || '').replace('%', ''));
-      let vol = parseFloat(cols[volumeIdx]?.trim() || '');
-
-      if (isNaN(price)) continue;
-      if (isNaN(change24h)) change24h = 0;
-      if (isNaN(vol)) vol = 0;
-
-      let type = 'stock';
-      let displaySymbol = rawSymbol;
-      let name = rawName;
-
-      if (STOCK_TICKERS.includes(rawSymbol)) {
-        type = 'stock';
-        displaySymbol = rawSymbol.endsWith('.US') ? rawSymbol.slice(0, -3) : rawSymbol;
-      } else if (FOREX_TICKERS.includes(rawSymbol)) {
-        type = 'forex';
-        displaySymbol = rawSymbol;
-      } else if (COMMODITY_TICKERS.includes(rawSymbol)) {
-        type = 'commodity';
-        const targets: { sym: string; name: string }[] = [];
-        if (rawSymbol === 'XAUUSD') {
-          targets.push({ sym: 'GLD', name: 'Gold Spot' });
-        } else if (rawSymbol === 'XAGUSD') {
-          targets.push({ sym: 'SLV', name: 'Silver Spot' });
-        } else if (rawSymbol === 'CL.F') {
-          targets.push({ sym: 'USO', name: 'Crude Oil' });
-          targets.push({ sym: 'WTI', name: 'WTI Crude Oil' });
-        } else if (rawSymbol === 'NG.F') {
-          targets.push({ sym: 'NG=F', name: 'Natural Gas' });
-        } else if (rawSymbol === 'CO.F') {
-          targets.push({ sym: 'BRENT', name: 'Brent Crude Oil' });
-        }
-
-        for (const target of targets) {
-          const volumeInMillions = vol > 0 ? Number(((vol * price) / 1e6).toFixed(2)) : Number((350 + (price % 10) * 45).toFixed(2));
-          const baseMomentum = 5.0 + (change24h > 0 ? Math.min(4, change24h) : Math.max(-4, change24h));
-          const originalAsset = FALLBACK_ASSETS.find(a => a.symbol === target.sym);
-          const basePresetScore = originalAsset ? originalAsset.score : undefined;
-
-          stooqAssets.push({
-            symbol: target.sym,
-            name: target.name,
-            type: 'commodity',
-            price,
-            change24h,
-            grahamScore: 0,
-            momentum: Number(baseMomentum.toFixed(1)),
-            risk: 'Medium',
-            status: 'Verifiziert',
-            marketCap: 450.0,
-            dividendYield: 0.0,
-            volume24h: volumeInMillions,
-            score: basePresetScore
-          });
-        }
-        continue;
-      } else {
-        continue;
-      }
-
-      // Stooqs kostenloser CSV-Endpunkt liefert keine Fundamentaldaten (P/E,
-      // Verschuldungsgrad, Dividendenrendite) und fuer Forex/Rohstoffe kein
-      // Handelsvolumen. Frueher wurden diese Felder ueber bedeutungslose
-      // price-Modulo-Formeln erfunden (No-Demo-Data-Policy-Verstoss, siehe
-      // docs/DATENSCHUTZ_PROTOKOLL.md) - jetzt bewusst undefined bzw. der reale
-      // statische Snapshot aus FALLBACK_ASSETS statt einer erfundenen Zahl.
-      const originalAsset = FALLBACK_ASSETS.find(a => a.symbol === displaySymbol);
-
-      let volumeInMillions: number | undefined;
-      if (type === 'stock') {
-        volumeInMillions = vol > 0 ? Number(((vol * price) / 1e6).toFixed(2)) : originalAsset?.volume24h;
-      } else {
-        volumeInMillions = vol > 0 ? Number(((vol * price) / 1e6).toFixed(2)) : originalAsset?.volume24h;
-      }
-
-      const baseMomentum = 5.0 + (change24h > 0 ? Math.min(4, change24h) : Math.max(-4, change24h));
-      const basePresetScore = originalAsset ? originalAsset.score : undefined;
-
-      stooqAssets.push({
-        symbol: displaySymbol,
-        name,
-        type,
-        price,
-        change24h,
-        grahamScore: originalAsset?.grahamScore,
-        momentum: Number(baseMomentum.toFixed(1)),
-        risk: type === 'stock' ? 'Low' : 'Medium',
-        status: 'Verifiziert',
-        peRatio: originalAsset?.peRatio,
-        debtToEquity: originalAsset?.debtToEquity,
-        marketCap: originalAsset?.marketCap ?? 450.0,
-        dividendYield: originalAsset?.dividendYield ?? 0.0,
-        volume24h: volumeInMillions ?? 0,
-        score: basePresetScore,
-        dataSource: 'live'
-      });
-    }
-  } catch (err: any) {
-    console.warn('[Stooq Live API Warning] Stooq failed (using resilient fallback):', err.message || err);
-    // Statischer Fallback ohne erfundene "Live-Fluktuation" (No-Demo-Data-Policy) -
-    // siehe Kommentar bei der analogen Krypto-Fallback-Stelle weiter oben.
-    stooqAssets = FALLBACK_ASSETS.filter(a => a.type !== 'crypto').map(asset => ({
-      ...asset,
-      status: 'Fallback',
-      dataSource: 'fallback'
-    }));
-  }
-
-  // Audit ARCH-AUDIT-0002 (J1-Folge): Indizes hatten bislang KEINE Live-Kursquelle (siehe
-  // Kommentar unten bei missingFallbackAssets, der bis hier unveraendert galt). FMP
-  // (server/fmpIndices.ts) liefert jetzt echte Kurse fuer die per INDEX_FMP_TICKERS
-  // abgebildeten Symbole. ensureIndexQuoteFresh() ist selbst rate-limit-bewusst (Cache +
-  // globaler Cooldown) - der Aufruf hier ist bewusst NICHT abgewartet-blockierend fuer alle
-  // 30 Indizes gleichzeitig, sondern best-effort: nur Symbole mit bereits frischem Cache-
-  // Stand liefern in diesem Zyklus ein 'live'-Ergebnis, der Rest bleibt (wie zuvor immer)
-  // ehrlich 'fallback', bis ihr Cache in einem der naechsten 60s-Zyklen aktualisiert wurde.
-  const indexAssets: any[] = [];
-  for (const indexSymbol of Object.keys(INDEX_FMP_TICKERS)) {
-    ensureIndexQuoteFresh(indexSymbol).catch(() => {});
-    const quote = getCachedIndexQuote(indexSymbol);
-    if (!quote) continue;
-    const fallbackAsset = FALLBACK_ASSETS.find(a => a.symbol === indexSymbol);
-    if (!fallbackAsset) continue;
-    indexAssets.push({
-      ...fallbackAsset,
-      price: quote.price,
-      change24h: quote.change24h,
-      status: 'Verifiziert',
-      dataSource: 'live' as const,
-    });
-    ensureIndexHistoryFresh(indexSymbol).catch(() => {});
-  }
-
-  const merged = [...cryptoAssets, ...stooqAssets, ...indexAssets];
-  // Ensure all remaining assets in the full asset registry are present in the final merged
-  // array. Indizes ohne (noch) frischen FMP-Cache-Stand sowie Anleihen haben keine angebundene
-  // Live-Quelle und sind daher ein statischer Snapshot - ohne erfundene "Live-Fluktuation"
-  // (No-Demo-Data-Policy, docs/DATENSCHUTZ_PROTOKOLL.md), dafuer ehrlich als
-  // dataSource: 'fallback' gekennzeichnet.
-  const existingSymbols = new Set(merged.map(a => a.symbol.toUpperCase()));
-  const missingFallbackAssets = assetRegistry.getAssets().filter(a => !existingSymbols.has(a.symbol.toUpperCase())).map(asset => ({
-    ...asset,
-    status: 'Fallback',
-    dataSource: 'fallback' as const
-  }));
-
-  const allMerged = [...merged, ...missingFallbackAssets];
-
-  const enriched = await Promise.all(allMerged.map(async asset => {
-    const pattern = await computeDisplayTrendLabel(asset.symbol);
-    const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
-    const { score, basis } = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
-    return {
-      ...asset,
-      pattern,
-      applicationArea,
-      score,
-      scoreBasis: basis
-    };
-  }));
-
-  // Audit ARCH-AUDIT-0002 (N1, H4): taeglicher Score-/Preis-Snapshot fuer die rueckwirkende
-  // Score-Validierung (server/scoreValidation.ts). Best-effort und nicht abgewartet - ein
-  // Fehler oder eine Verzoegerung hier darf /api/market-data nicht beeintraechtigen. Laeuft
-  // seit H4 ueber den Supervisor (echter Retry-mit-Backoff statt Aufgeben beim ersten
-  // Fehlschlag, z.B. bei einem voruebergehenden Supabase-Verbindungsfehler).
-  executeSupervised('recordDailySnapshots', () => recordDailySnapshots(enriched.map(a => ({
-    symbol: a.symbol,
-    assetType: a.type,
-    score: a.score,
-    scoreBasis: a.scoreBasis,
-    price: a.price,
-  })))).catch(err => {
-    console.warn('[ScoreValidation] recordDailySnapshots fehlgeschlagen:', err?.message || err);
-  });
-
-  // Audit ARCH-AUDIT-0002 (H2, H4): Auswertung faelliger Alert-Abos gegen die soeben
-  // aktualisierten Scores. Best-effort und nicht abgewartet, gleiches Muster wie
-  // recordDailySnapshots() oben - ueber den Supervisor mit echtem Retry.
-  executeSupervised('evaluateAlerts', () => evaluateAlerts(enriched.map(a => ({ symbol: a.symbol, score: a.score })))).catch(err => {
-    console.warn('[Alerts] evaluateAlerts fehlgeschlagen:', err?.message || err);
-  });
-
-  return enriched;
+async function enrichMarketDataAsset(asset: any) {
+  const pattern = await computeDisplayTrendLabel(asset.symbol);
+  const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
+  const { score, basis } = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
+  return { ...asset, pattern, applicationArea, score, scoreBasis: basis };
 }
 
-// Real, live market data endpoint utilizing CoinGecko (Crypto) and Stooq (Stocks/Forex/Commodities)
+const marketDataRuntime = createApplicationMarketDataRuntime({
+  fallbackAssets: FALLBACK_ASSETS,
+  registryAssets: () => assetRegistry.getAssets(),
+  enrichAsset: enrichMarketDataAsset,
+  syncAsset: syncAssetToRegistry,
+  getCoinMarketCapApiKey: () => getCleanEnv('COINMARKETCAP_API_KEY'),
+  // Beide Callbacks geben bewusst NICHT das executeSupervised(...)-Promise zurueck (fire-and-
+  // forget) - die Antwort darf nicht auf Snapshot-/Alert-Persistierung warten, exakt wie zuvor.
+  persistSnapshots: (assets) => {
+    executeSupervised('recordDailySnapshots', () => recordDailySnapshots(assets.map((a: any) => ({
+      symbol: a.symbol,
+      assetType: a.type,
+      score: a.score,
+      scoreBasis: a.scoreBasis,
+      price: a.price,
+    })))).catch(err => console.warn('[ScoreValidation] recordDailySnapshots fehlgeschlagen:', err?.message || err));
+  },
+  evaluateAlerts: (assets) => {
+    executeSupervised('evaluateAlerts', () => evaluateAlerts(assets.map((a: any) => ({ symbol: a.symbol, score: a.score }))))
+      .catch(err => console.warn('[Alerts] evaluateAlerts fehlgeschlagen:', err?.message || err));
+  },
+  onProviderFailure: (stage, error: any) => console.warn(`[Market Data] Provider stage "${stage}" failed:`, error?.message || error),
+  onRefreshFailure: (error: any) => console.warn('[Market Data] Refresh failed:', error?.message || error),
+  ttlMs: MARKET_DATA_CACHE_TTL,
+});
+
+// Real, live market data endpoint. Provider ordering, cache/TTL and background-refresh mechanics
+// are owned by server/marketData/createApplicationMarketDataRuntime.ts (ADR-0014 Phase 3.4).
 app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res) => {
-  const now = Date.now();
-
-  // 1. Serve from cache if valid
-  if (cachedMarketData && (now - lastMarketDataFetch < MARKET_DATA_CACHE_TTL)) {
-    return res.json(cachedMarketData);
-  }
-
-  // 2. Request coalescing: if an active fetch is already in progress, wait for it
-  if (activeMarketDataPromise) {
-    try {
-      const data = await activeMarketDataPromise;
-      return res.json(data);
-    } catch (err) {
-      // If the promise fails, fall through to fallback data logic
-    }
-  }
-
-  // 3. Spawning a new fetch
-  activeMarketDataPromise = fetchLiveMarketData();
   try {
-    const data = await activeMarketDataPromise;
-    cachedMarketData = data;
-    lastMarketDataFetch = Date.now();
-    activeMarketDataPromise = null;
-
-    // Sync to backend assetRegistry
-    for (const asset of data) {
-      assetRegistry.updateAsset(asset.symbol, {
-        price: asset.price,
-        change24h: asset.change24h,
-        marketCap: asset.marketCap,
-        volume24h: asset.volume24h,
-        score: asset.score,
-        // Audit ARCH-AUDIT-0002 (J1): pattern muss in die Registry zurueckgeschrieben
-        // werden, sonst liefert /api/registry/assets (ComplianceExporter.tsx,
-        // CryptoEnterpriseEvaluator.tsx) weiterhin den alten, beim Registry-Seed
-        // gesetzten Wert statt der hier berechneten ehrlichen Trend-Einordnung.
-        pattern: asset.pattern,
-        // Audit ARCH-AUDIT-0002 (S1/S2/S5): reale Supply-Daten fuer Tokenomics-Scoring,
-        // nur bei Krypto-Assets von CMC/CoinGecko geliefert (server: fetchLiveMarketData)
-        ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
-        ...(asset.maxSupply !== undefined ? { maxSupply: asset.maxSupply } : {}),
-        ...(asset.totalSupply !== undefined ? { totalSupply: asset.totalSupply } : {})
-      });
-    }
-
+    const data = await marketDataRuntime.get();
     return res.json(data);
   } catch (error: any) {
-    activeMarketDataPromise = null;
     console.warn('[API Warning] Failed to retrieve live market-data, returning resilient fallback:', error.message || error);
-    
-    // Serve expired cache if available as a robust backup
-    if (cachedMarketData) {
-      return res.json(cachedMarketData);
-    }
-
-    // Statischer Fallback ohne erfundene "Live-Fluktuation" (No-Demo-Data-Policy,
-    // docs/DATENSCHUTZ_PROTOKOLL.md). Schreibt bewusst NICHT mehr in die
-    // assetRegistry zurueck - ein zufaellig gejitterter Fallback-Preis wuerde sonst
-    // die Registry dauerhaft mit erfundenen Werten ueberschreiben und faelschlich
-    // zur Grundlage nachfolgender Requests werden.
+    // marketDataRuntime.get() already falls back to a stale cache internally on a refresh error;
+    // reaching here means there is no cache at all yet (e.g. the very first request after a cold
+    // start whose first refresh also failed) - build a fresh, honestly-labeled fallback directly
+    // from the registry, same as the previous third fallback tier.
     const dynamicFallback = await Promise.all(assetRegistry.getAssets().map(async asset => {
-      const pattern = await computeDisplayTrendLabel(asset.symbol);
-      const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
-      const { score, basis } = await calculateAssetScore(asset.symbol, asset.type, asset.change24h, asset.score);
-      return {
-        ...asset,
-        status: 'Fallback',
-        dataSource: 'fallback' as const,
-        pattern,
-        applicationArea,
-        score,
-        scoreBasis: basis
-      };
+      const enriched = await enrichMarketDataAsset(asset);
+      return { ...enriched, status: 'Fallback', dataSource: 'fallback' as const };
     }));
-
     res.json(dynamicFallback);
   }
 });
@@ -2172,52 +1652,20 @@ async function startServer() {
     
     // Start automatic background market data fetching to keep the assetRegistry fresh
     console.log("[Market Data] Initiating background fetch to populate AssetRegistry...");
-    fetchLiveMarketData().then(data => {
-      console.log(`[Market Data] Successfully pre-cached ${data.length} assets on startup.`);
-      cachedMarketData = data;
-      lastMarketDataFetch = Date.now();
-      for (const asset of data) {
-        assetRegistry.updateAsset(asset.symbol, {
-          price: asset.price,
-          change24h: asset.change24h,
-          marketCap: asset.marketCap,
-          volume24h: asset.volume24h,
-          score: asset.score,
-          // Audit ARCH-AUDIT-0002 (J1): siehe Kommentar bei der analogen Stelle in
-          // /api/market-data - sonst bleibt der Registry-Seed-Wert stehen.
-          pattern: asset.pattern,
-          ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
-          ...(asset.maxSupply !== undefined ? { maxSupply: asset.maxSupply } : {}),
-          ...(asset.totalSupply !== undefined ? { totalSupply: asset.totalSupply } : {})
-        });
+    marketDataRuntime.backgroundRefresh().then(data => {
+      if (data) {
+        console.log(`[Market Data] Successfully pre-cached ${data.length} assets on startup.`);
+      } else {
+        console.warn('[Market Data] Pre-cache on startup failed.');
       }
-    }).catch(err => {
-      console.warn("[Market Data] Pre-cache on startup failed:", err.message || err);
     });
 
     marketDataRefreshTimer = setInterval(async () => {
-      try {
-        const data = await fetchLiveMarketData();
-        cachedMarketData = data;
-        lastMarketDataFetch = Date.now();
-        for (const asset of data) {
-          assetRegistry.updateAsset(asset.symbol, {
-            price: asset.price,
-            change24h: asset.change24h,
-            marketCap: asset.marketCap,
-            volume24h: asset.volume24h,
-            score: asset.score,
-            // Audit ARCH-AUDIT-0002 (J1): siehe Kommentar bei der analogen Stelle in
-            // /api/market-data - sonst bleibt der Registry-Seed-Wert stehen.
-            pattern: asset.pattern,
-            ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
-            ...(asset.maxSupply !== undefined ? { maxSupply: asset.maxSupply } : {}),
-            ...(asset.totalSupply !== undefined ? { totalSupply: asset.totalSupply } : {})
-          });
-        }
+      const data = await marketDataRuntime.backgroundRefresh();
+      if (data) {
         console.log("[Market Data] Background cache refresh completed.");
-      } catch (err: any) {
-        console.warn("[Market Data] Background refresh failed:", err.message || err);
+      } else {
+        console.warn("[Market Data] Background refresh failed.");
       }
     }, 60 * 1000); // refresh every 60s
 

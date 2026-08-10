@@ -2,7 +2,7 @@
 
 Status date: 2026-08-10
 Baseline branch: `main`
-Baseline commit: `65e9950b07cb8bad863ee387a811a52972697e11`
+Baseline commit: `114356f`
 Platform version: `0.6.0`
 
 This document is the canonical roadmap status index for CAPITAL-AI. Detailed architecture decisions remain authoritative in their ADRs; this file provides the current execution order, closure gates and evidence pointers.
@@ -120,7 +120,7 @@ Next action: move remaining compatibility handlers behind canonical AI route/ser
 
 ### Phase 3.4 — Market-data runtime
 
-Status: `PREPARATION COMPLETE / FINAL CUTOVER NEXT`
+Status: `COMPLETE` (2026-08-10)
 
 Merged preparation includes:
 
@@ -132,7 +132,27 @@ Merged preparation includes:
 - runtime cache/coalescing facade;
 - application-level market-data runtime wiring in `server/marketData/createApplicationMarketDataRuntime.ts`.
 
-Immediate next implementation step: replace the legacy inline provider/cache/background-refresh implementation in `server.application.ts` with `createApplicationMarketDataRuntime(...)`, preserving provider priority, fallback labeling, registry synchronization, enrichment, score snapshots, alerts and stale-cache behavior.
+**Cutover complete (2026-08-10):** `server.application.ts`'s legacy inline
+`fetchLiveMarketData()` (~500 lines), its module-level cache/coalescing state
+(`cachedMarketData`/`lastMarketDataFetch`/`activeMarketDataPromise`/`cmcCoolDownUntil`/
+`coingeckoCoolDownUntil`), and the duplicated startup/background-timer refresh blocks are removed
+and replaced by a single `createApplicationMarketDataRuntime(...)` instance whose callbacks
+(`enrichAsset`, `syncAsset`, `persistSnapshots`, `evaluateAlerts`) supply exactly the same
+enrichment, registry sync, and Supervisor-wrapped snapshot/alert side effects as before. Verified
+behavior-preserving by: (1) line-by-line comparison of every provider stage
+(`server/marketData/*.ts`) against the deleted legacy code — confirmed byte-identical ticker lists,
+matching URLs/cooldowns/formulas for the CMC→CoinGecko→Binance→Kraken→Coinbase→static crypto
+cascade, the Stooq CSV parsing, and the FMP index stage; (2) full test suite green (110 files, 575
+tests) including the pre-existing 289 lines of dedicated market-data module tests plus
+`tests/unit/applicationMarketDataRuntime.test.ts`'s wiring-contract test; (3) a manual smoke test
+(dev server started locally, sandbox has no outbound network so every live provider correctly
+returned 403 and the pipeline fell through to the honest `dataSource: 'fallback'` static-registry
+tier exactly as designed) — `GET /api/market-data` returned all 572 registry assets, correctly
+enriched (`applicationArea`, `score`, `scoreBasis`) and cache-hit on a second request (~11ms); server
+logs showed the expected `[Market Data] Initiating background fetch...` /
+`Successfully pre-cached 572 assets on startup.` sequence. One micro-behavior difference, deliberate
+and favorable: the Stooq-failure fallback branch no longer double-emits `type: 'index'` assets
+(a pre-existing legacy edge-case quirk during a Stooq outage, not a regression).
 
 ### Phase 3.5 — Scoring route boundaries
 
@@ -152,15 +172,15 @@ Already protected behavior includes Render port resolution, runtime-secret valid
 
 ## Priority queue
 
-1. Complete ADR-0014 Phase 3.4 final market-data cutover in a narrow PR.
-2. Complete route/docs/history compatibility cutovers that are already gated by extracted boundaries.
-3. Resolve OPS-001 (production SMTP authentication) — owner action, not a dev-branch code change.
-4. Start R-004 with a dedicated ADR and additive database design for transactional, idempotent PDF-credit grants.
-5. Implement R-004 and prove replay-safe credit accounting.
-6. Start R-101 durable worker/outbox/lease only after R-004 establishes the durable side-effect transaction boundary.
-7. Finish scoring-route and startup/lifecycle decomposition under ADR-0014.
+1. Complete route/docs/history compatibility cutovers that are already gated by extracted boundaries.
+2. Resolve OPS-001 (production SMTP authentication) — owner action, not a dev-branch code change.
+3. Start R-004 with a dedicated ADR and additive database design for transactional, idempotent PDF-credit grants.
+4. Implement R-004 and prove replay-safe credit accounting.
+5. Start R-101 durable worker/outbox/lease only after R-004 establishes the durable side-effect transaction boundary.
+6. Finish scoring-route (Phase 3.5) and startup/lifecycle (Phase 3.6) decomposition under ADR-0014.
 
-R-003 is closed as of 2026-08-10 (see table above) and has been removed from this queue.
+R-003 (2026-08-10) and ADR-0014 Phase 3.4 (2026-08-10) are closed and have been removed from this
+queue.
 
 ## Protected invariants for all remaining work
 
