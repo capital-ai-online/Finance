@@ -1,21 +1,13 @@
-// Audit ARCH-AUDIT-0002 (Kapitel 11, S4): Es gab bisher kein Logger-Framework, keine Log-
-// Level, kein einheitliches Format und keine Correlation-IDs - 279 console.*-Aufrufe verteilt
-// ueber server/ und server.ts, jeder mit eigenem Ad-hoc-Format. Bewusst KEINE externe
-// Logging-Bibliothek (pino/winston) eingefuehrt: das Projekt hat an anderer Stelle bereits
-// bewusst gegen zusaetzliche Abhaengigkeiten fuer kleine, gut spezifizierte Probleme
-// entschieden (siehe src/platform/Security/totp.ts). Dieses Modul strukturiert stattdessen die
-// bestehende console.*-Ausgabe: einheitliches Format (Timestamp, Level, Scope, optionale
-// Request-ID, Message, Meta) plus eine Middleware, die jedem Request eine Correlation-ID
-// zuweist und als `x-request-id`-Header zurueckgibt.
-//
-// Migration ist bewusst schrittweise: neue und sicherheitsrelevante Logs (IAM, Step-Up,
-// globaler Fehlerhandler) nutzen dieses Modul; die uebrigen bestehenden console.*-Aufrufe
-// bleiben zunaechst unveraendert (Folgearbeit, kein Big-Bang-Rewrite von ~279 Aufrufstellen).
+// Audit ARCH-AUDIT-0002 (Kapitel 11, S4): zentraler strukturierter Logger und Correlation-ID.
+// O1 Observability Baseline: bestehendes Logging bleibt Authority; Telemetry erweitert es um
+// Redaction, kanonische Wertschöpfungs-Metadaten und Request-Dauer statt ein paralleles
+// Logging-System einzuführen.
 
 import crypto from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
 import { attachSecurityResponseContext } from './securityResponse';
 import { getDeploymentIdentity } from './deploymentIdentity';
+import { redactTelemetryAttributes, TELEMETRY_SCHEMA_VERSION } from '../src/platform/Telemetry';
 
 declare global {
   namespace Express {
@@ -35,10 +27,17 @@ interface LogFields {
 }
 
 function write(level: LogLevel, fields: LogFields, message: string) {
+  const deployment = getDeploymentIdentity();
+  const safeFields = redactTelemetryAttributes(fields) ?? fields;
   const entry = {
     timestamp: new Date().toISOString(),
+    telemetrySchemaVersion: TELEMETRY_SCHEMA_VERSION,
     level,
-    ...fields,
+    service: 'capital-ai',
+    environment: process.env.NODE_ENV || 'unknown',
+    version: deployment.version,
+    commitSha: deployment.commitSha || undefined,
+    ...safeFields,
     message,
   };
   const line = JSON.stringify(entry);
@@ -55,24 +54,31 @@ export function createLogger(scope: string, requestId?: string) {
   };
 }
 
+function resolveRequestId(req: Request): string {
+  const incoming = req.headers['x-request-id'];
+  if (
+    typeof incoming === 'string'
+    && incoming.length > 0
+    && incoming.length <= 128
+    && /^[A-Za-z0-9._:-]+$/.test(incoming)
+  ) return incoming;
+  return crypto.randomUUID();
+}
+
+function outcomeForStatus(statusCode: number): 'success' | 'failure' | 'denied' {
+  if (statusCode >= 500) return 'failure';
+  if (statusCode === 401 || statusCode === 403 || statusCode === 429) return 'denied';
+  return 'success';
+}
+
 /**
- * Weist jedem eingehenden Request eine Correlation-ID zu (aus x-request-id, falls von einem
- * vorgelagerten Proxy/Load-Balancer bereits gesetzt, sonst neu generiert) und spiegelt sie im
- * Response-Header - damit laesst sich ein Request ueber Logzeilen mehrerer Module hinweg
- * (CORS-Block, IAM-Pruefung, Route-Handler, Fehlerbehandlung) zusammenfuehren.
- *
- * ADR-0035: dieselbe fruehe Request-Schicht initialisiert zusaetzlich den pro-Response
- * Security-Context (CSP-Nonce + HTML-Nonce-Injection). Die eigentliche Security-Logik bleibt
- * in server/securityResponse.ts gekapselt; dieses Modul ist nur der bereits vorhandene,
- * garantiert fruehe Hook in die Express-Pipeline.
- *
- * ADR-0036: nicht-sensitive Deployment-Identitaet wird als Response-Header veroeffentlicht.
- * Dadurch kann der PR-Preflight den real deployten Render-Commit gegen `main` verifizieren,
- * ohne Render-API-Credentials oder einen weiteren privilegierten Endpoint zu benoetigen.
+ * Früher Request-Hook für Correlation-ID, Deployment-Evidence und Security-Context.
+ * O1 ergänzt eine standardisierte Abschlussmessung. Query-Strings und Request-Bodies werden
+ * absichtlich nicht geloggt, um Secret-/PII-Leakage in Operational Telemetry zu vermeiden.
  */
 export function requestContext(req: Request, res: Response, next: NextFunction) {
-  const incoming = req.headers['x-request-id'];
-  req.requestId = (typeof incoming === 'string' && incoming.length > 0) ? incoming : crypto.randomUUID();
+  const startedAt = process.hrtime.bigint();
+  req.requestId = resolveRequestId(req);
   res.setHeader('x-request-id', req.requestId);
 
   const deployment = getDeploymentIdentity();
@@ -83,5 +89,22 @@ export function requestContext(req: Request, res: Response, next: NextFunction) 
   res.setHeader('x-capital-ai-provider', deployment.provider);
 
   attachSecurityResponseContext(req, res);
+
+  res.once('finish', () => {
+    if (req.path === '/healthz') return;
+    const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+    const level: LogLevel = res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info';
+    createLogger('http', req.requestId)[level]('Request abgeschlossen', {
+      eventName: 'request.completed',
+      signal: 'metric',
+      stage: 'request-intake',
+      outcome: outcomeForStatus(res.statusCode),
+      method: req.method,
+      path: req.path,
+      statusCode: res.statusCode,
+      durationMs: Number(durationMs.toFixed(3)),
+    });
+  });
+
   next();
 }
