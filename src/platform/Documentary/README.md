@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.3.0
+Version: 1.4.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,9 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise von einer Zielstruktur zu einer ausführbaren Plattformkomponente ausgebaut. Die vollständige Engine ist noch nicht implementiert.
-
-Bereits vorhanden sind der bilinguale Vocabulary-basierte Projection-Layer, die D0-Versionierungsbaseline, D1 read-only Repository Code Discovery und D3 typisierte Document Models mit Provenance und Fingerprint.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind inzwischen der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, D3 Document Models/Provenance und D2 Core Engine.
 
 ## Implemented Scope
 
@@ -31,20 +29,29 @@ Bereits vorhanden sind der bilinguale Vocabulary-basierte Projection-Layer, die 
 - `Discovery/RepositoryCodeDiscovery.ts`
 - `Models/DocumentaryDocument.ts`
 - `Models/DocumentaryProvenance.ts`
+- `Interfaces/IDocumentaryEngine.ts`
+- `Engine/DocumentaryEngine.ts`
 - `Architecture/documentary-baseline.json`
 - zugehörige Unit-/Contract-Tests
 
-D1 liefert reproduzierbare Code-Evidence gebunden an einen Git-Commit. D3 überführt diese und weitere Authorities in ein strukturiertes Document Model.
+## D2 Core Engine
+
+`DocumentaryEngine` orchestriert die Erzeugung strukturierter `DocumentaryDocument`-Models aus D1-Code-Evidence, D3-Provenance-/Version-Contracts, Vocabulary Concept IDs und Traceability IDs.
+
+Die Engine arbeitet fail-closed:
+- vollständiger 40-stelliger `sourceCommit` ist verpflichtend;
+- Evidence Map und jedes Evidence-Element müssen denselben Source Commit tragen;
+- mindestens eine Code-Evidence, Concept-ID und Traceability-ID sind Pflicht;
+- vollständiger Documentary Version Context ist Pflicht;
+- eine `correlationId` darf idempotent wiederholt werden, aber nicht für einen abweichenden Request wiederverwendet werden.
+
+Die Engine erzeugt ausschließlich den Lifecycle-Status `generated`. Sie führt keine autonome Review-/Approval-Transition durch.
 
 ## D3 Document Model
 
 Jedes Documentary Document trägt `documentId`, `documentType`, `schemaVersion`, `componentVersion`, `platformVersion`, `sourceCommit`, `generatedAt`, `reviewStatus`, semantische Concept-/Traceability-IDs, Provenance und einen SHA-256-Fingerprint.
 
-Unterstützte Provenance-Arten sind Code, ESS, ADR, Vocabulary, Event und manuelle Evidence. Code-Provenance erfordert zwingend Git-Commit und Repository-Pfad. Dokumente ohne Provenance werden fail-closed abgewiesen.
-
 Der Reproduzierbarkeits-Fingerprint basiert auf stabilen Inhalts-, Versions- und Evidence-Feldern. `generatedAt` und `reviewStatus` sind Lifecycle-Metadaten und ändern den Fingerprint nicht.
-
-Statusmodell: `draft`, `generated`, `reviewed`, `approved`, `superseded`, `archived`.
 
 ## Version Model
 
@@ -56,13 +63,13 @@ Diese drei Versionen bleiben semantisch unabhängig.
 
 ## Implementation Baseline
 
-Aktuell implementiert: `Contracts`, `Discovery`, `Documentation`, `Models`, `Versioning`.
+Aktuell implementiert: `Contracts`, `Discovery`, `Documentation`, `Engine`, `Interfaces`, `Models`, `Versioning`.
 
-Weiterhin geplant: `Engine`, `Events`, `Generators`, `Governance`, `Interfaces`, `Knowledge`, `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen.
+Weiterhin geplant: `Events`, `Generators`, `Governance`, `Knowledge`, `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen.
 
 ## Boundaries
 
-Documentary mutiert in D3 keine Source-Dateien, APIs, Contracts, Events, DB-Schemas oder ENV Keys. D3 publiziert keine Events und implementiert noch keine Core Engine. Human-/Governance-Approval bleibt für geschützte Dokumentklassen ein späterer Engine-/Governance-Schritt.
+D2 rendert keine Markdown-/Diagramm-Ausgaben, publiziert keine Events, mutiert keinen Source Code und genehmigt keine geschützten Dokumente. Event-Integration, Governance/Approval, Generatoren und Knowledge Projection folgen in separaten Roadmap-Schritten.
 
 ## ESS / ADR
 
