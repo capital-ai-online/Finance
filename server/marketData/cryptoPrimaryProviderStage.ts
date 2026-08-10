@@ -1,11 +1,13 @@
 import type { MarketDataProviderStage, MarketDataAsset } from './marketDataCoordinator';
 import type { CryptoFallbackAsset } from './cryptoProviderChain';
+import { recordProviderHealth } from '../../src/platform/Supervisor/providerHealth';
 
 let cmcCoolDownUntil = 0;
 let coingeckoCoolDownUntil = 0;
 
 const DEFAULT_PROVIDER_ERROR_COOLDOWN_MS = 5 * 60_000;
 const MIN_RATE_LIMIT_COOLDOWN_MS = 60 * 60_000;
+const MARKET_CAPABILITY = 'crypto-global-market-snapshot';
 
 function toFiniteNumber(value: unknown, fallback = 0): number {
   const parsed = Number(value);
@@ -80,24 +82,81 @@ export function createCryptoPrimaryProviderStage(options: {
     name: 'crypto-primary-sources',
     async load() {
       const cmcKey = options.getCoinMarketCapApiKey?.();
-      if (cmcKey && now() >= cmcCoolDownUntil) {
+      if (!cmcKey) {
+        recordProviderHealth({
+          provider: 'CoinMarketCap',
+          capability: MARKET_CAPABILITY,
+          state: 'degraded',
+          diagnosticCode: 'not_configured',
+          payloadUsable: false,
+          message: 'CoinMarketCap API key is not configured.',
+        });
+      } else if (now() < cmcCoolDownUntil) {
+        recordProviderHealth({
+          provider: 'CoinMarketCap',
+          capability: MARKET_CAPABILITY,
+          state: 'degraded',
+          diagnosticCode: 'rate_limited',
+          payloadUsable: false,
+          circuitOpenUntil: new Date(cmcCoolDownUntil).toISOString(),
+          message: 'CoinMarketCap request is suppressed by the active provider cooldown.',
+        });
+      } else {
         try {
           const response = await fetchImpl('https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?limit=100&convert=USD', {
             headers: { 'X-CMC_PRO_API_KEY': cmcKey, Accept: 'application/json' },
           });
           if (!response.ok) {
             const nowMs = now();
+            const authError = response.status === 401 || response.status === 403;
             if (response.status === 429) {
               const cooldownMs = retryAfterMs(response, nowMs);
               cmcCoolDownUntil = nowMs + cooldownMs;
+              recordProviderHealth({
+                provider: 'CoinMarketCap',
+                capability: MARKET_CAPABILITY,
+                state: 'degraded',
+                diagnosticCode: 'rate_limited',
+                payloadUsable: false,
+                circuitOpenUntil: new Date(cmcCoolDownUntil).toISOString(),
+                message: `CoinMarketCap returned HTTP 429; provider paused for ${Math.ceil(cooldownMs / 60_000)} minutes.`,
+              });
               logger.info(`[Crypto Live API] CoinMarketCap rate-limited; provider paused for ${Math.ceil(cooldownMs / 60_000)} minutes.`);
             } else {
               cmcCoolDownUntil = nowMs + DEFAULT_PROVIDER_ERROR_COOLDOWN_MS;
+              recordProviderHealth({
+                provider: 'CoinMarketCap',
+                capability: MARKET_CAPABILITY,
+                state: 'unavailable',
+                diagnosticCode: authError ? 'auth_error' : 'provider_error',
+                payloadUsable: false,
+                circuitOpenUntil: new Date(cmcCoolDownUntil).toISOString(),
+                message: `CoinMarketCap returned HTTP ${response.status}.`,
+              });
               logger.warn(`[Crypto Live API Warning] CoinMarketCap returned status ${response.status}; fallback provider will be used.`);
             }
           } else {
             const payload = await response.json() as any;
-            if (!Array.isArray(payload?.data)) throw new Error('CoinMarketCap API returned invalid format');
+            if (!Array.isArray(payload?.data) || payload.data.length === 0) {
+              recordProviderHealth({
+                provider: 'CoinMarketCap',
+                capability: MARKET_CAPABILITY,
+                state: 'unavailable',
+                diagnosticCode: 'schema_error',
+                payloadUsable: false,
+                message: 'CoinMarketCap returned an empty or invalid data payload.',
+              });
+              throw new Error('CoinMarketCap API returned invalid format');
+            }
+            recordProviderHealth({
+              provider: 'CoinMarketCap',
+              capability: MARKET_CAPABILITY,
+              state: 'healthy',
+              diagnosticCode: 'healthy',
+              payloadUsable: true,
+              cacheMode: 'live',
+              message: `CoinMarketCap returned ${payload.data.length} usable assets.`,
+            });
             logger.info(`[Crypto Live API] CoinMarketCap loaded ${payload.data.length} assets`);
             return payload.data.map((coin: any) => normalizeCryptoAsset({
               symbol: coin.symbol,
@@ -113,11 +172,30 @@ export function createCryptoPrimaryProviderStage(options: {
           }
         } catch (error: any) {
           cmcCoolDownUntil = Math.max(cmcCoolDownUntil, now() + DEFAULT_PROVIDER_ERROR_COOLDOWN_MS);
+          recordProviderHealth({
+            provider: 'CoinMarketCap',
+            capability: MARKET_CAPABILITY,
+            state: 'unavailable',
+            diagnosticCode: 'transport_error',
+            payloadUsable: false,
+            circuitOpenUntil: new Date(cmcCoolDownUntil).toISOString(),
+            message: error?.message || String(error),
+          });
           logger.warn('[Crypto Live API Warning] CoinMarketCap request failed:', error?.message || error);
         }
       }
 
-      if (now() >= coingeckoCoolDownUntil) {
+      if (now() < coingeckoCoolDownUntil) {
+        recordProviderHealth({
+          provider: 'CoinGecko',
+          capability: MARKET_CAPABILITY,
+          state: 'degraded',
+          diagnosticCode: 'rate_limited',
+          payloadUsable: false,
+          circuitOpenUntil: new Date(coingeckoCoolDownUntil).toISOString(),
+          message: 'CoinGecko request is suppressed by the active provider cooldown.',
+        });
+      } else {
         try {
           const response = await fetchImpl('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false');
           if (!response.ok) {
@@ -125,14 +203,51 @@ export function createCryptoPrimaryProviderStage(options: {
             if (response.status === 429) {
               const cooldownMs = retryAfterMs(response, nowMs);
               coingeckoCoolDownUntil = nowMs + cooldownMs;
+              recordProviderHealth({
+                provider: 'CoinGecko',
+                capability: MARKET_CAPABILITY,
+                state: 'degraded',
+                diagnosticCode: 'rate_limited',
+                payloadUsable: false,
+                circuitOpenUntil: new Date(coingeckoCoolDownUntil).toISOString(),
+                message: `CoinGecko returned HTTP 429; provider paused for ${Math.ceil(cooldownMs / 60_000)} minutes.`,
+              });
               logger.info(`[Crypto Live API] CoinGecko rate-limited; provider paused for ${Math.ceil(cooldownMs / 60_000)} minutes.`);
             } else {
               coingeckoCoolDownUntil = nowMs + DEFAULT_PROVIDER_ERROR_COOLDOWN_MS;
+              recordProviderHealth({
+                provider: 'CoinGecko',
+                capability: MARKET_CAPABILITY,
+                state: 'unavailable',
+                diagnosticCode: 'provider_error',
+                payloadUsable: false,
+                circuitOpenUntil: new Date(coingeckoCoolDownUntil).toISOString(),
+                message: `CoinGecko returned HTTP ${response.status}.`,
+              });
               logger.warn(`[Crypto Live API Warning] CoinGecko returned status ${response.status}; fallback provider will be used.`);
             }
           } else {
             const payload = await response.json() as any;
-            if (!Array.isArray(payload)) throw new Error('CoinGecko API returned invalid format');
+            if (!Array.isArray(payload) || payload.length === 0) {
+              recordProviderHealth({
+                provider: 'CoinGecko',
+                capability: MARKET_CAPABILITY,
+                state: 'unavailable',
+                diagnosticCode: 'schema_error',
+                payloadUsable: false,
+                message: 'CoinGecko returned an empty or invalid data payload.',
+              });
+              throw new Error('CoinGecko API returned invalid format');
+            }
+            recordProviderHealth({
+              provider: 'CoinGecko',
+              capability: MARKET_CAPABILITY,
+              state: 'healthy',
+              diagnosticCode: 'healthy',
+              payloadUsable: true,
+              cacheMode: 'live',
+              message: `CoinGecko returned ${payload.length} usable assets.`,
+            });
             logger.info(`[Crypto Live API] CoinGecko loaded ${payload.length} assets`);
             return payload.map((coin: any) => normalizeCryptoAsset({
               symbol: coin.symbol,
@@ -148,6 +263,15 @@ export function createCryptoPrimaryProviderStage(options: {
           }
         } catch (error: any) {
           coingeckoCoolDownUntil = Math.max(coingeckoCoolDownUntil, now() + DEFAULT_PROVIDER_ERROR_COOLDOWN_MS);
+          recordProviderHealth({
+            provider: 'CoinGecko',
+            capability: MARKET_CAPABILITY,
+            state: 'unavailable',
+            diagnosticCode: 'transport_error',
+            payloadUsable: false,
+            circuitOpenUntil: new Date(coingeckoCoolDownUntil).toISOString(),
+            message: error?.message || String(error),
+          });
           logger.warn('[Crypto Live API Warning] CoinGecko request failed:', error?.message || error);
         }
       }
