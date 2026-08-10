@@ -1,8 +1,8 @@
 # CAPITAL-AI Enterprise Roadmap
 
-Status date: 2026-08-08
+Status date: 2026-08-10
 Baseline branch: `main`
-Baseline commit: `1809f03c3e7bc4a01e8922b35db00774936fecc4`
+Baseline commit: `65e9950b07cb8bad863ee387a811a52972697e11`
 Platform version: `0.6.0`
 
 This document is the canonical roadmap status index for CAPITAL-AI. Detailed architecture decisions remain authoritative in their ADRs; this file provides the current execution order, closure gates and evidence pointers.
@@ -21,23 +21,32 @@ This document is the canonical roadmap status index for CAPITAL-AI. Detailed arc
 |---|---|---|---|---|
 | R-001 — No-Demo-Data + scoring provenance | TECHNICALLY COMPLETE | ADR-0032 | `docs/adr/evidence/ADR-0032-REVALIDATION-2026-08-08-R001.md` | Preserve provenance invariants in all later provider/scoring work |
 | R-002 — Production runtime artifact immutability | COMPLETE | ADR-0044 | Runtime Artifact Guard, immutable release manifest, read-only production Documentary boundary, validated CI | Remove inert legacy compatibility code opportunistically without weakening guard |
-| R-003 — Single Stripe owner + durable event inbox | IMPLEMENTED / PRODUCTION HANDOFF PENDING | ADR-0045 | Repository implementation and CI validated; production read-only probe on 2026-08-08 confirms required Supabase inbox/RPC objects are not installed yet | Apply production migration, deploy merged handler, run controlled duplicate/replay verification, capture evidence |
+| R-003 — Single Stripe owner + durable event inbox | TECHNICALLY COMPLETE / REPLAY-EVIDENCE OPEN | ADR-0045 | Production re-verified 2026-08-10 (read-only Supabase + Render inspection): migration `20260808090343_stripe_event_inbox` is applied (table RLS enabled, `service_role`-only grants, both RPC functions present with correct signatures/security definer), the handler-containing build is live on Render (deploy `dep-*` for main HEAD, `status: live`, delivered via the GitHub Actions `deploy_hook` pipeline, not Render's git auto-deploy), and `stripe_event_inbox` shows 6 real production events since 2026-08-08, all `status=processed`, `attempts=1`, zero `failed`/stuck rows | No real duplicate delivery has occurred yet in the observed window, so dedup is evidenced organically (clean first-attempt processing) but not yet proven against an actual retry. Needs either more organic production time, or the owner running a deliberate `stripe trigger`/manual redelivery duplicate test via Stripe CLI against the live webhook endpoint (requires `STRIPE_WEBHOOK_SECRET`; not attempted from this sandbox per CLAUDE.md's production-mutation-from-dev-step restriction) |
 | R-004 — Transactional PDF-credit ledger | OPEN | Follow-up from ADR-0045 | Current PDF-credit mutation is explicitly outside the R-003 durable event transaction boundary | Design ADR, define idempotent credit ledger, migration contract, transactional grant semantics and replay tests |
 | R-101 — Durable worker/outbox/lease | OPEN | Follow-up from ADR-0045 | Explicitly deferred from R-003 | Start only after R-004 transaction boundary is defined; design lease/retry/dead-letter/reconciliation semantics |
 | ADR-0014 Phase 3 — `server.application.ts` decomposition | IN PROGRESS | ADR-0014 | Duplicate `src/server/**` retired; route, docs/history, AI and market-data boundaries progressively extracted | Complete compatibility cutovers, then scoring and lifecycle extraction |
 
-## Production evidence snapshot — 2026-08-08
+## Production evidence snapshot — 2026-08-10 (supersedes the 2026-08-08 snapshot below)
 
-Read-only production inspection established the following closure facts:
+Read-only production inspection (Supabase + Render MCP tools, no mutation performed) established:
 
 - Supabase project `AIFINANCIAL` is `ACTIVE_HEALTHY`.
+- `public.stripe_event_inbox` IS present (migration `20260808090343_stripe_event_inbox` applied), RLS enabled, `service_role`-only grants (`anon`/`authenticated` revoked) — matches ADR-0045 §6 exactly.
+- `public.claim_stripe_event(...)` and `public.claim_subscription_confirmation(text)` ARE present, `security definer`, `execute` granted only to `service_role`/`postgres`.
+- `stripe_event_inbox` contains 6 real events (2026-08-08 through 2026-08-09), all `status=processed`, `attempts=1`, zero `failed` or stuck `processing` rows.
+- Render production service `Finance` no longer uses git-based auto-deploy (`autoDeploy=no`, `autoDeployTrigger=off`) — deploys are now triggered via a GitHub Actions `deploy_hook` per merge (superseding the `checksPass` trigger described in the superseded snapshot below), and the deploy history shows every recent `main` merge, including the PR that carries this roadmap update, deployed within ~2 minutes with `status=live`.
+
+Consequence: the R-003 migration/deploy handoff gate is closed. The only remaining R-003 gap is a deliberate duplicate/replay proof (see table above) — this snapshot does not claim that has been demonstrated, only that the durable-inbox mechanism is live and organically healthy.
+
+### Superseded snapshot — 2026-08-08 (kept for history; do not treat as current)
+
 - `public.stripe_event_inbox` is not present in production.
 - `public.claim_stripe_event(...)` is not present in production.
 - `public.claim_subscription_confirmation(text)` is not present in production.
 - Render production service `Finance` tracks repository `SvenKulessa/Finance`, branch `main`, with `autoDeploy=yes` and `autoDeployTrigger=checksPass`.
 - Render reports commit `1809f03c3e7bc4a01e8922b35db00774936fecc4` as the current live deployment.
 
-Consequence: R-003 is not production-complete. The ADR-0045 migration remains a mandatory production handoff gate before any application revision that depends on the durable inbox/RPC contract. No Supabase, Render or Stripe mutation was performed during this inspection.
+At the time of this snapshot, no Supabase, Render or Stripe mutation was performed during the inspection. The migration was applied shortly afterward (same day, per Supabase migration history) by a separate handoff step not captured in this document at the time.
 
 ## ADR-0014 execution order
 
@@ -104,7 +113,7 @@ Already protected behavior includes Render port resolution, runtime-secret valid
 
 1. Complete ADR-0014 Phase 3.4 final market-data cutover in a narrow PR.
 2. Complete route/docs/history compatibility cutovers that are already gated by extracted boundaries.
-3. Close R-003 with production Supabase migration, Render deployment identity and Stripe duplicate/replay evidence.
+3. Close the remaining R-003 gap: a deliberate Stripe duplicate/replay proof (owner-run, requires `STRIPE_WEBHOOK_SECRET`) — migration and deployment evidence are otherwise closed as of 2026-08-10.
 4. Start R-004 with a dedicated ADR and additive database design for transactional, idempotent PDF-credit grants.
 5. Implement R-004 and prove replay-safe credit accounting.
 6. Start R-101 durable worker/outbox/lease only after R-004 establishes the durable side-effect transaction boundary.
