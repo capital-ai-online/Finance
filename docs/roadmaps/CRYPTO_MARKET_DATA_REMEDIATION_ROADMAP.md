@@ -4,6 +4,23 @@ Status: ACTIVE / MERGE BLOCKED
 Bezug: PR #184, ADR-0054
 Stand: 2026-08-10
 
+## Aktueller Ausführungsstand
+
+| Workstream | Status | Evidence / Blocker |
+|---|---|---|
+| P0-A Dependency Policy | IN PROGRESS | bidirektionale `package.json`/Lockfile-Parität ist als CI-Gate implementiert |
+| P0-A `kraken-api` Manifest | PASS | direkte Dependency aus `package.json` entfernt |
+| P0-A `kraken-api` Lockfile | BLOCKED | stale Root-Dependency und `node_modules/kraken-api` müssen noch aus dem Lockfile entfernt werden |
+| P0-A Install Scripts | PASS / REVALIDATING | `strict-allow-scripts=true`, bekannte Scripts explizit klassifiziert |
+| P0-A Production Audit | PASS / REVALIDATING | letzter Lauf: 0 bekannte Production Vulnerabilities; neuer Head läuft erneut durch CI |
+| P0-B Provider Diagnostics | IMPLEMENTED / CI PENDING | capability-geschützter read-only Provider-Health-Contract ergänzt |
+| P0-B CoinMarketCap | BLOCKED | Variable wird gelesen und Provider aufgerufen, beobachteter Runtime-Call liefert HTTP 429 statt verwertbarer Daten |
+| P0-C CoinGecko | PARTIAL PASS | reale Runtime-Evidence mit 50 Assets vorhanden; neue Diagnoseklassifikation muss CI/Runtime validiert werden |
+| P0-C Kraken | IMPLEMENTED / RUNTIME PENDING | Public REST + `exchange_liquidity` mit Provenance; Production-Runtime-Nachweis fehlt noch |
+| P0-D Consensus | IMPLEMENTED / REVALIDATING | CoinGecko+CMC globales Quorum; Kraken bleibt exchange-lokale Evidence |
+| P0-E Docker | PENDING FINAL VALIDATION | Build-/Runtime-Metadata-Gates werden erst nach sauberer Dependency-Parität als Merge-Evidence akzeptiert |
+| Merge #184 | BLOCKED | Draft bleibt bestehen, bis alle Pflicht-Gates PASS sind |
+
 ## Ziel
 
 Diese Roadmap führt die verbleibenden Fehler der Crypto-Market-Data-, Scoring-, Dependency- und Docker-Kette schrittweise bis zu einem evidenzbasierten Merge-Gate. Ein vorhandener API-Key oder eine erfolgreiche Konfigurationsprüfung gilt ausdrücklich nicht als Funktionsnachweis. Provider müssen verwertbare Daten liefern und deren Provenance muss bis in die Scoring-Entscheidung nachvollziehbar bleiben.
