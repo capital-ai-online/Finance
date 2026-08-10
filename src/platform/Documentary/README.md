@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.2.0
+Version: 1.3.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -20,9 +20,7 @@ Owner: CAPITAL-AI
 
 Documentary wird schrittweise von einer Zielstruktur zu einer ausführbaren Plattformkomponente ausgebaut. Die vollständige Engine ist noch nicht implementiert.
 
-Bereits vorhanden sind der bilinguale Vocabulary-basierte Projection-Layer, die D0-Versionierungsbaseline und seit D1 eine read-only Repository Code Discovery.
-
----
+Bereits vorhanden sind der bilinguale Vocabulary-basierte Projection-Layer, die D0-Versionierungsbaseline, D1 read-only Repository Code Discovery und D3 typisierte Document Models mit Provenance und Fingerprint.
 
 ## Implemented Scope
 
@@ -31,14 +29,22 @@ Bereits vorhanden sind der bilinguale Vocabulary-basierte Projection-Layer, die 
 - `Versioning/DocumentaryVersion.ts`
 - `Discovery/CodeEvidence.ts`
 - `Discovery/RepositoryCodeDiscovery.ts`
+- `Models/DocumentaryDocument.ts`
+- `Models/DocumentaryProvenance.ts`
 - `Architecture/documentary-baseline.json`
 - zugehörige Unit-/Contract-Tests
 
-D1 inventarisiert deterministisch für einen angegebenen Git-Commit Module, Exports, Type-/Interface-Contracts, Routes, Event-Symbole, Platform-Manifeste und deklarierte Manifest-Abhängigkeiten. Jedes Evidence-Element erhält `evidenceId`, `componentId`, `sourceCommit`, Pfad und optional Symbol/Detail.
+D1 liefert reproduzierbare Code-Evidence gebunden an einen Git-Commit. D3 überführt diese und weitere Authorities in ein strukturiertes Document Model.
 
-Die Discovery ist ausschließlich read-only. Sie mutiert weder Source Code noch APIs, Contracts, Events oder Manifeste.
+## D3 Document Model
 
----
+Jedes Documentary Document trägt `documentId`, `documentType`, `schemaVersion`, `componentVersion`, `platformVersion`, `sourceCommit`, `generatedAt`, `reviewStatus`, semantische Concept-/Traceability-IDs, Provenance und einen SHA-256-Fingerprint.
+
+Unterstützte Provenance-Arten sind Code, ESS, ADR, Vocabulary, Event und manuelle Evidence. Code-Provenance erfordert zwingend Git-Commit und Repository-Pfad. Dokumente ohne Provenance werden fail-closed abgewiesen.
+
+Der Reproduzierbarkeits-Fingerprint basiert auf stabilen Inhalts-, Versions- und Evidence-Feldern. `generatedAt` und `reviewStatus` sind Lifecycle-Metadaten und ändern den Fingerprint nicht.
+
+Statusmodell: `draft`, `generated`, `reviewed`, `approved`, `superseded`, `archived`.
 
 ## Version Model
 
@@ -48,38 +54,15 @@ Die Discovery ist ausschließlich read-only. Sie mutiert weder Source Code noch 
 
 Diese drei Versionen bleiben semantisch unabhängig.
 
----
-
 ## Implementation Baseline
 
-Aktuell implementiert:
-- `Contracts`
-- `Discovery`
-- `Documentation`
-- `Versioning`
+Aktuell implementiert: `Contracts`, `Discovery`, `Documentation`, `Models`, `Versioning`.
 
-Weiterhin geplant bzw. nicht als Documentary Runtime implementiert:
-- `Architecture` (abgesehen von Baseline-Metadaten)
-- `Engine`
-- `Events`
-- `Generators`
-- `Governance`
-- `Interfaces`
-- `Knowledge`
-- `Mermaid`
-- `Migration`
-- `Models`
-- `Plugins`
+Weiterhin geplant: `Engine`, `Events`, `Generators`, `Governance`, `Interfaces`, `Knowledge`, `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen.
 
----
+## Boundaries
 
-## Discovery Boundaries
-
-D1 verwendet keine AST-basierte Mutation und keine GitHub-/Runtime-Schreiboperation. Ein gültiger `sourceCommit` ist verpflichtend; ohne Commit-Provenance schlägt Discovery fail-closed fehl. Evidence wird stabil sortiert, und IDs werden aus Kind, Commit, Pfad und Symbol gehasht.
-
-Die Regex-basierte D1-Erkennung ist eine erste Evidence-Schicht. Semantisch tiefere AST-/Compiler-Analyse kann später ergänzt werden, muss aber ebenfalls read-only bleiben und denselben Evidence-Contract liefern.
-
----
+Documentary mutiert in D3 keine Source-Dateien, APIs, Contracts, Events, DB-Schemas oder ENV Keys. D3 publiziert keine Events und implementiert noch keine Core Engine. Human-/Governance-Approval bleibt für geschützte Dokumentklassen ein späterer Engine-/Governance-Schritt.
 
 ## ESS / ADR
 
@@ -88,18 +71,3 @@ Die Regex-basierte D1-Erkennung ist eine erste Evidence-Schicht. Semantisch tief
 - ESS-0012 — Documentation Governance
 - ESS-0017 / ESS-0017-CONTRACTS — Vocabulary Governance
 - ADR-0046 — Vocabulary Governance Authority and Namespace
-
----
-
-## Dependencies
-
-- Vocabulary Registry für bilinguale Concept-Projektion.
-- Version Manager für Plattformversions-Authority.
-
-D1 erzeugt keine neue Abhängigkeit auf Supervisor, Platform Director, EventMesh Runtime oder produktive Datenquellen.
-
----
-
-## Events
-
-D1 erkennt vorhandene Event-Symbole als Code Evidence, publiziert oder konsumiert aber selbst keine Documentary Events. Die Event-Integration bleibt Bestandteil der nachfolgenden Workstreams E/D2-D5.
