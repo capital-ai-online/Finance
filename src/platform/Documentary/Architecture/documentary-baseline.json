@@ -1,0 +1,33 @@
+{
+  "component": "Documentary",
+  "status": "partial-implementation",
+  "implementedAreas": [
+    "Contracts",
+    "Documentation",
+    "Versioning"
+  ],
+  "plannedAreas": [
+    "Architecture",
+    "Discovery",
+    "Engine",
+    "Events",
+    "Generators",
+    "Governance",
+    "Interfaces",
+    "Knowledge",
+    "Mermaid",
+    "Migration",
+    "Models",
+    "Plugins"
+  ],
+  "versionAuthorities": {
+    "componentVersion": "src/platform/Documentary/manifest.json#version",
+    "documentSchemaVersion": "src/platform/Documentary/Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
+    "platformVersion": "package.json#version"
+  },
+  "notes": [
+    "The bilingual vocabulary projection is implemented.",
+    "The full Documentary Engine is not implemented yet.",
+    "Planned areas must not be treated as implemented solely because their directories exist."
+  ]
+}
