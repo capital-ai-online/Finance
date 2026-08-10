@@ -1,24 +1,24 @@
 {
   "name": "Documentary",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "status": "development",
   "owner": "CAPITAL-AI",
-  "description": "Documentary-Komponente mit bilingualem Projection-Layer, D0-Versionierungsbaseline, D1 Code Discovery und D3 Document Models/Provenance gemaess ESS-0010, ESS-0011, ESS-0012 und ESS-0017. Die vollstaendige Documentary Engine ist weiterhin nicht implementiert.",
+  "description": "Documentary-Komponente mit bilingualem Projection-Layer, D0-Versionierungsbaseline, D1 Code Discovery, D3 Document Models/Provenance und D2 Core Engine gemaess ESS-0010, ESS-0011, ESS-0012 und ESS-0017.",
   "category": "platform",
   "ess": ["ESS-0001", "ESS-0001-CONTRACTS", "ESS-0010", "ESS-0011", "ESS-0012", "ESS-0017", "ESS-0017-CONTRACTS"],
   "adr": ["ADR-0046"],
   "dependencies": ["src/platform/Vocabulary", "src/platform/VersionManager"],
-  "events": {"produces": [], "consumes": [], "note": "D3 introduces no Documentary event producer or consumer."},
+  "events": {"produces": [], "consumes": [], "note": "D2 orchestrates document-model creation but does not publish or consume Documentary events."},
   "knowledge": [],
-  "interfaces": [],
-  "contracts": ["Contracts/BilingualDocumentReference.ts", "Versioning/DocumentaryVersion.ts", "Discovery/CodeEvidence.ts", "Models/DocumentaryDocument.ts", "Models/DocumentaryProvenance.ts"],
-  "documentation": ["README.md", "Architecture/documentary-baseline.json", "../../../../docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md", "../../../../docs/architecture/DOCUMENTARY_D1_CODE_INTEGRATION_DISCOVERY.md", "../../../../docs/architecture/DOCUMENTARY_D3_DOCUMENT_MODELS_PROVENANCE.md"],
-  "tests": ["../../../tests/unit/bilingualDocumentaryProjection.test.ts", "../../../tests/unit/documentaryVersionAuthority.test.ts", "../../../tests/unit/documentaryCodeDiscovery.test.ts", "../../../tests/unit/documentaryDocumentModel.test.ts"],
+  "interfaces": ["Interfaces/IDocumentaryEngine.ts"],
+  "contracts": ["Contracts/BilingualDocumentReference.ts", "Versioning/DocumentaryVersion.ts", "Discovery/CodeEvidence.ts", "Models/DocumentaryDocument.ts", "Models/DocumentaryProvenance.ts", "Interfaces/IDocumentaryEngine.ts"],
+  "documentation": ["README.md", "Architecture/documentary-baseline.json", "../../../../docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md", "../../../../docs/architecture/DOCUMENTARY_D1_CODE_INTEGRATION_DISCOVERY.md", "../../../../docs/architecture/DOCUMENTARY_D3_DOCUMENT_MODELS_PROVENANCE.md", "../../../../docs/architecture/DOCUMENTARY_D2_CORE_ENGINE.md"],
+  "tests": ["../../../tests/unit/bilingualDocumentaryProjection.test.ts", "../../../tests/unit/documentaryVersionAuthority.test.ts", "../../../tests/unit/documentaryCodeDiscovery.test.ts", "../../../tests/unit/documentaryDocumentModel.test.ts", "../../../tests/unit/documentaryCoreEngine.test.ts"],
   "implementation": {
     "level": "partial",
-    "implementedAreas": ["Contracts", "Discovery", "Documentation", "Models", "Versioning"],
-    "plannedAreas": ["Architecture", "Engine", "Events", "Generators", "Governance", "Interfaces", "Knowledge", "Mermaid", "Migration", "Plugins"]
+    "implementedAreas": ["Contracts", "Discovery", "Documentation", "Engine", "Interfaces", "Models", "Versioning"],
+    "plannedAreas": ["Architecture", "Events", "Generators", "Governance", "Knowledge", "Mermaid", "Migration", "Plugins"]
   },
   "versionAuthority": {"componentVersion": "manifest.json#version", "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION", "platformVersion": "../../../package.json#version"},
-  "note": "D3: typed document models require provenance, version context and source-commit lineage; fingerprints are deterministic across lifecycle-only metadata changes."
+  "note": "D2: Core Engine creates governed DocumentaryDocument models from D1 code evidence + D3 provenance/version contracts. Correlation IDs are idempotent and fail closed on conflicting reuse. Rendering, event publishing and approval transitions remain outside D2."
 }
