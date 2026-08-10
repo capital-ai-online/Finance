@@ -2,9 +2,9 @@
 
 ## Enterprise Component
 
-Status: Development
+Status: Implemented / Operational
 
-Version: 1.0.0
+Version: 1.2.0
 
 Layer: Querschnittsmodul mit erweitertem Zugriff
 
@@ -115,6 +115,18 @@ kanonischen Event-Namen aus Chapter 8/15/18 und ESS-0011 zu vermeiden.
 
 ---
 
+## E2 — Idempotency, Ordering & Replay
+
+`Policies/EventReplayGuard.ts` verwendet `eventId` als Idempotency Key. Ein deliberate Replay derselben Event-ID wird als `duplicate` klassifiziert. Ordering wird ausschließlich innerhalb derselben `correlationId` bewertet; ein älter eintreffendes Event wird dort als `stale` klassifiziert, ohne unabhängige Correlations zu blockieren.
+
+Die Guard-Schicht ist fail-closed bei fehlender Event-ID, Correlation-ID oder ungültigem Timestamp. Sie bleibt in-memory und pro Prozess. Durable Multi-Instance-Deduplication bleibt ein separater Infrastruktur-Scope.
+
+## E5 — Reliability & Observability Evidence
+
+`Reports/EventReliabilityReport.ts` leitet aus dem bestehenden Delivery Log deterministisch Delivery-/Failure-/No-Consumer-Zähler, Failure Rate, fehlgeschlagene Event-Typen und Consumer, strukturierte Failure Evidence sowie Poison-Event-Kandidaten ab. Die Auswertung ist read-only und erzeugt keine zweite Observability-Pipeline oder autonome Retry-Entscheidung.
+
+---
+
 ## ESS Reference
 
 ESS-0013 — Enterprise Event Mesh
@@ -153,32 +165,14 @@ gesamten `src/platform/`-Baum mit ausführbarem Code (ADR-0018, Folgeentscheidun
 | 3 | Enterprise Event Bus (Routing, Zustellung) | ✅ erledigt — `Core/EventBus.ts` |
 | 4 | Validator-Kette (`Validators/`) | ✅ erledigt — vier Validatoren |
 
-In-Memory, ohne externe Abhängigkeiten (konsistent mit `server/iam/rateLimiter.ts`).
-Sieben Vertragstests unter `Tests/eventBus.test.ts`, ausführbar via
-`npx tsx src/platform/EventMesh/Tests/eventBus.test.ts` — kein Testframework
-eingeführt, da `package.json` keinen `test`-Script führt (Audit-Befund „0
-Testdateien"; diese Datei ändert daran bewusst nichts an der Projektkonfiguration).
+In-Memory, ohne externe Abhängigkeiten. E2/E5 ergänzen Replay-/Ordering- und Reliability-Evidence, führen aber bewusst keine persistente Queue oder zweite Event-Infrastruktur ein.
 
-`Discovery/ManifestDiscovery.ts` liest `manifest.json` aller `src/platform/`-
-Komponenten zur Laufzeit und fand dabei **23 Komponenten** — mehr als die neun in der
-Vorab-Analyse identifizierten, darunter bislang nicht einzeln geprüfte
-Querschnittsverzeichnisse (`Core`, `Contracts`, `Events`, `Interfaces`, `Models`,
-`Registry`, `Shared`, `Telemetry`, `Validators`, `Plugins`, `Generators`).
+`Discovery/ManifestDiscovery.ts` liest `manifest.json` aller `src/platform/`-Komponenten zur Laufzeit und bildet Producer-/Consumer-Evidence aus dem realen Repository-Bestand.
 
-`server/systemEvents.ts` (Audit-Log) und die Frontend-`CustomEvent`-Nutzung wurden
-**additiv** erweitert (ADR-0018, Folgeentscheidung 3) — der bestehende Mechanismus
-bleibt vollständig erhalten, die Enterprise Event Mesh ergänzt eine zusätzliche
-Veröffentlichung, ersetzt ihn nicht. Details:
-`docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md`.
+`server/systemEvents.ts` (Audit-Log) und die Frontend-`CustomEvent`-Nutzung wurden additiv erweitert (ADR-0018, Folgeentscheidung 3); der bestehende Mechanismus bleibt erhalten.
 
 ---
 
 ## Notes
 
-Vollständige Analyse und Begründung: `docs/architecture/ENTERPRISE_EVENT_READINESS_REPORT.md`
-(vor dieser Komponente erstellt) und
-`docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md` (nach dieser Komponente
-erstellt).
-
-Diese Komponente ist die **zweite** im Repository mit vollständigem Metadatensatz
-einschließlich `component.yaml` und `CHANGELOG.md`, nach `Traceability` (ADR-0015).
+Vollständige Analyse und Begründung: `docs/architecture/ENTERPRISE_EVENT_READINESS_REPORT.md`, `docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md` und `docs/architecture/EVENTMESH_E2_E5_REPLAY_RELIABILITY.md`.

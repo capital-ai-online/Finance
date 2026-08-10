@@ -1,9 +1,9 @@
 {
   "name": "EventMesh",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "status": "implemented",
   "owner": "Platform Director",
-  "description": "Enterprise Event Mesh (EEM). Zentrale Kommunikationsschicht der CAPITAL-AI Plattform. Registriert, validiert, routet und protokolliert Enterprise Events zwischen Fachkomponenten. Erzeugt selbst keine fachlichen Events und keine Geschaeftslogik, sondern ausschliesslich Registrierung, Routing und Reports. Implementiert das in ESS-0001-CONTRACTS Chapter 8 bereits normativ definierte Event- und Messaging-Regelwerk.",
+  "description": "Enterprise Event Mesh (EEM). Zentrale Kommunikationsschicht der CAPITAL-AI Plattform. Registriert, validiert, routet und protokolliert Enterprise Events zwischen Fachkomponenten. Erzeugt selbst keine fachlichen Events und keine Geschaeftslogik, sondern ausschliesslich Registrierung, Routing und Reports. E2/E5 ergaenzen Replay-/Ordering- und Reliability-Evidence.",
   "category": "platform",
   "layer": "CrossCutting",
   "layerNote": "Querschnittsmodul mit erweitertem Zugriff, siehe ESS-0001-CONTRACTS Chapter 16 (Cross Cutting Modules). Abhaengigkeitsrichtung ist umgekehrt zu ueblichen Querschnittsmodulen: keine Fachkomponente darf die Implementierung direkt importieren.",
@@ -81,7 +81,7 @@
       "GovernanceViolationDetectedEvent",
       "TwinSynchronizedEvent"
     ],
-    "routesNote": "Ausgangsbestand der 15 in der auslösenden Anforderung genannten Standardereignisse, mit auf bereits kanonische Namen aus Chapter 8/15/18 und ESS-0011/ESS-0012-CONTRACTS korrigierten Bezeichnungen. Vollstaendige Zuordnungstabelle in ESS-0013."
+    "routesNote": "Ausgangsbestand der 15 Standardereignisse; E2/E5 aendern den fachlichen Katalog nicht."
   },
   "interfaces": [
     "IEventBus",
@@ -109,7 +109,7 @@
     "authentication": "nicht anwendbar",
     "authorization": "nicht anwendbar",
     "encryption": "nicht anwendbar",
-    "audit": "Saemtliche Events werden revisionssicher protokolliert (Chapter 8, Event Audit Trail)",
+    "audit": "Event-Zustellung sowie E5 Failure-Evidence werden strukturiert auswertbar gehalten.",
     "compliance": [
       "ESS-0001-CONTRACTS Chapter 8",
       "ESS-0001-CONTRACTS Chapter 11"
@@ -134,10 +134,14 @@
     "CHANGELOG.md",
     "component.yaml",
     "docs/architecture/ENTERPRISE_EVENT_READINESS_REPORT.md",
-    "docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md"
+    "docs/architecture/ENTERPRISE_EVENT_MESH_READINESS_REPORT.md",
+    "docs/architecture/EVENTMESH_E2_E5_REPLAY_RELIABILITY.md"
   ],
-  "tests": ["Tests/eventBus.test.ts"],
+  "tests": [
+    "Tests/eventBus.test.ts",
+    "../../../tests/unit/eventMeshReplayReliability.test.ts"
+  ],
   "conformanceLevel": null,
-  "implementationStatus": "Implementiert (Stufe 1-4). Erste Komponente im gesamten src/platform-Baum mit ausfuehrbarem Code (ADR-0018, Folgeentscheidung 1). In-Memory, ohne externe Abhaengigkeiten. Sieben Vertragstests unter Tests/eventBus.test.ts.",
-  "note": "Zweite Komponente des Repositorys mit vollstaendigem Metadatensatz einschliesslich component.yaml und CHANGELOG.md, nach Traceability (ADR-0015) und in gleicher Weise wie dort etabliert. Korrektur: 'status'/'lifecycle' waren trotz vollstaendiger Implementierung (siehe 'implementationStatus' oben, 35 Code-Dateien) weiterhin auf 'development' gesetzt - das unterschaetzte den tatsaechlichen Reifegrad. Auf 'implemented'/'Operational' korrigiert, konsistent mit den anderen tatsaechlich implementierten Modulen (Compliance, Security, Supervisor, VersionManager)."
+  "implementationStatus": "Implementiert (Stufe 1-4). E2 ergaenzt Event-ID-basierte Idempotency und correlation-spezifische Ordering-Evidence; E5 ergaenzt Failure-, Consumer-Health- und Poison-Event-Evidence. In-Memory, ohne externe Abhaengigkeiten.",
+  "note": "E2/E5 fuehren keine zweite EventMesh, keine fachliche Entscheidung und keine persistente Durable Queue ein. Durable Multi-Instance-Replay und autonome Retry-Orchestrierung bleiben separate Infrastruktur-Scope."
 }
