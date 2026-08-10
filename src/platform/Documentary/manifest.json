@@ -1,72 +1,45 @@
 {
   "name": "Documentary",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "status": "development",
   "owner": "CAPITAL-AI",
-  "description": "Documentary-Komponente mit implementiertem bilingualem Contract-/Projection-Layer und D0-Versionierungsbaseline gemaess ESS-0010, ESS-0012 und ESS-0017. Die vollstaendige Documentary Engine ist weiterhin nicht implementiert.",
+  "description": "Documentary-Komponente mit bilingualem Projection-Layer, D0-Versionierungsbaseline und D1 read-only Code Discovery gemaess ESS-0010, ESS-0012 und ESS-0017. Die vollstaendige Documentary Engine ist weiterhin nicht implementiert.",
   "category": "platform",
-  "ess": [
-    "ESS-0001",
-    "ESS-0001-CONTRACTS",
-    "ESS-0010",
-    "ESS-0012",
-    "ESS-0017",
-    "ESS-0017-CONTRACTS"
-  ],
-  "adr": [
-    "ADR-0046"
-  ],
-  "dependencies": [
-    "src/platform/Vocabulary",
-    "src/platform/VersionManager"
-  ],
+  "ess": ["ESS-0001", "ESS-0001-CONTRACTS", "ESS-0010", "ESS-0012", "ESS-0017", "ESS-0017-CONTRACTS"],
+  "adr": ["ADR-0046"],
+  "dependencies": ["src/platform/Vocabulary", "src/platform/VersionManager"],
   "events": {
     "produces": [],
     "consumes": [],
-    "note": "D0 fuehrt keine neuen Event-Typen ein. Documentary-Event-Integration folgt in Workstream E/D2-D5 ueber den bestehenden Enterprise Event Mesh."
+    "note": "D1 discovers existing event evidence read-only but does not publish or consume Documentary events."
   },
   "knowledge": [],
   "interfaces": [],
   "contracts": [
     "Contracts/BilingualDocumentReference.ts",
-    "Versioning/DocumentaryVersion.ts"
+    "Versioning/DocumentaryVersion.ts",
+    "Discovery/CodeEvidence.ts"
   ],
   "documentation": [
     "README.md",
     "Architecture/documentary-baseline.json",
-    "../../../../docs/architecture/VOCABULARY_GOVERNANCE_PHASE_4_BILINGUAL_DOCUMENTARY.md",
-    "../../../../docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md"
+    "../../../../docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md",
+    "../../../../docs/architecture/DOCUMENTARY_D1_CODE_INTEGRATION_DISCOVERY.md"
   ],
   "tests": [
     "../../../tests/unit/bilingualDocumentaryProjection.test.ts",
-    "../../../tests/unit/documentaryVersionAuthority.test.ts"
+    "../../../tests/unit/documentaryVersionAuthority.test.ts",
+    "../../../tests/unit/documentaryCodeDiscovery.test.ts"
   ],
   "implementation": {
     "level": "partial",
-    "implementedAreas": [
-      "Contracts",
-      "Documentation",
-      "Versioning"
-    ],
-    "plannedAreas": [
-      "Architecture",
-      "Discovery",
-      "Engine",
-      "Events",
-      "Generators",
-      "Governance",
-      "Interfaces",
-      "Knowledge",
-      "Mermaid",
-      "Migration",
-      "Models",
-      "Plugins"
-    ]
+    "implementedAreas": ["Contracts", "Discovery", "Documentation", "Versioning"],
+    "plannedAreas": ["Architecture", "Engine", "Events", "Generators", "Governance", "Interfaces", "Knowledge", "Mermaid", "Migration", "Models", "Plugins"]
   },
   "versionAuthority": {
     "componentVersion": "manifest.json#version",
     "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
     "platformVersion": "../../../package.json#version"
   },
-  "note": "D0: Partial Implementation. Component-, Document-Schema- und Platform-Version sind getrennte Authorities. Die vollstaendige Documentary Engine gemaess ESS-0010 bleibt ausstehend."
+  "note": "D1: Partial Implementation. Repository Code Discovery is read-only, deterministic for a source commit, and creates evidence without mutating application code."
 }

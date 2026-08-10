@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.1.0
+Version: 1.2.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,11 +18,9 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-`manifest.json` beschreibt weiterhin die Zielarchitektur der Documentary Engine gemäß ESS-0010. Die vollständige Engine ist noch nicht implementiert.
+Documentary wird schrittweise von einer Zielstruktur zu einer ausführbaren Plattformkomponente ausgebaut. Die vollständige Engine ist noch nicht implementiert.
 
-Seit Phase 4 existiert ein erster ausführbarer Integrationskern: ein Bilingual-Contract-/Projection-Layer, der deutsche und englische Dokumentationsansichten aus derselben freigegebenen `VocabularyConcept.id` ableitet.
-
-D0 ergänzt eine belastbare Implementierungsbaseline und trennt drei verschiedene Versionsdimensionen ausdrücklich voneinander. Dadurch wird verhindert, dass Component-Version, Document-Schema-Version und Plattform-/Release-Version semantisch vermischt oder unabhängig in README, Manifest und generierten Dokumenten gepflegt werden.
+Bereits vorhanden sind der bilinguale Vocabulary-basierte Projection-Layer, die D0-Versionierungsbaseline und seit D1 eine read-only Repository Code Discovery.
 
 ---
 
@@ -31,47 +29,37 @@ D0 ergänzt eine belastbare Implementierungsbaseline und trennt drei verschieden
 - `Contracts/BilingualDocumentReference.ts`
 - `Documentation/BilingualDocumentaryProjection.ts`
 - `Versioning/DocumentaryVersion.ts`
+- `Discovery/CodeEvidence.ts`
+- `Discovery/RepositoryCodeDiscovery.ts`
 - `Architecture/documentary-baseline.json`
-- Contract-Tests unter `tests/unit/bilingualDocumentaryProjection.test.ts`
-- D0-Versionierungs-/Baseline-Tests unter `tests/unit/documentaryVersionAuthority.test.ts`
-- DE und EN teilen dieselbe Concept-ID und denselben `canonicalCodeTerm`
-- ESS-/ADR-/Traceability-Referenzen bleiben sprachneutral identisch
-- unbekannte, nicht freigegebene oder unvollständig übersetzte Concepts werden fail-closed abgewiesen
+- zugehörige Unit-/Contract-Tests
 
-Dieser Scope implementiert nicht die vollständige Documentary Engine.
+D1 inventarisiert deterministisch für einen angegebenen Git-Commit Module, Exports, Type-/Interface-Contracts, Routes, Event-Symbole, Platform-Manifeste und deklarierte Manifest-Abhängigkeiten. Jedes Evidence-Element erhält `evidenceId`, `componentId`, `sourceCommit`, Pfad und optional Symbol/Detail.
+
+Die Discovery ist ausschließlich read-only. Sie mutiert weder Source Code noch APIs, Contracts, Events oder Manifeste.
 
 ---
 
 ## Version Model
 
-### Component Version
+- Component Version: `manifest.json#version`.
+- Document Schema Version: `DOCUMENTARY_DOCUMENT_SCHEMA_VERSION`.
+- Platform Version: zentrale Version-Manager-/`package.json`-Authority.
 
-Die Documentary-Komponentenversion beschreibt die Version der Documentary-Komponente selbst. Ihre einzige lokale Authority ist `src/platform/Documentary/manifest.json#version`.
-
-### Document Schema Version
-
-Die Document-Schema-Version beschreibt ausschließlich die Struktur zukünftiger Documentary Document Models. Sie wird unabhängig von Component- und Platform-Version in `DOCUMENTARY_DOCUMENT_SCHEMA_VERSION` geführt. Ein Component-Release muss daher nicht automatisch einen Breaking Schema Change bedeuten.
-
-### Platform Version
-
-Die Plattformversion bleibt Bestandteil der bestehenden zentralen Release-Governance. Repository-Authority ist `package.json#version`; Documentary liest diese Version read-only und erzeugt keine eigene Plattformversionsquelle.
+Diese drei Versionen bleiben semantisch unabhängig.
 
 ---
 
 ## Implementation Baseline
 
-`Architecture/documentary-baseline.json` trennt implementierte und geplante Bereiche. Das Vorhandensein eines Verzeichnisses allein darf nicht als Implementierungsnachweis gelten.
-
 Aktuell implementiert:
-
 - `Contracts`
+- `Discovery`
 - `Documentation`
 - `Versioning`
 
-Weiterhin geplant bzw. nicht als Runtime implementiert:
-
-- `Architecture` (abgesehen von Baseline-/Architekturmetadaten)
-- `Discovery`
+Weiterhin geplant bzw. nicht als Documentary Runtime implementiert:
+- `Architecture` (abgesehen von Baseline-Metadaten)
 - `Engine`
 - `Events`
 - `Generators`
@@ -85,44 +73,33 @@ Weiterhin geplant bzw. nicht als Runtime implementiert:
 
 ---
 
-## ESS Reference
+## Discovery Boundaries
 
-ESS-0001
+D1 verwendet keine AST-basierte Mutation und keine GitHub-/Runtime-Schreiboperation. Ein gültiger `sourceCommit` ist verpflichtend; ohne Commit-Provenance schlägt Discovery fail-closed fehl. Evidence wird stabil sortiert, und IDs werden aus Kind, Commit, Pfad und Symbol gehasht.
 
-ESS-0001-CONTRACTS
-
-ESS-0010 — Documentary Engine
-
-ESS-0012 — Documentation Governance
-
-ESS-0017 / ESS-0017-CONTRACTS — Vocabulary Governance
+Die Regex-basierte D1-Erkennung ist eine erste Evidence-Schicht. Semantisch tiefere AST-/Compiler-Analyse kann später ergänzt werden, muss aber ebenfalls read-only bleiben und denselben Evidence-Contract liefern.
 
 ---
 
-## ADR References
+## ESS / ADR
 
-ADR-0046 — Vocabulary Governance Authority and Namespace
+- ESS-0010 — Documentary Engine
+- ESS-0011 — Enterprise Traceability
+- ESS-0012 — Documentation Governance
+- ESS-0017 / ESS-0017-CONTRACTS — Vocabulary Governance
+- ADR-0046 — Vocabulary Governance Authority and Namespace
 
 ---
 
 ## Dependencies
 
-Der implementierte Bilingual-Layer hängt von der öffentlichen Vocabulary-Registry-Schnittstelle und dem `VocabularyConcept`-Contract ab.
+- Vocabulary Registry für bilinguale Concept-Projektion.
+- Version Manager für Plattformversions-Authority.
 
-D0 ergänzt die semantische Abhängigkeit auf die bestehende Version-Manager-/Release-Governance. Die Plattformversion wird dabei nicht im Documentary-Modul dupliziert, sondern aus der vorhandenen Repository-Version-Authority gelesen.
-
-Keine Abhängigkeit auf Supervisor, Platform Director, EventMesh Runtime oder produktive Datenquellen wird durch D0 eingeführt.
+D1 erzeugt keine neue Abhängigkeit auf Supervisor, Platform Director, EventMesh Runtime oder produktive Datenquellen.
 
 ---
 
 ## Events
 
-D0 führt keine neuen Events ein. Documentary-Event-Integration folgt in der Event-Driven-Value-Chain-Roadmap über den bestehenden Enterprise Event Mesh.
-
-Die bereits reservierten Documentary-Event-Namen bleiben unverändert und werden durch D0 nicht ausgelöst.
-
----
-
-## Notes
-
-ARCH-AUDIT-0002 (J5, 2026-08-02) hatte die Documentary-Komponente korrekt als nicht implementiert markiert. Phase 4 änderte diesen Zustand auf `Partial Implementation`; D0 macht diesen Teilzustand jetzt maschinenlesbar und versionierbar, ohne eine vollständige Engine vorzutäuschen.
+D1 erkennt vorhandene Event-Symbole als Code Evidence, publiziert oder konsumiert aber selbst keine Documentary Events. Die Event-Integration bleibt Bestandteil der nachfolgenden Workstreams E/D2-D5.
