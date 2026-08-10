@@ -13,6 +13,7 @@
 import { CAPABILITIES, checkCapability } from '../platform/Security/capabilities';
 import { computePlanHash } from '../platform/Security/approvals';
 import { executeApprovedSupervisedAction } from '../platform/Supervisor/supervisor';
+import { getProviderHealth, type ProviderHealthRecord } from '../platform/Supervisor/providerHealth';
 import {
   getAdminDiagnostics,
   getAlertSubscriptionPreview,
@@ -40,6 +41,16 @@ export class AdminDiagnosticsAgent {
     }
     const data = await getAdminDiagnostics(request);
     return { authorized: true as const, data };
+  }
+
+  public async readProviderHealth(
+    actorUserId: string,
+  ): Promise<{ authorized: true; data: ProviderHealthRecord[] } | CapabilityDeniedResult> {
+    const allowed = await checkCapability(actorUserId, CAPABILITIES.ADMIN_DIAGNOSTICS_READ);
+    if (!allowed) {
+      return { authorized: false, capability: CAPABILITIES.ADMIN_DIAGNOSTICS_READ };
+    }
+    return { authorized: true as const, data: getProviderHealth() };
   }
 
   /** Read-only preview of a proposed alert-subscription disable + the plan hash an owner must
