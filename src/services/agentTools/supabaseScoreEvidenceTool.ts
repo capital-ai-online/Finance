@@ -1,4 +1,4 @@
-// ESS-0017 Phase 1 / ADR-0046: read-only agent tool for the Screening/Scoring explainability
+// ESS-0018 Phase 1 / ADR-0050: read-only agent tool for the Screening/Scoring explainability
 // agent. Backend-only - never import this from Vite-/browser-bundled code. Reads exclusively
 // through getPrivilegedServerSupabase() (server/db.ts) because score_snapshots is intentionally
 // service-role-only (ADR-0043, global per-symbol data, not user-owned) - the RLS-bound client
@@ -65,7 +65,7 @@ function emptyResult(retrievalId: string, query: string): ScoreSnapshotEvidenceR
 
 /**
  * Read-only evidence tool: returns the persisted score_snapshots history for one symbol plus a
- * fail-closed, cited evidence bundle (ESS-0017 Phase 1). Query is built exclusively through the
+ * fail-closed, cited evidence bundle (ESS-0018 Phase 1). Query is built exclusively through the
  * Supabase JS query builder - never raw SQL, never string-concatenated input.
  */
 export async function getScoreSnapshotEvidence(request: ScoreSnapshotEvidenceRequest): Promise<ScoreSnapshotEvidenceResult> {

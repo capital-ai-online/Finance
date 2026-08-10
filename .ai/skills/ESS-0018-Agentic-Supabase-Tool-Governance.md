@@ -1,4 +1,4 @@
-# ESS-0017 — Agentic Supabase Tool Governance
+# ESS-0018 — Agentic Supabase Tool Governance
 
 ## Enterprise Specification
 
@@ -7,14 +7,14 @@
 **Implementation Status:** PHASE 1 IMPLEMENTED / PHASE 2 SPECIFIED, NOT YET IMPLEMENTED
 **Owner:** Platform Director
 **Security Authority:** CAPITAL-AI IAM / Security & Compliance
-**Related ADR:** ADR-0043 (Supabase Privilege Separation), ADR-0046 (Agent Tool & Capability IAM Foundation)
+**Related ADR:** ADR-0043 (Supabase Privilege Separation), ADR-0050 (Agent Tool & Capability IAM Foundation)
 **Related ESS:** ESS-0001-CONTRACTS, ESS-0014, ESS-0016
 
 ---
 
 ## 1. Zweck
 
-ESS-0017 definiert die verbindliche Architektur dafür, wie CAPITAL-AI-KI-Agenten kontrolliert auf
+ESS-0018 definiert die verbindliche Architektur dafür, wie CAPITAL-AI-KI-Agenten kontrolliert auf
 die eigene Supabase-Datenbank zugreifen dürfen. Ziel ist eine auditierbare, least-privilege
 Agent-Fähigkeits-Ebene, die niemals über den privilegierten Datenbankzugriff hinausgeht, den ein
 menschlicher Administrator ohnehin schon hat, und die niemals Rohzugriff (raw SQL, Schema-Mutation,
@@ -141,7 +141,7 @@ Policy -> IAM/Grant -> Approval -> Dry-run -> Fingerprint -> Apply -> Verify -> 
 mit `Compliance` (`src/platform/Compliance/`) als Policy-/Audit-Oberfläche und `Supervisor`
 (`executeSupervised()`) als Ausführungs-Wrapper, der Approval+Dry-run+Fingerprint vor jedem Apply
 erzwingt. Keine dieser Komponenten gewährt heute Laufzeit-Autorität — das muss Phase 2 erst bauen
-(siehe ADR-0046).
+(siehe ADR-0050).
 
 ## 5. MCP-Ebene
 

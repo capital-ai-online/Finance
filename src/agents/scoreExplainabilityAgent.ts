@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// ESS-0017 Phase 1 / ADR-0046: Screening/Scoring-Erklaerbarkeits-Agent. Liest ausschliesslich
+// ESS-0018 Phase 1 / ADR-0050: Screening/Scoring-Erklaerbarkeits-Agent. Liest ausschliesslich
 // ueber das read-only Agent-Tool getScoreSnapshotEvidence und erklaert einen bereits
 // persistierten Score anhand der zitierten Snapshot-Historie. Erfindet keine Erklaerung, wenn
 // keine Evidenz vorliegt (fail-closed, analog RAG-Evidence-Layer).

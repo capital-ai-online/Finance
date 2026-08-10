@@ -159,7 +159,7 @@ export function buildRagEvidenceBundle(input: {
 }
 
 /**
- * ESS-0017 Phase 1: evidence bundle for database-row evidence (e.g. score_snapshots rows) rather
+ * ESS-0018 Phase 1: evidence bundle for database-row evidence (e.g. score_snapshots rows) rather
  * than vector-chunk retrieval. Each record is an exact, already-persisted fact - there is no
  * fuzzy-match similarity score, so similarity is fixed at 1 and quality degrades only through
  * staleness (evaluateTemporalValidity), reusing the same fail-closed verdict thresholds as

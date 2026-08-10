@@ -85,7 +85,7 @@ describe('Financial RAG evidence layer', () => {
   });
 });
 
-describe('Row evidence bundle (ESS-0017 Phase 1 - database-backed agent evidence)', () => {
+describe('Row evidence bundle (ESS-0018 Phase 1 - database-backed agent evidence)', () => {
   const policy: RagSourcePolicy = {
     sourceClass: 'financial-research',
     authoritative: true,

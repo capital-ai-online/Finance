@@ -8,7 +8,7 @@
   "seed": true,
   "note": "Dieser Registry-Eintrag ist ein Knowledge Seed. Nach Bereitstellung des Enterprise Bootstrappers wird die Registry generatorgestuetzt fortgeschrieben.",
   "updatedAt": "2026-08-09",
-  "freeNumberSpaceStartsAt": "ESS-0018",
+  "freeNumberSpaceStartsAt": "ESS-0019",
   "entries": [
     {"id":"ESS-0001","title":"Documentary & Code Intelligence Architect","status":"published","version":"1.0.0","document":".ai/skills/ESS-0001-Documentary-Architect.md","reservedBy":"ESS-0001","owner":"Platform Director"},
     {"id":"ESS-0001-CONTRACTS","title":"Enterprise Technical Contracts","status":"published","version":"1.1.0","document":".ai/skills/ESS-0001-Contracts.md","reservedBy":"ESS-0001","owner":"Platform Director","note":"Technischer Vertragsteil von ESS-0001. Belegt keine eigene Nummer."},
@@ -32,7 +32,8 @@
     {"id":"ESS-0015","title":"API Interface Inventory & QA Governance","status":"published","version":"1.0.0","document":".ai/skills/ESS-0015-API-Interface-Inventory-QA.md","reservedBy":null,"owner":"Platform Director","operationalDocs":"docs/architecture/api/","implementationStatus":"IN PROGRESS","rationale":"Fuehrt eine verbindliche API-/Webhook-/SDK-/MCP-/SMTP-/Data-API-Inventarisierung mit QA-Evidence-Gates ein. Die daraus resultierende Provider Decision Matrix ist Voraussetzung fuer eine neue ADR zur zukuenftigen FinTech-API- und Market-Data-Routing-Architektur."},
     {"id":"ESS-0016","title":"Enterprise Market Data Provider & MCP Governance","status":"published","version":"1.0.0","document":".ai/skills/ESS-0016-Enterprise-Market-Data-Provider-MCP-Governance.md","reservedBy":null,"owner":"Platform Director","relatedAdr":["ADR-0041"],"implementationStatus":"SPECIFIED / NOT YET IMPLEMENTED","rationale":"Definiert die providerneutrale Market-Data-Gateway-Architektur und trennt die deterministische Runtime Data Plane von einer read-only, policy-gesteuerten MCP Agent Plane."},
     {"id":"ESS-0017","title":"Vocabulary Governance","status":"proposed","version":"1.0.0","document":".ai/skills/ESS-0017-Vocabulary-Governance.md","reservedBy":null,"owner":"Platform Director","relatedAdr":["ADR-0046"],"rationale":"Definiert die kanonische Terminologie-, Naming- und Vocabulary-Governance als eigenstaendige Authority unterhalb von ESS-0001-CONTRACTS, ohne Documentation Governance unter ESS-0012 zu ueberlagern.","implementationStatus":"SPECIFIED / PHASE 2 NOT YET IMPLEMENTED"},
-    {"id":"ESS-0017-CONTRACTS","title":"Vocabulary Governance Contracts","status":"proposed","version":"1.0.0","document":".ai/skills/ESS-0017-Contracts.md","reservedBy":null,"owner":"Platform Director","relatedAdr":["ADR-0046"],"note":"Vertragsteil von ESS-0017. Belegt keine eigene Nummer. Definiert ausschliesslich Vocabulary-spezifische Concept-, Alias-, Forbidden-Term-, Translation-, Lifecycle-, Traceability-, Event- und Safe-Rename-Contracts."}
+    {"id":"ESS-0017-CONTRACTS","title":"Vocabulary Governance Contracts","status":"proposed","version":"1.0.0","document":".ai/skills/ESS-0017-Contracts.md","reservedBy":null,"owner":"Platform Director","relatedAdr":["ADR-0046"],"note":"Vertragsteil von ESS-0017. Belegt keine eigene Nummer. Definiert ausschliesslich Vocabulary-spezifische Concept-, Alias-, Forbidden-Term-, Translation-, Lifecycle-, Traceability-, Event- und Safe-Rename-Contracts."},
+    {"id":"ESS-0018","title":"Agentic Supabase Tool Governance","status":"published","version":"1.0.0","document":".ai/skills/ESS-0018-Agentic-Supabase-Tool-Governance.md","reservedBy":null,"owner":"Platform Director","relatedAdr":["ADR-0043","ADR-0050"],"implementationStatus":"PHASE 1 IMPLEMENTED / PHASE 2 SPECIFIED, NOT YET IMPLEMENTED","rationale":"Definiert die governte Agent-Faehigkeitsebene fuer kontrollierten Supabase-Zugriff durch KI-Agenten (Screening/Scoring-Erklaerbarkeit lesend in Phase 1; Admin/Support-Diagnose lesend+kontrolliert-schreibend in Phase 2, spezifiziert/nicht implementiert).","numberingNote":"Urspruenglich ebenfalls als ESS-0017/ADR-0046 angelegt (PR #134, vor ESS-0017-Vocabulary-Governance gemergt); nach Kollision mit der bereits ins ESS-Registry uebernommenen Vocabulary-Governance-Belegung auf ESS-0018/ADR-0050 umnummeriert."}
   ],
   "rules": [
     "Jede ESS-Nummer wird genau einmal vergeben.",
@@ -72,7 +73,7 @@
       "adr": ["ADR-0010", "ADR-0011", "ADR-0012", "ADR-0013"],
       "ess": ["ESS-0002", "ESS-0003", "ESS-0004", "ESS-0005", "ESS-0006", "ESS-0007", "ESS-0008", "ESS-0009", "ESS-0010", "ESS-0013", "ESS-0013-CONTRACTS", "ESS-0014", "ESS-0014-CONTRACTS"]
     },
-    "freeNumberSpaceUnchanged": "Die fruehere abweichende ESS-0014-Belegung im Entwicklungsstand bleibt ungueltig. Im fuehrenden Produktionsrepository ist ESS-0014 an Google Marketing MCP Governance vergeben, ESS-0015 an API Interface Inventory & QA Governance, ESS-0016 an Enterprise Market Data Provider & MCP Governance und ESS-0017 an Vocabulary Governance; der naechste freie Nummernraum beginnt bei ESS-0018.",
+    "freeNumberSpaceUnchanged": "Die fruehere abweichende ESS-0014-Belegung im Entwicklungsstand bleibt ungueltig. Im fuehrenden Produktionsrepository ist ESS-0014 an Google Marketing MCP Governance vergeben, ESS-0015 an API Interface Inventory & QA Governance, ESS-0016 an Enterprise Market Data Provider & MCP Governance, ESS-0017 an Vocabulary Governance und ESS-0018 an Agentic Supabase Tool Governance; der naechste freie Nummernraum beginnt bei ESS-0019.",
     "auditReference": "docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md (ARCH-AUDIT-0002)"
   }
 }
