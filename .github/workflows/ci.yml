@@ -21,19 +21,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - name: Git 2.55 oder neuer bereitstellen
+      - name: Git 2.55.0 aus offizieller Quelle bereitstellen
         shell: bash
         run: |
           set -euo pipefail
           current="$(git --version | awk '{print $3}')"
-          minimum="2.55.0"
-          if [ "$(printf '%s\n%s\n' "$minimum" "$current" | sort -V | head -n1)" != "$minimum" ]; then
-            sudo add-apt-repository --yes ppa:git-core/ppa
+          required="2.55.0"
+          if [ "$current" != "$required" ]; then
             sudo apt-get update
-            sudo apt-get install --yes git
+            sudo apt-get install --yes build-essential libssl-dev libcurl4-gnutls-dev libexpat1-dev gettext zlib1g-dev
+            curl --fail --silent --show-error --location \
+              "https://www.kernel.org/pub/software/scm/git/git-${required}.tar.xz" \
+              --output "/tmp/git-${required}.tar.xz"
+            tar -xJf "/tmp/git-${required}.tar.xz" -C /tmp
+            make -C "/tmp/git-${required}" -j2 \
+              prefix=/opt/git-${required} \
+              NO_TCLTK=YesPlease \
+              all
+            sudo make -C "/tmp/git-${required}" \
+              prefix=/opt/git-${required} \
+              NO_TCLTK=YesPlease \
+              install
+            echo "/opt/git-${required}/bin" >> "$GITHUB_PATH"
+            export PATH="/opt/git-${required}/bin:$PATH"
           fi
-          actual="$(git --version | awk '{print $3}')"
-          test "$(printf '%s\n%s\n' "$minimum" "$actual" | sort -V | head -n1)" = "$minimum"
+          test "$(git --version | awk '{print $3}')" = "$required"
           git --version
 
       - name: Quellcode ohne persistierte Zugangsdaten auschecken
@@ -50,6 +62,8 @@ jobs:
 
       - name: Toolchain-Versionen verifizieren
         run: |
+          test "$(git --version | awk '{print $3}')" = "2.55.0"
+          test "$(node --version)" = "v24.18.0"
           git --version
           node --version
           npm --version
