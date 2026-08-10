@@ -9,6 +9,7 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 import { getCleanEnv } from './env';
 import { getServerSupabase, isSupabaseConfigured } from './db';
+import { enqueueOutboxJob } from './outbox';
 
 let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
 
@@ -195,6 +196,64 @@ async function claimSubscriptionConfirmation(sessionId: string): Promise<Confirm
   }
 }
 
+// --- ADR-0054 / R-101: outbox-backed retry for a failed confirmation-mail send ---------------
+//
+// OPS-001 (2026-08-10) showed the gap this closes: claimSubscriptionConfirmation() reserves the
+// Checkout Session BEFORE the SMTP attempt, so a subsequent SMTP failure (e.g. rotated
+// SMTP_PASSWORD) permanently consumes the reservation with no automated retry -- the customer
+// confirmation mail could never be sent again through the direct-send path alone. Scheduling
+// this job is best-effort and mirrors sendMail()'s own contract: it must never throw into the
+// webhook response path, and it never re-attempts the reservation itself (already won above).
+
+export type ConfirmationMailRecipientKind = 'customer' | 'owner';
+
+export interface SubscriptionConfirmationMailJobPayload {
+  kind: ConfirmationMailRecipientKind;
+  to: string;
+  subject: string;
+  html: string;
+  sessionId: string;
+}
+
+async function scheduleConfirmationMailRetry(
+  kind: ConfirmationMailRecipientKind,
+  sessionId: string,
+  to: string,
+  message: { subject: string; html: string }
+): Promise<void> {
+  try {
+    const result = await enqueueOutboxJob({
+      jobType: 'subscription_confirmation_mail',
+      idempotencyKey: `subscription_confirmation_mail:${sessionId}:${kind}`,
+      payload: { kind, to, subject: message.subject, html: message.html, sessionId },
+    });
+    if (result.enqueued) {
+      console.log(`[Mailer] Outbox-Retry fuer ${kind}-Bestaetigungsmail eingeplant (Session ${sessionId}, Job ${result.jobId}).`);
+    }
+  } catch (err: any) {
+    console.error(`[Mailer] Outbox-Retry fuer ${kind}-Bestaetigungsmail konnte nicht eingeplant werden (Session ${sessionId}):`, err?.message || err);
+  }
+}
+
+/**
+ * Handler for the 'subscription_confirmation_mail' outbox job type
+ * (server/outboxWorker.ts / ADR-0054). Re-attempts the SMTP send from the stored payload; the
+ * reservation itself is not re-checked here since it was already won before the job was
+ * scheduled. Throws on failure so the worker records a backoff retry / eventual dead-letter.
+ */
+export async function processSubscriptionConfirmationMailJob(
+  payload: Record<string, unknown>
+): Promise<void> {
+  const { to, subject, html, sessionId, kind } = payload as unknown as SubscriptionConfirmationMailJobPayload;
+  if (!to || !subject || !html) {
+    throw new Error('[Mailer] subscription_confirmation_mail job payload missing to/subject/html.');
+  }
+  const result = await sendMail({ to, subject, html });
+  if (!result.success) {
+    throw new Error(result.error || `send failed for ${kind} confirmation mail (Session ${sessionId})`);
+  }
+}
+
 export interface SubscriptionConfirmationResult {
   /** true, wenn dieser Aufruf wegen bereits erfolgter/in-flight Zustellung uebersprungen wurde. */
   skippedAsDuplicate: boolean;
@@ -263,6 +322,14 @@ export async function sendSubscriptionConfirmation(
         ? `[Mailer] Abo-Bestaetigung an Kunde ${customerEmail} gesendet (Session ${sessionId}).`
         : `[Mailer] Abo-Bestaetigung an Kunde ${customerEmail} fehlgeschlagen (Session ${sessionId}): ${customerResult.error}`
     );
+    if (!customerResult.success) {
+      await scheduleConfirmationMailRetry(
+        'customer',
+        sessionId,
+        customerEmail,
+        buildSubscriptionActivatedEmail(planId, customerEmail)
+      );
+    }
   } else {
     console.warn(`[Mailer] Keine Kunden-E-Mail fuer Session ${sessionId} bekannt - Bestaetigung nicht versendet, Owner-Benachrichtigung erfolgt trotzdem.`);
   }
@@ -271,6 +338,14 @@ export async function sendSubscriptionConfirmation(
       ? `[Mailer] Owner-Benachrichtigung an ${ownerEmail} gesendet (Session ${sessionId}).`
       : `[Mailer] Owner-Benachrichtigung an ${ownerEmail} fehlgeschlagen (Session ${sessionId}): ${ownerResult.error}`
   );
+  if (!ownerResult.success) {
+    await scheduleConfirmationMailRetry(
+      'owner',
+      sessionId,
+      ownerEmail,
+      buildOwnerSubscriptionNotificationEmail(customerEmail, subscriptionData)
+    );
+  }
 
   return {
     skippedAsDuplicate: false,

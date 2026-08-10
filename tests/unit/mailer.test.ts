@@ -7,6 +7,7 @@ const state = vi.hoisted(() => ({
   confirmations: new Set<string>(),
   supabaseConfigured: true,
   rpcError: null as null | { message: string },
+  enqueueOutboxJob: vi.fn(async () => ({ enqueued: true, jobId: 'job-1' })),
 }));
 
 vi.mock('../../server/env', () => ({
@@ -30,6 +31,13 @@ vi.mock('../../server/db', () => ({
   })),
 }));
 
+// ADR-0054 / R-101: mailer.ts schedules an outbox retry when a confirmation-mail send fails.
+// Mocked independently so these pre-existing reservation tests stay focused on ADR-0045 and
+// don't depend on outbox internals (covered separately by tests/unit/outbox.test.ts).
+vi.mock('../../server/outbox', () => ({
+  enqueueOutboxJob: state.enqueueOutboxJob,
+}));
+
 import { sendSubscriptionConfirmation } from '../../server/mailer';
 
 describe('mailer atomic confirmation reservation (ADR-0045)', () => {
@@ -37,6 +45,8 @@ describe('mailer atomic confirmation reservation (ADR-0045)', () => {
     state.confirmations.clear();
     state.supabaseConfigured = true;
     state.rpcError = null;
+    state.enqueueOutboxJob.mockClear();
+    state.enqueueOutboxJob.mockResolvedValue({ enqueued: true, jobId: 'job-1' });
   });
 
   it('claims the Checkout Session before the first send attempt', async () => {
@@ -112,5 +122,82 @@ describe('mailer atomic confirmation reservation (ADR-0045)', () => {
     expect(result.skippedAsDuplicate).toBe(false);
     expect(result.customer.error).toBe('missing-session-id');
     expect(state.confirmations.size).toBe(0);
+  });
+});
+
+describe('outbox retry scheduling on SMTP failure (ADR-0054 / R-101)', () => {
+  beforeEach(() => {
+    state.confirmations.clear();
+    state.supabaseConfigured = true;
+    state.rpcError = null;
+    state.enqueueOutboxJob.mockClear();
+    state.enqueueOutboxJob.mockResolvedValue({ enqueued: true, jobId: 'job-1' });
+  });
+
+  // SMTP_HOST/SMTP_USER/SMTP_PASSWORD are unset in this test environment, so every sendMail()
+  // call already fails with 'smtp-not-configured' -- the same shape a real credential failure
+  // (OPS-001) takes from the caller's point of view.
+
+  it('schedules an outbox retry job for both legs when both sends fail', async () => {
+    await sendSubscriptionConfirmation('kunde@example.com', 'owner@example.com', {
+      planId: 'pro',
+      sessionId: 'cs_retry_1',
+    });
+
+    expect(state.enqueueOutboxJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jobType: 'subscription_confirmation_mail',
+        idempotencyKey: 'subscription_confirmation_mail:cs_retry_1:customer',
+        payload: expect.objectContaining({ kind: 'customer', to: 'kunde@example.com', sessionId: 'cs_retry_1' }),
+      }),
+    );
+    expect(state.enqueueOutboxJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jobType: 'subscription_confirmation_mail',
+        idempotencyKey: 'subscription_confirmation_mail:cs_retry_1:owner',
+        payload: expect.objectContaining({ kind: 'owner', to: 'owner@example.com', sessionId: 'cs_retry_1' }),
+      }),
+    );
+    expect(state.enqueueOutboxJob).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not schedule a customer retry when no customer email is known', async () => {
+    await sendSubscriptionConfirmation('', 'owner@example.com', {
+      planId: 'pro',
+      sessionId: 'cs_retry_2',
+    });
+
+    expect(state.enqueueOutboxJob).not.toHaveBeenCalledWith(
+      expect.objectContaining({ idempotencyKey: expect.stringContaining(':customer') }),
+    );
+    expect(state.enqueueOutboxJob).toHaveBeenCalledWith(
+      expect.objectContaining({ idempotencyKey: 'subscription_confirmation_mail:cs_retry_2:owner' }),
+    );
+  });
+
+  it('does not schedule a retry when the send was skipped as a duplicate', async () => {
+    await sendSubscriptionConfirmation('kunde@example.com', 'owner@example.com', {
+      planId: 'pro',
+      sessionId: 'cs_retry_3',
+    });
+    state.enqueueOutboxJob.mockClear();
+
+    await sendSubscriptionConfirmation('kunde@example.com', 'owner@example.com', {
+      planId: 'pro',
+      sessionId: 'cs_retry_3',
+    });
+
+    expect(state.enqueueOutboxJob).not.toHaveBeenCalled();
+  });
+
+  it('never throws when scheduling the retry itself fails', async () => {
+    state.enqueueOutboxJob.mockRejectedValue(new Error('db down'));
+
+    await expect(
+      sendSubscriptionConfirmation('kunde@example.com', 'owner@example.com', {
+        planId: 'pro',
+        sessionId: 'cs_retry_4',
+      }),
+    ).resolves.toBeDefined();
   });
 });

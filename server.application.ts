@@ -43,6 +43,8 @@ import {
   getSubscription,
 } from './server/db';
 import { handleWebhookEvent, getStripeInstance } from './server/stripe';
+import { processSubscriptionConfirmationMailJob } from './server/mailer';
+import { registerOutboxJobHandler, startOutboxWorker, stopOutboxWorker } from './server/outboxWorker';
 import { getGeminiInstance, isGeminiConfigured } from './server/ai';
 import { logSystemEvent } from './server/systemEvents';
 import { startRecursiveFileWatcher } from './server/documentHygiene';
@@ -53,6 +55,11 @@ import { metricsMiddleware, renderMetrics } from './server/metrics';
 import { getStripeConfigurationStatus, hasFiniteScoreValues, resolveHeuristicCryptoScore, resolveRuntimePort } from './server/runtime/renderRuntimeSafety';
 
 const serverLogger = createLogger('server');
+
+// ADR-0054 / R-101: register outbox job handlers at composition time, before the worker poll
+// loop starts. subscription_confirmation_mail retries a failed checkout-confirmation SMTP send
+// (server/mailer.ts) with backoff instead of the previous permanent failure (see OPS-001).
+registerOutboxJobHandler('subscription_confirmation_mail', processSubscriptionConfirmationMailJob);
 
 dotenv.config();
 
@@ -1592,6 +1599,10 @@ async function startServer() {
       }
     }, 60 * 1000); // refresh every 60s
 
+    // ADR-0054 / R-101: start the durable outbox worker poll loop (job handlers registered
+    // above, at module load). No-op per tick in local development without Supabase configured.
+    startOutboxWorker();
+
     // ADR-0037 / security hardening: diagnostics expose configuration presence only.
     // Never log key prefixes, lengths or partial Price IDs in production telemetry.
     serverLogger.info('Stripe configuration validation', getStripeConfigurationStatus(getCleanEnv));
@@ -1609,6 +1620,7 @@ async function startServer() {
       clearInterval(marketDataRefreshTimer);
       marketDataRefreshTimer = null;
     }
+    stopOutboxWorker();
 
     const forceExitTimer = setTimeout(() => {
       serverLogger.error('Graceful shutdown timeout exceeded', { signal, timeoutMs: 25_000 });
