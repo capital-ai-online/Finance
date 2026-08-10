@@ -61,6 +61,7 @@ describe('Documentary D0 version authority and baseline', () => {
     const baseline = readJson('src/platform/Documentary/Architecture/documentary-baseline.json');
     expect(baseline.versionAuthorities.componentVersion).toContain('manifest.json#version');
     expect(baseline.versionAuthorities.documentSchemaVersion).toContain('DOCUMENTARY_DOCUMENT_SCHEMA_VERSION');
-    expect(baseline.versionAuthorities.platformVersion).toBe('package.json#version');
+    expect(baseline.versionAuthorities.platformVersion).toContain('VersionManager/platformVersionAuthority.ts#getPlatformVersion');
+    expect(baseline.versionAuthorities.platformVersion).toContain('package.json#version');
   });
 });
