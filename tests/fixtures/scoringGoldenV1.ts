@@ -19,6 +19,10 @@ export const cryptoGoldenCase: { input: CryptoScoringInputs; expectedFinalScore:
     breakout_quality: 0.5,
     relative_strength: 0.5,
     avg_daily_volume: 0.5,
+    // ADR-0054 split the former global-liquidity weight into global volume (8%) and
+    // exchange-local Kraken liquidity (4%). The golden fixture intentionally supplies both at
+    // the same neutral value so it continues to exercise the complete normalized weight set.
+    exchange_liquidity: 0.5,
     supply_dynamics: 0.5,
     regime_bonus: 0.5,
     data_quality_risk: 0.1,
