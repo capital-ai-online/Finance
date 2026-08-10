@@ -1,4 +1,4 @@
-// ESS-0017 Phase 1 / ADR-0046: Read-only Erklaerbarkeits-Endpunkt fuer Screening/Scoring. Nutzt
+// ESS-0018 Phase 1 / ADR-0050: Read-only Erklaerbarkeits-Endpunkt fuer Screening/Scoring. Nutzt
 // den privilegierten Server-Client ausschliesslich lesend ueber ScoreExplainabilityAgent
 // (score_snapshots ist per RLS service-role-only, ADR-0043) - kein Schreibpfad, kein anonymer
 // Zugriff. Admin/Supervisor-only, gleiches Muster wie server/agentEvaluationRouter.ts.

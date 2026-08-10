@@ -148,7 +148,7 @@ describe('aiUsageTracker', () => {
       module: 'server/binanceLandingQuickAnalysis.ts (/api/registry/assets/:symbol/quick-analysis)',
       version: '1.0.0',
     });
-    // ESS-0017 Phase 1: Score-Explainability-Agent (src/agents/scoreExplainabilityAgent.ts)
+    // ESS-0018 Phase 1: Score-Explainability-Agent (src/agents/scoreExplainabilityAgent.ts)
     expect(PROMPT_REGISTRY['score-explainability']).toMatchObject({
       id: 'score-explainability',
       module: 'src/agents/scoreExplainabilityAgent.ts',

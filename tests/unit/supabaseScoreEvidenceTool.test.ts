@@ -1,4 +1,4 @@
-// ESS-0017 Phase 1 / ADR-0046: server/db.ts wird gemockt (gleiches Muster wie
+// ESS-0018 Phase 1 / ADR-0050: server/db.ts wird gemockt (gleiches Muster wie
 // tests/unit/scoreValidation.test.ts), damit der Test deterministisch bleibt und keine echte
 // Datenbankverbindung benoetigt. Prueft, dass ausschliesslich der Supabase-Query-Builder mit
 // allowlisted Filtern verwendet wird (kein Raw-SQL) und dass nur getPrivilegedServerSupabase()

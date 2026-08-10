@@ -1,4 +1,4 @@
-# ADR-0046 — Agent Tool & Capability IAM Foundation (Supabase, Phase 1)
+# ADR-0050 — Agent Tool & Capability IAM Foundation (Supabase, Phase 1)
 
 - **Status:** Accepted / Phase 1 implemented, Phase 2 not started
 - **Date:** 2026-08-09
@@ -6,7 +6,7 @@
   capability/grant IAM extension
 - **Related:** ADR-0043 (Supabase Privilege Separation & Render Production Hardening), ADR-0041
   (Enterprise Market Data Provider & MCP Architecture — status reference for "specified, not
-  implemented"), ESS-0014, ESS-0016, ESS-0017
+  implemented"), ESS-0014, ESS-0016, ESS-0018
 
 ## Context
 
@@ -16,7 +16,7 @@ Supabase data — they only ever produced structured JSON/text via
 Screening/Scoring explainability agent (read-only) and an Admin/Support/Diagnostics agent (read +
 controlled write) coupled to the existing `Compliance` and `Supervisor` components.
 
-Investigation of the current codebase (documented in ESS-0017 §2) found that none of the
+Investigation of the current codebase (documented in ESS-0018 §2) found that none of the
 prerequisites for the write-capable admin agent exist yet: no tool-calling layer for agents, no
 capability/grant IAM (only coarse role checks in
 `src/platform/Security/authMiddleware.ts`), no approval-artifact implementation, and `Compliance`/
@@ -55,7 +55,7 @@ existing agents/routers are unmodified except for the one new `app.use(...)` mou
 
 ### 2. Phase 2 (capability IAM, approval workflow, write-capable admin agent) is specified, not built
 
-ESS-0017 §4.2 enumerates the target capability names and explicit non-goals (no raw-SQL tool ever,
+ESS-0018 §4.2 enumerates the target capability names and explicit non-goals (no raw-SQL tool ever,
 no schema/project/migration mutation via an agent, no agent-granted IAM roles) for the
 Admin/Support/Diagnostics agent. None of it ships in this ADR. Before any Phase 2 code:
 
@@ -76,7 +76,7 @@ Policy→IAM/Grant→Approval→Dry-run→Fingerprint→Apply→Verify→Audit c
 The only real MCP server in this repository (`ga4-analytics`, `.mcp.json`) is Claude Code developer
 tooling, not an in-app agent-capability pattern. With exactly one internal caller
 (`ScoreExplainabilityAgent`), introducing MCP transport/schema machinery in-process adds complexity
-without a consumer that needs it. ESS-0017 §5 records the trigger condition for revisiting this
+without a consumer that needs it. ESS-0018 §5 records the trigger condition for revisiting this
 (a second real, independent consumer — e.g. the Phase 2 write-capable admin agent, which may need
 its own process/trust boundary).
 
@@ -86,7 +86,7 @@ its own process/trust boundary).
 
 - A real, working, auditable read path exists for score explainability without touching any
   protected/security-critical file.
-- The eventual write-capable admin agent is designed now (ESS-0017 §4.2), not improvised later, and
+- The eventual write-capable admin agent is designed now (ESS-0018 §4.2), not improvised later, and
   its non-goals (no raw SQL, no schema/project mutation, no self-granted IAM) are on record before
   any code exists.
 - `score_snapshots`' existing service-role-only RLS posture (ADR-0043) is reused unchanged, not
