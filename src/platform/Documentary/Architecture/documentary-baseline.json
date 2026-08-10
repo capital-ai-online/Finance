@@ -1,25 +1,8 @@
 {
   "component": "Documentary",
   "status": "partial-implementation",
-  "implementedAreas": [
-    "Contracts",
-    "Discovery",
-    "Documentation",
-    "Versioning"
-  ],
-  "plannedAreas": [
-    "Architecture",
-    "Engine",
-    "Events",
-    "Generators",
-    "Governance",
-    "Interfaces",
-    "Knowledge",
-    "Mermaid",
-    "Migration",
-    "Models",
-    "Plugins"
-  ],
+  "implementedAreas": ["Contracts", "Discovery", "Documentation", "Models", "Versioning"],
+  "plannedAreas": ["Architecture", "Engine", "Events", "Generators", "Governance", "Interfaces", "Knowledge", "Mermaid", "Migration", "Plugins"],
   "versionAuthorities": {
     "componentVersion": "src/platform/Documentary/manifest.json#version",
     "documentSchemaVersion": "src/platform/Documentary/Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
@@ -28,8 +11,8 @@
   "notes": [
     "The bilingual vocabulary projection is implemented.",
     "D1 read-only repository code discovery is implemented and binds evidence to a source commit.",
+    "D3 typed Document Models and provenance/fingerprint contracts are implemented.",
     "The full Documentary Engine is not implemented yet.",
-    "Planned areas must not be treated as implemented solely because their directories exist.",
-    "Platform version resolution is delegated to the existing Version Manager authority and does not create a Documentary-local platform version."
+    "Planned areas must not be treated as implemented solely because their directories exist."
   ]
 }
