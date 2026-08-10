@@ -1,9 +1,9 @@
 {
   "name": "Documentary",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "development",
   "owner": "CAPITAL-AI",
-  "description": "Documentary-Komponente mit implementiertem bilingualem Contract-/Projection-Layer gemaess ESS-0010, ESS-0012 und ESS-0017. Die vollstaendige Documentary Engine ist weiterhin nicht implementiert.",
+  "description": "Documentary-Komponente mit implementiertem bilingualem Contract-/Projection-Layer und D0-Versionierungsbaseline gemaess ESS-0010, ESS-0012 und ESS-0017. Die vollstaendige Documentary Engine ist weiterhin nicht implementiert.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -17,24 +17,56 @@
     "ADR-0046"
   ],
   "dependencies": [
-    "src/platform/Vocabulary"
+    "src/platform/Vocabulary",
+    "src/platform/VersionManager"
   ],
   "events": {
     "produces": [],
     "consumes": [],
-    "note": "Phase 4 fuehrt keine neuen Event-Typen ein. Fehlende Uebersetzungen und Lifecycle-Folgeaktionen werden erst in Phase 5 ueber die bestehende Enterprise Event Mesh integriert."
+    "note": "D0 fuehrt keine neuen Event-Typen ein. Documentary-Event-Integration folgt in Workstream E/D2-D5 ueber den bestehenden Enterprise Event Mesh."
   },
   "knowledge": [],
   "interfaces": [],
   "contracts": [
-    "Contracts/BilingualDocumentReference.ts"
+    "Contracts/BilingualDocumentReference.ts",
+    "Versioning/DocumentaryVersion.ts"
   ],
   "documentation": [
     "README.md",
-    "../../../../docs/architecture/VOCABULARY_GOVERNANCE_PHASE_4_BILINGUAL_DOCUMENTARY.md"
+    "Architecture/documentary-baseline.json",
+    "../../../../docs/architecture/VOCABULARY_GOVERNANCE_PHASE_4_BILINGUAL_DOCUMENTARY.md",
+    "../../../../docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md"
   ],
   "tests": [
-    "../../../tests/unit/bilingualDocumentaryProjection.test.ts"
+    "../../../tests/unit/bilingualDocumentaryProjection.test.ts",
+    "../../../tests/unit/documentaryVersionAuthority.test.ts"
   ],
-  "note": "Phase 4: Teilimplementierung. Implementiert sind ausschliesslich der bilinguale Documentary-Contract-Layer und die Vocabulary-basierte DE/EN-Projektion. Die vollstaendige Documentary Engine gemaess ESS-0010 bleibt ausstehend."
+  "implementation": {
+    "level": "partial",
+    "implementedAreas": [
+      "Contracts",
+      "Documentation",
+      "Versioning"
+    ],
+    "plannedAreas": [
+      "Architecture",
+      "Discovery",
+      "Engine",
+      "Events",
+      "Generators",
+      "Governance",
+      "Interfaces",
+      "Knowledge",
+      "Mermaid",
+      "Migration",
+      "Models",
+      "Plugins"
+    ]
+  },
+  "versionAuthority": {
+    "componentVersion": "manifest.json#version",
+    "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
+    "platformVersion": "../../../package.json#version"
+  },
+  "note": "D0: Partial Implementation. Component-, Document-Schema- und Platform-Version sind getrennte Authorities. Die vollstaendige Documentary Engine gemaess ESS-0010 bleibt ausstehend."
 }
