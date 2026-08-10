@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { getPlatformVersion } from '../../VersionManager/platformVersionAuthority';
 
 export const DOCUMENTARY_DOCUMENT_SCHEMA_VERSION = '1.0.0';
 
@@ -26,11 +27,10 @@ function requireSemver(value: unknown, authority: string): string {
 
 export function resolveDocumentaryVersionContext(repoRoot: string = process.cwd()): DocumentaryVersionContext {
   const manifest = readJson<VersionedMetadata>(path.join(repoRoot, 'src/platform/Documentary/manifest.json'));
-  const packageMetadata = readJson<VersionedMetadata>(path.join(repoRoot, 'package.json'));
 
   return Object.freeze({
     componentVersion: requireSemver(manifest.version, 'Documentary manifest'),
     documentSchemaVersion: requireSemver(DOCUMENTARY_DOCUMENT_SCHEMA_VERSION, 'Document schema contract'),
-    platformVersion: requireSemver(packageMetadata.version, 'package.json platform authority'),
+    platformVersion: getPlatformVersion(repoRoot),
   });
 }
