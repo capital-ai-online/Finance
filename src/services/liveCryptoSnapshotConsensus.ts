@@ -23,6 +23,17 @@ function semanticScopeFor(field: SnapshotFieldProvenance['field']): string {
   return 'total-token-supply';
 }
 
+function resolveCoinMarketCapRow(payload: any, symbol: string): any | null {
+  const data = payload?.data;
+  if (Array.isArray(data)) {
+    return data.find((row: any) => String(row?.symbol || '').toUpperCase() === symbol) ?? data[0] ?? null;
+  }
+  const raw = data?.[symbol];
+  if (Array.isArray(raw)) return raw[0] ?? null;
+  if (raw && typeof raw === 'object') return raw;
+  return null;
+}
+
 async function fetchCoinMarketCapProvenance(
   symbol: string,
   options: LiveCryptoSnapshotConsensusOptions,
@@ -34,23 +45,27 @@ async function fetchCoinMarketCapProvenance(
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? 5_000);
   const started = Date.now();
   try {
+    // Current CMC contract. v2 quotes are legacy; keep the parser tolerant of both response
+    // shapes so a provider-side format transition cannot silently turn a 200 into no evidence.
     const response = await fetchImpl(
-      `https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?symbol=${encodeURIComponent(symbol)}&convert=USD`,
+      `https://pro-api.coinmarketcap.com/v3/cryptocurrency/quotes/latest?symbol=${encodeURIComponent(symbol)}&convert=USD`,
       {
         signal: controller.signal,
         headers: {
           Accept: 'application/json',
           'X-CMC_PRO_API_KEY': apiKey,
-          'User-Agent': 'CAPITAL-AI/0.6.3',
+          'User-Agent': 'CAPITAL-AI/0.6.0',
         },
       },
     );
     if (!response.ok) throw new Error(`CoinMarketCap HTTP ${response.status}`);
     const payload: any = await response.json();
-    const raw = payload?.data?.[symbol];
-    const row = Array.isArray(raw) ? raw[0] : raw;
+    if (payload?.status?.error_code && payload.status.error_code !== 0) {
+      throw new Error(`CoinMarketCap API ${payload.status.error_code}: ${payload.status.error_message || 'unknown error'}`);
+    }
+    const row = resolveCoinMarketCapRow(payload, symbol);
     if (!row) throw new Error('CoinMarketCap returned no symbol snapshot.');
-    const quote = row?.quote?.USD ?? {};
+    const quote = row?.quote?.USD ?? (Array.isArray(row?.quote) ? row.quote.find((q: any) => q?.symbol === 'USD') : undefined) ?? {};
     const retrievedAt = new Date(options.nowMs?.() ?? Date.now()).toISOString();
     const observedRaw = quote?.last_updated ?? row?.last_updated;
     const observedAt = typeof observedRaw === 'string' && Number.isFinite(Date.parse(observedRaw))
@@ -98,8 +113,9 @@ async function fetchCoinMarketCapProvenance(
 }
 
 /**
- * Observation-only runtime quorum. It deliberately does not hard-gate the production scorer yet;
- * tolerance calibration must first be based on observed CoinGecko/CoinMarketCap divergence.
+ * Runtime quorum for global crypto snapshot fields. Only semantically comparable CoinGecko and
+ * CoinMarketCap observations may become canonical global volume/supply evidence. Kraken is kept
+ * separate because exchange-local volume is not semantically equivalent to a global aggregate.
  */
 export async function getLiveCryptoSnapshotConsensus(
   symbol: string,
