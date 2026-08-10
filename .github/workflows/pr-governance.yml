@@ -7,7 +7,7 @@ run-name: >-
 on:
   pull_request:
     branches: [main]
-    types: [opened, reopened, synchronize, edited, ready_for_review]
+    types: [opened, reopened, synchronize, ready_for_review]
   merge_group:
     types: [checks_requested]
 
@@ -20,6 +20,8 @@ concurrency:
 
 # Kostenrichtlinie: Der vollständige Build/Test-Lauf liegt ausschließlich in ci.yml.
 # Dieser Workflow darf keine zweite npm-ci/Test/Build-Pipeline für denselben PR-SHA erzeugen.
+# Reine PR-Metadatenänderungen (Titel/Beschreibung) lösen bewusst keinen neuen
+# Governance-Lauf aus; unveränderte Head-SHAs verwenden bestehende Evidence weiter.
 jobs:
   repository-conventions-advisory:
     name: Repository-Konventionen – Hinweis
