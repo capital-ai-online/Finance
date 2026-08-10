@@ -10,29 +10,23 @@ import { orchestrator } from './src/lib/requestOrchestrator';
 import { assetRegistry } from './src/lib/assetRegistry';
 import { CryptoScoringService } from './src/services/cryptoScoringService';
 import { MemeCoinScoringService } from './src/services/memeCoinScoringService';
-import { createRawMaterialsRouter } from './src/routes/rawMaterialsRoutes';
 import { RawMaterialsScoringService } from './src/services/rawMaterialsScoring';
-import { createCryptoRouter } from './src/routes/cryptoRoutes';
-import { socialMediaRouter } from './src/routes/socialMediaRoutes';
 import { ClassificationService } from './src/services/classification.service';
 import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './src/services/scoring.service';
 import { trackedGenerateContent } from './src/services/aiUsageTracker';
 import { generateStructuredWithFallback } from './src/services/agentModelRouting';
-import { scoreValidationRouter, recordDailySnapshots } from './server/scoreValidation';
-import { createScoreExplainabilityRouter } from './server/scoreExplainability';
-import { adminDiagnosticsRouter } from './server/adminDiagnostics';
-import { alertsRouter, evaluateAlerts } from './server/alerts';
+import { recordDailySnapshots } from './server/scoreValidation';
+import { evaluateAlerts } from './server/alerts';
 import { generateTraditionalAssetInputs, generateTraditionalAssetInputsFromCloses, TraditionalAssetScoringService } from './src/services/traditionalAssetScoring';
 import { ensureFundamentalsFresh, getCachedFundamentals } from './server/stockFundamentals';
 import { INDEX_FMP_TICKERS, ensureIndexQuoteFresh, getCachedIndexQuote, ensureIndexHistoryFresh, getCachedIndexHistory } from './server/fmpIndices';
-import { supervisorRouter } from './server/supervisorRouter';
-import { createAgentEvaluationRouter } from './server/agentEvaluationRouter';
 import { getAnthropicInstance, isAnthropicConfigured } from './server/anthropicClient';
 import { getOpenAIInstance, isOpenAIConfigured } from './server/openaiClient';
 import { executeSupervised } from './src/platform/Supervisor/supervisor';
 import { createApplicationMarketDataRuntime } from './server/marketData/createApplicationMarketDataRuntime';
-import { newsRouter } from './src/features/news/newsRoutes';
-import { registryRouter } from './src/features/registry/registryRoutes';
+import { registerApplicationRoutes } from './server/routes/registerApplicationRoutes';
+import { createDocumentationRouter } from './server/routes/documentationRoutes';
+import { createHistoryRouter } from './server/routes/historyRoutes';
 import { computeReturnStats, classifyTrendLabel } from './src/services/realMarketSignals';
 
 // Import newly refactored modular server handlers (Production Billing & Enterprise Architecture)
@@ -50,15 +44,11 @@ import {
   getLocalPdfCredits,
   saveLocalPdfCredits
 } from './server/db';
-import { stripeRouter, handleWebhookEvent, getStripeInstance } from './server/stripe';
-import { orchestratorRouter } from './server/orchestrator';
-import { aiRouter, getGeminiInstance, isGeminiConfigured } from './server/ai';
-import { systemEventsRouter, logSystemEvent } from './server/systemEvents';
-import { hygieneRouter, startRecursiveFileWatcher } from './server/documentHygiene';
-import { versionManagerRouter } from './src/platform/VersionManager/versionManager';
-import { stepUpRouter } from './server/stepUp';
+import { handleWebhookEvent, getStripeInstance } from './server/stripe';
+import { getGeminiInstance, isGeminiConfigured } from './server/ai';
+import { logSystemEvent } from './server/systemEvents';
+import { startRecursiveFileWatcher } from './server/documentHygiene';
 import { enforceScreeningQuota } from './server/quota';
-import { complianceRouter } from './src/platform/Compliance/router';
 import { checkRateLimit, getClientIp } from './src/platform/Security/rateLimiter';
 import { createLogger, requestContext } from './server/logger';
 import { metricsMiddleware, renderMetrics } from './server/metrics';
@@ -427,25 +417,11 @@ app.get('/metrics', (req, res) => {
 // komplett verhindern, statt den Betrieb ohne KI-Funktionen fortzusetzen. Beide Router und die
 // dahinterliegenden Orchestratoren akzeptieren `GoogleGenAI | null` und liefern ohne Client
 // ihre quantitativen Fallbacks.
-app.use('/api/raw-materials', createRawMaterialsRouter(ai, anthropic, openai));
-app.use('/api/crypto', createCryptoRouter(ai, anthropic, openai));
-app.use('/api/stripe', stripeRouter);
-app.use('/api/orchestrator', orchestratorRouter);
-app.use('/api/admin/hygiene', hygieneRouter);
-app.use('/api/admin', systemEventsRouter);
-app.use('/api/admin', versionManagerRouter);
-app.use('/api/auth', stepUpRouter);
-app.use('/api/compliance', complianceRouter);
-app.use('/api/scoring', scoreValidationRouter);
-app.use('/api/scoring/explain', createScoreExplainabilityRouter(ai, anthropic, openai));
-app.use('/api/admin/diagnostics', adminDiagnosticsRouter);
-app.use('/api/alerts', alertsRouter);
-app.use('/api/admin/supervisor', supervisorRouter);
-app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic, openai));
-app.use('/api/news', newsRouter);
-app.use('/api/registry', registryRouter);
-app.use('/api/social-media', socialMediaRouter);
-app.use('/api', aiRouter);
+// ADR-0014 Phase 3.1: canonical route composition. This module intentionally owns only router
+// mounting/prefixes - Stripe raw-body ingress, global middleware ordering, provider construction
+// and runtime-secret validation all remain owned above, unchanged (see
+// server/routes/registerApplicationRoutes.ts's own doc comment).
+registerApplicationRoutes(app, { ai, anthropic, openai });
 
 // Define patterns, application areas, and pattern-aware asset scoring helpers
 //
@@ -976,37 +952,12 @@ app.get('/api/alpha-vantage-quote', orchestrator.handle('Alpha Vantage Quote'), 
 });
 
 
-// Endpoint to retrieve real local documentation content to verify compliance, architecture, and security
-app.get('/api/docs-file', (req, res) => {
-  const { path: docPath } = req.query;
-  if (!docPath) {
-    return res.status(400).json({ error: 'Path parameter is required.' });
-  }
-
-  // Sanitize path to prevent directory traversal
-  const sanitizedPath = String(docPath)
-    .replace(/\.\./g, '') // Remove parent directory attempts
-    .replace(/\\/g, '/')   // Normalize slashes
-    .trim();
-
-  // Construct absolute file path
-  const absolutePath = path.join(process.cwd(), 'docs', sanitizedPath);
-
-  // Verify that the file remains within the /docs folder
-  if (!absolutePath.startsWith(path.join(process.cwd(), 'docs'))) {
-    return res.status(403).json({ error: 'Access denied: Path lies outside of secure /docs boundary.' });
-  }
-
-  try {
-    if (!fs.existsSync(absolutePath)) {
-      return res.status(404).json({ error: `Dokumentation nicht gefunden: ${sanitizedPath}` });
-    }
-    const content = fs.readFileSync(absolutePath, 'utf-8');
-    res.json({ path: sanitizedPath, content });
-  } catch (err: any) {
-    res.status(500).json({ error: `Fehler beim Lesen der Datei: ${err.message || err}` });
-  }
-});
+// ADR-0014 Phase 3.2: GET /api/docs-file is now owned by the canonical, read-only documentation
+// boundary (server/routes/documentationRoutes.ts). The POST write handler below is deliberately
+// NOT migrated - it mutates repository documentation at runtime, which R-002 requires production
+// runtime artifacts to never do. Its retirement remains a separate, dedicated governance change
+// (see documentationRoutes.ts's own doc comment and tests/server/domainDecompositionPhase32.contract.test.ts).
+app.use(createDocumentationRouter());
 
 // Endpoint to write or update local documentation files in the /docs folder (staging/git integration support)
 app.post('/api/docs-file', express.json(), (req, res) => {
@@ -1045,35 +996,9 @@ app.post('/api/docs-file', express.json(), (req, res) => {
 
 
 
-// High-performance backtesting endpoint utilizing the backend Asset Registry to eliminate external API overhead and rate-limiting
-app.get('/api/backtest-history', orchestrator.handle('Backtest Download'), async (req, res) => {
-  const { symbol, range } = req.query;
-  if (!symbol) {
-    return res.status(400).json({ error: 'Symbol parameter is required.' });
-  }
-
-  const rawSymbol = String(symbol).toUpperCase().trim();
-  let limit = 365;
-  if (range === '3Y' || range === '1095') limit = 365 * 3;
-  else if (range === '5Y' || range === '1825') limit = 365 * 5;
-  else {
-    const parsedLimit = parseInt(String(range));
-    if (!isNaN(parsedLimit) && parsedLimit > 0) {
-      limit = parsedLimit;
-    }
-  }
-
-  try {
-    const history = await assetRegistry.getHistory(rawSymbol, limit);
-    // No-Demo-Data-Policy (docs/DATENSCHUTZ_PROTOKOLL.md): source wird immer
-    // mitgeliefert, damit simulierte Notfall-Historie im Frontend erkennbar bleibt
-    // und nie unmarkiert als reale Historie dargestellt wird.
-    res.json({ data: history.points, source: history.source });
-  } catch (err: any) {
-    console.error(`[Backtest Error] Failed to get history for ${rawSymbol} from registry:`, err.message || err);
-    res.status(500).json({ error: 'Fehler beim Laden der historischen Daten aus der Asset-Registry.' });
-  }
-});
+// ADR-0014 Phase 3.2: GET /api/backtest-history is now owned by the canonical history boundary
+// (server/routes/historyRoutes.ts) - identical registry-backed semantics, same range handling.
+app.use(createHistoryRouter());
 
 // Ad-hoc charts scoring engine using indicators
 app.post('/api/charts-scoring', express.json(), (req, res) => {

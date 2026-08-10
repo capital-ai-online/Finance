@@ -17,6 +17,8 @@ const expectedMounts = [
   "app.use('/api/auth', stepUpRouter);",
   "app.use('/api/compliance', complianceRouter);",
   "app.use('/api/scoring', scoreValidationRouter);",
+  "app.use('/api/scoring/explain', createScoreExplainabilityRouter(ai, anthropic, openai));",
+  "app.use('/api/admin/diagnostics', adminDiagnosticsRouter);",
   "app.use('/api/alerts', alertsRouter);",
   "app.use('/api/admin/supervisor', supervisorRouter);",
   "app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic, openai));",

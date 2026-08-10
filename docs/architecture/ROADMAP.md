@@ -2,7 +2,7 @@
 
 Status date: 2026-08-10
 Baseline branch: `main`
-Baseline commit: `114356f`
+Baseline commit: `f484112`
 Platform version: `0.6.0`
 
 This document is the canonical roadmap status index for CAPITAL-AI. Detailed architecture decisions remain authoritative in their ADRs; this file provides the current execution order, closure gates and evidence pointers.
@@ -95,22 +95,68 @@ The canonical production runtime is `server.ts -> server.application.ts -> serve
 
 ### Phase 3.1 — Route composition
 
-Status: `BOUNDARY EXISTS / CUTOVER REMAINS`
+Status: `COMPLETE` (2026-08-10)
 
 Canonical boundary: `server/routes/registerApplicationRoutes.ts`.
 
-Next action: replace the equivalent inline router-mount block in `server.application.ts` with the canonical route composer while preserving Stripe raw-body ordering, global middleware ownership, provider construction and runtime-secret validation.
+**Cutover complete (2026-08-10):** `server.application.ts`'s inline 17-line `app.use('/api/...')`
+router-mount block is replaced by a single `registerApplicationRoutes(app, { ai, anthropic, openai })`
+call. Stripe raw-body ingress (`express.raw(...)` webhook routes), global middleware ownership (CORS,
+security headers, probe-path 404, rate limiting, `express.json()`), provider construction (`ai`,
+`anthropic`, `openai`), and runtime-secret validation all remain exactly where they already were in
+`server.application.ts`, unchanged and untouched — the composer owns only `app.use('/api/x', router)`
+mounting, as its own doc comment requires and as
+`tests/server/applicationRouteComposition.contract.test.ts` (see below) verifies structurally.
+
+**Drift found and fixed before cutover:** the composer had gone stale since ESS-0018 was merged - it
+was missing `app.use('/api/scoring/explain', createScoreExplainabilityRouter(...))` and
+`app.use('/api/admin/diagnostics', adminDiagnosticsRouter)`, both live in production. Cutting over
+without first fixing this would have silently deleted two working admin/scoring endpoints. Both
+mounts are now added to the composer in their original relative order, and
+`tests/server/applicationRouteComposition.contract.test.ts`'s `expectedMounts` list is updated to
+include them so this can't silently drift again.
+
+**Test-wiring gap also fixed:** all 7 `tests/server/*.contract.test.ts` files (including this one and
+the Phase 3.2 one below) existed but were never actually executed - `vite.config.ts`'s
+`test.include` only covered `tests/unit/**`. Broadened to also include `tests/server/**/*.test.ts`;
+all 7 files/23 tests already passed once included, so this closes a real regression-coverage gap
+with no new failures.
+
+Verified via: full test suite (117 files, 598 tests, including the newly-wired contract tests) green;
+manual smoke test confirmed `GET /api/scoring/explain/BTC` and `GET /api/admin/diagnostics` return
+`403` (auth-gated, i.e. still mounted and reachable) rather than `404`, `GET /api/registry/assets`
+and `GET /healthz` return `200`, and both `POST /api/stripe/webhook` and `POST /billing/webhook`
+still correctly reject with "Missing signature" (confirming the raw-body webhook routes registered
+before `express.json()` were untouched by the route-composition change).
 
 ### Phase 3.2 — Documentation and history
 
-Status: `BOUNDARIES EXTRACTED / LEGACY CLEANUP REMAINS`
+Status: `READ PATHS COMPLETE / WRITE-PATH RETIREMENT REMAINS SEPARATE` (2026-08-10)
 
 Canonical boundaries:
 
 - `server/routes/documentationRoutes.ts`
 - `server/routes/historyRoutes.ts`
 
-The historic runtime documentation write path must not be migrated. R-002 already requires production runtime documentation to remain immutable. Remaining compatibility code should be retired only through a reviewed behavior-preserving cleanup.
+**Cutover complete for the read paths (2026-08-10):** `server.application.ts`'s inline
+`GET /api/docs-file` and `GET /api/backtest-history` handlers are replaced by
+`app.use(createDocumentationRouter())` and `app.use(createHistoryRouter())` respectively - both
+router factories already reimplemented the exact same sanitization/lookup/error-handling logic
+(verified line-by-line before deleting the inline handlers).
+
+The historic runtime documentation **write** path (`POST /api/docs-file`, `fs.writeFileSync`) is
+deliberately left untouched in `server.application.ts` — it must not be migrated into the canonical,
+read-only documentation boundary. R-002 already requires production runtime documentation to remain
+immutable; `tests/server/domainDecompositionPhase32.contract.test.ts` explicitly asserts this
+write handler stays out of `documentationRoutes.ts` AND stays present in `server.application.ts`
+until a dedicated, separately-reviewed retirement change. Remaining compatibility code (the POST
+handler itself) should be retired only through that reviewed, behavior-preserving cleanup — not as
+part of this cutover.
+
+Verified via: full test suite green including
+`tests/server/domainDecompositionPhase32.contract.test.ts`; manual smoke test confirmed
+`GET /api/docs-file` still reads real repository files, `POST /api/docs-file` still writes
+(unchanged, as required), and `GET /api/backtest-history` still returns registry-backed history data.
 
 ### Phase 3.3 — AI sentiment and portfolio
 
@@ -172,15 +218,17 @@ Already protected behavior includes Render port resolution, runtime-secret valid
 
 ## Priority queue
 
-1. Complete route/docs/history compatibility cutovers that are already gated by extracted boundaries.
-2. Resolve OPS-001 (production SMTP authentication) — owner action, not a dev-branch code change.
-3. Start R-004 with a dedicated ADR and additive database design for transactional, idempotent PDF-credit grants.
-4. Implement R-004 and prove replay-safe credit accounting.
-5. Start R-101 durable worker/outbox/lease only after R-004 establishes the durable side-effect transaction boundary.
-6. Finish scoring-route (Phase 3.5) and startup/lifecycle (Phase 3.6) decomposition under ADR-0014.
+1. Resolve OPS-001 (production SMTP authentication) — owner action, not a dev-branch code change.
+2. Start R-004 with a dedicated ADR and additive database design for transactional, idempotent PDF-credit grants.
+3. Implement R-004 and prove replay-safe credit accounting.
+4. Start R-101 durable worker/outbox/lease only after R-004 establishes the durable side-effect transaction boundary.
+5. Finish ADR-0014 Phase 3.3 (AI sentiment/portfolio — `PARTIALLY EXTRACTED / CUTOVER REMAINS`,
+   not yet tracked as its own queue item before this update), then Phase 3.5 (scoring routes) and
+   Phase 3.6 (startup/lifecycle).
 
-R-003 (2026-08-10) and ADR-0014 Phase 3.4 (2026-08-10) are closed and have been removed from this
-queue.
+R-003 (2026-08-10), ADR-0014 Phase 3.4 (2026-08-10), and ADR-0014 Phase 3.1/3.2 (2026-08-10, write-path
+retirement of `POST /api/docs-file` intentionally excluded — tracked separately, not in this queue
+yet) are closed and have been removed from this queue.
 
 ## Protected invariants for all remaining work
 
