@@ -69,6 +69,10 @@ export function getPrivilegedServerSupabase() {
         persistSession: false,
         autoRefreshToken: false,
         detectSessionInUrl: false,
+        // Login-Step-Up (ADR-0003.5-Erweiterung): server/stepUp.ts braucht auth.admin.passkey.*
+        // fuer die Break-Glass-Passkey-Bereinigung. Rein additiv, aendert kein bestehendes
+        // Verhalten (schaltet nur zusaetzliche Methoden frei, siehe src/supabaseClient.ts).
+        experimental: { passkey: true },
       },
     });
   }
