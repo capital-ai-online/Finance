@@ -7,8 +7,9 @@ const mocks = vi.hoisted(() => ({
   claimStripeEvent: vi.fn(),
   markStripeEventProcessed: vi.fn(),
   markStripeEventFailed: vi.fn(),
-  getLocalPdfCredits: vi.fn(),
-  saveLocalPdfCredits: vi.fn(),
+  getPdfCredits: vi.fn(),
+  consumePdfCredit: vi.fn(),
+  grantPdfCredits: vi.fn(),
   sendSubscriptionConfirmation: vi.fn(),
 }));
 
@@ -18,12 +19,16 @@ vi.mock('../../server/env', () => ({
 
 vi.mock('../../server/db', () => ({
   getSubscription: vi.fn(async () => 'Free'),
-  getLocalPdfCredits: mocks.getLocalPdfCredits,
-  saveLocalPdfCredits: mocks.saveLocalPdfCredits,
   isSupabaseConfigured: vi.fn(() => false),
   getServerSupabase: vi.fn(() => ({
     from: vi.fn(),
   })),
+}));
+
+vi.mock('../../server/pdfCreditLedger', () => ({
+  getPdfCredits: mocks.getPdfCredits,
+  consumePdfCredit: mocks.consumePdfCredit,
+  grantPdfCredits: mocks.grantPdfCredits,
 }));
 
 vi.mock('../../src/platform/Security/authMiddleware', () => ({
@@ -85,8 +90,7 @@ describe('Stripe webhook durable inbox gate (ADR-0045)', () => {
     });
     mocks.markStripeEventProcessed.mockResolvedValue(undefined);
     mocks.markStripeEventFailed.mockResolvedValue(undefined);
-    mocks.getLocalPdfCredits.mockResolvedValue(3);
-    mocks.saveLocalPdfCredits.mockReturnValue(undefined);
+    mocks.grantPdfCredits.mockResolvedValue({ granted: true, credits: 6 });
     mocks.sendSubscriptionConfirmation.mockResolvedValue({
       skippedAsDuplicate: false,
       customer: { attempted: true, success: true },
@@ -100,8 +104,14 @@ describe('Stripe webhook durable inbox gate (ADR-0045)', () => {
     const result = await handleWebhookEvent(event);
 
     expect(result.duplicate).toBe(false);
-    expect(mocks.getLocalPdfCredits).toHaveBeenCalledTimes(1);
-    expect(mocks.saveLocalPdfCredits).toHaveBeenCalledWith('11111111-1111-1111-1111-111111111111', 6);
+    expect(mocks.grantPdfCredits).toHaveBeenCalledTimes(1);
+    expect(mocks.grantPdfCredits).toHaveBeenCalledWith({
+      grantKey: 'evt_checkout_1',
+      userIdentifier: '11111111-1111-1111-1111-111111111111',
+      credits: 3,
+      source: 'stripe_checkout.session.completed',
+      reference: 'cs_1',
+    });
     expect(mocks.markStripeEventProcessed).toHaveBeenCalledWith('evt_checkout_1');
     expect(mocks.markStripeEventFailed).not.toHaveBeenCalled();
   });
@@ -117,8 +127,7 @@ describe('Stripe webhook durable inbox gate (ADR-0045)', () => {
     const result = await handleWebhookEvent(checkoutEvent());
 
     expect(result.duplicate).toBe(true);
-    expect(mocks.getLocalPdfCredits).not.toHaveBeenCalled();
-    expect(mocks.saveLocalPdfCredits).not.toHaveBeenCalled();
+    expect(mocks.grantPdfCredits).not.toHaveBeenCalled();
     expect(mocks.sendSubscriptionConfirmation).not.toHaveBeenCalled();
     expect(mocks.markStripeEventProcessed).not.toHaveBeenCalled();
   });
@@ -153,15 +162,14 @@ describe('Stripe webhook durable inbox gate (ADR-0045)', () => {
     });
 
     await expect(handleWebhookEvent(checkoutEvent())).rejects.toThrow('integrity conflict');
-    expect(mocks.getLocalPdfCredits).not.toHaveBeenCalled();
-    expect(mocks.saveLocalPdfCredits).not.toHaveBeenCalled();
+    expect(mocks.grantPdfCredits).not.toHaveBeenCalled();
     expect(mocks.markStripeEventProcessed).not.toHaveBeenCalled();
   });
 
   it('records a failed event when application side effects fail before completion', async () => {
-    mocks.getLocalPdfCredits.mockRejectedValue(new Error('credit read failed'));
+    mocks.grantPdfCredits.mockRejectedValue(new Error('credit grant failed'));
 
-    await expect(handleWebhookEvent(checkoutEvent())).rejects.toThrow('credit read failed');
+    await expect(handleWebhookEvent(checkoutEvent())).rejects.toThrow('credit grant failed');
 
     expect(mocks.markStripeEventFailed).toHaveBeenCalledWith('evt_checkout_1', expect.any(Error));
     expect(mocks.markStripeEventProcessed).not.toHaveBeenCalled();
@@ -172,7 +180,7 @@ describe('Stripe webhook durable inbox gate (ADR-0045)', () => {
 
     await expect(handleWebhookEvent(checkoutEvent())).rejects.toThrow('finalization unavailable');
 
-    expect(mocks.saveLocalPdfCredits).toHaveBeenCalledTimes(1);
+    expect(mocks.grantPdfCredits).toHaveBeenCalledTimes(1);
     expect(mocks.markStripeEventFailed).not.toHaveBeenCalled();
   });
 
