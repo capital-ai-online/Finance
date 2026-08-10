@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.6.0
+Version: 1.7.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,7 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration und D4 Review/Lifecycle Governance.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance und D6 Generatoren/Renderer.
 
 ## Implemented Scope
 
@@ -35,15 +35,22 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Events/DocumentaryEventPublisher.ts`
 - `Traceability/DocumentaryTraceability.ts`
 - `Lifecycle/DocumentaryLifecycle.ts`
+- `Generators/DocumentaryRenderer.ts`
 - `Architecture/documentary-baseline.json`
+
+## D6 Generators & Renderer
+
+D6 rendert ausschließlich bereits erzeugte `DocumentaryDocument`-Modelle. Unterstützt werden die Dokumenttypen `architecture`, `component`, `api`, `runbook`, `release-evidence` und `handoff` mit dokumenttyp-spezifischen Abschnittsprofilen.
+
+Als primäres Ausgabeformat wird deterministisches Markdown erzeugt. Für jedes Dokument können DE- und EN-Artefakte mit lokalisierten Metadatenüberschriften erstellt werden. Dateinamen, Provenance, Concept-IDs und Traceability-IDs werden stabil normalisiert und sortiert.
+
+Der Renderer verändert weder den Lifecycle-Status noch den Dokument-Fingerprint. Er führt keine Freigabe, Persistenz, Source-Code-Mutation oder Event-Publikation durch.
 
 ## D4 Review & Lifecycle Governance
 
 Der kontrollierte Lifecycle lautet `generated -> reviewed -> approved`. Nach Approval sind `approved -> superseded`, `approved -> archived` und `superseded -> archived` zulässig. Jeder Übergang benötigt eine explizite Actor-ID, passende Aktion, einen Zeitpunkt und mindestens eine Evidence-Referenz. Status-Sprünge, falsche Aktionen und evidence-freie Übergänge werden fail-closed blockiert.
 
-D4 führt keine autonome Freigabe durch. Die Lifecycle-Schicht validiert lediglich explizit angeforderte Lifecycle-Transitions. Der Dokument-Fingerprint bleibt bei Lifecycle-only-Änderungen stabil.
-
-Der separate Namespace `Governance/` bleibt dem in ESS-0012 spezifizierten Documentation Governance Validator vorbehalten. Dieser Validator ist weiterhin spezifiziert, aber nicht implementiert; D4 ändert diesen Implementierungsstatus nicht.
+Der separate Namespace `Governance/` bleibt dem in ESS-0012 spezifizierten Documentation Governance Validator vorbehalten. Dieser Validator ist weiterhin spezifiziert, aber nicht implementiert.
 
 ## D5 / E1 / E4 Traceability & Event Value Chain
 
@@ -61,13 +68,13 @@ Der separate Namespace `Governance/` bleibt dem in ESS-0012 spezifizierten Docum
 
 ## Implementation Baseline
 
-Aktuell implementiert: `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Interfaces`, `Lifecycle`, `Models`, `Traceability`, `Versioning`.
+Aktuell implementiert: `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Interfaces`, `Lifecycle`, `Models`, `Traceability`, `Versioning`.
 
-Weiterhin geplant: `Governance` (Documentation Governance Validator), `Generators`, `Knowledge`, `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen.
+Weiterhin geplant: `Governance` (Documentation Governance Validator), `Knowledge`, `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen.
 
 ## Boundaries
 
-Keine autonome Approval-Transition, keine Source-Code-Mutation, keine zweite Event-Infrastruktur. IAM-Step-Up/Persistenz, Governance Validator Runtime, Generatoren/Renderer und Knowledge Projection folgen separat.
+Keine autonome Approval-Transition, keine Source-Code-Mutation, keine zweite Event-Infrastruktur. IAM-Step-Up/Persistenz, Governance Validator Runtime und Knowledge Projection folgen separat.
 
 ## ESS / ADR
 
