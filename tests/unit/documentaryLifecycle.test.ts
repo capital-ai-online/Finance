@@ -10,7 +10,7 @@ function makeDocument() {
     documentId: 'DOC-D4-001', documentType: 'architecture', sourceCommit,
     generatedAt: '2026-08-10T03:30:00.000Z', title: 'Lifecycle test', content: 'Governed documentary content.',
     conceptIds: ['VOC-PLATFORM-0001'], traceabilityIds: ['TRACE-D4-001'],
-    provenance: [{ kind: 'code', referenceId: 'src/platform/Documentary', sourceCommit, repositoryPath: 'src/platform/Documentary' }],
+    provenance: [{ kind: 'code', referenceId: 'src/platform/Documentary', sourceCommit, path: 'src/platform/Documentary' }],
   }, versions);
 }
 
