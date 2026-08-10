@@ -6,6 +6,7 @@ interface Check {
   description: string;
   includes?: string;
   excludes?: string;
+  pattern?: RegExp;
 }
 
 const checks: Check[] = [
@@ -69,14 +70,14 @@ const checks: Check[] = [
   {
     id: 'PCG-007',
     file: '.github/workflows/ci.yml',
-    description: 'CI checkout action must be pinned to a commit SHA',
-    includes: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683',
+    description: 'CI checkout action must be pinned to a full 40-character commit SHA',
+    pattern: /actions\/checkout@[0-9a-f]{40}(?:\s|$)/,
   },
   {
     id: 'PCG-008',
     file: '.github/workflows/ci.yml',
-    description: 'CI Node setup action must be pinned to a commit SHA',
-    includes: 'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020',
+    description: 'CI Node setup action must be pinned to a full 40-character commit SHA',
+    pattern: /actions\/setup-node@[0-9a-f]{40}(?:\s|$)/,
   },
 ];
 
@@ -91,7 +92,9 @@ for (const check of checks) {
     ? content.includes(check.includes)
     : check.excludes !== undefined
       ? !content.includes(check.excludes)
-      : false;
+      : check.pattern !== undefined
+        ? check.pattern.test(content)
+        : false;
   if (!valid) failures.push(check);
 }
 
