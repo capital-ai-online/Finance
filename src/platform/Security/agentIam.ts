@@ -61,6 +61,7 @@ export interface AgentPrincipalContext {
 export interface AgentApprovalEvidence {
   approvalId: string;
   approvedByHumanActorId: string;
+  subjectAgentId: string;
   capability: AgentCapability;
   targetResource: string;
   expiresAt: string;
@@ -147,15 +148,16 @@ export function evaluateAgentAuthorization(request: Readonly<AgentAuthorizationR
   if (effectiveRisk === 'HIGH' || effectiveRisk === 'CRITICAL') {
     const approval = request.approval;
     if (!approval) {
-      return deny(`${effectiveRisk}-Aktion benötigt explizite Human-/Step-up-Evidence.`, effectiveRisk, capability);
+      return deny(`${effectiveRisk}-Aktion benötigt explizite Human-Approval-Evidence.`, effectiveRisk, capability);
     }
     if (
       !approval.approvalId ||
       approval.approvedByHumanActorId !== request.principal.humanActorId ||
+      approval.subjectAgentId !== request.principal.agentId ||
       approval.capability !== capability ||
       approval.targetResource !== request.targetResource
     ) {
-      return deny('Approval-Evidence ist nicht exakt an Actor, Capability und Ziel gebunden.', effectiveRisk, capability);
+      return deny('Approval-Evidence ist nicht exakt an Actor, Agent, Capability und Ziel gebunden.', effectiveRisk, capability);
     }
     if (
       approval.approvedByHumanActorId === request.principal.agentId ||
@@ -168,8 +170,8 @@ export function evaluateAgentAuthorization(request: Readonly<AgentAuthorizationR
     if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now()) {
       return deny('Approval-Evidence ist abgelaufen oder ungültig.', effectiveRisk, capability);
     }
-    if (!approval.stepUpVerified) {
-      return deny(`${effectiveRisk}-Aktion benötigt verifizierte Step-up-Evidence.`, effectiveRisk, capability);
+    if (effectiveRisk === 'CRITICAL' && !approval.stepUpVerified) {
+      return deny('CRITICAL-Aktion benötigt zusätzlich verifizierte Step-up-Evidence.', effectiveRisk, capability);
     }
   }
 
