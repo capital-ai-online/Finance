@@ -10,11 +10,11 @@ describe('ADR-0009 security header policy extraction', () => {
     expect(buildFrameAncestors(true)).toBe("'self'");
   });
 
-  it('allows AI Studio and localhost framing only outside production', () => {
+  it('allows localhost framing only outside production', () => {
     const value = buildFrameAncestors(false);
     expect(value).toContain("'self'");
-    expect(value).toContain('https://ai.studio');
     expect(value).toContain('http://localhost:*');
+    expect(value).not.toContain('ai.studio');
   });
 
   it('keeps unsafe-inline and unsafe-eval out of production script-src', () => {

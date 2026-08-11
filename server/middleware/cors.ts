@@ -1,5 +1,4 @@
 import type { Express, Request, Response, NextFunction } from 'express';
-import { getCleanEnv } from '../env';
 import { getServerSupabase, isSupabaseConfigured } from '../db';
 
 const PRODUCTION_ORIGINS = [
@@ -20,9 +19,7 @@ export function isOriginAllowed(origin: string, isProduction: boolean): boolean 
   if (PRODUCTION_ORIGINS.includes(origin)) return true;
   if (isProduction) return false;
 
-  if (isLocalDevOrigin(origin)) return true;
-  const aiStudioOrigin = getCleanEnv('AI_STUDIO_ORIGIN');
-  return Boolean(aiStudioOrigin && origin === aiStudioOrigin);
+  return isLocalDevOrigin(origin);
 }
 
 async function logBlockedOrigin(origin: string, req: Request, logger: CorsLogger): Promise<void> {
@@ -61,8 +58,8 @@ async function logBlockedOrigin(origin: string, req: Request, logger: CorsLogger
  * ADR-0009 CORS boundary extracted without changing policy semantics.
  *
  * Production accepts only the two explicit CAPITAL-AI origins. Development may
- * additionally accept localhost/127.0.0.1 and one explicitly configured
- * AI_STUDIO_ORIGIN. Unknown origins never receive ACAO credentials.
+ * additionally accept localhost/127.0.0.1. Unknown origins never receive ACAO
+ * credentials.
  */
 export function registerCorsMiddleware(
   app: Express,

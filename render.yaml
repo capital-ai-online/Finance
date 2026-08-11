@@ -64,8 +64,6 @@ services:
         sync: false
       - key: SMTP_FROM
         sync: false
-      - key: AI_STUDIO_ORIGIN
-        sync: false
       - key: YOUTUBE_CLIENT_ID
         sync: false
       - key: TIKTOK_CLIENT_ID

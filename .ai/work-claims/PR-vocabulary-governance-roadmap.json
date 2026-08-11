@@ -20,7 +20,7 @@
     "scripts/pr/renderPullRequestBody.mjs",
     "scripts/pr/validatePrBody.mjs",
     "docs/adr/ADR-0044-canonical-naming-bilingual-documentation-vocabulary-governance.md",
-    "docs/adr/ADR-0045-event-driven-value-chain-governance-integration.md",
+    "docs/adr/ADR-0055-event-driven-value-chain-governance-integration.md",
     "docs/architecture/VOCABULARY_GOVERNANCE_MIGRATION_ROADMAP.md"
   ],
   "releaseCondition": "Claim is released when the governance roadmap PR is merged or closed."

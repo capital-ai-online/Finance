@@ -2,7 +2,7 @@
 
 Stand: 2026-08-10  
 Status: Implementation Baseline  
-Architecture Decision: ADR-0050
+Architecture Decision: ADR-0056
 
 ## 1. Ausgangslage
 
@@ -104,7 +104,7 @@ Dies ist bewusst strenger als ein normales Application Log, da Provider-Requests
 - `tests/unit/telemetryContract.test.ts`
 - Integration in `server/logger.ts`
 - Aktualisierung von README und Manifest
-- ADR-0050
+- ADR-0056
 
 ## 7. Messbarer Exit-Status
 

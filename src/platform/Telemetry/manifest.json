@@ -14,7 +14,7 @@
     "ESS-0013"
   ],
   "adr": [
-    "ADR-0050"
+    "ADR-0056"
   ],
   "dependencies": [
     "server/logger.ts",
@@ -42,7 +42,7 @@
   ],
   "documentation": [
     "README.md",
-    "docs/adr/ADR-0050-observability-telemetry-baseline.md",
+    "docs/adr/ADR-0056-observability-telemetry-baseline.md",
     "docs/architecture/OBSERVABILITY_TELEMETRY_O1_BASELINE.md"
   ],
   "tests": [

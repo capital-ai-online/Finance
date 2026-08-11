@@ -92,7 +92,7 @@ function buildDevelopmentCsp(): string {
     "connect-src 'self' https: ws: wss:",
     "frame-src 'self' https:",
     "worker-src 'self' blob:",
-    "frame-ancestors 'self' https://ai.studio http://localhost:*",
+    "frame-ancestors 'self' http://localhost:*",
   ].join('; ') + ';';
 }
 

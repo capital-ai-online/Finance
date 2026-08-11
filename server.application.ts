@@ -43,6 +43,8 @@ import {
   getSubscription,
 } from './server/db';
 import { handleWebhookEvent, getStripeInstance } from './server/stripe';
+import { processSubscriptionConfirmationMailJob } from './server/mailer';
+import { registerOutboxJobHandler, startOutboxWorker, stopOutboxWorker } from './server/outboxWorker';
 import { getGeminiInstance, isGeminiConfigured } from './server/ai';
 import { logSystemEvent } from './server/systemEvents';
 import { startRecursiveFileWatcher } from './server/documentHygiene';
@@ -53,6 +55,11 @@ import { metricsMiddleware, renderMetrics } from './server/metrics';
 import { getStripeConfigurationStatus, hasFiniteScoreValues, resolveHeuristicCryptoScore, resolveRuntimePort } from './server/runtime/renderRuntimeSafety';
 
 const serverLogger = createLogger('server');
+
+// ADR-0054 / R-101: register outbox job handlers at composition time, before the worker poll
+// loop starts. subscription_confirmation_mail retries a failed checkout-confirmation SMTP send
+// (server/mailer.ts) with backoff instead of the previous permanent failure (see OPS-001).
+registerOutboxJobHandler('subscription_confirmation_mail', processSubscriptionConfirmationMailJob);
 
 dotenv.config();
 
@@ -105,11 +112,6 @@ const PRODUCTION_ORIGINS = [
   'https://www.capital-ai.online',
 ];
 
-// Google AI Studio: NUR über explizite Environment Variable, nie hartcodiert,
-// und NUR außerhalb der echten Produktionsumgebung nutzbar (ADR-0009,
-// "Dadurch bleibt die Produktionsumgebung frei von unnötigen Entwicklungsfreigaben").
-const AI_STUDIO_ORIGIN = getCleanEnv('AI_STUDIO_ORIGIN');
-
 function isLocalDevOrigin(origin: string): boolean {
   // Nur exakt localhost/127.0.0.1 mit optionalem Port - kein Teilstring-Match,
   // der z.B. auf "http://localhost.attacker.com" anspringen könnte.
@@ -120,7 +122,6 @@ function isOriginAllowed(origin: string): boolean {
   if (PRODUCTION_ORIGINS.includes(origin)) return true;
   if (!isProductionEnv) {
     if (isLocalDevOrigin(origin)) return true;
-    if (AI_STUDIO_ORIGIN && origin === AI_STUDIO_ORIGIN) return true;
   }
   return false;
 }
@@ -206,7 +207,7 @@ app.use((req, res, next) => {
   // Teil des ADR-Texts).
   const frameAncestors = [
     "'self'",
-    ...(!isProductionEnv ? ["https://ai.studio", "http://localhost:*"] : []),
+    ...(!isProductionEnv ? ["http://localhost:*"] : []),
   ].join(' ');
   // Audit ARCH-AUDIT-0002 (N7): script-src und style-src ohne 'unsafe-inline'/'unsafe-eval'
   // in Produktion. Der Vite-Produktionsbuild enthaelt weder Inline-<script>- noch
@@ -1591,6 +1592,10 @@ async function startServer() {
       }
     }, 60 * 1000); // refresh every 60s
 
+    // ADR-0054 / R-101: start the durable outbox worker poll loop (job handlers registered
+    // above, at module load). No-op per tick in local development without Supabase configured.
+    startOutboxWorker();
+
     // ADR-0037 / security hardening: diagnostics expose configuration presence only.
     // Never log key prefixes, lengths or partial Price IDs in production telemetry.
     serverLogger.info('Stripe configuration validation', getStripeConfigurationStatus(getCleanEnv));
@@ -1608,6 +1613,7 @@ async function startServer() {
       clearInterval(marketDataRefreshTimer);
       marketDataRefreshTimer = null;
     }
+    stopOutboxWorker();
 
     const forceExitTimer = setTimeout(() => {
       serverLogger.error('Graceful shutdown timeout exceeded', { signal, timeoutMs: 25_000 });

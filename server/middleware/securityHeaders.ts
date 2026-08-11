@@ -14,7 +14,7 @@ export interface SecurityHeaderPolicyOptions {
 export function buildFrameAncestors(isProduction: boolean): string {
   return [
     "'self'",
-    ...(!isProduction ? ['https://ai.studio', 'http://localhost:*'] : []),
+    ...(!isProduction ? ['http://localhost:*'] : []),
   ].join(' ');
 }
 
