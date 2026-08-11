@@ -14,14 +14,18 @@ Every pull request targeting `main` MUST be human-visible and MUST be verified a
 
 Binding rules:
 
-- the Owner MUST inspect the GitHub pull-request diff (`Files changed`) and the CI/Governance result for the exact current PR head SHA;
-- approval MUST be recorded by Owner `SvenKulessa` as an exact PR comment: `/owner-approve <HEAD_SHA>`;
-- approval is commit-bound; every new push changes the head SHA and invalidates any older approval;
+- the Owner MUST inspect the GitHub pull-request diff under `Files changed`;
+- every changed file MUST be reviewed and marked `Viewed` in the GitHub UI;
+- the PR description MUST contain both checked Owner attestations:
+  - `[x] Human/Owner: vollständigen PR-Diff geprüft.`
+  - `[x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.`
+- the Owner MUST submit a GitHub PR review for the exact current PR head commit with either `💪` or `okay`;
+- a review attached to an older commit is invalid after a new push;
 - successful CI, AI review or policy evaluation MUST NOT be interpreted as merge authorization;
 - AI agents, ChatGPT, Claude and other execution clients MAY prepare branches, commits, PRs, reviews and fixes but MUST STOP before MERGE;
-- an AI client may invoke merge only after the Owner approval artifact exists for the exact head SHA and the human explicitly instructs the client to merge that specific PR;
-- the required check `build-and-test` MUST enforce this Owner approval as its final pull-request gate;
-- code changes therefore remain visible and reviewable in the PR before they can become part of `main`.
+- an AI client may invoke merge only after the Owner checklist and current-commit review are valid and the human explicitly instructs the client to merge that specific PR;
+- the stable required check `build-and-test` remains the final merge gate;
+- expensive software validation is separated into `technical-validation`, so a missing Human/Owner approval can be rechecked without repeating the full technical pipeline.
 
 Authority: `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`.
 
@@ -32,6 +36,7 @@ Authority: `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`.
 - PR #194 closed M2G and synchronized the Documentation Freeze.
 - PR #195 implemented M3 CI Hardening through a regular pull request and Full-Path CI/Governance validation.
 - PR #196 validated the Docs-only Fast Path; `build-and-test` remained successful while expensive software gates were skipped as designed.
+- PR #197 introduces the streamlined Human/Owner review gate using PR checkboxes + current-commit review comment.
 - CoinMarketCap remains removed/deactivated.
 - Kraken remains public REST evidence only.
 - Required CI check contract remains the stable technical name `build-and-test`.
@@ -54,7 +59,7 @@ Authority: `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`.
 | M2E Traceability | COMPLETE | AI Agent traceability matrix | update every phase |
 | M2F Implementation Roadmap | COMPLETE | M0–M9 implementation roadmap | execute phase gates in order |
 | M2G Documentation Freeze | COMPLETE | freeze policy + PR #192/#194 | M3 executed |
-| M3 CI Hardening | COMPLETE | ADR-0060 + ADR-0053 + PR #195/#196 evidence | preserve Full Path, Docs Fast Path and Owner approval gate |
+| M3 CI Hardening | COMPLETE | ADR-0060 + ADR-0053 + PR #195/#196 evidence | preserve Full Path, Docs Fast Path and Human/Owner gate |
 | M4 Agent IAM | AUTHORIZED / NEXT | ADR-0058 + ADR-0050/0051 | implement deny-by-default agent capabilities and merge separation |
 | M5 Observability/Telemetry/Audit | BLOCKED BY M4 | ADR-0059 + ADR-0056 | begin after M4 closure |
 | M6 Supply Chain | BLOCKED BY M4/M5 | ADR-0060 | extend M3 evidence into provenance/attestation |
@@ -72,7 +77,7 @@ CAPITAL-AI uses a provider-neutral Agent Control Plane with four planes: Researc
 - CoinMarketCap remains decommissioned;
 - Kraken public REST only;
 - protected `main` + stable `build-and-test` required check;
-- every PR requires human/Owner diff visibility and commit-bound approval before merge;
+- every PR requires visible Human/Owner review, two checked Owner attestations and a current-commit review with `💪` or `okay` before merge;
 - AI agents cannot self-approve or autonomously merge;
 - no production Stripe/Supabase/Render mutation from development branches without explicit production handoff authorization;
 - agent-generated code receives no trust advantage over human-generated code;
@@ -80,4 +85,4 @@ CAPITAL-AI uses a provider-neutral Agent Control Plane with four planes: Researc
 - M5–M9 implementation may not bypass preceding phase closures.
 
 ## Next action
-Implement and validate the Human / Owner approval gate on the required `build-and-test` check, then begin M4 Agent IAM. M4 must formalize capability separation so that agent execution can prepare and validate changes but MERGE remains a separately authorized human-controlled capability.
+Validate and merge the streamlined Human / Owner approval gate in PR #197, then begin M4 Agent IAM. M4 must formalize capability separation so that agent execution can prepare and validate changes but MERGE remains a separately authorized human-controlled capability.
