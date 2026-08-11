@@ -1,76 +1,71 @@
 # M4 Agent IAM — Implementation Evidence
 
-Status: VALIDATION PENDING
+Status: CLOSURE IN REVIEW
 Date: 2026-08-11
-Baseline: `main@c093052c22ed620bc9b086ba4ec05612d7dd2150` (PR #197 merge)
+Baseline: `main@69f719683b60ba6aadc0022381c6cecc430f0ea5` (PR #198 merge)
 Authority: ESS-0019, ESS-0018, ADR-0058, ADR-0050, ADR-0051
 
 ## Objective
 
 Generalize the existing Supabase/tool-specific CapabilityGrant and Approval controls into a provider-neutral Agent IAM decision layer without weakening or replacing the existing domain/tool policies.
 
-## Existing controls retained
+## Canonical implementation
 
-- `src/platform/Security/capabilities.ts`: explicit tool-specific capability allowlist and persistent grants;
-- `src/platform/Security/approvals.ts`: single-use, plan-hash-bound approvals;
-- `src/platform/Compliance/PolicyGate.ts`: ESS-0018 read/write allowlists;
-- `src/platform/Supervisor/supervisor.ts`: Policy -> Approval -> Apply -> Audit chain;
-- `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`: Human/Owner merge separation.
+PR #198 is the canonical M4 implementation. It merged the provider-neutral Agent IAM into `main` and remains the architectural baseline.
 
-## M4 implementation
+Parallel PRs #200 and #201 were created from the older PR-#197 baseline. They are not separate roadmap phases. Their contents were reviewed against ADR-0058 and the current Roadmap. Only one useful missing control from #201 is retained: approval evidence is additionally bound to the exact logical `agentId`.
 
-### Provider-neutral contract
+The conflicting #201 risk mapping is rejected because it diverges from the canonical M4 ladder.
 
-`src/platform/Security/agentIam.ts` adds:
+## Canonical controls
 
-- canonical explicit capabilities: `READ`, `ANALYZE`, `PLAN`, `BRANCH`, `COMMIT`, `PR`, `CI_REQUEST`, `DEPLOY_REQUEST`, `PRODUCTION_MUTATION`;
-- no `MERGE` capability;
-- risk classes `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`;
-- attributable principal context: human actor, app, agent, session, request and credential holder;
-- provider/model as metadata only;
+- explicit capabilities READ, ANALYZE, PLAN, BRANCH, COMMIT, PR, CI_REQUEST, DEPLOY_REQUEST, PRODUCTION_MUTATION;
+- no MERGE capability;
+- LOW: READ/ANALYZE/PLAN;
+- MEDIUM: BRANCH/COMMIT/PR/CI_REQUEST;
+- HIGH: DEPLOY_REQUEST;
+- CRITICAL: PRODUCTION_MUTATION;
+- contextual risk may increase but never reduce minimum risk;
+- principal binds human actor, app, logical agent, session, request and credential holder;
+- provider/model are metadata only;
 - exact non-inheriting grants;
-- HIGH/CRITICAL approval + step-up evidence;
-- development -> production-mutation deny rule;
-- mutation kill switch;
-- deny-by-default result for unknown/missing/mismatched inputs.
-
-### PolicyGate integration
-
-`src/platform/Compliance/PolicyGate.ts` exposes `evaluateAgentPolicy()` as the provider-neutral M4 entry point. Existing ESS-0018 `evaluateReadPolicy()` / `evaluateWritePolicy()` remain unchanged in semantics and constitute an additional domain/tool gate.
-
-Therefore an application integration must not treat generic Agent IAM ALLOW as sufficient for a specific privileged tool operation; the relevant tool/domain policy and persisted grant/approval chain still apply.
+- HIGH requires current Human Approval;
+- CRITICAL requires Human Approval plus verified Step-up;
+- approval binds human actor + subject agent + capability + target and must be unexpired;
+- development -> production mutation is denied;
+- mutation kill switch is enforced;
+- ESS-0018 tool-specific grants, approvals and PolicyGate checks remain a second independent layer.
 
 ## Negative-test evidence
 
-`tests/unit/agentIam.test.ts` covers at minimum:
+`tests/unit/agentIam.test.ts` covers:
 
-- READ does not imply ANALYZE or PLAN;
-- COMMIT does not imply PR;
-- PR does not imply CI_REQUEST;
-- CI_REQUEST does not imply DEPLOY_REQUEST;
-- DEPLOY_REQUEST does not imply PRODUCTION_MUTATION;
-- `MERGE` is denied as an unknown/non-agent capability;
-- incomplete attribution fails closed;
-- provider/model labels do not grant privilege;
-- development principals cannot perform PRODUCTION_MUTATION;
-- HIGH/CRITICAL operations require exact approval and step-up evidence;
-- mismatched, expired, non-step-up and self-issued approval evidence is denied;
-- kill switch blocks mutating capabilities while preserving explicitly granted READ.
+- capability non-inheritance;
+- MERGE denial;
+- incomplete attribution;
+- provider/model non-authority;
+- minimum-risk enforcement;
+- HIGH approval without mandatory step-up;
+- CRITICAL approval plus step-up;
+- approval subject-agent mismatch;
+- target mismatch;
+- expired approval;
+- self-approval;
+- development production boundary;
+- kill switch.
 
-## Production-boundary evidence
+## Production boundary
 
-This M4 branch introduces no direct mutation of Stripe, Supabase or Render configuration and no new production secret. No database migration is added. Existing Supabase migrations remain unchanged.
+This closure PR introduces no direct mutation of Stripe, Supabase or Render configuration, no database migration and no new production secret.
 
-## M4 exit gate
+## Closure gate
 
-M4 remains `IN PROGRESS` until all of the following are true:
+M4 becomes COMPLETE only after this single consolidation/closure PR:
 
-- TypeScript, unit tests, production build and governance CI pass;
-- the Human/Owner reviews every changed file and marks it Viewed;
-- both Owner attestation checkboxes are checked in the PR body;
-- the current-head Owner review contains `💪` or `okay`;
-- merge occurs only after a separate explicit Human instruction;
-- post-merge `main` SHA is synchronized into ROADMAP, implementation roadmap and traceability;
-- ADR-0058 implementation status is reviewed for promotion from Proposed to Accepted.
+- passes technical/governance CI;
+- is fully reviewed under the Human/Owner gate;
+- has both Owner attestation checkboxes checked;
+- has a current-head `💪` or `okay` Owner review;
+- is merged only after a separate explicit Human merge instruction.
 
-After those post-merge closure steps, M5 may become the next authorized phase.
+After that merge, M5 Observability/Telemetry/Audit becomes the next authorized phase.
