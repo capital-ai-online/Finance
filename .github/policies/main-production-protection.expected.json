@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "repository": "SvenKulessa/Finance",
+  "target": "refs/heads/main",
+  "ruleset_name": "main-production-protection",
+  "required": {
+    "pull_request": true,
+    "required_status_checks": ["build-and-test"],
+    "strict_required_status_checks_policy": true,
+    "deletion_protection": true,
+    "non_fast_forward_protection": true,
+    "bypass_actors": []
+  },
+  "single_owner_topology": {
+    "observed_collaborators": 1,
+    "required_approving_review_count": 0,
+    "rationale": "A mandatory independent GitHub approval would deadlock the current single-owner repository. HIGH/CRITICAL agent actions remain subject to CAPITAL-AI capability, approval and step-up controls until an independent reviewer exists.",
+    "promotion_condition": "Enable at least one independent approving review and code-owner enforcement when a distinct trusted reviewer identity is available."
+  },
+  "desired_when_supported_without_deadlock": {
+    "required_review_thread_resolution": true,
+    "require_code_owner_review": true,
+    "require_last_push_approval": true,
+    "dismiss_stale_reviews_on_push": true
+  },
+  "production_environment": {
+    "canonical_name": "production",
+    "required": true,
+    "deployment_branch": "main",
+    "protection_required": true,
+    "status": "owner-admin-handoff-required"
+  },
+  "policy": {
+    "deny_direct_main_push_for_agents": true,
+    "agent_branch_prefixes": ["agent/", "claude/", "gemini/", "copilot/", "ai/"],
+    "no_agent_self_approval_high_critical": true,
+    "break_glass_must_be_attributable_and_time_limited": true
+  }
+}

@@ -1,26 +1,52 @@
 {
   "name": "Telemetry",
-  "version": "1.0.0",
-  "status": "unspecified",
+  "version": "1.1.0",
+  "status": "development",
   "owner": "CAPITAL-AI",
-  "description": "",
+  "description": "Vendor-neutrale Operational-Evidence-Schicht fuer Logs, Metriken und Trace-Kontext entlang der FinTech-Wertschoepfungskette; Audit Evidence bleibt getrennt.",
   "category": "platform",
   "ess": [
     "ESS-0001",
-    "ESS-0001-CONTRACTS"
+    "ESS-0001-CONTRACTS",
+    "ESS-0005",
+    "ESS-0006",
+    "ESS-0011",
+    "ESS-0013"
   ],
-  "adr": [],
-  "dependencies": [],
+  "adr": [
+    "ADR-0050"
+  ],
+  "dependencies": [
+    "server/logger.ts",
+    "server/deploymentIdentity.ts",
+    "src/platform/Security",
+    "src/platform/EventMesh"
+  ],
   "events": {
     "produces": [],
-    "consumes": []
+    "consumes": [],
+    "note": "O1 definiert kanonische Telemetry-Event-Namen, publiziert aber noch keine EventMesh-Domain-Events. Operational Telemetry und EventMesh bleiben getrennte Verantwortlichkeiten."
   },
-  "knowledge": [],
-  "interfaces": [],
-  "contracts": [],
-  "documentation": [
-    "README.md"
+  "knowledge": [
+    "docs/architecture/OBSERVABILITY_TELEMETRY_O1_BASELINE.md"
   ],
-  "tests": [],
-  "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): fuer diese Komponente existiert ausser dem vom Enterprise Bootstrapper generierten Platzhaltertext keine funktionale Spezifikation und kein Code. Status auf 'unspecified' korrigiert, um den Zustand ehrlich abzubilden - vorher suggerierte 'development' aktive Arbeit, die nicht stattfindet. Die Komponente kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden."
+  "interfaces": [
+    "contracts.ts",
+    "redaction.ts",
+    "index.ts"
+  ],
+  "contracts": [
+    "TelemetryRecord",
+    "TelemetryContext",
+    "FinTechValueChainStage"
+  ],
+  "documentation": [
+    "README.md",
+    "docs/adr/ADR-0050-observability-telemetry-baseline.md",
+    "docs/architecture/OBSERVABILITY_TELEMETRY_O1_BASELINE.md"
+  ],
+  "tests": [
+    "tests/unit/telemetryContract.test.ts"
+  ],
+  "note": "O1 ersetzt den bisherigen Bootstrap-Platzhalter durch eine codebasierte Baseline. Bestehender server/logger.ts bleibt Logger-Authority; Telemetry standardisiert Contract, Redaction und Wertschöpfungs-Metadaten."
 }
