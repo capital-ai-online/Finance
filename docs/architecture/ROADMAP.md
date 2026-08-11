@@ -2,166 +2,147 @@
 
 Status date: 2026-08-12
 Baseline branch: `main`
-Baseline commit: `2dc9f826eaf740e7def6682cb42a84dc846e65f3` (PR #202 merge)
+Baseline commit: `9322a7e274bfb765a5bbec71a3ce3107bde1d46c` (PR #206 merge)
 Platform version: `0.6.0`
-Canonical role: current-state DevelopmentChain status index. Detailed historical evidence remains in ADR/evidence documents.
+Canonical role: current-state DevelopmentChain status index. Historical detail remains in ADR/evidence documents.
 
 ## Mandatory maintenance rule
-Every merged DevelopmentChain step MUST update this file with the new `main` SHA, status date, affected phase status, next gate, mutation/test status and evidence pointer. A roadmap-changing PR is incomplete without this update.
+Every merged DevelopmentChain step MUST update this file with the new `main` SHA, affected phase status, mutation/test state, next gate and evidence pointer. A roadmap-changing PR is incomplete without this synchronization.
 
-## Mandatory Human / Owner approval gate BEFORE expensive CI
-Every pull request targeting `main` MUST be human-visible and MUST be verified and explicitly approved by repository Owner `SvenKulessa` before expensive build/test validation begins.
+## Human / Owner gate before expensive CI
+Every PR targeting `main` MUST be human-visible and explicitly reviewed by repository Owner `SvenKulessa` before expensive build/test validation starts.
 
 Binding sequence:
 
-`PR OPEN/UPDATE → OWNER FILE REVIEW → OWNER CHECKBOXES → CURRENT-HEAD REVIEW (💪/okay) → TECHNICAL CI → build-and-test → MERGE ELIGIBLE`
+`PR OPEN/UPDATE → OWNER FILE REVIEW → OWNER CHECKBOXES → CURRENT-HEAD REVIEW (💪/okay) → build-and-test → MERGE ELIGIBLE`
 
-Binding rules:
-- the Owner MUST inspect the GitHub pull-request diff under `Files changed`;
-- every changed file MUST be reviewed and marked `Viewed` in the GitHub UI;
-- because GitHub Actions does not expose the per-user `Viewed` state as a reliable API gate, the Owner MUST attest that action through the PR checkbox;
-- the PR description MUST contain both checked Owner attestations:
-  - `[x] Human/Owner: vollständigen PR-Diff geprüft.`
-  - `[x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.`
-- the Owner MUST submit a GitHub PR review for the exact current PR head commit with either `💪` or `okay`;
-- a review attached to an older commit is invalid after a new push;
-- before those human signals are valid, expensive Git/toolchain, npm, TypeScript, unit-test, build and Docker jobs MUST NOT start;
-- lightweight governance/security checks MAY run before Owner approval;
-- successful CI, AI review or policy evaluation MUST NOT be interpreted as merge authorization;
-- AI agents MAY prepare branches, commits, PRs, reviews and fixes when authorized by the active roadmap profile but MUST STOP before MERGE;
-- an AI client may invoke merge only after valid Owner evidence and a separate explicit human merge instruction;
-- `build-and-test` remains the stable final required check after `technical-validation`.
+Rules:
+- every changed file must be reviewed under `Files changed` and marked `Viewed`;
+- the PR body must attest both the complete diff review and all files viewed;
+- Owner review must target the exact current PR head and contain `💪` or `okay`;
+- any new commit invalidates the previous current-head review;
+- before those signals are valid, expensive npm/TypeScript/unit/build/Docker checks must not start;
+- lightweight governance/security checks may run earlier;
+- successful CI is not merge authorization;
+- AI clients stop before merge unless a separate explicit human merge instruction exists;
+- the stable required software check is a single `build-and-test` job.
 
 Authority: `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`.
 
-### Owner authentication assurance
-GitHub Actions can verify the review author account `SvenKulessa` but cannot prove which device/passkey authenticated that GitHub session. Device ID alone is not a strong factor. The target architecture SHOULD introduce a CAPITAL-AI WebAuthn/passkey step-up bound to actor + action + target + request/PR-head for privileged roadmap approvals, production mutations and break-glass. Until that service exists, repository automation MUST NOT claim passkey/device proof that it cannot verify.
-
-## Roadmap gate before privileged autonomous agents
-The required "concept" for privileged agents is this **Roadmap architecture package**, not an ad-hoc chat description.
-
-Before a privileged autonomous/semi-autonomous agent is implemented or elevated, the roadmap package MUST be derived from:
+## Roadmap package before privileged autonomous agents
+Privileged agent capability is allowed only after a Roadmap architecture package derived from:
 1. Deep Research/current best-practice comparison where relevant;
-2. read-only inspection of the current Finance repository and available production evidence;
+2. read-only current-repository and production-evidence inspection;
 3. gap analysis;
 4. required ESS creation/update;
 5. required ADR creation/update;
 6. traceability, mutation/test gates, rollback and kill-switch definition;
-7. explicit Human/Owner approval of the roadmap state.
+7. Human/Owner approval.
 
-Without that approved roadmap package, an agent MUST NOT receive BRANCH, COMMIT, PR, CI_REQUEST, DEPLOY_REQUEST, PRODUCTION_MUTATION or production write credentials. `MERGE` remains outside agent capability vocabulary.
+Without that package, an agent receives no `BRANCH`, `COMMIT`, `PR`, `CI_REQUEST`, `DEPLOY_REQUEST` or `PRODUCTION_MUTATION` capability. `MERGE` remains outside the autonomous agent capability vocabulary.
 
 Authority: `docs/governance/AUTONOMOUS_AGENT_CONCEPT_GATE.md`.
 
 ## Daily-task read-only agent exception
-Daily/recurring tasks MAY instantiate agents without prior Owner approval only under a strict read-only profile:
-
-- capabilities limited to `READ` and `ANALYZE`;
-- no BRANCH;
-- no COMMIT;
-- no PR creation/update;
-- no CI_REQUEST;
-- no DEPLOY_REQUEST;
-- no PRODUCTION_MUTATION;
-- no MERGE;
-- no write access to GitHub repository contents, Stripe, Supabase, Render or production configuration;
-- read-only least-privilege credentials only;
-- outputs limited to evidence, reports, alerts, summaries and analysis;
-- retrieval/tool content cannot elevate privileges;
-- any capability elevation immediately leaves this exception and requires the full Deep-Research + repo-read + ESS/ADR + Roadmap + Human/Owner approval sequence.
-
-This exception is intended for daily briefings, read-only repository audits, status monitoring and evidence collection. It never permits pull-request creation.
+Recurring/daily tasks may instantiate agents without prior Owner approval only when capabilities are limited to `READ` and `ANALYZE` and the agent has no repository/platform write credentials, no PR creation, no CI request, no deploy, no mutation and no merge capability. Any elevation exits this exception and requires the full Roadmap/ESS/ADR/Human-Approval sequence.
 
 ## Mandatory mutation and verification gate
-Any DevelopmentChain step that requires a state change in GitHub, Supabase, Stripe, Render or another production-connected platform MUST follow this sequence:
+Any state change in GitHub, Supabase, Stripe, Render or another production-connected platform follows:
 
 `ROADMAP/ADR → HUMAN APPROVAL → PRE-MUTATION TEST → MUTATION → POST-MUTATION VERIFICATION → EVIDENCE → ROADMAP UPDATE → NEXT PHASE`
 
-Binding rules:
-- a mutation MUST NOT be executed before the corresponding roadmap/ADR/runbook and Human/Owner approval exist;
-- a mutation MUST identify the exact environment, resource, expected effect and rollback path;
-- pre-mutation validation MUST establish the baseline and prove rollback readiness;
-- post-mutation verification MUST prove the intended state and check for unintended side effects;
-- mutation evidence MUST include timestamp, actor, target, before/after state, relevant request/trace/deployment IDs and verification result where available;
-- the next roadmap step remains BLOCKED until the required mutation is complete, verified and documented as PASS;
-- failed or inconclusive verification requires STOP/ROLLBACK or a new Human/Owner-approved remediation step;
-- development branches MUST NOT perform production Stripe/Supabase/Render mutation directly.
+The next phase remains blocked until every required mutation/test is documented as `VERIFIED PASS`. Failed/inconclusive verification requires STOP/ROLLBACK or a newly approved remediation step.
 
 ## Platform mutation schedule
-| Platform | Planned roadmap point | Allowed mutation scope | Required verification before next step |
+| Platform | Roadmap point | Allowed scope | Gate before next phase |
 |---|---|---|---|
-| Supabase | M5 Observability/Telemetry/Audit, only if schema/persistence changes are required by ADR-0059/ADR-0056 | audit/telemetry persistence, immutable evidence support, policy-bound IAM data required by the approved M5 design | migration dry-run/staging validation, RLS/permission tests, audit event write/read verification, rollback evidence; M6 remains blocked until PASS |
-| Stripe | M7 Production Platform Mutation Gate, only for explicitly pre-defined billing/webhook/credential changes with a dedicated ADR/runbook | no generic Stripe mutation; only named production changes approved by Owner and tied to a specific billing/agent integration requirement | test-mode or non-destructive verification where applicable, webhook/idempotency verification, metadata/customer/subscription mapping checks, rollback/revocation evidence; M8 remains blocked until PASS |
-| Render | M7 Deployment Identity | protected deployment identity, environment-scoped deployment credentials/hooks, production environment protection, rotation/revocation configuration | preflight, deployment identity test, controlled deploy, health/readiness verification, rollback deployment evidence; M8 remains blocked until PASS |
-
-Notes:
-- M4 performs no production Stripe/Supabase/Render mutation.
-- M5 may require Supabase mutation only if the approved observability/audit design needs persistence changes. If no mutation is required, document `NOT REQUIRED` with evidence.
-- M6 is supply-chain/provenance work and does not by itself authorize Stripe/Supabase/Render production mutation.
-- M7 is the primary production mutation window for deployment identity and explicitly approved external platform changes.
-- Stripe business/billing remediations outside the AI-Agent DevelopmentChain remain a separate billing/product workstream and require their own ADR/roadmap entry before mutation.
+| Supabase | M5 Observability/Telemetry/Audit | approved audit/telemetry persistence and policy-bound evidence | baseline → mutation → RLS/permission/append-only tests → redacted write/read → advisor → evidence |
+| Stripe | M7 only when explicitly named by dedicated ADR/runbook | specific billing/webhook/credential mutation only; no generic authorization | test-mode/non-destructive checks where possible → mutation → webhook/idempotency/mapping verification → rollback/revocation evidence |
+| Render | M7 Deployment Identity | protected deployment identity, environment-scoped credentials/hooks, rotation/revocation | preflight → mutation → controlled deploy → health/readiness → rollback evidence |
 
 ## Current status quo
 - PR #192 established the provider-neutral AI-Agent architecture and Documentation Freeze basis.
 - PR #194 closed M2G.
-- PR #195/#196 completed M3 CI Hardening and the docs-only Fast-Path proof.
+- PR #195/#196 completed M3 CI Hardening and docs-fast-path proof.
 - PR #197 established the Human/Owner review gate.
-- PR #198 merged the canonical M4 Agent-IAM implementation after Human/Owner review.
-- PR #202 merged the M4 consolidation/closure controls into `main` at `2dc9f826eaf740e7def6682cb42a84dc846e65f3`.
+- PR #198/#202 completed and consolidated M4 Agent IAM.
+- PR #203 moved expensive CI behind the Owner gate and appended M10 WebAuthn/passkey assurance.
+- PR #204 consolidated CI to one `build-and-test` job and established PR check classes.
+- PR #206 approved the M5 persistence design and classified the Supabase mutation as REQUIRED.
+- Production Supabase migrations `20260811230540_m5_agent_audit_events` and `20260811230743_m5_agent_audit_events_least_privilege` have been applied and verified.
+- `public.agent_audit_events` is RLS-enabled, append-only and deny-by-default for `anon`/`authenticated`; `service_role` has only `SELECT` + `INSERT`.
+- Synthetic redacted audit event write/read passed; UPDATE and DELETE negative tests fail closed.
+- Supabase Security Advisor shows no M5-created critical finding. The `RLS Enabled No Policy` INFO is intentional for the policyless deny-by-default audit table.
 - CoinMarketCap remains removed/deactivated.
 - Kraken remains public REST evidence only.
-- M0, M1, M2/M2G, M3 and M4 are COMPLETE from a code/governance perspective; the next roadmap change is the pre-CI Owner gate refinement before M5 begins.
 
 ## DevelopmentChain M0–M10
-
 | Phase | Status | Authority | Mutation / test gate | Next gate |
 |---|---|---|---|---|
-| M0 Evidence Baseline | COMPLETE | `docs/evidence/m0/*` | read-only evidence baseline | preserve evidence baseline |
-| M1 Git Guardrails | COMPLETE | main protection + Human/Owner policy | GitHub policy changes require Owner review and validation | preserve Owner gate |
-| M2 Architecture/Documentation | COMPLETE | ESS-0019 + ADR-0057..0063 | documentation only; no production mutation | keep synchronized |
-| M2G Documentation Freeze | COMPLETE | PR #192/#194 | freeze verification | implementation phases authorized sequentially |
-| M3 CI Hardening | COMPLETE | ADR-0060 + ADR-0053 + PR #195/#196 | CI mutation validated by full-path and docs-fast-path tests | preserve full/fast paths and pre-CI Owner gate |
-| M4 Agent IAM | COMPLETE | ADR-0058 + ADR-0050/0051 + ESS-0018/0019 + PR #198/#202 | no production platform mutation; negative IAM tests + Owner gate | maintain capability boundaries |
-| M5 Observability/Telemetry/Audit | NEXT AFTER THIS GOVERNANCE PR | ADR-0059 + ADR-0056 | Deep Research + repo read + ESS/ADR roadmap first; if Supabase persistence mutation is required: staging/dry-run → Owner approve → mutate → verify → evidence | M6 blocked until M5 verification PASS |
-| M6 Supply Chain | BLOCKED BY M5 | ADR-0060 | SBOM/provenance/attestation tests; no external platform mutation unless separately approved | proceed only after provenance evidence PASS |
-| M7 Deployment Identity + Production Platform Mutation Gate | BLOCKED BY M6 | ADR-0061 + platform-specific ADR/runbooks | Render mutation mandatory if target design requires it; Stripe/Supabase only when explicitly named in approved roadmap; each mutation must verify PASS before M8 | M8 blocked until all required M7 mutations/tests PASS |
-| M8 Agent Cutover | BLOCKED BY M7 | ADR-0062 | privileged execution-client/agent cutover requires approved roadmap package; daily read-only agents remain allowed under the strict exception | proceed only after cutover verification PASS |
-| M9 Assurance | BLOCKED BY M8 | ADR-0063 | negative tests, prompt/tool injection, replay, exfiltration, kill-switch/break-glass/rollback drills | M10 blocked until M9 assurance PASS |
-| M10 PR WebAuthn / Passkey Step-up | BLOCKED BY M9 | dedicated ADR + ESS + WebAuthn runbook derived from Deep Research and repository analysis | Owner passkey assertion bound to `SvenKulessa + Finance repository + PR number + current head SHA + privileged action`; origin/RP-ID, freshness, credential ownership, replay resistance and audit evidence must PASS; device ID is telemetry only | DevelopmentChain final assurance only after M10 PASS evidence |
+| M0 Evidence Baseline | COMPLETE | `docs/evidence/m0/*` | read-only baseline | preserve |
+| M1 Git Guardrails | COMPLETE | GitHub protection + Owner policy | policy validation | preserve |
+| M2 Architecture/Documentation | COMPLETE | ESS-0019 + ADR-0057..0063 | documentation only | synchronized |
+| M2G Documentation Freeze | COMPLETE | PR #192/#194 | freeze verification | sequential implementation |
+| M3 CI Hardening | COMPLETE | ADR-0053/0060 + PR #195/#196/#204 | one `build-and-test`, risk-based fast/full path | preserve |
+| M4 Agent IAM | COMPLETE | ADR-0050/0051/0058 + ESS-0018/0019 + PR #198/#202 | negative IAM tests + Owner gate; no live external mutation | preserve |
+| M5 Observability/Telemetry/Audit | IN PROGRESS — SUPABASE PERSISTENCE VERIFIED / APP INTEGRATION PENDING | ADR-0056/0059 + PR #206 + M5 mutation evidence | persistence `VERIFIED PASS`; application writer + redaction + E2E correlation still required | M6 blocked until application/E2E PASS |
+| M6 Supply Chain | BLOCKED BY M5 | ADR-0060 | SBOM/provenance/attestation tests | authorize only after M5 COMPLETE |
+| M7 Deployment Identity + Production Platform Mutation Gate | BLOCKED BY M6 | ADR-0061 + platform ADR/runbooks | Render required when design demands it; Stripe/Supabase only when explicitly named | M8 blocked until all M7 PASS |
+| M8 Agent Cutover | BLOCKED BY M7 | ADR-0062 | approved privileged execution-client cutover; read-only daily agents remain exception | M9 after cutover PASS |
+| M9 Assurance | BLOCKED BY M8 | ADR-0063 | injection/replay/exfiltration/kill-switch/break-glass/rollback drills | M10 after assurance PASS |
+| M10 PR WebAuthn / Passkey Step-up | BLOCKED BY M9 | dedicated ESS/ADR/runbook after Deep Research | Owner assertion bound to repository + PR + current head SHA + privileged action; replay/origin/RP-ID/freshness tests | final DevelopmentChain assurance |
+
+## M5 verified persistence evidence
+Authority: `docs/evidence/m5/M5_SUPABASE_AGENT_AUDIT_MUTATION_EVIDENCE.md`.
+
+Verified production facts:
+- table absent before mutation;
+- migrations applied through the approved Supabase mutation path;
+- RLS = enabled;
+- `anon`: no SELECT/INSERT;
+- `authenticated`: no SELECT/INSERT;
+- `service_role`: SELECT/INSERT only, no UPDATE/DELETE;
+- unexpected default `TRUNCATE/TRIGGER/REFERENCES` privileges were detected and removed before acceptance;
+- redacted synthetic event persisted and correlated successfully;
+- UPDATE negative test = DENIED (`append-only`);
+- DELETE negative test = DENIED (`append-only`);
+- no rollback required.
+
+## Remaining M5 implementation gate
+Before M6 is authorized, a Human-reviewed application PR must:
+1. add the server-side `agent_audit_events` writer using the existing service-side Supabase client;
+2. apply redaction before INSERT and prohibit secrets/tokens/full prompts/full diffs/raw sensitive bodies;
+3. bind real request/trace/actor/app/agent/capability/risk/policy/approval/tool/repository/PR/CI/runtime context;
+4. return/use `auditReference` in operational telemetry where applicable;
+5. add unit tests and negative redaction/fail-closed tests;
+6. prove an end-to-end authorized AI-assisted command can be reconstructed without exposing secrets;
+7. record PASS evidence and only then set M5 `COMPLETE` and M6 `AUTHORIZED`.
 
 ## M10 PR WebAuthn / Passkey Step-up acceptance criteria
-1. WebAuthn/passkey is the cryptographic step-up; a device ID alone is never sufficient authentication.
-2. The assertion is bound to Owner `SvenKulessa`, the Finance repository, PR number, exact current head SHA and the privileged action being authorized.
-3. Any new commit invalidates the previous assertion and requires a fresh step-up.
+1. WebAuthn/passkey is the cryptographic step-up; device ID alone is never sufficient authentication.
+2. Assertion is bound to Owner `SvenKulessa`, Finance repository, PR number, exact current head SHA and privileged action.
+3. Any new commit invalidates the prior assertion.
 4. Challenges are single-use, short-lived and replay-protected.
 5. RP ID/origin and credential ownership are verified server-side.
-6. Verification emits immutable/auditable evidence without storing private-key material.
-7. Failure, expiry, target mismatch, head-SHA mismatch or replay fails closed.
-8. Existing Files-changed/Viewed attestation, current-head review and CI gates remain independent controls and are not replaced by WebAuthn.
-9. Break-glass/recovery requires a separately documented recovery path and audit trail.
-10. Before M10 implementation, Deep Research + repository read + dedicated ESS + ADR + threat model + negative tests + rollback/runbook are mandatory.
+6. Verification emits immutable audit evidence without storing private-key material.
+7. Failure, expiry, target/head mismatch or replay fails closed.
+8. Existing Files-changed/Viewed attestation, current-head review and CI remain independent controls.
+9. Recovery/break-glass requires separate documented flow and audit trail.
+10. M10 implementation requires Deep Research + repo read + dedicated ESS + ADR + threat model + negative tests + rollback/runbook.
 
 ## Protected invariants
 - no synthetic/demo financial scores in production;
 - fail-closed IAM/auth/runtime-secret semantics;
 - CoinMarketCap remains decommissioned;
 - Kraken public REST only;
-- protected `main` + stable `build-and-test` required check;
-- expensive PR CI starts only after the Owner review gate is valid for the current head;
-- every PR requires visible Human/Owner review, both Owner attestations and a current-commit `💪`/`okay` review;
+- protected `main` + single stable `build-and-test` required check;
+- expensive CI only after valid Owner current-head review;
 - AI agents cannot self-approve or autonomously merge;
-- privileged autonomous agents require a Deep-Research + repo-read + ESS/ADR + Human/Owner-approved Roadmap package before implementation;
-- daily tasks may instantiate read-only READ/ANALYZE agents without Owner preapproval, but those agents cannot branch, commit, create PRs, request CI, deploy or mutate;
-- no production Stripe/Supabase/Render mutation from development branches without explicit production handoff authorization;
-- no next roadmap phase may start while a required mutation/test gate is incomplete, failed or undocumented;
-- M10 WebAuthn proof supplements rather than replaces the Human/Owner review and CI controls;
-- agent-generated code receives no trust advantage over human-generated code;
+- privileged autonomous agents require the approved Roadmap/ESS/ADR package;
+- daily agents are read-only only;
+- no next roadmap phase while a required mutation/test gate is incomplete, failed or undocumented;
+- M10 supplements rather than replaces Human/Owner review and CI;
 - every DevelopmentChain phase updates ROADMAP + traceability + affected ADR/ESS.
 
-## Assessment of PR #198/#202 versus the original roadmap
-PR #198 and PR #202 did not reorder M5–M9 and did not authorize production platform mutation. They implemented/closed the already-planned M4 Agent-IAM slice and preserved `M4 → M5 → M6 → M7 → M8 → M9`. M10 is an appended final assurance phase and does not reorder M5–M9.
-
-Restoring `main` to PR #197 is NOT REQUIRED and would remove Human-reviewed M4 controls without restoring any Stripe/Supabase/Render production state.
-
 ## Next action
-Merge the pre-CI Owner-gate governance change only after Owner review. Then begin M5 by first creating/updating the Deep-Research + repository-read + ESS/ADR Roadmap package. Before any M5 external mutation, determine whether Supabase mutation is REQUIRED or NOT REQUIRED, obtain Human/Owner approval where required, execute the defined test/mutation sequence, record PASS evidence and only then authorize M6. M10 remains the explicit final roadmap phase and must not be implemented opportunistically before M5–M9 have produced their required PASS evidence.
+Merge the M5 mutation-evidence repository-sync PR after Human/Owner review. Then implement the M5 server-side audit writer and end-to-end correlation tests in a separate application PR. M6 remains blocked until that application integration is `VERIFIED PASS` and M5 is formally closed.
