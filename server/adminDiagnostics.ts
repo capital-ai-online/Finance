@@ -1,13 +1,10 @@
-// ESS-0018 Phase 2 / ADR-0051: Admin/Support/Diagnostics endpoints. Two authorization layers on
-// every route: (1) coarse role check via checkAdminAccess (SUPERVISOR_ZONE_ROLES for
-// reads/previews, OWNER_ONLY_ROLES + fresh TOTP step-up for anything that grants a capability or
-// issues/consumes an approval), (2) fine-grained capability check inside AdminDiagnosticsAgent.
-// Every write path defaults to dryRun and requires an explicit, already-issued approvalId to
-// apply - see .ai/skills/ESS-0018-Agentic-Supabase-Tool-Governance.md §4.2.
+// ESS-0018 Phase 2 / ADR-0051 / ADR-0046: Admin/Support/Diagnostics endpoints. Two authorization
+// layers on every route: (1) coarse role check, (2) fine-grained capability check inside
+// AdminDiagnosticsAgent. Every write path requires an explicit approval artefact.
 
 import express from 'express';
 import { checkAdminAccess, requireStepUp } from '../src/platform/Security/authMiddleware';
-import { SUPERVISOR_ZONE_ROLES, OWNER_ONLY_ROLES } from '../src/platform/Security/types';
+import { DIAGNOSTIC_ZONE_ROLES, OPERATIONS_ZONE_ROLES, OWNER_ONLY_ROLES } from '../src/platform/Security/types';
 import { AdminDiagnosticsAgent } from '../src/agents/adminDiagnosticsAgent';
 import { grantCapability, revokeCapability, isKnownCapability } from '../src/platform/Security/capabilities';
 import { issueApproval } from '../src/platform/Security/approvals';
@@ -31,12 +28,12 @@ async function requireOwnerWithStepUp(req: express.Request, res: express.Respons
   return { userId: authz.userId, actorLabel: authz.actorLabel || authz.userId };
 }
 
-// ---- Reads (SUPERVISOR_ZONE_ROLES + capability grant) -----------------------------------------
+// ---- Reads (diagnostic roles + capability grant) -----------------------------------------------
 
 adminDiagnosticsRouter.get('/', async (req, res) => {
-  const authz = await checkAdminAccess(req, 'admin-diagnostics:read', SUPERVISOR_ZONE_ROLES);
+  const authz = await checkAdminAccess(req, 'admin-diagnostics:read', DIAGNOSTIC_ZONE_ROLES);
   if (!authz.authorized || !authz.userId) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.', reason: authz.reason });
+    return res.status(403).json({ error: 'Access Denied: Diagnose-Rolle erforderlich.', reason: authz.reason });
   }
 
   const userId = typeof req.query.userId === 'string' ? req.query.userId : undefined;
@@ -53,10 +50,28 @@ adminDiagnosticsRouter.get('/', async (req, res) => {
   }
 });
 
-adminDiagnosticsRouter.get('/alert-subscriptions/:id/preview', async (req, res) => {
-  const authz = await checkAdminAccess(req, 'admin-diagnostics:alert-subscription-preview', SUPERVISOR_ZONE_ROLES);
+adminDiagnosticsRouter.get('/providers', async (req, res) => {
+  const authz = await checkAdminAccess(req, 'admin-diagnostics:providers-read', DIAGNOSTIC_ZONE_ROLES);
   if (!authz.authorized || !authz.userId) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.', reason: authz.reason });
+    return res.status(403).json({ error: 'Access Denied: Diagnose-Rolle erforderlich.', reason: authz.reason });
+  }
+
+  try {
+    const result = await agent.readProviderHealth(authz.userId);
+    if (result.authorized === false) {
+      return res.status(403).json({ error: 'Capability nicht erteilt.', capability: result.capability });
+    }
+    logSystemEvent('ORCHESTRATOR', 'Provider Diagnostics Read', authz.actorLabel || 'unknown', `providers=${result.data.length}`, 'SUCCESS');
+    res.json({ providers: result.data });
+  } catch (err: any) {
+    res.status(400).json({ error: 'Provider-Diagnose fehlgeschlagen', message: err?.message || String(err) });
+  }
+});
+
+adminDiagnosticsRouter.get('/alert-subscriptions/:id/preview', async (req, res) => {
+  const authz = await checkAdminAccess(req, 'admin-diagnostics:alert-subscription-preview', DIAGNOSTIC_ZONE_ROLES);
+  if (!authz.authorized || !authz.userId) {
+    return res.status(403).json({ error: 'Access Denied: Diagnose-Rolle erforderlich.', reason: authz.reason });
   }
   try {
     const result = await agent.previewAlertSubscriptionDisable(authz.userId, req.params.id);
@@ -73,9 +88,9 @@ adminDiagnosticsRouter.get('/alert-subscriptions/:id/preview', async (req, res) 
 });
 
 adminDiagnosticsRouter.get('/alert-subscriptions/:id/confirmation-preview', async (req, res) => {
-  const authz = await checkAdminAccess(req, 'admin-diagnostics:alert-subscription-confirmation-preview', SUPERVISOR_ZONE_ROLES);
+  const authz = await checkAdminAccess(req, 'admin-diagnostics:alert-subscription-confirmation-preview', DIAGNOSTIC_ZONE_ROLES);
   if (!authz.authorized || !authz.userId) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.', reason: authz.reason });
+    return res.status(403).json({ error: 'Access Denied: Diagnose-Rolle erforderlich.', reason: authz.reason });
   }
   try {
     const result = await agent.previewAlertSubscriptionResendConfirmation(authz.userId, req.params.id);
@@ -147,12 +162,12 @@ adminDiagnosticsRouter.post('/approvals', async (req, res) => {
   res.json(result);
 });
 
-// ---- Write: alert-subscription disable (capability + consumed approval) -----------------------
+// ---- Writes (operations roles + capability + consumed approval) --------------------------------
 
 adminDiagnosticsRouter.post('/alert-subscriptions/:id/disable', async (req, res) => {
-  const authz = await checkAdminAccess(req, 'admin-diagnostics:alert-subscription-disable', SUPERVISOR_ZONE_ROLES);
+  const authz = await checkAdminAccess(req, 'admin-diagnostics:alert-subscription-disable', OPERATIONS_ZONE_ROLES);
   if (!authz.authorized || !authz.userId) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.', reason: authz.reason });
+    return res.status(403).json({ error: 'Access Denied: Operations-Rolle erforderlich.', reason: authz.reason });
   }
 
   const { approvalId, expectedFingerprint } = req.body || {};
@@ -185,12 +200,10 @@ adminDiagnosticsRouter.post('/alert-subscriptions/:id/disable', async (req, res)
   }
 });
 
-// ---- Write: alert-subscription resend confirmation (capability + consumed approval) -----------
-
 adminDiagnosticsRouter.post('/alert-subscriptions/:id/resend-confirmation', async (req, res) => {
-  const authz = await checkAdminAccess(req, 'admin-diagnostics:alert-subscription-resend-confirmation', SUPERVISOR_ZONE_ROLES);
+  const authz = await checkAdminAccess(req, 'admin-diagnostics:alert-subscription-resend-confirmation', OPERATIONS_ZONE_ROLES);
   if (!authz.authorized || !authz.userId) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to administrators/supervisors only.', reason: authz.reason });
+    return res.status(403).json({ error: 'Access Denied: Operations-Rolle erforderlich.', reason: authz.reason });
   }
 
   const { approvalId, expectedFingerprint } = req.body || {};

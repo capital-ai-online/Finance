@@ -1,9 +1,20 @@
 export type ProviderHealthState = 'healthy' | 'degraded' | 'unavailable';
+export type ProviderDiagnosticCode =
+  | 'healthy'
+  | 'rate_limited'
+  | 'auth_error'
+  | 'schema_error'
+  | 'transport_error'
+  | 'not_configured'
+  | 'provider_error'
+  | 'stale';
 
 export interface ProviderHealthRecord {
   provider: string;
   capability: string;
   state: ProviderHealthState;
+  diagnosticCode?: ProviderDiagnosticCode;
+  payloadUsable?: boolean;
   lastSuccessAt?: string;
   lastFailureAt?: string;
   lastObservedAt: string;
@@ -24,6 +35,8 @@ export function recordProviderHealth(input: {
   capability: string;
   state: ProviderHealthState;
   at?: string;
+  diagnosticCode?: ProviderDiagnosticCode;
+  payloadUsable?: boolean;
   cacheMode?: string;
   circuitOpenUntil?: string;
   message?: string;
@@ -36,6 +49,8 @@ export function recordProviderHealth(input: {
     provider: input.provider,
     capability: input.capability,
     state: input.state,
+    diagnosticCode: input.diagnosticCode,
+    payloadUsable: input.payloadUsable,
     lastSuccessAt: success ? at : previous?.lastSuccessAt,
     lastFailureAt: success ? previous?.lastFailureAt : at,
     lastObservedAt: at,

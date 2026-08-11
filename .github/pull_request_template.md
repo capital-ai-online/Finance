@@ -1,9 +1,9 @@
 <!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.0.0 -->
-# CAPITAL-AI Pull Request
+# CAPITAL-AI Änderungsantrag (Pull Request)
 
-> Dieses Template ist verbindlich. Maschinenverwaltete Baseline-Felder dürfen nicht gelöscht werden. Der PR bleibt **Draft**, bis alle erforderlichen technischen Prüfungen erfolgreich sind.
+> Diese Vorlage ist verbindlich. Maschinenverwaltete Baseline-Felder dürfen nicht gelöscht werden. Der PR bleibt **Entwurf**, bis alle erforderlichen technischen Prüfungen erfolgreich sind.
 >
-> **Statussemantik:** GitHubs nativer Status **Open** bedeutet ausschließlich, dass der Pull Request noch nicht geschlossen oder gemerged wurde. `Open` ist kein Fehler- und kein Merge-Bereitschaftsstatus. Die Merge-Bereitschaft wird ausschließlich durch den Required Check `build-and-test`, Governance-Prüfungen, Konfliktfreiheit und die geltenden Repository-Rulesets bestimmt.
+> **Statussemantik:** GitHubs nativer Status `Open` bedeutet ausschließlich, dass der Pull Request noch nicht geschlossen oder gemerged wurde. `Open` ist kein Fehler- und kein Merge-Bereitschaftsstatus. Die Merge-Bereitschaft wird durch die Pflichtprüfung **Build und Tests** (technische Job-ID `build-and-test`), Governance-Prüfungen, Konfliktfreiheit und geltende Repository-Regeln bestimmt.
 
 ## 1. Arbeitsauftrag
 
@@ -19,12 +19,12 @@
 - **Modell:** {{AGENT_MODEL}}
 - **Ausführungsoberfläche / MCP-Host:** {{AGENT_SURFACE}}
 - **PR-Erstellung ausdrücklich durch Benutzer autorisiert:** Ja
-- **Autorisierungsscope entspricht diesem PR:** Ja
+- **Autorisierungsumfang entspricht diesem PR:** Ja
 - **Human-/CODEOWNER-Freigabe für Merge erforderlich, sofern anwendbar:** Ja
 
-Ein erfolgreicher Sandbox-Build, CI-Lauf, Preflight oder Test ist ausschließlich technische Evidence und darf nicht als Autorisierung zur PR-Erstellung oder zum Merge interpretiert werden.
+Ein erfolgreicher Sandbox-Build, CI-Lauf, Vorabtest oder Test ist ausschließlich ein technischer Nachweis und darf nicht als Autorisierung zur PR-Erstellung oder zum Merge interpretiert werden.
 
-## 3. Produktions-Baseline — maschinenverwaltete / beratende Evidence
+## 3. Produktions-Baseline — maschinenverwalteter / beratender Nachweis
 
 <!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->
 - **Produktions-URL:** `https://capital-ai.online/healthz`
@@ -33,19 +33,19 @@ Ein erfolgreicher Sandbox-Build, CI-Lauf, Preflight oder Test ist ausschließlic
 - **Produktions-Branch:** `{{PRODUCTION_BRANCH}}`
 - **Aktueller main-Commit:** `{{MAIN_SHA}}`
 - **PR-Head-Commit:** `{{HEAD_SHA}}`
-- **Drift Produktion → main:** `{{PROD_TO_MAIN_COMMITS}}` Commit(s)
-- **Drift main → PR-Head:** `{{MAIN_TO_HEAD_COMMITS}}` Commit(s)
+- **Abweichung Produktion → main:** `{{PROD_TO_MAIN_COMMITS}}` Commit(s)
+- **Abweichung main → PR-Head:** `{{MAIN_TO_HEAD_COMMITS}}` Commit(s)
 - **Baseline erzeugt am:** `{{BASELINE_GENERATED_AT}}`
 <!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->
 
-Produktionsdrift ist beratende Prozess-Evidence und kein Autorisierungs-Gate für Sandbox oder Build.
+Produktionsabweichungen sind beratende Prozessnachweise und kein Autorisierungs-Gate für Sandbox oder Build.
 
-## 4. Scope / Multi-Agent-Koordination
+## 4. Umfang / Multi-Agent-Koordination
 
-- [ ] Der vorgesehene Scope ist dokumentiert.
+- [ ] Der vorgesehene Umfang ist dokumentiert.
 - [ ] Überschneidungen mit geänderten Dateien offener PRs wurden geprüft, sofern verfügbar.
 - [ ] Erkannte Überschneidungen oder Konfliktrisiken wurden vor PR-Erstellung offengelegt.
-- [ ] Work-Claim-Metadaten werden als beratende Koordinationsevidence und nicht als technische CI-Voraussetzung behandelt.
+- [ ] Work-Claim-Metadaten werden als beratende Koordinationsnachweise und nicht als technische CI-Voraussetzung behandelt.
 - [ ] Metadaten oder Arbeiten anderer Agenten wurden nicht stillschweigend übernommen.
 
 Es gibt **keine PR-Erstellungsfrist und keine 15-Minuten-SLA**.
@@ -63,12 +63,12 @@ Beschreibe präzise, was geändert wurde und warum. Nicht zusammenhängende Änd
 
 ## 7. Sicherheitsprüfung
 
-- [ ] Least Privilege bleibt erhalten.
-- [ ] Keine Credentials, Secrets oder Tokens wurden in Source, Logs, PR-Body oder Modellkontext aufgenommen.
+- [ ] Prinzip der geringsten Berechtigung bleibt erhalten.
+- [ ] Keine Zugangsdaten, Secrets oder Tokens wurden in Source, Logs, PR-Body oder Modellkontext aufgenommen.
 - [ ] Authentifizierung/Autorisierung bleibt, wo erforderlich, fail-closed.
 - [ ] Externe, Tool- und Retrieval-Inhalte werden als nicht vertrauenswürdige Eingaben behandelt.
 - [ ] Hochriskante oder destruktive Aktionen behalten Human-Approval-Gates.
-- [ ] Neue/geänderte Workflows verwenden immutable Action-SHAs und explizite Minimalberechtigungen.
+- [ ] Neue/geänderte Workflows verwenden unveränderliche Action-SHAs und explizite Minimalberechtigungen.
 
 ### MCP- / LLM-Gateway-Änderungen
 
@@ -76,44 +76,44 @@ Wenn anwendbar vollständig ausfüllen, andernfalls `N/A` angeben.
 
 - Token-Audience-/Resource-Validierung:
 - Token-Passthrough vermieden:
-- Per-Tool-/Capability-Autorisierung:
+- Werkzeug-/Capability-Autorisierung:
 - Idempotenz / Replay-Schutz:
 - Agent-/Session-/Request-Korrelation:
-- Human-in-the-loop-Grenze:
+- Grenze für menschliche Freigaben:
 
-## 8. Technische Validierungsevidence
+## 8. Technische Validierungsnachweise
 
-- [ ] Dependency-Installation / Vulnerability-Check
-- [ ] Type Check / Lint
+- [ ] Abhängigkeiten installieren / Schwachstellenprüfung
+- [ ] Typprüfung / Lint
 - [ ] Tests
-- [ ] Production Build
-- [ ] Deployment Readiness
-- [ ] Workflow-Security-Validierung
-- [ ] Relevante Security-/Compliance-Prüfungen
+- [ ] Produktions-Build
+- [ ] Deployment-Bereitschaft
+- [ ] Workflow-Sicherheitsvalidierung
+- [ ] Relevante Sicherheits-/Compliance-Prüfungen
 
-Befehle / Evidence:
+Befehle / Nachweise:
 
 ```text
-<knappe Evidence einfügen; keine Secrets einfügen>
+<knappe Nachweise einfügen; keine Secrets einfügen>
 ```
 
-## 9. Risiko und Rollback
+## 9. Risiko und Rücksetzung
 
-- **Blast Radius:** Niedrig / Mittel / Hoch / Kritisch
+- **Auswirkungsradius:** Niedrig / Mittel / Hoch / Kritisch
 - **Auswirkungen auf Benutzer:**
 - **Auswirkungen auf Daten / Billing / IAM:**
-- **Rollback-Vorgehen:**
-- **Rollback benötigt Freigabe für geschützte Änderung?** Ja / Nein — Referenz:
+- **Rücksetzverfahren:**
+- **Rücksetzung benötigt Freigabe für geschützte Änderung?** Ja / Nein — Referenz:
 
-## 10. Review- und Merge-Bereitschaft
+## 10. Prüf- und Merge-Bereitschaft
 
 - [ ] Die PR-Erstellung wurde vor Öffnung dieses PR ausdrücklich durch den Benutzer autorisiert.
 - [ ] Technischer CI-Status wird ausschließlich als Validierung verstanden.
-- [ ] Required Check `build-and-test` ist erfolgreich.
+- [ ] Pflichtprüfung **Build und Tests** (`build-and-test`) ist erfolgreich.
 - [ ] Governance-Prüfungen sind erfolgreich.
 - [ ] Der Branch ist konfliktfrei und gegen den aktuellen `main` geprüft.
-- [ ] Produktionsdrift und Warnungen zu parallelen Arbeiten wurden als beratende Evidence geprüft.
+- [ ] Produktionsabweichungen und Warnungen zu parallelen Arbeiten wurden als beratende Nachweise geprüft.
 - [ ] Alle merge-blockierenden Diskussionen/Funde sind gelöst.
-- [ ] CODEOWNER-/Human-Review wurde eingeholt, sofern anwendbar.
-- [ ] Der PR bleibt Draft, bis er reviewbereit ist.
+- [ ] CODEOWNER-/Human-Prüfung wurde eingeholt, sofern anwendbar.
+- [ ] Der PR bleibt Entwurf, bis er prüfbereit ist.
 - [ ] Keine Agenten-/Modell-Selbstfreigabe wird als Human-Freigabe behandelt.
