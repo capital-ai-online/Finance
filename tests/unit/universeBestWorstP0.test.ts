@@ -5,24 +5,27 @@ import { describe, expect, it } from 'vitest';
 const code = fs.readFileSync(path.join(process.cwd(), 'src/components/UniverseBestWorst.tsx'), 'utf8');
 
 describe('UniverseBestWorst P0 ranking coverage', () => {
-  it('does not truncate each asset class to the first eight catalog symbols', () => {
-    expect(code).not.toContain('.slice(0, 8)');
-    expect(code).toContain('RANKING_CANDIDATE_LIMIT = 24');
+  it('selects up to 24 candidates per asset class and prioritizes legacy-registry assets', () => {
+    expect(code).not.toMatch(/\.slice\(\s*0\s*,\s*8\s*\)/);
+    expect(code).toMatch(/const\s+RANKING_CANDIDATE_LIMIT\s*=\s*24/);
     expect(code).toContain('selectRankingCandidates');
-    expect(code).toContain("asset.origin === 'legacy-registry'");
+    expect(code).toMatch(/\.origin\s*===\s*['"]legacy-registry['"]\s*\?\s*0\s*:\s*1/);
+    expect(code).toMatch(/\.slice\(\s*0\s*,\s*RANKING_CANDIDATE_LIMIT\s*\)/);
   });
 
-  it('keeps unavailable scoring results visible instead of fabricating replacement scores', () => {
-    expect(code).toContain('SCORE_NOT_COMPUTABLE');
-    expect(code).toContain('PROVIDER_TIMEOUT');
-    expect(code).toContain('PROVIDER_UNAVAILABLE');
+  it('keeps unavailable scoring results visible and never fabricates fallback scores', () => {
+    for (const status of ['SCORE_NOT_COMPUTABLE', 'PROVIDER_TIMEOUT', 'PROVIDER_UNAVAILABLE']) {
+      expect(code).toContain(status);
+    }
     expect(code).toContain('Nicht berechenbar');
     expect(code).not.toContain('Math.random');
-    expect(code).not.toMatch(/score:\s*50/);
+    expect(code).not.toMatch(/score:\s*50(?:\D|$)/);
   });
 
-  it('reports ranking coverage and only ranks READY scores', () => {
-    expect(code).toContain("row.status === 'READY' && row.score !== null");
+  it('ranks only READY scores and exposes group plus universe coverage', () => {
+    expect(code).toMatch(/row\.status\s*===\s*['"]READY['"]\s*&&\s*row\.score\s*!==\s*null/);
+    expect(code).toContain('readyCount');
+    expect(code).toContain('candidatesInGroup');
     expect(code).toContain('totalCoverage');
     expect(code).toContain('Coverage');
   });
