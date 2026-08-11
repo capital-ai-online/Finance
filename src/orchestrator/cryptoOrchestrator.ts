@@ -127,7 +127,7 @@ export class CryptoOrchestrator {
     // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5, Kapitel 6): von den 11 Score-
     // Eingangsgroessen stammen 6 aus echten LLM-Agenten-Analysen (onChainAgent,
     // sentimentAgent, riskAgent) und 5 aus realen Marktdaten (seedScores =
-    // generateCryptoScores(), AssetRegistry/CMC/CoinGecko) - sofern nicht per customInput
+    // generateCryptoScores(), AssetRegistry/CoinGecko) - sofern nicht per customInput
     // ueberschrieben. Die vormals 12 Zeichen-Hash-Felder ohne belastbare Quelle wurden
     // entfernt (siehe CryptoScores in types/crypto.types.ts).
     const AGENT_DERIVED_FIELDS = ['networkActivity', 'security', 'utility', 'adoption', 'risk', 'sentiment'] as const;

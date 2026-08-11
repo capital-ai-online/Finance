@@ -5,7 +5,6 @@ import type { CryptoFallbackAsset } from './cryptoProviderChain';
 
 export function createCryptoMarketDataStage(options: {
   fallbackAssets: CryptoFallbackAsset[];
-  getCoinMarketCapApiKey?: () => string | undefined;
   fetchImpl?: typeof fetch;
   now?: () => number;
   logger?: Pick<Console, 'info' | 'warn'>;

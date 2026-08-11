@@ -1,7 +1,6 @@
 import type { MarketDataProviderStage, MarketDataAsset } from './marketDataCoordinator';
 import type { CryptoFallbackAsset } from './cryptoProviderChain';
 
-let cmcCoolDownUntil = 0;
 let coingeckoCoolDownUntil = 0;
 
 function toFiniteNumber(value: unknown, fallback = 0): number {
@@ -47,7 +46,6 @@ function normalizeCryptoAsset(asset: {
 
 export function createCryptoPrimaryProviderStage(options: {
   fallbackAssets: CryptoFallbackAsset[];
-  getCoinMarketCapApiKey?: () => string | undefined;
   fetchImpl?: typeof fetch;
   now?: () => number;
   logger?: Pick<Console, 'info' | 'warn'>;
@@ -59,35 +57,6 @@ export function createCryptoPrimaryProviderStage(options: {
   return {
     name: 'crypto-primary-sources',
     async load() {
-      const cmcKey = options.getCoinMarketCapApiKey?.();
-      if (cmcKey && now() >= cmcCoolDownUntil) {
-        try {
-          const response = await fetchImpl('https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?limit=100&convert=USD', {
-            headers: { 'X-CMC_PRO_API_KEY': cmcKey, Accept: 'application/json' },
-          });
-          if (!response.ok) {
-            cmcCoolDownUntil = now() + (response.status === 429 ? 15 * 60_000 : 5 * 60_000);
-            throw new Error(`CoinMarketCap API returned status ${response.status}`);
-          }
-          const payload = await response.json() as any;
-          if (!Array.isArray(payload?.data)) throw new Error('CoinMarketCap API returned invalid format');
-          logger.info(`[Crypto Live API] CoinMarketCap loaded ${payload.data.length} assets`);
-          return payload.data.map((coin: any) => normalizeCryptoAsset({
-            symbol: coin.symbol,
-            name: coin.name,
-            price: coin.quote?.USD?.price,
-            change24h: coin.quote?.USD?.percent_change_24h,
-            marketCap: coin.quote?.USD?.market_cap,
-            volume24h: coin.quote?.USD?.volume_24h,
-            circulatingSupply: coin.circulating_supply,
-            maxSupply: coin.max_supply,
-            totalSupply: coin.total_supply,
-          }));
-        } catch (error: any) {
-          logger.warn('[Crypto Live API Warning] CoinMarketCap failed:', error?.message || error);
-        }
-      }
-
       if (now() >= coingeckoCoolDownUntil) {
         try {
           const response = await fetchImpl('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false');

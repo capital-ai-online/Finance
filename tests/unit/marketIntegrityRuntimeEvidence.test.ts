@@ -14,7 +14,7 @@ describe('market integrity runtime compliance evidence', () => {
       capability: 'snapshot-consensus',
       state: 'conflict',
       correlationId: 'test-correlation',
-      providers: ['CoinGecko', 'CoinMarketCap'],
+      providers: ['CoinGecko', 'Binance'],
       evidenceIds: ['e1', 'e2'],
       message: 'Market cap disagreement',
     });

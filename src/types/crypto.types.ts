@@ -49,7 +49,7 @@ export interface CryptoClassification {
 }
 
 // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): auf 11 real anbindbare Faktoren reduziert.
-// 5 marktdatenbasiert (realMarketSignals.ts, aus AssetRegistry/CMC/CoinGecko): marketCap,
+// 5 marktdatenbasiert (realMarketSignals.ts, aus AssetRegistry/CoinGecko): marketCap,
 // liquidity, tokenomics, supplyTransparency, volatility. 6 agentenbasiert
 // (cryptoOrchestrator.ts, LLM-Multi-Agenten-Pipeline): networkActivity, security, utility,
 // adoption, risk, sentiment. Die vorherigen 7 Felder (volumeQuality, developerActivity,
@@ -91,7 +91,7 @@ export interface CryptoAnalysisPayload {
   };
   reasoning?: string[];
   // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): legt pro Score-Feld offen, ob der Wert aus
-  // einer echten LLM-Agenten-Analyse, aus realen Marktdaten (AssetRegistry/CMC/CoinGecko)
+  // einer echten LLM-Agenten-Analyse, aus realen Marktdaten (AssetRegistry/CoinGecko)
   // oder aus einer Nutzereingabe stammt.
   scoreFieldBasis?: Record<string, "agent-derived" | "real" | "user-adjusted">;
 }

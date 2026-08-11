@@ -15,7 +15,7 @@ Dieses Dokument ist die kanonische menschenlesbare Sicht auf externe Schnittstel
 | API-MARKET-BINANCE-001 | Binance Spot Public Market Data | market-data | Render backend | none (public data) | `server/binanceLandingQuickAnalysis.ts`, PR #81 | NOT_TESTED | EVALUATE |
 | API-MARKET-KRAKEN-001 | Kraken API | crypto market-data / exchange | backend | `KRAKEN_API_KEY`, `KRAKEN_API_SECRET`; legacy aliases `API_KEY`, `API_SECRET` present | `.env.example`, `server/_.env.example`, `cryptoHistoryProvider.ts`, `server.ts`, ADR-0020 | NOT_TESTED | EVALUATE |
 | API-MARKET-COINGECKO-001 | CoinGecko Crypto Data | market-data | backend/services | provider public/API contract | `cryptoHistoryProvider.ts`, `cryptoSnapshotProvider.ts`, `liveCryptoSnapshotConsensus.ts` | NOT_TESTED | EVALUATE |
-| API-MARKET-COINMARKETCAP-001 | CoinMarketCap | crypto market-data | backend | `COINMARKETCAP_API_KEY` | `.env.example`, `render.yaml` | NOT_TESTED | EVALUATE |
+| API-MARKET-COINMARKETCAP-001 | CoinMarketCap | crypto market-data | backend | ~~`COINMARKETCAP_API_KEY`~~ (removed) | Removed 2026-08-11: adapter, provider-registry entry, secret-manifest key and `.env.example` declarations deleted; crypto snapshot quorum now runs CoinGecko-only (single-source, so `getLiveCryptoSnapshotConsensus` consistently reports `INSUFFICIENT_SOURCES` per fail-closed policy) | REMOVED | REMOVED |
 | API-MARKET-FMP-001 | Financial Modeling Prep | market-data | Render backend | `FMP_API_KEY` | `server/fmpIndices.ts`, provider registry, `render.yaml` | NOT_TESTED | EVALUATE |
 | API-MARKET-ALPHAVANTAGE-001 | Alpha Vantage | market-data/fundamentals | Render backend | `ALPHA_VANTAGE_KEY` | `server/stockFundamentals.ts`, provider registry, `.env.example`, `render.yaml` | NOT_TESTED | EVALUATE |
 | API-MARKET-ALPACA-001 | Alpaca | market-data candidate | production candidate | API credential(s), exact canonical variable names to verify against production config | Secret-Bereitstellung reported; no active code evidence found in current branch | NOT_TESTED | EVALUATE |
@@ -54,7 +54,7 @@ Dieses Dokument ist die kanonische menschenlesbare Sicht auf externe Schnittstel
 ### Market Data / FinTech / Macro / News
 - `ALPHA_VANTAGE_KEY` — SECRET — Alpha Vantage.
 - `FMP_API_KEY` — SECRET — Financial Modeling Prep; declared in Render manifest but absent from root `.env.example` at this snapshot: documentation drift finding.
-- `COINMARKETCAP_API_KEY` — SECRET — CoinMarketCap.
+- `COINMARKETCAP_API_KEY` — REMOVED 2026-08-11 — CoinMarketCap integration decommissioned; no longer read anywhere in the codebase, no longer part of the secret file manifest or `.env.example`.
 - `COIN_API_KEY` — SECRET — CoinAPI.
 - `EODHD_API_KEY` — SECRET — EODHD.
 - `TWELVEDATA_API_KEY` — SECRET — Twelve Data.
