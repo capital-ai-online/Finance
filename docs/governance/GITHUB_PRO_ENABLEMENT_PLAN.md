@@ -5,6 +5,9 @@ Stand: 2026-08-11
 Repository: `SvenKulessa/Finance` (privat, Default-Branch `main`)
 Account: `SvenKulessa` (persönlicher Account, 0 öffentliche Repositories)
 Autorität: ergänzt `docs/governance/GITHUB_MAIN_PROTECTION_POLICY.md` und `docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md`
+Kostenrahmen: `docs/governance/PLATFORM_COST_BUDGET_POLICY.md` — 40 EUR Gesamtdeckel, davon 20 EUR GitHub-Teilbudget
+
+> **Ergänzende Dokumente (2026-08-11):** Der Modellvergleich zur Repository-Sichtbarkeit steht in `docs/governance/REPOSITORY_VISIBILITY_AND_COLLABORATION_MODELS.md`, der Feature- und Assistenz-Kostenvergleich in `docs/governance/AI_ASSISTANT_AND_GITHUB_FEATURE_COST_BENEFIT.md`, die Umsatzseite in `docs/architecture/MONETIZATION_ROADMAP.md`.
 
 ## 1. Zweck
 
@@ -57,14 +60,14 @@ Die Zuordnung erfolgt gegen bereits dokumentierte Gaps, nicht gegen den allgemei
 | `production_environment.status = "owner-admin-handoff-required"` (`.github/policies/main-production-protection.expected.json`) | Geschützte **Environments mit Deployment-Branch-Policy und Environment-Secrets** in privaten Repos |
 | `deploy-production`-Job nutzt Repo-weites `secrets.RENDER_DEPLOY_HOOK_URL` ohne `environment:`-Bindung (`.github/workflows/ci.yml:159`) | Deploy-Hook wird **environment-scoped**; Zugriff nur aus `main`-Deployments |
 | `require_code_owner_review`, `required_review_thread_resolution`, `require_last_push_approval` fehlen (M1-Gap-Evidence) | Review-basierte Branch-/Ruleset-Regeln auf privaten Repos |
-| Actions-Budget 15 EUR/Monat unter Druck | Höheres Freikontingent (3.000 statt 2.000 Min.), 60 statt 20 parallele Jobs, Codespaces-Kontingent für lokale Vorvalidierung |
+| GitHub-Teilbudget 20 EUR/Monat (zuvor 15 EUR Actions) | Höheres Freikontingent (3.000 statt 2.000 Min.), 60 statt 20 parallele Jobs, Codespaces-Kontingent für lokale Vorvalidierung |
 | Kein systematisches Kosten-/Aktivitäts-Monitoring | Repository-Insights (Pulse, Code Frequency, Actions Usage Metrics) auf privaten Repos |
 
 ## 4. Ausdrückliche Abgrenzung — was Pro **nicht** enthält
 
 Diese Punkte gehören nicht in den Plan und dürfen nicht als abgedeckt dokumentiert werden:
 
-1. **GitHub Copilot** (inkl. Copilot Code Review, Copilot Agents) — eigenständiges Abonnement, nicht Bestandteil von Pro.
+1. **GitHub Copilot** (inkl. Copilot Code Review, Copilot Agents) — eigenständiges Abonnement, nicht Bestandteil von Pro. Aktueller Stand: Copilot **Free-Tier aktiv**, kein bezahltes Abo. Die Assistenzfläche wird bewusst über Claude abgedeckt; die Begründung und die Zielkonfiguration stehen in `docs/governance/AI_ASSISTANT_AND_GITHUB_FEATURE_COST_BENEFIT.md`.
 2. **Secret Scanning / Push Protection für private Repositories** — erfordert das kostenpflichtige Add-on *GitHub Secret Protection*. Das repository-eigene `scripts/security/secretFileManifest.ts` bleibt damit die primäre Kontrolle.
 3. **Code Scanning / CodeQL für private Repositories** — erfordert *GitHub Code Security*. Für private Repos nicht in Pro enthalten.
 4. **Merge Queue** — auf persönlichen privaten Repositories nicht verfügbar. Konsequenz: Der `merge_group`-Trigger in `.github/workflows/pr-governance.yml` läuft dort dauerhaft ins Leere (siehe P3.3).
@@ -88,7 +91,7 @@ Daraus folgt die Reihenfolge des Plans: **Erst die deadlock-freien Härtungen (P
 ### P0 — Verifikation (Owner, ~15 Min., Voraussetzung für alles Weitere)
 
 1. Plan-/Billing-Status gemäß 2.1 bestätigen.
-2. Actions-Spending-Limit auf 15 EUR mit aktivierter Hard-Stop-Regel prüfen (`GITHUB_ACTIONS_BUDGET_POLICY.md` §5).
+2. Actions-Spending-Limit auf 20 EUR mit aktivierter Hard-Stop-Regel prüfen (`PLATFORM_COST_BUDGET_POLICY.md` §1, `GITHUB_ACTIONS_BUDGET_POLICY.md` §5).
 3. Verfügbarkeit von Environment-Protection-Rules im Settings-UI prüfen.
 4. Ergebnis als Evidence unter `docs/evidence/` ablegen (Muster: `GITHUB_ENFORCEMENT_STATE_2026-08-10.md`).
 

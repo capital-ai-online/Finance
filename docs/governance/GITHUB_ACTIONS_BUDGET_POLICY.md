@@ -56,7 +56,9 @@ Die statische Docker-Hardening-Policy darf weiterhin als kostengünstiger Bestan
 
 ## 5. Budgetsteuerung
 
-GitHub Billing MUSS mit einem monatlichen Actions-Budget von maximal **15 EUR** und aktivierter Stop-Regel am Budgetlimit betrieben werden. Empfohlene Warnschwellen:
+> **Änderung 2026-08-11:** Der Owner hat ein GitHub-Teilbudget von **20 EUR/Monat** innerhalb eines Gesamtdeckels von 40 EUR festgelegt. Maßgeblich ist ab sofort `docs/governance/PLATFORM_COST_BUDGET_POLICY.md`. Alle Run-Limits, verbotenen Kostenmuster und Agentenpflichten dieser Richtlinie bleiben unverändert in Kraft.
+
+GitHub Billing MUSS mit einem monatlichen Actions-Budget von maximal **20 EUR** (zuvor 15 EUR) und aktivierter Stop-Regel am Budgetlimit betrieben werden. Empfohlene Warnschwellen:
 
 - 50 %: Kostenprüfung;
 - 75 %: keine optionalen Remote-Testläufe mehr;

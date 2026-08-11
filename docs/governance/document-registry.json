@@ -61,6 +61,46 @@
       "language": "de",
       "lifecycle": "draft",
       "path": "docs/governance/GITHUB_PRO_ENABLEMENT_PLAN.md"
+    },
+    {
+      "documentId": "DOC-GOV-PLATFORM-COST-BUDGET",
+      "type": "governance-policy",
+      "owner": "CAPITAL-AI",
+      "authority": "Owner-Decision-2026-08-11",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/governance/PLATFORM_COST_BUDGET_POLICY.md"
+    },
+    {
+      "documentId": "DOC-GOV-REPO-VISIBILITY-MODELS",
+      "type": "governance-assessment",
+      "owner": "CAPITAL-AI",
+      "authority": "docs/governance/GITHUB_MAIN_PROTECTION_POLICY.md",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "draft",
+      "path": "docs/governance/REPOSITORY_VISIBILITY_AND_COLLABORATION_MODELS.md"
+    },
+    {
+      "documentId": "DOC-GOV-AI-ASSISTANT-FEATURE-COST-BENEFIT",
+      "type": "governance-assessment",
+      "owner": "CAPITAL-AI",
+      "authority": "docs/governance/PLATFORM_COST_BUDGET_POLICY.md",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "draft",
+      "path": "docs/governance/AI_ASSISTANT_AND_GITHUB_FEATURE_COST_BENEFIT.md"
+    },
+    {
+      "documentId": "DOC-ROADMAP-MONETIZATION",
+      "type": "roadmap",
+      "owner": "CAPITAL-AI",
+      "authority": "docs/architecture/ROADMAP.md",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "draft",
+      "path": "docs/architecture/MONETIZATION_ROADMAP.md"
     }
   ]
 }
