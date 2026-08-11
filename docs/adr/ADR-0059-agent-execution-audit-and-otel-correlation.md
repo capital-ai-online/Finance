@@ -1,6 +1,6 @@
 # ADR-0059 — Agent Execution Audit and OpenTelemetry Correlation
 
-Status: PROPOSED — M5 PLAN / PRE-MUTATION
+Status: ACCEPTED — PERSISTENCE VERIFIED / APPLICATION INTEGRATION PENDING
 Date: 2026-08-11
 Last updated: 2026-08-12
 
@@ -11,7 +11,7 @@ Minimum audit fields: human_actor_id, app_id, agent_id, provider/model metadata,
 
 ## M5 architecture decision
 
-M5 MUST extend the existing ADR-0056 / `src/platform/Telemetry` baseline and MUST NOT introduce a second logging stack.
+M5 extends the existing ADR-0056 / `src/platform/Telemetry` baseline and does not introduce a second logging stack.
 
 Operational Telemetry:
 - remains vendor-neutral in `src/platform/Telemetry`;
@@ -20,48 +20,65 @@ Operational Telemetry:
 - MUST NOT become the durable security-audit store.
 
 Security Audit Evidence:
-- receives a dedicated durable append-only persistence path;
+- uses dedicated durable append-only persistence;
 - MUST support reconstruction of an authorized AI-assisted change across actor, agent, policy, PR/CI and runtime evidence;
 - MUST be redacted before persistence;
 - MUST NOT store secrets, tokens, complete prompts, complete diffs or raw sensitive request bodies.
 
 ## Supabase persistence decision
 
-Read-only repository and production-schema assessment on 2026-08-12 found that existing `audit_logs_iam`, `iam_access_log` and `agent_action_approvals` do not carry the full ADR-0059 correlation contract. No dedicated agent execution audit table exists.
+Read-only repository and production-schema assessment on 2026-08-12 found that existing `audit_logs_iam`, `iam_access_log` and `agent_action_approvals` did not carry the full ADR-0059 correlation contract. No dedicated agent execution audit table existed.
 
-Therefore the M5 Supabase mutation is classified **REQUIRED**.
+Therefore the M5 Supabase mutation was classified **REQUIRED** and has now been executed after Human/Owner approval of PR #206.
 
-Target: one dedicated append-only `public.agent_audit_events` table with deny-by-default client access. The exact DDL is intentionally NOT executed by this planning PR. Authority for the mutation sequence is `docs/runbooks/M5_SUPABASE_AGENT_AUDIT_MUTATION.md`.
+Production target: `public.agent_audit_events` in Supabase project `AIFINANCIAL` (`ryzywoktpmyhwzxmstyu`).
+
+Applied migrations:
+- `20260811230540_m5_agent_audit_events`
+- `20260811230743_m5_agent_audit_events_least_privilege`
+
+The table is append-only, RLS-enabled and deny-by-default for `anon`/`authenticated`. `service_role` is explicitly limited to `SELECT` + `INSERT`.
 
 ## Security
 
 1. Redaction occurs before persistence/export.
 2. Secrets/tokens/full prompts/full diffs are prohibited by default.
-3. `anon` and `authenticated` MUST NOT gain general access to the audit store.
-4. UPDATE/DELETE of durable evidence MUST fail closed in normal operation.
+3. `anon` and `authenticated` have no direct access to the audit store.
+4. UPDATE/DELETE of durable evidence fail closed via table privileges and append-only trigger.
 5. Audit correlation IDs are metadata, not authorization credentials.
 6. W3C `traceparent` / `tracestate` are treated as untrusted inbound context and validated at trust boundaries.
 7. Operational telemetry retention/sampling MUST NOT delete or weaken required audit evidence.
 
-## Mutation gate
+## Verified production evidence
 
-Required order:
+The production mutation passed:
+- RLS verification;
+- least-privilege verification;
+- synthetic redacted event write/read;
+- UPDATE negative test;
+- DELETE negative test;
+- Supabase Security Advisor review.
 
-`PLAN PR → OWNER APPROVAL → PRE-MUTATION BASELINE TEST → SUPABASE MUTATION → RLS/PERMISSION/APPEND-ONLY NEGATIVE TESTS → REDACTED WRITE/READ TEST → SECURITY ADVISOR → EVIDENCE → ROADMAP PASS`
+Evidence authority: `docs/evidence/m5/M5_SUPABASE_AGENT_AUDIT_MUTATION_EVIDENCE.md`.
 
-M6 remains blocked until all M5 mutation and verification evidence is `VERIFIED PASS`.
+The Advisor's `RLS Enabled No Policy` INFO is intentional for this deny-by-default table. Existing Auth warnings for leaked-password protection and MFA are independent of M5.
+
+## Remaining M5 gate
+
+M5 is not complete yet. Before M6 can begin, the application must:
+1. provide a server-side writer for `agent_audit_events` using the existing server/service Supabase path;
+2. redact prohibited payload classes before persistence;
+3. bind request/trace/actor/agent/policy/tool/repository/PR/CI/runtime fields to real execution context;
+4. emit `auditReference` back into operational telemetry where applicable;
+5. pass unit/negative tests;
+6. pass an end-to-end reconstruction test without exposing secrets.
 
 ## Rollback
 
-Before productive audit data exists, a failed deployment may remove the new table/policies/triggers and restore the captured pre-mutation schema state. After productive evidence exists, destructive rollback is forbidden without separate Owner approval; writers are disabled first and evidence preserved.
+No rollback was required for the persistence mutation because all mandatory post-mutation checks passed.
+
+After productive audit evidence exists, destructive rollback is forbidden without separate Human/Owner approval. Writers are disabled first and evidence preserved before any schema remediation.
 
 ## Verification
 
-M5 is complete only when traceability tests can reconstruct an authorized change from request through runtime verification without exposing secrets, and Supabase verification proves:
-- intended schema only;
-- RLS/least privilege;
-- append-only behavior;
-- synthetic redacted event write/read;
-- negative rejection of forbidden mutations;
-- Security Advisor review;
-- rollback readiness.
+M5 is complete only when traceability tests can reconstruct an authorized change from request through runtime verification without exposing secrets, and both persistence and application integration evidence are `VERIFIED PASS`.
