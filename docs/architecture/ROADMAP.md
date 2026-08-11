@@ -2,7 +2,7 @@
 
 Status date: 2026-08-11
 Baseline branch: `main`
-Baseline commit: `c093052c22ed620bc9b086ba4ec05612d7dd2150` (PR #197 merge)
+Baseline commit: `69f719683b60ba6aadc0022381c6cecc430f0ea5` (PR #198 merge)
 Platform version: `0.6.0`
 Canonical role: current-state DevelopmentChain status index. Detailed historical evidence remains in ADR/evidence documents.
 
@@ -32,10 +32,12 @@ Authority: `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`.
 - PR #194 closed M2G.
 - PR #195/#196 completed M3 CI Hardening and the docs-only Fast-Path proof.
 - PR #197 established the Human/Owner checklist + current-commit review gate.
+- PR #198 merged the canonical M4 Agent-IAM implementation into `main` at `69f719683b60ba6aadc0022381c6cecc430f0ea5`.
+- PRs #200 and #201 are superseded parallel M4 drafts from the older PR-#197 baseline and are not independent roadmap phases.
 - CoinMarketCap remains removed/deactivated.
 - Kraken remains public REST evidence only.
 - M0, M1, M2/M2G and M3 are COMPLETE.
-- M4 Agent IAM is now IN PROGRESS on baseline `c093052c22ed620bc9b086ba4ec05612d7dd2150`.
+- M4 Agent IAM is IMPLEMENTED; this consolidation PR performs the final closure hardening and documentation synchronization.
 
 ## DevelopmentChain M0–M9
 
@@ -46,23 +48,26 @@ Authority: `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`.
 | M2 Architecture/Documentation | COMPLETE | ESS-0019 + ADR-0057..0063 | keep synchronized |
 | M2G Documentation Freeze | COMPLETE | PR #192/#194 | implementation phases authorized sequentially |
 | M3 CI Hardening | COMPLETE | ADR-0060 + ADR-0053 + PR #195/#196 | preserve full/fast paths |
-| M4 Agent IAM | IN PROGRESS | ADR-0058 + ADR-0050/0051 + ESS-0018/0019 | provider-neutral deny-by-default IAM + negative tests + Owner-reviewed merge |
-| M5 Observability/Telemetry/Audit | BLOCKED BY M4 | ADR-0059 + ADR-0056 | begin only after M4 closure |
+| M4 Agent IAM | CLOSURE IN REVIEW | ADR-0058 + ADR-0050/0051 + ESS-0018/0019 + PR #198 | merge this single consolidation PR after Owner review |
+| M5 Observability/Telemetry/Audit | BLOCKED BY M4 CLOSURE | ADR-0059 + ADR-0056 | authorize immediately after M4 closure merge |
 | M6 Supply Chain | BLOCKED BY M4/M5 | ADR-0060 | provenance/attestation |
 | M7 Deployment Identity | BLOCKED | ADR-0061 | protected deployment identity |
 | M8 Agent Cutover | BLOCKED | ADR-0062 | controlled client cutover |
 | M9 Assurance | BLOCKED | ADR-0063 | negative tests and drills |
 
-## M4 implementation scope
-M4 generalizes the existing ESS-0018/Supabase capability model into the provider-neutral Agent Control Plane without replacing the existing tool-specific grants.
+## M4 canonical implementation scope
+M4 generalizes the existing ESS-0018/Supabase capability model into the provider-neutral Agent Control Plane without replacing existing tool-specific grants.
 
 Required invariants:
 - canonical agent capabilities are explicit and non-inheriting;
 - `MERGE` is not an agent capability;
-- principal attribution binds human actor, app, agent/session, request and credential holder;
+- principal attribution binds human actor, app, logical agent, session, request and credential holder;
 - provider/model identifiers are metadata only;
 - unknown principals/capabilities and missing grants fail closed;
-- HIGH/CRITICAL operations require exact Human/Step-up evidence;
+- LOW: READ/ANALYZE/PLAN; MEDIUM: BRANCH/COMMIT/PR/CI_REQUEST; HIGH: DEPLOY_REQUEST; CRITICAL: PRODUCTION_MUTATION;
+- contextual risk may increase but never reduce capability minimum risk;
+- HIGH requires current Human Approval bound to actor + agent + capability + target;
+- CRITICAL requires the same Human Approval plus verified Step-up;
 - Development principals cannot execute `PRODUCTION_MUTATION`;
 - `DEPLOY_REQUEST` never implies `PRODUCTION_MUTATION`;
 - kill-switch policy can deny mutating agent capabilities;
@@ -81,4 +86,4 @@ Required invariants:
 - every DevelopmentChain phase updates ROADMAP + traceability + affected ADR/ESS.
 
 ## Next action
-Validate M4 provider-neutral Agent IAM, negative tests and PolicyGate integration in the M4 pull request. The PR must stop at the Human/Owner gate. After an explicitly Owner-approved merge and post-merge evidence update, M4 may become COMPLETE and M5 may be authorized.
+Validate this single M4 consolidation/closure PR. After its explicit Human/Owner-approved merge, set M4 to COMPLETE and authorize M5 Observability/Telemetry/Audit. No additional M4 implementation PR is authorized.
