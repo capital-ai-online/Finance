@@ -93,6 +93,26 @@ describe('agentAuthorization', () => {
     expect(decision.reason).toBe('SELF_APPROVAL_FORBIDDEN');
   });
 
+  it('rejects approval from a different human actor', () => {
+    const decision = authorizeAgentCapability(
+      request({
+        capability: 'COMMIT',
+        grantedCapabilities: ['COMMIT'],
+        approval: {
+          approvedByHumanActorId: 'human:other',
+          subjectAgentId: identity.agentId,
+          capability: 'COMMIT',
+          stepUpVerified: true,
+          expiresAt: '2030-01-01T00:00:00.000Z',
+        },
+      }),
+      new Date('2026-08-11T00:00:00.000Z'),
+    );
+
+    expect(decision.allowed).toBe(false);
+    expect(decision.reason).toBe('APPROVAL_HUMAN_ACTOR_MISMATCH');
+  });
+
   it('rejects approval for another agent or capability', () => {
     const wrongAgent = authorizeAgentCapability(
       request({
