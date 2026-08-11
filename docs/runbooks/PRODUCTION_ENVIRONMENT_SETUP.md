@@ -1,11 +1,13 @@
 # Runbook — Geschütztes GitHub-Environment `production` einrichten
 
-Status: Owner-Handoff, Ausführung ausstehend
+Status: **DESIGN ONLY** — Ausführung blockiert bis M2G Documentation Freeze und M7-Start
 Stand: 2026-08-11
 Repository: `SvenKulessa/Finance`
-Autorität: ADR-0047 (Addendum 2026-08-11), ADR-0037 §5 und §3.6, `docs/governance/GITHUB_PRO_ENABLEMENT_PLAN.md` P1
+Autorität: ADR-0047, ADR-0037 §5 und §3.6, `docs/governance/GITHUB_PRO_ENABLEMENT_PLAN.md` P1
 
-> Dieses Runbook ist nach den sieben Nachweisen aus ADR-0037 §5 „Production Change Authorization" gegliedert. Die Schritte 1 und 4 sind **nicht durch einen Agenten ausführbar** — sie erfordern Repository-Admin.
+> **Dieses Runbook autorisiert keine Mutation.** Es beschreibt den Zielzustand und das Vorgehen; die Ausführung ist bis zum Abschluss des M2G Documentation Freeze gesperrt (siehe `docs/governance/DEVELOPMENT_CHAIN_DOCUMENTATION_FREEZE_POLICY.md`). Die zugehörige `.github/workflows/ci.yml`-Änderung wird bewusst erst nach Aufhebung des Freeze als eigener Pull Request eingereicht.
+
+> Gegliedert nach den sieben Nachweisen aus ADR-0037 §5 „Production Change Authorization". Die Schritte 1 und 4 sind **nicht durch einen Agenten ausführbar** — sie erfordern Repository-Admin.
 
 ## 1. Ist-Zustand (Evidence)
 
@@ -102,8 +104,9 @@ Punkt 5 ist die Umsetzung von ADR-0047 Zeile 32; Punkt 6 ist die eigentliche Sch
 
 ## 7. Traceability
 
-- ADR-0047, Addendum 2026-08-11 — A1 (Job-Level-Gating), A2 (Environment-Secret), A3 (überholte Prämisse), A4 (offener Widerspruch zu ADR-0037).
+- ADR-0047 — Deploy-Gate. **Zu ergänzen im Umsetzungs-PR nach dem Freeze:** ein Addendum für das Job-Level-Gating, den Umzug des Deploy-Hooks auf ein Environment-Secret, die überholte Plan-Prämisse im Context und den in §8 benannten Widerspruch. Der Umzug auf ein Environment-Secret weicht vom Wortlaut in ADR-0047 Zeile 34 ab („stored only as GitHub Actions repository secret") und darf nicht ohne dieses Addendum umgesetzt werden.
 - `docs/governance/GITHUB_PRO_ENABLEMENT_PLAN.md` P1 — Plan of record.
+- `docs/governance/DEVELOPMENT_CHAIN_DOCUMENTATION_FREEZE_POLICY.md` — Gate, das die Ausführung derzeit sperrt.
 - `.github/policies/main-production-protection.expected.json` — Sollvertrag, Fortschreibung in Schritt 5.
 - Ergebnis von Schritt 3 und 6 als Evidence unter `docs/evidence/` ablegen, Muster: `docs/evidence/m0/GITHUB_ENFORCEMENT_STATE_2026-08-10.md`. **Keine Hook-URL, keine Secret-Werte** — zulässig ist ausschließlich das Rotationsdatum ohne Inhalt.
 
@@ -111,4 +114,6 @@ Punkt 5 ist die Umsetzung von ADR-0047 Zeile 32; Punkt 6 ist die eigentliche Sch
 
 `render.yaml` deklariert `autoDeployTrigger: checksPass`, der Build-Guard PCG-001 erzwingt diesen Literalstring, ADR-0037 §9 führt ihn als geschützte Invariante — während ADR-0047 „Auto-Deploy Off" verlangt und die Render-Evidence „Auto Deploy: no" zeigt.
 
-Dieser Widerspruch wird durch dieses Runbook **nicht** aufgelöst und ist für die hier beschriebenen Schritte auch nicht blockierend, weil der einzige praktisch wirksame Deploy-Pfad der Workflow-Hook ist. Die Auflösung erfordert eine Owner-Entscheidung; siehe ADR-0047 Addendum A4.
+Die Blueprint-Datei widerspricht damit der dokumentierten Realität, und ein Build-Gate erzwingt den Widerspruch.
+
+Dieser Punkt wird durch dieses Runbook **nicht** aufgelöst und ist für die hier beschriebenen Schritte auch nicht blockierend, weil der einzige praktisch wirksame Deploy-Pfad der Workflow-Hook ist. Eine Korrektur an `render.yaml` würde PCG-001 verletzen und eine als geschützt markierte Invariante berühren. Die Auflösung erfordert eine Owner-Entscheidung: entweder ADR-0037 §9 und PCG-001 an ADR-0047 angleichen, oder Render `checksPass` wiederherstellen und ADR-0047 ablösen.
