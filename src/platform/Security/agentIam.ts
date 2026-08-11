@@ -28,6 +28,25 @@ const MUTATING_CAPABILITIES: ReadonlySet<AgentCapability> = new Set([
   AGENT_CAPABILITIES.PRODUCTION_MUTATION,
 ]);
 
+const RISK_ORDER: Readonly<Record<AgentRiskClass, number>> = {
+  LOW: 0,
+  MEDIUM: 1,
+  HIGH: 2,
+  CRITICAL: 3,
+};
+
+const MINIMUM_RISK_BY_CAPABILITY: Readonly<Record<AgentCapability, AgentRiskClass>> = {
+  READ: 'LOW',
+  ANALYZE: 'LOW',
+  PLAN: 'LOW',
+  BRANCH: 'MEDIUM',
+  COMMIT: 'MEDIUM',
+  PR: 'MEDIUM',
+  CI_REQUEST: 'MEDIUM',
+  DEPLOY_REQUEST: 'HIGH',
+  PRODUCTION_MUTATION: 'CRITICAL',
+};
+
 export interface AgentPrincipalContext {
   humanActorId: string;
   appId: string;
@@ -52,6 +71,7 @@ export interface AgentAuthorizationRequest {
   principal: Readonly<AgentPrincipalContext>;
   capability: string;
   grantedCapabilities: readonly AgentCapability[];
+  /** Contextual risk may elevate, but never lower, the canonical capability minimum. */
   riskClass: AgentRiskClass;
   environment: AgentEnvironment;
   targetResource: string;
@@ -65,6 +85,15 @@ export type AgentAuthorizationDecision =
 
 export function isKnownAgentCapability(value: string): value is AgentCapability {
   return KNOWN_CAPABILITIES.has(value);
+}
+
+export function minimumRiskForCapability(capability: AgentCapability): AgentRiskClass {
+  return MINIMUM_RISK_BY_CAPABILITY[capability];
+}
+
+function effectiveRiskFor(capability: AgentCapability, contextualRisk: AgentRiskClass): AgentRiskClass {
+  const minimum = MINIMUM_RISK_BY_CAPABILITY[capability];
+  return RISK_ORDER[contextualRisk] >= RISK_ORDER[minimum] ? contextualRisk : minimum;
 }
 
 function hasCompletePrincipal(principal: Readonly<AgentPrincipalContext>): boolean {
@@ -97,27 +126,28 @@ export function evaluateAgentAuthorization(request: Readonly<AgentAuthorizationR
     return deny(`Unbekannte oder nicht agentisch freigegebene Capability: ${request.capability}.`, request.riskClass);
   }
   const capability = request.capability;
+  const effectiveRisk = effectiveRiskFor(capability, request.riskClass);
 
   if (!request.targetResource || !request.targetResource.trim()) {
-    return deny('Zielressource fehlt.', request.riskClass, capability);
+    return deny('Zielressource fehlt.', effectiveRisk, capability);
   }
 
   if (!request.grantedCapabilities.includes(capability)) {
-    return deny(`Capability ${capability} wurde dem Principal nicht explizit gewährt.`, request.riskClass, capability);
+    return deny(`Capability ${capability} wurde dem Principal nicht explizit gewährt.`, effectiveRisk, capability);
   }
 
   if (request.killSwitchActive && MUTATING_CAPABILITIES.has(capability)) {
-    return deny('Agent-Kill-Switch ist aktiv; mutierende Capability wird verweigert.', request.riskClass, capability);
+    return deny('Agent-Kill-Switch ist aktiv; mutierende Capability wird verweigert.', effectiveRisk, capability);
   }
 
   if (request.environment === 'development' && capability === AGENT_CAPABILITIES.PRODUCTION_MUTATION) {
-    return deny('Development-Principal darf keine Production-Mutation ausführen.', request.riskClass, capability);
+    return deny('Development-Principal darf keine Production-Mutation ausführen.', effectiveRisk, capability);
   }
 
-  if (request.riskClass === 'HIGH' || request.riskClass === 'CRITICAL') {
+  if (effectiveRisk === 'HIGH' || effectiveRisk === 'CRITICAL') {
     const approval = request.approval;
     if (!approval) {
-      return deny(`${request.riskClass}-Aktion benötigt explizite Human-/Step-up-Evidence.`, request.riskClass, capability);
+      return deny(`${effectiveRisk}-Aktion benötigt explizite Human-/Step-up-Evidence.`, effectiveRisk, capability);
     }
     if (
       !approval.approvalId ||
@@ -125,21 +155,21 @@ export function evaluateAgentAuthorization(request: Readonly<AgentAuthorizationR
       approval.capability !== capability ||
       approval.targetResource !== request.targetResource
     ) {
-      return deny('Approval-Evidence ist nicht exakt an Actor, Capability und Ziel gebunden.', request.riskClass, capability);
+      return deny('Approval-Evidence ist nicht exakt an Actor, Capability und Ziel gebunden.', effectiveRisk, capability);
     }
     if (
       approval.approvedByHumanActorId === request.principal.agentId ||
       approval.approvedByHumanActorId === request.principal.appId ||
       approval.approvedByHumanActorId === request.principal.credentialHolderId
     ) {
-      return deny('Agent/App/Credential-Principal darf sich nicht selbst freigeben.', request.riskClass, capability);
+      return deny('Agent/App/Credential-Principal darf sich nicht selbst freigeben.', effectiveRisk, capability);
     }
     const expiresAtMs = Date.parse(approval.expiresAt);
     if (!Number.isFinite(expiresAtMs) || expiresAtMs <= Date.now()) {
-      return deny('Approval-Evidence ist abgelaufen oder ungültig.', request.riskClass, capability);
+      return deny('Approval-Evidence ist abgelaufen oder ungültig.', effectiveRisk, capability);
     }
     if (!approval.stepUpVerified) {
-      return deny(`${request.riskClass}-Aktion benötigt verifizierte Step-up-Evidence.`, request.riskClass, capability);
+      return deny(`${effectiveRisk}-Aktion benötigt verifizierte Step-up-Evidence.`, effectiveRisk, capability);
     }
   }
 
@@ -147,6 +177,6 @@ export function evaluateAgentAuthorization(request: Readonly<AgentAuthorizationR
     verdict: 'ALLOW',
     reason: 'Explizite Capability, vollständige Attribution und risikoadäquate Evidence sind vorhanden.',
     capability,
-    riskClass: request.riskClass,
+    riskClass: effectiveRisk,
   };
 }
