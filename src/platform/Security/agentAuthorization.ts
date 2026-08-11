@@ -52,6 +52,7 @@ export interface AgentAuthorizationDecision {
     | 'CAPABILITY_NOT_GRANTED'
     | 'HUMAN_APPROVAL_REQUIRED'
     | 'SELF_APPROVAL_FORBIDDEN'
+    | 'APPROVAL_HUMAN_ACTOR_MISMATCH'
     | 'APPROVAL_SUBJECT_MISMATCH'
     | 'APPROVAL_CAPABILITY_MISMATCH'
     | 'APPROVAL_EXPIRED'
@@ -127,6 +128,10 @@ export function authorizeAgentCapability(
 
   if (approval.approvedByHumanActorId === request.identity.agentId) {
     return { allowed: false, riskClass, reason: 'SELF_APPROVAL_FORBIDDEN' };
+  }
+
+  if (approval.approvedByHumanActorId !== request.identity.humanActorId) {
+    return { allowed: false, riskClass, reason: 'APPROVAL_HUMAN_ACTOR_MISMATCH' };
   }
 
   if (approval.subjectAgentId !== request.identity.agentId) {
