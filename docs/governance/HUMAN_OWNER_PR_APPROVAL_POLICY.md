@@ -6,44 +6,47 @@ Repository Owner: `SvenKulessa`
 
 ## Purpose
 
-Every pull request targeting `main` MUST remain human-visible and MUST receive an explicit Owner approval for the exact pull-request head commit before it may be merged.
+Every pull request targeting `main` MUST remain human-visible and MUST receive a lightweight but explicit Owner review before merge.
 
-AI agents, coding assistants and connector clients may prepare branches, commits, pull requests, reviews, evidence and CI results. They MUST NOT self-approve or autonomously merge a pull request.
+AI agents, coding assistants and connector clients may prepare branches, commits, pull requests, evidence and CI fixes. They MUST NOT self-approve or autonomously merge a pull request.
 
 ## Human-visible change requirement
 
-Before approval, the Owner MUST be able to inspect the GitHub pull-request diff (`Files changed`) and the CI/Governance results for the exact head commit.
+Before approval, the Owner MUST inspect the GitHub pull-request diff under `Files changed` and the CI/Governance results for the current PR revision.
 
-The approval is commit-bound. It does not approve a branch name, a PR number, or a previous revision.
+GitHub's per-file `Viewed` state is treated as a human UI action. Because that state is not exposed as a reliable merge-gate signal to the current Actions contract, the Owner attests completion through a mandatory PR-body checkbox.
 
 ## Approval artifact
 
-The Owner records approval as a pull-request comment with this exact form:
+Approval consists of three human actions:
 
-`/owner-approve <HEAD_SHA>`
+1. In the PR description the Owner checks:
+   - `[x] Human/Owner: vollständigen PR-Diff geprüft.`
+   - `[x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.`
+2. The Owner submits a GitHub pull-request review for the current PR head commit.
+3. The review body contains either `💪` or `okay`.
 
-Example:
-
-`/owner-approve 0123456789abcdef0123456789abcdef01234567`
-
-The approving comment MUST:
+The review MUST:
 
 - be authored by repository Owner `SvenKulessa`;
-- reference the exact current PR head SHA;
-- exist before merge;
-- become invalid automatically when a new commit changes the PR head SHA.
+- be attached by GitHub to the exact current PR head commit;
+- contain `💪` or `okay` (case-insensitive for `okay`);
+- exist before merge.
+
+A review attached to an older commit becomes invalid when the PR receives a new commit. The Owner must then inspect the delta again and submit a new short review.
 
 ## Required merge gate
 
-The required GitHub check `build-and-test` MUST verify the Owner approval artifact as its final pull-request step.
+The stable required check remains `build-and-test`.
 
-Therefore:
+To avoid slowing the production flow, the CI architecture separates:
 
-- successful tests alone are insufficient for merge;
-- successful AI review alone is insufficient for merge;
-- an approval for an older SHA is insufficient;
-- a new push requires a new human review and a new `/owner-approve <HEAD_SHA>` comment;
-- `main` push validation is not subject to this PR approval step because approval must already have occurred before merge.
+- `technical-validation`: expensive Git/toolchain, dependency, TypeScript, unit-test, build, CSP/predeploy and Docker validation as required by scope;
+- `build-and-test`: lightweight final merge gate that depends on successful technical validation and verifies the Human/Owner checklist + current-commit review.
+
+Therefore a failed/missing Owner gate can be re-run without repeating the expensive technical validation.
+
+Successful tests alone are insufficient for merge. Successful AI review alone is insufficient for merge. Human checklist completion without a current-commit review is insufficient for merge.
 
 ## AI-agent capability restriction
 
@@ -51,18 +54,19 @@ Until a future independently approved merge-controller architecture replaces thi
 
 - AI agents MAY: READ, ANALYZE, PLAN, BRANCH, COMMIT, open/update PRs, inspect CI and propose fixes.
 - AI agents MUST STOP before MERGE.
-- Merge is permitted only after explicit Owner approval for the exact head SHA.
 - ChatGPT, Claude and other AI clients MUST NOT interpret CI success as merge authorization.
-- A merge through an AI client additionally requires an explicit human instruction to merge the specific PR after the Owner approval artifact exists.
+- Merge is permitted only after the Human/Owner gate is satisfied.
+- A merge through an AI client additionally requires an explicit human instruction to merge that specific PR after approval exists.
 
 ## Evidence
 
-The pull request itself is the primary evidence bundle:
+The pull request is the evidence bundle:
 
-1. visible diff;
-2. CI/Governance results;
-3. exact PR head SHA;
-4. Owner approval comment;
-5. resulting merge commit.
+1. visible `Files changed` diff;
+2. two checked Human/Owner PR-body boxes;
+3. CI/Governance results;
+4. current PR head SHA;
+5. Owner review attached to that SHA with `💪` or `okay`;
+6. resulting merge commit.
 
 This policy is part of the CAPITAL-AI DevelopmentChain and must remain synchronized with `docs/architecture/ROADMAP.md`, Agent IAM policy and merge governance.
