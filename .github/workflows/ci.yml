@@ -281,7 +281,8 @@ jobs:
 
       - name: main-Push ohne PR-Gate bestätigen
         if: ${{ github.event_name == 'push' }}
-        run: echo "main-Push: Human-/Owner-Gate wurde bereits vor Merge erfüllt."
+        run: |
+          echo "main-Push: Human-/Owner-Gate wurde bereits vor Merge erfüllt."
 
   deploy-production:
     name: Deployment verifiziert / Render-Produktion
