@@ -20,12 +20,6 @@ export const MARKET_DATA_PROVIDER_REGISTRY: MarketDataProviderRegistryEntry[] = 
     governanceNotes: 'Existing verified source. Downstream freshness/provenance gates remain mandatory.',
   },
   {
-    id: 'CoinMarketCap', assetClasses: ['crypto'], capabilities: ['snapshot', 'quotes'], basePriority: 2,
-    enabled: true, activation: 'active', environmentVariable: 'COINMARKETCAP_API_KEY', requiresApiKey: true,
-    purpose: 'Independent global crypto snapshot evidence for field-level quorum and conflict detection',
-    governanceNotes: 'Used by the observation-only CoinGecko/CoinMarketCap snapshot quorum. Semantic scope, observation time and provider provenance are mandatory; no secret is included in source paths.',
-  },
-  {
     id: 'Binance', assetClasses: ['crypto'], capabilities: ['history', 'quotes', 'orderbook'], basePriority: 2,
     enabled: true, activation: 'active', purpose: 'Crypto venue history fallback',
     governanceNotes: 'Existing public venue fallback; venue-specific data must not be represented as consolidated market truth.',
