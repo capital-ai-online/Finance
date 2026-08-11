@@ -9,15 +9,13 @@ on:
     branches: [main]
   pull_request:
     types: [opened, synchronize, reopened, edited, ready_for_review]
-  pull_request_review:
-    types: [submitted, edited, dismissed]
 
 permissions:
   contents: read
   pull-requests: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -66,6 +64,7 @@ jobs:
           else
             echo "approved=false" >> "$GITHUB_OUTPUT"
             echo "Owner-Gate nicht erfüllt. Build/Test wird nicht gestartet."
+            echo "Nach Review zuerst 💪/okay absenden und anschließend die beiden PR-Checkboxen setzen/speichern."
           fi
 
   build-and-test:
