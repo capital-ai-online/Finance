@@ -1,9 +1,9 @@
-<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.1.0 -->
+<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.2.0 -->
 # CAPITAL-AI Änderungsantrag (Pull Request)
 
-> Diese Vorlage ist verbindlich. Maschinenverwaltete Baseline-Felder dürfen nicht gelöscht werden. Der PR bleibt **Entwurf**, bis alle erforderlichen technischen Prüfungen erfolgreich sind.
+> Diese Vorlage ist verbindlich. Maschinenverwaltete Baseline-Felder dürfen nicht gelöscht werden.
 >
-> **Statussemantik:** GitHubs nativer Status `Open` bedeutet ausschließlich, dass der Pull Request noch nicht geschlossen oder gemerged wurde. `Open` ist kein Fehler- und kein Merge-Bereitschaftsstatus. Die Merge-Bereitschaft wird durch die Pflichtprüfung **Build und Tests** (technische Job-ID `build-and-test`), Governance-Prüfungen, Konfliktfreiheit und geltende Repository-Regeln bestimmt.
+> **Wichtig:** Die teure technische CI startet für Pull Requests erst nach vollständiger Human-/Owner-Sichtprüfung. Bis dahin darf nur die leichte Owner-/Governance-Prüfung laufen.
 
 ## 1. Arbeitsauftrag
 
@@ -20,7 +20,7 @@
 - **Ausführungsoberfläche / MCP-Host:** {{AGENT_SURFACE}}
 - **PR-Erstellung ausdrücklich durch Benutzer autorisiert:** Ja
 - **Autorisierungsumfang entspricht diesem PR:** Ja
-- **Human-/CODEOWNER-Freigabe für Merge erforderlich, sofern anwendbar:** Ja
+- **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja
 
 Ein erfolgreicher Sandbox-Build, CI-Lauf, Vorabtest oder Test ist ausschließlich ein technischer Nachweis und darf nicht als Autorisierung zur PR-Erstellung oder zum Merge interpretiert werden.
 
@@ -38,17 +38,12 @@ Ein erfolgreicher Sandbox-Build, CI-Lauf, Vorabtest oder Test ist ausschließlic
 - **Baseline erzeugt am:** `{{BASELINE_GENERATED_AT}}`
 <!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->
 
-Produktionsabweichungen sind beratende Prozessnachweise und kein Autorisierungs-Gate für Sandbox oder Build.
-
 ## 4. Umfang / Multi-Agent-Koordination
 
 - [ ] Der vorgesehene Umfang ist dokumentiert.
 - [ ] Überschneidungen mit geänderten Dateien offener PRs wurden geprüft, sofern verfügbar.
 - [ ] Erkannte Überschneidungen oder Konfliktrisiken wurden vor PR-Erstellung offengelegt.
-- [ ] Work-Claim-Metadaten werden als beratende Koordinationsnachweise und nicht als technische CI-Voraussetzung behandelt.
 - [ ] Metadaten oder Arbeiten anderer Agenten wurden nicht stillschweigend übernommen.
-
-Es gibt **keine PR-Erstellungsfrist und keine 15-Minuten-SLA**.
 
 ## 5. Änderungszusammenfassung
 
@@ -56,9 +51,11 @@ Beschreibe präzise, was geändert wurde und warum. Nicht zusammenhängende Änd
 
 ## 6. Architektur- / Governance-Auswirkungen
 
+- **Roadmap-Schritt / Phase:**
 - **ADR erforderlich?** Ja / Nein — Referenz:
 - **ESS-/Contract-Auswirkung?** Ja / Nein — Referenz:
 - **Traceability/Dokumentation aktualisiert?** Ja / Nein / N/A
+- **Mutation geplant?** Ja / Nein — Plattform/Runbook:
 - **Geschützte bestehende Invariante betroffen?** Ja / Nein — Referenz:
 
 ## 7. Sicherheitsprüfung
@@ -70,18 +67,22 @@ Beschreibe präzise, was geändert wurde und warum. Nicht zusammenhängende Änd
 - [ ] Hochriskante oder destruktive Aktionen behalten Human-Approval-Gates.
 - [ ] Neue/geänderte Workflows verwenden unveränderliche Action-SHAs und explizite Minimalberechtigungen.
 
-### MCP- / LLM-Gateway-Änderungen
+## 8. Human / Owner Review VOR technischer CI
 
-Wenn anwendbar vollständig ausfüllen, andernfalls `N/A` angeben.
+> Dieser Abschnitt ist das Start-Gate für die teure Build-/Test-Pipeline.
+>
+> Vor dem Abhaken müssen im Tab **Files changed** alle geänderten Dateien durch Owner `SvenKulessa` geprüft und als **Viewed** markiert worden sein.
+>
+> GitHub Actions kann den persönlichen `Viewed`-Status nicht zuverlässig auslesen; die zweite Checkbox ist deshalb die verbindliche Owner-Attestation dafür.
 
-- Token-Audience-/Resource-Validierung:
-- Token-Passthrough vermieden:
-- Werkzeug-/Capability-Autorisierung:
-- Idempotenz / Replay-Schutz:
-- Agent-/Session-/Request-Korrelation:
-- Grenze für menschliche Freigaben:
+- [ ] Human/Owner: vollständigen PR-Diff geprüft.
+- [ ] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.
 
-## 8. Technische Validierungsnachweise
+Danach gibt Owner `SvenKulessa` im GitHub-Review für den **aktuellen PR-Head** einen kurzen Review-Kommentar ab: **`💪`** oder **`okay`**.
+
+Erst wenn beide Kästchen gesetzt und der aktuelle Review vorhanden sind, darf `technical-validation` starten. Ein neuer Commit invalidiert den bisherigen Review für den neuen Head.
+
+## 9. Technische Validierungsnachweise — erst nach Abschnitt 8
 
 - [ ] Abhängigkeiten installieren / Schwachstellenprüfung
 - [ ] Typprüfung / Lint
@@ -97,7 +98,7 @@ Befehle / Nachweise:
 <knappe Nachweise einfügen; keine Secrets einfügen>
 ```
 
-## 9. Risiko und Rücksetzung
+## 10. Risiko und Rücksetzung
 
 - **Auswirkungsradius:** Niedrig / Mittel / Hoch / Kritisch
 - **Auswirkungen auf Benutzer:**
@@ -105,24 +106,12 @@ Befehle / Nachweise:
 - **Rücksetzverfahren:**
 - **Rücksetzung benötigt Freigabe für geschützte Änderung?** Ja / Nein — Referenz:
 
-## 10. Human / Owner Review vor Merge
-
-> Diese zwei Kästchen werden ausschließlich vom Repository-Owner nach Sichtprüfung gesetzt. Vor dem Abhaken müssen im Tab **Files changed** alle geänderten Dateien geprüft und als **Viewed** markiert worden sein.
-
-- [ ] Human/Owner: vollständigen PR-Diff geprüft.
-- [ ] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.
-
-Danach gibt der Owner im GitHub-Review für den **aktuellen Commit** einen kurzen Review-Kommentar ab: **`💪`** oder **`okay`**. Ein Review auf einem älteren Commit gilt nach einem neuen Push nicht mehr.
-
 ## 11. Prüf- und Merge-Bereitschaft
 
-- [ ] Die PR-Erstellung wurde vor Öffnung dieses PR ausdrücklich durch den Benutzer autorisiert.
-- [ ] Technischer CI-Status wird ausschließlich als Validierung verstanden.
-- [ ] Pflichtprüfung **Build und Tests** (`build-and-test`) ist erfolgreich.
+- [ ] Human-/Owner-Review aus Abschnitt 8 ist vollständig.
+- [ ] Pflichtprüfung `build-and-test` ist erfolgreich.
 - [ ] Governance-Prüfungen sind erfolgreich.
 - [ ] Der Branch ist konfliktfrei und gegen den aktuellen `main` geprüft.
-- [ ] Produktionsabweichungen und Warnungen zu parallelen Arbeiten wurden als beratende Nachweise geprüft.
 - [ ] Alle merge-blockierenden Diskussionen/Funde sind gelöst.
-- [ ] Human-/Owner-Review aus Abschnitt 10 ist vollständig.
-- [ ] Der PR bleibt Entwurf, bis er prüfbereit ist.
 - [ ] Keine Agenten-/Modell-Selbstfreigabe wird als Human-Freigabe behandelt.
+- [ ] Merge erfolgt nur nach separater ausdrücklicher menschlicher Anweisung.
