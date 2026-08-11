@@ -1,10 +1,12 @@
 # ADR-0058 — Agent Identity, Capability and Risk Authorization
 
-Status: PROPOSED — M4 IMPLEMENTATION IN REVIEW
+Status: ACCEPTED — M4 CLOSURE HARDENING IN REVIEW
 Date: 2026-08-11
 
 ## Context
 Provider identities and model names are not sufficient authorization principals. CAPITAL-AI already has Supabase/tool-specific capability grants and single-use approvals under ADR-0050/0051 and ESS-0018. M4 adds a provider-neutral authorization layer above those existing controls without replacing them.
+
+PR #198 merged the canonical M4 implementation into `main` at `69f719683b60ba6aadc0022381c6cecc430f0ea5`. Parallel M4 drafts #200 and #201 were created from the older PR-#197 baseline and are superseded by this consolidated closure state.
 
 ## Decision
 Authorize attributable principals through explicit, non-inheriting DevelopmentChain capabilities and deterministic minimum risk classes.
@@ -39,7 +41,7 @@ Authorization is deny-by-default and binds at least:
 
 Provider/model identifiers are metadata only and never grant authority.
 
-HIGH and CRITICAL actions require explicit approval/step-up evidence according to policy. Approval evidence must be current, unexpired and bound to the same human actor, capability and target resource. Agent/App/Credential principals may not self-approve.
+HIGH actions require explicit, current Human Approval. CRITICAL actions require the same Human Approval plus verified Step-up. Approval evidence must be unexpired and bound to the same human actor, logical agent, capability and target resource. Agent/App/Credential principals may not self-approve.
 
 Existing ADR-0050/0051 and ESS-0018 remain the product/tool implementation profile and are enforced in addition to this provider-neutral layer.
 
@@ -51,7 +53,8 @@ Existing ADR-0050/0051 and ESS-0018 remain the product/tool implementation profi
 - deterministic capability minimum-risk mapping;
 - exact grants only; no privilege inheritance;
 - environment boundary preventing development principals from `PRODUCTION_MUTATION`;
-- approval target/capability/actor binding and expiration validation;
+- approval actor/agent/target/capability binding and expiration validation;
+- HIGH Human Approval and CRITICAL Human Approval + Step-up semantics;
 - mutation kill switch;
 - explicit denial of unknown/non-agent capabilities such as `MERGE`.
 
@@ -70,7 +73,7 @@ M4 is additive and requires no production Supabase/Stripe/Render mutation and no
 Disable mutating agent capabilities and fall back to READ/ANALYZE. Removal of the provider-neutral layer does not modify the existing ADR-0050/0051 persistence model.
 
 ## Verification
-M4 exit requires green TypeScript/unit/build/governance validation plus negative tests for:
+M4 closure requires green TypeScript/unit/build/governance validation plus negative tests for:
 
 - incomplete principal attribution;
 - missing exact grants;
@@ -78,9 +81,10 @@ M4 exit requires green TypeScript/unit/build/governance validation plus negative
 - capability privilege non-inheritance;
 - deterministic HIGH/CRITICAL minimum risk;
 - missing/mismatched/expired approval evidence;
-- missing step-up evidence;
+- approval subject-agent mismatch;
+- missing Step-up for CRITICAL;
 - self-approval;
 - kill-switch enforcement;
 - attempted `MERGE` delegation.
 
-The ADR remains PROPOSED until the Human/Owner-reviewed M4 implementation is merged and post-merge evidence is synchronized.
+M5 remains blocked until the single M4 consolidation/closure PR is Human/Owner-reviewed and merged.
