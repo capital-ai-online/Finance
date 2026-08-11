@@ -1,7 +1,7 @@
 # AI Agent M0–M9 Implementation Roadmap
 
-Status: DOCUMENTATION PHASE
-Baseline: `main@1c3706c4f24e5f5a9fe5b0398a2fcd5bee758b17`
+Status: IMPLEMENTATION PHASE
+Baseline: `main@e2a405f4435e217ff2ba08f35a29835d4c41d5d9` (PR #192 merge)
 
 ## M0 — Evidence Baseline
 COMPLETE.
@@ -12,28 +12,45 @@ COMPLETE for current single-owner topology; future independent reviewer enables 
 ## M2 — Architecture Definition
 M2A inventory/current baseline; M2B ESS-0019; M2C ADR-0057..0063; M2D trust/threat models; M2E traceability; M2F implementation roadmap; M2G Documentation Freeze.
 
-Exit: all documents merged, no unresolved CRITICAL design decision, ROADMAP marks `DOCUMENTATION FREEZE = COMPLETE`.
+Exit: COMPLETE. PR #192 merged; no unresolved CRITICAL design decision blocks implementation.
 
 ## M3 — CI Hardening
-Only after M2G. Secure Git toolchain source, enforce workflow permissions/pinning, eliminate unnecessary expensive builds while preserving required checks.
+IN PROGRESS.
+
+Scope authorized by M2G:
+1. Preserve stable required check `build-and-test`.
+2. Preserve immutable SHA-pinned Actions and minimal workflow permissions.
+3. Strengthen Git 2.55.0 source integrity beyond `xz --test` using a repository-pinned cryptographic checksum and fail-closed verification before extraction/build.
+4. Remove avoidable expensive CI work through path/risk-based gating without skipping required validation for code, workflow, dependency, runtime or deployment changes.
+5. Keep Git repository integrity verification after checkout.
+6. Add M3-specific validation/evidence documentation and update ROADMAP/traceability on merge.
+
+M3 exit criteria:
+- workflow-security validation passes;
+- `build-and-test` remains the required check name;
+- Git source archive checksum is pinned and verified fail-closed;
+- documentation-only changes avoid unnecessary source compilation/image work where safely possible;
+- TypeScript/tests/build/predeploy remain mandatory for application-affecting changes;
+- no production deployment occurs from PR events;
+- ROADMAP and traceability contain the M3 merge evidence.
 
 ## M4 — Agent IAM
-Generalize existing ADR-0050/0051/ESS-0018 into provider-neutral capability enforcement and negative tests.
+BLOCKED BY M3. Generalize existing ADR-0050/0051/ESS-0018 into provider-neutral capability enforcement and negative tests.
 
 ## M5 — Observability/Telemetry/Audit
-Extend ADR-0056/O1 with W3C/OTel correlation, immutable security audit evidence and redaction.
+BLOCKED BY M3 sequencing. Extend ADR-0056/O1 with W3C/OTel correlation, immutable security audit evidence and redaction.
 
 ## M6 — Supply Chain
-Export SBOM, bind digest/provenance/attestation to exact source and artifact.
+BLOCKED BY M3. Extend M3 CI evidence into SBOM, provenance and attestation bound to exact source/artifact digests.
 
 ## M7 — Deployment Identity
-Implement protected `production` environment and Render credential bridge/short-lived identity according to ADR-0061. PR #190 code is not reused blindly.
+BLOCKED. Implement protected `production` environment and Render credential bridge/short-lived identity according to ADR-0061. PR #190 code is not reused blindly.
 
 ## M8 — Agent Cutover
-Route ChatGPT/Claude and future execution clients through Control Plane. NotebookLM remains read-only.
+BLOCKED. Route ChatGPT/Claude and future execution clients through Control Plane. NotebookLM remains read-only.
 
 ## M9 — Assurance
-Run negative tests, prompt/tool injection tests, replay tests, exfiltration tests, kill-switch/break-glass/rollback drills and independent evidence review.
+BLOCKED. Run negative tests, prompt/tool injection tests, replay tests, exfiltration tests, kill-switch/break-glass/rollback drills and independent evidence review.
 
 ## Per-step mandatory update
 Every completed DevelopmentChain step MUST update:
@@ -42,4 +59,4 @@ Every completed DevelopmentChain step MUST update:
 3. `AI_AGENT_M0_M9_TRACEABILITY_MATRIX.md` evidence pointer;
 4. affected ADR/ESS status if changed.
 
-No code/config implementation is authorized before M2G Documentation Freeze.
+M2G Documentation Freeze is COMPLETE; code/config implementation is now authorized only in the currently opened phase and may not skip phase gates.
