@@ -21,20 +21,86 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - name: Git 2.55.0 aus offizieller Quelle bereitstellen
+      - name: Quellcode ohne persistierte Zugangsdaten auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: CI-Validierungsumfang bestimmen
+        id: scope
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" = "push" ]; then
+            echo "full_validation=true" >> "$GITHUB_OUTPUT"
+            echo "main-Push: vollständige Validierung ist verpflichtend."
+            exit 0
+          fi
+
+          base_sha="$(git rev-parse HEAD^1)"
+          head_sha="$(git rev-parse HEAD^2)"
+          changed_files="$(git diff --name-only "$base_sha" "$head_sha")"
+          printf '%s\n' "$changed_files"
+
+          docs_only=true
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            case "$file" in
+              docs/*|.ai/*|*.md)
+                ;;
+              *)
+                docs_only=false
+                break
+                ;;
+            esac
+          done <<< "$changed_files"
+
+          if [ "$docs_only" = "true" ]; then
+            echo "full_validation=false" >> "$GITHUB_OUTPUT"
+            echo "Reiner Dokumentations-PR: Fast Path aktiviert."
+          else
+            echo "full_validation=true" >> "$GITHUB_OUTPUT"
+            echo "Code-/Workflow-/Dependency-/Konfigurationsänderung erkannt: vollständige Validierung."
+          fi
+
+      - name: Ausgecheckten Commit verifizieren
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rev-parse --verify 'HEAD^{commit}' >/dev/null
+
+      - name: Dokumentations-PR Fast Path bestätigen
+        if: steps.scope.outputs.full_validation != 'true'
+        run: |
+          echo "Nur Dokumentation betroffen. Teurer Toolchain-Build, npm-Installation, Tests, Build und Docker werden in diesem PR-Lauf übersprungen."
+          echo "Repository-/Workflow-Governance läuft weiterhin in den separaten Governance-Workflows."
+
+      - name: Git 2.55.0 kryptografisch verifiziert bereitstellen
+        if: steps.scope.outputs.full_validation == 'true'
         shell: bash
         run: |
           set -euo pipefail
           current="$(git --version | awk '{print $3}')"
           required="2.55.0"
+          expected_sha256="457fdb04dc8728e007d4688695e6912e6f680727920f2a40bf11eacc17505357"
+          archive="/tmp/git-${required}.tar.xz"
+
           if [ "$current" != "$required" ]; then
             sudo apt-get update
             sudo apt-get install --yes build-essential libssl-dev libcurl4-gnutls-dev libexpat1-dev gettext zlib1g-dev
             curl --fail --silent --show-error --location \
+              --retry 3 --retry-all-errors \
+              --connect-timeout 10 --max-time 120 \
               "https://www.kernel.org/pub/software/scm/git/git-${required}.tar.xz" \
-              --output "/tmp/git-${required}.tar.xz"
-            xz --test "/tmp/git-${required}.tar.xz"
-            tar -xJf "/tmp/git-${required}.tar.xz" -C /tmp
+              --output "$archive"
+
+            printf '%s  %s\n' "$expected_sha256" "$archive" | sha256sum --check --strict
+            xz --test "$archive"
+            tar -xJf "$archive" -C /tmp
             make -C "/tmp/git-${required}" -j2 \
               prefix=/opt/git-${required} \
               NO_TCLTK=YesPlease \
@@ -48,22 +114,19 @@ jobs:
             echo "/opt/git-${required}/bin" >> "$GITHUB_PATH"
             export PATH="/opt/git-${required}/bin:$PATH"
           fi
+
           test "$(git --version | awk '{print $3}')" = "$required"
           git --version
 
-      - name: Quellcode ohne persistierte Zugangsdaten auschecken
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
-        with:
-          fetch-depth: 2
-          persist-credentials: false
-
       - name: Node.js einrichten
+        if: steps.scope.outputs.full_validation == 'true'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
         with:
           node-version: '24.18.0'
           cache: 'npm'
 
       - name: Toolchain-Versionen verifizieren
+        if: steps.scope.outputs.full_validation == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -74,6 +137,7 @@ jobs:
           npm --version
 
       - name: Git-Repository-Integrität verifizieren
+        if: steps.scope.outputs.full_validation == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -81,36 +145,46 @@ jobs:
           git fsck --strict --no-dangling
 
       - name: Abhängigkeiten installieren
+        if: steps.scope.outputs.full_validation == 'true'
         run: npm ci
 
       - name: Produktionsabhängigkeiten auf Schwachstellen prüfen
+        if: steps.scope.outputs.full_validation == 'true'
         run: npm audit --omit=dev --audit-level=high
 
       - name: Produktionskonfiguration prüfen
+        if: steps.scope.outputs.full_validation == 'true'
         run: npx tsx scripts/security/verifyProductionConfigInvariants.ts
 
       - name: Docker-Hardening-Richtlinie prüfen
+        if: steps.scope.outputs.full_validation == 'true'
         run: node scripts/security/verifyDockerHardening.mjs
 
       - name: TypeScript prüfen
+        if: steps.scope.outputs.full_validation == 'true'
         run: npm run lint
 
       - name: Unit-Tests ausführen
+        if: steps.scope.outputs.full_validation == 'true'
         run: npm test
 
       - name: Produktions-Build erstellen
+        if: steps.scope.outputs.full_validation == 'true'
         run: npm run build
 
       - name: Gebauten CSP-Auslieferungspfad prüfen
+        if: steps.scope.outputs.full_validation == 'true'
         env:
           NODE_ENV: production
           CSP_MODE: report-only
         run: npx vitest run tests/unit/securityResponse.production.test.ts
 
       - name: Deployment-Bereitschaft prüfen (H7)
+        if: steps.scope.outputs.full_validation == 'true'
         run: npm run predeploy:check
 
       - name: Docker-Relevanz für diesen Lauf bestimmen
+        if: steps.scope.outputs.full_validation == 'true'
         id: docker-scope
         shell: bash
         env:
@@ -146,11 +220,11 @@ jobs:
           fi
 
       - name: Produktions-Docker-Image bauen
-        if: steps.docker-scope.outputs.required == 'true'
+        if: steps.scope.outputs.full_validation == 'true' && steps.docker-scope.outputs.required == 'true'
         run: docker build --tag capital-ai-ci:${{ github.sha }} .
 
       - name: Laufzeit-Metadaten des Images prüfen
-        if: steps.docker-scope.outputs.required == 'true'
+        if: steps.scope.outputs.full_validation == 'true' && steps.docker-scope.outputs.required == 'true'
         run: |
           test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{.Config.User}}')" = "capitalai"
           test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
