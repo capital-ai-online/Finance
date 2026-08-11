@@ -1,4 +1,9 @@
-# ADR-0050 — Observability & Telemetry Baseline
+# ADR-0056 — Observability & Telemetry Baseline
+
+> **Renumbering note (2026-08-11):** originally filed as `ADR-0050`, which collided with the
+> already-established `ADR-0050-agent-tool-capability-iam-foundation.md` (2026-08-09, ESS-0018
+> Phase 1, referenced by ADR-0051 and multiple `server`/`src` call sites). Renumbered to
+> `ADR-0056` to resolve the collision; no content changed beyond the number.
 
 Status: Proposed  
 Date: 2026-08-10

@@ -70,7 +70,7 @@ Die nächsten Phasen instrumentieren vorhandene Authorities statt parallele Syst
 - ESS-0006 — Security & Compliance
 - ESS-0011 — Enterprise Traceability
 - ESS-0013 — Enterprise Event Mesh
-- ADR-0050 — Observability & Telemetry Baseline
+- ADR-0056 — Observability & Telemetry Baseline
 
 ## Folgephasen
 

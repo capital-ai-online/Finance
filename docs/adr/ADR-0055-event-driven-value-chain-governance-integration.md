@@ -1,4 +1,9 @@
-# ADR-0045 — Event-Driven CAPITAL-AI Value Chain Governance Integration
+# ADR-0055 — Event-Driven CAPITAL-AI Value Chain Governance Integration
+
+> **Renumbering note (2026-08-11):** originally filed as `ADR-0045`, which collided with the
+> already-established `ADR-0045-stripe-event-ownership-durable-inbox.md` (2026-08-08, heavily
+> referenced by ADR-0052, ADR-0054, ROADMAP.md and multiple call sites). Renumbered to `ADR-0055`
+> to resolve the collision; no content changed beyond the number.
 
 Status: Proposed  
 Datum / Date: 2026-08-09  
