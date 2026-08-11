@@ -51,6 +51,16 @@
       "language": "mixed",
       "lifecycle": "generated",
       "path": "docs/governance/DOCUMENTATION_HYGIENE_POLICY.md"
+    },
+    {
+      "documentId": "DOC-GOV-GITHUB-PRO-ENABLEMENT",
+      "type": "governance-plan",
+      "owner": "CAPITAL-AI",
+      "authority": "docs/governance/GITHUB_MAIN_PROTECTION_POLICY.md",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "draft",
+      "path": "docs/governance/GITHUB_PRO_ENABLEMENT_PLAN.md"
     }
   ]
 }
