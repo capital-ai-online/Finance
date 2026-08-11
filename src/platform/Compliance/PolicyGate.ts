@@ -1,13 +1,13 @@
 // ESS-0018 Phase 2 / ADR-0051: Compliance's policy-verdict surface for governed agent actions.
-// Additive only - does NOT modify store.ts/scanners.ts/router.ts (those remain the whole-app
-// security/compliance auditor described in router.ts's own disclaimer: "darf keine
-// Berechtigungen vergeben, keine IAM-Regeln verändern, keine Sicherheitsmechanismen umgehen").
-// This module does not grant anything either - it only evaluates whether a proposed capability
-// use is on the allowlist CAPITAL-AI has actually approved (ESS-0018 §4.2). A capability/grant
-// approval elsewhere is necessary but not sufficient: this gate is the second, independent check
-// executeApprovedSupervisedAction() requires before any Apply.
+// M4 / ESS-0019 / ADR-0058 adds a provider-neutral Agent IAM layer above the existing
+// tool-specific allowlists. Provider/model names remain metadata and never grant authority.
 
 import { CAPABILITIES, type Capability, isKnownCapability } from '../Security/capabilities';
+import {
+  evaluateAgentAuthorization,
+  type AgentAuthorizationDecision,
+  type AgentAuthorizationRequest,
+} from '../Security/agentIam';
 
 export interface PolicyVerdict {
   verdict: 'ALLOW' | 'DENY';
@@ -41,4 +41,16 @@ export function evaluateWritePolicy(capability: string): PolicyVerdict {
     return { verdict: 'DENY', reason: `Capability "${capability}" ist keine freigegebene Schreib-Capability.` };
   }
   return { verdict: 'ALLOW', reason: 'Capability ist in der Schreib-Allowlist.' };
+}
+
+/**
+ * Canonical M4 entry point for provider-neutral execution authorization.
+ *
+ * This check is intentionally separate from the ESS-0018 tool allowlists above. A future or
+ * existing agent action must pass BOTH the generic Agent IAM decision and its domain/tool policy.
+ * This prevents a provider label, a broad tool grant or a successful CI result from becoming an
+ * implicit application-level privilege.
+ */
+export function evaluateAgentPolicy(request: Readonly<AgentAuthorizationRequest>): AgentAuthorizationDecision {
+  return evaluateAgentAuthorization(request);
 }
