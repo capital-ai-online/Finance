@@ -101,10 +101,12 @@ Daraus folgt die Reihenfolge des Plans: **Erst die deadlock-freien Härtungen (P
 
 Schließt die einzige explizit als `owner-admin-handoff-required` markierte Lücke des Sollvertrags.
 
+> **Umsetzungsstand 2026-08-11:** P1.5 (Workflow-Änderung) ist geliefert — der Job `deploy-production` trägt `environment: production` und ein Job-Level-`if:`. Die ADR-Grundlage steht als Addendum in ADR-0047. Die ausführbaren Owner-Schritte 1–4 und 6 sind als Runbook ausgearbeitet: **`docs/runbooks/PRODUCTION_ENVIRONMENT_SETUP.md`** — dort auch die verbindliche Reihenfolge, ohne die der nächste Deploy bricht. P1.7 bleibt offen und folgt nach der Serververifikation.
+
 1. Environment `production` anlegen (`Settings → Environments`).
 2. **Deployment branches and tags:** ausschließlich `main`.
 3. **Environment secret** `RENDER_DEPLOY_HOOK_URL` dort hinterlegen; anschließend das gleichnamige **Repository-Secret entfernen**, damit der Hook nicht mehr aus beliebigen Workflow-Kontexten erreichbar ist.
-4. Optional, aber empfohlen: **Wait timer** (z. B. 5 Min.) als Break-Glass-Fenster vor dem Produktionsdeploy. *Required reviewers* erzeugen im Single-Owner-Fall keinen echten Vier-Augen-Effekt und sind erst nach P3.1 sinnvoll.
+4. **Wait timer** zunächst **nicht** aktivieren, damit die Umstellung das Deploy-Verhalten nicht zusätzlich verändert; als Break-Glass-Fenster jederzeit nachrüstbar. *Required reviewers* erzeugen im Single-Owner-Fall keinen echten Vier-Augen-Effekt und sind erst nach P3.1 sinnvoll.
 5. Repository-Änderung (separater PR, CODEOWNERS-pflichtig): im Job `deploy-production` in `.github/workflows/ci.yml` `environment: production` ergänzen.
 6. Die 15 historischen, ungeschützten PR-/Deployment-Environments inventarisieren und nicht mehr benötigte löschen — sie sind aktuell ein unbewerteter Zugriffspfad (`can_admins_bypass=true`, keine Protection Rules).
 7. `.github/policies/main-production-protection.expected.json`: `production_environment.status` von `owner-admin-handoff-required` auf den erreichten Zustand fortschreiben — **erst nach** verifizierter Serverkonfiguration.

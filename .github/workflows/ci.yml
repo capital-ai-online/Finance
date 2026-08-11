@@ -156,17 +156,19 @@ jobs:
           test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
           docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
 
+  # ADR-0047: Der Deploy-Job darf für pull_request-Ereignisse nicht laufen.
+  # Die Trennung erfolgt auf Job-Ebene, damit die Environment-Bindung nicht
+  # bei jedem Pull Request ein Produktions-Deployment erzeugt.
   deploy-production:
     name: Deployment verifiziert / Render-Produktion
     needs: [build-and-test]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    environment:
+      name: production
+      url: https://capital-ai.online
     steps:
-      - name: Bestätigen, dass Pull Requests nicht produktiv deployen
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          echo "Die Pull-Request-CI ist erfolgreich. Ein Produktions-Deployment ist absichtlich deaktiviert, bis der verifizierte Commit nach main übernommen wurde."
-
       - name: Render-Deployment für den exakt verifizierten Commit auslösen
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         env:

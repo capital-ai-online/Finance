@@ -101,6 +101,16 @@
       "language": "de",
       "lifecycle": "draft",
       "path": "docs/architecture/MONETIZATION_ROADMAP.md"
+    },
+    {
+      "documentId": "DOC-RUNBOOK-PRODUCTION-ENVIRONMENT-SETUP",
+      "type": "runbook",
+      "owner": "CAPITAL-AI",
+      "authority": "ADR-0047",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "draft",
+      "path": "docs/runbooks/PRODUCTION_ENVIRONMENT_SETUP.md"
     }
   ]
 }
