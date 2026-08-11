@@ -1,4 +1,4 @@
-<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.0.0 -->
+<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.1.0 -->
 # CAPITAL-AI Änderungsantrag (Pull Request)
 
 > Diese Vorlage ist verbindlich. Maschinenverwaltete Baseline-Felder dürfen nicht gelöscht werden. Der PR bleibt **Entwurf**, bis alle erforderlichen technischen Prüfungen erfolgreich sind.
@@ -105,7 +105,16 @@ Befehle / Nachweise:
 - **Rücksetzverfahren:**
 - **Rücksetzung benötigt Freigabe für geschützte Änderung?** Ja / Nein — Referenz:
 
-## 10. Prüf- und Merge-Bereitschaft
+## 10. Human / Owner Review vor Merge
+
+> Diese zwei Kästchen werden ausschließlich vom Repository-Owner nach Sichtprüfung gesetzt. Vor dem Abhaken müssen im Tab **Files changed** alle geänderten Dateien geprüft und als **Viewed** markiert worden sein.
+
+- [ ] Human/Owner: vollständigen PR-Diff geprüft.
+- [ ] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.
+
+Danach gibt der Owner im GitHub-Review für den **aktuellen Commit** einen kurzen Review-Kommentar ab: **`💪`** oder **`okay`**. Ein Review auf einem älteren Commit gilt nach einem neuen Push nicht mehr.
+
+## 11. Prüf- und Merge-Bereitschaft
 
 - [ ] Die PR-Erstellung wurde vor Öffnung dieses PR ausdrücklich durch den Benutzer autorisiert.
 - [ ] Technischer CI-Status wird ausschließlich als Validierung verstanden.
@@ -114,6 +123,6 @@ Befehle / Nachweise:
 - [ ] Der Branch ist konfliktfrei und gegen den aktuellen `main` geprüft.
 - [ ] Produktionsabweichungen und Warnungen zu parallelen Arbeiten wurden als beratende Nachweise geprüft.
 - [ ] Alle merge-blockierenden Diskussionen/Funde sind gelöst.
-- [ ] CODEOWNER-/Human-Prüfung wurde eingeholt, sofern anwendbar.
+- [ ] Human-/Owner-Review aus Abschnitt 10 ist vollständig.
 - [ ] Der PR bleibt Entwurf, bis er prüfbereit ist.
 - [ ] Keine Agenten-/Modell-Selbstfreigabe wird als Human-Freigabe behandelt.

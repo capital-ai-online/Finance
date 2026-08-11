@@ -11,13 +11,15 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-and-test:
+  technical-validation:
+    name: Technische Validierung
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -229,6 +231,58 @@ jobs:
           test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{.Config.User}}')" = "capitalai"
           test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
           docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
+
+  build-and-test:
+    needs: [technical-validation]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Technische Validierung bestätigen
+        run: echo "Technische Validierung erfolgreich abgeschlossen."
+
+      - name: Human-/Owner-Review für aktuellen PR-Commit verifizieren
+        if: ${{ github.event_name == 'pull_request' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+
+          required_diff='- [x] Human/Owner: vollständigen PR-Diff geprüft.'
+          required_files='- [x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.'
+          current_body="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq '.body // ""')"
+
+          printf '%s\n' "$current_body" | grep -Fqx -- "$required_diff" || {
+            echo "FEHLER: Owner-Checkbox für vollständige Diff-Prüfung fehlt." >&2
+            exit 1
+          }
+          printf '%s\n' "$current_body" | grep -Fqx -- "$required_files" || {
+            echo "FEHLER: Owner-Checkbox für alle als Viewed markierten Dateien fehlt." >&2
+            exit 1
+          }
+
+          review_id="$(
+            gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" \
+              --jq '.[] | select(.user.login == env.REPOSITORY_OWNER and .commit_id == env.PR_HEAD_SHA and (((.body // "") | ascii_downcase | gsub("^[[:space:]]+|[[:space:]]+$"; "")) == "okay" or ((.body // "") | contains("💪")))) | .id' \
+              | head -n 1
+          )"
+
+          if [ -z "$review_id" ]; then
+            echo "FEHLER: Kein gültiger Owner-Review für den aktuellen PR-Head ${PR_HEAD_SHA} gefunden." >&2
+            echo "Bitte nach Sichtprüfung im GitHub-Review 💪 oder okay kommentieren." >&2
+            exit 1
+          fi
+
+          echo "Human-/Owner-Gate erfüllt: Checkliste bestätigt und Review ${review_id} ist an ${PR_HEAD_SHA} gebunden."
+
+      - name: main-Push ohne PR-Gate bestätigen
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          echo "main-Push: Human-/Owner-Gate wurde bereits vor Merge erfüllt."
 
   deploy-production:
     name: Deployment verifiziert / Render-Produktion
