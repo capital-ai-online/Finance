@@ -31,28 +31,33 @@ Expensive CI MUST NOT start until all of the following are true for the current 
 2. repository Owner `SvenKulessa` submitted a GitHub pull-request review for the exact current PR head commit;
 3. the review body contains `💪` or `okay`.
 
-A new commit invalidates the previous review evidence for gating purposes. The Owner must inspect the delta, confirm the checkboxes remain truthful and submit a new current-head review.
+A new commit invalidates the previous review evidence for gating purposes. The Owner must inspect the delta, ensure both PR-body attestations remain truthful and submit a new current-head review.
 
-## CI sequencing
+## CI sequencing — single trigger
 
-The CI sequence is intentionally:
+The required sequence is intentionally:
 
-`PR OPEN/UPDATE → LIGHTWEIGHT OWNER GATE → OWNER REVIEW PASS → TECHNICAL VALIDATION → build-and-test → MERGE ELIGIBLE`
+`PR OPEN/UPDATE → FILES CHANGED REVIEW → ALL FILES VIEWED → OWNER CHECKBOXES → FINAL CURRENT-HEAD REVIEW (💪/okay) → ONE build-and-test → MERGE ELIGIBLE`
 
-Before Owner approval:
+The final Owner review is the only pull-request event that starts the expensive CI workflow. Editing the PR body, opening the PR or pushing a commit MUST NOT independently start a full build/test run.
 
-- only the lightweight gate may run;
-- Git source build MUST NOT run;
+Before the final Owner review:
+
+- Git source/integrity work beyond lightweight governance MUST NOT trigger a full software validation run;
 - npm dependency installation/audit MUST NOT run;
 - TypeScript/unit tests MUST NOT run;
 - production build MUST NOT run;
 - Docker build MUST NOT run.
 
-After Owner approval:
+After the final Owner review:
 
-- `technical-validation` executes the scope-appropriate technical pipeline;
-- `build-and-test` remains the stable required check;
+- exactly one scope-appropriate `build-and-test` job is expected for the current PR head;
+- documentation-only changes use the fast path inside that same job;
+- code changes run npm/audit/TypeScript/unit/build checks inside that same job;
+- Docker/runtime checks run only when the changed-file scope requires them;
 - governance/security workflows may run independently because they are lightweight policy checks.
+
+A second Owner review may intentionally create a new validation run. Normal operation is one final review and one `build-and-test` run per PR head.
 
 Successful technical validation is still not merge authorization. Merge requires the existing Human/Owner policy and, when an AI client is used for the merge operation, a separate explicit human instruction for that specific PR.
 
@@ -82,8 +87,8 @@ The pull request is the evidence bundle:
 2. Owner attestation that all changed files were marked `Viewed`;
 3. two checked Human/Owner PR-body boxes;
 4. current PR head SHA;
-5. Owner review attached to that SHA with `💪` or `okay`;
-6. subsequent technical CI/Governance results;
+5. final Owner review attached to that SHA with `💪` or `okay`;
+6. exactly one normal `build-and-test` run for that review/head, unless a new Owner review intentionally requests revalidation;
 7. resulting merge commit.
 
 This policy is part of the CAPITAL-AI DevelopmentChain and must remain synchronized with `docs/architecture/ROADMAP.md`, Agent IAM policy and merge governance.
