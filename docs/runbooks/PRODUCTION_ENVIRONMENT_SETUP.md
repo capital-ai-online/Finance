@@ -5,7 +5,7 @@ Stand: 2026-08-11
 Repository: `SvenKulessa/Finance`
 Autorität: ADR-0047, ADR-0037 §5 und §3.6, `docs/governance/GITHUB_PRO_ENABLEMENT_PLAN.md` P1
 
-> **Dieses Runbook autorisiert keine Mutation.** Es beschreibt den Zielzustand und das Vorgehen; die Ausführung ist bis zum Abschluss des M2G Documentation Freeze gesperrt (siehe `docs/governance/DEVELOPMENT_CHAIN_DOCUMENTATION_FREEZE_POLICY.md`). Die zugehörige `.github/workflows/ci.yml`-Änderung wird bewusst erst nach Aufhebung des Freeze als eigener Pull Request eingereicht.
+> **Dieses Runbook autorisiert keine Mutation.** Es beschreibt den Zielzustand und das Vorgehen; die Ausführung ist bis zum Abschluss des M2G Documentation Freeze gesperrt (`docs/governance/DEVELOPMENT_CHAIN_DOCUMENTATION_FREEZE_POLICY.md`, wird mit PR #192 eingeführt). Die zugehörige `.github/workflows/ci.yml`-Änderung wird bewusst erst nach Aufhebung des Freeze als eigener Pull Request eingereicht.
 
 > Gegliedert nach den sieben Nachweisen aus ADR-0037 §5 „Production Change Authorization". Die Schritte 1 und 4 sind **nicht durch einen Agenten ausführbar** — sie erfordern Repository-Admin.
 
@@ -106,7 +106,7 @@ Punkt 5 ist die Umsetzung von ADR-0047 Zeile 32; Punkt 6 ist die eigentliche Sch
 
 - ADR-0047 — Deploy-Gate. **Zu ergänzen im Umsetzungs-PR nach dem Freeze:** ein Addendum für das Job-Level-Gating, den Umzug des Deploy-Hooks auf ein Environment-Secret, die überholte Plan-Prämisse im Context und den in §8 benannten Widerspruch. Der Umzug auf ein Environment-Secret weicht vom Wortlaut in ADR-0047 Zeile 34 ab („stored only as GitHub Actions repository secret") und darf nicht ohne dieses Addendum umgesetzt werden.
 - `docs/governance/GITHUB_PRO_ENABLEMENT_PLAN.md` P1 — Plan of record.
-- `docs/governance/DEVELOPMENT_CHAIN_DOCUMENTATION_FREEZE_POLICY.md` — Gate, das die Ausführung derzeit sperrt.
+- `docs/governance/DEVELOPMENT_CHAIN_DOCUMENTATION_FREEZE_POLICY.md` (wird mit PR #192 eingeführt) — Gate, das die Ausführung derzeit sperrt.
 - `.github/policies/main-production-protection.expected.json` — Sollvertrag, Fortschreibung in Schritt 5.
 - Ergebnis von Schritt 3 und 6 als Evidence unter `docs/evidence/` ablegen, Muster: `docs/evidence/m0/GITHUB_ENFORCEMENT_STATE_2026-08-10.md`. **Keine Hook-URL, keine Secret-Werte** — zulässig ist ausschließlich das Rotationsdatum ohne Inhalt.
 

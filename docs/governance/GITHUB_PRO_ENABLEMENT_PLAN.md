@@ -103,7 +103,7 @@ Schließt die einzige explizit als `owner-admin-handoff-required` markierte Lüc
 
 > **Umsetzungsstand 2026-08-11:** Das Vorgehen für die Owner-Schritte 1–4 und 6 ist als Runbook ausgearbeitet: **`docs/runbooks/PRODUCTION_ENVIRONMENT_SETUP.md`** — dort auch die verbindliche Reihenfolge, ohne die der nächste Deploy bricht.
 >
-> **Die Umsetzung selbst ist gesperrt.** P1.5 (die `.github/workflows/ci.yml`-Änderung) und das zugehörige ADR-0047-Addendum sind bis zum Abschluss des M2G Documentation Freeze zurückgestellt und werden danach als eigener Pull Request eingereicht — siehe `docs/governance/DEVELOPMENT_CHAIN_DOCUMENTATION_FREEZE_POLICY.md`. P1.7 folgt erst nach der Serververifikation.
+> **Die Umsetzung selbst ist gesperrt.** P1.5 (die `.github/workflows/ci.yml`-Änderung) und das zugehörige ADR-0047-Addendum sind bis zum Abschluss des M2G Documentation Freeze zurückgestellt und werden danach als eigener Pull Request eingereicht — siehe `docs/governance/DEVELOPMENT_CHAIN_DOCUMENTATION_FREEZE_POLICY.md` (wird mit PR #192 eingeführt). P1.7 folgt erst nach der Serververifikation.
 
 1. Environment `production` anlegen (`Settings → Environments`).
 2. **Deployment branches and tags:** ausschließlich `main`.
