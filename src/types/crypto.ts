@@ -15,7 +15,8 @@ export interface CryptoScoringInputs {
   volatility_quality?: number;    // 0.0 to 1.0 (invertierte Volatilitaet, verifizierte Historie)
   breakout_quality?: number;      // 0.0 to 1.0 (Position im realen High/Low-Fenster)
   relative_strength?: number;     // 0.0 to 1.0 (RSI, verifizierte Historie)
-  avg_daily_volume?: number;      // 0.0 to 1.0; nur aus verifizierter Market-Cap/Volume-Evidence
+  avg_daily_volume?: number;      // 0.0 to 1.0; nur aus verifizierter globaler Volume-Evidence
+  exchange_liquidity?: number;    // 0.0 to 1.0; nur aus verifizierter exchange-lokaler Provider-Evidence (z. B. Kraken Spot)
   supply_dynamics?: number;       // 0.0 to 1.0; nur aus verifizierter Supply-Evidence
   regime_bonus?: number;          // 0.0 to 1.0; nur aus verifizierter Preisveraenderungs-Evidence
   data_quality_risk?: number;     // 0.0 to 1.0; derzeit nur bei akzeptierter realer Kurshistorie

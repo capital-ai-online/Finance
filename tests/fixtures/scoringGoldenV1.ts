@@ -19,6 +19,7 @@ export const cryptoGoldenCase: { input: CryptoScoringInputs; expectedFinalScore:
     breakout_quality: 0.5,
     relative_strength: 0.5,
     avg_daily_volume: 0.5,
+    exchange_liquidity: 0.5,
     supply_dynamics: 0.5,
     regime_bonus: 0.5,
     data_quality_risk: 0.1,

@@ -16,44 +16,44 @@ const baseRef = process.env.PR_BASE_REF || 'origin/main';
 const headRef = process.env.PR_HEAD_REF || 'HEAD';
 const baselinePath = process.env.PR_BASELINE_OUTPUT || 'artifacts/pr/production-baseline.json';
 
-if (!repository) fail('GITHUB_REPOSITORY is required.');
-if (!token) fail('GITHUB_TOKEN/GH_TOKEN is required.');
-if (!prNumber) fail('PR_NUMBER is required for PR template validation.');
-if (!fs.existsSync(baselinePath)) fail(`Production baseline is missing: ${baselinePath}`);
+if (!repository) fail('GITHUB_REPOSITORY fehlt.');
+if (!token) fail('GITHUB_TOKEN/GH_TOKEN fehlt.');
+if (!prNumber) fail('PR_NUMBER ist für die PR-Vorlagenprüfung erforderlich.');
+if (!fs.existsSync(baselinePath)) fail(`Produktions-Baseline fehlt: ${baselinePath}`);
 
 const pr = await githubJson(`https://api.github.com/repos/${repository}/pulls/${prNumber}`, token);
 const body = String(pr.body || '');
 
 if (!body.includes(PR_TEMPLATE_MARKER)) {
-  fail(`PR #${prNumber} does not use the canonical template marker: ${PR_TEMPLATE_MARKER}`);
+  fail(`PR #${prNumber} verwendet nicht den Marker der kanonischen Vorlage: ${PR_TEMPLATE_MARKER}`);
 }
 
 const requiredSections = [
   '## 1. Arbeitsauftrag',
   '## 2. Agenten-/Principal-Identität und PR-Erstellungsfreigabe',
-  '## 3. Produktions-Baseline — maschinenverwaltete / beratende Evidence',
-  '## 4. Scope / Multi-Agent-Koordination',
+  '## 3. Produktions-Baseline — maschinenverwalteter / beratender Nachweis',
+  '## 4. Umfang / Multi-Agent-Koordination',
   '## 5. Änderungszusammenfassung',
   '## 6. Architektur- / Governance-Auswirkungen',
   '## 7. Sicherheitsprüfung',
   '### MCP- / LLM-Gateway-Änderungen',
-  '## 8. Technische Validierungsevidence',
-  '## 9. Risiko und Rollback',
-  '## 10. Review-Bereitschaft',
+  '## 8. Technische Validierungsnachweise',
+  '## 9. Risiko und Rücksetzung',
+  '## 10. Prüf- und Merge-Bereitschaft',
 ];
 
 const missingSections = requiredSections.filter((heading) => !body.includes(heading));
 if (missingSections.length > 0) {
-  fail(`PR #${prNumber} is missing required canonical template section(s): ${missingSections.join(', ')}`);
+  fail(`PR #${prNumber} enthält nicht alle Pflichtabschnitte der kanonischen Vorlage: ${missingSections.join(', ')}`);
 }
 
 const unresolved = [...body.matchAll(/\{\{([A-Z0-9_]+)\}\}/g)].map((match) => match[1]);
 if (unresolved.length > 0) {
-  fail(`PR #${prNumber} contains unresolved template placeholders: ${[...new Set(unresolved)].join(', ')}`);
+  fail(`PR #${prNumber} enthält nicht aufgelöste Vorlagenplatzhalter: ${[...new Set(unresolved)].join(', ')}`);
 }
 
 const claims = listAddedClaimFiles(baseRef, headRef);
-if (claims.length !== 1) fail(`Expected exactly one work claim in PR diff, found ${claims.length}.`);
+if (claims.length !== 1) fail(`Es wird genau ein Work-Claim im PR-Diff erwartet; gefunden: ${claims.length}.`);
 const claimPath = claims[0];
 const claim = readJsonFile(claimPath);
 const baseline = readJsonFile(baselinePath);
@@ -69,11 +69,11 @@ const evidenceTokens = [
 
 const missingEvidence = evidenceTokens.filter((value) => !body.includes(value));
 if (missingEvidence.length > 0) {
-  fail(`PR #${prNumber} template is stale or not machine-rendered; missing claim/baseline evidence: ${missingEvidence.join(', ')}`);
+  fail(`PR #${prNumber} ist veraltet oder nicht maschinell gerendert; folgende Claim-/Baseline-Nachweise fehlen: ${missingEvidence.join(', ')}`);
 }
 
 if (!body.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich, sofern anwendbar:** Ja')) {
-  fail('Canonical PR must explicitly retain the human/CODEOWNER approval requirement.');
+  fail('Der kanonische PR muss die Human-/CODEOWNER-Freigabe ausdrücklich beibehalten.');
 }
 
-console.log(`[PR-TEMPLATE] PR #${prNumber} uses the canonical German human-facing template and matches current work-claim/production baseline evidence.`);
+console.log(`[PR-VORLAGE] PR #${prNumber} verwendet die kanonische deutschsprachige Vorlage und entspricht den aktuellen Work-Claim-/Produktions-Baseline-Nachweisen.`);
