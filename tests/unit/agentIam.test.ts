@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   AGENT_CAPABILITIES,
   evaluateAgentAuthorization,
+  minimumRiskForCapability,
   type AgentAuthorizationRequest,
   type AgentCapability,
 } from '../../src/platform/Security/agentIam';
@@ -34,6 +35,13 @@ function request(
 }
 
 describe('M4 provider-neutral Agent IAM', () => {
+  it('keeps the canonical capability minimum-risk mapping stable', () => {
+    expect(minimumRiskForCapability(AGENT_CAPABILITIES.READ)).toBe('LOW');
+    expect(minimumRiskForCapability(AGENT_CAPABILITIES.COMMIT)).toBe('MEDIUM');
+    expect(minimumRiskForCapability(AGENT_CAPABILITIES.DEPLOY_REQUEST)).toBe('HIGH');
+    expect(minimumRiskForCapability(AGENT_CAPABILITIES.PRODUCTION_MUTATION)).toBe('CRITICAL');
+  });
+
   it('allows only an explicitly granted exact capability', () => {
     expect(evaluateAgentAuthorization(request('READ', [AGENT_CAPABILITIES.READ])).verdict).toBe('ALLOW');
     expect(evaluateAgentAuthorization(request('ANALYZE', [AGENT_CAPABILITIES.READ])).verdict).toBe('DENY');
@@ -61,6 +69,22 @@ describe('M4 provider-neutral Agent IAM', () => {
     expect(evaluateAgentAuthorization(request('COMMIT', [], {
       principal: { ...principal, provider: 'trusted-provider-name', model: 'owner-model' },
     })).verdict).toBe('DENY');
+  });
+
+  it('cannot under-classify deploy or production mutation risk', () => {
+    const deploy = evaluateAgentAuthorization(request('DEPLOY_REQUEST', [AGENT_CAPABILITIES.DEPLOY_REQUEST], {
+      environment: 'production',
+      riskClass: 'LOW',
+    }));
+    expect(deploy.verdict).toBe('DENY');
+    expect(deploy.riskClass).toBe('HIGH');
+
+    const production = evaluateAgentAuthorization(request('PRODUCTION_MUTATION', [AGENT_CAPABILITIES.PRODUCTION_MUTATION], {
+      environment: 'production',
+      riskClass: 'LOW',
+    }));
+    expect(production.verdict).toBe('DENY');
+    expect(production.riskClass).toBe('CRITICAL');
   });
 
   it('blocks production mutation from a development principal even when explicitly granted', () => {
