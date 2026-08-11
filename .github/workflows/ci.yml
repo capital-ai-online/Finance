@@ -1,13 +1,16 @@
 name: CI
 run-name: >-
-  ${{ github.event_name == 'pull_request'
-      && format('PR #{0} – CI-Prüfung', github.event.pull_request.number)
-      || format('main – CI-Prüfung für {0}', github.sha) }}
+  ${{ github.event_name == 'push'
+      && format('main – CI-Prüfung für {0}', github.sha)
+      || format('PR #{0} – CI-Prüfung', github.event.pull_request.number) }}
 
 on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
 
 permissions:
   contents: read
@@ -18,15 +21,67 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  owner-gate:
+    name: Human-/Owner-Vorprüfung
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      approved: ${{ steps.gate.outputs.approved }}
+    steps:
+      - name: main-Push ohne erneute PR-Freigabe zulassen
+        if: ${{ github.event_name == 'push' }}
+        id: push-gate
+        run: echo "approved=true" >> "$GITHUB_OUTPUT"
+
+      - name: Owner-Checkliste und aktuellen Review prüfen
+        if: ${{ github.event_name != 'push' }}
+        id: gate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EXPECTED_OWNER: SvenKulessa
+        run: |
+          set -euo pipefail
+
+          required_diff='- [x] Human/Owner: vollständigen PR-Diff geprüft.'
+          required_files='- [x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.'
+          current_body="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq '.body // ""')"
+
+          body_ok=true
+          printf '%s\n' "$current_body" | grep -Fqx -- "$required_diff" || body_ok=false
+          printf '%s\n' "$current_body" | grep -Fqx -- "$required_files" || body_ok=false
+
+          review_id="$(
+            gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" \
+              --jq '.[] | select(.user.login == env.EXPECTED_OWNER and .commit_id == env.PR_HEAD_SHA and (((.body // "") | ascii_downcase | gsub("^[[:space:]]+|[[:space:]]+$"; "")) == "okay" or ((.body // "") | contains("💪")))) | .id' \
+              | head -n 1
+          )"
+
+          if [ "$body_ok" = "true" ] && [ -n "$review_id" ]; then
+            echo "approved=true" >> "$GITHUB_OUTPUT"
+            echo "Owner-Gate erfüllt. Technische Validierung darf starten."
+          else
+            echo "approved=false" >> "$GITHUB_OUTPUT"
+            echo "Owner-Gate noch nicht erfüllt. Teure CI wird absichtlich nicht gestartet."
+            [ "$body_ok" = "true" ] || echo "Fehlend: beide Owner-Checkboxen im PR-Body."
+            [ -n "$review_id" ] || echo "Fehlend: aktueller Review von SvenKulessa mit 💪 oder okay für ${PR_HEAD_SHA}."
+          fi
+
   technical-validation:
     name: Technische Validierung
+    needs: [owner-gate]
+    if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.approved == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - name: Quellcode ohne persistierte Zugangsdaten auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
         with:
-          fetch-depth: 2
+          ref: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
+          fetch-depth: 0
           persist-credentials: false
 
       - name: CI-Validierungsumfang bestimmen
@@ -34,6 +89,8 @@ jobs:
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
 
@@ -43,9 +100,7 @@ jobs:
             exit 0
           fi
 
-          base_sha="$(git rev-parse HEAD^1)"
-          head_sha="$(git rev-parse HEAD^2)"
-          changed_files="$(git diff --name-only "$base_sha" "$head_sha")"
+          changed_files="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
           printf '%s\n' "$changed_files"
 
           docs_only=true
@@ -191,6 +246,8 @@ jobs:
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
           if [ "$EVENT_NAME" = "push" ]; then
@@ -199,9 +256,7 @@ jobs:
             exit 0
           fi
 
-          base_sha="$(git rev-parse HEAD^1)"
-          head_sha="$(git rev-parse HEAD^2)"
-          changed_files="$(git diff --name-only "$base_sha" "$head_sha")"
+          changed_files="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
           printf '%s\n' "$changed_files"
 
           required=false
@@ -234,64 +289,22 @@ jobs:
 
   build-and-test:
     needs: [technical-validation]
+    if: ${{ always() && needs.technical-validation.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Technische Validierung bestätigen
-        run: echo "Technische Validierung erfolgreich abgeschlossen."
-
-      - name: Human-/Owner-Review für aktuellen PR-Commit verifizieren
-        if: ${{ github.event_name == 'pull_request' }}
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-        run: |
-          set -euo pipefail
-
-          required_diff='- [x] Human/Owner: vollständigen PR-Diff geprüft.'
-          required_files='- [x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.'
-          current_body="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq '.body // ""')"
-
-          printf '%s\n' "$current_body" | grep -Fqx -- "$required_diff" || {
-            echo "FEHLER: Owner-Checkbox für vollständige Diff-Prüfung fehlt." >&2
-            exit 1
-          }
-          printf '%s\n' "$current_body" | grep -Fqx -- "$required_files" || {
-            echo "FEHLER: Owner-Checkbox für alle als Viewed markierten Dateien fehlt." >&2
-            exit 1
-          }
-
-          review_id="$(
-            gh api --paginate \
-              "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" \
-              --jq '.[] | select(.user.login == env.REPOSITORY_OWNER and .commit_id == env.PR_HEAD_SHA and (((.body // "") | ascii_downcase | gsub("^[[:space:]]+|[[:space:]]+$"; "")) == "okay" or ((.body // "") | contains("💪")))) | .id' \
-              | head -n 1
-          )"
-
-          if [ -z "$review_id" ]; then
-            echo "FEHLER: Kein gültiger Owner-Review für den aktuellen PR-Head ${PR_HEAD_SHA} gefunden." >&2
-            echo "Bitte nach Sichtprüfung im GitHub-Review 💪 oder okay kommentieren." >&2
-            exit 1
-          fi
-
-          echo "Human-/Owner-Gate erfüllt: Checkliste bestätigt und Review ${review_id} ist an ${PR_HEAD_SHA} gebunden."
-
-      - name: main-Push ohne PR-Gate bestätigen
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          echo "main-Push: Human-/Owner-Gate wurde bereits vor Merge erfüllt."
+        run: echo "Owner-freigegebene technische Validierung erfolgreich abgeschlossen."
 
   deploy-production:
     name: Deployment verifiziert / Render-Produktion
     needs: [build-and-test]
+    if: ${{ always() && needs.build-and-test.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Bestätigen, dass Pull Requests nicht produktiv deployen
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name != 'push' }}
         run: |
           echo "Die Pull-Request-CI ist erfolgreich. Ein Produktions-Deployment ist absichtlich deaktiviert, bis der verifizierte Commit nach main übernommen wurde."
 
