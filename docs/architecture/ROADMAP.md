@@ -2,7 +2,7 @@
 
 Status date: 2026-08-11
 Baseline branch: `main`
-Baseline commit: `dbfcbcbd5028b2520bd79980ecffff4917cb4096` (PR #196 merge)
+Baseline commit: `c093052c22ed620bc9b086ba4ec05612d7dd2150` (PR #197 merge)
 Platform version: `0.6.0`
 Canonical role: current-state DevelopmentChain status index. Detailed historical evidence remains in ADR/evidence documents.
 
@@ -29,22 +29,21 @@ Binding rules:
 
 Authority: `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`.
 
-## Current status quo after PR #196
+## Current status quo after PR #197
 
 - PR #191 remains the consolidated code baseline preceding the documentation freeze.
 - PR #192 merged the provider-neutral AI-Agent architecture, ESS-0019, ADR-0057..0063, cross-cutting architecture documents, traceability and implementation roadmap.
 - PR #194 closed M2G and synchronized the Documentation Freeze.
 - PR #195 implemented M3 CI Hardening through a regular pull request and Full-Path CI/Governance validation.
-- PR #196 validated the Docs-only Fast Path; `build-and-test` remained successful while expensive software gates were skipped as designed.
-- PR #197 introduces the streamlined Human/Owner review gate using PR checkboxes + current-commit review comment.
+- PR #196 validated the Docs-only Fast Path.
+- PR #197 merged the streamlined Human/Owner review gate using PR checkboxes + current-commit review comment and preserved `build-and-test` as the final required check.
 - CoinMarketCap remains removed/deactivated.
 - Kraken remains public REST evidence only.
-- Required CI check contract remains the stable technical name `build-and-test`.
 - M0 Evidence Baseline is COMPLETE.
-- M1 Git Guardrails are COMPLETE for the current single-owner topology.
+- M1 Git Guardrails are COMPLETE.
 - M2 Documentation Freeze is COMPLETE.
 - M3 CI Hardening is COMPLETE.
-- M4 Agent IAM is the next authorized implementation phase, subject to the Human / Owner approval gate.
+- M4 Agent IAM is ACTIVE / IN REVIEW.
 
 ## DevelopmentChain M0–M9
 
@@ -59,13 +58,41 @@ Authority: `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`.
 | M2E Traceability | COMPLETE | AI Agent traceability matrix | update every phase |
 | M2F Implementation Roadmap | COMPLETE | M0–M9 implementation roadmap | execute phase gates in order |
 | M2G Documentation Freeze | COMPLETE | freeze policy + PR #192/#194 | M3 executed |
-| M3 CI Hardening | COMPLETE | ADR-0060 + ADR-0053 + PR #195/#196 evidence | preserve Full Path, Docs Fast Path and Human/Owner gate |
-| M4 Agent IAM | AUTHORIZED / NEXT | ADR-0058 + ADR-0050/0051 | implement deny-by-default agent capabilities and merge separation |
-| M5 Observability/Telemetry/Audit | BLOCKED BY M4 | ADR-0059 + ADR-0056 | begin after M4 closure |
+| M3 CI Hardening | COMPLETE | ADR-0060 + ADR-0053 + PR #195/#196/#197 evidence | preserve Full Path, Docs Fast Path and Human/Owner gate |
+| M4 Agent IAM | ACTIVE / IN REVIEW | ADR-0058 + ADR-0050/0051 + ESS-0018/0019 | validate provider-neutral deny-by-default capabilities and merge separation |
+| M5 Observability/Telemetry/Audit | BLOCKED BY M4 | ADR-0059 + ADR-0056 | begin after M4 Human/Owner-approved merge |
 | M6 Supply Chain | BLOCKED BY M4/M5 | ADR-0060 | extend M3 evidence into provenance/attestation |
 | M7 Deployment Identity | BLOCKED | ADR-0061 | implement only after prior gates |
 | M8 Agent Cutover | BLOCKED | ADR-0062 | no cutover yet |
 | M9 Assurance | BLOCKED | ADR-0063 | final negative tests and drills |
+
+## M4 Agent IAM implementation scope
+
+M4 adds a provider-neutral authorization layer above the existing provider-specific capability profiles. The policy binds each authorization decision to an attributable human actor, app/client, agent, session and tool credential holder.
+
+Canonical agent capabilities:
+
+`READ → ANALYZE → PLAN → BRANCH → COMMIT → PR → CI_REQUEST → DEPLOY_REQUEST → PRODUCTION_MUTATION`
+
+Risk classes:
+
+- LOW: READ, ANALYZE
+- MEDIUM: PLAN, BRANCH
+- HIGH: COMMIT, PR, CI_REQUEST, DEPLOY_REQUEST
+- CRITICAL: PRODUCTION_MUTATION
+
+Security rules:
+
+- deny by default;
+- every capability requires explicit grant evidence;
+- HIGH/CRITICAL require matching human approval evidence;
+- CRITICAL requires verified step-up;
+- expired/mismatched/self-issued approval fails closed;
+- provider/model identity grants no privilege;
+- `MERGE` is not an AgentCapability and remains exclusively behind the Human/Owner PR approval gate;
+- M4 introduces no new production Supabase/Stripe/Render mutation.
+
+Evidence: `docs/evidence/m4/M4_AGENT_IAM_EVIDENCE.md`.
 
 ## Forced AI-agent architecture decision
 CAPITAL-AI uses a provider-neutral Agent Control Plane with four planes: Research & Evidence, Agent Execution, Control, Production. ChatGPT and Claude are controlled execution clients; Google AI Studio/Gemini is a development/prototype profile; NotebookLM is research/evidence only. No provider is a trust root.
@@ -85,4 +112,4 @@ CAPITAL-AI uses a provider-neutral Agent Control Plane with four planes: Researc
 - M5–M9 implementation may not bypass preceding phase closures.
 
 ## Next action
-Validate and merge the streamlined Human / Owner approval gate in PR #197, then begin M4 Agent IAM. M4 must formalize capability separation so that agent execution can prepare and validate changes but MERGE remains a separately authorized human-controlled capability.
+Validate the M4 provider-neutral Agent IAM pull request through full CI/Governance and the Human/Owner review gate. After merge, record the M4 merge SHA, set M4 to COMPLETE and authorize M5 Observability/Telemetry/Audit.
