@@ -13,7 +13,7 @@ Dieses Dokument ist die kanonische menschenlesbare Sicht auf externe Schnittstel
 | ID | Provider / Interface | Kategorie | Runtime | Auth / Variable | Evidence / Code | QA | Decision |
 |---|---|---|---|---|---|---|---|
 | API-MARKET-BINANCE-001 | Binance Spot Public Market Data | market-data | Render backend | none (public data) | `server/binanceLandingQuickAnalysis.ts`, PR #81 | NOT_TESTED | EVALUATE |
-| API-MARKET-KRAKEN-001 | Kraken API | crypto market-data / exchange | backend | `KRAKEN_API_KEY`, `KRAKEN_API_SECRET`; legacy aliases `API_KEY`, `API_SECRET` present | `.env.example`, `server/_.env.example`, `cryptoHistoryProvider.ts`, `server.ts`, ADR-0020 | NOT_TESTED | EVALUATE |
+| API-MARKET-KRAKEN-001 | Kraken API | crypto market-data / exchange | backend | none (public `api.kraken.com` ticker); ~~`KRAKEN_API_KEY`/`KRAKEN_API_SECRET`/`API_KEY`/`API_SECRET`~~ removed 2026-08-11 — never read by any code path | `server/marketData/cryptoProviderChain.ts` | NOT_TESTED | EVALUATE |
 | API-MARKET-COINGECKO-001 | CoinGecko Crypto Data | market-data | backend/services | provider public/API contract | `cryptoHistoryProvider.ts`, `cryptoSnapshotProvider.ts`, `liveCryptoSnapshotConsensus.ts` | NOT_TESTED | EVALUATE |
 | API-MARKET-COINMARKETCAP-001 | CoinMarketCap | crypto market-data | backend | ~~`COINMARKETCAP_API_KEY`~~ (removed) | Removed 2026-08-11: adapter, provider-registry entry, secret-manifest key and `.env.example` declarations deleted; crypto snapshot quorum now runs CoinGecko-only (single-source, so `getLiveCryptoSnapshotConsensus` consistently reports `INSUFFICIENT_SOURCES` per fail-closed policy) | REMOVED | REMOVED |
 | API-MARKET-FMP-001 | Financial Modeling Prep | market-data | Render backend | `FMP_API_KEY` | `server/fmpIndices.ts`, provider registry, `render.yaml` | NOT_TESTED | EVALUATE |
@@ -24,7 +24,7 @@ Dieses Dokument ist die kanonische menschenlesbare Sicht auf externe Schnittstel
 | API-MARKET-TWELVEDATA-001 | Twelve Data | market-data | backend | `TWELVEDATA_API_KEY` | `.env.example`, `render.yaml`, external market-data adapters | NOT_TESTED | EVALUATE |
 | API-MACRO-FRED-001 | FRED | macro/rate evidence | backend | `FRED_API_KEY` | `macroRateEvidence.ts`, ADR-0023, `.env.example`, `render.yaml` | NOT_TESTED | EVALUATE |
 | API-MACRO-ECB-001 | ECB Data API | macro/rate evidence | backend | none / keyless | macro evidence architecture | NOT_TESTED | EVALUATE |
-| API-NEWS-001 | News API | news/sentiment evidence | backend | `NEWS_API_KEY`; noncanonical legacy spelling `News_API_KEy` also declared | `src/features/news/newsRoutes.ts`, `.env.example`, `render.yaml` | NOT_TESTED | EVALUATE |
+| API-NEWS-001 | News API | news/sentiment evidence | backend | `NEWS_API_KEY`; noncanonical legacy spelling ~~`News_API_KEy`~~ removed 2026-08-11 | `src/features/news/newsRoutes.ts`, `.env.example`, `render.yaml` | NOT_TESTED | EVALUATE |
 | API-AI-ANTHROPIC-001 | Anthropic Claude API | ai | Render backend | `ANTHROPIC_API_KEY` | `server/anthropicClient.ts`, `agentModelRouting.ts`, `render.yaml` | PARTIAL | KEEP/EVALUATE |
 | API-AI-OPENAI-001 | OpenAI API | ai | Render backend | `OPENAI_API_KEY` | `server/openaiClient.ts`, RAG embeddings, `render.yaml` | PARTIAL | KEEP/EVALUATE |
 | API-AI-GEMINI-001 | Google Gemini API | ai | Render backend | `GEMINI_API_KEY` | `server/ai.ts`, `agentModelRouting.ts`, `render.yaml` | PARTIAL | KEEP/EVALUATE |
@@ -60,11 +60,11 @@ Dieses Dokument ist die kanonische menschenlesbare Sicht auf externe Schnittstel
 - `TWELVEDATA_API_KEY` — SECRET — Twelve Data.
 - `FRED_API_KEY` — SECRET — FRED macro evidence.
 - `NEWS_API_KEY` — SECRET — canonical News API variable.
-- `News_API_KEy` — LEGACY/NONCANONICAL — casing duplicate; candidate for removal after usage scan.
-- `KRAKEN_API_KEY` — SECRET — Kraken.
-- `KRAKEN_API_SECRET` — SECRET — Kraken.
-- `API_KEY` — LEGACY/AMBIGUOUS — declared alongside Kraken credentials; must not remain generic unless code evidence proves necessity.
-- `API_SECRET` — LEGACY/AMBIGUOUS — same governance finding.
+- `News_API_KEy` — REMOVED 2026-08-11 — casing-duplicate fallback deleted from `newsRoutes.ts` and both `.env.example` templates; `NEWS_API_KEY` is now the only variable read.
+- `KRAKEN_API_KEY` — REMOVED 2026-08-11 — never read by any code path (Kraken adapter only calls the public, unauthenticated `api.kraken.com` ticker); deleted from both `.env.example` templates.
+- `KRAKEN_API_SECRET` — REMOVED 2026-08-11 — same finding as `KRAKEN_API_KEY`.
+- `API_KEY` — REMOVED 2026-08-11 — generic, unreferenced legacy alias declared alongside Kraken credentials; deleted.
+- `API_SECRET` — REMOVED 2026-08-11 — same finding as `API_KEY`.
 - Alpaca credential variable(s) — PRODUCTION CONFIG TO VERIFY — reported as present, but exact canonical names are not evidenced by current repository manifest and must be read from the deployment configuration before documentation is finalized.
 
 ### Supabase
@@ -111,8 +111,8 @@ Client IDs are identifiers; client secrets are SECRET and server-only.
 ## 3. Configuration Drift Findings
 
 1. **Kraken was missing from the first ESS-0015 inventory** although repository evidence exists. Corrected in this snapshot.
-2. **News API must be first-class inventory**, not an incidental key. `NEWS_API_KEY` is canonical; `News_API_KEy` is a casing duplicate requiring usage verification and eventual removal.
-3. **Generic `API_KEY` / `API_SECRET` are ambiguous.** They are declared in the Kraken section but violate provider-specific naming expectations. Do not remove until call-site scan proves they are unused/legacy.
+2. **News API casing duplicate resolved (2026-08-11):** `News_API_KEy` was a noncanonical fallback in `newsRoutes.ts`; usage scan confirmed `NEWS_API_KEY` alone is sufficient, and the duplicate has been removed from code and both `.env.example` templates.
+3. **Generic `API_KEY` / `API_SECRET` resolved (2026-08-11):** call-site scan found zero references anywhere in the codebase (Kraken adapter only hits the public, unauthenticated ticker endpoint). Removed along with the equally unreferenced `KRAKEN_API_KEY`/`KRAKEN_API_SECRET` from both `.env.example` templates.
 4. **FMP drift:** `FMP_API_KEY` is declared by `render.yaml`, but not by the root `.env.example` snapshot.
 5. **Stripe publishable-key drift:** `.env.example` uses `VITE_STRIPE_PUBLISHABLE_KEY`; `render.yaml` declares `STRIPE_PUBLISHABLE_KEY`. Call-site/build-time usage must determine the canonical name.
 6. **Two env example files exist** (`.env.example` and `server/_.env.example`) with divergent variable sets. They must be reconciled after inventory, not used as independent sources of truth.
