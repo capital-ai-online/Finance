@@ -1,57 +1,76 @@
 # ADR-0053 — Node.js 24 LTS & Git 2.55 Toolchain Baseline
 
-Status: Proposed  
+Status: Accepted  
 Date: 2026-08-10  
+Last updated: 2026-08-11 (M3 CI Hardening)  
 Owner: CAPITAL-AI
 
 ## Deutsch
 
 ### Kontext
 
-CAPITAL-AI verwendete vor diesem ADR Node.js 22 in GitHub Actions und in beiden Docker-Stages. Die GitHub-hosted Ubuntu-24.04-Runner liefern Git 2.54.0, während Git 2.55.0 als gewählte Upstream-Baseline verwendet wird. Node.js 26 ist die Current-Linie; Node.js 24 (Krypton) ist die gewählte Produktions-LTS-Linie.
+CAPITAL-AI verwendete vor diesem ADR Node.js 22 in GitHub Actions und in beiden Docker-Stages. Die GitHub-hosted Ubuntu-Runner liefern eine andere Git-Version als die für CAPITAL-AI gewählte Upstream-Baseline Git 2.55.0. Node.js 24.18.0 LTS ist die gewählte Produktions-, CI- und lokale Entwicklungs-Linie.
 
-Für die Produktionsanwendung wird nicht auf die nicht-LTS Current-Linie Node 26 gewechselt. Stattdessen wird Node.js 24.18.0 LTS als einheitliche CI-, lokale Entwicklungs- und Docker-Runtime eingeführt. Das Docker-Image bleibt unveränderlich über einen SHA-256-Digest gepinnt.
-
-Git 2.55.0 wird vor `actions/checkout` aus dem offiziellen Source-Tarball von kernel.org gebaut und unter `/opt/git-2.55.0` installiert. Das heruntergeladene XZ-Archiv wird vor dem Entpacken strukturell mit `xz --test` validiert. Der optionale Rust-Unterbau von Git 2.55 wird mit dem upstream unterstützten `NO_RUST=YesPlease` deaktiviert, weil CAPITAL-AI in CI ausschließlich die klassische Git-CLI benötigt. Dadurch wird zugleich die Cargo/GNU-make-jobserver-Warnung vermieden, ohne Buildfehler zu unterdrücken.
-
-### Release-Impact
-
-Git 2.55 verbessert unter anderem Merge-, Fetch-, Repository- und Sicherheitsverhalten. Rust-Unterstützung ist in Git 2.55 optional und wird für diesen CI-Build bewusst nicht benötigt. Nach Checkout verifiziert CI den Commit und die Repository-Objektdatenbank mit `git rev-parse --verify 'HEAD^{commit}'` sowie `git fsck --strict --no-dangling`.
-
-Node.js 24.17.0 enthielt mehrere Security-Fixes in TLS, HTTP/2, DNS/Net und WebCrypto. Node.js 24.18.0 aktualisiert unter anderem Root-Zertifikate und HTTP-/Crypto-Verhalten. Im Repository wurden keine bekannten Legacy-Node-APIs gefunden, die vor diesem Upgrade eine Code-Migration erfordern.
+Das Produktions-Docker-Image bleibt über einen SHA-256-Digest unveränderlich gepinnt. Git 2.55.0 wird für vollständige Validierung aus dem offiziellen Source-Tarball von kernel.org gebaut und unter `/opt/git-2.55.0` installiert. Der optionale Rust-Unterbau wird mit `NO_RUST=YesPlease` deaktiviert, weil CAPITAL-AI in CI ausschließlich die klassische Git-CLI benötigt.
 
 ### Entscheidung
 
 1. Produktions- und CI-Runtime: Node.js 24.18.0 LTS.
 2. Docker: `node:24.18.0-alpine` mit immutable Multi-Platform-Digest.
 3. Lokale Node-Authority: `.nvmrc` mit `24.18.0`; `package.json` begrenzt auf die Node-24-LTS-Linie.
-4. Git CI Baseline: exakt 2.55.0 für diesen Upgrade-Schritt.
-5. Git-Source wird über HTTPS von kernel.org bezogen; XZ-Strukturintegrität wird vor Extraction geprüft.
-6. Optionale Rust-Git-Subsysteme werden im CI-Build mit `NO_RUST=YesPlease` deaktiviert.
-7. Nach Checkout ist `git fsck --strict --no-dangling` ein fail-closed Repository-Integritätsgate.
-8. Keine Node-26-Current-Runtime in Produktion vor einer separaten LTS-/Compatibility-Entscheidung.
-9. Docker-Hardening-Regex wird gemeinsam mit der Runtime-Basis aktualisiert; ein Node-22-Produktionsimage wird danach explizit blockiert.
+4. Git CI Baseline: exakt 2.55.0 für vollständige Validierungsläufe.
+5. Git-Source wird über HTTPS von kernel.org bezogen.
+6. Der Git-2.55.0-Tarball MUSS vor `xz --test`, Extraction und Build fail-closed gegen den im Repository/Workflow gepinnten SHA-256-Wert `457fdb04dc8728e007d4688695e6912e6f680727920f2a40bf11eacc17505357` geprüft werden.
+7. `xz --test` bleibt als zusätzliche Strukturprüfung bestehen, ist aber nicht mehr der alleinige Integritätsnachweis.
+8. Optionale Rust-Git-Subsysteme werden im CI-Build mit `NO_RUST=YesPlease` deaktiviert.
+9. Nach Checkout ist für vollständige Validierung `git fsck --strict --no-dangling` ein fail-closed Repository-Integritätsgate.
+10. Keine Node-26-Current-Runtime in Produktion vor einer separaten LTS-/Compatibility-Entscheidung.
+11. Der stabile Required Check bleibt technisch `build-and-test`.
+
+## M3 Addendum — Risk-based CI & kryptografischer Source-Pin (2026-08-11)
+
+### Anlass
+
+Die M0/M2G-Evidence zeigte, dass selbst reine Dokumentations-PRs den vollständigen Git-2.55.0-Source-Build, `npm ci`, Unit-Tests und den Production Build ausführen. Dies verursacht vermeidbare GitHub-Actions-Kosten, obwohl der Docker-Build bereits scope-basiert übersprungen wurde. Gleichzeitig dokumentierte dieser ADR selbst, dass `xz --test` keine kryptografische Integritätsprüfung darstellt.
+
+### Ergänzende Entscheidung
+
+CAPITAL-AI führt einen fail-closed, pfadbasierten CI-Fast-Path ein:
+
+- `push` auf `main`: immer vollständige Validierung.
+- Pull Requests mit Änderungen außerhalb von `docs/**`, `.ai/**` oder Markdown-Dateien: immer vollständige Validierung.
+- Reine Dokumentations-PRs: der Required Check `build-and-test` bleibt vorhanden und erfolgreich ausführbar, überspringt jedoch Git-Source-Kompilation, Node/npm-Setup, Tests, Production Build, Predeploy und Docker-Build.
+- Die separaten Governance-Workflows bleiben für Dokumentations-PRs aktiv; Repository-Konventionen und Workflow-Security werden dadurch nicht umgangen.
+- Die Scope-Klassifikation erfolgt unmittelbar nach einem minimalen, SHA-gepinnten `actions/checkout` mit `persist-credentials: false`.
+- Dieser initiale Checkout dient nur der Ermittlung des Diffs und der Commit-Existenz. Bei Vollvalidierung wird vor Ausführung von Repository-Code, Dependency-Installation, Tests oder Builds die verifizierte Git-2.55.0-Toolchain installiert.
+- Damit wird die frühere Formulierung „Git 2.55.0 wird vor `actions/checkout` gebaut“ für den M3-Stand ersetzt.
+
+### Trust Boundary
+
+Der initiale Scope-Checkout besitzt keine persistierten Zugangsdaten und verwendet ausschließlich eine auf vollständigen 40-Zeichen-SHA gepinnte Checkout-Action. Er darf keine Repository-Skripte, Package-Manager oder Build-Schritte ausführen. Sobald `full_validation=true` ist, gilt Git 2.55.0 als Toolchain-Authority für die folgenden Git-Integritäts- und Software-Validierungsschritte.
+
+### Kosten-/Sicherheitsauswirkung
+
+Die Optimierung reduziert teure Linux-Actions-Minuten nur bei nachweislich dokumentationsreinem PR-Scope. Sie reduziert keine Tests für Code, Workflow, Dependencies, Runtime, Docker oder Deployment. `main` bleibt immer vollständig validiert, sodass vor dem bestehenden Produktions-Deploy-Pfad weiterhin die vollständige CI durchlaufen wird.
 
 ### Risiken und Rollback
 
-Das Node-Major-Upgrade verändert V8, npm und einzelne Core-API-Details. Deshalb bleiben TypeScript, Unit-Tests, Production Build, Docker Build, Runtime-Metadaten und Render-Deploy verpflichtende Gates. Bei Regression wird auf den letzten verifizierten Node-22-Digest und Node-22-CI-Stand zurückgerollt.
+Risiko: Eine zu breite Docs-only-Klassifikation könnte eine relevante Änderung fälschlich in den Fast Path einordnen. Deshalb ist die Allowlist bewusst eng; jede nicht eindeutig dokumentarische Datei fällt automatisch auf vollständige Validierung zurück.
 
-Der Git-Source-Build betrifft ausschließlich CI-Tooling und nicht das Produktionscontainer-Image. Ist kernel.org nicht erreichbar, ist das Archiv beschädigt, schlägt der Build fehl oder meldet `git fsck` einen Objektfehler, blockiert CI fail-closed. Ein stilles Downgrade unter Git 2.55 findet nicht statt. `xz --test` validiert die Archivstruktur, ist jedoch keine kryptografische Publisher-Signaturprüfung.
+Rollback: Die Scope-Bedingungen können entfernt und alle Schritte wieder unconditional ausgeführt werden. Der SHA-256-Pin für den Git-Tarball darf bei einem Rollback der Kostenoptimierung nicht entfernt werden.
 
-### ADR-ID-Integrität
+### Verification
 
-Während der Synchronisation mit `main` wurde festgestellt, dass `ADR-0052` bereits dem Transactional PDF-Credit Ledger gehört. Der Toolchain-ADR wurde deshalb auf `ADR-0053` verschoben, um eine doppelte Architekturentscheidungs-ID zu verhindern.
+M3 ist erst abgeschlossen, wenn:
+- ein Workflow-ändernder PR die vollständige Validierung erfolgreich durchläuft;
+- die SHA-256-Prüfung des Git-Tarballs in diesem Lauf erfolgreich ist;
+- ein nachgelagerter reiner Dokumentations-PR den Fast Path nachweislich nutzt und trotzdem `build-and-test` + Governance erfolgreich meldet;
+- `main` nach Merge weiterhin vollständige Validierung ausführt.
 
-## English
+## ADR-ID-Integrität
 
-### Context
+Der Toolchain-ADR verwendet `ADR-0053`, da `ADR-0052` der Transactional PDF-Credit Ledger Authority ist.
 
-CAPITAL-AI previously used Node.js 22 in GitHub Actions and both Docker stages. GitHub-hosted Ubuntu 24.04 runners expose Git 2.54.0, while this change selects Git 2.55.0 as the CI baseline. Node.js 26 is the Current line; Node.js 24 (Krypton) is the selected production LTS line.
+## English summary
 
-### Decision
-
-CAPITAL-AI standardizes CI, local development and production Docker on Node.js 24.18.0 LTS and keeps the Docker base immutable by SHA-256 digest. Git 2.55.0 is built before checkout from the official kernel.org source tarball. The XZ archive is structurally validated before extraction, optional Rust subsystems are disabled via upstream-supported `NO_RUST=YesPlease`, and the checked-out repository is validated with strict Git object-database checks.
-
-Node 26 Current is intentionally not introduced into production. The Docker hardening policy is updated together with the runtime baseline so a legacy Node 22 production image is rejected. Existing TypeScript, unit, build, Docker, runtime-metadata and Render deployment gates remain mandatory.
-
-The toolchain decision uses ADR-0053 because ADR-0052 became authoritative for the Transactional PDF-Credit Ledger on `main` before this PR was merged.
+CAPITAL-AI standardizes production/CI on Node.js 24.18.0 LTS and full-validation Git operations on Git 2.55.0. M3 adds a pinned SHA-256 verification for the upstream Git tarball before extraction/build and introduces a conservative documentation-only PR fast path. The required check remains `build-and-test`; every `main` push and every non-documentation change still receives full validation. The initial checkout used for scope classification is immutable-SHA pinned and does not persist credentials or execute repository code.
