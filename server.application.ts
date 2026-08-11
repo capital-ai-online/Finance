@@ -112,11 +112,6 @@ const PRODUCTION_ORIGINS = [
   'https://www.capital-ai.online',
 ];
 
-// Google AI Studio: NUR über explizite Environment Variable, nie hartcodiert,
-// und NUR außerhalb der echten Produktionsumgebung nutzbar (ADR-0009,
-// "Dadurch bleibt die Produktionsumgebung frei von unnötigen Entwicklungsfreigaben").
-const AI_STUDIO_ORIGIN = getCleanEnv('AI_STUDIO_ORIGIN');
-
 function isLocalDevOrigin(origin: string): boolean {
   // Nur exakt localhost/127.0.0.1 mit optionalem Port - kein Teilstring-Match,
   // der z.B. auf "http://localhost.attacker.com" anspringen könnte.
@@ -127,7 +122,6 @@ function isOriginAllowed(origin: string): boolean {
   if (PRODUCTION_ORIGINS.includes(origin)) return true;
   if (!isProductionEnv) {
     if (isLocalDevOrigin(origin)) return true;
-    if (AI_STUDIO_ORIGIN && origin === AI_STUDIO_ORIGIN) return true;
   }
   return false;
 }
@@ -213,7 +207,7 @@ app.use((req, res, next) => {
   // Teil des ADR-Texts).
   const frameAncestors = [
     "'self'",
-    ...(!isProductionEnv ? ["https://ai.studio", "http://localhost:*"] : []),
+    ...(!isProductionEnv ? ["http://localhost:*"] : []),
   ].join(' ');
   // Audit ARCH-AUDIT-0002 (N7): script-src und style-src ohne 'unsafe-inline'/'unsafe-eval'
   // in Produktion. Der Vite-Produktionsbuild enthaelt weder Inline-<script>- noch

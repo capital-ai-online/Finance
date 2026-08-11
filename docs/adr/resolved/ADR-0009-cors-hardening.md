@@ -280,3 +280,29 @@ Ergebnis
 Capital-AI verwendet eine kontrollierte CORS-Allowlist Architektur.
 Entwicklungs- und Produktionsumgebung sind logisch getrennt und gegen unautorisierte Browser-basierte Fremdzugriffe geschützt.
 Diese Architekturentscheidung ist Bestandteil der Capital-AI Security Baseline.
+
+---
+
+## Nachtrag 2026-08-11 — Abschaltung der Google-AI-Studio-Origin-Ausnahme (Q6)
+
+Google AI Studio wird nicht mehr als Entwicklungsumgebung für CAPITAL-AI verwendet (siehe
+`.env.example`-Historie). Die in diesem ADR beschriebene, ausschließlich außerhalb der
+Produktionsumgebung wirksame `AI_STUDIO_ORIGIN`-Ausnahme (§ "Google AI Studio Entwicklung") ist
+damit obsolet und wurde vollständig entfernt, inklusive aller aktiven und noch nicht verdrahteten
+(ADR-0014-Dekompositions-)Duplikate der Origin-/CSP-Logik:
+
+- `server.application.ts` — inline `isOriginAllowed()` (CORS) und `frameAncestors` (CSP) verlieren
+  den `AI_STUDIO_ORIGIN`-Zweig; die Konstante entfällt vollständig.
+- `server/middleware/cors.ts` — extrahierte, noch nicht aktiv verdrahtete Kopie von
+  `isOriginAllowed()`, ebenso bereinigt, damit eine künftige Kompositions-Umstellung die
+  Ausnahme nicht versehentlich wieder einführt.
+- `server/middleware/securityHeaders.ts` — `buildFrameAncestors()`, dieselbe Bereinigung.
+- `server/securityResponse.ts` — `buildDevelopmentCsp()`s `frame-ancestors` (aktiv über
+  `attachSecurityResponseContext()`/`server/logger.ts` im Entwicklungsmodus wirksam).
+- `.env.example`, `server/_.env.example`, `render.yaml` — `AI_STUDIO_ORIGIN`-Variable und
+  zugehörige Kommentare entfernt.
+
+Die übrige CORS-Architektur (feste Produktions-Allowlist, `localhost`/`127.0.0.1`-Ausnahme nur
+außerhalb Produktion, Security-Event-Logging blockierter Origins, keine Wildcards) bleibt
+unverändert bestehen und ist von diesem Nachtrag nicht betroffen. Referenz: `docs/seo/
+SEO_MANAGEMENT_ROADMAP.md`, Punkt `Q6`.

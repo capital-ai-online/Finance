@@ -11,6 +11,10 @@ describe('server middleware extraction invariants', () => {
     expect(isOriginAllowed('https://capital-ai.online.attacker.example', true)).toBe(false);
   });
 
+  it('no longer grants the retired Google AI Studio origin exception, even in development', () => {
+    expect(isOriginAllowed('https://ai.studio', false)).toBe(false);
+  });
+
   it('recognizes only exact localhost development origins', () => {
     expect(isLocalDevOrigin('http://localhost:5173')).toBe(true);
     expect(isLocalDevOrigin('https://127.0.0.1:3000')).toBe(true);

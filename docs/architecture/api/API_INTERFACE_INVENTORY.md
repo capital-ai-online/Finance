@@ -95,7 +95,7 @@ Dieses Dokument ist die kanonische menschenlesbare Sicht auf externe Schnittstel
 - `TOTP_ENCRYPTION_KEY` — HIGH-PRIVILEGE SECRET.
 - `METRICS_TOKEN` — SECRET; declared in Render manifest, purpose/consumer to trace.
 - `APP_URL` — CONFIG.
-- `AI_STUDIO_ORIGIN` — CONFIG / development CORS origin.
+- `AI_STUDIO_ORIGIN` — RETIRED; explicitly removed by the ADR-0009 addendum (2026-08-11, Q6) and must not be restored.
 - `VITE_GA_MEASUREMENT_ID` — PUBLIC CONFIG, not a secret.
 - `ORCHESTRATOR_ADMIN_TOKEN` — RETIRED; explicitly removed by ADR-0003.5 and must not be restored.
 
