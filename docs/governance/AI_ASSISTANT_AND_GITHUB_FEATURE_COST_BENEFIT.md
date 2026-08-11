@@ -183,6 +183,7 @@ Bei Einhaltung aller Empfehlungen bleibt im GitHub-Teilbudget genau **ein** Post
 
 ## Verwandte Dokumente
 
+- `docs/governance/GITHUB_PRO_ENABLEMENT_DECISION.md` — M2-Festlegung; dieses Dokument liefert die dort geforderte Kosten-/Nutzen-Bewertung
 - `docs/governance/PLATFORM_COST_BUDGET_POLICY.md` — Deckel und Eskalationsregel
 - `docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md` — Run-Limits, verbotene Kostenmuster
 - `docs/governance/GITHUB_PRO_ENABLEMENT_PLAN.md` — Umsetzung der Plattformfunktionen

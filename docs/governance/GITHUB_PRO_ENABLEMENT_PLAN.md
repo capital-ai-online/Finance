@@ -7,6 +7,8 @@ Account: `SvenKulessa` (persönlicher Account, 0 öffentliche Repositories)
 Autorität: ergänzt `docs/governance/GITHUB_MAIN_PROTECTION_POLICY.md` und `docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md`
 Kostenrahmen: `docs/governance/PLATFORM_COST_BUDGET_POLICY.md` — 40 EUR Gesamtdeckel, davon 20 EUR GitHub-Teilbudget
 
+> **Verhältnis zu `docs/governance/GITHUB_PRO_ENABLEMENT_DECISION.md` (M2):** Jene Entscheidung stellt fest, dass ein GitHub-Plan-Upgrade eine **separate Kosten-/Nutzen-Entscheidung** erfordert und kein DevelopmentChain-Blocker ist. Dieses Dokument und die drei nachfolgend genannten liefern genau diese Entscheidungsgrundlage; sie ersetzen die M2-Festlegung nicht, sondern erfüllen ihre Anforderung.
+>
 > **Ergänzende Dokumente (2026-08-11):** Der Modellvergleich zur Repository-Sichtbarkeit steht in `docs/governance/REPOSITORY_VISIBILITY_AND_COLLABORATION_MODELS.md`, der Feature- und Assistenz-Kostenvergleich in `docs/governance/AI_ASSISTANT_AND_GITHUB_FEATURE_COST_BENEFIT.md`, die Umsatzseite in `docs/architecture/MONETIZATION_ROADMAP.md`.
 
 ## 1. Zweck
@@ -103,7 +105,7 @@ Schließt die einzige explizit als `owner-admin-handoff-required` markierte Lüc
 
 > **Umsetzungsstand 2026-08-11:** Das Vorgehen für die Owner-Schritte 1–4 und 6 ist als Runbook ausgearbeitet: **`docs/runbooks/PRODUCTION_ENVIRONMENT_SETUP.md`** — dort auch die verbindliche Reihenfolge, ohne die der nächste Deploy bricht.
 >
-> **Die Umsetzung selbst ist gesperrt.** P1.5 (die `.github/workflows/ci.yml`-Änderung) und das zugehörige ADR-0047-Addendum sind bis zum Abschluss des M2G Documentation Freeze zurückgestellt und werden danach als eigener Pull Request eingereicht — siehe `docs/governance/DEVELOPMENT_CHAIN_DOCUMENTATION_FREEZE_POLICY.md` (wird mit PR #192 eingeführt). P1.7 folgt erst nach der Serververifikation.
+> **Die Umsetzung selbst ist gesperrt.** P1.5 (die `.github/workflows/ci.yml`-Änderung) und das zugehörige ADR-0047-Addendum sind bis zum Abschluss des M2G Documentation Freeze zurückgestellt und werden danach als eigener Pull Request eingereicht — siehe `docs/governance/DEVELOPMENT_CHAIN_DOCUMENTATION_FREEZE_POLICY.md`. P1.7 folgt erst nach der Serververifikation.
 
 1. Environment `production` anlegen (`Settings → Environments`).
 2. **Deployment branches and tags:** ausschließlich `main`.

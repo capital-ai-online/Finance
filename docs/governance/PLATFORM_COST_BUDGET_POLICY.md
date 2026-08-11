@@ -98,6 +98,7 @@ Diese Richtlinie wird überprüft, sobald:
 
 ## 8. Verwandte Dokumente
 
+- `docs/governance/GITHUB_PRO_ENABLEMENT_DECISION.md` — M2-Festlegung, dass ein Plan-Upgrade eine separate Kosten-/Nutzen-Entscheidung erfordert; diese Richtlinie ist deren Kostenseite
 - `docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md` — Run-Limits und Kostenmuster im GitHub-Teilbudget
 - `docs/governance/GITHUB_PRO_ENABLEMENT_PLAN.md` — Plattformfunktionen im GitHub-Teilbudget
 - `docs/governance/AI_ASSISTANT_AND_GITHUB_FEATURE_COST_BENEFIT.md` — Kosten-Nutzen je Feature und Assistenz-Tool
