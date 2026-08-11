@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  issues: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -229,6 +230,35 @@ jobs:
           test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{.Config.User}}')" = "capitalai"
           test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
           docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
+
+      - name: Human-/Owner-Freigabe für aktuellen PR-Commit verifizieren
+        if: ${{ github.event_name == 'pull_request' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          export EXPECTED="/owner-approve ${PR_HEAD_SHA}"
+          echo "Erforderliche Owner-Freigabe: ${EXPECTED}"
+
+          approval_id="$(
+            gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
+              --jq '.[] | select(.user.login == env.REPOSITORY_OWNER and .body == env.EXPECTED) | .id' \
+              | head -n 1
+          )"
+
+          if [ -z "$approval_id" ]; then
+            echo "FEHLER: Für den aktuellen PR-Head ${PR_HEAD_SHA} liegt keine menschliche Owner-Freigabe vor." >&2
+            echo "Der Repository-Owner muss zuerst den vollständigen PR-Diff prüfen und anschließend exakt kommentieren:" >&2
+            echo "${EXPECTED}" >&2
+            exit 1
+          fi
+
+          echo "Owner-Freigabe für den exakten PR-Head ${PR_HEAD_SHA} verifiziert (Kommentar-ID ${approval_id})."
 
   deploy-production:
     name: Deployment verifiziert / Render-Produktion
