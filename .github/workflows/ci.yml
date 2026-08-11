@@ -247,19 +247,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR_BODY: ${{ github.event.pull_request.body }}
           REPOSITORY_OWNER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
 
           required_diff='- [x] Human/Owner: vollständigen PR-Diff geprüft.'
           required_files='- [x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.'
+          current_body="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq '.body // ""')"
 
-          printf '%s\n' "$PR_BODY" | grep -Fqx -- "$required_diff" || {
+          printf '%s\n' "$current_body" | grep -Fqx -- "$required_diff" || {
             echo "FEHLER: Owner-Checkbox für vollständige Diff-Prüfung fehlt." >&2
             exit 1
           }
-          printf '%s\n' "$PR_BODY" | grep -Fqx -- "$required_files" || {
+          printf '%s\n' "$current_body" | grep -Fqx -- "$required_files" || {
             echo "FEHLER: Owner-Checkbox für alle als Viewed markierten Dateien fehlt." >&2
             exit 1
           }
