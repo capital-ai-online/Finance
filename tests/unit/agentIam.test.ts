@@ -34,6 +34,26 @@ function request(
   };
 }
 
+const highApproval = {
+  approvalId: 'approval-high',
+  approvedByHumanActorId: 'owner-1',
+  subjectAgentId: 'agent-1',
+  capability: AGENT_CAPABILITIES.DEPLOY_REQUEST,
+  targetResource: 'github:SvenKulessa/Finance',
+  expiresAt: '2099-01-01T00:00:00.000Z',
+  stepUpVerified: false,
+} as const;
+
+const criticalApproval = {
+  approvalId: 'approval-critical',
+  approvedByHumanActorId: 'owner-1',
+  subjectAgentId: 'agent-1',
+  capability: AGENT_CAPABILITIES.PRODUCTION_MUTATION,
+  targetResource: 'github:SvenKulessa/Finance',
+  expiresAt: '2099-01-01T00:00:00.000Z',
+  stepUpVerified: true,
+} as const;
+
 describe('M4 provider-neutral Agent IAM', () => {
   it('keeps the canonical capability minimum-risk mapping stable', () => {
     expect(minimumRiskForCapability(AGENT_CAPABILITIES.READ)).toBe('LOW');
@@ -87,61 +107,61 @@ describe('M4 provider-neutral Agent IAM', () => {
     expect(production.riskClass).toBe('CRITICAL');
   });
 
+  it('allows HIGH only with matching human approval and no mandatory step-up', () => {
+    expect(evaluateAgentAuthorization(request('DEPLOY_REQUEST', [AGENT_CAPABILITIES.DEPLOY_REQUEST], {
+      environment: 'production',
+      riskClass: 'HIGH',
+      approval: highApproval,
+    }))).toMatchObject({ verdict: 'ALLOW', riskClass: 'HIGH' });
+  });
+
+  it('requires CRITICAL approval plus step-up', () => {
+    const base = request('PRODUCTION_MUTATION', [AGENT_CAPABILITIES.PRODUCTION_MUTATION], {
+      environment: 'production',
+      riskClass: 'CRITICAL',
+    });
+
+    expect(evaluateAgentAuthorization({
+      ...base,
+      approval: { ...criticalApproval, stepUpVerified: false },
+    }).verdict).toBe('DENY');
+
+    expect(evaluateAgentAuthorization({ ...base, approval: criticalApproval }))
+      .toMatchObject({ verdict: 'ALLOW', riskClass: 'CRITICAL' });
+  });
+
   it('blocks production mutation from a development principal even when explicitly granted', () => {
     expect(evaluateAgentAuthorization(request('PRODUCTION_MUTATION', [AGENT_CAPABILITIES.PRODUCTION_MUTATION], {
       environment: 'development',
       riskClass: 'CRITICAL',
-      approval: {
-        approvalId: 'approval-1',
-        approvedByHumanActorId: 'owner-1',
-        capability: AGENT_CAPABILITIES.PRODUCTION_MUTATION,
-        targetResource: 'github:SvenKulessa/Finance',
-        expiresAt: '2099-01-01T00:00:00.000Z',
-        stepUpVerified: true,
-      },
+      approval: criticalApproval,
     })).verdict).toBe('DENY');
   });
 
-  it('requires exact current Human/Step-up evidence for HIGH and CRITICAL actions', () => {
-    const critical = request('PRODUCTION_MUTATION', [AGENT_CAPABILITIES.PRODUCTION_MUTATION], {
-      environment: 'production',
-      riskClass: 'CRITICAL',
-    });
-    expect(evaluateAgentAuthorization(critical).verdict).toBe('DENY');
-    expect(evaluateAgentAuthorization({
-      ...critical,
-      approval: {
-        approvalId: 'approval-1',
-        approvedByHumanActorId: 'owner-1',
-        capability: AGENT_CAPABILITIES.PRODUCTION_MUTATION,
-        targetResource: 'github:SvenKulessa/Finance',
-        expiresAt: '2099-01-01T00:00:00.000Z',
-        stepUpVerified: true,
-      },
-    }).verdict).toBe('ALLOW');
-  });
-
-  it('rejects mismatched, expired, non-step-up and self-issued approval evidence', () => {
+  it('binds approval to the exact agent principal', () => {
     const base = request('DEPLOY_REQUEST', [AGENT_CAPABILITIES.DEPLOY_REQUEST], {
       environment: 'production',
       riskClass: 'HIGH',
     });
-    const approval = {
-      approvalId: 'approval-1',
-      approvedByHumanActorId: 'owner-1',
-      capability: AGENT_CAPABILITIES.DEPLOY_REQUEST,
-      targetResource: 'github:SvenKulessa/Finance',
-      expiresAt: '2099-01-01T00:00:00.000Z',
-      stepUpVerified: true,
-    } as const;
 
-    expect(evaluateAgentAuthorization({ ...base, approval: { ...approval, targetResource: 'render:other' } }).verdict).toBe('DENY');
-    expect(evaluateAgentAuthorization({ ...base, approval: { ...approval, expiresAt: '2000-01-01T00:00:00.000Z' } }).verdict).toBe('DENY');
-    expect(evaluateAgentAuthorization({ ...base, approval: { ...approval, stepUpVerified: false } }).verdict).toBe('DENY');
+    expect(evaluateAgentAuthorization({
+      ...base,
+      approval: { ...highApproval, subjectAgentId: 'other-agent' },
+    }).verdict).toBe('DENY');
+  });
+
+  it('rejects mismatched, expired and self-issued approval evidence', () => {
+    const base = request('DEPLOY_REQUEST', [AGENT_CAPABILITIES.DEPLOY_REQUEST], {
+      environment: 'production',
+      riskClass: 'HIGH',
+    });
+
+    expect(evaluateAgentAuthorization({ ...base, approval: { ...highApproval, targetResource: 'render:other' } }).verdict).toBe('DENY');
+    expect(evaluateAgentAuthorization({ ...base, approval: { ...highApproval, expiresAt: '2000-01-01T00:00:00.000Z' } }).verdict).toBe('DENY');
     expect(evaluateAgentAuthorization({
       ...base,
       principal: { ...principal, agentId: 'owner-1' },
-      approval,
+      approval: { ...highApproval, subjectAgentId: 'owner-1' },
     }).verdict).toBe('DENY');
   });
 
