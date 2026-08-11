@@ -8,7 +8,6 @@ export function createMarketDataProviderStages(options: {
   stockTickers: string[];
   forexTickers: string[];
   commodityTickers: string[];
-  getCoinMarketCapApiKey?: () => string | undefined;
   fetchImpl?: typeof fetch;
   now?: () => number;
   logger?: Pick<Console, 'info' | 'warn'>;
@@ -17,7 +16,6 @@ export function createMarketDataProviderStages(options: {
   return [
     createCryptoMarketDataStage({
       fallbackAssets: options.fallbackAssets,
-      getCoinMarketCapApiKey: options.getCoinMarketCapApiKey,
       fetchImpl: options.fetchImpl,
       now: options.now,
       logger: options.logger,

@@ -28,7 +28,6 @@ describe('application market-data runtime wiring', () => {
     const registryAssets = vi.fn(() => fallbackAssets);
     const enrichAsset = vi.fn(async (asset: any) => asset);
     const syncAsset = vi.fn();
-    const getCoinMarketCapApiKey = vi.fn(() => 'cmc-key');
     const persistSnapshots = vi.fn();
     const evaluateAlerts = vi.fn();
     const onProviderFailure = vi.fn();
@@ -39,7 +38,6 @@ describe('application market-data runtime wiring', () => {
       registryAssets,
       enrichAsset,
       syncAsset,
-      getCoinMarketCapApiKey,
       persistSnapshots,
       evaluateAlerts,
       onProviderFailure,
@@ -60,7 +58,6 @@ describe('application market-data runtime wiring', () => {
       stockTickers: ['AAPL.US', 'MSFT.US', 'GOOGL.US', 'AMZN.US', 'NVDA.US', 'TSLA.US', 'META.US', 'NFLX.US', 'AMD.US', 'INTC.US'],
       forexTickers: ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCAD', 'USDCHF', 'AUDUSD'],
       commodityTickers: ['XAUUSD', 'XAGUSD', 'CL.F', 'NG.F', 'CO.F'],
-      getCoinMarketCapApiKey,
       registryAssets,
       enrichAsset,
       persistSnapshots,

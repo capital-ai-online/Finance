@@ -10,7 +10,6 @@ export interface MarketDataCompatibilityFacadeOptions {
   stockTickers: string[];
   forexTickers: string[];
   commodityTickers: string[];
-  getCoinMarketCapApiKey?: () => string | undefined;
   registryAssets: () => MarketDataAsset[];
   enrichAsset: (asset: MarketDataAsset) => Promise<MarketDataAsset>;
   persistSnapshots?: (assets: MarketDataAsset[]) => Promise<void> | void;
@@ -51,7 +50,6 @@ export async function runMarketDataCompatibilityRefresh(
     stockTickers: options.stockTickers,
     forexTickers: options.forexTickers,
     commodityTickers: options.commodityTickers,
-    getCoinMarketCapApiKey: options.getCoinMarketCapApiKey,
   });
 
   return refreshMarketData({

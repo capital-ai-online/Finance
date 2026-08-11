@@ -24,7 +24,7 @@ export function classifyNewsSentiment(headline: string, description: string): Ne
 export const newsRouter = express.Router();
 
 newsRouter.get('/', async (req, res) => {
-  const apiKey = process.env.NEWS_API_KEY || process.env.News_API_KEy;
+  const apiKey = process.env.NEWS_API_KEY;
 
   if (!apiKey || apiKey.startsWith('MY_') || apiKey.includes('test') || apiKey.length <= 5) {
     return res.status(503).json({

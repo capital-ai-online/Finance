@@ -12,7 +12,6 @@ export interface ApplicationMarketDataRuntimeOptions {
   registryAssets: () => MarketDataAsset[];
   enrichAsset: (asset: MarketDataAsset) => Promise<MarketDataAsset>;
   syncAsset: (asset: MarketDataAsset) => void;
-  getCoinMarketCapApiKey?: () => string | undefined;
   persistSnapshots?: (assets: MarketDataAsset[]) => Promise<void> | void;
   evaluateAlerts?: (assets: MarketDataAsset[]) => Promise<void> | void;
   onProviderFailure?: (stage: string, error: unknown) => void;
@@ -37,7 +36,6 @@ export function createApplicationMarketDataRuntime(options: ApplicationMarketDat
       stockTickers: STOCK_TICKERS,
       forexTickers: FOREX_TICKERS,
       commodityTickers: COMMODITY_TICKERS,
-      getCoinMarketCapApiKey: options.getCoinMarketCapApiKey,
       registryAssets: options.registryAssets,
       enrichAsset: options.enrichAsset,
       persistSnapshots: options.persistSnapshots,

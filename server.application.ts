@@ -555,7 +555,7 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
       // ADR-0037 runtime remediation: the scoring engine remains fail-closed when no
       // verified feature set exists. The market-data aggregator may retain an already
       // finite upstream/base score only as an explicitly labelled heuristic result, so one
-      // unsupported CMC symbol cannot reject the entire Promise.all refresh batch.
+      // unsupported symbol cannot reject the entire Promise.all refresh batch.
       if (!hasFiniteScoreValues(seedScores as Record<string, unknown>)) {
         const heuristicScore = resolveHeuristicCryptoScore(baseScore);
         if (heuristicScore !== null) {
@@ -750,7 +750,7 @@ function syncAssetToRegistry(asset: any) {
     // liefert /api/registry/assets weiterhin den alten, beim Registry-Seed gesetzten Wert.
     pattern: asset.pattern,
     // Audit ARCH-AUDIT-0002 (S1/S2/S5): reale Supply-Daten fuer Tokenomics-Scoring, nur bei
-    // Krypto-Assets von CMC/CoinGecko geliefert.
+    // Krypto-Assets von CoinGecko geliefert.
     ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
     ...(asset.maxSupply !== undefined ? { maxSupply: asset.maxSupply } : {}),
     ...(asset.totalSupply !== undefined ? { totalSupply: asset.totalSupply } : {}),
@@ -769,7 +769,6 @@ const marketDataRuntime = createApplicationMarketDataRuntime({
   registryAssets: () => assetRegistry.getAssets(),
   enrichAsset: enrichMarketDataAsset,
   syncAsset: syncAssetToRegistry,
-  getCoinMarketCapApiKey: () => getCleanEnv('COINMARKETCAP_API_KEY'),
   // Beide Callbacks geben bewusst NICHT das executeSupervised(...)-Promise zurueck (fire-and-
   // forget) - die Antwort darf nicht auf Snapshot-/Alert-Persistierung warten, exakt wie zuvor.
   persistSnapshots: (assets) => {

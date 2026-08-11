@@ -50,7 +50,7 @@ function AuditTrailFlowGraphic() {
       icon: HardDrive,
       description: 'Institutionelle Marktdaten von führenden Brokern und Providern. Keine künstlichen Simulationsdaten.',
       bulletPoints: [
-        'CoinMarketCap & CoinGecko Crypto APIs',
+        'CoinGecko Crypto API',
         'Stooq Aktien- & Rohstoffströme (CSV)',
         'Google Gemini NLP News-Scoring API'
       ]
