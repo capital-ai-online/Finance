@@ -1,27 +1,46 @@
 # ADR-0058 — Agent Identity, Capability and Risk Authorization
 
-Status: PROPOSED
+Status: ACCEPTED / M4 IMPLEMENTATION IN PROGRESS
 Date: 2026-08-11
 
 ## Context
-Provider identities and model names are not sufficient authorization principals.
+Provider identities and model names are not sufficient authorization principals. Existing ADR-0050/0051 already provide domain-specific Supabase capability grants and single-use approvals, but the DevelopmentChain additionally requires a provider-neutral control-plane contract above those domain grants.
 
 ## Decision
-Authorize attributable principals through capability grants and risk classes. Canonical capabilities are READ, ANALYZE, PLAN, BRANCH, COMMIT, PR, CI_REQUEST, DEPLOY_REQUEST and PRODUCTION_MUTATION. Risk classes are LOW, MEDIUM, HIGH and CRITICAL. Deny by default. HIGH/CRITICAL require explicit approval/step-up according to policy. Agent self-approval is forbidden.
+Authorize attributable principals through explicit DevelopmentChain capabilities and risk classes. Canonical agent capabilities are READ, ANALYZE, PLAN, BRANCH, COMMIT, PR, CI_REQUEST, DEPLOY_REQUEST and PRODUCTION_MUTATION. Risk classes are LOW, MEDIUM, HIGH and CRITICAL. Authorization is deny-by-default.
 
-Existing ADR-0050/0051 remain the implementation foundation and are generalized by this ADR.
+The execution principal MUST bind human actor, client/app, agent session and credential holder. Provider/model metadata may be recorded but is never sufficient authorization.
+
+HIGH actions require explicit human approval. CRITICAL actions require explicit human approval plus verified step-up. DEPLOY_REQUEST has a minimum risk of HIGH; PRODUCTION_MUTATION has a minimum risk of CRITICAL.
+
+`MERGE` is intentionally not an agent capability. Pull-request merge remains a separate Human/Owner-controlled repository transition enforced by the PR checklist/review gate introduced in PR #197. AI clients may prepare, validate and update PRs but cannot receive a grant equivalent to MERGE.
+
+Existing ADR-0050/0051 remain the domain implementation foundation. Their Supabase capabilities are evaluated in addition to, not instead of, this provider-neutral execution authorization.
+
+## Implementation
+M4 adds `src/platform/Security/agentAuthorization.ts` as a pure provider-neutral authorization layer with:
+
+- attributable `AgentExecutionPrincipal`;
+- enumerated capability and risk contracts;
+- explicit grants only;
+- deny on unknown capability;
+- HIGH approval requirement;
+- CRITICAL approval + step-up requirement;
+- non-representability of MERGE as an agent capability.
+
+Negative unit tests prove missing identity, absent grant, unknown/MERGE capability, missing approval and missing step-up are denied.
 
 ## Alternatives
-Provider-based allowlists and prompt-only constraints are rejected.
+Provider-based allowlists, model-name trust, prompt-only constraints and wildcard capabilities are rejected.
 
 ## Security
-Identity must bind human actor, app/client, agent/session and tool credential holder. Retrieved content cannot change authorization.
+Retrieved content cannot change authorization. AI self-approval is forbidden. Human approval evidence must match the bound human actor. Domain-specific grants remain separately enforceable.
 
 ## Migration
-M4 implements this contract after M2 Documentation Freeze.
+No database migration is introduced by this provider-neutral layer. Existing Supabase grant/approval tables remain unchanged. Future provider profiles must map into this contract before invoking domain tools.
 
 ## Rollback
-Disable write capabilities and fall back to read-only analysis.
+Disable write capabilities and fall back to READ/ANALYZE-only execution. Removing this additive module does not alter existing Supabase grant storage.
 
 ## Verification
-Negative tests must prove privilege non-inheritance and denial of unauthorized HIGH/CRITICAL actions.
+M4 exit requires green TypeScript/unit/build validation plus negative tests for privilege non-inheritance, unknown capability denial, MERGE denial, HIGH approval and CRITICAL step-up enforcement. ROADMAP and traceability must be updated before M4 closure.
