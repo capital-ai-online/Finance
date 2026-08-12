@@ -85,7 +85,8 @@ Ablauf für den aktuellen Head:
 4. Einen neuen Commit als neuen Head behandeln; der trusted-main Workflow setzt den Kommentar nach erfolgreicher Governance zurück.
 
 Body-Edits, alte Kommentare, Reviews früherer Heads und Agenten-/Workflow-Selbstaussagen sind keine Human-Autorisierung.
-## 6. Automatisch synchronisierte Nachweise## 6. Automatisch synchronisierte Nachweise
+
+## 6. Automatisch synchronisierte Nachweise
 
 > **Nicht manuell bearbeiten.** Alle folgenden Häkchen werden ausschließlich vom trusted-main PR-Status-Workflow aus GitHub-/Actions-Evidence für den aktuellen Head gesetzt. `☐` bedeutet ausstehend oder fehlgeschlagen; `☑` bedeutet maschinell verifiziert oder für die erkannte Klasse nachweislich nicht erforderlich.
 
@@ -104,6 +105,7 @@ Body-Edits, alte Kommentare, Reviews früherer Heads und Agenten-/Workflow-Selbs
 - **Volltest ausgeführt:** Der exakt autorisierte PR-Head wurde einmal im trusted-main Dispatch vollständig geprüft.
 - **Nicht erforderlich:** Die automatische Klasse verlangt den Check für diesen Diff nicht; der Workflow darf das zugehörige Häkchen deshalb als erfüllt markieren.
 - **Ausstehend/fehlgeschlagen:** Das Häkchen bleibt offen; der Mensch setzt es nicht von Hand.
+
 ## 7. Was kann man aus diesem PR lernen?
 
 {{AUTO_LEARNING_NOTE}}
