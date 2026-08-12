@@ -1,0 +1,68 @@
+{
+  "mandateId": "REM-SA3B-PROBE-001",
+  "status": "OWNER_APPROVED",
+  "ownerActorId": "SvenKulessa",
+  "subjectAgentId": "capital-ai-systemadmin-roadmap-executor",
+  "repository": "SvenKulessa/Finance",
+  "baseBranch": "main",
+  "roadmapItems": [
+    "SA3B-HOST-PROBE"
+  ],
+  "authorityRefs": [
+    "docs/adr/ADR-0067-systemadmin-github-actions-execution-host.md",
+    ".ai/skills/ESS-0021-Systemadmin-Roadmap-Executor.md"
+  ],
+  "allowedCapabilities": [
+    "BRANCH"
+  ],
+  "allowedPaths": [
+    "docs/evidence/sa3b/**"
+  ],
+  "allowedTargets": [
+    "github:SvenKulessa/Finance"
+  ],
+  "maxRiskClass": "MEDIUM",
+  "allowedMutationClasses": [
+    "REPOSITORY"
+  ],
+  "prohibitedMutationClasses": [
+    "MERGE",
+    "REPOSITORY_PROTECTION_WEAKENING",
+    "OWNER_IAM_ELEVATION",
+    "OWNER_MFA_OR_BREAK_GLASS",
+    "SECRET_DISCLOSURE",
+    "UNRESTRICTED_CREDENTIAL_ROTATION",
+    "DESTRUCTIVE_PRODUCTION_DATA",
+    "LIVE_BILLING_MONEY_OR_ENTITLEMENT",
+    "PRODUCTION_RESOURCE_DELETION",
+    "DNS_TLS_DOMAIN_OWNERSHIP",
+    "SECURITY_CONTROL_DISABLEMENT",
+    "SELF_MANDATE_EXPANSION"
+  ],
+  "validFrom": "2026-08-12T00:00:00.000Z",
+  "expiresAt": "2026-08-19T00:00:00.000Z",
+  "maxOpenPullRequests": 1,
+  "ciBudgetPolicyRef": "docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md",
+  "killSwitch": {
+    "enabled": true,
+    "revocationAuthority": "SvenKulessa",
+    "reason": "One-time SA3B execution-host verification only"
+  },
+  "requiredPreflight": [
+    "current-main",
+    "sa3a-verified-pass",
+    "owner-issue-identity",
+    "github-actions-oidc",
+    "audit-store-available"
+  ],
+  "requiredEvidence": [
+    "mandateId",
+    "issueNumber",
+    "workflowRunId",
+    "authorizationAuditReference",
+    "branchName",
+    "outcomeAuditReference",
+    "cleanup"
+  ],
+  "approvalEvidenceRef": "human-owner-chat-2026-08-12-sa3b-probe"
+}

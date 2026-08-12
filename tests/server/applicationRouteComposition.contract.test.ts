@@ -22,6 +22,7 @@ const expectedMounts = [
   "app.use('/api/alerts', alertsRouter);",
   "app.use('/api/admin/supervisor', supervisorRouter);",
   "app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic, openai));",
+  "app.use('/api/internal/systemadmin-execution', systemadminExecutionBrokerRouter);",
   "app.use('/api/news', newsRouter);",
   "app.use('/api/registry', registryRouter);",
   "app.use('/api/social-media', socialMediaRouter);",
