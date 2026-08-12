@@ -1,0 +1,116 @@
+{
+  "profileId": "capital-ai-systemadmin-audited-execution",
+  "profileVersion": "1.0.0",
+  "stage": "SA3",
+  "status": "IMPLEMENTED_CI_AND_HOST_BINDING_PENDING",
+  "agentId": "capital-ai-systemadmin-roadmap-executor",
+  "repository": "SvenKulessa/Finance",
+  "baseBranch": "main",
+  "authorityChain": [
+    "OWNER_APPROVED_REM",
+    "SA1_REM_VALIDATOR",
+    "M4_AGENT_IAM",
+    "SA2_CHAT_EXECUTION_PROFILE",
+    "M5_APPEND_ONLY_AUDIT",
+    "SA3_AUDIT_BOUND_EXECUTION_PERMIT",
+    "SA3_EXECUTION_HOST_BINDING"
+  ],
+  "allowedCapabilities": [
+    "READ",
+    "ANALYZE",
+    "PLAN",
+    "BRANCH",
+    "COMMIT",
+    "PR",
+    "CI_REQUEST"
+  ],
+  "prohibitedCapabilities": [
+    "MERGE",
+    "DEPLOY_REQUEST",
+    "PRODUCTION_MUTATION"
+  ],
+  "authorizationSequence": [
+    "SA2_DRY_RUN_POLICY_ALLOW",
+    "SA3_SELF_AUTHORITY_DENY_CHECK",
+    "DURABLE_AUTHORIZATION_AUDIT_INSERT",
+    "AUDIT_REFERENCE_RETURNED",
+    "AUDIT_BOUND_EXECUTION_PERMIT_CREATED",
+    "EXECUTION_HOST_VERIFIES_PERMIT_AND_EXACT_ACTION",
+    "REPOSITORY_ACTION",
+    "DURABLE_OUTCOME_AUDIT_INSERT"
+  ],
+  "failClosed": {
+    "authorizationAuditUnavailable": true,
+    "invalidAuditReference": true,
+    "controlPlaneSelfMutation": true,
+    "deniedPolicyDecision": true,
+    "outcomeWithoutAuditedAllow": true,
+    "executionHostBindingMissing": true,
+    "directExternalConnectorMutationWithoutPermit": true
+  },
+  "executionHostBinding": {
+    "required": true,
+    "status": "REQUIRED_NOT_YET_PROVEN",
+    "repositoryTypeScriptCanInterceptExternalChatConnector": false,
+    "directChatGptGithubConnectorMutationAllowed": false,
+    "acceptedEnforcementModes": [
+      "TOOL_HOST_PRE_ACTION_MIDDLEWARE_CONSUMES_SA3_PERMIT",
+      "CAPITAL_AI_GATEWAY_EXECUTES_EXACT_ACTION_AFTER_SA3_PERMIT"
+    ],
+    "requiredEvidence": [
+      "actual execution host identified",
+      "permit consumed before side effect",
+      "exact capability target and head bound",
+      "bypass/direct mutation denied",
+      "authorization and outcome audit references correlated"
+    ]
+  },
+  "auditCorrelation": [
+    "mandateId",
+    "roadmapItem",
+    "humanActorId",
+    "agentId",
+    "appId",
+    "sessionId",
+    "requestId",
+    "traceId",
+    "capability",
+    "riskClass",
+    "targetResource",
+    "repository",
+    "requestedPaths",
+    "branchName",
+    "currentHeadSha",
+    "pullRequestNumber",
+    "authorizationAuditReference",
+    "commitSha",
+    "result"
+  ],
+  "evidencePolicy": {
+    "appendOnly": true,
+    "fullPromptStored": false,
+    "fullDiffStored": false,
+    "rawRequestResponseStored": false,
+    "reusableCredentialsStored": false
+  },
+  "selfAuthorityProtectedPaths": [
+    ".ai/contracts/systemadmin-roadmap-execution-profile.json",
+    ".ai/contracts/systemadmin-audit-execution-profile.json",
+    "src/platform/Security/systemadminExecutionProfile.ts",
+    "server/agentAudit/agentAuditWriter.ts",
+    "server/agentAudit/authorizedAgentExecution.ts",
+    "server/agentAudit/systemadminAuditedExecution.ts"
+  ],
+  "humanBoundary": {
+    "mergeAuthority": "HUMAN_OWNER_ONLY",
+    "finalReviewFreezesAgentMutation": true
+  },
+  "externalProductionMutationEnabled": false,
+  "sa3ExitRequires": [
+    "REPOSITORY_CI_VERIFIED_PASS",
+    "HUMAN_MERGE",
+    "BRANCH_DELETED",
+    "EXECUTION_HOST_BINDING_VERIFIED_PASS"
+  ],
+  "nextGate": "SA4_FIRST_BOUNDED_NON_PRODUCTION_REM_PILOT"
+}

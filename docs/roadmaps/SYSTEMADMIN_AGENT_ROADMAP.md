@@ -2,242 +2,199 @@
 
 Status: IMPLEMENTATION PHASE
 Date: 2026-08-12
-Baseline: `main@d8ccc3c5e136d51ae36b57b103119b25f4a42b8b` (PR #215 merge)
-Authority: ESS-0021, ADR-0065, ESS-0019, ADR-0058, ADR-0059
+Baseline: `main@083d8f25083034e3785d1a8e0c57eaf03463c907` (PR #217 merge)
+Authority: ESS-0021, ADR-0065, ESS-0019, ADR-0058, ADR-0059, ADR-0066
 
 ## Goal
 
-Introduce a privileged Systemadmin Roadmap Executor that can autonomously implement larger Owner-approved Roadmap work packages through a Pull Request while preserving least privilege, auditability, Human final review and Human merge authority.
+Introduce a privileged Systemadmin Roadmap Executor that can autonomously implement larger Owner-approved Roadmap work packages through a Pull Request while preserving least privilege, append-only auditability, Human final review and Human merge authority.
 
 ## SA0 — Governance package
 
 **Status: COMPLETE — PR #214 MERGED**
 
-Verified merge baseline:
-
-- PR #214 merged;
-- merge commit `d342654715b4f1aef23e9fbaf3230b54f327e0a2`;
-- ESS-0021, ADR-0065, REM schema, Systemadmin Policy, AGENTS exception and Concept Gate are on `main`;
-- former SA0 work branch is no longer present;
-- SA0 authorized SA1 implementation only.
+- merge: `d342654715b4f1aef23e9fbaf3230b54f327e0a2`;
+- governance/REM/ESS/ADR package on `main`;
+- branch deleted.
 
 ## SA1 — REM validator / Control-Plane enforcement
 
 **Status: COMPLETE / VERIFIED PASS — PR #215 MERGED**
 
-Verified merge baseline:
+- merge: `d8ccc3c5e136d51ae36b57b103119b25f4a42b8b`;
+- final head: `b3aacd0c9ca6dfdfb981c4f563f0c840f93dad2e`;
+- CI #909: PASS;
+- Governance #634: PASS;
+- branch deleted.
 
-- PR #215 merged;
-- merge commit `d8ccc3c5e136d51ae36b57b103119b25f4a42b8b`;
-- final PR head `b3aacd0c9ca6dfdfb981c4f563f0c840f93dad2e`;
-- CI-Prüfung #909: PASS;
-- Governance-Prüfung #634: PASS;
-- former SA1 branch is no longer present;
-- no Supabase/Stripe/Render/deployment/production mutation occurred.
+Primary controls:
 
-Primary implementation:
+- REM validation and exact scope binding;
+- M4 Agent IAM composition;
+- risk/path/target/mutation-class/expiry/kill-switch/PR-limit/CI-budget gates;
+- self-authority protection.
 
-- `src/platform/Security/roadmapExecutionMandate.ts`;
-- `src/platform/Compliance/PolicyGate.ts`;
-- `tests/unit/roadmapExecutionMandate.test.ts`;
-- `docs/evidence/sa1/SA1_REM_VALIDATOR_EVIDENCE.md`.
-
-SA1 verifies REM structure, exact Owner/agent/repository/base binding, Roadmap scope, capabilities, paths, targets, risk, mutation class, validity/expiry, kill-switch availability, open-PR conflict, PR limit and CI budget. It composes with the existing M4 Agent IAM.
-
-SA1 can authorize only:
+Capability ceiling:
 
 `READ, ANALYZE, PLAN, BRANCH, COMMIT, PR, CI_REQUEST`
 
-Still technically denied:
-
-- `MERGE`;
-- `DEPLOY_REQUEST`;
-- `PRODUCTION_MUTATION`;
-- CRITICAL execution;
-- reserved Human/Owner mutation classes;
-- Systemadmin self-authority/control-plane mutation covered by SA1.
-
-### CI regression discovered after PR #215
-
-The separate `Google-Marketing-Schutzprüfung` run #155 failed while SA1 CI #909 and Governance #634 passed. The same failure reproduced on initial SA2 head as run #157.
-
-Diagnosis proved two CI defects:
-
-1. the protected Google Marketing workflow watched the over-broad path `src/platform/Security/**`, causing unrelated Systemadmin security work to invoke it;
-2. central CI consolidation had removed the dedicated post-build execution of `tests/unit/securityResponse.production.test.ts`, although that test intentionally skips when `dist/index.html` does not yet exist.
-
-PR #216 therefore includes a **security-preserving CI remediation** instead of ignoring the failed guard:
-
-- Owner attestations are evaluated against the body snapshot of the exact `edited` event to prevent checkbox race/double-build authorization;
-- `securityResponse.production.test.ts` is restored after `npm run build` and before `predeploy:check`;
-- the Google Marketing workflow monitors exact security dependencies plus `ci.yml` and `package.json`;
-- its lightweight static check validates invariant-script wiring and the ordered central evidence chain `build → production CSP test → predeploy`.
-
-This remediation is pending current-head review and GitHub CI and is not considered VERIFIED PASS until those checks succeed.
+`MERGE`, `DEPLOY_REQUEST`, `PRODUCTION_MUTATION`, CRITICAL and reserved Owner mutations remain denied.
 
 ## SA2 — Chat execution profile
 
-**Status: IMPLEMENTED ON BRANCH / PR+CI PENDING**
+**Status: COMPLETE / VERIFIED PASS — PR #216 MERGED**
 
-Implementation branch:
+- final head: `14b9ec25dd60a34ae78a852f0a5b689b4811832b`;
+- merge: `a5abc1685026651f4297a487e855683a1fa1e58e`;
+- CI #919: PASS;
+- Google-Marketing #164: PASS;
+- Governance #643: PASS;
+- TypeScript/unit/build/post-build CSP/Docker: PASS;
+- branch deleted.
 
-`agent/sa2-systemadmin-chat-execution-profile`
-
-Primary artifacts:
-
-- `src/platform/Security/systemadminExecutionProfile.ts`;
-- `.ai/contracts/systemadmin-roadmap-execution-profile.json`;
-- `tests/unit/systemadminExecutionProfile.test.ts`;
-- `docs/runbooks/SYSTEMADMIN_CHAT_EXECUTION_PROFILE.md`;
-- `docs/evidence/sa2/SA2_CHAT_EXECUTION_PROFILE_EVIDENCE.md`;
-- `.github/workflows/ci.yml` Owner-gate race fix + restored post-build CSP evidence;
-- `.github/workflows/google-marketing-protected-change.yml` protected-scope/evidence hardening.
-
-### SA2 authority chain
+Authority chain:
 
 `OWNER_APPROVED REM → SA2 CHAT PROFILE → SA1 REM VALIDATOR → M4 AGENT IAM → ACTION ENVELOPE`
 
-The exact ChatGPT app/client id is only an execution-surface constraint. It grants no authority by itself. Provider/model metadata remains non-authoritative.
+Direct mutating SA2 LIVE remains denied. Mutating SA2 envelopes keep `liveMutationPermitted=false`.
 
-### SA2 initial delegated policy surface
+## M10 DevelopmentChain synchronization
 
-`READ, ANALYZE, PLAN, BRANCH, COMMIT, PR, CI_REQUEST`
+PR #217 merged the **Passkey-only Human/Owner PR Authorization target architecture** at:
 
-The profile adds mandatory execution-sequence checks:
+`main@083d8f25083034e3785d1a8e0c57eaf03463c907`
 
-1. current `main` resolved;
-2. current Roadmap work package resolved;
-3. SA1 VERIFIED PASS;
-4. security/negative-test preflight PASS;
-5. open-PR overlap check PASS;
-6. D/C/R/M check class resolved;
-7. rollback defined;
-8. targeted tests defined;
-9. fresh `agent/*` branch before commits;
-10. targeted validation before commit;
-11. implementation complete + current head before PR;
-12. open PR + current head before CI request;
-13. stop mutating once final Human/Owner review has begun.
+This is architecture only. M10 runtime implementation remains blocked until M9. The current Human/Owner review/attestation gate remains authoritative until the future M10 controlled cutover reaches `VERIFIED PASS`.
 
-### SA2 dry-run safety boundary
+M10 does not block SA3 or the non-production SA4 pilot. M10 `VERIFIED PASS` remains required before SA5 external mutation design.
 
-SA2 intentionally does **not** create unaudited standing mutation authority.
+## SA3 — Append-only Audit / Evidence correlation
 
-- `DRY_RUN`: full initial capability sequence can be policy-evaluated and prepared as an immutable, secret-free action envelope.
-- mutating envelopes always carry `liveMutationPermitted = false`.
-- `LIVE`: READ/ANALYZE may be allowed when REM/profile allow them; BRANCH/COMMIT/PR/CI_REQUEST are denied until SA3 append-only audit correlation is VERIFIED PASS.
+**Overall status: IN PROGRESS — SA3A IMPLEMENTED / CI PENDING; SA3B EXECUTION-HOST BINDING REQUIRED**
 
-This resolves the sequencing tension between profile enablement and audit: SA2 proves the execution contract; SA3 enables auditable mutation; SA4 is the first real autonomous work-package pilot.
+### SA3A — Repository audit adapter
 
-### SA2 stop conditions
+Branch:
 
-Immediate DENY/STOP on:
+`agent/sa3-systemadmin-audit-correlation`
 
-- invalid/expired/revoked/out-of-scope REM;
-- wrong Owner/agent/client/repository/base;
-- path/target/capability mismatch;
-- incomplete security preflight;
-- credential exposure;
-- prompt/tool/retrieval scope-elevation attempt;
-- unexpected production mutation requirement;
-- reserved Human/Owner action requirement;
-- concurrent writer conflict;
-- CI budget/duplicate-head violation;
-- final Human/Owner review already started;
-- kill switch/revocation.
+Primary artifacts:
 
-### SA2 exit gate
+- `server/agentAudit/systemadminAuditedExecution.ts`;
+- `tests/unit/systemadminAuditedExecution.test.ts`;
+- `.ai/contracts/systemadmin-audit-execution-profile.json`;
+- `docs/runbooks/SYSTEMADMIN_AUDITED_EXECUTION.md`;
+- `docs/evidence/sa3/SA3_SYSTEMADMIN_AUDIT_CORRELATION_EVIDENCE.md`.
 
-SA2 becomes complete only when:
+Canonical chain:
 
-1. current-head Human/Owner review is complete;
-2. required repository CI for final reviewed head passes;
-3. Google Marketing protected-change guard passes for the final head when triggered;
-4. restored post-build production CSP test passes;
-5. SA2 PR is Human-merged into `main`;
-6. SA2 branch is deleted;
-7. mutating LIVE mode remains disabled;
-8. no external production mutation occurred;
-9. SA3 becomes the next active stage.
+`OWNER_APPROVED REM → SA1 → SA2 DRY_RUN ALLOW → SA3 SELF-AUTHORITY CHECK → M5 DURABLE AUTHORIZATION EVENT → auditReference → AUDIT-BOUND EXECUTION PERMIT → EXECUTION HOST → REPOSITORY ACTION → M5 OUTCOME EVENT`
 
-## SA3 — Audit / Evidence verification
+The existing M5 append-only writer and production-verified `agent_audit_events` persistence are reused. No new Supabase schema or external platform mutation is required by SA3A.
 
-**Status: BLOCKED BY SA2 VERIFIED PASS**
+SA3A invariants:
 
-Connect the Systemadmin action path to the existing M5 append-only audit mechanism and prove:
+- no permit before durable authorization evidence;
+- audit-store failure stops before side effect;
+- DENY receives no permit;
+- second append-only terminal outcome event;
+- prompts/full diffs/raw bodies/reusable credentials omitted/redacted;
+- SA2/SA3 control-plane self-mutation denied;
+- only existing repository capabilities are eligible;
+- no MERGE/deploy/production authority.
 
-`mandateId → roadmap item → actor → agent/client/session/request → capability → target → policy decision → branch/commit/PR → result`
+### SA3B — Actual execution-host binding
 
-Required properties:
+Repository TypeScript cannot intercept the external ChatGPT GitHub connector. Therefore **SA3 is not VERIFIED PASS after repository CI/merge alone**.
 
-- durable append-only authorization + execution-outcome evidence;
-- fail-closed when audit persistence is unavailable;
-- no secret/raw credential evidence;
-- mutation enabled only after audit reference exists;
-- SA2 profile self-authority paths added to protected mutation scope before LIVE mutation is enabled.
+Before SA4, one enforcement mode must be proven:
 
-Exit gate: append-only correlation VERIFIED PASS.
+1. tool-host pre-action middleware consumes the SA3 permit before every mutating connector action and denies bypass; or
+2. a CAPITAL-AI execution gateway validates/consumes the permit and performs the exact repository action.
+
+SA3B required proof:
+
+- actual execution host identified;
+- permit consumed before side effect;
+- exact capability/target/head binding;
+- direct/bypass mutation denied;
+- authorization and outcome evidence correlated end-to-end.
+
+Until SA3B passes, direct mutating ChatGPT→GitHub connector calls do not count as SA3-enforced autonomous execution.
+
+### SA3 mutation classification
+
+| Domain | State |
+|---|---|
+| Repository adapter/tests/docs | REQUIRED / IMPLEMENTED |
+| Existing M5 audit persistence | REUSED / NO SCHEMA CHANGE |
+| Execution-host binding | REQUIRED / NOT YET VERIFIED |
+| Supabase schema/config | NOT REQUIRED |
+| Stripe | NOT REQUIRED |
+| Render | NOT REQUIRED |
+| Deployment | NOT REQUIRED |
+| Production mutation | PROHIBITED |
+
+### SA3 exit gate
+
+SA3 becomes `COMPLETE / VERIFIED PASS` only after:
+
+1. SA3A final head repository CI PASS;
+2. SA3A Human merge;
+3. SA3A branch deletion;
+4. SA3B execution host identified;
+5. permit-before-mutation positive proof;
+6. bypass/direct-mutation negative proof;
+7. end-to-end append-only authorization/outcome evidence PASS;
+8. Roadmap/traceability synchronized.
 
 ## SA4 — First bounded pilot mandate
 
-**Status: BLOCKED BY SA3**
+**Status: BLOCKED BY COMPLETE SA3 VERIFIED PASS (SA3A + SA3B)**
 
-The Owner creates the first concrete REM for one non-production Roadmap work package.
+First real autonomous repository work package requires one explicit Owner-approved REM.
 
-Recommended pilot constraints:
+Pilot constraints:
 
-- repository: `SvenKulessa/Finance`;
-- base: `main`;
+- Finance / `main`;
 - one Roadmap work package;
 - max one open Systemadmin PR;
 - no external production mutation;
-- max risk HIGH;
-- repository paths explicitly enumerated;
+- max HIGH risk;
+- explicit path allowlist;
 - expiry <= 7 days;
 - kill switch enabled;
-- one final build-and-test per reviewed head.
+- one final `build-and-test` per reviewed head;
+- every mutating action through the verified SA3 execution host.
 
-Pilot exit:
-
-- autonomous branch/commit/PR creation succeeds under the REM;
-- scope and negative tests pass;
-- Owner final review/CI succeed;
-- Human merge occurs separately;
-- merged branch is deleted;
-- audit/evidence complete.
+Pilot exit requires autonomous branch/commit/PR success under REM, complete audit correlation, Human review/CI, separate Human merge, branch deletion and evidence completion.
 
 ## SA5 — Bounded external mutation design
 
-**Status: BLOCKED BY SA4 + M10 STRONG OWNER APPROVAL ASSURANCE**
+**Status: BLOCKED BY SA4 + M10 VERIFIED PASS**
 
-Only after the repository pilot is verified may CAPITAL-AI consider delegated `PRODUCTION_MUTATION`.
+A future ADR may consider bounded external `PRODUCTION_MUTATION` only after the repository pilot and strong M10 Owner assurance are verified.
 
-A future production-capable REM must bind exact target and mutation class and prove deterministic preconditions, rollback, postconditions and audit.
-
-The following remain outside delegated authority unless separately redesigned:
+Still reserved unless separately redesigned:
 
 - MERGE;
-- repository protection weakening;
+- repository-protection weakening;
 - Owner/admin IAM elevation;
 - Owner MFA/break-glass;
 - secret disclosure/unrestricted credential rotation;
 - destructive production data;
-- live billing money/entitlement changes;
+- live billing/money/entitlement;
 - production resource deletion;
 - DNS/TLS/domain ownership;
 - security-control disablement;
-- self-expansion of mandate.
-
-## Target operating sequence after SA3/SA4 enablement
-
-`OWNER APPROVES REM → SYSTEMADMIN READ/PREFLIGHT → AUDITED BRANCH → IMPLEMENT/VALIDATE/COMMIT → PR → OWNER VIEWED/REVIEW → ONE CI → HUMAN MERGE → BRANCH DELETE → EVIDENCE → NEXT WORK PACKAGE`
+- self-expansion of mandate/audit authority.
 
 ## Branch lifecycle
 
-Every work package gets a fresh branch. After successful merge into Finance the branch is deleted. Closed/superseded branches are also deleted after Evidence retention. No merged branch is reused.
+`current main → fresh scoped branch → audited work → PR → Human review/CI → Human merge → branch delete`
 
-## Relationship to current DevelopmentChain
+Merged/superseded branches are not reused.
 
-The Systemadmin roadmap is cross-cutting. It does not bypass M5A–M10 sequencing or mark blocked phases as complete. It changes **who may execute an already authorized Roadmap work package**, not the acceptance criteria of that work package.
+## Current next action
 
-SA2 performs no Supabase, Stripe, Render, billing, deployment or production mutation. SA3 remains blocked until SA2 reaches `VERIFIED PASS`.
+Complete SA3A through PR/CI/Human merge, then perform SA3B execution-host integration/proof. SA4 remains blocked until both are `VERIFIED PASS`.
