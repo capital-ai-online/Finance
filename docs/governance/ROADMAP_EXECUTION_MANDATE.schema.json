@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "capital-ai://governance/roadmap-execution-mandate/v1",
+  "title": "CAPITAL-AI Roadmap Execution Mandate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mandateId",
+    "status",
+    "ownerActorId",
+    "subjectAgentId",
+    "repository",
+    "baseBranch",
+    "roadmapItems",
+    "allowedCapabilities",
+    "allowedPaths",
+    "allowedTargets",
+    "maxRiskClass",
+    "allowedMutationClasses",
+    "prohibitedMutationClasses",
+    "validFrom",
+    "expiresAt",
+    "maxOpenPullRequests",
+    "ciBudgetPolicyRef",
+    "killSwitch",
+    "requiredPreflight",
+    "requiredEvidence"
+  ],
+  "properties": {
+    "mandateId": {
+      "type": "string",
+      "pattern": "^REM-[A-Z0-9][A-Z0-9._-]{3,63}$"
+    },
+    "status": {
+      "enum": ["DRAFT", "OWNER_APPROVED", "REVOKED", "EXPIRED", "COMPLETE"]
+    },
+    "ownerActorId": {
+      "const": "SvenKulessa"
+    },
+    "subjectAgentId": {
+      "const": "capital-ai-systemadmin-roadmap-executor"
+    },
+    "repository": {
+      "const": "SvenKulessa/Finance"
+    },
+    "baseBranch": {
+      "const": "main"
+    },
+    "roadmapItems": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "authorityRefs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 },
+      "default": []
+    },
+    "allowedCapabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "READ",
+          "ANALYZE",
+          "PLAN",
+          "BRANCH",
+          "COMMIT",
+          "PR",
+          "CI_REQUEST",
+          "DEPLOY_REQUEST",
+          "PRODUCTION_MUTATION"
+        ]
+      },
+      "not": {
+        "contains": { "const": "MERGE" }
+      }
+    },
+    "allowedPaths": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "allowedTargets": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "maxRiskClass": {
+      "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    },
+    "allowedMutationClasses": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "REPOSITORY",
+          "NON_PRODUCTION_CONFIG",
+          "BOUNDED_REVERSIBLE_PRODUCTION"
+        ]
+      }
+    },
+    "prohibitedMutationClasses": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "MERGE",
+          "REPOSITORY_PROTECTION_WEAKENING",
+          "OWNER_IAM_ELEVATION",
+          "OWNER_MFA_OR_BREAK_GLASS",
+          "SECRET_DISCLOSURE",
+          "UNRESTRICTED_CREDENTIAL_ROTATION",
+          "DESTRUCTIVE_PRODUCTION_DATA",
+          "LIVE_BILLING_MONEY_OR_ENTITLEMENT",
+          "PRODUCTION_RESOURCE_DELETION",
+          "DNS_TLS_DOMAIN_OWNERSHIP",
+          "SECURITY_CONTROL_DISABLEMENT",
+          "SELF_MANDATE_EXPANSION"
+        ]
+      }
+    },
+    "validFrom": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "maxOpenPullRequests": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3
+    },
+    "ciBudgetPolicyRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "killSwitch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "revocationAuthority"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "revocationAuthority": { "const": "SvenKulessa" },
+        "reason": { "type": "string" }
+      }
+    },
+    "requiredPreflight": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "requiredEvidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "approvalEvidenceRef": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

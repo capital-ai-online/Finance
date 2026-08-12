@@ -1,0 +1,77 @@
+{
+  "mandateId": "REM-SYSTEMADMIN-PILOT-001",
+  "status": "DRAFT",
+  "ownerActorId": "SvenKulessa",
+  "subjectAgentId": "capital-ai-systemadmin-roadmap-executor",
+  "repository": "SvenKulessa/Finance",
+  "baseBranch": "main",
+  "roadmapItems": [
+    "EXAMPLE-ROADMAP-WORK-PACKAGE"
+  ],
+  "authorityRefs": [
+    ".ai/skills/ESS-0021-Systemadmin-Roadmap-Executor.md",
+    "docs/adr/ADR-0065-systemadmin-roadmap-execution-mandate.md",
+    "docs/governance/SYSTEMADMIN_AGENT_ROADMAP_EXECUTION_POLICY.md"
+  ],
+  "allowedCapabilities": [
+    "READ",
+    "ANALYZE",
+    "PLAN",
+    "BRANCH",
+    "COMMIT",
+    "PR",
+    "CI_REQUEST"
+  ],
+  "allowedPaths": [
+    "REPLACE_WITH_EXACT_APPROVED_PATH_OR_PREFIX"
+  ],
+  "allowedTargets": [
+    "github:SvenKulessa/Finance"
+  ],
+  "maxRiskClass": "HIGH",
+  "allowedMutationClasses": [
+    "REPOSITORY"
+  ],
+  "prohibitedMutationClasses": [
+    "MERGE",
+    "REPOSITORY_PROTECTION_WEAKENING",
+    "OWNER_IAM_ELEVATION",
+    "OWNER_MFA_OR_BREAK_GLASS",
+    "SECRET_DISCLOSURE",
+    "UNRESTRICTED_CREDENTIAL_ROTATION",
+    "DESTRUCTIVE_PRODUCTION_DATA",
+    "LIVE_BILLING_MONEY_OR_ENTITLEMENT",
+    "PRODUCTION_RESOURCE_DELETION",
+    "DNS_TLS_DOMAIN_OWNERSHIP",
+    "SECURITY_CONTROL_DISABLEMENT",
+    "SELF_MANDATE_EXPANSION"
+  ],
+  "validFrom": "2099-01-01T00:00:00Z",
+  "expiresAt": "2099-01-08T00:00:00Z",
+  "maxOpenPullRequests": 1,
+  "ciBudgetPolicyRef": "docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md",
+  "killSwitch": {
+    "enabled": true,
+    "revocationAuthority": "SvenKulessa",
+    "reason": "DRAFT example only — not executable authority"
+  },
+  "requiredPreflight": [
+    "resolve current main SHA",
+    "resolve current Roadmap gate",
+    "inspect open PR overlap",
+    "classify D/C/R/M",
+    "security and negative-test plan",
+    "rollback plan",
+    "CI cost/scope check"
+  ],
+  "requiredEvidence": [
+    "mandateId in PR body",
+    "base main SHA",
+    "changed paths",
+    "security preflight result",
+    "test results",
+    "branch and commit identifiers",
+    "PR identifier",
+    "branch deletion after merge"
+  ]
+}
