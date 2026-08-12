@@ -150,7 +150,7 @@ export async function writeAgentAuditEvent(input: Readonly<AgentAuditEventInput>
     result: input.result,
     error_code: optionalText(input.errorCode),
     rollback_reference: optionalText(input.rollbackReference),
-    attributes,
+    attributes: attributes,
   };
 
   const supabase = getPrivilegedServerSupabase();
