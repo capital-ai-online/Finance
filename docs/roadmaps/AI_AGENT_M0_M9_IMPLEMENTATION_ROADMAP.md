@@ -4,7 +4,8 @@
 
 Status: IMPLEMENTATION PHASE
 Status date: 2026-08-12
-Baseline: `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e` (PR #222 merge)
+Baseline: `main@2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd` (PR #229 merge)
+Production deploy: `dep-d9u392nlk1mc73fg1hk0` — `live` — same commit
 Platform version: `0.6.0`
 
 ## Global execution rule
@@ -33,36 +34,52 @@ Cross-cutting authorities:
 - `.ai/contracts/development-chain-mutation-handoff.schema.json`
 - `docs/runbooks/DEVELOPMENT_CHAIN_PHASE_EXECUTION.md`
 
-A Mutation Handoff is non-authorizing. Human/Owner approval, REM/IAM/reserved-action policy, verified Execution Host and durable audit remain separate gates.
+A Mutation Handoff is non-authorizing. Human/Owner approval, REM/IAM/reserved-action policy, verified execution-host capability and durable audit remain separate gates.
 
 ## Current Systemadmin execution-host state
 
-PR #220 merged the SA3B GitHub-Actions/OIDC Execution-Host repository implementation.
+### SA3B — COMPLETE / VERIFIED PASS
 
-The first real post-merge host probe reached the broker and proved fail-closed: strict request/REM/OIDC checks passed, durable M5 persistence failed, and the requested branch side effect was skipped.
+The real host evidence now covers:
 
-Diagnosis found:
+- Issue #221: audit persistence failure → no permit → no branch;
+- Issue #223: positive OIDC + durable authorization → BRANCH → durable SUCCESS outcome;
+- Issue #224: stale base → deny before OIDC/broker → no branch;
+- final deletion of `agent/sa3b-host-probe-20260812b`.
 
-- application writer↔production M5 schema vocabulary drift;
-- separate privileged Supabase backend credential failure (`Unregistered API key`).
+The production M5 writer/schema correction from PR #222 is therefore validated through the real privileged audit path.
 
-PR #222 corrected the writer↔schema contract and regression coverage and merged at `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e`.
+### SA4 — COMPLETE / VERIFIED PASS
 
-SA3B is still **VERIFICATION PENDING** until a valid Owner-controlled privileged Supabase backend credential is available, a real positive `BRANCH_PROBE` proves Authorization Evidence before the side effect and SUCCESS Outcome Evidence after it, a no-permit/stale negative probe produces no side effect, and the probe branch is deleted.
+PR #226 bootstrapped the bounded SA4 work-package host. Owner Issue #228 / Workflow run `31579519025` executed the first real autonomous pilot and produced:
 
-Until then, DEVELOPMENT Chain does not classify that host as a generally verified autonomous mutation executor.
+- fresh branch `agent/sa4-pilot-proof-20260812b`;
+- deterministic commit `02f012e71106d5ffd9a4baa3e6f3eba7160eb55d`;
+- Draft PR #229;
+- separate durable authorization/outcome references for BRANCH, COMMIT and PR.
+
+Human/Owner review and merge remained separate. PR #229 merged to `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`; main CI #966 passed; pilot branch is deleted; production deploy is live on the same merge SHA.
+
+Closure Evidence: `docs/evidence/sa4/SA4_VERIFIED_PASS_CLOSURE_2026-08-12.md`.
+
+SA4 proves the bounded deterministic repository control chain. It does not automatically authorize or technically prove arbitrary application-code patch execution.
 
 ## Human/Owner CI rule
 
-### Transitional until M10 VERIFIED PASS
+Until M10 `VERIFIED PASS`:
 
 ```text
-FILES CHANGED → VIEWED → CURRENT-HEAD REVIEW (💪/okay) → OWNER CHECKBOXES LAST → ONE build-and-test
+FILES CHANGED
+→ VIEWED
+→ CURRENT-HEAD REVIEW (💪/okay)
+→ OWNER CHECKBOXES LAST
+→ ONE build-and-test
+→ HUMAN MERGE
 ```
 
 New commits invalidate current-head review evidence. CI does not authorize merge.
 
-### M10 target after controlled cutover
+After controlled M10 cutover:
 
 ```text
 FILES CHANGED / VIEWED
@@ -74,8 +91,6 @@ FILES CHANGED / VIEWED
 → Human merge
 ```
 
-After cutover, emoji/text reviews and Owner checkboxes no longer authorize CI.
-
 ## Repository lifecycle
 
 Every work item uses a fresh branch from then-current `main`. After successful Human merge, the Finance remote branch is deleted and never reused. Ephemeral clones/worktrees created only for the work item are removed after required Evidence is secured.
@@ -84,12 +99,12 @@ Every work item uses a fresh branch from then-current `main`. After successful H
 
 | Phase | Status | Key gate |
 |---|---|---|
-| M0 Evidence Baseline | COMPLETE | preserve read-only evidence |
-| M1 Git Guardrails | COMPLETE | Human merge + protected main |
-| M2/M2G Architecture + Freeze | COMPLETE | sequential implementation only |
-| M3 CI Hardening | COMPLETE | one bounded expensive CI path |
-| M4 Agent IAM | COMPLETE | negative IAM / no autonomous MERGE |
-| M5 Audit | **PERSISTENCE VERIFIED / APPLICATION CORRECTIVE VERIFICATION ACTIVE** | PR #222 corrected mapping; real privileged audit insert still required |
+| M0 Evidence Baseline | **COMPLETE** | preserve read-only evidence |
+| M1 Git Guardrails | **COMPLETE** | Human merge + protected main |
+| M2/M2G Architecture + Freeze | **COMPLETE** | sequential implementation only |
+| M3 CI Hardening | **COMPLETE** | one bounded expensive CI path |
+| M4 Agent IAM | **COMPLETE** | negative IAM / no autonomous MERGE |
+| M5 Audit | **COMPLETE / VERIFIED PASS** | real permit-before-side-effect, SUCCESS outcome and audit-outage fail-closed proof |
 | M5A Native MFA/AAL2 | **IN PROGRESS** | code/CI then separate Owner production approval and native AAL2 verification |
 | M6 Supply Chain | **BLOCKED BY M5A** | source→SBOM→artifact→provenance/attestation verified |
 | M7 Deployment Identity | **BLOCKED BY M6** | exact approved platform mutation + postverify/rollback |
@@ -111,19 +126,24 @@ Recorded baseline proves the historical CAPITAL-AI custom TOTP mechanism is dist
 
 Required sequence:
 
-1. fresh implementation branch from current `main`;
-2. Native TOTP `enroll → challenge → verify`;
-3. centralized server AAL2 verification;
-4. privileged AAL1 and Auth/factor lookup errors fail closed;
-5. purpose-bound app step-up remains defense-in-depth only;
-6. recovery/factor reset redesign;
-7. positive/negative tests;
-8. repository CI `VERIFIED PASS`;
-9. read-only production precheck;
-10. separate explicit Human/Owner mutation approval;
-11. Owner native factor enrollment one identity at a time;
-12. AAL2/recovery/advisor verification;
-13. Evidence + Roadmap synchronization.
+1. synchronize/confirm Human/Owner Authority state for ESS-0020 and ADR-0064;
+2. choose execution path:
+   - normal Human-authorized Development PR path; or
+   - autonomous Systemadmin path only with a dedicated M5A REM and technically bounded code/test execution contract;
+3. fresh implementation branch from current `main`;
+4. Native TOTP `enroll → challenge → verify`;
+5. centralized server AAL2 verification;
+6. privileged AAL1 and Auth/factor lookup errors fail closed;
+7. purpose-bound application step-up remains defense-in-depth only;
+8. recovery/factor reset redesign;
+9. positive/negative tests;
+10. repository CI `VERIFIED PASS`;
+11. Human merge and branch deletion;
+12. read-only production precheck;
+13. separate explicit Human/Owner mutation approval;
+14. Owner native factor enrollment one identity at a time;
+15. AAL2/recovery/advisor verification;
+16. Evidence + Roadmap synchronization.
 
 Mutation classification:
 
@@ -132,7 +152,7 @@ Mutation classification:
 - Supabase Auth project config: `CONDITIONAL` only if exact need is proven;
 - new Native MFA Postgres DDL: `NOT REQUIRED`;
 - legacy custom-TOTP cleanup: `DEFERRED / SEPARATE APPROVAL`;
-- Stripe/Render: `NOT REQUIRED` for M5A.
+- Stripe/Render: `NOT REQUIRED` for M5A core.
 
 M6 remains blocked until M5A `VERIFIED PASS`.
 
@@ -165,8 +185,6 @@ Authority/runbook:
 - `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`.
 
 Every external mutation requires exact target, precheck, separate Owner mutation approval, non-authorizing Handoff, audited authorized execution, post-verification and rollback.
-
-Stripe/Supabase are included only when explicitly named by dedicated Authority. DNS/TLS/IONOS remains Human-reserved absent a later stronger ADR.
 
 ## M8 — Provider-neutral Agent Cutover
 
@@ -204,13 +222,20 @@ Authorities:
 - `docs/architecture/ai-agent/M10_PASSKEY_OWNER_PR_AUTHORIZATION_THREAT_MODEL.md`;
 - `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`.
 
-Every approval binds Owner, Finance repository, PR, exact base/head SHA, canonical changed-file-set hash, diff/review digest, `AUTHORIZE_PR_CI`, challenge freshness and consumption state.
-
 Human file review and Human-only merge remain mandatory.
 
 ## Mutation Executor integration
 
-The `capital-ai-systemadmin-roadmap-executor` becomes a bounded DEVELOPMENT Chain mutation executor only after its actual execution-host exit gate is independently `VERIFIED PASS`.
+The `capital-ai-systemadmin-roadmap-executor` has real `VERIFIED PASS` evidence for the exact bounded SA3B/SA4 host path. This does **not** create standing authority for unrelated DevelopmentChain work.
+
+Every new autonomous work package still requires:
+
+- active Owner-approved REM;
+- current-main binding;
+- exact path/target/capability/risk scope;
+- execution-host support for the requested operation;
+- durable authorization/outcome evidence;
+- Human final review and Human-only merge.
 
 Handoff artifacts:
 
@@ -228,11 +253,14 @@ Every completed work item updates:
 3. this legacy implementation roadmap;
 4. `docs/traceability/AI_AGENT_M0_M9_TRACEABILITY_MATRIX.md`;
 5. `docs/traceability/DEVELOPMENT_CHAIN_DOCUMENT_TRACEABILITY_MATRIX.md`;
-6. affected ADR/ESS;
-7. Evidence and mutation state;
-8. branch deletion state;
-9. explicit next gate.
+6. affected Systemadmin roadmap/traceability when executor authority/evidence changes;
+7. affected ADR/ESS;
+8. Evidence and mutation state;
+9. branch deletion state;
+10. explicit next gate.
 
 ## Current next gate
 
-**M5A repository remediation is the next executable DEVELOPMENT Chain step.** Parallel dazu muss die PR-#222-Korrektur produktiv verifiziert und SA3B positiv/negativ abgeschlossen werden, bevor der autonome Mutation Executor für spätere externe Mutationen als `VERIFIED PASS` gilt. M6–M10 planning completeness does not authorize their implementation or mutation.
+**M5A repository remediation is the next executable DEVELOPMENT Chain phase.** M5 and SA3B/SA4 are closed and no longer block it.
+
+Autonomous Systemadmin code implementation is not authorized by `REM-SA4-PILOT-001`; it requires a dedicated M5A REM plus a technically enforceable code/test execution path. M6–M10 planning completeness does not authorize their implementation or mutation.
