@@ -18,7 +18,10 @@ import {
   sanitizeAgentAuditMetadata,
   writeAgentAuditEvent,
 } from '../../server/agentAudit/agentAuditWriter';
-import { evaluateAndAuditAgentPolicy } from '../../server/agentAudit/authorizedAgentExecution';
+import {
+  evaluateAndAuditAgentPolicy,
+  recordAgentExecutionOutcome,
+} from '../../server/agentAudit/authorizedAgentExecution';
 
 const baseEvent = {
   requestId: 'request-1',
@@ -35,6 +38,37 @@ const baseEvent = {
   decision: 'ALLOW' as const,
   repository: 'SvenKulessa/Finance',
   result: 'PENDING' as const,
+};
+
+function agentRequest(): AgentAuthorizationRequest {
+  return {
+    principal: {
+      humanActorId: 'owner-1',
+      appId: 'chatgpt-client',
+      agentId: 'agent-1',
+      sessionId: 'session-1',
+      requestId: 'request-1',
+      credentialHolderId: 'github-tool-identity',
+      provider: 'openai',
+      model: 'metadata-only',
+    },
+    capability: AGENT_CAPABILITIES.READ,
+    grantedCapabilities: [AGENT_CAPABILITIES.READ],
+    riskClass: 'LOW',
+    environment: 'production',
+    targetResource: 'github:SvenKulessa/Finance',
+  };
+}
+
+const auditContext = {
+  traceId: baseEvent.traceId,
+  spanId: baseEvent.spanId,
+  policyId: 'ADR-0058/0059',
+  toolId: 'github.read',
+  repository: 'SvenKulessa/Finance',
+  prNumber: 210,
+  runtimeVersion: '0.6.0',
+  metadata: { prompt: 'must never persist', purpose: 'roadmap-evidence' },
 };
 
 beforeEach(() => {
@@ -96,49 +130,66 @@ describe('M5 agent audit writer', () => {
       .rejects.toThrow('durable audit persistence failed: database unavailable');
   });
 
-  it('audits the provider-neutral authorization decision and exposes the reference for telemetry', async () => {
-    const request: AgentAuthorizationRequest = {
-      principal: {
-        humanActorId: 'owner-1',
-        appId: 'chatgpt-client',
-        agentId: 'agent-1',
-        sessionId: 'session-1',
-        requestId: 'request-1',
-        credentialHolderId: 'github-tool-identity',
-        provider: 'openai',
-        model: 'metadata-only',
-      },
-      capability: AGENT_CAPABILITIES.READ,
-      grantedCapabilities: [AGENT_CAPABILITIES.READ],
-      riskClass: 'LOW',
-      environment: 'production',
-      targetResource: 'github:SvenKulessa/Finance',
-    };
+  it('audits authorization and terminal outcome as two correlated append-only events', async () => {
+    mocks.single
+      .mockResolvedValueOnce({ data: { id: 'auth-1' }, error: null })
+      .mockResolvedValueOnce({ data: { id: 'outcome-1' }, error: null });
 
-    const result = await evaluateAndAuditAgentPolicy(request, {
-      traceId: baseEvent.traceId,
-      spanId: baseEvent.spanId,
-      policyId: 'ADR-0058/0059',
-      toolId: 'github.read',
-      repository: 'SvenKulessa/Finance',
-      prNumber: 210,
-      runtimeVersion: '0.6.0',
-      metadata: { prompt: 'must never persist', purpose: 'roadmap-evidence' },
+    const request = agentRequest();
+    const authorization = await evaluateAndAuditAgentPolicy(request, auditContext);
+    const outcomeReference = await recordAgentExecutionOutcome({
+      authorization,
+      request,
+      context: auditContext,
+      result: 'SUCCESS',
+      metadata: { response_body: { should: 'not persist' }, operation: 'repository-read' },
     });
 
-    expect(result.decision).toMatchObject({ verdict: 'ALLOW', capability: 'READ', riskClass: 'LOW' });
-    expect(result.auditReference).toBe('supabase:agent_audit_events:audit-123');
-    expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({
+    expect(authorization.decision).toMatchObject({ verdict: 'ALLOW', capability: 'READ', riskClass: 'LOW' });
+    expect(authorization.auditReference).toBe('supabase:agent_audit_events:auth-1');
+    expect(outcomeReference).toBe('supabase:agent_audit_events:outcome-1');
+    expect(mocks.insert).toHaveBeenCalledTimes(2);
+
+    expect(mocks.insert.mock.calls[0]?.[0]).toEqual(expect.objectContaining({
       request_id: 'request-1',
+      trace_id: baseEvent.traceId,
       decision: 'ALLOW',
       result: 'PENDING',
       tool_id: 'github.read',
       pr_number: 210,
       metadata: expect.objectContaining({
+        eventType: 'authorization',
         prompt: '[OMITTED]',
         environment: 'production',
-        targetResource: 'github:SvenKulessa/Finance',
       }),
     }));
+
+    expect(mocks.insert.mock.calls[1]?.[0]).toEqual(expect.objectContaining({
+      request_id: 'request-1',
+      trace_id: baseEvent.traceId,
+      decision: 'ALLOW',
+      result: 'SUCCESS',
+      metadata: expect.objectContaining({
+        eventType: 'execution_outcome',
+        authorizationAuditReference: 'supabase:agent_audit_events:auth-1',
+        prompt: '[OMITTED]',
+        response_body: '[OMITTED]',
+        operation: 'repository-read',
+      }),
+    }));
+  });
+
+  it('refuses an outcome for a denied authorization', async () => {
+    const denied = await evaluateAndAuditAgentPolicy({
+      ...agentRequest(),
+      grantedCapabilities: [],
+    }, auditContext);
+
+    await expect(recordAgentExecutionOutcome({
+      authorization: denied,
+      request: agentRequest(),
+      context: auditContext,
+      result: 'SUCCESS',
+    })).rejects.toThrow('cannot be recorded for a denied authorization');
   });
 });
