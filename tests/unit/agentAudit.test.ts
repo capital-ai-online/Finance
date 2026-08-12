@@ -4,7 +4,10 @@ import { AGENT_CAPABILITIES, type AgentAuthorizationRequest } from '../../src/pl
 const mocks = vi.hoisted(() => {
   const single = vi.fn();
   const select = vi.fn(() => ({ single }));
-  const insert = vi.fn((_payload: Record<string, unknown>) => ({ select }));
+  const insert = vi.fn((payload: Record<string, unknown>) => {
+    void payload;
+    return { select };
+  });
   const from = vi.fn(() => ({ insert }));
   const getPrivilegedServerSupabase = vi.fn(() => ({ from }));
   return { single, select, insert, from, getPrivilegedServerSupabase };
