@@ -86,7 +86,7 @@ Die Klasse gibt nur vor, **was geprüft werden muss**. Sie erteilt keinem Agente
 - [ ] Falls Klasse C/R: Repository-Konventionen im blocking-Modus PASS.
 - [ ] Alle für `{{AUTO_CHECK_CLASS}}` erforderlichen Checks PASS.
 - [ ] Falls Klasse R: Produktions-Docker-Container real gestartet und `/healthz` mit HTTP 200 geprüft.
-- [ ] `build-and-test` für den aktuellen `(PR, Head-SHA)` PASS bzw. gültige One-Shot-Evidence kryptografisch/head-genau wiederverwendet.
+- [ ] `build-and-test` für den aktuellen `(PR, Head-SHA)` PASS bzw. gültige One-Shot-Evidence API-/SHA-head-genau wiederverwendet.
 - [ ] Falls Klasse M: separate Human/Owner-Mutationsfreigabe und Pre-/Post-Verification dokumentiert.
 
 **CI-Evidence verständlich lesen:**
