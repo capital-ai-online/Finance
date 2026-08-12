@@ -5,6 +5,7 @@ const OMITTED = '[OMITTED]';
 const PROHIBITED_PAYLOAD_KEY = /(^|[_-])(prompt|full[_-]?prompt|diff|full[_-]?diff|raw[_-]?(body|request|response)|request[_-]?body|response[_-]?body)($|[_-])/i;
 const AUDIT_REFERENCE_KEY = 'authorizationAuditReference';
 const AUDIT_REFERENCE_VALUE = /^supabase:agent_audit_events:[A-Za-z0-9_-]+$/;
+const UUID_VALUE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type AgentAuditDecision = 'ALLOW' | 'DENY';
 export type AgentAuditResult = 'SUCCESS' | 'DENIED' | 'ERROR' | 'PENDING';
@@ -18,19 +19,26 @@ export interface AgentAuditEventInput {
   agentId: string;
   provider?: string;
   model?: string;
+  intent: string;
+  scope: Record<string, unknown>;
   capability: string;
   riskClass: string;
   policyId: string;
+  policyVersion?: string;
   decision: AgentAuditDecision;
   approvalId?: string;
+  stepUpReference?: string;
   toolId?: string;
   repository?: string;
+  branch?: string;
+  commitSha?: string;
   prNumber?: number;
   workflowRunId?: string;
   artifactDigest?: string;
   deploymentId?: string;
   runtimeVersion?: string;
   result: AgentAuditResult;
+  errorCode?: string;
   rollbackReference?: string;
   metadata?: Record<string, unknown>;
   occurredAt?: string;
@@ -40,6 +48,15 @@ function requireNonEmpty(name: string, value: string): string {
   const clean = value?.trim();
   if (!clean) throw new Error(`[AgentAudit][SECURITY] ${name} is required.`);
   return clean;
+}
+
+function optionalText(value?: string): string | null {
+  return value?.trim() || null;
+}
+
+function optionalUuid(value?: string): string | null {
+  const clean = value?.trim();
+  return clean && UUID_VALUE.test(clean) ? clean : null;
 }
 
 function omitProhibitedPayloads(value: unknown, key = ''): unknown {
@@ -81,36 +98,59 @@ export function sanitizeAgentAuditMetadata(metadata?: Record<string, unknown>): 
 /**
  * ADR-0059 durable audit writer.
  *
- * The privileged Supabase client is intentionally server-only. The database table itself is
- * append-only and grants service_role only SELECT + INSERT. Any persistence error is propagated
- * so a caller cannot silently claim durable audit evidence that was never written.
+ * The privileged Supabase client is intentionally server-only. The production schema is owned by
+ * `20260811230540_m5_agent_audit_events.sql`; this adapter must map to that contract exactly rather
+ * than inventing application-only column aliases. The table itself is append-only and grants
+ * service_role only SELECT + INSERT. Any persistence error is propagated so a caller cannot
+ * silently claim durable audit evidence that was never written.
+ *
+ * `humanActorId`, `approvalId` and `stepUpReference` may originate in external control planes.
+ * UUID-valued identifiers are mapped to the corresponding database UUID columns. Non-UUID values
+ * are never coerced or fabricated; they remain attributable in sanitized `attributes` instead.
  */
 export async function writeAgentAuditEvent(input: Readonly<AgentAuditEventInput>): Promise<string> {
+  const humanActorUuid = optionalUuid(input.humanActorId);
+  const approvalUuid = optionalUuid(input.approvalId);
+  const stepUpUuid = optionalUuid(input.stepUpReference);
+  const attributes = sanitizeAgentAuditMetadata({
+    ...input.metadata,
+    ...(!humanActorUuid ? { humanActorExternalId: input.humanActorId } : {}),
+    ...(input.approvalId && !approvalUuid ? { approvalExternalId: input.approvalId } : {}),
+    ...(input.stepUpReference && !stepUpUuid ? { stepUpExternalId: input.stepUpReference } : {}),
+  });
+
   const row = {
     occurred_at: input.occurredAt ?? new Date().toISOString(),
     request_id: requireNonEmpty('requestId', input.requestId),
     trace_id: requireNonEmpty('traceId', input.traceId),
-    span_id: input.spanId?.trim() || null,
-    actor_id: requireNonEmpty('humanActorId', input.humanActorId),
+    span_id: optionalText(input.spanId),
+    human_actor_id: humanActorUuid,
     app_id: requireNonEmpty('appId', input.appId),
     agent_id: requireNonEmpty('agentId', input.agentId),
-    provider: input.provider?.trim() || null,
-    model: input.model?.trim() || null,
+    provider: optionalText(input.provider),
+    model: optionalText(input.model),
+    intent: requireNonEmpty('intent', input.intent),
+    scope: sanitizeAgentAuditMetadata(input.scope),
     capability: requireNonEmpty('capability', input.capability),
     risk_class: requireNonEmpty('riskClass', input.riskClass),
     policy_id: requireNonEmpty('policyId', input.policyId),
-    decision: input.decision,
-    approval_id: input.approvalId?.trim() || null,
-    tool_id: input.toolId?.trim() || null,
-    repository: input.repository?.trim() || null,
-    pr_number: input.prNumber ?? null,
-    workflow_run_id: input.workflowRunId?.trim() || null,
-    artifact_digest: input.artifactDigest?.trim() || null,
-    deployment_id: input.deploymentId?.trim() || null,
-    runtime_version: input.runtimeVersion?.trim() || null,
+    policy_version: optionalText(input.policyVersion),
+    authorization_decision: input.decision,
+    approval_reference: approvalUuid,
+    step_up_reference: stepUpUuid,
+    tool_name: optionalText(input.toolId),
+    repository: optionalText(input.repository),
+    branch: optionalText(input.branch),
+    commit_sha: optionalText(input.commitSha),
+    pull_request_number: input.prNumber ?? null,
+    ci_run_id: optionalText(input.workflowRunId),
+    artifact_digest: optionalText(input.artifactDigest),
+    deployment_id: optionalText(input.deploymentId),
+    runtime_version: optionalText(input.runtimeVersion),
     result: input.result,
-    rollback_reference: input.rollbackReference?.trim() || null,
-    metadata: sanitizeAgentAuditMetadata(input.metadata),
+    error_code: optionalText(input.errorCode),
+    rollback_reference: optionalText(input.rollbackReference),
+    attributes: attributes,
   };
 
   const supabase = getPrivilegedServerSupabase();

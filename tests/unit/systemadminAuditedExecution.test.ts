@@ -157,14 +157,24 @@ describe('SA3 Systemadmin audited execution', () => {
       liveMutationPermitted: false,
     });
     expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({
-      decision: 'ALLOW',
+      human_actor_id: null,
+      intent: 'systemadmin_authorization',
+      authorization_decision: 'ALLOW',
       result: 'PENDING',
       repository: SYSTEMADMIN_REPOSITORY,
-      metadata: expect.objectContaining({
+      branch: 'agent/sa4-pilot-example',
+      commit_sha: '0123456789abcdef0123456789abcdef01234567',
+      attributes: expect.objectContaining({
         eventType: 'systemadmin_authorization',
         mandateId: 'REM-SA3-AUDIT-001',
         roadmapItem: 'SA4-PILOT-EXAMPLE',
         prompt: '[OMITTED]',
+        humanActorExternalId: SYSTEMADMIN_OWNER_ACTOR_ID,
+      }),
+      scope: expect.objectContaining({
+        mandateId: 'REM-SA3-AUDIT-001',
+        roadmapItem: 'SA4-PILOT-EXAMPLE',
+        repository: SYSTEMADMIN_REPOSITORY,
       }),
     }));
   });
@@ -188,7 +198,7 @@ describe('SA3 Systemadmin audited execution', () => {
     expect(result.decision.verdict).toBe('DENY');
     expect(result.executionPermit).toBeUndefined();
     expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({
-      decision: 'DENY',
+      authorization_decision: 'DENY',
       result: 'DENIED',
     }));
   });
@@ -230,10 +240,13 @@ describe('SA3 Systemadmin audited execution', () => {
     expect(outcome).toBe('supabase:agent_audit_events:sa3-outcome-1');
     expect(mocks.insert).toHaveBeenCalledTimes(2);
     expect(mocks.insert.mock.calls[1]?.[0]).toEqual(expect.objectContaining({
-      decision: 'ALLOW',
+      intent: 'systemadmin_execution_outcome',
+      authorization_decision: 'ALLOW',
       result: 'SUCCESS',
-      pr_number: 218,
-      metadata: expect.objectContaining({
+      branch: 'agent/sa4-pilot-example',
+      commit_sha: '89abcdef0123456789abcdef0123456789abcdef',
+      pull_request_number: 218,
+      attributes: expect.objectContaining({
         eventType: 'systemadmin_execution_outcome',
         authorizationAuditReference: 'supabase:agent_audit_events:sa3-auth-1',
         mandateId: 'REM-SA3-AUDIT-001',

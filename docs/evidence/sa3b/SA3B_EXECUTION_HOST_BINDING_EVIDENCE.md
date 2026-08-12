@@ -1,132 +1,168 @@
 # SA3B Execution Host Binding Evidence
 
-Status: IMPLEMENTED / FINAL PR CI + POST-MERGE E2E PROBE PENDING
+Status: POST-MERGE HOST ACTIVE / FAIL-CLOSED PROBE PASS / POSITIVE PROBE BLOCKED
 Date: 2026-08-12
-Baseline: `main@8de5a538ae9d2f0afc7b2e505ddda427ceb77780`
+Baseline: `main@156142102e7d2a97ad466aee0340f758fa4365e5` (PR #220 merge)
 Authority: ADR-0059, ADR-0065, ADR-0067, ESS-0021
 
-## Prerequisite verification
+## Verified implementation prerequisite
 
 SA3A is complete through PR #218:
 
 - final head `4178f76c1c33b50b957cd073d83ed9eeb0493642`;
-- merge commit `8de5a538ae9d2f0afc7b2e505ddda427ceb77780`;
-- CI #926: PASS;
-- Governance #647: PASS;
-- former SA3A branch deleted.
+- merge `8de5a538ae9d2f0afc7b2e505ddda427ceb77780`;
+- CI #926 PASS;
+- Governance #647 PASS;
+- branch deleted.
 
-Therefore SA3B is the active Systemadmin stage.
+SA3B implementation is merged through PR #220:
 
-## Diagnosis
-
-The repository-side SA3A adapter cannot intercept direct external ChatGPT GitHub connector mutations. Treating direct connector writes as audited solely because repository policy exists would be a false enforcement claim.
-
-SA3B therefore introduces an actual side-effect host rather than relying on advisory client behavior.
+- final reviewed head `c4c7d00b33e521dfd12b14ddfdc097288a80f385`;
+- merge `156142102e7d2a97ad466aee0340f758fa4365e5`;
+- CI #936 PASS;
+- Governance #653 PASS;
+- implementation branch deleted.
 
 ## Selected enforcement architecture
 
 `Owner issue → GitHub Actions → GitHub OIDC → CAPITAL-AI audit broker → SA3A permit → exact GitHub action → SA3A outcome`
 
-The initial real action is deliberately limited to `BRANCH`.
+The initial real action remains deliberately limited to `BRANCH`.
 
-## Implemented artifacts
+Repository TypeScript cannot intercept ordinary direct ChatGPT GitHub connector writes. Direct connector writes therefore remain outside the autonomous Systemadmin mutation path.
 
-- `docs/adr/ADR-0067-systemadmin-github-actions-execution-host.md`;
-- `.github/workflows/systemadmin-roadmap-executor.yml`;
-- `.ai/mandates/REM-SA3B-PROBE-001.json`;
-- `server/systemadmin/githubActionsOidc.ts`;
-- `server/systemadmin/systemadminExecutionBrokerRouter.ts`;
-- `scripts/systemadmin/validateExecutionIssue.mjs`;
-- `tests/unit/githubActionsOidc.test.ts`;
-- `tests/unit/systemadminExecutionIssue.test.ts`;
-- `tests/unit/systemadminExecutionHostWorkflow.test.ts`;
-- route composition contract update;
-- SA3 control-plane self-protection extension;
-- machine-readable Systemadmin audit contract v1.1.0;
-- Roadmap/traceability/runbook updates.
+## Production deployment evidence
 
-## No external configuration mutation in this PR
+Render service `Finance` (`srv-d91o1o9o3t8c73edi55g`) has `autoDeploy=no`.
 
-| Platform | Mutation |
-|---|---|
-| Supabase schema/config | NOT REQUIRED |
-| Stripe | NOT REQUIRED |
-| Render settings/env | NOT REQUIRED |
-| DNS/IONOS | NOT REQUIRED |
-| GitHub repository files | REQUIRED / PR only |
-| Production data | NOT REQUIRED |
+After PR #220 merge, exactly one manual deployment was started without cache clear:
 
-The broker reuses the already production-verified M5 audit writer. GitHub-to-CAPITAL-AI authentication uses GitHub Actions OIDC and introduces no reusable shared secret.
+- deploy `dep-d9u19jjm8hqs73e95la0`;
+- commit `156142102e7d2a97ad466aee0340f758fa4365e5`;
+- finished `2026-08-12T06:39:05.889475Z`;
+- status `live`;
+- production telemetry reports the same commit SHA.
 
-## OIDC security evidence
+No Render environment/configuration value was changed by this deployment.
 
-Implementation requires:
+## Real post-merge probe #1
 
-- GitHub OIDC issuer;
-- exact audience `capital-ai-systemadmin-execution`;
-- Finance repository name + immutable repository ID;
-- Owner actor and IDs;
-- `issues` event;
-- `refs/heads/main`;
-- exact SA3B workflow ref;
-- RS256 JWT signature verified using GitHub JWKS;
-- valid token time window.
+Owner Issue **#221**:
 
-Unit negative matrix includes wrong audience, actor, actor ID, repository ID, owner ID, event, ref, workflow, expiry, signature and subject.
+`[SA3B-PROBE] Permit-before-side-effect Verifikation`
 
-## Ingress security evidence
+Request bound to:
 
-Issue payload is untrusted.
+- mode `BRANCH_PROBE`;
+- mandate `REM-SA3B-PROBE-001`;
+- roadmap item `SA3B-HOST-PROBE`;
+- base SHA `156142102e7d2a97ad466aee0340f758fa4365e5`;
+- requested branch `agent/sa3b-host-probe-20260812a`.
 
-Only six fields are accepted, and the mode is hard-limited to `BRANCH_PROBE`. Unknown fields and command-like branch names are denied. The workflow imports the real REM from trusted `main` rather than accepting it from the Issue.
+GitHub Actions:
 
-## Permit-before-side-effect evidence
+- workflow run `31570833507`;
+- trusted `main` checkout: PASS;
+- Node 24.18.0 setup: PASS;
+- strict Issue request validation: PASS;
+- current-main + trusted REM binding: PASS;
+- GitHub OIDC acquisition: PASS;
+- broker authorization: **HTTP 503 / FAIL-CLOSED**;
+- branch creation: **SKIPPED**;
+- terminal outcome: skipped because no authorization permit existed.
 
-Static workflow contract proves ordering in trusted workflow source:
+A repository branch lookup after the run confirms that `agent/sa3b-host-probe-20260812a` does not exist.
 
-`broker /authorize → validate audit-bound BRANCH permit → gh api branch create → broker /outcome`
+Therefore the real negative invariant is proven:
 
-The workflow contains only one branch-create POST and no `git push` or `gh pr create`.
+`NO DURABLE AUDIT PERMIT → NO GITHUB BRANCH SIDE EFFECT`
 
-Runtime proof is still pending because the workflow and broker must first be Human-reviewed, merged and available on `main`.
+This is a **fail-closed security PASS**, not a positive SA3B completion PASS.
 
-## Rollback evidence
+## Root cause 1 — production privileged Supabase credential
 
-If branch creation fails, an `ERROR` outcome is persisted.
+Render broker telemetry for workflow run `31570833507` records:
 
-If branch creation succeeds but terminal audit persistence fails, the workflow deletes the probe branch immediately and then fails.
+`[AgentAudit][SECURITY] durable audit persistence failed: Unregistered API key`
 
-After a successful acceptance probe, the probe branch is deleted after evidence capture according to the Finance branch lifecycle.
+The same production service currently emits `Unregistered API key` for other privileged Supabase operations including Outbox, ScoreValidation and Alerts.
 
-## Test plan
+Supabase project `AIFINANCIAL` (`ryzywoktpmyhwzxmstyu`) itself is `ACTIVE_HEALTHY` and its canonical project URL is `https://ryzywoktpmyhwzxmstyu.supabase.co`.
 
-Final repository CI must prove:
+`server/db.ts` intentionally resolves privileged credentials as:
 
-1. TypeScript build of OIDC verifier/broker and route composition;
-2. valid signed GitHub OIDC token accepted;
-3. invalid claims/signature denied;
-4. exact probe Issue accepted;
-5. expanded/malformed/shell-like Issue denied;
-6. workflow actions are immutable-SHA pinned;
-7. workflow explicit permissions pass repository security policy;
-8. durable authorization appears before branch side-effect in workflow contract;
-9. no PR/deploy/merge capability is exposed by the probe host;
-10. existing SA3 tests remain PASS.
+`SUPABASE_SECRET_KEY → SUPABASE_SERVICE_ROLE_KEY`
 
-## Post-merge acceptance still required
+No secret value is stored in this evidence. Credential repair/rotation remains an Owner-controlled production-secret operation and is not performed by the repository remediation PR.
 
-This document must not be upgraded to `VERIFIED PASS` from CI alone.
+## Root cause 2 — M5 writer/schema contract drift
 
-Required live evidence after merge/deployment:
+Read-only production schema verification exposed an independent application defect that had been hidden by mocked unit tests.
 
-- execution broker responds only to exact GitHub Actions OIDC identity;
-- one valid Owner probe receives authorization audit reference before branch creation;
-- created branch equals requested current `main` SHA;
-- terminal SUCCESS outcome reference exists;
-- a deliberately invalid/stale request produces no branch;
-- successful probe branch is deleted;
-- probe issues/workflow run IDs/audit references are recorded here without secrets.
+Canonical migration:
+
+`supabase/migrations/20260811230540_m5_agent_audit_events.sql`
+
+Canonical production columns include:
+
+- `human_actor_id`;
+- `intent`;
+- `scope`;
+- `authorization_decision`;
+- `approval_reference`;
+- `step_up_reference`;
+- `tool_name`;
+- `branch` / `commit_sha`;
+- `pull_request_number`;
+- `ci_run_id`;
+- `attributes`.
+
+The pre-remediation writer used application-only aliases including `actor_id`, `decision`, `approval_id`, `tool_id`, `pr_number`, `workflow_run_id` and `metadata` and omitted required `intent`/`scope`.
+
+This means a valid privileged key alone would not be sufficient for a positive SA3B audit insert.
+
+## Corrective repository remediation
+
+Branch:
+
+`fix/sa3b-m5-audit-schema-contract`
+
+The remediation changes application code/tests only. **No Supabase schema mutation is required or authorized.**
+
+Controls:
+
+1. `agentAuditWriter.ts` maps exactly to the existing production migration vocabulary.
+2. `intent` and `scope` become explicit application audit inputs.
+3. generic and Systemadmin audited execution provide structured intent/scope.
+4. external identities such as GitHub login `SvenKulessa` are never fabricated into UUID columns:
+   - valid UUID → corresponding DB UUID field;
+   - non-UUID → DB UUID field `NULL` + sanitized external identifier in `attributes`.
+5. invalid/non-UUID approval/step-up references follow the same non-coercion rule.
+6. `agentAudit.test.ts` asserts canonical runtime row keys and absence of legacy DB aliases.
+7. `agentAuditSchemaContract.test.ts` ties the application row mapping directly to the canonical M5 migration so future drift fails CI.
+
+The final review branch is squashed to one commit over the PR #220 merge baseline before the remediation PR is opened.
+
+## Existing production audit authority
+
+The production table is RLS-enabled, append-only and contains the original M5 verification row. The table itself is preserved; no destructive rollback or schema replacement is part of this remediation.
+
+## Remaining SA3B exit gate
+
+SA3B remains **IN PROGRESS** until all of the following are true:
+
+1. writer/schema remediation PR passes final CI and Human merge;
+2. remediation branch is deleted;
+3. corrected `main` is deployed;
+4. Owner restores a valid privileged Supabase server credential in Render without exposing it in repository/evidence;
+5. privileged persistence health is verified;
+6. a fresh Owner `BRANCH_PROBE` receives durable authorization evidence before branch creation;
+7. exact branch is created from the current `main` SHA;
+8. terminal `SUCCESS` outcome reference is durably recorded;
+9. probe branch is deleted;
+10. a deliberately invalid/stale/no-permit probe again proves zero side effect;
+11. roadmap/traceability/evidence are synchronized.
 
 ## Current conclusion
 
-**SA3B implementation is ready for final repository validation, but execution-host binding is not yet VERIFIED PASS. SA4 remains blocked.**
+**The real SA3B host exists and its fail-closed boundary has been proven in production. The positive permit-before-side-effect chain is blocked by a production privileged-key failure plus the discovered application writer/schema drift. SA4 remains blocked.**
