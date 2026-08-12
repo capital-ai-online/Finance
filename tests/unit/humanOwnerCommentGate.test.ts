@@ -63,6 +63,14 @@ describe('Human Owner Comment Gate', () => {
     expect(human).toContain('if [ -n "$blocking" ]; then');
     expect(human).toContain('echo "dispatch=false" >> "$GITHUB_OUTPUT"');
   });
+
+  it('keeps PR workflow followers serial instead of running Auto-Status beside the Human Gate', () => {
+    const autoStatus = read('.github/workflows/pr-auto-classification.yml');
+    expect(autoStatus).toContain('workflows: ["PR Build and Test"]');
+    expect(autoStatus).not.toContain('workflows: ["PR Governance", "PR Build and Test"]');
+    expect(autoStatus).not.toContain("github.event.workflow_run.name == 'PR Governance'");
+    expect(autoStatus).toContain("github.event.workflow_run.name == 'PR Build and Test'");
+  });
 });
 
 describe('PR Build and Test dispatch', () => {
