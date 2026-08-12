@@ -43,27 +43,78 @@ jobs:
         run: |
           set -euo pipefail
 
-          required_diff='- [x] Human/Owner: vollständigen PR-Diff geprüft.'
-          required_files='- [x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.'
           current_body="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq '.body // ""')"
 
-          body_ok=true
-          printf '%s\n' "$current_body" | grep -Fqx -- "$required_diff" || body_ok=false
-          printf '%s\n' "$current_body" | grep -Fqx -- "$required_files" || body_ok=false
+          # Semantisch strikt, aber Markdown-tolerant: echte checked task-list items
+          # werden normalisiert; Quote-/Codeblock-Evidence zählt nicht.
+          read -r diff_attested files_attested <<< "$(
+            PR_BODY="$current_body" python3 - <<'PY'
+          import os
+          import re
+
+          required_diff = 'Human/Owner: vollständigen PR-Diff geprüft.'
+          required_files = 'Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.'
+
+          def parse(body: str):
+              found = set()
+              in_fence = False
+              for raw in body.replace('\r\n', '\n').replace('\r', '\n').split('\n'):
+                  line = raw.strip()
+                  if re.match(r'^(?:```|~~~)', line):
+                      in_fence = not in_fence
+                      continue
+                  if in_fence or line.startswith('>'):
+                      continue
+                  match = re.fullmatch(r'-\s*\[\s*[xX]\s*\]\s+(.+?)\s*', line)
+                  if not match:
+                      continue
+                  label = re.sub(r'`([^`\n]+)`', r'\1', match.group(1))
+                  found.add(' '.join(label.split()))
+              return required_diff in found, required_files in found
+
+          canonical = '- [x] ' + required_diff + '\n- [x] ' + required_files
+          markdown = '- [X] ' + required_diff + '\n- [x] Human/Owner: alle geänderten Dateien im Tab `Files changed` als Viewed markiert.'
+          unchecked = '- [ ] ' + required_diff + '\n- [x] ' + required_files
+          fenced = '```text\n- [x] ' + required_diff + '\n- [x] ' + required_files + '\n```'
+          quoted = '> - [x] ' + required_diff + '\n- [x] ' + required_files
+
+          assert parse(canonical) == (True, True)
+          assert parse(markdown) == (True, True)
+          assert parse(unchecked) == (False, True)
+          assert parse(fenced) == (False, False)
+          assert parse(quoted) == (False, True)
+
+          diff_ok, files_ok = parse(os.environ.get('PR_BODY', ''))
+          print(f'{str(diff_ok).lower()} {str(files_ok).lower()}')
+          PY
+          )"
+
+          body_ok=false
+          if [ "$diff_attested" = "true" ] && [ "$files_attested" = "true" ]; then
+            body_ok=true
+          fi
 
           review_id="$(
             gh api --paginate \
               "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" \
-              --jq '.[] | select(.user.login == env.EXPECTED_OWNER and .commit_id == env.PR_HEAD_SHA and (((.body // "") | ascii_downcase | gsub("^[[:space:]]+|[[:space:]]+$"; "")) == "okay" or ((.body // "") | contains("💪")))) | .id' \
+              --jq '.[] | select(.user.login == env.EXPECTED_OWNER and .commit_id == env.PR_HEAD_SHA and (((((.body // "") | gsub("^[[:space:]]+|[[:space:]]+$"; "")) | ascii_downcase) == "okay") or (((.body // "") | gsub("^[[:space:]]+|[[:space:]]+$"; "")) == "💪"))) | .id' \
               | head -n 1
           )"
 
-          if [ "$body_ok" = "true" ] && [ -n "$review_id" ]; then
+          review_ok=false
+          if [ -n "$review_id" ]; then
+            review_ok=true
+          fi
+
+          if [ "$body_ok" = "true" ] && [ "$review_ok" = "true" ]; then
             echo "approved=true" >> "$GITHUB_OUTPUT"
             echo "Owner-Gate erfüllt. Genau ein build-and-test-Lauf darf starten."
           else
             echo "approved=false" >> "$GITHUB_OUTPUT"
             echo "Owner-Gate nicht erfüllt. Build/Test wird nicht gestartet."
+            echo "PR-Diff-Attestation: $diff_attested"
+            echo "Files-changed-Attestation: $files_attested"
+            echo "Current-Head-Owner-Review: $review_ok"
             echo "Reihenfolge: aktuellen Head reviewen (💪/okay), danach beide Owner-Checkboxen setzen/speichern."
             exit 1
           fi
