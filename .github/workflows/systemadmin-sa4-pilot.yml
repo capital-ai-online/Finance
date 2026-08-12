@@ -1,0 +1,53 @@
+name: Systemadmin SA4 Bounded Pilot
+run-name: >-
+  SA4 Pilot für Issue #${{ github.event.issue.number }}
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+concurrency:
+  group: systemadmin-sa4-pilot-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  bounded-doc-pr:
+    name: Audit-gebundener SA4 BRANCH-COMMIT-Draft-PR Pilot
+    if: >-
+      github.event.issue.user.login == 'SvenKulessa' &&
+      startsWith(github.event.issue.title, '[SA4-PILOT]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Vertrauenswürdigen main-Stand auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '24.18.0'
+
+      - name: Untrusted SA4 Issue-Request strikt validieren
+        env:
+          SYSTEMADMIN_ISSUE_BODY: ${{ github.event.issue.body }}
+          SYSTEMADMIN_REQUEST_OUTPUT: ${{ runner.temp }}/systemadmin-sa4-request.json
+        run: node scripts/systemadmin/validateSa4PilotIssue.mjs
+
+      - name: Audit-gebundenen bounded SA4 Host ausführen
+        env:
+          SYSTEMADMIN_REQUEST_FILE: ${{ runner.temp }}/systemadmin-sa4-request.json
+          SYSTEMADMIN_MANDATE_FILE: .ai/mandates/REM-SA4-PILOT-001.json
+          SYSTEMADMIN_BROKER_BASE_URL: https://capital-ai.online
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/systemadmin/runSa4Pilot.mjs

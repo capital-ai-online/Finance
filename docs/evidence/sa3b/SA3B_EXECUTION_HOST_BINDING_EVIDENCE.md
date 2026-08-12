@@ -1,13 +1,15 @@
 # SA3B Execution Host Binding Evidence
 
-Status: POST-MERGE HOST ACTIVE / FAIL-CLOSED PROBE PASS / POSITIVE PROBE BLOCKED
+Status: **TECHNICAL VERIFIED PASS / LIFECYCLE CLEANUP PENDING**
 Date: 2026-08-12
-Baseline: `main@156142102e7d2a97ad466aee0340f758fa4365e5` (PR #220 merge)
+Current verified production baseline: `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e`
 Authority: ADR-0059, ADR-0065, ADR-0067, ESS-0021
 
-## Verified implementation prerequisite
+## Merged implementation
 
-SA3A is complete through PR #218:
+### SA3A
+
+PR #218:
 
 - final head `4178f76c1c33b50b957cd073d83ed9eeb0493642`;
 - merge `8de5a538ae9d2f0afc7b2e505ddda427ceb77780`;
@@ -15,154 +17,174 @@ SA3A is complete through PR #218:
 - Governance #647 PASS;
 - branch deleted.
 
-SA3B implementation is merged through PR #220:
+### SA3B host
 
-- final reviewed head `c4c7d00b33e521dfd12b14ddfdc097288a80f385`;
+PR #220:
+
+- final head `c4c7d00b33e521dfd12b14ddfdc097288a80f385`;
 - merge `156142102e7d2a97ad466aee0340f758fa4365e5`;
 - CI #936 PASS;
 - Governance #653 PASS;
-- implementation branch deleted.
+- branch deleted.
 
-## Selected enforcement architecture
+### M5 writer/schema corrective
 
-`Owner issue → GitHub Actions → GitHub OIDC → CAPITAL-AI audit broker → SA3A permit → exact GitHub action → SA3A outcome`
+PR #222:
 
-The initial real action remains deliberately limited to `BRANCH`.
+- final head `1bb6fa3a3bb30d1671d14ba012462070ccd7293d`;
+- merge `91963f59b74c8c3c3c0b33c6a23237a01ac0128e`;
+- final CI #951 PASS;
+- Governance #656 PASS;
+- corrective branch deleted.
 
-Repository TypeScript cannot intercept ordinary direct ChatGPT GitHub connector writes. Direct connector writes therefore remain outside the autonomous Systemadmin mutation path.
+Render deploy `dep-d9u1v5942hec739bsc6g` reached `live` on the same #222 merge SHA.
 
-## Production deployment evidence
+## Secret-file runtime verification
 
-Render service `Finance` (`srv-d91o1o9o3t8c73edi55g`) has `autoDeploy=no`.
+The server contract loads `/etc/secrets/finance-secrets.env` before privileged database construction. The file contract includes both:
 
-After PR #220 merge, exactly one manual deployment was started without cache clear:
+- `SUPABASE_SECRET_KEY`;
+- `SUPABASE_SERVICE_ROLE_KEY`.
 
-- deploy `dep-d9u19jjm8hqs73e95la0`;
-- commit `156142102e7d2a97ad466aee0340f758fa4365e5`;
-- finished `2026-08-12T06:39:05.889475Z`;
-- status `live`;
-- production telemetry reports the same commit SHA.
+`server/db.ts` resolves privileged Supabase credentials in this order:
 
-No Render environment/configuration value was changed by this deployment.
+`SUPABASE_SECRET_KEY → SUPABASE_SERVICE_ROLE_KEY`
 
-## Real post-merge probe #1
+No credential value is stored in this evidence.
 
-Owner Issue **#221**:
+The functionality of the Owner-managed Render secret file was verified through the real SA3B execution path, not by reading or displaying the secret value.
 
-`[SA3B-PROBE] Permit-before-side-effect Verifikation`
+## Earlier fail-closed probe
 
-Request bound to:
+Issue #221 / workflow run `31570833507` proved:
+
+`DURABLE AUDIT FAILURE → NO PERMIT → NO BRANCH`
+
+The broker returned 503 when Supabase rejected the prior privileged credential. The requested branch `agent/sa3b-host-probe-20260812a` was never created.
+
+This remains valid negative evidence.
+
+## Positive live probe after PR #222 + secret repair
+
+Owner Issue #223 triggered the trusted SA3B host on exact:
+
+`main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e`
+
+Request:
 
 - mode `BRANCH_PROBE`;
 - mandate `REM-SA3B-PROBE-001`;
 - roadmap item `SA3B-HOST-PROBE`;
-- base SHA `156142102e7d2a97ad466aee0340f758fa4365e5`;
-- requested branch `agent/sa3b-host-probe-20260812a`.
+- branch `agent/sa3b-host-probe-20260812b`.
 
-GitHub Actions:
+Workflow run `31574111075`:
 
-- workflow run `31570833507`;
-- trusted `main` checkout: PASS;
-- Node 24.18.0 setup: PASS;
-- strict Issue request validation: PASS;
-- current-main + trusted REM binding: PASS;
-- GitHub OIDC acquisition: PASS;
-- broker authorization: **HTTP 503 / FAIL-CLOSED**;
-- branch creation: **SKIPPED**;
-- terminal outcome: skipped because no authorization permit existed.
+| Step | Result |
+|---|---|
+| Owner/title ingress | PASS |
+| strict Issue JSON validation | PASS |
+| exact current-main + REM binding | PASS |
+| GitHub Actions OIDC | PASS |
+| broker authorization | PASS |
+| durable M5 authorization insert | PASS |
+| audit-bound BRANCH permit | PASS |
+| branch creation | PASS |
+| durable M5 terminal outcome | PASS |
+| Issue evidence correlation | PASS |
 
-A repository branch lookup after the run confirms that `agent/sa3b-host-probe-20260812a` does not exist.
+Authorization reference:
 
-Therefore the real negative invariant is proven:
+`supabase:agent_audit_events:194f1198-492c-4d4f-b1e4-0c13a5d99d20`
 
-`NO DURABLE AUDIT PERMIT → NO GITHUB BRANCH SIDE EFFECT`
+Outcome reference:
 
-This is a **fail-closed security PASS**, not a positive SA3B completion PASS.
+`supabase:agent_audit_events:5ab9eefe-f472-4396-a7e7-2a3ceb029e34`
 
-## Root cause 1 — production privileged Supabase credential
+The created branch was independently verified to point exactly to:
 
-Render broker telemetry for workflow run `31570833507` records:
+`91963f59b74c8c3c3c0b33c6a23237a01ac0128e`
 
-`[AgentAudit][SECURITY] durable audit persistence failed: Unregistered API key`
+## Direct Supabase correlation
 
-The same production service currently emits `Unregistered API key` for other privileged Supabase operations including Outbox, ScoreValidation and Alerts.
+Read-only verification of `public.agent_audit_events` confirmed both referenced rows.
 
-Supabase project `AIFINANCIAL` (`ryzywoktpmyhwzxmstyu`) itself is `ACTIVE_HEALTHY` and its canonical project URL is `https://ryzywoktpmyhwzxmstyu.supabase.co`.
+Shared correlation:
 
-`server/db.ts` intentionally resolves privileged credentials as:
+- request ID `issue-223-run-31574111075`;
+- trace ID `github-actions:31574111075`;
+- agent `capital-ai-systemadmin-roadmap-executor`;
+- app `chatgpt-github-connector`;
+- capability `BRANCH`;
+- risk `MEDIUM`;
+- exact Finance repository and probe branch;
+- workflow run `31574111075`.
 
-`SUPABASE_SECRET_KEY → SUPABASE_SERVICE_ROLE_KEY`
+Authorization row:
 
-No secret value is stored in this evidence. Credential repair/rotation remains an Owner-controlled production-secret operation and is not performed by the repository remediation PR.
+- decision `ALLOW`;
+- result `PENDING`;
+- exact current-main SHA;
+- workload identity / workflow metadata retained in sanitized attributes.
 
-## Root cause 2 — M5 writer/schema contract drift
+Outcome row:
 
-Read-only production schema verification exposed an independent application defect that had been hidden by mocked unit tests.
+- decision `ALLOW`;
+- result `SUCCESS`;
+- `authorizationAuditReference` points to the authorization row;
+- `requiresHumanMerge=true` remains preserved.
 
-Canonical migration:
+This is the positive proof that the Render secret-file credential, corrected M5 writer and append-only audit path function together in production.
 
-`supabase/migrations/20260811230540_m5_agent_audit_events.sql`
+## Separate stale-base negative probe
 
-Canonical production columns include:
+Owner Issue #224 requested stale base:
 
-- `human_actor_id`;
-- `intent`;
-- `scope`;
-- `authorization_decision`;
-- `approval_reference`;
-- `step_up_reference`;
-- `tool_name`;
-- `branch` / `commit_sha`;
-- `pull_request_number`;
-- `ci_run_id`;
-- `attributes`.
+`156142102e7d2a97ad466aee0340f758fa4365e5`
 
-The pre-remediation writer used application-only aliases including `actor_id`, `decision`, `approval_id`, `tool_id`, `pr_number`, `workflow_run_id` and `metadata` and omitted required `intent`/`scope`.
+Requested branch:
 
-This means a valid privileged key alone would not be sufficient for a positive SA3B audit insert.
+`agent/sa3b-host-probe-negative-20260812c`
 
-## Corrective repository remediation
+Workflow run `31574221718`:
 
-Branch:
+- strict request validation: PASS;
+- current-main/REM binding: **DENY as expected**;
+- OIDC: SKIPPED;
+- broker authorization: SKIPPED;
+- audit side effect: SKIPPED;
+- branch creation: SKIPPED;
+- outcome: SKIPPED.
 
-`fix/sa3b-m5-audit-schema-contract`
+Independent branch lookup returned 404 for the requested negative branch.
 
-The remediation changes application code/tests only. **No Supabase schema mutation is required or authorized.**
+Therefore:
 
-Controls:
+`STALE BASE → ZERO OIDC/BROKER/REPOSITORY SIDE EFFECT`
 
-1. `agentAuditWriter.ts` maps exactly to the existing production migration vocabulary.
-2. `intent` and `scope` become explicit application audit inputs.
-3. generic and Systemadmin audited execution provide structured intent/scope.
-4. external identities such as GitHub login `SvenKulessa` are never fabricated into UUID columns:
-   - valid UUID → corresponding DB UUID field;
-   - non-UUID → DB UUID field `NULL` + sanitized external identifier in `attributes`.
-5. invalid/non-UUID approval/step-up references follow the same non-coercion rule.
-6. `agentAudit.test.ts` asserts canonical runtime row keys and absence of legacy DB aliases.
-7. `agentAuditSchemaContract.test.ts` ties the application row mapping directly to the canonical M5 migration so future drift fails CI.
+## Proven SA3B security invariants
 
-The final review branch is squashed to one commit over the PR #220 merge baseline before the remediation PR is opened.
+1. repository side effect occurs only after durable authorization evidence;
+2. invalid/stale base fails before side effect;
+3. audit persistence outage fails closed;
+4. OIDC identity is bound to Owner, repository, main and exact workflow;
+5. outcome is bound to the same issue/run/request and prior authorization;
+6. no direct ChatGPT→GitHub connector mutation counts as autonomous Systemadmin execution;
+7. `MERGE`, deployment and production mutation are not part of SA3B authority.
 
-## Existing production audit authority
+## Remaining lifecycle cleanup
 
-The production table is RLS-enabled, append-only and contains the original M5 verification row. The table itself is preserved; no destructive rollback or schema replacement is part of this remediation.
+The successful positive probe branch:
 
-## Remaining SA3B exit gate
+`agent/sa3b-host-probe-20260812b`
 
-SA3B remains **IN PROGRESS** until all of the following are true:
+still exists after evidence capture and must be deleted before SA3B may be recorded as full lifecycle `COMPLETE / VERIFIED PASS` and before the SA4 pilot is allowed to execute.
 
-1. writer/schema remediation PR passes final CI and Human merge;
-2. remediation branch is deleted;
-3. corrected `main` is deployed;
-4. Owner restores a valid privileged Supabase server credential in Render without exposing it in repository/evidence;
-5. privileged persistence health is verified;
-6. a fresh Owner `BRANCH_PROBE` receives durable authorization evidence before branch creation;
-7. exact branch is created from the current `main` SHA;
-8. terminal `SUCCESS` outcome reference is durably recorded;
-9. probe branch is deleted;
-10. a deliberately invalid/stale/no-permit probe again proves zero side effect;
-11. roadmap/traceability/evidence are synchronized.
+The connected GitHub tool surface used during this session exposes branch creation/update but no reference-delete mutation, so this cleanup cannot be truthfully recorded as completed by the agent.
 
-## Current conclusion
+SA4 therefore includes an independent activation check that refuses execution while this exact branch exists.
 
-**The real SA3B host exists and its fail-closed boundary has been proven in production. The positive permit-before-side-effect chain is blocked by a production privileged-key failure plus the discovered application writer/schema drift. SA4 remains blocked.**
+## Conclusion
+
+**SA3B technical enforcement is VERIFIED PASS.** The Render Supabase privileged secret path is functional, positive Authorization → Branch → Outcome correlation is proven in the production audit store, and independent fail-closed behavior is proven.
+
+**Lifecycle completion remains pending only on deletion of `agent/sa3b-host-probe-20260812b`.**
