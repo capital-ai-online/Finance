@@ -8,16 +8,14 @@ on:
   push:
     branches: [main]
   pull_request:
-    types: [opened, synchronize, reopened, edited, ready_for_review]
-  pull_request_review:
-    types: [submitted, edited, dismissed]
+    types: [edited]
 
 permissions:
   contents: read
   pull-requests: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -30,8 +28,8 @@ jobs:
     steps:
       - name: main-Push zulassen
         if: ${{ github.event_name == 'push' }}
-        id: push-gate
-        run: echo "approved=true" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "main-Push: vollständige CI ist verpflichtend."
 
       - name: Owner-Freigabe prüfen
         if: ${{ github.event_name != 'push' }}
@@ -62,10 +60,12 @@ jobs:
 
           if [ "$body_ok" = "true" ] && [ -n "$review_id" ]; then
             echo "approved=true" >> "$GITHUB_OUTPUT"
-            echo "Owner-Gate erfüllt. build-and-test darf starten."
+            echo "Owner-Gate erfüllt. Genau ein build-and-test-Lauf darf starten."
           else
             echo "approved=false" >> "$GITHUB_OUTPUT"
             echo "Owner-Gate nicht erfüllt. Build/Test wird nicht gestartet."
+            echo "Reihenfolge: aktuellen Head reviewen (💪/okay), danach beide Owner-Checkboxen setzen/speichern."
+            exit 1
           fi
 
   build-and-test:
