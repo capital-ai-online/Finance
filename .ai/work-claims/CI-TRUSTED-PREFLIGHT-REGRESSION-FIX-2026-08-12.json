@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CI-TRUSTED-PREFLIGHT-REGRESSION-FIX-2026-08-12",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Repair the trusted PR preflight regression introduced during PR #240 consolidation without weakening Human/Owner authority",
+  "workItemDE": "Trusted-PR-Preflight-Regression aus der Konsolidierung von PR #240 beheben, ohne Human/Owner-Autorität abzuschwächen",
+  "executionProfile": "P2",
+  "externalMutation": "NONE",
+  "startedAt": "2026-08-12T18:51:00Z",
+  "baseBranch": "main",
+  "baseSha": "74f4eb98345f994854f56e7296b9491241718b57",
+  "claimedPaths": [
+    ".github/workflows/pr-build-and-test.yml",
+    ".github/pull_request_template.md",
+    "tests/unit/humanOwnerCommentGate.test.ts",
+    ".ai/work-claims/CI-TRUSTED-PREFLIGHT-REGRESSION-FIX-2026-08-12.json"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated pull request is merged, closed, superseded or abandoned."
+}
