@@ -1,4 +1,4 @@
-<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.3.1 -->
+<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.3.2 -->
 # CAPITAL-AI Änderungsantrag (Pull Request)
 
 > Diese Vorlage ist verbindlich. Maschinenverwaltete Baseline-Felder dürfen nicht gelöscht werden.
@@ -90,14 +90,14 @@ Ein **Rollback-Runbook** beschreibt vor einer Mutation den sicheren Weg zurück 
 
 > Dieser Abschnitt ist das Start-Gate für die teure Build-/Test-Pipeline.
 >
-> Reihenfolge für den Owner: **Files changed prüfen und Viewed setzen → Review `💪`/`okay` absenden → beide Approval-Kästchen zuletzt setzen.** Das letzte Bearbeiten des PR-Bodys löst die Owner-Vorprüfung aus.
+> Reihenfolge für den Owner: **Files changed prüfen und Viewed setzen → Review `💪`/`okay` für den aktuellen PR-Head absenden → beide Checkboxen zuletzt setzen.** Das letzte Bearbeiten des PR-Bodys löst die Owner-Vorprüfung aus.
+>
+> **Wichtig:** Die folgenden beiden Checkbox-Texte sind maschinenlesbare Governance-Invarianten und dürfen nicht umbenannt oder paraphrasiert werden.
 
-### Verbindliche Human / Owner Approvals
+- [ ] Human/Owner: vollständigen PR-Diff geprüft.
+- [ ] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.
 
-- [ ] **Human Approval:** Ich habe den vollständigen PR-Diff sowie alle geänderten Dateien persönlich geprüft und als `Viewed` markiert.
-- [ ] **Owner Approval:** Ich genehmige den aktuellen PR-Head ausdrücklich für die technische CI gemäß dem dokumentierten Scope. Diese Freigabe gilt nicht automatisch für spätere Commits, Merge oder externe Produktionsmutationen.
-
-Danach muss für den **aktuellen PR-Head** ein Review von `SvenKulessa` mit **`💪`** oder **`okay`** vorhanden sein. Erst dann darf `technical-validation` starten. Ein neuer Commit invalidiert den bisherigen Review und die Owner Approval für den neuen Head.
+Danach muss für den **aktuellen PR-Head** ein Review von `SvenKulessa` mit **`💪`** oder **`okay`** vorhanden sein. Erst dann darf `technical-validation` starten. Ein neuer Commit invalidiert den bisherigen Review für den neuen Head. Merge und externe Produktionsmutationen benötigen weiterhin ihre jeweils separate ausdrückliche Human-/Owner-Freigabe.
 
 ## 9. PR-Checkklasse und auszuführende Checks
 
