@@ -1,5 +1,5 @@
 name: PR Build and Test
-run-name: PR #${{ inputs.pr_number }} – build-and-test @ ${{ inputs.head_sha }}
+run-name: PR #${{ inputs.pr_number }} – trusted build/test @ ${{ inputs.head_sha }}
 
 on:
   workflow_dispatch:
@@ -16,11 +16,12 @@ on:
         description: Head-gebundener Human-Gate-Kommentar
         required: true
         type: string
+      build_check_run_id:
+        description: Bereits auf dem PR-Head reservierter build-and-test Check-Run
+        required: true
+        type: string
 
-permissions:
-  contents: read
-  issues: read
-  pull-requests: read
+permissions: {}
 
 concurrency:
   group: pr-build-and-test-${{ inputs.pr_number }}-${{ inputs.head_sha }}
@@ -29,12 +30,17 @@ concurrency:
 jobs:
   owner-evidence:
     name: Human-/Owner-Evidence erneut verifizieren
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+      checks: read
     runs-on: ubuntu-latest
     timeout-minutes: 4
     outputs:
       base_sha: ${{ steps.verify.outputs.base_sha }}
     steps:
-      - name: Kommentar, Head und Owner-Review fail-closed prüfen
+      - name: Kommentar, Head, Owner-Review und Check-Reservation fail-closed prüfen
         id: verify
         shell: bash
         env:
@@ -42,12 +48,14 @@ jobs:
           PR_NUMBER: ${{ inputs.pr_number }}
           EXPECTED_HEAD_SHA: ${{ inputs.head_sha }}
           APPROVAL_COMMENT_ID: ${{ inputs.approval_comment_id }}
+          BUILD_CHECK_RUN_ID: ${{ inputs.build_check_run_id }}
           EXPECTED_OWNER: SvenKulessa
         run: |
           set -euo pipefail
           test "$PR_NUMBER" -gt 0
           printf '%s' "$EXPECTED_HEAD_SHA" | grep -Eq '^[0-9a-f]{40}$'
           test "$APPROVAL_COMMENT_ID" -gt 0
+          test "$BUILD_CHECK_RUN_ID" -gt 0
 
           read -r current_head base_ref base_sha pr_state <<< "$(
             gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" \
@@ -102,12 +110,20 @@ jobs:
           )"
           test -n "$review_id"
 
-          echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
-          echo "Human-/Owner-Evidence PASS: PR #${PR_NUMBER}@${EXPECTED_HEAD_SHA}, Review=${review_id}, Comment=${APPROVAL_COMMENT_ID}."
+          EXPECTED_HEAD_SHA="$EXPECTED_HEAD_SHA" BUILD_CHECK_RUN_ID="$BUILD_CHECK_RUN_ID" \
+            gh api -H 'Accept: application/vnd.github+json' \
+              "repos/${GITHUB_REPOSITORY}/check-runs/${BUILD_CHECK_RUN_ID}" \
+              --jq '. as $check | select(.id == (env.BUILD_CHECK_RUN_ID | tonumber) and .name == "build-and-test" and .head_sha == env.EXPECTED_HEAD_SHA and .status == "in_progress" and (.app.slug // "") == "github-actions") | .id' \
+              | grep -qx "$BUILD_CHECK_RUN_ID"
 
-  build-and-test:
-    name: build-and-test
+          echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
+          echo "Human-/Owner-Evidence PASS: PR #${PR_NUMBER}@${EXPECTED_HEAD_SHA}, Review=${review_id}, Comment=${APPROVAL_COMMENT_ID}, BuildCheck=${BUILD_CHECK_RUN_ID}."
+
+  build-and-test-executor:
+    name: Build/Test Executor (trusted-main)
     needs: [owner-evidence]
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -261,3 +277,49 @@ jobs:
 
           test "$health_ok" = 'true'
           echo "Docker Runtime Smoke Test PASS: /healthz antwortet für Image capital-ai-ci:${IMAGE_SHA}."
+
+  report-pr-head-check:
+    name: PR-Head build-and-test Status berichten
+    needs: [owner-evidence, build-and-test-executor]
+    if: ${{ always() }}
+    permissions:
+      checks: write
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Reservierten PR-Head-Check abschließen
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_CHECK_RUN_ID: ${{ inputs.build_check_run_id }}
+          EXPECTED_HEAD_SHA: ${{ inputs.head_sha }}
+          OWNER_RESULT: ${{ needs.owner-evidence.result }}
+          BUILD_RESULT: ${{ needs.build-and-test-executor.result }}
+        run: |
+          set -euo pipefail
+          test "$BUILD_CHECK_RUN_ID" -gt 0
+          printf '%s' "$EXPECTED_HEAD_SHA" | grep -Eq '^[0-9a-f]{40}$'
+
+          EXPECTED_HEAD_SHA="$EXPECTED_HEAD_SHA" BUILD_CHECK_RUN_ID="$BUILD_CHECK_RUN_ID" \
+            gh api -H 'Accept: application/vnd.github+json' \
+              "repos/${GITHUB_REPOSITORY}/check-runs/${BUILD_CHECK_RUN_ID}" \
+              --jq '. as $check | select(.id == (env.BUILD_CHECK_RUN_ID | tonumber) and .name == "build-and-test" and .head_sha == env.EXPECTED_HEAD_SHA and (.app.slug // "") == "github-actions") | .id' \
+              | grep -qx "$BUILD_CHECK_RUN_ID"
+
+          conclusion=failure
+          title='build-and-test FAIL'
+          summary="Human-Evidence=${OWNER_RESULT}; Build/Test=${BUILD_RESULT}."
+          if [ "$OWNER_RESULT" = 'success' ] && [ "$BUILD_RESULT" = 'success' ]; then
+            conclusion=success
+            title='build-and-test PASS'
+          fi
+
+          gh api --method PATCH -H 'Accept: application/vnd.github+json' \
+            "repos/${GITHUB_REPOSITORY}/check-runs/${BUILD_CHECK_RUN_ID}" \
+            -f status='completed' \
+            -f conclusion="$conclusion" \
+            -f "output[title]=$title" \
+            -f "output[summary]=$summary" >/dev/null
+
+          echo "PR-Head-Check ${BUILD_CHECK_RUN_ID} für ${EXPECTED_HEAD_SHA} abgeschlossen: ${conclusion}."
