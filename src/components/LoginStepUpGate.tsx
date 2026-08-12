@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { ShieldCheck, Fingerprint, KeyRound } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { signInWithPasskey } from './PasskeySettings';
-import { verifyStepUp, StepUpError } from '../lib/stepUp';
 import { authFetch } from '../lib/authFetch';
 import { loginStepUpRequirement, markLoginStepUpPassed, type LoginStepUpRequirement } from '../lib/loginStepUp';
 
@@ -13,10 +12,10 @@ interface LoginStepUpGateProps {
 }
 
 /**
- * Ganzseitiges Login-Gate: wird zwischen erfolgreicher Primär-Authentifizierung (Google-OAuth,
- * Passwort, Session-Restore) und tatsächlichem Dashboard-Zugriff eingeblendet, sobald der Nutzer
- * einen Passkey registriert oder 2FA aktiviert hat. Passkey hat Vorrang vor 2FA - ist ein Passkey
- * registriert, genügt dessen Bestätigung allein.
+ * Ganzseitiges Login-Gate zwischen Primär-Authentifizierung und Dashboard-Zugriff.
+ * M5A: Supabase Native MFA/AAL ist für TOTP die authoritative Assurance. Passkeys
+ * bleiben zusätzliche Authentisierung, dürfen einen erforderlichen Native-MFA-
+ * Challenge nicht ersetzen.
  */
 export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGateProps) {
   const [requirement, setRequirement] = useState<LoginStepUpRequirement | 'checking'>('checking');
@@ -52,8 +51,8 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
           const { data } = await supabase.from('profiles').select('totp_enabled').eq('id', userId).maybeSingle();
           if (!cancelled) setTotpAlsoEnabled(!!data?.totp_enabled);
         } catch {
-          // Recovery-Verfügbarkeit ist nur eine UI-Information - bei Fehler wird die
-          // vorsichtigere Annahme (kein Break-Glass verfügbar) beibehalten.
+          // Legacy-Recovery-Verfügbarkeit ist nur UI-Information. Native-MFA-
+          // Authority wird hiervon nicht abgeleitet.
         }
       }
     })();
@@ -72,6 +71,16 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
       if (!result.data?.session || result.data.session.user.id !== userId) {
         throw new Error('Der bestätigte Passkey gehört nicht zu diesem Konto.');
       }
+
+      const nextRequirement = await loginStepUpRequirement(result.data.session);
+      if (nextRequirement === 'totp') {
+        setRequirement('totp');
+        return;
+      }
+      if (nextRequirement !== 'none') {
+        throw new Error('Die erforderliche Authenticator-Assurance ist noch nicht erfüllt.');
+      }
+
       markLoginStepUpPassed(userId);
       onVerified();
     } catch (err: any) {
@@ -87,14 +96,35 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
       setTotpError('Bitte den 6-stelligen Code aus deiner Authenticator-App eingeben.');
       return;
     }
+    if (!supabase) {
+      setTotpError('Native MFA ist nicht verfügbar.');
+      return;
+    }
+
     setTotpVerifying(true);
     setTotpError(null);
     try {
-      await verifyStepUp(totpCode.trim(), 'login');
+      const { data: factors, error: factorError } = await supabase.auth.mfa.listFactors();
+      if (factorError) throw factorError;
+      const factor = (factors?.totp ?? []).find((entry) => entry.status === 'verified');
+      if (!factor) throw new Error('Kein verifizierter Native-TOTP-Faktor vorhanden.');
+
+      const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({
+        factorId: factor.id,
+        code: totpCode.trim(),
+      });
+      if (verifyError) throw verifyError;
+
+      const { data: aal, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aalError) throw aalError;
+      if (aal?.currentLevel !== 'aal2' || aal?.nextLevel !== 'aal2') {
+        throw new Error('TOTP wurde bestätigt, aber die Session hat AAL2 nicht erreicht.');
+      }
+
       markLoginStepUpPassed(userId);
       onVerified();
-    } catch (err) {
-      setTotpError(err instanceof StepUpError ? err.message : '2FA-Verifikation fehlgeschlagen.');
+    } catch (err: any) {
+      setTotpError(err?.message || 'Native-MFA-Verifikation fehlgeschlagen.');
     } finally {
       setTotpVerifying(false);
     }
@@ -115,8 +145,7 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
       if (!res.ok) {
         throw new Error(body.error || `Recovery fehlgeschlagen (HTTP ${res.status}).`);
       }
-      // Redeem deaktiviert 2FA (und ggf. Passkeys) für dieses Konto - der Nutzer kann nach dem
-      // Login in den Profil-Einstellungen neu einrichten. Kein neuer Step-Up in dieser Sitzung nötig.
+      // Legacy-Recovery bleibt bis M5A-EU3 ausschließlich Übergangsmechanismus.
       markLoginStepUpPassed(userId);
       onVerified();
     } catch (err: any) {
@@ -146,7 +175,7 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
           <div className="space-y-4">
             <p className="text-xs text-white/60 leading-relaxed text-center">
               Für dieses Konto ist ein Passkey registriert. Bitte bestätige die Anmeldung mit deinem
-              Passkey.
+              Passkey. Falls für die Session zusätzlich Native MFA erforderlich ist, folgt danach der TOTP-Schritt.
             </p>
             <button
               onClick={handlePasskeyConfirm}
@@ -167,8 +196,8 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
         {requirement === 'totp' && (
           <form onSubmit={handleTotpVerify} className="space-y-4">
             <p className="text-xs text-white/60 leading-relaxed text-center">
-              Für dieses Konto ist 2FA aktiviert. Bitte gib den aktuellen 6-stelligen Code aus
-              deiner Authenticator-App ein.
+              Für diese Session ist Supabase Native MFA erforderlich. Bitte gib den aktuellen
+              6-stelligen Code aus deiner Authenticator-App ein.
             </p>
             <input
               type="text"
@@ -192,7 +221,7 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
               className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-aif-gold-DEFAULT text-black hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer"
             >
               <KeyRound size={16} />
-              {totpVerifying ? 'Prüfe…' : 'Bestätigen'}
+              {totpVerifying ? 'Prüfe AAL2…' : 'Native MFA bestätigen'}
             </button>
           </form>
         )}
@@ -215,9 +244,7 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
           ) : (
             <form onSubmit={handleRecoveryRedeem} className="space-y-3">
               <p className="text-[11px] text-white/50 leading-relaxed">
-                Recovery-Code eingeben, der dir bei der Einrichtung von 2FA einmalig angezeigt
-                wurde. {requirement === 'passkey' ? 'Dies entfernt sowohl 2FA als auch alle registrierten Passkeys' : 'Dies deaktiviert 2FA'}{' '}
-                für dieses Konto, damit du dich neu einrichten kannst.
+                Übergangs-Recovery bis M5A-EU3. Der Recovery-Pfad darf keine Native-AAL2-Evidence simulieren.
               </p>
               <input
                 type="text"
