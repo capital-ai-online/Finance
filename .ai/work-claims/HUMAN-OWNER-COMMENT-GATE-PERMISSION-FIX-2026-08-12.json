@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "HUMAN-OWNER-COMMENT-GATE-PERMISSION-FIX-2026-08-12",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Repair the trusted-main Human/Owner comment gate permission boundary after the observed workflow_run 403",
+  "workItemDE": "Trusted-main Human/Owner-Kommentar-Gate nach beobachtetem workflow_run-403 mit jobweiser Least-Privilege-Rechtepartition reparieren",
+  "executionProfile": "P2",
+  "externalMutation": "NONE",
+  "startedAt": "2026-08-12T13:40:00Z",
+  "baseBranch": "main",
+  "baseSha": "b08c647e3cf4dac1d8ccfdf0d2b318a07f615729",
+  "productionBaseline": {
+    "checkedAt": "2026-08-12T13:01:00Z",
+    "version": "0.6.0",
+    "commitSha": "5bd5f4d78b87a89258126d0453eaf5e4bc6b6125",
+    "branch": "main",
+    "repoSlug": "SvenKulessa/Finance"
+  },
+  "claimedPaths": [
+    ".github/workflows/human-owner-comment-gate.yml",
+    "tests/unit/humanOwnerCommentGate.test.ts",
+    ".ai/work-claims/HUMAN-OWNER-COMMENT-GATE-PERMISSION-FIX-2026-08-12.json"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated pull request is merged, closed, superseded or abandoned."
+}
