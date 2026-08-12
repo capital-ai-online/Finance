@@ -3,11 +3,11 @@
 Status: PROPOSED
 Date: 2026-08-12
 Scope: CAPITAL-AI `SvenKulessa/Finance`
-Authority: `docs/architecture/ROADMAP.md`, `docs/roadmaps/AI_AGENT_M0_M9_IMPLEMENTATION_ROADMAP.md`, ESS-0019, ESS-0021, ADR-0039, ADR-0057..0066
+Authority: `docs/architecture/ROADMAP.md`, `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`, ESS-0019, ESS-0021 v1.1, ADR-0039, ADR-0057..0070
 
 ## Zweck
 
-Diese Policy definiert die verbindliche Ausführungslogik der CAPITAL-AI DEVELOPMENT Chain. Sie trennt Architektur-/Dokumentationsautorität, Repository-Implementierung, externe Plattformmutation, Verifikation und Human/Owner-Autorität voneinander.
+Diese Policy definiert die verbindliche Ausführungslogik der CAPITAL-AI DEVELOPMENT Chain. Sie trennt Architektur-/Dokumentationsautorität, Repository-Implementierung, autonome Systemadmin-Repository-Ausführung, externe Plattformmutation, Verifikation und Human/Owner-Autorität.
 
 Sie erteilt selbst **keine** Mutationsberechtigung. Jede konkrete Mutation benötigt die für den Roadmap-Punkt geltende ADR/ESS/REM-/Approval-Kette.
 
@@ -17,12 +17,14 @@ Sie erteilt selbst **keine** Mutationsberechtigung. Jede konkrete Mutation benö
 READ-ONLY BASELINE
 → GAP / ROADMAP PACKAGE
 → ESS / ADR / RUNBOOK / TRACEABILITY
-→ HUMAN/OWNER REVIEW
+→ HUMAN/OWNER AUTHORITY
 → FRESH SCOPED BRANCH FROM CURRENT MAIN
 → REPOSITORY IMPLEMENTATION
-→ PR / HUMAN FILE REVIEW / CI
+→ PR CHECKPOINT
+→ CURRENT HUMAN-OWNER GATE / REQUIRED CI
 → HUMAN MERGE
 → BRANCH DELETE
+→ OPTIONAL NEXT REPOSITORY UNIT FROM NEW MAIN
 → READ-ONLY PRE-MUTATION CHECK (wenn externe Mutation erforderlich)
 → EXPLICIT OWNER MUTATION APPROVAL
 → NON-AUTHORIZING MUTATION HANDOFF
@@ -37,16 +39,19 @@ Ein Schritt darf nicht übersprungen werden, wenn er für den konkreten Roadmap-
 
 ## Grundprinzipien
 
-1. **Roadmap vor Mutation.** Keine externe Plattformmutation ohne vorherige Roadmap-/ADR-/Runbook-Klassifikation.
-2. **Sequenzielle Phasen.** M6–M10 bleiben geblockt, bis der jeweilige Vorgänger `VERIFIED PASS` ist.
-3. **Fail closed.** Fehlende, abgelaufene, widersprüchliche oder nicht persistierbare Autorisierung führt zu `DENY/STOP`.
-4. **Human Merge.** `MERGE` bleibt Human/Owner-only und wird keinem Agenten als Capability übertragen.
-5. **Keine Self-Authority.** Ein Agent darf REM, Capability-Grenzen, Owner-Gates, Audit-Controls oder Kill-Switches nicht zu seinen Gunsten erweitern.
-6. **Evidence vor Statusfortschritt.** Ein Roadmap-Punkt wird erst nach positiver/negativer Verifikation und belastbarer Evidence geschlossen.
-7. **Keine Secrets in Evidence.** Reusable Credentials, TOTP-Codes/Secrets, Passkey Private Keys, Biometriedaten, rohe Tokens und vollständige sensible Requests/Responses dürfen nicht persistiert werden.
-8. **Ein Work Item = ein Branch = ein PR.** Branches werden nicht für nachfolgende Roadmap-Punkte wiederverwendet.
-9. **Parallelität nur ohne Schreibkonflikt.** Aktive PRs/Branches werden vor Schreibarbeit auf Changed-File-Overlap geprüft.
-10. **Transport ist keine Autorität.** ChatGPT Connector, Claude Tooling, Google AI Studio, MCP, SDK, GitHub Actions oder andere Hosts erhalten Autorität ausschließlich aus der Control Plane.
+1. **Roadmap vor Mutation.** Keine Mutation ohne kanonischen Roadmap-/Authority-Scope.
+2. **Ein Statusspeicher.** Phase-/Blockstatus bleibt in den kanonischen Roadmaps; Contracts/Handoffs/Issues/PR-Bodies führen keinen konkurrierenden Status.
+3. **Sequenzielle Phasen.** M6–M10 bleiben geblockt, bis der jeweilige Vorgänger `VERIFIED PASS` ist.
+4. **Fail closed.** Fehlende, abgelaufene, widersprüchliche oder nicht persistierbare Autorisierung führt zu `DENY/STOP`.
+5. **Human Merge.** MERGE bleibt Human/Owner-only.
+6. **Keine Self-Authority.** Ein Agent darf REM, Block Contract, Capability-Grenzen, Owner-Gates, Audit-Controls oder Kill-Switches nicht zu seinen Gunsten erweitern.
+7. **Evidence vor Statusfortschritt.** Ein Roadmap-Punkt wird erst nach positiver/negativer Verifikation und belastbarer Evidence geschlossen.
+8. **Keine Secrets in Evidence.** Reusable Credentials, MFA-Secrets/Codes, Passkey private material, rohe Tokens und vollständige sensible Payloads werden nicht persistiert.
+9. **Ein Execution Unit = ein Branch = ein PR.** Branches werden nicht für nachfolgende Roadmap-Punkte/Units wiederverwendet.
+10. **Parallelität nur ohne Schreibkonflikt.** Aktive PRs/Branches werden vor Schreibarbeit auf Changed-File-Overlap geprüft.
+11. **Transport ist keine Autorität.** ChatGPT/Claude/AI Studio/GitHub Actions/Connector/Issue/Chat erhalten Authority nur aus Control Plane + Human-approved Mandate.
+12. **Repository authority ≠ production authority.** Ein autonomer Repository-Block autorisiert keine externe Production Mutation.
+13. **PR-Gate nicht duplizieren.** ADR-0069 ist die aktuelle Human-Owner Comment Gate / dispatched-PR-CI-Architektur. ADR-0070 nutzt diese Grenze und erzeugt keinen parallelen Review-/CI-Control-Plane-Zustand.
 
 ## Rollen und Ausführungsgrenzen
 
@@ -54,94 +59,155 @@ Ein Schritt darf nicht übersprungen werden, wenn er für den konkreten Roadmap-
 
 Behält mindestens:
 
-- Architektur-/Roadmap-Freigabe bei sicherheitsrelevanten Entscheidungen;
-- Human File Review;
+- sicherheitsrelevante Architektur-/Roadmap-Freigabe;
+- Human current-head file review;
 - finale Merge-Autorität;
-- explizite Freigabe externer Produktionsmutationen;
-- Owner/Admin-IAM-Elevation, MFA/Break-Glass und Recovery;
-- Secret Disclosure/Rotation mit erweitertem Scope;
-- destruktive Produktionsdatenoperationen;
+- explizite Freigabe externer Production Mutations;
+- Owner/Admin-IAM-Elevation, MFA/Break-Glass/Recovery;
+- Secret Disclosure/erweiterte Rotation;
+- destruktive Production Data Operations;
 - Live Billing/Money/Entitlement;
-- Produktionsressourcen-Löschung;
-- DNS/TLS/Domain-Ownership;
+- Production Resource Deletion;
+- DNS/TLS/Domain Ownership;
 - Security-Control-Abschwächung.
 
 ### Roadmap / Architecture / Documentation Plane
 
-Darf read-only analysieren, Gaps klassifizieren, Roadmap-/ESS-/ADR-/Runbook-/Traceability-/Evidence-Vorgaben erstellen und Mutation Work Orders vorbereiten.
+Darf read-only analysieren, Gaps klassifizieren und Roadmap-/ESS-/ADR-/Runbook-/Traceability-/Contract-/Evidence-Vorgaben erstellen.
 
 Diese Plane führt keine externe Plattformmutation allein aufgrund einer Dokumentationsentscheidung aus.
 
 ### Development Implementation Plane — Google AI Studio
 
-Google AI Studio ist die Entwicklungsumgebung für Anwendungscode, Architektur und Frontend. Produktionsreifer Code darf dort erstellt werden, wenn er ohne zusätzliche Codeänderung nach den Projektstandards promoviert werden kann.
+Google AI Studio ist Entwicklungsumgebung für Anwendungscode, Architektur und Frontend. Produktionsreifer Code darf erstellt werden, sofern Production-Systeme dadurch nicht direkt mutiert werden.
 
-Änderungen, die Stripe, Supabase oder Render als externe Plattform betreffen, werden in der Development Plane **nicht direkt ausgeführt**. Dort werden nur Code, Kommentare, Contracts und Production-Handoff-Instruktionen vorbereitet.
+Stripe/Supabase/Render Production Changes werden als Code/Contract/Handoff vorbereitet, nicht direkt aus der Development Plane ausgeführt.
 
 ### Production Integration Plane — Claude
 
-Claude ist für Produktionsüberführung, Staging/Integration und Backend-Konfiguration vorgesehen. Auch diese Plane erhält keine implizite Mutationsautorität: Für externe Zustandsänderungen gelten Roadmap, Owner Approval, Mutation Handoff, Control Plane, Audit und Post-Verification unverändert.
+Claude ist für Produktionsüberführung/Staging/Integration vorgesehen. Externe Zustandsänderungen benötigen unverändert Roadmap + Owner Approval + Handoff + Control Plane + Audit + Post-Verification.
 
-### Systemadmin / Mutation Executor
+### Systemadmin Roadmap Executor
 
-Der logische Mutation Executor darf nur innerhalb eines gültigen, Human/Owner-approved Mandats und eines technisch enforcebaren Execution Hosts mutieren.
+Der Systemadmin darf Repository-Mutationen nur innerhalb eines gültigen Human/Owner-approved REM und technisch enforcebaren Execution Hosts ausführen.
+
+Authority: ESS-0021 v1.1, ADR-0065, ADR-0070 und `SYSTEMADMIN_AGENT_ROADMAP_EXECUTION_POLICY.md`.
 
 Der Executor:
 
-- konsumiert einen exakt gebundenen Auftrag;
-- validiert Capability, Target, Risk, Base/Head und Gültigkeit;
-- benötigt bei externer Mutation die separate Mutation Approval Evidence;
-- erzeugt Audit-Evidence **vor** und **nach** dem Side Effect;
-- darf keine beliebigen Shell-/Tool-Kommandos aus untrusted Input übernehmen;
-- darf `MERGE` nicht ausführen;
-- darf Reserved Human/Owner Actions nicht über einen Handoff-Contract delegieren.
+- konsumiert exakt gebundene Roadmap Block/Execution Unit IDs;
+- validiert REM + per-unit Contract + Capability + Path + Risk + Mutation Class;
+- erzeugt Audit Evidence vor und nach jedem Side Effect;
+- verwendet keine beliebigen Shell-/Tool-Kommandos aus untrusted Input;
+- stoppt an jedem PR-Checkpoint;
+- übergibt den PR an die aktuelle ADR-0069/Human-Owner-Gate-Architektur;
+- führt MERGE nicht aus;
+- führt externe Production Mutation nicht allein aufgrund eines Repository-REM aus.
 
-Die konkrete Systemadmin-Host-/REM-Architektur bleibt autoritativ in ESS-0021, ADR-0065 und `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md`.
+## Autonomous Roadmap Blocks
+
+Nach SA4B `VERIFIED PASS` darf ein Owner-approved REM mehrere explizite Execution Units eines größeren Roadmap-Blocks autorisieren.
+
+Authority: ADR-0070.
+
+### Architektur
+
+```text
+Canonical Roadmap Block
+→ Owner-approved REM
+→ non-authorizing Roadmap Block Contract
+→ EU-01 branch/commit/test/PR → STOP
+→ current Human-Owner Gate / CI / Human merge → branch delete
+→ EU-02 from new current main → ...
+```
+
+Contract:
+
+- `docs/contracts/DEVELOPMENT_CHAIN_ROADMAP_BLOCK_CONTRACT.md`;
+- `.ai/contracts/development-chain-roadmap-block.schema.json`.
+
+Der Contract beschreibt per-unit technische Grenzen und enthält keinen Phase-/Execution-State.
+
+### Per-unit effective authority
+
+Eine Operation ist nur erlaubt, wenn sie gleichzeitig in:
+
+- kanonischem Roadmap Gate;
+- Owner-approved REM;
+- current Execution Unit Contract;
+- Agent IAM/Risk Policy;
+- nicht geschütztem Trust-Root Scope
+
+zulässig ist.
+
+Die restriktivste Regel gewinnt.
+
+### PR checkpoint
+
+Review-ready PR ist ein harter `STOP_PR_CHECKPOINT_REACHED`.
+
+Der Agent darf vor finalem Human Review scope-konforme CI/Governance-Fehler reparieren. Danach übernimmt die jeweils aktuelle kanonische Human-Owner-Gate-/CI-Architektur; Merge bleibt Human-only. Erst nach Branch Delete darf die nächste Unit geprüft werden.
+
+### Resume gate
+
+Nächste Unit unter demselben REM nur wenn:
+
+1. vorheriger PR Human merged;
+2. Merge SHA auf current main;
+3. vorheriger Branch gelöscht;
+4. vorherige Unit Evidence vollständig;
+5. REM weiterhin gültig/approved;
+6. Kill Switch inactive;
+7. nächste Unit explizit im REM/Contract;
+8. Roadmap Gate unblocked;
+9. no Open-PR path overlap;
+10. M5 Audit verfügbar;
+11. kein Human-only external mutation gate dazwischenliegt.
 
 ## Parallel Work / Concurrent Writer Gate
 
-Vor jedem neuen Schreib-Workitem:
+Vor jedem neuen Schreib-Workitem/Execution Unit:
 
-1. aktuellen `main` SHA auflösen;
-2. offene PRs und deren Changed Files prüfen;
-3. Zielpfade des neuen Workitems bestimmen;
+1. current main SHA auflösen;
+2. offene PRs und Changed Files prüfen;
+3. Zielpfade bestimmen;
 4. bei Überschneidung `STOP/RESCOPE/SEQUENCE`;
-5. bei keiner Überschneidung neuen Branch aus aktuellem `main` erzeugen.
+5. bei keiner Überschneidung fresh branch aus current main.
 
-Ein offener Agent-/Mutation-PR darf parallel zu einem Dokumentations-PR laufen, sofern deren Schreibmengen disjunkt bleiben und keine nicht gemergte Datei als normative Abhängigkeit vorausgesetzt wird.
+Ein offener Agent-PR darf parallel zu disjunkten Arbeiten laufen, solange keine nicht gemergte Datei als normative Abhängigkeit vorausgesetzt wird.
 
 ## Branch- und Clone-Lifecycle
 
-Verbindliche Sequenz:
+Verbindlich:
 
 ```text
 current main → fresh scoped branch → commits → PR → Human merge → branch delete
 ```
 
-Für geklonte Repositories oder temporäre Worktrees gilt zusätzlich:
+Für geklonte Repositories/Worktrees:
 
-- niemals direkt auf `main` arbeiten;
-- für jedes Workitem einen neuen Branch im Finance Repository verwenden;
-- einen gemergten/supersedeten Branch niemals wiederverwenden;
-- nach erfolgreichem PR-Merge den zugehörigen Remote-Branch im Finance Repository löschen;
-- kurzlebige, nur für dieses Workitem erzeugte lokale Clone-/Worktree-Kopien nach Evidence-Sicherung entfernen.
+- niemals direkt auf main;
+- pro Unit neuer Branch;
+- gemergte/supersedete Branches nie wiederverwenden;
+- nach Merge Remote-Branch löschen;
+- kurzlebige Clone-/Worktree-Kopien nach Evidence-Sicherung entfernen.
 
-Details: `docs/governance/DEVELOPMENT_CHAIN_BRANCH_LIFECYCLE_POLICY.md`.
+Details: `DEVELOPMENT_CHAIN_BRANCH_LIFECYCLE_POLICY.md`.
 
 ## PR-/CI-Klassifikation
 
-Es gilt `docs/governance/PR_CHECK_CLASSIFICATION.md`:
+Es gilt `PR_CHECK_CLASSIFICATION.md`:
 
-- `D` — Documentation-only;
-- `C` — Application/Test/Configuration;
-- `R` — Runtime/Dependency/Docker/Deployment;
-- `M` — External Platform Mutation.
+- D — Documentation-only;
+- C — Application/Test/Configuration;
+- R — Runtime/Dependency/Docker/Deployment;
+- M — External Platform Mutation.
 
-Die strengste zutreffende Klasse gilt. Redundante unveränderte CI-Läufe sind zu vermeiden; Sicherheits- oder Exit-Gates dürfen dafür nicht abgeschwächt werden.
+Die strengste zutreffende Klasse gilt. CI-Kostenoptimierung darf Security-/Exit-Gates nicht abschwächen.
 
 ## Mutation State Vocabulary
 
-Jede externe Mutation verwendet mindestens einen der Zustände:
+Externe Mutation verwendet mindestens:
 
 - `NOT REQUIRED`
 - `PLANNED`
@@ -150,64 +216,65 @@ Jede externe Mutation verwendet mindestens einen der Zustände:
 - `VERIFIED PASS`
 - `FAILED / ROLLED BACK`
 
-Repository-only Vorarbeiten können zusätzlich `IMPLEMENTED / CI PENDING` verwenden, verändern aber den externen Mutation State nicht.
+Repository-only Vorarbeiten können `IMPLEMENTED / CI PENDING` verwenden, ändern aber den externen Mutation State nicht.
 
-## Mutation Handoff
+## External Mutation Handoff
 
-Der DevelopmentChain Handoff ist ein **nicht autorisierender** Arbeitsauftrag. Er beschreibt exakt, was geprüft, mutiert, verifiziert und bei Fehlern zurückgerollt werden soll.
+Der DevelopmentChain Handoff ist nicht autorisierend.
 
-Authority bleibt außerhalb des Handoffs:
+Authority bleibt:
 
-```text
-Roadmap/ADR/ESS
-+ Human/Owner Approval
-+ REM / Agent IAM / Execution Host Policy
-+ M5 Audit
-```
+`Roadmap/ADR/ESS + Human Owner Approval + REM/IAM/Execution Host Policy + M5 Audit`.
 
 Contract:
 
 - `docs/contracts/DEVELOPMENT_CHAIN_MUTATION_HANDOFF_CONTRACT.md`
 - `.ai/contracts/development-chain-mutation-handoff.schema.json`
 
-Ein valider JSON-Handoff ohne gültige Autorisierung muss weiterhin `DENY` ergeben.
+Ein valider Handoff ohne Autorisierung ergibt weiterhin DENY.
 
 ## Evidence Minimum
 
-Jeder geschlossene Roadmap-Punkt dokumentiert mindestens:
+Jeder geschlossene Repository Unit/Phase-Punkt dokumentiert mindestens:
 
-- Baseline SHA / Produktionsbaseline;
+- blockId/unitId/mandateId, wenn autonom;
+- Baseline SHA;
 - Authority refs;
-- Branch / PR / final Head / Merge SHA, soweit zutreffend;
+- Branch / PR / final Head / Merge SHA;
 - Checkklasse;
-- Mutation Class / Platform / Target;
-- Pre-Mutation Result;
-- Human Approval Evidence Reference, wenn erforderlich;
-- ausgeführte Mutation ohne Secrets;
-- Post-Mutation positive und negative Verifikation;
-- Audit-/Trace-Referenzen;
+- allowed/changed paths;
+- Preflight Result;
+- Authorization/Outcome refs für mutierende Capabilities;
+- Tests/negative tests;
+- Human Review/CI Evidence;
+- branchDeleted=true;
 - Rollback State;
-- finalen Status und Next Gate.
+- Next Gate/resume decision.
 
-Template: `docs/evidence/templates/DEVELOPMENT_CHAIN_PHASE_EVIDENCE_TEMPLATE.md`.
+Für externe Mutation zusätzlich exact platform/target, Owner approval, pre/post verification und mutation state.
 
 ## Stop- und Rollback-Regeln
 
-`STOP` ist verpflichtend bei:
+STOP ist verpflichtend bei:
 
-- unerwartetem Target/Account/Projekt/Environment;
-- Baseline-/Head-Drift außerhalb der genehmigten Bindung;
-- abgelaufener oder fehlender Approval Evidence;
-- Open-PR-Overlap auf mutierenden Zielpfaden;
+- unerwartetem Target/Account/Environment;
+- stale base / baseline drift;
+- expired/revoked REM;
+- block/unit/path/capability mismatch;
+- Self-Authority/Reserved Action;
+- Open-PR overlap;
 - fehlender Audit-Persistenz;
-- fehlgeschlagenem Pre-Mutation Check;
-- unbekanntem oder nicht reversierbarem Side Effect außerhalb des genehmigten Risikos;
-- Post-Mutation-Verifikation `FAILED` oder `INCONCLUSIVE`.
-
-Rollback erfolgt nach dem phase-/plattform-spezifischen Runbook. Ein fehlgeschlagener Schritt blockiert die nächste Roadmap-Phase.
+- fehlgeschlagenem Precheck/Test;
+- CI Budget Violation;
+- PR checkpoint reached;
+- prior branch not deleted;
+- external mutation approval required;
+- unbekanntem/nicht reversiblen Side Effect;
+- failed/inconclusive post-verification/rollback.
 
 ## Phase-spezifische Runbooks
 
+- Systemadmin ARB: `docs/runbooks/SYSTEMADMIN_AUTONOMOUS_ROADMAP_BLOCK_EXECUTION.md`
 - M5A: `docs/runbooks/M5A_SUPABASE_TOTP_AAL2_HARDENING.md`
 - M6: `docs/runbooks/M6_SUPPLY_CHAIN_PROVENANCE.md`
 - M7: `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`
@@ -215,6 +282,12 @@ Rollback erfolgt nach dem phase-/plattform-spezifischen Runbook. Ein fehlgeschla
 - M9: `docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md`
 - M10: `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`
 
+## Enablement boundary
+
+SA4 docs-only autonomy is VERIFIED PASS. General code/test/config Roadmap-block autonomy is **not enabled** until SA4B is VERIFIED PASS according to `SYSTEMADMIN_AGENT_ROADMAP.md` and `SA4B_AUTONOMOUS_ROADMAP_BLOCK_TRACEABILITY.md`.
+
+Normal Human-authorized Development work remains independent of this Systemadmin enablement gate.
+
 ## Closure Rule
 
-Eine Phase wird nur geschlossen, wenn Roadmap, detaillierte Roadmap, Traceability, betroffene ESS/ADR, Evidence und Mutation State konsistent sind. Der Abschluss eines PRs allein ist kein DevelopmentChain Exit Gate.
+Eine Phase/Block wird nur geschlossen, wenn Roadmap, Systemadmin Stage (wenn relevant), Traceability, ESS/ADR, Contracts, Evidence, Mutation State und Branch Lifecycle konsistent sind. PR completion alone is never a DevelopmentChain exit gate.

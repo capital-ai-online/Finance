@@ -31,6 +31,7 @@ jobs:
   owner-evidence:
     name: Human-/Owner-Evidence erneut verifizieren
     permissions:
+      actions: read
       contents: read
       issues: read
       pull-requests: read
@@ -49,6 +50,7 @@ jobs:
           EXPECTED_HEAD_SHA: ${{ inputs.head_sha }}
           APPROVAL_COMMENT_ID: ${{ inputs.approval_comment_id }}
           BUILD_CHECK_RUN_ID: ${{ inputs.build_check_run_id }}
+          EXPECTED_EXTERNAL_ID: "capital-ai:pr:${{ inputs.pr_number }}:build:${{ inputs.approval_comment_id }}:${{ inputs.head_sha }}"
           EXPECTED_OWNER: SvenKulessa
         run: |
           set -euo pipefail
@@ -65,11 +67,19 @@ jobs:
           test "$base_ref" = "main"
           test "$pr_state" = "open"
 
-          comment_body="$(
-            gh api "repos/${GITHUB_REPOSITORY}/issues/comments/${APPROVAL_COMMENT_ID}" \
-              --jq '.body // ""'
+          governance_run_id="$(
+            gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/pr-governance.yml/runs?event=pull_request&head_sha=${EXPECTED_HEAD_SHA}&per_page=100" \
+              --jq ".workflow_runs[] | select(.conclusion == \"success\") | select(any(.pull_requests[]?; .number == (${PR_NUMBER} | tonumber))) | .id" \
+              | head -n 1
           )"
+          test -n "$governance_run_id"
 
+          comment_body="$(
+            EXPECTED_COMMENT_AUTHOR='github-actions[bot]' gh api \
+              "repos/${GITHUB_REPOSITORY}/issues/comments/${APPROVAL_COMMENT_ID}" \
+              --jq 'select(.user.login == env.EXPECTED_COMMENT_AUTHOR) | .body // ""'
+          )"
           COMMENT_BODY="$comment_body" EXPECTED_HEAD_SHA="$EXPECTED_HEAD_SHA" python3 - <<'PY'
           import os
           import re
@@ -98,8 +108,8 @@ jobs:
               m = re.fullmatch(r'-\s*\[\s*[xX]\s*\]\s+(.+?)\s*', line)
               if m:
                   found.add(' '.join(m.group(1).split()))
-          if not required.issubset(found):
-              raise SystemExit('Beide Human-/Owner-Attestations müssen gesetzt sein.')
+          if found != required:
+              raise SystemExit('Human-Gate-Kommentar enthält nicht exakt die beiden gesetzten Attestations.')
           PY
 
           review_id="$(
@@ -110,18 +120,49 @@ jobs:
           )"
           test -n "$review_id"
 
-          # Die Reservierung muss exakt die vom Human-Gate erzeugte One-Shot-Identität tragen.
-          # Ein gleichnamiger ci.yml-Job auf demselben Head kann diese Prüfung nicht bestehen.
-          ONE_SHOT_ID="capital-ai-human-gate-one-shot:${PR_NUMBER}:${EXPECTED_HEAD_SHA}"
-
-          EXPECTED_HEAD_SHA="$EXPECTED_HEAD_SHA" BUILD_CHECK_RUN_ID="$BUILD_CHECK_RUN_ID" ONE_SHOT_ID="$ONE_SHOT_ID" \
+          EXPECTED_HEAD_SHA="$EXPECTED_HEAD_SHA" BUILD_CHECK_RUN_ID="$BUILD_CHECK_RUN_ID" \
             gh api -H 'Accept: application/vnd.github+json' \
               "repos/${GITHUB_REPOSITORY}/check-runs/${BUILD_CHECK_RUN_ID}" \
-              --jq '. as $check | select(.id == (env.BUILD_CHECK_RUN_ID | tonumber) and .name == "build-and-test" and .head_sha == env.EXPECTED_HEAD_SHA and (.external_id // "") == env.ONE_SHOT_ID and .status == "in_progress" and (.app.slug // "") == "github-actions") | .id' \
+              --jq '. as $check | select(.id == (env.BUILD_CHECK_RUN_ID | tonumber) and .name == "build-and-test" and .head_sha == env.EXPECTED_HEAD_SHA and .external_id == env.EXPECTED_EXTERNAL_ID and .status == "in_progress" and (.app.slug // "") == "github-actions") | .id' \
               | grep -qx "$BUILD_CHECK_RUN_ID"
 
           echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
           echo "Human-/Owner-Evidence PASS: PR #${PR_NUMBER}@${EXPECTED_HEAD_SHA}, Review=${review_id}, Comment=${APPROVAL_COMMENT_ID}, BuildCheck=${BUILD_CHECK_RUN_ID}."
+
+      - name: Vertrauenswürdige PR-Policy aus dem Dispatch-Commit auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.sha }}
+          path: policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Kandidaten nur als Datenquelle auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ inputs.head_sha }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Live-PR-Body und Produktionsbaseline mit trusted-main Policy validieren
+        working-directory: candidate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          PR_BASE_REF: ${{ steps.verify.outputs.base_sha }}
+          PR_HEAD_REF: ${{ inputs.head_sha }}
+          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
+          POLICY_ROOT: ../policy
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/pr
+          git fetch --no-tags ../policy main:refs/remotes/origin/main
+          git rev-parse --verify "${PR_BASE_REF}^{commit}" >/dev/null
+          git rev-parse --verify "${PR_HEAD_REF}^{commit}" >/dev/null
+          node "$POLICY_ROOT/scripts/pr/productionPreflight.mjs"
+          node "$POLICY_ROOT/scripts/pr/validatePrBody.mjs"
 
   build-and-test-executor:
     name: Build/Test Executor (trusted-main)
@@ -300,6 +341,7 @@ jobs:
           PR_NUMBER: ${{ inputs.pr_number }}
           BUILD_CHECK_RUN_ID: ${{ inputs.build_check_run_id }}
           EXPECTED_HEAD_SHA: ${{ inputs.head_sha }}
+          EXPECTED_EXTERNAL_ID: "capital-ai:pr:${{ inputs.pr_number }}:build:${{ inputs.approval_comment_id }}:${{ inputs.head_sha }}"
           OWNER_RESULT: ${{ needs.owner-evidence.result }}
           BUILD_RESULT: ${{ needs.build-and-test-executor.result }}
         run: |
@@ -308,12 +350,10 @@ jobs:
           test "$BUILD_CHECK_RUN_ID" -gt 0
           printf '%s' "$EXPECTED_HEAD_SHA" | grep -Eq '^[0-9a-f]{40}$'
 
-          ONE_SHOT_ID="capital-ai-human-gate-one-shot:${PR_NUMBER}:${EXPECTED_HEAD_SHA}"
-
-          EXPECTED_HEAD_SHA="$EXPECTED_HEAD_SHA" BUILD_CHECK_RUN_ID="$BUILD_CHECK_RUN_ID" ONE_SHOT_ID="$ONE_SHOT_ID" \
+          EXPECTED_HEAD_SHA="$EXPECTED_HEAD_SHA" BUILD_CHECK_RUN_ID="$BUILD_CHECK_RUN_ID" \
             gh api -H 'Accept: application/vnd.github+json' \
               "repos/${GITHUB_REPOSITORY}/check-runs/${BUILD_CHECK_RUN_ID}" \
-              --jq '. as $check | select(.id == (env.BUILD_CHECK_RUN_ID | tonumber) and .name == "build-and-test" and .head_sha == env.EXPECTED_HEAD_SHA and (.external_id // "") == env.ONE_SHOT_ID and (.app.slug // "") == "github-actions") | .id' \
+              --jq '. as $check | select(.id == (env.BUILD_CHECK_RUN_ID | tonumber) and .name == "build-and-test" and .head_sha == env.EXPECTED_HEAD_SHA and .external_id == env.EXPECTED_EXTERNAL_ID and (.app.slug // "") == "github-actions") | .id' \
               | grep -qx "$BUILD_CHECK_RUN_ID"
 
           conclusion=failure

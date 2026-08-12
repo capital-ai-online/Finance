@@ -26,6 +26,7 @@ jobs:
       ${{
         github.event_name == 'workflow_run' &&
         github.event.workflow_run.event == 'pull_request' &&
+        github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.pull_requests[0].number != null
       }}
     permissions:
@@ -66,7 +67,7 @@ jobs:
           comment_id="$(
             gh api --paginate \
               "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
-              --jq '.[] | select((.body // "") | contains("<!-- CAPITAL_AI_HUMAN_GATE -->")) | .id' \
+              --jq '.[] | select(.user.login == "github-actions[bot]" and ((.body // "") | contains("<!-- CAPITAL_AI_HUMAN_GATE -->"))) | .id' \
               | head -n 1
           )"
 
@@ -129,6 +130,14 @@ jobs:
           test "$base_ref" = "main"
           test "$pr_state" = "open"
 
+          governance_run_id="$(
+            gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/pr-governance.yml/runs?event=pull_request&head_sha=${current_head}&per_page=100" \
+              --jq ".workflow_runs[] | select(.conclusion == \"success\") | select(any(.pull_requests[]?; .number == (${PR_NUMBER} | tonumber))) | .id" \
+              | head -n 1
+          )"
+          test -n "$governance_run_id"
+
           approval_head="$(
             python3 - <<'PY'
           import os, re
@@ -141,9 +150,36 @@ jobs:
           )"
           test "$approval_head" = "$current_head"
 
-          live_body="$(gh api "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" --jq '.body // ""')"
+          live_body="$(
+            EXPECTED_COMMENT_AUTHOR='github-actions[bot]' gh api \
+              "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" \
+              --jq 'select(.user.login == env.EXPECTED_COMMENT_AUTHOR) | .body // ""'
+          )"
           test "$live_body" = "$COMMENT_BODY"
 
+          LIVE_COMMENT_BODY="$live_body" python3 - <<'PY'
+          import os
+          import re
+
+          required = {
+              'Human/Owner: vollständigen PR-Diff geprüft.',
+              'Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.',
+          }
+          found = set()
+          in_fence = False
+          for raw in os.environ['LIVE_COMMENT_BODY'].replace('\r\n', '\n').replace('\r', '\n').split('\n'):
+              line = raw.strip()
+              if re.match(r'^(?:```|~~~)', line):
+                  in_fence = not in_fence
+                  continue
+              if in_fence or line.startswith('>'):
+                  continue
+              match = re.fullmatch(r'-\s*\[\s*[xX]\s*\]\s+(.+?)\s*', line)
+              if match:
+                  found.add(' '.join(match.group(1).split()))
+          if found != required:
+              raise SystemExit('Human-Gate-Kommentar enthält nicht exakt die beiden gesetzten Attestations.')
+          PY
           review_id="$(
             PR_HEAD_SHA="$current_head" gh api --paginate \
               "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" \
@@ -152,24 +188,22 @@ jobs:
           )"
           test -n "$review_id"
 
-          # Die One-Shot-Reservierung wird ausschließlich über die vom Gate selbst gesetzte
-          # external_id identifiziert. Der gleichnamige `build-and-test`-Job aus ci.yml liegt
-          # auf demselben Head und darf die Reservierung weder belegen noch verdrängen.
-          # `filter=all` ist zwingend: der Endpunkt liefert per Default nur den jeweils
-          # letzten Check-Run je Name und würde die eigene Reservierung sonst verdecken.
-          one_shot_id="capital-ai-human-gate-one-shot:${PR_NUMBER}:${current_head}"
-
+          # Die Reservation wird nur über die Gate-eigene external_id-Familie erkannt.
+          # `filter=all` verhindert, dass ein gleichnamiger ci.yml-Check sie verdeckt.
+          # Nur laufende oder erfolgreiche Reservationen schließen den One-Shot;
+          # ein fehlgeschlagener Infrastrukturversuch darf nach neuer Human-Evidence erneut laufen.
           blocking="$(
-            ONE_SHOT_ID="$one_shot_id" gh api -H 'Accept: application/vnd.github+json' \
-              "repos/${GITHUB_REPOSITORY}/commits/${current_head}/check-runs?check_name=build-and-test&filter=all&per_page=100" \
-              --jq '.check_runs[]
-                      | select(
-                          .name == "build-and-test"
-                          and (.external_id // "") == env.ONE_SHOT_ID
-                          and (.app.slug // "") == "github-actions"
-                          and (.status != "completed" or .conclusion == "success")
-                        )
-                      | [(.id | tostring), .status, (.conclusion // "null")] | @tsv' \
+            CHECK_PREFIX="capital-ai:pr:${PR_NUMBER}:build:" \
+              gh api -H 'Accept: application/vnd.github+json' \
+                "repos/${GITHUB_REPOSITORY}/commits/${current_head}/check-runs?check_name=build-and-test&filter=all&per_page=100" \
+                --jq '.check_runs[]
+                        | select(
+                            .name == "build-and-test"
+                            and (.app.slug // "") == "github-actions"
+                            and ((.external_id // "") | startswith(env.CHECK_PREFIX))
+                            and (.status != "completed" or .conclusion == "success")
+                          )
+                        | [(.id | tostring), .status, (.conclusion // "null")] | @tsv' \
               | head -n 1
           )"
           if [ -n "$blocking" ]; then
@@ -183,6 +217,7 @@ jobs:
               "repos/${GITHUB_REPOSITORY}/check-runs" \
               -f name='Human-/Owner-Verifikation' \
               -f head_sha="$current_head" \
+              -f "external_id=capital-ai:pr:${PR_NUMBER}:human:${COMMENT_ID}:${current_head}" \
               -f status='completed' \
               -f conclusion='success' \
               -f "output[title]=Human-/Owner-Verifikation PASS" \
@@ -196,7 +231,7 @@ jobs:
               "repos/${GITHUB_REPOSITORY}/check-runs" \
               -f name='build-and-test' \
               -f head_sha="$current_head" \
-              -f external_id="$one_shot_id" \
+              -f "external_id=capital-ai:pr:${PR_NUMBER}:build:${COMMENT_ID}:${current_head}" \
               -f status='in_progress' \
               -f "output[title]=build-and-test läuft" \
               -f "output[summary]=Trusted-main Build/Test wurde durch head-genaue Human-Evidence autorisiert." \
