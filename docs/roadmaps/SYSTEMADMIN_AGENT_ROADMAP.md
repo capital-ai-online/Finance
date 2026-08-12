@@ -2,26 +2,29 @@
 
 Status: IMPLEMENTATION PHASE
 Date: 2026-08-12
-Current production baseline: `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e` (PR #222 merge)
+Current repository baseline: `main@2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd` (PR #229 merge)
+Current production baseline: Render deploy `dep-d9u392nlk1mc73fg1hk0` — `live` — commit `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`
 Authority: ESS-0021, ADR-0065, ADR-0058, ADR-0059, ADR-0066, ADR-0067, ADR-0068
 
 ## Goal
 
 The Systemadmin Roadmap Executor may autonomously implement Owner-approved repository work packages only through bounded REM authority, least privilege, durable append-only audit evidence, Human final review and Human-only merge.
 
+The agent is never the trust root. Provider/model identity does not create authority.
+
 ## Stage status
 
 | Stage | Status | Core evidence |
 |---|---|---|
-| SA0 Governance | COMPLETE | PR #214 |
-| SA1 REM Validator | COMPLETE / VERIFIED PASS | PR #215 |
-| SA2 Chat Execution Profile | COMPLETE / VERIFIED PASS | PR #216 |
-| SA3A Append-only Audit Adapter | COMPLETE / VERIFIED PASS | PR #218 |
-| SA3B Execution Host | **TECHNICAL VERIFIED PASS / CLEANUP PENDING** | PR #220, #222, Issues #221/#223/#224 |
-| SA4 First bounded autonomous work package | **BOOTSTRAP IN PROGRESS / ACTIVATION BLOCKED BY SA3B BRANCH CLEANUP** | ADR-0068 + REM-SA4-PILOT-001 |
-| SA5 Bounded external mutation design | BLOCKED | SA4 + M10 VERIFIED PASS required |
+| SA0 Governance | **COMPLETE** | PR #214 |
+| SA1 REM Validator | **COMPLETE / VERIFIED PASS** | PR #215 |
+| SA2 Chat Execution Profile | **COMPLETE / VERIFIED PASS** | PR #216 |
+| SA3A Append-only Audit Adapter | **COMPLETE / VERIFIED PASS** | PR #218 |
+| SA3B Execution Host | **COMPLETE / VERIFIED PASS** | PR #220, #222; Issues #221/#223/#224; branch cleanup verified |
+| SA4 First bounded autonomous work package | **COMPLETE / VERIFIED PASS** | PR #226 bootstrap; Issue #228 / run `31579519025`; PR #229; closure evidence |
+| SA5 Bounded external mutation design | **BLOCKED BY M10 + DEDICATED AUTHORITY** | future ADR/REM; no production mutation delegated |
 
-M10 passkey-only PR authorization target architecture was merged in PR #217, but runtime cutover remains sequentially blocked by M9. Until that cutover, current Human/Owner current-head review and attestation remain authoritative for final CI and merge.
+M10 passkey-only PR authorization target architecture exists, but runtime cutover remains sequentially blocked by M9. Until M10 reaches `VERIFIED PASS`, the current Human/Owner current-head review and attestation remain authoritative for final expensive CI and merge.
 
 ## SA0 — Governance
 
@@ -33,30 +36,30 @@ REM schema, ESS/ADR authority and branch lifecycle are on `main`.
 
 **COMPLETE / VERIFIED PASS — PR #215 MERGED**
 
-Capability ceiling:
+Logical capability ceiling defined by ESS-0021 / ADR-0065:
 
 `READ, ANALYZE, PLAN, BRANCH, COMMIT, PR, CI_REQUEST`
 
-`MERGE`, `DEPLOY_REQUEST`, `PRODUCTION_MUTATION`, CRITICAL execution and reserved Owner mutation classes remain denied.
+Capabilities do not inherit. Every actual execution requires explicit REM and host support for the exact operation.
 
-### SA4 trust-root hardening
+`MERGE`, unrestricted `DEPLOY_REQUEST`, unrestricted `PRODUCTION_MUTATION`, CRITICAL execution and reserved Owner mutation classes remain denied.
 
-Before the first SA4 COMMIT/PR pilot, the SA1 self-authority ring is extended to include the SA3B/SA4 workflow, OIDC verifier, broker, mandates, parsers/host runner and audit adapter. A REM cannot authorize modification of those files even if an allowlist is maliciously widened.
+Self-authority protection covers Systemadmin workflows, mandates, OIDC verifier, broker, audit adapter and trusted runner/parser paths.
 
 ## SA2 — Chat execution profile
 
 **COMPLETE / VERIFIED PASS — PR #216 MERGED**
 
-Mutating SA2 LIVE remains denied. SA2 produces policy-bound envelopes; real mutation requires the later audit-bound execution permit.
+SA2 produces policy-bound execution envelopes. A model/client alone cannot convert an envelope into mutation authority.
 
-Sequence requirements remain:
+Required repository sequence remains:
 
-- fresh `agent/*` branch;
-- full preflight;
+- fresh scoped branch from current `main`;
+- full read-only preflight;
 - targeted validation before COMMIT;
 - completed implementation + current head before PR;
 - no silent mutation after final Owner review begins;
-- no production mutation.
+- no production mutation without separate exact authority.
 
 ## SA3A — Append-only audit adapter
 
@@ -64,40 +67,36 @@ Sequence requirements remain:
 
 Canonical control:
 
-`SA1/SA2 ALLOW → durable M5 authorization event → auditReference → audit-bound permit → exact action → second append-only outcome event`
+```text
+SA1/SA2 ALLOW
+→ durable M5 authorization event
+→ auditReference
+→ audit-bound permit
+→ exact side effect
+→ durable terminal outcome event
+```
 
 ## SA3B — Execution-host binding
 
-**TECHNICAL VERIFIED PASS / LIFECYCLE CLEANUP PENDING**
+**COMPLETE / VERIFIED PASS**
 
 Merged implementation:
 
 - PR #220 host binding;
-- PR #222 M5 writer/schema correction;
-- final #222 merge `91963f59b74c8c3c3c0b33c6a23237a01ac0128e`;
-- final #222 CI #951 PASS;
-- corrected code live on Render deploy `dep-d9u1v5942hec739bsc6g`.
+- PR #222 M5 writer/schema correction.
 
-Host architecture:
+Real fail-closed proof:
 
-`OWNER ISSUE → TRUSTED main WORKFLOW → STRICT REQUEST → GITHUB OIDC → CAPITAL-AI BROKER → SA1/SA2/SA3A → M5 PERMIT → GITHUB SIDE EFFECT → M5 OUTCOME`
+- Issue #221 / run `31570833507`: `M5 PERSISTENCE FAILURE → NO PERMIT → NO BRANCH`.
 
-### Real fail-closed proof
+Real positive proof:
 
-Issue #221 / run `31570833507`:
-
-`M5 PERSISTENCE FAILURE → NO PERMIT → NO BRANCH`
-
-### Real positive proof
-
-Issue #223 / run `31574111075`:
-
-- exact current main: PASS;
-- OIDC: PASS;
-- durable authorization: PASS;
-- audit-bound BRANCH permit: PASS;
-- exact branch side effect: PASS;
-- terminal outcome: PASS.
+- Issue #223 / run `31574111075`;
+- OIDC/request binding PASS;
+- durable authorization PASS;
+- audit-bound BRANCH permit PASS;
+- exact branch side effect PASS;
+- terminal SUCCESS outcome PASS.
 
 Authorization:
 
@@ -107,128 +106,127 @@ Outcome:
 
 `supabase:agent_audit_events:5ab9eefe-f472-4396-a7e7-2a3ceb029e34`
 
-Direct read-only Supabase verification confirmed the correlated rows, request/run/branch and authorization reference.
+Separate stale-base proof:
 
-### Separate stale-base proof
+- Issue #224 / run `31574221718`;
+- `STALE BASE → DENY BEFORE OIDC/BROKER → NO BRANCH`.
 
-Issue #224 / run `31574221718` used stale base `156142102e7d2a97ad466aee0340f758fa4365e5`.
+Final lifecycle check confirms `agent/sa3b-host-probe-20260812b` is absent.
 
-Result:
+**SA3B lifecycle exit gate is complete.**
 
-`STALE BASE → DENY BEFORE OIDC/BROKER → NO BRANCH`
+## SA4 — First bounded autonomous work package
 
-### Remaining SA3B lifecycle gate
-
-Successful probe branch:
-
-`agent/sa3b-host-probe-20260812b`
-
-must be deleted after evidence capture. The current connected GitHub action surface does not expose reference deletion, so this is not recorded as complete yet.
-
-SA4 execution is technically guarded against bypass: the SA4 workflow checks that this exact branch is absent before acquiring OIDC or requesting any permit.
-
-## SA4 — First bounded autonomous work-package REM
-
-**BOOTSTRAP IN PROGRESS / LIVE PILOT BLOCKED UNTIL SA3B CLEANUP + BOOTSTRAP MERGE**
+**COMPLETE / VERIFIED PASS**
 
 Authority: ADR-0068 and `.ai/mandates/REM-SA4-PILOT-001.json`.
 
-### First pilot scope
+### Bootstrap
 
-The pilot is deliberately documentation-only and one-time.
+PR #226 Human-merged the bounded SA4 host and trust-root hardening at:
+
+`f7dfcda36905d9a55d74f57f2140224928960379`
+
+The bootstrap runtime was deployed before the live pilot.
+
+### Real autonomous pilot
+
+Owner Issue #228 triggered Workflow `31579519025` from exact base `f7dfcda36905d9a55d74f57f2140224928960379`.
+
+The trusted host autonomously executed:
+
+```text
+BRANCH
+→ durable BRANCH outcome
+→ COMMIT authorization
+→ deterministic exact file commit
+→ digest verification
+→ durable COMMIT outcome
+→ PR authorization
+→ Draft PR
+→ durable PR outcome
+```
 
 Exact output path:
 
 `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md`
 
-Allowed capabilities:
+Exact autonomous commit:
 
-`BRANCH → COMMIT → PR`
+`02f012e71106d5ffd9a4baa3e6f3eba7160eb55d`
 
-Not delegated:
+Exact PR:
 
-- `CI_REQUEST`;
-- merge;
-- deploy;
-- production mutation;
-- repository protection changes;
-- IAM/MFA/break-glass;
-- secrets/credential rotation;
-- billing;
-- DNS/TLS.
+`#229`
 
-Risk ceiling: `MEDIUM`.
+The host did **not** request final CI, approve, mark ready, merge, deploy or mutate production.
 
-Max open SA4/Systemadmin PRs: `1`.
+### Human boundary / closure
 
-Mandate expiry: no more than seven days.
+PR #229 was reviewed and merged by the Human/Owner. Merge SHA:
 
-Kill switch: Owner-controlled and required.
+`2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`
 
-### SA4 trusted input contract
+Main CI #966 / run `31580214920`: PASS.
 
-Trigger title prefix:
+Pilot branch `agent/sa4-pilot-proof-20260812b`: absent after merge.
 
-`[SA4-PILOT]`
+Render deploy `dep-d9u392nlk1mc73fg1hk0`: live on the same merge SHA.
 
-Issue body contains only:
+Closure Evidence:
 
-- `version`;
-- `mode = BOUNDED_DOC_PR`;
-- `mandateId = REM-SA4-PILOT-001`;
-- `roadmapItem = SA4-FIRST-AUTONOMOUS-WORK-PACKAGE`;
-- exact current `baseSha`;
-- branch `agent/sa4-pilot-*`.
+`docs/evidence/sa4/SA4_VERIFIED_PASS_CLOSURE_2026-08-12.md`
 
-No file content, command, arbitrary path, PR body or workflow definition may be supplied by the Issue.
+### Proven capability boundary
 
-### SA4 exact execution chain
+SA4 verifies a **deterministic, allowlisted repository work package** with:
 
-`Owner Issue → strict parser → current-main binding → SA3B cleanup check → open-PR overlap inventory → OIDC → BRANCH auth → branch → BRANCH outcome → COMMIT auth → deterministic evidence commit → digest verification → COMMIT outcome → PR auth → draft PR → PR outcome`
+`BRANCH → COMMIT → Draft PR`
 
-Every mutating capability receives a separate durable authorization/outcome pair. Permits are capability-, mandate-, branch-, path- and head-bound and cannot be reused across operations.
+It proves the execution-control architecture for those exact operations, including permit-before-side-effect and outcome correlation.
 
-The draft PR does not autonomously request final CI. Current Human/Owner review/attestation remains the gate for the single expensive `build-and-test`.
+It does **not** prove arbitrary application-code generation or arbitrary patch ingestion. The SA4 runner deliberately generated one trusted deterministic documentation artifact. Therefore a future autonomous M5A/code work package must have:
 
-### SA4 bootstrap exit gate
+1. a dedicated Owner-approved REM for the exact DEVELOPMENT item;
+2. explicit allowed code/test paths and risk ceiling;
+3. technically enforceable patch/code-generation boundary;
+4. self-authority denyset;
+5. required targeted/negative tests;
+6. audit-bound BRANCH/COMMIT/PR operations;
+7. Human final review and Human-only merge.
 
-Before the live autonomous pilot:
-
-1. SA4 bootstrap branch is reviewed and final CI is PASS;
-2. Human merge of bootstrap PR;
-3. bootstrap branch deleted;
-4. `agent/sa3b-host-probe-20260812b` deleted;
-5. corrected bootstrap `main` deployed because the broker/OIDC runtime changed;
-6. no concurrent PR changes the exact SA4 evidence path.
-
-### SA4 VERIFIED PASS exit gate
-
-1. fresh Owner `[SA4-PILOT]` Issue on exact current `main`;
-2. BRANCH authorization + SUCCESS outcome persisted;
-3. fresh pilot branch created from exact base SHA;
-4. COMMIT authorization persisted before exact file write;
-5. deterministic evidence file digest verified after commit;
-6. COMMIT SUCCESS outcome persisted with exact commit SHA;
-7. PR authorization persisted before draft PR creation;
-8. draft PR created from exact pilot commit;
-9. PR SUCCESS outcome persisted with exact PR number;
-10. no production mutation or autonomous CI/merge;
-11. Human file review + final CI + Human merge;
-12. pilot branch deleted after merge;
-13. evidence and traceability synchronized.
+Direct model→GitHub writes outside that bounded host must not be mislabeled as SA4-verified autonomous execution.
 
 ## SA5 — Bounded external mutation design
 
-**BLOCKED BY SA4 + M10 VERIFIED PASS**
+**BLOCKED**
 
-External production mutation remains prohibited until a separate future ADR proves exact-target, reversible execution plus strong M10 Owner assurance.
+SA4 completion does not grant external production mutation authority.
+
+External mutation remains prohibited until a separate architecture proves exact-target, reversible, auditable execution with adequate Human/Owner assurance. M10 `VERIFIED PASS` remains a prerequisite for the intended higher-assurance external mutation design unless a later Human-approved ADR explicitly defines an equivalent or stronger gate.
+
+Reserved Human actions remain outside delegation, including Owner MFA/break-glass, destructive production data, live money/entitlements, production-resource deletion, DNS/TLS/domain ownership and security-control weakening.
 
 ## Branch lifecycle
 
-`current main → fresh scoped branch → audited actions → PR → Human review/CI → Human merge → branch delete`
+Every work package follows:
 
-Merged/superseded branches are never reused.
+```text
+current main
+→ fresh scoped branch
+→ audited allowed actions
+→ PR
+→ Human review / required CI
+→ Human merge
+→ branch delete
+```
+
+Merged/superseded branches are never reused. Ephemeral clones/worktrees are cleaned after required Evidence retention.
 
 ## Current next action
 
-Complete the SA4 bootstrap PR under the existing Human review/CI/merge gate. Independently delete `agent/sa3b-host-probe-20260812b`. Only after both conditions and deployment of the bootstrap runtime may the first `[SA4-PILOT]` Issue be executed.
+SA3B and SA4 are closed as `COMPLETE / VERIFIED PASS`.
+
+The next DEVELOPMENT business/security phase is M5A, but the existing `REM-SA4-PILOT-001` is **not** authority for M5A code. Before the Systemadmin Executor may autonomously implement M5A application code, create/approve a dedicated M5A repository REM and provide a technically bounded execution path for the exact code/test scope.
+
+External M5A Supabase factor enrollment remains separately Human/Owner-approved and is not implied by repository authority.
