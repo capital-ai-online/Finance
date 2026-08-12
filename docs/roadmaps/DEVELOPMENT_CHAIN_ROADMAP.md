@@ -2,13 +2,14 @@
 
 Status: IMPLEMENTATION ROADMAP
 Status date: 2026-08-12
-Current repository baseline: `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e` (PR #222 merge)
+Current repository baseline: `main@2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd` (PR #229 merge)
+Current production baseline: Render deploy `dep-d9u392nlk1mc73fg1hk0` — `live` — commit `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`
 Repository: `SvenKulessa/Finance`
 Platform version: `0.6.0`
 
 ## Rolle dieses Dokuments
 
-Dieses Dokument ist der operative Phasenindex der DEVELOPMENT Chain. Historische Details bleiben in `docs/architecture/ROADMAP.md`, den ADRs, ESS-Dateien und Evidence-Dokumenten erhalten.
+Dieses Dokument ist der operative Phasenindex der DEVELOPMENT Chain. Historische Details bleiben in `docs/architecture/ROADMAP.md`, den ADRs, ESS-Dateien, Traceability-Matrizen und Evidence-Dokumenten erhalten.
 
 Es ersetzt keine bestehende Authority. Bei Widerspruch gilt die restriktivere Regel aus Roadmap, ADR, ESS, Human/Owner Policy, Agent IAM, REM oder plattformspezifischem Runbook.
 
@@ -35,41 +36,38 @@ READ-ONLY BASELINE
 
 Authority: `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`.
 
-## Parallel Systemadmin / Mutation-Agent Workstream
+## Verifizierter Systemadmin-/Mutation-Agent-Stand
 
-PR #220 merged the SA3B GitHub-Actions/OIDC Execution-Host repository implementation. Der erste reale Post-Merge Host-Probe erreichte den Broker und bewies bereits fail-closed:
+Der parallel aufgebaute Systemadmin-Pfad hat die früheren M5-/SA3B-Blocker inzwischen real geschlossen.
+
+### M5 / SA3B
+
+- PR #220 implementierte den GitHub-Actions/OIDC Execution Host.
+- Issue #221 / Run `31570833507` bewies fail-closed: M5-Persistenzfehler → kein Permit → kein Branch.
+- PR #222 korrigierte den Application↔M5-Schema-Contract.
+- Issue #223 / Run `31574111075` bewies den positiven realen Pfad: OIDC → durable Authorization Evidence → BRANCH Side Effect → durable SUCCESS Outcome.
+- Issue #224 / Run `31574221718` bewies stale-base DENY ohne Side Effect.
+- `agent/sa3b-host-probe-20260812b` ist nach Evidence-Erfassung gelöscht.
+
+Damit gelten der korrigierte privilegierte M5-Auditpfad und SA3B als **COMPLETE / VERIFIED PASS**.
+
+### SA4
+
+PR #226 implementierte den bounded SA4 Pilot Host. Der erste echte autonome Work-Package-Pilot lief über Owner Issue #228 / Workflow `31579519025` und erzeugte über getrennte audit-bound Permits:
 
 ```text
-OIDC / REQUEST BINDING PASS
-→ durable M5 audit persistence FAIL
-→ NO AUDIT PERMIT
-→ NO GITHUB SIDE EFFECT
+BRANCH → COMMIT → Draft PR
 ```
 
-Der Probe deckte zwei getrennte Blocker auf:
+Der Host erzeugte exakt `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md`, Commit `02f012e71106d5ffd9a4baa3e6f3eba7160eb55d` und Draft PR #229. PR #229 wurde anschließend ausschließlich durch den Human/Owner reviewed, final autorisiert und gemergt. Merge SHA: `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`. Main CI #966 / Run `31580214920` ist PASS; der Pilot-Branch ist gelöscht; Render deploy `dep-d9u392nlk1mc73fg1hk0` ist live.
 
-1. einen Application↔M5-Schema-Contract-Drift im Audit Writer;
-2. ein produktives Backend-Credential-Problem (`Unregistered API key`) für privilegierte Supabase-Persistenz.
+Closure Evidence: `docs/evidence/sa4/SA4_VERIFIED_PASS_CLOSURE_2026-08-12.md`.
 
-PR #222 (`fix(sa3b): M5 Audit Writer an Produktionsschema binden`) wurde am 2026-08-12 nach `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e` gemergt. Er korrigiert den Repository-/Application-Contract gegen das kanonische produktive M5-Schema, ohne Supabase-Schema-, Render-, Stripe- oder Workflow-Mutation.
+**SA4 finaler Stand: COMPLETE / VERIFIED PASS.**
 
-**SA3B bleibt trotzdem nicht `VERIFIED PASS`.** Vor autonomer Nutzung durch DEVELOPMENT Chain fehlen weiterhin:
+Wichtige Capability-Grenze: SA4 hat einen deterministischen docs-only Work-Package-Pfad mit `BRANCH`, `COMMIT` und Draft-`PR` verifiziert. Der aktuelle Pilot beweist **keinen allgemeinen Arbitrary-Code/Patch-Executor**. Ein späterer autonomer DEVELOPMENT-Codeauftrag benötigt daher weiterhin ein exaktes Owner-approved REM und einen technisch enforcebaren Execution-Pfad für die tatsächlichen Code-/Testpfade.
 
-1. corrected `main` Deployment / Broker-Verfügbarkeit;
-2. gültiges Owner-kontrolliertes privilegiertes Supabase Backend-Credential;
-3. erfolgreicher realer bounded `BRANCH_PROBE` auf aktuellem `main`;
-4. durable Authorization Evidence vor Branch-Erstellung;
-5. SUCCESS Outcome Evidence nach dem Side Effect;
-6. invalid/stale/no-permit Negativprobe ohne Side Effect;
-7. Probe-Branch Cleanup;
-8. finale Systemadmin Evidence/Roadmap Synchronisierung.
-
-Regeln:
-
-- DEVELOPMENT Chain verändert die Systemadmin Roadmap/Traceability in diesem Dokumentationspaket nicht parallel;
-- ein DevelopmentChain Handoff ersetzt niemals REM/IAM/Execution-Host Enforcement;
-- `MERGE` bleibt Human/Owner-only;
-- bis SA3B `VERIFIED PASS` erreicht, werden direkte mutierende Connector-Aufrufe nicht als autonome DevelopmentChain `VERIFIED PASS` Execution klassifiziert.
+`MERGE`, externe Produktionsmutation, Owner-IAM/MFA/Break-Glass, Secret Disclosure, Live Billing, DNS/TLS und Security-Control-Abschwächung bleiben nicht delegiert.
 
 ## Phasenstatus
 
@@ -81,7 +79,7 @@ Regeln:
 | M2G Documentation Freeze | **COMPLETE** | COMPLETE | Freeze policy | docs consistency | sequential implementation |
 | M3 CI Hardening | **COMPLETE** | COMPLETE | ADR-0053/0060 + CI governance | scope-aware CI / Owner gate | preserve until M10 cutover |
 | M4 Agent IAM | **COMPLETE** | COMPLETE | ADR-0058 + ESS-0018/0019 | negative IAM tests | preserve |
-| M5 Audit / Telemetry | **PERSISTENCE VERIFIED / APPLICATION CORRECTIVE VERIFICATION ACTIVE** | COMPLETE | ADR-0056/0059 + M5 Evidence | PR #222 merged; corrected writer must still deploy and prove a real successful privileged audit insert | M5A repository work may continue; autonomous mutation remains blocked |
+| M5 Audit / Telemetry | **COMPLETE / VERIFIED PASS** | COMPLETE | ADR-0056/0059 + M5/SA3B Evidence | real privileged authorization/outcome persistence proven; fail-closed outage proven | preserve; supports bounded audited automation |
 | M5A Native MFA / AAL2 | **IN PROGRESS** | baseline + runbook ready | ESS-0020 + ADR-0064 + ADR-0003.5 | repo code → CI → explicit Owner production approval → native factor/AAL2/recovery/advisor verification | M6 blocked until VERIFIED PASS |
 | M6 Supply Chain Provenance | **BLOCKED BY M5A** | **RUNBOOK READY** | ADR-0060 | SBOM/provenance/attestation bound to exact source/artifact | M7 after M6 VERIFIED PASS |
 | M7 Deployment Identity / Platform Mutation | **BLOCKED BY M6** | **RUNBOOK READY** | ADR-0061 | exact target + Owner mutation approval + post-verification/rollback | M8 after all required M7 mutations VERIFIED PASS |
@@ -93,7 +91,7 @@ Regeln:
 
 ## Current executable DEVELOPMENT phase — M5A
 
-M5A remains the next repository-development phase. Die M5-Korrektur aus PR #222 muss parallel produktiv verifiziert werden, bevor ein autonomer Mutation Executor für spätere DEVELOPMENT-Chain-Mutationen verwendet werden darf.
+M5A ist der nächste fachliche DEVELOPMENT-Chain-Implementierungspunkt.
 
 ### Goal
 
@@ -101,20 +99,22 @@ Replace the historical application-owned TOTP assurance for privileged identitie
 
 ### Required sequence
 
-1. architecture/runbook accepted;
-2. fresh implementation branch from then-current `main`;
-3. native TOTP enroll/challenge/verify integration;
-4. centralized server-side AAL2 gate;
-5. privileged session/factor lookup fail-closed;
-6. recovery/factor reset aligned with native MFA;
-7. positive + negative tests;
-8. repository CI `VERIFIED PASS`;
-9. read-only production precheck;
-10. separate explicit Owner mutation approval;
-11. native Owner-factor mutation one identity at a time;
-12. AAL2 positive/negative/recovery verification;
-13. advisor/evidence rerun;
-14. Roadmap/Traceability sync.
+1. aktuelle Authority-Metadaten von ESS-0020 / ADR-0064 gegen Human/Owner-Entscheid synchronisieren;
+2. für autonome Systemadmin-Codeausführung ein dediziertes, gültiges REM + technisch begrenzten Code-Execution-Pfad nachweisen; alternativ normaler Human-authorized Development-PR-Pfad;
+3. fresh implementation branch from then-current `main`;
+4. native TOTP enroll/challenge/verify integration;
+5. centralized server-side AAL2 gate;
+6. privileged session/factor lookup fail-closed;
+7. recovery/factor reset aligned with native MFA;
+8. positive + negative tests;
+9. repository CI `VERIFIED PASS`;
+10. Human merge + branch cleanup;
+11. read-only production precheck;
+12. separate explicit Owner mutation approval;
+13. native Owner-factor mutation one identity at a time;
+14. AAL2 positive/negative/recovery verification;
+15. advisor/evidence rerun;
+16. Roadmap/Traceability sync.
 
 Mutation boundary:
 
@@ -122,24 +122,14 @@ Mutation boundary:
 - Owner Native MFA enrollment: `REQUIRED / NOT YET AUTHORIZED` at baseline;
 - Supabase project setting: `CONDITIONAL` only if exact need is proven;
 - new Postgres DDL: `NOT REQUIRED`;
-- Stripe/Render: `NOT REQUIRED` for M5A.
+- legacy custom-TOTP cleanup: `DEFERRED / SEPARATE APPROVAL`;
+- Stripe/Render: `NOT REQUIRED` for M5A core implementation.
 
 ## M6 — Supply Chain Provenance
 
 Runbook: `docs/runbooks/M6_SUPPLY_CHAIN_PROVENANCE.md`.
 
-Required deliverables:
-
-- deterministic dependency resolution from committed lockfile;
-- exact source SHA and lockfile digest;
-- machine-readable SBOM;
-- source-to-artifact provenance;
-- signed/verifiable attestation appropriate to the available hosted build environment;
-- artifact digest bound to provenance;
-- pinned/least-privilege CI actions;
-- vulnerability and supply-chain checks;
-- immutable release/rollback reference;
-- Evidence under `docs/evidence/m6/`.
+Required deliverables remain: deterministic dependency resolution, source SHA + lockfile digest, machine-readable SBOM, source-to-artifact provenance, verifiable attestation, artifact digest binding, pinned/least-privilege CI actions, vulnerability checks, immutable rollback reference and Evidence under `docs/evidence/m6/`.
 
 No M6 implementation starts before M5A is `VERIFIED PASS`.
 
@@ -147,16 +137,7 @@ No M6 implementation starts before M5A is `VERIFIED PASS`.
 
 Runbook: `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`.
 
-Required deliverables:
-
-- exact production deploy identity and trust boundary;
-- source/provenance → deployment → runtime identity correlation;
-- environment-scoped Render deployment path;
-- credential/hook ownership, rotation and revocation;
-- exact mutation work order for every external change;
-- pre/post health/readiness and rollback verification;
-- Stripe/Supabase only when separately named by Authority;
-- DNS/TLS/IONOS remains Human/Owner-reserved absent a later stronger ADR.
+Required: exact production deploy identity, source/provenance→deployment→runtime correlation, environment-scoped Render path, credential/hook ownership/rotation/revocation, exact mutation work orders, pre/post verification and rollback. Stripe/Supabase only when separately named by Authority; DNS/TLS/IONOS remains Human/Owner-reserved absent a later stronger ADR.
 
 ## M8 — Provider-neutral Agent Cutover
 
@@ -172,30 +153,13 @@ AI App / Agent
 → bounded capability
 ```
 
-Required:
-
-- ChatGPT, Claude and Google AI Studio transports mapped to the same semantic capability policy;
-- no provider-specific direct admin path becomes canonical;
-- research/read-only profiles remain mutation-denied;
-- negative tests prove provider name/model cannot elevate authority;
-- rollback disables mutation/cutover profile and restores read-only operation.
+Provider/model identity never elevates authority. Research/read-only profiles remain mutation-denied.
 
 ## M9 — Assurance
 
 Runbook: `docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md`.
 
-Exit evidence must cover:
-
-- prompt/tool injection;
-- authorization bypass;
-- replay/idempotency;
-- secret/data exfiltration;
-- audit completeness and audit outage;
-- mutation kill switch;
-- break-glass procedure;
-- rollback/recovery drill;
-- independent Evidence review;
-- no unowned CRITICAL control.
+Exit evidence covers authorization bypass, prompt/tool injection, replay/idempotency, secret/data exfiltration, audit completeness/outage, kill switch, break-glass, rollback/recovery and independent Evidence review.
 
 ## M10 — Passkey-only Human/Owner PR Authorization
 
@@ -206,22 +170,7 @@ Authorities:
 - `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`;
 - `docs/architecture/ai-agent/M10_PASSKEY_OWNER_PR_AUTHORIZATION_THREAT_MODEL.md`.
 
-Target sequence:
-
-```text
-PR OPEN/UPDATE
-→ Human file review / Viewed
-→ exact PR-state resolution
-→ server-generated single-use WebAuthn challenge
-→ Owner passkey assertion with required user verification
-→ server verifies RP/origin/credential/signature/UP/UV/state freshness
-→ immutable approval evidence
-→ exactly one CI request consumes approval
-→ build-and-test
-→ Human merge
-```
-
-Legacy `💪`/`okay` and Owner checkbox authorization remain authoritative until controlled M10 cutover reaches `VERIFIED PASS`.
+Legacy `💪`/`okay` and Owner checkbox authorization remain authoritative until controlled M10 cutover reaches `VERIFIED PASS`. Human file review and Human-only merge remain mandatory after cutover.
 
 ## Mutation Executor Handoff
 
@@ -261,6 +210,8 @@ Each roadmapped phase closes only when applicable classes are covered:
 
 ## Current Next Action
 
-**M5A remains the next DEVELOPMENT Chain repository implementation gate.** M6–M10 documentation is prepared in advance only to remove planning gaps.
+**M5A remains the next DEVELOPMENT Chain implementation gate.** M5 and SA3B/SA4 are no longer blockers: their real positive/negative execution Evidence and branch lifecycle are complete.
 
-Parallel dazu muss der durch PR #222 korrigierte M5 Application-Audit-Pfad produktiv verifiziert und SA3B anschließend mit positiven/negativen Host-Probes abgeschlossen werden, bevor DEVELOPMENT Chain den autonomen Mutation Executor für spätere externe Mutationen als `VERIFIED PASS` nutzt.
+Before M5A is delegated to the Systemadmin as a code-producing autonomous work package, the exact code/test scope must be covered by a dedicated Owner-approved REM and a technically enforceable execution path. SA4's docs-only deterministic pilot is evidence of the control architecture, not blanket code-write authority.
+
+M6–M10 documentation is prepared in advance only to remove planning gaps and does not authorize blocked execution.
