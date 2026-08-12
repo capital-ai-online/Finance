@@ -11,6 +11,8 @@ on:
   issue_comment:
     types: [edited]
 
+# Kein globales Schreibrecht. Jeder Job erhält nur die für seinen exakten
+# Trust-Boundary-Schritt erforderlichen Berechtigungen.
 permissions: {}
 
 concurrency:
@@ -186,15 +188,26 @@ jobs:
           )"
           test -n "$review_id"
 
-          prior="$(
+          # Die Reservation wird nur über die Gate-eigene external_id-Familie erkannt.
+          # `filter=all` verhindert, dass ein gleichnamiger ci.yml-Check sie verdeckt.
+          # Nur laufende oder erfolgreiche Reservationen schließen den One-Shot;
+          # ein fehlgeschlagener Infrastrukturversuch darf nach neuer Human-Evidence erneut laufen.
+          blocking="$(
             CHECK_PREFIX="capital-ai:pr:${PR_NUMBER}:build:" \
               gh api -H 'Accept: application/vnd.github+json' \
-                "repos/${GITHUB_REPOSITORY}/commits/${current_head}/check-runs?check_name=build-and-test&per_page=100" \
-                --jq '.check_runs[] | select(.name == "build-and-test" and (.app.slug // "") == "github-actions" and ((.external_id // "") | startswith(env.CHECK_PREFIX))) | [.id, .status, (.conclusion // "null"), (.app.slug // "")] | @tsv' \
+                "repos/${GITHUB_REPOSITORY}/commits/${current_head}/check-runs?check_name=build-and-test&filter=all&per_page=100" \
+                --jq '.check_runs[]
+                        | select(
+                            .name == "build-and-test"
+                            and (.app.slug // "") == "github-actions"
+                            and ((.external_id // "") | startswith(env.CHECK_PREFIX))
+                            and (.status != "completed" or .conclusion == "success")
+                          )
+                        | [(.id | tostring), .status, (.conclusion // "null")] | @tsv' \
               | head -n 1
           )"
-          if [ -n "$prior" ]; then
-            echo "One-Shot für PR #${PR_NUMBER}@${current_head} ist bereits reserviert/verbraucht: ${prior}. Kein zweiter Build."
+          if [ -n "$blocking" ]; then
+            echo "One-Shot für PR #${PR_NUMBER}@${current_head} läuft bereits oder ist erfolgreich verbraucht: ${blocking}. Kein zweiter Build."
             echo "dispatch=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi

@@ -338,6 +338,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
           BUILD_CHECK_RUN_ID: ${{ inputs.build_check_run_id }}
           EXPECTED_HEAD_SHA: ${{ inputs.head_sha }}
           EXPECTED_EXTERNAL_ID: "capital-ai:pr:${{ inputs.pr_number }}:build:${{ inputs.approval_comment_id }}:${{ inputs.head_sha }}"
@@ -345,6 +346,7 @@ jobs:
           BUILD_RESULT: ${{ needs.build-and-test-executor.result }}
         run: |
           set -euo pipefail
+          test "$PR_NUMBER" -gt 0
           test "$BUILD_CHECK_RUN_ID" -gt 0
           printf '%s' "$EXPECTED_HEAD_SHA" | grep -Eq '^[0-9a-f]{40}$'
 

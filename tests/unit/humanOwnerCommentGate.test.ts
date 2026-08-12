@@ -47,6 +47,22 @@ describe('Human Owner Comment Gate', () => {
     expect(build).toContain('.external_id == env.EXPECTED_EXTERNAL_ID');
     expect(build).toContain('(.app.slug // "") == "github-actions"');
   });
+
+  it('does not let a same-name CI check hide the gate reservation', () => {
+    const gate = read('.github/workflows/human-owner-comment-gate.yml');
+    const human = gate.slice(gate.indexOf('  human-verification:'));
+    expect(human).toContain('check_name=build-and-test&filter=all&per_page=100');
+    expect(human).not.toContain('check_name=build-and-test&per_page=100');
+    expect(human).toContain('startswith(env.CHECK_PREFIX)');
+  });
+
+  it('keeps a running or successful one-shot closed and permits a reviewed retry after failure', () => {
+    const gate = read('.github/workflows/human-owner-comment-gate.yml');
+    const human = gate.slice(gate.indexOf('  human-verification:'));
+    expect(human).toContain('.status != "completed" or .conclusion == "success"');
+    expect(human).toContain('if [ -n "$blocking" ]; then');
+    expect(human).toContain('echo "dispatch=false" >> "$GITHUB_OUTPUT"');
+  });
 });
 
 describe('PR Build and Test dispatch', () => {
