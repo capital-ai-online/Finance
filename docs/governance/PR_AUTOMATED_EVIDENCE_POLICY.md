@@ -1,84 +1,72 @@
 # PR Automated Evidence Policy
 
 Status: REQUIRED
-Version: 1.0.0
+Version: 2.0.0
 Updated: 2026-08-12
 
 ## Ziel
 
-Pull Requests sollen für Menschen leicht verständlich bleiben, ohne technische Evidence manuell nachpflegen zu müssen. Manuelle und maschinelle Entscheidungen werden deshalb strikt getrennt.
+PR-Bodies bleiben verständliche Status- und Lernartefakte. Human-Autorisierung und maschinelle Evidence werden strikt getrennt und jeweils an `(PR-Nummer, aktueller Head-SHA)` gebunden.
 
 ## Human-only Aktionen
 
-Im kanonischen PR-Template existieren außerhalb maschinenverwalteter Bereiche exakt zwei manuelle Checkboxen:
+Der PR-Body enthält keine Human-Checkbox. Die einzige Autorisierungsquelle ist der von `github-actions[bot]` erzeugte, head-gebundene ADR-0069 Kommentar mit genau zwei Attestations. Zusätzlich ist ein current-head Review von `SvenKulessa` mit exakt `💪` oder `okay` erforderlich.
 
-1. `Human/Owner: vollständigen PR-Diff geprüft.`
-2. `Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.`
-
-Zusätzlich bleibt das current-head Review-Signal `💪` oder `okay` erforderlich. Diese drei Human-Signale dürfen weder durch Agenten noch durch Workflows selbst erzeugt oder als Human-Freigabe simuliert werden.
+Agenten und Workflows dürfen diese Signale weder setzen noch simulieren. Ein neuer Head wird ausschließlich durch den Kommentar-Gate-Workflow zurückgesetzt; der Body-Sync verändert keine Human-Evidence.
 
 ## Maschinenverwaltete Evidence
 
-Alle weiteren Checkboxen tragen das Präfix `🤖` und liegen ausschließlich zwischen den Markern:
+Alle Body-Checkboxen tragen das Präfix `🤖` und liegen ausschließlich zwischen:
 
 - `CAPITAL_AI_MACHINE_EVIDENCE_START/END`
 - `CAPITAL_AI_MACHINE_MERGE_START/END`
 
-Sie dürfen ausschließlich durch den trusted-main Workflow `PR Auto-Status` aus GitHub-/Actions-Evidence gesetzt oder zurückgesetzt werden. Ein manuelles Anklicken ist nicht autoritativ und wird bei der nächsten Status-Synchronisierung überschrieben.
+Nur `PR Auto-Status` darf sie aus GitHub-/Actions-Evidence setzen. Evidence früherer Heads, anderer PRs oder nicht passender Check-Identitäten bleibt historisch sichtbar, ist aber nicht autoritativ.
 
-Der Status-Sync bewertet ausschließlich Evidence, die an dieselbe Kombination `(PR-Nummer, aktueller Head-SHA)` gebunden ist. Evidence eines früheren Heads darf keinen technischen Status des neuen Heads auf PASS setzen.
+Human- und Build-Checks gelten nur, wenn Name, erfolgreicher Abschluss, GitHub-Actions-App, aktueller `head_sha` und die `external_id` mit PR-Nummer, Gate-Kommentar-ID, Zweck und Head übereinstimmen.
 
 ## Trusted-main Ausführung
 
-`PR Auto-Status` wird über `workflow_run` nach `PR Governance` und `CI` ausgeführt. Er checkt ausschließlich den vertrauenswürdigen `main`-Stand aus und führt keinen Code aus dem Kandidaten-Branch mit `pull-requests: write` aus.
+`PR Auto-Status` läuft über `workflow_run` nach `PR Governance` und `PR Build and Test`. Bei `workflow_dispatch` wird die PR-Nummer fail-closed aus dem kanonisch gequoteten Run-Titel extrahiert und anschließend über Live-PR-/Head-Evidence erneut validiert.
 
-Er besitzt nur:
+Der Workflow checkt ausschließlich `main` aus, persistiert keine Checkout-Credentials und besitzt nur:
 
 - `actions: read`
 - `contents: read`
 - `pull-requests: write`
 
-Checkout-Credentials werden nicht persistiert.
+Kandidatencode wird nie mit diesen Schreibrechten ausgeführt.
 
 ## Automatisch bewertete Zustände
 
-Der Workflow synchronisiert insbesondere:
+Der Status-Sync bewertet:
 
-- Diff-basierte D/C/R/M-Klassifikation und Execution Profile;
-- aktuellen PR-Head und sichtbare Produktionsbaseline;
+- Diff-basierte D/C/R/M-Klassifikation und aktuellen Head;
 - Governance-/Workflow-Security;
-- Live-PR-Body-/Baseline-Preflight;
-- blocking Repository-Konventionen;
-- Software-/Build-Prüfungen;
-- Docker-/Runtime-Prüfungen;
-- gültige `build-and-test` Primär-/One-Shot-Evidence;
-- technische Verifikation des Human-/Owner-Gates;
-- technische Check-Bereitschaft für Merge.
+- trusted-main Live-Body-/Produktionsbaseline-Preflight;
+- Repository-, Software-, Build- und gegebenenfalls Docker-/Runtime-Prüfungen;
+- PR-/Kommentar-/Head-gebundene `Human-/Owner-Verifikation`;
+- PR-/Kommentar-/Head-gebundene `build-and-test` Evidence;
+- externe Produktionsmutation nur bei `VERIFIED PASS` oder als nachweislich nicht erforderlich.
 
-Nicht erforderliche Checks dürfen für die erkannte Klasse automatisch als erfüllt markiert werden, müssen dabei aber sichtbar als `nicht erforderlich` erklärt werden.
+Ein erfolgreicher `build-and-test` Check ist aggregierte Evidence: Der Reporter setzt ihn nur auf PASS, wenn erneute Human-/Check-Validierung, trusted-main Preflight und der gesamte scope-gerechte Executor erfolgreich waren.
 
 ## Head-Wechsel
 
-Ein neuer Commit erzeugt einen neuen Head-SHA. Beim ersten trusted-main Sync für diesen Head:
+Bei einem neuen Commit:
 
-1. wird `CAPITAL_AI_SYNC_HEAD_SHA` aktualisiert;
-2. werden die beiden Human-Checkboxen zurückgesetzt;
-3. werden technische Häkchen ausschließlich aus Evidence des neuen Heads neu berechnet;
-4. bleiben Reviews und CI-Evidence früherer Heads historisch sichtbar, aber nicht autoritativ.
-
-Human-Checkboxen dürfen nach erfolgreichem CI auf demselben Head nicht erneut automatisch zurückgesetzt werden.
+1. aktualisiert `PR Auto-Status` den Sync-Head und berechnet technische Body-Evidence neu;
+2. setzt der separate ADR-0069 Workflow den Bot-Kommentar für den neuen Head zurück;
+3. bleiben Reviews, Kommentare und Checks des alten Heads nicht autoritativ.
 
 ## Idempotenz und Kosten
 
-Ein Status-Sync darf den PR-Body nur schreiben, wenn sich ein evidenzrelevanter Wert tatsächlich geändert hat. Insbesondere darf ein Zeitstempel allein keine neue Body-Version erzeugen. Dadurch endet die Kette `Body edit → CI metadata run → status sync` deterministisch und erzeugt keinen Workflow-Loop.
+Der Sync schreibt den Body nur bei evidenzrelevanter Änderung. Zeitstempel allein erzeugen keinen neuen Body-Stand. PR-Body-Edits starten keine technische CI; der eine teure Lauf entsteht ausschließlich aus dem erfolgreich verifizierten Kommentar-Gate.
 
 ## Grenzen
 
-Folgende Regeln werden bewusst nicht als anklickbare Pre-Merge-Checkbox dargestellt:
-
-- Merge benötigt eine separate ausdrückliche Human-Anweisung für den konkreten PR.
-- Agenten-/Modell-Selbstfreigabe ist keine Human-Freigabe.
-- Fachliche/reviewbezogene Einwände müssen vor Merge geklärt sein.
-- Nach erfolgreichem Merge ist der Work-Branch gemäß Branch-Lifecycle-Policy zu löschen.
-
-Für Klasse M bleibt eine externe Produktionsmutation fail-closed. Das technische Häkchen für Mutation darf erst nach verifizierter Mutation-Evidence (`VERIFIED PASS`) automatisch erfüllt werden; eine Checkbox allein erteilt niemals Produktionsrechte.
+- Merge benötigt eine separate ausdrückliche Human-Anweisung.
+- CI- oder Agenten-PASS ist keine Human-Freigabe.
+- Fachliche Einwände müssen vor Merge geklärt sein.
+- Klasse M bleibt ohne separate Mutationsautorität und Post-Mutation-Evidence fail-closed.
+- Nach Merge gilt die Branch-Lifecycle-Policy.

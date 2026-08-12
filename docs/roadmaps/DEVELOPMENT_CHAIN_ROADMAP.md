@@ -2,8 +2,8 @@
 
 Status: IMPLEMENTATION ROADMAP
 Status date: 2026-08-12
-Observed current `main`: `b08c647e3cf4dac1d8ccfdf0d2b318a07f615729`
-Current PR #235 merge-base: `5bd5f4d78b87a89258126d0453eaf5e4bc6b6125` — reconciliation with current `main` is required before merge.
+Synchronized `main` baseline: `e831f42d42c712bb30e15812b5c2b08cf6e1dddd` (after PRs #237 and #238)
+Combined source head: PR #235 at `e08f590dc555976cff7e9bd3b5f5cdaeec6e905d`; its net changes are carried forward with PR #239's least-privilege fixes in a separate draft.
 Repository: `SvenKulessa/Finance`
 Platform version: `0.6.0`
 Execution baseline rule: every work item re-resolves current `main`; any SHA in this document is context/evidence and not standing mutation authority.
@@ -376,7 +376,7 @@ Before a larger block can be autonomously delegated, it requires:
 
 ## Current Next Actions
 
-1. **Reconcile PR #235 with current `main@b08c647…` before any merge decision.** The new main-side ADR-0069 Comment Gate / dispatched CI architecture is canonical and must not be duplicated by PR #235.
+1. **Review the combined draft against `main@e831f42…`.** ADR-0069 Comment Gate / dispatched CI is the sole authorization path; the former PR-Body gate from #235 is removed and PR #239's permission/YAML fixes are integrated.
 2. **SA4B is the next Systemadmin enablement gate** for general bounded code/test Roadmap-block execution.
 3. **M5A remains the next DEVELOPMENT product/security phase.** It may proceed normally without waiting for SA4B.
 4. If M5A is delegated as an autonomous Systemadmin block, complete SA4B first, then create a dedicated M5A REM + validated per-unit Block Contract for `M5A-EU1..EU3`.

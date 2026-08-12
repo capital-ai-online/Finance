@@ -29,13 +29,6 @@ function markerValue(name, fallback) {
   const match = body.match(new RegExp(`<!--\\s*${name}:\\s*([^>]+?)\\s*-->`, 'i'));
   return match ? match[1].trim() : fallback;
 }
-function checkedHuman(label) {
-  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`^-\\s*\\[[xX]\\]\\s*${escaped}\\s*$`, 'm').test(body);
-}
-function stepConclusion(job, name) {
-  return job?.steps?.find((step) => step.name === name)?.conclusion || null;
-}
 function machineCheck(ok, label, detail = '') {
   return `- [${ok ? 'x' : ' '}] 🤖 ${label}${detail ? ` — ${detail}` : ''}`;
 }
@@ -69,17 +62,23 @@ const classificationOk = syncHead === headSha
   && body.includes(`Execution Profile:** ${classification.executionProfile}`)
   && body.includes(`Externe Produktionsmutation:** ${classification.externalMutation}`);
 
-const reviews = await githubPaginated(`/repos/${repository}/pulls/${prNumber}/reviews`, token);
-const ownerReviewOk = reviews.some((review) => {
-  const signal = String(review.body || '').trim();
-  return review.user?.login === 'SvenKulessa'
-    && review.commit_id === headSha
-    && (signal === '💪' || signal.toLowerCase() === 'okay');
-});
-const ownerBoxesOk = checkedHuman('Human/Owner: vollständigen PR-Diff geprüft.')
-  && checkedHuman('Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.');
-const humanGateOk = ownerBoxesOk && ownerReviewOk;
-
+const checksPayload = await githubJson(
+  `https://api.github.com/repos/${repository}/commits/${headSha}/check-runs?filter=all&per_page=100`,
+  token,
+);
+const checkRuns = checksPayload.check_runs || [];
+function trustedHeadCheck(name, kind) {
+  const identity = new RegExp(`^capital-ai:pr:${prNumber}:${kind}:[1-9][0-9]*:${headSha}$`, 'i');
+  return checkRuns.some((check) =>
+    check.name === name
+    && check.head_sha === headSha
+    && check.status === 'completed'
+    && check.conclusion === 'success'
+    && check.app?.slug === 'github-actions'
+    && identity.test(String(check.external_id || '')));
+}
+const humanGateOk = trustedHeadCheck('Human-/Owner-Verifikation', 'human');
+const buildEvidenceOk = trustedHeadCheck('build-and-test', 'build');
 const runsPayload = await githubJson(
   `https://api.github.com/repos/${repository}/actions/runs?event=pull_request&head_sha=${headSha}&per_page=100`,
   token,
@@ -112,44 +111,12 @@ for (const run of runs.filter((candidate) => candidate.name === 'PR Governance')
 }
 const governanceSecurityOk = governanceOk && workflowSecurityOk;
 
-let primaryJob = null;
-for (const run of runs.filter((candidate) => candidate.name === 'CI')) {
-  const jobs = await jobsFor(run.id);
-  const job = jobs.find((candidate) =>
-    candidate.name === 'build-and-test'
-    && stepConclusion(candidate, 'Primär-Volltest autorisiert') === 'success');
-  if (job) {
-    primaryJob = job;
-    break;
-  }
-}
-
-const baselineOk = stepConclusion(primaryJob, 'Live-PR-Body und Produktionsbaseline validieren') === 'success';
-const repositoryIntegrityOk = classification.repositoryClass === 'D'
-  || stepConclusion(primaryJob, 'Repository-Integrität prüfen') === 'success';
-const repositoryConventionsOk = classification.repositoryClass === 'D'
-  || stepConclusion(primaryJob, 'Repository-Konventionen blocking prüfen') === 'success';
-
-const softwareStepNames = [
-  'Abhängigkeiten installieren',
-  'Produktionsabhängigkeiten prüfen',
-  'TypeScript prüfen',
-  'Unit-Tests ausführen',
-  'Produktions-Build erstellen',
-  'Produktions-CSP-Auslieferung nach Build prüfen',
-  'Produktionskonfiguration und Deployment-Bereitschaft prüfen',
-];
-const softwareChecksOk = classification.repositoryClass === 'D'
-  || (repositoryIntegrityOk && softwareStepNames.every((name) => stepConclusion(primaryJob, name) === 'success'));
-
-const dockerStepNames = [
-  'Docker-Hardening prüfen',
-  'Produktions-Docker-Image bauen und prüfen',
-  'Produktions-Docker-Container starten und /healthz prüfen',
-];
+const baselineOk = buildEvidenceOk;
+const repositoryIntegrityOk = classification.repositoryClass === 'D' || buildEvidenceOk;
+const repositoryConventionsOk = classification.repositoryClass === 'D' || buildEvidenceOk;
+const softwareChecksOk = classification.repositoryClass === 'D' || (repositoryIntegrityOk && buildEvidenceOk);
 const dockerRequired = classification.repositoryClass === 'R';
-const dockerOk = !dockerRequired || dockerStepNames.every((name) => stepConclusion(primaryJob, name) === 'success');
-const buildEvidenceOk = primaryJob?.conclusion === 'success';
+const dockerOk = !dockerRequired || buildEvidenceOk;
 const mutationOk = !classification.mutationApprovalRequired || externalMutation === 'VERIFIED PASS';
 
 const allRequiredChecksOk = classificationOk
@@ -168,7 +135,7 @@ const evidenceLines = [
   machineCheck(repositoryConventionsOk, 'Repository-Konventionen sind im für die Klasse erforderlichen Modus erfüllt.', classification.repositoryClass === 'D' ? 'für Klasse D nicht erforderlich' : ''),
   machineCheck(softwareChecksOk, 'Erforderliche Software-/Build-Prüfungen sind erfolgreich oder für die Klasse nicht erforderlich.', classification.repositoryClass === 'D' ? 'Dokumentations-Fast-Path' : ''),
   machineCheck(dockerOk, 'Docker-/Runtime-Prüfungen sind erfolgreich oder für die Klasse nicht erforderlich.', dockerRequired ? 'Klasse R' : `für Klasse ${classification.repositoryClass} nicht erforderlich`),
-  machineCheck(buildEvidenceOk, '`build-and-test` besitzt gültige current-head Primär- oder One-Shot-Evidence.'),
+  machineCheck(buildEvidenceOk, '`build-and-test` besitzt gültige PR-/Head-gebundene trusted-main Evidence.'),
   machineCheck(mutationOk, 'Externe Produktionsmutation ist verifiziert oder für diesen PR nicht erforderlich.', classification.mutationApprovalRequired ? externalMutation : 'NONE'),
 ].join('\n');
 body = replaceBlock(body, 'CAPITAL_AI_MACHINE_EVIDENCE_START', 'CAPITAL_AI_MACHINE_EVIDENCE_END', evidenceLines);

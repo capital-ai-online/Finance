@@ -1,367 +1,80 @@
 name: CI
-run-name: >-
-  ${{ github.event_name == 'push'
-      && format('main – CI-Prüfung für {0}', github.sha)
-      || format('PR #{0} – CI-Prüfung', github.event.pull_request.number) }}
+run-name: "main – CI-Prüfung für ${{ github.sha }}"
 
 on:
   push:
     branches: [main]
-  pull_request:
-    types: [edited]
 
-permissions:
-  actions: read
-  contents: read
-  pull-requests: read
+permissions: {}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'push' }}
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  owner-gate:
-    name: Human-/Owner-Vorprüfung
-    if: >-
-      ${{
-        github.event_name == 'push' ||
-        (
-          github.run_attempt == 1 &&
-          github.event.changes.body.from != null &&
-          (
-            contains(github.event.pull_request.body, '- [x] Human/Owner: vollständigen PR-Diff geprüft.') ||
-            contains(github.event.pull_request.body, '- [X] Human/Owner: vollständigen PR-Diff geprüft.')
-          ) &&
-          (
-            contains(github.event.pull_request.body, '- [x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.') ||
-            contains(github.event.pull_request.body, '- [X] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.')
-          ) &&
-          !(
-            (
-              contains(github.event.changes.body.from, '- [x] Human/Owner: vollständigen PR-Diff geprüft.') ||
-              contains(github.event.changes.body.from, '- [X] Human/Owner: vollständigen PR-Diff geprüft.')
-            ) &&
-            (
-              contains(github.event.changes.body.from, '- [x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.') ||
-              contains(github.event.changes.body.from, '- [X] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.')
-            )
-          )
-        )
-      }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      approved: ${{ steps.gate.outputs.approved }}
-      reused: ${{ steps.gate.outputs.reused }}
-      evidence_run_id: ${{ steps.gate.outputs.evidence_run_id }}
-      evidence_job_id: ${{ steps.gate.outputs.evidence_job_id }}
-    steps:
-      - name: main-Push zulassen
-        if: ${{ github.event_name == 'push' }}
-        run: echo "main-Push: vollständige CI ist verpflichtend."
-
-      - name: Owner-Freigabe und One-Shot prüfen
-        if: ${{ github.event_name != 'push' }}
-        id: gate
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR_BODY: ${{ github.event.pull_request.body || '' }}
-          EXPECTED_OWNER: SvenKulessa
-          CURRENT_RUN_ID: ${{ github.run_id }}
-        run: |
-          set -euo pipefail
-
-          read -r diff_attested files_attested <<< "$(
-            python3 - <<'PY'
-          import os
-          import re
-
-          required_diff = 'Human/Owner: vollständigen PR-Diff geprüft.'
-          required_files = 'Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.'
-
-          def parse(body: str):
-              found = set()
-              in_fence = False
-              for raw in body.replace('\r\n', '\n').replace('\r', '\n').split('\n'):
-                  line = raw.strip()
-                  if re.match(r'^(?:```|~~~)', line):
-                      in_fence = not in_fence
-                      continue
-                  if in_fence or line.startswith('>'):
-                      continue
-                  match = re.fullmatch(r'-\s*\[\s*[xX]\s*\]\s+(.+?)\s*', line)
-                  if not match:
-                      continue
-                  label = re.sub(r'`([^`\n]+)`', r'\1', match.group(1))
-                  found.add(' '.join(label.split()))
-              return required_diff in found, required_files in found
-
-          canonical = '- [x] ' + required_diff + '\n- [x] ' + required_files
-          markdown = '- [X] ' + required_diff + '\n- [x] Human/Owner: alle geänderten Dateien im Tab `Files changed` als Viewed markiert.'
-          unchecked = '- [ ] ' + required_diff + '\n- [x] ' + required_files
-          fenced = '```text\n- [x] ' + required_diff + '\n- [x] ' + required_files + '\n```'
-          quoted = '> - [x] ' + required_diff + '\n- [x] ' + required_files
-
-          assert parse(canonical) == (True, True)
-          assert parse(markdown) == (True, True)
-          assert parse(unchecked) == (False, True)
-          assert parse(fenced) == (False, False)
-          assert parse(quoted) == (False, True)
-
-          diff_ok, files_ok = parse(os.environ.get('PR_BODY', ''))
-          print(f'{str(diff_ok).lower()} {str(files_ok).lower()}')
-          PY
-          )"
-
-          body_ok=false
-          if [ "$diff_attested" = "true" ] && [ "$files_attested" = "true" ]; then
-            body_ok=true
-          fi
-
-          review_id="$(
-            gh api --paginate \
-              "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" \
-              --jq '.[] | select(.user.login == env.EXPECTED_OWNER and .commit_id == env.PR_HEAD_SHA and (((((.body // "") | gsub("^[[:space:]]+|[[:space:]]+$"; "")) | ascii_downcase) == "okay") or (((.body // "") | gsub("^[[:space:]]+|[[:space:]]+$"; "")) == "💪"))) | .id' \
-              | head -n 1
-          )"
-
-          review_ok=false
-          if [ -n "$review_id" ]; then
-            review_ok=true
-          fi
-
-          if [ "$body_ok" != "true" ] || [ "$review_ok" != "true" ]; then
-            echo "approved=false" >> "$GITHUB_OUTPUT"
-            echo "reused=false" >> "$GITHUB_OUTPUT"
-            echo "evidence_run_id=" >> "$GITHUB_OUTPUT"
-            echo "evidence_job_id=" >> "$GITHUB_OUTPUT"
-            echo "Owner-Gate nicht erfüllt. Build/Test wird nicht gestartet."
-            echo "PR-Diff-Attestation: $diff_attested"
-            echo "Files-changed-Attestation: $files_attested"
-            echo "Current-Head-Owner-Review: $review_ok"
-            echo "Reihenfolge: aktuellen Head reviewen (💪/okay), danach beide Owner-Checkboxen setzen/speichern."
-            exit 1
-          fi
-
-          prior_build="$(
-            gh api --paginate \
-              "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?event=pull_request&head_sha=${PR_HEAD_SHA}&per_page=100" \
-              --jq ".workflow_runs[] | select(.id != (${CURRENT_RUN_ID} | tonumber)) | select(any(.pull_requests[]?; .number == (${PR_NUMBER} | tonumber))) | .id" \
-            | while IFS= read -r run_id; do
-                [ -z "$run_id" ] && continue
-                job="$(
-                  gh api \
-                    "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?filter=all&per_page=100" \
-                    --jq '.jobs[] | select(.name == "build-and-test" and .conclusion != "skipped" and any(.steps[]?; .name == "Primär-Volltest autorisiert" and .conclusion == "success")) | [.id, .status, (.conclusion // "null")] | @tsv' \
-                    | head -n 1
-                )"
-                if [ -n "$job" ]; then
-                  printf '%s\t%s\n' "$run_id" "$job"
-                  break
-                fi
-              done
-          )"
-
-          if [ -n "$prior_build" ]; then
-            IFS=$'\t' read -r prior_run_id prior_job_id prior_status prior_conclusion <<< "$prior_build"
-            echo "approved=false" >> "$GITHUB_OUTPUT"
-            echo "evidence_run_id=$prior_run_id" >> "$GITHUB_OUTPUT"
-            echo "evidence_job_id=$prior_job_id" >> "$GITHUB_OUTPUT"
-
-            case "$prior_conclusion" in
-              success)
-                echo "reused=true" >> "$GITHUB_OUTPUT"
-                echo "One-Shot erfüllt: Primär-build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} ist bereits erfolgreich."
-                echo "Evidence: run=${prior_run_id}, job=${prior_job_id}. Der Required Job verifiziert diese Primär-Evidence erneut."
-                exit 0
-                ;;
-              null)
-                echo "reused=false" >> "$GITHUB_OUTPUT"
-                echo "One-Shot reserviert: Primär-build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} ist bereits ${prior_status}." >&2
-                echo "Der doppelte Metadaten-Run bleibt absichtlich nicht grün, solange der reservierende Volltest noch keine SUCCESS-Evidence besitzt." >&2
-                exit 1
-                ;;
-              *)
-                echo "reused=false" >> "$GITHUB_OUTPUT"
-                echo "One-Shot verbraucht: vorheriger Primär-build-and-test endete mit ${prior_conclusion}." >&2
-                echo "Evidence: run=${prior_run_id}, job=${prior_job_id}." >&2
-                echo "Ein Retry auf demselben Head ist nicht erlaubt; ein neuer Commit/Head ist erforderlich." >&2
-                exit 1
-                ;;
-            esac
-          fi
-
-          echo "approved=true" >> "$GITHUB_OUTPUT"
-          echo "reused=false" >> "$GITHUB_OUTPUT"
-          echo "evidence_run_id=" >> "$GITHUB_OUTPUT"
-          echo "evidence_job_id=" >> "$GITHUB_OUTPUT"
-          echo "Owner-Gate erfüllt und One-Shot frei. Genau ein Primär-build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} darf starten."
-
   build-and-test:
     name: build-and-test
-    needs: [owner-gate]
-    if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.approved == 'true' || needs.owner-gate.outputs.reused == 'true' }}
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Evidence-Reuse für aktuellen PR-Head verifizieren
-        if: ${{ github.event_name != 'push' && needs.owner-gate.outputs.reused == 'true' }}
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          EVIDENCE_RUN_ID: ${{ needs.owner-gate.outputs.evidence_run_id }}
-          EVIDENCE_JOB_ID: ${{ needs.owner-gate.outputs.evidence_job_id }}
-        run: |
-          set -euo pipefail
-          test -n "$EVIDENCE_RUN_ID"
-          test -n "$EVIDENCE_JOB_ID"
-
-          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${EVIDENCE_RUN_ID}" \
-            --jq '. as $run | select(.head_sha == env.PR_HEAD_SHA and .event == "pull_request" and .conclusion == "success" and any(.pull_requests[]?; .number == (env.PR_NUMBER | tonumber))) | .id' \
-            | grep -qx "$EVIDENCE_RUN_ID"
-
-          gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${EVIDENCE_JOB_ID}" \
-            --jq '. as $job | select(.name == "build-and-test" and .conclusion == "success" and any(.steps[]?; .name == "Primär-Volltest autorisiert" and .conclusion == "success")) | .id' \
-            | grep -qx "$EVIDENCE_JOB_ID"
-
-          echo "Volltest-Evidence wiederverwendet und API-/SHA-head-genau verifiziert: PR #${PR_NUMBER}@${PR_HEAD_SHA}, run=${EVIDENCE_RUN_ID}, job=${EVIDENCE_JOB_ID}."
-
-      - name: Primär-Volltest autorisiert
-        if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.reused != 'true' }}
-        run: echo "Primär-Volltest für den aktuellen Commit ist autorisiert; dieser Marker unterscheidet echte Volltest-Evidence von Evidence-Reuse."
-
       - name: Repository auschecken
-        if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.reused != 'true' }}
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          ref: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Prüfumfang bestimmen
-        if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.reused != 'true' }}
-        id: scope
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-
-          if [ "$EVENT_NAME" = "push" ]; then
-            echo "full=true" >> "$GITHUB_OUTPUT"
-            echo "docker=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          changed_files="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
-          printf '%s\n' "$changed_files"
-
-          full=false
-          docker=false
-          while IFS= read -r file; do
-            [ -z "$file" ] && continue
-            case "$file" in
-              docs/*|.ai/*|*.md) ;;
-              *) full=true ;;
-            esac
-            case "$file" in
-              Dockerfile|.dockerignore|package.json|package-lock.json|server.ts|server/*|render.yaml|render.yml|scripts/security/*Docker*|scripts/security/*docker*|scripts/security/*Runtime*|scripts/security/*runtime*|.github/workflows/ci.yml|.github/workflows/*render*) docker=true ;;
-            esac
-          done <<< "$changed_files"
-
-          echo "full=$full" >> "$GITHUB_OUTPUT"
-          echo "docker=$docker" >> "$GITHUB_OUTPUT"
-
       - name: Repository-Integrität prüfen
-        if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.reused != 'true' }}
         shell: bash
         run: |
           set -euo pipefail
           git rev-parse --verify 'HEAD^{commit}' >/dev/null
           git fsck --strict --no-dangling
 
-      - name: Live-PR-Body und Produktionsbaseline validieren
-        if: ${{ github.event_name != 'push' && needs.owner-gate.outputs.reused != 'true' }}
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_BASE_REF: ${{ github.event.pull_request.base.sha }}
-          PR_HEAD_REF: ${{ github.event.pull_request.head.sha }}
-          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
-          CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
-        run: |
-          set -euo pipefail
-          mkdir -p artifacts/pr
-          git rev-parse --verify "${PR_BASE_REF}^{commit}" >/dev/null
-          git rev-parse --verify "${PR_HEAD_REF}^{commit}" >/dev/null
-          node scripts/pr/productionPreflight.mjs
-          node scripts/pr/validatePrBody.mjs
-
-      - name: Dokumentations-Fast-Path
-        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full != 'true' }}
-        run: echo "Nur Dokumentation betroffen; Software-Build und Tests sind nicht erforderlich."
-
       - name: Node.js einrichten
-        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: '24.18.0'
           cache: 'npm'
 
       - name: Abhängigkeiten installieren
-        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         run: npm ci
 
       - name: Repository-Konventionen blocking prüfen
-        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         run: npm run repository:validate
 
       - name: Produktionsabhängigkeiten prüfen
-        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         run: npm audit --omit=dev --audit-level=high
 
       - name: TypeScript prüfen
-        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         run: npm run lint
 
       - name: Unit-Tests ausführen
-        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         run: npm test
 
       - name: Produktions-Build erstellen
-        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         run: npm run build
 
       - name: Produktions-CSP-Auslieferung nach Build prüfen
-        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         env:
           NODE_ENV: production
           CSP_MODE: report-only
         run: npx vitest run tests/unit/securityResponse.production.test.ts
 
       - name: Produktionskonfiguration und Deployment-Bereitschaft prüfen
-        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         run: |
           npx tsx scripts/security/verifyProductionConfigInvariants.ts
           npm run predeploy:check
 
       - name: Docker-Hardening prüfen
-        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.docker == 'true' }}
         run: node scripts/security/verifyDockerHardening.mjs
 
       - name: Produktions-Docker-Image bauen und prüfen
-        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.docker == 'true' }}
         shell: bash
         env:
-          IMAGE_SHA: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
+          IMAGE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           docker build --tag "capital-ai-ci:${IMAGE_SHA}" .
@@ -370,10 +83,9 @@ jobs:
           docker image inspect "capital-ai-ci:${IMAGE_SHA}" --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
 
       - name: Produktions-Docker-Container starten und /healthz prüfen
-        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.docker == 'true' }}
         shell: bash
         env:
-          IMAGE_SHA: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
+          IMAGE_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           container_name="capital-ai-ci-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
@@ -415,15 +127,11 @@ jobs:
     name: Deployment verifiziert / Render-Produktion
     needs: [build-and-test]
     if: ${{ always() && needs.build-and-test.result == 'success' }}
+    permissions: {}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Pull Requests deployen nicht produktiv
-        if: ${{ github.event_name != 'push' }}
-        run: echo "PR validiert; Produktionsdeployment erfolgt erst nach Merge nach main."
-
       - name: Render-Deployment für verifizierten main-Commit auslösen
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
           VERIFIED_COMMIT_SHA: ${{ github.sha }}

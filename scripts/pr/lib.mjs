@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
-export const PR_TEMPLATE_VERSION = '2.2.0';
+export const PR_TEMPLATE_VERSION = '2.3.0';
 export const PR_TEMPLATE_MARKER = `CAPITAL_AI_PR_TEMPLATE_VERSION: ${PR_TEMPLATE_VERSION}`;
 export const DEFAULT_PRODUCTION_HEALTH_URL = 'https://capital-ai.online/healthz';
 export const MAX_PR_START_DELAY_MS = 15 * 60 * 1000;
@@ -59,7 +59,7 @@ export function classifyPullRequestScope(filePaths, options={}) {
   let repositoryClass='D'; if (scopeFiles.some(isRuntimePath)) repositoryClass='R'; else if (scopeFiles.some((filePath)=>!isDocumentationPath(filePath))) repositoryClass='C';
   const checkClass=mutationPlanned?'M':repositoryClass; const explicitProfile=String(options.executionProfile||'').trim(); let executionProfile=explicitProfile||(repositoryClass==='D'?'P1':'P2'); if (mutationPlanned&&!['P3','P4'].includes(executionProfile)) executionProfile='P0 HUMAN REQUIRED';
   const featureAreas=[]; for (const filePath of scopeFiles) for (const area of featureAreasForPath(filePath)) if (!featureAreas.includes(area)) featureAreas.push(area); if (featureAreas.length===0) featureAreas.push('Dokumentation und Governance');
-  const requiredChecks=['Human-/Owner-Vorprüfung','Live-PR-Body-Validierung','Governance-/Security-Prüfungen','build-and-test']; const notRequiredChecks=[];
+  const requiredChecks=['Human-/Owner-Kommentar-Gate','Live-PR-Body-Validierung','Governance-/Security-Prüfungen','build-and-test']; const notRequiredChecks=[];
   if (repositoryClass==='D') { requiredChecks.splice(3,0,'Dokumentations-Fast-Path'); notRequiredChecks.push('npm ci/audit','Repository-Konventionen (blocking)','TypeScript/Lint','Unit Tests','Production Build','Docker Image Build','Docker Runtime Smoke Test'); }
   else {
     requiredChecks.splice(3,0,'Git-/Repository-Integrität','npm ci','Repository-Konventionen (blocking)','Production Dependency Audit','Production Config Invariants','TypeScript/Lint','Unit Tests','Production Build','CSP-/Predeploy-Prüfung');

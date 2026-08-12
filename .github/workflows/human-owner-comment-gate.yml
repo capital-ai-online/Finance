@@ -24,11 +24,12 @@ jobs:
       ${{
         github.event_name == 'workflow_run' &&
         github.event.workflow_run.event == 'pull_request' &&
+        github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.pull_requests[0].number != null
       }}
     permissions:
       contents: read
-      issues: write
+      issues: read
       pull-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 3
@@ -64,7 +65,7 @@ jobs:
           comment_id="$(
             gh api --paginate \
               "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
-              --jq '.[] | select((.body // "") | contains("<!-- CAPITAL_AI_HUMAN_GATE -->")) | .id' \
+              --jq '.[] | select(.user.login == "github-actions[bot]" and ((.body // "") | contains("<!-- CAPITAL_AI_HUMAN_GATE -->"))) | .id' \
               | head -n 1
           )"
 
@@ -127,6 +128,14 @@ jobs:
           test "$base_ref" = "main"
           test "$pr_state" = "open"
 
+          governance_run_id="$(
+            gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/pr-governance.yml/runs?event=pull_request&head_sha=${current_head}&per_page=100" \
+              --jq ".workflow_runs[] | select(.conclusion == \"success\") | select(any(.pull_requests[]?; .number == (${PR_NUMBER} | tonumber))) | .id" \
+              | head -n 1
+          )"
+          test -n "$governance_run_id"
+
           approval_head="$(
             python3 - <<'PY'
           import os, re
@@ -139,9 +148,36 @@ jobs:
           )"
           test "$approval_head" = "$current_head"
 
-          live_body="$(gh api "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" --jq '.body // ""')"
+          live_body="$(
+            EXPECTED_COMMENT_AUTHOR='github-actions[bot]' gh api \
+              "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" \
+              --jq 'select(.user.login == env.EXPECTED_COMMENT_AUTHOR) | .body // ""'
+          )"
           test "$live_body" = "$COMMENT_BODY"
 
+          LIVE_COMMENT_BODY="$live_body" python3 - <<'PY'
+          import os
+          import re
+
+          required = {
+              'Human/Owner: vollständigen PR-Diff geprüft.',
+              'Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.',
+          }
+          found = set()
+          in_fence = False
+          for raw in os.environ['LIVE_COMMENT_BODY'].replace('\r\n', '\n').replace('\r', '\n').split('\n'):
+              line = raw.strip()
+              if re.match(r'^(?:```|~~~)', line):
+                  in_fence = not in_fence
+                  continue
+              if in_fence or line.startswith('>'):
+                  continue
+              match = re.fullmatch(r'-\s*\[\s*[xX]\s*\]\s+(.+?)\s*', line)
+              if match:
+                  found.add(' '.join(match.group(1).split()))
+          if found != required:
+              raise SystemExit('Human-Gate-Kommentar enthält nicht exakt die beiden gesetzten Attestations.')
+          PY
           review_id="$(
             PR_HEAD_SHA="$current_head" gh api --paginate \
               "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" \
@@ -151,9 +187,10 @@ jobs:
           test -n "$review_id"
 
           prior="$(
-            gh api -H 'Accept: application/vnd.github+json' \
-              "repos/${GITHUB_REPOSITORY}/commits/${current_head}/check-runs?check_name=build-and-test&per_page=100" \
-              --jq '.check_runs[] | select(.name == "build-and-test") | [.id, .status, (.conclusion // "null"), (.app.slug // "")] | @tsv' \
+            CHECK_PREFIX="capital-ai:pr:${PR_NUMBER}:build:" \
+              gh api -H 'Accept: application/vnd.github+json' \
+                "repos/${GITHUB_REPOSITORY}/commits/${current_head}/check-runs?check_name=build-and-test&per_page=100" \
+                --jq '.check_runs[] | select(.name == "build-and-test" and (.app.slug // "") == "github-actions" and ((.external_id // "") | startswith(env.CHECK_PREFIX))) | [.id, .status, (.conclusion // "null"), (.app.slug // "")] | @tsv' \
               | head -n 1
           )"
           if [ -n "$prior" ]; then
@@ -167,6 +204,7 @@ jobs:
               "repos/${GITHUB_REPOSITORY}/check-runs" \
               -f name='Human-/Owner-Verifikation' \
               -f head_sha="$current_head" \
+              -f "external_id=capital-ai:pr:${PR_NUMBER}:human:${COMMENT_ID}:${current_head}" \
               -f status='completed' \
               -f conclusion='success' \
               -f "output[title]=Human-/Owner-Verifikation PASS" \
@@ -180,6 +218,7 @@ jobs:
               "repos/${GITHUB_REPOSITORY}/check-runs" \
               -f name='build-and-test' \
               -f head_sha="$current_head" \
+              -f "external_id=capital-ai:pr:${PR_NUMBER}:build:${COMMENT_ID}:${current_head}" \
               -f status='in_progress' \
               -f "output[title]=build-and-test läuft" \
               -f "output[summary]=Trusted-main Build/Test wurde durch head-genaue Human-Evidence autorisiert." \

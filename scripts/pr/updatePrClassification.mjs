@@ -80,11 +80,8 @@ if (/<!--\s*CAPITAL_AI_SYNC_HEAD_SHA:[^>]*-->/i.test(body)) {
   body = body.replace(/<!--\s*CAPITAL_AI_EXECUTION_PROFILE:[^>]*-->/i, (match) => `${match}\n${syncMarker}`);
 }
 
-if (headChanged) {
-  body = body
-    .replace(/-\s*\[[xX]\]\s*Human\/Owner: vollständigen PR-Diff geprüft\./g, '- [ ] Human/Owner: vollständigen PR-Diff geprüft.')
-    .replace(/-\s*\[[xX]\]\s*Human\/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert\./g, '- [ ] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.');
-}
+// Human-Evidence wird nicht im PR-Body gespeichert. Ein neuer Head wird ausschließlich
+// durch den trusted-main ADR-0069 Bot-Kommentar-Workflow zurückgesetzt.
 
 const claimFiles = changedFiles.filter((file) => file.startsWith('.ai/work-claims/') && file.endsWith('.json'));
 const claimPath = claimFiles.length === 1 ? claimFiles[0] : 'N/A — kein eindeutiger Work-Claim im Diff';

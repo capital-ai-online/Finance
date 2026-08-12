@@ -2,7 +2,7 @@
 
 Status: PROPOSED
 Date: 2026-08-12
-Observed current `main`: `b08c647e3cf4dac1d8ccfdf0d2b318a07f615729`
+Synchronized `main` baseline: `e831f42d42c712bb30e15812b5c2b08cf6e1dddd` (after PRs #237 and #238)
 Execution baseline rule: every work item re-resolves current `main`; this matrix does not authorize mutation.
 
 ## Zweck
@@ -197,7 +197,7 @@ Every merged repository Execution Unit needs `branchDeleted=true` or equivalent 
 
 ## Current Next Gates
 
-- PR #235 must be reconciled with current `main@b08c647…` before merge because main now owns ADR-0069 and the Human-Owner Comment Gate/dispatched CI architecture.
+- The combined #235 + #239 draft is synchronized with `main@e831f42…`; ADR-0069 Human-Owner Comment Gate/dispatched CI remains the sole authorization architecture and the stale Body gate is removed.
 - M5A remains the active DEVELOPMENT phase.
 - SA4B is the next Systemadmin capability-enablement gate for autonomous general code/test blocks.
 - Normal Human-authorized M5A repository implementation is not blocked by SA4B.

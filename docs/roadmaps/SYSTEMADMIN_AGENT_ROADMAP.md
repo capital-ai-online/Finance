@@ -2,8 +2,8 @@
 
 Status: IMPLEMENTATION PHASE
 Date: 2026-08-12
-Observed current `main`: `b08c647e3cf4dac1d8ccfdf0d2b318a07f615729`
-Current PR #235 merge-base: `5bd5f4d78b87a89258126d0453eaf5e4bc6b6125` — reconciliation with current `main` is required before merge.
+Synchronized `main` baseline: `e831f42d42c712bb30e15812b5c2b08cf6e1dddd` (after PRs #237 and #238)
+Combined source head: PR #235 at `e08f590dc555976cff7e9bd3b5f5cdaeec6e905d`; reconciliation is complete in the separate #235 + #239 draft.
 Execution baseline rule: every autonomous work item re-resolves current `main`; no roadmap SHA is standing mutation authority.
 Authority: ESS-0021, ADR-0065, ADR-0058, ADR-0059, ADR-0066, ADR-0067, ADR-0068, ADR-0069, ADR-0070
 

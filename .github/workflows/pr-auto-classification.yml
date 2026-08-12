@@ -4,7 +4,7 @@ run-name: >-
 
 on:
   workflow_run:
-    workflows: ["PR Governance", "CI"]
+    workflows: ["PR Governance", "PR Build and Test"]
     types: [completed]
 
 permissions:
@@ -13,7 +13,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: pr-auto-status-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}
+  group: pr-auto-status-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.display_title }}
   cancel-in-progress: true
 
 jobs:
@@ -21,12 +21,39 @@ jobs:
     name: PR-Klasse und Evidence synchronisieren
     if: >-
       ${{
-        github.event.workflow_run.event == 'pull_request' &&
-        github.event.workflow_run.pull_requests[0].number != null
+        (
+          github.event.workflow_run.name == 'PR Governance' &&
+          github.event.workflow_run.event == 'pull_request' &&
+          github.event.workflow_run.pull_requests[0].number != null
+        ) || (
+          github.event.workflow_run.name == 'PR Build and Test' &&
+          github.event.workflow_run.event == 'workflow_dispatch'
+        )
       }}
     runs-on: ubuntu-latest
     timeout-minutes: 4
     steps:
+      - name: PR-Nummer fail-closed ermitteln
+        id: pr
+        shell: bash
+        env:
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          PAYLOAD_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          RUN_TITLE: ${{ github.event.workflow_run.display_title }}
+        run: |
+          set -euo pipefail
+          pr_number="$PAYLOAD_PR_NUMBER"
+          if [ "$WORKFLOW_NAME" = 'PR Build and Test' ]; then
+            if [[ "$RUN_TITLE" =~ ^PR[[:space:]]#([1-9][0-9]*)[[:space:]]–[[:space:]]trusted[[:space:]]build/test[[:space:]]@[[:space:]]([0-9a-f]{40})$ ]]; then
+              pr_number="${BASH_REMATCH[1]}"
+            else
+              echo 'Unerwarteter PR-Build-Run-Titel; Status-Sync verweigert.' >&2
+              exit 1
+            fi
+          fi
+          [[ "$pr_number" =~ ^[1-9][0-9]*$ ]]
+          echo "number=$pr_number" >> "$GITHUB_OUTPUT"
+
       - name: Vertrauenswürdigen main-Stand auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -42,11 +69,11 @@ jobs:
       - name: Changed Files klassifizieren
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: node scripts/pr/updatePrClassification.mjs
 
       - name: Human- und CI-Evidence für aktuellen Head synchronisieren
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: node scripts/pr/syncPrEvidence.mjs

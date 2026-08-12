@@ -33,7 +33,7 @@ const requiredSections = [
   '## 2. Automatisch erkannte Prüfungen',
   '## 3. Nachvollziehbarkeit',
   '## 4. Sicherheit und Rückweg',
-  '## 5. Human / Owner Review VOR technischer CI',
+  '## 5. Human / Owner Review und Kommentar-Gate',
   '## 6. Automatisch synchronisierte Nachweise',
   '## 7. Was kann man aus diesem PR lernen?',
   '## 8. Merge-Bereitschaft',
@@ -63,12 +63,8 @@ if (unresolved.length > 0) {
   fail(`PR #${prNumber} enthält nicht aufgelöste Vorlagenplatzhalter: ${[...new Set(unresolved)].join(', ')}`);
 }
 
-const humanLabels = [
-  'Human/Owner: vollständigen PR-Diff geprüft.',
-  'Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.',
-];
-for (const statement of humanLabels) {
-  if (!body.includes(statement)) fail(`PR #${prNumber} enthält die kanonische Owner-Attestation nicht: ${statement}`);
+if (!body.includes('CAPITAL_AI_HUMAN_GATE_AUTHORITY: BOT_COMMENT_ONLY')) {
+  fail(`PR #${prNumber} deklariert den ADR-0069 Bot-Kommentar nicht als einzige Human-Gate-Autorität.`);
 }
 
 const machinePatterns = [
@@ -78,10 +74,9 @@ const machinePatterns = [
 let bodyWithoutMachine = body;
 for (const pattern of machinePatterns) bodyWithoutMachine = bodyWithoutMachine.replace(pattern, '');
 const manualCheckboxes = [...bodyWithoutMachine.matchAll(/^\s*-\s*\[[ xX]\]\s+(.+?)\s*$/gm)].map((match) => match[1].trim());
-if (manualCheckboxes.length !== 2 || humanLabels.some((label) => !manualCheckboxes.includes(label))) {
-  fail(`PR #${prNumber} darf außerhalb maschinenverwalteter Blöcke exakt zwei manuelle Checkboxen besitzen: die beiden Human/Owner-Attestations.`);
+if (manualCheckboxes.length !== 0) {
+  fail(`PR #${prNumber} darf außerhalb maschinenverwalteter Blöcke keine Checkbox besitzen; Human-Evidence liegt nur im Bot-Kommentar.`);
 }
-
 for (const pattern of machinePatterns) {
   const match = body.match(new RegExp(pattern.source));
   if (!match) continue;
@@ -137,4 +132,4 @@ if (!body.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja')) {
   fail('Der kanonische PR muss die Human-/CODEOWNER-Freigabe ausdrücklich beibehalten.');
 }
 
-console.log(`[PR-VORLAGE] PR #${prNumber} nutzt die Lernvorlage, Klasse ${classification.checkClass}, Profil ${classification.executionProfile}; exakt zwei Human-Checkboxen bleiben manuell, technische Checkboxen sind maschinenverwaltet.`);
+console.log(`[PR-VORLAGE] PR #${prNumber} nutzt die Lernvorlage, Klasse ${classification.checkClass}, Profil ${classification.executionProfile}; Human-Evidence liegt ausschließlich im Bot-Kommentar; technische Checkboxen sind maschinenverwaltet.`);

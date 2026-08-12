@@ -20,7 +20,7 @@ Das GitHub-Budget von 15 EUR ist eine Obergrenze und kein Verbrauchsziel. Die Pi
 - Ein technischer Retry setzt eine **tatsächliche Korrektur und damit einen neuen Head-SHA** voraus. Ein Re-Run desselben unveränderten Heads ist nur bei dokumentierter GitHub-/Runner-Infrastrukturstörung zulässig.
 - `Re-run all jobs` ohne Code-/Konfigurationsänderung ist untersagt, außer bei dokumentierter GitHub-/Runner-Infrastrukturstörung.
 - Mehrere kleine Fix-Commits sollen lokal oder durch vorhandene Evidence gesammelt validiert werden; nicht jeder Zwischenstand soll einen neuen Remote-CI-Lauf erzeugen.
-- PR-Titel-/Body-/Checkbox-Edits dürfen für denselben Head **keinen zweiten `build-and-test`** autorisieren. Ein bereits `queued`/`in_progress` befindlicher Build reserviert den One-Shot-Slot.
+- PR-Titel-/Body-Edits und wiederholte Kommentar-Edits dürfen für denselben Head **keinen zweiten `build-and-test`** autorisieren. Ein PR-/Kommentar-/Head-gebundener Check im Zustand `queued`/`in_progress` reserviert den One-Shot-Slot.
 - Ein erfolgreicher vorhandener `build-and-test` für exakt `(PR, Head-SHA)` wird als technische Evidence wiederverwendet.
 
 ### main
@@ -84,6 +84,7 @@ Vor jedem Commit oder PR-Update MUSS ein Agent:
 Pull Request
   -> automatische Scope-/Checkklassen-Erkennung
   -> Human/Owner current-head Review
+  -> head-gebundener Bot-Kommentar nach ADR-0069
   -> 1x Build/Test-Gate pro Head
   -> nur betroffene Spezial-Gates
   -> kein Production Deploy

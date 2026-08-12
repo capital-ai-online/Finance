@@ -1,8 +1,9 @@
-<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 2.2.0 -->
+<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 2.3.0 -->
 # CAPITAL-AI Pull Request — {{WORK_ITEM}}
 
 <!-- CAPITAL_AI_EXTERNAL_MUTATION: NONE -->
 <!-- CAPITAL_AI_EXECUTION_PROFILE: AUTO -->
+<!-- CAPITAL_AI_HUMAN_GATE_AUTHORITY: BOT_COMMENT_ONLY -->
 <!-- CAPITAL_AI_SYNC_HEAD_SHA: {{HEAD_SHA}} -->
 
 > Dieser Pull Request ist gleichzeitig **Änderungsnachweis und Lernmaterial**. Die technische Checkklasse wird aus den geänderten Dateien automatisch ermittelt. Ein geplanter externer Produktionsschritt muss ausdrücklich deklariert werden und hebt die Prüfung auf Klasse M an. Der Mensch muss keine Klasse oder technische PASS-Häkchen erraten.
@@ -72,14 +73,19 @@ Die Klasse gibt nur vor, **was geprüft werden muss**. Sie erteilt keinem Agente
 - **Separate Produktionsfreigabe nötig:** {{AUTO_MUTATION_APPROVAL}}
 - **Nicht delegierbar:** Merge, Owner-IAM/MFA/Break-Glass, Secret-Offenlegung, destruktive Produktionsdatenoperationen, Live-Billing/Money/Entitlement, Produktionsressourcen-Löschung, DNS/TLS/Domain-Ownership und Abschwächung von Security-/Audit-/RLS-/Consent-/Protection-Kontrollen.
 
-## 5. Human / Owner Review VOR technischer CI
+## 5. Human / Owner Review und Kommentar-Gate
 
-> **Nur diese zwei Häkchen werden vom Menschen gesetzt.** Reihenfolge: `Files changed` lesen → jede Datei als `Viewed` markieren → Review `💪` oder `okay` für den aktuellen Head absenden → **danach** die beiden Kästchen setzen. Ein neuer Commit setzt sie automatisch zurück und macht die Head-gebundene Review-Evidence ungültig.
+> **Autoritative Human-Evidence liegt ausschließlich im head-gebundenen Bot-Kommentar nach ADR-0069.** Der PR-Body enthält bewusst keine Human-Checkboxen und kann keinen Build autorisieren.
 
-- [ ] Human/Owner: vollständigen PR-Diff geprüft.
-- [ ] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.
+Ablauf für den aktuellen Head:
 
-## 6. Automatisch synchronisierte Nachweise
+1. `Files changed` vollständig lesen und jede Datei als `Viewed` markieren.
+2. Einen Review mit exakt `💪` oder `okay` für den aktuellen Head absenden.
+3. Erst danach die zwei Häkchen im Bot-Kommentar **Human / Owner Verifikation** setzen.
+4. Einen neuen Commit als neuen Head behandeln; der trusted-main Workflow setzt den Kommentar nach erfolgreicher Governance zurück.
+
+Body-Edits, alte Kommentare, Reviews früherer Heads und Agenten-/Workflow-Selbstaussagen sind keine Human-Autorisierung.
+## 6. Automatisch synchronisierte Nachweise## 6. Automatisch synchronisierte Nachweise
 
 > **Nicht manuell bearbeiten.** Alle folgenden Häkchen werden ausschließlich vom trusted-main PR-Status-Workflow aus GitHub-/Actions-Evidence für den aktuellen Head gesetzt. `☐` bedeutet ausstehend oder fehlgeschlagen; `☑` bedeutet maschinell verifiziert oder für die erkannte Klasse nachweislich nicht erforderlich.
 
@@ -90,16 +96,14 @@ Die Klasse gibt nur vor, **was geprüft werden muss**. Sie erteilt keinem Agente
 - [ ] 🤖 Repository-Konventionen sind im für die Klasse erforderlichen Modus erfüllt.
 - [ ] 🤖 Erforderliche Software-/Build-Prüfungen sind erfolgreich oder für die Klasse nicht erforderlich.
 - [ ] 🤖 Docker-/Runtime-Prüfungen sind erfolgreich oder für die Klasse nicht erforderlich.
-- [ ] 🤖 `build-and-test` besitzt gültige current-head Primär- oder One-Shot-Evidence.
+- [ ] 🤖 `build-and-test` besitzt gültige PR-/Head-gebundene Evidence.
 - [ ] 🤖 Externe Produktionsmutation ist verifiziert oder für diesen PR nicht erforderlich.
 <!-- CAPITAL_AI_MACHINE_EVIDENCE_END -->
 
 **CI-Evidence verständlich lesen:**
-- **Volltest ausgeführt:** dieser Head wurde in einem Primärlauf vollständig getestet.
-- **Volltest-Evidence wiederverwendet:** derselbe `(PR, Head-SHA)` wurde bereits erfolgreich vollständig getestet; die Primär-Evidence wird über GitHub Actions erneut verifiziert, ohne den teuren Build zu duplizieren.
-- **Nicht erforderlich:** die automatische Klasse verlangt den Check für diesen Diff nicht; der Workflow darf das zugehörige Häkchen deshalb als erfüllt markieren.
-- **Ausstehend/fehlgeschlagen:** das Häkchen bleibt offen; der Mensch setzt es nicht von Hand.
-
+- **Volltest ausgeführt:** Der exakt autorisierte PR-Head wurde einmal im trusted-main Dispatch vollständig geprüft.
+- **Nicht erforderlich:** Die automatische Klasse verlangt den Check für diesen Diff nicht; der Workflow darf das zugehörige Häkchen deshalb als erfüllt markieren.
+- **Ausstehend/fehlgeschlagen:** Das Häkchen bleibt offen; der Mensch setzt es nicht von Hand.
 ## 7. Was kann man aus diesem PR lernen?
 
 {{AUTO_LEARNING_NOTE}}
