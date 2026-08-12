@@ -2,7 +2,7 @@
 
 Status: IMPLEMENTATION PHASE
 Date: 2026-08-12
-Production baseline: `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e`
+Production baseline: `main@2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`
 
 | Stage | Authority | Implementation / Evidence | Mutation boundary | Exit gate |
 |---|---|---|---|---|
@@ -10,9 +10,9 @@ Production baseline: `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e`
 | SA1 Mandate Validator | ESS-0021 + ADR-0065 + ADR-0058 | PR #215; expanded trust root in SA4 bootstrap | repository only; production denied | COMPLETE / VERIFIED PASS |
 | SA2 Chat Profile | ESS-0021 + SA1 | PR #216 | mutating LIVE envelope alone denied | COMPLETE / VERIFIED PASS |
 | SA3A Audit Adapter | ADR-0059 + ADR-0065 | PR #218; M5 writer corrected by #222 | no permit before durable M5 audit | COMPLETE / VERIFIED PASS |
-| SA3B Execution Host | ADR-0067 | PR #220 + #222; Issues #221/#223/#224 | BRANCH host proof only | **TECHNICAL VERIFIED PASS / CLEANUP PENDING** |
-| SA4 Bounded Pilot | ADR-0068 + REM-SA4-PILOT-001 | bootstrap branch / dedicated host, parser, runner, tests | exact doc path; BRANCH/COMMIT/Draft PR only | **BOOTSTRAP IN PROGRESS** |
-| SA5 External Mutation | future ADR + M10 | not implemented | production mutation prohibited | BLOCKED BY SA4 + M10 |
+| SA3B Execution Host | ADR-0067 | PR #220 + #222; Issues #221/#223/#224; probe branch cleanup verified | BRANCH host proof only | **COMPLETE / VERIFIED PASS** |
+| SA4 Bounded Pilot | ADR-0068 + REM-SA4-PILOT-001 | PR #226; Issue #228 / run `31579519025`; PR #229; six M5 events | exact doc path; BRANCH/COMMIT/Draft PR only | **COMPLETE / VERIFIED PASS** |
+| SA5 External Mutation | future ADR + M10 | not implemented | production mutation prohibited | BLOCKED BY M10 VERIFIED PASS |
 
 ## Canonical evidence chain
 
@@ -53,9 +53,11 @@ Issue #224 / run `31574221718`:
 
 Requested negative branch was independently absent.
 
-### Remaining SA3B lifecycle item
+### SA3B lifecycle closure
 
-`agent/sa3b-host-probe-20260812b` still requires deletion after evidence capture. SA4 checks this ref before OIDC and refuses execution while it exists.
+The successful probe branch `agent/sa3b-host-probe-20260812b` was deleted before the live SA4 pilot. The SA4 preflight confirmed the ref was absent before OIDC acquisition or any mutation-permit request.
+
+SA3B therefore satisfies both runtime verification and post-proof branch lifecycle cleanup.
 
 ## SA4 authority trace
 
@@ -113,21 +115,42 @@ All existing Owner/repository immutable ID, audience, issuer, signature, event a
 
 No earlier permit may authorize a later capability.
 
+## SA4 live pilot trace
+
+### Runtime correlation
+
+| Correlation | Value |
+|---|---|
+| Owner trigger | Issue #228 |
+| workflow run | `31579519025` |
+| workflow result | `SUCCESS` |
+| exact base | `f7dfcda36905d9a55d74f57f2140224928960379` |
+| branch | `agent/sa4-pilot-proof-20260812b` |
+| autonomous commit | `02f012e71106d5ffd9a4baa3e6f3eba7160eb55d` |
+| autonomous Draft PR | #229 |
+| exact path | `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md` |
+
+### Durable M5 authorization/outcome pairs
+
+| Capability | Authorization auditReference | Outcome auditReference | Result |
+|---|---|---|---|
+| BRANCH | `supabase:agent_audit_events:1b4b04cb-a86b-4612-9ef5-308e95a18c95` | `supabase:agent_audit_events:e99b9af7-74cc-4693-966f-c9b85102035d` | SUCCESS |
+| COMMIT | `supabase:agent_audit_events:3c5916a1-d8c1-4ba1-9de1-d839fcc1bc85` | `supabase:agent_audit_events:bc6ecf0b-86db-4b8c-ae95-2c963a0776f5` | SUCCESS |
+| PR | `supabase:agent_audit_events:41874d2e-a7b7-48c9-8287-71d75bea7d05` | `supabase:agent_audit_events:d4722de8-3242-4822-ab7d-f353880312ac` | SUCCESS / PR #229 |
+
+Direct read-only Supabase verification confirmed all six correlated append-only rows. The PR outcome carries `pull_request_number=229`; the COMMIT outcome carries the exact autonomous commit SHA.
+
 ## Deterministic content boundary
 
-The Issue cannot provide Markdown/file payload. `runSa4Pilot.mjs` generates the evidence file from trusted metadata and verifies the committed bytes by SHA-256 before recording COMMIT SUCCESS.
+The Issue cannot provide Markdown/file payload. `runSa4Pilot.mjs` generated the evidence file from trusted metadata and verified the committed bytes by SHA-256 before recording COMMIT SUCCESS.
 
-The exact target file is absent from bootstrap/main and is reserved for the autonomous pilot itself.
+PR #229 changed exactly one file with one autonomous commit and no additional repository path.
 
 ## Concurrent writer boundary
 
-Before COMMIT and again before PR authorization, the trusted host queries open PR changed files through GitHub and supplies them to the SA1 policy. Exact target-path overlap is DENY.
+Before COMMIT and again before PR authorization, the trusted host queried open PR changed files through GitHub and supplied them to the SA1 policy. Exact target-path overlap is DENY.
 
-At bootstrap time:
-
-- PR #225 changes DevelopmentChain documentation only;
-- PR #193 changes cost/monetization documentation only;
-- neither includes the SA4 pilot evidence path.
+The successful live pilot had no concurrent PR overlap on `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md`.
 
 ## Trust-root boundary
 
@@ -135,26 +158,49 @@ SA1 and SA3 self-authority protection include the SA3B/SA4 workflows, mandates, 
 
 ## Rollback boundary
 
-The trusted runner may delete only its exact `agent/sa4-pilot-*` branch as bounded rollback. If a draft PR was already created and its outcome cannot be persisted, the host closes that exact draft PR and deletes its exact branch before failing.
+The trusted runner may delete only its exact `agent/sa4-pilot-*` branch as bounded rollback. If a Draft PR was already created and its outcome cannot be persisted, the host closes that exact Draft PR and deletes its exact branch before failing.
 
 Rollback never targets `main`, repository protection, another PR or production infrastructure.
 
 ## Human boundary
 
-- `CI_REQUEST` is not part of `REM-SA4-PILOT-001`;
-- the autonomous host does not mark the PR ready, approve or merge;
-- current Human/Owner current-head review/attestation remains the final CI gate;
-- `MERGE` remains Human-only;
-- pilot branch deletion remains mandatory after Human merge.
+- `CI_REQUEST` was not part of `REM-SA4-PILOT-001`;
+- the autonomous host did not approve or merge PR #229;
+- final CI remained behind Human/Owner current-head review and attestation;
+- Governance #662 completed `SUCCESS`;
+- final CI #965 completed `SUCCESS`;
+- `MERGE` remained Human-only;
+- Human merge produced `main@2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`;
+- pilot branch deletion remained mandatory and was verified after merge.
 
-## SA4 activation gate
+## SA4 activation gate — SATISFIED
 
-The live pilot is blocked until:
+1. bootstrap PR #226 final CI PASS and Human merge: PASS;
+2. bootstrap branch deletion: PASS;
+3. successful SA3B probe branch deletion: PASS;
+4. bootstrap runtime deployed to Render: PASS;
+5. no exact target-path overlap before live execution: PASS.
 
-1. bootstrap PR final CI PASS and Human merge;
-2. bootstrap branch deletion;
-3. successful SA3B probe branch deletion;
-4. bootstrap runtime deployed to Render;
-5. no exact target-path overlap exists.
+## SA4 VERIFIED PASS exit gate — SATISFIED
 
-Only then may a fresh Owner `[SA4-PILOT]` Issue execute the bounded autonomous work package.
+1. fresh Owner Issue #228 bound to exact current `main`: PASS;
+2. BRANCH authorization persisted before side effect: PASS;
+3. BRANCH SUCCESS outcome persisted: PASS;
+4. COMMIT authorization persisted before deterministic file mutation: PASS;
+5. committed bytes verified by SHA-256: PASS;
+6. COMMIT SUCCESS outcome persisted with `02f012e71106d5ffd9a4baa3e6f3eba7160eb55d`: PASS;
+7. PR authorization persisted before Draft-PR creation: PASS;
+8. Draft PR #229 created from the exact pilot commit: PASS;
+9. PR SUCCESS outcome persisted with `pull_request_number=229`: PASS;
+10. no production mutation, autonomous final CI request or autonomous merge: PASS;
+11. Human review and final CI #965: PASS;
+12. Human merge to `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`: PASS;
+13. `agent/sa4-pilot-proof-20260812b` deleted after merge: PASS;
+14. Issue #228 closed with reason `completed`: PASS;
+15. roadmap and traceability synchronized: completed by this SA4 status-sync change set.
+
+## SA5 boundary after SA4
+
+SA4 is no longer a prerequisite blocker. SA5 remains **BLOCKED BY M10 VERIFIED PASS**.
+
+Completion of SA4 does not authorize external production mutation. Any future SA5 design still requires separate authority, exact-target and rollback controls, and strong M10 Owner assurance.
