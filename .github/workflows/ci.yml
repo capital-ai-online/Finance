@@ -28,7 +28,8 @@ jobs:
     steps:
       - name: main-Push zulassen
         if: ${{ github.event_name == 'push' }}
-        run: echo "main-Push: vollständige CI ist verpflichtend."
+        run: |
+          echo "main-Push: vollständige CI ist verpflichtend."
 
       - name: Owner-Freigabe prüfen
         if: ${{ github.event_name != 'push' }}
