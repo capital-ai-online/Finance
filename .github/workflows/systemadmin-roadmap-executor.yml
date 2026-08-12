@@ -1,0 +1,247 @@
+name: Systemadmin Roadmap Execution Host
+run-name: >-
+  SA3B Host-Probe für Issue #${{ github.event.issue.number }}
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+  id-token: write
+
+concurrency:
+  group: systemadmin-roadmap-host-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  branch-probe:
+    name: Audit-gebundener SA3B Branch-Probe
+    if: >-
+      github.event.issue.user.login == 'SvenKulessa' &&
+      startsWith(github.event.issue.title, '[SA3B-PROBE]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Vertrauenswürdigen main-Stand auschecken
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.18.0'
+
+      - name: Untrusted Issue-Request strikt validieren
+        env:
+          SYSTEMADMIN_ISSUE_BODY: ${{ github.event.issue.body }}
+          SYSTEMADMIN_REQUEST_OUTPUT: ${{ runner.temp }}/systemadmin-request.json
+        run: node scripts/systemadmin/validateExecutionIssue.mjs
+
+      - name: main-Baseline und Probe-REM binden
+        env:
+          REQUEST_FILE: ${{ runner.temp }}/systemadmin-request.json
+          MANDATE_FILE: .ai/mandates/REM-SA3B-PROBE-001.json
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const request = JSON.parse(fs.readFileSync(process.env.REQUEST_FILE, 'utf8'));
+          const mandate = JSON.parse(fs.readFileSync(process.env.MANDATE_FILE, 'utf8'));
+          const { execFileSync } = require('node:child_process');
+          const mainSha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+          if (request.baseSha !== mainSha) throw new Error('[SA3B][SECURITY] baseSha ist nicht aktuelles main.');
+          if (request.mandateId !== mandate.mandateId) throw new Error('[SA3B][SECURITY] mandateId mismatch.');
+          if (mandate.status !== 'OWNER_APPROVED') throw new Error('[SA3B][SECURITY] Probe-REM ist nicht Owner-approved.');
+          fs.writeFileSync(process.env.RUNNER_TEMP + '/systemadmin-mandate.json', JSON.stringify(mandate), { mode: 0o600 });
+          NODE
+
+      - name: GitHub OIDC Token für CAPITAL-AI Broker anfordern
+        env:
+          TOKEN_OUTPUT: ${{ runner.temp }}/github-oidc-token
+        run: |
+          set -euo pipefail
+          : "${ACTIONS_ID_TOKEN_REQUEST_URL:?GitHub OIDC URL fehlt}"
+          : "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:?GitHub OIDC Request Token fehlt}"
+          response="$(curl --fail-with-body --silent --show-error \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=capital-ai-systemadmin-execution")"
+          RESPONSE="$response" TOKEN_OUTPUT="$TOKEN_OUTPUT" node <<'NODE'
+          const fs = require('node:fs');
+          const payload = JSON.parse(process.env.RESPONSE);
+          if (!payload.value || typeof payload.value !== 'string') throw new Error('GitHub OIDC response missing token.');
+          fs.writeFileSync(process.env.TOKEN_OUTPUT, payload.value, { mode: 0o600 });
+          NODE
+
+      - name: Exakte BRANCH-Autorisierung + M5 Evidence anfordern
+        env:
+          REQUEST_FILE: ${{ runner.temp }}/systemadmin-request.json
+          MANDATE_FILE: ${{ runner.temp }}/systemadmin-mandate.json
+          AUTH_REQUEST_FILE: ${{ runner.temp }}/systemadmin-auth-request.json
+          AUTH_RESPONSE_FILE: ${{ runner.temp }}/systemadmin-auth-response.json
+          OIDC_TOKEN_FILE: ${{ runner.temp }}/github-oidc-token
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RUN_ID: ${{ github.run_id }}
+          BROKER_URL: https://capital-ai.online/api/internal/systemadmin-execution/authorize
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const request = JSON.parse(fs.readFileSync(process.env.REQUEST_FILE, 'utf8'));
+          const mandate = JSON.parse(fs.readFileSync(process.env.MANDATE_FILE, 'utf8'));
+          const issueNumber = Number(process.env.ISSUE_NUMBER);
+          const runId = process.env.RUN_ID;
+          const body = {
+            issueNumber,
+            authorization: {
+              principal: {
+                humanActorId: 'SvenKulessa',
+                appId: 'chatgpt-github-connector',
+                agentId: 'capital-ai-systemadmin-roadmap-executor',
+                sessionId: `github-issue-${issueNumber}`,
+                requestId: `issue-${issueNumber}-run-${runId}`,
+                credentialHolderId: 'github-actions-oidc',
+                provider: 'openai',
+                model: 'non-authoritative-host-metadata'
+              },
+              capability: 'BRANCH',
+              riskClass: 'MEDIUM',
+              environment: 'development',
+              targetResource: 'github:SvenKulessa/Finance',
+              mandate,
+              execution: {
+                roadmapItem: request.roadmapItem,
+                repository: 'SvenKulessa/Finance',
+                baseBranch: 'main',
+                requestedPaths: [],
+                mutationClass: 'REPOSITORY',
+                now: new Date().toISOString()
+              }
+            },
+            checkpoint: {
+              sa1VerifiedPass: true,
+              mainResolved: true,
+              roadmapResolved: true,
+              securityPreflightPassed: true,
+              overlapCheckPassed: true,
+              checkClassResolved: true,
+              rollbackDefined: true,
+              testsDefined: true,
+              freshBranchCreated: false,
+              branchName: request.branchName,
+              currentHeadSha: request.baseSha,
+              finalOwnerReviewStarted: false,
+              credentialExposureDetected: false,
+              untrustedScopeElevationDetected: false,
+              productionMutationRequired: false
+            }
+          };
+          fs.writeFileSync(process.env.AUTH_REQUEST_FILE, JSON.stringify(body), { mode: 0o600 });
+          NODE
+          oidc="$(cat "$OIDC_TOKEN_FILE")"
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer ${oidc}" \
+            -H 'Content-Type: application/json' \
+            --data-binary "@${AUTH_REQUEST_FILE}" \
+            "$BROKER_URL" > "$AUTH_RESPONSE_FILE"
+          node <<'NODE'
+          const fs = require('node:fs');
+          const response = JSON.parse(fs.readFileSync(process.env.AUTH_RESPONSE_FILE, 'utf8'));
+          const permit = response.executionPermit;
+          if (response.decision?.verdict !== 'ALLOW') throw new Error('[SA3B][SECURITY] Broker decision is not ALLOW.');
+          if (!permit?.auditBoundExecutionPermitted || permit.capability !== 'BRANCH') throw new Error('[SA3B][SECURITY] Missing audit-bound BRANCH permit.');
+          if (!/^supabase:agent_audit_events:[A-Za-z0-9_-]+$/.test(response.auditReference || '')) throw new Error('[SA3B][SECURITY] Invalid audit reference.');
+          const request = JSON.parse(fs.readFileSync(process.env.REQUEST_FILE, 'utf8'));
+          if (permit.branchName !== request.branchName || permit.currentHeadSha !== request.baseSha) throw new Error('[SA3B][SECURITY] Permit branch/head binding mismatch.');
+          NODE
+
+      - name: Erst jetzt den autorisierten Branch erzeugen
+        id: branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUEST_FILE: ${{ runner.temp }}/systemadmin-request.json
+        run: |
+          set -euo pipefail
+          branch="$(node -e "const r=require(process.env.REQUEST_FILE); process.stdout.write(r.branchName)")"
+          sha="$(node -e "const r=require(process.env.REQUEST_FILE); process.stdout.write(r.baseSha)")"
+          if gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+            -f ref="refs/heads/${branch}" \
+            -f sha="${sha}" >/dev/null; then
+            echo "created=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "created=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Append-only Outcome persistieren
+        id: outcome
+        env:
+          AUTH_RESPONSE_FILE: ${{ runner.temp }}/systemadmin-auth-response.json
+          OUTCOME_REQUEST_FILE: ${{ runner.temp }}/systemadmin-outcome-request.json
+          OUTCOME_RESPONSE_FILE: ${{ runner.temp }}/systemadmin-outcome-response.json
+          OIDC_TOKEN_FILE: ${{ runner.temp }}/github-oidc-token
+          REQUEST_FILE: ${{ runner.temp }}/systemadmin-request.json
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          BRANCH_CREATED: ${{ steps.branch.outputs.created }}
+          BROKER_URL: https://capital-ai.online/api/internal/systemadmin-execution/outcome
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const authorization = JSON.parse(fs.readFileSync(process.env.AUTH_RESPONSE_FILE, 'utf8'));
+          const request = JSON.parse(fs.readFileSync(process.env.REQUEST_FILE, 'utf8'));
+          fs.writeFileSync(process.env.OUTCOME_REQUEST_FILE, JSON.stringify({
+            issueNumber: Number(process.env.ISSUE_NUMBER),
+            authorization,
+            result: process.env.BRANCH_CREATED === 'true' ? 'SUCCESS' : 'ERROR',
+            branchName: request.branchName
+          }), { mode: 0o600 });
+          NODE
+          oidc="$(cat "$OIDC_TOKEN_FILE")"
+          if ! curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer ${oidc}" \
+            -H 'Content-Type: application/json' \
+            --data-binary "@${OUTCOME_REQUEST_FILE}" \
+            "$BROKER_URL" > "$OUTCOME_RESPONSE_FILE"; then
+            if [ "$BRANCH_CREATED" = 'true' ]; then
+              branch="$(node -e "const r=require(process.env.REQUEST_FILE); process.stdout.write(r.branchName)")"
+              gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/${branch}" >/dev/null || true
+            fi
+            echo 'Outcome-Evidence fehlgeschlagen; persistenter Probe-Branch wurde falls nötig rollback-bereinigt.' >&2
+            exit 1
+          fi
+          node -e "const r=require(process.env.OUTCOME_RESPONSE_FILE); if(!/^supabase:agent_audit_events:[A-Za-z0-9_-]+$/.test(r.auditReference||'')) process.exit(1)"
+          if [ "$BRANCH_CREATED" != 'true' ]; then
+            echo 'Branch-Erzeugung fehlgeschlagen; ERROR-Outcome wurde persistiert.' >&2
+            exit 1
+          fi
+
+      - name: Evidence im Issue referenzieren
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUEST_FILE: ${{ runner.temp }}/systemadmin-request.json
+          AUTH_RESPONSE_FILE: ${{ runner.temp }}/systemadmin-auth-response.json
+          OUTCOME_RESPONSE_FILE: ${{ runner.temp }}/systemadmin-outcome-response.json
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          node <<'NODE' > "$RUNNER_TEMP/sa3b-comment.md"
+          const r = require(process.env.REQUEST_FILE);
+          const a = require(process.env.AUTH_RESPONSE_FILE);
+          const o = require(process.env.OUTCOME_RESPONSE_FILE);
+          console.log('SA3B Host-Probe: **PASS**');
+          console.log('');
+          console.log(`- Branch: \`${r.branchName}\``);
+          console.log(`- Authorization Evidence: \`${a.auditReference}\``);
+          console.log(`- Outcome Evidence: \`${o.auditReference}\``);
+          console.log(`- Workflow Run: \`${process.env.GITHUB_RUN_ID}\``);
+          console.log('');
+          console.log('Der Probe-Branch muss nach Evidence-Prüfung gelöscht werden.');
+          NODE
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/sa3b-comment.md"

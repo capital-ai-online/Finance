@@ -25,10 +25,16 @@ const MUTATING = new Set<AgentCapability>([
 export const SYSTEMADMIN_SA3_SELF_AUTHORITY_PATHS = Object.freeze([
   '.ai/contracts/systemadmin-roadmap-execution-profile.json',
   '.ai/contracts/systemadmin-audit-execution-profile.json',
+  '.ai/mandates/REM-SA3B-PROBE-001.json',
+  '.github/workflows/systemadmin-roadmap-executor.yml',
+  'docs/adr/ADR-0067-systemadmin-github-actions-execution-host.md',
   'src/platform/Security/systemadminExecutionProfile.ts',
   'server/agentAudit/agentAuditWriter.ts',
   'server/agentAudit/authorizedAgentExecution.ts',
   'server/agentAudit/systemadminAuditedExecution.ts',
+  'server/systemadmin/githubActionsOidc.ts',
+  'server/systemadmin/systemadminExecutionBrokerRouter.ts',
+  'scripts/systemadmin/validateExecutionIssue.mjs',
 ] as const);
 
 export interface SystemadminAuditContext {

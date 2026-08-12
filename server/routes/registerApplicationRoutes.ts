@@ -18,6 +18,7 @@ import { adminDiagnosticsRouter } from '../adminDiagnostics';
 import { newsRouter } from '../../src/features/news/newsRoutes';
 import { registryRouter } from '../../src/features/registry/registryRoutes';
 import { aiRouter } from '../ai';
+import { systemadminExecutionBrokerRouter } from '../systemadmin/systemadminExecutionBrokerRouter';
 
 export interface ApplicationRouteProviders {
   ai: any | null;
@@ -60,6 +61,7 @@ export function registerApplicationRoutes(
   app.use('/api/alerts', alertsRouter);
   app.use('/api/admin/supervisor', supervisorRouter);
   app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic, openai));
+  app.use('/api/internal/systemadmin-execution', systemadminExecutionBrokerRouter);
   app.use('/api/news', newsRouter);
   app.use('/api/registry', registryRouter);
   app.use('/api/social-media', socialMediaRouter);
