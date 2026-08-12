@@ -3,7 +3,7 @@
 Status: PROPOSED
 Date: 2026-08-12
 Scope: CAPITAL-AI `SvenKulessa/Finance`
-Authority: `docs/architecture/ROADMAP.md`, `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`, ESS-0019, ESS-0021 v1.1, ADR-0039, ADR-0057..0069
+Authority: `docs/architecture/ROADMAP.md`, `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`, ESS-0019, ESS-0021 v1.1, ADR-0039, ADR-0057..0070
 
 ## Zweck
 
@@ -21,7 +21,7 @@ READ-ONLY BASELINE
 → FRESH SCOPED BRANCH FROM CURRENT MAIN
 → REPOSITORY IMPLEMENTATION
 → PR CHECKPOINT
-→ HUMAN FILE REVIEW / REQUIRED CI
+→ CURRENT HUMAN-OWNER GATE / REQUIRED CI
 → HUMAN MERGE
 → BRANCH DELETE
 → OPTIONAL NEXT REPOSITORY UNIT FROM NEW MAIN
@@ -51,6 +51,7 @@ Ein Schritt darf nicht übersprungen werden, wenn er für den konkreten Roadmap-
 10. **Parallelität nur ohne Schreibkonflikt.** Aktive PRs/Branches werden vor Schreibarbeit auf Changed-File-Overlap geprüft.
 11. **Transport ist keine Autorität.** ChatGPT/Claude/AI Studio/GitHub Actions/Connector/Issue/Chat erhalten Authority nur aus Control Plane + Human-approved Mandate.
 12. **Repository authority ≠ production authority.** Ein autonomer Repository-Block autorisiert keine externe Production Mutation.
+13. **PR-Gate nicht duplizieren.** ADR-0069 ist die aktuelle Human-Owner Comment Gate / dispatched-PR-CI-Architektur. ADR-0070 nutzt diese Grenze und erzeugt keinen parallelen Review-/CI-Control-Plane-Zustand.
 
 ## Rollen und Ausführungsgrenzen
 
@@ -90,7 +91,7 @@ Claude ist für Produktionsüberführung/Staging/Integration vorgesehen. Externe
 
 Der Systemadmin darf Repository-Mutationen nur innerhalb eines gültigen Human/Owner-approved REM und technisch enforcebaren Execution Hosts ausführen.
 
-Authority: ESS-0021 v1.1, ADR-0065, ADR-0069 und `SYSTEMADMIN_AGENT_ROADMAP_EXECUTION_POLICY.md`.
+Authority: ESS-0021 v1.1, ADR-0065, ADR-0070 und `SYSTEMADMIN_AGENT_ROADMAP_EXECUTION_POLICY.md`.
 
 Der Executor:
 
@@ -99,12 +100,15 @@ Der Executor:
 - erzeugt Audit Evidence vor und nach jedem Side Effect;
 - verwendet keine beliebigen Shell-/Tool-Kommandos aus untrusted Input;
 - stoppt an jedem PR-Checkpoint;
+- übergibt den PR an die aktuelle ADR-0069/Human-Owner-Gate-Architektur;
 - führt MERGE nicht aus;
 - führt externe Production Mutation nicht allein aufgrund eines Repository-REM aus.
 
 ## Autonomous Roadmap Blocks
 
 Nach SA4B `VERIFIED PASS` darf ein Owner-approved REM mehrere explizite Execution Units eines größeren Roadmap-Blocks autorisieren.
+
+Authority: ADR-0070.
 
 ### Architektur
 
@@ -113,7 +117,7 @@ Canonical Roadmap Block
 → Owner-approved REM
 → non-authorizing Roadmap Block Contract
 → EU-01 branch/commit/test/PR → STOP
-→ Human review/CI/merge → branch delete
+→ current Human-Owner Gate / CI / Human merge → branch delete
 → EU-02 from new current main → ...
 ```
 
@@ -142,7 +146,7 @@ Die restriktivste Regel gewinnt.
 
 Review-ready PR ist ein harter `STOP_PR_CHECKPOINT_REACHED`.
 
-Der Agent darf vor finalem Human Review scope-konforme CI/Governance-Fehler reparieren. Danach folgen Human Review, required CI und Human Merge. Erst nach Branch Delete darf die nächste Unit geprüft werden.
+Der Agent darf vor finalem Human Review scope-konforme CI/Governance-Fehler reparieren. Danach übernimmt die jeweils aktuelle kanonische Human-Owner-Gate-/CI-Architektur; Merge bleibt Human-only. Erst nach Branch Delete darf die nächste Unit geprüft werden.
 
 ### Resume gate
 
