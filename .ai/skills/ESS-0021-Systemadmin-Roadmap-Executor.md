@@ -249,7 +249,7 @@ Technical enablement requires at minimum negative tests proving:
 - ADR-0058 Provider-neutral Agent IAM
 - ADR-0059 Agent Audit / OTel Correlation
 - ADR-0065 Systemadmin Roadmap Execution Mandate
-- ADR-0069 Autonomous Roadmap Block Execution with PR Checkpoints
+- ADR-0070 Autonomous Roadmap Block Execution with PR Checkpoints
 - `docs/governance/SYSTEMADMIN_AGENT_ROADMAP_EXECUTION_POLICY.md`
 - `docs/contracts/DEVELOPMENT_CHAIN_ROADMAP_BLOCK_CONTRACT.md`
 - `docs/runbooks/SYSTEMADMIN_AUTONOMOUS_ROADMAP_BLOCK_EXECUTION.md`
