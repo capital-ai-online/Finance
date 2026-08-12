@@ -7,15 +7,15 @@ run-name: >-
 on:
   push:
     branches: [main]
-  pull_request_review:
-    types: [submitted]
+  pull_request:
+    types: [edited]
 
 permissions:
   contents: read
   pull-requests: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -63,6 +63,7 @@ jobs:
           else
             echo "approved=false" >> "$GITHUB_OUTPUT"
             echo "Owner-Gate nicht erfüllt. Build/Test wird nicht gestartet."
+            echo "Reihenfolge: aktuellen Head reviewen (💪/okay), danach beide Owner-Checkboxen setzen/speichern."
             exit 1
           fi
 
