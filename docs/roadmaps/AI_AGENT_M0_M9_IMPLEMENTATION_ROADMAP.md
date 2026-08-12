@@ -3,7 +3,7 @@
 > Legacy filename retained for stable references.
 
 Status: IMPLEMENTATION PHASE
-Baseline: `main@ee65ba19f64e7e8ee2d618e16364a658dfe60e4c` (PR #211 merge)
+Baseline: `main@a5abc1685026651f4297a487e855683a1fa1e58e` (PR #216 merge)
 
 ## Global execution rule
 Every phase that contains a platform mutation follows:
@@ -15,11 +15,21 @@ No later phase may start while a required mutation/test is missing, failed, inco
 Privileged autonomous/semi-autonomous agents require the Human/Owner-approved Roadmap/ESS/ADR package. Daily/recurring agents may be created without prior approval only with `READ`/`ANALYZE`, no write credentials and no branch/commit/PR/CI/deploy/mutation/merge capability.
 
 ## Human/Owner CI rule
+
+### Current transitional rule — until M10 VERIFIED PASS
 For PRs targeting `main`:
 
 `FILES CHANGED → VIEWED → CURRENT-HEAD REVIEW (💪/okay) → OWNER CHECKBOXES LAST → ONE build-and-test`
 
 The review itself does not start expensive CI. The final PR-body checkbox edit triggers the single normal `pull_request: edited` CI event. Any new commit invalidates the previous review.
+
+### M10 target rule — after controlled cutover
+
+`FILES CHANGED → VIEWED → PASSKEY/WEBAUTHN APPROVAL → ONE build-and-test`
+
+After M10 `VERIFIED PASS`, only a valid CAPITAL-AI WebAuthn Owner assertion may authorize expensive CI. The assertion must be bound to the exact repository, PR, base SHA, head SHA, canonical changed-file-set hash, diff/review digest and action `AUTHORIZE_PR_CI`. Emoji/text reviews and PR-body Owner checkboxes then become non-authoritative legacy evidence and are removed from the CI authorization path.
+
+Human merge remains separate and non-agentic.
 
 ## M0 — Evidence Baseline
 **COMPLETE.** Read-only evidence collection.
@@ -31,7 +41,7 @@ The review itself does not start expensive CI. The final PR-body checkbox edit t
 **COMPLETE.** ESS-0019, ADR-0057..0063, trust/threat models, traceability and Documentation Freeze.
 
 ## M3 — CI Hardening
-**COMPLETE.** One required `build-and-test`, scope-aware fast/full validation, Owner-before-CI gate and robust final-checkbox trigger.
+**COMPLETE.** One required `build-and-test`, scope-aware fast/full validation, Owner-before-CI gate and robust final-checkbox trigger. This remains the transitional authorization mechanism until M10 performs a controlled replacement.
 
 ## M4 — Agent IAM
 **COMPLETE.** Provider-neutral principal attribution, explicit non-inheriting capabilities, canonical risk ladder, approval/step-up rules, kill switch and no agent `MERGE` capability.
@@ -177,10 +187,82 @@ Route privileged ChatGPT/Claude/future execution clients through the provider-ne
 
 Injection, replay, exfiltration, negative authorization, kill-switch, break-glass and rollback/recovery drills with independent evidence review.
 
-## M10 — PR WebAuthn / Passkey Step-up
-**BLOCKED BY M9.**
+## M10 — Passkey-only Human/Owner PR Authorization
+**BLOCKED BY M9 — TARGET ARCHITECTURE DEFINED.**
 
-Requires Deep Research + repository read + dedicated ESS/ADR/runbook/threat model/negative tests. Assertion must bind Owner `SvenKulessa`, Finance repo, PR, exact head SHA and privileged action. Device ID alone is not authentication.
+Authority: `docs/adr/ADR-0066-passkey-only-owner-pr-authorization.md` plus the dedicated M10 ESS/runbook/threat model that must be produced before implementation.
+
+### Target sequence
+
+`PR OPEN/UPDATE → OWNER FILE REVIEW → ALL FILES VIEWED → PASSKEY CHALLENGE → VERIFIED OWNER ASSERTION → ONE build-and-test → HUMAN MERGE`
+
+### Required transaction binding
+
+Each approval transaction binds at least:
+
+- Owner `SvenKulessa`;
+- repository `SvenKulessa/Finance`;
+- PR number;
+- base SHA;
+- exact current head SHA;
+- canonical sorted changed-file-set hash;
+- canonical diff/review digest;
+- action `AUTHORIZE_PR_CI`;
+- challenge id / issuance / expiry / replay state.
+
+### WebAuthn requirements
+
+- server-generated cryptographically random challenge;
+- short-lived and single-use;
+- `userVerification=required`;
+- expected HTTPS origin and RP ID verified;
+- credential ownership and signature verified;
+- `UP` and `UV` asserted;
+- revoked credential denied;
+- audit persistence required before CI request;
+- duplicate approval/CI consumption denied or deduplicated;
+- no private key, biometric or reusable credential data stored.
+
+### Legacy authorization removal
+
+Only after M10 positive, negative, replay, recovery and shadow-mode tests reach `VERIFIED PASS`:
+
+- remove `💪`/`okay` from CI authorization logic;
+- remove PR-body Owner checkboxes from CI authorization logic;
+- retain Human file review / Viewed process;
+- make the passkey assertion the sole normal Owner authorization before expensive CI.
+
+A GitHub passkey sign-in is not, by itself, proof that the exact PR state was approved. CAPITAL-AI therefore requires its own PR-bound WebAuthn approval transaction.
+
+### Mandatory negative tests
+
+- wrong Owner credential → DENY;
+- wrong RP ID/origin → DENY;
+- `UV=false` or missing `UP` → DENY;
+- expired/stale challenge → DENY;
+- challenge/assertion replay → DENY;
+- wrong repository/PR/base/head → DENY;
+- changed file-set/diff after challenge issue → DENY;
+- revoked credential → DENY;
+- forged emoji/comment/review/reaction/checkbox → no authorization;
+- unavailable verifier or durable audit → DENY;
+- duplicate CI request for consumed approval → DENY/DEDUPE;
+- agent self-approval attempt → DENY.
+
+### Rollout
+
+1. architecture + ESS/runbook/threat model;
+2. implementation + unit/integration/security tests;
+3. Owner passkey enrollment and recovery validation;
+4. shadow verification while the legacy gate remains authoritative;
+5. compare legacy/passkey decisions and remediate false allow/deny paths;
+6. controlled passkey-only cutover;
+7. remove legacy emoji/checkbox parser and update templates/policies;
+8. final `VERIFIED PASS` evidence and DevelopmentChain sync.
+
+### M10 exit gate
+
+M10 is complete only when File Review + Passkey approval is the enforced normal PR authorization path, the old emoji/checkbox authorization no longer gates CI, exactly one expensive CI run is proven per approved head, recovery is auditable/fail-closed, and Human-only merge authority remains intact.
 
 ## Mandatory per-step update
 Every completed step updates:
