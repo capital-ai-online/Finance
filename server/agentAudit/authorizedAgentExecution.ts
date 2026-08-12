@@ -31,8 +31,46 @@ export interface AuditedAgentAuthorization {
   auditReference: string;
 }
 
+export interface AgentExecutionOutcomeInput {
+  authorization: Readonly<AuditedAgentAuthorization>;
+  request: Readonly<AgentAuthorizationRequest>;
+  context: Readonly<AgentExecutionAuditContext>;
+  result: Extract<AgentAuditResult, 'SUCCESS' | 'ERROR'>;
+  metadata?: Record<string, unknown>;
+}
+
 function resultFromDecision(decision: AgentAuthorizationDecision): AgentAuditResult {
   return decision.verdict === 'ALLOW' ? 'PENDING' : 'DENIED';
+}
+
+function buildBaseEvent(
+  request: Readonly<AgentAuthorizationRequest>,
+  context: Readonly<AgentExecutionAuditContext>,
+  decision: Readonly<AgentAuthorizationDecision>,
+): Omit<AgentAuditEventInput, 'result' | 'metadata'> {
+  return {
+    requestId: request.principal.requestId,
+    traceId: context.traceId,
+    spanId: context.spanId,
+    humanActorId: request.principal.humanActorId,
+    appId: request.principal.appId,
+    agentId: request.principal.agentId,
+    provider: request.principal.provider,
+    model: request.principal.model,
+    capability: decision.capability ?? request.capability,
+    riskClass: decision.riskClass,
+    policyId: context.policyId,
+    decision: decision.verdict,
+    approvalId: request.approval?.approvalId,
+    toolId: context.toolId,
+    repository: context.repository,
+    prNumber: context.prNumber,
+    workflowRunId: context.workflowRunId,
+    artifactDigest: context.artifactDigest,
+    deploymentId: context.deploymentId,
+    runtimeVersion: context.runtimeVersion,
+    rollbackReference: context.rollbackReference,
+  };
 }
 
 /**
@@ -47,41 +85,51 @@ export async function evaluateAndAuditAgentPolicy(
   context: Readonly<AgentExecutionAuditContext>,
 ): Promise<AuditedAgentAuthorization> {
   const decision = evaluateAgentPolicy(request);
-  const capability = decision.capability ?? request.capability;
 
-  const event: AgentAuditEventInput = {
-    requestId: request.principal.requestId,
-    traceId: context.traceId,
-    spanId: context.spanId,
-    humanActorId: request.principal.humanActorId,
-    appId: request.principal.appId,
-    agentId: request.principal.agentId,
-    provider: request.principal.provider,
-    model: request.principal.model,
-    capability,
-    riskClass: decision.riskClass,
-    policyId: context.policyId,
-    decision: decision.verdict,
-    approvalId: request.approval?.approvalId,
-    toolId: context.toolId,
-    repository: context.repository,
-    prNumber: context.prNumber,
-    workflowRunId: context.workflowRunId,
-    artifactDigest: context.artifactDigest,
-    deploymentId: context.deploymentId,
-    runtimeVersion: context.runtimeVersion,
+  const auditReference = await writeAgentAuditEvent({
+    ...buildBaseEvent(request, context, decision),
     result: resultFromDecision(decision),
-    rollbackReference: context.rollbackReference,
     metadata: {
       ...context.metadata,
+      eventType: 'authorization',
       authorizationReason: decision.reason,
       environment: request.environment,
       targetResource: request.targetResource,
       sessionId: request.principal.sessionId,
       credentialHolderId: request.principal.credentialHolderId,
     },
-  };
+  });
 
-  const auditReference = await writeAgentAuditEvent(event);
   return { decision, auditReference };
+}
+
+/**
+ * Records the terminal SUCCESS/ERROR state as a second append-only event.
+ *
+ * The durable store must never be UPDATEd to complete an execution. The outcome instead keeps the
+ * same request/trace/principal/policy correlation and points back to the authorization event. This
+ * preserves append-only evidence while making authorization -> execution result reconstructable.
+ */
+export async function recordAgentExecutionOutcome(
+  input: Readonly<AgentExecutionOutcomeInput>,
+): Promise<string> {
+  if (input.authorization.decision.verdict !== 'ALLOW') {
+    throw new Error('[AgentAudit][SECURITY] execution outcome cannot be recorded for a denied authorization.');
+  }
+  if (!input.authorization.auditReference?.trim()) {
+    throw new Error('[AgentAudit][SECURITY] authorization auditReference is required for execution outcome.');
+  }
+
+  return writeAgentAuditEvent({
+    ...buildBaseEvent(input.request, input.context, input.authorization.decision),
+    result: input.result,
+    metadata: {
+      ...input.context.metadata,
+      ...input.metadata,
+      eventType: 'execution_outcome',
+      authorizationAuditReference: input.authorization.auditReference,
+      environment: input.request.environment,
+      targetResource: input.request.targetResource,
+    },
+  });
 }
