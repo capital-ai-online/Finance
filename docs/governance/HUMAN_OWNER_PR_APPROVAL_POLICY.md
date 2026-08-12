@@ -36,15 +36,24 @@ The task-list parser is intentionally **semantically strict but Markdown-toleran
 
 The review parser is likewise fail-closed: prose that merely contains `💪` or `okay` is not approval evidence. The complete trimmed review value must match one of the two approved signals.
 
-A new commit invalidates the previous review evidence for gating purposes. The Owner must inspect the delta, submit a new current-head review and only then save the two Owner attestations as the final CI trigger.
+**Event-Snapshot-Regel:** Die Attestations werden aus dem PR-Body-Snapshot des konkret auslösenden `pull_request: edited`-Events bewertet. Der Workflow darf hierfür nicht den späteren Live-PR-Body erneut laden. Dadurch kann ein früher Checkbox-Event nicht nachträglich durch einen zweiten Checkbox-Klick freigegeben werden und keinen zweiten teuren Build auslösen.
 
-## CI sequencing — single trigger
+A new commit invalidates the previous review evidence for gating purposes. The Owner must inspect the delta, submit a new current-head review and only then save the two Owner attestations as the final CI trigger. Nach einem neuen Head müssen bereits gesetzte Attestations zurückgesetzt und für den neuen Head erneut gesetzt werden.
+
+## CI sequencing — single expensive trigger
 
 The required sequence is intentionally:
 
-`PR OPEN/UPDATE → FILES CHANGED REVIEW → ALL FILES VIEWED → CURRENT-HEAD REVIEW (💪/okay) → OWNER CHECKBOXES LAST → ONE build-and-test → MERGE ELIGIBLE`
+`PR OPEN/UPDATE → FILES CHANGED REVIEW → ALL FILES VIEWED → CURRENT-HEAD REVIEW (💪/okay) → PR-DIFF CHECKBOX → FILES-CHANGED CHECKBOX LAST → ONE build-and-test → MERGE ELIGIBLE`
 
-The **final PR-body edit that saves the two Owner attestations after the current-head review** is the single normal `pull_request: edited` trigger for the expensive CI workflow. Opening the PR, pushing a commit or submitting the review alone MUST NOT independently start a full build/test run.
+GitHub kann beim Anklicken gerenderter Markdown-Checkboxen **pro Checkbox einen eigenen `edited`-Event** erzeugen. Deshalb gilt:
+
+- die PR-Diff-Attestation wird nach dem Current-Head-Review zuerst gesetzt;
+- die `Files changed`-/`Viewed`-Attestation wird **zuletzt** gesetzt und ist der finale normale CI-Trigger;
+- ein vorheriger Event, bei dem noch nicht beide Attestations gesetzt waren, darf wegen der Event-Snapshot-Regel kein `build-and-test` autorisieren;
+- `concurrency` mit `cancel-in-progress: true` begrenzt gleichzeitige Läufe desselben PRs zusätzlich; die inhaltliche Autorisierung bleibt trotzdem an den konkreten Event-Snapshot gebunden.
+
+Opening the PR, pushing a commit or submitting the review alone MUST NOT independently start a full build/test run.
 
 Before the final Owner-checkbox edit:
 
@@ -59,10 +68,11 @@ After the final Owner-checkbox edit:
 - exactly one scope-appropriate `build-and-test` job is expected for the current PR head;
 - documentation-only changes use the fast path inside that same job;
 - code changes run npm/audit/TypeScript/unit/build checks inside that same job;
+- protected post-build tests that require generated `dist/` artifacts run **after** the production build;
 - Docker/runtime checks run only when the changed-file scope requires them;
 - governance/security workflows may run independently because they are lightweight policy checks.
 
-If a new commit changes the PR head, the previous review is no longer valid for that head. Revalidation requires a new current-head review followed by a new final PR-body save. Normal operation remains one final body-triggered `build-and-test` run per reviewed PR head.
+If a new commit changes the PR head, the previous review is no longer valid for that head. Revalidation requires reset attestations, a new current-head review and then the ordered final checkbox sequence above. Normal operation remains one expensive `build-and-test` run per reviewed PR head.
 
 Successful technical validation is still not merge authorization. Merge requires the existing Human/Owner policy and, when an AI client is used for the merge operation, a separate explicit human instruction for that specific PR.
 
@@ -90,11 +100,11 @@ The pull request is the evidence bundle:
 
 1. visible `Files changed` diff;
 2. Owner attestation that all changed files were marked `Viewed`;
-3. two checked Human/Owner PR-body boxes;
+3. two checked Human/Owner PR-body boxes in the final triggering event snapshot;
 4. current PR head SHA;
 5. Owner review attached to that exact SHA with exact trimmed value `💪` or `okay`;
-6. final PR-body edit after that review;
-7. exactly one normal `build-and-test` run for that reviewed head;
+6. final `Files changed`-/`Viewed` checkbox edit after that review;
+7. exactly one normal expensive `build-and-test` run for that reviewed head;
 8. resulting merge commit.
 
 This policy is part of the CAPITAL-AI DevelopmentChain and must remain synchronized with `docs/architecture/ROADMAP.md`, Agent IAM policy and merge governance.
