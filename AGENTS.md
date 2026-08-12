@@ -134,3 +134,52 @@ New/modified workflows must use explicit least-privilege permissions, immutable 
 CI success is necessary but not sufficient. AI agents do not self-approve architecture/security changes. Human/CODEOWNER approval remains required where repository rules or the change risk require it.
 
 Normative details: `docs/architecture/PR_MULTI_AGENT_GOVERNANCE.md` and `docs/adr/ADR-0039-human-authorized-pr-creation-and-advisory-governance.md`.
+
+---
+
+## 🛠️ Systemadmin Roadmap Executor Exception — ESS-0021 / ADR-0065
+
+The per-Pull-Request authorization rule above remains the default for normal interactive agents.
+
+A single exception exists for the logical agent profile `capital-ai-systemadmin-roadmap-executor` when an active Human/Owner-approved **Roadmap Execution Mandate (REM)** exists on the authoritative Roadmap/Governance state.
+
+### Standing PR-creation authority
+
+While the REM is valid and the requested work is completely inside its declared Roadmap, path, target, capability, risk and time boundaries, the Systemadmin Agent MAY autonomously:
+
+- READ / ANALYZE / PLAN;
+- create a fresh branch from current `main`;
+- implement scoped repository changes;
+- create tests/evidence;
+- COMMIT;
+- create/update a Pull Request;
+- request/inspect CI and repair scoped technical failures before final Human review.
+
+The agent MUST NOT ask again for per-PR creation authorization when the PR is fully covered by the active REM. The PR body must name the `mandateId` and Roadmap work package.
+
+If no valid REM exists, or if scope/target/risk materially expands, the normal ADR-0039 per-PR authorization rule applies immediately.
+
+### Non-delegable boundary
+
+`MERGE` is never delegated. Human/Owner current-head review, Viewed attestations, scope-appropriate CI and a separate explicit Human merge instruction remain mandatory.
+
+Owner/admin IAM elevation, Owner MFA/break-glass, secret disclosure, destructive production data operations, live billing-money/entitlement mutations, production-resource deletion, DNS/TLS/domain ownership changes, security-control weakening and expansion of the agent's own REM remain Human/Owner-only unless a future dedicated ADR explicitly replaces one boundary with equivalent or stronger assurance.
+
+External production mutation authority is not implied by the Systemadmin role. It requires separate REM-bound technical Control-Plane enforcement and verification before use.
+
+### Mandatory preflight and audit
+
+Before every Systemadmin work package, perform current-main/Roadmap resolution, open-PR overlap inspection, relevant repository/production read-only evidence, security/risk/check-class classification, required negative tests, rollback definition and CI-cost scope. Security-critical ambiguity fails closed.
+
+Every mutating action must be attributable to `mandateId + roadmap item + human actor + agent/client/session/request + capability + target + decision + result` and use the M5 audit/evidence controls where available.
+
+### Branch lifecycle
+
+Every Roadmap work package uses a fresh branch. After successful Human merge into the Finance repository, the branch MUST be deleted. Closed/superseded work branches are also deleted after necessary Evidence retention. A merged branch is never reused for a new Roadmap item.
+
+Normative details:
+
+- `.ai/skills/ESS-0021-Systemadmin-Roadmap-Executor.md`
+- `docs/adr/ADR-0065-systemadmin-roadmap-execution-mandate.md`
+- `docs/governance/SYSTEMADMIN_AGENT_ROADMAP_EXECUTION_POLICY.md`
+- `docs/governance/ROADMAP_EXECUTION_MANDATE.schema.json`
