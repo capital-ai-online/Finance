@@ -15,13 +15,44 @@ describe('Human Owner Comment Gate', () => {
     expect(gate).not.toContain('pull_request:\n');
   });
 
-  it('keeps write permissions narrowly scoped to comment sync and dispatch', () => {
+  it('partitions write permissions between comment seeding and CI dispatch', () => {
     const gate = read('.github/workflows/human-owner-comment-gate.yml');
-    expect(gate).toContain('actions: write');
-    expect(gate).toContain('issues: write');
-    expect(gate).toContain('pull-requests: read');
-    expect(gate).toContain('contents: read');
-    expect(gate).not.toContain('contents: write');
+    expect(gate).toContain('permissions: {}');
+
+    const seedStart = gate.indexOf('  seed-or-reset:');
+    const verifyStart = gate.indexOf('  human-verification:');
+    expect(seedStart).toBeGreaterThan(-1);
+    expect(verifyStart).toBeGreaterThan(seedStart);
+
+    const seed = gate.slice(seedStart, verifyStart);
+    const verify = gate.slice(verifyStart);
+
+    expect(seed).toContain('pull-requests: write');
+    expect(seed).toContain('issues: read');
+    expect(seed).toContain('contents: read');
+    expect(seed).not.toContain('actions: write');
+    expect(seed).not.toContain('contents: write');
+
+    expect(verify).toContain('actions: write');
+    expect(verify).toContain('pull-requests: read');
+    expect(verify).toContain('issues: read');
+    expect(verify).toContain('contents: read');
+    expect(verify).not.toContain('pull-requests: write');
+    expect(verify).not.toContain('issues: write');
+    expect(verify).not.toContain('contents: write');
+  });
+
+  it('limits PR-write usage to timeline comment synchronization', () => {
+    const gate = read('.github/workflows/human-owner-comment-gate.yml');
+    const seedStart = gate.indexOf('  seed-or-reset:');
+    const verifyStart = gate.indexOf('  human-verification:');
+    const seed = gate.slice(seedStart, verifyStart);
+
+    expect(seed).toContain('issues/${PR_NUMBER}/comments');
+    expect(seed).toContain('issues/comments/${comment_id}');
+    expect(seed).not.toContain('/merge');
+    expect(seed).not.toContain('/reviews');
+    expect(seed).not.toContain('--method PUT');
   });
 
   it('binds the human gate to owner, current head, exact review and both attestations', () => {
