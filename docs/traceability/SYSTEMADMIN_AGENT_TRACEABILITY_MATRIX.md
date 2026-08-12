@@ -2,232 +2,159 @@
 
 Status: IMPLEMENTATION PHASE
 Date: 2026-08-12
-Baseline: `main@156142102e7d2a97ad466aee0340f758fa4365e5` (PR #220 merge)
+Production baseline: `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e`
 
 | Stage | Authority | Implementation / Evidence | Mutation boundary | Exit gate |
 |---|---|---|---|---|
-| SA0 Governance | ESS-0021 + ADR-0065 | REM/governance package; PR #214 | repository governance | **COMPLETE** |
-| SA1 Mandate Validator | ESS-0021 + ADR-0065 + ADR-0058 | REM validator + PolicyGate; PR #215 | repository only; production denied | **COMPLETE / VERIFIED PASS** |
-| SA2 Chat Profile | ESS-0021 + SA1 | execution profile/action envelope; PR #216 | direct mutating LIVE denied | **COMPLETE / VERIFIED PASS** |
-| SA3A Audit Adapter | ADR-0059 + ADR-0065 | append-only audited execution adapter; PR #218 | no permit before M5 audit | **COMPLETE / VERIFIED PASS; writer contract remediation active** |
-| SA3B Execution Host | ADR-0067 + SA3A | PR #220 merged; GitHub Actions OIDC host deployed; Issue #221 / run `31570833507` | BRANCH only; no audit = no branch | **FAIL-CLOSED LIVE PASS / POSITIVE PATH BLOCKED** |
-| SA4 Pilot REM | Systemadmin policy + complete SA3 | first bounded product work package | BRANCH/COMMIT/PR only after host proof | **BLOCKED BY SA3B VERIFIED PASS** |
-| SA5 External mutation | future ADR + M10 | bounded reversible production design | reserved Owner actions excluded | **BLOCKED BY SA4 + M10 VERIFIED PASS** |
+| SA0 Governance | ESS-0021 + ADR-0065 | PR #214 | repository governance | COMPLETE |
+| SA1 Mandate Validator | ESS-0021 + ADR-0065 + ADR-0058 | PR #215; expanded trust root in SA4 bootstrap | repository only; production denied | COMPLETE / VERIFIED PASS |
+| SA2 Chat Profile | ESS-0021 + SA1 | PR #216 | mutating LIVE envelope alone denied | COMPLETE / VERIFIED PASS |
+| SA3A Audit Adapter | ADR-0059 + ADR-0065 | PR #218; M5 writer corrected by #222 | no permit before durable M5 audit | COMPLETE / VERIFIED PASS |
+| SA3B Execution Host | ADR-0067 | PR #220 + #222; Issues #221/#223/#224 | BRANCH host proof only | **TECHNICAL VERIFIED PASS / CLEANUP PENDING** |
+| SA4 Bounded Pilot | ADR-0068 + REM-SA4-PILOT-001 | bootstrap branch / dedicated host, parser, runner, tests | exact doc path; BRANCH/COMMIT/Draft PR only | **BOOTSTRAP IN PROGRESS** |
+| SA5 External Mutation | future ADR + M10 | not implemented | production mutation prohibited | BLOCKED BY SA4 + M10 |
 
-## Verified predecessors
+## Canonical evidence chain
 
-### SA2
+Every Systemadmin repository side effect must be reconstructable as:
 
-PR #216 final head `14b9ec25dd60a34ae78a852f0a5b689b4811832b`:
+`Owner-approved REM → Owner issue → trusted main workflow → GitHub workload identity → exact capability/path/head → durable authorization auditReference → exact side effect → durable terminal outcomeReference`
 
-- CI #919 PASS;
-- Google-Marketing #164 PASS;
-- Governance #643 PASS;
-- merge `a5abc1685026651f4297a487e855683a1fa1e58e`;
-- branch deleted.
+Direct ChatGPT→GitHub connector writes remain outside the autonomous Systemadmin mutation path.
 
-### M10 architecture
+## SA3B production proof
 
-PR #217 merged passkey-only Human/Owner PR authorization architecture at `083d8f25083034e3785d1a8e0c57eaf03463c907`. Runtime cutover remains blocked until M9.
+### Fail-closed audit outage
 
-### SA3A
+Issue #221 / run `31570833507`:
 
-PR #218 final head `4178f76c1c33b50b957cd073d83ed9eeb0493642`:
+`AUDIT PERSISTENCE FAILURE → NO PERMIT → NO BRANCH`
 
-- CI #926 PASS;
-- Governance #647 PASS;
-- merge `8de5a538ae9d2f0afc7b2e505ddda427ceb77780`;
-- branch deleted.
+### Positive permit-before-side-effect
 
-### SA3B implementation
+Issue #223 / run `31574111075` on exact `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e`:
 
-PR #220:
-
-- final reviewed head `c4c7d00b33e521dfd12b14ddfdc097288a80f385`;
-- CI #936 PASS;
-- Governance #653 PASS;
-- merge `156142102e7d2a97ad466aee0340f758fa4365e5`;
-- implementation branch deleted;
-- Render deploy `dep-d9u19jjm8hqs73e95la0` reached `live` on the same merge SHA.
-
-## End-to-end authorization trace
-
-Every future Systemadmin repository side effect must be reconstructable as:
-
-`Owner-approved REM → Owner execution request → trusted host → workload identity → mandate/roadmap → actor/app/agent/session/request → capability/risk/target → policy decision → durable authorization auditReference → exact side effect → durable terminal outcomeReference`
-
-## SA3B host architecture
-
-ADR-0067 selects:
-
-`GitHub Issue ingress → GitHub Actions main workflow → GitHub OIDC → CAPITAL-AI Broker → SA3A → GitHub side effect`
-
-Repository TypeScript still cannot intercept ordinary direct ChatGPT GitHub connector writes. Therefore direct connector writes remain **outside** the autonomous Systemadmin execution path.
-
-### OIDC identity binding
-
-| Claim / property | Required value | Failure |
-|---|---|---|
-| issuer | `https://token.actions.githubusercontent.com` | DENY |
-| audience | `capital-ai-systemadmin-execution` | DENY |
-| repository | `SvenKulessa/Finance` | DENY |
-| repository_id | `1284319285` | DENY |
-| actor | `SvenKulessa` | DENY |
-| actor_id when present | `84307769` | DENY |
-| repository_owner_id | `84307769` | DENY |
-| event_name | `issues` | DENY |
-| ref | `refs/heads/main` | DENY |
-| workflow_ref | `SvenKulessa/Finance/.github/workflows/systemadmin-roadmap-executor.yml@refs/heads/main` | DENY |
-| JWT algorithm/signature | RS256 / GitHub JWKS | DENY |
-| `exp` / `iat` / `nbf` | valid current window | DENY |
-
-Implementation: `server/systemadmin/githubActionsOidc.ts`.
-
-## SA3B ingress contract
-
-`validateExecutionIssue.mjs` accepts only JSON with:
-
-- `version = 1.0`;
-- `mode = BRANCH_PROBE`;
-- `mandateId = REM-SA3B-PROBE-001`;
-- `roadmapItem = SA3B-HOST-PROBE`;
-- exact lowercase 40-char `baseSha`;
-- branch matching `agent/sa3b-host-probe-*`.
-
-Unknown fields, arbitrary commands, alternate modes, malformed JSON, unsafe branch names and oversized bodies are DENY.
-
-## Real post-merge host trace — Issue #221
-
-Workflow run `31570833507` executed on trusted `main@156142102e7d2a97ad466aee0340f758fa4365e5`.
-
-| Step | Runtime result | Security interpretation |
-|---|---|---|
-| Owner/title ingress | PASS | authorized host job started |
-| strict JSON parser | PASS | untrusted body constrained |
-| exact main SHA | PASS | stale-base protection active |
-| trusted REM binding | PASS | Issue cannot inject authority |
-| GitHub OIDC | PASS | workload identity available |
-| broker request | reached | production host reachable |
-| durable M5 audit insert | **FAIL — `Unregistered API key`** | broker returned 503 |
-| BRANCH side effect | **SKIPPED** | no permit → no mutation |
-| requested branch existence | **ABSENT** | fail-closed invariant proven |
-
-Negative security evidence:
-
-`M5 PERSISTENCE FAILURE → NO auditBoundExecutionPermit → NO BRANCH`
-
-This is an actual production fail-closed PASS.
-
-## Production blocker correlation
-
-Render broker telemetry for run `31570833507` records:
-
-`[AgentAudit][SECURITY] durable audit persistence failed: Unregistered API key`
-
-Supabase project `AIFINANCIAL` (`ryzywoktpmyhwzxmstyu`) is `ACTIVE_HEALTHY`; the service-side privileged credential is therefore a separate Owner-controlled production-secret blocker.
-
-No credential value belongs in repository evidence.
-
-## M5 writer/schema contract drift
-
-The live probe triggered a read-only comparison of:
-
-- canonical migration `supabase/migrations/20260811230540_m5_agent_audit_events.sql`;
-- actual production `public.agent_audit_events`;
-- `server/agentAudit/agentAuditWriter.ts`.
-
-Canonical DB vocabulary:
-
-`human_actor_id, intent, scope, authorization_decision, approval_reference, step_up_reference, tool_name, repository, branch, commit_sha, pull_request_number, ci_run_id, attributes`
-
-Pre-remediation writer aliases:
-
-`actor_id, decision, approval_id, tool_id, pr_number, workflow_run_id, metadata`
-
-The table/migration are authoritative. No schema rollback/replacement is authorized.
-
-Corrective branch:
-
-`fix/sa3b-m5-audit-schema-contract`
-
-Required corrective controls:
-
-| Requirement | Remediation |
+| Correlation | Value |
 |---|---|
-| exact DB vocabulary | canonical row mapping in `agentAuditWriter.ts` |
-| required intent | explicit caller-provided `intent` |
-| required scope | structured caller-provided `scope` |
-| external actor is not UUID | DB `human_actor_id = NULL`; sanitized external ID in `attributes` |
-| external approval/step-up ref not UUID | UUID column `NULL`; sanitized external ref retained |
-| generic audit caller | canonical intent/scope mapping |
-| Systemadmin caller | roadmap/REM/target/path scope mapping |
-| future schema drift | migration↔writer contract test |
-| legacy aliases | negative runtime row assertions |
+| capability | `BRANCH` |
+| branch | `agent/sa3b-host-probe-20260812b` |
+| authorization | `supabase:agent_audit_events:194f1198-492c-4d4f-b1e4-0c13a5d99d20` |
+| outcome | `supabase:agent_audit_events:5ab9eefe-f472-4396-a7e7-2a3ceb029e34` |
+| outcome result | `SUCCESS` |
+| branch SHA | `91963f59b74c8c3c3c0b33c6a23237a01ac0128e` |
 
-## Permit-before-side-effect traceability
+Read-only Supabase verification confirmed both real append-only rows and the outcome→authorization reference.
 
-| Requirement | Enforcement | Expected |
-|---|---|---|
-| issue not created by Owner | workflow job `if` | no host job |
-| wrong title | workflow job `if` | no host job |
-| malformed/expanded request | strict parser | DENY before side effect |
-| stale base SHA | trusted checkout comparison | DENY |
-| wrong probe REM | trusted mandate binding | DENY |
-| invalid OIDC | broker verifier | 401 / no permit |
-| actor/request/run mismatch | broker binding | 403 / no permit |
-| SA1/SA2/SA3 policy DENY | audited authorization | DENY, no permit |
-| M5 authorization persistence unavailable | SA3A writer | STOP, no permit — **runtime proven #221** |
-| valid authorization | durable M5 reference | audit-bound BRANCH permit — positive proof pending |
-| branch attempted before permit | workflow-order contract | impossible in trusted workflow |
-| GitHub branch API fails | workflow + outcome | ERROR outcome, job fail |
-| terminal outcome persistence fails after branch | workflow rollback | branch deleted + job fail |
-| successful branch | outcome endpoint | SUCCESS append-only evidence |
-| MERGE/COMMIT/PR/CI/deploy/prod in probe | workflow/parser/REM surface | unavailable |
+### Stale-base negative path
 
-## Initial probe mandate
+Issue #224 / run `31574221718`:
 
-`.ai/mandates/REM-SA3B-PROBE-001.json` remains limited to:
+`STALE BASE → DENY BEFORE OIDC/BROKER → NO BRANCH`
 
-- capability `BRANCH` only;
-- risk `MEDIUM`;
-- target Finance;
-- exact roadmap item `SA3B-HOST-PROBE`;
-- expiry 2026-08-19;
-- all reserved Human mutation classes prohibited;
-- no content commit, PR, CI request, deployment or merge.
+Requested negative branch was independently absent.
 
-## Tests / evidence mapping
+### Remaining SA3B lifecycle item
 
-| Security property | Test / evidence |
+`agent/sa3b-host-probe-20260812b` still requires deletion after evidence capture. SA4 checks this ref before OIDC and refuses execution while it exists.
+
+## SA4 authority trace
+
+### Mandate
+
+`.ai/mandates/REM-SA4-PILOT-001.json`
+
+| Field | Required |
 |---|---|
-| exact OIDC claims/signature | `tests/unit/githubActionsOidc.test.ts` |
-| invalid signature/audience/actor/repo/workflow/ref/time | OIDC negative matrix |
-| exact Issue schema | `tests/unit/systemadminExecutionIssue.test.ts` |
-| authorize before branch and outcome after branch | `tests/unit/systemadminExecutionHostWorkflow.test.ts` |
-| live no-audit/no-branch behavior | Issue #221 / run `31570833507` |
-| exact M5 row vocabulary | `tests/unit/agentAudit.test.ts` |
-| migration↔writer drift | `tests/unit/agentAuditSchemaContract.test.ts` |
-| durable positive audit correlation | fresh post-remediation host probe pending |
+| Owner | `SvenKulessa` |
+| agent | `capital-ai-systemadmin-roadmap-executor` |
+| repository/base | `SvenKulessa/Finance` / `main` |
+| roadmap item | `SA4-FIRST-AUTONOMOUS-WORK-PACKAGE` |
+| capabilities | `BRANCH`, `COMMIT`, `PR` |
+| exact path | `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md` |
+| mutation class | `REPOSITORY` |
+| max risk | `MEDIUM` |
+| max open SA4 PRs | `1` |
+| expiry | <= 7 days |
+| kill switch | Owner-controlled / required |
 
-## SA3B completion gate
+All reserved mutation classes, including `MERGE`, remain prohibited.
 
-SA3B stays `IN PROGRESS` until:
+## SA4 ingress trace
 
-1. writer-schema remediation final CI PASS + Human merge;
-2. remediation branch deletion;
-3. corrected `main` deployed;
-4. valid Owner-controlled privileged Supabase credential restored/verified;
-5. fresh positive BRANCH_PROBE receives authorization auditReference before side effect;
-6. branch equals current `main` SHA;
-7. SUCCESS outcome reference exists;
-8. probe branch deleted;
-9. separate invalid/stale/no-permit probe again creates no branch;
-10. evidence/Roadmap synchronized.
+`validateSa4PilotIssue.mjs` accepts only:
+
+- `version=1.0`;
+- `mode=BOUNDED_DOC_PR`;
+- `mandateId=REM-SA4-PILOT-001`;
+- `roadmapItem=SA4-FIRST-AUTONOMOUS-WORK-PACKAGE`;
+- full lowercase base SHA;
+- `agent/sa4-pilot-*` branch.
+
+Unknown fields, file payloads, arbitrary commands, alternate paths/modes and unsafe branches are denied.
+
+## SA4 host identity trace
+
+The OIDC verifier accepts exactly two workflow refs on `refs/heads/main`:
+
+1. `.github/workflows/systemadmin-roadmap-executor.yml` for `REM-SA3B-PROBE-001`;
+2. `.github/workflows/systemadmin-sa4-pilot.yml` for `REM-SA4-PILOT-001`.
+
+The broker separately binds workflow ref ↔ mandate. Cross-stage token/mandate substitution returns 403.
+
+All existing Owner/repository immutable ID, audience, issuer, signature, event and ref checks remain required.
+
+## SA4 permit-before-side-effect matrix
+
+| Operation | Pre-side-effect control | Side effect | Terminal evidence |
+|---|---|---|---|
+| BRANCH | SA1/SA2/SA3 + M5 BRANCH authorization | create exact `agent/sa4-pilot-*` branch | BRANCH SUCCESS/ERROR outcome |
+| COMMIT | exact path + branch/head + targeted prevalidation + M5 COMMIT authorization | create deterministic evidence file only | COMMIT outcome with commit SHA |
+| PR | open-PR inventory + exact path/head + M5 PR authorization | create one draft PR to `main` | PR outcome with PR number |
+
+No earlier permit may authorize a later capability.
+
+## Deterministic content boundary
+
+The Issue cannot provide Markdown/file payload. `runSa4Pilot.mjs` generates the evidence file from trusted metadata and verifies the committed bytes by SHA-256 before recording COMMIT SUCCESS.
+
+The exact target file is absent from bootstrap/main and is reserved for the autonomous pilot itself.
+
+## Concurrent writer boundary
+
+Before COMMIT and again before PR authorization, the trusted host queries open PR changed files through GitHub and supplies them to the SA1 policy. Exact target-path overlap is DENY.
+
+At bootstrap time:
+
+- PR #225 changes DevelopmentChain documentation only;
+- PR #193 changes cost/monetization documentation only;
+- neither includes the SA4 pilot evidence path.
+
+## Trust-root boundary
+
+SA1 and SA3 self-authority protection include the SA3B/SA4 workflows, mandates, OIDC verifier, broker, audit adapter and SA4 parser/runner. A Systemadmin REM cannot authorize modifications to these paths.
+
+## Rollback boundary
+
+The trusted runner may delete only its exact `agent/sa4-pilot-*` branch as bounded rollback. If a draft PR was already created and its outcome cannot be persisted, the host closes that exact draft PR and deletes its exact branch before failing.
+
+Rollback never targets `main`, repository protection, another PR or production infrastructure.
 
 ## Human boundary
 
-- direct autonomous merge remains prohibited;
-- green CI is evidence, not merge authority;
-- production secret repair/rotation is Owner-controlled;
-- current Owner PR review/attestation gate remains until M10 runtime cutover;
-- SA4 remains blocked until full SA3B VERIFIED PASS.
+- `CI_REQUEST` is not part of `REM-SA4-PILOT-001`;
+- the autonomous host does not mark the PR ready, approve or merge;
+- current Human/Owner current-head review/attestation remains the final CI gate;
+- `MERGE` remains Human-only;
+- pilot branch deletion remains mandatory after Human merge.
+
+## SA4 activation gate
+
+The live pilot is blocked until:
+
+1. bootstrap PR final CI PASS and Human merge;
+2. bootstrap branch deletion;
+3. successful SA3B probe branch deletion;
+4. bootstrap runtime deployed to Render;
+5. no exact target-path overlap exists.
+
+Only then may a fresh Owner `[SA4-PILOT]` Issue execute the bounded autonomous work package.
