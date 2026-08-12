@@ -3,7 +3,7 @@
 Status: PROPOSED  
 Version: 1.0.0  
 Date: 2026-08-12  
-Authority: ADR-0069, ESS-0021, ADR-0065, DEVELOPMENT Chain Execution Policy
+Authority: ADR-0070, ESS-0021, ADR-0065, DEVELOPMENT Chain Execution Policy
 
 ## Zweck
 
