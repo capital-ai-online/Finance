@@ -1,172 +1,138 @@
-# AI Agent M0–M9 Implementation Roadmap
+# AI Agent M0–M10 Implementation Roadmap
+
+> Legacy filename retained for stable references.
 
 Status: IMPLEMENTATION PHASE
-Baseline: `main@69f719683b60ba6aadc0022381c6cecc430f0ea5` (PR #198 merge)
+Baseline: `main@af88fcdfbc0d6b4a466ce734c0787ad0b6277dd8` (PR #208 merge)
 
 ## Global execution rule
 Every phase that contains a platform mutation follows:
 
-`CONCEPT → HUMAN APPROVAL → PRE-MUTATION TEST → MUTATION → POST-MUTATION VERIFICATION → EVIDENCE → ROADMAP UPDATE → NEXT PHASE`
+`ROADMAP/ADR → HUMAN APPROVAL → PRE-MUTATION TEST → MUTATION → POST-MUTATION VERIFICATION → EVIDENCE → ROADMAP UPDATE → NEXT PHASE`
 
 No later phase may start while a required mutation/test is missing, failed, inconclusive or undocumented.
 
-No autonomous/semi-autonomous agent may be created or enabled before a predefined roadmap concept is Human/Owner-approved under `docs/governance/AUTONOMOUS_AGENT_CONCEPT_GATE.md`.
+Privileged autonomous/semi-autonomous agents require the Human/Owner-approved Roadmap/ESS/ADR package. Daily/recurring agents may be created without prior approval only with `READ`/`ANALYZE`, no write credentials and no branch/commit/PR/CI/deploy/mutation/merge capability.
+
+## Human/Owner CI rule
+For PRs targeting `main`:
+
+`FILES CHANGED → VIEWED → CURRENT-HEAD REVIEW (💪/okay) → OWNER CHECKBOXES LAST → ONE build-and-test`
+
+The review itself does not start expensive CI. The final PR-body checkbox edit triggers the single normal `pull_request: edited` CI event. Any new commit invalidates the previous review.
 
 ## M0 — Evidence Baseline
-COMPLETE.
-
-Mutation gate: none; evidence collection is read-only.
+**COMPLETE.** Read-only evidence collection.
 
 ## M1 — Git Guardrails
-COMPLETE for current single-owner topology. Human/Owner review is a mandatory merge gate.
+**COMPLETE.** Protected `main`, Human/Owner merge gate and stable required check.
 
-Mutation gate: GitHub policy/ruleset/workflow changes require Owner review and validation before becoming authoritative.
-
-## M2 — Architecture Definition
-COMPLETE. ESS-0019, ADR-0057..0063, trust/threat models, traceability and Documentation Freeze are established.
-
-Mutation gate: documentation only; no production platform mutation.
+## M2 / M2G — Architecture Definition and Documentation Freeze
+**COMPLETE.** ESS-0019, ADR-0057..0063, trust/threat models, traceability and Documentation Freeze.
 
 ## M3 — CI Hardening
-COMPLETE via PR #195/#196. PR #197 additionally established the Human/Owner final gate.
-
-Mutation/test gate: CI/workflow changes were validated through full-path and docs-only-fast-path evidence.
+**COMPLETE.** One required `build-and-test`, scope-aware fast/full validation, Owner-before-CI gate and robust final-checkbox trigger.
 
 ## M4 — Agent IAM
-CLOSURE IN REVIEW.
+**COMPLETE.** Provider-neutral principal attribution, explicit non-inheriting capabilities, canonical risk ladder, approval/step-up rules, kill switch and no agent `MERGE` capability.
 
-PR #198 merged the canonical provider-neutral Agent IAM implementation. Parallel drafts #200/#201 are superseded; only controls consistent with ADR-0058 and the canonical risk ladder are retained.
+Mutation state: **NOT REQUIRED** for Stripe/Supabase/Render.
 
-Canonical M4 scope:
-1. Explicit non-inheriting capabilities: READ, ANALYZE, PLAN, BRANCH, COMMIT, PR, CI_REQUEST, DEPLOY_REQUEST, PRODUCTION_MUTATION.
-2. MERGE remains outside agent capability vocabulary and behind Human/Owner governance.
-3. Principal attribution binds human/app/agent/session/request/credential holder.
-4. Provider/model identifiers are non-authoritative metadata.
-5. LOW: READ/ANALYZE/PLAN; MEDIUM: BRANCH/COMMIT/PR/CI_REQUEST; HIGH: DEPLOY_REQUEST; CRITICAL: PRODUCTION_MUTATION.
-6. Context may increase but never reduce canonical minimum risk.
-7. HIGH requires current Human Approval; CRITICAL requires Human Approval plus Step-up.
-8. Approval binds human actor + subject agent + capability + target and must be unexpired.
-9. PRODUCTION_MUTATION is denied to development principals.
-10. Kill switch denies mutating capabilities.
-11. ESS-0018 tool-specific grants, approvals and PolicyGate remain an independent second layer.
-12. Negative tests cover privilege inheritance, approval mismatch, risk under-classification, MERGE, self-approval and production boundary.
+## M5 — Observability / Telemetry / Audit
+**IN PROGRESS — PERSISTENCE VERIFIED / APPLICATION INTEGRATION IN REVIEW.**
 
-M4 mutation gate:
-- no production Stripe/Supabase/Render mutation is authorized in M4;
-- M4 is code/policy hardening only.
+### M5 persistence
+Production Supabase audit authority `public.agent_audit_events` is **VERIFIED PASS**:
+- RLS enabled;
+- `anon`/`authenticated` no direct access;
+- `service_role` SELECT + INSERT only;
+- UPDATE/DELETE fail closed;
+- redacted synthetic write/read PASS;
+- Security Advisor reviewed.
 
-M4 closure criteria:
-- consolidation tests/CI are green;
-- #200/#201 are closed as superseded;
-- Owner reviews every changed file, checks both attestations and submits current-commit `💪` or `okay` review;
-- merge occurs only after explicit human merge instruction;
-- after merge, M4 is COMPLETE and M5 is authorized.
+Applied migrations:
+- `20260811230540_m5_agent_audit_events`
+- `20260811230743_m5_agent_audit_events_least_privilege`
 
-## M5 — Observability/Telemetry/Audit
-BLOCKED BY M4 CLOSURE.
+### M5 application integration
+Current review branch: `agent/m5-audit-writer-e2e`.
 
-Scope:
-- extend ADR-0056/O1 with W3C/OTel correlation;
-- immutable security audit evidence;
-- redaction and security-event separation.
+Implemented scope:
+1. backend-only `agent_audit_events` writer using the existing privileged server Supabase path;
+2. reuse of canonical Telemetry secret/PII redaction;
+3. explicit omission of full prompts, full diffs and raw request/response bodies;
+4. provider-neutral PolicyGate decision persisted as an immutable authorization event;
+5. `auditReference` returned for operational telemetry correlation;
+6. terminal `SUCCESS`/`ERROR` recorded as a **second append-only outcome event**, linked to the authorization `auditReference` rather than updating prior evidence;
+7. request/trace/actor/app/agent/capability/risk/policy/approval/tool/repository/PR/CI/artifact/deployment/runtime mapping;
+8. unit/negative tests for redaction, omission, correlation, denied-outcome prevention and persistence fail-closed behavior.
 
-Mutation/test gate:
-1. finish and Owner-approve the M5 implementation concept;
-2. implement code/instrumentation without production mutation;
-3. determine explicitly whether Supabase persistence/schema mutation is `REQUIRED` or `NOT REQUIRED`;
-4. if REQUIRED: validate migration/dry-run/staging path, RLS/permission behavior and rollback;
-5. obtain explicit Owner approval for the exact Supabase mutation;
-6. execute mutation only in the authorized production path;
-7. verify audit event write/read, authorization, retention semantics and absence of privilege expansion;
-8. record PASS evidence and update ROADMAP/traceability;
-9. only then authorize M6.
+Mutation state for this substep: **NOT REQUIRED**. No new Supabase/Stripe/Render mutation is authorized or needed.
 
-M6 remains blocked until the M5 mutation/test gate is PASS.
+Because `server/**` is runtime-relevant under current CI scope rules, this PR is **Check Class R** and must run the existing Docker/runtime verification in addition to application checks.
+
+M5 exit gate:
+- current-head Owner review and final checkbox trigger;
+- one `build-and-test` PASS;
+- audit-specific unit/negative tests PASS;
+- production build/runtime checks PASS;
+- merge after explicit Human instruction;
+- post-merge ROADMAP/ADR/evidence sync to final SHA.
+
+Only then is M5 `COMPLETE` and M5A authorized.
+
+## M5A — Supabase TOTP MFA / AAL2 Hardening
+**PLANNED — BLOCKED BY M5.**
+
+Required sequence:
+1. read-only inventory of application TOTP enroll/challenge/verify flow and Supabase Auth settings;
+2. determine exact mutation/config need;
+3. Human/Owner approval before any Supabase Auth mutation;
+4. privileged Owner/admin operations require verified `aal2`; `aal1` fails closed;
+5. invalid/expired TOTP, missing factor, stale session and mismatched challenge fail closed;
+6. server/API authorization verifies trusted session/JWT/AAL context, never UI state alone;
+7. recovery/factor-reset path is Owner-controlled and audited;
+8. rerun Security Advisor after mutation/configuration;
+9. positive/negative tests and redacted evidence must be `VERIFIED PASS`.
+
+Leaked Password Protection: **DEFERRED — PLAN DEPENDENCY / PRO+** and not a blocker while unavailable on the current plan.
 
 ## M6 — Supply Chain
-BLOCKED BY M5.
+**BLOCKED BY M5 + M5A.**
 
-Scope:
-- SBOM;
-- provenance;
-- attestation bound to exact source/artifact digests.
-
-Mutation/test gate:
-- provenance/attestation generation and verification must PASS;
-- no Stripe/Supabase/Render mutation is implied by M6;
-- any newly discovered external-platform mutation requires a separate Owner-approved concept/ADR before execution.
-
-M7 remains blocked until M6 evidence is PASS.
+Scope: SBOM, provenance and attestations bound to source/artifact digests. No implicit external-platform mutation.
 
 ## M7 — Deployment Identity + Production Platform Mutation Gate
-BLOCKED BY M6.
+**BLOCKED BY M6.**
 
-Scope:
-- protected deployment identity according to ADR-0061;
-- environment-scoped credentials/hooks;
-- rotation/revocation;
-- controlled production mutation handoff.
+Render mutations: only approved identity/environment credential/hook changes, followed by controlled deploy, health/readiness and rollback evidence.
 
-Render mutation gate:
-1. approved M7 concept/runbook;
-2. preflight and rollback readiness;
-3. Owner approval for exact Render setting/credential/hook mutation;
-4. mutation;
-5. controlled deployment test;
-6. health/readiness verification;
-7. rollback evidence;
-8. PASS required before M8.
+Stripe mutations: only explicitly named billing/webhook/credential changes with dedicated ADR/runbook and Owner approval. Unrelated billing remediation stays a separate workstream.
 
-Supabase mutation gate in M7:
-- only additional production IAM/credential/deployment-boundary changes explicitly required by the approved M7 design;
-- never repeat M5 schema work opportunistically;
-- same PREPARE → APPROVE → MUTATE → VERIFY → EVIDENCE sequence applies.
-
-Stripe mutation gate in M7:
-- no generic Stripe mutation is authorized;
-- only a named billing/webhook/credential mutation with dedicated ADR/runbook and Owner approval may execute;
-- use non-destructive/test-mode verification where applicable;
-- verify webhook/idempotency behavior, metadata/customer/subscription mapping and rollback/revocation;
-- PASS evidence is required before M8 when the mutation is part of the agent/platform cutover dependency chain.
-
-Stripe billing/product remediations unrelated to the AI-Agent DevelopmentChain remain a separate workstream and require their own roadmap/ADR before mutation.
+Supabase mutations: only explicitly required deployment/IAM boundary changes; do not opportunistically repeat M5/M5A work.
 
 ## M8 — Agent Cutover
-BLOCKED BY M7.
+**BLOCKED BY M7.**
 
-Scope:
-- route ChatGPT/Claude and future execution clients through the Control Plane;
-- NotebookLM remains read-only unless a future approved concept changes that profile.
-
-Agent creation gate:
-- every autonomous/semi-autonomous agent requires a predefined Human/Owner-approved concept before implementation or enablement;
-- concept must define capabilities, risk, target systems, approvals, mutations, tests, telemetry, rollback and kill switch;
-- controlled cutover test must PASS before production enablement;
-- no agent may self-authorize MERGE or production mutation.
-
-M9 remains blocked until M8 cutover verification is PASS.
+Route privileged ChatGPT/Claude/future execution clients through the provider-neutral Control Plane. Read-only daily agents remain the documented exception. No agent self-authorizes merge or production mutation.
 
 ## M9 — Assurance
-BLOCKED BY M8.
+**BLOCKED BY M8.**
 
-Run:
-- negative authorization tests;
-- prompt/tool injection tests;
-- replay tests;
-- exfiltration tests;
-- kill-switch/break-glass drills;
-- rollback/recovery drills;
-- independent evidence review.
+Injection, replay, exfiltration, negative authorization, kill-switch, break-glass and rollback/recovery drills with independent evidence review.
 
-Final assurance requires PASS evidence for all mandatory drills and all unresolved mutation/test gates.
+## M10 — PR WebAuthn / Passkey Step-up
+**BLOCKED BY M9.**
 
-## Per-step mandatory update
-Every completed DevelopmentChain step MUST update:
-1. `docs/architecture/ROADMAP.md` status date and baseline SHA;
-2. this roadmap phase/gate;
-3. `AI_AGENT_M0_M9_TRACEABILITY_MATRIX.md` evidence pointer;
-4. affected ADR/ESS status if changed;
-5. required mutation status (`NOT REQUIRED`, `PLANNED`, `APPROVED`, `MUTATED`, `VERIFIED PASS`, `FAILED/ROLLED BACK`);
-6. required test status and evidence.
+Requires Deep Research + repository read + dedicated ESS/ADR/runbook/threat model/negative tests. Assertion must bind Owner `SvenKulessa`, Finance repo, PR, exact head SHA and privileged action. Device ID alone is not authentication.
 
-No implementation phase may skip the Human/Owner merge gate, the autonomous-agent concept gate, a required mutation/test gate or a preceding phase closure.
+## Mandatory per-step update
+Every completed step updates:
+1. `docs/architecture/ROADMAP.md`;
+2. this implementation roadmap;
+3. `docs/traceability/AI_AGENT_M0_M9_TRACEABILITY_MATRIX.md`;
+4. affected ADR/ESS;
+5. mutation state (`NOT REQUIRED`, `PLANNED`, `HUMAN APPROVED`, `MUTATED`, `VERIFIED PASS`, `FAILED / ROLLED BACK`);
+6. required test/evidence state.
+
+No phase may skip Human/Owner review, required mutation/test gates, or preceding phase closure.
