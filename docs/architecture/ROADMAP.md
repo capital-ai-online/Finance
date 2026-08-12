@@ -2,7 +2,7 @@
 
 Status date: 2026-08-12
 Baseline branch: `main`
-Baseline commit: `ee65ba19f64e7e8ee2d618e16364a658dfe60e4c` (PR #211 merge)
+Baseline commit: `a5abc1685026651f4297a487e855683a1fa1e58e` (PR #216 merge)
 Platform version: `0.6.0`
 Canonical role: current-state DevelopmentChain status index. Historical detail remains in ADR/evidence documents.
 
@@ -11,6 +11,8 @@ Every merged DevelopmentChain step MUST update this file with the new `main` SHA
 
 ## Human / Owner gate before expensive CI
 Every PR targeting `main` MUST be human-visible and explicitly reviewed by repository Owner `SvenKulessa` before expensive build/test validation starts.
+
+### Current transitional gate — until M10 VERIFIED PASS
 
 Binding sequence:
 
@@ -32,6 +34,27 @@ Rules:
 - AI clients stop before merge unless a separate explicit human merge instruction exists.
 
 Authority: `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`.
+
+### Target gate after M10 VERIFIED PASS — File Review + Passkey only
+
+M10 changes the Owner authorization mechanism. After controlled cutover, the normal PR authorization sequence SHALL be:
+
+`PR OPEN/UPDATE → OWNER FILE REVIEW → ALL FILES VIEWED → CAPITAL-AI PASSKEY/WEBAUTHN APPROVAL → ONE build-and-test → MERGE ELIGIBLE`
+
+Target rules:
+- Human file review remains mandatory;
+- every changed file remains part of the Owner review set and should remain marked `Viewed` in GitHub;
+- the passkey approval is the sole security authorization accepted by the expensive-CI gate;
+- `💪`, `okay`, GitHub review state, PR-body Owner checkboxes, reactions, comments, labels and device-id claims no longer authorize CI after cutover;
+- the WebAuthn assertion must be bound to Owner, repository, PR number, base SHA, exact current head SHA, canonical changed-file-set hash, PR diff/review digest and action `AUTHORIZE_PR_CI`;
+- `userVerification=required`, RP-ID/origin validation, server-generated challenge, short expiry, single-use and replay protection are mandatory;
+- any new commit, force-push, base change or material diff change invalidates prior approval;
+- verified approval evidence must be persisted immutably before CI is requested;
+- exactly one CI request is allowed per approval/head and duplicate requests are rejected or deduplicated;
+- GitHub passkey sign-in alone is not proof that a specific PR head was approved;
+- Human merge remains separate and non-agentic.
+
+Authority target: `docs/adr/ADR-0066-passkey-only-owner-pr-authorization.md` plus the dedicated M10 ESS/runbook/threat model.
 
 ## Roadmap package before privileged autonomous agents
 Privileged agent capability is allowed only after a Roadmap architecture package derived from:
@@ -84,7 +107,10 @@ The next phase remains blocked until every required mutation/test is documented 
 - PR #208 merged the M5A roadmap gate and the single robust PR-body CI trigger.
 - PR #210 merged M5 application audit integration at `e39d5370d8b1498e84952535a38a339cc200082f`; final CI #892 passed.
 - PR #211 merged the M5 post-merge synchronization at `ee65ba19f64e7e8ee2d618e16364a658dfe60e4c`; M5 is canonically **COMPLETE / VERIFIED PASS**.
-- M5A read-only production/repository baseline is now complete on `agent/m5a-totp-aal2-baseline`.
+- PR #214 established the Systemadmin Roadmap Executor governance package.
+- PR #215 merged SA1 REM validator/control-plane enforcement at `d8ccc3c5e136d51ae36b57b103119b25f4a42b8b`.
+- PR #216 merged SA2 Chat Execution Profile + CI-Hardening at `a5abc1685026651f4297a487e855683a1fa1e58e`; SA3 append-only audit correlation is the next Systemadmin gate.
+- M5A read-only production/repository baseline is complete; implementation remains a separate gated workstream.
 - Production Supabase Auth contains **0 native MFA factors** and current session evidence contains **2 × aal1 / 0 × aal2**.
 - Both Owner profiles currently carry the legacy CAPITAL-AI flag `totp_enabled=true`, proving the legacy TOTP path is separate from Supabase AAL2.
 - Security Advisor reports `auth_insufficient_mfa_options`.
@@ -94,6 +120,7 @@ The next phase remains blocked until every required mutation/test is documented 
 - ESS-0020 and ADR-0064 define Supabase Auth as Native MFA authority and preserve purpose-bound `x-step-up-token` only as defense-in-depth over AAL2.
 - No Supabase Auth factor/config mutation has been performed by the baseline.
 - M6 remains blocked until M5A reaches `VERIFIED PASS`.
+- M10 target architecture is now governed by ADR-0066: file review remains, while passkey/WebAuthn becomes the sole Owner CI-authorization signal after verified cutover.
 - CoinMarketCap remains removed/deactivated.
 - Kraken remains public REST evidence only.
 
@@ -104,7 +131,7 @@ The next phase remains blocked until every required mutation/test is documented 
 | M1 Git Guardrails | COMPLETE | GitHub protection + Owner policy | policy validation | preserve |
 | M2 Architecture/Documentation | COMPLETE | ESS-0019 + ADR-0057..0063 | documentation only | synchronized |
 | M2G Documentation Freeze | COMPLETE | PR #192/#194 | freeze verification | sequential implementation |
-| M3 CI Hardening | COMPLETE | ADR-0053/0060 + PR #195/#196/#204/#208 | one `build-and-test`, review → checkbox final trigger, risk-based fast/full path | preserve single-trigger behavior |
+| M3 CI Hardening | COMPLETE | ADR-0053/0060 + PR #195/#196/#204/#208 | one `build-and-test`, review → checkbox final trigger, risk-based fast/full path | preserve until M10 controlled replacement |
 | M4 Agent IAM | COMPLETE | ADR-0050/0051/0058 + ESS-0018/0019 + PR #198/#202 | negative IAM tests + Owner gate; no live external mutation | preserve |
 | M5 Observability/Telemetry/Audit | **COMPLETE — VERIFIED PASS** | ADR-0056/0059 + PR #206/#207/#210/#211 + M5 evidence | persistence/app integration `VERIFIED PASS`; app mutation `NOT REQUIRED` | preserve |
 | M5A Supabase MFA/TOTP Hardening | **IN PROGRESS — READ-ONLY BASELINE COMPLETE / REMEDIATION PLAN IN REVIEW** | ESS-0020 + ADR-0064 + reactivated ADR-0003.5 + `docs/evidence/m5a/*` | repository code `REQUIRED`; Owner native factor enrollment `REQUIRED BUT NOT YET AUTHORIZED`; project config mutation `CONDITIONAL`; Postgres DDL `NOT REQUIRED` | Human-review/merge baseline package → implement code on fresh branch → CI → explicit production mutation approval |
@@ -112,7 +139,7 @@ The next phase remains blocked until every required mutation/test is documented 
 | M7 Deployment Identity + Production Platform Mutation Gate | BLOCKED BY M6 | ADR-0061 + platform ADR/runbooks | Render required when design demands it; Stripe/Supabase only when explicitly named | M8 blocked until all M7 PASS |
 | M8 Agent Cutover | BLOCKED BY M7 | ADR-0062 | approved privileged execution-client cutover; read-only daily agents remain exception | M9 after cutover PASS |
 | M9 Assurance | BLOCKED BY M8 | ADR-0063 | injection/replay/exfiltration/kill-switch/break-glass/rollback drills | M10 after assurance PASS |
-| M10 PR WebAuthn / Passkey Step-up | BLOCKED BY M9 | dedicated ESS/ADR/runbook after Deep Research | Owner assertion bound to repository + PR + current head SHA + privileged action; replay/origin/RP-ID/freshness tests | final DevelopmentChain assurance |
+| M10 Passkey-only Human/Owner PR Authorization | **BLOCKED BY M9 — TARGET ARCHITECTURE DEFINED** | ADR-0066 + dedicated ESS/runbook/threat model | File Review + current-head/diff-bound WebAuthn assertion; UV/RP-ID/origin/challenge/replay/freshness tests; shadow mode; single-trigger cutover | final DevelopmentChain assurance after legacy emoji/checkbox gate removal |
 
 ## M5 verified persistence evidence
 Authority: `docs/evidence/m5/M5_SUPABASE_AGENT_AUDIT_MUTATION_EVIDENCE.md`.
@@ -184,17 +211,22 @@ Authority: `docs/evidence/m5a/M5A_SUPABASE_TOTP_AAL2_BASELINE.md`.
 13. Mutation/test state must be `VERIFIED PASS` before M6.
 14. Leaked Password Protection remains `DEFERRED — REQUIRES PRO+` until the plan changes.
 
-## M10 PR WebAuthn / Passkey Step-up acceptance criteria
-1. WebAuthn/passkey is the cryptographic step-up; device ID alone is never sufficient authentication.
-2. Assertion is bound to Owner `SvenKulessa`, Finance repository, PR number, exact current head SHA and privileged action.
-3. Any new commit invalidates the prior assertion.
-4. Challenges are single-use, short-lived and replay-protected.
-5. RP ID/origin and credential ownership are verified server-side.
-6. Verification emits immutable audit evidence without storing private-key material.
-7. Failure, expiry, target/head mismatch or replay fails closed.
-8. Existing Files-changed/Viewed attestation, current-head review and CI remain independent controls.
-9. Recovery/break-glass requires separate documented flow and audit trail.
-10. M10 implementation requires Deep Research + repository read + dedicated ESS + ADR + threat model + negative tests + rollback/runbook.
+## M10 Passkey-only Human/Owner PR Authorization acceptance criteria
+1. WebAuthn/passkey is the sole cryptographic Owner authorization accepted by the expensive-CI gate after cutover; device ID alone is never sufficient authentication.
+2. Human file review remains mandatory and the approval context binds the canonical changed-file-set hash plus PR diff/review digest.
+3. Assertion is bound to Owner `SvenKulessa`, Finance repository, PR number, base SHA, exact current head SHA and action `AUTHORIZE_PR_CI`.
+4. Any new commit, force-push, base change or material diff change invalidates the prior assertion.
+5. Challenges are server-generated, single-use, short-lived and replay-protected.
+6. RP ID, HTTPS origin, credential ownership, assertion signature, `UP` and required `UV` are verified server-side.
+7. Verification emits immutable M5-compatible audit evidence without storing private-key, biometric or reusable credential material.
+8. Failure, expiry, credential revocation, target/head/diff mismatch, unavailable verifier/audit persistence or replay fails closed.
+9. Duplicate CI requests for the same approval/head are rejected or deduplicated; normal operation remains exactly one expensive `build-and-test` per approved head.
+10. GitHub `💪`/`okay`, PR-body Owner checkboxes, comments, reactions, labels, generic GitHub review state and GitHub sign-in method are not CI authorization after cutover.
+11. File Review / Viewed remains an independent Human process control, with its exact file/diff digest cryptographically included in the passkey approval transaction.
+12. Human merge remains separate; a valid passkey approval and green CI do not grant autonomous `MERGE`.
+13. Recovery/break-glass requires a separate strong, audited flow and must never silently downgrade to emoji/checkbox/TOTP-only approval.
+14. M10 implementation requires dedicated ESS + runbook + threat model + positive/negative/replay/recovery tests + rollback plan.
+15. Cutover uses design → shadow verification → enforced passkey-only gate → legacy parser/checkbox cleanup; legacy removal occurs only after `VERIFIED PASS`.
 
 ## Protected invariants
 - no synthetic/demo financial scores in production;
@@ -202,13 +234,17 @@ Authority: `docs/evidence/m5a/M5A_SUPABASE_TOTP_AAL2_BASELINE.md`.
 - CoinMarketCap remains decommissioned;
 - Kraken public REST only;
 - protected `main` + single stable `build-and-test` required check;
-- normal PR flow produces one expensive `build-and-test` run only after current-head Owner review and the final Owner-checkbox edit;
+- until M10 cutover, the current-head Owner review/final-checkbox gate remains authoritative;
+- after M10 cutover, normal PR authorization is Human File Review + exact-state-bound WebAuthn/passkey approval only;
+- legacy emoji/text review and Owner checkboxes cannot authorize CI after M10 cutover;
 - AI agents cannot self-approve or autonomously merge;
 - privileged autonomous agents require the approved Roadmap/ESS/ADR package;
 - daily agents are read-only only;
 - no next roadmap phase while a required mutation/test gate is incomplete, failed or undocumented;
-- M10 supplements rather than replaces Human/Owner review and CI;
+- M10 replaces the legacy Owner CI-authorization signal while preserving Human file review, CI and Human-only merge authority;
 - every DevelopmentChain phase updates ROADMAP + traceability + affected ADR/ESS.
 
 ## Next action
 Human-review and merge the M5A baseline/architecture package. This merge authorizes the **repository implementation phase only**. Then create a fresh implementation branch for Native TOTP enrollment/challenge/verify, centralized server AAL2 enforcement, fail-closed privileged login/session handling, recovery integration and tests. Production Owner-factor enrollment or Auth configuration mutation remains blocked until implementation CI is `VERIFIED PASS` and a separate explicit Human/Owner production-mutation approval is recorded. M6 remains blocked until M5A is complete.
+
+M10 remains sequentially blocked by M9, but its target authorization architecture is now defined by ADR-0066 and this Roadmap: future Pull Requests are to be released for expensive CI through Human File Review plus a current-state-bound passkey/WebAuthn assertion, without emoji/text review or Owner-checkbox authorization after controlled cutover.
