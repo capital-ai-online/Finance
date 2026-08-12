@@ -24,6 +24,7 @@
   },
   "claimedPaths": [
     ".github/workflows/human-owner-comment-gate.yml",
+    ".github/workflows/pr-build-and-test.yml",
     "tests/unit/humanOwnerCommentGate.test.ts",
     ".ai/work-claims/HUMAN-OWNER-COMMENT-GATE-PERMISSION-FIX-2026-08-12.json"
   ],

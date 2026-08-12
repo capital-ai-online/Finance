@@ -109,6 +109,18 @@ describe('PR Build and Test dispatch', () => {
     expect(build).toContain('build_check_run_id:');
   });
 
+
+  it('protects PR hash labels from YAML comment truncation', () => {
+    const build = read('.github/workflows/pr-build-and-test.yml');
+    expect(build).toContain(
+      'run-name: "PR #${{ inputs.pr_number }} – trusted build/test @ ${{ inputs.head_sha }}"',
+    );
+    expect(build).toContain(
+      'run: >-\n          echo "Primär-Volltest für PR #${{ inputs.pr_number }}@${{ inputs.head_sha }} ist durch head-genaue Human-Evidence autorisiert."',
+    );
+    expect(build).not.toContain('run-name: PR #');
+    expect(build).not.toContain('run: echo "Primär-Volltest für PR #');
+  });
   it('executes candidate code only in a read-only job on exactly the approved head', () => {
     const build = read('.github/workflows/pr-build-and-test.yml');
     const executor = build.slice(build.indexOf('  build-and-test-executor:'), build.indexOf('  report-pr-head-check:'));
