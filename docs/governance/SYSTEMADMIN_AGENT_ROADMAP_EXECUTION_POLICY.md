@@ -2,7 +2,7 @@
 
 Status: PROPOSED
 Date: 2026-08-12
-Authority: ESS-0021 v1.1, ADR-0065, ADR-0069, ESS-0019, ADR-0058, HUMAN_OWNER_PR_APPROVAL_POLICY.md
+Authority: ESS-0021 v1.1, ADR-0065, ADR-0069, ADR-0070, ESS-0019, ADR-0058, HUMAN_OWNER_PR_APPROVAL_POLICY.md
 Accountable Owner: `SvenKulessa`
 
 ## 1. Purpose
@@ -21,7 +21,7 @@ OWNER-APPROVED ROADMAP BLOCK REM
 → IMPLEMENT/TEST/COMMIT
 → PR CHECKPOINT
 → AUTONOMOUS STOP
-→ HUMAN REVIEW / REQUIRED CI / HUMAN MERGE
+→ CURRENT HUMAN-OWNER GATE / REQUIRED CI / HUMAN MERGE
 → BRANCH DELETE
 → RE-READ CURRENT MAIN
 → NEXT EXPLICIT UNIT UNDER SAME VALID REM
@@ -86,7 +86,9 @@ DEPLOY_REQUEST / PRODUCTION_MUTATION are not implied by repository authority.
 
 ## 5. Roadmap Block / Execution Unit model
 
-A larger Owner-approved block is decomposed by ADR-0069 into ordered Execution Units (EU).
+A larger Owner-approved block is decomposed by ADR-0070 into ordered Execution Units (EU).
+
+ADR-0069 remains the separate canonical Human-Owner Comment Gate / dispatched-PR-CI architecture consumed at every PR checkpoint. ADR-0070 does not introduce a second PR-approval mechanism.
 
 Invariant:
 
@@ -172,13 +174,12 @@ At the checkpoint:
 ```text
 PR READY
 → STOP_PR_CHECKPOINT_REACHED
-→ Human current-head diff review
-→ canonical Human approval evidence
+→ current canonical Human-Owner Gate
 → required technical CI/evidence
 → separate Human merge decision
 ```
 
-The agent must consume the current `HUMAN_OWNER_PR_APPROVAL_POLICY.md` instead of hard-coding a transient checkbox/event implementation.
+The agent must consume the current `HUMAN_OWNER_PR_APPROVAL_POLICY.md` and ADR-0069 implementation instead of hard-coding a transient or parallel approval mechanism.
 
 Successful CI is not merge authorization.
 
@@ -304,7 +305,7 @@ A merged/superseded branch is never reused. Short-lived clones/worktrees are rem
 
 ADR-0039 per-PR creation authorization remains default for normal interactive agents.
 
-For Systemadmin only, a valid Owner-approved REM is standing PR-creation authority for all explicitly named units it covers. This exception does not remove Human current-head review, required CI or separate Human merge.
+For Systemadmin only, a valid Owner-approved REM is standing PR-creation authority for all explicitly named units it covers. This exception does not remove the ADR-0069 Human gate, required CI or separate Human merge.
 
 ## 18. Enablement gate
 
