@@ -26,6 +26,7 @@
     ".github/workflows/human-owner-comment-gate.yml",
     ".github/workflows/pr-build-and-test.yml",
     "tests/unit/humanOwnerCommentGate.test.ts",
+    "docs/adr/ADR-0069-human-owner-comment-gate-and-dispatched-pr-ci.md",
     ".ai/work-claims/HUMAN-OWNER-COMMENT-GATE-PERMISSION-FIX-2026-08-12.json"
   ],
   "releaseCondition": "Coordination metadata is released when the associated pull request is merged, closed, superseded or abandoned."

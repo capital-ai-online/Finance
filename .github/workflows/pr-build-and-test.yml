@@ -110,10 +110,14 @@ jobs:
           )"
           test -n "$review_id"
 
-          EXPECTED_HEAD_SHA="$EXPECTED_HEAD_SHA" BUILD_CHECK_RUN_ID="$BUILD_CHECK_RUN_ID" \
+          # Die Reservierung muss exakt die vom Human-Gate erzeugte One-Shot-Identität tragen.
+          # Ein gleichnamiger ci.yml-Job auf demselben Head kann diese Prüfung nicht bestehen.
+          ONE_SHOT_ID="capital-ai-human-gate-one-shot:${PR_NUMBER}:${EXPECTED_HEAD_SHA}"
+
+          EXPECTED_HEAD_SHA="$EXPECTED_HEAD_SHA" BUILD_CHECK_RUN_ID="$BUILD_CHECK_RUN_ID" ONE_SHOT_ID="$ONE_SHOT_ID" \
             gh api -H 'Accept: application/vnd.github+json' \
               "repos/${GITHUB_REPOSITORY}/check-runs/${BUILD_CHECK_RUN_ID}" \
-              --jq '. as $check | select(.id == (env.BUILD_CHECK_RUN_ID | tonumber) and .name == "build-and-test" and .head_sha == env.EXPECTED_HEAD_SHA and .status == "in_progress" and (.app.slug // "") == "github-actions") | .id' \
+              --jq '. as $check | select(.id == (env.BUILD_CHECK_RUN_ID | tonumber) and .name == "build-and-test" and .head_sha == env.EXPECTED_HEAD_SHA and (.external_id // "") == env.ONE_SHOT_ID and .status == "in_progress" and (.app.slug // "") == "github-actions") | .id' \
               | grep -qx "$BUILD_CHECK_RUN_ID"
 
           echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
@@ -293,19 +297,23 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
           BUILD_CHECK_RUN_ID: ${{ inputs.build_check_run_id }}
           EXPECTED_HEAD_SHA: ${{ inputs.head_sha }}
           OWNER_RESULT: ${{ needs.owner-evidence.result }}
           BUILD_RESULT: ${{ needs.build-and-test-executor.result }}
         run: |
           set -euo pipefail
+          test "$PR_NUMBER" -gt 0
           test "$BUILD_CHECK_RUN_ID" -gt 0
           printf '%s' "$EXPECTED_HEAD_SHA" | grep -Eq '^[0-9a-f]{40}$'
 
-          EXPECTED_HEAD_SHA="$EXPECTED_HEAD_SHA" BUILD_CHECK_RUN_ID="$BUILD_CHECK_RUN_ID" \
+          ONE_SHOT_ID="capital-ai-human-gate-one-shot:${PR_NUMBER}:${EXPECTED_HEAD_SHA}"
+
+          EXPECTED_HEAD_SHA="$EXPECTED_HEAD_SHA" BUILD_CHECK_RUN_ID="$BUILD_CHECK_RUN_ID" ONE_SHOT_ID="$ONE_SHOT_ID" \
             gh api -H 'Accept: application/vnd.github+json' \
               "repos/${GITHUB_REPOSITORY}/check-runs/${BUILD_CHECK_RUN_ID}" \
-              --jq '. as $check | select(.id == (env.BUILD_CHECK_RUN_ID | tonumber) and .name == "build-and-test" and .head_sha == env.EXPECTED_HEAD_SHA and (.app.slug // "") == "github-actions") | .id' \
+              --jq '. as $check | select(.id == (env.BUILD_CHECK_RUN_ID | tonumber) and .name == "build-and-test" and .head_sha == env.EXPECTED_HEAD_SHA and (.external_id // "") == env.ONE_SHOT_ID and (.app.slug // "") == "github-actions") | .id' \
               | grep -qx "$BUILD_CHECK_RUN_ID"
 
           conclusion=failure

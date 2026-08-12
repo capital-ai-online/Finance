@@ -89,6 +89,31 @@ describe('Human Owner Comment Gate', () => {
     expect(gate).toContain('check_name=build-and-test');
   });
 
+  it('identifies the one-shot reservation by its own external id and not by check name alone', () => {
+    const gate = read('.github/workflows/human-owner-comment-gate.yml');
+    const verify = gate.slice(gate.indexOf('  human-verification:'));
+
+    expect(verify).toContain(
+      'one_shot_id="capital-ai-human-gate-one-shot:${PR_NUMBER}:${current_head}"',
+    );
+    expect(verify).toContain('-f external_id="$one_shot_id"');
+    expect(verify).toContain('(.external_id // "") == env.ONE_SHOT_ID');
+
+    // Der Default-Filter liefert nur den letzten Check-Run je Name und würde die eigene
+    // Reservierung hinter dem gleichnamigen ci.yml-Job verstecken.
+    expect(verify).toContain('check_name=build-and-test&filter=all');
+    expect(verify).not.toContain('check_name=build-and-test&per_page');
+  });
+
+  it('keeps the one-shot closed while reserved or passed and reopens it after a failed reservation', () => {
+    const gate = read('.github/workflows/human-owner-comment-gate.yml');
+    const verify = gate.slice(gate.indexOf('  human-verification:'));
+
+    expect(verify).toContain('.status != "completed" or .conclusion == "success"');
+    expect(verify).toContain('if [ -n "$blocking" ]; then');
+    expect(verify).toContain('echo "dispatch=false" >> "$GITHUB_OUTPUT"');
+  });
+
   it('dispatches exactly the trusted main build workflow and passes the reserved head check', () => {
     const gate = read('.github/workflows/human-owner-comment-gate.yml');
     expect(gate).toContain('gh workflow run pr-build-and-test.yml');
@@ -154,5 +179,18 @@ describe('PR Build and Test dispatch', () => {
     expect(reporter).toContain("conclusion=success");
     expect(reporter).toContain("conclusion=failure");
     expect(reporter).toContain('check-runs/${BUILD_CHECK_RUN_ID}');
+  });
+
+  it('accepts only the gate-issued one-shot reservation in both trusted jobs', () => {
+    const build = read('.github/workflows/pr-build-and-test.yml');
+    const evidence = build.slice(build.indexOf('  owner-evidence:'), build.indexOf('  build-and-test-executor:'));
+    const reporter = build.slice(build.indexOf('  report-pr-head-check:'));
+
+    const expectedId = 'ONE_SHOT_ID="capital-ai-human-gate-one-shot:${PR_NUMBER}:${EXPECTED_HEAD_SHA}"';
+    expect(evidence).toContain(expectedId);
+    expect(reporter).toContain(expectedId);
+    expect(evidence).toContain('(.external_id // "") == env.ONE_SHOT_ID');
+    expect(reporter).toContain('(.external_id // "") == env.ONE_SHOT_ID');
+    expect(evidence).toContain('.status == "in_progress"');
   });
 });
