@@ -64,13 +64,14 @@ describe('CI one-shot build-and-test contract', () => {
     expect(yaml).toContain('Ein Retry auf demselben Head ist nicht erlaubt; ein neuer Commit/Head ist erforderlich.');
   });
 
-  it('validates the live PR body and production baseline before full PR tests', () => {
+  it('validates the live PR body and production baseline from immutable event refs without credentialed refetch', () => {
     const yaml = workflow();
     expect(yaml).toContain('Live-PR-Body und Produktionsbaseline validieren');
     expect(yaml).toContain('node scripts/pr/productionPreflight.mjs');
     expect(yaml).toContain('node scripts/pr/validatePrBody.mjs');
-    expect(yaml).toContain('PR_BASE_REF: origin/main');
-    expect(yaml).toContain('PR_HEAD_REF: HEAD');
+    expect(yaml).toContain('PR_BASE_REF: ${{ github.event.pull_request.base.sha }}');
+    expect(yaml).toContain('PR_HEAD_REF: ${{ github.event.pull_request.head.sha }}');
+    expect(yaml).not.toContain('git fetch --no-tags origin main:refs/remotes/origin/main');
   });
 
   it('makes repository conventions blocking in the full C/R path', () => {
