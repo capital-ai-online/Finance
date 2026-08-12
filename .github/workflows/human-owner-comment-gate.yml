@@ -2,12 +2,12 @@ name: Human Owner Comment Gate
 run-name: >-
   ${{ github.event_name == 'issue_comment'
       && format('PR #{0} – Human-/Owner-Verifikation', github.event.issue.number)
-      || format('PR #{0} – Human-Gate zurücksetzen', github.event.pull_request.number) }}
+      || format('Human-Gate nach Governance-Run #{0}', github.event.workflow_run.id) }}
 
 on:
-  pull_request_target:
-    branches: [main]
-    types: [opened, reopened, synchronize, ready_for_review]
+  workflow_run:
+    workflows: ["PR Governance"]
+    types: [completed]
   issue_comment:
     types: [edited]
 
@@ -18,13 +18,18 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: human-owner-comment-gate-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
+  group: human-owner-comment-gate-${{ github.event.issue.number || github.event.workflow_run.pull_requests[0].number || github.run_id }}
   cancel-in-progress: false
 
 jobs:
   seed-or-reset:
     name: Human-Gate-Kommentar erzeugen / zurücksetzen
-    if: ${{ github.event_name == 'pull_request_target' }}
+    if: >-
+      ${{
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.event == 'pull_request' &&
+        github.event.workflow_run.pull_requests[0].number != null
+      }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -32,17 +37,29 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          GOVERNANCE_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
 
+          read -r current_head base_ref pr_state <<< "$(
+            gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" \
+              --jq '[.head.sha, .base.ref, .state] | @tsv'
+          )"
+          test "$base_ref" = "main"
+          test "$pr_state" = "open"
+
+          if [ "$current_head" != "$GOVERNANCE_HEAD_SHA" ]; then
+            echo "Staler Governance-Run für ${GOVERNANCE_HEAD_SHA}; aktueller Head ist ${current_head}. Kein Reset."
+            exit 0
+          fi
+
           body="$(cat <<EOF
           <!-- CAPITAL_AI_HUMAN_GATE -->
-          <!-- CAPITAL_AI_HUMAN_GATE_HEAD_SHA: ${PR_HEAD_SHA} -->
+          <!-- CAPITAL_AI_HUMAN_GATE_HEAD_SHA: ${current_head} -->
           ## Human / Owner Verifikation
 
-          > Nur diese zwei Häkchen setzt der Human/Owner. Der Kommentar ist an den aktuellen PR-Head gebunden. Ein neuer Commit setzt ihn automatisch zurück. Vor dem zweiten Haken muss für denselben Head ein Owner-Review mit exakt \`💪\` oder \`okay\` vorliegen.
+          > Nur diese zwei Häkchen setzt der Human/Owner. Der Kommentar ist an den aktuellen PR-Head gebunden. Ein neuer Commit setzt ihn nach erfolgreichem Governance-Run automatisch zurück. Vor dem zweiten Haken muss für denselben Head ein Owner-Review mit exakt \`💪\` oder \`okay\` vorliegen.
 
           - [ ] Human/Owner: vollständigen PR-Diff geprüft.
           - [ ] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.
@@ -60,12 +77,12 @@ jobs:
             gh api --method PATCH \
               "repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" \
               -f body="$body" >/dev/null
-            echo "Human-Gate-Kommentar #${comment_id} auf Head ${PR_HEAD_SHA} zurückgesetzt."
+            echo "Human-Gate-Kommentar #${comment_id} auf Head ${current_head} zurückgesetzt."
           else
             gh api --method POST \
               "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
               -f body="$body" >/dev/null
-            echo "Human-Gate-Kommentar für PR #${PR_NUMBER}@${PR_HEAD_SHA} erzeugt."
+            echo "Human-Gate-Kommentar für PR #${PR_NUMBER}@${current_head} erzeugt."
           fi
 
   human-verification:
