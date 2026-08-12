@@ -17,15 +17,11 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  # PR-Metadaten-Edits dürfen einen bereits autorisierten Build nicht abbrechen.
-  # Für main-Pushes bleibt Latest-wins aktiv, damit veraltete Deploy-Kandidaten keine Kosten erzeugen.
   cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   owner-gate:
     name: Human-/Owner-Vorprüfung
-    # Runner nur beim echten Übergang "noch nicht beide Attestations -> beide Attestations"
-    # starten. Titel-/sonstige Body-Edits und der erste Checkbox-Klick bleiben runner-frei.
     if: >-
       ${{
         github.event_name == 'push' ||
@@ -62,8 +58,7 @@ jobs:
     steps:
       - name: main-Push zulassen
         if: ${{ github.event_name == 'push' }}
-        run: |
-          echo "main-Push: vollständige CI ist verpflichtend."
+        run: echo "main-Push: vollständige CI ist verpflichtend."
 
       - name: Owner-Freigabe und One-Shot prüfen
         if: ${{ github.event_name != 'push' }}
@@ -151,9 +146,6 @@ jobs:
             exit 1
           fi
 
-          # One-Shot-Reservation: Nur ein build-and-test mit erfolgreich ausgeführtem Marker-Step
-          # "Primär-Volltest autorisiert" darf Primär-Evidence sein. Ein Evidence-Reuse-Lauf
-          # hat denselben stabilen Required-Check-Namen, aber der Marker bleibt dort skipped.
           prior_build="$(
             gh api --paginate \
               "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?event=pull_request&head_sha=${PR_HEAD_SHA}&per_page=100" \
@@ -276,16 +268,11 @@ jobs:
           while IFS= read -r file; do
             [ -z "$file" ] && continue
             case "$file" in
-              docs/*|.ai/*|*.md)
-                ;;
-              *)
-                full=true
-                ;;
+              docs/*|.ai/*|*.md) ;;
+              *) full=true ;;
             esac
             case "$file" in
-              Dockerfile|.dockerignore|package.json|package-lock.json|server.ts|server/*|render.yaml|render.yml|scripts/security/*Docker*|scripts/security/*docker*|scripts/security/*Runtime*|scripts/security/*runtime*|.github/workflows/ci.yml|.github/workflows/*render*)
-                docker=true
-                ;;
+              Dockerfile|.dockerignore|package.json|package-lock.json|server.ts|server/*|render.yaml|render.yml|scripts/security/*Docker*|scripts/security/*docker*|scripts/security/*Runtime*|scripts/security/*runtime*|.github/workflows/ci.yml|.github/workflows/*render*) docker=true ;;
             esac
           done <<< "$changed_files"
 
@@ -306,14 +293,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_BASE_REF: origin/main
-          PR_HEAD_REF: HEAD
+          PR_BASE_REF: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.sha }}
           PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
           CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
         run: |
           set -euo pipefail
           mkdir -p artifacts/pr
-          git fetch --no-tags origin main:refs/remotes/origin/main
+          git rev-parse --verify "${PR_BASE_REF}^{commit}" >/dev/null
+          git rev-parse --verify "${PR_HEAD_REF}^{commit}" >/dev/null
           node scripts/pr/productionPreflight.mjs
           node scripts/pr/validatePrBody.mjs
 
