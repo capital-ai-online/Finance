@@ -11,6 +11,24 @@ Every pull request targeting `main` MUST remain human-visible and MUST receive a
 
 AI agents, coding assistants and connector clients may prepare branches, commits, pull requests, evidence and proposed fixes. They MUST NOT self-approve or autonomously merge a pull request.
 
+## Verbindlicher PR-Template-Contract
+
+Jeder Pull Request gegen `main` MUSS die kanonische Vorlage `.github/pull_request_template.md` verwenden. Die Vorlage ist ein Governance-Contract und kein optionaler Textbaustein.
+
+Es gelten folgende Invarianten:
+
+1. Kein Agent, Connector, lokaler Client oder Human darf einen verkürzten oder frei formulierten PR-Body anstelle der kanonischen Vorlage verwenden.
+2. Alle nummerierten Template-Abschnitte bleiben erhalten; nicht zutreffende Felder werden mit `N/A` begründet statt entfernt.
+3. Maschinenlesbare Marker, Baseline-Blöcke und Human-/Owner-Attestations dürfen nicht umbenannt, paraphrasiert oder entfernt werden.
+4. Die beiden Owner-Gate-Checkboxen müssen exakt die vom CI-Gate erwarteten normalisierten Aussagen enthalten:
+   - `Human/Owner: vollständigen PR-Diff geprüft.`
+   - `Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.`
+5. Ein PR-Body-Update durch einen Agenten muss von der aktuell auf dem PR-Branch versionierten Template-Datei ausgehen und darf nur die vorgesehenen Felder mit PR-spezifischen Inhalten befüllen.
+6. Ein neuer PR-Head invalidiert die Head-gebundene Review-/Approval-Evidence. Die Template-Checkboxen müssen danach erneut im vorgeschriebenen Ablauf gesetzt werden.
+7. Abweichende PR-Bodies sind Governance-Fehler und dürfen nicht als `VERIFIED PASS` klassifiziert werden.
+
+Eine maschinelle Template-Contract-Prüfung MUSS als separater Governance-Hardening-Change eingeführt werden. Diese Policy allein ersetzt bis dahin nicht die bestehende Owner-Gate-Prüfung.
+
 ## Human-visible change requirement
 
 Before technical validation starts, the Owner MUST inspect the GitHub pull-request diff under `Files changed`.
@@ -98,13 +116,14 @@ Read-only daily-task agents are governed separately by `AUTONOMOUS_AGENT_CONCEPT
 
 The pull request is the evidence bundle:
 
-1. visible `Files changed` diff;
-2. Owner attestation that all changed files were marked `Viewed`;
-3. two checked Human/Owner PR-body boxes in the final triggering event snapshot;
-4. current PR head SHA;
-5. Owner review attached to that exact SHA with exact trimmed value `💪` or `okay`;
-6. final `Files changed`-/`Viewed` checkbox edit after that review;
-7. exactly one normal expensive `build-and-test` run for that reviewed head;
-8. resulting merge commit.
+1. canonical `.github/pull_request_template.md` structure retained in the PR body;
+2. visible `Files changed` diff;
+3. Owner attestation that all changed files were marked `Viewed`;
+4. two checked Human/Owner PR-body boxes in the final triggering event snapshot;
+5. current PR head SHA;
+6. Owner review attached to that exact SHA with exact trimmed value `💪` or `okay`;
+7. final `Files changed`-/`Viewed` checkbox edit after that review;
+8. exactly one normal expensive `build-and-test` run for that reviewed head;
+9. resulting merge commit.
 
 This policy is part of the CAPITAL-AI DevelopmentChain and must remain synchronized with `docs/architecture/ROADMAP.md`, Agent IAM policy and merge governance.
