@@ -1,8 +1,8 @@
 # CAPITAL-AI Systemadmin Agent Roadmap
 
-Status: PROPOSED / OWNER REVIEW REQUIRED
+Status: IMPLEMENTATION PHASE
 Date: 2026-08-12
-Baseline: `main@4ef148b86773e5756641417ec7b6a7cc9ae0b188`
+Baseline: `main@d342654715b4f1aef23e9fbaf3230b54f327e0a2` (PR #214 merge)
 Authority: ESS-0021, ADR-0065, ESS-0019, ADR-0058, ADR-0059
 
 ## Goal
@@ -11,55 +11,90 @@ Introduce a privileged Systemadmin Roadmap Executor that can autonomously implem
 
 ## SA0 — Governance package
 
-**Status: IN REVIEW**
+**Status: COMPLETE — PR #214 MERGED**
 
-Deliverables:
+Verified merge baseline:
 
-- ESS-0021 Systemadmin Roadmap Executor;
-- ADR-0065 Roadmap Execution Mandate;
-- Systemadmin execution policy;
-- machine-readable REM schema;
-- AGENTS.md exception to ADR-0039 for a valid REM;
-- Autonomous Agent Concept Gate integration;
-- canonical Roadmap/traceability references.
-
-Exit gate:
-
-- Human/Owner reviews and merges the governance package;
-- no Systemadmin profile is considered enabled merely by drafting the package.
+- PR #214 merged;
+- merge commit `d342654715b4f1aef23e9fbaf3230b54f327e0a2`;
+- ESS-0021, ADR-0065, REM schema, Systemadmin Policy, AGENTS exception and Concept Gate are on `main`;
+- the former SA0 work branch is no longer present;
+- SA0 authorizes SA1 implementation only and does not itself enable autonomous execution.
 
 ## SA1 — REM validator / Control-Plane enforcement
 
-**Status: BLOCKED BY SA0**
+**Status: IMPLEMENTED — PR/CI VALIDATION PENDING**
 
-Implement a provider-neutral validator that consumes a signed/approved REM and evaluates:
+Implementation branch:
 
-- mandate status/expiry;
-- owner/subject/repository/base binding;
-- Roadmap and authority references;
-- capability allowlist;
-- path/target allowlist;
-- maximum risk;
+`agent/sa1-rem-validator-control-plane`
+
+Primary implementation:
+
+- `src/platform/Security/roadmapExecutionMandate.ts`;
+- `src/platform/Compliance/PolicyGate.ts`;
+- `tests/unit/roadmapExecutionMandate.test.ts`;
+- `docs/evidence/sa1/SA1_REM_VALIDATOR_EVIDENCE.md`.
+
+The validator is provider-neutral and evaluates:
+
+- strict REM structure and unknown-field rejection;
+- `OWNER_APPROVED` status and explicit approval evidence;
+- validity window / expiry;
+- exact Owner, Systemadmin agent, repository and base binding;
+- Roadmap item and authority references;
+- exact capability allowlist;
+- exact target allowlist;
+- exact-path or `prefix/**` repository path allowlist;
+- path traversal / unsafe wildcard rejection;
+- effective risk against mandate and SA1 ceiling;
 - mutation class;
-- reserved Human-only actions;
-- kill switch;
-- concurrent-scope conflicts;
-- audit correlation.
+- complete reserved Human-only mutation set;
+- self-modification of the Systemadmin trust root;
+- exact open-PR changed-file conflicts;
+- maximum number of open Systemadmin PRs;
+- CI budget / duplicate unchanged-head CI requests;
+- kill-switch availability;
+- composition with the existing M4 Agent IAM.
 
-Required negative tests:
+### SA1 hard boundary
 
-- expired/revoked mandate DENY;
-- wrong agent/repository/target/path DENY;
-- missing capability DENY;
-- risk above mandate DENY;
-- self-expansion DENY;
-- MERGE DENY;
-- reserved Owner action DENY;
-- kill switch DENY.
+SA1 may authorize only:
+
+`READ, ANALYZE, PLAN, BRANCH, COMMIT, PR, CI_REQUEST`
+
+The following remain technically DENY even if a malicious or over-broad REM tries to include them:
+
+- `MERGE`;
+- `DEPLOY_REQUEST`;
+- `PRODUCTION_MUTATION`;
+- `CRITICAL` execution;
+- any reserved Human/Owner mutation class;
+- changes to the Systemadmin agent's own authority/control-plane files.
+
+### SA1 validation
+
+Pre-PR isolated checks completed:
+
+- TypeScript compile of `agentIam.ts + roadmapExecutionMandate.ts`: PASS;
+- functional security harness: PASS;
+- negative checks covered expiry, identity mismatch, MERGE, deploy/production, traversal, out-of-scope path, self-authority mutation, concurrent-writer overlap, PR limit, CI budget/redundant CI and reserved mutation classes.
+
+The isolated validation environment used Node 22 and TypeScript 5.8.x; repository-required Node 24/full dependency graph remains for normal GitHub CI. The PR is not SA1 `VERIFIED PASS` until repository CI passes on the final reviewed head.
+
+### SA1 exit gate
+
+SA1 becomes complete only when:
+
+1. current-head Human/Owner review is complete;
+2. required Class C/R scope checks and `build-and-test` pass;
+3. the SA1 PR is Human-merged into `main`;
+4. the merged work branch is deleted;
+5. no external production mutation occurred.
 
 ## SA2 — Chat execution profile
 
-**Status: BLOCKED BY SA1**
+**Status: BLOCKED BY SA1 VERIFIED PASS**
 
 Enable the logical agent id `capital-ai-systemadmin-roadmap-executor` in supported execution clients.
 
@@ -154,4 +189,4 @@ Every work package gets a fresh branch. After successful merge into Finance the 
 
 The Systemadmin roadmap is cross-cutting. It does not bypass M5A–M10 sequencing or mark blocked phases as complete. It changes **who may execute an already authorized Roadmap work package**, not the acceptance criteria of that work package.
 
-The first practical use should be a repository-only implementation package after SA0–SA3 are verified. Production mutation remains blocked until both technical REM enforcement and strong Owner approval assurance exist.
+SA1 performs no Supabase, Stripe, Render, billing, deployment or other production mutation. SA2 remains blocked until SA1 reaches `VERIFIED PASS`.

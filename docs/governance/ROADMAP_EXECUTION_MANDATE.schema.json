@@ -12,6 +12,7 @@
     "repository",
     "baseBranch",
     "roadmapItems",
+    "authorityRefs",
     "allowedCapabilities",
     "allowedPaths",
     "allowedTargets",
@@ -54,9 +55,9 @@
     },
     "authorityRefs": {
       "type": "array",
+      "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 },
-      "default": []
+      "items": { "type": "string", "minLength": 1 }
     },
     "allowedCapabilities": {
       "type": "array",
@@ -80,13 +81,16 @@
       }
     },
     "allowedPaths": {
+      "description": "Exact repository paths or one suffix-prefix form path/**. Other glob syntax, absolute paths and traversal segments are invalid at runtime.",
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 }
     },
     "allowedTargets": {
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 }
     },
     "maxRiskClass": {
@@ -104,6 +108,7 @@
       }
     },
     "prohibitedMutationClasses": {
+      "description": "The SA1 runtime additionally requires the complete canonical reserved-action set; omission is fail-closed.",
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
@@ -154,16 +159,29 @@
     "requiredPreflight": {
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 }
     },
     "requiredEvidence": {
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 }
     },
     "approvalEvidenceRef": {
       "type": "string",
       "minLength": 1
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "OWNER_APPROVED" } },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["approvalEvidenceRef"]
+      }
+    }
+  ]
 }
