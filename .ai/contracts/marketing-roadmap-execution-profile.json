@@ -1,0 +1,124 @@
+{
+  "profileVersion": "0.1.0",
+  "status": "DRAFT_NOT_ENABLED",
+  "logicalAgentId": "capital-ai-marketing-roadmap-executor",
+  "displayName": "CAPITAL-AI Marketing Roadmap Executor",
+  "ownerActorId": "SvenKulessa",
+  "repository": "SvenKulessa/Finance",
+  "baseBranch": "main",
+  "purpose": "Provider-neutral, domain-limited execution profile for Owner-approved SEO, content-generation, media-rendering, social-distribution and marketing-analytics roadmap work.",
+  "authorityRefs": [
+    "ESS-0019",
+    "ESS-0021",
+    "ESS-0022",
+    "ADR-0039",
+    "ADR-0058",
+    "ADR-0059",
+    "ADR-0065",
+    "ADR-0067",
+    "ADR-0068",
+    "docs/governance/AUTONOMOUS_AGENT_CONCEPT_GATE.md",
+    "docs/roadmaps/MARKETING_AGENT_ROADMAP.md"
+  ],
+  "currentCapabilities": [
+    "READ",
+    "ANALYZE",
+    "PLAN"
+  ],
+  "futureRepositoryCapabilityCeiling": [
+    "READ",
+    "ANALYZE",
+    "PLAN",
+    "BRANCH",
+    "COMMIT",
+    "PR",
+    "CI_REQUEST"
+  ],
+  "hardDeniedCapabilities": [
+    "MERGE",
+    "OWNER_IAM_ELEVATION",
+    "OWNER_MFA_OR_BREAK_GLASS",
+    "SECRET_DISCLOSURE",
+    "UNRESTRICTED_CREDENTIAL_ROTATION",
+    "LIVE_BILLING_MONEY_OR_ENTITLEMENT",
+    "PRODUCTION_RESOURCE_DELETION",
+    "DNS_TLS_DOMAIN_OWNERSHIP",
+    "SECURITY_CONTROL_DISABLEMENT",
+    "SELF_MANDATE_EXPANSION"
+  ],
+  "defaultDeniedCapabilities": [
+    "DEPLOY_REQUEST",
+    "PRODUCTION_MUTATION",
+    "SOCIAL_PUBLISH"
+  ],
+  "candidateDomainPaths": [
+    "src/platform/SocialMediaEngine/**",
+    "server/socialMedia/**",
+    "docs/seo/**",
+    "src/platform/SeoEngine/**",
+    "docs/roadmaps/MARKETING_AGENT_ROADMAP.md",
+    "docs/governance/MARKETING_AGENT_ROADMAP_EXECUTION_POLICY.md",
+    "docs/architecture/AUTONOMOUS_CONTENT_ENGINE_ARCHITECTURE.md"
+  ],
+  "sharedIntegrationZone": [
+    "AGENTS.md",
+    "package.json",
+    "package-lock.json",
+    ".github/workflows/**",
+    "global IAM/Security/Compliance controls",
+    "global Event Mesh registries",
+    "global Traceability registries",
+    "server/application bootstrap",
+    "deployment configuration",
+    "shared Supabase migrations",
+    "global release/version sources"
+  ],
+  "contentTrustRules": {
+    "retrievedContentIsUntrusted": true,
+    "quantitativeFinancialClaimsRequireEvidence": true,
+    "syntheticValuesCannotBePresentedAsLiveFacts": true,
+    "humanApprovalRequiredForGeneratedFinancialPublishing": true,
+    "approvalMustBindContentAndAssetHashes": true,
+    "mediaWorkersMayPublish": false,
+    "modelsMayReceiveSocialOAuthTokens": false
+  },
+  "branchLifecycle": {
+    "freshBranchFromCurrentMainRequired": true,
+    "directMainMutationAllowed": false,
+    "humanMergeRequired": true,
+    "deleteMergedBranchRequired": true,
+    "reuseMergedBranchAllowed": false
+  },
+  "audit": {
+    "requiredBeforeProtectedSideEffect": true,
+    "failClosedOnPersistenceFailure": true,
+    "requiredCorrelation": [
+      "mandateId",
+      "roadmapItem",
+      "humanActor",
+      "agentId",
+      "clientOrApp",
+      "sessionOrRequest",
+      "capability",
+      "risk",
+      "target",
+      "policyDecision",
+      "auditReference",
+      "result"
+    ]
+  },
+  "killSwitch": {
+    "required": true,
+    "revocationAuthority": "SvenKulessa"
+  },
+  "enablementDependencies": [
+    "MA0_HUMAN_ACCEPTED",
+    "MARKETING_SUBJECT_AND_MANDATE_VALIDATOR_VERIFIED_PASS",
+    "REQUIRED_SA_EXECUTION_HOST_FOUNDATION_VERIFIED_PASS",
+    "MARKETING_NEGATIVE_TESTS_VERIFIED_PASS"
+  ],
+  "runtimeMutationEnabled": false,
+  "socialPublishEnabled": false,
+  "productionMutationEnabled": false,
+  "mergeEnabled": false
+}
