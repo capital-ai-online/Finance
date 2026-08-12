@@ -2,7 +2,7 @@
 
 Status date: 2026-08-12
 Baseline branch: `main`
-Baseline commit: `af88fcdfbc0d6b4a466ce734c0787ad0b6277dd8` (PR #208 merge)
+Baseline commit: `e39d5370d8b1498e84952535a38a339cc200082f` (PR #210 merge)
 Platform version: `0.6.0`
 Canonical role: current-state DevelopmentChain status index. Historical detail remains in ADR/evidence documents.
 
@@ -60,7 +60,7 @@ The next phase remains blocked until every required mutation/test is documented 
 ## Platform mutation schedule
 | Platform | Roadmap point | Allowed scope | Gate before next phase |
 |---|---|---|---|
-| Supabase | M5 Observability/Telemetry/Audit | approved audit/telemetry persistence and policy-bound evidence | baseline → mutation → RLS/permission/append-only tests → redacted write/read → advisor → evidence |
+| Supabase | M5 Observability/Telemetry/Audit | approved audit/telemetry persistence and policy-bound evidence | **COMPLETE / VERIFIED PASS** |
 | Supabase Auth | M5A MFA/TOTP Hardening | TOTP enrollment/challenge/verify, AAL2 enforcement for privileged flows, recovery/backup-factor handling; no unrelated auth mutation | repo/config baseline → Owner approval → TOTP/AAL2 mutation/configuration where required → positive/negative auth tests → evidence |
 | Stripe | M7 only when explicitly named by dedicated ADR/runbook | specific billing/webhook/credential mutation only; no generic authorization | test-mode/non-destructive checks where possible → mutation → webhook/idempotency/mapping verification → rollback/revocation evidence |
 | Render | M7 Deployment Identity | protected deployment identity, environment-scoped credentials/hooks, rotation/revocation | preflight → mutation → controlled deploy → health/readiness → rollback evidence |
@@ -80,14 +80,17 @@ The next phase remains blocked until every required mutation/test is documented 
 - PR #204 consolidated CI to one `build-and-test` job and established PR check classes.
 - PR #206 approved the M5 persistence design and classified the Supabase mutation as REQUIRED.
 - PR #207 merged the verified M5 Supabase mutation evidence and repository synchronization.
-- PR #208 merged the M5A TOTP/AAL2 roadmap gate and the single robust PR-body CI trigger; current baseline is `af88fcdfbc0d6b4a466ce734c0787ad0b6277dd8`.
-- Production Supabase migrations `20260811230540_m5_agent_audit_events` and `20260811230743_m5_agent_audit_events_least_privilege` are applied and verified.
+- PR #208 merged the M5A TOTP/AAL2 roadmap gate and the single robust PR-body CI trigger.
+- PR #210 merged the M5 application audit integration at `e39d5370d8b1498e84952535a38a339cc200082f`.
+- PR #210 final head `ffeab08c218314edd5292fbaf5ccb77413cee80e` passed required CI run #892 (`31559124198`).
+- Final M5 checks PASS: Human-/Owner gate, repository integrity, dependency audit, TypeScript, unit tests, production build/predeploy, Docker hardening and production image verification.
+- Production Supabase migrations `20260811230540_m5_agent_audit_events` and `20260811230743_m5_agent_audit_events_least_privilege` remain applied and verified.
 - `public.agent_audit_events` is RLS-enabled, append-only and deny-by-default for `anon`/`authenticated`; `service_role` has only `SELECT` + `INSERT`.
 - Synthetic redacted audit event write/read passed; UPDATE and DELETE negative tests fail closed.
-- Supabase Security Advisor shows no M5-created critical finding. The `RLS Enabled No Policy` INFO is intentional for the policyless deny-by-default audit table.
-- M5 application integration is now **IN REVIEW** on `agent/m5-audit-writer-e2e`: server-side writer, durable audited PolicyGate adapter, redaction/omission controls and unit/negative tests are implemented.
-- This M5 application substep requires **NO NEW SUPABASE MUTATION**; it consumes the already verified audit table.
-- Supabase Auth MFA/TOTP hardening remains the required M5A follow-up after M5 application integration reaches `VERIFIED PASS`.
+- M5 application integration uses the server-side audited PolicyGate adapter, validated redaction/omission and append-only authorization/outcome correlation.
+- M5 application substep required **NO NEW SUPABASE MUTATION**.
+- M5 is **COMPLETE / VERIFIED PASS** subject only to merging this post-merge documentation synchronization.
+- M5A Supabase Auth MFA/TOTP hardening is the next phase; its first step is read-only baseline only.
 - Leaked Password Protection remains plan-dependent (Pro+) and is not a blocker for M5A TOTP completion.
 - CoinMarketCap remains removed/deactivated.
 - Kraken remains public REST evidence only.
@@ -101,9 +104,9 @@ The next phase remains blocked until every required mutation/test is documented 
 | M2G Documentation Freeze | COMPLETE | PR #192/#194 | freeze verification | sequential implementation |
 | M3 CI Hardening | COMPLETE | ADR-0053/0060 + PR #195/#196/#204/#208 | one `build-and-test`, review → checkbox final trigger, risk-based fast/full path | preserve single-trigger behavior |
 | M4 Agent IAM | COMPLETE | ADR-0050/0051/0058 + ESS-0018/0019 + PR #198/#202 | negative IAM tests + Owner gate; no live external mutation | preserve |
-| M5 Observability/Telemetry/Audit | IN PROGRESS — PERSISTENCE VERIFIED / APP INTEGRATION IN REVIEW | ADR-0056/0059 + PR #206/#207 + M5 evidence | persistence `VERIFIED PASS`; app writer/audited PolicyGate/redaction/E2E tests must PASS; no new DB mutation required | M5A blocked until final M5 app PR PASS/merge |
-| M5A Supabase MFA/TOTP Hardening | PLANNED / BLOCKED BY M5 APP INTEGRATION | Supabase Auth MFA guidance + existing IAM/Step-up ADRs; dedicated remediation evidence/ADR update if architecture changes | verify current TOTP flow/config → Owner approve → enroll/challenge/verify + AAL2 enforcement mutation/config → positive/negative tests → recovery evidence | M6 blocked until M5A `VERIFIED PASS`; Leaked Password Protection remains Pro+ deferred |
-| M6 Supply Chain | BLOCKED BY M5 + M5A | ADR-0060 | SBOM/provenance/attestation tests | authorize only after M5 and M5A COMPLETE |
+| M5 Observability/Telemetry/Audit | **COMPLETE — VERIFIED PASS** | ADR-0056/0059 + PR #206/#207/#210 + M5 evidence | persistence `VERIFIED PASS`; app integration `VERIFIED PASS`; app mutation `NOT REQUIRED` | merge post-merge sync, then start M5A read-only baseline |
+| M5A Supabase MFA/TOTP Hardening | **PLANNED — UNBLOCKED AFTER M5 SYNC MERGE** | Supabase Auth guidance + existing IAM/Step-up ADRs; dedicated remediation evidence/ADR update if architecture changes | verify current TOTP flow/config read-only → Owner approve → enroll/challenge/verify + AAL2 enforcement mutation/config if required → positive/negative tests → recovery evidence | M6 blocked until M5A `VERIFIED PASS`; Leaked Password Protection remains Pro+ deferred |
+| M6 Supply Chain | BLOCKED BY M5A | ADR-0060 | SBOM/provenance/attestation tests | authorize only after M5A COMPLETE |
 | M7 Deployment Identity + Production Platform Mutation Gate | BLOCKED BY M6 | ADR-0061 + platform ADR/runbooks | Render required when design demands it; Stripe/Supabase only when explicitly named | M8 blocked until all M7 PASS |
 | M8 Agent Cutover | BLOCKED BY M7 | ADR-0062 | approved privileged execution-client cutover; read-only daily agents remain exception | M9 after cutover PASS |
 | M9 Assurance | BLOCKED BY M8 | ADR-0063 | injection/replay/exfiltration/kill-switch/break-glass/rollback drills | M10 after assurance PASS |
@@ -125,21 +128,27 @@ Verified production facts:
 - DELETE negative test = DENIED (`append-only`);
 - no rollback required.
 
-## M5 application integration gate
-Authority while in review: `docs/evidence/m5/M5_APP_AUDIT_INTEGRATION_EVIDENCE.md`.
+## M5 application integration — final evidence
+Authority: `docs/evidence/m5/M5_APP_AUDIT_INTEGRATION_EVIDENCE.md`.
 
-Implemented on the review branch:
+Verified implementation:
 1. server-side `agent_audit_events` writer using the existing privileged server Supabase client;
-2. reuse of Telemetry secret/PII redaction before INSERT;
+2. Telemetry secret/PII redaction before INSERT;
 3. explicit omission of full prompts, full diffs and raw request/response bodies;
-4. request/trace/actor/app/agent/capability/risk/policy/approval/tool/repository/PR/CI/runtime mapping;
+4. request/trace/actor/app/agent/capability/risk/policy/approval/tool/repository/PR/CI/artifact/deployment/runtime mapping;
 5. `auditReference` returned from the durable writer;
 6. provider-neutral PolicyGate composed with durable audit persistence in a server-only adapter;
-7. unit/negative tests for redaction, omission, correlation and persistence fail-closed behavior.
+7. terminal outcome persisted as a second append-only correlated event;
+8. unit/negative tests for redaction, omission, correlation, denied-outcome prevention and persistence fail-closed behavior;
+9. typed Supabase insert mock fixed the prior TS2493 compile failure;
+10. final required CI run #892 passed all application and runtime checks.
 
-Mutation state for this substep: **NOT REQUIRED** — the existing verified Supabase schema is sufficient.
+Mutation state for this substep: **NOT REQUIRED** — the existing verified Supabase schema was sufficient.
 
-M5 application integration becomes `VERIFIED PASS` only after final Owner review, the single `build-and-test` succeeds, the branch is merged, and ROADMAP/ADR/evidence are synchronized to the merge SHA. Only then may M5A begin.
+Final merge evidence:
+- PR #210 head: `ffeab08c218314edd5292fbaf5ccb77413cee80e`;
+- merge SHA: `e39d5370d8b1498e84952535a38a339cc200082f`;
+- CI run: `31559124198` / #892 — **VERIFIED PASS**.
 
 ## M5A Supabase MFA/TOTP acceptance criteria
 1. Read-only assessment proves the current application TOTP enrollment/login/step-up path and current Supabase Auth configuration.
@@ -180,4 +189,4 @@ M5 application integration becomes `VERIFIED PASS` only after final Owner review
 - every DevelopmentChain phase updates ROADMAP + traceability + affected ADR/ESS.
 
 ## Next action
-Human-review and validate the M5 application audit integration PR. No Supabase mutation is required for this substep. After its `build-and-test` and audit-specific tests are `VERIFIED PASS` and the PR is merged, close M5 and execute the read-only M5A TOTP/AAL2 baseline before any Supabase Auth mutation. M6 remains blocked until both M5 and M5A are complete.
+Merge this documentation-only M5 post-merge synchronization after Human/Owner review. Then start **M5A Supabase MFA/TOTP/AAL2** with a read-only repository and Supabase Auth baseline. No Supabase Auth mutation is authorized until the baseline establishes the exact need and a separate Human/Owner approval is recorded. M6 remains blocked until M5A is `VERIFIED PASS`.

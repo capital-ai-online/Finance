@@ -1,6 +1,6 @@
 # ADR-0059 — Agent Execution Audit and OpenTelemetry Correlation
 
-Status: ACCEPTED — PERSISTENCE VERIFIED / APPLICATION INTEGRATION IN REVIEW
+Status: ACCEPTED — VERIFIED PASS
 Date: 2026-08-11
 Last updated: 2026-08-12
 
@@ -29,7 +29,7 @@ Security Audit Evidence:
 
 Read-only repository and production-schema assessment on 2026-08-12 found that existing `audit_logs_iam`, `iam_access_log` and `agent_action_approvals` did not carry the full ADR-0059 correlation contract. No dedicated agent execution audit table existed.
 
-Therefore the M5 Supabase mutation was classified **REQUIRED** and has now been executed after Human/Owner approval of PR #206.
+Therefore the M5 Supabase mutation was classified **REQUIRED** and was executed after Human/Owner approval of PR #206.
 
 Production target: `public.agent_audit_events` in Supabase project `AIFINANCIAL` (`ryzywoktpmyhwzxmstyu`).
 
@@ -41,18 +41,19 @@ The table is append-only, RLS-enabled and deny-by-default for `anon`/`authentica
 
 ## Application integration decision
 
-The remaining M5 application integration is implemented as a server-only adapter and requires **no additional Supabase mutation**:
+The M5 application integration is implemented as a server-only adapter and requires **no additional Supabase mutation**:
 
 - `server/agentAudit/agentAuditWriter.ts` is the single durable writer for `agent_audit_events`;
 - the writer reuses `src/platform/Telemetry/redaction.ts` for secret/PII redaction;
 - complete prompts, complete diffs and raw request/response bodies are omitted before persistence;
 - `server/agentAudit/authorizedAgentExecution.ts` composes the existing provider-neutral PolicyGate with durable audit persistence;
 - persistence returns an `auditReference` suitable for operational telemetry correlation;
+- terminal `SUCCESS`/`ERROR` is persisted as a second append-only event correlated to the authorization evidence;
 - persistence errors propagate and therefore fail closed instead of silently producing an unaudited authorization result.
 
 The existing synchronous `evaluateAgentPolicy()` remains unchanged for compatibility. Server-side agent execution that requires ADR-0059 evidence must use the audited adapter.
 
-Evidence authority while in review: `docs/evidence/m5/M5_APP_AUDIT_INTEGRATION_EVIDENCE.md`.
+Final application evidence authority: `docs/evidence/m5/M5_APP_AUDIT_INTEGRATION_EVIDENCE.md`.
 
 ## Security
 
@@ -65,6 +66,7 @@ Evidence authority while in review: `docs/evidence/m5/M5_APP_AUDIT_INTEGRATION_E
 7. Operational telemetry retention/sampling MUST NOT delete or weaken required audit evidence.
 8. Provider/model metadata is recorded for provenance only and never grants authority.
 9. Application audit persistence failure is fail-closed for the audited server execution path.
+10. Only syntactically valid `supabase:agent_audit_events:<id>` references may bypass generic authorization-key redaction; tokens/headers and malformed values remain redacted.
 
 ## Verified production persistence evidence
 
@@ -80,25 +82,32 @@ Evidence authority: `docs/evidence/m5/M5_SUPABASE_AGENT_AUDIT_MUTATION_EVIDENCE.
 
 The Advisor's `RLS Enabled No Policy` INFO is intentional for this deny-by-default table. Existing Auth warnings for leaked-password protection and MFA are independent of M5 and tracked under M5A.
 
-## Remaining M5 gate
+## M5 closure evidence
 
-M5 is not complete yet. The application implementation now exists on the M5 review branch, but before M5 can be declared `VERIFIED PASS` the Human-reviewed PR must prove:
-1. server-side writer uses the existing privileged server Supabase path;
-2. prohibited payload classes are omitted/redacted before persistence;
-3. request/trace/actor/app/agent/capability/risk/policy/approval/tool/repository/PR/CI/runtime correlation is mapped correctly;
-4. `auditReference` is returned to the caller for operational telemetry correlation;
-5. unit and negative fail-closed tests pass;
-6. an audited authorization can be reconstructed without exposing secrets;
-7. the merged Roadmap/ADR/evidence reference the final merge SHA.
+PR #210 completed the application integration and was merged on 2026-08-12.
+
+- final PR head: `ffeab08c218314edd5292fbaf5ccb77413cee80e`;
+- merge commit: `e39d5370d8b1498e84952535a38a339cc200082f`;
+- required CI run #892 / run id `31559124198`: **PASS**;
+- Human-/Owner gate: **PASS**;
+- TypeScript/lint: **PASS**;
+- unit tests including audit-specific negative tests: **PASS**;
+- production build/predeploy: **PASS**;
+- Docker hardening and production image verification: **PASS**;
+- application substep external mutation: **NOT REQUIRED**.
+
+The prior TS2493 failure in `tests/unit/agentAudit.test.ts` was fixed before the final PASS by typing the Supabase insert mock with its actual payload argument.
 
 ## Rollback
 
 No rollback was required for the persistence mutation because all mandatory post-mutation checks passed.
 
-For the application integration, rollback is code-only: disable/revert the audited adapter while preserving all previously persisted audit evidence. No schema rollback is authorized by this PR.
+For the application integration, rollback is code-only: disable/revert the audited adapter while preserving all previously persisted audit evidence. No schema rollback is authorized by this ADR.
 
 After productive audit evidence exists, destructive database rollback is forbidden without separate Human/Owner approval. Writers are disabled first and evidence preserved before any schema remediation.
 
 ## Verification
 
-M5 is complete only when the application PR's required `build-and-test` and audit-specific tests are PASS, the final Human/Owner review is valid, and both persistence and application integration evidence are `VERIFIED PASS`.
+M5 persistence and application integration are both **VERIFIED PASS**. ADR-0059 is therefore complete for M5 once the post-merge ROADMAP/traceability synchronization referencing `main@e39d5370d8b1498e84952535a38a339cc200082f` is merged.
+
+M5A Supabase MFA/TOTP/AAL2 may begin with its read-only baseline only after that synchronization is present on `main`. No Supabase Auth mutation is authorized by this ADR.

@@ -3,7 +3,7 @@
 > Legacy filename retained for stable references.
 
 Status: IMPLEMENTATION PHASE
-Baseline: `main@af88fcdfbc0d6b4a466ce734c0787ad0b6277dd8` (PR #208 merge)
+Baseline: `main@e39d5370d8b1498e84952535a38a339cc200082f` (PR #210 merge)
 
 ## Global execution rule
 Every phase that contains a platform mutation follows:
@@ -39,7 +39,7 @@ The review itself does not start expensive CI. The final PR-body checkbox edit t
 Mutation state: **NOT REQUIRED** for Stripe/Supabase/Render.
 
 ## M5 — Observability / Telemetry / Audit
-**IN PROGRESS — PERSISTENCE VERIFIED / APPLICATION INTEGRATION IN REVIEW.**
+**COMPLETE — VERIFIED PASS.**
 
 ### M5 persistence
 Production Supabase audit authority `public.agent_audit_events` is **VERIFIED PASS**:
@@ -55,50 +55,47 @@ Applied migrations:
 - `20260811230743_m5_agent_audit_events_least_privilege`
 
 ### M5 application integration
-Current review branch: `agent/m5-audit-writer-e2e`.
-
-Implemented scope:
+PR #210 implemented and merged the remaining application scope:
 1. backend-only `agent_audit_events` writer using the existing privileged server Supabase path;
 2. reuse of canonical Telemetry secret/PII redaction;
 3. explicit omission of full prompts, full diffs and raw request/response bodies;
-4. provider-neutral PolicyGate decision persisted as an immutable authorization event;
+4. provider-neutral PolicyGate decision persisted as immutable authorization evidence;
 5. `auditReference` returned for operational telemetry correlation;
-6. terminal `SUCCESS`/`ERROR` recorded as a **second append-only outcome event**, linked to the authorization `auditReference` rather than updating prior evidence;
+6. terminal `SUCCESS`/`ERROR` recorded as a second append-only outcome event linked to the authorization evidence;
 7. request/trace/actor/app/agent/capability/risk/policy/approval/tool/repository/PR/CI/artifact/deployment/runtime mapping;
-8. unit/negative tests for redaction, omission, correlation, denied-outcome prevention and persistence fail-closed behavior.
+8. unit/negative tests for redaction, omission, correlation, denied-outcome prevention and persistence fail-closed behavior;
+9. validated audit-reference handling so only `supabase:agent_audit_events:<id>` correlation identifiers bypass generic authorization-key redaction.
 
-Mutation state for this substep: **NOT REQUIRED**. No new Supabase/Stripe/Render mutation is authorized or needed.
+Mutation state for the application substep: **NOT REQUIRED**. No new Supabase/Stripe/Render mutation was performed.
 
-Because `server/**` is runtime-relevant under current CI scope rules, this PR is **Check Class R** and must run the existing Docker/runtime verification in addition to application checks.
+Final evidence:
+- PR #210 final head: `ffeab08c218314edd5292fbaf5ccb77413cee80e`;
+- merge commit: `e39d5370d8b1498e84952535a38a339cc200082f`;
+- required CI run #892 / `31559124198`: **PASS**;
+- TypeScript, unit tests, production build/predeploy, Docker hardening and production image verification: **PASS**.
 
-M5 exit gate:
-- current-head Owner review and final checkbox trigger;
-- one `build-and-test` PASS;
-- audit-specific unit/negative tests PASS;
-- production build/runtime checks PASS;
-- merge after explicit Human instruction;
-- post-merge ROADMAP/ADR/evidence sync to final SHA.
-
-Only then is M5 `COMPLETE` and M5A authorized.
+M5 exit gate is fulfilled. This post-merge synchronization records the final SHA and evidence on the canonical documentation set.
 
 ## M5A — Supabase TOTP MFA / AAL2 Hardening
-**PLANNED — BLOCKED BY M5.**
+**PLANNED — UNBLOCKED AFTER THIS M5 POST-MERGE SYNC IS MERGED.**
 
 Required sequence:
-1. read-only inventory of application TOTP enroll/challenge/verify flow and Supabase Auth settings;
-2. determine exact mutation/config need;
+1. read-only inventory of application TOTP enroll/challenge/verify flow and current Supabase Auth settings;
+2. determine exact mutation/configuration need;
 3. Human/Owner approval before any Supabase Auth mutation;
 4. privileged Owner/admin operations require verified `aal2`; `aal1` fails closed;
 5. invalid/expired TOTP, missing factor, stale session and mismatched challenge fail closed;
 6. server/API authorization verifies trusted session/JWT/AAL context, never UI state alone;
 7. recovery/factor-reset path is Owner-controlled and audited;
-8. rerun Security Advisor after mutation/configuration;
+8. rerun Security Advisor after any mutation/configuration;
 9. positive/negative tests and redacted evidence must be `VERIFIED PASS`.
 
 Leaked Password Protection: **DEFERRED — PLAN DEPENDENCY / PRO+** and not a blocker while unavailable on the current plan.
 
+No Supabase Auth mutation is authorized by this M5 closure PR. The first M5A action is read-only assessment only.
+
 ## M6 — Supply Chain
-**BLOCKED BY M5 + M5A.**
+**BLOCKED BY M5A.**
 
 Scope: SBOM, provenance and attestations bound to source/artifact digests. No implicit external-platform mutation.
 
