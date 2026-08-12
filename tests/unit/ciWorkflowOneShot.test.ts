@@ -48,7 +48,15 @@ describe('CI one-shot build-and-test contract', () => {
     expect(yaml).toContain('.name == "build-and-test" and .conclusion == "success"');
   });
 
-  it('runs the required build-and-test job for fresh authorization or verified evidence reuse', () => {
+  it('keeps primary full-test evidence distinct from evidence-reuse jobs', () => {
+    const yaml = workflow();
+    expect(yaml).toContain("name: ${{ needs.owner-gate.outputs.reused == 'true' && 'build-and-test – Evidence-Reuse' || 'build-and-test' }}");
+    expect(yaml).toContain('.name == "build-and-test" and .conclusion != "skipped"');
+    expect(yaml).toContain('Evidence-Reuse-Jobs');
+    expect(yaml).toContain('können nie selbst zur Primär-Evidence werden');
+  });
+
+  it('runs the required CI job for fresh authorization or verified evidence reuse', () => {
     const yaml = workflow();
     expect(yaml).toContain("needs.owner-gate.outputs.approved == 'true' || needs.owner-gate.outputs.reused == 'true'");
     expect(yaml).toContain("needs.owner-gate.outputs.reused != 'true'");
