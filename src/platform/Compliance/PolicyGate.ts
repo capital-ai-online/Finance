@@ -1,6 +1,7 @@
 // ESS-0018 Phase 2 / ADR-0051: Compliance's policy-verdict surface for governed agent actions.
 // M4 / ESS-0019 / ADR-0058 adds a provider-neutral Agent IAM layer above the existing
 // tool-specific allowlists. Provider/model names remain metadata and never grant authority.
+// SA1 / ESS-0021 / ADR-0065 adds a separate, bounded REM layer for the Systemadmin profile.
 
 import { CAPABILITIES, type Capability, isKnownCapability } from '../Security/capabilities';
 import {
@@ -8,6 +9,11 @@ import {
   type AgentAuthorizationDecision,
   type AgentAuthorizationRequest,
 } from '../Security/agentIam';
+import {
+  evaluateSystemadminRoadmapAuthorization,
+  type SystemadminRoadmapAuthorizationDecision,
+  type SystemadminRoadmapAuthorizationRequest,
+} from '../Security/roadmapExecutionMandate';
 
 export interface PolicyVerdict {
   verdict: 'ALLOW' | 'DENY';
@@ -53,4 +59,18 @@ export function evaluateWritePolicy(capability: string): PolicyVerdict {
  */
 export function evaluateAgentPolicy(request: Readonly<AgentAuthorizationRequest>): AgentAuthorizationDecision {
   return evaluateAgentAuthorization(request);
+}
+
+/**
+ * Canonical SA1 entry point for the Systemadmin Roadmap Executor.
+ *
+ * This does not replace evaluateAgentPolicy. The REM validator first restricts the action to an
+ * Owner-approved roadmap/path/target/risk scope and then composes with the unchanged M4 Agent IAM.
+ * DEPLOY_REQUEST, PRODUCTION_MUTATION, MERGE and self-modification of the Systemadmin trust root
+ * remain fail-closed in SA1.
+ */
+export function evaluateSystemadminRoadmapPolicy(
+  request: Readonly<SystemadminRoadmapAuthorizationRequest>,
+): SystemadminRoadmapAuthorizationDecision {
+  return evaluateSystemadminRoadmapAuthorization(request);
 }
