@@ -15,6 +15,17 @@ describe('Human Owner Comment Gate', () => {
     expect(gate).not.toContain('pull_request:\n');
   });
 
+  it('seeds from the trusted workflow_run payload without a PR API bootstrap dependency', () => {
+    const gate = read('.github/workflows/human-owner-comment-gate.yml');
+    const seed = gate.slice(gate.indexOf('  seed-or-reset:'), gate.indexOf('  human-verification:'));
+    expect(seed).toContain('PR_HEAD_SHA: ${{ github.event.workflow_run.pull_requests[0].head.sha }}');
+    expect(seed).toContain('PR_BASE_REF: ${{ github.event.workflow_run.pull_requests[0].base.ref }}');
+    expect(seed).not.toContain('pulls/${PR_NUMBER}');
+    expect(seed).toContain('pull-requests: write');
+    expect(seed).toContain('issues: read');
+  });
+
+
   it('partitions write permissions between comment seeding and CI dispatch', () => {
     const gate = read('.github/workflows/human-owner-comment-gate.yml');
     expect(gate).toContain('permissions: {}');
@@ -31,9 +42,11 @@ describe('Human Owner Comment Gate', () => {
     expect(seed).toContain('issues: read');
     expect(seed).toContain('contents: read');
     expect(seed).not.toContain('actions: write');
+    expect(seed).not.toContain('checks: write');
     expect(seed).not.toContain('contents: write');
 
     expect(verify).toContain('actions: write');
+    expect(verify).toContain('checks: write');
     expect(verify).toContain('pull-requests: read');
     expect(verify).toContain('issues: read');
     expect(verify).toContain('contents: read');
@@ -54,7 +67,6 @@ describe('Human Owner Comment Gate', () => {
     expect(seed).not.toContain('/reviews');
     expect(seed).not.toContain('--method PUT');
   });
-
   it('binds the human gate to owner, current head, exact review and both attestations', () => {
     const gate = read('.github/workflows/human-owner-comment-gate.yml');
     expect(gate).toContain("github.actor == 'SvenKulessa'");
@@ -67,12 +79,22 @@ describe('Human Owner Comment Gate', () => {
     expect(gate).toContain('- [x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.');
   });
 
-  it('dispatches exactly the trusted PR build workflow and prevents same-head duplicate dispatch', () => {
+  it('creates Human verification and build-and-test checks on the exact PR head', () => {
     const gate = read('.github/workflows/human-owner-comment-gate.yml');
-    expect(gate).toContain('actions/workflows/pr-build-and-test.yml/runs?event=workflow_dispatch');
-    expect(gate).toContain('select(.display_title == env.RUN_TITLE)');
+    expect(gate).toContain('checks: write');
+    expect(gate).toContain('repos/${GITHUB_REPOSITORY}/check-runs');
+    expect(gate).toContain("-f name='Human-/Owner-Verifikation'");
+    expect(gate).toContain("-f name='build-and-test'");
+    expect(gate).toContain('-f head_sha="$current_head"');
+    expect(gate).toContain('check_name=build-and-test');
+  });
+
+  it('dispatches exactly the trusted main build workflow and passes the reserved head check', () => {
+    const gate = read('.github/workflows/human-owner-comment-gate.yml');
     expect(gate).toContain('gh workflow run pr-build-and-test.yml');
     expect(gate).toContain('--ref main');
+    expect(gate).toContain('-f build_check_run_id="$BUILD_CHECK_RUN_ID"');
+    expect(gate).toContain('Kein zweiter Build');
   });
 });
 
@@ -84,13 +106,18 @@ describe('PR Build and Test dispatch', () => {
     expect(build).toContain('Human-/Owner-Evidence erneut verifizieren');
     expect(build).toContain('CAPITAL_AI_HUMAN_GATE_HEAD_SHA');
     expect(build).toContain('.commit_id == env.PR_HEAD_SHA');
+    expect(build).toContain('build_check_run_id:');
   });
 
-  it('checks out exactly the approved head with no persisted credentials', () => {
+  it('executes candidate code only in a read-only job on exactly the approved head', () => {
     const build = read('.github/workflows/pr-build-and-test.yml');
-    expect(build).toContain('ref: ${{ inputs.head_sha }}');
-    expect(build).toContain('persist-credentials: false');
-    expect(build).toContain('test "$(git rev-parse HEAD)" = "${{ inputs.head_sha }}"');
+    const executor = build.slice(build.indexOf('  build-and-test-executor:'), build.indexOf('  report-pr-head-check:'));
+    expect(executor).toContain('contents: read');
+    expect(executor).not.toContain('checks: write');
+    expect(executor).not.toContain('pull-requests: write');
+    expect(executor).toContain('ref: ${{ inputs.head_sha }}');
+    expect(executor).toContain('persist-credentials: false');
+    expect(executor).toContain('test "$(git rev-parse HEAD)" = "${{ inputs.head_sha }}"');
   });
 
   it('preserves blocking repository, build and runtime verification', () => {
@@ -103,5 +130,17 @@ describe('PR Build and Test dispatch', () => {
     expect(build).toContain('verifyProductionConfigInvariants.ts');
     expect(build).toContain('verifyDockerHardening.mjs');
     expect(build).toContain('Produktions-Docker-Container starten und /healthz prüfen');
+  });
+
+  it('reports PASS or FAIL back to the reserved build-and-test check on the PR head', () => {
+    const build = read('.github/workflows/pr-build-and-test.yml');
+    const reporter = build.slice(build.indexOf('  report-pr-head-check:'));
+    expect(reporter).toContain('checks: write');
+    expect(reporter).toContain('if: ${{ always() }}');
+    expect(reporter).toContain('.head_sha == env.EXPECTED_HEAD_SHA');
+    expect(reporter).toContain('.name == "build-and-test"');
+    expect(reporter).toContain("conclusion=success");
+    expect(reporter).toContain("conclusion=failure");
+    expect(reporter).toContain('check-runs/${BUILD_CHECK_RUN_ID}');
   });
 });
