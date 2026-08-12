@@ -73,13 +73,33 @@ describe('PR Build and Test dispatch', () => {
     expect(build).not.toMatch(/^\s*run:\s+echo\s+.*PR #/m);
   });
 
-  it('executes the full candidate suite only after fail-closed evidence validation', () => {
+  it('separates Human evidence from trusted policy validation', () => {
+    const build = read('.github/workflows/pr-build-and-test.yml');
+    expect(build).toContain('  human-owner-evidence:');
+    expect(build).toContain('  trusted-policy-preflight:');
+    expect(build).toContain('needs: [human-owner-evidence]');
+    expect(build).toContain('name: Trusted PR Policy / Baseline validieren');
+    expect(build).toContain('Policy-Preflight=${POLICY_RESULT}');
+  });
+
+  it('keeps trusted policy and candidate checkouts isolated without cross-checkout branch fetches', () => {
+    const build = read('.github/workflows/pr-build-and-test.yml');
+    expect(build).toContain('path: policy');
+    expect(build).toContain('path: candidate');
+    expect(build).toContain('fetch-depth: 0');
+    expect(build).toContain('persist-credentials: false');
+    expect(build).toContain('git cat-file -e "${PR_BASE_REF}^{commit}"');
+    expect(build).toContain('git cat-file -e "${PR_HEAD_REF}^{commit}"');
+    expect(build).not.toContain('git fetch --no-tags ../policy main:refs/remotes/origin/main');
+  });
+
+  it('executes the full candidate suite only after Human evidence and policy preflight pass', () => {
     const build = read('.github/workflows/pr-build-and-test.yml');
     expect(build).toContain('Human-/Owner-Evidence erneut verifizieren');
     expect(build).toContain('actions: read');
     expect(build).toContain('actions/workflows/pr-governance.yml/runs?event=pull_request&head_sha=${EXPECTED_HEAD_SHA}');
     expect(build).toContain('Live-PR-Body und Produktionsbaseline mit trusted-main Policy validieren');
-    expect(build).toContain('needs: [owner-evidence]');
+    expect(build).toContain('needs: [human-owner-evidence, trusted-policy-preflight]');
     expect(build).toContain('npm run repository:validate');
     expect(build).toContain('npm audit --omit=dev --audit-level=high');
     expect(build).toContain('npm test');
