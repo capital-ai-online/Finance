@@ -3,6 +3,8 @@ import { redactTelemetryValue } from '../../src/platform/Telemetry/redaction';
 
 const OMITTED = '[OMITTED]';
 const PROHIBITED_PAYLOAD_KEY = /(^|[_-])(prompt|full[_-]?prompt|diff|full[_-]?diff|raw[_-]?(body|request|response)|request[_-]?body|response[_-]?body)($|[_-])/i;
+const AUDIT_REFERENCE_KEY = 'authorizationAuditReference';
+const AUDIT_REFERENCE_VALUE = /^supabase:agent_audit_events:[A-Za-z0-9_-]+$/;
 
 export type AgentAuditDecision = 'ALLOW' | 'DENY';
 export type AgentAuditResult = 'SUCCESS' | 'DENIED' | 'ERROR' | 'PENDING';
@@ -53,10 +55,27 @@ function omitProhibitedPayloads(value: unknown, key = ''): unknown {
   return value;
 }
 
+function redactAgentAuditValue(value: unknown, key = ''): unknown {
+  if (key === AUDIT_REFERENCE_KEY) {
+    return typeof value === 'string' && AUDIT_REFERENCE_VALUE.test(value)
+      ? value
+      : '[REDACTED]';
+  }
+  if (Array.isArray(value)) return value.map(item => redactAgentAuditValue(item));
+  if (value && typeof value === 'object') {
+    const output: Record<string, unknown> = {};
+    for (const [childKey, childValue] of Object.entries(value as Record<string, unknown>)) {
+      output[childKey] = redactAgentAuditValue(childValue, childKey);
+    }
+    return output;
+  }
+  return redactTelemetryValue(value, key);
+}
+
 export function sanitizeAgentAuditMetadata(metadata?: Record<string, unknown>): Record<string, unknown> {
   if (!metadata) return {};
   const withoutPayloads = omitProhibitedPayloads(metadata) as Record<string, unknown>;
-  return redactTelemetryValue(withoutPayloads) as Record<string, unknown>;
+  return redactAgentAuditValue(withoutPayloads) as Record<string, unknown>;
 }
 
 /**
