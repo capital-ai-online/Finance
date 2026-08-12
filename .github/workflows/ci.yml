@@ -151,9 +151,9 @@ jobs:
             exit 1
           fi
 
-          # One-Shot-Reservation: Für dasselbe (PR, Head-SHA) darf höchstens ein echter
-          # Volltest-Job mit dem exakten Namen build-and-test existieren. Evidence-Reuse-Jobs
-          # tragen absichtlich einen anderen Namen und können nie selbst zur Primär-Evidence werden.
+          # One-Shot-Reservation: Nur ein build-and-test mit erfolgreich ausgeführtem Marker-Step
+          # "Primär-Volltest autorisiert" darf Primär-Evidence sein. Ein Evidence-Reuse-Lauf
+          # hat denselben stabilen Required-Check-Namen, aber der Marker bleibt dort skipped.
           prior_build="$(
             gh api --paginate \
               "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?event=pull_request&head_sha=${PR_HEAD_SHA}&per_page=100" \
@@ -163,7 +163,7 @@ jobs:
                 job="$(
                   gh api \
                     "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?filter=all&per_page=100" \
-                    --jq '.jobs[] | select(.name == "build-and-test" and .conclusion != "skipped") | [.id, .status, (.conclusion // "null")] | @tsv' \
+                    --jq '.jobs[] | select(.name == "build-and-test" and .conclusion != "skipped" and any(.steps[]?; .name == "Primär-Volltest autorisiert" and .conclusion == "success")) | [.id, .status, (.conclusion // "null")] | @tsv' \
                     | head -n 1
                 )"
                 if [ -n "$job" ]; then
@@ -182,19 +182,19 @@ jobs:
             case "$prior_conclusion" in
               success)
                 echo "reused=true" >> "$GITHUB_OUTPUT"
-                echo "One-Shot erfüllt: build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} ist bereits erfolgreich."
-                echo "Evidence: run=${prior_run_id}, job=${prior_job_id}. Der Evidence-Reuse-Job verifiziert diese Primär-Evidence erneut."
+                echo "One-Shot erfüllt: Primär-build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} ist bereits erfolgreich."
+                echo "Evidence: run=${prior_run_id}, job=${prior_job_id}. Der Required Job verifiziert diese Primär-Evidence erneut."
                 exit 0
                 ;;
               null)
                 echo "reused=false" >> "$GITHUB_OUTPUT"
-                echo "One-Shot reserviert: build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} ist bereits ${prior_status}." >&2
+                echo "One-Shot reserviert: Primär-build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} ist bereits ${prior_status}." >&2
                 echo "Der doppelte Metadaten-Run bleibt absichtlich nicht grün, solange der reservierende Volltest noch keine SUCCESS-Evidence besitzt." >&2
                 exit 1
                 ;;
               *)
                 echo "reused=false" >> "$GITHUB_OUTPUT"
-                echo "One-Shot verbraucht: vorheriger build-and-test endete mit ${prior_conclusion}." >&2
+                echo "One-Shot verbraucht: vorheriger Primär-build-and-test endete mit ${prior_conclusion}." >&2
                 echo "Evidence: run=${prior_run_id}, job=${prior_job_id}." >&2
                 echo "Ein Retry auf demselben Head ist nicht erlaubt; ein neuer Commit/Head ist erforderlich." >&2
                 exit 1
@@ -206,10 +206,10 @@ jobs:
           echo "reused=false" >> "$GITHUB_OUTPUT"
           echo "evidence_run_id=" >> "$GITHUB_OUTPUT"
           echo "evidence_job_id=" >> "$GITHUB_OUTPUT"
-          echo "Owner-Gate erfüllt und One-Shot frei. Genau ein build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} darf starten."
+          echo "Owner-Gate erfüllt und One-Shot frei. Genau ein Primär-build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} darf starten."
 
   build-and-test:
-    name: ${{ needs.owner-gate.outputs.reused == 'true' && 'build-and-test – Evidence-Reuse' || 'build-and-test' }}
+    name: build-and-test
     needs: [owner-gate]
     if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.approved == 'true' || needs.owner-gate.outputs.reused == 'true' }}
     runs-on: ubuntu-latest
@@ -234,10 +234,14 @@ jobs:
             | grep -qx "$EVIDENCE_RUN_ID"
 
           gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${EVIDENCE_JOB_ID}" \
-            --jq '. as $job | select(.name == "build-and-test" and .conclusion == "success") | .id' \
+            --jq '. as $job | select(.name == "build-and-test" and .conclusion == "success" and any(.steps[]?; .name == "Primär-Volltest autorisiert" and .conclusion == "success")) | .id' \
             | grep -qx "$EVIDENCE_JOB_ID"
 
           echo "Volltest-Evidence wiederverwendet und API-/SHA-head-genau verifiziert: PR #${PR_NUMBER}@${PR_HEAD_SHA}, run=${EVIDENCE_RUN_ID}, job=${EVIDENCE_JOB_ID}."
+
+      - name: Primär-Volltest autorisiert
+        if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.reused != 'true' }}
+        run: echo "Primär-Volltest für den aktuellen Commit ist autorisiert; dieser Marker unterscheidet echte Volltest-Evidence von Evidence-Reuse."
 
       - name: Repository auschecken
         if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.reused != 'true' }}

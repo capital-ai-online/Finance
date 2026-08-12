@@ -35,7 +35,7 @@ describe('CI one-shot build-and-test contract', () => {
     expect(yaml).toContain("contains(github.event.changes.body.from, '- [x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.')");
   });
 
-  it('binds the one-shot reservation and reusable evidence to the exact PR and head SHA', () => {
+  it('binds one-shot reservation and reusable evidence to the exact PR and head SHA', () => {
     const yaml = workflow();
     expect(yaml).toContain('CURRENT_RUN_ID: ${{ github.run_id }}');
     expect(yaml).toContain('actions/workflows/ci.yml/runs?event=pull_request&head_sha=${PR_HEAD_SHA}&per_page=100');
@@ -45,22 +45,22 @@ describe('CI one-shot build-and-test contract', () => {
     expect(yaml).toContain('evidence_job_id: ${{ steps.gate.outputs.evidence_job_id }}');
     expect(yaml).toContain('Evidence-Reuse für aktuellen PR-Head verifizieren');
     expect(yaml).toContain('.head_sha == env.PR_HEAD_SHA');
-    expect(yaml).toContain('.name == "build-and-test" and .conclusion == "success"');
   });
 
-  it('keeps primary full-test evidence distinct from evidence-reuse jobs', () => {
+  it('marks primary full-test evidence explicitly so reuse runs cannot become primary evidence', () => {
     const yaml = workflow();
-    expect(yaml).toContain("name: ${{ needs.owner-gate.outputs.reused == 'true' && 'build-and-test – Evidence-Reuse' || 'build-and-test' }}");
-    expect(yaml).toContain('.name == "build-and-test" and .conclusion != "skipped"');
-    expect(yaml).toContain('Evidence-Reuse-Jobs');
-    expect(yaml).toContain('können nie selbst zur Primär-Evidence werden');
+    expect(yaml).toContain('name: build-and-test');
+    expect(yaml).toContain('- name: Primär-Volltest autorisiert');
+    expect(yaml).toContain('.name == "build-and-test" and .conclusion != "skipped" and any(.steps[]?; .name == "Primär-Volltest autorisiert" and .conclusion == "success")');
+    expect(yaml).toContain('.name == "build-and-test" and .conclusion == "success" and any(.steps[]?; .name == "Primär-Volltest autorisiert" and .conclusion == "success")');
+    expect(yaml).toContain('Marker-Step');
   });
 
-  it('runs the required CI job for fresh authorization or verified evidence reuse', () => {
+  it('runs the required build-and-test job for fresh authorization or verified evidence reuse', () => {
     const yaml = workflow();
     expect(yaml).toContain("needs.owner-gate.outputs.approved == 'true' || needs.owner-gate.outputs.reused == 'true'");
     expect(yaml).toContain("needs.owner-gate.outputs.reused != 'true'");
-    expect(yaml).toContain('One-Shot erfüllt: build-and-test');
+    expect(yaml).toContain('One-Shot erfüllt: Primär-build-and-test');
     expect(yaml).toContain('Ein Retry auf demselben Head ist nicht erlaubt; ein neuer Commit/Head ist erforderlich.');
   });
 
@@ -94,6 +94,6 @@ describe('CI one-shot build-and-test contract', () => {
     const yaml = workflow();
     expect(yaml).toContain('.commit_id == env.PR_HEAD_SHA');
     expect(yaml).toContain('PR_BODY: ${{ github.event.pull_request.body || \'\' }}');
-    expect(yaml).toContain('Owner-Gate erfüllt und One-Shot frei. Genau ein build-and-test');
+    expect(yaml).toContain('Owner-Gate erfüllt und One-Shot frei. Genau ein Primär-build-and-test');
   });
 });
