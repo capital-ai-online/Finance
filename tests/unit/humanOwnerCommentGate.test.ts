@@ -15,11 +15,11 @@ describe('Human Owner Comment Gate', () => {
     expect(gate).not.toContain('pull_request:\n');
   });
 
-  it('keeps write permissions narrowly scoped to comment sync and dispatch', () => {
+  it('keeps write permissions narrowly scoped to PR comment sync and dispatch', () => {
     const gate = read('.github/workflows/human-owner-comment-gate.yml');
     expect(gate).toContain('actions: write');
     expect(gate).toContain('issues: write');
-    expect(gate).toContain('pull-requests: read');
+    expect(gate).toContain('pull-requests: write');
     expect(gate).toContain('contents: read');
     expect(gate).not.toContain('contents: write');
   });
