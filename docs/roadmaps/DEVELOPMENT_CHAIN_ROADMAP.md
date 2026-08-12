@@ -2,10 +2,11 @@
 
 Status: IMPLEMENTATION ROADMAP
 Status date: 2026-08-12
-Current repository baseline: `main@5bd5f4d78b87a89258126d0453eaf5e4bc6b6125` (PR #232 merge)
+Observed current `main`: `b08c647e3cf4dac1d8ccfdf0d2b318a07f615729`
+Current PR #235 merge-base: `5bd5f4d78b87a89258126d0453eaf5e4bc6b6125` — reconciliation with current `main` is required before merge.
 Repository: `SvenKulessa/Finance`
 Platform version: `0.6.0`
-Execution baseline rule: every work item re-resolves current `main`; this header SHA is documentation context, not standing mutation authority.
+Execution baseline rule: every work item re-resolves current `main`; any SHA in this document is context/evidence and not standing mutation authority.
 
 ## Rolle dieses Dokuments
 
@@ -24,7 +25,7 @@ READ-ONLY BASELINE
 → FRESH BRANCH FROM CURRENT MAIN
 → REPOSITORY IMPLEMENTATION
 → PR CHECKPOINT
-→ HUMAN FILE REVIEW / REQUIRED CI
+→ CURRENT HUMAN-OWNER GATE / REQUIRED CI
 → HUMAN MERGE
 → BRANCH DELETE
 → OPTIONAL NEXT REPOSITORY UNIT FROM NEW MAIN
@@ -39,6 +40,11 @@ READ-ONLY BASELINE
 ```
 
 Authority: `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`.
+
+**PR-Gate Source of Truth:** ADR-0069 + `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`.  
+**Autonomous Roadmap Block Source of Truth:** ADR-0070 + ESS-0021 v1.1.
+
+ADR-0070 verwendet die ADR-0069-Gate-/CI-Architektur an jedem PR-Checkpoint und erzeugt keinen zweiten Approval- oder CI-Zustand.
 
 ## Verifizierter Systemadmin-/Mutation-Agent-Stand
 
@@ -69,7 +75,7 @@ Capability-Grenze: SA4 beweist einen deterministischen docs-only Work-Package-Pf
 
 ### SA4B — benötigtes Enablement für größere autonome Code-Blöcke
 
-ADR-0069 und ESS-0021 v1.1 definieren den nächsten Systemadmin-Schritt:
+ADR-0070 und ESS-0021 v1.1 definieren den nächsten Systemadmin-Schritt:
 
 **SA4B — Bounded Repository Code / Roadmap Block Executor**.
 
@@ -105,7 +111,7 @@ Bis SA4B `VERIFIED PASS` ist:
 
 Authority:
 
-- ADR-0069;
+- ADR-0070;
 - ESS-0021 v1.1;
 - `docs/contracts/DEVELOPMENT_CHAIN_ROADMAP_BLOCK_CONTRACT.md`;
 - `.ai/contracts/development-chain-roadmap-block.schema.json`;
@@ -118,9 +124,9 @@ Ein größerer Roadmap-Block wird in geordnete **Execution Units (EU)** zerlegt.
 
 ```text
 Block
-→ EU-01 → PR checkpoint → Human merge → branch delete
-→ EU-02 → PR checkpoint → Human merge → branch delete
-→ EU-03 → PR checkpoint → Human merge → branch delete
+→ EU-01 → PR checkpoint → ADR-0069 Human Gate / CI → Human merge → branch delete
+→ EU-02 → PR checkpoint → ADR-0069 Human Gate / CI → Human merge → branch delete
+→ EU-03 → PR checkpoint → ADR-0069 Human Gate / CI → Human merge → branch delete
 → block-specific external mutation gate if required
 ```
 
@@ -135,6 +141,8 @@ Ein Owner-approved REM darf mehrere explizit benannte EU-IDs desselben Blocks en
 Review-ready PR = harter Autonomous STOP.
 
 Der Systemadmin darf innerhalb derselben EU vor finalem Human Review CI-/Governance-Fehler scope-konform reparieren. Er darf nicht mergen oder die nächste EU beginnen.
+
+Der PR wird an die **aktuelle kanonische Human-Owner-Gate-/CI-Architektur** übergeben; heute ist dies ADR-0069. Ein späterer akzeptierter M10-Cutover darf diese Gate-Implementierung ersetzen, ohne ADR-0070 oder den Block Contract zu duplizieren.
 
 ### Resume gate
 
@@ -156,7 +164,8 @@ Nächste EU erst nach:
 |---|---|
 | Development phase/block status | this Roadmap |
 | Systemadmin capability stage | `SYSTEMADMIN_AGENT_ROADMAP.md` |
-| Security decision | ESS/ADR/Governance |
+| Human PR gate / dispatched CI | ADR-0069 + `HUMAN_OWNER_PR_APPROVAL_POLICY.md` |
+| Autonomous block architecture | ADR-0070 + ESS-0021 v1.1 |
 | per-unit technical scope | Roadmap Block Contract bound to REM |
 | runtime authorization | REM + Agent IAM + trusted host |
 | side-effect evidence | M5 append-only audit + GitHub evidence |
@@ -206,7 +215,7 @@ Current architecture path candidates to resolve exactly at preflight include:
 
 Required tests include positive enrollment/challenge state plus invalid code, unverified factor, AAL1/AAL1, AAL1/AAL2 and stale AAL2/AAL1 denial behavior.
 
-**PR checkpoint M5A-PR1:** review-ready PR → autonomous STOP → Human review/CI/merge → branch delete.
+**PR checkpoint M5A-PR1:** review-ready PR → autonomous STOP → current Human-Owner Gate / required CI → Human merge → branch delete.
 
 ### M5A-EU2 — Canonical server AAL2 enforcement and privileged route composition
 
@@ -224,7 +233,7 @@ Current path candidates include `server/stepUp.ts`, exact privileged route compo
 
 Required negative tests include AAL1 owner/admin deny, missing/unverified factor, stale session, Auth verification error, wrong-purpose/replayed step-up and unauthorized privileged action.
 
-**PR checkpoint M5A-PR2:** review-ready PR → autonomous STOP → Human review/CI/merge → branch delete.
+**PR checkpoint M5A-PR2:** review-ready PR → autonomous STOP → current Human-Owner Gate / required CI → Human merge → branch delete.
 
 ### M5A-EU3 — Recovery, factor administration, integration evidence and production-handoff readiness
 
@@ -241,7 +250,7 @@ Objective:
 
 Repository-only unit. Any test or documentation that would require exposing TOTP secret/QR/code/factor identifiers is prohibited.
 
-**PR checkpoint M5A-PR3:** review-ready closure PR → autonomous STOP → Human review/CI/merge → branch delete.
+**PR checkpoint M5A-PR3:** review-ready closure PR → autonomous STOP → current Human-Owner Gate / required CI → Human merge → branch delete.
 
 ### M5A repository block exit
 
@@ -325,7 +334,7 @@ Authorities:
 - `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`;
 - `docs/architecture/ai-agent/M10_PASSKEY_OWNER_PR_AUTHORIZATION_THREAT_MODEL.md`.
 
-The Systemadmin must consume the then-current Human/Owner PR policy rather than hard-code a transitional checkbox/event mechanism. Human file review and Human-only merge remain mandatory after cutover.
+The Systemadmin must consume the then-current Human/Owner PR policy rather than hard-code a transitional gate mechanism. Human file review and Human-only merge remain mandatory after cutover.
 
 ## Mutation Executor Handoff
 
@@ -367,8 +376,9 @@ Before a larger block can be autonomously delegated, it requires:
 
 ## Current Next Actions
 
-1. **SA4B is the next Systemadmin enablement gate** for general bounded code/test Roadmap-block execution.
-2. **M5A remains the next DEVELOPMENT product/security phase.** It may proceed normally without waiting for SA4B.
-3. If M5A is delegated as an autonomous Systemadmin block, complete SA4B first, then create a dedicated M5A REM + validated per-unit Block Contract for `M5A-EU1..EU3`.
-4. M5A Native Owner MFA Production Mutation remains separately Human-approved after repository implementation and read-only precheck.
-5. M6 remains blocked until M5A `VERIFIED PASS`.
+1. **Reconcile PR #235 with current `main@b08c647…` before any merge decision.** The new main-side ADR-0069 Comment Gate / dispatched CI architecture is canonical and must not be duplicated by PR #235.
+2. **SA4B is the next Systemadmin enablement gate** for general bounded code/test Roadmap-block execution.
+3. **M5A remains the next DEVELOPMENT product/security phase.** It may proceed normally without waiting for SA4B.
+4. If M5A is delegated as an autonomous Systemadmin block, complete SA4B first, then create a dedicated M5A REM + validated per-unit Block Contract for `M5A-EU1..EU3`.
+5. M5A Native Owner MFA Production Mutation remains separately Human-approved after repository implementation and read-only precheck.
+6. M6 remains blocked until M5A `VERIFIED PASS`.
