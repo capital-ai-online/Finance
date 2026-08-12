@@ -35,8 +35,6 @@ const baseEvent = {
   agentId: 'agent-1',
   provider: 'openai',
   model: 'metadata-only',
-  intent: 'agent_authorization',
-  scope: { environment: 'production', targetResource: 'github:SvenKulessa/Finance' },
   capability: 'READ',
   riskClass: 'LOW',
   policyId: 'ADR-0059',
@@ -118,7 +116,7 @@ describe('M5 agent audit writer', () => {
     });
   });
 
-  it('persists the exact production M5 column contract and returns an auditReference', async () => {
+  it('persists complete correlation metadata and returns an auditReference', async () => {
     const reference = await writeAgentAuditEvent({
       ...baseEvent,
       workflowRunId: '31550995195',
@@ -132,53 +130,15 @@ describe('M5 agent audit writer', () => {
       request_id: baseEvent.requestId,
       trace_id: baseEvent.traceId,
       span_id: baseEvent.spanId,
-      human_actor_id: null,
+      actor_id: baseEvent.humanActorId,
       app_id: baseEvent.appId,
       agent_id: baseEvent.agentId,
-      intent: 'agent_authorization',
-      scope: { environment: 'production', targetResource: 'github:SvenKulessa/Finance' },
       capability: 'READ',
       risk_class: 'LOW',
       policy_id: 'ADR-0059',
-      authorization_decision: 'ALLOW',
       repository: 'SvenKulessa/Finance',
-      ci_run_id: '31550995195',
-      attributes: {
-        authorization: '[REDACTED]',
-        safe: 'visible',
-        humanActorExternalId: 'owner-1',
-      },
-    }));
-
-    const inserted = mocks.insert.mock.calls[0]?.[0] as Record<string, unknown>;
-    for (const legacyColumn of [
-      'actor_id',
-      'decision',
-      'approval_id',
-      'tool_id',
-      'pr_number',
-      'workflow_run_id',
-      'metadata',
-    ]) {
-      expect(inserted).not.toHaveProperty(legacyColumn);
-    }
-  });
-
-  it('maps UUID actor/approval references to UUID columns without inventing UUIDs', async () => {
-    await writeAgentAuditEvent({
-      ...baseEvent,
-      humanActorId: '11111111-1111-1111-1111-111111111111',
-      approvalId: '22222222-2222-2222-2222-222222222222',
-      stepUpReference: 'external-step-up-ref',
-    });
-
-    expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({
-      human_actor_id: '11111111-1111-1111-1111-111111111111',
-      approval_reference: '22222222-2222-2222-2222-222222222222',
-      step_up_reference: null,
-      attributes: expect.objectContaining({
-        stepUpExternalId: 'external-step-up-ref',
-      }),
+      workflow_run_id: '31550995195',
+      metadata: { authorization: '[REDACTED]', safe: 'visible' },
     }));
   });
 
@@ -212,26 +172,23 @@ describe('M5 agent audit writer', () => {
     expect(mocks.insert.mock.calls[0]?.[0]).toEqual(expect.objectContaining({
       request_id: 'request-1',
       trace_id: baseEvent.traceId,
-      intent: 'agent_authorization',
-      authorization_decision: 'ALLOW',
+      decision: 'ALLOW',
       result: 'PENDING',
-      tool_name: 'github.read',
-      pull_request_number: 210,
-      attributes: expect.objectContaining({
+      tool_id: 'github.read',
+      pr_number: 210,
+      metadata: expect.objectContaining({
         eventType: 'authorization',
         prompt: '[OMITTED]',
         environment: 'production',
-        humanActorExternalId: 'owner-1',
       }),
     }));
 
     expect(mocks.insert.mock.calls[1]?.[0]).toEqual(expect.objectContaining({
       request_id: 'request-1',
       trace_id: baseEvent.traceId,
-      intent: 'agent_execution_outcome',
-      authorization_decision: 'ALLOW',
+      decision: 'ALLOW',
       result: 'SUCCESS',
-      attributes: expect.objectContaining({
+      metadata: expect.objectContaining({
         eventType: 'execution_outcome',
         authorizationAuditReference: 'supabase:agent_audit_events:auth-1',
         prompt: '[OMITTED]',

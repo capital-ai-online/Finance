@@ -2,9 +2,6 @@ import type { AddressInfo } from 'node:net';
 import express from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const SA3B_WORKFLOW_REF = 'SvenKulessa/Finance/.github/workflows/systemadmin-roadmap-executor.yml@refs/heads/main';
-const SA4_WORKFLOW_REF = 'SvenKulessa/Finance/.github/workflows/systemadmin-sa4-pilot.yml@refs/heads/main';
-
 const mocks = vi.hoisted(() => ({
   verifyGitHubActionsOidcToken: vi.fn(),
   authorizeSystemadminAuditedExecution: vi.fn(),
@@ -12,8 +9,6 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../../server/systemadmin/githubActionsOidc', () => ({
-  SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF: 'SvenKulessa/Finance/.github/workflows/systemadmin-roadmap-executor.yml@refs/heads/main',
-  SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF: 'SvenKulessa/Finance/.github/workflows/systemadmin-sa4-pilot.yml@refs/heads/main',
   verifyGitHubActionsOidcToken: mocks.verifyGitHubActionsOidcToken,
 }));
 vi.mock('../../server/agentAudit/systemadminAuditedExecution', () => ({
@@ -36,7 +31,7 @@ const identity = Object.freeze({
   ref: 'refs/heads/main',
   sha: '0123456789abcdef0123456789abcdef01234567',
   workflow: 'Systemadmin Roadmap Execution Host',
-  workflowRef: SA3B_WORKFLOW_REF,
+  workflowRef: 'SvenKulessa/Finance/.github/workflows/systemadmin-roadmap-executor.yml@refs/heads/main',
   workflowSha: '0123456789abcdef0123456789abcdef01234567',
   runId: '42',
   runNumber: '1',
@@ -55,7 +50,7 @@ const decision = {
   liveMutationPermitted: false,
 };
 
-function authorizationBody(actor = 'SvenKulessa', mandateId = 'REM-SA3B-PROBE-001') {
+function authorizationBody(actor = 'SvenKulessa') {
   return {
     issueNumber: 7,
     authorization: {
@@ -71,7 +66,7 @@ function authorizationBody(actor = 'SvenKulessa', mandateId = 'REM-SA3B-PROBE-00
       riskClass: 'MEDIUM',
       environment: 'development',
       targetResource: 'github:SvenKulessa/Finance',
-      mandate: { mandateId },
+      mandate: {},
       execution: {},
     },
     checkpoint: {},
@@ -105,7 +100,6 @@ beforeEach(() => {
     auditReference: 'supabase:agent_audit_events:auth-1',
     traceId: 'github-actions:42',
     executionPermit: {
-      mandateId: 'REM-SA3B-PROBE-001',
       requestId: 'issue-7-run-42',
       authorizationAuditReference: 'supabase:agent_audit_events:auth-1',
       auditBoundExecutionPermitted: true,
@@ -116,7 +110,7 @@ beforeEach(() => {
 
 afterEach(() => vi.restoreAllMocks());
 
-describe('Systemadmin execution broker', () => {
+describe('SA3B execution broker', () => {
   it('rejects requests when GitHub Actions OIDC is invalid', async () => {
     mocks.verifyGitHubActionsOidcToken.mockRejectedValue(new Error('invalid oidc'));
     const response = await request('/authorize', authorizationBody());
@@ -138,38 +132,6 @@ describe('Systemadmin execution broker', () => {
     expect(mocks.authorizeSystemadminAuditedExecution).not.toHaveBeenCalled();
   });
 
-  it('binds SA3B workflow to SA3B mandate and rejects SA4 mandate substitution', async () => {
-    const response = await request('/authorize', authorizationBody('SvenKulessa', 'REM-SA4-PILOT-001'));
-    expect(response.status).toBe(403);
-    expect(mocks.authorizeSystemadminAuditedExecution).not.toHaveBeenCalled();
-  });
-
-  it('accepts the SA4 mandate only from the exact SA4 workflow', async () => {
-    mocks.verifyGitHubActionsOidcToken.mockResolvedValue({
-      ...identity,
-      workflow: 'Systemadmin SA4 Bounded Pilot',
-      workflowRef: SA4_WORKFLOW_REF,
-    });
-    mocks.authorizeSystemadminAuditedExecution.mockResolvedValue({
-      decision: { ...decision, mandateId: 'REM-SA4-PILOT-001' },
-      auditReference: 'supabase:agent_audit_events:auth-sa4',
-      traceId: 'github-actions:42',
-      executionPermit: {
-        mandateId: 'REM-SA4-PILOT-001',
-        requestId: 'issue-7-run-42',
-        authorizationAuditReference: 'supabase:agent_audit_events:auth-sa4',
-        auditBoundExecutionPermitted: true,
-      },
-    });
-    const response = await request('/authorize', authorizationBody('SvenKulessa', 'REM-SA4-PILOT-001'));
-    expect(response.status).toBe(200);
-    const call = mocks.authorizeSystemadminAuditedExecution.mock.calls[0];
-    expect(call?.[1]).toMatchObject({
-      policyId: 'ADR-0059/ADR-0065/ADR-0067/ADR-0068/SA4',
-      toolId: 'github-actions-systemadmin-sa4-host',
-    });
-  });
-
   it('returns audited authorization only after the exact host binding passed', async () => {
     const response = await request('/authorize', authorizationBody());
     expect(response.status).toBe(200);
@@ -187,20 +149,17 @@ describe('Systemadmin execution broker', () => {
     expect(response.status).toBe(503);
   });
 
-  it('binds terminal outcome to the same workflow run, issue request and mandate', async () => {
+  it('binds terminal outcome to the same workflow run and issue request', async () => {
     const authorization = {
       decision,
       auditReference: 'supabase:agent_audit_events:auth-1',
       traceId: 'github-actions:42',
-      executionPermit: { mandateId: 'REM-SA3B-PROBE-001', requestId: 'issue-7-run-42' },
+      executionPermit: { requestId: 'issue-7-run-42' },
     };
     const response = await request('/outcome', { issueNumber: 7, authorization, result: 'SUCCESS' });
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ auditReference: 'supabase:agent_audit_events:outcome-1' });
     expect(mocks.recordSystemadminAuditedOutcome).toHaveBeenCalledTimes(1);
-    expect(mocks.recordSystemadminAuditedOutcome.mock.calls[0]?.[0]).toMatchObject({
-      policyId: 'ADR-0059/ADR-0065/ADR-0067/SA3B',
-    });
   });
 
   it('rejects outcome replay from a different workflow trace', async () => {
@@ -208,19 +167,7 @@ describe('Systemadmin execution broker', () => {
       decision,
       auditReference: 'supabase:agent_audit_events:auth-1',
       traceId: 'github-actions:other-run',
-      executionPermit: { mandateId: 'REM-SA3B-PROBE-001', requestId: 'issue-7-run-42' },
-    };
-    const response = await request('/outcome', { issueNumber: 7, authorization, result: 'SUCCESS' });
-    expect(response.status).toBe(403);
-    expect(mocks.recordSystemadminAuditedOutcome).not.toHaveBeenCalled();
-  });
-
-  it('rejects an SA4 outcome presented by the SA3B workflow', async () => {
-    const authorization = {
-      decision: { ...decision, mandateId: 'REM-SA4-PILOT-001' },
-      auditReference: 'supabase:agent_audit_events:auth-sa4',
-      traceId: 'github-actions:42',
-      executionPermit: { mandateId: 'REM-SA4-PILOT-001', requestId: 'issue-7-run-42' },
+      executionPermit: { requestId: 'issue-7-run-42' },
     };
     const response = await request('/outcome', { issueNumber: 7, authorization, result: 'SUCCESS' });
     expect(response.status).toBe(403);

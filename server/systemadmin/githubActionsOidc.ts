@@ -6,18 +6,9 @@ export const SYSTEMADMIN_GITHUB_REPOSITORY = 'SvenKulessa/Finance';
 export const SYSTEMADMIN_GITHUB_REPOSITORY_ID = '1284319285';
 export const SYSTEMADMIN_GITHUB_OWNER = 'SvenKulessa';
 export const SYSTEMADMIN_GITHUB_OWNER_ID = '84307769';
-export const SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF =
+export const SYSTEMADMIN_GITHUB_WORKFLOW_REF =
   'SvenKulessa/Finance/.github/workflows/systemadmin-roadmap-executor.yml@refs/heads/main';
-export const SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF =
-  'SvenKulessa/Finance/.github/workflows/systemadmin-sa4-pilot.yml@refs/heads/main';
-/** @deprecated Use the explicit stage-specific workflow ref. */
-export const SYSTEMADMIN_GITHUB_WORKFLOW_REF = SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF;
-export const SYSTEMADMIN_GITHUB_ALLOWED_WORKFLOW_REFS = Object.freeze([
-  SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF,
-  SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF,
-] as const);
 
-const ALLOWED_WORKFLOW_REF_SET = new Set<string>(SYSTEMADMIN_GITHUB_ALLOWED_WORKFLOW_REFS);
 const CLOCK_SKEW_SECONDS = 60;
 const CACHE_TTL_MS = 5 * 60_000;
 
@@ -178,11 +169,9 @@ function validateClaims(claims: RawClaims, nowSeconds: number): VerifiedGitHubAc
   if (repository !== SYSTEMADMIN_GITHUB_REPOSITORY) fail('OIDC repository ist nicht Finance.');
   if (repositoryId !== SYSTEMADMIN_GITHUB_REPOSITORY_ID) fail('OIDC repository_id ist nicht Finance.');
   if (repositoryOwnerId !== SYSTEMADMIN_GITHUB_OWNER_ID) fail('OIDC repository_owner_id ist nicht der kanonische Owner.');
-  if (eventName !== 'issues') fail('Nur ein issues-Execution-Host darf den Broker aufrufen.');
+  if (eventName !== 'issues') fail('Nur der issues-Execution-Host darf den Broker aufrufen.');
   if (ref !== 'refs/heads/main') fail('Execution Host muss aus main laufen.');
-  if (!ALLOWED_WORKFLOW_REF_SET.has(workflowRef)) {
-    fail('OIDC workflow_ref ist kein freigegebener Systemadmin Execution Host.');
-  }
+  if (workflowRef !== SYSTEMADMIN_GITHUB_WORKFLOW_REF) fail('OIDC workflow_ref ist nicht der SA3B Execution Host.');
 
   return Object.freeze({
     issuer: claims.iss,

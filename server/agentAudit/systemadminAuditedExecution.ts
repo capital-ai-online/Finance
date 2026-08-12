@@ -26,11 +26,8 @@ export const SYSTEMADMIN_SA3_SELF_AUTHORITY_PATHS = Object.freeze([
   '.ai/contracts/systemadmin-roadmap-execution-profile.json',
   '.ai/contracts/systemadmin-audit-execution-profile.json',
   '.ai/mandates/REM-SA3B-PROBE-001.json',
-  '.ai/mandates/REM-SA4-PILOT-001.json',
   '.github/workflows/systemadmin-roadmap-executor.yml',
-  '.github/workflows/systemadmin-sa4-pilot.yml',
   'docs/adr/ADR-0067-systemadmin-github-actions-execution-host.md',
-  'docs/adr/ADR-0068-first-bounded-autonomous-work-package.md',
   'src/platform/Security/systemadminExecutionProfile.ts',
   'server/agentAudit/agentAuditWriter.ts',
   'server/agentAudit/authorizedAgentExecution.ts',
@@ -38,8 +35,6 @@ export const SYSTEMADMIN_SA3_SELF_AUTHORITY_PATHS = Object.freeze([
   'server/systemadmin/githubActionsOidc.ts',
   'server/systemadmin/systemadminExecutionBrokerRouter.ts',
   'scripts/systemadmin/validateExecutionIssue.mjs',
-  'scripts/systemadmin/validateSa4PilotIssue.mjs',
-  'scripts/systemadmin/runSa4Pilot.mjs',
 ] as const);
 
 export interface SystemadminAuditContext {
@@ -78,7 +73,7 @@ function touchesOwnControlPlane(request: Readonly<SystemadminChatExecutionProfil
 function selfAuthorityDeny(decision: Readonly<SystemadminChatExecutionDecision>): SystemadminChatExecutionDecision {
   return {
     verdict: 'DENY',
-    reason: 'SA3/SA4 Audit-/Execution-Control-Plane ist für Systemadmin-REM-Mutationen geschützt.',
+    reason: 'SA3 Audit-/Execution-Control-Plane ist für Systemadmin-REM-Mutationen geschützt.',
     riskClass: decision.riskClass,
     layer: 'CHAT_PROFILE',
     ...(decision.capability ? { capability: decision.capability } : {}),
@@ -98,8 +93,6 @@ export async function authorizeSystemadminAuditedExecution(
     : prepared.decision;
   const principal = request.authorization.principal;
   const checkpoint = request.checkpoint;
-  const roadmapItem = request.authorization.execution.roadmapItem;
-  const requestedPaths = request.authorization.execution.requestedPaths ?? [];
 
   const auditReference = await writeAgentAuditEvent({
     requestId: principal.requestId,
@@ -107,26 +100,12 @@ export async function authorizeSystemadminAuditedExecution(
     humanActorId: principal.humanActorId,
     appId: principal.appId,
     agentId: principal.agentId,
-    intent: 'systemadmin_authorization',
-    scope: {
-      mandateId: decision.mandateId,
-      roadmapItem,
-      targetResource: request.authorization.targetResource,
-      repository: SYSTEMADMIN_REPOSITORY,
-      baseBranch: SYSTEMADMIN_BASE_BRANCH,
-      requestedPaths,
-      branchName: checkpoint.branchName,
-      currentHeadSha: checkpoint.currentHeadSha,
-      pullRequestNumber: checkpoint.pullRequestNumber,
-    },
     capability: decision.capability ?? request.authorization.capability,
     riskClass: decision.riskClass,
     policyId: context.policyId ?? SYSTEMADMIN_SA3_AUDIT_POLICY_ID,
     decision: decision.verdict,
     repository: SYSTEMADMIN_REPOSITORY,
     result: decision.verdict === 'ALLOW' ? 'PENDING' : 'DENIED',
-    ...(checkpoint.branchName ? { branch: checkpoint.branchName } : {}),
-    ...(checkpoint.currentHeadSha ? { commitSha: checkpoint.currentHeadSha } : {}),
     ...(context.spanId ? { spanId: context.spanId } : {}),
     ...(context.toolId ? { toolId: context.toolId } : {}),
     ...(context.workflowRunId ? { workflowRunId: context.workflowRunId } : {}),
@@ -141,11 +120,11 @@ export async function authorizeSystemadminAuditedExecution(
       profileId: SYSTEMADMIN_CHAT_PROFILE_ID,
       profileVersion: SYSTEMADMIN_CHAT_PROFILE_VERSION,
       mandateId: decision.mandateId,
-      roadmapItem,
+      roadmapItem: request.authorization.execution.roadmapItem,
       sessionId: principal.sessionId,
       targetResource: request.authorization.targetResource,
       baseBranch: SYSTEMADMIN_BASE_BRANCH,
-      requestedPaths,
+      requestedPaths: request.authorization.execution.requestedPaths ?? [],
       branchName: checkpoint.branchName,
       currentHeadSha: checkpoint.currentHeadSha,
       pullRequestNumber: checkpoint.pullRequestNumber,
@@ -175,7 +154,6 @@ export async function recordSystemadminAuditedOutcome(input: Readonly<{
   commitSha?: string;
   pullRequestNumber?: number;
   workflowRunId?: string;
-  policyId?: string;
   metadata?: Record<string, unknown>;
 }>): Promise<string> {
   const permit = input.authorization.executionPermit;
@@ -187,38 +165,21 @@ export async function recordSystemadminAuditedOutcome(input: Readonly<{
     throw new Error('[SystemadminAudit][SECURITY] authorization audit reference mismatch.');
   }
 
-  const branchName = input.branchName ?? permit.branchName;
-  const pullRequestNumber = input.pullRequestNumber ?? permit.pullRequestNumber;
-
   return writeAgentAuditEvent({
     requestId: permit.requestId,
     traceId: input.authorization.traceId,
     humanActorId: permit.humanActorId,
     appId: permit.appId,
     agentId: permit.agentId,
-    intent: 'systemadmin_execution_outcome',
-    scope: {
-      mandateId: permit.mandateId,
-      roadmapItem: permit.roadmapItem,
-      targetResource: permit.targetResource,
-      repository: permit.repository,
-      requestedPaths: permit.requestedPaths,
-      branchName,
-      authorizationHeadSha: permit.currentHeadSha,
-      commitSha: input.commitSha,
-      pullRequestNumber,
-    },
     capability: permit.capability,
     riskClass: permit.riskClass,
-    policyId: input.policyId ?? SYSTEMADMIN_SA3_AUDIT_POLICY_ID,
+    policyId: SYSTEMADMIN_SA3_AUDIT_POLICY_ID,
     decision: 'ALLOW',
     repository: permit.repository,
     result: input.result,
-    ...(branchName ? { branch: branchName } : {}),
-    ...(input.commitSha ? { commitSha: input.commitSha } : {}),
     ...(input.workflowRunId ? { workflowRunId: input.workflowRunId } : {}),
-    ...(Number.isInteger(pullRequestNumber)
-      ? { prNumber: pullRequestNumber }
+    ...(Number.isInteger(input.pullRequestNumber ?? permit.pullRequestNumber)
+      ? { prNumber: input.pullRequestNumber ?? permit.pullRequestNumber }
       : {}),
     metadata: {
       ...input.metadata,
@@ -229,10 +190,10 @@ export async function recordSystemadminAuditedOutcome(input: Readonly<{
       sessionId: permit.sessionId,
       targetResource: permit.targetResource,
       requestedPaths: permit.requestedPaths,
-      branchName,
+      branchName: input.branchName ?? permit.branchName,
       authorizationHeadSha: permit.currentHeadSha,
       commitSha: input.commitSha,
-      pullRequestNumber,
+      pullRequestNumber: input.pullRequestNumber ?? permit.pullRequestNumber,
       requiresHumanMerge: permit.requiresHumanMerge,
     },
   });

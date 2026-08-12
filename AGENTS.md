@@ -173,21 +173,11 @@ Before every Systemadmin work package, perform current-main/Roadmap resolution, 
 
 Every mutating action must be attributable to `mandateId + roadmap item + human actor + agent/client/session/request + capability + target + decision + result` and use the M5 audit/evidence controls where available.
 
-### Branch and clone lifecycle
+### Branch lifecycle
 
-Every Roadmap work package uses a **fresh scoped branch from current `main`**. A cloned repository, temporary worktree or agent workspace is only a working copy and MUST create/check out that fresh branch before any edit; direct mutation of local or remote `main` is prohibited.
+Every Roadmap work package uses a fresh branch. After successful Human merge into the Finance repository, the branch MUST be deleted. Closed/superseded work branches are also deleted after necessary Evidence retention. A merged branch is never reused for a new Roadmap item.
 
-After successful Human merge into the Finance repository, the corresponding remote work branch MUST be deleted. Closed/superseded work branches are also deleted after necessary Evidence retention. A merged branch is never reused for a new Roadmap item. Ephemeral clone/worktree copies created only for that work item SHOULD be removed after required Evidence is secured.
-
-Repository rollback uses a new scoped revert/rollback branch from current `main`; it MUST NOT resurrect the original merged branch.
-
-Normative DevelopmentChain details:
-
-- `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
-- `docs/governance/DEVELOPMENT_CHAIN_BRANCH_LIFECYCLE_POLICY.md`
-- `docs/contracts/DEVELOPMENT_CHAIN_MUTATION_HANDOFF_CONTRACT.md`
-
-Normative Systemadmin details:
+Normative details:
 
 - `.ai/skills/ESS-0021-Systemadmin-Roadmap-Executor.md`
 - `docs/adr/ADR-0065-systemadmin-roadmap-execution-mandate.md`

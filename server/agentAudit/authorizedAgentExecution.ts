@@ -15,11 +15,8 @@ export interface AgentExecutionAuditContext {
   traceId: string;
   spanId?: string;
   policyId: string;
-  policyVersion?: string;
   toolId?: string;
   repository?: string;
-  branch?: string;
-  commitSha?: string;
   prNumber?: number;
   workflowRunId?: string;
   artifactDigest?: string;
@@ -50,42 +47,29 @@ function buildBaseEvent(
   request: Readonly<AgentAuthorizationRequest>,
   context: Readonly<AgentExecutionAuditContext>,
   decision: Readonly<AgentAuthorizationDecision>,
-  intent: string,
 ): Omit<AgentAuditEventInput, 'result' | 'metadata'> {
   return {
     requestId: request.principal.requestId,
     traceId: context.traceId,
+    spanId: context.spanId,
     humanActorId: request.principal.humanActorId,
     appId: request.principal.appId,
     agentId: request.principal.agentId,
-    intent,
-    scope: {
-      environment: request.environment,
-      targetResource: request.targetResource,
-      ...(context.repository ? { repository: context.repository } : {}),
-      ...(context.branch ? { branch: context.branch } : {}),
-      ...(context.commitSha ? { commitSha: context.commitSha } : {}),
-      ...(Number.isInteger(context.prNumber) ? { pullRequestNumber: context.prNumber } : {}),
-    },
+    provider: request.principal.provider,
+    model: request.principal.model,
     capability: decision.capability ?? request.capability,
     riskClass: decision.riskClass,
     policyId: context.policyId,
     decision: decision.verdict,
-    ...(context.spanId ? { spanId: context.spanId } : {}),
-    ...(request.principal.provider ? { provider: request.principal.provider } : {}),
-    ...(request.principal.model ? { model: request.principal.model } : {}),
-    ...(context.policyVersion ? { policyVersion: context.policyVersion } : {}),
-    ...(request.approval?.approvalId ? { approvalId: request.approval.approvalId } : {}),
-    ...(context.toolId ? { toolId: context.toolId } : {}),
-    ...(context.repository ? { repository: context.repository } : {}),
-    ...(context.branch ? { branch: context.branch } : {}),
-    ...(context.commitSha ? { commitSha: context.commitSha } : {}),
-    ...(Number.isInteger(context.prNumber) ? { prNumber: context.prNumber } : {}),
-    ...(context.workflowRunId ? { workflowRunId: context.workflowRunId } : {}),
-    ...(context.artifactDigest ? { artifactDigest: context.artifactDigest } : {}),
-    ...(context.deploymentId ? { deploymentId: context.deploymentId } : {}),
-    ...(context.runtimeVersion ? { runtimeVersion: context.runtimeVersion } : {}),
-    ...(context.rollbackReference ? { rollbackReference: context.rollbackReference } : {}),
+    approvalId: request.approval?.approvalId,
+    toolId: context.toolId,
+    repository: context.repository,
+    prNumber: context.prNumber,
+    workflowRunId: context.workflowRunId,
+    artifactDigest: context.artifactDigest,
+    deploymentId: context.deploymentId,
+    runtimeVersion: context.runtimeVersion,
+    rollbackReference: context.rollbackReference,
   };
 }
 
@@ -103,7 +87,7 @@ export async function evaluateAndAuditAgentPolicy(
   const decision = evaluateAgentPolicy(request);
 
   const auditReference = await writeAgentAuditEvent({
-    ...buildBaseEvent(request, context, decision, 'agent_authorization'),
+    ...buildBaseEvent(request, context, decision),
     result: resultFromDecision(decision),
     metadata: {
       ...context.metadata,
@@ -137,7 +121,7 @@ export async function recordAgentExecutionOutcome(
   }
 
   return writeAgentAuditEvent({
-    ...buildBaseEvent(input.request, input.context, input.authorization.decision, 'agent_execution_outcome'),
+    ...buildBaseEvent(input.request, input.context, input.authorization.decision),
     result: input.result,
     metadata: {
       ...input.context.metadata,

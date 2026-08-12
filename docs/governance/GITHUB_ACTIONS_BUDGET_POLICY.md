@@ -17,11 +17,9 @@ Das GitHub-Budget von 15 EUR ist eine Obergrenze und kein Verbrauchsziel. Die Pi
 - Pro PR-Head-SHA ist genau **ein vollständiger technischer Linux-Testlauf** zulässig.
 - Ein zusätzlicher Linux-Job ist nur für eine spezialisierte, nicht duplizierende Sicherheits-/Governance-Prüfung zulässig.
 - Maximales reguläres Runner-Budget je PR-Head-SHA: **30 Linux-Runner-Minuten**.
-- Ein technischer Retry setzt eine **tatsächliche Korrektur und damit einen neuen Head-SHA** voraus. Ein Re-Run desselben unveränderten Heads ist nur bei dokumentierter GitHub-/Runner-Infrastrukturstörung zulässig.
+- Nach einem fehlgeschlagenen Lauf ist genau **ein gezielter Wiederholungslauf nach einer tatsächlichen Korrektur** zulässig.
 - `Re-run all jobs` ohne Code-/Konfigurationsänderung ist untersagt, außer bei dokumentierter GitHub-/Runner-Infrastrukturstörung.
 - Mehrere kleine Fix-Commits sollen lokal oder durch vorhandene Evidence gesammelt validiert werden; nicht jeder Zwischenstand soll einen neuen Remote-CI-Lauf erzeugen.
-- PR-Titel-/Body-Edits und wiederholte Kommentar-Edits dürfen für denselben Head **keinen zweiten `build-and-test`** autorisieren. Ein PR-/Kommentar-/Head-gebundener Check im Zustand `queued`/`in_progress` reserviert den One-Shot-Slot.
-- Ein erfolgreicher vorhandener `build-and-test` für exakt `(PR, Head-SHA)` wird als technische Evidence wiederverwendet.
 
 ### main
 
@@ -82,10 +80,7 @@ Vor jedem Commit oder PR-Update MUSS ein Agent:
 
 ```text
 Pull Request
-  -> automatische Scope-/Checkklassen-Erkennung
-  -> Human/Owner current-head Review
-  -> head-gebundener Bot-Kommentar nach ADR-0069
-  -> 1x Build/Test-Gate pro Head
+  -> 1x Build/Test-Gate
   -> nur betroffene Spezial-Gates
   -> kein Production Deploy
 
@@ -95,7 +90,7 @@ Merge nach main
   -> Render Deploy Hook für exakt geprüften SHA
 ```
 
-`PR Technische Validierung` darf keine zweite vollständige Kopie des normalen CI-Gates darstellen. Doppelte Test-/Build-Arbeit ist zu entfernen oder in einen einzigen wiederverwendbaren Workflow zu konsolidieren.
+`PR Technische Validierung` darf künftig keine zweite vollständige Kopie des normalen CI-Gates darstellen. Doppelte Test-/Build-Arbeit ist zu entfernen oder in einen einzigen wiederverwendbaren Workflow zu konsolidieren.
 
 ## 8. Ausnahmeprozess
 

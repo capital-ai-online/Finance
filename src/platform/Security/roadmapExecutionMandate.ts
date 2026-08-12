@@ -102,31 +102,14 @@ const PATH_SCOPED_CAPABILITIES = new Set<AgentCapability>([
  */
 const SYSTEMADMIN_SELF_AUTHORITY_PATHS = [
   '.ai/skills/ESS-0021-Systemadmin-Roadmap-Executor.md',
-  '.ai/contracts/systemadmin-roadmap-execution-profile.json',
-  '.ai/contracts/systemadmin-audit-execution-profile.json',
-  '.ai/mandates/REM-SA3B-PROBE-001.json',
-  '.ai/mandates/REM-SA4-PILOT-001.json',
-  '.github/workflows/systemadmin-roadmap-executor.yml',
-  '.github/workflows/systemadmin-sa4-pilot.yml',
   'AGENTS.md',
   'docs/adr/ADR-0065-systemadmin-roadmap-execution-mandate.md',
-  'docs/adr/ADR-0067-systemadmin-github-actions-execution-host.md',
-  'docs/adr/ADR-0068-first-bounded-autonomous-work-package.md',
   'docs/governance/AUTONOMOUS_AGENT_CONCEPT_GATE.md',
   'docs/governance/ROADMAP_EXECUTION_MANDATE.schema.json',
   'docs/governance/SYSTEMADMIN_AGENT_ROADMAP_EXECUTION_POLICY.md',
   'src/platform/Security/agentIam.ts',
   'src/platform/Security/roadmapExecutionMandate.ts',
-  'src/platform/Security/systemadminExecutionProfile.ts',
   'src/platform/Compliance/PolicyGate.ts',
-  'server/agentAudit/agentAuditWriter.ts',
-  'server/agentAudit/authorizedAgentExecution.ts',
-  'server/agentAudit/systemadminAuditedExecution.ts',
-  'server/systemadmin/githubActionsOidc.ts',
-  'server/systemadmin/systemadminExecutionBrokerRouter.ts',
-  'scripts/systemadmin/validateExecutionIssue.mjs',
-  'scripts/systemadmin/validateSa4PilotIssue.mjs',
-  'scripts/systemadmin/runSa4Pilot.mjs',
 ] as const;
 
 const RISK_ORDER: Readonly<Record<AgentRiskClass, number>> = {

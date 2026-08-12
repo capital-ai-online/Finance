@@ -2,284 +2,184 @@
 
 Status: IMPLEMENTATION PHASE
 Date: 2026-08-12
-Synchronized `main` baseline: `e831f42d42c712bb30e15812b5c2b08cf6e1dddd` (after PRs #237 and #238)
-Combined source head: PR #235 at `e08f590dc555976cff7e9bd3b5f5cdaeec6e905d`; reconciliation is complete in the separate #235 + #239 draft.
-Execution baseline rule: every autonomous work item re-resolves current `main`; no roadmap SHA is standing mutation authority.
-Authority: ESS-0021, ADR-0065, ADR-0058, ADR-0059, ADR-0066, ADR-0067, ADR-0068, ADR-0069, ADR-0070
+Baseline: `main@8de5a538ae9d2f0afc7b2e505ddda427ceb77780` (PR #218 merge)
+Authority: ESS-0021, ADR-0065, ADR-0058, ADR-0059, ADR-0066, ADR-0067
 
 ## Goal
 
-The Systemadmin Roadmap Executor may autonomously implement Owner-approved repository Roadmap blocks only through bounded REM authority, least privilege, durable append-only audit evidence, explicit Pull-Request checkpoints, Human final review and Human-only merge.
+The Systemadmin Roadmap Executor may autonomously implement Owner-approved repository work packages only through bounded REM authority, least privilege, durable append-only audit evidence, Human final review and Human-only merge.
 
-Target operating model:
+## Completed stages
 
-```text
-OWNER-APPROVED REM FOR ONE ROADMAP BLOCK
-→ execution unit 1: fresh branch → implement/test → PR → STOP
-→ current Human-Owner Gate / required CI → Human merge → branch delete
-→ execution unit 2: fresh branch from new main → implement/test → PR → STOP
-→ current Human-Owner Gate / required CI → Human merge → branch delete
-→ ...
-→ optional separate external-mutation gate
-```
-
-The Roadmap and Traceability remain the only execution-state source of truth. Block contracts describe scope; they do not create status or authority. ADR-0069 remains the canonical Human-Owner Comment Gate / dispatched-PR-CI architecture. ADR-0070 adds Roadmap-block execution and does not duplicate that gate.
-
-## Stage status
-
-| Stage | Status | Core evidence / exit requirement |
-|---|---|---|
-| SA0 Governance | COMPLETE | PR #214 |
-| SA1 REM Validator | COMPLETE / VERIFIED PASS | PR #215 |
-| SA2 Chat Execution Profile | COMPLETE / VERIFIED PASS | PR #216 |
-| SA3A Append-only Audit Adapter | COMPLETE / VERIFIED PASS | PR #218 |
-| SA3B Execution Host | **COMPLETE / VERIFIED PASS** | PR #220/#222; Issues #221/#223/#224; lifecycle cleanup |
-| SA4 First bounded autonomous work package | **COMPLETE / VERIFIED PASS** | PR #226; Issue #228 / run `31579519025`; PR #229; BRANCH/COMMIT/PR audit pairs |
-| SA4B Bounded Repository Code / Roadmap Block Executor | **PLANNED — NEXT SYSTEMADMIN ENABLEMENT GATE** | ADR-0070 + ESS-0021 v1.1 + Roadmap Block Contract; real 2-unit code/test pilot required |
-| SA5 Bounded external mutation design | BLOCKED | M10 VERIFIED PASS + dedicated future ADR/Control-Plane proof |
-
-M10 passkey-only PR authorization remains a later DevelopmentChain runtime cutover. The currently merged ADR-0069 Comment Gate / dispatched CI path is the Human-gate implementation to consume until a later accepted cutover replaces it. Human-only merge remains authoritative.
-
-## SA0 — Governance
+### SA0 — Governance
 
 **COMPLETE — PR #214 MERGED**
 
-REM schema, ESS/ADR authority and branch lifecycle are on `main`.
+Governance, REM schema, ESS/ADR authority and branch lifecycle are on `main`.
 
-## SA1 — REM validator / Control Plane
+### SA1 — REM validator / Control Plane
 
 **COMPLETE / VERIFIED PASS — PR #215 MERGED**
 
-Current repository capability ceiling:
+- merge `d8ccc3c5e136d51ae36b57b103119b25f4a42b8b`;
+- CI #909 PASS;
+- Governance #634 PASS;
+- branch deleted.
+
+Capability ceiling remains:
 
 `READ, ANALYZE, PLAN, BRANCH, COMMIT, PR, CI_REQUEST`
 
-`MERGE`, generic deployment/production mutation, CRITICAL reserved execution and Owner-only mutation classes remain denied.
+`MERGE`, `DEPLOY_REQUEST`, `PRODUCTION_MUTATION`, CRITICAL execution and reserved Owner mutations remain denied.
 
-The Systemadmin self-authority ring protects the REM/agent-IAM/workflow/broker/audit trust root. A REM must not authorize changes to those protected paths.
-
-Important SA4B gap: REM v1 has block-wide/global `allowedPaths`. A multi-PR code block requires technically enforced **per-Execution-Unit** path/capability/risk scope before general code autonomy is enabled.
-
-## SA2 — Chat execution profile
+### SA2 — Chat execution profile
 
 **COMPLETE / VERIFIED PASS — PR #216 MERGED**
 
-SA2 produces policy-bound envelopes. A mutating LIVE envelope alone is not authority; real mutation requires an audit-bound execution permit from the trusted host.
+- merge `a5abc1685026651f4297a487e855683a1fa1e58e`;
+- CI #919 PASS;
+- Google-Marketing #164 PASS;
+- Governance #643 PASS;
+- branch deleted.
 
-Required sequence remains:
+Direct mutating SA2 LIVE remains denied. SA2 envelopes alone are not mutation authority.
 
-- current main read-only preflight;
-- fresh `agent/*` branch;
-- targeted validation before COMMIT;
-- completed unit + current head before PR;
-- no silent scope expansion after final Human review begins;
-- no autonomous merge;
-- no implied production mutation.
+### M10 target architecture
 
-## SA3A — Append-only audit adapter
+PR #217 merged Passkey-only Human/Owner PR authorization architecture at `083d8f25083034e3785d1a8e0c57eaf03463c907`.
+
+M10 runtime remains sequentially blocked by M9. Until its controlled cutover reaches `VERIFIED PASS`, the current Human/Owner review/attestation gate remains authoritative.
+
+### SA3A — Append-only audit adapter
 
 **COMPLETE / VERIFIED PASS — PR #218 MERGED**
 
-Canonical control:
+- final head `4178f76c1c33b50b957cd073d83ed9eeb0493642`;
+- merge `8de5a538ae9d2f0afc7b2e505ddda427ceb77780`;
+- CI #926 PASS;
+- Governance #647 PASS;
+- branch deleted.
 
-`SA1/SA2 ALLOW → durable M5 authorization event → auditReference → audit-bound permit → exact action → durable terminal outcome event`
+Canonical SA3A control:
 
-Every later SA4B mutation capability inherits this permit-before-side-effect invariant.
+`SA1/SA2 ALLOW → durable M5 authorization event → auditReference → audit-bound permit → action → second append-only outcome event`
+
+No new Supabase schema or external platform mutation was required.
 
 ## SA3B — Execution-host binding
 
-**COMPLETE / VERIFIED PASS**
+**Status: IMPLEMENTED ON `agent/sa3b-execution-host-binding` / PR+CI+POST-MERGE HOST PROBE PENDING**
 
-Merged implementation/evidence:
+ADR-0067 selects **GitHub Actions + GitHub OIDC + CAPITAL-AI audit broker** as the first enforceable host.
 
-- PR #220 host binding;
-- PR #222 M5 writer/schema correction;
-- Issue #221 / run `31570833507`: audit persistence failure → no permit → no branch;
-- Issue #223 / run `31574111075`: OIDC → durable authorization → exact BRANCH side effect → durable SUCCESS outcome;
-- Issue #224 / run `31574221718`: stale base → DENY before OIDC/broker → no branch;
-- successful probe branch deleted before SA4.
+Canonical chain:
 
-This proves the trusted-host and fail-closed audit boundary, not an arbitrary code executor.
+`OWNER EXECUTION ISSUE → TRUSTED MAIN WORKFLOW → STRICT REQUEST VALIDATION → GITHUB ACTIONS OIDC → CAPITAL-AI BROKER → SA1/SA2/SA3A → M5 auditReference → EXACT SIDE EFFECT → M5 OUTCOME`
 
-## SA4 — First bounded autonomous work package
+### Why this host
 
-**COMPLETE / VERIFIED PASS — PR #229 MERGED**
+Repository TypeScript cannot intercept direct ChatGPT→GitHub connector writes. The direct connector therefore remains invalid as the autonomous mutation path.
 
-Authority: ADR-0068 and `.ai/mandates/REM-SA4-PILOT-001.json`.
+The GitHub Actions host provides a concrete pre-action enforcement point with bounded `GITHUB_TOKEN` permissions and short-lived OIDC workload identity. No reusable GitHub-to-CAPITAL-AI shared secret is introduced.
 
-The pilot was intentionally documentation-only and one-time. It proved:
+### Initial SA3B probe capability
 
-`Owner-approved REM → Owner Issue → trusted main workflow → OIDC → BRANCH permit/outcome → COMMIT permit/outcome → Draft-PR permit/outcome → Human review → final CI → Human merge → branch delete`
+Before SA4, the host is deliberately restricted to:
 
-Exact autonomous result:
+`BRANCH_PROBE → BRANCH`
 
-- branch `agent/sa4-pilot-proof-20260812b`;
-- deterministic path `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md`;
-- commit `02f012e71106d5ffd9a4baa3e6f3eba7160eb55d`;
-- Draft PR #229;
-- six correlated M5 authorization/outcome events;
-- Human merge `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`;
-- branch deletion verified.
+The one-time mandate `.ai/mandates/REM-SA3B-PROBE-001.json` can create one empty `agent/sa3b-host-probe-*` branch from the exact current `main` SHA only after durable authorization evidence exists.
 
-Closure Evidence: `docs/evidence/sa4/SA4_VERIFIED_PASS_CLOSURE_2026-08-12.md`.
+The probe cannot:
 
-SA4 proves the control architecture for an exact deterministic path. It **does not** prove general code/test/config mutation.
+- commit files;
+- open a PR;
+- request CI;
+- deploy;
+- merge;
+- perform production mutation;
+- execute arbitrary shell supplied by the issue.
 
-## SA4B — Bounded Repository Code / Roadmap Block Executor
+The probe is security-control verification, not the SA4 product work-package pilot.
 
-**PLANNED — NEXT SYSTEMADMIN ENABLEMENT GATE**
+### SA3B implementation artifacts
 
-Authority:
+- `docs/adr/ADR-0067-systemadmin-github-actions-execution-host.md`;
+- `.github/workflows/systemadmin-roadmap-executor.yml`;
+- `.ai/mandates/REM-SA3B-PROBE-001.json`;
+- `server/systemadmin/githubActionsOidc.ts`;
+- `server/systemadmin/systemadminExecutionBrokerRouter.ts`;
+- `scripts/systemadmin/validateExecutionIssue.mjs`;
+- OIDC / ingress / workflow negative tests;
+- route-composition contract;
+- SA3 audit self-authority extension.
 
-- ADR-0070;
-- ESS-0021 v1.1;
-- `docs/contracts/DEVELOPMENT_CHAIN_ROADMAP_BLOCK_CONTRACT.md`;
-- `.ai/contracts/development-chain-roadmap-block.schema.json`;
-- `docs/runbooks/SYSTEMADMIN_AUTONOMOUS_ROADMAP_BLOCK_EXECUTION.md`.
+### SA3B fail-closed invariants
 
-### SA4B purpose
+- exact Owner issue author required;
+- JSON-only allowlisted request schema;
+- exact probe REM/work package/branch namespace;
+- current `main` SHA binding;
+- GitHub OIDC signature + issuer + audience + repository/immutable IDs + actor + event + ref + workflow binding;
+- no branch before broker `ALLOW` + valid append-only audit reference + bound BRANCH permit;
+- branch failure records terminal `ERROR` evidence;
+- outcome persistence failure after branch creation triggers immediate probe-branch rollback;
+- direct ChatGPT connector mutation is not counted as SA3B enforcement;
+- SA3B execution-host/control-plane paths are protected by the SA3 audit layer.
 
-Enable one Owner-approved REM to cover a coherent DEVELOPMENT Roadmap block made of multiple explicit Execution Units while preserving:
+### SA3B exit gate
 
-`one Execution Unit = one fresh branch = one PR checkpoint = one Human merge boundary`
+SA3B is **not** complete merely because its PR merges.
 
-The Systemadmin may autonomously iterate **inside** each unit until the review-ready PR, but it must stop at that PR checkpoint.
+`COMPLETE / VERIFIED PASS` requires:
 
-After Human merge and branch deletion it may resume the next named unit under the same REM without another PR-creation prompt, provided the REM, Roadmap gate, per-unit scope and audit preconditions remain valid.
+1. final reviewed SA3B head passes repository CI and workflow-security validation;
+2. Human merge;
+3. SA3B implementation branch deletion;
+4. `main` deployment exposes the OIDC broker;
+5. Owner creates the exact `BRANCH_PROBE` request;
+6. GitHub Actions obtains OIDC identity and receives durable SA3 authorization before branch creation;
+7. a valid probe branch is created from exact current `main`;
+8. Authorization + SUCCESS Outcome references are durably correlated;
+9. a negative no/invalid-permit path proves no branch side effect;
+10. probe branch is deleted after evidence capture;
+11. roadmap/traceability/evidence are synchronized.
 
-At every PR checkpoint, the Systemadmin consumes the current Human-Owner policy/ADR-0069 gate instead of implementing a parallel approval mechanism.
+## SA4 — First bounded autonomous work-package REM
 
-### SA4B technical work packages / PR checkpoints
+**Status: BLOCKED BY SA3B VERIFIED PASS**
 
-#### SA4B-EU1 — Per-unit contract and REM binding
+Only after the real host probe passes may the host be extended for one bounded non-production Roadmap work package.
 
-Goal: make block decomposition machine-enforceable rather than descriptive only.
+Required SA4 constraints remain:
 
-Required implementation:
+- Finance / `main`;
+- one Owner-approved REM and one Roadmap item;
+- max one open Systemadmin PR;
+- no external production mutation;
+- max HIGH risk;
+- explicit path allowlist;
+- expiry <= 7 days;
+- kill switch enabled;
+- every BRANCH/COMMIT/PR action audit-bound;
+- one final expensive CI for the reviewed head;
+- Human review and Human-only merge;
+- branch deletion after merge.
 
-- validate `.ai/contracts/development-chain-roadmap-block.schema.json`;
-- bind one contract digest to the Owner-approved REM/approval evidence;
-- enforce `blockId + unitId + roadmapItem` correlation;
-- enforce per-unit allowed paths/capabilities/risk/mutation classes;
-- extend self-authority protection to the new contract/validator/host trust root;
-- fail closed on unknown fields, stale Roadmap baseline or unit mismatch;
-- tests for wrong unit/path/capability/risk/digest/dependency.
-
-**PR checkpoint SA4B-PR1:** review-ready PR → autonomous STOP → current Human-Owner Gate / required CI → Human merge → branch delete.
-
-#### SA4B-EU2 — Bounded code/test execution host
-
-Depends on SA4B-EU1 merged.
-
-Required implementation:
-
-- trusted-main execution host for repository code/test/config changes;
-- no arbitrary shell/command execution from Issue/Chat/Roadmap payloads;
-- exact file/path scope validation before writes;
-- bounded patch/write mechanism;
-- targeted test allowlist / deterministic test plan;
-- BRANCH/COMMIT/PR/CI_REQUEST each require separate audit-bound permit;
-- durable terminal outcome after each capability;
-- bounded rollback only for exact work branch/PR generated by the run.
-
-**PR checkpoint SA4B-PR2:** review-ready PR → autonomous STOP → current Human-Owner Gate / required CI → Human merge → branch delete.
-
-#### SA4B-EU3 — Two-unit live repository pilot
-
-Depends on SA4B-EU2 merged.
-
-Use a non-production, non-self-authority repository scope with real code/test changes. The pilot must prove two units under one REM:
-
-```text
-EU-A branch → code/test → PR-A → Human merge → branch delete
-→ re-resolve new main
-→ EU-B branch → code/test → PR-B → Human merge → branch delete
-```
-
-Required positive evidence:
-
-- per-unit scope enforced;
-- current-main resume gate after PR-A;
-- separate permit/outcome pairs for both units;
-- CI_REQUEST bounded to each exact head;
-- no branch reuse;
-- no production side effect.
-
-Required negative evidence:
-
-- attempt EU-B before PR-A merge → STOP;
-- missing PR-A branch deletion → STOP;
-- cross-unit path access → DENY;
-- stale main → DENY;
-- self-authority path → DENY;
-- audit persistence failure → DENY before side effect;
-- invalid/revoked/expired REM → DENY.
-
-**PR checkpoint SA4B-PR3:** pilot closure/evidence PR → autonomous STOP → current Human-Owner Gate / required CI → Human merge → branch delete.
-
-### SA4B VERIFIED PASS exit gate
-
-SA4B is complete only when:
-
-1. per-unit contract enforcement merged and tested;
-2. bounded code/test executor merged and tested;
-3. two real separated repository units executed under one Owner-approved REM;
-4. each unit stopped at its PR checkpoint;
-5. each PR passed the current Human-Owner gate and was Human merged;
-6. both branches deleted;
-7. resume from new main between units proven;
-8. positive and negative M5 audit evidence complete;
-9. no external production mutation occurred;
-10. Roadmap and Traceability synchronized.
-
-Only after this gate may the Systemadmin be described as capable of autonomous **general bounded repository Roadmap-block execution**.
-
-## Autonomous block operating rules after SA4B
-
-For any later DevelopmentChain block:
-
-1. canonical Roadmap defines the block and its Execution Units;
-2. Owner approves one bounded REM containing all intended unit IDs;
-3. Roadmap Block Contract supplies per-unit technical boundaries but no status;
-4. Systemadmin selects only the next unblocked unit;
-5. fresh branch from current main;
-6. implement/test/commit autonomously inside unit scope;
-7. create/update review-ready PR;
-8. `STOP_PR_CHECKPOINT_REACHED`;
-9. current Human-Owner Gate / required CI / Human merge;
-10. branch deletion verified;
-11. re-read current main/Roadmap/REM;
-12. continue next unit only if resume gate passes.
-
-External Production Mutation always uses a separate DevelopmentChain mutation approval/handoff path.
+Before SA4 adds COMMIT/PR authority, the broader SA1 trust-root list must include the SA3B host/control-plane artifacts in addition to the current SA3 self-protection.
 
 ## SA5 — Bounded external mutation design
 
-**BLOCKED BY M10 VERIFIED PASS**
+**Status: BLOCKED BY SA4 + M10 VERIFIED PASS**
 
-SA4B does not change this boundary. Repository code autonomy does not imply Supabase/Render/Stripe/DNS/IAM production write authority.
-
-A future SA5 design requires:
-
-- exact-target reversible mutation contract;
-- strong Owner assurance per M10 or later accepted equivalent;
-- separate production mutation capability;
-- pre/post verification and rollback;
-- permit-before-side-effect and durable outcome;
-- explicit exclusion of non-delegable Owner actions.
+External production mutation remains prohibited until a separate future ADR proves exact-target, reversible execution plus strong M10 Owner assurance.
 
 ## Branch lifecycle
 
-For every Execution Unit:
-
 `current main → fresh scoped branch → audited actions → PR → Human review/CI → Human merge → branch delete`
 
-Merged/superseded branches are never reused. The next unit starts only after deletion evidence and from then-current `main`.
+Merged/superseded branches are never reused.
 
 ## Current next action
 
-**SA4B is the next Systemadmin enablement gate.**
-
-DevelopmentChain M5A remains the next product/security implementation phase. It can proceed through the normal Human-authorized Development path now; if it is to be executed as a larger autonomous Systemadmin code block, SA4B must first reach `VERIFIED PASS` and M5A must receive a dedicated Owner-approved REM + per-unit Roadmap Block Contract.
-
-No completion of SA4/SA4B authorizes the later native Owner MFA production mutation itself; that remains behind the separate M5A Owner mutation approval gate.
+Complete the SA3B PR and final-head CI. After Human merge and main deployment, execute the one-time real BRANCH_PROBE. **SA4 remains blocked until that post-merge proof and cleanup are VERIFIED PASS.**
