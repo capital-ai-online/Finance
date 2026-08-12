@@ -54,7 +54,11 @@ The task-list parser is intentionally **semantically strict but Markdown-toleran
 
 The review parser is likewise fail-closed: prose that merely contains `💪` or `okay` is not approval evidence. The complete trimmed review value must match one of the two approved signals.
 
-**Event-Snapshot-Regel:** Die Attestations werden aus dem PR-Body-Snapshot des konkret auslösenden `pull_request: edited`-Events bewertet. Der Workflow darf hierfür nicht den späteren Live-PR-Body erneut laden. Dadurch kann ein früher Checkbox-Event nicht nachträglich durch einen zweiten Checkbox-Klick freigegeben werden und keinen zweiten teuren Build auslösen.
+**Event-Snapshot-Regel:** Die Attestations werden aus dem PR-Body-Snapshot des konkret auslösenden `pull_request: edited`-Events bewertet. Der Workflow darf hierfür nicht den späteren Live-PR-Body erneut laden. Dadurch kann ein früher Checkbox-Event nicht nachträglich durch einen zweiten Checkbox-Klick freigegeben werden.
+
+**Transition-Gate-Regel:** Für Pull Requests darf der kostenpflichtige Owner-Gate-Runner nur beim Body-Übergang von „noch nicht beide kanonischen Attestations gesetzt“ zu „beide gesetzt“ starten. Der erste Checkbox-Klick, Titeländerungen und spätere Body-Edits bei bereits gesetzten Attestations erzeugen keine erneute Runner-Ausführung. Manuelle Workflow-Reruns desselben PR-Events dürfen keine neue CI-Autorisierung erzeugen.
+
+**One-Shot-Regel:** Für die Identität `(PR-Nummer, Head-SHA)` existiert höchstens ein autorisierter `build-and-test`-Slot. Die GitHub-Actions-Run-/Job-Evidence ist hierfür die technische Reservation: ein nicht `skipped` klassifizierter `build-and-test`-Job zählt bereits im Zustand `queued` als reserviert und im Zustand `in_progress` oder `completed` als verbraucht. Ein bereits erfolgreicher Lauf wird als gleiche Head-Evidence wiederverwendet; ein fehlgeschlagener, abgebrochener oder anderweitig verbrauchter Lauf darf auf demselben Head nicht erneut gestartet werden. Für einen Retry ist ein neuer Commit und damit ein neuer Head erforderlich.
 
 A new commit invalidates the previous review evidence for gating purposes. The Owner must inspect the delta, submit a new current-head review and only then save the two Owner attestations as the final CI trigger. Nach einem neuen Head müssen bereits gesetzte Attestations zurückgesetzt und für den neuen Head erneut gesetzt werden.
 
@@ -69,7 +73,10 @@ GitHub kann beim Anklicken gerenderter Markdown-Checkboxen **pro Checkbox einen 
 - die PR-Diff-Attestation wird nach dem Current-Head-Review zuerst gesetzt;
 - die `Files changed`-/`Viewed`-Attestation wird **zuletzt** gesetzt und ist der finale normale CI-Trigger;
 - ein vorheriger Event, bei dem noch nicht beide Attestations gesetzt waren, darf wegen der Event-Snapshot-Regel kein `build-and-test` autorisieren;
-- `concurrency` mit `cancel-in-progress: true` begrenzt gleichzeitige Läufe desselben PRs zusätzlich; die inhaltliche Autorisierung bleibt trotzdem an den konkreten Event-Snapshot gebunden.
+- der Owner-Gate-Job läuft nur beim Übergang auf „beide Attestations gesetzt“; spätere Metadaten-Edits bleiben runner-frei;
+- PR-CI verwendet für Metadaten-Events **kein** `cancel-in-progress`, damit ein bereits autorisierter Build nicht durch einen späteren Checkbox-/Body-Edit abgebrochen wird;
+- `main`-Push-CI darf weiterhin `cancel-in-progress` verwenden, damit ein veralteter Main-/Deploy-Kandidat durch einen neueren ersetzt werden kann;
+- vor Freigabe eines neuen PR-Builds prüft das Gate die vorhandene GitHub-Actions-Evidence für exakt dieselbe PR-Nummer und denselben Head-SHA und reserviert den Slot fail-closed.
 
 Opening the PR, pushing a commit or submitting the review alone MUST NOT independently start a full build/test run.
 
@@ -83,12 +90,13 @@ Before the final Owner-checkbox edit:
 
 After the final Owner-checkbox edit:
 
-- exactly one scope-appropriate `build-and-test` job is expected for the current PR head;
+- exactly one scope-appropriate `build-and-test` job is authorized for the current PR head;
 - documentation-only changes use the fast path inside that same job;
 - code changes run npm/audit/TypeScript/unit/build checks inside that same job;
 - protected post-build tests that require generated `dist/` artifacts run **after** the production build;
 - Docker/runtime checks run only when the changed-file scope requires them;
-- governance/security workflows may run independently because they are lightweight policy checks.
+- governance/security workflows may run independently because they are lightweight policy checks;
+- a later Body-/Checkbox-Edit on the same Head MUST NOT create a second `build-and-test`; successful same-head Evidence is reused, while failed/aborted same-head Evidence requires a new Head before retry.
 
 If a new commit changes the PR head, the previous review is no longer valid for that head. Revalidation requires reset attestations, a new current-head review and then the ordered final checkbox sequence above. Normal operation remains one expensive `build-and-test` run per reviewed PR head.
 
@@ -122,8 +130,9 @@ The pull request is the evidence bundle:
 4. two checked Human/Owner PR-body boxes in the final triggering event snapshot;
 5. current PR head SHA;
 6. Owner review attached to that exact SHA with exact trimmed value `💪` or `okay`;
-7. final `Files changed`-/`Viewed` checkbox edit after that review;
-8. exactly one normal expensive `build-and-test` run for that reviewed head;
-9. resulting merge commit.
+7. final `Files changed`-/`Viewed` checkbox transition after that review;
+8. exact `(PR number, Head SHA)` One-Shot reservation/evidence from GitHub Actions;
+9. exactly one non-skipped scope-appropriate `build-and-test` job for that reviewed head;
+10. resulting merge commit.
 
 This policy is part of the CAPITAL-AI DevelopmentChain and must remain synchronized with `docs/architecture/ROADMAP.md`, Agent IAM policy and merge governance.

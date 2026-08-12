@@ -2,55 +2,19 @@
   "schemaVersion": "1.0.0",
   "authority": "docs/governance/DOCUMENTATION_HYGIENE_POLICY.md",
   "entries": [
-    {
-      "documentId": "DOC-ROOT-README",
-      "type": "repository-overview",
-      "owner": "CAPITAL-AI",
-      "authority": "Repository",
-      "version": "0.6.0",
-      "language": "mixed",
-      "lifecycle": "approved",
-      "path": "README.md"
-    },
-    {
-      "documentId": "DOC-GOV-AGENTS",
-      "type": "governance",
-      "owner": "CAPITAL-AI",
-      "authority": "ADR-0039",
-      "version": "1.0.0",
-      "language": "en",
-      "lifecycle": "approved",
-      "path": "AGENTS.md"
-    },
-    {
-      "documentId": "DOC-GOV-CLAUDE",
-      "type": "agent-governance",
-      "owner": "CAPITAL-AI",
-      "authority": "Repository",
-      "version": "1.0.0",
-      "language": "mixed",
-      "lifecycle": "approved",
-      "path": "CLAUDE.md"
-    },
-    {
-      "documentId": "DOC-ROADMAP-DOCUMENTARY-EVENT-VALUE-CHAIN",
-      "type": "roadmap",
-      "owner": "CAPITAL-AI",
-      "authority": "ESS-0010",
-      "version": "1.0.0",
-      "language": "de",
-      "lifecycle": "approved",
-      "path": "docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md"
-    },
-    {
-      "documentId": "DOC-GOV-DOCUMENTATION-HYGIENE",
-      "type": "governance-policy",
-      "owner": "CAPITAL-AI",
-      "authority": "H0-H4-H5",
-      "version": "1.0.0",
-      "language": "mixed",
-      "lifecycle": "generated",
-      "path": "docs/governance/DOCUMENTATION_HYGIENE_POLICY.md"
-    }
+    {"documentId":"DOC-ROOT-README","type":"repository-overview","owner":"CAPITAL-AI","authority":"Repository","version":"0.6.0","language":"mixed","lifecycle":"approved","path":"README.md"},
+    {"documentId":"DOC-GOV-AGENTS","type":"governance","owner":"CAPITAL-AI","authority":"ADR-0039","version":"1.0.0","language":"en","lifecycle":"approved","path":"AGENTS.md"},
+    {"documentId":"DOC-GOV-CLAUDE","type":"agent-governance","owner":"CAPITAL-AI","authority":"Repository","version":"1.0.0","language":"mixed","lifecycle":"approved","path":"CLAUDE.md"},
+    {"documentId":"DOC-ROADMAP-DOCUMENTARY-EVENT-VALUE-CHAIN","type":"roadmap","owner":"CAPITAL-AI","authority":"ESS-0010","version":"1.0.0","language":"de","lifecycle":"approved","path":"docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md"},
+    {"documentId":"DOC-GOV-DOCUMENTATION-HYGIENE","type":"governance-policy","owner":"CAPITAL-AI","authority":"H0-H4-H5","version":"1.0.0","language":"mixed","lifecycle":"generated","path":"docs/governance/DOCUMENTATION_HYGIENE_POLICY.md"},
+    {"documentId":"DOC-GOV-GITHUB-PLATFORM-ENABLEMENT","type":"governance-plan","owner":"CAPITAL-AI","authority":"docs/governance/GITHUB_MAIN_PROTECTION_POLICY.md","version":"1.0.0","language":"de","lifecycle":"draft","path":"docs/governance/GITHUB_PRO_ENABLEMENT_PLAN.md"},
+    {"documentId":"DOC-GOV-PLATFORM-COST-BUDGET","type":"governance-policy","owner":"CAPITAL-AI","authority":"Owner review required","version":"1.0.0","language":"de","lifecycle":"draft","path":"docs/governance/PLATFORM_COST_BUDGET_POLICY.md"},
+    {"documentId":"DOC-GOV-REPO-VISIBILITY-MODELS","type":"governance-assessment","owner":"CAPITAL-AI","authority":"docs/governance/GITHUB_MAIN_PROTECTION_POLICY.md","version":"1.0.0","language":"de","lifecycle":"draft","path":"docs/governance/REPOSITORY_VISIBILITY_AND_COLLABORATION_MODELS.md"},
+    {"documentId":"DOC-GOV-AI-ASSISTANT-FEATURE-COST-BENEFIT","type":"governance-assessment","owner":"CAPITAL-AI","authority":"docs/governance/PLATFORM_COST_BUDGET_POLICY.md","version":"1.0.0","language":"de","lifecycle":"draft","path":"docs/governance/AI_ASSISTANT_AND_GITHUB_FEATURE_COST_BENEFIT.md"},
+    {"documentId":"DOC-ROADMAP-MONETIZATION","type":"roadmap","owner":"CAPITAL-AI","authority":"docs/architecture/ROADMAP.md","version":"1.0.0","language":"de","lifecycle":"draft","path":"docs/architecture/MONETIZATION_ROADMAP.md"},
+    {"documentId":"DOC-RUNBOOK-PRODUCTION-ENVIRONMENT-SETUP","type":"runbook","owner":"CAPITAL-AI","authority":"DevelopmentChain M7","version":"2.0.0","language":"de","lifecycle":"draft","path":"docs/runbooks/PRODUCTION_ENVIRONMENT_SETUP.md"},
+    {"documentId":"DOC-GOV-PR-CHECK-CLASSIFICATION","type":"governance-policy","owner":"CAPITAL-AI","authority":"CAPITAL-AI DevelopmentChain","version":"2.0.0","language":"de","lifecycle":"approved","path":"docs/governance/PR_CHECK_CLASSIFICATION.md"},
+    {"documentId":"DOC-GOV-PR-EXECUTION-RIGHTS","type":"governance-policy","owner":"CAPITAL-AI","authority":"CAPITAL-AI DevelopmentChain","version":"2.0.0","language":"de","lifecycle":"approved","path":"docs/governance/PR_EXECUTION_RIGHTS_CLASSIFICATION.md"},
+    {"documentId":"DOC-GOV-HUMAN-OWNER-PR-APPROVAL","type":"governance-policy","owner":"CAPITAL-AI","authority":"ADR-0039","version":"2.0.0","language":"de","lifecycle":"approved","path":"docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md"}
   ]
 }

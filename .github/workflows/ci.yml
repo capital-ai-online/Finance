@@ -11,27 +11,59 @@ on:
     types: [edited]
 
 permissions:
+  actions: read
   contents: read
   pull-requests: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # PR-Metadaten-Edits dürfen einen bereits autorisierten Build nicht abbrechen.
+  # Für main-Pushes bleibt Latest-wins aktiv, damit veraltete Deploy-Kandidaten keine Kosten erzeugen.
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   owner-gate:
     name: Human-/Owner-Vorprüfung
+    # Runner nur beim echten Übergang "noch nicht beide Attestations -> beide Attestations"
+    # starten. Titel-/sonstige Body-Edits und der erste Checkbox-Klick bleiben runner-frei.
+    if: >-
+      ${{
+        github.event_name == 'push' ||
+        (
+          github.run_attempt == 1 &&
+          github.event.changes.body.from != null &&
+          (
+            contains(github.event.pull_request.body, '- [x] Human/Owner: vollständigen PR-Diff geprüft.') ||
+            contains(github.event.pull_request.body, '- [X] Human/Owner: vollständigen PR-Diff geprüft.')
+          ) &&
+          (
+            contains(github.event.pull_request.body, '- [x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.') ||
+            contains(github.event.pull_request.body, '- [X] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.')
+          ) &&
+          !(
+            (
+              contains(github.event.changes.body.from, '- [x] Human/Owner: vollständigen PR-Diff geprüft.') ||
+              contains(github.event.changes.body.from, '- [X] Human/Owner: vollständigen PR-Diff geprüft.')
+            ) &&
+            (
+              contains(github.event.changes.body.from, '- [x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.') ||
+              contains(github.event.changes.body.from, '- [X] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.')
+            )
+          )
+        )
+      }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       approved: ${{ steps.gate.outputs.approved }}
+      reused: ${{ steps.gate.outputs.reused }}
     steps:
       - name: main-Push zulassen
         if: ${{ github.event_name == 'push' }}
         run: |
           echo "main-Push: vollständige CI ist verpflichtend."
 
-      - name: Owner-Freigabe prüfen
+      - name: Owner-Freigabe und One-Shot prüfen
         if: ${{ github.event_name != 'push' }}
         id: gate
         shell: bash
@@ -41,12 +73,13 @@ jobs:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_BODY: ${{ github.event.pull_request.body || '' }}
           EXPECTED_OWNER: SvenKulessa
+          CURRENT_RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
 
-          # Wichtig: Die Attestations werden aus dem Body-Snapshot genau dieses edited-Events
-          # ausgewertet. Ein späterer zweiter Checkbox-Klick darf einen älteren Event-Lauf nicht
-          # nachträglich freigeben und dadurch einen doppelten build-and-test auslösen.
+          # Die Attestations werden ausschließlich aus dem Snapshot dieses edited-Events
+          # ausgewertet. Live-PR-Metadaten dürfen einen älteren Event-Snapshot nicht nachträglich
+          # autorisieren.
           read -r diff_attested files_attested <<< "$(
             python3 - <<'PY'
           import os
@@ -106,11 +139,9 @@ jobs:
             review_ok=true
           fi
 
-          if [ "$body_ok" = "true" ] && [ "$review_ok" = "true" ]; then
-            echo "approved=true" >> "$GITHUB_OUTPUT"
-            echo "Owner-Gate erfüllt. Genau ein build-and-test-Lauf darf starten."
-          else
+          if [ "$body_ok" != "true" ] || [ "$review_ok" != "true" ]; then
             echo "approved=false" >> "$GITHUB_OUTPUT"
+            echo "reused=false" >> "$GITHUB_OUTPUT"
             echo "Owner-Gate nicht erfüllt. Build/Test wird nicht gestartet."
             echo "PR-Diff-Attestation: $diff_attested"
             echo "Files-changed-Attestation: $files_attested"
@@ -118,6 +149,60 @@ jobs:
             echo "Reihenfolge: aktuellen Head reviewen (💪/okay), danach beide Owner-Checkboxen setzen/speichern."
             exit 1
           fi
+
+          # One-Shot-Reservation: Für dasselbe (PR, Head-SHA) darf höchstens ein nicht
+          # übersprungener build-and-test-Job existieren. queued/in_progress zählt bereits als
+          # reserviert; damit können schnelle Uncheck/Recheck-Sequenzen keinen zweiten Build
+          # autorisieren. Skipped-Jobs aus nicht autorisierten Metadaten-Events zählen nicht.
+          prior_build="$(
+            gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?event=pull_request&head_sha=${PR_HEAD_SHA}&per_page=100" \
+              --jq ".workflow_runs[] | select(.id != (${CURRENT_RUN_ID} | tonumber)) | select(any(.pull_requests[]?; .number == (${PR_NUMBER} | tonumber))) | .id" \
+            | while IFS= read -r run_id; do
+                [ -z "$run_id" ] && continue
+                job="$(
+                  gh api \
+                    "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?filter=all&per_page=100" \
+                    --jq '.jobs[] | select(.name == "build-and-test" and .conclusion != "skipped") | [.id, .status, (.conclusion // "null")] | @tsv' \
+                    | head -n 1
+                )"
+                if [ -n "$job" ]; then
+                  printf '%s\t%s\n' "$run_id" "$job"
+                  break
+                fi
+              done
+          )"
+
+          if [ -n "$prior_build" ]; then
+            IFS=$'\t' read -r prior_run_id prior_job_id prior_status prior_conclusion <<< "$prior_build"
+            echo "approved=false" >> "$GITHUB_OUTPUT"
+
+            case "$prior_conclusion" in
+              success)
+                echo "reused=true" >> "$GITHUB_OUTPUT"
+                echo "One-Shot erfüllt: build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} ist bereits erfolgreich."
+                echo "Evidence: run=${prior_run_id}, job=${prior_job_id}. Kein zweiter Build wird gestartet."
+                exit 0
+                ;;
+              null)
+                echo "reused=false" >> "$GITHUB_OUTPUT"
+                echo "One-Shot reserviert: build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} ist bereits ${prior_status}."
+                echo "Evidence: run=${prior_run_id}, job=${prior_job_id}. Kein paralleler zweiter Build wird gestartet."
+                exit 0
+                ;;
+              *)
+                echo "reused=false" >> "$GITHUB_OUTPUT"
+                echo "One-Shot verbraucht: vorheriger build-and-test endete mit ${prior_conclusion}."
+                echo "Evidence: run=${prior_run_id}, job=${prior_job_id}."
+                echo "Ein Retry auf demselben Head ist nicht erlaubt; ein neuer Commit/Head ist erforderlich."
+                exit 1
+                ;;
+            esac
+          fi
+
+          echo "approved=true" >> "$GITHUB_OUTPUT"
+          echo "reused=false" >> "$GITHUB_OUTPUT"
+          echo "Owner-Gate erfüllt und One-Shot frei. Genau ein build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} darf starten."
 
   build-and-test:
     name: build-and-test

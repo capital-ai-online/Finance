@@ -1,0 +1,20 @@
+{
+  "schemaVersion":"1.0.0",
+  "claimId":"CONSOLIDATED-PR-GOVERNANCE-2026-08-12",
+  "status":"active",
+  "exclusive":true,
+  "agent":{"provider":"OpenAI","model":"GPT-5.6 Sol","executionSurface":"ChatGPT GitHub Connector"},
+  "workItem":"Consolidate all open pull requests and introduce an automatically classified learning-oriented pull request workflow",
+  "workItemDE":"Offene Pull Requests konsolidieren und verständliche automatische PR-Klassifikation einführen",
+  "changeSummaryDE":"Die offenen PRs #193, #233 und #234 werden fachlich in einen aktuellen Branch überführt. Zusätzlich wird der One-Shot-CI-Fix integriert und die PR-Vorlage zu einem automatisch klassifizierten, leicht verständlichen Lern- und Review-Artefakt weiterentwickelt.",
+  "learningGoalDE":"Nach dem Lesen des Pull Requests soll verständlich sein, welche CAPITAL-AI-Bereiche geändert werden, warum die automatische Klasse R gilt, welche Tests daraus folgen und warum CI-Erfolg niemals Merge- oder Produktionsautorität erteilt.",
+  "executionProfile":"P2",
+  "externalMutation":"NONE",
+  "startedAt":"2026-08-12T10:19:00Z",
+  "baseBranch":"main",
+  "baseSha":"5bd5f4d78b87a89258126d0453eaf5e4bc6b6125",
+  "pullRequest":null,
+  "productionBaseline":{"checkedAt":"2026-08-12T10:19:00Z","version":"0.6.0","commitSha":"5bd5f4d78b87a89258126d0453eaf5e4bc6b6125","branch":"main","repoSlug":"SvenKulessa/Finance"},
+  "claimedPaths":[".github/pull_request_template.md",".github/workflows/ci.yml",".github/workflows/open-agent-draft-pr.yml",".github/workflows/pr-auto-classification.yml","scripts/pr/createWorkClaim.mjs","scripts/pr/lib.mjs","scripts/pr/renderPullRequestBody.mjs","scripts/pr/updatePrClassification.mjs","scripts/pr/validatePrBody.mjs","scripts/pr/classification.test.mjs","tests/unit/ciWorkflowOneShot.test.ts","docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md","docs/governance/PR_CHECK_CLASSIFICATION.md","docs/governance/PR_EXECUTION_RIGHTS_CLASSIFICATION.md","docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md","docs/governance/GITHUB_PRO_ENABLEMENT_PLAN.md","docs/governance/PLATFORM_COST_BUDGET_POLICY.md","docs/governance/AI_ASSISTANT_AND_GITHUB_FEATURE_COST_BENEFIT.md","docs/governance/REPOSITORY_VISIBILITY_AND_COLLABORATION_MODELS.md","docs/governance/document-registry.json","docs/architecture/MONETIZATION_ROADMAP.md","docs/architecture/ROADMAP.md","docs/evidence/sa4/SA4_VERIFIED_PASS_CLOSURE_2026-08-12.md","docs/roadmaps/AI_AGENT_M0_M9_IMPLEMENTATION_ROADMAP.md","docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md","docs/traceability/AI_AGENT_M0_M9_TRACEABILITY_MATRIX.md","docs/traceability/DEVELOPMENT_CHAIN_DOCUMENT_TRACEABILITY_MATRIX.md","docs/runbooks/PRODUCTION_ENVIRONMENT_SETUP.md"],
+  "releaseCondition":"Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}

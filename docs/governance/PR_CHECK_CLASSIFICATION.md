@@ -1,65 +1,56 @@
 # Pull Request Check Classification
 
-Status: PROPOSED
-Authority: CAPITAL-AI DevelopmentChain
+Status: **REQUIRED**  
+Authority: CAPITAL-AI DevelopmentChain  
+Companion: `docs/governance/PR_EXECUTION_RIGHTS_CLASSIFICATION.md`
 
 ## Zweck
 
-Dieses Dokument legt fest, welche Checks ein Pull Request abhängig vom tatsächlichen Änderungsumfang durchlaufen muss. Ziel ist, unnötige CI-Läufe zu vermeiden, ohne Sicherheits-, Qualitäts- oder Human-/Owner-Gates zu schwächen.
+Die Checkklasse beantwortet nur eine Frage: **Welche technischen Prüfungen braucht der tatsächliche PR-Diff?** Sie wird automatisch aus den Changed Files ermittelt. Menschen und Agenten sollen die Klasse nicht aus dem Bauch heraus auswählen.
 
-## Begriffe
+Die Ausführungsrechte sind davon getrennt. Eine strengere Checkklasse gibt keinem Agenten zusätzliche Rechte.
 
-### Threat Model
+## Automatische Klassen
 
-Ein Threat Model beschreibt Assets, Trust Boundaries, mögliche Angreifer/Fehlbedienungen, Angriffswege, Auswirkungen und Gegenmaßnahmen. Es ist vor allem erforderlich, wenn ein PR Authentisierung, Autorisierung, Agent-Capabilities, Secrets, externe Schreibzugriffe, neue Trust Boundaries oder Produktionsmutationen einführt.
+| Klasse | Einfache Bedeutung | Automatische Erkennung | Mindestprüfungen |
+|---|---|---|---|
+| **D** | Nur Dokumentation/Evidence | ausschließlich `docs/**`, `.ai/**` oder Markdown und kein Runtime-/Workflow-Pfad | Owner-Gate, Governance/Security, Docs-Fast-Path, `build-and-test` |
+| **C** | Anwendung/Test/Konfiguration | ausführbare Repository-Dateien, aber kein Runtime-/Deployment-Pfad | D-Governance + npm/audit + TypeScript + Tests + Production Build + CSP/Predeploy |
+| **R** | Runtime/CI/Dependencies/Deployment | u. a. `Dockerfile`, `.dockerignore`, `package*.json`, `server.ts`, `server/**`, `render.yaml`, `.github/workflows/**`, Runtime-/Docker-Security | C + Workflow-/Docker-/Runtime-Schutzprüfungen |
+| **M** | Externer produktiver Side Effect | nicht allein aus Git ableitbar; muss ausdrücklich als externe Mutation deklariert werden | technisch zutreffende D/C/R-Prüfungen + separate Owner-Mutationsfreigabe + Pre/Post Verification + Evidence |
 
-### Negative Tests
+Mehrere Treffer → strengste Klasse. Unklarheit → fail-closed zur strengeren Prüfung.
 
-Negative Tests prüfen nicht den gewünschten Happy Path, sondern beweisen, dass verbotene Zustände fail-closed abgelehnt werden. Beispiele: falscher Actor, fehlende Capability, falscher PR-Head-SHA, Replay, abgelaufene Approval-Evidence, falsche WebAuthn Origin/RP-ID, unerlaubter Produktionszugriff oder ungültige Konfiguration.
+## Technische Umsetzung
 
-### Rollback-Runbook
+Die Source of Truth ist `classifyPullRequestScope()` in `scripts/pr/lib.mjs`.
 
-Ein Rollback-Runbook definiert, wie nach einer fehlerhaften Mutation der letzte verifizierte Zustand wiederhergestellt wird. Es enthält Trigger, Verantwortlichkeit, Rücksetzschritte, Daten-/Konfigurationsfolgen und Verifikation. Bei reinem Repository-Code kann `git revert` genügen. Externe Mutationen an Supabase, Stripe, Render, Credentials, Deployments oder Schemas benötigen ein explizites Runbook.
+- `scripts/pr/renderPullRequestBody.mjs` rendert die Klasse bereits vor der PR-Erstellung.
+- `.github/workflows/pr-auto-classification.yml` läuft ausschließlich aus dem vertrauenswürdigen `main` nach dem bestehenden Governance-Workflow. Er liest Changed Files über die GitHub API, führt keinen Kandidatencode aus und aktualisiert den maschinenverwalteten Lern-/Klassifikationsblock.
+- `scripts/pr/updatePrClassification.mjs` setzt bei einem neuen Head die beiden Human-/Owner-Attestations wieder zurück.
+- `scripts/pr/validatePrBody.mjs` berechnet die Klasse erneut und erkennt veraltete oder manipulierte Klassifikationen.
 
-## Checkklassen
+Die externe Mutation wird über `CAPITAL_AI_EXTERNAL_MUTATION` bzw. einen Work-Claim deklariert. `NONE` bedeutet: dieser PR selbst plant keinen externen produktiven Side Effect. Ein unbekannter Wert wird fail-closed als `PLANNED` behandelt und führt zu M.
 
-### D — Documentation-only
+## Kostenregel
 
-Nur `docs/**`, `.ai/**` oder Markdown.
+Die Klassifikation ist zugleich CI-Kostensteuerung:
 
-Pflicht: Owner-Gate, Governance/Security, Docs-Fast-Path, `build-and-test`.
+- D überspringt npm/Test/Build/Docker;
+- C führt den normalen Softwarepfad aus;
+- R ergänzt nur die wirklich erforderlichen Runtime-/Workflow-/Docker-Prüfungen;
+- pro `(PR, Head-SHA)` gilt die One-Shot-Regel für `build-and-test`.
 
-Nicht erforderlich: npm, TypeScript, Unit Tests, Production Build, Docker.
-
-### C — Application / Test / Configuration
-
-Anwendungs-/Servicecode, Tests oder nicht-dokumentarische Konfiguration ohne Runtime-/Deployment-Relevanz.
-
-Pflicht zusätzlich zu Owner/Governance: Git-/Toolchain-Integrität, `npm ci`, Production Dependency Audit, Production Config Invariants, Docker-Hardening-Policy-Check, TypeScript/Lint, Unit Tests, Production Build, CSP-Test, Predeploy-Check, `build-and-test`.
-
-### R — Runtime / Dependency / Docker / Deployment
-
-Dockerfile, Dependency-Manifeste, Server/Runtime, Render-Konfiguration, Runtime-/Docker-Security oder relevante Workflows.
-
-Pflicht: vollständige Klasse C plus Docker Image Build, Image User/CMD/Healthcheck, Workflow Security bei Workflow-Änderungen sowie Deployment-/Rollback-Nachweis wenn Produktionsverhalten betroffen ist.
-
-### M — External Platform Mutation
-
-Geplante Mutation an Supabase, Stripe, Render oder anderer produktionsverbundener Plattform.
-
-Pflicht zusätzlich: autorisierende Roadmap/ADR/ESS, Owner Mutation Approval, Pre-Mutation Baseline/Test, ausführbares Rollback-Runbook, protokollierte Mutation, Post-Mutation Verification und Evidence. Der nächste Roadmap-Schritt bleibt bis `VERIFIED PASS` blockiert.
-
-## Auswahlregel
-
-Die strengste zutreffende Klasse gilt für den gesamten PR. Ein neuer Commit, der den Scope erweitert, kann die Checkklasse erhöhen und invalidiert die vorherige Human-/Owner-Freigabe für den alten Head.
+Normative Kostenquelle: `docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md` mit **15 EUR/Monat** maximalen GitHub-Actions-Zusatzkosten.
 
 ## Merge-Regel
 
-Ein PR ist nur merge-fähig, wenn:
+Ein PR ist nur merge-bereit, wenn:
 
-1. Owner-Gate für den aktuellen Head erfüllt ist;
-2. alle Checks der gewählten Klasse PASS sind;
-3. `build-and-test` PASS ist;
-4. Governance PASS ist;
-5. keine offenen merge-blockierenden Funde bestehen;
-6. eine separate ausdrückliche menschliche Merge-Anweisung vorliegt.
+1. die automatische Klassifikation zum aktuellen Diff passt;
+2. das Execution Profile innerhalb der dokumentierten Rechte liegt;
+3. der Human/Owner den aktuellen Head geprüft hat;
+4. die erforderlichen Checks erfolgreich sind;
+5. eine externe Mutation, falls geplant, separat autorisiert und verifiziert ist;
+6. keine P0-reservierte Aktion an einen Agenten delegiert wurde;
+7. eine separate ausdrückliche Human/Owner-Anweisung den Merge autorisiert.
