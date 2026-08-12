@@ -1,33 +1,52 @@
-name: PR Auto-Klassifikation
+name: PR Auto-Status
 run-name: >-
-  PR-Auto-Klassifikation nach Governance-Run ${{ github.event.workflow_run.id }}
+  PR-Auto-Status nach ${{ github.event.workflow_run.name }} #${{ github.event.workflow_run.id }}
 
 on:
   workflow_run:
-    workflows: ["PR Governance"]
+    workflows: ["PR Governance", "CI"]
     types: [completed]
 
 permissions:
+  actions: read
   contents: read
   pull-requests: write
 
 concurrency:
-  group: pr-auto-classification-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}
+  group: pr-auto-status-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.id }}
   cancel-in-progress: true
 
 jobs:
-  classify:
-    name: PR verständlich klassifizieren
-    if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.pull_requests[0].number != null }}
+  sync:
+    name: PR-Klasse und Evidence synchronisieren
+    if: >-
+      ${{
+        github.event.workflow_run.event == 'pull_request' &&
+        github.event.workflow_run.pull_requests[0].number != null
+      }}
     runs-on: ubuntu-latest
     timeout-minutes: 4
     steps:
       - name: Vertrauenswürdigen main-Stand auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with: { ref: main, fetch-depth: 1, persist-credentials: false }
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
       - name: Node.js einrichten
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with: { node-version: '24.18.0' }
-      - name: Changed Files klassifizieren und Lernblock aktualisieren
-        env: { GITHUB_TOKEN: "${{ github.token }}", PR_NUMBER: "${{ github.event.workflow_run.pull_requests[0].number }}" }
+        with:
+          node-version: '24.18.0'
+
+      - name: Changed Files klassifizieren
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
         run: node scripts/pr/updatePrClassification.mjs
+
+      - name: Human- und CI-Evidence für aktuellen Head synchronisieren
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        run: node scripts/pr/syncPrEvidence.mjs

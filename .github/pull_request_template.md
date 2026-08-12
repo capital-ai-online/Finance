@@ -1,10 +1,11 @@
-<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 2.1.0 -->
+<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 2.2.0 -->
 # CAPITAL-AI Pull Request — {{WORK_ITEM}}
 
 <!-- CAPITAL_AI_EXTERNAL_MUTATION: NONE -->
 <!-- CAPITAL_AI_EXECUTION_PROFILE: AUTO -->
+<!-- CAPITAL_AI_SYNC_HEAD_SHA: {{HEAD_SHA}} -->
 
-> Dieser Pull Request ist gleichzeitig **Änderungsnachweis und Lernmaterial**. Die technische Checkklasse wird aus den geänderten Dateien automatisch ermittelt. Ein geplanter externer Produktionsschritt muss ausdrücklich deklariert werden und hebt die Prüfung auf Klasse M an. Der Mensch muss keine Klasse erraten.
+> Dieser Pull Request ist gleichzeitig **Änderungsnachweis und Lernmaterial**. Die technische Checkklasse wird aus den geänderten Dateien automatisch ermittelt. Ein geplanter externer Produktionsschritt muss ausdrücklich deklariert werden und hebt die Prüfung auf Klasse M an. Der Mensch muss keine Klasse oder technische PASS-Häkchen erraten.
 
 ## 1. Kurz erklärt
 
@@ -73,27 +74,31 @@ Die Klasse gibt nur vor, **was geprüft werden muss**. Sie erteilt keinem Agente
 
 ## 5. Human / Owner Review VOR technischer CI
 
-> **Reihenfolge:** `Files changed` lesen → jede Datei als `Viewed` markieren → Review `💪` oder `okay` für den aktuellen Head absenden → **danach** die beiden Kästchen setzen. Ein neuer Commit macht die Head-gebundene Review-Evidence ungültig.
+> **Nur diese zwei Häkchen werden vom Menschen gesetzt.** Reihenfolge: `Files changed` lesen → jede Datei als `Viewed` markieren → Review `💪` oder `okay` für den aktuellen Head absenden → **danach** die beiden Kästchen setzen. Ein neuer Commit setzt sie automatisch zurück und macht die Head-gebundene Review-Evidence ungültig.
 
 - [ ] Human/Owner: vollständigen PR-Diff geprüft.
 - [ ] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.
 
-## 6. Technische Nachweise
+## 6. Automatisch synchronisierte Nachweise
 
-- [ ] Automatische Klassifikation stimmt mit dem tatsächlichen Diff überein.
-- [ ] Live-PR-Body und Produktionsbaseline sind gegen den aktuellen Head validiert.
-- [ ] Governance-/Security-Prüfungen PASS.
-- [ ] Falls Klasse C/R: Repository-Konventionen im blocking-Modus PASS.
-- [ ] Alle für `{{AUTO_CHECK_CLASS}}` erforderlichen Checks PASS.
-- [ ] Falls Klasse R: Produktions-Docker-Container real gestartet und `/healthz` mit HTTP 200 geprüft.
-- [ ] `build-and-test` für den aktuellen `(PR, Head-SHA)` PASS bzw. gültige One-Shot-Evidence API-/SHA-head-genau wiederverwendet.
-- [ ] Falls Klasse M: separate Human/Owner-Mutationsfreigabe und Pre-/Post-Verification dokumentiert.
+> **Nicht manuell bearbeiten.** Alle folgenden Häkchen werden ausschließlich vom trusted-main PR-Status-Workflow aus GitHub-/Actions-Evidence für den aktuellen Head gesetzt. `☐` bedeutet ausstehend oder fehlgeschlagen; `☑` bedeutet maschinell verifiziert oder für die erkannte Klasse nachweislich nicht erforderlich.
+
+<!-- CAPITAL_AI_MACHINE_EVIDENCE_START -->
+- [ ] 🤖 Automatische Klassifikation und aktueller Head sind synchronisiert.
+- [ ] 🤖 Governance-/Workflow-Security für den aktuellen Head ist erfolgreich.
+- [ ] 🤖 Live-PR-Body und Produktionsbaseline sind gegen den aktuellen Head validiert.
+- [ ] 🤖 Repository-Konventionen sind im für die Klasse erforderlichen Modus erfüllt.
+- [ ] 🤖 Erforderliche Software-/Build-Prüfungen sind erfolgreich oder für die Klasse nicht erforderlich.
+- [ ] 🤖 Docker-/Runtime-Prüfungen sind erfolgreich oder für die Klasse nicht erforderlich.
+- [ ] 🤖 `build-and-test` besitzt gültige current-head Primär- oder One-Shot-Evidence.
+- [ ] 🤖 Externe Produktionsmutation ist verifiziert oder für diesen PR nicht erforderlich.
+<!-- CAPITAL_AI_MACHINE_EVIDENCE_END -->
 
 **CI-Evidence verständlich lesen:**
-- **Volltest ausgeführt:** dieser Head wurde in diesem Lauf vollständig getestet.
-- **Volltest-Evidence wiederverwendet:** derselbe `(PR, Head-SHA)` wurde bereits erfolgreich vollständig getestet; die Evidence wird über GitHub Actions erneut verifiziert, ohne den teuren Build zu duplizieren.
-- **Nicht erforderlich:** die automatische Klasse verlangt diesen Check für den Diff nicht.
-- **Ausstehend/fehlgeschlagen:** Merge-Bereitschaft ist nicht erreicht.
+- **Volltest ausgeführt:** dieser Head wurde in einem Primärlauf vollständig getestet.
+- **Volltest-Evidence wiederverwendet:** derselbe `(PR, Head-SHA)` wurde bereits erfolgreich vollständig getestet; die Primär-Evidence wird über GitHub Actions erneut verifiziert, ohne den teuren Build zu duplizieren.
+- **Nicht erforderlich:** die automatische Klasse verlangt den Check für diesen Diff nicht; der Workflow darf das zugehörige Häkchen deshalb als erfüllt markieren.
+- **Ausstehend/fehlgeschlagen:** das Häkchen bleibt offen; der Mensch setzt es nicht von Hand.
 
 ## 7. Was kann man aus diesem PR lernen?
 
@@ -103,9 +108,13 @@ Die Klasse gibt nur vor, **was geprüft werden muss**. Sie erteilt keinem Agente
 
 ## 8. Merge-Bereitschaft
 
-- [ ] Human-/Owner-Review für den aktuellen Head vollständig.
-- [ ] Erforderliche Checks erfolgreich.
-- [ ] Keine offene merge-blockierende Diskussion.
-- [ ] Keine Agenten-/Modell-Selbstfreigabe wird als Human-Freigabe behandelt.
-- [ ] Merge erfolgt nur nach separater ausdrücklicher menschlicher Anweisung.
-- [ ] Nach erfolgreichem Merge wird der Work-Branch gemäß Branch-Lifecycle-Policy gelöscht.
+<!-- CAPITAL_AI_MACHINE_MERGE_START -->
+- [ ] 🤖 Human-/Owner-Gate ist für den aktuellen Head technisch verifiziert.
+- [ ] 🤖 Alle automatisch erforderlichen Checks der erkannten Klasse sind erfüllt.
+<!-- CAPITAL_AI_MACHINE_MERGE_END -->
+
+**Nicht automatisierbare Grenzen – bewusst ohne Checkbox:**
+- Merge erfolgt nur nach einer **separaten ausdrücklichen menschlichen Anweisung** für genau diesen PR.
+- Keine Agenten-/Modell-Selbstfreigabe gilt als Human-Freigabe.
+- Offene fachliche/reviewbezogene Einwände müssen vor Merge geklärt sein.
+- Nach erfolgreichem Merge wird der Work-Branch gemäß Branch-Lifecycle-Policy gelöscht.
