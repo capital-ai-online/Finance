@@ -100,6 +100,22 @@ describe('M5 agent audit writer', () => {
     });
   });
 
+  it('preserves only a syntactically valid authorization audit reference', () => {
+    expect(sanitizeAgentAuditMetadata({
+      authorization: 'Bearer secret-token',
+      authorizationAuditReference: 'supabase:agent_audit_events:auth-1',
+    })).toEqual({
+      authorization: '[REDACTED]',
+      authorizationAuditReference: 'supabase:agent_audit_events:auth-1',
+    });
+
+    expect(sanitizeAgentAuditMetadata({
+      authorizationAuditReference: 'Bearer secret-token',
+    })).toEqual({
+      authorizationAuditReference: '[REDACTED]',
+    });
+  });
+
   it('persists complete correlation metadata and returns an auditReference', async () => {
     const reference = await writeAgentAuditEvent({
       ...baseEvent,
