@@ -13,7 +13,7 @@ Execution baseline rule: every mutating unit resolves current `main`; historical
 | SA3A Audit Adapter | ADR-0059 + ADR-0065 | PR #218; M5 writer corrected by #222 | no permit before durable M5 audit | COMPLETE / VERIFIED PASS |
 | SA3B Execution Host | ADR-0067 | PR #220 + #222; Issues #221/#223/#224; probe cleanup | BRANCH host proof / trusted OIDC path | COMPLETE / VERIFIED PASS |
 | SA4 Bounded Docs Pilot | ADR-0068 + REM-SA4-PILOT-001 | PR #226; Issue #228 / run `31579519025`; PR #229; six M5 events | exact docs path; BRANCH/COMMIT/Draft PR | COMPLETE / VERIFIED PASS |
-| SA4B Repository Code / Roadmap Block Executor | ADR-0069 + ESS-0021 v1.1 | `docs/traceability/SA4B_AUTONOMOUS_ROADMAP_BLOCK_TRACEABILITY.md` | per-EU repository code/test/config only; no production mutation | **PLANNED / NOT YET ENABLED** |
+| SA4B Repository Code / Roadmap Block Executor | ADR-0070 + ESS-0021 v1.1 | `docs/traceability/SA4B_AUTONOMOUS_ROADMAP_BLOCK_TRACEABILITY.md` | per-EU repository code/test/config only; no production mutation | **PLANNED / NOT YET ENABLED** |
 | SA5 External Mutation | future ADR + M10 | not implemented | production mutation prohibited | BLOCKED BY M10 VERIFIED PASS |
 
 ## Canonical evidence chain
@@ -94,19 +94,21 @@ SA4 verified that a deterministic docs-only work package can use separate permit
 
 Canonical planning artifacts:
 
-- `docs/adr/ADR-0069-autonomous-roadmap-block-pr-checkpoint-execution.md`;
+- `docs/adr/ADR-0070-autonomous-roadmap-block-pr-checkpoint-execution.md`;
 - `.ai/skills/ESS-0021-Systemadmin-Roadmap-Executor.md` v1.1;
 - `docs/contracts/DEVELOPMENT_CHAIN_ROADMAP_BLOCK_CONTRACT.md`;
 - `.ai/contracts/development-chain-roadmap-block.schema.json`;
 - `docs/runbooks/SYSTEMADMIN_AUTONOMOUS_ROADMAP_BLOCK_EXECUTION.md`;
 - `docs/traceability/SA4B_AUTONOMOUS_ROADMAP_BLOCK_TRACEABILITY.md`.
 
+ADR-0069 remains the separate current Human-Owner Comment Gate / dispatched-PR-CI authority consumed at each PR checkpoint; SA4B does not duplicate it.
+
 ### SA4B planned PR checkpoints
 
 | Unit | Goal | Autonomous boundary | Human checkpoint |
 |---|---|---|---|
-| SA4B-EU1 | per-unit contract + REM/digest binding + policy enforcement | repository governance/control-plane implementation only | SA4B-PR1 review/CI/merge + branch delete |
-| SA4B-EU2 | bounded code/test executor + audit-bound BRANCH/COMMIT/PR/CI_REQUEST | no arbitrary untrusted commands; no production mutation | SA4B-PR2 review/CI/merge + branch delete |
+| SA4B-EU1 | per-unit contract + REM/digest binding + policy enforcement | repository governance/control-plane implementation only | SA4B-PR1 current Human-gate/CI/merge + branch delete |
+| SA4B-EU2 | bounded code/test executor + audit-bound BRANCH/COMMIT/PR/CI_REQUEST | no arbitrary untrusted commands; no production mutation | SA4B-PR2 current Human-gate/CI/merge + branch delete |
 | SA4B-EU3 | real two-unit repository pilot under one REM | two separate fresh branches and PR stops | SA4B-PR3 closure/evidence merge + branch delete |
 
 ### SA4B minimum negative evidence
@@ -150,7 +152,7 @@ Systemadmin-autonomous M5A execution requires:
 4. exact current-main path allowlists for each EU;
 5. per-EU positive/negative tests;
 6. BRANCH/COMMIT/PR/CI_REQUEST audit evidence;
-7. Human review/merge at each PR checkpoint;
+7. Human review/merge at each PR checkpoint through the current canonical PR gate;
 8. branch deletion before next unit.
 
 Native Owner MFA enrollment remains outside repository authority and uses the separate M5A production mutation approval path.
