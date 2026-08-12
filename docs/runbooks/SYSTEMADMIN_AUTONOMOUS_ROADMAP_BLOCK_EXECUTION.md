@@ -2,7 +2,7 @@
 
 Status: PROPOSED  
 Date: 2026-08-12  
-Authority: ADR-0069, ESS-0021, ADR-0065, DEVELOPMENT Chain Execution Policy
+Authority: ADR-0070, ESS-0021, ADR-0065, DEVELOPMENT Chain Execution Policy
 
 ## 1. Purpose
 
@@ -171,7 +171,7 @@ Human inspects current-head diff
 → separate Human merge decision
 ```
 
-Der Systemadmin darf keinen veralteten Human-Gate-Mechanismus hart codieren; er konsumiert die jeweils kanonische `HUMAN_OWNER_PR_APPROVAL_POLICY.md`.
+Der Systemadmin darf keinen veralteten Human-Gate-Mechanismus hart codieren; er konsumiert die jeweils kanonische `HUMAN_OWNER_PR_APPROVAL_POLICY.md` und damit auch die durch ADR-0069 etablierte aktuelle Comment-Gate-/dispatched-CI-Architektur.
 
 ## 11. Post-merge resume
 
