@@ -15,7 +15,7 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -39,16 +39,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
           EXPECTED_OWNER: SvenKulessa
         run: |
           set -euo pipefail
 
-          current_body="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq '.body // ""')"
-
-          # Semantisch strikt, aber Markdown-tolerant: echte checked task-list items
-          # werden normalisiert; Quote-/Codeblock-Evidence zählt nicht.
+          # Wichtig: Die Attestations werden aus dem Body-Snapshot genau dieses edited-Events
+          # ausgewertet. Ein späterer zweiter Checkbox-Klick darf einen älteren Event-Lauf nicht
+          # nachträglich freigeben und dadurch einen doppelten build-and-test auslösen.
           read -r diff_attested files_attested <<< "$(
-            PR_BODY="$current_body" python3 - <<'PY'
+            python3 - <<'PY'
           import os
           import re
 
@@ -210,6 +210,13 @@ jobs:
       - name: Produktions-Build erstellen
         if: steps.scope.outputs.full == 'true'
         run: npm run build
+
+      - name: Produktions-CSP-Auslieferung nach Build prüfen
+        if: steps.scope.outputs.full == 'true'
+        env:
+          NODE_ENV: production
+          CSP_MODE: report-only
+        run: npx vitest run tests/unit/securityResponse.production.test.ts
 
       - name: Produktionskonfiguration und Deployment-Bereitschaft prüfen
         if: steps.scope.outputs.full == 'true'

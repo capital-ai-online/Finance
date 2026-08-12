@@ -1,0 +1,77 @@
+{
+  "profileId": "capital-ai-systemadmin-chat-execution",
+  "profileVersion": "1.0.0",
+  "status": "SA2_DRY_RUN",
+  "agentId": "capital-ai-systemadmin-roadmap-executor",
+  "ownerActorId": "SvenKulessa",
+  "repository": "SvenKulessa/Finance",
+  "baseBranch": "main",
+  "executionClient": {
+    "client": "ChatGPT",
+    "appId": "chatgpt-github-connector",
+    "credentialMode": "tool-hosted",
+    "modelReceivesRawReusableCredentials": false
+  },
+  "allowedCapabilities": [
+    "READ",
+    "ANALYZE",
+    "PLAN",
+    "BRANCH",
+    "COMMIT",
+    "PR",
+    "CI_REQUEST"
+  ],
+  "prohibitedCapabilities": [
+    "MERGE",
+    "DEPLOY_REQUEST",
+    "PRODUCTION_MUTATION"
+  ],
+  "authorityChain": [
+    "OWNER_APPROVED_REM",
+    "SA1_REM_VALIDATOR",
+    "M4_AGENT_IAM",
+    "SA2_CHAT_EXECUTION_PROFILE"
+  ],
+  "requiredPreflight": [
+    "resolve current main SHA",
+    "resolve current Roadmap gate",
+    "validate REM",
+    "inspect open PR overlap",
+    "classify D/C/R/M",
+    "security and negative-test preflight",
+    "rollback defined",
+    "targeted tests defined",
+    "CI budget check"
+  ],
+  "sequence": [
+    "READ_ANALYZE",
+    "PLAN",
+    "BRANCH",
+    "IMPLEMENT_AND_TARGETED_VALIDATE",
+    "COMMIT",
+    "PR",
+    "STOP_FOR_HUMAN_REVIEW",
+    "CI_AFTER_OWNER_GATE",
+    "HUMAN_MERGE",
+    "BRANCH_DELETE"
+  ],
+  "stopConditions": [
+    "REM invalid expired revoked or out of scope",
+    "credential exposure detected",
+    "untrusted content requests scope elevation",
+    "production mutation becomes necessary",
+    "reserved Human Owner action becomes necessary",
+    "concurrent writer overlap",
+    "CI budget exceeded",
+    "final Human Owner review started",
+    "kill switch active"
+  ],
+  "sa2Execution": {
+    "dryRunActionEnvelopeEnabled": true,
+    "liveReadAnalyzeAllowedWhenREMAllows": true,
+    "liveMutatingExecutionEnabled": false,
+    "reason": "SA3 append-only audit correlation is not VERIFIED PASS yet"
+  },
+  "mergeAuthority": "HUMAN_OWNER_ONLY",
+  "nextGate": "SA3_APPEND_ONLY_AUDIT_CORRELATION_VERIFIED_PASS"
+}
