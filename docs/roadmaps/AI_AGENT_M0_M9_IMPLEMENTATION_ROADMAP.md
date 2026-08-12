@@ -3,7 +3,7 @@
 > Legacy filename retained for stable references.
 
 Status: IMPLEMENTATION PHASE
-Baseline: `main@e39d5370d8b1498e84952535a38a339cc200082f` (PR #210 merge)
+Baseline: `main@ee65ba19f64e7e8ee2d618e16364a658dfe60e4c` (PR #211 merge)
 
 ## Global execution rule
 Every phase that contains a platform mutation follows:
@@ -41,58 +41,117 @@ Mutation state: **NOT REQUIRED** for Stripe/Supabase/Render.
 ## M5 — Observability / Telemetry / Audit
 **COMPLETE — VERIFIED PASS.**
 
-### M5 persistence
-Production Supabase audit authority `public.agent_audit_events` is **VERIFIED PASS**:
-- RLS enabled;
-- `anon`/`authenticated` no direct access;
-- `service_role` SELECT + INSERT only;
-- UPDATE/DELETE fail closed;
-- redacted synthetic write/read PASS;
-- Security Advisor reviewed.
+Production Supabase audit persistence and application integration are complete. Final application evidence:
 
-Applied migrations:
-- `20260811230540_m5_agent_audit_events`
-- `20260811230743_m5_agent_audit_events_least_privilege`
+- PR #210 final head `ffeab08c218314edd5292fbaf5ccb77413cee80e`;
+- merge `e39d5370d8b1498e84952535a38a339cc200082f`;
+- required CI #892 / `31559124198`: PASS;
+- post-merge sync PR #211 merged at `ee65ba19f64e7e8ee2d618e16364a658dfe60e4c`.
 
-### M5 application integration
-PR #210 implemented and merged the remaining application scope:
-1. backend-only `agent_audit_events` writer using the existing privileged server Supabase path;
-2. reuse of canonical Telemetry secret/PII redaction;
-3. explicit omission of full prompts, full diffs and raw request/response bodies;
-4. provider-neutral PolicyGate decision persisted as immutable authorization evidence;
-5. `auditReference` returned for operational telemetry correlation;
-6. terminal `SUCCESS`/`ERROR` recorded as a second append-only outcome event linked to the authorization evidence;
-7. request/trace/actor/app/agent/capability/risk/policy/approval/tool/repository/PR/CI/artifact/deployment/runtime mapping;
-8. unit/negative tests for redaction, omission, correlation, denied-outcome prevention and persistence fail-closed behavior;
-9. validated audit-reference handling so only `supabase:agent_audit_events:<id>` correlation identifiers bypass generic authorization-key redaction.
+M5 application mutation state: **NOT REQUIRED** beyond the already verified persistence mutation.
 
-Mutation state for the application substep: **NOT REQUIRED**. No new Supabase/Stripe/Render mutation was performed.
+## M5A — Supabase Native TOTP MFA / AAL2 Hardening
+**IN PROGRESS — READ-ONLY BASELINE COMPLETE / REMEDIATION PLAN IN REVIEW.**
 
-Final evidence:
-- PR #210 final head: `ffeab08c218314edd5292fbaf5ccb77413cee80e`;
-- merge commit: `e39d5370d8b1498e84952535a38a339cc200082f`;
-- required CI run #892 / `31559124198`: **PASS**;
-- TypeScript, unit tests, production build/predeploy, Docker hardening and production image verification: **PASS**.
+Authorities:
 
-M5 exit gate is fulfilled. This post-merge synchronization records the final SHA and evidence on the canonical documentation set.
+- `.ai/skills/ESS-0020-Supabase-Native-MFA-AAL2-Hardening.md`;
+- `docs/adr/ADR-0064-supabase-native-mfa-aal2-hardening.md`;
+- reactivated `docs/adr/ADR-0003_5-identity-access-management.md`;
+- `docs/evidence/m5a/M5A_SUPABASE_TOTP_AAL2_BASELINE.md`;
+- `docs/runbooks/M5A_SUPABASE_TOTP_AAL2_HARDENING.md`.
 
-## M5A — Supabase TOTP MFA / AAL2 Hardening
-**PLANNED — UNBLOCKED AFTER THIS M5 POST-MERGE SYNC IS MERGED.**
+### M5A baseline result
 
-Required sequence:
-1. read-only inventory of application TOTP enroll/challenge/verify flow and current Supabase Auth settings;
-2. determine exact mutation/configuration need;
-3. Human/Owner approval before any Supabase Auth mutation;
-4. privileged Owner/admin operations require verified `aal2`; `aal1` fails closed;
-5. invalid/expired TOTP, missing factor, stale session and mismatched challenge fail closed;
-6. server/API authorization verifies trusted session/JWT/AAL context, never UI state alone;
-7. recovery/factor-reset path is Owner-controlled and audited;
-8. rerun Security Advisor after any mutation/configuration;
-9. positive/negative tests and redacted evidence must be `VERIFIED PASS`.
+Read-only production and repository inspection proves:
 
-Leaked Password Protection: **DEFERRED — PLAN DEPENDENCY / PRO+** and not a blocker while unavailable on the current plan.
+- native Supabase MFA factors: **0**;
+- current session assurance: **2 × aal1 / 0 × aal2**;
+- both Owner profiles use the historical CAPITAL-AI custom `totp_enabled=true` model;
+- the current TOTP implementation stores/verifies its own encrypted secret and issues its own step-up token;
+- no runtime `aal2` enforcement exists in `checkAdminAccess()`;
+- privileged login factor/status lookup can fail-open;
+- passkey-first login step-up can bypass the TOTP condition stated in ADR-0003.5;
+- Security Advisor reports `auth_insufficient_mfa_options`;
+- native Auth MFA schema already exists, therefore core Native MFA needs no new Postgres DDL.
 
-No Supabase Auth mutation is authorized by this M5 closure PR. The first M5A action is read-only assessment only.
+### M5A architecture decision
+
+Supabase Auth becomes the authoritative MFA source.
+
+Required flow:
+
+`primary login → native TOTP enroll/challenge/verify → Supabase aal2 → server IAM role + centralized AAL2 enforcement → optional purpose-bound single-use action step-up → privileged operation → audit`
+
+The existing CAPITAL-AI `x-step-up-token` may remain only as defense-in-depth over AAL2. It cannot upgrade AAL1 or replace native factor verification.
+
+### Mutation classification
+
+| Scope | State |
+|---|---|
+| Repository/application implementation | **REQUIRED** |
+| Native TOTP enrollment for two Owner identities | **REQUIRED / NOT YET AUTHORIZED** |
+| Supabase project Auth configuration | **CONDITIONAL / NOT YET VERIFIED** |
+| New Postgres DDL for Native MFA | **NOT REQUIRED** |
+| Legacy custom-TOTP cleanup | **DEFERRED / SEPARATE OWNER APPROVAL** |
+| Stripe | **NOT REQUIRED** |
+| Render configuration | **NOT REQUIRED for M5A baseline/design** |
+
+No production Auth mutation is performed by the baseline PR.
+
+### Required implementation sequence
+
+1. Human/Owner reviews and merges the M5A baseline/architecture package.
+2. Create a fresh implementation branch from the resulting `main`.
+3. Implement native TOTP `enroll → challenge → verify`.
+4. Implement canonical server-side AAL2 verification.
+5. Make privileged Owner/Admin session/factor lookup fail-closed.
+6. Compose IAM role + AAL2 + purpose-bound step-up for critical actions.
+7. Redesign recovery/factor-reset around native MFA without implicit unrelated passkey deletion.
+8. Add positive and negative MFA/AAL2 tests.
+9. Pass required CI.
+10. Execute a read-only pre-mutation production check.
+11. Obtain separate Human/Owner approval for native Owner factor enrollment and any exact Auth-setting mutation proven necessary.
+12. Enroll/verify Owner factors one identity at a time and prove AAL2.
+13. Verify AAL1/stale/error/replay/recovery negative paths.
+14. Rerun Security Advisor.
+15. Complete redacted Evidence and Roadmap sync.
+
+### Required negative tests
+
+- Owner/Admin with AAL1 → DENY;
+- missing or unverified factor → DENY;
+- wrong TOTP → DENY;
+- invalid/expired challenge → DENY;
+- stale `aal2/aal1` → DENY;
+- Auth/AAL lookup failure → DENY;
+- valid legacy/action token without AAL2 → DENY;
+- AAL2 without required critical-action step-up → DENY;
+- wrong user/purpose/replayed step-up → DENY;
+- unauthorized native factor reset → DENY.
+
+### Recovery
+
+Legacy break-glass capability remains transitional until native recovery is proven. Recovery cannot mint AAL2 or elevate roles. Native factor removal must be Owner-controlled, audited and performed through supported Supabase Admin MFA operations. A TOTP recovery path must not implicitly delete unrelated passkeys without a separate decision.
+
+### Plan dependency
+
+Leaked Password Protection remains **DEFERRED — REQUIRES PRO+**. The current Supabase organization is on Free and this does not block TOTP/AAL2 completion.
+
+### M5A exit gate
+
+M5A becomes `COMPLETE / VERIFIED PASS` only after:
+
+- ESS-0020 + ADR-0064 approved;
+- native MFA/AAL2 code merged;
+- required CI PASS;
+- both Owner identities native TOTP-verified;
+- AAL2 positive/negative tests PASS;
+- recovery/backup PASS;
+- Security Advisor rerun;
+- final evidence and roadmap synchronized.
+
+M6 remains blocked until this gate is complete.
 
 ## M6 — Supply Chain
 **BLOCKED BY M5A.**
