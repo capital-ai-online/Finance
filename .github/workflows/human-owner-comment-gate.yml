@@ -11,11 +11,7 @@ on:
   issue_comment:
     types: [edited]
 
-permissions:
-  actions: write
-  contents: read
-  issues: write
-  pull-requests: read
+permissions: {}
 
 concurrency:
   group: human-owner-comment-gate-${{ github.event.issue.number || github.event.workflow_run.pull_requests[0].number || github.run_id }}
@@ -30,6 +26,10 @@ jobs:
         github.event.workflow_run.event == 'pull_request' &&
         github.event.workflow_run.pull_requests[0].number != null
       }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -38,25 +38,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          PR_HEAD_SHA: ${{ github.event.workflow_run.pull_requests[0].head.sha }}
+          PR_BASE_REF: ${{ github.event.workflow_run.pull_requests[0].base.ref }}
           GOVERNANCE_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
+          test "$PR_BASE_REF" = "main"
+          printf '%s' "$PR_HEAD_SHA" | grep -Eq '^[0-9a-f]{40}$'
+          test "$PR_HEAD_SHA" = "$GOVERNANCE_HEAD_SHA"
 
-          read -r current_head base_ref pr_state <<< "$(
-            gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" \
-              --jq '[.head.sha, .base.ref, .state] | @tsv'
-          )"
-          test "$base_ref" = "main"
-          test "$pr_state" = "open"
-
-          if [ "$current_head" != "$GOVERNANCE_HEAD_SHA" ]; then
-            echo "Staler Governance-Run für ${GOVERNANCE_HEAD_SHA}; aktueller Head ist ${current_head}. Kein Reset."
-            exit 0
-          fi
-
+          # Trusted workflow_run liefert PR und Head bereits im Event-Payload. Hier wird bewusst
+          # kein PR-Kandidatencode ausgeführt und keine zusätzliche Pull-Request-API-Abfrage benötigt.
           body="$(cat <<EOF
           <!-- CAPITAL_AI_HUMAN_GATE -->
-          <!-- CAPITAL_AI_HUMAN_GATE_HEAD_SHA: ${current_head} -->
+          <!-- CAPITAL_AI_HUMAN_GATE_HEAD_SHA: ${PR_HEAD_SHA} -->
           ## Human / Owner Verifikation
 
           > Nur diese zwei Häkchen setzt der Human/Owner. Der Kommentar ist an den aktuellen PR-Head gebunden. Ein neuer Commit setzt ihn nach erfolgreichem Governance-Run automatisch zurück. Vor dem zweiten Haken muss für denselben Head ein Owner-Review mit exakt \`💪\` oder \`okay\` vorliegen.
@@ -77,12 +72,12 @@ jobs:
             gh api --method PATCH \
               "repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" \
               -f body="$body" >/dev/null
-            echo "Human-Gate-Kommentar #${comment_id} auf Head ${current_head} zurückgesetzt."
+            echo "Human-Gate-Kommentar #${comment_id} auf Head ${PR_HEAD_SHA} zurückgesetzt."
           else
             gh api --method POST \
               "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
               -f body="$body" >/dev/null
-            echo "Human-Gate-Kommentar für PR #${PR_NUMBER}@${current_head} erzeugt."
+            echo "Human-Gate-Kommentar für PR #${PR_NUMBER}@${PR_HEAD_SHA} erzeugt."
           fi
 
   human-verification:
@@ -102,10 +97,16 @@ jobs:
           contains(github.event.comment.body, '- [X] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.')
         )
       }}
+    permissions:
+      actions: write
+      checks: write
+      contents: read
+      issues: read
+      pull-requests: read
     runs-on: ubuntu-latest
     timeout-minutes: 4
     steps:
-      - name: Human-Evidence head-genau verifizieren
+      - name: Human-Evidence head-genau verifizieren und Checks reservieren
         id: verify
         shell: bash
         env:
@@ -149,25 +150,49 @@ jobs:
           )"
           test -n "$review_id"
 
-          run_title="PR #${PR_NUMBER} – build-and-test @ ${current_head}"
           prior="$(
-            RUN_TITLE="$run_title" gh api --paginate \
-              "repos/${GITHUB_REPOSITORY}/actions/workflows/pr-build-and-test.yml/runs?event=workflow_dispatch&per_page=100" \
-              --jq '.workflow_runs[] | select(.display_title == env.RUN_TITLE) | [.id, .status, (.conclusion // "null")] | @tsv' \
+            gh api -H 'Accept: application/vnd.github+json' \
+              "repos/${GITHUB_REPOSITORY}/commits/${current_head}/check-runs?check_name=build-and-test&per_page=100" \
+              --jq '.check_runs[] | select(.name == "build-and-test") | [.id, .status, (.conclusion // "null"), (.app.slug // "")] | @tsv' \
               | head -n 1
           )"
-
           if [ -n "$prior" ]; then
-            echo "Für PR #${PR_NUMBER}@${current_head} existiert bereits One-Shot-Evidence/Reservation: ${prior}. Kein zweiter Build wird ausgelöst."
+            echo "One-Shot für PR #${PR_NUMBER}@${current_head} ist bereits reserviert/verbraucht: ${prior}. Kein zweiter Build."
             echo "dispatch=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
+          human_check_id="$(
+            gh api --method POST -H 'Accept: application/vnd.github+json' \
+              "repos/${GITHUB_REPOSITORY}/check-runs" \
+              -f name='Human-/Owner-Verifikation' \
+              -f head_sha="$current_head" \
+              -f status='completed' \
+              -f conclusion='success' \
+              -f "output[title]=Human-/Owner-Verifikation PASS" \
+              -f "output[summary]=Owner, aktueller Head, Live-Kommentar, beide Attestations und current-head Review wurden verifiziert." \
+              --jq '.id'
+          )"
+          test -n "$human_check_id"
+
+          build_check_id="$(
+            gh api --method POST -H 'Accept: application/vnd.github+json' \
+              "repos/${GITHUB_REPOSITORY}/check-runs" \
+              -f name='build-and-test' \
+              -f head_sha="$current_head" \
+              -f status='in_progress' \
+              -f "output[title]=build-and-test läuft" \
+              -f "output[summary]=Trusted-main Build/Test wurde durch head-genaue Human-Evidence autorisiert." \
+              --jq '.id'
+          )"
+          test -n "$build_check_id"
+
           echo "dispatch=true" >> "$GITHUB_OUTPUT"
           echo "head_sha=$current_head" >> "$GITHUB_OUTPUT"
-          echo "Human-/Owner-Verifikation PASS: PR #${PR_NUMBER}@${current_head}, Review=${review_id}, Comment=${COMMENT_ID}."
+          echo "build_check_run_id=$build_check_id" >> "$GITHUB_OUTPUT"
+          echo "Human-/Owner-Verifikation PASS: PR #${PR_NUMBER}@${current_head}, Review=${review_id}, Comment=${COMMENT_ID}, HumanCheck=${human_check_id}, BuildCheck=${build_check_id}."
 
-      - name: Genau einen build-and-test für den verifizierten Head auslösen
+      - name: Genau einen trusted-main Build/Test für den verifizierten Head auslösen
         if: ${{ steps.verify.outputs.dispatch == 'true' }}
         shell: bash
         env:
@@ -175,12 +200,22 @@ jobs:
           PR_NUMBER: ${{ github.event.issue.number }}
           PR_HEAD_SHA: ${{ steps.verify.outputs.head_sha }}
           APPROVAL_COMMENT_ID: ${{ github.event.comment.id }}
+          BUILD_CHECK_RUN_ID: ${{ steps.verify.outputs.build_check_run_id }}
         run: |
           set -euo pipefail
-          gh workflow run pr-build-and-test.yml \
+          if ! gh workflow run pr-build-and-test.yml \
             --repo "$GITHUB_REPOSITORY" \
             --ref main \
             -f pr_number="$PR_NUMBER" \
             -f head_sha="$PR_HEAD_SHA" \
-            -f approval_comment_id="$APPROVAL_COMMENT_ID"
-          echo "build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} angefordert."
+            -f approval_comment_id="$APPROVAL_COMMENT_ID" \
+            -f build_check_run_id="$BUILD_CHECK_RUN_ID"; then
+            gh api --method PATCH -H 'Accept: application/vnd.github+json' \
+              "repos/${GITHUB_REPOSITORY}/check-runs/${BUILD_CHECK_RUN_ID}" \
+              -f status='completed' \
+              -f conclusion='failure' \
+              -f "output[title]=build-and-test konnte nicht gestartet werden" \
+              -f "output[summary]=Der trusted-main Workflow-Dispatch ist fehlgeschlagen." >/dev/null || true
+            exit 1
+          fi
+          echo "Trusted-main Build/Test für PR #${PR_NUMBER}@${PR_HEAD_SHA} angefordert; PR-Head-Check=${BUILD_CHECK_RUN_ID}."
