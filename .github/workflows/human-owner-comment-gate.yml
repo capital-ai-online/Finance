@@ -132,8 +132,7 @@ jobs:
           )"
           test -n "$review_id"
 
-          short_head="${current_head:0:12}"
-          run_title="PR #${PR_NUMBER} – build-and-test @ ${short_head}"
+          run_title="PR #${PR_NUMBER} – build-and-test @ ${current_head}"
           prior="$(
             RUN_TITLE="$run_title" gh api --paginate \
               "repos/${GITHUB_REPOSITORY}/actions/workflows/pr-build-and-test.yml/runs?event=workflow_dispatch&per_page=100" \
