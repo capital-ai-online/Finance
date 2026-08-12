@@ -109,7 +109,8 @@ Authority:
 - ESS-0021 v1.1;
 - `docs/contracts/DEVELOPMENT_CHAIN_ROADMAP_BLOCK_CONTRACT.md`;
 - `.ai/contracts/development-chain-roadmap-block.schema.json`;
-- `docs/runbooks/SYSTEMADMIN_AUTONOMOUS_ROADMAP_BLOCK_EXECUTION.md`.
+- `docs/runbooks/SYSTEMADMIN_AUTONOMOUS_ROADMAP_BLOCK_EXECUTION.md`;
+- `docs/traceability/SA4B_AUTONOMOUS_ROADMAP_BLOCK_TRACEABILITY.md`.
 
 ### Block definition
 
