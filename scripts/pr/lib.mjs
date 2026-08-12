@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
-export const PR_TEMPLATE_VERSION = '2.0.0';
+export const PR_TEMPLATE_VERSION = '2.1.0';
 export const PR_TEMPLATE_MARKER = `CAPITAL_AI_PR_TEMPLATE_VERSION: ${PR_TEMPLATE_VERSION}`;
 export const DEFAULT_PRODUCTION_HEALTH_URL = 'https://capital-ai.online/healthz';
 export const MAX_PR_START_DELAY_MS = 15 * 60 * 1000;
@@ -59,9 +59,15 @@ export function classifyPullRequestScope(filePaths, options={}) {
   let repositoryClass='D'; if (scopeFiles.some(isRuntimePath)) repositoryClass='R'; else if (scopeFiles.some((filePath)=>!isDocumentationPath(filePath))) repositoryClass='C';
   const checkClass=mutationPlanned?'M':repositoryClass; const explicitProfile=String(options.executionProfile||'').trim(); let executionProfile=explicitProfile||(repositoryClass==='D'?'P1':'P2'); if (mutationPlanned&&!['P3','P4'].includes(executionProfile)) executionProfile='P0 HUMAN REQUIRED';
   const featureAreas=[]; for (const filePath of scopeFiles) for (const area of featureAreasForPath(filePath)) if (!featureAreas.includes(area)) featureAreas.push(area); if (featureAreas.length===0) featureAreas.push('Dokumentation und Governance');
-  const requiredChecks=['Human-/Owner-Vorprüfung','Governance-/Security-Prüfungen','build-and-test']; const notRequiredChecks=[];
-  if (repositoryClass==='D') { requiredChecks.splice(2,0,'Dokumentations-Fast-Path'); notRequiredChecks.push('npm ci/audit','TypeScript/Lint','Unit Tests','Production Build','Docker Image Build'); }
-  else { requiredChecks.splice(2,0,'Git-/Repository-Integrität','npm ci','Production Dependency Audit','Production Config Invariants','TypeScript/Lint','Unit Tests','Production Build','CSP-/Predeploy-Prüfung'); if (repositoryClass==='R') { requiredChecks.splice(requiredChecks.length-1,0,'Docker-/Runtime-Prüfung'); if (scopeFiles.some((filePath)=>filePath.startsWith('.github/workflows/'))) requiredChecks.splice(requiredChecks.length-1,0,'Workflow-Security'); } else notRequiredChecks.push('Docker Image Build, sofern kein Runtime-Scope hinzukommt'); }
+  const requiredChecks=['Human-/Owner-Vorprüfung','Live-PR-Body-Validierung','Governance-/Security-Prüfungen','build-and-test']; const notRequiredChecks=[];
+  if (repositoryClass==='D') { requiredChecks.splice(3,0,'Dokumentations-Fast-Path'); notRequiredChecks.push('npm ci/audit','Repository-Konventionen (blocking)','TypeScript/Lint','Unit Tests','Production Build','Docker Image Build','Docker Runtime Smoke Test'); }
+  else {
+    requiredChecks.splice(3,0,'Git-/Repository-Integrität','npm ci','Repository-Konventionen (blocking)','Production Dependency Audit','Production Config Invariants','TypeScript/Lint','Unit Tests','Production Build','CSP-/Predeploy-Prüfung');
+    if (repositoryClass==='R') {
+      requiredChecks.splice(requiredChecks.length-1,0,'Docker-/Runtime-Prüfung','Docker Runtime Smoke Test');
+      if (scopeFiles.some((filePath)=>filePath.startsWith('.github/workflows/'))) requiredChecks.splice(requiredChecks.length-1,0,'Workflow-Security');
+    } else notRequiredChecks.push('Docker Image Build und Docker Runtime Smoke Test, sofern kein Runtime-Scope hinzukommt');
+  }
   if (mutationPlanned) requiredChecks.push('separate Human/Owner-Mutationsfreigabe','Pre-Mutation Baseline','Post-Mutation Verification und Evidence'); else notRequiredChecks.push('externe Produktionsmutation / Mutation Approval');
   const risk=checkClass==='M'?'Kritisch':repositoryClass==='R'?'Hoch':repositoryClass==='C'?'Mittel':'Niedrig';
   const reason=mutationPlanned?`Repository-Scope ${repositoryClass}; zusätzlich ist eine externe Produktionsmutation als ${externalMutation} deklariert, daher gilt M.`:repositoryClass==='R'?'Mindestens eine Workflow-, Runtime-, Dependency-, Docker- oder Deployment-relevante Datei ist betroffen.':repositoryClass==='C'?'Mindestens eine ausführbare Anwendung-/Test-/Konfigurationsdatei ist betroffen, aber kein Runtime-/Deployment-Pfad.':'Alle geänderten Nutzdateien sind Dokumentation/Evidence/AI-Metadaten; kein ausführbarer Runtime-Pfad ist betroffen.';

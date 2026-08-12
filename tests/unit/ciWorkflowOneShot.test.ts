@@ -35,27 +35,57 @@ describe('CI one-shot build-and-test contract', () => {
     expect(yaml).toContain("contains(github.event.changes.body.from, '- [x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.')");
   });
 
-  it('binds the one-shot reservation to the exact PR and head SHA', () => {
+  it('binds the one-shot reservation and reusable evidence to the exact PR and head SHA', () => {
     const yaml = workflow();
     expect(yaml).toContain('CURRENT_RUN_ID: ${{ github.run_id }}');
     expect(yaml).toContain('actions/workflows/ci.yml/runs?event=pull_request&head_sha=${PR_HEAD_SHA}&per_page=100');
     expect(yaml).toContain('select(.id != (${CURRENT_RUN_ID} | tonumber))');
     expect(yaml).toContain('select(any(.pull_requests[]?; .number == (${PR_NUMBER} | tonumber)))');
+    expect(yaml).toContain('evidence_run_id: ${{ steps.gate.outputs.evidence_run_id }}');
+    expect(yaml).toContain('evidence_job_id: ${{ steps.gate.outputs.evidence_job_id }}');
+    expect(yaml).toContain('Evidence-Reuse für aktuellen PR-Head verifizieren');
+    expect(yaml).toContain('.head_sha == env.PR_HEAD_SHA');
+    expect(yaml).toContain('.name == "build-and-test" and .conclusion == "success"');
   });
 
-  it('treats every non-skipped build-and-test job as a consumed or reserved one-shot slot', () => {
+  it('runs the required build-and-test job for fresh authorization or verified evidence reuse', () => {
     const yaml = workflow();
-    expect(yaml).toContain('.name == "build-and-test" and .conclusion != "skipped"');
-    expect(yaml).toContain('One-Shot reserviert: build-and-test');
+    expect(yaml).toContain("needs.owner-gate.outputs.approved == 'true' || needs.owner-gate.outputs.reused == 'true'");
+    expect(yaml).toContain("needs.owner-gate.outputs.reused != 'true'");
     expect(yaml).toContain('One-Shot erfüllt: build-and-test');
     expect(yaml).toContain('Ein Retry auf demselben Head ist nicht erlaubt; ein neuer Commit/Head ist erforderlich.');
+  });
+
+  it('validates the live PR body and production baseline before full PR tests', () => {
+    const yaml = workflow();
+    expect(yaml).toContain('Live-PR-Body und Produktionsbaseline validieren');
+    expect(yaml).toContain('node scripts/pr/productionPreflight.mjs');
+    expect(yaml).toContain('node scripts/pr/validatePrBody.mjs');
+    expect(yaml).toContain('PR_BASE_REF: origin/main');
+    expect(yaml).toContain('PR_HEAD_REF: HEAD');
+  });
+
+  it('makes repository conventions blocking in the full C/R path', () => {
+    const yaml = workflow();
+    expect(yaml).toContain('Repository-Konventionen blocking prüfen');
+    expect(yaml).toContain('npm run repository:validate');
+    expect(yaml).not.toContain('repository:validate:advisory');
+  });
+
+  it('builds and starts the exact PR-head Docker image and probes healthz', () => {
+    const yaml = workflow();
+    expect(yaml).toContain("IMAGE_SHA: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}");
+    expect(yaml).toContain('docker build --tag "capital-ai-ci:${IMAGE_SHA}" .');
+    expect(yaml).toContain('Produktions-Docker-Container starten und /healthz prüfen');
+    expect(yaml).toContain('docker run -d');
+    expect(yaml).toContain('http://127.0.0.1:${host_port}/healthz');
+    expect(yaml).toContain("test \"$health_ok\" = 'true'");
   });
 
   it('preserves exact current-head Owner review and body snapshot authorization', () => {
     const yaml = workflow();
     expect(yaml).toContain('.commit_id == env.PR_HEAD_SHA');
     expect(yaml).toContain('PR_BODY: ${{ github.event.pull_request.body || \'\' }}');
-    expect(yaml).toContain('needs.owner-gate.outputs.approved == \'true\'');
     expect(yaml).toContain('Owner-Gate erfüllt und One-Shot frei. Genau ein build-and-test');
   });
 });

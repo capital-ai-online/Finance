@@ -1,4 +1,4 @@
-<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 2.0.0 -->
+<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 2.1.0 -->
 # CAPITAL-AI Pull Request — {{WORK_ITEM}}
 
 <!-- CAPITAL_AI_EXTERNAL_MUTATION: NONE -->
@@ -38,7 +38,7 @@
 
 - **D — Dokumentation:** Texte, Roadmaps oder Evidence; kein Software-Build nötig.
 - **C — Anwendung:** Code, Tests oder Konfiguration; normale Softwaretests und Build sind nötig.
-- **R — Runtime/CI/Deployment:** Server, Dependencies, Docker oder Workflows; zusätzlich werden Runtime-/Workflow-/Docker-Schutzregeln geprüft.
+- **R — Runtime/CI/Deployment:** Server, Dependencies, Docker oder Workflows; zusätzlich werden Runtime-/Workflow-/Docker-Schutzregeln und ein echter Container-Health-Smoke-Test geprüft.
 - **M — externe Produktionsänderung:** Außerhalb des Repositories soll ein produktiver Zustand verändert werden. Dafür ist immer eine **separate Human/Owner-Mutationsfreigabe** nötig.
 
 Die Klasse gibt nur vor, **was geprüft werden muss**. Sie erteilt keinem Agenten zusätzliche Rechte. `MERGE` bleibt Human/Owner-only.
@@ -81,10 +81,19 @@ Die Klasse gibt nur vor, **was geprüft werden muss**. Sie erteilt keinem Agente
 ## 6. Technische Nachweise
 
 - [ ] Automatische Klassifikation stimmt mit dem tatsächlichen Diff überein.
+- [ ] Live-PR-Body und Produktionsbaseline sind gegen den aktuellen Head validiert.
 - [ ] Governance-/Security-Prüfungen PASS.
+- [ ] Falls Klasse C/R: Repository-Konventionen im blocking-Modus PASS.
 - [ ] Alle für `{{AUTO_CHECK_CLASS}}` erforderlichen Checks PASS.
-- [ ] `build-and-test` für den aktuellen `(PR, Head-SHA)` PASS bzw. gültige One-Shot-Evidence wiederverwendet.
+- [ ] Falls Klasse R: Produktions-Docker-Container real gestartet und `/healthz` mit HTTP 200 geprüft.
+- [ ] `build-and-test` für den aktuellen `(PR, Head-SHA)` PASS bzw. gültige One-Shot-Evidence kryptografisch/head-genau wiederverwendet.
 - [ ] Falls Klasse M: separate Human/Owner-Mutationsfreigabe und Pre-/Post-Verification dokumentiert.
+
+**CI-Evidence verständlich lesen:**
+- **Volltest ausgeführt:** dieser Head wurde in diesem Lauf vollständig getestet.
+- **Volltest-Evidence wiederverwendet:** derselbe `(PR, Head-SHA)` wurde bereits erfolgreich vollständig getestet; die Evidence wird über GitHub Actions erneut verifiziert, ohne den teuren Build zu duplizieren.
+- **Nicht erforderlich:** die automatische Klasse verlangt diesen Check für den Diff nicht.
+- **Ausstehend/fehlgeschlagen:** Merge-Bereitschaft ist nicht erreicht.
 
 ## 7. Was kann man aus diesem PR lernen?
 

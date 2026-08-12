@@ -57,6 +57,8 @@ jobs:
     outputs:
       approved: ${{ steps.gate.outputs.approved }}
       reused: ${{ steps.gate.outputs.reused }}
+      evidence_run_id: ${{ steps.gate.outputs.evidence_run_id }}
+      evidence_job_id: ${{ steps.gate.outputs.evidence_job_id }}
     steps:
       - name: main-Push zulassen
         if: ${{ github.event_name == 'push' }}
@@ -77,9 +79,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Die Attestations werden ausschließlich aus dem Snapshot dieses edited-Events
-          # ausgewertet. Live-PR-Metadaten dürfen einen älteren Event-Snapshot nicht nachträglich
-          # autorisieren.
           read -r diff_attested files_attested <<< "$(
             python3 - <<'PY'
           import os
@@ -142,6 +141,8 @@ jobs:
           if [ "$body_ok" != "true" ] || [ "$review_ok" != "true" ]; then
             echo "approved=false" >> "$GITHUB_OUTPUT"
             echo "reused=false" >> "$GITHUB_OUTPUT"
+            echo "evidence_run_id=" >> "$GITHUB_OUTPUT"
+            echo "evidence_job_id=" >> "$GITHUB_OUTPUT"
             echo "Owner-Gate nicht erfüllt. Build/Test wird nicht gestartet."
             echo "PR-Diff-Attestation: $diff_attested"
             echo "Files-changed-Attestation: $files_attested"
@@ -151,9 +152,8 @@ jobs:
           fi
 
           # One-Shot-Reservation: Für dasselbe (PR, Head-SHA) darf höchstens ein nicht
-          # übersprungener build-and-test-Job existieren. queued/in_progress zählt bereits als
-          # reserviert; damit können schnelle Uncheck/Recheck-Sequenzen keinen zweiten Build
-          # autorisieren. Skipped-Jobs aus nicht autorisierten Metadaten-Events zählen nicht.
+          # übersprungener build-and-test-Job existieren. Ein erfolgreicher früherer Volltest
+          # wird nicht nur behauptet, sondern im nachfolgenden Required Job erneut per API verifiziert.
           prior_build="$(
             gh api --paginate \
               "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?event=pull_request&head_sha=${PR_HEAD_SHA}&per_page=100" \
@@ -176,25 +176,27 @@ jobs:
           if [ -n "$prior_build" ]; then
             IFS=$'\t' read -r prior_run_id prior_job_id prior_status prior_conclusion <<< "$prior_build"
             echo "approved=false" >> "$GITHUB_OUTPUT"
+            echo "evidence_run_id=$prior_run_id" >> "$GITHUB_OUTPUT"
+            echo "evidence_job_id=$prior_job_id" >> "$GITHUB_OUTPUT"
 
             case "$prior_conclusion" in
               success)
                 echo "reused=true" >> "$GITHUB_OUTPUT"
                 echo "One-Shot erfüllt: build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} ist bereits erfolgreich."
-                echo "Evidence: run=${prior_run_id}, job=${prior_job_id}. Kein zweiter Build wird gestartet."
+                echo "Evidence: run=${prior_run_id}, job=${prior_job_id}. Der Required Job verifiziert diese Evidence erneut."
                 exit 0
                 ;;
               null)
                 echo "reused=false" >> "$GITHUB_OUTPUT"
-                echo "One-Shot reserviert: build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} ist bereits ${prior_status}."
-                echo "Evidence: run=${prior_run_id}, job=${prior_job_id}. Kein paralleler zweiter Build wird gestartet."
-                exit 0
+                echo "One-Shot reserviert: build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} ist bereits ${prior_status}." >&2
+                echo "Der doppelte Metadaten-Run bleibt absichtlich nicht grün, solange der reservierende Volltest noch keine SUCCESS-Evidence besitzt." >&2
+                exit 1
                 ;;
               *)
                 echo "reused=false" >> "$GITHUB_OUTPUT"
-                echo "One-Shot verbraucht: vorheriger build-and-test endete mit ${prior_conclusion}."
-                echo "Evidence: run=${prior_run_id}, job=${prior_job_id}."
-                echo "Ein Retry auf demselben Head ist nicht erlaubt; ein neuer Commit/Head ist erforderlich."
+                echo "One-Shot verbraucht: vorheriger build-and-test endete mit ${prior_conclusion}." >&2
+                echo "Evidence: run=${prior_run_id}, job=${prior_job_id}." >&2
+                echo "Ein Retry auf demselben Head ist nicht erlaubt; ein neuer Commit/Head ist erforderlich." >&2
                 exit 1
                 ;;
             esac
@@ -202,16 +204,43 @@ jobs:
 
           echo "approved=true" >> "$GITHUB_OUTPUT"
           echo "reused=false" >> "$GITHUB_OUTPUT"
+          echo "evidence_run_id=" >> "$GITHUB_OUTPUT"
+          echo "evidence_job_id=" >> "$GITHUB_OUTPUT"
           echo "Owner-Gate erfüllt und One-Shot frei. Genau ein build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} darf starten."
 
   build-and-test:
     name: build-and-test
     needs: [owner-gate]
-    if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.approved == 'true' }}
+    if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.approved == 'true' || needs.owner-gate.outputs.reused == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: Evidence-Reuse für aktuellen PR-Head verifizieren
+        if: ${{ github.event_name != 'push' && needs.owner-gate.outputs.reused == 'true' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVIDENCE_RUN_ID: ${{ needs.owner-gate.outputs.evidence_run_id }}
+          EVIDENCE_JOB_ID: ${{ needs.owner-gate.outputs.evidence_job_id }}
+        run: |
+          set -euo pipefail
+          test -n "$EVIDENCE_RUN_ID"
+          test -n "$EVIDENCE_JOB_ID"
+
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${EVIDENCE_RUN_ID}" \
+            --jq '. as $run | select(.head_sha == env.PR_HEAD_SHA and .event == "pull_request" and .conclusion == "success" and any(.pull_requests[]?; .number == (env.PR_NUMBER | tonumber))) | .id' \
+            | grep -qx "$EVIDENCE_RUN_ID"
+
+          gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${EVIDENCE_JOB_ID}" \
+            --jq '. as $job | select(.name == "build-and-test" and .conclusion == "success") | .id' \
+            | grep -qx "$EVIDENCE_JOB_ID"
+
+          echo "Volltest-Evidence wiederverwendet und head-genau verifiziert: PR #${PR_NUMBER}@${PR_HEAD_SHA}, run=${EVIDENCE_RUN_ID}, job=${EVIDENCE_JOB_ID}."
+
       - name: Repository auschecken
+        if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.reused != 'true' }}
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           ref: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
@@ -219,6 +248,7 @@ jobs:
           persist-credentials: false
 
       - name: Prüfumfang bestimmen
+        if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.reused != 'true' }}
         id: scope
         shell: bash
         env:
@@ -259,67 +289,135 @@ jobs:
           echo "docker=$docker" >> "$GITHUB_OUTPUT"
 
       - name: Repository-Integrität prüfen
+        if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.reused != 'true' }}
         shell: bash
         run: |
           set -euo pipefail
           git rev-parse --verify 'HEAD^{commit}' >/dev/null
           git fsck --strict --no-dangling
 
+      - name: Live-PR-Body und Produktionsbaseline validieren
+        if: ${{ github.event_name != 'push' && needs.owner-gate.outputs.reused != 'true' }}
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/pr
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          node scripts/pr/productionPreflight.mjs
+          node scripts/pr/validatePrBody.mjs
+
       - name: Dokumentations-Fast-Path
-        if: steps.scope.outputs.full != 'true'
+        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full != 'true' }}
         run: echo "Nur Dokumentation betroffen; Software-Build und Tests sind nicht erforderlich."
 
       - name: Node.js einrichten
-        if: steps.scope.outputs.full == 'true'
+        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: '24.18.0'
           cache: 'npm'
 
       - name: Abhängigkeiten installieren
-        if: steps.scope.outputs.full == 'true'
+        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         run: npm ci
 
+      - name: Repository-Konventionen blocking prüfen
+        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
+        run: npm run repository:validate
+
       - name: Produktionsabhängigkeiten prüfen
-        if: steps.scope.outputs.full == 'true'
+        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         run: npm audit --omit=dev --audit-level=high
 
       - name: TypeScript prüfen
-        if: steps.scope.outputs.full == 'true'
+        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         run: npm run lint
 
       - name: Unit-Tests ausführen
-        if: steps.scope.outputs.full == 'true'
+        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         run: npm test
 
       - name: Produktions-Build erstellen
-        if: steps.scope.outputs.full == 'true'
+        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         run: npm run build
 
       - name: Produktions-CSP-Auslieferung nach Build prüfen
-        if: steps.scope.outputs.full == 'true'
+        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         env:
           NODE_ENV: production
           CSP_MODE: report-only
         run: npx vitest run tests/unit/securityResponse.production.test.ts
 
       - name: Produktionskonfiguration und Deployment-Bereitschaft prüfen
-        if: steps.scope.outputs.full == 'true'
+        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.full == 'true' }}
         run: |
           npx tsx scripts/security/verifyProductionConfigInvariants.ts
           npm run predeploy:check
 
       - name: Docker-Hardening prüfen
-        if: steps.scope.outputs.docker == 'true'
+        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.docker == 'true' }}
         run: node scripts/security/verifyDockerHardening.mjs
 
       - name: Produktions-Docker-Image bauen und prüfen
-        if: steps.scope.outputs.docker == 'true'
+        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.docker == 'true' }}
+        shell: bash
+        env:
+          IMAGE_SHA: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
         run: |
-          docker build --tag capital-ai-ci:${{ github.sha }} .
-          test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{.Config.User}}')" = "capitalai"
-          test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
-          docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
+          set -euo pipefail
+          docker build --tag "capital-ai-ci:${IMAGE_SHA}" .
+          test "$(docker image inspect "capital-ai-ci:${IMAGE_SHA}" --format '{{.Config.User}}')" = "capitalai"
+          test "$(docker image inspect "capital-ai-ci:${IMAGE_SHA}" --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
+          docker image inspect "capital-ai-ci:${IMAGE_SHA}" --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
+
+      - name: Produktions-Docker-Container starten und /healthz prüfen
+        if: ${{ needs.owner-gate.outputs.reused != 'true' && steps.scope.outputs.docker == 'true' }}
+        shell: bash
+        env:
+          IMAGE_SHA: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          container_name="capital-ai-ci-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cleanup() {
+            docker logs "$container_name" 2>/dev/null || true
+            docker rm -f "$container_name" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          docker run -d \
+            --name "$container_name" \
+            -p 127.0.0.1::3000 \
+            -e PORT=3000 \
+            -e SUPABASE_SECRET_KEY=ci-smoke-nonsecret \
+            -e STRIPE_SECRET_KEY=sk_test_ci_runtime_smoke \
+            -e STRIPE_WEBHOOK_SECRET=whsec_ci_runtime_smoke \
+            -e TOTP_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef \
+            "capital-ai-ci:${IMAGE_SHA}" >/dev/null
+
+          host_port="$(docker port "$container_name" 3000/tcp | sed -E 's/.*:([0-9]+)$/\1/' | head -n 1)"
+          test -n "$host_port"
+
+          health_ok=false
+          for _attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error "http://127.0.0.1:${host_port}/healthz" >/dev/null; then
+              health_ok=true
+              break
+            fi
+            if [ "$(docker inspect --format '{{.State.Running}}' "$container_name")" != 'true' ]; then
+              break
+            fi
+            sleep 1
+          done
+
+          test "$health_ok" = 'true'
+          echo "Docker Runtime Smoke Test PASS: /healthz antwortet mit HTTP 2xx für Image capital-ai-ci:${IMAGE_SHA}."
 
   deploy-production:
     name: Deployment verifiziert / Render-Produktion
