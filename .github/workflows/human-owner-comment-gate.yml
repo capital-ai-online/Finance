@@ -11,6 +11,8 @@ on:
   issue_comment:
     types: [edited]
 
+# Kein globales Schreibrecht. Jeder Job erhält nur die für seinen exakten
+# Trust-Boundary-Schritt erforderlichen Berechtigungen.
 permissions: {}
 
 concurrency:
@@ -28,7 +30,7 @@ jobs:
       }}
     permissions:
       contents: read
-      issues: write
+      issues: read
       pull-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 3
@@ -150,14 +152,28 @@ jobs:
           )"
           test -n "$review_id"
 
-          prior="$(
-            gh api -H 'Accept: application/vnd.github+json' \
-              "repos/${GITHUB_REPOSITORY}/commits/${current_head}/check-runs?check_name=build-and-test&per_page=100" \
-              --jq '.check_runs[] | select(.name == "build-and-test") | [.id, .status, (.conclusion // "null"), (.app.slug // "")] | @tsv' \
+          # Die One-Shot-Reservierung wird ausschließlich über die vom Gate selbst gesetzte
+          # external_id identifiziert. Der gleichnamige `build-and-test`-Job aus ci.yml liegt
+          # auf demselben Head und darf die Reservierung weder belegen noch verdrängen.
+          # `filter=all` ist zwingend: der Endpunkt liefert per Default nur den jeweils
+          # letzten Check-Run je Name und würde die eigene Reservierung sonst verdecken.
+          one_shot_id="capital-ai-human-gate-one-shot:${PR_NUMBER}:${current_head}"
+
+          blocking="$(
+            ONE_SHOT_ID="$one_shot_id" gh api -H 'Accept: application/vnd.github+json' \
+              "repos/${GITHUB_REPOSITORY}/commits/${current_head}/check-runs?check_name=build-and-test&filter=all&per_page=100" \
+              --jq '.check_runs[]
+                      | select(
+                          .name == "build-and-test"
+                          and (.external_id // "") == env.ONE_SHOT_ID
+                          and (.app.slug // "") == "github-actions"
+                          and (.status != "completed" or .conclusion == "success")
+                        )
+                      | [(.id | tostring), .status, (.conclusion // "null")] | @tsv' \
               | head -n 1
           )"
-          if [ -n "$prior" ]; then
-            echo "One-Shot für PR #${PR_NUMBER}@${current_head} ist bereits reserviert/verbraucht: ${prior}. Kein zweiter Build."
+          if [ -n "$blocking" ]; then
+            echo "One-Shot für PR #${PR_NUMBER}@${current_head} läuft bereits oder ist erfolgreich verbraucht: ${blocking}. Kein zweiter Build."
             echo "dispatch=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -180,6 +196,7 @@ jobs:
               "repos/${GITHUB_REPOSITORY}/check-runs" \
               -f name='build-and-test' \
               -f head_sha="$current_head" \
+              -f external_id="$one_shot_id" \
               -f status='in_progress' \
               -f "output[title]=build-and-test läuft" \
               -f "output[summary]=Trusted-main Build/Test wurde durch head-genaue Human-Evidence autorisiert." \

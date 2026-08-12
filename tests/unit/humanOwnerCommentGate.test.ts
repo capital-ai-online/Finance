@@ -22,9 +22,51 @@ describe('Human Owner Comment Gate', () => {
     expect(seed).toContain('PR_BASE_REF: ${{ github.event.workflow_run.pull_requests[0].base.ref }}');
     expect(seed).not.toContain('pulls/${PR_NUMBER}');
     expect(seed).toContain('pull-requests: write');
-    expect(seed).toContain('issues: write');
+    expect(seed).toContain('issues: read');
   });
 
+
+  it('partitions write permissions between comment seeding and CI dispatch', () => {
+    const gate = read('.github/workflows/human-owner-comment-gate.yml');
+    expect(gate).toContain('permissions: {}');
+
+    const seedStart = gate.indexOf('  seed-or-reset:');
+    const verifyStart = gate.indexOf('  human-verification:');
+    expect(seedStart).toBeGreaterThan(-1);
+    expect(verifyStart).toBeGreaterThan(seedStart);
+
+    const seed = gate.slice(seedStart, verifyStart);
+    const verify = gate.slice(verifyStart);
+
+    expect(seed).toContain('pull-requests: write');
+    expect(seed).toContain('issues: read');
+    expect(seed).toContain('contents: read');
+    expect(seed).not.toContain('actions: write');
+    expect(seed).not.toContain('checks: write');
+    expect(seed).not.toContain('contents: write');
+
+    expect(verify).toContain('actions: write');
+    expect(verify).toContain('checks: write');
+    expect(verify).toContain('pull-requests: read');
+    expect(verify).toContain('issues: read');
+    expect(verify).toContain('contents: read');
+    expect(verify).not.toContain('pull-requests: write');
+    expect(verify).not.toContain('issues: write');
+    expect(verify).not.toContain('contents: write');
+  });
+
+  it('limits PR-write usage to timeline comment synchronization', () => {
+    const gate = read('.github/workflows/human-owner-comment-gate.yml');
+    const seedStart = gate.indexOf('  seed-or-reset:');
+    const verifyStart = gate.indexOf('  human-verification:');
+    const seed = gate.slice(seedStart, verifyStart);
+
+    expect(seed).toContain('issues/${PR_NUMBER}/comments');
+    expect(seed).toContain('issues/comments/${comment_id}');
+    expect(seed).not.toContain('/merge');
+    expect(seed).not.toContain('/reviews');
+    expect(seed).not.toContain('--method PUT');
+  });
   it('binds the human gate to owner, current head, exact review and both attestations', () => {
     const gate = read('.github/workflows/human-owner-comment-gate.yml');
     expect(gate).toContain("github.actor == 'SvenKulessa'");
@@ -47,6 +89,31 @@ describe('Human Owner Comment Gate', () => {
     expect(gate).toContain('check_name=build-and-test');
   });
 
+  it('identifies the one-shot reservation by its own external id and not by check name alone', () => {
+    const gate = read('.github/workflows/human-owner-comment-gate.yml');
+    const verify = gate.slice(gate.indexOf('  human-verification:'));
+
+    expect(verify).toContain(
+      'one_shot_id="capital-ai-human-gate-one-shot:${PR_NUMBER}:${current_head}"',
+    );
+    expect(verify).toContain('-f external_id="$one_shot_id"');
+    expect(verify).toContain('(.external_id // "") == env.ONE_SHOT_ID');
+
+    // Der Default-Filter liefert nur den letzten Check-Run je Name und würde die eigene
+    // Reservierung hinter dem gleichnamigen ci.yml-Job verstecken.
+    expect(verify).toContain('check_name=build-and-test&filter=all');
+    expect(verify).not.toContain('check_name=build-and-test&per_page');
+  });
+
+  it('keeps the one-shot closed while reserved or passed and reopens it after a failed reservation', () => {
+    const gate = read('.github/workflows/human-owner-comment-gate.yml');
+    const verify = gate.slice(gate.indexOf('  human-verification:'));
+
+    expect(verify).toContain('.status != "completed" or .conclusion == "success"');
+    expect(verify).toContain('if [ -n "$blocking" ]; then');
+    expect(verify).toContain('echo "dispatch=false" >> "$GITHUB_OUTPUT"');
+  });
+
   it('dispatches exactly the trusted main build workflow and passes the reserved head check', () => {
     const gate = read('.github/workflows/human-owner-comment-gate.yml');
     expect(gate).toContain('gh workflow run pr-build-and-test.yml');
@@ -67,6 +134,18 @@ describe('PR Build and Test dispatch', () => {
     expect(build).toContain('build_check_run_id:');
   });
 
+
+  it('protects PR hash labels from YAML comment truncation', () => {
+    const build = read('.github/workflows/pr-build-and-test.yml');
+    expect(build).toContain(
+      'run-name: "PR #${{ inputs.pr_number }} – trusted build/test @ ${{ inputs.head_sha }}"',
+    );
+    expect(build).toContain(
+      'run: >-\n          echo "Primär-Volltest für PR #${{ inputs.pr_number }}@${{ inputs.head_sha }} ist durch head-genaue Human-Evidence autorisiert."',
+    );
+    expect(build).not.toContain('run-name: PR #');
+    expect(build).not.toContain('run: echo "Primär-Volltest für PR #');
+  });
   it('executes candidate code only in a read-only job on exactly the approved head', () => {
     const build = read('.github/workflows/pr-build-and-test.yml');
     const executor = build.slice(build.indexOf('  build-and-test-executor:'), build.indexOf('  report-pr-head-check:'));
@@ -100,5 +179,18 @@ describe('PR Build and Test dispatch', () => {
     expect(reporter).toContain("conclusion=success");
     expect(reporter).toContain("conclusion=failure");
     expect(reporter).toContain('check-runs/${BUILD_CHECK_RUN_ID}');
+  });
+
+  it('accepts only the gate-issued one-shot reservation in both trusted jobs', () => {
+    const build = read('.github/workflows/pr-build-and-test.yml');
+    const evidence = build.slice(build.indexOf('  owner-evidence:'), build.indexOf('  build-and-test-executor:'));
+    const reporter = build.slice(build.indexOf('  report-pr-head-check:'));
+
+    const expectedId = 'ONE_SHOT_ID="capital-ai-human-gate-one-shot:${PR_NUMBER}:${EXPECTED_HEAD_SHA}"';
+    expect(evidence).toContain(expectedId);
+    expect(reporter).toContain(expectedId);
+    expect(evidence).toContain('(.external_id // "") == env.ONE_SHOT_ID');
+    expect(reporter).toContain('(.external_id // "") == env.ONE_SHOT_ID');
+    expect(evidence).toContain('.status == "in_progress"');
   });
 });

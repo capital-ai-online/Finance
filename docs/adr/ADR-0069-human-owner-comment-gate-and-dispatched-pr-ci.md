@@ -24,7 +24,7 @@ GitHub stellt für Kommentare auf Pull Requests das Ereignis `issue_comment: edi
 5. Erst wenn beide Häkchen gesetzt sind, wird `Human-/Owner-Verifikation` ausgeführt.
 6. Die Verifikation akzeptiert nur den erwarteten Owner, einen offenen PR gegen `main`, den aktuellen Head, den unveränderten Live-Kommentar und einen current-head Review mit exakt `💪` oder `okay`.
 7. Nach PASS erzeugt der trusted-main Gate-Job zwei explizit an den aktuellen PR-Head gebundene Checks: `Human-/Owner-Verifikation = success` und `build-and-test = in_progress`.
-8. Pro `(PR, Head-SHA)` darf höchstens eine `build-and-test`-Reservation existieren. Eine vorhandene Reservation oder Evidence verhindert einen zweiten teuren Build.
+8. Pro `(PR, Head-SHA)` darf höchstens eine *wirksame* `build-and-test`-Reservation existieren. Die Reservation wird ausschließlich über die vom Gate gesetzte `external_id` `capital-ai-human-gate-one-shot:<PR-Nummer>:<Head-SHA>` identifiziert; gleichnamige Check-Runs anderer Workflows — insbesondere der `build-and-test`-Job aus `ci.yml` — belegen den One-Shot nicht und können ihn auch nicht verdrängen. Eine laufende (`queued`/`in_progress`) oder erfolgreich abgeschlossene Reservation verhindert einen zweiten teuren Build. Eine mit `failure`, `cancelled`, `timed_out` oder `action_required` abgeschlossene Reservation gibt den One-Shot wieder frei, damit ein infrastrukturbedingter Fehlschlag denselben Head nicht dauerhaft unmergebar macht; die Freigabe wirkt nur über einen erneuten vollständigen Human-Evidence-Zyklus.
 9. Danach wird genau ein `workflow_dispatch` von `pr-build-and-test.yml` auf `main` angefordert. Der Dispatch transportiert PR-Nummer, Head-SHA, Approval-Kommentar-ID und die reservierte `build-and-test`-Check-ID.
 10. Der Build-Workflow verifiziert Head, Kommentar, Review und Check-Reservation erneut, bevor er Kandidatencode auscheckt.
 11. Kandidatencode läuft ausschließlich in einem Job mit `contents: read`. Dieser Job besitzt keine Check-, PR-, Issue- oder Actions-Schreibrechte.
@@ -38,14 +38,16 @@ GitHub stellt für Kommentare auf Pull Requests das Ereignis `issue_comment: edi
 - Kein Kandidatencode im schreibenden Human-Gate- oder Reporter-Job.
 - Checkout im Build nur über den exakt freigegebenen Head-SHA.
 - Keine persistierten Checkout-Zugangsdaten.
-- Check-Reporting nur für die reservierte Check-ID mit Name `build-and-test`, exakt erwartetem `head_sha` und GitHub-Actions-App-Bindung.
-- Ein `(PR, Head-SHA)` erhält höchstens eine Build-Reservation.
+- Check-Reporting nur für die reservierte Check-ID mit Name `build-and-test`, exakt erwartetem `head_sha`, exakt erwarteter One-Shot-`external_id` und GitHub-Actions-App-Bindung.
+- Ein `(PR, Head-SHA)` erhält höchstens eine gleichzeitig wirksame Build-Reservation; ein erneuter Versuch nach `failure`/`cancelled`/`timed_out` setzt einen vollständigen neuen Human-Evidence-Zyklus voraus.
 - Fehlende, veraltete oder widersprüchliche Human-Evidence führt zu DENY.
 - Ein fehlgeschlagener Dispatch oder Build wird als `build-and-test = failure` auf dem PR-Head sichtbar; er darf nicht als PASS maskiert werden.
 
 ## Kosteninvariante
 
 Der erste Checkbox-Klick startet keinen Build. Erst der Zustand mit beiden gesetzten Häkchen führt nach erfolgreicher Human-Verifikation zu genau einer Build-Reservation. Duplicate-Edits desselben Heads dürfen keinen zweiten Volltest auslösen.
+
+Ein erneuter Volltest für denselben Head ist ausschließlich nach einer mit `failure`, `cancelled` oder `timed_out` beendeten Reservation zulässig und wird nie automatisch ausgelöst: Er erfordert erneut Owner-Identität, offenen PR gegen `main`, current-head Bindung, unveränderten Live-Kommentar, current-head Review `💪`/`okay` und beide Attestations. Ein erfolgreicher Volltest schließt den One-Shot für diesen Head endgültig.
 
 ## Übergang PR #235
 
