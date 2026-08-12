@@ -3,67 +3,41 @@
 Status: **COMPLETE / VERIFIED PASS**
 Date: 2026-08-12
 Repository: `SvenKulessa/Finance`
-Current repository baseline: `main@2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`
-Current production deploy: `dep-d9u392nlk1mc73fg1hk0` — `live` — commit `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`
+Current repository baseline: `main@3b6bba0ec5c156c7bc1c68115284555f7560c2bf`
+Current production deploy: `dep-d9u3ifbm8hqs73eedgq0` — `live` — commit `3b6bba0ec5c156c7bc1c68115284555f7560c2bf`
 Authority: ESS-0021, ADR-0065, ADR-0067, ADR-0068, `REM-SA4-PILOT-001`
 
 ## Purpose
 
-This document closes the repository lifecycle evidence for SA3B/SA4 without rewriting the earlier append-only evidence snapshots. It records only independently verified final state after the Human merge and branch cleanup of the first bounded autonomous Systemadmin work package.
+This document closes the repository lifecycle evidence for SA3B/SA4 without rewriting earlier append-only evidence snapshots. It records independently verified final state after Human merge and branch cleanup of the first bounded autonomous Systemadmin work package.
 
 ## SA3B prerequisite closure
 
-SA3B previously proved:
+SA3B proved:
 
 - audit persistence failure -> no permit -> no branch (Issue #221 / run `31570833507`);
 - positive permit-before-side-effect BRANCH execution (Issue #223 / run `31574111075`);
 - durable authorization reference `supabase:agent_audit_events:194f1198-492c-4d4f-b1e4-0c13a5d99d20`;
 - durable SUCCESS outcome reference `supabase:agent_audit_events:5ab9eefe-f472-4396-a7e7-2a3ceb029e34`;
-- stale-base negative path -> deny before OIDC/broker -> no branch (Issue #224 / run `31574221718`).
-
-Final lifecycle verification on 2026-08-12 confirmed that `agent/sa3b-host-probe-20260812b` is absent.
+- stale-base negative path -> deny before OIDC/broker -> no branch (Issue #224 / run `31574221718`);
+- final branch lookup confirmed `agent/sa3b-host-probe-20260812b` absent.
 
 **SA3B final state: `COMPLETE / VERIFIED PASS`.**
 
 ## SA4 bootstrap
 
-PR #226 (`feat(sa4): bounded autonomous Work-Package-Pilot vorbereiten`) Human-merged at:
-
-`f7dfcda36905d9a55d74f57f2140224928960379`
-
-The bootstrap implemented the dedicated SA4 GitHub Actions/OIDC host, strict Issue parser, deterministic runner, trust-root protection, broker binding and negative tests.
-
-The bootstrap runtime was deployed to Render and reached `live` before the real pilot.
+PR #226 (`feat(sa4): bounded autonomous Work-Package-Pilot vorbereiten`) was Human-merged at `f7dfcda36905d9a55d74f57f2140224928960379`. The bootstrap implemented the dedicated SA4 GitHub Actions/OIDC host, strict Issue parser, deterministic runner, trust-root protection, broker binding and negative tests. The bootstrap runtime reached Render `live` before the real pilot.
 
 ## Real SA4 autonomous pilot
 
-Owner Issue #228 triggered the bounded SA4 host on base:
+Owner Issue #228 triggered the bounded SA4 host on base `f7dfcda36905d9a55d74f57f2140224928960379`.
 
-`f7dfcda36905d9a55d74f57f2140224928960379`
-
-Workflow run:
-
-`31579519025`
-
-Mandate:
-
-`REM-SA4-PILOT-001`
-
-Roadmap item:
-
-`SA4-FIRST-AUTONOMOUS-WORK-PACKAGE`
-
-Exact autonomous output:
-
-`docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md`
-
-Exact pilot branch:
-
-`agent/sa4-pilot-proof-20260812b`
-
-Exact autonomous commit:
-
-`02f012e71106d5ffd9a4baa3e6f3eba7160eb55d`
+- Workflow run: `31579519025`
+- Mandate: `REM-SA4-PILOT-001`
+- Roadmap item: `SA4-FIRST-AUTONOMOUS-WORK-PACKAGE`
+- Exact autonomous output: `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md`
+- Exact pilot branch: `agent/sa4-pilot-proof-20260812b`
+- Exact autonomous commit: `02f012e71106d5ffd9a4baa3e6f3eba7160eb55d`
 
 ### Durable authorization / outcome chain
 
@@ -75,26 +49,20 @@ Exact autonomous commit:
 
 The execution host created draft PR #229 as `github-actions[bot]`. The PR remained subject to Human File Review, Human CI authorization and Human-only merge.
 
-## Human boundary and final repository state
+## Human boundary and historical SA4 merge state
 
-PR #229 was Human-merged into `main` with merge SHA:
-
-`2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`
+PR #229 was Human-merged into `main` with merge SHA `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`.
 
 Post-merge main CI:
 
 - workflow run `31580214920` / CI #966;
 - conclusion: `success`.
 
-Final branch lookup confirmed:
+Final branch lookup confirmed `agent/sa4-pilot-proof-20260812b` absent.
 
-`agent/sa4-pilot-proof-20260812b` -> absent.
+The #229 merge commit reached Render on deploy `dep-d9u392nlk1mc73fg1hk0` with status `live` at that time.
 
-The merge commit was subsequently deployed to Render:
-
-- deploy `dep-d9u392nlk1mc73fg1hk0`;
-- status `live`;
-- deployed commit `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`.
+Subsequent documentation merges #230 and #231 advanced repository and production baseline to `3b6bba0ec5c156c7bc1c68115284555f7560c2bf` without changing the historical SA4 execution evidence. Current Render deploy is `dep-d9u3ifbm8hqs73eedgq0` `live` on the same commit.
 
 ## Verified capability boundary
 
@@ -102,19 +70,7 @@ SA4 proves an audit-bound, fail-closed repository side-effect chain for the exac
 
 `BRANCH -> COMMIT -> Draft PR`
 
-It proves:
-
-- exact current-main binding;
-- exact REM/workflow binding;
-- separate durable authorization before each side effect;
-- separate terminal outcome after each side effect;
-- exact path/branch/head binding;
-- deterministic content generation by trusted host code;
-- no autonomous CI authorization;
-- no autonomous merge;
-- no production mutation;
-- mandatory Human review and Human merge;
-- branch cleanup after merge.
+It proves exact current-main binding, exact REM/workflow binding, separate durable authorization before each side effect, separate terminal outcome after each side effect, exact path/branch/head binding, deterministic content generation by trusted host code, no autonomous CI authorization, no autonomous merge, no production mutation, mandatory Human review/Human merge and branch cleanup after merge.
 
 It does **not** by itself prove that the current SA4 runner can accept or safely generate arbitrary application-code patches. The first pilot runner is deliberately deterministic and allowlisted to one documentation artifact. Any future autonomous DEVELOPMENT-Chain code implementation therefore requires a dedicated Owner-approved REM plus an execution path whose code/patch scope, tests, self-authority protections and audit binding are technically enforceable.
 

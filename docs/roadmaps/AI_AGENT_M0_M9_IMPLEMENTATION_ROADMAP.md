@@ -4,8 +4,8 @@
 
 Status: IMPLEMENTATION PHASE
 Status date: 2026-08-12
-Baseline: `main@2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd` (PR #229 merge)
-Production deploy: `dep-d9u392nlk1mc73fg1hk0` — `live` — same commit
+Baseline: `main@3b6bba0ec5c156c7bc1c68115284555f7560c2bf` (PR #231 merge)
+Production deploy: `dep-d9u3ifbm8hqs73eedgq0` — `live` — same commit
 Platform version: `0.6.0`
 
 ## Global execution rule
@@ -40,25 +40,13 @@ A Mutation Handoff is non-authorizing. Human/Owner approval, REM/IAM/reserved-ac
 
 ### SA3B — COMPLETE / VERIFIED PASS
 
-The real host evidence now covers:
-
-- Issue #221: audit persistence failure → no permit → no branch;
-- Issue #223: positive OIDC + durable authorization → BRANCH → durable SUCCESS outcome;
-- Issue #224: stale base → deny before OIDC/broker → no branch;
-- final deletion of `agent/sa3b-host-probe-20260812b`.
-
-The production M5 writer/schema correction from PR #222 is therefore validated through the real privileged audit path.
+The real host evidence covers audit-outage fail-closed, positive durable authorization→BRANCH→SUCCESS outcome, stale-base deny and final probe-branch deletion.
 
 ### SA4 — COMPLETE / VERIFIED PASS
 
-PR #226 bootstrapped the bounded SA4 work-package host. Owner Issue #228 / Workflow run `31579519025` executed the first real autonomous pilot and produced:
+PR #226 bootstrapped the bounded SA4 work-package host. Owner Issue #228 / Workflow run `31579519025` executed the first real autonomous pilot and produced a fresh branch, deterministic commit `02f012e71106d5ffd9a4baa3e6f3eba7160eb55d`, Draft PR #229 and separate durable authorization/outcome references for BRANCH, COMMIT and PR.
 
-- fresh branch `agent/sa4-pilot-proof-20260812b`;
-- deterministic commit `02f012e71106d5ffd9a4baa3e6f3eba7160eb55d`;
-- Draft PR #229;
-- separate durable authorization/outcome references for BRANCH, COMMIT and PR.
-
-Human/Owner review and merge remained separate. PR #229 merged to `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`; main CI #966 passed; pilot branch is deleted; production deploy is live on the same merge SHA.
+Human/Owner review and merge remained separate. PR #229 merged to `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`; main CI #966 passed; pilot branch was deleted. PR #231 subsequently synchronized the Systemadmin roadmap/traceability. Current repository/production baseline is `main@3b6bba0ec5c156c7bc1c68115284555f7560c2bf`, Render deploy `dep-d9u3ifbm8hqs73eedgq0` live.
 
 Closure Evidence: `docs/evidence/sa4/SA4_VERIFIED_PASS_CLOSURE_2026-08-12.md`.
 
@@ -127,9 +115,7 @@ Recorded baseline proves the historical CAPITAL-AI custom TOTP mechanism is dist
 Required sequence:
 
 1. synchronize/confirm Human/Owner Authority state for ESS-0020 and ADR-0064;
-2. choose execution path:
-   - normal Human-authorized Development PR path; or
-   - autonomous Systemadmin path only with a dedicated M5A REM and technically bounded code/test execution contract;
+2. choose execution path: normal Human-authorized Development PR path, or autonomous Systemadmin path only with a dedicated M5A REM and technically bounded code/test execution contract;
 3. fresh implementation branch from current `main`;
 4. Native TOTP `enroll → challenge → verify`;
 5. centralized server AAL2 verification;
@@ -158,13 +144,7 @@ M6 remains blocked until M5A `VERIFIED PASS`.
 
 ## M6 — Supply Chain Provenance & Attestation
 
-**BLOCKED — DOCUMENTATION READY.**
-
-Authority/runbook:
-
-- ADR-0060;
-- `docs/architecture/ai-agent/AI_AGENT_SUPPLY_CHAIN_MODEL.md`;
-- `docs/runbooks/M6_SUPPLY_CHAIN_PROVENANCE.md`.
+**BLOCKED — DOCUMENTATION READY.** Authority/runbook: ADR-0060, `docs/architecture/ai-agent/AI_AGENT_SUPPLY_CHAIN_MODEL.md`, `docs/runbooks/M6_SUPPLY_CHAIN_PROVENANCE.md`.
 
 Required chain:
 
@@ -176,51 +156,21 @@ External platform mutation is `NOT REQUIRED` by default for M6.
 
 ## M7 — Deployment Identity + Platform Mutation Gate
 
-**BLOCKED — DOCUMENTATION READY.**
-
-Authority/runbook:
-
-- ADR-0061;
-- `docs/architecture/ai-agent/AI_AGENT_DEPLOYMENT_IDENTITY.md`;
-- `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`.
+**BLOCKED — DOCUMENTATION READY.** Authority/runbook: ADR-0061, `docs/architecture/ai-agent/AI_AGENT_DEPLOYMENT_IDENTITY.md`, `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`.
 
 Every external mutation requires exact target, precheck, separate Owner mutation approval, non-authorizing Handoff, audited authorized execution, post-verification and rollback.
 
 ## M8 — Provider-neutral Agent Cutover
 
-**BLOCKED — DOCUMENTATION READY.**
-
-Authority/runbook:
-
-- ADR-0062;
-- ESS-0019;
-- Provider Profile Contract;
-- `docs/runbooks/M8_AGENT_CUTOVER.md`.
-
-ChatGPT, Claude, Google AI Studio and future transports obey the same semantic capability policy. Read-only research profiles fail mutation tests. Provider/model identity cannot elevate authority.
+**BLOCKED — DOCUMENTATION READY.** Authority/runbook: ADR-0062, ESS-0019, Provider Profile Contract, `docs/runbooks/M8_AGENT_CUTOVER.md`.
 
 ## M9 — Assurance / Incident / Break-Glass
 
-**BLOCKED — DOCUMENTATION READY.**
-
-Authority/runbook:
-
-- ADR-0063;
-- `docs/architecture/ai-agent/AI_AGENT_INCIDENT_RESPONSE.md`;
-- `docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md`.
-
-Mandatory assurance includes authorization bypass, prompt/tool injection, replay/idempotency, secret/data exfiltration, audit outage/completeness, kill switch, break-glass, rollback/recovery and independent Evidence review.
+**BLOCKED — DOCUMENTATION READY.** Authority/runbook: ADR-0063, `docs/architecture/ai-agent/AI_AGENT_INCIDENT_RESPONSE.md`, `docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md`.
 
 ## M10 — Passkey-only Human/Owner PR Authorization
 
-**BLOCKED — COMPLETE PLANNING PACKAGE PREPARED.**
-
-Authorities:
-
-- ADR-0066;
-- `.ai/skills/ESS-0022-Passkey-Only-Owner-PR-Authorization.md`;
-- `docs/architecture/ai-agent/M10_PASSKEY_OWNER_PR_AUTHORIZATION_THREAT_MODEL.md`;
-- `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`.
+**BLOCKED — COMPLETE PLANNING PACKAGE PREPARED.** Authorities: ADR-0066, `.ai/skills/ESS-0022-Passkey-Only-Owner-PR-Authorization.md`, `docs/architecture/ai-agent/M10_PASSKEY_OWNER_PR_AUTHORIZATION_THREAT_MODEL.md`, `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`.
 
 Human file review and Human-only merge remain mandatory.
 
@@ -228,21 +178,12 @@ Human file review and Human-only merge remain mandatory.
 
 The `capital-ai-systemadmin-roadmap-executor` has real `VERIFIED PASS` evidence for the exact bounded SA3B/SA4 host path. This does **not** create standing authority for unrelated DevelopmentChain work.
 
-Every new autonomous work package still requires:
-
-- active Owner-approved REM;
-- current-main binding;
-- exact path/target/capability/risk scope;
-- execution-host support for the requested operation;
-- durable authorization/outcome evidence;
-- Human final review and Human-only merge.
+Every new autonomous work package still requires active Owner-approved REM, current-main binding, exact path/target/capability/risk scope, execution-host support for the requested operation, durable authorization/outcome evidence and Human final review/Human-only merge.
 
 Handoff artifacts:
 
 - `docs/contracts/DEVELOPMENT_CHAIN_MUTATION_HANDOFF_CONTRACT.md`;
 - `.ai/contracts/development-chain-mutation-handoff.schema.json`.
-
-A Handoff cannot expand REM/capabilities, bypass Human approval or authorize `MERGE`.
 
 ## Mandatory per-step synchronization
 

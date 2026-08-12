@@ -2,8 +2,8 @@
 
 Status: PROPOSED
 Date: 2026-08-12
-Baseline: `main@2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd` (PR #229 merge)
-Production deploy: `dep-d9u392nlk1mc73fg1hk0` — `live` — same commit
+Baseline: `main@3b6bba0ec5c156c7bc1c68115284555f7560c2bf` (PR #231 merge)
+Production deploy: `dep-d9u3ifbm8hqs73eedgq0` — `live` — same commit
 
 ## Zweck
 
@@ -82,38 +82,17 @@ Mutation Requirement
 
 ## M5 / SA3B closure trace
 
-The full corrective chain is now complete:
+The full corrective chain is complete: PR #220 execution host; Issue #221 audit persistence fail-closed/no branch; PR #222 writer↔schema correction; Issue #223 real durable authorization before BRANCH and durable SUCCESS outcome; Issue #224 stale-base DENY before OIDC/broker; final positive probe branch deletion.
 
-- PR #220 implemented the GitHub-Actions/OIDC execution host.
-- Issue #221 proved audit persistence failure fails closed with no branch.
-- PR #222 corrected the application writer↔production schema mapping.
-- Issue #223 proved real durable authorization before BRANCH and durable SUCCESS outcome after the side effect.
-- Issue #224 proved stale-base DENY before OIDC/broker and no branch.
-- final lookup proved `agent/sa3b-host-probe-20260812b` absent.
-
-Therefore:
-
-- M5 production schema/persistence controls: **VERIFIED PASS**;
-- M5 corrected application writer runtime: **VERIFIED PASS**;
-- SA3B execution host: **COMPLETE / VERIFIED PASS**.
+Therefore M5 production persistence, corrected application writer runtime and SA3B are **COMPLETE / VERIFIED PASS**.
 
 ## SA4 closure trace
 
-PR #226 bootstrapped the bounded autonomous host. Owner Issue #228 / Workflow `31579519025` executed the real pilot on base `f7dfcda36905d9a55d74f57f2140224928960379`.
+PR #226 bootstrapped the bounded autonomous host. Owner Issue #228 / Workflow `31579519025` executed the real pilot on base `f7dfcda36905d9a55d74f57f2140224928960379` and produced branch `agent/sa4-pilot-proof-20260812b`, commit `02f012e71106d5ffd9a4baa3e6f3eba7160eb55d`, exact file `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md`, Draft PR #229 and separate durable BRANCH/COMMIT/PR authorization/outcome references.
 
-Real outputs:
+Human/Owner reviewed and merged PR #229; main CI #966 PASS; pilot branch deleted. PR #231 later synchronized Systemadmin roadmap/traceability. Current repository and production baseline is `main@3b6bba0ec5c156c7bc1c68115284555f7560c2bf`, Render deploy `dep-d9u3ifbm8hqs73eedgq0` live.
 
-- branch `agent/sa4-pilot-proof-20260812b`;
-- commit `02f012e71106d5ffd9a4baa3e6f3eba7160eb55d`;
-- exact file `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md`;
-- Draft PR #229;
-- separate durable BRANCH/COMMIT/PR authorization and outcome references.
-
-Human/Owner then reviewed and merged PR #229. Merge SHA `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`; main CI #966 PASS; pilot branch deleted; Render deploy `dep-d9u392nlk1mc73fg1hk0` live.
-
-Closure Evidence:
-
-`docs/evidence/sa4/SA4_VERIFIED_PASS_CLOSURE_2026-08-12.md`.
+Closure Evidence: `docs/evidence/sa4/SA4_VERIFIED_PASS_CLOSURE_2026-08-12.md`.
 
 **SA4 = COMPLETE / VERIFIED PASS for the exact deterministic docs-only `BRANCH → COMMIT → Draft PR` contract.**
 
@@ -133,9 +112,7 @@ Before M5A application code may be executed autonomously by Systemadmin, traceab
 8. Human final review/CI/merge;
 9. branch deletion.
 
-The existing `REM-SA4-PILOT-001` does not authorize M5A code.
-
-External Native MFA enrollment remains outside repository authority and requires a separate Owner production mutation approval.
+The existing `REM-SA4-PILOT-001` does not authorize M5A code. External Native MFA enrollment remains outside repository authority and requires a separate Owner production mutation approval.
 
 ## Documentation Readiness vs Execution State
 

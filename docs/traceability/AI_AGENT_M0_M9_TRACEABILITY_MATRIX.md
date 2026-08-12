@@ -3,8 +3,8 @@
 > Legacy filename retained for stable references. Detailed document/handoff traceability: `docs/traceability/DEVELOPMENT_CHAIN_DOCUMENT_TRACEABILITY_MATRIX.md`.
 
 Status date: 2026-08-12
-Baseline: `main@2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd` (PR #229 merge)
-Production deploy: `dep-d9u392nlk1mc73fg1hk0` — `live` — same commit
+Baseline: `main@3b6bba0ec5c156c7bc1c68115284555f7560c2bf` (PR #231 merge)
+Production deploy: `dep-d9u3ifbm8hqs73eedgq0` — `live` — same commit
 
 | Phase | Execution State | Authority | Primary implementation / execution documents | Mutation / Test Gate | Exit Evidence |
 |---|---|---|---|---|---|
@@ -61,17 +61,9 @@ The fail-closed invariant `NO DURABLE AUDIT PERMIT → NO GITHUB SIDE EFFECT` an
 
 ## SA4 repository-autonomy trace
 
-PR #226 bootstrapped the first bounded autonomous work-package host.
+PR #226 bootstrapped the first bounded autonomous work-package host. Owner Issue #228 / Workflow `31579519025` produced branch `agent/sa4-pilot-proof-20260812b`, commit `02f012e71106d5ffd9a4baa3e6f3eba7160eb55d`, exact path `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md`, Draft PR #229 and separate authorization/outcome references for BRANCH, COMMIT and PR.
 
-Owner Issue #228 / Workflow `31579519025` produced:
-
-- branch `agent/sa4-pilot-proof-20260812b`;
-- commit `02f012e71106d5ffd9a4baa3e6f3eba7160eb55d`;
-- exact path `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md`;
-- Draft PR #229;
-- separate authorization/outcome references for BRANCH, COMMIT and PR.
-
-PR #229 was then Human-reviewed and Human-merged to `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`; main CI #966 passed; pilot branch is absent; production deploy is live on the same merge SHA.
+PR #229 was then Human-reviewed and Human-merged to `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`; main CI #966 passed; pilot branch is absent. PR #231 later synchronized Systemadmin roadmap/traceability. Current repository/production baseline is `main@3b6bba0ec5c156c7bc1c68115284555f7560c2bf` on Render deploy `dep-d9u3ifbm8hqs73eedgq0`.
 
 Closure: `docs/evidence/sa4/SA4_VERIFIED_PASS_CLOSURE_2026-08-12.md`.
 
@@ -95,63 +87,6 @@ Closure: `docs/evidence/sa4/SA4_VERIFIED_PASS_CLOSURE_2026-08-12.md`.
 | recovery/factor reset | Owner-controlled native recovery | audited PASS |
 | advisor rerun | post-mutation production evidence | captured |
 | secret safety | evidence review | no MFA secret/code/recovery material |
-
-## M6 Requirement Trace
-
-| Requirement | Artifact / Test | Expected result |
-|---|---|---|
-| exact source | source SHA in build/evidence | matches candidate head |
-| exact dependencies | committed lockfile + digest | deterministic install |
-| SBOM | SPDX/CycloneDX machine output | bound to source/lock |
-| artifact identity | artifact/image digest | immutable subject |
-| provenance | builder/source/input/subject statement | verifies exact artifact |
-| attestation | verifiable signature/trust path where required | PASS |
-| source/lock/artifact mismatch | negative tests | DENY |
-| untrusted builder/provenance | negative test | DENY |
-| rollback artifact | immutable last-known-good reference | retrievable/verifiable |
-
-## M7 Mutation Trace
-
-Every external state change must resolve:
-
-```text
-Roadmap Item
-→ exact target
-→ pre-mutation baseline
-→ Human Mutation Approval Evidence
-→ DevelopmentChain Handoff ID
-→ REM / IAM / Execution Host decision
-→ authorization audit reference
-→ exact side effect
-→ outcome audit reference
-→ post-verification
-→ rollback state
-```
-
-No Handoff alone authorizes execution.
-
-## M8 Provider Equivalence Trace
-
-Equivalent semantic capability requests must produce the same policy outcome across ChatGPT, Claude, Google AI Studio and future transports. All agent profiles deny `MERGE`; research profiles deny mutation; production mutation requires exact approved Handoff plus separately verified execution permission.
-
-## M9 Assurance Trace
-
-Required drill families: authorization bypass, prompt/tool injection, replay/idempotency, secret/data exfiltration, audit outage/completeness, kill switch, break-glass, rollback/recovery and independent Evidence review. Unexpected ALLOW/side effect blocks M10.
-
-## M10 Passkey Authorization Trace
-
-```text
-Human File Review / Viewed
-→ trusted PR-state resolver
-→ server challenge
-→ Owner WebAuthn assertion
-→ RP/origin/credential/signature/UP/UV/freshness verification
-→ exact PR-context match
-→ immutable approval evidence
-→ atomic one-CI consumption
-→ build-and-test
-→ Human merge
-```
 
 ## Mutation State Vocabulary
 

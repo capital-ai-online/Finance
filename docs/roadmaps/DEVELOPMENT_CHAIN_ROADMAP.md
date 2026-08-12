@@ -2,8 +2,8 @@
 
 Status: IMPLEMENTATION ROADMAP
 Status date: 2026-08-12
-Current repository baseline: `main@2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd` (PR #229 merge)
-Current production baseline: Render deploy `dep-d9u392nlk1mc73fg1hk0` — `live` — commit `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`
+Current repository baseline: `main@3b6bba0ec5c156c7bc1c68115284555f7560c2bf` (PR #231 merge)
+Current production baseline: Render deploy `dep-d9u3ifbm8hqs73eedgq0` — `live` — commit `3b6bba0ec5c156c7bc1c68115284555f7560c2bf`
 Repository: `SvenKulessa/Finance`
 Platform version: `0.6.0`
 
@@ -38,7 +38,7 @@ Authority: `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`.
 
 ## Verifizierter Systemadmin-/Mutation-Agent-Stand
 
-Der parallel aufgebaute Systemadmin-Pfad hat die früheren M5-/SA3B-Blocker inzwischen real geschlossen.
+Der parallel aufgebaute Systemadmin-Pfad hat die früheren M5-/SA3B-Blocker real geschlossen.
 
 ### M5 / SA3B
 
@@ -47,7 +47,7 @@ Der parallel aufgebaute Systemadmin-Pfad hat die früheren M5-/SA3B-Blocker inzw
 - PR #222 korrigierte den Application↔M5-Schema-Contract.
 - Issue #223 / Run `31574111075` bewies den positiven realen Pfad: OIDC → durable Authorization Evidence → BRANCH Side Effect → durable SUCCESS Outcome.
 - Issue #224 / Run `31574221718` bewies stale-base DENY ohne Side Effect.
-- `agent/sa3b-host-probe-20260812b` ist nach Evidence-Erfassung gelöscht.
+- `agent/sa3b-host-probe-20260812b` wurde nach Evidence-Erfassung gelöscht.
 
 Damit gelten der korrigierte privilegierte M5-Auditpfad und SA3B als **COMPLETE / VERIFIED PASS**.
 
@@ -59,7 +59,9 @@ PR #226 implementierte den bounded SA4 Pilot Host. Der erste echte autonome Work
 BRANCH → COMMIT → Draft PR
 ```
 
-Der Host erzeugte exakt `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md`, Commit `02f012e71106d5ffd9a4baa3e6f3eba7160eb55d` und Draft PR #229. PR #229 wurde anschließend ausschließlich durch den Human/Owner reviewed, final autorisiert und gemergt. Merge SHA: `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`. Main CI #966 / Run `31580214920` ist PASS; der Pilot-Branch ist gelöscht; Render deploy `dep-d9u392nlk1mc73fg1hk0` ist live.
+Der Host erzeugte exakt `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md`, Commit `02f012e71106d5ffd9a4baa3e6f3eba7160eb55d` und Draft PR #229. PR #229 wurde anschließend ausschließlich durch den Human/Owner reviewed, final autorisiert und gemergt. Merge SHA: `2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`. Main CI #966 / Run `31580214920` ist PASS; der Pilot-Branch wurde gelöscht.
+
+PR #231 synchronisierte anschließend den Systemadmin-Roadmap-/Traceability-Stand. Der aktuelle Repository- und Render-Produktionsstand ist `main@3b6bba0ec5c156c7bc1c68115284555f7560c2bf`, Deploy `dep-d9u3ifbm8hqs73eedgq0` `live`.
 
 Closure Evidence: `docs/evidence/sa4/SA4_VERIFIED_PASS_CLOSURE_2026-08-12.md`.
 
