@@ -1,0 +1,170 @@
+name: Human Owner Comment Gate
+run-name: >-
+  ${{ github.event_name == 'issue_comment'
+      && format('PR #{0} – Human-/Owner-Verifikation', github.event.issue.number)
+      || format('PR #{0} – Human-Gate zurücksetzen', github.event.pull_request.number) }}
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, synchronize, ready_for_review]
+  issue_comment:
+    types: [edited]
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: human-owner-comment-gate-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  seed-or-reset:
+    name: Human-Gate-Kommentar erzeugen / zurücksetzen
+    if: ${{ github.event_name == 'pull_request_target' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Head-gebundenen Approval-Kommentar synchronisieren
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          body="$(cat <<EOF
+          <!-- CAPITAL_AI_HUMAN_GATE -->
+          <!-- CAPITAL_AI_HUMAN_GATE_HEAD_SHA: ${PR_HEAD_SHA} -->
+          ## Human / Owner Verifikation
+
+          > Nur diese zwei Häkchen setzt der Human/Owner. Der Kommentar ist an den aktuellen PR-Head gebunden. Ein neuer Commit setzt ihn automatisch zurück. Vor dem zweiten Haken muss für denselben Head ein Owner-Review mit exakt \`💪\` oder \`okay\` vorliegen.
+
+          - [ ] Human/Owner: vollständigen PR-Diff geprüft.
+          - [ ] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.
+          EOF
+          )"
+
+          comment_id="$(
+            gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
+              --jq '.[] | select((.body // "") | contains("<!-- CAPITAL_AI_HUMAN_GATE -->")) | .id' \
+              | head -n 1
+          )"
+
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH \
+              "repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" \
+              -f body="$body" >/dev/null
+            echo "Human-Gate-Kommentar #${comment_id} auf Head ${PR_HEAD_SHA} zurückgesetzt."
+          else
+            gh api --method POST \
+              "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+              -f body="$body" >/dev/null
+            echo "Human-Gate-Kommentar für PR #${PR_NUMBER}@${PR_HEAD_SHA} erzeugt."
+          fi
+
+  human-verification:
+    name: Human-/Owner-Verifikation
+    if: >-
+      ${{
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        github.actor == 'SvenKulessa' &&
+        contains(github.event.comment.body, '<!-- CAPITAL_AI_HUMAN_GATE -->') &&
+        (
+          contains(github.event.comment.body, '- [x] Human/Owner: vollständigen PR-Diff geprüft.') ||
+          contains(github.event.comment.body, '- [X] Human/Owner: vollständigen PR-Diff geprüft.')
+        ) &&
+        (
+          contains(github.event.comment.body, '- [x] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.') ||
+          contains(github.event.comment.body, '- [X] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.')
+        )
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Human-Evidence head-genau verifizieren
+        id: verify
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          EXPECTED_OWNER: SvenKulessa
+          EVENT_ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          test "$EVENT_ACTOR" = "$EXPECTED_OWNER"
+
+          read -r current_head base_ref pr_state <<< "$(
+            gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" \
+              --jq '[.head.sha, .base.ref, .state] | @tsv'
+          )"
+          test "$base_ref" = "main"
+          test "$pr_state" = "open"
+
+          approval_head="$(
+            python3 - <<'PY'
+          import os, re
+          body = os.environ['COMMENT_BODY']
+          match = re.search(r'<!--\s*CAPITAL_AI_HUMAN_GATE_HEAD_SHA:\s*([0-9a-f]{40})\s*-->', body, re.I)
+          if not match:
+              raise SystemExit(1)
+          print(match.group(1).lower())
+          PY
+          )"
+          test "$approval_head" = "$current_head"
+
+          live_body="$(gh api "repos/${GITHUB_REPOSITORY}/issues/comments/${COMMENT_ID}" --jq '.body // ""')"
+          test "$live_body" = "$COMMENT_BODY"
+
+          review_id="$(
+            PR_HEAD_SHA="$current_head" gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" \
+              --jq '.[] | select(.user.login == env.EXPECTED_OWNER and .commit_id == env.PR_HEAD_SHA and (((((.body // "") | gsub("^[[:space:]]+|[[:space:]]+$"; "")) | ascii_downcase) == "okay") or (((.body // "") | gsub("^[[:space:]]+|[[:space:]]+$"; "")) == "💪"))) | .id' \
+              | head -n 1
+          )"
+          test -n "$review_id"
+
+          short_head="${current_head:0:12}"
+          run_title="PR #${PR_NUMBER} – build-and-test @ ${short_head}"
+          prior="$(
+            RUN_TITLE="$run_title" gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/pr-build-and-test.yml/runs?event=workflow_dispatch&per_page=100" \
+              --jq '.workflow_runs[] | select(.display_title == env.RUN_TITLE) | [.id, .status, (.conclusion // "null")] | @tsv' \
+              | head -n 1
+          )"
+
+          if [ -n "$prior" ]; then
+            echo "Für PR #${PR_NUMBER}@${current_head} existiert bereits One-Shot-Evidence/Reservation: ${prior}. Kein zweiter Build wird ausgelöst."
+            echo "dispatch=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "dispatch=true" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$current_head" >> "$GITHUB_OUTPUT"
+          echo "Human-/Owner-Verifikation PASS: PR #${PR_NUMBER}@${current_head}, Review=${review_id}, Comment=${COMMENT_ID}."
+
+      - name: Genau einen build-and-test für den verifizierten Head auslösen
+        if: ${{ steps.verify.outputs.dispatch == 'true' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          PR_HEAD_SHA: ${{ steps.verify.outputs.head_sha }}
+          APPROVAL_COMMENT_ID: ${{ github.event.comment.id }}
+        run: |
+          set -euo pipefail
+          gh workflow run pr-build-and-test.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f pr_number="$PR_NUMBER" \
+            -f head_sha="$PR_HEAD_SHA" \
+            -f approval_comment_id="$APPROVAL_COMMENT_ID"
+          echo "build-and-test für PR #${PR_NUMBER}@${PR_HEAD_SHA} angefordert."
