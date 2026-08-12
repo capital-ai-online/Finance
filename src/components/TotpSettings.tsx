@@ -1,18 +1,15 @@
 import { useEffect, useState } from 'react';
-import { KeyRound, Copy, Check, ShieldAlert } from 'lucide-react';
+import { KeyRound, Copy } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
-import { authFetch } from '../lib/authFetch';
 
 /**
- * ADR-0003.5 / Audit ARCH-AUDIT-0002 (D9): TOTP-Setup-Oberfläche für die Step-Up-
- * Authentifizierung. Der Server-seitige Ablauf (server/stepUp.ts: /totp/setup,
- * /totp/verify-setup) existierte bereits, hatte aber in der gesamten Codebasis keine
- * Frontend-Entsprechung - ohne diese Komponente konnte niemand jemals ein Step-Up-Token
- * erzeugen. Analog zu PasskeySettings.tsx als eigenständige Sicherheits-Einstellung in
- * ProfilePage.tsx eingebunden.
+ * M5A / ESS-0020 / ADR-0064:
+ * Supabase Native MFA ist die authoritative TOTP-Assurance. Diese UI verwendet
+ * enroll -> challengeAndVerify -> getAuthenticatorAssuranceLevel und schreibt
+ * keine TOTP-Secrets in CAPITAL-AI-Anwendungstabellen.
  */
 
-type SetupStage = 'idle' | 'awaiting-code' | 'recovery-codes';
+type SetupStage = 'idle' | 'awaiting-code';
 
 export default function TotpSettings() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
@@ -20,11 +17,11 @@ export default function TotpSettings() {
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
   const [stage, setStage] = useState<SetupStage>('idle');
+  const [factorId, setFactorId] = useState('');
   const [secret, setSecret] = useState('');
   const [otpauthUri, setOtpauthUri] = useState('');
+  const [qrCode, setQrCode] = useState('');
   const [code, setCode] = useState('');
-  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     void loadStatus();
@@ -34,36 +31,43 @@ export default function TotpSettings() {
     if (!supabase) return;
     setLoading(true);
     try {
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
       if (!userData.user) {
         setEnabled(null);
         return;
       }
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('totp_enabled')
-        .eq('id', userData.user.id)
-        .maybeSingle();
-      if (error) throw error;
-      setEnabled(!!data?.totp_enabled);
+
+      const { data: factors, error: factorError } = await supabase.auth.mfa.listFactors();
+      if (factorError) throw factorError;
+      setEnabled((factors?.totp ?? []).some((factor) => factor.status === 'verified'));
     } catch (e: any) {
-      setMessage({ type: 'error', text: `2FA-Status konnte nicht geladen werden: ${e.message ?? e}` });
+      setEnabled(null);
+      setMessage({ type: 'error', text: `Native-MFA-Status konnte nicht geladen werden: ${e.message ?? e}` });
     } finally {
       setLoading(false);
     }
   }
 
   async function handleStartSetup() {
+    if (!supabase) return;
     setMessage(null);
     setLoading(true);
     try {
-      const res = await authFetch('/api/auth/totp/setup', { method: 'POST' });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
-      setSecret(body.secret);
-      setOtpauthUri(body.otpauthUri);
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: 'totp',
+        friendlyName: 'CAPITAL-AI Authenticator',
+      });
+      if (error) throw error;
+      if (!data?.id || !data.totp) throw new Error('Supabase hat keinen TOTP-Faktor zurückgegeben.');
+
+      setFactorId(data.id);
+      setSecret(data.totp.secret ?? '');
+      setOtpauthUri(data.totp.uri ?? '');
+      setQrCode(data.totp.qr_code ?? '');
       setCode('');
       setStage('awaiting-code');
+      setMessage({ type: 'info', text: 'Native TOTP wurde angelegt und muss jetzt verifiziert werden.' });
     } catch (e: any) {
       setMessage({ type: 'error', text: `Setup konnte nicht gestartet werden: ${e.message ?? e}` });
     } finally {
@@ -73,23 +77,39 @@ export default function TotpSettings() {
 
   async function handleVerifySetup(e: React.FormEvent) {
     e.preventDefault();
+    if (!supabase) return;
+    if (!factorId) {
+      setMessage({ type: 'error', text: 'Der Native-MFA-Faktor fehlt. Bitte Setup neu starten.' });
+      return;
+    }
     if (code.trim().length !== 6) {
       setMessage({ type: 'error', text: 'Bitte den 6-stelligen Code aus deiner Authenticator-App eingeben.' });
       return;
     }
+
     setLoading(true);
     setMessage(null);
     try {
-      const res = await authFetch('/api/auth/totp/verify-setup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: code.trim() }),
+      const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({
+        factorId,
+        code: code.trim(),
       });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
-      setRecoveryCodes(body.recoveryCodes || []);
-      setStage('recovery-codes');
+      if (verifyError) throw verifyError;
+
+      const { data: aal, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aalError) throw aalError;
+      if (aal?.currentLevel !== 'aal2' || aal?.nextLevel !== 'aal2') {
+        throw new Error('Native MFA wurde verifiziert, aber die Session ist nicht aal2/aal2.');
+      }
+
       setEnabled(true);
+      setStage('idle');
+      setFactorId('');
+      setSecret('');
+      setOtpauthUri('');
+      setQrCode('');
+      setCode('');
+      setMessage({ type: 'success', text: 'Native TOTP ist aktiv und die aktuelle Session wurde auf AAL2 angehoben.' });
     } catch (e: any) {
       setMessage({ type: 'error', text: e.message ?? String(e) });
     } finally {
@@ -97,18 +117,21 @@ export default function TotpSettings() {
     }
   }
 
-  function handleCopyRecoveryCodes() {
-    void navigator.clipboard.writeText(recoveryCodes.join('\n'));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  function handleFinishSetup() {
-    setStage('idle');
+  async function handleCancelSetup() {
+    if (supabase && factorId) {
+      try {
+        await supabase.auth.mfa.unenroll({ factorId });
+      } catch {
+        // Der unverified Faktor ist keine erfolgreiche Assurance. Status wird danach neu geladen.
+      }
+    }
+    setFactorId('');
     setSecret('');
     setOtpauthUri('');
-    setRecoveryCodes([]);
-    setMessage({ type: 'success', text: '2FA (TOTP) ist jetzt aktiv.' });
+    setQrCode('');
+    setCode('');
+    setStage('idle');
+    await loadStatus();
   }
 
   if (!isSupabaseConfigured()) {
@@ -119,11 +142,11 @@ export default function TotpSettings() {
     <div className="space-y-4 p-4 rounded-lg border border-white/10 bg-black/20">
       <div className="flex items-center gap-2">
         <KeyRound size={16} className="text-aif-gold-DEFAULT" />
-        <h3 className="text-white font-semibold">Zwei-Faktor-Authentifizierung (TOTP)</h3>
+        <h3 className="text-white font-semibold">Zwei-Faktor-Authentifizierung (Native TOTP)</h3>
       </div>
       <p className="text-white/50 text-sm">
-        Erforderlich für Step-Up-geschützte Aktionen (z. B. Versions-Bump). Nutzt eine
-        Authenticator-App (z. B. Google Authenticator, 1Password, Authy).
+        Supabase Native MFA ist die verbindliche TOTP-Assurance. Erfolgreiches Setup gilt erst,
+        wenn die aktuelle Session nach der Verifikation den Zustand AAL2 erreicht.
       </p>
 
       {message && (
@@ -143,7 +166,7 @@ export default function TotpSettings() {
       {stage === 'idle' && (
         <div className="flex items-center justify-between">
           <span className={`text-sm font-mono ${enabled ? 'text-emerald-400' : 'text-white/40'}`}>
-            {enabled === null ? 'Lade Status…' : enabled ? '● Aktiv' : '○ Nicht aktiviert'}
+            {enabled === null ? 'Status nicht verifiziert' : enabled ? '● Native MFA aktiv' : '○ Nicht aktiviert'}
           </span>
           {!enabled && (
             <button
@@ -151,7 +174,7 @@ export default function TotpSettings() {
               disabled={loading}
               className="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-sm font-medium"
             >
-              {loading ? 'Bitte warten…' : '2FA einrichten'}
+              {loading ? 'Bitte warten…' : 'Native TOTP einrichten'}
             </button>
           )}
         </div>
@@ -159,10 +182,14 @@ export default function TotpSettings() {
 
       {stage === 'awaiting-code' && (
         <form onSubmit={handleVerifySetup} className="space-y-3">
+          {qrCode && (
+            <div className="flex justify-center rounded-lg bg-white p-3">
+              <img src={qrCode} alt="QR-Code für Supabase Native TOTP" className="w-48 h-48" />
+            </div>
+          )}
+
           <div className="space-y-1.5">
-            <p className="text-xs text-white/50">
-              In der Authenticator-App manuell hinzufügen (kein QR-Scan verfügbar):
-            </p>
+            <p className="text-xs text-white/50">Alternativ Secret manuell in der Authenticator-App eintragen:</p>
             <div className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-lg px-3 py-2">
               <code className="text-xs font-mono text-white/90 flex-1 break-all">{secret}</code>
               <button
@@ -174,13 +201,11 @@ export default function TotpSettings() {
                 <Copy size={14} />
               </button>
             </div>
-            {otpauthUri && (
-              <p className="text-[10px] text-white/30 break-all">Setup-URI: {otpauthUri}</p>
-            )}
+            {otpauthUri && <p className="text-[10px] text-white/30 break-all">Setup-URI: {otpauthUri}</p>}
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs text-white/50">Code aus der Authenticator-App zur Bestätigung:</label>
+            <label className="text-xs text-white/50">Code aus der Authenticator-App:</label>
             <input
               type="text"
               inputMode="numeric"
@@ -195,7 +220,7 @@ export default function TotpSettings() {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setStage('idle')}
+              onClick={() => void handleCancelSetup()}
               className="flex-1 px-4 py-2 rounded bg-white/5 hover:bg-white/10 text-white text-sm"
             >
               Abbrechen
@@ -205,43 +230,10 @@ export default function TotpSettings() {
               disabled={loading || code.length !== 6}
               className="flex-1 px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-sm font-medium"
             >
-              {loading ? 'Prüfe…' : 'Bestätigen & aktivieren'}
+              {loading ? 'Prüfe…' : 'Verifizieren & AAL2 aktivieren'}
             </button>
           </div>
         </form>
-      )}
-
-      {stage === 'recovery-codes' && (
-        <div className="space-y-3">
-          <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
-            <ShieldAlert className="text-amber-400 w-4 h-4 shrink-0 mt-0.5" />
-            <p className="text-xs text-white/70 leading-relaxed">
-              Diese 10 Recovery-Codes werden <span className="font-bold">nur jetzt einmalig</span> angezeigt.
-              Jeder Code funktioniert genau einmal für den Break-Glass-Zugang, falls du dein Gerät verlierst.
-              Speichere sie an einem sicheren Ort, bevor du fortfährst.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-1.5 bg-black/40 border border-white/10 rounded-lg p-3">
-            {recoveryCodes.map((c) => (
-              <code key={c} className="text-xs font-mono text-white/90">{c}</code>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleCopyRecoveryCodes}
-              className="flex-1 px-4 py-2 rounded bg-white/5 hover:bg-white/10 text-white text-sm flex items-center justify-center gap-1.5"
-            >
-              {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-              {copied ? 'Kopiert' : 'Codes kopieren'}
-            </button>
-            <button
-              onClick={handleFinishSetup}
-              className="flex-1 px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium"
-            >
-              Ich habe die Codes gespeichert
-            </button>
-          </div>
-        </div>
       )}
     </div>
   );
