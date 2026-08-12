@@ -1,7 +1,9 @@
-<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.3.2 -->
+<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.3.3 -->
 # CAPITAL-AI Änderungsantrag (Pull Request)
 
 > Diese Vorlage ist verbindlich. Maschinenverwaltete Baseline-Felder dürfen nicht gelöscht werden.
+>
+> **Governance-Contract:** Jeder Pull Request gegen `main` MUSS diese vollständige Vorlage verwenden. Abschnitte dürfen nicht entfernt oder frei ersetzt werden; nicht zutreffende Angaben werden mit `N/A` begründet.
 >
 > **Wichtig:** Die teure technische CI startet für Pull Requests erst nach vollständiger Human-/Owner-Sichtprüfung.
 
