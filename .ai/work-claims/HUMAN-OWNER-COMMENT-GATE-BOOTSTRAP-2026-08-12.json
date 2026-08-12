@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "HUMAN-OWNER-COMMENT-GATE-BOOTSTRAP-2026-08-12",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Bootstrap a trusted-main Human/Owner comment gate that dispatches exactly one head-bound PR build",
+  "workItemDE": "Trusted-main Human/Owner-Kommentar-Gate bootstrapen und genau einen head-gebundenen PR-Build auslösen",
+  "executionProfile": "P2",
+  "externalMutation": "NONE",
+  "startedAt": "2026-08-12T13:01:00Z",
+  "baseBranch": "main",
+  "baseSha": "5bd5f4d78b87a89258126d0453eaf5e4bc6b6125",
+  "productionBaseline": {
+    "checkedAt": "2026-08-12T13:01:00Z",
+    "version": "0.6.0",
+    "commitSha": "5bd5f4d78b87a89258126d0453eaf5e4bc6b6125",
+    "branch": "main",
+    "repoSlug": "SvenKulessa/Finance"
+  },
+  "claimedPaths": [
+    ".github/workflows/human-owner-comment-gate.yml",
+    ".github/workflows/pr-build-and-test.yml",
+    "tests/unit/humanOwnerCommentGate.test.ts",
+    "docs/adr/ADR-0069-human-owner-comment-gate-and-dispatched-pr-ci.md",
+    ".ai/work-claims/HUMAN-OWNER-COMMENT-GATE-BOOTSTRAP-2026-08-12.json"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated pull request is merged, closed, superseded or abandoned."
+}
