@@ -9,6 +9,18 @@ Security baseline: `docs/security/SECURITY_REMEDIATION_BASELINE_2026-08-12.md`
 
 Close the Security Audit 2026-08-12 findings without duplicating work already owned by M5, M5A, M6, M7 and M9. S1 is a bounded security gate inside the existing DEVELOPMENT Chain, not a parallel development program.
 
+## Verbindlicher PR-Template-Contract
+
+Jeder Pull Request gegen `main`, einschließlich aller S1-Remediation-PRs, MUSS die vollständige kanonische Vorlage `.github/pull_request_template.md` verwenden.
+
+- kein verkürzter oder frei formulierter PR-Body anstelle der Vorlage;
+- alle nummerierten Abschnitte bleiben erhalten;
+- nicht zutreffende Felder werden mit `N/A` begründet;
+- maschinenlesbare Marker und Human-/Owner-Attestations bleiben wortgleich;
+- nach jedem neuen Head wird die Approval-Evidence für den neuen Head erneut erzeugt;
+- eine separate Governance-Hardening-Aufgabe ergänzt maschinelle Template-Contract-Validierung aus einer vertrauenswürdigen Baseline;
+- kein laufender PR darf durch die von ihm selbst geänderte CI-Authority allein autorisiert werden.
+
 ## Integration into the DEVELOPMENT Chain
 
 Current canonical chain remains authoritative. For security closure, the intended gate sequence is:
@@ -33,7 +45,8 @@ current main
 → fresh scoped branch
 → bounded implementation
 → positive + negative tests
-→ PR / Human file review / CI
+→ PR using canonical template
+→ Human file review / CI
 → Human merge
 → remote branch deletion
 → evidence + roadmap sync
@@ -182,7 +195,8 @@ Required implementation:
 - validator checks that required jobs/dependencies cannot be removed or weakened by the PR being evaluated;
 - fail on privilege widening, unsafe event-model changes such as unapproved `pull_request_target`, unsafe credential persistence, or replacement of trusted-main policy with PR-controlled policy;
 - use safe GitHub output serialization; untrusted multiline values cannot create additional output keys or workflow commands;
-- keep actions pinned and least-privilege; complete provenance/version consolidation in M6 rather than duplicating it here.
+- keep actions pinned and least-privilege; complete provenance/version consolidation in M6 rather than duplicating it here;
+- add machine validation that PR bodies retain the canonical `.github/pull_request_template.md` contract, implemented from a trusted baseline rather than PR-controlled policy.
 
 Negative tests:
 
@@ -190,12 +204,14 @@ Negative tests:
 - PR weakens Owner/head-SHA gate;
 - PR attempts output injection with newline/delimiter payload;
 - PR widens workflow token permissions;
-- PR changes event model to a more privileged trigger without explicit allowed invariant.
+- PR changes event model to a more privileged trigger without explicit allowed invariant;
+- PR removes/renames mandatory template sections or Human-/Owner attestations.
 
 Exit:
 
 - F-03 and F-09 `VERIFIED PASS`;
-- M3 remains the CI authority, S1 only closes the identified residual weakness.
+- M3 remains the CI authority, S1 only closes the identified residual weakness;
+- canonical PR-template usage is machine-validated from trusted policy.
 
 ## S1.6 — Browser HTTP policy hardening
 
@@ -255,7 +271,7 @@ Retain `ACCEPTED / INTENTIONAL` only when evidence proves deny-by-default RLS is
 
 ## PR slicing
 
-Use small reviewable PRs; do not combine unrelated trust boundaries:
+Use small reviewable PRs; do not combine unrelated trust boundaries. Every PR uses the canonical template completely.
 
 | PR | Scope | Findings | Class |
 |---|---|---|---|
@@ -264,7 +280,7 @@ Use small reviewable PRs; do not combine unrelated trust boundaries:
 | S1-02 | runtime fail-closed | F-02 | security code |
 | S1-03 | proxy/IP/rate limit | F-04/F-15 | security code |
 | S1-04 | secret namespace | F-05 | security code |
-| S1-05 | CI trust/output integrity | F-03/F-09 | CI/security |
+| S1-05 | CI trust/output/template integrity | F-03/F-09 + PR template contract | CI/security |
 | S1-06 | CSP/CORS | F-06/F-07/F-08 | HTTP security |
 | existing | M5/M5A/M6/M9 work | F-10/F-13/F-14/F-16/F-17/F-18 | canonical phases |
 
@@ -297,6 +313,7 @@ S1 is complete only when:
 - F-06..F-09 have implementation/test evidence or are explicitly gated before M9;
 - canonical later phases retain F-10/F-13/F-14/F-16/F-17/F-18 ownership;
 - no secrets are present in evidence;
+- all remediation PRs use the complete canonical PR template;
 - all remediation PRs received Human review and Human merge;
 - work branches are deleted after successful merge;
 - DEVELOPMENT Chain roadmap and traceability are synchronized to the exact final SHAs.
