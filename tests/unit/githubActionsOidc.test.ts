@@ -5,6 +5,8 @@ import {
   SYSTEMADMIN_GITHUB_OIDC_ISSUER,
   SYSTEMADMIN_GITHUB_OWNER_ID,
   SYSTEMADMIN_GITHUB_REPOSITORY_ID,
+  SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF,
+  SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF,
   SYSTEMADMIN_GITHUB_WORKFLOW_REF,
   resetGitHubActionsOidcCacheForTests,
   verifyGitHubActionsOidcToken,
@@ -58,10 +60,10 @@ function responseJson(value: unknown): Response {
   } as Response;
 }
 
-describe('SA3B GitHub Actions OIDC verifier', () => {
+describe('Systemadmin GitHub Actions OIDC verifier', () => {
   let privateKey: KeyObject;
   let publicJwk: JsonWebKey;
-  const kid = 'sa3b-test-kid';
+  const kid = 'systemadmin-test-kid';
 
   beforeEach(() => {
     resetGitHubActionsOidcCacheForTests();
@@ -84,7 +86,7 @@ describe('SA3B GitHub Actions OIDC verifier', () => {
     }));
   });
 
-  it('accepts a correctly signed token bound to the exact Finance issue workflow', async () => {
+  it('accepts a correctly signed token bound to the exact SA3B Finance issue workflow', async () => {
     const identity = await verifyGitHubActionsOidcToken(createJwt(privateKey, kid), NOW);
     expect(identity).toMatchObject({
       actor: 'SvenKulessa',
@@ -92,8 +94,19 @@ describe('SA3B GitHub Actions OIDC verifier', () => {
       repositoryId: SYSTEMADMIN_GITHUB_REPOSITORY_ID,
       eventName: 'issues',
       ref: 'refs/heads/main',
-      workflowRef: SYSTEMADMIN_GITHUB_WORKFLOW_REF,
+      workflowRef: SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF,
       runId: '31570000000',
+    });
+  });
+
+  it('accepts only the explicitly allowlisted SA4 workflow as the second host', async () => {
+    const token = createJwt(privateKey, kid, {
+      workflow: 'Systemadmin SA4 Bounded Pilot',
+      workflow_ref: SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF,
+    });
+    await expect(verifyGitHubActionsOidcToken(token, NOW)).resolves.toMatchObject({
+      workflowRef: SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF,
+      repositoryId: SYSTEMADMIN_GITHUB_REPOSITORY_ID,
     });
   });
 
@@ -114,7 +127,7 @@ describe('SA3B GitHub Actions OIDC verifier', () => {
     ['wrong owner id', { repository_owner_id: '999' }],
     ['wrong event', { event_name: 'workflow_dispatch' }],
     ['wrong ref', { ref: 'refs/heads/feature' }],
-    ['wrong workflow', { workflow_ref: 'SvenKulessa/Finance/.github/workflows/ci.yml@refs/heads/main' }],
+    ['unlisted workflow', { workflow_ref: 'SvenKulessa/Finance/.github/workflows/ci.yml@refs/heads/main' }],
     ['expired', { exp: NOW_SECONDS - 120 }],
   ])('fails closed for %s', async (_label, overrides) => {
     await expect(verifyGitHubActionsOidcToken(createJwt(privateKey, kid, overrides), NOW))

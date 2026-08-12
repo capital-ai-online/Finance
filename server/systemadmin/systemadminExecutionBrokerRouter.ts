@@ -8,12 +8,17 @@ import {
 import type { SystemadminChatExecutionCheckpoint } from '../../src/platform/Security/systemadminExecutionProfile';
 import type { SystemadminRoadmapAuthorizationRequest } from '../../src/platform/Security/roadmapExecutionMandate';
 import {
+  SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF,
+  SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF,
   verifyGitHubActionsOidcToken,
   type VerifiedGitHubActionsIdentity,
 } from './githubActionsOidc';
 
 const logger = createLogger('systemadmin-execution-broker');
 const router = express.Router();
+
+const SA3B_MANDATE = 'REM-SA3B-PROBE-001';
+const SA4_MANDATE = 'REM-SA4-PILOT-001';
 
 function bearerToken(header: string | undefined): string {
   if (!header?.startsWith('Bearer ')) return '';
@@ -37,6 +42,27 @@ function hostTraceId(identity: VerifiedGitHubActionsIdentity): string {
   return `github-actions:${identity.runId}`;
 }
 
+function mandateIdFromAuthorization(authorization: SystemadminRoadmapAuthorizationRequest): string {
+  const mandate = authorization.mandate;
+  return isRecord(mandate) && typeof mandate.mandateId === 'string' ? mandate.mandateId : '';
+}
+
+function expectedMandateForWorkflow(workflowRef: string): string | null {
+  if (workflowRef === SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF) return SA3B_MANDATE;
+  if (workflowRef === SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF) return SA4_MANDATE;
+  return null;
+}
+
+function workflowMatchesMandate(identity: VerifiedGitHubActionsIdentity, mandateId: string): boolean {
+  return expectedMandateForWorkflow(identity.workflowRef) === mandateId;
+}
+
+function policyIdForMandate(mandateId: string): string {
+  return mandateId === SA4_MANDATE
+    ? 'ADR-0059/ADR-0065/ADR-0067/ADR-0068/SA4'
+    : 'ADR-0059/ADR-0065/ADR-0067/SA3B';
+}
+
 router.post('/authorize', async (req, res) => {
   let identity: VerifiedGitHubActionsIdentity;
   try {
@@ -58,7 +84,11 @@ router.post('/authorize', async (req, res) => {
 
   const authorization = req.body.authorization as unknown as SystemadminRoadmapAuthorizationRequest;
   const checkpoint = req.body.checkpoint as unknown as SystemadminChatExecutionCheckpoint;
+  const mandateId = mandateIdFromAuthorization(authorization);
 
+  if (!workflowMatchesMandate(identity, mandateId)) {
+    return res.status(403).json({ error: 'workflow-mandate-binding-mismatch' });
+  }
   if (authorization.principal.humanActorId !== identity.actor) {
     return res.status(403).json({ error: 'actor-binding-mismatch' });
   }
@@ -71,12 +101,15 @@ router.post('/authorize', async (req, res) => {
       { authorization, checkpoint },
       {
         traceId: hostTraceId(identity),
-        policyId: 'ADR-0059/ADR-0065/ADR-0067/SA3B',
-        toolId: 'github-actions-systemadmin-host',
+        policyId: policyIdForMandate(mandateId),
+        toolId: identity.workflowRef === SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF
+          ? 'github-actions-systemadmin-sa4-host'
+          : 'github-actions-systemadmin-host',
         workflowRunId: identity.runId,
         rollbackReference: `issue:${req.body.issueNumber}`,
         metadata: {
           executionHost: 'github-actions',
+          executionStage: mandateId === SA4_MANDATE ? 'SA4' : 'SA3B',
           issueNumber: req.body.issueNumber,
           oidcSubject: identity.subject,
           repositoryId: identity.repositoryId,
@@ -119,6 +152,10 @@ router.post('/outcome', async (req, res) => {
   }
 
   const authorization = req.body.authorization as unknown as SystemadminAuditedAuthorization;
+  const mandateId = authorization.executionPermit?.mandateId ?? authorization.decision.mandateId ?? '';
+  if (!workflowMatchesMandate(identity, mandateId)) {
+    return res.status(403).json({ error: 'outcome-workflow-mandate-binding-mismatch' });
+  }
   if (authorization.traceId !== hostTraceId(identity)) {
     return res.status(403).json({ error: 'host-trace-mismatch' });
   }
@@ -136,8 +173,10 @@ router.post('/outcome', async (req, res) => {
         ? { pullRequestNumber: req.body.pullRequestNumber }
         : {}),
       workflowRunId: identity.runId,
+      policyId: policyIdForMandate(mandateId),
       metadata: {
         executionHost: 'github-actions',
+        executionStage: mandateId === SA4_MANDATE ? 'SA4' : 'SA3B',
         issueNumber: req.body.issueNumber,
         oidcSubject: identity.subject,
         workflowRef: identity.workflowRef,
