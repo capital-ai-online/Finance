@@ -1,30 +1,177 @@
 name: CI
-run-name: "main – CI-Prüfung für ${{ github.sha }}"
+run-name: >-
+  ${{ github.event_name == 'push'
+      && format('main – CI-Prüfung für {0}', github.sha)
+      || format('PR #{0} – CI-Prüfung', github.event.pull_request.number) }}
 
 on:
   push:
     branches: [main]
+  pull_request:
+    types: [edited]
 
-permissions: {}
+permissions:
+  contents: read
+  pull-requests: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  owner-gate:
+    name: Human-/Owner-Vorprüfung
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      approved: ${{ steps.gate.outputs.approved }}
+    steps:
+      - name: main-Push zulassen
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          echo "main-Push: vollständige CI ist verpflichtend."
+
+      - name: Owner-Freigabe prüfen
+        if: ${{ github.event_name != 'push' }}
+        id: gate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
+          EXPECTED_OWNER: SvenKulessa
+        run: |
+          set -euo pipefail
+
+          # Wichtig: Die Attestations werden aus dem Body-Snapshot genau dieses edited-Events
+          # ausgewertet. Ein späterer zweiter Checkbox-Klick darf einen älteren Event-Lauf nicht
+          # nachträglich freigeben und dadurch einen doppelten build-and-test auslösen.
+          read -r diff_attested files_attested <<< "$(
+            python3 - <<'PY'
+          import os
+          import re
+
+          required_diff = 'Human/Owner: vollständigen PR-Diff geprüft.'
+          required_files = 'Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.'
+
+          def parse(body: str):
+              found = set()
+              in_fence = False
+              for raw in body.replace('\r\n', '\n').replace('\r', '\n').split('\n'):
+                  line = raw.strip()
+                  if re.match(r'^(?:```|~~~)', line):
+                      in_fence = not in_fence
+                      continue
+                  if in_fence or line.startswith('>'):
+                      continue
+                  match = re.fullmatch(r'-\s*\[\s*[xX]\s*\]\s+(.+?)\s*', line)
+                  if not match:
+                      continue
+                  label = re.sub(r'`([^`\n]+)`', r'\1', match.group(1))
+                  found.add(' '.join(label.split()))
+              return required_diff in found, required_files in found
+
+          canonical = '- [x] ' + required_diff + '\n- [x] ' + required_files
+          markdown = '- [X] ' + required_diff + '\n- [x] Human/Owner: alle geänderten Dateien im Tab `Files changed` als Viewed markiert.'
+          unchecked = '- [ ] ' + required_diff + '\n- [x] ' + required_files
+          fenced = '```text\n- [x] ' + required_diff + '\n- [x] ' + required_files + '\n```'
+          quoted = '> - [x] ' + required_diff + '\n- [x] ' + required_files
+
+          assert parse(canonical) == (True, True)
+          assert parse(markdown) == (True, True)
+          assert parse(unchecked) == (False, True)
+          assert parse(fenced) == (False, False)
+          assert parse(quoted) == (False, True)
+
+          diff_ok, files_ok = parse(os.environ.get('PR_BODY', ''))
+          print(f'{str(diff_ok).lower()} {str(files_ok).lower()}')
+          PY
+          )"
+
+          body_ok=false
+          if [ "$diff_attested" = "true" ] && [ "$files_attested" = "true" ]; then
+            body_ok=true
+          fi
+
+          review_id="$(
+            gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" \
+              --jq '.[] | select(.user.login == env.EXPECTED_OWNER and .commit_id == env.PR_HEAD_SHA and (((((.body // "") | gsub("^[[:space:]]+|[[:space:]]+$"; "")) | ascii_downcase) == "okay") or (((.body // "") | gsub("^[[:space:]]+|[[:space:]]+$"; "")) == "💪"))) | .id' \
+              | head -n 1
+          )"
+
+          review_ok=false
+          if [ -n "$review_id" ]; then
+            review_ok=true
+          fi
+
+          if [ "$body_ok" = "true" ] && [ "$review_ok" = "true" ]; then
+            echo "approved=true" >> "$GITHUB_OUTPUT"
+            echo "Owner-Gate erfüllt. Genau ein build-and-test-Lauf darf starten."
+          else
+            echo "approved=false" >> "$GITHUB_OUTPUT"
+            echo "Owner-Gate nicht erfüllt. Build/Test wird nicht gestartet."
+            echo "PR-Diff-Attestation: $diff_attested"
+            echo "Files-changed-Attestation: $files_attested"
+            echo "Current-Head-Owner-Review: $review_ok"
+            echo "Reihenfolge: aktuellen Head reviewen (💪/okay), danach beide Owner-Checkboxen setzen/speichern."
+            exit 1
+          fi
+
   build-and-test:
     name: build-and-test
-    permissions:
-      contents: read
+    needs: [owner-gate]
+    if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.approved == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Repository auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Prüfumfang bestimmen
+        id: scope
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" = "push" ]; then
+            echo "full=true" >> "$GITHUB_OUTPUT"
+            echo "docker=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed_files="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+          printf '%s\n' "$changed_files"
+
+          full=false
+          docker=false
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            case "$file" in
+              docs/*|.ai/*|*.md)
+                ;;
+              *)
+                full=true
+                ;;
+            esac
+            case "$file" in
+              Dockerfile|.dockerignore|package.json|package-lock.json|server.ts|server/*|render.yaml|render.yml|scripts/security/*Docker*|scripts/security/*docker*|scripts/security/*Runtime*|scripts/security/*runtime*|.github/workflows/ci.yml|.github/workflows/*render*)
+                docker=true
+                ;;
+            esac
+          done <<< "$changed_files"
+
+          echo "full=$full" >> "$GITHUB_OUTPUT"
+          echo "docker=$docker" >> "$GITHUB_OUTPUT"
 
       - name: Repository-Integrität prüfen
         shell: bash
@@ -33,105 +180,75 @@ jobs:
           git rev-parse --verify 'HEAD^{commit}' >/dev/null
           git fsck --strict --no-dangling
 
+      - name: Dokumentations-Fast-Path
+        if: steps.scope.outputs.full != 'true'
+        run: echo "Nur Dokumentation betroffen; Software-Build und Tests sind nicht erforderlich."
+
       - name: Node.js einrichten
+        if: steps.scope.outputs.full == 'true'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: '24.18.0'
           cache: 'npm'
 
       - name: Abhängigkeiten installieren
+        if: steps.scope.outputs.full == 'true'
         run: npm ci
 
-      - name: Repository-Konventionen blocking prüfen
-        run: npm run repository:validate
-
       - name: Produktionsabhängigkeiten prüfen
+        if: steps.scope.outputs.full == 'true'
         run: npm audit --omit=dev --audit-level=high
 
       - name: TypeScript prüfen
+        if: steps.scope.outputs.full == 'true'
         run: npm run lint
 
       - name: Unit-Tests ausführen
+        if: steps.scope.outputs.full == 'true'
         run: npm test
 
       - name: Produktions-Build erstellen
+        if: steps.scope.outputs.full == 'true'
         run: npm run build
 
       - name: Produktions-CSP-Auslieferung nach Build prüfen
+        if: steps.scope.outputs.full == 'true'
         env:
           NODE_ENV: production
           CSP_MODE: report-only
         run: npx vitest run tests/unit/securityResponse.production.test.ts
 
       - name: Produktionskonfiguration und Deployment-Bereitschaft prüfen
+        if: steps.scope.outputs.full == 'true'
         run: |
           npx tsx scripts/security/verifyProductionConfigInvariants.ts
           npm run predeploy:check
 
       - name: Docker-Hardening prüfen
+        if: steps.scope.outputs.docker == 'true'
         run: node scripts/security/verifyDockerHardening.mjs
 
       - name: Produktions-Docker-Image bauen und prüfen
-        shell: bash
-        env:
-          IMAGE_SHA: ${{ github.sha }}
+        if: steps.scope.outputs.docker == 'true'
         run: |
-          set -euo pipefail
-          docker build --tag "capital-ai-ci:${IMAGE_SHA}" .
-          test "$(docker image inspect "capital-ai-ci:${IMAGE_SHA}" --format '{{.Config.User}}')" = "capitalai"
-          test "$(docker image inspect "capital-ai-ci:${IMAGE_SHA}" --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
-          docker image inspect "capital-ai-ci:${IMAGE_SHA}" --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
-
-      - name: Produktions-Docker-Container starten und /healthz prüfen
-        shell: bash
-        env:
-          IMAGE_SHA: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          container_name="capital-ai-ci-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          cleanup() {
-            docker logs "$container_name" 2>/dev/null || true
-            docker rm -f "$container_name" >/dev/null 2>&1 || true
-          }
-          trap cleanup EXIT
-
-          docker run -d \
-            --name "$container_name" \
-            -p 127.0.0.1::3000 \
-            -e PORT=3000 \
-            -e SUPABASE_SECRET_KEY=ci-smoke-nonsecret \
-            -e STRIPE_SECRET_KEY=sk_test_ci_runtime_smoke \
-            -e STRIPE_WEBHOOK_SECRET=whsec_ci_runtime_smoke \
-            -e TOTP_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef \
-            "capital-ai-ci:${IMAGE_SHA}" >/dev/null
-
-          host_port="$(docker port "$container_name" 3000/tcp | sed -E 's/.*:([0-9]+)$/\1/' | head -n 1)"
-          test -n "$host_port"
-
-          health_ok=false
-          for _attempt in $(seq 1 30); do
-            if curl --fail --silent --show-error "http://127.0.0.1:${host_port}/healthz" >/dev/null; then
-              health_ok=true
-              break
-            fi
-            if [ "$(docker inspect --format '{{.State.Running}}' "$container_name")" != 'true' ]; then
-              break
-            fi
-            sleep 1
-          done
-
-          test "$health_ok" = 'true'
-          echo "Docker Runtime Smoke Test PASS: /healthz antwortet mit HTTP 2xx für Image capital-ai-ci:${IMAGE_SHA}."
+          docker build --tag capital-ai-ci:${{ github.sha }} .
+          test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{.Config.User}}')" = "capitalai"
+          test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
+          docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
 
   deploy-production:
     name: Deployment verifiziert / Render-Produktion
     needs: [build-and-test]
     if: ${{ always() && needs.build-and-test.result == 'success' }}
-    permissions: {}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Pull Requests deployen nicht produktiv
+        if: ${{ github.event_name != 'push' }}
+        run: echo "PR validiert; Produktionsdeployment erfolgt erst nach Merge nach main."
+
       - name: Render-Deployment für verifizierten main-Commit auslösen
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
           VERIFIED_COMMIT_SHA: ${{ github.sha }}

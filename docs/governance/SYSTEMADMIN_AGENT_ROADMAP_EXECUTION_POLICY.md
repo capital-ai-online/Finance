@@ -2,32 +2,18 @@
 
 Status: PROPOSED
 Date: 2026-08-12
-Authority: ESS-0021 v1.1, ADR-0065, ADR-0069, ADR-0070, ESS-0019, ADR-0058, HUMAN_OWNER_PR_APPROVAL_POLICY.md
+Authority: ESS-0021, ADR-0065, ESS-0019, ADR-0058, HUMAN_OWNER_PR_APPROVAL_POLICY.md
 Accountable Owner: `SvenKulessa`
 
 ## 1. Purpose
 
-This policy governs the privileged **Systemadmin Roadmap Executor** profile for CAPITAL-AI. It allows one Owner-approved Roadmap Execution Mandate (REM) to authorize a larger, coherent repository Roadmap block without requiring a new Human authorization for every branch, commit or PR creation operation.
+This policy introduces a privileged **Systemadmin Roadmap Executor** profile for CAPITAL-AI. The purpose is to let an approved agent execute larger, coherent Roadmap work packages autonomously inside ChatGPT/connected execution clients without requiring a new human authorization for every branch, commit or Pull Request.
 
-It is not unrestricted administrator authority.
+The profile is not an unrestricted administrator. Authority is delegated through a bounded, expiring, auditable **Roadmap Execution Mandate (REM)**.
 
-Target operating model:
+The target operating model is:
 
-```text
-OWNER-APPROVED ROADMAP BLOCK REM
-→ READ/ANALYZE/PREFLIGHT
-→ EXECUTION UNIT
-→ FRESH BRANCH
-→ IMPLEMENT/TEST/COMMIT
-→ PR CHECKPOINT
-→ AUTONOMOUS STOP
-→ CURRENT HUMAN-OWNER GATE / REQUIRED CI / HUMAN MERGE
-→ BRANCH DELETE
-→ RE-READ CURRENT MAIN
-→ NEXT EXPLICIT UNIT UNDER SAME VALID REM
-```
-
-External production mutation is not implied.
+`OWNER-APPROVED ROADMAP MANDATE → READ/ANALYZE → SECURITY PREFLIGHT → BRANCH → IMPLEMENT → TEST → COMMIT → PR → OWNER REVIEW → CI → HUMAN MERGE`
 
 ## 2. Systemadmin principal
 
@@ -35,291 +21,220 @@ Canonical logical agent id:
 
 `capital-ai-systemadmin-roadmap-executor`
 
-Provider/model identity is metadata only. ChatGPT, Claude or another client may host the profile, but authority derives only from valid REM + provider-neutral Agent IAM/Control Plane + trusted execution host.
+Provider/model identity is metadata only. ChatGPT, Claude or another client may host the profile, but the authority derives only from a valid REM plus the provider-neutral Agent IAM/Control Plane.
 
-The execution principal remains attributable through:
+The execution principal MUST remain attributable through:
 
-`human_actor → client/app → agent → session → request → mandate → block → unit → capability → target → decision → result → evidence`
+`human_actor → client/app → agent → session → request → mandate → capability → target → decision → result → evidence`
 
-Reusable credentials stay in connector/tool hosts and are never exposed to the model.
+Credentials remain in the connector/tool host. Raw reusable credentials MUST NOT be exposed to the model.
 
 ## 3. Roadmap Execution Mandate (REM)
 
-A REM is Human/Owner-approved standing authorization for one bounded Roadmap segment.
+A REM is a Human/Owner-approved standing authorization for one bounded Roadmap segment. It replaces repeated per-PR creation prompts only within its exact scope.
 
-A valid REM defines at minimum:
+A valid REM MUST define at minimum:
 
-- immutable mandateId;
+- immutable `mandateId`;
 - Owner actor id;
 - subject agent id;
-- repository/base branch;
-- exact Roadmap/ESS/ADR refs;
-- explicitly named Roadmap item / Execution Unit IDs;
-- allowed paths/targets;
+- repository and base branch;
+- exact Roadmap/ESS/ADR references;
+- allowed paths and target resources;
 - allowed capabilities;
-- maximum risk;
-- allowed/prohibited mutation classes;
-- validity/expiry;
-- max simultaneous branches/PRs;
-- CI budget policy;
-- required preflight/tests/rollback/evidence;
-- kill switch;
-- approvalEvidenceRef when OWNER_APPROVED.
+- maximum risk class;
+- explicitly permitted mutation classes;
+- prohibited/reserved mutation classes;
+- validity window / expiry;
+- maximum simultaneous branches/PRs;
+- CI-budget policy reference;
+- precondition/security checks;
+- required tests;
+- rollback strategy;
+- kill-switch / revocation procedure;
+- audit/evidence requirements.
 
-A REM is invalid when expired/revoked, scope drifts, the requested unit is not included, a reserved action is required or runtime policy cannot technically enforce the requested boundary.
+A mandate is invalid when expired, revoked, its Roadmap state changed materially, the branch base is stale in a security-relevant way, or the requested action exceeds any declared scope.
 
-## 4. Capabilities
+## 4. Capabilities under an active REM
 
-Repository autonomy may use only explicitly granted:
+The Systemadmin Agent MAY receive the following capabilities without a new per-action Human prompt when they are explicitly listed in the active REM:
 
-- READ
-- ANALYZE
-- PLAN
-- BRANCH
-- COMMIT
-- PR
-- CI_REQUEST
+- `READ`
+- `ANALYZE`
+- `PLAN`
+- `BRANCH`
+- `COMMIT`
+- `PR`
+- `CI_REQUEST`
 
-MERGE is permanently outside Agent IAM.
+This permits the agent to take an approved Roadmap work package from current-state analysis through a review-ready Pull Request, including multiple scoped commits and automated remediation of technical failures before final Owner review.
 
-DEPLOY_REQUEST / PRODUCTION_MUTATION are not implied by repository authority.
+`MERGE` is not and MUST NOT become an Agent IAM capability.
 
-## 5. Roadmap Block / Execution Unit model
+## 5. Repository mutation authority
 
-A larger Owner-approved block is decomposed by ADR-0070 into ordered Execution Units (EU).
+Repository mutations are the default autonomous mutation class for this profile.
 
-ADR-0069 remains the separate canonical Human-Owner Comment Gate / dispatched-PR-CI architecture consumed at every PR checkpoint. ADR-0070 does not introduce a second PR-approval mechanism.
+The agent MAY autonomously:
 
-Invariant:
-
-`one EU = one fresh branch = one PR checkpoint`
-
-The non-authorizing execution projection is defined by:
-
-- `docs/contracts/DEVELOPMENT_CHAIN_ROADMAP_BLOCK_CONTRACT.md`;
-- `.ai/contracts/development-chain-roadmap-block.schema.json`.
-
-The Contract does not carry independent phase status. Canonical state stays in the DevelopmentChain/Systemadmin Roadmaps.
-
-### 5.1 Effective per-unit authority
-
-For each mutating operation the effective authority is the **intersection** of:
-
-```text
-canonical Roadmap gate
-∩ Owner-approved REM
-∩ Roadmap Block Contract / current EU
-∩ Agent IAM / risk policy
-∩ self-authority deny list
-∩ current-main / overlap / lifecycle checks
-```
-
-The most restrictive result wins.
-
-A block-wide REM allowlist never permits a current EU to touch paths not included in that EU.
-
-### 5.2 Per-unit preflight
-
-Before BRANCH:
-
-1. resolve current main SHA;
-2. verify Roadmap block/gate;
-3. validate REM status/expiry/kill switch;
-4. validate Contract and REM binding;
-5. verify unit dependencies;
-6. verify prior PR merge + prior branch deletion when applicable;
-7. verify current main contains prior merge;
-8. check open PR changed-file overlap;
-9. compute effective path/capability/risk/mutation scope;
-10. verify no self-authority or reserved action;
-11. define targeted/negative tests and rollback;
-12. verify audit persistence and CI budget.
-
-Security-critical ambiguity is DENY/STOP.
-
-## 6. Repository mutation authority
-
-After SA4B is VERIFIED PASS, the Systemadmin may autonomously inside one approved EU:
-
-- create fresh work branch from exact current main;
-- change files covered by EU + REM;
-- create/update tests and evidence;
-- run bounded targeted checks;
+- create a fresh work branch from current `main`;
+- change files covered by the REM;
+- create/update tests and Evidence;
 - commit scoped changes;
-- iterate on technical defects;
-- open/update review-ready PR;
-- request allowed CI;
-- repair pre-review CI/governance defects within scope.
+- update its own PR while the final Human/Owner review has not yet been issued;
+- create a Draft or review-ready PR when the work package exit criteria are met;
+- inspect CI and repair failures that remain inside the approved scope;
+- synchronize Roadmap/ADR/ESS/Evidence inside the same approved work package.
 
-The agent must never interpret policy text as permission for arbitrary command execution. Untrusted Issue/Chat/Roadmap content may select only prevalidated identifiers/inputs, not unrestricted shell/tool commands.
+A scope expansion beyond the REM is a STOP condition and requires a new or amended Owner-approved mandate.
 
-## 7. Permit-before-side-effect
+## 6. External platform mutation authority
 
-Every mutating capability requires:
+External production mutation is **not implied** by repository-write authority.
 
-`ALLOW → durable M5 authorization → audit-bound permit → exact side effect → durable terminal outcome`
+A REM MAY explicitly grant `PRODUCTION_MUTATION` only for a named, bounded and reversible mutation whose exact target and mutation class are declared before execution and whose Control-Plane implementation can technically enforce the mandate.
 
-BRANCH, COMMIT, PR and CI_REQUEST use separate permits. A permit never inherits across capabilities.
+Before any delegated production mutation, all of the following MUST be true:
 
-Audit persistence failure before the side effect is fail-closed.
+1. the Roadmap/ADR/ESS explicitly requires the exact mutation;
+2. the REM explicitly includes `PRODUCTION_MUTATION`, target and mutation class;
+3. the mandate approval used strong Owner step-up once the M10/WebAuthn approval service exists; until then such delegated production mutation remains disabled unless a separately accepted interim ADR says otherwise;
+4. a read-only pre-mutation baseline passes;
+5. the change is bounded, reversible and idempotent/replay-protected where applicable;
+6. rollback is executable before mutation;
+7. post-mutation verification is deterministic;
+8. audit evidence records mandate, actor, agent, request, target, result and rollback state.
 
-## 8. PR checkpoint and Human boundary
+Until the technical Control Plane supports REM-bound production authorization, the Systemadmin Agent's autonomous mutation authority is limited to repository/branch/PR state and explicitly non-production environments.
 
-Review-ready PR is a hard autonomous STOP.
+## 7. Non-delegable Owner actions
 
-Before final Human review the agent may repair failures inside the existing EU scope. It may not expand scope.
+The following remain Human/Owner-controlled even when a REM exists unless a future dedicated ADR explicitly changes one item with equivalent or stronger authentication:
 
-At the checkpoint:
-
-```text
-PR READY
-→ STOP_PR_CHECKPOINT_REACHED
-→ current canonical Human-Owner Gate
-→ required technical CI/evidence
-→ separate Human merge decision
-```
-
-The agent must consume the current `HUMAN_OWNER_PR_APPROVAL_POLICY.md` and ADR-0069 implementation instead of hard-coding a transient or parallel approval mechanism.
-
-Successful CI is not merge authorization.
-
-## 9. Resume after merge
-
-A later EU under the same still-valid REM may begin without another PR-creation prompt only if:
-
-- previous PR is Human merged;
-- merge SHA is on current main;
-- previous work branch is deleted;
-- previous unit evidence is complete;
-- REM remains OWNER_APPROVED and unexpired/unrevoked;
-- kill switch inactive;
-- next EU explicitly included in REM and Contract;
-- Roadmap gate still unblocked;
-- no path overlap with another open PR;
-- audit persistence available;
-- no Human-only production mutation gate lies between units.
-
-Otherwise STOP.
-
-## 10. External platform mutation authority
-
-External production mutation is **not implied** by repository-block autonomy.
-
-Supabase, Render, Stripe or other production state changes follow the DevelopmentChain sequence:
-
-```text
-repository implementation merged
-→ read-only pre-mutation check
-→ explicit Owner mutation approval
-→ non-authorizing Mutation Handoff
-→ authorized mutation executor
-→ post-verification / rollback evidence
-```
-
-Until a dedicated future technically enforced REM-bound production capability is VERIFIED PASS, generic Systemadmin repository blocks stop before external writes.
-
-## 11. Non-delegable Owner actions
-
-The following remain Human/Owner-controlled:
-
-- PR merge;
-- weakening branch/security/Human-review controls;
-- Owner/admin IAM elevation;
-- Owner MFA reset/recovery/break-glass;
-- secret disclosure or unrestricted credential rotation;
-- destructive production data/bulk user-data operations;
-- live billing/money/entitlement changes;
+- Pull Request merge;
+- weakening branch protection, CODEOWNERS, required checks or Human/Owner gates;
+- Owner/admin role elevation or IAM policy weakening;
+- Owner MFA reset, recovery/break-glass activation or factor removal;
+- secret/API-key/credential disclosure or unrestricted credential rotation;
+- destructive production database operations or bulk user-data deletion;
+- live billing/price/subscription/credit mutations that can directly change customer money or entitlement;
 - production resource deletion;
-- DNS/TLS/domain ownership;
-- disabling security/audit/RLS/consent controls;
-- expanding or extending the agent's own REM, target set or expiry.
+- DNS/TLS/domain ownership changes;
+- disabling security, audit, RLS, append-only or consent controls;
+- expanding the agent's own mandate, capabilities, target set or expiry.
 
-## 12. Mandatory security preflight for security-sensitive work
+The agent can prepare these changes and their runbooks, but it must stop before execution.
 
-Before a Roadmap Unit touching security/architecture boundaries the Systemadmin must additionally inspect current relevant best-practice/standard requirements where the Roadmap calls for it, map them to existing architecture and avoid introducing parallel control planes.
+## 8. Mandatory security preflight
 
-Missing current-source capability is documented; it never expands authority.
+Before opening or mutating a work branch, the Systemadmin Agent MUST perform a read-only preflight:
 
-## 13. CI and cost control
+1. resolve current `main` SHA and Roadmap state;
+2. identify the next unblocked work package;
+3. check open PR changed-file overlap;
+4. inspect relevant code, ADR, ESS, Evidence and production state read-only where needed;
+5. perform Deep Research/current best-practice review for security/architecture-sensitive work where relevant;
+6. classify PR class D/C/R/M;
+7. classify every requested capability/risk;
+8. verify mandate validity and path/target scope;
+9. verify no reserved Owner-only action is required;
+10. define tests, negative tests, rollback and evidence;
+11. estimate CI scope and avoid redundant full runs.
 
-The Systemadmin must respect repository CI budget policy.
+Any inconclusive security-critical precondition is DENY/STOP, not an invitation to guess.
 
-Default:
+## 9. Autonomous execution loop
 
-- targeted checks during implementation;
-- no redundant expensive full runs for unchanged head;
-- no rerun of a known-invalid gate without changing the precondition;
-- one normal final full validation path as required by current PR governance;
-- CI_REQUEST remains head- and unit-bound.
+Within a valid REM the agent MAY execute continuously:
 
-## 14. Audit and evidence
+`ROADMAP READ → PREFLIGHT → BRANCH → IMPLEMENT → TARGETED TESTS → SECURITY SELF-CHECK → COMMIT → REPEAT UNTIL WORK PACKAGE COMPLETE → PR`
 
-Every autonomous mutating action records/correlates at least:
+After PR creation:
 
-- mandateId;
-- blockId/unitId/roadmapItem;
-- human actor;
-- agent/client/session/request;
-- capability/risk;
-- exact target/path;
-- branch/commit/PR/head where relevant;
+- the agent may repair CI/governance defects before final Human/Owner review;
+- every new commit invalidates any earlier current-head Owner review;
+- once the Owner has performed the final current-head review/Viewed attestations, the agent must not silently expand scope;
+- merge remains a separate Human/Owner action.
+
+## 10. CI and cost control
+
+The Systemadmin Agent MUST respect the repository CI budget policy.
+
+Default behavior:
+
+- targeted local/read-only/static checks during implementation;
+- no intentional repeated expensive full CI runs for the same unchanged head;
+- one normal final `build-and-test` run after the Human/Owner gate unless a remediation commit makes revalidation necessary;
+- do not rerun a known-invalid gate without changing the failing precondition.
+
+## 11. Audit and evidence
+
+Every autonomous mutating action MUST be correlated to the active mandate and, where the M5 audit path is available, record at least:
+
+- `mandateId`;
+- Roadmap item/work-package id;
+- human actor id;
+- agent/client/session/request ids;
+- capability;
+- risk class;
+- target resource;
+- branch/commit/PR identifiers where applicable;
 - authorization verdict;
 - execution result;
-- rollback status;
-- next-unit resume decision.
+- rollback status when applicable.
 
-No secrets, raw tokens, TOTP secrets/codes, passkey private material or raw sensitive payloads belong in evidence.
+No secrets, raw tokens, full sensitive prompts or raw private request/response bodies belong in audit evidence.
 
-## 15. Kill switch / STOP
+## 12. Kill switch and revocation
 
-Owner can revoke REM at any time.
+Owner can revoke a REM at any time. Revocation immediately removes all mutating capabilities for the mandate.
 
-Mandatory STOP includes:
+Automatic STOP/revocation conditions include:
 
-- expired/revoked mandate;
-- kill switch active;
-- Roadmap gate blocked;
-- stale base;
-- contract/REM/unit mismatch;
-- self-authority path;
-- reserved action;
-- open PR overlap;
-- missing audit persistence;
-- CI budget violation;
-- repeated failure without changed precondition;
-- PR checkpoint reached;
-- prior branch not deleted;
-- required external mutation approval;
-- inconclusive rollback;
-- security-critical ambiguity.
+- mandate expiry;
+- target/path scope mismatch;
+- attempted reserved action;
+- unexplained production drift affecting the work package;
+- security-control regression;
+- unresolvable concurrent-writer conflict;
+- repeated verification failure;
+- missing audit correlation;
+- credential/identity ambiguity.
 
-## 16. Branch lifecycle
+## 13. Branch lifecycle
 
-Every EU uses a dedicated branch:
+Every Systemadmin work package uses a dedicated branch. A cloned repository/work branch is temporary execution state, not a persistent product artifact.
 
-`current main → branch → commits → PR → Human merge → branch delete`
+Mandatory lifecycle:
 
-A merged/superseded branch is never reused. Short-lived clones/worktrees are removed after required evidence retention.
+`current main → new scoped branch → commits → PR → successful Human merge → branch deletion`
 
-## 17. Relationship to ADR-0039
+After a successful PR merge into the Finance repository, the work branch MUST be deleted. A branch from a closed/superseded PR MUST also be removed after necessary Evidence has been retained. The agent MUST NOT reuse an old merged branch for a new Roadmap item.
 
-ADR-0039 per-PR creation authorization remains default for normal interactive agents.
+## 14. Relationship to ADR-0039 and current PR governance
 
-For Systemadmin only, a valid Owner-approved REM is standing PR-creation authority for all explicitly named units it covers. This exception does not remove the ADR-0069 Human gate, required CI or separate Human merge.
+ADR-0039's per-PR creation authorization remains the default for normal interactive agents.
 
-## 18. Enablement gate
+For the Systemadmin Agent only, an active Owner-approved REM is the PR-creation authorization for all PRs that remain inside the mandate. The agent does not ask again before each scoped PR.
 
-SA4 proved docs-only deterministic execution. General code/test/config block autonomy requires SA4B VERIFIED PASS.
+This exception does **not** remove:
 
-SA4B must prove:
+- Files-changed/Viewed Human review;
+- current-head `💪`/`okay` Owner review;
+- scope-appropriate CI;
+- separate Human merge authority.
 
-1. per-unit Contract validation/binding;
-2. per-unit least privilege;
-3. bounded code/test executor without arbitrary untrusted commands;
-4. self-authority protection;
-5. permit/outcome for BRANCH/COMMIT/PR/CI_REQUEST;
-6. negative tests for scope, dependency, stale base, overlap, audit outage, expiry/revocation and reserved actions;
-7. two real repository Units under one REM separated by Human merge + branch deletion;
-8. resume from the new current main.
+## 15. Enablement gate
 
-Only then may larger DevelopmentChain repository blocks be delegated autonomously under this policy.
+This policy does not itself enable the agent.
+
+Enablement requires:
+
+1. ESS-0021 + ADR-0065 + Roadmap package merged;
+2. Control-Plane support for REM validation where technical enforcement is required;
+3. negative tests for scope, expiry, self-elevation, reserved actions and kill switch;
+4. M5 audit correlation verified for Systemadmin actions;
+5. Human/Owner approval of the first concrete REM.
+
+Only then may the Systemadmin Agent operate without per-PR creation prompts inside that mandate.

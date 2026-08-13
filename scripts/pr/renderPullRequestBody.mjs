@@ -2,14 +2,82 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { PR_TEMPLATE_VERSION,appendGithubOutput,classifyPullRequestScope,fail,git,listAddedClaimFiles,listChangedFiles,readJsonFile } from './lib.mjs';
-const baseRef=process.env.PR_BASE_REF||'origin/main', headRef=process.env.PR_HEAD_REF||'HEAD', baselinePath=process.env.PR_BASELINE_OUTPUT||'artifacts/pr/production-baseline.json', templatePath=process.env.PR_TEMPLATE_PATH||'.github/pull_request_template.md', outputPath=process.env.PR_BODY_OUTPUT||'artifacts/pr/pull-request-body.md';
-if (!fs.existsSync(templatePath)) fail(`PR-Vorlage nicht gefunden: ${templatePath}`); if (!fs.existsSync(baselinePath)) fail(`Produktions-Baseline nicht gefunden: ${baselinePath}`);
-const claims=listAddedClaimFiles(baseRef,headRef); if (claims.length>1) fail(`Pro PR ist höchstens ein neuer Work-Claim zulässig; gefunden: ${claims.length}.`); const claimPath=claims[0]||null; let claim=null; if (claimPath) claim=headRef==='HEAD'?readJsonFile(claimPath):JSON.parse(git(['show',`${headRef}:${claimPath}`]));
-const baseline=readJsonFile(baselinePath), template=fs.readFileSync(templatePath,'utf8'); const headBranch=process.env.PR_HEAD_BRANCH||(()=>{const value=git(['rev-parse','--abbrev-ref',headRef]); return value==='HEAD'?process.env.GITHUB_REF_NAME||'detached-head':value;})();
-const changedFiles=listChangedFiles(baseRef,headRef); const classification=classifyPullRequestScope(changedFiles,{externalMutation:claim?.externalMutation||process.env.PR_EXTERNAL_MUTATION||'NONE',executionProfile:claim?.executionProfile||process.env.PR_EXECUTION_PROFILE||''});
-const germanWorkItem=String(claim?.workItemDE||claim?.workItemDe||claim?.titleDE||process.env.PR_WORK_ITEM||(claim?`Agenten-Arbeitsauftrag ${claim.claimId}`:`Repository-Änderung ${headBranch}`)).trim(); const changeSummary=String(claim?.changeSummaryDE||process.env.PR_CHANGE_SUMMARY||`${germanWorkItem}. Der tatsächliche Dateiscope wurde automatisch ausgewertet.`).trim(); const learningGoal=String(claim?.learningGoalDE||process.env.PR_LEARNING_GOAL||`Verstehen, welche Teile von CAPITAL-AI betroffen sind und warum für diesen Scope die Klasse ${classification.checkClass} gilt.`).trim();
-const featureDescriptions={'Pull-Request-Governance':'wie Änderungen erklärt, klassifiziert, geprüft und vom Owner freigegeben werden','CI/CD und GitHub-Automation':'wie GitHub Actions Tests auslöst, Kosten begrenzt und Delivery-Gates schützt','Monetarisierung und Kosten':'wie Preis-/Kosten-/GitHub-Entscheidungen dokumentiert und budgetiert werden','Roadmap und Nachweisführung':'wie Umsetzungsstand, Evidence und nächste Gates nachvollziehbar bleiben','Backend und API':'serverseitige Endpunkte und Geschäftslogik','Benutzeroberfläche':'sichtbares Verhalten und Bedienung im Frontend','Plattformarchitektur':'zentrale Plattformdienste und Architekturgrenzen','Datenbank und Supabase':'Datenhaltung, Authentisierung und Datenbankintegration','Container und Runtime':'Docker-Image und produktive Laufzeit','Abhängigkeiten':'installierte Pakete und Software-Supply-Chain','Repository-Konfiguration':'Repository-Verhalten außerhalb der eigentlichen Produktlogik','Dokumentation und Governance':'Dokumentation, Regeln und Nachweise'};
-const featureAreas=classification.featureAreas.map((area)=>`- **${area}:** ${featureDescriptions[area]||'betroffener CAPITAL-AI-Bereich'}`).join('\n'); const bullets=(items)=>items.length>0?items.map((item)=>`- ${item}`).join('\n'):'- Keine.'; const classNames={D:'D — Dokumentation',C:'C — Anwendung/Test/Konfiguration',R:'R — Runtime/CI/Dependency/Deployment',M:'M — externe Produktionsänderung'};
-const replacements={WORK_ITEM:germanWorkItem,CHANGE_SUMMARY:changeSummary,LEARNING_GOAL:learningGoal,CLAIM_ID:claim?.claimId||'N/A — kein Work-Claim erforderlich',CLAIM_FILE:claimPath||'N/A — kein Work-Claim im Diff',HEAD_BRANCH:headBranch,AGENT_PROVIDER:claim?.agent?.provider||process.env.PR_AGENT_PROVIDER||'nicht angegeben',AGENT_MODEL:claim?.agent?.model||process.env.PR_AGENT_MODEL||'nicht angegeben',AGENT_SURFACE:claim?.agent?.executionSurface||process.env.PR_AGENT_SURFACE||'nicht angegeben',PR_CREATION_AUTH:process.env.PR_CREATION_AUTH||(claim?.mandateId?`REM-bound — ${claim.mandateId}`:'Ja — scope-bound Human/Owner-Autorisierung erforderlich'),PRODUCTION_VERSION:baseline.production?.version||'nicht-verfügbar',PRODUCTION_SHA:baseline.production?.commitSha||'nicht-verfügbar',PRODUCTION_BRANCH:baseline.production?.branch||'nicht-verfügbar',MAIN_SHA:baseline.main?.sha||'unbekannt',HEAD_SHA:baseline.head?.sha||'unbekannt',PROD_TO_MAIN_COMMITS:baseline.drift?.productionToMainCommits??'unbekannt',MAIN_TO_HEAD_COMMITS:baseline.drift?.mainToHeadCommits??'unbekannt',BASELINE_GENERATED_AT:baseline.generatedAt||new Date().toISOString(),AUTO_FEATURE_AREAS:featureAreas,AUTO_REPOSITORY_CLASS:classNames[classification.repositoryClass],AUTO_CHECK_CLASS:classNames[classification.checkClass],AUTO_EXECUTION_PROFILE:classification.executionProfile,AUTO_EXTERNAL_MUTATION:classification.externalMutation,AUTO_RISK:classification.risk,AUTO_CLASS_REASON:classification.reason,AUTO_REQUIRED_CHECKS:bullets(classification.requiredChecks),AUTO_NOT_REQUIRED_CHECKS:bullets(classification.notRequiredChecks),AUTO_SECURITY_NOTE:classification.securityNote,AUTO_ROLLBACK:classification.rollback,AUTO_MUTATION_APPROVAL:classification.mutationApprovalRequired?'Ja — separat und scope-bound':'Nein — keine externe Produktionsmutation deklariert',AUTO_LEARNING_NOTE:classification.learningNote};
-let body=template; for (const [key,value] of Object.entries(replacements)) body=body.split(`{{${key}}}`).join(String(value)); const unresolved=[...body.matchAll(/\{\{([A-Z0-9_]+)\}\}/g)].map((match)=>match[1]); if (unresolved.length>0) fail(`PR-Vorlage enthält noch nicht aufgelöste Platzhalter: ${[...new Set(unresolved)].join(', ')}`); fs.mkdirSync(path.dirname(outputPath),{recursive:true}); fs.writeFileSync(outputPath,body,'utf8'); const title=`Änderung: ${germanWorkItem}`.slice(0,240); appendGithubOutput({pr_body_output:outputPath,pr_title:title,claim_id:claim?.claimId||'',claim_file:claimPath||'',check_class:classification.checkClass,repository_class:classification.repositoryClass,execution_profile:classification.executionProfile}); console.log(`[PR-VORLAGE] ${outputPath} aus deutscher Lernvorlage v${PR_TEMPLATE_VERSION} erzeugt; Klasse=${classification.checkClass}, Profil=${classification.executionProfile}.`);
+import {
+  appendGithubOutput,
+  fail,
+  git,
+  listAddedClaimFiles,
+  readJsonFile,
+} from './lib.mjs';
+
+const baseRef = process.env.PR_BASE_REF || 'origin/main';
+const headRef = process.env.PR_HEAD_REF || 'HEAD';
+const baselinePath = process.env.PR_BASELINE_OUTPUT || 'artifacts/pr/production-baseline.json';
+const templatePath = process.env.PR_TEMPLATE_PATH || '.github/pull_request_template.md';
+const outputPath = process.env.PR_BODY_OUTPUT || 'artifacts/pr/pull-request-body.md';
+
+if (!fs.existsSync(templatePath)) fail(`PR-Vorlage nicht gefunden: ${templatePath}`);
+if (!fs.existsSync(baselinePath)) fail(`Produktions-Baseline nicht gefunden: ${baselinePath}`);
+
+const claims = listAddedClaimFiles(baseRef, headRef);
+if (claims.length !== 1) fail(`Für die PR-Erzeugung ist genau ein neuer Work-Claim erforderlich; gefunden: ${claims.length}.`);
+
+const claimPath = claims[0];
+let claim;
+if (headRef === 'HEAD') {
+  claim = readJsonFile(claimPath);
+} else {
+  claim = JSON.parse(git(['show', `${headRef}:${claimPath}`]));
+}
+
+const baseline = readJsonFile(baselinePath);
+const template = fs.readFileSync(templatePath, 'utf8');
+const headBranch = process.env.PR_HEAD_BRANCH || (() => {
+  const value = git(['rev-parse', '--abbrev-ref', headRef]);
+  return value === 'HEAD' ? process.env.GITHUB_REF_NAME || 'detached-head' : value;
+})();
+
+// Sichtbare Pull-Request-Inhalte sind repositoryweit deutsch. Ein Agent kann optional
+// workItemDE/titleDE liefern. Fehlt eine deutsche Fassung, wird kein englischer Work-Item-Text
+// in die sichtbare PR-Oberfläche übernommen; die technische Detailquelle bleibt der Work-Claim.
+const germanWorkItem = String(
+  claim.workItemDE
+  || claim.workItemDe
+  || claim.titleDE
+  || `Agenten-Arbeitsauftrag ${claim.claimId}`,
+).trim();
+
+const replacements = {
+  WORK_ITEM: germanWorkItem,
+  CLAIM_ID: claim.claimId,
+  CLAIM_FILE: claimPath,
+  HEAD_BRANCH: headBranch,
+  AGENT_PROVIDER: claim.agent?.provider || 'unbekannt',
+  AGENT_MODEL: claim.agent?.model || 'unbekannt',
+  AGENT_SURFACE: claim.agent?.executionSurface || 'unbekannt',
+  PRODUCTION_VERSION: baseline.production?.version || 'nicht-verfügbar',
+  PRODUCTION_SHA: baseline.production?.commitSha || 'nicht-verfügbar',
+  PRODUCTION_BRANCH: baseline.production?.branch || 'nicht-verfügbar',
+  MAIN_SHA: baseline.main?.sha || 'unbekannt',
+  HEAD_SHA: baseline.head?.sha || 'unbekannt',
+  PROD_TO_MAIN_COMMITS: baseline.drift?.productionToMainCommits ?? 'unbekannt',
+  MAIN_TO_HEAD_COMMITS: baseline.drift?.mainToHeadCommits ?? 'unbekannt',
+  BASELINE_GENERATED_AT: baseline.generatedAt || new Date().toISOString(),
+};
+
+let body = template;
+for (const [key, value] of Object.entries(replacements)) {
+  body = body.split(`{{${key}}}`).join(String(value));
+}
+
+const unresolved = [...body.matchAll(/\{\{([A-Z0-9_]+)\}\}/g)].map((match) => match[1]);
+if (unresolved.length > 0) {
+  fail(`PR-Vorlage enthält noch nicht aufgelöste Platzhalter: ${[...new Set(unresolved)].join(', ')}`);
+}
+
+fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+fs.writeFileSync(outputPath, body, 'utf8');
+
+const title = `Agenten-Änderung: ${germanWorkItem}`.slice(0, 240);
+appendGithubOutput({ pr_body_output: outputPath, pr_title: title, claim_id: claim.claimId, claim_file: claimPath });
+console.log(`[PR-VORLAGE] ${outputPath} aus deutscher Vorlage v1.0.0 für ${claim.claimId} erzeugt.`);
