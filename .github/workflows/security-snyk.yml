@@ -1,0 +1,64 @@
+name: Snyk Security Baseline
+run-name: "PR #${{ github.event.pull_request.number || 'manual' }} – Snyk Baseline"
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  snyk-open-source:
+    name: Snyk Open Source baseline
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Snyk-Aktivierung prüfen
+        id: snyk-preflight
+        shell: bash
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${SNYK_TOKEN:-}" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "SNYK_TOKEN ist vorhanden; Baseline-Scan wird ausgeführt." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "## Snyk Baseline nicht aktiviert" >> "$GITHUB_STEP_SUMMARY"
+            echo "Repository-Secret SNYK_TOKEN fehlt. Der Workflow bleibt absichtlich neutral, bis der Human/Owner Snyk autorisiert und das Secret hinterlegt hat." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Snyk Open Source Scan
+        id: snyk-scan
+        if: steps.snyk-preflight.outputs.enabled == 'true'
+        continue-on-error: true
+        uses: snyk/actions/node@12140f4059e244892ae643824a95459a102120dd # pinned 2026-08-03 master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: Baseline-Ergebnis dokumentieren
+        if: always() && steps.snyk-preflight.outputs.enabled == 'true'
+        shell: bash
+        env:
+          SNYK_OUTCOME: ${{ steps.snyk-scan.outcome }}
+        run: |
+          set -euo pipefail
+          echo "## Snyk Open Source Baseline" >> "$GITHUB_STEP_SUMMARY"
+          echo "Outcome: ${SNYK_OUTCOME}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Der Baseline-Modus blockiert Merge noch nicht. High/Critical Findings müssen vor späterer Fail-Closed-Promotion triagiert werden." >> "$GITHUB_STEP_SUMMARY"
