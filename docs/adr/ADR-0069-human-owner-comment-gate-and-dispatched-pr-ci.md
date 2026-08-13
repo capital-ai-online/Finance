@@ -1,68 +1,169 @@
-# ADR-0069 — Human/Owner Comment Gate und dispatch-basierte PR-CI
+# ADR-0069 — Human/Owner PR Gate ohne selbstreferenziellen Bootstrap
 
-- **Status:** ACCEPTED — korrigiert nach Bootstrap-Evidence
-- **Datum:** 2026-08-12
-- **Scope:** Pull-Request-Governance und CI
+- **Status:** ACCEPTED — RECOVERY REVISION 2026-08-13
+- **Datum:** 2026-08-13
+- **Scope:** Pull-Request-Governance, CI-Trust-Root, Required Checks
+- **Incident Evidence:** `docs/evidence/ci/PR236_BOOTSTRAP_INCIDENT_2026-08-13.md`
 
 ## Kontext
 
-PR #235 hat gezeigt, dass Task-Checkboxen im Pull-Request-Body zwar gespeichert werden, aber nicht zuverlässig einen `pull_request: edited`-Actions-Run erzeugen. Damit ist der PR-Body kein belastbarer Event-Transport für das Human-Gate.
+Die ursprüngliche ADR-0069 führte ab PR #236 einen trusted-main Human/Owner-Kommentar-Gate-Pfad ein. Das Ziel war, Human-Evidence an den aktuellen PR-Head zu binden und Kandidatencode von schreibenden Jobs zu isolieren.
 
-PR #236 hat den ersten trusted-main Bootstrap eingeführt. Die reale Ausführung danach lieferte zwei zusätzliche Befunde:
+Die reale Bootstrapserie PR #236–#240 zeigte jedoch mehrere Fehlerklassen: API-Berechtigungsfehler, falsche Check-SHA-Bindung, Dispatch-/YAML-Fehler und schließlich einen fehlerhaften trusted Preflight. Weil das GitHub-Ruleset den Status `build-and-test` zwingend verlangte und dieser Status durch die neue Control-Plane selbst erzeugt wurde, konnte ein Defekt der Control-Plane ihre eigene Reparatur blockieren.
 
-1. Der `workflow_run`-Seed scheiterte bei einer zusätzlichen Pull-Request-API-Abfrage mit `HTTP 403 Resource not accessible by integration`, obwohl der für das Seeding notwendige PR-/Head-Kontext bereits im `workflow_run`-Payload vorhanden war.
-2. Ein `workflow_dispatch --ref main` führt den vertrauenswürdigen Workflow auf `main` aus. Sein normaler Actions-Job-Check ist deshalb nicht automatisch der Required Check des PR-Head-SHA. Der Build muss seine Evidence explizit an den freigegebenen PR-Head binden.
-
-GitHub stellt für Kommentare auf Pull Requests das Ereignis `issue_comment: edited` bereit. `workflow_run` erlaubt eine privilegierte trusted-main Folgestufe, ohne Kandidatencode mit Schreibrechten auszuführen. Die Checks API kann Check-Runs an einen konkreten `head_sha` binden. Die bestehende Finance-Policy verbietet `pull_request_target` in geänderten Workflows.
+Diese Revision verwirft daher nicht Human-/Owner-Evidence oder fail-closed CI. Sie verwirft ausschließlich die selbstreferenzielle Bootstrap-Strategie.
 
 ## Entscheidung
 
-1. `PR Governance` bleibt der erste PR-Sicherheitslauf.
-2. Ein trusted-main `workflow_run` auf `PR Governance` erzeugt oder resettet einen Human-Gate-Kommentar anhand der bereits im Event-Payload enthaltenen PR-Nummer, Base und Head-SHA. Das Seeding hat keine zusätzliche PR-API-Bootstrap-Abhängigkeit.
-3. Der Seed-Job erhält nur die für Kommentar-Synchronisierung erforderlichen Schreibrechte. Kandidatencode wird dort nie ausgeführt.
-4. Der Kommentar enthält `CAPITAL_AI_HUMAN_GATE_HEAD_SHA` und genau zwei Human/Owner-Attestations.
-5. Erst wenn beide Häkchen gesetzt sind, wird `Human-/Owner-Verifikation` ausgeführt.
-6. Die Verifikation akzeptiert nur den erwarteten Owner, einen offenen PR gegen `main`, den aktuellen Head, den unveränderten Live-Kommentar und einen current-head Review mit exakt `💪` oder `okay`.
-7. Nach PASS erzeugt der trusted-main Gate-Job zwei explizit an den aktuellen PR-Head gebundene Checks: `Human-/Owner-Verifikation = success` und `build-and-test = in_progress`.
-8. Pro `(PR, Head-SHA)` darf höchstens eine *wirksame* `build-and-test`-Reservation existieren. Die Reservation wird ausschließlich über die vom Gate gesetzte `external_id` `capital-ai-human-gate-one-shot:<PR-Nummer>:<Head-SHA>` identifiziert; gleichnamige Check-Runs anderer Workflows — insbesondere der `build-and-test`-Job aus `ci.yml` — belegen den One-Shot nicht und können ihn auch nicht verdrängen. Eine laufende (`queued`/`in_progress`) oder erfolgreich abgeschlossene Reservation verhindert einen zweiten teuren Build. Eine mit `failure`, `cancelled`, `timed_out` oder `action_required` abgeschlossene Reservation gibt den One-Shot wieder frei, damit ein infrastrukturbedingter Fehlschlag denselben Head nicht dauerhaft unmergebar macht; die Freigabe wirkt nur über einen erneuten vollständigen Human-Evidence-Zyklus.
-9. Danach wird genau ein `workflow_dispatch` von `pr-build-and-test.yml` auf `main` angefordert. Der Dispatch transportiert PR-Nummer, Head-SHA, Approval-Kommentar-ID und die reservierte `build-and-test`-Check-ID.
-10. Der Build-Workflow verifiziert Head, Kommentar, Review und Check-Reservation erneut, bevor er Kandidatencode auscheckt.
-11. Kandidatencode läuft ausschließlich in einem Job mit `contents: read`. Dieser Job besitzt keine Check-, PR-, Issue- oder Actions-Schreibrechte.
-12. Ein separater trusted Reporter mit `checks: write` aktualisiert ausschließlich die zuvor verifizierte `build-and-test`-Check-ID auf dem erwarteten PR-Head auf `success` oder `failure`.
-13. Ein neuer Commit erzeugt einen neuen Head und setzt das Human-Gate nach dem folgenden Governance-Run zurück.
-14. `MERGE` bleibt Human/Owner-only.
+### 1. Bestehender funktionierender Required Check bleibt Trust Root
 
-## Sicherheitsinvarianten
+Während einer Governance-/CI-Migration bleibt der zuletzt verifizierte, funktionierende Required Check aktiv. Ein Kandidaten-PR darf den alleinigen aktiven Trust Root nicht durch eine neue, erst nach Merge ausführbare Control-Plane ersetzen.
 
-- Kein `pull_request_target`.
-- Kein Kandidatencode im schreibenden Human-Gate- oder Reporter-Job.
-- Checkout im Build nur über den exakt freigegebenen Head-SHA.
-- Keine persistierten Checkout-Zugangsdaten.
-- Check-Reporting nur für die reservierte Check-ID mit Name `build-and-test`, exakt erwartetem `head_sha`, exakt erwarteter One-Shot-`external_id` und GitHub-Actions-App-Bindung.
-- Ein `(PR, Head-SHA)` erhält höchstens eine gleichzeitig wirksame Build-Reservation; ein erneuter Versuch nach `failure`/`cancelled`/`timed_out` setzt einen vollständigen neuen Human-Evidence-Zyklus voraus.
-- Fehlende, veraltete oder widersprüchliche Human-Evidence führt zu DENY.
-- Ein fehlgeschlagener Dispatch oder Build wird als `build-and-test = failure` auf dem PR-Head sichtbar; er darf nicht als PASS maskiert werden.
+### 2. Kein Bootstrap darf den Required Check selbst erzeugen
 
-## Kosteninvariante
+Ein neuer Governance-Workflow darf nicht gleichzeitig:
 
-Der erste Checkbox-Klick startet keinen Build. Erst der Zustand mit beiden gesetzten Häkchen führt nach erfolgreicher Human-Verifikation zu genau einer Build-Reservation. Duplicate-Edits desselben Heads dürfen keinen zweiten Volltest auslösen.
+- den aktuell erforderlichen `build-and-test` ersetzen,
+- seinen eigenen Aktivierungszustand erst nach Merge erhalten,
+- und den Merge seiner eigenen Reparatur von genau diesem neuen Pfad abhängig machen.
 
-Ein erneuter Volltest für denselben Head ist ausschließlich nach einer mit `failure`, `cancelled` oder `timed_out` beendeten Reservation zulässig und wird nie automatisch ausgelöst: Er erfordert erneut Owner-Identität, offenen PR gegen `main`, current-head Bindung, unveränderten Live-Kommentar, current-head Review `💪`/`okay` und beide Attestations. Ein erfolgreicher Volltest schließt den One-Shot für diesen Head endgültig.
+Diese Kombination ist verboten.
 
-## Übergang PR #235
+### 3. Neue Gate-Architektur nur als Shadow/Observation
 
-Nach Merge der korrigierenden Bootstrap-Stufe wird PR #235 auf den neuen `main`-Stand aktualisiert. Dadurch entsteht ein neuer Head und `PR Governance` läuft erneut. Anschließend muss der Human-Gate-Kommentar mit offenen Häkchen erzeugt werden.
+Neue Human-Gate-, Dispatch-, Reporter- oder Auto-Status-Mechanismen werden zuerst parallel und **nicht merge-blockierend** ausgeführt.
 
-Für diesen neuen Head gilt dann ausschließlich:
+Zulässige Reihenfolge:
 
-1. Files changed prüfen / Viewed setzen.
-2. Current-head Review `💪` oder `okay` absenden.
-3. Die zwei Human-Gate-Kommentar-Häkchen setzen.
-4. `Human-/Owner-Verifikation` muss auf exakt diesem PR-Head PASS werden.
-5. `build-and-test` muss auf exakt demselben PR-Head PASS oder FAIL berichten.
+```text
+bestehender Required Check
+→ neue Control-Plane im Shadow Mode
+→ wiederholter Parallel-PASS auf realen PRs
+→ Human/Owner Abnahme
+→ serverseitige Ruleset-Umstellung
+→ alter Check bleibt für definierte Übergangsfrist verfügbar
+→ erst danach kontrollierte Stilllegung
+```
 
-Alte Body-Häkchen und alte Check-Evidence dürfen nicht auf einen neuen Head übertragen werden. Der bestehende PR-Body-Checkbox-Trigger in PR #235 wird vor dessen Merge mit dieser Architektur konsolidiert und darf nicht als zweite Autorisierungsquelle bestehen bleiben.
+### 4. Required-Check-Umstellung ist eine eigene Change-Klasse
+
+Die Änderung eines GitHub-Rulesets oder der Identität eines Required Checks ist nicht Bestandteil eines normalen Workflow-PRs. Sie benötigt:
+
+- eigenen dokumentierten Change;
+- exakte vorher/nachher Check-Identität;
+- Rollback-Plan;
+- Human/Owner-Freigabe;
+- Post-Change-Verifikation auf mindestens einem realen PR;
+- Evidence in Roadmap/Traceability.
+
+### 5. Human-Evidence bleibt current-head gebunden
+
+Bis zu einer späteren M10-Passkey-Autorisierung gilt weiterhin:
+
+- vollständiger `Files changed` Review;
+- alle Dateien Viewed;
+- current-head Review exakt `💪` oder `okay`;
+- Human/Owner-Attestation;
+- neuer Commit invalidiert Head-Evidence;
+- Merge bleibt separat Human/Owner-only.
+
+Die konkrete Event-Transportform darf geändert werden, solange sie diese Invarianten erfüllt und vorher im Shadow Mode bewiesen wurde.
+
+### 6. Kein Kandidatencode mit privilegierten Schreibrechten
+
+Weiterhin verbindlich:
+
+- kein `pull_request_target` für Kandidatencode;
+- Checkout exakt auf den geprüften Head;
+- `persist-credentials: false`;
+- schreibende Governance-/Reporter-Jobs führen keinen Kandidatencode aus;
+- Kandidaten-Build/Test besitzt keine PR-/Issue-/Checks-Schreibrechte.
+
+### 7. Kein synthetischer PASS als alleinige Merge-Evidence
+
+Ein synthetischer Check darf technische Evidence aggregieren, aber nicht der einzige Beweis für einen Build sein, wenn seine eigene Control-Plane Gegenstand des PRs ist.
+
+Für Änderungen an der CI-Trust-Root-Schicht muss mindestens ein unabhängiger, bereits auf `main` verifizierter Prüfpfad erhalten bleiben.
+
+### 8. Recovery muss repository-normal möglich bleiben
+
+Jede Governance-/CI-Architektur muss so gestaltet sein, dass ein Defekt durch:
+
+```text
+fresh branch from current main
+→ scoped fix/revert
+→ normal pull request
+→ existing independent required check
+→ Human merge
+```
+
+behebbar bleibt.
+
+Ein Zustand, in dem zur Reparatur zuerst ein Bypass-Actor, Force-Push, Direct-Main-Push oder Abschalten des einzigen Required Checks nötig wäre, ist als Architekturfehler zu behandeln.
+
+### 9. Bypass ist kein normaler Recovery-Mechanismus
+
+Repository-Owner-Rechte oder GitHub-Ruleset-Bypass dürfen nicht als regulärer technischer Bestandteil der DevelopmentChain vorausgesetzt werden.
+
+Break-glass kann später in M9 als eigener, auditierter Incident-Mechanismus existieren, ersetzt aber nicht die Pflicht, normale CI-Recovery ohne Bypass zu ermöglichen.
+
+### 10. PR-Template-Automation darf keine Gate-Autorität tragen
+
+PR-Body-Synchronisierung, Klassifikation und Lern-/Evidence-Darstellung sind sekundäre Automation. Ein Fehler dort darf:
+
+- Human-Evidence nicht verfälschen;
+- einen erfolgreichen realen Build nicht in `Human-Evidence=failure` umdeuten;
+- keine Merge-Evidence selbst autorisieren.
+
+Workflow-Identität ist über stabile Felder wie Workflow-Pfad/ID zu bestimmen, nicht über dynamische `run-name`-Anzeigenamen.
+
+## Verbotene Bootstrap-Muster
+
+Folgende Muster sind ab dieser Revision ausdrücklich verboten:
+
+1. `workflow_dispatch --ref main` als alleiniger Required-Check-Executor für einen PR, der genau diesen Executor ändert;
+2. synthetischer `build-and-test` Check als alleiniger Ruleset-Check ohne unabhängigen Recovery-Pfad;
+3. Ersetzen des funktionierenden PR-CI-Pfads in einem einzigen Bootstrap-Merge;
+4. Aktivierung einer neuen Required-Check-Identity vor realem Shadow-PASS;
+5. PR-Body-/Auto-Status-Automation als Human-Autorisierungsquelle;
+6. dauerhaft aktive Bootstrap-Work-Claims nach Abschluss des zugehörigen PRs.
+
+## Recovery-Baseline 2026-08-13
+
+Der verifizierte Stand unmittelbar vor PR #236 ist:
+
+- Commit `5bd5f4d78b87a89258126d0453eaf5e4bc6b6125`
+- Tree `5d95c7e21b7dcded2fb023047e01ca629b37b75d`
+
+Dort erzeugt `.github/workflows/ci.yml` den echten `build-and-test` direkt auf dem PR-Head. Dieser Zustand wird als Recovery-Baseline verwendet.
+
+## Konsequenzen
+
+### Positiv
+
+- keine selbstblockierende CI-Trust-Root-Reparatur;
+- keine Notwendigkeit eines Owner-Bypass für normale Governance-Fehler;
+- technische Migrationen werden beobachtbar und reversibel;
+- Human-/Owner-Gate und Credential Isolation bleiben erhalten;
+- Ruleset-Änderung und Workflow-Code werden als getrennte Trust-Boundaries behandelt.
+
+### Trade-off
+
+- Governance-Migrationen benötigen eine Parallel-/Shadow-Phase;
+- für eine Zeit können alter und neuer Prüfpfad parallel laufen;
+- Ruleset-Promotion erfordert explizite Human-Administration und Evidence.
+
+## Verifikation
+
+Diese ADR gilt als technisch umgesetzt, wenn:
+
+1. der Recovery-PR den Pre-#236-CI-Pfad wiederherstellt;
+2. ein PR-Head `build-and-test` ohne synthetischen trusted-main Reporter erfolgreich ausführt;
+3. Main-CI nach Merge erfolgreich ist;
+4. keine PR-#236–#240-Bootstrap-Control-Plane mehr Required-Check-Autorität besitzt;
+5. zukünftige Gate-Weiterentwicklung ausschließlich Shadow → Parallel PASS → Promotion folgt;
+6. Roadmap und Traceability diesen Incident und die neue Migrationsregel referenzieren.
 
 ## Rollback
 
-Rollback erfolgt ausschließlich repository-seitig durch einen Human-autorisierten Revert. Ein Rückfall auf nicht verifizierte PR-Body-Checkbox-Trigger oder auf einen Build-PASS am falschen Commit-SHA ist nicht zulässig.
+Ein späterer ADR-0069-Nachfolger darf diese Recovery-Invarianten nur durch einen eigenen Human/Owner-reviewten ADR ersetzen. Ein Rückfall auf selbstreferenzielle Bootstrap-Required-Checks ist nicht zulässig.

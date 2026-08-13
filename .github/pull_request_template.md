@@ -1,61 +1,33 @@
-<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 2.3.0 -->
-# CAPITAL-AI Pull Request — {{WORK_ITEM}}
+<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.3.3 -->
+# CAPITAL-AI Änderungsantrag (Pull Request)
 
-<!-- CAPITAL_AI_EXTERNAL_MUTATION: NONE -->
-<!-- CAPITAL_AI_EXECUTION_PROFILE: AUTO -->
-<!-- CAPITAL_AI_HUMAN_GATE_AUTHORITY: BOT_COMMENT_ONLY -->
-<!-- CAPITAL_AI_SYNC_HEAD_SHA: {{HEAD_SHA}} -->
+> Diese Vorlage ist verbindlich. Maschinenverwaltete Baseline-Felder dürfen nicht gelöscht werden.
+>
+> **Governance-Contract:** Jeder Pull Request gegen `main` MUSS diese vollständige Vorlage verwenden. Abschnitte dürfen nicht entfernt oder frei ersetzt werden; nicht zutreffende Angaben werden mit `N/A` begründet.
+>
+> **Wichtig:** Die teure technische CI startet für Pull Requests erst nach vollständiger Human-/Owner-Sichtprüfung.
 
-> Dieser Pull Request ist gleichzeitig **Änderungsnachweis und Lernmaterial**. Die technische Checkklasse wird aus den geänderten Dateien automatisch ermittelt. Ein geplanter externer Produktionsschritt muss ausdrücklich deklariert werden und hebt die Prüfung auf Klasse M an. Der Mensch muss keine Klasse oder technische PASS-Häkchen erraten.
+## 1. Arbeitsauftrag
 
-## 1. Kurz erklärt
-
-**Was wird geändert?**  
-{{CHANGE_SUMMARY}}
-
-**Welche Bereiche/Features sind betroffen?**  
-{{AUTO_FEATURE_AREAS}}
-
-**Warum ist das relevant?**  
-{{LEARNING_GOAL}}
-
-## 2. Automatisch erkannte Prüfungen
-
-<!-- CAPITAL_AI_AUTO_CLASSIFICATION_START -->
-- **Repository-Scope:** {{AUTO_REPOSITORY_CLASS}}
-- **Wirksame Checkklasse:** {{AUTO_CHECK_CLASS}}
-- **Execution Profile:** {{AUTO_EXECUTION_PROFILE}}
-- **Externe Produktionsmutation:** {{AUTO_EXTERNAL_MUTATION}}
-- **Risiko:** {{AUTO_RISK}}
-- **Begründung:** {{AUTO_CLASS_REASON}}
-
-**Erforderliche Checks**
-{{AUTO_REQUIRED_CHECKS}}
-
-**Bewusst nicht erforderliche Checks**
-{{AUTO_NOT_REQUIRED_CHECKS}}
-<!-- CAPITAL_AI_AUTO_CLASSIFICATION_END -->
-
-### Was bedeuten die Klassen in einfacher Sprache?
-
-- **D — Dokumentation:** Texte, Roadmaps oder Evidence; kein Software-Build nötig.
-- **C — Anwendung:** Code, Tests oder Konfiguration; normale Softwaretests und Build sind nötig.
-- **R — Runtime/CI/Deployment:** Server, Dependencies, Docker oder Workflows; zusätzlich werden Runtime-/Workflow-/Docker-Schutzregeln und ein echter Container-Health-Smoke-Test geprüft.
-- **M — externe Produktionsänderung:** Außerhalb des Repositories soll ein produktiver Zustand verändert werden. Dafür ist immer eine **separate Human/Owner-Mutationsfreigabe** nötig.
-
-Die Klasse gibt nur vor, **was geprüft werden muss**. Sie erteilt keinem Agenten zusätzliche Rechte. `MERGE` bleibt Human/Owner-only.
-
-## 3. Nachvollziehbarkeit
-
+- **Zweck:** {{WORK_ITEM}}
 - **Claim-ID:** `{{CLAIM_ID}}`
 - **Claim-Datei:** `{{CLAIM_FILE}}`
 - **Branch:** `{{HEAD_BRANCH}}`
-- **Provider / Modell:** {{AGENT_PROVIDER}} / {{AGENT_MODEL}}
-- **Ausführungsoberfläche:** {{AGENT_SURFACE}}
-- **PR-Erstellung autorisiert:** {{PR_CREATION_AUTH}}
+- **Basis:** `main`
+
+## 2. Agenten-/Principal-Identität und PR-Erstellungsfreigabe
+
+- **Provider:** {{AGENT_PROVIDER}}
+- **Modell:** {{AGENT_MODEL}}
+- **Ausführungsoberfläche / MCP-Host:** {{AGENT_SURFACE}}
+- **PR-Erstellung ausdrücklich durch Benutzer autorisiert:** Ja
+- **Autorisierungsumfang entspricht diesem PR:** Ja
 - **Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja
 
+## 3. Produktions-Baseline — maschinenverwalteter / beratender Nachweis
+
 <!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->
+- **Produktions-URL:** `https://capital-ai.online/healthz`
 - **Produktionsversion:** `{{PRODUCTION_VERSION}}`
 - **Produktions-Commit:** `{{PRODUCTION_SHA}}`
 - **Produktions-Branch:** `{{PRODUCTION_BRANCH}}`
@@ -66,59 +38,164 @@ Die Klasse gibt nur vor, **was geprüft werden muss**. Sie erteilt keinem Agente
 - **Baseline erzeugt am:** `{{BASELINE_GENERATED_AT}}`
 <!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->
 
-## 4. Sicherheit und Rückweg
+## 4. Umfang / Multi-Agent-Koordination
 
-- **Security-/Governance-Auswirkung:** {{AUTO_SECURITY_NOTE}}
-- **Rollback:** {{AUTO_ROLLBACK}}
-- **Separate Produktionsfreigabe nötig:** {{AUTO_MUTATION_APPROVAL}}
-- **Nicht delegierbar:** Merge, Owner-IAM/MFA/Break-Glass, Secret-Offenlegung, destruktive Produktionsdatenoperationen, Live-Billing/Money/Entitlement, Produktionsressourcen-Löschung, DNS/TLS/Domain-Ownership und Abschwächung von Security-/Audit-/RLS-/Consent-/Protection-Kontrollen.
+- [ ] Der vorgesehene Umfang ist dokumentiert.
+- [ ] Überschneidungen mit geänderten Dateien offener PRs wurden geprüft, sofern verfügbar.
+- [ ] Erkannte Überschneidungen oder Konfliktrisiken wurden vor PR-Erstellung offengelegt.
+- [ ] Metadaten oder Arbeiten anderer Agenten wurden nicht stillschweigend übernommen.
 
-## 5. Human / Owner Review und Kommentar-Gate
+## 5. Änderungszusammenfassung
 
-> **Autoritative Human-Evidence liegt ausschließlich im head-gebundenen Bot-Kommentar nach ADR-0069.** Der PR-Body enthält bewusst keine Human-Checkboxen und kann keinen Build autorisieren.
+Beschreibe präzise, was geändert wurde und warum. Nicht zusammenhängende Änderungen gehören nicht in diesen PR.
 
-Ablauf für den aktuellen Head:
+## 6. Architektur- / Governance-Auswirkungen
 
-1. `Files changed` vollständig lesen und jede Datei als `Viewed` markieren.
-2. Einen Review mit exakt `💪` oder `okay` für den aktuellen Head absenden.
-3. Erst danach die zwei Häkchen im Bot-Kommentar **Human / Owner Verifikation** setzen.
-4. Einen neuen Commit als neuen Head behandeln; der trusted-main Workflow setzt den Kommentar nach erfolgreicher Governance zurück.
+- **Roadmap-Schritt / Phase:**
+- **ADR erforderlich?** Ja / Nein — Referenz:
+- **ESS-/Contract-Auswirkung?** Ja / Nein — Referenz:
+- **Traceability/Dokumentation aktualisiert?** Ja / Nein / N/A
+- **Mutation geplant?** Ja / Nein — Plattform/Runbook:
+- **Geschützte bestehende Invariante betroffen?** Ja / Nein — Referenz:
 
-Body-Edits, alte Kommentare, Reviews früherer Heads und Agenten-/Workflow-Selbstaussagen sind keine Human-Autorisierung.
-## 6. Automatisch synchronisierte Nachweise## 6. Automatisch synchronisierte Nachweise
+## 7. Sicherheitsprüfung
 
-> **Nicht manuell bearbeiten.** Alle folgenden Häkchen werden ausschließlich vom trusted-main PR-Status-Workflow aus GitHub-/Actions-Evidence für den aktuellen Head gesetzt. `☐` bedeutet ausstehend oder fehlgeschlagen; `☑` bedeutet maschinell verifiziert oder für die erkannte Klasse nachweislich nicht erforderlich.
+- [ ] Prinzip der geringsten Berechtigung bleibt erhalten.
+- [ ] Keine Zugangsdaten, Secrets oder Tokens wurden in Source, Logs, PR-Body oder Modellkontext aufgenommen.
+- [ ] Authentifizierung/Autorisierung bleibt, wo erforderlich, fail-closed.
+- [ ] Externe, Tool- und Retrieval-Inhalte werden als nicht vertrauenswürdige Eingaben behandelt.
+- [ ] Hochriskante oder destruktive Aktionen behalten Human-Approval-Gates.
+- [ ] Neue/geänderte Workflows verwenden unveränderliche Action-SHAs und explizite Minimalberechtigungen.
 
-<!-- CAPITAL_AI_MACHINE_EVIDENCE_START -->
-- [ ] 🤖 Automatische Klassifikation und aktueller Head sind synchronisiert.
-- [ ] 🤖 Governance-/Workflow-Security für den aktuellen Head ist erfolgreich.
-- [ ] 🤖 Live-PR-Body und Produktionsbaseline sind gegen den aktuellen Head validiert.
-- [ ] 🤖 Repository-Konventionen sind im für die Klasse erforderlichen Modus erfüllt.
-- [ ] 🤖 Erforderliche Software-/Build-Prüfungen sind erfolgreich oder für die Klasse nicht erforderlich.
-- [ ] 🤖 Docker-/Runtime-Prüfungen sind erfolgreich oder für die Klasse nicht erforderlich.
-- [ ] 🤖 `build-and-test` besitzt gültige PR-/Head-gebundene Evidence.
-- [ ] 🤖 Externe Produktionsmutation ist verifiziert oder für diesen PR nicht erforderlich.
-<!-- CAPITAL_AI_MACHINE_EVIDENCE_END -->
+### Threat Model
 
-**CI-Evidence verständlich lesen:**
-- **Volltest ausgeführt:** Der exakt autorisierte PR-Head wurde einmal im trusted-main Dispatch vollständig geprüft.
-- **Nicht erforderlich:** Die automatische Klasse verlangt den Check für diesen Diff nicht; der Workflow darf das zugehörige Häkchen deshalb als erfüllt markieren.
-- **Ausstehend/fehlgeschlagen:** Das Häkchen bleibt offen; der Mensch setzt es nicht von Hand.
-## 7. Was kann man aus diesem PR lernen?
+Ein **Threat Model** beschreibt vor der Umsetzung, *was geschützt werden muss, vor wem, über welche Angriffswege und mit welchen Kontrollen*. Ein separates Threat-Model-Artefakt ist erforderlich, wenn der PR neue Trust Boundaries, Authentisierung/Autorisierung, Agent-Capabilities, Secrets, externe Schreibzugriffe oder Produktionsmutationen einführt oder wesentlich verändert.
 
-{{AUTO_LEARNING_NOTE}}
+- **Threat Model erforderlich?** Ja / Nein
+- **Referenz / Begründung:**
 
-> Ziel: Nach dem Lesen dieses Abschnitts soll auch ohne tiefes Repository-Wissen verständlich sein, **welches Feature oder welche Schutzfunktion geändert wird, warum die gewählten Tests nötig sind und welche Grenzen weiterhin gelten**.
+### Negative Tests
 
-## 8. Merge-Bereitschaft
+**Negative Tests** beweisen, dass verbotene oder fehlerhafte Zustände zuverlässig abgelehnt werden. Beispiele: falscher Actor, falscher Head-SHA, fehlende Capability, Replay, abgelaufene Approval-Evidence, falsche Origin/RP-ID, unerlaubter Produktionszugriff oder ungültige Konfiguration.
 
-<!-- CAPITAL_AI_MACHINE_MERGE_START -->
-- [ ] 🤖 Human-/Owner-Gate ist für den aktuellen Head technisch verifiziert.
-- [ ] 🤖 Alle automatisch erforderlichen Checks der erkannten Klasse sind erfüllt.
-<!-- CAPITAL_AI_MACHINE_MERGE_END -->
+- **Negative Tests erforderlich?** Ja / Nein
+- **Getestete DENY-/Fail-Closed-Fälle:**
 
-**Nicht automatisierbare Grenzen – bewusst ohne Checkbox:**
-- Merge erfolgt nur nach einer **separaten ausdrücklichen menschlichen Anweisung** für genau diesen PR.
-- Keine Agenten-/Modell-Selbstfreigabe gilt als Human-Freigabe.
-- Offene fachliche/reviewbezogene Einwände müssen vor Merge geklärt sein.
-- Nach erfolgreichem Merge wird der Work-Branch gemäß Branch-Lifecycle-Policy gelöscht.
+### Rollback / Runbook
+
+Ein **Rollback-Runbook** beschreibt vor einer Mutation den sicheren Weg zurück zum letzten verifizierten Zustand: Auslöser, Verantwortlicher, konkrete Rücksetzschritte, Daten-/Konfigurationsfolgen und Verifikationscheck. Bei reinen Code-/Dokumentationsänderungen ohne externe Mutation kann `git revert` ausreichen. Bei Supabase-, Stripe-, Render-, Credential-, Deployment- oder Schema-Mutationen ist ein explizites Runbook erforderlich.
+
+- **Rollback-Runbook erforderlich?** Ja / Nein
+- **Referenz / Rücksetzweg:**
+
+## 8. Human / Owner Review VOR technischer CI
+
+> Dieser Abschnitt ist das Start-Gate für die teure Build-/Test-Pipeline.
+>
+> Reihenfolge für den Owner: **Files changed prüfen und Viewed setzen → Review `💪`/`okay` für den aktuellen PR-Head absenden → beide Checkboxen zuletzt setzen.** Das letzte Bearbeiten des PR-Bodys löst die Owner-Vorprüfung aus.
+>
+> **Wichtig:** Die folgenden beiden Checkbox-Texte sind maschinenlesbare Governance-Invarianten und dürfen nicht umbenannt oder paraphrasiert werden.
+
+- [ ] Human/Owner: vollständigen PR-Diff geprüft.
+- [ ] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.
+
+Danach muss für den **aktuellen PR-Head** ein Review von `SvenKulessa` mit **`💪`** oder **`okay`** vorhanden sein. Erst dann darf `technical-validation` starten. Ein neuer Commit invalidiert den bisherigen Review für den neuen Head. Merge und externe Produktionsmutationen benötigen weiterhin ihre jeweils separate ausdrückliche Human-/Owner-Freigabe.
+
+## 9. PR-Checkklasse und auszuführende Checks
+
+Wähle die strengste zutreffende Klasse. Sobald der Dateiscope in eine höhere Klasse fällt, gilt die höhere Klasse für den gesamten PR.
+
+### Klasse D — Documentation-only
+Scope: ausschließlich `docs/**`, `.ai/**` oder Markdown; keine Runtime-, Workflow-, Dependency- oder Deployment-Dateien.
+
+Erforderlich:
+- [ ] Human-/Owner-Vorprüfung
+- [ ] Governance-/Security-Workflows
+- [ ] `technical-validation` Fast Path
+- [ ] finaler Required Check `build-and-test`
+
+Bewusst übersprungen: Git-Source-Build, npm ci/audit, TypeScript, Unit Tests, Production Build, Docker.
+
+### Klasse C — Application / Test / Konfiguration
+Scope: Anwendungs-/Servicecode, Tests oder nicht-dokumentarische Konfiguration ohne Docker-/Deployment-Relevanz.
+
+Erforderlich:
+- [ ] Human-/Owner-Vorprüfung
+- [ ] Governance-/Security-Workflows
+- [ ] Git-2.55-Integritäts-/Toolchain-Prüfung
+- [ ] `npm ci`
+- [ ] `npm audit --omit=dev --audit-level=high`
+- [ ] Produktionskonfigurations-Invarianten
+- [ ] Docker-Hardening-Policy-Check
+- [ ] TypeScript/Lint
+- [ ] Unit Tests
+- [ ] Production Build
+- [ ] CSP-Produktionspfad-Test
+- [ ] Predeploy-/Deployment-Readiness-Check
+- [ ] `build-and-test`
+
+Docker Image Build nur, wenn Klasse R zusätzlich zutrifft.
+
+### Klasse R — Runtime / Dependency / Docker / Deployment
+Scope enthält z. B. `Dockerfile`, `.dockerignore`, `package*.json`, `server.ts`, `server/**`, `render.yaml`, Runtime-/Docker-Security-Skripte oder relevante Workflows.
+
+Zusätzlich zu Klasse C erforderlich:
+- [ ] Produktions-Docker-Image bauen
+- [ ] Image-User/CMD/Healthcheck verifizieren
+- [ ] Workflow-Security-Validierung bei Workflow-Änderungen
+- [ ] Deployment-/Rollback-Runbook prüfen, wenn Produktionsverhalten betroffen ist
+
+Pull Requests deployen **nicht** produktiv. Produktionsdeployment erfolgt erst nach Merge auf `main` und erfolgreicher Main-CI.
+
+### Klasse M — Externe Plattformmutation
+Scope beinhaltet eine geplante Mutation an Supabase, Stripe, Render oder einer anderen produktionsverbundenen Plattform.
+
+Zusätzlich erforderlich:
+- [ ] Roadmap/ADR/ESS autorisieren die konkrete Mutation
+- [ ] Human/Owner Mutation Approval liegt vor
+- [ ] Pre-Mutation Baseline/Test PASS
+- [ ] Rollback-Runbook ist ausführbar
+- [ ] Mutation wird mit Actor/Target/Timestamp/Request-/Deployment-ID protokolliert
+- [ ] Post-Mutation Verification PASS
+- [ ] Evidence ist dokumentiert
+- [ ] nächster Roadmap-Schritt bleibt bis `VERIFIED PASS` blockiert
+
+### Für diesen PR
+
+- **Gewählte Klasse:** D / C / R / M
+- **Warum:**
+- **Erwartete Checks:**
+- **Bewusst nicht erforderliche Checks:**
+
+## 10. Technische Validierungsnachweise
+
+Trage nur Checks als erfolgreich ein, die für die gewählte Klasse tatsächlich erforderlich und ausgeführt wurden. Nicht erforderliche Checks mit `N/A — gemäß Klasse ...` kennzeichnen.
+
+- [ ] Owner-Gate PASS
+- [ ] Governance/Security PASS
+- [ ] Dependency/Audit PASS oder N/A
+- [ ] TypeScript/Lint PASS oder N/A
+- [ ] Unit Tests PASS oder N/A
+- [ ] Production Build PASS oder N/A
+- [ ] Docker/Runtime PASS oder N/A
+- [ ] Pre-/Post-Mutation Verification PASS oder N/A
+- [ ] `build-and-test` PASS
+
+## 11. Risiko und Rücksetzung
+
+- **Auswirkungsradius:** Niedrig / Mittel / Hoch / Kritisch
+- **Auswirkungen auf Benutzer:**
+- **Auswirkungen auf Daten / Billing / IAM:**
+- **Rücksetzverfahren:**
+- **Rücksetzung benötigt Freigabe für geschützte Änderung?** Ja / Nein — Referenz:
+
+## 12. Prüf- und Merge-Bereitschaft
+
+- [ ] Human-/Owner-Review aus Abschnitt 8 ist vollständig.
+- [ ] Alle für die gewählte Checkklasse erforderlichen Checks sind PASS.
+- [ ] Pflichtprüfung `build-and-test` ist erfolgreich.
+- [ ] Governance-Prüfungen sind erfolgreich.
+- [ ] Der Branch ist konfliktfrei und gegen den aktuellen `main` geprüft.
+- [ ] Alle merge-blockierenden Diskussionen/Funde sind gelöst.
+- [ ] Keine Agenten-/Modell-Selbstfreigabe wird als Human-Freigabe behandelt.
+- [ ] Merge erfolgt nur nach separater ausdrücklicher menschlicher Anweisung.
