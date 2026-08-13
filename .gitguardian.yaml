@@ -1,0 +1,4 @@
+version: 2
+exit_zero: false
+verbose: false
+instance: https://dashboard.gitguardian.com
