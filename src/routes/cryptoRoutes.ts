@@ -1,6 +1,6 @@
 import express from 'express';
 import { randomUUID } from 'node:crypto';
-import { GoogleGenAI } from '@google/genai';
+import type { AiGenerationClient } from '../services/aiSchema';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 import { CryptoOrchestrator } from '../orchestrator/cryptoOrchestrator';
@@ -21,7 +21,7 @@ function requestCorrelationId(req: express.Request): string {
 }
 
 export function createCryptoRouter(
-  aiClient: GoogleGenAI | null,
+  aiClient: AiGenerationClient | null,
   anthropicClient: Anthropic | null = null,
   openaiClient: OpenAI | null = null,
 ): express.Router {
