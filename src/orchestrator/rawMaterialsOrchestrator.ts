@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GoogleGenAI } from '@google/genai';
+import type { AiGenerationClient } from '../services/aiSchema';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 import { AnalysisPayload, RawMaterialInput } from '../types/rawMaterials';
@@ -16,7 +16,7 @@ import { findRawMaterialConfig } from '../config/rawMaterialsConfig';
 import { updateAgentActivity } from '../../server/systemEvents';
 
 export class RawMaterialsOrchestrator {
-  private ai: GoogleGenAI | null;
+  private ai: AiGenerationClient | null;
   private classificationAgent: ClassificationAgent;
   private fundamentalsAgent: FundamentalsAgent;
   private riskAgent: RiskAgent;
@@ -25,7 +25,7 @@ export class RawMaterialsOrchestrator {
   // Audit ARCH-AUDIT-0002 (J3/J3-Folge, Kapitel 14.6): optionale Anthropic-/OpenAI-Clients
   // fuer den providerübergreifenden Rückfall - ohne konfigurierten Client (Standardwert null)
   // ruckt die Kette einfach zur naechsten Stufe durch.
-  constructor(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null) {
+  constructor(aiClient: AiGenerationClient | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null) {
     this.ai = aiClient;
     this.classificationAgent = new ClassificationAgent(aiClient, anthropicClient, openaiClient);
     this.fundamentalsAgent = new FundamentalsAgent(aiClient, anthropicClient, openaiClient);

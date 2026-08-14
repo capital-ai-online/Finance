@@ -19,17 +19,6 @@ function mockOpenAI(behavior: 'ok' | 'fail', dims = 3) {
   } as any;
 }
 
-function mockGemini(behavior: 'ok' | 'fail', dims = 3) {
-  return {
-    models: {
-      embedContent: async ({ contents }: { contents: string[] }) => {
-        if (behavior === 'fail') throw new Error('gemini embeddings failed');
-        return { embeddings: contents.map((_, i) => ({ values: Array(dims).fill(0).map((_, d) => i + d) })) };
-      },
-    },
-  } as any;
-}
-
 describe('rag/documentLoader', () => {
   it('laedt reale Chunks aus docs/ und .ai/skills/', () => {
     const chunks = loadCorpusChunks();
@@ -49,23 +38,18 @@ describe('rag/documentLoader', () => {
 
 describe('rag/embeddingsClient', () => {
   it('liefert null, wenn kein Provider konfiguriert ist', async () => {
-    const result = await embedTexts(['x'], { openai: null, gemini: null });
+    const result = await embedTexts(['x'], { openai: null });
     expect(result).toBeNull();
   });
 
-  it('bevorzugt OpenAI vor Gemini, wenn beide konfiguriert sind', async () => {
-    const result = await embedTexts(['a', 'b'], { openai: mockOpenAI('ok'), gemini: mockGemini('ok') });
+  it('verwendet OpenAI für echte Embeddings', async () => {
+    const result = await embedTexts(['a', 'b'], { openai: mockOpenAI('ok') });
     expect(result?.provider).toMatch(/^openai:/);
     expect(result?.vectors).toHaveLength(2);
   });
 
-  it('faellt auf Gemini zurueck, wenn OpenAI fehlschlaegt', async () => {
-    const result = await embedTexts(['a'], { openai: mockOpenAI('fail'), gemini: mockGemini('ok') });
-    expect(result?.provider).toMatch(/^gemini:/);
-  });
-
-  it('liefert null, wenn beide konfigurierten Provider fehlschlagen', async () => {
-    const result = await embedTexts(['a'], { openai: mockOpenAI('fail'), gemini: mockGemini('fail') });
+  it('liefert null, wenn OpenAI fehlschlägt', async () => {
+    const result = await embedTexts(['a'], { openai: mockOpenAI('fail') });
     expect(result).toBeNull();
   });
 });

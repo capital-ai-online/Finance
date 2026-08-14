@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GoogleGenAI, Type } from '@google/genai';
+import { Type, type AiGenerationClient } from '../services/aiSchema';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 import { generateStructuredWithFallback } from '../services/agentModelRouting';
@@ -16,11 +16,11 @@ export interface CryptoRiskAssessment {
 }
 
 export class CryptoRiskAgent {
-  private ai: GoogleGenAI | null;
+  private ai: AiGenerationClient | null;
   private anthropic: Anthropic | null;
   private openai: OpenAI | null;
 
-  constructor(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null) {
+  constructor(aiClient: AiGenerationClient | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null) {
     this.ai = aiClient;
     this.anthropic = anthropicClient;
     this.openai = openaiClient;
@@ -28,11 +28,9 @@ export class CryptoRiskAgent {
 
   public async analyze(coin: string): Promise<CryptoRiskAssessment> {
     const result = await generateStructuredWithFallback({
-      gemini: this.ai,
       anthropic: this.anthropic,
       openai: this.openai,
       promptId: 'crypto-risk',
-      geminiModels: ['gemini-2.5-flash'],
       contents: `Analysiere die Risikoprofile für: "${coin}".
 Bestimme das geschätzte Manipulationsrisiko (Wash Trading), die Handelsplatzkonzentration und regulatorische Risiken.
 Antworte strictly mit einem strukturierten JSON.`,

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GoogleGenAI, Type } from '@google/genai';
+import { Type, type AiGenerationClient } from '../services/aiSchema';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 import { Classification, CategoryMain } from '../types/rawMaterials';
@@ -11,11 +11,11 @@ import { findRawMaterialConfig } from '../config/rawMaterialsConfig';
 import { generateStructuredWithFallback } from '../services/agentModelRouting';
 
 export class ClassificationAgent {
-  private ai: GoogleGenAI | null;
+  private ai: AiGenerationClient | null;
   private anthropic: Anthropic | null;
   private openai: OpenAI | null;
 
-  constructor(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null) {
+  constructor(aiClient: AiGenerationClient | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null) {
     this.ai = aiClient;
     this.anthropic = anthropicClient;
     this.openai = openaiClient;
@@ -28,11 +28,9 @@ export class ClassificationAgent {
     const fallback = findRawMaterialConfig(name);
 
     const result = await generateStructuredWithFallback({
-      gemini: this.ai,
       anthropic: this.anthropic,
       openai: this.openai,
       promptId: 'raw-materials-classification',
-      geminiModels: ['gemini-3.1-pro-preview', 'gemini-3.5-flash'],
       contents: `Klassifiziere den folgenden Rohstoff: "${name}".
 Bestimme die Hauptklasse (Metal, Energy, Agriculture, Industrial, Recycling, oder Unknown), eine präzise Subklasse (z.B. Batteriemetalle, Edelmetalle, Nuklearbrennstoffe), den Markttyp (z.B. LME, OTC, Physisch) und den Bewertungsmodus (z.B. Standard, Strategische Relevanz).
 Gib ein strukturiertes JSON zurück.`,

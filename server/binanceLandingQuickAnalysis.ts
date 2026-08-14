@@ -1,5 +1,4 @@
 import express from 'express';
-import { GoogleGenAI } from '@google/genai';
 import { generateTextWithFallback } from '../src/services/agentModelRouting';
 import { getAnthropicInstance, isAnthropicConfigured } from './anthropicClient';
 import { getOpenAIInstance, isOpenAIConfigured } from './openaiClient';
@@ -107,7 +106,7 @@ function deterministicSummary(symbol: string, ticker: BinanceTicker24h, closes: 
 
 /**
  * Geteilte Kernlogik (ADR-0038): laedt oeffentliche Binance-Spot-Marktdaten und erzeugt
- * daraus eine kurze AI-Einschaetzung ueber die bestehende Anthropic->OpenAI->Gemini-Kette,
+ * daraus eine kurze AI-Einschaetzung ueber die bestehende Anthropic->OpenAI-Kette,
  * mit deterministischem Fallback statt Demo-/erfundenen Daten. Wird sowohl vom oeffentlichen
  * Landing-Endpunkt als auch vom authentifizierten Enterprise-Scorer-Endpunkt aufgerufen -
  * siehe ADR-0038-Nachtrag fuer die Trennung der beiden Aufrufkontexte.
@@ -168,18 +167,14 @@ export async function computeBinanceQuickAnalysis(
 
   const anthropic = isAnthropicConfigured() ? getAnthropicInstance() : null;
   const openai = isOpenAIConfigured() ? getOpenAIInstance() : null;
-  const gemini = process.env.GEMINI_API_KEY
-    ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
-    : null;
 
   let provider = 'quantitative-fallback';
   let analysis = deterministicSummary(symbol, ticker, closes);
 
-  if (anthropic || openai || gemini) {
+  if (anthropic || openai) {
     const result = await generateTextWithFallback({
       anthropic,
       openai,
-      gemini,
       promptId,
       contents: JSON.stringify(marketData),
       systemInstruction:
@@ -187,7 +182,6 @@ export async function computeBinanceQuickAnalysis(
         'Erfinde keine Kurse, Nachrichten, Fundamentaldaten oder On-Chain-Daten. Antworte auf Deutsch in maximal 4 kurzen Sätzen: ' +
         'Momentum, kurzfristiger Trend, auffällige Volatilität/Spanne und ein nüchterner Risikohinweis. ' +
         'Nenne Binance Spot als Datenquelle und formuliere ausdrücklich keine Kauf- oder Verkaufsempfehlung.',
-      geminiModels: ['gemini-3.1-pro-preview'],
       maxTokens: 320,
       requestId,
     });

@@ -1,6 +1,7 @@
 import { recordProviderHealth } from '../platform/Supervisor/providerHealth';
 import { recordMarketDataProviderOutcome } from './marketDataProviderRouter';
 import { ensureIndexQuoteFresh, getCachedIndexQuote, INDEX_FMP_TICKERS } from '../../server/fmpIndices';
+import { observeAlpacaStockQuote } from './alpacaShadowProvider';
 
 export const TRADITIONAL_QUOTE_CONTRACT_VERSION = 'traditional-quote/1.0.0' as const;
 export type TraditionalQuoteAssetClass = 'stock' | 'forex' | 'index';
@@ -171,5 +172,15 @@ export async function fetchVerifiedTraditionalQuote(
 ): Promise<VerifiedTraditionalQuote> {
   const symbol = symbolInput.toUpperCase().trim();
   if (assetClass === 'index') return fetchFmpIndexQuote(symbol, options);
-  return fetchTwelveDataQuote(symbol, assetClass, options);
+  const canonical = await fetchTwelveDataQuote(symbol, assetClass, options);
+  if (assetClass === 'stock') {
+    // Shadow-only: Alpaca records independent freshness/deviation evidence but never
+    // changes the canonical Twelve Data quote or the score in this integration phase.
+    await observeAlpacaStockQuote(symbol, { price: canonical.price, provider: canonical.provider }, {
+      fetchImpl: options.fetchImpl,
+      timeoutMs: options.timeoutMs,
+      nowMs: options.nowMs,
+    });
+  }
+  return canonical;
 }
