@@ -90,6 +90,28 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export interface HeaderLookup {
+  get(name: string): string | null;
+}
+
+// /healthz (server/routes/health.ts) does NOT include a `deployment` field in its JSON body -
+// deployment identity is set exclusively as response headers by the middleware in
+// server/logger.ts (x-capital-ai-version/-commit/-branch/-repo/-provider). Falls back to those
+// headers exactly like scripts/pr/productionPreflight.mjs already does, so both consumers of this
+// endpoint agree on where the identity actually comes from. Exported and unit-tested on its own
+// because a first version of this script silently missed this and only read the JSON body,
+// making verification fail-closed forever regardless of how long it polled.
+export function mergeHealthPayloadWithHeaders(payload: any, headers: HeaderLookup): any {
+  const headerDeployment = {
+    version: headers.get('x-capital-ai-version'),
+    commitSha: headers.get('x-capital-ai-commit'),
+    branch: headers.get('x-capital-ai-branch'),
+    repoSlug: headers.get('x-capital-ai-repo'),
+    provider: headers.get('x-capital-ai-provider'),
+  };
+  return { ...payload, deployment: payload?.deployment || headerDeployment };
+}
+
 async function fetchHealth(url: string): Promise<{ responseOk: boolean; payload: any }> {
   try {
     const response = await fetch(url, {
@@ -102,7 +124,8 @@ async function fetchHealth(url: string): Promise<{ responseOk: boolean; payload:
     } catch {
       payload = null;
     }
-    return { responseOk: response.ok, payload };
+
+    return { responseOk: response.ok, payload: mergeHealthPayloadWithHeaders(payload, response.headers) };
   } catch {
     return { responseOk: false, payload: null };
   }

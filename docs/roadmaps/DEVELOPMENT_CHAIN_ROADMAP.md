@@ -94,7 +94,7 @@ unberührt.
 | M5 Audit / Telemetry | **VERIFIED PASS** | COMPLETE | ADR-0056/0059 + M5 Evidence | PR #222 corrected writer deployed and confirmed via real successful privileged audit insert (`docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md`, cross-verified against PR #229) | autonomous mutation remains blocked independent of this (SA5/M10 gate) |
 | M5A Native MFA / AAL2 | **VERIFIED PASS** | baseline + runbook + closure evidence complete | ESS-0020 + ADR-0064 + ADR-0003.5 | repo code merged (PR #255/#256) → beide Owner-Profile mit verifiziertem nativen TOTP-Faktor + bestätigter `aal2`-Sitzung (`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`) → Advisor ohne unowned HIGH/CRITICAL | M6 unblocked |
 | M6 Supply Chain Provenance | **VERIFIED PASS** | **RUNBOOK READY + repo evidence** | ADR-0060 | source→lockfile→SBOM→provenance chain implemented, merged, and confirmed on the real hosted `push`-to-`main` build path: run [`31834114193`](https://github.com/SvenKulessa/Finance/actions/runs/31834114193) signed the provenance statement via cosign keyless signing (Sigstore Fulcio/Rekor) and verified it in the same run (`cosign verify-blob ... Verified OK`) against the exact expected certificate identity and OIDC issuer (`docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`) | M7 unblocked |
-| M7 Deployment Identity / Platform Mutation | **PHASE 0 COMPLETE / REPOSITORY CONTROLS CODE COMPLETE (unmerged)** | **RUNBOOK READY + repo evidence** | ADR-0061 | read-only Render preflight done; deploy-production now gated on M6 attestation success; new post-deploy identity/health verification job implemented and locally tested (`docs/evidence/m7/M7_PHASE0_AND_REPOSITORY_CONTROLS_EVIDENCE.md`); zero external mutations performed; every required external mutation still needs its own exact target + Owner mutation approval before execution | M8 after all required M7 mutations VERIFIED PASS |
+| M7 Deployment Identity / Platform Mutation | **PHASE 0 COMPLETE / PROVENANCE-GATE MERGED, POST-DEPLOY VERIFICATION BUGFIX PENDING MERGE** | **RUNBOOK READY + repo evidence** | ADR-0061 | read-only Render preflight done; deploy-production merged and confirmed gated on M6 attestation on a real push; the new post-deploy identity/health verification job merged but failed its first real run — root cause found (it never read the `/healthz` response headers, only the JSON body, which never carries the deployment identity in production) and fixed, pending merge (`docs/evidence/m7/M7_PHASE0_AND_REPOSITORY_CONTROLS_EVIDENCE.md`); zero external mutations performed; every required external mutation still needs its own exact target + Owner mutation approval before execution | M8 after all required M7 mutations VERIFIED PASS |
 | M8 Agent Cutover | **BLOCKED BY M7** | **RUNBOOK READY** | ADR-0062 + ESS-0019 | provider-neutral profiles + equivalent policy tests + rollback to read-only | M9 after cutover VERIFIED PASS |
 | M9 Assurance / Incident / Break-Glass | **BLOCKED BY M8** | **RUNBOOK READY** | ADR-0063 | injection/replay/exfiltration/audit/kill-switch/break-glass/rollback drills | M10 after assurance VERIFIED PASS |
 | M10 Passkey-only Owner PR Authorization | **BLOCKED BY M9** | **ESS + RUNBOOK + THREAT MODEL READY** | ADR-0066 + ESS-0022 | exact-state WebAuthn approval, shadow mode, replay/recovery tests, legacy gate cleanup | DevelopmentChain closure after VERIFIED PASS |
@@ -110,14 +110,17 @@ M7 (Deployment Identity) — Phase-0-Preflight (read-only) abgeschlossen: exakt 
 identifiziert (`srv-d91o1o9o3t8c73edi55g`, „Finance"), aktueller live Deploy bestätigt konsistent mit
 `main`, bestehender Health-/Deployment-Identitäts-Mechanismus (ADR-0036) inspiziert, keine GitHub-OIDC-
 Föderation zu Render verfügbar. Erstes Repository-Implementation-Paket (Owner-bestätigter Scope:
-Provenance-Gate + Post-Deploy-Verifikation) code-vollständig und lokal verifiziert: `deploy-production`
-hängt jetzt zusätzlich von `supply-chain-attestation` ab (fail-closed, kein Deploy bei fehlgeschlagener
-M6-Attestation mehr möglich); neuer Job `verify-deployment-identity` pollt nach jedem Produktions-Deploy
-den öffentlichen `/healthz`-Endpunkt, bis der erwartete Commit als live+healthy bestätigt ist, oder
-schlägt fail-closed fehl — siehe `docs/evidence/m7/M7_PHASE0_AND_REPOSITORY_CONTROLS_EVIDENCE.md`. Keine
-externe Mutation durch diese Sitzung; jede künftige externe Plattform-Mutation braucht weiterhin ihr
-eigenes exaktes Ziel + separate Owner-Mutation-Approval. SA5 bleibt weiterhin bis M10 `VERIFIED PASS`
-blockiert.
+Provenance-Gate + Post-Deploy-Verifikation) gemergt: `deploy-production` hängt jetzt zusätzlich von
+`supply-chain-attestation` ab und wurde im ersten realen `push`-Lauf bestätigt fail-closed korrekt
+darauf zu warten. Der neue Job `verify-deployment-identity`, der nach jedem Produktions-Deploy den
+öffentlichen `/healthz`-Endpunkt pollt, schlug in seinem ersten echten Lauf fehl: er las die
+Deployment-Identität nur aus dem JSON-Body, während Produktion sie ausschließlich über Response-Header
+liefert — ein echter, im realen Lauf gefundener Bug, nicht nur ein hypothetisches Risiko. Root Cause
+gefunden, Fix implementiert, getestet (13 Tests inkl. 3 neuer, gezielt für diesen Fehlerfall) und gegen
+einen die reale Produktionsantwort nachbildenden Mock-Server bestätigt — Merge des Fixes steht noch aus.
+Siehe `docs/evidence/m7/M7_PHASE0_AND_REPOSITORY_CONTROLS_EVIDENCE.md`. Keine externe Mutation durch
+diese Sitzung; jede künftige externe Plattform-Mutation braucht weiterhin ihr eigenes exaktes Ziel +
+separate Owner-Mutation-Approval. SA5 bleibt weiterhin bis M10 `VERIFIED PASS` blockiert.
 
 ### Goal
 

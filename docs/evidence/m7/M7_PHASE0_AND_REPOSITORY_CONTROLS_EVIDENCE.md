@@ -1,7 +1,7 @@
 # M7 — Deployment Identity: Phase-0-Preflight und Repository-Controls Evidence
 
-Status: PHASE 0 COMPLETE, REPOSITORY CONTROLS CODE COMPLETE / CI-VERIFIKATION PENDING FIRST MAIN PUSH
-Datum: 2026-08-14
+Status: PHASE 0 COMPLETE, REPOSITORY CONTROLS CODE COMPLETE / BUGFIX NACH ERSTEM ECHTEN LAUF UNMERGED (siehe Nachtrag Abschnitt 0.1)
+Datum: 2026-08-14 (Nachtrag: 2026-08-14, selber Tag)
 Roadmap phase: M7
 Authority: ADR-0061, `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`,
 `docs/architecture/ai-agent/AI_AGENT_DEPLOYMENT_IDENTITY.md`
@@ -16,6 +16,46 @@ gelöscht. Alle Render-Zugriffe in Abschnitt 1 sind ausschließlich lesend
 (`list_workspaces`, `select_workspace`, `list_services`, `list_deploys`) über die Render-MCP-Tools
 dieser Sitzung. Der M7-Runbook-Owner-Mutation-Gate (Abschnitt „Owner Mutation Gate") wurde nicht
 durchlaufen und ist für diese Sitzung nicht relevant, da keine externe Mutation stattfindet.
+
+## 0.1 Nachtrag — erster echter `push`-Lauf: `verify-deployment-identity` schlug real fehl, Root Cause gefunden und behoben
+
+Nach Merge von PR #265 löste der resultierende `push`-Lauf auf `main`
+([`31841526883`](https://github.com/SvenKulessa/Finance/actions/runs/31841526883), Commit
+`c0bfa4d63bab7a770bb4d4b79a0c87f44d6290eb`) den vollständigen neuen Trust Chain real aus:
+`build-and-test` PASS, `supply-chain-attestation` PASS, `deploy-production` PASS (bestätigt: wartete
+korrekt auf `supply-chain-attestation`, wie in Abschnitt 2.1 vorgesehen) — aber der neue Job
+`verify-deployment-identity` schlug nach dem vollen 5-Minuten-Timeout (29 Poll-Versuche) fehl:
+
+```text
+[deployment-verify] FAIL-CLOSED nach 29 Versuch(en), 300609ms: Deployment liefert keinen gueltigen
+40-stelligen Commit-SHA (ADR-0036 Header/Feld fehlt oder ungueltig).
+```
+
+**Root Cause** (verifiziert durch Lesen der tatsächlichen Endpoint-Quelle,
+`server/routes/health.ts` und `server/logger.ts`): `/healthz` liefert **keine** `deployment`-Eigenschaft
+im JSON-Body — die ADR-0036-Deployment-Identität wird ausschließlich als Response-Header gesetzt
+(`x-capital-ai-version`/`-commit`/`-branch`/`-repo`/`-provider`, `server/logger.ts` Zeilen 84–89). Die
+ursprüngliche Behauptung in Abschnitt 1 („Laufzeit-Endpoint liefert u. a. ADR-0036-Deployment-Identität")
+war also ungenau formuliert — richtig ist: *nur über Header*, nicht im Body. `scripts/pr/productionPreflight.mjs`
+kennt diesen Fallback bereits (`payload?.deployment || headerDeployment`); die erste Version von
+`scripts/deployment/verifyDeploymentIdentity.ts` hatte diesen Fallback **nicht** übernommen und las
+ausschließlich den JSON-Body — das Skript konnte dadurch grundsätzlich nie erfolgreich sein, unabhängig
+davon, wie lange es pollte. Ein reiner Timing-Bug (Render-Deploy noch nicht fertig) wurde geprüft und
+ausgeschlossen: Der Commit-Mismatch-Violation-Text taucht nirgends auf, sondern durchgehend „kein
+gültiger 40-stelliger Commit-SHA" — konsistent mit einer komplett fehlenden `deployment`-Eigenschaft im
+Body, nicht mit einem alten, aber gültigen Commit.
+
+**Fix**: `fetchHealth()` liest jetzt zusätzlich die Response-Header und baut daraus einen Fallback
+`headerDeployment`, exakt nach demselben Muster wie `productionPreflight.mjs`. Die Merge-Logik wurde als
+eigene, exportierte, reine Funktion `mergeHealthPayloadWithHeaders()` herausgezogen und mit 3 neuen Tests
+abgesichert (`tests/unit/verifyDeploymentIdentity.test.ts`, jetzt 13 Tests gesamt) — genau die Art Test,
+die diesen Bug von Anfang an gefangen hätte. Zusätzlich lokal end-to-end gegen einen echten
+HTTP-Mock-Server bestätigt (Header-only-Response, exakt wie die reale Produktions-Antwort): PASS nach
+1 Versuch, 61ms.
+
+Dies ist eine reale, im ersten echten Lauf gefundene und behobene Lücke — kein hypothetisches Risiko.
+Genau deshalb blieb der Status bewusst unterhalb „VERIFIED PASS", bis ein echter `push`-Lauf das Skript
+tatsächlich geprüft hat.
 
 ## 1. Phase 0 — Read-only Preflight (Runbook-Abschnitt „Phase 0")
 
@@ -69,7 +109,7 @@ gegen den Ursprungs-Repository verifiziert) 90 Tage aufbewahrt.
 | Datei | Zweck |
 |---|---|
 | `scripts/deployment/verifyDeploymentIdentity.ts` (neu) | Exportiert reine `verifyDeploymentIdentity()`-Prüf-Funktion + CLI mit Poll-Loop, fail-closed bei Timeout/Mismatch. |
-| `tests/unit/verifyDeploymentIdentity.test.ts` (neu) | 10 Tests: 1 Positiv-Fall (exakter Match), 1 Positiv-Fall (kein Repository-Constraint), 1 Case-Insensitivitäts-Fall, 7 Negativ-Fälle. |
+| `tests/unit/verifyDeploymentIdentity.test.ts` (neu) | 13 Tests: 1 Positiv-Fall (exakter Match), 1 Positiv-Fall (kein Repository-Constraint), 1 Case-Insensitivitäts-Fall, 7 Negativ-Fälle, 3 Tests für `mergeHealthPayloadWithHeaders` (Nachtrag 0.1 — Header-Fallback exakt für den real gefundenen Bug). |
 | `.github/workflows/ci.yml` (geändert) | `deploy-production` jetzt zusätzlich von `supply-chain-attestation` abhängig; neuer Job `verify-deployment-identity`. |
 | `docs/evidence/m7/M7_PHASE0_AND_REPOSITORY_CONTROLS_EVIDENCE.md` (dieses Dokument, neu) | Phase-0- und Repository-Controls-Evidence. |
 
@@ -92,17 +132,28 @@ Abschnitt 4). Die für `verifyDeploymentIdentity.ts` tatsächlich relevanten Fä
 - DENY: Branch ≠ `main` → „deploy request from non-main or unverified source" aus der Runbook-Liste;
 - DENY: erwarteter Commit selbst kein gültiger 40-Zeichen-SHA.
 
+Zusätzlich abgedeckt (`mergeHealthPayloadWithHeaders`, 3 Tests): Header-Fallback greift, wenn der
+JSON-Body keine `deployment`-Eigenschaft enthält (der reale Produktionsfall); ein vorhandenes
+`deployment`-Feld im Body hat weiterhin Vorrang vor Headern; ein unparsbarer/`null`-Body fällt
+vollständig auf Header zurück.
+
 Zusätzlich lokal bestätigt (siehe Abschnitt 5): CLI schlägt korrekt fehl, wenn `VERIFIED_COMMIT_SHA`
 fehlt, und schreibt bei Timeout gegen eine unerreichbare URL korrekt eine `FAILED / TIMEOUT`-Evidence
-nach 3 Versuchen (Poll-Intervall 1s, Timeout 3s im Test).
+nach 3 Versuchen (Poll-Intervall 1s, Timeout 3s im Test). Nach dem Fix (Nachtrag 0.1) zusätzlich gegen
+einen lokalen HTTP-Mock-Server bestätigt, der die reale Produktionsantwort nachbildet (Header-only,
+kein `deployment` im Body): PASS nach 1 Versuch, 61ms.
 
 ## 4. Warum dieses Dokument (noch) nicht „VERIFIED PASS" meldet
 
-Der neue Job `verify-deployment-identity` läuft — wie `supply-chain-attestation` zuvor — ausschließlich
-auf `push`+`main` und hat zum Zeitpunkt dieses PRs noch nie gegen einen echten Render-Deploy
-ausgeführt. Der reale Nachweis (Poll konvergiert auf den tatsächlich deployten Commit, Evidence-Artefakt
-mit `result: "VERIFIED PASS"`) folgt als Nachtrag nach Merge, analog zum bei M6 etablierten Muster
-(siehe `docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md` Abschnitte 0/0.1).
+Der erste echte `push`-Lauf nach Merge von PR #265 fand einen realen Bug (Nachtrag Abschnitt 0.1) —
+`verify-deployment-identity` konnte grundsätzlich nie erfolgreich sein, weil das Skript die
+Deployment-Identität ausschließlich im JSON-Body suchte, während die Produktion sie nur über Header
+liefert. Der Fix ist lokal implementiert, getestet (13/13 Tests, inkl. 3 neuer Tests exakt für diesen
+Fehlerfall) und gegen einen die reale Produktionsantwort nachbildenden Mock-Server bestätigt, aber noch
+nicht gemergt. Der reale Nachweis (Poll konvergiert im echten CI-Lauf auf den tatsächlich deployten
+Commit, Evidence-Artefakt mit `result: "VERIFIED PASS"`) folgt als weiterer Nachtrag nach Merge dieses
+Fixes, analog zum bei M6 etablierten Muster (siehe `docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`
+Abschnitte 0/0.1).
 
 Darüber hinaus ist dies **nur der erste** von mehreren möglichen M7-Repository-Implementation-Paketen.
 Der M7-Exit-Gate selbst (`docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`, Abschnitt „Exit Gate")
@@ -112,6 +163,8 @@ den gesamten Scope. Keines davon ist Teil dieses Pakets — M7 als Ganzes bleibt
 `VERIFIED PASS`.
 
 ## 5. Lokaler Nachweis dieser Sitzung
+
+Erster Implementierungslauf (vor Merge von PR #265, vor Entdeckung des Header-vs-Body-Bugs):
 
 ```text
 npm run lint                                -> PASS (tsc --noEmit)
@@ -132,6 +185,24 @@ npx tsx scripts/deployment/verifyDeploymentIdentity.ts
                                              -> FAIL-CLOSED nach 3 Versuchen/3045ms wie erwartet,
                                                 Evidence-Datei mit result: "FAILED / TIMEOUT" korrekt
                                                 geschrieben, Exit 1
+```
+
+Nachtrag-Lauf (nach dem Header-Fallback-Fix, Abschnitt 0.1):
+
+```text
+npm run lint                                -> PASS (tsc --noEmit)
+npx vitest run tests/unit/verifyDeploymentIdentity.test.ts
+                                             -> 13/13 PASS (3 neu: mergeHealthPayloadWithHeaders)
+npx vitest run                              -> 151 Testdateien, 867 Tests PASS
+
+Lokaler HTTP-Mock-Server (Node http, Port 38123) bildet die reale Produktionsantwort exakt nach:
+Header x-capital-ai-* gesetzt, KEIN deployment-Feld im JSON-Body.
+
+CAPITAL_AI_PRODUCTION_HEALTH_URL=http://127.0.0.1:38123/healthz \
+VERIFIED_COMMIT_SHA=cccc...cccc (40 Zeichen) GITHUB_REPOSITORY=SvenKulessa/Finance \
+npx tsx scripts/deployment/verifyDeploymentIdentity.ts
+                                             -> PASS nach 1 Versuch, 61ms, Evidence-Datei mit
+                                                result: "VERIFIED PASS" korrekt geschrieben, Exit 0
 ```
 
 ## 6. Nicht Teil dieser Implementierung
