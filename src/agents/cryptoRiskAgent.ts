@@ -28,11 +28,9 @@ export class CryptoRiskAgent {
 
   public async analyze(coin: string): Promise<CryptoRiskAssessment> {
     const result = await generateStructuredWithFallback({
-      gemini: this.ai,
       anthropic: this.anthropic,
       openai: this.openai,
       promptId: 'crypto-risk',
-      geminiModels: ['gemini-2.5-flash'],
       contents: `Analysiere die Risikoprofile für: "${coin}".
 Bestimme das geschätzte Manipulationsrisiko (Wash Trading), die Handelsplatzkonzentration und regulatorische Risiken.
 Antworte strictly mit einem strukturierten JSON.`,
