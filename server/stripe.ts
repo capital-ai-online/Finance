@@ -128,6 +128,16 @@ stripeRouter.post('/create-checkout-session', async (req, res) => {
       }
     };
 
+    // Owner-Policy 2026-08-14: kein eigenes Lastschrift-/SEPA-Mandat bei neuen Abos moeglich.
+    // SEPA Debit (und andere verzoegert clearende Verfahren) wird nachtraeglich belastet und kann
+    // Tage spaeter mangels Deckung zurueckgehen ("Liquiditaet" ist beim Kaufzeitpunkt nicht
+    // geprueft) - im Gegensatz zu einer Kartenzahlung, die Stripe bereits beim Checkout-Abschluss
+    // synchron autorisiert. Deshalb ausschliesslich Zahlungsmittel mit sofortiger Autorisierung
+    // fuer Abo-Checkouts, unabhaengig von den im Dashboard aktivierten Methoden.
+    if (mode === 'subscription') {
+      sessionData.payment_method_types = ['card'];
+    }
+
     // Der Jahresrabatt steckt bereits im Betrag der jeweiligen
     // STRIPE_PRICE_ID_*_YEARLY Price-ID (separates Stripe-Produkt/-Preis,
     // vom Platform Director im Dashboard mit dem rabattierten Jahresbetrag

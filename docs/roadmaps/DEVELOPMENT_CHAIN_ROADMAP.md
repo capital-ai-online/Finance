@@ -2,9 +2,18 @@
 
 Status: IMPLEMENTATION ROADMAP
 Status date: 2026-08-14
-Current repository baseline: `main@5ba4ab12f7c6d98912b95bf000ceb352d9297fcd` (PR #252 merge)
+Current repository baseline: `main@66da35b80ba23e4f216318a9cd9f9b4e7b787679` (PR #255 merge)
 Repository: `SvenKulessa/Finance`
 Platform version: `0.6.0`
+
+**Sync 2026-08-14 (nach PR #255 Merge):** M5A-Repository-Code ist gemerged; `main` erzwingt seither
+serverseitig eine echte AAL2-Sitzung für Step-Up-Ausstellung (`requireVerifiedAal2`). PR #256
+(offen, Direktauftrag außerhalb dieser Roadmap-Kette, gleiche Session) ergänzt zusätzlich: Löschung
+der `break_glass_codes`-Produktionsdaten, DSGVO-Consent-Log + Land/Telefon bei Registrierung,
+verpflichtendes Onboarding (mind. 1 Faktor) für neue Konten, Schutz gegen Entfernen des letzten
+Faktors bei verpflichteten Konten, sowie Stripe-SEPA-Ausschluss bei neuen Abos. Keine dieser
+Ergänzungen ändert den M5A-Phasenstatus unten — sie sind Owner-Direktaufträge, keine
+Roadmap-Phasenausführung.
 
 ## Rolle dieses Dokuments
 
@@ -83,7 +92,7 @@ unberührt.
 | M3 CI Hardening | **COMPLETE** | COMPLETE | ADR-0053/0060 + CI governance | scope-aware CI / Owner gate | preserve until M10 cutover |
 | M4 Agent IAM | **COMPLETE** | COMPLETE | ADR-0058 + ESS-0018/0019 | negative IAM tests | preserve |
 | M5 Audit / Telemetry | **PERSISTENCE VERIFIED / APPLICATION CORRECTIVE VERIFICATION ACTIVE** | COMPLETE | ADR-0056/0059 + M5 Evidence | PR #222 merged; corrected writer must still deploy and prove a real successful privileged audit insert | M5A repository work may continue; autonomous mutation remains blocked |
-| M5A Native MFA / AAL2 | **CODE COMPLETE / CI PENDING MERGE** | baseline + runbook ready | ESS-0020 + ADR-0064 + ADR-0003.5 | repo code implemented (`docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`) → CI → Human merge → explicit Owner production approval → native factor/AAL2/recovery/advisor verification | M6 blocked until VERIFIED PASS |
+| M5A Native MFA / AAL2 | **REPOSITORY CODE MERGED (PR #255) / AWAITING OWNER NATIVE-FACTOR ENROLLMENT** | baseline + runbook ready | ESS-0020 + ADR-0064 + ADR-0003.5 | repo code merged (`docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`) → **offen:** explizite Owner-Mutationsfreigabe → natives Owner-Faktor-Enrollment (Human-Aktion, nicht code-automatisierbar) → AAL2/Recovery/Advisor-Verifikation | M6 blocked until VERIFIED PASS |
 | M6 Supply Chain Provenance | **BLOCKED BY M5A** | **RUNBOOK READY** | ADR-0060 | SBOM/provenance/attestation bound to exact source/artifact | M7 after M6 VERIFIED PASS |
 | M7 Deployment Identity / Platform Mutation | **BLOCKED BY M6** | **RUNBOOK READY** | ADR-0061 | exact target + Owner mutation approval + post-verification/rollback | M8 after all required M7 mutations VERIFIED PASS |
 | M8 Agent Cutover | **BLOCKED BY M7** | **RUNBOOK READY** | ADR-0062 + ESS-0019 | provider-neutral profiles + equivalent policy tests + rollback to read-only | M9 after cutover VERIFIED PASS |
@@ -95,9 +104,13 @@ unberührt.
 ## Current executable DEVELOPMENT phase — M5A
 
 M5A repository code (native TOTP enroll/challenge/verify, centralized server-side AAL2 gate,
-step-up coupling) is implemented and pending Human/Owner PR review and CI — see
-`docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`. Externe oder produktive Mutationen
-bleiben davon ausdrücklich ausgeschlossen; SA5 bleibt bis M10 `VERIFIED PASS` blockiert.
+step-up coupling) is merged (PR #255) — see
+`docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`. Der verbleibende Schritt zu
+`VERIFIED PASS` ist ausschließlich eine interaktive Human/Owner-Aktion (natives TOTP oder Passkey
+für das eigene Owner-Profil in `TotpSettings.tsx` einrichten) plus anschließender Advisor-Rerun —
+das kann diese Sitzung nicht stellvertretend ausführen. Bis dahin bleibt M6 blockiert; externe oder
+produktive Mutationen bleiben davon ausdrücklich ausgeschlossen; SA5 bleibt bis M10 `VERIFIED PASS`
+blockiert.
 
 ### Goal
 

@@ -44,8 +44,7 @@
     "docs/adr/resolved/ADR-0030-platform-version-release-lifecycle.md"
   ],
   "tests": [
-    "tests/unit/releaseVersionGate.test.ts",
-    "tests/unit/platformVersionConsistency.test.ts"
+    "tests/unit/releaseVersionGate.test.ts"
   ],
   "note": "ADR-0030 implementation: scripts/automation/releaseVersion.ts provides dry-run by default and requires explicit --apply for mutations. It validates exact next SemVer transitions, classification, work-package/ADR traceability, rollback and acceptance requirements; synchronizes package/lock/metadata/governed mirrors; runs lint, version consistency, build and predeploy gates; restores version files on failure; writes release-candidate evidence only after gates pass; and never creates a final Git tag."
 }
