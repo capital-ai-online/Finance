@@ -1,0 +1,74 @@
+/**
+ * SEO-ROADMAP-0001 / D2 — route-specific titles and meta descriptions.
+ * Applied client-side after hydration; crawlers with JS see updated values.
+ * Full prerender remains S2.
+ */
+
+export interface RouteSeo {
+  title: string;
+  description: string;
+  canonicalPath: string;
+}
+
+const DEFAULT: RouteSeo = {
+  title: 'CAPITAL-AI Portal',
+  description:
+    'Offizielles CAPITAL-AI Portal (Version 0.6.0) – Sichere quantitative Analysen, Compliance-Management, Asset-Scoring und automatisierte DSGVO-Dokumentation.',
+  canonicalPath: '/',
+};
+
+const ROUTES: Record<string, RouteSeo> = {
+  '/': DEFAULT,
+  '/impressum': {
+    title: 'Impressum – CAPITAL-AI',
+    description: 'Impressum und Anbieterkennzeichnung gemäß TMG §5 für CAPITAL-AI (Sven Kulessa).',
+    canonicalPath: '/impressum',
+  },
+  '/agb': {
+    title: 'AGB – CAPITAL-AI',
+    description: 'Allgemeine Geschäftsbedingungen für die Nutzung des CAPITAL-AI Portals.',
+    canonicalPath: '/agb',
+  },
+  '/datenschutz': {
+    title: 'Datenschutzerklärung – CAPITAL-AI',
+    description: 'Datenschutzerklärung und Informationen zur Datenverarbeitung gemäß DSGVO für CAPITAL-AI.',
+    canonicalPath: '/datenschutz',
+  },
+};
+
+export function normalizePathname(pathname: string): string {
+  if (!pathname || pathname === '/') return '/';
+  return pathname.replace(/\/+$/, '') || '/';
+}
+
+export function getRouteSeo(pathname: string): RouteSeo {
+  const key = normalizePathname(pathname);
+  return ROUTES[key] ?? DEFAULT;
+}
+
+export function applyRouteSeo(pathname: string): void {
+  if (typeof document === 'undefined') return;
+  const seo = getRouteSeo(pathname);
+  document.title = seo.title;
+
+  const setMeta = (selector: string, attr: string, value: string) => {
+    const el = document.querySelector(selector);
+    if (el) el.setAttribute(attr, value);
+  };
+
+  setMeta('meta[name="title"]', 'content', seo.title);
+  setMeta('meta[name="description"]', 'content', seo.description);
+  setMeta('meta[property="og:title"]', 'content', seo.title);
+  setMeta('meta[property="og:description"]', 'content', seo.description);
+  setMeta('meta[property="og:url"]', 'content', `https://capital-ai.online${seo.canonicalPath === '/' ? '/' : seo.canonicalPath}`);
+  setMeta('meta[property="twitter:title"]', 'content', seo.title);
+  setMeta('meta[property="twitter:description"]', 'content', seo.description);
+
+  const canonical = document.querySelector('link[rel="canonical"]');
+  if (canonical) {
+    canonical.setAttribute(
+      'href',
+      `https://capital-ai.online${seo.canonicalPath === '/' ? '/' : seo.canonicalPath}`,
+    );
+  }
+}
