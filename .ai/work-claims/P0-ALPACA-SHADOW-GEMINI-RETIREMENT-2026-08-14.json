@@ -14,6 +14,7 @@
   "baseSha": "6d611ddda387bfe620e826d110f9a5623dce4378",
   "pullRequest": null,
   "claimedPaths": [
+    ".ai/work-claims/P0-ALPACA-SHADOW-GEMINI-RETIREMENT-2026-08-14.json",
     ".env.example",
     "docs/adr/ADR-0072-alpaca-shadow-and-gemini-retirement.md",
     "docs/architecture/api/ALPACA_SHADOW_DATA_QUALITY_PLAN.md",
@@ -53,10 +54,11 @@
     "src/services/rag/embeddingsClient.ts",
     "src/services/traditionalQuoteEvidence.ts",
     "tests/unit/agentModelRouting.test.ts",
+    "tests/unit/aiGovernance.test.ts",
+    "tests/unit/aiGovernanceComplianceEvidence.test.ts",
     "tests/unit/aiUsageTracker.test.ts",
     "tests/unit/alpacaShadowProvider.test.ts",
-    "tests/unit/rag.test.ts",
-    ".ai/work-claims/P0-ALPACA-SHADOW-GEMINI-RETIREMENT-2026-08-14.json"
+    "tests/unit/rag.test.ts"
   ],
   "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
 }
