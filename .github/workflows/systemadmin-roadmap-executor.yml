@@ -18,13 +18,20 @@ concurrency:
 jobs:
   branch-probe:
     name: Audit-gebundener SA3B Branch-Probe
-    # SA3B ist COMPLETE / VERIFIED PASS (docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md). Ein dauerhaft
-    # scharfgeschalteter privilegierter Host nach Auftragsende widerspricht ADR-0069 Punkt 6
-    # (dauerhaft aktive Bootstrap-Work-Claims). Stillgelegt per `false &&`, damit der auditierte
-    # Vertrag (siehe tests/unit/systemadminExecutionHostWorkflow.test.ts) unveraendert nachweisbar
-    # bleibt. Reaktivierung ist ein eigener, dokumentierter Human/Owner-Change.
+    # SA3B ist COMPLETE / VERIFIED PASS (docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md). War per
+    # `false &&` stillgelegt (ADR-0069 Punkt 6: kein dauerhaft scharfgeschalteter privilegierter
+    # Host ohne aktiven Auftrag), auditierter Vertrag blieb inhaltlich unveraendert nachweisbar
+    # (tests/unit/systemadminExecutionHostWorkflow.test.ts).
+    #
+    # Reaktiviert 2026-08-14 auf explizite Owner-Anweisung ("aktiviere bitte sa3b ... wieder").
+    # Nutzt weiterhin exakt das bestehende, noch gueltige Mandat .ai/mandates/REM-SA3B-PROBE-001.json
+    # (status OWNER_APPROVED, gueltig bis 2026-08-19) - keine neue Aufgabe, keine Pfad-/Kapazitaets-
+    # Erweiterung. SA4 bleibt bewusst weiterhin deaktiviert (siehe systemadmin-sa4-pilot.yml): dessen
+    # Pilot-Skript ist fest an sein bereits gemergtes Zielartefakt gebunden und braeuchte fuer eine
+    # neue Aufgabe ein neues Skript, nicht nur einen Trigger-Flip - siehe M5A_SYSTEMADMIN_REPOSITORY_WORK_PACKAGE.md
+    # und die zugehoerige Owner-Entscheidung, das erst nach M5A VERIFIED PASS mit einem konkreten
+    # M6-Arbeitspaket anzugehen.
     if: >-
-      false &&
       github.event.issue.user.login == 'SvenKulessa' &&
       startsWith(github.event.issue.title, '[SA3B-PROBE]')
     runs-on: ubuntu-latest

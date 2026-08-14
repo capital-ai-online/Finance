@@ -9,6 +9,16 @@ Authority: ESS-0021, ADR-0065, ADR-0058, ADR-0059, ADR-0066, ADR-0067, ADR-0068
 (M5A wurde direkt implementiert, nicht über den SA4-Pfad — siehe Korrektur im M5A-Abschnitt unten
 und `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`). SA5 bleibt bis M10 `VERIFIED PASS` blockiert.
 
+**Reaktivierung 2026-08-14 (Owner-Anweisung "aktiviere bitte sa3b und sa4 wieder"):** SA3B-Trigger
+wurde reaktiviert (`.github/workflows/systemadmin-roadmap-executor.yml`) — nutzt weiterhin exakt
+das bestehende `OWNER_APPROVED`-Mandat `REM-SA3B-PROBE-001`, keine neue Aufgabe. SA4 bleibt
+bewusst deaktiviert: `scripts/systemadmin/runSa4Pilot.mjs` ist kein generisches Ausführungsskript,
+sondern fest an sein bereits gemergtes Zielartefakt (`docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md`)
+inklusive fest codiertem Inhalt gebunden — ein reiner Trigger-Flip würde sofort am
+Self-Blocking-Check scheitern. Eine neue SA4-Aufgabe braucht ein neues Pilot-Skript und ein neues
+Mandat, was gemäß Owner-Entscheidung erst nach M5A `VERIFIED PASS` mit einem konkret auf
+Dateiebene feststehenden M6-Arbeitspaket sinnvoll angegangen wird.
+
 ## Goal
 
 The Systemadmin Roadmap Executor may autonomously implement Owner-approved repository work packages only through bounded REM authority, least privilege, durable append-only audit evidence, Human final review and Human-only merge.
@@ -21,8 +31,8 @@ The Systemadmin Roadmap Executor may autonomously implement Owner-approved repos
 | SA1 REM Validator | COMPLETE / VERIFIED PASS | PR #215 |
 | SA2 Chat Execution Profile | COMPLETE / VERIFIED PASS | PR #216 |
 | SA3A Append-only Audit Adapter | COMPLETE / VERIFIED PASS | PR #218 |
-| SA3B Execution Host | **COMPLETE / VERIFIED PASS** | PR #220, #222; Issues #221/#223/#224; lifecycle cleanup verified before SA4 |
-| SA4 First bounded autonomous work package | **COMPLETE / VERIFIED PASS** | PR #226; Issue #228 / run `31579519025`; PR #229; six M5 authorization/outcome events |
+| SA3B Execution Host | **COMPLETE / VERIFIED PASS** — trigger reaktiviert 2026-08-14 (Owner-Anweisung), gleiches Mandat | PR #220, #222; Issues #221/#223/#224; lifecycle cleanup verified before SA4 |
+| SA4 First bounded autonomous work package | **COMPLETE / VERIFIED PASS** — trigger bleibt bewusst deaktiviert, siehe Korrektur 2026-08-14 unten | PR #226; Issue #228 / run `31579519025`; PR #229; six M5 authorization/outcome events |
 | SA5 Bounded external mutation design | BLOCKED | M10 VERIFIED PASS required |
 
 M10 passkey-only PR authorization target architecture was merged in PR #217, but runtime cutover remains sequentially blocked by M9. Until that cutover, current Human/Owner current-head review and attestation remain authoritative for final CI and merge.

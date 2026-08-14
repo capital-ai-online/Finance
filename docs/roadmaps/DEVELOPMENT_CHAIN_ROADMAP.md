@@ -48,7 +48,7 @@ Authority: `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`.
 
 Die Systemadmin-Authority ist gegenüber der älteren DEVELOPMENT-CHAIN-Baseline fortgeschritten:
 
-- SA3B Execution Host: **COMPLETE / VERIFIED PASS**; Job nach Abschluss per `false &&`-Bedingung stillgelegt (`.github/workflows/systemadmin-roadmap-executor.yml`), auditierter Vertrag bleibt inhaltlich unverändert nachweisbar (`tests/unit/systemadminExecutionHostWorkflow.test.ts`);
+- SA3B Execution Host: **COMPLETE / VERIFIED PASS**; am 2026-08-14 auf explizite Owner-Anweisung reaktiviert (`.github/workflows/systemadmin-roadmap-executor.yml`, `false &&`-Sperre entfernt), nutzt weiterhin exakt das bestehende `OWNER_APPROVED`-Mandat `.ai/mandates/REM-SA3B-PROBE-001.json` (gültig bis 2026-08-19), auditierter Vertrag bleibt inhaltlich unverändert nachweisbar (`tests/unit/systemadminExecutionHostWorkflow.test.ts`);
 - SA4 bounded autonomous repository work package: **COMPLETE / VERIFIED PASS**; Job nach Abschluss per `false &&`-Bedingung stillgelegt (`.github/workflows/systemadmin-sa4-pilot.yml`), zusätzlich durch sein eigenes bereits gemergtes Zielartefakt dauerhaft self-blocking, auditierter Vertrag bleibt inhaltlich unverändert nachweisbar (`tests/unit/systemadminSa4Contracts.test.ts`);
 - permit-before-side-effect, positive/negative Host-Probes, M5 authorization/outcome evidence und Branch-Cleanup sind in der SA-Roadmap und Traceability dokumentiert;
 - direkte ChatGPT→GitHub-Connector-Schreibvorgänge bleiben außerhalb des autonomen SA-Nachweispfads;
