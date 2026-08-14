@@ -1160,9 +1160,7 @@ app.post('/api/market-sentiment/simulate-shock', express.json(), orchestrator.ha
     const result = await generateStructuredWithFallback({
       anthropic,
       openai,
-      gemini: null,
       promptId: 'server-market-sentiment-shock',
-      geminiModels: [],
       systemInstruction: 'Du bist ein hochprofessioneller Quant-Analyst. Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.',
       contents: `Analysiere den theoretischen Einfluss eines makroökonomischen Schocks oder Finanzereignisses auf ein Asset.
 
@@ -1242,9 +1240,7 @@ app.post('/api/portfolio-review', express.json(), orchestrator.handle('Portfolio
     const result = await generateStructuredWithFallback({
       anthropic,
       openai,
-      gemini: null,
       promptId: 'server-portfolio-review',
-      geminiModels: [],
       systemInstruction: 'Du bist ein hochprofessioneller Quant-Portfolio-Analyst und Risk-Officer bei CAPITAL-AI. Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.',
       contents: `Analysiere die folgende Portfolio-Allokation und deren historische Backtest-Ergebnisse (1, 3 und 5 Jahre):
 
