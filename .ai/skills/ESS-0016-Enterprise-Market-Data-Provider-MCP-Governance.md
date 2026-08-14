@@ -4,7 +4,7 @@
 
 **Version:** 1.0.0  
 **Status:** Enterprise Specification  
-**Implementation Status:** PHASE 1 IMPLEMENTED / RUNTIME PROMOTION NOT AUTHORIZED  
+**Implementation Status:** PHASE 2 IMPLEMENTED / RUNTIME PROMOTION NOT AUTHORIZED  
 **Owner:** Platform Director  
 **Security Authority:** CAPITAL-AI IAM / Security & Compliance  
 **Related ADR:** ADR-0041  
@@ -563,6 +563,11 @@ Scoring-/Screening-Pfade sind noch nicht migriert.
 - rate-limit budget;
 - circuit breaker;
 - observability.
+
+Phase-2-Nachweis (2026-08-14): explizites Registry-Routing, bounded Cache mit erneuter
+Freshness-Prüfung, Request Coalescing, provider-/capability-spezifisches Rate-Limit-Budget,
+Circuit Breaker und strukturierte payloadfreie Telemetrie sind implementiert. Die Komponenten
+sind weiterhin nicht in Scoring-/Screening-Call-Sites verdrahtet; Alpaca bleibt `shadow`.
 
 ### Phase 3 — Pipeline Migration
 
