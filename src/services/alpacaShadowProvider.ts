@@ -179,6 +179,7 @@ export async function observeAlpacaStockQuote(
 
 
 export interface AlpacaShadowSmokeSummary {
+  [key: string]: unknown;
   configured: boolean;
   authenticated: boolean;
   state: AlpacaShadowState;
