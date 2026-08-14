@@ -44,6 +44,10 @@ export interface MarketDataGatewayOptions {
 
 const NOOP_TELEMETRY: MarketDataGatewayTelemetry = { record: () => undefined };
 
+function forCorrelation(result: MarketDataGatewayResult, correlationId: string): MarketDataGatewayResult {
+  return { ...result, snapshot: { ...result.snapshot, correlationId } };
+}
+
 function unavailable(
   request: SnapshotRequest,
   attemptedProviders: string[],
@@ -114,7 +118,7 @@ export class MarketDataGateway {
       const assessment = assessMarketDataSnapshot(snapshot, this.qualityOptions(request));
       if (assessment.accepted) {
         this.telemetry.record('cache_hit', { provider: snapshot.provider, qualityState: snapshot.qualityState });
-        return { snapshot, attemptedProviders: [], skippedProviders: [], source: 'cache' };
+        return { snapshot: { ...snapshot, correlationId: request.correlationId }, attemptedProviders: [], skippedProviders: [], source: 'cache' };
       }
       this.cache.delete(key);
     }
@@ -122,7 +126,7 @@ export class MarketDataGateway {
     const existing = this.coalescer.has(key);
     const result = await this.coalescer.run(key, () => this.fetchFromProviders(request, key));
     if (existing) this.telemetry.record('coalesced', { assetClass: request.assetClass, capability: 'snapshot' });
-    return result;
+    return forCorrelation(result, request.correlationId);
   }
 
   private async fetchFromProviders(request: SnapshotRequest, key: string): Promise<MarketDataGatewayResult> {
