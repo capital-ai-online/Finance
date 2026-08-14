@@ -14,7 +14,6 @@ export function marketDataRequestKey(request: SnapshotRequest): string {
   return JSON.stringify({
     symbol: request.symbol.toUpperCase().trim(),
     assetClass: request.assetClass,
-    correlationId: request.correlationId,
     maxAgeMs: request.maxAgeMs ?? null,
     allowStale: request.allowStale === true,
     includeShadow: request.includeShadow === true,

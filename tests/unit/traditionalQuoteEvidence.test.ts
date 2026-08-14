@@ -19,6 +19,7 @@ describe('traditional quote evidence contract', () => {
     expect(quote.evidenceIds[0]).toContain('quote:twelvedata:AAPL');
     expect(quote.alertEligible).toBe(true);
     expect(quote.executionPriceEligible).toBe(false);
+    expect(quote.reason).toBeUndefined();
   });
 
   it('normalizes a six-character forex pair and preserves quote evidence', async () => {
@@ -57,6 +58,7 @@ describe('traditional quote evidence contract', () => {
     expect(quote.alertEligible).toBe(false);
     expect(quote.evidenceIds).toHaveLength(1);
     expect(quote.evidenceAgeMs).toBe(60 * 60 * 1000);
+    expect(quote.provider).toBe('TwelveData');
   });
 
   it('fails closed when Twelve Data is not configured', async () => {
