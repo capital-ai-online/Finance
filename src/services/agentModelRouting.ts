@@ -4,7 +4,7 @@
 // Block zweimal (Premium-Modell, dann bei Fehlschlag identisch nochmal mit dem Flash-Modell)
 // copy-paste-dupliziert. Die 4 Krypto-Agenten hatten gar keinen Modell-Retry - ein
 // Fehlschlag ging direkt auf den hartkodierten getFallback(). Und in beiden Fällen gab es nur
-// einen einzigen Anbieter (Google Gemini) - ein Gemini-Totalausfall (nicht nur Rate-Limit)
+// einen einzigen Anbieter (einen einzelnen KI-Provider) - ein einen einzelnen KI-Provider (nicht nur Rate-Limit)
 // hätte alle 8 Agenten gleichzeitig auf ihren statischen Fallback zurückfallen lassen.
 //
 // Jetzt: eine gemeinsame Routing-Funktion, die die Retry-/Fallback-Kette EINMAL implementiert
@@ -163,10 +163,7 @@ export async function generateStructuredWithFallback(
 // ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): Nutzerentscheidung, dieselbe
 // Anthropic -> OpenAI-Priorisierung auch fuer freie Textantworten (nicht nur
 // schema-gebundene Agentenausgaben) anzuwenden, je nach Anwendungsfall. Zwei Anwendungsfaelle
-// bleiben davon bewusst ausgenommen und weiterhin direkt an Gemini gebunden, weil sie eine
-// Gemini-spezifische Faehigkeit voraussetzen, die die anderen beiden Provider hier nicht
-// gleichwertig ersetzen: /api/market-sentiment (Google-Suche-Grounding ueber
-// `tools: [{ googleSearch: {} }]`) und /api/analyze-image (Vision ueber Gemini-`inlineData`).
+// Provider-spezifische Gemini-Funktionen wurden entfernt; fehlende Ersatz-Evidence bleibt fail-closed.
 
 export interface ChatTurn {
   role: 'user' | 'assistant';
@@ -180,9 +177,7 @@ export interface TextGenerationRequest {
   /** Vorherige Gespraechsrunden, aelteste zuerst. Fehlt sie, ist die Anfrage einzelstehend. */
   history?: ChatTurn[];
   systemInstruction: string;
-  /** Anthropic/OpenAI verlangen ein explizites Token-Limit (anders als Gemini, das ohne
-   *  Angabe seinen eigenen, i.d.R. grossen Default nutzt - hier unveraendert gelassen).
-   *  Default DEFAULT_TEXT_MAX_TOKENS passt fuer Chat-Antworten; Anwendungsfaelle mit groesserem
+  /** Anthropic/OpenAI verlangen ein explizites Token-Limit. Default DEFAULT_TEXT_MAX_TOKENS passt fuer Chat-Antworten; Anwendungsfaelle mit groesserem
    *  Ausgabebedarf (z.B. vollstaendige Dokumentregeneration) setzen einen hoeheren Wert. */
   maxTokens?: number;
   requestId?: string;
@@ -256,7 +251,7 @@ async function tryOpenAIText(openai: OpenAI, req: TextGenerationRequest): Promis
 export async function generateTextWithFallback(
   req: TextGenerationRequest & { anthropic: Anthropic | null; openai: OpenAI | null }
 ): Promise<TextGenerationResult | null> {
-  const { gemini, anthropic, openai, ...rest } = req;
+  const { anthropic, openai, ...rest } = req;
 
   if (anthropic) {
     const result = await tryAnthropicText(anthropic, rest);
