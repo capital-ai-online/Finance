@@ -23,6 +23,14 @@ import { generateBase32Secret, verifyTotp, buildOtpAuthUri } from '../src/platfo
 
 export const stepUpRouter = express.Router();
 
+// Owner-Anweisung 2026-08-14: DSGVO-Nachweispflicht (Art. 7 Abs. 1 DSGVO) fuer AGB-/
+// Datenschutz-/Marketing-Zustimmungen bei der Registrierung. Versionsstempel wird server-seitig
+// vergeben (nicht vom Client), damit spaeter nachvollziehbar bleibt, welcher Dokumentstand exakt
+// akzeptiert wurde. Bei einer inhaltlichen Aenderung von AGB/Datenschutz muss dieser Wert manuell
+// hochgezaehlt werden.
+const CURRENT_TERMS_VERSION = '2026-08-14';
+const CURRENT_PRIVACY_VERSION = '2026-08-14';
+
 async function logSecurityEvent(fields: {
   event_type: string;
   ip_address?: string;
@@ -137,6 +145,83 @@ stepUpRouter.post('/totp/verify-setup', requireAuth(async (req, res, identity) =
   }
 
   await logIamEvent(identity.userId, identity.userId, 'totp.enabled', null, { enabled: true });
+
+  res.json({ success: true });
+}));
+
+// Registrierungsabschluss: DSGVO-Consent-Log + zusaetzliche Profilangaben (Land, Telefon).
+// Wird vom Client unmittelbar nach erfolgreichem supabase.auth.signUp() aufgerufen - profiles
+// selbst hat fuer normale Nutzer keine UPDATE-RLS-Policy (nur SELECT der eigenen Zeile), daher
+// muss diese Schreiboperation ueber die service-role laufen statt direkt vom Client.
+stepUpRouter.post('/register/complete', requireAuth(async (req, res, identity) => {
+  if (!checkRateLimit(`register-complete:${identity.userId}`, 5, 60_000)) {
+    return res.status(429).json({ error: 'Zu viele Versuche. Bitte kurz warten.' });
+  }
+  const { country, phoneNumber, termsAccepted, privacyAccepted, marketingOptIn } = req.body;
+
+  if (termsAccepted !== true || privacyAccepted !== true) {
+    return res.status(400).json({ error: 'Zustimmung zu AGB und Datenschutzbestimmungen ist erforderlich.' });
+  }
+  if (typeof country !== 'string' || country.trim().length === 0) {
+    return res.status(400).json({ error: 'Land/Wohnsitz ist erforderlich.' });
+  }
+
+  const ip = getClientIp(req as any);
+  const ipHash = hashOpaqueToken(ip);
+  const supabase = getServerSupabase();
+
+  const { error: profileErr } = await supabase
+    .from('profiles')
+    .update({
+      country: country.trim().slice(0, 2).toUpperCase(),
+      phone_number: typeof phoneNumber === 'string' && phoneNumber.trim() ? phoneNumber.trim().slice(0, 32) : null,
+    })
+    .eq('id', identity.userId);
+  if (profileErr) {
+    return res.status(500).json({ error: 'Profilangaben konnten nicht gespeichert werden.' });
+  }
+
+  const consentRows = [
+    { user_id: identity.userId, consent_type: 'terms', document_version: CURRENT_TERMS_VERSION, granted: true, ip_hash: ipHash },
+    { user_id: identity.userId, consent_type: 'privacy', document_version: CURRENT_PRIVACY_VERSION, granted: true, ip_hash: ipHash },
+    { user_id: identity.userId, consent_type: 'marketing', document_version: CURRENT_TERMS_VERSION, granted: marketingOptIn === true, ip_hash: ipHash },
+  ];
+  const { error: consentErr } = await supabase.from('user_consents').insert(consentRows);
+  if (consentErr) {
+    console.error(`[STEP-UP][ERROR] user_consents-Insert fehlgeschlagen: ${consentErr.message}`);
+    return res.status(500).json({ error: 'Zustimmungen konnten nicht protokolliert werden.' });
+  }
+
+  res.json({ success: true });
+}));
+
+// Verpflichtende MFA-Einrichtung fuer neue Registrierungen (Owner-Policy 2026-08-14:
+// "mindestens 1 von TOTP/Passkey muss aktiviert sein, um sich anmelden zu koennen" -
+// Uebergangsfrist-Modell: gilt nur fuer profiles.onboarding_required = true, siehe Migration
+// 20260814153000/20260814154500). Verlangt eine bereits verifizierte AAL2-Sitzung als Nachweis -
+// dieselbe unabhaengige, server-seitig gegen Supabase Auth re-validierte Pruefung wie
+// /step-up/verify (requireVerifiedAal2), damit ein Client nicht einfach "ich habe eingerichtet"
+// behaupten kann, ohne dass ein echter verifizierter Faktor (nativer TOTP-Faktor ODER Passkey)
+// existiert.
+stepUpRouter.post('/mfa/enrollment-complete', requireAuth(async (req, res, identity) => {
+  const aal2 = await requireVerifiedAal2(req);
+  if (!aal2.verified) {
+    return res.status(428).json({
+      error: 'Verpflichtende MFA-Einrichtung erfordert eine gueltige native TOTP- oder Passkey-Bestaetigung (AAL2) dieser Sitzung.',
+      code: 'aal2_required',
+    });
+  }
+
+  const supabase = getServerSupabase();
+  const { error } = await supabase
+    .from('profiles')
+    .update({ onboarding_required: false })
+    .eq('id', identity.userId);
+  if (error) {
+    return res.status(500).json({ error: 'Status konnte nicht aktualisiert werden.' });
+  }
+
+  await logIamEvent(identity.userId, identity.userId, 'mfa.enrollment_completed', null, {});
 
   res.json({ success: true });
 }));

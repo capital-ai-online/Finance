@@ -11,6 +11,8 @@ import { Datenschutz } from './components/Datenschutz';
 import { ImpressumAgb } from './components/ImpressumAgb';
 import { LoginStepUpGate } from './components/LoginStepUpGate';
 import { loginStepUpRequirement, hasPassedLoginStepUpThisTab, clearLoginStepUpMarkers } from './lib/loginStepUp';
+import { RegistrationCompletionGate } from './components/RegistrationCompletionGate';
+import { needsOnboarding } from './lib/onboarding';
 
 export interface UserSession {
   type: 'guest' | 'registered';
@@ -42,6 +44,12 @@ export default function App() {
   // (und damit Dashboard-Zugriff) ausgelöst wird. Siehe src/lib/loginStepUp.ts und
   // src/components/LoginStepUpGate.tsx.
   const [pendingStepUpSession, setPendingStepUpSession] = useState<any | null>(null);
+  // Owner-Policy 2026-08-14: neue Registrierungen (profiles.onboarding_required = true) muessen
+  // vor jedem Dashboard-Zugriff Land/Zustimmungen abgeben und mindestens einen MFA-Faktor
+  // einrichten - siehe src/lib/onboarding.ts und src/components/RegistrationCompletionGate.tsx.
+  // Wird VOR loginStepUpRequirement geprueft: ein Konto mit onboarding_required=true hat per
+  // Definition noch keinen Faktor, fuer das LoginStepUpGate gaebe es dort ohnehin nichts zu tun.
+  const [pendingOnboardingSession, setPendingOnboardingSession] = useState<any | null>(null);
 
   const updateUserSession = (session: UserSession | null) => {
     setUserSession(session);
@@ -130,6 +138,11 @@ export default function App() {
   // Aufrufe für bereits verifizierte Tabs billig, verhindert aber zuverlässig, dass z.B. der
   // USER_UPDATED-Event eines Passwort-Resets die Sperre umgeht.
   const establishSession = async (session: any) => {
+    if (await needsOnboarding(session)) {
+      setPendingOnboardingSession(session);
+      setLoading(false);
+      return;
+    }
     const required = await loginStepUpRequirement(session);
     if (required === 'none') {
       await handleSupabaseSession(session);
@@ -410,6 +423,24 @@ export default function App() {
           <p className="text-xs text-white/40 font-mono uppercase tracking-widest animate-pulse">Lade Sicherheits-Modul...</p>
         </div>
       </div>
+    );
+  }
+
+  if (pendingOnboardingSession) {
+    return (
+      <RegistrationCompletionGate
+        session={pendingOnboardingSession}
+        onComplete={async () => {
+          const session = pendingOnboardingSession;
+          setPendingOnboardingSession(null);
+          setLoading(true);
+          await handleSupabaseSession(session);
+        }}
+        onAbort={async () => {
+          setPendingOnboardingSession(null);
+          await handleLogout();
+        }}
+      />
     );
   }
 
