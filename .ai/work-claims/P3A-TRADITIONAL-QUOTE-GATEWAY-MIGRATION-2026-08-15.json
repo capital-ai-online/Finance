@@ -19,6 +19,7 @@
     "src/platform/MarketData/MarketDataGateway.ts",
     "src/platform/MarketData/providers/TwelveDataMarketDataProvider.ts",
     "src/services/traditionalQuoteEvidence.ts",
+    "tests/unit/marketDataGateway.test.ts",
     "tests/unit/traditionalQuoteEvidence.test.ts",
     "tests/unit/twelveDataMarketDataProvider.test.ts"
   ],
