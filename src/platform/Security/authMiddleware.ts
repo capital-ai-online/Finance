@@ -262,6 +262,85 @@ export async function checkAdminAccess(
   }
 }
 
+export type Aal2DenyReason =
+  | 'supabase-not-configured'
+  | 'no-bearer-token'
+  | 'invalid-token'
+  | 'aal-lookup-failed'
+  | 'insufficient-aal'
+  | 'internal-error';
+
+export interface Aal2Result {
+  verified: boolean;
+  userId?: string;
+  currentLevel: string | null;
+  reason: Aal2DenyReason | 'aal2-verified';
+}
+
+/**
+ * ADR-0064 / ESS-0020 — zentrale, serverseitige AAL2-Prüfung.
+ *
+ * Nutzt den bereits vorliegenden Bearer-Token (dieselbe Identität wie checkAdminAccess/
+ * resolveVerifiedIdentity) und fragt Supabase Auth direkt nach dem Authenticator Assurance
+ * Level DIESES Tokens - `supabase.auth.mfa.getAuthenticatorAssuranceLevel(jwt)` löst dafür einen
+ * echten Netzwerk-Roundtrip gegen Supabase Auth aus und validiert den Token dabei erneut. Das
+ * `aal`-Claim ist Teil des von GoTrue signierten Tokens und daher vom Client nicht fälschbar;
+ * diese Funktion vertraut ausdrücklich NIEMALS einem client-gelieferten AAL-Feld, Header oder
+ * einem UI-/sessionStorage-Marker (siehe nativeMfa.ts Modul-Kommentar).
+ *
+ * Fail-closed bei jedem Fehler: fehlender Token, ungültiger Token, Lookup-Fehler (Netzwerk/Auth)
+ * oder AAL kleiner als `aal2` führen alle zu `verified: false`. Da jeder Aufruf den Token frisch
+ * gegen Supabase verifiziert, kann kein zwischenzeitlich zurückgestufter/abgelaufener Zustand
+ * unbemerkt bleiben ("stale aal2/aal1" - es gibt keinen gecachten Vorzustand, der veralten könnte).
+ */
+export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
+  if (!isSupabaseConfigured()) {
+    return { verified: false, currentLevel: null, reason: 'supabase-not-configured' };
+  }
+
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (!token) {
+    return { verified: false, currentLevel: null, reason: 'no-bearer-token' };
+  }
+
+  try {
+    const supabase = getServerSupabase();
+    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+    if (userErr || !userData?.user) {
+      return { verified: false, currentLevel: null, reason: 'invalid-token' };
+    }
+
+    const { data: aalData, error: aalErr } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(token);
+    if (aalErr || !aalData) {
+      iamLogger.error('AAL2-Lookup fehlgeschlagen - fail-closed verweigert', {
+        requestId: req.requestId,
+        userId: userData.user.id,
+        error: aalErr?.message || 'no-data',
+      });
+      return { verified: false, userId: userData.user.id, currentLevel: null, reason: 'aal-lookup-failed' };
+    }
+
+    if (aalData.currentLevel !== 'aal2') {
+      return {
+        verified: false,
+        userId: userData.user.id,
+        currentLevel: aalData.currentLevel,
+        reason: 'insufficient-aal',
+      };
+    }
+
+    return { verified: true, userId: userData.user.id, currentLevel: 'aal2', reason: 'aal2-verified' };
+  } catch (err: any) {
+    // Fail-closed: jeder unerwartete Fehler (Netzwerk, SDK) verweigert AAL2 statt offen zu scheitern.
+    iamLogger.error('requireVerifiedAal2 unerwarteter Fehler - fail-closed verweigert', {
+      requestId: req.requestId,
+      error: err?.message || String(err),
+    });
+    return { verified: false, currentLevel: null, reason: 'internal-error' };
+  }
+}
+
 /**
  * Prüft einen kurzlebigen Step-up-Nachweis für kritische Owner-Aktionen
  * (Rollenverwaltung, Break-Glass, Versions-Bumps/Rollbacks).
@@ -270,14 +349,19 @@ export async function checkAdminAccess(
  * (ausgestellt durch POST /api/auth/step-up/verify nach frischer TOTP-Eingabe, 5 Min gültig).
  * Verifikation ist atomar und Einmal-verwendbar (UPDATE ... WHERE used_at IS NULL),
  * um Race-Conditions bei parallelen Requests mit demselben Token auszuschließen.
+ *
+ * ADR-0064: ein gespeichertes Step-Up-Token allein genügt seit M5A nicht mehr. Die aktuelle
+ * Session muss ZUM ZEITPUNKT DIESES REQUESTS AAL2 sein - ein Token kann eine AAL1-Sitzung nicht
+ * auf AAL2 anheben, und ein Token aus einer inzwischen auf AAL1 zurückgefallenen Sitzung
+ * (Logout/Ablauf/Faktor entfernt) darf nicht mehr akzeptiert werden.
  */
 export async function requireStepUp(req: Request): Promise<boolean> {
   const stepUpHeader = req.headers['x-step-up-token'];
   if (!stepUpHeader || typeof stepUpHeader !== 'string') return false;
   if (!isSupabaseConfigured()) return false;
 
-  const identity = await resolveVerifiedIdentity(req);
-  if (!identity) return false;
+  const aal2 = await requireVerifiedAal2(req);
+  if (!aal2.verified || !aal2.userId) return false;
 
   try {
     const supabase = getServerSupabase();
@@ -285,7 +369,7 @@ export async function requireStepUp(req: Request): Promise<boolean> {
     const { data, error } = await supabase
       .from('step_up_tokens')
       .update({ used_at: new Date().toISOString() })
-      .eq('user_id', identity.userId)
+      .eq('user_id', aal2.userId)
       .eq('token_hash', tokenHash)
       .is('used_at', null)
       .gt('expires_at', new Date().toISOString())

@@ -3,11 +3,15 @@
 // hier wuerde entweder legitime Codes ablehnen (Owner ausgesperrt) oder falsche akzeptieren.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { generateBase32Secret, verifyTotp, buildOtpAuthUri } from '../../src/platform/Security/totp';
+import { generateBase32Secret, verifyTotp, buildOtpAuthUri, TOTP_WINDOW_STEPS } from '../../src/platform/Security/totp';
 
 describe('totp', () => {
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it('TOTP_WINDOW_STEPS entspricht der RFC-6238 §5.2 empfohlenen Toleranz von genau einem Zeitschritt', () => {
+    expect(TOTP_WINDOW_STEPS).toBe(1);
   });
 
   it('generateBase32Secret liefert einen gueltigen Base32-String plausibler Laenge', () => {

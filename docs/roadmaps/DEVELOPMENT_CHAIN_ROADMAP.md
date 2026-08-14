@@ -50,9 +50,13 @@ für genau `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md` unter `REM-S
 `server/systemadmin/githubActionsOidc.ts` (Workflow-Ref-Allowlist) als auch
 `systemadminExecutionBrokerRouter.ts` (Mandats-Mapping) als auch `runSa4Pilot.mjs` (harte
 Mandats-/Pfad-Gleichheitsprüfung) verweigern jede andere Mandats-Bindung. Der verifizierte SA4-Pfad
-kann `REM-M5A-REPOSITORY-001` **nicht** ausführen. Für M5A ist vor jeder Mandatsaktivierung ein
-eigener, human-verfasster Ausführungshost (eigener ADR + Erweiterung der Workflow-Ref-Allowlist und
-des Mandats-Mappings) erforderlich. Details: `docs/evidence/security/SECURITY_AUDIT_2026-08-14_ADR0069_DEVELOPMENT_CHAIN.md` (Befund P1-2).
+kann `REM-M5A-REPOSITORY-001` **nicht** ausführen. Details: `docs/evidence/security/SECURITY_AUDIT_2026-08-14_ADR0069_DEVELOPMENT_CHAIN.md` (Befund P1-2).
+
+**Owner-Entscheidung 2026-08-14:** statt eines neuen SA-Ausführungshosts implementiert die
+Owner-instruierte Claude-Code-Sitzung das M5A-Repository-Code-Paket direkt im normalen
+Branch → PR → Human-Review → CI → Merge-Zyklus (kein neuer autonomer Host, kein
+`REM-M5A-REPOSITORY-001`-Statuswechsel auf `OWNER_APPROVED` nötig). Details/Evidence:
+`docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`.
 
 Für M5A gilt vorbehaltlich dieser Korrektur weiterhin die inhaltliche Begrenzung auf ein begrenztes
 Repository-Work-Package:
@@ -79,7 +83,7 @@ unberührt.
 | M3 CI Hardening | **COMPLETE** | COMPLETE | ADR-0053/0060 + CI governance | scope-aware CI / Owner gate | preserve until M10 cutover |
 | M4 Agent IAM | **COMPLETE** | COMPLETE | ADR-0058 + ESS-0018/0019 | negative IAM tests | preserve |
 | M5 Audit / Telemetry | **PERSISTENCE VERIFIED / APPLICATION CORRECTIVE VERIFICATION ACTIVE** | COMPLETE | ADR-0056/0059 + M5 Evidence | PR #222 merged; corrected writer must still deploy and prove a real successful privileged audit insert | M5A repository work may continue; autonomous mutation remains blocked |
-| M5A Native MFA / AAL2 | **IN PROGRESS** | baseline + runbook ready | ESS-0020 + ADR-0064 + ADR-0003.5 | repo code → CI → explicit Owner production approval → native factor/AAL2/recovery/advisor verification | M6 blocked until VERIFIED PASS |
+| M5A Native MFA / AAL2 | **CODE COMPLETE / CI PENDING MERGE** | baseline + runbook ready | ESS-0020 + ADR-0064 + ADR-0003.5 | repo code implemented (`docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`) → CI → Human merge → explicit Owner production approval → native factor/AAL2/recovery/advisor verification | M6 blocked until VERIFIED PASS |
 | M6 Supply Chain Provenance | **BLOCKED BY M5A** | **RUNBOOK READY** | ADR-0060 | SBOM/provenance/attestation bound to exact source/artifact | M7 after M6 VERIFIED PASS |
 | M7 Deployment Identity / Platform Mutation | **BLOCKED BY M6** | **RUNBOOK READY** | ADR-0061 | exact target + Owner mutation approval + post-verification/rollback | M8 after all required M7 mutations VERIFIED PASS |
 | M8 Agent Cutover | **BLOCKED BY M7** | **RUNBOOK READY** | ADR-0062 + ESS-0019 | provider-neutral profiles + equivalent policy tests + rollback to read-only | M9 after cutover VERIFIED PASS |
@@ -90,7 +94,10 @@ unberührt.
 
 ## Current executable DEVELOPMENT phase — M5A
 
-M5A remains the next repository-development phase. Der verifizierte SA4-Ausführungspfad darf nach Aktivierung von `REM-M5A-REPOSITORY-001` das begrenzte Repository-Code-/Test-Paket ausführen. Externe oder produktive Mutationen bleiben davon ausdrücklich ausgeschlossen; SA5 bleibt bis M10 `VERIFIED PASS` blockiert.
+M5A repository code (native TOTP enroll/challenge/verify, centralized server-side AAL2 gate,
+step-up coupling) is implemented and pending Human/Owner PR review and CI — see
+`docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`. Externe oder produktive Mutationen
+bleiben davon ausdrücklich ausgeschlossen; SA5 bleibt bis M10 `VERIFIED PASS` blockiert.
 
 ### Goal
 
