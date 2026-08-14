@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { GoogleGenAI, Type } from '@google/genai';
+import { Type, type AiGenerationClient } from '../services/aiSchema';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 import { RawMaterialInput } from '../types/rawMaterials';
@@ -20,11 +20,11 @@ export interface FundamentalsAnalysis {
 }
 
 export class FundamentalsAgent {
-  private ai: GoogleGenAI | null;
+  private ai: AiGenerationClient | null;
   private anthropic: Anthropic | null;
   private openai: OpenAI | null;
 
-  constructor(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null) {
+  constructor(aiClient: AiGenerationClient | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null) {
     this.ai = aiClient;
     this.anthropic = anthropicClient;
     this.openai = openaiClient;
@@ -34,11 +34,9 @@ export class FundamentalsAgent {
     const fallback = findRawMaterialConfig(name);
 
     const result = await generateStructuredWithFallback({
-      gemini: this.ai,
       anthropic: this.anthropic,
       openai: this.openai,
       promptId: 'raw-materials-fundamentals',
-      geminiModels: ['gemini-3.1-pro-preview', 'gemini-3.5-flash'],
       contents: `Analysiere die geologischen und physischen Fundamentaldaten für: "${name}".
 Schätze folgende Metriken auf einer Skala von 0 bis 100 ein:
 1. ore_grade (Erzgehalt: 100 = extrem hoch/rein, 0 = extrem gering/degradierend)

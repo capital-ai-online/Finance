@@ -8,7 +8,7 @@
 // persistierten Score anhand der zitierten Snapshot-Historie. Erfindet keine Erklaerung, wenn
 // keine Evidenz vorliegt (fail-closed, analog RAG-Evidence-Layer).
 
-import { GoogleGenAI } from '@google/genai';
+import type { AiGenerationClient } from '../services/aiSchema';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 import { generateTextWithFallback } from '../services/agentModelRouting';
@@ -29,11 +29,11 @@ export interface ScoreExplainabilityResult {
 }
 
 export class ScoreExplainabilityAgent {
-  private ai: GoogleGenAI | null;
+  private ai: AiGenerationClient | null;
   private anthropic: Anthropic | null;
   private openai: OpenAI | null;
 
-  constructor(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null) {
+  constructor(aiClient: AiGenerationClient | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null) {
     this.ai = aiClient;
     this.anthropic = anthropicClient;
     this.openai = openaiClient;
@@ -56,11 +56,9 @@ export class ScoreExplainabilityAgent {
       .join('\n');
 
     const result = await generateTextWithFallback({
-      gemini: this.ai,
       anthropic: this.anthropic,
       openai: this.openai,
       promptId: 'score-explainability',
-      geminiModels: ['gemini-3.1-pro-preview', 'gemini-3.5-flash'],
       systemInstruction: `Du bist der "Score Explainability Agent" der CAPITAL-AI Plattform.
 Erklaere ausschliesslich anhand der bereitgestellten, tatsaechlich gespeicherten Score-Snapshots, wie sich der Score fuer das angefragte Symbol entwickelt hat.
 Erfinde keine Daten und keine Gruende, die nicht aus den bereitgestellten Snapshots ableitbar sind. Wenn die Datenlage duenn ist, sag das explizit.`,

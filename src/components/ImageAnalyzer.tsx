@@ -51,7 +51,7 @@ export function ImageAnalyzer({ triggerAttempt }: ImageAnalyzerProps) {
         setResult(data.reply);
       } catch (error: any) {
         console.error(error);
-        setResult('Error analyzing image. Please ensure GEMINI_API_KEY is configured in settings.');
+        setResult('Die Bildanalyse ist derzeit nicht verfügbar.');
       } finally {
         setIsLoading(false);
       }
@@ -79,7 +79,7 @@ export function ImageAnalyzer({ triggerAttempt }: ImageAnalyzerProps) {
         </div>
         <div>
           <h3 className="font-semibold text-white">Chart & Document Analysis</h3>
-          <p className="text-xs text-white/50">Upload a chart or document for Gemini 3.1 Pro to analyze</p>
+          <p className="text-xs text-white/50">Bildanalyse ist bis zur Anbindung eines geprüften Ersatzproviders deaktiviert</p>
         </div>
       </div>
 

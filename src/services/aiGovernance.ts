@@ -1,6 +1,6 @@
 import { PROMPT_REGISTRY, type PromptRegistryEntry } from './aiUsageTracker';
 
-export type AiProvider = 'anthropic' | 'openai' | 'gemini';
+export type AiProvider = 'anthropic' | 'openai';
 export type AiRiskClass = 'LOW' | 'MEDIUM' | 'HIGH';
 
 export interface AiModelRegistryEntry {
@@ -24,12 +24,7 @@ export const AI_MODEL_REGISTRY: Record<string, AiModelRegistryEntry> = {
   openai: {
     id: 'openai', provider: 'openai', purpose: 'Secondary reasoning provider and primary embedding provider when configured',
     allowedForFinancialReasoning: true, riskClass: 'HIGH', lifecycle: 'fallback',
-  },
-  gemini: {
-    id: 'gemini', provider: 'gemini', purpose: 'Fallback reasoning plus Gemini-specific search-grounding/vision capabilities',
-    allowedForFinancialReasoning: true, riskClass: 'HIGH', lifecycle: 'fallback',
-  },
-};
+  },};
 
 export interface AiEvaluationRecord {
   evaluationId: string;

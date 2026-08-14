@@ -29,7 +29,7 @@ describe('AI governance compliance evidence', () => {
     recordAiEvaluation({
       promptId: 'chat-assistant',
       promptVersion: '1.0.0',
-      modelProvider: 'gemini',
+      modelProvider: 'anthropic',
       model: 'test-model',
       checks: { grounded: false },
       outcome: 'FAIL',

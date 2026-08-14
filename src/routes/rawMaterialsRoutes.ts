@@ -4,7 +4,7 @@
  */
 
 import express from 'express';
-import { GoogleGenAI } from '@google/genai';
+import type { AiGenerationClient } from '../services/aiSchema';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 import { RawMaterialsOrchestrator } from '../orchestrator/rawMaterialsOrchestrator';
@@ -15,7 +15,7 @@ import { getAssetCatalogEntry } from '../lib/assetSearchCatalog';
 import { getTwelveDataCommodityEvidence } from '../services/commodityMarketEvidence';
 import { scoreCommodityMarketEvidence } from '../services/commodityEvidenceScoring';
 
-export function createRawMaterialsRouter(aiClient: GoogleGenAI | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null): express.Router {
+export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null): express.Router {
   const router = express.Router();
   const orchestrator = new RawMaterialsOrchestrator(aiClient, anthropicClient, openaiClient);
 

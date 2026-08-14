@@ -1,7 +1,7 @@
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
-import { GoogleGenAI, Type } from '@google/genai';
+import { Type } from '../src/services/aiSchema';
 import { logSystemEvent } from './systemEvents';
 import { FileWatcher } from './fileWatcher';
 import { decisionEngine } from './decisionEngine';
@@ -16,7 +16,6 @@ import { ADMIN_ZONE_ROLES } from '../src/platform/Security/types';
 import { generateStructuredWithFallback, generateTextWithFallback } from '../src/services/agentModelRouting';
 import { getAnthropicInstance, isAnthropicConfigured } from './anthropicClient';
 import { getOpenAIInstance, isOpenAIConfigured } from './openaiClient';
-import { isGeminiConfigured } from './ai';
 import { retrieveRelevantChunksWithEvidence, formatChunksForPrompt } from '../src/services/rag/retrieval';
 import { getPromptGovernanceEntry, recordAiEvaluation, type AiProvider } from '../src/services/aiGovernance';
 
@@ -25,16 +24,6 @@ export const hygieneRouter = express.Router();
 const DOCS_DIR = path.join(process.cwd(), 'docs');
 const HISTORY_DIR = path.join(DOCS_DIR, '.history');
 const HYGIENE_DB_FILE = path.join(process.cwd(), 'uploads', 'document_hygiene.json');
-
-// Initialize Gemini Client
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    },
-  },
-});
 
 // Types & Interfaces
 export type HygieneState =
@@ -290,8 +279,7 @@ export function applyBrandingToAllDocs(dir: string = DOCS_DIR) {
 }
 
 // ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): Nutzerentscheidung - dieselbe Anthropic ->
-// OpenAI -> Gemini-Kette wie bei den Scoring-Agenten, statt Gemini direkt anzusprechen. Kein
-// Gemini-spezifisches Feature haengt an dieser Klassifikation. Zusaetzlich (J4, zweiter echter
+// OpenAI-Kette wie bei den Scoring-Agenten, ohne einen dritten Provider. Zusaetzlich (J4, zweiter echter
 // RAG-Verbraucher neben dem Chat-Assistenten): die Regel "conflict_candidate bei Widerspruch zu
 // Standardvorgaben wie DSGVO/OWASP" konnte das Modell bisher nur aus Trainingswissen einschaetzen
 // - es hatte keinen Zugriff auf die tatsaechlichen internen Richtliniendokumente
@@ -356,11 +344,9 @@ Analysiere die Änderungen semantisch und liefere eine JSON-Antwort mit exakt fo
     const result = await generateStructuredWithFallback({
       anthropic: isAnthropicConfigured() ? getAnthropicInstance() : null,
       openai: isOpenAIConfigured() ? getOpenAIInstance() : null,
-      gemini: isGeminiConfigured() ? ai : null,
       promptId: 'document-hygiene-change-classification',
       contents,
       systemInstruction,
-      geminiModels: ['gemini-3.5-flash'],
       schema: {
         type: Type.OBJECT,
         properties: {
@@ -394,7 +380,7 @@ Analysiere die Änderungen semantisch und liefere eine JSON-Antwort mit exakt fo
       ? 'anthropic'
       : result.provider.startsWith('openai:')
         ? 'openai'
-        : 'gemini';
+        : 'openai';
     const model = result.provider.includes(':') ? result.provider.split(':').slice(1).join(':') : result.provider;
     const evidenceIds = retrieval.evidence.evidence.map(item => item.evidenceId);
     recordAiEvaluation({
@@ -426,11 +412,10 @@ Analysiere die Änderungen semantisch und liefere eine JSON-Antwort mit exakt fo
   }
 }
 
-// ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): dieselbe Anthropic -> OpenAI -> Gemini-Kette wie
+// ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): dieselbe Anthropic -> OpenAI-Kette wie
 // analyzeChangeWithAI() oben. maxTokens ist hier bewusst hoeher als der Chat-Default (8192 statt
 // 2048) - die Antwort ist der VOLLSTAENDIGE neue Dokumentinhalt, nicht eine kurze Chat-Antwort;
-// mit dem Default waeren laengere Dokumente bei Anthropic/OpenAI abgeschnitten worden (Gemini
-// war davon nicht betroffen, da dort ohnehin kein explizites Limit gesetzt wird).
+// mit dem Default waeren laengere Dokumente bei Anthropic/OpenAI abgeschnitten worden .
 async function generatePropagatedContent(
   dependentFilePath: string,
   dependentContent: string,
@@ -455,11 +440,9 @@ Bitte generiere den VOLLSTÄNDIGEN neuen Inhalt für das abhängige Dokument (${
     const result = await generateTextWithFallback({
       anthropic: isAnthropicConfigured() ? getAnthropicInstance() : null,
       openai: isOpenAIConfigured() ? getOpenAIInstance() : null,
-      gemini: isGeminiConfigured() ? ai : null,
       promptId: 'document-hygiene-propagation',
       contents,
       systemInstruction,
-      geminiModels: ['gemini-3.5-flash'],
       maxTokens: 8192,
     });
 

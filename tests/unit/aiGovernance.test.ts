@@ -51,7 +51,7 @@ describe('AI model/prompt/evaluation governance', () => {
     const inventory = getAiGovernanceInventory();
     expect(inventory.models.some(model => model.provider === 'anthropic')).toBe(true);
     expect(inventory.models.some(model => model.provider === 'openai')).toBe(true);
-    expect(inventory.models.some(model => model.provider === 'gemini')).toBe(true);
+    expect(inventory.models.map(model => model.provider)).toEqual(['anthropic', 'openai']);
     expect(inventory.prompts.some(prompt => prompt.id === 'rag-retrieval-query')).toBe(true);
   });
 });

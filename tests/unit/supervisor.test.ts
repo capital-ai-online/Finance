@@ -82,7 +82,7 @@ describe('supervisor', () => {
       expect(status.capabilities.taskRouting).toBe(true);
       expect(status.capabilities.retry).toBe(true);
       expect(status.capabilities.aiGovernance).toBe(true);
-      expect(status.aiGovernance.providerRoles).toBeGreaterThanOrEqual(3);
+      expect(status.aiGovernance.providerRoles).toBe(2);
       expect(status.aiGovernance.registeredPrompts).toBeGreaterThan(0);
     });
 

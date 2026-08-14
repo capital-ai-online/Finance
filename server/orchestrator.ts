@@ -4,7 +4,6 @@ import fs from 'fs';
 import { orchestrator } from '../src/lib/requestOrchestrator';
 import { checkAdminAccess } from '../src/platform/Security/authMiddleware';
 import { SUPERVISOR_ZONE_ROLES } from '../src/platform/Security/types';
-import { isGeminiConfigured } from './ai';
 import { getCleanEnv } from './env';
 
 export const orchestratorRouter = express.Router();
@@ -25,7 +24,6 @@ orchestratorRouter.get('/ping-models', (_req, res) => {
   const models = [
     { id: 'claude', name: 'Claude 3.5 Sonnet', task: 'Code & Review', cost: '3.00', configured: false },
     { id: 'gpt4', name: 'GPT-4o', task: 'Reasoning & Legacy', cost: '2.50', configured: false },
-    { id: 'gemini', name: 'Gemini 2.5 Flash', task: 'Speed & Vision', cost: '0.075', configured: isGeminiConfigured() },
     { id: 'grok', name: 'Grok 2', task: 'Real-time Research', cost: '2.00', configured: false },
     { id: 'llama', name: 'Llama 3.3 (Local)', task: 'GDPR / Compliant', cost: '0.00', configured: !!getCleanEnv('LLAMA_LOCAL_ENDPOINT') },
   ].map((model) => ({
