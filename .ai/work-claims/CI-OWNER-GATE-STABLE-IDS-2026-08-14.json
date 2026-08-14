@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.1.0",
+  "claimId": "CI-OWNER-GATE-STABLE-IDS-2026-08-14",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Owner-Gate gegen Textabweichungen härten: stabile Maschinen-IDs statt deutscher Freitextvergleiche verwenden.",
+  "startedAt": "2026-08-14T21:05:00Z",
+  "baseBranch": "main",
+  "baseSha": "6d611ddda387bfe620e826d110f9a5623dce4378",
+  "pullRequest": null,
+  "claimedPaths": [
+    ".github/workflows/ci.yml",
+    ".github/pull_request_template.md",
+    ".ai/work-claims/CI-OWNER-GATE-STABLE-IDS-2026-08-14.json"
+  ],
+  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
+}
