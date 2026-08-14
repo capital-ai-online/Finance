@@ -56,11 +56,9 @@ export class ScoreExplainabilityAgent {
       .join('\n');
 
     const result = await generateTextWithFallback({
-      gemini: this.ai,
       anthropic: this.anthropic,
       openai: this.openai,
       promptId: 'score-explainability',
-      geminiModels: ['gemini-3.1-pro-preview', 'gemini-3.5-flash'],
       systemInstruction: `Du bist der "Score Explainability Agent" der CAPITAL-AI Plattform.
 Erklaere ausschliesslich anhand der bereitgestellten, tatsaechlich gespeicherten Score-Snapshots, wie sich der Score fuer das angefragte Symbol entwickelt hat.
 Erfinde keine Daten und keine Gruende, die nicht aus den bereitgestellten Snapshots ableitbar sind. Wenn die Datenlage duenn ist, sag das explizit.`,
