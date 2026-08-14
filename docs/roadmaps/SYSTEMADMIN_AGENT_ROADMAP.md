@@ -2,7 +2,7 @@
 
 Status: IMPLEMENTATION PHASE
 Date: 2026-08-12
-Current production baseline: `main@2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd` (PR #229 merge)
+Current repository baseline: `main@6205868da833a6ee75b5301e78b0a2e6a118c411` (PR #251 merge)
 Authority: ESS-0021, ADR-0065, ADR-0058, ADR-0059, ADR-0066, ADR-0067, ADR-0068
 
 ## Goal
@@ -220,6 +220,41 @@ This proves the bounded autonomous chain:
 12. pilot branch deleted after merge: PASS;
 13. evidence and traceability synchronized: completed by the SA4 status-sync change set.
 
+## Next bounded repository work package — M5A Native MFA/AAL2
+
+**DRAFT / NOT ACTIVATED**
+
+Authority:
+
+- `docs/roadmaps/M5A_SYSTEMADMIN_REPOSITORY_WORK_PACKAGE.md`;
+- `.ai/mandates/REM-M5A-REPOSITORY-001.json`;
+- ESS-0020 and ADR-0064.
+
+The package reuses the verified SA4 repository execution chain for M5A code, tests and redacted evidence only. It does not introduce a new SA stage and does not widen SA4 authority.
+
+Activation gates:
+
+1. this documentation package is Human-reviewed and merged;
+2. ESS-0020 and ADR-0064 are Human/Owner-accepted for repository implementation;
+3. mandate is rebound to exact then-current `main`;
+4. mandate status changes from `DRAFT` to `OWNER_APPROVED` with Approval Evidence;
+5. SA preflight proves no path overlap, no stale base and durable audit availability.
+
+Allowed:
+
+`READ → ANALYZE → PLAN → BRANCH → bounded CODE/TEST/EVIDENCE → COMMIT → Draft PR → CI_REQUEST`
+
+Denied:
+
+- Supabase factor enrollment/removal/reset;
+- production Auth/project configuration;
+- secrets/recovery codes;
+- Render/Stripe/IONOS;
+- Ruleset/security-control weakening;
+- merge and self-authority expansion.
+
+After repository CI PASS, productive Owner-factor enrollment remains a separate Human/Owner M5A mutation gate. SA5 remains blocked until M10 `VERIFIED PASS`.
+
 ## SA5 — Bounded external mutation design
 
 **BLOCKED BY M10 VERIFIED PASS**
@@ -234,4 +269,4 @@ Merged/superseded branches are never reused.
 
 ## Current next action
 
-Advance the prerequisite path toward M10 runtime `VERIFIED PASS`. SA5 remains blocked and no external production mutation is authorized by completion of SA4.
+After merge and explicit activation of `REM-M5A-REPOSITORY-001`, execute the bounded M5A repository code/test work package through the verified SA4 host. SA5 remains blocked and no external production mutation is authorized by SA4 or by the draft mandate.
