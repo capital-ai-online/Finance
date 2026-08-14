@@ -65,9 +65,11 @@ Nachteile:
 `GitGuardian Security Checks`, `security/snyk (svenkulessa)` und `code/snyk (svenkulessa)`
 erreichten mit PR #249, #250 und #251 drei statt der geforderten zwei unabhängigen,
 head-gebundenen PASS-Läufe (Detail-Evidence: `docs/evidence/security/GITGUARDIAN_SNYK_BASELINE_2026-08-14.md`).
-Der Owner hat die Promotion zu Required Checks im `main-production-protection`-Ruleset freigegeben
-und vorgenommen; das ist der in Punkt 4/5 der Sicherheitsinvarianten vorausgesetzte separate
-Owner-Mutationsschritt.
+Der Owner hat die Promotion freigegeben; `security/snyk` und `code/snyk` sind als Required Checks
+im `main-production-protection`-Ruleset angewendet — das ist der in Punkt 4/5 der
+Sicherheitsinvarianten vorausgesetzte separate Owner-Mutationsschritt. Ob `GitGuardian Security
+Checks` ebenfalls promoviert wurde, ist zum Zeitpunkt dieses Nachtrags noch nicht bestätigt (siehe
+offene Nachweise in der Detail-Evidence).
 
 Parallel wurde GitHub Advanced Security CodeQL geprüft, weil der Owner es testweise dem Ruleset
 hinzugefügt hatte. `code/snyk` ist Snyk Code — ein SAST-Check, der dieselbe Bedrohungskategorie

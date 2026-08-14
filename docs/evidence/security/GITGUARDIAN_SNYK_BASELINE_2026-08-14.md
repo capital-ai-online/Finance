@@ -1,8 +1,8 @@
 # GitGuardian-/Snyk-Integrationsbaseline — 2026-08-14
 
-Status: VERIFIED PASS / PROMOTED TO REQUIRED CHECKS
+Status: VERIFIED PASS / SNYK PROMOTED TO REQUIRED CHECKS, GITGUARDIAN-PROMOTION UNBESTÄTIGT
 Repository: `SvenKulessa/Finance`
-Aktuelle Main-Baseline: `main@6205868da833a6ee75b5301e78b0a2e6a118c411` (PR #251 Merge)
+Aktuelle Main-Baseline: `main@e2830fba142e076c49b8837e0823b8526f5f4e26` (PR #253 Merge)
 
 ## Korrektur 2026-08-14 (Sicherheitsaudit-Nachtrag)
 
@@ -39,14 +39,24 @@ erfolgreichen PR-Läufen und separater Owner-Freigabe als Required Check promovi
 statt zwei unabhängigen, head-gebundenen PASS-Läufen erfüllt. Der Owner hat die Promotion
 freigegeben:
 
-- `GitGuardian Security Checks`, `security/snyk (svenkulessa)` und `code/snyk (svenkulessa)`
-  wurden zusammen mit `capital-ai-ci` und `build-and-test` als Required Checks im
-  `main-production-protection`-Ruleset aktiviert (siehe
-  `.github/policies/main-production-protection.expected.json`, `decision_2026-08-14c`).
+- `security/snyk (svenkulessa)` und `code/snyk (svenkulessa)` wurden anstelle von CodeQL als
+  Required Checks im `main-production-protection`-Ruleset aktiviert (Owner-bestätigt). Ob
+  `GitGuardian Security Checks` ebenfalls als Required Check aktiv ist, ist zum Zeitpunkt dieser
+  Dokument-Fassung noch nicht Owner-bestätigt und daher als offener Nachweis unten geführt statt
+  als erledigt markiert. `.github/policies/main-production-protection.expected.json`
+  (`decision_2026-08-14c`) beschreibt den vorgeschlagenen Zielzustand mit allen drei Kontexten.
 - CodeQL wurde geprüft und **nicht** als Required Check übernommen: `code/snyk` deckt dieselbe
   SAST-Kategorie bereits ab, ohne zusätzliche GitHub-Actions-Laufzeit zu benötigen — genau das
   Designziel von ADR-0070. Eine parallele SAST-Engine wäre Doppelarbeit, kein zusätzlicher Schutz
   im Sinne einer neuen Bedrohungskategorie.
+
+## Owner-Entscheidung 2026-08-14b: Snyk-Token bleibt gesetzt
+
+Der Owner hat bestätigt, dass der bestehende Snyk-Token als GitHub Repository Secret absichtlich
+gesetzt ist und weiterverwendet werden soll — keine Altlast. Grep über `.github/workflows/**`
+bestätigt weiterhin, dass kein Repository-Workflow das Secret direkt liest; die Verwendung erfolgt
+ausschließlich anbieterseitig innerhalb der Snyk-GitHub-Integration, konsistent mit der
+App-only-Architektur aus ADR-0070. Damit ist dieser Punkt geschlossen.
 
 ## Offene Nachweise (nur Owner-seitig einsehbar, kein Tool-Zugriff verfügbar)
 
@@ -54,11 +64,9 @@ freigegeben:
   GitHub Settings → Applications, nicht per Tool abfragbar).
 - [ ] GitGuardian arbeitet ohne Repository-Schreibrechte (dieselbe Quelle).
 - [ ] Snyk automatische Fix-PRs/Write-Zugriffe sind im Snyk-Dashboard deaktiviert.
-- [ ] Notwendigkeit des GitHub-Secrets `SNYK_*` ist geklärt — da die Integration App-/
-  Status-API-basiert läuft und kein Repository-Workflow das Secret konsumiert (bestätigt durch
-  Grep über `.github/workflows/**`), ist der Token vermutlich nicht mehr erforderlich. Löschung
-  bleibt eine separate Owner-Entscheidung, da der Zweck des konkreten Secrets ohne Einsicht in
-  die Snyk-Projektkonfiguration nicht abschließend bestätigt werden kann.
+- [ ] `GitGuardian Security Checks` als Required Check im Ruleset bestätigen oder bewusst weglassen
+  (siehe Owner-Entscheidung oben — noch offen, ob es zusätzlich zu `security/snyk` und `code/snyk`
+  aktiviert wurde).
 
 ## Bewertung
 
@@ -68,5 +76,7 @@ freigegeben:
 | Snyk Dependency-Scan (`security/snyk`) | VERIFIED PASS | drei unabhängige PR-Heads, alle grün |
 | Snyk Code / SAST (`code/snyk`) | VERIFIED PASS | drei unabhängige PR-Heads, alle grün |
 | App-only Architektur | VERIFIED | kein Workflow in `.github/workflows/**` konsumiert Snyk/GitGuardian |
-| Required-Check-Promotion | OWNER-APPROVED, angewendet 2026-08-14 | ADR-0070-Gate mit drei statt zwei Heads übererfüllt |
+| Required-Check-Promotion Snyk | OWNER-APPROVED, angewendet 2026-08-14 | `security/snyk` und `code/snyk` ersetzen CodeQL im Ruleset |
+| Required-Check-Promotion GitGuardian | UNBESTÄTIGT | ADR-0070-Gate erfüllt, Owner-Bestätigung der Ruleset-Aktivierung steht noch aus |
+| Snyk-Token (GitHub Secret) | VERWENDUNG BESTÄTIGT | Owner-Entscheidung 2026-08-14b, kein Repository-Workflow liest es |
 | CodeQL | BEWUSST NICHT verwendet | Redundanz zu `code/snyk`, keine neue Bedrohungskategorie abgedeckt |
