@@ -11,11 +11,11 @@ export interface PortfolioReviewRouteDependencies {
 
 export function createPortfolioReviewRouter(deps: PortfolioReviewRouteDependencies): express.Router {
   const router = express.Router();
-  const { ai, anthropic, openai } = deps;
+  const { anthropic, openai } = deps;
 
   router.post('/portfolio-review', express.json(), orchestrator.handle('Portfolio Review'), async (req, res) => {
-    if (!anthropic && !openai && !ai) {
-      return res.status(500).json({ error: 'Kein KI-Provider konfiguriert (ANTHROPIC_API_KEY, OPENAI_API_KEY oder GEMINI_API_KEY erforderlich).' });
+    if (!anthropic && !openai) {
+      return res.status(500).json({ error: 'Kein KI-Provider konfiguriert (ANTHROPIC_API_KEY oder OPENAI_API_KEY erforderlich).' });
     }
 
     const { allocation, metrics1Y, metrics3Y, metrics5Y } = req.body || {};
@@ -24,9 +24,9 @@ export function createPortfolioReviewRouter(deps: PortfolioReviewRouteDependenci
       const result = await generateStructuredWithFallback({
         anthropic,
         openai,
-        gemini: ai,
+        gemini: null,
         promptId: 'server-portfolio-review',
-        geminiModels: ['gemini-2.5-flash'],
+        geminiModels: [],
         systemInstruction: 'Du bist ein hochprofessioneller Quant-Portfolio-Analyst und Risk-Officer bei CAPITAL-AI. Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.',
         contents: `Analysiere die folgende Portfolio-Allokation und deren historische Backtest-Ergebnisse (1, 3 und 5 Jahre):\n\nAllokation:\n${JSON.stringify(allocation, null, 2)}\n\nPerformance-Metriken:\n- 1 Jahr: Rendite ${metrics1Y?.strategyReturn?.toFixed?.(2)}%, Max Drawdown -${metrics1Y?.maxDrawdown?.toFixed?.(2)}%, Sharpe ${metrics1Y?.sharpeRatio?.toFixed?.(2)}\n- 3 Jahre: Rendite ${metrics3Y?.strategyReturn?.toFixed?.(2)}%, Max Drawdown -${metrics3Y?.maxDrawdown?.toFixed?.(2)}%, Sharpe ${metrics3Y?.sharpeRatio?.toFixed?.(2)}\n- 5 Jahre: Rendite ${metrics5Y?.strategyReturn?.toFixed?.(2)}%, Max Drawdown -${metrics5Y?.maxDrawdown?.toFixed?.(2)}%, Sharpe ${metrics5Y?.sharpeRatio?.toFixed?.(2)}\n\nLiefere executiveSummary, riskAssessment und konkrete optimizations.`,
         schema: {
