@@ -18,6 +18,7 @@ import { getAnthropicInstance, isAnthropicConfigured } from './anthropicClient';
 import { getOpenAIInstance, isOpenAIConfigured } from './openaiClient';
 import { retrieveRelevantChunksWithEvidence, formatChunksForPrompt } from '../src/services/rag/retrieval';
 import { getPromptGovernanceEntry, recordAiEvaluation, type AiProvider } from '../src/services/aiGovernance';
+import { isDocumentHygieneRuntimeWritable } from './runtime/documentHygieneRuntimeMode';
 
 export const hygieneRouter = express.Router();
 
@@ -77,9 +78,16 @@ let activeLogs: HygieneLogEntry[] = [];
 let pendingTickets: ReviewTicket[] = [];
 let fileWatchDebounceTimers: Record<string, NodeJS.Timeout> = {};
 
-// Load database from file or initialize
+// Load database from file or initialize. Production images are immutable/read-only:
+ // a missing local artifact is represented by the in-memory defaults and is never created.
 function loadHygieneDb() {
   try {
+    if (!isDocumentHygieneRuntimeWritable() && !fs.existsSync(HYGIENE_DB_FILE)) {
+      currentState = 'IDLE';
+      activeLogs = [];
+      pendingTickets = [];
+      return;
+    }
     if (!fs.existsSync(path.dirname(HYGIENE_DB_FILE))) {
       fs.mkdirSync(path.dirname(HYGIENE_DB_FILE), { recursive: true });
     }
@@ -101,6 +109,7 @@ function loadHygieneDb() {
 }
 
 function saveHygieneDb() {
+  if (!isDocumentHygieneRuntimeWritable()) return;
   try {
     const payload: HygieneDatabase = {
       state: decisionEngine.getCurrentState(),
@@ -689,6 +698,20 @@ async function requireAdmin(req: express.Request, res: express.Response, next: e
   next();
 }
 
+function requireWritableDocumentHygiene(
+  _req: express.Request,
+  res: express.Response,
+  next: express.NextFunction,
+) {
+  if (!isDocumentHygieneRuntimeWritable()) {
+    return res.status(503).json({
+      error: 'Document Hygiene mutations are disabled in the production read-only runtime.',
+      code: 'DOCUMENT_HYGIENE_READ_ONLY',
+    });
+  }
+  next();
+}
+
 // 1. GET status, graph, logs, and tickets
 hygieneRouter.get('/status', requireAdmin, (req, res) => {
   loadHygieneDb();
@@ -702,7 +725,7 @@ hygieneRouter.get('/status', requireAdmin, (req, res) => {
 });
 
 // 2. POST review decision (Approve/Decline)
-hygieneRouter.post('/review', requireAdmin, async (req, res) => {
+hygieneRouter.post('/review', requireAdmin, requireWritableDocumentHygiene, async (req, res) => {
   const { ticketId, decision, email } = req.body;
   if (!ticketId || !decision) {
     return res.status(400).json({ error: 'ticketId and decision are required.' });
@@ -823,7 +846,7 @@ hygieneRouter.post('/review', requireAdmin, async (req, res) => {
 });
 
 // 3. POST Manual Rollback
-hygieneRouter.post('/rollback', requireAdmin, (req, res) => {
+hygieneRouter.post('/rollback', requireAdmin, requireWritableDocumentHygiene, (req, res) => {
   const { filePath, backupName, email } = req.body;
   if (!filePath || !backupName) {
     return res.status(400).json({ error: 'filePath and backupName are required.' });
@@ -1196,7 +1219,7 @@ hygieneRouter.get('/lint', requireAdmin, (req, res) => {
 });
 
 // 4.6. POST /lint-fix - apply single-issue auto-remediation programmatically
-hygieneRouter.post('/lint-fix', requireAdmin, (req, res) => {
+hygieneRouter.post('/lint-fix', requireAdmin, requireWritableDocumentHygiene, (req, res) => {
   const { filePath, line, ruleId, email } = req.body;
   if (!filePath || !ruleId) {
     return res.status(400).json({ error: 'filePath and ruleId are required.' });
@@ -1275,7 +1298,7 @@ hygieneRouter.post('/lint-fix', requireAdmin, (req, res) => {
 });
 
 // 5. POST manual execution trigger
-hygieneRouter.post('/trigger', requireAdmin, async (req, res) => {
+hygieneRouter.post('/trigger', requireAdmin, requireWritableDocumentHygiene, async (req, res) => {
   const { filePath, email } = req.body;
   if (!filePath) {
     return res.status(400).json({ error: 'filePath parameter is required.' });
@@ -1360,6 +1383,7 @@ function recordAdrHistory(
 }
 
 function ensureADRDirectoryAndSeeds() {
+  if (!isDocumentHygieneRuntimeWritable()) return;
   if (!fs.existsSync(ADR_DIR)) {
     fs.mkdirSync(ADR_DIR, { recursive: true });
   }
@@ -1533,7 +1557,7 @@ hygieneRouter.get('/adr', requireAdmin, (req, res) => {
 });
 
 // 2. POST create ADR
-hygieneRouter.post('/adr', requireAdmin, (req, res) => {
+hygieneRouter.post('/adr', requireAdmin, requireWritableDocumentHygiene, (req, res) => {
   const { id, title, status, date, author, context, decision, consequences, email } = req.body;
   if (!id || !title || !status || !date || !author) {
     return res.status(400).json({ error: 'id, title, status, date, and author are required.' });
@@ -1570,7 +1594,7 @@ hygieneRouter.post('/adr', requireAdmin, (req, res) => {
 });
 
 // 3. PUT update ADR
-hygieneRouter.put('/adr/:id', requireAdmin, (req, res) => {
+hygieneRouter.put('/adr/:id', requireAdmin, requireWritableDocumentHygiene, (req, res) => {
   const { id } = req.params;
   const { title, status, date, author, context, decision, consequences, email } = req.body;
   
@@ -1621,7 +1645,7 @@ hygieneRouter.put('/adr/:id', requireAdmin, (req, res) => {
 });
 
 // 4. DELETE ADR
-hygieneRouter.delete('/adr/:id', requireAdmin, (req, res) => {
+hygieneRouter.delete('/adr/:id', requireAdmin, requireWritableDocumentHygiene, (req, res) => {
   const { id } = req.params;
   const email = req.query.email || req.body.email;
 
@@ -1702,7 +1726,12 @@ hygieneRouter.get('/adr/:id/history', requireAdmin, (req, res) => {
 
 let activeWatcher: FileWatcher | null = null;
 
-export function startRecursiveFileWatcher() {
+export function startRecursiveFileWatcher(): boolean {
+  if (!isDocumentHygieneRuntimeWritable()) {
+    console.info('[DocumentHygiene] Production read-only mode: watcher and local artifact writes disabled.');
+    return false;
+  }
+
   loadHygieneDb();
 
   if (!fs.existsSync(DOCS_DIR)) {
@@ -1742,4 +1771,5 @@ export function startRecursiveFileWatcher() {
   );
 
   activeWatcher.start();
+  return true;
 }
