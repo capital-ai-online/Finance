@@ -126,16 +126,22 @@ export class MarketDataGateway {
   }
 
   private async fetchFromProviders(request: SnapshotRequest, key: string): Promise<MarketDataGatewayResult> {
-    const route = this.router.route(request);
-    if (route.providers.length === 0) {
-      const result = unavailable(request, [], route.skipped, 'No approved provider is currently routable.', this.nowMs());
-      this.telemetry.record('unavailable', { reason: 'no_routable_provider' });
+    const candidates = this.router.candidates(request);
+    if (candidates.length === 0) {
+      const result = unavailable(request, [], [], 'No approved provider supports this request.', this.nowMs());
+      this.telemetry.record('unavailable', { reason: 'no_approved_provider' });
       return result;
     }
 
     const attemptedProviders: string[] = [];
-    for (const provider of route.providers) {
+    const skippedProviders: ProviderSkip[] = [];
+    for (const provider of candidates) {
       const providerId = provider.descriptor.id;
+      const skipReason = this.router.tryAcquire(providerId);
+      if (skipReason) {
+        skippedProviders.push({ providerId, reason: skipReason });
+        continue;
+      }
       attemptedProviders.push(providerId);
       this.telemetry.record('provider_attempt', { provider: providerId, capability: 'snapshot' });
       try {
@@ -145,7 +151,7 @@ export class MarketDataGateway {
           this.router.recordSuccess(providerId);
           this.cache.set(key, snapshot, this.cacheTtlMs);
           this.telemetry.record('provider_success', { provider: providerId, qualityState: snapshot.qualityState });
-          return { snapshot, attemptedProviders, skippedProviders: route.skipped, source: 'provider' };
+          return { snapshot, attemptedProviders, skippedProviders, source: 'provider' };
         }
         this.router.recordFailure(providerId);
         this.telemetry.record('provider_failure', { provider: providerId, reason: assessment.state });
@@ -158,7 +164,7 @@ export class MarketDataGateway {
     const result = unavailable(
       request,
       attemptedProviders,
-      route.skipped,
+      skippedProviders,
       'All approved providers were unavailable or failed data-quality validation.',
       this.nowMs(),
     );
