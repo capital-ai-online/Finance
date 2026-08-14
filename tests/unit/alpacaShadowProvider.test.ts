@@ -19,10 +19,11 @@ describe('Alpaca Shadow Provider', () => {
       fetchImpl: fetchImpl as any, apiKeyId: 'key-id', apiSecretKey: 'secret', feed: 'iex', nowMs: () => now,
     });
     expect(result).toMatchObject({ state: 'READY', symbol: 'AAPL', feed: 'iex', price: 100, canonicalProvider: 'Twelve Data' });
-    const [url, init] = fetchImpl.mock.calls[0];
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    const headers = init.headers as Record<string, string>;
     expect(url).toContain('/stocks/AAPL/trades/latest?feed=iex');
-    expect(init.headers['APCA-API-KEY-ID']).toBe('key-id');
-    expect(init.headers['APCA-API-SECRET-KEY']).toBe('secret');
+    expect(headers['APCA-API-KEY-ID']).toBe('key-id');
+    expect(headers['APCA-API-SECRET-KEY']).toBe('secret');
   });
 
   it('markiert alte Beobachtungen als STALE', async () => {
