@@ -1,7 +1,7 @@
 # ADR-0054 — Durable Worker/Outbox/Lease
 
 - **Status:** Accepted
-- **Implementation-Status:** IMPLEMENTED IN PR -> PRODUCTION HANDOFF PENDING
+- **Implementation-Status:** VERIFIED PASS IN PRODUCTION
 - **Date:** 2026-08-10
 - **Scope:** CAPITAL-AI generic durable job retry infrastructure (first consumer: checkout-confirmation e-mail)
 - **Platform Version:** `0.6.0`
@@ -163,6 +163,27 @@ No live Supabase, Render or Stripe mutation is performed by the development bran
 ADR. Application deployment before the database migration is intentionally unsupported because
 `server/outbox.ts` fails closed (`assertPrivilegedSupabaseConfigured`) in production when the
 durable outbox contract is unavailable.
+
+## 7.1 Production closure evidence (2026-08-14)
+
+The Owner authorized the production migration explicitly after a read-only preflight. The exact
+repository migration `supabase/migrations/20260810160000_outbox_jobs.sql` was applied to the sole
+active production project `AIFINANCIAL` and registered as Supabase migration
+`20260814221830_outbox_jobs`.
+
+Post-mutation verification proved:
+
+- `public.outbox_jobs` exists with RLS enabled and zero pre-existing rows;
+- all four RPCs exist as `SECURITY DEFINER` functions with explicit signatures;
+- `anon` and `authenticated` have no execute privilege;
+- `service_role` has execute privilege and the only table policy is
+  `service_role_full_access`;
+- an empty `claim_outbox_job` verification returned no job and created no test data;
+- the repeating Render schema-cache error stopped immediately after the migration;
+- the subsequent live deploy `dep-d9vpf3dbedkc73et92ag` at commit
+  `ef711596f0020764441ff6ea9e1cf350b6ad2c1a` produced no Outbox or application errors.
+
+Canonical evidence: `docs/evidence/r101/R101_OUTBOX_PRODUCTION_MIGRATION_EVIDENCE.md`.
 
 ## 8. Explicit non-goals
 
