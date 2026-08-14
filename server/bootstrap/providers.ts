@@ -1,12 +1,9 @@
-import type { GoogleGenAI } from '@google/genai';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
-import { getGeminiInstance, isGeminiConfigured } from '../ai';
 import { getAnthropicInstance, isAnthropicConfigured } from '../anthropicClient';
 import { getOpenAIInstance, isOpenAIConfigured } from '../openaiClient';
 
 export interface AiProviderSet {
-  gemini: GoogleGenAI | null;
   anthropic: Anthropic | null;
   openai: OpenAI | null;
 }
@@ -38,7 +35,6 @@ function safeProvider<T>(
  */
 export function initializeAiProviders(logger: ProviderBootstrapLogger): AiProviderSet {
   return {
-    gemini: safeProvider(isGeminiConfigured, getGeminiInstance, 'gemini', logger),
     anthropic: safeProvider(isAnthropicConfigured, getAnthropicInstance, 'anthropic', logger),
     openai: safeProvider(isOpenAIConfigured, getOpenAIInstance, 'openai', logger),
   };
