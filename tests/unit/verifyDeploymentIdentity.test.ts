@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { verifyDeploymentIdentity } from '../../scripts/deployment/verifyDeploymentIdentity';
+import { mergeHealthPayloadWithHeaders, verifyDeploymentIdentity } from '../../scripts/deployment/verifyDeploymentIdentity';
 
 const VALID_SHA = 'a'.repeat(40);
 const OTHER_SHA = 'b'.repeat(40);
@@ -125,5 +125,49 @@ describe('verifyDeploymentIdentity', () => {
       healthPayload: healthyPayload(),
     });
     expect(result.ok).toBe(true);
+  });
+});
+
+function headerLookup(values: Record<string, string | null>) {
+  return { get: (name: string) => values[name] ?? null };
+}
+
+describe('mergeHealthPayloadWithHeaders', () => {
+  it('falls back to x-capital-ai-* headers when the JSON body has no deployment field', () => {
+    // Reproduces the real production contract: server/routes/health.ts never puts `deployment`
+    // in the JSON body - it is set exclusively via headers in server/logger.ts. An earlier
+    // version of this script missed this and only ever read the JSON body, which made
+    // verification fail-closed forever no matter how long it polled.
+    const merged = mergeHealthPayloadWithHeaders(
+      { status: 'ok', timestamp: '2026-08-14T00:00:00.000Z' },
+      headerLookup({
+        'x-capital-ai-version': '0.6.0',
+        'x-capital-ai-commit': VALID_SHA,
+        'x-capital-ai-branch': 'main',
+        'x-capital-ai-repo': 'SvenKulessa/Finance',
+        'x-capital-ai-provider': 'render',
+      }),
+    );
+    expect(merged.deployment).toEqual({
+      version: '0.6.0',
+      commitSha: VALID_SHA,
+      branch: 'main',
+      repoSlug: 'SvenKulessa/Finance',
+      provider: 'render',
+    });
+    expect(merged.status).toBe('ok');
+  });
+
+  it('prefers an existing deployment field in the JSON body over headers', () => {
+    const merged = mergeHealthPayloadWithHeaders(
+      { status: 'ok', deployment: { commitSha: VALID_SHA, branch: 'main' } },
+      headerLookup({ 'x-capital-ai-commit': OTHER_SHA }),
+    );
+    expect(merged.deployment.commitSha).toBe(VALID_SHA);
+  });
+
+  it('handles a null JSON payload (unparsable body) by falling back entirely to headers', () => {
+    const merged = mergeHealthPayloadWithHeaders(null, headerLookup({ 'x-capital-ai-commit': VALID_SHA }));
+    expect(merged.deployment.commitSha).toBe(VALID_SHA);
   });
 });
