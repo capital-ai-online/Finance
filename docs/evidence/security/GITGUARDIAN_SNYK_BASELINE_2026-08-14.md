@@ -1,56 +1,62 @@
 # GitGuardian-/Snyk-Integrationsbaseline — 2026-08-14
 
-Status: PARTIAL / RUNTIME VERIFICATION REQUIRED  
+Status: PARTIAL / SNYK PR CHECK VERIFICATION ACTIVE  
 Repository: `SvenKulessa/Finance`  
-Baseline: `main@5e8471de10644a5432017d28d2f4ff0657d92dd5`  
-Branch: `agent/security-scanner-app-integration`
+Aktuelle Main-Baseline: `main@d084b33d90bd416258b2887f7493607928a691e3`  
+Aktueller Verifikationsbranch: `agent/snyk-pr-check-verification-1`
 
 ## Verifizierte Repository-Fakten
 
-- PR #248 wurde in `main` gemerged.
-- Zum Beginn dieses Arbeitsschritts waren keine Pull Requests offen.
+- PR #249 wurde als `d084b33d90bd416258b2887f7493607928a691e3` in `main` gemerged.
+- Der zugehörige Remote-Branch wurde nach Merge automatisch gelöscht.
+- Zum Beginn dieses Verifikationsschritts waren keine Pull Requests offen.
 - Auf `main` existiert keine aktive GitGuardian- oder Snyk-Workflowdatei.
-- `.github/workflows/**`, Rulesets und Repository-Secrets werden durch diesen Branch nicht verändert.
+- `.github/workflows/**` und Rulesets werden durch diesen Branch nicht verändert.
 - Der bestehende Required-Check-Pfad `capital-ai-ci` bleibt unverändert.
 
-## Owner-bestätigte externe Fakten
+## PR #249 — erster externer Beobachtungslauf
 
-- GitGuardian ist bereits als GitHub App integriert.
-- Ein Snyk-Token ist bereits gesetzt.
+| Scanner | Ergebnis | Evidence-Qualität |
+|---|---|---|
+| GitGuardian | PASS | Owner-bestätigt für PR #249 / Head `680c1d2894260447e74fc3374c94cdf969dc75a7` |
+| Snyk | KEIN CHECK ERSCHIENEN | Kein Head-SHA-Nachweis; nicht als PASS wertbar |
 
-Diese Aussagen wurden nicht durch Auslesen von Tokenwerten oder externen Anbieteradministrationsseiten verifiziert. Sie werden nicht als `VERIFIED PASS` hochgestuft.
+PR #249 zählt als erster aktueller GitGuardian-Head-Nachweis, aber nicht als Snyk-Nachweis.
 
-## Historische Evidence
+## Nach PR #249 Owner-bestätigte Snyk-Konfiguration
 
-Die Recovery-Dokumentation zu PR #236–#246 hält fest, dass GitGuardian und Snyk bei betroffenen Folge-PRs erfolgreich waren, während die eigene CI-Control-Plane fehlschlug. Diese historische Aussage beweist keine aktuelle Head-SHA-gebundene Laufzeitfunktion nach PR #248.
+- Snyk ist mit GitHub verbunden.
+- `SvenKulessa/Finance` wurde in Snyk importiert.
+- PR-Check-Konfiguration wurde im importierten Repository eingestellt.
+- Ein Snyk-Token ist als GitHub Secret hinterlegt.
 
-Referenz:
-
-- `docs/evidence/ci/PR236_BOOTSTRAP_INCIDENT_2026-08-13.md`
+Der Tokenwert wurde nicht gelesen, angezeigt oder in Evidence übernommen. Die reine Existenz eines Secrets beweist keine Verwendung. Da ADR-0070 eine App-only-Architektur vorsieht und kein Workflow das Secret konsumiert, wird nach erfolgreicher App-Verifikation separat geprüft, ob das Secret entfernt werden kann.
 
 ## Offene Nachweise
 
 - [ ] GitGuardian-App-Zugriff ist auf `SvenKulessa/Finance` begrenzt.
 - [ ] GitGuardian arbeitet ohne Repository-Schreibrechte.
-- [ ] Snyk-GitHub-Integration hat `SvenKulessa/Finance` importiert.
+- [x] Erster aktueller GitGuardian-Check ist an PR #249 / exakten Head-SHA gebunden — Owner-bestätigt.
+- [x] Snyk-GitHub-Integration hat `SvenKulessa/Finance` importiert — Owner-bestätigt.
 - [ ] Snyk automatische Fix-PRs/Write-Zugriffe sind deaktiviert.
-- [ ] Erster aktueller GitGuardian-Check ist an exakten PR/Head-SHA gebunden.
-- [ ] Erster aktueller Snyk-Check ist an exakten PR/Head-SHA gebunden.
-- [ ] Zweiter unabhängiger PR-Head bestätigt beide Scanner.
+- [ ] Erster aktueller Snyk-Check erscheint für einen exakten PR/Head-SHA.
+- [ ] Zweiter unabhängiger PR-Head bestätigt GitGuardian.
+- [ ] Zweiter unabhängiger PR-Head bestätigt Snyk.
 - [ ] Keine Secrets erscheinen in exportierter Evidence.
+- [ ] Notwendigkeit des ungenutzten GitHub Secrets ist geklärt.
 - [ ] Separate Owner-Entscheidung über eine spätere Required-Check-Promotion.
 
 ## Bewertung
 
 | Kontrolle | Status | Begründung |
 |---|---|---|
-| GitGuardian App vorhanden | OWNER CONFIRMED | UI-/Permission-Evidence offen |
-| Snyk Token vorhanden | OWNER CONFIRMED | Wert absichtlich nicht gelesen |
-| Snyk Repository-Import | OPEN | Anbieter-Laufzeitnachweis fehlt |
-| App-only Architektur | IMPLEMENTED IN GOVERNANCE | keine Workflow-/Secret-Mutation |
-| Head-SHA-Laufzeittest | OPEN | benötigt neuen PR |
-| Required-Check-Promotion | BLOCKED | zwei erfolgreiche PR-Heads + Owner-Freigabe fehlen |
+| GitGuardian Laufzeit | PARTIAL PASS | ein bestätigter PR-Head |
+| Snyk Repository-Import | OWNER CONFIRMED | aktueller PR-Check noch ausstehend |
+| Snyk PR Checks | VERIFICATION ACTIVE | dieser Branch ist erster Test nach Konfiguration |
+| App-only Architektur | IMPLEMENTED IN GOVERNANCE | keine Scanner-Workflow-Mutation |
+| GitHub Secret | REVIEW REQUIRED | vorhanden, aber in App-only-Variante möglicherweise unnötig |
+| Required-Check-Promotion | BLOCKED | zwei erfolgreiche PR-Heads pro Scanner + Owner-Freigabe fehlen |
 
 ## Nächster Schritt
 
-Draft-PR für diesen Dokumentationsbranch öffnen. Dieser PR dient als erster aktueller Head-SHA-Test der externen Scanner. Er darf die Scannerchecks nicht selbst als Required Checks promovieren.
+Dieser Dokumentations-PR dient als erster Snyk-PR-Check-Test nach der anbieterseitigen Konfiguration und als zweiter GitGuardian-Beobachtungslauf. Beide Ergebnisse müssen für den exakten PR-Head festgehalten werden. Keine Promotion zu Required Checks in diesem PR.
