@@ -2,8 +2,8 @@
 
 > Legacy filename retained for stable references. Detailed document/handoff traceability: `docs/traceability/DEVELOPMENT_CHAIN_DOCUMENT_TRACEABILITY_MATRIX.md`.
 
-Status date: 2026-08-12
-Baseline: `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e` (PR #222 merge)
+Status date: 2026-08-14
+Baseline: `main@66da35b80ba23e4f216318a9cd9f9b4e7b787679` (PR #255 merge)
 
 | Phase | Execution State | Authority | Primary implementation / execution documents | Mutation / Test Gate | Exit Evidence |
 |---|---|---|---|---|---|
@@ -13,7 +13,7 @@ Baseline: `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e` (PR #222 merge)
 | M3 | COMPLETE | ADR-0053 + ADR-0060 | `.github/workflows/ci.yml`, PR Check Classification | bounded scope-aware CI | one normal `build-and-test` path preserved |
 | M4 | COMPLETE | ADR-0058 + ESS-0018/0019 | Agent IAM / PolicyGate / capability/risk models | negative IAM + Human gate | M4 VERIFIED |
 | M5 | **PERSISTENCE VERIFIED / APPLICATION CORRECTIVE VERIFICATION ACTIVE** | ADR-0056 + ADR-0059 | `public.agent_audit_events`, `server/agentAudit/*` | PR #222 corrected writer↔schema contract; real privileged audit insert still required | persistence remains verified; application runtime PASS pending |
-| M5A | **IN PROGRESS** | ESS-0020 + ADR-0064 + ADR-0003.5 | `docs/runbooks/M5A_SUPABASE_TOTP_AAL2_HARDENING.md` | repo code+CI → explicit Owner production approval → native factor/AAL2/recovery/advisor tests | `docs/evidence/m5a/*`; M6 remains blocked |
+| M5A | **REPOSITORY CODE MERGED (PR #255) — AWAITING OWNER NATIVE-FACTOR ENROLLMENT** | ESS-0020 + ADR-0064 + ADR-0003.5 | `docs/runbooks/M5A_SUPABASE_TOTP_AAL2_HARDENING.md` | repo code+CI merged → explicit Owner production approval → native factor/AAL2/recovery/advisor tests (interactive Human/Owner action, not code-automatable) | `docs/evidence/m5a/*`; M6 remains blocked |
 | M6 | **BLOCKED BY M5A** | ADR-0060 | `AI_AGENT_SUPPLY_CHAIN_MODEL.md`, `docs/runbooks/M6_SUPPLY_CHAIN_PROVENANCE.md` | source/lock/SBOM/artifact/provenance/attestation positive + mismatch negative tests | `docs/evidence/m6/*` → VERIFIED PASS required |
 | M7 | **BLOCKED BY M6** | ADR-0061 | `AI_AGENT_DEPLOYMENT_IDENTITY.md`, `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md` | exact target + Owner mutation approval + Handoff + postverify/rollback | `docs/evidence/m7/*`; all required mutations VERIFIED PASS |
 | M8 | **BLOCKED BY M7** | ADR-0062 + ESS-0019 | Provider Profile Contract, `docs/runbooks/M8_AGENT_CUTOVER.md` | provider-neutral policy equivalence + bypass denial + rollback-to-read-only | `docs/evidence/m8/*` VERIFIED PASS |
@@ -41,7 +41,7 @@ Baseline: `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e` (PR #222 merge)
 
 M5 production persistence remains verified, but the application writer entered corrective runtime verification after the first real SA3B probe. PR #222 corrected the repository-side M5 schema mapping and added migration↔writer regression coverage. A successful privileged production audit insert is still required before that corrective application path returns to full `VERIFIED PASS`.
 
-M5A remains the next executable DEVELOPMENT Chain repository phase. M6–M10 remain blocked by their sequential predecessor gates.
+M5A repository code is merged (PR #255); no further repository-code work is required for this phase. The only remaining step to `VERIFIED PASS` is an interactive Human/Owner action (native TOTP or Passkey enrollment for the Owner profile in production) plus advisor rerun — no session can perform this on the Owner's behalf. M6–M10 remain blocked by their sequential predecessor gates.
 
 ## M5 corrective trace — PR #222
 
