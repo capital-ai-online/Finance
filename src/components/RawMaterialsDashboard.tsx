@@ -23,19 +23,21 @@ import {
   RotateCcw,
   Plus
 } from 'lucide-react';
-import {
-  ResponsiveContainer,
-  ComposedChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  Line
-} from 'recharts';
 import { RAW_MATERIALS_DATABASE } from '../config/rawMaterialsConfig';
 import { AnalysisPayload, RawMaterialInput } from '../types/rawMaterials';
-import { assetRegistry } from '../lib/assetRegistry';
+
+
+export function buildRawMaterialFallbackList() {
+  return Object.values(RAW_MATERIALS_DATABASE).map(item => ({
+    symbol: item.symbol,
+    name: item.name,
+    category_main: item.category_main,
+    category_sub: item.category_sub,
+    is_critical: item.is_critical,
+    score: null,
+    scoreStatus: 'DATA_UNAVAILABLE' as const,
+  }));
+}
 
 export function RawMaterialsDashboard() {
   // Search state
@@ -49,76 +51,8 @@ export function RawMaterialsDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Dynamic Forward Curves data generator
-  const forwardData = payload ? (() => {
-    const matchedAsset = assetRegistry.getAssets().find(a => 
-      a.name.toLowerCase() === payload.raw_material.toLowerCase() || 
-      a.symbol.toLowerCase() === payload.raw_material.toLowerCase()
-    );
-    const symbol = matchedAsset ? matchedAsset.symbol : payload.raw_material.toUpperCase();
-    const spotPrice = matchedAsset ? matchedAsset.price : 4200;
-    
-    const isOilOrGas = symbol.includes('BRENT') || symbol.includes('WTI') || symbol.includes('GAS');
-    const isGoldOrSilver = symbol.includes('GOLD') || symbol.includes('SILVER') || symbol.includes('PLATINUM') || symbol === 'XAU' || symbol === 'XAG';
-    
-    // Deterministic market structure based on symbol
-    let marketStructure: 'CONTANGO' | 'BACKWARDATION' = 'CONTANGO';
-    if (isOilOrGas) {
-      const charSum = symbol.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      marketStructure = charSum % 2 === 0 ? 'BACKWARDATION' : 'CONTANGO';
-    } else if (isGoldOrSilver) {
-      marketStructure = 'CONTANGO';
-    } else {
-      const charSum = symbol.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      marketStructure = charSum % 3 === 0 ? 'BACKWARDATION' : 'CONTANGO';
-    }
-
-    const months = ['Spot', 'M+1', 'M+2', 'M+3', 'M+4', 'M+5', 'M+6', 'M+9', 'M+12'];
-    const contractCodes = ['F', 'G', 'H', 'J', 'K', 'M', 'N', 'Q', 'U', 'V', 'X', 'Z'];
-    const currentMonthIdx = new Date().getMonth();
-    
-    const curveData = months.map((monthName, i) => {
-      let priceCoeff = 1;
-      let factor = (i * 0.008);
-      
-      if (marketStructure === 'CONTANGO') {
-        priceCoeff = 1 + factor;
-      } else {
-        priceCoeff = 1 - factor * 0.85;
-      }
-      
-      if (isOilOrGas || symbol.includes('COAL') || symbol.includes('WHEAT')) {
-        priceCoeff += Math.sin(i * 1.2) * 0.015;
-      }
-      
-      const targetMonthIdx = (currentMonthIdx + i) % 12;
-      const yearCode = String(new Date().getFullYear() + Math.floor((currentMonthIdx + i) / 12)).substring(2);
-      const contract = `${symbol}${contractCodes[targetMonthIdx]}${yearCode}`;
-      const price = Number((spotPrice * priceCoeff).toFixed(2));
-      const yieldPercent = Number(((price - spotPrice) / spotPrice * 100).toFixed(2));
-      const costOfCarry = Number((spotPrice * (0.015 + i * 0.002)).toFixed(2));
-
-      return {
-        contract,
-        month: monthName,
-        price,
-        yieldPercent,
-        costOfCarry,
-      };
-    });
-
-    const impliedInventory = marketStructure === 'CONTANGO' ? 'HOCH / REICHLICH' : 'KNAPP / NIEDRIG';
-    const convenienceYield = marketStructure === 'BACKWARDATION' ? 4.25 : 0.85;
-
-    return {
-      symbol,
-      spotPrice,
-      marketStructure,
-      curveData,
-      impliedInventory,
-      convenienceYield,
-    };
-  })() : null;
+  // Terminkurven werden nur mit verifizierten Laufzeitdaten dargestellt.
+  // Der bisherige symbolbasierte Generator wurde entfernt, weil er keine Marktevidence war.
 
   // Manual Sandbox Tuning State
   const [sandboxMode, setSandboxMode] = useState(false);
@@ -162,19 +96,11 @@ export function RawMaterialsDashboard() {
         const data = await res.json();
         setMaterialsList(data);
       } else {
-        // Fallback to local keys if API not loaded yet
-        const localList = Object.values(RAW_MATERIALS_DATABASE).map(item => ({
-          symbol: item.symbol,
-          name: item.name,
-          category_main: item.category_main,
-          category_sub: item.category_sub,
-          is_critical: item.is_critical,
-          score: 75 // Mock UI fallback initial score
-        }));
-        setMaterialsList(localList);
+        setMaterialsList(buildRawMaterialFallbackList());
       }
     } catch (e) {
-      console.warn("Could not fetch materials list from API, using fallback DB registry.", e);
+      console.warn('Could not fetch materials list from API; scores remain unavailable.', e);
+      setMaterialsList(buildRawMaterialFallbackList());
     }
   };
 
@@ -770,148 +696,16 @@ export function RawMaterialsDashboard() {
 
               </div>
 
-              {/* Forward Curves (Terminkurven) Visualization Card */}
-              {forwardData && (
-                <div className="p-6 rounded-2xl bg-gradient-to-br from-neutral-950 to-black border border-white/10 space-y-6 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-72 h-72 bg-white/2 rounded-full filter blur-3xl pointer-events-none" />
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-4 relative z-10">
-                    <div>
-                      <h3 className="text-sm font-bold text-white font-display uppercase tracking-wider flex items-center gap-2">
-                        <TrendingUp size={16} className="text-aif-gold-DEFAULT" />
-                        Terminkurve &amp; Forward Curve Analyse
-                      </h3>
-                      <p className="text-[11px] text-white/50 mt-1 leading-relaxed">
-                        Futures-Laufzeitstruktur (Spot bis M+12) für {payload.raw_material}.
-                      </p>
-                    </div>
-                    
-                    {/* Market Structure Badge */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono text-white/40 uppercase">Marktstruktur:</span>
-                      {forwardData.marketStructure === 'CONTANGO' ? (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black font-mono bg-aif-gold-DEFAULT/15 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/35 tracking-wider">
-                          CONTANGO (Normal)
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black font-mono bg-rose-500/15 text-rose-400 border border-rose-500/35 tracking-wider animate-pulse">
-                          BACKWARDATION (Knappheit)
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Key Metrics row */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-white/5 p-4 rounded-xl border border-white/5 font-mono text-xs relative z-10">
-                    <div className="space-y-1">
-                      <span className="text-[9px] text-white/40 uppercase">Spot-Referenz</span>
-                      <p className="text-sm font-bold text-white">{forwardData.spotPrice.toLocaleString('de-DE', { minimumFractionDigits: 2 })} EUR</p>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-[9px] text-white/40 uppercase">Convenience Yield</span>
-                      <p className="text-sm font-bold text-emerald-400">+{forwardData.convenienceYield}%</p>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-[9px] text-white/40 uppercase">Lagerbestand</span>
-                      <p className="text-sm font-bold text-white">{forwardData.impliedInventory}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-[9px] text-white/40 uppercase">12M-Terminaufschlag</span>
-                      <p className={`text-sm font-bold ${forwardData.marketStructure === 'CONTANGO' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {forwardData.curveData[forwardData.curveData.length - 1].yieldPercent > 0 ? '+' : ''}
-                        {forwardData.curveData[forwardData.curveData.length - 1].yieldPercent}%
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Chart Container */}
-                  <div className="h-64 w-full relative z-10">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={forwardData.curveData} margin={{ top: 10, right: 10, left: 10, bottom: 5 }}>
-                        <defs>
-                          <linearGradient id="curveColor" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={forwardData.marketStructure === 'CONTANGO' ? '#D4A017' : '#EF4444'} stopOpacity={0.25}/>
-                            <stop offset="95%" stopColor={forwardData.marketStructure === 'CONTANGO' ? '#D4A017' : '#EF4444'} stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis 
-                          dataKey="month" 
-                          stroke="rgba(255,255,255,0.4)" 
-                          fontSize={10} 
-                          tickLine={false}
-                        />
-                        <YAxis 
-                          stroke="rgba(255,255,255,0.4)" 
-                          fontSize={10} 
-                          tickLine={false}
-                          domain={['dataMin - (dataMin * 0.05)', 'dataMax + (dataMax * 0.05)']}
-                          tickFormatter={(v) => `${Number(v).toLocaleString('de-DE')}`}
-                        />
-                        <Tooltip 
-                          content={({ active, payload: tPayload }) => {
-                            if (active && tPayload && tPayload.length) {
-                              const data = tPayload[0].payload;
-                              return (
-                                <div className="bg-neutral-950 border border-white/10 p-3 rounded-lg shadow-xl font-mono text-xs space-y-1.5">
-                                  <p className="text-white font-bold">{data.contract}</p>
-                                  <div className="flex justify-between gap-4">
-                                    <span className="text-white/50">Laufzeit:</span>
-                                    <span className="text-white">{data.month}</span>
-                                  </div>
-                                  <div className="flex justify-between gap-4">
-                                    <span className="text-white/50">Terminpreis:</span>
-                                    <span className="text-aif-gold-DEFAULT font-bold">{data.price.toLocaleString('de-DE', { minimumFractionDigits: 2 })} EUR</span>
-                                  </div>
-                                  <div className="flex justify-between gap-4">
-                                    <span className="text-white/50">Auf/Abschlag:</span>
-                                    <span className={data.yieldPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                                      {data.yieldPercent >= 0 ? '+' : ''}{data.yieldPercent}%
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between gap-4 border-t border-white/5 pt-1 mt-1 text-[10px]">
-                                    <span className="text-white/40">Lagerkosten (impl.):</span>
-                                    <span className="text-white/60">{data.costOfCarry.toLocaleString('de-DE', { minimumFractionDigits: 2 })} EUR</span>
-                                  </div>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="price" 
-                          stroke={forwardData.marketStructure === 'CONTANGO' ? '#D4A017' : '#EF4444'} 
-                          strokeWidth={2}
-                          fillOpacity={1} 
-                          fill="url(#curveColor)" 
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="price"
-                          stroke={forwardData.marketStructure === 'CONTANGO' ? '#D4A017' : '#EF4444'}
-                          strokeWidth={2}
-                          dot={{ r: 4, strokeWidth: 1, fill: '#0a0a0a' }}
-                          activeDot={{ r: 6 }}
-                        />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  {/* Educational analysis note */}
-                  <div className="p-3 bg-white/5 border border-white/5 rounded-xl text-[10px] text-white/50 leading-relaxed font-mono relative z-10">
-                    {forwardData.marketStructure === 'CONTANGO' ? (
-                      <span>
-                        💡 <strong>CONTANGO-SITUATION:</strong> Die zukünftigen Lieferpreise liegen über dem aktuellen Spotpreis. Dies signalisiert eine ausreichende Versorgungssituation auf dem physischen Markt mit normalen Lagerkosten und Versicherungsaufschlägen (Cost of Carry). Spotkäufe bieten keine unmittelbare Arbitrageprämie.
-                      </span>
-                    ) : (
-                      <span>
-                        ⚠️ <strong>BACKWARDATION-SITUATION:</strong> Der Markt verzeichnet eine Verknappung der physischen Bestände. Die Spotpreise übersteigen die zukünftigen Forward-Preise. Dies deutet auf eine extrem hohe Nachfrage oder Unterbrechungen in den Lieferketten hin. Hedging über Terminverkäufe wird hochgradig attraktiv.
-                      </span>
-                    )}
-                  </div>
+              {/* Forward curves require verified contract-level market data. */}
+              <div className="p-5 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex items-start gap-3">
+                <AlertTriangle className="text-amber-300 shrink-0 mt-0.5" size={18} />
+                <div>
+                  <h3 className="text-xs font-mono font-black uppercase tracking-widest text-amber-200">Terminkurve: DATA_UNAVAILABLE</h3>
+                  <p className="mt-1 text-[11px] leading-relaxed text-white/55">
+                    Für {payload.raw_material} liegen derzeit keine verifizierten Futures-Laufzeiten vor. Marktstruktur, Convenience Yield, Lagerbestand und Terminaufschläge werden nicht synthetisch abgeleitet.
+                  </p>
                 </div>
-              )}
+              </div>
 
               {/* Traceable Reasoning Logs (Agent Reasoning outputs) */}
               <div className="p-5 rounded-2xl bg-[#080808] border border-white/10 space-y-4">

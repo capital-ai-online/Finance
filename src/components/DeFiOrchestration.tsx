@@ -46,6 +46,18 @@ const DEFI_TOKENS = [
   { symbol: 'COMP', name: 'Compound Governance Token', desc: 'Pionier unter den dezentralen Zins- und Geldmarkt-Protokollen.' }
 ];
 
+
+export function buildDefiRadarData(scores: any) {
+  if (!scores) return [];
+  return [
+    { name: 'Tokenomics (Supply-Ratio)', wert: scores.tokenomics, max: 100 },
+    { name: 'Netzwerk-Aktivität', wert: scores.networkActivity, max: 100 },
+    { name: 'Liquiditätstiefe', wert: scores.liquidity, max: 100 },
+    { name: 'Protokoll-Sicherheit', wert: scores.security, max: 100 },
+    { name: 'Adoption & Nutzen', wert: scores.utility, max: 100 },
+  ].filter(item => typeof item.wert === 'number' && Number.isFinite(item.wert));
+}
+
 export function DeFiOrchestration() {
   const [selectedToken, setSelectedToken] = useState<string>('AAVE');
   const [analyzing, setAnalyzing] = useState<boolean>(false);
@@ -84,16 +96,9 @@ export function DeFiOrchestration() {
       setScores(computed);
       setScoreBasis('market-data');
 
-      // Simulate Multi-Agent telemetry fetch
-      setTimeout(() => {
-        setAgentReasoning([
-          `[Master Orchestrator] Analysiere Liquiditäts-Parameter für "${symbol}"...`,
-          `[Risk Agent] Volatilität liegt bei ${generated.volatility ?? 'n/a'}%. Smart-Contract Risiko ist durch Multi-Audits minimiert.`,
-          `[Fundamentals Agent] Tokenomics-Score (Supply-Ratio) bewertet mit ${generated.tokenomics ?? 'n/a'}/100.`,
-          `[Valuation Agent] Das DeFi-Cashflow-Modell liefert eine fundamentale Bewertung von ${(computed.final_score ?? 0).toFixed(1)}/100.`
-        ]);
-        setAnalyzing(false);
-      }, 600);
+      // Marktbasierte Scores sind keine ausgeführte Multi-Agenten-Analyse.
+      setAgentReasoning([]);
+      setAnalyzing(false);
     } catch (e) {
       console.error(e);
       setAnalyzing(false);
@@ -102,7 +107,7 @@ export function DeFiOrchestration() {
 
   const handleAgentTrigger = async () => {
     setAnalyzing(true);
-    setAgentReasoning(prev => [...prev, `[Master Orchestrator] Triggering live multi-agent sub-routine via @google/genai...`]);
+    setAgentReasoning([]);
     try {
       const res = await fetch('/api/crypto/analyze', {
         method: 'POST',
@@ -119,10 +124,10 @@ export function DeFiOrchestration() {
           setAgentReasoning(data.reasoning);
         }
       } else {
-        setAgentReasoning(prev => [...prev, `[Fehler] Live-Anfrage fehlgeschlagen. Nutze hochpräzise deterministische Rückfallebene.`]);
+        setAgentReasoning(prev => [...prev, `[DATA_UNAVAILABLE] Live-Agentenanalyse fehlgeschlagen; es wird keine Agenten-Evidence ergänzt.`]);
       }
     } catch (err: any) {
-      setAgentReasoning(prev => [...prev, `[Fehler] Netzwerkfehler: ${err.message || err}. Rückfall-Modus aktiv.`]);
+      setAgentReasoning(prev => [...prev, `[DATA_UNAVAILABLE] Netzwerkfehler: ${err.message || err}. Keine Agenten-Evidence verfügbar.`]);
     } finally {
       setAnalyzing(false);
     }
@@ -140,63 +145,13 @@ export function DeFiOrchestration() {
   // Higher divergence = higher IL % = higher risk
   const ilRiskScore = Math.min(100, Math.round(Math.abs(impermanentLossPct) * 4));
 
-  // Build Radar Data
-  // Audit ARCH-AUDIT-0002 (S1/S2/S5): TVL-Qualitaet/Gebuehrengenerierung/Governance-Wert
-  // hatten keine reale Datenquelle und wurden aus CryptoScores entfernt (siehe
-  // types/crypto.types.ts); ersetzt durch die verbleibenden real- bzw. agentenbasierten
-  // Felder Tokenomics und Netzwerk-Aktivitaet.
-  const radarData = scores ? [
-    { name: 'Tokenomics (Supply-Ratio)', wert: scores.tokenomics ?? 0, max: 100 },
-    { name: 'Netzwerk-Aktivität', wert: scores.networkActivity ?? 0, max: 100 },
-    { name: 'Liquiditätstiefe', wert: scores.liquidity ?? 80, max: 100 },
-    { name: 'Protokoll-Sicherheit', wert: scores.security ?? 85, max: 100 },
-    { name: 'IL-Risiko (Simulator)', wert: ilRiskScore, max: 100 },
-    { name: 'Adoption & Nutzen', wert: scores.utility ?? 60, max: 100 }
-  ] : [];
+  // Das Radar zeigt ausschließlich vorhandene, numerische Scorefelder ohne Ersatzwerte.
+  const radarData = buildDefiRadarData(scores);
 
-  // Generate Pools for selected token
-  const getPoolsForToken = (symbol: string): DeFiPoolData[] => {
-    switch (symbol) {
-      case 'AAVE':
-        return [
-          { name: 'AAVE / WETH (0.3%)', dex: 'Uniswap v3', tvl: 42300000, volume24h: 3800000, apr: 14.5, ilRisk: 'medium' },
-          { name: 'AAVE / wstETH', dex: 'Balancer', tvl: 28500000, volume24h: 1200000, apr: 11.2, ilRisk: 'low' },
-          { name: 'AAVE / sDAI', dex: 'Curve', tvl: 12900000, volume24h: 450000, apr: 8.9, ilRisk: 'low' }
-        ];
-      case 'UNI':
-        return [
-          { name: 'UNI / WETH (0.3%)', dex: 'Uniswap v3', tvl: 128400000, volume24h: 19400000, apr: 18.2, ilRisk: 'medium' },
-          { name: 'UNI / USDC (1.0%)', dex: 'Uniswap v3', tvl: 45100000, volume24h: 5200000, apr: 12.4, ilRisk: 'high' },
-          { name: 'UNI / WBTC', dex: 'Sushiswap', tvl: 14200000, volume24h: 890000, apr: 9.8, ilRisk: 'medium' }
-        ];
-      case 'MKR':
-        return [
-          { name: 'MKR / WETH (0.3%)', dex: 'Uniswap v3', tvl: 35100000, volume24h: 2100000, apr: 11.6, ilRisk: 'medium' },
-          { name: 'MKR / USDS', dex: 'Curve', tvl: 58900000, volume24h: 4600000, apr: 13.1, ilRisk: 'low' },
-          { name: 'MKR / DAI', dex: 'Balancer', tvl: 22400000, volume24h: 900000, apr: 10.4, ilRisk: 'low' }
-        ];
-      case 'LDO':
-        return [
-          { name: 'LDO / WETH (0.3%)', dex: 'Uniswap v3', tvl: 95400000, volume24h: 14200000, apr: 22.4, ilRisk: 'high' },
-          { name: 'wstETH / LDO', dex: 'Balancer', tvl: 64100000, volume24h: 3800000, apr: 16.8, ilRisk: 'medium' },
-          { name: 'LDO / CRV', dex: 'Curve', tvl: 18500000, volume24h: 750000, apr: 14.1, ilRisk: 'high' }
-        ];
-      case 'CRV':
-        return [
-          { name: 'CRV / WETH (1.0%)', dex: 'Uniswap v3', tvl: 15400000, volume24h: 2900000, apr: 25.6, ilRisk: 'high' },
-          { name: '3pool / CRV', dex: 'Curve', tvl: 142800000, volume24h: 18400000, apr: 19.4, ilRisk: 'medium' },
-          { name: 'CRV / crvUSD', dex: 'Curve', tvl: 89100000, volume24h: 11500000, apr: 17.2, ilRisk: 'low' }
-        ];
-      default:
-        return [
-          { name: 'COMP / WETH (0.3%)', dex: 'Uniswap v3', tvl: 14800000, volume24h: 1100000, apr: 9.4, ilRisk: 'medium' },
-          { name: 'COMP / USDC', dex: 'Balancer', tvl: 9500000, volume24h: 450000, apr: 7.2, ilRisk: 'medium' }
-        ];
-    }
-  };
+  // Pooldaten bleiben leer, bis ein verifizierter DEX-/On-chain-Provider angebunden ist.
+  const currentPools: DeFiPoolData[] = [];
 
   const selectedTokenInfo = DEFI_TOKENS.find(t => t.symbol === selectedToken);
-  const currentPools = getPoolsForToken(selectedToken);
 
   return (
     <div id="defi-orchestration-widget" className="space-y-8">
@@ -218,7 +173,7 @@ export function DeFiOrchestration() {
               DeFi Token Orchestration &amp; IL Radar
             </h2>
             <p className="text-xs text-white/60 leading-relaxed max-w-2xl">
-              Dezentrale Protokolle erfordern ein spezialisiertes Bewertungsverfahren. Dieser Leitstand analysiert TVL-Qualität, organische Gebührenströme, Pool-Konzentrationen und kalkuliert das Risiko von unbeständigen Verlusten (Impermanent Loss) unter dynamischen Preispfaden.
+              Dezentrale Protokolle erfordern ein spezialisiertes Bewertungsverfahren. Dieser Leitstand zeigt ausschließlich verfügbare Scorefelder und berechnet das Risiko unbeständiger Verluste (Impermanent Loss) in einer klar getrennten Simulation. TVL-, Pool- und APR-Werte bleiben ohne verifizierten Provider unverfügbar.
             </p>
           </div>
           <div className="flex gap-2 shrink-0">
@@ -299,7 +254,7 @@ export function DeFiOrchestration() {
               <div className="bg-white/2 border border-white/5 rounded-xl p-3 text-center">
                 <span className="text-[9px] font-mono text-white/40 uppercase block">DeFi Final Score</span>
                 <span className="text-xl font-black text-purple-400 font-display mt-1 block">
-                  {(scores.final_score ?? 0).toFixed(1)}
+                  {typeof scores.final_score === 'number' ? scores.final_score.toFixed(1) : '—'}
                   <span className="text-xs text-white/50 font-normal">/100</span>
                 </span>
               </div>
@@ -433,6 +388,11 @@ export function DeFiOrchestration() {
               Multi-Agent Audit-Trail
             </h3>
             <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+              {agentReasoning.length === 0 && (
+                <div className="p-3 rounded-lg border border-amber-500/15 bg-amber-500/5 text-[10px] font-mono text-amber-100/65">
+                  Keine ausgeführte Agentenanalyse vorhanden. Marktbasierte Scores erzeugen keinen Agenten-Audit-Trail.
+                </div>
+              )}
               {agentReasoning.map((r, idx) => (
                 <div key={idx} className="p-2 bg-white/2 rounded-lg border border-white/5 text-[10px] font-mono text-white/70 leading-relaxed flex items-start gap-1.5">
                   <span className="text-purple-400 font-bold shrink-0">●</span>
@@ -453,10 +413,10 @@ export function DeFiOrchestration() {
               <Droplet className="text-purple-400" size={16} />
               Aktive DeFi Liquidity Pools
             </h3>
-            <p className="text-xs text-white/50 mt-0.5">Top-Liquiditätspools mit Real-time TVL, Volumen-Indikatoren und APR-Gewichtung.</p>
+            <p className="text-xs text-white/50 mt-0.5">Verifizierte TVL-, Volumen- und APR-Werte aus angebundenen DEX-/On-chain-Providern.</p>
           </div>
           <span className="text-[10px] font-mono text-white/40 uppercase bg-white/5 border border-white/10 px-2 py-1 rounded">
-            DEX-Verzeichnisse aktiv
+            DATA_UNAVAILABLE
           </span>
         </div>
 
@@ -473,6 +433,13 @@ export function DeFiOrchestration() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 font-mono text-xs">
+              {currentPools.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-8 px-4 text-center text-[11px] text-amber-200/70">
+                    Keine verifizierten Pooldaten verfügbar. Es werden keine TVL-, Volumen- oder APR-Ersatzwerte angezeigt.
+                  </td>
+                </tr>
+              )}
               {currentPools.map((pool, idx) => (
                 <tr key={idx} className="hover:bg-white/2 transition-all">
                   <td className="py-3.5 px-4 font-bold text-white font-display flex items-center gap-2">
