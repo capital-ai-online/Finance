@@ -2,7 +2,7 @@
 
 Status: IMPLEMENTATION PHASE
 Date: 2026-08-12
-Production baseline: `main@2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`
+Repository baseline: `main@6205868da833a6ee75b5301e78b0a2e6a118c411`
 
 | Stage | Authority | Implementation / Evidence | Mutation boundary | Exit gate |
 |---|---|---|---|---|
@@ -12,6 +12,7 @@ Production baseline: `main@2e86d5fbc54f9b5ea2af4e6db33e9749c2ac15dd`
 | SA3A Audit Adapter | ADR-0059 + ADR-0065 | PR #218; M5 writer corrected by #222 | no permit before durable M5 audit | COMPLETE / VERIFIED PASS |
 | SA3B Execution Host | ADR-0067 | PR #220 + #222; Issues #221/#223/#224; probe branch cleanup verified | BRANCH host proof only | **COMPLETE / VERIFIED PASS** |
 | SA4 Bounded Pilot | ADR-0068 + REM-SA4-PILOT-001 | PR #226; Issue #228 / run `31579519025`; PR #229; six M5 events | exact doc path; BRANCH/COMMIT/Draft PR only | **COMPLETE / VERIFIED PASS** |
+| M5A Repository Package | ESS-0020 + ADR-0064 + REM-M5A-REPOSITORY-001 | Work-package + DRAFT mandate in governance PR | repository code/tests/evidence only; production denied | OWNER REVIEW + REM ACTIVATION REQUIRED |
 | SA5 External Mutation | future ADR + M10 | not implemented | production mutation prohibited | BLOCKED BY M10 VERIFIED PASS |
 
 ## Canonical evidence chain
@@ -204,3 +205,25 @@ Rollback never targets `main`, repository protection, another PR or production i
 SA4 is no longer a prerequisite blocker. SA5 remains **BLOCKED BY M10 VERIFIED PASS**.
 
 Completion of SA4 does not authorize external production mutation. Any future SA5 design still requires separate authority, exact-target and rollback controls, and strong M10 Owner assurance.
+
+## M5A bounded repository package trace
+
+| Dimension | Binding |
+|---|---|
+| Roadmap item | `M5A-NATIVE-MFA-AAL2-REPOSITORY-IMPLEMENTATION` |
+| Executor | `capital-ai-systemadmin-roadmap-executor` |
+| Mandate | `.ai/mandates/REM-M5A-REPOSITORY-001.json` |
+| Initial mandate state | `DRAFT` — no execution authority |
+| Work-package | `docs/roadmaps/M5A_SYSTEMADMIN_REPOSITORY_WORK_PACKAGE.md` |
+| Mutation class | `REPOSITORY` only |
+| Risk ceiling | `HIGH` |
+| Open PR limit | 1 |
+| Production mutation | DENY |
+| Merge | Human-only |
+| Next activation | exact-current-main binding + Owner acceptance + durable audit preflight |
+
+Required permit sequence after activation:
+
+`BRANCH authorization/outcome → COMMIT authorization/outcome → PR authorization/outcome → Human review → CI → Human merge → branch delete`
+
+The package cannot enroll/remove/reset Supabase factors, mutate Auth settings, read secrets, deploy Render, alter billing/DNS, weaken repository protection or expand its own authority. Productive M5A enrollment remains a later separate Human/Owner gate.
