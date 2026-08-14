@@ -48,14 +48,11 @@ Grahams Prinzipien (Sicherheitsmarge + fundamentale Unterbewertung) lassen sich 
 HINWEIS: Keine Anlageberatung. Die gezeigten Daten sind ausschließlich quantitative Berechnungen. Die Anlageentscheidung liegt vollumfänglich beim Nutzer.
 ```
 
----
-
-## Optionaler separater Referral-Tweet (nicht in den Bildungs-Thread mischen)
-
+**Tweet 8 (Referral – klar als Partner/Werbung)**
 ```
-Optional / separat:
+Werbung / Partner:
 
 Tritt Kraken Pro bei, und wir können beide Prämien erhalten.
-Verwende meinen Link oder den Referral-Code yc4ggk3f:
+Link oder Code yc4ggk3f:
 https://proinvite.kraken.com/9f1e/xghjfdv4
 ```

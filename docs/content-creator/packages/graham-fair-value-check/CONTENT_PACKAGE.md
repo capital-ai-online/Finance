@@ -59,6 +59,12 @@ Die Darstellung erfolgt bewusst ohne prognostische Sprache. Es handelt sich um e
 
 ---
 
+**Partner-Hinweis (Werbung):**  
+Tritt Kraken Pro bei, und wir können beide Prämien erhalten.  
+Link oder Referral-Code **yc4ggk3f**: https://proinvite.kraken.com/9f1e/xghjfdv4
+
+---
+
 ## 3. Instagram – Carousel (5 Slides) + Caption
 
 **Slide 1**  
@@ -98,6 +104,13 @@ Alle Werte basieren auf realen Marktdaten. Keine simulierten Zahlen. Keine Kursp
 HINWEIS: Keine Anlageberatung. Die gezeigten Daten sind ausschließlich quantitative Berechnungen. Die Anlageentscheidung liegt beim Nutzer.
 
 ---
+Werbung / Partner:  
+Tritt Kraken Pro bei – wir können beide Prämien erhalten.  
+Code **yc4ggk3f** oder Link: https://proinvite.kraken.com/9f1e/xghjfdv4
+
+#ValueInvesting #QuantitativeAnalysis #CAPITALAI #Graham
+
+---
 
 ## 4. TikTok / Instagram Reels / YouTube Short (45–60 s)
 
@@ -119,11 +132,24 @@ Disclaimer einblenden.
 • „Numerischer Fair-Value-Bereich“  
 • „Keine Anlageberatung“
 
+**Caption (TikTok / Reels)**  
+Graham Fair Value Check bei CAPITAL-AI – rein quantitativ, ohne Hype.  
+Keine Anlageberatung.  
+
+Werbung: Kraken Pro – Code yc4ggk3f → https://proinvite.kraken.com/9f1e/xghjfdv4
+
 ---
 
 ## 5. Facebook-Post
 
-Kurze Version des LinkedIn-Posts + Standard-Disclaimer.
+CAPITAL-AI berechnet den Fair-Value-Check nach Benjamin-Graham-Prinzipien: Earnings Power, Buchwert, Sicherheitsmarge, Multiplikatoren und Risikoadjustierung. Ergebnis = numerischer Fair-Value-Bereich + Confidence-Metrik. Keine Prognose – nur Mathematik und belegbare Daten.
+
+**HINWEIS:** Keine Anlageberatung. Die gezeigten Daten stellen ausschließlich quantitative Berechnungen dar. Die endgültige Anlageentscheidung liegt vollumfänglich beim Nutzer.
+
+---
+**Werbung / Partner:**  
+Tritt Kraken Pro bei, und wir können beide Prämien erhalten.  
+Referral-Code **yc4ggk3f** oder Link: https://proinvite.kraken.com/9f1e/xghjfdv4
 
 ---
 
@@ -142,6 +168,7 @@ Sekundär: #InvestmentTools #DataDriven #TransparentFinance #NoHype
 
 ---
 
-## 8. Affiliate / Referral (separat)
+## 8. Affiliate / Referral
 
-Siehe `AFFILIATE_REFERRAL.md`. Nicht in die Bildungsclaims einmischen.
+Vollständiger Block und Regeln: siehe `AFFILIATE_REFERRAL.md`.  
+Zusätzlich: komplettes X-Post + Short-Video zu Imagine auf X → `X_IMAGINE_SHORT.md`.
