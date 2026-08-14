@@ -1,7 +1,7 @@
 # M7 — Deployment Rollback Verification: Mutation Work Order
 
-Status: PROPOSED (nicht ausgeführt)
-Datum: 2026-08-14
+Status: Rollback **VERIFIED PASS** (durchgeführt und real verifiziert, siehe Nachtrag Abschnitt 9) — Roll-Forward ausstehend
+Datum: 2026-08-14 (Nachtrag: 2026-08-14, selber Tag)
 Roadmap phase: M7 (ADR-0061, `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`, Exit-Gate-Punkt 7
 „rollback is proven")
 Authority: `docs/contracts/DEVELOPMENT_CHAIN_MUTATION_HANDOFF_CONTRACT.md`,
@@ -120,14 +120,61 @@ erfüllt markieren; M7 als Ganzes bleibt weiterhin unterhalb `VERIFIED PASS`, bi
 „Required Negative Tests"-Liste geklärt ist (siehe `docs/runbooks/M7_DEPLOY_HOOK_ROTATION_HANDOFF.md`
 Abschnitt 9 für die bereits dokumentierte Einschränkung).
 
+## 9. Nachtrag — Rollback real durchgeführt und verifiziert (2026-08-14)
+
+Der Owner hat im Render-Dashboard den Rollback auf den in Abschnitt 3 genannten Ziel-Deploy
+ausgelöst und dieser Sitzung Bescheid gegeben. Read-only Verifikation per `list_deploys`
+(Render-MCP, unabhängig von GitHub):
+
+```yaml
+rollbackDeploy:
+  id: dep-d9vpuru1egvs73f7684g
+  commitSha: 8b4cab066c7c893c4525cd8e015e80919b145bde
+  status: live
+  trigger: rollback   # Render's eigene Klassifizierung des Auslösers - nicht "deploy_hook"
+  startedAt: 2026-08-14T23:06:28Z
+  finishedAt: 2026-08-14T23:06:48Z
+```
+
+`trigger: "rollback"` ist Render's **eigene** Einordnung des Auslösers (nicht `deploy_hook`,
+nicht `manual`) — ein unabhängiger, plattformseitiger Beweis, dass tatsächlich die
+Rollback-Funktion verwendet wurde, nicht ein gewöhnlicher Neu-Deploy. Commit stimmt exakt mit dem
+in Abschnitt 3 benannten Ziel überein.
+
+**Nebenbefund** (kein Fehler, nur zur Vollständigkeit dokumentiert): Während des Rollback-Zeitfensters
+löste ein regulärer `push` auf `main` (Merge von PR #275, Commit `3cc92df6...`) über den Deploy-Hook
+einen weiteren, unabhängigen Deploy-Versuch aus (`dep-d9vpuq7mal7c7386r55g`). Dieser wurde von Render
+selbst mit `status: canceled` markiert, da der Rollback-Vorgang Vorrang erhielt. Das bedeutet:
+Produktion lief nach dem Rollback auf dem alten Commit `8b4cab06...`, während `main` bereits deutlich
+weiter war (PR #274 Outbox-Migration, PR #275 Market-Data-Contracts/Alpaca-Adapter — beides echte
+Code-Änderungen, kein reiner Dokumentations-Diff mehr). Der Roll-Forward (Abschnitt 4, Schritt 5) ist
+daher **nicht optional/kosmetisch**, sondern erforderlich, um Produktion wieder mit aktuellem `main`
+zu synchronisieren.
+
+**Ergebnis:** M7-Exit-Gate-Punkt 7 („rollback is proven") ist real bewiesen — ein echter,
+Render-seitig als solcher klassifizierter Rollback auf einen spezifischen vorherigen Deploy wurde
+erfolgreich durchgeführt und unabhängig verifiziert.
+
+**Roll-Forward-Plan:** Statt eines direkten Render-Dashboard-Klicks oder eines Aufrufs von
+`mcp__render__trigger_deploy` aus dieser Sitzung (was den vollständigen CI-Gate — `build-and-test`,
+M6-`supply-chain-attestation` — umgehen würde, da dieses Tool nicht über den GitHub-Actions-Pfad
+läuft), erfolgt der Roll-Forward über den **regulären Merge dieses PRs**: der resultierende
+`push`-Lauf auf `main` löst `deploy-production` über die normale, M6-attestation-gegatete Kette aus
+und deployt automatisch den dann aktuellen `main`-Stand. Das ist der einzige Weg, Produktion wieder
+auf `main` zu bringen, ohne die M6/M7-Gate-Kette für diesen einen Deploy zu umgehen. Nachtrag mit dem
+Roll-Forward-Ergebnis folgt als separater PR, sobald dieser hier gemergt ist.
+
 ## 8. Freigabestatus
 
-- [ ] Human/Owner: Work Order geprüft und Umfang bestätigt (insbesondere: welcher Deploy exakt als
+- [x] Human/Owner: Work Order geprüft und Umfang bestätigt (insbesondere: welcher Deploy exakt als
       Rollback-Ziel dient).
-- [ ] Human/Owner: Rollback durchgeführt (Schritt 1–4).
-- [ ] Diese Sitzung: Rollback-Verifikation durchgeführt und dokumentiert.
-- [ ] Human/Owner: Roll-Forward durchgeführt.
-- [ ] Diese Sitzung: Roll-Forward-Verifikation durchgeführt und dokumentiert.
+- [x] Human/Owner: Rollback durchgeführt (Schritt 1–4).
+- [x] Diese Sitzung: Rollback-Verifikation durchgeführt und dokumentiert (Abschnitt 9).
+- [ ] Human/Owner: Roll-Forward durchgeführt. — erfolgt automatisch beim Merge dieses PRs (siehe
+      Abschnitt 9, „Roll-Forward-Plan").
+- [ ] Diese Sitzung: Roll-Forward-Verifikation durchgeführt und dokumentiert. — folgt als separater
+      Nachtrag/PR nach diesem Merge.
 
-**Dieses Dokument autorisiert selbst keine Ausführung.** Es liegt ausschließlich am Owner, ob und
-wann die in Abschnitt 4 beschriebenen Schritte durchgeführt werden.
+**Dieses Dokument autorisiert selbst keine weitere Ausführung.** Der Rollback ist bereits erfolgt
+(siehe Abschnitt 9); der Roll-Forward ergibt sich automatisch aus dem regulären, CI-gegateten
+Merge-Prozess dieses PRs.
