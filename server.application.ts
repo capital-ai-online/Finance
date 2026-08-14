@@ -44,7 +44,7 @@ import {
 import { handleWebhookEvent, getStripeInstance } from './server/stripe';
 import { processSubscriptionConfirmationMailJob } from './server/mailer';
 import { registerOutboxJobHandler, startOutboxWorker, stopOutboxWorker } from './server/outboxWorker';
-import { isAlpacaConfigured } from './src/services/alpacaShadowProvider';
+import { isAlpacaConfigured, runAlpacaShadowStartupSmoke } from './src/services/alpacaShadowProvider';
 import { logSystemEvent } from './server/systemEvents';
 import { startRecursiveFileWatcher } from './server/documentHygiene';
 import { enforceScreeningQuota } from './server/quota';
@@ -1386,8 +1386,14 @@ async function startServer() {
   const httpServer = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
     
-    // Start Recursive Document Hygiene File Watcher
+    // Production remains immutable/read-only; the watcher only starts in writable non-production runtimes.
     startRecursiveFileWatcher();
+
+    // One best-effort, read-only Market Data GET verifies Alpaca configuration/authentication.
+    // The diagnostic is deliberately redacted and never affects readiness, canonical prices or scores.
+    void runAlpacaShadowStartupSmoke()
+      .then((summary) => serverLogger.info('Alpaca shadow startup smoke', summary))
+      .catch(() => serverLogger.warn('Alpaca shadow startup smoke failed without a provider observation.'));
     
     // Start automatic background market data fetching to keep the assetRegistry fresh
     console.log("[Market Data] Initiating background fetch to populate AssetRegistry...");
