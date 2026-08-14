@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GoogleGenAI } from '@google/genai';
+import type { AiGenerationClient } from './aiSchema';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 
@@ -118,10 +118,10 @@ function computeCostUsd(model: string, promptTokens: number, candidateTokens: nu
  * Fehler-/Mock-Antworten), wird KEIN Eintrag mit geschaetzten Werten erzeugt.
  */
 export async function trackedGenerateContent(
-  ai: GoogleGenAI,
-  params: Parameters<GoogleGenAI['models']['generateContent']>[0],
+  ai: AiGenerationClient,
+  params: Parameters<AiGenerationClient['models']['generateContent']>[0],
   meta: { promptId: string; requestId?: string }
-): ReturnType<GoogleGenAI['models']['generateContent']> {
+): ReturnType<AiGenerationClient['models']['generateContent']> {
   const response = await ai.models.generateContent(params);
   try {
     recordGeminiUsage(response, String((params as any).model || 'unknown'), meta);
