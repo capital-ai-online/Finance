@@ -269,7 +269,7 @@ Merged/superseded branches are never reused.
 
 ## Current next action
 
-After merge and explicit activation of `REM-M5A-REPOSITORY-001`, execute the bounded M5A repository code/test work package through the verified SA4 host. SA5 remains blocked and no external production mutation is authorized by SA4 or by the draft mandate.
+M5A repository code is merged via PR #255 and native MFA is Owner-attested active. The SA4 one-purpose host MUST NOT be reused for M5A. The next allowed action is read-only M5/M5A verification evidence; any corrective mutation requires an exact Proposal and explicit Owner approval. SA5 remains blocked until M10 VERIFIED PASS.
 
 ## Konsolidierter Prototyp- und Mutationsanfragepfad (PR #257)
 
