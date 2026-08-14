@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { isSupabaseConfigured } from '../db';
-import { isGeminiConfigured } from '../ai';
+import { isAlpacaConfigured } from '../../src/services/alpacaShadowProvider';
 import { isAnthropicConfigured } from '../anthropicClient';
 import { isOpenAIConfigured } from '../openaiClient';
 
@@ -21,7 +21,7 @@ export function createHealthRouter(): Router {
       uptimeSeconds: Math.floor(process.uptime()),
       configured: {
         supabase: isSupabaseConfigured(),
-        gemini: isGeminiConfigured(),
+        alpaca: isAlpacaConfigured(),
         anthropic: isAnthropicConfigured(),
         openai: isOpenAIConfigured(),
       },
