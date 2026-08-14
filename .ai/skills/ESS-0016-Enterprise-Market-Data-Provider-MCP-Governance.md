@@ -4,7 +4,7 @@
 
 **Version:** 1.0.0  
 **Status:** Enterprise Specification  
-**Implementation Status:** SPECIFIED / NOT YET IMPLEMENTED  
+**Implementation Status:** PHASE 1 IMPLEMENTED / RUNTIME PROMOTION NOT AUTHORIZED  
 **Owner:** Platform Director  
 **Security Authority:** CAPITAL-AI IAM / Security & Compliance  
 **Related ADR:** ADR-0041  
@@ -549,6 +549,11 @@ Event-Namens- und Registry-Regeln werden nicht in ESS-0016 neu definiert, sonder
 - Alpaca REST Adapter;
 - Secret/Env validation;
 - unit tests.
+
+Phase-1-Nachweis (2026-08-14): kanonischer Snapshot-Vertrag, Quality Assessment,
+Provider Registry, fail-closed Gateway-Grundgrenze und Alpaca REST Adapter sind implementiert.
+Alpaca bleibt technisch `shadow` und wird ohne `includeShadow: true` nicht geroutet. Bestehende
+Scoring-/Screening-Pfade sind noch nicht migriert.
 
 ### Phase 2 — Gateway
 
