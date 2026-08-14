@@ -2,7 +2,7 @@
 ## Enterprise Market Data Provider & MCP Architecture
 
 **Status:** ACCEPTED  
-**Implementation-Status:** SPECIFIED / NOT YET IMPLEMENTED  
+**Implementation-Status:** PHASE 1 IMPLEMENTED / RUNTIME PROMOTION NOT AUTHORIZED  
 **Date:** 2026-08-03  
 **Version:** 0.6.0  
 **Priority:** P1  
@@ -94,6 +94,18 @@ Business Logic
 MCP darf ergänzende Research-/Evidence-Daten liefern, aber keine ungeprüfte agentische Ausgabe als authoritative Marktpreis oder deterministischen Score einschleusen.
 
 ---
+
+## 3.3 P1 Phase-1 implementation boundary (2026-08-14)
+
+Phase 1 introduces the provider-neutral canonical snapshot contract, data-quality assessment,
+explicit provider registry, fail-closed gateway and Alpaca REST adapter under
+`src/platform/MarketData/`.
+
+Alpaca remains registered with role `shadow`. The gateway excludes shadow providers unless the
+caller explicitly sets `includeShadow: true`; no existing quote, screening or scoring call site
+is migrated by this phase. Therefore the architectural target "Alpaca primary" remains a future
+promotion decision subject to the documented 14-trading-day / 1,000-observation evidence gate,
+entitlement review and separate Owner authorization.
 
 ## 4. Alpaca wird Primary Provider
 
