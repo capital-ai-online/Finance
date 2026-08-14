@@ -344,11 +344,9 @@ Analysiere die Änderungen semantisch und liefere eine JSON-Antwort mit exakt fo
     const result = await generateStructuredWithFallback({
       anthropic: isAnthropicConfigured() ? getAnthropicInstance() : null,
       openai: isOpenAIConfigured() ? getOpenAIInstance() : null,
-      gemini: null,
       promptId: 'document-hygiene-change-classification',
       contents,
       systemInstruction,
-      geminiModels: [],
       schema: {
         type: Type.OBJECT,
         properties: {
@@ -442,11 +440,9 @@ Bitte generiere den VOLLSTÄNDIGEN neuen Inhalt für das abhängige Dokument (${
     const result = await generateTextWithFallback({
       anthropic: isAnthropicConfigured() ? getAnthropicInstance() : null,
       openai: isOpenAIConfigured() ? getOpenAIInstance() : null,
-      gemini: null,
       promptId: 'document-hygiene-propagation',
       contents,
       systemInstruction,
-      geminiModels: [],
       maxTokens: 8192,
     });
 
