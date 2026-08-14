@@ -59,3 +59,20 @@ Nachteile:
 3. GitHub-App-Zugriff auf `SvenKulessa/Finance` entziehen.
 4. Token nur anbieterseitig widerrufen/rotieren; niemals in Repository-Evidence kopieren.
 5. Bestehenden `capital-ai-ci`-Pfad unverändert weiterverwenden.
+
+## Nachtrag 2026-08-14 — Owner-Freigabe der Promotion, CodeQL bewusst nicht gewählt
+
+`GitGuardian Security Checks`, `security/snyk (svenkulessa)` und `code/snyk (svenkulessa)`
+erreichten mit PR #249, #250 und #251 drei statt der geforderten zwei unabhängigen,
+head-gebundenen PASS-Läufe (Detail-Evidence: `docs/evidence/security/GITGUARDIAN_SNYK_BASELINE_2026-08-14.md`).
+Der Owner hat die Promotion zu Required Checks im `main-production-protection`-Ruleset freigegeben
+und vorgenommen; das ist der in Punkt 4/5 der Sicherheitsinvarianten vorausgesetzte separate
+Owner-Mutationsschritt.
+
+Parallel wurde GitHub Advanced Security CodeQL geprüft, weil der Owner es testweise dem Ruleset
+hinzugefügt hatte. `code/snyk` ist Snyk Code — ein SAST-Check, der dieselbe Bedrohungskategorie
+(semantische Quellcode-Schwachstellen) abdeckt wie CodeQL, ohne zusätzliche
+GitHub-Actions-Laufzeit zu benötigen. Der Owner hat sich gegen CodeQL als zusätzlichen Required
+Check entschieden, um keine zweite, redundante SAST-Engine parallel pflegen zu müssen. Diese
+Entscheidung ist keine Schwächung — sie ersetzt keinen bestehenden Kontrollpfad, sondern
+verzichtet auf eine Ergänzung, deren Kategorie bereits abgedeckt ist.
