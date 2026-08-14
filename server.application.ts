@@ -336,7 +336,11 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// Gemini wurde anwendungsweit entfernt. Der Legacy-Kompatibilitätsparameter bleibt bis zur\n// vollständigen Router-Signaturbereinigung bewusst null und kann keinen Provideraufruf auslösen.\nconst ai: any = null;\n\n// Audit ARCH-AUDIT-0002 (J3, Kapitel 14.6): optionaler Anthropic-Client fuer den
+// Gemini wurde anwendungsweit entfernt. Der Legacy-Kompatibilitätsparameter bleibt bis zur
+// vollständigen Router-Signaturbereinigung bewusst null und kann keinen Provideraufruf auslösen.
+const ai: any = null;
+
+// Audit ARCH-AUDIT-0002 (J3, Kapitel 14.6): optionaler Anthropic-Client fuer den
 // providerübergreifenden Rückfall der KI-Agenten. Ohne ANTHROPIC_API_KEY bleibt
 // anthropic === null - die Agenten verhalten sich dann exakt wie vor J3 (fail-open).
 let anthropic: any = null;
@@ -399,7 +403,8 @@ app.get('/metrics', (req, res) => {
 
 // Mount Modular Router Sub-systems
 //
-// Gemini wurde entfernt; der Kompatibilitätsparameter `ai` ist strikt null.\n// ADR-0014 Phase 3.1: canonical route composition. This module intentionally owns only router
+// Gemini wurde entfernt; der Kompatibilitätsparameter `ai` ist strikt null.
+// ADR-0014 Phase 3.1: canonical route composition. This module intentionally owns only router
 // mounting/prefixes - Stripe raw-body ingress, global middleware ordering, provider construction
 // and runtime-secret validation all remain owned above, unchanged (see
 // server/routes/registerApplicationRoutes.ts's own doc comment).
