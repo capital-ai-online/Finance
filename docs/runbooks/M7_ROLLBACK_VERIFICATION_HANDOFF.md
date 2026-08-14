@@ -1,7 +1,7 @@
 # M7 — Deployment Rollback Verification: Mutation Work Order
 
-Status: Rollback **VERIFIED PASS** (durchgeführt und real verifiziert, siehe Nachtrag Abschnitt 9) — Roll-Forward ausstehend
-Datum: 2026-08-14 (Nachtrag: 2026-08-14, selber Tag)
+Status: Rollback und Roll-Forward beide **VERIFIED PASS** (siehe Nachtrag Abschnitt 9 und Abschnitt 10) — M7-Exit-Gate-Punkt 7 vollständig geschlossen; M7 als Ganzes bleibt `PLANNED`
+Datum: 2026-08-14 (Nachträge: 2026-08-14, selber Tag)
 Roadmap phase: M7 (ADR-0061, `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`, Exit-Gate-Punkt 7
 „rollback is proven")
 Authority: `docs/contracts/DEVELOPMENT_CHAIN_MUTATION_HANDOFF_CONTRACT.md`,
@@ -164,17 +164,51 @@ und deployt automatisch den dann aktuellen `main`-Stand. Das ist der einzige Weg
 auf `main` zu bringen, ohne die M6/M7-Gate-Kette für diesen einen Deploy zu umgehen. Nachtrag mit dem
 Roll-Forward-Ergebnis folgt als separater PR, sobald dieser hier gemergt ist.
 
+## 10. Nachtrag — Roll-Forward real durchgeführt und verifiziert (2026-08-14)
+
+Der Merge von PR #277 (dieses Dokument, Nachtrag Abschnitt 9) löste den geplanten Roll-Forward
+automatisch über die reguläre, M6-attestation-gegatete `push`-zu-`main`-Kette aus (Run
+[`31850025365`](https://github.com/SvenKulessa/Finance/actions/runs/31850025365)). Drei unabhängige
+Nachweise bestätigen den Erfolg:
+
+1. **GitHub-Actions-Job-Log** (`deploy-production`): `curl` gegen den rotierten Deploy-Hook lieferte
+   `{"deploy":{"id":"dep-d9vq75c9v7es73fu2uh0"}}` für `VERIFIED_COMMIT_SHA:
+   28917b08a8fee0a6adaf58542e97522e5ab5a22b` (Merge-Commit von PR #277).
+2. **Render-Deploy-Historie** (read-only per `list_deploys`, unabhängig von GitHub):
+
+   ```yaml
+   rollForwardDeploy:
+     id: dep-d9vq75c9v7es73fu2uh0
+     commitSha: 28917b08a8fee0a6adaf58542e97522e5ab5a22b
+     status: live
+     trigger: deploy_hook
+     startedAt: 2026-08-14T23:24:05Z
+     finishedAt: 2026-08-14T23:24:55Z
+   ```
+
+   Der vorherige Rollback-Deploy `dep-d9vpuru1egvs73f7684g` (Commit `8b4cab06...`) zeigt jetzt
+   `status: deactivated` — sauber durch den Roll-Forward abgelöst, kein Rest-/Konfliktzustand.
+3. **`verify-deployment-identity`** (CI-Job im selben Run): `PASS nach 4 Versuch(en), 32206ms: Commit
+   28917b08a8fee0a6adaf58542e97522e5ab5a22b live und healthy.`
+
+**Ergebnis:** Produktion ist wieder vollständig mit `main` synchron, inklusive der zuvor durch den
+Rollback zurückgestellten Änderungen aus PR #274 (Outbox-Migration) und PR #275
+(Market-Data-Contracts/Alpaca-Adapter). Der Roll-Forward ist damit ebenfalls real bewiesen, nicht nur
+geplant.
+
 ## 8. Freigabestatus
 
 - [x] Human/Owner: Work Order geprüft und Umfang bestätigt (insbesondere: welcher Deploy exakt als
       Rollback-Ziel dient).
 - [x] Human/Owner: Rollback durchgeführt (Schritt 1–4).
 - [x] Diese Sitzung: Rollback-Verifikation durchgeführt und dokumentiert (Abschnitt 9).
-- [ ] Human/Owner: Roll-Forward durchgeführt. — erfolgt automatisch beim Merge dieses PRs (siehe
-      Abschnitt 9, „Roll-Forward-Plan").
-- [ ] Diese Sitzung: Roll-Forward-Verifikation durchgeführt und dokumentiert. — folgt als separater
-      Nachtrag/PR nach diesem Merge.
+- [x] Human/Owner: Roll-Forward durchgeführt. — erfolgt automatisch beim Merge von PR #277 (siehe
+      Abschnitt 9, „Roll-Forward-Plan"; Ergebnis siehe Abschnitt 10).
+- [x] Diese Sitzung: Roll-Forward-Verifikation durchgeführt und dokumentiert (Abschnitt 10).
 
-**Dieses Dokument autorisiert selbst keine weitere Ausführung.** Der Rollback ist bereits erfolgt
-(siehe Abschnitt 9); der Roll-Forward ergibt sich automatisch aus dem regulären, CI-gegateten
-Merge-Prozess dieses PRs.
+**Dieses Dokument autorisiert selbst keine weitere Ausführung.** Rollback und Roll-Forward sind
+beide bereits real erfolgt und unabhängig verifiziert (siehe Abschnitt 9 und Abschnitt 10). M7-Exit-
+Gate-Punkt 7 ist damit vollständig geschlossen; M7 als Ganzes bleibt weiterhin unterhalb
+`VERIFIED PASS`, bis zusätzlich die vollständige „Required Negative Tests"-Liste geklärt ist (siehe
+`docs/runbooks/M7_DEPLOY_HOOK_ROTATION_HANDOFF.md` Abschnitt 9 für die bereits dokumentierte
+Einschränkung).
