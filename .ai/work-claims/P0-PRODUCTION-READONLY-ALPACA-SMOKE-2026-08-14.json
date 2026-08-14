@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.1.0",
+  "claimId": "P0-PRODUCTION-READONLY-ALPACA-SMOKE-2026-08-14",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5",
+    "executionSurface": "Codex Work GitHub Connector"
+  },
+  "workItem": "Produktive Document-Hygiene-Schreibkollision beseitigen und Alpaca read-only per redigiertem Start-Smoke verifizieren.",
+  "startedAt": "2026-08-14T22:00:00Z",
+  "baseBranch": "main",
+  "baseSha": "c0bfa4d63bab7a770bb4d4b79a0c87f44d6290eb",
+  "pullRequest": null,
+  "claimedPaths": [
+    ".ai/work-claims/P0-PRODUCTION-READONLY-ALPACA-SMOKE-2026-08-14.json",
+    "docs/runbooks/ALPACA_SHADOW_PRODUCTION_VERIFICATION.md",
+    "server.application.ts",
+    "server/documentHygiene.ts",
+    "server/runtime/documentHygieneRuntimeMode.ts",
+    "src/services/alpacaShadowProvider.ts",
+    "tests/unit/alpacaShadowProvider.test.ts",
+    "tests/unit/documentHygieneRuntimeMode.test.ts"
+  ],
+  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
+}
