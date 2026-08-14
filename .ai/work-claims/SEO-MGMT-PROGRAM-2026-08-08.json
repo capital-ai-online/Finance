@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "SEO-MGMT-PROGRAM-2026-08-08",
-  "status": "active",
+  "status": "superseded",
   "exclusive": true,
   "agent": {
     "provider": "Anthropic",
@@ -21,5 +21,6 @@
     ".env.example",
     ".ai/work-claims/SEO-MGMT-PROGRAM-2026-08-08.json"
   ],
-  "releaseCondition": "Claim is released when the associated pull request is merged, closed, superseded or abandoned."
+  "releaseCondition": "Claim is released when the associated pull request is merged, closed, superseded or abandoned.",
+  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete."
 }

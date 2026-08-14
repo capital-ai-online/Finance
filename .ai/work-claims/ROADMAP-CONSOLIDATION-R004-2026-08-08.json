@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "ROADMAP-CONSOLIDATION-R004-2026-08-08",
-  "status": "active",
+  "status": "superseded",
   "exclusive": true,
   "agent": {
     "provider": "OpenAI",
@@ -17,5 +17,6 @@
     "docs/architecture/ROADMAP.md",
     ".ai/work-claims/ROADMAP-CONSOLIDATION-R004-2026-08-08.json"
   ],
-  "releaseCondition": "Claim is released when the associated roadmap consolidation change is merged, closed, superseded or abandoned."
+  "releaseCondition": "Claim is released when the associated roadmap consolidation change is merged, closed, superseded or abandoned.",
+  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete."
 }

@@ -13,7 +13,7 @@ export default defineConfig(() => {
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // Do not modify - file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
@@ -22,7 +22,10 @@ export default defineConfig(() => {
     // (Plugins, Alias) statt eine separate Test-Toolchain aufzusetzen.
     test: {
       environment: 'node',
-      include: ['tests/unit/**/*.test.ts', 'tests/server/**/*.test.ts'],
+      // tests/integration is included because REM-M5A-REPOSITORY-001.allowedPaths references
+      // tests/integration/nativeMfaAal2.test.ts; without this, an M5A negative test placed there
+      // would silently never run while CI still reports green.
+      include: ['tests/unit/**/*.test.ts', 'tests/server/**/*.test.ts', 'tests/integration/**/*.test.ts'],
       globals: false,
     },
   };

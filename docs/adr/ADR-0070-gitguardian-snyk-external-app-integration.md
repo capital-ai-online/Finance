@@ -22,7 +22,7 @@ GitGuardian und Snyk werden als externe GitHub-Apps beziehungsweise anbieterseit
 - keine Contents-Schreibrechte und keine automatischen Fix-PRs in der ersten Stufe;
 - GitGuardian und Snyk starten als beobachtende externe Checks;
 - kein Check wird vor zwei Head-gebundenen erfolgreichen PR-Läufen und separater Owner-Freigabe als Required Check promoviert;
-- Anbieterfehler dürfen den bestehenden Required Check `capital-ai-ci` in der Beobachtungsphase nicht ersetzen;
+- Anbieterfehler dürfen den in Promotion befindlichen Shadow-Check `capital-ai-ci` (Stand 2026-08-14: Promotion-Gate erfüllt, serverseitiges Ruleset noch nicht aktiviert — siehe `docs/evidence/ci/P0_MAIN_PROTECTION_RECOVERY_2026-08-14.md`) in der Beobachtungsphase nicht ersetzen;
 - Merge bleibt Human/Owner-only; ab M10 gilt zusätzlich der kanonische Passkey-Verifier.
 
 ## Trust Boundaries

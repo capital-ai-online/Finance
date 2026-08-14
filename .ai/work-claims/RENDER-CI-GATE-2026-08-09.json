@@ -9,5 +9,7 @@
   "base": "main",
   "branch": "agent/fix-render-ci-gate-status",
   "risk": "low",
-  "productionMutation": false
+  "productionMutation": false,
+  "status": "superseded",
+  "supersededReason": "Legacy pre-schema claim file predating schemaVersion 1.0.0; no open pull request references it as of the 2026-08-14 security audit."
 }

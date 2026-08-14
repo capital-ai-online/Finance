@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "PR-104-r003-stripe-event-inbox",
-  "status": "active",
+  "status": "superseded",
   "exclusive": true,
   "agent": {
     "provider": "OpenAI",
@@ -31,5 +31,6 @@
     "tests/unit/mailer.test.ts",
     "tests/unit/stripeWebhookInbox.test.ts"
   ],
-  "releaseCondition": "Claim is released only when PR #104 is merged or closed. Production R-003 closure additionally requires Supabase migration, application deployment and controlled Stripe replay evidence."
+  "releaseCondition": "Claim is released only when PR #104 is merged or closed. Production R-003 closure additionally requires Supabase migration, application deployment and controlled Stripe replay evidence.",
+  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete."
 }

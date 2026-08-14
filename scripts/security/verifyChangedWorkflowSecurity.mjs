@@ -6,12 +6,24 @@ import { fail, git, normalizeRepoPath } from '../pr/lib.mjs';
 const baseRef = process.env.PR_BASE_REF || 'origin/main';
 const headRef = process.env.PR_HEAD_REF || 'HEAD';
 
-const raw = git(['diff', '--name-only', `${baseRef}...${headRef}`, '--', '.github/workflows']);
-const workflowFiles = raw
-  ? raw.split(/\r?\n/).map(normalizeRepoPath).filter((name) => /\.ya?ml$/i.test(name) && fs.existsSync(name))
-  : [];
+const statusRaw = git(['diff', '--name-status', `${baseRef}...${headRef}`, '--', '.github/workflows']);
+const statusLines = statusRaw ? statusRaw.split(/\r?\n/).filter(Boolean) : [];
 
 const failures = [];
+const workflowFiles = [];
+
+for (const line of statusLines) {
+  const [status, ...rest] = line.split('\t');
+  const name = normalizeRepoPath(rest[rest.length - 1] || '');
+  if (!/\.ya?ml$/i.test(name)) continue;
+
+  if (status === 'D') {
+    failures.push(`${name}: workflow file deletion requires explicit Human/Owner security review; deletions are not exempt from workflow security policy.`);
+    continue;
+  }
+
+  if (fs.existsSync(name)) workflowFiles.push(name);
+}
 
 for (const file of workflowFiles) {
   const content = fs.readFileSync(file, 'utf8');

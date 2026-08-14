@@ -1,8 +1,8 @@
 # CAPITAL-AI DEVELOPMENT Chain Roadmap
 
 Status: IMPLEMENTATION ROADMAP
-Status date: 2026-08-12
-Current repository baseline: `main@6205868da833a6ee75b5301e78b0a2e6a118c411` (PR #251 merge)
+Status date: 2026-08-14
+Current repository baseline: `main@5ba4ab12f7c6d98912b95bf000ceb352d9297fcd` (PR #252 merge)
 Repository: `SvenKulessa/Finance`
 Platform version: `0.6.0`
 
@@ -39,13 +39,23 @@ Authority: `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`.
 
 Die Systemadmin-Authority ist gegenüber der älteren DEVELOPMENT-CHAIN-Baseline fortgeschritten:
 
-- SA3B Execution Host: **COMPLETE / VERIFIED PASS**;
-- SA4 bounded autonomous repository work package: **COMPLETE / VERIFIED PASS**;
+- SA3B Execution Host: **COMPLETE / VERIFIED PASS**; Job nach Abschluss per `false &&`-Bedingung stillgelegt (`.github/workflows/systemadmin-roadmap-executor.yml`), auditierter Vertrag bleibt inhaltlich unverändert nachweisbar (`tests/unit/systemadminExecutionHostWorkflow.test.ts`);
+- SA4 bounded autonomous repository work package: **COMPLETE / VERIFIED PASS**; Job nach Abschluss per `false &&`-Bedingung stillgelegt (`.github/workflows/systemadmin-sa4-pilot.yml`), zusätzlich durch sein eigenes bereits gemergtes Zielartefakt dauerhaft self-blocking, auditierter Vertrag bleibt inhaltlich unverändert nachweisbar (`tests/unit/systemadminSa4Contracts.test.ts`);
 - permit-before-side-effect, positive/negative Host-Probes, M5 authorization/outcome evidence und Branch-Cleanup sind in der SA-Roadmap und Traceability dokumentiert;
 - direkte ChatGPT→GitHub-Connector-Schreibvorgänge bleiben außerhalb des autonomen SA-Nachweispfads;
 - SA5 externe Produktionsmutation bleibt bis M10 `VERIFIED PASS` blockiert.
 
-Für M5A darf der verifizierte SA4-Pfad ausschließlich ein begrenztes Repository-Work-Package ausführen:
+**Korrektur 2026-08-14 (Sicherheitsaudit):** Der SA4-Pfad ist strukturell ein Ein-Zweck-Ein-Pfad-Host
+für genau `docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md` unter `REM-SA4-PILOT-001` — sowohl
+`server/systemadmin/githubActionsOidc.ts` (Workflow-Ref-Allowlist) als auch
+`systemadminExecutionBrokerRouter.ts` (Mandats-Mapping) als auch `runSa4Pilot.mjs` (harte
+Mandats-/Pfad-Gleichheitsprüfung) verweigern jede andere Mandats-Bindung. Der verifizierte SA4-Pfad
+kann `REM-M5A-REPOSITORY-001` **nicht** ausführen. Für M5A ist vor jeder Mandatsaktivierung ein
+eigener, human-verfasster Ausführungshost (eigener ADR + Erweiterung der Workflow-Ref-Allowlist und
+des Mandats-Mappings) erforderlich. Details: `docs/evidence/security/SECURITY_AUDIT_2026-08-14_ADR0069_DEVELOPMENT_CHAIN.md` (Befund P1-2).
+
+Für M5A gilt vorbehaltlich dieser Korrektur weiterhin die inhaltliche Begrenzung auf ein begrenztes
+Repository-Work-Package:
 
 - Authority: `docs/roadmaps/M5A_SYSTEMADMIN_REPOSITORY_WORK_PACKAGE.md`;
 - Mandat: `.ai/mandates/REM-M5A-REPOSITORY-001.json`;
@@ -53,7 +63,10 @@ Für M5A darf der verifizierte SA4-Pfad ausschließlich ein begrenztes Repositor
 - zulässig: Analyse, Branch, begrenzte Code-/Teständerungen, Commit, Draft-PR, CI-Request und redigierte Evidence;
 - verboten: Supabase-Faktor-/Auth-Mutation, Secrets, Render/Stripe/IONOS, Rulesets, Merge, Owner-MFA/Break-Glass und Self-Expansion.
 
-Aktivierung erfordert nach Merge eine exakte current-main-Bindung, Human/Owner-Akzeptanz von ESS-0020/ADR-0064 sowie einen separaten `OWNER_APPROVED`-Status mit Approval-Evidence. Produktion bleibt bis zum späteren M5A-Mutation-Gate unberührt.
+Aktivierung erfordert nach Merge eine exakte current-main-Bindung, Human/Owner-Akzeptanz von
+ESS-0020/ADR-0064, einen eigenen M5A-Ausführungshost gemäß obiger Korrektur sowie einen separaten
+`OWNER_APPROVED`-Status mit Approval-Evidence. Produktion bleibt bis zum späteren M5A-Mutation-Gate
+unberührt.
 
 ## Phasenstatus
 
@@ -247,4 +260,4 @@ Each roadmapped phase closes only when applicable classes are covered:
 
 **M5A remains the next DEVELOPMENT Chain repository implementation gate.** M6–M10 documentation is prepared in advance only to remove planning gaps.
 
-Nächster zulässiger Auftrag: Human/Owner prüft dieses Governance-Paket, akzeptiert ESS-0020/ADR-0064 für die Repository-Implementierung und aktiviert danach `REM-M5A-REPOSITORY-001` gegen den exakten aktuellen `main`. Der Systemadministrator darf anschließend das M5A-Code-/Test-Paket über den auditierten SA4-Pfad bis zum Draft-PR ausführen. Native Supabase-Faktor-Enrollments und andere externe Mutationen bleiben ein späterer separater Human-/Owner-Gate.
+Nächster zulässiger Auftrag: Human/Owner prüft dieses Governance-Paket, akzeptiert ESS-0020/ADR-0064 für die Repository-Implementierung, spezifiziert und implementiert den in der Korrektur oben beschriebenen eigenen M5A-Ausführungshost und aktiviert erst danach `REM-M5A-REPOSITORY-001` gegen den exakten aktuellen `main`. Der bestehende SA4-Pfad deckt M5A nicht ab. Native Supabase-Faktor-Enrollments und andere externe Mutationen bleiben ein späterer separater Human-/Owner-Gate.

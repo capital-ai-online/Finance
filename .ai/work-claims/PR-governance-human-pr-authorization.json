@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "PR-governance-human-pr-authorization",
-  "status": "active",
+  "status": "superseded",
   "exclusive": true,
   "agent": {
     "provider": "OpenAI",
@@ -34,5 +34,6 @@
     "scripts/pr/validateWorkClaim.mjs",
     "docs/adr/ADR-0039-human-authorized-pr-creation-and-advisory-governance.md"
   ],
-  "releaseCondition": "Coordination metadata is released when this governance PR is merged, closed, superseded or abandoned."
+  "releaseCondition": "Coordination metadata is released when this governance PR is merged, closed, superseded or abandoned.",
+  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete."
 }

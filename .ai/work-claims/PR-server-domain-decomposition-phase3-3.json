@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "PR-server-domain-decomposition-phase3-3",
-  "status": "active",
+  "status": "superseded",
   "exclusive": true,
   "agent": {
     "provider": "OpenAI",
@@ -28,5 +28,6 @@
     "src/services/cryptoScoringService.ts",
     "src/services/memeCoinScoringService.ts"
   ],
-  "releaseCondition": "Claim is released when the PR is merged or closed."
+  "releaseCondition": "Claim is released when the PR is merged or closed.",
+  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete."
 }

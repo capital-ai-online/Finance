@@ -239,16 +239,17 @@ jobs:
   deploy-production:
     name: Deployment verifiziert / Render-Produktion
     needs: [build-and-test]
-    if: ${{ always() && needs.build-and-test.result == 'success' }}
+    # Dieser Job lief zuvor bei jedem PR- und Push-Event, nur intern per Step-if auf den
+    # echten Deploy beschraenkt. Ein job-level `environment:` wuerde dadurch JEDE PR-CI-Ausfuehrung
+    # auf eine GitHub-Environment-Freigabe warten lassen. Der Job laeuft daher jetzt nur noch fuer
+    # den tatsaechlichen main-Push-Pfad; PR-Events ueberspringen ihn vollstaendig (kein Funktionsverlust,
+    # zuvor war der PR-Zweig ohnehin nur eine informative Echo-Ausgabe).
+    if: ${{ needs.build-and-test.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    environment: production
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Pull Requests deployen nicht produktiv
-        if: ${{ github.event_name != 'push' }}
-        run: echo "PR validiert; Produktionsdeployment erfolgt erst nach Merge nach main."
-
       - name: Render-Deployment für verifizierten main-Commit auslösen
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
           VERIFIED_COMMIT_SHA: ${{ github.sha }}
