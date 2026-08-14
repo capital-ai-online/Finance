@@ -1,0 +1,16 @@
+# CAPITAL-AI — robots.txt (SEO-ROADMAP-0001 / Q1)
+# Domain: https://capital-ai.online/
+User-agent: *
+Allow: /
+
+# Public legal & marketing surfaces
+Allow: /impressum
+Allow: /agb
+Allow: /datenschutz
+
+# Disallow authenticated / app internals (SPA deep links without public content)
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /admin
+
+Sitemap: https://capital-ai.online/sitemap.xml

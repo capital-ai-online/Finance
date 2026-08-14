@@ -1,0 +1,32 @@
+{
+  "claimId": "SEO-Q-QUICK-WINS-2026-08-15",
+  "title": "SEO Block Q Quick Wins — robots, sitemap, canonical, first-party OG",
+  "roadmap": "docs/seo/SEO_MANAGEMENT_ROADMAP.md",
+  "roadmapIds": ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6"],
+  "branch": "seo/q-quick-wins-foundation",
+  "base": "main",
+  "owner": "SvenKulessa",
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "surface": "Grok chat + GitHub MCP"
+  },
+  "scope": [
+    "public/robots.txt",
+    "public/sitemap.xml",
+    "public/og-image.svg",
+    "index.html",
+    "docs/seo/SEO_CHECKLIST.md",
+    "docs/seo/Q_BLOCK_IMPLEMENTATION_NOTES.md",
+    ".ai/work-claims/SEO-Q-QUICK-WINS-2026-08-15.json"
+  ],
+  "outOfScope": [
+    "server middleware trailing-slash redirects",
+    "JSON-LD",
+    "route-specific meta",
+    "soft-404",
+    "Search Console verification token (owner)"
+  ],
+  "status": "ready-for-pr",
+  "createdAt": "2026-08-15T00:00:00Z"
+}
