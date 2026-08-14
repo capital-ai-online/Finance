@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { resolveSourceCommit } from './sourceIdentity';
 
 const CONTRACT = 'capital-ai-runtime-release-manifest/1.0.0';
 const repoRoot = process.cwd();
@@ -43,24 +43,6 @@ function hashDocumentaryTree(): { sha256: string; files: number } {
   return { sha256: sha256(records.join('\n')), files: records.length };
 }
 
-function gitHead(): string | null {
-  const result = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' });
-  if (result.status !== 0) return null;
-  const commit = String(result.stdout || '').trim();
-  return commit || null;
-}
-
-function resolveSourceCommit(): string | null {
-  return (
-    process.env.RELEASE_SOURCE_COMMIT ||
-    process.env.GITHUB_SHA ||
-    process.env.RENDER_GIT_COMMIT ||
-    process.env.GIT_COMMIT ||
-    process.env.SOURCE_VERSION ||
-    gitHead()
-  );
-}
-
 function generatedAt(): string {
   const epoch = process.env.SOURCE_DATE_EPOCH;
   if (epoch && /^\d+$/.test(epoch)) return new Date(Number(epoch) * 1000).toISOString();
@@ -72,7 +54,7 @@ function main() {
   const packageLockPath = path.join(repoRoot, 'package-lock.json');
   const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8')) as { name?: string; version?: string };
   const version = typeof pkg.version === 'string' && pkg.version.trim() ? pkg.version.trim() : 'unknown';
-  const sourceCommit = resolveSourceCommit();
+  const sourceCommit = resolveSourceCommit(repoRoot);
   const documentary = hashDocumentaryTree();
   const packageLockSha256 = hashFile(packageLockPath);
 

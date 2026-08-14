@@ -22,9 +22,11 @@
     "repository:validate": "tsx scripts/automation/validateRepositoryConventions.ts",
     "repository:validate:advisory": "tsx scripts/automation/validateRepositoryConventions.ts --advisory",
     "hygiene:sweep": "tsx scripts/automation/sweepDocumentaryBranding.ts",
-    "predeploy:check": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/verifyDeploymentReadiness.ts",
+    "predeploy:check": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/verifyDeploymentReadiness.ts && npm run supplychain:provenance && npm run supplychain:verify",
     "release:version": "tsx scripts/automation/releaseVersion.ts",
     "release:manifest": "tsx scripts/automation/buildRuntimeReleaseManifest.ts",
+    "supplychain:provenance": "tsx scripts/automation/buildSupplyChainProvenance.ts",
+    "supplychain:verify": "tsx scripts/security/verifySupplyChainProvenance.ts",
     "traceability:build": "tsx src/platform/Traceability/Services/runTraceability.ts",
     "rag:build-index": "tsx scripts/automation/buildRagIndex.ts"
   },
