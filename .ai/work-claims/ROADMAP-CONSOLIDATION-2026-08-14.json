@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "ROADMAP-CONSOLIDATION-2026-08-14",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "Konsolidierung aller offenen CAPITAL-AI-Roadmaps in einen kanonischen Master-Index ohne Runtime- oder Produktionsmutation.",
+  "startedAt": "2026-08-14T15:30:00Z",
+  "baseBranch": "main",
+  "baseSha": "66da35b80ba23e4f216318a9cd9f9b4e7b787679",
+  "pullRequest": null,
+  "claimedPaths": [
+    "docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
+    ".ai/work-claims/ROADMAP-CONSOLIDATION-2026-08-14.json"
+  ],
+  "releaseCondition": "Claim is released when the associated roadmap consolidation change is merged, closed, superseded or abandoned."
+}
