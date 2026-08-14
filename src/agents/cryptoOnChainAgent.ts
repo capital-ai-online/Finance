@@ -28,11 +28,9 @@ export class CryptoOnChainAgent {
 
   public async analyze(coin: string): Promise<CryptoOnChainMetrics> {
     const result = await generateStructuredWithFallback({
-      gemini: this.ai,
       anthropic: this.anthropic,
       openai: this.openai,
       promptId: 'crypto-onchain',
-      geminiModels: ['gemini-2.5-flash'],
       contents: `Analysiere die hypothetischen On-Chain-Metriken für die Kryptowährung: "${coin}".
 Schätze das Wachstum aktiver Adressen, die Transaktionsgeschwindigkeit und die Akkumulation von Walen (Smart Money).
 Antworte strictly mit einem strukturierten JSON.`,
