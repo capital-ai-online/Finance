@@ -1,7 +1,7 @@
 # DEVELOPMENT Chain Document Traceability Matrix
 
 Status: PROPOSED
-Date: 2026-08-12
+Date: 2026-08-14
 Baseline: `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e` (PR #222 merge)
 
 ## Zweck
@@ -32,8 +32,8 @@ Diese Matrix zeigt für jeden DEVELOPMENT Chain Roadmap-Punkt die normative Auth
 | M2 | COMPLETE | ESS-0019 + ADR-0057..0063 | `docs/architecture/ai-agent/*` | architecture contracts | M2 Evidence | `NOT REQUIRED` | Documentation Freeze complete |
 | M3 | COMPLETE | ADR-0053 + ADR-0060 | CI / PR Check Classification | `.github/workflows/ci.yml` | M3 Evidence | repository workflow | one bounded build-and-test preserved |
 | M4 | COMPLETE | ADR-0058 + ESS-0018/0019 | IAM / risk / capability models | Agent IAM / PolicyGate | M4 Evidence | `NOT REQUIRED` external | negative IAM PASS |
-| M5 | **PERSISTENCE VERIFIED / APPLICATION CORRECTIVE VERIFICATION ACTIVE** | ADR-0056 + ADR-0059 | M5 Evidence + PR #222 corrective contract | `public.agent_audit_events`, `server/agentAudit/*` | `docs/evidence/m5/*` | schema `VERIFIED`; app runtime verification pending | real privileged audit insert PASS required before autonomous mutation reliance |
-| M5A | IN PROGRESS | ESS-0020 + ADR-0064 + ADR-0003.5 | `docs/runbooks/M5A_SUPABASE_TOTP_AAL2_HARDENING.md` | Native Supabase MFA/AAL2 code | `docs/evidence/m5a/*` | repo `PLANNED`; production `NOT AUTHORIZED` baseline | native factor/AAL2/recovery/advisor `VERIFIED PASS` |
+| M5 | **VERIFIED PASS** | ADR-0056 + ADR-0059 | M5 Evidence + PR #222 corrective contract | `public.agent_audit_events`, `server/agentAudit/*` | `docs/evidence/m5/*` | schema `VERIFIED`; app runtime verification pending | real privileged audit insert PASS required before autonomous mutation reliance |
+| M5A | IN PROGRESS — REPOSITORY PACKAGE DRAFT | ESS-0020 + ADR-0064 + ADR-0003.5 | `docs/runbooks/M5A_SUPABASE_TOTP_AAL2_HARDENING.md` + `docs/roadmaps/M5A_SYSTEMADMIN_REPOSITORY_WORK_PACKAGE.md` | `REM-M5A-REPOSITORY-001` + Native Supabase MFA/AAL2 code | `docs/evidence/m5a/*` | repo `OWNER REVIEW / REM ACTIVATION REQUIRED`; production `NOT AUTHORIZED` | repository CI PASS, then separately approved native factor/AAL2/recovery/advisor `VERIFIED PASS` |
 | M6 | BLOCKED BY M5A | ADR-0060 | `AI_AGENT_SUPPLY_CHAIN_MODEL.md`, `docs/runbooks/M6_SUPPLY_CHAIN_PROVENANCE.md` | SBOM/provenance/attestation outputs | `docs/evidence/m6/*` | `PLANNED / BLOCKED` | source→artifact→attestation trace VERIFIED PASS |
 | M7 | BLOCKED BY M6 | ADR-0061 | `AI_AGENT_DEPLOYMENT_IDENTITY.md`, `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md` | per-mutation Handoff Contract | `docs/evidence/m7/*` | `PLANNED / BLOCKED` | all required platform mutations VERIFIED PASS |
 | M8 | BLOCKED BY M7 | ADR-0062 + ESS-0019 | Provider Profile Contract + `docs/runbooks/M8_AGENT_CUTOVER.md` | provider adapters / profiles | `docs/evidence/m8/*` | `PLANNED / BLOCKED` | equivalent provider policy + rollback VERIFIED PASS |
@@ -82,30 +82,40 @@ Mutation Requirement
 
 `Documentation Ready` ist weder `Mutation Approved` noch `Verified Pass`.
 
-## M5 / SA3B corrective trace after PR #222
+## M5 / SA4 verified execution trace
 
-PR #220 deployed the first enforceable GitHub-Actions/OIDC execution host. The first real host probe reached the broker but durable M5 persistence failed with `Unregistered API key`; the branch side effect was skipped. Diagnosis additionally identified application writer↔production-schema drift.
+The M5 persistence and application writer path, the SA3B GitHub-Actions/OIDC execution host and the SA4 policy-validation pilot are recorded as **COMPLETE / VERIFIED PASS** in the canonical Systemadmin roadmap and traceability matrix.
 
-PR #222 corrected the application-side schema mapping and regression contract and merged into `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e`. It did not mutate the Supabase schema, Render, Stripe, DNS or GitHub workflows.
+The Development Chain therefore records:
 
-The DevelopmentChain therefore records:
+- M5 production schema/persistence and application writer: **VERIFIED PASS**;
+- SA3B execution host: **COMPLETE / VERIFIED PASS**;
+- SA4 policy-validation pilot: **COMPLETE / VERIFIED PASS**;
+- SA5 external production mutation: **DENY until M10 VERIFIED PASS**.
 
-- M5 production schema/persistence controls: **VERIFIED**;
-- M5 application writer: **CORRECTED / PRODUCTION VERIFICATION PENDING**;
-- SA3B execution host: **IMPLEMENTED / VERIFICATION PENDING**;
-- autonomous mutation reliance: **DENY until positive and negative host Evidence complete**.
+## M5A Systemadmin Repository Package Trace
 
-## Parallel Systemadmin Trace
+The next bounded Systemadmin activity is repository-only M5A implementation under:
 
-Before DEVELOPMENT Chain may use the Systemadmin Executor as a generally verified autonomous mutation host, SA3B still requires:
+- work package: `docs/roadmaps/M5A_SYSTEMADMIN_REPOSITORY_WORK_PACKAGE.md`;
+- mandate draft: `.ai/mandates/REM-M5A-REPOSITORY-001.json`;
+- authority candidates: ESS-0020 and ADR-0064.
 
-- valid Owner-controlled privileged Supabase backend credential;
-- real bounded positive `BRANCH_PROBE`;
-- Authorization Evidence before the side effect;
-- SUCCESS Outcome Evidence;
-- invalid/stale/no-permit negative probe without side effect;
-- Probe-Branch deletion;
-- final Systemadmin Evidence/Roadmap synchronization.
+The package is **DRAFT / NOT ACTIVATED**. The permit sequence is:
+
+```text
+Documentation PR merged
+→ Owner accepts ESS-0020 and ADR-0064 for repository implementation
+→ mandate baseline updated to exact current main
+→ mandate status set to OWNER_APPROVED with approval evidence
+→ Systemadmin validates permit and SA3B/SA4 state
+→ fresh branch
+→ bounded code + tests + evidence
+→ Draft PR
+→ Human review and merge
+```
+
+Explicitly denied by this package: Supabase production factor enrollment or removal, owner IAM/MFA changes, secrets, Render/Stripe/DNS mutations, GitHub ruleset changes, merge, and mandate self-expansion.
 
 ## Branch Closure Trace
 
