@@ -1,6 +1,9 @@
 # M5A Systemadmin Repository Work Package
 
-Status: CODE-SLICE-SPEZIFIKATION UMGESETZT UND GEMERGED (PR #255) — siehe `docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`. Verbleibend bis `VERIFIED PASS`: interaktive Owner-Aktion (natives Faktor-Enrollment) + Advisor-Rerun, siehe `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`.
+Status: **VERIFIED PASS** (2026-08-14) — Code umgesetzt und gemergt (PR #255/#256), beide
+Owner-Profile mit interaktiv eingerichtetem und verifiziertem nativen TOTP-Faktor, `aal2`-Session
+read-only bestätigt, Advisor ohne unowned HIGH/CRITICAL. Details:
+`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`.
 Datum: 2026-08-14
 Roadmap phase: M5A
 Executor: direkte Owner-instruierte Claude-Code-Sitzung (nicht der SA4-Pfad — siehe Korrektur unten)
