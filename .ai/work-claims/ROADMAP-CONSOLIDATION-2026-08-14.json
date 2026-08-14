@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.1.0",
+  "claimId": "ROADMAP-CONSOLIDATION-2026-08-14",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6",
+    "executionSurface": "ChatGPT GitHub connector"
+  },
+  "workItem": "Konsolidierung aller offenen CAPITAL-AI-Roadmaps, M0-M10, P0-P3 und dokumentenbasierter Systemadministrator-Prototyp-/Mutationsanfrage-Authority ohne Runtime- oder Produktionsmutation.",
+  "startedAt": "2026-08-14T15:30:00Z",
+  "baseBranch": "main",
+  "baseSha": "0efeb05e507698129ff1d72de4887554d3f32100",
+  "pullRequest": 257,
+  "claimedPaths": [
+    "docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
+    "docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md",
+    "docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md",
+    "docs/adr/ADR-0071-consolidated-roadmap-and-requested-systemadmin-mutations.md",
+    ".ai/skills/ESS-0023-Consolidated-Systemadmin-Prototype-and-Mutation-Request.md",
+    ".ai/work-claims/ROADMAP-CONSOLIDATION-2026-08-14.json"
+  ],
+  "releaseCondition": "Claim is released when PR #257 is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
+}

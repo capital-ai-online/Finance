@@ -273,4 +273,12 @@ Merged/superseded branches are never reused.
 
 ## Current next action
 
-After merge and explicit activation of `REM-M5A-REPOSITORY-001`, execute the bounded M5A repository code/test work package through the verified SA4 host. SA5 remains blocked and no external production mutation is authorized by SA4 or by the draft mandate.
+M5A repository code is merged via PR #255; PR #256 additionally merged required onboarding and the last-factor guard. Native MFA is Owner-attested active. The SA4 one-purpose host MUST NOT be reused for M5A. The next allowed action is read-only M5/M5A verification evidence; any corrective mutation requires an exact Proposal and explicit Owner approval. SA5 remains blocked until M10 VERIFIED PASS.
+
+## Konsolidierter Prototyp- und Mutationsanfragepfad (PR #257)
+
+Authority: `docs/adr/ADR-0071-consolidated-roadmap-and-requested-systemadmin-mutations.md` und `.ai/skills/ESS-0023-Consolidated-Systemadmin-Prototype-and-Mutation-Request.md`.
+
+Der Systemadministrator-Agent darf aus der konsolidierten Roadmap begrenzte Prototypaufträge ableiten und notwendige Mutationen beim Owner anfragen. Eine Agentenanfrage ist niemals Approval. Externe, produktive, IAM-, Datenbank-, Billing-, Secret-, Deployment- oder HIGH/CRITICAL-Mutationen bleiben bis zur exakten Owner-Freigabe fail-closed.
+
+Native MFA ist laut Owner-Attestation vom 2026-08-14 aktiviert. Der Status bleibt bis AAL2-, DENY-, Recovery-, Advisor- und Audit-Evidence `VERIFICATION PENDING`. SA5 bleibt bis M10 `VERIFIED PASS` blockiert.

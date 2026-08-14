@@ -2,7 +2,7 @@
 
 Status: IMPLEMENTATION ROADMAP
 Status date: 2026-08-14
-Current repository baseline: `main@66da35b80ba23e4f216318a9cd9f9b4e7b787679` (PR #255 merge)
+Current repository baseline: `main@0efeb05e507698129ff1d72de4887554d3f32100` (PR #256 merge)
 Repository: `SvenKulessa/Finance`
 Platform version: `0.6.0`
 
@@ -278,6 +278,6 @@ Each roadmapped phase closes only when applicable classes are covered:
 
 ## Current Next Action
 
-**M5A remains the next DEVELOPMENT Chain repository implementation gate.** M6–M10 documentation is prepared in advance only to remove planning gaps.
+**M5/M5A verification is the next DEVELOPMENT Chain gate.** M6–M10 documentation is prepared in advance only to remove planning gaps.
 
-Nächster zulässiger Auftrag: Human/Owner prüft dieses Governance-Paket, akzeptiert ESS-0020/ADR-0064 für die Repository-Implementierung, spezifiziert und implementiert den in der Korrektur oben beschriebenen eigenen M5A-Ausführungshost und aktiviert erst danach `REM-M5A-REPOSITORY-001` gegen den exakten aktuellen `main`. Der bestehende SA4-Pfad deckt M5A nicht ab. Native Supabase-Faktor-Enrollments und andere externe Mutationen bleiben ein späterer separater Human-/Owner-Gate.
+Nächster zulässiger Auftrag: M5 Audit-Evidence und M5A AAL2-/DENY-/Recovery-/Advisor-Evidence read-only vervollständigen. Mutation Requests dürfen vom Owner oder Systemadministrator-Agenten initiiert werden; jede externe oder sicherheitsrelevante Ausführung benötigt weiterhin ein exaktes Proposal und ausdrückliche Owner-Freigabe gemäß ADR-0071/ESS-0023.
