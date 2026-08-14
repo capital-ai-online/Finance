@@ -33,6 +33,10 @@
     "README.md"
   ],
   "tests": [
-    "tests/unit/supervisor.test.ts"
+    "tests/unit/marketIntegrityCalibration.test.ts",
+    "tests/unit/marketIntegrityRuntimeEvidence.test.ts",
+    "tests/unit/providerHealth.test.ts",
+    "tests/unit/supervisor.test.ts",
+    "tests/unit/supervisorApprovedAction.test.ts"
   ]
 }
