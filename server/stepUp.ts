@@ -203,6 +203,11 @@ stepUpRouter.post('/register/complete', requireAuth(async (req, res, identity) =
 // /step-up/verify (requireVerifiedAal2), damit ein Client nicht einfach "ich habe eingerichtet"
 // behaupten kann, ohne dass ein echter verifizierter Faktor (nativer TOTP-Faktor ODER Passkey)
 // existiert.
+//
+// Setzt zusaetzlich mfa_required_account = true (Migration 20260814160000): anders als
+// onboarding_required (einmaliger Gate-Zustand) bleibt dieses Flag dauerhaft bestehen und macht
+// die Pflicht nicht durch sofortiges Entfernen des gerade eingerichteten Faktors wirkungslos -
+// src/lib/mfaLastFactorGuard.ts verweigert danach das Entfernen des letzten verbleibenden Faktors.
 stepUpRouter.post('/mfa/enrollment-complete', requireAuth(async (req, res, identity) => {
   const aal2 = await requireVerifiedAal2(req);
   if (!aal2.verified) {
@@ -215,7 +220,7 @@ stepUpRouter.post('/mfa/enrollment-complete', requireAuth(async (req, res, ident
   const supabase = getServerSupabase();
   const { error } = await supabase
     .from('profiles')
-    .update({ onboarding_required: false })
+    .update({ onboarding_required: false, mfa_required_account: true })
     .eq('id', identity.userId);
   if (error) {
     return res.status(500).json({ error: 'Status konnte nicht aktualisiert werden.' });
