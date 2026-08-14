@@ -261,3 +261,51 @@ jobs:
           curl --fail-with-body --silent --show-error --location \
             --request POST \
             "${RENDER_DEPLOY_HOOK_URL}${separator}ref=${VERIFIED_COMMIT_SHA}"
+
+  supply-chain-attestation:
+    name: Supply-Chain-Provenance / Attestation
+    needs: [build-and-test]
+    # M6 (ADR-0060, docs/runbooks/M6_SUPPLY_CHAIN_PROVENANCE.md): Provenance muss von einem
+    # gehosteten, vertrauenswuerdigen Build-Pfad erzeugt werden, nicht von einem Entwickler-Laptop
+    # oder einem Agenten. Laeuft daher wie deploy-production ausschliesslich auf dem tatsaechlichen
+    # main-Push-Pfad, mit eigenen, minimalen Berechtigungen - nur dieser Job bekommt
+    # id-token/attestations write, nicht das gesamte Workflow (das auch bei jedem PR-Event laeuft).
+    if: ${{ needs.build-and-test.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Vertrauenswürdigen main-Stand auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24.18.0'
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Produktions-Build und Supply-Chain-Kette erzeugen
+        run: |
+          npm run build
+          npm run predeploy:check
+
+      - name: Provenance-Bindung an gehosteten Build-Pfad erzwingen
+        run: npx tsx scripts/security/verifySupplyChainProvenance.ts --require-ci
+
+      - name: Provenance-Attestation erzeugen und signieren
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            dist/security/sbom.cdx.json
+            dist/security/provenance.json
+            dist/control-plane/release-manifest.json

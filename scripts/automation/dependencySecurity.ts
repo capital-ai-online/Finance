@@ -1,5 +1,7 @@
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { resolveSourceCommit } from './sourceIdentity';
 
 export interface DependencyPolicyResult {
   violations: string[];
@@ -40,7 +42,21 @@ export function evaluateDependencyPolicy(pkg: any, lock: any): DependencyPolicyR
   return { violations, productionDependencyCount: Object.keys(dependencies).length };
 }
 
-export function buildCycloneDxSbom(pkg: any, lock: any, serialNumber = 'urn:uuid:capital-ai-build'): any {
+export interface SbomSourceBinding {
+  sourceCommit: string | null;
+  packageLockSha256: string | null;
+}
+
+// M6 (Supply Chain Provenance): binds the SBOM to the exact source commit and lockfile digest it
+// was generated from, so buildSupplyChainProvenance.ts / verifySupplyChainProvenance.ts can prove
+// (or reject) that a given SBOM matches the current source state, instead of an SBOM that is only
+// ever trusted by proximity in time.
+export function buildCycloneDxSbom(
+  pkg: any,
+  lock: any,
+  serialNumber = 'urn:uuid:capital-ai-build',
+  sourceBinding: SbomSourceBinding = { sourceCommit: null, packageLockSha256: null },
+): any {
   const components = Object.entries<any>(lock?.packages ?? {})
     .filter(([packagePath, entry]) => packagePath.startsWith('node_modules/') && entry?.version && entry?.dev !== true)
     .map(([packagePath, entry]) => {
@@ -70,6 +86,10 @@ export function buildCycloneDxSbom(pkg: any, lock: any, serialNumber = 'urn:uuid
         version: pkg?.version ?? 'unknown',
       },
       tools: [{ vendor: 'CAPITAL-AI', name: 'dependencySecurity.ts', version: '1.0.0' }],
+      properties: [
+        ...(sourceBinding.sourceCommit ? [{ name: 'capital-ai:source-commit', value: sourceBinding.sourceCommit }] : []),
+        ...(sourceBinding.packageLockSha256 ? [{ name: 'capital-ai:package-lock-sha256', value: sourceBinding.packageLockSha256 }] : []),
+      ],
     },
     components,
   };
@@ -79,7 +99,14 @@ export function writeCycloneDxSbom(repoRoot: string, pkg: any, lock: any): strin
   const outputDir = path.join(repoRoot, 'dist', 'security');
   fs.mkdirSync(outputDir, { recursive: true });
   const outputPath = path.join(outputDir, 'sbom.cdx.json');
-  const sbom = buildCycloneDxSbom(pkg, lock);
+  const packageLockPath = path.join(repoRoot, 'package-lock.json');
+  const sourceBinding: SbomSourceBinding = {
+    sourceCommit: resolveSourceCommit(repoRoot),
+    packageLockSha256: fs.existsSync(packageLockPath)
+      ? crypto.createHash('sha256').update(fs.readFileSync(packageLockPath)).digest('hex')
+      : null,
+  };
+  const sbom = buildCycloneDxSbom(pkg, lock, undefined, sourceBinding);
   fs.writeFileSync(outputPath, `${JSON.stringify(sbom, null, 2)}\n`, 'utf8');
   return outputPath;
 }

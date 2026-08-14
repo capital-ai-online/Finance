@@ -41,4 +41,19 @@ describe('dependency security policy', () => {
     expect(sbom.components.map((component: any) => component.name)).toContain('express');
     expect(sbom.components.map((component: any) => component.name)).not.toContain('dev-only');
   });
+
+  it('embeds source commit and lockfile digest when a source binding is provided (M6)', () => {
+    const sbom = buildCycloneDxSbom(pkg, lock, 'urn:uuid:test', {
+      sourceCommit: 'abc123',
+      packageLockSha256: 'deadbeef',
+    });
+    const properties = sbom.metadata.properties;
+    expect(properties).toContainEqual({ name: 'capital-ai:source-commit', value: 'abc123' });
+    expect(properties).toContainEqual({ name: 'capital-ai:package-lock-sha256', value: 'deadbeef' });
+  });
+
+  it('omits source binding properties when none is provided', () => {
+    const sbom = buildCycloneDxSbom(pkg, lock, 'urn:uuid:test');
+    expect(sbom.metadata.properties).toEqual([]);
+  });
 });

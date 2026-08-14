@@ -91,9 +91,9 @@ unberührt.
 | M2G Documentation Freeze | **COMPLETE** | COMPLETE | Freeze policy | docs consistency | sequential implementation |
 | M3 CI Hardening | **COMPLETE** | COMPLETE | ADR-0053/0060 + CI governance | scope-aware CI / Owner gate | preserve until M10 cutover |
 | M4 Agent IAM | **COMPLETE** | COMPLETE | ADR-0058 + ESS-0018/0019 | negative IAM tests | preserve |
-| M5 Audit / Telemetry | **PERSISTENCE VERIFIED / APPLICATION CORRECTIVE VERIFICATION ACTIVE** | COMPLETE | ADR-0056/0059 + M5 Evidence | PR #222 merged; corrected writer must still deploy and prove a real successful privileged audit insert | M5A repository work may continue; autonomous mutation remains blocked |
+| M5 Audit / Telemetry | **VERIFIED PASS** | COMPLETE | ADR-0056/0059 + M5 Evidence | PR #222 corrected writer deployed and confirmed via real successful privileged audit insert (`docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md`, cross-verified against PR #229) | autonomous mutation remains blocked independent of this (SA5/M10 gate) |
 | M5A Native MFA / AAL2 | **VERIFIED PASS** | baseline + runbook + closure evidence complete | ESS-0020 + ADR-0064 + ADR-0003.5 | repo code merged (PR #255/#256) → beide Owner-Profile mit verifiziertem nativen TOTP-Faktor + bestätigter `aal2`-Sitzung (`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`) → Advisor ohne unowned HIGH/CRITICAL | M6 unblocked |
-| M6 Supply Chain Provenance | **READY TO START** | **RUNBOOK READY** | ADR-0060 | SBOM/provenance/attestation bound to exact source/artifact | M7 after M6 VERIFIED PASS |
+| M6 Supply Chain Provenance | **CODE COMPLETE / CI ATTESTATION PENDING FIRST MAIN PUSH** | **RUNBOOK READY + repo evidence** | ADR-0060 | source→lockfile→SBOM→provenance chain implemented and locally end-to-end verified (`docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`); real signed attestation requires the first `push`-triggered `supply-chain-attestation` CI run after merge | M7 after M6 VERIFIED PASS |
 | M7 Deployment Identity / Platform Mutation | **BLOCKED BY M6** | **RUNBOOK READY** | ADR-0061 | exact target + Owner mutation approval + post-verification/rollback | M8 after all required M7 mutations VERIFIED PASS |
 | M8 Agent Cutover | **BLOCKED BY M7** | **RUNBOOK READY** | ADR-0062 + ESS-0019 | provider-neutral profiles + equivalent policy tests + rollback to read-only | M9 after cutover VERIFIED PASS |
 | M9 Assurance / Incident / Break-Glass | **BLOCKED BY M8** | **RUNBOOK READY** | ADR-0063 | injection/replay/exfiltration/audit/kill-switch/break-glass/rollback drills | M10 after assurance VERIFIED PASS |
@@ -106,9 +106,14 @@ unberührt.
 M5A ist `VERIFIED PASS` (2026-08-14): Repository-Code gemerged (PR #255/#256), beide Owner-Profile
 haben native TOTP-Faktoren interaktiv eingerichtet und verifiziert, `aal2`-Sitzungen read-only
 gegen Produktion bestätigt, Security-Advisor ohne unowned HIGH/CRITICAL — siehe
-`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`. M6 (Supply Chain Provenance) ist damit
-das nächste ausführbare Gate; Repository-Code-Implementierung dafür ist ein separater, neuer
-Auftrag (kein automatischer Start durch diese Statusänderung). SA5 bleibt weiterhin bis M10
+`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`.
+
+M6 (Supply Chain Provenance): Repository-Code implementiert — source→lockfile→SBOM→Provenance-Kette,
+neuer `supply-chain-attestation`-CI-Job (nur `push`+`main`, eigene minimale Berechtigungen),
+vollständig lokal Ende-zu-Ende verifiziert inkl. Positiv-/Negativtests. Status
+`CODE COMPLETE / CI ATTESTATION PENDING FIRST MAIN PUSH` — die echte, signierte Attestation kann
+per Definition erst nach Merge beim ersten realen `push`-Lauf entstehen, siehe
+`docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`. SA5 bleibt weiterhin bis M10
 `VERIFIED PASS` blockiert.
 
 ### Goal
