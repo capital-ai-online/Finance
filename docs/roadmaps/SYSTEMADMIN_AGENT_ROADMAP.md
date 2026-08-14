@@ -1,9 +1,13 @@
 # CAPITAL-AI Systemadmin Agent Roadmap
 
 Status: IMPLEMENTATION PHASE
-Date: 2026-08-12
-Current repository baseline: `main@6205868da833a6ee75b5301e78b0a2e6a118c411` (PR #251 merge)
+Date: 2026-08-14
+Current repository baseline: `main@66da35b80ba23e4f216318a9cd9f9b4e7b787679` (PR #255 merge)
 Authority: ESS-0021, ADR-0065, ADR-0058, ADR-0059, ADR-0066, ADR-0067, ADR-0068
+
+**Sync 2026-08-14:** SA0-SA4 bleiben `COMPLETE / VERIFIED PASS`; keine Statusänderung durch PR #255
+(M5A wurde direkt implementiert, nicht über den SA4-Pfad — siehe Korrektur im M5A-Abschnitt unten
+und `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`). SA5 bleibt bis M10 `VERIFIED PASS` blockiert.
 
 ## Goal
 
@@ -269,7 +273,7 @@ Merged/superseded branches are never reused.
 
 ## Current next action
 
-M5A repository code is merged via PR #255 and native MFA is Owner-attested active. The SA4 one-purpose host MUST NOT be reused for M5A. The next allowed action is read-only M5/M5A verification evidence; any corrective mutation requires an exact Proposal and explicit Owner approval. SA5 remains blocked until M10 VERIFIED PASS.
+M5A repository code is merged via PR #255; PR #256 additionally merged required onboarding and the last-factor guard. Native MFA is Owner-attested active. The SA4 one-purpose host MUST NOT be reused for M5A. The next allowed action is read-only M5/M5A verification evidence; any corrective mutation requires an exact Proposal and explicit Owner approval. SA5 remains blocked until M10 VERIFIED PASS.
 
 ## Konsolidierter Prototyp- und Mutationsanfragepfad (PR #257)
 

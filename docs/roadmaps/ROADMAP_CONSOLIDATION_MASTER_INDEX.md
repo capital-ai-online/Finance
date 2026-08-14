@@ -2,7 +2,7 @@
 
 Status: ACTIVE — CANONICAL EXECUTION PORTFOLIO  
 Stand: 2026-08-14  
-Repository-Baseline: `main@66da35b80ba23e4f216318a9cd9f9b4e7b787679`  
+Repository-Baseline: `main@0efeb05e507698129ff1d72de4887554d3f32100` (PR #256 Merge)  
 Owner: SvenKulessa  
 PR: #257  
 Authority: ADR-0071 + ESS-0023
@@ -29,7 +29,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 
 | ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
 |---|---|---|---|---|
-| DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M4 COMPLETE; M5 Evidence offen; M5A Code gemergt, native MFA Owner-attestiert aktiviert, Abschlussverifikation offen; M6–M10 blockiert | M5/M5A Evidence vervollständigen |
+| DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M4 COMPLETE; M5 Evidence offen; M5A Code + Pflicht-Onboarding/Last-Factor-Guard in main, native MFA Owner-attestiert aktiviert, Abschlussverifikation offen; M6–M10 blockiert | M5/M5A Evidence vervollständigen |
 | S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | READY FOR OWNER REVIEW; S1.0–S1.6 nicht vollständig VERIFIED PASS | F-01–F-18 gegen aktuelles main revalidieren |
 | DOC | Documentary/Event Value Chain | `docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` | ACTIVE / PARTIAL | D0 read-only Baseline |
 | SA | Systemadministrator-Agent | `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md` | SA0–SA4 VERIFIED PASS; SA5 blockiert | dokumentenbasierte Prototypen nach ESS-0023 |

@@ -11,7 +11,7 @@
   "workItem": "Konsolidierung aller offenen CAPITAL-AI-Roadmaps, M0-M10, P0-P3 und dokumentenbasierter Systemadministrator-Prototyp-/Mutationsanfrage-Authority ohne Runtime- oder Produktionsmutation.",
   "startedAt": "2026-08-14T15:30:00Z",
   "baseBranch": "main",
-  "baseSha": "66da35b80ba23e4f216318a9cd9f9b4e7b787679",
+  "baseSha": "0efeb05e507698129ff1d72de4887554d3f32100",
   "pullRequest": 257,
   "claimedPaths": [
     "docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md",

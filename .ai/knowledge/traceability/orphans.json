@@ -23,5 +23,60 @@
     "type": "ess-without-component",
     "id": "ESS-0010",
     "detail": "ESS-0010 (\"Documentary Engine\") hat kein implementedBy in der ESS-Registry."
+  },
+  {
+    "type": "ess-without-component",
+    "id": "ESS-0014",
+    "detail": "ESS-0014 (\"Google Marketing MCP Governance\") hat kein implementedBy in der ESS-Registry."
+  },
+  {
+    "type": "ess-without-component",
+    "id": "ESS-0014-CONTRACTS",
+    "detail": "ESS-0014-CONTRACTS (\"Google Marketing Integration & Protected Change Contracts\") hat kein implementedBy in der ESS-Registry."
+  },
+  {
+    "type": "ess-without-component",
+    "id": "ESS-0015",
+    "detail": "ESS-0015 (\"API Interface Inventory & QA Governance\") hat kein implementedBy in der ESS-Registry."
+  },
+  {
+    "type": "ess-without-component",
+    "id": "ESS-0016",
+    "detail": "ESS-0016 (\"Enterprise Market Data Provider & MCP Governance\") hat kein implementedBy in der ESS-Registry."
+  },
+  {
+    "type": "ess-without-component",
+    "id": "ESS-0017",
+    "detail": "ESS-0017 (\"Vocabulary Governance\") hat kein implementedBy in der ESS-Registry."
+  },
+  {
+    "type": "ess-without-component",
+    "id": "ESS-0017-CONTRACTS",
+    "detail": "ESS-0017-CONTRACTS (\"Vocabulary Governance Contracts\") hat kein implementedBy in der ESS-Registry."
+  },
+  {
+    "type": "ess-without-component",
+    "id": "ESS-0018",
+    "detail": "ESS-0018 (\"Agentic Supabase Tool Governance\") hat kein implementedBy in der ESS-Registry."
+  },
+  {
+    "type": "adr-without-component",
+    "id": "Documentary:ADR-0046",
+    "detail": "src/platform/Documentary/manifest.json verweist auf ADR-0046, das nicht in docs/adr/adr_history.json gefuehrt wird."
+  },
+  {
+    "type": "adr-without-component",
+    "id": "Release:ADR-0030",
+    "detail": "src/platform/Release/manifest.json verweist auf ADR-0030, das nicht in docs/adr/adr_history.json gefuehrt wird."
+  },
+  {
+    "type": "adr-without-component",
+    "id": "Telemetry:ADR-0056",
+    "detail": "src/platform/Telemetry/manifest.json verweist auf ADR-0056, das nicht in docs/adr/adr_history.json gefuehrt wird."
+  },
+  {
+    "type": "adr-without-component",
+    "id": "Vocabulary:ADR-0046",
+    "detail": "src/platform/Vocabulary/manifest.json verweist auf ADR-0046, das nicht in docs/adr/adr_history.json gefuehrt wird."
   }
 ]

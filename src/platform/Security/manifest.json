@@ -30,7 +30,20 @@
     "README.md"
   ],
   "tests": [
+    "tests/integration/nativeMfaAal2.test.ts",
+    "tests/unit/agentAudit.test.ts",
+    "tests/unit/agentIam.test.ts",
+    "tests/unit/approvals.test.ts",
+    "tests/unit/authMiddlewareAal2.test.ts",
+    "tests/unit/capabilities.test.ts",
+    "tests/unit/nativeMfa.test.ts",
+    "tests/unit/policyGate.test.ts",
+    "tests/unit/roadmapExecutionMandate.test.ts",
     "tests/unit/secretCrypto.test.ts",
+    "tests/unit/supervisorApprovedAction.test.ts",
+    "tests/unit/systemadminAuditedExecution.test.ts",
+    "tests/unit/systemadminExecutionProfile.test.ts",
+    "tests/unit/systemadminSa4Contracts.test.ts",
     "tests/unit/totp.test.ts"
   ],
   "note": "ARCH-AUDIT-0002 (J5, Kapitel 14.6): physisch aus server/iam/ hierher verschoben - vorher wies die ESS-Registry (implementedBy von ESS-0006) auf diesen Ordner, obwohl er nur eine leere Huelle war und der Code unter server/iam/ lag. Diese Verschiebung macht die Registry-Angabe korrekt."

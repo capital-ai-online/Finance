@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
+import { canRemoveLastFactor } from '../lib/mfaLastFactorGuard';
 
 /**
  * Echte Passkey-Verwaltung auf Basis der nativen Supabase-Auth-Passkey-API (Beta, seit Mai 2026).
@@ -24,6 +25,7 @@ export default function PasskeySettings() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     void loadPasskeys();
@@ -34,6 +36,7 @@ export default function PasskeySettings() {
     if (!supabase) return;
     const { data } = await supabase.auth.getUser();
     setCurrentUserEmail(data.user?.email ?? null);
+    setCurrentUserId(data.user?.id ?? null);
   }
 
   async function loadPasskeys() {
@@ -102,6 +105,13 @@ export default function PasskeySettings() {
     if (!window.confirm('Diesen Passkey wirklich entfernen? Er kann danach nicht mehr zum Anmelden genutzt werden.')) return;
     setLoading(true);
     try {
+      if (currentUserId) {
+        const guard = await canRemoveLastFactor(supabase, currentUserId, 'passkey');
+        if (!guard.allowed) {
+          setMessage({ type: 'error', text: guard.reason! });
+          return;
+        }
+      }
       const { error } = await supabase.auth.passkey.delete({ passkeyId });
       if (error) throw error;
       setMessage({ type: 'success', text: 'Passkey entfernt.' });

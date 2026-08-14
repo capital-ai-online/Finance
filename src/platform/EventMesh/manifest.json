@@ -138,8 +138,10 @@
     "docs/architecture/EVENTMESH_E2_E5_REPLAY_RELIABILITY.md"
   ],
   "tests": [
-    "Tests/eventBus.test.ts",
-    "../../../tests/unit/eventMeshReplayReliability.test.ts"
+    "tests/unit/documentaryTraceabilityEvents.test.ts",
+    "tests/unit/eventMeshInventoryVersioning.test.ts",
+    "tests/unit/eventMeshReplayReliability.test.ts",
+    "tests/unit/platformDecisionEventBridge.test.ts"
   ],
   "conformanceLevel": null,
   "implementationStatus": "Implementiert (Stufe 1-4). E2 ergaenzt Event-ID-basierte Idempotency und correlation-spezifische Ordering-Evidence; E5 ergaenzt Failure-, Consumer-Health- und Poison-Event-Evidence. In-Memory, ohne externe Abhaengigkeiten.",

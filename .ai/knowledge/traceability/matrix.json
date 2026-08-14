@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-02T05:05:42.282Z",
+  "generatedAt": "2026-08-14T15:47:15.177Z",
   "ess": [
     {
       "id": "ESS-0001",
@@ -128,6 +128,48 @@
       "implementedBy": [
         "src/platform/EventMesh"
       ]
+    },
+    {
+      "id": "ESS-0014",
+      "title": "Google Marketing MCP Governance",
+      "status": "published",
+      "implementedBy": []
+    },
+    {
+      "id": "ESS-0014-CONTRACTS",
+      "title": "Google Marketing Integration & Protected Change Contracts",
+      "status": "published",
+      "implementedBy": []
+    },
+    {
+      "id": "ESS-0015",
+      "title": "API Interface Inventory & QA Governance",
+      "status": "published",
+      "implementedBy": []
+    },
+    {
+      "id": "ESS-0016",
+      "title": "Enterprise Market Data Provider & MCP Governance",
+      "status": "published",
+      "implementedBy": []
+    },
+    {
+      "id": "ESS-0017",
+      "title": "Vocabulary Governance",
+      "status": "proposed",
+      "implementedBy": []
+    },
+    {
+      "id": "ESS-0017-CONTRACTS",
+      "title": "Vocabulary Governance Contracts",
+      "status": "proposed",
+      "implementedBy": []
+    },
+    {
+      "id": "ESS-0018",
+      "title": "Agentic Supabase Tool Governance",
+      "status": "published",
+      "implementedBy": []
     }
   ],
   "adr": [
@@ -235,6 +277,11 @@
       "id": "ADR-0020",
       "title": "Social Media Direct Publishing — Reale OAuth-2.0- und Plattform-API-Integration",
       "status": "ACCEPTED"
+    },
+    {
+      "id": "ADR-0021",
+      "title": "Social Media Direct Publishing Hub — Zugriffsbeschraenkung auf Owner-Rolle oder Founder-Abo",
+      "status": "ACCEPTED"
     }
   ],
   "components": [
@@ -300,19 +347,29 @@
       "name": "Documentary",
       "path": "src/platform/Documentary",
       "manifestPath": "src/platform/Documentary/manifest.json",
-      "status": "unspecified",
+      "status": "development",
       "ess": [
         "ESS-0001",
         "ESS-0001-CONTRACTS",
-        "ESS-0010"
+        "ESS-0009",
+        "ESS-0010",
+        "ESS-0011",
+        "ESS-0012",
+        "ESS-0013",
+        "ESS-0013-CONTRACTS",
+        "ESS-0017",
+        "ESS-0017-CONTRACTS"
       ],
-      "adr": []
+      "adr": [
+        "ADR-0018",
+        "ADR-0046"
+      ]
     },
     {
       "name": "Documentary/Governance",
       "path": "src/platform/Documentary/Governance",
       "manifestPath": "src/platform/Documentary/Governance/manifest.json",
-      "status": "development",
+      "status": "unspecified",
       "ess": [
         "ESS-0001",
         "ESS-0001-CONTRACTS",
@@ -332,7 +389,7 @@
       "name": "EventMesh",
       "path": "src/platform/EventMesh",
       "manifestPath": "src/platform/EventMesh/manifest.json",
-      "status": "development",
+      "status": "implemented",
       "ess": [
         "ESS-0001-CONTRACTS",
         "ESS-0013",
@@ -403,12 +460,17 @@
       "name": "PlatformDirector",
       "path": "src/platform/PlatformDirector",
       "manifestPath": "src/platform/PlatformDirector/manifest.json",
-      "status": "unspecified",
+      "status": "development",
       "ess": [
         "ESS-0001",
-        "ESS-0001-CONTRACTS"
+        "ESS-0001-CONTRACTS",
+        "ESS-0003",
+        "ESS-0013",
+        "ESS-0017"
       ],
-      "adr": []
+      "adr": [
+        "ADR-0018"
+      ]
     },
     {
       "name": "Plugins",
@@ -447,12 +509,15 @@
       "name": "Release",
       "path": "src/platform/Release",
       "manifestPath": "src/platform/Release/manifest.json",
-      "status": "unspecified",
+      "status": "development",
       "ess": [
         "ESS-0001",
-        "ESS-0001-CONTRACTS"
+        "ESS-0001-CONTRACTS",
+        "ESS-0007"
       ],
-      "adr": []
+      "adr": [
+        "ADR-0030"
+      ]
     },
     {
       "name": "Security",
@@ -496,12 +561,18 @@
       "name": "Telemetry",
       "path": "src/platform/Telemetry",
       "manifestPath": "src/platform/Telemetry/manifest.json",
-      "status": "unspecified",
+      "status": "development",
       "ess": [
         "ESS-0001",
-        "ESS-0001-CONTRACTS"
+        "ESS-0001-CONTRACTS",
+        "ESS-0005",
+        "ESS-0006",
+        "ESS-0011",
+        "ESS-0013"
       ],
-      "adr": []
+      "adr": [
+        "ADR-0056"
+      ]
     },
     {
       "name": "Traceability",
@@ -543,10 +614,78 @@
         "ESS-0001-CONTRACTS",
         "ESS-0004"
       ],
-      "adr": []
+      "adr": [
+        "ADR-0011",
+        "ADR-0020"
+      ]
+    },
+    {
+      "name": "Vocabulary",
+      "path": "src/platform/Vocabulary",
+      "manifestPath": "src/platform/Vocabulary/manifest.json",
+      "status": "implemented",
+      "ess": [
+        "ESS-0001-CONTRACTS",
+        "ESS-0017",
+        "ESS-0017-CONTRACTS",
+        "ESS-0012",
+        "ESS-0013"
+      ],
+      "adr": [
+        "ADR-0046"
+      ]
     }
   ],
   "tests": [
+    {
+      "path": "tests/integration/nativeMfaAal2.test.ts",
+      "targets": [
+        "src/platform/Security/authMiddleware",
+        "src/platform/Security/nativeMfa"
+      ]
+    },
+    {
+      "path": "tests/server/alphaVantageRoutes.contract.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/server/analysisRouteExtraction.contract.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/server/applicationRouteComposition.contract.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/server/domainDecompositionPhase32.contract.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/server/marketDataAdapterComposition.contract.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/server/marketDataAdapterIsolation.contract.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/server/marketDataCoordinator.contract.test.ts",
+      "targets": [
+        "server/marketData/marketDataCoordinator"
+      ]
+    },
+    {
+      "path": "tests/unit/agentAudit.test.ts",
+      "targets": [
+        "src/platform/Security/agentIam",
+        "server/agentAudit/agentAuditWriter",
+        "server/agentAudit/authorizedAgentExecution"
+      ]
+    },
+    {
+      "path": "tests/unit/agentAuditSchemaContract.test.ts",
+      "targets": []
+    },
     {
       "path": "tests/unit/agentEvaluation.test.ts",
       "targets": [
@@ -554,9 +693,28 @@
       ]
     },
     {
+      "path": "tests/unit/agentIam.test.ts",
+      "targets": [
+        "src/platform/Security/agentIam"
+      ]
+    },
+    {
       "path": "tests/unit/agentModelRouting.test.ts",
       "targets": [
         "src/services/agentModelRouting"
+      ]
+    },
+    {
+      "path": "tests/unit/aiGovernance.test.ts",
+      "targets": [
+        "src/services/aiGovernance"
+      ]
+    },
+    {
+      "path": "tests/unit/aiGovernanceComplianceEvidence.test.ts",
+      "targets": [
+        "src/platform/Compliance/aiGovernanceEvidence",
+        "src/services/aiGovernance"
       ]
     },
     {
@@ -573,9 +731,240 @@
       ]
     },
     {
+      "path": "tests/unit/applicationMarketDataRuntime.test.ts",
+      "targets": [
+        "server/marketData/createApplicationMarketDataRuntime"
+      ]
+    },
+    {
+      "path": "tests/unit/approvals.test.ts",
+      "targets": [
+        "src/platform/Security/approvals"
+      ]
+    },
+    {
+      "path": "tests/unit/assetSearchCatalog.test.ts",
+      "targets": [
+        "src/lib/assetSearchCatalog"
+      ]
+    },
+    {
+      "path": "tests/unit/audit4EnterpriseHardening.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/unit/audit4PseudoMetricGate.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/unit/auditIntegrityRegression.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/unit/authMiddlewareAal2.test.ts",
+      "targets": [
+        "src/platform/Security/authMiddleware",
+        "server/db"
+      ]
+    },
+    {
+      "path": "tests/unit/bilingualDocumentaryProjection.test.ts",
+      "targets": [
+        "src/platform/Vocabulary/Registry/VocabularyRegistry",
+        "src/platform/Vocabulary/Registry/seedConcepts",
+        "src/platform/Documentary/Documentation/BilingualDocumentaryProjection"
+      ]
+    },
+    {
+      "path": "tests/unit/bondFeatureContract.test.ts",
+      "targets": [
+        "src/services/bondFeatureContract",
+        "tests/fixtures/bondGoldenDataset"
+      ]
+    },
+    {
+      "path": "tests/unit/bondScoringContract.test.ts",
+      "targets": [
+        "tests/fixtures/bond-golden-contract-v1.json",
+        "src/types/bondScoringContract"
+      ]
+    },
+    {
+      "path": "tests/unit/bondScoringWeightsProposal.test.ts",
+      "targets": [
+        "src/services/bondScoringWeightsProposal",
+        "src/types/bondScoringContract",
+        "tests/fixtures/bond-golden-contract-v1.json"
+      ]
+    },
+    {
+      "path": "tests/unit/candlestickPatterns.test.ts",
+      "targets": [
+        "src/services/candlestickPatterns"
+      ]
+    },
+    {
+      "path": "tests/unit/capabilities.test.ts",
+      "targets": [
+        "src/platform/Security/capabilities",
+        "server/db"
+      ]
+    },
+    {
+      "path": "tests/unit/commodityEvidenceScoring.test.ts",
+      "targets": [
+        "src/services/commodityEvidenceScoring",
+        "src/services/commodityMarketEvidence"
+      ]
+    },
+    {
+      "path": "tests/unit/complianceRuntimeEvidence.test.ts",
+      "targets": [
+        "src/platform/Compliance/runtimeEvidence"
+      ]
+    },
+    {
       "path": "tests/unit/complianceScanners.test.ts",
       "targets": [
         "src/platform/Compliance/scanners"
+      ]
+    },
+    {
+      "path": "tests/unit/cryptoHistoryProvider.test.ts",
+      "targets": [
+        "src/services/cryptoHistoryProvider"
+      ]
+    },
+    {
+      "path": "tests/unit/cryptoPrimaryProviderStage.test.ts",
+      "targets": [
+        "server/marketData/cryptoMarketDataStage"
+      ]
+    },
+    {
+      "path": "tests/unit/cryptoProviderChain.test.ts",
+      "targets": [
+        "server/marketData/cryptoProviderChain"
+      ]
+    },
+    {
+      "path": "tests/unit/cryptoSnapshotConsensus.test.ts",
+      "targets": [
+        "src/services/cryptoSnapshotConsensus"
+      ]
+    },
+    {
+      "path": "tests/unit/cryptoSnapshotProvider.test.ts",
+      "targets": [
+        "src/services/cryptoSnapshotProvider"
+      ]
+    },
+    {
+      "path": "tests/unit/dependencySecurity.test.ts",
+      "targets": [
+        "scripts/automation/dependencySecurity"
+      ]
+    },
+    {
+      "path": "tests/unit/documentaryCodeDiscovery.test.ts",
+      "targets": [
+        "src/platform/Documentary/Discovery/RepositoryCodeDiscovery"
+      ]
+    },
+    {
+      "path": "tests/unit/documentaryCoreEngine.test.ts",
+      "targets": [
+        "src/platform/Documentary/Engine/DocumentaryEngine"
+      ]
+    },
+    {
+      "path": "tests/unit/documentaryDocumentModel.test.ts",
+      "targets": [
+        "src/platform/Documentary/Models/DocumentaryDocument",
+        "src/platform/Documentary/Versioning/DocumentaryVersion"
+      ]
+    },
+    {
+      "path": "tests/unit/documentaryKnowledgeProjection.test.ts",
+      "targets": [
+        "src/platform/Documentary/Models/DocumentaryDocument",
+        "src/platform/Documentary/Knowledge/DocumentaryKnowledgeProjection"
+      ]
+    },
+    {
+      "path": "tests/unit/documentaryLifecycle.test.ts",
+      "targets": [
+        "src/platform/Documentary/Models/DocumentaryDocument",
+        "src/platform/Documentary/Lifecycle/DocumentaryLifecycle"
+      ]
+    },
+    {
+      "path": "tests/unit/documentaryRenderer.test.ts",
+      "targets": [
+        "src/platform/Documentary/Models/DocumentaryDocument",
+        "src/platform/Documentary/Generators/DocumentaryRenderer"
+      ]
+    },
+    {
+      "path": "tests/unit/documentaryTraceabilityEvents.test.ts",
+      "targets": [
+        "src/platform/EventMesh/Contracts/EventPayload",
+        "src/platform/EventMesh/Interfaces/IEventPublisher",
+        "src/platform/EventMesh/Contracts/EventContract",
+        "src/platform/EventMesh/Contracts/EventVersion",
+        "src/platform/Documentary/Models/DocumentaryDocument",
+        "src/platform/Documentary/Events/DocumentaryEventPublisher",
+        "src/platform/Documentary/Traceability/DocumentaryTraceability"
+      ]
+    },
+    {
+      "path": "tests/unit/documentaryVersionAuthority.test.ts",
+      "targets": [
+        "src/platform/Documentary/Versioning/DocumentaryVersion"
+      ]
+    },
+    {
+      "path": "tests/unit/documentationHygiene.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/unit/eodhdBondEvidence.test.ts",
+      "targets": [
+        "src/services/eodhdBondEvidence"
+      ]
+    },
+    {
+      "path": "tests/unit/eventMeshInventoryVersioning.test.ts",
+      "targets": [
+        "src/platform/EventMesh/Discovery/EventContractInventory",
+        "src/platform/EventMesh/Contracts/EventRuntimeVersionContext"
+      ]
+    },
+    {
+      "path": "tests/unit/eventMeshReplayReliability.test.ts",
+      "targets": [
+        "src/platform/EventMesh/Contracts/EventContract",
+        "src/platform/EventMesh/Policies/EventReplayGuard",
+        "src/platform/EventMesh/Reports/EventReliabilityReport",
+        "src/platform/EventMesh/Models/EventDeliveryRecord"
+      ]
+    },
+    {
+      "path": "tests/unit/externalMarketDataAdapters.test.ts",
+      "targets": [
+        "src/services/externalMarketDataAdapters"
+      ]
+    },
+    {
+      "path": "tests/unit/externalSpotPriceAdapters.test.ts",
+      "targets": [
+        "src/services/externalSpotPriceAdapters"
+      ]
+    },
+    {
+      "path": "tests/unit/fmpIndexProviderStage.test.ts",
+      "targets": [
+        "server/marketData/fmpIndexProviderStage"
       ]
     },
     {
@@ -583,10 +972,126 @@
       "targets": []
     },
     {
+      "path": "tests/unit/frontendFinancialDataContract.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/unit/githubActionsOidc.test.ts",
+      "targets": [
+        "server/systemadmin/githubActionsOidc"
+      ]
+    },
+    {
+      "path": "tests/unit/googleMarketingConsent.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/unit/horizonExactScoreValidation.test.ts",
+      "targets": [
+        "src/services/horizonExactScoreValidation"
+      ]
+    },
+    {
+      "path": "tests/unit/horizonValidationEvidence.test.ts",
+      "targets": [
+        "src/services/horizonValidationEvidence"
+      ]
+    },
+    {
+      "path": "tests/unit/horizonValidationProvider.test.ts",
+      "targets": [
+        "src/services/horizonValidationProvider"
+      ]
+    },
+    {
+      "path": "tests/unit/indexProviderMapping.test.ts",
+      "targets": [
+        "server/fmpIndices",
+        "src/lib/assetSearchCatalog",
+        "src/services/indexProviderMapping"
+      ]
+    },
+    {
+      "path": "tests/unit/krakenSpotMarketEvidence.test.ts",
+      "targets": [
+        "src/services/krakenSpotMarketEvidence",
+        "src/services/cryptoScoringService"
+      ]
+    },
+    {
+      "path": "tests/unit/liveCryptoSnapshotConsensus.test.ts",
+      "targets": [
+        "src/services/liveCryptoSnapshotConsensus",
+        "src/services/cryptoSnapshotProvider"
+      ]
+    },
+    {
+      "path": "tests/unit/loginStepUp.test.ts",
+      "targets": [
+        "src/lib/loginStepUp"
+      ]
+    },
+    {
+      "path": "tests/unit/macroRateEvidence.test.ts",
+      "targets": [
+        "src/services/macroRateEvidence"
+      ]
+    },
+    {
       "path": "tests/unit/mailer.test.ts",
       "targets": [
-        "server/mailer",
-        "server/db"
+        "server/mailer"
+      ]
+    },
+    {
+      "path": "tests/unit/marketDataCompatibilityFacade.test.ts",
+      "targets": [
+        "server/marketData/marketDataCompatibilityFacade"
+      ]
+    },
+    {
+      "path": "tests/unit/marketDataConsensus.test.ts",
+      "targets": [
+        "src/services/marketDataConsensus"
+      ]
+    },
+    {
+      "path": "tests/unit/marketDataProviderRouter.test.ts",
+      "targets": [
+        "src/services/marketDataProviderRouter"
+      ]
+    },
+    {
+      "path": "tests/unit/marketDataProviderStages.test.ts",
+      "targets": [
+        "server/marketData/createMarketDataProviderStages",
+        "server/marketData/stooqProviderStage"
+      ]
+    },
+    {
+      "path": "tests/unit/marketDataRuntimeFacade.test.ts",
+      "targets": [
+        "server/marketData/marketDataRuntimeFacade"
+      ]
+    },
+    {
+      "path": "tests/unit/marketIntegrityCalibration.test.ts",
+      "targets": [
+        "src/services/marketIntegrityCalibration",
+        "src/platform/Supervisor/marketIntegrityRuntime"
+      ]
+    },
+    {
+      "path": "tests/unit/marketIntegrityRuntimeEvidence.test.ts",
+      "targets": [
+        "src/platform/Supervisor/marketIntegrityRuntime",
+        "src/platform/Compliance/marketIntegrityEvidence"
+      ]
+    },
+    {
+      "path": "tests/unit/marketSnapshotConsensus.test.ts",
+      "targets": [
+        "src/services/marketSnapshotConsensus"
       ]
     },
     {
@@ -604,9 +1109,83 @@
       ]
     },
     {
+      "path": "tests/unit/mfaLastFactorGuard.test.ts",
+      "targets": [
+        "src/lib/mfaLastFactorGuard"
+      ]
+    },
+    {
+      "path": "tests/unit/nativeMfa.test.ts",
+      "targets": [
+        "src/platform/Security/nativeMfa"
+      ]
+    },
+    {
       "path": "tests/unit/newsRoutes.test.ts",
       "targets": [
         "src/features/news/newsRoutes"
+      ]
+    },
+    {
+      "path": "tests/unit/onboarding.test.ts",
+      "targets": [
+        "src/lib/onboarding"
+      ]
+    },
+    {
+      "path": "tests/unit/outbox.test.ts",
+      "targets": [
+        "server/outbox"
+      ]
+    },
+    {
+      "path": "tests/unit/outboxWorker.test.ts",
+      "targets": [
+        "server/outboxWorker"
+      ]
+    },
+    {
+      "path": "tests/unit/pdfCreditLedger.test.ts",
+      "targets": [
+        "server/pdfCreditLedger"
+      ]
+    },
+    {
+      "path": "tests/unit/platformDecisionEventBridge.test.ts",
+      "targets": [
+        "src/platform/EventMesh/Core/EventBus",
+        "src/platform/PlatformDirector/Contracts/PlatformDecision",
+        "src/platform/PlatformDirector/Events/publishPlatformDecision"
+      ]
+    },
+    {
+      "path": "tests/unit/platformManifestIntegrity.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/unit/platformVersionConsistency.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/unit/policyGate.test.ts",
+      "targets": [
+        "src/platform/Compliance/PolicyGate",
+        "src/platform/Security/capabilities",
+        "src/platform/Security/agentIam"
+      ]
+    },
+    {
+      "path": "tests/unit/protectedDecisionBoundary.test.ts",
+      "targets": [
+        "src/platform/PlatformDirector/Contracts/PlatformDecision",
+        "src/platform/PlatformDirector/Policies/ProtectedDecisionBoundary"
+      ]
+    },
+    {
+      "path": "tests/unit/providerHealth.test.ts",
+      "targets": [
+        "src/platform/Supervisor/providerHealth",
+        "src/platform/Supervisor/supervisor"
       ]
     },
     {
@@ -616,12 +1195,25 @@
       ]
     },
     {
+      "path": "tests/unit/r001CryptoProvenanceBoundary.test.ts",
+      "targets": [
+        "src/services/cryptoScoringService",
+        "src/services/memeCoinScoringService"
+      ]
+    },
+    {
       "path": "tests/unit/rag.test.ts",
       "targets": [
         "src/services/rag/documentLoader",
         "src/services/rag/embeddingsClient",
         "src/services/rag/vectorStore",
         "src/services/rag/retrieval"
+      ]
+    },
+    {
+      "path": "tests/unit/ragEvidenceLayer.test.ts",
+      "targets": [
+        "src/services/rag/evidenceLayer"
       ]
     },
     {
@@ -643,11 +1235,72 @@
       ]
     },
     {
+      "path": "tests/unit/releaseVersionGate.test.ts",
+      "targets": [
+        "src/platform/Release/Services/releaseVersionGate"
+      ]
+    },
+    {
+      "path": "tests/unit/renameCandidateInventory.test.ts",
+      "targets": [
+        "scripts/automation/classifyRenameCandidates"
+      ]
+    },
+    {
+      "path": "tests/unit/renderRuntimeRemediation.test.ts",
+      "targets": [
+        "server/runtime/renderRuntimeSafety"
+      ]
+    },
+    {
+      "path": "tests/unit/roadmapExecutionMandate.test.ts",
+      "targets": [
+        "src/platform/Compliance/PolicyGate",
+        "src/platform/Security/agentIam",
+        "src/platform/Security/roadmapExecutionMandate"
+      ]
+    },
+    {
+      "path": "tests/unit/scoreConfidenceCalibration.test.ts",
+      "targets": [
+        "src/services/scoreConfidenceCalibration"
+      ]
+    },
+    {
+      "path": "tests/unit/scoreConfidenceEvidence.test.ts",
+      "targets": [
+        "src/services/scoreConfidenceCalibration",
+        "src/services/scoreConfidenceEvidence"
+      ]
+    },
+    {
       "path": "tests/unit/scoreValidation.test.ts",
       "targets": [
         "server/scoreValidation",
         "server/db",
         "src/lib/assetRegistry"
+      ]
+    },
+    {
+      "path": "tests/unit/scoringGoldenRegression.test.ts",
+      "targets": [
+        "src/services/cryptoScoringService",
+        "src/services/memeCoinScoringService",
+        "src/services/traditionalAssetScoring",
+        "tests/fixtures/scoringGoldenV1"
+      ]
+    },
+    {
+      "path": "tests/unit/scoringIntegrity.test.ts",
+      "targets": [
+        "src/services/scoringIntegrity",
+        "src/types/scoringIntegrity"
+      ]
+    },
+    {
+      "path": "tests/unit/scoringLineage.test.ts",
+      "targets": [
+        "src/services/scoringLineage"
       ]
     },
     {
@@ -659,9 +1312,102 @@
       ]
     },
     {
+      "path": "tests/unit/screeningBatchGovernance.test.ts",
+      "targets": [
+        "src/services/screeningBatchGovernance"
+      ]
+    },
+    {
+      "path": "tests/unit/screeningEligibility.test.ts",
+      "targets": [
+        "src/services/screeningEligibility"
+      ]
+    },
+    {
+      "path": "tests/unit/screeningGovernanceEvidence.test.ts",
+      "targets": [
+        "src/platform/Compliance/screeningGovernanceEvidence",
+        "src/services/marketDataProviderRouter",
+        "src/services/scoreConfidenceEvidence"
+      ]
+    },
+    {
+      "path": "tests/unit/screeningOperations.test.ts",
+      "targets": [
+        "src/services/screeningOperations",
+        "src/services/screeningEligibility",
+        "src/services/screeningSla"
+      ]
+    },
+    {
+      "path": "tests/unit/screeningSla.test.ts",
+      "targets": [
+        "src/services/screeningSla"
+      ]
+    },
+    {
+      "path": "tests/unit/screeningSloEvidence.test.ts",
+      "targets": [
+        "src/services/screeningEligibility",
+        "src/services/screeningSla",
+        "src/services/screeningOperations",
+        "src/services/screeningSloEvidence"
+      ]
+    },
+    {
+      "path": "tests/unit/screeningSloSink.test.ts",
+      "targets": [
+        "src/services/screeningSloSink"
+      ]
+    },
+    {
+      "path": "tests/unit/screeningSloSupabaseSink.test.ts",
+      "targets": [
+        "server/screeningSloSupabaseSink"
+      ]
+    },
+    {
       "path": "tests/unit/secretCrypto.test.ts",
       "targets": [
         "src/platform/Security/secretCrypto"
+      ]
+    },
+    {
+      "path": "tests/unit/securityHeadersPolicy.test.ts",
+      "targets": [
+        "server/middleware/securityHeaders"
+      ]
+    },
+    {
+      "path": "tests/unit/securityResponse.production.test.ts",
+      "targets": [
+        "server/logger"
+      ]
+    },
+    {
+      "path": "tests/unit/securityResponse.test.ts",
+      "targets": [
+        "server/securityResponse"
+      ]
+    },
+    {
+      "path": "tests/unit/serverMiddlewareExtraction.test.ts",
+      "targets": [
+        "server/middleware/probeProtection",
+        "server/middleware/cors"
+      ]
+    },
+    {
+      "path": "tests/unit/sovereignBenchmarkEvidenceScoring.test.ts",
+      "targets": [
+        "src/services/sovereignBenchmarkEvidenceScoring",
+        "src/services/eodhdBondEvidence"
+      ]
+    },
+    {
+      "path": "tests/unit/sovereignBondProviderMapping.test.ts",
+      "targets": [
+        "src/services/sovereignBondProviderMapping"
       ]
     },
     {
@@ -669,9 +1415,100 @@
       "targets": []
     },
     {
+      "path": "tests/unit/stripeWebhookInbox.test.ts",
+      "targets": [
+        "server/stripe"
+      ]
+    },
+    {
+      "path": "tests/unit/subscriptionEntitlements.test.ts",
+      "targets": [
+        "src/config/subscriptionEntitlements"
+      ]
+    },
+    {
+      "path": "tests/unit/supabaseAdminDiagnosticsTool.test.ts",
+      "targets": [
+        "src/services/agentTools/supabaseAdminDiagnosticsTool",
+        "server/db"
+      ]
+    },
+    {
+      "path": "tests/unit/supabasePrivilegeSeparation.test.ts",
+      "targets": [
+        "server/db"
+      ]
+    },
+    {
+      "path": "tests/unit/supabaseScoreEvidenceTool.test.ts",
+      "targets": [
+        "src/services/agentTools/supabaseScoreEvidenceTool",
+        "server/db"
+      ]
+    },
+    {
       "path": "tests/unit/supervisor.test.ts",
       "targets": [
         "src/platform/Supervisor/supervisor"
+      ]
+    },
+    {
+      "path": "tests/unit/supervisorApprovedAction.test.ts",
+      "targets": [
+        "src/platform/Supervisor/supervisor",
+        "src/platform/Security/capabilities"
+      ]
+    },
+    {
+      "path": "tests/unit/systemadminAuditedExecution.test.ts",
+      "targets": [
+        "src/platform/Security/agentIam",
+        "src/platform/Security/roadmapExecutionMandate",
+        "src/platform/Security/systemadminExecutionProfile",
+        "server/agentAudit/systemadminAuditedExecution"
+      ]
+    },
+    {
+      "path": "tests/unit/systemadminExecutionBroker.test.ts",
+      "targets": [
+        "server/systemadmin/systemadminExecutionBrokerRouter"
+      ]
+    },
+    {
+      "path": "tests/unit/systemadminExecutionHostWorkflow.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/unit/systemadminExecutionIssue.test.ts",
+      "targets": [
+        "scripts/systemadmin/validateExecutionIssue.mjs"
+      ]
+    },
+    {
+      "path": "tests/unit/systemadminExecutionProfile.test.ts",
+      "targets": [
+        "src/platform/Security/agentIam",
+        "src/platform/Security/roadmapExecutionMandate",
+        "src/platform/Security/systemadminExecutionProfile"
+      ]
+    },
+    {
+      "path": "tests/unit/systemadminSa4Contracts.test.ts",
+      "targets": [
+        "src/platform/Security/roadmapExecutionMandate",
+        "server/agentAudit/systemadminAuditedExecution"
+      ]
+    },
+    {
+      "path": "tests/unit/systemadminSa4PilotIssue.test.ts",
+      "targets": [
+        "scripts/systemadmin/validateSa4PilotIssue.mjs"
+      ]
+    },
+    {
+      "path": "tests/unit/telemetryContract.test.ts",
+      "targets": [
+        "src/platform/Telemetry"
       ]
     },
     {
@@ -690,9 +1527,32 @@
       ]
     },
     {
+      "path": "tests/unit/tradeSetupLevels.test.ts",
+      "targets": [
+        "src/services/tradeSetupLevels",
+        "src/services/realMarketSignals"
+      ]
+    },
+    {
       "path": "tests/unit/traditionalAssetScoring.test.ts",
       "targets": [
         "src/services/traditionalAssetScoring"
+      ]
+    },
+    {
+      "path": "tests/unit/traditionalQuoteEvidence.test.ts",
+      "targets": [
+        "src/services/traditionalQuoteEvidence"
+      ]
+    },
+    {
+      "path": "tests/unit/universeBestWorstP0.test.ts",
+      "targets": []
+    },
+    {
+      "path": "tests/unit/verifiedCryptoTechnicalScoring.test.ts",
+      "targets": [
+        "src/services/verifiedCryptoTechnicalScoring"
       ]
     }
   ],
@@ -750,7 +1610,7 @@
         "type": "component",
         "id": "Release"
       },
-      "bidirectional": false
+      "bidirectional": true
     },
     {
       "from": {
@@ -836,7 +1696,348 @@
       },
       "to": {
         "type": "test",
+        "id": "tests/unit/aiGovernanceComplianceEvidence.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Compliance"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/complianceRuntimeEvidence.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Compliance"
+      },
+      "to": {
+        "type": "test",
         "id": "tests/unit/complianceScanners.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Compliance"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/marketIntegrityRuntimeEvidence.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Compliance"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/policyGate.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Compliance"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/roadmapExecutionMandate.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Compliance"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/screeningGovernanceEvidence.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Documentary"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/bilingualDocumentaryProjection.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Documentary"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/documentaryCodeDiscovery.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Documentary"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/documentaryCoreEngine.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Documentary"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/documentaryDocumentModel.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Documentary"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/documentaryKnowledgeProjection.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Documentary"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/documentaryLifecycle.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Documentary"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/documentaryRenderer.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Documentary"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/documentaryTraceabilityEvents.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Documentary"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/documentaryVersionAuthority.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "EventMesh"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/documentaryTraceabilityEvents.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "EventMesh"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/eventMeshInventoryVersioning.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "EventMesh"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/eventMeshReplayReliability.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "EventMesh"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/platformDecisionEventBridge.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "PlatformDirector"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/platformDecisionEventBridge.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "PlatformDirector"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/protectedDecisionBoundary.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Release"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/releaseVersionGate.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/integration/nativeMfaAal2.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/agentAudit.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/agentIam.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/approvals.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/authMiddlewareAal2.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/capabilities.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/nativeMfa.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/policyGate.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/roadmapExecutionMandate.test.ts"
       },
       "bidirectional": true
     },
@@ -858,7 +2059,84 @@
       },
       "to": {
         "type": "test",
+        "id": "tests/unit/supervisorApprovedAction.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/systemadminAuditedExecution.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/systemadminExecutionProfile.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/systemadminSa4Contracts.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Security"
+      },
+      "to": {
+        "type": "test",
         "id": "tests/unit/totp.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Supervisor"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/marketIntegrityCalibration.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Supervisor"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/marketIntegrityRuntimeEvidence.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Supervisor"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/providerHealth.test.ts"
       },
       "bidirectional": true
     },
@@ -876,11 +2154,44 @@
     {
       "from": {
         "type": "component",
+        "id": "Supervisor"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/supervisorApprovedAction.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Telemetry"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/telemetryContract.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
         "id": "Traceability"
       },
       "to": {
         "type": "test",
         "id": "tests/unit/traceabilityValidator.test.ts"
+      },
+      "bidirectional": true
+    },
+    {
+      "from": {
+        "type": "component",
+        "id": "Vocabulary"
+      },
+      "to": {
+        "type": "test",
+        "id": "tests/unit/bilingualDocumentaryProjection.test.ts"
       },
       "bidirectional": true
     }

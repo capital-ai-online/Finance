@@ -1,6 +1,6 @@
 # M5A Systemadmin Repository Work Package
 
-Status: CODE-SLICE-SPEZIFIKATION UMGESETZT — siehe `docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`
+Status: CODE-SLICE-SPEZIFIKATION UMGESETZT UND GEMERGED (PR #255) — siehe `docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`. Verbleibend bis `VERIFIED PASS`: interaktive Owner-Aktion (natives Faktor-Enrollment) + Advisor-Rerun, siehe `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`.
 Datum: 2026-08-14
 Roadmap phase: M5A
 Executor: direkte Owner-instruierte Claude-Code-Sitzung (nicht der SA4-Pfad — siehe Korrektur unten)

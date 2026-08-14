@@ -44,8 +44,6 @@
     "README.md",
     "docs/adr/ADR-0020-version-manager-repository-convention-validator.md"
   ],
-  "tests": [
-    "repositoryConventionValidator.test.ts"
-  ],
+  "tests": [],
   "note": "ADR-0020: Der Validator ist read-only. Strict Mode blockiert nur bei Severity=error; Advisory Mode meldet alle Findings ohne Blockade. Ausnahmegenehmigungen bleiben ausserhalb der Komponente."
 }

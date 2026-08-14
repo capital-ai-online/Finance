@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-08-02T05:05:42.282Z",
+  "generatedAt": "2026-08-14T15:47:15.177Z",
   "ess": {
-    "total": 17,
+    "total": 24,
     "withComponent": 11,
-    "ratio": 0.6470588235294118
+    "ratio": 0.4583333333333333
   },
   "components": {
-    "total": 25,
-    "implemented": 7,
-    "withEss": 25,
-    "withAdr": 6,
-    "withTests": 4,
-    "testRatio": 0.16
+    "total": 26,
+    "implemented": 11,
+    "withEss": 26,
+    "withAdr": 12,
+    "withTests": 10,
+    "testRatio": 0.38461538461538464
   },
   "perComponent": [
     {
@@ -26,7 +26,7 @@
       "status": "implemented",
       "essCount": 3,
       "adrCount": 1,
-      "testCount": 1
+      "testCount": 7
     },
     {
       "name": "Contracts",
@@ -51,24 +51,24 @@
     },
     {
       "name": "Documentary",
-      "status": "unspecified",
-      "essCount": 3,
-      "adrCount": 0,
-      "testCount": 0
+      "status": "development",
+      "essCount": 10,
+      "adrCount": 2,
+      "testCount": 9
     },
     {
       "name": "Documentary/Governance",
-      "status": "development",
+      "status": "unspecified",
       "essCount": 7,
       "adrCount": 3,
       "testCount": 0
     },
     {
       "name": "EventMesh",
-      "status": "development",
+      "status": "implemented",
       "essCount": 5,
       "adrCount": 1,
-      "testCount": 0
+      "testCount": 4
     },
     {
       "name": "Events",
@@ -107,10 +107,10 @@
     },
     {
       "name": "PlatformDirector",
-      "status": "unspecified",
-      "essCount": 2,
-      "adrCount": 0,
-      "testCount": 0
+      "status": "development",
+      "essCount": 5,
+      "adrCount": 1,
+      "testCount": 2
     },
     {
       "name": "Plugins",
@@ -135,17 +135,17 @@
     },
     {
       "name": "Release",
-      "status": "unspecified",
-      "essCount": 2,
-      "adrCount": 0,
-      "testCount": 0
+      "status": "development",
+      "essCount": 3,
+      "adrCount": 1,
+      "testCount": 1
     },
     {
       "name": "Security",
       "status": "implemented",
       "essCount": 3,
       "adrCount": 1,
-      "testCount": 2
+      "testCount": 15
     },
     {
       "name": "Shared",
@@ -159,14 +159,14 @@
       "status": "implemented",
       "essCount": 2,
       "adrCount": 1,
-      "testCount": 1
+      "testCount": 5
     },
     {
       "name": "Telemetry",
-      "status": "unspecified",
-      "essCount": 2,
-      "adrCount": 0,
-      "testCount": 0
+      "status": "development",
+      "essCount": 6,
+      "adrCount": 1,
+      "testCount": 1
     },
     {
       "name": "Traceability",
@@ -186,8 +186,15 @@
       "name": "VersionManager",
       "status": "implemented",
       "essCount": 3,
-      "adrCount": 0,
+      "adrCount": 2,
       "testCount": 0
+    },
+    {
+      "name": "Vocabulary",
+      "status": "implemented",
+      "essCount": 5,
+      "adrCount": 1,
+      "testCount": 1
     }
   ]
 }

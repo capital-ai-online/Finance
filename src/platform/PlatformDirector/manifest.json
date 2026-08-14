@@ -38,8 +38,8 @@
     "../../../docs/architecture/EVENT_VALUE_CHAIN_E6_GOVERNANCE_BOUNDARIES.md"
   ],
   "tests": [
-    "../../../tests/unit/platformDecisionEventBridge.test.ts",
-    "../../../tests/unit/protectedDecisionBoundary.test.ts"
+    "tests/unit/platformDecisionEventBridge.test.ts",
+    "tests/unit/protectedDecisionBoundary.test.ts"
   ],
   "note": "Die Entscheidungsfindung und Persistenz bleiben ausserhalb dieses Schritts. E6 validiert ausschliesslich die geschuetzte Boundary bereits vorliegender PlatformDecisionRecord-Evidence; keine autonome Approval- oder Release-Entscheidung."
 }
