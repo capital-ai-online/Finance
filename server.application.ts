@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { Type } from '@google/genai';
+import { Type } from './src/services/aiSchema';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
