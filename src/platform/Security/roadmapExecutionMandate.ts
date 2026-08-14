@@ -106,8 +106,12 @@ const SYSTEMADMIN_SELF_AUTHORITY_PATHS = [
   '.ai/contracts/systemadmin-audit-execution-profile.json',
   '.ai/mandates/REM-SA3B-PROBE-001.json',
   '.ai/mandates/REM-SA4-PILOT-001.json',
+  '.ai/mandates/REM-M5A-REPOSITORY-001.json',
   '.github/workflows/systemadmin-roadmap-executor.yml',
   '.github/workflows/systemadmin-sa4-pilot.yml',
+  '.github/workflows/ci.yml',
+  '.github/workflows/capital-ai-ci-shadow.yml',
+  '.github/policies/main-production-protection.expected.json',
   'AGENTS.md',
   'docs/adr/ADR-0065-systemadmin-roadmap-execution-mandate.md',
   'docs/adr/ADR-0067-systemadmin-github-actions-execution-host.md',
@@ -127,6 +131,7 @@ const SYSTEMADMIN_SELF_AUTHORITY_PATHS = [
   'scripts/systemadmin/validateExecutionIssue.mjs',
   'scripts/systemadmin/validateSa4PilotIssue.mjs',
   'scripts/systemadmin/runSa4Pilot.mjs',
+  'scripts/security/verifyChangedWorkflowSecurity.mjs',
 ] as const;
 
 const RISK_ORDER: Readonly<Record<AgentRiskClass, number>> = {

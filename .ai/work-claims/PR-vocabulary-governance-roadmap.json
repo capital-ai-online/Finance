@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "PR-vocabulary-governance-roadmap",
-  "status": "active",
+  "status": "superseded",
   "exclusive": true,
   "agent": {
     "provider": "OpenAI",
@@ -23,5 +23,6 @@
     "docs/adr/ADR-0055-event-driven-value-chain-governance-integration.md",
     "docs/architecture/VOCABULARY_GOVERNANCE_MIGRATION_ROADMAP.md"
   ],
-  "releaseCondition": "Claim is released when the governance roadmap PR is merged or closed."
+  "releaseCondition": "Claim is released when the governance roadmap PR is merged or closed.",
+  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete."
 }

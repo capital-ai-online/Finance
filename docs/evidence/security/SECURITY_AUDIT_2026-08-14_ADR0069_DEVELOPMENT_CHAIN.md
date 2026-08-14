@@ -330,3 +330,72 @@ Reihenfolge bewusst so gewählt, dass keine Maßnahme eine spätere blockiert:
   ausschließlich lokal und lesend.
 - Sämtliche Korrekturen aus Abschnitt 5 bleiben Human/Owner-Entscheidungen; dieses Dokument ersetzt
   weder eine Owner-Freigabe noch eine ADR.
+
+---
+
+## 7. Nachtrag — durchgeführte Korrekturen (2026-08-14, Folge-Commit)
+
+Auf Grundlage dieses Audits wurden die folgenden risikoarmen, rein code-/dokumentbasierten
+Korrekturen im normalen Branch→PR→Human-Merge-Fluss umgesetzt. Keine davon mutiert
+Produktion, GitHub-Admin-Einstellungen oder ein `OWNER_APPROVED`-Mandat.
+
+| Befund | Umsetzung |
+|---|---|
+| P0-2 | `deploy-production` in `ci.yml` läuft jetzt nur noch für den echten `push`-auf-`main`-Pfad (Job-`if` statt Step-`if`) und trägt `environment: production`. PR-Events überspringen den Job vollständig (zuvor nur eine Echo-Ausgabe) — kein Verhaltensunterschied für PR-CI. **Wirkt erst, wenn der Owner das GitHub-Environment `production` mit Required-Reviewer-Schutz konfiguriert** — das ist eine GitHub-Admin-Mutation außerhalb des Repository-Codes und wurde nicht vorgenommen. |
+| P1-3 | SA3B (`systemadmin-roadmap-executor.yml`) und SA4 (`systemadmin-sa4-pilot.yml`) per `false &&`-Präfix vor der bestehenden Job-Bedingung stillgelegt. Trigger, Permissions und der komplette auditierte Host-Code bleiben byte-identisch erhalten, damit `tests/unit/systemadminExecutionHostWorkflow.test.ts` und `tests/unit/systemadminSa4Contracts.test.ts` den Sicherheitsvertrag unverändert weiter verifizieren. Reaktivierung erfordert nur das Entfernen von `false &&`. |
+| P2-1 | `SYSTEMADMIN_SA3_SELF_AUTHORITY_PATHS` (`server/agentAudit/systemadminAuditedExecution.ts`) und der Parallelring `SYSTEMADMIN_SELF_AUTHORITY_PATHS` (`src/platform/Security/roadmapExecutionMandate.ts`) um `REM-M5A-REPOSITORY-001.json`, `ci.yml`, `capital-ai-ci-shadow.yml`, `main-production-protection.expected.json`, `roadmapExecutionMandate.ts` selbst und `verifyChangedWorkflowSecurity.mjs` erweitert. |
+| P2-2 | `vite.config.ts` lädt jetzt zusätzlich `tests/integration/**/*.test.ts`, damit ein künftiger `tests/integration/nativeMfaAal2.test.ts` (von `REM-M5A-REPOSITORY-001.allowedPaths` referenziert) tatsächlich in CI ausgeführt wird. |
+| P2-3 | `verifyChangedWorkflowSecurity.mjs` erkennt jetzt gelöschte Workflow-Dateien (`git diff --name-status` statt `--name-only`) und verlangt für Löschungen explizite Owner-Review statt sie stillschweigend zu ignorieren. |
+| D-1 | Fremdschrift-Fragment `בלבד` in `docs/evidence/ci/P0_MAIN_PROTECTION_RECOVERY_2026-08-14.md:22` **nicht verändert** — betrifft ein bereits gemergtes, append-only-artiges Evidence-Dokument auf `main`; Korrektur dort ist eine eigene, kleine Owner-Entscheidung und wird hier nicht mitgezogen, um dieses Audit-/Fix-Paket nicht mit unabhängigen historischen Evidence-Dateien zu vermischen. |
+| D-2 | `DEVELOPMENT_CHAIN_ROADMAP.md`-Baseline auf `main@5ba4ab1` (PR #252) aktualisiert; zusätzlich Korrektur der SA4→M5A-Ausführungsaussage (siehe P1-2-Nachtrag). |
+| D-3 | ADR-0070 korrigiert: `capital-ai-ci` heißt nicht mehr fälschlich „bestehender Required Check", sondern verweist auf den tatsächlichen Promotion-Status. |
+| D-5 | Alle 20 `.ai/work-claims/*.json` von `status: active` auf `status: superseded` mit `supersededReason` umgestellt (append-only, keine Löschung); Legacy-Datei `RENDER-CI-GATE-2026-08-09.json` ohne bisheriges `status`-Feld ebenso ergänzt. |
+| D-6 | Doppelt-UTF-8-kodierter Gedankenstrich in `vite.config.ts:16` repariert. |
+
+**P1-2 (Nachtrag):** `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` wurde um eine explizite Korrektur
+ergänzt, dass der SA4-Pfad `REM-M5A-REPOSITORY-001` strukturell nicht ausführen kann (Workflow-Ref-
+Allowlist, Broker-Mandats-Mapping und `runSa4Pilot.mjs` sind hart auf `REM-SA4-PILOT-001` gebunden).
+Ein neuer M5A-Ausführungshost wurde **nicht** implementiert — das ist eine neue privilegierte
+Automations-Capability und erfordert einen eigenen, human-verfassten ADR mit Owner-Review, nicht
+einen stillschweigenden Workaround in diesem Fix-Paket.
+
+### Neuer Befund während der Umsetzung: ADR-Registry-Lücken (nicht behoben)
+
+`npm run traceability:build` wurde probeweise ausgeführt, um D-4 (veraltete Traceability-Daten) zu
+beheben. Der Lauf endet mit Exit-Code 1 und vier harten Befunden, die **bereits vor diesem Audit**
+im Repository bestanden und nichts mit den hier vorgenommenen Änderungen zu tun haben:
+
+- **ADR-0046 ist doppelt vergeben**: `docs/adr/ADR-0046-modern-supabase-key-contracts-and-ai-admin-control-plane.md`
+  und `docs/adr/ADR-0046-vocabulary-governance-authority-and-namespace.md` sind zwei inhaltlich
+  unabhängige ADRs mit identischer Nummer;
+- **ADR-0030 fehlt vollständig**: `src/platform/Release/manifest.json` referenziert `ADR-0030`, aber
+  keine `docs/adr/ADR-0030-*.md`-Datei existiert;
+- **ADR-0056 fehlt in `docs/adr/adr_history.json`**: die Datei existiert
+  (`ADR-0056-observability-telemetry-baseline.md`), ist aber nicht in der Historie registriert.
+
+Die generierten Traceability-Artefakte (`matrix.json`, `coverage.json`, `orphans.json`,
+`COVERAGE_REPORT.md`, neun `manifest.json`-Dateien) wurden **testweise erzeugt und danach wieder
+verworfen** (`git checkout --`), weil ihre Regenerierung untrennbar mit diesen drei ungelösten
+Registry-Lücken verknüpft ist. Eine Umnummerierung eines bereits `ACCEPTED`-ADRs ist eine
+Dokumentations-Governance-Entscheidung (vgl. ADR-0044, Documentation-Governance-Validator) und keine
+mechanische Korrektur — sie gehört vor die nächste Traceability-Regenerierung, nicht in dieses
+Fix-Paket. D-4 bleibt bis dahin offen.
+
+### Nicht umgesetzt — erfordert Owner-Admin-Mutation oder neue Autorität
+
+Vier Punkte aus Abschnitt 5 wurden bewusst **nicht** umgesetzt, weil sie außerhalb dessen liegen,
+was ein Repository-Code-Commit leisten kann oder darf:
+
+1. **P0-1** — Aktivierung des GitHub-Rulesets `main-production-protection` (echte Admin-API-Mutation
+   auf GitHub, kein Repository-Code);
+2. **Owner-Environment-Schutz zu P0-2** — Anlegen/Konfigurieren des GitHub-Environments `production`
+   mit Required-Reviewer (Owner-only, außerhalb des Repository-Codes; der Workflow-Code-Teil ist
+   umgesetzt, siehe Tabelle oben);
+3. **P1-1** — Endgültige Required-Check-Zusammensetzung des neuen Rulesets (Empfehlung bleibt: sowohl
+   `capital-ai-ci` als auch den Owner-gegateten `build-and-test` verlangen) — an P0-1 gebunden;
+4. **P1-4** — Mandatsfenster von `REM-SA3B-PROBE-001`/`REM-SA4-PILOT-001` (`OWNER_APPROVED`) wurden
+   nicht verändert; nur der Owner mit frischem TOTP-Step-up darf ein bereits genehmigtes Mandat
+   ändern.
+
+Alle vier Punkte sind reine Entscheidungen des Human/Owner und werden hier ausdrücklich nicht
+vorweggenommen.

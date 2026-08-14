@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "PR-render-runtime-remediation-adr0037",
-  "status": "active",
+  "status": "superseded",
   "exclusive": true,
   "agent": {
     "provider": "OpenAI",
@@ -32,5 +32,6 @@
     "docs/architecture/RENDER_RUNTIME_REMEDIATION_2026-08-03.md",
     "docs/runbooks/RENDER_PRODUCTION_EVIDENCE_HANDOFF.md"
   ],
-  "releaseCondition": "Claim is released only when the remediation PR is merged or closed."
+  "releaseCondition": "Claim is released only when the remediation PR is merged or closed.",
+  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete."
 }

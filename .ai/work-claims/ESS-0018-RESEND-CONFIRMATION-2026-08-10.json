@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "ESS-0018-RESEND-CONFIRMATION-2026-08-10",
-  "status": "active",
+  "status": "superseded",
   "exclusive": true,
   "agent": {
     "provider": "Anthropic",
@@ -22,5 +22,6 @@
     "server/adminDiagnostics.ts",
     "server/alerts.ts"
   ],
-  "releaseCondition": "Claim is released when this PR is merged, closed, or abandoned."
+  "releaseCondition": "Claim is released when this PR is merged, closed, or abandoned.",
+  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete."
 }

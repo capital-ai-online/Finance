@@ -18,7 +18,13 @@ concurrency:
 jobs:
   branch-probe:
     name: Audit-gebundener SA3B Branch-Probe
+    # SA3B ist COMPLETE / VERIFIED PASS (docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md). Ein dauerhaft
+    # scharfgeschalteter privilegierter Host nach Auftragsende widerspricht ADR-0069 Punkt 6
+    # (dauerhaft aktive Bootstrap-Work-Claims). Stillgelegt per `false &&`, damit der auditierte
+    # Vertrag (siehe tests/unit/systemadminExecutionHostWorkflow.test.ts) unveraendert nachweisbar
+    # bleibt. Reaktivierung ist ein eigener, dokumentierter Human/Owner-Change.
     if: >-
+      false &&
       github.event.issue.user.login == 'SvenKulessa' &&
       startsWith(github.event.issue.title, '[SA3B-PROBE]')
     runs-on: ubuntu-latest

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GA4-MCP-SERVER-SETUP-2026-08-08",
-  "status": "active",
+  "status": "superseded",
   "exclusive": true,
   "agent": {
     "provider": "Anthropic",
@@ -20,5 +20,6 @@
     "docs/runbooks/GA4_MCP_SERVER_SETUP.md",
     ".ai/work-claims/GA4-MCP-SERVER-SETUP-2026-08-08.json"
   ],
-  "releaseCondition": "Claim is released when the associated work is merged, closed, superseded or abandoned."
+  "releaseCondition": "Claim is released when the associated work is merged, closed, superseded or abandoned.",
+  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete."
 }

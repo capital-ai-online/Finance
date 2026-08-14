@@ -19,7 +19,16 @@ concurrency:
 jobs:
   bounded-doc-pr:
     name: Audit-gebundener SA4 BRANCH-COMMIT-Draft-PR Pilot
+    # SA4 ist COMPLETE / VERIFIED PASS (docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md); das
+    # Zielartefakt docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md ist bereits auf main
+    # gemergt, wodurch runSa4Pilot.mjs (Zeile "existiert bereits auf main") den Host ohnehin
+    # dauerhaft self-blocking macht. Ein weiterhin scharfgeschalteter privilegierter Host nach
+    # Auftragsende widerspricht zusaetzlich ADR-0069 Punkt 6 (dauerhaft aktive
+    # Bootstrap-Work-Claims). Stillgelegt per `false &&`, damit der auditierte Vertrag (siehe
+    # tests/unit/systemadminSa4Contracts.test.ts) unveraendert nachweisbar bleibt. Reaktivierung
+    # oder ein M5A-Nachfolge-Host ist ein eigener, dokumentierter Human/Owner-Change.
     if: >-
+      false &&
       github.event.issue.user.login == 'SvenKulessa' &&
       startsWith(github.event.issue.title, '[SA4-PILOT]')
     runs-on: ubuntu-latest

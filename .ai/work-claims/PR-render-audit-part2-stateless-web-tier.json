@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "PR-render-audit-part2-stateless-web-tier",
-  "status": "active",
+  "status": "superseded",
   "exclusive": true,
   "agent": {
     "provider": "OpenAI",
@@ -26,5 +26,6 @@
     ".ai/work-claims/PR-render-audit-part2-stateless-web-tier.json",
     "docs/architecture/RENDER_STATELESS_WEB_TIER_AUDIT_2026-08-03.md"
   ],
-  "releaseCondition": "Claim is released only when the audit PR is merged or closed."
+  "releaseCondition": "Claim is released only when the audit PR is merged or closed.",
+  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete."
 }

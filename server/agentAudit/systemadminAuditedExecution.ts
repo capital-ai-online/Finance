@@ -27,11 +27,16 @@ export const SYSTEMADMIN_SA3_SELF_AUTHORITY_PATHS = Object.freeze([
   '.ai/contracts/systemadmin-audit-execution-profile.json',
   '.ai/mandates/REM-SA3B-PROBE-001.json',
   '.ai/mandates/REM-SA4-PILOT-001.json',
+  '.ai/mandates/REM-M5A-REPOSITORY-001.json',
   '.github/workflows/systemadmin-roadmap-executor.yml',
   '.github/workflows/systemadmin-sa4-pilot.yml',
+  '.github/workflows/ci.yml',
+  '.github/workflows/capital-ai-ci-shadow.yml',
+  '.github/policies/main-production-protection.expected.json',
   'docs/adr/ADR-0067-systemadmin-github-actions-execution-host.md',
   'docs/adr/ADR-0068-first-bounded-autonomous-work-package.md',
   'src/platform/Security/systemadminExecutionProfile.ts',
+  'src/platform/Security/roadmapExecutionMandate.ts',
   'server/agentAudit/agentAuditWriter.ts',
   'server/agentAudit/authorizedAgentExecution.ts',
   'server/agentAudit/systemadminAuditedExecution.ts',
@@ -40,6 +45,7 @@ export const SYSTEMADMIN_SA3_SELF_AUTHORITY_PATHS = Object.freeze([
   'scripts/systemadmin/validateExecutionIssue.mjs',
   'scripts/systemadmin/validateSa4PilotIssue.mjs',
   'scripts/systemadmin/runSa4Pilot.mjs',
+  'scripts/security/verifyChangedWorkflowSecurity.mjs',
 ] as const);
 
 export interface SystemadminAuditContext {

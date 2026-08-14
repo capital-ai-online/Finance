@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "PR-pr-preflight-empty-success-hotfix",
-  "status": "active",
+  "status": "superseded",
   "exclusive": true,
   "agent": {
     "provider": "OpenAI",
@@ -25,5 +25,6 @@
     "scripts/pr/lib.test.mjs",
     "scripts/pr/productionPreflight.mjs"
   ],
-  "releaseCondition": "Claim is released only when the hotfix PR is merged or closed."
+  "releaseCondition": "Claim is released only when the hotfix PR is merged or closed.",
+  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete."
 }
