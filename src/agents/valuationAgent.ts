@@ -30,11 +30,9 @@ export class ValuationAgent {
     const fallback = findRawMaterialConfig(name);
 
     const result = await generateStructuredWithFallback({
-      gemini: this.ai,
       anthropic: this.anthropic,
       openai: this.openai,
       promptId: 'raw-materials-valuation',
-      geminiModels: ['gemini-3.1-pro-preview', 'gemini-3.5-flash'],
       contents: `Bewerte die strategische Bedeutung für: "${name}".
 Schätze folgende Metriken auf einer Skala von 0 bis 100 ein (100 = extrem hoch/unverzichtbar, 0 = irrelevant):
 1. military_importance (Militärische Bedeutung, Verteidigungstechnologien, Luft- und Raumfahrt)
