@@ -24,9 +24,7 @@ export function createPortfolioReviewRouter(deps: PortfolioReviewRouteDependenci
       const result = await generateStructuredWithFallback({
         anthropic,
         openai,
-        gemini: null,
         promptId: 'server-portfolio-review',
-        geminiModels: [],
         systemInstruction: 'Du bist ein hochprofessioneller Quant-Portfolio-Analyst und Risk-Officer bei CAPITAL-AI. Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.',
         contents: `Analysiere die folgende Portfolio-Allokation und deren historische Backtest-Ergebnisse (1, 3 und 5 Jahre):\n\nAllokation:\n${JSON.stringify(allocation, null, 2)}\n\nPerformance-Metriken:\n- 1 Jahr: Rendite ${metrics1Y?.strategyReturn?.toFixed?.(2)}%, Max Drawdown -${metrics1Y?.maxDrawdown?.toFixed?.(2)}%, Sharpe ${metrics1Y?.sharpeRatio?.toFixed?.(2)}\n- 3 Jahre: Rendite ${metrics3Y?.strategyReturn?.toFixed?.(2)}%, Max Drawdown -${metrics3Y?.maxDrawdown?.toFixed?.(2)}%, Sharpe ${metrics3Y?.sharpeRatio?.toFixed?.(2)}\n- 5 Jahre: Rendite ${metrics5Y?.strategyReturn?.toFixed?.(2)}%, Max Drawdown -${metrics5Y?.maxDrawdown?.toFixed?.(2)}%, Sharpe ${metrics5Y?.sharpeRatio?.toFixed?.(2)}\n\nLiefere executiveSummary, riskAssessment und konkrete optimizations.`,
         schema: {
