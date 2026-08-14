@@ -53,12 +53,14 @@
     "src/services/alpacaShadowProvider.ts",
     "src/services/rag/embeddingsClient.ts",
     "src/services/traditionalQuoteEvidence.ts",
+    "tests/server/analysisRouteExtraction.contract.test.ts",
     "tests/unit/agentModelRouting.test.ts",
     "tests/unit/aiGovernance.test.ts",
     "tests/unit/aiGovernanceComplianceEvidence.test.ts",
     "tests/unit/aiUsageTracker.test.ts",
     "tests/unit/alpacaShadowProvider.test.ts",
-    "tests/unit/rag.test.ts"
+    "tests/unit/rag.test.ts",
+    "tests/unit/supervisor.test.ts"
   ],
   "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
 }
