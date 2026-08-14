@@ -1,0 +1,30 @@
+{
+  "claimId": "SEO-D-BLOCK-2026-08-15",
+  "title": "SEO Block D foundation + Q2 trailing-slash helpers",
+  "roadmap": "docs/seo/SEO_MANAGEMENT_ROADMAP.md",
+  "roadmapIds": ["Q2", "D1", "D2", "D3", "D4", "D5"],
+  "branch": "seo/d-block-foundation",
+  "base": "main",
+  "owner": "SvenKulessa",
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "surface": "Grok chat + GitHub MCP"
+  },
+  "scope": [
+    "server/middleware/seoUrlNormalize.ts",
+    "server/runtime/spaFallback.ts",
+    "src/lib/routeSeo.ts",
+    "src/App.tsx",
+    "index.html",
+    "vite.config.ts",
+    "tests/server/seoUrlNormalize.contract.test.ts",
+    "tests/unit/routeSeo.test.ts",
+    "docs/seo/D_BLOCK_IMPLEMENTATION_NOTES.md",
+    "docs/seo/SEARCH_CONSOLE_MCP_RUNBOOK.md",
+    "docs/seo/SEO_CHECKLIST.md",
+    ".ai/work-claims/SEO-D-BLOCK-2026-08-15.json"
+  ],
+  "status": "ready-for-pr",
+  "createdAt": "2026-08-15T00:00:00Z"
+}
