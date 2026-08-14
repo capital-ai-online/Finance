@@ -175,7 +175,6 @@ export async function computeBinanceQuickAnalysis(
     const result = await generateTextWithFallback({
       anthropic,
       openai,
-      gemini: null,
       promptId,
       contents: JSON.stringify(marketData),
       systemInstruction:
@@ -183,7 +182,6 @@ export async function computeBinanceQuickAnalysis(
         'Erfinde keine Kurse, Nachrichten, Fundamentaldaten oder On-Chain-Daten. Antworte auf Deutsch in maximal 4 kurzen Sätzen: ' +
         'Momentum, kurzfristiger Trend, auffällige Volatilität/Spanne und ein nüchterner Risikohinweis. ' +
         'Nenne Binance Spot als Datenquelle und formuliere ausdrücklich keine Kauf- oder Verkaufsempfehlung.',
-      geminiModels: [],
       maxTokens: 320,
       requestId,
     });
