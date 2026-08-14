@@ -1,15 +1,22 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "repository": "SvenKulessa/Finance",
   "target": "refs/heads/main",
   "ruleset_name": "main-production-protection",
   "required": {
     "pull_request": true,
-    "required_status_checks": ["build-and-test"],
+    "required_status_checks": ["capital-ai-ci"],
     "strict_required_status_checks_policy": true,
     "deletion_protection": true,
     "non_fast_forward_protection": true,
     "bypass_actors": []
+  },
+  "promotion": {
+    "state": "shadow_validation_required",
+    "current_server_ruleset": "absent",
+    "shadow_check": "capital-ai-ci",
+    "promotion_gate": "At least one real pull request must show capital-ai-ci PASS before this expected policy is promoted to a live GitHub ruleset.",
+    "rollback": "Do not enable the new ruleset if capital-ai-ci is missing, ambiguous, skipped unexpectedly, or failing. Preserve normal PR workflow and repair on a fresh branch."
   },
   "single_owner_topology": {
     "observed_collaborators": 1,
@@ -34,6 +41,8 @@
     "deny_direct_main_push_for_agents": true,
     "agent_branch_prefixes": ["agent/", "claude/", "gemini/", "copilot/", "ai/"],
     "no_agent_self_approval_high_critical": true,
-    "break_glass_must_be_attributable_and_time_limited": true
+    "break_glass_must_be_attributable_and_time_limited": true,
+    "synthetic_check_must_not_reuse_required_context": true,
+    "ruleset_promotion_requires_shadow_pass": true
   }
 }
