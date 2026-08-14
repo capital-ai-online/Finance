@@ -10,9 +10,11 @@ import { resolveSourceCommit } from './sourceIdentity';
 // SBOM already written by dependencySecurity.ts, and the release manifest already written by
 // buildRuntimeReleaseManifest.ts into one signable artifact. This script only ASSEMBLES the
 // statement from artifacts that must already exist (fail-closed otherwise) - it does not sign it.
-// Signing/attestation happens in CI via actions/attest-build-provenance, which produces a real
-// Sigstore-backed, GitHub-verifiable attestation; a locally hand-built "signature" would be
-// worthless (no trusted key material belongs on a developer laptop or in this repository).
+// Signing happens in CI via cosign keyless signing against the public Sigstore infrastructure
+// (Fulcio/Rekor, GitHub-OIDC-bound identity) - not actions/attest-build-provenance, whose GitHub
+// Attestations API is unavailable for user-owned private repositories; a locally hand-built
+// "signature" would be worthless (no trusted key material belongs on a developer laptop or in this
+// repository).
 const SLSA_PREDICATE_TYPE = 'https://slsa.dev/provenance/v1';
 const repoRoot = process.cwd();
 

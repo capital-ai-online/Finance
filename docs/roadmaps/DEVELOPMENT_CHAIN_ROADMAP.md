@@ -93,7 +93,7 @@ unberührt.
 | M4 Agent IAM | **COMPLETE** | COMPLETE | ADR-0058 + ESS-0018/0019 | negative IAM tests | preserve |
 | M5 Audit / Telemetry | **VERIFIED PASS** | COMPLETE | ADR-0056/0059 + M5 Evidence | PR #222 corrected writer deployed and confirmed via real successful privileged audit insert (`docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md`, cross-verified against PR #229) | autonomous mutation remains blocked independent of this (SA5/M10 gate) |
 | M5A Native MFA / AAL2 | **VERIFIED PASS** | baseline + runbook + closure evidence complete | ESS-0020 + ADR-0064 + ADR-0003.5 | repo code merged (PR #255/#256) → beide Owner-Profile mit verifiziertem nativen TOTP-Faktor + bestätigter `aal2`-Sitzung (`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`) → Advisor ohne unowned HIGH/CRITICAL | M6 unblocked |
-| M6 Supply Chain Provenance | **CODE COMPLETE / CI ATTESTATION PENDING FIRST MAIN PUSH** | **RUNBOOK READY + repo evidence** | ADR-0060 | source→lockfile→SBOM→provenance chain implemented and locally end-to-end verified (`docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`); real signed attestation requires the first `push`-triggered `supply-chain-attestation` CI run after merge | M7 after M6 VERIFIED PASS |
+| M6 Supply Chain Provenance | **CODE COMPLETE / COSIGN-FIX UNMERGED** | **RUNBOOK READY + repo evidence** | ADR-0060 | source→lockfile→SBOM→provenance chain implemented and locally end-to-end verified; first real `push` run found `actions/attest-build-provenance` blocked (GitHub Attestations API unavailable for user-owned private repos) — fixed with cosign keyless signing (Sigstore Fulcio/Rekor) against the public GitHub-OIDC identity, independent of repo visibility/ownership (`docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`); real signed+verified attestation requires the next `push`-triggered `supply-chain-attestation` CI run after this fix merges | M7 after M6 VERIFIED PASS |
 | M7 Deployment Identity / Platform Mutation | **BLOCKED BY M6** | **RUNBOOK READY** | ADR-0061 | exact target + Owner mutation approval + post-verification/rollback | M8 after all required M7 mutations VERIFIED PASS |
 | M8 Agent Cutover | **BLOCKED BY M7** | **RUNBOOK READY** | ADR-0062 + ESS-0019 | provider-neutral profiles + equivalent policy tests + rollback to read-only | M9 after cutover VERIFIED PASS |
 | M9 Assurance / Incident / Break-Glass | **BLOCKED BY M8** | **RUNBOOK READY** | ADR-0063 | injection/replay/exfiltration/audit/kill-switch/break-glass/rollback drills | M10 after assurance VERIFIED PASS |
@@ -110,9 +110,12 @@ gegen Produktion bestätigt, Security-Advisor ohne unowned HIGH/CRITICAL — sie
 
 M6 (Supply Chain Provenance): Repository-Code implementiert — source→lockfile→SBOM→Provenance-Kette,
 neuer `supply-chain-attestation`-CI-Job (nur `push`+`main`, eigene minimale Berechtigungen),
-vollständig lokal Ende-zu-Ende verifiziert inkl. Positiv-/Negativtests. Status
-`CODE COMPLETE / CI ATTESTATION PENDING FIRST MAIN PUSH` — die echte, signierte Attestation kann
-per Definition erst nach Merge beim ersten realen `push`-Lauf entstehen, siehe
+vollständig lokal Ende-zu-Ende verifiziert inkl. Positiv-/Negativtests. Der erste reale `push`-Lauf
+deckte auf, dass `actions/attest-build-provenance`s GitHub-Attestations-API für private,
+personenbezogene Repositories nicht verfügbar ist — behoben durch keyless Signierung per
+`cosign`/Sigstore (Fulcio/Rekor), unabhängig von Repo-Sichtbarkeit/-Ownership. Status
+`CODE COMPLETE / COSIGN-FIX UNMERGED` — die echte, signierte und verifizierte Attestation kann per
+Definition erst nach Merge dieses Fixes beim nächsten realen `push`-Lauf entstehen, siehe
 `docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`. SA5 bleibt weiterhin bis M10
 `VERIFIED PASS` blockiert.
 
