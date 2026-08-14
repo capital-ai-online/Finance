@@ -34,11 +34,9 @@ export class FundamentalsAgent {
     const fallback = findRawMaterialConfig(name);
 
     const result = await generateStructuredWithFallback({
-      gemini: this.ai,
       anthropic: this.anthropic,
       openai: this.openai,
       promptId: 'raw-materials-fundamentals',
-      geminiModels: ['gemini-3.1-pro-preview', 'gemini-3.5-flash'],
       contents: `Analysiere die geologischen und physischen Fundamentaldaten für: "${name}".
 Schätze folgende Metriken auf einer Skala von 0 bis 100 ein:
 1. ore_grade (Erzgehalt: 100 = extrem hoch/rein, 0 = extrem gering/degradierend)
