@@ -1,7 +1,7 @@
 # M7 — Deployment Identity: Phase-0-Preflight und Repository-Controls Evidence
 
-Status: PHASE 0 COMPLETE, REPOSITORY CONTROLS CODE COMPLETE / BUGFIX NACH ERSTEM ECHTEN LAUF UNMERGED (siehe Nachtrag Abschnitt 0.1)
-Datum: 2026-08-14 (Nachtrag: 2026-08-14, selber Tag)
+Status: PHASE 0 COMPLETE, REPOSITORY-CONTROLS-PAKET **VERIFIED PASS** auf dem realen Build-/Deploy-Pfad (siehe Nachtrag Abschnitt 0.2) — M7 als Ganzes bleibt PLANNED, keine externe Mutation autorisiert
+Datum: 2026-08-14 (Nachträge: 2026-08-14, selber Tag)
 Roadmap phase: M7
 Authority: ADR-0061, `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`,
 `docs/architecture/ai-agent/AI_AGENT_DEPLOYMENT_IDENTITY.md`
@@ -56,6 +56,41 @@ HTTP-Mock-Server bestätigt (Header-only-Response, exakt wie die reale Produktio
 Dies ist eine reale, im ersten echten Lauf gefundene und behobene Lücke — kein hypothetisches Risiko.
 Genau deshalb blieb der Status bewusst unterhalb „VERIFIED PASS", bis ein echter `push`-Lauf das Skript
 tatsächlich geprüft hat.
+
+## 0.2 Nachtrag — zweiter echter `push`-Lauf nach dem Header-Fallback-Fix: vollständig PASS
+
+PR #267 (der Header-Fallback-Fix aus Nachtrag 0.1) wurde vom Owner per Review (`💪`) freigegeben und
+gemerged (Merge-Commit `fd52af95449ef4ee13114dba0649976126d0db8d`). Der dadurch ausgelöste reale
+`push`-Lauf auf `main`, Run [`31843242491`](https://github.com/SvenKulessa/Finance/actions/runs/31843242491),
+lief vollständig **PASS** — alle fünf Jobs (`Human-/Owner-Vorprüfung`, `build-and-test`,
+`Supply-Chain-Provenance / Attestation`, `Deployment verifiziert / Render-Produktion`,
+`Deployment-Identität post-verifizieren`) mit `conclusion: success`.
+
+Job-Log des Post-Deploy-Verifikationsschritts (Job-ID `94904984229`), wörtlich:
+
+```text
+$ npx tsx scripts/deployment/verifyDeploymentIdentity.ts
+[deployment-verify] PASS nach 5 Versuch(en), 40871ms: Commit fd52af95449ef4ee13114dba0649976126d0db8d
+live und healthy.
+```
+
+5 Poll-Versuche über ~41 Sekunden — plausibel für die tatsächliche Render-Rollout-Zeit (deutlich unter
+dem 5-Minuten-Timeout). Der Job prüfte damit real: HTTP 2xx, `status: "ok"`, exakter Commit-Match
+(`fd52af95...` == der auslösende `main`-Commit), Repository-Match, Branch `== main` — alles über die
+zuvor gefundene Header-Quelle, nicht mehr über den leeren JSON-Body. Redigierte Evidence wurde per
+`actions/upload-artifact` abgelegt: Artefakt `deployment-identity-evidence-fd52af95449ef4ee13114dba0649976126d0db8d`,
+Artifact-ID `9235084959`, SHA-256 des Zip-Archivs `6b55dd3868b888e300c143edf259ce43370986cd9a5852c8c3c705a7a4eb5e1e`,
+abrufbar unter <https://github.com/SvenKulessa/Finance/actions/runs/31843242491/artifacts/9235084959> (90
+Tage Aufbewahrung ab `2026-08-14`).
+
+Damit ist das in diesem Dokument beschriebene Repository-Controls-Paket (Provenance-Gate +
+Post-Deploy-Verifikation) auf dem tatsächlichen, gehosteten `main`-Build-/Deploy-Pfad **vollständig
+verifiziert** — nicht nur lokal, sondern im realen CI-Lauf gegen den echten Render-Deploy. Das rechtfertigt
+`VERIFIED PASS` für **dieses Paket**, ändert aber nichts am Gesamtstatus von M7: der Runbook-Exit-Gate
+(`docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`, Abschnitt „Exit Gate") verlangt zusätzlich jede
+erforderliche externe Mutation separat Human-genehmigt und verifiziert, bewiesenes Rollback und
+vollständige Negativtests über den gesamten M7-Scope — nichts davon war Teil dieses Pakets, da keine
+externe Mutation eingeführt wurde. M7 als Ganzes bleibt **PLANNED**.
 
 ## 1. Phase 0 — Read-only Preflight (Runbook-Abschnitt „Phase 0")
 
@@ -143,24 +178,21 @@ nach 3 Versuchen (Poll-Intervall 1s, Timeout 3s im Test). Nach dem Fix (Nachtrag
 einen lokalen HTTP-Mock-Server bestätigt, der die reale Produktionsantwort nachbildet (Header-only,
 kein `deployment` im Body): PASS nach 1 Versuch, 61ms.
 
-## 4. Warum dieses Dokument (noch) nicht „VERIFIED PASS" meldet
+## 4. Warum M7 als Ganzes (trotz Paket-VERIFIED-PASS) weiterhin `PLANNED` bleibt
 
 Der erste echte `push`-Lauf nach Merge von PR #265 fand einen realen Bug (Nachtrag Abschnitt 0.1) —
 `verify-deployment-identity` konnte grundsätzlich nie erfolgreich sein, weil das Skript die
 Deployment-Identität ausschließlich im JSON-Body suchte, während die Produktion sie nur über Header
-liefert. Der Fix ist lokal implementiert, getestet (13/13 Tests, inkl. 3 neuer Tests exakt für diesen
-Fehlerfall) und gegen einen die reale Produktionsantwort nachbildenden Mock-Server bestätigt, aber noch
-nicht gemergt. Der reale Nachweis (Poll konvergiert im echten CI-Lauf auf den tatsächlich deployten
-Commit, Evidence-Artefakt mit `result: "VERIFIED PASS"`) folgt als weiterer Nachtrag nach Merge dieses
-Fixes, analog zum bei M6 etablierten Muster (siehe `docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`
-Abschnitte 0/0.1).
+liefert. Der Fix wurde gemergt, und der zweite echte `push`-Lauf lief vollständig PASS inkl. realer
+Post-Deploy-Verifikation (Nachtrag Abschnitt 0.2) — das Repository-Controls-Paket dieses Dokuments ist
+damit **VERIFIED PASS** auf dem tatsächlichen Build-/Deploy-Pfad.
 
-Darüber hinaus ist dies **nur der erste** von mehreren möglichen M7-Repository-Implementation-Paketen.
-Der M7-Exit-Gate selbst (`docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`, Abschnitt „Exit Gate")
-verlangt zusätzlich: jede erforderliche externe Mutation separat Human-genehmigt und
-`VERIFIED PASS`/sicher `FAILED / ROLLED BACK`, bewiesenes Rollback, vollständige Negativtests über
-den gesamten Scope. Keines davon ist Teil dieses Pakets — M7 als Ganzes bleibt **PLANNED**, nicht
-`VERIFIED PASS`.
+Das ändert nichts an M7 als Ganzem: dies ist **nur der erste** von mehreren möglichen
+M7-Repository-Implementation-Paketen, und es führt **keine** externe Mutation ein. Der M7-Exit-Gate
+selbst (`docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`, Abschnitt „Exit Gate") verlangt zusätzlich:
+jede erforderliche externe Mutation separat Human-genehmigt und `VERIFIED PASS`/sicher
+`FAILED / ROLLED BACK`, bewiesenes Rollback, vollständige Negativtests über den gesamten Scope. Keines
+davon ist Teil dieses Pakets — M7 als Ganzes bleibt **PLANNED**, nicht `VERIFIED PASS`.
 
 ## 5. Lokaler Nachweis dieser Sitzung
 
@@ -216,9 +248,9 @@ npx tsx scripts/deployment/verifyDeploymentIdentity.ts
 
 ## 7. Nächster Schritt
 
-Nach Merge: nächster `push`-Lauf auf `main` löst `verify-deployment-identity` real gegen den
-tatsächlichen Render-Deploy aus. Danach: Nachtrag mit realem Poll-Ergebnis/Evidence-Artefakt-Link
-ergänzen. Weitere M7-Repository-Implementation-Pakete (z. B. Rollback-Tooling, explizite
+Dieses Repository-Controls-Paket (Provenance-Gate + Post-Deploy-Verifikation) ist mit Nachtrag 0.2
+abgeschlossen — real auf dem gehosteten Build-/Deploy-Pfad verifiziert, kein weiterer Nachtrag hierzu
+erforderlich. Weitere M7-Repository-Implementation-Pakete (z. B. Rollback-Tooling, explizite
 Mutation-Handoff-Vorlage für einen konkreten zukünftigen Render-Mutationsbedarf) bleiben eigene,
-separat zu beauftragende Schritte — keine externe Mutation ohne die im Runbook beschriebene
-separate Owner-Mutation-Approval.
+separat zu beauftragende Schritte — keine externe Mutation ohne die im Runbook beschriebene separate
+Owner-Mutation-Approval.
