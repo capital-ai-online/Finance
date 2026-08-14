@@ -1,134 +1,220 @@
-# CAPITAL-AI Roadmap Consolidation Master Index
+# CAPITAL-AI Konsolidierte Gesamtroadmap
 
-Status: ACTIVE — CANONICAL PORTFOLIO INDEX  
+Status: ACTIVE — CANONICAL EXECUTION PORTFOLIO  
 Stand: 2026-08-14  
-Repository-Baseline: `main@66da35b80ba23e4f216318a9cd9f9b4e7b787679` (PR #255 Merge)  
+Repository-Baseline: `main@66da35b80ba23e4f216318a9cd9f9b4e7b787679`  
 Owner: SvenKulessa  
-Master-Ausführungsroadmap: `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`
+PR: #257  
+Authority: ADR-0071 + ESS-0023
 
-## 1. Zweck und Authority
+## 1. Zweck
 
-Dieses Dokument konsolidiert alle aktiven CAPITAL-AI-Roadmaps in einem Portfolio-Index. Es ersetzt keine ESS-, ADR-, Runbook-, Evidence-, IAM- oder Human-/Owner-Authority und erzeugt keine Mutationsberechtigung.
+Dieses Dokument ersetzt den bisherigen reinen Portfolio-Index durch eine vollständige, dokumentenbasierte Ausführungsroadmap. Es führt alle noch offenen Roadmaps, die DEVELOPMENT Chain M0–M10, die P0–P3-Prioritäten und begrenzte Systemadministrator-Prototypaufträge zusammen.
 
-Bei Statuswidersprüchen gilt:
+Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder Human/Owner-Authority. Ein Status `DOCUMENTATION READY` oder `PROTOTYPE READY` erzeugt keine Mutationsberechtigung.
 
-1. verifizierte Code-/Produktions-Evidence auf dem aktuellen `main`;
-2. neueste spezifische ESS-/ADR-/Governance-Authority;
-3. `DEVELOPMENT_CHAIN_ROADMAP.md` als operative Phasensteuerung;
-4. dieses Dokument als Portfolio- und Abhängigkeitsindex;
-5. Fachroadmaps;
-6. historische oder ausdrücklich als Legacy gekennzeichnete Statusindizes.
+## 2. Verbindliche Authority-Reihenfolge
 
-Ein Eintrag `DOCUMENTATION READY` autorisiert keine Implementierung oder externe Mutation.
+1. verifizierte Runtime-, Code- und Produktions-Evidence;
+2. ausdrückliche Human/Owner-Freigabe;
+3. spezifische ADR/ESS/IAM/REM/Runbook-Authority;
+4. `DEVELOPMENT_CHAIN_ROADMAP.md`;
+5. diese Gesamtroadmap;
+6. Fachroadmaps;
+7. historische oder als Legacy markierte Indizes.
 
-## 2. Kanonisches Portfolio
+Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 
-| ID | Programm | Kanonisches Dokument | Konsolidierter Zustand | Ausführbarer nächster Schritt | DEVELOPMENT-Chain-Gate |
-|---|---|---|---|---|---|
-| DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M4 COMPLETE; M5 Verifikation offen; M5A Code gemergt, Produktionsverifikation offen; M6–M10 blockiert | M5/M5A Post-Merge- und Produktions-Evidence aktualisieren | Master |
-| S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | READY FOR OWNER REVIEW; S1.0–S1.6 nicht als VERIFIED PASS belegt | S1.0 Befunde F-01–F-18 gegen aktuelles `main` revalidieren | vor M6 High-Severity Gate |
-| DOC | Documentary / Event Value Chain | `docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` | ACTIVE / PARTIAL IMPLEMENTATION | D0 Manifest-, Versions- und Code-Baseline | normaler Branch/PR-Zyklus; geschützte Änderungen nach DC-Gate |
-| SA | Systemadmin Agent | `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md` | SA0–SA4 VERIFIED PASS; SA5 BLOCKED | Statuskorrektur des überholten M5A/SA4-Handoffs; SA5 nicht ausführen | SA5 erst nach M10 VERIFIED PASS |
-| IAM-DIAG | Diagnostics IAM | `docs/roadmaps/AI_SYSTEM_ADMIN_DIAGNOSTICS_IAM_ROADMAP.md` | nicht phasenweise evidenzgebunden; teilweise durch neuere SA/DC-Authority überholt | Ist-Abgleich und Aufteilung in `retained / superseded / migrated` | keine eigenständige Mutationsauthority |
-| MA | Marketing Agent | `docs/roadmaps/MARKETING_AGENT_ROADMAP.md` | DRAFT; MA0 IN PROGRESS; MA1–MA7 blockiert | MA0-Dokumentationspaket konsolidieren und Owner Review | keine Runtime-/Publishing-Mutation |
-| SEO | SEO Management | `docs/seo/SEO_MANAGEMENT_ROADMAP.md` | ACTIVE, aber Baseline 2026-08-08; Q–J nicht aktuell evidenzgebunden | Q1–Q6 gegen aktuelles `main` revalidieren | Code/Plattformschritte nach DC/S1 und separater Authority |
+## 3. Konsolidiertes Portfolio
 
-## 3. Nicht doppelt als eigenständige Roadmap zählen
+| ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
+|---|---|---|---|---|
+| DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M4 COMPLETE; M5 Evidence offen; M5A Code gemergt, native MFA Owner-attestiert aktiviert, Abschlussverifikation offen; M6–M10 blockiert | M5/M5A Evidence vervollständigen |
+| S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | READY FOR OWNER REVIEW; S1.0–S1.6 nicht vollständig VERIFIED PASS | F-01–F-18 gegen aktuelles main revalidieren |
+| DOC | Documentary/Event Value Chain | `docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` | ACTIVE / PARTIAL | D0 read-only Baseline |
+| SA | Systemadministrator-Agent | `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md` | SA0–SA4 VERIFIED PASS; SA5 blockiert | dokumentenbasierte Prototypen nach ESS-0023 |
+| IAM-DIAG | Diagnostics IAM | `docs/roadmaps/AI_SYSTEM_ADMIN_DIAGNOSTICS_IAM_ROADMAP.md` | teilweise überholt, nicht vollständig evidenzgebunden | retained/superseded/migrated-Matrix |
+| MA | Marketing Agent | `docs/roadmaps/MARKETING_AGENT_ROADMAP.md` | DRAFT; MA0 offen | MA0 Dokumentation/Owner Review |
+| SEO | SEO Management | `docs/seo/SEO_MANAGEMENT_ROADMAP.md` | ACTIVE, Baseline 2026-08-08 | Q1–Q6 read-only revalidieren |
+| GOV | GitHub/CI/Branch Governance | DEVELOPMENT Policy + PR-Template | laufend | Kosten-, Gate- und Branch-Cleanup-Evidence pflegen |
+| AI-T | AI-Transparenz/Provenance | ESS-0020/ADR-0057/0059/0062/0064 | teilweise nachgewiesen | kundenwirksame Ausgaben und Auditpfade verifizieren |
 
-| Dokument | Klassifizierung | Behandlung |
-|---|---|---|
-| `docs/architecture/ROADMAP.md` | DEVELOPMENT-Chain-Statusindex | mit DC synchronisieren; kein zusätzliches Programm |
-| `docs/roadmaps/AI_AGENT_M0_M9_IMPLEMENTATION_ROADMAP.md` | Legacy-Dateiname / paralleler DC-Index | stabile Referenzen erhalten; Status aus DC ableiten |
-| `docs/architecture/VOCABULARY_GOVERNANCE_MIGRATION_ROADMAP.md` | COMPLETE / OPERATIONAL | aus offenem Portfolio entfernen; nur Betriebsgovernance |
-| `docs/roadmaps/M5A_SYSTEMADMIN_REPOSITORY_WORK_PACKAGE.md` | umgesetztes Code-Slice-Arbeitspaket | nicht als Roadmap zählen; M5A bleibt bis Produktions-Evidence offen |
-| `.ai/work-claims/*ROADMAP*` | Arbeitsclaims | keine Roadmap-Authority |
+Nicht als eigene offene Programme zählen: `docs/architecture/ROADMAP.md`, `AI_AGENT_M0_M9_IMPLEMENTATION_ROADMAP.md`, abgeschlossene Vocabulary-Migrationen, einzelne Work Packages und Work Claims.
 
-## 4. Konsolidierte Abhängigkeiten
+## 4. Mutationsanfrage und Freigabe
+
+Eine Mutation darf initiiert werden durch:
+
+- den Owner im Chat, PR oder freigegebenen Mandat;
+- den Systemadministrator-Agenten als formale Rückfrage mit Lösungsvorschlägen.
+
+Eine Agentenanfrage ist keine Genehmigung. Vor jeder sicherheits-, datenintegritäts-, manipulations- oder produktionsrelevanten Mutation muss ein Mutation Proposal vorliegen:
+
+| Feld | Pflichtinhalt |
+|---|---|
+| Requestor | Owner oder Systemadministrator-Agent |
+| Ziel | exakter Dienst, Umgebung, Ressource und Tenant |
+| Ist-Zustand | read-only Evidence mit Zeitpunkt und SHA/Version |
+| Optionen | mindestens sichere Standardoption; bei echter Alternative 2–3 Varianten |
+| Risiko | Security, Datenintegrität, Verfügbarkeit, Compliance, Kosten |
+| Precheck | prüfbare Vorbedingungen |
+| Operation | kleinste konkrete Mutation |
+| Postcheck | erwartete positive und negative Nachweise |
+| Rollback | ausführbarer Rücksetzweg und Trigger |
+| Evidence | redigierter Zielpfad und Audit-Korrelation |
+| Approval | ausdrückliche Owner-Freigabe für exakt diesen Zustand |
+
+Nur der Owner kann HIGH/CRITICAL-, Produktions-, IAM-, Billing-, Datenbank-, Deployment-, Secret-, DNS- oder externe Plattformmutation genehmigen. Provider- oder Modellidentität erzeugt keine Authority.
+
+## 5. Native MFA / M5A
+
+Owner-Attestation 2026-08-14: Native MFA ist aktiviert.
+
+Konsolidierter Status:
+
+- Repository-Code aus PR #255: `MERGED`;
+- native MFA: `OWNER-ATTESTED ACTIVE`;
+- nicht automatisch belegt: exakte Produktionsversion, AAL2-positive Session, AAL1-DENY, Recovery, Faktorreset, Advisor/Policy und Auditkorrelation;
+- M5A bleibt daher `ACTIVATED / VERIFICATION PENDING`, bis redigierte Evidence vollständig ist;
+- keine erneute Aktivierung oder Faktoränderung ohne neues Proposal und Owner-Freigabe.
+
+M5A Exit:
+
+1. aktive Faktorart und Zielidentität redigiert belegt;
+2. AAL2-Positivtest PASS;
+3. AAL1-/fehlender-Faktor-Negativtest DENY;
+4. Recovery/Reset Runbook geprüft;
+5. privilegierter Auditinsert erfolgreich korreliert;
+6. Advisor/Policy ohne unowned HIGH/CRITICAL;
+7. Roadmap und Traceability synchronisiert.
+
+## 6. Prioritäten P0–P3
+
+| Prio | Arbeitspaket | Roadmap-Bindung | Systemadministrator-Prototyp | Exit |
+|---|---|---|---|---|
+| P0-1 | AI-Transparenz aller produktiven AI-Ausgaben | DOC, M8, ESS-0023 | SA-P01 read-only Output-Inventar + Contract-Test-Skelett | alle kundenwirksamen Ausgaben klassifiziert |
+| P0-2 | ADR-0059 Runtime-Auditstatus verifizieren | M5 | SA-P02 redigierter Audit-Probe-Plan | realer privilegierter Insert + Korrelation PASS |
+| P0-3 | M5A Abschluss-Evidence | M5A | SA-P03 AAL2-/Recovery-Evidence Collector, read-only zuerst | M5A VERIFIED PASS |
+| P1-1 | AI-Use-Case-Register | DOC/M8/M9 | SA-P04 Registry-Schema/Validator | Use Cases mit Materialität/Risiko/Owner |
+| P1-2 | Provider-Failover/Modellwechsel | M8/M9 | SA-P05 Cutover-Simulator ohne Produktion | kontrollierter Cutover/Rollback PASS |
+| P1-3 | S1 High-Severity Revalidierung | S1 vor M6 | SA-P06 Findings Normalizer | F-01–F-18 aktuell und ownergebunden |
+| P2-1 | Datenqualitätsmetriken | DOC/M5/M9 | SA-P07 Provider Quality Contract | feldbezogene Qualität/Lineage messbar |
+| P2-2 | Regulatorischer Roadmap-Checkpoint | DOC/M9 | SA-P08 Evidence-Mapping | Requirements→Code→Test→Evidence |
+| P2-3 | IAM Diagnostics konsolidieren | M4/M9 | SA-P09 Status-Migrationsmatrix | retained/superseded/migrated vollständig |
+| P3-1 | Explainability-Premium-Evidence | nach M9 | SA-P10 read-only Export Contract | kein Marketingclaim ohne Evidence |
+| P3-2 | SEO/Marketing-Baseline | parallel read-only | SA-P11 Q1–Q6/MA0 Revalidator | aktuelle Baseline, keine Publikation |
+| P3-3 | Documentary D0 | parallel read-only | SA-P12 Manifest/Version/Code Comparator | konsistente Documentary-Baseline |
+
+## 7. DEVELOPMENT Chain M0–M10
+
+| Phase | Status | Systemadministrator-Auftrag | Gate / Exit |
+|---|---|---|---|
+| M0 Evidence Baseline | COMPLETE | Evidence nur erhalten/prüfen | unveränderte, redigierte Evidence |
+| M1 Git Guardrails | COMPLETE | Branch-/Claim-/Cleanup-Prüfer | Human Merge; Branch danach löschen |
+| M2 Architektur/Dokumentation | COMPLETE / laufende Pflege | ADR-/ESS-/Traceability-Linter | keine Authority-Lücke |
+| M2G Freeze | COMPLETE | Drift-Erkennung | keine stillen Statusänderungen |
+| M3 CI Hardening | COMPLETE / laufend | kostensensitiver Check-Plan | Owner Gate + erforderliche CI |
+| M4 Agent IAM | COMPLETE | DENY-first Policy-Probes | keine Provider-Eskalation |
+| M5 Audit/Telemetry | VERIFICATION ACTIVE | SA-P02 | realer Auditinsert und OTEL-Korrelation |
+| M5A Native MFA/AAL2 | ACTIVATED / VERIFICATION PENDING | SA-P03 | AAL2, DENY, Recovery, Advisor, Audit PASS |
+| M6 Supply Chain | BLOCKED BY M5A | SBOM/Provenance-Prototyp | source→artifact attestation |
+| M7 Deployment Identity | BLOCKED BY M6 | Mutation-Proposal Generator | Zielbindung, Approval, Postcheck, Rollback |
+| M8 Agent Cutover | BLOCKED BY M7 | SA-P05 + Provider-Profile-Tests | semantisch äquivalente Policy |
+| M9 Assurance | BLOCKED BY M8 | Angriffs-/Replay-/Kill-Switch-Drills | keine unowned CRITICAL Controls |
+| M10 Passkey Owner Authorization | BLOCKED BY M9 | Shadow-Mode/WebAuthn-Prototyp | exact-state single-use Approval |
+
+Keine blockierte Phase darf durch Dokumentationsreife übersprungen werden.
+
+## 8. Systemadministrator-Prototyp-Vertrag
+
+Jeder Prototyp besitzt:
+
+1. eindeutige ID `SA-Pxx`;
+2. Requirement- und ADR-/ESS-Verweise;
+3. exakte current-main-Bindung;
+4. erlaubte/verbotene Pfade;
+5. Risiko- und Datenklassifikation;
+6. positive und negative Tests;
+7. keine Produktions-Secrets;
+8. standardmäßig Mock/Sandbox/read-only;
+9. Mutation Proposal statt stiller Mutation;
+10. Human Review und deutscher PR;
+11. Append-only Evidence;
+12. Remote-Branch-Löschung nach Merge.
+
+Der Agent darf eine Mutation aktiv beim Owner anfragen. Er muss stoppen, wenn Ziel, Approval, Precheck, Rollback oder Evidence-Pfad fehlen.
+
+## 9. Programmabhängigkeiten
 
 ```text
-M5 Audit-Verifikation
-→ M5A Native MFA/AAL2 Produktionsverifikation
+M5 Audit Evidence
+→ M5A Native MFA Abschlussverifikation
 → S1 High-Severity Gate
 → M6 Supply Chain
 → M7 Deployment Identity
-→ M8 Agent Cutover
+→ M8 Provider-neutraler Cutover
 → M9 Assurance
-→ M10 Passkey-only Owner Authorization
-→ SA5 darf erst danach neu bewertet werden
+→ M10 Passkey Owner Authorization
+→ SA5 Neubewertung
 ```
 
-Parallel dokumentierbar, aber nicht autorisierend:
+Parallel nur read-only/dokumentarisch: Documentary D0, IAM-Diagnostics, SEO Q1–Q6, MA0 und AI-Use-Case-Register.
 
-- DOC D0 und read-only Discovery;
-- IAM-DIAG Ist-Abgleich;
-- SEO Revalidierung;
-- MA0 Dokumentationsabschluss.
+## 10. Dokumente pro Arbeitspaket
 
-Parallel laufende Arbeit darf keine gemeinsamen Dateien ohne explizite Single-Writer-Abstimmung verändern.
+Pflicht, soweit anwendbar:
 
-## 5. Erkannte Statuswidersprüche und verbindliche Auflösung
+- Roadmap/Requirement;
+- ADR für neue Architektur-, Trust-Boundary- oder Authority-Entscheidung;
+- ESS/Contract für Agenten- oder Prozessverhalten;
+- Threat/Risk Model;
+- Runbook;
+- Mutation Proposal;
+- positive/negative Tests;
+- redigierte Evidence;
+- Traceability;
+- PR-/CI-/Merge-/Branch-Cleanup-Nachweis.
 
-### C-01 — M5A Repository-Code
+## 11. Branch- und PR-Lifecycle
 
-PR #255 ist in `main@66da35b8` gemergt. Ältere Roadmaps mit `CI PENDING MERGE`, `REQUIRED / PLANNED` oder einer noch ausstehenden Codeimplementierung sind veraltet.
+```text
+current main
+→ frischer scoped branch
+→ deutscher Draft-PR
+→ Human File Review
+→ erforderliche CI
+→ Human Merge
+→ Remote-Branch löschen
+→ Workspace bereinigen
+→ Evidence/Status synchronisieren
+```
 
-Konsolidierter Zustand:
+Kein gemergter Branch wird wiederverwendet. PR #257 bleibt Documentation-only; Prototypcode folgt in separaten, phasenbezogenen PRs.
 
-- Repository-Code: `MERGED`;
-- Produktions-/Owner-Faktor-Mutation: nicht aus dem Merge ableitbar;
-- M5A Gesamtphase: bis Post-Merge-, AAL2-, Recovery- und Advisor-Evidence `IN PROGRESS`.
+## 12. Konsolidiertes Ausführungsbacklog
 
-### C-02 — SA4 als M5A-Executor
-
-Der SA4-Pfad ist ein Ein-Zweck-Host für `REM-SA4-PILOT-001` und kann `REM-M5A-REPOSITORY-001` nicht ausführen. Aussagen in der SA-Roadmap, M5A solle über den verifizierten SA4-Host ausgeführt werden, sind durch die neuere Development-Chain-Korrektur und die direkte Owner-instruierte PR-#255-Implementierung überholt.
-
-Konsolidierte Regel: SA4 bleibt als historisch verifizierter Pilot erhalten, wird aber nicht nachträglich als generischer M5A-Ausführungshost dargestellt.
-
-### C-03 — M5/SA3B-Statusdrift
-
-Ältere Enterprise-/AI-Agent-Indizes nennen SA3B `VERIFICATION PENDING`; die neuere SA-Roadmap führt SA3B als `COMPLETE / VERIFIED PASS`. Vor weiterer externer Mutationsabhängigkeit muss die aktuelle Evidence-Kette gegen das reale M5-Audit-Backend bestätigt und anschließend in allen DC-Indizes synchronisiert werden.
-
-### C-04 — SEO- und Diagnostics-Baselines
-
-SEO basiert auf 2026-08-08; Diagnostics IAM besitzt keine verlässlichen Phase-Statusmarker. Keine Maßnahme wird allein aufgrund fehlender Abschlussmarker neu implementiert. Zuerst erfolgt ein read-only Code-/Evidence-Abgleich.
-
-## 6. Priorisierte Konsolidierungs-Backlog
-
-| Reihenfolge | Arbeitspaket | Änderungsart | Exit |
+| Reihenfolge | Paket | Modus | Startbedingung |
 |---:|---|---|---|
-| 1 | DC/M5/M5A nach PR #255 synchronisieren | Dokumentation/Evidence | alle DC-Indizes nennen denselben SHA und Status |
-| 2 | S1.0 gegen `main@66da35b8` revalidieren | Diagnose/Dokumentation | F-01–F-18 mit Owner, Status und Evidence |
-| 3 | SA-Roadmap M5A/SA4-Widerspruch korrigieren | Dokumentation | kein falscher Executor-Handoff |
-| 4 | Documentary D0 ausführen | read-only Analyse + später separater PR | Manifest/Version/Code konsistent |
-| 5 | Diagnostics IAM konsolidieren | Dokumentation | retained/superseded/migrated je Phase |
-| 6 | SEO Q1–Q6 revalidieren | Diagnose/Dokumentation | aktueller Ist-Status statt 08.08.-Annahme |
-| 7 | Marketing MA0 Owner-Review vorbereiten | Dokumentation | MA0 angenommen oder ausdrücklich zurückgestellt |
+| 1 | M5/M5A Evidence Sync | read-only/verifizierend | sofort |
+| 2 | P0 AI-Transparenz + Auditpfad | read-only/Testspezifikation | sofort |
+| 3 | S1 Revalidierung | read-only | aktuelle main-Baseline |
+| 4 | Documentary D0 | read-only | Single-Writer geklärt |
+| 5 | IAM Diagnostics Matrix | Dokumentation | neuere Authority erfasst |
+| 6 | M6 Prototyp | Repository-Code | M5A VERIFIED PASS |
+| 7 | M7 Proposal-Prototyp | Repository-Code, keine Produktion | M6 VERIFIED PASS |
+| 8 | M8 Cutover-Simulator | Sandbox | M7 VERIFIED PASS |
+| 9 | M9 Assurance Drills | kontrollierte Umgebung | M8 VERIFIED PASS |
+| 10 | M10 Shadow Mode | keine Legacy-Abschaltung | M9 VERIFIED PASS |
+| 11 | SEO/MA/Monetarisierung | getrennte Programme | jeweilige Authority |
 
-Jedes Paket verwendet einen frischen Branch vom dann aktuellen `main`, einen eigenen Claim, einen deutschen PR nach vollständiger Vorlage, Human File Review, erforderliche CI, Human Merge und anschließende Remote-Branch-Löschung.
+## 13. Abschlusskriterien der Gesamtroadmap
 
-## 7. Mutations- und Sicherheitsgrenze
+Die Roadmap ist erst abgeschlossen, wenn:
 
-Diese Konsolidierung:
-
-- verändert keinen Anwendungscode;
-- verändert keine Workflows, Rulesets oder Required Checks;
-- verändert keine Secrets oder Credentials;
-- mutiert weder Supabase noch Render, Stripe, IONOS oder andere Produktionssysteme;
-- autorisiert weder Deployment noch autonome Agentenmutation;
-- ändert keine bestehenden ESS-/ADR-Entscheidungen.
-
-Jede spätere sicherheits-, datenintegritäts-, manipulations- oder mutationsrelevante Änderung benötigt vor Branch-Vorbereitung konkrete Lösungsoptionen für den Owner sowie die jeweils geltenden Approval-, Precheck-, Rollback- und Evidence-Gates.
-
-## 8. Pflegevertrag
-
-Nach jedem Roadmap-relevanten Merge werden aktualisiert:
-
-1. aktuelle `main`-SHA;
-2. betroffene Portfoliozeile;
-3. Status und Evidence;
-4. nächster zulässiger Schritt;
-5. Blocker/Abhängigkeit;
-6. veraltete parallele Statusindizes;
-7. Branch-Cleanup-Evidence.
-
-Ein Programm wird erst aus dem offenen Portfolio entfernt, wenn seine kanonische Roadmap `COMPLETE / VERIFIED PASS` oder `SUPERSEDED / ARCHIVED` ausweist und die Abschluss-Evidence referenziert.
+- M0–M10 `VERIFIED PASS`;
+- alle P0/P1-Pakete geschlossen oder explizit risikobegründet akzeptiert;
+- keine unowned HIGH/CRITICAL Findings;
+- produktive Mutationen Owner-genehmigt und post-verifiziert;
+- Traceability vollständig;
+- offene Fachroadmaps abgeschlossen, superseded oder archiviert;
+- alle gemergten Arbeitsbranches gelöscht sind.
