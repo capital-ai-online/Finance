@@ -30,11 +30,9 @@ export class CryptoClassificationAgent {
 
   public async analyze(coin: string): Promise<CryptoClassification> {
     const result = await generateStructuredWithFallback({
-      gemini: this.ai,
       anthropic: this.anthropic,
       openai: this.openai,
       promptId: 'crypto-classification',
-      geminiModels: ['gemini-2.5-flash'],
       contents: `Analysiere und klassifiziere die folgende Kryptowährung: "${coin}".
 Bestimme die Kategorie (z.B. L1, L2, DeFi, Oracle, Payment, Web3, Meme), das Sub-Tier (z.B. Core Layer, Scaling), die Marktstruktur (z.B. High Liquidity) und die Ausrichtung des Hauptnarrativs (z.B. Digital Gold, AI Integration).
 Antworte strictly mit einem strukturierten JSON.`,
