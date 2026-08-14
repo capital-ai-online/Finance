@@ -1,7 +1,7 @@
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
-import { Type } from '@google/genai';
+import { Type } from '../src/services/aiSchema';
 import { logSystemEvent } from './systemEvents';
 import { FileWatcher } from './fileWatcher';
 import { decisionEngine } from './decisionEngine';
