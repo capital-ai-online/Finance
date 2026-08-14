@@ -119,6 +119,21 @@ describe('P2 MarketDataGateway', () => {
     expect(primary.getSnapshot).toHaveBeenCalledTimes(1);
   });
 
+  it('verbraucht kein Fallback-Budget, wenn der Primary erfolgreich ist', async () => {
+    const registry = new ProviderRegistry();
+    const primary = provider('primary');
+    const secondary = provider('secondary');
+    registry.register(primary);
+    registry.register(secondary);
+    const budget = new RateLimitBudget({ capacity: 1, windowMs: 60_000 });
+    const gateway = new MarketDataGateway(registry, { rateLimitBudget: budget, cacheTtlMs: 0 });
+    await gateway.getSnapshot(request);
+    vi.mocked(primary.getSnapshot).mockRejectedValueOnce(new Error('primary down'));
+    const fallback = await gateway.getSnapshot(request);
+    expect(fallback.snapshot.provider).toBe('secondary-provider');
+    expect(secondary.getSnapshot).toHaveBeenCalledTimes(1);
+  });
+
   it('stoppt Provider nach ausgeschöpftem Rate-Limit-Budget fail-closed', async () => {
     const registry = new ProviderRegistry();
     const primary = provider('primary');
