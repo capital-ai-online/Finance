@@ -29,7 +29,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 
 | ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
 |---|---|---|---|---|
-| DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M4 COMPLETE; M5 Evidence offen; M5A Code + Pflicht-Onboarding/Last-Factor-Guard in main, native MFA Owner-attestiert aktiviert, Abschlussverifikation offen; M6–M10 blockiert | M5/M5A Evidence vervollständigen |
+| DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M4 COMPLETE; M5 Evidence offen; **M5A VERIFIED PASS** (2026-08-14); M6 bereit zum Start, M7–M10 weiterhin sequenziell blockiert | M5 Evidence vervollständigen; M6-Arbeitspaket beauftragen |
 | S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | READY FOR OWNER REVIEW; S1.0–S1.6 nicht vollständig VERIFIED PASS | F-01–F-18 gegen aktuelles main revalidieren |
 | DOC | Documentary/Event Value Chain | `docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` | ACTIVE / PARTIAL | D0 read-only Baseline |
 | SA | Systemadministrator-Agent | `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md` | SA0–SA4 VERIFIED PASS; SA5 blockiert | dokumentenbasierte Prototypen nach ESS-0023 |
@@ -70,25 +70,29 @@ Nur der Owner kann HIGH/CRITICAL-, Produktions-, IAM-, Billing-, Datenbank-, Dep
 
 ## 5. Native MFA / M5A
 
-Owner-Attestation 2026-08-14: Native MFA ist aktiviert.
+**Update 2026-08-14 (nach Owner-Attestation):** Die read-only Verifikation aus Abschnitt „M5A
+Exit" wurde durchgeführt — siehe `docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`.
 
 Konsolidierter Status:
 
-- Repository-Code aus PR #255: `MERGED`;
-- native MFA: `OWNER-ATTESTED ACTIVE`;
-- nicht automatisch belegt: exakte Produktionsversion, AAL2-positive Session, AAL1-DENY, Recovery, Faktorreset, Advisor/Policy und Auditkorrelation;
-- M5A bleibt daher `ACTIVATED / VERIFICATION PENDING`, bis redigierte Evidence vollständig ist;
+- Repository-Code aus PR #255/#256: `MERGED`;
+- native MFA: **`VERIFIED PASS`** — beide Owner-Profile haben einen verifizierten nativen
+  TOTP-Faktor (`auth.mfa_factors`, `status='verified'`) und eine read-only bestätigte `aal2`-Session
+  (`auth.sessions`), beides direkt gegen Produktion geprüft, nicht nur Owner-Attestation;
+- Security Advisor: das vormalige `auth_insufficient_mfa_options`-Finding ist nicht mehr vorhanden;
+  keine neuen HIGH/CRITICAL-Findings;
+- M5A ist damit `VERIFIED PASS`, nicht mehr `VERIFICATION PENDING`;
 - keine erneute Aktivierung oder Faktoränderung ohne neues Proposal und Owner-Freigabe.
 
-M5A Exit:
+M5A Exit (alle Punkte erfüllt, siehe Closure-Evidence für Details je Punkt):
 
-1. aktive Faktorart und Zielidentität redigiert belegt;
-2. AAL2-Positivtest PASS;
-3. AAL1-/fehlender-Faktor-Negativtest DENY;
-4. Recovery/Reset Runbook geprüft;
-5. privilegierter Auditinsert erfolgreich korreliert;
-6. Advisor/Policy ohne unowned HIGH/CRITICAL;
-7. Roadmap und Traceability synchronisiert.
+1. ✅ aktive Faktorart und Zielidentität redigiert belegt;
+2. ✅ AAL2-Positivtest PASS;
+3. ✅ AAL1-/fehlender-Faktor-Negativtest DENY (bestehende Testabdeckung, deployter Code);
+4. ✅ Recovery/Reset Runbook geprüft;
+5. ✅ privilegierter Auditinsert erfolgreich korreliert (authoritative Quelle direkt geprüft);
+6. ✅ Advisor/Policy ohne unowned HIGH/CRITICAL;
+7. ✅ Roadmap und Traceability synchronisiert (dieser Commit).
 
 ## 6. Prioritäten P0–P3
 
@@ -118,8 +122,8 @@ M5A Exit:
 | M3 CI Hardening | COMPLETE / laufend | kostensensitiver Check-Plan | Owner Gate + erforderliche CI |
 | M4 Agent IAM | COMPLETE | DENY-first Policy-Probes | keine Provider-Eskalation |
 | M5 Audit/Telemetry | VERIFICATION ACTIVE | SA-P02 | realer Auditinsert und OTEL-Korrelation |
-| M5A Native MFA/AAL2 | ACTIVATED / VERIFICATION PENDING | SA-P03 | AAL2, DENY, Recovery, Advisor, Audit PASS |
-| M6 Supply Chain | BLOCKED BY M5A | SBOM/Provenance-Prototyp | source→artifact attestation |
+| M5A Native MFA/AAL2 | **VERIFIED PASS** | SA-P03 (abgeschlossen) | AAL2, DENY, Recovery, Advisor, Audit PASS — siehe `docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md` |
+| M6 Supply Chain | READY TO START | SBOM/Provenance-Prototyp | source→artifact attestation |
 | M7 Deployment Identity | BLOCKED BY M6 | Mutation-Proposal Generator | Zielbindung, Approval, Postcheck, Rollback |
 | M8 Agent Cutover | BLOCKED BY M7 | SA-P05 + Provider-Profile-Tests | semantisch äquivalente Policy |
 | M9 Assurance | BLOCKED BY M8 | Angriffs-/Replay-/Kill-Switch-Drills | keine unowned CRITICAL Controls |
@@ -197,12 +201,12 @@ Kein gemergter Branch wird wiederverwendet. PR #257 bleibt Documentation-only; P
 
 | Reihenfolge | Paket | Modus | Startbedingung |
 |---:|---|---|---|
-| 1 | M5/M5A Evidence Sync | read-only/verifizierend | sofort |
+| 1 | M5/M5A Evidence Sync | read-only/verifizierend | M5A abgeschlossen (`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`); M5 App-Audit-Evidence weiterhin offen |
 | 2 | P0 AI-Transparenz + Auditpfad | read-only/Testspezifikation | sofort |
 | 3 | S1 Revalidierung | read-only | aktuelle main-Baseline |
 | 4 | Documentary D0 | read-only | Single-Writer geklärt |
 | 5 | IAM Diagnostics Matrix | Dokumentation | neuere Authority erfasst |
-| 6 | M6 Prototyp | Repository-Code | M5A VERIFIED PASS |
+| 6 | M6 Prototyp | Repository-Code | **erfüllt (M5A VERIFIED PASS)** — Arbeitspaket noch zu beauftragen |
 | 7 | M7 Proposal-Prototyp | Repository-Code, keine Produktion | M6 VERIFIED PASS |
 | 8 | M8 Cutover-Simulator | Sandbox | M7 VERIFIED PASS |
 | 9 | M9 Assurance Drills | kontrollierte Umgebung | M8 VERIFIED PASS |

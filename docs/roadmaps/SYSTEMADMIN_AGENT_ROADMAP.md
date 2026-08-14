@@ -9,6 +9,16 @@ Authority: ESS-0021, ADR-0065, ADR-0058, ADR-0059, ADR-0066, ADR-0067, ADR-0068
 (M5A wurde direkt implementiert, nicht über den SA4-Pfad — siehe Korrektur im M5A-Abschnitt unten
 und `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`). SA5 bleibt bis M10 `VERIFIED PASS` blockiert.
 
+**Reaktivierung 2026-08-14 (Owner-Anweisung "aktiviere bitte sa3b und sa4 wieder"):** SA3B-Trigger
+wurde reaktiviert (`.github/workflows/systemadmin-roadmap-executor.yml`) — nutzt weiterhin exakt
+das bestehende `OWNER_APPROVED`-Mandat `REM-SA3B-PROBE-001`, keine neue Aufgabe. SA4 bleibt
+bewusst deaktiviert: `scripts/systemadmin/runSa4Pilot.mjs` ist kein generisches Ausführungsskript,
+sondern fest an sein bereits gemergtes Zielartefakt (`docs/evidence/sa4/SA4_FIRST_AUTONOMOUS_WORK_PACKAGE.md`)
+inklusive fest codiertem Inhalt gebunden — ein reiner Trigger-Flip würde sofort am
+Self-Blocking-Check scheitern. Eine neue SA4-Aufgabe braucht ein neues Pilot-Skript und ein neues
+Mandat, was gemäß Owner-Entscheidung erst nach M5A `VERIFIED PASS` mit einem konkret auf
+Dateiebene feststehenden M6-Arbeitspaket sinnvoll angegangen wird.
+
 ## Goal
 
 The Systemadmin Roadmap Executor may autonomously implement Owner-approved repository work packages only through bounded REM authority, least privilege, durable append-only audit evidence, Human final review and Human-only merge.
@@ -21,8 +31,8 @@ The Systemadmin Roadmap Executor may autonomously implement Owner-approved repos
 | SA1 REM Validator | COMPLETE / VERIFIED PASS | PR #215 |
 | SA2 Chat Execution Profile | COMPLETE / VERIFIED PASS | PR #216 |
 | SA3A Append-only Audit Adapter | COMPLETE / VERIFIED PASS | PR #218 |
-| SA3B Execution Host | **COMPLETE / VERIFIED PASS** | PR #220, #222; Issues #221/#223/#224; lifecycle cleanup verified before SA4 |
-| SA4 First bounded autonomous work package | **COMPLETE / VERIFIED PASS** | PR #226; Issue #228 / run `31579519025`; PR #229; six M5 authorization/outcome events |
+| SA3B Execution Host | **COMPLETE / VERIFIED PASS** — trigger reaktiviert 2026-08-14 (Owner-Anweisung), gleiches Mandat | PR #220, #222; Issues #221/#223/#224; lifecycle cleanup verified before SA4 |
+| SA4 First bounded autonomous work package | **COMPLETE / VERIFIED PASS** — trigger bleibt bewusst deaktiviert, siehe Korrektur 2026-08-14 unten | PR #226; Issue #228 / run `31579519025`; PR #229; six M5 authorization/outcome events |
 | SA5 Bounded external mutation design | BLOCKED | M10 VERIFIED PASS required |
 
 M10 passkey-only PR authorization target architecture was merged in PR #217, but runtime cutover remains sequentially blocked by M9. Until that cutover, current Human/Owner current-head review and attestation remain authoritative for final CI and merge.
@@ -273,7 +283,12 @@ Merged/superseded branches are never reused.
 
 ## Current next action
 
-M5A repository code is merged via PR #255; PR #256 additionally merged required onboarding and the last-factor guard. Native MFA is Owner-attested active. The SA4 one-purpose host MUST NOT be reused for M5A. The next allowed action is read-only M5/M5A verification evidence; any corrective mutation requires an exact Proposal and explicit Owner approval. SA5 remains blocked until M10 VERIFIED PASS.
+M5A is `VERIFIED PASS` (2026-08-14, `docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`): both
+Owner identities completed native TOTP enrollment interactively; read-only production evidence
+confirms verified factors and `aal2` sessions for both, and the Security Advisor shows no unowned
+HIGH/CRITICAL finding. The SA4 one-purpose host was never reused for M5A. M6 is now the next
+eligible DEVELOPMENT Chain gate; any M6 repository-code work is a separate, not-yet-issued
+mandate/task. SA5 remains blocked until M10 VERIFIED PASS.
 
 ## Konsolidierter Prototyp- und Mutationsanfragepfad (PR #257)
 
@@ -281,4 +296,4 @@ Authority: `docs/adr/ADR-0071-consolidated-roadmap-and-requested-systemadmin-mut
 
 Der Systemadministrator-Agent darf aus der konsolidierten Roadmap begrenzte Prototypaufträge ableiten und notwendige Mutationen beim Owner anfragen. Eine Agentenanfrage ist niemals Approval. Externe, produktive, IAM-, Datenbank-, Billing-, Secret-, Deployment- oder HIGH/CRITICAL-Mutationen bleiben bis zur exakten Owner-Freigabe fail-closed.
 
-Native MFA ist laut Owner-Attestation vom 2026-08-14 aktiviert. Der Status bleibt bis AAL2-, DENY-, Recovery-, Advisor- und Audit-Evidence `VERIFICATION PENDING`. SA5 bleibt bis M10 `VERIFIED PASS` blockiert.
+Native MFA ist seit 2026-08-14 `VERIFIED PASS` — die anfängliche Owner-Attestation wurde durch read-only AAL2-, Faktor- und Advisor-Evidence gegen Produktion bestätigt (`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`). SA5 bleibt bis M10 `VERIFIED PASS` blockiert.
