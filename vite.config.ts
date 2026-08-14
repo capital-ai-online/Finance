@@ -11,6 +11,24 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    build: {
+      // SEO-ROADMAP-0001 / D4: split vendor chunks to reduce main-bundle size
+      // (previously ~2.49 MB / 678 kB gzip single chunk).
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (!id.includes('node_modules')) return;
+            if (id.includes('react-dom') || id.includes('/react/') || id.includes('\\react\\')) {
+              return 'vendor-react';
+            }
+            if (id.includes('@supabase')) return 'vendor-supabase';
+            if (id.includes('stripe')) return 'vendor-stripe';
+            return 'vendor';
+          },
+        },
+      },
+      chunkSizeWarningLimit: 900,
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify - file watching is disabled to prevent flickering during agent edits.
