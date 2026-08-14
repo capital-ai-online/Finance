@@ -28,11 +28,9 @@ export class ClassificationAgent {
     const fallback = findRawMaterialConfig(name);
 
     const result = await generateStructuredWithFallback({
-      gemini: this.ai,
       anthropic: this.anthropic,
       openai: this.openai,
       promptId: 'raw-materials-classification',
-      geminiModels: ['gemini-3.1-pro-preview', 'gemini-3.5-flash'],
       contents: `Klassifiziere den folgenden Rohstoff: "${name}".
 Bestimme die Hauptklasse (Metal, Energy, Agriculture, Industrial, Recycling, oder Unknown), eine präzise Subklasse (z.B. Batteriemetalle, Edelmetalle, Nuklearbrennstoffe), den Markttyp (z.B. LME, OTC, Physisch) und den Bewertungsmodus (z.B. Standard, Strategische Relevanz).
 Gib ein strukturiertes JSON zurück.`,
