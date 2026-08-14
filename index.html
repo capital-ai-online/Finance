@@ -35,6 +35,44 @@
          Example: <meta name="google-site-verification" content="YOUR_TOKEN_HERE" />
          DNS verification is an equally valid alternative and preferred when available. -->
 
+    <!-- SEO D1: JSON-LD structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://capital-ai.online/#organization",
+          "name": "CAPITAL-AI",
+          "url": "https://capital-ai.online/",
+          "logo": "https://capital-ai.online/favicon.svg",
+          "founder": {
+            "@type": "Person",
+            "name": "Sven Kulessa"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://capital-ai.online/#website",
+          "url": "https://capital-ai.online/",
+          "name": "CAPITAL-AI Portal",
+          "publisher": { "@id": "https://capital-ai.online/#organization" },
+          "inLanguage": "de-DE"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://capital-ai.online/#app",
+          "name": "CAPITAL-AI Portal",
+          "applicationCategory": "FinanceApplication",
+          "operatingSystem": "Web",
+          "url": "https://capital-ai.online/",
+          "description": "Quantitative Analysen, Compliance-Management, Asset-Scoring und DSGVO-Dokumentation.",
+          "publisher": { "@id": "https://capital-ai.online/#organization" }
+        }
+      ]
+    }
+    </script>
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://capital-ai.online/" />
@@ -53,12 +91,6 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
-    <!-- Server-seitig sichtbare Rechtslinks: die App selbst ist eine React-SPA, die
-         Footer-Links zu AGB/Impressum/Datenschutz werden erst nach dem Hydratisieren
-         gerendert. Security-/Compliance-Scanner (und Crawler ohne JS) lesen nur die
-         rohe HTML-Antwort - dieser noscript-Block ist fuer Browser mit aktiviertem
-         JavaScript unsichtbar und ohne jede Laufzeitwirkung, macht die Rechtsseiten
-         aber im Response-Body direkt auffindbar. -->
     <noscript>
       <p>CAPITAL-AI Portal benötigt JavaScript. Rechtliche Informationen:
         <a href="https://capital-ai.online/impressum">Impressum</a> ·
