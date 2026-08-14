@@ -28,11 +28,9 @@ export class CryptoSentimentAgent {
 
   public async analyze(coin: string): Promise<CryptoSentimentMetrics> {
     const result = await generateStructuredWithFallback({
-      gemini: this.ai,
       anthropic: this.anthropic,
       openai: this.openai,
       promptId: 'crypto-sentiment',
-      geminiModels: ['gemini-2.5-flash'],
       contents: `Analysiere die Marktstimmung und virale Dynamik für: "${coin}".
 Schätze die Social-Media-Geschwindigkeit, die fundamentale Narrativstärke und das Momentum aktueller Nachrichtenmeldungen ein.
 Antworte strictly mit einem strukturierten JSON.`,
