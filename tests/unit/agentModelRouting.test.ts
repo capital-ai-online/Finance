@@ -2,7 +2,7 @@
 // Provider-Routing-Kette. Reihenfolge (Nutzerpriorisierung): Anthropic -> OpenAI -> Gemini.
 
 import { describe, it, expect } from 'vitest';
-import { Type } from '@google/genai';
+import { Type } from '../../src/services/aiSchema';
 import { generateStructuredWithFallback, generateTextWithFallback, toJsonSchema } from '../../src/services/agentModelRouting';
 
 function mockGemini(behaviors: Array<'ok' | 'fail'>, data: any = { foo: 'gemini' }) {
