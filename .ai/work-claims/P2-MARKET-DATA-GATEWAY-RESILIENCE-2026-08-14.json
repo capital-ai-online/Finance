@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.1.0",
+  "claimId": "P2-MARKET-DATA-GATEWAY-RESILIENCE-2026-08-14",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5",
+    "executionSurface": "Codex Work GitHub Connector"
+  },
+  "workItem": "ESS-0016 Phase 2: explizites Provider-Routing, bounded Cache, Request Coalescing, Rate-Limit-Budget, Circuit Breaker und sichere Telemetrie.",
+  "startedAt": "2026-08-14T23:15:00Z",
+  "baseBranch": "main",
+  "baseSha": "3cc92df65e83427956b28c655da9c58688d1bb50",
+  "pullRequest": null,
+  "claimedPaths": [
+    ".ai/work-claims/P2-MARKET-DATA-GATEWAY-RESILIENCE-2026-08-14.json",
+    ".ai/skills/ESS-0016-Enterprise-Market-Data-Provider-MCP-Governance.md",
+    "docs/adr/ADR-0041-enterprise-market-data-provider-and-mcp-architecture.md",
+    "src/platform/MarketData/CircuitBreaker.ts",
+    "src/platform/MarketData/MarketDataCache.ts",
+    "src/platform/MarketData/MarketDataGateway.ts",
+    "src/platform/MarketData/ProviderRouter.ts",
+    "src/platform/MarketData/RateLimitBudget.ts",
+    "src/platform/MarketData/RequestCoalescer.ts",
+    "tests/unit/marketDataGateway.test.ts"
+  ],
+  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
+}

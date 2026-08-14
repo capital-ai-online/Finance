@@ -2,7 +2,7 @@
 ## Enterprise Market Data Provider & MCP Architecture
 
 **Status:** ACCEPTED  
-**Implementation-Status:** PHASE 1 IMPLEMENTED / RUNTIME PROMOTION NOT AUTHORIZED  
+**Implementation-Status:** PHASE 2 IMPLEMENTED / RUNTIME PROMOTION NOT AUTHORIZED  
 **Date:** 2026-08-03  
 **Version:** 0.6.0  
 **Priority:** P1  
@@ -106,6 +106,18 @@ caller explicitly sets `includeShadow: true`; no existing quote, screening or sc
 is migrated by this phase. Therefore the architectural target "Alpaca primary" remains a future
 promotion decision subject to the documented 14-trading-day / 1,000-observation evidence gate,
 entitlement review and separate Owner authorization.
+
+## 3.4 P2 Phase-2 gateway resilience boundary (2026-08-14)
+
+Phase 2 adds explicit provider routing with bounded server-side caching, identical-request
+coalescing, provider/capability rate-limit budgets, circuit-breaker isolation and structured
+payload-free telemetry. Cached observations are revalidated against the caller's freshness
+contract before use; expired or unacceptable observations are evicted and never converted into
+synthetic data.
+
+This phase remains outside the active scoring/screening composition root. Alpaca remains
+`shadow`; provider promotion, entitlement approval and pipeline migration require separate
+evidence and Owner authorization.
 
 ## 4. Alpaca wird Primary Provider
 
