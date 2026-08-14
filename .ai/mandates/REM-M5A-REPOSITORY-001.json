@@ -1,0 +1,98 @@
+{
+  "mandateId": "REM-M5A-REPOSITORY-001",
+  "status": "DRAFT",
+  "ownerActorId": "SvenKulessa",
+  "subjectAgentId": "capital-ai-systemadmin-roadmap-executor",
+  "repository": "SvenKulessa/Finance",
+  "baseBranch": "main",
+  "roadmapItems": [
+    "M5A-NATIVE-MFA-AAL2-REPOSITORY-IMPLEMENTATION"
+  ],
+  "authorityRefs": [
+    "docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md",
+    "docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md",
+    ".ai/skills/ESS-0020-Supabase-Native-MFA-AAL2-Hardening.md",
+    ".ai/skills/ESS-0021-Systemadmin-Roadmap-Executor.md",
+    "docs/adr/ADR-0064-supabase-native-mfa-aal2-hardening.md",
+    "docs/adr/ADR-0065-systemadmin-roadmap-execution-mandate.md",
+    "docs/runbooks/M5A_SUPABASE_TOTP_AAL2_HARDENING.md"
+  ],
+  "allowedCapabilities": [
+    "READ",
+    "ANALYZE",
+    "PLAN",
+    "BRANCH",
+    "COMMIT",
+    "PR",
+    "CI_REQUEST"
+  ],
+  "allowedPaths": [
+    "src/platform/Security/totp.ts",
+    "src/platform/Security/nativeMfa.ts",
+    "src/platform/Security/authMiddleware.ts",
+    "server/stepUp.ts",
+    "src/components/TotpSettings.tsx",
+    "src/components/LoginStepUpGate.tsx",
+    "tests/unit/totp.test.ts",
+    "tests/unit/nativeMfa.test.ts",
+    "tests/unit/authMiddlewareAal2.test.ts",
+    "tests/integration/nativeMfaAal2.test.ts",
+    "docs/evidence/m5a/**"
+  ],
+  "allowedTargets": [
+    "github:SvenKulessa/Finance"
+  ],
+  "maxRiskClass": "HIGH",
+  "allowedMutationClasses": [
+    "REPOSITORY"
+  ],
+  "prohibitedMutationClasses": [
+    "MERGE",
+    "REPOSITORY_PROTECTION_WEAKENING",
+    "OWNER_IAM_ELEVATION",
+    "OWNER_MFA_OR_BREAK_GLASS",
+    "SECRET_DISCLOSURE",
+    "UNRESTRICTED_CREDENTIAL_ROTATION",
+    "DESTRUCTIVE_PRODUCTION_DATA",
+    "LIVE_BILLING_MONEY_OR_ENTITLEMENT",
+    "PRODUCTION_RESOURCE_DELETION",
+    "DNS_TLS_DOMAIN_OWNERSHIP",
+    "SECURITY_CONTROL_DISABLEMENT",
+    "SELF_MANDATE_EXPANSION"
+  ],
+  "validFrom": "2026-08-14T00:00:00.000Z",
+  "expiresAt": "2026-08-21T00:00:00.000Z",
+  "maxOpenPullRequests": 1,
+  "ciBudgetPolicyRef": "docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md",
+  "killSwitch": {
+    "enabled": true,
+    "revocationAuthority": "SvenKulessa",
+    "reason": "M5A repository code, tests and redacted evidence only; no external or production mutation"
+  },
+  "requiredPreflight": [
+    "resolve exact current main SHA after this governance package merges",
+    "require ESS-0020 and ADR-0064 Human/Owner acceptance before activation",
+    "verify SA3B and SA4 remain VERIFIED PASS",
+    "verify no open PR changed-file overlap on allowed paths",
+    "verify production mutation remains denied",
+    "inventory all privileged endpoints requiring centralized AAL2",
+    "define positive and required negative tests",
+    "verify rollback preserves legacy recovery until native recovery is proven",
+    "validate mandate schema and exact path scope",
+    "respect GitHub Actions budget policy"
+  ],
+  "requiredEvidence": [
+    "mandateId and Owner activation reference",
+    "exact base main SHA",
+    "branch authorization and outcome audit references",
+    "commit authorization and outcome audit references",
+    "changed path inventory",
+    "positive and negative test results",
+    "no-secret evidence statement",
+    "PR authorization and outcome audit references",
+    "pull request number and exact head SHA",
+    "Human merge required",
+    "branch deletion after merge",
+    "separate production-mutation gate remains blocked"
+  ]
+}

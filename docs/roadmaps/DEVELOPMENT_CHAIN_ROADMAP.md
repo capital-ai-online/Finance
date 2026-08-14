@@ -2,7 +2,7 @@
 
 Status: IMPLEMENTATION ROADMAP
 Status date: 2026-08-12
-Current repository baseline: `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e` (PR #222 merge)
+Current repository baseline: `main@6205868da833a6ee75b5301e78b0a2e6a118c411` (PR #251 merge)
 Repository: `SvenKulessa/Finance`
 Platform version: `0.6.0`
 
@@ -37,39 +37,23 @@ Authority: `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`.
 
 ## Parallel Systemadmin / Mutation-Agent Workstream
 
-PR #220 merged the SA3B GitHub-Actions/OIDC Execution-Host repository implementation. Der erste reale Post-Merge Host-Probe erreichte den Broker und bewies bereits fail-closed:
+Die Systemadmin-Authority ist gegenüber der älteren DEVELOPMENT-CHAIN-Baseline fortgeschritten:
 
-```text
-OIDC / REQUEST BINDING PASS
-→ durable M5 audit persistence FAIL
-→ NO AUDIT PERMIT
-→ NO GITHUB SIDE EFFECT
-```
+- SA3B Execution Host: **COMPLETE / VERIFIED PASS**;
+- SA4 bounded autonomous repository work package: **COMPLETE / VERIFIED PASS**;
+- permit-before-side-effect, positive/negative Host-Probes, M5 authorization/outcome evidence und Branch-Cleanup sind in der SA-Roadmap und Traceability dokumentiert;
+- direkte ChatGPT→GitHub-Connector-Schreibvorgänge bleiben außerhalb des autonomen SA-Nachweispfads;
+- SA5 externe Produktionsmutation bleibt bis M10 `VERIFIED PASS` blockiert.
 
-Der Probe deckte zwei getrennte Blocker auf:
+Für M5A darf der verifizierte SA4-Pfad ausschließlich ein begrenztes Repository-Work-Package ausführen:
 
-1. einen Application↔M5-Schema-Contract-Drift im Audit Writer;
-2. ein produktives Backend-Credential-Problem (`Unregistered API key`) für privilegierte Supabase-Persistenz.
+- Authority: `docs/roadmaps/M5A_SYSTEMADMIN_REPOSITORY_WORK_PACKAGE.md`;
+- Mandat: `.ai/mandates/REM-M5A-REPOSITORY-001.json`;
+- Mandatstatus bei Erstellung: `DRAFT`, damit kein Dokument seine eigene Autorität erzeugt;
+- zulässig: Analyse, Branch, begrenzte Code-/Teständerungen, Commit, Draft-PR, CI-Request und redigierte Evidence;
+- verboten: Supabase-Faktor-/Auth-Mutation, Secrets, Render/Stripe/IONOS, Rulesets, Merge, Owner-MFA/Break-Glass und Self-Expansion.
 
-PR #222 (`fix(sa3b): M5 Audit Writer an Produktionsschema binden`) wurde am 2026-08-12 nach `main@91963f59b74c8c3c3c0b33c6a23237a01ac0128e` gemergt. Er korrigiert den Repository-/Application-Contract gegen das kanonische produktive M5-Schema, ohne Supabase-Schema-, Render-, Stripe- oder Workflow-Mutation.
-
-**SA3B bleibt trotzdem nicht `VERIFIED PASS`.** Vor autonomer Nutzung durch DEVELOPMENT Chain fehlen weiterhin:
-
-1. corrected `main` Deployment / Broker-Verfügbarkeit;
-2. gültiges Owner-kontrolliertes privilegiertes Supabase Backend-Credential;
-3. erfolgreicher realer bounded `BRANCH_PROBE` auf aktuellem `main`;
-4. durable Authorization Evidence vor Branch-Erstellung;
-5. SUCCESS Outcome Evidence nach dem Side Effect;
-6. invalid/stale/no-permit Negativprobe ohne Side Effect;
-7. Probe-Branch Cleanup;
-8. finale Systemadmin Evidence/Roadmap Synchronisierung.
-
-Regeln:
-
-- DEVELOPMENT Chain verändert die Systemadmin Roadmap/Traceability in diesem Dokumentationspaket nicht parallel;
-- ein DevelopmentChain Handoff ersetzt niemals REM/IAM/Execution-Host Enforcement;
-- `MERGE` bleibt Human/Owner-only;
-- bis SA3B `VERIFIED PASS` erreicht, werden direkte mutierende Connector-Aufrufe nicht als autonome DevelopmentChain `VERIFIED PASS` Execution klassifiziert.
+Aktivierung erfordert nach Merge eine exakte current-main-Bindung, Human/Owner-Akzeptanz von ESS-0020/ADR-0064 sowie einen separaten `OWNER_APPROVED`-Status mit Approval-Evidence. Produktion bleibt bis zum späteren M5A-Mutation-Gate unberührt.
 
 ## Phasenstatus
 
@@ -93,7 +77,7 @@ Regeln:
 
 ## Current executable DEVELOPMENT phase — M5A
 
-M5A remains the next repository-development phase. Die M5-Korrektur aus PR #222 muss parallel produktiv verifiziert werden, bevor ein autonomer Mutation Executor für spätere DEVELOPMENT-Chain-Mutationen verwendet werden darf.
+M5A remains the next repository-development phase. Der verifizierte SA4-Ausführungspfad darf nach Aktivierung von `REM-M5A-REPOSITORY-001` das begrenzte Repository-Code-/Test-Paket ausführen. Externe oder produktive Mutationen bleiben davon ausdrücklich ausgeschlossen; SA5 bleibt bis M10 `VERIFIED PASS` blockiert.
 
 ### Goal
 
@@ -263,4 +247,4 @@ Each roadmapped phase closes only when applicable classes are covered:
 
 **M5A remains the next DEVELOPMENT Chain repository implementation gate.** M6–M10 documentation is prepared in advance only to remove planning gaps.
 
-Parallel dazu muss der durch PR #222 korrigierte M5 Application-Audit-Pfad produktiv verifiziert und SA3B anschließend mit positiven/negativen Host-Probes abgeschlossen werden, bevor DEVELOPMENT Chain den autonomen Mutation Executor für spätere externe Mutationen als `VERIFIED PASS` nutzt.
+Nächster zulässiger Auftrag: Human/Owner prüft dieses Governance-Paket, akzeptiert ESS-0020/ADR-0064 für die Repository-Implementierung und aktiviert danach `REM-M5A-REPOSITORY-001` gegen den exakten aktuellen `main`. Der Systemadministrator darf anschließend das M5A-Code-/Test-Paket über den auditierten SA4-Pfad bis zum Draft-PR ausführen. Native Supabase-Faktor-Enrollments und andere externe Mutationen bleiben ein späterer separater Human-/Owner-Gate.
