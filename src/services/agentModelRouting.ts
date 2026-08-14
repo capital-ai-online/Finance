@@ -14,15 +14,14 @@
 // Modellkette ist zentralisiert.
 //
 // Reihenfolge (J3-Folge, explizite Nutzerpriorisierung nach Bereitstellung aller drei Keys):
-// 1) Anthropic Claude, 2) OpenAI, 3) Gemini-Modelle in der vom Agenten übergebenen Reihenfolge
+// 1) Anthropic Claude, 2) OpenAI
 // (i.d.R. Premium -> Flash) als letzter Rückfall. Jede Stufe wird NUR versucht, wenn ein
 // Client dafür konfiguriert ist - ohne einen der drei Keys bleibt die jeweilige Stufe fail-open
 // inaktiv, die Kette rutscht einfach zur naechsten Stufe durch.
 
-import type { AiGenerationClient } from './aiSchema';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
-import { trackedGenerateContent, trackedAnthropicMessage, trackedOpenAIMessage } from './aiUsageTracker';
+import { trackedAnthropicMessage, trackedOpenAIMessage } from './aiUsageTracker';
 import { getAnthropicModel } from '../../server/anthropicClient';
 import { getOpenAIModel } from '../../server/openaiClient';
 
@@ -30,21 +29,19 @@ export interface StructuredGenerationRequest {
   promptId: string;
   contents: string;
   systemInstruction: string;
-  /** Gemini-responseSchema (Type.OBJECT/STRING/NUMBER/...) - fuer Anthropic/OpenAI in ein JSON-Schema konvertiert. */
+  /** Strukturiertes responseSchema (Type.OBJECT/STRING/NUMBER/...) - fuer Anthropic/OpenAI in ein JSON-Schema konvertiert. */
   schema: Record<string, unknown>;
-  /** Gemini-Modelle in Versuchsreihenfolge (letzte Stufe der Kette), z.B. ['gemini-3.1-pro-preview', 'gemini-3.5-flash']. */
-  geminiModels: string[];
   requestId?: string;
 }
 
 export interface StructuredGenerationResult {
   data: any;
-  /** Tatsaechlich erfolgreich verwendetes Modell, z.B. 'anthropic:claude-haiku-4-5', 'openai:gpt-5.4-mini' oder 'gemini-3.1-pro-preview'. */
+  /** Tatsaechlich erfolgreich verwendetes Modell, z.B. 'anthropic:claude-haiku-4-5', 'openai:gpt-5.4-mini'. */
   provider: string;
 }
 
 /**
- * Wandelt ein Gemini-`Type`-Schema (Enum-Werte wie 'OBJECT'/'STRING'/'NUMBER'/'INTEGER'/'ARRAY',
+ * Wandelt ein providerneutrales Schema (Enum-Werte wie 'OBJECT'/'STRING'/'NUMBER'/'INTEGER'/'ARRAY',
  * Grossschreibung) in ein Standard-JSON-Schema (Kleinschreibung) um - fuer Anthropics
  * `tools[].input_schema` und OpenAIs `response_format.json_schema.schema` gleichermassen
  * verwendbar (beide erwarten Standard-JSON-Schema). INTEGER existiert in JSON Schema nicht als
@@ -139,40 +136,16 @@ async function tryOpenAI(
   return null;
 }
 
-async function tryGemini(
-  gemini: AiGenerationClient,
-  req: StructuredGenerationRequest
-): Promise<StructuredGenerationResult | null> {
-  for (const model of req.geminiModels) {
-    try {
-      const response = await trackedGenerateContent(gemini, {
-        model,
-        contents: req.contents,
-        config: {
-          systemInstruction: req.systemInstruction,
-          responseMimeType: 'application/json',
-          responseSchema: req.schema as any,
-        },
-      }, { promptId: req.promptId, requestId: req.requestId });
-      const data = JSON.parse(response.text || '{}');
-      return { data, provider: model };
-    } catch (e) {
-      console.warn(`[AgentModelRouting] Gemini-Modell '${model}' fehlgeschlagen fuer '${req.promptId}'.`, e);
-    }
-  }
-  return null;
-}
-
 /**
  * Fuehrt die Modell-/Provider-Kette fuer eine einzelne strukturierte Agentenanfrage aus, in
- * der Reihenfolge Anthropic -> OpenAI -> Gemini. Liefert `null`, wenn kein Provider
+ * der Reihenfolge Anthropic -> OpenAI. Liefert `null`, wenn kein Provider
  * konfiguriert ist ODER alle konfigurierten Provider fehlschlagen - der Aufrufer (Agent)
  * faellt dann auf seinen eigenen, hartkodierten getFallback() zurueck.
  */
 export async function generateStructuredWithFallback(
-  req: StructuredGenerationRequest & { gemini: AiGenerationClient | null; anthropic: Anthropic | null; openai: OpenAI | null }
+  req: StructuredGenerationRequest & { anthropic: Anthropic | null; openai: OpenAI | null }
 ): Promise<StructuredGenerationResult | null> {
-  const { gemini, anthropic, openai, ...rest } = req;
+  const { anthropic, openai, ...rest } = req;
 
   if (anthropic) {
     const result = await tryAnthropic(anthropic, rest);
@@ -184,16 +157,11 @@ export async function generateStructuredWithFallback(
     if (result) return result;
   }
 
-  if (gemini) {
-    const result = await tryGemini(gemini, rest);
-    if (result) return result;
-  }
-
   return null;
 }
 
 // ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): Nutzerentscheidung, dieselbe
-// Anthropic -> OpenAI -> Gemini-Priorisierung auch fuer freie Textantworten (nicht nur
+// Anthropic -> OpenAI-Priorisierung auch fuer freie Textantworten (nicht nur
 // schema-gebundene Agentenausgaben) anzuwenden, je nach Anwendungsfall. Zwei Anwendungsfaelle
 // bleiben davon bewusst ausgenommen und weiterhin direkt an Gemini gebunden, weil sie eine
 // Gemini-spezifische Faehigkeit voraussetzen, die die anderen beiden Provider hier nicht
@@ -212,8 +180,6 @@ export interface TextGenerationRequest {
   /** Vorherige Gespraechsrunden, aelteste zuerst. Fehlt sie, ist die Anfrage einzelstehend. */
   history?: ChatTurn[];
   systemInstruction: string;
-  /** Gemini-Modelle in Versuchsreihenfolge (letzte Stufe der Kette). */
-  geminiModels: string[];
   /** Anthropic/OpenAI verlangen ein explizites Token-Limit (anders als Gemini, das ohne
    *  Angabe seinen eigenen, i.d.R. grossen Default nutzt - hier unveraendert gelassen).
    *  Default DEFAULT_TEXT_MAX_TOKENS passt fuer Chat-Antworten; Anwendungsfaelle mit groesserem
@@ -280,38 +246,15 @@ async function tryOpenAIText(openai: OpenAI, req: TextGenerationRequest): Promis
   return null;
 }
 
-async function tryGeminiText(gemini: AiGenerationClient, req: TextGenerationRequest): Promise<TextGenerationResult | null> {
-  const contents = [
-    ...(req.history ?? []).map(turn => ({ role: turn.role === 'user' ? 'user' : 'model', parts: [{ text: turn.text }] })),
-    { role: 'user', parts: [{ text: req.contents }] },
-  ];
-  for (const model of req.geminiModels) {
-    try {
-      const response = await trackedGenerateContent(gemini, {
-        model,
-        contents,
-        config: { systemInstruction: req.systemInstruction },
-      }, { promptId: req.promptId, requestId: req.requestId });
-      if (typeof response.text === 'string' && response.text.length > 0) {
-        return { text: response.text, provider: model };
-      }
-      console.warn(`[AgentModelRouting] Gemini-Modell '${model}' ohne Textinhalt fuer '${req.promptId}'.`);
-    } catch (e) {
-      console.warn(`[AgentModelRouting] Gemini-Modell '${model}' fehlgeschlagen fuer '${req.promptId}'.`, e);
-    }
-  }
-  return null;
-}
-
 /**
  * Freitext-Gegenstueck zu generateStructuredWithFallback(): dieselbe Provider-Kette
- * (Anthropic -> OpenAI -> Gemini), aber ohne Response-Schema - fuer Anwendungsfaelle wie den
+ * (Anthropic -> OpenAI), aber ohne Response-Schema - fuer Anwendungsfaelle wie den
  * Chat-Assistenten oder die Dokumenten-Propagation, die volltextliche statt strukturierte
  * Antworten benoetigen. Liefert `null`, wenn kein Provider konfiguriert ist ODER alle
  * konfigurierten Provider fehlschlagen.
  */
 export async function generateTextWithFallback(
-  req: TextGenerationRequest & { gemini: AiGenerationClient | null; anthropic: Anthropic | null; openai: OpenAI | null }
+  req: TextGenerationRequest & { anthropic: Anthropic | null; openai: OpenAI | null }
 ): Promise<TextGenerationResult | null> {
   const { gemini, anthropic, openai, ...rest } = req;
 
@@ -322,11 +265,6 @@ export async function generateTextWithFallback(
 
   if (openai) {
     const result = await tryOpenAIText(openai, rest);
-    if (result) return result;
-  }
-
-  if (gemini) {
-    const result = await tryGeminiText(gemini, rest);
     if (result) return result;
   }
 
