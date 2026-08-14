@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.1.0",
+  "claimId": "R101-PRODUCTION-EVIDENCE-2026-08-14",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5",
+    "executionSurface": "Codex Work GitHub/Supabase/Render Connector"
+  },
+  "workItem": "R-101 Outbox-Produktionsmigration revisionssicher dokumentieren und ADR-0054 auf VERIFIED PASS synchronisieren.",
+  "startedAt": "2026-08-14T22:40:00Z",
+  "baseBranch": "main",
+  "baseSha": "ef711596f0020764441ff6ea9e1cf350b6ad2c1a",
+  "pullRequest": null,
+  "claimedPaths": [
+    ".ai/work-claims/R101-PRODUCTION-EVIDENCE-2026-08-14.json",
+    "docs/adr/ADR-0054-durable-worker-outbox-lease.md",
+    "docs/evidence/r101/R101_OUTBOX_PRODUCTION_MIGRATION_EVIDENCE.md"
+  ],
+  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
+}
