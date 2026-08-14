@@ -53,8 +53,6 @@ aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
     const result = await generateTextWithFallback({
       anthropic,
       openai,
-      gemini: null,
-      geminiModels: [],
       promptId: 'chat-assistant',
       contents: message,
       history: chatHistory,
