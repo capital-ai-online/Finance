@@ -163,7 +163,7 @@ A later phase cannot start while a predecessor required mutation/test is missing
 
 | Platform | Roadmap point | Allowed scope | Gate before next phase |
 |---|---|---|---|
-| Supabase | M5 Audit | append-only audit persistence remains verified; application writer is under corrective runtime verification after PR #222 | real privileged audit insert + Evidence must pass before autonomous mutation reliance |
+| Supabase | M5 Audit | append-only audit persistence and application writer both VERIFIED PASS (corrective runtime verification after PR #222 closed 2026-08-14) | real privileged audit insert confirmed, see `docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md` |
 | Supabase Auth | M5A | Native TOTP/AAL2, recovery, exact conditional Auth config only | code+CI → precheck → explicit Owner approval → factor/AAL2/recovery/advisor verification |
 | Render | M7 | exact deployment identity / environment-scoped deploy config | precheck → explicit Owner approval → mutation → deploy/health/readiness/rollback verification |
 | Stripe | M7 only when separately named | exact webhook/config/credential operation | dedicated authority + test/non-destructive precheck + explicit approval + verification |
@@ -200,7 +200,7 @@ Repository/governance milestones:
 | M2G Documentation Freeze | COMPLETE | COMPLETE | Freeze policy | freeze verification | sequential implementation |
 | M3 CI Hardening | COMPLETE | COMPLETE | ADR-0053/0060 + CI policy | scope-aware one `build-and-test` | preserve until M10 cutover |
 | M4 Agent IAM | COMPLETE | COMPLETE | ADR-0058 + ESS-0018/0019 | negative IAM tests | preserve |
-| M5 Observability/Telemetry/Audit | **PERSISTENCE VERIFIED / APPLICATION CORRECTIVE VERIFICATION ACTIVE** | COMPLETE | ADR-0056/0059 + M5 Evidence | corrected writer merged in PR #222; production credential + real successful audit insert still required | M5A repo work may continue; autonomous mutation blocked |
+| M5 Observability/Telemetry/Audit | **VERIFIED PASS** | COMPLETE | ADR-0056/0059 + M5 Evidence | corrected writer merged in PR #222; real successful audit insert confirmed 2026-08-14 (`docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md`) | autonomous mutation remains blocked independent of this (SA5/M10 gate) |
 | M5A Supabase Native MFA/AAL2 | **IN PROGRESS** | BASELINE/RUNBOOK READY | ESS-0020 + ADR-0064 + ADR-0003.5 | repository remediation + CI; Owner native factor mutation separately approved; AAL2/recovery/advisor tests | M6 blocked until VERIFIED PASS |
 | M6 Supply Chain | **BLOCKED BY M5A** | RUNBOOK READY | ADR-0060 | exact source/lock/SBOM/artifact/provenance/attestation verification | M7 after M6 VERIFIED PASS |
 | M7 Deployment Identity / Platform Mutation | **BLOCKED BY M6** | RUNBOOK READY | ADR-0061 | exact target + approval + platform mutation + postverify/rollback | M8 after all required M7 PASS |

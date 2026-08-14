@@ -29,7 +29,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 
 | ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
 |---|---|---|---|---|
-| DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M4 COMPLETE; M5 Evidence offen; **M5A VERIFIED PASS** (2026-08-14); M6 bereit zum Start, M7–M10 weiterhin sequenziell blockiert | M5 Evidence vervollständigen; M6-Arbeitspaket beauftragen |
+| DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M5 **VERIFIED PASS**; **M5A VERIFIED PASS** (2026-08-14); M6 bereit zum Start, M7–M10 weiterhin sequenziell blockiert | M6-Arbeitspaket beauftragen |
 | S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | READY FOR OWNER REVIEW; S1.0–S1.6 nicht vollständig VERIFIED PASS | F-01–F-18 gegen aktuelles main revalidieren |
 | DOC | Documentary/Event Value Chain | `docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` | ACTIVE / PARTIAL | D0 read-only Baseline |
 | SA | Systemadministrator-Agent | `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md` | SA0–SA4 VERIFIED PASS; SA5 blockiert | dokumentenbasierte Prototypen nach ESS-0023 |
@@ -99,7 +99,7 @@ M5A Exit (alle Punkte erfüllt, siehe Closure-Evidence für Details je Punkt):
 | Prio | Arbeitspaket | Roadmap-Bindung | Systemadministrator-Prototyp | Exit |
 |---|---|---|---|---|
 | P0-1 | AI-Transparenz aller produktiven AI-Ausgaben | DOC, M8, ESS-0023 | SA-P01 read-only Output-Inventar + Contract-Test-Skelett | alle kundenwirksamen Ausgaben klassifiziert |
-| P0-2 | ADR-0059 Runtime-Auditstatus verifizieren | M5 | SA-P02 redigierter Audit-Probe-Plan | realer privilegierter Insert + Korrelation PASS |
+| P0-2 | ADR-0059 Runtime-Auditstatus verifizieren | M5 | SA-P02 redigierter Audit-Probe-Plan (**abgeschlossen 2026-08-14**) | realer privilegierter Insert + Korrelation **PASS** — `docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md` |
 | P0-3 | M5A Abschluss-Evidence | M5A | SA-P03 AAL2-/Recovery-Evidence Collector, read-only zuerst | M5A VERIFIED PASS |
 | P1-1 | AI-Use-Case-Register | DOC/M8/M9 | SA-P04 Registry-Schema/Validator | Use Cases mit Materialität/Risiko/Owner |
 | P1-2 | Provider-Failover/Modellwechsel | M8/M9 | SA-P05 Cutover-Simulator ohne Produktion | kontrollierter Cutover/Rollback PASS |
@@ -121,7 +121,7 @@ M5A Exit (alle Punkte erfüllt, siehe Closure-Evidence für Details je Punkt):
 | M2G Freeze | COMPLETE | Drift-Erkennung | keine stillen Statusänderungen |
 | M3 CI Hardening | COMPLETE / laufend | kostensensitiver Check-Plan | Owner Gate + erforderliche CI |
 | M4 Agent IAM | COMPLETE | DENY-first Policy-Probes | keine Provider-Eskalation |
-| M5 Audit/Telemetry | VERIFICATION ACTIVE | SA-P02 | realer Auditinsert und OTEL-Korrelation |
+| M5 Audit/Telemetry | **VERIFIED PASS** | SA-P02 (abgeschlossen) | realer Auditinsert und OTEL-Korrelation — siehe `docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md` |
 | M5A Native MFA/AAL2 | **VERIFIED PASS** | SA-P03 (abgeschlossen) | AAL2, DENY, Recovery, Advisor, Audit PASS — siehe `docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md` |
 | M6 Supply Chain | READY TO START | SBOM/Provenance-Prototyp | source→artifact attestation |
 | M7 Deployment Identity | BLOCKED BY M6 | Mutation-Proposal Generator | Zielbindung, Approval, Postcheck, Rollback |
@@ -201,7 +201,7 @@ Kein gemergter Branch wird wiederverwendet. PR #257 bleibt Documentation-only; P
 
 | Reihenfolge | Paket | Modus | Startbedingung |
 |---:|---|---|---|
-| 1 | M5/M5A Evidence Sync | read-only/verifizierend | M5A abgeschlossen (`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`); M5 App-Audit-Evidence weiterhin offen |
+| 1 | M5/M5A Evidence Sync | read-only/verifizierend | **erledigt** — M5 (`docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md`) und M5A (`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`) beide VERIFIED PASS |
 | 2 | P0 AI-Transparenz + Auditpfad | read-only/Testspezifikation | sofort |
 | 3 | S1 Revalidierung | read-only | aktuelle main-Baseline |
 | 4 | Documentary D0 | read-only | Single-Writer geklärt |

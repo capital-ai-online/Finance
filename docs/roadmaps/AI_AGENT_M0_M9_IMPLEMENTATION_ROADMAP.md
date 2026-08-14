@@ -89,7 +89,7 @@ Every work item uses a fresh branch from then-current `main`. After successful H
 | M2/M2G Architecture + Freeze | COMPLETE | sequential implementation only |
 | M3 CI Hardening | COMPLETE | one bounded expensive CI path |
 | M4 Agent IAM | COMPLETE | negative IAM / no autonomous MERGE |
-| M5 Audit | **PERSISTENCE VERIFIED / APPLICATION CORRECTIVE VERIFICATION ACTIVE** | PR #222 corrected mapping; real privileged audit insert still required |
+| M5 Audit | **VERIFIED PASS** | PR #222 corrected mapping; real privileged audit insert confirmed 2026-08-14, see `docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md` |
 | M5A Native MFA/AAL2 | **IN PROGRESS** | code/CI then separate Owner production approval and native AAL2 verification |
 | M6 Supply Chain | **BLOCKED BY M5A** | source→SBOM→artifact→provenance/attestation verified |
 | M7 Deployment Identity | **BLOCKED BY M6** | exact approved platform mutation + postverify/rollback |
