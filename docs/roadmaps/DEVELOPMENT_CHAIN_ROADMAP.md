@@ -2,7 +2,7 @@
 
 Status: IMPLEMENTATION ROADMAP
 Status date: 2026-08-14
-Current repository baseline: `main@5ba4ab12f7c6d98912b95bf000ceb352d9297fcd` (PR #252 merge)
+Current repository baseline: `main@66da35b80ba23e4f216318a9cd9f9b4e7b787679` (PR #255 merge)
 Repository: `SvenKulessa/Finance`
 Platform version: `0.6.0`
 
@@ -83,7 +83,7 @@ unberührt.
 | M3 CI Hardening | **COMPLETE** | COMPLETE | ADR-0053/0060 + CI governance | scope-aware CI / Owner gate | preserve until M10 cutover |
 | M4 Agent IAM | **COMPLETE** | COMPLETE | ADR-0058 + ESS-0018/0019 | negative IAM tests | preserve |
 | M5 Audit / Telemetry | **PERSISTENCE VERIFIED / APPLICATION CORRECTIVE VERIFICATION ACTIVE** | COMPLETE | ADR-0056/0059 + M5 Evidence | PR #222 merged; corrected writer must still deploy and prove a real successful privileged audit insert | M5A repository work may continue; autonomous mutation remains blocked |
-| M5A Native MFA / AAL2 | **CODE COMPLETE / CI PENDING MERGE** | baseline + runbook ready | ESS-0020 + ADR-0064 + ADR-0003.5 | repo code implemented (`docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`) → CI → Human merge → explicit Owner production approval → native factor/AAL2/recovery/advisor verification | M6 blocked until VERIFIED PASS |
+| M5A Native MFA / AAL2 | **CODE MERGED / NATIVE MFA OWNER-ATTESTED ACTIVE / VERIFICATION PENDING** | baseline + runbook ready | ESS-0020 + ADR-0064 + ADR-0003.5 | repo code implemented (`docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`) → CI → Human merge → explicit Owner production approval → native factor/AAL2/recovery/advisor verification | M6 blocked until VERIFIED PASS |
 | M6 Supply Chain Provenance | **BLOCKED BY M5A** | **RUNBOOK READY** | ADR-0060 | SBOM/provenance/attestation bound to exact source/artifact | M7 after M6 VERIFIED PASS |
 | M7 Deployment Identity / Platform Mutation | **BLOCKED BY M6** | **RUNBOOK READY** | ADR-0061 | exact target + Owner mutation approval + post-verification/rollback | M8 after all required M7 mutations VERIFIED PASS |
 | M8 Agent Cutover | **BLOCKED BY M7** | **RUNBOOK READY** | ADR-0062 + ESS-0019 | provider-neutral profiles + equivalent policy tests + rollback to read-only | M9 after cutover VERIFIED PASS |
@@ -95,7 +95,7 @@ unberührt.
 ## Current executable DEVELOPMENT phase — M5A
 
 M5A repository code (native TOTP enroll/challenge/verify, centralized server-side AAL2 gate,
-step-up coupling) is implemented and pending Human/Owner PR review and CI — see
+step-up coupling) is merged via PR #255. Native MFA ist laut Owner-Attestation vom 2026-08-14 aktiviert; AAL2-, DENY-, Recovery-, Advisor- und Audit-Evidence bleibt offen — see
 `docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`. Externe oder produktive Mutationen
 bleiben davon ausdrücklich ausgeschlossen; SA5 bleibt bis M10 `VERIFIED PASS` blockiert.
 
@@ -265,6 +265,6 @@ Each roadmapped phase closes only when applicable classes are covered:
 
 ## Current Next Action
 
-**M5A remains the next DEVELOPMENT Chain repository implementation gate.** M6–M10 documentation is prepared in advance only to remove planning gaps.
+**M5/M5A verification is the next DEVELOPMENT Chain gate.** M6–M10 documentation is prepared in advance only to remove planning gaps.
 
-Nächster zulässiger Auftrag: Human/Owner prüft dieses Governance-Paket, akzeptiert ESS-0020/ADR-0064 für die Repository-Implementierung, spezifiziert und implementiert den in der Korrektur oben beschriebenen eigenen M5A-Ausführungshost und aktiviert erst danach `REM-M5A-REPOSITORY-001` gegen den exakten aktuellen `main`. Der bestehende SA4-Pfad deckt M5A nicht ab. Native Supabase-Faktor-Enrollments und andere externe Mutationen bleiben ein späterer separater Human-/Owner-Gate.
+Nächster zulässiger Auftrag: M5 Audit-Evidence und M5A AAL2-/DENY-/Recovery-/Advisor-Evidence read-only vervollständigen. Mutation Requests dürfen vom Owner oder Systemadministrator-Agenten initiiert werden; jede externe oder sicherheitsrelevante Ausführung benötigt weiterhin ein exaktes Proposal und ausdrückliche Owner-Freigabe gemäß ADR-0071/ESS-0023.
