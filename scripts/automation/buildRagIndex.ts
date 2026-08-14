@@ -4,7 +4,7 @@
 // src/platform/Traceability (N4): explizit per `npm run rag:build-index`, nicht als
 // ueberraschende Nebenwirkung jedes Entwicklerlaufs (vgl. AUD2-F-014).
 //
-// Erfordert OPENAI_API_KEY oder GEMINI_API_KEY. Ohne einen der beiden bricht der Lauf mit einer
+// Erfordert OPENAI_API_KEY. Ohne einen der beiden bricht der Lauf mit einer
 // klaren Fehlermeldung ab, statt einen Index mit erfundenen Vektoren zu schreiben.
 
 import { loadCorpusChunks } from '../../src/services/rag/documentLoader';
@@ -15,7 +15,7 @@ const BATCH_SIZE = 100;
 
 async function main() {
   if (!isEmbeddingProviderConfigured()) {
-    console.error('[buildRagIndex] Weder OPENAI_API_KEY noch GEMINI_API_KEY gesetzt - kein Embedding-Provider konfiguriert. Abbruch ohne Index.');
+    console.error('[buildRagIndex] OPENAI_API_KEY nicht gesetzt - kein Embedding-Provider konfiguriert. Abbruch ohne Index.');
     process.exit(1);
   }
 
