@@ -238,13 +238,19 @@ jobs:
 
   deploy-production:
     name: Deployment verifiziert / Render-Produktion
-    needs: [build-and-test]
+    # M7 (ADR-0061, docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md): der Required Trust Chain
+    # zufolge muss eine "protected deployment request" erst nach verifizierter M6-Provenance
+    # erfolgen ("M6 verified artifact/provenance -> protected deployment request"). Vorher haengte
+    # dieser Job nur von build-and-test ab und konnte auch dann ausloesen, wenn die Supply-Chain-
+    # Attestation fehlschlug. supply-chain-attestation ist daher jetzt eine zusaetzliche, fail-closed
+    # Voraussetzung.
+    needs: [build-and-test, supply-chain-attestation]
     # Dieser Job lief zuvor bei jedem PR- und Push-Event, nur intern per Step-if auf den
     # echten Deploy beschraenkt. Ein job-level `environment:` wuerde dadurch JEDE PR-CI-Ausfuehrung
     # auf eine GitHub-Environment-Freigabe warten lassen. Der Job laeuft daher jetzt nur noch fuer
     # den tatsaechlichen main-Push-Pfad; PR-Events ueberspringen ihn vollstaendig (kein Funktionsverlust,
     # zuvor war der PR-Zweig ohnehin nur eine informative Echo-Ausgabe).
-    if: ${{ needs.build-and-test.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: ${{ needs.build-and-test.result == 'success' && needs.supply-chain-attestation.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     environment: production
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -261,6 +267,49 @@ jobs:
           curl --fail-with-body --silent --show-error --location \
             --request POST \
             "${RENDER_DEPLOY_HOOK_URL}${separator}ref=${VERIFIED_COMMIT_SHA}"
+
+  verify-deployment-identity:
+    name: Deployment-Identität post-verifizieren
+    # M7 Required Trust Chain, letztes fehlendes Glied: "health/readiness verification ->
+    # immutable deployment evidence". deploy-production loeste den Render-Deploy-Hook bisher nur
+    # aus und endete sofort - ob der erwartete Commit tatsaechlich live und gesund ist, wurde nie
+    # automatisiert geprueft. Dieser Job pollt den oeffentlichen /healthz-Endpunkt (ADR-0036), bis
+    # er den ausgeloesten Commit als live+healthy meldet, oder schlaegt fail-closed fehl.
+    needs: [deploy-production]
+    if: ${{ needs.deploy-production.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24.18.0'
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Deployte Commit-Identität und Health gegen erwarteten main-Commit verifizieren
+        env:
+          VERIFIED_COMMIT_SHA: ${{ github.sha }}
+        run: npx tsx scripts/deployment/verifyDeploymentIdentity.ts
+
+      - name: Deployment-Identitäts-Evidence als Workflow-Artefakt ablegen
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: deployment-identity-evidence-${{ github.sha }}
+          path: artifacts/deployment/deployment-identity-evidence.json
+          retention-days: 90
+          if-no-files-found: error
 
   supply-chain-attestation:
     name: Supply-Chain-Provenance / Attestation
