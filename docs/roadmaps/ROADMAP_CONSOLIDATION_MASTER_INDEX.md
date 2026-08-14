@@ -37,9 +37,11 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 | MA | Marketing Agent | `docs/roadmaps/MARKETING_AGENT_ROADMAP.md` | DRAFT; MA0 offen | MA0 Dokumentation/Owner Review |
 | SEO | SEO Management | `docs/seo/SEO_MANAGEMENT_ROADMAP.md` | ACTIVE, Baseline 2026-08-08 | Q1–Q6 read-only revalidieren |
 | GOV | GitHub/CI/Branch Governance | DEVELOPMENT Policy + PR-Template | laufend | Kosten-, Gate- und Branch-Cleanup-Evidence pflegen |
-| AI-T | AI-Transparenz/Provenance | ESS-0020/ADR-0057/0059/0062/0064 | teilweise nachgewiesen | kundenwirksame Ausgaben und Auditpfade verifizieren |
+| AI-T | AI-Transparenz/Provenance | ADR-0057/0059/0062 + Documentary Provenance; eigener Content-Transparency-Contract noch offen | teilweise nachgewiesen | P0-Vertrag für kundenwirksame Ausgaben erstellen und Ausgabe-/Auditpfade verifizieren |
 
 Nicht als eigene offene Programme zählen: `docs/architecture/ROADMAP.md`, `AI_AGENT_M0_M9_IMPLEMENTATION_ROADMAP.md`, abgeschlossene Vocabulary-Migrationen, einzelne Work Packages und Work Claims.
+
+Hinweis zur Nummerierung: Die vorhandene `.ai/skills/ESS-0020-Supabase-Native-MFA-AAL2-Hardening.md` ist ausschließlich MFA/AAL2-Authority. Sie darf nicht als AI-Content-Transparency-Contract zitiert werden. Ein eigener Transparenzvertrag bleibt Bestandteil von P0-1 und erhält erst nach Kollisionsprüfung eine freie ESS-ID.
 
 ## 4. Mutationsanfrage und Freigabe
 
