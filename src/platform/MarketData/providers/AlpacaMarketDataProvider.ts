@@ -7,6 +7,7 @@ import {
   MARKET_DATA_CONTRACT_VERSION,
   type CanonicalMarketDataSnapshot,
   type MarketDataProvider,
+  type MarketDataProviderDescriptor,
   type MarketDataQualityState,
   type SnapshotRequest,
 } from '../contracts';
@@ -23,11 +24,11 @@ function qualityState(state: AlpacaShadowState): MarketDataQualityState {
 }
 
 export class AlpacaMarketDataProvider implements MarketDataProvider {
-  readonly descriptor = {
+  readonly descriptor: MarketDataProviderDescriptor = {
     id: 'alpaca',
-    role: 'shadow' as const,
-    capabilities: ['snapshot', 'trade'] as const,
-    assetClasses: ['stock'] as const,
+    role: 'shadow',
+    capabilities: ['snapshot', 'trade'],
+    assetClasses: ['stock'],
     enabled: true,
     priority: 100,
   };
