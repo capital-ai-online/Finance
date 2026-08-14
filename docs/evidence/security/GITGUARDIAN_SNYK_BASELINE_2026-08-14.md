@@ -1,64 +1,82 @@
 # GitGuardian-/Snyk-Integrationsbaseline — 2026-08-14
 
-Status: PARTIAL / SECOND SNYK HEAD VERIFICATION ACTIVE  
-Repository: `SvenKulessa/Finance`  
-Aktuelle Main-Baseline: `main@efefd4298ea8e6a2dc712d03192e894a19ae4464`  
-Aktueller Verifikationsbranch: `agent/snyk-pr-check-verification-2`
+Status: VERIFIED PASS / SNYK PROMOTED TO REQUIRED CHECKS, GITGUARDIAN-PROMOTION UNBESTÄTIGT
+Repository: `SvenKulessa/Finance`
+Aktuelle Main-Baseline: `main@e2830fba142e076c49b8837e0823b8526f5f4e26` (PR #253 Merge)
 
-## Verifizierte Repository-Fakten
+## Korrektur 2026-08-14 (Sicherheitsaudit-Nachtrag)
 
-- PR #249 wurde als `d084b33d90bd416258b2887f7493607928a691e3` gemerged.
-- PR #250 wurde als `efefd4298ea8e6a2dc712d03192e894a19ae4464` gemerged.
-- Beide zugehörigen Remote-Branches wurden nach Merge automatisch gelöscht.
-- Zum Beginn dieses Verifikationsschritts waren keine Pull Requests offen.
-- Auf `main` existiert keine aktive GitGuardian- oder Snyk-Workflowdatei.
-- `.github/workflows/**`, Rulesets und Secrets werden durch diesen Branch nicht verändert.
-- `capital-ai-ci` bleibt unverändert.
+Die vorherige Fassung dieses Dokuments stufte Snyk als „PARTIAL / SECOND SNYK HEAD
+VERIFICATION ACTIVE" ein und behauptete für PR #249, es sei „kein Check erschienen". Das war
+falsch. Eine direkte Abfrage der GitHub-Commit-Status-API (nicht der Checks-API — Snyk meldet
+über die ältere Status-API, die in der PR-UI unter „Show all checks" statt im Actions-Tab
+erscheint und beim vorherigen Review offenbar übersehen wurde) zeigt für alle drei zuletzt
+gemergten PRs vollständige, head-gebundene Snyk- und GitGuardian-Evidence:
 
-## Head-SHA-Evidence
-
-| PR | Head-SHA | GitGuardian | Snyk | Pipeline |
+| PR | Head-SHA | `security/snyk` | `code/snyk` | GitGuardian |
 |---|---|---|---|---|
-| #249 | `680c1d2894260447e74fc3374c94cdf969dc75a7` | PASS — Owner-bestätigt | kein Check | Merge erfolgreich |
-| #250 | `7a6c72bc6aa19bae2721b330c53ba962cb53e730` | PASS — in „alle Tests erfolgreich“ enthalten | PASS — Check in Pipeline enthalten | alle Tests PASS, Merge erfolgreich |
+| #249 | `680c1d2894260447e74fc3374c94cdf969dc75a7` | ✅ „No manifest changes detected in 1 project" | ✅ „No new Code Analysis issues found" | ✅ |
+| #250 | `7a6c72bc6aa19bae2721b330c53ba962cb53e730` | ✅ „1 security test has passed" | ✅ „No new Code Analysis issues found" | ✅ |
+| #251 | `b81ee47ce08a04b5a87fa74667e8adca627cdaad` | ✅ „1 security test has passed" | ✅ „No new Code Analysis issues found" | ✅ |
 
-PR #249 zählt als erster GitGuardian-Head. PR #250 zählt als zweiter GitGuardian-Head und erster Snyk-Head. Dieser neue PR ist der zweite unabhängige Snyk-Head.
+Wichtiger Nebenbefund: `code/snyk` ist **Snyk Code**, also ein SAST-Check (semantische
+Quellcode-Schwachstellenanalyse) — nicht nur Dependency-Scanning. Das war beim Schreiben der
+vorherigen Fassung nicht als eigene Kategorie erkannt.
 
-## Owner-bestätigte Snyk-Konfiguration
+## Owner-bestätigte Konfiguration
 
-- Snyk ist mit GitHub verbunden.
-- `SvenKulessa/Finance` wurde importiert.
-- PR-Check-Konfiguration wurde im importierten Repository eingestellt.
-- Ein Snyk-Token ist als GitHub Secret hinterlegt.
-- Für PR #250 erschien der Snyk-Check in der Pipeline und war erfolgreich.
+- GitGuardian ist als GitHub App verbunden und liefert `GitGuardian Security Checks`.
+- Snyk ist mit GitHub verbunden, `SvenKulessa/Finance` importiert, PR-Check-Konfiguration aktiv.
+- Auf `main` existiert keine aktive GitGuardian- oder Snyk-Workflowdatei — beide laufen
+  vollständig anbieterseitig, exakt wie in ADR-0070 vorgesehen.
+- Ein Snyk-Token liegt weiterhin als GitHub Repository Secret; der Tokenwert wurde zu keinem
+  Zeitpunkt gelesen, angezeigt oder in Evidence übernommen.
 
-Der Tokenwert wurde nicht gelesen, angezeigt oder in Evidence übernommen. Da ADR-0070 eine App-only-Architektur vorsieht und kein Repository-Workflow das Secret konsumiert, bleibt die Notwendigkeit des Secrets nach Abschluss der zweiten Head-Verifikation separat zu entscheiden.
+## Owner-Entscheidung 2026-08-14: Promotion zu Required Checks
 
-## Offene Nachweise
+Der in ADR-0070 definierte Promotion-Gate („kein Check wird vor zwei Head-gebundenen
+erfolgreichen PR-Läufen und separater Owner-Freigabe als Required Check promoviert") ist mit drei
+statt zwei unabhängigen, head-gebundenen PASS-Läufen erfüllt. Der Owner hat die Promotion
+freigegeben:
 
-- [ ] GitGuardian-App-Zugriff ist auf `SvenKulessa/Finance` begrenzt.
-- [ ] GitGuardian arbeitet ohne Repository-Schreibrechte.
-- [x] Erster GitGuardian-Head: PR #249.
-- [x] Zweiter GitGuardian-Head: PR #250.
-- [x] Snyk-GitHub-Integration hat `SvenKulessa/Finance` importiert — Owner-bestätigt.
-- [ ] Snyk automatische Fix-PRs/Write-Zugriffe sind deaktiviert.
-- [x] Erster Snyk-Head: PR #250.
-- [ ] Zweiter unabhängiger Snyk-Head: aktueller PR.
-- [ ] Keine Secrets erscheinen in exportierter Evidence.
-- [ ] Notwendigkeit des GitHub Secrets ist geklärt.
-- [ ] Separate Owner-Entscheidung über eine spätere Required-Check-Promotion.
+- `security/snyk (svenkulessa)` und `code/snyk (svenkulessa)` wurden anstelle von CodeQL als
+  Required Checks im `main-production-protection`-Ruleset aktiviert (Owner-bestätigt). Ob
+  `GitGuardian Security Checks` ebenfalls als Required Check aktiv ist, ist zum Zeitpunkt dieser
+  Dokument-Fassung noch nicht Owner-bestätigt und daher als offener Nachweis unten geführt statt
+  als erledigt markiert. `.github/policies/main-production-protection.expected.json`
+  (`decision_2026-08-14c`) beschreibt den vorgeschlagenen Zielzustand mit allen drei Kontexten.
+- CodeQL wurde geprüft und **nicht** als Required Check übernommen: `code/snyk` deckt dieselbe
+  SAST-Kategorie bereits ab, ohne zusätzliche GitHub-Actions-Laufzeit zu benötigen — genau das
+  Designziel von ADR-0070. Eine parallele SAST-Engine wäre Doppelarbeit, kein zusätzlicher Schutz
+  im Sinne einer neuen Bedrohungskategorie.
+
+## Owner-Entscheidung 2026-08-14b: Snyk-Token bleibt gesetzt
+
+Der Owner hat bestätigt, dass der bestehende Snyk-Token als GitHub Repository Secret absichtlich
+gesetzt ist und weiterverwendet werden soll — keine Altlast. Grep über `.github/workflows/**`
+bestätigt weiterhin, dass kein Repository-Workflow das Secret direkt liest; die Verwendung erfolgt
+ausschließlich anbieterseitig innerhalb der Snyk-GitHub-Integration, konsistent mit der
+App-only-Architektur aus ADR-0070. Damit ist dieser Punkt geschlossen.
+
+## Offene Nachweise (nur Owner-seitig einsehbar, kein Tool-Zugriff verfügbar)
+
+- [ ] GitGuardian-App-Zugriff ist auf `SvenKulessa/Finance` begrenzt (App-Berechtigungen unter
+  GitHub Settings → Applications, nicht per Tool abfragbar).
+- [ ] GitGuardian arbeitet ohne Repository-Schreibrechte (dieselbe Quelle).
+- [ ] Snyk automatische Fix-PRs/Write-Zugriffe sind im Snyk-Dashboard deaktiviert.
+- [ ] `GitGuardian Security Checks` als Required Check im Ruleset bestätigen oder bewusst weglassen
+  (siehe Owner-Entscheidung oben — noch offen, ob es zusätzlich zu `security/snyk` und `code/snyk`
+  aktiviert wurde).
 
 ## Bewertung
 
 | Kontrolle | Status | Begründung |
 |---|---|---|
-| GitGuardian Laufzeit | VERIFIED PASS | zwei unabhängige PR-Heads Owner-bestätigt |
-| Snyk Repository-Import | VERIFIED ACTIVE | PR #250 lieferte Pipeline-Check |
-| Snyk PR Checks | PARTIAL PASS | ein erfolgreicher Head; zweiter läuft |
-| App-only Architektur | IMPLEMENTED IN GOVERNANCE | keine Scanner-Workflow-Mutation |
-| GitHub Secret | REVIEW REQUIRED | vorhanden, aber möglicherweise nicht benötigt |
-| Required-Check-Promotion | BLOCKED | zweiter erfolgreicher Snyk-Head + separate Owner-Freigabe fehlen |
-
-## Nächster Schritt
-
-Dieser Dokumentations-PR dient ausschließlich als zweiter unabhängiger Snyk-Head-Test. Nach erfolgreichem Snyk-Check und Merge kann die Scanner-Laufzeitintegration geschlossen werden. Required-Check-Promotion und Secret-Entfernung bleiben separate sicherheitsrelevante Owner-Entscheidungen.
+| GitGuardian Laufzeit | VERIFIED PASS | drei unabhängige PR-Heads, alle grün |
+| Snyk Dependency-Scan (`security/snyk`) | VERIFIED PASS | drei unabhängige PR-Heads, alle grün |
+| Snyk Code / SAST (`code/snyk`) | VERIFIED PASS | drei unabhängige PR-Heads, alle grün |
+| App-only Architektur | VERIFIED | kein Workflow in `.github/workflows/**` konsumiert Snyk/GitGuardian |
+| Required-Check-Promotion Snyk | OWNER-APPROVED, angewendet 2026-08-14 | `security/snyk` und `code/snyk` ersetzen CodeQL im Ruleset |
+| Required-Check-Promotion GitGuardian | UNBESTÄTIGT | ADR-0070-Gate erfüllt, Owner-Bestätigung der Ruleset-Aktivierung steht noch aus |
+| Snyk-Token (GitHub Secret) | VERWENDUNG BESTÄTIGT | Owner-Entscheidung 2026-08-14b, kein Repository-Workflow liest es |
+| CodeQL | BEWUSST NICHT verwendet | Redundanz zu `code/snyk`, keine neue Bedrohungskategorie abgedeckt |

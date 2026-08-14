@@ -50,3 +50,9 @@
 /docs/adr/ADR-0043-* @SvenKulessa
 /docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md @SvenKulessa
 /docs/architecture/PR_MULTI_AGENT_GOVERNANCE.md @SvenKulessa
+
+# Catch-all — 2026-08-14: "Require code owner review" is active on the main ruleset. CODEOWNERS
+# uses last-matching-pattern precedence; since every rule above also maps to @SvenKulessa, this
+# entry only extends owner-review coverage to paths not explicitly listed above. It does not
+# change who the owner is anywhere in this file.
+* @SvenKulessa
