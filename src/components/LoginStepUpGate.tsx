@@ -3,7 +3,6 @@ import { ShieldCheck, Fingerprint, KeyRound } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { signInWithPasskey } from './PasskeySettings';
 import { verifyStepUp, StepUpError } from '../lib/stepUp';
-import { authFetch } from '../lib/authFetch';
 import { loginStepUpRequirement, markLoginStepUpPassed, type LoginStepUpRequirement } from '../lib/loginStepUp';
 import {
   NativeMfaError,
@@ -31,10 +30,14 @@ type GateRequirement = LoginStepUpRequirement | 'native' | 'checking';
  * die vorrangige Prüfung - sie ist die einzige Quelle, die eine echte AAL2-Sitzung erzeugt (vom
  * Server über requireVerifiedAal2 unabhängig nachprüfbar). Existiert kein nativer Faktor, greift
  * unverändert der bisherige Passkey-/Legacy-TOTP-Pfad.
+ *
+ * Owner-Policy 2026-08-14: kein Notfall-Bypass-Mechanismus in der Anwendung - dieses Gate bietet
+ * bewusst KEINEN Break-Glass-/Recovery-Code-Pfad mehr an. Verlust von Passkey und Authenticator
+ * gleichzeitig wird ausschließlich außerhalb der Anwendung (Supabase-Dashboard-Administration
+ * durch den Owner) behoben.
  */
 export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGateProps) {
   const [requirement, setRequirement] = useState<GateRequirement>('checking');
-  const [totpAlsoEnabled, setTotpAlsoEnabled] = useState(false);
 
   const [nativeFactorId, setNativeFactorId] = useState('');
   const [nativeChallengeId, setNativeChallengeId] = useState('');
@@ -48,11 +51,6 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
   const [totpCode, setTotpCode] = useState('');
   const [totpVerifying, setTotpVerifying] = useState(false);
   const [totpError, setTotpError] = useState<string | null>(null);
-
-  const [showRecovery, setShowRecovery] = useState(false);
-  const [recoveryCode, setRecoveryCode] = useState('');
-  const [recoveryVerifying, setRecoveryVerifying] = useState(false);
-  const [recoveryError, setRecoveryError] = useState<string | null>(null);
 
   const userId = session.user.id;
 
@@ -95,15 +93,6 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
         return;
       }
       setRequirement(req);
-      if (req === 'passkey' && supabase) {
-        try {
-          const { data } = await supabase.from('profiles').select('totp_enabled').eq('id', userId).maybeSingle();
-          if (!cancelled) setTotpAlsoEnabled(!!data?.totp_enabled);
-        } catch {
-          // Recovery-Verfügbarkeit ist nur eine UI-Information - bei Fehler wird die
-          // vorsichtigere Annahme (kein Break-Glass verfügbar) beibehalten.
-        }
-      }
     })();
     return () => {
       cancelled = true;
@@ -167,34 +156,6 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
       setTotpVerifying(false);
     }
   }
-
-  async function handleRecoveryRedeem(e: React.FormEvent) {
-    e.preventDefault();
-    if (!recoveryCode.trim()) return;
-    setRecoveryVerifying(true);
-    setRecoveryError(null);
-    try {
-      const res = await authFetch('/api/auth/break-glass/redeem', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: recoveryCode.trim() }),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(body.error || `Recovery fehlgeschlagen (HTTP ${res.status}).`);
-      }
-      // Redeem deaktiviert 2FA (und ggf. Passkeys) für dieses Konto - der Nutzer kann nach dem
-      // Login in den Profil-Einstellungen neu einrichten. Kein neuer Step-Up in dieser Sitzung nötig.
-      markLoginStepUpPassed(userId);
-      onVerified();
-    } catch (err: any) {
-      setRecoveryError(err?.message || 'Recovery-Code ungültig oder bereits verwendet.');
-    } finally {
-      setRecoveryVerifying(false);
-    }
-  }
-
-  const canOfferRecovery = requirement === 'totp' || requirement === 'native' || (requirement === 'passkey' && totpAlsoEnabled);
 
   return (
     <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4 selection:bg-aif-gold-DEFAULT selection:text-black">
@@ -297,50 +258,10 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
           </form>
         )}
 
-        <div className="pt-2 border-t border-white/10 space-y-3">
-          {!showRecovery ? (
-            canOfferRecovery ? (
-              <button
-                onClick={() => setShowRecovery(true)}
-                className="w-full text-center text-[11px] text-white/40 hover:text-white/70 transition-colors cursor-pointer"
-              >
-                {requirement === 'passkey' ? 'Kein Zugriff mehr auf diesen Passkey?' : 'Kein Zugriff mehr auf die Authenticator-App?'}
-              </button>
-            ) : requirement === 'passkey' ? (
-              <p className="text-[11px] text-white/40 text-center leading-relaxed">
-                Kein Zugriff mehr auf diesen Passkey? Bitte kontaktiere den Support - für Konten
-                ohne aktivierte 2FA gibt es aktuell keinen automatischen Recovery-Weg.
-              </p>
-            ) : null
-          ) : (
-            <form onSubmit={handleRecoveryRedeem} className="space-y-3">
-              <p className="text-[11px] text-white/50 leading-relaxed">
-                Recovery-Code eingeben, der dir bei der Einrichtung von 2FA einmalig angezeigt
-                wurde. Dies setzt native und Legacy-2FA sowie alle registrierten Passkeys zurück{' '}
-                für dieses Konto, damit du dich neu einrichten kannst.
-              </p>
-              <input
-                type="text"
-                value={recoveryCode}
-                onChange={(e) => setRecoveryCode(e.target.value.toUpperCase())}
-                placeholder="RECOVERY-CODE"
-                className="w-full text-center text-sm font-mono tracking-widest bg-black/40 border border-white/10 rounded-xl py-2.5 text-white focus:border-aif-gold-DEFAULT/50 focus:outline-none"
-              />
-              {recoveryError && (
-                <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
-                  {recoveryError}
-                </p>
-              )}
-              <button
-                type="submit"
-                disabled={recoveryVerifying || !recoveryCode.trim()}
-                className="w-full px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-40 cursor-pointer"
-              >
-                {recoveryVerifying ? 'Prüfe…' : 'Recovery-Code einlösen'}
-              </button>
-            </form>
-          )}
-        </div>
+        <p className="pt-2 border-t border-white/10 text-[11px] text-white/40 text-center leading-relaxed">
+          Kein Zugriff mehr auf Passkey oder Authenticator-App? Es gibt bewusst keinen
+          automatischen Recovery-Weg in der Anwendung - bitte wende dich an den Owner.
+        </p>
 
         <button
           onClick={onAbort}

@@ -216,6 +216,17 @@ If testing native factor removal:
 
 Legacy break-glass codes remain transitional until this stage passes.
 
+> **Update 2026-08-14 (Owner-Policy, ahead of this stage):** the Owner has explicitly directed
+> that no in-app emergency bypass exist ("kein Notfall-Bypass-Code in der Anwendung"). The
+> `/break-glass/redeem` application route and all recovery-code UI have already been removed from
+> the codebase (see `docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`, Nachtrag
+> 2026-08-14) — independent of and prior to this runbook stage being reached. Stage H's documented
+> recovery route is therefore no longer available in-app; loss of both Passkey and Authenticator
+> can only be resolved via Supabase-Dashboard administration by the Owner. Plan this stage's
+> Owner-approval test accordingly (there is no code-level fallback to fall back on if a test
+> factor removal goes wrong — verify re-enrollment capability via the Dashboard path before
+> testing, not via break-glass codes).
+
 ## 11. Stage I — Post-mutation verification
 
 After successful native enrollment:
@@ -235,7 +246,8 @@ Create a separate mutation decision for:
 
 - `profiles.totp_enabled`;
 - `totp_secret_encrypted` / pending secret fields;
-- legacy break-glass code table/data;
+- legacy break-glass code **table/data** (application code already removed 2026-08-14 per
+  Owner-Policy — this item is now data-only, see runbook update in Stage H above);
 - legacy local TOTP verifier and server setup routes;
 - legacy step-up issuance logic that still depends on local TOTP.
 

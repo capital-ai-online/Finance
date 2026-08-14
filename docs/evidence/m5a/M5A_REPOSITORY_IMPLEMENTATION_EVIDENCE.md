@@ -42,7 +42,7 @@ Exit-Kriterien (verifiziert durch `tests/unit/authMiddlewareAal2.test.ts`, `test
 | Datei | Änderung |
 |---|---|
 | `src/components/TotpSettings.tsx` | Neuer, additiver Abschnitt „Native Zwei-Faktor-Authentifizierung (empfohlen)“ oberhalb des bestehenden Legacy-Abschnitts (jetzt „(Legacy)“ beschriftet). Enroll → QR/Secret anzeigen → Challenge → Verify. Legacy-Abschnitt unverändert funktionsfähig (ADR-0064 Punkt 5: Migration, keine Löschung). |
-| `src/components/LoginStepUpGate.tsx` | Prüft beim Laden zuerst den nativen AAL-Status (`getCurrentAssuranceLevel`). Existiert ein verifizierter nativer Faktor (`nextLevel === 'aal2'`), hat der native Challenge-Pfad Vorrang vor Passkey/Legacy-TOTP. Ohne nativen Faktor bleibt der bisherige Passkey-/Legacy-Pfad unverändert aktiv. Break-Glass-Recovery-Option wird jetzt auch für den nativen Pfad angeboten. |
+| `src/components/LoginStepUpGate.tsx` | Prüft beim Laden zuerst den nativen AAL-Status (`getCurrentAssuranceLevel`). Existiert ein verifizierter nativer Faktor (`nextLevel === 'aal2'`), hat der native Challenge-Pfad Vorrang vor Passkey/Legacy-TOTP. Ohne nativen Faktor bleibt der bisherige Passkey-/Legacy-Pfad unverändert aktiv. Siehe Nachtrag unten: die ursprünglich hier vorgesehene Break-Glass-Recovery-Option für den nativen Pfad wurde durch explizite Owner-Policy noch vor Merge verworfen und nicht umgesetzt. |
 
 Exit-Kriterien (verifiziert durch `tests/integration/nativeMfaAal2.test.ts`, `tests/unit/nativeMfa.test.ts`):
 
@@ -55,7 +55,7 @@ Exit-Kriterien (verifiziert durch `tests/integration/nativeMfaAal2.test.ts`, `te
 
 | Datei | Änderung |
 |---|---|
-| `server/stepUp.ts` | `/step-up/verify` verlangt jetzt zusätzlich zum bestehenden Legacy-TOTP-Code eine gültige AAL2-Sitzung (`requireVerifiedAal2`), bevor ein Step-Up-Token ausgestellt wird — HTTP 428 `aal2_required` sonst. `/break-glass/redeem` entfernt jetzt zusätzlich zu Legacy-TOTP und Passkeys auch alle nativen MFA-Faktoren des Nutzers (`supabase.auth.admin.mfa.listFactors`/`deleteFactor`, dieselbe Owner-kontrollierte, code-gated, audit-protokollierte Operation wie die bestehende Passkey-Bereinigung). |
+| `server/stepUp.ts` | `/step-up/verify` verlangt jetzt zusätzlich zum bestehenden Legacy-TOTP-Code eine gültige AAL2-Sitzung (`requireVerifiedAal2`), bevor ein Step-Up-Token ausgestellt wird — HTTP 428 `aal2_required` sonst. Siehe Nachtrag unten: `/break-glass/redeem` wurde durch explizite Owner-Policy vollständig entfernt statt (wie ursprünglich hier vorgesehen) um natives MFA erweitert. |
 | `tests/unit/totp.test.ts` | Unverändert — bleibt als Migrations-/Regressionstest für die weiterhin vorhandene Legacy-RFC-6238-Implementierung bestehen. |
 
 Exit-Kriterien (verifiziert durch `tests/unit/authMiddlewareAal2.test.ts`):
@@ -78,7 +78,7 @@ Exit-Kriterien (verifiziert durch `tests/unit/authMiddlewareAal2.test.ts`):
 | 8 | Step-Up ohne AAL2 verweigert | `authMiddlewareAal2.test.ts` |
 | 9 | falscher User/Purpose verweigert | bestehende Logik unverändert (User-Scope in `requireStepUp`/`step_up_tokens`-Query) |
 | 10 | Replay verweigert | bestehende Logik unverändert (`used_at IS NULL` atomar) |
-| 11 | unautorisierter Faktor-Reset verweigert | kein neuer serverseitiger Fremd-Reset-Pfad eingeführt; Faktor-Entfernung ausschließlich Self-Service (eigene Session) oder Owner-kontrolliertes, code-gated Break-Glass |
+| 11 | unautorisierter Faktor-Reset verweigert | kein neuer serverseitiger Fremd-Reset-Pfad eingeführt; Faktor-Entfernung ausschließlich Self-Service (eigene Session) — kein Break-Glass-Pfad mehr, siehe Nachtrag |
 
 ## Verifikation dieser Session
 
@@ -104,8 +104,9 @@ Testergebnis: `142` bestehende + `3` neue Testdateien, `812` Tests bestanden, `2
   `requireStepUp()` ändert sein Verhalten für den einzigen produktiven Aufrufer
   (`adminDiagnostics.ts`) ausschließlich durch die geänderte gemeinsame Funktion, ohne dass diese
   Datei selbst angefasst wurde;
-- keine Löschung von Legacy-TOTP-Code, -Spalten oder Break-Glass-Daten (ADR-0064 Punkt 5:
-  Migration, kein sofortiger Cutover);
+- keine Löschung von Legacy-TOTP-Code oder -Spalten (ADR-0064 Punkt 5: Migration, kein
+  sofortiger Cutover). Der Break-Glass-Recovery-*Anwendungscode* wurde dagegen entfernt (siehe
+  Nachtrag) — die `break_glass_codes`-*Produktionsdaten* selbst wurden davon nicht berührt;
 - keine Supabase-Projektkonfigurations-Mutation;
 - keine Owner-Faktor-Registrierung.
 
@@ -122,13 +123,40 @@ Step-Up-geschützte kritische Aktionen (aktuell: `adminDiagnosticsRouter`s
 diesem PR unverändert bleibt.
 
 Das ist eine bewusste, im Runbook (`M5A_SUPABASE_TOTP_AAL2_HARDENING.md`, Abschnitt „Rollback“)
-bereits antizipierte Konsequenz eines Hard-Cutovers, keine unbeabsichtigte Nebenwirkung. Legacy
-Break-Glass-Codes (20 unbenutzte, laut Baseline) bleiben unverändert als Notfallpfad nutzbar,
-sollte das zu Problemen führen. Empfehlung: unmittelbar nach Merge mindestens ein Owner-Profil
-über die neue Oberfläche registrieren, um die Lücke zu schließen.
+bereits antizipierte Konsequenz eines Hard-Cutovers, keine unbeabsichtigte Nebenwirkung.
+**Seit dem Nachtrag unten gibt es dafür keinen Break-Glass-Notfallpfad mehr** — Verlust von
+Passkey und Authenticator gleichzeitig kann nur noch außerhalb der Anwendung (Supabase-Dashboard
+durch den Owner) behoben werden. Empfehlung: unmittelbar nach Merge mindestens ein Owner-Profil
+über die neue Oberfläche registrieren, um die Lücke zu schließen — die Dringlichkeit dafür ist
+durch den Wegfall des Notfallpfads höher als ursprünglich in diesem Dokument dargestellt.
 
 ## Nächster Schritt
 
 Nach Merge und CI `VERIFIED PASS`: separates, explizites Owner-Mutation-Gate für die native
 TOTP-Registrierung der beiden Owner-Identitäten gemäß Runbook Stage D–I. Dieses Dokument
 autorisiert diesen nächsten Schritt nicht selbst.
+
+## Nachtrag 2026-08-14 — Entfernung des Break-Glass-Recovery-Pfads (Owner-Policy)
+
+Nach Erstellung der obigen Fassung (noch vor Merge, gleiche PR/Branch) hat der Owner explizit
+angewiesen: „Es soll kein Notfall-Bypass-Code in der Anwendung stehen (Policy)“, konkretisiert
+über `AskUserQuestion` als „Break-Glass-Recovery-System komplett entfernen“. Damit sind die
+Aussagen weiter oben zu einer weiterhin nutzbaren Break-Glass-Recovery-Option **überholt** und
+durch diesen Nachtrag korrigiert.
+
+Umgesetzt in derselben Session, zusätzlich zu Slice A–C:
+
+| Datei | Änderung |
+|---|---|
+| `server/stepUp.ts` | Route `/break-glass/redeem` vollständig entfernt (~113 Zeilen, inkl. Passkey- und nativer-MFA-Faktor-Bereinigung). `/totp/verify-setup` erzeugt keine Recovery-Codes mehr und liefert nur noch `{ success: true }`. Kein `break_glass_codes`-Zugriff mehr im Anwendungscode. |
+| `src/components/TotpSettings.tsx` | Stage `'recovery-codes'` und die zugehörige UI (Codes-Grid, Copy-Button, Bestätigungsbutton) entfernt. Nach erfolgreicher Verifikation direkter Übergang zu `stage: 'idle'` mit Erfolgsmeldung. |
+| `src/components/LoginStepUpGate.tsx` | Recovery-Code-Eingabe, zugehörige States und `handleRecoveryRedeem` entfernt. Statischer Hinweistext: kein automatischer Recovery-Weg, Kontakt zum Owner bei Verlust von Passkey/Authenticator. |
+| `src/platform/Security/totp.ts` | Zusätzlich, unabhängig von der Break-Glass-Entfernung: `TOTP_WINDOW_STEPS = 1` als benannte Konstante extrahiert und mit RFC-6238-§5.2-Zitat dokumentiert (Owner-Anfrage „MFA-Faktor auf die empfohlenen Best-Practice-Anzahl ändern“ — Antwort: der bestehende Wert **war bereits** die von der RFC selbst empfohlene Zahl; keine funktionale Änderung, nur Benennung/Dokumentation). |
+
+Ausdrücklich **nicht** Teil dieses Nachtrags: die `break_glass_codes`-Tabelle und ihre 20
+unbenutzten Produktions-Zeilen (siehe `M5A_SUPABASE_TOTP_AAL2_BASELINE.md`) wurden **nicht**
+gelöscht oder verändert. Das ist eine separate, noch zu treffende Produktions-Datenmutations-
+Entscheidung außerhalb des Anwendungscodes und wird hier nur referenziert, nicht ausgeführt.
+
+Verifikation: `npx tsc --noEmit` (0 Fehler), betroffene Testdateien (`totp.test.ts`,
+`nativeMfa.test.ts`, `authMiddlewareAal2.test.ts`, `nativeMfaAal2.test.ts`) grün.

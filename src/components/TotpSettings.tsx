@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { KeyRound, Copy, Check, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { KeyRound, Copy, ShieldCheck } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 import { authFetch } from '../lib/authFetch';
 import {
@@ -23,9 +23,14 @@ import {
  * Native MFA ist die neue Autoritätsquelle für AAL2 (server-seitig via requireVerifiedAal2
  * geprüft); das bestehende Legacy-TOTP unten bleibt laut ADR-0064 Punkt 5 vorerst als
  * Migrationspfad/Defense-in-Depth erhalten und wird NICHT entfernt.
+ *
+ * Owner-Policy 2026-08-14: kein Notfall-Bypass-Mechanismus in der Anwendung - nach
+ * erfolgreicher Legacy-TOTP-Aktivierung werden bewusst keine Recovery-/Break-Glass-Codes
+ * mehr angezeigt oder erzeugt (server/stepUp.ts gibt seither nur noch { success: true }
+ * zurück).
  */
 
-type SetupStage = 'idle' | 'awaiting-code' | 'recovery-codes';
+type SetupStage = 'idle' | 'awaiting-code';
 type NativeStage = 'idle' | 'enrolling' | 'awaiting-code' | 'active';
 
 export default function TotpSettings() {
@@ -37,8 +42,6 @@ export default function TotpSettings() {
   const [secret, setSecret] = useState('');
   const [otpauthUri, setOtpauthUri] = useState('');
   const [code, setCode] = useState('');
-  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
-  const [copied, setCopied] = useState(false);
 
   const [nativeStage, setNativeStage] = useState<NativeStage>('idle');
   const [nativeLoading, setNativeLoading] = useState(false);
@@ -188,28 +191,17 @@ export default function TotpSettings() {
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
-      setRecoveryCodes(body.recoveryCodes || []);
-      setStage('recovery-codes');
+      setStage('idle');
+      setSecret('');
+      setOtpauthUri('');
+      setCode('');
       setEnabled(true);
+      setMessage({ type: 'success', text: '2FA (TOTP) ist jetzt aktiv.' });
     } catch (e: any) {
       setMessage({ type: 'error', text: e.message ?? String(e) });
     } finally {
       setLoading(false);
     }
-  }
-
-  function handleCopyRecoveryCodes() {
-    void navigator.clipboard.writeText(recoveryCodes.join('\n'));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  function handleFinishSetup() {
-    setStage('idle');
-    setSecret('');
-    setOtpauthUri('');
-    setRecoveryCodes([]);
-    setMessage({ type: 'success', text: '2FA (TOTP) ist jetzt aktiv.' });
   }
 
   if (!isSupabaseConfigured()) {
@@ -414,38 +406,6 @@ export default function TotpSettings() {
         </form>
       )}
 
-      {stage === 'recovery-codes' && (
-        <div className="space-y-3">
-          <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
-            <ShieldAlert className="text-amber-400 w-4 h-4 shrink-0 mt-0.5" />
-            <p className="text-xs text-white/70 leading-relaxed">
-              Diese 10 Recovery-Codes werden <span className="font-bold">nur jetzt einmalig</span> angezeigt.
-              Jeder Code funktioniert genau einmal für den Break-Glass-Zugang, falls du dein Gerät verlierst.
-              Speichere sie an einem sicheren Ort, bevor du fortfährst.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-1.5 bg-black/40 border border-white/10 rounded-lg p-3">
-            {recoveryCodes.map((c) => (
-              <code key={c} className="text-xs font-mono text-white/90">{c}</code>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleCopyRecoveryCodes}
-              className="flex-1 px-4 py-2 rounded bg-white/5 hover:bg-white/10 text-white text-sm flex items-center justify-center gap-1.5"
-            >
-              {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-              {copied ? 'Kopiert' : 'Codes kopieren'}
-            </button>
-            <button
-              onClick={handleFinishSetup}
-              className="flex-1 px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium"
-            >
-              Ich habe die Codes gespeichert
-            </button>
-          </div>
-        </div>
-      )}
     </div>
     </div>
   );

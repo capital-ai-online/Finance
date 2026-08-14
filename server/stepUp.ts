@@ -1,9 +1,18 @@
-// ADR-0003.5 — TOTP-Step-Up-Authentifizierung & Break-Glass-Recovery.
+// ADR-0003.5 — TOTP-Step-Up-Authentifizierung.
 //
-// Owner-Aktionen (Rollenvergabe, Break-Glass, kritische System-Eingriffe) verlangen
-// zusätzlich zur normalen Session einen frischen, kurzlebigen Step-Up-Nachweis per TOTP.
-// Sämtliche Endpunkte hier verlangen eine bereits gültige Supabase-Session (Bearer-Token);
-// es gibt keinen Pfad, der ohne bestehende Authentifizierung Owner-Rechte gewährt.
+// Owner-Aktionen (Rollenvergabe, kritische System-Eingriffe) verlangen zusätzlich zur normalen
+// Session einen frischen, kurzlebigen Step-Up-Nachweis per TOTP. Sämtliche Endpunkte hier
+// verlangen eine bereits gültige Supabase-Session (Bearer-Token); es gibt keinen Pfad, der ohne
+// bestehende Authentifizierung Owner-Rechte gewährt.
+//
+// Owner-Policy 2026-08-14: kein Notfall-Bypass-Mechanismus in der Anwendung. Der vormals hier
+// implementierte Break-Glass-Recovery-Pfad (redeembare Codes, die TOTP/Passkeys/native
+// MFA-Faktoren zurücksetzen konnten) wurde ersatzlos entfernt. Verlust des zweiten Faktors wird
+// jetzt ausschließlich außerhalb der Anwendung (Supabase-Dashboard-Administration durch den
+// Owner) behoben, nicht durch einen in der App selbst vorgehaltenen Bypass-Code. Die
+// `break_glass_codes`-Tabelle und bereits existierende, unbenutzte Codes bleiben Bestandteil
+// einer separaten, noch zu entscheidenden Produktions-Cleanup-Mutation - dieser Commit entfernt
+// nur den Anwendungscode, keine Produktionsdaten.
 
 import express from 'express';
 import { getServerSupabase, isSupabaseConfigured } from './db';
@@ -85,8 +94,7 @@ stepUpRouter.post('/totp/setup', requireAuth(async (req, res, identity) => {
   });
 }));
 
-// 2. TOTP-Setup bestätigen: verifiziert den ersten Code, aktiviert TOTP, generiert
-//    einmalig 10 Break-Glass-Recovery-Codes (nur JETZT im Klartext sichtbar).
+// 2. TOTP-Setup bestätigen: verifiziert den ersten Code und aktiviert TOTP.
 stepUpRouter.post('/totp/verify-setup', requireAuth(async (req, res, identity) => {
   if (!checkRateLimit(`totp-verify-setup:${identity.userId}`, 8, 5 * 60_000)) {
     return res.status(429).json({ error: 'Zu viele Versuche. Bitte 5 Minuten warten.' });
@@ -116,10 +124,6 @@ stepUpRouter.post('/totp/verify-setup', requireAuth(async (req, res, identity) =
     return res.status(400).json({ error: 'Code ungültig oder abgelaufen.' });
   }
 
-  const recoveryCodes = Array.from({ length: 10 }, () =>
-    generateOpaqueToken(6).replace(/[^A-Za-z0-9]/g, '').slice(0, 10).toUpperCase()
-  );
-
   const { error: updateErr } = await supabase
     .from('profiles')
     .update({
@@ -132,17 +136,9 @@ stepUpRouter.post('/totp/verify-setup', requireAuth(async (req, res, identity) =
     return res.status(500).json({ error: 'Aktivierung fehlgeschlagen.' });
   }
 
-  await supabase.from('break_glass_codes').delete().eq('user_id', identity.userId);
-  await supabase.from('break_glass_codes').insert(
-    recoveryCodes.map((c) => ({ user_id: identity.userId, code_hash: hashOpaqueToken(c) }))
-  );
-
   await logIamEvent(identity.userId, identity.userId, 'totp.enabled', null, { enabled: true });
 
-  res.json({
-    success: true,
-    recoveryCodes,
-  });
+  res.json({ success: true });
 }));
 
 // 3. Step-Up-Verifikation: gültiger TOTP-Code -> kurzlebiges, einmaliges Step-Up-Token
@@ -219,118 +215,4 @@ stepUpRouter.post('/step-up/verify', requireAuth(async (req, res, identity) => {
   }
 
   res.json({ stepUpToken: token, expiresAt });
-}));
-
-// 4. Break-Glass-Redemption.
-//
-// WICHTIG (siehe COMPLIANCE_REVIEW.md): Dies ersetzt NICHT die normale Authentifizierung.
-// Voraussetzung ist eine bereits gültige Supabase-Session - die der Nutzer nur über
-// Supabases eigenen, bewährten E-Mail-Passwort-Reset-Flow (supabase.auth.resetPasswordForEmail)
-// erhalten kann, falls er ausgesperrt ist. Der Recovery-Code ist ein ZUSÄTZLICHER Faktor
-// oben drauf, kein Ersatz für Authentifizierung. Diese Route gewährt keine neuen
-// Berechtigungen - sie setzt lediglich TOTP zurück, damit der Owner sich neu einrichten kann,
-// und protokolliert den Vorgang als CRITICAL Security Event.
-stepUpRouter.post('/break-glass/redeem', requireAuth(async (req, res, identity) => {
-  const ip = getClientIp(req as any);
-  if (!checkRateLimit(`break-glass:${identity.userId}`, 3, 60 * 60_000)) {
-    await logSecurityEvent({
-      event_type: 'rate_limit_exceeded',
-      actor_user_id: identity.userId,
-      ip_address: ip,
-      outcome: 'blocked',
-      reason: 'Break-Glass Rate-Limit erreicht',
-      endpoint: '/api/auth/break-glass/redeem',
-    });
-    return res.status(429).json({ error: 'Zu viele Versuche. Bitte später erneut versuchen und ggf. den Owner direkt kontaktieren.' });
-  }
-
-  const { code } = req.body;
-  if (!code || typeof code !== 'string') {
-    return res.status(400).json({ error: 'Recovery-Code erforderlich.' });
-  }
-
-  const supabase = getServerSupabase();
-  const codeHash = hashOpaqueToken(code.toUpperCase().trim());
-
-  const { data: redeemed, error: redeemErr } = await supabase
-    .from('break_glass_codes')
-    .update({ used_at: new Date().toISOString() })
-    .eq('user_id', identity.userId)
-    .eq('code_hash', codeHash)
-    .is('used_at', null)
-    .select('id')
-    .maybeSingle();
-
-  if (redeemErr || !redeemed) {
-    await logSecurityEvent({
-      event_type: 'unauthorized_access',
-      actor_user_id: identity.userId,
-      ip_address: ip,
-      outcome: 'blocked',
-      reason: 'Ungültiger oder bereits verwendeter Break-Glass-Code',
-      endpoint: '/api/auth/break-glass/redeem',
-    });
-    return res.status(400).json({ error: 'Recovery-Code ungültig oder bereits verwendet.' });
-  }
-
-  await supabase.from('break_glass_codes').delete().eq('user_id', identity.userId);
-  await supabase.from('step_up_tokens').delete().eq('user_id', identity.userId);
-  await supabase
-    .from('profiles')
-    .update({ totp_enabled: false, totp_secret_encrypted: null, totp_pending_secret_encrypted: null })
-    .eq('id', identity.userId);
-
-  // Login-Step-Up-Erweiterung: Passkey hat beim Login Vorrang vor 2FA (LoginStepUpGate). Ein
-  // Nutzer, der seinen Passkey verloren hat, braeuchte sonst trotz erfolgreicher Break-Glass-
-  // Loesung fuer TOTP weiterhin einen (verlorenen) Passkey zur Anmeldung. Da Break-Glass-Codes
-  // ausschliesslich bei aktivierter TOTP existieren, ist diese Bereinigung nur fuer Konten mit
-  // BEIDEN Faktoren erreichbar - fuer Passkey-only-Konten gibt es bewusst keinen Self-Service-Weg
-  // (kein secret-gated Recovery-Mechanismus vorhanden, siehe ADR/PR-Beschreibung).
-  let passkeysRemoved = 0;
-  try {
-    const { data: passkeys } = await supabase.auth.admin.passkey.listPasskeys({ userId: identity.userId });
-    for (const pk of passkeys || []) {
-      const { error: delErr } = await supabase.auth.admin.passkey.deletePasskey({ userId: identity.userId, passkeyId: pk.id });
-      if (!delErr) passkeysRemoved++;
-    }
-  } catch (err: any) {
-    console.error(`[STEP-UP][ERROR] Break-Glass-Passkey-Bereinigung fehlgeschlagen: ${err?.message || err}`);
-  }
-
-  // ADR-0064 (M5A): analog zur Passkey-Bereinigung oben - ohne dies bliebe ein bereits
-  // registrierter nativer MFA-Faktor nach Break-Glass aktiv, LoginStepUpGate wuerde den
-  // (unerreichbaren) nativen Challenge-Schritt weiterhin verlangen und der Nutzer bliebe trotz
-  // erfolgreicher Recovery ausgesperrt. Nutzung der supported Supabase Admin-MFA-API
-  // (ADR-0064 Punkt 6: "Native factor removal must use supported Supabase Admin MFA operations").
-  // Ausschließlich der eigene, per gültigem Break-Glass-Code bereits authentifizierte Nutzer -
-  // kein Fremd-Reset.
-  let nativeFactorsRemoved = 0;
-  try {
-    const { data: factorList } = await supabase.auth.admin.mfa.listFactors({ userId: identity.userId });
-    for (const factor of factorList?.factors || []) {
-      const { error: delErr } = await supabase.auth.admin.mfa.deleteFactor({ id: factor.id, userId: identity.userId });
-      if (!delErr) nativeFactorsRemoved++;
-    }
-  } catch (err: any) {
-    console.error(`[STEP-UP][ERROR] Break-Glass-Native-MFA-Bereinigung fehlgeschlagen: ${err?.message || err}`);
-  }
-
-  await logSecurityEvent({
-    event_type: 'unauthorized_access',
-    actor_user_id: identity.userId,
-    ip_address: ip,
-    outcome: 'CRITICAL_BREAK_GLASS_USED',
-    reason: `Break-Glass-Recovery erfolgreich eingelöst - TOTP zurückgesetzt, ${passkeysRemoved} Passkey(s) entfernt, ${nativeFactorsRemoved} nativer MFA-Faktor(en) entfernt, Neueinrichtung erforderlich`,
-    endpoint: '/api/auth/break-glass/redeem',
-  });
-  await logIamEvent(identity.userId, identity.userId, 'break-glass.redeemed', null, {
-    reset: 'totp+step-up-tokens+passkeys+native-mfa-factors',
-    passkeysRemoved,
-    nativeFactorsRemoved,
-  });
-
-  res.json({
-    success: true,
-    message: 'Break-Glass erfolgreich. TOTP, native MFA-Faktoren und alle Passkeys wurden zurückgesetzt - bitte richten Sie diese in den Profil-Einstellungen neu ein.',
-  });
 }));

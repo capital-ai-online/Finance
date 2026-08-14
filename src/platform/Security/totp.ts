@@ -63,10 +63,21 @@ function hotp(secret: Buffer, counter: number): string {
 }
 
 /**
- * Verifiziert einen 6-stelligen TOTP-Code mit ±1 Zeitfenster (30s Schritt) Toleranz
- * gegen Client-Uhr-Drift, wie in RFC 6238 empfohlen.
+ * RFC 6238 §5.2 empfiehlt wörtlich: "at most one time-step is allowed as the network delay"
+ * für die Toleranz vor/nach dem aktuellen 30s-Zeitfenster gegen Client-Uhr-Drift und
+ * Netzwerklatenz. `TOTP_WINDOW_STEPS = 1` prüft daher genau drei Fenster (vorheriges,
+ * aktuelles, nächstes = max. 90s) - das ist die von der RFC selbst benannte empfohlene
+ * Best-Practice-Zahl, keine willkürliche Standardeinstellung. Ein größerer Wert würde das
+ * Zeitfenster für Brute-Force-/Replay-Versuche unnötig vergrößern; ein kleinerer (0) lehnt
+ * legitime Codes bei normaler Uhr-Drift ab.
  */
-export function verifyTotp(base32Secret: string, code: string, windowSteps = 1): boolean {
+export const TOTP_WINDOW_STEPS = 1;
+
+/**
+ * Verifiziert einen 6-stelligen TOTP-Code mit RFC-6238-konformer Zeitfenster-Toleranz
+ * (siehe TOTP_WINDOW_STEPS).
+ */
+export function verifyTotp(base32Secret: string, code: string, windowSteps = TOTP_WINDOW_STEPS): boolean {
   if (!/^\d{6}$/.test(code)) return false;
   const secret = base32Decode(base32Secret);
   const counter = Math.floor(Date.now() / 1000 / 30);
