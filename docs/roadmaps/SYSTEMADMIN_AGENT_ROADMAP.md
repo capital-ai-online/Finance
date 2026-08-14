@@ -283,7 +283,12 @@ Merged/superseded branches are never reused.
 
 ## Current next action
 
-M5A repository code is merged via PR #255; PR #256 additionally merged required onboarding and the last-factor guard. Native MFA is Owner-attested active. The SA4 one-purpose host MUST NOT be reused for M5A. The next allowed action is read-only M5/M5A verification evidence; any corrective mutation requires an exact Proposal and explicit Owner approval. SA5 remains blocked until M10 VERIFIED PASS.
+M5A is `VERIFIED PASS` (2026-08-14, `docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`): both
+Owner identities completed native TOTP enrollment interactively; read-only production evidence
+confirms verified factors and `aal2` sessions for both, and the Security Advisor shows no unowned
+HIGH/CRITICAL finding. The SA4 one-purpose host was never reused for M5A. M6 is now the next
+eligible DEVELOPMENT Chain gate; any M6 repository-code work is a separate, not-yet-issued
+mandate/task. SA5 remains blocked until M10 VERIFIED PASS.
 
 ## Konsolidierter Prototyp- und Mutationsanfragepfad (PR #257)
 
@@ -291,4 +296,4 @@ Authority: `docs/adr/ADR-0071-consolidated-roadmap-and-requested-systemadmin-mut
 
 Der Systemadministrator-Agent darf aus der konsolidierten Roadmap begrenzte Prototypaufträge ableiten und notwendige Mutationen beim Owner anfragen. Eine Agentenanfrage ist niemals Approval. Externe, produktive, IAM-, Datenbank-, Billing-, Secret-, Deployment- oder HIGH/CRITICAL-Mutationen bleiben bis zur exakten Owner-Freigabe fail-closed.
 
-Native MFA ist laut Owner-Attestation vom 2026-08-14 aktiviert. Der Status bleibt bis AAL2-, DENY-, Recovery-, Advisor- und Audit-Evidence `VERIFICATION PENDING`. SA5 bleibt bis M10 `VERIFIED PASS` blockiert.
+Native MFA ist seit 2026-08-14 `VERIFIED PASS` — die anfängliche Owner-Attestation wurde durch read-only AAL2-, Faktor- und Advisor-Evidence gegen Produktion bestätigt (`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`). SA5 bleibt bis M10 `VERIFIED PASS` blockiert.

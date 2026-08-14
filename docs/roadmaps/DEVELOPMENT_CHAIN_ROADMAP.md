@@ -92,8 +92,8 @@ unberührt.
 | M3 CI Hardening | **COMPLETE** | COMPLETE | ADR-0053/0060 + CI governance | scope-aware CI / Owner gate | preserve until M10 cutover |
 | M4 Agent IAM | **COMPLETE** | COMPLETE | ADR-0058 + ESS-0018/0019 | negative IAM tests | preserve |
 | M5 Audit / Telemetry | **PERSISTENCE VERIFIED / APPLICATION CORRECTIVE VERIFICATION ACTIVE** | COMPLETE | ADR-0056/0059 + M5 Evidence | PR #222 merged; corrected writer must still deploy and prove a real successful privileged audit insert | M5A repository work may continue; autonomous mutation remains blocked |
-| M5A Native MFA / AAL2 | **REPOSITORY CODE MERGED (PR #255) / AWAITING OWNER NATIVE-FACTOR ENROLLMENT** | baseline + runbook ready | ESS-0020 + ADR-0064 + ADR-0003.5 | repo code merged (`docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`) → **offen:** explizite Owner-Mutationsfreigabe → natives Owner-Faktor-Enrollment (Human-Aktion, nicht code-automatisierbar) → AAL2/Recovery/Advisor-Verifikation | M6 blocked until VERIFIED PASS |
-| M6 Supply Chain Provenance | **BLOCKED BY M5A** | **RUNBOOK READY** | ADR-0060 | SBOM/provenance/attestation bound to exact source/artifact | M7 after M6 VERIFIED PASS |
+| M5A Native MFA / AAL2 | **VERIFIED PASS** | baseline + runbook + closure evidence complete | ESS-0020 + ADR-0064 + ADR-0003.5 | repo code merged (PR #255/#256) → beide Owner-Profile mit verifiziertem nativen TOTP-Faktor + bestätigter `aal2`-Sitzung (`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`) → Advisor ohne unowned HIGH/CRITICAL | M6 unblocked |
+| M6 Supply Chain Provenance | **READY TO START** | **RUNBOOK READY** | ADR-0060 | SBOM/provenance/attestation bound to exact source/artifact | M7 after M6 VERIFIED PASS |
 | M7 Deployment Identity / Platform Mutation | **BLOCKED BY M6** | **RUNBOOK READY** | ADR-0061 | exact target + Owner mutation approval + post-verification/rollback | M8 after all required M7 mutations VERIFIED PASS |
 | M8 Agent Cutover | **BLOCKED BY M7** | **RUNBOOK READY** | ADR-0062 + ESS-0019 | provider-neutral profiles + equivalent policy tests + rollback to read-only | M9 after cutover VERIFIED PASS |
 | M9 Assurance / Incident / Break-Glass | **BLOCKED BY M8** | **RUNBOOK READY** | ADR-0063 | injection/replay/exfiltration/audit/kill-switch/break-glass/rollback drills | M10 after assurance VERIFIED PASS |
@@ -101,16 +101,15 @@ unberührt.
 
 **Documentation readiness never authorizes blocked phase execution.**
 
-## Current executable DEVELOPMENT phase — M5A
+## Current executable DEVELOPMENT phase — M6
 
-M5A repository code (native TOTP enroll/challenge/verify, centralized server-side AAL2 gate,
-step-up coupling) is merged (PR #255) — see
-`docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`. Der verbleibende Schritt zu
-`VERIFIED PASS` ist ausschließlich eine interaktive Human/Owner-Aktion (natives TOTP oder Passkey
-für das eigene Owner-Profil in `TotpSettings.tsx` einrichten) plus anschließender Advisor-Rerun —
-das kann diese Sitzung nicht stellvertretend ausführen. Bis dahin bleibt M6 blockiert; externe oder
-produktive Mutationen bleiben davon ausdrücklich ausgeschlossen; SA5 bleibt bis M10 `VERIFIED PASS`
-blockiert.
+M5A ist `VERIFIED PASS` (2026-08-14): Repository-Code gemerged (PR #255/#256), beide Owner-Profile
+haben native TOTP-Faktoren interaktiv eingerichtet und verifiziert, `aal2`-Sitzungen read-only
+gegen Produktion bestätigt, Security-Advisor ohne unowned HIGH/CRITICAL — siehe
+`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`. M6 (Supply Chain Provenance) ist damit
+das nächste ausführbare Gate; Repository-Code-Implementierung dafür ist ein separater, neuer
+Auftrag (kein automatischer Start durch diese Statusänderung). SA5 bleibt weiterhin bis M10
+`VERIFIED PASS` blockiert.
 
 ### Goal
 
@@ -158,7 +157,8 @@ Required deliverables:
 - immutable release/rollback reference;
 - Evidence under `docs/evidence/m6/`.
 
-No M6 implementation starts before M5A is `VERIFIED PASS`.
+M5A ist `VERIFIED PASS` (2026-08-14, `docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`).
+M6-Implementierung ist damit zulässig, aber ein separater, noch zu beauftragender Schritt.
 
 ## M7 — Deployment Identity and Platform Mutation
 
@@ -278,6 +278,6 @@ Each roadmapped phase closes only when applicable classes are covered:
 
 ## Current Next Action
 
-**M5/M5A verification is the next DEVELOPMENT Chain gate.** M6–M10 documentation is prepared in advance only to remove planning gaps.
+**M5A is `VERIFIED PASS` (2026-08-14). M6 (Supply Chain Provenance) is the next DEVELOPMENT Chain gate.** M6–M10 documentation is prepared in advance only to remove planning gaps; M7–M10 remain blocked by their sequential predecessors.
 
 Nächster zulässiger Auftrag: M5 Audit-Evidence und M5A AAL2-/DENY-/Recovery-/Advisor-Evidence read-only vervollständigen. Mutation Requests dürfen vom Owner oder Systemadministrator-Agenten initiiert werden; jede externe oder sicherheitsrelevante Ausführung benötigt weiterhin ein exaktes Proposal und ausdrückliche Owner-Freigabe gemäß ADR-0071/ESS-0023.
