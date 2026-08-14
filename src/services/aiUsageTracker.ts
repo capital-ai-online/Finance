@@ -3,18 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { AiGenerationClient } from './aiSchema';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 
 // Audit ARCH-AUDIT-0002 (N2, Kapitel 14.4): Prompt-Registry und Token-/Kostenerfassung fuer
-// alle Gemini-API-Aufrufe. Vor N2 gab es keine zentrale Uebersicht, welche Prompts das System
-// tatsaechlich verwendet und wie viele Tokens/Kosten dabei anfallen - jeder der 19
-// Aufrufstellen (server.ts, server/ai.ts, server/documentHygiene.ts, src/agents/*.ts) rief
-// generateContent() direkt und unbeobachtet auf.
-//
-// Der Prompt-TEXT selbst bleibt bewusst in der jeweiligen Agent-/Router-Datei (naeher am
-// fachlichen Kontext, deutlich geringeres Refactoring-Risiko als eine Verschiebung aller
+// providerübergreifende Anthropic-/OpenAI-Aufrufe. Der Prompt-Text bleibt im\n// fachlichen Kontext, deutlich geringeres Refactoring-Risiko als eine Verschiebung aller
 // System-Instructions/Response-Schemas in ein zentrales Modul) - PROMPT_REGISTRY ist der
 // Katalog (stabile ID, Modulherkunft, Kurzbeschreibung, Version), nicht der Speicherort.
 
@@ -27,10 +20,8 @@ export interface PromptRegistryEntry {
 
 export const PROMPT_REGISTRY: Record<string, PromptRegistryEntry> = {
   'chat-assistant': { id: 'chat-assistant', module: 'server/ai.ts (/api/chat)', description: 'Freier Chat-Assistent fuer quantitative Finanzfragen.', version: '1.0.0' },
-  'image-analysis': { id: 'image-analysis', module: 'server/ai.ts (/api/analyze-image)', description: 'Bildanalyse aus finanzieller Perspektive (Gemini Vision).', version: '1.0.0' },
   'document-hygiene-change-classification': { id: 'document-hygiene-change-classification', module: 'server/documentHygiene.ts (analyzeChangeWithAI)', description: 'Klassifiziert eine Dokumentaenderung (typo/content_update/structural_change/new_section/conflict_candidate).', version: '1.0.0' },
   'document-hygiene-propagation': { id: 'document-hygiene-propagation', module: 'server/documentHygiene.ts (generatePropagatedContent)', description: 'Uebertraegt eine Aenderung semantisch auf ein abhaengiges Dokument.', version: '1.0.0' },
-  'server-market-sentiment': { id: 'server-market-sentiment', module: 'server.ts (/api/market-sentiment)', description: 'Marktstimmungsanalyse mit Google-Suche-Grounding.', version: '1.0.0' },
   'server-market-sentiment-shock': { id: 'server-market-sentiment-shock', module: 'server.ts (/api/market-sentiment/simulate-shock)', description: 'Simuliert den Sentiment-Effekt eines makrooekonomischen Schock-Szenarios.', version: '1.0.0' },
   'server-portfolio-review': { id: 'server-portfolio-review', module: 'server.ts (/api/portfolio-review)', description: 'KI-gestuetztes Review einer Portfolio-Allokation samt Backtest-Kennzahlen.', version: '1.0.0' },
   'landing-binance-quick-analysis': { id: 'landing-binance-quick-analysis', module: 'server/binanceLandingQuickAnalysis.ts (/api/ai/landing/quick-analysis)', description: 'Oeffentliche, provideruebergreifende Kurzanalyse ausschliesslich auf Basis gelieferter Binance-Spot-Marktdaten.', version: '1.0.0' },
@@ -72,7 +63,7 @@ interface ModelPricing {
   outputPerMillionUsd: number;
 }
 
-// Audit ARCH-AUDIT-0002 (N2): KEINE hartkodierte Preistabelle. Tatsaechliche Gemini-Preise
+// Audit ARCH-AUDIT-0002 (N2): KEINE hartkodierte Preistabelle. Providerpreise
 // haengen von Modellvariante, Kontextfenster-Groesse und Vertrag ab und aendern sich; ein
 // im Code fest eingetragener USD-Wert waere binnen kurzer Zeit falsch und wuerde einen nicht
 // verifizierten Kostenwert als scheinbar reale Zahl ausgeben - exakt das Muster, das
@@ -87,16 +78,16 @@ export function configureModelPricing(model: string, pricing: ModelPricing): voi
 
 /**
  * Laedt Preise aus Umgebungsvariablen im Format
- * GEMINI_PRICE_<MODEL>_INPUT_PER_M / GEMINI_PRICE_<MODEL>_OUTPUT_PER_M (USD je 1M Tokens),
- * z.B. GEMINI_PRICE_GEMINI_3_5_FLASH_INPUT_PER_M=0.075. Modellname wird dafuer auf
+ * AI_PRICE_<MODEL>_INPUT_PER_M / AI_PRICE_<MODEL>_OUTPUT_PER_M (USD je 1M Tokens),
+ * z.B. AI_PRICE_GPT_5_INPUT_PER_M. Modellname wird dafuer auf
  * Grossbuchstaben mit Unterstrichen normalisiert. Best-effort: fehlende/ungueltige Werte
  * werden uebersprungen statt einen Default anzunehmen.
  */
 export function loadPricingFromEnv(models: string[]): void {
   for (const model of models) {
     const envKey = model.toUpperCase().replace(/[^A-Z0-9]/g, '_');
-    const inputRaw = process.env[`GEMINI_PRICE_${envKey}_INPUT_PER_M`];
-    const outputRaw = process.env[`GEMINI_PRICE_${envKey}_OUTPUT_PER_M`];
+    const inputRaw = process.env[`AI_PRICE_${envKey}_INPUT_PER_M`];
+    const outputRaw = process.env[`AI_PRICE_${envKey}_OUTPUT_PER_M`];
     const inputPerMillionUsd = inputRaw !== undefined ? Number(inputRaw) : NaN;
     const outputPerMillionUsd = outputRaw !== undefined ? Number(outputRaw) : NaN;
     if (Number.isFinite(inputPerMillionUsd) && Number.isFinite(outputPerMillionUsd)) {
@@ -111,37 +102,8 @@ function computeCostUsd(model: string, promptTokens: number, candidateTokens: nu
   return (promptTokens / 1_000_000) * pricing.inputPerMillionUsd + (candidateTokens / 1_000_000) * pricing.outputPerMillionUsd;
 }
 
-/**
- * Dünner Wrapper um ai.models.generateContent(): reicht Parameter und Antwort unveraendert
- * durch (keine Aenderung an Prompt/System-Instruction/Response-Schema), zeichnet aber die
- * reale usageMetadata der Antwort auf. Faellt die Antwort ohne usageMetadata aus (z.B. manche
- * Fehler-/Mock-Antworten), wird KEIN Eintrag mit geschaetzten Werten erzeugt.
- */
-export async function trackedGenerateContent(
-  ai: AiGenerationClient,
-  params: Parameters<AiGenerationClient['models']['generateContent']>[0],
-  meta: { promptId: string; requestId?: string }
-): ReturnType<AiGenerationClient['models']['generateContent']> {
-  const response = await ai.models.generateContent(params);
-  try {
-    recordGeminiUsage(response, String((params as any).model || 'unknown'), meta);
-  } catch {
-    // Aufzeichnung ist best-effort und darf den eigentlichen KI-Aufruf nicht gefaehrden.
-  }
-  return response;
-}
-
-function recordGeminiUsage(response: any, model: string, meta: { promptId: string; requestId?: string }): void {
-  const usage = response?.usageMetadata;
-  if (!usage) return;
-  const promptTokens = typeof usage.promptTokenCount === 'number' ? usage.promptTokenCount : 0;
-  const candidateTokens = typeof usage.candidatesTokenCount === 'number' ? usage.candidatesTokenCount : 0;
-  const totalTokens = typeof usage.totalTokenCount === 'number' ? usage.totalTokenCount : promptTokens + candidateTokens;
-  pushUsageRecord(model, promptTokens, candidateTokens, totalTokens, meta);
-}
-
 // Audit ARCH-AUDIT-0002 (J3, Kapitel 14.6): providerübergreifender Rückfall auf Anthropic
-// Claude, wenn beide Gemini-Modelle fehlschlagen (src/services/agentModelRouting.ts). Der
+// Claude als priorisierter Provider (src/services/agentModelRouting.ts). Der
 // Ledger bleibt EIN gemeinsames, providerübergreifendes Instrument - genau das macht J2s
 // Erfolgserkennung (Diff auf getUsageLedger() vor/nach einem Agentenaufruf) weiterhin
 // korrekt, unabhaengig davon, welcher Provider tatsaechlich geantwortet hat.
@@ -167,8 +129,7 @@ function recordAnthropicUsage(response: any, model: string, meta: { promptId: st
   pushUsageRecord(model, promptTokens, candidateTokens, promptTokens + candidateTokens, meta);
 }
 
-// Audit ARCH-AUDIT-0002 (J3-Folge): dritter Provider in der Kette (Anthropic -> OpenAI ->
-// Gemini, Nutzerpriorisierung). Derselbe gemeinsame, providerunabhaengige Ledger wie bei
+// Audit ARCH-AUDIT-0002 (J3-Folge): OpenAI als zweiter Provider nach Anthropic. Derselbe gemeinsame, providerunabhaengige Ledger wie bei
 // trackedAnthropicMessage() - J2s Erfolgserkennung bleibt unveraendert korrekt.
 export async function trackedOpenAIMessage(
   openai: OpenAI,
@@ -195,9 +156,6 @@ function recordOpenAIUsage(response: any, model: string, meta: { promptId: strin
 
 // ARCH-AUDIT-0002 (J4, Kapitel 14.6): Embeddings-Aufrufe fuer RAG (src/services/rag/). Nur fuer
 // OpenAI verkabelt: CreateEmbeddingResponse.usage liefert reale prompt_tokens/total_tokens.
-// Gemini embedContent() liefert in der oeffentlichen Developer API dagegen KEIN usageMetadata
-// (nur ein Enterprise-Platform-spezifisches metadata-Feld) - fuer diesen Fall wird bewusst kein
-// Ledger-Eintrag mit geschaetzten Werten erzeugt, statt Tokens zu raten.
 export async function trackedOpenAIEmbedding(
   openai: OpenAI,
   params: Parameters<OpenAI['embeddings']['create']>[0],
