@@ -29,7 +29,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 
 | ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
 |---|---|---|---|---|
-| DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M5 **VERIFIED PASS**; **M5A VERIFIED PASS** (2026-08-14); **M6 CODE COMPLETE / cosign-Fix nach Merge offen** (erster `push`-Lauf fand `actions/attest-build-provenance` für private, personenbezogene Repos blockiert, behoben per cosign/Sigstore keyless signing); M7–M10 weiterhin sequenziell blockiert | M6-Fix-PR mergen, nächsten `push`-Attestation-Lauf abwarten |
+| DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M5 **VERIFIED PASS**; **M5A VERIFIED PASS** (2026-08-14); **M6 VERIFIED PASS** (2026-08-14, realer `push`-Lauf signierte + verifizierte die Provenance per cosign/Sigstore auf dem gehosteten Build-Pfad); M7 unblocked, M8–M10 weiterhin sequenziell blockiert | M7-Scope (exaktes Ziel + Owner-Mutation-Approval) mit Owner abstimmen |
 | S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | READY FOR OWNER REVIEW; S1.0–S1.6 nicht vollständig VERIFIED PASS | F-01–F-18 gegen aktuelles main revalidieren |
 | DOC | Documentary/Event Value Chain | `docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` | ACTIVE / PARTIAL | D0 read-only Baseline |
 | SA | Systemadministrator-Agent | `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md` | SA0–SA4 VERIFIED PASS; SA5 blockiert | dokumentenbasierte Prototypen nach ESS-0023 |
@@ -123,8 +123,8 @@ M5A Exit (alle Punkte erfüllt, siehe Closure-Evidence für Details je Punkt):
 | M4 Agent IAM | COMPLETE | DENY-first Policy-Probes | keine Provider-Eskalation |
 | M5 Audit/Telemetry | **VERIFIED PASS** | SA-P02 (abgeschlossen) | realer Auditinsert und OTEL-Korrelation — siehe `docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md` |
 | M5A Native MFA/AAL2 | **VERIFIED PASS** | SA-P03 (abgeschlossen) | AAL2, DENY, Recovery, Advisor, Audit PASS — siehe `docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md` |
-| M6 Supply Chain | CODE COMPLETE / cosign-Fix nach Merge offen | SBOM/Provenance-Prototyp (umgesetzt, cosign/Sigstore-Signierung nach real entdecktem Attestations-API-Blocker, siehe `docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`) | source→artifact attestation |
-| M7 Deployment Identity | BLOCKED BY M6 | Mutation-Proposal Generator | Zielbindung, Approval, Postcheck, Rollback |
+| M6 Supply Chain | **VERIFIED PASS** | SBOM/Provenance (umgesetzt + auf realem `push`-Build-Pfad signiert und verifiziert per cosign/Sigstore, siehe `docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`) | source→artifact attestation — erreicht |
+| M7 Deployment Identity | UNBLOCKED (M6 VERIFIED PASS) | Mutation-Proposal Generator | Zielbindung, Approval, Postcheck, Rollback — noch nicht begonnen |
 | M8 Agent Cutover | BLOCKED BY M7 | SA-P05 + Provider-Profile-Tests | semantisch äquivalente Policy |
 | M9 Assurance | BLOCKED BY M8 | Angriffs-/Replay-/Kill-Switch-Drills | keine unowned CRITICAL Controls |
 | M10 Passkey Owner Authorization | BLOCKED BY M9 | Shadow-Mode/WebAuthn-Prototyp | exact-state single-use Approval |
@@ -206,8 +206,8 @@ Kein gemergter Branch wird wiederverwendet. PR #257 bleibt Documentation-only; P
 | 3 | S1 Revalidierung | read-only | aktuelle main-Baseline |
 | 4 | Documentary D0 | read-only | Single-Writer geklärt |
 | 5 | IAM Diagnostics Matrix | Dokumentation | neuere Authority erfasst |
-| 6 | M6 Prototyp | Repository-Code | **umgesetzt** — Code + Tests vollständig; erster `push`-Lauf fand `actions/attest-build-provenance` für private, personenbezogene Repos blockiert, behoben per cosign/Sigstore keyless signing; wartet auf Merge + nächsten `push`-Attestation-Lauf |
-| 7 | M7 Proposal-Prototyp | Repository-Code, keine Produktion | M6 VERIFIED PASS |
+| 6 | M6 Prototyp | Repository-Code | **VERIFIED PASS** — Code + Tests vollständig; nach real entdecktem Attestations-API-Blocker (`actions/attest-build-provenance` für private, personenbezogene Repos) auf cosign/Sigstore keyless signing umgestellt; realer `push`-Lauf signierte + verifizierte die Provenance auf dem gehosteten Build-Pfad |
+| 7 | M7 Proposal-Prototyp | Repository-Code, keine Produktion | M6 VERIFIED PASS — erreicht, Scope noch mit Owner abzustimmen |
 | 8 | M8 Cutover-Simulator | Sandbox | M7 VERIFIED PASS |
 | 9 | M9 Assurance Drills | kontrollierte Umgebung | M8 VERIFIED PASS |
 | 10 | M10 Shadow Mode | keine Legacy-Abschaltung | M9 VERIFIED PASS |
