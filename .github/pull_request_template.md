@@ -1,4 +1,4 @@
-<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.3.3 -->
+<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.3.4 -->
 # CAPITAL-AI Änderungsantrag (Pull Request)
 
 > Diese Vorlage ist verbindlich. Maschinenverwaltete Baseline-Felder dürfen nicht gelöscht werden.
@@ -94,9 +94,11 @@ Ein **Rollback-Runbook** beschreibt vor einer Mutation den sicheren Weg zurück 
 >
 > Reihenfolge für den Owner: **Files changed prüfen und Viewed setzen → Review `💪`/`okay` für den aktuellen PR-Head absenden → beide Checkboxen zuletzt setzen.** Das letzte Bearbeiten des PR-Bodys löst die Owner-Vorprüfung aus.
 >
-> **Wichtig:** Die folgenden beiden Checkbox-Texte sind maschinenlesbare Governance-Invarianten und dürfen nicht umbenannt oder paraphrasiert werden.
+**Wichtig:** Die unsichtbaren IDs direkt über den beiden Checkboxen sind maschinenlesbare Governance-Invarianten. Die sichtbaren Texte dürfen verständlich angepasst werden; IDs dürfen weder entfernt, dupliziert noch verschoben werden.
 
+<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->
 - [ ] Human/Owner: vollständigen PR-Diff geprüft.
+<!-- CAPITAL_AI_OWNER_FILES_ATTESTATION -->
 - [ ] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.
 
 Danach muss für den **aktuellen PR-Head** ein Review von `SvenKulessa` mit **`💪`** oder **`okay`** vorhanden sein. Erst dann darf `technical-validation` starten. Ein neuer Commit invalidiert den bisherigen Review für den neuen Head. Merge und externe Produktionsmutationen benötigen weiterhin ihre jeweils separate ausdrückliche Human-/Owner-Freigabe.
