@@ -77,7 +77,7 @@ Aktivierung erfordert nach Merge eine exakte current-main-Bindung, Human/Owner-A
 
 ## Current executable DEVELOPMENT phase — M5A
 
-M5A remains the next repository-development phase. Die M5-Korrektur aus PR #222 muss parallel produktiv verifiziert werden, bevor ein autonomer Mutation Executor für spätere DEVELOPMENT-Chain-Mutationen verwendet werden darf.
+M5A remains the next repository-development phase. Der verifizierte SA4-Ausführungspfad darf nach Aktivierung von `REM-M5A-REPOSITORY-001` das begrenzte Repository-Code-/Test-Paket ausführen. Externe oder produktive Mutationen bleiben davon ausdrücklich ausgeschlossen; SA5 bleibt bis M10 `VERIFIED PASS` blockiert.
 
 ### Goal
 
