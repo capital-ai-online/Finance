@@ -1,5 +1,5 @@
 import express from 'express';
-import { Type } from '@google/genai';
+import { Type } from '../../src/services/aiSchema';
 import { orchestrator } from '../../src/lib/requestOrchestrator';
 import { generateStructuredWithFallback } from '../../src/services/agentModelRouting';
 
