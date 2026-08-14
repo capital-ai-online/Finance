@@ -2,7 +2,7 @@
 ## Enterprise Market Data Provider & MCP Architecture
 
 **Status:** ACCEPTED  
-**Implementation-Status:** PHASE 2 IMPLEMENTED / RUNTIME PROMOTION NOT AUTHORIZED  
+**Implementation-Status:** PHASE 3A PARTIALLY IMPLEMENTED / ALPACA PROMOTION NOT AUTHORIZED  
 **Date:** 2026-08-03  
 **Version:** 0.6.0  
 **Priority:** P1  
@@ -118,6 +118,18 @@ synthetic data.
 This phase remains outside the active scoring/screening composition root. Alpaca remains
 `shadow`; provider promotion, entitlement approval and pipeline migration require separate
 evidence and Owner authorization.
+
+## 3.5 P3A traditional quote migration boundary (2026-08-15)
+
+The existing Twelve Data stock/forex quote path now enters through the canonical
+`MarketDataGateway` and a typed `TwelveDataMarketDataProvider`. The legacy
+`traditional-quote/1.0.0` response remains a compatibility boundary for current consumers,
+while freshness, provenance, cache, coalescing, rate-limit and circuit-breaker controls are
+enforced centrally.
+
+Alpaca continues to run as independent score-neutral shadow evidence. Index quotes, historical
+series, fundamentals and scoring-input migrations remain outside P3A and require later bounded
+work packages.
 
 ## 4. Alpaca wird Primary Provider
 
