@@ -94,14 +94,14 @@ unberührt.
 | M5 Audit / Telemetry | **VERIFIED PASS** | COMPLETE | ADR-0056/0059 + M5 Evidence | PR #222 corrected writer deployed and confirmed via real successful privileged audit insert (`docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md`, cross-verified against PR #229) | autonomous mutation remains blocked independent of this (SA5/M10 gate) |
 | M5A Native MFA / AAL2 | **VERIFIED PASS** | baseline + runbook + closure evidence complete | ESS-0020 + ADR-0064 + ADR-0003.5 | repo code merged (PR #255/#256) → beide Owner-Profile mit verifiziertem nativen TOTP-Faktor + bestätigter `aal2`-Sitzung (`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`) → Advisor ohne unowned HIGH/CRITICAL | M6 unblocked |
 | M6 Supply Chain Provenance | **VERIFIED PASS** | **RUNBOOK READY + repo evidence** | ADR-0060 | source→lockfile→SBOM→provenance chain implemented, merged, and confirmed on the real hosted `push`-to-`main` build path: run [`31834114193`](https://github.com/SvenKulessa/Finance/actions/runs/31834114193) signed the provenance statement via cosign keyless signing (Sigstore Fulcio/Rekor) and verified it in the same run (`cosign verify-blob ... Verified OK`) against the exact expected certificate identity and OIDC issuer (`docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`) | M7 unblocked |
-| M7 Deployment Identity / Platform Mutation | **PHASE 0 COMPLETE / THREE SCOPE ELEMENTS VERIFIED PASS (provenance-gate+post-deploy verification; deploy-hook rotation/revocation; rollback+roll-forward proof) — M7 EXIT GATE NOT YET MET** | **RUNBOOK READY + repo evidence** | ADR-0061 | read-only Render preflight done; deploy-production merged and confirmed gated on M6 attestation on a real push; post-deploy identity/health verification confirmed end-to-end against the live Render deploy after a real bug fix (`docs/evidence/m7/M7_PHASE0_AND_REPOSITORY_CONTROLS_EVIDENCE.md`); Owner performed a real deploy-hook rotation (new hook + GitHub secret update + old hook revoked), confirmed via 3 independent sources (GitHub Actions log, Render deploy history, verify-deployment-identity PASS) (`docs/runbooks/M7_DEPLOY_HOOK_ROTATION_HANDOFF.md`); Owner performed a real Render Dashboard rollback to a prior deploy, confirmed via Render's own `trigger: rollback` deploy classification, and the subsequent roll-forward to current `main` (via merge of PR #277) is likewise confirmed via 3 independent sources (GitHub Actions log, Render `trigger: deploy_hook` live deploy, verify-deployment-identity PASS) (`docs/runbooks/M7_ROLLBACK_VERIFICATION_HANDOFF.md`); exit gate still requires the full Required Negative Tests list, several of which assume an automated execution host that does not exist for Render — M7 as a whole remains PLANNED | M8 after all required M7 mutations VERIFIED PASS |
-| M8 Agent Cutover | **BLOCKED BY M7** | **RUNBOOK READY** | ADR-0062 + ESS-0019 | provider-neutral profiles + equivalent policy tests + rollback to read-only | M9 after cutover VERIFIED PASS |
+| M7 Deployment Identity / Platform Mutation | **COMPLETE / VERIFIED PASS** (2026-08-14, all 9 Exit Gate criteria met) | **RUNBOOK READY + repo evidence** | ADR-0061 | read-only Render preflight done; deploy-production merged and confirmed gated on M6 attestation on a real push; post-deploy identity/health verification confirmed end-to-end against the live Render deploy after a real bug fix (`docs/evidence/m7/M7_PHASE0_AND_REPOSITORY_CONTROLS_EVIDENCE.md`); Owner performed a real deploy-hook rotation, confirmed via 3 independent sources (`docs/runbooks/M7_DEPLOY_HOOK_ROTATION_HANDOFF.md`); Owner performed a real Render Dashboard rollback plus roll-forward to current `main`, both confirmed via 3 independent sources each (`docs/runbooks/M7_ROLLBACK_VERIFICATION_HANDOFF.md`); all 10 Required Negative Tests now have a concrete, automated, passing test (`docs/evidence/m7/M7_REQUIRED_NEGATIVE_TESTS_EVIDENCE.md`) | M8 unblocked, not yet started |
+| M8 Agent Cutover | **EXECUTION UNBLOCKED** (M7 VERIFIED PASS 2026-08-14; not yet started) | **RUNBOOK READY** | ADR-0062 + ESS-0019 | provider-neutral profiles + equivalent policy tests + rollback to read-only | M9 after cutover VERIFIED PASS |
 | M9 Assurance / Incident / Break-Glass | **BLOCKED BY M8** | **RUNBOOK READY** | ADR-0063 | injection/replay/exfiltration/audit/kill-switch/break-glass/rollback drills | M10 after assurance VERIFIED PASS |
 | M10 Passkey-only Owner PR Authorization | **BLOCKED BY M9** | **ESS + RUNBOOK + THREAT MODEL READY** | ADR-0066 + ESS-0022 | exact-state WebAuthn approval, shadow mode, replay/recovery tests, legacy gate cleanup | DevelopmentChain closure after VERIFIED PASS |
 
 **Documentation readiness never authorizes blocked phase execution.**
 
-## Current executable DEVELOPMENT phase — M7
+## M7 closure — Current executable DEVELOPMENT phase is now M8
 
 M5A und M6 sind `VERIFIED PASS` (2026-08-14) — siehe `docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`
 und `docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`.
@@ -148,11 +148,32 @@ Roll-Forward dreifach unabhängig: GitHub-Actions-Log (`deploy-production` liefe
 vollständig mit `main` synchron. M7-Exit-Gate-Punkt 7 ist damit vollständig geschlossen — sowohl
 Rollback als auch Roll-Forward real durchgeführt und unabhängig verifiziert.
 
-**M7 als Ganzes bleibt dennoch `PLANNED`**, nicht `COMPLETE / VERIFIED PASS`: der Exit Gate verlangt
-zusätzlich die vollständige „Required Negative Tests"-Liste, von der mehrere Punkte (Replay/Dedupe,
-Audit-Permit-gebundene Ausführung, Handoff-Target-Mismatch) einen automatisierten Execution Host
-voraussetzen, der für Render nicht existiert.
-Jede künftige externe Plattform-Mutation braucht weiterhin ihr eigenes exaktes Ziel + separate
+Viertes Element (Owner-Anweisung „fang mit der Required Negative Tests Liste an" für Exit-Gate-Punkt
+6): da die DEVELOPMENT Chain Mutation Handoff Contract (`.ai/contracts/development-chain-mutation-handoff.schema.json`)
+nie einen Validator hatte — ihr `executorAgentId` ist fest auf den SA3B/GitHub-Executor gebunden, der
+für Render nie existiert hat — wurde `src/platform/Security/developmentChainMutationHandoff.ts` neu
+gebaut (strukturvalidierend + Ausführungszeit-Gate, exakt nach dem Muster des bereits produktiven
+`roadmapExecutionMandate.ts`). Alle 10 im Runbook gelisteten „Required Negative Tests" haben jetzt
+einen konkreten, automatisierten, real laufenden Test: 20 neue Tests für den Handoff-Validator/-Gate,
+5 für statische CI-Guards (`deploy-production`/`supply-chain-attestation`/`verify-deployment-identity`
+laufen nachweislich nur bei `push` auf `main`), 2 Integrationstests, die den echten
+`verifyDeploymentIdentity`-Subprozess gegen einen Mock-Server fail-closed scheitern lassen (Exit-Code
+≠ 0, `FAILED / TIMEOUT`-Evidence) — dieselbe Eigenschaft, die bereits einmal real in Produktion
+beobachtet wurde. Vollständiger Suite-Lauf: 901 Tests, alle PASS. Details:
+`docs/evidence/m7/M7_REQUIRED_NEGATIVE_TESTS_EVIDENCE.md`.
+
+**M7-Exit-Gate-Neubewertung — alle 9 Punkte explizit geprüft** (siehe
+`docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md` Abschnitt „Exit Gate Closure" für die vollständige
+Begründung je Punkt): M6-Voraussetzung verifiziert; Repository-Controls gemerged/validiert; alle
+erforderlichen externen Mutationen (Rotation, Rollback, Roll-Forward) separat Owner-freigegeben;
+alle `VERIFIED PASS`; Deployment-Identität bindet verifizierte Quelle an Laufzeit; Negativtests
+bestehen; Rollback ist bewiesen; Evidence/Roadmap/Traceability synchron (dieser Commit); Work
+Branches gelöscht (per `git ls-remote` bestätigt — Repository löscht Head-Branches automatisch nach
+Merge).
+
+**M7 ist damit `COMPLETE / VERIFIED PASS`** (2026-08-14). **M8 ist entsperrt**, aber noch nicht
+begonnen — ein Start erfordert weiterhin eine separate, ausdrückliche Owner-Anweisung. Jede künftige
+externe Plattform-Mutation braucht weiterhin ihr eigenes exaktes Ziel + separate
 Owner-Mutation-Approval. SA5 bleibt weiterhin bis M10 `VERIFIED PASS` blockiert.
 
 ### Goal
