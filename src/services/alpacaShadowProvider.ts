@@ -24,7 +24,7 @@ export interface AlpacaShadowObservation {
   reason?: string;
 }
 
-interface AlpacaShadowOptions {
+export interface AlpacaShadowOptions {
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
   nowMs?: () => number;
@@ -175,4 +175,30 @@ export async function observeAlpacaStockQuote(
   } finally {
     clearTimeout(timeout);
   }
+}
+
+
+export interface AlpacaShadowSmokeSummary {
+  [key: string]: unknown;
+  configured: boolean;
+  authenticated: boolean;
+  state: AlpacaShadowState;
+  symbol: string;
+  feed: 'iex' | 'sip';
+  retrievedAt: string;
+}
+
+export async function runAlpacaShadowStartupSmoke(
+  symbol = 'AAPL',
+  options: AlpacaShadowOptions = {},
+): Promise<AlpacaShadowSmokeSummary> {
+  const observation = await observeAlpacaStockQuote(symbol, undefined, options);
+  return {
+    configured: observation.state !== 'NOT_CONFIGURED',
+    authenticated: observation.state !== 'NOT_CONFIGURED' && observation.state !== 'UNAVAILABLE',
+    state: observation.state,
+    symbol: observation.symbol,
+    feed: observation.feed,
+    retrievedAt: observation.retrievedAt,
+  };
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { observeAlpacaStockQuote } from '../../src/services/alpacaShadowProvider';
+import { observeAlpacaStockQuote, runAlpacaShadowStartupSmoke } from '../../src/services/alpacaShadowProvider';
 
 const now = Date.parse('2026-08-14T12:00:00.000Z');
 const response = (price: number, observedAt = '2026-08-14T11:59:30.000Z', ok = true, status = 200) =>
@@ -51,5 +51,30 @@ describe('Alpaca Shadow Provider', () => {
     expect(result.state).toBe('UNAVAILABLE');
     expect(result.reason).toBe('HTTP 401');
     expect(JSON.stringify(result)).not.toContain('super-secret-value');
+  });
+  it('führt den Start-Smoke read-only aus und gibt nur redigierte Auth-Metadaten zurück', async () => {
+    const fetchImpl = vi.fn(async () => response(100));
+    const result = await runAlpacaShadowStartupSmoke('AAPL', {
+      fetchImpl: fetchImpl as any,
+      apiKeyId: 'key-id',
+      apiSecretKey: 'super-secret-value',
+      nowMs: () => now,
+    });
+    expect(result).toMatchObject({ configured: true, authenticated: true, state: 'READY', symbol: 'AAPL', feed: 'iex' });
+    expect(Object.keys(result).sort()).toEqual(['authenticated', 'configured', 'feed', 'retrievedAt', 'state', 'symbol']);
+    expect(JSON.stringify(result)).not.toContain('super-secret-value');
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('meldet einen abgelehnten Alpaca-Key redigiert und nicht authentifiziert', async () => {
+    const result = await runAlpacaShadowStartupSmoke('AAPL', {
+      fetchImpl: (async () => response(0, '', false, 401)) as any,
+      apiKeyId: 'key-id',
+      apiSecretKey: 'super-secret-value',
+      nowMs: () => now,
+    });
+    expect(result).toMatchObject({ configured: true, authenticated: false, state: 'UNAVAILABLE' });
+    expect(JSON.stringify(result)).not.toContain('super-secret-value');
+    expect(JSON.stringify(result)).not.toContain('HTTP 401');
   });
 });
