@@ -52,37 +52,60 @@ jobs:
           import os
           import re
 
-          required_diff = 'Human/Owner: vollständigen PR-Diff geprüft.'
-          required_files = 'Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.'
+          ids = {
+              '<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->': 'diff',
+              '<!-- CAPITAL_AI_OWNER_FILES_ATTESTATION -->': 'files',
+          }
 
           def parse(body: str):
-              found = set()
+              values = {'diff': False, 'files': False}
+              seen = set()
+              pending = None
               in_fence = False
+
               for raw in body.replace('\r\n', '\n').replace('\r', '\n').split('\n'):
                   line = raw.strip()
                   if re.match(r'^(?:```|~~~)', line):
                       in_fence = not in_fence
+                      pending = None
                       continue
                   if in_fence or line.startswith('>'):
                       continue
-                  match = re.fullmatch(r'-\s*\[\s*[xX]\s*\]\s+(.+?)\s*', line)
-                  if not match:
+                  if line in ids:
+                      key = ids[line]
+                      if key in seen:
+                          return False, False
+                      seen.add(key)
+                      pending = key
                       continue
-                  label = re.sub(r'`([^`\n]+)`', r'\1', match.group(1))
-                  found.add(' '.join(label.split()))
-              return required_diff in found, required_files in found
+                  if pending and line:
+                      match = re.fullmatch(r'-\s*\[\s*([xX]?)\s*\]\s+.+', line)
+                      if not match:
+                          return False, False
+                      values[pending] = bool(match.group(1))
+                      pending = None
 
-          canonical = '- [x] ' + required_diff + '\n- [x] ' + required_files
-          markdown = '- [X] ' + required_diff + '\n- [x] Human/Owner: alle geänderten Dateien im Tab `Files changed` als Viewed markiert.'
-          unchecked = '- [ ] ' + required_diff + '\n- [x] ' + required_files
-          fenced = '```text\n- [x] ' + required_diff + '\n- [x] ' + required_files + '\n```'
-          quoted = '> - [x] ' + required_diff + '\n- [x] ' + required_files
+              return (
+                  seen == {'diff', 'files'}
+                  and values['diff'],
+                  seen == {'diff', 'files'}
+                  and values['files'],
+              )
+
+          canonical = '''<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->
+          - [x] beliebiger sichtbarer Text
+          <!-- CAPITAL_AI_OWNER_FILES_ATTESTATION -->
+          - [X] ebenfalls frei formulierbar'''
+          unchecked = canonical.replace('- [x] beliebiger', '- [ ] beliebiger')
+          missing_id = '- [x] vollständigen Diff geprüft\n- [x] alle Dateien geprüft'
+          duplicate_id = canonical + '\n<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->\n- [x] doppelt'
+          fenced = '```text\n' + canonical + '\n```'
 
           assert parse(canonical) == (True, True)
-          assert parse(markdown) == (True, True)
           assert parse(unchecked) == (False, True)
+          assert parse(missing_id) == (False, False)
+          assert parse(duplicate_id) == (False, False)
           assert parse(fenced) == (False, False)
-          assert parse(quoted) == (False, True)
 
           diff_ok, files_ok = parse(os.environ.get('PR_BODY', ''))
           print(f'{str(diff_ok).lower()} {str(files_ok).lower()}')
