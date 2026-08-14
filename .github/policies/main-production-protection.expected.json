@@ -5,7 +5,7 @@
   "ruleset_name": "main-production-protection",
   "required": {
     "pull_request": true,
-    "required_status_checks": ["capital-ai-ci"],
+    "required_status_checks": ["capital-ai-ci", "build-and-test"],
     "strict_required_status_checks_policy": true,
     "deletion_protection": true,
     "non_fast_forward_protection": true,
@@ -16,7 +16,8 @@
     "current_server_ruleset": "absent",
     "shadow_check": "capital-ai-ci",
     "promotion_gate": "At least one real pull request must show capital-ai-ci PASS before this expected policy is promoted to a live GitHub ruleset.",
-    "rollback": "Do not enable the new ruleset if capital-ai-ci is missing, ambiguous, skipped unexpectedly, or failing. Preserve normal PR workflow and repair on a fresh branch."
+    "rollback": "Do not enable the new ruleset if capital-ai-ci or build-and-test is missing, ambiguous, skipped unexpectedly, or failing. Preserve normal PR workflow and repair on a fresh branch.",
+    "decision_2026-08-14": "Owner decided both capital-ai-ci and build-and-test are required, not capital-ai-ci alone, so the existing Human/Owner comment-gate (checkbox attestations + head-bound review in ci.yml owner-gate/build-and-test) remains a server-enforced merge condition and is not silently dropped by the capital-ai-ci-shadow.yml migration. See docs/evidence/security/SECURITY_AUDIT_2026-08-14_ADR0069_DEVELOPMENT_CHAIN.md, Befund P1-1."
   },
   "single_owner_topology": {
     "observed_collaborators": 1,
