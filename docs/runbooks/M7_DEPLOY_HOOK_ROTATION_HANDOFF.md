@@ -1,7 +1,7 @@
 # M7 — Render Deploy-Hook-Rotation: Mutation Work Order
 
-Status: PROPOSED (nicht ausgeführt)
-Datum: 2026-08-14
+Status: **VERIFIED PASS** (durchgeführt und real verifiziert, siehe Nachtrag Abschnitt 9) — M7 als Ganzes bleibt PLANNED
+Datum: 2026-08-14 (Nachtrag: 2026-08-14, selber Tag)
 Roadmap phase: M7 (ADR-0061, `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`)
 Authority: `docs/contracts/DEVELOPMENT_CHAIN_MUTATION_HANDOFF_CONTRACT.md`,
 `docs/runbooks/RENDER_PRODUCTION_EVIDENCE_HANDOFF.md`
@@ -121,11 +121,55 @@ Nach erfolgreicher Durchführung: Nachtrag in diesem Dokument mit Post-Mutation-
 (Job-Run-Link, Deploy-ID, Commit-SHA) — kein Secret-Wert. Anschließend `docs/evidence/m7/*`
 entsprechend ergänzen und M7-Traceability für dieses Element aktualisieren.
 
+## 9. Nachtrag — Durchführung und Post-Mutation Verification (2026-08-14)
+
+Der Owner hat die Rotation durchgeführt: neuen Deploy-Hook im Render-Dashboard erzeugt, GitHub-Secret
+`RENDER_DEPLOY_HOOK_URL` aktualisiert, alten Hook gelöscht. Kein Secret-Wert wurde dieser Sitzung zu
+irgendeinem Zeitpunkt mitgeteilt oder von ihr gelesen.
+
+Der Merge von PR #270 löste den realen `push`-Lauf [`31845661423`](https://github.com/SvenKulessa/Finance/actions/runs/31845661423)
+aus — der erste Deploy-Trigger-Versuch mit dem **neuen** Hook-Wert. Drei unabhängige Nachweise
+bestätigen den Erfolg:
+
+1. **GitHub-Actions-Job-Log** (`deploy-production`, Job-ID `94912100575`): der `curl`-Aufruf gegen
+   den (aus dem aktualisierten GitHub-Secret gelesenen) Hook lieferte
+   `{"deploy":{"id":"dep-d9vp6unmal7c73855dq0"}}` — HTTP-Erfolg mit gültiger Render-Deploy-ID.
+2. **Render-Deploy-Historie** (read-only per `list_deploys`, unabhängig von GitHub erfasst): exakt
+   diese Deploy-ID `dep-d9vp6unmal7c73855dq0`, gebunden an Commit
+   `888112d483764ef8f5d8abb918ac0e1b855c9a9d` (dem auslösenden Commit), mit `status: "live"`.
+3. **`verify-deployment-identity`-Job** (Job-ID `94912127023`): PASS — bestätigt zusätzlich, dass die
+   tatsächlich laufende Instanz den erwarteten Commit über `/healthz` meldet.
+
+Der alte Hook wurde vom Owner im Render-Dashboard gelöscht (nicht separat durch diese Sitzung
+verifizierbar, da kein Zugriff auf den alten Wert bestand/besteht — konsistent mit der Secret-Policy
+dieses Dokuments).
+
+**Ergebnis:** Rotation + Revocation der Deployment-Credential-Bridge ist real bewiesen — die im
+M7-Runbook geforderte, bisher ungetestete Fähigkeit ist jetzt `VERIFIED PASS`.
+
+**Was dies NICHT bedeutet:** M7 als Ganzes ist damit **nicht** `COMPLETE / VERIFIED PASS`. Der
+M7-Exit-Gate (`docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`, Abschnitt „Exit Gate") verlangt
+zusätzlich mindestens:
+
+- **Punkt 7, „rollback is proven"**: ein echter Render-Rollback (Wiederherstellung eines vorherigen
+  Deploys) wurde **nie** ausgeführt oder verifiziert — nur die (andersartige) Credential-Rotation.
+  Dies bleibt offen.
+- **Punkt 6, „negative tests pass"**: mehrere Punkte der Runbook-Liste „Required Negative Tests"
+  (`duplicate/replayed mutation request → DENY/DEDUPE`, `execution without durable audit permit →
+  DENY`, `Handoff target mismatch → DENY`) setzen einen automatisierten Execution Host mit Audit-Permit
+  voraus — dieser existiert für Render nicht (siehe Abschnitt 0). Diese Punkte sind für eine manuell
+  durch den Owner durchgeführte Mutation konzeptuell nicht 1:1 anwendbar und wurden nicht durch ein
+  automatisiertes Testsystem nachgewiesen.
+
+M7 bleibt daher weiterhin `PLANNED` — zwei von mehreren möglichen Scope-Elementen sind jetzt real
+verifiziert (Repository-Controls-Paket; Deploy-Hook-Rotation), aber der vollständige Exit Gate ist
+nicht erreicht.
+
 ## 8. Freigabestatus
 
-- [ ] Human/Owner: Work Order geprüft und Umfang bestätigt.
-- [ ] Human/Owner: Schritte 1–4 durchgeführt.
-- [ ] Diese Sitzung: Post-Mutation Verification durchgeführt und dokumentiert.
+- [x] Human/Owner: Work Order geprüft und Umfang bestätigt.
+- [x] Human/Owner: Schritte 1–4 durchgeführt.
+- [x] Diese Sitzung: Post-Mutation Verification durchgeführt und dokumentiert (Abschnitt 9).
 
-**Dieses Dokument autorisiert selbst keine Ausführung.** Es liegt ausschließlich am Owner, ob und
-wann die in Abschnitt 4 beschriebenen Schritte durchgeführt werden.
+**Dieses Dokument autorisiert selbst keine Ausführung.** Die Ausführung ist bereits erfolgt (siehe
+Abschnitt 9); dieses Dokument diente als Vorbereitung und dient jetzt als Evidence.
