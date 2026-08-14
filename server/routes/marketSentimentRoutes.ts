@@ -38,9 +38,7 @@ export function createMarketSentimentRouter(deps: MarketSentimentRouteDependenci
       const result = await generateStructuredWithFallback({
         anthropic,
         openai,
-        gemini: null,
         promptId: 'server-market-sentiment-shock',
-        geminiModels: [],
         systemInstruction: 'Du bist ein hochprofessioneller Quant-Analyst. Kennzeichne die Ausgabe als theoretische Simulation und gib ausschließlich valides JSON zurück.',
         contents: `Analysiere als ausdrücklich theoretische Simulation den möglichen Einfluss des Ereignisses "${shockScenario}" auf ${symbol} (${assetClass}). Nutze keine erfundenen aktuellen Marktdaten.`,
         schema: {
