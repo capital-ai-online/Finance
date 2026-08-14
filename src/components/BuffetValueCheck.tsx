@@ -23,6 +23,12 @@ import {
   ChevronDown
 } from 'lucide-react';
 
+export function formatBuffettMetric(value: unknown): string {
+  if (value === null || value === undefined || value === '') return 'Nicht verfügbar';
+  const numericValue = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(numericValue) ? numericValue.toLocaleString('de-DE') : 'Nicht verfügbar';
+}
+
 interface RegistryAsset {
   symbol: string;
   name: string;
@@ -330,7 +336,7 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[11px] font-mono text-white/40 uppercase">{activeAsset.type}</span>
                     <span className="w-1 h-1 rounded-full bg-white/20" />
-                    <span className="text-[11px] font-mono text-emerald-400 font-bold">${activeAsset.price.toLocaleString()}</span>
+                    <span className="text-[11px] font-mono text-emerald-400 font-bold">${formatBuffettMetric(activeAsset.price)}</span>
                   </div>
                 </div>
               </>
@@ -391,7 +397,7 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
                         <span className="text-xs font-semibold truncate max-w-[130px]">{asset.name}</span>
                       </div>
                       <span className="text-xs font-mono text-emerald-400 font-bold shrink-0 ml-2">
-                        ${asset.price.toLocaleString()}
+                        ${formatBuffettMetric(asset.price)}
                       </span>
                     </button>
                   ))
