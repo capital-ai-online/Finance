@@ -19,7 +19,7 @@
 // Client dafür konfiguriert ist - ohne einen der drei Keys bleibt die jeweilige Stufe fail-open
 // inaktiv, die Kette rutscht einfach zur naechsten Stufe durch.
 
-import { GoogleGenAI } from '@google/genai';
+import type { AiGenerationClient } from './aiSchema';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 import { trackedGenerateContent, trackedAnthropicMessage, trackedOpenAIMessage } from './aiUsageTracker';
@@ -140,7 +140,7 @@ async function tryOpenAI(
 }
 
 async function tryGemini(
-  gemini: GoogleGenAI,
+  gemini: AiGenerationClient,
   req: StructuredGenerationRequest
 ): Promise<StructuredGenerationResult | null> {
   for (const model of req.geminiModels) {
@@ -170,7 +170,7 @@ async function tryGemini(
  * faellt dann auf seinen eigenen, hartkodierten getFallback() zurueck.
  */
 export async function generateStructuredWithFallback(
-  req: StructuredGenerationRequest & { gemini: GoogleGenAI | null; anthropic: Anthropic | null; openai: OpenAI | null }
+  req: StructuredGenerationRequest & { gemini: AiGenerationClient | null; anthropic: Anthropic | null; openai: OpenAI | null }
 ): Promise<StructuredGenerationResult | null> {
   const { gemini, anthropic, openai, ...rest } = req;
 
@@ -280,7 +280,7 @@ async function tryOpenAIText(openai: OpenAI, req: TextGenerationRequest): Promis
   return null;
 }
 
-async function tryGeminiText(gemini: GoogleGenAI, req: TextGenerationRequest): Promise<TextGenerationResult | null> {
+async function tryGeminiText(gemini: AiGenerationClient, req: TextGenerationRequest): Promise<TextGenerationResult | null> {
   const contents = [
     ...(req.history ?? []).map(turn => ({ role: turn.role === 'user' ? 'user' : 'model', parts: [{ text: turn.text }] })),
     { role: 'user', parts: [{ text: req.contents }] },
@@ -311,7 +311,7 @@ async function tryGeminiText(gemini: GoogleGenAI, req: TextGenerationRequest): P
  * konfigurierten Provider fehlschlagen.
  */
 export async function generateTextWithFallback(
-  req: TextGenerationRequest & { gemini: GoogleGenAI | null; anthropic: Anthropic | null; openai: OpenAI | null }
+  req: TextGenerationRequest & { gemini: AiGenerationClient | null; anthropic: Anthropic | null; openai: OpenAI | null }
 ): Promise<TextGenerationResult | null> {
   const { gemini, anthropic, openai, ...rest } = req;
 
