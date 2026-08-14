@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.1.0",
+  "claimId": "P0-SCORING-DATA-INTEGRITY-2026-08-14",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "P0-Datenintegrität der grafischen Rohstoff- und DeFi-Scoring-Komponenten: synthetische Scores, Terminkurven, Poolwerte und simulierte Agenten-Evidence entfernen.",
+  "startedAt": "2026-08-14T18:45:00Z",
+  "baseBranch": "main",
+  "baseSha": "9f1516f2c7858aa4d8b0595f1b2766d71ba40b8d",
+  "pullRequest": null,
+  "claimedPaths": [
+    "src/components/RawMaterialsDashboard.tsx",
+    "src/components/DeFiOrchestration.tsx",
+    "tests/unit/scoringVisualDataIntegrityP0.test.ts",
+    ".ai/work-claims/P0-SCORING-DATA-INTEGRITY-2026-08-14.json"
+  ],
+  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
+}
