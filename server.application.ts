@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { GoogleGenAI, Type } from '@google/genai';
+import { Type } from '@google/genai';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
@@ -13,7 +13,6 @@ import { MemeCoinScoringService } from './src/services/memeCoinScoringService';
 import { RawMaterialsScoringService } from './src/services/rawMaterialsScoring';
 import { ClassificationService } from './src/services/classification.service';
 import { generateCryptoScores, calculateBaseScore, calculateDefiScore } from './src/services/scoring.service';
-import { trackedGenerateContent } from './src/services/aiUsageTracker';
 import { generateStructuredWithFallback } from './src/services/agentModelRouting';
 import { recordDailySnapshots } from './server/scoreValidation';
 import { evaluateAlerts } from './server/alerts';
@@ -45,7 +44,7 @@ import {
 import { handleWebhookEvent, getStripeInstance } from './server/stripe';
 import { processSubscriptionConfirmationMailJob } from './server/mailer';
 import { registerOutboxJobHandler, startOutboxWorker, stopOutboxWorker } from './server/outboxWorker';
-import { getGeminiInstance, isGeminiConfigured } from './server/ai';
+import { isAlpacaConfigured } from './src/services/alpacaShadowProvider';
 import { logSystemEvent } from './server/systemEvents';
 import { startRecursiveFileWatcher } from './server/documentHygiene';
 import { enforceScreeningQuota } from './server/quota';
@@ -337,18 +336,8 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// Retrieve the modular Gemini client safely for use in downstream routes
-let ai: any = null;
-try {
-  if (isGeminiConfigured()) {
-    ai = getGeminiInstance();
-  }
-} catch (e) {
-  console.warn("Failed to retrieve Gemini instance on boot:", e);
-}
-
-// Audit ARCH-AUDIT-0002 (J3, Kapitel 14.6): optionaler Anthropic-Client fuer den
-// providerübergreifenden Rückfall der 8 Gemini-Agenten. Ohne ANTHROPIC_API_KEY bleibt
+// Gemini wurde anwendungsweit entfernt. Der Legacy-Kompatibilitätsparameter bleibt bis zur\n// vollständigen Router-Signaturbereinigung bewusst null und kann keinen Provideraufruf auslösen.\nconst ai: any = null;\n\n// Audit ARCH-AUDIT-0002 (J3, Kapitel 14.6): optionaler Anthropic-Client fuer den
+// providerübergreifenden Rückfall der KI-Agenten. Ohne ANTHROPIC_API_KEY bleibt
 // anthropic === null - die Agenten verhalten sich dann exakt wie vor J3 (fail-open).
 let anthropic: any = null;
 try {
@@ -360,7 +349,7 @@ try {
 }
 
 // Audit ARCH-AUDIT-0002 (J3-Folge, Kapitel 14.6): dritter Provider in der Kette. Reihenfolge
-// (Nutzerpriorisierung nach Bereitstellung aller drei Keys): Anthropic -> OpenAI -> Gemini
+// (Nutzerpriorisierung nach Bereitstellung aller drei Keys): Anthropic -> OpenAI
 // (agentModelRouting.ts). Ohne OPENAI_API_KEY bleibt openai === null - fail-open.
 let openai: any = null;
 try {
@@ -382,7 +371,7 @@ app.get('/healthz', (req, res) => {
     uptimeSeconds: Math.floor(process.uptime()),
     configured: {
       supabase: isSupabaseConfigured(),
-      gemini: isGeminiConfigured(),
+      alpaca: isAlpacaConfigured(),
       anthropic: isAnthropicConfigured(),
       openai: isOpenAIConfigured(),
     },
@@ -410,13 +399,7 @@ app.get('/metrics', (req, res) => {
 
 // Mount Modular Router Sub-systems
 //
-// WICHTIG: Hier wird die oben defensiv ermittelte Instanz `ai` weitergereicht und NICHT erneut
-// getGeminiInstance() aufgerufen. getGeminiInstance() wirft ohne GEMINI_API_KEY (server/ai.ts);
-// ein Aufruf an dieser Stelle liegt ausserhalb jedes try/catch und wuerde den Serverstart
-// komplett verhindern, statt den Betrieb ohne KI-Funktionen fortzusetzen. Beide Router und die
-// dahinterliegenden Orchestratoren akzeptieren `GoogleGenAI | null` und liefern ohne Client
-// ihre quantitativen Fallbacks.
-// ADR-0014 Phase 3.1: canonical route composition. This module intentionally owns only router
+// Gemini wurde entfernt; der Kompatibilitätsparameter `ai` ist strikt null.\n// ADR-0014 Phase 3.1: canonical route composition. This module intentionally owns only router
 // mounting/prefixes - Stripe raw-body ingress, global middleware ordering, provider construction
 // and runtime-secret validation all remain owned above, unchanged (see
 // server/routes/registerApplicationRoutes.ts's own doc comment).
@@ -1158,184 +1141,16 @@ app.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
 // GET all registry assets (highly efficient, zero rate-limit risk)
 
 
-// GET real-time financial market sentiment via Google Search Grounding and Gemini 3.5 Flash
-app.get('/api/market-sentiment', orchestrator.handle('Market Sentiment'), async (req, res) => {
-  if (!ai) {
-    return res.status(500).json({ error: 'Gemini API-Schlüssel fehlt oder ist ungültig' });
-  }
-  const symbol = (req.query.symbol as string || 'BTC').toUpperCase();
-  const assetClass = (req.query.assetClass as string || 'Crypto');
-
-  try {
-    const prompt = `Analysiere das aktuelle Markt-Sentiment und die neuesten Nachrichten für das Asset "${symbol}" (Kategorie: ${assetClass}). 
-    Verwende die Google-Suche, um die allerneuesten Nachrichten, Berichte und Marktentwicklungen der letzten 24-48 Stunden zu recherchieren.
-    
-    Generiere eine präzise Sentiment-Analyse im folgenden JSON-Format:
-    {
-      "score": <Zahl von 0 bis 100, wobei 0 extrem bearisch, 50 neutral und 100 extrem bullisch ist>,
-      "label": "<Extrem Bearisch | Bearisch | Neutral | Bullisch | Extrem Bullisch>",
-      "summary": "<Eine professionelle Zusammenfassung der aktuellen Stimmungslage in deutscher Sprache, max. 3 Sätze>",
-      "drivers": [
-        { "text": "<Ein prägnanter Markttreiber in deutscher Sprache>", "impact": "<Bullisch | Bearisch | Neutral>" }
-      ],
-      "sources": [
-        { "title": "<Titel der Nachricht oder Quelle>", "url": "<URL der Quelle aus den Suchergebnissen, falls vorhanden, andernfalls eine leere Zeichenkette>", "sentiment": "<Bullisch | Bearisch | Neutral>" }
-      ]
-    }
-    
-    Antworte AUSSCHLIESSLICH mit diesem JSON-Objekt. Verwende kein Markdown-Code-Highlighting wie \`\`\`json.`;
-
-    const response = await trackedGenerateContent(ai, {
-      model: 'gemini-3.5-flash',
-      contents: prompt,
-      config: {
-        tools: [{ googleSearch: {} }],
-        responseMimeType: "application/json"
-      }
-    }, { promptId: 'server-market-sentiment', requestId: req.requestId });
-
-    const text = response.text || '';
-    let parsedData;
-    try {
-      parsedData = JSON.parse(text);
-    } catch (parseErr) {
-      // Clean potential markdown wrapping if returned anyway
-      const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      parsedData = JSON.parse(cleanedText);
-    }
-
-    // Double check that we have grounding chunks if sources URLs are empty
-    if (parsedData && parsedData.sources && Array.isArray(parsedData.sources)) {
-      const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-      if (chunks && chunks.length > 0) {
-        parsedData.sources = parsedData.sources.map((src: any, index: number) => {
-          if (chunks[index]?.web) {
-            if (!src.url && chunks[index].web.uri) {
-              src.url = chunks[index].web.uri;
-            }
-            if (!src.title && chunks[index].web.title) {
-              src.title = chunks[index].web.title;
-            }
-          }
-          return src;
-        });
-      }
-    }
-
-    res.json(parsedData);
-  } catch (error: any) {
-    console.log("[System Notice] Market Sentiment generator: utilizing quantitative dynamic metrics.");
-    
-    // Calculate a high-fidelity dynamic quantitative fallback using the live database (assetRegistry)
-    const asset = assetRegistry.getAsset(symbol) || FALLBACK_ASSETS.find(a => a.symbol === symbol);
-    
-    let scoreValue = 50;
-    if (asset) {
-      const changeFactor = (asset.change24h || 0) * 2; // e.g. +5% change adds +10 to score
-      scoreValue = Math.min(100, Math.max(0, Math.round((asset.score || 7.0) * 10 + changeFactor)));
-    }
-    
-    let label = "Neutral";
-    let summary = "";
-    if (scoreValue >= 80) {
-      label = "Extrem Bullisch";
-      summary = `Das Markt-Sentiment für ${asset ? asset.name : symbol} ist extrem bullisch. Der quantitative Score von ${asset ? asset.score : '7.0'}/10 und ein Anstieg von ${asset ? asset.change24h : '0'}% in den letzten 24 Stunden signalisieren ein starkes Kaufinteresse. Technische Muster deuten auf eine Fortsetzung des Aufwärtstrends hin.`;
-    } else if (scoreValue >= 60) {
-      label = "Bullisch";
-      summary = `Das Sentiment für ${asset ? asset.name : symbol} zeigt eine positive Tendenz. Mit einem Score von ${asset ? asset.score : '6.5'}/10 und solider Dynamik im kurzfristigen Zeitfenster bleibt die Stimmung konstruktiv. Erste Widerstände könnten bald getestet werden.`;
-    } else if (scoreValue >= 40) {
-      label = "Neutral";
-      summary = `Das Markt-Sentiment für ${asset ? asset.name : symbol} konsolidiert sich im neutralen Bereich. Anleger halten sich vor wichtigen makroökonomischen Datenveröffentlichungen zurück. Der Markt zeigt eine ausgewogene Balance zwischen Angebot und Nachfrage.`;
-    } else if (scoreValue >= 20) {
-      label = "Bearisch";
-      summary = `Das Sentiment für ${asset ? asset.name : symbol} hat sich leicht eingetrübt. Gewinnmitnahmen und ein mäßiger Verkaufsdruck belasten den Kurs. Der quantitative Trend zeigt Anzeichen einer temporären Schwächephase.`;
-    } else {
-      label = "Extrem Bearisch";
-      summary = `Das Sentiment für ${asset ? asset.name : symbol} ist stark belastet. Hohe Volatilität und anhaltender Verkaufsdruck haben den quantitativen Score gedrückt. Marktteilnehmer agieren extrem risikoavers, während wichtige Unterstützungszonen getestet werden.`;
-    }
-
-    const drivers = [];
-    if (asset) {
-      const anyAsset = asset as any;
-      const changeValue = anyAsset.change24h || 0;
-      const changeImpact = changeValue >= 1.0 ? 'Bullisch' : (changeValue <= -1.0 ? 'Bearisch' : 'Neutral');
-      drivers.push({
-        text: `24h-Preisentwicklung von ${changeValue}% zeigt ${changeImpact.toLowerCase()}es Momentum`,
-        impact: changeImpact
-      });
-
-      const volatility = anyAsset.volatility || 25;
-      const valImpact = volatility > 35 ? 'Bearisch' : 'Bullisch';
-      drivers.push({
-        text: `Volatilität von ${volatility}% indiziert ein ${volatility > 35 ? 'erhöhtes' : 'stabiles'} Risikoprofil`,
-        impact: valImpact
-      });
-
-      if (anyAsset.pattern) {
-        drivers.push({
-          text: `Technisches Muster "${anyAsset.pattern}" erkannt`,
-          impact: changeValue >= 0 ? 'Bullisch' : 'Bearisch'
-        });
-      }
-
-      if (anyAsset.risk) {
-        drivers.push({
-          text: `Eingestuftes Risiko-Level: ${anyAsset.risk}`,
-          impact: anyAsset.risk === 'Low' ? 'Bullisch' : (anyAsset.risk === 'High' ? 'Bearisch' : 'Neutral')
-        });
-      }
-    } else {
-      drivers.push({ text: "Konsolidierung im neutralen Bereich", impact: "Neutral" });
-      drivers.push({ text: "Ausgewogenes Handelsvolumen", impact: "Neutral" });
-    }
-
-    const sources = [];
-    if (asset) {
-      const isUp = asset.change24h >= 0;
-      sources.push({
-        title: `${asset.name} Analyse: ${isUp ? 'Aufwärtsdynamik' : 'Konsolidierungsphase'} setzt sich fort`,
-        url: `https://de.tradingview.com/symbols/${symbol}/`,
-        sentiment: isUp ? 'Bullisch' : 'Bearisch'
-      });
-      sources.push({
-        title: `Finanznachrichten - Fokus auf ${asset.name} (${symbol})`,
-        url: `https://finance.yahoo.com/quote/${symbol}`,
-        sentiment: isUp ? 'Bullisch' : 'Bearisch'
-      });
-      sources.push({
-        title: `Kryptovergleich / Aktienanalyse - ${asset.name} Trend-Update`,
-        url: `https://www.coingecko.com/de/coins/${symbol.toLowerCase()}`,
-        sentiment: 'Neutral'
-      });
-    } else {
-      sources.push({
-        title: `Allgemeiner Marktbericht: Asset ${symbol} im Fokus`,
-        url: "",
-        sentiment: "Neutral"
-      });
-    }
-
-    res.json({
-      score: scoreValue,
-      label,
-      summary,
-      drivers,
-      sources
-    });
-  }
-});
-
-
-// POST Simulate real-time market sentiment shock scenarios
+// GET /api/market-sentiment wird vom modularen fail-closed Router bereitgestellt.\n\n// POST Simulate real-time market sentiment shock scenarios
 // ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): Nutzerentscheidung - auf die Anthropic -> OpenAI
-// -> Gemini-Kette umgestellt (kein Google-Search-Grounding hier, anders als /api/market-sentiment
+// -> Anthropic-/OpenAI-Kette umgestellt (kein Google-Search-Grounding hier, anders als /api/market-sentiment
 // oben - reine Reasoning-Aufgabe ohne Gemini-spezifische Abhaengigkeit). Ueber
 // generateStructuredWithFallback statt responseMimeType: der bisherige Ansatz (JSON-Format nur
 // im Prompt beschrieben) funktioniert bei Gemini leidlich, bei Anthropic/OpenAI unzuverlaessig
 // ohne echtes Schema - responseSchema/tool_choice/response_format erzwingen die Form strukturell.
 app.post('/api/market-sentiment/simulate-shock', express.json(), orchestrator.handle('Market Sentiment Simulator'), async (req, res) => {
-  if (!anthropic && !openai && !ai) {
-    return res.status(500).json({ error: 'Kein KI-Provider konfiguriert (ANTHROPIC_API_KEY, OPENAI_API_KEY oder GEMINI_API_KEY erforderlich).' });
+  if (!anthropic && !openai) {
+    return res.status(500).json({ error: 'Kein KI-Provider konfiguriert (ANTHROPIC_API_KEY oder OPENAI_API_KEY erforderlich).' });
   }
   const symbol = (req.body.symbol as string || 'BTC').toUpperCase();
   const assetClass = (req.body.assetClass as string || 'Crypto');
@@ -1345,9 +1160,9 @@ app.post('/api/market-sentiment/simulate-shock', express.json(), orchestrator.ha
     const result = await generateStructuredWithFallback({
       anthropic,
       openai,
-      gemini: ai,
+      gemini: null,
       promptId: 'server-market-sentiment-shock',
-      geminiModels: ['gemini-3.5-flash'],
+      geminiModels: [],
       systemInstruction: 'Du bist ein hochprofessioneller Quant-Analyst. Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.',
       contents: `Analysiere den theoretischen Einfluss eines makroökonomischen Schocks oder Finanzereignisses auf ein Asset.
 
@@ -1414,12 +1229,12 @@ Berechne den potenziellen Einfluss: originalScore (0-100, normales Sentiment vor
 
 // POST AI-driven portfolio allocation analysis
 // ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): Nutzerentscheidung - auf die Anthropic -> OpenAI
-// -> Gemini-Kette umgestellt, aus denselben Gruenden wie beim Sentiment-Schock-Endpunkt oben
+// -> Anthropic-/OpenAI-Kette umgestellt, aus denselben Gruenden wie beim Sentiment-Schock-Endpunkt oben
 // (reine Reasoning-Aufgabe, kein Gemini-spezifisches Feature, echtes Schema statt
 // responseMimeType-Konvention).
 app.post('/api/portfolio-review', express.json(), orchestrator.handle('Portfolio Review'), async (req, res) => {
-  if (!anthropic && !openai && !ai) {
-    return res.status(500).json({ error: 'Kein KI-Provider konfiguriert (ANTHROPIC_API_KEY, OPENAI_API_KEY oder GEMINI_API_KEY erforderlich).' });
+  if (!anthropic && !openai) {
+    return res.status(500).json({ error: 'Kein KI-Provider konfiguriert (ANTHROPIC_API_KEY oder OPENAI_API_KEY erforderlich).' });
   }
   const { allocation, metrics1Y, metrics3Y, metrics5Y } = req.body;
 
@@ -1427,9 +1242,9 @@ app.post('/api/portfolio-review', express.json(), orchestrator.handle('Portfolio
     const result = await generateStructuredWithFallback({
       anthropic,
       openai,
-      gemini: ai,
+      gemini: null,
       promptId: 'server-portfolio-review',
-      geminiModels: ['gemini-2.5-flash'],
+      geminiModels: [],
       systemInstruction: 'Du bist ein hochprofessioneller Quant-Portfolio-Analyst und Risk-Officer bei CAPITAL-AI. Gib ausschließlich ein valides JSON-Objekt zurück, das dem verlangten Schema entspricht.',
       contents: `Analysiere die folgende Portfolio-Allokation und deren historische Backtest-Ergebnisse (1, 3 und 5 Jahre):
 
