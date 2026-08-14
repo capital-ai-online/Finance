@@ -10,11 +10,6 @@ export interface ProviderSkip {
   reason: ProviderSkipReason;
 }
 
-export interface ProviderRoute {
-  providers: MarketDataProvider[];
-  skipped: ProviderSkip[];
-}
-
 export class ProviderRouter {
   constructor(
     private readonly registry: ProviderRegistry,
@@ -22,22 +17,14 @@ export class ProviderRouter {
     private readonly circuitBreaker: CircuitBreaker,
   ) {}
 
-  route(request: SnapshotRequest): ProviderRoute {
-    const providers: MarketDataProvider[] = [];
-    const skipped: ProviderSkip[] = [];
-    for (const provider of this.registry.candidates(request)) {
-      const providerId = provider.descriptor.id;
-      if (!this.circuitBreaker.allow(providerId)) {
-        skipped.push({ providerId, reason: 'circuit_open' });
-        continue;
-      }
-      if (!this.rateLimitBudget.tryConsume(providerId, 'snapshot').allowed) {
-        skipped.push({ providerId, reason: 'rate_limit_budget_exhausted' });
-        continue;
-      }
-      providers.push(provider);
-    }
-    return { providers, skipped };
+  candidates(request: SnapshotRequest): MarketDataProvider[] {
+    return this.registry.candidates(request);
+  }
+
+  tryAcquire(providerId: string): ProviderSkipReason | null {
+    if (!this.circuitBreaker.allow(providerId)) return 'circuit_open';
+    if (!this.rateLimitBudget.tryConsume(providerId, 'snapshot').allowed) return 'rate_limit_budget_exhausted';
+    return null;
   }
 
   recordSuccess(providerId: string): void {
