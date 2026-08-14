@@ -7,7 +7,7 @@
 
 import express from 'express';
 import { getServerSupabase, isSupabaseConfigured } from './db';
-import { resolveVerifiedIdentity, logIamEvent } from '../src/platform/Security/authMiddleware';
+import { resolveVerifiedIdentity, logIamEvent, requireVerifiedAal2 } from '../src/platform/Security/authMiddleware';
 import { checkRateLimit, getClientIp } from '../src/platform/Security/rateLimiter';
 import { encryptSecret, decryptSecret, hashOpaqueToken, generateOpaqueToken } from '../src/platform/Security/secretCrypto';
 import { generateBase32Secret, verifyTotp, buildOtpAuthUri } from '../src/platform/Security/totp';
@@ -147,6 +147,11 @@ stepUpRouter.post('/totp/verify-setup', requireAuth(async (req, res, identity) =
 
 // 3. Step-Up-Verifikation: gültiger TOTP-Code -> kurzlebiges, einmaliges Step-Up-Token
 //    (5 Minuten), das kritische Owner-Endpunkte zusätzlich zum normalen Bearer-Token verlangen.
+//
+// ADR-0064 (M5A): ein Step-Up-Token darf seit der Native-MFA-Härtung nur noch aus einer bereits
+// gültigen AAL2-Sitzung heraus ausgestellt werden ("it may only be issued/accepted together
+// with a valid AAL2 session" - Runbook Stage B4). Das bestehende Legacy-TOTP bleibt zusätzlich
+// als Defense-in-Depth-Prüfung erhalten; keine der beiden Prüfungen ersetzt die andere.
 stepUpRouter.post('/step-up/verify', requireAuth(async (req, res, identity) => {
   const ip = getClientIp(req as any);
   if (!checkRateLimit(`stepup-verify:${identity.userId}`, 5, 5 * 60_000) || !checkRateLimit(`stepup-verify-ip:${ip}`, 15, 5 * 60_000)) {
@@ -158,6 +163,22 @@ stepUpRouter.post('/step-up/verify', requireAuth(async (req, res, identity) => {
       endpoint: '/api/auth/step-up/verify',
     });
     return res.status(429).json({ error: 'Zu viele Versuche. Bitte 5 Minuten warten.' });
+  }
+
+  const aal2 = await requireVerifiedAal2(req);
+  if (!aal2.verified) {
+    await logSecurityEvent({
+      event_type: 'invalid_token',
+      actor_user_id: identity.userId,
+      ip_address: ip,
+      outcome: 'blocked',
+      reason: `Step-Up-Ausstellung ohne AAL2-Sitzung verweigert (${aal2.reason})`,
+      endpoint: '/api/auth/step-up/verify',
+    });
+    return res.status(428).json({
+      error: 'Diese Aktion erfordert eine gültige native TOTP-Bestätigung (AAL2) dieser Sitzung.',
+      code: 'aal2_required',
+    });
   }
 
   const { code, purpose } = req.body;
@@ -276,18 +297,40 @@ stepUpRouter.post('/break-glass/redeem', requireAuth(async (req, res, identity) 
     console.error(`[STEP-UP][ERROR] Break-Glass-Passkey-Bereinigung fehlgeschlagen: ${err?.message || err}`);
   }
 
+  // ADR-0064 (M5A): analog zur Passkey-Bereinigung oben - ohne dies bliebe ein bereits
+  // registrierter nativer MFA-Faktor nach Break-Glass aktiv, LoginStepUpGate wuerde den
+  // (unerreichbaren) nativen Challenge-Schritt weiterhin verlangen und der Nutzer bliebe trotz
+  // erfolgreicher Recovery ausgesperrt. Nutzung der supported Supabase Admin-MFA-API
+  // (ADR-0064 Punkt 6: "Native factor removal must use supported Supabase Admin MFA operations").
+  // Ausschließlich der eigene, per gültigem Break-Glass-Code bereits authentifizierte Nutzer -
+  // kein Fremd-Reset.
+  let nativeFactorsRemoved = 0;
+  try {
+    const { data: factorList } = await supabase.auth.admin.mfa.listFactors({ userId: identity.userId });
+    for (const factor of factorList?.factors || []) {
+      const { error: delErr } = await supabase.auth.admin.mfa.deleteFactor({ id: factor.id, userId: identity.userId });
+      if (!delErr) nativeFactorsRemoved++;
+    }
+  } catch (err: any) {
+    console.error(`[STEP-UP][ERROR] Break-Glass-Native-MFA-Bereinigung fehlgeschlagen: ${err?.message || err}`);
+  }
+
   await logSecurityEvent({
     event_type: 'unauthorized_access',
     actor_user_id: identity.userId,
     ip_address: ip,
     outcome: 'CRITICAL_BREAK_GLASS_USED',
-    reason: `Break-Glass-Recovery erfolgreich eingelöst - TOTP zurückgesetzt, ${passkeysRemoved} Passkey(s) entfernt, Neueinrichtung erforderlich`,
+    reason: `Break-Glass-Recovery erfolgreich eingelöst - TOTP zurückgesetzt, ${passkeysRemoved} Passkey(s) entfernt, ${nativeFactorsRemoved} nativer MFA-Faktor(en) entfernt, Neueinrichtung erforderlich`,
     endpoint: '/api/auth/break-glass/redeem',
   });
-  await logIamEvent(identity.userId, identity.userId, 'break-glass.redeemed', null, { reset: 'totp+step-up-tokens+passkeys', passkeysRemoved });
+  await logIamEvent(identity.userId, identity.userId, 'break-glass.redeemed', null, {
+    reset: 'totp+step-up-tokens+passkeys+native-mfa-factors',
+    passkeysRemoved,
+    nativeFactorsRemoved,
+  });
 
   res.json({
     success: true,
-    message: 'Break-Glass erfolgreich. TOTP und alle Passkeys wurden zurückgesetzt - bitte richten Sie diese in den Profil-Einstellungen neu ein.',
+    message: 'Break-Glass erfolgreich. TOTP, native MFA-Faktoren und alle Passkeys wurden zurückgesetzt - bitte richten Sie diese in den Profil-Einstellungen neu ein.',
   });
 }));

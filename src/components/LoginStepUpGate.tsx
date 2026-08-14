@@ -5,6 +5,13 @@ import { signInWithPasskey } from './PasskeySettings';
 import { verifyStepUp, StepUpError } from '../lib/stepUp';
 import { authFetch } from '../lib/authFetch';
 import { loginStepUpRequirement, markLoginStepUpPassed, type LoginStepUpRequirement } from '../lib/loginStepUp';
+import {
+  NativeMfaError,
+  getCurrentAssuranceLevel,
+  listVerifiedTotpFactors,
+  challengeTotpFactor,
+  verifyTotpChallenge,
+} from '../platform/Security/nativeMfa';
 
 interface LoginStepUpGateProps {
   session: { user: any; [key: string]: any };
@@ -12,15 +19,28 @@ interface LoginStepUpGateProps {
   onAbort: () => void;
 }
 
+type GateRequirement = LoginStepUpRequirement | 'native' | 'checking';
+
 /**
  * Ganzseitiges Login-Gate: wird zwischen erfolgreicher Primär-Authentifizierung (Google-OAuth,
  * Passwort, Session-Restore) und tatsächlichem Dashboard-Zugriff eingeblendet, sobald der Nutzer
  * einen Passkey registriert oder 2FA aktiviert hat. Passkey hat Vorrang vor 2FA - ist ein Passkey
  * registriert, genügt dessen Bestätigung allein.
+ *
+ * ADR-0064 / ESS-0020 (M5A): natives Supabase-MFA ist, sobald ein verifizierter Faktor existiert,
+ * die vorrangige Prüfung - sie ist die einzige Quelle, die eine echte AAL2-Sitzung erzeugt (vom
+ * Server über requireVerifiedAal2 unabhängig nachprüfbar). Existiert kein nativer Faktor, greift
+ * unverändert der bisherige Passkey-/Legacy-TOTP-Pfad.
  */
 export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGateProps) {
-  const [requirement, setRequirement] = useState<LoginStepUpRequirement | 'checking'>('checking');
+  const [requirement, setRequirement] = useState<GateRequirement>('checking');
   const [totpAlsoEnabled, setTotpAlsoEnabled] = useState(false);
+
+  const [nativeFactorId, setNativeFactorId] = useState('');
+  const [nativeChallengeId, setNativeChallengeId] = useState('');
+  const [nativeCode, setNativeCode] = useState('');
+  const [nativeVerifying, setNativeVerifying] = useState(false);
+  const [nativeError, setNativeError] = useState<string | null>(null);
 
   const [passkeyVerifying, setPasskeyVerifying] = useState(false);
   const [passkeyError, setPasskeyError] = useState<string | null>(null);
@@ -39,6 +59,34 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // ADR-0064: natives MFA hat Vorrang, sofern ein verifizierter Faktor existiert - es ist die
+      // einzige Quelle, die eine echte, server-seitig nachprüfbare AAL2-Sitzung erzeugt. Existiert
+      // kein nativer Faktor (nextLevel !== 'aal2'), greift unverändert der bisherige Pfad.
+      if (supabase) {
+        try {
+          const level = await getCurrentAssuranceLevel(supabase);
+          if (!cancelled && level.nextLevel === 'aal2') {
+            if (level.currentLevel === 'aal2') {
+              markLoginStepUpPassed(userId);
+              onVerified();
+              return;
+            }
+            const factors = await listVerifiedTotpFactors(supabase);
+            if (!cancelled && factors.length > 0) {
+              const challengeId = await challengeTotpFactor(supabase, factors[0].id);
+              if (!cancelled) {
+                setNativeFactorId(factors[0].id);
+                setNativeChallengeId(challengeId);
+                setRequirement('native');
+                return;
+              }
+            }
+          }
+        } catch (err) {
+          console.error('[LoginStepUpGate] Nativer AAL-Status konnte nicht geladen werden, fahre mit Legacy-Pfad fort:', err);
+        }
+      }
+
       const req = await loginStepUpRequirement(session);
       if (cancelled) return;
       if (req === 'none') {
@@ -62,6 +110,26 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  async function handleNativeVerify(e: React.FormEvent) {
+    e.preventDefault();
+    if (!supabase) return;
+    if (nativeCode.trim().length !== 6) {
+      setNativeError('Bitte den 6-stelligen Code aus deiner Authenticator-App eingeben.');
+      return;
+    }
+    setNativeVerifying(true);
+    setNativeError(null);
+    try {
+      await verifyTotpChallenge(supabase, nativeFactorId, nativeChallengeId, nativeCode.trim());
+      markLoginStepUpPassed(userId);
+      onVerified();
+    } catch (err) {
+      setNativeError(err instanceof NativeMfaError ? err.message : '2FA-Verifikation fehlgeschlagen.');
+    } finally {
+      setNativeVerifying(false);
+    }
+  }
 
   async function handlePasskeyConfirm() {
     setPasskeyVerifying(true);
@@ -126,7 +194,7 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
     }
   }
 
-  const canOfferRecovery = requirement === 'totp' || (requirement === 'passkey' && totpAlsoEnabled);
+  const canOfferRecovery = requirement === 'totp' || requirement === 'native' || (requirement === 'passkey' && totpAlsoEnabled);
 
   return (
     <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4 selection:bg-aif-gold-DEFAULT selection:text-black">
@@ -197,6 +265,38 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
           </form>
         )}
 
+        {requirement === 'native' && (
+          <form onSubmit={handleNativeVerify} className="space-y-4">
+            <p className="text-xs text-white/60 leading-relaxed text-center">
+              Bitte gib den aktuellen 6-stelligen Code aus deiner Authenticator-App ein.
+            </p>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              autoFocus
+              value={nativeCode}
+              onChange={(e) => setNativeCode(e.target.value.replace(/\D/g, ''))}
+              placeholder="000000"
+              className="w-full text-center text-2xl font-mono tracking-[0.5em] bg-black/40 border border-white/10 rounded-xl py-3 text-white focus:border-aif-gold-DEFAULT/50 focus:outline-none"
+            />
+            {nativeError && (
+              <p className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
+                {nativeError}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={nativeVerifying || nativeCode.length !== 6}
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-wider bg-aif-gold-DEFAULT text-black hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer"
+            >
+              <KeyRound size={16} />
+              {nativeVerifying ? 'Prüfe…' : 'Bestätigen'}
+            </button>
+          </form>
+        )}
+
         <div className="pt-2 border-t border-white/10 space-y-3">
           {!showRecovery ? (
             canOfferRecovery ? (
@@ -216,7 +316,7 @@ export function LoginStepUpGate({ session, onVerified, onAbort }: LoginStepUpGat
             <form onSubmit={handleRecoveryRedeem} className="space-y-3">
               <p className="text-[11px] text-white/50 leading-relaxed">
                 Recovery-Code eingeben, der dir bei der Einrichtung von 2FA einmalig angezeigt
-                wurde. {requirement === 'passkey' ? 'Dies entfernt sowohl 2FA als auch alle registrierten Passkeys' : 'Dies deaktiviert 2FA'}{' '}
+                wurde. Dies setzt native und Legacy-2FA sowie alle registrierten Passkeys zurück{' '}
                 für dieses Konto, damit du dich neu einrichten kannst.
               </p>
               <input

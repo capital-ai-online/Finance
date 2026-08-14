@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react';
-import { KeyRound, Copy, Check, ShieldAlert } from 'lucide-react';
+import { KeyRound, Copy, Check, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 import { authFetch } from '../lib/authFetch';
+import {
+  NativeMfaError,
+  enrollTotpFactor,
+  challengeTotpFactor,
+  verifyTotpChallenge,
+  listVerifiedTotpFactors,
+  unenrollTotpFactor,
+} from '../platform/Security/nativeMfa';
 
 /**
  * ADR-0003.5 / Audit ARCH-AUDIT-0002 (D9): TOTP-Setup-Oberfläche für die Step-Up-
@@ -10,9 +18,15 @@ import { authFetch } from '../lib/authFetch';
  * Frontend-Entsprechung - ohne diese Komponente konnte niemand jemals ein Step-Up-Token
  * erzeugen. Analog zu PasskeySettings.tsx als eigenständige Sicherheits-Einstellung in
  * ProfilePage.tsx eingebunden.
+ *
+ * ADR-0064 / ESS-0020 (M5A): ergänzt um natives Supabase-MFA (enroll -> challenge -> verify).
+ * Native MFA ist die neue Autoritätsquelle für AAL2 (server-seitig via requireVerifiedAal2
+ * geprüft); das bestehende Legacy-TOTP unten bleibt laut ADR-0064 Punkt 5 vorerst als
+ * Migrationspfad/Defense-in-Depth erhalten und wird NICHT entfernt.
  */
 
 type SetupStage = 'idle' | 'awaiting-code' | 'recovery-codes';
+type NativeStage = 'idle' | 'enrolling' | 'awaiting-code' | 'active';
 
 export default function TotpSettings() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
@@ -26,9 +40,96 @@ export default function TotpSettings() {
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
 
+  const [nativeStage, setNativeStage] = useState<NativeStage>('idle');
+  const [nativeLoading, setNativeLoading] = useState(false);
+  const [nativeMessage, setNativeMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+  const [nativeFactorId, setNativeFactorId] = useState('');
+  const [nativeChallengeId, setNativeChallengeId] = useState('');
+  const [nativeQrCode, setNativeQrCode] = useState('');
+  const [nativeSecret, setNativeSecret] = useState('');
+  const [nativeCode, setNativeCode] = useState('');
+
   useEffect(() => {
     void loadStatus();
+    void loadNativeStatus();
   }, []);
+
+  async function loadNativeStatus() {
+    if (!supabase) return;
+    try {
+      const factors = await listVerifiedTotpFactors(supabase);
+      if (factors.length > 0) {
+        setNativeFactorId(factors[0].id);
+        setNativeStage('active');
+      }
+    } catch (e: any) {
+      // Nur UI-Status; ein Ladefehler blockiert nicht das Anzeigen des restlichen Formulars.
+      console.error('[TotpSettings] Nativer MFA-Status konnte nicht geladen werden:', e?.message ?? e);
+    }
+  }
+
+  async function handleNativeStartSetup() {
+    if (!supabase) return;
+    setNativeMessage(null);
+    setNativeLoading(true);
+    try {
+      const enrollment = await enrollTotpFactor(supabase, 'CAPITAL-AI Native MFA');
+      setNativeFactorId(enrollment.factorId);
+      setNativeQrCode(enrollment.qrCode);
+      setNativeSecret(enrollment.secret);
+      const challengeId = await challengeTotpFactor(supabase, enrollment.factorId);
+      setNativeChallengeId(challengeId);
+      setNativeCode('');
+      setNativeStage('awaiting-code');
+    } catch (e: any) {
+      setNativeMessage({
+        type: 'error',
+        text: e instanceof NativeMfaError ? e.message : `Registrierung konnte nicht gestartet werden: ${e.message ?? e}`,
+      });
+    } finally {
+      setNativeLoading(false);
+    }
+  }
+
+  async function handleNativeVerify(e: React.FormEvent) {
+    e.preventDefault();
+    if (!supabase) return;
+    if (nativeCode.trim().length !== 6) {
+      setNativeMessage({ type: 'error', text: 'Bitte den 6-stelligen Code aus deiner Authenticator-App eingeben.' });
+      return;
+    }
+    setNativeLoading(true);
+    setNativeMessage(null);
+    try {
+      await verifyTotpChallenge(supabase, nativeFactorId, nativeChallengeId, nativeCode.trim());
+      setNativeStage('active');
+      setNativeQrCode('');
+      setNativeSecret('');
+      setNativeCode('');
+      setNativeMessage({ type: 'success', text: 'Native MFA ist jetzt aktiv. Diese Sitzung erfüllt AAL2.' });
+    } catch (e: any) {
+      setNativeMessage({ type: 'error', text: e instanceof NativeMfaError ? e.message : 'Verifikation fehlgeschlagen.' });
+    } finally {
+      setNativeLoading(false);
+    }
+  }
+
+  async function handleNativeCancel() {
+    if (supabase && nativeFactorId && nativeStage === 'awaiting-code') {
+      try {
+        await unenrollTotpFactor(supabase, nativeFactorId);
+      } catch {
+        // Best effort - ein hängender unverified Faktor blockiert keine spätere Neuregistrierung.
+      }
+    }
+    setNativeStage('idle');
+    setNativeFactorId('');
+    setNativeChallengeId('');
+    setNativeQrCode('');
+    setNativeSecret('');
+    setNativeCode('');
+    setNativeMessage(null);
+  }
 
   async function loadStatus() {
     if (!supabase) return;
@@ -116,14 +217,116 @@ export default function TotpSettings() {
   }
 
   return (
+    <div className="space-y-4">
+      <div className="space-y-4 p-4 rounded-lg border border-emerald-500/20 bg-black/20">
+        <div className="flex items-center gap-2">
+          <ShieldCheck size={16} className="text-emerald-400" />
+          <h3 className="text-white font-semibold">Native Zwei-Faktor-Authentifizierung (empfohlen)</h3>
+        </div>
+        <p className="text-white/50 text-sm">
+          Von Supabase Auth selbst verifiziert (AAL2) - die maßgebliche Quelle für alle künftigen
+          Step-Up-geschützten Aktionen. Nutzt dieselbe Authenticator-App wie unten.
+        </p>
+
+        {nativeMessage && (
+          <div
+            className={`text-sm rounded px-3 py-2 ${
+              nativeMessage.type === 'success'
+                ? 'bg-emerald-500/10 text-emerald-400'
+                : nativeMessage.type === 'error'
+                ? 'bg-red-500/10 text-red-400'
+                : 'bg-blue-500/10 text-blue-400'
+            }`}
+          >
+            {nativeMessage.text}
+          </div>
+        )}
+
+        {(nativeStage === 'idle' || nativeStage === 'active') && (
+          <div className="flex items-center justify-between">
+            <span className={`text-sm font-mono ${nativeStage === 'active' ? 'text-emerald-400' : 'text-white/40'}`}>
+              {nativeStage === 'active' ? '● Aktiv' : '○ Nicht aktiviert'}
+            </span>
+            {nativeStage === 'idle' && (
+              <button
+                onClick={handleNativeStartSetup}
+                disabled={nativeLoading}
+                className="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-sm font-medium"
+              >
+                {nativeLoading ? 'Bitte warten…' : 'Native MFA einrichten'}
+              </button>
+            )}
+          </div>
+        )}
+
+        {nativeStage === 'awaiting-code' && (
+          <form onSubmit={handleNativeVerify} className="space-y-3">
+            {nativeQrCode && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-white/50">QR-Code mit der Authenticator-App scannen:</p>
+                <div className="bg-white rounded-lg p-2 w-fit">
+                  <img src={nativeQrCode} alt="QR-Code für native MFA-Registrierung" width={160} height={160} />
+                </div>
+              </div>
+            )}
+            {nativeSecret && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-white/50">Alternativ manuell hinzufügen:</p>
+                <div className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-lg px-3 py-2">
+                  <code className="text-xs font-mono text-white/90 flex-1 break-all">{nativeSecret}</code>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(nativeSecret)}
+                    className="text-white/40 hover:text-white shrink-0 cursor-pointer"
+                    aria-label="Secret kopieren"
+                  >
+                    <Copy size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-xs text-white/50">Code aus der Authenticator-App zur Bestätigung:</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={nativeCode}
+                onChange={(e) => setNativeCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="000000"
+                className="w-full text-center text-xl font-mono tracking-[0.4em] bg-black/40 border border-white/10 rounded-lg py-2.5 text-white focus:border-aif-gold-DEFAULT/50 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => void handleNativeCancel()}
+                className="flex-1 px-4 py-2 rounded bg-white/5 hover:bg-white/10 text-white text-sm"
+              >
+                Abbrechen
+              </button>
+              <button
+                type="submit"
+                disabled={nativeLoading || nativeCode.length !== 6}
+                className="flex-1 px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-sm font-medium"
+              >
+                {nativeLoading ? 'Prüfe…' : 'Bestätigen & aktivieren'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
     <div className="space-y-4 p-4 rounded-lg border border-white/10 bg-black/20">
       <div className="flex items-center gap-2">
         <KeyRound size={16} className="text-aif-gold-DEFAULT" />
-        <h3 className="text-white font-semibold">Zwei-Faktor-Authentifizierung (TOTP)</h3>
+        <h3 className="text-white font-semibold">Zwei-Faktor-Authentifizierung (Legacy)</h3>
       </div>
       <p className="text-white/50 text-sm">
-        Erforderlich für Step-Up-geschützte Aktionen (z. B. Versions-Bump). Nutzt eine
-        Authenticator-App (z. B. Google Authenticator, 1Password, Authy).
+        Historischer Migrationspfad, bleibt als Defense-in-Depth erhalten. Für neue
+        Einrichtungen bitte die native MFA oben verwenden.
       </p>
 
       {message && (
@@ -243,6 +446,7 @@ export default function TotpSettings() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

@@ -1,14 +1,23 @@
 # M5A Systemadmin Repository Work Package
 
-Status: DRAFT — OWNER REVIEW REQUIRED  
-Datum: 2026-08-14  
-Roadmap phase: M5A  
-Executor: `capital-ai-systemadmin-roadmap-executor`  
-Mandate: `.ai/mandates/REM-M5A-REPOSITORY-001.json`
+Status: CODE-SLICE-SPEZIFIKATION UMGESETZT — siehe `docs/evidence/m5a/M5A_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`
+Datum: 2026-08-14
+Roadmap phase: M5A
+Executor: direkte Owner-instruierte Claude-Code-Sitzung (nicht der SA4-Pfad — siehe Korrektur unten)
+Mandate: `.ai/mandates/REM-M5A-REPOSITORY-001.json` (bleibt `DRAFT`; für diese Umsetzung nicht aktiviert)
+
+## Korrektur 2026-08-14
+
+Der ursprünglich vorgesehene Executor (`capital-ai-systemadmin-roadmap-executor` über den SA4-Pfad)
+kann dieses Paket strukturell nicht ausführen (Audit-Befund P1-2, siehe
+`docs/evidence/security/SECURITY_AUDIT_2026-08-14_ADR0069_DEVELOPMENT_CHAIN.md`). Der Owner hat
+sich für direkte Implementierung im normalen Branch → PR → Human-Review → CI → Merge-Zyklus
+entschieden. Die unten stehenden Code-Slices, Exit-Kriterien und Pflichtprüfungen blieben als
+Spezifikation gültig und wurden vollständig umgesetzt; nur der Ausführungsweg hat sich geändert.
 
 ## Zweck
 
-Dieses Paket übersetzt den nächsten ausführbaren DEVELOPMENT-CHAIN-Schritt in einen begrenzten, codebasierten Auftrag für den verifizierten Systemadmin-SA4-Ausführungspfad.
+Dieses Paket übersetzt den nächsten ausführbaren DEVELOPMENT-CHAIN-Schritt in einen begrenzten, codebasierten Auftrag.
 
 Es autorisiert durch seine Existenz keine Mutation. Aktivierung erfordert:
 
