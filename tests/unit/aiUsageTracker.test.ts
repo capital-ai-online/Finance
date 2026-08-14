@@ -13,16 +13,16 @@ import {
   configureModelPricing,
   PROMPT_REGISTRY,
 } from '../../src/services/aiUsageTracker';
-import type { GoogleGenAI } from '@google/genai';
+import type { AiGenerationClient } from '../../src/services/aiSchema';
 import type Anthropic from '@anthropic-ai/sdk';
 import type OpenAI from 'openai';
 
-function mockAiClient(response: any): GoogleGenAI {
+function mockAiClient(response: any): AiGenerationClient {
   return {
     models: {
       generateContent: async () => response,
     },
-  } as unknown as GoogleGenAI;
+  } as unknown as AiGenerationClient;
 }
 
 function mockAnthropicClient(response: any): Anthropic {
