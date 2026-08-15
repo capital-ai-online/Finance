@@ -1,6 +1,7 @@
 // ADR-0020 — Social Media Direct Publishing Router (echte Implementierung).
 //
 // SEO-ROADMAP-0001 / N1+N2 — POST /generate delivers text variants + script templates.
+// SEO-ROADMAP-0001 / N4 — Owner approval gate before instant publish.
 // No media rendering (N3). No auto-publish.
 
 import { Router, Request, Response } from 'express';
@@ -13,6 +14,10 @@ import { recordPublishLog, listPublishLogForUser } from '../../server/socialMedi
 import { checkSocialMediaAccess, accessDeniedMessage } from '../../server/socialMedia/accessControl';
 import { generateTextContent } from '../../server/socialMedia/textContentGeneration';
 import { buildScriptPackage } from '../../server/socialMedia/scriptTemplates';
+import {
+  contentApprovalStore,
+  isApprovalGateEnabled,
+} from '../../server/socialMedia/contentApproval';
 import type { SupportedAccountPlatform, PublishRequestPayload } from '../platform/SocialMediaEngine/types';
 
 export const socialMediaRouter = Router();
@@ -41,7 +46,12 @@ async function requireAccess(req: Request, res: Response): Promise<{ userId: str
 
 socialMediaRouter.get('/access', async (req: Request, res: Response) => {
   const access = await checkSocialMediaAccess(req);
-  res.json({ success: true, allowed: access.allowed, reason: access.reason });
+  res.json({
+    success: true,
+    allowed: access.allowed,
+    reason: access.reason,
+    approvalGateEnabled: isApprovalGateEnabled(),
+  });
 });
 
 socialMediaRouter.get('/accounts', async (req: Request, res: Response) => {
@@ -207,12 +217,105 @@ socialMediaRouter.post('/generate', async (req: Request, res: Response) => {
       success: true,
       package: textPackage,
       scripts: scripts || null,
+      approvalGateEnabled: isApprovalGateEnabled(),
+      nextStep: isApprovalGateEnabled()
+        ? 'POST /api/social-media/approvals then approve before instant publish'
+        : null,
     });
   } catch (err: any) {
     return res.status(400).json({
       success: false,
       error: err?.message || 'Generierung fehlgeschlagen.',
     });
+  }
+});
+
+// --- N4 Content approvals ---
+
+socialMediaRouter.post('/approvals', async (req: Request, res: Response) => {
+  const identity = await requireAccess(req, res);
+  if (!identity) return;
+
+  if (!checkRateLimit(`social-media-approvals:${identity.userId}`, 30, 60_000)) {
+    return res.status(429).json({ success: false, error: 'Zu viele Freigabe-Anfragen - bitte kurz warten.' });
+  }
+
+  try {
+    const row = contentApprovalStore.create({
+      userId: identity.userId,
+      title: req.body?.title || req.body?.episodeTitle || 'Untitled content',
+      topic: req.body?.topic,
+      platforms: req.body?.platforms || req.body?.targetPlatforms,
+      payloadSummary: req.body?.payloadSummary || req.body?.summary,
+      scheduledAt: req.body?.scheduledAt,
+    });
+    logger.info('Content approval created', { userId: identity.userId, id: row.id });
+    res.status(201).json({ success: true, approval: row });
+  } catch (err: any) {
+    return res.status(400).json({ success: false, error: err?.message || 'Freigabeantrag fehlgeschlagen.' });
+  }
+});
+
+socialMediaRouter.get('/approvals', async (req: Request, res: Response) => {
+  const identity = await requireAccess(req, res);
+  if (!identity) return;
+  const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+  const allowed = ['pending', 'approved', 'rejected', 'consumed'] as const;
+  const filter = status && (allowed as readonly string[]).includes(status)
+    ? (status as (typeof allowed)[number])
+    : undefined;
+  const approvals = contentApprovalStore.listForUser(identity.userId, filter);
+  res.json({
+    success: true,
+    approvals,
+    count: approvals.length,
+    approvalGateEnabled: isApprovalGateEnabled(),
+  });
+});
+
+socialMediaRouter.post('/approvals/:id/approve', async (req: Request, res: Response) => {
+  const identity = await requireAccess(req, res);
+  if (!identity) return;
+
+  const id = String(req.params.id || '');
+  const existing = contentApprovalStore.get(id);
+  if (!existing || existing.userId !== identity.userId) {
+    return res.status(404).json({ success: false, error: 'Freigabe nicht gefunden.' });
+  }
+
+  try {
+    const row = contentApprovalStore.approve(
+      id,
+      identity.email || identity.userId,
+      typeof req.body?.note === 'string' ? req.body.note : undefined,
+    );
+    logger.info('Content approval approved', { userId: identity.userId, id });
+    res.json({ success: true, approval: row });
+  } catch (err: any) {
+    return res.status(400).json({ success: false, error: err?.message || 'Freigabe fehlgeschlagen.' });
+  }
+});
+
+socialMediaRouter.post('/approvals/:id/reject', async (req: Request, res: Response) => {
+  const identity = await requireAccess(req, res);
+  if (!identity) return;
+
+  const id = String(req.params.id || '');
+  const existing = contentApprovalStore.get(id);
+  if (!existing || existing.userId !== identity.userId) {
+    return res.status(404).json({ success: false, error: 'Freigabe nicht gefunden.' });
+  }
+
+  try {
+    const row = contentApprovalStore.reject(
+      id,
+      identity.email || identity.userId,
+      typeof req.body?.note === 'string' ? req.body.note : undefined,
+    );
+    logger.info('Content approval rejected', { userId: identity.userId, id });
+    res.json({ success: true, approval: row });
+  } catch (err: any) {
+    return res.status(400).json({ success: false, error: err?.message || 'Ablehnung fehlgeschlagen.' });
   }
 });
 
@@ -224,13 +327,37 @@ socialMediaRouter.post('/publish', async (req: Request, res: Response) => {
     return res.status(429).json({ success: false, error: 'Zu viele Veroeffentlichungs-Anfragen - bitte kurz warten.' });
   }
 
-  const payload: PublishRequestPayload = req.body;
+  const payload: PublishRequestPayload & { approvalId?: string } = req.body;
   if (!payload?.targetPlatforms || payload.targetPlatforms.length === 0) {
     return res.status(400).json({ error: 'Mindestens eine Ziel-Plattform muss ausgewaehlt werden.' });
   }
 
   const isDraft = payload.publishType === 'draft';
   const isScheduled = payload.publishType === 'scheduled';
+  const isInstant = !isDraft && !isScheduled;
+
+  // N4: instant publish requires a consumed-once approved approvalId when gate is on.
+  if (isInstant && isApprovalGateEnabled()) {
+    const approvalId = typeof payload.approvalId === 'string' ? payload.approvalId.trim() : '';
+    if (!approvalId) {
+      return res.status(428).json({
+        success: false,
+        error: 'Owner-Freigabe erforderlich: approvalId fehlt. Zuerst POST /approvals und approve.',
+        code: 'approval_required',
+        approvalGateEnabled: true,
+      });
+    }
+    try {
+      contentApprovalStore.consumeForPublish(approvalId, identity.userId);
+    } catch (err: any) {
+      return res.status(403).json({
+        success: false,
+        error: err?.message || 'Freigabe ungueltig.',
+        code: 'approval_invalid',
+      });
+    }
+  }
+
   const results = [];
 
   for (const platform of payload.targetPlatforms) {
