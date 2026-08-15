@@ -1,7 +1,7 @@
 # M7 — Deployment Identity & Production Platform Mutation Runbook
 
-Status: PLANNED — EXECUTION BLOCKED BY M6
-Date: 2026-08-12
+Status: **COMPLETE / VERIFIED PASS** (2026-08-14, siehe Abschnitt „Exit Gate Closure" am Ende dieses Dokuments) — M8 unblocked
+Date: 2026-08-12 (Closure: 2026-08-14)
 Authority: ADR-0061, `docs/architecture/ai-agent/AI_AGENT_DEPLOYMENT_IDENTITY.md`, DEVELOPMENT Chain Execution Policy
 
 ## Goal
@@ -218,3 +218,41 @@ M7 is `COMPLETE / VERIFIED PASS` only when:
 9. work branches are deleted.
 
 Only a fully `VERIFIED PASS` M7 unblocks M8.
+
+## Exit Gate Closure (2026-08-14)
+
+Owner instruction "fang mit der Required Negative Tests Liste an" closed the last open item
+(negative tests). All 9 Exit Gate criteria are now walked through explicitly against real evidence:
+
+1. **M6 prerequisite is verified** — `docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`,
+   `VERIFIED PASS` on the real hosted `push` build path (cosign/Sigstore).
+2. **repository controls are merged and validated** — Provenance-Gate + Post-Deploy-Verification
+   package `VERIFIED PASS`, `docs/evidence/m7/M7_PHASE0_AND_REPOSITORY_CONTROLS_EVIDENCE.md`.
+3. **every required external mutation is separately Human-approved** — deploy-hook rotation
+   (`docs/runbooks/M7_DEPLOY_HOOK_ROTATION_HANDOFF.md`), rollback and roll-forward
+   (`docs/runbooks/M7_ROLLBACK_VERIFICATION_HANDOFF.md`); each performed by the Owner directly,
+   never by this session. No further external mutation is required by this runbook's scope beyond
+   these three (see "External Mutation Work Order" / "Render Verification" above).
+4. **every required external mutation is `VERIFIED PASS`** — all three independently confirmed via
+   at least 3 sources each (GitHub Actions logs, Render's own `list_deploys`, and
+   `verify-deployment-identity` CI PASS).
+5. **production deployment identity binds exact verified source/artifact to runtime** —
+   `verify-deployment-identity` CI job, real PASS on multiple production pushes.
+6. **negative tests pass** — `docs/evidence/m7/M7_REQUIRED_NEGATIVE_TESTS_EVIDENCE.md`: all 10
+   listed scenarios now have a concrete, automated, passing test.
+7. **rollback is proven** — `docs/runbooks/M7_ROLLBACK_VERIFICATION_HANDOFF.md`, both rollback and
+   roll-forward real-executed and independently verified.
+8. **Evidence and Roadmap/Traceability are synchronized** — this document plus
+   `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`, `docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md`,
+   `docs/traceability/AI_AGENT_M0_M9_TRACEABILITY_MATRIX.md`,
+   `docs/traceability/DEVELOPMENT_CHAIN_DOCUMENT_TRACEABILITY_MATRIX.md` updated in the same PR as
+   this closure.
+9. **work branches are deleted** — confirmed via `git ls-remote --heads origin` immediately before
+   this closure: the session's designated branch does not persist after merge (repository has
+   auto-delete-head-branches; each prior M7 PR's branch was gone the moment it merged), and no
+   stray M7-related branch exists on the remote.
+
+**Result: all 9 criteria are met. M7 is `COMPLETE / VERIFIED PASS`. M8 is unblocked** per this
+runbook's own closing rule. M8 itself has not been started and will not start without a separate,
+explicit Owner instruction — this closure only removes the blocker documented in
+`docs/runbooks/M8_AGENT_CUTOVER.md`'s Prerequisite Gate.

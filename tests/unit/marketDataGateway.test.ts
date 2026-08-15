@@ -84,6 +84,18 @@ describe('P2 MarketDataGateway', () => {
     expect(primary.getSnapshot).toHaveBeenCalledTimes(2);
   });
 
+  it('bindet Cache-Evidence an die Correlation-ID des aktuellen Aufrufs', async () => {
+    const registry = new ProviderRegistry();
+    const primary = provider('primary');
+    registry.register(primary);
+    const gateway = new MarketDataGateway(registry);
+    await gateway.getSnapshot(request);
+    const cached = await gateway.getSnapshot({ ...request, correlationId: 'corr-2' });
+    expect(cached.source).toBe('cache');
+    expect(cached.snapshot.correlationId).toBe('corr-2');
+    expect(primary.getSnapshot).toHaveBeenCalledTimes(1);
+  });
+
   it('coalesced identische parallele Requests', async () => {
     const registry = new ProviderRegistry();
     const primary = provider('primary');
