@@ -78,7 +78,7 @@ if (unresolved.length > 0) {
   );
 }
 
-// 5) Work-Claim: Agent-PRs genau einer; Human-PRs ohne neuen Claim sind zulässig (ADR-0039 advisory)
+// 5) Work-Claim: Agent-PRs höchstens einer; Human-PRs ohne neuen Claim sind zulässig (ADR-0039 advisory)
 const claims = listAddedClaimFiles(baseRef, headRef);
 if (claims.length > 1) {
   fail(`Es wird höchstens ein neuer Work-Claim im PR-Diff erwartet; gefunden: ${claims.length}.`);
