@@ -1,4 +1,4 @@
-<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.3.4 -->
+<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.3.5 -->
 # CAPITAL-AI Änderungsantrag (Pull Request)
 
 > Diese Vorlage ist verbindlich. Maschinenverwaltete Baseline-Felder dürfen nicht gelöscht werden.

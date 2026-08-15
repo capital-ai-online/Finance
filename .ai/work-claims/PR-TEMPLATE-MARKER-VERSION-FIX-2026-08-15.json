@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "PR-TEMPLATE-MARKER-VERSION-FIX-2026-08-15",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "Anthropic",
+    "model": "Claude (Sonnet 5)",
+    "executionSurface": "Claude Code Remote (interaktive Owner-Sitzung)"
+  },
+  "workItem": "One-line fix: .github/pull_request_template.md's own CAPITAL_AI_PR_TEMPLATE_VERSION marker still said 1.3.4 while scripts/pr/lib.mjs (hardened in PR #331, commit 0f38f3f) requires 1.3.5. Discovered because it made the just-merged PR #334 fail the new pr-template-contract CI job with 'PR #334 verwendet nicht den Marker der kanonischen Vorlage: CAPITAL_AI_PR_TEMPLATE_VERSION: 1.3.5' -- every future PR using the literal template would fail the same way until fixed.",
+  "workItemDE": "Fix: PR-Vorlagen-Marker-Version (1.3.4 -> 1.3.5) an lib.mjs angleichen",
+  "startedAt": "2026-08-15T20:20:00Z",
+  "baseBranch": "main",
+  "baseSha": "2ca710af295508361a8fb25a020848db9e559750",
+  "prCreationApproval": {
+    "status": "approved",
+    "approvedBy": "human-user",
+    "approvedAt": "2026-08-15T20:19:00Z",
+    "scope": "Owner hat auf explizite Rückfrage (AskUserQuestion) \"Ja, eigenen Fix-PR öffnen\" gewählt, nachdem dieser Bug während der CI-Diagnose von PR #334 gefunden wurde."
+  },
+  "productionBaseline": {
+    "note": "Diese Sitzungsumgebung hat keinen Netzwerkzugriff auf https://capital-ai.online/healthz (Egress-Proxy blockiert externe Hosts, HTTP 403 bei lokalem Testlauf von scripts/pr/productionPreflight.mjs). Wert unten stammt aus dem echten stdout des vorangehenden pr-template-contract-Laufs auf PR #334 (Job 95063007842, Run 31905699530), der productionPreflight.mjs mit echtem Runner-Internetzugriff erfolgreich ausgeführt hat, bevor validatePrBody.mjs an der Marker-Version scheiterte. Falls production seither erneut deployt hat, wird der nāchste echte CI-Lauf dieses PRs den tatsächlichen Wert liefern; dieser PR-Body wird dann anhand des CI-Logs nachgezogen.",
+    "checkedAt": "2026-08-15T20:05:00Z",
+    "version": "0.6.0",
+    "commitSha": "381815d7c049cb5dd6cf9b528562db3de34f7e5a",
+    "branch": "main",
+    "repoSlug": "SvenKulessa/Finance",
+    "source": "ci-job-stdout"
+  },
+  "claimedPaths": [
+    ".github/pull_request_template.md",
+    ".ai/work-claims/PR-TEMPLATE-MARKER-VERSION-FIX-2026-08-15.json"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}
