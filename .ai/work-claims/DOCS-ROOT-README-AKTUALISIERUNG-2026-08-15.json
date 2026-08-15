@@ -1,0 +1,13 @@
+{
+  "claimId": "DOCS-ROOT-README-AKTUALISIERUNG-2026-08-15",
+  "title": "Root-README an aktuelle CAPITAL-AI Architektur anpassen",
+  "branch": "docs/root-readme-aktualisieren",
+  "base": "main",
+  "ownerDecision": "README-Ueberarbeitung durch Owner beauftragt",
+  "scope": [
+    "README.md",
+    ".ai/work-claims/DOCS-ROOT-README-AKTUALISIERUNG-2026-08-15.json"
+  ],
+  "externalMutationHandoff": "none",
+  "status": "implemented-awaiting-pr-review"
+}
