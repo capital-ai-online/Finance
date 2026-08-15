@@ -10,6 +10,7 @@ import type { SystemadminRoadmapAuthorizationRequest } from '../../src/platform/
 import {
   SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF,
   SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF,
+  SYSTEMADMIN_GITHUB_WORK_PACKAGE_RUNNER_WORKFLOW_REF,
   verifyGitHubActionsOidcToken,
   type VerifiedGitHubActionsIdentity,
 } from './githubActionsOidc';
@@ -19,6 +20,20 @@ const router = express.Router();
 
 const SA3B_MANDATE = 'REM-SA3B-PROBE-001';
 const SA4_MANDATE = 'REM-SA4-PILOT-001';
+/**
+ * ADR-0074: every REM authored for the generalized work-package catalog host must carry this
+ * exact mandateId prefix. The broker never looks up individual work-package mandates by name —
+ * it only checks that the OIDC-verified workflow is the one generic runner AND the presented
+ * mandateId is reserved for that family. Per-work-package scoping (which file, which content)
+ * is enforced entirely inside src/platform/Security/roadmapExecutionMandate.ts's REM_SCOPE layer
+ * against that mandate's own allowedPaths/allowedCapabilities — this prefix check only binds the
+ * *family* of mandates to the *one* workflow identity allowed to use them.
+ */
+const WORK_PACKAGE_MANDATE_PREFIX = 'REM-WORKPACKAGE-';
+
+function isWorkPackageMandate(mandateId: string): boolean {
+  return mandateId.startsWith(WORK_PACKAGE_MANDATE_PREFIX) && mandateId.length > WORK_PACKAGE_MANDATE_PREFIX.length;
+}
 
 function bearerToken(header: string | undefined): string {
   if (!header?.startsWith('Bearer ')) return '';
@@ -54,13 +69,23 @@ function expectedMandateForWorkflow(workflowRef: string): string | null {
 }
 
 function workflowMatchesMandate(identity: VerifiedGitHubActionsIdentity, mandateId: string): boolean {
+  if (identity.workflowRef === SYSTEMADMIN_GITHUB_WORK_PACKAGE_RUNNER_WORKFLOW_REF) {
+    return isWorkPackageMandate(mandateId);
+  }
   return expectedMandateForWorkflow(identity.workflowRef) === mandateId;
 }
 
+function executionStageForMandate(mandateId: string): 'SA4' | 'SA3B' | 'WORKPACKAGE' {
+  if (mandateId === SA4_MANDATE) return 'SA4';
+  if (isWorkPackageMandate(mandateId)) return 'WORKPACKAGE';
+  return 'SA3B';
+}
+
 function policyIdForMandate(mandateId: string): string {
-  return mandateId === SA4_MANDATE
-    ? 'ADR-0059/ADR-0065/ADR-0067/ADR-0068/SA4'
-    : 'ADR-0059/ADR-0065/ADR-0067/SA3B';
+  const stage = executionStageForMandate(mandateId);
+  if (stage === 'SA4') return 'ADR-0059/ADR-0065/ADR-0067/ADR-0068/SA4';
+  if (stage === 'WORKPACKAGE') return 'ADR-0059/ADR-0065/ADR-0067/ADR-0074/WORKPACKAGE';
+  return 'ADR-0059/ADR-0065/ADR-0067/SA3B';
 }
 
 router.post('/authorize', async (req, res) => {
@@ -104,12 +129,14 @@ router.post('/authorize', async (req, res) => {
         policyId: policyIdForMandate(mandateId),
         toolId: identity.workflowRef === SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF
           ? 'github-actions-systemadmin-sa4-host'
-          : 'github-actions-systemadmin-host',
+          : identity.workflowRef === SYSTEMADMIN_GITHUB_WORK_PACKAGE_RUNNER_WORKFLOW_REF
+            ? 'github-actions-systemadmin-workpackage-host'
+            : 'github-actions-systemadmin-host',
         workflowRunId: identity.runId,
         rollbackReference: `issue:${req.body.issueNumber}`,
         metadata: {
           executionHost: 'github-actions',
-          executionStage: mandateId === SA4_MANDATE ? 'SA4' : 'SA3B',
+          executionStage: executionStageForMandate(mandateId),
           issueNumber: req.body.issueNumber,
           oidcSubject: identity.subject,
           repositoryId: identity.repositoryId,
@@ -176,7 +203,7 @@ router.post('/outcome', async (req, res) => {
       policyId: policyIdForMandate(mandateId),
       metadata: {
         executionHost: 'github-actions',
-        executionStage: mandateId === SA4_MANDATE ? 'SA4' : 'SA3B',
+        executionStage: executionStageForMandate(mandateId),
         issueNumber: req.body.issueNumber,
         oidcSubject: identity.subject,
         workflowRef: identity.workflowRef,
