@@ -78,3 +78,22 @@ GitHub-Actions-Laufzeit zu benötigen. Der Owner hat sich gegen CodeQL als zusä
 Check entschieden, um keine zweite, redundante SAST-Engine parallel pflegen zu müssen. Diese
 Entscheidung ist keine Schwächung — sie ersetzt keinen bestehenden Kontrollpfad, sondern
 verzichtet auf eine Ergänzung, deren Kategorie bereits abgedeckt ist.
+
+## Nachtrag 2026-08-15 — Snyk-Required-Check-Demotion (Kontingent erschöpft)
+
+`security/snyk (svenkulessa)` und `code/snyk (svenkulessa)` begannen, unabhängig vom tatsächlichen
+Scan-Ergebnis, dauerhaft mit `error` / „You have used your limit of private tests" zu antworten
+(Snyk-seitig erschöpftes Kontingent für private Repository-Scans, keine Erkenntnis über den
+Code-Zustand). Das blockierte real mindestens 3 gleichzeitig offene Pull Requests (#295, #296,
+#297), da beide Kontexte als Required Checks im `main-production-protection`-Ruleset standen.
+
+Der Owner hat am 2026-08-15 `security/snyk` und `code/snyk` aus dem Required-Checks-Set des
+Rulesets entfernt — das ist exakt der in Abschnitt „Rollback" Punkt 1 dieses ADRs vorgesehene
+Schritt („Anbietercheck aus Required Checks entfernen, sofern später promoviert"), keine Abweichung
+vom hier festgelegten Vorgehen. `GitGuardian Security Checks` bleibt unverändert Required Check.
+Snyk selbst (App-Integration, Repository-Scanning) bleibt aktiv; nur die Merge-blockierende
+Required-Check-Bindung wurde entfernt. `.github/policies/main-production-protection.expected.json`
+wurde entsprechend aktualisiert (`decision_2026-08-15`), und die 3 betroffenen offenen Pull
+Requests wurden geschlossen und mit identischem Branch/Commit als neue Pull Requests (#298, #299,
+#300) neu eröffnet, um eine saubere Status-Check-Auswertung unter dem aktualisierten Ruleset zu
+erhalten. Siehe `docs/evidence/security/SNYK_REQUIRED_CHECK_DEMOTION_2026-08-15.md`.
