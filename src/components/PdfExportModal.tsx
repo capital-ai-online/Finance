@@ -46,7 +46,7 @@ export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }:
   const [demoMode, setDemoMode] = useState<boolean>(false);
 
   const prepareExport = onPrepare ?? (async () => async () => {
-    await onSuccess();
+    await onSuccess!();
   });
 
   useEffect(() => {
