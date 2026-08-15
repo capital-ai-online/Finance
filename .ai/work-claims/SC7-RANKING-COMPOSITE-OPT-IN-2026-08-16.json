@@ -12,7 +12,7 @@
   "startedAt": "2026-08-15T22:40:00Z",
   "baseBranch": "main",
   "baseSha": "f0594e353c8be0a2fae13373e3144ff34cdb1945",
-  "pullRequest": null,
+  "pullRequest": 349,
   "claimedPaths": [
     "src/services/ranking.service.ts",
     "tests/unit/rankingService.test.ts",
