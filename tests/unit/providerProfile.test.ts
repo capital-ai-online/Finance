@@ -348,6 +348,24 @@ describe('M8 Provider Cutover Readiness Gate', () => {
     expect(decision.status).toBe('NOT_APPLICABLE');
   });
 
+  it('fails closed even when an untyped caller omits a required evidence field', () => {
+    const incomplete = {
+      realCallerVerified: true,
+      canonicalControlPlanePathVerified: true,
+      providerSpecificBypassDenied: true,
+      auditCorrelationVerified: true,
+      rollbackToReadOnlyVerified: true,
+    };
+    const decision = evaluateProviderCutoverReadiness(
+      'claude-code-cli',
+      incomplete as never,
+    );
+    expect(decision).toMatchObject({
+      status: 'BLOCKED',
+      missingEvidence: ['externalHostConfigurationVerified'],
+    });
+  });
+
   it('blocks unknown or removed provider aliases such as Gemini', () => {
     const decision = evaluateProviderCutoverReadiness('gemini', completeEvidence);
     expect(decision).toMatchObject({ status: 'BLOCKED', missingEvidence: [] });
