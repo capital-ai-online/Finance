@@ -179,3 +179,31 @@ JSON file to a durable, service-role-only Supabase ledger with atomic consume/gr
 ported directly from the pattern ADR-0045 already proved in production for the Stripe event
 inbox. Because production deploys on merge, the additive Supabase migration is a mandatory
 pre-merge production gate. Generic worker durability remains a separate roadmap item, R-101.
+
+## 9. Nachtrag 2026-08-15 — authentifizierter Client und sichere Exportreihenfolge
+
+Die nach ADR-0003.5 gehärteten Endpunkte `GET /api/stripe/pdf-credits` und
+`POST /api/stripe/consume-pdf-credit` akzeptieren ausschließlich die durch den Bearer-Token
+verifizierte Supabase-Identität. Der Exportdialog rief beide Endpunkte jedoch weiterhin über
+nacktes `fetch()` auf. Damit fehlte der Authorization-Header, jeder reale Exportversuch endete
+fail-closed mit HTTP 401 und selbst Enterprise-Konten konnten serverseitig nicht als unbegrenzt
+erkannt werden.
+
+Der Client verwendet deshalb für beide Ledger-Endpunkte die zentrale Funktion
+`src/lib/authFetch.ts`. E-Mail-Adresse oder andere clientseitige Identifier werden nicht mehr
+an den Balance-Endpunkt übertragen; maßgeblich bleibt ausschließlich
+`resolveVerifiedIdentity(req).userId` auf dem Server.
+
+Zusätzlich wird der Ablauf in `src/lib/pdfExportFlow.ts` festgelegt:
+
+1. PDF vollständig im Speicher vorbereiten;
+2. bei begrenzten Konten den Credit authentifiziert und atomar verbrauchen;
+3. nur nach erfolgreicher Credit-Entscheidung den vorbereiteten Download auslösen;
+4. Enterprise überspringt ausschließlich die Credit-Mutation, nicht die Identitätsprüfung beim
+   initialen Ledger-/Entitlement-Lookup.
+
+Schlägt die PDF-Vorbereitung fehl, wird kein Credit verbraucht. Schlägt die Autorisierung oder
+Credit-Mutation fehl, wird der Download nicht ausgelöst. Unit- und statische Contract-Tests
+sichern Reihenfolge, Enterprise-Bypass, 401-/Fehlerverhalten und die Verwendung von
+`authFetch()` ab. Die serverseitige Ledger-, RLS- und RPC-Grenze bleibt unverändert.
+
