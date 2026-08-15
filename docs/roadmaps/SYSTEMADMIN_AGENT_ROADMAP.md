@@ -299,7 +299,13 @@ new workflow file and broker route each time, as SA4 alone would have required.
 Activation gates (mirrors SA4's, ADR-0074 Exit criteria): this PR Human-reviewed/merged; Owner
 separately flips the workflow's `if:` condition; Owner separately approves
 `REM-WORKPACKAGE-GEN-PROOF-001` with a real `approvalEvidenceRef`; a fresh Owner Issue then runs
-the proof end-to-end. None of these four steps happened in this session.
+the proof end-to-end.
+
+**Status 2026-08-15:** gate 1 (PR #321 merged) done. Gate 2 (workflow trigger) activated on
+explicit Owner instruction ("aktiviere den Work-Package-Runner") — `if: false && ...` removed from
+`.github/workflows/systemadmin-work-package-runner.yml`. Gates 3 and 4 remain open:
+`REM-WORKPACKAGE-GEN-PROOF-001` is still `status: DRAFT`, so any Issue-triggered run still fails
+closed at SA1 REM_SCOPE regardless of the now-active trigger.
 
 ## SA5 — Bounded external mutation design
 
