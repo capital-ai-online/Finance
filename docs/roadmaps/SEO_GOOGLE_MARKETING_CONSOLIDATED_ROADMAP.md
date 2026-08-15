@@ -8,7 +8,7 @@
 
 **ACTIVE — CANONICAL EXECUTION AUTHORITY (Domain SEO / Google Marketing / Content Distribution)**  
 Stand: 2026-08-15  
-Baseline: `main@0bd57fee7c8d1b7de6befeb28028b8dd10f4e25d`  
+Baseline: `main` (Store-Code PR #335 merged)  
 Owner: SvenKulessa  
 Authority-Bindung: ADR-0035, ADR-0042, ADR-0068 (PROPOSED), ESS-0014, ESS-0022 (PROPOSED), ADR-0071, ESS-0023
 
@@ -109,7 +109,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Agen
 | D3 Soft-404 | offen | — |
 | D4 Bundle-Splitting | offen (carried) | — |
 | D5 Search Console MCP Read | offen | Runbook vorhanden |
-| S1 SeoEngine Platform | **IN PROGRESS** | `src/platform/SeoEngine/`, Routes, Migration Draft, Tests; Persistenz-Wiring offen |
+| S1 SeoEngine Platform | **CODE DONE / OWNER GATES OPEN** | Store + Routes + Tests auf main (PR #335); Schema Foundation/Grants applied; FK RESTRICT + Ledger pending Owner; ADR-Draft unnumbered |
 | S2 Prerender/SSG | offen | ADR-DRAFT vorhanden |
 | S3 SEO Dashboard | **DONE** | PR #309, Admin-Tab, No-Demo-Data |
 | S4 hreflang / Sprache | **IN PROGRESS / Branch** | Spec `S4_LANGUAGE_AND_HREFLANG_STRATEGY.md` |
@@ -155,7 +155,7 @@ Präfixe bleiben kompatibel zur etablierten Q/D/S/N/H/J-Konvention; Marketing-Ph
 
 | ID | Inhalt | Abhängigkeit | DoD |
 |----|--------|--------------|-----|
-| WP-S1 | SeoEngine Persistenz + RLS + No-Demo-Data | Migration, Security Review | Ranks nur search-console \| manual-import |
+| WP-S1 | SeoEngine Persistenz + RLS + No-Demo-Data | Migration, Security Review | Ranks nur search-console \| manual-import; Code DONE (PR #335); Owner FK/Ledger/ADR open |
 | WP-S2 | Prerender/SSG öffentlicher Routen | ADR formal | Crawler sehen Inhalt ohne JS |
 | WP-S3 | Dashboard | **DONE** | — |
 | WP-S4 | hreflang + Sprachstrategie | Vocabulary | Konsistente `lang`/hreflang |
@@ -265,14 +265,14 @@ Programm gilt als abgeschlossen, wenn:
 
 ---
 
-## 10. Sofortige nächste Schritte (nach Owner-Merge dieser Doku)
+## 10. Sofortige nächste Schritte (Stand 2026-08-15, nach PR #335)
 
-1. Master-Index (`ROADMAP_CONSOLIDATION_MASTER_INDEX.md`): SEO + MA → **SEO-GM-ROADMAP-0002**.
-2. SUPERSEDED-Header in Alt-Roadmaps setzen (dieses PR).
-3. Owner: Search Console Property verifizieren (WP-Q-CLOSE / Q3).
+1. **Owner:** FK RESTRICT Apply (`20260815220000`) + Ledger-Abgleich (`docs/runbooks/SEO_WP_S1_LEDGER_RECONCILIATION.md`) — Claim `SEO-WP-S1-FOLLOWUP-HARDENING-2026-08-15`.
+2. **Owner:** Search Console Property verifizieren (WP-Q-CLOSE / Q3).
+3. ADR-Draft SeoEngine nummerieren nach Kollisionscheck (optional parallel).
 4. ADR-0068 + ESS-0022 Owner-Review (WP-M0) — ohne Runtime-Enablement.
-5. S1 Persistenz/RLS Security Review abschließen.
-6. D1/D2/D3 in einem scoped PR (keine Shared-Zone ohne Lease).
+5. Nächstes **Code**-WP ohne Shared-Zone-Lease: **WP-D1 / D2 / D3** (JSON-LD, Title/Meta, Soft-404) scoped PR.
+6. WP-S2 nur nach formalem Prerender-ADR.
 
 ---
 
@@ -281,3 +281,4 @@ Programm gilt als abgeschlossen, wenn:
 | Version | Datum | Änderung |
 |---------|-------|----------|
 | 0002.0 | 2026-08-15 | Erstausgabe: Konsolidierung SEO-ROADMAP-0001 + MARKETING_AGENT_ROADMAP + Google-Marketing-Programmplan zu Single Point of Trust |
+| 0002.1 | 2026-08-15 | Ist-Stand S1: Store-Code PR #335 auf main; Owner-Gates (FK/Ledger/ADR) explizit; nächste Schritte aktualisiert |

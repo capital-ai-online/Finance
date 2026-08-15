@@ -7,10 +7,12 @@
   "predecessor": "SEO-WP-S1-PERSISTENCE-2026-08-15",
   "branch": "seo/wp-s1-store-adapters",
   "base": "main",
+  "pr": 335,
   "owner": "SvenKulessa",
-  "status": "in-progress",
+  "status": "merged",
   "phase": "store-code",
   "createdAt": "2026-08-15",
+  "mergedAt": "2026-08-15",
   "scope": [
     "src/platform/SeoEngine/store/**",
     "src/platform/SeoEngine/SeoEngineService.ts",
@@ -37,9 +39,10 @@
     "Ranks only search-console | manual-import"
   ],
   "dod": [
-    "ISeoEngineStore + Memory + Supabase adapters on branch",
+    "ISeoEngineStore + Memory + Supabase adapters on main",
     "Routes use getSeoEngineStore; 503 on config failure",
-    "Unit/contract tests green for source reject, unknown keyword, empty ranks",
+    "Unit/contract tests for source reject, unknown keyword, empty ranks",
     "No automatic prod apply"
-  ]
+  ],
+  "outcome": "PR #335 merged; store wiring on main; WP-S1 full VERIFIED blocked on Owner FK RESTRICT + ledger evidence"
 }

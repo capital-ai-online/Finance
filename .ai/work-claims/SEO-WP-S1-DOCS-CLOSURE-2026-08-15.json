@@ -1,0 +1,39 @@
+{
+  "claimId": "SEO-WP-S1-DOCS-CLOSURE-2026-08-15",
+  "title": "WP-S1 Docs-Closure after store-code merge",
+  "roadmap": "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+  "documentId": "SEO-GM-ROADMAP-0002",
+  "roadmapIds": ["WP-S1"],
+  "predecessor": "SEO-WP-S1-STORE-CODE-2026-08-15",
+  "branch": "seo/wp-s1-docs-closure",
+  "base": "main",
+  "owner": "SvenKulessa",
+  "status": "in-progress",
+  "phase": "docs-closure",
+  "createdAt": "2026-08-15",
+  "scope": [
+    "docs/seo/S1_SEO_ENGINE.md",
+    "docs/seo/WP_S1_PERSISTENCE_IMPLEMENTATION.md",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+    ".ai/work-claims/SEO-WP-S1-STORE-CODE-2026-08-15.json",
+    ".ai/work-claims/SEO-WP-S1-DOCS-CLOSURE-2026-08-15.json"
+  ],
+  "outOfScope": [
+    "Any Supabase production mutation",
+    "FK RESTRICT apply",
+    "Ledger reconciliation",
+    "ADR number assignment (needs collision check + Owner)",
+    "Application code changes"
+  ],
+  "externalMutations": [],
+  "securityNotes": [
+    "Documentation-only PR",
+    "Does not grant or imply production apply authority"
+  ],
+  "dod": [
+    "S1 status reflects PR #335 on main",
+    "Prep doc DoD checkboxes match reality",
+    "Roadmap §4 S1 evidence no longer says Persistenz-Wiring offen",
+    "Remaining Owner gates listed explicitly"
+  ]
+}
