@@ -20,8 +20,6 @@ concurrency:
 
 # Kostenrichtlinie: Der vollständige Build/Test-Lauf liegt ausschließlich in ci.yml.
 # Dieser Workflow darf keine zweite npm-ci/Test/Build-Pipeline für denselben PR-SHA erzeugen.
-# Reine PR-Metadatenänderungen (Titel/Beschreibung) lösen bewusst keinen neuen
-# Governance-Lauf aus; unveränderte Head-SHAs verwenden bestehende Evidence weiter.
 jobs:
   repository-conventions-advisory:
     name: Repository-Konventionen – Hinweis
@@ -34,22 +32,37 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 1
+          fetch-depth: 0
           persist-credentials: false
 
+      - name: Scope klassifizieren
+        id: scope
+        env:
+          EVENT_NAME: pull_request
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/pr/classifyPrScope.mjs
+
+      - name: Docs-only — npm ci überspringen
+        if: steps.scope.outputs.npm_advisory != 'true'
+        run: echo "Klasse D / kein App-Scope: advisory npm-Validierung entfällt (Kostensparpfad)."
+
       - name: Node.js einrichten
+        if: steps.scope.outputs.npm_advisory == 'true'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
         with:
           node-version: '24.18.0'
           cache: npm
 
       - name: Abhängigkeiten installieren
+        if: steps.scope.outputs.npm_advisory == 'true'
         env:
           GITHUB_TOKEN: ''
           GH_TOKEN: ''
         run: npm ci --ignore-scripts
 
       - name: Repository-Konventionen beratend prüfen
+        if: steps.scope.outputs.npm_advisory == 'true'
         continue-on-error: true
         env:
           GITHUB_TOKEN: ''
@@ -63,7 +76,27 @@ jobs:
     timeout-minutes: 8
 
     steps:
+      - name: Kandidaten-Head auschecken (für Scope)
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Scope klassifizieren
+        id: scope
+        env:
+          EVENT_NAME: pull_request
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/pr/classifyPrScope.mjs
+
+      - name: Keine Workflow-Änderung — Prüfung entfällt
+        if: steps.scope.outputs.workflow_security != 'true'
+        run: echo "Keine .github/workflows/**-Änderung im Diff — Workflow-Security-Check nicht erforderlich."
+
       - name: Vertrauenswürdige Sicherheitsrichtlinie aus main auschecken
+        if: steps.scope.outputs.workflow_security == 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
         with:
           ref: main
@@ -72,6 +105,7 @@ jobs:
           persist-credentials: false
 
       - name: Kandidaten ohne persistierte Zugangsdaten auschecken
+        if: steps.scope.outputs.workflow_security == 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -80,10 +114,12 @@ jobs:
           persist-credentials: false
 
       - name: Aktuellen vertrauenswürdigen main-Stand importieren
+        if: steps.scope.outputs.workflow_security == 'true'
         working-directory: candidate
         run: git fetch --no-tags ../policy main:refs/remotes/origin/main
 
       - name: Sicherheit geänderter Workflows validieren
+        if: steps.scope.outputs.workflow_security == 'true'
         working-directory: candidate
         env:
           POLICY_ROOT: ../policy
