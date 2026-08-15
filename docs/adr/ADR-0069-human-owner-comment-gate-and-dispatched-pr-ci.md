@@ -1,6 +1,6 @@
 # ADR-0069 — Human/Owner PR Gate ohne selbstreferenziellen Bootstrap
 
-- **Status:** ACCEPTED — RECOVERY REVISION 2026-08-13
+- **Status:** ACCEPTED — RECOVERY REVISION 2026-08-13 · **NACHTRAG 2026-08-16 (Owner-Gate-Ritual retired)**
 - **Datum:** 2026-08-13
 - **Scope:** Pull-Request-Governance, CI-Trust-Root, Required Checks
 - **Incident Evidence:** `docs/evidence/ci/PR236_BOOTSTRAP_INCIDENT_2026-08-13.md`
@@ -21,44 +21,19 @@ Während einer Governance-/CI-Migration bleibt der zuletzt verifizierte, funktio
 
 ### 2. Kein Bootstrap darf den Required Check selbst erzeugen
 
-Ein neuer Governance-Workflow darf nicht gleichzeitig:
-
-- den aktuell erforderlichen `build-and-test` ersetzen,
-- seinen eigenen Aktivierungszustand erst nach Merge erhalten,
-- und den Merge seiner eigenen Reparatur von genau diesem neuen Pfad abhängig machen.
-
-Diese Kombination ist verboten.
+Ein neuer Governance-Workflow darf nicht gleichzeitig den aktuell erforderlichen `build-and-test` ersetzen, seinen eigenen Aktivierungszustand erst nach Merge erhalten, und den Merge seiner eigenen Reparatur von genau diesem neuen Pfad abhängig machen. Diese Kombination ist verboten.
 
 ### 3. Neue Gate-Architektur nur als Shadow/Observation
 
 Neue Human-Gate-, Dispatch-, Reporter- oder Auto-Status-Mechanismen werden zuerst parallel und **nicht merge-blockierend** ausgeführt.
 
-Zulässige Reihenfolge:
-
-```text
-bestehender Required Check
-→ neue Control-Plane im Shadow Mode
-→ wiederholter Parallel-PASS auf realen PRs
-→ Human/Owner Abnahme
-→ serverseitige Ruleset-Umstellung
-→ alter Check bleibt für definierte Übergangsfrist verfügbar
-→ erst danach kontrollierte Stilllegung
-```
-
 ### 4. Required-Check-Umstellung ist eine eigene Change-Klasse
 
-Die Änderung eines GitHub-Rulesets oder der Identität eines Required Checks ist nicht Bestandteil eines normalen Workflow-PRs. Sie benötigt:
+Die Änderung eines GitHub-Rulesets oder der Identität eines Required Checks ist nicht Bestandteil eines normalen Workflow-PRs.
 
-- eigenen dokumentierten Change;
-- exakte vorher/nachher Check-Identität;
-- Rollback-Plan;
-- Human/Owner-Freigabe;
-- Post-Change-Verifikation auf mindestens einem realen PR;
-- Evidence in Roadmap/Traceability.
+### 5. Human-Evidence / Merge (historisch bis 2026-08-16)
 
-### 5. Human-Evidence bleibt current-head gebunden
-
-Bis zu einer späteren M10-Passkey-Autorisierung gilt weiterhin:
+Bis zur Owner-Entscheidung 2026-08-16 galt transitional:
 
 - vollständiger `Files changed` Review;
 - alle Dateien Viewed;
@@ -67,124 +42,27 @@ Bis zu einer späteren M10-Passkey-Autorisierung gilt weiterhin:
 - neuer Commit invalidiert Head-Evidence;
 - Merge bleibt separat Human/Owner-only.
 
-Die konkrete Event-Transportform darf geändert werden, solange sie diese Invarianten erfüllt und vorher im Shadow Mode bewiesen wurde.
+### 6–10.
 
-### 6. Kein Kandidatencode mit privilegierten Schreibrechten
-
-Weiterhin verbindlich:
-
-- kein `pull_request_target` für Kandidatencode;
-- Checkout exakt auf den geprüften Head;
-- `persist-credentials: false`;
-- schreibende Governance-/Reporter-Jobs führen keinen Kandidatencode aus;
-- Kandidaten-Build/Test besitzt keine PR-/Issue-/Checks-Schreibrechte.
-
-### 7. Kein synthetischer PASS als alleinige Merge-Evidence
-
-Ein synthetischer Check darf technische Evidence aggregieren, aber nicht der einzige Beweis für einen Build sein, wenn seine eigene Control-Plane Gegenstand des PRs ist.
-
-Für Änderungen an der CI-Trust-Root-Schicht muss mindestens ein unabhängiger, bereits auf `main` verifizierter Prüfpfad erhalten bleiben.
-
-### 8. Recovery muss repository-normal möglich bleiben
-
-Jede Governance-/CI-Architektur muss so gestaltet sein, dass ein Defekt durch:
-
-```text
-fresh branch from current main
-→ scoped fix/revert
-→ normal pull request
-→ existing independent required check
-→ Human merge
-```
-
-behebbar bleibt.
-
-Ein Zustand, in dem zur Reparatur zuerst ein Bypass-Actor, Force-Push, Direct-Main-Push oder Abschalten des einzigen Required Checks nötig wäre, ist als Architekturfehler zu behandeln.
-
-### 9. Bypass ist kein normaler Recovery-Mechanismus
-
-Repository-Owner-Rechte oder GitHub-Ruleset-Bypass dürfen nicht als regulärer technischer Bestandteil der DevelopmentChain vorausgesetzt werden.
-
-Break-glass kann später in M9 als eigener, auditierter Incident-Mechanismus existieren, ersetzt aber nicht die Pflicht, normale CI-Recovery ohne Bypass zu ermöglichen.
-
-### 10. PR-Template-Automation darf keine Gate-Autorität tragen
-
-PR-Body-Synchronisierung, Klassifikation und Lern-/Evidence-Darstellung sind sekundäre Automation. Ein Fehler dort darf:
-
-- Human-Evidence nicht verfälschen;
-- einen erfolgreichen realen Build nicht in `Human-Evidence=failure` umdeuten;
-- keine Merge-Evidence selbst autorisieren.
-
-Workflow-Identität ist über stabile Felder wie Workflow-Pfad/ID zu bestimmen, nicht über dynamische `run-name`-Anzeigenamen.
-
-## Verbotene Bootstrap-Muster
-
-Folgende Muster sind ab dieser Revision ausdrücklich verboten:
-
-1. `workflow_dispatch --ref main` als alleiniger Required-Check-Executor für einen PR, der genau diesen Executor ändert;
-2. synthetischer `build-and-test` Check als alleiniger Ruleset-Check ohne unabhängigen Recovery-Pfad;
-3. Ersetzen des funktionierenden PR-CI-Pfads in einem einzigen Bootstrap-Merge;
-4. Aktivierung einer neuen Required-Check-Identity vor realem Shadow-PASS;
-5. PR-Body-/Auto-Status-Automation als Human-Autorisierungsquelle;
-6. dauerhaft aktive Bootstrap-Work-Claims nach Abschluss des zugehörigen PRs.
-
-## Recovery-Baseline 2026-08-13
-
-Der verifizierte Stand unmittelbar vor PR #236 ist:
-
-- Commit `5bd5f4d78b87a89258126d0453eaf5e4bc6b6125`
-- Tree `5d95c7e21b7dcded2fb023047e01ca629b37b75d`
-
-Dort erzeugt `.github/workflows/ci.yml` den echten `build-and-test` direkt auf dem PR-Head. Dieser Zustand wird als Recovery-Baseline verwendet.
-
-## Konsequenzen
-
-### Positiv
-
-- keine selbstblockierende CI-Trust-Root-Reparatur;
-- keine Notwendigkeit eines Owner-Bypass für normale Governance-Fehler;
-- technische Migrationen werden beobachtbar und reversibel;
-- Human-/Owner-Gate und Credential Isolation bleiben erhalten;
-- Ruleset-Änderung und Workflow-Code werden als getrennte Trust-Boundaries behandelt.
-
-### Trade-off
-
-- Governance-Migrationen benötigen eine Parallel-/Shadow-Phase;
-- für eine Zeit können alter und neuer Prüfpfad parallel laufen;
-- Ruleset-Promotion erfordert explizite Human-Administration und Evidence.
-
-## Verifikation
-
-Diese ADR gilt als technisch umgesetzt, wenn:
-
-1. der Recovery-PR den Pre-#236-CI-Pfad wiederherstellt;
-2. ein PR-Head `build-and-test` ohne synthetischen trusted-main Reporter erfolgreich ausführt;
-3. Main-CI nach Merge erfolgreich ist;
-4. keine PR-#236–#240-Bootstrap-Control-Plane mehr Required-Check-Autorität besitzt;
-5. zukünftige Gate-Weiterentwicklung ausschließlich Shadow → Parallel PASS → Promotion folgt;
-6. Roadmap und Traceability diesen Incident und die neue Migrationsregel referenzieren.
-
-## Rollback
-
-Ein späterer ADR-0069-Nachfolger darf diese Recovery-Invarianten nur durch einen eigenen Human/Owner-reviewten ADR ersetzen. Ein Rückfall auf selbstreferenzielle Bootstrap-Required-Checks ist nicht zulässig.
-
+Unverändert: kein Kandidatencode mit privilegierten Schreibrechten; kein synthetischer PASS als alleinige Merge-Evidence; Recovery muss repository-normal möglich bleiben; Bypass ist kein normaler Recovery-Mechanismus; PR-Template-Automation darf keine Gate-Autorität tragen.
 
 ## Nachtrag 2026-08-15 — Shadow-Phase abgeschlossen
 
-Die zeitlich begrenzte Parallelphase von `capital-ai-ci` und `build-and-test` ist abgeschlossen.
-PR #308 und PR #309 haben beide technischen Pfade auf realen, head-gebundenen Pull Requests
-erfolgreich ausgeführt. Der Owner entschied sich anschließend ausdrücklich für
-Konsolidierungsoption 1.
+Die zeitlich begrenzte Parallelphase von `capital-ai-ci` und `build-and-test` ist abgeschlossen. Die Recovery-Invarianten dieser ADR bleiben bestehen.
 
-Die Stilllegung folgt ADR-0073:
+## Nachtrag 2026-08-16 — Owner-Gate-Ritual retired
 
-1. `build-and-test` einschließlich Human-/Owner-Gate bleibt unverändert;
-2. der Live-Ruleset entfernt zuerst `capital-ai-ci` aus den Required Checks;
-3. erst danach darf der PR gemergt werden, der `.github/workflows/capital-ai-ci-shadow.yml`
-   stilllegt (nur noch `workflow_dispatch`; die Datei bleibt erhalten, da Workflow-Löschungen
-   durch die Workflow-Sicherheitsrichtlinie fail-closed untersagt sind);
-4. GitGuardian bleibt Required Check;
-5. bei fehlendem `build-and-test` wird nicht gemergt und der Workflow auf einem frischen Branch repariert.
+**Owner-Entscheidung:** Pre-CI-Autorisierung über PR-Body-Checkboxen und Review-Text `💪`/`okay` wird **nicht fortgeführt**.
 
-Die Recovery-Invarianten dieser ADR bleiben vollständig bestehen. Insbesondere wird kein
-synthetischer Check eingeführt und kein Owner-/Human-Gate abgeschwächt.
+Folgen:
+
+1. `.github/workflows/ci.yml` startet PR-CI ohne Owner-Gate-Job (Events: opened/synchronize/reopened/ready_for_review).
+2. PR-Template v1.4.0 und `HUMAN_OWNER_PR_APPROVAL_POLICY` dokumentieren den vereinfachten Ablauf.
+3. **Merge bleibt Human/Owner-only** (Agenten mergen nicht).
+4. Ab Development-Chain-Punkt **M10** wird die starke CI-Autorisierung über **Passkey/WebAuthn** (`AUTHORIZE_PR_CI`) gemäß `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md` eingeführt.
+5. Recovery-/Bootstrap-Invarianten (kein selbstreferenzieller Required-Check-Bootstrap, kein Kandidatencode mit Schreibrechten) bleiben **vollständig** in Kraft.
+6. Ein Wieder-Einführen von Checkbox-/Emoji-CI-Gates ist nur über eigenen ADR + Shadow → Cutover zulässig und nicht der Default-Pfad.
+
+## Rollback
+
+Ein späterer ADR-0069-Nachfolger darf Recovery-Invarianten nur durch einen eigenen Human/Owner-reviewten ADR ersetzen. Ein Rückfall auf selbstreferenzielle Bootstrap-Required-Checks ist nicht zulässig. Ein Rückfall auf Checkbox-/Emoji-CI-Gates ist nicht der intendierte Rollback-Pfad; Rollback vor M10-Cutover bedeutet den vereinfachten CI-Pfad beizubehalten.
