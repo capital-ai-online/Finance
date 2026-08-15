@@ -194,7 +194,8 @@ jobs:
 
       - name: Dokumentations-Fast-Path (Klasse D)
         if: steps.scope.outputs.class == 'D'
-        run: echo "Klasse D: nur Dokumentation/.ai/Markdown — Software-Build und Tests sind nicht erforderlich."
+        run: |
+          echo "Klasse D: nur Dokumentation/.ai/Markdown — Software-Build und Tests sind nicht erforderlich."
 
       - name: Node.js einrichten
         if: steps.scope.outputs.node == 'true'

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CI-YAML-SYNTAX-OUTAGE-FIX-2026-08-15",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "Anthropic",
+    "model": "Claude (Sonnet 5)",
+    "executionSurface": "Claude Code Remote (interaktive Owner-Sitzung)"
+  },
+  "workItem": "Critical fix: PR #340's merge to main (commit 9b6ff29) introduced an unquoted colon inside an inline `run: echo \"...: ...\"` step in .github/workflows/ci.yml, making the entire workflow file invalid YAML (`mapping values are not allowed here`). Verified via a background CI-verification agent that the resulting push-to-main run (31909534294) scheduled ZERO jobs -- owner-gate, build-and-test, supply-chain-attestation, deploy-production, and verify-deployment-identity were all silently bypassed, not merely failed. Found the identical bug pattern already present in .github/workflows/pr-governance.yml (a colon inside an unquoted `run: echo \"Klasse D / kein App-Scope: ...\"` line), which explains why pr-governance.yml jobs (PR-Vorlagenvertrag, Sicherheit geaenderter Workflows, Repository-Konventionen) never triggered for PR #340 either. Fixed both by switching the offending `run:` lines to YAML block-scalar (`run: |`) form, which is immune to this class of bug. Verified via PyYAML that every workflow file under .github/workflows/ now parses as valid YAML.",
+  "workItemDE": "Kritischer Fix: ci.yml + pr-governance.yml waren durch einen unquoted-Doppelpunkt in einem echo-run-Schritt komplett ungueltiges YAML -- main-Push-CI lief seit dem PR-#340-Merge gar nicht mehr",
+  "startedAt": "2026-08-15T21:29:00Z",
+  "baseBranch": "main",
+  "baseSha": "440901c0a024283edae87e3eb0a13e5010676afb",
+  "prCreationApproval": {
+    "status": "approved",
+    "approvedBy": "human-user",
+    "approvedAt": "2026-08-15T21:20:00Z",
+    "scope": "Drive-to-green-Verpflichtung fuer eine Regression, die diese Sitzung durch das Mergen von PR #340 mitverursacht hat (Konfliktinhalt stammte von einem anderen Agenten, aber diese Sitzung hat den finalen Merge gepusht) -- deckt sich mit der bereits etablierten Session-Praxis, CI-Fehler auf selbst geoeffneten/gepushten PRs bis zur Behebung zu verfolgen."
+  },
+  "productionBaseline": {
+    "note": "Grok-Support-Sync 2026-08-16: baseSha auf aktuellen main nachgezogen. Production-SHA wird von CI-Baseline-Generator zur Laufzeit bestimmt.",
+    "checkedAt": "2026-08-16T00:28:00Z",
+    "version": "0.6.0",
+    "commitSha": "2cd96ab566ab8e06880b4707d7dc31e916ab28f8",
+    "branch": "main",
+    "repoSlug": "SvenKulessa/Finance",
+    "source": "prior-pr-body + claim-sync"
+  },
+  "claimedPaths": [
+    ".github/workflows/ci.yml",
+    ".github/workflows/pr-governance.yml",
+    ".ai/work-claims/CI-YAML-SYNTAX-OUTAGE-FIX-2026-08-15.json"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}
