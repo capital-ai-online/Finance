@@ -30,7 +30,7 @@ if (!body.includes(PR_TEMPLATE_MARKER)) {
   fail(`PR #${prNumber} verwendet nicht den Marker der kanonischen Vorlage: ${PR_TEMPLATE_MARKER}`);
 }
 
-// 2) Pflichtabschnitte
+// 2) Pflichtabschnitte (v1.4.0: Abschnitt 8 = Merge-Autorisierung vereinfacht)
 const requiredSections = [
   '## 1. Arbeitsauftrag',
   '## 2. Agenten-/Principal-Identität und PR-Erstellungsfreigabe',
@@ -42,7 +42,7 @@ const requiredSections = [
   '### Threat Model',
   '### Negative Tests',
   '### Rollback / Runbook',
-  '## 8. Human / Owner Review VOR technischer CI',
+  '## 8. Merge-Autorisierung (vereinfacht)',
   '## 9. PR-Checkklasse und auszuführende Checks',
   '## 10. Technische Validierungsnachweise',
   '## 11. Risiko und Rücksetzung',
@@ -56,12 +56,10 @@ if (missingSections.length > 0) {
   );
 }
 
-// 3) Governance-IDs: HTML-Kommentar und/oder sichtbare Fallback-Zeile
+// 3) Governance-IDs: Baseline only (Owner-Attestation-IDs retired 2026-08-16)
 const requiredIds = [
   'CAPITAL_AI_PRODUCTION_BASELINE_START',
   'CAPITAL_AI_PRODUCTION_BASELINE_END',
-  'CAPITAL_AI_OWNER_DIFF_ATTESTATION',
-  'CAPITAL_AI_OWNER_FILES_ATTESTATION',
 ];
 const missingIds = requiredIds.filter((id) => !bodyHasGovernanceId(body, id));
 if (missingIds.length > 0) {
@@ -78,7 +76,7 @@ if (unresolved.length > 0) {
   );
 }
 
-// 5) Work-Claim: Agent-PRs höchstens einer; Human-PRs ohne neuen Claim sind zulässig (ADR-0039 advisory)
+// 5) Work-Claim: Agent-PRs höchstens einer; Human-PRs ohne neuen Claim sind zulässig
 const claims = listAddedClaimFiles(baseRef, headRef);
 if (claims.length > 1) {
   fail(`Es wird höchstens ein neuer Work-Claim im PR-Diff erwartet; gefunden: ${claims.length}.`);
@@ -116,5 +114,5 @@ if (!body.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja')) {
 }
 
 console.log(
-  `[PR-VORLAGE] PR #${prNumber} entspricht dem kanonischen Vorlagenvertrag (Abschnitte, Marker, Freigabe).`,
+  `[PR-VORLAGE] PR #${prNumber} entspricht dem kanonischen Vorlagenvertrag v1.4.0 (Abschnitte, Marker, Freigabe; Owner-Checkbox-Gate retired).`,
 );
