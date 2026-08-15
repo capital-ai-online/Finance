@@ -115,6 +115,16 @@ Eigenschaft außerhalb des Repository-Kontrollradius — siehe
 code-adressierbaren Aufrufer erfordern (analog zum SA3B-GitHub-Actions-Host) — nicht die
 interaktive Sitzung selbst, die strukturell nicht auf diese Weise gegated werden kann.
 
+**Nachtrag 2026-08-15 (I1 Option B):** `docs/architecture/M8_CLAUDE_CODE_REAL_CALLER_DESIGN.md`
+formalisiert diese Frage vollständig — zwei strukturell verschiedene Wege wurden bewertet: (1)
+Claude als reiner Content-Generator ohne eigenen Tool-Zugriff innerhalb eines Model-A-Work-Package
+(buildbar, bedient aber ein anderes, enger gefasstes Profil ohne mutierende Capability, nicht
+`claude-code-cli` selbst), (2) ein echter agentischer Claude-Code-Host mit eigenem Tool-Zugriff
+(bedient das Profil wörtlich, ist aber durch dieselbe ungelöste Tool-Call-Vermittlungslücke
+blockiert, die Modell B bereits ausschließt). Ergebnis: kein sicherheitsarchitektonisch
+vertretbarer Weg zu einem realen `claude-code-cli`-Aufrufer existiert heute — `BLOCKED` ist der
+korrekte, nicht der unvollständige Zustand.
+
 ### 3.3 `google-ai-studio` (Development Plane, nicht-mutierend)
 
 `evaluateProviderCutoverReadiness('google-ai-studio', ...)` → **`NOT_APPLICABLE`** — das Profil
@@ -195,4 +205,5 @@ den M8-Status bereits akkurat als „Phase 0 + Teil-Gates VERIFIED, Exit-Gate of
 - `docs/evidence/m8/M8_PROVIDER_BYPASS_ROUTE_AUDIT_EXIT_GATE_4_EVIDENCE.md`
 - `docs/evidence/m8/M8_PROVIDER_CUTOVER_READINESS_NO_GEMINI_EVIDENCE.md`
 - `docs/evidence/m8/M8_SA_P05_CUTOVER_SIMULATOR_EVIDENCE.md`
+- `docs/architecture/M8_CLAUDE_CODE_REAL_CALLER_DESIGN.md` (I1 Option B — Design-Klarstellung, warum `claude-code-cli` heute keinen vertretbaren realen Aufrufer haben kann)
 - `src/platform/Security/providerProfile.ts`
