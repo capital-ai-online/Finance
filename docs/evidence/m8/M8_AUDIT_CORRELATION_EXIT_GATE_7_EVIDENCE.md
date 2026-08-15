@@ -1,6 +1,6 @@
 # M8 — Audit-Korrelation Exit-Gate-Punkt 7
 
-Status: IMPLEMENTED / PR-CI PENDING  
+Status: VERIFIED PASS — PR #308 MERGED  
 Datum: 2026-08-15  
 Baseline: `main@fafba177101ff0a19d71c6ddea3605df93d9036d`  
 Authority: ADR-0059, ADR-0062, ESS-0019, `docs/runbooks/M8_AGENT_CUTOVER.md`
@@ -47,9 +47,12 @@ Es wurde kein löschbarer privilegierter In-Repo-Bypass nachgewiesen. Der einzig
 
 ## Validierung
 
-- TypeScript/Lint: PENDING PR-CI
-- Unit Tests: PENDING PR-CI
-- Production Build: PENDING PR-CI
-- Governance/Security: PENDING PR-CI
+- TypeScript/Lint: PASS
+- Unit Tests: PASS
+- Production Build: PASS
+- Governance/Security: PASS
+- `build-and-test`: PASS — Run `31862280230`
+- Shadow CI: PASS — Run `31862280254`
+- Human Merge: PASS — PR #308, Merge-Commit `2fa15c8d3b5bceb32a26e34e1ae51cf9d3ec14b9`
 
-M8-Punkt 7 darf erst nach erfolgreicher CI, Human Merge und Branch-Cleanup als `VERIFIED PASS` markiert werden.
+M8-Exit-Gate-Punkt 7 ist damit `VERIFIED PASS`. Der allgemeine M8-Branch-Cleanup aus Exit-Gate-Punkt 9 bleibt separat offen; diese Evidence behauptet keine Löschung, solange die Remote-Branches nicht nachweislich entfernt wurden.
