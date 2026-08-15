@@ -2,7 +2,7 @@
 ## Enterprise Market Data Provider & MCP Architecture
 
 **Status:** ACCEPTED  
-**Implementation-Status:** PHASE 3B PARTIALLY IMPLEMENTED / ALPACA PROMOTION NOT AUTHORIZED  
+**Implementation-Status:** PHASE 3C CONTRACT AND ADAPTER IMPLEMENTED / SCORING WIRING NOT AUTHORIZED / ALPACA PROMOTION NOT AUTHORIZED  
 **Date:** 2026-08-03  
 **Version:** 0.6.0  
 **Priority:** P1  
@@ -140,6 +140,17 @@ contract remains compatible and continues to deny execution-price eligibility.
 
 Index histories, stock fundamentals and scoring-input generation remain outside P3B. Alpaca
 remains score-neutral shadow evidence and is not promoted.
+
+## 3.7 P3C index history contract boundary (2026-08-15)
+
+P3C introduces the versioned `market-data-history/1.0.0` contract, an independent history
+provider registry, a fail-closed history gateway and an injected FMP index-history adapter. The
+platform layer receives no credentials and imports no server internals. Invalid, empty or mixed
+invalid series are denied; shadow providers remain excluded unless explicitly requested.
+
+P3C intentionally does not wire the gateway into `server/fmpIndices.ts`, scoring, alerts,
+backtesting or other runtime consumers. That activation is a separate Class-R/scoring-impact
+change requiring explicit human authorization, compatibility evidence and rollback planning.
 
 ## 4. Alpaca wird Primary Provider
 

@@ -6,22 +6,16 @@ import { isPublicSpaPath, stripTrailingSlashPath } from '../middleware/seoUrlNor
 /**
  * SEO-ROADMAP-0001 / D3 + S2 — production SPA fallback with soft-404 guard.
  *
- * Known public marketing/legal routes receive prerendered HTML when present
- * (dist/<route>/index.html from scripts/seo/prerender-public-routes.mjs),
- * otherwise dist/index.html (200).
- * Unknown paths receive HTTP 404 (no soft-404 SPA shell).
- *
- * Security: request URL segments are never joined into filesystem paths.
- * Only an allowlist maps public routes → fixed relative filenames under dist.
+ * Security invariant: request data may select a known route, but it must never
+ * participate in construction of a filesystem path passed to sendFile.
  */
 
-/** Fixed relative paths under dist — no user input in these strings. */
-const PUBLIC_ROUTE_HTML: Readonly<Record<string, string>> = {
-  '/': 'index.html',
-  '/impressum': path.join('impressum', 'index.html'),
-  '/agb': path.join('agb', 'index.html'),
-  '/datenschutz': path.join('datenschutz', 'index.html'),
-};
+interface PublicHtmlFiles {
+  root: string;
+  impressum: string;
+  agb: string;
+  datenschutz: string;
+}
 
 function isPathInsideRoot(rootDir: string, candidate: string): boolean {
   const root = path.resolve(rootDir);
@@ -30,47 +24,43 @@ function isPathInsideRoot(rootDir: string, candidate: string): boolean {
   return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
 }
 
-/**
- * Resolve the HTML file for a public SPA path.
- * Input is only used for allowlist lookup after normalization — never as a path segment.
- */
-function resolvePublicHtmlFile(distPath: string, requestPath: string): string {
-  const root = path.resolve(distPath);
-  const fallback = path.resolve(root, 'index.html');
-  const normalized = stripTrailingSlashPath(requestPath);
-
-  const relative = PUBLIC_ROUTE_HTML[normalized];
-  if (!relative) {
-    // Caller should only invoke for public paths; fail closed to root index.
-    return fallback;
+/** Build every sendFile candidate exclusively from trusted server configuration and literals. */
+function buildPublicHtmlFiles(distPath: string): PublicHtmlFiles {
+  const rootDir = path.resolve(distPath);
+  const root = path.resolve(rootDir, 'index.html');
+  const candidates: PublicHtmlFiles = {
+    root,
+    impressum: path.resolve(rootDir, 'impressum', 'index.html'),
+    agb: path.resolve(rootDir, 'agb', 'index.html'),
+    datenschutz: path.resolve(rootDir, 'datenschutz', 'index.html'),
+  };
+  for (const candidate of Object.values(candidates)) {
+    if (!isPathInsideRoot(rootDir, candidate)) {
+      throw new Error('Public HTML route escaped the configured distribution root.');
+    }
   }
-
-  const candidate = path.resolve(root, relative);
-  if (!isPathInsideRoot(root, candidate)) {
-    return fallback;
-  }
-
-  if (normalized !== '/' && !fs.existsSync(candidate)) {
-    return fallback;
-  }
-
-  return candidate;
+  return candidates;
 }
 
 export function registerProductionSpaFallback(app: Express, distPath: string): void {
-  const root = path.resolve(distPath);
+  const files = buildPublicHtmlFiles(distPath);
+  const existingOrRoot = (candidate: string): string => fs.existsSync(candidate) ? candidate : files.root;
 
   app.get('*', (req: Request, res: Response) => {
-    if (!isPublicSpaPath(req.path)) {
-      return res.status(404).type('text/plain').send('Not Found');
+    // The untrusted request value controls only this finite branch selection.
+    // Every sendFile argument below was precomputed from trusted literals.
+    switch (stripTrailingSlashPath(req.path)) {
+      case '/':
+        return res.sendFile(files.root);
+      case '/impressum':
+        return res.sendFile(existingOrRoot(files.impressum));
+      case '/agb':
+        return res.sendFile(existingOrRoot(files.agb));
+      case '/datenschutz':
+        return res.sendFile(existingOrRoot(files.datenschutz));
+      default:
+        return res.status(404).type('text/plain').send('Not Found');
     }
-
-    const file = resolvePublicHtmlFile(root, req.path);
-    if (!isPathInsideRoot(root, file)) {
-      return res.status(404).type('text/plain').send('Not Found');
-    }
-
-    return res.sendFile(file);
   });
 }
 
@@ -112,5 +102,5 @@ export function installProductionSoft404Intercept(): void {
   } as typeof proto.get;
 }
 
-/** Exported for unit tests */
-export { resolvePublicHtmlFile, isPathInsideRoot, PUBLIC_ROUTE_HTML };
+/** Exported for unit tests. */
+export { buildPublicHtmlFiles, isPathInsideRoot };
