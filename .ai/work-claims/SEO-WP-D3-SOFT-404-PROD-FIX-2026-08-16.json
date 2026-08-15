@@ -1,0 +1,38 @@
+{
+  "claimId": "SEO-WP-D3-SOFT-404-PROD-FIX-2026-08-16",
+  "title": "WP-D3 Soft-404 production fix + evidence of prior gap",
+  "roadmap": "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+  "documentId": "SEO-GM-ROADMAP-0002",
+  "roadmapIds": ["WP-D3"],
+  "predecessor": "SEO-WP-S1-ADR-0082-2026-08-16",
+  "branch": "seo/wp-d3-soft-404-prod-fix-2026-08-16",
+  "base": "main",
+  "owner": "SvenKulessa",
+  "status": "prepared",
+  "createdAt": "2026-08-16",
+  "createdBy": {
+    "provider": "xAI",
+    "model": "Grok",
+    "surface": "Grok Chat / GitHub MCP"
+  },
+  "authorizedByHuman": true,
+  "scope": [
+    "server.application.ts",
+    "server/runtime/spaFallback.ts",
+    "scripts/seo/apply-server-wiring.mjs",
+    "docs/seo/D3_SOFT_404.md",
+    "docs/seo/D_BLOCK_IMPLEMENTATION_NOTES.md",
+    "docs/evidence/seo/D3_SOFT_404_PROD_GAP_2026-08-16.md",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+    "tests/server/seoApplicationWiring.contract.test.ts",
+    ".ai/work-claims/SEO-WP-D3-SOFT-404-PROD-FIX-2026-08-16.json"
+  ],
+  "outOfScope": [
+    "WP-D1 JSON-LD changes (already in index.html)",
+    "WP-D2 client-side SPA title router",
+    "WP-S2 formal Prerender ADR",
+    "Supabase / SeoEngine store",
+    "Shared IAM / billing / deploy configs"
+  ],
+  "notes": "Class C: composition-root SPA wiring + docs/evidence. Closes prod Soft-404 gap observed 2026-08-16."
+}
