@@ -1,0 +1,27 @@
+{
+  "claimId": "SC7-PHASE-B-ORCHESTRATOR-WIRING-2026-08-16",
+  "spt": "SC-MD-SPT-0001",
+  "workPackage": "SC-7",
+  "phase": "B",
+  "title": "Orchestrator wires compositeLevel into calculateRankScore",
+  "status": "OPEN_PR",
+  "createdAt": "2026-08-16T01:40:00+02:00",
+  "branch": "feat/sc-md-sc7-phase-b-orchestrator-composite-wiring-2026-08-16",
+  "scope": [
+    "src/orchestrator/cryptoOrchestrator.ts",
+    "docs/roadmaps/work-packages/SC-7_RANKING_COMPOSITE_OPT_IN.md",
+    "docs/evidence/sc-md/SC7_PHASE_B_ORCHESTRATOR_WIRING_2026-08-16.md",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md"
+  ],
+  "invariants": [
+    "RANKING_SCORE_IMPACT_ENABLED remains false",
+    "Formula weights 0.70/0.15/0.10/0.05 unchanged",
+    "No scoreImpact / rankingImpact flip",
+    "Human merge only"
+  ],
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "surface": "Grok Chat / GitHub MCP"
+  }
+}
