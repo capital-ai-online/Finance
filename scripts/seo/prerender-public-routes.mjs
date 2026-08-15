@@ -69,26 +69,6 @@ function canonicalHref(routePath) {
   return routePath === '/' ? `${ORIGIN}/` : `${ORIGIN}${routePath}`;
 }
 
-function replaceMetaByName(html, name, content) {
-  const re = new RegExp(
-    `<meta\\s+name="${name}"\\s+content="[^"]*"\\s*/?>`,
-    'i',
-  );
-  // Use unescaped pattern for runtime:
-  const runtime = new RegExp(
-    `<meta\\s+name="${name}"\\s+content="[^"]*"\\s*/?>`.replace(/\\\\/g, '\\'),
-    'i',
-  );
-  void re;
-  if (runtime.test(html)) {
-    return html.replace(
-      new RegExp(`<meta\\s+name="${name}"\\s+content="[^"]*"\\s*/?>`.replace(/\\\\s\+/g, '\\s+').replace(/\\\\/g, ''), 'i'),
-      `<meta name="${name}" content="${escapeAttr(content)}" />`,
-    );
-  }
-  return html;
-}
-
 function injectMeta(html, route) {
   const title = route.title;
   const description = route.description;
@@ -159,7 +139,6 @@ function injectMeta(html, route) {
     out = out.replace(/<body[^>]*>/i, (m) => `${m}\n    ${noscriptBlock}`);
   }
 
-  void replaceMetaByName;
   return out;
 }
 
