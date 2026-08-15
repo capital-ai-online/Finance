@@ -1,0 +1,22 @@
+{
+  "claimId": "CI-CONSOLIDATE-BUILD-AND-TEST-2026-08-15",
+  "title": "Shadow CI in build-and-test konsolidieren",
+  "branch": "ci/consolidate-build-and-test",
+  "base": "main@31f3e0fd0b002aeb0c9208a63a39145b4c9c1bf0",
+  "ownerDecision": "Option 1",
+  "evidence": [
+    "PR #308 build-and-test + shadow PASS",
+    "PR #309 build-and-test + shadow PASS"
+  ],
+  "scope": [
+    ".github/workflows/capital-ai-ci-shadow.yml (retire: workflow_dispatch only, file retained because workflow deletions are fail-closed forbidden by verifyChangedWorkflowSecurity.mjs)",
+    ".github/policies/main-production-protection.expected.json",
+    "docs/adr/ADR-0069-human-owner-comment-gate-and-dispatched-pr-ci.md",
+    "docs/adr/ADR-0073-ci-consolidation-build-and-test.md",
+    "docs/evidence/ci/P0_MAIN_PROTECTION_RECOVERY_2026-08-14.md",
+    "docs/runbooks/CI_BUILD_AND_TEST_CONSOLIDATION.md",
+    ".ai/work-claims/CI-CONSOLIDATE-BUILD-AND-TEST-2026-08-15.json"
+  ],
+  "externalMutationHandoff": "Remove capital-ai-ci from live Ruleset before merge",
+  "status": "implemented-awaiting-pr-and-owner-ruleset-cutover"
+}

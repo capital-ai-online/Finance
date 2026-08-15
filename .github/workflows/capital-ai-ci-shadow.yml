@@ -1,13 +1,19 @@
 name: CAPITAL-AI CI Shadow
-run-name: >-
-  ${{ github.event_name == 'pull_request'
-      && format('PR #{0} – capital-ai-ci Shadow', github.event.pull_request.number)
-      || format('capital-ai-ci Shadow – {0}', github.sha) }}
+run-name: capital-ai-ci Shadow (stillgelegt) – ${{ github.sha }}
+
+# Stillgelegt gemäß ADR-0073: Die technische PR-CI ist auf `build-and-test`
+# in ci.yml konsolidiert. Dieser Workflow erzeugt bewusst keinen automatischen
+# `capital-ai-ci`-Check mehr für Pull Requests und läuft ausschließlich noch
+# manuell per workflow_dispatch als Rollback-/Vergleichspfad.
+#
+# Die Datei wird absichtlich NICHT gelöscht:
+# `scripts/security/verifyChangedWorkflowSecurity.mjs` behandelt jede
+# Workflow-Löschung als Verstoß gegen die Workflow-Sicherheitsrichtlinie.
+# Die Stilllegung über die Trigger-Fläche erreicht dasselbe Kostenziel, ohne
+# diese Invariante aufzuweichen, und hält den Rollback aus ADR-0073
+# (Shadow-Pfad wiederherstellen) unmittelbar verfügbar.
 
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened, edited]
   workflow_dispatch:
 
 permissions:
