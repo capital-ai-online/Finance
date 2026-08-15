@@ -150,6 +150,24 @@ This generalization reaches `VERIFIED PASS` only after:
 9. Human merge boundary remains intact;
 10. evidence, roadmap and traceability are synchronized.
 
+## Nachtrag 2026-08-15 — VERIFIED PASS: alle 10 Exit-Kriterien real erfüllt
+
+Alle vier Aktivierungsschritte wurden auf separate, ausdrückliche Owner-Anweisungen durchgeführt
+und real durchlaufen — nicht nur strukturell getestet:
+
+1. ✅ PR #321 Human-reviewed, CI PASS, Human-merged (Merge-Commit `51af4c9e0902a07841ee4b5f84d8592a49427459`, push-to-main-CI-Lauf 31891824130 `success`).
+2. ✅ Owner-Anweisung "aktiviere den Work-Package-Runner" — PR #322, `if: false && ...` entfernt (Merge-Commit `fc4606150c896cf8980b561b7c6f436021bbad74`, CI-Lauf 31893202838 `success`).
+3. ✅ Owner-Anweisung "fahre mit den Punkten 2 bis 4 fort" — PR #323, `REM-WORKPACKAGE-GEN-PROOF-001` auf `OWNER_APPROVED` mit `approvalEvidenceRef: "human-owner-chat-2026-08-15-workpackage-gen-proof"` (Merge-Commit `9d55826a2ef41d1a933e9f843929eb5f51ea5c64`, CI-Lauf 31893623159 `success`).
+4. ✅ Owner öffnete Issue #325 (`[SYSTEMADMIN-WORK-PACKAGE]`, korrektes JSON, `baseSha` exakt `9d55826a...`) von seinem eigenen GitHub-Account aus `main`.
+5. ✅ Drei getrennte, durable Autorisierungs-/Outcome-Paare (BRANCH, COMMIT, PR) — sechs `supabase:agent_audit_events:*`-Referenzen, im Issue-Kommentar und im PR-Body identisch dokumentiert.
+6. ✅ Committete Datei ist exakt der katalog-generierte deterministische Inhalt aus `generalizationProof.mjs.generate()`, verifiziert per direktem Read gegen den Branch `agent/systemadmin-work-package-gen-proof-1`, Commit `e1ce748d9a4125777adeddac857603aff0c77ab3`.
+7. ✅ Genau ein Draft-PR (#326) erzeugt, zeigt auf exakt diesen auditierten Commit, Basis exakt `main@9d55826a...`.
+8. ✅ Keine Produktionsmutation — Klasse D/Dokumentation, `docker`/`deploy`/`CI_REQUEST` nirgends angefragt.
+9. ✅ Human-Merge-Grenze intakt — PR #326 blieb `draft: true` bis der Owner ihn selbst reviewt und gemergt hat (Merge-Commit `cb2db699ca7a2baf6cd9b4446aa7a2655d86ccdb`, push-to-main-CI-Lauf 31894252190 `success`).
+10. ✅ Evidence/Roadmap/Traceability synchronisiert — dieser Nachtrag, `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md`.
+
+**Damit ist die Generalisierung (Modell A, `docs/architecture/GENERALIZED_SYSTEMADMIN_EXECUTION_HOST_DESIGN.md`) `VERIFIED PASS`.** Der Katalogeintrag `GENERALIZATION-PROOF` selbst wird **nicht gelöscht** — er ist durch die eigene `target-path-not-already-on-main`-Prüfung in `runWorkPackage.mjs` bereits selbstsperrend (das Zielfile existiert jetzt auf `main`, ein erneuter Lauf mit derselben `workPackageId` schlägt automatisch fehl), dient als Referenzimplementierung für künftige Katalogeinträge und bleibt — anders als SA4 — Teil eines bewusst wiederverwendbaren, weiterhin aktiven Hosts. Der Workflow-Trigger bleibt daher aktiv (keine Rückkehr zu `if: false && ...`), im Unterschied zum einmalig genutzten SA4-Piloten.
+
 ## Consequences
 
 Positive: future bounded, documentation/repository-scoped work packages need only a new catalog

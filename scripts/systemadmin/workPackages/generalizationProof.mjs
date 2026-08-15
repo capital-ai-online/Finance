@@ -4,6 +4,11 @@
 // exactly one deterministic output file, no production effect — same bounded-pilot philosophy as
 // ADR-0068's original SA4 work package, just proving the *generalization* this time instead of
 // the base BRANCH/COMMIT/PR authorization chain itself.
+//
+// COMPLETE / VERIFIED PASS (2026-08-15, Issue #325, PR #326, see ADR-0074 Nachtrag for full
+// evidence). Kept in the catalog as a reference implementation and left runnable — a re-run with
+// this workPackageId now fails closed on its own via runWorkPackage.mjs's
+// target-path-not-already-on-main preflight, since the target file already exists on main.
 
 export const workPackage = Object.freeze({
   workPackageId: 'GENERALIZATION-PROOF',
