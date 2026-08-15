@@ -1,17 +1,13 @@
 /**
  * CAPITAL-AI Social Media & Podcast Engine - Client Service
  *
- * ADR-0020: Deckt ausschliesslich den Account-/OAuth-/Publishing-Teil ab
+ * ADR-0020: Account-/OAuth-/Publishing-Teil
  * (fetchConnectedAccounts, getAuthUrl, toggleAccountConnection, publishContent, fetchHistory).
- * Die im Handover referenzierten Content-Generation-Methoden (generateSeries,
- * generateFallbackPackage, playAudioPreview/stopAudioPreview, downloadJson/-Markdown/
- * -StandaloneJsModule) sind bewusst NICHT enthalten - der zugehoerige Server-Endpunkt
- * (POST /api/social-media/generate, Gemini-Promptorchestrierung) war nie Teil des Handovers
- * und wurde daher nicht implementiert. SocialMediaGenerator.tsx (die Studio-Haupt-UI, die diese
- * Methoden braucht) ist entsprechend nicht Teil dieser Integration. Siehe ADR-0020 Abschnitt 3.
  *
- * Alle Requests laufen ueber authFetch() (Bearer-Token aus der Supabase-Session) - der Server
- * verlangt seit ADR-0020 fuer JEDEN /api/social-media/*-Endpunkt eine verifizierte Identitaet.
+ * SEO-ROADMAP-0001 / N1: generateSeries() calls POST /api/social-media/generate for
+ * text platforms (X, Facebook, community). Media formats remain out of scope until N3.
+ *
+ * Alle Requests laufen ueber authFetch() (Bearer-Token aus der Supabase-Session).
  */
 
 import { authFetch } from '../../lib/authFetch';
@@ -34,6 +30,30 @@ async function parseOrThrow<T>(res: Response): Promise<T> {
 export interface SocialMediaAccessStatus {
   allowed: boolean;
   reason: 'owner' | 'founder-tier' | 'unauthenticated' | 'insufficient-tier' | 'supabase-not-configured' | 'internal-error';
+}
+
+export interface GenerateSeriesRequest {
+  topic: string;
+  platforms?: Array<'x' | 'facebook' | 'community'>;
+  locale?: 'de' | 'en';
+  contextNote?: string;
+}
+
+export interface GeneratedTextVariant {
+  platform: 'x' | 'facebook' | 'community';
+  format: string;
+  text: string;
+  charCount: number;
+  disclaimer: string;
+}
+
+export interface GenerateSeriesPackage {
+  topic: string;
+  locale: 'de' | 'en';
+  variants: GeneratedTextVariant[];
+  authorship: 'ai_assisted';
+  generatedAt: string;
+  humanReviewed: boolean;
 }
 
 export const SocialMediaGeneratorService = {
@@ -69,13 +89,10 @@ export const SocialMediaGeneratorService = {
       return json.url || null;
     } catch (err) {
       console.error('[SocialMediaGeneratorService] getAuthUrl fehlgeschlagen:', err);
-      throw err; // Aufrufer (SocialAccountManager) zeigt die konkrete Fehlermeldung an (z.B. "Plattform nicht konfiguriert").
+      throw err;
     }
   },
 
-  /** Verbinden funktioniert ausschliesslich ueber den echten OAuth-Flow (getAuthUrl). Dieser
-   *  Aufruf dient nur noch dem Trennen bestehender Verbindungen (connect wird serverseitig
-   *  abgelehnt, siehe socialMediaRoutes.ts). */
   async disconnectAccount(platform: SupportedAccountPlatform): Promise<SocialAccount[] | null> {
     try {
       const res = await authFetch('/api/social-media/accounts/toggle', {
@@ -88,6 +105,25 @@ export const SocialMediaGeneratorService = {
     } catch (err) {
       console.error('[SocialMediaGeneratorService] disconnectAccount fehlgeschlagen:', err);
       return null;
+    }
+  },
+
+  /**
+   * N1: Text content generation for X / Facebook / community.
+   * Does not publish. Does not render media.
+   */
+  async generateSeries(request: GenerateSeriesRequest): Promise<GenerateSeriesPackage | null> {
+    try {
+      const res = await authFetch('/api/social-media/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request),
+      });
+      const json = await parseOrThrow<ApiResponse<never> & { package: GenerateSeriesPackage }>(res);
+      return json.package || null;
+    } catch (err) {
+      console.error('[SocialMediaGeneratorService] generateSeries fehlgeschlagen:', err);
+      throw err;
     }
   },
 

@@ -1,43 +1,40 @@
-# SEO Block D (+ Q2 completion) — Implementation Notes (2026-08-15)
+# SEO Block D (+ Q2 completion) — Implementation Notes
 
-**Roadmap:** `docs/seo/SEO_MANAGEMENT_ROADMAP.md`  
-**Branch:** `seo/d-block-foundation`  
-**Claim:** `SEO-D-BLOCK-2026-08-15`
+**PR:** https://github.com/SvenKulessa/Finance/pull/280  
+**Branch:** `seo/d-block-foundation`
 
-## Delivered in this PR
+## Wiring status (2026-08-15)
 
-| ID | Status | Artefakt |
-|----|--------|----------|
-| **Q2** | code ready | `server/middleware/seoUrlNormalize.ts` — 301 Trailing-Slash-Normalize |
-| **D1** | done | JSON-LD in `index.html` (`Organization`, `WebSite`, `SoftwareApplication`) |
-| **D2** | done | `src/lib/routeSeo.ts` + Anwendung in `src/App.tsx` |
-| **D3** | code ready | `server/runtime/spaFallback.ts` — Soft-404 für unbekannte Pfade |
-| **D4** | done | `vite.config.ts` `manualChunks` |
-| **D5** | docs + config stub | `docs/seo/SEARCH_CONSOLE_MCP_RUNBOOK.md`; Topology-Hinweis |
+| ID | Status | How |
+|----|--------|-----|
+| **Q2 Trailing-Slash 301** | **LIVE in branch** | `registerTrailingSlashNormalize(app)` in `server/routes/registerApplicationRoutes.ts` |
+| **D3 Soft-404** | helper ready | `server/runtime/spaFallback.ts` — SPA catch-all in `server.application.ts` still uses `app.get('*')` until script applied |
 
-## Server-Wiring (verpflichtend in `server.application.ts`)
+### Apply remaining D3 soft-404 (one command)
 
-Nach dem Probe-Protection-Block und **vor** den API-Routen:
-
-```ts
-import { registerTrailingSlashNormalize } from './server/middleware/seoUrlNormalize';
-registerTrailingSlashNormalize(app);
+```bash
+node scripts/seo/apply-server-wiring.mjs
+git add server.application.ts && git commit -m "seo(D3): wire registerProductionSpaFallback in production SPA branch"
 ```
 
-Im Produktionszweig von `startServer()` den Catch-all ersetzen:
+The script is idempotent and also adds the import if missing.
+
+### Manual D3 snippet (if script is not used)
+
+Replace in `startServer()` production branch:
 
 ```ts
 import { registerProductionSpaFallback } from './server/runtime/spaFallback';
 // ...
-app.use(express.static(distPath));
-registerProductionSpaFallback(app, distPath);
+} else {
+  const distPath = path.join(process.cwd(), 'dist');
+  app.use(express.static(distPath));
+  registerProductionSpaFallback(app, distPath);
+}
 ```
 
-> **Hinweis:** Die reinen Hilfsmodule und Tests sind in diesem PR enthalten. Die zwei Import-/Aufrufzeilen in `server.application.ts` müssen beim Merge/Review gesetzt werden (Datei ist sehr groß; getrennte Review-Oberfläche empfohlen).
+## Delivered artefacts
 
-## Owner follow-ups
-
-1. Q3: Search-Console-Token (Meta oder DNS)
-2. D5: GSC OAuth/Credentials und MCP-Eintrag aktivieren (siehe Runbook)
-3. S2: echtes Prerendering für Crawler ohne JS
-4. Optional: OG-Image als PNG 1200×630
+- D1 JSON-LD, D2 routeSeo, D4 vite chunks, D5 GSC runbook
+- S1 SeoEngine scaffold
+- N1 `POST /api/social-media/generate` + client `generateSeries`
