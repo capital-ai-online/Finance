@@ -53,6 +53,9 @@ export class CryptoOrchestrator {
    * SC-1 (SC-MD-SPT-0001): classification exits only via classificationAdapter
    * (adaptAgent → ensureCanonical deterministic → mergeDeterministicAndAgent).
    * No free-text category values remain on the ranking payload path.
+   *
+   * SC-7 Phase B: rank score resolves DQ points via optional compositeLevel from
+   * SC-3 computeCompositeDataQuality (same 100/70/40/50 map). scoreImpact remains off.
    */
   public async analyzeCrypto(coin: string, customInput?: Partial<CryptoScores>): Promise<CryptoAnalysisPayload> {
     const symbol = coin.toUpperCase().trim();
@@ -123,7 +126,7 @@ export class CryptoOrchestrator {
     };
 
     // Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5, Kapitel 6): von den 11 Score-
-    // Eingangsgroessen stammen 6 aus echten LLM-Agenten-Analysen (onChainAgent,
+    // Eingangsgroissen stammen 6 aus echten LLM-Agenten-Analysen (onChainAgent,
     // sentimentAgent, riskAgent) und 5 aus realen Marktdaten (seedScores =
     // generateCryptoScores(), AssetRegistry/CoinGecko) - sofern nicht per customInput
     // ueberschrieben. Die vormals 12 Zeichen-Hash-Felder ohne belastbare Quelle wurden
@@ -176,8 +179,14 @@ export class CryptoOrchestrator {
       : calculateBaseScore(payload);
 
     // 7. Calculate value corridor and rank metrics
+    // SC-7 Phase B: pass SC-3 composite level explicitly (opt-in path).
+    // RANKING_SCORE_IMPACT_ENABLED stays false; weights unchanged.
+    // When composite.level is 'unknown', pure SC-3 map yields 50 (fail-closed)
+    // instead of the display-level rewrite on payload.data_quality.
     const valueCorridor = calculateValueCorridor(finalScores.final_score ?? 0, asset ? asset.price : undefined);
-    const rankScore = calculateRankScore(payload, finalScores.final_score ?? 0);
+    const rankScore = calculateRankScore(payload, finalScores.final_score ?? 0, {
+      compositeLevel: composite.level,
+    });
     const eligibleForTop10 = isTop10Eligible({
       ...payload,
       scores: finalScores
@@ -192,6 +201,7 @@ export class CryptoOrchestrator {
       `[Valuation Autopilot] Modell: ${categoryMain === 'DeFi' ? 'DeFi-Cashflow-Modell' : 'Krypto-Basis-Modell'}, Final Score: ${(finalScores.final_score ?? 0).toFixed(1)}/100`,
       `[Top 10 Status] Eignung: ${eligibleForTop10 ? "Zugelassen (Rank Score: " + rankScore.toFixed(1) + ")" : "Nicht zugelassen (unzureichende Liquidität oder Datenqualität)"}`,
       `[SC-3/${COMPOSITE_DATA_QUALITY_VERSION}] composite=${composite.score ?? 'n/a'} level=${composite.level}; unifiedConf=${unifiedConfidence.confidence} (scoreImpactEnabled=false)`,
+      `[SC-7 Phase B] rankScore uses compositeLevel=${composite.level} (RANKING_SCORE_IMPACT_ENABLED=false)`,
     ];
 
     return {
