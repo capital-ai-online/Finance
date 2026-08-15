@@ -1,9 +1,9 @@
-# WP-S1 — SeoEngine Persistenz: Implementierungsvorbereitung
+# WP-S1 — SeoEngine Persistenz: Implementierungsplan & Status
 
 **Roadmap:** SEO-GM-ROADMAP-0002 / WP-S1  
-**Claim:** `SEO-WP-S1-PERSISTENCE-2026-08-15`  
-**Branch:** `seo/wp-s1-persistence-prep`  
-**Status:** PREPARED (noch nicht implementiert / keine Produktions-DB-Mutation)  
+**Claims:** `SEO-WP-S1-PERSISTENCE-2026-08-15` → `SEO-WP-S1-STORE-CODE-2026-08-15`  
+**Store-Code Branch (merged):** `seo/wp-s1-store-adapters` → PR #335  
+**Status:** Store-Code **DELIVERED on main**; Schema Foundation/Grants **applied** (Owner); FK RESTRICT + Ledger **pending Owner**  
 **Stand:** 2026-08-15
 
 ---
@@ -12,41 +12,45 @@
 
 SeoEngine von rein in-memory auf **persistente** Keyword-/Rank-/Content-Daten umstellen, ohne No-Demo-Data oder Admin-IAM zu verwässern.
 
-| Anforderung | Soll |
-|-------------|------|
-| Rank-Quellen | nur `search-console` \| `manual-import` |
-| Leerzustand | ehrlich (keine Seed-Ranks) |
-| Schreibpfad | Server privileged Supabase (`getServerSupabase` / `server/db`) |
-| RLS | deny-by-default; kein Public Write |
-| API | `/api/seo/*` unverändert admin-gated (`checkAdminAccess`) |
-| Fallback | Memory nur Dev/Test; Production fail-closed ohne privileged config |
+| Anforderung | Soll | Ist |
+|-------------|------|-----|
+| Rank-Quellen | nur `search-console` \| `manual-import` | ✅ API + SQL CHECK + Tests |
+| Leerzustand | ehrlich (keine Seed-Ranks) | ✅ |
+| Schreibpfad | Server privileged Supabase | ✅ `SupabaseSeoEngineStore` |
+| RLS | deny-by-default; kein Public Write | ✅ enable + revoke anon/auth |
+| API | `/api/seo/*` admin-gated | ✅ + Store + 503 |
+| Fallback | Memory nur Dev/Test; Prod fail-closed | ✅ Factory |
 
 ---
 
-## 2. Ist-Zustand (verifiziert)
+## 2. Ist-Zustand (verifiziert, nach PR #333 / #335)
 
 | Baustein | Status |
 |----------|--------|
-| `SeoEngineService` in-memory | ✅ auf main |
-| Admin-Router `/api/seo` | ✅ |
+| `ISeoEngineStore` + Memory + Supabase | ✅ main (PR #335) |
+| Admin-Router `/api/seo` auf Store | ✅ |
 | Dashboard S3 | ✅ PR #309 |
-| Migration `20260815010000_seo_engine.sql` | ⚠️ Draft auf main; **Source-Enum drift** |
-| Persistenz-Wiring im Service | ❌ fehlt |
-| RLS Policies (über ENABLE hinaus) | ❌ fehlen |
-| Production apply der Migration | ❓ Owner-Gate |
+| Migration Foundation `20260815010000` | ✅ Repo + Prod apply |
+| Source-Align `20260815200000` | ✅ Repo + Prod apply |
+| service_role Grants `20260815210000` | ✅ Repo + Prod apply (PR #333) |
+| FK RESTRICT `20260815220000` | ⚠️ Repo; **Prod-Apply Owner-Gate** |
+| Ledger-Abgleich (schema_migrations) | ⚠️ Runbook; **Owner-Gate** |
+| ADR-Draft formalisiert/nummeriert | ❌ offen |
 
-### Schema-Drift (kritisch)
+### Schema-Drift (historisch, behoben)
 
 | Schicht | `source`-Werte |
 |---------|----------------|
 | TypeScript / API | `search-console`, `manual-import` |
-| SQL Draft | `manual`, `search_console`, **`estimated`** |
+| SQL (nach Align) | `search-console`, `manual-import` |
 
-`estimated` verstößt gegen No-Demo-Data und darf **nicht** produktiv bleiben.
+`estimated` ist aus dem CHECK entfernt; API lehnt Non-Canonical ab.
+
+**Bekannte Domain-/Schema-Lücke (nicht blockierend für Store-DoD):** Domain-Felder `notes` und `sourceRef` haben **keine** DB-Spalten. Memory speichert sie; Supabase-Adapter persistiert sie nicht. Follow-up nur bei Bedarf, eigene Migration + Owner-Gate.
 
 ---
 
-## 3. Architektur (Ziel)
+## 3. Architektur (geliefert)
 
 ```
 seoEngineRoutes.ts
@@ -62,61 +66,35 @@ seoEngineRoutes.ts
      public.seo_content_inventory
 ```
 
-**Muster:** analog `src/platform/Compliance/store.ts` → `getServerSupabase()` / `isSupabaseConfigured()` aus `server/db`.
-
 Privilege-Separation (ADR-0043-Linie):
 
 - Publishable/Anon **nie** für SEO-Writes
-- Production: `assertPrivilegedSupabaseConfigured` bzw. äquivalent fail-closed
+- Production: `assertPrivilegedSupabaseConfigured` / Factory fail-closed
 
 ---
 
-## 4. Implementierungsschritte (Reihenfolge)
+## 4. Implementierungsschritte — Status
 
-### Schritt A — Schema angleichen (Repo, noch kein Prod-Apply)
-
-1. Neue Migration `20260815200000_seo_engine_source_align_rls.sql`:
-   - `source` CHECK nur `search-console` | `manual-import` (oder kanonische snake_case mit Mapping-Layer — **Empfehlung:** API-Strings beibehalten und SQL angleichen)
-   - optional `notes` auf keywords/content falls API sie speichert
-   - RLS Policies: SELECT/INSERT/UPDATE/DELETE **nur** für `service_role` (bzw. keine Policies für `authenticated`/`anon` → deny)
-2. Bestehenden Draft-Kommentar aktualisieren: „Apply only after OWNER review“
-
-### Schritt B — Store-Abstraktion
-
-1. `src/platform/SeoEngine/store/ISeoEngineStore.ts` — async-fähige Interface-Methoden (list/add keywords, ranks, content, snapshot)
-2. `MemorySeoEngineStore` — extrahiert aus aktuellem `SeoEngineService`
-3. `SupabaseSeoEngineStore` — row mapping snake_case ↔ domain types
-4. `createSeoEngineStore()` — Factory: production → Supabase privileged; test → memory
-
-### Schritt C — Router
-
-1. `seoEngineRoutes.ts` auf async Store umstellen
-2. Fehlercodes: 400 domain validation, 403 authz, 503 DB not configured (prod)
-
-### Schritt D — Tests
-
-1. Bestehende `seoEngineStore.test.ts` gegen Memory-Adapter
-2. Neu: contract tests — reject `estimated`, unknown keywordId, empty ranks default
-3. Mock-Supabase optional; kein Live-DB in CI Pflicht
-
-### Schritt E — Owner Production Gate (separat)
-
-1. Migration auf Supabase Production **nur** nach ausdrücklicher Owner-Freigabe
-2. Evidence: Migration History + read-only Probe (keyword count, rank count = 0 initial)
-3. Kein automatischer Seed von Rankings
+| Schritt | Inhalt | Status |
+|---------|--------|--------|
+| A | Schema align + RLS harden | ✅ Repo + Prod |
+| B | Store-Abstraktion | ✅ PR #335 |
+| C | Router async + 503 | ✅ PR #335 |
+| D | Unit/Contract-Tests | ✅ PR #335 |
+| E | Owner Production Gate (Rest) | ⚠️ FK RESTRICT + Ledger |
 
 ---
 
 ## 5. Definition of Done (WP-S1)
 
-- [ ] Source-Enum SQL ≡ API (kein `estimated`)
-- [ ] RLS enabled + keine anon/authenticated Write-Policies
-- [ ] `ISeoEngineStore` + Memory + Supabase Adapter
-- [ ] Routes nutzen Store; Production fail-closed ohne privileged key
-- [ ] Unit/Contract-Tests grün
-- [ ] `docs/seo/S1_SEO_ENGINE.md` Status aktualisiert
+- [x] Source-Enum SQL ≡ API (kein `estimated`)
+- [x] RLS enabled + keine anon/authenticated Write-Policies
+- [x] `ISeoEngineStore` + Memory + Supabase Adapter
+- [x] Routes nutzen Store; Production fail-closed ohne privileged key
+- [x] Unit/Contract-Tests (Source-Reject, unknown keyword, empty ranks)
+- [x] `docs/seo/S1_SEO_ENGINE.md` Status aktualisiert (dieser Docs-PR)
 - [ ] ADR-Draft finalisiert oder nummeriert nach Kollisionscheck
-- [ ] Production apply + Evidence **oder** explizit „schema on main, apply pending Owner“
+- [ ] Production apply + Evidence **vollständig** (FK RESTRICT + Ledger) **oder** explizit Owner-ACCEPT der Restlücke
 
 ---
 
@@ -125,9 +103,10 @@ Privilege-Separation (ADR-0043-Linie):
 | Risiko | Maßnahme |
 |--------|----------|
 | Shared Migration Zone | Nur `seo_*` Tabellen; keine globalen Auth-Tabellen |
-| Privilege fallback auf Anon | Tests wie `supabasePrivilegeSeparation.test.ts` |
+| Privilege fallback auf Anon | Factory + assertPrivileged |
 | Doppelte IDs Memory vs UUID | Domain `id` als string; DB uuid → string |
 | Stille Rank-Invention | CHECK + API reject + Tests |
+| CASCADE löscht Rank-Historie | FK RESTRICT Migration (Owner-Apply) |
 
 STOP bei: Scope-Drift in Shared Zone, fehlender Owner-Approval für Prod-Apply, Request nach `estimated`-Ranks.
 
@@ -139,11 +118,14 @@ STOP bei: Scope-Drift in Shared Zone, fehlender Owner-Approval für Prod-Apply, 
 - Prerender (WP-S2)
 - Content-Generate (WP-N1)
 - AdSense (WP-R1)
-- Documentary Event-Emission (optional follow-up, nicht blockierend für Store)
+- Documentary Event-Emission (optional follow-up)
+- `notes` / `source_ref` Spalten (optional follow-up)
 
 ---
 
-## 8. Nächster Code-PR (nach diesem Prep)
+## 8. Nächste Owner-Aktionen (keine Agent-Mutation ohne Freigabe)
 
-Empfohlener Titel: `feat(seo): WP-S1 SeoEngine Supabase store + source enum align`  
-Scope: Adapter + Migration-Align + Tests; **ohne** automatisches Prod-Apply.
+1. Apply `20260815220000_seo_rank_snapshots_fk_restrict.sql` auf AIFINANCIAL
+2. Ledger-Abgleich laut `docs/runbooks/SEO_WP_S1_LEDGER_RECONCILIATION.md`
+3. Optional: ADR-Draft nummerieren nach Kollisionscheck
+4. Danach WP-S1 als VERIFIED markieren in Roadmap §4
