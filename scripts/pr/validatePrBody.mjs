@@ -25,12 +25,12 @@ if (!fs.existsSync(baselinePath)) fail(`Produktions-Baseline fehlt: ${baselinePa
 const pr = await githubJson(`https://api.github.com/repos/${repository}/pulls/${prNumber}`, token);
 const body = String(pr.body || '');
 
-// 1) Kanonischer Template-Marker (Comment und/oder sichtbare Form)
+// 1) Kanonischer Template-Marker (sichtbar und/oder in Comment)
 if (!body.includes(PR_TEMPLATE_MARKER)) {
   fail(`PR #${prNumber} verwendet nicht den Marker der kanonischen Vorlage: ${PR_TEMPLATE_MARKER}`);
 }
 
-// 2) Pflichtabschnitte gemäß .github/pull_request_template.md
+// 2) Pflichtabschnitte
 const requiredSections = [
   '## 1. Arbeitsauftrag',
   '## 2. Agenten-/Principal-Identität und PR-Erstellungsfreigabe',
@@ -78,28 +78,35 @@ if (unresolved.length > 0) {
   );
 }
 
-// 5) Genau ein Work-Claim im Diff + Baseline-/Claim-Evidence im Body
+// 5) Work-Claim: Agent-PRs genau einer; Human-PRs ohne neuen Claim sind zulässig (ADR-0039 advisory)
 const claims = listAddedClaimFiles(baseRef, headRef);
-if (claims.length !== 1) {
-  fail(`Es wird genau ein Work-Claim im PR-Diff erwartet; gefunden: ${claims.length}.`);
+if (claims.length > 1) {
+  fail(`Es wird höchstens ein neuer Work-Claim im PR-Diff erwartet; gefunden: ${claims.length}.`);
 }
-const claimPath = claims[0];
-const claim = readJsonFile(claimPath);
-const baseline = readJsonFile(baselinePath);
 
-const evidenceTokens = [
-  claim.claimId,
-  claimPath,
-  baseline.main?.sha,
-  baseline.head?.sha,
-  baseline.production?.commitSha,
-  baseline.production?.version,
-].filter(Boolean).map(String);
+if (claims.length === 1) {
+  const claimPath = claims[0];
+  const claim = readJsonFile(claimPath);
+  const baseline = readJsonFile(baselinePath);
 
-const missingEvidence = evidenceTokens.filter((value) => !body.includes(value));
-if (missingEvidence.length > 0) {
-  fail(
-    `PR #${prNumber} ist veraltet oder nicht maschinell gerendert; folgende Claim-/Baseline-Nachweise fehlen: ${missingEvidence.join(', ')}`,
+  const evidenceTokens = [
+    claim.claimId,
+    claimPath,
+    baseline.main?.sha,
+    baseline.head?.sha,
+    baseline.production?.commitSha,
+    baseline.production?.version,
+  ].filter(Boolean).map(String);
+
+  const missingEvidence = evidenceTokens.filter((value) => !body.includes(value));
+  if (missingEvidence.length > 0) {
+    fail(
+      `PR #${prNumber} ist veraltet oder nicht maschinell gerendert; folgende Claim-/Baseline-Nachweise fehlen: ${missingEvidence.join(', ')}`,
+    );
+  }
+} else {
+  console.log(
+    `[PR-VORLAGE] PR #${prNumber}: kein neuer Work-Claim im Diff (Human-/UI-Pfad); Claim-Evidence-Pflicht entfällt.`,
   );
 }
 
@@ -109,5 +116,5 @@ if (!body.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja')) {
 }
 
 console.log(
-  `[PR-VORLAGE] PR #${prNumber} entspricht dem kanonischen Vorlagenvertrag (Comment- und/oder sichtbare Governance-IDs).`,
+  `[PR-VORLAGE] PR #${prNumber} entspricht dem kanonischen Vorlagenvertrag (Abschnitte, Marker, Freigabe).`,
 );
