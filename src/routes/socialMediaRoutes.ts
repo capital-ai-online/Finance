@@ -16,6 +16,8 @@
 // ADR-0021 — zusaetzlich zur Auth-Pflicht (401 ohne gueltiges Token) verlangt jeder Endpunkt
 // mit echter Funktionalitaet Owner-IAM-Rolle ODER den 'Founder'-Abo-Tarif (403 sonst) - siehe
 // server/socialMedia/accessControl.ts.
+//
+// SEO-ROADMAP-0001 / N1 — POST /generate delivers text variants only (no media, no auto-publish).
 
 import { Router, Request, Response } from 'express';
 import { checkRateLimit, getClientIp } from '../platform/Security/rateLimiter';
@@ -25,6 +27,7 @@ import { listAccountsForUser, disconnectAccount, getDecryptedAccount } from '../
 import { publishToPlatform } from '../../server/socialMedia/platformPublishers';
 import { recordPublishLog, listPublishLogForUser } from '../../server/socialMedia/publishLog';
 import { checkSocialMediaAccess, accessDeniedMessage } from '../../server/socialMedia/accessControl';
+import { generateTextContent } from '../../server/socialMedia/textContentGeneration';
 import type { SupportedAccountPlatform, PublishRequestPayload } from '../platform/SocialMediaEngine/types';
 
 export const socialMediaRouter = Router();
@@ -142,7 +145,7 @@ socialMediaRouter.get(['/auth/callback', '/auth/callback/'], async (req: Request
 
 function renderCallbackPage(platform: string | null, success: boolean, errorMessage?: string): string {
   const safePlatform = (platform || 'social').replace(/[^a-z]/gi, '');
-  const safeError = (errorMessage || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const safeError = (errorMessage || '').replace(/</g, '<').replace(/>/g, '>');
   return `
     <!doctype html>
     <html>
@@ -174,6 +177,45 @@ function renderCallbackPage(platform: string | null, success: boolean, errorMess
     </html>
   `;
 }
+
+// POST /api/social-media/generate — N1 text variants (X / Facebook / community).
+// Does not publish. Media formats remain fail-closed until N3.
+socialMediaRouter.post('/generate', async (req: Request, res: Response) => {
+  const identity = await requireAccess(req, res);
+  if (!identity) return;
+
+  if (!checkRateLimit(`social-media-generate:${identity.userId}`, 30, 60_000)) {
+    return res.status(429).json({ success: false, error: 'Zu viele Generate-Anfragen - bitte kurz warten.' });
+  }
+
+  if (process.env.CONTENT_GENERATION_ENABLED === 'false') {
+    return res.status(503).json({
+      success: false,
+      error: 'Content-Generierung ist per Feature-Flag deaktiviert (CONTENT_GENERATION_ENABLED=false).',
+    });
+  }
+
+  try {
+    const result = generateTextContent({
+      topic: req.body?.topic,
+      platforms: req.body?.platforms,
+      locale: req.body?.locale,
+      contextNote: req.body?.contextNote,
+      format: req.body?.format,
+    });
+    logger.info('Content generated', {
+      userId: identity.userId,
+      topic: result.topic,
+      variantCount: result.variants.length,
+    });
+    res.json({ success: true, package: result });
+  } catch (err: any) {
+    return res.status(400).json({
+      success: false,
+      error: err?.message || 'Generierung fehlgeschlagen.',
+    });
+  }
+});
 
 // POST /api/social-media/publish
 socialMediaRouter.post('/publish', async (req: Request, res: Response) => {
