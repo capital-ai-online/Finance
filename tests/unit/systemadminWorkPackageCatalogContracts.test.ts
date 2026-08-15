@@ -118,11 +118,11 @@ describe('Generalized Systemadmin work-package catalog contracts', () => {
     expect(sa4Runner).not.toContain('workPackages/registry.mjs');
   });
 
-  it('keeps the workflow issue-only, dormant by default, exact-owner and without CI/merge/dispatch', () => {
+  it('keeps the workflow issue-only, exact-owner and without CI/merge/dispatch (activated 2026-08-15)', () => {
     const workflow = fs.readFileSync(workflowPath, 'utf8');
     expect(workflow).toContain('issues:');
     expect(workflow).toContain('if: >-');
-    expect(workflow).toMatch(/if: >-\s*\n\s*false &&/);
+    expect(workflow).not.toMatch(/if: >-\s*\n\s*false &&/);
     expect(workflow).toContain("github.event.issue.user.login == 'SvenKulessa'");
     expect(workflow).toContain("startsWith(github.event.issue.title, '[SYSTEMADMIN-WORK-PACKAGE]')");
     expect(workflow).toContain('id-token: write');

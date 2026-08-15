@@ -84,11 +84,22 @@ Authorized Principals: only a verified human OWNER with fresh TOTP step-up).
 ## Dormant by default
 
 Exactly like SA4 before its first pilot run, `.github/workflows/systemadmin-work-package-runner.yml`
-carries `if: false && ...` — merging this ADR's code does not create a live privileged execution
+carried `if: false && ...` — merging this ADR's code did not create a live privileged execution
 surface. Activation (flipping the `if:` condition) is a separate, explicit, documented Human/Owner
 change, and even after that flip, running the `GENERALIZATION-PROOF` work package specifically
 still additionally requires the Owner to approve `REM-WORKPACKAGE-GEN-PROOF-001` (flip `status` to
 `OWNER_APPROVED` with a real `approvalEvidenceRef`) — two independent gates, not one.
+
+### Nachtrag 2026-08-15 — Schritt 1 von 2 aktiviert
+
+Auf explizite Owner-Anweisung ("aktiviere den Work-Package-Runner") wurde `if: false && ...` aus
+`.github/workflows/systemadmin-work-package-runner.yml` entfernt. Der Host kann jetzt bei einem
+passenden Owner-Issue anlaufen. **Schritt 2 (Mandat-Freigabe) ist weiterhin offen:**
+`REM-WORKPACKAGE-GEN-PROOF-001.json` bleibt `status: DRAFT`, wodurch jede tatsächliche Ausführung
+weiterhin an der SA1-REM_SCOPE-Prüfung fehlschlägt (`mandate.status !== 'OWNER_APPROVED'` →
+`deny`) — unabhängig vom jetzt aktiven Trigger. `tests/unit/systemadminWorkPackageCatalogContracts.test.ts`
+entsprechend aktualisiert (Test benannt in „... (activated 2026-08-15)" umbenannt, prüft jetzt das
+Fehlen von `false &&`).
 
 ## Trust-root boundary
 

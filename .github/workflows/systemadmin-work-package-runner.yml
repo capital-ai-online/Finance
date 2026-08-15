@@ -19,13 +19,14 @@ concurrency:
 jobs:
   run-catalog-work-package:
     name: Audit-gebundener generalisierter Work-Package-Host (ADR-0074)
-    # Dieser Host bleibt bewusst dauerhaft deaktiviert (`false &&`), bis der Owner ihn für ein
-    # konkretes, bereits im Katalog (scripts/systemadmin/workPackages/registry.mjs) gemergtes
-    # Arbeitspaket explizit aktiviert (identisches Prinzip wie SA3B/SA4, ADR-0069 Punkt 6: kein
-    # dauerhaft scharfgeschalteter privilegierter Host ohne aktiven Auftrag). Der auditierte
-    # Vertrag bleibt dabei unveraendert nachweisbar (siehe
-    # tests/unit/systemadminWorkPackageRunner.test.ts). Reaktivierung ist ein eigener,
-    # dokumentierter Human/Owner-Change, wie bei SA3B/SA4.
+    # Trigger aktiviert 2026-08-15 auf explizite Owner-Anweisung ("aktiviere den Work-Package-
+    # Runner") — identisches Prinzip wie die SA3B/SA4-Reaktivierung 2026-08-14. Dies ist
+    # ausdrücklich nur Schritt 1 von 2: der Host kann jetzt bei einem passenden Issue anlaufen,
+    # aber jede tatsächliche Ausführung schlägt weiterhin fehl, solange das gebundene Mandat
+    # (.ai/mandates/REM-WORKPACKAGE-GEN-PROOF-001.json) `status: DRAFT` bleibt — SA1 REM_SCOPE
+    # verweigert das unabhängig von diesem Trigger (mandate.status !== 'OWNER_APPROVED' → deny).
+    # Der auditierte Vertrag bleibt dabei unveraendert nachweisbar (siehe
+    # tests/unit/systemadminWorkPackageCatalogContracts.test.ts).
     #
     # Anders als SA3B/SA4 ist dieser Workflow selbst generisch: er ruft keinen pro-Arbeitspaket
     # geschriebenen Trigger-Flip auf, sondern liest den zu bindenden workPackageId aus dem
@@ -34,7 +35,6 @@ jobs:
     # Issue-Body waehlt nur, WELCHES bereits genehmigte Arbeitspaket laeuft, nie WAS geschrieben
     # wird.
     if: >-
-      false &&
       github.event.issue.user.login == 'SvenKulessa' &&
       startsWith(github.event.issue.title, '[SYSTEMADMIN-WORK-PACKAGE]')
     runs-on: ubuntu-latest
