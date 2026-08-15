@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.1.0",
+  "claimId": "P3B-FMP-INDEX-QUOTE-GATEWAY-MIGRATION-2026-08-15",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5",
+    "executionSurface": "Codex Work GitHub Connector"
+  },
+  "workItem": "ESS-0016 Phase 3B: bestehende FMP-Indexquotes über einen injizierten read-only Adapter auf den MarketDataGateway migrieren.",
+  "startedAt": "2026-08-15T00:05:00Z",
+  "baseBranch": "main",
+  "baseSha": "fae116104bf6fda0fbb660eed3708b479f9b8cf6",
+  "pullRequest": null,
+  "claimedPaths": [
+    ".ai/work-claims/P3B-FMP-INDEX-QUOTE-GATEWAY-MIGRATION-2026-08-15.json",
+    ".ai/skills/ESS-0016-Enterprise-Market-Data-Provider-MCP-Governance.md",
+    "docs/adr/ADR-0041-enterprise-market-data-provider-and-mcp-architecture.md",
+    "src/platform/MarketData/providers/FmpIndexMarketDataProvider.ts",
+    "src/services/traditionalQuoteEvidence.ts",
+    "tests/unit/fmpIndexMarketDataProvider.test.ts",
+    "tests/unit/traditionalIndexQuoteGateway.test.ts"
+  ],
+  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
+}

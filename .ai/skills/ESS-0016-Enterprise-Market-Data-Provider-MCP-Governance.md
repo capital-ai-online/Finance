@@ -4,7 +4,7 @@
 
 **Version:** 1.0.0  
 **Status:** Enterprise Specification  
-**Implementation Status:** PHASE 3A PARTIALLY IMPLEMENTED / ALPACA PROMOTION NOT AUTHORIZED  
+**Implementation Status:** PHASE 3B PARTIALLY IMPLEMENTED / ALPACA PROMOTION NOT AUTHORIZED  
 **Owner:** Platform Director  
 **Security Authority:** CAPITAL-AI IAM / Security & Compliance  
 **Related ADR:** ADR-0041  
@@ -580,6 +580,11 @@ wird über einen typisierten Provider-Adapter und den kanonischen MarketDataGate
 Der bisherige Traditional-Quote-Vertrag bleibt als Compatibility Boundary erhalten. Index,
 Historie, Fundamentals und Scoring-Inputs sind noch nicht migriert; Alpaca bleibt score-neutraler
 Shadow und ist nicht als Primary autorisiert.
+
+Phase-3B-Nachweis (2026-08-15): FMP-Indexquotes werden über einen injizierten read-only
+Loader-Adapter und den MarketDataGateway geführt. Bestehende Ticker-Allowlist, Cooldown und
+Server-Cache bleiben erhalten; der Platform-Layer importiert keine Server-Interna. Indexhistorie,
+Fundamentals und Scoring-Inputs bleiben offen.
 
 ### Phase 4 — Streaming
 
