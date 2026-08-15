@@ -8,8 +8,9 @@
   "branch": "seo/wp-d3-soft-404-prod-fix-2026-08-16",
   "base": "main",
   "owner": "SvenKulessa",
-  "status": "prepared",
+  "status": "in_progress",
   "createdAt": "2026-08-16",
+  "updatedAt": "2026-08-16",
   "createdBy": {
     "provider": "xAI",
     "model": "Grok",
@@ -34,5 +35,5 @@
     "Supabase / SeoEngine store",
     "Shared IAM / billing / deploy configs"
   ],
-  "notes": "Class C: composition-root SPA wiring + docs/evidence. Closes prod Soft-404 gap observed 2026-08-16."
+  "notes": "Class C: composition-root SPA wiring + docs/evidence. Evidence + apply script + contract test on branch; owner must run node scripts/seo/apply-server-wiring.mjs then push server.application.ts (file ~100KB exceeds single MCP write). Closes prod Soft-404 gap observed 2026-08-16."
 }
