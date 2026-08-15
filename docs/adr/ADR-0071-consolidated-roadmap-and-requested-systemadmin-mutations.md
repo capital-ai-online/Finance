@@ -23,6 +23,11 @@ Die Begriffe Anfrage, Freigabe und Ausführung dürfen nicht vermischt werden. E
 8. Native MFA wird aufgrund der Owner-Attestation als aktiviert, aber bis technischer Evidence als `VERIFICATION PENDING` geführt.
 9. PR #257 bleibt Documentation-only; Runtime-Prototypen erhalten eigene Branches/PRs.
 10. Nach Merge wird der Remote-Arbeitsbranch gelöscht.
+11. Jede an einen Administrator delegierte Mutationsfreigabe gilt ausschließlich für einen exakt benannten Roadmap-Abschnitt bzw. ein Work Package.
+12. Die Freigabe ist einmalig: ihre `approvalId` bzw. ihr gebundener `idempotencyKey` wird beim ersten Ausführungsversuch atomar konsumiert und darf weder nach Erfolg noch nach Fehler, Abbruch oder Rollback wiederverwendet werden.
+13. Die Abschnittsfreigabe muss an Administrator-Principal, aktuellen `main`-SHA, Branch, Zielressource, Allowlist der Operationen, Risikoklasse, Ablaufzeit, Pre-/Postcheck, Rollback und Auditpfad gebunden sein.
+14. Scope-, Principal-, SHA-, Ziel-, Operations-, Risiko- oder Zeitfensterabweichungen führen fail-closed zu `DENY`; eine Erweiterung benötigt eine neue Owner-Freigabe.
+15. Die Regel gilt einheitlich für jeden menschlichen oder agentischen Administrator. Sie delegiert niemals Merge, Owner-IAM/MFA, Secret-Offenlegung, Billing-/Entitlement-Mutation, destructive production data, DNS/TLS, Security-Control-Abschaltung oder Selbst-Erweiterung.
 
 ## Mutation-Proposal-Zustandsmodell
 
@@ -38,6 +43,17 @@ DISCOVERED
 ```
 
 Nur der Owner darf `OWNER_APPROVED` erzeugen. Ein Zustands-, Ziel-, SHA-, Versions- oder Risikowechsel invalidiert die Freigabe.
+
+Für Abschnittsfreigaben gilt zusätzlich:
+
+```text
+OWNER_APPROVED (unused)
+→ atomic consume before first side effect
+→ CONSUMED_EXECUTING
+→ VERIFIED_PASS | VERIFIED_FAIL | ROLLED_BACK | CLOSED
+```
+
+Jeder erneute Verbrauchsversuch ergibt `DENY_APPROVAL_REPLAY`. Ein fehlgeschlagener Precheck darf keinen Side Effect auslösen; wurde die Freigabe bereits konsumiert, ist für einen weiteren Versuch eine neue Owner-Freigabe erforderlich.
 
 ## Sicherheitsinvarianten
 

@@ -45,7 +45,8 @@ Der Handoff beschreibt den Auftrag; die Control Plane entscheidet, ob er ausfüh
 - `owner`;
 - `executorAgentId`;
 - `authorityRefs`: ESS/ADR/Runbook/Roadmap;
-- `approvalEvidenceRef`: separate Human Approval Evidence, sobald eine Mutation autorisiert wurde.
+- `approvalEvidenceRef`: separate Human Approval Evidence, sobald eine Mutation autorisiert wurde;
+- die Approval Evidence bindet genau einen Administrator-Principal und einen benannten Roadmap-Abschnitt/Work Package.
 
 ### Mutation
 
@@ -178,7 +179,11 @@ Direkte Tool-/Connector-Mutation ohne diesen enforcebaren Pfad zählt nicht als 
 - ein bereits erfolgreich konsumierter Auftrag darf nicht erneut ausgeführt werden;
 - `expiresAt` wird fail-closed geprüft;
 - Base-/Target-/Approval-Drift invalidiert den Auftrag;
-- Outcome-Evidence referenziert die Authorization Evidence.
+- Outcome-Evidence referenziert die Authorization Evidence;
+- der Execution Host claimt `approvalEvidenceRef + idempotencyKey` atomar vor dem ersten Side Effect;
+- derselbe Abschnitts-Grant ist nach Erfolg, Fehler, Abbruch oder Rollback verbraucht;
+- Wiederholung, Parallelverbrauch oder Übertragung auf einen anderen Administrator-Principal ergibt `DENY_APPROVAL_REPLAY`;
+- ein erneuter Versuch benötigt eine neue Owner-Freigabe mit neuer Approval-Referenz und neuem Idempotency Key.
 
 ## Evidence Output
 

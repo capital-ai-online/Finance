@@ -33,6 +33,8 @@ Credentials remain in the connector/tool host. Raw reusable credentials MUST NOT
 
 A REM is a Human/Owner-approved standing authorization for one bounded Roadmap segment. It replaces repeated per-PR creation prompts only within its exact scope.
 
+The following single-use section rule applies to every human or agentic administrator principal. A mutation grant is valid for exactly one named Roadmap section/work package and exactly one bound administrator principal. It MUST bind approval id, current `main` SHA, branch, targets, enumerated operations, risk ceiling, expiry, pre/post checks, rollback and audit path. The Execution Host MUST atomically consume the grant before the first side effect. Success, failure, cancellation or rollback permanently consumes it; retry requires a new Owner approval. Replay, concurrent consumption or any principal/scope/SHA/target/operation/risk/time drift is `DENY`.
+
 A valid REM MUST define at minimum:
 
 - immutable `mandateId`;
@@ -71,6 +73,8 @@ The Systemadmin Agent MAY receive the following capabilities without a new per-a
 This permits the agent to take an approved Roadmap work package from current-state analysis through a review-ready Pull Request, including multiple scoped commits and automated remediation of technical failures before final Owner review.
 
 `MERGE` is not and MUST NOT become an Agent IAM capability.
+
+A section grant may contain multiple operations only when every operation is fully enumerated before approval. It is not a reusable standing administrator session and cannot authorize newly discovered follow-up work.
 
 ## 5. Repository mutation authority
 
@@ -122,7 +126,8 @@ The following remain Human/Owner-controlled even when a REM exists unless a futu
 - production resource deletion;
 - DNS/TLS/domain ownership changes;
 - disabling security, audit, RLS, append-only or consent controls;
-- expanding the agent's own mandate, capabilities, target set or expiry.
+- expanding the agent's own mandate, capabilities, target set or expiry;
+- reusing, transferring or replaying a consumed section approval.
 
 The agent can prepare these changes and their runbooks, but it must stop before execution.
 

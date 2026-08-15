@@ -1,7 +1,7 @@
 # ESS-0023 — Konsolidierter Systemadministrator-Prototyp- und Mutationsanfragevertrag
 
 Status: ACTIVE — DOCUMENTATION CONTRACT  
-Version: 1.0.0  
+Version: 1.1.0  
 Datum: 2026-08-14  
 Authority: ADR-0071  
 Owner: SvenKulessa
@@ -69,6 +69,22 @@ Für externe Plattformen, Produktion, Supabase, Render, Stripe, IONOS, GitHub-Go
 - keine Agenten-, Provider- oder Modellselbstfreigabe;
 - `OWNER_APPROVED` muss vor Side Effect persistent und referenzierbar sein.
 
+### 5.1 Einmalige Abschnittsfreigabe für jeden Administrator
+
+Diese Regeln gelten ausnahmslos für jeden menschlichen oder agentischen Administrator-Principal:
+
+- genau ein benannter Roadmap-Abschnitt bzw. ein Work Package;
+- genau ein Administrator-Principal;
+- Bindung an `approvalId`, `main`-SHA, Branch, Ziel, Operations-Allowlist, Risikoklasse und Ablaufzeit;
+- atomarer Single-Use-Verbrauch vor dem ersten Side Effect;
+- nach Erfolg, Fehler, Abbruch oder Rollback keine Wiederverwendung;
+- Replay oder paralleler Verbrauch → `DENY_APPROVAL_REPLAY`;
+- Scope-/Principal-/SHA-/Target-/Operations-/Risiko-/Zeitfensterdrift → `DENY_SCOPE_DRIFT`;
+- Precheck, Postcheck, Rollback, Kill-Switch und append-only Audit sind verpflichtend;
+- Erweiterungen oder Folgemutationen benötigen eine neue Owner-Freigabe.
+
+Eine Abschnittsfreigabe kann mehrere vorab vollständig enumerierte atomare Operationen enthalten. Sie ist verbraucht, sobald der Execution Host den Abschnitt zur Ausführung claimt. Sie darf niemals Merge, Owner-IAM/MFA, Secret-Offenlegung, Live-Billing/Entitlement, destructive production data, DNS/TLS, Security-Control-Abschaltung oder Selbst-Erweiterung delegieren.
+
 ## 6. Prototypmodi
 
 | Modus | Erlaubt | Verboten |
@@ -92,6 +108,7 @@ Standard ist `READ_ONLY` oder `MOCK`.
 - `DENY_TARGET_MISMATCH`;
 - `DENY_PRECHECK_FAILED`;
 - `DENY_AUDIT_UNAVAILABLE`;
+- `DENY_APPROVAL_REPLAY`;
 - `STOP_AND_ROLLBACK`.
 
 ## 8. Native MFA
@@ -125,6 +142,9 @@ Mindestens:
 - Scope drift → DENY;
 - Secret im Output → Redaction/DENY;
 - abgelaufene Approval → DENY;
+- zweiter oder paralleler Verbrauch derselben Abschnittsfreigabe → DENY_APPROVAL_REPLAY;
+- anderer Administrator-Principal mit derselben approvalId → DENY;
+- Fehler/Abbruch/Rollback und anschließender Wiederholungsversuch ohne neue Freigabe → DENY;
 - Branch nach Merge noch vorhanden → Arbeitspaket nicht geschlossen.
 
 ## 10. Evidence
@@ -133,7 +153,7 @@ Evidence ist redigiert, append-only und korreliert:
 
 - request/proposal ID;
 - requestor;
-- Owner-Approval-Referenz;
+- Owner-Approval-Referenz und Single-Use-Verbrauchsstatus;
 - target hash/version;
 - Precheck;
 - authorization event vor Side Effect;
