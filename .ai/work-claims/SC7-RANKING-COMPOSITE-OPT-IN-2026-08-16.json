@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "SC7-RANKING-COMPOSITE-OPT-IN-2026-08-16",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "SC-7 Phase A: ranking.service optional composite DQ level mapping via compositeLevelToRankingDqPoints; formula weights unchanged; RANKING_SCORE_IMPACT_ENABLED=false.",
+  "workItemDE": "SC-7 Phase A: optionale Composite-Level-Anbindung in ranking.service über compositeLevelToRankingDqPoints; Formelgewichte unverändert; RANKING_SCORE_IMPACT_ENABLED=false.",
+  "startedAt": "2026-08-15T22:40:00Z",
+  "baseBranch": "main",
+  "baseSha": "f0594e353c8be0a2fae13373e3144ff34cdb1945",
+  "pullRequest": 349,
+  "claimedPaths": [
+    "src/services/ranking.service.ts",
+    "tests/unit/rankingService.test.ts",
+    "docs/roadmaps/work-packages/SC-7_RANKING_COMPOSITE_OPT_IN.md",
+    "docs/roadmaps/work-packages/SC-3_UNIFIED_DQ_CONFIDENCE.md",
+    "docs/evidence/sc-md/SC7_RANKING_COMPOSITE_OPT_IN_2026-08-16.md",
+    ".ai/work-claims/SC7-RANKING-COMPOSITE-OPT-IN-2026-08-16.json"
+  ],
+  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
+}
