@@ -17,7 +17,6 @@ import { HeatmapCreator } from './HeatmapCreator';
 import { CapitalAiLogo } from './CapitalAiLogo';
 import { MarketScreener } from './MarketScreener';
 import { CryptoScoringEnterprise } from './CryptoScoringEnterprise';
-import { FavoriteAssetPatternSlots } from './FavoriteAssetPatternSlots';
 import { SecurityRadarBadge } from './SecurityRadarBadge';
 import { UserSession } from '../App';
 import { GuestCliffhangerModal } from './GuestCliffhangerModal';
@@ -1315,9 +1314,6 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                      subscriptionTier={profile.subscriptionTier}
                      onUpgradeClick={() => navigateTo('abonnements')}
                   />
-
-                  {/* 3 Favoriten-Slots mit live 1H/4H Candlestick-Pattern-Erkennung */}
-                  <FavoriteAssetPatternSlots onSelectSymbol={setSelectedSymbol} />
 
                   {/* Free & Guest User Upgrade Banner & Support Link */}
                   {(profile.subscriptionTier === 'Free' || userSession?.type === 'guest') && (
