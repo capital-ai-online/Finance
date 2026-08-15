@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CI-SMART-SCOPE-2026-08-15",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "executionSurface": "Grok GitHub connector / SuperGrok"
+  },
+  "workItem": "CI smart scope: classifyPrScope.mjs + tests; wire step flags in ci.yml; path-conditional skips in pr-governance.yml.",
+  "workItemDE": "Intelligente CI-Scope-Klassifikation D/C/R",
+  "startedAt": "2026-08-15T20:33:00Z",
+  "baseBranch": "main",
+  "baseSha": "2cd96ab566ab8e06880b4707d7dc31e916ab28f8",
+  "pullRequest": null,
+  "prCreationApproval": {
+    "status": "approved",
+    "approvedBy": "human-user",
+    "approvedAt": "2026-08-15T20:33:00Z",
+    "scope": "scripts/pr/classifyPrScope.mjs (+ Tests), Anbindung in .github/workflows/ci.yml und path-bedingte Skips in .github/workflows/pr-governance.yml."
+  },
+  "claimedPaths": [
+    "scripts/pr/classifyPrScope.mjs",
+    "scripts/pr/classifyPrScope.test.mjs",
+    ".github/workflows/ci.yml",
+    ".github/workflows/pr-governance.yml",
+    ".ai/work-claims/CI-SMART-SCOPE-2026-08-15.json"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}

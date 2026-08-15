@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "M8-CLAUDE-CODE-REAL-CALLER-DESIGN-2026-08-15",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "Anthropic",
+    "model": "Claude (Sonnet 5)",
+    "executionSurface": "Claude Code Remote (interaktive Owner-Sitzung)"
+  },
+  "workItem": "I1 (M8 Agent Cutover) Option B: formal design evidence on what a 'real caller' for the claude-code-cli provider profile would have to mean. Concludes two structurally distinct paths exist -- a content-generation-only LLM call inside a Model A work package (buildable, but serves a different, narrower profile without mutating capability) vs. a genuine agentic Claude Code host with real tool access (serves the profile literally, but blocked by the same unresolved tool-call-level authorization mediation gap already documented for Model B). No implementation, no new caller, no code change -- claude-code-cli stays BLOCKED, which this document argues is the structurally correct state, not an open task.",
+  "workItemDE": "I1 Option B: Design-Evidence, was ein realer Aufrufer für claude-code-cli bedeuten müsste",
+  "startedAt": "2026-08-15T20:35:00Z",
+  "baseBranch": "main",
+  "baseSha": "2cd96ab566ab8e06880b4707d7dc31e916ab28f8",
+  "prCreationApproval": {
+    "status": "approved",
+    "approvedBy": "human-user",
+    "approvedAt": "2026-08-15T20:30:00Z",
+    "scope": "Owner-Anweisung \"fahre mit den nächsten Schritten fort\" nach I1-Fortsetzung; Option B (Claude-Code-Caller-Design-Evidence) als nächster sicherer, dokumentierter Schritt aus dem in der I1-Anweisung selbst gegebenen Options-Menü (A/B/C/D) gewählt -- A bereits abgeschlossen (PR #334)."
+  },
+  "productionBaseline": {
+    "note": "Diese Sitzungsumgebung hat keinen Netzwerkzugriff auf https://capital-ai.online/healthz (Egress-Proxy blockiert externe Hosts). Wert unten zuletzt real via CI-Job-stdout auf PR #334 beobachtet (Job 95063007842, Run 31905699530) und durch PR #336's erfolgreichen pr-template-contract-Lauf (Job 95065025954, Run 31906481422) implizit bestätigt (derselbe Wert hätte sonst validatePrBody.mjs's Evidence-Token-Check dort ebenfalls scheitern lassen).",
+    "checkedAt": "2026-08-15T20:05:00Z",
+    "version": "0.6.0",
+    "commitSha": "381815d7c049cb5dd6cf9b528562db3de34f7e5a",
+    "branch": "main",
+    "repoSlug": "SvenKulessa/Finance",
+    "source": "ci-job-stdout"
+  },
+  "claimedPaths": [
+    "docs/architecture/M8_CLAUDE_CODE_REAL_CALLER_DESIGN.md",
+    "docs/evidence/m8/M8_I1_CUTOVER_READINESS_MATRIX_AND_EXIT_GATE_SYNC_EVIDENCE.md",
+    ".ai/work-claims/M8-CLAUDE-CODE-REAL-CALLER-DESIGN-2026-08-15.json"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}
