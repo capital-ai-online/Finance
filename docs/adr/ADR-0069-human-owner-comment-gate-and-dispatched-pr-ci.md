@@ -180,7 +180,9 @@ Die Stilllegung folgt ADR-0073:
 
 1. `build-and-test` einschließlich Human-/Owner-Gate bleibt unverändert;
 2. der Live-Ruleset entfernt zuerst `capital-ai-ci` aus den Required Checks;
-3. erst danach darf der PR gemergt werden, der `.github/workflows/capital-ai-ci-shadow.yml` entfernt;
+3. erst danach darf der PR gemergt werden, der `.github/workflows/capital-ai-ci-shadow.yml`
+   stilllegt (nur noch `workflow_dispatch`; die Datei bleibt erhalten, da Workflow-Löschungen
+   durch die Workflow-Sicherheitsrichtlinie fail-closed untersagt sind);
 4. GitGuardian bleibt Required Check;
 5. bei fehlendem `build-and-test` wird nicht gemergt und der Workflow auf einem frischen Branch repariert.
 

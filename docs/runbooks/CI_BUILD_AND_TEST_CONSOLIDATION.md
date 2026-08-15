@@ -31,7 +31,34 @@ Required Checks:
 ## Fail-Closed
 
 Falls `capital-ai-ci` vor dem Merge weiterhin Required ist, darf der PR nicht gemergt werden.
-Nach einem Merge würde sonst jeder neue PR auf einen nicht mehr existierenden Check warten.
+Nach einem Merge würde sonst jeder neue PR auf einen nicht mehr gemeldeten Check warten.
+
+## Umsetzung im Repository
+
+`.github/workflows/capital-ai-ci-shadow.yml` wird **nicht gelöscht**, sondern stillgelegt:
+
+- `on:` enthält nur noch `workflow_dispatch`;
+- der Workflow meldet für Pull Requests keinen `capital-ai-ci`-Check mehr;
+- Jobinhalt, Pinning, Read-only-Permissions und `persist-credentials: false` bleiben unverändert.
+
+Grund: Der Required-Check `Sicherheit geänderter Workflows` verbietet Workflow-Löschungen
+fail-closed und ohne Ausnahmepfad (`scripts/security/verifyChangedWorkflowSecurity.mjs`,
+geladen aus dem vertrauenswürdigen `main`-Stand). Die Stilllegung erreicht dasselbe Ziel,
+ohne diese Sicherheitsinvariante aufzuweichen.
+
+## Rollback
+
+Frischen Branch erstellen und den `pull_request`-Trigger wieder eintragen:
+
+```yaml
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+  workflow_dispatch:
+```
+
+`capital-ai-ci` erst nach einem realen PASS wieder als Required Check setzen.
 
 ## Erwarteter Nutzen
 

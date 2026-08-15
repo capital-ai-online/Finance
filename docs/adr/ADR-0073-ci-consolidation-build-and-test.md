@@ -29,10 +29,31 @@ verbraucht damit unnötig GitHub-Actions-Minuten.
 1. `build-and-test` bleibt einziger repository-hosted technischer Required Check.
 2. Human-/Owner-Vorprüfung, Head-Bindung und beide Attestations bleiben unverändert.
 3. `GitGuardian Security Checks` bleibt Required Check.
-4. `capital-ai-ci-shadow.yml` wird nach dem Ruleset-Cutover entfernt.
+4. `capital-ai-ci-shadow.yml` wird nach dem Ruleset-Cutover stillgelegt: Der
+   `pull_request`-Trigger entfällt, die Datei bleibt mit `workflow_dispatch` erhalten.
 5. Kein synthetischer Reporter darf den Namen `build-and-test` erzeugen.
 6. Die Ausführungsreihenfolge ist verbindlich: Live-Ruleset zuerst, Workflow-Merge danach.
 7. Keine Bypass Actors, kein Direct-Main-Push und kein Force-Push werden zugelassen.
+
+## Stilllegung statt Löschung
+
+Die ursprüngliche Umsetzung löschte `.github/workflows/capital-ai-ci-shadow.yml`. Der
+Required-Check `Sicherheit geänderter Workflows` (`pr-governance.yml` →
+`scripts/security/verifyChangedWorkflowSecurity.mjs`) behandelt jede Workflow-Löschung
+fail-closed als Richtlinienverstoß und kennt keinen Ausnahmepfad. Die Richtlinie wird aus
+dem vertrauenswürdigen `main`-Stand geladen; ein PR kann sie für sich selbst nicht ändern.
+
+Entschieden wurde deshalb die Stilllegung über die Trigger-Fläche:
+
+- `on:` enthält nur noch `workflow_dispatch`;
+- der Workflow erzeugt für Pull Requests keinen `capital-ai-ci`-Check mehr;
+- das Kostenziel (ein statt zwei Node-/Build-Läufe pro PR) ist vollständig erreicht;
+- die Workflow-Löschungs-Invariante bleibt unangetastet und muss nicht aufgeweicht werden;
+- der Rollback aus ADR-0073 reduziert sich auf das Wiedereinsetzen des `pull_request`-Triggers.
+
+Eine spätere physische Löschung der Datei bleibt möglich, erfordert aber einen eigenen,
+Human/Owner-reviewten Änderungspfad für `verifyChangedWorkflowSecurity.mjs` und ist nicht
+Bestandteil dieser Entscheidung.
 
 ## Sicherheitsinvarianten
 
@@ -69,5 +90,7 @@ Der nächste reale Pull Request muss zeigen:
 ## Rollback
 
 Vor Merge: Ruleset-Cutover zurücknehmen und PR offen lassen.
-Nach Merge: frischen Recovery-Branch erstellen, Shadow-Workflow wiederherstellen, PASS abwarten und
-erst danach `capital-ai-ci` wieder als Required Check aktivieren.
+Nach Merge: frischen Recovery-Branch erstellen, in `capital-ai-ci-shadow.yml` den
+`pull_request`-Trigger (`branches: [main]`, `types: [opened, synchronize, reopened, edited]`)
+wieder eintragen, PASS abwarten und erst danach `capital-ai-ci` wieder als Required Check
+aktivieren.

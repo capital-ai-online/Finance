@@ -76,8 +76,11 @@ Die Shadow-Phase hat ihren Zweck erfüllt:
 | #309 | Run `31863283061` PASS | Run `31863283041` PASS | Application-/Test-Scope; Governance ebenfalls PASS |
 
 Owner-Entscheidung: Konsolidierungsoption 1. `build-and-test` bleibt technischer Trust Root,
-`capital-ai-ci` wird stillgelegt. Damit die Entfernung des Workflows keinen dauerhaft fehlenden
-Required Check erzeugt, gilt folgende zwingende Reihenfolge:
+`capital-ai-ci` wird stillgelegt. Die Stilllegung erfolgt über die Trigger-Fläche des
+Shadow-Workflows (nur noch `workflow_dispatch`); die Workflow-Datei wird nicht gelöscht, weil
+`scripts/security/verifyChangedWorkflowSecurity.mjs` Workflow-Löschungen fail-closed untersagt.
+Damit die Stilllegung keinen dauerhaft fehlenden Required Check erzeugt, gilt folgende zwingende
+Reihenfolge:
 
 1. Live-Ruleset `main-production-protection` öffnen.
 2. Required Check `capital-ai-ci` entfernen.
@@ -87,5 +90,5 @@ Required Check erzeugt, gilt folgende zwingende Reihenfolge:
 6. Mit dem nächsten realen PR nachweisen, dass Merge ohne `build-and-test` weiterhin blockiert.
 
 Rollback vor Merge: Ruleset-Änderung rückgängig machen und diesen PR nicht mergen.
-Rollback nach Merge: frischer Recovery-Branch, Shadow-Workflow aus dem letzten verifizierten Stand
-wiederherstellen, anschließend `capital-ai-ci` erst nach PASS erneut Required setzen.
+Rollback nach Merge: frischer Recovery-Branch, `pull_request`-Trigger des Shadow-Workflows wieder
+eintragen, anschließend `capital-ai-ci` erst nach PASS erneut Required setzen.

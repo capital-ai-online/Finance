@@ -9,7 +9,7 @@
     "PR #309 build-and-test + shadow PASS"
   ],
   "scope": [
-    ".github/workflows/capital-ai-ci-shadow.yml (delete)",
+    ".github/workflows/capital-ai-ci-shadow.yml (retire: workflow_dispatch only, file retained because workflow deletions are fail-closed forbidden by verifyChangedWorkflowSecurity.mjs)",
     ".github/policies/main-production-protection.expected.json",
     "docs/adr/ADR-0069-human-owner-comment-gate-and-dispatched-pr-ci.md",
     "docs/adr/ADR-0073-ci-consolidation-build-and-test.md",
