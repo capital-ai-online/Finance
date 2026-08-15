@@ -1,8 +1,11 @@
 # M8 — Provider-neutral Agent Cutover Runbook
 
-Status: PLANNED — EXECUTION BLOCKED BY M7
-Date: 2026-08-12
-Authority: ADR-0062, ESS-0019, `docs/architecture/ai-agent/AI_AGENT_PROVIDER_PROFILE_CONTRACT.md`, DEVELOPMENT Chain Execution Policy
+Status: IN PROGRESS — Phase 0 complete; Exit Gate items 1, 3, 4, 5, 6, 7 VERIFIED PASS; item 2
+PARTIAL (1 of 4 provider profiles has a real caller); item 8 in progress; item 9 N/A for current
+M8-scope branches. Full status: `docs/evidence/m8/M8_I1_CUTOVER_READINESS_MATRIX_AND_EXIT_GATE_SYNC_EVIDENCE.md`.
+Date: 2026-08-15 (Nachtrag zum Status-Header; Date 2026-08-12 war veraltet — M7 ist seit 2026-08-14
+`VERIFIED PASS`. Exit Gate und Cutover Sequence unten bleiben normativ unverändert.)
+Authority: ADR-0062, ESS-0019, `docs/architecture/ai-agent/AI_AGENT_PROVIDER_PROFILE_CONTRACT.md`, DEVELOPMENT Chain Execution Policy, `docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (Phase I1, ROADMAP-INTEGRATED-DC-SA-0001) — dieses Runbook bleibt die spezifischere Authority; die Integrated Roadmap ersetzt es nicht.
 
 ## Goal
 
