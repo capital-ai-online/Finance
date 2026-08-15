@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.1.0",
+  "claimId": "UI-DEACTIVATE-FAVORITE-LIVE-PATTERN-SLOTS-2026-08-15",
+  "status": "ready-for-pr",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5",
+    "executionSurface": "Codex Work GitHub Connector"
+  },
+  "workItem": "Favoriten-Slots mit Live-Pattern-Erkennung auf der Hauptseite unterhalb des Enterprise Scorers deaktivieren.",
+  "startedAt": "2026-08-15T02:30:00Z",
+  "baseBranch": "main",
+  "baseSha": "8ea55a9601078cd9de942b754a9e93910eff5680",
+  "claimedPaths": [
+    ".ai/work-claims/UI-DEACTIVATE-FAVORITE-LIVE-PATTERN-SLOTS-2026-08-15.json",
+    "src/components/Dashboard.tsx"
+  ],
+  "safetyBoundary": "Nur die Dashboard-Einbindung wird entfernt. Die Komponente bleibt als reversibler, unreferenzierter Code bestehen; keine Daten-, Provider-, Scoring- oder Produktionsmutation.",
+  "releaseCondition": "Claim wird nach Merge, Schließung oder Supersession des Pull Requests freigegeben; nach verifiziertem Merge wird der Remote-Branch gelöscht."
+}
