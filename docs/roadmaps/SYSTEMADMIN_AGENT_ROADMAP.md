@@ -308,13 +308,20 @@ explicit Owner instruction ("fahre mit den Punkten 2 bis 4 fort") —
 `REM-WORKPACKAGE-GEN-PROOF-001` is now `status: OWNER_APPROVED` with
 `approvalEvidenceRef: "human-owner-chat-2026-08-15-workpackage-gen-proof"`, proven end-to-end via
 a real `evaluateSystemadminRoadmapAuthorization()` ALLOW test
-(`tests/unit/systemadminWorkPackageCatalogContracts.test.ts`). **Gate 4 remains open and is
-Owner-only:** a fresh GitHub Issue titled `[SYSTEMADMIN-WORK-PACKAGE] ...` from the
-`SvenKulessa` account, with the exact request JSON (`workPackageId: GENERALIZATION-PROOF`,
-`mandateId: REM-WORKPACKAGE-GEN-PROOF-001`, current `main` SHA as `baseSha`,
-`branchName: agent/systemadmin-work-package-gen-proof-<n>`), then Owner review/merge of the
-resulting draft PR. This session cannot open that Issue — GitHub itself checks
-`github.event.issue.user.login == 'SvenKulessa'`.
+(`tests/unit/systemadminWorkPackageCatalogContracts.test.ts`).
+
+**Nachtrag 2026-08-15 — Gate 4 erfüllt, generalization COMPLETE / VERIFIED PASS:** the Owner
+opened Issue #325 (`[SYSTEMADMIN-WORK-PACKAGE]`, exact request JSON, `baseSha` matching current
+`main`) from the `SvenKulessa` account. The host ran the full audit-bound BRANCH → COMMIT → PR
+chain for real: branch `agent/systemadmin-work-package-gen-proof-1`, commit
+`e1ce748d9a4125777adeddac857603aff0c77ab3`, draft PR #326 with all six
+`supabase:agent_audit_events:*` authorization/outcome references. The Owner reviewed and merged
+PR #326 (merge commit `cb2db699ca7a2baf6cd9b4446aa7a2655d86ccdb`); the resulting push-to-main CI
+run (31894252190) passed. All 10 ADR-0074 exit criteria are met — see that ADR's own Nachtrag for
+the full point-by-point evidence. `GENERALIZATION-PROOF` is not deleted from the catalog (it is
+naturally self-blocking now via the `target-path-not-already-on-main` preflight check, and serves
+as a reference implementation for future catalog entries); the workflow trigger stays active,
+unlike SA4's one-time pilot.
 
 ## SA5 — Bounded external mutation design
 
