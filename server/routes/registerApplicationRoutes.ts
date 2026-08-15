@@ -21,6 +21,7 @@ import { aiRouter } from '../ai';
 import { systemadminExecutionBrokerRouter } from '../systemadmin/systemadminExecutionBrokerRouter';
 import { registerTrailingSlashNormalize } from '../middleware/seoUrlNormalize';
 import { installProductionSoft404Intercept } from '../runtime/spaFallback';
+import { seoEngineRouter } from './seoEngineRoutes';
 
 export interface ApplicationRouteProviders {
   ai: any | null;
@@ -39,6 +40,7 @@ export interface ApplicationRouteProviders {
  * SEO-ROADMAP-0001:
  * - Q2: trailing-slash 301 via registerTrailingSlashNormalize
  * - D3: installProductionSoft404Intercept wraps later app.get('*') in production
+ * - S1: SeoEngine admin API under /api/seo
  */
 export function registerApplicationRoutes(
   app: Express,
@@ -78,5 +80,7 @@ export function registerApplicationRoutes(
   app.use('/api/news', newsRouter);
   app.use('/api/registry', registryRouter);
   app.use('/api/social-media', socialMediaRouter);
+  // SEO S1: keyword register, content inventory, rank snapshots (admin-only).
+  app.use('/api/seo', seoEngineRouter);
   app.use('/api', aiRouter);
 }
