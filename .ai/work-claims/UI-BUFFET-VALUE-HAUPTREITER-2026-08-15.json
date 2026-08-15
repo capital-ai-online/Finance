@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "UI-BUFFET-VALUE-HAUPTREITER-2026-08-15",
+  "status": "ready-for-pr",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6",
+    "executionSurface": "ChatGPT Work + GitHub connector"
+  },
+  "workItem": "Buffet Value Check als eigenen Reiter der Hauptzentrale führen",
+  "startedAt": "2026-08-15T01:16:00Z",
+  "baseBranch": "main",
+  "baseSha": "be251e109c37a61db654103269451010fc9495e8",
+  "productionBaseline": {
+    "mode": "verified",
+    "productionUrl": "https://capital-ai.online/healthz",
+    "productionVersion": "0.6.0",
+    "productionCommit": "be251e109c37a61db654103269451010fc9495e8",
+    "productionBranch": "main"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/UI-BUFFET-VALUE-HAUPTREITER-2026-08-15.json",
+    "src/components/Dashboard.tsx"
+  ],
+  "releaseCondition": "Claim wird erst nach Merge oder Schließung des PR freigegeben."
+}

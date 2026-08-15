@@ -1293,6 +1293,13 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                       <a href="#trade-setup-grafik" className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-white/70 hover:border-aif-gold-DEFAULT/40 hover:text-aif-gold-DEFAULT transition-colors"><Activity size={12} /> Trade-Setup</a>
                       <a href="#favoriten-slots" className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-white/70 hover:border-aif-gold-DEFAULT/40 hover:text-aif-gold-DEFAULT transition-colors"><Star size={12} /> Favoriten</a>
                       <a href="#tiefenanalyse" className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-white/70 hover:border-aif-gold-DEFAULT/40 hover:text-aif-gold-DEFAULT transition-colors"><Database size={12} /> Tiefenanalyse</a>
+                      <button
+                        type="button"
+                        onClick={() => navigateTo('buffet-value')}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-white/70 hover:border-aif-gold-DEFAULT/40 hover:text-aif-gold-DEFAULT transition-colors"
+                      >
+                        <Percent size={12} /> Buffet Value Check
+                      </button>
                     </nav>
                   </div>
 
@@ -1375,49 +1382,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                      onUpgradeClick={() => navigateTo('abonnements')}
                    />
 
-                 {/* Middle Row: Quantitative Ticker (Enterprise Trading Evaluation Tool lebt jetzt ausschliesslich im CryptoScoringEnterprise-Hero oben - keine doppelte Score-Anzeige mehr) */}
-                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                   <div className="sm:col-span-1">
-                     {/* Strategie-Evidenz-Check Quick Card (Clickable to Buffett DCF check) */}
-                     <div
-                       onClick={() => navigateTo('buffet-value')}
-                       className="bg-black/40 border border-white/10 rounded-xl p-6 backdrop-blur-md cursor-pointer hover:border-aif-gold-DEFAULT/50 hover:shadow-[0_0_20px_rgba(245,196,83,0.1)] transition-all group"
-                       title="Klicke für BuffettValueCheck Graham-DCF Rechner"
-                     >
-                       <div className="flex justify-between items-start mb-3">
-                         <h3 className="text-sm font-medium text-white/80 font-display group-hover:text-aif-gold-light transition-colors">
-                           Buffett-Value & DCF Check
-                         </h3>
-                         <span className="text-[11px] font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-wider bg-aif-gold-DEFAULT/10 px-2 py-0.5 rounded">
-                           Berechnen
-                         </span>
-                       </div>
-                       <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 p-3 rounded-lg mb-4 relative overflow-hidden">
-                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                         <ShieldCheck className="text-green-400 z-10" size={20} />
-                         <div className="z-10">
-                           <div className="text-xs text-white/60 uppercase font-mono">Status</div>
-                           <div className="text-sm font-bold text-green-400 uppercase tracking-wide font-display drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">Verifiziert</div>
-                         </div>
-                       </div>
-                       <div className="grid grid-cols-2 gap-4">
-                         <div>
-                           <div className="text-xs text-white/50 mb-1 font-mono">Graham-Wert</div>
-                           <div className="text-xl font-mono text-white font-bold text-aif-gold-DEFAULT">Aktiv</div>
-                         </div>
-                         <div>
-                           <div className="text-xs text-white/50 mb-1 font-mono">Modell</div>
-                           <div className="text-xs font-mono text-white font-semibold">Benjamin Graham</div>
-                         </div>
-                       </div>
-                       <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
-                         <span className="text-[11px] text-white/70 uppercase tracking-wider">Klicken für Rechner</span>
-                         <span className="text-[11px] font-mono text-aif-gold-DEFAULT">Graham-Formel-Modell</span>
-                       </div>
-                     </div>
-                   </div>
-                 </div>
-
+                 {/* Buffett Value Check wurde in den eigenen Reiter der Hauptzentrale verschoben. */}
 
                  {/* Market Sentiment Tool */}
                  <MarketSentiment selectedSymbol={selectedSymbol} assetClass={profile.preferredAssetClass} />
