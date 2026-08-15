@@ -29,6 +29,10 @@ dqPoints: high=100, medium=70, low=40, unknown=50
 - No weight mutation
 - No `scoreImpactEnabled: true`
 
+## Remediation note (PR #349)
+
+Initial PR body was free-form Summary (not canonical template v1.3.5). Body was replaced with full `CAPITAL_AI_PR_TEMPLATE_VERSION: 1.3.5` contract; claim `schemaVersion` corrected to `1.0.0`. Root cause: agent PR creation path skipped `renderPullRequestBody.mjs` / template fill.
+
 ## Authority
 
 SC-MD-SPT-0001 SC-7 · SC-3 composite contract · DOCUMENTATION_HYGIENE_POLICY
