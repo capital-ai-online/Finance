@@ -1,21 +1,19 @@
 /**
  * SEO-ROADMAP-0001 / S1 — SeoEngine domain types.
- * Full ADR pending owner number assignment (see docs/adr/ADR-DRAFT-seo-engine-platform-module.md).
+ * Rank positions must come from Search Console (D5) or explicit manual import — never synthetic.
  */
 
-export type KeywordIntent = 'informational' | 'commercial' | 'transactional' | 'navigational';
-
 export type KeywordLocale = 'de' | 'en';
+export type KeywordIntent = 'informational' | 'commercial' | 'navigational' | 'transactional';
 
 export interface SeoKeyword {
   id: string;
   phrase: string;
   locale: KeywordLocale;
   intent: KeywordIntent;
-  /** Target public path, e.g. `/` or future landing pages */
-  targetPath: string;
-  priority: number;
-  active: boolean;
+  /** Optional target path on capital-ai.online (no trailing slash except `/`). */
+  targetPath?: string;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,25 +21,49 @@ export interface SeoKeyword {
 export interface SeoRankSnapshot {
   id: string;
   keywordId: string;
-  capturedAt: string;
-  /** 1-based SERP position; null = not observed */
+  /** 1-based position when known; null = not ranking / unknown. */
   position: number | null;
-  source: 'manual' | 'search_console' | 'estimated';
-  url?: string;
+  /** Source system — never "synthetic" / "estimated". */
+  source: 'search-console' | 'manual-import';
+  capturedAt: string;
+  /** Optional GSC property or import batch id. */
+  sourceRef?: string;
 }
+
+export type ContentInventoryStatus = 'draft' | 'published' | 'archived';
 
 export interface SeoContentInventoryItem {
   id: string;
   path: string;
   title: string;
-  locale: KeywordLocale;
-  status: 'draft' | 'published' | 'archived';
   primaryKeywordId?: string;
+  status: ContentInventoryStatus;
   lastReviewedAt?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface SeoEngineSnapshot {
-  keywords: SeoKeyword[];
-  ranks: SeoRankSnapshot[];
-  content: SeoContentInventoryItem[];
+export interface CreateKeywordInput {
+  phrase: string;
+  locale?: KeywordLocale;
+  intent?: KeywordIntent;
+  targetPath?: string;
+  notes?: string;
+}
+
+export interface CreateRankSnapshotInput {
+  keywordId: string;
+  position: number | null;
+  source: 'search-console' | 'manual-import';
+  sourceRef?: string;
+  capturedAt?: string;
+}
+
+export interface CreateContentItemInput {
+  path: string;
+  title: string;
+  primaryKeywordId?: string;
+  status?: ContentInventoryStatus;
+  notes?: string;
 }
