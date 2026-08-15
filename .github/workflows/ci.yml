@@ -44,17 +44,22 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Wichtig: Die Attestations werden aus dem Body-Snapshot genau dieses edited-Events
-          # ausgewertet. Ein späterer zweiter Checkbox-Klick darf einen älteren Event-Lauf nicht
-          # nachträglich freigeben und dadurch einen doppelten build-and-test auslösen.
+          # Attestations aus dem Body-Snapshot dieses edited-Events.
+          # IDs: HTML-Kommentar (kanonisch) ODER sichtbare Fallback-Zeile `CAPITAL_AI_*`.
           read -r diff_attested files_attested <<< "$(
             python3 - <<'PY'
           import os
           import re
 
-          ids = {
+          COMMENT_TO_KEY = {
               '<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->': 'diff',
               '<!-- CAPITAL_AI_OWNER_FILES_ATTESTATION -->': 'files',
+          }
+          VISIBLE_TO_KEY = {
+              '`CAPITAL_AI_OWNER_DIFF_ATTESTATION`': 'diff',
+              'CAPITAL_AI_OWNER_DIFF_ATTESTATION': 'diff',
+              '`CAPITAL_AI_OWNER_FILES_ATTESTATION`': 'files',
+              'CAPITAL_AI_OWNER_FILES_ATTESTATION': 'files',
           }
 
           def parse(body: str):
@@ -71,8 +76,8 @@ jobs:
                       continue
                   if in_fence or line.startswith('>'):
                       continue
-                  if line in ids:
-                      key = ids[line]
+                  key = COMMENT_TO_KEY.get(line) or VISIBLE_TO_KEY.get(line)
+                  if key:
                       if key in seen:
                           return False, False
                       seen.add(key)
@@ -86,22 +91,25 @@ jobs:
                       pending = None
 
               return (
-                  seen == {'diff', 'files'}
-                  and values['diff'],
-                  seen == {'diff', 'files'}
-                  and values['files'],
+                  seen == {'diff', 'files'} and values['diff'],
+                  seen == {'diff', 'files'} and values['files'],
               )
 
-          canonical = '''<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->
+          canonical_comment = '''<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->
           - [x] beliebiger sichtbarer Text
           <!-- CAPITAL_AI_OWNER_FILES_ATTESTATION -->
           - [X] ebenfalls frei formulierbar'''
-          unchecked = canonical.replace('- [x] beliebiger', '- [ ] beliebiger')
+          canonical_visible = '''`CAPITAL_AI_OWNER_DIFF_ATTESTATION`
+          - [x] beliebiger sichtbarer Text
+          `CAPITAL_AI_OWNER_FILES_ATTESTATION`
+          - [X] ebenfalls frei formulierbar'''
+          unchecked = canonical_comment.replace('- [x] beliebiger', '- [ ] beliebiger')
           missing_id = '- [x] vollständigen Diff geprüft\n- [x] alle Dateien geprüft'
-          duplicate_id = canonical + '\n<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->\n- [x] doppelt'
-          fenced = '```text\n' + canonical + '\n```'
+          duplicate_id = canonical_comment + '\n<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->\n- [x] doppelt'
+          fenced = '```text\n' + canonical_comment + '\n```'
 
-          assert parse(canonical) == (True, True)
+          assert parse(canonical_comment) == (True, True)
+          assert parse(canonical_visible) == (True, True)
           assert parse(unchecked) == (False, True)
           assert parse(missing_id) == (False, False)
           assert parse(duplicate_id) == (False, False)
@@ -261,18 +269,7 @@ jobs:
 
   deploy-production:
     name: Deployment verifiziert / Render-Produktion
-    # M7 (ADR-0061, docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md): der Required Trust Chain
-    # zufolge muss eine "protected deployment request" erst nach verifizierter M6-Provenance
-    # erfolgen ("M6 verified artifact/provenance -> protected deployment request"). Vorher haengte
-    # dieser Job nur von build-and-test ab und konnte auch dann ausloesen, wenn die Supply-Chain-
-    # Attestation fehlschlug. supply-chain-attestation ist daher jetzt eine zusaetzliche, fail-closed
-    # Voraussetzung.
     needs: [build-and-test, supply-chain-attestation]
-    # Dieser Job lief zuvor bei jedem PR- und Push-Event, nur intern per Step-if auf den
-    # echten Deploy beschraenkt. Ein job-level `environment:` wuerde dadurch JEDE PR-CI-Ausfuehrung
-    # auf eine GitHub-Environment-Freigabe warten lassen. Der Job laeuft daher jetzt nur noch fuer
-    # den tatsaechlichen main-Push-Pfad; PR-Events ueberspringen ihn vollstaendig (kein Funktionsverlust,
-    # zuvor war der PR-Zweig ohnehin nur eine informative Echo-Ausgabe).
     if: ${{ needs.build-and-test.result == 'success' && needs.supply-chain-attestation.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     environment: production
     runs-on: ubuntu-latest
@@ -293,11 +290,6 @@ jobs:
 
   verify-deployment-identity:
     name: Deployment-Identität post-verifizieren
-    # M7 Required Trust Chain, letztes fehlendes Glied: "health/readiness verification ->
-    # immutable deployment evidence". deploy-production loeste den Render-Deploy-Hook bisher nur
-    # aus und endete sofort - ob der erwartete Commit tatsaechlich live und gesund ist, wurde nie
-    # automatisiert geprueft. Dieser Job pollt den oeffentlichen /healthz-Endpunkt (ADR-0036), bis
-    # er den ausgeloesten Commit als live+healthy meldet, oder schlaegt fail-closed fehl.
     needs: [deploy-production]
     if: ${{ needs.deploy-production.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     permissions:
@@ -337,20 +329,6 @@ jobs:
   supply-chain-attestation:
     name: Supply-Chain-Provenance / Attestation
     needs: [build-and-test]
-    # M6 (ADR-0060, docs/runbooks/M6_SUPPLY_CHAIN_PROVENANCE.md): Provenance muss von einem
-    # gehosteten, vertrauenswuerdigen Build-Pfad erzeugt werden, nicht von einem Entwickler-Laptop
-    # oder einem Agenten. Laeuft daher wie deploy-production ausschliesslich auf dem tatsaechlichen
-    # main-Push-Pfad, mit eigenen, minimalen Berechtigungen - nur dieser Job bekommt id-token write,
-    # nicht das gesamte Workflow (das auch bei jedem PR-Event laeuft).
-    #
-    # Signierung erfolgt per Sigstore/cosign keyless signing (GitHub-OIDC-Identitaet, oeffentliches
-    # Rekor-Transparency-Log), NICHT ueber actions/attest-build-provenance: dessen GitHub Attestations
-    # API ist fuer user-eigene private Repositories nicht verfuegbar ("Feature not available for
-    # user-owned private repositories" - real beobachtet im ersten main-Push-Lauf dieses Jobs,
-    # SvenKulessa/Finance ist ein privates Repo unter einem persoenlichen Account, keine Organisation).
-    # cosign nutzt ausschliesslich die oeffentliche Sigstore-Infrastruktur (Fulcio/Rekor), unabhaengig
-    # von GitHub-Repo-Sichtbarkeit oder -Ownership; das Bundle wird als Workflow-Artefakt abgelegt statt
-    # im GitHub-Attestations-Tab.
     if: ${{ needs.build-and-test.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     permissions:
       contents: read
