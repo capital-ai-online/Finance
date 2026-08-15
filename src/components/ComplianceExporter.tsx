@@ -62,7 +62,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
     }
   };
 
-  const generatePDFReport = async () => {
+  const preparePDFReport = async (): Promise<() => void> => {
     try {
       setExporting(true);
       setError(null);
@@ -530,19 +530,32 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
       doc.setLineWidth(0.2);
       doc.line(120, 234, 185, 234);
 
-      // Save PDF to trigger local download
-      doc.save(`AIF_Compliance_Report_${selectedSymbol}_${new Date().toISOString().slice(0, 10)}.pdf`);
-      
-      setExportSuccess(true);
-      setTimeout(() => {
-        setExportSuccess(false);
-      }, 5000);
+      // The document is complete at this point, but the download is committed only
+      // after the authenticated credit decision in PdfExportModal succeeded.
+      const filename = `AIF_Compliance_Report_${selectedSymbol}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      return () => {
+        doc.save(filename);
+        setExportSuccess(true);
+        setTimeout(() => {
+          setExportSuccess(false);
+        }, 5000);
+      };
 
     } catch (err: any) {
       console.error('PDF export error:', err);
       setError(err.message || 'Der PDF-Export ist fehlgeschlagen.');
+      throw err;
     } finally {
       setExporting(false);
+    }
+  };
+
+  const generatePDFReport = async () => {
+    try {
+      const commitDownload = await preparePDFReport();
+      commitDownload();
+    } catch {
+      // preparePDFReport already exposes the user-facing error state.
     }
   };
 
@@ -600,7 +613,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
                 isOpen={showExportModal} 
                 onClose={() => setShowExportModal(false)} 
                 email={userEmail} 
-                onSuccess={generatePDFReport} 
+                onPrepare={preparePDFReport} 
               />
             )}
           </AnimatePresence>
