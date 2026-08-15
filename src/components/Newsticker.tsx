@@ -20,6 +20,7 @@ interface NewsItem {
   summary?: string;
   description?: string;
   sentiment?: 'positive' | 'negative' | 'neutral';
+  sentimentBasis?: 'heuristic';
   time?: string;
   publishedAt?: string;
   source?: string;
