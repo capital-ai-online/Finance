@@ -143,8 +143,9 @@ sind dadurch als veraltet identifiziert:
 Alle übrigen in Abschnitt 4 gelisteten Lücken (News-Sentiment, `CryptoEnterpriseEvaluator.tsx`
 hartkodierte Fallback-Werte) sind laut Bestandsaufnahme weiterhin unverändert offen. Zusätzlich hat
 die Bestandsaufnahme einen bislang unbekannten Befund in `src/platform/Supervisor/supervisor.ts:36`
-aufgedeckt (Anleihen-Routing-Tabelle behauptet `hasDedicatedEngine: false` trotz real verdrahtetem
-Scoring) — Code, keine Dokumentation, daher hier nicht behoben, siehe Inventar-Dokument Abschnitt 7,
+aufgedeckt (Anleihen-Routing-Tabelle behauptete `hasDedicatedEngine: false` trotz real verdrahtetem
+Scoring) — auf separate Owner-Anweisung („behebe F1") am 2026-08-15 in
+`src/platform/Supervisor/supervisor.ts` korrigiert, siehe Inventar-Dokument Abschnitt 7/10,
 Befund F1.
 
 ## Nicht Bestandteil dieses Dokuments

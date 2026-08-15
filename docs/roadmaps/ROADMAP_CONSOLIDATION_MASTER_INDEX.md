@@ -118,7 +118,9 @@ dokumentiert vorhanden (3 parallele Provenance-Typfamilien + Provider-Health-Sto
 vereinte feld-/anlageklassenbezogene Qualitätsübersicht — Exit-Kriterium „feldbezogene Qualität/
 Lineage messbar" **weiterhin nicht erreicht**. SA-P07 Provider Quality Contract selbst noch nicht
 begonnen; nächster Schritt braucht separate, ausdrückliche Owner-Anweisung (Optionen siehe
-Inventar-Dokument Abschnitt 9).
+Inventar-Dokument Abschnitt 9). **Nachtrag 2026-08-15:** Befund F1 (veraltete Anleihen-Routing-
+Tabelle in `supervisor.ts`) auf separate Owner-Anweisung „behebe F1" korrigiert — reine
+Faktenkorrektur, ändert nichts am weiterhin offenen P2-1-Exit-Kriterium.
 
 ## 7. DEVELOPMENT Chain M0–M10
 

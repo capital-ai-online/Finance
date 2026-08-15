@@ -69,7 +69,7 @@ Besonderheit: `data_quality_risk` (`verifiedCryptoTechnicalScoring.ts:172`, hart
 
 **Zwei Diskrepanzen, beide verifiziert:**
 1. `DATENQUALITAETSSCHICHT.md:57` behauptet Anleihen-Historie sei „❌ nicht abgedeckt" — überholt, `eodhdBondEvidence.ts` liefert real evidenzbasierte Historie, ein dediziertes Scoring existiert.
-2. `src/platform/Supervisor/supervisor.ts:36` — **verifiziert per direktem Read**: `bond: { engineId: 'heuristic_fallback', label: 'Kein dediziertes Anleihen-Scoring implementiert', hasDedicatedEngine: false }`. Das widerspricht der tatsächlich verdrahteten, ADR-0033-freigegebenen `sovereignBenchmarkEvidenceScoring.ts`. `getSupervisorStatus()` ist damit die aktuell einzige quasi-öffentliche „Datenqualität je Anlageklasse"-Übersicht im System und meldet für Anleihen eine falsche Aussage. **Dies ist eine Code-Zeile, keine Dokumentation — außerhalb des read-only-Scopes dieser Bestandsaufnahme; explizit als Befund markiert, nicht behoben.**
+2. `src/platform/Supervisor/supervisor.ts:36` — **verifiziert per direktem Read**: `bond: { engineId: 'heuristic_fallback', label: 'Kein dediziertes Anleihen-Scoring implementiert', hasDedicatedEngine: false }`. Das widerspricht der tatsächlich verdrahteten, ADR-0033-freigegebenen `sovereignBenchmarkEvidenceScoring.ts`. `getSupervisorStatus()` ist damit die aktuell einzige quasi-öffentliche „Datenqualität je Anlageklasse"-Übersicht im System und meldete für Anleihen eine falsche Aussage. **Behoben 2026-08-15 auf separate Owner-Anweisung „behebe F1" — siehe Nachtrag am Ende dieses Dokuments.**
 
 Einzel-Anleihen-Scoring ist bewusst ausgeschlossen (`individualBondScoringEligible: false`, `sovereignBenchmarkEvidenceScoring.ts:35`) — nur Benchmark-/Zinsniveau-Score, kein Instrument-Score.
 
@@ -155,7 +155,7 @@ einsehen — nie beides zusammen in einem Artefakt. Genau diese Verknüpfung wä
 
 | # | Befund | Art | Ort | Status |
 |---|---|---|---|---|
-| F1 | Anleihen-Routing-Tabelle im Supervisor ist falsch (`hasDedicatedEngine: false` trotz real verdrahtetem, ADR-0033-freigegebenem Scoring) | Code, veraltet | `src/platform/Supervisor/supervisor.ts:36` | **nicht behoben** — außerhalb read-only-Scope, zur Owner-Entscheidung markiert |
+| F1 | Anleihen-Routing-Tabelle im Supervisor ist falsch (`hasDedicatedEngine: false` trotz real verdrahtetem, ADR-0033-freigegebenem Scoring) | Code, veraltet | `src/platform/Supervisor/supervisor.ts:36` | **behoben 2026-08-15** (Owner-Anweisung „behebe F1") — siehe Nachtrag |
 | F2 | `DATENQUALITAETSSCHICHT.md` §1-Tabelle veraltet für Anleihen (Historie als „nicht abgedeckt" gelistet) | Dokumentation, veraltet | `docs/architecture/DATENQUALITAETSSCHICHT.md:57` | Nachtrag in diesem Dokument ergänzt (siehe unten) |
 | F3 | `DATENQUALITAETSSCHICHT.md` §4-Punkt zu H1-Fundamentaldaten-Zeitstempel ist überholt (bereits gelöst) | Dokumentation, veraltet | `docs/architecture/DATENQUALITAETSSCHICHT.md:118-121` | Nachtrag ergänzt |
 | F4 | News-Sentiment ohne jede Provenance-/Health-Kennzeichnung | echte offene Lücke | `src/features/news/newsRoutes.ts` | weiterhin offen, unverändert seit `DATENQUALITAETSSCHICHT.md` |
@@ -183,8 +183,8 @@ Basierend auf dieser Bestandsaufnahme ergeben sich für den eigentlichen `SA-P07
 Contract` mehrere unabhängig wählbare, nicht sich gegenseitig ausschließende Optionen — keine davon
 wurde bereits begonnen:
 
-1. **F1 beheben** (`supervisor.ts:36` korrigieren) — kleinster Schritt, reine Faktenkorrektur, kein
-   neues Konzept nötig.
+1. ~~**F1 beheben** (`supervisor.ts:36` korrigieren) — kleinster Schritt, reine Faktenkorrektur, kein
+   neues Konzept nötig.~~ **Erledigt, siehe Nachtrag unten.**
 2. **News-Sentiment-Kennzeichnung** (F4) — die im ursprünglichen `AskUserQuestion` als dritte Option
    angebotene, engste Lücke.
 3. **Vereinter Qualitäts-Report** (§5) — `getSupervisorStatus()` um feld-/anlageklassenbezogene
@@ -192,7 +192,42 @@ wurde bereits begonnen:
 4. **Evidence-ID-Vereinheitlichung** (F5/F6) — alle Domänen auf `buildFinancialEvidenceId()`
    umstellen.
 
-Owner-Entscheidung erforderlich, welche(r) Punkt(e) als nächstes bearbeitet werden soll(en).
+Owner-Entscheidung erforderlich, welche(r) weitere(n) Punkt(e) als nächstes bearbeitet werden soll(en).
+
+## 10. Nachtrag 2026-08-15 — F1 behoben (Owner-Anweisung „behebe F1")
+
+`src/platform/Supervisor/supervisor.ts:36` korrigiert: die Anleihen-Zeile der
+`TASK_ROUTING_TABLE` lautete zuvor
+`{ engineId: 'heuristic_fallback', label: 'Kein dediziertes Anleihen-Scoring implementiert',
+hasDedicatedEngine: false }` und behauptete damit fälschlich, es existiere keine dedizierte
+Engine. Neu:
+
+```ts
+bond: {
+  engineId: 'sovereign_benchmark_yield_engine',
+  label: 'Anleihen-Scoring: Sovereign-Benchmark-Rendite (ADR-0033, yield-state; kein
+    Einzelanleihen-/Credit-/Duration-Score)',
+  hasDedicatedEngine: true,
+},
+```
+
+Die Formulierung übernimmt bewusst den in `sovereignBenchmarkEvidenceScoring.ts`
+(`SOVEREIGN_BENCHMARK_SCORING_CONTRACT.semanticScope`) selbst dokumentierten Geltungsbereich, um
+keine neue Überclaim-Lücke zu öffnen: `hasDedicatedEngine: true` ist jetzt korrekt, aber
+weiterhin ausdrücklich als Yield-State-Benchmark-Score gekennzeichnet, nicht als
+Einzelanleihen-/Credit-/Duration-/Liquiditäts- oder Empfehlungs-Score
+(`individualBondScoringEligible: false` bleibt in der Scoring-Engine selbst unverändert).
+
+`tests/unit/supervisor.test.ts` aktualisiert: der bisherige Test „kennzeichnet Anleihen weiterhin
+ehrlich als ohne dedizierte Engine" (erwartete `hasDedicatedEngine === false`) ersetzt durch einen
+Test, der `engineId === 'sovereign_benchmark_yield_engine'`, `hasDedicatedEngine === true` und dass
+das Label weiterhin explizit „kein Einzelanleihen"-Scoring ausschließt, prüft — die Ehrlichkeits-
+Eigenschaft des ursprünglichen Tests bleibt erhalten, nur die zugrunde liegende Tatsachenbehauptung
+wurde korrigiert.
+
+Voller Suite-Lauf nach der Änderung: siehe zugehöriger PR-Body. Keine weiteren Aufrufer von
+`routeTask('bond')`/`TASK_ROUTING_TABLE.bond` außerhalb von `supervisor.ts`/`supervisor.test.ts`
+gefunden (per Grep verifiziert).
 
 ## Verwandte Dokumente
 
@@ -200,3 +235,4 @@ Owner-Entscheidung erforderlich, welche(r) Punkt(e) als nächstes bearbeitet wer
 - `docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md` Abschnitt 6, P2-1
 - `src/types/financialProvenance.ts`, `src/platform/Supervisor/providerHealth.ts`,
   `src/types/scoringIntegrity.ts`, `src/services/cryptoSnapshotProvider.ts`
+- `src/platform/Supervisor/supervisor.ts`, `tests/unit/supervisor.test.ts` — F1-Fix

@@ -33,7 +33,7 @@ const TASK_ROUTING_TABLE: Record<AssetClass, TaskRoute> = {
   stock: { engineId: 'traditional_asset_engine', label: 'Aktien-Scoring (Technik + Alpha-Vantage-Fundamentaldaten)', hasDedicatedEngine: true },
   forex: { engineId: 'traditional_asset_engine', label: 'Forex-Scoring (reale Kurshistorie, rein technisch)', hasDedicatedEngine: true },
   index: { engineId: 'traditional_asset_engine', label: 'Index-Scoring (FMP-Kurshistorie, rein technisch)', hasDedicatedEngine: true },
-  bond: { engineId: 'heuristic_fallback', label: 'Kein dediziertes Anleihen-Scoring implementiert', hasDedicatedEngine: false },
+  bond: { engineId: 'sovereign_benchmark_yield_engine', label: 'Anleihen-Scoring: Sovereign-Benchmark-Rendite (ADR-0033, yield-state; kein Einzelanleihen-/Credit-/Duration-Score)', hasDedicatedEngine: true },
 };
 
 export function routeTask(assetClass: string): TaskRoute | undefined {
