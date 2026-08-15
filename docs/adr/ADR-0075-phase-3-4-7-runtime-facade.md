@@ -1,8 +1,9 @@
 # ADR-0075 Phase 3.4.7 — Market Data Runtime Facade
 
-Status: Proposed
-Date: 2026-08-08
-Supersedes-Number-Only: formerly filed as ADR-0014 (number collision; content unchanged)
+Status: Proposed  
+Date: 2026-08-08  
+Supersedes-Number-Only: formerly filed as ADR-0014 (number collision with Documentation Governance; content unchanged)  
+Parent phase series: `docs/architecture/` market-data Phase 3.4.x (not `docs/adr/ADR-0014`)
 
 ## Context
 
@@ -20,7 +21,12 @@ The facade owns only:
 - best-effort background refresh behavior,
 - synchronization of successfully refreshed assets through an injected `syncAsset` callback.
 
-Provider I/O, fallback completion, scoring/enrichment, score snapshots and alert evaluation remain outside this facade and behind the existing ADR-0014 compatibility refresh boundary.
+Provider I/O, fallback completion, scoring/enrichment, score snapshots and alert evaluation remain outside this facade and behind the existing **market-data compatibility refresh boundary** documented in:
+
+- `docs/architecture/ADR-0014-PHASE-3.4.6-MARKET-DATA-COMPATIBILITY-FACADE.md`
+- related Phase 3.4.x notes under `docs/architecture/` and `docs/architecture/adr/`
+
+**Numbering note (ADR-0081):** The label `ADR-0014` in those architecture phase documents refers to the **server/market-data workstream**, not to the canonical active ADR `docs/adr/ADR-0014-documentation-governance-validator.md` (Documentation Governance Validator). Disambiguation of the architecture phase document titles is tracked separately (GOV-XREF-2026-08-16).
 
 ## Protected invariants
 
