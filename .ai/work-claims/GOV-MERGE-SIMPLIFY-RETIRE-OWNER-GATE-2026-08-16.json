@@ -13,6 +13,7 @@
   "startedAt": "2026-08-15T23:15:00Z",
   "baseBranch": "main",
   "baseSha": "fab8d57c2166a386b5ffc184907756745897725c",
+  "pullRequest": 353,
   "claimedPaths": [
     "docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md",
     "docs/governance/PR_CHECK_CLASSIFICATION.md",
