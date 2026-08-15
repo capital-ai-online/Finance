@@ -12,7 +12,7 @@
   "workItemDE": "Kritischer Fix: ci.yml + pr-governance.yml waren durch einen unquoted-Doppelpunkt in einem echo-run-Schritt komplett ungueltiges YAML -- main-Push-CI lief seit dem PR-#340-Merge gar nicht mehr",
   "startedAt": "2026-08-15T21:29:00Z",
   "baseBranch": "main",
-  "baseSha": "a74e3011f6381e66ad1d6cf6e5f78d53f45730c3",
+  "baseSha": "440901c0a024283edae87e3eb0a13e5010676afb",
   "prCreationApproval": {
     "status": "approved",
     "approvedBy": "human-user",
@@ -20,13 +20,13 @@
     "scope": "Drive-to-green-Verpflichtung fuer eine Regression, die diese Sitzung durch das Mergen von PR #340 mitverursacht hat (Konfliktinhalt stammte von einem anderen Agenten, aber diese Sitzung hat den finalen Merge gepusht) -- deckt sich mit der bereits etablierten Session-Praxis, CI-Fehler auf selbst geoeffneten/gepushten PRs bis zur Behebung zu verfolgen."
   },
   "productionBaseline": {
-    "note": "Diese Sitzungsumgebung hat keinen Netzwerkzugriff auf https://capital-ai.online/healthz (Egress-Proxy blockiert externe Hosts).",
-    "checkedAt": "2026-08-15T20:05:00Z",
+    "note": "Grok-Support-Sync 2026-08-16: baseSha auf aktuellen main nachgezogen. Production-SHA wird von CI-Baseline-Generator zur Laufzeit bestimmt.",
+    "checkedAt": "2026-08-16T00:28:00Z",
     "version": "0.6.0",
-    "commitSha": "381815d7c049cb5dd6cf9b528562db3de34f7e5a",
+    "commitSha": "2cd96ab566ab8e06880b4707d7dc31e916ab28f8",
     "branch": "main",
     "repoSlug": "SvenKulessa/Finance",
-    "source": "ci-job-stdout"
+    "source": "prior-pr-body + claim-sync"
   },
   "claimedPaths": [
     ".github/workflows/ci.yml",
