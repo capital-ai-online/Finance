@@ -37,7 +37,10 @@ describe('secretCrypto', () => {
   it('schlaegt bei manipuliertem Ciphertext fehl (Authentizitaetspruefung greift)', () => {
     const encrypted = encryptSecret('geheim');
     const [iv, authTag, data] = encrypted.split(':');
-    const tampered = `${iv}:${authTag}:${data.slice(0, -2)}00`;
+    const tamperedData = Buffer.from(data, 'hex');
+    tamperedData[0] ^= 0x01;
+    const tampered = `${iv}:${authTag}:${tamperedData.toString('hex')}`;
+    expect(tamperedData.toString('hex')).not.toBe(data);
     expect(() => decryptSecret(tampered)).toThrow();
   });
 

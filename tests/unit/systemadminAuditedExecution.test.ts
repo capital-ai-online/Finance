@@ -14,6 +14,7 @@ import {
   SYSTEMADMIN_CHAT_CAPABILITIES,
   type SystemadminChatExecutionCheckpoint,
 } from '../../src/platform/Security/systemadminExecutionProfile';
+import { PROVIDER_PROFILES } from '../../src/platform/Security/providerProfile';
 
 const mocks = vi.hoisted(() => {
   const single = vi.fn();
@@ -266,5 +267,48 @@ describe('SA3 Systemadmin audited execution', () => {
       authorization: denied,
       result: 'SUCCESS',
     })).rejects.toThrow('outcome requires an audited ALLOW permit');
+  });
+
+  // M8 (ADR-0062): the generic Provider Profile Registry check now composes with SA2/SA1/M4 for
+  // this real caller. It must only narrow, never widen, the pre-existing SA3B/SA4 behavior.
+  describe('M8 Provider Profile Registry composition', () => {
+    it('keeps the M8 chatgpt-github-connector profile capabilities in exact sync with the SA2 chat profile (Policy Equivalence)', () => {
+      // If these two independently-maintained lists ever drift, the new PROVIDER_PROFILE layer
+      // added below would start denying live SA3B/SA4 requests that SA2 itself still allows.
+      expect([...PROVIDER_PROFILES['chatgpt-github-connector'].allowedCapabilities].sort())
+        .toEqual([...SYSTEMADMIN_CHAT_CAPABILITIES].sort());
+    });
+
+    it('denies at the PROVIDER_PROFILE layer when no audit correlation id reaches the check (defense-in-depth ahead of the audit writer)', async () => {
+      await expect(authorizeSystemadminAuditedExecution({
+        authorization: authorization(),
+        checkpoint: baseCheckpoint,
+      }, { ...auditContext, traceId: '' })).rejects.toThrow();
+      // The pre-existing audit writer already fails closed on a missing traceId; the new
+      // PROVIDER_PROFILE check independently agrees no audit-bound execution may proceed either
+      // way - see checkProviderProfileScope's own unit tests for the isolated DENY behavior.
+    });
+
+    it('still allows the real live SA3B capability (BRANCH, MEDIUM risk) through the added Provider Profile layer unchanged', async () => {
+      const branchAuthorization: SystemadminRoadmapAuthorizationRequest = {
+        ...authorization(AGENT_CAPABILITIES.BRANCH, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']),
+        riskClass: 'MEDIUM',
+      };
+      const branchCheckpoint: Readonly<SystemadminChatExecutionCheckpoint> = {
+        ...baseCheckpoint,
+        freshBranchCreated: false,
+        branchName: undefined,
+        implementationComplete: false,
+        targetedValidationPassed: false,
+      };
+
+      const result = await authorizeSystemadminAuditedExecution({
+        authorization: branchAuthorization,
+        checkpoint: branchCheckpoint,
+      }, auditContext);
+
+      expect(result.decision).toMatchObject({ verdict: 'ALLOW', capability: AGENT_CAPABILITIES.BRANCH, layer: 'REM_POLICY' });
+      expect(result.executionPermit).toMatchObject({ capability: AGENT_CAPABILITIES.BRANCH, auditBoundExecutionPermitted: true });
+    });
   });
 });

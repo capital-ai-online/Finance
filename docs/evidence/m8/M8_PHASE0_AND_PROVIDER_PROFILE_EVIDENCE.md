@@ -1,8 +1,9 @@
 # M8 — Provider-neutral Agent Cutover: Phase-0-Preflight und Provider-Profile-Paket Evidence
 
-Status: PHASE 0 COMPLETE, PROVIDER-PROFILE-PAKET **VERIFIED PASS** auf dem realen Test-Pfad — M8 als
-Ganzes bleibt PLANNED, keine externe Mutation autorisiert, kein Live-Cutover
-Datum: 2026-08-15
+Status: PHASE 0 COMPLETE, PROVIDER-PROFILE-PAKET **VERIFIED PASS** auf dem realen Test-Pfad, jetzt
+zusätzlich real gegen einen echten Aufrufer (SA3/SA4) verdrahtet (siehe Nachtrag Abschnitt 6) — M8
+als Ganzes bleibt PLANNED, keine externe Mutation autorisiert, kein Live-Cutover
+Datum: 2026-08-15 (Nachtrag: 2026-08-15, selber Tag)
 Roadmap phase: M8
 Authority: ADR-0062, `docs/runbooks/M8_AGENT_CUTOVER.md`,
 `docs/architecture/ai-agent/AI_AGENT_PROVIDER_PROFILE_CONTRACT.md`, ESS-0019
@@ -125,25 +126,94 @@ Research-Profil ruft Mutation-Endpunkt auf → verweigert; Ziel-Mismatch verweig
 Mutation-Envelope (Replay/Dedupe) verweigert; nicht verfügbares Audit auf Mutationspfad verweigert;
 aktiver Kill-Switch verweigert Mutation, behält Lesezugriff.
 
-## 3. Testlauf
+## 3. Testlauf (Provider-Profile-Paket, isoliert)
 
 - `npx vitest run` (voller Suite-Lauf): **930 Tests, 161 Dateien, alle PASS** (davon neu: 23 in
   `providerProfile.test.ts`).
 - `npm run lint` (`tsc --noEmit`): PASS.
 
+## 6. Nachtrag — Policy Equivalence gegen einen echten Aufrufer verdrahtet (2026-08-15)
+
+Owner-Anweisung (nach Merge des Provider-Profile-Pakets): „Policy Equivalence gegen einen echten
+Aufrufer verdrahten". Ziel: das neue, generische `providerProfile.ts` nicht nur isoliert testen,
+sondern tatsächlich in einen bestehenden, produktiven Autorisierungspfad einbinden — ohne dessen
+bisheriges Verhalten zu verändern.
+
+**Gewählter Aufrufer**: `server/agentAudit/systemadminAuditedExecution.ts` (SA3), der aktive,
+Owner-reaktivierte SA3B-GitHub-Actions-Host. Grund: das SA2-Chat-Profil
+(`systemadminExecutionProfile.ts`) implementiert bereits händisch exakt ein
+ChatGPT-Provider-Profil (`SYSTEMADMIN_CHAT_APP_ID = 'chatgpt-github-connector'`,
+`SYSTEMADMIN_CHAT_CAPABILITIES`) — die ideale Stelle, um zu beweisen, dass das neue generische M8-
+Registry-Profil zum selben Ergebnis kommt wie die bisherige SA2-spezifische Logik.
+
+**Sicherheitsanalyse vor der Umsetzung**: ein naiver Ansatz — `evaluateProviderScopedAuthorization()`
+(die volle Funktion inkl. eigenem `evaluateAgentAuthorization()`-Aufruf) direkt in SA3 einzuhängen —
+hätte die bestehende HIGH-Risk-PR-Testabdeckung real gebrochen: SA1
+(`evaluateSystemadminRoadmapAuthorization`) baut sein eigenes `AgentApprovalEvidence`-Objekt aus dem
+REM-Mandat (`mandate.approvalEvidenceRef`); ein zweiter, unabhängiger
+`evaluateAgentAuthorization()`-Aufruf ohne dieselbe Approval-Konstruktion hätte für jede HIGH-Risk-
+Anfrage fälschlich verweigert. Daher wurde `providerProfile.ts` refaktoriert: eine neue, reine
+`checkProviderProfileScope()`-Funktion führt ausschließlich die Profil-Eingrenzung durch (bekanntes
+Profil, appId-Match, Capability-Zugehörigkeit, Audit-Korrelation, Replay) **ohne** `agentIam.ts`
+selbst aufzurufen. Die bestehende `evaluateProviderScopedAuthorization()` bleibt für Aufrufer ohne
+eigene IAM-Kette unverändert bestehen (jetzt intern auf `checkProviderProfileScope()` aufgebaut,
+alle 23 bestehenden Tests weiterhin PASS, reiner Refactor).
+
+**Verdrahtung**: `authorizeSystemadminAuditedExecution()` ruft `checkProviderProfileScope()`
+zusätzlich zu (nicht anstelle von) `prepareSystemadminChatAction()` (SA2→SA1→M4) auf. Eine
+Verweigerung durch die neue Schicht (`layer: 'PROVIDER_PROFILE'`) gewinnt nur, wenn weder
+Self-Authority-Schutz noch die neue Schicht ein ALLOW liefern — die bestehende SA2/SA1/M4-Kette
+bleibt in jedem Fall die maßgebliche Autorität für ALLOW-Entscheidungen. `SystemadminChatProfileLayer`
+wurde um `'PROVIDER_PROFILE'` erweitert (rein additiv, keine bestehende Verwendung angepasst).
+
+**Regressionsnachweis**: alle 6 bestehenden `systemadminAuditedExecution.test.ts`-Tests bestehen
+unverändert. 3 neue Tests bewiesen die Komposition:
+
+1. **Policy-Equivalence-Drift-Guard**: `PROVIDER_PROFILES['chatgpt-github-connector'].allowedCapabilities`
+   und `SYSTEMADMIN_CHAT_CAPABILITIES` werden explizit auf exakte Übereinstimmung getestet — driften
+   sie künftig auseinander, würde die neue Schicht sofort live gültige SA3B/SA4-Anfragen verweigern,
+   und dieser Test schlägt fehl, bevor das passiert.
+2. **Audit-Verfügbarkeit**: ein leerer `traceId` führt weiterhin zu einem harten Fehlschlag (bereits
+   vorher durch `agentAuditWriter.ts` erzwungen); die neue Schicht stimmt darin unabhängig überein.
+3. **Echte Live-Capability (BRANCH, MEDIUM Risk)**: end-to-end-ALLOW durch die komplette Kette
+   inklusive der neuen Schicht, identisch zum Verhalten vor dieser Änderung
+   (`layer: 'REM_POLICY'`, `executionPermit.auditBoundExecutionPermitted: true`).
+
+**Testlauf (voller Suite-Lauf nach der Verdrahtung)**: `npx vitest run` — **949 Tests, 168 Dateien,
+alle PASS**. `npm run lint` (`tsc --noEmit`): PASS.
+
+**Ergebnis**: das M8-Provider-Profile-Registry ist jetzt kein isoliert getestetes Modul mehr, sondern
+nimmt real an einer produktiven Autorisierungsentscheidung teil — additiv, ausschließlich
+einschränkend, ohne das bestehende SA3B/SA4-Verhalten zu verändern. Dies ist die im Runbook
+geforderte „Policy Equivalence" real gegen einen echten Aufrufer bewiesen, nicht nur in Unit-Tests
+gegen synthetische Fixtures.
+
 ## 4. Was dieses Ergebnis NICHT bedeutet
 
-- M8 als Ganzes ist **nicht** `COMPLETE / VERIFIED PASS`. Dieses Paket deckt nur „Phase 1 —
-  Provider Profile Implementation" (teilweise, für die 4 dokumentierten Provider) und die dazu
-  gehörenden Policy-Equivalence-/Negativtests ab. Offen bleiben laut Runbook-Exit-Gate insbesondere:
-  tatsächliche Cutover-Sequenz (direkte Provider-Bypässe deaktivieren), Rollback-zu-read-only real
-  bewiesen, Audit-Korrelation über einen echten Aufrufer, und die Frage, wie/ob die
-  Live-interaktive-Sitzungs-Lücke (Abschnitt 1.2) überhaupt im Scope von M8 geschlossen werden kann,
-  da sie außerhalb der Repository-Kontrolle liegt.
-- Kein bestehender direkter Provider-Zugriffspfad wurde deaktiviert oder verändert.
+- M8 als Ganzes ist **nicht** `COMPLETE / VERIFIED PASS`. Bisher deckt dies „Phase 1 — Provider
+  Profile Implementation" (für die 4 dokumentierten Provider) plus eine reale Verdrahtung an genau
+  einen bestehenden Aufrufer (SA3/SA3B) ab. Offen bleiben laut Runbook-Exit-Gate insbesondere: die
+  Cutover-Sequenz für die übrigen Provider (Claude Code, Google AI Studio, NotebookLM haben noch
+  keinen echten Aufrufer), direkte Provider-Bypässe deaktivieren, Rollback-zu-read-only real
+  bewiesen, und die Frage, wie/ob die Live-interaktive-Sitzungs-Lücke (Abschnitt 1.2) überhaupt im
+  Scope von M8 geschlossen werden kann, da sie außerhalb der Repository-Kontrolle liegt.
+- Kein bestehender direkter Provider-Zugriffspfad wurde deaktiviert. Der SA3B-Live-Host verhält sich
+  für seine tatsächlich genutzte Capability (BRANCH) exakt wie vor dieser Änderung — die neue Schicht
+  ist bewiesen ein reiner Zusatz, keine Verhaltensänderung.
 
 ## 5. Geänderte/neue Dateien
 
+**Provider-Profile-Paket:**
 - `src/platform/Security/providerProfile.ts` (neu)
 - `tests/unit/providerProfile.test.ts` (neu, 23 Tests)
-- `docs/evidence/m8/M8_PHASE0_AND_PROVIDER_PROFILE_EVIDENCE.md` (diese Datei)
+
+**Nachtrag — Verdrahtung gegen SA3/SA3B:**
+- `src/platform/Security/providerProfile.ts` (refaktoriert: neue `checkProviderProfileScope()`,
+  `evaluateProviderScopedAuthorization()` baut jetzt darauf auf)
+- `src/platform/Security/systemadminExecutionProfile.ts` (Typ `SystemadminChatProfileLayer` um
+  `'PROVIDER_PROFILE'` erweitert)
+- `server/agentAudit/systemadminAuditedExecution.ts` (neue Komposition mit
+  `checkProviderProfileScope()`)
+- `tests/unit/systemadminAuditedExecution.test.ts` (3 neue Tests)
+
+`docs/evidence/m8/M8_PHASE0_AND_PROVIDER_PROFILE_EVIDENCE.md` (diese Datei)

@@ -44,7 +44,7 @@ const MUTATING_CHAT_CAPABILITIES: ReadonlySet<AgentCapability> = new Set([
 ]);
 
 export type SystemadminChatExecutionMode = 'DRY_RUN' | 'LIVE';
-export type SystemadminChatProfileLayer = 'CHAT_PROFILE' | 'REM_POLICY';
+export type SystemadminChatProfileLayer = 'CHAT_PROFILE' | 'REM_POLICY' | 'PROVIDER_PROFILE';
 
 export interface SystemadminChatExecutionCheckpoint {
   /** SA1 has been merged and its authoritative repository CI passed. */

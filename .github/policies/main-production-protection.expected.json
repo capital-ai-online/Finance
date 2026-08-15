@@ -8,9 +8,7 @@
     "required_status_checks": [
       "capital-ai-ci",
       "build-and-test",
-      "GitGuardian Security Checks",
-      "security/snyk (svenkulessa)",
-      "code/snyk (svenkulessa)"
+      "GitGuardian Security Checks"
     ],
     "strict_required_status_checks_policy": true,
     "deletion_protection": false,
@@ -26,7 +24,8 @@
     "rollback": "Disable or edit the ruleset if any required check becomes missing, ambiguous, skipped unexpectedly, or failing without a documented cause. Preserve normal PR workflow and repair on a fresh branch.",
     "decision_2026-08-14": "Owner decided both capital-ai-ci and build-and-test are required, not capital-ai-ci alone, so the existing Human/Owner comment-gate (checkbox attestations + head-bound review in ci.yml owner-gate/build-and-test) remains a server-enforced merge condition and is not silently dropped by the capital-ai-ci-shadow.yml migration. See docs/evidence/security/SECURITY_AUDIT_2026-08-14_ADR0069_DEVELOPMENT_CHAIN.md, Befund P1-1.",
     "decision_2026-08-14b": "Owner created the live ruleset with deletion_protection deliberately left disabled: in the current single-owner topology, enabling it forced a bypass actor entry to remain administrable, which would itself reintroduce a bypass exception. Accepted residual risk: main can currently be deleted without a ruleset block. Revisit once a second trusted reviewer identity exists (see single_owner_topology.promotion_condition). Owner also enabled require_code_owner_review; .github/CODEOWNERS received a `* @SvenKulessa` catch-all the same day so the rule covers paths beyond the previously explicit list.",
-    "decision_2026-08-14c": "GitHub Advanced Security CodeQL was evaluated against the already-active Snyk Code check (context code/snyk) and found redundant for SAST coverage (both do semantic source-code vulnerability analysis; Snyk Code needs no GitHub Actions runtime, matching ADR-0070's no-new-workflow design). Owner decided against CodeQL as a required check. GitGuardian Security Checks and both Snyk contexts (security/snyk, code/snyk) passed on three independent head-bound pull requests (#249, #250, #251), exceeding ADR-0070's two-head promotion gate, and were promoted to required checks with Owner approval. See docs/evidence/security/GITGUARDIAN_SNYK_BASELINE_2026-08-14.md."
+    "decision_2026-08-14c": "GitHub Advanced Security CodeQL was evaluated against the already-active Snyk Code check (context code/snyk) and found redundant for SAST coverage (both do semantic source-code vulnerability analysis; Snyk Code needs no GitHub Actions runtime, matching ADR-0070's no-new-workflow design). Owner decided against CodeQL as a required check. GitGuardian Security Checks and both Snyk contexts (security/snyk, code/snyk) passed on three independent head-bound pull requests (#249, #250, #251), exceeding ADR-0070's two-head promotion gate, and were promoted to required checks with Owner approval. See docs/evidence/security/GITGUARDIAN_SNYK_BASELINE_2026-08-14.md.",
+    "decision_2026-08-15": "Snyk's private-test quota was exhausted (external Snyk-side account limit, both security/snyk and code/snyk contexts started reporting 'error'/'You have used your limit of private tests' regardless of actual scan outcome), permanently blocking merge on at least 3 concurrently open pull requests (#295, #296, #297) despite ADR-0070's Rollback step 1 ('Anbietercheck aus Required Checks entfernen, sofern später promoviert'). Owner removed both security/snyk and code/snyk from the live main-production-protection ruleset on 2026-08-15; this expected-policy file is updated to match. GitGuardian Security Checks remains required and unaffected. See docs/adr/ADR-0070-gitguardian-snyk-external-app-integration.md Nachtrag 2026-08-15 and docs/evidence/security/SNYK_REQUIRED_CHECK_DEMOTION_2026-08-15.md."
   },
   "single_owner_topology": {
     "observed_collaborators": 1,

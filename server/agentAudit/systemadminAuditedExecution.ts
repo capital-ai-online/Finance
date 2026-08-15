@@ -11,6 +11,7 @@ import {
   type SystemadminChatExecutionProfileRequest,
   type SystemadminPreparedActionEnvelope,
 } from '../../src/platform/Security/systemadminExecutionProfile';
+import { checkProviderProfileScope } from '../../src/platform/Security/providerProfile';
 import { writeAgentAuditEvent, type AgentAuditResult } from './agentAuditWriter';
 
 export const SYSTEMADMIN_SA3_AUDIT_POLICY_ID = 'ADR-0059/ADR-0065/SA3';
@@ -93,15 +94,46 @@ function selfAuthorityDeny(decision: Readonly<SystemadminChatExecutionDecision>)
   };
 }
 
+// M8 (ADR-0062, docs/runbooks/M8_AGENT_CUTOVER.md, "Policy Equivalence Tests" against a real
+// caller). The SA2 profile already hardcodes the equivalent of a ChatGPT provider profile
+// (SYSTEMADMIN_CHAT_APP_ID + SYSTEMADMIN_CHAT_CAPABILITIES). This adds an independent, generic
+// M8 Provider Profile Registry check that must ALSO agree - it can only narrow, never widen, what
+// SA2/SA1/M4 already decide. Deliberately does NOT re-run agentIam.ts a second time (that stays
+// the sole job of evaluateSystemadminRoadmapPolicy() inside prepareSystemadminChatAction); see
+// checkProviderProfileScope's own doc comment for why re-running it here would be unsafe.
+function providerProfileDeny(
+  decision: Readonly<SystemadminChatExecutionDecision>,
+  reason: string,
+): SystemadminChatExecutionDecision {
+  return {
+    verdict: 'DENY',
+    reason: `M8 Provider-Profile-Gate: ${reason}`,
+    riskClass: decision.riskClass,
+    layer: 'PROVIDER_PROFILE',
+    ...(decision.capability ? { capability: decision.capability } : {}),
+    ...(decision.mandateId ? { mandateId: decision.mandateId } : {}),
+    liveMutationPermitted: false,
+  };
+}
+
 export async function authorizeSystemadminAuditedExecution(
   input: Readonly<Omit<SystemadminChatExecutionProfileRequest, 'mode'>>,
   context: Readonly<SystemadminAuditContext>,
 ): Promise<SystemadminAuditedAuthorization> {
   const request: SystemadminChatExecutionProfileRequest = { ...input, mode: 'DRY_RUN' };
   const prepared = prepareSystemadminChatAction(request);
+  const providerScope = checkProviderProfileScope({
+    appId: request.authorization.principal.appId,
+    principal: request.authorization.principal,
+    capability: request.authorization.capability,
+    riskClass: request.authorization.riskClass,
+    auditCorrelationId: context.traceId,
+  });
   const decision = touchesOwnControlPlane(request)
     ? selfAuthorityDeny(prepared.decision)
-    : prepared.decision;
+    : providerScope.verdict === 'DENY'
+      ? providerProfileDeny(prepared.decision, providerScope.reason)
+      : prepared.decision;
   const principal = request.authorization.principal;
   const checkpoint = request.checkpoint;
   const roadmapItem = request.authorization.execution.roadmapItem;

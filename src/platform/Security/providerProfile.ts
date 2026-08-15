@@ -163,52 +163,80 @@ export type ProviderScopedAuthorizationDecision =
 function deny(
   reason: string,
   riskClass: AgentRiskClass,
-  layer: ProviderScopedAuthorizationDecision['layer'],
   capability?: AgentCapability,
-): ProviderScopedAuthorizationDecision {
-  return { verdict: 'DENY', reason, riskClass, layer, ...(capability ? { capability } : {}) };
+): { verdict: 'DENY'; reason: string; riskClass: AgentRiskClass; layer: 'PROVIDER_PROFILE'; capability?: AgentCapability } {
+  return { verdict: 'DENY', reason, riskClass, layer: 'PROVIDER_PROFILE', ...(capability ? { capability } : {}) };
 }
 
-// Canonical M8 entry point. A provider profile only narrows what agentIam.ts would otherwise
-// allow - it is never itself the source of a grant. Unknown appId, capability mismatch, missing
-// audit correlation on a mutating request, and replayed envelopes are all denied here, before
-// reaching agentIam.ts at all.
-export function evaluateProviderScopedAuthorization(
-  request: Readonly<ProviderScopedAuthorizationRequest>,
-): ProviderScopedAuthorizationDecision {
+export interface ProviderProfileScopeCheckRequest {
+  appId: string;
+  principal: Readonly<Pick<AgentPrincipalContext, 'appId'>>;
+  capability: string;
+  riskClass: AgentRiskClass;
+  auditCorrelationId?: string;
+  envelopeId?: string;
+  seenEnvelopeIds?: ReadonlySet<string>;
+}
+
+export type ProviderProfileScopeDecision =
+  | { verdict: 'ALLOW'; profile: Readonly<ProviderProfile> }
+  | { verdict: 'DENY'; reason: string; riskClass: AgentRiskClass; layer: 'PROVIDER_PROFILE'; capability?: AgentCapability };
+
+// Pure profile-narrowing pre-check: unknown appId, principal/profile mismatch, capability outside
+// the profile's allowlist, missing audit correlation on a mutating request, and replayed envelopes.
+// Deliberately does NOT call agentIam.ts - composing this with an authorization chain that already
+// evaluates agentIam.ts itself (e.g. the SA1/SA2/SA3 Systemadmin chain) must never re-run the IAM
+// check a second time with an independently reconstructed (and therefore potentially inconsistent)
+// approval object. Callers that have no existing IAM chain of their own should use
+// evaluateProviderScopedAuthorization below instead, which composes this check with agentIam.ts.
+export function checkProviderProfileScope(
+  request: Readonly<ProviderProfileScopeCheckRequest>,
+): ProviderProfileScopeDecision {
   const resolved = PROVIDER_PROFILES[request.appId];
   if (!resolved) {
-    return deny(`Unbekanntes Provider-Profil: ${request.appId}.`, request.riskClass, 'PROVIDER_PROFILE');
+    return deny(`Unbekanntes Provider-Profil: ${request.appId}.`, request.riskClass);
   }
   if (request.principal.appId !== request.appId) {
-    return deny('Principal-appId stimmt nicht mit dem angeforderten Provider-Profil überein.', request.riskClass, 'PROVIDER_PROFILE');
+    return deny('Principal-appId stimmt nicht mit dem angeforderten Provider-Profil überein.', request.riskClass);
   }
   if (!isKnownAgentCapability(request.capability)) {
-    return deny(`Unbekannte Capability: ${request.capability}.`, request.riskClass, 'PROVIDER_PROFILE');
+    return deny(`Unbekannte Capability: ${request.capability}.`, request.riskClass);
   }
   const capability = request.capability;
   if (!resolved.allowedCapabilities.includes(capability)) {
     return deny(
       `Capability ${capability} liegt außerhalb des Provider-Profils ${resolved.appId} (Plane: ${resolved.plane}).`,
       request.riskClass,
-      'PROVIDER_PROFILE',
       capability,
     );
   }
 
   if (MUTATING_CAPABILITIES.has(capability)) {
     if (!request.auditCorrelationId || !request.auditCorrelationId.trim()) {
-      return deny('Keine Audit-Korrelations-ID für mutierende Capability vorhanden.', request.riskClass, 'PROVIDER_PROFILE', capability);
+      return deny('Keine Audit-Korrelations-ID für mutierende Capability vorhanden.', request.riskClass, capability);
     }
     if (request.envelopeId && request.seenEnvelopeIds?.has(request.envelopeId)) {
-      return deny(`Mutation-Envelope ${request.envelopeId} wurde bereits verarbeitet (Replay).`, request.riskClass, 'PROVIDER_PROFILE', capability);
+      return deny(`Mutation-Envelope ${request.envelopeId} wurde bereits verarbeitet (Replay).`, request.riskClass, capability);
     }
   }
 
+  return { verdict: 'ALLOW', profile: resolved };
+}
+
+// Canonical M8 entry point for callers with no authorization chain of their own: composes the
+// profile pre-check with agentIam.ts (never replaces it). Unknown appId, capability mismatch,
+// missing audit correlation on a mutating request, and replayed envelopes are all denied here,
+// before reaching agentIam.ts at all.
+export function evaluateProviderScopedAuthorization(
+  request: Readonly<ProviderScopedAuthorizationRequest>,
+): ProviderScopedAuthorizationDecision {
+  const scope = checkProviderProfileScope(request);
+  if (scope.verdict === 'DENY') return scope;
+
   const iamDecision = evaluateAgentAuthorization({
     principal: request.principal,
-    capability,
-    grantedCapabilities: resolved.allowedCapabilities,
+    capability: request.capability,
+    grantedCapabilities: scope.profile.allowedCapabilities,
     riskClass: request.riskClass,
     environment: request.environment,
     targetResource: request.targetResource,
