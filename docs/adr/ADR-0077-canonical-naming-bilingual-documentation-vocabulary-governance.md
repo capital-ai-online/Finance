@@ -1,9 +1,13 @@
-# ADR-0044 — Canonical Naming, Bilingual Documentation & Vocabulary Governance
+# ADR-0077 — Canonical Naming, Bilingual Documentation & Vocabulary Governance
 
 Status: Proposed  
 Datum / Date: 2026-08-09  
 Authority: ESS-0001-CONTRACTS  
 Related: ESS-0012, ESS-0003, ESS-0009, ESS-0010, ESS-0011
+
+## Numbering note
+
+Formerly filed as ADR-0044 (number collision with production-runtime-artifact-immutability). Content unchanged; number reassigned under ADR-0081.
 
 ## Deutsch
 
