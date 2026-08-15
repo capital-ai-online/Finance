@@ -7,10 +7,10 @@
 ## Status
 
 **ACTIVE — CANONICAL EXECUTION AUTHORITY (Domain SEO / Google Marketing / Content Distribution)**  
-Stand: 2026-08-15  
-Baseline: `main` (Store-Code PR #335 merged)  
+Stand: 2026-08-16  
+Baseline: `main` (Store-Code PR #335; ADR-0082; WP-S1 VERIFIED)  
 Owner: SvenKulessa  
-Authority-Bindung: ADR-0035, ADR-0042, ADR-0068 (PROPOSED), ESS-0014, ESS-0022 (PROPOSED), ADR-0071, ESS-0023
+Authority-Bindung: ADR-0035, ADR-0042, ADR-0068 (PROPOSED), ADR-0082 (SeoEngine), ESS-0014, ESS-0022 (PROPOSED), ADR-0071, ESS-0023
 
 ## Zweck
 
@@ -44,7 +44,7 @@ Die folgenden Dokumente gelten ab Merge dieses Standes als **SUPERSEDED** für P
 | `docs/roadmaps/MARKETING_AGENT_ROADMAP.md` | MA-Roadmap (DRAFT) | **dieses Dokument** (Abschnitt MA → WP-M) |
 | `docs/seo/S1_SEO_ENGINE.md` … `S4_…` (als Programmplan) | Block-Specs | eingearbeitet; Specs bleiben technische Evidence |
 | `docs/seo/Q_BLOCK_IMPLEMENTATION_NOTES.md`, `D_BLOCK_…` | Implementation Notes | Status in §4; Notes bleiben Evidence |
-| `docs/adr/ADR-DRAFT-seo-engine-platform-module.md` | Draft | zu formalisieren als nummerierter ADR unter diesem Programm |
+| `docs/adr/ADR-DRAFT-seo-engine-platform-module.md` | Draft | **ADR-0082** (`docs/adr/ADR-0082-seo-engine-platform-module.md`) |
 | `docs/adr/ADR-DRAFT-prerender-public-routes.md` | Draft | zu formalisieren unter WP-S2 |
 | Parallele Aussagen in Architektur-MCP-Docs, soweit sie **offene Programmarbeit** duplizieren | — | ESS-0014 + dieses Dokument sind normativ für den Programmplan |
 
@@ -63,7 +63,7 @@ Die folgenden Dokumente gelten ab Merge dieses Standes als **SUPERSEDED** für P
 
 1. Verifizierte Runtime-/Production-Evidence und Code auf `main`
 2. Ausdrückliche Human/Owner-Freigabe (ADR-0039, Protected Change ADR-0035)
-3. ESS-0014, ADR-0035, ADR-0042 und akzeptierte ADRs dieses Programms
+3. ESS-0014, ADR-0035, ADR-0042, ADR-0082 und akzeptierte ADRs dieses Programms
 4. **Dieses Dokument (SEO-GM-ROADMAP-0002)**
 5. Fachliche Block-Notes und Runbooks unter `docs/seo/`, `docs/runbooks/`
 6. Historische / als SUPERSEDED markierte Roadmaps
@@ -92,7 +92,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Agen
 
 ---
 
-## 4. Ist-Stand (Evidence, 2026-08-15)
+## 4. Ist-Stand (Evidence, 2026-08-16)
 
 ### 4.1 Technical SEO / SeoEngine
 
@@ -109,7 +109,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Agen
 | D3 Soft-404 | offen | — |
 | D4 Bundle-Splitting | offen (carried) | — |
 | D5 Search Console MCP Read | offen | Runbook vorhanden |
-| S1 SeoEngine Platform | **CODE DONE / OWNER GATES OPEN** | Store + Routes + Tests auf main (PR #335); Schema Foundation/Grants applied; FK RESTRICT + Ledger pending Owner; ADR-Draft unnumbered |
+| S1 SeoEngine Platform | **VERIFIED** | Store + Routes + Tests (PR #335); Schema/Grants/FK/Ledger applied 2026-08-15; **ADR-0082** Accepted 2026-08-16 |
 | S2 Prerender/SSG | offen | ADR-DRAFT vorhanden |
 | S3 SEO Dashboard | **DONE** | PR #309, Admin-Tab, No-Demo-Data |
 | S4 hreflang / Sprache | **IN PROGRESS / Branch** | Spec `S4_LANGUAGE_AND_HREFLANG_STRATEGY.md` |
@@ -155,7 +155,7 @@ Präfixe bleiben kompatibel zur etablierten Q/D/S/N/H/J-Konvention; Marketing-Ph
 
 | ID | Inhalt | Abhängigkeit | DoD |
 |----|--------|--------------|-----|
-| WP-S1 | SeoEngine Persistenz + RLS + No-Demo-Data | Migration, Security Review | Ranks nur search-console \| manual-import; Code DONE (PR #335); Schema/Grants/FK/Ledger applied 2026-08-15; nur ADR-Nummerierung offen |
+| WP-S1 | SeoEngine Persistenz + RLS + No-Demo-Data | Migration, Security Review | **VERIFIED** — Ranks nur search-console \| manual-import; Code DONE (PR #335); Schema/Grants/FK/Ledger applied 2026-08-15; **ADR-0082** Accepted 2026-08-16 |
 | WP-S2 | Prerender/SSG öffentlicher Routen | ADR formal | Crawler sehen Inhalt ohne JS |
 | WP-S3 | Dashboard | **DONE** | — |
 | WP-S4 | hreflang + Sprachstrategie | Vocabulary | Konsistente `lang`/hreflang |
@@ -208,7 +208,7 @@ Präfixe bleiben kompatibel zur etablierten Q/D/S/N/H/J-Konvention; Marketing-Ph
 ### 6.4 SocialMediaEngine & SeoEngine
 
 - **Eine** Distribution-Authority: `SocialMediaEngine` + bestehende Publisher.
-- **Eine** SEO-Management-Authority: `src/platform/SeoEngine/`.
+- **Eine** SEO-Management-Authority: `src/platform/SeoEngine/` (ADR-0082).
 - Open-Source (z. B. rank-tracker-ähnliche Tools, Postiz-ähnliche Orchestratoren, n8n): nur als **optionale Evidence-/Worker-Adapter** hinter CAPITAL-AI-Contracts; niemals OAuth-, Token- oder Policy-Root.
 
 ### 6.5 Google MCP
@@ -265,16 +265,16 @@ Programm gilt als abgeschlossen, wenn:
 
 ---
 
-## 10. Sofortige nächste Schritte (Stand 2026-08-15, nach FK RESTRICT + Ledger-Abgleich)
+## 10. Sofortige nächste Schritte (Stand 2026-08-16, nach ADR-0082 / WP-S1 VERIFIED)
 
-1. ~~**Owner:** FK RESTRICT Apply (`20260815220000`) + Ledger-Abgleich~~ — angewendet 2026-08-15, Evidenz in `docs/runbooks/SEO_WP_S1_LEDGER_RECONCILIATION.md`, Claim `SEO-WP-S1-FOLLOWUP-HARDENING-2026-08-15`.
+1. ~~**Owner:** FK RESTRICT Apply (`20260815220000`) + Ledger-Abgleich~~ — angewendet 2026-08-15.
 2. **Owner:** Search Console Property verifizieren (WP-Q-CLOSE / Q3).
-3. ADR-Draft SeoEngine nummerieren nach Kollisionscheck (nächste freie Nummer: `ADR-0075`) — **einziger offener Schritt für WP-S1 VERIFIED**.
+3. ~~ADR-Draft SeoEngine nummerieren~~ — **ADR-0082** Accepted (Kollisionscheck nach PR #345: 0075–0081 belegt).
 4. ADR-0068 + ESS-0022 Owner-Review (WP-M0) — ohne Runtime-Enablement.
 5. Nächstes **Code**-WP ohne Shared-Zone-Lease: **WP-D1 / D2 / D3** (JSON-LD, Title/Meta, Soft-404) scoped PR.
-
-Vollständiger Übergabekontext für den nächsten Bearbeiter: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`.
 6. WP-S2 nur nach formalem Prerender-ADR.
+
+Vollständiger Übergabekontext: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`. Canonical ADR: `docs/adr/ADR-0082-seo-engine-platform-module.md`.
 
 ---
 
@@ -284,3 +284,4 @@ Vollständiger Übergabekontext für den nächsten Bearbeiter: `docs/seo/HANDOFF
 |---------|-------|----------|
 | 0002.0 | 2026-08-15 | Erstausgabe: Konsolidierung SEO-ROADMAP-0001 + MARKETING_AGENT_ROADMAP + Google-Marketing-Programmplan zu Single Point of Trust |
 | 0002.1 | 2026-08-15 | Ist-Stand S1: Store-Code PR #335 auf main; Owner-Gates (FK/Ledger/ADR) explizit; nächste Schritte aktualisiert |
+| 0002.2 | 2026-08-16 | WP-S1 **VERIFIED**: ADR-0082 Accepted (nach PR #345 Nummernraum); §4/§5.2/§10 synchronisiert |
