@@ -13,21 +13,41 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { ComplianceConsentWrapper } from './ComplianceConsentModal';
+import { authFetch } from '../lib/authFetch';
+import { runPdfExportFlow } from '../lib/pdfExportFlow';
 
-interface PdfExportModalProps {
+interface PdfExportModalBaseProps {
   isOpen: boolean;
   onClose: () => void;
   email: string;
-  onSuccess: () => void; // Callback to actually trigger the PDF download!
 }
 
-export function PdfExportModal({ isOpen, onClose, email, onSuccess }: PdfExportModalProps) {
+type PdfExportModalProps = PdfExportModalBaseProps & (
+  | {
+      onPrepare: () => Promise<() => void>;
+      onSuccess?: never;
+    }
+  | {
+      /**
+       * Compatibility adapter for existing non-compliance exporters. New credit-sensitive
+       * call sites must use onPrepare so generation can finish before the ledger mutation.
+       */
+      onSuccess: () => void | Promise<void>;
+      onPrepare?: never;
+    }
+);
+
+export function PdfExportModal({ isOpen, onClose, email, onPrepare, onSuccess }: PdfExportModalProps) {
   const [loading, setLoading] = useState(false);
   const [credits, setCredits] = useState<number>(3);
   const [isUnlimited, setIsUnlimited] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [demoMode, setDemoMode] = useState<boolean>(false);
+
+  const prepareExport = onPrepare ?? (async () => async () => {
+    await onSuccess!();
+  });
 
   useEffect(() => {
     if (isOpen && email) {
@@ -40,7 +60,7 @@ export function PdfExportModal({ isOpen, onClose, email, onSuccess }: PdfExportM
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`/api/stripe/pdf-credits?email=${encodeURIComponent(email)}`);
+      const res = await authFetch('/api/stripe/pdf-credits');
       if (!res.ok) throw new Error('Fehler beim Laden der Credits');
       const data = await res.json();
       setCredits(data.credits);
@@ -68,13 +88,7 @@ export function PdfExportModal({ isOpen, onClose, email, onSuccess }: PdfExportM
   };
 
   const handleConsumeAndExport = async () => {
-    if (isUnlimited) {
-      onSuccess();
-      onClose();
-      return;
-    }
-
-    if (credits <= 0) {
+    if (!isUnlimited && credits <= 0) {
       setError('Sie haben keine Credits mehr. Bitte laden Sie neue Credits auf.');
       return;
     }
@@ -82,24 +96,31 @@ export function PdfExportModal({ isOpen, onClose, email, onSuccess }: PdfExportM
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('/api/stripe/consume-pdf-credit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+
+      const consumption = await runPdfExportFlow({
+        unlimited: isUnlimited,
+        prepareExport,
+        consumeCredit: async () => {
+          const res = await authFetch('/api/stripe/consume-pdf-credit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error(data.error || 'Fehler beim Abziehen der Credits');
+          }
+          return data as { credits: number };
+        },
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Fehler beim Abziehen der Credits');
+      if (consumption) {
+        setCredits(consumption.credits);
+        setSuccessMsg('Download erfolgreich gestartet! 1 Export-Credit abgezogen.');
+      } else {
+        setSuccessMsg('Download erfolgreich gestartet! Enterprise-Export bleibt unbegrenzt.');
       }
 
-      const data = await res.json();
-      setCredits(data.credits);
-      
-      // Trigger actual PDF download!
-      onSuccess();
-      
-      setSuccessMsg('Download erfolgreich gestartet! 1 Export-Credit abgezogen.');
       setTimeout(() => {
         setSuccessMsg(null);
         onClose();

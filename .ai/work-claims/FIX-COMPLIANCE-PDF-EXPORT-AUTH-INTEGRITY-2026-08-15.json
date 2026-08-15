@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.1.0",
+  "claimId": "FIX-COMPLIANCE-PDF-EXPORT-AUTH-INTEGRITY-2026-08-15",
+  "status": "ready-for-pr",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5",
+    "executionSurface": "Codex Work GitHub Connector"
+  },
+  "workItem": "Internen Compliance-PDF-Export authentifiziert wiederherstellen und Credit-Verbrauch gegen fehlgeschlagene PDF-Erzeugung absichern.",
+  "startedAt": "2026-08-15T03:00:00Z",
+  "baseBranch": "main",
+  "baseSha": "fafba177101ff0a19d71c6ddea3605df93d9036d",
+  "claimedPaths": [
+    ".ai/work-claims/FIX-COMPLIANCE-PDF-EXPORT-AUTH-INTEGRITY-2026-08-15.json",
+    "src/components/ComplianceExporter.tsx",
+    "src/components/PdfExportModal.tsx",
+    "src/lib/pdfExportFlow.ts",
+    "tests/unit/pdfExportFlow.test.ts",
+    "tests/unit/pdfExportAuthContract.test.ts",
+    "docs/adr/ADR-0052-pdf-credit-ledger.md"
+  ],
+  "safetyBoundary": "Keine Server-, Supabase-, Stripe-, Render- oder Ledger-Mutation. Bestehende fail-closed Serverautorisierung bleibt unverändert; Client sendet die vorhandene Supabase-Session über authFetch.",
+  "releaseCondition": "Claim wird nach Merge, Schließung oder Supersession des Pull Requests freigegeben; nach verifiziertem Merge wird der Remote-Branch gelöscht.",
+  "branch": "fix/compliance-pdf-export-auth-integrity-v2"
+}
