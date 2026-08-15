@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "HOTFIX-FRONTEND-REACT-CHUNK-CYCLE-2026-08-15",
+  "status": "ready-for-pr",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6",
+    "executionSurface": "ChatGPT Work + GitHub connector"
+  },
+  "workItem": "Produktive schwarze Seite durch zyklische Vite-React-Chunk-Aufteilung beheben",
+  "startedAt": "2026-08-15T00:29:00Z",
+  "baseBranch": "main",
+  "baseSha": "05c28397801a94fceb92d9512e0330c30d4501e3",
+  "productionBaseline": {
+    "mode": "verified",
+    "productionUrl": "https://capital-ai.online/healthz",
+    "productionVersion": "0.6.0",
+    "productionCommit": "05c28397801a94fceb92d9512e0330c30d4501e3",
+    "productionBranch": "main"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/HOTFIX-FRONTEND-REACT-CHUNK-CYCLE-2026-08-15.json",
+    "vite.config.ts"
+  ],
+  "releaseCondition": "Claim wird erst nach Merge oder Schließung des Hotfix-PR freigegeben."
+}
