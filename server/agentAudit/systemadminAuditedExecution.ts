@@ -63,6 +63,10 @@ export interface SystemadminAuditContext {
 export type SystemadminAuditedExecutionPermit = Readonly<
   SystemadminPreparedActionEnvelope & {
     authorizationAuditReference: string;
+    auditCorrelationId: string;
+    provider?: string;
+    model?: string;
+    toolId?: string;
     auditBoundExecutionPermitted: true;
   }
 >;
@@ -70,8 +74,17 @@ export type SystemadminAuditedExecutionPermit = Readonly<
 export interface SystemadminAuditedAuthorization {
   decision: SystemadminChatExecutionDecision;
   auditReference: string;
+  auditCorrelationId: string;
   traceId: string;
   executionPermit?: SystemadminAuditedExecutionPermit;
+}
+
+function buildAuditCorrelationId(requestId: string, traceId: string, sessionId: string): string {
+  const parts = { requestId: requestId.trim(), traceId: traceId.trim(), sessionId: sessionId.trim() };
+  for (const [name, value] of Object.entries(parts)) {
+    if (!value) throw new Error(`[SystemadminAudit][SECURITY] ${name} is required for M8 audit correlation.`);
+  }
+  return `${parts.requestId}:${parts.traceId}:${parts.sessionId}`;
 }
 
 function touchesOwnControlPlane(request: Readonly<SystemadminChatExecutionProfileRequest>): boolean {
@@ -138,6 +151,11 @@ export async function authorizeSystemadminAuditedExecution(
   const checkpoint = request.checkpoint;
   const roadmapItem = request.authorization.execution.roadmapItem;
   const requestedPaths = request.authorization.execution.requestedPaths ?? [];
+  const auditCorrelationId = buildAuditCorrelationId(
+    principal.requestId,
+    context.traceId,
+    principal.sessionId,
+  );
 
   const auditReference = await writeAgentAuditEvent({
     requestId: principal.requestId,
@@ -145,6 +163,8 @@ export async function authorizeSystemadminAuditedExecution(
     humanActorId: principal.humanActorId,
     appId: principal.appId,
     agentId: principal.agentId,
+    ...(principal.provider ? { provider: principal.provider } : {}),
+    ...(principal.model ? { model: principal.model } : {}),
     intent: 'systemadmin_authorization',
     scope: {
       mandateId: decision.mandateId,
@@ -156,6 +176,8 @@ export async function authorizeSystemadminAuditedExecution(
       branchName: checkpoint.branchName,
       currentHeadSha: checkpoint.currentHeadSha,
       pullRequestNumber: checkpoint.pullRequestNumber,
+      auditCorrelationId,
+      environment: request.authorization.environment,
     },
     capability: decision.capability ?? request.authorization.capability,
     riskClass: decision.riskClass,
@@ -188,11 +210,16 @@ export async function authorizeSystemadminAuditedExecution(
       currentHeadSha: checkpoint.currentHeadSha,
       pullRequestNumber: checkpoint.pullRequestNumber,
       authorizationReason: decision.reason,
+      auditCorrelationId,
+      requestId: principal.requestId,
+      traceId: context.traceId,
+      environment: request.authorization.environment,
+      providerProfileId: principal.appId,
     },
   });
 
   if (decision.verdict !== 'ALLOW' || !('envelope' in prepared)) {
-    return Object.freeze({ decision, auditReference, traceId: context.traceId });
+    return Object.freeze({ decision, auditReference, auditCorrelationId, traceId: context.traceId });
   }
   if (!AUDIT_REFERENCE.test(auditReference)) {
     throw new Error('[SystemadminAudit][SECURITY] invalid authorization audit reference.');
@@ -201,9 +228,13 @@ export async function authorizeSystemadminAuditedExecution(
   const executionPermit: SystemadminAuditedExecutionPermit = Object.freeze({
     ...prepared.envelope,
     authorizationAuditReference: auditReference,
+    auditCorrelationId,
+    ...(principal.provider ? { provider: principal.provider } : {}),
+    ...(principal.model ? { model: principal.model } : {}),
+    ...(context.toolId ? { toolId: context.toolId } : {}),
     auditBoundExecutionPermitted: true as const,
   });
-  return Object.freeze({ decision, auditReference, traceId: context.traceId, executionPermit });
+  return Object.freeze({ decision, auditReference, auditCorrelationId, traceId: context.traceId, executionPermit });
 }
 
 export async function recordSystemadminAuditedOutcome(input: Readonly<{
@@ -224,6 +255,15 @@ export async function recordSystemadminAuditedOutcome(input: Readonly<{
     || permit.authorizationAuditReference !== input.authorization.auditReference) {
     throw new Error('[SystemadminAudit][SECURITY] authorization audit reference mismatch.');
   }
+  const expectedCorrelationId = buildAuditCorrelationId(
+    permit.requestId,
+    input.authorization.traceId,
+    permit.sessionId,
+  );
+  if (input.authorization.auditCorrelationId !== expectedCorrelationId
+    || permit.auditCorrelationId !== expectedCorrelationId) {
+    throw new Error('[SystemadminAudit][SECURITY] authorization/outcome audit correlation mismatch.');
+  }
 
   const branchName = input.branchName ?? permit.branchName;
   const pullRequestNumber = input.pullRequestNumber ?? permit.pullRequestNumber;
@@ -234,6 +274,8 @@ export async function recordSystemadminAuditedOutcome(input: Readonly<{
     humanActorId: permit.humanActorId,
     appId: permit.appId,
     agentId: permit.agentId,
+    ...(permit.provider ? { provider: permit.provider } : {}),
+    ...(permit.model ? { model: permit.model } : {}),
     intent: 'systemadmin_execution_outcome',
     scope: {
       mandateId: permit.mandateId,
@@ -245,6 +287,8 @@ export async function recordSystemadminAuditedOutcome(input: Readonly<{
       authorizationHeadSha: permit.currentHeadSha,
       commitSha: input.commitSha,
       pullRequestNumber,
+      auditCorrelationId: expectedCorrelationId,
+      authorizationAuditReference: input.authorization.auditReference,
     },
     capability: permit.capability,
     riskClass: permit.riskClass,
@@ -252,6 +296,7 @@ export async function recordSystemadminAuditedOutcome(input: Readonly<{
     decision: 'ALLOW',
     repository: permit.repository,
     result: input.result,
+    ...(permit.toolId ? { toolId: permit.toolId } : {}),
     ...(branchName ? { branch: branchName } : {}),
     ...(input.commitSha ? { commitSha: input.commitSha } : {}),
     ...(input.workflowRunId ? { workflowRunId: input.workflowRunId } : {}),
@@ -262,6 +307,11 @@ export async function recordSystemadminAuditedOutcome(input: Readonly<{
       ...input.metadata,
       eventType: 'systemadmin_execution_outcome',
       authorizationAuditReference: input.authorization.auditReference,
+      auditCorrelationId: expectedCorrelationId,
+      authorizationRequestId: permit.requestId,
+      authorizationTraceId: input.authorization.traceId,
+      authorizationSessionId: permit.sessionId,
+      providerProfileId: permit.appId,
       mandateId: permit.mandateId,
       roadmapItem: permit.roadmapItem,
       sessionId: permit.sessionId,

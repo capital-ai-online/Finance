@@ -154,11 +154,15 @@ describe('SA3 Systemadmin audited execution', () => {
       mandateId: 'REM-SA3-AUDIT-001',
       auditBoundExecutionPermitted: true,
       authorizationAuditReference: 'supabase:agent_audit_events:sa3-auth-1',
+      auditCorrelationId: 'sa3-request-1:0123456789abcdef0123456789abcdef:sa3-session-1',
       requiresHumanMerge: true,
       liveMutationPermitted: false,
     });
     expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({
       human_actor_id: null,
+      provider: 'openai',
+      model: 'metadata-only',
+      tool_name: 'github.pr.create',
       intent: 'systemadmin_authorization',
       authorization_decision: 'ALLOW',
       result: 'PENDING',
@@ -169,6 +173,7 @@ describe('SA3 Systemadmin audited execution', () => {
         eventType: 'systemadmin_authorization',
         mandateId: 'REM-SA3-AUDIT-001',
         roadmapItem: 'SA4-PILOT-EXAMPLE',
+        auditCorrelationId: 'sa3-request-1:0123456789abcdef0123456789abcdef:sa3-session-1',
         prompt: '[OMITTED]',
         humanActorExternalId: SYSTEMADMIN_OWNER_ACTOR_ID,
       }),
@@ -176,6 +181,7 @@ describe('SA3 Systemadmin audited execution', () => {
         mandateId: 'REM-SA3-AUDIT-001',
         roadmapItem: 'SA4-PILOT-EXAMPLE',
         repository: SYSTEMADMIN_REPOSITORY,
+        auditCorrelationId: 'sa3-request-1:0123456789abcdef0123456789abcdef:sa3-session-1',
       }),
     }));
   });
@@ -247,14 +253,52 @@ describe('SA3 Systemadmin audited execution', () => {
       branch: 'agent/sa4-pilot-example',
       commit_sha: '89abcdef0123456789abcdef0123456789abcdef',
       pull_request_number: 218,
+      provider: 'openai',
+      model: 'metadata-only',
+      tool_name: 'github.pr.create',
       attributes: expect.objectContaining({
         eventType: 'systemadmin_execution_outcome',
         authorizationAuditReference: 'supabase:agent_audit_events:sa3-auth-1',
+        auditCorrelationId: 'sa3-request-1:0123456789abcdef0123456789abcdef:sa3-session-1',
+        authorizationRequestId: '[REDACTED]',
+        authorizationTraceId: '[REDACTED]',
+        authorizationSessionId: '[REDACTED]',
+        providerProfileId: SYSTEMADMIN_CHAT_APP_ID,
         mandateId: 'REM-SA3-AUDIT-001',
         response_body: '[OMITTED]',
         commitSha: '89abcdef0123456789abcdef0123456789abcdef',
       }),
     }));
+  });
+
+  it('fails closed when authorization correlation is changed before the outcome', async () => {
+    const authorizationResult = await authorizeSystemadminAuditedExecution({
+      authorization: authorization(),
+      checkpoint: baseCheckpoint,
+    }, auditContext);
+    const tampered = {
+      ...authorizationResult,
+      auditCorrelationId: 'tampered:correlation:id',
+    };
+
+    await expect(recordSystemadminAuditedOutcome({
+      authorization: tampered,
+      result: 'SUCCESS',
+    })).rejects.toThrow('authorization/outcome audit correlation mismatch');
+    expect(mocks.insert).toHaveBeenCalledTimes(1);
+  });
+
+  it('requires request, trace and session identifiers before durable authorization evidence', async () => {
+    const missingSession: SystemadminRoadmapAuthorizationRequest = {
+      ...authorization(),
+      principal: { ...principal, sessionId: '' },
+    };
+
+    await expect(authorizeSystemadminAuditedExecution({
+      authorization: missingSession,
+      checkpoint: baseCheckpoint,
+    }, auditContext)).rejects.toThrow('sessionId is required for M8 audit correlation');
+    expect(mocks.insert).not.toHaveBeenCalled();
   });
 
   it('refuses an outcome when no audited ALLOW permit exists', async () => {

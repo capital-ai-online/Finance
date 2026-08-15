@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "M8-AUDIT-CORRELATION-EXIT-GATE-7-2026-08-15",
+  "status": "implementation-ready",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6",
+    "executionSurface": "ChatGPT Work + GitHub Connector"
+  },
+  "workItem": "M8 Exit-Gate Punkt 7: vollständige Audit-Korrelation",
+  "startedAt": "2026-08-15T03:15:00Z",
+  "baseBranch": "main",
+  "baseSha": "fafba177101ff0a19d71c6ddea3605df93d9036d",
+  "claimedPaths": [
+    "server/agentAudit/systemadminAuditedExecution.ts",
+    "tests/unit/systemadminAuditedExecution.test.ts",
+    "docs/evidence/m8/M8_AUDIT_CORRELATION_EXIT_GATE_7_EVIDENCE.md"
+  ],
+  "securityScope": "Fail-closed Korrelation; keine Control-Plane-Abschwächung; keine externe Plattformmutation",
+  "releaseCondition": "Nach Merge oder Schließung des PR freigeben."
+}
