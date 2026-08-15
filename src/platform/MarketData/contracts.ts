@@ -1,4 +1,5 @@
 export const MARKET_DATA_CONTRACT_VERSION = 'market-data/1.0.0' as const;
+export const MARKET_DATA_HISTORY_CONTRACT_VERSION = 'market-data-history/1.0.0' as const;
 
 export type MarketDataAssetClass = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond' | 'macro';
 export type ProviderCapability = 'snapshot' | 'quote' | 'trade' | 'history' | 'bars' | 'fundamentals';
@@ -18,6 +19,17 @@ export interface SnapshotRequest {
   correlationId: string;
   maxAgeMs?: number;
   allowStale?: boolean;
+  includeShadow?: boolean;
+  allowedProviderIds?: string[];
+}
+
+export interface HistoryRequest {
+  symbol: string;
+  assetClass: MarketDataAssetClass;
+  correlationId: string;
+  from?: string;
+  to?: string;
+  maxPoints?: number;
   includeShadow?: boolean;
   allowedProviderIds?: string[];
 }
@@ -44,6 +56,26 @@ export interface CanonicalMarketDataSnapshot {
   reason?: string;
 }
 
+export interface CanonicalMarketDataHistoryPoint {
+  timestamp: string;
+  close: number;
+}
+
+export interface CanonicalMarketDataHistory {
+  contractVersion: typeof MARKET_DATA_HISTORY_CONTRACT_VERSION;
+  provider: string;
+  providerFeed: string | null;
+  symbol: string;
+  assetClass: MarketDataAssetClass;
+  currency: string | null;
+  receivedAt: string;
+  qualityState: Extract<MarketDataQualityState, 'HISTORICAL' | 'UNAVAILABLE' | 'INVALID'>;
+  correlationId: string;
+  points: CanonicalMarketDataHistoryPoint[];
+  evidenceId: string | null;
+  reason?: string;
+}
+
 export interface MarketDataProviderDescriptor {
   id: string;
   role: ProviderRole;
@@ -56,4 +88,9 @@ export interface MarketDataProviderDescriptor {
 export interface MarketDataProvider {
   readonly descriptor: MarketDataProviderDescriptor;
   getSnapshot(request: SnapshotRequest): Promise<CanonicalMarketDataSnapshot>;
+}
+
+export interface MarketDataHistoryProvider {
+  readonly descriptor: MarketDataProviderDescriptor;
+  getHistory(request: HistoryRequest): Promise<CanonicalMarketDataHistory>;
 }

@@ -4,7 +4,7 @@
 
 **Version:** 1.0.0  
 **Status:** Enterprise Specification  
-**Implementation Status:** PHASE 3B PARTIALLY IMPLEMENTED / ALPACA PROMOTION NOT AUTHORIZED  
+**Implementation Status:** PHASE 3C CONTRACT AND ADAPTER IMPLEMENTED / SCORING WIRING NOT AUTHORIZED / ALPACA PROMOTION NOT AUTHORIZED  
 **Owner:** Platform Director  
 **Security Authority:** CAPITAL-AI IAM / Security & Compliance  
 **Related ADR:** ADR-0041  
@@ -585,6 +585,18 @@ Phase-3B-Nachweis (2026-08-15): FMP-Indexquotes werden über einen injizierten r
 Loader-Adapter und den MarketDataGateway geführt. Bestehende Ticker-Allowlist, Cooldown und
 Server-Cache bleiben erhalten; der Platform-Layer importiert keine Server-Interna. Indexhistorie,
 Fundamentals und Scoring-Inputs bleiben offen.
+
+### Phase-3C-Nachweis (2026-08-15)
+
+Der kanonische Vertrag `market-data-history/1.0.0`, eine separate History-Provider-Registry,
+ein fail-closed History-Gateway und ein injizierter FMP-Index-History-Adapter sind implementiert.
+Der Adapter normalisiert ausschließlich positive, datierte EOD-Schlusswerte, bewahrt Correlation-
+und Evidence-IDs und erzeugt keine synthetischen Historienwerte. Shadow-Provider sind
+standardmäßig ausgeschlossen.
+
+Die aktive Composition Boundary in `server/fmpIndices.ts`, bestehende Scoring-Inputs,
+Fundamentals und produktive Historienkonsumenten sind ausdrücklich noch nicht migriert. Dieser
+Schritt autorisiert weder neue Provider-Aufrufe noch Alpaca-Promotion.
 
 ### Phase 4 — Streaming
 
