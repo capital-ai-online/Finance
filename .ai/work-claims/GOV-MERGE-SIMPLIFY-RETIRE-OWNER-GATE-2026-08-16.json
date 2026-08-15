@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOV-MERGE-SIMPLIFY-RETIRE-OWNER-GATE-2026-08-16",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "executionSurface": "Grok GitHub Connector / SuperGrok"
+  },
+  "workItem": "Retire Owner PR checkbox and 💪/okay pre-CI gate; simplify merge process; document M10 passkey as next authorization layer; update policies, template v1.4.0, validatePrBody, ci.yml.",
+  "workItemDE": "Owner-Gate Checkboxen und 💪/okay vor CI abschaffen; Merge vereinfachen; ab M10 Passkey-Autorisierung; Policies, Template 1.4.0, Validator und ci.yml anpassen.",
+  "startedAt": "2026-08-15T23:15:00Z",
+  "baseBranch": "main",
+  "baseSha": "fab8d57c2166a386b5ffc184907756745897725c",
+  "claimedPaths": [
+    "docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md",
+    "docs/governance/PR_CHECK_CLASSIFICATION.md",
+    "docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md",
+    "docs/governance/GROK_POST_PR_MERGE_CONTINUATION_POLICY.md",
+    "docs/adr/ADR-0069-human-owner-comment-gate-and-dispatched-pr-ci.md",
+    "docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md",
+    ".github/pull_request_template.md",
+    ".github/workflows/ci.yml",
+    "scripts/pr/lib.mjs",
+    "scripts/pr/validatePrBody.mjs",
+    ".ai/work-claims/GOV-MERGE-SIMPLIFY-RETIRE-OWNER-GATE-2026-08-16.json"
+  ],
+  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
+}
