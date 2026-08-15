@@ -1,0 +1,77 @@
+{
+  "mandateId": "REM-WORKPACKAGE-GEN-PROOF-001",
+  "status": "DRAFT",
+  "ownerActorId": "SvenKulessa",
+  "subjectAgentId": "capital-ai-systemadmin-roadmap-executor",
+  "repository": "SvenKulessa/Finance",
+  "baseBranch": "main",
+  "roadmapItems": [
+    "SYSTEMADMIN-WORK-PACKAGE-CATALOG-GENERALIZATION"
+  ],
+  "authorityRefs": [
+    "docs/adr/ADR-0074-generalized-systemadmin-work-package-catalog.md",
+    ".ai/skills/ESS-0021-Systemadmin-Roadmap-Executor.md"
+  ],
+  "allowedCapabilities": [
+    "BRANCH",
+    "COMMIT",
+    "PR"
+  ],
+  "allowedPaths": [
+    "docs/evidence/systemadmin-work-packages/WORK_PACKAGE_GENERALIZATION_PROOF.md"
+  ],
+  "allowedTargets": [
+    "github:SvenKulessa/Finance"
+  ],
+  "maxRiskClass": "MEDIUM",
+  "allowedMutationClasses": [
+    "REPOSITORY"
+  ],
+  "prohibitedMutationClasses": [
+    "MERGE",
+    "REPOSITORY_PROTECTION_WEAKENING",
+    "OWNER_IAM_ELEVATION",
+    "OWNER_MFA_OR_BREAK_GLASS",
+    "SECRET_DISCLOSURE",
+    "UNRESTRICTED_CREDENTIAL_ROTATION",
+    "DESTRUCTIVE_PRODUCTION_DATA",
+    "LIVE_BILLING_MONEY_OR_ENTITLEMENT",
+    "PRODUCTION_RESOURCE_DELETION",
+    "DNS_TLS_DOMAIN_OWNERSHIP",
+    "SECURITY_CONTROL_DISABLEMENT",
+    "SELF_MANDATE_EXPANSION"
+  ],
+  "validFrom": "2026-08-15T00:00:00.000Z",
+  "expiresAt": "2026-08-22T00:00:00.000Z",
+  "maxOpenPullRequests": 1,
+  "ciBudgetPolicyRef": "docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md",
+  "killSwitch": {
+    "enabled": true,
+    "revocationAuthority": "SvenKulessa",
+    "reason": "First entry in the generalized work-package catalog only; status DRAFT until the Owner explicitly approves it (fresh TOTP step-up + approvalEvidenceRef, per CLAUDE.md Authorized Principals). This session cannot and does not self-approve."
+  },
+  "requiredPreflight": [
+    "current-main",
+    "sa3b-and-sa4-verified-pass",
+    "owner-issue-identity",
+    "github-actions-oidc",
+    "audit-store-available",
+    "open-pr-overlap-check",
+    "target-path-not-already-on-main"
+  ],
+  "requiredEvidence": [
+    "mandateId",
+    "workPackageId",
+    "issueNumber",
+    "workflowRunId",
+    "branchAuthorizationAuditReference",
+    "branchOutcomeAuditReference",
+    "commitAuthorizationAuditReference",
+    "commitOutcomeAuditReference",
+    "commitSha",
+    "prAuthorizationAuditReference",
+    "prOutcomeAuditReference",
+    "pullRequestNumber",
+    "humanMergeRequired"
+  ]
+}

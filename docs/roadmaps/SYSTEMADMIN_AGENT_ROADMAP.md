@@ -269,6 +269,38 @@ Denied:
 
 After repository CI PASS, productive Owner-factor enrollment remains a separate Human/Owner M5A mutation gate. SA5 remains blocked until M10 `VERIFIED PASS`.
 
+## Nachtrag 2026-08-15 — generalized work-package catalog (ADR-0074)
+
+Owner instruction to continue Systemadmin execution "codebasiert und dokumentenbasiert
+Anwendungsweit... über die Action Workflows", refined via `docs/architecture/
+GENERALIZED_SYSTEMADMIN_EXECUTION_HOST_DESIGN.md` to Model A (a catalog of pre-approved,
+already-reviewed work packages replayed through the same audited BRANCH/COMMIT/PR machinery
+SA4 proved) rather than Model B (runtime code generation — remains unsolved, see that document).
+
+Like the M5A package above, this **does not introduce a new SA stage number** and does not widen
+SA4's proven authority — it generalizes the *host machinery itself* so a future work package needs
+only a new catalog module + a new Owner-approved REM (`REM-WORKPACKAGE-*` prefix), not an entirely
+new workflow file and broker route each time, as SA4 alone would have required.
+
+- New generic host: `.github/workflows/systemadmin-work-package-runner.yml`, dormant by default
+  (`if: false && ...`), same as SA4 before its own first activation.
+- New catalog: `scripts/systemadmin/workPackages/registry.mjs` — currently exactly one entry,
+  `GENERALIZATION-PROOF`, proving the machinery structurally works. `runSa4Pilot.mjs` itself is
+  untouched; the new `runWorkPackage.mjs` duplicates its proven security pattern rather than
+  refactor a verified-pass security path.
+- First catalog mandate: `.ai/mandates/REM-WORKPACKAGE-GEN-PROOF-001.json`, **status `DRAFT`** —
+  not Owner-approved by this session; independently unusable per SA1 REM_SCOPE
+  (`mandate.status !== 'OWNER_APPROVED'` denies) even if the dormant trigger were ever flipped.
+- Both Systemadmin self-authority rings extended with every new file — see ADR-0074.
+- Full contract test coverage: `tests/unit/systemadminWorkPackageCatalogContracts.test.ts`,
+  `tests/unit/systemadminWorkPackageIssue.test.ts`, plus extended broker/OIDC tests proving
+  SA3B/SA4 mandates cannot be used via the new workflow and vice versa.
+
+Activation gates (mirrors SA4's, ADR-0074 Exit criteria): this PR Human-reviewed/merged; Owner
+separately flips the workflow's `if:` condition; Owner separately approves
+`REM-WORKPACKAGE-GEN-PROOF-001` with a real `approvalEvidenceRef`; a fresh Owner Issue then runs
+the proof end-to-end. None of these four steps happened in this session.
+
 ## SA5 — Bounded external mutation design
 
 **BLOCKED BY M10 VERIFIED PASS**

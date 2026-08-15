@@ -7,6 +7,7 @@ import {
   SYSTEMADMIN_GITHUB_REPOSITORY_ID,
   SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF,
   SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF,
+  SYSTEMADMIN_GITHUB_WORK_PACKAGE_RUNNER_WORKFLOW_REF,
   SYSTEMADMIN_GITHUB_WORKFLOW_REF,
   resetGitHubActionsOidcCacheForTests,
   verifyGitHubActionsOidcToken,
@@ -106,6 +107,17 @@ describe('Systemadmin GitHub Actions OIDC verifier', () => {
     });
     await expect(verifyGitHubActionsOidcToken(token, NOW)).resolves.toMatchObject({
       workflowRef: SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF,
+      repositoryId: SYSTEMADMIN_GITHUB_REPOSITORY_ID,
+    });
+  });
+
+  it('accepts only the explicitly allowlisted generalized work-package runner as the third host', async () => {
+    const token = createJwt(privateKey, kid, {
+      workflow: 'Systemadmin Work-Package Runner',
+      workflow_ref: SYSTEMADMIN_GITHUB_WORK_PACKAGE_RUNNER_WORKFLOW_REF,
+    });
+    await expect(verifyGitHubActionsOidcToken(token, NOW)).resolves.toMatchObject({
+      workflowRef: SYSTEMADMIN_GITHUB_WORK_PACKAGE_RUNNER_WORKFLOW_REF,
       repositoryId: SYSTEMADMIN_GITHUB_REPOSITORY_ID,
     });
   });

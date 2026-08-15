@@ -10,11 +10,21 @@ export const SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF =
   'SvenKulessa/Finance/.github/workflows/systemadmin-roadmap-executor.yml@refs/heads/main';
 export const SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF =
   'SvenKulessa/Finance/.github/workflows/systemadmin-sa4-pilot.yml@refs/heads/main';
+/**
+ * Generalized, catalog-driven work-package host (ADR-0074). Unlike SA3B/SA4, this single
+ * workflow can be bound to many different REM mandates — but only ones whose mandateId carries
+ * the reserved `REM-WORKPACKAGE-` prefix (enforced in systemadminExecutionBrokerRouter.ts). Every
+ * individual work package's file content is still trusted, already-merged code from
+ * scripts/systemadmin/workPackages/ — this workflow never executes untrusted issue content.
+ */
+export const SYSTEMADMIN_GITHUB_WORK_PACKAGE_RUNNER_WORKFLOW_REF =
+  'SvenKulessa/Finance/.github/workflows/systemadmin-work-package-runner.yml@refs/heads/main';
 /** @deprecated Use the explicit stage-specific workflow ref. */
 export const SYSTEMADMIN_GITHUB_WORKFLOW_REF = SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF;
 export const SYSTEMADMIN_GITHUB_ALLOWED_WORKFLOW_REFS = Object.freeze([
   SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF,
   SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF,
+  SYSTEMADMIN_GITHUB_WORK_PACKAGE_RUNNER_WORKFLOW_REF,
 ] as const);
 
 const ALLOWED_WORKFLOW_REF_SET = new Set<string>(SYSTEMADMIN_GITHUB_ALLOWED_WORKFLOW_REFS);

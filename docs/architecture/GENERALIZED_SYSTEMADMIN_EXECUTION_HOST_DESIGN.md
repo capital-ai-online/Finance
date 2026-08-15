@@ -2,6 +2,10 @@
 
 Status: DISCUSSION PAPER — kein ADR, keine Implementierung, kein neues Mandat. Reine
 Architekturanalyse auf Owner-Anfrage ("Design für echten Ausführungs-Host skizzieren").
+**Nachtrag 2026-08-15:** Modell A (Abschnitt 3) wurde inzwischen auf separate Owner-Anweisung
+tatsächlich umgesetzt — siehe `docs/adr/ADR-0074-generalized-systemadmin-work-package-catalog.md`.
+Modell B (Abschnitt 3/4) bleibt unverändert unbegonnen; der in Abschnitt 4 identifizierte Blocker
+(Tool-Call-Vermittlungsschicht) wurde nicht angegangen.
 Datum: 2026-08-15
 Authority-Referenzen: `.ai/skills/ESS-0021-Systemadmin-Roadmap-Executor.md`,
 `docs/adr/ADR-0065-systemadmin-roadmap-execution-mandate.md`,

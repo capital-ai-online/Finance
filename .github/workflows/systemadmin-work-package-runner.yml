@@ -1,0 +1,67 @@
+name: Systemadmin Work-Package Runner
+run-name: >-
+  Work-Package-Host für Issue #${{ github.event.issue.number }}
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+concurrency:
+  group: systemadmin-work-package-runner-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  run-catalog-work-package:
+    name: Audit-gebundener generalisierter Work-Package-Host (ADR-0074)
+    # Dieser Host bleibt bewusst dauerhaft deaktiviert (`false &&`), bis der Owner ihn für ein
+    # konkretes, bereits im Katalog (scripts/systemadmin/workPackages/registry.mjs) gemergtes
+    # Arbeitspaket explizit aktiviert (identisches Prinzip wie SA3B/SA4, ADR-0069 Punkt 6: kein
+    # dauerhaft scharfgeschalteter privilegierter Host ohne aktiven Auftrag). Der auditierte
+    # Vertrag bleibt dabei unveraendert nachweisbar (siehe
+    # tests/unit/systemadminWorkPackageRunner.test.ts). Reaktivierung ist ein eigener,
+    # dokumentierter Human/Owner-Change, wie bei SA3B/SA4.
+    #
+    # Anders als SA3B/SA4 ist dieser Workflow selbst generisch: er ruft keinen pro-Arbeitspaket
+    # geschriebenen Trigger-Flip auf, sondern liest den zu bindenden workPackageId aus dem
+    # validierten Issue-Request und schlaegt ihn im Katalog nach. Jedes einzelne Arbeitspaket
+    # (Zielpfad, Inhalt, Mandat) bleibt dabei trusted, bereits auf main gemergter Code — der
+    # Issue-Body waehlt nur, WELCHES bereits genehmigte Arbeitspaket laeuft, nie WAS geschrieben
+    # wird.
+    if: >-
+      false &&
+      github.event.issue.user.login == 'SvenKulessa' &&
+      startsWith(github.event.issue.title, '[SYSTEMADMIN-WORK-PACKAGE]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Vertrauenswürdigen main-Stand auschecken
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.18.0'
+
+      - name: Untrusted Issue-Request strikt gegen den Katalog validieren
+        env:
+          SYSTEMADMIN_ISSUE_BODY: ${{ github.event.issue.body }}
+          SYSTEMADMIN_REQUEST_OUTPUT: ${{ runner.temp }}/systemadmin-workpackage-request.json
+        run: node scripts/systemadmin/validateWorkPackageIssue.mjs
+
+      - name: Audit-gebundenen Work-Package-Host ausführen
+        env:
+          SYSTEMADMIN_REQUEST_FILE: ${{ runner.temp }}/systemadmin-workpackage-request.json
+          SYSTEMADMIN_BROKER_BASE_URL: https://capital-ai.online
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/systemadmin/runWorkPackage.mjs

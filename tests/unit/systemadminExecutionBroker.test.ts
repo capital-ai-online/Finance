@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const SA3B_WORKFLOW_REF = 'SvenKulessa/Finance/.github/workflows/systemadmin-roadmap-executor.yml@refs/heads/main';
 const SA4_WORKFLOW_REF = 'SvenKulessa/Finance/.github/workflows/systemadmin-sa4-pilot.yml@refs/heads/main';
+const WORK_PACKAGE_WORKFLOW_REF = 'SvenKulessa/Finance/.github/workflows/systemadmin-work-package-runner.yml@refs/heads/main';
 
 const mocks = vi.hoisted(() => ({
   verifyGitHubActionsOidcToken: vi.fn(),
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../../server/systemadmin/githubActionsOidc', () => ({
   SYSTEMADMIN_GITHUB_SA3B_WORKFLOW_REF: 'SvenKulessa/Finance/.github/workflows/systemadmin-roadmap-executor.yml@refs/heads/main',
   SYSTEMADMIN_GITHUB_SA4_WORKFLOW_REF: 'SvenKulessa/Finance/.github/workflows/systemadmin-sa4-pilot.yml@refs/heads/main',
+  SYSTEMADMIN_GITHUB_WORK_PACKAGE_RUNNER_WORKFLOW_REF: 'SvenKulessa/Finance/.github/workflows/systemadmin-work-package-runner.yml@refs/heads/main',
   verifyGitHubActionsOidcToken: mocks.verifyGitHubActionsOidcToken,
 }));
 vi.mock('../../server/agentAudit/systemadminAuditedExecution', () => ({
@@ -168,6 +170,60 @@ describe('Systemadmin execution broker', () => {
       policyId: 'ADR-0059/ADR-0065/ADR-0067/ADR-0068/SA4',
       toolId: 'github-actions-systemadmin-sa4-host',
     });
+  });
+
+  it('accepts a REM-WORKPACKAGE-* mandate only from the exact work-package runner workflow', async () => {
+    mocks.verifyGitHubActionsOidcToken.mockResolvedValue({
+      ...identity,
+      workflow: 'Systemadmin Work-Package Runner',
+      workflowRef: WORK_PACKAGE_WORKFLOW_REF,
+    });
+    mocks.authorizeSystemadminAuditedExecution.mockResolvedValue({
+      decision: { ...decision, mandateId: 'REM-WORKPACKAGE-GEN-PROOF-001' },
+      auditReference: 'supabase:agent_audit_events:auth-workpackage',
+      traceId: 'github-actions:42',
+      executionPermit: {
+        mandateId: 'REM-WORKPACKAGE-GEN-PROOF-001',
+        requestId: 'issue-7-run-42',
+        authorizationAuditReference: 'supabase:agent_audit_events:auth-workpackage',
+        auditBoundExecutionPermitted: true,
+      },
+    });
+    const response = await request('/authorize', authorizationBody('SvenKulessa', 'REM-WORKPACKAGE-GEN-PROOF-001'));
+    expect(response.status).toBe(200);
+    const call = mocks.authorizeSystemadminAuditedExecution.mock.calls[0];
+    expect(call?.[1]).toMatchObject({
+      policyId: 'ADR-0059/ADR-0065/ADR-0067/ADR-0074/WORKPACKAGE',
+      toolId: 'github-actions-systemadmin-workpackage-host',
+    });
+  });
+
+  it('rejects a SA3B/SA4 mandate presented from the work-package runner workflow', async () => {
+    mocks.verifyGitHubActionsOidcToken.mockResolvedValue({
+      ...identity,
+      workflow: 'Systemadmin Work-Package Runner',
+      workflowRef: WORK_PACKAGE_WORKFLOW_REF,
+    });
+    const response = await request('/authorize', authorizationBody('SvenKulessa', 'REM-SA4-PILOT-001'));
+    expect(response.status).toBe(403);
+    expect(mocks.authorizeSystemadminAuditedExecution).not.toHaveBeenCalled();
+  });
+
+  it('rejects a REM-WORKPACKAGE-* mandate presented from the SA3B or SA4 workflow', async () => {
+    const response = await request('/authorize', authorizationBody('SvenKulessa', 'REM-WORKPACKAGE-GEN-PROOF-001'));
+    expect(response.status).toBe(403);
+    expect(mocks.authorizeSystemadminAuditedExecution).not.toHaveBeenCalled();
+  });
+
+  it('rejects a mandateId that merely starts with the reserved prefix but has no suffix', async () => {
+    mocks.verifyGitHubActionsOidcToken.mockResolvedValue({
+      ...identity,
+      workflow: 'Systemadmin Work-Package Runner',
+      workflowRef: WORK_PACKAGE_WORKFLOW_REF,
+    });
+    const response = await request('/authorize', authorizationBody('SvenKulessa', 'REM-WORKPACKAGE-'));
+    expect(response.status).toBe(403);
+    expect(mocks.authorizeSystemadminAuditedExecution).not.toHaveBeenCalled();
   });
 
   it('returns audited authorization only after the exact host binding passed', async () => {
