@@ -45,7 +45,8 @@ jobs:
 
       - name: Docs-only — npm ci überspringen
         if: steps.scope.outputs.npm_advisory != 'true'
-        run: echo "Klasse D / kein App-Scope: advisory npm-Validierung entfällt (Kostensparpfad)."
+        run: |
+          echo "Klasse D / kein App-Scope: advisory npm-Validierung entfällt (Kostensparpfad)."
 
       - name: Node.js einrichten
         if: steps.scope.outputs.npm_advisory == 'true'
