@@ -1,14 +1,14 @@
-<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.3.5 -->
-`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.3.5`
+<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.4.0 -->
+`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.4.0`
 # CAPITAL-AI Änderungsantrag (Pull Request)
 
 > Diese Vorlage ist verbindlich. Maschinenverwaltete Baseline-Felder dürfen nicht gelöscht werden.
 >
 > **Governance-Contract:** Jeder Pull Request gegen `main` MUSS diese vollständige Vorlage verwenden. Abschnitte dürfen nicht entfernt oder frei ersetzt werden; nicht zutreffende Angaben werden mit `N/A` begründet.
 >
-> **Wichtig:** Die teure technische CI startet für Pull Requests erst nach vollständiger Human-/Owner-Sichtprüfung.
+> **Merge-Vereinfachung (2026-08-16):** Pre-CI-Owner-Checkboxen und Review `💪`/`okay` sind **retired**. Technische CI startet ohne diese Zeremonie. Merge bleibt Human/Owner-only. Ab Development-Chain **M10** gilt Passkey/WebAuthn-Autorisierung.
 >
-> **Marker-Hinweis:** HTML-Kommentare (`<!-- CAPITAL_AI_* -->`) sind kanonisch. Zusätzlich stehen sichtbare `` `CAPITAL_AI_*` ``-Zeilen als Fallback, falls ein API-/Connector den Kommentar strippt. IDs dürfen weder entfernt, dupliziert noch verschoben werden.
+> **Marker-Hinweis:** HTML-Kommentare (`<!-- CAPITAL_AI_* -->`) sind kanonisch. Zusätzlich stehen sichtbare `` `CAPITAL_AI_*` ``-Zeilen als Fallback, falls ein API-/Connector den Kommentar strippt. Baseline-IDs dürfen weder entfernt, dupliziert noch verschoben werden.
 
 ## 1. Arbeitsauftrag
 
@@ -69,7 +69,7 @@ Beschreibe präzise, was geändert wurde und warum. Nicht zusammenhängende Änd
 - [ ] Keine Zugangsdaten, Secrets oder Tokens wurden in Source, Logs, PR-Body oder Modellkontext aufgenommen.
 - [ ] Authentifizierung/Autorisierung bleibt, wo erforderlich, fail-closed.
 - [ ] Externe, Tool- und Retrieval-Inhalte werden als nicht vertrauenswürdige Eingaben behandelt.
-- [ ] Hochriskante oder destruktive Aktionen behalten Human-Approval-Gates.
+- [ ] Hochriskante oder destruktive Aktionen behalten Human-Approval-Gates (Merge; ab M10 Passkey für CI-Autorisierung; externe Mutation).
 - [ ] Neue/geänderte Workflows verwenden unveränderliche Action-SHAs und explizite Minimalberechtigungen.
 
 ### Threat Model
@@ -93,22 +93,17 @@ Ein **Rollback-Runbook** beschreibt vor einer Mutation den sicheren Weg zurück 
 - **Rollback-Runbook erforderlich?** Ja / Nein
 - **Referenz / Rücksetzweg:**
 
-## 8. Human / Owner Review VOR technischer CI
+## 8. Merge-Autorisierung (vereinfacht)
 
-> Dieser Abschnitt ist das Start-Gate für die teure Build-/Test-Pipeline.
+> **Retired (2026-08-16):** PR-Body-Owner-Checkboxen und Current-Head-Review `💪`/`okay` sind keine CI- oder Merge-Voraussetzung mehr.
 >
-> Reihenfolge für den Owner: **Files changed prüfen und Viewed setzen → Review `💪`/`okay` für den aktuellen PR-Head absenden → beide Checkboxen zuletzt setzen.** Das letzte Bearbeiten des PR-Bodys löst die Owner-Vorprüfung aus.
+> **Aktuell:** Technische CI läuft ohne diese Zeremonie. Der Owner entscheidet über den Merge; Agenten mergen nicht.
 >
-**Wichtig:** Direkt über den Checkboxen stehen HTML-Kommentar-IDs und sichtbare Fallback-IDs. Sichtbare Checkbox-Texte dürfen angepasst werden; die IDs (Comment und sichtbare Form) dürfen weder entfernt, dupliziert noch verschoben werden.
+> **Ab M10:** Passkey/WebAuthn-Transaction für `AUTHORIZE_PR_CI` gemäß `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`.
 
-<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->
-`CAPITAL_AI_OWNER_DIFF_ATTESTATION`
-- [ ] Human/Owner: vollständigen PR-Diff geprüft.
-<!-- CAPITAL_AI_OWNER_FILES_ATTESTATION -->
-`CAPITAL_AI_OWNER_FILES_ATTESTATION`
-- [ ] Human/Owner: alle geänderten Dateien im Tab Files changed als Viewed markiert.
-
-Danach muss für den **aktuellen PR-Head** ein Review von `SvenKulessa` mit **`💪`** oder **`okay`** vorhanden sein. Erst dann darf `technical-validation` starten. Ein neuer Commit invalidiert den bisherigen Review für den neuen Head. Merge und externe Produktionsmutationen benötigen weiterhin ihre jeweils separate ausdrückliche Human-/Owner-Freigabe.
+- **Human-/CODEOWNER-Merge erforderlich:** Ja
+- **Agent-Self-Merge:** Nein
+- **Empfohlen vor Merge:** Diff unter *Files changed* lesen (nicht CI-blockierend)
 
 ## 9. PR-Checkklasse und auszuführende Checks
 
@@ -118,7 +113,6 @@ Wähle die strengste zutreffende Klasse. Sobald der Dateiscope in eine höhere K
 Scope: ausschließlich `docs/**`, `.ai/**` oder Markdown; keine Runtime-, Workflow-, Dependency- oder Deployment-Dateien.
 
 Erforderlich:
-- [ ] Human-/Owner-Vorprüfung
 - [ ] Governance-/Security-Workflows
 - [ ] `technical-validation` Fast Path
 - [ ] finaler Required Check `build-and-test`
@@ -129,9 +123,8 @@ Bewusst übersprungen: Git-Source-Build, npm ci/audit, TypeScript, Unit Tests, P
 Scope: Anwendungs-/Servicecode, Tests oder nicht-dokumentarische Konfiguration ohne Docker-/Deployment-Relevanz.
 
 Erforderlich:
-- [ ] Human-/Owner-Vorprüfung
 - [ ] Governance-/Security-Workflows
-- [ ] Git-2.55-Integritäts-/Toolchain-Prüfung
+- [ ] Git-Integritäts-/Toolchain-Prüfung
 - [ ] `npm ci`
 - [ ] `npm audit --omit=dev --audit-level=high`
 - [ ] Produktionskonfigurations-Invarianten
@@ -143,31 +136,11 @@ Erforderlich:
 - [ ] Predeploy-/Deployment-Readiness-Check
 - [ ] `build-and-test`
 
-Docker Image Build nur, wenn Klasse R zusätzlich zutrifft.
-
 ### Klasse R — Runtime / Dependency / Docker / Deployment
-Scope enthält z. B. `Dockerfile`, `.dockerignore`, `package*.json`, `server.ts`, `server/**`, `render.yaml`, Runtime-/Docker-Security-Skripte oder relevante Workflows.
-
-Zusätzlich zu Klasse C erforderlich:
-- [ ] Produktions-Docker-Image bauen
-- [ ] Image-User/CMD/Healthcheck verifizieren
-- [ ] Workflow-Security-Validierung bei Workflow-Änderungen
-- [ ] Deployment-/Rollback-Runbook prüfen, wenn Produktionsverhalten betroffen ist
-
-Pull Requests deployen **nicht** produktiv. Produktionsdeployment erfolgt erst nach Merge auf `main` und erfolgreicher Main-CI.
+Zusätzlich zu Klasse C: Produktions-Docker-Image, Image-User/CMD/Healthcheck, Workflow-Security bei Workflow-Änderungen, Deployment-/Rollback-Runbook wenn Produktionsverhalten betroffen.
 
 ### Klasse M — Externe Plattformmutation
-Scope beinhaltet eine geplante Mutation an Supabase, Stripe, Render oder einer anderen produktionsverbundenen Plattform.
-
-Zusätzlich erforderlich:
-- [ ] Roadmap/ADR/ESS autorisieren die konkrete Mutation
-- [ ] Human/Owner Mutation Approval liegt vor
-- [ ] Pre-Mutation Baseline/Test PASS
-- [ ] Rollback-Runbook ist ausführbar
-- [ ] Mutation wird mit Actor/Target/Timestamp/Request-/Deployment-ID protokolliert
-- [ ] Post-Mutation Verification PASS
-- [ ] Evidence ist dokumentiert
-- [ ] nächster Roadmap-Schritt bleibt bis `VERIFIED PASS` blockiert
+Zusätzlich: Roadmap/ADR/ESS, Owner Mutation Approval, Pre-/Post-Mutation Verification, Rollback-Runbook, Evidence.
 
 ### Für diesen PR
 
@@ -178,9 +151,6 @@ Zusätzlich erforderlich:
 
 ## 10. Technische Validierungsnachweise
 
-Trage nur Checks als erfolgreich ein, die für die gewählte Klasse tatsächlich erforderlich und ausgeführt wurden. Nicht erforderliche Checks mit `N/A — gemäß Klasse ...` kennzeichnen.
-
-- [ ] Owner-Gate PASS
 - [ ] Governance/Security PASS
 - [ ] Dependency/Audit PASS oder N/A
 - [ ] TypeScript/Lint PASS oder N/A
@@ -189,6 +159,7 @@ Trage nur Checks als erfolgreich ein, die für die gewählte Klasse tatsächlich
 - [ ] Docker/Runtime PASS oder N/A
 - [ ] Pre-/Post-Mutation Verification PASS oder N/A
 - [ ] `build-and-test` PASS
+- [ ] Owner-Gate Checkbox/Emoji — N/A (retired 2026-08-16)
 
 ## 11. Risiko und Rücksetzung
 
@@ -200,7 +171,6 @@ Trage nur Checks als erfolgreich ein, die für die gewählte Klasse tatsächlich
 
 ## 12. Prüf- und Merge-Bereitschaft
 
-- [ ] Human-/Owner-Review aus Abschnitt 8 ist vollständig.
 - [ ] Alle für die gewählte Checkklasse erforderlichen Checks sind PASS.
 - [ ] Pflichtprüfung `build-and-test` ist erfolgreich.
 - [ ] Governance-Prüfungen sind erfolgreich.
