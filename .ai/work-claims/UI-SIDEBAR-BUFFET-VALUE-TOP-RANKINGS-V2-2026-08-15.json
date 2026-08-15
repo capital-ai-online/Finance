@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "UI-SIDEBAR-BUFFET-VALUE-TOP-RANKINGS-V2-2026-08-15",
+  "status": "ready-for-pr",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6",
+    "executionSurface": "ChatGPT Work + GitHub connector"
+  },
+  "workItem": "Buffet Value Check im linken Seitenmenü unter Universe TOP Rankings einordnen",
+  "startedAt": "2026-08-15T02:40:00Z",
+  "baseBranch": "main",
+  "baseSha": "6db2661cfc2b99b4ba2ad5890da1f1e6cb95f7e4",
+  "productionBaseline": {
+    "mode": "verified",
+    "productionUrl": "https://capital-ai.online/healthz",
+    "productionVersion": "0.6.0",
+    "productionCommit": "6db2661cfc2b99b4ba2ad5890da1f1e6cb95f7e4",
+    "productionBranch": "main"
+  },
+  "claimedPaths": [
+    ".ai/work-claims/UI-SIDEBAR-BUFFET-VALUE-TOP-RANKINGS-V2-2026-08-15.json",
+    "src/components/Dashboard.tsx"
+  ],
+  "releaseCondition": "Claim wird erst nach Merge oder Schließung des Ersatz-PR freigegeben."
+}
