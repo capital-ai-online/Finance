@@ -1,42 +1,31 @@
-# SEO Block D (+ Q2 completion) — Implementation Notes (2026-08-15)
+# SEO Block D (+ Q2 completion) — Implementation Notes
 
-**Roadmap:** `docs/seo/SEO_MANAGEMENT_ROADMAP.md`  
-**Branch:** `seo/d-block-foundation`  
-**Claim:** `SEO-D-BLOCK-2026-08-15`  
-**PR:** https://github.com/SvenKulessa/Finance/pull/280
+**PR:** https://github.com/SvenKulessa/Finance/pull/280  
+**Branch:** `seo/d-block-foundation`
 
-## Delivered
+## Wiring status (2026-08-15)
 
-| ID | Status | Artefakt |
-|----|--------|----------|
-| **Q2** | code + tests | `server/middleware/seoUrlNormalize.ts` |
-| **D1** | done | JSON-LD in `index.html` |
-| **D2** | done | `src/lib/routeSeo.ts` + `src/main.tsx` |
-| **D3** | code ready | `server/runtime/spaFallback.ts` |
-| **D4** | done | `vite.config.ts` `manualChunks` |
-| **D5** | docs | `docs/seo/SEARCH_CONSOLE_MCP_RUNBOOK.md` |
-| **S1** | scaffold | `src/platform/SeoEngine/**`, migration draft, ADR draft |
+| ID | Status | How |
+|----|--------|-----|
+| **Q2 Trailing-Slash 301** | **LIVE in branch** | `registerTrailingSlashNormalize(app)` in `server/routes/registerApplicationRoutes.ts` |
+| **D3 Soft-404** | helper ready | `server/runtime/spaFallback.ts` — SPA catch-all in `server.application.ts` still uses `app.get('*')` until script applied |
 
-## Server-Wiring (noch offen in `server.application.ts`)
+### Apply remaining D3 soft-404 (one command)
 
-Datei ist sehr groß (~140 KB); deshalb extrahierte Module + Contract-Test.
+```bash
+node scripts/seo/apply-server-wiring.mjs
+git add server.application.ts && git commit -m "seo(D3): wire registerProductionSpaFallback in production SPA branch"
+```
 
-### 1) Imports (nach den bestehenden `server/runtime/*` Imports)
+The script is idempotent and also adds the import if missing.
+
+### Manual D3 snippet (if script is not used)
+
+Replace in `startServer()` production branch:
 
 ```ts
-import { registerTrailingSlashNormalize } from './server/middleware/seoUrlNormalize';
 import { registerProductionSpaFallback } from './server/runtime/spaFallback';
-```
-
-### 2) Nach dem `PROBE_PATH_PATTERNS`-Block
-
-```ts
-registerTrailingSlashNormalize(app);
-```
-
-### 3) Produktions-SPA-Zweig ersetzen
-
-```ts
+// ...
 } else {
   const distPath = path.join(process.cwd(), 'dist');
   app.use(express.static(distPath));
@@ -44,12 +33,8 @@ registerTrailingSlashNormalize(app);
 }
 ```
 
-Danach in `tests/server/seoApplicationWiring.contract.test.ts` `REQUIRE_WIRING = true` setzen.
+## Delivered artefacts
 
-## Owner follow-ups
-
-1. Q2/D3 Wiring (3 Snippets oben)
-2. Q3 Search-Console-Token
-3. Migration `20260815010000_seo_engine.sql` review + apply
-4. ADR-Nummer für SeoEngine vergeben
-5. S2 Prerender ADR
+- D1 JSON-LD, D2 routeSeo, D4 vite chunks, D5 GSC runbook
+- S1 SeoEngine scaffold
+- N1 `POST /api/social-media/generate` + client `generateSeries`
