@@ -255,3 +255,65 @@ export function evaluateProviderScopedAuthorization(
 
   return { ...iamDecision, layer: 'AGENT_IAM' };
 }
+
+
+export interface ProviderCutoverEvidence {
+  realCallerVerified: boolean;
+  canonicalControlPlanePathVerified: boolean;
+  providerSpecificBypassDenied: boolean;
+  auditCorrelationVerified: boolean;
+  rollbackToReadOnlyVerified: boolean;
+  externalHostConfigurationVerified: boolean;
+}
+
+export type ProviderCutoverReadinessDecision =
+  | { status: 'READY'; profile: Readonly<ProviderProfile> }
+  | { status: 'NOT_APPLICABLE'; profile: Readonly<ProviderProfile>; reason: string }
+  | { status: 'BLOCKED'; reason: string; missingEvidence: readonly (keyof ProviderCutoverEvidence)[] };
+
+/**
+ * M8 fail-closed cutover gate.
+ *
+ * Only profiles that can mutate state may become canonical execution providers. Read-only and
+ * development profiles without mutating capabilities remain explicitly NOT_APPLICABLE. This keeps
+ * Google AI Studio as a non-privileged Development Plane profile and does not reintroduce a Gemini
+ * API/runtime adapter. External connector/session grants must be verified at their owning host;
+ * repository evidence alone can never satisfy that boundary.
+ */
+export function evaluateProviderCutoverReadiness(
+  appId: string,
+  evidence: Readonly<ProviderCutoverEvidence>,
+  registry: Readonly<Record<string, Readonly<ProviderProfile>>> = PROVIDER_PROFILES,
+): ProviderCutoverReadinessDecision {
+  const resolved = registry[appId];
+  if (!resolved) {
+    return {
+      status: 'BLOCKED',
+      reason: `Unbekanntes Provider-Profil: ${appId}.`,
+      missingEvidence: [],
+    };
+  }
+
+  const canMutate = resolved.allowedCapabilities.some(capability =>
+    MUTATING_CAPABILITIES.has(capability),
+  );
+  if (!canMutate) {
+    return {
+      status: 'NOT_APPLICABLE',
+      profile: resolved,
+      reason: `Provider-Profil ${appId} besitzt keine mutierende Capability und benötigt keinen privilegierten Cutover.`,
+    };
+  }
+
+  const required = Object.keys(evidence) as (keyof ProviderCutoverEvidence)[];
+  const missingEvidence = required.filter(key => evidence[key] !== true);
+  if (missingEvidence.length > 0) {
+    return {
+      status: 'BLOCKED',
+      reason: `M8-Cutover für ${appId} ist ohne vollständige Caller-, Control-Plane-, Bypass-, Audit-, Rollback- und Host-Evidence blockiert.`,
+      missingEvidence: Object.freeze(missingEvidence),
+    };
+  }
+
+  return { status: 'READY', profile: resolved };
+}
