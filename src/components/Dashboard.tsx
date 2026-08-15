@@ -528,6 +528,20 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                             </button>
                           </SidebarTooltip>
 
+                          <SidebarTooltip title="Buffet Value Check" text="Bewertet Aktien nach den zeitlosen Kriterien der Value-Investing-Legende Warren Buffett und berechnet den fairen inneren Wert.">
+                            <button 
+                              onClick={() => navigateTo('buffet-value')}
+                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
+                                activeView === 'buffet-value' 
+                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
+                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <Percent size={14} />
+                              <span>Buffet Value Check</span>
+                            </button>
+                          </SidebarTooltip>
+
                           <SidebarTooltip title="Abonnements & Tarife" text="Verwalte Deine Zahlungsmethoden und wähle den optimalen Tarif für Deine Investment-Bedürfnisse.">
                             <button 
                               onClick={() => navigateTo('abonnements')}
@@ -633,19 +647,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                             </button>
                           </SidebarTooltip>
 
-                          <SidebarTooltip title="Buffet Value Check" text="Bewertet Aktien nach den zeitlosen Kriterien der Value-Investing-Legende Warren Buffett und berechnet den fairen inneren Wert.">
-                            <button 
-                              onClick={() => navigateTo('buffet-value')}
-                              className={`w-full px-4 py-2.5 rounded-xl text-left text-xs font-bold uppercase tracking-wider flex items-center gap-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT ${
-                                activeView === 'buffet-value' 
-                                  ? 'bg-aif-gold-DEFAULT text-black font-black shadow-[0_0_15px_rgba(245,196,83,0.25)]' 
-                                  : 'text-white/70 hover:text-white hover:bg-white/5 border border-transparent'
-                              }`}
-                            >
-                              <Percent size={14} />
-                              <span>BuffetValueCheck</span>
-                            </button>
-                          </SidebarTooltip>
+
 
                           <SidebarTooltip title="Backtest Engine" text="Teste historische Handelsstrategien (wie gleitende Durchschnitte) an vergangenen Daten, um zu sehen, wie profitabel sie gewesen wären.">
                             <button 
