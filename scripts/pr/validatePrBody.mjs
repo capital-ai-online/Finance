@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import {
   PR_TEMPLATE_MARKER,
+  bodyHasGovernanceId,
   fail,
   githubJson,
   listAddedClaimFiles,
@@ -24,12 +25,12 @@ if (!fs.existsSync(baselinePath)) fail(`Produktions-Baseline fehlt: ${baselinePa
 const pr = await githubJson(`https://api.github.com/repos/${repository}/pulls/${prNumber}`, token);
 const body = String(pr.body || '');
 
-// 1) Kanonischer Template-Marker (v1.3.4)
+// 1) Kanonischer Template-Marker (Comment und/oder sichtbare Form)
 if (!body.includes(PR_TEMPLATE_MARKER)) {
   fail(`PR #${prNumber} verwendet nicht den Marker der kanonischen Vorlage: ${PR_TEMPLATE_MARKER}`);
 }
 
-// 2) Pflichtabschnitte gemäß .github/pull_request_template.md v1.3.4
+// 2) Pflichtabschnitte gemäß .github/pull_request_template.md
 const requiredSections = [
   '## 1. Arbeitsauftrag',
   '## 2. Agenten-/Principal-Identität und PR-Erstellungsfreigabe',
@@ -51,21 +52,21 @@ const requiredSections = [
 const missingSections = requiredSections.filter((heading) => !body.includes(heading));
 if (missingSections.length > 0) {
   fail(
-    `PR #${prNumber} enthält nicht alle Pflichtabschnitte der kanonischen Vorlage v1.3.4: ${missingSections.join(', ')}`,
+    `PR #${prNumber} enthält nicht alle Pflichtabschnitte der kanonischen Vorlage: ${missingSections.join(', ')}`,
   );
 }
 
-// 3) Maschinenlesbare Governance-Marker (dürfen nicht entfernt/dupliziert werden)
-const requiredMarkers = [
-  '<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->',
-  '<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->',
-  '<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->',
-  '<!-- CAPITAL_AI_OWNER_FILES_ATTESTATION -->',
+// 3) Governance-IDs: HTML-Kommentar und/oder sichtbare Fallback-Zeile
+const requiredIds = [
+  'CAPITAL_AI_PRODUCTION_BASELINE_START',
+  'CAPITAL_AI_PRODUCTION_BASELINE_END',
+  'CAPITAL_AI_OWNER_DIFF_ATTESTATION',
+  'CAPITAL_AI_OWNER_FILES_ATTESTATION',
 ];
-const missingMarkers = requiredMarkers.filter((m) => !body.includes(m));
-if (missingMarkers.length > 0) {
+const missingIds = requiredIds.filter((id) => !bodyHasGovernanceId(body, id));
+if (missingIds.length > 0) {
   fail(
-    `PR #${prNumber} fehlt mindestens ein maschinenlesbarer Governance-Marker: ${missingMarkers.join(', ')}`,
+    `PR #${prNumber} fehlt mindestens eine maschinenlesbare Governance-ID (Comment oder sichtbare Form): ${missingIds.join(', ')}`,
   );
 }
 
@@ -108,5 +109,5 @@ if (!body.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja')) {
 }
 
 console.log(
-  `[PR-VORLAGE] PR #${prNumber} verwendet die kanonische deutschsprachige Vorlage v1.3.4 und entspricht den aktuellen Work-Claim-/Produktions-Baseline-Nachweisen.`,
+  `[PR-VORLAGE] PR #${prNumber} entspricht dem kanonischen Vorlagenvertrag (Comment- und/oder sichtbare Governance-IDs).`,
 );

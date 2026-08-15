@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
-export const PR_TEMPLATE_VERSION = '1.3.4';
+export const PR_TEMPLATE_VERSION = '1.3.5';
 export const PR_TEMPLATE_MARKER = `CAPITAL_AI_PR_TEMPLATE_VERSION: ${PR_TEMPLATE_VERSION}`;
 export const DEFAULT_PRODUCTION_HEALTH_URL = 'https://capital-ai.online/healthz';
 export const MAX_PR_START_DELAY_MS = 15 * 60 * 1000;
@@ -255,4 +255,10 @@ export function compareSemver(a, b) {
     if (left[i] < right[i]) return -1;
   }
   return 0;
+}
+
+/** True if body contains HTML-comment form and/or visible backtick form of a governance ID. */
+export function bodyHasGovernanceId(body, id) {
+  const text = String(body || '');
+  return text.includes(`<!-- ${id} -->`) || text.includes(`\`${id}\``) || new RegExp(`(^|\\n)\\s*${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*($|\\n)`).test(text);
 }
