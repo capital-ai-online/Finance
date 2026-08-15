@@ -10,26 +10,67 @@ import { isPublicSpaPath, stripTrailingSlashPath } from '../middleware/seoUrlNor
  * (dist/<route>/index.html from scripts/seo/prerender-public-routes.mjs),
  * otherwise dist/index.html (200).
  * Unknown paths receive HTTP 404 (no soft-404 SPA shell).
+ *
+ * Security: request URL segments are never joined into filesystem paths.
+ * Only an allowlist maps public routes → fixed relative filenames under dist.
  */
 
+/** Fixed relative paths under dist — no user input in these strings. */
+const PUBLIC_ROUTE_HTML: Readonly<Record<string, string>> = {
+  '/': 'index.html',
+  '/impressum': path.join('impressum', 'index.html'),
+  '/agb': path.join('agb', 'index.html'),
+  '/datenschutz': path.join('datenschutz', 'index.html'),
+};
+
+function isPathInsideRoot(rootDir: string, candidate: string): boolean {
+  const root = path.resolve(rootDir);
+  const resolved = path.resolve(candidate);
+  const rel = path.relative(root, resolved);
+  return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+}
+
+/**
+ * Resolve the HTML file for a public SPA path.
+ * Input is only used for allowlist lookup after normalization — never as a path segment.
+ */
 function resolvePublicHtmlFile(distPath: string, requestPath: string): string {
+  const root = path.resolve(distPath);
+  const fallback = path.resolve(root, 'index.html');
   const normalized = stripTrailingSlashPath(requestPath);
-  if (normalized === '/') {
-    return path.join(distPath, 'index.html');
+
+  const relative = PUBLIC_ROUTE_HTML[normalized];
+  if (!relative) {
+    // Caller should only invoke for public paths; fail closed to root index.
+    return fallback;
   }
-  const routeFile = path.join(distPath, normalized.slice(1), 'index.html');
-  if (fs.existsSync(routeFile)) {
-    return routeFile;
+
+  const candidate = path.resolve(root, relative);
+  if (!isPathInsideRoot(root, candidate)) {
+    return fallback;
   }
-  return path.join(distPath, 'index.html');
+
+  if (normalized !== '/' && !fs.existsSync(candidate)) {
+    return fallback;
+  }
+
+  return candidate;
 }
 
 export function registerProductionSpaFallback(app: Express, distPath: string): void {
+  const root = path.resolve(distPath);
+
   app.get('*', (req: Request, res: Response) => {
-    if (isPublicSpaPath(req.path)) {
-      return res.sendFile(resolvePublicHtmlFile(distPath, req.path));
+    if (!isPublicSpaPath(req.path)) {
+      return res.status(404).type('text/plain').send('Not Found');
     }
-    return res.status(404).type('text/plain').send('Not Found');
+
+    const file = resolvePublicHtmlFile(root, req.path);
+    if (!isPathInsideRoot(root, file)) {
+      return res.status(404).type('text/plain').send('Not Found');
+    }
+
+    return res.sendFile(file);
   });
 }
 
@@ -72,4 +113,4 @@ export function installProductionSoft404Intercept(): void {
 }
 
 /** Exported for unit tests */
-export { resolvePublicHtmlFile };
+export { resolvePublicHtmlFile, isPathInsideRoot, PUBLIC_ROUTE_HTML };
