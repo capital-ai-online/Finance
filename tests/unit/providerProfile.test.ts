@@ -258,3 +258,37 @@ describe('Negative Tests (M8 runbook)', () => {
     expect(read.verdict).toBe('ALLOW');
   });
 });
+
+// M8 (ADR-0062) Exit Gate item 6: "rollback-to-read-only is proven", specifically "disable the
+// privileged provider profile" (M8 runbook Rollback requirement 1). Proves the profile registry
+// itself is a real, independent rollback lever - distinct from the killSwitchActive flag above -
+// using a rolled-back registry snapshot injected via the registry parameter, never mutating the
+// real exported PROVIDER_PROFILES singleton.
+describe('Rollback-to-read-only via profile registry (M8 Exit Gate item 6)', () => {
+  const rolledBackRegistry = {
+    ...PROVIDER_PROFILES,
+    'chatgpt-github-connector': {
+      ...PROVIDER_PROFILES['chatgpt-github-connector'],
+      allowedCapabilities: ['READ', 'ANALYZE'] as const,
+    },
+  };
+
+  it('denies a previously-allowed mutating capability once the profile is rolled back', () => {
+    const decision = evaluateProviderScopedAuthorization(
+      request('chatgpt-github-connector', { capability: 'BRANCH', registry: rolledBackRegistry }),
+    );
+    expect(decision.verdict).toBe('DENY');
+    expect(decision.layer).toBe('PROVIDER_PROFILE');
+  });
+
+  it('keeps read access available through the same rolled-back profile', () => {
+    const decision = evaluateProviderScopedAuthorization(
+      request('chatgpt-github-connector', { capability: 'READ', registry: rolledBackRegistry }),
+    );
+    expect(decision.verdict).toBe('ALLOW');
+  });
+
+  it('never mutated the real exported PROVIDER_PROFILES singleton', () => {
+    expect(PROVIDER_PROFILES['chatgpt-github-connector'].allowedCapabilities).toContain('BRANCH');
+  });
+});

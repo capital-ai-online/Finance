@@ -231,6 +231,14 @@ export interface SystemadminRoadmapAuthorizationRequest {
   targetResource: string;
   mandate: unknown;
   execution: Readonly<SystemadminRoadmapExecutionContext>;
+  /**
+   * M8 (ADR-0062) rollback-to-read-only lever: distinct from mandate.killSwitch.enabled, which
+   * denies everything (including READ) when disabled. Setting this true denies only mutating
+   * capabilities while READ/ANALYZE/PLAN stay available, matching the M8 runbook's Rollback
+   * requirement to "restore read-only operation" rather than cut access entirely. Optional and
+   * off by default - existing callers are unaffected.
+   */
+  killSwitchActive?: boolean;
 }
 
 export interface SystemadminRoadmapAuthorizationDecision {
@@ -724,6 +732,7 @@ export function evaluateSystemadminRoadmapAuthorization(
           stepUpVerified: false,
         }
       : undefined,
+    killSwitchActive: request.killSwitchActive,
   } as const;
 
   const iamDecision: AgentAuthorizationDecision = evaluateAgentAuthorization(iamRequest);

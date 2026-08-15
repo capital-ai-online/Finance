@@ -191,15 +191,62 @@ gegen synthetische Fixtures.
 ## 4. Was dieses Ergebnis NICHT bedeutet
 
 - M8 als Ganzes ist **nicht** `COMPLETE / VERIFIED PASS`. Bisher deckt dies „Phase 1 — Provider
-  Profile Implementation" (für die 4 dokumentierten Provider) plus eine reale Verdrahtung an genau
-  einen bestehenden Aufrufer (SA3/SA3B) ab. Offen bleiben laut Runbook-Exit-Gate insbesondere: die
-  Cutover-Sequenz für die übrigen Provider (Claude Code, Google AI Studio, NotebookLM haben noch
-  keinen echten Aufrufer), direkte Provider-Bypässe deaktivieren, Rollback-zu-read-only real
-  bewiesen, und die Frage, wie/ob die Live-interaktive-Sitzungs-Lücke (Abschnitt 1.2) überhaupt im
-  Scope von M8 geschlossen werden kann, da sie außerhalb der Repository-Kontrolle liegt.
+  Profile Implementation" (für die 4 dokumentierten Provider), eine reale Verdrahtung an genau einen
+  bestehenden Aufrufer (SA3/SA3B) und den Rollback-zu-read-only-Nachweis (Abschnitt 7) ab. Offen
+  bleiben laut Runbook-Exit-Gate insbesondere: die Cutover-Sequenz für die übrigen Provider (Claude
+  Code, Google AI Studio, NotebookLM haben noch keinen echten Aufrufer), direkte Provider-Bypässe
+  deaktivieren, und die Frage, wie/ob die Live-interaktive-Sitzungs-Lücke (Abschnitt 1.2) überhaupt
+  im Scope von M8 geschlossen werden kann, da sie außerhalb der Repository-Kontrolle liegt.
 - Kein bestehender direkter Provider-Zugriffspfad wurde deaktiviert. Der SA3B-Live-Host verhält sich
   für seine tatsächlich genutzte Capability (BRANCH) exakt wie vor dieser Änderung — die neue Schicht
   ist bewiesen ein reiner Zusatz, keine Verhaltensänderung.
+
+## 7. Nachtrag — Rollback-zu-read-only real bewiesen (M8-Exit-Gate-Punkt 6, 2026-08-15)
+
+Owner-Anweisung (nach Merge der SA3B-Verdrahtung): „fahre mit Roadmap fort" → gewähltes nächstes
+Element (bei fehlender Präferenz empfohlene Option): Rollback-zu-read-only beweisen, direktes
+Gegenstück zu M7s Rollback-Nachweis.
+
+**Befund vor der Umsetzung:** Der einzige bisher an SA3B verdrahtete Kill-Switch
+(`mandate.killSwitch.enabled`) verweigert bei Deaktivierung **alles**, inklusive `READ` — zu strikt,
+um „restore read-only operation" (M8-Runbook, Rollback-Anforderung 3) tatsächlich zu belegen.
+`agentIam.ts`s eigener `killSwitchActive`-Mechanismus verweigert dagegen gezielt nur mutierende
+Capabilities und erhält `READ`/`ANALYZE`/`PLAN` — genau das vom Runbook geforderte Verhalten —, war
+aber bisher **nicht** durch die SA1-REM-Kette hindurch verdrahtet
+(`evaluateSystemadminRoadmapAuthorization`s `iamRequest` enthielt kein `killSwitchActive`-Feld).
+
+**Schließung (additiv, rein einschränkend):**
+- `src/platform/Security/roadmapExecutionMandate.ts`: `SystemadminRoadmapAuthorizationRequest`
+  erhält ein neues, optionales Feld `killSwitchActive?: boolean` (Standard: nicht gesetzt = keine
+  Verhaltensänderung), das unverändert an `evaluateAgentAuthorization()` durchgereicht wird. Fließt
+  automatisch durch die gesamte bestehende Kette (Broker → SA3 → SA2 → SA1 → M4), ohne
+  `systemadminExecutionProfile.ts` oder `systemadminAuditedExecution.ts` ändern zu müssen.
+- `src/platform/Security/providerProfile.ts`: `checkProviderProfileScope()` (und darüber
+  `evaluateProviderScopedAuthorization()`) erhält ein optionales `registry`-Parameter — beweist den
+  zweiten, unabhängigen Rollback-Hebel „Provider-Profil deaktivieren" (M8-Runbook-Anforderung 1),
+  ohne die exportierte `PROVIDER_PROFILES`-Singleton-Registry je zu mutieren.
+
+**Realer Nachweis (nicht nur synthetisch):**
+- 2 neue Tests in `tests/unit/roadmapExecutionMandate.test.ts`: `killSwitchActive: true` verweigert
+  `BRANCH`/`COMMIT`/`PR`/`CI_REQUEST`, erlaubt `READ`/`ANALYZE`/`PLAN` weiterhin; Normalbetrieb ohne
+  das Flag bleibt unverändert.
+- 2 neue Tests in `tests/unit/systemadminAuditedExecution.test.ts`, end-to-end durch die **echte,
+  live verdrahtete** SA3B-Kette (`authorizeSystemadminAuditedExecution`, nicht nur die isolierte
+  REM-Unit-Test-Ebene): die tatsächlich live genutzte Capability `BRANCH` wird bei
+  `killSwitchActive: true` verweigert; `READ` bleibt durch dieselbe zurückgerollte Kette erlaubt.
+- 3 neue Tests in `tests/unit/providerProfile.test.ts`: eine zurückgerollte Registry-Momentaufnahme
+  (chatgpt-github-connector-Profil auf `READ`/`ANALYZE` verengt) verweigert `BRANCH`, erlaubt `READ`;
+  die reale exportierte `PROVIDER_PROFILES`-Registry bleibt dabei nachweislich unverändert.
+
+**Testlauf:** `npx vitest run` — **975 Tests, 174 Dateien, alle PASS** (davon neu: 7). Bestehende
+SA1/SA2/SA3-Tests (37 vorher) bestehen unverändert — reine additive Erweiterung, kein bestehendes
+Verhalten geändert.
+
+**Ergebnis:** M8-Exit-Gate-Punkt 6 („rollback-to-read-only is proven") ist für den bisher einzigen
+real verdrahteten Aufrufer (SA3B) real bewiesen, mit zwei unabhängigen, komponierbaren Hebeln
+(IAM-Kill-Switch und Provider-Profil-Registry). Für Provider ohne echten Aufrufer (Claude Code,
+Google AI Studio, NotebookLM) ist dieser Nachweis mangels Aufrufer nicht anwendbar — bleibt offen,
+bis ein echter Aufrufer für sie existiert.
 
 ## 5. Geänderte/neue Dateien
 
@@ -215,5 +262,12 @@ gegen synthetische Fixtures.
 - `server/agentAudit/systemadminAuditedExecution.ts` (neue Komposition mit
   `checkProviderProfileScope()`)
 - `tests/unit/systemadminAuditedExecution.test.ts` (3 neue Tests)
+
+**Nachtrag — Rollback-zu-read-only:**
+- `src/platform/Security/roadmapExecutionMandate.ts` (neues optionales Feld `killSwitchActive`)
+- `src/platform/Security/providerProfile.ts` (neues optionales `registry`-Parameter)
+- `tests/unit/roadmapExecutionMandate.test.ts` (2 neue Tests)
+- `tests/unit/systemadminAuditedExecution.test.ts` (2 neue Tests)
+- `tests/unit/providerProfile.test.ts` (3 neue Tests)
 
 `docs/evidence/m8/M8_PHASE0_AND_PROVIDER_PROFILE_EVIDENCE.md` (diese Datei)
