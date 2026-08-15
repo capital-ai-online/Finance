@@ -1,0 +1,25 @@
+{
+  "claimId": "SEO-S4-LANGUAGE-STRATEGY-2026-08-15",
+  "title": "SEO S4 Sprach- und hreflang-Strategie",
+  "roadmap": "docs/seo/SEO_MANAGEMENT_ROADMAP.md",
+  "roadmapIds": ["S4"],
+  "branch": "seo/s4-language-strategy",
+  "base": "main@ac47dfd901155c56c61f733bc7e8df9e892341ff",
+  "owner": "SvenKulessa",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6",
+    "surface": "ChatGPT Work + GitHub Connector"
+  },
+  "scope": [
+    "docs/seo/S4_LANGUAGE_AND_HREFLANG_STRATEGY.md",
+    "docs/seo/S3_SEO_DASHBOARD.md",
+    "docs/seo/SEO_CHECKLIST.md",
+    "docs/seo/SEO_MANAGEMENT_ROADMAP.md",
+    ".ai/work-claims/SEO-S3-DASHBOARD-2026-08-15.json",
+    ".ai/work-claims/SEO-S4-LANGUAGE-STRATEGY-2026-08-15.json"
+  ],
+  "externalMutations": [],
+  "status": "implemented-awaiting-validation-and-pr-authorization",
+  "createdAt": "2026-08-15"
+}
