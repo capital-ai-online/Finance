@@ -1,7 +1,8 @@
-# ADR-0014 Phase 3.4.7 — Market Data Runtime Facade
+# ADR-0075 Phase 3.4.7 — Market Data Runtime Facade
 
 Status: Proposed
 Date: 2026-08-08
+Supersedes-Number-Only: formerly filed as ADR-0014 (number collision; content unchanged)
 
 ## Context
 

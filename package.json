@@ -29,7 +29,9 @@
     "supplychain:provenance": "tsx scripts/automation/buildSupplyChainProvenance.ts",
     "supplychain:verify": "tsx scripts/security/verifySupplyChainProvenance.ts",
     "traceability:build": "tsx src/platform/Traceability/Services/runTraceability.ts",
-    "rag:build-index": "tsx scripts/automation/buildRagIndex.ts"
+    "rag:build-index": "tsx scripts/automation/buildRagIndex.ts",
+    "governance:shadow-adr": "node scripts/governance/shadowAdrMetadataValidator.mjs",
+    "governance:score": "node scripts/governance/weeklyGovernanceScore.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
