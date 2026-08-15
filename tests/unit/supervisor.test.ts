@@ -24,8 +24,11 @@ describe('supervisor', () => {
       expect(routeTask('index')?.hasDedicatedEngine).toBe(true);
     });
 
-    it('kennzeichnet Anleihen weiterhin ehrlich als ohne dedizierte Engine', () => {
-      expect(routeTask('bond')?.hasDedicatedEngine).toBe(false);
+    it('routet Anleihen auf die Sovereign-Benchmark-Rendite-Engine, ehrlich begrenzt auf Yield-State', () => {
+      const route = routeTask('bond');
+      expect(route?.engineId).toBe('sovereign_benchmark_yield_engine');
+      expect(route?.hasDedicatedEngine).toBe(true);
+      expect(route?.label).toMatch(/kein Einzelanleihen/i);
     });
 
     it('liefert undefined fuer eine unbekannte Anlageklasse', () => {

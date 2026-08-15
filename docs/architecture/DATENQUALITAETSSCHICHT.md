@@ -124,6 +124,30 @@ Diese Auflistung ist bewusst Teil des Dokuments statt stillschweigend ausgelasse
   — ein eigenständiger, vom `pattern`-Fund unabhängiger Befund, bei der Durchsicht dieses
   Datenpunkts entdeckt. Nicht Bestandteil dieses Commits.
 
+## 5. Nachtrag 2026-08-15 — P2-1 Bestandsaufnahme deckt zwei veraltete Aussagen auf
+
+Im Rahmen der Roadmap-Priorität P2-1 (Datenqualitätsmetriken) wurde eine vollständige read-only
+Bestandsaufnahme der Provenance-/Lineage-/Provider-Health-Infrastruktur durchgeführt:
+`docs/evidence/p2-1/P2_1_SA_P07_DATA_QUALITY_LINEAGE_INVENTORY.md`. Zwei Aussagen dieses Dokuments
+sind dadurch als veraltet identifiziert:
+
+- **Abschnitt 1, Anleihen-Zeile:** „Historie ❌ nicht abgedeckt" ist überholt. `src/services/
+  eodhdBondEvidence.ts` liefert seit ADR-0033 (2026-08-02) real evidenzbasierte Rendite-Historie
+  (EODHD `*.GBOND`), und `src/services/sovereignBenchmarkEvidenceScoring.ts` ist ein dediziertes,
+  freigegebenes Scoring dafür. Weiterhin zutreffend: kein Live-Kurs für Einzelanleihen
+  (`individualBondScoringEligible: false`).
+- **Abschnitt 4, H1-Fundamentaldaten-Zeitstempel:** überholt. `server/stockFundamentals.ts`
+  exportiert seit dem in der Bestandsaufnahme referenzierten Code bereits ein vollständiges
+  `FinancialFieldProvenance[]` je Fundamentaldaten-Feld inklusive `retrievedAt`/`observedAt`.
+
+Alle übrigen in Abschnitt 4 gelisteten Lücken (News-Sentiment, `CryptoEnterpriseEvaluator.tsx`
+hartkodierte Fallback-Werte) sind laut Bestandsaufnahme weiterhin unverändert offen. Zusätzlich hat
+die Bestandsaufnahme einen bislang unbekannten Befund in `src/platform/Supervisor/supervisor.ts:36`
+aufgedeckt (Anleihen-Routing-Tabelle behauptete `hasDedicatedEngine: false` trotz real verdrahtetem
+Scoring) — auf separate Owner-Anweisung („behebe F1") am 2026-08-15 in
+`src/platform/Supervisor/supervisor.ts` korrigiert, siehe Inventar-Dokument Abschnitt 7/10,
+Befund F1.
+
 ## Nicht Bestandteil dieses Dokuments
 
 - **Versionierung von Korrekturen.** Eine echte Korrektur-Historie (z. B. "scoreBasis für AAPL
