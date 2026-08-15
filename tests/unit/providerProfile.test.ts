@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  evaluateProviderCutoverReadiness,
   evaluateProviderScopedAuthorization,
   PROVIDER_PROFILES,
   type ProviderScopedAuthorizationRequest,
@@ -290,5 +291,83 @@ describe('Rollback-to-read-only via profile registry (M8 Exit Gate item 6)', () 
 
   it('never mutated the real exported PROVIDER_PROFILES singleton', () => {
     expect(PROVIDER_PROFILES['chatgpt-github-connector'].allowedCapabilities).toContain('BRANCH');
+  });
+});
+
+
+describe('M8 Provider Cutover Readiness Gate', () => {
+  const completeEvidence = {
+    realCallerVerified: true,
+    canonicalControlPlanePathVerified: true,
+    providerSpecificBypassDenied: true,
+    auditCorrelationVerified: true,
+    rollbackToReadOnlyVerified: true,
+    externalHostConfigurationVerified: true,
+  } as const;
+
+  it('allows a mutating provider only with complete cutover evidence', () => {
+    const decision = evaluateProviderCutoverReadiness(
+      'chatgpt-github-connector',
+      completeEvidence,
+    );
+    expect(decision.status).toBe('READY');
+  });
+
+  it('fails closed when external host or bypass evidence is missing', () => {
+    const decision = evaluateProviderCutoverReadiness('claude-code-cli', {
+      ...completeEvidence,
+      providerSpecificBypassDenied: false,
+      externalHostConfigurationVerified: false,
+    });
+    expect(decision).toMatchObject({
+      status: 'BLOCKED',
+      missingEvidence: [
+        'providerSpecificBypassDenied',
+        'externalHostConfigurationVerified',
+      ],
+    });
+  });
+
+  it('keeps Google AI Studio non-privileged and does not require a Gemini runtime cutover', () => {
+    const decision = evaluateProviderCutoverReadiness('google-ai-studio', {
+      realCallerVerified: false,
+      canonicalControlPlanePathVerified: false,
+      providerSpecificBypassDenied: false,
+      auditCorrelationVerified: false,
+      rollbackToReadOnlyVerified: false,
+      externalHostConfigurationVerified: false,
+    });
+    expect(decision.status).toBe('NOT_APPLICABLE');
+    expect(PROVIDER_PROFILES['google-ai-studio'].allowedCapabilities).not.toContain('BRANCH');
+    expect(PROVIDER_PROFILES['google-ai-studio'].allowedCapabilities).not.toContain('PR');
+    expect(PROVIDER_PROFILES.gemini).toBeUndefined();
+  });
+
+  it('keeps NotebookLM research-only and outside privileged cutover', () => {
+    const decision = evaluateProviderCutoverReadiness('notebooklm', completeEvidence);
+    expect(decision.status).toBe('NOT_APPLICABLE');
+  });
+
+  it('fails closed even when an untyped caller omits a required evidence field', () => {
+    const incomplete = {
+      realCallerVerified: true,
+      canonicalControlPlanePathVerified: true,
+      providerSpecificBypassDenied: true,
+      auditCorrelationVerified: true,
+      rollbackToReadOnlyVerified: true,
+    };
+    const decision = evaluateProviderCutoverReadiness(
+      'claude-code-cli',
+      incomplete as never,
+    );
+    expect(decision).toMatchObject({
+      status: 'BLOCKED',
+      missingEvidence: ['externalHostConfigurationVerified'],
+    });
+  });
+
+  it('blocks unknown or removed provider aliases such as Gemini', () => {
+    const decision = evaluateProviderCutoverReadiness('gemini', completeEvidence);
+    expect(decision).toMatchObject({ status: 'BLOCKED', missingEvidence: [] });
   });
 });
