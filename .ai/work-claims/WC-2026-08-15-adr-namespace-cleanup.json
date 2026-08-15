@@ -1,0 +1,29 @@
+{
+  "claimId": "WC-2026-08-15-adr-namespace-cleanup",
+  "title": "ADR namespace cleanup, shadow metadata validator, weekly governance score",
+  "createdAt": "2026-08-15T21:45:00.000Z",
+  "createdBy": {
+    "provider": "xAI",
+    "model": "Grok",
+    "surface": "Grok Chat / GitHub MCP"
+  },
+  "authorizedByHuman": true,
+  "scope": {
+    "paths": [
+      "docs/adr/",
+      "docs/governance/",
+      "scripts/governance/",
+      "package.json",
+      ".ai/work-claims/"
+    ],
+    "excludes": [
+      "server/**",
+      "src/**",
+      ".github/workflows/**"
+    ]
+  },
+  "intent": "Eliminate duplicate ADR numbers; add ADR-0081; advisory shadow validator and weekly score; version governance library report.",
+  "prClassExpected": "C",
+  "mergeBlockingChecks": false,
+  "notes": "Shadow validator is advisory (exit 0). No runtime/deploy mutation."
+}
