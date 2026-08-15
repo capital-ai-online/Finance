@@ -1,23 +1,7 @@
 // ADR-0020 — Social Media Direct Publishing Router (echte Implementierung).
 //
-// Ersetzt src/routes/socialMediaRoutes.ts aus dem Google-AI-Studio-Handover vollstaendig.
-// Kernunterschiede zum Handover-Prototyp:
-//  1. Jeder Endpunkt verlangt eine verifizierte Nutzer-Identitaet (resolveVerifiedIdentity) -
-//     der Prototyp hatte GAR KEINE Auth, Konten/Logs waren ein einziges globales In-Memory-
-//     Array fuer alle Besucher der Anwendung gleichzeitig.
-//  2. `/accounts/toggle` kann ein Konto nur noch TRENNEN, nicht mehr "verbinden" ohne echten
-//     OAuth-Handshake - der Prototyp liess jeden Client per Request-Body ein Konto als
-//     "connected" markieren, mit frei erfundenem accessTokenMasked-Wert.
-//  3. `/auth/callback` verifiziert den `state`-Parameter gegen social_media_oauth_states und
-//     tauscht den `code` echt gegen ein Access-Token (siehe oauthExchange.ts).
-//  4. `/publish` ruft echte Plattform-APIs auf (platformPublishers.ts) statt Fake-URLs zu
-//     konstruieren, und schreibt in social_media_publish_log statt in ein In-Memory-Array.
-//
-// ADR-0021 — zusaetzlich zur Auth-Pflicht (401 ohne gueltiges Token) verlangt jeder Endpunkt
-// mit echter Funktionalitaet Owner-IAM-Rolle ODER den 'Founder'-Abo-Tarif (403 sonst) - siehe
-// server/socialMedia/accessControl.ts.
-//
-// SEO-ROADMAP-0001 / N1 — POST /generate delivers text variants only (no media, no auto-publish).
+// SEO-ROADMAP-0001 / N1+N2 — POST /generate delivers text variants + script templates.
+// No media rendering (N3). No auto-publish.
 
 import { Router, Request, Response } from 'express';
 import { checkRateLimit, getClientIp } from '../platform/Security/rateLimiter';
@@ -28,6 +12,7 @@ import { publishToPlatform } from '../../server/socialMedia/platformPublishers';
 import { recordPublishLog, listPublishLogForUser } from '../../server/socialMedia/publishLog';
 import { checkSocialMediaAccess, accessDeniedMessage } from '../../server/socialMedia/accessControl';
 import { generateTextContent } from '../../server/socialMedia/textContentGeneration';
+import { buildScriptPackage } from '../../server/socialMedia/scriptTemplates';
 import type { SupportedAccountPlatform, PublishRequestPayload } from '../platform/SocialMediaEngine/types';
 
 export const socialMediaRouter = Router();
@@ -41,7 +26,6 @@ function getRedirectUri(req: Request): string {
   return `${protocol}://${host}/api/social-media/auth/callback`;
 }
 
-/** Auth (401) + Autorisierung (403, ADR-0021: nur Owner-IAM-Rolle oder Founder-Abo). */
 async function requireAccess(req: Request, res: Response): Promise<{ userId: string; email: string | null } | null> {
   const access = await checkSocialMediaAccess(req);
   if (access.reason === 'unauthenticated') {
@@ -55,14 +39,11 @@ async function requireAccess(req: Request, res: Response): Promise<{ userId: str
   return { userId: access.userId!, email: access.email ?? null };
 }
 
-// GET /api/social-media/access — liefert nur den Zugriffsstatus (immer 200), damit das
-// Frontend eine klare "kein Zugriff"-Ansicht statt eines rohen 401/403 rendern kann.
 socialMediaRouter.get('/access', async (req: Request, res: Response) => {
   const access = await checkSocialMediaAccess(req);
   res.json({ success: true, allowed: access.allowed, reason: access.reason });
 });
 
-// GET /api/social-media/accounts
 socialMediaRouter.get('/accounts', async (req: Request, res: Response) => {
   const identity = await requireAccess(req, res);
   if (!identity) return;
@@ -70,8 +51,6 @@ socialMediaRouter.get('/accounts', async (req: Request, res: Response) => {
   res.json({ success: true, accounts, timestamp: new Date().toISOString() });
 });
 
-// POST /api/social-media/accounts/toggle — nur zum Trennen. Verbinden laeuft ausschliesslich
-// ueber den echten OAuth-Handshake (/auth/url -> Provider -> /auth/callback).
 socialMediaRouter.post('/accounts/toggle', async (req: Request, res: Response) => {
   const identity = await requireAccess(req, res);
   if (!identity) return;
@@ -95,7 +74,6 @@ socialMediaRouter.post('/accounts/toggle', async (req: Request, res: Response) =
   res.json({ success: true, platform, accounts });
 });
 
-// GET /api/social-media/auth/url
 socialMediaRouter.get('/auth/url', async (req: Request, res: Response) => {
   const identity = await requireAccess(req, res);
   if (!identity) return;
@@ -123,9 +101,6 @@ socialMediaRouter.get('/auth/url', async (req: Request, res: Response) => {
   res.json({ success: true, platform, url: result.url, redirectUri });
 });
 
-// GET /api/social-media/auth/callback — Browser-Redirect vom Provider, kein Bearer-Token
-// verfuegbar. Die Nutzeridentitaet kommt ausschliesslich aus dem serverseitig persistierten
-// state-Datensatz (social_media_oauth_states.user_id), NIE aus einem Client-Parameter.
 socialMediaRouter.get(['/auth/callback', '/auth/callback/'], async (req: Request, res: Response) => {
   const { code, state, error: providerError } = req.query;
 
@@ -145,7 +120,7 @@ socialMediaRouter.get(['/auth/callback', '/auth/callback/'], async (req: Request
 
 function renderCallbackPage(platform: string | null, success: boolean, errorMessage?: string): string {
   const safePlatform = (platform || 'social').replace(/[^a-z]/gi, '');
-  const safeError = (errorMessage || '').replace(/</g, '<').replace(/>/g, '>');
+  const safeError = (errorMessage || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return `
     <!doctype html>
     <html>
@@ -178,8 +153,7 @@ function renderCallbackPage(platform: string | null, success: boolean, errorMess
   `;
 }
 
-// POST /api/social-media/generate — N1 text variants (X / Facebook / community).
-// Does not publish. Media formats remain fail-closed until N3.
+// POST /api/social-media/generate — N1 text + optional N2 script package.
 socialMediaRouter.post('/generate', async (req: Request, res: Response) => {
   const identity = await requireAccess(req, res);
   if (!identity) return;
@@ -196,19 +170,44 @@ socialMediaRouter.post('/generate', async (req: Request, res: Response) => {
   }
 
   try {
-    const result = generateTextContent({
-      topic: req.body?.topic,
+    const mode = (req.body?.mode as string) || 'full';
+    const topic = req.body?.topic;
+    const locale = req.body?.locale;
+    const contextNote = req.body?.contextNote;
+
+    const textPackage = generateTextContent({
+      topic,
       platforms: req.body?.platforms,
-      locale: req.body?.locale,
-      contextNote: req.body?.contextNote,
+      locale,
+      contextNote,
       format: req.body?.format,
     });
+
+    let scripts = undefined;
+    if (mode === 'full' || mode === 'scripts') {
+      scripts = buildScriptPackage({
+        topic,
+        locale,
+        contextNote,
+        ctaText: req.body?.ctaText,
+        hostAName: req.body?.hostAName,
+        hostBName: req.body?.hostBName,
+      });
+    }
+
     logger.info('Content generated', {
       userId: identity.userId,
-      topic: result.topic,
-      variantCount: result.variants.length,
+      topic: textPackage.topic,
+      mode,
+      variantCount: textPackage.variants.length,
+      hasScripts: !!scripts,
     });
-    res.json({ success: true, package: result });
+
+    res.json({
+      success: true,
+      package: textPackage,
+      scripts: scripts || null,
+    });
   } catch (err: any) {
     return res.status(400).json({
       success: false,
@@ -217,7 +216,6 @@ socialMediaRouter.post('/generate', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/social-media/publish
 socialMediaRouter.post('/publish', async (req: Request, res: Response) => {
   const identity = await requireAccess(req, res);
   if (!identity) return;
@@ -251,9 +249,6 @@ socialMediaRouter.post('/publish', async (req: Request, res: Response) => {
     }
 
     if (isDraft || isScheduled) {
-      // Entwurf/Terminierung: kein sofortiger externer API-Call. Ein echter Scheduler
-      // (Cron/Queue, der zur Zielzeit publishToPlatform() aufruft) ist Folgearbeit -
-      // siehe ADR-0020 Abschnitt 5 Backlog. Der Log-Eintrag ist bereits real persistiert.
       const entry = await recordPublishLog({
         userId: identity.userId, episodeId: payload.episodeId, episodeTitle: payload.episodeTitle,
         platform, accountId: account.row.id, accountHandle,
@@ -298,7 +293,6 @@ socialMediaRouter.post('/publish', async (req: Request, res: Response) => {
   });
 });
 
-// GET /api/social-media/history
 socialMediaRouter.get('/history', async (req: Request, res: Response) => {
   const identity = await requireAccess(req, res);
   if (!identity) return;
