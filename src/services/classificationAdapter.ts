@@ -8,6 +8,9 @@
  *
  * This module maps (1)+(2)+(3) onto the canonical shape without mutating scores,
  * ranking eligibility, or provider evidence. Fail-closed defaults use Unknown/tier 3.
+ *
+ * Orchestrator exit: mergeDeterministicAndAgentClassification is the single
+ * classification boundary used by cryptoOrchestrator (SC-1 wiring 2026-08-15).
  */
 
 import type {
@@ -17,7 +20,7 @@ import type {
   CryptoClassification,
 } from '../types/crypto.types';
 
-export const CLASSIFICATION_ADAPTER_VERSION = 'classification-adapter/1.0.0' as const;
+export const CLASSIFICATION_ADAPTER_VERSION = 'classification-adapter/1.1.0' as const;
 
 /** Agent free-text output (do not confuse with canonical CryptoClassification). */
 export interface AgentCryptoClassificationRaw {
@@ -260,5 +263,70 @@ export function ensureCanonicalClassification(
     tier: inferTierFromCategory(category_main, value.tier),
     confidence: clampConfidence(value.confidence, 0.6),
     reasoning: Array.isArray(value.reasoning) ? value.reasoning.slice(0, 5) : [],
+  };
+}
+
+/**
+ * Single classification exit for CryptoOrchestrator (SC-1).
+ *
+ * Preference rules (fail-closed, no ranking formula change):
+ * 1. Deterministic category_main wins when it is not Unknown (table-driven, high trust).
+ * 2. Otherwise adopt agent canonical category when agent is not Unknown.
+ * 3. category_sub / asset_type / tier: prefer deterministic when known, else agent, else infer.
+ * 4. confidence: arithmetic mean of both (clamped); never invent high confidence from agent alone.
+ * 5. reasoning: deterministic first, then agent, capped; adapter provenance tag appended.
+ */
+export function mergeDeterministicAndAgentClassification(
+  deterministic: CryptoClassification,
+  agentCanonical: CryptoClassification,
+): CryptoClassification {
+  const det = ensureCanonicalClassification(deterministic);
+  const agent = ensureCanonicalClassification(agentCanonical);
+
+  const category_main: CryptoCategory =
+    det.category_main !== 'Unknown'
+      ? det.category_main
+      : agent.category_main !== 'Unknown'
+        ? agent.category_main
+        : 'Unknown';
+
+  const category_sub: CryptoSubCategory =
+    det.category_sub !== 'Unknown'
+      ? det.category_sub
+      : agent.category_sub !== 'Unknown'
+        ? agent.category_sub
+        : 'Unknown';
+
+  const asset_type =
+    det.asset_type !== 'unknown'
+      ? det.asset_type
+      : agent.asset_type !== 'unknown'
+        ? agent.asset_type
+        : inferAssetType(category_main, category_sub);
+
+  const tier: CryptoTier =
+    det.category_main !== 'Unknown'
+      ? det.tier
+      : agent.category_main !== 'Unknown'
+        ? agent.tier
+        : inferTierFromCategory(category_main);
+
+  const confidence = Number(
+    ((clampConfidence(det.confidence) + clampConfidence(agent.confidence)) / 2).toFixed(2),
+  );
+
+  const reasoning = [
+    ...det.reasoning.slice(0, 3),
+    ...agent.reasoning.slice(0, 2),
+    `${CLASSIFICATION_ADAPTER_VERSION}: merge(det=${det.category_main}, agent=${agent.category_main}) → ${category_main}`,
+  ].slice(0, 6);
+
+  return {
+    category_main,
+    category_sub,
+    asset_type,
+    tier,
+    confidence,
+    reasoning,
   };
 }

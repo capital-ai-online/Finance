@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.1.0",
+  "claimId": "SC1-ORCHESTRATOR-WIRING-2026-08-15",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "SC-1 Orchestrator wiring: classificationAdapter as single classification exit in cryptoOrchestrator; mergeDeterministicAndAgentClassification; docs + evidence; no ranking formula mutation.",
+  "startedAt": "2026-08-15T21:45:00Z",
+  "baseBranch": "docs/sc-md-sc1-sc3-foundation-2026-08-15",
+  "baseSha": "3907bf17d3af65f3bf9f0bd474ac8695cbafa3ee",
+  "pullRequest": null,
+  "claimedPaths": [
+    "src/services/classificationAdapter.ts",
+    "src/orchestrator/cryptoOrchestrator.ts",
+    "tests/unit/classificationAdapter.test.ts",
+    "docs/roadmaps/work-packages/SC-1_CLASSIFICATION_CONSOLIDATION.md",
+    "docs/evidence/sc-md/SC1_ORCHESTRATOR_WIRING_2026-08-15.md",
+    ".ai/work-claims/SC1-ORCHESTRATOR-WIRING-2026-08-15.json"
+  ],
+  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
+}

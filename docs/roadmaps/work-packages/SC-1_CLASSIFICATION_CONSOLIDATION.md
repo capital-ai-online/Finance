@@ -2,7 +2,7 @@
 
 **SPT:** SC-MD-SPT-0001  
 **Priority:** P0  
-**Status:** FOUNDATION LANDED (adapter + tests) — wiring pending Owner  
+**Status:** ORCHESTRATOR WIRING LANDED — Owner review for merge  
 **Date:** 2026-08-15
 
 ## Problem
@@ -20,12 +20,14 @@ Three incompatible `CryptoClassification` definitions coexist:
 ## Delivered in this WP slice
 
 - [x] `src/services/classificationAdapter.ts` — pure adapter (agent → canonical, legacy → canonical, ensureCanonical)
-- [x] Unit tests `tests/unit/classificationAdapter.test.ts`
+- [x] `mergeDeterministicAndAgentClassification` — single classification exit (deterministic preferred when known)
+- [x] Unit tests `tests/unit/classificationAdapter.test.ts` (incl. merge cases)
+- [x] **Wire adapter into `cryptoOrchestrator` as single classification exit**
 - [x] Baseline inventory evidence under `docs/evidence/sc-md/`
+- [x] Wiring evidence `docs/evidence/sc-md/SC1_ORCHESTRATOR_WIRING_2026-08-15.md`
 
 ## Explicitly NOT done (requires Owner / follow-up commits)
 
-- [ ] Wire adapter into `cryptoOrchestrator` as single classification exit
 - [ ] Expand deterministic `ClassificationService` table (Stablecoin, RWA, …)
 - [ ] Deprecate / rename agent interface to `AgentCryptoClassificationRaw` at import sites
 - [ ] Delete or archive unused legacy type fields after adapter coverage ≥ critical paths
@@ -40,4 +42,4 @@ Three incompatible `CryptoClassification` definitions coexist:
 
 ## Risk
 
-Low for adapter-only (additive). Medium when wiring orchestrator (payload shape consumers).
+Low for adapter-only (additive). Medium when wiring orchestrator (payload shape consumers) — mitigated by keep of existing `CryptoClassification` shape on payload; only construction path changed.

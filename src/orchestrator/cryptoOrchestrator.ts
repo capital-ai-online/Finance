@@ -12,6 +12,17 @@ import { CryptoSentimentAgent } from '../agents/cryptoSentimentAgent';
 import { CryptoRiskAgent } from '../agents/cryptoRiskAgent';
 import { assetRegistry } from '../lib/assetRegistry';
 import { ClassificationService } from '../services/classification.service';
+import {
+  adaptAgentClassification,
+  ensureCanonicalClassification,
+  mergeDeterministicAndAgentClassification,
+  CLASSIFICATION_ADAPTER_VERSION,
+} from '../services/classificationAdapter';
+import {
+  computeCompositeDataQuality,
+  computeUnifiedConfidence,
+  COMPOSITE_DATA_QUALITY_VERSION,
+} from '../platform/MarketData/CompositeDataQuality';
 import { generateCryptoScores, calculateBaseScore, calculateDefiScore, calculateValueCorridor } from '../services/scoring.service';
 import { calculateRankScore, isTop10Eligible } from '../services/ranking.service';
 import { CryptoCategory, CryptoSubCategory, CryptoTier, CryptoClassification, CryptoScores, CryptoAnalysisPayload } from '../types/crypto.types';
@@ -38,6 +49,10 @@ export class CryptoOrchestrator {
   /**
    * Coordinates the multi-agent pipeline for standard/enterprise cryptocurrencies,
    * blending AI inputs with the new, official deterministic Standard & DeFi scoring models.
+   *
+   * SC-1 (SC-MD-SPT-0001): classification exits only via classificationAdapter
+   * (adaptAgent → ensureCanonical deterministic → mergeDeterministicAndAgent).
+   * No free-text category values remain on the ranking payload path.
    */
   public async analyzeCrypto(coin: string, customInput?: Partial<CryptoScores>): Promise<CryptoAnalysisPayload> {
     const symbol = coin.toUpperCase().trim();
@@ -48,10 +63,10 @@ export class CryptoOrchestrator {
     updateAgentActivity('ag_allocator', `Analysiert On-Chain Metriken für ${symbol}`, true);
     updateAgentActivity('ag_risk', `Berechnet Risiko-Koeffizienten für ${symbol}`, true);
 
-    let agentClassification, onchain, sentiment, risk;
+    let agentClassificationRaw, onchain, sentiment, risk;
     try {
       // 1. Run Classification, On-Chain metrics, Sentiment, and Risk Agents in parallel
-      [agentClassification, onchain, sentiment, risk] = await Promise.all([
+      [agentClassificationRaw, onchain, sentiment, risk] = await Promise.all([
         this.classificationAgent.analyze(symbol),
         this.onChainAgent.analyze(symbol),
         this.sentimentAgent.analyze(symbol),
@@ -68,38 +83,21 @@ export class CryptoOrchestrator {
     const asset = assetRegistry.getAsset(symbol);
     const assetName = asset ? asset.name : symbol;
 
-    // 3. Resolve deterministic classification and real-data-backed seed scores
-    const baseClassification = ClassificationService.classifyAsset(symbol);
+    // 3. SC-1 single classification exit: deterministic + adapted agent → merge
+    const deterministic = ensureCanonicalClassification(
+      ClassificationService.classifyAsset(symbol),
+    );
+    const agentCanonical = adaptAgentClassification(agentClassificationRaw);
+    const classification = mergeDeterministicAndAgentClassification(
+      deterministic,
+      agentCanonical,
+    );
+    const categoryMain: CryptoCategory = classification.category_main;
+    const categorySub: CryptoSubCategory = classification.category_sub;
+    const tier: CryptoTier = classification.tier;
+
+    // 4. Resolve real-data-backed seed scores
     const seedScores = await generateCryptoScores(symbol, asset ? asset.change24h : 0.0);
-
-    // 4. Determine main category mapping
-    let categoryMain: CryptoCategory = baseClassification.category_main;
-    if (agentClassification.category?.toLowerCase().includes('defi')) {
-      categoryMain = 'DeFi';
-    } else if (agentClassification.category?.toLowerCase() === 'l1' || agentClassification.category?.toLowerCase() === 'layer1') {
-      categoryMain = 'Layer 1';
-    } else if (agentClassification.category?.toLowerCase() === 'l2' || agentClassification.category?.toLowerCase() === 'layer2') {
-      categoryMain = 'Layer 2';
-    } else if (agentClassification.category?.toLowerCase().includes('meme')) {
-      categoryMain = 'Meme';
-    } else if (agentClassification.category?.toLowerCase().includes('oracle')) {
-      categoryMain = 'Oracle';
-    }
-
-    const categorySub: CryptoSubCategory = baseClassification.category_sub;
-    const tier: CryptoTier = baseClassification.tier;
-
-    const classification: CryptoClassification = {
-      category_main: categoryMain,
-      category_sub: categorySub,
-      asset_type: baseClassification.asset_type,
-      tier,
-      confidence: Number(((baseClassification.confidence + agentClassification.confidence) / 2).toFixed(2)),
-      reasoning: [
-        ...baseClassification.reasoning,
-        ...agentClassification.reasoning
-      ]
-    };
 
     // 5. Construct composite scoring inputs, blending AI agent qualitative observations with
     // real-data-backed market scores (seedScores) and custom overrides. Felder ohne reale
@@ -140,20 +138,41 @@ export class CryptoOrchestrator {
       scoreFieldBasis[field] = (customInput && field in customInput) ? 'user-adjusted' : 'real';
     }
 
+    // SC-3 foundation observation only (rankingImpactEnabled remains false)
+    const presentScoreFields = Object.keys(scores).filter(
+      (k) => scores[k as keyof CryptoScores] !== undefined && scores[k as keyof CryptoScores] !== null,
+    );
+    const composite = computeCompositeDataQuality({
+      sourceCoverage: presentScoreFields.length / 11,
+      supplyTransparency:
+        typeof scores.supplyTransparency === 'number'
+          ? scores.supplyTransparency / 100
+          : null,
+      providerCount: asset ? 1 : 0,
+      outlierDetected: risk.manipulation_index > 0.6,
+    });
+    const unifiedConfidence = computeUnifiedConfidence({
+      baseConfidence: classification.confidence,
+      composite,
+      providerCount: asset ? 1 : 0,
+    });
+
     const payload: CryptoAnalysisPayload = {
       asset_name: assetName,
       symbol,
       classification,
       scores,
       data_quality: {
-        level: risk.manipulation_index > 0.4 ? 'medium' : 'high',
-        missing_fields: []
-      }
+        level: composite.level === 'unknown'
+          ? (risk.manipulation_index > 0.4 ? 'medium' : 'high')
+          : composite.level,
+        missing_fields: composite.missingFactors,
+      },
     };
 
     // 6. Compute scores using the high-fidelity scoring engines
-    const finalScores = categoryMain === 'DeFi' 
-      ? calculateDefiScore(payload) 
+    const finalScores = categoryMain === 'DeFi'
+      ? calculateDefiScore(payload)
       : calculateBaseScore(payload);
 
     // 7. Calculate value corridor and rank metrics
@@ -166,12 +185,13 @@ export class CryptoOrchestrator {
 
     // 8. Build consolidated reasoning trail
     const mergedReasoning = [
-      `[Klassifikation] Hauptkategorie: ${categoryMain}, Unterklasse: ${categorySub}, Tier: ${tier}.`,
+      `[Klassifikation/${CLASSIFICATION_ADAPTER_VERSION}] Hauptkategorie: ${categoryMain}, Unterklasse: ${categorySub}, Tier: ${tier}, conf=${classification.confidence}.`,
       `[Netzwerk-Aktivität] ${onchain.explanation}`,
       `[Markt-Sentiment] ${sentiment.explanation}`,
       `[Systemisches Risiko] ${risk.explanation}`,
       `[Valuation Autopilot] Modell: ${categoryMain === 'DeFi' ? 'DeFi-Cashflow-Modell' : 'Krypto-Basis-Modell'}, Final Score: ${(finalScores.final_score ?? 0).toFixed(1)}/100`,
-      `[Top 10 Status] Eignung: ${eligibleForTop10 ? "Zugelassen (Rank Score: " + rankScore.toFixed(1) + ")" : "Nicht zugelassen (unzureichende Liquidität oder Datenqualität)"}`
+      `[Top 10 Status] Eignung: ${eligibleForTop10 ? "Zugelassen (Rank Score: " + rankScore.toFixed(1) + ")" : "Nicht zugelassen (unzureichende Liquidität oder Datenqualität)"}`,
+      `[SC-3/${COMPOSITE_DATA_QUALITY_VERSION}] composite=${composite.score ?? 'n/a'} level=${composite.level}; unifiedConf=${unifiedConfidence.confidence} (scoreImpactEnabled=false)`,
     ];
 
     return {
@@ -180,8 +200,12 @@ export class CryptoOrchestrator {
       classification,
       scores: finalScores,
       data_quality: {
-        level: classification.confidence >= 0.8 ? 'high' : 'medium',
-        missing_fields: []
+        level: classification.confidence >= 0.8 && composite.level === 'high'
+          ? 'high'
+          : composite.level === 'low'
+            ? 'low'
+            : 'medium',
+        missing_fields: composite.missingFactors,
       },
       reasoning: mergedReasoning,
       scoreFieldBasis
