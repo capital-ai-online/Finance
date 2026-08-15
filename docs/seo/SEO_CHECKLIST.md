@@ -27,3 +27,6 @@
 - [x] Generate text/scripts — **N1/N2**
 - [x] Owner-Freigabe vor Instant-Publish — **N4**
 - [ ] Media-Rendering — **N3** (Make-or-Buy)
+
+### S3 Management Dashboard
+- [x] Owner/Admin-Dashboard für SeoEngine-KPIs, Quellenstatus, Keywords und Content-Inventar — **S3**

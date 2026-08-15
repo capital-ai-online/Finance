@@ -109,7 +109,7 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [timeframe, setTimeframe] = useState<string>('1std');
   const [activeView, setActiveView] = useState<'dashboard' | 'myworkspace' | 'universe-scoring' | 'buffet-value' | 'backtest' | 'heatmap' | 'market-screener' | 'abonnements' | 'profil' | 'markdown-orchestrator' | 'interact' | 'charts' | 'request-orchestrator' | 'performance' | 'risiko-assessment' | 'admin-panel' | 'preis-alarme' | 'audit-logs' | 'sentiment-dashboard' | 'raw-materials' | 'asset-universe' | 'defi-orchestration' | 'social-accounts' | 'login' | 'auth-debugger' | 'admin-portal'>('dashboard');
-  const [adminTab, setAdminTab] = useState<'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor' | 'compliance'>('users');
+  const [adminTab, setAdminTab] = useState<'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor' | 'seo' | 'compliance'>('users');
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>('hub');
   const [expandedUniverse, setExpandedUniverse] = useState<string | null>(null);
