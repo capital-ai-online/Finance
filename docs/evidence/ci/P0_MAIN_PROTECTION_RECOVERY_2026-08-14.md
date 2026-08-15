@@ -1,6 +1,6 @@
 # P0 Main Protection Recovery — 2026-08-14
 
-Status: SHADOW VALIDATION
+Status: VERIFIED PASS — RETIREMENT AUTHORIZED 2026-08-15
 Repository: `SvenKulessa/Finance`
 Baseline: `main@3fb7e668ab997909b2c34a020f08d701dc7a3409`
 Authority: `ADR-0069-human-owner-comment-gate-and-dispatched-pr-ci.md`
@@ -64,3 +64,28 @@ Keine Promotion, wenn `capital-ai-ci`:
 5. Test-PR beweist Merge-Protection ohne Bypass;
 6. Evidence auf `VERIFIED PASS` aktualisiert;
 7. P0-Branch nach Human-Merge gelöscht.
+
+
+## Abschluss-Evidence 2026-08-15
+
+Die Shadow-Phase hat ihren Zweck erfüllt:
+
+| Pull Request | build-and-test | capital-ai-ci Shadow | Ergebnis |
+|---|---:|---:|---|
+| #308 | Run `31862280230` PASS | Run `31862280254` PASS | unabhängige parallele technische Evidence |
+| #309 | Run `31863283061` PASS | Run `31863283041` PASS | Application-/Test-Scope; Governance ebenfalls PASS |
+
+Owner-Entscheidung: Konsolidierungsoption 1. `build-and-test` bleibt technischer Trust Root,
+`capital-ai-ci` wird stillgelegt. Damit die Entfernung des Workflows keinen dauerhaft fehlenden
+Required Check erzeugt, gilt folgende zwingende Reihenfolge:
+
+1. Live-Ruleset `main-production-protection` öffnen.
+2. Required Check `capital-ai-ci` entfernen.
+3. `build-and-test` und `GitGuardian Security Checks` unverändert Required lassen.
+4. Speichern und verifizieren, dass keine Bypass Actors hinzugefügt wurden.
+5. Erst danach den Workflow-Retirement-PR mergen.
+6. Mit dem nächsten realen PR nachweisen, dass Merge ohne `build-and-test` weiterhin blockiert.
+
+Rollback vor Merge: Ruleset-Änderung rückgängig machen und diesen PR nicht mergen.
+Rollback nach Merge: frischer Recovery-Branch, Shadow-Workflow aus dem letzten verifizierten Stand
+wiederherstellen, anschließend `capital-ai-ci` erst nach PASS erneut Required setzen.

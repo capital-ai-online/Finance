@@ -167,3 +167,22 @@ Diese ADR gilt als technisch umgesetzt, wenn:
 ## Rollback
 
 Ein späterer ADR-0069-Nachfolger darf diese Recovery-Invarianten nur durch einen eigenen Human/Owner-reviewten ADR ersetzen. Ein Rückfall auf selbstreferenzielle Bootstrap-Required-Checks ist nicht zulässig.
+
+
+## Nachtrag 2026-08-15 — Shadow-Phase abgeschlossen
+
+Die zeitlich begrenzte Parallelphase von `capital-ai-ci` und `build-and-test` ist abgeschlossen.
+PR #308 und PR #309 haben beide technischen Pfade auf realen, head-gebundenen Pull Requests
+erfolgreich ausgeführt. Der Owner entschied sich anschließend ausdrücklich für
+Konsolidierungsoption 1.
+
+Die Stilllegung folgt ADR-0073:
+
+1. `build-and-test` einschließlich Human-/Owner-Gate bleibt unverändert;
+2. der Live-Ruleset entfernt zuerst `capital-ai-ci` aus den Required Checks;
+3. erst danach darf der PR gemergt werden, der `.github/workflows/capital-ai-ci-shadow.yml` entfernt;
+4. GitGuardian bleibt Required Check;
+5. bei fehlendem `build-and-test` wird nicht gemergt und der Workflow auf einem frischen Branch repariert.
+
+Die Recovery-Invarianten dieser ADR bleiben vollständig bestehen. Insbesondere wird kein
+synthetischer Check eingeführt und kein Owner-/Human-Gate abgeschwächt.
