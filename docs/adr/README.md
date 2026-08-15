@@ -4,6 +4,16 @@
 Menschen) bereits vollständig umgesetzte und verifizierte ADRs erneut komplett
 gegenprüfen muss.
 
+## Fester Ort (Invariante ab 2026-08-16)
+
+- **Formale ADRs** werden ausschließlich unter `docs/adr/` angelegt und nummeriert.
+- Dateien unter `docs/architecture/` dürfen den Präfix `ADR-XXXX` **nicht** als
+  primäre ID oder Dateiname für neue Entscheidungsdokumente verwenden.
+- Phase-/Work-Package-Notizen: `PHASE-…` oder beschreibende Namen; Parent-Verweis
+  auf ein ADR unter `docs/adr/`.
+- Begründung: einheitliche Architektur, einheitliche Nummerierung, keine parallelen
+  ADR-Räume (siehe ADR-0083, GOV-XREF-UNIFIED-LOC-2026-08-16).
+
 ## Struktur
 
 - **`docs/adr/*.md`** — aktive ADRs. Entscheidung getroffen (`Status: ACCEPTED`), aber

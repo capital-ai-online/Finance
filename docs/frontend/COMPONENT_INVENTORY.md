@@ -1,0 +1,144 @@
+# CAPITAL-AI Frontend – Component Inventory
+
+**Stand:** 16. August 2026  
+**Quelle:** `src/components/` (Finance-Repo)  
+**Namenskonvention:** PascalCase, Dateiname = Komponentenname
+
+Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grundlage für Phase 0 der Frontend-Roadmap.
+
+---
+
+## Kern-Dashboard & Cockpit
+
+| Komponente | Datei | Kurzbeschreibung |
+|------------|-------|------------------|
+| Dashboard | `Dashboard.tsx` | Haupt-Dashboard (Multi-Asset, Scores, Live-Intelligence) |
+| AssetUniverseDashboard | `AssetUniverseDashboard.tsx` | Enterprise-Universum-Übersicht |
+| UniverseBestWorst | `UniverseBestWorst.tsx` | Best/Worst-Ranking im Universum |
+| Screener | `Screener.tsx` | Quantitativer Multi-Asset-Screener |
+| MarketScreener | `MarketScreener.tsx` | Markt-Screener-Variante |
+| Watchlist | `Watchlist.tsx` | Persönliche Watchlist |
+| FavoriteAssetPatternSlots | `FavoriteAssetPatternSlots.tsx` | Favoriten-/Pattern-Slots |
+
+---
+
+## Scoring & Analyse
+
+| Komponente | Datei | Kurzbeschreibung |
+|------------|-------|------------------|
+| CryptoScoringEnterprise | `CryptoScoringEnterprise.tsx` | Enterprise-Crypto-Scoring |
+| BuffetValueCheck | `BuffetValueCheck.tsx` | Graham/Buffett Value-Check |
+| BacktestEngine | `BacktestEngine.tsx` | Backtesting-Engine |
+| PortfolioBacktester | `PortfolioBacktester.tsx` | Portfolio-Backtester |
+| PortfolioPerformance | `PortfolioPerformance.tsx` | Portfolio-Performance |
+| MonteCarloDetailed | `MonteCarloDetailed.tsx` | Monte-Carlo-Detailansicht |
+| RealTimeRiskAssessment | `RealTimeRiskAssessment.tsx` | Echtzeit-Risiko |
+| EnterpriseAnalysisPanels | `EnterpriseAnalysisPanels.tsx` | Enterprise-Analyse-Panels |
+| EnterpriseBinanceQuickAnalysis | `EnterpriseBinanceQuickAnalysis.tsx` | Schnellanalyse Binance |
+| LandingBinanceQuickAnalysis | `LandingBinanceQuickAnalysis.tsx` | Landing-Schnellanalyse |
+| HeatmapCreator | `HeatmapCreator.tsx` | Heatmap-Erstellung |
+| QuantumGraph | `QuantumGraph.tsx` | Graph-Visualisierung |
+| Charts | `Charts.tsx` | Chart-Komponenten (Recharts/D3) |
+| PerformanceDashboard | `PerformanceDashboard.tsx` | Performance-Übersicht |
+| RawMaterialsDashboard | `RawMaterialsDashboard.tsx` | Rohstoff-Dashboard |
+| DeFiOrchestration | `DeFiOrchestration.tsx` | DeFi-Orchestrierung |
+
+---
+
+## Sentiment, News & AI
+
+| Komponente | Datei | Kurzbeschreibung |
+|------------|-------|------------------|
+| SentimentDashboard | `SentimentDashboard.tsx` | Sentiment-Dashboard |
+| MarketSentiment | `MarketSentiment.tsx` | Markt-Sentiment |
+| RealtimeAiNewsfeed | `RealtimeAiNewsfeed.tsx` | AI-Newsfeed |
+| Newsticker | `Newsticker.tsx` | Newsticker |
+| MarkdownOrchestrator | `MarkdownOrchestrator.tsx` | Markdown-/Dokumentations-Orchestrierung |
+| OrchestratorPanel | `OrchestratorPanel.tsx` | Orchestrator-Panel |
+| InteractModule | `InteractModule.tsx` | Interaktionsmodul |
+| ImageAnalyzer | `ImageAnalyzer.tsx` | Bildanalyse |
+
+---
+
+## Auth, Profile, Billing
+
+| Komponente | Datei | Kurzbeschreibung |
+|------------|-------|------------------|
+| LoginStepUpGate | `LoginStepUpGate.tsx` | Step-up Login-Gate |
+| StepUpModal | `StepUpModal.tsx` | Step-up Modal |
+| RegistrationCompletionGate | `RegistrationCompletionGate.tsx` | Registrierungs-Abschluss |
+| ProfilePage | `ProfilePage.tsx` | Profilseite |
+| PasskeySettings | `PasskeySettings.tsx` | Passkey-Einstellungen |
+| TotpSettings | `TotpSettings.tsx` | TOTP-Einstellungen |
+| Abonnements | `Abonnements.tsx` | Abonnement-Übersicht |
+| SubscriptionModal | `SubscriptionModal.tsx` | Abo-Modal |
+| Checkout | `Checkout.tsx` | Checkout |
+| GuestCliffhangerModal | `GuestCliffhangerModal.tsx` | Guest-Cliffhanger |
+
+---
+
+## Compliance, Admin, Governance
+
+| Komponente | Datei | Kurzbeschreibung |
+|------------|-------|------------------|
+| ComplianceBadge | `ComplianceBadge.tsx` | Compliance-Badge |
+| ComplianceConsentModal | `ComplianceConsentModal.tsx` | Consent-Modal |
+| ComplianceExporter | `ComplianceExporter.tsx` | Compliance-Export |
+| ComplianceNotifications | `ComplianceNotifications.tsx` | Compliance-Benachrichtigungen |
+| SecurityComplianceAuditor | `SecurityComplianceAuditor.tsx` | Security/Compliance-Auditor |
+| SecurityRadarBadge | `SecurityRadarBadge.tsx` | Security-Radar-Badge |
+| AuditLog | `AuditLog.tsx` | Audit-Log |
+| AuditLogs | `AuditLogs.tsx` | Audit-Logs-Übersicht |
+| AuditLogManager | `AuditLogManager.tsx` | Audit-Log-Manager |
+| AdminPanel | `AdminPanel.tsx` | Admin-Panel |
+| AdminPortal | `AdminPortal.tsx` | Admin-Portal |
+| SupervisorDashboard | `SupervisorDashboard.tsx` | Supervisor-Dashboard |
+| DocumentHygienePanel | `DocumentHygienePanel.tsx` | Dokumenten-Hygiene |
+| VersionManagerPanel | `VersionManagerPanel.tsx` | Version-Manager |
+| AdrForm | `AdrForm.tsx` | ADR-Formular |
+| AuthStateDebugger | `AuthStateDebugger.tsx` | Auth-State-Debugger |
+| SystemLatencyMonitor | `SystemLatencyMonitor.tsx` | Latenz-Monitor |
+| SeoDashboard | `SeoDashboard.tsx` | SEO-Dashboard |
+
+---
+
+## Landing, Legal, Branding, Utils
+
+| Komponente | Datei | Kurzbeschreibung |
+|------------|-------|------------------|
+| LandingPage | `LandingPage.tsx` | Landing Page |
+| CapitalAiLogo | `CapitalAiLogo.tsx` | Logo |
+| AssetLogo | `AssetLogo.tsx` | Asset-Logos |
+| Datenschutz | `Datenschutz.tsx` | Datenschutz |
+| ImpressumAgb | `ImpressumAgb.tsx` | Impressum / AGB |
+| PdfExportModal | `PdfExportModal.tsx` | PDF-Export-Modal |
+| PriceAlert | `PriceAlert.tsx` | Preis-Alerts |
+| SocialAccountManager | `SocialAccountManager.tsx` | Social-Account-Verwaltung |
+| SocialDirectPublisherModal | `SocialDirectPublisherModal.tsx` | Social-Publisher-Modal |
+| ErrorBoundary | `ErrorBoundary.tsx` | Error Boundary |
+
+---
+
+## Design-Primitives (aus `src/index.css` / Architektur)
+
+| Token / Pattern | Quelle | Bemerkung |
+|-----------------|--------|-----------|
+| `--color-background` / `#18181b` | `index.css` | Canvas |
+| `--color-aif-gold-*` | `index.css` | Premium-Highlight |
+| `--color-aif-neon-cyan` / `neon-purple` | `index.css` | Neural / Accent |
+| Glassmorphism Card | `FRONTEND_ARCH.md` | `bg-neutral-950/40 border-white/10 backdrop-blur-md` |
+| Focus Outline | `index.css` | `*:focus-visible` gold |
+| Fonts | Poppins, Montserrat, JetBrains Mono | `--font-sans` / `display` / `mono` |
+
+---
+
+## Hinweise zur Weiterentwicklung
+
+1. Neue UI-Komponenten in `src/components/` anlegen und hier dokumentieren.
+2. Wiederverwendbare Primitives (Button, Badge, Card, Gauge, Chip) schrittweise extrahieren (Phase 1).
+3. Status-Badges und Score-Gauges als erste Kandidaten für ein formales Design-System.
+4. Dieses Inventory ist die Basis für Storybook und die Frontend-Roadmap Phase 0.
+
+---
+
+*Erstellt am 16.08.2026 im Rahmen der Frontend-Roadmap.*

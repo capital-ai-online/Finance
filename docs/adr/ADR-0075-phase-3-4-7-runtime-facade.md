@@ -3,7 +3,7 @@
 Status: Proposed  
 Date: 2026-08-08  
 Supersedes-Number-Only: formerly filed as ADR-0014 (number collision with Documentation Governance; content unchanged)  
-Parent phase series: `docs/architecture/` market-data Phase 3.4.x (not `docs/adr/ADR-0014`)
+Parent decision: [ADR-0083 — Server Runtime Architecture Consolidation](./ADR-0083-server-runtime-architecture-consolidation.md)
 
 ## Context
 
@@ -23,10 +23,10 @@ The facade owns only:
 
 Provider I/O, fallback completion, scoring/enrichment, score snapshots and alert evaluation remain outside this facade and behind the existing **market-data compatibility refresh boundary** documented in:
 
-- `docs/architecture/ADR-0014-PHASE-3.4.6-MARKET-DATA-COMPATIBILITY-FACADE.md`
-- related Phase 3.4.x notes under `docs/architecture/` and `docs/architecture/adr/`
+- `docs/architecture/PHASE-3.4.6-MARKET-DATA-COMPATIBILITY-FACADE.md`
+- related Phase 3.4.x notes under `docs/architecture/`
 
-**Numbering note (ADR-0081):** The label `ADR-0014` in those architecture phase documents refers to the **server/market-data workstream**, not to the canonical active ADR `docs/adr/ADR-0014-documentation-governance-validator.md` (Documentation Governance Validator). Disambiguation of the architecture phase document titles is tracked separately (GOV-XREF-2026-08-16).
+**Numbering note (ADR-0081 / ADR-0083):** Architecture phase documents no longer claim the ADR-0014 identity. The server/market-data workstream parent is **ADR-0083**. Canonical `docs/adr/ADR-0014` remains the Documentation Governance Validator.
 
 ## Protected invariants
 
