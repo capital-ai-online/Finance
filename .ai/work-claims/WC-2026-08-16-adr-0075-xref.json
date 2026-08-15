@@ -1,0 +1,14 @@
+{
+  "claimId": "WC-2026-08-16-adr-0075-xref",
+  "title": "Disambiguate ADR-0075 parent xref + architecture ADR-0014 proposal",
+  "owner": "SvenKulessa",
+  "agent": "Grok",
+  "class": "D",
+  "paths": [
+    "docs/adr/ADR-0075-phase-3-4-7-runtime-facade.md",
+    "docs/governance/ADR_CROSSREF_INVENTORY_2026-08-16.md",
+    "docs/governance/ADR_0014_ARCHITECTURE_PHASE_DISAMBIGUATION_PROPOSAL.md",
+    ".ai/work-claims/WC-2026-08-16-adr-0075-xref.json"
+  ],
+  "notes": "Docs only. No architecture mass-rename without Owner decision A/B/C."
+}
