@@ -12,7 +12,7 @@
   "startedAt": "2026-08-15T21:45:00Z",
   "baseBranch": "docs/sc-md-sc1-sc3-foundation-2026-08-15",
   "baseSha": "3907bf17d3af65f3bf9f0bd474ac8695cbafa3ee",
-  "pullRequest": null,
+  "pullRequest": 344,
   "claimedPaths": [
     "src/services/classificationAdapter.ts",
     "src/orchestrator/cryptoOrchestrator.ts",
