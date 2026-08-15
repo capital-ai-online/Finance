@@ -8,7 +8,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    types: [edited]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
@@ -18,142 +18,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# 2026-08-16: Pre-CI Owner-Gate (Checkboxen + Review 💪/okay) retired.
+# Merge bleibt Human/Owner-only. Ab M10: Passkey/WebAuthn für AUTHORIZE_PR_CI.
 jobs:
-  owner-gate:
-    name: Human-/Owner-Vorprüfung
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      approved: ${{ steps.gate.outputs.approved }}
-    steps:
-      - name: main-Push zulassen
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          echo "main-Push: vollständige CI ist verpflichtend."
-
-      - name: Owner-Freigabe prüfen
-        if: ${{ github.event_name != 'push' }}
-        id: gate
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR_BODY: ${{ github.event.pull_request.body || '' }}
-          EXPECTED_OWNER: SvenKulessa
-        run: |
-          set -euo pipefail
-
-          # Attestations aus dem Body-Snapshot dieses edited-Events.
-          # IDs: HTML-Kommentar (kanonisch) ODER sichtbare Fallback-Zeile `CAPITAL_AI_*`.
-          read -r diff_attested files_attested <<< "$(
-            python3 - <<'PY'
-          import os
-          import re
-
-          COMMENT_TO_KEY = {
-              '<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->': 'diff',
-              '<!-- CAPITAL_AI_OWNER_FILES_ATTESTATION -->': 'files',
-          }
-          VISIBLE_TO_KEY = {
-              '`CAPITAL_AI_OWNER_DIFF_ATTESTATION`': 'diff',
-              'CAPITAL_AI_OWNER_DIFF_ATTESTATION': 'diff',
-              '`CAPITAL_AI_OWNER_FILES_ATTESTATION`': 'files',
-              'CAPITAL_AI_OWNER_FILES_ATTESTATION': 'files',
-          }
-
-          def parse(body: str):
-              values = {'diff': False, 'files': False}
-              seen = set()
-              pending = None
-              in_fence = False
-
-              for raw in body.replace('\r\n', '\n').replace('\r', '\n').split('\n'):
-                  line = raw.strip()
-                  if re.match(r'^(?:```|~~~)', line):
-                      in_fence = not in_fence
-                      pending = None
-                      continue
-                  if in_fence or line.startswith('>'):
-                      continue
-                  key = COMMENT_TO_KEY.get(line) or VISIBLE_TO_KEY.get(line)
-                  if key:
-                      if key in seen:
-                          return False, False
-                      seen.add(key)
-                      pending = key
-                      continue
-                  if pending and line:
-                      match = re.fullmatch(r'-\s*\[\s*([xX]?)\s*\]\s+.+', line)
-                      if not match:
-                          return False, False
-                      values[pending] = bool(match.group(1))
-                      pending = None
-
-              return (
-                  seen == {'diff', 'files'} and values['diff'],
-                  seen == {'diff', 'files'} and values['files'],
-              )
-
-          canonical_comment = '''<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->
-          - [x] beliebiger sichtbarer Text
-          <!-- CAPITAL_AI_OWNER_FILES_ATTESTATION -->
-          - [X] ebenfalls frei formulierbar'''
-          canonical_visible = '''`CAPITAL_AI_OWNER_DIFF_ATTESTATION`
-          - [x] beliebiger sichtbarer Text
-          `CAPITAL_AI_OWNER_FILES_ATTESTATION`
-          - [X] ebenfalls frei formulierbar'''
-          unchecked = canonical_comment.replace('- [x] beliebiger', '- [ ] beliebiger')
-          missing_id = '- [x] vollständigen Diff geprüft\n- [x] alle Dateien geprüft'
-          duplicate_id = canonical_comment + '\n<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->\n- [x] doppelt'
-          fenced = '```text\n' + canonical_comment + '\n```'
-
-          assert parse(canonical_comment) == (True, True)
-          assert parse(canonical_visible) == (True, True)
-          assert parse(unchecked) == (False, True)
-          assert parse(missing_id) == (False, False)
-          assert parse(duplicate_id) == (False, False)
-          assert parse(fenced) == (False, False)
-
-          diff_ok, files_ok = parse(os.environ.get('PR_BODY', ''))
-          print(f'{str(diff_ok).lower()} {str(files_ok).lower()}')
-          PY
-          )"
-
-          body_ok=false
-          if [ "$diff_attested" = "true" ] && [ "$files_attested" = "true" ]; then
-            body_ok=true
-          fi
-
-          review_id="$(
-            gh api --paginate \
-              "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" \
-              --jq '.[] | select(.user.login == env.EXPECTED_OWNER and .commit_id == env.PR_HEAD_SHA and (((((.body // "") | gsub("^[[:space:]]+|[[:space:]]+$"; "")) | ascii_downcase) == "okay") or (((.body // "") | gsub("^[[:space:]]+|[[:space:]]+$"; "")) == "💪"))) | .id' \
-              | head -n 1
-          )"
-
-          review_ok=false
-          if [ -n "$review_id" ]; then
-            review_ok=true
-          fi
-
-          if [ "$body_ok" = "true" ] && [ "$review_ok" = "true" ]; then
-            echo "approved=true" >> "$GITHUB_OUTPUT"
-            echo "Owner-Gate erfüllt. Genau ein build-and-test-Lauf darf starten."
-          else
-            echo "approved=false" >> "$GITHUB_OUTPUT"
-            echo "Owner-Gate nicht erfüllt. Build/Test wird nicht gestartet."
-            echo "PR-Diff-Attestation: $diff_attested"
-            echo "Files-changed-Attestation: $files_attested"
-            echo "Current-Head-Owner-Review: $review_ok"
-            echo "Reihenfolge: aktuellen Head reviewen (💪/okay), danach beide Owner-Checkboxen setzen/speichern."
-            exit 1
-          fi
-
   build-and-test:
     name: build-and-test
-    needs: [owner-gate]
-    if: ${{ github.event_name == 'push' || needs.owner-gate.outputs.approved == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
