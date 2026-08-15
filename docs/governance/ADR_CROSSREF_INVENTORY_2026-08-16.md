@@ -1,7 +1,7 @@
 # ADR Cross-Reference Inventory — Post Namespace Cleanup
 
 **Document ID:** GOV-XREF-2026-08-16  
-**Basis:** main after PR #345 (`440901c0`)  
+**Basis:** main after PR #345 / #348  
 **Shadow-Score:** 90/100 (advisory subset; 0 duplicate active numbers in `docs/adr/`)
 
 ## 1. Renumber map (PR #345)
@@ -30,9 +30,9 @@ Canonical keepers remain: 0014 documentation-governance, 0020 multi-provider, 00
 | Warnings | 0 |
 | Info (missing Implementation-Status) | high density (expected; pre-existing) |
 
-## 3. Cross-reference debt (not fixed in #345)
+## 3. Cross-reference debt
 
-### 3.1 Parallel `ADR-0014` family under `docs/architecture/`
+### 3.1 Parallel `ADR-0014` family under `docs/architecture/` — OPEN (Owner decision)
 
 These files use the **ADR-0014** label for **server/market-data phase work**, while the canonical active ADR under `docs/adr/` for 0014 is **Documentation Governance Validator**:
 
@@ -47,32 +47,25 @@ These files use the **ADR-0014** label for **server/market-data phase work**, wh
 | `docs/architecture/phase3-4-3-crypto-provider-extraction.md` | Crypto provider chain |
 | Work-claims / evidence under architecture referencing “ADR-0014 Phase 3.4.x” | Phase tracking |
 
-**Recommendation:** Treat architecture phase notes as **phase/work-package documents**, not second copies of the ADR number space. Options for a later PR (Class D):
-
-1. Rename titles to `Phase 3.4.x — … (parent: server-runtime consolidation)` without claiming `ADR-0014` as primary ID, **or**
-2. Assign dedicated ADR numbers ≥ 0082 for the server-runtime parent decision and link phases to it.
+**Proposal:** `docs/governance/ADR_0014_ARCHITECTURE_PHASE_DISAMBIGUATION_PROPOSAL.md`
 
 Do **not** silently rewrite historical work-claim evidence paths without Owner review.
 
-### 3.2 Internal reference in ADR-0075
+### 3.2 Internal reference in ADR-0075 — FIXED
 
-`docs/adr/ADR-0075-phase-3-4-7-runtime-facade.md` still contains:
+Reworded: parent is the market-data compatibility refresh boundary under `docs/architecture/ADR-0014-PHASE-3.4.6-MARKET-DATA-COMPATIBILITY-FACADE.md`, with explicit note that `docs/adr/ADR-0014` remains Documentation Governance (ADR-0081).
 
-> behind the existing **ADR-0014** compatibility refresh boundary
-
-After cleanup, **ADR-0014** in `docs/adr/` is Documentation Governance. The intended parent is the **market-data / server-runtime phase series** under `docs/architecture/`. Follow-up should reword to an explicit architecture parent path or a dedicated server-runtime ADR id once chosen.
-
-### 3.3 `adr_history.json`
+### 3.3 `adr_history.json` — OPEN
 
 Still incomplete relative to the live ADR tree (historical lag; known from maturity report). Separate maintenance PR.
 
 ## 4. Suggested next PRs (ordered)
 
-1. **This PR (D):** persist weekly score JSON + this inventory (no runtime change).
-2. **D:** ADR-0075 wording fix for the compatibility-boundary parent reference.
-3. **D (Owner decision required):** architecture `ADR-0014-*` phase-document disambiguation (rename vs. new numbers).
-4. **D/C:** backfill `Implementation-Status` on high-traffic active ADRs to reduce shadow info density.
-5. Continue ESS-0012 engine work (not shadow).
+1. ~~Score + inventory~~ — done (#348)
+2. ~~ADR-0075 wording~~ — this PR
+3. **Owner decision:** architecture `ADR-0014-*` phase disambiguation (see proposal)
+4. **D/C:** backfill `Implementation-Status` on high-traffic active ADRs
+5. Continue ESS-0012 engine work (not shadow)
 
 ## 5. Invariants
 
