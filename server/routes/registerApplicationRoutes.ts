@@ -20,6 +20,7 @@ import { registryRouter } from '../../src/features/registry/registryRoutes';
 import { aiRouter } from '../ai';
 import { systemadminExecutionBrokerRouter } from '../systemadmin/systemadminExecutionBrokerRouter';
 import { registerTrailingSlashNormalize } from '../middleware/seoUrlNormalize';
+import { seoEngineRouter } from './seoEngineRoutes';
 
 export interface ApplicationRouteProviders {
   ai: any | null;
@@ -35,8 +36,9 @@ export interface ApplicationRouteProviders {
  * scoring semantics or runtime lifecycle. Those remain separate architecture
  * boundaries under ADR-0014.
  *
- * SEO-ROADMAP-0001 / Q2: trailing-slash 301 is registered here (after probe
- * protection and global middleware in server.application.ts, before domain routes).
+ * SEO-ROADMAP-0001:
+ * - Q2: trailing-slash 301 via registerTrailingSlashNormalize
+ * - S1: SeoEngine admin API under /api/seo
  */
 export function registerApplicationRoutes(
   app: Express,
@@ -72,5 +74,7 @@ export function registerApplicationRoutes(
   app.use('/api/news', newsRouter);
   app.use('/api/registry', registryRouter);
   app.use('/api/social-media', socialMediaRouter);
+  // SEO S1: keyword register, content inventory, rank snapshots (admin-only).
+  app.use('/api/seo', seoEngineRouter);
   app.use('/api', aiRouter);
 }
