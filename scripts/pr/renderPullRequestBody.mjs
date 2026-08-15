@@ -8,6 +8,7 @@ import {
   git,
   listAddedClaimFiles,
   readJsonFile,
+  PR_TEMPLATE_VERSION,
 } from './lib.mjs';
 
 const baseRef = process.env.PR_BASE_REF || 'origin/main';
@@ -80,4 +81,4 @@ fs.writeFileSync(outputPath, body, 'utf8');
 
 const title = `Agenten-Änderung: ${germanWorkItem}`.slice(0, 240);
 appendGithubOutput({ pr_body_output: outputPath, pr_title: title, claim_id: claim.claimId, claim_file: claimPath });
-console.log(`[PR-VORLAGE] ${outputPath} aus deutscher Vorlage v1.0.0 für ${claim.claimId} erzeugt.`);
+console.log(`[PR-VORLAGE] ${outputPath} aus deutscher Vorlage v${PR_TEMPLATE_VERSION} für ${claim.claimId} erzeugt.`);

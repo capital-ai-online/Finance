@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "PR-TEMPLATE-CONTRACT-HARDENING-2026-08-15",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "executionSurface": "Grok GitHub connector / SuperGrok"
+  },
+  "workItem": "PR-Vorlagenvertrag hardenen: validatePrBody.mjs und lib.mjs auf Template v1.3.4 ausrichten; fail-closed Job in pr-governance.yml ergänzen; Marker- und Abschnittspflichten erzwingen.",
+  "workItemDE": "PR-Vorlagenvertrag hardenen (v1.3.4 Alignment + CI-Gate)",
+  "startedAt": "2026-08-15T18:47:00Z",
+  "baseBranch": "main",
+  "baseSha": "0c07e1a43fde4dc0419f5f60ac74230608927393",
+  "pullRequest": null,
+  "prCreationApproval": {
+    "status": "approved",
+    "approvedBy": "human-user",
+    "approvedAt": "2026-08-15T18:46:00Z",
+    "scope": "Einen PR anlegen, der ausschließlich validatePrBody.mjs, lib.mjs (Version), optional renderPullRequestBody.mjs Log und den pr-template-contract Job in pr-governance.yml enthält."
+  },
+  "productionBaseline": {
+    "checkedAt": "2026-08-15T18:46:54Z",
+    "version": "0.6.0",
+    "commitSha": "0c07e1a43fde4dc0419f5f60ac74230608927393",
+    "branch": "main",
+    "repoSlug": "SvenKulessa/Finance"
+  },
+  "claimedPaths": [
+    "scripts/pr/validatePrBody.mjs",
+    "scripts/pr/lib.mjs",
+    "scripts/pr/renderPullRequestBody.mjs",
+    ".github/workflows/pr-governance.yml",
+    ".ai/work-claims/PR-TEMPLATE-CONTRACT-HARDENING-2026-08-15.json"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}

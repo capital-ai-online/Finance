@@ -90,3 +90,59 @@ jobs:
           PR_BASE_REF: origin/main
           PR_HEAD_REF: HEAD
         run: node "$POLICY_ROOT/scripts/security/verifyChangedWorkflowSecurity.mjs"
+
+  pr-template-contract:
+    name: PR-Vorlagenvertrag (kanonisch)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Vertrauenswürdigen Policy-Stand aus main auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: main
+          path: policy
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Kandidaten-Head ohne Credentials auschecken
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: candidate
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: main-Referenz für Claim-Diff importieren
+        working-directory: candidate
+        run: git fetch --no-tags ../policy main:refs/remotes/origin/main
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
+        with:
+          node-version: '24.18.0'
+
+      - name: Produktions-Baseline erzeugen (beratend, für Evidence-Tokens)
+        working-directory: candidate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          CAPITAL_AI_PRODUCTION_HEALTH_URL: https://capital-ai.online/healthz
+        run: node scripts/pr/productionPreflight.mjs
+
+      - name: Kanonische PR-Vorlage fail-closed prüfen
+        working-directory: candidate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+          PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+        run: node scripts/pr/validatePrBody.mjs
