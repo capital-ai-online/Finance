@@ -1,0 +1,45 @@
+{
+  "claimId": "SEO-WP-S1-PERSISTENCE-2026-08-15",
+  "title": "WP-S1 SeoEngine Persistenz + RLS + No-Demo-Data",
+  "roadmap": "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+  "documentId": "SEO-GM-ROADMAP-0002",
+  "roadmapIds": ["WP-S1", "S1"],
+  "branch": "seo/wp-s1-persistence-prep",
+  "base": "main@0c07e1a43fde4dc0419f5f60ac74230608927393",
+  "owner": "SvenKulessa",
+  "status": "prepared",
+  "phase": "prep",
+  "createdAt": "2026-08-15",
+  "scope": [
+    "docs/seo/S1_SEO_ENGINE.md",
+    "docs/seo/WP_S1_PERSISTENCE_IMPLEMENTATION.md",
+    "docs/adr/ADR-DRAFT-seo-engine-platform-module.md",
+    "supabase/migrations/20260815010000_seo_engine.sql",
+    "supabase/migrations/20260815200000_seo_engine_source_align_rls.sql",
+    "src/platform/SeoEngine/**",
+    "server/routes/seoEngineRoutes.ts",
+    "tests/unit/seoEngineStore.test.ts",
+    "tests/unit/seoEnginePersistence.contract.test.ts",
+    ".ai/work-claims/SEO-WP-S1-PERSISTENCE-2026-08-15.json"
+  ],
+  "outOfScope": [
+    "Production Supabase apply without Owner approval",
+    "Search Console MCP write",
+    "Social publish",
+    "Prerender S2",
+    "Shared bootstrap / workflows / package.json"
+  ],
+  "externalMutations": [],
+  "securityNotes": [
+    "RLS deny-by-default; server writes only via getServerSupabase privileged path",
+    "No estimated ranks (No-Demo-Data)",
+    "Admin API remains checkAdminAccess gated"
+  ],
+  "dod": [
+    "Schema source enum aligned with API: search-console | manual-import only",
+    "SeoEngineStore interface + memory + supabase adapters",
+    "Routes use store abstraction; fail closed in production without privileged Supabase",
+    "Unit/contract tests for source rejection, unknown keyword, empty ranks",
+    "Migration apply requires separate Owner-approved production step"
+  ]
+}
