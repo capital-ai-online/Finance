@@ -111,6 +111,15 @@ M5A Exit (alle Punkte erfüllt, siehe Closure-Evidence für Details je Punkt):
 | P3-2 | SEO/Marketing-Baseline | parallel read-only | SA-P11 Q1–Q6/MA0 Revalidator | aktuelle Baseline, keine Publikation |
 | P3-3 | Documentary D0 | parallel read-only | SA-P12 Manifest/Version/Code Comparator | konsistente Documentary-Baseline |
 
+**Status-Update P2-1 (2026-08-15):** read-only Bestandsaufnahme der bestehenden Provenance-/
+Lineage-/Provider-Health-Infrastruktur abgeschlossen — `docs/evidence/p2-1/
+P2_1_SA_P07_DATA_QUALITY_LINEAGE_INVENTORY.md`. Ergebnis: umfangreichere Infrastruktur als bisher
+dokumentiert vorhanden (3 parallele Provenance-Typfamilien + Provider-Health-Store), aber keine
+vereinte feld-/anlageklassenbezogene Qualitätsübersicht — Exit-Kriterium „feldbezogene Qualität/
+Lineage messbar" **weiterhin nicht erreicht**. SA-P07 Provider Quality Contract selbst noch nicht
+begonnen; nächster Schritt braucht separate, ausdrückliche Owner-Anweisung (Optionen siehe
+Inventar-Dokument Abschnitt 9).
+
 ## 7. DEVELOPMENT Chain M0–M10
 
 | Phase | Status | Systemadministrator-Auftrag | Gate / Exit |
