@@ -2,7 +2,7 @@
 ## Enterprise Market Data Provider & MCP Architecture
 
 **Status:** ACCEPTED  
-**Implementation-Status:** PHASE 3A PARTIALLY IMPLEMENTED / ALPACA PROMOTION NOT AUTHORIZED  
+**Implementation-Status:** PHASE 3B PARTIALLY IMPLEMENTED / ALPACA PROMOTION NOT AUTHORIZED  
 **Date:** 2026-08-03  
 **Version:** 0.6.0  
 **Priority:** P1  
@@ -130,6 +130,16 @@ enforced centrally.
 Alpaca continues to run as independent score-neutral shadow evidence. Index quotes, historical
 series, fundamentals and scoring-input migrations remain outside P3A and require later bounded
 work packages.
+
+## 3.6 P3B index quote migration boundary (2026-08-15)
+
+FMP index quotes now enter the canonical gateway through an injected read-only loader adapter.
+The platform provider does not import server internals; existing approved ticker mappings, FMP
+cooldown and cache remain in the server composition boundary. The legacy Traditional Quote
+contract remains compatible and continues to deny execution-price eligibility.
+
+Index histories, stock fundamentals and scoring-input generation remain outside P3B. Alpaca
+remains score-neutral shadow evidence and is not promoted.
 
 ## 4. Alpaca wird Primary Provider
 
