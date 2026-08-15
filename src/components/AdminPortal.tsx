@@ -10,7 +10,8 @@ import {
   ShieldCheck, 
   Sparkles,
   Activity,
-  Shield
+  Shield,
+  Search
 } from 'lucide-react';
 import { AdminPanel } from './AdminPanel';
 import { AuthStateDebugger } from './AuthStateDebugger';
@@ -25,12 +26,13 @@ import { SupervisorDashboard } from './SupervisorDashboard';
 import { ComplianceBadge } from './ComplianceBadge';
 import { ComplianceNotifications } from './ComplianceNotifications';
 import { SecurityComplianceAuditor } from './SecurityComplianceAuditor';
+import { SeoDashboard } from './SeoDashboard';
 import { isAuthorizedOwnerOrDevAdmin } from '../lib/ownerUtils';
 
 interface AdminPortalProps {
   currentUserEmail: string;
-  activeTab: 'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor' | 'compliance';
-  onChangeTab: (tab: 'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor' | 'compliance') => void;
+  activeTab: 'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor' | 'seo' | 'compliance';
+  onChangeTab: (tab: 'users' | 'auth' | 'markdown' | 'requests' | 'performance' | 'logs' | 'hygiene' | 'supervisor' | 'seo' | 'compliance') => void;
 }
 
 export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminPortalProps) {
@@ -156,6 +158,17 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
         adr: 'ADR-0006',
         title: 'Decentralized Multi-Agent State Tracking',
         description: 'Stellt sicher, dass dezentrale Multi-Agenten-Netzwerkakteure lückenlos protokolliert und deren Ausfälle im Ernstfall abgefangen werden.'
+      }
+    },
+    {
+      id: 'seo' as const,
+      label: 'SEO Management',
+      description: 'Keywords, Rankings, Content & Quellenstatus',
+      icon: Search,
+      compliance: {
+        adr: 'SEO-ROADMAP-0001 / S3',
+        title: 'Messbares SEO ohne synthetische Kennzahlen',
+        description: 'Zeigt ausschließlich validierte SeoEngine-Daten und kennzeichnet fehlende Search-Console-/GA4-Verbindungen ausdrücklich.'
       }
     },
     {
@@ -323,6 +336,10 @@ export function AdminPortal({ currentUserEmail, activeTab, onChangeTab }: AdminP
 
         {activeTab === 'supervisor' && (
           <SupervisorDashboard currentUserEmail={currentUserEmail} />
+        )}
+
+        {activeTab === 'seo' && (
+          <SeoDashboard />
         )}
 
         {activeTab === 'compliance' && (
