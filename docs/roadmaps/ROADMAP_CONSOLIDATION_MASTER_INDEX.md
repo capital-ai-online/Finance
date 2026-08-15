@@ -119,8 +119,10 @@ vereinte feld-/anlageklassenbezogene Qualitätsübersicht — Exit-Kriterium „
 Lineage messbar" **weiterhin nicht erreicht**. SA-P07 Provider Quality Contract selbst noch nicht
 begonnen; nächster Schritt braucht separate, ausdrückliche Owner-Anweisung (Optionen siehe
 Inventar-Dokument Abschnitt 9). **Nachtrag 2026-08-15:** Befund F1 (veraltete Anleihen-Routing-
-Tabelle in `supervisor.ts`) auf separate Owner-Anweisung „behebe F1" korrigiert — reine
-Faktenkorrektur, ändert nichts am weiterhin offenen P2-1-Exit-Kriterium.
+Tabelle in `supervisor.ts`) und Befund F4 (News-Sentiment ohne Herkunftskennzeichnung) auf separate
+Owner-Anweisungen korrigiert — beides reine Punktkorrekturen, ändert nichts am weiterhin offenen
+P2-1-Exit-Kriterium „feldbezogene Qualität/Lineage messbar" (vereinter Report/Evidence-ID-
+Vereinheitlichung stehen weiterhin aus).
 
 ## 7. DEVELOPMENT Chain M0–M10
 

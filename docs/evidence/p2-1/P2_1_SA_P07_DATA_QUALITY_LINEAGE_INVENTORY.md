@@ -79,8 +79,8 @@ Gleiches Muster wie Anleihen: `CommodityMarketEvidence` (`src/services/commodity
 ### 2.7 Makro/FRED
 `MacroEvidenceSeries` (FRED: DGS2/DGS10/FEDFUNDS/CPIAUCSL; ECB EUR-Referenzkurs), `FRED:macro-series`/`ECB:macro-series`, fail-closed bei leerem/fehlerhaftem Payload (`src/services/macroRateEvidence.ts:63-144`). Zinskurven-Risikoregime (`macroRiskRegime.ts:1-153`) nutzt bewusst einen **eigenen** Capability-Key `FRED:macro-risk-regime` statt `FRED:macro-series` — dokumentierte Designentscheidung (Zeilen 44-47), damit „HTTP erfolgreich" und „Regime-Evidence nutzbar" nicht zu einem Signal verschmelzen. `executionPriceEligible: false` ist an mehreren Stellen hart typisiert — Makrodaten sind nie ein handelbarer Preis.
 
-### 2.8 News-Sentiment — Lücke bestätigt weiterhin offen
-`classifyNewsSentiment()` (`src/features/news/newsRoutes.ts:17,45`) ist eine deterministische Schlüsselwort-Heuristik. **Selbst verifiziert per Grep:** keine einzige Referenz auf `recordProviderHealth` oder `FinancialFieldProvenance` in dieser Datei. Weder alte noch neue Provenance-Generation deckt dieses Feld ab; die API kennzeichnet `sentiment` nicht als heuristisch. Einziger seit `DATENQUALITAETSSCHICHT.md` unverändert offener Punkt aus dessen Abschnitt 4.
+### 2.8 News-Sentiment — Lücke behoben 2026-08-15 (F4)
+`classifyNewsSentiment()` (`src/features/news/newsRoutes.ts`) ist eine deterministische Schlüsselwort-Heuristik. **Selbst verifiziert per Grep:** keine einzige Referenz auf `recordProviderHealth` oder `FinancialFieldProvenance` in dieser Datei. Weder alte noch neue Provenance-Generation deckt dieses Feld ab. Die API kennzeichnete `sentiment` bislang nicht als heuristisch — auf Owner-Anweisung „News-Sentiment kennzeichnen" behoben, siehe Nachtrag Abschnitt 11.
 
 ## 3. Provider-Health-Katalog (alle beobachteten `provider:capability`-Paare)
 
@@ -158,7 +158,7 @@ einsehen — nie beides zusammen in einem Artefakt. Genau diese Verknüpfung wä
 | F1 | Anleihen-Routing-Tabelle im Supervisor ist falsch (`hasDedicatedEngine: false` trotz real verdrahtetem, ADR-0033-freigegebenem Scoring) | Code, veraltet | `src/platform/Supervisor/supervisor.ts:36` | **behoben 2026-08-15** (Owner-Anweisung „behebe F1") — siehe Nachtrag |
 | F2 | `DATENQUALITAETSSCHICHT.md` §1-Tabelle veraltet für Anleihen (Historie als „nicht abgedeckt" gelistet) | Dokumentation, veraltet | `docs/architecture/DATENQUALITAETSSCHICHT.md:57` | Nachtrag in diesem Dokument ergänzt (siehe unten) |
 | F3 | `DATENQUALITAETSSCHICHT.md` §4-Punkt zu H1-Fundamentaldaten-Zeitstempel ist überholt (bereits gelöst) | Dokumentation, veraltet | `docs/architecture/DATENQUALITAETSSCHICHT.md:118-121` | Nachtrag ergänzt |
-| F4 | News-Sentiment ohne jede Provenance-/Health-Kennzeichnung | echte offene Lücke | `src/features/news/newsRoutes.ts` | weiterhin offen, unverändert seit `DATENQUALITAETSSCHICHT.md` |
+| F4 | News-Sentiment ohne jede Provenance-/Health-Kennzeichnung | echte offene Lücke | `src/features/news/newsRoutes.ts` | **behoben 2026-08-15** (Owner-Anweisung „News-Sentiment kennzeichnen") — siehe Nachtrag |
 | F5 | Zwei Evidence-ID-Schemata für dieselben Index-Rohdaten | Inkonsistenz | `src/services/indexMarketEvidence.ts` | dokumentiert, nicht behoben |
 | F6 | Sechs ad-hoc Evidence-ID-Formate statt einheitlichem `buildFinancialEvidenceId()` | Inkonsistenz | Familie C (§6) | dokumentiert, nicht behoben |
 | F7 | Provider-Health-Store In-Memory, nicht persistent, keine Multi-Instanz-Aggregation | Architektur-Grenze | `providerHealth.ts:27` | vom Supervisor selbst bereits offengelegt (Kommentar Zeile 289) |
@@ -184,9 +184,9 @@ Contract` mehrere unabhängig wählbare, nicht sich gegenseitig ausschließende 
 wurde bereits begonnen:
 
 1. ~~**F1 beheben** (`supervisor.ts:36` korrigieren) — kleinster Schritt, reine Faktenkorrektur, kein
-   neues Konzept nötig.~~ **Erledigt, siehe Nachtrag unten.**
-2. **News-Sentiment-Kennzeichnung** (F4) — die im ursprünglichen `AskUserQuestion` als dritte Option
-   angebotene, engste Lücke.
+   neues Konzept nötig.~~ **Erledigt, siehe Nachtrag Abschnitt 10.**
+2. ~~**News-Sentiment-Kennzeichnung** (F4) — die im ursprünglichen `AskUserQuestion` als dritte Option
+   angebotene, engste Lücke.~~ **Erledigt, siehe Nachtrag Abschnitt 11.**
 3. **Vereinter Qualitäts-Report** (§5) — `getSupervisorStatus()` um feld-/anlageklassenbezogene
    Provenance-Zusammenfassung erweitern, ohne die drei bestehenden Typfamilien zu verschmelzen.
 4. **Evidence-ID-Vereinheitlichung** (F5/F6) — alle Domänen auf `buildFinancialEvidenceId()`
@@ -229,6 +229,34 @@ Voller Suite-Lauf nach der Änderung: siehe zugehöriger PR-Body. Keine weiteren
 `routeTask('bond')`/`TASK_ROUTING_TABLE.bond` außerhalb von `supervisor.ts`/`supervisor.test.ts`
 gefunden (per Grep verifiziert).
 
+## 11. Nachtrag 2026-08-15 — F4 behoben (Owner-Anweisung „News-Sentiment kennzeichnen")
+
+`src/features/news/newsRoutes.ts` lieferte `sentiment` bislang ohne jede Herkunftskennzeichnung
+aus, obwohl `classifyNewsSentiment()` eine rein deterministische Schlüsselwort-Heuristik ist, keine
+NLP-/KI-Analyse. Neu, analog zum bestehenden `dataSource`/`scoreBasis`-Muster:
+
+```ts
+export type NewsSentimentBasis = 'heuristic';
+export const NEWS_SENTIMENT_BASIS: NewsSentimentBasis = 'heuristic';
+```
+
+Jeder ausgelieferte News-Eintrag trägt jetzt zusätzlich `sentimentBasis: 'heuristic'` neben
+`sentiment` (`newsRoutes.ts`, `/`-Route-Handler). Der einzige reale Frontend-Konsument,
+`src/components/Newsticker.tsx`, wurde geprüft: `sentiment` wird dort aktuell **nicht** gerendert
+(nur ins `NewsItem`-State-Interface übernommen) — der Typ-Vertrag (`sentimentBasis?: 'heuristic'`)
+wurde dennoch synchron ergänzt, damit das Interface den tatsächlich empfangenen Datenshape korrekt
+beschreibt und eine künftige Anzeige die Kennzeichnung sofort zur Verfügung hat, ohne den
+Backend-Vertrag erneut ändern zu müssen. Keine neue UI-Anzeige wurde ergänzt — außerhalb des
+angeforderten Scopes „kennzeichnen" (Datenvertrag), da `sentiment` selbst noch nirgends sichtbar
+ist.
+
+`tests/unit/newsRoutes.test.ts` um einen Test für `NEWS_SENTIMENT_BASIS === 'heuristic'` ergänzt.
+Der HTTP-Router selbst wird — konsistent mit der etablierten Projektkonvention (keine
+supertest-Abhängigkeit, siehe `tests/unit/alerts.test.ts`) — nicht end-to-end getestet; die neue
+Konstante ist exportiert und direkt geprüft.
+
+Voller Suite-Lauf nach der Änderung: siehe zugehöriger PR-Body.
+
 ## Verwandte Dokumente
 
 - `docs/architecture/DATENQUALITAETSSCHICHT.md` — älteres Provenance-Muster, teilweise veraltet (F2/F3)
@@ -236,3 +264,5 @@ gefunden (per Grep verifiziert).
 - `src/types/financialProvenance.ts`, `src/platform/Supervisor/providerHealth.ts`,
   `src/types/scoringIntegrity.ts`, `src/services/cryptoSnapshotProvider.ts`
 - `src/platform/Supervisor/supervisor.ts`, `tests/unit/supervisor.test.ts` — F1-Fix
+- `src/features/news/newsRoutes.ts`, `src/components/Newsticker.tsx`,
+  `tests/unit/newsRoutes.test.ts` — F4-Fix

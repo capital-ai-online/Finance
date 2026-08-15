@@ -2,7 +2,7 @@
 // src/features/news/ extrahierte Sentiment-Heuristik.
 
 import { describe, it, expect } from 'vitest';
-import { classifyNewsSentiment } from '../../src/features/news/newsRoutes';
+import { classifyNewsSentiment, NEWS_SENTIMENT_BASIS } from '../../src/features/news/newsRoutes';
 
 describe('classifyNewsSentiment', () => {
   it('erkennt positive Schluesselwoerter', () => {
@@ -21,5 +21,11 @@ describe('classifyNewsSentiment', () => {
 
   it('behandelt fehlende Felder ohne zu werfen', () => {
     expect(classifyNewsSentiment(undefined as any, undefined as any)).toBe('neutral');
+  });
+});
+
+describe('NEWS_SENTIMENT_BASIS (P2-1/F4: Herkunftskennzeichnung fuer sentiment)', () => {
+  it('kennzeichnet sentiment als heuristisch, nicht gemessen oder KI-basiert', () => {
+    expect(NEWS_SENTIMENT_BASIS).toBe('heuristic');
   });
 });

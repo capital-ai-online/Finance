@@ -10,6 +10,15 @@ import express from 'express';
 
 export type NewsSentiment = 'positive' | 'negative' | 'neutral';
 
+/**
+ * Herkunftskennzeichnung fuer das sentiment-Feld, analog zum dataSource/scoreBasis-Muster
+ * (docs/architecture/DATENQUALITAETSSCHICHT.md). classifyNewsSentiment() ist eine deterministische
+ * Schluesselwort-Heuristik, keine NLP-/KI-Analyse - 'heuristic' ist damit der einzig zutreffende
+ * Wert, solange kein gemessenes/modellbasiertes Sentiment existiert.
+ */
+export type NewsSentimentBasis = 'heuristic';
+export const NEWS_SENTIMENT_BASIS: NewsSentimentBasis = 'heuristic';
+
 const POSITIVE_KEYWORDS = ['bullish', 'surge', 'gain', 'rise', 'rally', 'growth'];
 const NEGATIVE_KEYWORDS = ['bearish', 'plummet', 'drop', 'fall', 'crash', 'risk', 'hack'];
 
@@ -43,6 +52,7 @@ newsRouter.get('/', async (req, res) => {
           headline: art.title || 'Krypto Markt Update',
           summary: art.description || art.content || 'Keine detaillierte Beschreibung verfügbar.',
           sentiment: classifyNewsSentiment(art.title, art.description),
+          sentimentBasis: NEWS_SENTIMENT_BASIS,
           time: new Date(art.publishedAt || Date.now()).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr',
           source: art.source?.name || 'NewsAPI',
         }));

@@ -112,9 +112,10 @@ und Aktien/Forex ohne echte Datenquelle) — dort ist sie ein dokumentierter, be
 
 Diese Auflistung ist bewusst Teil des Dokuments statt stillschweigend ausgelassen zu werden:
 
-- **News-Sentiment** (`src/features/news/newsRoutes.ts`, `classifyNewsSentiment()`): eine
+- ~~**News-Sentiment** (`src/features/news/newsRoutes.ts`, `classifyNewsSentiment()`): eine
   deterministische Schlüsselwort-Heuristik, keine NLP-/KI-Analyse. Die API-Antwort kennzeichnet
-  aktuell nicht, dass `sentiment` heuristisch statt gemessen ist.
+  aktuell nicht, dass `sentiment` heuristisch statt gemessen ist.~~ **Behoben 2026-08-15**, siehe
+  Nachtrag Abschnitt 5 unten (`sentimentBasis: 'heuristic'`).
 - **H1-Fundamentaldaten** (`server/stockFundamentals.ts`): `peRatio`/`dividendYieldPct`/
   `profitMarginPct` fließen mit einem internen `fetchedAt`-Zeitstempel in den Score ein, dieser
   Zeitstempel wird aber nicht bis zu einer eventuellen direkten Anzeige der Rohwerte
@@ -140,9 +141,11 @@ sind dadurch als veraltet identifiziert:
   exportiert seit dem in der Bestandsaufnahme referenzierten Code bereits ein vollständiges
   `FinancialFieldProvenance[]` je Fundamentaldaten-Feld inklusive `retrievedAt`/`observedAt`.
 
-Alle übrigen in Abschnitt 4 gelisteten Lücken (News-Sentiment, `CryptoEnterpriseEvaluator.tsx`
-hartkodierte Fallback-Werte) sind laut Bestandsaufnahme weiterhin unverändert offen. Zusätzlich hat
-die Bestandsaufnahme einen bislang unbekannten Befund in `src/platform/Supervisor/supervisor.ts:36`
+Von den übrigen in Abschnitt 4 gelisteten Lücken ist `CryptoEnterpriseEvaluator.tsx` (hartkodierte
+Fallback-Werte) weiterhin unverändert offen. News-Sentiment (F4) wurde am 2026-08-15 auf separate
+Owner-Anweisung („News-Sentiment kennzeichnen") behoben — `sentiment` trägt jetzt
+`sentimentBasis: 'heuristic'`, siehe oben und Inventar-Dokument Abschnitt 11. Zusätzlich hat die
+Bestandsaufnahme einen bislang unbekannten Befund in `src/platform/Supervisor/supervisor.ts:36`
 aufgedeckt (Anleihen-Routing-Tabelle behauptete `hasDedicatedEngine: false` trotz real verdrahtetem
 Scoring) — auf separate Owner-Anweisung („behebe F1") am 2026-08-15 in
 `src/platform/Supervisor/supervisor.ts` korrigiert, siehe Inventar-Dokument Abschnitt 7/10,
