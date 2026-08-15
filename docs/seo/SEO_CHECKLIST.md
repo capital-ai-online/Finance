@@ -1,6 +1,6 @@
 # 🔍 SEO Checklist & Technical Discovery Guide
 **Project: CAPITAL-AI**  
-**Stand:** 15.08.2026 — S1 gemerged (#289); S2 Prerender Build-Wire  
+**Stand:** 15.08.2026 — S2 gemerged (#290); N4 Freigabe-Gate in PR  
 **Umsetzungsplan:** `docs/seo/SEO_MANAGEMENT_ROADMAP.md`
 
 ### 1. Crawling & Indexierung
@@ -15,12 +15,15 @@
 - [x] og:image first-party — **Q5**
 
 ### 4. Crawler-Render
-- [x] Prerender Meta + noscript pro Public-Route — **S2** (`npm run build` → prerender)
+- [x] Prerender Meta + noscript pro Public-Route — **S2** (#290)
 - [ ] Full React-Body SSR — optional Follow-up
 
 ### 5. Performance
 - [x] manualChunks — **D4**
 
-### 6. Management
+### 6. Management & Content
 - [ ] Search Console MCP Credentials — **D5**
-- [x] SeoEngine foundation (in-memory + API) — **S1** (#289)
+- [x] SeoEngine foundation — **S1** (#289)
+- [x] Generate text/scripts — **N1/N2**
+- [x] Owner-Freigabe vor Instant-Publish — **N4**
+- [ ] Media-Rendering — **N3** (Make-or-Buy)
