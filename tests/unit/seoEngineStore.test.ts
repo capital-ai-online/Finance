@@ -1,21 +1,20 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { SeoEngineStore } from '../../src/platform/SeoEngine/store';
+import { SeoEngineService } from '../../src/platform/SeoEngine/SeoEngineService';
 
-describe('SeoEngineStore (S1)', () => {
-  let store: SeoEngineStore;
+describe('SeoEngineService (S1)', () => {
+  let engine: SeoEngineService;
 
   beforeEach(() => {
-    store = new SeoEngineStore();
-    store.resetForTests();
+    engine = new SeoEngineService();
   });
 
   it('seeds keywords without rank snapshots (no demo ranks)', () => {
-    expect(store.listKeywords().length).toBeGreaterThan(0);
-    expect(store.listRankSnapshots()).toEqual([]);
+    expect(engine.listKeywords(false).length).toBeGreaterThan(0);
+    expect(engine.listRanks()).toEqual([]);
   });
 
   it('seeds published legal/home content paths', () => {
-    const paths = store.listContent().map((c) => c.path);
+    const paths = engine.listContent().map((c) => c.path);
     expect(paths).toContain('/');
     expect(paths).toContain('/impressum');
     expect(paths).toContain('/agb');
@@ -23,14 +22,14 @@ describe('SeoEngineStore (S1)', () => {
   });
 
   it('upserts keywords by phrase+locale', () => {
-    const a = store.addKeyword({ phrase: 'Monte Carlo Portfolio Simulator', locale: 'en' });
-    const b = store.addKeyword({ phrase: 'monte carlo portfolio simulator', locale: 'en' });
+    const a = engine.addKeyword({ phrase: 'Monte Carlo Portfolio Simulator', locale: 'en' });
+    const b = engine.addKeyword({ phrase: 'monte carlo portfolio simulator', locale: 'en' });
     expect(a.id).toBe(b.id);
   });
 
   it('rejects rank snapshots for unknown keywords', () => {
     expect(() =>
-      store.addRankSnapshot({
+      engine.addRankSnapshot({
         keywordId: 'missing',
         position: 12,
         source: 'manual-import',
@@ -39,21 +38,21 @@ describe('SeoEngineStore (S1)', () => {
   });
 
   it('accepts manual-import ranks', () => {
-    const kw = store.listKeywords()[0];
-    const snap = store.addRankSnapshot({
+    const kw = engine.listKeywords(false)[0];
+    const snap = engine.addRankSnapshot({
       keywordId: kw.id,
       position: 8,
       source: 'manual-import',
       sourceRef: 'owner-csv-2026-08',
     });
     expect(snap.position).toBe(8);
-    expect(store.listRankSnapshots(kw.id)).toHaveLength(1);
+    expect(engine.listRanks(kw.id)).toHaveLength(1);
   });
 
   it('rejects invalid position values', () => {
-    const kw = store.listKeywords()[0];
+    const kw = engine.listKeywords(false)[0];
     expect(() =>
-      store.addRankSnapshot({ keywordId: kw.id, position: 0, source: 'manual-import' }),
+      engine.addRankSnapshot({ keywordId: kw.id, position: 0, source: 'manual-import' }),
     ).toThrow(/position/);
   });
 });
