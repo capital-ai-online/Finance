@@ -12,21 +12,10 @@ export default defineConfig(() => {
       },
     },
     build: {
-      // SEO-ROADMAP-0001 / D4: split vendor chunks to reduce main-bundle size
-      // (previously ~2.49 MB / 678 kB gzip single chunk).
-      rollupOptions: {
-        output: {
-          manualChunks(id: string) {
-            if (!id.includes('node_modules')) return;
-            if (id.includes('react-dom') || id.includes('/react/') || id.includes('\\react\\')) {
-              return 'vendor-react';
-            }
-            if (id.includes('@supabase')) return 'vendor-supabase';
-            if (id.includes('stripe')) return 'vendor-stripe';
-            return 'vendor';
-          },
-        },
-      },
+      // HOTFIX: Rollup übernimmt die Chunk-Aufteilung wieder selbst.
+      // Die zuvor erzwungene Trennung in vendor und vendor-react erzeugte
+      // einen zyklischen Chunk (vendor -> vendor-react -> vendor) und ließ
+      // React in Produktion vor dem Mount mit createContext abbrechen.
       chunkSizeWarningLimit: 900,
     },
     server: {
