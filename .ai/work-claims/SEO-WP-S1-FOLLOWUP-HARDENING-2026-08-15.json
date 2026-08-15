@@ -1,0 +1,65 @@
+{
+  "claimId": "SEO-WP-S1-FOLLOWUP-HARDENING-2026-08-15",
+  "title": "WP-S1 Follow-up: Rank-Historie gegen CASCADE absichern + Ledger-Abgleich",
+  "roadmap": "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+  "documentId": "SEO-GM-ROADMAP-0002",
+  "roadmapIds": ["WP-S1"],
+  "predecessor": "SEO-WP-S1-PERSISTENCE-2026-08-15",
+  "branch": "claude/seo-engine-db-migration-bmgb7o",
+  "base": "main@381815d7c049cb5dd6cf9b528562db3de34f7e5a",
+  "owner": "SvenKulessa",
+  "ownerDecision": "ON DELETE RESTRICT (Variante 1); beide offenen Punkte umsetzen",
+  "status": "prepared",
+  "phase": "post-mutation-hardening",
+  "createdAt": "2026-08-15",
+  "context": [
+    "Mutation SB-MIG-20260815010000-seo-engine-foundation ist angewendet: 20260815010000, 20260815200000 und 20260815210000 sind auf AIFINANCIAL (ryzywoktpmyhwzxmstyu) produktiv.",
+    "Dieser Vorgang raeumt die beiden Restbefunde aus dem Apply-Report ab."
+  ],
+  "scope": [
+    "supabase/migrations/20260815220000_seo_rank_snapshots_fk_restrict.sql",
+    "docs/runbooks/SEO_WP_S1_LEDGER_RECONCILIATION.md",
+    ".ai/work-claims/SEO-WP-S1-FOLLOWUP-HARDENING-2026-08-15.json"
+  ],
+  "outOfScope": [
+    "Produktions-Apply ohne separate OWNER-Freigabe",
+    "Ledger-Eintraege fuer nicht angewendete Migrationen (siehe findings.unapplied)",
+    "Nachtraegliches Anwenden von social_media_publishing / pdf_credit_ledger / social_media_content_approvals",
+    "RLS-Policies oder weitere Grant-Aenderungen auf den SEO-Tabellen",
+    "Schema-Aenderungen an seo_keywords oder seo_content_inventory"
+  ],
+  "findings": {
+    "cascadeGap": {
+      "severity": "medium",
+      "detail": "seo_rank_snapshots.keyword_id trug ON DELETE CASCADE. 20260815210000 entzieht service_role DELETE und TRUNCATE auf seo_rank_snapshots, aber Postgres verlangt fuer einen Cascade kein DELETE-Recht auf der referenzierenden Tabelle. Das Loeschen eines Keywords loeschte damit dessen Rank-Historie trotz entzogenem Recht.",
+      "resolution": "FK auf ON DELETE RESTRICT umstellen (20260815220000). Stilllegung eines Keywords laeuft ueber das bestehende Feld seo_keywords.active, nicht ueber DELETE."
+    },
+    "ledgerDrift": {
+      "severity": "low",
+      "detail": "Der Supabase-MCP-Connector stempelt beim apply_migration die Anwendungszeit statt der Repo-Version. Betroffen sind die drei in dieser Sitzung angewendeten SEO-Migrationen (20260815192502, 20260815192747, 20260815193957) sowie kuenftig 20260815220000.",
+      "resolution": "Einmaliger, namensbasierter UPDATE auf supabase_migrations.schema_migrations laut docs/runbooks/SEO_WP_S1_LEDGER_RECONCILIATION.md."
+    },
+    "unapplied": {
+      "severity": "medium",
+      "detail": "20260801150000_social_media_publishing, 20260810110642_pdf_credit_ledger und 20260815140000_social_media_content_approvals fehlen im Ledger, weil sie nie angewendet wurden - keine der sechs erzeugten Tabellen existiert in der Datenbank (to_regclass = null fuer social_media_accounts, social_media_oauth_states, social_media_publish_log, pdf_credits, pdf_credit_grants, social_media_content_approvals). Das ist kein Ledger-Drift, sondern offener Migrationsrueckstand.",
+      "resolution": "Bewusst NICHT Teil dieses Vorgangs. Ein Ledger-Eintrag wuerde diese Migrationen faelschlich als angewendet markieren und db push das echte Schema ueberspringen lassen. Erfordert einen eigenen Vorgang mit fachlicher Pruefung, ob die Features noch gewollt sind."
+    }
+  },
+  "externalMutations": [
+    "Supabase AIFINANCIAL: ALTER TABLE seo_rank_snapshots FK -> ON DELETE RESTRICT (ausstehend, OWNER-Freigabe erforderlich)",
+    "Supabase AIFINANCIAL: UPDATE supabase_migrations.schema_migrations, 4 Zeilen (ausstehend, OWNER-Freigabe erforderlich)"
+  ],
+  "securityNotes": [
+    "Kein Grant wird veraendert; service_role behaelt select/insert/update auf seo_rank_snapshots ohne delete und truncate",
+    "RLS bleibt aktiviert und policy-frei (deny-by-default) auf allen drei SEO-Tabellen",
+    "Kein anon/authenticated-Privileg wird hinzugefuegt",
+    "Keine Datenaenderung; alle drei Tabellen sind leer (0 Zeilen)"
+  ],
+  "dod": [
+    "FK seo_rank_snapshots_keyword_id_fkey traegt ON DELETE RESTRICT",
+    "Loeschversuch auf ein Keyword mit Snapshots schlaegt mit foreign_key_violation fehl",
+    "schema_migrations fuehrt die vier SEO-Migrationen unter ihren Repo-Versionen",
+    "Kein Ledger-Eintrag fuer die drei nicht angewendeten Migrationen",
+    "Apply-Evidenz je Schritt im Runbook nachgetragen"
+  ]
+}
