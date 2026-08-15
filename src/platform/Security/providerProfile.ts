@@ -266,6 +266,15 @@ export interface ProviderCutoverEvidence {
   externalHostConfigurationVerified: boolean;
 }
 
+const PROVIDER_CUTOVER_EVIDENCE_KEYS: readonly (keyof ProviderCutoverEvidence)[] = Object.freeze([
+  'realCallerVerified',
+  'canonicalControlPlanePathVerified',
+  'providerSpecificBypassDenied',
+  'auditCorrelationVerified',
+  'rollbackToReadOnlyVerified',
+  'externalHostConfigurationVerified',
+]);
+
 export type ProviderCutoverReadinessDecision =
   | { status: 'READY'; profile: Readonly<ProviderProfile> }
   | { status: 'NOT_APPLICABLE'; profile: Readonly<ProviderProfile>; reason: string }
@@ -305,8 +314,7 @@ export function evaluateProviderCutoverReadiness(
     };
   }
 
-  const required = Object.keys(evidence) as (keyof ProviderCutoverEvidence)[];
-  const missingEvidence = required.filter(key => evidence[key] !== true);
+  const missingEvidence = PROVIDER_CUTOVER_EVIDENCE_KEYS.filter(key => evidence[key] !== true);
   if (missingEvidence.length > 0) {
     return {
       status: 'BLOCKED',
