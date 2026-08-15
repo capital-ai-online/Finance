@@ -310,5 +310,43 @@ describe('SA3 Systemadmin audited execution', () => {
       expect(result.decision).toMatchObject({ verdict: 'ALLOW', capability: AGENT_CAPABILITIES.BRANCH, layer: 'REM_POLICY' });
       expect(result.executionPermit).toMatchObject({ capability: AGENT_CAPABILITIES.BRANCH, auditBoundExecutionPermitted: true });
     });
+
+    // M8 (ADR-0062) Exit Gate item 6: "rollback-to-read-only is proven". Proven end-to-end
+    // through the real, live-wired SA3B chain (SA3 -> SA2 -> SA1 -> M4), not just the isolated
+    // roadmapExecutionMandate.ts unit tests. killSwitchActive is distinct from
+    // mandate.killSwitch.enabled=false (which denies everything, including READ, and is already
+    // covered by "denies and audits attempts to rewrite the SA2/SA3 control plane"-style tests) -
+    // this proves the narrower "restore read-only operation" rollback the M8 runbook requires.
+    describe('rollback-to-read-only (M8 Exit Gate item 6)', () => {
+      it('denies the real live SA3B mutating capability (BRANCH) once rolled back', async () => {
+        const rolledBackBranch: SystemadminRoadmapAuthorizationRequest = {
+          ...authorization(AGENT_CAPABILITIES.BRANCH, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']),
+          riskClass: 'MEDIUM',
+          killSwitchActive: true,
+        };
+        const result = await authorizeSystemadminAuditedExecution({
+          authorization: rolledBackBranch,
+          checkpoint: { ...baseCheckpoint, freshBranchCreated: false, branchName: undefined },
+        }, auditContext);
+
+        expect(result.decision.verdict).toBe('DENY');
+        expect(result.executionPermit).toBeUndefined();
+      });
+
+      it('keeps READ available through the same rolled-back chain (read-only, not fully cut off)', async () => {
+        const rolledBackRead: SystemadminRoadmapAuthorizationRequest = {
+          ...authorization(AGENT_CAPABILITIES.READ, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']),
+          riskClass: 'LOW',
+          killSwitchActive: true,
+        };
+        const result = await authorizeSystemadminAuditedExecution({
+          authorization: rolledBackRead,
+          checkpoint: baseCheckpoint,
+        }, auditContext);
+
+        expect(result.decision).toMatchObject({ verdict: 'ALLOW', capability: AGENT_CAPABILITIES.READ });
+        expect(result.executionPermit).toMatchObject({ capability: AGENT_CAPABILITIES.READ, auditBoundExecutionPermitted: true });
+      });
+    });
   });
 });

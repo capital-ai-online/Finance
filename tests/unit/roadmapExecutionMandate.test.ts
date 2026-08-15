@@ -278,6 +278,28 @@ describe('SA1 Systemadmin REM enforcement', () => {
     }).verdict).toBe('DENY');
   });
 
+  // M8 (ADR-0062, "rollback-to-read-only"). mandate.killSwitch.enabled=false denies everything,
+  // including READ - too strict to prove "restore read-only operation" specifically.
+  // killSwitchActive is the distinct, narrower lever: mutations denied, read access retained.
+  it('rolls back to read-only: denies mutating capabilities but keeps READ/ANALYZE/PLAN available', () => {
+    const rolledBack = { ...request(AGENT_CAPABILITIES.BRANCH, {}, { killSwitchActive: true }) };
+    for (const mutating of [
+      AGENT_CAPABILITIES.BRANCH,
+      AGENT_CAPABILITIES.COMMIT,
+      AGENT_CAPABILITIES.PR,
+      AGENT_CAPABILITIES.CI_REQUEST,
+    ]) {
+      expect(evaluateSystemadminRoadmapPolicy({ ...rolledBack, capability: mutating }).verdict).toBe('DENY');
+    }
+    for (const readOnly of [AGENT_CAPABILITIES.READ, AGENT_CAPABILITIES.ANALYZE, AGENT_CAPABILITIES.PLAN]) {
+      expect(evaluateSystemadminRoadmapPolicy({ ...rolledBack, capability: readOnly }).verdict).toBe('ALLOW');
+    }
+  });
+
+  it('leaves normal operation unaffected when killSwitchActive is absent (default off)', () => {
+    expect(evaluateSystemadminRoadmapPolicy(request(AGENT_CAPABILITIES.BRANCH)).verdict).toBe('ALLOW');
+  });
+
   it('denies redundant or over-budget CI requests', () => {
     expect(evaluateSystemadminRoadmapPolicy(request(AGENT_CAPABILITIES.CI_REQUEST, {
       ciBudgetExceeded: true,

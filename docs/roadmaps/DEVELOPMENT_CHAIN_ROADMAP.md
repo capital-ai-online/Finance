@@ -95,7 +95,7 @@ unberührt.
 | M5A Native MFA / AAL2 | **VERIFIED PASS** | baseline + runbook + closure evidence complete | ESS-0020 + ADR-0064 + ADR-0003.5 | repo code merged (PR #255/#256) → beide Owner-Profile mit verifiziertem nativen TOTP-Faktor + bestätigter `aal2`-Sitzung (`docs/evidence/m5a/M5A_VERIFIED_PASS_CLOSURE_EVIDENCE.md`) → Advisor ohne unowned HIGH/CRITICAL | M6 unblocked |
 | M6 Supply Chain Provenance | **VERIFIED PASS** | **RUNBOOK READY + repo evidence** | ADR-0060 | source→lockfile→SBOM→provenance chain implemented, merged, and confirmed on the real hosted `push`-to-`main` build path: run [`31834114193`](https://github.com/SvenKulessa/Finance/actions/runs/31834114193) signed the provenance statement via cosign keyless signing (Sigstore Fulcio/Rekor) and verified it in the same run (`cosign verify-blob ... Verified OK`) against the exact expected certificate identity and OIDC issuer (`docs/evidence/m6/M6_REPOSITORY_IMPLEMENTATION_EVIDENCE.md`) | M7 unblocked |
 | M7 Deployment Identity / Platform Mutation | **COMPLETE / VERIFIED PASS** (2026-08-14, all 9 Exit Gate criteria met) | **RUNBOOK READY + repo evidence** | ADR-0061 | read-only Render preflight done; deploy-production merged and confirmed gated on M6 attestation on a real push; post-deploy identity/health verification confirmed end-to-end against the live Render deploy after a real bug fix (`docs/evidence/m7/M7_PHASE0_AND_REPOSITORY_CONTROLS_EVIDENCE.md`); Owner performed a real deploy-hook rotation, confirmed via 3 independent sources (`docs/runbooks/M7_DEPLOY_HOOK_ROTATION_HANDOFF.md`); Owner performed a real Render Dashboard rollback plus roll-forward to current `main`, both confirmed via 3 independent sources each (`docs/runbooks/M7_ROLLBACK_VERIFICATION_HANDOFF.md`); all 10 Required Negative Tests now have a concrete, automated, passing test (`docs/evidence/m7/M7_REQUIRED_NEGATIVE_TESTS_EVIDENCE.md`) | M8 unblocked, not yet started |
-| M8 Agent Cutover | **PHASE 0 COMPLETE / PROVIDER PROFILE PACKAGE VERIFIED PASS, WIRED TO ONE REAL CALLER — M8 EXIT GATE NOT YET MET** | **RUNBOOK READY + repo evidence** | ADR-0062 + ESS-0019 | read-only provider inventory done; Provider Profile Registry + composed authorization gate merged with full Policy-Equivalence/Negative Test coverage, then wired as an additive narrowing check into the live SA3B/SA4 execution host with proven no-regression (`docs/evidence/m8/M8_PHASE0_AND_PROVIDER_PROFILE_EVIDENCE.md`); Claude Code/Google AI Studio/NotebookLM still have no real caller, no cutover performed, no direct provider bypass deactivated — M8 as a whole remains PLANNED | M9 after cutover VERIFIED PASS |
+| M8 Agent Cutover | **PHASE 0 COMPLETE / PROVIDER PROFILE PACKAGE VERIFIED PASS, WIRED TO ONE REAL CALLER, ROLLBACK-TO-READ-ONLY PROVEN — M8 EXIT GATE NOT YET MET** | **RUNBOOK READY + repo evidence** | ADR-0062 + ESS-0019 | read-only provider inventory done; Provider Profile Registry + composed authorization gate merged with full Policy-Equivalence/Negative Test coverage, wired as an additive narrowing check into the live SA3B/SA4 execution host with proven no-regression, rollback-to-read-only proven end-to-end through the real chain via two independent levers (`docs/evidence/m8/M8_PHASE0_AND_PROVIDER_PROFILE_EVIDENCE.md`); Claude Code/Google AI Studio/NotebookLM still have no real caller, no cutover performed, no direct provider bypass deactivated — M8 as a whole remains PLANNED | M9 after cutover VERIFIED PASS |
 | M9 Assurance / Incident / Break-Glass | **BLOCKED BY M8** | **RUNBOOK READY** | ADR-0063 | injection/replay/exfiltration/audit/kill-switch/break-glass/rollback drills | M10 after assurance VERIFIED PASS |
 | M10 Passkey-only Owner PR Authorization | **BLOCKED BY M9** | **ESS + RUNBOOK + THREAT MODEL READY** | ADR-0066 + ESS-0022 | exact-state WebAuthn approval, shadow mode, replay/recovery tests, legacy gate cleanup | DevelopmentChain closure after VERIFIED PASS |
 
@@ -204,10 +204,25 @@ SA2-Chat-Profil; ein End-to-End-Test beweist, dass die tatsächlich live genutzt
 `ALLOW` liefert. Alle 6 bestehenden SA3-Tests bestehen unverändert. Voller Suite-Lauf: 949 Tests,
 alle PASS.
 
+Drittes Element (Owner-Anweisung „fahre mit Roadmap fort", bei fehlender Präferenz gewählt:
+Rollback-zu-read-only beweisen — M8-Exit-Gate-Punkt 6): Befund vor der Umsetzung — der einzige
+bisher verdrahtete Kill-Switch (`mandate.killSwitch.enabled`) verweigert bei Deaktivierung alles,
+inklusive `READ`, zu strikt für „restore read-only operation". `agentIam.ts`s eigener
+`killSwitchActive`-Mechanismus erhält gezielt `READ`/`ANALYZE`/`PLAN`, war aber nicht durch die
+SA1-REM-Kette hindurch verdrahtet. Geschlossen durch ein neues, optionales
+`killSwitchActive`-Feld auf `SystemadminRoadmapAuthorizationRequest` (additiv, Standard unverändert),
+das automatisch durch die gesamte bestehende Kette fließt. Zweiter, unabhängiger Rollback-Hebel:
+`checkProviderProfileScope()` erhält ein optionales `registry`-Parameter, das beweist, dass ein
+deaktiviertes Provider-Profil (`allowedCapabilities` verengt) unabhängig ebenfalls verweigert, ohne
+die reale `PROVIDER_PROFILES`-Registry je zu mutieren. Beide Hebel end-to-end durch die echte,
+live verdrahtete SA3B-Kette bewiesen (nicht nur isolierte Unit-Tests): die tatsächlich live
+genutzte Capability `BRANCH` wird verweigert, `READ` bleibt erlaubt. 7 neue Tests, bestehende
+SA1/SA2/SA3-Tests unverändert. Voller Suite-Lauf: 975 Tests, alle PASS.
+
 **M8 als Ganzes bleibt `PLANNED`**, nicht `COMPLETE / VERIFIED PASS`: Claude Code, Google AI Studio
-und NotebookLM haben weiterhin keinen echten Aufrufer, keine direkte Provider-Zugriffsmethode wurde
-deaktiviert, kein Rollback-zu-read-only wurde real bewiesen, und die Cutover-Sequenz hat nicht
-begonnen.
+und NotebookLM haben weiterhin keinen echten Aufrufer (der Rollback-Nachweis gilt daher nur für den
+verdrahteten SA3B-Pfad), keine direkte Provider-Zugriffsmethode wurde deaktiviert, und die
+Cutover-Sequenz hat nicht begonnen.
 
 ### Goal
 

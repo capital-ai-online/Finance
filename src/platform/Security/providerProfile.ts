@@ -155,6 +155,8 @@ export interface ProviderScopedAuthorizationRequest {
   /** Idempotency/replay control for mutation, mirrors the M7 Mutation Handoff idempotencyKey pattern. */
   envelopeId?: string;
   seenEnvelopeIds?: ReadonlySet<string>;
+  /** M8 rollback lever, see ProviderProfileScopeCheckRequest.registry. */
+  registry?: Readonly<Record<string, Readonly<ProviderProfile>>>;
 }
 
 export type ProviderScopedAuthorizationDecision =
@@ -176,6 +178,13 @@ export interface ProviderProfileScopeCheckRequest {
   auditCorrelationId?: string;
   envelopeId?: string;
   seenEnvelopeIds?: ReadonlySet<string>;
+  /**
+   * M8 (ADR-0062) rollback lever: defaults to the live PROVIDER_PROFILES registry. Tests (and, if
+   * ever needed operationally, a real rollback) can pass a narrowed/rolled-back registry snapshot
+   * here to prove or perform "disable the privileged provider profile" without mutating the
+   * shared module-level singleton.
+   */
+  registry?: Readonly<Record<string, Readonly<ProviderProfile>>>;
 }
 
 export type ProviderProfileScopeDecision =
@@ -192,7 +201,7 @@ export type ProviderProfileScopeDecision =
 export function checkProviderProfileScope(
   request: Readonly<ProviderProfileScopeCheckRequest>,
 ): ProviderProfileScopeDecision {
-  const resolved = PROVIDER_PROFILES[request.appId];
+  const resolved = (request.registry ?? PROVIDER_PROFILES)[request.appId];
   if (!resolved) {
     return deny(`Unbekanntes Provider-Profil: ${request.appId}.`, request.riskClass);
   }
