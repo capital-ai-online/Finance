@@ -1,7 +1,7 @@
 # 🔍 SEO Checklist & Technical Discovery Guide
 **Project: CAPITAL-AI**  
 **Target Focus:** Quantitative Financial Calculators & Stock Screener Platform  
-**Stand:** 15.08.2026 — Q/D mostly landed; D3 Soft-404 in PR #285; S1 foundation in progress  
+**Stand:** 15.08.2026 — D3 gemerged (#285); S1 Foundation in PR #287  
 **Umsetzungsplan:** `docs/seo/SEO_MANAGEMENT_ROADMAP.md`
 
 ---
@@ -19,7 +19,7 @@ To secure organic placements for keywords like "Benjamin Graham DCF Calculator",
 - [x] **`<link rel="canonical">`**: Homepage + client route updates → **Q2 / D2**
 - [x] **Trailing-Slash 301 serverseitig**: `registerTrailingSlashNormalize` in `registerApplicationRoutes` → **Q2 done**
 - [ ] **Search-Console-Verifizierung**: Owner-Token → **Q3 owner action**
-- [x] **Echte 404-Antworten (Code)**: `installProductionSoft404Intercept` → **D3 in PR #285** (Merge + Deploy ausstehend)
+- [x] **Echte 404-Antworten**: `installProductionSoft404Intercept` → **D3 done** (PR #285 gemerged; Deploy verifizieren)
 
 ### 2. Semantic Hierarchy & Landmarking
 - [ ] **Strict `<h1>` Constraint**: nicht automatisiert verifiziert.
@@ -40,7 +40,7 @@ To secure organic placements for keywords like "Benjamin Graham DCF Calculator",
 
 ### 6. Monitoring & Management
 - [ ] **Search-Console MCP**: Runbook `docs/seo/SEARCH_CONSOLE_MCP_RUNBOOK.md` → **D5 docs**; Credentials/Owner freigeben
-- [x] **SeoEngine foundation (S1)**: Keyword-Register, Content-Inventar, Rank-Snapshots (in-memory + Migration-Draft) unter `src/platform/SeoEngine/` und `/api/seo/*`
+- [x] **SeoEngine foundation (S1)**: Keyword-Register, Content-Inventar, Rank-Snapshots (in-memory) unter `src/platform/SeoEngine/` und `/api/seo/*` — Schema-Draft bereits auf main: `20260815010000_seo_engine.sql`
 
 ---
 

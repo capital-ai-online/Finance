@@ -20,6 +20,7 @@ import { registryRouter } from '../../src/features/registry/registryRoutes';
 import { aiRouter } from '../ai';
 import { systemadminExecutionBrokerRouter } from '../systemadmin/systemadminExecutionBrokerRouter';
 import { registerTrailingSlashNormalize } from '../middleware/seoUrlNormalize';
+import { installProductionSoft404Intercept } from '../runtime/spaFallback';
 import { seoEngineRouter } from './seoEngineRoutes';
 
 export interface ApplicationRouteProviders {
@@ -38,6 +39,7 @@ export interface ApplicationRouteProviders {
  *
  * SEO-ROADMAP-0001:
  * - Q2: trailing-slash 301 via registerTrailingSlashNormalize
+ * - D3: installProductionSoft404Intercept wraps later app.get('*') in production
  * - S1: SeoEngine admin API under /api/seo
  */
 export function registerApplicationRoutes(
@@ -48,6 +50,10 @@ export function registerApplicationRoutes(
 
   // SEO Q2: normalize /path/ → /path before domain routers handle the request.
   registerTrailingSlashNormalize(app);
+
+  // SEO D3: wrap production SPA catch-all (registered later in startServer) so
+  // unknown paths return real 404 instead of the SPA shell.
+  installProductionSoft404Intercept();
 
   // Domain route factories keep the exact provider contract currently used by
   // server.application.ts. Missing AI providers remain fail-open where the

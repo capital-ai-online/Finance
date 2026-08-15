@@ -11,7 +11,7 @@
 | Types | `src/platform/SeoEngine/types.ts` |
 | In-Memory Store | `src/platform/SeoEngine/store.ts` |
 | HTTP API (Admin) | `server/routes/seoEngineRoutes.ts` → `/api/seo/*` |
-| Migration Draft | `supabase/migrations/20260815120000_seo_engine.sql` |
+| Schema-Draft (main) | `supabase/migrations/20260815010000_seo_engine.sql` |
 | Tests | `tests/unit/seoEngineStore.test.ts` |
 
 ## API (Admin-Rolle via `checkAdminAccess`)
@@ -28,6 +28,13 @@
 - Rank-Liste startet **leer**.
 - Keine synthetischen SERP-Positionen.
 - Positionen nur aus Search Console (D5) oder Owner-Import.
+- In-Memory-API akzeptiert **nicht** `source: estimated` (auch wenn die SQL-Draft-Spalte das erlaubt).
+
+## Schema-Hinweis
+
+Die SQL-Migration auf `main` (`20260815010000_seo_engine.sql`) ist Schema-Draft.
+Laufzeit nutzt vorerst den In-Memory-Store. DB-Kopplung + Align der Source-Enums
+(`manual` vs `manual-import`) erfolgt bei Apply nach Security-Review.
 
 ## Noch offen
 
