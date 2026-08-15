@@ -155,7 +155,7 @@ Präfixe bleiben kompatibel zur etablierten Q/D/S/N/H/J-Konvention; Marketing-Ph
 
 | ID | Inhalt | Abhängigkeit | DoD |
 |----|--------|--------------|-----|
-| WP-S1 | SeoEngine Persistenz + RLS + No-Demo-Data | Migration, Security Review | Ranks nur search-console \| manual-import; Code DONE (PR #335); Owner FK/Ledger/ADR open |
+| WP-S1 | SeoEngine Persistenz + RLS + No-Demo-Data | Migration, Security Review | Ranks nur search-console \| manual-import; Code DONE (PR #335); Schema/Grants/FK/Ledger applied 2026-08-15; nur ADR-Nummerierung offen |
 | WP-S2 | Prerender/SSG öffentlicher Routen | ADR formal | Crawler sehen Inhalt ohne JS |
 | WP-S3 | Dashboard | **DONE** | — |
 | WP-S4 | hreflang + Sprachstrategie | Vocabulary | Konsistente `lang`/hreflang |
@@ -265,13 +265,15 @@ Programm gilt als abgeschlossen, wenn:
 
 ---
 
-## 10. Sofortige nächste Schritte (Stand 2026-08-15, nach PR #335)
+## 10. Sofortige nächste Schritte (Stand 2026-08-15, nach FK RESTRICT + Ledger-Abgleich)
 
-1. **Owner:** FK RESTRICT Apply (`20260815220000`) + Ledger-Abgleich (`docs/runbooks/SEO_WP_S1_LEDGER_RECONCILIATION.md`) — Claim `SEO-WP-S1-FOLLOWUP-HARDENING-2026-08-15`.
+1. ~~**Owner:** FK RESTRICT Apply (`20260815220000`) + Ledger-Abgleich~~ — angewendet 2026-08-15, Evidenz in `docs/runbooks/SEO_WP_S1_LEDGER_RECONCILIATION.md`, Claim `SEO-WP-S1-FOLLOWUP-HARDENING-2026-08-15`.
 2. **Owner:** Search Console Property verifizieren (WP-Q-CLOSE / Q3).
-3. ADR-Draft SeoEngine nummerieren nach Kollisionscheck (optional parallel).
+3. ADR-Draft SeoEngine nummerieren nach Kollisionscheck (nächste freie Nummer: `ADR-0075`) — **einziger offener Schritt für WP-S1 VERIFIED**.
 4. ADR-0068 + ESS-0022 Owner-Review (WP-M0) — ohne Runtime-Enablement.
 5. Nächstes **Code**-WP ohne Shared-Zone-Lease: **WP-D1 / D2 / D3** (JSON-LD, Title/Meta, Soft-404) scoped PR.
+
+Vollständiger Übergabekontext für den nächsten Bearbeiter: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`.
 6. WP-S2 nur nach formalem Prerender-ADR.
 
 ---

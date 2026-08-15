@@ -1,9 +1,9 @@
 # WP-S1 — SeoEngine Persistenz: Implementierungsplan & Status
 
 **Roadmap:** SEO-GM-ROADMAP-0002 / WP-S1  
-**Claims:** `SEO-WP-S1-PERSISTENCE-2026-08-15` → `SEO-WP-S1-STORE-CODE-2026-08-15`  
+**Claims:** `SEO-WP-S1-PERSISTENCE-2026-08-15` → `SEO-WP-S1-STORE-CODE-2026-08-15` → `SEO-WP-S1-FOLLOWUP-HARDENING-2026-08-15`  
 **Store-Code Branch (merged):** `seo/wp-s1-store-adapters` → PR #335  
-**Status:** Store-Code **DELIVERED on main**; Schema Foundation/Grants **applied** (Owner); FK RESTRICT + Ledger **pending Owner**  
+**Status:** Store-Code **DELIVERED on main**; Schema Foundation/Grants/FK RESTRICT/Ledger-Abgleich **applied** (Owner, 2026-08-15) — nur ADR-Nummerierung offen  
 **Stand:** 2026-08-15
 
 ---
@@ -93,8 +93,8 @@ Privilege-Separation (ADR-0043-Linie):
 - [x] Routes nutzen Store; Production fail-closed ohne privileged key
 - [x] Unit/Contract-Tests (Source-Reject, unknown keyword, empty ranks)
 - [x] `docs/seo/S1_SEO_ENGINE.md` Status aktualisiert (dieser Docs-PR)
-- [ ] ADR-Draft finalisiert oder nummeriert nach Kollisionscheck
-- [ ] Production apply + Evidence **vollständig** (FK RESTRICT + Ledger) **oder** explizit Owner-ACCEPT der Restlücke
+- [ ] ADR-Draft finalisiert oder nummeriert nach Kollisionscheck (nächste freie Nummer: `ADR-0075`)
+- [x] Production apply + Evidence **vollständig** (FK RESTRICT + Ledger) — angewendet 2026-08-15, Evidenz in `docs/runbooks/SEO_WP_S1_LEDGER_RECONCILIATION.md`
 
 ---
 
@@ -123,9 +123,11 @@ STOP bei: Scope-Drift in Shared Zone, fehlender Owner-Approval für Prod-Apply, 
 
 ---
 
-## 8. Nächste Owner-Aktionen (keine Agent-Mutation ohne Freigabe)
+## 8. Nächste Aktionen (keine Agent-Mutation ohne Freigabe)
 
-1. Apply `20260815220000_seo_rank_snapshots_fk_restrict.sql` auf AIFINANCIAL
-2. Ledger-Abgleich laut `docs/runbooks/SEO_WP_S1_LEDGER_RECONCILIATION.md`
-3. Optional: ADR-Draft nummerieren nach Kollisionscheck
+1. ~~Apply `20260815220000_seo_rank_snapshots_fk_restrict.sql` auf AIFINANCIAL~~ — erledigt 2026-08-15
+2. ~~Ledger-Abgleich laut `docs/runbooks/SEO_WP_S1_LEDGER_RECONCILIATION.md`~~ — erledigt 2026-08-15
+3. ADR-Draft nummerieren nach Kollisionscheck (nächste freie Nummer: `ADR-0075`) — **letzter offener Schritt**
 4. Danach WP-S1 als VERIFIED markieren in Roadmap §4
+
+Siehe `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md` für den vollständigen Übergabekontext.

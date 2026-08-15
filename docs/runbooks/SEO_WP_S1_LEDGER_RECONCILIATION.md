@@ -135,7 +135,7 @@ begin;
 update supabase_migrations.schema_migrations set version = '20260815192502' where name = 'seo_engine';
 update supabase_migrations.schema_migrations set version = '20260815192747' where name = 'seo_engine_source_align_rls';
 update supabase_migrations.schema_migrations set version = '20260815193957' where name = 'seo_engine_service_role_grants';
--- 20260815220000: auf den beim Apply tatsaechlich gestempelten Wert zuruecksetzen
+-- 20260815220000: auf den beim Apply tatsaechlich gestempelten Wert zuruecksetzen (siehe Apply-Evidenz unten: 20260815210718)
 commit;
 ```
 
@@ -150,8 +150,13 @@ Drift bei jedem Apply erneut auf. Zwei Optionen, jeweils eigener Vorgang:
 
 ## Apply-Evidenz
 
-| Schritt | Datum | Ergebnis |
-| --- | --- | --- |
-| Vorab-Pruefung | offen | |
-| Mutation | offen | |
-| Verifikation | offen | |
+Ausgefuehrt 2026-08-15, Owner-Freigabe SvenKulessa (Work claim
+`SEO-WP-S1-FOLLOWUP-HARDENING-2026-08-15`).
+
+| Schritt | Ergebnis |
+| --- | --- |
+| `20260815220000` FK-Apply | `success: true`. `pg_get_constraintdef` bestaetigt `FOREIGN KEY (keyword_id) REFERENCES seo_keywords(id) ON DELETE RESTRICT`, gestempelt als `20260815210718 seo_rank_snapshots_fk_restrict`. |
+| Vorab-Pruefung Ledger | Genau vier Zeilen (`seo_engine`, `seo_engine_source_align_rls`, `seo_engine_service_role_grants`, `seo_rank_snapshots_fk_restrict`), keine trug bereits eine Zielversion. Keine Kollision. |
+| Mutation Ledger | Vier namensbasierte `UPDATE`s in einer Transaktion, `commit`. |
+| Verifikation Ledger | `schema_migrations` zeigt exakt die vier Repo-Versionen: `20260815010000 seo_engine`, `20260815200000 seo_engine_source_align_rls`, `20260815210000 seo_engine_service_role_grants`, `20260815220000 seo_rank_snapshots_fk_restrict`. |
+| Abgrenzungs-Check | `to_regclass` fuer alle sechs Tabellen aus `social_media_publishing` / `pdf_credit_ledger` / `social_media_content_approvals` weiterhin `false` — unveraendert nicht angewendet, kein Ledger-Eintrag erzeugt. |

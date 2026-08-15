@@ -9,7 +9,7 @@
   "base": "main@381815d7c049cb5dd6cf9b528562db3de34f7e5a",
   "owner": "SvenKulessa",
   "ownerDecision": "ON DELETE RESTRICT (Variante 1); beide offenen Punkte umsetzen",
-  "status": "prepared",
+  "status": "applied",
   "phase": "post-mutation-hardening",
   "createdAt": "2026-08-15",
   "context": [
@@ -46,8 +46,8 @@
     }
   },
   "externalMutations": [
-    "Supabase AIFINANCIAL: ALTER TABLE seo_rank_snapshots FK -> ON DELETE RESTRICT (ausstehend, OWNER-Freigabe erforderlich)",
-    "Supabase AIFINANCIAL: UPDATE supabase_migrations.schema_migrations, 4 Zeilen (ausstehend, OWNER-Freigabe erforderlich)"
+    "Supabase AIFINANCIAL: ALTER TABLE seo_rank_snapshots FK -> ON DELETE RESTRICT (angewendet 2026-08-15, gestempelt als 20260815210718)",
+    "Supabase AIFINANCIAL: UPDATE supabase_migrations.schema_migrations, 4 Zeilen (angewendet 2026-08-15)"
   ],
   "securityNotes": [
     "Kein Grant wird veraendert; service_role behaelt select/insert/update auf seo_rank_snapshots ohne delete und truncate",
