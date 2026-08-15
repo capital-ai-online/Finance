@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.1.0",
+  "claimId": "SC1-TABLE-EXPANSION-2026-08-15",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "executionSurface": "Grok GitHub Connector"
+  },
+  "workItem": "SC-1 ClassificationService table expansion: table-driven deterministic coverage for Stablecoin/RWA/AI/L2/Oracle/…; tests + evidence; no ranking formula mutation.",
+  "startedAt": "2026-08-15T22:30:00Z",
+  "baseBranch": "main",
+  "baseSha": "440901c0a024283edae87e3eb0a13e5010676afb",
+  "pullRequest": null,
+  "claimedPaths": [
+    "src/services/classification.service.ts",
+    "tests/unit/classificationServiceTable.test.ts",
+    "docs/roadmaps/work-packages/SC-1_CLASSIFICATION_CONSOLIDATION.md",
+    "docs/evidence/sc-md/SC1_TABLE_EXPANSION_2026-08-15.md",
+    ".ai/work-claims/SC1-TABLE-EXPANSION-2026-08-15.json"
+  ],
+  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
+}

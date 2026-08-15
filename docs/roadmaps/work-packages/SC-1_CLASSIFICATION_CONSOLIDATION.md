@@ -2,8 +2,8 @@
 
 **SPT:** SC-MD-SPT-0001  
 **Priority:** P0  
-**Status:** ORCHESTRATOR WIRING LANDED — Owner review for merge  
-**Date:** 2026-08-15
+**Status:** TABLE EXPANSION LANDED (deterministic coverage) — Owner review for merge  
+**Date:** 2026-08-15 / 2026-08-16
 
 ## Problem
 
@@ -15,22 +15,22 @@ Three incompatible `CryptoClassification` definitions coexist:
 | `src/types/crypto.ts` | Legacy `"Crypto" \| "Unknown"` |
 | `src/agents/cryptoClassificationAgent.ts` | Free-text `category` / `sub_tier` |
 
-`ClassificationService` only hard-codes ~20 symbols; classifier coverage of the 25 categories is partial.
+Historically `ClassificationService` only hard-coded ~20 symbols.
 
-## Delivered in this WP slice
+## Delivered in this WP
 
-- [x] `src/services/classificationAdapter.ts` — pure adapter (agent → canonical, legacy → canonical, ensureCanonical)
-- [x] `mergeDeterministicAndAgentClassification` — single classification exit (deterministic preferred when known)
-- [x] Unit tests `tests/unit/classificationAdapter.test.ts` (incl. merge cases)
-- [x] **Wire adapter into `cryptoOrchestrator` as single classification exit**
-- [x] Baseline inventory evidence under `docs/evidence/sc-md/`
-- [x] Wiring evidence `docs/evidence/sc-md/SC1_ORCHESTRATOR_WIRING_2026-08-15.md`
+- [x] `src/services/classificationAdapter.ts` — pure adapter + merge
+- [x] Wire adapter into `cryptoOrchestrator` as single classification exit
+- [x] Unit tests adapter + merge
+- [x] Baseline + wiring evidence under `docs/evidence/sc-md/`
+- [x] **Expand deterministic `ClassificationService` table** (table-driven; Stablecoin, RWA, AI/Data, L2, Oracle, Liquid Staking, Gaming, Storage, Privacy, Payments, Exchange, …)
+- [x] Unit tests `tests/unit/classificationServiceTable.test.ts`
 
-## Explicitly NOT done (requires Owner / follow-up commits)
+## Explicitly NOT done
 
-- [ ] Expand deterministic `ClassificationService` table (Stablecoin, RWA, …)
-- [ ] Deprecate / rename agent interface to `AgentCryptoClassificationRaw` at import sites
-- [ ] Delete or archive unused legacy type fields after adapter coverage ≥ critical paths
+- [ ] Deprecate / rename agent interface to `AgentCryptoClassificationRaw` at all import sites
+- [ ] Delete or archive unused legacy type fields after full consumer audit
+- [ ] SC-7 ranking writeback of composite DQ (separate Owner gate)
 
 ## DoD (full SC-1)
 
@@ -38,8 +38,9 @@ Three incompatible `CryptoClassification` definitions coexist:
 2. Adapter used at orchestrator boundary  
 3. No free-text category values in ranking payloads  
 4. Tests green; no ranking formula change  
-5. Evidence note under `docs/evidence/sc-md/`
+5. Deterministic table covers core categories beyond legacy ~20 symbols  
+6. Evidence note under `docs/evidence/sc-md/`
 
 ## Risk
 
-Low for adapter-only (additive). Medium when wiring orchestrator (payload shape consumers) — mitigated by keep of existing `CryptoClassification` shape on payload; only construction path changed.
+Low: additive table rows; fail-closed Unknown retained; no ranking formula mutation.
