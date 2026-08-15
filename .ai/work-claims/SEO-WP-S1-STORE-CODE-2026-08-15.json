@@ -1,0 +1,45 @@
+{
+  "claimId": "SEO-WP-S1-STORE-CODE-2026-08-15",
+  "title": "WP-S1 SeoEngine Store-Code: ISeoEngineStore + Memory + Supabase",
+  "roadmap": "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+  "documentId": "SEO-GM-ROADMAP-0002",
+  "roadmapIds": ["WP-S1"],
+  "predecessor": "SEO-WP-S1-PERSISTENCE-2026-08-15",
+  "branch": "seo/wp-s1-store-adapters",
+  "base": "main",
+  "owner": "SvenKulessa",
+  "status": "in-progress",
+  "phase": "store-code",
+  "createdAt": "2026-08-15",
+  "scope": [
+    "src/platform/SeoEngine/store/**",
+    "src/platform/SeoEngine/SeoEngineService.ts",
+    "src/platform/SeoEngine/index.ts",
+    "server/routes/seoEngineRoutes.ts",
+    "tests/unit/seoEngineStore.test.ts",
+    "tests/unit/seoEngine.test.ts",
+    "tests/unit/seoEnginePersistence.contract.test.ts",
+    "docs/seo/S1_SEO_ENGINE.md",
+    ".ai/work-claims/SEO-WP-S1-STORE-CODE-2026-08-15.json"
+  ],
+  "outOfScope": [
+    "Production Supabase mutation / migration apply",
+    "FK RESTRICT apply (SEO-WP-S1-FOLLOWUP-HARDENING)",
+    "Ledger reconciliation",
+    "Search Console MCP",
+    "notes/source_ref schema columns (follow-up if needed)"
+  ],
+  "externalMutations": [],
+  "securityNotes": [
+    "Production fail-closed without privileged Supabase",
+    "No anon/publishable fallback for SEO writes",
+    "Admin routes remain checkAdminAccess gated",
+    "Ranks only search-console | manual-import"
+  ],
+  "dod": [
+    "ISeoEngineStore + Memory + Supabase adapters on branch",
+    "Routes use getSeoEngineStore; 503 on config failure",
+    "Unit/contract tests green for source reject, unknown keyword, empty ranks",
+    "No automatic prod apply"
+  ]
+}
