@@ -37,5 +37,5 @@
     "assigned": "ADR-0082",
     "checkedAt": "2026-08-16"
   },
-  "notes": "Docs-only (class D). Deletes draft path after adding ADR-0082. Marks WP-S1 VERIFIED in roadmap status tables."
+  "notes": "Docs-only (class D). Deletes draft path after adding ADR-0082. Marks WP-S1 VERIFIED in roadmap status tables. Baseline synced 2026-08-16 for Vorlagenvertrag evidence tokens (production 0.6.0@fab8d57c)."
 }
