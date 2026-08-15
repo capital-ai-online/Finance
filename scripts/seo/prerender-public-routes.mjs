@@ -4,10 +4,6 @@
  *
  * Run after `vite build` (also hooked from npm run build):
  *   node scripts/seo/prerender-public-routes.mjs
- *
- * Full React-body HTML extraction remains a follow-up; this step ensures crawlers
- * without JS still see route-specific title/description/canonical and a minimal
- * noscript content block.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -33,7 +29,7 @@ const ROUTES = [
     description:
       'Impressum und Anbieterkennzeichnung gemäß TMG §5 für CAPITAL-AI (Sven Kulessa).',
     noscript:
-      'Impressum CAPITAL-AI — Anbieter: Sven Kulessa. Vollständiger Text nach Aktivierung von JavaScript oder unter capital-ai.online/impressum.',
+      'Impressum CAPITAL-AI — Anbieter: Sven Kulessa. Vollständiger Text nach Aktivierung von JavaScript.',
   },
   {
     routePath: '/agb',
@@ -62,11 +58,35 @@ if (!fs.existsSync(indexPath)) {
 const base = fs.readFileSync(indexPath, 'utf8');
 
 function escapeAttr(value) {
-  return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function canonicalHref(routePath) {
   return routePath === '/' ? `${ORIGIN}/` : `${ORIGIN}${routePath}`;
+}
+
+function replaceMetaByName(html, name, content) {
+  const re = new RegExp(
+    `<meta\\s+name="${name}"\\s+content="[^"]*"\\s*/?>`,
+    'i',
+  );
+  // Use unescaped pattern for runtime:
+  const runtime = new RegExp(
+    `<meta\\s+name="${name}"\\s+content="[^"]*"\\s*/?>`.replace(/\\\\/g, '\\'),
+    'i',
+  );
+  void re;
+  if (runtime.test(html)) {
+    return html.replace(
+      new RegExp(`<meta\\s+name="${name}"\\s+content="[^"]*"\\s*/?>`.replace(/\\\\s\+/g, '\\s+').replace(/\\\\/g, ''), 'i'),
+      `<meta name="${name}" content="${escapeAttr(content)}" />`,
+    );
+  }
+  return html;
 }
 
 function injectMeta(html, route) {
@@ -75,30 +95,15 @@ function injectMeta(html, route) {
   const canonical = canonicalHref(route.routePath);
   let out = html;
 
-  out = out.replace(/<title>[^<]*<\/title>/i, `<title>${title}</title>`);
+  out = out.replace(/<title>[^<]*<\/title>/i, `<title>${escapeAttr(title)}</title>`);
 
-  const replaceMeta = (attrName, content) => {
-    const re = new RegExp(
-      `<meta\\s+[^>]*${attrName}\\s*=\\s*["'][^"']*["'][^>]*>`,
-      'i',
-    );
-    const tag = attrName.startsWith('property')
-      ? `<meta property="${attrName.replace(/^property=["']?|["']$/g, '').replace(/^property=/, '')}" content="${escapeAttr(content)}" />`
-      : null;
-    // Simpler path: named replacements below
-    return re;
-  };
-
-  // name="title" / name="description"
-  if (/name=["']title["']/i.test(out)) {
+  out = out.replace(
+    /<meta\s+name="title"\s+content="[^"]*"\s*\/?>/i,
+    `<meta name="title" content="${escapeAttr(title)}" />`,
+  );
+  if (/<meta\s+name="description"/i.test(out)) {
     out = out.replace(
-      /<meta\\s+name=["']title["']\\s+content=["'][^"']*["']\\s*\\/?>/i,
-      `<meta name="title" content="${escapeAttr(title)}" />`,
-    );
-  }
-  if (/name=["']description["']/i.test(out)) {
-    out = out.replace(
-      /<meta\\s+name=["']description["']\\s+content=["'][^"']*["']\\s*\\/?>/i,
+      /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,
       `<meta name="description" content="${escapeAttr(description)}" />`,
     );
   } else {
@@ -107,16 +112,6 @@ function injectMeta(html, route) {
       (m) => `${m}\n    <meta name="description" content="${escapeAttr(description)}" />`,
     );
   }
-
-  // Fix: the double-escaped regex above may not match. Use practical replacements.
-  out = out.replace(
-    /<meta\s+name="title"\s+content="[^"]*"\s*\/?>/i,
-    `<meta name="title" content="${escapeAttr(title)}" />`,
-  );
-  out = out.replace(
-    /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,
-    `<meta name="description" content="${escapeAttr(description)}" />`,
-  );
 
   out = out.replace(
     /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i,
@@ -149,7 +144,6 @@ function injectMeta(html, route) {
     `<meta property="twitter:description" content="${escapeAttr(description)}" />`,
   );
 
-  // Enrich noscript for non-JS crawlers / accessibility
   const noscriptBlock = `<noscript>
       <main>
         <h1>${escapeAttr(title)}</h1>
@@ -165,23 +159,19 @@ function injectMeta(html, route) {
     out = out.replace(/<body[^>]*>/i, (m) => `${m}\n    ${noscriptBlock}`);
   }
 
-  // silence unused helper in strict tooling
-  void replaceMeta;
-
+  void replaceMetaByName;
   return out;
 }
 
 for (const r of ROUTES) {
   if (r.routePath === '/') {
-    const html = injectMeta(base, r);
-    fs.writeFileSync(indexPath, html, 'utf8');
+    fs.writeFileSync(indexPath, injectMeta(base, r), 'utf8');
     console.log('updated', r.file);
     continue;
   }
   const outFile = path.join(dist, r.file);
   fs.mkdirSync(path.dirname(outFile), { recursive: true });
-  const html = injectMeta(base, r);
-  fs.writeFileSync(outFile, html, 'utf8');
+  fs.writeFileSync(outFile, injectMeta(base, r), 'utf8');
   console.log('wrote', r.file);
 }
 
