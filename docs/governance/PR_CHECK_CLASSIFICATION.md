@@ -1,11 +1,14 @@
 # Pull Request Check Classification
 
-Status: PROPOSED
+Status: ACTIVE  
+Updated: 2026-08-16  
 Authority: CAPITAL-AI DevelopmentChain
 
 ## Zweck
 
-Dieses Dokument legt fest, welche Checks ein Pull Request abhängig vom tatsächlichen Änderungsumfang durchlaufen muss. Ziel ist, unnötige CI-Läufe zu vermeiden, ohne Sicherheits-, Qualitäts- oder Human-/Owner-Gates zu schwächen.
+Dieses Dokument legt fest, welche Checks ein Pull Request abhängig vom tatsächlichen Änderungsumfang durchlaufen muss. Ziel ist, unnötige CI-Läufe zu vermeiden, ohne Sicherheits- oder Qualitätsgates zu schwächen.
+
+**Stand 2026-08-16:** Das frühere Pre-CI-Owner-Gate (Checkboxen + Review `💪`/`okay`) ist **retired**. Technische CI startet ohne diese Zeremonie. Merge bleibt Human/Owner-only. Ab M10 gilt Passkey-Autorisierung laut M10-Runbook.
 
 ## Begriffe
 
@@ -27,15 +30,15 @@ Ein Rollback-Runbook definiert, wie nach einer fehlerhaften Mutation der letzte 
 
 Nur `docs/**`, `.ai/**` oder Markdown.
 
-Pflicht: Owner-Gate, Governance/Security, Docs-Fast-Path, `build-and-test`.
+Pflicht: Governance/Security, Docs-Fast-Path, `build-and-test`.
 
-Nicht erforderlich: npm, TypeScript, Unit Tests, Production Build, Docker.
+Nicht erforderlich: npm, TypeScript, Unit Tests, Production Build, Docker. Kein Owner-Checkbox-/Emoji-Gate.
 
 ### C — Application / Test / Configuration
 
 Anwendungs-/Servicecode, Tests oder nicht-dokumentarische Konfiguration ohne Runtime-/Deployment-Relevanz.
 
-Pflicht zusätzlich zu Owner/Governance: Git-/Toolchain-Integrität, `npm ci`, Production Dependency Audit, Production Config Invariants, Docker-Hardening-Policy-Check, TypeScript/Lint, Unit Tests, Production Build, CSP-Test, Predeploy-Check, `build-and-test`.
+Pflicht zusätzlich zu Governance: Git-/Toolchain-Integrität, `npm ci`, Production Dependency Audit, Production Config Invariants, Docker-Hardening-Policy-Check, TypeScript/Lint, Unit Tests, Production Build, CSP-Test, Predeploy-Check, `build-and-test`.
 
 ### R — Runtime / Dependency / Docker / Deployment
 
@@ -51,15 +54,18 @@ Pflicht zusätzlich: autorisierende Roadmap/ADR/ESS, Owner Mutation Approval, Pr
 
 ## Auswahlregel
 
-Die strengste zutreffende Klasse gilt für den gesamten PR. Ein neuer Commit, der den Scope erweitert, kann die Checkklasse erhöhen und invalidiert die vorherige Human-/Owner-Freigabe für den alten Head.
+Die strengste zutreffende Klasse gilt für den gesamten PR. Ein neuer Commit, der den Scope erweitert, kann die Checkklasse erhöhen.
 
 ## Merge-Regel
 
-Ein PR ist nur merge-fähig, wenn:
+Ein PR ist merge-fähig, wenn:
 
-1. Owner-Gate für den aktuellen Head erfüllt ist;
-2. alle Checks der gewählten Klasse PASS sind;
-3. `build-and-test` PASS ist;
-4. Governance PASS ist;
-5. keine offenen merge-blockierenden Funde bestehen;
-6. eine separate ausdrückliche menschliche Merge-Anweisung vorliegt.
+1. alle Checks der gewählten Klasse PASS sind;
+2. `build-and-test` PASS ist;
+3. Governance PASS ist;
+4. keine offenen merge-blockierenden Funde bestehen;
+5. eine separate ausdrückliche menschliche Merge-Anweisung vorliegt (Agenten mergen nicht).
+
+**Nicht erforderlich:** Owner-Body-Checkboxen, Review-Text `💪`/`okay`, Viewed-Attestation als CI-Gate.
+
+**Ab M10:** zusätzliche Passkey-/WebAuthn-Autorisierung gemäß `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`.
