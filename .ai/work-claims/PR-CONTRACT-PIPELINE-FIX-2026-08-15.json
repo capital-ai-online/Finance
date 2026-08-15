@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "PR-CONTRACT-PIPELINE-FIX-2026-08-15",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "executionSurface": "Grok GitHub connector / SuperGrok"
+  },
+  "workItem": "Pipeline-Fix für alle zukünftigen PRs: Template v1.3.5 mit sichtbaren Fallback-IDs, duales Owner-Gate, validatePrBody Human-Pfad ohne zwingenden Work-Claim.",
+  "workItemDE": "PR-Contract Pipeline-Fix (Template + Owner-Gate + Validator)",
+  "startedAt": "2026-08-15T20:16:00Z",
+  "baseBranch": "main",
+  "baseSha": "2ca710af295508361a8fb25a020848db9e559750",
+  "pullRequest": null,
+  "prCreationApproval": {
+    "status": "approved",
+    "approvedBy": "human-user",
+    "approvedAt": "2026-08-15T20:16:00Z",
+    "scope": "Pipeline-Fehler für alle zukünftigen PRs beheben: Template, ci.yml Owner-Gate, validatePrBody."
+  },
+  "claimedPaths": [
+    ".github/pull_request_template.md",
+    ".github/workflows/ci.yml",
+    "scripts/pr/validatePrBody.mjs",
+    ".ai/work-claims/PR-CONTRACT-PIPELINE-FIX-2026-08-15.json"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}

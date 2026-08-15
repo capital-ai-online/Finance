@@ -44,14 +44,22 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Attestations aus dem Body-Snapshot dieses edited-Events.
+          # IDs: HTML-Kommentar (kanonisch) ODER sichtbare Fallback-Zeile `CAPITAL_AI_*`.
           read -r diff_attested files_attested <<< "$(
             python3 - <<'PY'
           import os
           import re
 
-          ids = {
+          COMMENT_TO_KEY = {
               '<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->': 'diff',
               '<!-- CAPITAL_AI_OWNER_FILES_ATTESTATION -->': 'files',
+          }
+          VISIBLE_TO_KEY = {
+              '`CAPITAL_AI_OWNER_DIFF_ATTESTATION`': 'diff',
+              'CAPITAL_AI_OWNER_DIFF_ATTESTATION': 'diff',
+              '`CAPITAL_AI_OWNER_FILES_ATTESTATION`': 'files',
+              'CAPITAL_AI_OWNER_FILES_ATTESTATION': 'files',
           }
 
           def parse(body: str):
@@ -68,8 +76,8 @@ jobs:
                       continue
                   if in_fence or line.startswith('>'):
                       continue
-                  if line in ids:
-                      key = ids[line]
+                  key = COMMENT_TO_KEY.get(line) or VISIBLE_TO_KEY.get(line)
+                  if key:
                       if key in seen:
                           return False, False
                       seen.add(key)
@@ -83,22 +91,25 @@ jobs:
                       pending = None
 
               return (
-                  seen == {'diff', 'files'}
-                  and values['diff'],
-                  seen == {'diff', 'files'}
-                  and values['files'],
+                  seen == {'diff', 'files'} and values['diff'],
+                  seen == {'diff', 'files'} and values['files'],
               )
 
-          canonical = '''<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->
+          canonical_comment = '''<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->
           - [x] beliebiger sichtbarer Text
           <!-- CAPITAL_AI_OWNER_FILES_ATTESTATION -->
           - [X] ebenfalls frei formulierbar'''
-          unchecked = canonical.replace('- [x] beliebiger', '- [ ] beliebiger')
+          canonical_visible = '''`CAPITAL_AI_OWNER_DIFF_ATTESTATION`
+          - [x] beliebiger sichtbarer Text
+          `CAPITAL_AI_OWNER_FILES_ATTESTATION`
+          - [X] ebenfalls frei formulierbar'''
+          unchecked = canonical_comment.replace('- [x] beliebiger', '- [ ] beliebiger')
           missing_id = '- [x] vollständigen Diff geprüft\n- [x] alle Dateien geprüft'
-          duplicate_id = canonical + '\n<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->\n- [x] doppelt'
-          fenced = '```text\n' + canonical + '\n```'
+          duplicate_id = canonical_comment + '\n<!-- CAPITAL_AI_OWNER_DIFF_ATTESTATION -->\n- [x] doppelt'
+          fenced = '```text\n' + canonical_comment + '\n```'
 
-          assert parse(canonical) == (True, True)
+          assert parse(canonical_comment) == (True, True)
+          assert parse(canonical_visible) == (True, True)
           assert parse(unchecked) == (False, True)
           assert parse(missing_id) == (False, False)
           assert parse(duplicate_id) == (False, False)
