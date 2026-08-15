@@ -2,9 +2,9 @@
 
 Status: ACTIVE — CANONICAL EXECUTION PORTFOLIO  
 Stand: 2026-08-15  
-Repository-Baseline: `main@0bd57fee7c8d1b7de6befeb28028b8dd10f4e25d`  
+Repository-Baseline: `main@0c07e1a43fde4dc0419f5f60ac74230608927393`  
 Owner: SvenKulessa  
-Authority: ADR-0071 + ESS-0023
+Authority: ADR-0071 + ESS-0023 + ROADMAP-INTEGRATED-DC-SA-0001
 
 ## 1. Zweck
 
@@ -14,15 +14,18 @@ Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder 
 
 **Domain-Update 2026-08-15:** SEO Management und Marketing Agent sind in **SEO-GM-ROADMAP-0002** (`docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md`) zu einem Single Point of Trust konsolidiert. Die früheren Dateien `docs/seo/SEO_MANAGEMENT_ROADMAP.md` und `docs/roadmaps/MARKETING_AGENT_ROADMAP.md` sind SUPERSEDED.
 
+**Integration 2026-08-15:** Die DEVELOPMENT Chain und der Systemadmin-Agent sind in der kanonischen Ausführungsroadmap **ROADMAP-INTEGRATED-DC-SA-0001** (`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md`) verbunden. Diese Integrated Roadmap ist die verbindende Ausführungsautorität für DC + SA Phasen (I0–I4).
+
 ## 2. Verbindliche Authority-Reihenfolge
 
 1. verifizierte Runtime-, Code- und Produktions-Evidence;
 2. ausdrückliche Human/Owner-Freigabe;
 3. spezifische ADR/ESS/IAM/REM/Runbook-Authority;
-4. `DEVELOPMENT_CHAIN_ROADMAP.md`;
-5. diese Gesamtroadmap;
-6. Fachroadmaps (für SEO/Google Marketing: **SEO-GM-ROADMAP-0002**);
-7. historische oder als Legacy/SUPERSEDED markierte Indizes.
+4. `INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001) für DC+SA-Verbindung;
+5. `DEVELOPMENT_CHAIN_ROADMAP.md` (Detail-Phasen);
+6. diese Gesamtroadmap (Portfolio-Index);
+7. Fachroadmaps (für SEO/Google Marketing: **SEO-GM-ROADMAP-0002**);
+8. historische oder als Legacy/SUPERSEDED markierte Indizes.
 
 Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 
@@ -30,6 +33,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 
 | ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
 |---|---|---|---|---|
+| **DC-SA** | **Integrated DC + SA** | **`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001)** | **ACTIVE — CANONICAL**; I0 VERIFIED PASS; I1 (M8) IN PROGRESS | nächstes M8-Element nur auf separate, ausdrückliche Owner-Anweisung |
 | DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M7 weitgehend VERIFIED PASS; M8 Phase 0 + Teil-Gates VERIFIED, Exit-Gate offen; M9–M10 blockiert | weiteres M8-Element nur auf separate, ausdrückliche Owner-Anweisung |
 | S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | READY FOR OWNER REVIEW; S1.0–S1.6 nicht vollständig VERIFIED PASS | F-01–F-18 gegen aktuelles main revalidieren |
 | DOC | Documentary/Event Value Chain | `docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` | ACTIVE / PARTIAL | D0 read-only Baseline |
