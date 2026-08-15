@@ -271,3 +271,26 @@ bis ein echter Aufrufer für sie existiert.
 - `tests/unit/providerProfile.test.ts` (3 neue Tests)
 
 `docs/evidence/m8/M8_PHASE0_AND_PROVIDER_PROFILE_EVIDENCE.md` (diese Datei)
+
+## 8. Nachtrag — Exit-Gate-Punkt 4 / Cutover-Sequenz-Punkt 6 vollständig auditiert (2026-08-15)
+
+Owner-Anweisung (nach „fahre mit der Roadmap fort"): „Direkte Provider-Bypass-Routen deaktivieren"
+(gewählte Option). Ergänzend zu Abschnitt 1.1 dieses Dokuments (das bereits feststellte, dass
+ChatGPT/Gemini/Google-AI-Studio/NotebookLM fast ausschließlich Dokumentations-/ADR-Referenzen ohne
+echten Ausführungspfad sind) wurde in einer separaten Sitzung ein vollständiges,
+repository-weites Router-Mount-Audit durchgeführt, um Exit-Gate-Punkt 4 („direct provider-specific
+privileged bypasses are denied/deactivated") und Cutover-Sequenz-Punkt 6 direkt und mit
+Datei:Zeile-Belegen zu prüfen, statt sich nur auf die Dokumentations-Stichprobe zu stützen.
+
+**Ergebnis (unabhängig übereinstimmend mit Abschnitt 1.1):** Kein provider-spezifischer
+privilegierter Bypass existiert im Repository. Alle Admin-nahen Routen nutzen die geteilte
+`checkAdminAccess`-Guard; die einzige KI-Agent-erreichbare privilegierte Oberfläche
+(`/api/internal/systemadmin-execution`) nutzt die volle OIDC+SA3-Kette. Punkt 4/6 sind damit
+**vacuously erfüllt** — es gibt nichts zu deaktivieren, weil nie eine parallele
+provider-spezifische Admin-Route existierte.
+
+Vollständige Methodik, das 7-zeilige Router-Mount-Audit und die Bewertung gegen
+`ProviderCutoverEvidence.providerSpecificBypassDenied`:
+`docs/evidence/m8/M8_PROVIDER_BYPASS_ROUTE_AUDIT_EXIT_GATE_4_EVIDENCE.md`. Regressionsschutz gegen
+künftige unauditierte Admin-Routen: `tests/unit/adminRouterBypassAudit.test.ts` (4 Tests, alle
+PASS).
