@@ -1,0 +1,63 @@
+{
+  "documentId": "GOV-SCORE-WEEKLY",
+  "generatedAt": "2026-08-15T22:25:50.475Z",
+  "score": 90,
+  "scale": "0-100 shadow subset (not full ESS-0012 Chapter-3)",
+  "thresholdNote": "Full production gate (>=80) requires complete Governance Validator; this weekly score is advisory only.",
+  "mainSha": "440901c0a024283edae87e3eb0a13e5010676afb",
+  "prMerged": 345,
+  "notes": [
+    "Uniqueness verified against live main tree (docs/adr): 0 duplicate active ADR numbers after PR #345.",
+    "Implementation-Status density (info findings) reflects incomplete field coverage across active ADRs; not introduced by cleanup.",
+    "Score is advisory shadow subset, not ESS-0012 Chapter-3 production gate."
+  ],
+  "renumberMap": {
+    "ADR-0014-phase-3-4-7-runtime-facade.md": "ADR-0075",
+    "ADR-0020-version-manager-repository-convention-validator.md": "ADR-0076",
+    "ADR-0044-canonical-naming-bilingual-documentation-vocabulary-governance.md": "ADR-0077",
+    "ADR-0046-vocabulary-governance-authority-and-namespace.md": "ADR-0078",
+    "ADR-0067-systemadmin-github-actions-execution-host.md": "ADR-0079",
+    "ADR-0068-marketing-roadmap-executor-and-content-automation-boundary.md": "ADR-0080"
+  },
+  "components": {
+    "adrShadow": {
+      "activeAdrCount": 72,
+      "duplicateNumberGroups": 0,
+      "findings": {
+        "error": 0,
+        "warning": 0,
+        "info": 69
+      }
+    },
+    "packageIdentity": {
+      "ok": true,
+      "name": "capital-ai",
+      "version": "0.6.0",
+      "message": "package identity capital-ai + semver OK"
+    },
+    "registryHints": [
+      { "path": "docs/adr/adr_history.json", "present": true },
+      { "path": ".ai/registry/ess-registry.json", "present": true },
+      { "path": ".github/pull_request_template.md", "present": true },
+      { "path": "docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md", "present": true }
+    ]
+  },
+  "deductions": [
+    {
+      "reason": "Missing Implementation-Status density (69)",
+      "points": 10
+    }
+  ],
+  "executableRulesCovered": [
+    "GOV-ADR uniqueness (shadow)",
+    "GOV-ADR Status presence (shadow)",
+    "GOV-ADR Implementation-Status presence (shadow)",
+    "package identity (capital-ai)",
+    "core governance file presence"
+  ],
+  "notCoveredYet": [
+    "GOV-KG / Digital Twin",
+    "component.yaml / CHANGELOG per component",
+    "full 57-rule ESS-0012 engine"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "claimId": "WC-2026-08-16-gov-score-xref",
+  "title": "Persist weekly governance score + ADR cross-ref inventory post PR #345",
+  "owner": "SvenKulessa",
+  "agent": "Grok",
+  "class": "D",
+  "paths": [
+    "docs/governance/scores/",
+    "docs/governance/ADR_CROSSREF_INVENTORY_2026-08-16.md",
+    ".ai/work-claims/WC-2026-08-16-gov-score-xref.json"
+  ],
+  "notes": "Advisory score artifact + inventory only. No architecture ADR renames in this claim."
+}
