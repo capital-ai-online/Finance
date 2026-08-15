@@ -1,20 +1,76 @@
 import type { Express, Request, Response, NextFunction, RequestHandler } from 'express';
+import fs from 'fs';
 import path from 'path';
-import { isPublicSpaPath } from '../middleware/seoUrlNormalize';
+import { isPublicSpaPath, stripTrailingSlashPath } from '../middleware/seoUrlNormalize';
 
 /**
- * SEO-ROADMAP-0001 / D3 — production SPA fallback with soft-404 guard.
+ * SEO-ROADMAP-0001 / D3 + S2 — production SPA fallback with soft-404 guard.
  *
- * Known public marketing/legal routes receive index.html (200).
+ * Known public marketing/legal routes receive prerendered HTML when present
+ * (dist/<route>/index.html from scripts/seo/prerender-public-routes.mjs),
+ * otherwise dist/index.html (200).
  * Unknown paths receive HTTP 404 (no soft-404 SPA shell).
- * Static files are still served by express.static mounted before this handler.
+ *
+ * Security: request URL segments are never joined into filesystem paths.
+ * Only an allowlist maps public routes → fixed relative filenames under dist.
  */
+
+/** Fixed relative paths under dist — no user input in these strings. */
+const PUBLIC_ROUTE_HTML: Readonly<Record<string, string>> = {
+  '/': 'index.html',
+  '/impressum': path.join('impressum', 'index.html'),
+  '/agb': path.join('agb', 'index.html'),
+  '/datenschutz': path.join('datenschutz', 'index.html'),
+};
+
+function isPathInsideRoot(rootDir: string, candidate: string): boolean {
+  const root = path.resolve(rootDir);
+  const resolved = path.resolve(candidate);
+  const rel = path.relative(root, resolved);
+  return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+}
+
+/**
+ * Resolve the HTML file for a public SPA path.
+ * Input is only used for allowlist lookup after normalization — never as a path segment.
+ */
+function resolvePublicHtmlFile(distPath: string, requestPath: string): string {
+  const root = path.resolve(distPath);
+  const fallback = path.resolve(root, 'index.html');
+  const normalized = stripTrailingSlashPath(requestPath);
+
+  const relative = PUBLIC_ROUTE_HTML[normalized];
+  if (!relative) {
+    // Caller should only invoke for public paths; fail closed to root index.
+    return fallback;
+  }
+
+  const candidate = path.resolve(root, relative);
+  if (!isPathInsideRoot(root, candidate)) {
+    return fallback;
+  }
+
+  if (normalized !== '/' && !fs.existsSync(candidate)) {
+    return fallback;
+  }
+
+  return candidate;
+}
+
 export function registerProductionSpaFallback(app: Express, distPath: string): void {
+  const root = path.resolve(distPath);
+
   app.get('*', (req: Request, res: Response) => {
-    if (isPublicSpaPath(req.path)) {
-      return res.sendFile(path.join(distPath, 'index.html'));
+    if (!isPublicSpaPath(req.path)) {
+      return res.status(404).type('text/plain').send('Not Found');
     }
-    return res.status(404).type('text/plain').send('Not Found');
+
+    const file = resolvePublicHtmlFile(root, req.path);
+    if (!isPathInsideRoot(root, file)) {
+      return res.status(404).type('text/plain').send('Not Found');
+    }
+
+    return res.sendFile(file);
   });
 }
 
@@ -22,11 +78,6 @@ let soft404InterceptInstalled = false;
 
 /**
  * Install once, before startServer() registers `app.get('*', sendFile)`.
- *
- * In production, any subsequent `app.get('*', …)` handler is wrapped so that
- * only public SPA paths receive the SPA shell; everything else is a real 404.
- *
- * This wires D3 without rewriting the large server.application.ts composition root.
  * Idempotent.
  */
 export function installProductionSoft404Intercept(): void {
@@ -52,7 +103,6 @@ export function installProductionSoft404Intercept(): void {
           if (isPublicSpaPath(req.path)) {
             return handler(req, res, next);
           }
-          // Soft-404 fix: do not serve the SPA shell for arbitrary URLs.
           return res.status(404).type('text/plain').send('Not Found');
         };
       });
@@ -61,3 +111,6 @@ export function installProductionSoft404Intercept(): void {
     return originalGet.call(this, routePath as string, ...handlers);
   } as typeof proto.get;
 }
+
+/** Exported for unit tests */
+export { resolvePublicHtmlFile, isPathInsideRoot, PUBLIC_ROUTE_HTML };
