@@ -1,10 +1,10 @@
 # WP-S1 — SeoEngine Persistenz: Implementierungsplan & Status
 
 **Roadmap:** SEO-GM-ROADMAP-0002 / WP-S1  
-**Claims:** `SEO-WP-S1-PERSISTENCE-2026-08-15` → `SEO-WP-S1-STORE-CODE-2026-08-15` → `SEO-WP-S1-FOLLOWUP-HARDENING-2026-08-15`  
+**Claims:** `SEO-WP-S1-PERSISTENCE-2026-08-15` → `SEO-WP-S1-STORE-CODE-2026-08-15` → `SEO-WP-S1-FOLLOWUP-HARDENING-2026-08-15` → `SEO-WP-S1-ADR-0082-2026-08-16`  
 **Store-Code Branch (merged):** `seo/wp-s1-store-adapters` → PR #335  
-**Status:** Store-Code **DELIVERED on main**; Schema Foundation/Grants/FK RESTRICT/Ledger-Abgleich **applied** (Owner, 2026-08-15) — nur ADR-Nummerierung offen  
-**Stand:** 2026-08-15
+**Status:** Store-Code **DELIVERED on main**; Schema Foundation/Grants/FK RESTRICT/Ledger-Abgleich **applied** (Owner, 2026-08-15); ADR **ADR-0082 Accepted** — **WP-S1 VERIFIED**  
+**Stand:** 2026-08-16
 
 ---
 
@@ -20,10 +20,11 @@ SeoEngine von rein in-memory auf **persistente** Keyword-/Rank-/Content-Daten um
 | RLS | deny-by-default; kein Public Write | ✅ enable + revoke anon/auth |
 | API | `/api/seo/*` admin-gated | ✅ + Store + 503 |
 | Fallback | Memory nur Dev/Test; Prod fail-closed | ✅ Factory |
+| ADR | nummeriert, Accepted | ✅ ADR-0082 |
 
 ---
 
-## 2. Ist-Zustand (verifiziert, nach PR #333 / #335)
+## 2. Ist-Zustand (verifiziert, nach PR #333 / #335 / #341 / ADR-0082)
 
 | Baustein | Status |
 |----------|--------|
@@ -33,9 +34,9 @@ SeoEngine von rein in-memory auf **persistente** Keyword-/Rank-/Content-Daten um
 | Migration Foundation `20260815010000` | ✅ Repo + Prod apply |
 | Source-Align `20260815200000` | ✅ Repo + Prod apply |
 | service_role Grants `20260815210000` | ✅ Repo + Prod apply (PR #333) |
-| FK RESTRICT `20260815220000` | ⚠️ Repo; **Prod-Apply Owner-Gate** |
-| Ledger-Abgleich (schema_migrations) | ⚠️ Runbook; **Owner-Gate** |
-| ADR-Draft formalisiert/nummeriert | ❌ offen |
+| FK RESTRICT `20260815220000` | ✅ Repo + Prod apply 2026-08-15 |
+| Ledger-Abgleich (schema_migrations) | ✅ ausgeführt 2026-08-15 |
+| ADR formalisiert/nummeriert | ✅ **ADR-0082** (2026-08-16) |
 
 ### Schema-Drift (historisch, behoben)
 
@@ -81,7 +82,8 @@ Privilege-Separation (ADR-0043-Linie):
 | B | Store-Abstraktion | ✅ PR #335 |
 | C | Router async + 503 | ✅ PR #335 |
 | D | Unit/Contract-Tests | ✅ PR #335 |
-| E | Owner Production Gate (Rest) | ⚠️ FK RESTRICT + Ledger |
+| E | Owner Production Gate | ✅ FK RESTRICT + Ledger |
+| F | ADR-Nummerierung | ✅ ADR-0082 |
 
 ---
 
@@ -92,8 +94,8 @@ Privilege-Separation (ADR-0043-Linie):
 - [x] `ISeoEngineStore` + Memory + Supabase Adapter
 - [x] Routes nutzen Store; Production fail-closed ohne privileged key
 - [x] Unit/Contract-Tests (Source-Reject, unknown keyword, empty ranks)
-- [x] `docs/seo/S1_SEO_ENGINE.md` Status aktualisiert (dieser Docs-PR)
-- [ ] ADR-Draft finalisiert oder nummeriert nach Kollisionscheck (nächste freie Nummer: `ADR-0075`)
+- [x] `docs/seo/S1_SEO_ENGINE.md` Status aktualisiert
+- [x] ADR finalisiert und nummeriert — **ADR-0082** (Kollisionscheck nach PR #345)
 - [x] Production apply + Evidence **vollständig** (FK RESTRICT + Ledger) — angewendet 2026-08-15, Evidenz in `docs/runbooks/SEO_WP_S1_LEDGER_RECONCILIATION.md`
 
 ---
@@ -106,7 +108,7 @@ Privilege-Separation (ADR-0043-Linie):
 | Privilege fallback auf Anon | Factory + assertPrivileged |
 | Doppelte IDs Memory vs UUID | Domain `id` als string; DB uuid → string |
 | Stille Rank-Invention | CHECK + API reject + Tests |
-| CASCADE löscht Rank-Historie | FK RESTRICT Migration (Owner-Apply) |
+| CASCADE löscht Rank-Historie | FK RESTRICT Migration (applied) |
 
 STOP bei: Scope-Drift in Shared Zone, fehlender Owner-Approval für Prod-Apply, Request nach `estimated`-Ranks.
 
@@ -123,11 +125,12 @@ STOP bei: Scope-Drift in Shared Zone, fehlender Owner-Approval für Prod-Apply, 
 
 ---
 
-## 8. Nächste Aktionen (keine Agent-Mutation ohne Freigabe)
+## 8. Nächste Aktionen
 
 1. ~~Apply `20260815220000_seo_rank_snapshots_fk_restrict.sql` auf AIFINANCIAL~~ — erledigt 2026-08-15
 2. ~~Ledger-Abgleich laut `docs/runbooks/SEO_WP_S1_LEDGER_RECONCILIATION.md`~~ — erledigt 2026-08-15
-3. ADR-Draft nummerieren nach Kollisionscheck (nächste freie Nummer: `ADR-0075`) — **letzter offener Schritt**
-4. Danach WP-S1 als VERIFIED markieren in Roadmap §4
+3. ~~ADR-Draft nummerieren~~ — **ADR-0082 Accepted** (2026-08-16)
+4. ~~WP-S1 als VERIFIED markieren in Roadmap~~ — in diesem Docs-PR
+5. Nächstes Code-WP: **WP-D1 / D2 / D3** (JSON-LD, Title/Meta, Soft-404)
 
-Siehe `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md` für den vollständigen Übergabekontext.
+Siehe `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md` und `docs/adr/ADR-0082-seo-engine-platform-module.md`.

@@ -1,9 +1,10 @@
 # SEO S1 / WP-S1 — SeoEngine Foundation & Persistenz
 
-**Status:** Foundation + Store-Code **auf main** (PR #335); Schema + Grants + FK RESTRICT + Ledger **vollständig auf Produktion angewendet**; WP-S1 DoD **nur noch ADR-Nummerierung offen**  
+**Status:** Foundation + Store-Code **auf main** (PR #335); Schema + Grants + FK RESTRICT + Ledger **vollständig auf Produktion angewendet**; ADR **ADR-0082** nummeriert — **WP-S1 VERIFIED**  
 **Roadmap:** SEO-GM-ROADMAP-0002 / WP-S1  
-**Claims:** `SEO-WP-S1-PERSISTENCE-2026-08-15` → `SEO-WP-S1-STORE-CODE-2026-08-15` (merged) → `SEO-WP-S1-FOLLOWUP-HARDENING-2026-08-15` (applied)  
+**Claims:** `SEO-WP-S1-PERSISTENCE-2026-08-15` → `SEO-WP-S1-STORE-CODE-2026-08-15` (merged) → `SEO-WP-S1-FOLLOWUP-HARDENING-2026-08-15` (applied) → `SEO-WP-S1-ADR-0082-2026-08-16`  
 **Prep-Doc:** `docs/seo/WP_S1_PERSISTENCE_IMPLEMENTATION.md`  
+**ADR:** `docs/adr/ADR-0082-seo-engine-platform-module.md`  
 **Handoff:** `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`
 
 ## Geliefert
@@ -18,6 +19,7 @@
 | service_role Grants | `supabase/migrations/20260815210000_seo_engine_service_role_grants.sql` | PR #333 + Prod applied |
 | FK RESTRICT | `supabase/migrations/20260815220000_seo_rank_snapshots_fk_restrict.sql` | Prod applied 2026-08-15 |
 | Ledger-Abgleich | `docs/runbooks/SEO_WP_S1_LEDGER_RECONCILIATION.md` | Ausgeführt 2026-08-15 |
+| ADR | `docs/adr/ADR-0082-seo-engine-platform-module.md` | Accepted 2026-08-16 |
 | Tests (memory + contracts) | `tests/unit/seoEngineStore.test.ts`, `seoEnginePersistence.contract.test.ts` | main |
 | Dashboard | S3 / PR #309 | main |
 
@@ -31,6 +33,8 @@ Ranks starten leer. API akzeptiert nur `search-console` | `manual-import` (kein 
 2. ~~Production fail-closed ohne privileged Supabase~~ — Factory + 503 in Routes
 3. ~~Migration Production-Apply: Foundation / Source-Align / Grants / FK RESTRICT / Ledger-Abgleich~~ — **alle fünf angewendet** (Evidenz: `docs/runbooks/SEO_WP_S1_LEDGER_RECONCILIATION.md`)
 4. ~~Contract-Tests für Source-Reject und leere Rank-Liste~~ — main
-5. ADR-Draft (`docs/adr/ADR-DRAFT-seo-engine-platform-module.md`) — **noch nicht nummeriert** (nächste freie Nummer: `ADR-0075`, Kollisionscheck offen) — **letzter offener Punkt für WP-S1 VERIFIED**
+5. ~~ADR nummeriert~~ — **`ADR-0082`** (Kollisionscheck nach PR #345: 0075–0081 belegt; nächste freie Nummer 0082)
+
+**WP-S1 = VERIFIED.** Nächstes Code-WP laut Roadmap §10: **WP-D1 / D2 / D3**.
 
 Siehe Implementierungsplan: `WP_S1_PERSISTENCE_IMPLEMENTATION.md`, Übergabe: `HANDOFF_WP_S1_NEXT_2026-08-15.md`.
