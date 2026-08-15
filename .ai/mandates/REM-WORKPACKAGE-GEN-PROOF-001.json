@@ -1,6 +1,6 @@
 {
   "mandateId": "REM-WORKPACKAGE-GEN-PROOF-001",
-  "status": "DRAFT",
+  "status": "OWNER_APPROVED",
   "ownerActorId": "SvenKulessa",
   "subjectAgentId": "capital-ai-systemadmin-roadmap-executor",
   "repository": "SvenKulessa/Finance",
@@ -48,7 +48,7 @@
   "killSwitch": {
     "enabled": true,
     "revocationAuthority": "SvenKulessa",
-    "reason": "First entry in the generalized work-package catalog only; status DRAFT until the Owner explicitly approves it (fresh TOTP step-up + approvalEvidenceRef, per CLAUDE.md Authorized Principals). This session cannot and does not self-approve."
+    "reason": "First entry in the generalized work-package catalog only; single-file documentation-only pilot proving the catalog machinery, no production effect."
   },
   "requiredPreflight": [
     "current-main",
@@ -73,5 +73,6 @@
     "prOutcomeAuditReference",
     "pullRequestNumber",
     "humanMergeRequired"
-  ]
+  ],
+  "approvalEvidenceRef": "human-owner-chat-2026-08-15-workpackage-gen-proof"
 }
