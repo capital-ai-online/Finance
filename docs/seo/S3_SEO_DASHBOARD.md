@@ -1,7 +1,7 @@
 # SEO S3 — Management Dashboard
 
 **Roadmap:** SEO-ROADMAP-0001 / S3  
-**Status:** im Branch implementiert  
+**Status:** abgeschlossen — gemergt mit PR #309  
 **Zugriff:** Owner/Admin; Backend-Endpunkte bleiben durch `checkAdminAccess` geschützt.
 
 ## Geliefert

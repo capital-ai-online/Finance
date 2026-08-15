@@ -15,7 +15,7 @@ SEO-ROADMAP-0001
 
 ## Status
 
-Aktiv — Programmplan. Basis-Commit `1809f03`, Prüfstichtag 08.08.2026.
+Aktiv — Programmplan. Ursprüngliche Basis `1809f03`; Fortschritt zuletzt am 15.08.2026 gegen `main@ac47dfd` abgeglichen.
 
 ---
 
@@ -130,8 +130,8 @@ Aufwand in Personentagen (PT). ROI-Skala: sehr hoch / hoch / mittel / niedrig.
 |---|---|---|---|---|---|
 | S1 | `src/platform/SeoEngine/` + Supabase-Schema: Keyword-Register, Ranking-Historie, Content-Inventar | sehr hoch — das eigentliche „Management" | hoch | 15 | mittel |
 | S2 | Prerendering/SSG der öffentlichen Routen | sehr hoch — Crawler sehen heute keinen Inhalt | hoch | 12 | hoch |
-| S3 | SEO-Dashboard in der Webanwendung (Search Console + GA4) | hoch | mittel | 8 | niedrig |
-| S4 | hreflang-/Sprachstrategie klären (`lang="de"`, Keywords DE+EN gemischt) | mittel | mittel | 5 | niedrig |
+| S3 | SEO-Dashboard in der Webanwendung (Search Console + GA4) — **abgeschlossen, PR #309** | hoch | mittel | 8 | niedrig |
+| S4 | hreflang-/Sprachstrategie klären (`lang="de"`, Keywords DE+EN gemischt) — **im Folge-Branch umgesetzt** | mittel | mittel | 5 | niedrig |
 
 **Summe 60 Tage: 40 PT.**
 

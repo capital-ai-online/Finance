@@ -1,6 +1,6 @@
 # 🔍 SEO Checklist & Technical Discovery Guide
 **Project: CAPITAL-AI**  
-**Stand:** 15.08.2026 — S2 gemerged (#290); N4 Freigabe-Gate in PR  
+**Stand:** 15.08.2026 — S3 gemergt (#309); S4 im Folge-Branch umgesetzt  
 **Umsetzungsplan:** `docs/seo/SEO_MANAGEMENT_ROADMAP.md`
 
 ### 1. Crawling & Indexierung
@@ -29,4 +29,8 @@
 - [ ] Media-Rendering — **N3** (Make-or-Buy)
 
 ### S3 Management Dashboard
-- [x] Owner/Admin-Dashboard für SeoEngine-KPIs, Quellenstatus, Keywords und Content-Inventar — **S3**
+- [x] Owner/Admin-Dashboard für SeoEngine-KPIs, Quellenstatus, Keywords und Content-Inventar — **S3** (#309)
+
+### S4 Sprache und hreflang
+- [x] German-first-Strategie und Aktivierungskriterien für echte Sprachvarianten dokumentiert — **S4**
+- [x] Kein irreführendes `hreflang` ohne kanonische Übersetzungs-URLs
