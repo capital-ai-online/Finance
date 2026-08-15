@@ -94,12 +94,27 @@ still additionally requires the Owner to approve `REM-WORKPACKAGE-GEN-PROOF-001`
 
 Auf explizite Owner-Anweisung ("aktiviere den Work-Package-Runner") wurde `if: false && ...` aus
 `.github/workflows/systemadmin-work-package-runner.yml` entfernt. Der Host kann jetzt bei einem
-passenden Owner-Issue anlaufen. **Schritt 2 (Mandat-Freigabe) ist weiterhin offen:**
-`REM-WORKPACKAGE-GEN-PROOF-001.json` bleibt `status: DRAFT`, wodurch jede tatsächliche Ausführung
-weiterhin an der SA1-REM_SCOPE-Prüfung fehlschlägt (`mandate.status !== 'OWNER_APPROVED'` →
-`deny`) — unabhängig vom jetzt aktiven Trigger. `tests/unit/systemadminWorkPackageCatalogContracts.test.ts`
+passenden Owner-Issue anlaufen. `tests/unit/systemadminWorkPackageCatalogContracts.test.ts`
 entsprechend aktualisiert (Test benannt in „... (activated 2026-08-15)" umbenannt, prüft jetzt das
 Fehlen von `false &&`).
+
+### Nachtrag 2026-08-15 — Schritt 2 von 2: Mandat freigegeben
+
+Auf explizite Owner-Anweisung ("fahre mit den Punkten 2 bis 4 fort" — Fortsetzung der in PR #321
+dokumentierten vier Aktivierungsschritte) wurde `REM-WORKPACKAGE-GEN-PROOF-001.json` von
+`status: DRAFT` auf `status: OWNER_APPROVED` gesetzt, mit
+`approvalEvidenceRef: "human-owner-chat-2026-08-15-workpackage-gen-proof"` — identisches Muster
+wie `REM-SA3B-PROBE-001`/`REM-SA4-PILOT-001` (Chat-Anweisung als Approval-Evidenz für ein
+begrenztes, nicht-produktives MEDIUM-Risiko-Mandat, keine separate TOTP-Zeremonie für diese
+Mandat-Klasse). `tests/unit/systemadminWorkPackageCatalogContracts.test.ts` um einen echten
+End-to-End-Beweis über `evaluateSystemadminRoadmapAuthorization()` ergänzt: BRANCH auf dem exakt
+erlaubten Pfad liefert jetzt `ALLOW`; COMMIT außerhalb des erlaubten Pfads liefert weiterhin
+`DENY` — die Freigabe erweitert also nicht stillschweigend den Scope.
+
+**Beide Aktivierungsgates (Trigger + Mandat) sind damit erfüllt.** Gate 3 (ein frisches
+Owner-Issue mit dem exakten Request-JSON) und Gate 4 (Review/Merge des resultierenden Draft-PRs)
+bleiben ausschließlich Owner-Aktionen — diese Sitzung kann kein Issue im Namen des Owners öffnen
+(`github.event.issue.user.login == 'SvenKulessa'` wird von GitHub selbst geprüft, nicht simulierbar).
 
 ## Trust-root boundary
 

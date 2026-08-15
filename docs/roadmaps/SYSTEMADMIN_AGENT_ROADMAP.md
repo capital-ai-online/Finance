@@ -303,9 +303,18 @@ the proof end-to-end.
 
 **Status 2026-08-15:** gate 1 (PR #321 merged) done. Gate 2 (workflow trigger) activated on
 explicit Owner instruction ("aktiviere den Work-Package-Runner") — `if: false && ...` removed from
-`.github/workflows/systemadmin-work-package-runner.yml`. Gates 3 and 4 remain open:
-`REM-WORKPACKAGE-GEN-PROOF-001` is still `status: DRAFT`, so any Issue-triggered run still fails
-closed at SA1 REM_SCOPE regardless of the now-active trigger.
+`.github/workflows/systemadmin-work-package-runner.yml`. Gate 3 (mandate approval) done on
+explicit Owner instruction ("fahre mit den Punkten 2 bis 4 fort") —
+`REM-WORKPACKAGE-GEN-PROOF-001` is now `status: OWNER_APPROVED` with
+`approvalEvidenceRef: "human-owner-chat-2026-08-15-workpackage-gen-proof"`, proven end-to-end via
+a real `evaluateSystemadminRoadmapAuthorization()` ALLOW test
+(`tests/unit/systemadminWorkPackageCatalogContracts.test.ts`). **Gate 4 remains open and is
+Owner-only:** a fresh GitHub Issue titled `[SYSTEMADMIN-WORK-PACKAGE] ...` from the
+`SvenKulessa` account, with the exact request JSON (`workPackageId: GENERALIZATION-PROOF`,
+`mandateId: REM-WORKPACKAGE-GEN-PROOF-001`, current `main` SHA as `baseSha`,
+`branchName: agent/systemadmin-work-package-gen-proof-<n>`), then Owner review/merge of the
+resulting draft PR. This session cannot open that Issue — GitHub itself checks
+`github.event.issue.user.login == 'SvenKulessa'`.
 
 ## SA5 — Bounded external mutation design
 

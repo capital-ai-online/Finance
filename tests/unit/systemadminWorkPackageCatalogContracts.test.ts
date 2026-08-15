@@ -1,7 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { validateRoadmapExecutionMandate } from '../../src/platform/Security/roadmapExecutionMandate';
+import {
+  evaluateSystemadminRoadmapAuthorization,
+  validateRoadmapExecutionMandate,
+  type SystemadminRoadmapAuthorizationRequest,
+} from '../../src/platform/Security/roadmapExecutionMandate';
 import { SYSTEMADMIN_SA3_SELF_AUTHORITY_PATHS } from '../../server/agentAudit/systemadminAuditedExecution';
 import { lookupWorkPackage, knownWorkPackageIds } from '../../scripts/systemadmin/workPackages/registry.mjs';
 
@@ -52,19 +56,19 @@ describe('Generalized Systemadmin work-package catalog contracts', () => {
     expect(content).toContain('HUMAN MERGE REQUIRED');
   });
 
-  it('keeps the first catalog REM exact, DRAFT (not self-approved) and non-production', () => {
+  it('keeps the first catalog REM exact, Owner-approved (2026-08-15) and non-production', () => {
     const rem = JSON.parse(fs.readFileSync(remPath, 'utf8'));
     expect(validateRoadmapExecutionMandate(rem)).toMatchObject({ valid: true });
     expect(rem).toMatchObject({
       mandateId: 'REM-WORKPACKAGE-GEN-PROOF-001',
-      status: 'DRAFT',
+      status: 'OWNER_APPROVED',
       ownerActorId: 'SvenKulessa',
       repository: 'SvenKulessa/Finance',
       baseBranch: 'main',
       maxRiskClass: 'MEDIUM',
       maxOpenPullRequests: 1,
+      approvalEvidenceRef: 'human-owner-chat-2026-08-15-workpackage-gen-proof',
     });
-    expect(rem.approvalEvidenceRef).toBeUndefined();
     expect(rem.allowedCapabilities).toEqual(['BRANCH', 'COMMIT', 'PR']);
     expect(rem.allowedPaths).toEqual(['docs/evidence/systemadmin-work-packages/WORK_PACKAGE_GENERALIZATION_PROOF.md']);
     expect(rem.allowedMutationClasses).toEqual(['REPOSITORY']);
@@ -73,11 +77,66 @@ describe('Generalized Systemadmin work-package catalog contracts', () => {
     expect(Date.parse(rem.expiresAt) - Date.parse(rem.validFrom)).toBeLessThanOrEqual(7 * 24 * 60 * 60 * 1000);
   });
 
-  it('is denied at runtime by SA1 REM_SCOPE precisely because it is DRAFT, not OWNER_APPROVED', () => {
+  it('is now ALLOWED end-to-end by SA1 REM_SCOPE for BRANCH on the exact allowlisted path', () => {
     const rem = JSON.parse(fs.readFileSync(remPath, 'utf8'));
-    const decision = validateRoadmapExecutionMandate(rem);
-    expect(decision.valid).toBe(true);
-    expect(rem.status).not.toBe('OWNER_APPROVED');
+    const authRequest: SystemadminRoadmapAuthorizationRequest = {
+      principal: {
+        humanActorId: 'SvenKulessa',
+        appId: 'chatgpt-github-connector',
+        agentId: rem.subjectAgentId,
+        sessionId: 'github-issue-999',
+        requestId: 'issue-999-run-123',
+        credentialHolderId: 'github-actions-oidc',
+        provider: 'openai',
+        model: 'non-authoritative-host-metadata',
+      },
+      capability: 'BRANCH',
+      riskClass: 'MEDIUM',
+      environment: 'development',
+      targetResource: 'github:SvenKulessa/Finance',
+      mandate: rem,
+      execution: {
+        roadmapItem: rem.roadmapItems[0],
+        repository: 'SvenKulessa/Finance',
+        baseBranch: 'main',
+        requestedPaths: [],
+        mutationClass: 'REPOSITORY',
+        openSystemadminPullRequests: 0,
+        openPullRequestChangedPaths: [],
+        now: '2026-08-15T12:00:00.000Z',
+      },
+    };
+    expect(evaluateSystemadminRoadmapAuthorization(authRequest)).toMatchObject({ verdict: 'ALLOW' });
+  });
+
+  it('still denies COMMIT outside the exact allowlisted path even though the mandate is approved', () => {
+    const rem = JSON.parse(fs.readFileSync(remPath, 'utf8'));
+    const authRequest: SystemadminRoadmapAuthorizationRequest = {
+      principal: {
+        humanActorId: 'SvenKulessa',
+        appId: 'chatgpt-github-connector',
+        agentId: rem.subjectAgentId,
+        sessionId: 'github-issue-999',
+        requestId: 'issue-999-run-123',
+        credentialHolderId: 'github-actions-oidc',
+      },
+      capability: 'COMMIT',
+      riskClass: 'MEDIUM',
+      environment: 'development',
+      targetResource: 'github:SvenKulessa/Finance',
+      mandate: rem,
+      execution: {
+        roadmapItem: rem.roadmapItems[0],
+        repository: 'SvenKulessa/Finance',
+        baseBranch: 'main',
+        requestedPaths: ['docs/evidence/systemadmin-work-packages/SOME_OTHER_FILE.md'],
+        mutationClass: 'REPOSITORY',
+        openSystemadminPullRequests: 0,
+        openPullRequestChangedPaths: [],
+        now: '2026-08-15T12:00:00.000Z',
+      },
+    };
+    expect(evaluateSystemadminRoadmapAuthorization(authRequest)).toMatchObject({ verdict: 'DENY' });
   });
 
   it('places every work-package host/control-plane artifact inside both Systemadmin self-authority rings', () => {
