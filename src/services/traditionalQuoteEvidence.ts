@@ -129,15 +129,17 @@ async function fetchGatewayTraditionalQuote(
 
 let productionFmpIndexGateway: MarketDataGateway | undefined;
 
-function fmpIndexGateway(): MarketDataGateway {
-  if (productionFmpIndexGateway) return productionFmpIndexGateway;
+function fmpIndexGateway(options: QuoteOptions): MarketDataGateway {
+  const usesInjectedClock = Boolean(options.nowMs);
+  if (!usesInjectedClock && productionFmpIndexGateway) return productionFmpIndexGateway;
   const registry = new ProviderRegistry();
   registry.register(new FmpIndexMarketDataProvider(async symbol => {
     await ensureIndexQuoteFresh(symbol);
     return getCachedIndexQuote(symbol) ?? null;
-  }));
-  productionFmpIndexGateway = new MarketDataGateway(registry);
-  return productionFmpIndexGateway;
+  }, options.nowMs));
+  const gateway = new MarketDataGateway(registry, { nowMs: options.nowMs });
+  if (!usesInjectedClock) productionFmpIndexGateway = gateway;
+  return gateway;
 }
 
 async function fetchFmpIndexQuote(symbol: string, options: QuoteOptions): Promise<VerifiedTraditionalQuote> {
@@ -153,7 +155,7 @@ async function fetchFmpIndexQuote(symbol: string, options: QuoteOptions): Promis
   }
 
   const startedAt = Date.now();
-  const result = await fmpIndexGateway().getSnapshot({
+  const result = await fmpIndexGateway(options).getSnapshot({
     symbol,
     assetClass: 'index',
     correlationId: `traditional-quote:index:${symbol}:${nowMs(options)}`,
