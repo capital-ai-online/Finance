@@ -1,0 +1,41 @@
+{
+  "claimId": "SEO-WP-S1-ADR-0082-2026-08-16",
+  "title": "WP-S1 ADR numbering: SeoEngine → ADR-0082 + VERIFIED status sync",
+  "roadmap": "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+  "documentId": "SEO-GM-ROADMAP-0002",
+  "roadmapIds": ["WP-S1"],
+  "predecessor": "SEO-WP-S1-FOLLOWUP-HARDENING-2026-08-15",
+  "branch": "seo/wp-s1-adr-0082-numbering",
+  "base": "main",
+  "owner": "SvenKulessa",
+  "status": "prepared",
+  "createdAt": "2026-08-16",
+  "createdBy": {
+    "provider": "xAI",
+    "model": "Grok",
+    "surface": "Grok Chat / GitHub MCP"
+  },
+  "authorizedByHuman": true,
+  "scope": [
+    "docs/adr/ADR-0082-seo-engine-platform-module.md",
+    "docs/adr/ADR-DRAFT-seo-engine-platform-module.md",
+    "docs/seo/S1_SEO_ENGINE.md",
+    "docs/seo/WP_S1_PERSISTENCE_IMPLEMENTATION.md",
+    "docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+    ".ai/work-claims/SEO-WP-S1-ADR-0082-2026-08-16.json"
+  ],
+  "outOfScope": [
+    "Runtime / SEO store code",
+    "Supabase mutations",
+    "WP-D1/D2/D3 implementation",
+    "ADR-DRAFT-prerender-public-routes"
+  ],
+  "collisionCheck": {
+    "after": "PR #345 merged (ADR-0075–0081)",
+    "highestActive": "ADR-0081",
+    "assigned": "ADR-0082",
+    "checkedAt": "2026-08-16"
+  },
+  "notes": "Docs-only (class D). Deletes draft path after adding ADR-0082. Marks WP-S1 VERIFIED in roadmap status tables."
+}
