@@ -1,9 +1,9 @@
 {
   "name": "Documentary",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "status": "development",
   "owner": "CAPITAL-AI",
-  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Status-Event Drift Detection, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Generatoren/Renderer und D7 Knowledge Projection.",
+  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Status-Event Drift Detection/Updater, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Generatoren/Renderer und D7 Knowledge Projection.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -35,7 +35,7 @@
       "RepositoryScannedEvent",
       "PlatformDecisionEvent"
     ],
-    "note": "D7 adds a deterministic Documentary-to-Knowledge projection contract only; it does not introduce a second Knowledge engine or autonomous Knowledge build. Status-event drift detector is read-only Discovery input (Phase B); successful merge is an optional trigger annotation, not a write path."
+    "note": "Status-event drift detector is read-only Discovery input (Phase B). Phase C updater proposes header-only changes via Draft-PR (dryRun default true); never silent main write."
   },
   "knowledge": [
     "Knowledge/DocumentaryKnowledgeProjection.ts"
@@ -49,6 +49,7 @@
     "Discovery/CodeEvidence.ts",
     "Discovery/StatusEventEvidence.ts",
     "Discovery/StatusEventDriftDetector.ts",
+    "Discovery/StatusEventDriftUpdater.ts",
     "Models/DocumentaryDocument.ts",
     "Models/DocumentaryProvenance.ts",
     "Interfaces/IDocumentaryEngine.ts",
@@ -81,7 +82,8 @@
     "tests/unit/documentaryRenderer.test.ts",
     "tests/unit/documentaryTraceabilityEvents.test.ts",
     "tests/unit/documentaryVersionAuthority.test.ts",
-    "tests/unit/statusEventDriftDetector.test.ts"
+    "tests/unit/statusEventDriftDetector.test.ts",
+    "tests/unit/statusEventDriftUpdater.test.ts"
   ],
   "implementation": {
     "level": "partial",
@@ -112,5 +114,5 @@
     "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
     "platformVersion": "../../../package.json#version"
   },
-  "note": "D7 derives deterministic Knowledge projection evidence from governed DocumentaryDocument models. The authoritative ESS-0009 Knowledge Engine remains separate and specification-only until its own implementation scope. Phase B StatusEventDriftDetector is read-only; Phase C updater remains owner-gated."
+  "note": "Phase B StatusEventDriftDetector is read-only. Phase C StatusEventDriftUpdater is header-only, allowlisted, dryRun-default, Draft-PR only."
 }

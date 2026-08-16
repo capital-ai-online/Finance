@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.9.0
+Version: 1.10.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,7 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Status-Event Drift Detection (Phase B, read-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer und D7 Knowledge Projection.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Status-Event Drift Detection (Phase B, read-only), Status-Event Drift Updater (Phase C, header-only, Draft-PR / dryRun default), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer und D7 Knowledge Projection.
 
 ## Implemented Scope
 
@@ -28,6 +28,7 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Discovery/CodeEvidence.ts`
 - `Discovery/StatusEventEvidence.ts`
 - `Discovery/StatusEventDriftDetector.ts`
+- `Discovery/StatusEventDriftUpdater.ts`
 - `Models/DocumentaryDocument.ts`
 - `Models/DocumentaryProvenance.ts`
 - `Interfaces/IDocumentaryEngine.ts`
@@ -83,7 +84,7 @@ Weiterhin geplant: `Governance` (Documentation Governance Validator), `Mermaid`,
 
 ## Boundaries
 
-Keine autonome Approval-Transition, keine Source-Code-Mutation, keine zweite Event- oder Knowledge-Infrastruktur. IAM-Step-Up/Persistenz, Governance Validator Runtime und der zentrale ESS-0009 KnowledgeBuilder bleiben separate Scopes.
+Keine autonome Approval-Transition, keine Source-Code-Mutation, keine zweite Event- oder Knowledge-Infrastruktur. IAM-Step-Up/Persistenz, Governance Validator Runtime und der zentrale ESS-0009 KnowledgeBuilder bleiben separate Scopes. Phase-C Status-Header-Updates erfolgen nur header-only, allowlisted, dryRun-default und über Draft-PR.
 
 ## ESS / ADR
 
