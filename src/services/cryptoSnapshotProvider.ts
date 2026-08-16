@@ -11,7 +11,7 @@ import {
   getProviderMatrixEntry,
   rateLimitOverridesFromMatrix,
 } from '../platform/MarketData/ProviderMatrix';
-import { recordProviderHealth } from '../platform/Supervisor/providerHealth';
+import { recordProviderHealth, type ProviderDiagnosticCode } from '../platform/Supervisor/providerHealth';
 
 export type CryptoSnapshotField =
   | 'marketCapUsd'
@@ -141,7 +141,7 @@ function writeHealth(
   options: CryptoSnapshotProviderOptions,
   state: 'healthy' | 'degraded' | 'unavailable',
   message: string,
-  diagnosticCode?: string,
+  diagnosticCode?: ProviderDiagnosticCode,
   circuitOpenUntil?: string | null,
 ): void {
   if (options.recordHealth === false) return;
