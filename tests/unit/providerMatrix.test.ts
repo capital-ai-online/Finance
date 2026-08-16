@@ -68,8 +68,13 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
     expect(getProviderMatrixEntry('fmp-index')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('coingecko')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('alpaca')?.gatewayStatus).toBe('shadow_only');
+    // SC-5 Phase D: CoinAPI/EODHD registered as gateway-hardened crypto adapters (quorum prep);
+    // TwelveData gains assetClass=crypto. Not yet consumed by cryptoQuoteEvidence.
+    expect(getProviderMatrixEntry('coinapi')?.gatewayStatus).toBe('behind_gateway');
+    expect(getProviderMatrixEntry('eodhd')?.gatewayStatus).toBe('behind_gateway');
+    expect(getProviderMatrixEntry('twelvedata')?.assetClasses).toContain('crypto');
     expect(providersBehindGateway().map((e) => e.id)).toEqual(
-      expect.arrayContaining(['twelvedata', 'fmp-index', 'coingecko']),
+      expect.arrayContaining(['twelvedata', 'fmp-index', 'coingecko', 'coinapi', 'eodhd']),
     );
     expect(providersLegacyOffGateway().some((e) => e.id === 'stooq')).toBe(true);
   });
@@ -80,7 +85,10 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
     expect(overrides['fmp-index']?.capacity).toBe(40);
     expect(overrides.alpaca?.capacity).toBe(20);
     expect(overrides.coingecko?.capacity).toBe(25);
-    expect(overrides.coinapi).toBeUndefined();
+    // SC-5 Phase D: coinapi/eodhd moved from consensus_only to behind_gateway, so they now get a
+    // matrix-managed rate-limit budget too (registration only; not yet consumed for quorum).
+    expect(overrides.coinapi?.capacity).toBe(20);
+    expect(overrides.eodhd?.capacity).toBe(15);
     expect(overrides.stooq).toBeUndefined();
   });
 

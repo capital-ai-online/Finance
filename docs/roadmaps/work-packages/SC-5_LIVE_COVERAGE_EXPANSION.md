@@ -2,7 +2,7 @@
 
 **SPT:** SC-MD-SPT-0001  
 **Priority:** P1  
-**Status:** PHASE C LANDED (code) — canonical multi-field on gateway; Phase B PR may still be open  
+**Status:** PHASE D LANDED (code) — CoinAPI/EODHD gateway crypto adapters registered; quorum consumption still Owner-gated  
 **Date:** 2026-08-16
 
 ## Goal
@@ -35,10 +35,21 @@ Verified live quotes for **Stock / FX / Index / Crypto** with fail-closed status
 - [x] ProviderMatrix `provider-matrix/1.3.0` notes
 - [x] Evidence under `docs/evidence/sc-md/SC5_PHASE_C_CANONICAL_MULTIFIELD_2026-08-16.md`
 
+## Delivered (Phase D)
+
+- [x] `CoinAPIMarketDataProvider` — `MarketDataProvider` adapter for CoinAPI crypto exchange-rate (`LIVE`)
+- [x] `EODHDMarketDataProvider` — `MarketDataProvider` adapter for EODHD crypto EOD close, labelled `HISTORICAL` (never `LIVE`/`DELAYED`, so it cannot masquerade as a current execution price)
+- [x] `TwelveDataMarketDataProvider` extended with `assetClass: 'crypto'` (`X/USD` via existing `/quote` endpoint, same conservative `DELAYED` posture as stock/forex)
+- [x] ProviderMatrix: `coinapi` and `eodhd` moved `consensus_only` → `behind_gateway` (matrix RL/CB budget now applies if/when a caller registers them); `twelvedata` gains `crypto` in `assetClasses`; `provider-matrix/1.4.0`
+- [x] Unit tests: success + fail-closed (missing key, invalid/empty payload, wrong asset class) for both new adapters; crypto branch for TwelveData
+- [x] Evidence under `docs/evidence/sc-md/SC5_PHASE_D_GATEWAY_CRYPTO_ADAPTERS_2026-08-16.md`
+
+**Scope boundary:** these adapters are registered inventory only — no `ProviderRegistry`/`MarketDataGateway` instance actually consumes them yet. `cryptoQuoteEvidence.ts` still pins `allowedProviderIds: ['coingecko']` unchanged, and `cryptoSpotConsensus.ts` still calls the raw `fetchCryptoSpotObservation` fetchers directly (no matrix RL/CB). Wiring an actual multi-provider quorum into the gateway path remains the next, still Owner-gated step below.
+
 ## Explicitly NOT done
 
-- [ ] Register CoinAPI/TwelveData/EODHD as gateway crypto adapters for quorum
-- [ ] Wire `executionPriceEligible: true` for crypto (requires multi-provider quorum + Owner)
+- [ ] Wire a gateway-hardened multi-provider crypto quorum (consume `coinapi`/`eodhd`/`twelvedata` adapters from Phase D in a registry alongside `coingecko`) into `cryptoQuoteEvidence`/`cryptoSpotConsensus`
+- [ ] Wire `executionPriceEligible: true` for crypto (requires the quorum above + Owner)
 - [ ] Stooq behind gateway
 - [ ] Alpaca primary promotion
 - [ ] scoreImpact / rankingImpact flip
@@ -54,6 +65,17 @@ Verified live quotes for **Stock / FX / Index / Crypto** with fail-closed status
 4. Existing price-only consumers remain compatible  
 5. Tests green; evidence + work-claim updated
 
+## DoD Phase D
+
+1. CoinAPI/EODHD/TwelveData(crypto) implement `MarketDataProvider` and return `CanonicalMarketDataSnapshot`
+2. EODHD snapshot is labelled `HISTORICAL`, never `LIVE`/`DELAYED` — cannot be mistaken for a current execution price
+3. No synthetic prices; missing key / invalid payload / wrong asset class → `UNAVAILABLE` with reason
+4. ProviderMatrix reflects the new `behind_gateway` status and stays queryable via `providersBehindGateway()`
+5. No consumer wiring, no `executionPriceEligible` change, no scoring/eligibility mutation
+6. Tests green; evidence updated
+
 ## Risk
 
 Niedrig–mittel: coins/{id} is heavier than simple/price (same rate-limit budget). Fail-closed on missing price. No eligibility mutation.
+
+Phase D: Niedrig — purely additive adapter classes + matrix inventory update; nothing in production calls them yet, so the change carries no runtime blast radius. The only behavior change is that `rateLimitOverridesFromMatrix()` now reserves budget slots for `coinapi`/`eodhd`, which is inert until a caller actually registers those providers.
