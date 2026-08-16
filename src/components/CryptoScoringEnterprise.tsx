@@ -101,9 +101,6 @@ const TYPE_LABEL: Record<AssetType, string> = {
   crypto: 'Krypto', stock: 'Aktien', forex: 'Forex', commodity: 'Rohstoffe', index: 'Indizes', bond: 'Anleihen',
 };
 
-// Institutionelle Multi-Faktor-Kriterien der 9-Faktor Enterprise-Engine (cryptoScoringService.ts).
-// data_quality_risk wird fuer die Darstellung invertiert (hoeherer Wert = bessere Datenqualitaet),
-// damit auf allen Radar-Achsen einheitlich gilt: aussen = staerker/besser.
 const CRYPTO_FACTOR_META: Record<string, { label: string; category: string; invert?: boolean }> = {
   trend: { label: 'Trendstärke', category: 'Technisch' },
   momentum: { label: 'Momentum', category: 'Technisch' },
@@ -485,11 +482,12 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
   }, [result]);
 
   return (
-    <section id="enterprise-scorer" className="scroll-mt-24 bg-neutral-950/60 border border-white/10 rounded-2xl p-5 sm:p-6 backdrop-blur-xl relative overflow-hidden space-y-6">
-      <div className="absolute -top-24 -right-24 w-96 h-96 bg-purple-500/10 blur-[130px] rounded-full pointer-events-none" />
-      <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-cyan-500/5 blur-[130px] rounded-full pointer-events-none" />
+    <section id="enterprise-scorer" className="scroll-mt-24 bg-neutral-950/60 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden space-y-8">
+      {/* Phase 1: softer ambient orbs */}
+      <div className="absolute -top-24 -right-24 w-96 h-96 bg-purple-500/5 blur-[130px] rounded-full pointer-events-none" />
+      <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-cyan-500/[0.03] blur-[130px] rounded-full pointer-events-none" />
 
-      <div className="relative z-30 rounded-2xl border border-aif-gold-DEFAULT/20 bg-black/35 p-4 space-y-3">
+      <div className="relative z-30 rounded-2xl border border-aif-gold-DEFAULT/20 bg-black/35 p-5 space-y-4">
         <div className="flex items-center gap-2 text-[10px] font-mono font-black uppercase tracking-widest text-aif-gold-DEFAULT"><Search size={14} /> Asset-Suche</div>
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="relative flex-1">
@@ -499,7 +497,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
               onChange={(event) => { setSearchValue(event.target.value); setSearchOpen(true); }}
               onFocus={() => setSearchOpen(true)}
               placeholder="Symbol oder Asset suchen: BTC, AAPL, EURUSD, Gold, Bond …"
-              className="w-full rounded-xl border border-white/10 bg-black/50 pl-9 pr-3 py-2.5 text-sm text-white outline-none focus:border-aif-gold-DEFAULT/50"
+              className="w-full rounded-xl border border-white/10 bg-black/50 pl-9 pr-3 py-3 text-sm text-white outline-none focus:border-aif-gold-DEFAULT/50 min-h-11"
             />
             {searchOpen && (
               <div className="absolute left-0 right-0 top-full mt-2 max-h-80 overflow-y-auto rounded-xl border border-white/15 bg-neutral-950 shadow-2xl z-50">
@@ -508,7 +506,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
                     type="button"
                     key={`${asset.type}-${asset.symbol}`}
                     onClick={() => { onSelectSymbol?.(asset.symbol); setSearchValue(''); setSearchOpen(false); }}
-                    className="w-full flex items-center justify-between gap-3 px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/5 text-left"
+                    className="w-full flex items-center justify-between gap-3 px-4 py-3 min-h-11 border-b border-white/5 last:border-0 hover:bg-white/5 text-left"
                   >
                     <div className="flex items-center gap-3"><AssetLogo symbol={asset.symbol} size="xs" /><div><div className="text-xs font-bold text-white">{asset.symbol} · {asset.name}</div><div className="text-[10px] text-white/40">{TYPE_LABEL[asset.type as AssetType]}</div></div></div>
                     <span className="text-[9px] font-mono uppercase text-white/30">auswählen</span>
@@ -517,15 +515,15 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
               </div>
             )}
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {(['all', 'crypto', 'stock', 'forex', 'index', 'commodity', 'bond'] as const).map((type) => (
-              <button key={type} type="button" onClick={() => { setAssetTypeFilter(type); setSearchOpen(true); }} className={`rounded-lg border px-2.5 py-2 text-[10px] font-bold ${assetTypeFilter === type ? 'border-aif-gold-DEFAULT/50 bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT' : 'border-white/10 text-white/45 hover:text-white'}`}>{type === 'all' ? 'Alle' : TYPE_LABEL[type]}</button>
+              <button key={type} type="button" onClick={() => { setAssetTypeFilter(type); setSearchOpen(true); }} className={`rounded-lg border px-3 min-h-11 text-[10px] font-bold ${assetTypeFilter === type ? 'border-aif-gold-DEFAULT/50 bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT' : 'border-white/10 text-white/45 hover:text-white'}`}>{type === 'all' ? 'Alle' : TYPE_LABEL[type]}</button>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="relative z-20 flex flex-col xl:flex-row xl:items-start justify-between gap-5 border-b border-white/10 pb-5">
+      <div className="relative z-20 flex flex-col xl:flex-row xl:items-start justify-between gap-6 border-b border-white/10 pb-6">
         <div className="flex items-center gap-3">
           <AssetLogo symbol={symbol} size={48} />
           <div>
@@ -542,14 +540,14 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
             <p className="text-xs text-white/45 mt-1 font-mono">Multi-Faktor Institutional-Grade Scoring · alle Assetklassen durchsuchbar · evidence-gated</p>
           </div>
         </div>
-        <button type="button" onClick={() => void loadEvaluation()} disabled={loading} className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-white/15 bg-white/5 text-xs font-bold text-white/80 hover:bg-white/10 disabled:opacity-50"><RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Neu prüfen</button>
+        <button type="button" onClick={() => void loadEvaluation()} disabled={loading} className="inline-flex items-center justify-center gap-2 px-4 min-h-11 rounded-xl border border-white/15 bg-white/5 text-xs font-bold text-white/80 hover:bg-white/10 disabled:opacity-50"><RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Neu prüfen</button>
       </div>
 
       <div className="relative z-20">
         <EnterpriseBinanceQuickAnalysis symbol={symbol} />
       </div>
 
-      <div className="relative z-10 flex flex-wrap gap-1.5">{TIMEFRAMES.map((item) => <button type="button" key={item.value} onClick={() => onChangeTimeframe?.(item.value)} className={`rounded-md px-2 py-1 text-[9px] font-mono border transition-all ${timeframe === item.value ? 'border-white/30 bg-white/10 text-white' : 'border-white/5 text-white/35 hover:text-white/60'}`} title="Zeitrahmen ist Analysekontext und verändert keinen kanonischen Score im Browser.">{item.label}</button>)}</div>
+      <div className="relative z-10 flex flex-wrap gap-2">{TIMEFRAMES.map((item) => <button type="button" key={item.value} onClick={() => onChangeTimeframe?.(item.value)} className={`rounded-md px-3 min-h-11 text-[9px] font-mono border transition-all ${timeframe === item.value ? 'border-white/30 bg-white/10 text-white' : 'border-white/5 text-white/35 hover:text-white/60'}`} title="Zeitrahmen ist Analysekontext und verändert keinen kanonischen Score im Browser.">{item.label}</button>)}</div>
 
       {requestError && <div className="relative z-10 flex gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4"><AlertTriangle className="mt-0.5 shrink-0 text-red-300" size={20} /><div><p className="text-sm font-bold text-red-100">DATA_UNAVAILABLE</p><p className="text-xs text-red-100/70 mt-1">{requestError}</p></div></div>}
 
@@ -563,9 +561,9 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25 }}
-            className="relative z-10 space-y-5"
+            className="relative z-10 space-y-8"
           >
-            <div className="grid grid-cols-1 xl:grid-cols-6 gap-5">
+            <div className="grid grid-cols-1 xl:grid-cols-6 gap-6">
               <div className={`xl:col-span-2 rounded-2xl border p-6 flex flex-col items-center justify-center gap-3 ${tier.border} ${tier.bg}`}>
                 <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-white/50 font-mono"><Gauge size={13} /> Kanonischer Gesamt-Score</div>
                 <ScoreGauge score={result.score} tier={tier} />
@@ -585,19 +583,19 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
                 <p className="text-[9px] text-purple-100/40 font-mono leading-relaxed">Kompositscore aus Score, Datenqualität, Tier & Liquidität (ranking.service.ts)</p>
               </div>
 
-              <div className="xl:col-span-3 rounded-2xl border border-white/10 bg-black/25 p-5">
-                <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="xl:col-span-3 rounded-2xl border border-white/10 bg-black/25 p-6">
+                <div className="flex items-center justify-between gap-3 mb-3">
                   <div className="flex items-center gap-2 text-sm font-black uppercase text-white"><RadarGlyph size={15} className="text-cyan-300" /> Multi-Faktor Bewertungsmatrix</div>
                   <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">{radarData.length} Kriterien</span>
                 </div>
-                <p className="text-[10px] text-white/40 font-mono mb-2">State-of-the-Art institutionelles Faktormodell · dynamisch neugewichtet bei fehlenden Faktoren</p>
+                <p className="text-[10px] text-white/40 font-mono mb-3">State-of-the-Art institutionelles Faktormodell · dynamisch neugewichtet bei fehlenden Faktoren</p>
                 <FactorRadar data={radarData} tier={tier} />
               </div>
             </div>
 
             {result.assetType === 'crypto' && (
-              <div id="trade-setup-grafik" className="scroll-mt-24 rounded-2xl border border-white/10 bg-black/25 p-5">
-                <div className="flex items-center gap-2 mb-1 text-sm font-black uppercase text-white"><Activity size={15} className="text-aif-gold-DEFAULT" /> Trade-Setup Grafik</div>
+              <div id="trade-setup-grafik" className="scroll-mt-24 rounded-2xl border border-white/10 bg-black/25 p-6">
+                <div className="flex items-center gap-2 mb-2 text-sm font-black uppercase text-white"><Activity size={15} className="text-aif-gold-DEFAULT" /> Trade-Setup Grafik</div>
                 {result.tradeSetup ? (
                   <TradeSetupLadder setup={result.tradeSetup} />
                 ) : (
@@ -620,18 +618,18 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
               </div>
             )}
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-              <div className="rounded-xl border border-white/10 bg-black/25 p-4 text-xs space-y-2.5">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="rounded-xl border border-white/10 bg-black/25 p-5 text-xs space-y-2.5">
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-white/50 mb-1"><Database size={13} className="text-cyan-300" /> Integrität & Coverage</div>
                 <div className="flex items-center justify-between"><span className="text-white/40">Coverage</span> <span className="text-white font-bold">{coveragePct === null ? '—' : `${coveragePct}%`}</span></div>
                 <div className="flex items-center justify-between"><span className="text-white/40">Data Quality</span> <span className="text-white font-bold">{result.dataQuality ?? '—'}</span></div>
                 <div className="flex items-center justify-between"><span className="text-white/40">Risk Level</span> <span className="text-white font-bold">{result.riskLevel ?? '—'}</span></div>
               </div>
 
-              <div className="xl:col-span-2 rounded-xl border border-white/10 bg-black/25 p-4">
+              <div className="xl:col-span-2 rounded-xl border border-white/10 bg-black/25 p-5">
                 <div className="flex items-center gap-2 mb-3 text-[10px] font-black uppercase tracking-wider text-white/50"><Activity size={13} className="text-emerald-300" /> Faktor-Detailwerte</div>
                 {radarData.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {radarData.map((factor) => (
                       <div key={factor.key} className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
                         <div className="flex items-center justify-between gap-2">
@@ -651,7 +649,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
               </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <div className="rounded-xl border border-white/10 bg-black/25 p-5"><h3 className="text-xs font-black uppercase text-white mb-3 flex items-center gap-2"><Layers3 size={14} className="text-aif-gold-DEFAULT" /> Reasoning</h3>{result.reasoning.length ? <div className="space-y-2">{result.reasoning.slice(0, 8).map((text, index) => <div key={index} className="rounded-lg border border-white/5 bg-white/[0.02] p-3 text-xs text-white/60">{text}</div>)}</div> : <p className="text-xs text-white/40">Keine verifizierte Begründung verfügbar.</p>}</div>
               <div className="rounded-xl border border-white/10 bg-black/25 p-5"><h3 className="text-xs font-black uppercase text-white mb-3">Provider & Evidence</h3><div className="flex flex-wrap gap-2 mb-4">{result.providers.length ? result.providers.map((provider) => <span key={provider} className="rounded-md border border-cyan-500/15 bg-cyan-500/5 px-2 py-1 text-[10px] font-mono text-cyan-200">{provider}</span>) : <span className="text-xs text-white/40">Keine Provider-Evidence.</span>}</div><div className="text-[10px] font-mono text-white/35 space-y-1"><div>Evidence IDs: {result.evidenceIds.length}</div><div>Feature: {result.featureVersion ?? '—'}</div><div>Scoring: {result.scoringVersion ?? '—'}</div></div></div>
             </div>
