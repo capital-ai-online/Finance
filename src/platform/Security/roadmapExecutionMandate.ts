@@ -14,6 +14,9 @@ export const SYSTEMADMIN_OWNER_ACTOR_ID = 'SvenKulessa';
 export const SYSTEMADMIN_AGENT_ID = 'capital-ai-systemadmin-roadmap-executor';
 export const SYSTEMADMIN_REPOSITORY = 'SvenKulessa/Finance';
 export const SYSTEMADMIN_BASE_BRANCH = 'main';
+/** M9 (ADR-0063) Break-Glass mandateId prefix — shared with breakGlass.ts so the revocation gate
+ * below and the issuer agree on the exact same namespace without duplicating the literal. */
+export const BREAK_GLASS_MANDATE_ID_PREFIX = 'REM-BREAK-GLASS-';
 
 export const ROADMAP_EXECUTION_MUTATION_CLASSES = {
   REPOSITORY: 'REPOSITORY',
@@ -255,6 +258,17 @@ export interface SystemadminRoadmapAuthorizationRequest {
    */
   envelopeId?: string;
   seenEnvelopeIds?: ReadonlySet<string>;
+  /**
+   * M9 (ADR-0063) Break-Glass explicit-revocation lever, as specified in the OWNER-ACCEPTED design
+   * (docs/evidence/m9/M9_BREAK_GLASS_DESIGN_PROPOSAL_2026-08-16.md §2.7): "ein dediziertes
+   * breakGlassRevoked-Flag, das denselben Denial-Pattern wie killSwitchActive folgt". Caller-supplied
+   * (not mandate-embedded, exactly like killSwitchActive) because a break-glass mandate's own
+   * killSwitch.enabled is fixed at construction and cannot be flipped after issuance without
+   * invalidating the mandate's structural self-validation. Only ever consulted for mandates whose
+   * mandateId carries the BREAK_GLASS_MANDATE_ID_PREFIX namespace - unset or false is a no-op for
+   * every other mandate. Optional and unset by default - existing callers are unaffected.
+   */
+  breakGlassRevoked?: boolean;
 }
 
 export interface SystemadminRoadmapAuthorizationDecision {
@@ -503,6 +517,15 @@ function evaluateMandateScope(
   if (!mandate.killSwitch.enabled) {
     return deny(
       'Mandat ohne aktivierbaren Kill-Switch ist nicht ausführbar.',
+      risk,
+      'REM_SCOPE',
+      capability,
+      mandateId,
+    );
+  }
+  if (request.breakGlassRevoked && mandateId.startsWith(BREAK_GLASS_MANDATE_ID_PREFIX)) {
+    return deny(
+      'Break-Glass-Mandat wurde vom Owner explizit widerrufen.',
       risk,
       'REM_SCOPE',
       capability,

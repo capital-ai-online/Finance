@@ -14,10 +14,13 @@ import {
 } from '../../src/platform/Security/breakGlass';
 import { AGENT_CAPABILITIES } from '../../src/platform/Security/agentIam';
 import {
+  RESERVED_MUTATION_CLASSES,
+  ROADMAP_EXECUTION_MUTATION_CLASSES,
   SYSTEMADMIN_AGENT_ID,
   SYSTEMADMIN_OWNER_ACTOR_ID,
   SYSTEMADMIN_REPOSITORY,
   validateRoadmapExecutionMandate,
+  type RoadmapExecutionMandate,
   type SystemadminRoadmapAuthorizationRequest,
 } from '../../src/platform/Security/roadmapExecutionMandate';
 import {
@@ -293,5 +296,63 @@ describe('Break-Glass mandate through the real live-wired SA3B chain (proves add
     expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({
       authorization_decision: 'ALLOW',
     }));
+  });
+
+  it('M9 drill: denies through the real chain once explicitly revoked via breakGlassRevoked, even though the mandate itself has not expired', async () => {
+    const activation = activateBreakGlass(validRequest({ capability: AGENT_CAPABILITIES.BRANCH }));
+    expect(activation.verdict).toBe('ALLOW');
+    if (activation.verdict !== 'ALLOW') return;
+
+    const unrevoked = requestFor(activation.mandate, AGENT_CAPABILITIES.BRANCH, '2026-08-16T12:05:00.000Z');
+    const beforeRevoke = await authorizeSystemadminAuditedExecution({
+      authorization: unrevoked,
+      checkpoint: baseCheckpoint,
+    }, auditContext);
+    expect(beforeRevoke.decision.verdict).toBe('ALLOW');
+
+    const revoked = requestFor(activation.mandate, AGENT_CAPABILITIES.BRANCH, '2026-08-16T12:05:00.000Z');
+    const afterRevoke = await authorizeSystemadminAuditedExecution({
+      authorization: { ...revoked, breakGlassRevoked: true },
+      checkpoint: baseCheckpoint,
+    }, auditContext);
+    expect(afterRevoke.decision.verdict).toBe('DENY');
+    expect(afterRevoke.executionPermit).toBeUndefined();
+  });
+
+  it('M9 drill: breakGlassRevoked is scoped to REM-BREAK-GLASS-* mandateIds only - it has no effect on an unrelated, non-break-glass mandate', async () => {
+    const ordinaryMandate: RoadmapExecutionMandate = {
+      mandateId: 'REM-SA1-PILOT-001',
+      status: 'OWNER_APPROVED',
+      ownerActorId: SYSTEMADMIN_OWNER_ACTOR_ID,
+      subjectAgentId: SYSTEMADMIN_AGENT_ID,
+      repository: SYSTEMADMIN_REPOSITORY,
+      baseBranch: 'main',
+      roadmapItems: ['M9-BREAK-GLASS-DRILL'],
+      authorityRefs: ['docs/adr/ADR-0065-systemadmin-roadmap-execution-mandate.md'],
+      allowedCapabilities: [AGENT_CAPABILITIES.BRANCH],
+      allowedPaths: ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md'],
+      allowedTargets: ['github:SvenKulessa/Finance'],
+      maxRiskClass: 'HIGH',
+      allowedMutationClasses: [ROADMAP_EXECUTION_MUTATION_CLASSES.REPOSITORY],
+      prohibitedMutationClasses: [...RESERVED_MUTATION_CLASSES],
+      validFrom: '2026-08-12T00:00:00.000Z',
+      expiresAt: '2099-01-01T00:00:00.000Z',
+      maxOpenPullRequests: 1,
+      ciBudgetPolicyRef: 'docs/governance/GITHUB_ACTIONS_BUDGET_POLICY.md',
+      killSwitch: { enabled: true, revocationAuthority: SYSTEMADMIN_OWNER_ACTOR_ID },
+      requiredPreflight: ['security', 'overlap', 'tests', 'rollback'],
+      requiredEvidence: ['mandateId', 'auditReference'],
+      approvalEvidenceRef: 'pr-review:REM-SA1-PILOT-001',
+    };
+
+    const result = await authorizeSystemadminAuditedExecution({
+      authorization: {
+        ...requestFor(ordinaryMandate, AGENT_CAPABILITIES.BRANCH, '2026-08-16T12:05:00.000Z'),
+        breakGlassRevoked: true,
+      },
+      checkpoint: baseCheckpoint,
+    }, auditContext);
+
+    expect(result.decision.verdict).toBe('ALLOW');
   });
 });

@@ -17,6 +17,7 @@
 import { randomBytes } from 'node:crypto';
 import { AGENT_CAPABILITIES, isKnownAgentCapability, type AgentCapability } from './agentIam';
 import {
+  BREAK_GLASS_MANDATE_ID_PREFIX,
   ROADMAP_EXECUTION_MUTATION_CLASSES,
   RESERVED_MUTATION_CLASSES,
   SYSTEMADMIN_AGENT_ID,
@@ -83,9 +84,11 @@ function deny(reason: string): BreakGlassActivationResult {
 function freshMandateId(issuedAtMs: number): string {
   // MANDATE_ID_PATTERN (roadmapExecutionMandate.ts) requires ^REM-[A-Z0-9][A-Z0-9._-]{3,63}$ -
   // reused unchanged rather than relaxed, so a break-glass mandate is indistinguishable in shape
-  // from any other REM the existing validator already accepts.
+  // from any other REM the existing validator already accepts. Prefix reused from
+  // roadmapExecutionMandate.ts so the issuer and the breakGlassRevoked revocation gate there always
+  // agree on the exact same namespace.
   const suffix = randomBytes(6).toString('hex').toUpperCase();
-  return `REM-BREAK-GLASS-${issuedAtMs}-${suffix}`;
+  return `${BREAK_GLASS_MANDATE_ID_PREFIX}${issuedAtMs}-${suffix}`;
 }
 
 /**
