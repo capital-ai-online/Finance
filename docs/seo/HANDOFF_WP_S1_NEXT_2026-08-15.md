@@ -55,7 +55,7 @@ Kein Shared-Zone-Lease nötig, wenn nur öffentliche SEO-Frontend-/SPA-Wiring-Pf
 1. ~~FK RESTRICT + Ledger~~ — erledigt
 2. Search Console Property verifizieren (WP-Q-CLOSE / Q3) — Owner-Aktion
 3. ~~ADR-Nummerierung~~ — **ADR-0082**, WP-S1 VERIFIED
-4. ADR-0068 + ESS-0022 Owner-Review (WP-M0) — ohne Runtime
+4. ADR-0080 + ESS-0024 Owner-Review (WP-M0) — ohne Runtime
 5. **WP-D1 / D2 / D3** — nächstes Code-WP
 6. WP-S2 erst nach formalem Prerender-ADR
 

@@ -15,24 +15,24 @@ This matrix is non-authorizing. It must be synchronized with canonical Traceabil
 
 | Requirement | Source authority | Proposed artifact | Implementation gate | Evidence / test |
 |---|---|---|---|---|
-| Provider is not trust root | ESS-0019 | ESS-0022 §3 | MA1 | subject/provider separation test |
-| Separate Marketing identity | ESS-0019, ADR-0058 | ESS-0022 / ADR-0068 | MA1 | wrong-agent DENY |
-| No inherited Systemadmin authority | ESS-0021, ADR-0065 | ADR-0068 | MA1 | Systemadmin REM cannot authorize Marketing subject |
+| Provider is not trust root | ESS-0019 | ESS-0024 §3 | MA1 | subject/provider separation test |
+| Separate Marketing identity | ESS-0019, ADR-0058 | ESS-0024 / ADR-0080 | MA1 | wrong-agent DENY |
+| No inherited Systemadmin authority | ESS-0021, ADR-0065 | ADR-0080 | MA1 | Systemadmin REM cannot authorize Marketing subject |
 | Exact capabilities | ESS-0019 | Execution Policy | MA1 | missing-capability DENY |
 | Exact path scope | ESS-0021 pattern | Execution Policy | MA1 | wrong-path DENY |
 | Expiring/revocable authority | ESS-0021 pattern | Marketing mandate model | MA1 | expired/revoked DENY |
-| Kill switch | ESS-0019/0021 | ESS-0022 / Execution Policy | MA1 | active kill switch DENY |
+| Kill switch | ESS-0019/0021 | ESS-0024 / Execution Policy | MA1 | active kill switch DENY |
 | Audit before side effect | ADR-0059 / SA3 | Execution Policy | MA5 | audit fail -> zero mutation |
-| Human-only merge | AGENTS / ADR-0039 | ESS-0022 / Execution Policy | all mutating phases | merge capability absent |
+| Human-only merge | AGENTS / ADR-0039 | ESS-0024 / Execution Policy | all mutating phases | merge capability absent |
 | Fresh branch / delete after merge | AGENTS / DevelopmentChain | Roadmap / Execution Policy | MA5+ | branch lifecycle evidence |
-| Generation separated from publishing | ADR-0026 / ADR-0068 | Content Engine Architecture | MA2+ | generator has no publish capability |
+| Generation separated from publishing | ADR-0026 / ADR-0080 | Content Engine Architecture | MA2+ | generator has no publish capability |
 | Existing publisher retained | ADR-0026 | Content Engine Architecture | MA2–MA6 | regression tests |
-| Source-grounded financial claims | AGENTS No-Fake-Data | ESS-0022 / Content Architecture | MA3 | unsupported claim DENY |
+| Source-grounded financial claims | AGENTS No-Fake-Data | ESS-0024 / Content Architecture | MA3 | unsupported claim DENY |
 | AI provenance | governance requirement | Content Architecture | MA3 | provenance completeness tests |
-| Human content approval | SEO Roadmap N4 | ESS-0022 / Content Architecture | MA3+ | hash mismatch DENY |
-| Renderer least privilege | ADR-0068 | Content Architecture | MA4 | no credential access |
+| Human content approval | SEO Roadmap N4 | ESS-0024 / Content Architecture | MA3+ | hash mismatch DENY |
+| Renderer least privilege | ADR-0080 | Content Architecture | MA4 | no credential access |
 | SSRF-safe media fetch | Security baseline | Content Architecture | MA4 | private/local URL DENY |
-| External publish separately controlled | ADR-0068 | Roadmap MA6 | MA6 | no publish without approval |
+| External publish separately controlled | ADR-0080 | Roadmap MA6 | MA6 | no publish without approval |
 | Analytics does not grant authority | ESS-0019 | Roadmap MA7 | MA7 | feedback cannot publish |
 
 ## 2. Roadmap gate dependencies
@@ -178,14 +178,14 @@ Full secrets, bearer tokens and raw sensitive prompts are excluded/redacted.
 
 MA0 package expected before implementation:
 
-- [x] `.ai/skills/ESS-0022-Marketing-Roadmap-Executor.md` draft
-- [x] `docs/adr/ADR-0068-marketing-roadmap-executor-and-content-automation-boundary.md` draft
+- [x] `.ai/skills/ESS-0024-Marketing-Roadmap-Executor.md` draft
+- [x] `docs/adr/ADR-0080-marketing-roadmap-executor-and-content-automation-boundary.md` draft
 - [x] `docs/roadmaps/MARKETING_AGENT_ROADMAP.md` draft
 - [x] `docs/governance/MARKETING_AGENT_ROADMAP_EXECUTION_POLICY.md` draft
 - [x] `docs/architecture/AUTONOMOUS_CONTENT_ENGINE_ARCHITECTURE.md` draft
 - [x] this traceability/gate matrix
 - [x] inactive machine-readable Marketing execution profile
-- [ ] canonical ESS Registry update after Human review
+- [x] canonical ESS Registry update (ESS-0024 registriert unter ADR-0085, 2026-08-16)
 - [ ] canonical ADR/traceability index update after Human review
 - [ ] `docs/architecture/ROADMAP.md` integration after Human review
 - [ ] M0–M10 traceability integration where required
@@ -194,5 +194,7 @@ MA0 package expected before implementation:
 ## 8. Current authorization state
 
 `READ / ANALYZE / PLAN` conceptual profile only.
+
+ESS-0024 and ADR-0080 are **ACCEPTED** (Owner, 2026-08-16, WP-M0). Acceptance establishes the boundary and grants no capability; the authorization state above is unchanged.
 
 No document in this package authorizes runtime repository mutation, CI requests, deployment, production mutation, Social publishing or merge.

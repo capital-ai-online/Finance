@@ -1,7 +1,7 @@
 # CAPITAL-AI Konsolidierte Gesamtroadmap
 
 Status: ACTIVE — CANONICAL EXECUTION PORTFOLIO  
-Stand: 2026-08-15  
+Stand: 2026-08-16  
 Repository-Baseline: `main@0c07e1a43fde4dc0419f5f60ac74230608927393`  
 Owner: SvenKulessa  
 Authority: ADR-0071 + ESS-0023 + ROADMAP-INTEGRATED-DC-SA-0001
@@ -13,6 +13,8 @@ Dieses Dokument ersetzt den bisherigen reinen Portfolio-Index durch eine vollst�
 Es ersetzt keine restriktivere ADR-, ESS-, IAM-, REM-, Runbook-, Evidence- oder Human/Owner-Authority. Ein Status `DOCUMENTATION READY` oder `PROTOTYPE READY` erzeugt keine Mutationsberechtigung.
 
 **Domain-Update 2026-08-15:** SEO Management und Marketing Agent sind in **SEO-GM-ROADMAP-0002** (`docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md`) zu einem Single Point of Trust konsolidiert. Die früheren Dateien `docs/seo/SEO_MANAGEMENT_ROADMAP.md` und `docs/roadmaps/MARKETING_AGENT_ROADMAP.md` sind SUPERSEDED.
+
+**Portfolio-Sync SEO-GM 2026-08-16:** Die Portfolio-Zeile `SEO-GM` in §3 war auf dem Stand SEO-GM-ROADMAP-0002 v0002.1 stehengeblieben und nannte bereits erledigte Arbeitspakete als nächste Schritte. Sie ist auf **v0002.11** nachgezogen (WP-S1, Q3, WP-D1/D2/D3 und WP-S2 VERIFIED; WP-M0 durch Owner-ACCEPT erfuellt). Diese Synchronisation ist rein statusabbildend; Programmautorität und Statusfortschreibung liegen unverändert allein bei SEO-GM-ROADMAP-0002.
 
 **Integration 2026-08-15:** Die DEVELOPMENT Chain und der Systemadmin-Agent sind in der kanonischen Ausführungsroadmap **ROADMAP-INTEGRATED-DC-SA-0001** (`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md`) verbunden. Diese Integrated Roadmap ist die verbindende Ausführungsautorität für DC + SA Phasen (I0–I4).
 
@@ -39,7 +41,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 | DOC | Documentary/Event Value Chain | `docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` | ACTIVE / PARTIAL | D0 read-only Baseline |
 | SA | Systemadministrator-Agent | `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md` | SA0–SA4 VERIFIED PASS; SA5 blockiert | dokumentenbasierte Prototypen nach ESS-0023 |
 | IAM-DIAG | Diagnostics IAM | `docs/roadmaps/AI_SYSTEM_ADMIN_DIAGNOSTICS_IAM_ROADMAP.md` | teilweise überholt, nicht vollständig evidenzgebunden | retained/superseded/migrated-Matrix |
-| **SEO-GM** | **SEO + Google Marketing + Content Distribution** | **`docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` (SEO-GM-ROADMAP-0002)** | **ACTIVE — CANONICAL**; Q weitgehend DONE; S3 DONE; S1 IN PROGRESS; MA/Content DRAFT | WP-Q-CLOSE (Owner GSC), WP-M0 (ADR-0068/ESS-0022 Review), WP-D1–D3, S1 Persistenz |
+| **SEO-GM** | **SEO + Google Marketing + Content Distribution** | **`docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` (SEO-GM-ROADMAP-0002, v0002.11)** | **ACTIVE — CANONICAL** (Stand 2026-08-16); Q1/Q4/Q5 DONE, **Q3 VERIFIED**, Q2 PARTIAL; **D1/D2/D3 VERIFIED** (PR #375, PR #360); **S1 VERIFIED** (ADR-0082); **S2 VERIFIED** (ADR-0084 Prerender); S3 DONE; S4 IN PROGRESS; **WP-M0 ERFÜLLT** (Owner-ACCEPT 2026-08-16: ESS-0024 + ADR-0080 accepted, **ohne** Runtime-Capability); D4/D5 offen; ADR-0035 Strict-CSP-DoD offen | **WP-N1** (`POST /api/social-media/generate`, Text-Packages ohne Publish) als naechstes Marketing-Paket; Q2-Restabschluss und WP-D4 als Code-Arbeit; WP-D5 optional (Credentials Owner-separat). Runtime-Enablement des Marketing-Agenten bleibt gesperrt: Execution Policy §18 unerfuellt. |
 | MA | Marketing Agent (historisch) | `docs/roadmaps/MARKETING_AGENT_ROADMAP.md` | **SUPERSEDED** → SEO-GM | keine parallele Fortschreibung |
 | SEO | SEO Management (historisch) | `docs/seo/SEO_MANAGEMENT_ROADMAP.md` | **SUPERSEDED** → SEO-GM | keine parallele Fortschreibung |
 | GOV | GitHub/CI/Branch Governance | DEVELOPMENT Policy + PR-Template | laufend | Kosten-, Gate- und Branch-Cleanup-Evidence pflegen |

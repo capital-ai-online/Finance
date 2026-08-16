@@ -10,7 +10,9 @@
 Stand: 2026-08-16  
 Baseline: `main` (ADR-0082; WP-S1 VERIFIED; WP-D3 Soft-404 VERIFIED PR #360; **Q3 Search Console Domain property VERIFIED**; **WP-D1/D2 VERIFIED** PR #375 + Owner Rich Results Test; **WP-S2 Prerender VERIFIED** ADR-0084)  
 Owner: SvenKulessa  
-Authority-Bindung: ADR-0035, ADR-0042, ADR-0068 (PROPOSED), ADR-0082 (SeoEngine), ADR-0084 (Prerender), ESS-0014, ESS-0022 (PROPOSED), ADR-0071, ESS-0023
+Authority-Bindung: ADR-0035, ADR-0042, ADR-0080 (ACCEPTED), ADR-0082 (SeoEngine), ADR-0084 (Prerender), ADR-0085 (ESS-Nummernraum), ESS-0014, ESS-0024 (ACCEPTED), ADR-0071, ESS-0023
+
+> **Nummernkorrekturen 2026-08-16.** Die Marketing-Boundary-Entscheidung wurde bis v0002.7 als *ADR-0068* zitiert; unter **ADR-0081** wurde sie auf **ADR-0080** umgenummert. Die Nummer 0068 gehört seither ausschließlich zu `ADR-0068-first-bounded-autonomous-work-package.md`, einer **Systemadmin**-Entscheidung unter ESS-0021. Die zugehörige Spezifikation wurde unter **ADR-0085** von *ESS-0022* auf **ESS-0024** umgenummert; ESS-0022 bleibt die Passkey/M10-Spezifikation. Mappings: `docs/governance/ADR_CROSSREF_INVENTORY_2026-08-16.md`, `.ai/registry/ess-registry.json`.
 
 ## Zweck
 
@@ -68,7 +70,7 @@ Die folgenden Dokumente gelten ab Merge dieses Standes als **SUPERSEDED** für P
 5. Fachliche Block-Notes und Runbooks unter `docs/seo/`, `docs/runbooks/`
 6. Historische / als SUPERSEDED markierte Roadmaps
 
-Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Agent-Identität (Marketing vs. Systemadmin) erzeugt keine Authority-Überschneidung (ADR-0068 / ESS-0022).
+Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Agent-Identität (Marketing vs. Systemadmin) erzeugt keine Authority-Überschneidung (ADR-0080 / ESS-0024).
 
 ---
 
@@ -132,7 +134,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Agen
 | YouTube/TikTok/Instagram | blockiert bis Media-Asset (`mediaRequiredError`) |
 | `generateSeries` / Content-API | **fehlt** (explizit in Code dokumentiert) |
 | Marketing Agent MA0–MA7 | **DRAFT**, keine Runtime-Capability |
-| ADR-0068 / ESS-0022 | PROPOSED / DRAFT |
+| ADR-0080 / ESS-0024 | **ACCEPTED** (Owner 2026-08-16); Execution Policy bleibt DRAFT / NOT ACTIVE |
 
 ---
 
@@ -164,7 +166,7 @@ Präfixe bleiben kompatibel zur etablierten Q/D/S/N/H/J-Konvention; Marketing-Ph
 
 | ID | Inhalt | Abhängigkeit | DoD |
 |----|--------|--------------|-----|
-| WP-M0 | Governance-Paket: ESS-0022, ADR-0068, Policy, Traceability, inaktives Profil | Human Review | Dokumente accepted; **keine** Runtime-Capability |
+| WP-M0 | Governance-Paket: ESS-0024, ADR-0080, Policy, Traceability, inaktives Profil | Human Review | **ERFÜLLT** — Owner-ACCEPT 2026-08-16; Dokumente accepted, **keine** Runtime-Capability |
 | WP-N1 | `POST /api/social-media/generate` + Prompt-Orchestrierung | M0, bestehende Types | Text-Packages ohne Publish |
 | WP-N2 | Skript-Vorlagen (Tweet, Community, Podcast, Short-Video) | N1 | Template-Registry + Tests |
 | WP-N3 | Media-Rendering (TTS/Video) als **ersetzbare Sidecar-Adapter** | N1, Make-or-Buy Owner | YouTube/TikTok/IG freigeschaltet nur mit validiertem Asset-Hash |
@@ -270,7 +272,7 @@ Programm gilt als abgeschlossen, wenn:
 1. ~~**Owner:** FK RESTRICT Apply (`20260815220000`) + Ledger-Abgleich~~ — angewendet 2026-08-15.
 2. ~~**Owner:** Search Console Property verifizieren (WP-Q-CLOSE / Q3)~~ — **VERIFIED** 2026-08-16 (Domain `capital-ai.online`, Ownership bestätigt, Sitemap Success).
 3. ~~ADR-Draft SeoEngine nummerieren~~ — **ADR-0082** Accepted (Kollisionscheck nach PR #345: 0075–0081 belegt).
-4. ADR-0068 + ESS-0022 Owner-Review (WP-M0) — ohne Runtime-Enablement.
+4. ~~ADR-0080 + ESS-0024 Owner-Review (WP-M0)~~ — **ERFÜLLT** (Owner-ACCEPT 2026-08-16). Review-Paket: `docs/governance/WP_M0_OWNER_REVIEW_PACKAGE.md`; drei Befunde vorher behoben (B1/B2 unter ADR-0085, B3 durch Ausarbeitung von ADR-0080). Kein Runtime-Enablement: Execution Policy §18 bleibt unerfüllt, Profil bleibt `READ/ANALYZE/PLAN`. Nächstes Marketing-Paket: **WP-N1**.
 5. ~~WP-D3 Soft-404~~ — **VERIFIED** (PR #360; prod curl 2026-08-16).
 6. ~~**WP-D1 / D2**~~ — **VERIFIED** (PR #375 merged; prod unique titles; Owner Rich Results Test success for Legal-Unterseiten 2026-08-16).
 7. ~~**WP-S2** formal Prerender-ADR~~ — **VERIFIED** (**ADR-0084** Accepted 2026-08-16; code already live).
@@ -293,3 +295,7 @@ Vollständiger Übergabekontext: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`. Ca
 | 0002.5 | 2026-08-16 | **WP-D1 / D2 CODE READY** — JSON-LD ImageObject + offers; routeSeo client popstate + unit test; §4/§5.1/§10 + Checklist/Claim |
 | 0002.6 | 2026-08-16 | **WP-D1 / D2 VERIFIED** — PR #375; Owner Rich Results Test success (3 Legal-Unterseiten); Claim + Checklist + §4/§5.1/§10 |
 | 0002.7 | 2026-08-16 | **WP-S2 VERIFIED** — ADR-0084 Accepted (Prerender public routes); draft superseded; Checklist + §4/§5.2/§10 |
+| 0002.8 | 2026-08-16 | **WP-M0 Review-Paket** `docs/governance/WP_M0_OWNER_REVIEW_PACKAGE.md` erstellt; drei blockierende Befunde erhoben. Zugleich **Nummernkorrektur ADR-0068 → ADR-0080** (Marketing-Boundary) nach ADR-0081 in 21 Fundstellen ueber neun Dateien. Keine Statusaenderung. |
+| 0002.9 | 2026-08-16 | **ESS-Nummernraum bereinigt (ADR-0085)** — Marketing-Spezifikation von ESS-0022 auf **ESS-0024** umgenummert (ESS-0022 bleibt Passkey/M10); Registry um ESS-0019 bis ESS-0024 ergaenzt, `freeNumberSpaceStartsAt` = ESS-0025. WP-M0-Befunde B1 und B2 geschlossen. |
+| 0002.10 | 2026-08-16 | **ADR-0080 auf Repository-Standard ausgearbeitet** — Context, fuenf verworfene Alternativen, Consequences, sechs Security-Invarianten, pruefbare DoD, `Implementation-Status`. Entscheidung inhaltlich unveraendert. WP-M0-Befund B3 geschlossen. |
+| 0002.11 | 2026-08-16 | **WP-M0 ERFÜLLT — Owner-ACCEPT** fuer ESS-0024 und ADR-0080 (Antwort im Claim `WP-M0-MARKETING-GOVERNANCE-OWNER-ACCEPT-2026-08-16` woertlich protokolliert). Status PROPOSED → ACCEPTED, Registry-Eintrag ESS-0024 → published. **Keine Runtime-Capability**; Execution Policy bleibt DRAFT / NOT ACTIVE. |
