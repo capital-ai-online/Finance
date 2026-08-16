@@ -798,4 +798,76 @@ describe('SA3 Systemadmin audited execution', () => {
     // Direct tool/connector bypass: already proven live end-to-end above via the M8 Provider
     // Profile Registry composition tests (defense-in-depth layer independent of REM/IAM).
   });
+
+  // M9 (ADR-0063, docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md "Assurance Domain 4: Secret /
+  // Data Exfiltration") Owner-authorized live drill (2026-08-16, AskUserQuestion
+  // "Secret/Exfiltration-Drill (empfohlen)"). Plants every runbook-named secret/PII category into
+  // context.metadata of a REAL authorizeSystemadminAuditedExecution() call and inspects the actual
+  // captured Supabase insert payload - not a synthetic call to the redaction function in isolation.
+  // Along the way this drill found and closed two real gaps (see server/agentAudit/
+  // agentAuditWriter.ts and src/platform/Telemetry/redaction.ts, both 2026-08-16): the PII/
+  // prohibited-payload key regexes anchor on `[_-]`/string-boundary, so a prefixed camelCase key
+  // like `customerEmail`/`fullRequestBody` slipped past unredacted while the snake_case equivalent
+  // did not; and TOTP/recovery/backup-code-named secrets were not covered by SECRET_KEY_PATTERN at
+  // all. Both fixes are additive normalization/pattern widenings, proven not to weaken any existing
+  // match by the full suite staying green.
+  describe('M9 Secret/Exfiltration Live-Drill (I2 Assurance, 2026-08-16)', () => {
+    const plantedSecrets: Record<string, string> = {
+      // sk_live_... (literal ellipsis, matches redactString's /sk_(?:live|test)_/i content
+      // pattern without a realistic-looking secret body) - same placeholder convention already
+      // used elsewhere in this repo (server/stripe.ts, docs/archive/legacy/
+      // PRODUCTION_DEPLOYMENT_GUIDE.md) specifically to avoid tripping GitGuardian/Snyk secret
+      // scanners on a synthetic test fixture.
+      apiKey: 'sk_live_...',
+      authorizationHeader: 'Bearer abc.def.ghi',
+      password: 'CorrectHorseBatteryStaple123!',
+      serviceRoleKey: 'sb_service_role_abcdefghijklmnopqrstuvwx',
+      totpSecret: 'JBSWY3DPEHPK3PXP',
+      recoveryCode: 'ABCD-1234-EFGH-5678',
+      privateKey: '-----BEGIN PRIVATE KEY-----MIIEvQIBADANBg-----END PRIVATE KEY-----',
+      customerEmail: 'jane.doe@example.com',
+      creditCard: '4242424242424242',
+      fullRequestBody: '{"secret":"must not persist raw"}',
+    };
+
+    it('redacts or omits every planted secret/PII category in the real captured audit insert payload', async () => {
+      const result = await authorizeSystemadminAuditedExecution({
+        authorization: authorization(),
+        checkpoint: baseCheckpoint,
+      }, { ...auditContext, metadata: { ...auditContext.metadata, ...plantedSecrets } });
+
+      expect(result.decision.verdict).toBe('ALLOW');
+      const insertedRow = mocks.insert.mock.calls.at(-1)?.[0] as { attributes: Record<string, unknown> };
+      const attributes = insertedRow.attributes;
+
+      for (const key of Object.keys(plantedSecrets)) {
+        expect([attributes[key]]).not.toEqual([plantedSecrets[key]]);
+        expect(['[REDACTED]', '[OMITTED]']).toContain(attributes[key]);
+      }
+    });
+
+    it('never persists any planted raw secret value anywhere in the real captured audit insert payload (no reusable secret persists)', async () => {
+      await authorizeSystemadminAuditedExecution({
+        authorization: authorization(),
+        checkpoint: baseCheckpoint,
+      }, { ...auditContext, metadata: { ...auditContext.metadata, ...plantedSecrets } });
+
+      const insertedRow = mocks.insert.mock.calls.at(-1)?.[0];
+      const serialized = JSON.stringify(insertedRow);
+
+      for (const rawSecretValue of Object.values(plantedSecrets)) {
+        expect(serialized).not.toContain(rawSecretValue);
+      }
+    });
+
+    it('leaves genuinely safe metadata untouched (redaction is not overbroad)', async () => {
+      await authorizeSystemadminAuditedExecution({
+        authorization: authorization(),
+        checkpoint: baseCheckpoint,
+      }, { ...auditContext, metadata: { ...auditContext.metadata, ...plantedSecrets, purposeNote: 'routine SA3B drill run' } });
+
+      const insertedRow = mocks.insert.mock.calls.at(-1)?.[0] as { attributes: Record<string, unknown> };
+      expect(insertedRow.attributes.purposeNote).toBe('routine SA3B drill run');
+    });
+  });
 });
