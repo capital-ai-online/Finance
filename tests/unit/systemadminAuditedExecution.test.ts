@@ -392,5 +392,133 @@ describe('SA3 Systemadmin audited execution', () => {
         expect(result.executionPermit).toMatchObject({ capability: AGENT_CAPABILITIES.READ, auditBoundExecutionPermitted: true });
       });
     });
+
+    // M9 (ADR-0063, docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md "Assurance Domain 6: Kill
+    // Switch") Owner-authorized live drill (2026-08-16, AskUserQuestion "Kill-Switch-Live-Drill
+    // (empfohlen)"). Extends the M8 rollback-to-read-only proof above into an adversarial M9 drill
+    // against the SAME real, live-wired SA3B chain: every real mutating capability is attempted
+    // while the switch is active (not just BRANCH), non-mutating capabilities are proven to stay
+    // available, a same-request control case proves the DENY is caused specifically by the switch
+    // (not by an unrelated checkpoint condition), and a same-session before/after pair proves the
+    // switch has no sticky/cached state - each request is evaluated fresh.
+    describe('M9 Kill-Switch Live-Drill (I2 Assurance, 2026-08-16)', () => {
+      // Each mutating capability has its own SA2 sequence preconditions (fresh branch, open PR,
+      // ...). The checkpoint below is deliberately tailored per capability so that ONLY the kill
+      // switch is the variable under test - if an unrelated checkpoint gap denied first instead,
+      // this drill would not actually be testing the kill switch at all.
+      const mutatingCapabilityCases = [
+        {
+          capability: AGENT_CAPABILITIES.BRANCH,
+          checkpoint: { ...baseCheckpoint, freshBranchCreated: false, branchName: undefined },
+        },
+        {
+          capability: AGENT_CAPABILITIES.COMMIT,
+          checkpoint: baseCheckpoint,
+        },
+        {
+          capability: AGENT_CAPABILITIES.PR,
+          checkpoint: baseCheckpoint,
+        },
+        {
+          capability: AGENT_CAPABILITIES.CI_REQUEST,
+          checkpoint: { ...baseCheckpoint, pullRequestOpen: true, pullRequestNumber: 218 },
+        },
+      ] as const;
+
+      it.each(mutatingCapabilityCases)(
+        'denies real mutating capability $capability through the live chain while active, and audits the DENY',
+        async ({ capability, checkpoint }) => {
+          const request: SystemadminRoadmapAuthorizationRequest = {
+            ...authorization(capability, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']),
+            riskClass: 'MEDIUM',
+            killSwitchActive: true,
+          };
+          const result = await authorizeSystemadminAuditedExecution({
+            authorization: request,
+            checkpoint,
+          }, auditContext);
+
+          expect(result.decision.verdict).toBe('DENY');
+          expect(result.decision.reason).toMatch(/Kill-Switch/i);
+          expect(result.executionPermit).toBeUndefined();
+          expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({
+            authorization_decision: 'DENY',
+            result: 'DENIED',
+          }));
+        },
+      );
+
+      const nonMutatingCapabilities = [
+        AGENT_CAPABILITIES.READ,
+        AGENT_CAPABILITIES.ANALYZE,
+        AGENT_CAPABILITIES.PLAN,
+      ] as const;
+
+      it.each(nonMutatingCapabilities)(
+        'keeps non-mutating capability %s allowed and audited through the same active kill switch',
+        async (capability) => {
+          const request: SystemadminRoadmapAuthorizationRequest = {
+            ...authorization(capability, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']),
+            riskClass: 'LOW',
+            killSwitchActive: true,
+          };
+          const result = await authorizeSystemadminAuditedExecution({
+            authorization: request,
+            checkpoint: baseCheckpoint,
+          }, auditContext);
+
+          expect(result.decision).toMatchObject({ verdict: 'ALLOW', capability });
+          expect(result.executionPermit).toMatchObject({ capability, auditBoundExecutionPermitted: true });
+          expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({
+            authorization_decision: 'ALLOW',
+          }));
+        },
+      );
+
+      it('proves the DENY is caused specifically by the switch: the identical BRANCH request without it is ALLOW', async () => {
+        const baseline: SystemadminRoadmapAuthorizationRequest = {
+          ...authorization(AGENT_CAPABILITIES.BRANCH, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']),
+          riskClass: 'MEDIUM',
+        };
+        const armed: SystemadminRoadmapAuthorizationRequest = { ...baseline, killSwitchActive: true };
+        const branchCheckpoint = { ...baseCheckpoint, freshBranchCreated: false, branchName: undefined };
+
+        const before = await authorizeSystemadminAuditedExecution({
+          authorization: baseline,
+          checkpoint: branchCheckpoint,
+        }, auditContext);
+        expect(before.decision.verdict).toBe('ALLOW');
+
+        const during = await authorizeSystemadminAuditedExecution({
+          authorization: armed,
+          checkpoint: branchCheckpoint,
+        }, auditContext);
+        expect(during.decision.verdict).toBe('DENY');
+      });
+
+      it('has no sticky/cached denial state: deactivating within the same session immediately restores ALLOW on the very next request', async () => {
+        const branchCheckpoint = { ...baseCheckpoint, freshBranchCreated: false, branchName: undefined };
+        const armed: SystemadminRoadmapAuthorizationRequest = {
+          ...authorization(AGENT_CAPABILITIES.BRANCH, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']),
+          riskClass: 'MEDIUM',
+          killSwitchActive: true,
+        };
+        const denied = await authorizeSystemadminAuditedExecution({
+          authorization: armed,
+          checkpoint: branchCheckpoint,
+        }, auditContext);
+        expect(denied.decision.verdict).toBe('DENY');
+
+        const disarmed: SystemadminRoadmapAuthorizationRequest = { ...armed, killSwitchActive: false };
+        const allowed = await authorizeSystemadminAuditedExecution({
+          authorization: disarmed,
+          checkpoint: branchCheckpoint,
+        }, auditContext);
+        expect(allowed.decision.verdict).toBe('ALLOW');
+        // No mandate, checkpoint, code or config field changed between the two calls other than
+        // the per-request boolean - activation/deactivation needs no policy weakening (M9 Kill
+        // Switch expectation: "no policy weakening needed to activate/deactivate").
+      });
+    });
   });
 });
