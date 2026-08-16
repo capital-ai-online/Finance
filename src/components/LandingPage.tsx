@@ -197,12 +197,36 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
         </svg>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="relative z-10 w-full max-w-md mx-auto p-[2px] rounded-2xl overflow-hidden animate-brand-border-pulse"
-      >
+      <div className="relative z-10 w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+
+        {/* Erklärt, wozu CAPITAL-AI dient - erscheint hier immer mit, da diese Login-Ansicht bewusst über
+            den "Login (Anmelden)"-Link im Dashboard-Menü aufgerufen wird (siehe Dashboard.tsx activeView
+            === 'login'). Die eigentliche öffentliche Startseite ist das Gast-Dashboard, dessen analoger
+            Erklärblock in Dashboard.tsx liegt. */}
+        <div className="w-full max-w-xl mx-auto lg:mx-0 space-y-5 order-2 lg:order-1">
+          <div className="inline-flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-widest text-aif-neon-cyan">
+            <span className="w-1.5 h-1.5 rounded-full bg-aif-neon-cyan animate-pulse shadow-[0_0_8px_rgba(13,221,221,0.6)]" />
+            <span>Finanzanalyse-Plattform</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black font-display text-white leading-tight text-balance">
+            Multi-Asset-Analyse mit erklärbaren KI-Scorings
+          </h1>
+          <p className="text-sm text-white/60 leading-relaxed">
+            CAPITAL-AI screent Aktien, Indizes, Forex, Krypto und Rohstoffe, berechnet quantitative Scorings und liefert nachvollziehbare, geprüfte Analysen. Mit einem Konto speichern Sie Watchlists, erhalten den Realtime-Newsfeed und schalten Backtesting frei.
+          </p>
+          <ul className="space-y-2">
+            <li className="flex items-start gap-2 text-xs text-white/55"><span className="mt-1.5 w-1 h-1 rounded-full bg-aif-gold-DEFAULT shrink-0" /><span>Fundamentale Bewertung (Graham, DCF)</span></li>
+            <li className="flex items-start gap-2 text-xs text-white/55"><span className="mt-1.5 w-1 h-1 rounded-full bg-aif-gold-DEFAULT shrink-0" /><span>Backtesting &amp; Stressszenarien</span></li>
+            <li className="flex items-start gap-2 text-xs text-white/55"><span className="mt-1.5 w-1 h-1 rounded-full bg-aif-gold-DEFAULT shrink-0" /><span>PDF-/CSV-Exporte für Compliance</span></li>
+          </ul>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="relative w-full max-w-md mx-auto p-[2px] rounded-2xl overflow-hidden animate-brand-border-pulse order-1 lg:order-2"
+        >
         <div className="absolute inset-[-400%] bg-[conic-gradient(from_0deg,#F5C453_0deg,#0DDDDD_120deg,#B026FF_240deg,#F5C453_360deg)] animate-brand-border-rotate" />
         <div className="relative z-10 w-full rounded-[14px] bg-[#06070B]/95 backdrop-blur-2xl p-6 sm:p-8">
           <div className="text-center mb-6">
@@ -257,7 +281,8 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
 
           <div className="mt-6 pt-5 border-t border-white/10 text-center text-xs text-white/50 flex flex-col items-center gap-1.5"><ShieldAlert className="w-3.5 h-3.5 text-aif-gold-DEFAULT animate-pulse" /><p className="font-mono text-[9px] tracking-wider text-white/60">Strict No Demo Data Policy</p><p className="text-[8px] text-white/40">EU GDPR Compliant • MiFID II Ready</p></div>
         </div>
-      </motion.div>
+        </motion.div>
+      </div>
 
       <footer className="relative z-10 mt-8 mb-4 w-full max-w-md text-center space-y-4"><div className="flex items-center justify-center gap-4 text-[11px] font-mono"><a href="https://capital-ai.online/impressum" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-aif-gold-DEFAULT transition-colors hover:underline tracking-wider uppercase font-bold">Impressum</a><span className="text-white/20">•</span><a href="https://capital-ai.online/agb/" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-aif-gold-DEFAULT transition-colors hover:underline tracking-wider uppercase font-bold">AGB</a><span className="text-white/20">•</span><a href="https://capital-ai.online/datenschutz/" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-aif-gold-DEFAULT transition-colors hover:underline tracking-wider uppercase font-bold">Datenschutz</a></div><SecurityRadarBadge /></footer>
 
