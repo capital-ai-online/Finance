@@ -1,4 +1,4 @@
-import type { Express, Request, Response, NextFunction, RequestHandler } from 'express';
+import express, { type Express, type Request, type Response, type NextFunction, type RequestHandler } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { isPublicSpaPath, stripTrailingSlashPath } from '../middleware/seoUrlNormalize';
@@ -74,9 +74,6 @@ export function installProductionSoft404Intercept(): void {
   if (soft404InterceptInstalled) return;
   soft404InterceptInstalled = true;
 
-  // Lazy require so unit tests without a full Express app still load this module.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const express = require('express') as typeof import('express');
   const proto = express.application as Express & {
     get: (path: string, ...handlers: RequestHandler[]) => Express;
   };
