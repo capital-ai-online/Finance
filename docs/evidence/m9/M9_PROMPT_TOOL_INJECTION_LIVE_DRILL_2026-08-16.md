@@ -129,10 +129,29 @@ erforderlich.
   Dieser Punkt sollte vor einer M9-`COMPLETE`-Bewertung explizit vom Owner adressiert werden.
 - M9 bleibt insgesamt `PLANNED — EXECUTION BLOCKED BY M8` im Runbook-Kopf.
 
+## 8. Nachtrag — Fund aus §1 aufgelöst (2026-08-16)
+
+Owner-Wahl „Untrusted-Content-Detector-Arbeitspaket (empfohlen)" via `AskUserQuestion` führte zu
+`docs/evidence/m9/M9_UNTRUSTED_CONTENT_DETECTOR_WORK_PACKAGE_2026-08-16.md`. Diese Sitzung selbst
+bleibt hier unverändert als historischer Nachweis stehen (Dokumentationshygiene-Regel dieser
+Sitzung: bereits veröffentlichte Evidence wird nicht rückwirkend umgeschrieben, nur ergänzt).
+
+**Kurzfassung des Ergebnisses:** der in §1 dokumentierte Fund wurde **nicht** durch den Bau eines
+spekulativen Detektors geschlossen, sondern durch eine architekturelle Untersuchung, die zeigte,
+dass aktuell kein einziger Codepfad Freitext in etwas Autorisierungsrelevantes überführt — die drei
+realen Issue-Validatoren (`validateSa4PilotIssue.mjs`, `validateWorkPackageIssue.mjs`,
+`validateExecutionIssue.mjs`) akzeptieren ausschließlich ein geschlossenes Schema mit exakten/
+regex-validierten Feldern, vorher **ungetestet**. Das Arbeitspaket liefert 38 neue Tests für genau
+diese Grenze plus eine dokumentierte Trigger-Bedingung für einen künftigen echten Detektor, falls
+ein neuer Katalogeintrag jemals Freitext konsumiert. §7 dieses Dokuments („teilweise erfüllt") gilt
+damit als durch das Nachtrag-Dokument aufgelöst — siehe dessen §6 für die aktualisierte
+Exit-Gate-Bewertung.
+
 ## Related Documents
 
 - `docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md`
 - `docs/evidence/m9/M9_I2_ENTRY_INVENTORY_AND_GAP_ANALYSIS_2026-08-16.md`
+- `docs/evidence/m9/M9_UNTRUSTED_CONTENT_DETECTOR_WORK_PACKAGE_2026-08-16.md`
 - `tests/unit/systemadminAuditedExecution.test.ts`
 - `tests/unit/systemadminExecutionProfile.test.ts`
 - `src/platform/Security/systemadminExecutionProfile.ts`
