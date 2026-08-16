@@ -1,0 +1,75 @@
+name: Agenten-PR-Branches synchronisieren
+run-name: Offene Agenten-PR-Branches auf aktuellen main-Stand bringen
+
+# Root cause of the recurring "PR-Vorlagenvertrag" / productionPreflight.mjs failures:
+# scripts/pr/productionPreflight.mjs requires every PR head to contain the current main
+# commit (deployment-guard / traceability invariant, see ADR-0036). That invariant is
+# intentionally strict and must not be weakened (CLAUDE.md protected-change rule). But
+# this repository merges into main very frequently, so any agent-authored PR branch that
+# stays open for a while goes stale between creation and merge, and the check keeps
+# failing until someone manually rebases.
+#
+# This workflow removes the manual step: whenever main advances, it asks GitHub to merge
+# the latest main into every open PR whose head branch uses an agent prefix (matching the
+# prefixes already allowed by open-agent-draft-pr.yml). The ancestry check itself is left
+# completely untouched; branches simply stop going stale.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-agent-pr-branches
+  cancel-in-progress: true
+
+jobs:
+  sync-branches:
+    name: Offene Agenten-PRs auf main aktualisieren
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Offene Agenten-PR-Branches per Update-Branch-API synchronisieren
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          prs="$(gh pr list --repo "$REPO" --state open --json number,headRefName,isCrossRepository --limit 200)"
+          count="$(echo "$prs" | jq 'length')"
+          echo "Offene PRs insgesamt: $count"
+
+          echo "$prs" | jq -c '.[]' | while read -r pr; do
+            number="$(echo "$pr" | jq -r '.number')"
+            head="$(echo "$pr" | jq -r '.headRefName')"
+            cross="$(echo "$pr" | jq -r '.isCrossRepository')"
+
+            case "$head" in
+              agent/*|claude/*|gemini/*|copilot/*|ai/*) ;;
+              *)
+                echo "PR #$number ($head): kein Agenten-Branch-Praefix, uebersprungen."
+                continue
+                ;;
+            esac
+
+            if [ "$cross" = "true" ]; then
+              echo "PR #$number ($head): Fork-PR, kein Auto-Sync moeglich."
+              continue
+            fi
+
+            echo "PR #$number ($head): Sync mit main anstossen..."
+            if gh api --method PUT "repos/$REPO/pulls/$number/update-branch" >/dev/null 2>err.log; then
+              echo "PR #$number ($head): Update-Branch angestossen."
+            elif grep -q '"status": *"422"' err.log 2>/dev/null || grep -qi '422' err.log 2>/dev/null; then
+              echo "PR #$number ($head): bereits aktuell oder Update laeuft schon (422), uebersprungen."
+            else
+              echo "PR #$number ($head): Sync fehlgeschlagen:"
+              cat err.log
+            fi
+            rm -f err.log
+          done
