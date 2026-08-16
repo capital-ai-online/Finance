@@ -2,9 +2,9 @@
 
 ## Enterprise Component
 
-Status: Implemented
+Status: Implemented (extended 2026-08-16)
 
-Version: 1.1.0
+Version: 1.2.0
 
 Owner: CAPITAL-AI
 
@@ -12,64 +12,23 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-ARCH-AUDIT-0002 (H4, Kapitel 4.4) stellte fest, dass dieses Verzeichnis in null
-TypeScript-Dateien bestand und „Supervisor" lediglich der Name eines Frontend-Dashboards war,
-ohne Steuerungslogik dahinter. `supervisor.ts` ist die reale Komponente, die diese Lücke
-schließt.
+`supervisor.ts` is the real Supervisor component.
 
-Der Befund nannte sieben erwartete Fähigkeiten. Ehrliche Bestandsaufnahme statt
-Vollständigkeitsbehauptung:
+**Implemented:**
 
-**Implementiert:**
-- **Task Routing / Tool Selection** — `routeTask()` bildet jede Anlageklasse auf die
-  zuständige Scoring-Engine ab (Crypto/DeFi/Meme → `crypto_orchestrator`, Rohstoffe →
-  `rawmaterials_orchestrator`, Aktien/Forex → `traditional_asset_engine`, siehe H1).
-- **Execution Control / Retry / Recovery / Self-Healing** — `executeSupervised()` führt eine
-  übergebene asynchrone Aufgabe mit echtem Retry-mit-Backoff aus (Standard: 2 zusätzliche
-  Versuche, Backoff verdoppelt sich je Versuch), statt beim ersten Fehlschlag aufzugeben.
-  Jede Ausführung wird in einem Ringpuffer aufgezeichnet und über
-  `GET /api/admin/supervisor/status` (server/supervisorRouter.ts) abrufbar.
+- **Task Routing / Tool Selection** — `routeTask()`
+- **Execution Control / Retry / Recovery / Self-Healing** — `executeSupervised()`
+- **Approved write path** — `executeApprovedSupervisedAction()` (Policy → Approval → Apply → Audit)
+- **Agent Provider Chain Observation** (2026-08-16) — ChatGPT, Claude, Grok via `observeAgentProviderChain()`; Google AI Studio/NotebookLM/Gemini = RETIRED
+- **Findings** — lightweight findings from failed supervised executions and provider inventory (ESS-0002 spirit; Supervisor does not decide)
 
-**Nicht implementiert (mit Begründung):**
-- **Conflict Resolution** — setzt mehrere konkurrierende Quellen für dieselbe Entscheidung
-  voraus. Die aktuelle Architektur hat pro Anlageklasse genau eine autoritative Engine, es
-  gibt aktuell keinen echten Konflikt aufzulösen.
+**Not implemented:**
+
+- Multi-engine Conflict Resolution (one authoritative engine per asset class)
+- Full ESS-0002 Digital Twin / complete finding lifecycle persistence
 
 ---
 
-## ESS Reference
+## ESS / ADR
 
-ESS-0001
-
-ESS-0001-CONTRACTS
-
----
-
-## ADR References
-
-ADR-0018 (Enterprise Event Mesh) — `executeSupervised()` veröffentlicht bei endgültig
-fehlgeschlagenen Aufgaben ein `SupervisorAlertEvent` über die Event Mesh.
-
----
-
-## Dependencies
-
-EventMesh (`src/platform/EventMesh/Core/EventBus.ts`) für die Veröffentlichung von
-`SupervisorAlertEvent`.
-
----
-
-## Events
-
-Siehe `manifest.json` — produziert `SupervisorAlertEvent` (real, bei endgültig
-fehlgeschlagenen supervised Tasks) und `CriticalArchitectureViolationEvent` (deklariert,
-noch kein Producer-Code); konsumiert `GovernanceViolationDetectedEvent` und
-`EventRoutingFailedEvent` (deklariert, noch kein Consumer-Code).
-
----
-
-## Notes
-
-Aktuell an zwei realen Aufrufstellen in `server.ts` verankert: `recordDailySnapshots()` (N1)
-und `evaluateAlerts()` (H2) - beide vorher "best-effort, bei erstem Fehlschlag aufgeben",
-jetzt mit echtem Retry.
+ESS-0001, ESS-0001-CONTRACTS, ESS-0002; ADR-0018, ADR-0051, ADR-0062
