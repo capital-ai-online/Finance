@@ -5,11 +5,13 @@ import { ProviderRegistry } from './ProviderRegistry';
 import { ProviderRouter, type ProviderSkip } from './ProviderRouter';
 import { RateLimitBudget } from './RateLimitBudget';
 import { RequestCoalescer } from './RequestCoalescer';
+import { rateLimitOverridesFromMatrix } from './ProviderMatrix';
 import {
   MARKET_DATA_CONTRACT_VERSION,
   type CanonicalMarketDataSnapshot,
   type SnapshotRequest,
 } from './contracts';
+import { recordProviderHealth } from '../Supervisor/providerHealth';
 
 export type MarketDataGatewaySource = 'provider' | 'cache';
 export type MarketDataGatewayEvent =
@@ -40,6 +42,8 @@ export interface MarketDataGatewayOptions {
   telemetry?: MarketDataGatewayTelemetry;
   cacheTtlMs?: number;
   nowMs?: () => number;
+  /** When false, skip Supervisor health writes (tests). Default true. */
+  recordHealth?: boolean;
 }
 
 const NOOP_TELEMETRY: MarketDataGatewayTelemetry = { record: () => undefined };
@@ -86,21 +90,27 @@ export class MarketDataGateway {
   private readonly cache: MarketDataCache;
   private readonly coalescer: RequestCoalescer;
   private readonly router: ProviderRouter;
+  private readonly circuitBreaker: CircuitBreaker;
   private readonly telemetry: MarketDataGatewayTelemetry;
   private readonly cacheTtlMs: number;
   private readonly nowMs: () => number;
+  private readonly recordHealth: boolean;
 
   constructor(private readonly registry: ProviderRegistry, options: MarketDataGatewayOptions = {}) {
     this.nowMs = options.nowMs ?? Date.now;
     this.cache = options.cache ?? new MarketDataCache({ nowMs: this.nowMs });
     this.coalescer = options.coalescer ?? new RequestCoalescer();
-    this.router = new ProviderRouter(
-      registry,
-      options.rateLimitBudget ?? new RateLimitBudget({ nowMs: this.nowMs }),
-      options.circuitBreaker ?? new CircuitBreaker({ nowMs: this.nowMs }),
-    );
+    this.circuitBreaker = options.circuitBreaker ?? new CircuitBreaker({ nowMs: this.nowMs });
+    const rateLimitBudget =
+      options.rateLimitBudget ??
+      new RateLimitBudget({
+        nowMs: this.nowMs,
+        perProvider: rateLimitOverridesFromMatrix(),
+      });
+    this.router = new ProviderRouter(registry, rateLimitBudget, this.circuitBreaker);
     this.telemetry = options.telemetry ?? NOOP_TELEMETRY;
     this.cacheTtlMs = Math.max(0, options.cacheTtlMs ?? 30_000);
+    this.recordHealth = options.recordHealth !== false;
   }
 
   async getSnapshot(request: SnapshotRequest): Promise<MarketDataGatewayResult> {
@@ -144,6 +154,7 @@ export class MarketDataGateway {
       const skipReason = this.router.tryAcquire(providerId);
       if (skipReason) {
         skippedProviders.push({ providerId, reason: skipReason });
+        this.writeSkipHealth(providerId, skipReason);
         continue;
       }
       attemptedProviders.push(providerId);
@@ -155,13 +166,16 @@ export class MarketDataGateway {
           this.router.recordSuccess(providerId);
           this.cache.set(key, snapshot, this.cacheTtlMs);
           this.telemetry.record('provider_success', { provider: providerId, qualityState: snapshot.qualityState });
+          this.writeOutcomeHealth(providerId, 'healthy', snapshot.qualityState);
           return { snapshot, attemptedProviders, skippedProviders, source: 'provider' };
         }
         this.router.recordFailure(providerId);
         this.telemetry.record('provider_failure', { provider: providerId, reason: assessment.state });
+        this.writeOutcomeHealth(providerId, assessment.state === 'STALE' ? 'degraded' : 'unavailable', assessment.state);
       } catch {
         this.router.recordFailure(providerId);
         this.telemetry.record('provider_failure', { provider: providerId, reason: 'exception' });
+        this.writeOutcomeHealth(providerId, 'unavailable', 'exception');
       }
     }
 
@@ -174,6 +188,45 @@ export class MarketDataGateway {
     );
     this.telemetry.record('unavailable', { reason: 'all_providers_failed' });
     return result;
+  }
+
+  private writeSkipHealth(providerId: string, reason: ProviderSkip['reason']): void {
+    if (!this.recordHealth) return;
+    if (reason === 'rate_limit_budget_exhausted') {
+      recordProviderHealth({
+        provider: providerId,
+        capability: 'snapshot',
+        state: 'degraded',
+        diagnosticCode: 'rate_limited',
+        message: 'Rate-limit budget exhausted for provider (SC-4 matrix).',
+      });
+      return;
+    }
+    recordProviderHealth({
+      provider: providerId,
+      capability: 'snapshot',
+      state: 'degraded',
+      diagnosticCode: 'provider_error',
+      circuitOpenUntil: this.circuitBreaker.openedUntilIso(providerId) ?? undefined,
+      message: 'Circuit breaker open for provider (SC-4).',
+    });
+  }
+
+  private writeOutcomeHealth(
+    providerId: string,
+    state: 'healthy' | 'degraded' | 'unavailable',
+    detail: string,
+  ): void {
+    if (!this.recordHealth) return;
+    recordProviderHealth({
+      provider: providerId,
+      capability: 'snapshot',
+      state,
+      diagnosticCode: state === 'healthy' ? 'healthy' : detail === 'STALE' ? 'stale' : 'provider_error',
+      payloadUsable: state === 'healthy',
+      circuitOpenUntil: this.circuitBreaker.openedUntilIso(providerId) ?? undefined,
+      message: `MarketDataGateway snapshot outcome: ${detail}`,
+    });
   }
 
   private assess(snapshot: CanonicalMarketDataSnapshot, request: SnapshotRequest): CanonicalMarketDataSnapshot {
