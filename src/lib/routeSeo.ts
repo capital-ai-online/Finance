@@ -1,7 +1,7 @@
 /**
- * SEO-ROADMAP-0001 / D2 — route-specific titles and meta descriptions.
+ * SEO-GM-ROADMAP-0002 / WP-D2 — route-specific titles and meta descriptions.
  * Applied client-side after hydration; crawlers with JS see updated values.
- * Full prerender remains S2.
+ * Full prerender remains S2 (scripts/seo/prerender-public-routes.mjs).
  */
 
 export interface RouteSeo {
@@ -60,7 +60,11 @@ export function applyRouteSeo(pathname: string): void {
   setMeta('meta[name="description"]', 'content', seo.description);
   setMeta('meta[property="og:title"]', 'content', seo.title);
   setMeta('meta[property="og:description"]', 'content', seo.description);
-  setMeta('meta[property="og:url"]', 'content', `https://capital-ai.online${seo.canonicalPath === '/' ? '/' : seo.canonicalPath}`);
+  setMeta(
+    'meta[property="og:url"]',
+    'content',
+    `https://capital-ai.online${seo.canonicalPath === '/' ? '/' : seo.canonicalPath}`,
+  );
   setMeta('meta[property="twitter:title"]', 'content', seo.title);
   setMeta('meta[property="twitter:description"]', 'content', seo.description);
 
@@ -71,4 +75,9 @@ export function applyRouteSeo(pathname: string): void {
       `https://capital-ai.online${seo.canonicalPath === '/' ? '/' : seo.canonicalPath}`,
     );
   }
+}
+
+/** Public route keys used by prerender and checklist DoD. */
+export function listPublicRouteSeoPaths(): string[] {
+  return Object.keys(ROUTES);
 }
