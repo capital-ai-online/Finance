@@ -9,7 +9,10 @@ import { MarketDataGateway } from '../platform/MarketData/MarketDataGateway';
 import { ProviderRegistry } from '../platform/MarketData/ProviderRegistry';
 import { RateLimitBudget } from '../platform/MarketData/RateLimitBudget';
 import { rateLimitOverridesFromMatrix } from '../platform/MarketData/ProviderMatrix';
-import { CoinGeckoMarketDataProvider } from '../platform/MarketData/providers/CoinGeckoMarketDataProvider';
+import {
+  CoinGeckoMarketDataProvider,
+  COINGECKO_SYMBOL_IDS,
+} from '../platform/MarketData/providers/CoinGeckoMarketDataProvider';
 import { recordMarketDataProviderOutcome } from './marketDataProviderRouter';
 
 export const CRYPTO_QUOTE_CONTRACT_VERSION = 'crypto-quote/1.0.0' as const;
@@ -113,6 +116,29 @@ export async function fetchVerifiedCryptoQuote(
       alertEligible: false,
       executionPriceEligible: false,
       reason: 'Symbol is required.',
+    };
+  }
+
+  // Short-circuit before gateway: unmapped symbols must stay UNSUPPORTED_ASSET.
+  // Gateway DataQuality rejects UNAVAILABLE and replaces the provider reason with a generic
+  // "all providers failed" message, which would otherwise collapse to SOURCE_UNAVAILABLE.
+  if (!COINGECKO_SYMBOL_IDS[symbol]) {
+    return {
+      contractVersion: CRYPTO_QUOTE_CONTRACT_VERSION,
+      status: 'UNSUPPORTED_ASSET',
+      symbol,
+      assetClass: 'crypto',
+      price: null,
+      currency: null,
+      provider: null,
+      providers: [],
+      observedAt: null,
+      retrievedAt,
+      evidenceIds: [],
+      sourcePath: 'https://api.coingecko.com/api/v3/simple/price',
+      alertEligible: false,
+      executionPriceEligible: false,
+      reason: `No approved CoinGecko mapping for symbol ${symbol}.`,
     };
   }
 
