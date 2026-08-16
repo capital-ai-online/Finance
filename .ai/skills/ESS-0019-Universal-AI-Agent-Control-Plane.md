@@ -1,7 +1,7 @@
 # ESS-0019 — Universal AI Agent Control Plane
 
-Status: PROPOSED
-Version: 1.0.0
+Status: ACCEPTED (provider-set clarified 2026-08-16)
+Version: 1.1.0
 Date: 2026-08-11
 Owner: Platform Director
 Scope: CAPITAL-AI DevelopmentChain M2–M9
@@ -14,7 +14,7 @@ The controlling invariant is:
 
 `AI product != trust root`.
 
-ChatGPT, Claude, Google AI Studio/Gemini, NotebookLM and future providers are execution or research profiles. Authorization, policy, audit, evidence and production mutation authority remain inside CAPITAL-AI governance.
+**Canonical active providers (Owner 2026-08-16):** ChatGPT, Claude and Grok are execution or research profiles. **Google AI Studio, NotebookLM and Gemini are not part of the active DEVELOPMENT Chain or AI value chain** (retired aliases). Authorization, policy, audit, evidence and production mutation authority remain inside CAPITAL-AI governance.
 
 ## 2. Plane separation
 
@@ -29,10 +29,10 @@ No provider may bypass the Control Plane to reach the Production Plane.
 
 ## 3. Provider profiles
 
-- **ChatGPT**: execution/research client through GitHub/connectors/MCP/Apps or agent harnesses; never receives implicit Owner authority.
-- **Claude / Claude Code**: execution client with permission-scoped tools/MCP; plan/read modes are preferred before write; bypass-permissions modes are prohibited for CAPITAL-AI production work.
-- **Google AI Studio / Gemini**: development and prototyping profile; function calls remain application-executed and therefore MUST pass through CAPITAL-AI authorization before side effects. Managed agent sandboxes may be used only as isolated execution environments.
-- **NotebookLM**: Research & Evidence Plane only. It may ground analysis in approved sources, but MUST NOT receive repository, infrastructure, billing or database mutation capabilities.
+- **ChatGPT** (`chatgpt-github-connector`): execution/research client through GitHub/connectors/MCP/Apps; never receives implicit Owner authority.
+- **Claude / Claude Code** (`claude-code-cli`): execution client with permission-scoped tools/MCP; plan/read modes preferred before write; bypass-permissions modes prohibited for CAPITAL-AI production work.
+- **Grok** (`grok-xai-connector`): research + controlled execution client via GitHub MCP / Grok Chat connector; same control-plane policy as ChatGPT/Claude; model name never elevates authority.
+- **Google AI Studio / Gemini / NotebookLM**: **RETIRED** — not registered as active value-chain profiles; control plane returns DENY/RETIRED.
 
 ## 4. Capability model
 
@@ -67,7 +67,7 @@ The minimum correlation set is defined by ADR-0059 and the audit schema under `d
 - Read-only evidence gathering is separated from mutation authority.
 - Tool inputs and retrieved content are untrusted data and cannot elevate capability.
 - Agent self-approval is forbidden for HIGH/CRITICAL changes.
-- Production mutation is impossible from NotebookLM and from development-only profiles.
+- Production mutation is impossible from retired profiles and from research-only ceilings.
 - Production changes require rollback and postcondition evidence.
 - Security audit evidence is not sampled away with normal telemetry.
 
@@ -75,29 +75,15 @@ The minimum correlation set is defined by ADR-0059 and the audit schema under `d
 
 OpenTelemetry/W3C Trace Context is the preferred cross-provider correlation mechanism. Operational telemetry and security audit evidence are separate retention classes. Redaction occurs before export.
 
+Supervisor observes the agent provider chain (ChatGPT/Claude/Grok) via `observeAgentProviderChain` (ESS-0002).
+
 ## 9. Supply chain
 
 Agent-generated code is not trusted by origin. It passes the same branch, PR, CI, SBOM, provenance, review and deployment gates as human-authored changes.
 
-## 10. Documentation-first gate
+## 10. Related authorities
 
-M3–M9 implementation work is frozen until:
-
-- ESS-0019 is merged;
-- related ADRs are merged;
-- trust/threat/IAM/audit/telemetry/supply-chain/deployment/cutover/assurance documents are merged;
-- `AI_AGENT_M0_M9_TRACEABILITY_MATRIX.md` is complete;
-- `AI_AGENT_M0_M9_IMPLEMENTATION_ROADMAP.md` reaches `IMPLEMENTATION READY`;
-- `docs/architecture/ROADMAP.md` records `M2G DOCUMENTATION FREEZE = COMPLETE`.
-
-## 11. Related authorities
-
-- ESS-0006 Security & Compliance
-- ESS-0008 AI Agent Framework
-- ESS-0011 Enterprise Traceability
-- ESS-0012 Documentation Governance
-- ESS-0018 Agentic Supabase Tool Governance
-- ADR-0050 Agent Tool & Capability IAM Foundation
-- ADR-0051 Capability Grant Approval Workflow
-- ADR-0056 Observability & Telemetry Baseline
-- ADR-0057..ADR-0063 created for this DevelopmentChain
+- ESS-0002 Supervisor, ESS-0006 Security & Compliance, ESS-0008 AI Agent Framework
+- ADR-0050, ADR-0051, ADR-0056, ADR-0057..ADR-0063
+- `docs/evidence/m8/M8_PROVIDER_SET_CORRECTION_2026-08-16.md`
+- `docs/architecture/ai-agent/AI_AGENT_PROVIDER_PROFILE_CONTRACT.md`
