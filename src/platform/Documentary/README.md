@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.8.0
+Version: 1.9.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,7 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer und D7 Knowledge Projection.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Status-Event Drift Detection (Phase B, read-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer und D7 Knowledge Projection.
 
 ## Implemented Scope
 
@@ -26,6 +26,8 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Documentation/BilingualDocumentaryProjection.ts`
 - `Versioning/DocumentaryVersion.ts`
 - `Discovery/CodeEvidence.ts`
+- `Discovery/StatusEventEvidence.ts`
+- `Discovery/StatusEventDriftDetector.ts`
 - `Models/DocumentaryDocument.ts`
 - `Models/DocumentaryProvenance.ts`
 - `Interfaces/IDocumentaryEngine.ts`
