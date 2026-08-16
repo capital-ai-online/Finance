@@ -55,8 +55,9 @@ Provider-neutraler Agent-Cutover: privilegierte Execution über denselben Contro
 
 - Phase 0 + Provider-Profile + SA3B-Verdrahtung + Rollback + Bypass-Audit + Audit-Korrelation: **VERIFIED PASS**
 - `chatgpt-github-connector`: alle 6 `ProviderCutoverEvidence`-Felder **true** inkl. `externalHostConfigurationVerified` (`docs/evidence/m8/M8_EXTERNAL_HOST_CONFIGURATION_VERIFIED_EVIDENCE.md`) → Readiness **READY**
-- `google-ai-studio` / `notebooklm`: **NOT_APPLICABLE** (non-mutating)
+- Kanonisches Provider-Set korrigiert 2026-08-16 (PR #365, `docs/evidence/m8/M8_PROVIDER_SET_CORRECTION_2026-08-16.md`): **ChatGPT, Claude, Grok**. `google-ai-studio` / `notebooklm` / `gemini` sind jetzt **RETIRED** (DENY im Control Plane), nicht mehr Teil der Matrix
 - `claude-code-cli`: **BLOCKED** strukturell (`docs/architecture/M8_CLAUDE_CODE_REAL_CALLER_DESIGN.md`) — kein unterstützter privilegierter Produktionspfad
+- `grok-xai-connector`: **BLOCKED** aus demselben strukturellen Grund (interaktive, host-vermittelte Connector-Sitzung ohne code-adressierbaren Execution-Host) — kein unterstützter privilegierter Produktionspfad
 - Exit-Gate-Punkt 2: **OWNER_ACCEPTED** (2026-08-16, explizite Owner-Antwort "ACCEPT (empfohlen)" via `AskUserQuestion`) — `docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md`
 - M8 Closure: `docs/evidence/m8/M8_CLOSURE_EVIDENCE.md` — **COMPLETE / VERIFIED PASS**
 

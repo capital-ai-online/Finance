@@ -4,10 +4,13 @@ Status: **COMPLETE / VERIFIED PASS** — all 9 Exit Gate items PASS. Item 2 clos
 Owner-accepted scope decision (2026-08-16, explicit "ACCEPT" via AskUserQuestion): "privileged
 supported providers" = mutating providers with a production execution host, currently
 `chatgpt-github-connector` only (READY, all 6 `ProviderCutoverEvidence` fields incl.
-`externalHostConfigurationVerified`); `claude-code-cli` remains structurally BLOCKED and is
-explicitly not a supported privileged production path; `google-ai-studio`/`notebooklm` remain
-NOT_APPLICABLE. M9 (Integrated Roadmap Phase I2) is no longer blocked by M8, but each individual
-M9 drill remains a separately Owner-authorized action.
+`externalHostConfigurationVerified`). Canonical provider set corrected the same day (PR #365,
+`docs/evidence/m8/M8_PROVIDER_SET_CORRECTION_2026-08-16.md`): ChatGPT, Claude, Grok;
+`google-ai-studio`/`notebooklm`/`gemini` are now `RETIRED_PROVIDER_ALIASES` (DENY). Both
+`claude-code-cli` and `grok-xai-connector` remain structurally BLOCKED (interactive,
+host-mediated connector sessions with no code-addressable execution host) and are explicitly not
+supported privileged production paths. M9 (Integrated Roadmap Phase I2) is no longer blocked by
+M8, but each individual M9 drill remains a separately Owner-authorized action.
 Evidence: `docs/evidence/m8/M8_CLOSURE_EVIDENCE.md`,
 `docs/evidence/m8/M8_EXTERNAL_HOST_CONFIGURATION_VERIFIED_EVIDENCE.md`,
 `docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md`,

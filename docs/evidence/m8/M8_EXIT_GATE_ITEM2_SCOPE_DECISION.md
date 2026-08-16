@@ -101,10 +101,34 @@ Produktions-/IAM-/Secret-/Deploy-Mutation — diese bleiben eigenständig zu aut
 (CLAUDE.md Authorized Principals, Integrated Roadmap §11 "Nicht ausführbar ohne separate
 Owner-Freigabe").
 
+## 6. Nachtrag — Provider-Set-Korrektur nach Owner-ACCEPT (2026-08-16)
+
+Zwischen der Owner-ACCEPT-Entscheidung oben und der Veröffentlichung dieses Status-Flips hat der
+Owner das kanonische Provider-Set korrigiert (PR #365,
+`docs/evidence/m8/M8_PROVIDER_SET_CORRECTION_2026-08-16.md`): Google AI Studio ist **nicht** Teil der
+Wertschöpfungskette; kanonisch sind ChatGPT, Claude, **Grok** (`grok-xai-connector` neu,
+`google-ai-studio`/`notebooklm` jetzt `RETIRED_PROVIDER_ALIASES`).
+
+§1–§4 oben bleiben als historische Evidence unverändert (Stand PR #362, Vier-Provider-Modell) — siehe
+`M8_PROVIDER_SET_CORRECTION_2026-08-16.md`s eigene Hygiene-Regel: bereits veröffentlichte M8-Evidence
+wird nicht rückwirkend umgeschrieben.
+
+**Die akzeptierte Scope-Entscheidung selbst bleibt unverändert gültig und skaliert direkt auf drei
+Provider:** „privileged supported providers" = mutierende Provider mit produktivem
+Execution-Host. Das ist weiterhin ausschließlich `chatgpt-github-connector`. `grok-xai-connector` ist
+— nach identischer struktureller Begründung wie `claude-code-cli` (interaktive, host-vermittelte
+Connector-Sitzung ohne code-adressierbaren, OIDC-gegateten Execution-Host) — ebenfalls `BLOCKED` und
+kein unterstützter privilegierter Produktionspfad. `google-ai-studio`/`notebooklm` sind nicht mehr
+`NOT_APPLICABLE`, sondern `RETIRED` (Alias-DENY im Control Plane). Ergebnis für Exit-Gate-Punkt 2
+unverändert: `PASS` unter demselben Scope, jetzt mit drei statt vier Profilen bewertet. Volle
+aktualisierte Matrix: `docs/evidence/m8/M8_CLOSURE_EVIDENCE.md` §2.
+
 ## Verwandte Dokumente
 
 - `docs/evidence/m8/M8_EXTERNAL_HOST_CONFIGURATION_VERIFIED_EVIDENCE.md`
 - `docs/evidence/m8/M8_I1_CUTOVER_READINESS_MATRIX_AND_EXIT_GATE_SYNC_EVIDENCE.md`
+- `docs/evidence/m8/M8_PROVIDER_SET_CORRECTION_2026-08-16.md`
+- `docs/evidence/m8/M8_CLOSURE_EVIDENCE.md`
 - `docs/architecture/M8_CLAUDE_CODE_REAL_CALLER_DESIGN.md`
 - `docs/runbooks/M8_AGENT_CUTOVER.md`
 - `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`
