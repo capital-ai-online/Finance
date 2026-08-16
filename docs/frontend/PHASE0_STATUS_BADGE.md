@@ -1,6 +1,6 @@
 # Phase 0 — StatusBadge Primitive
 
-**Status:** IMPLEMENTED (first call site)  
+**Status:** IMPLEMENTED (multiple call sites)  
 **Stand:** 16. August 2026  
 **Code:** `src/components/StatusBadge.tsx`  
 **Spec:** `docs/frontend/PHASE0_LOADING_ERROR_STATES.md`
@@ -47,6 +47,8 @@ Unknown strings fall back to amber + normalized label. Soft aliases map `NOT_COM
 | Location | Status |
 |----------|--------|
 | `CryptoScoringEnterprise` (header status) | wired |
+| `MarketScreener` (result card status) | wired |
+| `UniverseBestWorst` (unavailable rows) | wired |
 | `Dashboard` / `Screener` / other panels | backlog Phase 1 |
 
 ---
