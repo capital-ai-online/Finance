@@ -1,6 +1,6 @@
-# ESS-0022 — Marketing Roadmap Executor
+# ESS-0024 — Marketing Roadmap Executor
 
-Status: PROPOSED / NOT ENABLED
+Status: ACCEPTED / NOT ENABLED (Owner-ACCEPT 2026-08-16; keine Runtime-Capability)
 Version: 0.1.0
 Date: 2026-08-12
 Owner: Platform Director / Repository Owner
@@ -8,7 +8,7 @@ Scope: CAPITAL-AI Marketing, SEO, Social Content and Content-Distribution Develo
 
 ## 1. Purpose
 
-ESS-0022 defines the provider-neutral logical agent `capital-ai-marketing-roadmap-executor`.
+ESS-0024 defines the provider-neutral logical agent `capital-ai-marketing-roadmap-executor`.
 
 The Marketing Roadmap Executor is a domain-limited development and operations agent for Owner-approved Marketing Roadmap work packages. It is deliberately separate from the broader `capital-ai-systemadmin-roadmap-executor` defined by ESS-0021.
 
@@ -223,11 +223,15 @@ After successful Human merge into `Finance`, the remote work branch MUST be dele
 - ADR-0059 Agent Audit / OTel Correlation
 - ADR-0065 Systemadmin Roadmap Execution Mandate
 - ADR-0067 Systemadmin execution-host binding
-- ADR-0068 Marketing Roadmap Executor and Content Automation Boundary
+- ADR-0080 Marketing Roadmap Executor and Content Automation Boundary
 - `docs/governance/AUTONOMOUS_AGENT_CONCEPT_GATE.md`
 - `docs/roadmaps/MARKETING_AGENT_ROADMAP.md`
 - `docs/governance/MARKETING_AGENT_ROADMAP_EXECUTION_POLICY.md`
 
 ## 17. Registry note
 
-`ESS-0022` was checked as unoccupied in the current repository before this draft was created. The canonical ESS Registry MUST be updated as part of the final Human-approved documentation PR before this specification is treated as published authority.
+This specification was originally filed as `ESS-0022`. That number was already held by `ESS-0022-Passkey-Only-Owner-PR-Authorization.md`; the stated collision check had been performed against the file listing instead of the canonical registry, which at the time ended at `ESS-0018`. Under **ADR-0085** the ESS namespace was cleaned up and the registry backfilled: this specification is now `ESS-0024`, and `ESS-0022` remains the Passkey specification. Content is unchanged.
+
+`ESS-0024` is registered in `.ai/registry/ess-registry.json`. New ESS numbers MUST be allocated against that registry, never against the file listing under `.ai/skills/`.
+
+The specification is `ACCEPTED` as of 2026-08-16 (Owner decision, WP-M0) but remains `NOT ENABLED`: acceptance establishes the boundary, not any capability. The profile stays at `READ / ANALYZE / PLAN` until the Execution Policy §18 gates are individually VERIFIED PASS.

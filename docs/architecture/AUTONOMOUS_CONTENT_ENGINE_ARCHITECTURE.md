@@ -5,7 +5,7 @@ Status: DRAFT — IMPLEMENTATION NOT AUTHORIZED
 Date: 2026-08-12
 Baseline: `main@3a733f2b6efeffb3013fbb2c558b5ef4c185125e`
 Owner: Platform Director / Repository Owner
-Related: ESS-0014, ESS-0019, ESS-0022, ADR-0026, ADR-0068
+Related: ESS-0014, ESS-0019, ESS-0024, ADR-0026, ADR-0080
 
 ## 1. Executive decision
 
