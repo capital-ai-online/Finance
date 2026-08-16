@@ -125,6 +125,16 @@ Für jede Domain: was bereits als **Kontrollmechanismus** existiert (aus M4–M8
   SA3B-Kette. Trägt zu M9-Exit-Gate-Punkt 4 **nicht** bei (Punkt 4 verlangt „drill PASS", kein
   Drill wurde ausgeführt) — reduziert aber das Risiko für den kommenden Live-Verdrahtungsschritt.
 
+**Nachtrag 2026-08-16 (Live-Wiring):** HTTP-Endpunkt jetzt live-verdrahtet (Owner-Wahl
+"Break-Glass live verdrahten (empfohlen)") — `server/systemadmin/breakGlassRouter.ts`, gemountet
+unter `/api/systemadmin/break-glass` in `registerApplicationRoutes.ts`, mit echtem
+`requireStepUp()`-Owner-Guard und In-Memory-Widerruf-Persistenz. 10 neue HTTP-Level-Tests, siehe
+`docs/evidence/m9/M9_BREAK_GLASS_LIVE_WIRING_2026-08-16.md`. Der eigentliche M9-Drill (Punkt 4)
+bleibt weiterhin **nicht ausgeführt** — jetzt aber technisch möglich, da ein echter Endpunkt
+existiert. ADR-0063 weiterhin `PROPOSED`. Ein dokumentierter, unbehobener Nebenbefund
+(`requireStepUp()` filtert `purpose` beim Konsum nicht) betrifft alle Step-up-gated Endpunkte, siehe
+Live-Wiring-Evidence §3.
+
 ### 2.8 Rollback / Recovery
 - Kontrollmechanismus vorhanden: **zwei unabhängige, real bewiesene Hebel** für den einzigen realen
   Aufrufer (SA3B) — IAM-Kill-Switch und Provider-Profil-Registry-Rollback, siehe
@@ -176,11 +186,12 @@ Priorisierungsvorschlag nach Reifegrad der Grundlage (am weitesten fortgeschritt
    `docs/evidence/m9/M9_PROMPT_TOOL_INJECTION_LIVE_DRILL_2026-08-16.md`. Mit wichtigem offenem
    Fund: kein realer Content-Scanning-Detektor für die bereits vorhandenen Checkpoint-Gates —
    empfohlen als eigenes Arbeitspaket vor M9-Closure.
-8. **Break-Glass** (§2.7) — Proposal Owner-`ACCEPT`ed und Policy-/Logik-Ebene implementiert
-   2026-08-16 (siehe `docs/evidence/m9/M9_BREAK_GLASS_DESIGN_PROPOSAL_2026-08-16.md` und
-   `docs/evidence/m9/M9_BREAK_GLASS_LOGIC_IMPLEMENTATION_2026-08-16.md`). Noch offen: Live-
-   Verdrahtung (eigener Schritt) und danach der eigentliche Drill mit Pflicht-Post-Review —
-   realistisch weiterhin der letzte Punkt in der Sequenz bis zur vollen M9-Closure.
+8. ~~**Break-Glass Live-Wiring** (§2.7)~~ — **erledigt 2026-08-16**, siehe
+   `docs/evidence/m9/M9_BREAK_GLASS_LIVE_WIRING_2026-08-16.md`. Proposal Owner-`ACCEPT`ed,
+   Policy-/Logik-Ebene implementiert und jetzt hinter einem echten, Owner+Step-up-gated
+   HTTP-Endpunkt (`/api/systemadmin/break-glass`) live erreichbar. Noch offen: der eigentliche
+   M9-Drill mit Pflicht-Post-Review — realistisch weiterhin der letzte Punkt in der Sequenz bis zur
+   vollen M9-Closure.
 
 Dieses Dokument trifft selbst keine Auswahl unter diesen Optionen — das ist Owner-Entscheidung.
 

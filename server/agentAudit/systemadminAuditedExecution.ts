@@ -46,6 +46,8 @@ export const SYSTEMADMIN_SA3_SELF_AUTHORITY_PATHS = Object.freeze([
   'server/agentAudit/systemadminAuditedExecution.ts',
   'server/systemadmin/githubActionsOidc.ts',
   'server/systemadmin/systemadminExecutionBrokerRouter.ts',
+  'server/systemadmin/breakGlassRouter.ts',
+  'src/platform/Security/breakGlass.ts',
   'scripts/systemadmin/validateExecutionIssue.mjs',
   'scripts/systemadmin/validateSa4PilotIssue.mjs',
   'scripts/systemadmin/runSa4Pilot.mjs',
