@@ -65,8 +65,12 @@ Für jede Domain: was bereits als **Kontrollmechanismus** existiert (aus M4–M8
 - Kontrollmechanismus vorhanden: substanziell — `tests/unit/eventMeshReplayReliability.test.ts`,
   `tests/unit/outbox.test.ts`, `tests/unit/developmentChainMutationHandoff.test.ts`,
   `tests/unit/providerCutoverSimulator.test.ts` decken Replay/Dedupe-Verhalten bereits ab.
-- M9-Drill ausgeführt: Teilweise Grundlage vorhanden, aber nicht als konsolidierter M9-Drill gegen
-  Approval-Evidence/Mutation-Handoff/CI-Request/Terminal-Outcome im Runbook-Format dokumentiert.
+- M9-Drill ausgeführt: **Ja, 2026-08-16** (Owner-autorisiert via `AskUserQuestion`) — siehe
+  `docs/evidence/m9/M9_REPLAY_IDEMPOTENCY_LIVE_DRILL_2026-08-16.md`. Fand und schloss eine reale
+  Integrationslücke: der Envelope-Replay-Schutz in `checkProviderProfileScope()` existierte bereits,
+  war aber nicht über den realen SA3B-Aufrufer erreichbar — additiv nachverdrahtet (Präzedenzfall:
+  `killSwitchActive`), jetzt end-to-end bewiesen (5 neue Tests). Trägt zu M9-Exit-Gate-Punkt 2 bei
+  (Replay-Anteil vollständig).
 
 ### 2.4 Secret / Data Exfiltration
 - Kontrollmechanismus vorhanden: `src/platform/Telemetry/redaction.ts`,
@@ -147,7 +151,8 @@ Priorisierungsvorschlag nach Reifegrad der Grundlage (am weitesten fortgeschritt
    `docs/evidence/m9/M9_ROLLBACK_RECOVERY_LIVE_DRILL_2026-08-16.md`.
 3. ~~**Audit-Outage-Drill** (§2.5)~~ — **erledigt 2026-08-16**, siehe
    `docs/evidence/m9/M9_AUDIT_OUTAGE_LIVE_DRILL_2026-08-16.md`.
-4. **Replay/Idempotency-Drill** (§2.3) — bestehende Tests konsolidieren + Runbook-Evidence-Format.
+4. ~~**Replay/Idempotency-Drill** (§2.3)~~ — **erledigt 2026-08-16**, siehe
+   `docs/evidence/m9/M9_REPLAY_IDEMPOTENCY_LIVE_DRILL_2026-08-16.md`.
 5. **Authorization-Bypass-Negativtests** (§2.1) — verstreute Tests konsolidieren.
 6. **Secret/Exfiltration-Drill** (§2.4) — Redaction-Struktur vorhanden, adversarieller Test fehlt.
 7. **Prompt/Tool-Injection-Tests** (§2.2) — größte Lücke, braucht Testsuite von Grund auf.

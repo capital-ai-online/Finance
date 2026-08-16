@@ -246,6 +246,15 @@ export interface SystemadminRoadmapAuthorizationRequest {
    * off by default - existing callers are unaffected.
    */
   killSwitchActive?: boolean;
+  /**
+   * M9 (ADR-0063) replay/idempotency drill lever: identifies the mutation envelope this request
+   * carries and the set of envelope ids already processed. Read only by the M8 Provider Profile
+   * Registry check (checkProviderProfileScope), never by REM/IAM directly - a previously-seen
+   * mutation envelope is denied as a replay while distinct envelopes are unaffected. Optional and
+   * unset by default - existing callers are unaffected.
+   */
+  envelopeId?: string;
+  seenEnvelopeIds?: ReadonlySet<string>;
 }
 
 export interface SystemadminRoadmapAuthorizationDecision {
