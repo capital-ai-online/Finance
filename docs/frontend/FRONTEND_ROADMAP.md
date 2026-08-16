@@ -2,7 +2,7 @@
 
 **Projekt:** capital-ai.online  
 **Repository:** SvenKulessa/Finance  
-**Version:** 1.2  
+**Version:** 1.3  
 **Stand:** 16. August 2026  
 **Owner:** Sven Kulessa / Capital-AI  
 **Bezug:** `docs/frontend/FRONTEND_ARCH.md`, `src/index.css` (@theme), public mirror: `SvenKulessa/capital-ai-frontend`
@@ -30,25 +30,23 @@ Zielbild: Vergleichbar mit modernen FinTech-/Quant-Interfaces (Linear-ähnliche 
 
 **Stärken**
 - Starke thematische Dark-Theme-Identität (`#18181b`, AIF-Gold, Neon-Cyan/Purple)
-- Klare Status-Kommunikation (READY / REJECT / DATA_UNAVAILABLE) — jetzt via `StatusBadge`-Primitive
+- Klare Status-Kommunikation (READY / REJECT / DATA_UNAVAILABLE) — via `StatusBadge`
 - Gute Grundstruktur für Multi-Asset-Scoring (`Dashboard`, `AssetUniverseDashboard`, `Screener`, `CryptoScoringEnterprise`)
 - Responsive Basis und Motion-Integration vorhanden
-- Fokus-Outline und Glassmorphism-Patterns in `FRONTEND_ARCH.md` und `index.css` bereits definiert
+- Fokus-Outline, Reduced-Motion und Glassmorphism-Patterns in `index.css` / `FRONTEND_ARCH.md`
 
 **Schwächen**
 - Hohe Informationsdichte in großen Komponenten (z. B. `Dashboard.tsx`)
-- Zu wenig Whitespace und unklare Card-Hierarchie
-- Hintergrund-/Neural-Animationen können ablenken
-- Score-Visualisierungen und Multi-Faktor-Matrix noch nicht optimal prominent
+- Card-Hierarchie und Whitespace noch nicht überall konsistent
+- Score-Visualisierungen und Multi-Faktor-Matrix können noch prominenter werden
 - Fehlendes starkes Onboarding & progressive Disclosure
-- Design-Tokens formal inventarisiert (Phase 0)
 - Kein Storybook / Component-Library-Dokumentation
 
 ---
 
 ## 3. Roadmap-Phasen
 
-### Phase 0 – Fundament (Woche 1–2) — **IN PROGRESS**
+### Phase 0 – Fundament (Woche 1–2) — **DONE** (Live-Baseline optional pending)
 **Ziel:** Stabile Basis schaffen
 
 - [x] Design-Tokens formalisieren — `docs/frontend/design-tokens.json` + `PHASE0_DESIGN_TOKENS.md`
@@ -56,28 +54,27 @@ Zielbild: Vergleichbar mit modernen FinTech-/Quant-Interfaces (Linear-ähnliche 
 - [x] Performance-Baseline-Protokoll — `PHASE0_PERFORMANCE_BASELINE.md` (Messung pending)
 - [x] Einheitliche Error- und Loading-States spezifiziert — `PHASE0_LOADING_ERROR_STATES.md`
 - [x] Component Inventory finalisieren — `docs/frontend/COMPONENT_INVENTORY.md`
-- [x] StatusBadge-Primitive + erster Call-Site (`CryptoScoringEnterprise`) — `src/components/StatusBadge.tsx`, `PHASE0_STATUS_BADGE.md`
+- [x] StatusBadge-Primitive + Call-Sites — `src/components/StatusBadge.tsx`
 - [ ] Storybook-Grundlage vorbereiten (optional, parallel)
 - [ ] Live Lighthouse / axe-Messung dokumentieren
 
-**Deliverables:**  
-`design-tokens.json`, Phase-0-Docs, Inventory, StatusBadge ✅ · Live-Baseline ⏳
+**Deliverables:** Tokens, Specs, Inventory, StatusBadge ✅
 
 ---
 
-### Phase 1 – Visual Design System & Look & Feel (Woche 3–6)
+### Phase 1 – Visual Design System & Look & Feel (Woche 3–6) — **IN PROGRESS**
 **Ziel:** Professionelles, ruhiges Erscheinungsbild
 
 - [ ] Dark-Theme verfeinern (präzisere Semantic Colors auf Basis AIF-Gold / Neon)
-- [ ] Mehr Whitespace und klarere Card-Hierarchie (Glassmorphism-Panels)
-- [ ] Hintergrund-Partikel / Neural-Animationen abschwächen oder deaktivierbar machen
-- [ ] Einheitliche Card-, Badge- und Button-Stile (StatusBadge-Adoption ausweiten)
+- [x] Mehr Whitespace und klarere Card-Hierarchie — Utilities + Enterprise-Scorer (siehe `PHASE1_QUICK_WINS.md`)
+- [x] Hintergrund-Partikel / Neural-Animationen abschwächen + `prefers-reduced-motion`
+- [x] Einheitliche Badge-Stile (StatusBadge); Card-/Button-Primitive noch offen
 - [ ] Score-Gauges und Multi-Faktor-Matrix visuell vervollständigen und prominent platzieren
 - [ ] Typografie-Upgrade (bestehende Poppins / Montserrat / JetBrains Mono nutzen und Tracking optimieren)
 - [ ] Icon-Library (lucide-react) vereinheitlichen
 
 **Deliverables:**  
-Aktualisiertes Design-System, Visual Specs, verbesserte Hauptansicht (`Dashboard` / `AssetUniverseDashboard`)
+`PHASE1_QUICK_WINS.md`, CSS-Utilities, Enterprise Spacing/Hit-Targets ✅ · weitere Surfaces ⏳
 
 ---
 
@@ -92,8 +89,7 @@ Aktualisiertes Design-System, Visual Specs, verbesserte Hauptansicht (`Dashboard
 - [ ] Secondary Navigation überarbeiten (weniger parallele CTAs)
 - [ ] Command-Palette (Power-User) vorbereiten
 
-**Deliverables:**  
-UX-Flows, Wireframes, aktualisierte Navigation
+**Deliverables:** UX-Flows, Wireframes, aktualisierte Navigation
 
 ---
 
@@ -105,24 +101,22 @@ UX-Flows, Wireframes, aktualisierte Navigation
 - [ ] Verbesserte Score-Visualisierungen (Gauge, Trend, Breakdown) mit Recharts / D3
 - [ ] Keyboard-Navigation und Focus-Management
 - [ ] Live-Daten-Feedback (subtil)
-- [ ] Export- und Share-Funktionen für Scores (bestehende PDF-Export-Pfade erweitern)
+- [ ] Export- und Share-Funktionen für Scores
 
-**Deliverables:**  
-Interaktive Komponenten, Data-Viz Specs
+**Deliverables:** Interaktive Komponenten, Data-Viz Specs
 
 ---
 
 ### Phase 4 – Mobile & Accessibility (parallel ab Woche 4)
 **Ziel:** Exzellente mobile und barrierefreie Erfahrung
 
-- [ ] Touch-optimierte Chips und Bottom-Sheets (44×44 px)
+- [x] Touch-optimierte Chips (44×44) — Enterprise-Filter/Timeframe + `.ui-hit`
 - [ ] Mobile Informationsarchitektur optimieren
 - [ ] Vollständige Screenreader-Unterstützung
-- [ ] Kontrast- und Fokus-Optimierung (bestehende `*:focus-visible` erweitern)
-- [ ] Reduced-Motion Support
+- [ ] Kontrast- und Fokus-Optimierung
+- [x] Reduced-Motion Support (`prefers-reduced-motion` in `index.css`)
 
-**Deliverables:**  
-Mobile Specs, Accessibility-Checklist (grün)
+**Deliverables:** Mobile Specs, Accessibility-Checklist (grün)
 
 ---
 
@@ -131,24 +125,25 @@ Mobile Specs, Accessibility-Checklist (grün)
 
 - [ ] Conversational Layer (Chat über Scores & Analysen)
 - [ ] Personalisierte Dashboards / Saved Views
-- [ ] Explainability-UI („Warum dieser Score?“ – Anbindung an `scoreExplainabilityAgent`)
+- [ ] Explainability-UI („Warum dieser Score?“)
 - [ ] Vollständiges Design-System + Storybook
 - [ ] Komponenten-Bibliothek dokumentieren
 - [ ] Theming & mögliche Light-Mode-Option (optional)
 
-**Deliverables:**  
-AI-Chat-Interface, personalisierte Views, Design-System v1.0
+**Deliverables:** AI-Chat-Interface, personalisierte Views, Design-System v1.0
 
 ---
 
-## 4. Quick Wins (sofort umsetzbar)
+## 4. Quick Wins
 
-1. Mehr Abstand zwischen den Hauptkarten
+1. ~~Mehr Abstand zwischen den Hauptkarten~~ → gestartet (Enterprise + CSS)
 2. Score- und Matrix-Bereiche vollständig sichtbar und prominent machen
-3. ~~Einheitliche Status-Badges (READY / REJECT / DATA_UNAVAILABLE)~~ → StatusBadge live
-4. Mobile Chip-Layout und Button-Größen optimieren (BFSG)
-5. Hintergrund-Grafiken / Neural-Pulse deaktivierbar oder stark reduzieren
+3. ~~Einheitliche Status-Badges~~ → StatusBadge live
+4. ~~Mobile Chip-Layout und Button-Größen (BFSG)~~ → `.ui-hit` + Enterprise
+5. ~~Hintergrund / Neural-Pulse abschwächen~~ → Keyframes + reduced-motion
 6. Klare primäre Aktion pro Viewport definieren
+
+Details: `docs/frontend/PHASE1_QUICK_WINS.md`
 
 ---
 
@@ -164,12 +159,12 @@ AI-Chat-Interface, personalisierte Views, Design-System v1.0
 
 ## 6. Nächste Schritte
 
-1. ~~Phase 0 Dokumentation + StatusBadge~~ → **done** (Tokens, Specs, Primitive + Call-Site)
-2. Live Lighthouse / axe-Baseline eintragen
-3. StatusBadge-Adoption in weiteren Panels (Dashboard, Screener, …) — Phase 1
+1. ~~Phase 0 + StatusBadge~~ → done
+2. Phase 1 Quick Wins ausweiten (`Dashboard`, `AssetUniverseDashboard`, `MarketScreener`)
+3. Live Lighthouse / axe-Baseline eintragen
 4. Regelmäßige Reviews (alle 2 Wochen)
 5. Öffentlicher Mirror `SvenKulessa/capital-ai-frontend` bei Bedarf synchron halten
 
 ---
 
-*Dokument erstellt am 16.08.2026 – Phase 0 gestartet 16.08.2026 – StatusBadge wired 16.08.2026 – wird laufend aktualisiert.*
+*Dokument erstellt am 16.08.2026 – Phase 0 done / Phase 1 gestartet 16.08.2026.*
