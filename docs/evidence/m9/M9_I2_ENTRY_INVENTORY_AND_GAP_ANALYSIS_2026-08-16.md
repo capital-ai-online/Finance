@@ -79,9 +79,12 @@ Für jede Domain: was bereits als **Kontrollmechanismus** existiert (aus M4–M8
 ### 2.4 Secret / Data Exfiltration
 - Kontrollmechanismus vorhanden: `src/platform/Telemetry/redaction.ts`,
   `tests/unit/telemetryContract.test.ts`, Audit-Redaction in `systemadminAuditedExecution.ts`.
-- M9-Drill ausgeführt: **Nein** als konsolidierter Angriffsversuch (TOTP-Secrets, Passkey-Material,
-  vollständige Prompts/Request-Bodies) — bestehende Tests prüfen Redaction strukturell, nicht
-  adversariell.
+- M9-Drill ausgeführt: **Ja, 2026-08-16** (Owner-autorisiert via `AskUserQuestion`) — siehe
+  `docs/evidence/m9/M9_SECRET_EXFILTRATION_LIVE_DRILL_2026-08-16.md`. Fand und schloss zwei reale
+  Redaction-Lücken (camelCase-Präfix-Schlüssel wie `customerEmail` rutschten unredigiert durch;
+  TOTP/Recovery/Backup-Code-Benennungen fehlten in `SECRET_KEY_PATTERN`), dann alle
+  Runbook-Kategorien über die reale SA3B-Kette bewiesen (3 neue Tests). Trägt zu
+  M9-Exit-Gate-Punkt 2 bei (Exfiltration-Anteil vollständig).
 
 ### 2.5 Audit Completeness / Outage
 - Kontrollmechanismus vorhanden: stark — `docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md`,
@@ -159,7 +162,8 @@ Priorisierungsvorschlag nach Reifegrad der Grundlage (am weitesten fortgeschritt
    `docs/evidence/m9/M9_REPLAY_IDEMPOTENCY_LIVE_DRILL_2026-08-16.md`.
 5. ~~**Authorization-Bypass-Negativtests** (§2.1)~~ — **erledigt 2026-08-16**, siehe
    `docs/evidence/m9/M9_AUTHORIZATION_BYPASS_LIVE_DRILL_2026-08-16.md`.
-6. **Secret/Exfiltration-Drill** (§2.4) — Redaction-Struktur vorhanden, adversarieller Test fehlt.
+6. ~~**Secret/Exfiltration-Drill** (§2.4)~~ — **erledigt 2026-08-16**, siehe
+   `docs/evidence/m9/M9_SECRET_EXFILTRATION_LIVE_DRILL_2026-08-16.md`.
 7. **Prompt/Tool-Injection-Tests** (§2.2) — größte Lücke, braucht Testsuite von Grund auf.
 8. **Break-Glass** (§2.7) — braucht zuerst einen Owner-genehmigten Proposal/Implementierung, bevor
    überhaupt ein Drill möglich ist; realistisch der letzte Punkt in der Sequenz.
