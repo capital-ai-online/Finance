@@ -203,6 +203,65 @@ describe('Rollback-to-read-only via profile registry', () => {
   });
 });
 
+// M9 (ADR-0063, docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md "Assurance Domain 8:
+// Rollback / Recovery") Owner-authorized live drill (2026-08-16, AskUserQuestion
+// "Rollback/Recovery-Drill (empfohlen)"). Extends the M8 rollback-to-read-only proof above
+// (which only proved DENY-after-rollback + singleton-immutability for one provider) into a full
+// M9 recovery drill: baseline ALLOW -> rolled-back DENY -> RESTORED ALLOW again, across all three
+// canonical providers, through the composed evaluateProviderScopedAuthorization() path (not just
+// the isolated scope check), with an independent before/after snapshot proving the real exported
+// registry was never mutated at any point in the sequence.
+describe('M9 Rollback/Recovery Live-Drill (I2 Assurance, 2026-08-16)', () => {
+  const registrySnapshotBeforeDrill = JSON.parse(JSON.stringify(PROVIDER_PROFILES));
+
+  function rolledBackRegistry(appId: string) {
+    return {
+      ...PROVIDER_PROFILES,
+      [appId]: {
+        ...PROVIDER_PROFILES[appId],
+        allowedCapabilities: ['READ', 'ANALYZE'] as const,
+      },
+    };
+  }
+
+  it.each(CANONICAL_VALUE_CHAIN_PROVIDER_IDS)(
+    'recovers %s from a rolled-back profile to full capability again (last-known-good state restored)',
+    (appId) => {
+      const auditCorrelationId = `m9-rollback-drill-${appId}`;
+
+      // 1) Baseline: real, unrolled registry allows the real live mutating capability.
+      const baseline = evaluateProviderScopedAuthorization(
+        request(appId, { capability: 'BRANCH', riskClass: 'MEDIUM', auditCorrelationId }),
+      );
+      expect(baseline.verdict).toBe('ALLOW');
+
+      // 2) Rollback: narrowed snapshot denies the mutating capability, keeps READ.
+      const rolledBack = rolledBackRegistry(appId);
+      const duringRollbackMutating = evaluateProviderScopedAuthorization(
+        request(appId, { capability: 'BRANCH', riskClass: 'MEDIUM', auditCorrelationId, registry: rolledBack }),
+      );
+      expect(duringRollbackMutating.verdict).toBe('DENY');
+      expect(duringRollbackMutating.layer).toBe('PROVIDER_PROFILE');
+
+      const duringRollbackRead = evaluateProviderScopedAuthorization(
+        request(appId, { capability: 'READ', registry: rolledBack }),
+      );
+      expect(duringRollbackRead.verdict).toBe('ALLOW');
+
+      // 3) Recovery: the very next request against the real registry is ALLOW again - proves the
+      // rollback is reversible (a snapshot swap, not a one-way ratchet or persisted mutation).
+      const restored = evaluateProviderScopedAuthorization(
+        request(appId, { capability: 'BRANCH', riskClass: 'MEDIUM', auditCorrelationId }),
+      );
+      expect(restored.verdict).toBe('ALLOW');
+    },
+  );
+
+  it('never mutated the real exported PROVIDER_PROFILES registry across the full baseline/rollback/recovery sequence, for any canonical provider', () => {
+    expect(JSON.parse(JSON.stringify(PROVIDER_PROFILES))).toEqual(registrySnapshotBeforeDrill);
+  });
+});
+
 describe('M8 Provider Cutover Readiness Gate', () => {
   const completeEvidence = {
     realCallerVerified: true,

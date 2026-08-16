@@ -108,8 +108,13 @@ Für jede Domain: was bereits als **Kontrollmechanismus** existiert (aus M4–M8
   Aufrufer (SA3B) — IAM-Kill-Switch und Provider-Profil-Registry-Rollback, siehe
   `docs/evidence/m8/M8_PHASE0_AND_PROVIDER_PROFILE_EVIDENCE.md` §7. Für `claude-code-cli`/
   `grok-xai-connector` mangels echtem Aufrufer nicht anwendbar (siehe `M8_CLOSURE_EVIDENCE.md` §2).
-- M9-Drill ausgeführt: Rollback-zu-read-only für SA3B bewiesen; ein vollständiger
-  Repository-Revert- oder Konfigurations-Rollback-Drill im M9-Format noch offen.
+- M9-Drill ausgeführt: **Ja, 2026-08-16** (Owner-autorisiert via `AskUserQuestion`) — siehe
+  `docs/evidence/m9/M9_ROLLBACK_RECOVERY_LIVE_DRILL_2026-08-16.md`. Provider-Profil-Registry-Hebel
+  jetzt für alle 3 kanonischen Provider als Baseline→Rollback→Recovery-Sequenz bewiesen, inkl.
+  vollständigem Vorher/Nachher-Registry-Snapshot als Unveränderlichkeitsnachweis. Repository-Revert
+  und Deployment-Rollback bewusst nicht als künstliche Testmutation ausgeführt (siehe Drill-Evidence
+  §0) — durch bestehende operative Praxis bzw. M7-Evidence bereits belegt. Trägt zu
+  M9-Exit-Gate-Punkt 5 bei (teilweise).
 
 ## 3. Governance-Lücke: ADR-0063 Status
 
@@ -135,7 +140,8 @@ Priorisierungsvorschlag nach Reifegrad der Grundlage (am weitesten fortgeschritt
 
 1. ~~**Kill-Switch-Live-Drill** (§2.6)~~ — **erledigt 2026-08-16**, siehe
    `docs/evidence/m9/M9_KILL_SWITCH_LIVE_DRILL_2026-08-16.md`.
-2. **Rollback/Recovery-Drill** (§2.8) — ebenfalls starke Grundlage, direktes Gegenstück zu Punkt 1.
+2. ~~**Rollback/Recovery-Drill** (§2.8)~~ — **erledigt 2026-08-16**, siehe
+   `docs/evidence/m9/M9_ROLLBACK_RECOVERY_LIVE_DRILL_2026-08-16.md`.
 3. **Audit-Outage-Drill** (§2.5) — Korrelation bereits bewiesen; fehlt nur der Fehlerinjektionsteil.
 4. **Replay/Idempotency-Drill** (§2.3) — bestehende Tests konsolidieren + Runbook-Evidence-Format.
 5. **Authorization-Bypass-Negativtests** (§2.1) — verstreute Tests konsolidieren.
