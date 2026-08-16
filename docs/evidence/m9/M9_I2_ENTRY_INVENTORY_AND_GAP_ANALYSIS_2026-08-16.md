@@ -218,6 +218,17 @@ Priorisierungsvorschlag nach Reifegrad der Grundlage (am weitesten fortgeschritt
     (jetzt als MEDIUM–HIGH eingestuft). Exit-Gate-Punkt 6 gilt als erfüllt; M9 als Ganzes bleibt
     wegen Punkt 9 (Traceability-Sync) und Punkt 10 (Branch-Bereinigung) weiterhin nicht formal
     `COMPLETE / VERIFIED PASS`.
+11. ~~**Exit-Gate-Punkte 9 und 10** (Traceability-Sync, Branch-Bereinigung)~~ — **erledigt
+    2026-08-16**, siehe `docs/evidence/m9/M9_EXIT_GATE_ITEMS_9_10_2026-08-16.md`. Punkt 9: Runbook-
+    Status-Header und Traceability-Matrix-Zeile für M9 korrigiert (waren „BLOCKED BY M8", obwohl M8
+    abgeschlossen und alle 8 Domains gedrillt sind) — bewusst korrigiert zu „IN PROGRESS — NOT YET
+    COMPLETE / VERIFIED PASS" statt zu einer pauschalen „COMPLETE"-Behauptung, da mehrere
+    Exit-Gate-Punkte laut Independent Review nur teilweise erfüllt sind. Punkt 10: verifiziert, dass
+    der Review-Fund auf einer veralteten, nicht-geprunten lokalen Branch-Ansicht beruhte — nach
+    `git fetch --prune` existiert auf dem geteilten Repository kein M9-zuordenbarer verwaister
+    Branch (jeder M9-PR wurde bereits bei Merge automatisch bereinigt). **M9-Exit-Gate-Punkte 1, 6,
+    7, 9, 10 jetzt vollständig erfüllt; Punkte 2, 3, 4, 5, 8 bleiben laut Independent Review
+    teilweise erfüllt — M9 als Ganzes weiterhin nicht formal `COMPLETE / VERIFIED PASS`.**
 
 Dieses Dokument trifft selbst keine Auswahl unter diesen Optionen — das ist Owner-Entscheidung.
 

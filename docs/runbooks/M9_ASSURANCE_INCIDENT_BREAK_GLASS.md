@@ -1,6 +1,7 @@
 # M9 — Agent Assurance, Incident Response & Break-Glass Runbook
 
-Status: PLANNED — EXECUTION BLOCKED BY M8
+Status: IN PROGRESS — NOT YET `COMPLETE / VERIFIED PASS` (updated 2026-08-16, see Exit Gate status
+note below)
 Date: 2026-08-12
 Authority: ADR-0063, `docs/architecture/ai-agent/AI_AGENT_INCIDENT_RESPONSE.md`, DEVELOPMENT Chain Execution Policy
 
@@ -203,5 +204,21 @@ M9 is `COMPLETE / VERIFIED PASS` only when:
 8. residual risk is explicitly documented/accepted as required;
 9. Evidence and Roadmap/Traceability are synchronized;
 10. work branches are deleted.
+
+**Status note (2026-08-16, replaces the earlier "PLANNED — EXECUTION BLOCKED BY M8" header, which
+was stale after M8 completed and all 8 domains below were drilled):** All 8 Assurance Domains have
+a live drill with evidence under `docs/evidence/m9/*_LIVE_DRILL_2026-08-16.md`. The Required
+Independent Review (item 6) is complete —
+`docs/evidence/m9/M9_INDEPENDENT_EVIDENCE_REVIEW_2026-08-16.md` gives its own independent,
+per-item verdict for all 10 Exit Gate items (several graded "partially satisfied" rather than
+fully satisfied — see that document, not this line, for the authoritative per-item status). Items
+1, 6 and 7 are satisfied. Item 9 is satisfied by this edit. Item 10 was re-verified 2026-08-16:
+after pruning stale local branch caches, the only branches on the shared repository are `main`,
+this session's own active designated branch, and one unrelated branch belonging to a different
+parallel agent session — no M9-attributable leftover branch exists. **M9 is NOT yet formally
+`COMPLETE / VERIFIED PASS`** — see the Independent Review document for the specific items still
+graded partial and the Owner decisions that remain open (`docs/evidence/m9/
+M9_I2_ENTRY_INVENTORY_AND_GAP_ANALYSIS_2026-08-16.md` §5 tracks the live list of Owner-facing
+options).
 
 Only then may M10 implementation/cutover begin.
