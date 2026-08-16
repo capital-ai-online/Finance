@@ -13,10 +13,14 @@ export interface TwelveDataMarketDataProviderOptions {
   apiKey?: string;
 }
 
-function providerSymbol(symbol: string, assetClass: 'stock' | 'forex'): string {
+function providerSymbol(symbol: string, assetClass: 'stock' | 'forex' | 'crypto'): string {
   const normalized = symbol.toUpperCase().trim();
   if (assetClass === 'forex' && !normalized.includes('/') && normalized.length === 6) {
     return `${normalized.slice(0, 3)}/${normalized.slice(3)}`;
+  }
+  // SC-5 Phase D: crypto pairs quote against USD, same "/quote" endpoint as stock/forex.
+  if (assetClass === 'crypto' && !normalized.includes('/')) {
+    return `${normalized}/USD`;
   }
   return normalized;
 }
@@ -26,7 +30,7 @@ export class TwelveDataMarketDataProvider implements MarketDataProvider {
     id: 'twelvedata',
     role: 'primary',
     capabilities: ['snapshot', 'quote'],
-    assetClasses: ['stock', 'forex'],
+    assetClasses: ['stock', 'forex', 'crypto'],
     enabled: true,
     priority: 10,
   };
@@ -39,7 +43,7 @@ export class TwelveDataMarketDataProvider implements MarketDataProvider {
     const apiKey = this.options.apiKey ?? process.env.TWELVEDATA_API_KEY;
     if (!apiKey) return this.unavailable(request, retrievedAt, 'TWELVEDATA_API_KEY is not configured.');
 
-    const symbol = providerSymbol(request.symbol, request.assetClass as 'stock' | 'forex');
+    const symbol = providerSymbol(request.symbol, request.assetClass as 'stock' | 'forex' | 'crypto');
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.options.timeoutMs ?? 4_000);
     try {
@@ -65,7 +69,7 @@ export class TwelveDataMarketDataProvider implements MarketDataProvider {
         : retrievedAt;
       const currency = typeof data?.currency === 'string'
         ? data.currency
-        : request.assetClass === 'forex'
+        : request.assetClass === 'forex' || request.assetClass === 'crypto'
           ? symbol.slice(-3)
           : null;
       return {

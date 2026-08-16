@@ -11,7 +11,7 @@ import type {
   ProviderRole,
 } from './contracts';
 
-export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.3.0' as const;
+export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.4.0' as const;
 
 export type ProviderGatewayStatus =
   | 'behind_gateway'
@@ -71,13 +71,16 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     displayName: 'TwelveData',
     role: 'primary',
     capabilities: ['snapshot', 'quote'],
-    assetClasses: ['stock', 'forex'],
+    assetClasses: ['stock', 'forex', 'crypto'],
     enabled: true,
     priority: 10,
     rateLimit: { capacity: 30, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 45_000 },
     gatewayStatus: 'behind_gateway',
-    notes: 'Traditional stock/forex quotes via traditionalQuoteEvidence → MarketDataGateway.',
+    notes:
+      'Traditional stock/forex quotes via traditionalQuoteEvidence → MarketDataGateway. ' +
+      'SC-5 Phase D: TwelveDataMarketDataProvider also accepts assetClass=crypto (X/USD via /quote); ' +
+      'registered for a future gateway-hardened quorum, not yet consumed by cryptoQuoteEvidence.',
   },
   {
     id: 'fmp-index',
@@ -142,8 +145,11 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     priority: 20,
     rateLimit: { capacity: 20, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 30_000 },
-    gatewayStatus: 'consensus_only',
-    notes: 'Used by cryptoSpotConsensus only; gateway adapter not yet registered.',
+    gatewayStatus: 'behind_gateway',
+    notes:
+      'SC-5 Phase D: CoinAPIMarketDataProvider registered (matrix RL/CB) for a future gateway-hardened ' +
+      'crypto quorum. Still consumed directly (no matrix RL/CB) by cryptoSpotConsensus; ' +
+      'cryptoQuoteEvidence still pins allowedProviderIds to [coingecko]. executionPriceEligible unchanged.',
   },
   {
     id: 'eodhd',
@@ -155,8 +161,12 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     priority: 40,
     rateLimit: { capacity: 15, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 45_000 },
-    gatewayStatus: 'consensus_only',
-    notes: 'EOD reference observation in cryptoSpotConsensus; cannot form tight realtime quorum alone.',
+    gatewayStatus: 'behind_gateway',
+    notes:
+      'SC-5 Phase D: EODHDMarketDataProvider registered (matrix RL/CB), snapshot labelled HISTORICAL ' +
+      '(EOD close, never LIVE/DELAYED) so it cannot masquerade as a current execution price; cannot form ' +
+      'tight realtime quorum alone. Still consumed directly by cryptoSpotConsensus (no matrix RL/CB); ' +
+      'cryptoQuoteEvidence still pins allowedProviderIds to [coingecko].',
   },
   {
     id: 'stooq',

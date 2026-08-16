@@ -25,6 +25,32 @@ describe('TwelveDataMarketDataProvider', () => {
     expect(snapshot.evidenceId).toContain('quote:twelvedata:AAPL');
   });
 
+  it('formatiert Crypto-Symbole als X/USD-Paar und meldet DELAYED (SC-5 Phase D)', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({
+      close: '61234.50', currency: 'USD', datetime: '2026-08-16T00:00:00Z', exchange: 'Crypto',
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+    const provider = new TwelveDataMarketDataProvider({
+      apiKey: 'test-key',
+      nowMs: () => Date.parse('2026-08-16T00:01:00Z'),
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+    });
+    const snapshot = await provider.getSnapshot({
+      symbol: 'BTC', assetClass: 'crypto', correlationId: 'corr-twelve-crypto',
+    });
+    expect(snapshot).toMatchObject({
+      provider: 'TwelveData',
+      price: 61234.5,
+      currency: 'USD',
+      qualityState: 'DELAYED',
+      isRealtime: false,
+      isDelayed: true,
+      correlationId: 'corr-twelve-crypto',
+    });
+    const [requestedUrlArg] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    const requestedUrl = String(requestedUrlArg ?? '');
+    expect(requestedUrl).toContain(encodeURIComponent('BTC/USD'));
+  });
+
   it('schlägt bei fehlendem Secret ohne synthetischen Preis fehl', async () => {
     const previous = process.env.TWELVEDATA_API_KEY;
     delete process.env.TWELVEDATA_API_KEY;
