@@ -45,8 +45,7 @@ function bodyHasSection(bodyText, requiredHeading) {
 
 /**
  * Evidence token is present if the full value or (for 40-char SHAs) a stable 12-char prefix
- * appears in the body. Ephemeral head/main SHAs are intentionally NOT required: every push
- * would otherwise invalidate a correctly filled template until a human rewrites the body.
+ * appears in the body.
  */
 function bodyHasEvidenceToken(bodyText, token) {
   const value = String(token || '').trim();
@@ -110,9 +109,12 @@ if (unresolved.length > 0) {
 }
 
 // 5) Work-Claim: Agent-PRs höchstens einer; Human-PRs ohne neuen Claim sind zulässig.
-// Durable evidence only: claimId, claim path, production identity.
-// DO NOT require baseline.head.sha or baseline.main.sha in the body — those change on every
-// push/rebase and caused systemic false failures of the PR-Vorlagenvertrag after legitimate fixes.
+// Durable evidence only: claimId + claim path.
+// Production version/commitSha are intentionally NOT required in the body:
+// they are only known after CI preflight runs, so agents cannot reliably put them
+// at PR-creation time without placeholders that then fail the match.
+// Production identity remains enforced by the preflight job + baseline markers.
+// Head-/main-SHAs remain non-required (ephemeral on every push/rebase).
 const claims = listAddedClaimFiles(baseRef, headRef);
 if (claims.length > 1) {
   fail(`Es wird höchstens ein neuer Work-Claim im PR-Diff erwartet; gefunden: ${claims.length}.`);
@@ -121,21 +123,16 @@ if (claims.length > 1) {
 if (claims.length === 1) {
   const claimPath = claims[0];
   const claim = readJsonFile(claimPath);
-  const baseline = readJsonFile(baselinePath);
 
-  const durableTokens = [
-    claim.claimId,
-    claimPath,
-    baseline.production?.version,
-    baseline.production?.commitSha,
-  ].filter(Boolean).map(String);
+  const durableTokens = [claim.claimId, claimPath].filter(Boolean).map(String);
 
   const missingEvidence = durableTokens.filter((value) => !bodyHasEvidenceToken(body, value));
   if (missingEvidence.length > 0) {
     fail(
-      `PR #${prNumber} fehlt dauerhafte Claim-/Produktions-Nachweise im Body: ${missingEvidence.join(', ')}. ` +
-        `Erforderlich: Claim-ID, Claim-Pfad, Produktionsversion und Produktions-Commit (voll oder 12-Zeichen-Präfix). ` +
-        `Head-/main-SHAs sind bewusst nicht mehr Body-pflichtig (ändern sich bei jedem Push).`,
+      `PR #${prNumber} fehlt dauerhafte Claim-Nachweise im Body: ${missingEvidence.join(', ')}. ` +
+        `Erforderlich: Claim-ID und Claim-Pfad. ` +
+        `Produktionsversion/-Commit und Head-/main-SHAs sind bewusst nicht mehr Body-pflichtig ` +
+        `(Preflight + Baseline-Marker decken die Produktionsidentität ab; SHAs ändern sich bei jedem Push).`,
     );
   }
 } else {
@@ -150,7 +147,7 @@ if (!body.includes('Human-/CODEOWNER-Freigabe für Merge erforderlich:** Ja')) {
 }
 
 console.log(
-  `[PR-VORLAGE] PR #${prNumber} entspricht dem kanonischen Vorlagenvertrag v1.4.1 ` +
-    `(Abschnitte dash-tolerant, Marker, Freigabe; durable Claim/Production-Evidence; ` +
-    `ephemere head/main-SHAs nicht body-pflichtig; Owner-Checkbox-Gate retired).`,
+  `[PR-VORLAGE] PR #${prNumber} entspricht dem kanonischen Vorlagenvertrag v1.4.2 ` +
+    `(Abschnitte dash-tolerant, Marker, Freigabe; durable Claim-ID/Pfad only; ` +
+    `production version/SHA und ephemere head/main-SHAs nicht body-pflichtig; Owner-Checkbox-Gate retired).`,
 );
