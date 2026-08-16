@@ -77,7 +77,10 @@ describe('SC-5 Phase B matrix guards', () => {
   it('returns last-known-good when rate-limit budget is exhausted', async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify(payload()), { status: 200 }));
     const fetchImpl = fetchMock as unknown as typeof fetch;
-    const nowMs = () => Date.parse('2026-08-16T12:00:00.000Z');
+    // Mutable clock: second call must advance past cacheTtlMs=0 so the
+    // rate-limit path is reached instead of an equal-timestamp cache-hit.
+    let now = Date.parse('2026-08-16T12:00:00.000Z');
+    const nowMs = () => now;
     const budget = new RateLimitBudget({
       nowMs,
       perProvider: { coingecko: { capacity: 1, windowMs: 60_000 } },
@@ -91,6 +94,8 @@ describe('SC-5 Phase B matrix guards', () => {
     });
     expect(first?.cacheMode).toBe('fresh');
     expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    now += 1; // expire zero-TTL cache entry
 
     const second = await getVerifiedCryptoSnapshot('ETH', {
       fetchImpl,
