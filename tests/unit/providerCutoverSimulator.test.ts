@@ -85,22 +85,22 @@ describe('SA-P05 Provider Cutover Simulator', () => {
     });
   });
 
-  it('keeps non-mutating Development and Research profiles outside privileged cutover', () => {
+  it('marks retired Google AI Studio / NotebookLM as RETIRED (Owner 2026-08-16)', () => {
     const google = simulateProviderCutover(simulation({
       candidateRequest: candidate('google-ai-studio', { capability: 'READ' }),
     }));
     const notebook = simulateProviderCutover(simulation({
       candidateRequest: candidate('notebooklm', { capability: 'READ' }),
     }));
-    expect(google).toMatchObject({ status: 'NOT_APPLICABLE', executionPermitted: false });
-    expect(notebook).toMatchObject({ status: 'NOT_APPLICABLE', executionPermitted: false });
+    expect(google).toMatchObject({ status: 'RETIRED', executionPermitted: false });
+    expect(notebook).toMatchObject({ status: 'RETIRED', executionPermitted: false });
   });
 
-  it('blocks removed or unknown provider aliases such as Gemini', () => {
+  it('marks removed Gemini alias as RETIRED', () => {
     const result = simulateProviderCutover(simulation({
       candidateRequest: candidate('gemini'),
     }));
-    expect(result).toMatchObject({ status: 'BLOCKED', executionPermitted: false });
+    expect(result).toMatchObject({ status: 'RETIRED', executionPermitted: false });
   });
 
   it('surfaces replay denial as a shadow mismatch and never mutates state', () => {
