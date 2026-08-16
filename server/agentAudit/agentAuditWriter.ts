@@ -59,8 +59,18 @@ function optionalUuid(value?: string): string | null {
   return clean && UUID_VALUE.test(clean) ? clean : null;
 }
 
+/**
+ * Same camelCase-boundary fix as src/platform/Telemetry/redaction.ts's normalizeKeyForMatching
+ * (M9 Secret/Exfiltration drill finding, 2026-08-16): PROHIBITED_PAYLOAD_KEY anchors on
+ * `[_-]`/string-boundary, so a prefixed key like `fullRequestBody` would otherwise slip past
+ * unredacted while `full_request_body` would not.
+ */
+function normalizeKeyForMatching(key: string): string {
+  return key.replace(/([a-z0-9])([A-Z])/g, '$1_$2');
+}
+
 function omitProhibitedPayloads(value: unknown, key = ''): unknown {
-  if (PROHIBITED_PAYLOAD_KEY.test(key)) return OMITTED;
+  if (PROHIBITED_PAYLOAD_KEY.test(normalizeKeyForMatching(key))) return OMITTED;
   if (Array.isArray(value)) return value.map(item => omitProhibitedPayloads(item));
   if (value && typeof value === 'object') {
     const output: Record<string, unknown> = {};
