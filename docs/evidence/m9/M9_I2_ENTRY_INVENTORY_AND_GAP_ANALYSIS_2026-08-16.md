@@ -209,6 +209,15 @@ Priorisierungsvorschlag nach Reifegrad der Grundlage (am weitesten fortgeschritt
    (`.ai/evidence/break-glass/BREAK-GLASS-M9-DRILL-2026-08-16-01-POST-REVIEW.md`) ist Owner-signiert.
    Kein weiterer Break-Glass-spezifischer Punkt offen — verbleibende M9-Punkte betreffen andere
    Domains (v. a. Punkt 6, Independent Evidence Review).
+10. ~~**Independent Evidence Review** (Exit-Gate-Punkt 6)~~ — **erledigt 2026-08-16**, siehe
+    `docs/evidence/m9/M9_INDEPENDENT_EVIDENCE_REVIEW_2026-08-16.md`. Durchgeführt von einem frischen,
+    an keiner M9-Implementierung beteiligten Sub-Agenten (keine Selbstprüfung). Gesamtverdikt:
+    „Ja, mit Vorbehalten" — kein CRITICAL-Fund, aber 4 dokumentierte Folgepunkte (F1/F2/F3/F4,
+    Details im Review), darunter ein veralteter Runbook-/Traceability-Matrix-Status (Exit-Gate-Punkt
+    9 dadurch **nicht erfüllt**) und der bereits bekannte `requireStepUp()`-`purpose`-Filter-Fund
+    (jetzt als MEDIUM–HIGH eingestuft). Exit-Gate-Punkt 6 gilt als erfüllt; M9 als Ganzes bleibt
+    wegen Punkt 9 (Traceability-Sync) und Punkt 10 (Branch-Bereinigung) weiterhin nicht formal
+    `COMPLETE / VERIFIED PASS`.
 
 Dieses Dokument trifft selbst keine Auswahl unter diesen Optionen — das ist Owner-Entscheidung.
 
