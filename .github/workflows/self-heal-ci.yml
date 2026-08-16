@@ -1,0 +1,260 @@
+name: Self-Heal CI (Claude Code)
+run-name: >-
+  ${{ github.event_name == 'workflow_dispatch'
+      && format('Manuell – Self-Heal für Run/PR')
+      || format('Self-Heal für CI-Fail (PR #{0})', github.event.workflow_run.pull_requests[0].number || '?') }}
+
+# ---------------------------------------------------------------------------
+# Autonomous CI Self-Healing with Claude Code Action
+#
+# Trigger: CI workflow fails on a same-repo pull_request.
+# Action:  Create isolated fix branch → diagnose failure logs →
+#          Claude generates minimal code fix → push + draft PR.
+#
+# Safety:
+# - Infinite-loop guard via branch prefixes (claude-auto-fix-*, claude/*)
+# - Only same-repo PRs (fork PRs excluded by workflow_run.pull_requests check)
+# - Claude is instructed to keep patches minimal and avoid workflow/secrets changes
+# - Draft PRs preferred; human/owner review remains required for merge
+#
+# Required secret: ANTHROPIC_API_KEY
+# Recommended: Repo Settings → Actions → General →
+#   "Allow GitHub Actions to create and approve pull requests" = enabled
+# ---------------------------------------------------------------------------
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Optional PR number to target (manual heal)"
+        required: false
+        type: string
+      run_id:
+        description: "Optional failed workflow run ID (manual heal)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+  issues: write
+  id-token: write   # OIDC for Claude Code Action
+
+concurrency:
+  group: self-heal-ci-${{ github.event.workflow_run.pull_requests[0].number || github.event.inputs.pr_number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  self-heal:
+    name: Diagnose & Fix CI Failure
+    if: |
+      github.event_name == 'workflow_dispatch' || (
+        github.event.workflow_run.conclusion == 'failure' &&
+        github.event.workflow_run.event == 'pull_request' &&
+        github.event.workflow_run.pull_requests[0] != null &&
+        !startsWith(github.event.workflow_run.head_branch, 'claude-auto-fix-') &&
+        !startsWith(github.event.workflow_run.head_branch, 'claude/')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Resolve target PR / branch / run
+        id: target
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const isManual = context.eventName === 'workflow_dispatch';
+            let prNumber, headBranch, runId, baseSha;
+
+            if (isManual) {
+              prNumber = core.getInput('pr_number') || null;
+              runId = core.getInput('run_id') || null;
+              if (!prNumber && !runId) {
+                core.setFailed('Manual dispatch requires pr_number or run_id');
+                return;
+              }
+              if (prNumber) {
+                const pr = await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: Number(prNumber)
+                });
+                headBranch = pr.data.head.ref;
+                baseSha = pr.data.base.sha;
+              }
+            } else {
+              const wr = context.payload.workflow_run;
+              prNumber = wr.pull_requests?.[0]?.number ?? null;
+              headBranch = wr.head_branch;
+              runId = String(wr.id);
+              baseSha = wr.pull_requests?.[0]?.base?.sha ?? null;
+            }
+
+            core.setOutput('pr_number', prNumber || '');
+            core.setOutput('head_branch', headBranch || '');
+            core.setOutput('run_id', runId || '');
+            core.setOutput('base_sha', baseSha || '');
+            core.info(`Target → PR #${prNumber || 'n/a'} branch=${headBranch} run=${runId}`);
+
+      - name: Checkout failing head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.target.outputs.head_branch }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git identity (claude[bot])
+        run: |
+          git config --global user.email "claude[bot]@users.noreply.github.com"
+          git config --global user.name "claude[bot]"
+
+      - name: Create isolated fix branch
+        id: branch
+        env:
+          HEAD_BRANCH: ${{ steps.target.outputs.head_branch }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          SAFE=$(printf '%s' "$HEAD_BRANCH" | tr -cd 'a-zA-Z0-9/_.-' | head -c 80)
+          BRANCH_NAME="claude-auto-fix-ci-${SAFE}-${RUN_ID}"
+          git checkout -b "$BRANCH_NAME"
+          echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+          echo "Created fix branch: $BRANCH_NAME"
+
+      - name: Collect CI failure details & logs
+        id: failure
+        uses: actions/github-script@v7
+        env:
+          TARGET_RUN_ID: ${{ steps.target.outputs.run_id }}
+        with:
+          script: |
+            const runId = process.env.TARGET_RUN_ID;
+            if (!runId) {
+              core.setOutput('result', JSON.stringify({ runUrl: '', failedJobs: [], errorLogs: [] }));
+              return;
+            }
+
+            const run = await github.rest.actions.getWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: Number(runId)
+            });
+
+            const jobsResp = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: Number(runId),
+              per_page: 100
+            });
+
+            const failed = jobsResp.data.jobs.filter(j => j.conclusion === 'failure');
+            const errorLogs = [];
+
+            for (const job of failed.slice(0, 5)) { // cap to avoid huge payloads
+              try {
+                const logResp = await github.rest.actions.downloadJobLogsForWorkflowRun({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  job_id: job.id
+                });
+                // Truncate very long logs
+                const text = typeof logResp.data === 'string'
+                  ? logResp.data
+                  : String(logResp.data);
+                errorLogs.push({
+                  jobName: job.name,
+                  logs: text.slice(-12000) // last 12k chars are usually most useful
+                });
+              } catch (e) {
+                errorLogs.push({ jobName: job.name, logs: `(log download failed: ${e.message})` });
+              }
+            }
+
+            const result = {
+              runUrl: run.data.html_url,
+              failedJobs: failed.map(j => j.name),
+              errorLogs
+            };
+            core.setOutput('result', JSON.stringify(result));
+
+      - name: Setup Node (match repo engines)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.18.0'
+          cache: 'npm'
+
+      - name: Install dependencies (for local verification by Claude)
+        run: npm ci
+        continue-on-error: true
+
+      - name: Claude Code – diagnose & apply minimal fix
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are the autonomous CI self-healing agent for the Capital-AI / Finance repository (TypeScript, Vite, Vitest, Node 24).
+
+            ## Goal
+            Diagnose the CI failure and apply the **smallest possible code fix** that makes the relevant checks pass again.
+
+            ## Context
+            - Repository: ${{ github.repository }}
+            - Original PR: #${{ steps.target.outputs.pr_number }}
+            - Original head branch: ${{ steps.target.outputs.head_branch }}
+            - Fix branch (you are already on it): ${{ steps.branch.outputs.branch_name }}
+            - Failed CI run: ${{ fromJSON(steps.failure.outputs.result).runUrl }}
+            - Failed jobs: ${{ join(fromJSON(steps.failure.outputs.result).failedJobs, ', ') }}
+
+            ## Failure logs (truncated)
+            ```
+            ${{ toJSON(fromJSON(steps.failure.outputs.result).errorLogs) }}
+            ```
+
+            ## Hard rules
+            1. Prefer minimal, surgical changes. Do not refactor unrelated code.
+            2. Do **not** modify secrets, environment variables, or production deploy hooks.
+            3. Avoid changing `.github/workflows/**` unless the failure is clearly caused by a workflow syntax/logic error you introduced in a previous human commit. Prefer fixing application code/tests.
+            4. Do not weaken security checks, CSP, supply-chain, or governance scripts.
+            5. After editing, verify locally with the most relevant commands, e.g.:
+               - `npm run lint`
+               - `npm test`
+               - or the specific failing script if identifiable
+            6. Commit only when the fix is verified (or you are highly confident).
+            7. Use a clear commit message: `fix(ci): autonomous heal for PR #${{ steps.target.outputs.pr_number }}`
+            8. Push the fix branch to origin.
+            9. If a draft PR for this fix branch does not yet exist, open one with `gh pr create --draft` against `main` (or the original PR base if more appropriate). Title it something like:
+               `[Self-Heal] Fix CI failure for PR #${{ steps.target.outputs.pr_number }}`
+               In the body, briefly state root cause + what was changed + link to the failed run.
+            10. If you cannot fix safely, stop, leave a short comment on the original PR explaining why, and do not push broken code.
+
+            Start by reading the error logs carefully, then locate the relevant source files, apply the minimal fix, verify, commit, push, and open/update the draft PR.
+          claude_args: >-
+            --allowedTools 'Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(gh:*),Bash(node:*)'
+            --max-turns 25
+
+      - name: Post status comment on original PR (best-effort)
+        if: always() && steps.target.outputs.pr_number != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ steps.target.outputs.pr_number }}
+          FIX_BRANCH: ${{ steps.branch.outputs.branch_name }}
+          RUN_URL: ${{ fromJSON(steps.failure.outputs.result).runUrl }}
+        run: |
+          set -euo pipefail
+          BODY="## 🩹 Self-Heal CI (Claude Code)
+
+          Attempted autonomous remediation for the failed CI run.
+
+          - Failed run: ${RUN_URL}
+          - Fix branch: \`${FIX_BRANCH}\`
+          - Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          Please review the generated draft PR (if created) before merging."
+          gh pr comment "$PR" --body "$BODY" || true
