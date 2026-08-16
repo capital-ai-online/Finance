@@ -87,9 +87,12 @@ Für jede Domain: was bereits als **Kontrollmechanismus** existiert (aus M4–M8
   `agentIam.ts`s `killSwitchActive` (verweigert Mutation, erhält READ) und REM-Level
   `killSwitch.enabled`. Real end-to-end durch die SA3B-Kette verdrahtet und getestet, siehe
   `docs/evidence/m8/M8_PHASE0_AND_PROVIDER_PROFILE_EVIDENCE.md` §1.4 und §7.
-- M9-Drill ausgeführt: Unit-/Integrationsebene ja; ein Live-Drill „Kill-Switch während laufender
-  Ausführung aktivieren, in-flight work stoppt an der nächsten Grenze" gemäß Runbook-Erwartung
-  bisher nicht als eigenes Evidence-Dokument.
+- M9-Drill ausgeführt: **Ja, 2026-08-16** (Owner-autorisiert via `AskUserQuestion`) — siehe
+  `docs/evidence/m9/M9_KILL_SWITCH_LIVE_DRILL_2026-08-16.md`. Alle vier realen mutierenden
+  Capabilities (`BRANCH`/`COMMIT`/`PR`/`CI_REQUEST`) einzeln gegen die live-wired SA3B-Kette
+  angegriffen und verweigert; `READ`/`ANALYZE`/`PLAN` bleiben erhalten; differenzieller Beweis und
+  Nicht-Sticky-Beweis erbracht. Trägt zu M9-Exit-Gate-Punkt 3 bei (teilweise — nur für den einzigen
+  produktiven Aufrufer SA3B, siehe Drill-Evidence §7).
 
 ### 2.7 Break-Glass
 - Kontrollmechanismus vorhanden: **nicht implementiert.** ADR-0063 (die normative Grundlage für
@@ -130,8 +133,8 @@ Beobachtung, keine Blockade — wird hier dokumentiert, damit sie nicht verloren
 
 Priorisierungsvorschlag nach Reifegrad der Grundlage (am weitesten fortgeschritten zuerst):
 
-1. **Kill-Switch-Live-Drill** (§2.6) — Grundlage am stärksten, zwei Mechanismen bereits verdrahtet
-   und unit-getestet; ein echter Drill wäre primär eine End-to-End-Bestätigung, kein Neubau.
+1. ~~**Kill-Switch-Live-Drill** (§2.6)~~ — **erledigt 2026-08-16**, siehe
+   `docs/evidence/m9/M9_KILL_SWITCH_LIVE_DRILL_2026-08-16.md`.
 2. **Rollback/Recovery-Drill** (§2.8) — ebenfalls starke Grundlage, direktes Gegenstück zu Punkt 1.
 3. **Audit-Outage-Drill** (§2.5) — Korrelation bereits bewiesen; fehlt nur der Fehlerinjektionsteil.
 4. **Replay/Idempotency-Drill** (§2.3) — bestehende Tests konsolidieren + Runbook-Evidence-Format.
