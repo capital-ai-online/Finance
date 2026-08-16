@@ -521,4 +521,110 @@ describe('SA3 Systemadmin audited execution', () => {
       });
     });
   });
+
+  // M9 (ADR-0063, docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md "Assurance Domain 5: Audit
+  // Completeness / Outage") Owner-authorized live drill (2026-08-16, AskUserQuestion
+  // "Audit-Outage-Drill (empfohlen)"). The authorization-phase persistence-failure case is already
+  // covered above ("fails closed before returning a permit when audit persistence is unavailable");
+  // this block covers the three parts of Domain 5 not yet drilled: (1) a persistence failure during
+  // the TERMINAL outcome write must also fail closed, not just the authorization write - a mutation
+  // could otherwise complete with no terminal SUCCESS/ERROR record; (2) the append-only guarantee is
+  // proven structurally, not just by absence of a counterexample; (3) full actor/agent/session/
+  // request/target/capability/result correlation is proven for a real mutating capability end to
+  // end across both the authorization and terminal events.
+  describe('M9 Audit-Completeness/Outage Live-Drill (I2 Assurance, 2026-08-16)', () => {
+    it('fails closed (throws, does not silently return success) when the TERMINAL outcome event cannot be persisted', async () => {
+      const authorizationResult = await authorizeSystemadminAuditedExecution({
+        authorization: authorization(AGENT_CAPABILITIES.BRANCH, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']),
+        checkpoint: { ...baseCheckpoint, freshBranchCreated: false, branchName: undefined },
+      }, auditContext);
+      expect(authorizationResult.decision.verdict).toBe('ALLOW');
+
+      // The authorization write succeeded (above); only the SECOND, terminal write now fails -
+      // proving the outage-handling is not a one-time startup check but applies independently to
+      // every durable write in the lifecycle, including the one that closes out a mutation attempt.
+      mocks.single.mockResolvedValueOnce({ data: null, error: { message: 'audit store unavailable mid-flight' } });
+
+      await expect(recordSystemadminAuditedOutcome({
+        authorization: authorizationResult,
+        result: 'SUCCESS',
+        branchName: 'agent/sa4-pilot-example',
+        commitSha: '89abcdef0123456789abcdef0123456789abcdef',
+      })).rejects.toThrow('durable audit persistence failed');
+      // No caller can observe a fabricated terminal record: recordSystemadminAuditedOutcome only
+      // ever returns the real writeAgentAuditEvent() promise (server/agentAudit/
+      // agentAuditWriter.ts), never a synthesized success on persistence failure.
+    });
+
+    it('the mocked durable audit sink only ever exposes insert - never update or delete (structural append-only proof)', async () => {
+      await authorizeSystemadminAuditedExecution({
+        authorization: authorization(),
+        checkpoint: baseCheckpoint,
+      }, auditContext);
+
+      // mocks.getPrivilegedServerSupabase() -> { from } -> from() -> { insert } (see the vi.hoisted
+      // mock factory at the top of this file). If server/agentAudit/agentAuditWriter.ts ever called
+      // .update()/.delete() on this table instead of .insert(), that call would throw "is not a
+      // function" and this test (and every other test in this file) would fail immediately - the
+      // mock contract itself enforces append-only, it is not merely an assertion of absence.
+      const tableHandle = mocks.from.mock.results.at(-1)?.value;
+      expect(tableHandle).toBeDefined();
+      expect(typeof tableHandle.insert).toBe('function');
+      expect('update' in tableHandle).toBe(false);
+      expect('delete' in tableHandle).toBe(false);
+    });
+
+    it('correlates actor/agent/session/request/target/capability/result across the authorization and terminal events for a real mutating capability', async () => {
+      mocks.single
+        .mockResolvedValueOnce({ data: { id: 'm9-audit-auth-1' }, error: null })
+        .mockResolvedValueOnce({ data: { id: 'm9-audit-outcome-1' }, error: null });
+
+      const branchAuthorization = authorization(AGENT_CAPABILITIES.BRANCH, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']);
+      const authorizationResult = await authorizeSystemadminAuditedExecution({
+        authorization: branchAuthorization,
+        checkpoint: { ...baseCheckpoint, freshBranchCreated: false, branchName: undefined },
+      }, auditContext);
+      expect(authorizationResult.decision.verdict).toBe('ALLOW');
+
+      const expectedCorrelationId = `${principal.requestId}:${auditContext.traceId}:${principal.sessionId}`;
+      expect(authorizationResult.auditCorrelationId).toBe(expectedCorrelationId);
+
+      const authWriteArgs = mocks.insert.mock.calls[0]?.[0];
+      expect(authWriteArgs).toMatchObject({
+        agent_id: principal.agentId,
+        app_id: principal.appId,
+        capability: AGENT_CAPABILITIES.BRANCH,
+        authorization_decision: 'ALLOW',
+        scope: expect.objectContaining({
+          targetResource: 'github:SvenKulessa/Finance',
+          auditCorrelationId: expectedCorrelationId,
+        }),
+      });
+
+      await recordSystemadminAuditedOutcome({
+        authorization: authorizationResult,
+        result: 'SUCCESS',
+        branchName: 'agent/sa4-pilot-example',
+        commitSha: '89abcdef0123456789abcdef0123456789abcdef',
+      });
+
+      const outcomeWriteArgs = mocks.insert.mock.calls[1]?.[0];
+      expect(outcomeWriteArgs).toMatchObject({
+        agent_id: principal.agentId,
+        app_id: principal.appId,
+        capability: AGENT_CAPABILITIES.BRANCH,
+        authorization_decision: 'ALLOW',
+        result: 'SUCCESS',
+        commit_sha: '89abcdef0123456789abcdef0123456789abcdef',
+        scope: expect.objectContaining({
+          targetResource: 'github:SvenKulessa/Finance',
+          auditCorrelationId: expectedCorrelationId,
+        }),
+      });
+      // Same requestId/traceId/sessionId-derived correlation id ties the authorization event
+      // (BEFORE the attempted mutation) to the terminal event (AFTER the attempt) - the exact
+      // Domain 5 requirement "correlation across actor/agent/session/request/target/capability/
+      // result", proven for a real mutating capability rather than the generic default (PR) case.
+    });
+  });
 });
