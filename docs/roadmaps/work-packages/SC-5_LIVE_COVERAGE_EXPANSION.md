@@ -2,7 +2,7 @@
 
 **SPT:** SC-MD-SPT-0001  
 **Priority:** P1  
-**Status:** PHASE B IN PROGRESS — multi-field snapshot matrix RL/CB aligned  
+**Status:** PHASE C LANDED (code) — canonical multi-field on gateway; Phase B PR may still be open  
 **Date:** 2026-08-16
 
 ## Goal
@@ -27,9 +27,16 @@ Verified live quotes for **Stock / FX / Index / Crypto** with fail-closed status
 - [x] ProviderMatrix version `provider-matrix/1.2.0` + notes
 - [x] Unit tests for rate-limit and circuit-open paths
 
+## Delivered (Phase C)
+
+- [x] Optional `marketCapUsd` / `volume24hUsd` / `circulatingSupply` / `maxSupply` / `totalSupply` on `CanonicalMarketDataSnapshot`
+- [x] `CoinGeckoMarketDataProvider.getSnapshot` uses `coins/{id}?market_data=true` and maps fields (never synthetic)
+- [x] Unit tests for multi-field mapping + missing `market_data` fail-closed
+- [x] ProviderMatrix `provider-matrix/1.3.0` notes
+- [x] Evidence under `docs/evidence/sc-md/SC5_PHASE_C_CANONICAL_MULTIFIELD_2026-08-16.md`
+
 ## Explicitly NOT done
 
-- [ ] Map marketCap/supply into `CanonicalMarketDataSnapshot` / full gateway `getSnapshot` path
 - [ ] Register CoinAPI/TwelveData/EODHD as gateway crypto adapters for quorum
 - [ ] Wire `executionPriceEligible: true` for crypto (requires multi-provider quorum + Owner)
 - [ ] Stooq behind gateway
@@ -37,15 +44,16 @@ Verified live quotes for **Stock / FX / Index / Crypto** with fail-closed status
 - [ ] scoreImpact / rankingImpact flip
 - [ ] Change scoring formulas or eligibility thresholds
 - [ ] Process-wide shared RateLimitBudget instance between gateway quote path and multi-field path (policies aligned; instances still separate)
+- [ ] Unify VerifiedCryptoSnapshot scoring path fully onto gateway-only (optional later)
 
-## DoD Phase B
+## DoD Phase C
 
-1. Multi-field CoinGecko path consumes matrix RL capacity and CB thresholds  
-2. Rate-limit / open circuit → no synthetic fields; degraded last-known-good or null  
-3. Evidence + work-claim updated  
-4. Existing provenance + cache-hit behaviour preserved  
-5. Tests green
+1. Canonical contract carries optional multi-field keys  
+2. CoinGecko gateway provider populates them from real market_data  
+3. No synthetic fields; no price → UNAVAILABLE  
+4. Existing price-only consumers remain compatible  
+5. Tests green; evidence + work-claim updated
 
 ## Risk
 
-Niedrig: additive policy wiring. Callers of `getVerifiedCryptoSnapshot` unchanged. No eligibility or scoreImpact mutation.
+Niedrig–mittel: coins/{id} is heavier than simple/price (same rate-limit budget). Fail-closed on missing price. No eligibility mutation.
