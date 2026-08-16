@@ -4,11 +4,14 @@
   "roadmap": "SEO-GM-ROADMAP-0002",
   "documentId": "SEO-GM-ROADMAP-0002",
   "title": "WP-S2 formalize ADR-0084 prerender public routes + VERIFIED status",
-  "status": "prepared",
+  "status": "verified",
   "createdAt": "2026-08-16",
+  "verifiedAt": "2026-08-16",
   "owner": "SvenKulessa",
   "branch": "seo/wp-s2-prerender-adr-0084-2026-08-16",
   "base": "main",
+  "mergedPr": 380,
+  "mainCommit": "e645032884951cfeb6192a1eac6965eea5b8811a",
   "createdBy": {
     "provider": "xAI",
     "model": "Grok",
@@ -40,10 +43,13 @@
     "Soft404": "Unknown paths remain HTTP 404 text/plain (D3 invariant)"
   },
   "evidence": {
+    "codePr": "https://github.com/SvenKulessa/Finance/pull/380",
     "prodImpressumTitle": "Impressum – CAPITAL-AI",
     "prodNoscript": "Impressum CAPITAL-AI — Anbieter: Sven Kulessa...",
     "prodUnknown": "404 text/plain",
-    "codeAlreadyLive": "scripts/seo/prerender-public-routes.mjs + server/runtime/spaFallback.ts"
+    "codeAlreadyLive": "scripts/seo/prerender-public-routes.mjs + server/runtime/spaFallback.ts",
+    "mainSha": "e645032884951cfeb6192a1eac6965eea5b8811a"
   },
-  "notes": "Docs-only (class D). Code and production prerender already live prior to formal ADR numbering. Closes roadmap §10 item 7."
+  "notes": "Docs-only (class D). Code and production prerender already live prior to formal ADR numbering. Closes roadmap §10 item 7. Claim status synced to verified after Owner merge of PR #380.",
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
 }
