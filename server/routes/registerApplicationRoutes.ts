@@ -19,6 +19,7 @@ import { newsRouter } from '../../src/features/news/newsRoutes';
 import { registryRouter } from '../../src/features/registry/registryRoutes';
 import { aiRouter } from '../ai';
 import { systemadminExecutionBrokerRouter } from '../systemadmin/systemadminExecutionBrokerRouter';
+import { breakGlassRouter } from '../systemadmin/breakGlassRouter';
 import { registerTrailingSlashNormalize } from '../middleware/seoUrlNormalize';
 import { installProductionSoft404Intercept } from '../runtime/spaFallback';
 import { seoEngineRouter } from './seoEngineRoutes';
@@ -77,6 +78,7 @@ export function registerApplicationRoutes(
   app.use('/api/admin/supervisor', supervisorRouter);
   app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic, openai));
   app.use('/api/internal/systemadmin-execution', systemadminExecutionBrokerRouter);
+  app.use('/api/systemadmin/break-glass', breakGlassRouter);
   app.use('/api/news', newsRouter);
   app.use('/api/registry', registryRouter);
   app.use('/api/social-media', socialMediaRouter);
