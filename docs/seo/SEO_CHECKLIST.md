@@ -1,12 +1,12 @@
 # 🔍 SEO Checklist & Technical Discovery Guide
 **Project: CAPITAL-AI**  
-**Stand:** 16.08.2026 — WP-D3 Soft-404 VERIFIED; Q3 Search Console Owner-Gate  
+**Stand:** 16.08.2026 — WP-D3 Soft-404 VERIFIED; **Q3 Search Console Domain property VERIFIED**  
 **Umsetzungsplan:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` (SEO-GM-ROADMAP-0002)
 
 ### 1. Crawling & Indexierung
 - [x] robots.txt / sitemap.xml — **Q1** (live `200`)
 - [x] canonical + Trailing-Slash 301 — **Q2** (canonical + server 301 live; WP-Q-CLOSE rest: GSC)
-- [ ] Search-Console-Verifizierung — **Q3 owner** → `docs/seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md`
+- [x] Search-Console-Verifizierung — **Q3 VERIFIED** (Domain `capital-ai.online`, Ownership bestätigt, Sitemap success) → `docs/seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md`
 - [x] Echte 404 (Soft-404 behoben) — **D3** (PR #360, prod VERIFIED)
 
 ### 3. JSON-LD / Meta
