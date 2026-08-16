@@ -28,6 +28,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { AssetLogo } from './AssetLogo';
+import { StatusBadge } from './StatusBadge';
 import { assetRegistry } from '../lib/assetRegistry';
 import { EnterpriseAnalysisPanels } from './EnterpriseAnalysisPanels';
 import { EnterpriseBinanceQuickAnalysis } from './EnterpriseBinanceQuickAnalysis';
@@ -396,7 +397,7 @@ function TradeSetupLadder({ setup }: { setup: TradeSetupLevels }) {
         <span>Tagesvolatilität: {setup.volatilityPct.toFixed(2)}%</span>
       </div>
       <p className="text-[10px] leading-relaxed text-white/35">
-        Rein technische Strukturableitung aus verifizierter 30-Tage-Kurshistorie (SMA/letzter Kurs für Richtung &amp; Entry-Zone, 1×/2× Tagesvolatilität sowie 30-Tage-Hoch/-Tief für SL1/SL2 &amp; TP1/TP2 — tradeSetupLevels.ts, {setup.methodology}). Keine Anlageberatung, keine Ausführungsgarantie; Gebühren, Slippage und Spread sind nicht eingerechnet.
+        Rein technische Strukturableitung aus verifizierter 30-Tage-Kurshistorie (SMA/letzter Kurs für Richtung & Entry-Zone, 1×/2× Tagesvolatilität sowie 30-Tage-Hoch/-Tief für SL1/SL2 & TP1/TP2 — tradeSetupLevels.ts, {setup.methodology}). Keine Anlageberatung, keine Ausführungsgarantie; Gebühren, Slippage und Spread sind nicht eingerechnet.
       </p>
     </div>
   );
@@ -532,7 +533,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-gradient-to-r from-aif-gold-DEFAULT/20 to-purple-500/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/25 uppercase">
                 <Sparkles size={10} /> Enterprise Universum Scorer
               </span>
-              <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest uppercase border ${ready ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25' : 'bg-amber-500/10 text-amber-200 border-amber-500/25'}`}>{result?.status ?? (loading ? 'LOADING' : 'DATA_UNAVAILABLE')}</span>
+              <StatusBadge status={result?.status ?? (loading ? 'LOADING' : 'DATA_UNAVAILABLE')} />
               {result?.decisionName && (
                 <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest uppercase border ${tier.bg} ${tier.text} ${tier.border}`}>{result.decisionName}</span>
               )}
@@ -581,7 +582,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
                 {result.eligibleForTop10 && (
                   <span className="rounded-full border border-purple-400/30 bg-purple-400/10 px-2 py-0.5 text-[9px] font-mono font-bold uppercase text-purple-200">Top-10 eligible</span>
                 )}
-                <p className="text-[9px] text-purple-100/40 font-mono leading-relaxed">Kompositscore aus Score, Datenqualität, Tier &amp; Liquidität (ranking.service.ts)</p>
+                <p className="text-[9px] text-purple-100/40 font-mono leading-relaxed">Kompositscore aus Score, Datenqualität, Tier & Liquidität (ranking.service.ts)</p>
               </div>
 
               <div className="xl:col-span-3 rounded-2xl border border-white/10 bg-black/25 p-5">
