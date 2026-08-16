@@ -125,15 +125,20 @@ jobs:
             body_ok=true
           fi
 
-          review_id="$(
+          # Kein `| head -n 1`: head schliesst die Pipe nach der ersten Zeile,
+          # gh --paginate erhaelt beim Schreiben der zweiten Zeile SIGPIPE und
+          # endet mit 141. Mit `set -o pipefail` + `set -e` bricht der Step dann
+          # ab, BEVOR das Gate ausgewertet wird — bei genau einem passenden
+          # Review unauffaellig, ab dem zweiten reproduzierbar fatal.
+          # Gebraucht wird ohnehin nur "mindestens ein passendes Review".
+          review_ids="$(
             gh api --paginate \
               "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" \
-              --jq '.[] | select(.user.login == env.EXPECTED_OWNER and .commit_id == env.PR_HEAD_SHA and (((((.body // "") | gsub("^[[:space:]]+|[[:space:]]+$"; "")) | ascii_downcase) == "okay") or (((.body // "") | gsub("^[[:space:]]+|[[:space:]]+$"; "")) == "💪"))) | .id' \
-              | head -n 1
+              --jq '.[] | select(.user.login == env.EXPECTED_OWNER and .commit_id == env.PR_HEAD_SHA and (((((.body // "") | gsub("^[[:space:]]+|[[:space:]]+$"; "")) | ascii_downcase) == "okay") or (((.body // "") | gsub("^[[:space:]]+|[[:space:]]+$"; "")) == "💪"))) | .id'
           )"
 
           review_ok=false
-          if [ -n "$review_id" ]; then
+          if [ -n "${review_ids//[[:space:]]/}" ]; then
             review_ok=true
           fi
 
