@@ -241,13 +241,26 @@ socialMediaRouter.post('/approvals', async (req: Request, res: Response) => {
   }
 
   try {
+    // WP-N4: the approval is bound to exactly this content and platform set.
+    // The same fields are recomputed from the publish payload before the
+    // approval can be consumed (ESS-0024 §10, ADR-0080 invariant 5).
+    const platforms = req.body?.platforms || req.body?.targetPlatforms;
     const row = contentApprovalStore.create({
       userId: identity.userId,
       title: req.body?.title || req.body?.episodeTitle || 'Untitled content',
       topic: req.body?.topic,
-      platforms: req.body?.platforms || req.body?.targetPlatforms,
+      platforms,
       payloadSummary: req.body?.payloadSummary || req.body?.summary,
       scheduledAt: req.body?.scheduledAt,
+      content: {
+        episodeTitle: req.body?.episodeTitle ?? req.body?.title,
+        targetPlatforms: platforms,
+        customCaptions: req.body?.customCaptions,
+        hashtags: req.body?.hashtags,
+        videoTitle: req.body?.videoTitle,
+        mediaUrl: req.body?.mediaUrl,
+        mediaType: req.body?.mediaType,
+      },
     });
     logger.info('Content approval created', { userId: identity.userId, id: row.id });
     res.status(201).json({ success: true, approval: row });
@@ -348,12 +361,25 @@ socialMediaRouter.post('/publish', async (req: Request, res: Response) => {
       });
     }
     try {
-      contentApprovalStore.consumeForPublish(approvalId, identity.userId);
+      // The hash is recomputed from the outgoing payload, not taken from the
+      // request: a client-supplied hash would let the caller assert its own
+      // approval and defeat the gate.
+      contentApprovalStore.consumeForPublish(approvalId, identity.userId, {
+        episodeTitle: payload.episodeTitle,
+        targetPlatforms: payload.targetPlatforms,
+        customCaptions: payload.customCaptions,
+        hashtags: payload.hashtags,
+        videoTitle: payload.videoTitle,
+        mediaUrl: payload.mediaUrl,
+        mediaType: payload.mediaType,
+      });
     } catch (err: any) {
+      const message = err?.message || 'Freigabe ungueltig.';
+      const mismatch = message.includes('does not match the approved version');
       return res.status(403).json({
         success: false,
-        error: err?.message || 'Freigabe ungueltig.',
-        code: 'approval_invalid',
+        error: message,
+        code: mismatch ? 'approval_content_mismatch' : 'approval_invalid',
       });
     }
   }

@@ -1,0 +1,61 @@
+{
+  "claimId": "SEO-WP-N4-APPROVAL-HASH-BINDING-2026-08-16",
+  "title": "WP-N4: Owner-Freigabe an Inhalts-Hash binden; Ist-Stand N1/N2 korrigieren",
+  "roadmap": "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+  "documentId": "SEO-GM-ROADMAP-0002",
+  "roadmapIds": ["WP-N4", "WP-N1", "WP-N2"],
+  "predecessor": "WP-M0-MARKETING-GOVERNANCE-OWNER-ACCEPT-2026-08-16",
+  "branch": "claude/wp-n4-approval-hash-binding",
+  "base": "main",
+  "owner": "SvenKulessa",
+  "status": "prepared",
+  "createdAt": "2026-08-16",
+  "createdBy": {
+    "provider": "Anthropic",
+    "model": "Claude Code",
+    "surface": "Claude Code Remote (interaktive Owner-Sitzung)"
+  },
+  "authorizedByHuman": true,
+  "authorizationScope": "Owner-Anweisung 'fahre mit der Roadmap fort' nach Merge von WP-M0 (PR #397). Umfasst Implementierung des naechsten Roadmap-Pakets. KEINE Freigabe fuer Merge, externe Mutation oder Runtime-Enablement des Marketing-Agenten.",
+  "finding": {
+    "id": "WP-N4-HASH-GAP",
+    "severity": "hoch",
+    "summary": "Das N4-Approval-Gate band die Owner-Freigabe an nichts. consumeForPublish(id, userId) prueft nur Existenz, Nutzerzugehoerigkeit und Status 'approved'; der Publish-Payload wurde nie mit dem freigegebenen Inhalt verglichen.",
+    "impact": "Eine Freigabe fuer Inhalt A konnte verwendet werden, um Inhalt B zu veroeffentlichen - inklusive anderer Captions, anderer Hashtags, anderem Medien-Asset und zusaetzlicher Zielplattformen. Das verletzt ESS-0024 Abschnitt 10 und ADR-0080 Security-Invariante 5 ('approval is bound to the final content and asset hashes; material changes invalidate the approval') sowie die eigene DoD von WP-N4 ('Kein Publish ohne Approval-Hash').",
+    "resolution": "sha256 ueber kanonisierte Publish-Felder (Titel, Captions je Plattform, Hashtags, Video-Titel, Medien-URL, Medientyp, Plattform-Set). Hash wird beim Anlegen der Freigabe gespeichert und beim Publish aus dem ausgehenden Payload neu berechnet - nie vom Client uebernommen. Mismatch -> HTTP 403 'approval_content_mismatch'; die Freigabe bleibt dabei 'approved', damit der Owner den korrigierten Inhalt erneut freigeben kann statt den Datensatz zu verlieren."
+  },
+  "statusCorrection": "Die Roadmap fuehrte 'generateSeries / Content-API' als 'fehlt (explizit in Code dokumentiert)'. Tatsaechlich sind WP-N1 (POST /api/social-media/generate mit generateTextContent) und WP-N2 (scriptTemplates.buildScriptPackage) implementiert und getestet. Abschnitt 4.3 und 5.3 entsprechend korrigiert.",
+  "scope": [
+    "server/socialMedia/contentApproval.ts",
+    "src/routes/socialMediaRoutes.ts",
+    "tests/unit/contentApproval.test.ts",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+    ".ai/work-claims/SEO-WP-N4-APPROVAL-HASH-BINDING-2026-08-16.json"
+  ],
+  "outOfScope": [
+    "WP-N3 Media-Rendering (TTS/Video-Sidecar)",
+    "Content-Kalender / Scheduling-UI (Rest von WP-N4)",
+    "Supabase-Persistenz des Approval-Stores (weiterhin in-memory)",
+    "OAuth-, Token- und Publisher-Pfade",
+    "Runtime-Enablement des Marketing-Agenten (Execution Policy Abschnitt 18 unerfuellt)"
+  ],
+  "checkClass": "C",
+  "negativeTests": [
+    "geaenderte Caption -> DENY",
+    "geaenderter Titel -> DENY",
+    "geaenderte Hashtags -> DENY",
+    "ausgetauschtes Medien-Asset -> DENY",
+    "zusaetzliche Zielplattform -> DENY",
+    "entfernte Zielplattform -> DENY",
+    "leerer Payload gegen echte Freigabe -> DENY",
+    "Wiederverwendung einer konsumierten Freigabe -> DENY (bestand bereits)",
+    "fremder Nutzer -> DENY (bestand bereits)",
+    "Freigabe ohne approve -> DENY (bestand bereits)"
+  ],
+  "validation": {
+    "vitest": "191 Dateien, 1147 Tests passed, 2 skipped",
+    "typescript": "tsc --noEmit exit 0",
+    "googleMarketingInvariants": "34 invariants verified, exit 0"
+  },
+  "notes": "Kanonisierung ist bewusst tolerant gegenueber Reihenfolge (Plattformen, Hashtags, Caption-Keys) und umgebenden Leerzeichen, damit ein unveraenderter Payload nicht je nach Serialisierung des Clients abgelehnt wird. Der Plattform-Vergleich ist exakt (Mengengleichheit), nicht Teilmenge: ESS-0024 Abschnitt 10 bindet die Freigabe ausdruecklich auch an die Zielplattformen. Der Approval-Store bleibt in-memory; es existieren daher keine Altdatensaetze ohne contentHash, die einen Migrationspfad braeuchten."
+}
