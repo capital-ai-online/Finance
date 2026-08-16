@@ -61,6 +61,16 @@ export class CircuitBreaker {
     return circuit.state;
   }
 
+  /**
+   * SC-4: ISO timestamp when an OPEN circuit is expected to enter HALF_OPEN, else null.
+   * Used by Supervisor providerHealth `circuitOpenUntil`.
+   */
+  openedUntilIso(providerId: string): string | null {
+    const circuit = this.get(providerId);
+    if (circuit.state !== 'OPEN' || circuit.openedAtMs === null) return null;
+    return new Date(circuit.openedAtMs + this.cooldownMs).toISOString();
+  }
+
   private get(providerId: string): Circuit {
     let circuit = this.circuits.get(providerId);
     if (!circuit) {

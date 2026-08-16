@@ -1,10 +1,10 @@
 # Screening · Scoring · Market Data — Single Point of Trust Roadmap
 
 **Document ID:** SC-MD-SPT-0001  
-**Version:** 1.0.1  
+**Version:** 1.0.2  
 **Status:** ACTIVE — CANONICAL EXECUTION AUTHORITY  
 **Stand:** 2026-08-16  
-**Repository-Baseline:** `main` (SC-1 / SC-3 foundation / SC-7 Phase A+B)  
+**Repository-Baseline:** `main` (SC-1 / SC-3 / SC-7 Phase A+B; SC-4 Phase A in flight)  
 **Owner:** SvenKulessa  
 **Authority:** DOCUMENTATION_HYGIENE_POLICY · ROADMAP_CONSOLIDATION_MASTER_INDEX · ADR-0020 / ADR-0041 · ESS EventMesh/Traceability
 
@@ -32,8 +32,8 @@ Es ersetzt als Ausführungsautorität:
 
 | Schicht | Code-Pfad | Reife |
 |---|---|---|
-| Market-Data Gateway | `src/platform/MarketData/` | **Implementiert** |
-| Provider | Alpaca, FMP, TwelveData, Legacy-Fallbacks | **Teilweise live** |
+| Market-Data Gateway | `src/platform/MarketData/` | **Implementiert + SC-4 Phase A Matrix/Health** |
+| Provider | Alpaca, FMP, TwelveData hinter Gateway; Crypto legacy off-gateway | **Teilweise live** |
 | Evidence / Consensus | Snapshot/Spot consensus, traditional/commodity/macro evidence | **Stark ausgebaut** |
 | Scoring-Engines | Base/DeFi, crypto 9-Faktor, meme, raw materials, traditional, verified technical | **Multi-Engine, noch fragmentiert** |
 | Ranking / Eligibility | `ranking.service` + SC-7 composite opt-in (Phase A+B) | **Crypto-lastig; orchestrator wired** |
@@ -44,9 +44,9 @@ Es ersetzt als Ausführungsautorität:
 
 1. scoreImpact / rankingImpact noch Owner-gated (`false`)
 2. Ranking-Generalisierung cross-asset (Overall / Category / Tier / Growth)
-3. Live-Coverage Non-Crypto (SC-5)
+3. Live-Coverage Crypto + restliche Non-Crypto (SC-5)
 4. Model registry & UAI adapters (SC-2)
-5. Gateway hardening matrix (SC-4)
+5. Alpaca primary promotion (ADR-0041 Owner gate)
 6. Horizon / Walk-Forward backtests (SC-8)
 
 ---
@@ -54,7 +54,7 @@ Es ersetzt als Ausführungsautorität:
 ## 3. Kanonische Wertschöpfungskette (SPT-Modell)
 
 ```text
-[Providers] → MarketDataGateway (CB/Cache/RL/Coalesce)
+[Providers] → MarketDataGateway (CB/Cache/RL/Coalesce + ProviderMatrix)
                     ↓
             DataQualityService + Evidence/Consensus Services
                     ↓
@@ -77,12 +77,12 @@ Es ersetzt als Ausführungsautorität:
 
 | ID | Titel | Priorität | Status (2026-08-16) | DoD (kurz) |
 |---|---|---|---|---|
-| **SC-0** | Baseline freeze & inventory | P0 | **IN PROGRESS** (this doc on main) | SPT gemerged; Master NOTICE; Remediation archiviert |
+| **SC-0** | Baseline freeze & inventory | P0 | **LANDED** (this doc on main) | SPT gemerged; Master NOTICE; Remediation archiviert |
 | **SC-1** | Classification consolidation | P0 | **LANDED** (adapter + table expansion) | Canonical schema; deterministic coverage |
 | **SC-2** | Model registry & UAI adapters | P1 | OPEN | model_registry; UAI adapters |
 | **SC-3** | Unified DQ + Confidence composite | P0 | **FOUNDATION LANDED** | Composite + unified confidence; impact off |
-| **SC-4** | Gateway hardening & provider matrix | P1 | OPEN | All live providers behind gateway |
-| **SC-5** | Live coverage expansion | P1 | OPEN | Verified quotes Stock/FX/Index min. |
+| **SC-4** | Gateway hardening & provider matrix | P1 | **Phase A LANDED** (matrix + RL + supervisor health) | Crypto still off-gateway → SC-5 |
+| **SC-5** | Live coverage expansion | P1 | OPEN | Crypto behind gateway; Stock/FX/Index verified |
 | **SC-6** | Scoring integrity & lineage | P1 | PARTIAL | calculation_version + lineage |
 | **SC-7** | Ranking generalization | P1 | **Phase A+B LANDED** (opt-in + orchestrator wire) | Cross-asset modes still open; impact off |
 | **SC-8** | Horizon / Walk-Forward backtests | P2 | OPEN | Drift-Evidence; golden-set regression |
@@ -108,12 +108,14 @@ Mutation von Scoring-Gewichten, Eligibility-Schwellen, Provider-Routing, Live-Ga
 
 - `docs/roadmaps/work-packages/SC-1_CLASSIFICATION_CONSOLIDATION.md`
 - `docs/roadmaps/work-packages/SC-3_UNIFIED_DQ_CONFIDENCE.md`
+- `docs/roadmaps/work-packages/SC-4_GATEWAY_HARDENING_PROVIDER_MATRIX.md`
 - `docs/roadmaps/work-packages/SC-7_RANKING_COMPOSITE_OPT_IN.md`
 - `docs/evidence/sc-md/`
+- `src/platform/MarketData/ProviderMatrix.ts`
 - `src/platform/MarketData/CompositeDataQuality.ts`
 - `src/services/ranking.service.ts`
 - `src/orchestrator/cryptoOrchestrator.ts`
 
 ---
 
-*SC-0 land + SC-7 Phase B 2026-08-16. Keine scoreImpact-Mutation. Merge nur nach Owner-Review.*
+*SC-4 Phase A 2026-08-16. Keine scoreImpact-Mutation. Keine Alpaca-Promotion. Merge nur nach Owner-Review.*

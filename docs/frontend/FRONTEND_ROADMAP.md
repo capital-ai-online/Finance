@@ -2,7 +2,7 @@
 
 **Projekt:** capital-ai.online  
 **Repository:** SvenKulessa/Finance  
-**Version:** 1.0  
+**Version:** 1.1  
 **Stand:** 16. August 2026  
 **Owner:** Sven Kulessa / Capital-AI  
 **Bezug:** `docs/frontend/FRONTEND_ARCH.md`, `src/index.css` (@theme), public mirror: `SvenKulessa/capital-ai-frontend`
@@ -41,25 +41,27 @@ Zielbild: Vergleichbar mit modernen FinTech-/Quant-Interfaces (Linear-ähnliche 
 - Hintergrund-/Neural-Animationen können ablenken
 - Score-Visualisierungen und Multi-Faktor-Matrix noch nicht optimal prominent
 - Fehlendes starkes Onboarding & progressive Disclosure
-- Design-Tokens noch nicht als formales, versioniertes Design-System extrahiert
+- Design-Tokens erst seit Phase 0 formal inventarisiert
 - Kein Storybook / Component-Library-Dokumentation
 
 ---
 
 ## 3. Roadmap-Phasen
 
-### Phase 0 – Fundament (Woche 1–2)
+### Phase 0 – Fundament (Woche 1–2) — **IN PROGRESS**
 **Ziel:** Stabile Basis schaffen
 
-- [ ] Design-Tokens formalisieren (Farben, Spacing, Typography, Radii, Shadows) – Ausgangspunkt: `@theme` in `src/index.css`
-- [ ] Accessibility-Audit (WCAG 2.2 AA, BFSG 44×44 px Hit-Targets)
-- [ ] Performance-Baseline (Lighthouse, Core Web Vitals)
-- [ ] Einheitliche Error- und Loading-States (inkl. DATA_UNAVAILABLE, Skeleton)
-- [ ] Component Inventory finalisieren (`docs/frontend/COMPONENT_INVENTORY.md`)
+- [x] Design-Tokens formalisieren — `docs/frontend/design-tokens.json` + `PHASE0_DESIGN_TOKENS.md`
+- [x] Accessibility-Audit-Checkliste — `PHASE0_ACCESSIBILITY_AUDIT.md` (Live-Messung pending)
+- [x] Performance-Baseline-Protokoll — `PHASE0_PERFORMANCE_BASELINE.md` (Messung pending)
+- [x] Einheitliche Error- und Loading-States spezifiziert — `PHASE0_LOADING_ERROR_STATES.md`
+- [x] Component Inventory finalisieren — `docs/frontend/COMPONENT_INVENTORY.md`
 - [ ] Storybook-Grundlage vorbereiten (optional, parallel)
+- [ ] Live Lighthouse / axe-Messung dokumentieren
+- [ ] StatusBadge-Primitive (erster Code-Schritt, eigener PR)
 
 **Deliverables:**  
-`design-tokens` (Tailwind `@theme` / JSON), Audit-Report, aktualisiertes Inventory, Phase-0-Checklist grün
+`design-tokens.json`, Phase-0-Docs, Inventory ✅ · Live-Baseline & erste Primitive ⏳
 
 ---
 
@@ -162,11 +164,12 @@ AI-Chat-Interface, personalisierte Views, Design-System v1.0
 
 ## 6. Nächste Schritte
 
-1. Phase 0 starten (Design-Tokens aus `src/index.css` extrahieren + Audit)
-2. Dieses Dokument als Single Source of Truth im Finance-Repo nutzen
-3. Regelmäßige Reviews (alle 2 Wochen)
-4. Öffentlicher Mirror `SvenKulessa/capital-ai-frontend` bei Bedarf synchron halten
+1. ~~Phase 0 Dokumentation~~ → **läuft** (Tokens + Specs)
+2. Live Lighthouse / axe-Baseline eintragen
+3. StatusBadge-Primitive als erster Code-PR
+4. Regelmäßige Reviews (alle 2 Wochen)
+5. Öffentlicher Mirror `SvenKulessa/capital-ai-frontend` bei Bedarf synchron halten
 
 ---
 
-*Dokument erstellt am 16.08.2026 – wird laufend aktualisiert.*
+*Dokument erstellt am 16.08.2026 – Phase 0 gestartet 16.08.2026 – wird laufend aktualisiert.*
