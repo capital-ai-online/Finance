@@ -1,0 +1,46 @@
+{
+  "claimId": "SEO-WP-Q3-SEARCH-CONSOLE-VERIFY-2026-08-16",
+  "title": "Q3 / WP-Q-CLOSE — Google Search Console Property verifizieren + Sitemap submit",
+  "roadmap": "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+  "documentId": "SEO-GM-ROADMAP-0002",
+  "roadmapIds": ["WP-Q-CLOSE", "Q3"],
+  "predecessor": "SEO-WP-D3-SOFT-404-PROD-FIX-2026-08-16",
+  "branch": "docs/seo-q3-search-console-verify-2026-08-16",
+  "base": "main",
+  "owner": "SvenKulessa",
+  "status": "verified",
+  "createdAt": "2026-08-16",
+  "updatedAt": "2026-08-16",
+  "verifiedAt": "2026-08-16",
+  "createdBy": {
+    "provider": "xAI",
+    "model": "Grok",
+    "surface": "Grok Chat / GitHub MCP"
+  },
+  "authorizedByHuman": true,
+  "verification": {
+    "propertyType": "Domain",
+    "property": "capital-ai.online",
+    "ownership": "confirmed",
+    "sitemap": "https://capital-ai.online/sitemap.xml",
+    "sitemapStatus": "success",
+    "ownerConfirmedAt": "2026-08-16",
+    "notes": "Owner confirmed Domain property capital-ai.online ownership already verified; sitemap.xml submitted and green/success; incorrect page-URL sitemap submissions removed."
+  },
+  "scope": [
+    "docs/seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md",
+    "docs/seo/SEARCH_CONSOLE_MCP_RUNBOOK.md",
+    "docs/seo/SEO_CHECKLIST.md",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+    "index.html",
+    ".ai/work-claims/SEO-WP-Q3-SEARCH-CONSOLE-VERIFY-2026-08-16.json"
+  ],
+  "outOfScope": [
+    "D5 Search Console MCP credentials / write plane",
+    "DNS provider account changes without owner",
+    "Google account login by agent",
+    "WP-D1/D2 code",
+    "Supabase / billing"
+  ],
+  "notes": "Class D docs. Domain property capital-ai.online ownership confirmed by owner 2026-08-16; sitemap.xml success in GSC; false page-URL submissions cleaned. Q3 VERIFIED."
+}
