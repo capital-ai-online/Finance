@@ -1,31 +1,44 @@
-# M8 / Value Chain — Provider Set Correction (ChatGPT, Claude, Grok)
+# M8 Provider Set Correction — Owner 2026-08-16
 
 **Document ID:** M8-PROVIDER-SET-CORRECTION-2026-08-16  
-**Status:** OWNER DECISION IMPLEMENTED  
-**Date:** 2026-08-16  
-**Authority:** Owner instruction; ADR-0062; AI_AGENT_PROVIDER_PROFILE_CONTRACT; ROADMAP-INTEGRATED-DC-SA-0001  
+**Status:** ACTIVE EVIDENCE  
+**Authority:** Human/Owner decision (SvenKulessa)
 
 ## Decision
 
-Google AI Studio is **not** part of the CAPITAL-AI DEVELOPMENT Chain or AI value chain.  
-Canonical agent providers:
+Google AI Studio is **not** part of the CAPITAL-AI DEVELOPMENT Chain or AI value chain.
 
-1. **ChatGPT** (`chatgpt-github-connector`)
-2. **Claude** (`claude-code-cli`)
-3. **Grok** (`grok-xai-connector`)
+**Canonical active providers:**
 
-NotebookLM and Gemini remain non-chain / retired aliases.
+1. ChatGPT (`chatgpt-github-connector`)
+2. Claude (`claude-code-cli`)
+3. Grok (`grok-xai-connector`)
 
-## Code changes
+**Retired aliases (DENY / RETIRED in control plane):**
 
-- `src/platform/Security/providerProfile.ts` — active registry = three canonical providers; `RETIRED_PROVIDER_ALIASES`; `getCanonicalValueChainProviderInventory()`
-- Tests updated accordingly
-- Supervisor observes the canonical chain via `agentProviderObservation.ts`
+- `google-ai-studio`
+- `notebooklm`
+- `gemini`
 
-## Historical evidence
+## Code impact
 
-Earlier M8 evidence files that still mention Google AI Studio / NotebookLM as profiles remain valid as **historical snapshots**. They are not rewritten; this document supersedes the active provider set.
+- `src/platform/Security/providerProfile.ts` — registry reduced to three canonical profiles; `RETIRED_PROVIDER_ALIASES`; `evaluateProviderCutoverReadiness` returns `RETIRED` for retired aliases; `getCanonicalValueChainProviderInventory`.
+- `src/platform/Supervisor/agentProviderObservation.ts` — ESS-0002 chain observation of the three providers.
+- `src/platform/Supervisor/supervisor.ts` — `getSupervisorStatus()` includes `agentProviderChain` and lightweight `findings`.
+- `docs/architecture/ai-agent/AI_AGENT_PROVIDER_PROFILE_CONTRACT.md` — contract updated.
 
-## Governance
+## Documentation hygiene
 
-Model/provider identity still grants **no** authority. Capability policy remains external to the model.
+Historical M8 evidence files that still mention Google AI Studio / NotebookLM as active profiles are **not rewritten**. They remain append-only historical evidence. This note supersedes their provider-set assumptions for all forward work.
+
+Historical value-chain diagrams in `docs/architecture/AI_VALUE_CHAIN_VALIDATION.md` (ARCH-CHAIN-0001) that list "Google AI Studio" as Stage 1 are superseded for operational authority by this Owner decision and the provider profile contract. A follow-up doc revision may restate the normative chain as ChatGPT → Claude → Grok → Documentary → Supervisor → … without rewriting past findings.
+
+## Verification
+
+- Unit tests: `tests/unit/providerProfile.test.ts` (canonical three + retired DENY/RETIRED).
+- Supervisor status exposes `agentProviderChain.expectedProviders === [chatgpt, claude, grok]`.
+
+## Related
+
+- ADR-0062, ESS-0019, ESS-0002
+- REPORT-SVC-AI-VC-0001 (update in same change set where applicable)
