@@ -61,9 +61,13 @@ Für jede Domain: was bereits als **Kontrollmechanismus** existiert (aus M4–M8
 - Kontrollmechanismus vorhanden: kein dediziertes Modul gefunden (`grep -rli injection tests/
   src/` → keine Treffer). Die Threat-Model-Dokumentation (`docs/architecture/ai-agent/
   AI_AGENT_THREAT_MODEL.md`) benennt die Bedrohung, aber ohne zugehörige Testsuite.
-- M9-Drill ausgeführt: **Nein.** Größte offene Lücke dieser Domain — keine automatisierten
-  Negative-Tests, dass untrusted Content (Repo/PR-Kommentare/Tool-Output) niemals als Autorität
-  behandelt wird.
+- M9-Drill ausgeführt: **Ja, 2026-08-16** (Owner-autorisiert via `AskUserQuestion`) — siehe
+  `docs/evidence/m9/M9_PROMPT_TOOL_INJECTION_LIVE_DRILL_2026-08-16.md`. Beweist, dass alle
+  typisierten Autorisierungsfelder (targetResource/roadmapItem/capability/metadata) gegen
+  adversariell geformte Payloads immun sind (18 neue Tests). **Wichtiger, unbehobener Fund:** die
+  vorgesehenen `credentialExposureDetected`/`untrustedScopeElevationDetected`-Checkpoint-Felder
+  funktionieren als Gate, werden aber von beiden realen Aufrufern hartkodiert auf `false` gesetzt —
+  kein echter Content-Scanning-Detektor existiert. Trägt zu M9-Exit-Gate-Punkt 2 nur teilweise bei.
 
 ### 2.3 Replay / Idempotency
 - Kontrollmechanismus vorhanden: substanziell — `tests/unit/eventMeshReplayReliability.test.ts`,
@@ -164,7 +168,10 @@ Priorisierungsvorschlag nach Reifegrad der Grundlage (am weitesten fortgeschritt
    `docs/evidence/m9/M9_AUTHORIZATION_BYPASS_LIVE_DRILL_2026-08-16.md`.
 6. ~~**Secret/Exfiltration-Drill** (§2.4)~~ — **erledigt 2026-08-16**, siehe
    `docs/evidence/m9/M9_SECRET_EXFILTRATION_LIVE_DRILL_2026-08-16.md`.
-7. **Prompt/Tool-Injection-Tests** (§2.2) — größte Lücke, braucht Testsuite von Grund auf.
+7. ~~**Prompt/Tool-Injection-Tests** (§2.2)~~ — **erledigt 2026-08-16**, siehe
+   `docs/evidence/m9/M9_PROMPT_TOOL_INJECTION_LIVE_DRILL_2026-08-16.md`. Mit wichtigem offenem
+   Fund: kein realer Content-Scanning-Detektor für die bereits vorhandenen Checkpoint-Gates —
+   empfohlen als eigenes Arbeitspaket vor M9-Closure.
 8. **Break-Glass** (§2.7) — braucht zuerst einen Owner-genehmigten Proposal/Implementierung, bevor
    überhaupt ein Drill möglich ist; realistisch der letzte Punkt in der Sequenz.
 

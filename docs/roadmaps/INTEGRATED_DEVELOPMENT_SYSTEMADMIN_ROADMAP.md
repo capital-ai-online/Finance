@@ -2,7 +2,7 @@
 
 **Document ID:** ROADMAP-INTEGRATED-DC-SA-0001  
 **Status:** ACTIVE — CANONICAL EXECUTION ROADMAP  
-**Version:** 1.0.9  
+**Version:** 1.0.10  
 **Date:** 2026-08-16  
 **Repository:** SvenKulessa/Finance  
 **Authority:** ADR-0071, ESS-0023, DEVELOPMENT_CHAIN_EXECUTION_POLICY, SYSTEMADMIN_AGENT_ROADMAP_EXECUTION_POLICY, DOCUMENTATION_HYGIENE_POLICY  
@@ -224,8 +224,9 @@ Kein Document erzeugt eigene Authority.
 - **Audit-Outage-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Audit-Outage-Drill (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_AUDIT_OUTAGE_LIVE_DRILL_2026-08-16.md`. Terminal-Outage-Fehlerinjektion, struktureller Append-only-Beweis, end-to-end-Korrelation für echte mutierende Capability; 3 neue Tests. Trägt zu M9-Exit-Gate-Punkt 2 bei (teilweise — Audit-Anteil).
 - **Replay/Idempotency-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Replay/Idempotency-Drill (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_REPLAY_IDEMPOTENCY_LIVE_DRILL_2026-08-16.md`. Fand und schloss eine reale Integrationslücke (Envelope-Replay-Schutz existierte, war aber nicht über den realen SA3B-Aufrufer erreichbar — additiv nachverdrahtet nach `killSwitchActive`-Präzedenzfall); 5 neue Tests. Trägt zu M9-Exit-Gate-Punkt 2 bei (Replay-Anteil vollständig).
 - **Authorization-Bypass-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Authorization-Bypass-Negativtests (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_AUTHORIZATION_BYPASS_LIVE_DRILL_2026-08-16.md`. Alle 9 Runbook-Angriffsvektoren jetzt über die reale SA3B-Kette bewiesen (6 neu getestet, 3 bereits live bewiesen zitiert); 7 neue Tests. Trägt zu M9-Exit-Gate-Punkt 2 bei (Authorization-Bypass-Anteil vollständig).
-- **Secret/Exfiltration-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Secret/Exfiltration-Drill (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_SECRET_EXFILTRATION_LIVE_DRILL_2026-08-16.md`. Fand und schloss zwei reale Redaction-Lücken (camelCase-Präfix-Schlüssel wie `customerEmail`; fehlende TOTP/Recovery/Backup-Code-Benennungen); alle Runbook-Kategorien über die reale SA3B-Kette bewiesen; 3 neue Tests, 1110/1110 gesamt PASS. Trägt zu M9-Exit-Gate-Punkt 2 bei (Exfiltration-Anteil vollständig).
-- Nächster Schritt: Owner wählt den nächsten konkreten Drill (Prompt/Tool-Injection als größte verbleibende Lücke, oder Break-Glass-Proposal) — siehe Priorisierungsvorschlag im Inventory-Dokument §5.
+- **Secret/Exfiltration-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Secret/Exfiltration-Drill (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_SECRET_EXFILTRATION_LIVE_DRILL_2026-08-16.md`. Fand und schloss zwei reale Redaction-Lücken (camelCase-Präfix-Schlüssel wie `customerEmail`; fehlende TOTP/Recovery/Backup-Code-Benennungen); alle Runbook-Kategorien über die reale SA3B-Kette bewiesen; 3 neue Tests. Trägt zu M9-Exit-Gate-Punkt 2 bei (Exfiltration-Anteil vollständig).
+- **Prompt/Tool-Injection-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Prompt/Tool-Injection-Tests (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_PROMPT_TOOL_INJECTION_LIVE_DRILL_2026-08-16.md`. Beweist, dass alle typisierten Autorisierungsfelder gegen adversarielle Payloads immun sind (18 neue Tests, 1128/1128 gesamt PASS). **Wichtiger offener Fund (nicht behoben):** `credentialExposureDetected`/`untrustedScopeElevationDetected`-Checkpoint-Gates funktionieren, werden aber von beiden realen Aufrufern hartkodiert auf `false` gesetzt — kein echter Content-Scanning-Detektor existiert; eigenes Arbeitspaket vor M9-Closure empfohlen. Trägt zu M9-Exit-Gate-Punkt 2 nur teilweise bei.
+- Nächster Schritt: Owner wählt entweder ein neues Arbeitspaket „Untrusted-Content-Injection-Detector" (schließt den offenen Fund oben), oder den Break-Glass-Proposal (letzter verbleibender M9-Kandidat aus der ursprünglichen Priorisierung) — siehe Inventory-Dokument §5.
 
 **Nicht ausführbar ohne separate Owner-Freigabe:**
 - M9-Drills / M10 / SA5
@@ -279,10 +280,11 @@ Die Roadmap gilt als geschlossen, wenn:
 | 1.0.7   | 2026-08-16 | I2: Replay/Idempotency-Live-Drill Owner-authorized and executed (`M9_REPLAY_IDEMPOTENCY_LIVE_DRILL_2026-08-16.md`); closed a real integration gap (envelope replay guard now wired to the real SA3B caller); contributes to M9 Exit Gate item 2 (replay portion, complete) |
 | 1.0.8   | 2026-08-16 | I2: Authorization-Bypass-Live-Drill Owner-authorized and executed (`M9_AUTHORIZATION_BYPASS_LIVE_DRILL_2026-08-16.md`); all 9 runbook attack vectors now proven through the real SA3B chain; contributes to M9 Exit Gate item 2 (authorization-bypass portion, complete) |
 | 1.0.9   | 2026-08-16 | I2: Secret/Exfiltration-Live-Drill Owner-authorized and executed (`M9_SECRET_EXFILTRATION_LIVE_DRILL_2026-08-16.md`); closed two real redaction gaps (camelCase-prefixed keys, missing TOTP/recovery/backup-code coverage); contributes to M9 Exit Gate item 2 (exfiltration portion, complete) |
+| 1.0.10  | 2026-08-16 | I2: Prompt/Tool-Injection-Live-Drill Owner-authorized and executed (`M9_PROMPT_TOOL_INJECTION_LIVE_DRILL_2026-08-16.md`); proved typed authorization fields immune to adversarial payloads; found and documented (not fixed) that the credentialExposureDetected/untrustedScopeElevationDetected checkpoint gates have no real content-scanning detector behind them yet — recommended as its own work package before M9 closure |
 
 ---
 
 **End of Document**  
 ROADMAP-INTEGRATED-DC-SA-0001  
 CAPITAL-AI Integrated Development Chain + Systemadmin Roadmap  
-Version 1.0.9
+Version 1.0.10
