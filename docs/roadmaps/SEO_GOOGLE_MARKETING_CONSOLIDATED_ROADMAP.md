@@ -8,7 +8,7 @@
 
 **ACTIVE — CANONICAL EXECUTION AUTHORITY (Domain SEO / Google Marketing / Content Distribution)**  
 Stand: 2026-08-16  
-Baseline: `main` (Store-Code PR #335; ADR-0082; WP-S1 VERIFIED)  
+Baseline: `main` (ADR-0082; WP-S1 VERIFIED; WP-D3 Soft-404 VERIFIED PR #360)  
 Owner: SvenKulessa  
 Authority-Bindung: ADR-0035, ADR-0042, ADR-0068 (PROPOSED), ADR-0082 (SeoEngine), ESS-0014, ESS-0022 (PROPOSED), ADR-0071, ESS-0023
 
@@ -99,14 +99,14 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Agen
 | WP | Status | Evidence |
 |----|--------|----------|
 | Q1 robots.txt + sitemap | **DONE** | `public/robots.txt`, `public/sitemap.xml` |
-| Q2 canonical + trailing slash | **PARTIAL** | Canonical in `index.html`; Server-Redirects offen |
+| Q2 canonical + trailing slash | **PARTIAL** | Canonical in `index.html`; Server trailing-slash 301 live (`/impressum/` → `/impressum`); full Q-CLOSE still open |
 | Q3 Search Console Verify | **OWNER ACTION** | Platzhalter; Owner muss Property verifizieren |
 | Q4 Checklist | **DONE** | `docs/seo/SEO_CHECKLIST.md` |
 | Q5 og:image first-party | **DONE** | `public/og-image.svg` |
 | Q6 obsolete CORS | **N/A** | Keine AI-Studio-Ausnahme im Tree |
-| D1 JSON-LD | offen | — |
-| D2 route-specific titles/meta | offen | — |
-| D3 Soft-404 | offen | — |
+| D1 JSON-LD | offen | Shell-JSON-LD in `index.html` vorhanden; Rich-Results-DoD offen |
+| D2 route-specific titles/meta | offen | teilweise via prerender; client router titles offen |
+| D3 Soft-404 | **VERIFIED** | PR #360; prod commit `54c48ca`; unknown → 404 `text/plain`; evidence `docs/evidence/seo/D3_SOFT_404_PROD_GAP_2026-08-16.md` |
 | D4 Bundle-Splitting | offen (carried) | — |
 | D5 Search Console MCP Read | offen | Runbook vorhanden |
 | S1 SeoEngine Platform | **VERIFIED** | Store + Routes + Tests (PR #335); Schema/Grants/FK/Ledger applied 2026-08-15; **ADR-0082** Accepted 2026-08-16 |
@@ -144,10 +144,10 @@ Präfixe bleiben kompatibel zur etablierten Q/D/S/N/H/J-Konvention; Marketing-Ph
 
 | ID | Inhalt | Abhängigkeit | DoD (kurz) |
 |----|--------|--------------|------------|
-| WP-Q-CLOSE | Q2 Server-Trailing-Slash, Q3 Owner-Verify + Sitemap-Submit | Owner | 301-Normalisierung live; GSC Property verified |
+| WP-Q-CLOSE | Q2 Server-Trailing-Slash, Q3 Owner-Verify + Sitemap-Submit | Owner | Server-301 live; GSC Property verified noch OWNER |
 | WP-D1 | JSON-LD Organization/WebSite/SoftwareApplication | Q | Rich-Results-Test ohne Fehler |
 | WP-D2 | Routen-spezifische Title/Meta (Legal + Feature) | Q | Pro öffentlicher Route eindeutiger Title |
-| WP-D3 | Soft-404: unbekannte Routen → HTTP 404 | — | Kein Soft-404 für unbekannte Pfade |
+| WP-D3 | Soft-404: unbekannte Routen → HTTP 404 | — | **VERIFIED** — PR #360; prod unknown → 404 `text/plain` (2026-08-16) |
 | WP-D4 | Bundle-Splitting / CWV | — | Messbare LCP/JS-Verbesserung |
 | WP-D5 | Search Console als MCP-Read (Evidence) | ESS-0014 | Read-only MCP, kein Write |
 
@@ -265,14 +265,15 @@ Programm gilt als abgeschlossen, wenn:
 
 ---
 
-## 10. Sofortige nächste Schritte (Stand 2026-08-16, nach ADR-0082 / WP-S1 VERIFIED)
+## 10. Sofortige nächste Schritte (Stand 2026-08-16, nach WP-D3 VERIFIED)
 
 1. ~~**Owner:** FK RESTRICT Apply (`20260815220000`) + Ledger-Abgleich~~ — angewendet 2026-08-15.
 2. **Owner:** Search Console Property verifizieren (WP-Q-CLOSE / Q3).
 3. ~~ADR-Draft SeoEngine nummerieren~~ — **ADR-0082** Accepted (Kollisionscheck nach PR #345: 0075–0081 belegt).
 4. ADR-0068 + ESS-0022 Owner-Review (WP-M0) — ohne Runtime-Enablement.
-5. Nächstes **Code**-WP ohne Shared-Zone-Lease: **WP-D1 / D2 / D3** (JSON-LD, Title/Meta, Soft-404) scoped PR.
-6. WP-S2 nur nach formalem Prerender-ADR.
+5. ~~WP-D3 Soft-404~~ — **VERIFIED** (PR #360; prod curl 2026-08-16).
+6. Nächstes **Code**-WP ohne Shared-Zone-Lease: **WP-D1 / D2** (JSON-LD Rich-Results-DoD, route-specific titles/meta).
+7. WP-S2 nur nach formalem Prerender-ADR.
 
 Vollständiger Übergabekontext: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`. Canonical ADR: `docs/adr/ADR-0082-seo-engine-platform-module.md`.
 
@@ -285,3 +286,4 @@ Vollständiger Übergabekontext: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`. Ca
 | 0002.0 | 2026-08-15 | Erstausgabe: Konsolidierung SEO-ROADMAP-0001 + MARKETING_AGENT_ROADMAP + Google-Marketing-Programmplan zu Single Point of Trust |
 | 0002.1 | 2026-08-15 | Ist-Stand S1: Store-Code PR #335 auf main; Owner-Gates (FK/Ledger/ADR) explizit; nächste Schritte aktualisiert |
 | 0002.2 | 2026-08-16 | WP-S1 **VERIFIED**: ADR-0082 Accepted (nach PR #345 Nummernraum); §4/§5.2/§10 synchronisiert |
+| 0002.3 | 2026-08-16 | WP-D3 Soft-404 **VERIFIED** (PR #360; prod commit `54c48ca`; unknown → 404); §4/§5.1/§10 synchronisiert |
