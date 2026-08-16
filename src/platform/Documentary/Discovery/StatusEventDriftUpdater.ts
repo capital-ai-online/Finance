@@ -11,6 +11,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { detectStatusEventDrift } from './StatusEventDriftDetector';
 import type { StatusEventDriftFinding, StatusEventDriftReport } from './StatusEventEvidence';
 import { STATUS_EVENT_DETECTOR_VERSION } from './StatusEventEvidence';
 
@@ -189,7 +190,8 @@ export function applyStatusHeaderUpdates(
         dryRun,
         previousHeaderStatus: previous,
         newHeaderStatus: previous,
-        skippedReason: previous === proposal.proposedHeaderStatus ? 'already at target' : 'no Status header line',
+        skippedReason:
+          previous === proposal.proposedHeaderStatus ? 'already at target' : 'no Status header line',
       });
       continue;
     }
@@ -235,9 +237,6 @@ export function runControlledStatusHeaderUpdate(options: {
   dryRun?: boolean;
   sourceCommit?: string;
 }): StatusHeaderUpdateReport {
-  // Lazy import path avoided: caller may pass precomputed report; here we import detector.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { detectStatusEventDrift } = require('./StatusEventDriftDetector') as typeof import('./StatusEventDriftDetector');
   const report = detectStatusEventDrift({
     repoRoot: options.repoRoot,
     documentPaths: options.documentPaths,
