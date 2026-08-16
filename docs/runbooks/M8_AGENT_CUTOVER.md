@@ -1,13 +1,21 @@
 # M8 — Provider-neutral Agent Cutover Runbook
 
-Status: IN PROGRESS — Phase 0 complete; Exit Gate items 1, 3, 4, 5, 6, 7 VERIFIED PASS;
-item 2 **PENDING OWNER SCOPE DECISION** (chatgpt-github-connector now READY including
-`externalHostConfigurationVerified`; claude-code-cli structurally BLOCKED; google-ai-studio +
-notebooklm NOT_APPLICABLE); item 8 IN PROGRESS (this PR); item 9 N/A for M8-scope branches.
-Evidence: `docs/evidence/m8/M8_EXTERNAL_HOST_CONFIGURATION_VERIFIED_EVIDENCE.md`,
+Status: **COMPLETE / VERIFIED PASS** — all 9 Exit Gate items PASS. Item 2 closed under an
+Owner-accepted scope decision (2026-08-16, explicit "ACCEPT" via AskUserQuestion): "privileged
+supported providers" = mutating providers with a production execution host, currently
+`chatgpt-github-connector` only (READY, all 6 `ProviderCutoverEvidence` fields incl.
+`externalHostConfigurationVerified`). Canonical provider set corrected the same day (PR #365,
+`docs/evidence/m8/M8_PROVIDER_SET_CORRECTION_2026-08-16.md`): ChatGPT, Claude, Grok;
+`google-ai-studio`/`notebooklm`/`gemini` are now `RETIRED_PROVIDER_ALIASES` (DENY). Both
+`claude-code-cli` and `grok-xai-connector` remain structurally BLOCKED (interactive,
+host-mediated connector sessions with no code-addressable execution host) and are explicitly not
+supported privileged production paths. M9 (Integrated Roadmap Phase I2) is no longer blocked by
+M8, but each individual M9 drill remains a separately Owner-authorized action.
+Evidence: `docs/evidence/m8/M8_CLOSURE_EVIDENCE.md`,
+`docs/evidence/m8/M8_EXTERNAL_HOST_CONFIGURATION_VERIFIED_EVIDENCE.md`,
 `docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md`,
 `docs/evidence/m8/M8_I1_CUTOVER_READINESS_MATRIX_AND_EXIT_GATE_SYNC_EVIDENCE.md`.
-Date: 2026-08-16 (Nachtrag: external host config evidence + Exit-Gate-2 Scope-Proposal).
+Date: 2026-08-16 (Nachtrag: Owner-ACCEPT + M8 Closure).
 Authority: ADR-0062, ESS-0019, `docs/architecture/ai-agent/AI_AGENT_PROVIDER_PROFILE_CONTRACT.md`, DEVELOPMENT Chain Execution Policy, `docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (Phase I1, ROADMAP-INTEGRATED-DC-SA-0001) — dieses Runbook bleibt die spezifischere Authority; die Integrated Roadmap ersetzt es nicht.
 
 ## Goal
