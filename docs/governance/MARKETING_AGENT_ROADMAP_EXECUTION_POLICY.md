@@ -4,7 +4,7 @@ Status: DRAFT / NOT ACTIVE
 Date: 2026-08-12
 Owner: SvenKulessa
 Logical agent: `capital-ai-marketing-roadmap-executor`
-Authority: proposed ESS-0022 / ADR-0068
+Authority: proposed ESS-0024 / ADR-0080
 
 ## 1. Purpose
 
@@ -277,7 +277,7 @@ This avoids cross-domain privilege creep.
 
 This policy becomes executable authority only after:
 
-- ESS-0022 and ADR-0068 are accepted;
+- ESS-0024 and ADR-0080 are accepted;
 - the canonical registry/traceability entries are updated;
 - required SA host foundations are VERIFIED PASS;
 - Marketing subject/mandate enforcement and negative tests are VERIFIED PASS;

@@ -1,0 +1,73 @@
+{
+  "claimId": "WP-M0-MARKETING-GOVERNANCE-OWNER-ACCEPT-2026-08-16",
+  "title": "WP-M0: ESS-Nummernraum bereinigen, ADR-0080 ausarbeiten, Owner-ACCEPT vollziehen",
+  "roadmap": "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+  "documentId": "SEO-GM-ROADMAP-0002",
+  "roadmapIds": ["WP-M0"],
+  "branch": "claude/wp-m0-marketing-governance",
+  "base": "main",
+  "owner": "SvenKulessa",
+  "status": "prepared",
+  "createdAt": "2026-08-16",
+  "createdBy": {
+    "provider": "Anthropic",
+    "model": "Claude Code (Opus)",
+    "surface": "Claude Code Remote (interaktive Owner-Sitzung)"
+  },
+  "authorizedByHuman": true,
+  "ownerDecision": {
+    "type": "ACCEPT",
+    "subject": [
+      ".ai/skills/ESS-0024-Marketing-Roadmap-Executor.md",
+      "docs/adr/ADR-0080-marketing-roadmap-executor-and-content-automation-boundary.md"
+    ],
+    "verbatimAnswer": "acceptedn. bringe das Paket auf einen neuen branch um das Thema von den PDF Exports abzutrennen",
+    "decidedAt": "2026-08-16",
+    "decidedBy": "SvenKulessa (Repository Owner)",
+    "context": "Die Entscheidung erfolgte unmittelbar auf eine schriftliche Darlegung des exakten Owner-Schritts und der Reichweite einer Annahme (WP_M0_OWNER_REVIEW_PACKAGE.md Abschnitt 6: was eine Annahme bewirkt und was ausdruecklich nicht). Der Owner antwortete 'accepted' (Tippfehler 'acceptedn.' im Original) und gab zugleich die Abtrennung auf einen eigenen Branch frei.",
+    "scopeOfAuthorization": "Annahme der beiden Dokumente sowie Erstellung dieses Branches getrennt vom NotebookLM-PDF-Export. KEINE Freigabe fuer Runtime-Enablement, Mandatserteilung, externe Mutation oder Merge.",
+    "mergeAuthorization": "NICHT erteilt. Merge bleibt Human/Owner-only (HUMAN_OWNER_PR_APPROVAL_POLICY)."
+  },
+  "scope": [
+    ".ai/skills/ESS-0024-Marketing-Roadmap-Executor.md",
+    ".ai/registry/ess-registry.json",
+    ".ai/contracts/marketing-roadmap-execution-profile.json",
+    "docs/adr/ADR-0080-marketing-roadmap-executor-and-content-automation-boundary.md",
+    "docs/adr/ADR-0085-ess-namespace-cleanup-and-registry-backfill.md",
+    "docs/governance/WP_M0_OWNER_REVIEW_PACKAGE.md",
+    "docs/governance/MARKETING_AGENT_ROADMAP_EXECUTION_POLICY.md",
+    "docs/traceability/MARKETING_AGENT_TRACEABILITY_MATRIX.md",
+    "docs/architecture/AUTONOMOUS_CONTENT_ENGINE_ARCHITECTURE.md",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+    "docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
+    "docs/roadmaps/MARKETING_AGENT_ROADMAP.md",
+    "docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md",
+    ".ai/work-claims/WP-M0-MARKETING-GOVERNANCE-OWNER-ACCEPT-2026-08-16.json"
+  ],
+  "outOfScope": [
+    "Runtime-Code, Workflows, Infrastruktur",
+    "Marketing-Mandat / Capability-Erteilung (MA1+)",
+    "Externes Publishing und Social-OAuth-Pfade",
+    "Execution-Policy-Aktivierung (Paragraph 18 unerfuellt)",
+    "ESS-0022 Passkey / M10 und alle zugehoerigen Dokumente",
+    "NotebookLM-PDF-Export (eigener Branch)",
+    "Folgebefund F1 (ESS-0012-Doppelbelegung)"
+  ],
+  "findingsResolved": {
+    "B1": "ESS-0022 doppelt vergeben (Marketing + Passkey/M10). Marketing-Spezifikation unter ADR-0085 auf ESS-0024 umgenummert; ESS-0022 bleibt Passkey. Inhalt unveraendert.",
+    "B2": "ESS-Registry endete bei ESS-0018. Nachgezogen um ESS-0019 bis ESS-0024; freeNumberSpaceStartsAt auf ESS-0025; Vergaberegel ergaenzt.",
+    "B3": "ADR-0080 ohne Context, Alternativen, Consequences und DoD. Auf Repository-Standard ausgearbeitet; Entscheidung inhaltlich unveraendert."
+  },
+  "collisionCheck": {
+    "adr": "ADR-0084 war zunaechst als Nummer vorgesehen (ADR_UNIFIED_LOCATION_INVENTORY_2026-08-16), wurde jedoch parallel auf main an ADR-0084-prerender-public-routes.md (WP-S2) vergeben. Nach erneuter Pruefung gegen main 41d3e5c: hoechste belegte Nummer ADR-0084, zugewiesen ADR-0085.",
+    "ess": "Hoechste belegte Nummer vor diesem Vorgang ESS-0023; zugewiesen ESS-0024; freeNumberSpaceStartsAt danach ESS-0025.",
+    "checkedAt": "2026-08-16"
+  },
+  "checkClass": "D",
+  "notes": "Dokumentations-only. Keine Runtime-, Workflow- oder Infrastrukturaenderung. Die Annahme etabliert die Agentengrenze und erteilt keine Faehigkeit: Das Ausfuehrungsprofil bleibt DRAFT_NOT_ENABLED mit READ/ANALYZE/PLAN, MERGE bleibt dauerhaft verboten, externes Publishing bleibt ungenehmigt. Offener Folgebefund F1 (ESS-0012 doppelt belegt) ist in ADR-0085 dokumentiert und bewusst nicht mitentschieden.",
+  "validation": {
+    "shadowAdrMetadataValidator": "error=0",
+    "essRegistry": "30 Eintraege, keine Duplikate, jede ESS-Datei registriert, jeder Eintrag zeigt auf eine existierende Datei",
+    "passkeyM10Untouched": "verifiziert - keine M10-/Passkey-Datei im Diff"
+  }
+}

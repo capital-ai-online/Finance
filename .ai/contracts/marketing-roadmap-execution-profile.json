@@ -10,13 +10,13 @@
   "authorityRefs": [
     "ESS-0019",
     "ESS-0021",
-    "ESS-0022",
+    "ESS-0024",
     "ADR-0039",
     "ADR-0058",
     "ADR-0059",
     "ADR-0065",
     "ADR-0067",
-    "ADR-0068",
+    "ADR-0080",
     "docs/governance/AUTONOMOUS_AGENT_CONCEPT_GATE.md",
     "docs/roadmaps/MARKETING_AGENT_ROADMAP.md"
   ],
