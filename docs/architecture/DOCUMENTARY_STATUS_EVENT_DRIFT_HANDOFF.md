@@ -28,6 +28,7 @@ npx tsx scripts/automation/scanStatusEventDrift.ts
 npx tsx scripts/automation/scanStatusEventDrift.ts --path docs/runbooks/FOO.md
 # write headers only in local Draft-PR working tree:
 npx tsx scripts/automation/scanStatusEventDrift.ts --apply
+npm run status:scan-drift
 ```
 
 Exit code `2` when drift findings exist in dry-run (advisory signal only; not a CI gate).
@@ -68,7 +69,7 @@ Only one work-claim with `status: "applied"` was found under `.ai/work-claims/` 
 ## Owner next steps
 
 1. Review and merge Draft-PR **#364** (updater + SEO_WP_S1 header + scan CLI + this handoff).
-2. After merge, run `npx tsx scripts/automation/scanStatusEventDrift.ts` on `main` — expect **0 drift** for the SEO_WP_S1 path.
+2. After merge, run `npm run status:scan-drift` on `main` — expect **0 drift** for the SEO_WP_S1 path.
 3. Further header hygiene: only when new Apply-Evidenz + applied claims appear; always via new Draft-PR.
 
 ## Non-goals (still out of scope)
