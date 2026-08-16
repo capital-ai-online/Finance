@@ -2,8 +2,8 @@
 
 **Document ID:** ROADMAP-INTEGRATED-DC-SA-0001  
 **Status:** ACTIVE — CANONICAL EXECUTION ROADMAP  
-**Version:** 1.0.0  
-**Date:** 2026-08-15  
+**Version:** 1.0.1  
+**Date:** 2026-08-16  
 **Repository:** SvenKulessa/Finance  
 **Authority:** ADR-0071, ESS-0023, DEVELOPMENT_CHAIN_EXECUTION_POLICY, SYSTEMADMIN_AGENT_ROADMAP_EXECUTION_POLICY, DOCUMENTATION_HYGIENE_POLICY  
 **Owner:** SvenKulessa  
@@ -37,7 +37,7 @@ Bei Widerspruch gilt immer die restriktivere Regel.
 | Phase | DEVELOPMENT Chain | Systemadmin | Execution State | Mutation Gate | Next Gate |
 |-------|-------------------|-------------|-----------------|---------------|-----------|
 | **I0** | M0–M7 Baseline | SA0–SA4 Baseline | **VERIFIED PASS** | read-only preserve | I1 |
-| **I1** | M8 Agent Cutover (Abschluss) | Work-Package Catalog Nutzung | **IN PROGRESS** (Phase 0 + Teil-Gates VERIFIED) | repository only, REM-bound | I2 nach VERIFIED PASS |
+| **I1** | M8 Agent Cutover (Abschluss) | Work-Package Catalog Nutzung | **IN PROGRESS** — Exit 1/3–7 PASS; chatgpt-github-connector READY; Exit-2 **Owner-Scope pending**; Exit-8 this PR | repository only, REM-bound | I2 nur nach M8 VERIFIED PASS + Owner |
 | **I2** | M9 Assurance / Incident / Break-Glass | SA-Prototyp-Anfragen (ESS-0023) | **BLOCKED** | drills + evidence | I3 nach VERIFIED PASS |
 | **I3** | M10 Passkey-only Owner PR Authorization | SA5 Design-Vorbereitung | **BLOCKED** | exact-state WebAuthn | I4 nach VERIFIED PASS |
 | **I4** | DevelopmentChain Closure | SA5 Bounded External Mutation Design | **BLOCKED** | separate ADR + Owner Approval | Production Mutation möglich |
@@ -49,23 +49,18 @@ Bei Widerspruch gilt immer die restriktivere Regel.
 ## 4. I1 — M8 Agent Cutover (aktueller ausführbarer Fokus)
 
 ### Goal
-Provider-neutraler Agent-Cutover: alle Provider (ChatGPT, Claude Code, Google AI Studio, NotebookLM) laufen über denselben Control-Plane-Pfad mit identischer Capability-Policy. Kein provider-spezifischer privilegierter Bypass bleibt kanonisch.
+Provider-neutraler Agent-Cutover: privilegierte Execution über denselben Control-Plane-Pfad mit identischer Capability-Policy. Kein provider-spezifischer privilegierter Bypass bleibt kanonisch.
 
-### Offene Lücken (aus Evidence + Roadmap)
-- Claude Code / Google AI Studio / NotebookLM haben noch keinen realen Caller
-- Provider-Cutover-Sequenz nicht ausgeführt
-- Branch-Cleanup nach Cutover offen
-- Exit-Gate-Punkte 1–3, 5, 8–10 noch nicht vollständig geschlossen
+### Stand 2026-08-16 (Evidence)
+- Phase 0 + Provider-Profile + SA3B-Verdrahtung + Rollback + Bypass-Audit + Audit-Korrelation: **VERIFIED PASS**
+- `chatgpt-github-connector`: alle 6 `ProviderCutoverEvidence`-Felder **true** inkl. `externalHostConfigurationVerified` (`docs/evidence/m8/M8_EXTERNAL_HOST_CONFIGURATION_VERIFIED_EVIDENCE.md`) → Readiness **READY**
+- `google-ai-studio` / `notebooklm`: **NOT_APPLICABLE** (non-mutating)
+- `claude-code-cli`: **BLOCKED** strukturell (`docs/architecture/M8_CLAUDE_CODE_REAL_CALLER_DESIGN.md`)
+- Exit-Gate-Punkt 2: **Scope-Entscheidung PROPOSED** — `docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md` (Owner ACCEPT/REJECT/DEFER)
 
-### Required Sequence
-1. Fresh branch from current `main`
-2. Real Caller-Wiring für alle verbleibenden Provider (additiv, nie ersetzend)
-3. Policy-Equivalence-Tests erweitern
-4. Full Cutover-Sequenz (shadow → active) mit Rollback-Beweis
-5. Branch-Cleanup aller Cutover-Arbeitsbranches
-6. Positive + Negative Tests + Evidence unter `docs/evidence/m8/`
-7. Human/Owner Review + CI + Merge
-8. Roadmap + Traceability Sync → Status `VERIFIED PASS`
+### Offene Lücken (nur noch Owner-gebunden)
+- Explizite Owner-Akzeptanz der Scope-Entscheidung zu Exit-Gate-Punkt 2
+- Danach: formales M8 Closure Evidence + Traceability-Final + Branch-Delete nach Merge
 
 ### Systemadmin-Rolle in I1
 - Darf bounded Work-Packages aus dem generalisierten Catalog (ADR-0074) für M8-Dokumentation und Tests ausführen
@@ -73,13 +68,16 @@ Provider-neutraler Agent-Cutover: alle Provider (ChatGPT, Claude Code, Google AI
 - Darf **keine** Provider-Profile oder IAM-Regeln eigenmächtig erweitern
 - Execution nur über trusted GitHub Actions Host + OIDC + REM
 
-### Exit Gate I1
-- Alle 4 Provider-Profile haben realen Caller
-- Kein provider-spezifischer Bypass existiert (CI-Guard vorhanden)
-- Rollback-to-read-only bewiesen
-- Alle Cutover-Branches gelöscht
-- Evidence + Traceability synchron
-- Owner bestätigt `VERIFIED PASS`
+### Exit Gate I1 (Runbook-9-Punkte, maßgeblich)
+1. M7 verified — **PASS**
+2. Privileged supported providers on Control Plane — **PENDING OWNER SCOPE**
+3. Policy equivalence — **PASS**
+4. No provider-specific privileged bypass — **PASS**
+5. Research profiles fail mutation — **PASS**
+6. Rollback-to-read-only — **PASS**
+7. Audit correlation — **PASS**
+8. Evidence + Traceability sync — **IN PROGRESS** (dieser PR)
+9. Work branches deleted — **N/A** (kein offener M8-Cutover-Branch)
 
 ---
 
@@ -105,12 +103,14 @@ Nachweis, dass die Control Plane gegen Injection, Authorization-Bypass, Replay, 
 - Darf Kill-Switch- und Break-Glass-Proposals formulieren
 - Ausführung der Drills bleibt Human/Owner-gesteuert
 
+**Startbedingung:** M8 `COMPLETE / VERIFIED PASS` inkl. Owner-ACCEPT auf Exit-Gate-2-Scope.
+
 ---
 
 ## 6. I3 — M10 Passkey-only Owner PR Authorization
 
 ### Goal
-Ersetze Legacy-`💪`/`okay`- und Checkbox-Authorization durch exact-state WebAuthn (Passkey) mit User-Verification.
+Exact-state WebAuthn (Passkey) mit User-Verification für `AUTHORIZE_PR_CI` (Legacy-Emoji/Checkbox-Gates sind bereits retired; M10 ist die nächste starke Schicht).
 
 ### Sequence
 ```
@@ -125,8 +125,6 @@ PR OPEN/UPDATE
 → build-and-test
 → Human merge
 ```
-
-Legacy bleibt autoritativ bis `VERIFIED PASS`.
 
 ### Systemadmin-Rolle
 - Darf Shadow-Mode und Threat-Model-Evidence liefern
@@ -212,13 +210,14 @@ Kein Document erzeugt eigene Authority.
 
 ## 11. Current Next Action (I1)
 
-**Sofort ausführbar:**
-1. Owner-Anweisung für nächstes konkretes M8-Element (z. B. Claude-Code-Caller oder Cutover-Sequenz)
-2. Optional: Bounded Systemadmin Work-Package für M8-Evidence/Tests über den generalisierten Runner
-3. Parallel: SUPERSEDED-Dokumente gemäß Hygiene-Policy archivieren
+**Sofort ausführbar (Human):**
+1. PR `docs/m8-exit-gate-a-b-c-2026-08-16` reviewen und mergen (Klasse D)
+2. In `docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md` **ACCEPT / REJECT / DEFER** setzen
+3. Bei ACCEPT: M8 Closure Evidence + Roadmap-Status `VERIFIED PASS` + Freigabe I2/M9
 
 **Nicht ausführbar ohne separate Owner-Freigabe:**
-- M9 / M10 / SA5
+- M9-Drills / M10 / SA5
+- Claude-Code Real-Caller (eigenes ADR erforderlich)
 - Jede Produktions-, IAM-, Secret-, Deploy- oder HIGH/CRITICAL-Mutation
 
 ---
@@ -249,6 +248,8 @@ Die Roadmap gilt als geschlossen, wenn:
 - `docs/adr/ADR-0071-consolidated-roadmap-and-requested-systemadmin-mutations.md`
 - `docs/adr/ADR-0074-generalized-systemadmin-work-package-catalog.md`
 - `.ai/skills/ESS-0023-Consolidated-Systemadmin-Prototype-and-Mutation-Request.md`
+- `docs/evidence/m8/M8_EXTERNAL_HOST_CONFIGURATION_VERIFIED_EVIDENCE.md`
+- `docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md`
 
 ---
 
@@ -257,10 +258,11 @@ Die Roadmap gilt als geschlossen, wenn:
 | Version | Date       | Description                                      |
 |---------|------------|--------------------------------------------------|
 | 1.0.0   | 2026-08-15 | Initial Integrated Roadmap — connects DC + SA, absorbs all open gaps and improvement suggestions |
+| 1.0.1   | 2026-08-16 | I1 sync: externalHostConfigurationVerified PASS; Exit-Gate-2 Scope-Proposal; M9 remains blocked |
 
 ---
 
 **End of Document**  
 ROADMAP-INTEGRATED-DC-SA-0001  
 CAPITAL-AI Integrated Development Chain + Systemadmin Roadmap  
-Version 1.0.0
+Version 1.0.1
