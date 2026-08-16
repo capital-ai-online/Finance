@@ -32,7 +32,7 @@ export type ProviderCutoverSimulationResult =
       reason: string;
     }
   | {
-      status: 'BLOCKED' | 'NOT_APPLICABLE';
+      status: 'BLOCKED' | 'NOT_APPLICABLE' | 'RETIRED';
       executionPermitted: false;
       reason: string;
       missingEvidence: readonly (keyof ProviderCutoverEvidence)[];
@@ -45,6 +45,8 @@ export type ProviderCutoverSimulationResult =
  * fail-closed readiness gate, then evaluates the candidate through the canonical Provider Profile
  * + Agent IAM chain and compares that verdict with the already-observed baseline verdict.
  * A MATCH is evidence for review only and never an execution permit.
+ *
+ * Owner 2026-08-16: retired aliases (google-ai-studio, notebooklm, gemini) surface as RETIRED.
  */
 export function simulateProviderCutover(
   request: Readonly<ProviderCutoverSimulationRequest>,
@@ -67,6 +69,15 @@ export function simulateProviderCutover(
   if (readiness.status === 'NOT_APPLICABLE') {
     return {
       status: 'NOT_APPLICABLE',
+      executionPermitted: false,
+      reason: readiness.reason,
+      missingEvidence: [],
+    };
+  }
+
+  if (readiness.status === 'RETIRED') {
+    return {
+      status: 'RETIRED',
       executionPermitted: false,
       reason: readiness.reason,
       missingEvidence: [],

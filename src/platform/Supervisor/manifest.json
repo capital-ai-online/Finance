@@ -1,42 +1,21 @@
 {
   "name": "Supervisor",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "status": "implemented",
   "owner": "CAPITAL-AI",
-  "description": "Task Routing/Tool Selection (Anlageklasse -> zustaendige Scoring-Engine) und Execution Control/Retry/Recovery/Self-Healing (executeSupervised(), echter Retry-mit-Backoff statt Aufgeben beim ersten Fehlschlag) fuer server.ts. Conflict Resolution bewusst nicht implementiert - die Architektur hat pro Anlageklasse genau eine autoritative Engine, siehe supervisor.ts.",
+  "description": "Task Routing/Tool Selection, Execution Control/Retry, approved write path, agent provider chain observation (ChatGPT/Claude/Grok), lightweight findings.",
   "category": "platform",
-  "ess": [
-    "ESS-0001",
-    "ESS-0001-CONTRACTS"
-  ],
-  "adr": [
-    "ADR-0018"
-  ],
-  "dependencies": [
-    "EventMesh"
-  ],
+  "ess": ["ESS-0001", "ESS-0001-CONTRACTS", "ESS-0002"],
+  "adr": ["ADR-0018", "ADR-0051", "ADR-0062"],
+  "dependencies": ["EventMesh"],
   "events": {
-    "produces": [
-      "SupervisorAlertEvent",
-      "CriticalArchitectureViolationEvent"
-    ],
-    "consumes": [
-      "GovernanceViolationDetectedEvent",
-      "EventRoutingFailedEvent"
-    ],
-    "note": "Nachgepflegt gemaess ADR-0018 Folgeentscheidung 2 (Enterprise Event Mesh Manifest-Nachpflege)."
+    "produces": ["SupervisorAlertEvent", "CriticalArchitectureViolationEvent", "SupervisorApprovedActionApplied"],
+    "consumes": ["GovernanceViolationDetectedEvent", "EventRoutingFailedEvent"]
   },
-  "knowledge": [],
-  "interfaces": [],
-  "contracts": [],
-  "documentation": [
-    "README.md"
-  ],
+  "documentation": ["README.md"],
   "tests": [
-    "tests/unit/marketIntegrityCalibration.test.ts",
-    "tests/unit/marketIntegrityRuntimeEvidence.test.ts",
-    "tests/unit/providerHealth.test.ts",
     "tests/unit/supervisor.test.ts",
-    "tests/unit/supervisorApprovedAction.test.ts"
+    "tests/unit/supervisorApprovedAction.test.ts",
+    "tests/unit/providerProfile.test.ts"
   ]
 }
