@@ -1,10 +1,13 @@
 # M8 — Provider-neutral Agent Cutover Runbook
 
-Status: IN PROGRESS — Phase 0 complete; Exit Gate items 1, 3, 4, 5, 6, 7 VERIFIED PASS; item 2
-PARTIAL (1 of 4 provider profiles has a real caller); item 8 in progress; item 9 N/A for current
-M8-scope branches. Full status: `docs/evidence/m8/M8_I1_CUTOVER_READINESS_MATRIX_AND_EXIT_GATE_SYNC_EVIDENCE.md`.
-Date: 2026-08-15 (Nachtrag zum Status-Header; Date 2026-08-12 war veraltet — M7 ist seit 2026-08-14
-`VERIFIED PASS`. Exit Gate und Cutover Sequence unten bleiben normativ unverändert.)
+Status: IN PROGRESS — Phase 0 complete; Exit Gate items 1, 3, 4, 5, 6, 7 VERIFIED PASS;
+item 2 **PENDING OWNER SCOPE DECISION** (chatgpt-github-connector now READY including
+`externalHostConfigurationVerified`; claude-code-cli structurally BLOCKED; google-ai-studio +
+notebooklm NOT_APPLICABLE); item 8 IN PROGRESS (this PR); item 9 N/A for M8-scope branches.
+Evidence: `docs/evidence/m8/M8_EXTERNAL_HOST_CONFIGURATION_VERIFIED_EVIDENCE.md`,
+`docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md`,
+`docs/evidence/m8/M8_I1_CUTOVER_READINESS_MATRIX_AND_EXIT_GATE_SYNC_EVIDENCE.md`.
+Date: 2026-08-16 (Nachtrag: external host config evidence + Exit-Gate-2 Scope-Proposal).
 Authority: ADR-0062, ESS-0019, `docs/architecture/ai-agent/AI_AGENT_PROVIDER_PROFILE_CONTRACT.md`, DEVELOPMENT Chain Execution Policy, `docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (Phase I1, ROADMAP-INTEGRATED-DC-SA-0001) — dieses Runbook bleibt die spezifischere Authority; die Integrated Roadmap ersetzt es nicht.
 
 ## Goal
@@ -158,6 +161,8 @@ Create `docs/evidence/m8/*` including:
 - audit correlation;
 - rollback-to-read-only proof;
 - final branch/merge/deletion evidence.
+- external host configuration verification for the wired mutating provider;
+- Exit-Gate item 2 scope decision (Owner).
 
 ## Exit Gate
 
@@ -172,5 +177,11 @@ M8 is `COMPLETE / VERIFIED PASS` only when:
 7. audit correlation is complete;
 8. Evidence + Roadmap/Traceability are synchronized;
 9. work branches are deleted.
+
+**Scope note (2026-08-16):** Point 2 may be closed by explicit Owner acceptance of the supported
+privileged provider set defined in `docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md`
+(currently: only `chatgpt-github-connector` is a production mutating host path; non-mutating
+profiles remain NOT_APPLICABLE; `claude-code-cli` remains structurally BLOCKED pending a separate
+ADR). Without that Owner acceptance, point 2 stays open and M9 remains blocked.
 
 Only then may M9 begin.
