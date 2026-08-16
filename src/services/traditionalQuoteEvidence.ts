@@ -1,6 +1,8 @@
 import { recordProviderHealth } from '../platform/Supervisor/providerHealth';
 import { MarketDataGateway } from '../platform/MarketData/MarketDataGateway';
 import { ProviderRegistry } from '../platform/MarketData/ProviderRegistry';
+import { RateLimitBudget } from '../platform/MarketData/RateLimitBudget';
+import { rateLimitOverridesFromMatrix } from '../platform/MarketData/ProviderMatrix';
 import { TwelveDataMarketDataProvider } from '../platform/MarketData/providers/TwelveDataMarketDataProvider';
 import { FmpIndexMarketDataProvider } from '../platform/MarketData/providers/FmpIndexMarketDataProvider';
 import { recordMarketDataProviderOutcome } from './marketDataProviderRouter';
@@ -71,7 +73,14 @@ function traditionalQuoteGateway(options: QuoteOptions): MarketDataGateway {
     nowMs: options.nowMs,
     apiKey: options.twelveDataApiKey,
   }));
-  const gateway = new MarketDataGateway(registry, { nowMs: options.nowMs });
+  // SC-4: matrix-backed per-provider rate limits on the shared gateway path.
+  const gateway = new MarketDataGateway(registry, {
+    nowMs: options.nowMs,
+    rateLimitBudget: new RateLimitBudget({
+      nowMs: options.nowMs,
+      perProvider: rateLimitOverridesFromMatrix(),
+    }),
+  });
   if (!usesInjectedRuntime) productionTraditionalQuoteGateway = gateway;
   return gateway;
 }
@@ -137,7 +146,13 @@ function fmpIndexGateway(options: QuoteOptions): MarketDataGateway {
     await ensureIndexQuoteFresh(symbol);
     return getCachedIndexQuote(symbol) ?? null;
   }, options.nowMs));
-  const gateway = new MarketDataGateway(registry, { nowMs: options.nowMs });
+  const gateway = new MarketDataGateway(registry, {
+    nowMs: options.nowMs,
+    rateLimitBudget: new RateLimitBudget({
+      nowMs: options.nowMs,
+      perProvider: rateLimitOverridesFromMatrix(),
+    }),
+  });
   if (!usesInjectedClock) productionFmpIndexGateway = gateway;
   return gateway;
 }

@@ -1,0 +1,32 @@
+{
+  "claimId": "SC4-GATEWAY-HARDENING-PROVIDER-MATRIX-2026-08-16",
+  "spt": "SC-MD-SPT-0001",
+  "workPackage": "SC-4",
+  "phase": "A",
+  "title": "Gateway hardening & provider matrix",
+  "status": "OPEN_PR",
+  "createdAt": "2026-08-16T02:30:00+02:00",
+  "ownerAuthorization": "User: sc 4 starten",
+  "scope": [
+    "src/platform/MarketData/ProviderMatrix.ts",
+    "src/platform/MarketData/RateLimitBudget.ts",
+    "src/platform/MarketData/CircuitBreaker.ts",
+    "src/platform/MarketData/MarketDataGateway.ts",
+    "src/services/traditionalQuoteEvidence.ts",
+    "tests/unit/providerMatrix.test.ts",
+    "docs/roadmaps/work-packages/SC-4_GATEWAY_HARDENING_PROVIDER_MATRIX.md",
+    "docs/evidence/sc-md/SC4_GATEWAY_HARDENING_PROVIDER_MATRIX_2026-08-16.md",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md"
+  ],
+  "nonGoals": [
+    "Crypto gateway migration (SC-5)",
+    "Alpaca primary promotion",
+    "scoreImpact / rankingImpact flip",
+    "History gateway consumer activation"
+  ],
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "surface": "Grok Chat / GitHub MCP"
+  }
+}
