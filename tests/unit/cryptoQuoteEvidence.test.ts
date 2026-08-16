@@ -7,23 +7,37 @@ import {
 import { CoinGeckoMarketDataProvider } from '../../src/platform/MarketData/providers/CoinGeckoMarketDataProvider';
 import { resetProviderHealth } from '../../src/platform/Supervisor/providerHealth';
 
+/** SC-5 Phase C — coins/{id}?market_data=true shape used by the gateway provider. */
+function coinsPayload(overrides: Record<string, unknown> = {}) {
+  return {
+    market_data: {
+      current_price: { usd: 65000.5 },
+      market_cap: { usd: 1_280_000_000_000 },
+      total_volume: { usd: 32_000_000_000 },
+      circulating_supply: 19_700_000,
+      max_supply: 21_000_000,
+      total_supply: 19_700_000,
+      last_updated: '2024-08-18T12:00:00.000Z',
+      ...overrides,
+    },
+  };
+}
+
 beforeEach(() => {
   resetCryptoQuoteGatewayForTests();
   resetProviderHealth();
 });
 
 describe('SC-5 CoinGeckoMarketDataProvider', () => {
-  it('returns LIVE snapshot for mapped symbol with injected fetch', async () => {
+  it('returns LIVE snapshot with multi-field market data for mapped symbol', async () => {
     const fetchImpl = vi.fn(async () => ({
       ok: true,
-      json: async () => ({
-        bitcoin: { usd: 65000.5, last_updated_at: 1_724_000_000 },
-      }),
+      json: async () => coinsPayload(),
     })) as unknown as typeof fetch;
 
     const provider = new CoinGeckoMarketDataProvider({
       fetchImpl,
-      nowMs: () => 1_724_000_100_000,
+      nowMs: () => Date.parse('2024-08-18T12:00:10.000Z'),
     });
     const snapshot = await provider.getSnapshot({
       symbol: 'BTC',
@@ -34,7 +48,37 @@ describe('SC-5 CoinGeckoMarketDataProvider', () => {
     expect(snapshot.price).toBe(65000.5);
     expect(snapshot.currency).toBe('USD');
     expect(snapshot.provider).toBe('CoinGecko');
+    expect(snapshot.providerFeed).toBe('coins/market_data');
     expect(snapshot.evidenceId).toContain('coingecko');
+    expect(snapshot.marketCapUsd).toBe(1_280_000_000_000);
+    expect(snapshot.volume24hUsd).toBe(32_000_000_000);
+    expect(snapshot.circulatingSupply).toBe(19_700_000);
+    expect(snapshot.maxSupply).toBe(21_000_000);
+    expect(snapshot.totalSupply).toBe(19_700_000);
+  });
+
+  it('maps max_supply null as null (not undefined)', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      json: async () =>
+        coinsPayload({
+          current_price: { usd: 3200 },
+          max_supply: null,
+          market_cap: { usd: 400_000_000_000 },
+          total_volume: { usd: 20_000_000_000 },
+          circulating_supply: 120_000_000,
+          total_supply: 120_000_000,
+        }),
+    })) as unknown as typeof fetch;
+
+    const provider = new CoinGeckoMarketDataProvider({ fetchImpl });
+    const snapshot = await provider.getSnapshot({
+      symbol: 'ETH',
+      assetClass: 'crypto',
+      correlationId: 't1b',
+    });
+    expect(snapshot.qualityState).toBe('LIVE');
+    expect(snapshot.maxSupply).toBeNull();
   });
 
   it('fail-closed UNAVAILABLE for unmapped symbol without network', async () => {
@@ -48,6 +92,7 @@ describe('SC-5 CoinGeckoMarketDataProvider', () => {
     });
     expect(snapshot.qualityState).toBe('UNAVAILABLE');
     expect(snapshot.price).toBeNull();
+    expect(snapshot.marketCapUsd).toBeUndefined();
     expect(snapshot.reason).toMatch(/No approved CoinGecko mapping/);
   });
 
@@ -61,20 +106,43 @@ describe('SC-5 CoinGeckoMarketDataProvider', () => {
     expect(snapshot.qualityState).toBe('UNAVAILABLE');
     expect(snapshot.reason).toMatch(/does not support assetClass/);
   });
+
+  it('fail-closed when market_data is missing', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({}),
+    })) as unknown as typeof fetch;
+
+    const provider = new CoinGeckoMarketDataProvider({ fetchImpl });
+    const snapshot = await provider.getSnapshot({
+      symbol: 'BTC',
+      assetClass: 'crypto',
+      correlationId: 't4',
+    });
+    expect(snapshot.qualityState).toBe('UNAVAILABLE');
+    expect(snapshot.price).toBeNull();
+    expect(snapshot.reason).toMatch(/missing market_data/);
+  });
 });
 
 describe('SC-5 fetchVerifiedCryptoQuote', () => {
   it('returns READY through gateway for mapped symbol', async () => {
     const fetchImpl = vi.fn(async () => ({
       ok: true,
-      json: async () => ({
-        ethereum: { usd: 3200, last_updated_at: 1_724_000_000 },
-      }),
+      json: async () =>
+        coinsPayload({
+          current_price: { usd: 3200 },
+          market_cap: { usd: 400_000_000_000 },
+          total_volume: { usd: 15_000_000_000 },
+          circulating_supply: 120_000_000,
+          max_supply: null,
+          total_supply: 120_000_000,
+        }),
     })) as unknown as typeof fetch;
 
     const quote = await fetchVerifiedCryptoQuote('ETH', {
       fetchImpl,
-      nowMs: () => 1_724_000_050_000,
+      nowMs: () => Date.parse('2024-08-18T12:00:05.000Z'),
     });
     expect(quote.contractVersion).toBe(CRYPTO_QUOTE_CONTRACT_VERSION);
     expect(quote.status).toBe('READY');
