@@ -79,8 +79,11 @@ Für jede Domain: was bereits als **Kontrollmechanismus** existiert (aus M4–M8
 - Kontrollmechanismus vorhanden: stark — `docs/evidence/m5/M5_VERIFIED_PASS_CLOSURE_EVIDENCE.md`,
   `docs/evidence/m8/M8_AUDIT_CORRELATION_EXIT_GATE_7_EVIDENCE.md`,
   `docs/evidence/sa3/SA3_SYSTEMADMIN_AUDIT_CORRELATION_EVIDENCE.md`.
-- M9-Drill ausgeführt: Korrelation bewiesen; „Audit-Persistenzausfall verhindert autonome Mutation"
-  (Runbook-Anforderung) noch nicht als eigener Fehlerinjektions-Drill nachgewiesen.
+- M9-Drill ausgeführt: **Ja, 2026-08-16** (Owner-autorisiert via `AskUserQuestion`) — siehe
+  `docs/evidence/m9/M9_AUDIT_OUTAGE_LIVE_DRILL_2026-08-16.md`. Terminal-Outage-Fehlerinjektion
+  (nicht nur Autorisierungsphase), struktureller Append-only-Beweis, und end-to-end-Korrelation für
+  eine echte mutierende Capability. „Read-only operator visibility" bewusst nicht abgedeckt (siehe
+  Drill-Evidence §0). Trägt zu M9-Exit-Gate-Punkt 2 bei (teilweise — Audit-Anteil).
 
 ### 2.6 Kill Switch
 - Kontrollmechanismus vorhanden: **zwei unabhängige, bereits getestete Mechanismen** —
@@ -142,7 +145,8 @@ Priorisierungsvorschlag nach Reifegrad der Grundlage (am weitesten fortgeschritt
    `docs/evidence/m9/M9_KILL_SWITCH_LIVE_DRILL_2026-08-16.md`.
 2. ~~**Rollback/Recovery-Drill** (§2.8)~~ — **erledigt 2026-08-16**, siehe
    `docs/evidence/m9/M9_ROLLBACK_RECOVERY_LIVE_DRILL_2026-08-16.md`.
-3. **Audit-Outage-Drill** (§2.5) — Korrelation bereits bewiesen; fehlt nur der Fehlerinjektionsteil.
+3. ~~**Audit-Outage-Drill** (§2.5)~~ — **erledigt 2026-08-16**, siehe
+   `docs/evidence/m9/M9_AUDIT_OUTAGE_LIVE_DRILL_2026-08-16.md`.
 4. **Replay/Idempotency-Drill** (§2.3) — bestehende Tests konsolidieren + Runbook-Evidence-Format.
 5. **Authorization-Bypass-Negativtests** (§2.1) — verstreute Tests konsolidieren.
 6. **Secret/Exfiltration-Drill** (§2.4) — Redaction-Struktur vorhanden, adversarieller Test fehlt.
