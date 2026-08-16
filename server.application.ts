@@ -52,6 +52,7 @@ import { checkRateLimit, getClientIp } from './src/platform/Security/rateLimiter
 import { createLogger, requestContext } from './server/logger';
 import { metricsMiddleware, renderMetrics } from './server/metrics';
 import { getStripeConfigurationStatus, hasFiniteScoreValues, resolveHeuristicCryptoScore, resolveRuntimePort } from './server/runtime/renderRuntimeSafety';
+import { registerProductionSpaFallback } from './server/runtime/spaFallback';
 
 const serverLogger = createLogger('server');
 
@@ -1357,10 +1358,10 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    // SEO-GM-ROADMAP-0002 / WP-D3: no directory redirect (avoids Q2 vs S2 prerender dir ping-pong);
+    // public HTML is owned by the allow-list SPA fallback (unknown → real 404).
+    app.use(express.static(distPath, { redirect: false, index: false }));
+    registerProductionSpaFallback(app, distPath);
   }
 
   // Compliance-Review Punkt 1: globale Express-Error-Middleware (4 Argumente = von
