@@ -8,9 +8,9 @@
 
 **ACTIVE — CANONICAL EXECUTION AUTHORITY (Domain SEO / Google Marketing / Content Distribution)**  
 Stand: 2026-08-16  
-Baseline: `main` (ADR-0082; WP-S1 VERIFIED; WP-D3 Soft-404 VERIFIED PR #360; **Q3 Search Console Domain property VERIFIED**; **WP-D1/D2 VERIFIED** PR #375 + Owner Rich Results Test)  
+Baseline: `main` (ADR-0082; WP-S1 VERIFIED; WP-D3 Soft-404 VERIFIED PR #360; **Q3 Search Console Domain property VERIFIED**; **WP-D1/D2 VERIFIED** PR #375 + Owner Rich Results Test; **WP-S2 Prerender VERIFIED** ADR-0084)  
 Owner: SvenKulessa  
-Authority-Bindung: ADR-0035, ADR-0042, ADR-0068 (PROPOSED), ADR-0082 (SeoEngine), ESS-0014, ESS-0022 (PROPOSED), ADR-0071, ESS-0023
+Authority-Bindung: ADR-0035, ADR-0042, ADR-0068 (PROPOSED), ADR-0082 (SeoEngine), ADR-0084 (Prerender), ESS-0014, ESS-0022 (PROPOSED), ADR-0071, ESS-0023
 
 ## Zweck
 
@@ -45,7 +45,7 @@ Die folgenden Dokumente gelten ab Merge dieses Standes als **SUPERSEDED** für P
 | `docs/seo/S1_SEO_ENGINE.md` … `S4_…` (als Programmplan) | Block-Specs | eingearbeitet; Specs bleiben technische Evidence |
 | `docs/seo/Q_BLOCK_IMPLEMENTATION_NOTES.md`, `D_BLOCK_…` | Implementation Notes | Status in §4; Notes bleiben Evidence |
 | `docs/adr/ADR-DRAFT-seo-engine-platform-module.md` | Draft | **ADR-0082** (`docs/adr/ADR-0082-seo-engine-platform-module.md`) |
-| `docs/adr/ADR-DRAFT-prerender-public-routes.md` | Draft | zu formalisieren unter WP-S2 |
+| `docs/adr/ADR-DRAFT-prerender-public-routes.md` | Draft | **ADR-0084** (`docs/adr/ADR-0084-prerender-public-routes.md`) |
 | Parallele Aussagen in Architektur-MCP-Docs, soweit sie **offene Programmarbeit** duplizieren | — | ESS-0014 + dieses Dokument sind normativ für den Programmplan |
 
 **Nicht supersediert (bleiben Authority):**
@@ -63,7 +63,7 @@ Die folgenden Dokumente gelten ab Merge dieses Standes als **SUPERSEDED** für P
 
 1. Verifizierte Runtime-/Production-Evidence und Code auf `main`
 2. Ausdrückliche Human/Owner-Freigabe (ADR-0039, Protected Change ADR-0035)
-3. ESS-0014, ADR-0035, ADR-0042, ADR-0082 und akzeptierte ADRs dieses Programms
+3. ESS-0014, ADR-0035, ADR-0042, ADR-0082, ADR-0084 und akzeptierte ADRs dieses Programms
 4. **Dieses Dokument (SEO-GM-ROADMAP-0002)**
 5. Fachliche Block-Notes und Runbooks unter `docs/seo/`, `docs/runbooks/`
 6. Historische / als SUPERSEDED markierte Roadmaps
@@ -110,7 +110,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Agen
 | D4 Bundle-Splitting | offen (carried) | — |
 | D5 Search Console MCP Read | offen | Runbook vorhanden; nach Q3 |
 | S1 SeoEngine Platform | **VERIFIED** | Store + Routes + Tests (PR #335); Schema/Grants/FK/Ledger applied 2026-08-15; **ADR-0082** Accepted 2026-08-16 |
-| S2 Prerender/SSG | offen | ADR-DRAFT vorhanden; partial prerender script live |
+| S2 Prerender/SSG | **VERIFIED** | **ADR-0084** Accepted 2026-08-16; build-wired `prerender-public-routes.mjs`; spaFallback serves path HTML; prod noscript without JS |
 | S3 SEO Dashboard | **DONE** | PR #309, Admin-Tab, No-Demo-Data |
 | S4 hreflang / Sprache | **IN PROGRESS / Branch** | Spec `S4_LANGUAGE_AND_HREFLANG_STRATEGY.md` |
 
@@ -156,7 +156,7 @@ Präfixe bleiben kompatibel zur etablierten Q/D/S/N/H/J-Konvention; Marketing-Ph
 | ID | Inhalt | Abhängigkeit | DoD |
 |----|--------|--------------|-----|
 | WP-S1 | SeoEngine Persistenz + RLS + No-Demo-Data | Migration, Security Review | **VERIFIED** — Ranks nur search-console \| manual-import; Code DONE (PR #335); Schema/Grants/FK/Ledger applied 2026-08-15; **ADR-0082** Accepted 2026-08-16 |
-| WP-S2 | Prerender/SSG öffentlicher Routen | ADR formal | Crawler sehen Inhalt ohne JS |
+| WP-S2 | Prerender/SSG öffentlicher Routen | ADR formal | **VERIFIED** — **ADR-0084** Accepted; crawlers see title/meta/noscript without JS; soft-404 invariant preserved |
 | WP-S3 | Dashboard | **DONE** | — |
 | WP-S4 | hreflang + Sprachstrategie | Vocabulary | Konsistente `lang`/hreflang |
 
@@ -265,7 +265,7 @@ Programm gilt als abgeschlossen, wenn:
 
 ---
 
-## 10. Sofortige nächste Schritte (Stand 2026-08-16, nach WP-D1/D2 VERIFIED)
+## 10. Sofortige nächste Schritte (Stand 2026-08-16, nach WP-S2 VERIFIED)
 
 1. ~~**Owner:** FK RESTRICT Apply (`20260815220000`) + Ledger-Abgleich~~ — angewendet 2026-08-15.
 2. ~~**Owner:** Search Console Property verifizieren (WP-Q-CLOSE / Q3)~~ — **VERIFIED** 2026-08-16 (Domain `capital-ai.online`, Ownership bestätigt, Sitemap Success).
@@ -273,10 +273,11 @@ Programm gilt als abgeschlossen, wenn:
 4. ADR-0068 + ESS-0022 Owner-Review (WP-M0) — ohne Runtime-Enablement.
 5. ~~WP-D3 Soft-404~~ — **VERIFIED** (PR #360; prod curl 2026-08-16).
 6. ~~**WP-D1 / D2**~~ — **VERIFIED** (PR #375 merged; prod unique titles; Owner Rich Results Test success for Legal-Unterseiten 2026-08-16).
-7. WP-S2 nur nach formalem Prerender-ADR.
+7. ~~**WP-S2** formal Prerender-ADR~~ — **VERIFIED** (**ADR-0084** Accepted 2026-08-16; code already live).
 8. Optional: **WP-D5** Search Console MCP Read (Credentials Owner-separat).
+9. Optional follow-up: shared Legal-Copy-Module für noscript/body; single source `routeSeo` ↔ prerender.
 
-Vollständiger Übergabekontext: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`. Canonical ADR: `docs/adr/ADR-0082-seo-engine-platform-module.md`. Q3 Runbook: `docs/seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md`.
+Vollständiger Übergabekontext: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`. Canonical ADRs: `docs/adr/ADR-0082-seo-engine-platform-module.md`, `docs/adr/ADR-0084-prerender-public-routes.md`. Q3 Runbook: `docs/seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md`.
 
 ---
 
@@ -291,3 +292,4 @@ Vollständiger Übergabekontext: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`. Ca
 | 0002.4 | 2026-08-16 | **Q3 / WP-Q-CLOSE Search Console Domain property VERIFIED** (Owner: `capital-ai.online` Ownership bestätigt; Sitemap Success); §4/§5.1/§10 + Checklist/Runbook/Claim synchronisiert |
 | 0002.5 | 2026-08-16 | **WP-D1 / D2 CODE READY** — JSON-LD ImageObject + offers; routeSeo client popstate + unit test; §4/§5.1/§10 + Checklist/Claim |
 | 0002.6 | 2026-08-16 | **WP-D1 / D2 VERIFIED** — PR #375; Owner Rich Results Test success (3 Legal-Unterseiten); Claim + Checklist + §4/§5.1/§10 |
+| 0002.7 | 2026-08-16 | **WP-S2 VERIFIED** — ADR-0084 Accepted (Prerender public routes); draft superseded; Checklist + §4/§5.2/§10 |
