@@ -148,6 +148,8 @@ export async function authorizeSystemadminAuditedExecution(
     capability: request.authorization.capability,
     riskClass: request.authorization.riskClass,
     auditCorrelationId: context.traceId,
+    envelopeId: request.authorization.envelopeId,
+    seenEnvelopeIds: request.authorization.seenEnvelopeIds,
   });
   const decision = touchesOwnControlPlane(request)
     ? selfAuthorityDeny(prepared.decision)

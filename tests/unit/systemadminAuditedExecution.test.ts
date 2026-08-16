@@ -627,4 +627,93 @@ describe('SA3 Systemadmin audited execution', () => {
       // result", proven for a real mutating capability rather than the generic default (PR) case.
     });
   });
+
+  // M9 (ADR-0063, docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md "Assurance Domain 3: Replay /
+  // Idempotency") Owner-authorized live drill (2026-08-16, AskUserQuestion "Replay/Idempotency-
+  // Drill (empfohlen)"). The envelope-replay guard already existed in isolation at
+  // checkProviderProfileScope() (src/platform/Security/providerProfile.ts, one DENY-only test in
+  // tests/unit/providerProfile.test.ts) but was NOT reachable through the real, live-wired SA3B
+  // entry point: authorizeSystemadminAuditedExecution() never passed envelopeId/seenEnvelopeIds
+  // through. This drill closes that gap the same way the M8 rollback-to-read-only lever was wired
+  // in (additive-only optional fields on SystemadminRoadmapAuthorizationRequest, unset = no
+  // behavior change - see killSwitchActive precedent in roadmapExecutionMandate.ts), then proves
+  // baseline/replay/distinct-envelope behavior through the real chain, not just the isolated check.
+  describe('M9 Replay/Idempotency Live-Drill (I2 Assurance, 2026-08-16)', () => {
+    const branchCheckpoint = { ...baseCheckpoint, freshBranchCreated: false, branchName: undefined };
+
+    it('allows a fresh mutation envelope through the real live-wired chain (baseline)', async () => {
+      const result = await authorizeSystemadminAuditedExecution({
+        authorization: {
+          ...authorization(AGENT_CAPABILITIES.BRANCH, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']),
+          riskClass: 'MEDIUM',
+          envelopeId: 'm9-replay-drill-envelope-1',
+          seenEnvelopeIds: new Set<string>(),
+        },
+        checkpoint: branchCheckpoint,
+      }, auditContext);
+
+      expect(result.decision.verdict).toBe('ALLOW');
+      expect(result.executionPermit).toBeDefined();
+    });
+
+    it('denies a replayed mutation envelope through the real live-wired chain, and audits the DENY', async () => {
+      const result = await authorizeSystemadminAuditedExecution({
+        authorization: {
+          ...authorization(AGENT_CAPABILITIES.BRANCH, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']),
+          riskClass: 'MEDIUM',
+          envelopeId: 'm9-replay-drill-envelope-2',
+          seenEnvelopeIds: new Set(['m9-replay-drill-envelope-2']),
+        },
+        checkpoint: branchCheckpoint,
+      }, auditContext);
+
+      expect(result.decision.verdict).toBe('DENY');
+      expect(result.decision.reason).toMatch(/Replay/i);
+      expect(result.executionPermit).toBeUndefined();
+      expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({
+        authorization_decision: 'DENY',
+        result: 'DENIED',
+      }));
+    });
+
+    it('does not falsely deny a distinct envelope even when other envelopes were already seen (not overbroad)', async () => {
+      const result = await authorizeSystemadminAuditedExecution({
+        authorization: {
+          ...authorization(AGENT_CAPABILITIES.BRANCH, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']),
+          riskClass: 'MEDIUM',
+          envelopeId: 'm9-replay-drill-envelope-3-new',
+          seenEnvelopeIds: new Set(['m9-replay-drill-envelope-3-old', 'm9-replay-drill-envelope-3-older']),
+        },
+        checkpoint: branchCheckpoint,
+      }, auditContext);
+
+      expect(result.decision.verdict).toBe('ALLOW');
+    });
+
+    it('does not gate READ on envelope replay (only mutating capabilities need envelope idempotency)', async () => {
+      const result = await authorizeSystemadminAuditedExecution({
+        authorization: {
+          ...authorization(AGENT_CAPABILITIES.READ, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']),
+          riskClass: 'LOW',
+          envelopeId: 'm9-replay-drill-envelope-4',
+          seenEnvelopeIds: new Set(['m9-replay-drill-envelope-4']),
+        },
+        checkpoint: baseCheckpoint,
+      }, auditContext);
+
+      expect(result.decision).toMatchObject({ verdict: 'ALLOW', capability: AGENT_CAPABILITIES.READ });
+    });
+
+    it('leaves existing callers unaffected: an authorization request without envelope fields behaves exactly as before', async () => {
+      const result = await authorizeSystemadminAuditedExecution({
+        authorization: authorization(AGENT_CAPABILITIES.BRANCH, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']),
+        checkpoint: branchCheckpoint,
+      }, auditContext);
+
+      expect(result.decision.verdict).toBe('ALLOW');
+      // No envelopeId/seenEnvelopeIds set at all (undefined, not empty) - proves the new optional
+      // fields are purely additive and do not change behavior for any caller that does not use them,
+      // consistent with the M8 killSwitchActive precedent this wiring follows.
+    });
+  });
 });

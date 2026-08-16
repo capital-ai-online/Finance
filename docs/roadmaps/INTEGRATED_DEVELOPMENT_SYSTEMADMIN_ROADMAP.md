@@ -2,7 +2,7 @@
 
 **Document ID:** ROADMAP-INTEGRATED-DC-SA-0001  
 **Status:** ACTIVE — CANONICAL EXECUTION ROADMAP  
-**Version:** 1.0.6  
+**Version:** 1.0.7  
 **Date:** 2026-08-16  
 **Repository:** SvenKulessa/Finance  
 **Authority:** ADR-0071, ESS-0023, DEVELOPMENT_CHAIN_EXECUTION_POLICY, SYSTEMADMIN_AGENT_ROADMAP_EXECUTION_POLICY, DOCUMENTATION_HYGIENE_POLICY  
@@ -221,8 +221,9 @@ Kein Document erzeugt eigene Authority.
 - **I2-Bestandsaufnahme erledigt (2026-08-16):** `docs/evidence/m9/M9_I2_ENTRY_INVENTORY_AND_GAP_ANALYSIS_2026-08-16.md` — Prerequisite Gate 7/7 erfüllt, Bestand je Assurance-Domain bewertet (stärkste Grundlage: Kill-Switch/Rollback, schwächste: Prompt/Tool-Injection und Break-Glass — Letzteres braucht zuerst einen Owner-Proposal, da ADR-0063 noch `PROPOSED` ist), priorisierter Vorschlag für die Drill-Reihenfolge dokumentiert.
 - **Kill-Switch-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Kill-Switch-Live-Drill (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_KILL_SWITCH_LIVE_DRILL_2026-08-16.md`. Alle vier realen mutierenden Capabilities gegen die live-wired SA3B-Kette angegriffen und verweigert; READ/ANALYZE/PLAN bleiben erhalten; 9 neue Tests. Trägt zu M9-Exit-Gate-Punkt 3 bei (teilweise — nur SA3B als einziger produktiver Aufrufer).
 - **Rollback/Recovery-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Rollback/Recovery-Drill (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_ROLLBACK_RECOVERY_LIVE_DRILL_2026-08-16.md`. Provider-Profil-Registry-Rollback-Hebel für alle 3 kanonischen Provider als Baseline→Rollback→Recovery-Sequenz bewiesen, inkl. Registry-Unveränderlichkeitsnachweis; 4 neue Tests. Trägt zu M9-Exit-Gate-Punkt 5 bei (teilweise).
-- **Audit-Outage-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Audit-Outage-Drill (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_AUDIT_OUTAGE_LIVE_DRILL_2026-08-16.md`. Terminal-Outage-Fehlerinjektion, struktureller Append-only-Beweis, end-to-end-Korrelation für echte mutierende Capability; 3 neue Tests, 1095/1095 gesamt PASS. Trägt zu M9-Exit-Gate-Punkt 2 bei (teilweise — Audit-Anteil).
-- Nächster Schritt: Owner wählt den nächsten konkreten Drill (Replay/Idempotency oder Authorization-Bypass als nächststärkste Grundlage) — siehe Priorisierungsvorschlag im Inventory-Dokument §5.
+- **Audit-Outage-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Audit-Outage-Drill (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_AUDIT_OUTAGE_LIVE_DRILL_2026-08-16.md`. Terminal-Outage-Fehlerinjektion, struktureller Append-only-Beweis, end-to-end-Korrelation für echte mutierende Capability; 3 neue Tests. Trägt zu M9-Exit-Gate-Punkt 2 bei (teilweise — Audit-Anteil).
+- **Replay/Idempotency-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Replay/Idempotency-Drill (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_REPLAY_IDEMPOTENCY_LIVE_DRILL_2026-08-16.md`. Fand und schloss eine reale Integrationslücke (Envelope-Replay-Schutz existierte, war aber nicht über den realen SA3B-Aufrufer erreichbar — additiv nachverdrahtet nach `killSwitchActive`-Präzedenzfall); 5 neue Tests, 1100/1100 gesamt PASS. Trägt zu M9-Exit-Gate-Punkt 2 bei (Replay-Anteil vollständig).
+- Nächster Schritt: Owner wählt den nächsten konkreten Drill (Authorization-Bypass oder Secret-Exfiltration als nächststärkste Grundlage) — siehe Priorisierungsvorschlag im Inventory-Dokument §5.
 
 **Nicht ausführbar ohne separate Owner-Freigabe:**
 - M9-Drills / M10 / SA5
@@ -273,10 +274,11 @@ Die Roadmap gilt als geschlossen, wenn:
 | 1.0.4   | 2026-08-16 | I2: Kill-Switch-Live-Drill Owner-authorized and executed (`M9_KILL_SWITCH_LIVE_DRILL_2026-08-16.md`); contributes to M9 Exit Gate item 3 (partial, SA3B only) |
 | 1.0.5   | 2026-08-16 | I2: Rollback/Recovery-Live-Drill Owner-authorized and executed (`M9_ROLLBACK_RECOVERY_LIVE_DRILL_2026-08-16.md`); contributes to M9 Exit Gate item 5 (partial) |
 | 1.0.6   | 2026-08-16 | I2: Audit-Outage-Live-Drill Owner-authorized and executed (`M9_AUDIT_OUTAGE_LIVE_DRILL_2026-08-16.md`); contributes to M9 Exit Gate item 2 (partial, audit portion) |
+| 1.0.7   | 2026-08-16 | I2: Replay/Idempotency-Live-Drill Owner-authorized and executed (`M9_REPLAY_IDEMPOTENCY_LIVE_DRILL_2026-08-16.md`); closed a real integration gap (envelope replay guard now wired to the real SA3B caller); contributes to M9 Exit Gate item 2 (replay portion, complete) |
 
 ---
 
 **End of Document**  
 ROADMAP-INTEGRATED-DC-SA-0001  
 CAPITAL-AI Integrated Development Chain + Systemadmin Roadmap  
-Version 1.0.6
+Version 1.0.7
