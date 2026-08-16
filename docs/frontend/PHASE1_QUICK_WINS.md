@@ -2,7 +2,7 @@
 
 **Status:** IN PROGRESS  
 **Stand:** 16. August 2026  
-**Branch:** `feat/frontend-phase1-quickwins-2026-08-16`  
+**Branch:** `feat/frontend-phase1-spacing-dashboard-universe-2026-08-16`  
 **Bezug:** `FRONTEND_ROADMAP.md` §4 Quick Wins, `src/index.css`, `design-tokens.json`
 
 ---
@@ -13,10 +13,10 @@ Sofort spürbare visuelle Ruhe und bessere Bedienbarkeit, ohne große Architektu
 
 | # | Quick Win | Status |
 |---|-----------|--------|
-| 1 | Mehr Abstand zwischen Hauptkarten | ✅ CSS-Utilities + Enterprise-Scorer Spacing |
+| 1 | Mehr Abstand zwischen Hauptkarten | ✅ CSS-Utilities + Enterprise + Universe + AssetUniverse |
 | 2 | Score- / Matrix-Bereiche prominent | ⏳ teilweise (Enterprise-Layout) |
 | 3 | Einheitliche Status-Badges | ✅ Phase 0 (`StatusBadge`) |
-| 4 | Mobile Chip- / Button-Größen (BFSG 44×44) | ✅ `.ui-hit` + Enterprise Filter/Timeframe |
+| 4 | Mobile Chip- / Button-Größen (BFSG 44×44) | ✅ `.ui-hit` + Enterprise / Universe / AssetUniverse Tabs |
 | 5 | Neural-Pulse abschwächen / Reduced-Motion | ✅ Keyframes + `prefers-reduced-motion` |
 | 6 | Klare primäre Aktion pro Viewport | ⏳ backlog |
 
@@ -46,20 +46,23 @@ Sofort spürbare visuelle Ruhe und bessere Bedienbarkeit, ohne große Architektu
 
 ---
 
-## Call-Sites (dieser PR)
+## Call-Sites
 
 1. **Global** — `index.css` Motion + Utilities  
 2. **CryptoScoringEnterprise** — `space-y-8`, weichere Blur-Orbs, Filter-Chips und Timeframe-Buttons mit `min-h-11`  
+3. **AssetUniverseDashboard** — `ui-stack` Root, `ui-panel` Cards, Asset-Tabs + JSON-Buttons mit `ui-hit` / `min-h-11`  
+4. **UniverseBestWorst** — `ui-panel` Root, Refresh + Ranking-Rows mit `ui-hit` / `min-h-11`, Grid `gap-6`  
+5. **Dashboard** — Main Content bereits `space-y-8` / `py-8` (Shell-Spacing)
 
 ---
 
 ## Nächste Schritte (Phase 1 fortsetzen)
 
-1. `.ui-stack` / größere Gaps in `Dashboard`, `AssetUniverseDashboard`, `MarketScreener`
+1. `.ui-stack` / Gaps in `MarketScreener` und weiteren Surfaces
 2. Neural-SVG in `Dashboard` / `LandingPage` mit Klasse `neural-decor` markieren
 3. Primäre CTA pro Viewport (eine dominante Aktion)
 4. Einheitliche Button-/Chip-Primitive (analog StatusBadge)
 
 ---
 
-*Phase 1 gestartet 16.08.2026.*
+*Phase 1 gestartet 16.08.2026 · Spacing Dashboard/Universe 16.08.2026.*

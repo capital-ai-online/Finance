@@ -420,7 +420,7 @@ export function AssetUniverseDashboard() {
   };
 
   return (
-    <div className="space-y-8" id="aif-asset-universe-root">
+    <div className="ui-stack" id="aif-asset-universe-root">
       
       {/* Visual Header */}
       <div className="bg-gradient-to-r from-aif-gold-DEFAULT/15 via-black/40 to-neutral-950 border border-aif-gold-DEFAULT/20 p-6 rounded-2xl backdrop-blur-md relative overflow-hidden shadow-[0_0_25px_rgba(245,196,83,0.05)]">
@@ -445,13 +445,13 @@ export function AssetUniverseDashboard() {
         </div>
       </div>
 
-      {/* Asset Selection Tabs Menu */}
+      {/* Asset Selection Tabs Menu — Phase 1: BFSG 44px hit targets */}
       <div className="flex flex-wrap bg-neutral-950 p-1 rounded-xl border border-white/5 gap-1.5">
         {assetClasses.map((ac) => (
           <button
             key={ac.id}
             onClick={() => setActiveTab(ac.id)}
-            className={`flex-1 min-w-[140px] py-3 px-4 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2.5 cursor-pointer border ${
+            className={`flex-1 min-w-[140px] min-h-11 ui-hit py-3 px-4 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2.5 cursor-pointer border ${
               activeTab === ac.id
                 ? 'bg-aif-gold-DEFAULT text-black font-black border-aif-gold-DEFAULT shadow-[0_0_15px_rgba(245,196,83,0.2)]'
                 : 'text-white/60 hover:text-white hover:bg-white/5 border-transparent'
@@ -463,14 +463,14 @@ export function AssetUniverseDashboard() {
         ))}
       </div>
 
-      {/* Main Tab View Card Grid */}
+      {/* Main Tab View Card Grid — Phase 1: gap-6 section rhythm */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Left Side: Overview & Features */}
         <div className="lg:col-span-7 space-y-6">
           
           {/* Asset Class Card Details */}
-          <div className="bg-neutral-950/60 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-4">
+          <div className="ui-panel space-y-4">
             <div className="flex justify-between items-start border-b border-white/5 pb-4">
               <div>
                 <span className="text-[9px] font-mono text-aif-gold-DEFAULT uppercase tracking-widest font-black">
@@ -493,7 +493,7 @@ export function AssetUniverseDashboard() {
             {/* Render 3 Core Features */}
             <div className="space-y-4 pt-2">
               <h3 className="text-xs font-mono font-bold text-white/40 uppercase tracking-widest">
-                3 Kern-Features &amp; Workflows
+                3 Kern-Features & Workflows
               </h3>
               
               <div className="grid grid-cols-1 gap-3">
@@ -542,9 +542,9 @@ export function AssetUniverseDashboard() {
           </div>
 
           {/* Transparent Scoring Formula Details */}
-          <div className="bg-neutral-950/60 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-4">
+          <div className="ui-panel space-y-4">
             <h3 className="text-xs font-mono font-bold text-white/40 uppercase tracking-widest">
-              Mathematische Bewertungslogik &amp; Transparenz
+              Mathematische Bewertungslogik & Transparenz
             </h3>
 
             <div className="bg-black/60 border border-white/5 rounded-xl p-4 font-mono space-y-3">
@@ -575,7 +575,7 @@ export function AssetUniverseDashboard() {
         <div className="lg:col-span-5 space-y-6">
           
           {/* Interactive What-If Score Meter */}
-          <div className="bg-neutral-950/60 border-2 border-aif-gold-DEFAULT/30 rounded-2xl p-6 backdrop-blur-md relative overflow-hidden text-center space-y-4 shadow-[0_0_30px_rgba(245,196,83,0.05)]">
+          <div className="ui-panel border-2 border-aif-gold-DEFAULT/30 relative overflow-hidden text-center space-y-4 shadow-[0_0_30px_rgba(245,196,83,0.05)]">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-aif-gold-DEFAULT" />
             
             <div className="space-y-1">
@@ -617,7 +617,7 @@ export function AssetUniverseDashboard() {
           </div>
 
           {/* Example Assets table of each universe */}
-          <div className="bg-neutral-950/60 border border-white/10 rounded-2xl p-5 backdrop-blur-md space-y-3.5">
+          <div className="ui-panel space-y-3.5">
             <h3 className="text-xs font-mono font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
               <Layers size={14} className="text-aif-gold-DEFAULT" />
               <span>Standard-Universum Beispielwerte</span>
@@ -661,7 +661,7 @@ export function AssetUniverseDashboard() {
           </div>
 
           {/* JSON Schema Export & Tech Stack Recommendation */}
-          <div className="bg-neutral-950/60 border border-white/10 rounded-2xl p-6 backdrop-blur-md space-y-4">
+          <div className="ui-panel space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-xs font-mono font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
                 <Code size={14} className="text-aif-gold-DEFAULT" />
@@ -670,14 +670,14 @@ export function AssetUniverseDashboard() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleCopyJson}
-                  className="p-2 bg-white/5 border border-white/10 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                  className="ui-hit min-h-11 min-w-11 inline-flex items-center justify-center bg-white/5 border border-white/10 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                   title="JSON in Zwischenablage kopieren"
                 >
                   {copiedStatus ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
                 </button>
                 <button
                   onClick={handleDownloadJson}
-                  className="p-2 bg-white/5 border border-white/10 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                  className="ui-hit min-h-11 min-w-11 inline-flex items-center justify-center bg-white/5 border border-white/10 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                   title="JSON-Datei herunterladen"
                 >
                   <Download size={12} />

@@ -234,40 +234,40 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
   const totalCandidates = grouped.reduce((sum, group) => sum + group.candidatesInGroup, 0);
   const totalCoverage = totalCandidates ? Math.round((totalReady / totalCandidates) * 100) : 0;
 
-  if (error) return <div className="rounded-2xl border border-red-500/20 bg-neutral-950/60 p-6 text-center"><AlertTriangle className="mx-auto text-red-400" size={30} /><p className="mt-3 text-sm font-bold text-white">Ladefehler</p><p className="mt-1 text-xs text-white/50">{error}</p></div>;
+  if (error) return <div className="ui-panel text-center"><AlertTriangle className="mx-auto text-red-400" size={30} /><p className="mt-3 text-sm font-bold text-white">Ladefehler</p><p className="mt-1 text-xs text-white/50">{error}</p></div>;
 
   return (
-    <div className="bg-neutral-950/60 border border-white/10 rounded-2xl p-6 backdrop-blur-md relative overflow-hidden" id="universe-scoring-root">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-5 mb-6">
+    <div className="ui-panel relative overflow-hidden" id="universe-scoring-root">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 border-b border-white/10 pb-6 mb-8">
         <div>
-          <div className="flex flex-wrap items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-purple-500/15 text-purple-400 border border-purple-500/25 uppercase">CAPITAL-AI QUANT-SYSTEM</span>
             <span className="px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 uppercase flex items-center gap-1"><Activity size={10} /> Progressive Scoring</span>
             <span className="px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-white/5 text-white/60 border border-white/10 uppercase flex items-center gap-1"><ShieldCheck size={10} /> {totalReady}/{totalCandidates || '–'} verifiziert · {totalCoverage}% Coverage</span>
           </div>
           <h2 className="text-lg font-black font-display text-white uppercase tracking-wider flex items-center gap-2"><Award className="text-purple-400" size={18} /> Universe TOP Rankings</h2>
-          <p className="text-xs text-white/50 mt-1 max-w-2xl">Bis zu {RANKING_CANDIDATE_LIMIT} priorisierte Kandidaten je Assetklasse werden evidence-basiert ausgewertet. Fehlende Scores bleiben sichtbar und werden nie durch Ersatzwerte ersetzt.</p>
+          <p className="text-xs text-white/50 mt-2 max-w-2xl leading-relaxed">Bis zu {RANKING_CANDIDATE_LIMIT} priorisierte Kandidaten je Assetklasse werden evidence-basiert ausgewertet. Fehlende Scores bleiben sichtbar und werden nie durch Ersatzwerte ersetzt.</p>
         </div>
-        <div className="flex flex-col items-start sm:items-end gap-1.5">
-          <button onClick={() => void refreshScores(catalog)} disabled={!catalog.length || scoreLoading} className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70 disabled:opacity-40 hover:bg-white/10 transition-colors"><RefreshCw size={13} className={scoreLoading ? 'animate-spin' : ''} /> Aktualisieren</button>
+        <div className="flex flex-col items-start sm:items-end gap-2">
+          <button onClick={() => void refreshScores(catalog)} disabled={!catalog.length || scoreLoading} className="ui-hit min-h-11 inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 text-xs text-white/70 disabled:opacity-40 hover:bg-white/10 transition-colors"><RefreshCw size={13} className={scoreLoading ? 'animate-spin' : ''} /> Aktualisieren</button>
           <span className="text-[9px] font-mono text-white/35 flex items-center gap-1"><Clock size={10} /> {scoreLoading ? 'lädt…' : `Stand: ${relativeTime(lastUpdated)}`}</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {grouped.map(group => {
           const Icon = group.icon;
           return (
-            <div key={group.id} className="rounded-xl border border-white/10 bg-black/30 p-4 min-h-72 flex flex-col">
-              <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+            <div key={group.id} className="rounded-xl border border-white/10 bg-black/30 p-5 min-h-72 flex flex-col">
+              <div className="flex items-center gap-3 border-b border-white/10 pb-4">
                 <div className="p-2 rounded-lg bg-white/5"><Icon size={16} /></div>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-xs font-black uppercase text-white">{group.name}</h3>
-                  <p className="text-[10px] text-white/40">{group.description}</p>
+                  <p className="text-[10px] text-white/40 mt-0.5">{group.description}</p>
                 </div>
                 <span className="shrink-0 text-[9px] font-mono font-bold text-white/40 bg-white/5 rounded px-1.5 py-0.5">{group.readyCount}/{group.candidatesInGroup || '–'} · {group.coverage}%</span>
               </div>
-              <div className="mt-4 space-y-4 flex-1">
+              <div className="mt-5 space-y-5 flex-1">
                 <AssetBlock title="Top 3 Best" rows={group.best} tone="best" onSelectAsset={onSelectAsset} pending={scoreLoading} />
                 <AssetBlock title="Top 3 Worst" rows={group.worst} tone="worst" onSelectAsset={onSelectAsset} pending={scoreLoading} />
                 <UnavailableBlock rows={group.unavailable} pending={scoreLoading} />
@@ -276,7 +276,7 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
           );
         })}
       </div>
-      {catalogLoading && <div className="mt-4 text-[10px] font-mono text-white/35">Asset-Katalog wird geladen…</div>}
+      {catalogLoading && <div className="mt-6 text-[10px] font-mono text-white/35">Asset-Katalog wird geladen…</div>}
     </div>
   );
 }
@@ -284,11 +284,11 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
 function AssetBlock({ title, rows, tone, onSelectAsset, pending }: { title: string; rows: AssetRow[]; tone: 'best' | 'worst'; onSelectAsset?: (symbol: string) => void; pending: boolean }) {
   return (
     <div>
-      <div className={`mb-2 text-[9px] font-mono font-black uppercase ${tone === 'best' ? 'text-emerald-400' : 'text-rose-400'}`}>{title}</div>
-      <div className="space-y-1.5">
+      <div className={`mb-2.5 text-[9px] font-mono font-black uppercase ${tone === 'best' ? 'text-emerald-400' : 'text-rose-400'}`}>{title}</div>
+      <div className="space-y-2">
         {rows.length
           ? rows.map(row => <AssetRowItem key={row.symbol} row={row} tone={tone} onSelectAsset={onSelectAsset} />)
-          : <div className="rounded-lg border border-white/5 bg-white/[0.02] p-2 text-[9px] text-white/35">{pending ? 'Verifizierte Scores werden nachgeladen…' : 'Nicht genügend READY-Scores für dieses Ranking'}</div>}
+          : <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3 text-[9px] text-white/35">{pending ? 'Verifizierte Scores werden nachgeladen…' : 'Nicht genügend READY-Scores für dieses Ranking'}</div>}
       </div>
     </div>
   );
@@ -298,15 +298,15 @@ function UnavailableBlock({ rows, pending }: { rows: AssetRow[]; pending: boolea
   if (pending || rows.length === 0) return null;
   return (
     <div>
-      <div className="mb-2 text-[9px] font-mono font-black uppercase text-amber-400">Nicht berechenbar · {rows.length}</div>
-      <div className="space-y-1.5">
+      <div className="mb-2.5 text-[9px] font-mono font-black uppercase text-amber-400">Nicht berechenbar · {rows.length}</div>
+      <div className="space-y-2">
         {rows.slice(0, 4).map(row => (
-          <div key={row.symbol} className="rounded-lg border border-amber-500/10 bg-amber-500/[0.03] px-2 py-1.5" title={row.reason}>
+          <div key={row.symbol} className="rounded-lg border border-amber-500/10 bg-amber-500/[0.03] px-3 py-2" title={row.reason}>
             <div className="flex items-center justify-between gap-2">
               <span className="text-[10px] font-bold text-white/70">{row.symbol}</span>
               <StatusBadge status={row.status} />
             </div>
-            {row.reason && <div className="mt-0.5 truncate text-[8px] text-white/30">{row.reason}</div>}
+            {row.reason && <div className="mt-1 truncate text-[8px] text-white/30">{row.reason}</div>}
           </div>
         ))}
         {rows.length > 4 && <div className="text-[8px] font-mono text-white/25">+ {rows.length - 4} weitere nicht berechenbare Assets</div>}
@@ -324,7 +324,7 @@ function AssetRowItem({ row, tone, onSelectAsset }: { row: AssetRow; tone: 'best
       type="button"
       onClick={() => onSelectAsset?.(row.symbol)}
       title={row.reasoning.join(' ') || undefined}
-      className="w-full relative overflow-hidden rounded-lg border border-white/5 bg-white/[0.02] p-2 pb-2.5 text-left hover:bg-white/5 transition-colors group"
+      className="w-full relative overflow-hidden rounded-lg border border-white/5 bg-white/[0.02] p-2.5 min-h-11 ui-hit text-left hover:bg-white/5 transition-colors group"
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
