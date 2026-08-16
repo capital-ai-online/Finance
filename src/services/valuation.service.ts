@@ -10,7 +10,13 @@ export class ValuationService {
     // Default reference calculation
     const marketRef = payload.scores?.marketCap;
     const value_corridor = calculateValueCorridor(scores.final_score ?? 0, marketRef);
-    const rankScore = calculateRankScore(payload, scores.final_score ?? 0);
+    // SC-7 Phase C: route through the explicit SC-3 opt-in path for consistency with the
+    // orchestrator (Phase B). No independent composite is computed here yet, so this passes
+    // the same payload.data_quality.level resolveRankingDqPoints already falls back to —
+    // numerically identical rankScore, just no longer relying on the implicit default.
+    const rankScore = calculateRankScore(payload, scores.final_score ?? 0, {
+      compositeLevel: payload.data_quality?.level ?? null,
+    });
     const eligibleForTop10 = isTop10Eligible(payload);
 
     return {

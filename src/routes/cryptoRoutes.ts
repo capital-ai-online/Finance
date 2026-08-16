@@ -87,7 +87,11 @@ export function createCryptoRouter(
           decisionDesc: assessment.analysis.decisionDesc,
           risk_level: assessment.analysis.risk_level,
           reasoning: assessment.analysis.reasoning,
-          rank_score: calculateRankScore(rankPayload, canonical.final_score),
+          // SC-7 Phase C: explicit SC-3 opt-in path (same value as rankPayload.data_quality.level;
+          // numerically identical to the previous default-fallback call).
+          rank_score: calculateRankScore(rankPayload, canonical.final_score, {
+            compositeLevel: canonical.integrity.dataQuality,
+          }),
           eligible_for_top10: eligible,
           provenance: assessment.fieldProvenance,
           providerState: assessment.providerState,
@@ -299,7 +303,11 @@ export function createCryptoRouter(
         risk_level: assessment.analysis.risk_level,
         reasoning: assessment.analysis.reasoning,
         alerts: assessment.analysis.alerts,
-        rank_score: calculateRankScore(rankPayload, canonical.final_score),
+        // SC-7 Phase C: explicit SC-3 opt-in path (same value as rankPayload.data_quality.level;
+        // numerically identical to the previous default-fallback call).
+        rank_score: calculateRankScore(rankPayload, canonical.final_score, {
+          compositeLevel: canonical.integrity.dataQuality,
+        }),
         eligible_for_top10: eligible,
         priceStats: assessment.priceStats,
         tradeSetup,
@@ -348,7 +356,11 @@ export function createCryptoRouter(
           name: asset.name,
           classification,
           final_score: canonical.final_score,
-          rank_score: calculateRankScore(rankPayload, canonical.final_score),
+          // SC-7 Phase C: explicit SC-3 opt-in path (same value as rankPayload.data_quality.level;
+          // numerically identical to the previous default-fallback call).
+          rank_score: calculateRankScore(rankPayload, canonical.final_score, {
+            compositeLevel: canonical.integrity.dataQuality,
+          }),
           eligible,
           integrity: canonical.integrity,
           provenance: assessment.fieldProvenance,
