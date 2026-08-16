@@ -1,15 +1,23 @@
 # ADR-0057 — Provider-Neutral Agent Control Plane and Plane Separation
 
-Status: PROPOSED
+Status: ACCEPTED (provider-set clarified 2026-08-16)
 Date: 2026-08-11
 
 ## Context
-CAPITAL-AI is operated through multiple AI surfaces (ChatGPT, Claude Code, Google AI Studio/Gemini and source-grounded research tools such as NotebookLM). Direct provider-specific privilege creates inconsistent authorization, audit and rollback semantics.
+CAPITAL-AI is operated through multiple AI surfaces. Direct provider-specific privilege creates inconsistent authorization, audit and rollback semantics.
+
+**Owner clarification 2026-08-16:** The active DEVELOPMENT Chain / AI value-chain agent providers are **ChatGPT, Claude and Grok**. Google AI Studio, NotebookLM and Gemini are **not** part of the active value chain (retired aliases in the control plane).
 
 ## Decision
 Adopt a provider-neutral Agent Control Plane as the only trust root for AI-assisted execution. Separate Research & Evidence, Agent Execution, Control and Production planes. Provider products are profiles/clients, never authority sources.
 
-NotebookLM is restricted to the Research & Evidence Plane. Google AI Studio is a development/prototyping profile. ChatGPT and Claude may be execution clients only through capability-gated tools/connectors.
+Canonical profiles (registry):
+
+- `chatgpt-github-connector` — Research + controlled Execution
+- `claude-code-cli` — controlled Execution
+- `grok-xai-connector` — Research + controlled Execution
+
+Retired aliases resolve to DENY/RETIRED: `google-ai-studio`, `notebooklm`, `gemini`.
 
 ## Alternatives rejected
 - Provider-specific direct admin access: rejected for privilege drift and audit fragmentation.
@@ -23,10 +31,10 @@ Deny-by-default, least privilege, no implicit privilege inheritance, no AI self-
 Requires common identity/capability/audit contracts and provider adapters. Enables future provider replacement without rewriting production authorization.
 
 ## Migration
-Document-first M2; implementation only after Documentation Freeze.
+Document-first M2; implementation via M8 provider profiles. Provider-set correction evidence: `docs/evidence/m8/M8_PROVIDER_SET_CORRECTION_2026-08-16.md`.
 
 ## Rollback
-Revert control-plane adoption before cutover; existing provider profiles remain read-only/isolated until M8.
+Revert control-plane adoption before cutover; existing provider profiles remain capability-gated until full M8 evidence.
 
 ## Verification
-ESS-0019 plus traceability matrix must map every provider surface to one plane and capability set.
+ESS-0019 plus traceability matrix must map every provider surface to one plane and capability set. Unit tests assert three canonical profiles and RETIRED for former Google surfaces.
