@@ -114,13 +114,16 @@ Für jede Domain: was bereits als **Kontrollmechanismus** existiert (aus M4–M8
   produktiven Aufrufer SA3B, siehe Drill-Evidence §7).
 
 ### 2.7 Break-Glass
-- Kontrollmechanismus vorhanden: **nicht implementiert.** ADR-0063 (die normative Grundlage für
-  M9 selbst) steht weiterhin auf `Status: PROPOSED`, nicht `ACCEPTED`. Kein Break-Glass-Modul, kein
-  Runbook-Verfahren über die Zieltextbeschreibung in `M9_ASSURANCE_INCIDENT_BREAK_GLASS.md` selbst
-  hinaus gefunden.
-- M9-Drill ausgeführt: **Nein — nicht ausführbar, bevor ein Break-Glass-Mechanismus überhaupt
-  existiert.** Dies ist der klarste Fall, in dem I2 zunächst einen **Proposal** (Systemadmin-Rolle
-  laut Roadmap §5) statt eines Drills braucht.
+- Kontrollmechanismus vorhanden: **Policy-/Logik-Ebene implementiert, 2026-08-16** —
+  `src/platform/Security/breakGlass.ts`, siehe
+  `docs/evidence/m9/M9_BREAK_GLASS_DESIGN_PROPOSAL_2026-08-16.md` (OWNER_ACCEPTED) und
+  `docs/evidence/m9/M9_BREAK_GLASS_LOGIC_IMPLEMENTATION_2026-08-16.md`. ADR-0063 bleibt weiterhin
+  `PROPOSED`. **Kein live erreichbarer Endpunkt** — bewusst nicht verdrahtet, eigener nächster
+  Schritt.
+- M9-Drill ausgeführt: **Nein — weiterhin nicht möglich**, da kein live erreichbarer Aktivierungspfad
+  existiert. Die Logikebene ist jedoch jetzt 27-fach getestet, inkl. end-to-end über die reale
+  SA3B-Kette. Trägt zu M9-Exit-Gate-Punkt 4 **nicht** bei (Punkt 4 verlangt „drill PASS", kein
+  Drill wurde ausgeführt) — reduziert aber das Risiko für den kommenden Live-Verdrahtungsschritt.
 
 ### 2.8 Rollback / Recovery
 - Kontrollmechanismus vorhanden: **zwei unabhängige, real bewiesene Hebel** für den einzigen realen
@@ -173,8 +176,11 @@ Priorisierungsvorschlag nach Reifegrad der Grundlage (am weitesten fortgeschritt
    `docs/evidence/m9/M9_PROMPT_TOOL_INJECTION_LIVE_DRILL_2026-08-16.md`. Mit wichtigem offenem
    Fund: kein realer Content-Scanning-Detektor für die bereits vorhandenen Checkpoint-Gates —
    empfohlen als eigenes Arbeitspaket vor M9-Closure.
-8. **Break-Glass** (§2.7) — braucht zuerst einen Owner-genehmigten Proposal/Implementierung, bevor
-   überhaupt ein Drill möglich ist; realistisch der letzte Punkt in der Sequenz.
+8. **Break-Glass** (§2.7) — Proposal Owner-`ACCEPT`ed und Policy-/Logik-Ebene implementiert
+   2026-08-16 (siehe `docs/evidence/m9/M9_BREAK_GLASS_DESIGN_PROPOSAL_2026-08-16.md` und
+   `docs/evidence/m9/M9_BREAK_GLASS_LOGIC_IMPLEMENTATION_2026-08-16.md`). Noch offen: Live-
+   Verdrahtung (eigener Schritt) und danach der eigentliche Drill mit Pflicht-Post-Review —
+   realistisch weiterhin der letzte Punkt in der Sequenz bis zur vollen M9-Closure.
 
 Dieses Dokument trifft selbst keine Auswahl unter diesen Optionen — das ist Owner-Entscheidung.
 
