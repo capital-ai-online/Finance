@@ -1,11 +1,12 @@
 # M8 Exit-Gate-Punkt 2 — Scope-Entscheidung (Owner-Proposal)
 
-Status: **PROPOSED — wartet auf ausdrückliche Owner-Bestätigung**
+Status: **OWNER_ACCEPTED — 2026-08-16, direkte Owner-Anweisung in Claude-Code-Sitzung**
 Datum: 2026-08-16
 Roadmap phase: M8 / Integrated Roadmap I1
 Authority: `docs/runbooks/M8_AGENT_CUTOVER.md` Exit Gate Punkt 2, ADR-0062, ESS-0019,
 `docs/architecture/M8_CLAUDE_CODE_REAL_CALLER_DESIGN.md`
-Executor: Owner-instruierte Grok-Sitzung (Punkt A–C)
+Executor: Owner-instruierte Grok-Sitzung (Punkt A–C, Proposal-Erstellung); Owner-Bestätigung in
+einer separaten Claude-Code-Sitzung (Status-Flip, Closure)
 Baseline: `main@fc03e327a01df458595b1210d74d109fd895b717`
 
 ## 0. Zweck
@@ -87,13 +88,18 @@ Dann darf M8 als `COMPLETE / VERIFIED PASS` **nur nach ausdrücklicher Owner-Bes
 
 ## 5. Owner-Aktionsfeld
 
-Bitte eine der folgenden Optionen **explizit** wählen:
+- **[x] ACCEPT** — Scope-Entscheidung wie in §3; M8 Closure Evidence wird geschrieben, M9 wird als Phase freigegeben (Start jedes einzelnen M9-Drills bleibt eine eigene, separat zu autorisierende Handlung).
+- **[ ] REJECT**
+- **[ ] DEFER**
 
-- **[ ] ACCEPT** — Scope-Entscheidung wie in §3; nach Merge darf M8 Closure Evidence geschrieben und M9 freigegeben werden.
-- **[ ] REJECT** — Punkt 2 bleibt PARTIAL; M8 nicht schließen.
-- **[ ] DEFER** — weitere Evidence/ADR vor Entscheidung (bitte Ziel nennen).
+Signatur / Datum (Owner): SvenKulessa (explizite Anweisung "ACCEPT (empfohlen)" via AskUserQuestion in Claude-Code-Sitzung) / 2026-08-16
 
-Signatur / Datum (Owner): __________________ / __________
+**Reichweite der Freigabe:** Diese Owner-Bestätigung akzeptiert ausschließlich die in §3 formulierte
+Scope-Entscheidung für Exit-Gate-Punkt 2 und die daraus resultierende M8-Closure. Sie ist **keine**
+Freigabe für einzelne M9-Assurance-Drills, keine Freigabe für einen `claude-code-cli`-Host, und keine
+Produktions-/IAM-/Secret-/Deploy-Mutation — diese bleiben eigenständig zu autorisieren
+(CLAUDE.md Authorized Principals, Integrated Roadmap §11 "Nicht ausführbar ohne separate
+Owner-Freigabe").
 
 ## Verwandte Dokumente
 
