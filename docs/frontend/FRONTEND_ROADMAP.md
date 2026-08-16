@@ -2,7 +2,7 @@
 
 **Projekt:** capital-ai.online  
 **Repository:** SvenKulessa/Finance  
-**Version:** 1.1  
+**Version:** 1.2  
 **Stand:** 16. August 2026  
 **Owner:** Sven Kulessa / Capital-AI  
 **Bezug:** `docs/frontend/FRONTEND_ARCH.md`, `src/index.css` (@theme), public mirror: `SvenKulessa/capital-ai-frontend`
@@ -30,7 +30,7 @@ Zielbild: Vergleichbar mit modernen FinTech-/Quant-Interfaces (Linear-ähnliche 
 
 **Stärken**
 - Starke thematische Dark-Theme-Identität (`#18181b`, AIF-Gold, Neon-Cyan/Purple)
-- Klare Status-Kommunikation (READY / REJECT / DATA_UNAVAILABLE)
+- Klare Status-Kommunikation (READY / REJECT / DATA_UNAVAILABLE) — jetzt via `StatusBadge`-Primitive
 - Gute Grundstruktur für Multi-Asset-Scoring (`Dashboard`, `AssetUniverseDashboard`, `Screener`, `CryptoScoringEnterprise`)
 - Responsive Basis und Motion-Integration vorhanden
 - Fokus-Outline und Glassmorphism-Patterns in `FRONTEND_ARCH.md` und `index.css` bereits definiert
@@ -41,7 +41,7 @@ Zielbild: Vergleichbar mit modernen FinTech-/Quant-Interfaces (Linear-ähnliche 
 - Hintergrund-/Neural-Animationen können ablenken
 - Score-Visualisierungen und Multi-Faktor-Matrix noch nicht optimal prominent
 - Fehlendes starkes Onboarding & progressive Disclosure
-- Design-Tokens erst seit Phase 0 formal inventarisiert
+- Design-Tokens formal inventarisiert (Phase 0)
 - Kein Storybook / Component-Library-Dokumentation
 
 ---
@@ -56,12 +56,12 @@ Zielbild: Vergleichbar mit modernen FinTech-/Quant-Interfaces (Linear-ähnliche 
 - [x] Performance-Baseline-Protokoll — `PHASE0_PERFORMANCE_BASELINE.md` (Messung pending)
 - [x] Einheitliche Error- und Loading-States spezifiziert — `PHASE0_LOADING_ERROR_STATES.md`
 - [x] Component Inventory finalisieren — `docs/frontend/COMPONENT_INVENTORY.md`
+- [x] StatusBadge-Primitive + erster Call-Site (`CryptoScoringEnterprise`) — `src/components/StatusBadge.tsx`, `PHASE0_STATUS_BADGE.md`
 - [ ] Storybook-Grundlage vorbereiten (optional, parallel)
 - [ ] Live Lighthouse / axe-Messung dokumentieren
-- [ ] StatusBadge-Primitive (erster Code-Schritt, eigener PR)
 
 **Deliverables:**  
-`design-tokens.json`, Phase-0-Docs, Inventory ✅ · Live-Baseline & erste Primitive ⏳
+`design-tokens.json`, Phase-0-Docs, Inventory, StatusBadge ✅ · Live-Baseline ⏳
 
 ---
 
@@ -71,7 +71,7 @@ Zielbild: Vergleichbar mit modernen FinTech-/Quant-Interfaces (Linear-ähnliche 
 - [ ] Dark-Theme verfeinern (präzisere Semantic Colors auf Basis AIF-Gold / Neon)
 - [ ] Mehr Whitespace und klarere Card-Hierarchie (Glassmorphism-Panels)
 - [ ] Hintergrund-Partikel / Neural-Animationen abschwächen oder deaktivierbar machen
-- [ ] Einheitliche Card-, Badge- und Button-Stile
+- [ ] Einheitliche Card-, Badge- und Button-Stile (StatusBadge-Adoption ausweiten)
 - [ ] Score-Gauges und Multi-Faktor-Matrix visuell vervollständigen und prominent platzieren
 - [ ] Typografie-Upgrade (bestehende Poppins / Montserrat / JetBrains Mono nutzen und Tracking optimieren)
 - [ ] Icon-Library (lucide-react) vereinheitlichen
@@ -145,7 +145,7 @@ AI-Chat-Interface, personalisierte Views, Design-System v1.0
 
 1. Mehr Abstand zwischen den Hauptkarten
 2. Score- und Matrix-Bereiche vollständig sichtbar und prominent machen
-3. Einheitliche Status-Badges (READY / REJECT / DATA_UNAVAILABLE)
+3. ~~Einheitliche Status-Badges (READY / REJECT / DATA_UNAVAILABLE)~~ → StatusBadge live
 4. Mobile Chip-Layout und Button-Größen optimieren (BFSG)
 5. Hintergrund-Grafiken / Neural-Pulse deaktivierbar oder stark reduzieren
 6. Klare primäre Aktion pro Viewport definieren
@@ -164,12 +164,12 @@ AI-Chat-Interface, personalisierte Views, Design-System v1.0
 
 ## 6. Nächste Schritte
 
-1. ~~Phase 0 Dokumentation~~ → **läuft** (Tokens + Specs)
+1. ~~Phase 0 Dokumentation + StatusBadge~~ → **done** (Tokens, Specs, Primitive + Call-Site)
 2. Live Lighthouse / axe-Baseline eintragen
-3. StatusBadge-Primitive als erster Code-PR
+3. StatusBadge-Adoption in weiteren Panels (Dashboard, Screener, …) — Phase 1
 4. Regelmäßige Reviews (alle 2 Wochen)
 5. Öffentlicher Mirror `SvenKulessa/capital-ai-frontend` bei Bedarf synchron halten
 
 ---
 
-*Dokument erstellt am 16.08.2026 – Phase 0 gestartet 16.08.2026 – wird laufend aktualisiert.*
+*Dokument erstellt am 16.08.2026 – Phase 0 gestartet 16.08.2026 – StatusBadge wired 16.08.2026 – wird laufend aktualisiert.*
