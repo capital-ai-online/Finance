@@ -80,3 +80,11 @@ Do not directly mutate production Supabase, Google provider configuration, Rende
 Do not bypass `scripts/security/verifyGoogleMarketingInvariants.ts` to make a build pass.
 
 If it fails, classify the intended change. A legitimate protected change must follow ESS-0014 and ADR-0035; an accidental regression must restore the invariant.
+
+## CI cost / test-minutes budget policy
+
+CI/CD scheduling and Actions-minutes cost tuning is **not** one of the protected invariants listed under "Protected-change rule" and is **not** subject to the OWNER + fresh-TOTP rollback gate. The repository owner may adjust CI cost/scheduling policy (trigger conditions, matrix size, concurrency, which jobs run on which event) directly via a normal commit to workflow files and this document, without the disclosure-and-approval flow required for protected rollbacks.
+
+Budget: **3000 GitHub Actions minutes / month** is the accepted baseline spend for CI on this repository. Cost-optimization changes should aim to stay within that budget rather than disable testing outright.
+
+This carve-out is scheduling/cost policy only. It does **not** authorize weakening, skipping, or bypassing any check tied to a protected invariant (CSP delivery check, `verifyProductionConfigInvariants.ts`, `verifyGoogleMarketingInvariants.ts`, Docker hardening, consent/CookieHub/AdSense checks, IAM/TOTP, service-account approval, deployment guard/traceability evidence). Those steps run unconditionally regardless of the monthly budget or any cost pressure — if the budget is tight, reduce cost elsewhere (fewer redundant triggers, smaller matrices, more aggressive concurrency cancellation for non-protected jobs), not by skipping protected checks. A blanket "skip all tests" gate remains a protected change under the rule above and still requires the disclosure-and-approval flow.
