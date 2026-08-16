@@ -18,6 +18,7 @@ vi.mock('../../server/agentAudit/agentAuditWriter', () => ({
 
 import { breakGlassRouter } from '../../server/systemadmin/breakGlassRouter';
 import { resetRateLimit } from '../../src/platform/Security/rateLimiter';
+import { MAX_BREAK_GLASS_DURATION_MS } from '../../src/platform/Security/breakGlass';
 
 const OWNER_AUTHZ = Object.freeze({
   authorized: true,
@@ -198,5 +199,25 @@ describe('Break-Glass router: POST /revoke and GET /status', () => {
       const response = await fetch(`${baseUrl}/status/REM-BREAK-GLASS-IRRELEVANT`);
       expect(response.status).toBe(403);
     });
+  });
+
+  it('M9 drill: automatically expires without explicit revocation once MAX_BREAK_GLASS_DURATION_MS has elapsed', async () => {
+    vi.useFakeTimers();
+    try {
+      await withServer(async (baseUrl) => {
+        const activateResponse = await activate(baseUrl);
+        const { mandate } = await activateResponse.json();
+
+        const statusWithinWindow = await fetch(`${baseUrl}/status/${mandate.mandateId}`);
+        expect(await statusWithinWindow.json()).toMatchObject({ active: true, revoked: false });
+
+        vi.setSystemTime(new Date(Date.now() + MAX_BREAK_GLASS_DURATION_MS + 1_000));
+
+        const statusAfterExpiry = await fetch(`${baseUrl}/status/${mandate.mandateId}`);
+        expect(await statusAfterExpiry.json()).toMatchObject({ active: false, revoked: false });
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

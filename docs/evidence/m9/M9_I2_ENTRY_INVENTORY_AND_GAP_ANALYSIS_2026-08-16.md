@@ -135,6 +135,18 @@ existiert. ADR-0063 weiterhin `PROPOSED`. Ein dokumentierter, unbehobener Nebenb
 (`requireStepUp()` filtert `purpose` beim Konsum nicht) betrifft alle Step-up-gated Endpunkte, siehe
 Live-Wiring-Evidence §3.
 
+**Nachtrag 2026-08-16 (Live-Drill):** M9-Drill jetzt technisch ausgeführt — Owner-Wahl „Break-Glass-
+Drill durchführen (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/
+M9_BREAK_GLASS_LIVE_DRILL_2026-08-16.md`. Alle 8 Runbook-Anforderungen an Domain 7 geprüft und
+bestanden, darunter eine während der Drill-Vorbereitung gefundene und additiv geschlossene reale
+Lücke (explizite Widerruf-Durchsetzung fehlte bisher in der realen Autorisierungskette — neues
+`breakGlassRevoked`-Flag in `roadmapExecutionMandate.ts`, dem OWNER-akzeptierten Proposal §2.7
+folgend). 5 neue Tests. **M9-Exit-Gate-Punkt 4 gilt jedoch erst als erfüllt, sobald der laut
+Proposal §2.8 verpflichtende Post-Event-Review Owner-signiert ist** — das Artefakt
+(`.ai/evidence/break-glass/BREAK-GLASS-M9-DRILL-2026-08-16-01-POST-REVIEW.md`) ist erstellt, die
+Owner-Signatur ist zum Zeitpunkt dieses Nachtrags noch ausstehend (eigene, separate
+Owner-Entscheidung). ADR-0063 weiterhin `PROPOSED`.
+
 ### 2.8 Rollback / Recovery
 - Kontrollmechanismus vorhanden: **zwei unabhängige, real bewiesene Hebel** für den einzigen realen
   Aufrufer (SA3B) — IAM-Kill-Switch und Provider-Profil-Registry-Rollback, siehe
@@ -189,9 +201,14 @@ Priorisierungsvorschlag nach Reifegrad der Grundlage (am weitesten fortgeschritt
 8. ~~**Break-Glass Live-Wiring** (§2.7)~~ — **erledigt 2026-08-16**, siehe
    `docs/evidence/m9/M9_BREAK_GLASS_LIVE_WIRING_2026-08-16.md`. Proposal Owner-`ACCEPT`ed,
    Policy-/Logik-Ebene implementiert und jetzt hinter einem echten, Owner+Step-up-gated
-   HTTP-Endpunkt (`/api/systemadmin/break-glass`) live erreichbar. Noch offen: der eigentliche
-   M9-Drill mit Pflicht-Post-Review — realistisch weiterhin der letzte Punkt in der Sequenz bis zur
-   vollen M9-Closure.
+   HTTP-Endpunkt (`/api/systemadmin/break-glass`) live erreichbar.
+9. ~~**Break-Glass-Drill** (§2.7)~~ — **technisch ausgeführt 2026-08-16**, siehe
+   `docs/evidence/m9/M9_BREAK_GLASS_LIVE_DRILL_2026-08-16.md`. Alle 8 Runbook-Anforderungen geprüft
+   und bestanden, inkl. einer während der Vorbereitung gefundenen und additiv geschlossenen realen
+   Lücke (Widerruf-Durchsetzung). **Owner-Signatur des Pflicht-Post-Event-Reviews
+   (`.ai/evidence/break-glass/BREAK-GLASS-M9-DRILL-2026-08-16-01-POST-REVIEW.md`) steht noch aus** —
+   ohne sie gilt M9-Exit-Gate-Punkt 4 formal nicht als erfüllt, auch wenn die technische Ausführung
+   vollständig PASS ist. Realistisch der letzte offene Break-Glass-Punkt bis zur vollen M9-Closure.
 
 Dieses Dokument trifft selbst keine Auswahl unter diesen Optionen — das ist Owner-Entscheidung.
 
