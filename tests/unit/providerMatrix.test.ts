@@ -61,22 +61,27 @@ function mockProvider(id: string, state: 'LIVE' | 'UNAVAILABLE' = 'LIVE'): Marke
   };
 }
 
-describe('SC-4 ProviderMatrix', () => {
+describe('SC-4/SC-5 ProviderMatrix', () => {
   it('has stable contract version and required gateway providers', () => {
     expect(PROVIDER_MATRIX_VERSION).toMatch(/^provider-matrix\/1\./);
     expect(getProviderMatrixEntry('twelvedata')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('fmp-index')?.gatewayStatus).toBe('behind_gateway');
+    expect(getProviderMatrixEntry('coingecko')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('alpaca')?.gatewayStatus).toBe('shadow_only');
-    expect(providersBehindGateway().length).toBeGreaterThanOrEqual(2);
-    expect(providersLegacyOffGateway().some((e) => e.id === 'coingecko')).toBe(true);
+    expect(providersBehindGateway().map((e) => e.id)).toEqual(
+      expect.arrayContaining(['twelvedata', 'fmp-index', 'coingecko']),
+    );
+    expect(providersLegacyOffGateway().some((e) => e.id === 'stooq')).toBe(true);
   });
 
-  it('exposes rate-limit overrides only for gateway-relevant providers', () => {
+  it('exposes rate-limit overrides for gateway-relevant providers including coingecko', () => {
     const overrides = rateLimitOverridesFromMatrix();
     expect(overrides.twelvedata?.capacity).toBe(30);
     expect(overrides['fmp-index']?.capacity).toBe(40);
     expect(overrides.alpaca?.capacity).toBe(20);
-    expect(overrides.coingecko).toBeUndefined();
+    expect(overrides.coingecko?.capacity).toBe(25);
+    expect(overrides.coinapi).toBeUndefined();
+    expect(overrides.stooq).toBeUndefined();
   });
 
   it('RateLimitBudget applies per-provider capacity from matrix overrides', () => {
@@ -88,7 +93,6 @@ describe('SC-4 ProviderMatrix', () => {
     expect(budget.tryConsume('twelvedata').allowed).toBe(true);
     expect(budget.tryConsume('twelvedata').allowed).toBe(true);
     expect(budget.tryConsume('twelvedata').allowed).toBe(false);
-    // other providers use default capacity
     expect(budget.tryConsume('other').allowed).toBe(true);
   });
 
