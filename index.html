@@ -35,7 +35,7 @@
          Example: <meta name="google-site-verification" content="YOUR_TOKEN_HERE" />
          DNS verification is an equally valid alternative and preferred when available. -->
 
-    <!-- SEO D1: JSON-LD structured data -->
+    <!-- SEO D1: JSON-LD structured data (Rich-Results-DoD: ImageObject logo + SoftwareApplication offers) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -45,7 +45,11 @@
           "@id": "https://capital-ai.online/#organization",
           "name": "CAPITAL-AI",
           "url": "https://capital-ai.online/",
-          "logo": "https://capital-ai.online/favicon.svg",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://capital-ai.online/favicon.svg",
+            "contentUrl": "https://capital-ai.online/favicon.svg"
+          },
           "founder": {
             "@type": "Person",
             "name": "Sven Kulessa"
@@ -67,7 +71,14 @@
           "operatingSystem": "Web",
           "url": "https://capital-ai.online/",
           "description": "Quantitative Analysen, Compliance-Management, Asset-Scoring und DSGVO-Dokumentation.",
-          "publisher": { "@id": "https://capital-ai.online/#organization" }
+          "publisher": { "@id": "https://capital-ai.online/#organization" },
+          "image": "https://capital-ai.online/og-image.svg",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "EUR",
+            "availability": "https://schema.org/InStock"
+          }
         }
       ]
     }

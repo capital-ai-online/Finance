@@ -1,0 +1,28 @@
+{
+  "claimId": "SEO-WP-D1-D2-JSONLD-ROUTE-TITLES-2026-08-16",
+  "workPackage": "WP-D1 / WP-D2",
+  "roadmap": "SEO-GM-ROADMAP-0002",
+  "title": "JSON-LD Rich-Results-DoD + route-specific titles/meta",
+  "status": "in_progress",
+  "createdAt": "2026-08-16",
+  "owner": "SvenKulessa",
+  "branch": "seo/wp-d1-d2-2026-08-16",
+  "scope": {
+    "D1": "Enhance index.html JSON-LD: Organization logo as ImageObject; SoftwareApplication image + offers (price 0 EUR)",
+    "D2": "Client applyRouteSeo on load + popstate; unit tests for unique public route titles; prerender already aligned"
+  },
+  "definitionOfDone": {
+    "D1": "Rich-Results-Test without critical schema errors for Organization/WebSite/SoftwareApplication",
+    "D2": "Each public route (/ , /impressum, /agb, /datenschutz) has a unique document title via prerender + client applyRouteSeo"
+  },
+  "claimedPaths": [
+    "index.html",
+    "src/main.tsx",
+    "src/lib/routeSeo.ts",
+    "src/lib/routeSeo.test.ts",
+    "docs/seo/SEO_CHECKLIST.md",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+    ".ai/work-claims/SEO-WP-D1-D2-JSONLD-ROUTE-TITLES-2026-08-16.json"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}
