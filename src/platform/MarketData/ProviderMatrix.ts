@@ -1,9 +1,8 @@
 /**
- * SC-4 Provider Matrix (SC-MD-SPT-0001).
+ * SC-4 / SC-5 Provider Matrix (SC-MD-SPT-0001).
  *
  * Canonical inventory of market-data providers with rate-limit / circuit-breaker
- * defaults and gateway adoption status. Does NOT promote providers or change
- * scoring. Live crypto paths still marked legacy_off_gateway (SC-5).
+ * defaults and gateway adoption status. Does NOT promote Alpaca or flip scoreImpact.
  */
 
 import type {
@@ -12,14 +11,15 @@ import type {
   ProviderRole,
 } from './contracts';
 
-export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.0.0' as const;
+export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.1.0' as const;
 
 export type ProviderGatewayStatus =
   | 'behind_gateway'
   | 'shadow_only'
   | 'legacy_off_gateway'
   | 'history_gateway_only'
-  | 'not_wired';
+  | 'not_wired'
+  | 'consensus_only';
 
 export interface ProviderRateLimitPolicy {
   /** Max consumes per window for snapshot (and shared capability keys). */
@@ -62,7 +62,7 @@ export const DEFAULT_CIRCUIT_BREAKER: ProviderCircuitBreakerPolicy = {
 };
 
 /**
- * Authoritative provider matrix for SC-4 documentation + runtime budget wiring.
+ * Authoritative provider matrix for SC-4/SC-5 documentation + runtime budget wiring.
  * Update this table when registering or migrating a provider.
  */
 export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
@@ -74,7 +74,6 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     assetClasses: ['stock', 'forex'],
     enabled: true,
     priority: 10,
-    // Free/paid tiers vary; keep tight server-side budget independent of upstream quota.
     rateLimit: { capacity: 30, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 45_000 },
     gatewayStatus: 'behind_gateway',
@@ -92,6 +91,20 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     circuitBreaker: { failureThreshold: 3, cooldownMs: 30_000 },
     gatewayStatus: 'behind_gateway',
     notes: 'Index quotes via injected loader; server FMP cache/cooldown remains composition boundary.',
+  },
+  {
+    id: 'coingecko',
+    displayName: 'CoinGecko',
+    role: 'primary',
+    capabilities: ['snapshot', 'quote'],
+    assetClasses: ['crypto'],
+    enabled: true,
+    priority: 10,
+    rateLimit: { capacity: 25, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 30_000 },
+    gatewayStatus: 'behind_gateway',
+    notes:
+      'SC-5 Phase A: USD price via CoinGeckoMarketDataProvider + cryptoQuoteEvidence. Multi-field market snapshot still uses legacy cryptoSnapshotProvider.',
   },
   {
     id: 'alpaca',
@@ -120,17 +133,30 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     notes: 'P3C history contract; not wired into scoring consumers yet.',
   },
   {
-    id: 'coingecko',
-    displayName: 'CoinGecko',
-    role: 'primary',
+    id: 'coinapi',
+    displayName: 'CoinAPI',
+    role: 'secondary',
+    capabilities: ['snapshot', 'quote'],
+    assetClasses: ['crypto'],
+    enabled: true,
+    priority: 20,
+    rateLimit: { capacity: 20, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 30_000 },
+    gatewayStatus: 'consensus_only',
+    notes: 'Used by cryptoSpotConsensus only; gateway adapter not yet registered.',
+  },
+  {
+    id: 'eodhd',
+    displayName: 'EODHD',
+    role: 'secondary',
     capabilities: ['snapshot', 'history'],
     assetClasses: ['crypto'],
     enabled: true,
-    priority: 10,
-    rateLimit: { capacity: 25, windowMs: 60_000 },
-    circuitBreaker: { failureThreshold: 3, cooldownMs: 30_000 },
-    gatewayStatus: 'legacy_off_gateway',
-    notes: 'SC-5 target: migrate crypto live paths behind MarketDataGateway.',
+    priority: 40,
+    rateLimit: { capacity: 15, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 45_000 },
+    gatewayStatus: 'consensus_only',
+    notes: 'EOD reference observation in cryptoSpotConsensus; cannot form tight realtime quorum alone.',
   },
   {
     id: 'stooq',
@@ -143,7 +169,7 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     rateLimit: { capacity: 20, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 30_000 },
     gatewayStatus: 'legacy_off_gateway',
-    notes: 'Legacy fallback paths; migrate under SC-5.',
+    notes: 'Legacy fallback paths; optional SC-5 Phase B migration.',
   },
 ] as const;
 
