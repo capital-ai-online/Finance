@@ -716,4 +716,86 @@ describe('SA3 Systemadmin audited execution', () => {
       // consistent with the M8 killSwitchActive precedent this wiring follows.
     });
   });
+
+  // M9 (ADR-0063, docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md "Assurance Domain 1:
+  // Authorization Bypass") Owner-authorized live drill (2026-08-16, AskUserQuestion
+  // "Authorization-Bypass-Negativtests (empfohlen)"). All 9 runbook attack vectors already had
+  // isolated unit coverage at the REM layer (tests/unit/roadmapExecutionMandate.test.ts) - this
+  // drill proves each one denies through the REAL, live-wired, audited SA3B entry point
+  // (authorizeSystemadminAuditedExecution), not just the isolated REM/IAM function. Three of the
+  // nine vectors (Human-reserved action, Self-Authority mutation, direct tool/connector bypass)
+  // already had live-chain coverage above and are not duplicated here - only cited.
+  describe('M9 Authorization-Bypass Live-Drill (I2 Assurance, 2026-08-16)', () => {
+    async function expectDeniedAndAudited(authRequest: SystemadminRoadmapAuthorizationRequest) {
+      const result = await authorizeSystemadminAuditedExecution({
+        authorization: authRequest,
+        checkpoint: baseCheckpoint,
+      }, auditContext);
+      expect(result.decision.verdict).toBe('DENY');
+      expect(result.executionPermit).toBeUndefined();
+      expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({
+        authorization_decision: 'DENY',
+        result: 'DENIED',
+      }));
+      return result;
+    }
+
+    it('1. missing principal: an empty humanActorId is denied through the real chain', async () => {
+      await expectDeniedAndAudited({
+        ...authorization(),
+        principal: { ...principal, humanActorId: '' },
+      });
+    });
+
+    it('2. wrong principal: an agentId that does not match the Systemadmin subject is denied at the SA2 chat profile layer', async () => {
+      const result = await expectDeniedAndAudited({
+        ...authorization(),
+        principal: { ...principal, agentId: 'some-other-agent-id' },
+      });
+      expect(result.decision.layer).toBe('CHAT_PROFILE');
+    });
+
+    it('3. missing/unknown capability: a capability outside AGENT_CAPABILITIES is denied through the real chain', async () => {
+      await expectDeniedAndAudited(authorization('DESTROY_EVERYTHING', []));
+    });
+
+    it('4. risk above allowed ceiling: BRANCH under a mandate capped at LOW is denied through the real chain', async () => {
+      const capped = authorization(AGENT_CAPABILITIES.BRANCH, ['docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md']);
+      await expectDeniedAndAudited({
+        ...capped,
+        riskClass: 'MEDIUM',
+        mandate: { ...(capped.mandate as Record<string, unknown>), maxRiskClass: 'LOW' },
+      });
+    });
+
+    it('5. wrong target/resource: a target outside the mandate allowlist is denied through the real chain', async () => {
+      await expectDeniedAndAudited({
+        ...authorization(),
+        targetResource: 'github:someone-else/unrelated-repo',
+      });
+    });
+
+    it('6. revoked/unapproved mandate: a non-OWNER_APPROVED mandate status is denied through the real chain', async () => {
+      const base = authorization();
+      await expectDeniedAndAudited({
+        ...base,
+        mandate: { ...(base.mandate as Record<string, unknown>), status: 'DRAFT' },
+      });
+    });
+
+    it('7. expired mandate: a request timestamped after mandate.expiresAt is denied through the real chain', async () => {
+      const base = authorization();
+      await expectDeniedAndAudited({
+        ...base,
+        execution: { ...base.execution, now: '2026-09-01T00:00:00.000Z' },
+      });
+    });
+
+    // Human-reserved action (MERGE): already proven live end-to-end above, "keeps MERGE and
+    // production capabilities outside the audited permit path".
+    // Self-Authority mutation: already proven live end-to-end above, "denies and audits attempts
+    // to rewrite the SA2/SA3 control plane".
+    // Direct tool/connector bypass: already proven live end-to-end above via the M8 Provider
+    // Profile Registry composition tests (defense-in-depth layer independent of REM/IAM).
+  });
 });

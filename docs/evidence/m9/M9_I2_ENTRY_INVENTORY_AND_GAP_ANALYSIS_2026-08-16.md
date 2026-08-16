@@ -50,8 +50,12 @@ Für jede Domain: was bereits als **Kontrollmechanismus** existiert (aus M4–M8
   (`providerProfile.ts`), negative Unit-Tests für falsche Capability/Principal existieren bereits
   verstreut (`tests/unit/agentAudit.test.ts`, `tests/unit/systemadminAuditedExecution.test.ts`,
   `tests/unit/roadmapExecutionMandate.test.ts`).
-- M9-Drill ausgeführt: **Nein.** Kein konsolidiertes Drill-Evidence-Dokument mit dem in
-  Runbook-§„Evidence Schema" geforderten Format existiert bisher.
+- M9-Drill ausgeführt: **Ja, 2026-08-16** (Owner-autorisiert via `AskUserQuestion`) — siehe
+  `docs/evidence/m9/M9_AUTHORIZATION_BYPASS_LIVE_DRILL_2026-08-16.md`. Alle 9 Runbook-Vektoren
+  (missing/wrong principal, unknown capability, risk above ceiling, wrong target, expired/revoked
+  mandate, human-reserved action, self-authority mutation, direct connector bypass) jetzt über die
+  reale SA3B-Kette bewiesen, nicht nur isoliert auf REM-Ebene. Trägt zu M9-Exit-Gate-Punkt 2 bei
+  (Authorization-Bypass-Anteil vollständig).
 
 ### 2.2 Prompt / Tool Injection
 - Kontrollmechanismus vorhanden: kein dediziertes Modul gefunden (`grep -rli injection tests/
@@ -153,7 +157,8 @@ Priorisierungsvorschlag nach Reifegrad der Grundlage (am weitesten fortgeschritt
    `docs/evidence/m9/M9_AUDIT_OUTAGE_LIVE_DRILL_2026-08-16.md`.
 4. ~~**Replay/Idempotency-Drill** (§2.3)~~ — **erledigt 2026-08-16**, siehe
    `docs/evidence/m9/M9_REPLAY_IDEMPOTENCY_LIVE_DRILL_2026-08-16.md`.
-5. **Authorization-Bypass-Negativtests** (§2.1) — verstreute Tests konsolidieren.
+5. ~~**Authorization-Bypass-Negativtests** (§2.1)~~ — **erledigt 2026-08-16**, siehe
+   `docs/evidence/m9/M9_AUTHORIZATION_BYPASS_LIVE_DRILL_2026-08-16.md`.
 6. **Secret/Exfiltration-Drill** (§2.4) — Redaction-Struktur vorhanden, adversarieller Test fehlt.
 7. **Prompt/Tool-Injection-Tests** (§2.2) — größte Lücke, braucht Testsuite von Grund auf.
 8. **Break-Glass** (§2.7) — braucht zuerst einen Owner-genehmigten Proposal/Implementierung, bevor
