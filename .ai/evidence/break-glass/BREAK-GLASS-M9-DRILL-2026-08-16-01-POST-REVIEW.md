@@ -71,12 +71,13 @@ und Testlauf-Nachweis: `docs/evidence/m9/M9_BREAK_GLASS_LIVE_DRILL_2026-08-16.md
 | Feld | Wert |
 |---|---|
 | Owner | SvenKulessa |
-| Entscheidung | **AUSSTEHEND** — siehe separate `AskUserQuestion`-Anfrage in dieser Sitzung |
-| Datum | — |
+| Entscheidung | **SIGNIERT** — explizite Owner-Bestätigung in dieser Sitzung ("signing" / "führe signature durch") |
+| Datum | 2026-08-16 |
 
-**Solange dieses Feld nicht durch eine explizite Owner-Antwort ausgefüllt ist, gilt
-M9-Exit-Gate-Punkt 4 nicht als erfüllt**, auch wenn die technische Drill-Ausführung selbst
-vollständig PASS ist.
+Mit dieser Signatur gilt M9-Exit-Gate-Punkt 4 („break-glass drill PASS") als formal erfüllt. Die in
+§4 dokumentierten offenen Punkte (Broker-Anbindung des Widerruf-Hebels; `requireStepUp()`-
+`purpose`-Filter) bleiben als separat zu behandelnde, nicht-blockierende Folgepunkte bestehen — sie
+wurden dem Owner vor der Signatur offengelegt (siehe §4) und sind kein Hindernis für dieses Review.
 
 ## Related Documents
 

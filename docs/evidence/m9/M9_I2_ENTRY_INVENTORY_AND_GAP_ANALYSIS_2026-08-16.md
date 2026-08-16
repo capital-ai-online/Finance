@@ -141,11 +141,11 @@ M9_BREAK_GLASS_LIVE_DRILL_2026-08-16.md`. Alle 8 Runbook-Anforderungen an Domain
 bestanden, darunter eine während der Drill-Vorbereitung gefundene und additiv geschlossene reale
 Lücke (explizite Widerruf-Durchsetzung fehlte bisher in der realen Autorisierungskette — neues
 `breakGlassRevoked`-Flag in `roadmapExecutionMandate.ts`, dem OWNER-akzeptierten Proposal §2.7
-folgend). 5 neue Tests. **M9-Exit-Gate-Punkt 4 gilt jedoch erst als erfüllt, sobald der laut
-Proposal §2.8 verpflichtende Post-Event-Review Owner-signiert ist** — das Artefakt
-(`.ai/evidence/break-glass/BREAK-GLASS-M9-DRILL-2026-08-16-01-POST-REVIEW.md`) ist erstellt, die
-Owner-Signatur ist zum Zeitpunkt dieses Nachtrags noch ausstehend (eigene, separate
-Owner-Entscheidung). ADR-0063 weiterhin `PROPOSED`.
+folgend). 5 neue Tests. **M9-Exit-Gate-Punkt 4 gilt als erfüllt** — der laut Proposal §2.8
+verpflichtende Post-Event-Review (`.ai/evidence/break-glass/
+BREAK-GLASS-M9-DRILL-2026-08-16-01-POST-REVIEW.md`) wurde am 2026-08-16 vom Owner explizit
+signiert. Zwei nicht-blockierende Folgepunkte bleiben dokumentiert offen (Broker-Anbindung des
+Widerruf-Hebels; `requireStepUp()`-`purpose`-Filter). ADR-0063 weiterhin `PROPOSED`.
 
 ### 2.8 Rollback / Recovery
 - Kontrollmechanismus vorhanden: **zwei unabhängige, real bewiesene Hebel** für den einzigen realen
@@ -202,13 +202,13 @@ Priorisierungsvorschlag nach Reifegrad der Grundlage (am weitesten fortgeschritt
    `docs/evidence/m9/M9_BREAK_GLASS_LIVE_WIRING_2026-08-16.md`. Proposal Owner-`ACCEPT`ed,
    Policy-/Logik-Ebene implementiert und jetzt hinter einem echten, Owner+Step-up-gated
    HTTP-Endpunkt (`/api/systemadmin/break-glass`) live erreichbar.
-9. ~~**Break-Glass-Drill** (§2.7)~~ — **technisch ausgeführt 2026-08-16**, siehe
-   `docs/evidence/m9/M9_BREAK_GLASS_LIVE_DRILL_2026-08-16.md`. Alle 8 Runbook-Anforderungen geprüft
-   und bestanden, inkl. einer während der Vorbereitung gefundenen und additiv geschlossenen realen
-   Lücke (Widerruf-Durchsetzung). **Owner-Signatur des Pflicht-Post-Event-Reviews
-   (`.ai/evidence/break-glass/BREAK-GLASS-M9-DRILL-2026-08-16-01-POST-REVIEW.md`) steht noch aus** —
-   ohne sie gilt M9-Exit-Gate-Punkt 4 formal nicht als erfüllt, auch wenn die technische Ausführung
-   vollständig PASS ist. Realistisch der letzte offene Break-Glass-Punkt bis zur vollen M9-Closure.
+9. ~~**Break-Glass-Drill** (§2.7)~~ — **erledigt 2026-08-16, M9-Exit-Gate-Punkt 4 formal erfüllt**,
+   siehe `docs/evidence/m9/M9_BREAK_GLASS_LIVE_DRILL_2026-08-16.md`. Alle 8 Runbook-Anforderungen
+   geprüft und bestanden, inkl. einer während der Vorbereitung gefundenen und additiv geschlossenen
+   realen Lücke (Widerruf-Durchsetzung). Der laut Proposal §2.8 verpflichtende Post-Event-Review
+   (`.ai/evidence/break-glass/BREAK-GLASS-M9-DRILL-2026-08-16-01-POST-REVIEW.md`) ist Owner-signiert.
+   Kein weiterer Break-Glass-spezifischer Punkt offen — verbleibende M9-Punkte betreffen andere
+   Domains (v. a. Punkt 6, Independent Evidence Review).
 
 Dieses Dokument trifft selbst keine Auswahl unter diesen Optionen — das ist Owner-Entscheidung.
 

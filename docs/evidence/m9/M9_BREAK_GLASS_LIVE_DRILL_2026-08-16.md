@@ -1,7 +1,7 @@
 # M9 — Break-Glass Live-Drill Evidence (2026-08-16)
 
 Status: DRILL COMPLETE — PASS (Assurance Domain 7 only; M9 overall remains NOT COMPLETE), **Owner
-Post-Event-Review AUSSTEHEND (siehe §8) — kein automatisches Exit-Gate-„PASS" ohne dieses Review**
+Post-Event-Review SIGNIERT (siehe §8) — M9-Exit-Gate-Punkt 4 formal erfüllt**
 Authority: `docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md` §„Assurance Domains" 7,
 §„Evidence Schema"; `docs/evidence/m9/M9_BREAK_GLASS_DESIGN_PROPOSAL_2026-08-16.md` (OWNER_ACCEPTED)
 §2.8 („Verpflichtender Post-Event-Review"); Owner-Autorisierung: explizite Wahl
@@ -114,7 +114,7 @@ Step-up), explizite Begründung+Ziel (Aktivierung ohne diese Felder → `DENY`),
 | Keine stille Rollen-Elevation | ✅ Neues, eigenständiges Mandat; vollständige reservierte Mutationsklassen-Denylist geerbt; kein bestehendes Mandat/keine Policy-Datei verändert |
 | Append-only Audit | ✅ Jede Aktivierung/Ablehnung/Widerruf schreibt ein Audit-Event über den bereits bewiesenen SA3B-Pfad |
 | Automatischer/expliziter Widerruf | ✅ Automatisch: `/status` zeigt `active:false` nach Ablauf. **Explizit: jetzt real durchgesetzt** (neuer `breakGlassRevoked`-Hebel), nicht nur in der `/status`-Anzeige — siehe §2 für die während der Drill-Vorbereitung gefundene und geschlossene Lücke |
-| Verpflichtender Post-Event-Review | ⏳ Artefakt erstellt (`.ai/evidence/break-glass/BREAK-GLASS-M9-DRILL-2026-08-16-01-POST-REVIEW.md`), **Owner-Signatur aussteht** — siehe §8 |
+| Verpflichtender Post-Event-Review | ✅ Artefakt erstellt und **Owner-signiert** 2026-08-16 (`.ai/evidence/break-glass/BREAK-GLASS-M9-DRILL-2026-08-16-01-POST-REVIEW.md`) — siehe §8 |
 | Break-Glass mintet niemals `MERGE`, schwächt nie dauerhaft, Service-Account kann sich nie selbst gewähren | ✅ Strukturell unmöglich (`MERGE` kein bekannter `AgentCapability`); additiv, kein bestehendes Mandat verändert; Aktivierung erfordert zwingend `ownerActorId === SYSTEMADMIN_OWNER_ACTOR_ID` und `stepUpVerified` |
 
 **Testlauf:** `npx vitest run` — **195 Dateien, 1204 Tests, alle PASS** (davon neu in diesem Drill:
@@ -162,15 +162,17 @@ Artefakt erstellt unter: `.ai/evidence/break-glass/BREAK-GLASS-M9-DRILL-2026-08-
 
 Da es sich um einen **synthetischen Drill, keinen echten Notfall** handelt, sind die inhaltlichen
 Pflichtfelder entsprechend als „N/A — synthetischer Drill" bzw. mit der Drill-spezifischen Analyse
-beantwortet (siehe Artefakt). Die **Owner-Signatur ist zum Zeitpunkt dieses Dokuments noch
-ausstehend** — sie kann nur durch den Owner selbst erfolgen (kein Agent darf sich selbst
-genehmigen), siehe die separate `AskUserQuestion`-Anfrage in dieser Sitzung.
+beantwortet (siehe Artefakt). Die **Owner-Signatur wurde 2026-08-16 explizit erteilt** ("signing" /
+"führe signature durch", in dieser Sitzung) — kein Agent hat sich selbst genehmigt; die offenen
+Folgepunkte (Broker-Anbindung des Widerruf-Hebels, `requireStepUp()`-`purpose`-Filter) wurden dem
+Owner vor der Signatur offengelegt (Post-Review §4) und bleiben als separat zu behandelnde,
+nicht-blockierende Punkte bestehen.
 
 ## 9. Bezug zum M9-Exit-Gate
 
-- Punkt 4 „break-glass drill PASS": **technisch vollständig ausgeführt und bewiesen**, formal aber
-  **erst nach Owner-Signatur des Post-Event-Reviews (§8) als erfüllt zu betrachten** — exakt wie von
-  der akzeptierten Proposal selbst gefordert.
+- Punkt 4 „break-glass drill PASS": **technisch vollständig ausgeführt und bewiesen, formal erfüllt**
+  nach Owner-Signatur des Post-Event-Reviews (§8), 2026-08-16 — exakt wie von der akzeptierten
+  Proposal selbst gefordert.
 - M9 bleibt insgesamt `PLANNED — EXECUTION BLOCKED BY M8` im Runbook-Kopf, bis auch die übrigen
   Exit-Gate-Punkte (insbesondere Punkt 6, Independent Evidence Review) erfüllt sind; dieser Drill
   allein schließt M9 nicht ab.
