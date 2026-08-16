@@ -1,0 +1,35 @@
+{
+  "claimId": "SC5-PHASE-C-CANONICAL-MULTIFIELD-2026-08-16",
+  "spt": "SC-MD-SPT-0001",
+  "workPackage": "SC-5",
+  "phase": "C",
+  "title": "Live coverage — CanonicalMarketDataSnapshot multi-field marketCap/supply via gateway",
+  "status": "IN_PROGRESS",
+  "createdAt": "2026-08-16T04:20:00+02:00",
+  "ownerAuthorization": "User: starte mit sc5 phase c",
+  "scope": [
+    "src/platform/MarketData/contracts.ts",
+    "src/platform/MarketData/providers/CoinGeckoMarketDataProvider.ts",
+    "src/platform/MarketData/ProviderMatrix.ts",
+    "tests/unit/cryptoQuoteEvidence.test.ts",
+    "docs/roadmaps/work-packages/SC-5_LIVE_COVERAGE_EXPANSION.md",
+    "docs/evidence/sc-md/SC5_PHASE_C_CANONICAL_MULTIFIELD_2026-08-16.md",
+    "docs/evidence/sc-md/SC5_LIVE_COVERAGE_MATRIX_2026-08-16.md",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md",
+    ".ai/work-claims/SC5-PHASE-C-CANONICAL-MULTIFIELD-2026-08-16.json"
+  ],
+  "nonGoals": [
+    "CoinAPI/TwelveData/EODHD gateway adapter registration",
+    "executionPriceEligible true",
+    "Alpaca promotion",
+    "scoreImpact / rankingImpact flip",
+    "Stooq gateway migration",
+    "Change VerifiedCryptoSnapshot scoring API",
+    "Process-wide shared RateLimitBudget singleton"
+  ],
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "surface": "Grok Chat / GitHub MCP"
+  }
+}
