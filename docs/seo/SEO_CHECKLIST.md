@@ -1,6 +1,6 @@
 # 🔍 SEO Checklist & Technical Discovery Guide
 **Project: CAPITAL-AI**  
-**Stand:** 16.08.2026 — WP-D3 Soft-404 VERIFIED; **Q3 Search Console Domain property VERIFIED**  
+**Stand:** 16.08.2026 — WP-D3 Soft-404 VERIFIED; **Q3 Search Console Domain property VERIFIED**; WP-D1/D2 in PR  
 **Umsetzungsplan:** `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md` (SEO-GM-ROADMAP-0002)
 
 ### 1. Crawling & Indexierung
@@ -10,12 +10,12 @@
 - [x] Echte 404 (Soft-404 behoben) — **D3** (PR #360, prod VERIFIED)
 
 ### 3. JSON-LD / Meta
-- [x] JSON-LD Organization/WebSite/SoftwareApplication — **D1** (Shell in `index.html`; Rich-Results-DoD offen)
-- [ ] Routen-Titles client-side — **D2** (teilweise prerender)
+- [x] JSON-LD Organization/WebSite/SoftwareApplication — **D1** (Shell + Rich-Results-DoD: ImageObject logo, SoftwareApplication offers/image in `index.html`)
+- [x] Routen-Titles client-side — **D2** (routeSeo map + main.tsx apply on load/popstate; prerender inject; unit test)
 - [x] og:image first-party — **Q5**
 
 ### 4. Crawler-Render
-- [ ] Prerender Meta + noscript pro Public-Route — **S2** (ADR formal noch offen)
+- [ ] Prerender Meta + noscript pro Public-Route — **S2** (ADR formal noch offen; script live)
 - [ ] Full React-Body SSR — optional Follow-up
 
 ### 5. Performance
