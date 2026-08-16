@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldAlert, Mail, User, Lock, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, X } from 'lucide-react';
+import { ShieldAlert, Mail, User, Lock, CheckCircle2, AlertCircle, Loader2, Eye, EyeOff, X, BarChart3, Layers, ShieldCheck, Bookmark } from 'lucide-react';
 import { CapitalAiLogo } from './CapitalAiLogo';
 import { SecurityRadarBadge } from './SecurityRadarBadge';
 import { supabase } from '../supabaseClient';
@@ -197,12 +197,52 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
         </svg>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="relative z-10 w-full max-w-md mx-auto p-[2px] rounded-2xl overflow-hidden animate-brand-border-pulse"
-      >
+      <div className="relative z-10 w-full max-w-5xl mx-auto grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          aria-labelledby="landing-purpose-heading"
+          className="order-2 lg:order-1 text-white px-2 sm:px-0"
+        >
+          <h1 id="landing-purpose-heading" className="text-2xl sm:text-3xl font-black tracking-tight mb-4">
+            Quantitative Multi-Asset-Analyse &amp; Risikobewertung
+          </h1>
+          <p className="text-sm text-white/70 leading-relaxed mb-6">
+            CAPITAL-AI ist eine quantitative Finanzanalyse-Plattform. Sie bewertet Aktien, Kryptowährungen,
+            Devisen, Rohstoffe, Indizes und Anleihen anhand transparenter, datengetriebener Scoring-Modelle
+            und liefert dazu eine strukturierte Risikobewertung je Asset.
+          </p>
+          <ul className="space-y-3 mb-6 text-sm text-white/70">
+            <li className="flex items-start gap-3">
+              <BarChart3 className="w-4 h-4 mt-0.5 text-aif-gold-DEFAULT shrink-0" />
+              <span><strong className="text-white font-bold">Quantitative Finanzanalysen</strong> — datenbasierte Bewertungsmodelle statt Spekulation.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <Layers className="w-4 h-4 mt-0.5 text-[#0DDDDD] shrink-0" />
+              <span><strong className="text-white font-bold">Multi-Asset-Scoring</strong> — einheitliche, vergleichbare Scores über acht Assetklassen hinweg.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <ShieldCheck className="w-4 h-4 mt-0.5 text-[#B026FF] shrink-0" />
+              <span><strong className="text-white font-bold">Risikobewertung</strong> — strukturierte Einschätzung von Volatilität, Liquidität und Datenqualität je Position.</span>
+            </li>
+          </ul>
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-start gap-3">
+            <Bookmark className="w-4 h-4 mt-0.5 text-white/50 shrink-0" />
+            <p className="text-xs text-white/60 leading-relaxed">
+              <strong className="text-white/80 font-bold">Warum eine Anmeldung nötig ist:</strong> Ihr Konto (per E-Mail oder
+              Google-Login) verwaltet Ihr persönliches Profil, Ihre gespeicherten Watchlists und Ihre individuellen
+              Analyseeinstellungen. Ohne Anmeldung können diese nicht geräteübergreifend gespeichert werden.
+            </p>
+          </div>
+        </motion.section>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="order-1 lg:order-2 w-full max-w-md mx-auto p-[2px] rounded-2xl overflow-hidden animate-brand-border-pulse"
+        >
         <div className="absolute inset-[-400%] bg-[conic-gradient(from_0deg,#F5C453_0deg,#0DDDDD_120deg,#B026FF_240deg,#F5C453_360deg)] animate-brand-border-rotate" />
         <div className="relative z-10 w-full rounded-[14px] bg-[#06070B]/95 backdrop-blur-2xl p-6 sm:p-8">
           <div className="text-center mb-6">
@@ -257,9 +297,10 @@ export function LandingPage({ onLoginEmail, onGuestLogin, onRegisterEmail, justL
 
           <div className="mt-6 pt-5 border-t border-white/10 text-center text-xs text-white/50 flex flex-col items-center gap-1.5"><ShieldAlert className="w-3.5 h-3.5 text-aif-gold-DEFAULT animate-pulse" /><p className="font-mono text-[9px] tracking-wider text-white/60">Strict No Demo Data Policy</p><p className="text-[8px] text-white/40">EU GDPR Compliant • MiFID II Ready</p></div>
         </div>
-      </motion.div>
+        </motion.div>
+      </div>
 
-      <footer className="relative z-10 mt-8 mb-4 w-full max-w-md text-center space-y-4"><div className="flex items-center justify-center gap-4 text-[11px] font-mono"><a href="https://capital-ai.online/impressum" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-aif-gold-DEFAULT transition-colors hover:underline tracking-wider uppercase font-bold">Impressum</a><span className="text-white/20">•</span><a href="https://capital-ai.online/agb/" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-aif-gold-DEFAULT transition-colors hover:underline tracking-wider uppercase font-bold">AGB</a><span className="text-white/20">•</span><a href="https://capital-ai.online/datenschutz/" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-aif-gold-DEFAULT transition-colors hover:underline tracking-wider uppercase font-bold">Datenschutz</a></div><SecurityRadarBadge /></footer>
+      <footer className="relative z-10 mt-8 mb-4 w-full max-w-5xl mx-auto text-center space-y-4"><div className="flex items-center justify-center gap-4 text-[11px] font-mono"><a href="https://capital-ai.online/impressum" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-aif-gold-DEFAULT transition-colors hover:underline tracking-wider uppercase font-bold">Impressum</a><span className="text-white/20">•</span><a href="https://capital-ai.online/agb/" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-aif-gold-DEFAULT transition-colors hover:underline tracking-wider uppercase font-bold">AGB</a><span className="text-white/20">•</span><a href="https://capital-ai.online/datenschutz/" target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-aif-gold-DEFAULT transition-colors hover:underline tracking-wider uppercase font-bold">Datenschutz</a></div><SecurityRadarBadge /></footer>
 
       <AnimatePresence>{isForgotModalOpen && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"><motion.div initial={{ scale: 0.95, y: 15 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 15 }} transition={{ type: 'spring', duration: 0.35 }} className="relative w-full max-w-md bg-neutral-950/90 border border-white/10 rounded-2xl p-6 overflow-hidden shadow-[0_0_50px_rgba(13,221,221,0.15)]"><div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" /><div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-32 h-32 rounded-full bg-purple-600/10 blur-3xl pointer-events-none" /><button type="button" onClick={() => setIsForgotModalOpen(false)} className="absolute top-4 right-4 text-white/40 hover:text-white/80 transition-colors focus:outline-none cursor-pointer" title="Schließen"><X className="w-5 h-5" /></button><div className="mb-5 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-aif-gold-DEFAULT animate-pulse" /><span className="text-[10px] font-mono font-bold text-aif-gold-DEFAULT uppercase tracking-widest">Sicherheits-Center</span></div><h3 className="text-lg font-bold text-white tracking-tight mb-2">Passwort zurücksetzen</h3><p className="text-xs text-white/60 leading-relaxed mb-5">Geben Sie Ihre registrierte E-Mail-Adresse ein. Wir senden Ihnen umgehend einen sicheren Link zu, mit dem Sie ein neues Passwort erstellen können.</p>{forgotError && <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2 font-mono"><AlertCircle size={14} className="shrink-0 text-red-400" /><span>{forgotError}</span></div>}{forgotSuccess && <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 font-mono"><CheckCircle2 size={14} className="shrink-0 text-emerald-400" /><span>{forgotSuccess}</span></div>}{!forgotSuccess && <form onSubmit={handleForgotResetSubmit} className="space-y-4"><div className="space-y-1.5"><label className="text-[10px] uppercase font-bold tracking-widest text-white/55 font-mono">E-Mail-Adresse</label><div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" /><input type="email" placeholder="name@beispiel.com" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} required className="w-full bg-black/60 border border-white/25 rounded-lg pl-10 pr-4 py-2.5 text-xs text-white placeholder-white/35 focus:outline-none focus:ring-1 focus:ring-aif-gold-DEFAULT" /></div></div><button type="submit" disabled={forgotLoading} className="w-full py-2.5 px-4 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 disabled:opacity-50 text-black font-sans font-bold text-xs uppercase tracking-widest rounded-lg border border-transparent shadow-[0_0_15px_rgba(13,221,221,0.2)] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]">{forgotLoading ? <><Loader2 className="w-4 h-4 animate-spin" /><span>Sende Link...</span></> : <span>Reset-Link senden</span>}</button></form>}{forgotSuccess && <button type="button" onClick={() => setIsForgotModalOpen(false)} className="w-full py-2.5 px-4 bg-white/10 hover:bg-white/15 text-white font-sans font-bold text-xs uppercase tracking-widest rounded-lg border border-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer">Schließen</button>}</motion.div></motion.div>}</AnimatePresence>
     </main>
