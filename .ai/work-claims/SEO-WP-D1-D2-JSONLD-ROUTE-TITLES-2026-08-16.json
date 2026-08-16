@@ -3,10 +3,12 @@
   "workPackage": "WP-D1 / WP-D2",
   "roadmap": "SEO-GM-ROADMAP-0002",
   "title": "JSON-LD Rich-Results-DoD + route-specific titles/meta",
-  "status": "in_progress",
+  "status": "verified",
   "createdAt": "2026-08-16",
+  "verifiedAt": "2026-08-16",
   "owner": "SvenKulessa",
   "branch": "seo/wp-d1-d2-2026-08-16",
+  "mergedPr": 375,
   "scope": {
     "D1": "Enhance index.html JSON-LD: Organization logo as ImageObject; SoftwareApplication image + offers (price 0 EUR)",
     "D2": "Client applyRouteSeo on load + popstate; unit tests for unique public route titles; prerender already aligned"
@@ -14,6 +16,16 @@
   "definitionOfDone": {
     "D1": "Rich-Results-Test without critical schema errors for Organization/WebSite/SoftwareApplication",
     "D2": "Each public route (/ , /impressum, /agb, /datenschutz) has a unique document title via prerender + client applyRouteSeo"
+  },
+  "evidence": {
+    "codePr": "https://github.com/SvenKulessa/Finance/pull/375",
+    "prodTitles": {
+      "/": "CAPITAL-AI Portal",
+      "/impressum": "Impressum – CAPITAL-AI",
+      "/agb": "AGB – CAPITAL-AI",
+      "/datenschutz": "Datenschutzerklärung – CAPITAL-AI"
+    },
+    "ownerRichResultsTest": "VERIFIED 2026-08-16 — Owner confirmed success for all 3 public legal subpages"
   },
   "claimedPaths": [
     "index.html",

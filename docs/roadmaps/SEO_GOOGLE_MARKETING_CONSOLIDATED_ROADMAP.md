@@ -8,7 +8,7 @@
 
 **ACTIVE — CANONICAL EXECUTION AUTHORITY (Domain SEO / Google Marketing / Content Distribution)**  
 Stand: 2026-08-16  
-Baseline: `main` (ADR-0082; WP-S1 VERIFIED; WP-D3 Soft-404 VERIFIED PR #360; **Q3 Search Console Domain property VERIFIED**; WP-D1/D2 code on branch `seo/wp-d1-d2-2026-08-16`)  
+Baseline: `main` (ADR-0082; WP-S1 VERIFIED; WP-D3 Soft-404 VERIFIED PR #360; **Q3 Search Console Domain property VERIFIED**; **WP-D1/D2 VERIFIED** PR #375 + Owner Rich Results Test)  
 Owner: SvenKulessa  
 Authority-Bindung: ADR-0035, ADR-0042, ADR-0068 (PROPOSED), ADR-0082 (SeoEngine), ESS-0014, ESS-0022 (PROPOSED), ADR-0071, ESS-0023
 
@@ -104,8 +104,8 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Agen
 | Q4 Checklist | **DONE** | `docs/seo/SEO_CHECKLIST.md` |
 | Q5 og:image first-party | **DONE** | `public/og-image.svg` |
 | Q6 obsolete CORS | **N/A** | Keine AI-Studio-Ausnahme im Tree |
-| D1 JSON-LD | **CODE READY** | ImageObject logo + SoftwareApplication `offers`/`image` in `index.html`; Rich-Results-Test Owner nach Merge |
-| D2 route-specific titles/meta | **CODE READY** | `src/lib/routeSeo.ts` + `main.tsx` load/popstate; prerender script; unit test; unique titles for public routes |
+| D1 JSON-LD | **VERIFIED** | PR #375; ImageObject logo + SoftwareApplication `offers`/`image`; **Owner Rich Results Test success** (3 Legal-Unterseiten, 2026-08-16); prod live |
+| D2 route-specific titles/meta | **VERIFIED** | PR #375; `routeSeo` + `main.tsx` load/popstate; prerender; unique titles live `/` `/impressum` `/agb` `/datenschutz` |
 | D3 Soft-404 | **VERIFIED** | PR #360; prod commit `54c48ca`; unknown → 404 `text/plain`; evidence `docs/evidence/seo/D3_SOFT_404_PROD_GAP_2026-08-16.md` |
 | D4 Bundle-Splitting | offen (carried) | — |
 | D5 Search Console MCP Read | offen | Runbook vorhanden; nach Q3 |
@@ -145,8 +145,8 @@ Präfixe bleiben kompatibel zur etablierten Q/D/S/N/H/J-Konvention; Marketing-Ph
 | ID | Inhalt | Abhängigkeit | DoD (kurz) |
 |----|--------|--------------|------------|
 | WP-Q-CLOSE | Q2 Server-Trailing-Slash, Q3 Owner-Verify + Sitemap-Submit | Owner | Server-301 live; **Q3 VERIFIED** (Domain `capital-ai.online`, Sitemap Success 2026-08-16) |
-| WP-D1 | JSON-LD Organization/WebSite/SoftwareApplication | Q | **CODE READY** — Rich-Results-Test Owner nach Merge |
-| WP-D2 | Routen-spezifische Title/Meta (Legal + Feature) | Q | **CODE READY** — unique titles public routes + client sync |
+| WP-D1 | JSON-LD Organization/WebSite/SoftwareApplication | Q | **VERIFIED** — PR #375; Owner Rich Results Test 2026-08-16 |
+| WP-D2 | Routen-spezifische Title/Meta (Legal + Feature) | Q | **VERIFIED** — unique titles public routes + client sync (PR #375) |
 | WP-D3 | Soft-404: unbekannte Routen → HTTP 404 | — | **VERIFIED** — PR #360; prod unknown → 404 `text/plain` (2026-08-16) |
 | WP-D4 | Bundle-Splitting / CWV | — | Messbare LCP/JS-Verbesserung |
 | WP-D5 | Search Console als MCP-Read (Evidence) | ESS-0014, Q3 | Read-only MCP, kein Write |
@@ -265,16 +265,16 @@ Programm gilt als abgeschlossen, wenn:
 
 ---
 
-## 10. Sofortige nächste Schritte (Stand 2026-08-16)
+## 10. Sofortige nächste Schritte (Stand 2026-08-16, nach WP-D1/D2 VERIFIED)
 
 1. ~~**Owner:** FK RESTRICT Apply (`20260815220000`) + Ledger-Abgleich~~ — angewendet 2026-08-15.
 2. ~~**Owner:** Search Console Property verifizieren (WP-Q-CLOSE / Q3)~~ — **VERIFIED** 2026-08-16 (Domain `capital-ai.online`, Ownership bestätigt, Sitemap Success).
 3. ~~ADR-Draft SeoEngine nummerieren~~ — **ADR-0082** Accepted (Kollisionscheck nach PR #345: 0075–0081 belegt).
 4. ADR-0068 + ESS-0022 Owner-Review (WP-M0) — ohne Runtime-Enablement.
 5. ~~WP-D3 Soft-404~~ — **VERIFIED** (PR #360; prod curl 2026-08-16).
-6. ~~**WP-D1 / D2** Code~~ — Branch `seo/wp-d1-d2-2026-08-16` (JSON-LD Rich-Results fields + route titles/popstate + tests). **Owner:** Merge + Google Rich Results Test auf `https://capital-ai.online/` und Legal-Routen.
+6. ~~**WP-D1 / D2**~~ — **VERIFIED** (PR #375 merged; prod unique titles; Owner Rich Results Test success for Legal-Unterseiten 2026-08-16).
 7. WP-S2 nur nach formalem Prerender-ADR.
-8. Optional danach: **WP-D5** Search Console MCP Read (Credentials Owner-separat).
+8. Optional: **WP-D5** Search Console MCP Read (Credentials Owner-separat).
 
 Vollständiger Übergabekontext: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`. Canonical ADR: `docs/adr/ADR-0082-seo-engine-platform-module.md`. Q3 Runbook: `docs/seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md`.
 
@@ -290,3 +290,4 @@ Vollständiger Übergabekontext: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`. Ca
 | 0002.3 | 2026-08-16 | WP-D3 Soft-404 **VERIFIED** (PR #360; prod commit `54c48ca`; unknown → 404); §4/§5.1/§10 synchronisiert |
 | 0002.4 | 2026-08-16 | **Q3 / WP-Q-CLOSE Search Console Domain property VERIFIED** (Owner: `capital-ai.online` Ownership bestätigt; Sitemap Success); §4/§5.1/§10 + Checklist/Runbook/Claim synchronisiert |
 | 0002.5 | 2026-08-16 | **WP-D1 / D2 CODE READY** — JSON-LD ImageObject + offers; routeSeo client popstate + unit test; §4/§5.1/§10 + Checklist/Claim |
+| 0002.6 | 2026-08-16 | **WP-D1 / D2 VERIFIED** — PR #375; Owner Rich Results Test success (3 Legal-Unterseiten); Claim + Checklist + §4/§5.1/§10 |
