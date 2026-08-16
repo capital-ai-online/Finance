@@ -54,6 +54,16 @@ export interface CanonicalMarketDataSnapshot {
   ask?: number | null;
   evidenceId: string | null;
   reason?: string;
+  /**
+   * SC-5 Phase C — optional extended market fields.
+   * Present when the provider supplies them (e.g. CoinGecko coins/{id}).
+   * Price-only providers omit these keys. Never synthetic.
+   */
+  marketCapUsd?: number | null;
+  volume24hUsd?: number | null;
+  circulatingSupply?: number | null;
+  maxSupply?: number | null;
+  totalSupply?: number | null;
 }
 
 export interface CanonicalMarketDataHistoryPoint {
