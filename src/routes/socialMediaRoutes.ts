@@ -18,6 +18,7 @@ import {
   contentApprovalStore,
   isApprovalGateEnabled,
 } from '../../server/socialMedia/contentApproval';
+import { validateMediaAssetUrl } from '../../server/socialMedia/mediaAssetValidation';
 import type { SupportedAccountPlatform, PublishRequestPayload } from '../platform/SocialMediaEngine/types';
 
 export const socialMediaRouter = Router();
@@ -348,6 +349,24 @@ socialMediaRouter.post('/publish', async (req: Request, res: Response) => {
   const isDraft = payload.publishType === 'draft';
   const isScheduled = payload.publishType === 'scheduled';
   const isInstant = !isDraft && !isScheduled;
+
+  // WP-N3 asset validation (ESS-0024 §8 plane 7, §13 "invalid/private media URL
+  // -> DENY"). Runs before the approval is consumed: a single-use approval must
+  // not be burnt by a payload that never had a chance to publish.
+  if (payload.mediaUrl) {
+    const asset = await validateMediaAssetUrl(payload.mediaUrl);
+    if (!asset.ok) {
+      logger.warn('Publish denied: media asset rejected', {
+        userId: identity.userId,
+        code: asset.code,
+      });
+      return res.status(400).json({
+        success: false,
+        error: asset.reason || 'mediaUrl ist nicht zulaessig.',
+        code: asset.code,
+      });
+    }
+  }
 
   // N4: instant publish requires a consumed-once approved approvalId when gate is on.
   if (isInstant && isApprovalGateEnabled()) {
