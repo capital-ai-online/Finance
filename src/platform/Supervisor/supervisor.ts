@@ -18,6 +18,10 @@ import {
 } from '../../services/marketIntegrityCalibration';
 import { buildScreeningSlaReport, type ScreeningSlaReport } from '../../services/screeningSla';
 import { getLatestScoreConfidenceEvidence, type ScoreConfidenceEvidenceRecord } from '../../services/scoreConfidenceEvidence';
+import {
+  observeAgentProviderChain,
+  type AgentProviderObservation,
+} from './agentProviderObservation';
 
 export type AssetClass = 'crypto' | 'commodity' | 'stock' | 'forex' | 'index' | 'bond';
 
@@ -129,16 +133,6 @@ export async function executeSupervised<T>(
   throw lastError;
 }
 
-// ESS-0018 Phase 2 / ADR-0051: governed write-action execution, additive alongside
-// executeSupervised() rather than a change to its signature (executeSupervised has exactly one
-// other call site today, so this keeps that path entirely unaffected). This function is Apply
-// only - dry-run/preview is a separate, unauthorized-safe read that happens before a caller ever
-// requests an approval. Enforces Policy (Compliance PolicyGate) -> Approval (single-use,
-// plan-hash-bound consumption, src/platform/Security/approvals.ts) -> Apply (executeSupervised)
-// -> Audit (EventMesh). Fingerprint verification against current DB state is the write tool's
-// own responsibility inside `fn` (Supervisor has no DB-specific knowledge) - a mismatch there
-// should throw, which this function reports as a thrown error, never as a silent no-op success.
-
 export interface ApprovedActionRequest<T> {
   taskName: string;
   action: string;
@@ -189,6 +183,66 @@ export async function executeApprovedSupervisedAction<T>(
   return { status: 'APPLIED', result };
 }
 
+/** Lightweight finding for ESS-0002 spirit — observe/evaluate only; Supervisor never decides. */
+export interface SupervisorFinding {
+  id: string;
+  category: 'execution' | 'provider_chain' | 'inventory';
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  summary: string;
+  evidence: string;
+  timestamp: string;
+  recommendation: string;
+}
+
+function buildFindingsFromExecutions(
+  recent: SupervisedExecutionRecord[],
+  agentProviders: AgentProviderObservation,
+): SupervisorFinding[] {
+  const findings: SupervisorFinding[] = [];
+  const now = new Date().toISOString();
+
+  const failed = recent.filter(r => !r.succeeded).slice(0, 10);
+  for (const f of failed) {
+    findings.push({
+      id: `exec-fail-${f.taskName}-${f.timestamp}`,
+      category: 'execution',
+      severity: 'MEDIUM',
+      summary: `Supervised task failed after ${f.attempts} attempt(s): ${f.taskName}`,
+      evidence: f.error ?? 'no error message',
+      timestamp: f.timestamp,
+      recommendation: 'Review task implementation and retry policy; Supervisor does not auto-remediate.',
+    });
+  }
+
+  if (!agentProviders.inventoryComplete) {
+    findings.push({
+      id: 'provider-inventory-incomplete',
+      category: 'inventory',
+      severity: 'HIGH',
+      summary: 'Canonical DEVELOPMENT Chain provider inventory incomplete',
+      evidence: `Missing: ${agentProviders.missingProviders.join(', ') || 'unknown'}`,
+      timestamp: now,
+      recommendation: 'Register missing ChatGPT/Claude/Grok profiles before M8 cutover.',
+    });
+  }
+
+  const blockedCanonical = Object.entries(agentProviders.cutoverByProvider)
+    .filter(([id, status]) => agentProviders.expectedProviders.includes(id) && status === 'BLOCKED');
+  if (blockedCanonical.length > 0) {
+    findings.push({
+      id: 'provider-cutover-blocked',
+      category: 'provider_chain',
+      severity: 'MEDIUM',
+      summary: 'One or more canonical providers are cutover-BLOCKED (fail-closed without full M8 evidence)',
+      evidence: blockedCanonical.map(([id, s]) => `${id}=${s}`).join('; '),
+      timestamp: now,
+      recommendation: 'Complete real-caller, control-plane, bypass, audit, rollback and host evidence per ADR-0062.',
+    });
+  }
+
+  return findings;
+}
+
 export interface SupervisorStatus {
   routingTable: Record<AssetClass, TaskRoute>;
   recentExecutions: SupervisedExecutionRecord[];
@@ -213,6 +267,10 @@ export interface SupervisorStatus {
     warnings: number;
     failures: number;
   };
+  /** ESS-0002: observation of DEVELOPMENT Chain / AI value-chain agent providers (ChatGPT, Claude, Grok). */
+  agentProviderChain: AgentProviderObservation;
+  /** Lightweight findings — observation only; no decision authority. */
+  findings: SupervisorFinding[];
   capabilities: {
     taskRouting: boolean;
     toolSelection: boolean;
@@ -227,6 +285,8 @@ export interface SupervisorStatus {
     screeningSla: boolean;
     scoreConfidenceEvidence: boolean;
     aiGovernance: boolean;
+    agentProviderObservation: boolean;
+    findings: boolean;
   };
   notes: string[];
 }
@@ -240,9 +300,13 @@ export function getSupervisorStatus(): SupervisorStatus {
   const routingTelemetry = getMarketDataProviderTelemetry();
   const screeningSla = buildScreeningSlaReport(routingTelemetry);
   const scoreConfidenceLatest = getLatestScoreConfidenceEvidence();
+  const recentExecutions = getRecentExecutions();
+  const agentProviderChain = observeAgentProviderChain();
+  const findings = buildFindingsFromExecutions(recentExecutions, agentProviderChain);
+
   return {
     routingTable: getRoutingTable(),
-    recentExecutions: getRecentExecutions(),
+    recentExecutions,
     providerHealth: getProviderHealth(),
     marketDataRouting: {
       registeredProviders: marketProviders.length,
@@ -264,6 +328,8 @@ export function getSupervisorStatus(): SupervisorStatus {
       warnings,
       failures,
     },
+    agentProviderChain,
+    findings,
     capabilities: {
       taskRouting: true,
       toolSelection: true,
@@ -278,6 +344,8 @@ export function getSupervisorStatus(): SupervisorStatus {
       screeningSla: true,
       scoreConfidenceEvidence: true,
       aiGovernance: true,
+      agentProviderObservation: true,
+      findings: true,
     },
     notes: [
       'conflictResolution: evidence-preserving Spot-/Snapshot-Quorum erkennt SOURCE_CONFLICT und verweigert einen künstlichen kanonischen Wert; harte Score-/Ranking-Gates bleiben bis zur Kalibrierung deaktiviert.',
@@ -289,6 +357,9 @@ export function getSupervisorStatus(): SupervisorStatus {
       'providerHealth: runtime-basiert; nur tatsächlich beobachtete Provider-Aufrufe erscheinen im Status.',
       'marketDataRouting: adaptive Priorisierung nutzt Governance-Priorität, Failures/Cooldown und EWMA-Latenz; Candidate-Provider bleiben bis Production Handoff deaktiviert.',
       'aiGovernance: runtime-basiert; Evaluationen erscheinen erst, nachdem ein instrumentierter AI-Aufruf tatsächlich ausgeführt wurde.',
+      'agentProviderChain: canonical providers ChatGPT, Claude, Grok (Owner 2026-08-16). Google AI Studio / NotebookLM / Gemini = RETIRED.',
+      'findings: observation-only; Supervisor entscheidet niemals (ESS-0002).',
+      ...agentProviderChain.notes,
     ],
   };
 }

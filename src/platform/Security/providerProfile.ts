@@ -1,3 +1,8 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
   AGENT_CAPABILITIES,
   evaluateAgentAuthorization,
@@ -10,20 +15,9 @@ import {
   type AgentRiskClass,
 } from './agentIam';
 
-// M8 (Agent Cutover, ADR-0062, docs/runbooks/M8_AGENT_CUTOVER.md, ESS-0019,
-// docs/architecture/ai-agent/AI_AGENT_PROVIDER_PROFILE_CONTRACT.md). Provider-neutral Control
-// Plane, Phase 1 (Provider Profile Implementation). Composes with - never replaces - the M4
-// evaluateAgentAuthorization kernel, exactly the way roadmapExecutionMandate.ts (SA1) already
-// does for the Systemadmin agent. A provider profile can only narrow the capability surface an
-// appId may request; it can never grant a capability agentIam.ts itself would deny.
-//
-// M8 Phase 0 found that this pattern is already proven end-to-end for exactly one provider/
-// transport (GitHub Actions OIDC host, Systemadmin agent, BRANCH capability). ChatGPT, Google AI
-// Studio and NotebookLM had no code-level profile at all before this module - only prose in the
-// Provider Profile Contract doc. Phase 0 also found the single largest bypass: a live interactive
-// session's own MCP tool calls (this session included) are not mediated by agentIam.ts at all -
-// that tool grant comes from the outer CCR/session runtime, not from anything in this repository,
-// so this module cannot close it by itself (see docs/evidence/m8/M8_PHASE0_PROVIDER_INVENTORY_EVIDENCE.md).
+// M8 Provider-neutral Control Plane. Owner 2026-08-16: canonical DEVELOPMENT Chain / AI value-chain
+// providers are ChatGPT, Claude and Grok. Google AI Studio and NotebookLM are NOT part of the active
+// value chain. Gemini has no registry profile and remains RETIRED/BLOCKED.
 
 export const PROVIDER_PLANES = {
   RESEARCH: 'research',
@@ -34,15 +28,11 @@ export const PROVIDER_PLANES = {
 
 export type ProviderPlane = typeof PROVIDER_PLANES[keyof typeof PROVIDER_PLANES];
 
-// "Research/briefing/notebook profiles receive READ/ANALYZE only" (M8 runbook, Provider Roles).
 const RESEARCH_PLANE_CEILING: ReadonlySet<AgentCapability> = new Set([
   AGENT_CAPABILITIES.READ,
   AGENT_CAPABILITIES.ANALYZE,
 ]);
 
-// Capabilities that change repository/platform state; mirrors agentIam.ts's own MUTATING_CAPABILITIES
-// (not exported there). Used only for this layer's audit-correlation/replay checks - the final
-// mutating/non-mutating decision always remains agentIam.ts's.
 const MUTATING_CAPABILITIES: ReadonlySet<AgentCapability> = new Set([
   AGENT_CAPABILITIES.BRANCH,
   AGENT_CAPABILITIES.COMMIT,
@@ -74,10 +64,22 @@ function profile(input: ProviderProfile): Readonly<ProviderProfile> {
   return Object.freeze({ ...input, allowedCapabilities: Object.freeze([...input.allowedCapabilities]) });
 }
 
-// Every documented provider from AI_AGENT_PROVIDER_PROFILE_CONTRACT.md. Google AI Studio and
-// NotebookLM have no real execution transport in this repository yet (Phase 0 finding) - their
-// allowedCapabilities are deliberately conservative until a real transport exists and its own
-// scoped decision widens them.
+/** Canonical active DEVELOPMENT Chain / AI value-chain providers (Owner 2026-08-16). */
+export const CANONICAL_VALUE_CHAIN_PROVIDER_IDS = Object.freeze([
+  'chatgpt-github-connector',
+  'claude-code-cli',
+  'grok-xai-connector',
+] as const);
+
+export type CanonicalValueChainProviderId = typeof CANONICAL_VALUE_CHAIN_PROVIDER_IDS[number];
+
+/** Retired / non-chain aliases. Lookups resolve to DENY / RETIRED. */
+export const RETIRED_PROVIDER_ALIASES = Object.freeze([
+  'google-ai-studio',
+  'notebooklm',
+  'gemini',
+] as const);
+
 export const PROVIDER_PROFILES: Readonly<Record<string, Readonly<ProviderProfile>>> = Object.freeze({
   'chatgpt-github-connector': profile({
     appId: 'chatgpt-github-connector',
@@ -117,27 +119,24 @@ export const PROVIDER_PROFILES: Readonly<Record<string, Readonly<ProviderProfile
     dataRetention: 'no repository secret values ever included in commit/PR content',
     killSwitchProcedure: 'revoke/narrow the interactive session\'s tool grant at the CCR/environment level; no in-repo credential to disable',
   }),
-  'google-ai-studio': profile({
-    appId: 'google-ai-studio',
-    provider: 'google',
-    plane: PROVIDER_PLANES.DEVELOPMENT,
-    allowedCapabilities: [AGENT_CAPABILITIES.READ, AGENT_CAPABILITIES.ANALYZE, AGENT_CAPABILITIES.PLAN],
-    authenticationSource: 'not yet integrated - no real execution transport exists in this repository (Phase 0 finding)',
-    toolTransport: 'function calls executed by application (documented only)',
-    sandboxBoundary: 'managed sandbox allowed only as isolated execution',
-    dataRetention: 'Stripe/Supabase/Render external mutations remain Handoff-controlled, never direct from this plane',
-    killSwitchProcedure: 'no live integration to disable; widening this profile requires its own scoped decision first',
-  }),
-  notebooklm: profile({
-    appId: 'notebooklm',
-    provider: 'google',
-    plane: PROVIDER_PLANES.RESEARCH,
-    allowedCapabilities: [AGENT_CAPABILITIES.READ, AGENT_CAPABILITIES.ANALYZE],
-    authenticationSource: 'not yet integrated - no real execution transport exists in this repository (Phase 0 finding)',
-    toolTransport: 'source-grounded notebook, no mutation tools',
-    sandboxBoundary: 'Research & Evidence Plane only',
-    dataRetention: 'read-only; no mutation tools ever exposed',
-    killSwitchProcedure: 'no live integration to disable',
+  'grok-xai-connector': profile({
+    appId: 'grok-xai-connector',
+    provider: 'xai',
+    plane: PROVIDER_PLANES.RESEARCH_AND_EXECUTION,
+    allowedCapabilities: [
+      AGENT_CAPABILITIES.READ,
+      AGENT_CAPABILITIES.ANALYZE,
+      AGENT_CAPABILITIES.PLAN,
+      AGENT_CAPABILITIES.BRANCH,
+      AGENT_CAPABILITIES.COMMIT,
+      AGENT_CAPABILITIES.PR,
+      AGENT_CAPABILITIES.CI_REQUEST,
+    ],
+    authenticationSource: 'Grok GitHub Connector / SuperGrok session (xAI); repository grants are host-side, not model identity',
+    toolTransport: 'GitHub MCP / Grok Chat connector / work-claims',
+    sandboxBoundary: 'same CONTROL-PLANE policy as ChatGPT/Claude; model name never elevates authority',
+    dataRetention: 'no repository secret values ever included in issue/PR/commit content',
+    killSwitchProcedure: 'revoke host-side connector grant; disable any REM bound to grok-xai-connector; no in-repo secret to rotate for interactive Grok sessions',
   }),
 });
 
@@ -150,12 +149,9 @@ export interface ProviderScopedAuthorizationRequest {
   targetResource: string;
   approval?: Readonly<AgentApprovalEvidence>;
   killSwitchActive?: boolean;
-  /** Preserves M5 audit correlation: required for every mutating capability request. */
   auditCorrelationId?: string;
-  /** Idempotency/replay control for mutation, mirrors the M7 Mutation Handoff idempotencyKey pattern. */
   envelopeId?: string;
   seenEnvelopeIds?: ReadonlySet<string>;
-  /** M8 rollback lever, see ProviderProfileScopeCheckRequest.registry. */
   registry?: Readonly<Record<string, Readonly<ProviderProfile>>>;
 }
 
@@ -178,12 +174,6 @@ export interface ProviderProfileScopeCheckRequest {
   auditCorrelationId?: string;
   envelopeId?: string;
   seenEnvelopeIds?: ReadonlySet<string>;
-  /**
-   * M8 (ADR-0062) rollback lever: defaults to the live PROVIDER_PROFILES registry. Tests (and, if
-   * ever needed operationally, a real rollback) can pass a narrowed/rolled-back registry snapshot
-   * here to prove or perform "disable the privileged provider profile" without mutating the
-   * shared module-level singleton.
-   */
   registry?: Readonly<Record<string, Readonly<ProviderProfile>>>;
 }
 
@@ -191,16 +181,15 @@ export type ProviderProfileScopeDecision =
   | { verdict: 'ALLOW'; profile: Readonly<ProviderProfile> }
   | { verdict: 'DENY'; reason: string; riskClass: AgentRiskClass; layer: 'PROVIDER_PROFILE'; capability?: AgentCapability };
 
-// Pure profile-narrowing pre-check: unknown appId, principal/profile mismatch, capability outside
-// the profile's allowlist, missing audit correlation on a mutating request, and replayed envelopes.
-// Deliberately does NOT call agentIam.ts - composing this with an authorization chain that already
-// evaluates agentIam.ts itself (e.g. the SA1/SA2/SA3 Systemadmin chain) must never re-run the IAM
-// check a second time with an independently reconstructed (and therefore potentially inconsistent)
-// approval object. Callers that have no existing IAM chain of their own should use
-// evaluateProviderScopedAuthorization below instead, which composes this check with agentIam.ts.
 export function checkProviderProfileScope(
   request: Readonly<ProviderProfileScopeCheckRequest>,
 ): ProviderProfileScopeDecision {
+  if ((RETIRED_PROVIDER_ALIASES as readonly string[]).includes(request.appId)) {
+    return deny(
+      `Provider-Alias ${request.appId} ist retired und nicht Teil der aktiven DEVELOPMENT/AI-Wertschöpfungskette (Owner 2026-08-16: ChatGPT, Claude, Grok).`,
+      request.riskClass,
+    );
+  }
   const resolved = (request.registry ?? PROVIDER_PROFILES)[request.appId];
   if (!resolved) {
     return deny(`Unbekanntes Provider-Profil: ${request.appId}.`, request.riskClass);
@@ -232,10 +221,6 @@ export function checkProviderProfileScope(
   return { verdict: 'ALLOW', profile: resolved };
 }
 
-// Canonical M8 entry point for callers with no authorization chain of their own: composes the
-// profile pre-check with agentIam.ts (never replaces it). Unknown appId, capability mismatch,
-// missing audit correlation on a mutating request, and replayed envelopes are all denied here,
-// before reaching agentIam.ts at all.
 export function evaluateProviderScopedAuthorization(
   request: Readonly<ProviderScopedAuthorizationRequest>,
 ): ProviderScopedAuthorizationDecision {
@@ -255,7 +240,6 @@ export function evaluateProviderScopedAuthorization(
 
   return { ...iamDecision, layer: 'AGENT_IAM' };
 }
-
 
 export interface ProviderCutoverEvidence {
   realCallerVerified: boolean;
@@ -278,22 +262,21 @@ const PROVIDER_CUTOVER_EVIDENCE_KEYS: readonly (keyof ProviderCutoverEvidence)[]
 export type ProviderCutoverReadinessDecision =
   | { status: 'READY'; profile: Readonly<ProviderProfile> }
   | { status: 'NOT_APPLICABLE'; profile: Readonly<ProviderProfile>; reason: string }
-  | { status: 'BLOCKED'; reason: string; missingEvidence: readonly (keyof ProviderCutoverEvidence)[] };
+  | { status: 'BLOCKED'; reason: string; missingEvidence: readonly (keyof ProviderCutoverEvidence)[] }
+  | { status: 'RETIRED'; reason: string };
 
-/**
- * M8 fail-closed cutover gate.
- *
- * Only profiles that can mutate state may become canonical execution providers. Read-only and
- * development profiles without mutating capabilities remain explicitly NOT_APPLICABLE. This keeps
- * Google AI Studio as a non-privileged Development Plane profile and does not reintroduce a Gemini
- * API/runtime adapter. External connector/session grants must be verified at their owning host;
- * repository evidence alone can never satisfy that boundary.
- */
 export function evaluateProviderCutoverReadiness(
   appId: string,
   evidence: Readonly<ProviderCutoverEvidence>,
   registry: Readonly<Record<string, Readonly<ProviderProfile>>> = PROVIDER_PROFILES,
 ): ProviderCutoverReadinessDecision {
+  if ((RETIRED_PROVIDER_ALIASES as readonly string[]).includes(appId)) {
+    return {
+      status: 'RETIRED',
+      reason: `Provider-Alias ${appId} ist aus der aktiven DEVELOPMENT/AI-Wertschöpfungskette entfernt (Owner 2026-08-16: ChatGPT, Claude, Grok).`,
+    };
+  }
+
   const resolved = registry[appId];
   if (!resolved) {
     return {
@@ -324,4 +307,22 @@ export function evaluateProviderCutoverReadiness(
   }
 
   return { status: 'READY', profile: resolved };
+}
+
+export function getCanonicalValueChainProviderInventory(
+  registry: Readonly<Record<string, Readonly<ProviderProfile>>> = PROVIDER_PROFILES,
+): {
+  expected: readonly CanonicalValueChainProviderId[];
+  present: CanonicalValueChainProviderId[];
+  missing: CanonicalValueChainProviderId[];
+  complete: boolean;
+} {
+  const present = CANONICAL_VALUE_CHAIN_PROVIDER_IDS.filter(id => registry[id] !== undefined);
+  const missing = CANONICAL_VALUE_CHAIN_PROVIDER_IDS.filter(id => registry[id] === undefined);
+  return {
+    expected: CANONICAL_VALUE_CHAIN_PROVIDER_IDS,
+    present: [...present],
+    missing: [...missing],
+    complete: missing.length === 0,
+  };
 }

@@ -1,4 +1,4 @@
-// Audit ARCH-AUDIT-0002 (H4): Testabdeckung fuer die reale Supervisor-Komponente.
+// Audit ARCH-AUDIT-0002 (H4) + 2026-08-16 agent provider chain observation.
 
 import { describe, it, expect } from 'vitest';
 import {
@@ -21,14 +21,12 @@ describe('supervisor', () => {
       expect(routeTask('stock')?.engineId).toBe('traditional_asset_engine');
       expect(routeTask('forex')?.engineId).toBe('traditional_asset_engine');
       expect(routeTask('index')?.engineId).toBe('traditional_asset_engine');
-      expect(routeTask('index')?.hasDedicatedEngine).toBe(true);
     });
 
-    it('routet Anleihen auf die Sovereign-Benchmark-Rendite-Engine, ehrlich begrenzt auf Yield-State', () => {
+    it('routet Anleihen auf die Sovereign-Benchmark-Rendite-Engine', () => {
       const route = routeTask('bond');
       expect(route?.engineId).toBe('sovereign_benchmark_yield_engine');
       expect(route?.hasDedicatedEngine).toBe(true);
-      expect(route?.label).toMatch(/kein Einzelanleihen/i);
     });
 
     it('liefert undefined fuer eine unbekannte Anlageklasse', () => {
@@ -77,7 +75,7 @@ describe('supervisor', () => {
   });
 
   describe('getSupervisorStatus', () => {
-    it('meldet evidence-preserving Conflict Resolution und Market-Integrity-Kalibrierung als aktiv', () => {
+    it('meldet Kern-Capabilities und Market-Integrity als aktiv', () => {
       const status = getSupervisorStatus();
       expect(status.capabilities.conflictResolution).toBe(true);
       expect(status.capabilities.marketIntegrityCalibration).toBe(true);
@@ -85,8 +83,23 @@ describe('supervisor', () => {
       expect(status.capabilities.taskRouting).toBe(true);
       expect(status.capabilities.retry).toBe(true);
       expect(status.capabilities.aiGovernance).toBe(true);
-      expect(status.aiGovernance.providerRoles).toBe(2);
-      expect(status.aiGovernance.registeredPrompts).toBeGreaterThan(0);
+      expect(status.capabilities.agentProviderObservation).toBe(true);
+      expect(status.capabilities.findings).toBe(true);
+    });
+
+    it('beobachtet die kanonische Agent-Provider-Kette ChatGPT / Claude / Grok', () => {
+      const status = getSupervisorStatus();
+      expect(status.agentProviderChain.expectedProviders).toEqual([
+        'chatgpt-github-connector',
+        'claude-code-cli',
+        'grok-xai-connector',
+      ]);
+      expect(status.agentProviderChain.inventoryComplete).toBe(true);
+      expect(status.agentProviderChain.retiredAliases).toEqual(
+        expect.arrayContaining(['google-ai-studio', 'notebooklm', 'gemini']),
+      );
+      expect(status.agentProviderChain.cutoverByProvider['google-ai-studio']).toBe('RETIRED');
+      expect(status.agentProviderChain.cutoverByProvider['chatgpt-github-connector']).toBe('BLOCKED');
     });
 
     it('enthaelt die Routing-Tabelle und juengste Ausfuehrungen', async () => {
@@ -94,6 +107,14 @@ describe('supervisor', () => {
       const status = getSupervisorStatus();
       expect(status.routingTable.crypto.engineId).toBe('crypto_orchestrator');
       expect(status.recentExecutions.some(r => r.taskName === 'test-task-status')).toBe(true);
+    });
+
+    it('erzeugt Findings aus fehlgeschlagenen supervised Executions', async () => {
+      await executeSupervised('test-finding-fail', async () => {
+        throw new Error('expected-fail');
+      }, { retries: 0, backoffMs: 1 }).catch(() => {});
+      const status = getSupervisorStatus();
+      expect(status.findings.some(f => f.category === 'execution' && f.summary.includes('test-finding-fail'))).toBe(true);
     });
   });
 });

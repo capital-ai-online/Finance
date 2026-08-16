@@ -1,0 +1,32 @@
+{
+  "claimId": "SC5-LIVE-COVERAGE-CRYPTO-GATEWAY-2026-08-16",
+  "spt": "SC-MD-SPT-0001",
+  "workPackage": "SC-5",
+  "phase": "A",
+  "title": "Live coverage expansion — crypto USD price behind gateway",
+  "status": "OPEN_PR",
+  "createdAt": "2026-08-16T02:45:00+02:00",
+  "ownerAuthorization": "User: fahre mit sc5 live fort",
+  "scope": [
+    "src/platform/MarketData/providers/CoinGeckoMarketDataProvider.ts",
+    "src/services/cryptoQuoteEvidence.ts",
+    "src/platform/MarketData/ProviderMatrix.ts",
+    "tests/unit/cryptoQuoteEvidence.test.ts",
+    "tests/unit/providerMatrix.test.ts",
+    "docs/roadmaps/work-packages/SC-5_LIVE_COVERAGE_EXPANSION.md",
+    "docs/evidence/sc-md/SC5_LIVE_COVERAGE_MATRIX_2026-08-16.md",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md"
+  ],
+  "nonGoals": [
+    "Multi-field cryptoSnapshotProvider migration",
+    "executionPriceEligible true",
+    "Alpaca promotion",
+    "scoreImpact flip",
+    "Stooq gateway migration"
+  ],
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "surface": "Grok Chat / GitHub MCP"
+  }
+}

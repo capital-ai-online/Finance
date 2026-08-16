@@ -7,10 +7,13 @@
   "predecessor": "SEO-WP-S1-ADR-0082-2026-08-16",
   "branch": "seo/wp-d3-soft-404-prod-fix-2026-08-16",
   "base": "main",
+  "pr": 360,
   "owner": "SvenKulessa",
-  "status": "in_progress",
+  "status": "verified",
   "createdAt": "2026-08-16",
   "updatedAt": "2026-08-16",
+  "verifiedAt": "2026-08-16T00:40:11Z",
+  "productionCommit": "54c48ca28817b41b93623be61ea8292f0a8288c2",
   "createdBy": {
     "provider": "xAI",
     "model": "Grok",
@@ -35,5 +38,5 @@
     "Supabase / SeoEngine store",
     "Shared IAM / billing / deploy configs"
   ],
-  "notes": "Class C: composition-root SPA wiring + docs/evidence. Evidence + apply script + contract test on branch; owner must run node scripts/seo/apply-server-wiring.mjs then push server.application.ts (file ~100KB exceeds single MCP write). Closes prod Soft-404 gap observed 2026-08-16."
+  "notes": "Class C: composition-root SPA wiring + docs/evidence. PR #360 merged; production probed 2026-08-16T00:40Z — unknown path 404 text/plain, /impressum 200, /agb 200, /datenschutz 200, /wp-admin 404. DoD met."
 }
