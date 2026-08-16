@@ -8,15 +8,25 @@
   "branch": "docs/seo-q3-search-console-verify-2026-08-16",
   "base": "main",
   "owner": "SvenKulessa",
-  "status": "owner_action",
+  "status": "verified",
   "createdAt": "2026-08-16",
   "updatedAt": "2026-08-16",
+  "verifiedAt": "2026-08-16",
   "createdBy": {
     "provider": "xAI",
     "model": "Grok",
     "surface": "Grok Chat / GitHub MCP"
   },
   "authorizedByHuman": true,
+  "verification": {
+    "propertyType": "Domain",
+    "property": "capital-ai.online",
+    "ownership": "confirmed",
+    "sitemap": "https://capital-ai.online/sitemap.xml",
+    "sitemapStatus": "success",
+    "ownerConfirmedAt": "2026-08-16",
+    "notes": "Owner confirmed Domain property capital-ai.online ownership already verified; sitemap.xml submitted and green/success; incorrect page-URL sitemap submissions removed."
+  },
   "scope": [
     "docs/seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md",
     "docs/seo/SEARCH_CONSOLE_MCP_RUNBOOK.md",
@@ -32,5 +42,5 @@
     "WP-D1/D2 code",
     "Supabase / billing"
   ],
-  "notes": "Class D docs + owner gate. robots.txt and sitemap.xml already live 200. Preferred verification: Domain property + DNS TXT. Alternative: HTML meta token → agent commits index.html after owner supplies token only."
+  "notes": "Class D docs. Domain property capital-ai.online ownership confirmed by owner 2026-08-16; sitemap.xml success in GSC; false page-URL submissions cleaned. Q3 VERIFIED."
 }
