@@ -1,10 +1,10 @@
 # Screening · Scoring · Market Data — Single Point of Trust Roadmap
 
 **Document ID:** SC-MD-SPT-0001  
-**Version:** 1.0.4  
+**Version:** 1.0.5  
 **Status:** ACTIVE — CANONICAL EXECUTION AUTHORITY  
 **Stand:** 2026-08-16  
-**Repository-Baseline:** `main` (SC-1 / SC-3 / SC-4 Phase A / SC-7 Phase A+B; SC-5 Phase A landed, Phase B in flight)  
+**Repository-Baseline:** `main` (SC-1 / SC-3 / SC-4 Phase A / SC-7 Phase A+B; SC-5 Phase A–C code; Phase B PR may still be open)  
 **Owner:** SvenKulessa  
 **Authority:** DOCUMENTATION_HYGIENE_POLICY · ROADMAP_CONSOLIDATION_MASTER_INDEX · ADR-0020 / ADR-0041 · ESS EventMesh/Traceability
 
@@ -32,8 +32,8 @@ Es ersetzt als Ausführungsautorität:
 
 | Schicht | Code-Pfad | Reife |
 |---|---|---|
-| Market-Data Gateway | `src/platform/MarketData/` | **SC-4 Matrix/Health + SC-5 CoinGecko price + multi-field matrix guards** |
-| Provider | TwelveData, FMP Index, CoinGecko (price + matrix-aligned multi-field); Alpaca shadow | **Kern live** |
+| Market-Data Gateway | `src/platform/MarketData/` | **SC-4 Matrix/Health + SC-5 CoinGecko canonical multi-field** |
+| Provider | TwelveData, FMP Index, CoinGecko (price + marketCap/supply on Canonical); Alpaca shadow | **Kern live** |
 | Evidence / Consensus | Snapshot/Spot consensus, traditional/commodity/macro evidence | **Stark ausgebaut** |
 | Scoring-Engines | Base/DeFi, crypto 9-Faktor, meme, raw materials, traditional, verified technical | **Multi-Engine, noch fragmentiert** |
 | Ranking / Eligibility | `ranking.service` + SC-7 composite opt-in (Phase A+B) | **Crypto-lastig; orchestrator wired** |
@@ -44,7 +44,7 @@ Es ersetzt als Ausführungsautorität:
 
 1. scoreImpact / rankingImpact noch Owner-gated (`false`)
 2. Ranking-Generalisierung cross-asset (Overall / Category / Tier / Growth)
-3. Canonical multi-field crypto snapshot on gateway + execution-price quorum (SC-5 Phase C+)
+3. Multi-provider crypto quorum + `executionPriceEligible` (Owner-gated; SC-5 follow-up)
 4. Model registry & UAI adapters (SC-2)
 5. Alpaca primary promotion (ADR-0041 Owner gate)
 6. Horizon / Walk-Forward backtests (SC-8)
@@ -82,7 +82,7 @@ Es ersetzt als Ausführungsautorität:
 | **SC-2** | Model registry & UAI adapters | P1 | OPEN | model_registry; UAI adapters |
 | **SC-3** | Unified DQ + Confidence composite | P0 | **FOUNDATION LANDED** | Composite; impact off |
 | **SC-4** | Gateway hardening & provider matrix | P1 | **Phase A LANDED** | Matrix + RL + supervisor health |
-| **SC-5** | Live coverage expansion | P1 | **Phase A LANDED; Phase B (matrix multi-field) in flight** | Canonical market fields + execution quorum still open |
+| **SC-5** | Live coverage expansion | P1 | **Phase A–C code; Phase B PR may be open** | Canonical multi-field on gateway; execution quorum still open |
 | **SC-6** | Scoring integrity & lineage | P1 | PARTIAL | calculation_version + lineage |
 | **SC-7** | Ranking generalization | P1 | **Phase A+B LANDED** | Cross-asset modes still open; impact off |
 | **SC-8** | Horizon / Walk-Forward backtests | P2 | OPEN | Drift-Evidence; golden-set regression |
@@ -119,4 +119,4 @@ Mutation von Scoring-Gewichten, Eligibility-Schwellen, Provider-Routing, Live-Ga
 
 ---
 
-*SC-5 Phase B 2026-08-16 (matrix multi-field guards). Keine scoreImpact-Mutation. Keine Alpaca-Promotion. Merge nur nach Owner-Review.*
+*SC-5 Phase C 2026-08-16 (canonical multi-field on gateway). Keine scoreImpact-Mutation. Keine executionPriceEligible-Flip. Merge nur nach Owner-Review.*

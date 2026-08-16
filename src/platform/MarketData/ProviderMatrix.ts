@@ -11,7 +11,7 @@ import type {
   ProviderRole,
 } from './contracts';
 
-export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.2.0' as const;
+export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.3.0' as const;
 
 export type ProviderGatewayStatus =
   | 'behind_gateway'
@@ -104,7 +104,7 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     circuitBreaker: { failureThreshold: 3, cooldownMs: 30_000 },
     gatewayStatus: 'behind_gateway',
     notes:
-      'SC-5 Phase A: USD price via CoinGeckoMarketDataProvider + cryptoQuoteEvidence. Phase B: multi-field cryptoSnapshotProvider uses same matrix RL/CB policies (capability market-fields). Canonical marketCap/supply on gateway contract still deferred.',
+      'SC-5 Phase A–C: coins/{id} market_data via CoinGeckoMarketDataProvider → CanonicalMarketDataSnapshot (price + optional marketCap/supply). cryptoQuoteEvidence + multi-field cryptoSnapshotProvider share matrix RL/CB. executionPriceEligible still false.',
   },
   {
     id: 'alpaca',

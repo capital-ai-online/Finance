@@ -1,7 +1,7 @@
 /**
- * SC-5 Phase A — CoinGecko crypto price adapter for MarketDataGateway.
- * Price-only canonical snapshot. Multi-field market-cap/supply remains in
- * cryptoSnapshotProvider until a later SC-5 phase migrates that path.
+ * SC-5 Phase C — CoinGecko crypto adapter for MarketDataGateway.
+ * Canonical snapshot includes price plus optional marketCap/supply fields.
+ * executionPriceEligible / scoreImpact remain false (Owner-gated later).
  */
 
 import {
@@ -36,6 +36,10 @@ export const COINGECKO_SYMBOL_IDS: Readonly<Record<string, string>> = {
   SHIB: 'shiba-inu',
 };
 
+function finitePositive(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
 export class CoinGeckoMarketDataProvider implements MarketDataProvider {
   readonly descriptor: MarketDataProviderDescriptor = {
     id: 'coingecko',
@@ -65,10 +69,12 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.options.timeoutMs ?? 5_000);
     try {
+      // coins/{id} supplies current_price + market_cap/volume/supply in one call
+      // (same payload shape as cryptoSnapshotProvider multi-field path).
       const url =
-        `https://api.coingecko.com/api/v3/simple/price` +
-        `?ids=${encodeURIComponent(coinId)}` +
-        `&vs_currencies=usd&include_last_updated_at=true`;
+        `https://api.coingecko.com/api/v3/coins/${encodeURIComponent(coinId)}` +
+        `?localization=false&tickers=false&market_data=true` +
+        `&community_data=false&developer_data=false&sparkline=false`;
       const headers: Record<string, string> = {
         Accept: 'application/json',
         'User-Agent': 'CAPITAL-AI/0.6.3',
@@ -82,22 +88,37 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data: any = await response.json();
-      const row = data?.[coinId];
-      const price = Number(row?.usd);
-      if (!Number.isFinite(price) || price <= 0) {
+      const md = data?.market_data;
+      if (!md || typeof md !== 'object') {
+        throw new Error('CoinGecko snapshot missing market_data.');
+      }
+
+      const price = finitePositive(md?.current_price?.usd);
+      if (price === undefined) {
         throw new Error('CoinGecko returned no valid USD price.');
       }
 
-      const lastUpdatedSec = Number(row?.last_updated_at);
-      const observedAt = Number.isFinite(lastUpdatedSec) && lastUpdatedSec > 0
-        ? new Date(lastUpdatedSec * 1000).toISOString()
+      const marketCapUsd = finitePositive(md?.market_cap?.usd) ?? null;
+      const volume24hUsd = finitePositive(md?.total_volume?.usd) ?? null;
+      const circulatingSupply = finitePositive(md?.circulating_supply) ?? null;
+      const maxSupplyRaw = md?.max_supply;
+      const maxSupply =
+        maxSupplyRaw === null
+          ? null
+          : finitePositive(maxSupplyRaw) ?? null;
+      const totalSupply = finitePositive(md?.total_supply) ?? null;
+
+      const observedCandidate =
+        typeof md?.last_updated === 'string' ? Date.parse(md.last_updated) : Number.NaN;
+      const observedAt = Number.isFinite(observedCandidate)
+        ? new Date(observedCandidate).toISOString()
         : retrievedAt;
       const freshnessMs = Math.max(0, nowMs - Date.parse(observedAt));
 
       return {
         contractVersion: MARKET_DATA_CONTRACT_VERSION,
         provider: 'CoinGecko',
-        providerFeed: 'simple/price',
+        providerFeed: 'coins/market_data',
         symbol,
         assetClass: 'crypto',
         currency: 'USD',
@@ -111,6 +132,11 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
         correlationId: request.correlationId,
         price,
         evidenceId: `quote:coingecko:${coinId}:USD:${observedAt}`,
+        marketCapUsd,
+        volume24hUsd,
+        circulatingSupply,
+        maxSupply,
+        totalSupply,
       };
     } catch (error) {
       return this.unavailable(
@@ -131,7 +157,7 @@ export class CoinGeckoMarketDataProvider implements MarketDataProvider {
     return {
       contractVersion: MARKET_DATA_CONTRACT_VERSION,
       provider: 'CoinGecko',
-      providerFeed: 'simple/price',
+      providerFeed: 'coins/market_data',
       symbol: request.symbol.toUpperCase().trim(),
       assetClass: request.assetClass,
       currency: null,
