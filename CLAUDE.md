@@ -80,3 +80,19 @@ Do not directly mutate production Supabase, Google provider configuration, Rende
 Do not bypass `scripts/security/verifyGoogleMarketingInvariants.ts` to make a build pass.
 
 If it fails, classify the intended change. A legitimate protected change must follow ESS-0014 and ADR-0035; an accidental regression must restore the invariant.
+
+## CI cost / test-minutes budget policy
+
+CI/CD scheduling and Actions-minutes cost tuning is **not** one of the protected invariants listed under "Protected-change rule" and is **not** subject to the OWNER + fresh-TOTP rollback gate, *provided the change only touches genuinely advisory/non-blocking jobs*. The repository owner may adjust that kind of cost/scheduling policy (trigger conditions, matrix size, concurrency, which non-blocking jobs run on which event) directly via a normal commit to workflow files and this document, without the disclosure-and-approval flow required for protected rollbacks.
+
+Budget: **3000 GitHub Actions minutes / month** is the accepted baseline spend for CI on this repository.
+
+**Never in scope for this carve-out, regardless of date or minutes spent** — these are required/blocking checks and stay unconditional no matter the budget:
+
+- `ci.yml` → `build-and-test` (runs `npm test`, `npm run build`, the production CSP test, `verifyProductionConfigInvariants.ts`, `predeploy:check`, Docker hardening — see "Build guard" above) and the push-to-main-only jobs `deploy-production`, `verify-deployment-identity`, `supply-chain-attestation` (deployment guard / traceability evidence);
+- `pr-governance.yml` → `workflow-security` (`verifyChangedWorkflowSecurity.mjs`, prevents malicious workflow-file changes) and `pr-template-contract` (production-preflight/drift check);
+- `google-marketing-protected-change.yml` in its entirety.
+
+**Actually in scope** — implemented as of 2026-08-16: `pr-governance.yml` → `repository-conventions-advisory` (explicitly non-blocking, `continue-on-error: true`, never gated a merge to begin with) is skipped by a `check-cost-gate` job until 2026-09-01, and after that date only while the trailing current-month Actions run time (summed via the GitHub Actions API) is at or above the 3000-minute budget. Because the gated job was never a required check, this budget mechanism reduces spend but does **not** and cannot make merging possible "without the pipeline" — the checks above still run and still gate every merge, on every date, at any spend level.
+
+A gate that skips any of the never-in-scope checks above — however it's timed or conditioned (by date, by a minutes counter, or otherwise) — remains a protected change under the rule above and still requires the disclosure-and-approval flow, not a normal commit.
