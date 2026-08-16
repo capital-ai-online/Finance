@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { AssetLogo } from './AssetLogo';
+import { StatusBadge } from './StatusBadge';
 import { UserSession } from '../App';
 
 interface MarketScreenerProps {
@@ -422,7 +423,9 @@ export function MarketScreener({
                     </div>
                     <div className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
                       <div className="text-[9px] uppercase text-white/35">Status</div>
-                      <div className="mt-2 text-[10px] font-bold text-white/70">{result.status}</div>
+                      <div className="mt-2">
+                        <StatusBadge status={result.status} />
+                      </div>
                     </div>
                   </div>
 
