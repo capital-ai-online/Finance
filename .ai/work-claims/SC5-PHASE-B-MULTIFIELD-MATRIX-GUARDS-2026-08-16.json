@@ -1,0 +1,34 @@
+{
+  "claimId": "SC5-PHASE-B-MULTIFIELD-MATRIX-GUARDS-2026-08-16",
+  "spt": "SC-MD-SPT-0001",
+  "workPackage": "SC-5",
+  "phase": "B",
+  "title": "Live coverage — multi-field cryptoSnapshotProvider matrix RL/CB alignment",
+  "status": "OPEN_PR",
+  "createdAt": "2026-08-16T03:15:00+02:00",
+  "ownerAuthorization": "User: sc 5 Phase b starten",
+  "scope": [
+    "src/services/cryptoSnapshotProvider.ts",
+    "src/platform/MarketData/ProviderMatrix.ts",
+    "tests/unit/cryptoSnapshotProvider.test.ts",
+    "docs/roadmaps/work-packages/SC-5_LIVE_COVERAGE_EXPANSION.md",
+    "docs/evidence/sc-md/SC5_PHASE_B_MULTIFIELD_MATRIX_GUARDS_2026-08-16.md",
+    "docs/evidence/sc-md/SC5_LIVE_COVERAGE_MATRIX_2026-08-16.md",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md",
+    ".ai/work-claims/SC5-PHASE-B-MULTIFIELD-MATRIX-GUARDS-2026-08-16.json"
+  ],
+  "nonGoals": [
+    "CanonicalMarketDataSnapshot marketCap/supply fields",
+    "CoinAPI/EODHD gateway adapter registration",
+    "executionPriceEligible true",
+    "Alpaca promotion",
+    "scoreImpact flip",
+    "Stooq gateway migration",
+    "Process-wide shared RateLimitBudget singleton with quote path"
+  ],
+  "agent": {
+    "provider": "xAI",
+    "model": "Grok",
+    "surface": "Grok Chat / GitHub MCP"
+  }
+}

@@ -1,3 +1,18 @@
+/**
+ * SC-5 Phase B — multi-field CoinGecko market snapshot with matrix-aligned RL/CB.
+ * VerifiedCryptoSnapshot API remains stable. Full CanonicalMarketDataSnapshot
+ * mapping for marketCap/supply stays a later phase; this path now shares
+ * ProviderMatrix coingecko rate-limit and circuit-breaker policies.
+ */
+
+import { CircuitBreaker } from '../platform/MarketData/CircuitBreaker';
+import { RateLimitBudget } from '../platform/MarketData/RateLimitBudget';
+import {
+  getProviderMatrixEntry,
+  rateLimitOverridesFromMatrix,
+} from '../platform/MarketData/ProviderMatrix';
+import { recordProviderHealth } from '../platform/Supervisor/providerHealth';
+
 export type CryptoSnapshotField =
   | 'marketCapUsd'
   | 'volume24hUsd'
@@ -35,11 +50,6 @@ interface CacheEntry {
   cachedAtMs: number;
 }
 
-interface CircuitState {
-  consecutiveFailures: number;
-  openUntilMs: number;
-}
-
 export interface CryptoSnapshotProviderOptions {
   fetchImpl?: typeof fetch;
   nowMs?: () => number;
@@ -48,19 +58,53 @@ export interface CryptoSnapshotProviderOptions {
   timeoutMs?: number;
   maxAttempts?: number;
   cacheTtlMs?: number;
-  circuitFailureThreshold?: number;
-  circuitCooldownMs?: number;
+  /** SC-5 Phase B: inject matrix-aligned guards (tests). */
+  rateLimitBudget?: RateLimitBudget;
+  circuitBreaker?: CircuitBreaker;
+  /** When false, skip Supervisor health writes (tests). Default true. */
+  recordHealth?: boolean;
 }
 
 const COINGECKO_IDS: Record<string, string> = {
-  BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', ADA: 'cardano', XRP: 'ripple',
-  DOT: 'polkadot', AVAX: 'avalanche-2', LINK: 'chainlink', BNB: 'binancecoin',
-  MATIC: 'matic-network', DOGE: 'dogecoin', SHIB: 'shiba-inu',
+  BTC: 'bitcoin',
+  ETH: 'ethereum',
+  SOL: 'solana',
+  ADA: 'cardano',
+  XRP: 'ripple',
+  DOT: 'polkadot',
+  AVAX: 'avalanche-2',
+  LINK: 'chainlink',
+  BNB: 'binancecoin',
+  MATIC: 'matic-network',
+  DOGE: 'dogecoin',
+  SHIB: 'shiba-inu',
 };
 
+const PROVIDER_ID = 'coingecko';
+const CAPABILITY = 'market-fields';
+
 const cache = new Map<string, CacheEntry>();
-const circuit: CircuitState = { consecutiveFailures: 0, openUntilMs: 0 };
 const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** Process-local guards aligned to ProviderMatrix coingecko entry (SC-5 Phase B). */
+let productionBudget: RateLimitBudget | undefined;
+let productionBreaker: CircuitBreaker | undefined;
+
+function matrixGuards(nowMs?: () => number): { budget: RateLimitBudget; breaker: CircuitBreaker } {
+  if (!productionBudget || !productionBreaker) {
+    const entry = getProviderMatrixEntry(PROVIDER_ID);
+    productionBudget = new RateLimitBudget({
+      nowMs,
+      perProvider: rateLimitOverridesFromMatrix(),
+    });
+    productionBreaker = new CircuitBreaker({
+      nowMs,
+      failureThreshold: entry?.circuitBreaker.failureThreshold ?? 3,
+      cooldownMs: entry?.circuitBreaker.cooldownMs ?? 30_000,
+    });
+  }
+  return { budget: productionBudget, breaker: productionBreaker };
+}
 
 function finitePositive(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
@@ -72,7 +116,7 @@ async function fetchJsonWithTimeout(fetchImpl: typeof fetch, url: string, timeou
   try {
     const response = await fetchImpl(url, {
       signal: controller.signal,
-      headers: { Accept: 'application/json', 'User-Agent': 'CAPITAL-AI/0.6.1' },
+      headers: { Accept: 'application/json', 'User-Agent': 'CAPITAL-AI/0.6.3' },
     });
     if (!response.ok) throw new Error(`CoinGecko HTTP ${response.status}`);
     return await response.json();
@@ -93,10 +137,30 @@ function buildProvenance(
   return { field, provider: 'CoinGecko', sourcePath, observedAt, retrievedAt, value, unit };
 }
 
+function writeHealth(
+  options: CryptoSnapshotProviderOptions,
+  state: 'healthy' | 'degraded' | 'unavailable',
+  message: string,
+  diagnosticCode?: string,
+  circuitOpenUntil?: string | null,
+): void {
+  if (options.recordHealth === false) return;
+  recordProviderHealth({
+    provider: 'CoinGecko',
+    capability: CAPABILITY,
+    state,
+    diagnosticCode: diagnosticCode ?? (state === 'healthy' ? 'healthy' : 'provider_error'),
+    circuitOpenUntil: circuitOpenUntil ?? undefined,
+    message,
+  });
+}
+
 /**
  * Fetches a verified market snapshot with per-field provenance. No AssetRegistry bootstrap
  * value is used as fallback. On provider failure only a previously verified last-known-good
  * snapshot may be returned, explicitly marked degraded; freshness is enforced by the scoring gate.
+ *
+ * SC-5 Phase B: rate-limit and circuit-breaker follow ProviderMatrix `coingecko` policies.
  */
 export async function getVerifiedCryptoSnapshot(
   symbol: string,
@@ -113,15 +177,36 @@ export async function getVerifiedCryptoSnapshot(
   const timeoutMs = options.timeoutMs ?? 5_000;
   const maxAttempts = Math.max(1, options.maxAttempts ?? 3);
   const cacheTtlMs = options.cacheTtlMs ?? 2 * 60 * 1000;
-  const circuitFailureThreshold = Math.max(1, options.circuitFailureThreshold ?? 3);
-  const circuitCooldownMs = options.circuitCooldownMs ?? 60_000;
   const now = nowMs();
   const cached = cache.get(s);
 
   if (cached && now - cached.cachedAtMs <= cacheTtlMs) {
     return { ...cached.value, cacheMode: 'cache-hit', degraded: false };
   }
-  if (circuit.openUntilMs > now) {
+
+  const guards = matrixGuards(options.nowMs);
+  const budget = options.rateLimitBudget ?? guards.budget;
+  const breaker = options.circuitBreaker ?? guards.breaker;
+
+  if (!breaker.allow(PROVIDER_ID)) {
+    writeHealth(
+      options,
+      'degraded',
+      'Circuit breaker open for coingecko market-fields (SC-5 Phase B matrix).',
+      'provider_error',
+      breaker.openedUntilIso(PROVIDER_ID),
+    );
+    return cached ? { ...cached.value, cacheMode: 'last-known-good', degraded: true } : null;
+  }
+
+  const rl = budget.tryConsume(PROVIDER_ID, CAPABILITY);
+  if (!rl.allowed) {
+    writeHealth(
+      options,
+      'degraded',
+      'Rate-limit budget exhausted for coingecko market-fields (SC-5 Phase B matrix).',
+      'rate_limited',
+    );
     return cached ? { ...cached.value, cacheMode: 'last-known-good', degraded: true } : null;
   }
 
@@ -177,8 +262,12 @@ export async function getVerifiedCryptoSnapshot(
         provenance,
       };
       cache.set(s, { value, cachedAtMs: nowMs() });
-      circuit.consecutiveFailures = 0;
-      circuit.openUntilMs = 0;
+      breaker.success(PROVIDER_ID);
+      writeHealth(
+        options,
+        'healthy',
+        `Verified multi-field crypto snapshot received for ${s} (SC-5 Phase B matrix guards).`,
+      );
       return { ...value, cacheMode: 'fresh', degraded: false };
     } catch (error) {
       lastError = error;
@@ -188,18 +277,27 @@ export async function getVerifiedCryptoSnapshot(
     }
   }
 
-  circuit.consecutiveFailures += 1;
-  if (circuit.consecutiveFailures >= circuitFailureThreshold) {
-    circuit.openUntilMs = nowMs() + circuitCooldownMs;
-  }
+  breaker.failure(PROVIDER_ID);
   if (lastError) {
-    console.warn(`[CryptoSnapshotProvider] ${s}: verified CoinGecko snapshot unavailable.`, (lastError as Error)?.message || lastError);
+    console.warn(
+      `[CryptoSnapshotProvider] ${s}: verified CoinGecko snapshot unavailable.`,
+      (lastError as Error)?.message || lastError,
+    );
   }
+  writeHealth(
+    options,
+    'unavailable',
+    lastError instanceof Error
+      ? lastError.message
+      : `No verified multi-field crypto snapshot available for ${s}.`,
+    'provider_error',
+    breaker.openedUntilIso(PROVIDER_ID),
+  );
   return cached ? { ...cached.value, cacheMode: 'last-known-good', degraded: true } : null;
 }
 
 export function resetCryptoSnapshotProviderState(): void {
   cache.clear();
-  circuit.consecutiveFailures = 0;
-  circuit.openUntilMs = 0;
+  productionBudget = undefined;
+  productionBreaker = undefined;
 }

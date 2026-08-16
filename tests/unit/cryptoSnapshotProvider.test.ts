@@ -3,6 +3,12 @@ import {
   getVerifiedCryptoSnapshot,
   resetCryptoSnapshotProviderState,
 } from '../../src/services/cryptoSnapshotProvider';
+import { RateLimitBudget } from '../../src/platform/MarketData/RateLimitBudget';
+import { CircuitBreaker } from '../../src/platform/MarketData/CircuitBreaker';
+import {
+  getProviderHealth,
+  resetProviderHealth,
+} from '../../src/platform/Supervisor/providerHealth';
 
 function payload() {
   return {
@@ -19,6 +25,7 @@ function payload() {
 
 afterEach(() => {
   resetCryptoSnapshotProviderState();
+  resetProviderHealth();
   vi.restoreAllMocks();
 });
 
@@ -63,5 +70,64 @@ describe('cryptoSnapshotProvider provenance', () => {
     });
 
     expect(snapshot).toBeNull();
+  });
+});
+
+describe('SC-5 Phase B matrix guards', () => {
+  it('returns last-known-good when rate-limit budget is exhausted', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(payload()), { status: 200 }));
+    const fetchImpl = fetchMock as unknown as typeof fetch;
+    const nowMs = () => Date.parse('2026-08-16T12:00:00.000Z');
+    const budget = new RateLimitBudget({
+      nowMs,
+      perProvider: { coingecko: { capacity: 1, windowMs: 60_000 } },
+    });
+
+    const first = await getVerifiedCryptoSnapshot('ETH', {
+      fetchImpl,
+      nowMs,
+      rateLimitBudget: budget,
+      cacheTtlMs: 0,
+    });
+    expect(first?.cacheMode).toBe('fresh');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const second = await getVerifiedCryptoSnapshot('ETH', {
+      fetchImpl,
+      nowMs,
+      rateLimitBudget: budget,
+      cacheTtlMs: 0,
+    });
+    expect(second?.cacheMode).toBe('last-known-good');
+    expect(second?.degraded).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const health = getProviderHealth().find(
+      (h) => h.provider === 'CoinGecko' && h.capability === 'market-fields',
+    );
+    expect(health?.state).toBe('degraded');
+    expect(health?.diagnosticCode).toBe('rate_limited');
+  });
+
+  it('skips upstream when circuit breaker is open', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(payload()), { status: 200 }));
+    let now = Date.parse('2026-08-16T12:00:00.000Z');
+    const breaker = new CircuitBreaker({
+      failureThreshold: 1,
+      cooldownMs: 30_000,
+      nowMs: () => now,
+    });
+    breaker.failure('coingecko');
+    expect(breaker.state('coingecko')).toBe('OPEN');
+
+    const snapshot = await getVerifiedCryptoSnapshot('ETH', {
+      fetchImpl: fetchMock as unknown as typeof fetch,
+      nowMs: () => now,
+      circuitBreaker: breaker,
+      cacheTtlMs: 0,
+    });
+
+    expect(snapshot).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
