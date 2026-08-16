@@ -234,10 +234,10 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
   const totalCandidates = grouped.reduce((sum, group) => sum + group.candidatesInGroup, 0);
   const totalCoverage = totalCandidates ? Math.round((totalReady / totalCandidates) * 100) : 0;
 
-  if (error) return <div className="rounded-2xl border border-red-500/20 bg-neutral-950/60 p-6 sm:p-8 text-center"><AlertTriangle className="mx-auto text-red-400" size={30} /><p className="mt-3 text-sm font-bold text-white">Ladefehler</p><p className="mt-1 text-xs text-white/50">{error}</p></div>;
+  if (error) return <div className="ui-panel text-center"><AlertTriangle className="mx-auto text-red-400" size={30} /><p className="mt-3 text-sm font-bold text-white">Ladefehler</p><p className="mt-1 text-xs text-white/50">{error}</p></div>;
 
   return (
-    <div className="bg-neutral-950/60 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-md relative overflow-hidden" id="universe-scoring-root">
+    <div className="ui-panel relative overflow-hidden" id="universe-scoring-root">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 border-b border-white/10 pb-6 mb-8">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -249,7 +249,7 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
           <p className="text-xs text-white/50 mt-2 max-w-2xl leading-relaxed">Bis zu {RANKING_CANDIDATE_LIMIT} priorisierte Kandidaten je Assetklasse werden evidence-basiert ausgewertet. Fehlende Scores bleiben sichtbar und werden nie durch Ersatzwerte ersetzt.</p>
         </div>
         <div className="flex flex-col items-start sm:items-end gap-2">
-          <button onClick={() => void refreshScores(catalog)} disabled={!catalog.length || scoreLoading} className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 min-h-11 text-xs text-white/70 disabled:opacity-40 hover:bg-white/10 transition-colors"><RefreshCw size={13} className={scoreLoading ? 'animate-spin' : ''} /> Aktualisieren</button>
+          <button onClick={() => void refreshScores(catalog)} disabled={!catalog.length || scoreLoading} className="ui-hit min-h-11 inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 text-xs text-white/70 disabled:opacity-40 hover:bg-white/10 transition-colors"><RefreshCw size={13} className={scoreLoading ? 'animate-spin' : ''} /> Aktualisieren</button>
           <span className="text-[9px] font-mono text-white/35 flex items-center gap-1"><Clock size={10} /> {scoreLoading ? 'lädt…' : `Stand: ${relativeTime(lastUpdated)}`}</span>
         </div>
       </div>
@@ -324,7 +324,7 @@ function AssetRowItem({ row, tone, onSelectAsset }: { row: AssetRow; tone: 'best
       type="button"
       onClick={() => onSelectAsset?.(row.symbol)}
       title={row.reasoning.join(' ') || undefined}
-      className="w-full relative overflow-hidden rounded-lg border border-white/5 bg-white/[0.02] p-2.5 min-h-11 text-left hover:bg-white/5 transition-colors group"
+      className="w-full relative overflow-hidden rounded-lg border border-white/5 bg-white/[0.02] p-2.5 min-h-11 ui-hit text-left hover:bg-white/5 transition-colors group"
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
