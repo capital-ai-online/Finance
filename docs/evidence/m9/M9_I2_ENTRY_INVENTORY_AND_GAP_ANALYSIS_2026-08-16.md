@@ -64,10 +64,11 @@ Für jede Domain: was bereits als **Kontrollmechanismus** existiert (aus M4–M8
 - M9-Drill ausgeführt: **Ja, 2026-08-16** (Owner-autorisiert via `AskUserQuestion`) — siehe
   `docs/evidence/m9/M9_PROMPT_TOOL_INJECTION_LIVE_DRILL_2026-08-16.md`. Beweist, dass alle
   typisierten Autorisierungsfelder (targetResource/roadmapItem/capability/metadata) gegen
-  adversariell geformte Payloads immun sind (18 neue Tests). **Wichtiger, unbehobener Fund:** die
-  vorgesehenen `credentialExposureDetected`/`untrustedScopeElevationDetected`-Checkpoint-Felder
-  funktionieren als Gate, werden aber von beiden realen Aufrufern hartkodiert auf `false` gesetzt —
-  kein echter Content-Scanning-Detektor existiert. Trägt zu M9-Exit-Gate-Punkt 2 nur teilweise bei.
+  adversariell geformte Payloads immun sind (18 neue Tests). Der zunächst offene Fund
+  (`credentialExposureDetected`/`untrustedScopeElevationDetected` hartkodiert `false`) wurde im
+  Anschluss durch `docs/evidence/m9/M9_UNTRUSTED_CONTENT_DETECTOR_WORK_PACKAGE_2026-08-16.md`
+  aufgelöst (architekturell bewiesen, kein Detektor nötig; 38 neue Tests der drei Issue-Validatoren).
+  Trägt zu M9-Exit-Gate-Punkt 2 bei (Injection-Anteil vollständig).
 
 ### 2.3 Replay / Idempotency
 - Kontrollmechanismus vorhanden: substanziell — `tests/unit/eventMeshReplayReliability.test.ts`,
