@@ -2,7 +2,7 @@
 
 **Document ID:** ROADMAP-INTEGRATED-DC-SA-0001  
 **Status:** ACTIVE — CANONICAL EXECUTION ROADMAP  
-**Version:** 1.0.3  
+**Version:** 1.0.4  
 **Date:** 2026-08-16  
 **Repository:** SvenKulessa/Finance  
 **Authority:** ADR-0071, ESS-0023, DEVELOPMENT_CHAIN_EXECUTION_POLICY, SYSTEMADMIN_AGENT_ROADMAP_EXECUTION_POLICY, DOCUMENTATION_HYGIENE_POLICY  
@@ -218,8 +218,9 @@ Kein Document erzeugt eigene Authority.
 
 **I2 (M9 Assurance) ist jetzt der aktive Fokus, aber:**
 - Kein einzelner M9-Drill (Prompt/Tool-Injection, Authorization-Bypass, Replay, Exfiltration, Audit-Outage, Kill-Switch, Break-Glass, Rollback) startet automatisch — jeder braucht eine eigene, konkrete Owner-Anweisung.
-- **I2-Bestandsaufnahme erledigt (2026-08-16):** `docs/evidence/m9/M9_I2_ENTRY_INVENTORY_AND_GAP_ANALYSIS_2026-08-16.md` — Prerequisite Gate 7/7 erfüllt, Bestand je Assurance-Domain bewertet (stärkste Grundlage: Kill-Switch/Rollback, schwächste: Prompt/Tool-Injection und Break-Glass — Letzteres braucht zuerst einen Owner-Proposal, da ADR-0063 noch `PROPOSED` ist), priorisierter Vorschlag für die Drill-Reihenfolge dokumentiert. Kein Drill wurde ausgeführt.
-- Nächster Schritt: Owner wählt, welcher konkrete Drill (oder Break-Glass-Proposal) zuerst freigegeben wird — siehe Priorisierungsvorschlag im Inventory-Dokument §5.
+- **I2-Bestandsaufnahme erledigt (2026-08-16):** `docs/evidence/m9/M9_I2_ENTRY_INVENTORY_AND_GAP_ANALYSIS_2026-08-16.md` — Prerequisite Gate 7/7 erfüllt, Bestand je Assurance-Domain bewertet (stärkste Grundlage: Kill-Switch/Rollback, schwächste: Prompt/Tool-Injection und Break-Glass — Letzteres braucht zuerst einen Owner-Proposal, da ADR-0063 noch `PROPOSED` ist), priorisierter Vorschlag für die Drill-Reihenfolge dokumentiert.
+- **Kill-Switch-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Kill-Switch-Live-Drill (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_KILL_SWITCH_LIVE_DRILL_2026-08-16.md`. Alle vier realen mutierenden Capabilities gegen die live-wired SA3B-Kette angegriffen und verweigert; READ/ANALYZE/PLAN bleiben erhalten; 9 neue Tests, 1086/1086 gesamt PASS. Trägt zu M9-Exit-Gate-Punkt 3 bei (teilweise — nur SA3B als einziger produktiver Aufrufer).
+- Nächster Schritt: Owner wählt den nächsten konkreten Drill (Rollback/Recovery empfohlen als nächststärkste Grundlage) — siehe Priorisierungsvorschlag im Inventory-Dokument §5.
 
 **Nicht ausführbar ohne separate Owner-Freigabe:**
 - M9-Drills / M10 / SA5
@@ -267,10 +268,11 @@ Die Roadmap gilt als geschlossen, wenn:
 | 1.0.1   | 2026-08-16 | I1 sync: externalHostConfigurationVerified PASS; Exit-Gate-2 Scope-Proposal; M9 remains blocked |
 | 1.0.2   | 2026-08-16 | I1 COMPLETE / VERIFIED PASS: Owner accepted Exit-Gate-2 scope decision; M8 Closure Evidence; I2 (M9) unblocked as a phase, each drill still separately Owner-authorized |
 | 1.0.3   | 2026-08-16 | I2 entry: read-only inventory/gap analysis (`M9_I2_ENTRY_INVENTORY_AND_GAP_ANALYSIS_2026-08-16.md`) — no drill executed; priority proposal for Owner drill selection |
+| 1.0.4   | 2026-08-16 | I2: Kill-Switch-Live-Drill Owner-authorized and executed (`M9_KILL_SWITCH_LIVE_DRILL_2026-08-16.md`); contributes to M9 Exit Gate item 3 (partial, SA3B only) |
 
 ---
 
 **End of Document**  
 ROADMAP-INTEGRATED-DC-SA-0001  
 CAPITAL-AI Integrated Development Chain + Systemadmin Roadmap  
-Version 1.0.3
+Version 1.0.4
