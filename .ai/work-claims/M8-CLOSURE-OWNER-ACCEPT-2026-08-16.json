@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "M8-CLOSURE-OWNER-ACCEPT-2026-08-16",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "Anthropic",
+    "model": "Claude (Sonnet 5)",
+    "executionSurface": "Claude Code Remote (interaktive Owner-Sitzung)"
+  },
+  "workItem": "Close M8 (Development Chain) / Integrated Roadmap Phase I1 after the Owner explicitly answered ACCEPT (via AskUserQuestion, three clearly distinct options ACCEPT/REJECT/DEFER) to docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md's proposal (written by a parallel Grok session, PR #362). Flipped the scope-decision doc to OWNER_ACCEPTED with the exact Owner answer recorded, wrote docs/evidence/m8/M8_CLOSURE_EVIDENCE.md consolidating all 9 Exit Gate criteria as PASS, and synced status across M8_AGENT_CUTOVER.md, DEVELOPMENT_CHAIN_ROADMAP.md, INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md (I1 VERIFIED PASS, I2/M9 unblocked as a phase but not started), ROADMAP_CONSOLIDATION_MASTER_INDEX.md and both traceability matrices. No code change, no mutation, no M9 drill started -- each M9 drill remains its own separately Owner-authorized action per the roadmap's own rules.",
+  "workItemDE": "M8 abschliessen nach expliziter Owner-ACCEPT-Entscheidung zur Exit-Gate-2-Scope-Frage; Roadmap-/Traceability-Sync",
+  "startedAt": "2026-08-16T00:45:00Z",
+  "baseBranch": "main",
+  "baseSha": "54c48ca28817b41b93623be61ea8292f0a8288c2",
+  "prCreationApproval": {
+    "status": "approved",
+    "approvedBy": "human-user",
+    "approvedAt": "2026-08-16T00:44:00Z",
+    "scope": "Owner-Anweisung \"fahre mit der Systemadministrator und Development Chain fort\" gefolgt von expliziter AskUserQuestion-Antwort \"ACCEPT (empfohlen)\" auf die Exit-Gate-2-Scope-Frage aus docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md."
+  },
+  "productionBaseline": {
+    "note": "Diese Sitzungsumgebung hat keinen Netzwerkzugriff auf https://capital-ai.online/healthz (Egress-Proxy blockiert externe Hosts).",
+    "checkedAt": "2026-08-15T21:39:00Z",
+    "version": "0.6.0",
+    "commitSha": "2cd96ab566ab8e06880b4707d7dc31e916ab28f8",
+    "branch": "main",
+    "repoSlug": "SvenKulessa/Finance",
+    "source": "prior CI job stdout"
+  },
+  "claimedPaths": [
+    "docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md",
+    "docs/evidence/m8/M8_CLOSURE_EVIDENCE.md",
+    "docs/runbooks/M8_AGENT_CUTOVER.md",
+    "docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md",
+    "docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md",
+    "docs/roadmaps/ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
+    "docs/traceability/AI_AGENT_M0_M9_TRACEABILITY_MATRIX.md",
+    "docs/traceability/DEVELOPMENT_CHAIN_DOCUMENT_TRACEABILITY_MATRIX.md",
+    ".ai/work-claims/M8-CLOSURE-OWNER-ACCEPT-2026-08-16.json"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}

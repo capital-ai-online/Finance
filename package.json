@@ -22,6 +22,7 @@
     "pr:governance:test": "node --test scripts/pr/*.test.mjs",
     "repository:validate": "tsx scripts/automation/validateRepositoryConventions.ts",
     "repository:validate:advisory": "tsx scripts/automation/validateRepositoryConventions.ts --advisory",
+    "status:scan-drift": "tsx scripts/automation/scanStatusEventDrift.ts",
     "hygiene:sweep": "tsx scripts/automation/sweepDocumentaryBranding.ts",
     "predeploy:check": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/verifyDeploymentReadiness.ts && npm run supplychain:provenance && npm run supplychain:verify",
     "release:version": "tsx scripts/automation/releaseVersion.ts",

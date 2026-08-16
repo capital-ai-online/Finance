@@ -8,6 +8,14 @@ Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grun
 
 ---
 
+## Design-Primitives (Phase 0+)
+
+| Komponente | Datei | Kurzbeschreibung |
+|------------|-------|------------------|
+| StatusBadge | `StatusBadge.tsx` | Kanonischer Status-Badge (READY / REJECT / DATA_UNAVAILABLE / LOADING / …) mit Icon + Text, WCAG-konform |
+
+---
+
 ## Kern-Dashboard & Cockpit
 
 | Komponente | Datei | Kurzbeschreibung |
@@ -26,7 +34,7 @@ Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grun
 
 | Komponente | Datei | Kurzbeschreibung |
 |------------|-------|------------------|
-| CryptoScoringEnterprise | `CryptoScoringEnterprise.tsx` | Enterprise-Crypto-Scoring |
+| CryptoScoringEnterprise | `CryptoScoringEnterprise.tsx` | Enterprise-Crypto-Scoring (nutzt StatusBadge) |
 | BuffetValueCheck | `BuffetValueCheck.tsx` | Graham/Buffett Value-Check |
 | BacktestEngine | `BacktestEngine.tsx` | Backtesting-Engine |
 | PortfolioBacktester | `PortfolioBacktester.tsx` | Portfolio-Backtester |
@@ -119,7 +127,7 @@ Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grun
 
 ---
 
-## Design-Primitives (aus `src/index.css` / Architektur)
+## Design-Tokens / Patterns (aus `src/index.css` / Architektur)
 
 | Token / Pattern | Quelle | Bemerkung |
 |-----------------|--------|-----------|
@@ -129,6 +137,7 @@ Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grun
 | Glassmorphism Card | `FRONTEND_ARCH.md` | `bg-neutral-950/40 border-white/10 backdrop-blur-md` |
 | Focus Outline | `index.css` | `*:focus-visible` gold |
 | Fonts | Poppins, Montserrat, JetBrains Mono | `--font-sans` / `display` / `mono` |
+| StatusBadge tones | `StatusBadge.tsx` | emerald / rose / amber / gold / muted |
 
 ---
 
@@ -136,9 +145,9 @@ Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grun
 
 1. Neue UI-Komponenten in `src/components/` anlegen und hier dokumentieren.
 2. Wiederverwendbare Primitives (Button, Badge, Card, Gauge, Chip) schrittweise extrahieren (Phase 1).
-3. Status-Badges und Score-Gauges als erste Kandidaten für ein formales Design-System.
+3. StatusBadge ist der erste formalisierte Primitive — weitere Call-Sites in Phase 1.
 4. Dieses Inventory ist die Basis für Storybook und die Frontend-Roadmap Phase 0.
 
 ---
 
-*Erstellt am 16.08.2026 im Rahmen der Frontend-Roadmap.*
+*Erstellt am 16.08.2026 im Rahmen der Frontend-Roadmap. StatusBadge ergänzt 16.08.2026.*

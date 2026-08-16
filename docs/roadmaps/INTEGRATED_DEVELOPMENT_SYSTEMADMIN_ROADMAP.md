@@ -2,7 +2,7 @@
 
 **Document ID:** ROADMAP-INTEGRATED-DC-SA-0001  
 **Status:** ACTIVE — CANONICAL EXECUTION ROADMAP  
-**Version:** 1.0.1  
+**Version:** 1.0.2  
 **Date:** 2026-08-16  
 **Repository:** SvenKulessa/Finance  
 **Authority:** ADR-0071, ESS-0023, DEVELOPMENT_CHAIN_EXECUTION_POLICY, SYSTEMADMIN_AGENT_ROADMAP_EXECUTION_POLICY, DOCUMENTATION_HYGIENE_POLICY  
@@ -37,8 +37,8 @@ Bei Widerspruch gilt immer die restriktivere Regel.
 | Phase | DEVELOPMENT Chain | Systemadmin | Execution State | Mutation Gate | Next Gate |
 |-------|-------------------|-------------|-----------------|---------------|-----------|
 | **I0** | M0–M7 Baseline | SA0–SA4 Baseline | **VERIFIED PASS** | read-only preserve | I1 |
-| **I1** | M8 Agent Cutover (Abschluss) | Work-Package Catalog Nutzung | **IN PROGRESS** — Exit 1/3–7 PASS; chatgpt-github-connector READY; Exit-2 **Owner-Scope pending**; Exit-8 this PR | repository only, REM-bound | I2 nur nach M8 VERIFIED PASS + Owner |
-| **I2** | M9 Assurance / Incident / Break-Glass | SA-Prototyp-Anfragen (ESS-0023) | **BLOCKED** | drills + evidence | I3 nach VERIFIED PASS |
+| **I1** | M8 Agent Cutover (Abschluss) | Work-Package Catalog Nutzung | **VERIFIED PASS** (2026-08-16) — alle 9 Exit-Gate-Punkte PASS; Exit-2 unter Owner-akzeptiertem Scope geschlossen (`M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md`, `OWNER_ACCEPTED`) | repository only, REM-bound | I2 unblocked |
+| **I2** | M9 Assurance / Incident / Break-Glass | SA-Prototyp-Anfragen (ESS-0023) | **UNBLOCKED — not yet started** (M8 VERIFIED PASS) | drills + evidence, jeder Drill einzeln Owner-autorisiert | I3 nach VERIFIED PASS |
 | **I3** | M10 Passkey-only Owner PR Authorization | SA5 Design-Vorbereitung | **BLOCKED** | exact-state WebAuthn | I4 nach VERIFIED PASS |
 | **I4** | DevelopmentChain Closure | SA5 Bounded External Mutation Design | **BLOCKED** | separate ADR + Owner Approval | Production Mutation möglich |
 
@@ -51,33 +51,34 @@ Bei Widerspruch gilt immer die restriktivere Regel.
 ### Goal
 Provider-neutraler Agent-Cutover: privilegierte Execution über denselben Control-Plane-Pfad mit identischer Capability-Policy. Kein provider-spezifischer privilegierter Bypass bleibt kanonisch.
 
-### Stand 2026-08-16 (Evidence)
+### Stand 2026-08-16 (Evidence) — I1 abgeschlossen
+
 - Phase 0 + Provider-Profile + SA3B-Verdrahtung + Rollback + Bypass-Audit + Audit-Korrelation: **VERIFIED PASS**
 - `chatgpt-github-connector`: alle 6 `ProviderCutoverEvidence`-Felder **true** inkl. `externalHostConfigurationVerified` (`docs/evidence/m8/M8_EXTERNAL_HOST_CONFIGURATION_VERIFIED_EVIDENCE.md`) → Readiness **READY**
-- `google-ai-studio` / `notebooklm`: **NOT_APPLICABLE** (non-mutating)
-- `claude-code-cli`: **BLOCKED** strukturell (`docs/architecture/M8_CLAUDE_CODE_REAL_CALLER_DESIGN.md`)
-- Exit-Gate-Punkt 2: **Scope-Entscheidung PROPOSED** — `docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md` (Owner ACCEPT/REJECT/DEFER)
-
-### Offene Lücken (nur noch Owner-gebunden)
-- Explizite Owner-Akzeptanz der Scope-Entscheidung zu Exit-Gate-Punkt 2
-- Danach: formales M8 Closure Evidence + Traceability-Final + Branch-Delete nach Merge
+- Kanonisches Provider-Set korrigiert 2026-08-16 (PR #365, `docs/evidence/m8/M8_PROVIDER_SET_CORRECTION_2026-08-16.md`): **ChatGPT, Claude, Grok**. `google-ai-studio` / `notebooklm` / `gemini` sind jetzt **RETIRED** (DENY im Control Plane), nicht mehr Teil der Matrix
+- `claude-code-cli`: **BLOCKED** strukturell (`docs/architecture/M8_CLAUDE_CODE_REAL_CALLER_DESIGN.md`) — kein unterstützter privilegierter Produktionspfad
+- `grok-xai-connector`: **BLOCKED** aus demselben strukturellen Grund (interaktive, host-vermittelte Connector-Sitzung ohne code-adressierbaren Execution-Host) — kein unterstützter privilegierter Produktionspfad
+- Exit-Gate-Punkt 2: **OWNER_ACCEPTED** (2026-08-16, explizite Owner-Antwort "ACCEPT (empfohlen)" via `AskUserQuestion`) — `docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md`
+- M8 Closure: `docs/evidence/m8/M8_CLOSURE_EVIDENCE.md` — **COMPLETE / VERIFIED PASS**
 
 ### Systemadmin-Rolle in I1
+
 - Darf bounded Work-Packages aus dem generalisierten Catalog (ADR-0074) für M8-Dokumentation und Tests ausführen
 - Darf Mutation Proposals an den Owner stellen (ESS-0023)
 - Darf **keine** Provider-Profile oder IAM-Regeln eigenmächtig erweitern
 - Execution nur über trusted GitHub Actions Host + OIDC + REM
 
-### Exit Gate I1 (Runbook-9-Punkte, maßgeblich)
+### Exit Gate I1 (Runbook-9-Punkte, maßgeblich) — 9/9 PASS
+
 1. M7 verified — **PASS**
-2. Privileged supported providers on Control Plane — **PENDING OWNER SCOPE**
+2. Privileged supported providers on Control Plane — **PASS** (Owner-akzeptierter Scope: mutierende Provider mit produktivem Host = `chatgpt-github-connector`)
 3. Policy equivalence — **PASS**
 4. No provider-specific privileged bypass — **PASS**
 5. Research profiles fail mutation — **PASS**
 6. Rollback-to-read-only — **PASS**
 7. Audit correlation — **PASS**
-8. Evidence + Traceability sync — **IN PROGRESS** (dieser PR)
-9. Work branches deleted — **N/A** (kein offener M8-Cutover-Branch)
+8. Evidence + Traceability sync — **PASS** (dieser PR + `M8_CLOSURE_EVIDENCE.md`)
+9. Work branches deleted — **N/A / PASS** (kein offener M8-Cutover-Branch)
 
 ---
 
@@ -208,12 +209,16 @@ Kein Document erzeugt eigene Authority.
 
 ---
 
-## 11. Current Next Action (I1)
+## 11. Current Next Action (I1 abgeschlossen → I2)
 
-**Sofort ausführbar (Human):**
-1. PR `docs/m8-exit-gate-a-b-c-2026-08-16` reviewen und mergen (Klasse D)
-2. In `docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md` **ACCEPT / REJECT / DEFER** setzen
-3. Bei ACCEPT: M8 Closure Evidence + Roadmap-Status `VERIFIED PASS` + Freigabe I2/M9
+**I1 erledigt (2026-08-16):**
+1. PR `docs/m8-exit-gate-a-b-c-2026-08-16` gemergt (PR #362)
+2. Owner hat in `docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md` **ACCEPT** gesetzt (explizite Antwort via `AskUserQuestion`)
+3. M8 Closure Evidence (`docs/evidence/m8/M8_CLOSURE_EVIDENCE.md`) + Roadmap-Status `VERIFIED PASS` + Freigabe I2/M9 — dieser PR
+
+**I2 (M9 Assurance) ist jetzt der aktive Fokus, aber:**
+- Kein einzelner M9-Drill (Prompt/Tool-Injection, Authorization-Bypass, Replay, Exfiltration, Audit-Outage, Kill-Switch, Break-Glass, Rollback) startet automatisch — jeder braucht eine eigene, konkrete Owner-Anweisung.
+- Nächster sicherer Schritt wäre eine reine Bestandsaufnahme/Planungs-Evidence für I2 (analog zu I1 Option A), nicht die Ausführung eines echten Drills.
 
 **Nicht ausführbar ohne separate Owner-Freigabe:**
 - M9-Drills / M10 / SA5
@@ -259,6 +264,7 @@ Die Roadmap gilt als geschlossen, wenn:
 |---------|------------|--------------------------------------------------|
 | 1.0.0   | 2026-08-15 | Initial Integrated Roadmap — connects DC + SA, absorbs all open gaps and improvement suggestions |
 | 1.0.1   | 2026-08-16 | I1 sync: externalHostConfigurationVerified PASS; Exit-Gate-2 Scope-Proposal; M9 remains blocked |
+| 1.0.2   | 2026-08-16 | I1 COMPLETE / VERIFIED PASS: Owner accepted Exit-Gate-2 scope decision; M8 Closure Evidence; I2 (M9) unblocked as a phase, each drill still separately Owner-authorized |
 
 ---
 

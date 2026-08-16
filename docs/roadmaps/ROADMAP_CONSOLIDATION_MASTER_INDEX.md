@@ -33,8 +33,8 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel.
 
 | ID | Programm | Quelle | Konsolidierter Status | Nächster zulässiger Schritt |
 |---|---|---|---|---|
-| **DC-SA** | **Integrated DC + SA** | **`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001)** | **ACTIVE — CANONICAL**; I0 VERIFIED PASS; I1 (M8) IN PROGRESS | nächstes M8-Element nur auf separate, ausdrückliche Owner-Anweisung |
-| DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M7 weitgehend VERIFIED PASS; M8 Phase 0 + Teil-Gates VERIFIED, Exit-Gate offen; M9–M10 blockiert | weiteres M8-Element nur auf separate, ausdrückliche Owner-Anweisung |
+| **DC-SA** | **Integrated DC + SA** | **`docs/roadmaps/INTEGRATED_DEVELOPMENT_SYSTEMADMIN_ROADMAP.md` (ROADMAP-INTEGRATED-DC-SA-0001)** | **ACTIVE — CANONICAL**; I0 VERIFIED PASS; I1 (M8) **VERIFIED PASS** (2026-08-16); I2 (M9) unblocked, not yet started | I2/M9-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; einzelne Drills bleiben Owner-autorisiert |
+| DC | DEVELOPMENT Chain | `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` | M0–M8 VERIFIED PASS (M8 2026-08-16); M9 unblocked, not yet started; M10 blockiert | M9-Drill-Vorbereitung nur auf separate, ausdrückliche Owner-Anweisung; jeder einzelne Drill separat autorisiert |
 | S1 | Security Hardening | `docs/roadmaps/S1_SECURITY_HARDENING_ROADMAP.md` | READY FOR OWNER REVIEW; S1.0–S1.6 nicht vollständig VERIFIED PASS | F-01–F-18 gegen aktuelles main revalidieren |
 | DOC | Documentary/Event Value Chain | `docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` | ACTIVE / PARTIAL | D0 read-only Baseline |
 | SA | Systemadministrator-Agent | `docs/roadmaps/SYSTEMADMIN_AGENT_ROADMAP.md` | SA0–SA4 VERIFIED PASS; SA5 blockiert | dokumentenbasierte Prototypen nach ESS-0023 |

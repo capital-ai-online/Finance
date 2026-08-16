@@ -1,6 +1,6 @@
 # Phase 0 — Loading & Error State Patterns
 
-**Status:** SPEC READY  
+**Status:** SPEC READY + REFERENCE IMPLEMENTED  
 **Stand:** 16. August 2026  
 **Ziel:** Einheitliche UX für Loading, Empty, Error und DATA_UNAVAILABLE
 
@@ -71,9 +71,9 @@ Reduced-motion: `animate-pulse` durch statischen Placeholder ersetzen.
 
 ## 6. Implementierungs-Reihenfolge (nach Phase 0 Spec)
 
-1. Gemeinsame Badge-Primitive (StatusBadge)
+1. Gemeinsame Badge-Primitive (StatusBadge) ✅
 2. Shared Skeleton-Bausteine für Score-Cards
-3. Vereinheitlichung in `Dashboard`, `AssetUniverseDashboard`, `Screener`, `CryptoScoringEnterprise`
+3. Vereinheitlichung in `Dashboard`, `AssetUniverseDashboard`, `Screener`, `CryptoScoringEnterprise` (teilweise: CryptoScoringEnterprise, MarketScreener, UniverseBestWorst)
 4. Empty States für Watchlist / Search
 
 ---
@@ -82,5 +82,5 @@ Reduced-motion: `animate-pulse` durch statischen Placeholder ersetzen.
 
 - [x] State-Modell dokumentiert
 - [x] Visuelle Konventionen an Tokens gekoppelt
-- [ ] Mindestens eine Referenz-Implementierung (StatusBadge) in Code-PR
+- [x] Mindestens eine Referenz-Implementierung (StatusBadge) in Code-PR — `CryptoScoringEnterprise`, `MarketScreener`, `UniverseBestWorst`
 - [ ] Inventory der aktuellen ad-hoc Loading/Error-Stellen (Stichprobe)

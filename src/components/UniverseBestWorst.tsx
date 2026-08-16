@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Activity, AlertTriangle, Award, Clock, Compass, Layers, Orbit, Percent, RefreshCw, ShieldCheck, TrendingUp } from 'lucide-react';
 import { AssetLogo } from './AssetLogo';
+import { StatusBadge } from './StatusBadge';
 
 type AssetType = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';
 type AssetRow = {
@@ -303,7 +304,7 @@ function UnavailableBlock({ rows, pending }: { rows: AssetRow[]; pending: boolea
           <div key={row.symbol} className="rounded-lg border border-amber-500/10 bg-amber-500/[0.03] px-2 py-1.5" title={row.reason}>
             <div className="flex items-center justify-between gap-2">
               <span className="text-[10px] font-bold text-white/70">{row.symbol}</span>
-              <span className="text-[8px] font-mono text-amber-300/70">{row.status}</span>
+              <StatusBadge status={row.status} />
             </div>
             {row.reason && <div className="mt-0.5 truncate text-[8px] text-white/30">{row.reason}</div>}
           </div>
