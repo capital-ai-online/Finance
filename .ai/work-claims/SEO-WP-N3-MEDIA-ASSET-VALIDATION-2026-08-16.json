@@ -1,0 +1,65 @@
+{
+  "claimId": "SEO-WP-N3-MEDIA-ASSET-VALIDATION-2026-08-16",
+  "title": "WP-N3: Asset-Validierung fuer mediaUrl (SSRF-Gate vor jedem Plattform-Aufruf)",
+  "roadmap": "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+  "documentId": "SEO-GM-ROADMAP-0002",
+  "roadmapIds": ["WP-N3"],
+  "predecessor": "SEO-WP-N4-APPROVAL-HASH-BINDING-2026-08-16",
+  "branch": "claude/wp-n4-approval-hash-binding",
+  "base": "main",
+  "owner": "SvenKulessa",
+  "status": "prepared",
+  "createdAt": "2026-08-16",
+  "createdBy": {
+    "provider": "Anthropic",
+    "model": "Claude Code",
+    "surface": "Claude Code Remote (interaktive Owner-Sitzung)"
+  },
+  "authorizedByHuman": true,
+  "authorizationScope": "Owner-Anweisung 'fahre mit der Roadmap fort' bzw. Zustimmung zur Fortsetzung mit WP-N3 und Content-Kalender. KEINE Freigabe fuer Merge, Renderer-Beschaffung oder externe Mutation.",
+  "finding": {
+    "id": "WP-N3-MEDIAURL-SSRF",
+    "severity": "hoch",
+    "summary": "mediaUrl aus dem Publish-Request wurde nirgends validiert. server/socialMedia/platformPublishers.ts ruft die URL fuer den YouTube-Upload serverseitig per fetch ab; TikTok und Instagram erhalten sie als PULL_FROM_URL-Quelle.",
+    "impact": "Server-side Request Forgery ueber den Publish-Pfad: Cloud-Metadata (169.254.169.254), Loopback-Dienste, interne Hosts und nicht-https-Schemata (file:, data:) waren erreichbar bzw. wurden weitergereicht. ESS-0024 Abschnitt 13 fordert ausdruecklich 'invalid/private media URL -> DENY' als Negativtest; dieser Test existierte nicht.",
+    "resolution": "Neues providerneutrales Modul server/socialMedia/mediaAssetValidation.ts. Prueft: absolute URL, https-only, keine eingebetteten Zugangsdaten, keine Loopback-/internen Hostnamen, IP-Literale muessen oeffentlich sein, DNS-Aufloesung muss ausschliesslich oeffentliche Adressen liefern. Eingehaengt im Publish-Pfad vor dem Approval-Consume, damit eine Einmal-Freigabe nicht durch einen ohnehin unzulaessigen Payload verbraucht wird."
+  },
+  "notableDetail": "Die erste Implementierung pruefte die IPv4-mapped IPv6-Form per Regex auf die Dotted-Schreibweise. Der WHATWG-URL-Parser normalisiert jedoch ::ffff:169.254.169.254 zu ::ffff:a9fe:a9fe, wodurch die Metadata-Adresse in Hex-Schreibweise durchgerutscht waere. Ein Test hat das aufgedeckt; die Regex wurde durch eine vollstaendige IPv6-Gruppenexpansion ersetzt.",
+  "residualRisk": "DNS wird hier aufgeloest, die Verbindung oeffnet spaeter fetch. Ein feindlicher Resolver koennte beim zweiten Lookup abweichend antworten (DNS-Rebinding). Vollstaendige Abdeckung erfordert das Pinnen der aufgeloesten Adresse in den Socket. Bewusst als Folgepunkt dokumentiert und nicht als geloest behauptet - im Modulkopf und hier.",
+  "scope": [
+    "server/socialMedia/mediaAssetValidation.ts",
+    "src/routes/socialMediaRoutes.ts",
+    "tests/unit/mediaAssetValidation.test.ts",
+    "docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md",
+    ".ai/work-claims/SEO-WP-N3-MEDIA-ASSET-VALIDATION-2026-08-16.json"
+  ],
+  "outOfScope": [
+    "Renderer-Auswahl / Make-or-Buy fuer TTS und Video (Owner-Entscheidung, WP-N3 Kern)",
+    "Byte-Hash des Assets gegen die Freigabe (setzt Renderer-Pipeline voraus)",
+    "DNS-Rebinding-Haertung durch Address-Pinning (Folgepunkt)",
+    "Content-Kalender / Scheduling-UI (Rest von WP-N4)",
+    "OAuth-, Token- und Publisher-Logik im Uebrigen"
+  ],
+  "checkClass": "C",
+  "negativeTests": [
+    "leere und syntaktisch ungueltige URL -> DENY",
+    "relative URL -> DENY",
+    "http, file, ftp, data -> DENY",
+    "eingebettete Zugangsdaten -> DENY",
+    "localhost, .internal, .local, .home.arpa -> DENY",
+    "169.254.169.254 (Cloud-Metadata) -> DENY",
+    "127.0.0.1, 10/8, 172.16/12, 192.168/16, 100.64/10, 0.0.0.0 -> DENY",
+    "IPv6 ::1, fe80::, fc00::, fd00:: -> DENY",
+    "IPv4-mapped IPv6 in Dotted- und Hex-Schreibweise -> DENY",
+    "oeffentlicher Name, der auf private Adresse aufloest -> DENY",
+    "gemischte Aufloesung (oeffentlich + privat) -> DENY",
+    "nicht aufloesbarer Host bzw. leere Adressliste -> DENY"
+  ],
+  "validation": {
+    "vitest": "193 Dateien, 1164 Tests passed",
+    "typescript": "tsc --noEmit exit 0",
+    "npmAudit": "0 vulnerabilities (--omit=dev --audit-level=high)",
+    "productionBuild": "npm run build exit 0",
+    "googleMarketingInvariants": "34 invariants verified, exit 0"
+  }
+}
