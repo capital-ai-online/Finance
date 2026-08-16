@@ -2,7 +2,7 @@
 
 **Document ID:** ROADMAP-INTEGRATED-DC-SA-0001  
 **Status:** ACTIVE — CANONICAL EXECUTION ROADMAP  
-**Version:** 1.0.11  
+**Version:** 1.0.12  
 **Date:** 2026-08-16  
 **Repository:** SvenKulessa/Finance  
 **Authority:** ADR-0071, ESS-0023, DEVELOPMENT_CHAIN_EXECUTION_POLICY, SYSTEMADMIN_AGENT_ROADMAP_EXECUTION_POLICY, DOCUMENTATION_HYGIENE_POLICY  
@@ -226,8 +226,9 @@ Kein Document erzeugt eigene Authority.
 - **Authorization-Bypass-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Authorization-Bypass-Negativtests (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_AUTHORIZATION_BYPASS_LIVE_DRILL_2026-08-16.md`. Alle 9 Runbook-Angriffsvektoren jetzt über die reale SA3B-Kette bewiesen (6 neu getestet, 3 bereits live bewiesen zitiert); 7 neue Tests. Trägt zu M9-Exit-Gate-Punkt 2 bei (Authorization-Bypass-Anteil vollständig).
 - **Secret/Exfiltration-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Secret/Exfiltration-Drill (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_SECRET_EXFILTRATION_LIVE_DRILL_2026-08-16.md`. Fand und schloss zwei reale Redaction-Lücken (camelCase-Präfix-Schlüssel wie `customerEmail`; fehlende TOTP/Recovery/Backup-Code-Benennungen); alle Runbook-Kategorien über die reale SA3B-Kette bewiesen; 3 neue Tests. Trägt zu M9-Exit-Gate-Punkt 2 bei (Exfiltration-Anteil vollständig).
 - **Prompt/Tool-Injection-Live-Drill erledigt (2026-08-16):** Owner-Wahl „Prompt/Tool-Injection-Tests (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_PROMPT_TOOL_INJECTION_LIVE_DRILL_2026-08-16.md`. Beweist, dass alle typisierten Autorisierungsfelder gegen adversarielle Payloads immun sind (18 neue Tests).
-- **Untrusted-Content-Detector-Arbeitspaket erledigt (2026-08-16):** Owner-Wahl „Untrusted-Content-Detector-Arbeitspaket (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_UNTRUSTED_CONTENT_DETECTOR_WORK_PACKAGE_2026-08-16.md`. Löst den offenen Fund des vorherigen Drills auf: kein Detektor gebaut, stattdessen architekturell bewiesen, dass aktuell kein Codepfad Freitext in Autorisierung überführt (vorher **ungetestete** Issue-Validatoren `validateSa4PilotIssue.mjs`/`validateWorkPackageIssue.mjs`/`validateExecutionIssue.mjs` jetzt mit 38 neuen Tests); `package.json` `test`-Skript erweitert, damit diese in CI laufen. 1139/1139 vitest gesamt PASS (unverändert), `node --test`-Glob 65/66 (1 vorbestehender, unabhängiger R-002-Fehlschlag, nicht behoben, siehe Evidence §5). Trägt zu M9-Exit-Gate-Punkt 2 bei (Injection-Anteil jetzt vollständig).
-- Nächster Schritt: Owner wählt den Break-Glass-Proposal (letzter verbleibender M9-Kandidat aus der ursprünglichen Priorisierung) — siehe Inventory-Dokument §5.
+- **Untrusted-Content-Detector-Arbeitspaket erledigt (2026-08-16):** Owner-Wahl „Untrusted-Content-Detector-Arbeitspaket (empfohlen)" via `AskUserQuestion` → `docs/evidence/m9/M9_UNTRUSTED_CONTENT_DETECTOR_WORK_PACKAGE_2026-08-16.md`. Löst den offenen Fund des vorherigen Drills auf: kein Detektor gebaut, stattdessen architekturell bewiesen, dass aktuell kein Codepfad Freitext in Autorisierung überführt (vorher **ungetestete** Issue-Validatoren `validateSa4PilotIssue.mjs`/`validateWorkPackageIssue.mjs`/`validateExecutionIssue.mjs` jetzt mit 38 neuen Tests); `package.json` `test`-Skript erweitert, damit diese in CI laufen. Trägt zu M9-Exit-Gate-Punkt 2 bei (Injection-Anteil jetzt vollständig).
+- **Break-Glass-Proposal ACCEPTED + Logik-Ebene implementiert (2026-08-16):** Owner-Wahl „M9 zuerst fertigstellen" (nach Anfrage, mit M10/Passkey fortzufahren — laut Runbook durch M9-Vollständigkeit gesperrt), dann „ACCEPT" auf `docs/evidence/m9/M9_BREAK_GLASS_DESIGN_PROPOSAL_2026-08-16.md` (additives, eng begrenztes REM-Mandat, max. 30 Min, eine Capability, Owner-AAL2-Step-up-Aktivierung über den bestehenden M5A-Mechanismus). Implementiert als reine, getestete Policy-Logik (`src/platform/Security/breakGlass.ts`, 27 neue Tests inkl. Live-Beweis über die reale SA3B-Kette) — siehe `docs/evidence/m9/M9_BREAK_GLASS_LOGIC_IMPLEMENTATION_2026-08-16.md`. **Kein live erreichbarer Endpunkt, kein Drill ausgeführt, ADR-0063 bleibt PROPOSED** — beides eigene, separat zu autorisierende nächste Schritte.
+- Nächster Schritt: Owner wählt zwischen (a) Break-Glass live verdrahten (HTTP-Endpunkt) als Voraussetzung für den eigentlichen Drill, oder (b) zurück zu M10/Passkey-Vorbereitung (Phase 1/2/6, ohne echte Enrollment) sobald der Owner den M9-Gate für M10-Start explizit übergehen möchte, oder (c) M9 formal als „COMPLETE mit einem dokumentierten offenen Punkt (Break-Glass-Drill)" abschließen.
 
 **Nicht ausführbar ohne separate Owner-Freigabe:**
 - M9-Drills / M10 / SA5
@@ -283,10 +284,11 @@ Die Roadmap gilt als geschlossen, wenn:
 | 1.0.9   | 2026-08-16 | I2: Secret/Exfiltration-Live-Drill Owner-authorized and executed (`M9_SECRET_EXFILTRATION_LIVE_DRILL_2026-08-16.md`); closed two real redaction gaps (camelCase-prefixed keys, missing TOTP/recovery/backup-code coverage); contributes to M9 Exit Gate item 2 (exfiltration portion, complete) |
 | 1.0.10  | 2026-08-16 | I2: Prompt/Tool-Injection-Live-Drill Owner-authorized and executed (`M9_PROMPT_TOOL_INJECTION_LIVE_DRILL_2026-08-16.md`); proved typed authorization fields immune to adversarial payloads; found and documented (not fixed) that the credentialExposureDetected/untrustedScopeElevationDetected checkpoint gates have no real content-scanning detector behind them yet — recommended as its own work package before M9 closure |
 | 1.0.11  | 2026-08-16 | I2: Untrusted-Content-Detector work package Owner-authorized and executed (`M9_UNTRUSTED_CONTENT_DETECTOR_WORK_PACKAGE_2026-08-16.md`); resolved prior finding architecturally rather than building a speculative detector; added 38 tests for the previously-untested Issue-validator boundary; contributes to M9 Exit Gate item 2 (injection portion, now complete) |
+| 1.0.12  | 2026-08-16 | I2: Break-Glass design proposal Owner-ACCEPTED and policy-logic layer implemented + tested (`M9_BREAK_GLASS_DESIGN_PROPOSAL_2026-08-16.md`, `M9_BREAK_GLASS_LOGIC_IMPLEMENTATION_2026-08-16.md`); explicitly not live-wired, no drill executed, ADR-0063 remains PROPOSED |
 
 ---
 
 **End of Document**  
 ROADMAP-INTEGRATED-DC-SA-0001  
 CAPITAL-AI Integrated Development Chain + Systemadmin Roadmap  
-Version 1.0.11
+Version 1.0.12
