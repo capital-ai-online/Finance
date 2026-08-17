@@ -30,10 +30,12 @@ import {
   GitBranch,
   History,
   FileText,
-  Package
+  Package,
+  KeyRound
 } from 'lucide-react';
 
 import { VersionManagerPanel } from './VersionManagerPanel';
+import { M10PasskeyEnrollmentPanel } from './M10PasskeyEnrollmentPanel';
 import { authFetch } from '../lib/authFetch';
 
 interface SupervisorDashboardProps {
@@ -73,7 +75,7 @@ interface PromptLog {
 
 export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardProps) {
   // Tabs: dashboard (Overview), agents (Agent Monitor), infrastructure (Docker/DB/Render), circuit-breakers (Circuit Breaker), alerts (Alerting Panel)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'agents' | 'infrastructure' | 'circuit-breakers' | 'alerts' | 'version-manager'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'agents' | 'infrastructure' | 'circuit-breakers' | 'alerts' | 'version-manager' | 'm10-passkey'>('dashboard');
 
   // Operative Kennzahlen. Waren zuvor mit erfundenen Startwerten belegt und wurden
   // per "Simulated Fluctuation Engine" (Math.random(), siehe Git-Historie) laufend
@@ -588,6 +590,7 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
           { id: 'circuit-breakers', label: 'Circuit Breakers', icon: Power },
           { id: 'alerts', label: 'Schwellenwert-Alarme', icon: ShieldAlert },
           { id: 'version-manager', label: 'Enterprise Versionierung', icon: GitBranch },
+          { id: 'm10-passkey', label: 'Passkey-Autorisierung (M10)', icon: KeyRound },
         ].map(t => {
           const Icon = t.icon;
           const isSelected = activeTab === t.id;
@@ -1624,6 +1627,19 @@ export function SupervisorDashboard({ currentUserEmail }: SupervisorDashboardPro
               className="space-y-6"
             >
               <VersionManagerPanel currentUserEmail={currentUserEmail} />
+            </motion.div>
+          )}
+
+          {/* TAB 7: M10 PASSKEY-ONLY PR AUTHORIZATION (ADR-0066) */}
+          {activeTab === 'm10-passkey' && (
+            <motion.div
+              key="m10-passkey"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="space-y-6"
+            >
+              <M10PasskeyEnrollmentPanel />
             </motion.div>
           )}
 

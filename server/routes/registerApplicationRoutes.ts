@@ -20,6 +20,7 @@ import { registryRouter } from '../../src/features/registry/registryRoutes';
 import { aiRouter } from '../ai';
 import { systemadminExecutionBrokerRouter } from '../systemadmin/systemadminExecutionBrokerRouter';
 import { breakGlassRouter } from '../systemadmin/breakGlassRouter';
+import { m10CredentialEnrollmentRouter } from '../m10/credentialEnrollmentRouter';
 import { registerTrailingSlashNormalize } from '../middleware/seoUrlNormalize';
 import { installProductionSoft404Intercept } from '../runtime/spaFallback';
 import { seoEngineRouter } from './seoEngineRoutes';
@@ -79,6 +80,7 @@ export function registerApplicationRoutes(
   app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic, openai));
   app.use('/api/internal/systemadmin-execution', systemadminExecutionBrokerRouter);
   app.use('/api/systemadmin/break-glass', breakGlassRouter);
+  app.use('/api/m10/credential-enrollment', m10CredentialEnrollmentRouter);
   app.use('/api/news', newsRouter);
   app.use('/api/registry', registryRouter);
   app.use('/api/social-media', socialMediaRouter);

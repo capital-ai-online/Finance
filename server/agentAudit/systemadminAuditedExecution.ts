@@ -51,6 +51,8 @@ export const SYSTEMADMIN_SA3_SELF_AUTHORITY_PATHS = Object.freeze([
   'server/m10/githubPrStateResolver.ts',
   'server/m10/challengeIssuance.ts',
   'server/m10/credentialEnrollment.ts',
+  'server/m10/credentialEnrollmentSupabaseStore.ts',
+  'server/m10/credentialEnrollmentRouter.ts',
   'scripts/systemadmin/validateExecutionIssue.mjs',
   'scripts/systemadmin/validateSa4PilotIssue.mjs',
   'scripts/systemadmin/runSa4Pilot.mjs',
