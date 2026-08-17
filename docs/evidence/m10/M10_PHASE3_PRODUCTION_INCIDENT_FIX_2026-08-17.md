@@ -1,17 +1,21 @@
 # M10 — Phase 3 Production Incident: Migration Never Applied + Error-Handling Bug (2026-08-17)
 
-Status: BEHOBEN — Migration gegen Produktion angewendet (Owner-autorisiert), Fehlerbehandlungs-Bug
-im Code geschlossen und getestet
+Status: BEHOBEN — Migration + service_role-Grants gegen Produktion angewendet (beide
+Owner-autorisiert), Fehlerbehandlungs-Bug im Code geschlossen und getestet
 Authority: Owner-Bericht „die Passkey Registrierung im Supervisor Dashboard registriert die Passkey
 erstellung nicht", 2026-08-17; Owner-Wahl „Ja, Migration jetzt gegen Produktion anwenden
-(empfohlen)" via `AskUserQuestion`.
+(empfohlen)" via `AskUserQuestion`; zweiter Owner-Bericht „Registrierungs-Challenge konnte nicht
+gespeichert werden: ... permission denied for table m10_registration_challenges" nach PR #412;
+Owner-Wahl „Ja, Migration jetzt gegen Produktion anwenden (empfohlen)" (Grant-Fix) via
+`AskUserQuestion`.
 
 ## 0. Zweck
 
 Dokumentiert einen realen, vom Owner gemeldeten Produktionsfehler direkt im Anschluss an
 `docs/evidence/m10/M10_PHASE3_LIVE_WIRING_2026-08-17.md` (PR #411): Passkey-Registrierung im
-Supervisor-Dashboard schlug fehl. Root-Cause-Analyse fand **zwei unabhängige Ursachen**, beide
-behoben.
+Supervisor-Dashboard schlug fehl. Root-Cause-Analyse fand **drei unabhängige Ursachen** (die
+dritte erst nach Deploy des PR-#412-Fixes sichtbar, da sie erst nach erfolgreichem Erreichen der
+Datenbank auftritt), alle behoben.
 
 ## 1. Root Cause 1: Migration nie gegen Produktion angewendet
 
@@ -74,9 +78,47 @@ liefern `null`/`false`/`[]`). Der konkrete Produktionsfehler traf daher exakt
 „Passkey registrieren". Die übrigen Kapselungen sind Verteidigung in der Tiefe für den Fall einer
 künftigen Store-Implementierung, die auch bei anderen Methoden wirft.
 
-## 3. Testabdeckung
+## 3. Root Cause 3: fehlende explizite `service_role`-Tabellenrechte (nach PR #412 gefunden)
 
-6 neue Regressionstests in `tests/unit/m10CredentialEnrollment.test.ts`:
+Nach Merge von PR #412 (Fehlerbehandlungs-Fix) meldete der Owner einen neuen, klareren Fehler beim
+tatsächlichen Registrierungsversuch: „Registrierungs-Challenge konnte nicht gespeichert werden:
+m10_registration_challenges insert fehlgeschlagen: permission denied for table
+m10_registration_challenges". Das ist der jetzt sauber sichtbare (statt unbehandelt abstürzende)
+Fehler aus genau dem in §2 gefixten Pfad — der eigentliche Bug lag also eine Ebene tiefer.
+
+**Ursache:** Die Migration `20260817020000_m10_passkey_owner_enrollment.sql` aktiviert RLS und legt
+eine `service_role`-Policy an, vergibt aber **keine explizite Tabellen-GRANT** an `service_role`.
+Dieses Repository vergibt — dokumentiert in ADR-0043 und bereits einmal reell aufgetreten bei den
+SEO-Engine-Tabellen (`20260815210000_seo_engine_service_role_grants.sql`) — **keine** der
+Supabase-Standard-`service_role`-Rechte automatisch. Tabellenrechte werden vor RLS geprüft; eine
+aktivierte RLS-Policy ersetzt keine fehlende GRANT. Ohne explizite GRANT ist die Tabelle für
+`service_role` (und jede andere Rolle außer dem Owner der Tabelle) schlicht nicht erreichbar —
+daher „permission denied for table", nicht ein RLS-„new row violates policy"-Fehler.
+
+**Fix:** Neue Migration `20260817030000_m10_passkey_service_role_grants.sql` — nach dem in diesem
+Repository etablierten Least-Privilege-Muster (`revoke all` zuerst für ein deterministisches
+Ergebnis, dann genau die vom Code tatsächlich genutzten Operationen grantieren): `select, insert,
+update` auf beide M10-Tabellen für `service_role` (kein `delete`, da
+`credentialEnrollmentSupabaseStore.ts` keine Lösch-Operation verwendet). Nach expliziter
+Owner-Freigabe direkt via `mcp__Supabase__apply_migration` auf Produktion angewendet. Verifiziert
+über `information_schema.role_table_grants`: exakt `SELECT`/`INSERT`/`UPDATE` für `service_role` auf
+beiden Tabellen, kein `DELETE`. `mcp__Supabase__get_advisors` (Security) zeigt weiterhin keinen
+neuen Fund für die beiden M10-Tabellen (nur die bereits vorher dokumentierten, unabhängigen
+Pre-Existing-Findings für andere Tabellen).
+
+**Lektion:** Für jede neue Service-Role-only-Tabelle in diesem Repository ist neben `enable row
+level security` + Policy **zusätzlich immer eine explizite `grant ... to service_role`-Anweisung**
+erforderlich — dieses Muster wurde bereits einmal (SEO-Engine) dokumentiert, aber beim Anlegen der
+M10-Migration nicht angewendet. Künftige M10-/sonstige neue Tabellen-Migrationen sollten
+`20260815210000_seo_engine_service_role_grants.sql` bzw. `20260804200909_issue_92_service_role_dml_grants.sql`
+als Vorlage referenzieren.
+
+## 4. Testabdeckung
+
+6 neue Regressionstests in `tests/unit/m10CredentialEnrollment.test.ts` (Root Cause 2; Root Cause 3
+ist eine reine Datenbank-Rechte-Migration ohne eigenen Anwendungscode-Pfad und braucht daher keine
+zusätzlichen Unit-Tests — sie ist stattdessen per `information_schema.role_table_grants`-Abfrage
+gegen die reale Produktionsdatenbank verifiziert, siehe §3):
 
 - `beginM10CredentialEnrollment`: `credentialStore.listActiveForOwner()` wirft → `DENY` mit dem
   Fehlertext, nicht crash; `challengeStore.save()` wirft (exakt der reale Fehler — „relation ...
@@ -89,26 +131,40 @@ künftigen Store-Implementierung, die auch bei anderen Methoden wirft.
 **Testlauf:** `npx vitest run` — **200 Dateien, 1298 Tests, alle PASS** (davon neu: 6).
 `npm run lint` (`tsc --noEmit`) PASS.
 
-## 4. Produktionszustand nach diesem Fix
+## 5. Produktionszustand nach diesem Fix
 
-- Beide Tabellen existieren in Produktion mit aktivem RLS und korrekten Service-Role-Policies.
-- Der Code fängt jetzt jeden Store-Fehler sauber ab.
+- Beide Tabellen existieren in Produktion mit aktivem RLS, korrekten Service-Role-Policies UND den
+  jetzt erforderlichen expliziten `service_role`-Tabellenrechten (`SELECT`/`INSERT`/`UPDATE`,
+  verifiziert über `information_schema.role_table_grants`).
+- Der Code fängt jetzt jeden Store-Fehler sauber ab (Root Cause 2, PR #412, bereits gemerged und
+  deployt).
 - **Der Owner kann jetzt tatsächlich einen Passkey über das Supervisor-Dashboard registrieren** —
-  vorbehaltlich des nächsten Deploys, der den Code-Fix (try/catch) auf Produktion bringt (die
-  Migration selbst ist bereits unabhängig vom Code-Deploy wirksam).
+  alle drei Ursachen (fehlende Migration, unbehandelte Store-Fehler, fehlende service_role-Grants)
+  sind sowohl im Code (main) als auch direkt in Produktion behoben.
 
-## 5. Lektion für künftige Live-Wiring-Schritte
+## 6. Lektion für künftige Live-Wiring-Schritte
 
-Die Annahme „Migration rollt automatisch über den Deploy-Prozess aus" war unbegründet und wurde
-nicht vor der PR-Erstellung verifiziert. **Für jede künftige Migration in diesem Repository muss
-explizit mit dem Owner geklärt werden, ob/wie sie angewendet wird** — es gibt keinen impliziten
-Automatismus.
+Zwei unabhängige, unbegründete Annahmen wurden nicht vor PR-Erstellung verifiziert:
+
+1. Die Annahme „Migration rollt automatisch über den Deploy-Prozess aus" — es gibt keinen
+   impliziten Automatismus; **für jede künftige Migration muss explizit mit dem Owner geklärt
+   werden, ob/wie sie angewendet wird**.
+2. Die Annahme „RLS aktiviert + Policy angelegt reicht aus" — dieses Repository vergibt keine
+   Supabase-Standard-`service_role`-Rechte automatisch (ADR-0043); **jede neue Tabellen-Migration
+   braucht zusätzlich eine explizite `grant ... to service_role`-Anweisung**, unabhängig von RLS.
+   Dieses Muster war bereits einmal dokumentiert (SEO-Engine-Präzedenzfall,
+   `20260815210000_seo_engine_service_role_grants.sql`) und wurde bei M10 trotzdem übersehen —
+   künftige neue Tabellen-Migrationen in diesem Repository sollten **immer** gegen dieses Muster
+   geprüft werden, nicht erst nach einem echten Produktionsfehler.
 
 ## Related Documents
 
 - `docs/evidence/m10/M10_PHASE3_LIVE_WIRING_2026-08-17.md`
 - `docs/evidence/m10/M10_PHASE3_OWNER_CREDENTIAL_ENROLLMENT_2026-08-17.md`
 - `supabase/migrations/20260817020000_m10_passkey_owner_enrollment.sql`
+- `supabase/migrations/20260817030000_m10_passkey_service_role_grants.sql`
+- `supabase/migrations/20260815210000_seo_engine_service_role_grants.sql` (Präzedenzfall)
+- `docs/adr/ADR-0043-supabase-privilege-separation-render-production-hardening.md`
 - `server/m10/credentialEnrollment.ts`
 - `server/m10/credentialEnrollmentSupabaseStore.ts`
 - `tests/unit/m10CredentialEnrollment.test.ts`
