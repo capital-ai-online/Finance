@@ -1,10 +1,12 @@
 # M10 — Passkey-only Human/Owner PR Authorization Runbook
 
 Status: IN PROGRESS — Prerequisite Gate satisfied (M9 `COMPLETE / VERIFIED PASS`,
-`docs/evidence/m9/M9_CLOSURE_EVIDENCE.md`); Phases 1-2 implemented and tested, see
-`docs/evidence/m10/M10_PHASE1_TRUSTED_PR_STATE_RESOLVER_2026-08-17.md` and
-`docs/evidence/m10/M10_PHASE2_CHALLENGE_ISSUANCE_2026-08-17.md`; Phases 3-6 and Controlled Cutover
-outstanding  
+`docs/evidence/m9/M9_CLOSURE_EVIDENCE.md`); Phases 1-3 implemented and tested (code/logic only —
+Phase 3 has NOT performed a real Owner enrollment, which can never be done by an agent), see
+`docs/evidence/m10/M10_PHASE1_TRUSTED_PR_STATE_RESOLVER_2026-08-17.md`,
+`docs/evidence/m10/M10_PHASE2_CHALLENGE_ISSUANCE_2026-08-17.md`, and
+`docs/evidence/m10/M10_PHASE3_OWNER_CREDENTIAL_ENROLLMENT_2026-08-17.md`; Phases 4-6 and Controlled
+Cutover outstanding  
 Date: 2026-08-12  
 Updated: 2026-08-17  
 Authority: ADR-0066, ESS-0022, M10 Threat Model, DEVELOPMENT Chain Execution Policy, HUMAN_OWNER_PR_APPROVAL_POLICY
