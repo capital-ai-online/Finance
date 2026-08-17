@@ -143,6 +143,43 @@ describe('beginM10CredentialEnrollment', () => {
     const durationMs = Date.parse(stored!.challenge.expiresAt) - Date.parse(stored!.challenge.issuedAt);
     expect(durationMs).toBe(M10_REGISTRATION_CHALLENGE_TTL_MS);
   });
+
+  // Regression coverage for a real production incident (2026-08-17): the Supabase-backed
+  // credentialEnrollmentSupabaseStore.ts throws on an insert failure (e.g. a missing table before
+  // the migration was applied), but these two store calls were not wrapped in try/catch - the
+  // exception propagated unhandled through the router, and enrollment silently never completed
+  // instead of returning a clean error. Fixed by wrapping every store call; these tests prove it.
+  it('fails closed with DENY when credentialStore.listActiveForOwner() throws, instead of an unhandled rejection', async () => {
+    const credentialStore: M10CredentialStore = {
+      save: vi.fn(),
+      listActiveForOwner: vi.fn().mockRejectedValue(new Error('relation "m10_owner_credentials" does not exist')),
+      revoke: vi.fn(),
+    };
+    const result = await beginM10CredentialEnrollment(SYSTEMADMIN_OWNER_ACTOR_ID, {
+      challengeStore: createInMemoryM10RegistrationChallengeStore(),
+      credentialStore,
+      generateOptions: vi.fn().mockResolvedValue(fakeOptionsFor('challenge-a')),
+    });
+    expect(result.verdict).toBe('DENY');
+    if (result.verdict !== 'DENY') return;
+    expect(result.reason).toMatch(/does not exist/);
+  });
+
+  it('fails closed with DENY when challengeStore.save() throws, instead of an unhandled rejection', async () => {
+    const challengeStore: M10RegistrationChallengeStore = {
+      save: vi.fn().mockRejectedValue(new Error('relation "m10_registration_challenges" does not exist')),
+      get: vi.fn(),
+      markConsumed: vi.fn(),
+    };
+    const result = await beginM10CredentialEnrollment(SYSTEMADMIN_OWNER_ACTOR_ID, {
+      challengeStore,
+      credentialStore: createInMemoryM10CredentialStore(),
+      generateOptions: vi.fn().mockResolvedValue(fakeOptionsFor('challenge-a')),
+    });
+    expect(result.verdict).toBe('DENY');
+    if (result.verdict !== 'DENY') return;
+    expect(result.reason).toMatch(/does not exist/);
+  });
 });
 
 describe('completeM10CredentialEnrollment', () => {
@@ -226,6 +263,53 @@ describe('completeM10CredentialEnrollment', () => {
     expect(result.verdict).toBe('DENY');
   });
 
+  // Regression coverage for the 2026-08-17 production incident - see the equivalent tests in
+  // describe('beginM10CredentialEnrollment') for the full explanation.
+  it('fails closed with DENY when challengeStore.get() throws, instead of an unhandled rejection', async () => {
+    const credentialStore = createInMemoryM10CredentialStore();
+    const challengeStore: M10RegistrationChallengeStore = {
+      save: vi.fn(),
+      get: vi.fn().mockRejectedValue(new Error('relation "m10_registration_challenges" does not exist')),
+      markConsumed: vi.fn(),
+    };
+    const result = await completeM10CredentialEnrollment(SYSTEMADMIN_OWNER_ACTOR_ID, 'challenge-a', fakeResponse, {
+      challengeStore, credentialStore,
+    });
+    expect(result.verdict).toBe('DENY');
+  });
+
+  it('fails closed with DENY when challengeStore.markConsumed() throws, instead of an unhandled rejection', async () => {
+    const { credentialStore } = await setup();
+    const challengeStore: M10RegistrationChallengeStore = {
+      save: vi.fn(),
+      get: vi.fn().mockResolvedValue({
+        challenge: { challengeId: 'challenge-a', challenge: 'challenge-a', ownerId: SYSTEMADMIN_OWNER_ACTOR_ID, issuedAt: '2026-08-17T12:00:00.000Z', expiresAt: '2026-08-17T12:02:00.000Z' },
+        state: 'UNUSED',
+      }),
+      markConsumed: vi.fn().mockRejectedValue(new Error('connection reset')),
+    };
+    const result = await completeM10CredentialEnrollment(SYSTEMADMIN_OWNER_ACTOR_ID, 'challenge-a', fakeResponse, {
+      challengeStore, credentialStore, now: '2026-08-17T12:01:00.000Z',
+    });
+    expect(result.verdict).toBe('DENY');
+  });
+
+  it('fails closed with DENY when credentialStore.save() throws on a verified response, instead of an unhandled rejection', async () => {
+    const { challengeStore } = await setup();
+    const credentialStore: M10CredentialStore = {
+      save: vi.fn().mockRejectedValue(new Error('relation "m10_owner_credentials" does not exist')),
+      listActiveForOwner: vi.fn().mockResolvedValue([]),
+      revoke: vi.fn(),
+    };
+    const verifyResponse = vi.fn().mockResolvedValue(verifiedRegistrationResult());
+    const result = await completeM10CredentialEnrollment(SYSTEMADMIN_OWNER_ACTOR_ID, 'challenge-a', fakeResponse, {
+      challengeStore, credentialStore, verifyResponse, now: '2026-08-17T12:01:00.000Z',
+    });
+    expect(result.verdict).toBe('DENY');
+    if (result.verdict !== 'DENY') return;
+    expect(result.reason).toMatch(/does not exist/);
+  });
+
   it('enrolls and persists only minimal public credential material on a verified response', async () => {
     const { challengeStore, credentialStore } = await setup();
     const verifyResponse = vi.fn().mockResolvedValue(verifiedRegistrationResult({ publicKey: new Uint8Array([5, 6, 7]) }));
@@ -307,6 +391,16 @@ describe('revokeM10Credential', () => {
     await revokeM10Credential(SYSTEMADMIN_OWNER_ACTOR_ID, 'credential-1', { credentialStore });
     const second = await revokeM10Credential(SYSTEMADMIN_OWNER_ACTOR_ID, 'credential-1', { credentialStore });
     expect(second.verdict).toBe('DENY');
+  });
+
+  it('fails closed with DENY when credentialStore.revoke() throws, instead of an unhandled rejection', async () => {
+    const credentialStore: M10CredentialStore = {
+      save: vi.fn(),
+      listActiveForOwner: vi.fn(),
+      revoke: vi.fn().mockRejectedValue(new Error('connection reset')),
+    };
+    const result = await revokeM10Credential(SYSTEMADMIN_OWNER_ACTOR_ID, 'credential-1', { credentialStore });
+    expect(result.verdict).toBe('DENY');
   });
 });
 

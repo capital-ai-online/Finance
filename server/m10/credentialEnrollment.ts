@@ -183,7 +183,12 @@ export async function beginM10CredentialEnrollment(
     return { verdict: 'DENY', reason: 'Nur der kanonische CAPITAL-AI Owner kann einen Passkey registrieren.' };
   }
 
-  const activeCredentials = await deps.credentialStore.listActiveForOwner(ownerId);
+  let activeCredentials: readonly Readonly<M10StoredCredential>[];
+  try {
+    activeCredentials = await deps.credentialStore.listActiveForOwner(ownerId);
+  } catch (err: any) {
+    return { verdict: 'DENY', reason: `Bestehende Credentials konnten nicht geladen werden: ${err?.message || String(err)}` };
+  }
   const generate = deps.generateOptions ?? realGenerateRegistrationOptions;
 
   let options: PublicKeyCredentialCreationOptionsJSON;
@@ -209,16 +214,20 @@ export async function beginM10CredentialEnrollment(
   const expiresAtMs = issuedAtMs + M10_REGISTRATION_CHALLENGE_TTL_MS;
 
   const challengeId = options.challenge;
-  await deps.challengeStore.save({
-    challenge: {
-      challengeId,
-      challenge: options.challenge,
-      ownerId,
-      issuedAt: new Date(issuedAtMs).toISOString(),
-      expiresAt: new Date(expiresAtMs).toISOString(),
-    },
-    state: 'UNUSED',
-  });
+  try {
+    await deps.challengeStore.save({
+      challenge: {
+        challengeId,
+        challenge: options.challenge,
+        ownerId,
+        issuedAt: new Date(issuedAtMs).toISOString(),
+        expiresAt: new Date(expiresAtMs).toISOString(),
+      },
+      state: 'UNUSED',
+    });
+  } catch (err: any) {
+    return { verdict: 'DENY', reason: `Registrierungs-Challenge konnte nicht gespeichert werden: ${err?.message || String(err)}` };
+  }
 
   return { verdict: 'CHALLENGE_ISSUED', challengeId, options };
 }
@@ -251,7 +260,12 @@ export async function completeM10CredentialEnrollment(
     return { verdict: 'DENY', reason: 'Nur der kanonische CAPITAL-AI Owner kann einen Passkey registrieren.' };
   }
 
-  const stored = await deps.challengeStore.get(challengeId);
+  let stored: Readonly<StoredM10RegistrationChallenge> | null;
+  try {
+    stored = await deps.challengeStore.get(challengeId);
+  } catch (err: any) {
+    return { verdict: 'DENY', reason: `Registrierungs-Challenge konnte nicht geladen werden: ${err?.message || String(err)}` };
+  }
   if (!stored) return { verdict: 'DENY', reason: 'Unbekannte oder abgelaufene Registrierungs-Challenge.' };
   if (stored.challenge.ownerId !== ownerId) {
     return { verdict: 'DENY', reason: 'Challenge wurde nicht für diesen Owner ausgestellt.' };
@@ -260,7 +274,12 @@ export async function completeM10CredentialEnrollment(
     return { verdict: 'DENY', reason: 'Registrierungs-Challenge ist abgelaufen, verbraucht oder ungültig.' };
   }
 
-  const consumed = await deps.challengeStore.markConsumed(challengeId);
+  let consumed: boolean;
+  try {
+    consumed = await deps.challengeStore.markConsumed(challengeId);
+  } catch (err: any) {
+    return { verdict: 'DENY', reason: `Registrierungs-Challenge konnte nicht verbraucht werden: ${err?.message || String(err)}` };
+  }
   if (!consumed) return { verdict: 'DENY', reason: 'Registrierungs-Challenge wurde bereits verbraucht (Replay).' };
 
   const verify = deps.verifyResponse ?? realVerifyRegistrationResponse;
@@ -296,7 +315,11 @@ export async function completeM10CredentialEnrollment(
     revokedAt: null,
   };
 
-  await deps.credentialStore.save(stored_credential);
+  try {
+    await deps.credentialStore.save(stored_credential);
+  } catch (err: any) {
+    return { verdict: 'DENY', reason: `Credential konnte nicht gespeichert werden: ${err?.message || String(err)}` };
+  }
 
   return { verdict: 'ENROLLED', credential: stored_credential };
 }
@@ -318,7 +341,12 @@ export async function revokeM10Credential(
   if (ownerId !== SYSTEMADMIN_OWNER_ACTOR_ID) {
     return { verdict: 'DENY', reason: 'Nur der kanonische CAPITAL-AI Owner kann einen Passkey widerrufen.' };
   }
-  const revoked = await deps.credentialStore.revoke(credentialId);
+  let revoked: boolean;
+  try {
+    revoked = await deps.credentialStore.revoke(credentialId);
+  } catch (err: any) {
+    return { verdict: 'DENY', reason: `Credential konnte nicht widerrufen werden: ${err?.message || String(err)}` };
+  }
   if (!revoked) return { verdict: 'DENY', reason: 'Unbekanntes oder bereits widerrufenes Credential.' };
   return { verdict: 'REVOKED' };
 }
