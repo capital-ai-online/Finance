@@ -632,7 +632,9 @@ async function requireAdmin(req: express.Request, res: express.Response, next: e
 // zwischen "keine Berechtigung" und "zusaetzlicher TOTP-Nachweis noetig" unterscheiden und den
 // Step-Up-Dialog gezielt anzeigen kann.
 async function requireFreshStepUp(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const ok = await requireStepUp(req);
+  // Muss exakt dem 'purpose' entsprechen, das VersionManagerPanel.tsx bei der Step-up-Ausstellung
+  // sendet (<StepUpModal purpose="version-bump" .../>) - siehe M9 Independent Review Finding F2.
+  const ok = await requireStepUp(req, 'version-bump');
   if (!ok) {
     return res.status(428).json({
       error: 'Diese Aktion erfordert einen frischen Step-Up-Nachweis (TOTP).',

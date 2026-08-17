@@ -354,10 +354,19 @@ export async function requireVerifiedAal2(req: Request): Promise<Aal2Result> {
  * Session muss ZUM ZEITPUNKT DIESES REQUESTS AAL2 sein - ein Token kann eine AAL1-Sitzung nicht
  * auf AAL2 anheben, und ein Token aus einer inzwischen auf AAL1 zurückgefallenen Sitzung
  * (Logout/Ablauf/Faktor entfernt) darf nicht mehr akzeptiert werden.
+ *
+ * M9 (Independent Evidence Review, Finding F2, 2026-08-16): `purpose` ist jetzt ein
+ * Pflichtparameter und wird gegen den bei Ausstellung (`server/stepUp.ts`) gespeicherten
+ * `purpose`-Wert geprüft. Vorher wurde `purpose` bei Ausstellung gespeichert, aber beim Konsum nie
+ * gelesen - ein für einen Zweck ausgestelltes Token (z. B. `version-bump`) hätte innerhalb seines
+ * 5-Minuten-Fensters für jeden anderen Step-up-gated Endpunkt wiederverwendet werden können. Jeder
+ * Aufrufer muss seinen eigenen, bereits vorhandenen eindeutigen Bezeichner (z. B. den `zone`-String,
+ * den er ohnehin schon an `checkAdminAccess` übergibt) als `purpose` reichen.
  */
-export async function requireStepUp(req: Request): Promise<boolean> {
+export async function requireStepUp(req: Request, purpose: string): Promise<boolean> {
   const stepUpHeader = req.headers['x-step-up-token'];
   if (!stepUpHeader || typeof stepUpHeader !== 'string') return false;
+  if (!purpose) return false;
   if (!isSupabaseConfigured()) return false;
 
   const aal2 = await requireVerifiedAal2(req);
@@ -371,6 +380,7 @@ export async function requireStepUp(req: Request): Promise<boolean> {
       .update({ used_at: new Date().toISOString() })
       .eq('user_id', aal2.userId)
       .eq('token_hash', tokenHash)
+      .eq('purpose', purpose)
       .is('used_at', null)
       .gt('expires_at', new Date().toISOString())
       .select('id')

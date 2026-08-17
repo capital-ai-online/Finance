@@ -10,6 +10,7 @@ import type { Request } from 'express';
 const getUserMock = vi.fn();
 const getAalMock = vi.fn();
 const stepUpUpdateResultMock = vi.fn();
+const eqCallsMock = vi.fn();
 
 vi.mock('../../server/db', () => ({
   isSupabaseConfigured: vi.fn(() => true),
@@ -24,17 +25,28 @@ vi.mock('../../server/db', () => ({
       if (table !== 'step_up_tokens') throw new Error(`Unerwartete Tabelle im Test: ${table}`);
       return {
         update: () => ({
-          eq: () => ({
-            eq: () => ({
-              is: () => ({
-                gt: () => ({
-                  select: () => ({
-                    maybeSingle: () => stepUpUpdateResultMock(),
-                  }),
-                }),
-              }),
-            }),
-          }),
+          eq: (...args: unknown[]) => {
+            eqCallsMock(...args);
+            return {
+              eq: (...args2: unknown[]) => {
+                eqCallsMock(...args2);
+                return {
+                  eq: (...args3: unknown[]) => {
+                    eqCallsMock(...args3);
+                    return {
+                      is: () => ({
+                        gt: () => ({
+                          select: () => ({
+                            maybeSingle: () => stepUpUpdateResultMock(),
+                          }),
+                        }),
+                      }),
+                    };
+                  },
+                };
+              },
+            };
+          },
         }),
       };
     },
@@ -120,18 +132,19 @@ describe('requireStepUp (gekoppelt an AAL2)', () => {
     getUserMock.mockReset();
     getAalMock.mockReset();
     stepUpUpdateResultMock.mockReset();
+    eqCallsMock.mockReset();
     (isSupabaseConfigured as any).mockReturnValue(true);
   });
 
   it('verweigert ohne x-step-up-token-Header, ohne jede Supabase-Abfrage', async () => {
-    expect(await requireStepUp(req({ authorization: 'Bearer tok' }))).toBe(false);
+    expect(await requireStepUp(req({ authorization: 'Bearer tok' }), 'test-purpose')).toBe(false);
     expect(getUserMock).not.toHaveBeenCalled();
   });
 
   it('verweigert bei AAL1, auch wenn ein syntaktisch gültiger Step-Up-Header vorliegt - der DB-Tokencheck wird gar nicht erst versucht', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     getAalMock.mockResolvedValue({ data: { currentLevel: 'aal1', nextLevel: 'aal2' }, error: null });
-    const result = await requireStepUp(req({ authorization: 'Bearer tok', 'x-step-up-token': 'step-up-abc' }));
+    const result = await requireStepUp(req({ authorization: 'Bearer tok', 'x-step-up-token': 'step-up-abc' }), 'test-purpose');
     expect(result).toBe(false);
     expect(stepUpUpdateResultMock).not.toHaveBeenCalled();
   });
@@ -140,15 +153,44 @@ describe('requireStepUp (gekoppelt an AAL2)', () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     getAalMock.mockResolvedValue({ data: { currentLevel: 'aal2', nextLevel: 'aal2' }, error: null });
     stepUpUpdateResultMock.mockResolvedValue({ data: { id: 'token-row-1' }, error: null });
-    const result = await requireStepUp(req({ authorization: 'Bearer tok', 'x-step-up-token': 'step-up-abc' }));
+    const result = await requireStepUp(req({ authorization: 'Bearer tok', 'x-step-up-token': 'step-up-abc' }), 'test-purpose');
     expect(result).toBe(true);
+  });
+
+  // M9 Independent Evidence Review Finding F2 (2026-08-16): requireStepUp() previously never read
+  // back the 'purpose' field stored at issuance, so a token issued for one critical action could be
+  // replayed for any other step-up-gated endpoint within its 5-minute window. These tests prove the
+  // consumption-side filter is actually wired into the DB query, not just documented.
+  it('F2-Fix: verweigert ohne purpose-Argument, ohne jede Supabase-Abfrage (leerer String)', async () => {
+    const result = await requireStepUp(req({ authorization: 'Bearer tok', 'x-step-up-token': 'step-up-abc' }), '');
+    expect(result).toBe(false);
+    expect(getUserMock).not.toHaveBeenCalled();
+  });
+
+  it('F2-Fix: filtert die Token-Abfrage nach dem übergebenen purpose-Wert (nicht nur user_id/token_hash)', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    getAalMock.mockResolvedValue({ data: { currentLevel: 'aal2', nextLevel: 'aal2' }, error: null });
+    stepUpUpdateResultMock.mockResolvedValue({ data: { id: 'token-row-1' }, error: null });
+    await requireStepUp(req({ authorization: 'Bearer tok', 'x-step-up-token': 'step-up-abc' }), 'admin-diagnostics:capability-grant');
+    expect(eqCallsMock).toHaveBeenCalledWith('user_id', 'user-1');
+    expect(eqCallsMock).toHaveBeenCalledWith('purpose', 'admin-diagnostics:capability-grant');
+  });
+
+  it('F2-Fix: ein für einen anderen Zweck ausgestelltes Token wird für den angeforderten Zweck verweigert (kein Treffer in der purpose-gefilterten Abfrage)', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
+    getAalMock.mockResolvedValue({ data: { currentLevel: 'aal2', nextLevel: 'aal2' }, error: null });
+    // Simuliert exakt das reale DB-Verhalten: die WHERE-Klausel enthält jetzt purpose = 'break-glass',
+    // ein für 'version-bump' ausgestelltes Token erfüllt sie nicht -> kein Zeilentreffer.
+    stepUpUpdateResultMock.mockResolvedValue({ data: null, error: null });
+    const result = await requireStepUp(req({ authorization: 'Bearer tok', 'x-step-up-token': 'version-bump-token' }), 'systemadmin:break-glass-activate');
+    expect(result).toBe(false);
   });
 
   it('verweigert bei AAL2, aber abgelaufenem/bereits verbrauchtem/fremdem Token', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     getAalMock.mockResolvedValue({ data: { currentLevel: 'aal2', nextLevel: 'aal2' }, error: null });
     stepUpUpdateResultMock.mockResolvedValue({ data: null, error: null });
-    const result = await requireStepUp(req({ authorization: 'Bearer tok', 'x-step-up-token': 'step-up-abc' }));
+    const result = await requireStepUp(req({ authorization: 'Bearer tok', 'x-step-up-token': 'step-up-abc' }), 'test-purpose');
     expect(result).toBe(false);
   });
 
@@ -156,13 +198,13 @@ describe('requireStepUp (gekoppelt an AAL2)', () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null });
     getAalMock.mockResolvedValue({ data: { currentLevel: 'aal2', nextLevel: 'aal2' }, error: null });
     stepUpUpdateResultMock.mockResolvedValue({ data: null, error: { message: 'db unreachable' } });
-    const result = await requireStepUp(req({ authorization: 'Bearer tok', 'x-step-up-token': 'step-up-abc' }));
+    const result = await requireStepUp(req({ authorization: 'Bearer tok', 'x-step-up-token': 'step-up-abc' }), 'test-purpose');
     expect(result).toBe(false);
   });
 
   it('verweigert, wenn Supabase nicht konfiguriert ist', async () => {
     (isSupabaseConfigured as any).mockReturnValue(false);
-    const result = await requireStepUp(req({ authorization: 'Bearer tok', 'x-step-up-token': 'step-up-abc' }));
+    const result = await requireStepUp(req({ authorization: 'Bearer tok', 'x-step-up-token': 'step-up-abc' }), 'test-purpose');
     expect(result).toBe(false);
   });
 });

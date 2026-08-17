@@ -1,7 +1,8 @@
 # M9 — Agent Assurance, Incident Response & Break-Glass Runbook
 
-Status: IN PROGRESS — NOT YET `COMPLETE / VERIFIED PASS` (updated 2026-08-16, see Exit Gate status
-note below)
+Status: **COMPLETE / VERIFIED PASS** (2026-08-17, all 10 Exit Gate items satisfied — see
+`docs/evidence/m9/M9_CLOSURE_EVIDENCE.md` for the authoritative closure record; M10 prerequisite
+gate is satisfied)
 Date: 2026-08-12
 Authority: ADR-0063, `docs/architecture/ai-agent/AI_AGENT_INCIDENT_RESPONSE.md`, DEVELOPMENT Chain Execution Policy
 
@@ -205,20 +206,30 @@ M9 is `COMPLETE / VERIFIED PASS` only when:
 9. Evidence and Roadmap/Traceability are synchronized;
 10. work branches are deleted.
 
-**Status note (2026-08-16, replaces the earlier "PLANNED — EXECUTION BLOCKED BY M8" header, which
-was stale after M8 completed and all 8 domains below were drilled):** All 8 Assurance Domains have
-a live drill with evidence under `docs/evidence/m9/*_LIVE_DRILL_2026-08-16.md`. The Required
-Independent Review (item 6) is complete —
-`docs/evidence/m9/M9_INDEPENDENT_EVIDENCE_REVIEW_2026-08-16.md` gives its own independent,
-per-item verdict for all 10 Exit Gate items (several graded "partially satisfied" rather than
-fully satisfied — see that document, not this line, for the authoritative per-item status). Items
-1, 6 and 7 are satisfied. Item 9 is satisfied by this edit. Item 10 was re-verified 2026-08-16:
-after pruning stale local branch caches, the only branches on the shared repository are `main`,
-this session's own active designated branch, and one unrelated branch belonging to a different
-parallel agent session — no M9-attributable leftover branch exists. **M9 is NOT yet formally
-`COMPLETE / VERIFIED PASS`** — see the Independent Review document for the specific items still
-graded partial and the Owner decisions that remain open (`docs/evidence/m9/
-M9_I2_ENTRY_INVENTORY_AND_GAP_ANALYSIS_2026-08-16.md` §5 tracks the live list of Owner-facing
-options).
+**Status note (2026-08-17, supersedes the 2026-08-16 note below — M9 is now formally closed):** All
+10 Exit Gate items are satisfied — see `docs/evidence/m9/M9_CLOSURE_EVIDENCE.md` for the
+authoritative, item-by-item closure record. Items 1, 4, 6, 7, 9 and 10 are fully satisfied. Items
+2, 3, 5 and 8 are satisfied via explicit Owner acceptance of documented structural residuals (SA3B
+as the only real caller across several domains; mocked-Supabase test methodology) — these are
+properties of the current system architecture, not open security gaps. The one genuinely fixable
+finding from the Required Independent Review (F2: `requireStepUp()` did not filter the `purpose`
+field at consumption) is closed and tested —
+`docs/evidence/m9/M9_STEPUP_PURPOSE_FILTER_FIX_2026-08-17.md`. **The M10 prerequisite gate is
+satisfied.**
+
+<details>
+<summary>2026-08-16 status note (historical, superseded above)</summary>
+
+All 8 Assurance Domains have a live drill with evidence under
+`docs/evidence/m9/*_LIVE_DRILL_2026-08-16.md`. The Required Independent Review (item 6) is complete
+— `docs/evidence/m9/M9_INDEPENDENT_EVIDENCE_REVIEW_2026-08-16.md` gives its own independent,
+per-item verdict for all 10 Exit Gate items (several graded "partially satisfied" rather than fully
+satisfied at that point in time). Items 1, 6 and 7 were satisfied. Item 9 was satisfied by the edit
+that added this note. Item 10 was re-verified 2026-08-16: after pruning stale local branch caches,
+the only branches on the shared repository were `main`, this session's own active designated
+branch, and one unrelated branch belonging to a different parallel agent session — no
+M9-attributable leftover branch existed.
+
+</details>
 
 Only then may M10 implementation/cutover begin.
