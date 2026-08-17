@@ -20,7 +20,7 @@ async function requireOwnerWithStepUp(req: express.Request, res: express.Respons
     res.status(403).json({ error: 'Access Denied: Restricted to the CAPITAL-AI owner.', reason: authz.reason });
     return null;
   }
-  const stepUpOk = await requireStepUp(req);
+  const stepUpOk = await requireStepUp(req, zone);
   if (!stepUpOk) {
     res.status(428).json({ error: 'Diese Aktion erfordert einen frischen Step-Up-Nachweis (TOTP).', code: 'step_up_required' });
     return null;
