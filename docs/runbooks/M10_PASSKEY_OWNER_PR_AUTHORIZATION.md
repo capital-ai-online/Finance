@@ -2,11 +2,13 @@
 
 Status: IN PROGRESS — Prerequisite Gate satisfied (M9 `COMPLETE / VERIFIED PASS`,
 `docs/evidence/m9/M9_CLOSURE_EVIDENCE.md`); Phases 1-3 implemented and tested, Phase 3 now live-wired
-(real HTTP endpoint, Supabase persistence, minimal Owner UI). A production incident was found and
-fixed after live-wiring (migration had never been applied to production; unhandled store exceptions
-caused Owner passkey enrollment attempts to fail silently) — migration is now applied to production
-(Owner-authorized) and the error-handling bug is fixed and tested, pending code deploy — NO real
-Owner enrollment has been performed, which can never be done by an agent, see
+(real HTTP endpoint, Supabase persistence, minimal Owner UI). Three independent production incidents
+were found and fixed after live-wiring: (1) migration had never been applied to production, (2)
+unhandled store exceptions caused Owner passkey enrollment attempts to fail silently, (3) the
+migration enabled RLS but granted no explicit `service_role` table privilege (this repository does
+not carry Supabase's default service_role grants, ADR-0043), causing "permission denied for table"
+on insert. All three are now fixed both on `main` and directly in production (Owner-authorized) —
+NO real Owner enrollment has been performed, which can never be done by an agent, see
 `docs/evidence/m10/M10_PHASE1_TRUSTED_PR_STATE_RESOLVER_2026-08-17.md`,
 `docs/evidence/m10/M10_PHASE2_CHALLENGE_ISSUANCE_2026-08-17.md`,
 `docs/evidence/m10/M10_PHASE3_OWNER_CREDENTIAL_ENROLLMENT_2026-08-17.md`,
