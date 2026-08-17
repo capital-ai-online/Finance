@@ -2,13 +2,17 @@
 
 Status: IN PROGRESS — Prerequisite Gate satisfied (M9 `COMPLETE / VERIFIED PASS`,
 `docs/evidence/m9/M9_CLOSURE_EVIDENCE.md`); Phases 1-3 implemented and tested, Phase 3 now live-wired
-(real HTTP endpoint, Supabase persistence, minimal Owner UI) — NO real Owner enrollment has been
-performed, which can never be done by an agent, see
+(real HTTP endpoint, Supabase persistence, minimal Owner UI). A production incident was found and
+fixed after live-wiring (migration had never been applied to production; unhandled store exceptions
+caused Owner passkey enrollment attempts to fail silently) — migration is now applied to production
+(Owner-authorized) and the error-handling bug is fixed and tested, pending code deploy — NO real
+Owner enrollment has been performed, which can never be done by an agent, see
 `docs/evidence/m10/M10_PHASE1_TRUSTED_PR_STATE_RESOLVER_2026-08-17.md`,
 `docs/evidence/m10/M10_PHASE2_CHALLENGE_ISSUANCE_2026-08-17.md`,
-`docs/evidence/m10/M10_PHASE3_OWNER_CREDENTIAL_ENROLLMENT_2026-08-17.md`, and
-`docs/evidence/m10/M10_PHASE3_LIVE_WIRING_2026-08-17.md`; Phases 4-6 and Controlled Cutover
-outstanding  
+`docs/evidence/m10/M10_PHASE3_OWNER_CREDENTIAL_ENROLLMENT_2026-08-17.md`,
+`docs/evidence/m10/M10_PHASE3_LIVE_WIRING_2026-08-17.md`, and
+`docs/evidence/m10/M10_PHASE3_PRODUCTION_INCIDENT_FIX_2026-08-17.md`; Phases 4-6 and Controlled
+Cutover outstanding  
 Date: 2026-08-12  
 Updated: 2026-08-17  
 Authority: ADR-0066, ESS-0022, M10 Threat Model, DEVELOPMENT Chain Execution Policy, HUMAN_OWNER_PR_APPROVAL_POLICY
