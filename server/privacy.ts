@@ -11,7 +11,7 @@ import {
 
 export const privacyRouter = express.Router();
 
-type VerifiedIdentity = { userId: string; email?: string; role: string };
+type VerifiedIdentity = { userId: string; email?: string };
 
 type ExportSection = {
   available: boolean;
