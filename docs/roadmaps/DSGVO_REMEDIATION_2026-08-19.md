@@ -3,7 +3,7 @@
 **Baseline:** `main` @ `345b2bd3f0a9d61ba4f07182b6e892da5cf3b52d`  
 **Branch:** `agent/dsgvo-remediation-controller-rights`  
 **Owner/Controller:** Sven Michael Kulessa, von Lepel Straße 3a, 27259 Freistatt, Deutschland  
-**Status:** Implementation abgeschlossen; PR/CI-Gate ausstehend
+**Status:** P0/P1 repository remediation implemented; vendor evidence onboarding and follow-up advisor hardening in progress on PR #414
 
 ## Ziel
 
@@ -69,6 +69,13 @@ Das Ziel ist **keine Selbsterklärung einer Zertifizierung**. Die Anwendung darf
 - [x] Provider und mögliche Drittlandtransfers werden in der Processing Registry transparent aufgeführt.
 - [x] Repository behauptet keine AVV/SCC/Region-Zusicherung ohne separat gepflegten Vertragsnachweis.
 - [x] Offene Vendor-Evidence wird als organisatorischer Nachweis außerhalb des Sourcecodes gekennzeichnet.
+- [x] Maschinenlesbares Vendor-Inventar für Supabase, Render, Stripe, IONOS, Google, YouTube, Instagram, TikTok, X, Threads, LinkedIn und Facebook angelegt.
+- [x] Technisch beobachtete Regionen werden getrennt von vertraglich zugesicherten Regionen gespeichert.
+- [x] Onboarding-Preflight verhindert strukturell ungültige bzw. falsch als verifiziert markierte Evidence.
+- [x] Strict-Gate für DPA-/Subprocessor-/SCC-/TIA-/Region-Evidence implementiert.
+- [ ] Kandidaten einzeln mit dem Controller bestätigen und Legal Role / tatsächliche Produktionsnutzung vervollständigen.
+- [ ] Vertragliche Evidence-Hashes und kontrollierte Ablageorte ergänzen.
+- [ ] Relevante Drittlandtransfers und TIA-Ergebnisse vervollständigen.
 
 ### P1-3 — Logging / PII
 
@@ -77,22 +84,34 @@ Das Ziel ist **keine Selbsterklärung einer Zertifizierung**. Die Anwendung darf
 - [x] Konkret identifizierte Subscription-Logs geben E-Mail/User-ID nicht mehr im Klartext aus.
 - [x] Regression-Test schützt die bereinigten Subscription-Logging-Stellen.
 
+### P1-4 — Supabase Advisor Hardening
+
+- [x] Leaked-Password-Protection als vom Controller akzeptierte Free-Tier-Restriktion dokumentiert; kein falscher PASS-Claim.
+- [x] Policy-lose `agent_audit_events`-/SEO-Tabellen als absichtliches server-only deny-by-default bewertet; keine künstlich permissiven Policies.
+- [x] Vier veraltete `auth.role()`-Service-Role-Policies im PR auf explizites `TO service_role` umgestellt.
+- [x] Fehlenden FK-Index für `seo_content_inventory.primary_keyword_id` im PR ergänzt.
+- [x] `unused_index`-Befunde bis zu belastbarer Produktions-Workload-Evidence zurückgestellt.
+- [ ] `promo_redemptions`-Identitäts-/Idempotenzmodell fachlich klären, bevor ein Primary Key festgelegt wird.
+- [ ] Follow-up-Advisor-Migration erst nach separater Produktionsfreigabe anwenden und danach Advisors erneut verifizieren.
+
 ## Release Gate
 
 ### Main-Korrelation
 
-Am 19. August 2026 wurde der Branch nach Abschluss der Codeänderungen erneut gegen `main` geprüft.
+Am 19. August 2026 wurde der Branch nach den Vendor-Evidence-/Advisor-Follow-up-Änderungen erneut gegen `main` geprüft.
 
 - `main` stand weiterhin auf `345b2bd3f0a9d61ba4f07182b6e892da5cf3b52d`.
-- Seit Branch-Erstellung wurden damit **keine neuen Main-Commits** gemerged.
-- Es existieren folglich keine zwischenzeitlichen Main-Änderungen, die mit Auth-, Supabase-, Routing-, Legal- oder Privacy-Dateien dieses Branches korrelieren oder neu eingearbeitet werden müssten.
+- Branch war zuletzt **27 Commits voraus und 0 Commits zurück**; Merge-Base weiterhin identisch mit `main`.
+- Seit Branch-Erstellung wurden damit keine neuen Main-Commits gemerged.
+- Es existieren folglich keine zwischenzeitlichen Main-Änderungen, die mit Auth-, Supabase-, Routing-, Legal-, Privacy- oder Vendor-Evidence-Dateien dieses Branches korrelieren oder neu eingearbeitet werden müssten.
 
 ### PR-/CI-Gate
 
-- [x] Branch gegen aktuellen `main` verglichen.
+- [x] Branch nach Follow-up-Änderungen gegen aktuellen `main` verglichen.
 - [x] Keine zwischenzeitlichen Main-Korrelationen festgestellt.
 - [x] Diff enthält Regression-Tests für Controller-Identity, DDG-Referenz, Compliance-Claims und PII-Logging.
-- [ ] GitHub-CI nach PR-Erstellung erfolgreich.
+- [x] Vendor-Evidence-Onboarding-Preflight in `npm test` integriert.
+- [ ] Aktueller GitHub-CI-Lauf nach Vendor-/Advisor-Follow-up erfolgreich.
 
 Lokale CLI-Ausführung ist in der aktuellen Agent-Laufzeit nicht verfügbar; der GitHub-PR-CI-Lauf ist deshalb der ausführbare Build/Test-Nachweis für diesen Branch.
 
@@ -100,8 +119,9 @@ Lokale CLI-Ausführung ist in der aktuellen Agent-Laufzeit nicht verfügbar; der
 
 Folgende Punkte bleiben organisatorische/legal-evidence Aufgaben und werden nicht als „erfüllt“ ausgezeichnet, solange keine Belege vorliegen:
 
-- AVV/DPA je Auftragsverarbeiter,
+- AVV/DPA je tatsächlichem Auftragsverarbeiter,
 - aktuelle Standardvertragsklauseln / Angemessenheitsmechanismen je Drittlandtransfer,
-- tatsächliche Hosting-Regionen und Subprozessoren,
+- vollständige Subprocessor-Kette und Change-Notification-Nachweis,
+- vertraglich zugesicherte Processing-/Hosting-Regionen,
 - externe Datenschutz- oder ISO-Zertifizierung,
-- abschließende juristische Prüfung der Rechtsgrundlagen und Aufbewahrungsfristen.
+- abschließende juristische Prüfung der Rechtsgrundlagen, Transferbewertungen und Aufbewahrungsfristen.
