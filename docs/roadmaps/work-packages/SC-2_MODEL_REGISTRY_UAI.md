@@ -1,11 +1,11 @@
 # SC-2 — Model Registry & Universal Asset Interface
 
 **SPT:** `SC-MD-SPT-0001`  
-**Status:** IN IMPLEMENTATION — A1/A2 consolidation + Research Evidence re-entry boundary  
+**Status:** IN IMPLEMENTATION — A1/A2 consolidation + Research Evidence Shadow  
 **Parent Branch:** `agent/a1-a2-scoring-consolidation`  
 **Current Child Branch:** `agent/gemini-research-evidence-adapter`  
 **Start:** 2026-08-19  
-**ADRs:** ADR-0086, ADR-0087
+**ADRs:** ADR-0086, ADR-0087, ADR-0088
 
 ## Ziel
 
@@ -16,6 +16,7 @@ SC-2 konsolidiert die historisch gewachsenen Scoring-Pfade in **eine** kanonisch
 ```text
 UAI Identity
    -> Evidence Acquisition / MarketDataGateway / ResearchEvidenceAdapter
+          -> GeminiResearchTransport (optional shadow, server-only, default-off)
           -> AI_DISCOVERED_EVIDENCE (niemals direkt scoreEligible)
           -> Source Validation
           -> zukünftige field-spezifische Evidence Promotion
@@ -71,25 +72,43 @@ Vollständige Baseline: `docs/evidence/sc-md/SC2_A1_A2_BASELINE_2026-08-19.md`.
 
 ### Phase A.5 — Research-/Extraction-/Evidence-Discovery Re-Entry Boundary
 
-ADR-0087 erlaubt die **dormant** Vorbereitung einer zukünftigen Gemini-Rückkehr, ohne ADR-0072 für Runtime/Keys/Dependencies aufzuheben.
-
 - [x] providerneutraler `ResearchEvidenceAdapter`-Contract
 - [x] UAI-gebundener `ResearchEvidenceCandidate` mit `AI_DISCOVERED_EVIDENCE`
 - [x] harte Invariante `scoreEligible=false` für Discovery + Source Validation
-- [x] Source-Policy-Klassen (`regulated-primary`, `official-primary`, `provider-primary`, `secondary`, `unknown`)
-- [x] öffentliche HTTPS-/SSRF-nahe URL-Grenzen
-- [x] dormant `GeminiResearchEvidenceAdapter` + `GeminiResearchTransport` Interface
-- [x] Search/URL-Context/Structured-Output Mapping vorbereitet
-- [x] Citation-/Source-Bindung verpflichtend; unsourced Claims werden verworfen
-- [x] Function Calling in Re-Entry Phase 1 deaktiviert
+- [x] Source-Policy-Klassen und öffentliche HTTPS-/SSRF-nahe URL-Grenzen
+- [x] `GeminiResearchEvidenceAdapter` + `GeminiResearchTransport` Interface
+- [x] Search/URL-Context/Structured-Output Mapping
+- [x] provider-owned Citation-/Source-Bindung verpflichtend
+- [x] Function Calling deaktiviert
 - [x] Regressionstests implementiert
-- [ ] Tests in CI/lokal ausführen und PASS-Evidence erfassen
-- [ ] echter Gemini Transport — **Owner-gated, separate Aktivierungsstufe**
-- [ ] `@google/genai`/Secret/Feature-Flag/Telemetry — **nicht Teil dieser Foundation**
+
+Evidence: `docs/evidence/sc-md/SC2_GEMINI_RESEARCH_EVIDENCE_ADAPTER_2026-08-19.md`.
+
+### Phase A.6 — Server-only Gemini Research Shadow Runtime
+
+Owner-gated Aktivierungsstufe aus ADR-0087, umgesetzt durch ADR-0088.
+
+- [x] REST `GeminiResearchTransport` gegen Interactions API
+- [x] server-only; keine öffentliche Route / kein Startup-Traffic
+- [x] Feature Flag `GEMINI_RESEARCH_SHADOW_ENABLED=false`
+- [x] `GEMINI_API_KEY` über kanonische `finance-secrets.env`-Manifestliste
+- [x] Modell-/Preis-/Kostenvertrag vor Aktivierung zwingend
+- [x] lokales RPM via bestehendem `RateLimitBudget`
+- [x] tägliches Request-/Token-/USD-Shadow-Budget
+- [x] bestehender `CircuitBreaker`
+- [x] bestehende Supervisor Provider Health
+- [x] kanonische, prompt-/secret-freie Audit-Telemetrie
+- [x] `store=false` / `background=false`
+- [x] provider-owned `url_citation`-Span-Bindung; kein Model-Source-JSON
+- [x] Regressionstests implementiert
+- [ ] vollständiges `vitest`/`tsc` CI-PASS-Evidence
+- [ ] realen `GEMINI_API_KEY` in Render Secret File setzen — Owner/Deployment-Aktion
+- [ ] Shadow-Consumer gezielt verdrahten und Coverage/Kosten/Latenz messen
 - [ ] reale Source-Policy + Lizenzfreigaben je Domain/Field
 - [ ] field-spezifische Promotion zu `ScoringEvidenceRef` — separat Owner-gated
 
-Evidence: `docs/evidence/sc-md/SC2_GEMINI_RESEARCH_EVIDENCE_ADAPTER_2026-08-19.md`.
+Evidence: `docs/evidence/sc-md/SC2_GEMINI_SHADOW_TRANSPORT_2026-08-19.md`.  
+Runbook: `docs/runbooks/GEMINI_RESEARCH_SHADOW.md`.
 
 ### Phase B — Consumer Migration
 
@@ -98,7 +117,7 @@ Evidence: `docs/evidence/sc-md/SC2_GEMINI_RESEARCH_EVIDENCE_ADAPTER_2026-08-19.m
 - [ ] Commodity/Sovereign Executor aus `registryRoutes` extrahieren
 - [ ] Registry routes über UAI + Registry-Resolution
 - [ ] Meme/Raw-Materials direkte Modellwahl hinter kanonische Adapter setzen oder retire
-- [ ] `/api/crypto/analyze` auf Research-/Enrichment-Semantik begrenzen; Research Evidence ggf. ausschließlich über `ResearchEvidenceAdapter`
+- [ ] `/api/crypto/analyze` auf Research-/Enrichment-Semantik begrenzen; Research Evidence ausschließlich über `ResearchEvidenceAdapter`
 
 ### Phase C — Single Dispatcher Exit
 
@@ -113,14 +132,15 @@ Evidence: `docs/evidence/sc-md/SC2_GEMINI_RESEARCH_EVIDENCE_ADAPTER_2026-08-19.m
 - keine Änderung von Scoring-Gewichten;
 - keine Änderung von Ranking-/Eligibility-Schwellen;
 - kein `scoreImpact`-/`rankingImpact`-Flip;
-- kein Provider-Routing-/executionPriceEligible-Flip;
-- **keine Gemini Runtime-Reaktivierung in Phase A.5**; ADR-0072 bleibt für SDK/Key/Runtime wirksam;
+- kein Market-Data-Provider-Routing-/executionPriceEligible-Flip;
 - keine neuen synthetischen/LLM-basierten Finanzmerkmale;
-- keine automatische Evidence-Promotion aus AI-Ausgaben.
+- keine automatische Evidence-Promotion aus AI-Ausgaben;
+- keine Gemini-Aufnahme in das Anthropic/OpenAI-Agent-Routing;
+- keine öffentliche Gemini-Research-Route in Phase A.6.
 
 ## Enterprise-/FinTech-Abgleich
 
-Die Registry übernimmt die für Enterprise Model Governance wesentlichen Prinzipien: zentrale Versionierung, kontrollierte Deployment-Aliase (`champion`/`challenger`), nachvollziehbare Modellmetadaten und fail-closed Promotion. Die UAI-/Evidence-Trennung verhindert, dass Asset-Katalogdaten oder AI-Outputs stillschweigend zu Finanz-Evidence werden. Der Research-Evidence-Contract ergänzt diese Trennung um eine explizite Trust Boundary: AI kann Quellen entdecken und Claims extrahieren, aber Source Authority und Score-Evidence entstehen erst in separaten, reviewbaren Policy-/Feature-Gates. Outcome-/Walk-Forward-Validierung bleibt SC-8 und wird über die Registry-Versionen korrelierbar.
+Die Registry übernimmt zentrale Versionierung, kontrollierte Deployment-Aliase, nachvollziehbare Modellmetadaten und fail-closed Promotion. UAI/Evidence-Trennung verhindert, dass Asset-Katalogdaten oder AI-Outputs stillschweigend zu Finanz-Evidence werden. Der Gemini-Shadow-Transport bleibt vor dem Evidence Gate, ist explizit kosten-/rate-/circuit-begrenzt und liefert nur zitierte Research Candidates. Produktive Score-Wirkung erfordert weiterhin einen separat versionierten und reviewbaren Evidence-/Feature-Contract. Outcome-/Walk-Forward-Validierung bleibt SC-8.
 
 ## Definition of Done SC-2
 
