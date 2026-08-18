@@ -44,19 +44,24 @@ function transportWith(
 }
 
 describe('GeminiResearchEvidenceAdapter dormant re-entry boundary', () => {
-  it('maps sourced structured claims to non-score-bearing evidence candidates', async () => {
+  it('maps provider-cited structured claims to non-score-bearing evidence candidates', async () => {
     let captured: GeminiResearchTransportRequest | undefined;
     const adapter = new GeminiResearchEvidenceAdapter(
       transportWith({
         model: 'gemini-test-model',
-        sources: [{ url: 'https://www.sec.gov/Archives/edgar/data/320193/example.htm', title: 'Apple filing' }],
+        providerCitations: [{
+          url: 'https://www.sec.gov/Archives/edgar/data/320193/example.htm',
+          title: 'Apple filing',
+          startIndex: 20,
+          endIndex: 80,
+        }],
         claims: [{
           field: 'revenue',
           value: 123.45,
           unit: 'USD billion',
           observedAt: '2026-06-30T00:00:00.000Z',
           extractionConfidence: 0.92,
-          sourceIndexes: [0],
+          providerCitationIndexes: [0],
         }],
       }, (req) => { captured = req; }),
       () => new Date('2026-08-19T00:00:00.000Z'),
@@ -73,6 +78,10 @@ describe('GeminiResearchEvidenceAdapter dormant re-entry boundary', () => {
         hostname: 'www.sec.gov',
         sourceClass: 'unknown',
       },
+      citation: {
+        startIndex: 20,
+        endIndex: 80,
+      },
       claim: {
         field: 'revenue',
         value: 123.45,
@@ -82,6 +91,7 @@ describe('GeminiResearchEvidenceAdapter dormant re-entry boundary', () => {
     expect(adapter.descriptor.functionCallingEnabled).toBe(false);
     expect(captured?.tools).toEqual(['google_search']);
     expect(captured?.functionCallingEnabled).toBe(false);
+    expect(JSON.stringify(captured?.responseSchema)).not.toContain('sources');
   });
 
   it('enables URL context only for explicitly supplied public URLs', async () => {
@@ -89,7 +99,7 @@ describe('GeminiResearchEvidenceAdapter dormant re-entry boundary', () => {
     const adapter = new GeminiResearchEvidenceAdapter(
       transportWith({
         model: 'gemini-test-model',
-        sources: [],
+        providerCitations: [],
         claims: [],
       }, (req) => { captured = req; }),
     );
@@ -100,18 +110,18 @@ describe('GeminiResearchEvidenceAdapter dormant re-entry boundary', () => {
     expect(captured?.urls).toEqual(['https://www.apple.com/newsroom/']);
   });
 
-  it('fails closed on unsourced claims instead of treating model output as evidence', async () => {
+  it('fails closed on claims without provider-owned citation binding', async () => {
     const adapter = new GeminiResearchEvidenceAdapter(transportWith({
       model: 'gemini-test-model',
-      sources: [{ url: 'https://www.sec.gov/Archives/example.htm' }],
-      claims: [{ field: 'revenue', value: 123, sourceIndexes: [99] }],
+      providerCitations: [{ url: 'https://www.sec.gov/Archives/example.htm' }],
+      claims: [{ field: 'revenue', value: 123, providerCitationIndexes: [99] }],
     }));
 
     const result = await adapter.discover(request());
 
     expect(result.status).toBe('UNAVAILABLE');
     expect(result.candidates).toEqual([]);
-    expect(result.diagnostics.join(' ')).toContain('no valid cited source');
+    expect(result.diagnostics.join(' ')).toContain('no valid provider citation binding');
   });
 
   it('rejects private/non-HTTPS input URLs before a provider transport is called', async () => {
@@ -136,7 +146,7 @@ describe('GeminiResearchEvidenceAdapter dormant re-entry boundary', () => {
     const adapter = new GeminiResearchEvidenceAdapter({
       async discover() {
         called = true;
-        return { model: 'unused', sources: [], claims: [] };
+        return { model: 'unused', providerCitations: [], claims: [] };
       },
     });
     const urls = Array.from({ length: GEMINI_RESEARCH_MAX_URLS + 1 }, (_, i) => `https://example${i}.com/data`);
@@ -150,8 +160,8 @@ describe('GeminiResearchEvidenceAdapter dormant re-entry boundary', () => {
   it('can validate an approved primary source without making it score-eligible', async () => {
     const adapter = new GeminiResearchEvidenceAdapter(transportWith({
       model: 'gemini-test-model',
-      sources: [{ url: 'https://www.sec.gov/Archives/example.htm', title: 'SEC filing' }],
-      claims: [{ field: 'revenue', value: 123, sourceIndexes: [0] }],
+      providerCitations: [{ url: 'https://www.sec.gov/Archives/example.htm', title: 'SEC filing' }],
+      claims: [{ field: 'revenue', value: 123, providerCitationIndexes: [0] }],
     }));
     const discovery = await adapter.discover(request());
     const candidate = discovery.candidates[0];
@@ -180,8 +190,8 @@ describe('GeminiResearchEvidenceAdapter dormant re-entry boundary', () => {
   it('keeps unknown sources research-only and rejects citation/source mismatches', async () => {
     const adapter = new GeminiResearchEvidenceAdapter(transportWith({
       model: 'gemini-test-model',
-      sources: [{ url: 'https://example.com/article' }],
-      claims: [{ field: 'revenue', value: 'reported value', sourceIndexes: [0] }],
+      providerCitations: [{ url: 'https://example.com/article' }],
+      claims: [{ field: 'revenue', value: 'reported value', providerCitationIndexes: [0] }],
     }));
     const discovery = await adapter.discover(request());
     const candidate = discovery.candidates[0];

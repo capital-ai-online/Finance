@@ -21,7 +21,8 @@ ResearchEvidenceAdapter contract
       |
       +-- GeminiResearchEvidenceAdapter (dormant)
       |      tools: google_search + optional url_context
-      |      structured claim/source schema
+      |      structured CLAIM schema only
+      |      provider citation metadata kept separate
       |      function calling = false
       |
       v
@@ -68,8 +69,9 @@ Canonical ScoringEvidenceRef / Feature Contract
 - keine Gemini SDK-Abhängigkeit;
 - keine Secret-/Environment-Nutzung;
 - zukünftiger Providerzugriff nur hinter `GeminiResearchTransport`;
-- Schema für `sources[]` + `claims[]` mit verpflichtender `sourceIndexes`-Bindung;
-- Claims ohne gültige Source-Bindung werden verworfen;
+- Structured-Output-Schema enthält **nur Claims**, keine modellgenerierte Source-Liste;
+- URLs/Titel/Spans dürfen im Transport ausschließlich aus provider-eigenen Citation-/Grounding-Metadaten stammen;
+- der Transport bindet Claims an `providerCitationIndexes`; Claims ohne zuverlässige Bindung werden verworfen;
 - URL Context maximal 20 URLs pro Request;
 - Google Search ist read-only Discovery;
 - Function Calling ist ausdrücklich `false`;
@@ -89,21 +91,23 @@ Der Code bindet absichtlich kein konkretes Gemini-Modell fest. Modell-/SDK-Auswa
 ## Sicherheits-/FinTech-Invarianten
 
 1. LLM-Ausgabe ist keine Finanzdaten-Provenance.
-2. Citation-Bindung ist erforderlich, aber allein nicht hinreichend für Score-Evidence.
-3. Source Authority wird nicht vom Modell bestimmt.
-4. Catalog/UAI Identity und Evidence bleiben getrennt.
-5. Keine synthetische Auffüllung fehlender Finanzwerte.
-6. Keine interne Action-/Function-Calling-Fähigkeit in der ersten Gemini-Re-Entry-Stufe.
-7. Fehlende validierte Evidence bleibt `SCORE_NOT_COMPUTABLE`.
-8. Nutzungs-/Lizenz- und field-spezifische Promotion müssen vor Score-Wirkung separat genehmigt werden.
+2. Source URLs werden nicht aus modellgeneriertem JSON akzeptiert; nur Provider-Citation-/Grounding-Metadaten dürfen Source-Authority begründen.
+3. Citation-Bindung ist erforderlich, aber allein nicht hinreichend für Score-Evidence.
+4. Source Authority wird nicht vom Modell bestimmt.
+5. Catalog/UAI Identity und Evidence bleiben getrennt.
+6. Keine synthetische Auffüllung fehlender Finanzwerte.
+7. Keine interne Action-/Function-Calling-Fähigkeit in der ersten Gemini-Re-Entry-Stufe.
+8. Fehlende validierte Evidence bleibt `SCORE_NOT_COMPUTABLE`.
+9. Nutzungs-/Lizenz- und field-spezifische Promotion müssen vor Score-Wirkung separat genehmigt werden.
 
 ## Testumfang
 
 `tests/unit/researchEvidenceAdapter.test.ts` deckt ab:
 
-- sourced structured claim -> Candidate, aber `scoreEligible=false`;
+- provider-cited structured claim -> Candidate, aber `scoreEligible=false`;
+- Structured Output enthält keine modellgenerierte Source-Liste;
 - URL Context nur bei expliziten URLs;
-- unsourced/out-of-range source references -> verworfen;
+- Claims ohne gültige provider-owned Citation-Bindung -> verworfen;
 - private/non-HTTPS URLs -> vor Providertransport abgelehnt;
 - 20-URL-Limit;
 - approved primary source -> `VALIDATED_PRIMARY_SOURCE`, aber weiterhin nicht scorebar;
@@ -126,7 +130,7 @@ Der Code bindet absichtlich kein konkretes Gemini-Modell fest. Modell-/SDK-Auswa
 
 ## Nächste Aktivierungsstufe
 
-Erst nach Owner-Freigabe: server-only Transport + Feature Flag default false + Secret Wiring + Telemetry/Cost Budget + Shadow Measurement. Danach kann anhand realer Coverage-Daten entschieden werden, ob und welche primären Quellen/Fields in einem separaten Evidence-Promotion-Schritt scorefähig werden.
+Erst nach Owner-Freigabe: server-only Transport + Feature Flag default false + Secret Wiring + Telemetry/Cost Budget + Shadow Measurement. Der Transport muss nachweisbar provider-eigene Citation-/Grounding-Metadaten von modellgeneriertem Claim-JSON getrennt halten. Danach kann anhand realer Coverage-Daten entschieden werden, ob und welche primären Quellen/Fields in einem separaten Evidence-Promotion-Schritt scorefähig werden.
 
 ## Referenzen
 

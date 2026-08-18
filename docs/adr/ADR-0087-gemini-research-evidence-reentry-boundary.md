@@ -34,7 +34,9 @@ Jeder Modellfund wird als `ResearchEvidenceCandidate` mit folgenden harten Eigen
 - einzelner strukturierter Claim mit Field/Value/Unit/optionalem observedAt;
 - Discovery Provider/Model/Methoden.
 
-Unsourced Claims werden verworfen. Ein Modellname oder eine Gemini-Antwort ist keine Finanzdaten-Provenance.
+**Source-of-Source-Regel:** Die Source-Liste darf nicht aus modellgeneriertem JSON stammen. Der zukünftige Gemini-Transport muss URLs/Titel/Spans ausschließlich aus provider-eigenen Citation-/Grounding-Metadaten (z. B. `url_citation` annotations / Search-/URL-Context-Resultaten) übernehmen. Structured Output enthält nur Claims. Der Transport bindet Claims an Provider-Citation-Indizes; kann er diese Bindung nicht zuverlässig herstellen, muss er eine leere Bindung liefern und der Adapter verwirft den Claim fail-closed.
+
+Ein Modellname oder eine Gemini-Antwort ist keine Finanzdaten-Provenance.
 
 ### 3. Source Validation ist getrennt von Evidence Promotion
 
@@ -65,7 +67,7 @@ Der Branch liefert ausschließlich `GeminiResearchTransport` als Interface und `
 - kein Scoring-/Ranking-/Eligibility-Impact;
 - kein Function Calling.
 
-Ein späterer Transport kann die Gemini Interactions API auf diese Schnittstelle abbilden, ohne Domain-Scoring oder Evidence Contracts erneut zu ändern.
+Ein späterer Transport kann die Gemini Interactions API auf diese Schnittstelle abbilden, ohne Domain-Scoring oder Evidence Contracts erneut zu ändern. Er ist dafür verantwortlich, provider-eigene Citation-Metadaten von modellgenerierten Claim-Daten getrennt zu halten.
 
 ### 5. Initial erlaubte Gemini-Fähigkeiten
 
@@ -73,13 +75,14 @@ Die Transport-Schnittstelle ist für folgende rein lesende Fähigkeiten ausgeleg
 
 - `google_search` für Source Discovery;
 - `url_context` für explizit angegebene öffentliche URLs;
-- Structured Output gegen ein festes JSON-Schema.
+- Structured Output gegen ein festes Claim-JSON-Schema;
+- provider-eigene Citation-/Grounding-Metadaten als einzige Source-Liste.
 
 Das Adapter-Limit für URL Context ist 20 URLs pro Request. Input-/Output-Quellen werden nur als öffentliche HTTPS-Hostnames akzeptiert; localhost, private Hostnamen, IP-Literale, Credentials und nicht-standardisierte Ports werden an der kanonischen Adaptergrenze abgelehnt.
 
 ### 6. Untrusted Content bleibt Dateninhalt, keine Anweisung
 
-Der feste Research-Systemprompt weist den Provider an, Seiteninhalt als untrusted data zu behandeln und keine Instruktionen aus Quellen zu befolgen. Entscheidend ist jedoch nicht der Prompt allein: der Adapter erlaubt weder Function Calling noch interne Actions und konsumiert nur das geschlossene strukturierte Claim/Source-Schema. Damit kann ein gefundenes Dokument keine Autorisierungs- oder Ausführungsbefehle in CAPITAL-AI einschleusen.
+Der feste Research-Systemprompt weist den Provider an, Seiteninhalt als untrusted data zu behandeln und keine Instruktionen aus Quellen zu befolgen. Entscheidend ist jedoch nicht der Prompt allein: der Adapter erlaubt weder Function Calling noch interne Actions und konsumiert nur das geschlossene strukturierte Claim-Schema plus provider-eigene Citation-Metadaten. Damit kann ein gefundenes Dokument keine Autorisierungs- oder Ausführungsbefehle in CAPITAL-AI einschleusen.
 
 ## Aktivierungs-Gate für eine spätere echte Gemini-Rückkehr
 
@@ -91,7 +94,7 @@ Ein separater, explizit Owner-genehmigter Schritt ist erforderlich, bevor Gemini
 4. Feature Flag default `false` / Shadow-Mode;
 5. Timeout, Rate/Cost Budget, Circuit Breaker, Provider Health und Audit/Usage Telemetry;
 6. Source Policy + Nutzungs-/Lizenzregeln je Source-Klasse;
-7. Tests für Citation-Bindung, Schema-/Semantic Validation, SSRF-/URL-Grenzen und untrusted retrieved content;
+7. Tests für Provider-Citation-Bindung, Schema-/Semantic Validation, SSRF-/URL-Grenzen und untrusted retrieved content;
 8. Shadow-Messung: zusätzliche validierbare Primärquellen, Kosten, Fehlerquote, Latenz, Coverage-Gewinn;
 9. keine Score-Evidence-Promotion ohne separaten field-spezifischen Gate-/ADR-Schritt.
 
