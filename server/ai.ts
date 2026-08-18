@@ -8,10 +8,12 @@ import { generateTextWithFallback, type ChatTurn } from '../src/services/agentMo
 import { getPromptGovernanceEntry, recordAiEvaluation, getAiGovernanceInventory, type AiProvider } from '../src/services/aiGovernance';
 import { getAnthropicInstance, isAnthropicConfigured } from './anthropicClient';
 import { getOpenAIInstance, isOpenAIConfigured } from './openaiClient';
+import { SupabaseAiGovernanceSink } from './aiGovernanceSupabaseSink';
 import { entitlementsRouter } from './entitlements';
 import { binanceLandingQuickAnalysisRouter } from './binanceLandingQuickAnalysis';
 
 export const aiRouter = express.Router();
+const aiGovernanceSink = new SupabaseAiGovernanceSink();
 
 aiRouter.use('/entitlements', entitlementsRouter);
 aiRouter.use('/landing', binanceLandingQuickAnalysisRouter);
@@ -76,6 +78,15 @@ aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
       outcome: hasEvidence ? 'PASS' : 'WARN',
       notes: hasEvidence ? `RAG evidence quality: ${retrieval.evidence.evaluation.quality}.` : 'Keine Repository-Evidence verfügbar.',
     });
+    const persistence = await aiGovernanceSink.write(evaluation);
+
+    if (!persistence.persisted) {
+      console.warn('[AI Governance] Durable evaluation evidence unavailable', {
+        evaluationId: evaluation.evaluationId,
+        sink: persistence.sink,
+        reason: persistence.reason,
+      });
+    }
 
     res.json({
       reply: result.text,
@@ -85,6 +96,11 @@ aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
         evidenceQuality: retrieval.evidence.evaluation.quality,
         evidenceIds,
         retrievalId: retrieval.evidence.attribution.retrievalId,
+        persistence: {
+          durable: persistence.persisted,
+          sink: persistence.sink,
+          reason: persistence.persisted ? undefined : persistence.reason,
+        },
       },
     });
   } catch (error: any) {
@@ -109,6 +125,13 @@ aiRouter.get('/usage', async (req, res) => {
     summary: getUsageSummary(),
     ledger: getUsageLedger(),
     promptRegistry: PROMPT_REGISTRY,
-    governance: getAiGovernanceInventory(),
+    governance: {
+      ...getAiGovernanceInventory(),
+      evaluationCache: {
+        durable: false,
+        type: 'process-memory',
+        note: 'Recent evaluations are a bounded operational cache. Durable evidence uses the server-side append-only Supabase sink when available.',
+      },
+    },
   });
 });
