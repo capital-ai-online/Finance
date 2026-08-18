@@ -1,0 +1,42 @@
+{
+  "claimId": "SC2-GEMINI-RESEARCH-EVIDENCE-ADAPTER-2026-08-19",
+  "spt": "SC-MD-SPT-0001",
+  "workPackage": "SC-2",
+  "phase": "A.5",
+  "title": "Dormant Research/Extraction/Evidence-Discovery adapter for controlled Gemini re-entry",
+  "status": "IN_PROGRESS",
+  "createdAt": "2026-08-19T01:12:00+02:00",
+  "ownerAuthorization": "User: Research-/Extraction-/Evidence-Discovery-Adapter erstellen um eine Rückkehr der Gemini API möglich zu machen; @GitHub; Branch für weitere Schritte.",
+  "base": {
+    "main": "345b2bd3f0a9d61ba4f07182b6e892da5cf3b52d",
+    "parentBranch": "agent/a1-a2-scoring-consolidation",
+    "parentHead": "60bb16d9391d44c33421686709c7c8efd6363c19",
+    "branch": "agent/gemini-research-evidence-adapter"
+  },
+  "scope": [
+    "src/platform/ResearchEvidence/contracts.ts",
+    "src/platform/ResearchEvidence/sourcePolicy.ts",
+    "src/platform/ResearchEvidence/GeminiResearchEvidenceAdapter.ts",
+    "src/platform/ResearchEvidence/index.ts",
+    "tests/unit/researchEvidenceAdapter.test.ts",
+    "docs/adr/ADR-0087-gemini-research-evidence-reentry-boundary.md",
+    "docs/evidence/sc-md/SC2_GEMINI_RESEARCH_EVIDENCE_ADAPTER_2026-08-19.md",
+    "docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md",
+    ".ai/work-claims/SC2-GEMINI-RESEARCH-EVIDENCE-ADAPTER-2026-08-19.json"
+  ],
+  "nonGoals": [
+    "Install @google/genai",
+    "Add or read GEMINI_API_KEY",
+    "Enable Gemini runtime traffic",
+    "Wire a public route",
+    "Enable Gemini function calling",
+    "Promote AI-discovered claims to ScoringEvidenceRef",
+    "Change scoring weights, ranking, eligibility, scoreImpact/rankingImpact or provider routing"
+  ],
+  "architectureInvariant": "AI_DISCOVERED_EVIDENCE is always scoreEligible=false until separate source+field validation/promotion occurs inside the canonical evidence architecture.",
+  "agent": {
+    "provider": "OpenAI",
+    "surface": "ChatGPT / GitHub connector"
+  }
+}
