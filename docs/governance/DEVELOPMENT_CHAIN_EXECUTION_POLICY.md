@@ -2,9 +2,10 @@
 
 Status: ACTIVE  
 Date: 2026-08-12  
-Updated: 2026-08-16  
+Updated: 2026-08-19  
 Scope: CAPITAL-AI `SvenKulessa/Finance`  
-Authority: `docs/architecture/ROADMAP.md`, `docs/roadmaps/AI_AGENT_M0_M9_IMPLEMENTATION_ROADMAP.md`, ESS-0019, ESS-0021, ADR-0039, ADR-0057..0066, ADR-0069 Nachtrag 2026-08-16
+Authority: `docs/architecture/ROADMAP.md`, `docs/roadmaps/AI_AGENT_M0_M9_IMPLEMENTATION_ROADMAP.md`, ESS-0019, ESS-0021, ADR-0057..0066, **Accepted ADR-0069 Nachtrag 2026-08-16**  
+Design reference only: ADR-0039 (`PROPOSED`)
 
 ## Zweck
 
@@ -12,7 +13,9 @@ Diese Policy definiert die verbindliche Ausführungslogik der CAPITAL-AI DEVELOP
 
 Sie erteilt selbst **keine** Mutationsberechtigung. Jede konkrete Mutation benötigt die für den Roadmap-Punkt geltende ADR/ESS/REM-/Approval-Kette.
 
-**Stand 2026-08-16:** Pre-CI-Owner-Gate mit Checkboxen und Review `💪`/`okay` ist **retired**. Merge bleibt Human/Owner-only. Ab **M10** Passkey/WebAuthn für CI-Autorisierung.
+**Stand 2026-08-16:** Pre-CI-Owner-Gate mit Checkboxen und Review `💪`/`okay` ist **retired**. Merge bleibt Human/Owner-only. Ab **M10 Controlled Cutover** Passkey/WebAuthn für CI-Autorisierung.
+
+**Authority rule 2026-08-19:** Proposed/Draft material does not silently become protected-action authority. Conflict resolution follows `GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md` after Human Merge of ADR-0086; until then applicable law, explicit Owner decisions and Accepted ADRs remain controlling.
 
 ## Kanonische Kette
 
@@ -35,7 +38,7 @@ READ-ONLY BASELINE
 → NEXT PHASE
 ```
 
-Ab **M10** (nach `VERIFIED PASS` Cutover): vor teurer CI zusätzlich Passkey-`AUTHORIZE_PR_CI` laut M10-Runbook.
+Ab **M10** (nach `VERIFIED PASS` Controlled Cutover): vor teurer CI zusätzlich Passkey-`AUTHORIZE_PR_CI` laut M10-Runbook.
 
 Ein Schritt darf nicht übersprungen werden, wenn er für den konkreten Roadmap-Punkt als `REQUIRED` markiert ist.
 
@@ -50,7 +53,7 @@ Ein Schritt darf nicht übersprungen werden, wenn er für den konkreten Roadmap-
 7. **Keine Secrets in Evidence.** Reusable Credentials, TOTP-Codes/Secrets, Passkey Private Keys, Biometriedaten, rohe Tokens und vollständige sensible Requests/Responses dürfen nicht persistiert werden.
 8. **Ein Work Item = ein Branch = ein PR.** Branches werden nicht für nachfolgende Roadmap-Punkte wiederverwendet.
 9. **Parallelität nur ohne Schreibkonflikt.** Aktive PRs/Branches werden vor Schreibarbeit auf Changed-File-Overlap geprüft.
-10. **Transport ist keine Autorität.** ChatGPT Connector, Claude Tooling, Google AI Studio, MCP, SDK, GitHub Actions oder andere Hosts erhalten Autorität ausschließlich aus der Control Plane.
+10. **Transport ist keine Autorität.** ChatGPT Connector, Claude Tooling, Grok, MCP, SDK, GitHub Actions oder andere Hosts erhalten Autorität ausschließlich aus der Control Plane.
 
 ## Rollen und Ausführungsgrenzen
 
@@ -60,7 +63,7 @@ Behält mindestens:
 
 - Architektur-/Roadmap-Freigabe bei sicherheitsrelevanten Entscheidungen;
 - finale Merge-Autorität (explizite Anweisung; kein Agent-Self-Merge);
-- ab M10: Passkey-Autorisierung für `AUTHORIZE_PR_CI` und privilegierte Step-ups;
+- ab M10 Controlled Cutover: Passkey-Autorisierung für `AUTHORIZE_PR_CI` und privilegierte Step-ups;
 - explizite Freigabe externer Produktionsmutationen;
 - Owner/Admin-IAM-Elevation, MFA/Break-Glass und Recovery;
 - Secret Disclosure/Rotation mit erweitertem Scope;
@@ -74,13 +77,15 @@ Behält mindestens:
 
 Darf read-only analysieren, Gaps klassifizieren, Roadmap-/ESS-/ADR-/Runbook-/Traceability-/Evidence-Vorgaben erstellen und Mutation Work Orders vorbereiten.
 
-### Development Implementation Plane — Google AI Studio
+### Agent Execution Plane
 
-Google AI Studio ist die Entwicklungsumgebung für Anwendungscode, Architektur und Frontend. Externe Plattformmutationen (Stripe, Supabase, Render) werden dort nicht direkt ausgeführt.
+Aktive Provider-/Client-Profile werden ausschließlich über **Accepted ESS-0019** bestimmt. Stand der dortigen Owner-Klarstellung 2026-08-16: ChatGPT, Claude und Grok können je nach Profil Research-/Execution-Clients sein; Google AI Studio, Gemini und NotebookLM sind für die aktive DEVELOPMENT Chain **RETIRED**. Kein Providername verleiht Autorität.
 
-### Production Integration Plane — Claude
+Repository-Implementierung erfolgt nur innerhalb der gewährten Capability-/Roadmap-/Branch-Grenzen. Externe Plattformmutationen (z. B. Stripe, Supabase, Render) sind davon getrennt.
 
-Claude ist für Produktionsüberführung und Backend-Konfiguration vorgesehen; Mutationsautorität bleibt an Roadmap, Owner Approval, Handoff und Audit gebunden.
+### Production Integration / Mutation Plane
+
+Kein bestimmter Modellanbieter besitzt diese Plane. Externe Produktionsmutation erfolgt ausschließlich über einen autorisierten Execution Host / Mutation Executor mit Roadmap, Owner Approval, Handoff, Capability und Audit Evidence. Transport oder Provideridentität ersetzen diese Autorität nicht.
 
 ### Systemadmin / Mutation Executor
 
@@ -108,15 +113,15 @@ Es gilt `docs/governance/PR_CHECK_CLASSIFICATION.md` (D/C/R/M). Owner-Checkbox-/
 
 ## Mutation Handoff
 
-Nicht autorisierender Arbeitsauftrag. Authority: Roadmap/ADR/ESS + Human/Owner Approval + REM / Agent IAM + M5 Audit.
+Nicht autorisierender Arbeitsauftrag. Authority: Accepted/Active Roadmap/ADR/ESS + Human/Owner Approval + REM / Agent IAM + M5 Audit. Proposed/Draft material allein ist nicht ausreichend.
 
 ## Evidence Minimum
 
-Baseline SHA, Authority refs, Branch/PR/Head/Merge SHA, Checkklasse, Mutation Class, Pre/Post Verification, Approval Evidence (wenn erforderlich; ab M10 Passkey-Evidence), Audit refs, Rollback State, Next Gate.
+Baseline SHA, Authority refs with lifecycle/status, Branch/PR/Head/Merge SHA, Checkklasse, Mutation Class, Pre/Post Verification, Approval Evidence (wenn erforderlich; ab M10 Passkey-Evidence), Audit refs, Rollback State, Next Gate.
 
 ## Stop- und Rollback-Regeln
 
-`STOP` bei unerwartetem Target, Baseline-Drift, fehlender Approval Evidence, Open-PR-Overlap, fehlender Audit-Persistenz, fehlgeschlagenem Pre-Check, unbekanntem Side Effect, Post-Mutation FAILED/INCONCLUSIVE.
+`STOP` bei unerwartetem Target, Baseline-Drift, fehlender Approval Evidence, Open-PR-Overlap, fehlender Audit-Persistenz, fehlgeschlagenem Pre-Check, unbekanntem Side Effect, Post-Mutation FAILED/INCONCLUSIVE oder ungelöstem Authority-Konflikt.
 
 ## Phase-spezifische Runbooks
 
