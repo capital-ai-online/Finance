@@ -74,3 +74,33 @@ services:
         sync: false
       - key: FACEBOOK_CLIENT_ID
         sync: false
+      # ADR-0088 — Gemini Research Evidence Shadow. Default-off by Blueprint; no public route,
+      # no score/ranking impact. GEMINI_API_KEY itself stays exclusively in finance-secrets.env.
+      - key: GEMINI_RESEARCH_SHADOW_ENABLED
+        value: "false"
+      - key: GEMINI_RESEARCH_MODEL
+        sync: false
+      - key: GEMINI_RESEARCH_INPUT_USD_PER_M
+        sync: false
+      - key: GEMINI_RESEARCH_OUTPUT_USD_PER_M
+        sync: false
+      - key: GEMINI_RESEARCH_SEARCH_USD_PER_1K
+        sync: false
+      - key: GEMINI_RESEARCH_DAILY_COST_BUDGET_USD
+        sync: false
+      - key: GEMINI_RESEARCH_REQUESTS_PER_MINUTE
+        value: "3"
+      - key: GEMINI_RESEARCH_DAILY_REQUEST_BUDGET
+        value: "50"
+      - key: GEMINI_RESEARCH_DAILY_TOKEN_BUDGET
+        value: "250000"
+      - key: GEMINI_RESEARCH_TIMEOUT_MS
+        value: "8000"
+      - key: GEMINI_RESEARCH_CIRCUIT_FAILURE_THRESHOLD
+        value: "3"
+      - key: GEMINI_RESEARCH_CIRCUIT_COOLDOWN_MS
+        value: "60000"
+      - key: GEMINI_RESEARCH_MAX_OUTPUT_TOKENS
+        value: "1200"
+      - key: GEMINI_RESEARCH_THINKING_LEVEL
+        value: "low"
