@@ -42,7 +42,7 @@ export function ImpressumAgb({ initialTab = 'impressum' }: { initialTab?: 'impre
           </div>
 
           <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4 text-xs text-white/65 leading-relaxed">
-            <strong className="text-white">Rechtlicher Status:</strong> CAPITAL-AI ist eine Projekt-/Produktbezeichnung. Anbieter ist Sven Michael Kulessa als Privatperson; es wird keine eigenständige „Capital-AI GmbH“ oder „AIFinancial GmbH“ als Betreiber ausgewiesen.
+            <strong className="text-white">Rechtlicher Status:</strong> CAPITAL-AI ist eine Projekt-/Produktbezeichnung. Anbieter und Verantwortlicher ist Sven Michael Kulessa als Privatperson.
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
