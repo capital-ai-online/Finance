@@ -3,7 +3,7 @@
 **Baseline:** `main` @ `345b2bd3f0a9d61ba4f07182b6e892da5cf3b52d`  
 **Branch:** `agent/dsgvo-remediation-controller-rights`  
 **Owner/Controller:** Sven Michael Kulessa, von Lepel Straße 3a, 27259 Freistatt, Deutschland  
-**Status:** In Umsetzung
+**Status:** Implementation abgeschlossen; PR/CI-Gate ausstehend
 
 ## Ziel
 
@@ -24,66 +24,77 @@ Das Ziel ist **keine Selbsterklärung einer Zertifizierung**. Die Anwendung darf
 ### P0-1 — Kanonische Verantwortlichen-Identität
 
 - [x] Verantwortlicher fachlich festgelegt: Sven Michael Kulessa, Privatperson.
-- [ ] Öffentliche Datenschutzerklärung verwendet ausschließlich diese Identität.
-- [ ] Impressum verwendet dieselbe Identität und § 5 DDG statt § 5 TMG.
-- [ ] VVT/Datenschutzprotokoll verwendet dieselbe Identität.
-- [ ] Produktbezeichnungen wie CAPITAL-AI werden nicht als juristische Person dargestellt.
+- [x] Öffentliche Datenschutzerklärung verwendet ausschließlich diese Identität.
+- [x] Impressum verwendet dieselbe Identität und § 5 DDG statt § 5 TMG.
+- [x] VVT/Datenschutzprotokoll verwendet dieselbe Identität.
+- [x] Produktbezeichnungen wie CAPITAL-AI werden nicht als juristische Person dargestellt.
 
 ### P0-2 — Compliance-Auszeichnung
 
-- [ ] Entferne öffentliche Aussagen wie „DSGVO VERIFIZIERT“, „gerichtsfest“, „Zertifiziert (Art. 32)“ und fingierte richterliche Freigaben.
-- [ ] Ersatzstatus: intern dokumentierte Datenschutzkontrollen, ausdrücklich ohne behördliche/rechtliche Zertifizierung.
-- [ ] Regression-Test verhindert Wiedereinführung unbelegter Zertifizierungs-Claims.
+- [x] Öffentliche Aussagen wie „DSGVO VERIFIZIERT“, „gerichtsfest“, „Zertifiziert (Art. 32)“ und fingierte richterliche Freigaben entfernt.
+- [x] Ersatzstatus: intern dokumentierte Datenschutzkontrollen, ausdrücklich ohne behördliche/rechtliche Zertifizierung.
+- [x] Regression-Test verhindert Wiedereinführung unbelegter Zertifizierungs-Claims.
 
 ### P0-3 — Transparenz / Art. 13
 
-- [ ] Processing Registry deckt mindestens Account/Profile, Billing, Consent-Evidence, Security/IAM, Analytics/Ads, Social Publishing, Alerts und Privacy Requests ab.
-- [ ] Pro Verarbeitung: Zweck, Datenkategorien, Rechtsgrundlage, Empfänger, Transferhinweis und Speicher-/Löschkriterium.
-- [ ] Technische Datenflüsse ohne PII werden nicht fälschlich als personenbezogene Verarbeitung ausgezeichnet.
+- [x] Processing Registry deckt mindestens Account/Profile, Billing, Consent-Evidence, Security/IAM, Analytics/Ads, Social Publishing, Alerts, Quota und Privacy Requests ab.
+- [x] Pro Verarbeitung: Zweck, Datenkategorien, Rechtsgrundlage, Empfänger, Transferhinweis und Speicher-/Löschkriterium.
+- [x] Technische Datenflüsse ohne PII werden nicht fälschlich als personenbezogene Verarbeitung ausgezeichnet.
 
 ### P0-4 — Betroffenenrechte
 
-- [ ] Authentifizierter Self-Service-Datenexport.
-- [ ] Authentifizierte Datenschutzanfragen für Auskunft, Berichtigung, Löschung, Einschränkung, Widerspruch und Übertragbarkeit.
-- [ ] Requests werden versioniert/statusbehaftet gespeichert und mit einer Bearbeitungsfrist versehen.
-- [ ] Datenschutzerklärung behauptet keine Echtzeit-Löschung, solange keine vollständig transaktionale Erasure-Orchestrierung vorhanden ist.
+- [x] Authentifizierter Self-Service-Datenexport.
+- [x] Authentifizierte Datenschutzanfragen für Auskunft, Berichtigung, Löschung, Einschränkung, Widerspruch und Übertragbarkeit.
+- [x] Requests werden statusbehaftet gespeichert und mit einer Bearbeitungsfrist versehen.
+- [x] Datenschutzerklärung behauptet keine Echtzeit-Löschung; Erasure ist ein kontrollierter Request-Workflow.
 
 ### P0-5 — Consent-Semantik
 
-- [ ] Datenschutzinformation wird als `acknowledgement` und nicht als pauschale Einwilligungs-Rechtsgrundlage klassifiziert.
-- [ ] Marketing bleibt eine eigenständige optionale Einwilligung.
-- [ ] AGB-Annahme wird als Vertragsannahme klassifiziert.
-- [ ] Neue Privacy-Acknowledgements werden gegen Notice-Version `2026-08-19` protokolliert.
+- [x] Datenschutzinformation wird als `acknowledgement` und nicht als pauschale Einwilligungs-Rechtsgrundlage klassifiziert.
+- [x] Marketing bleibt eine eigenständige optionale Einwilligung.
+- [x] AGB-Annahme wird als Vertragsannahme klassifiziert.
+- [x] Neue Privacy-Acknowledgements werden gegen Notice-Version `2026-08-19` protokolliert.
+- [x] Export-Sicherheitsdialog verwendet Kenntnisnahme statt einer fingierten DSGVO-Einwilligung.
 
 ### P1-1 — Retention-as-Code
 
-- [ ] Kurzlebige OAuth-/Step-up-Artefakte werden automatisierbar bereinigt.
-- [ ] Security Events erhalten eine dokumentierte technische Maximalaufbewahrung.
-- [ ] Veraltete Quota-Daten und nicht bestätigte Alert-Anmeldungen werden bereinigbar.
-- [ ] Abgeschlossene Privacy Requests erhalten eine Accountability-Retention.
-- [ ] Retention-Funktion ist service-role-only und idempotent.
+- [x] Kurzlebige OAuth-/Step-up-Artefakte werden automatisierbar bereinigt.
+- [x] Security Events erhalten eine dokumentierte technische Maximalaufbewahrung.
+- [x] Veraltete Quota-Daten und nicht bestätigte Alert-Anmeldungen werden bereinigbar.
+- [x] Abgeschlossene Privacy Requests erhalten eine Accountability-Retention.
+- [x] Retention-Funktion ist service-role-only und idempotent.
 
 ### P1-2 — Vendor-/Transfer-Governance
 
-- [ ] Provider und mögliche Drittlandtransfers werden in der Processing Registry transparent aufgeführt.
-- [ ] Repository behauptet keine AVV/SCC/Region-Zusicherung ohne separat gepflegten Vertragsnachweis.
-- [ ] Offene Vendor-Evidence wird als organisatorischer Nachweis außerhalb des Sourcecodes gekennzeichnet.
+- [x] Provider und mögliche Drittlandtransfers werden in der Processing Registry transparent aufgeführt.
+- [x] Repository behauptet keine AVV/SCC/Region-Zusicherung ohne separat gepflegten Vertragsnachweis.
+- [x] Offene Vendor-Evidence wird als organisatorischer Nachweis außerhalb des Sourcecodes gekennzeichnet.
 
 ### P1-3 — Logging / PII
 
-- [ ] Neue Privacy-Endpunkte loggen keine Rohdaten aus Anfragen oder Exporten.
-- [ ] Dokumentation weist darauf hin, dass Security-Logs personenbezogene Daten enthalten können.
-- [ ] Bestehende PII-Logging-Stellen werden als separater Hardening-Track weitergeführt, falls sie nicht in diesem Branch ohne risikoreiche Querschnittsänderung sicher geändert werden können.
+- [x] Neue Privacy-Endpunkte loggen keine Rohdaten aus Anfragen oder Exporten.
+- [x] Dokumentation weist darauf hin, dass Security-Logs personenbezogene Daten enthalten können.
+- [x] Konkret identifizierte Subscription-Logs geben E-Mail/User-ID nicht mehr im Klartext aus.
+- [x] Regression-Test schützt die bereinigten Subscription-Logging-Stellen.
 
 ## Release Gate
 
-Vor PR-Erstellung:
+### Main-Korrelation
 
-1. Branch gegen den dann aktuellen `main` vergleichen.
-2. Neue Main-Änderungen auf Überschneidungen mit Datenschutz-, Auth-, Supabase-, Routing- und Legal-Dateien prüfen.
-3. Bei Überschneidungen Branch-Dateien erneut anpassen.
-4. Diff auf verbotene Compliance-Claims und inkonsistente Verantwortlichenangaben prüfen.
-5. Tests/CI prüfen; lokale CLI-Ausführung ist in der aktuellen Agent-Laufzeit nicht verfügbar, daher wird GitHub-CI als Ausführungsnachweis verwendet, sobald der PR existiert.
+Am 19. August 2026 wurde der Branch nach Abschluss der Codeänderungen erneut gegen `main` geprüft.
+
+- `main` stand weiterhin auf `345b2bd3f0a9d61ba4f07182b6e892da5cf3b52d`.
+- Seit Branch-Erstellung wurden damit **keine neuen Main-Commits** gemerged.
+- Es existieren folglich keine zwischenzeitlichen Main-Änderungen, die mit Auth-, Supabase-, Routing-, Legal- oder Privacy-Dateien dieses Branches korrelieren oder neu eingearbeitet werden müssten.
+
+### PR-/CI-Gate
+
+- [x] Branch gegen aktuellen `main` verglichen.
+- [x] Keine zwischenzeitlichen Main-Korrelationen festgestellt.
+- [x] Diff enthält Regression-Tests für Controller-Identity, DDG-Referenz, Compliance-Claims und PII-Logging.
+- [ ] GitHub-CI nach PR-Erstellung erfolgreich.
+
+Lokale CLI-Ausführung ist in der aktuellen Agent-Laufzeit nicht verfügbar; der GitHub-PR-CI-Lauf ist deshalb der ausführbare Build/Test-Nachweis für diesen Branch.
 
 ## Nicht durch Sourcecode allein beweisbar
 
