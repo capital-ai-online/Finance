@@ -1,0 +1,39 @@
+{
+  "claimId": "SC2-A1-A2-SCORING-CONSOLIDATION-2026-08-19",
+  "spt": "SC-MD-SPT-0001",
+  "workPackage": "SC-2",
+  "phase": "A1-A2",
+  "title": "Single scoring architecture freeze, UAI and ScoringModelRegistry foundation",
+  "status": "IN_PROGRESS",
+  "createdAt": "2026-08-19T00:50:00+02:00",
+  "ownerAuthorization": "User: erstelle einen frischen Branch und beginne mit dem konsolidieren von A1/A2",
+  "branch": "agent/a1-a2-scoring-consolidation",
+  "baseCommit": "345b2bd3f0a9d61ba4f07182b6e892da5cf3b52d",
+  "scope": [
+    "src/platform/Scoring/contracts.ts",
+    "src/platform/Scoring/UniversalAssetAdapter.ts",
+    "src/platform/Scoring/ScoringModelRegistry.ts",
+    "src/platform/Scoring/index.ts",
+    "tests/unit/scoringModelRegistry.test.ts",
+    "src/routes/cryptoRoutes.ts",
+    "docs/adr/ADR-0086-single-scoring-architecture-uai-model-registry.md",
+    "docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md",
+    "docs/evidence/sc-md/SC2_A1_A2_BASELINE_2026-08-19.md",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md",
+    ".ai/work-claims/SC2-A1-A2-SCORING-CONSOLIDATION-2026-08-19.json"
+  ],
+  "nonGoals": [
+    "Scoring weight changes",
+    "Eligibility threshold changes",
+    "scoreImpact or rankingImpact activation",
+    "Provider routing changes",
+    "executionPriceEligible activation",
+    "Gemini reactivation",
+    "Synthetic or LLM-derived financial evidence"
+  ],
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "surface": "ChatGPT / GitHub connector"
+  }
+}
