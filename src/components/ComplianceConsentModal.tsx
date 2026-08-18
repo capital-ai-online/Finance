@@ -167,7 +167,7 @@ interface ComplianceConsentWrapperProps {
   onConfirm: () => void;
   title?: string;
   reportName?: string;
-  children: React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>;
+  children: React.ReactElement<{ onClick?: (event: React.MouseEvent) => void }>;
 }
 
 export function ComplianceConsentWrapper({
@@ -184,7 +184,13 @@ export function ComplianceConsentWrapper({
     setIsOpen(true);
   };
 
-  const childWithOnClick = React.cloneElement(children, { onClick: handleClick });
+  // React 19's cloneElement overloads infer `unknown` for polymorphic children here even
+  // though the public wrapper contract only injects onClick. Keep the compatibility cast
+  // local to this adapter instead of weakening the component's external prop type.
+  const childWithOnClick = React.cloneElement(
+    children as React.ReactElement<any>,
+    { onClick: handleClick },
+  );
 
   return (
     <>
