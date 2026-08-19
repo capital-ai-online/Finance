@@ -25,12 +25,20 @@ Technical observations never substitute contractual evidence. A runtime region s
 - `verified`: evidence fields required by the automated strict gate are complete and internally consistent.
 - `not-applicable`: only after a documented reason establishes why the evidence category does not apply.
 
+### Contract and role status extensions
+
+- `electronically-incorporated`: the applicable provider agreement incorporates the DPA/AVV by reference or by online agreement/use; this is **not** the same as evidence of a wet-ink or separately countersigned contract. The evidence record MUST capture the incorporation basis, document/version, immutable hash and evidence reference. If the exact customer acceptance/effective timestamp is not evidenced, it must remain null/unknown rather than be inferred from the document version date.
+- `verified-scoped`: the legal role is verified only for an explicitly named data/process scope (for example, Customer Personal Data or Covered Data). It MUST NOT be interpreted as a global role classification for account, usage, telemetry or other provider-controlled processing.
+- `snapshot-verified-scope-pending`: the dated vendor-wide subprocessor source and its immutable digest are verified, while CAPITAL-AI-specific routing, locations and transfer applicability remain open.
+
+These extensions deliberately keep contract formation, legal role, subprocessor inventory and transfer/TIA evidence separate. A DPA may be electronically incorporated while the vendor's overall evidence status remains `pending`.
+
 ## Evidence file requirements
 
 For an executed DPA/AVV or comparable contractual artifact, record at least:
 
 - document/version identifier;
-- execution/effective date;
+- execution/effective date, or a documented electronic-incorporation basis when the exact customer timestamp is not evidenced;
 - SHA-256 of the retained artifact;
 - restricted evidence location/reference.
 
