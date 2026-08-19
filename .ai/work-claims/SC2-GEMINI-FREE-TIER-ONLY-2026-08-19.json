@@ -1,0 +1,41 @@
+{
+  "documentVersion": "1.0.0",
+  "date": "2026-08-19",
+  "spt": "SC-MD-SPT-0001",
+  "workPackage": "SC-2",
+  "phase": "A.6-free-tier-only-hardening",
+  "status": "IMPLEMENTED_PENDING_CI",
+  "branch": "agent/gemini-free-tier-only",
+  "parentBranch": "agent/gemini-research-evidence-adapter",
+  "ownerAuthorization": "der Gemini key soll free to use genutzt werden und keine Kosten verursachen.",
+  "authority": [
+    "docs/adr/ADR-0089-gemini-free-tier-only-zero-cost-policy.md",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md"
+  ],
+  "scope": [
+    "server/researchEvidence/geminiResearchFreeTierRuntime.ts",
+    "server/researchEvidence/index.ts",
+    "tests/unit/geminiResearchFreeTierRuntime.test.ts",
+    "render.yaml",
+    ".env.example",
+    "docs/runbooks/GEMINI_RESEARCH_SHADOW.md",
+    "docs/evidence/sc-md/SC2_GEMINI_FREE_TIER_ONLY_2026-08-19.md"
+  ],
+  "invariants": [
+    "Gemini research runtime is free-tier-only",
+    "paidBillingPermitted=false",
+    "canonical model pinned to gemini-2.5-flash",
+    "GEMINI_RESEARCH_FREE_TIER_ATTESTED defaults false",
+    "API key must belong to project without billing enabled",
+    "daily requests hard-capped at 100",
+    "no score/ranking/eligibility impact",
+    "AI_DISCOVERED_EVIDENCE remains scoreEligible=false"
+  ],
+  "nonGoals": [
+    "do not create or store a real Gemini API key in git",
+    "do not activate Render shadow traffic",
+    "do not enable paid Gemini tier",
+    "do not promote AI discovered claims into scoring evidence",
+    "do not change scoring weights or provider routing"
+  ]
+}
