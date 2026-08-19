@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "registryAuthorityId": "AUTH-GOV-ADR-REGISTRY",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "date": "2026-08-19",
   "canonicalLocation": "docs/adr",
   "rules": {
@@ -43,6 +43,16 @@
       "date": "2026-08-19",
       "lifecycle": "accepted-for-implementation",
       "path": "docs/adr/ADR-0086-vendor-privacy-evidence-governance.md",
+      "legacyAliases": [],
+      "supersedes": []
+    },
+    {
+      "authorityId": "AUTH-ADR-PRIVACY-RETENTION-2026-08-19",
+      "displayId": "ADR-0092",
+      "version": "1.0.0",
+      "date": "2026-08-19",
+      "lifecycle": "accepted-for-implementation",
+      "path": "docs/adr/ADR-0092-privacy-retention-and-lifecycle-hardening.md",
       "legacyAliases": [],
       "supersedes": []
     },
