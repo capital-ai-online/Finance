@@ -6,6 +6,7 @@
 import { generateOpaqueToken } from '../../src/platform/Security/secretCrypto';
 import type { M10ApprovalEvidence } from './assertionVerification';
 import { resolveTrustedPrState, type GithubApiFetch } from './githubPrStateResolver';
+import { resolveTrustedM10DispatchRef } from './githubPrDispatchRef';
 
 export interface M10CiConsumptionEvidence {
   consumptionId: string;
@@ -47,6 +48,7 @@ export interface M10CiDispatchRequest {
   prNumber: number;
   baseSha: string;
   headSha: string;
+  headRef: string;
   authorizationDigest: string;
   action: 'AUTHORIZE_PR_CI';
 }
@@ -67,7 +69,7 @@ export interface ConsumeM10ApprovalDeps {
 }
 
 export type ConsumeM10ApprovalResult =
-  | { verdict: 'DISPATCHED'; consumption: Readonly<M10CiConsumptionEvidence>; dispatchReference?: string }
+  | { verdict: 'DISPATCH_ACCEPTED'; consumption: Readonly<M10CiConsumptionEvidence>; dispatchReference?: string }
   | { verdict: 'DEDUPE'; reason: string }
   | { verdict: 'DENY'; reason: string }
   | { verdict: 'DISPATCH_UNCERTAIN'; consumptionId: string; reason: string };
@@ -104,15 +106,17 @@ function boundedReason(err: unknown): string {
 }
 
 /**
- * Phase 5 execution order is intentionally fixed:
+ * Phase 5 + Controlled-Cutover execution order is intentionally fixed:
  * 1. load immutable Phase-4 approval evidence;
  * 2. re-resolve authoritative GitHub PR state;
  * 3. reject any base/head/file-set/diff drift;
- * 4. atomically claim the approval + exact PR head in durable storage;
- * 5. issue one and only one external CI dispatch attempt;
- * 6. persist a terminal dispatch outcome.
+ * 4. resolve the current same-repository PR head branch and require it to still point at headSha;
+ * 5. atomically claim the approval + exact PR head in durable storage;
+ * 6. issue one and only one external CI dispatch attempt against that exact branch ref;
+ * 7. keep the consumption PENDING until the dispatched workflow redeems its single-use
+ *    consumptionId through the server-side workflow gate before any expensive CI step.
  *
- * There is no automatic retry after step 4. A network-ambiguous dispatch could already have reached
+ * There is no automatic retry after step 5. A network-ambiguous dispatch could already have reached
  * GitHub; retrying would violate the at-most-one expensive CI invariant. Recovery must first inspect
  * GitHub state and proceed through a separate Human-controlled path.
  */
@@ -139,6 +143,16 @@ export async function consumeM10ApprovalForCi(
   if (!sameApprovalContext(approval, resolved.state)) {
     return { verdict: 'DENY', reason: 'PR-/Owner-Zustand hat sich seit Owner-Approval geändert; CI wird nicht gestartet.' };
   }
+
+  const dispatchRef = await resolveTrustedM10DispatchRef(
+    {
+      repository: resolved.state.repository,
+      prNumber: resolved.state.prNumber,
+      expectedHeadSha: resolved.state.headSha,
+    },
+    deps.githubApiFetch,
+  );
+  if (dispatchRef.verdict === 'DENY') return { verdict: 'DENY', reason: dispatchRef.reason };
 
   const consumptionId = generateOpaqueToken(16);
   let claim: M10ConsumptionClaimResult;
@@ -188,6 +202,7 @@ export async function consumeM10ApprovalForCi(
       prNumber: resolved.state.prNumber,
       baseSha: resolved.state.baseSha,
       headSha: resolved.state.headSha,
+      headRef: dispatchRef.headRef,
       authorizationDigest: approval.authorizationDigest,
       action: 'AUTHORIZE_PR_CI',
     });
@@ -211,24 +226,13 @@ export async function consumeM10ApprovalForCi(
     return { verdict: 'DISPATCH_UNCERTAIN', consumptionId: evidence.consumptionId, reason };
   }
 
-  let finalized = false;
-  try {
-    finalized = await deps.approvalStore.finalizeDispatch(evidence.consumptionId, 'DISPATCHED');
-  } catch {
-    finalized = false;
-  }
-
-  if (!finalized) {
-    return {
-      verdict: 'DISPATCH_UNCERTAIN',
-      consumptionId: evidence.consumptionId,
-      reason: 'GitHub akzeptierte den Dispatch, aber die terminale Consumption-Evidence konnte nicht bestätigt werden.',
-    };
-  }
-
+  // Do NOT mark DISPATCHED here. A manual workflow_dispatch must never be able to bypass WebAuthn
+  // simply by copying public PR metadata. The dispatched workflow has to redeem this high-entropy,
+  // single-use consumptionId through the production workflow gate before any expensive step. That
+  // gate performs the only PENDING -> DISPATCHED transition; a replay loses the atomic race.
   return {
-    verdict: 'DISPATCHED',
-    consumption: { ...evidence, dispatchState: 'DISPATCHED' },
+    verdict: 'DISPATCH_ACCEPTED',
+    consumption: evidence,
     dispatchReference: dispatch.reference,
   };
 }
