@@ -75,8 +75,9 @@ describe('ADR-0094 open-source media rendering contract', () => {
   });
 
   it('shows the financial disclaimer at both edges of the Graham short', () => {
+    const finalScene = graham.scenes[graham.scenes.length - 1];
     expect(graham.scenes[0].disclaimer).toMatch(/Keine Anlageberatung/);
-    expect(graham.scenes.at(-1)?.disclaimer).toMatch(/Keine Anlageberatung/);
+    expect(finalScene?.disclaimer).toMatch(/Keine Anlageberatung/);
     expect(JSON.stringify(graham)).not.toMatch(/BUY|SELL|Kaufempfehlung|Verkaufsempfehlung/i);
   });
 });
