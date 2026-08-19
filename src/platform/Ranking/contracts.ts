@@ -62,6 +62,7 @@ export interface CanonicalRankingCandidate {
 
 export type CrossAssetRankingExclusionReason =
   | 'SCORE_NOT_READY'
+  | 'SCORE_VALUE_INVALID'
   | 'IDENTITY_MISMATCH'
   | 'MODEL_LINEAGE_MISSING'
   | 'GOVERNANCE_EVIDENCE_MISSING'
@@ -73,7 +74,8 @@ export type CrossAssetRankingExclusionReason =
   | 'GROWTH_EVIDENCE_MISSING'
   | 'GROWTH_EVIDENCE_UNVERIFIED'
   | 'GROWTH_VALUE_INVALID'
-  | 'COMPARISON_KEY_MISSING';
+  | 'COMPARISON_KEY_MISSING'
+  | 'DUPLICATE_ASSET';
 
 export interface CrossAssetRankingExclusion {
   assetId: string;
