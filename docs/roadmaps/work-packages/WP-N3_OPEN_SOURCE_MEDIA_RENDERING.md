@@ -61,7 +61,7 @@ Die bereits vorhandene SocialMediaEngine um einen kleinen, ersetzbaren und offli
 - [x] Developer-Video-Smoke dokumentieren;
 - [x] PDF Companion Smoke dokumentieren;
 - [x] Source-/Governance-Tests ergänzen;
-- [x] finaler Main-/Parallel-PR-Abgleich: `main@59a2755de53297a934b062b380a313d68cd47492`, Branch vor PR `3 ahead / 0 behind`; offene #439/#442 ohne direkten Dateioverlap;
+- [x] finaler Main-/Parallel-PR-Abgleich: Merge-Base exakt `main@59a2755de53297a934b062b380a313d68cd47492`, `behind=0`; offene #439/#442 ohne direkten Dateioverlap;
 - [x] PR erst nach dem finalen Pre-PR-Abgleich erstellen;
 - [ ] Post-PR Repository-Checks ausführen und Evidence ergänzen.
 
