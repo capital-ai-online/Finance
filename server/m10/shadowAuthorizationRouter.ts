@@ -4,7 +4,7 @@
 // the simplified pre-M10 CI path remains authoritative. It NEVER imports or invokes Phase-5 CI
 // consumption/dispatch. Successful assertions persist only to m10_shadow_evaluations.
 import express from 'express';
-import { generateAuthenticationOptions, type AuthenticationResponseJSON } from '@simplewebauthn/server';
+import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
 import { checkAdminAccess } from '../../src/platform/Security/authMiddleware';
 import { OWNER_ONLY_ROLES } from '../../src/platform/Security/types';
 import {
@@ -47,6 +47,12 @@ async function requireOwner(req: express.Request, res: express.Response, zone: s
   return authz;
 }
 
+/**
+ * `issueM10Challenge()` already creates the canonical WebAuthn challenge as base64url bytes.
+ * Pass that value directly to @simplewebauthn/browser. Feeding the string through
+ * generateAuthenticationOptions() as a custom string would UTF-8/base64url encode it again and
+ * break Phase-4 expectedChallenge equality.
+ */
 export async function buildM10ShadowAuthenticationOptions(
   challenge: string,
   credentials: readonly Readonly<{ credentialId: string; transports: readonly string[] }>[],
@@ -55,16 +61,16 @@ export async function buildM10ShadowAuthenticationOptions(
     throw new Error('M10 Shadow benötigt eine Challenge und mindestens ein aktives Owner-Credential.');
   }
 
-  return generateAuthenticationOptions({
-    rpID: M10_RP_ID,
+  return {
     challenge,
+    rpId: M10_RP_ID,
     timeout: M10_CHALLENGE_TTL_MS,
-    userVerification: 'required',
+    userVerification: 'required' as const,
     allowCredentials: credentials.map(credential => ({
       id: credential.credentialId,
       transports: [...credential.transports] as any,
     })),
-  });
+  };
 }
 
 m10ShadowAuthorizationRouter.get('/status', async (req, res) => {
