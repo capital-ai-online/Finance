@@ -1,15 +1,16 @@
-// M10 Phase 5 — retry-free GitHub Actions dispatcher adapter.
+// M10 Controlled Cutover — retry-free GitHub Actions dispatcher adapter.
 //
 // This adapter intentionally performs exactly one HTTP request and contains no retry/backoff logic.
 // After a durable M10 consumption claim, a transport ambiguity must be reconciled by a Human rather
-// than risking a second expensive CI run. The target workflow is introduced/activated only by the
-// later controlled-cutover change; this module is not live-wired on its own.
+// than risking a second expensive CI run. The workflow itself must redeem the single-use
+// consumptionId before any expensive step; merely possessing GitHub Actions write access is not an
+// alternative authorization path.
 import type { M10CiDispatcher, M10CiDispatchRequest } from './atomicCiConsumption';
+import { isSafeM10HeadRef } from './githubPrDispatchRef';
 
 export interface M10GithubDispatcherOptions {
   token: string;
   workflowFile: string;
-  workflowRef?: string;
   fetchImpl?: typeof fetch;
 }
 
@@ -28,16 +29,24 @@ function validateWorkflowFile(workflowFile: string): string {
   return workflowFile;
 }
 
+function validateHeadRef(headRef: string): string {
+  const ref = headRef.trim();
+  if (!isSafeM10HeadRef(ref)) {
+    throw new Error('Ungültiger GitHub-PR-Head-Ref für M10-CI-Dispatch.');
+  }
+  return ref;
+}
+
 export function createM10GithubActionsDispatcher(options: Readonly<M10GithubDispatcherOptions>): M10CiDispatcher {
   const token = options.token.trim();
   if (!token) throw new Error('M10 GitHub Actions token fehlt.');
   const workflowFile = validateWorkflowFile(options.workflowFile);
-  const workflowRef = options.workflowRef?.trim() || 'main';
   const fetchImpl = options.fetchImpl ?? fetch;
 
   return {
     async dispatch(request: Readonly<M10CiDispatchRequest>) {
       const { owner, repo } = validateRepository(request.repository);
+      const headRef = validateHeadRef(request.headRef);
       const response = await fetchImpl(
         `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${encodeURIComponent(workflowFile)}/dispatches`,
         {
@@ -46,10 +55,11 @@ export function createM10GithubActionsDispatcher(options: Readonly<M10GithubDisp
             Accept: 'application/vnd.github+json',
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
-            'X-GitHub-Api-Version': '2022-11-28',
+            'X-GitHub-Api-Version': '2026-03-10',
           },
           body: JSON.stringify({
-            ref: workflowRef,
+            ref: headRef,
+            return_run_details: true,
             inputs: {
               m10_consumption_id: request.consumptionId,
               m10_approval_id: request.approvalId,
@@ -64,9 +74,17 @@ export function createM10GithubActionsDispatcher(options: Readonly<M10GithubDisp
         },
       );
 
+      let reference = response.headers.get('x-github-request-id') || undefined;
+      if (response.status === 200) {
+        const body = await response.json().catch(() => null) as { workflow_run_id?: unknown } | null;
+        if (typeof body?.workflow_run_id === 'number' || typeof body?.workflow_run_id === 'string') {
+          reference = String(body.workflow_run_id);
+        }
+      }
+
       return {
-        accepted: response.status === 204,
-        reference: response.headers.get('x-github-request-id') || undefined,
+        accepted: response.status === 200 || response.status === 204,
+        reference,
       };
     },
   };

@@ -4,12 +4,12 @@ import { browserSupportsWebAuthn, startRegistration } from '@simplewebauthn/brow
 import { authFetch } from '../lib/authFetch';
 import { isStepUpRequired } from '../lib/stepUp';
 import { StepUpModal } from './StepUpModal';
-import { M10PrAuthorizationShadowPanel } from './M10PrAuthorizationShadowPanel';
+import { M10PrAuthorizationPanel } from './M10PrAuthorizationPanel';
 
 /**
  * M10 (ADR-0066, ESS-0022) Owner passkey console. Enrollment/revocation remains the Phase-3
- * Human identity operation; the nested Phase-6 panel performs a real, non-authoritative Shadow
- * assertion against a PR without dispatching CI.
+ * Human identity operation; after Controlled Cutover the nested panel performs authoritative,
+ * exact-PR-head CI authorization while Human Merge remains a separate action.
  */
 interface M10Credential {
   credentialId: string;
@@ -172,9 +172,9 @@ export function M10PasskeyEnrollmentPanel() {
         <h3 className="text-sm font-bold font-display text-white uppercase tracking-wide">Passkey-Autorisierung (M10)</h3>
       </div>
       <p className="text-xs text-white/60 leading-relaxed">
-        Verwalte das Owner-Passkey-Credential und führe Phase-6-Shadow-Prüfungen durch. Registrierung
-        und Widerruf erfordern weiterhin einen frischen TOTP-Step-Up; die Shadow-Prüfung verwendet
-        anschließend den Passkey selbst und bleibt bis zum Controlled Cutover nicht autoritativ für CI.
+        Verwalte das Owner-Passkey-Credential und autorisiere teure Pull-Request-CI exakt für den
+        aktuellen GitHub-Head. Registrierung und Widerruf erfordern weiterhin einen frischen
+        TOTP-Step-Up; CI-Autorisierung verwendet anschließend den Passkey selbst. Human Merge bleibt separat.
       </p>
 
       {error && (
@@ -222,7 +222,7 @@ export function M10PasskeyEnrollmentPanel() {
         ))}
       </div>
 
-      <M10PrAuthorizationShadowPanel />
+      <M10PrAuthorizationPanel />
 
       {pendingStepUp && (
         <StepUpModal

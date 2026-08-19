@@ -1,4 +1,4 @@
-// M10 Phase 5 — Atomic CI Consumption positive/negative tests.
+// M10 Phase 5 + Controlled Cutover — Atomic CI Consumption positive/negative tests.
 import { describe, expect, it, vi } from 'vitest';
 import type { M10ApprovalEvidence } from '../../server/m10/assertionVerification';
 import {
@@ -9,12 +9,24 @@ import {
 import { resolveTrustedPrState, type GithubApiFetch } from '../../server/m10/githubPrStateResolver';
 import { SYSTEMADMIN_OWNER_ACTOR_ID, SYSTEMADMIN_REPOSITORY } from '../../src/platform/Security/roadmapExecutionMandate';
 
-function githubState(headSha = 'head-sha-1', patch = '@@ -1 +1 @@\n-old\n+new'): GithubApiFetch {
+function githubState(
+  headSha = 'head-sha-1',
+  patch = '@@ -1 +1 @@\n-old\n+new',
+  overrides: Partial<{ headRef: string; headRepository: string; state: string }> = {},
+): GithubApiFetch {
   return vi.fn(async (path: string) => {
     if (path === '/repos/SvenKulessa/Finance/pulls/7') {
       return {
         status: 200,
-        json: { state: 'open', base: { ref: 'main', sha: 'base-sha-1' }, head: { sha: headSha } },
+        json: {
+          state: overrides.state ?? 'open',
+          base: { ref: 'main', sha: 'base-sha-1' },
+          head: {
+            sha: headSha,
+            ref: overrides.headRef ?? 'agent/test-pr',
+            repo: { full_name: overrides.headRepository ?? 'SvenKulessa/Finance' },
+          },
+        },
       };
     }
     if (path === '/repos/SvenKulessa/Finance/pulls/7/files?per_page=100&page=1') {
@@ -73,7 +85,7 @@ function dispatcher(accepted = true): M10CiDispatcher {
 }
 
 describe('consumeM10ApprovalForCi', () => {
-  it('re-resolves exact PR state, atomically claims once, and dispatches exactly one approved head', async () => {
+  it('re-resolves exact PR state, resolves same-repo branch ref, atomically claims once, and dispatches once', async () => {
     const current = githubState();
     const record = await approval(current);
     const approvalStore = storeFor(record);
@@ -85,7 +97,7 @@ describe('consumeM10ApprovalForCi', () => {
       dispatcher: ciDispatcher,
     });
 
-    expect(result.verdict).toBe('DISPATCHED');
+    expect(result.verdict).toBe('DISPATCH_ACCEPTED');
     expect(approvalStore.claim).toHaveBeenCalledTimes(1);
     expect(ciDispatcher.dispatch).toHaveBeenCalledTimes(1);
     expect(ciDispatcher.dispatch).toHaveBeenCalledWith(expect.objectContaining({
@@ -93,10 +105,14 @@ describe('consumeM10ApprovalForCi', () => {
       repository: SYSTEMADMIN_REPOSITORY,
       prNumber: 7,
       headSha: 'head-sha-1',
+      headRef: 'agent/test-pr',
       authorizationDigest: 'a'.repeat(64),
       action: 'AUTHORIZE_PR_CI',
     }));
-    expect(approvalStore.finalizeDispatch).toHaveBeenCalledWith(expect.any(String), 'DISPATCHED');
+    expect(approvalStore.finalizeDispatch).not.toHaveBeenCalled();
+    if (result.verdict === 'DISPATCH_ACCEPTED') {
+      expect(result.consumption.dispatchState).toBe('PENDING');
+    }
   });
 
   it('denies PR drift before claiming or dispatching', async () => {
@@ -107,6 +123,23 @@ describe('consumeM10ApprovalForCi', () => {
 
     const result = await consumeM10ApprovalForCi('approval-1', {
       githubApiFetch: githubState('head-sha-2', '@@ changed @@'),
+      approvalStore,
+      dispatcher: ciDispatcher,
+    });
+
+    expect(result.verdict).toBe('DENY');
+    expect(approvalStore.claim).not.toHaveBeenCalled();
+    expect(ciDispatcher.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('denies a cross-repository/fork PR head before durable claim', async () => {
+    const original = githubState();
+    const record = await approval(original);
+    const approvalStore = storeFor(record);
+    const ciDispatcher = dispatcher();
+
+    const result = await consumeM10ApprovalForCi('approval-1', {
+      githubApiFetch: githubState('head-sha-1', '@@ -1 +1 @@\n-old\n+new', { headRepository: 'fork-owner/Finance' }),
       approvalStore,
       dispatcher: ciDispatcher,
     });
@@ -183,7 +216,7 @@ describe('consumeM10ApprovalForCi', () => {
     );
   });
 
-  it('does not report success when GitHub accepted dispatch but terminal evidence cannot be persisted', async () => {
+  it('does not finalize a successfully accepted dispatch before the workflow gate redeems it', async () => {
     const record = await approval();
     const approvalStore = storeFor(record, { finalizeDispatch: vi.fn(async () => false) });
 
@@ -191,6 +224,7 @@ describe('consumeM10ApprovalForCi', () => {
       githubApiFetch: githubState(), approvalStore, dispatcher: dispatcher(true),
     });
 
-    expect(result.verdict).toBe('DISPATCH_UNCERTAIN');
+    expect(result.verdict).toBe('DISPATCH_ACCEPTED');
+    expect(approvalStore.finalizeDispatch).not.toHaveBeenCalled();
   });
 });
