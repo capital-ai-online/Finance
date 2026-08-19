@@ -69,6 +69,57 @@ Der FFmpeg-Build wird vor Ausführung auf GPL/nonfree-Compile-Flags geprüft. De
 
 ---
 
+## 3a. Premium Brand Film - Graham + Buffett Value Intelligence (45 s / 16:9)
+
+Der Premium-Film ist ein **deterministischer Silent-Master** für Website, Präsentation und kontrollierte Brand-Ausspielung. Er verwendet keine generativen Finanzdaten, keine Remote-Medien und keinen TTS-Provider.
+
+Kanonisches Manifest:
+
+`PREMIUM_BRAND_FILM_MANIFEST.json`
+
+Headline-Sequenz:
+
+`DATA -> EVIDENCE -> MODELS -> RISK -> INTELLIGENCE`
+
+Der `MODELS`-Abschnitt visualisiert neun unabhängig geprüfte Graham-/Buffett-orientierte Value-Dimensionen:
+
+- Intrinsic Value
+- Margin of Safety
+- Earnings Quality
+- Balance-Sheet Strength
+- Free Cash Flow
+- Capital Efficiency
+- Debt Resilience
+- Economic Moat
+- Valuation Discipline
+
+Traceability wird als `SOURCE -> METRIC -> CHECK -> MODEL -> SCORE` visualisiert. Die finale Aussage ist fest auf:
+
+`CAPITAL-AI`  
+`QUANTITATIVE INTELLIGENCE FOR COMPLEX MARKETS`
+
+Rendering:
+
+```bash
+python3 scripts/media/render_cinematic_brand_film.py \
+  --manifest docs/content-creator/packages/graham-fair-value-check/PREMIUM_BRAND_FILM_MANIFEST.json \
+  --output /tmp/CAPITAL-AI_Graham_Buffett_Premium_Brand_Film_45s.mp4
+```
+
+Output-Contract:
+
+- 1920x1080 (16:9)
+- 24 fps
+- exakt 45 Sekunden
+- keine Audio-/TTS-Spur
+- SHA-256-Asset-Manifest
+- `publishReady=false`
+- vorhandenes FFmpeg-Lizenzprofil aus ADR-0094 bleibt fail-closed
+
+Wenn der lokale Developer-FFmpeg-Build `--enable-gpl` enthält, darf `--allow-gpl-ffmpeg` ausschließlich für einen visuellen lokalen Smoke verwendet werden. Vor externer Veröffentlichung ist ein erneuter Render mit geprüftem LGPL-kompatiblem Build erforderlich.
+
+---
+
 ## 4. Produktions-Checkliste
 
 - [ ] Keine echten Kursdaten oder Ticker ohne freigegebene Evidence
