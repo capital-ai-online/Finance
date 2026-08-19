@@ -1,11 +1,11 @@
 # SC-2 — Model Registry & Universal Asset Interface
 
 **SPT:** `SC-MD-SPT-0001`  
-**Status:** IN IMPLEMENTATION — A1/A2 consolidation + Research Evidence Shadow  
-**Parent Branch:** `agent/a1-a2-scoring-consolidation`  
-**Current Child Branch:** `agent/gemini-research-evidence-adapter`  
+**Status:** IN IMPLEMENTATION — A1/A2 consolidation + Research Evidence Shadow + Free-Tier-only hardening  
+**Parent Branch:** `agent/gemini-research-evidence-adapter`  
+**Current Child Branch:** `agent/gemini-free-tier-only`  
 **Start:** 2026-08-19  
-**ADRs:** ADR-0086, ADR-0087, ADR-0088
+**ADRs:** ADR-0086, ADR-0087, ADR-0088, ADR-0089
 
 ## Ziel
 
@@ -16,7 +16,7 @@ SC-2 konsolidiert die historisch gewachsenen Scoring-Pfade in **eine** kanonisch
 ```text
 UAI Identity
    -> Evidence Acquisition / MarketDataGateway / ResearchEvidenceAdapter
-          -> GeminiResearchTransport (optional shadow, server-only, default-off)
+          -> GeminiResearchTransport (optional shadow, server-only, default-off, free-tier-only)
           -> AI_DISCOVERED_EVIDENCE (niemals direkt scoreEligible)
           -> Source Validation
           -> zukünftige field-spezifische Evidence Promotion
@@ -86,28 +86,45 @@ Evidence: `docs/evidence/sc-md/SC2_GEMINI_RESEARCH_EVIDENCE_ADAPTER_2026-08-19.m
 
 ### Phase A.6 — Server-only Gemini Research Shadow Runtime
 
-Owner-gated Aktivierungsstufe aus ADR-0087, umgesetzt durch ADR-0088.
+Owner-gated Aktivierungsstufe aus ADR-0087/ADR-0088; Zero-Cost-Policy konkretisiert durch ADR-0089.
 
 - [x] REST `GeminiResearchTransport` gegen Interactions API
 - [x] server-only; keine öffentliche Route / kein Startup-Traffic
 - [x] Feature Flag `GEMINI_RESEARCH_SHADOW_ENABLED=false`
 - [x] `GEMINI_API_KEY` über kanonische `finance-secrets.env`-Manifestliste
-- [x] Modell-/Preis-/Kostenvertrag vor Aktivierung zwingend
 - [x] lokales RPM via bestehendem `RateLimitBudget`
-- [x] tägliches Request-/Token-/USD-Shadow-Budget
+- [x] tägliches Request-/Token-Shadow-Budget
 - [x] bestehender `CircuitBreaker`
 - [x] bestehende Supervisor Provider Health
 - [x] kanonische, prompt-/secret-freie Audit-Telemetrie
 - [x] `store=false` / `background=false`
 - [x] provider-owned `url_citation`-Span-Bindung; kein Model-Source-JSON
 - [x] Regressionstests implementiert
+
+#### Phase A.6 Free-Tier-only Hardening
+
+- [x] kanonischer `createGeminiResearchFreeTierRuntime()`
+- [x] `paidBillingPermitted=false`
+- [x] `gemini-2.5-flash` gepinnt (Free-Tier-Vertrag am 2026-08-19 verifiziert)
+- [x] Modell-/Paid-Preis-Overrides aus kanonischem Entry-Point entfernt/ignoriert
+- [x] lokale Input-/Output-/Search-Unit-Costs auf 0 erzwungen
+- [x] `GEMINI_RESEARCH_FREE_TIER_ONLY=true`
+- [x] `GEMINI_RESEARCH_FREE_TIER_ATTESTED=false` Default / zweiter Kill-Switch
+- [x] Free-Tier-Key muss aus Projekt ohne Billing-Verknüpfung stammen
+- [x] lokales hartes Request-Cap 100/Tag; Blueprint Default 50/Tag
+- [x] Canonical server index exponiert keinen Paid-Runtime-Factory
+- [x] Free-Tier-Regressionstests implementiert
 - [ ] vollständiges `vitest`/`tsc` CI-PASS-Evidence
-- [ ] realen `GEMINI_API_KEY` in Render Secret File setzen — Owner/Deployment-Aktion
-- [ ] Shadow-Consumer gezielt verdrahten und Coverage/Kosten/Latenz messen
+- [ ] realen **Free-Tier** `GEMINI_API_KEY` in Render Secret File setzen — Owner/Deployment-Aktion
+- [ ] Billing-freies Google-Projekt prüfen und danach `GEMINI_RESEARCH_FREE_TIER_ATTESTED=true` setzen
+- [ ] Shadow-Consumer gezielt verdrahten und Coverage/Latenz/Quota messen
 - [ ] reale Source-Policy + Lizenzfreigaben je Domain/Field
 - [ ] field-spezifische Promotion zu `ScoringEvidenceRef` — separat Owner-gated
 
-Evidence: `docs/evidence/sc-md/SC2_GEMINI_SHADOW_TRANSPORT_2026-08-19.md`.  
+Evidence:
+- `docs/evidence/sc-md/SC2_GEMINI_SHADOW_TRANSPORT_2026-08-19.md`
+- `docs/evidence/sc-md/SC2_GEMINI_FREE_TIER_ONLY_2026-08-19.md`
+
 Runbook: `docs/runbooks/GEMINI_RESEARCH_SHADOW.md`.
 
 ### Phase B — Consumer Migration
@@ -136,11 +153,12 @@ Runbook: `docs/runbooks/GEMINI_RESEARCH_SHADOW.md`.
 - keine neuen synthetischen/LLM-basierten Finanzmerkmale;
 - keine automatische Evidence-Promotion aus AI-Ausgaben;
 - keine Gemini-Aufnahme in das Anthropic/OpenAI-Agent-Routing;
-- keine öffentliche Gemini-Research-Route in Phase A.6.
+- keine öffentliche Gemini-Research-Route in Phase A.6;
+- **keine kostenpflichtige Gemini-Nutzung**.
 
 ## Enterprise-/FinTech-Abgleich
 
-Die Registry übernimmt zentrale Versionierung, kontrollierte Deployment-Aliase, nachvollziehbare Modellmetadaten und fail-closed Promotion. UAI/Evidence-Trennung verhindert, dass Asset-Katalogdaten oder AI-Outputs stillschweigend zu Finanz-Evidence werden. Der Gemini-Shadow-Transport bleibt vor dem Evidence Gate, ist explizit kosten-/rate-/circuit-begrenzt und liefert nur zitierte Research Candidates. Produktive Score-Wirkung erfordert weiterhin einen separat versionierten und reviewbaren Evidence-/Feature-Contract. Outcome-/Walk-Forward-Validierung bleibt SC-8.
+Die Registry übernimmt zentrale Versionierung, kontrollierte Deployment-Aliase, nachvollziehbare Modellmetadaten und fail-closed Promotion. UAI/Evidence-Trennung verhindert, dass Asset-Katalogdaten oder AI-Outputs stillschweigend zu Finanz-Evidence werden. Der Gemini-Shadow-Transport bleibt vor dem Evidence Gate, ist explizit rate-/circuit-/quota-begrenzt und liefert nur zitierte Research Candidates. ADR-0089 ergänzt eine Kosten-Trust-Boundary: der kanonische Runtime-Entry-Point ist Free-Tier-only, Paid Mode ist verboten und Billing-Freiheit wird zusätzlich operator-attestiert. Produktive Score-Wirkung erfordert weiterhin einen separat versionierten und reviewbaren Evidence-/Feature-Contract. Outcome-/Walk-Forward-Validierung bleibt SC-8.
 
 ## Definition of Done SC-2
 
