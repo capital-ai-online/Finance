@@ -95,7 +95,9 @@ These controls are satisfied by the combined deterministic and production-live e
 
 ```text
 NORMAL PR EVENT
-→ cheap required-check DENY before checkout/npm/build
+→ dedicated cheap `m10-authorization-required` guard
+→ DENY before checkout/npm/build
+→ canonical required `build-and-test` context is NOT created
 → no expensive CI
 
 OWNER IN CAPITAL-AI
@@ -113,7 +115,8 @@ OWNER IN CAPITAL-AI
 → durable pre-finalize audit with hashed capability/OIDC-JTI correlation
 → atomic PENDING -> DISPATCHED
 → only winner proceeds to checkout/npm/test/build/docker as classified
-→ required `build-and-test` attaches to the approved head
+→ canonical required `build-and-test` attaches to the approved head
+→ later ordinary PR lifecycle events can only create `m10-authorization-required`, never replace `build-and-test`
 → Human Merge remains separate
 ```
 
@@ -143,15 +146,31 @@ OIDC and the one-time M10 consumption are conjunctive controls: both are require
 
 ### Workflow fail-closed requirements
 
-- ordinary `pull_request` events may create the required check context but fail before expensive steps;
+- ordinary `pull_request` events are handled only by the dedicated `m10-pr-authorization-guard.yml` workflow, which fails before checkout and MUST NOT create the canonical `build-and-test` check context;
+- `.github/workflows/ci.yml` accepts only `push` to `main` and authoritative `workflow_dispatch`; a normal PR lifecycle event has no execution path in the expensive-CI workflow;
 - `workflow_dispatch` must target the same-repository PR branch whose current head equals the approved SHA;
 - dispatched inputs carry consumption/approval/PR/base/head/digest/action context;
 - before checkout/npm/build, the workflow obtains GitHub Actions OIDC and redeems OIDC + the single-use consumption capability at the production M10 workflow-gate endpoint;
 - unknown, malformed, mismatched, replayed or already-finalized capabilities deny before expensive CI;
 - invalid/missing/stale/wrong-audience/wrong-context OIDC identities deny before expensive CI;
 - a manually initiated workflow rerun/dispatch without both valid workload identity and an unredeemed M10 capability cannot start expensive CI;
-- the required job name remains `build-and-test` so the current-head successful authorized run can satisfy branch protection;
+- the canonical required job name remains exclusively `build-and-test`, so only `main` push or a successfully authorized current-head dispatch can report that check identity;
+- the historical PR #429 bootstrap is retired and MUST NOT provide an ordinary-PR expensive-CI bypass;
 - main-push supply-chain/deployment jobs remain separate from PR-head CI authorization.
+
+### Post-closure check-orchestration correction — 2026-08-19
+
+A production observation after M10 closure exposed a GitHub check-identity defect without invalidating the underlying WebAuthn/OIDC authorization chain: an authorized `workflow_dispatch` could complete `build-and-test` successfully on the exact head, and a later `pull_request` lifecycle event on the same head could create another job with the same `build-and-test` name and intentionally fail at the M10 pre-check. GitHub would then present the later red check under the same identity.
+
+The corrective invariant is therefore stricter than the original cutover wording:
+
+1. ordinary PR events and expensive CI MUST use different workflow/check identities;
+2. ordinary PR events remain fail-closed before checkout/npm/build;
+3. `build-and-test` is reserved for `main` push or an authoritative M10 `workflow_dispatch` only;
+4. PR lifecycle events such as `ready_for_review` cannot overwrite or collide with an already-authorized `build-and-test` result on the same head;
+5. the retired PR #429 bootstrap path is removed from the active CI workflow.
+
+This is an orchestration correction, not a relaxation of M10. Passkey verification, exact-head binding, atomic single-use consumption, GitHub Actions OIDC verification and Human-only Merge remain unchanged.
 
 ### Post-merge Controlled-Cutover verification — VERIFIED PASS
 
