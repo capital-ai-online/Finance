@@ -437,40 +437,49 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                       <span className="text-[11px] text-white/50 font-mono tracking-widest uppercase mt-0.5">PRODUCTION RELEASE</span>
                     </div>
                   </div>
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => setMenuOpen(false)}
-                    className="p-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-white/70"
+                    className="ui-hit inline-flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all text-white/70"
+                    aria-label="Hauptmenü schließen"
                   >
-                    <X size={18} />
+                    <X size={18} aria-hidden="true" />
                   </button>
                 </div>
 
                 {/* Account / Profil Profile Logo section */}
-                <div 
-                  onClick={() => navigateTo('profil')}
-                  className="p-5 border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent hover:from-white/10 transition-all cursor-pointer flex items-center gap-4 group"
+                <a
+                  href="#profil"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    navigateTo('profil');
+                  }}
+                  className="block w-full p-5 border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent hover:from-white/10 transition-all cursor-pointer group"
                   title="Mein Profil verwalten"
+                  aria-label="Mein Profil verwalten"
                 >
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${profile.avatarColor} flex items-center justify-center shadow-[0_0_15px_rgba(245,196,83,0.2)] group-hover:scale-105 transition-all overflow-hidden`}>
-                    {profile.customAvatarUrl ? (
-                      <img src={profile.customAvatarUrl} alt={profile.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                    ) : (
-                      <ActiveAvatarIcon className="w-6 h-6 text-black" />
-                    )}
-                  </div>
-                  <div className="overflow-hidden">
-                    <div className="text-xs text-aif-gold-DEFAULT font-mono uppercase tracking-widest font-black flex items-center gap-1">
-                      {profile.subscriptionTier}
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${profile.avatarColor} flex items-center justify-center shadow-[0_0_15px_rgba(245,196,83,0.2)] group-hover:scale-105 transition-all overflow-hidden`}>
+                      {profile.customAvatarUrl ? (
+                        <img src={profile.customAvatarUrl} alt={profile.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      ) : (
+                        <ActiveAvatarIcon className="w-6 h-6 text-black" />
+                      )}
                     </div>
-                    <h4 className="text-sm font-bold text-white truncate font-display group-hover:text-aif-gold-light transition-colors flex items-center gap-2">
-                      <span className="truncate">{profile.name}</span>
-                      {renderTierBadge(profile.subscriptionTier)}
-                    </h4>
-                    <p className="text-[11px] text-white/70 truncate font-mono">
-                      {profile.email}
-                    </p>
+                    <div className="overflow-hidden">
+                      <div className="text-xs text-aif-gold-DEFAULT font-mono uppercase tracking-widest font-black flex items-center gap-1">
+                        {profile.subscriptionTier}
+                      </div>
+                      <h4 className="text-sm font-bold text-white truncate font-display group-hover:text-aif-gold-light transition-colors flex items-center gap-2">
+                        <span className="truncate">{profile.name}</span>
+                        {renderTierBadge(profile.subscriptionTier)}
+                      </h4>
+                      <p className="text-[11px] text-white/70 truncate font-mono">
+                        {profile.email}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                </a>
 
                 {/* Navigation Items with Premium Vertical Accordion */}
                 <div className="p-4 space-y-3">
@@ -1257,8 +1266,14 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
         {activeView !== 'dashboard' && (
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10 backdrop-blur-md">
             <div className="flex items-center gap-2 text-xs font-mono text-white/50">
-              <span className="hover:text-white cursor-pointer uppercase tracking-wider font-bold" onClick={() => setActiveView('dashboard')}>Capital-AI</span>
-              <span>/</span>
+              <button
+                type="button"
+                className="ui-hit inline-flex items-center rounded-lg px-2 text-white/50 hover:text-white uppercase tracking-wider font-bold transition-colors"
+                onClick={() => setActiveView('dashboard')}
+              >
+                Capital-AI
+              </button>
+              <span aria-hidden="true">/</span>
               <span className="text-aif-gold-DEFAULT uppercase tracking-wider font-bold">
                 {activeView === 'myworkspace' && 'Myworkspace – Persönlicher Radar'}
                 {activeView === 'universe-scoring' && 'Universe TOP Rankings'}
@@ -1895,10 +1910,12 @@ export function Dashboard({ userSession, onLogout, onRegister, onLoginEmail, onR
                     </div>
 
                     <button
+                      type="button"
                       onClick={() => setPushNotifications(prev => prev.filter(n => n.id !== notif.id))}
-                      className="text-white/40 hover:text-white transition-colors cursor-pointer"
+                      className="ui-hit inline-flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                      aria-label={`Benachrichtigung ${notif.symbol} schließen`}
                     >
-                      <X size={12} />
+                      <X size={12} aria-hidden="true" />
                     </button>
                   </div>
 
