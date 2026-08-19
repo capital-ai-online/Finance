@@ -2,60 +2,117 @@
 
 ## Scope
 
-Post-production-migration review of Supabase Security and Performance Advisor findings for project `AIFINANCIAL` (`ryzywoktpmyhwzxmstyu`). This document distinguishes remediations from intentional architecture and accepted platform constraints.
+Production advisor review for Supabase project `AIFINANCIAL` (`ryzywoktpmyhwzxmstyu`) in PR #414. This document preserves the original pre-application assessment but supersedes its former statement that the advisor-hardening migration was PR-only.
 
-## Security findings
+No additional production mutation is performed by this evidence reconciliation.
 
-### Leaked Password Protection Disabled — accepted residual risk
+## Superseding production verification — 2026-08-19
 
-**Decision:** accepted for the current Supabase Free tier by the controller on 2026-08-19. The control remains disabled because the account plan does not expose the paid capability.
+The controller subsequently authorized the advisor-hardening migration, and it was applied to the production project.
 
-**Treatment:** not represented as remediated and not treated as a false compliance pass. Reassess when the Supabase plan changes or an equivalent control becomes available on the active plan.
+### Migration traceability
 
-Existing compensating controls in repository scope include authenticated server routes, MFA/passkey work, step-up controls and rate-limited sensitive operations. These do not make leaked-password screening equivalent; they only reduce adjacent account-takeover risk.
+| Repository artifact | Production migration history | Verification |
+| --- | --- | --- |
+| `supabase/migrations/20260819020000_supabase_advisor_policy_hardening.sql` | `20260819035020 / supabase_advisor_policy_hardening` | applied and post-verified |
 
-### RLS enabled with no policy — intentional deny-by-default
+The differing timestamps are intentional evidence of how the Supabase migration API registered the already-defined repository SQL. The production history version must therefore not be represented as identical to the repository filename timestamp.
 
-Affected advisor INFO findings:
+### Verified post-application state
 
-- `public.agent_audit_events`
-- `public.seo_keywords`
-- `public.seo_rank_snapshots`
-- `public.seo_content_inventory`
-
-Repository migrations explicitly revoke client-facing access and grant only required server/service-role privileges. These tables are intentionally not given authenticated/anonymous RLS policies. Adding a permissive policy only to silence `rls_enabled_no_policy` would weaken the documented server-only design.
-
-**Treatment:** accepted informational findings; retain RLS + least-privilege table grants; verify grants during security reviews.
-
-## Performance findings remediated in PR
-
-### Deprecated/per-row `auth.role()` service-role policies
-
-Affected tables:
+The four `service_role_full_access` policies on:
 
 - `public.capability_grants`
 - `public.agent_action_approvals`
 - `public.m10_registration_challenges`
 - `public.m10_owner_credentials`
 
-Live production inspection showed each `service_role_full_access` policy targeted `{public}` and evaluated `auth.role() = 'service_role'` in both `USING` and `WITH CHECK`.
+now target `TO service_role` with `USING (true)` and `WITH CHECK (true)`. The previous `{public}` + `auth.role() = 'service_role'` definitions are no longer present.
 
-PR migration `20260819020000_supabase_advisor_policy_hardening.sql` replaces these with explicit `TO service_role USING (true) WITH CHECK (true)`. This matches current Supabase RLS guidance, removes deprecated `auth.role()` authorization logic and avoids unnecessary per-row auth evaluation.
+`idx_seo_content_inventory_primary_keyword_id` exists as a partial index on `public.seo_content_inventory(primary_keyword_id)` for non-null values.
 
-### Unindexed SEO foreign key
+Fresh post-application Performance Advisor review confirms:
 
-`public.seo_content_inventory.primary_keyword_id` references the SEO keyword register without a covering index. The PR migration adds a partial index for non-null values.
+- the four prior `auth_rls_initplan` warnings for these policies are no longer reported;
+- the prior unindexed-FK finding for `seo_content_inventory.primary_keyword_id` is no longer reported;
+- the new SEO index is currently reported as unused, which is expected immediately after introduction and is not removal evidence.
 
-## Findings deferred with rationale
+## Current security findings
+
+### Leaked Password Protection Disabled — accepted residual risk
+
+**Decision:** accepted for the current Supabase Free tier by the controller on 2026-08-19. The control remains disabled because the active plan does not expose the paid capability.
+
+**Treatment:** not represented as remediated and not treated as a compliance pass. Reassess when the Supabase plan changes or an equivalent control becomes available.
+
+Existing compensating controls in repository scope include authenticated server routes, MFA/passkey work, step-up controls and rate-limited sensitive operations. These controls reduce adjacent account-takeover risk but are not equivalent to leaked-password screening.
+
+### RLS enabled with no policy — informational findings retained for architecture review
+
+Fresh Security Advisor review reports `rls_enabled_no_policy` INFO findings for:
+
+- `public.agent_audit_events`
+- `public.ai_governance_evaluations`
+- `public.m10_approval_evidence`
+- `public.m10_authorization_challenges`
+- `public.m10_ci_consumptions`
+- `public.m10_shadow_evaluations`
+- `public.seo_content_inventory`
+- `public.seo_keywords`
+- `public.seo_rank_snapshots`
+
+Several of these tables are designed as server/service-role-only or deny-by-default surfaces. This evidence does **not** convert every INFO finding into a blanket compliance assertion. The safe treatment is to keep them visible, verify grants and intended access contracts per table, and avoid adding permissive policies merely to silence the advisor.
+
+## Current performance residuals
+
+### Unindexed foreign key — `m10_shadow_evaluations`
+
+Fresh Performance Advisor review reports:
+
+`public.m10_shadow_evaluations.m10_shadow_evaluations_credential_id_fkey`
+
+without a covering index.
+
+This finding appeared in correlated M10 scope after the original advisor-hardening migration had been defined. It is outside the production mutation explicitly authorized for PR #414 and is therefore **not silently remediated** here. A separate migration should be created and reviewed if workload/query evidence confirms the covering index is appropriate.
+
+### Unindexed foreign key — managed Stripe schema
+
+Fresh Performance Advisor review also reports:
+
+`stripe._managed_webhooks.fk_managed_webhooks_account`
+
+without a covering index.
+
+The table belongs to the provider-managed Stripe/Supabase integration schema. PR #414 does not mutate provider-managed schema solely to suppress an advisor signal.
 
 ### `promo_redemptions` without primary key
 
-Production inspection on 2026-08-19 showed the table is currently empty and contains only `email` and `redeemed_at`. A primary-key change is deferred until the owning promotion/redemption contract is traced in application code and the desired identity/idempotency invariant is decided. Inventing a UUID key without understanding whether `email` should instead be unique would suppress the advisor without proving the correct domain model.
+The advisor continues to report `public.promo_redemptions` without a primary key. Earlier production inspection showed the table empty with only `email` and `redeemed_at`. A primary-key change remains deferred until the owning promotion/redemption contract is traced and the intended identity/idempotency invariant is decided.
 
 ### Unused indexes
 
-No indexes are removed in this PR based solely on the advisor's `unused_index` signal. Newly introduced privacy indexes are expected to have no usage history immediately after deployment; other indexes may protect low-frequency incident, audit or operational queries. Removal requires a production observation window plus query/workload evidence.
+No indexes are removed in PR #414 solely from `unused_index` INFO findings. Newly introduced or low-frequency audit/security indexes can legitimately show no usage in a short observation window. Removal requires workload evidence and an observation period.
 
-## Production mutation status
+## Historical pre-application snapshot — superseded
 
-The original privacy migration `privacy_governance_and_requests` was already applied and verified in production. The new advisor-hardening migration added by this follow-up is **PR-only at this stage** and must not be described as production-applied until a separate production mutation is explicitly authorized and verified.
+The original version of this document correctly recorded that, **at that earlier checkpoint**, only `privacy_governance_and_requests` had been applied and the advisor-hardening migration was still PR-only.
+
+That status is now superseded by the production verification above:
+
+- repository migration: `20260819020000_supabase_advisor_policy_hardening.sql`;
+- production history: `20260819035020 / supabase_advisor_policy_hardening`;
+- target policy/index changes: verified;
+- target advisor findings: no longer present.
+
+The historical distinction is retained for audit chronology; it must not be used as the current production-state claim.
+
+## Scope boundary
+
+This reconciliation changes evidence only. It does not:
+
+- apply another Supabase migration;
+- add policies to tables with `rls_enabled_no_policy` INFO findings;
+- add the M10 shadow-evaluation FK index;
+- modify provider-managed Stripe schema;
+- enable leaked-password protection;
+- remove unused indexes.

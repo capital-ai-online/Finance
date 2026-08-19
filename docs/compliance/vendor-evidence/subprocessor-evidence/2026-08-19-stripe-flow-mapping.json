@@ -15,7 +15,8 @@
     "repository inspection of CAPITAL-AI Stripe server integration",
     "connected Stripe live-account read-only inspection",
     "connected Stripe live webhook-endpoint inspection",
-    "production Supabase Edge Function read-only inspection",
+    "production Supabase Edge Function inventory read-only inspection",
+    "Render production service read-only inspection",
     "official Stripe subprocessor/service-provider source review",
     "existing Stripe DPA and Data Transfers Addendum contract evidence"
   ],
@@ -72,47 +73,105 @@
       "notes": "At least one succeeded livemode charge in the connected account reports payment_method_details.type=link. This does not establish that the current repository checkout configuration still offers Link."
     }
   ],
+  "webhookInventory": {
+    "status": "current-live-account-read",
+    "endpointCount": 3,
+    "supersedesPriorEndpointSnapshot": true,
+    "notes": "Current Stripe read shows three enabled livemode webhook endpoints. The endpoint IDs captured in the earlier PR #414 snapshot are no longer present in the current account endpoint list."
+  },
   "webhookDestinations": [
     {
-      "destination": "Supabase Edge Function",
-      "endpointId": "we_1TkXz5PKr4joNbEcCgfa1PBb",
+      "destination": "Supabase managed stripe-sync integration",
+      "endpointId": "we_1Tis8RPKr4joNbEc4vuhefcZ",
+      "applicationId": "ca_CEZPhZcAA5forHL91QU584LOVcxV3Ecv",
+      "description": "stripe-sync managed webhook",
       "url": "https://ryzywoktpmyhwzxmstyu.supabase.co/functions/v1/stripe-webhook",
       "productionScope": "AIFINANCIAL / ryzywoktpmyhwzxmstyu",
       "livemode": true,
-      "stripeEnabledEvents": ["*"],
-      "receiverAuthentication": "Stripe webhook signature verified with constructEventAsync before event handling",
-      "receiverHandledEvents": [
-        "checkout.session.completed",
-        "customer.subscription.updated",
-        "customer.subscription.deleted"
-      ],
-      "receiverPersistence": [
-        "Stripe customer and subscription identifiers",
-        "subscription status and tier",
-        "billing period metadata",
-        "profile membership status/tier"
-      ],
-      "unhandledEventBehavior": "Other valid Stripe events are parsed, their event type is logged, and the function returns success without generic event persistence.",
-      "dataMinimizationFinding": "open-overbroad-event-subscription",
-      "finding": "The Stripe endpoint currently subscribes to all events although the production function intentionally handles only three event types. Transport exposure is therefore broader than the receiver's functional processing need."
-    },
-    {
-      "destination": "Render Finance service",
-      "endpointId": "we_1TgOLPPKr4joNbEcBDbZlGD1",
-      "url": "https://finance-7clq.onrender.com/api/stripe-webhook",
-      "productionScope": "Render service Finance / srv-d91o1o9o3t8c73edi55g",
-      "livemode": true,
+      "status": "enabled-provider-managed",
+      "apiVersion": null,
       "stripeEnabledEvents": [
-        "checkout.session.completed",
+        "customer.created",
+        "customer.deleted",
+        "customer.updated",
         "customer.subscription.created",
         "customer.subscription.deleted",
+        "customer.subscription.paused",
+        "customer.subscription.resumed",
+        "customer.subscription.trial_will_end",
         "customer.subscription.updated",
+        "payment_intent.canceled",
+        "payment_intent.created",
+        "payment_intent.payment_failed",
+        "payment_intent.processing",
+        "payment_intent.requires_action",
+        "payment_intent.succeeded",
+        "setup_intent.canceled",
+        "setup_intent.created",
+        "setup_intent.requires_action",
+        "setup_intent.setup_failed",
+        "setup_intent.succeeded"
+      ],
+      "receiverEvidence": "Supabase project exposes active stripe-webhook and stripe-sync Edge Functions; Stripe marks this endpoint with an application ID and description 'stripe-sync managed webhook'.",
+      "dataMinimizationFinding": "no-wildcard-finding-currently-supported",
+      "finding": "The prior wildcard endpoint observation is superseded. The current Supabase endpoint has an explicit event set and is provider/application-managed; PR #414 does not manually narrow its event list without a provider-supported ownership/control path.",
+      "lifecycleAssessment": "current-managed-integration"
+    },
+    {
+      "destination": "financekey.app application webhook",
+      "endpointId": "we_1TnHFePKr4joNbEc8KJNBymp",
+      "applicationId": null,
+      "url": "https://financekey.app/api/payments/webhook",
+      "livemode": true,
+      "status": "enabled-live-account-configuration",
+      "apiVersion": "2026-06-30.basil",
+      "stripeEnabledEvents": [
+        "checkout.session.async_payment_failed",
+        "checkout.session.async_payment_succeeded",
+        "checkout.session.completed",
+        "checkout.session.expired",
+        "invoice.paid",
         "invoice.payment_failed",
-        "invoice.payment_succeeded",
+        "payment_intent.payment_failed",
         "payment_intent.succeeded"
       ],
-      "receiverEvidence": "Repository server/stripe.ts implements subscription/invoice webhook processing and persists subscription/profile state through Supabase admin access.",
-      "finding": "Stripe event data is also delivered to the Render application path, creating a second production webhook destination that must be considered in the data-flow inventory."
+      "receiverEvidence": "Current Stripe account configuration only; repository search did not establish this hostname as the current canonical CAPITAL-AI production host.",
+      "lifecycleAssessment": "ownership-and-current-necessity-pending",
+      "finding": "The endpoint is enabled in the live Stripe account, but PR #414 evidence does not establish whether it is still an intended CAPITAL-AI production receiver. No disable/delete mutation is performed without explicit ownership confirmation."
+    },
+    {
+      "destination": "Render-hosted webhook with unresolved service ownership",
+      "endpointId": "we_1TkBjtPKr4joNbEcyzFUZwAd",
+      "applicationId": null,
+      "url": "https://finance-renewed.onrender.com/api/payments/webhook",
+      "livemode": true,
+      "status": "enabled-live-account-configuration",
+      "apiVersion": "2026-06-30.basil",
+      "stripeEnabledEvents": [
+        "checkout.session.completed",
+        "invoice.paid",
+        "invoice.payment_failed"
+      ],
+      "receiverEvidence": "Current Stripe account configuration. The owner-confirmed Render production service Finance is srv-d91o1o9o3t8c73edi55g with current Render URL https://finance-7clq.onrender.com; that hostname does not match finance-renewed.onrender.com.",
+      "lifecycleAssessment": "active-endpoint-lifecycle-attribution-pending",
+      "finding": "The endpoint is enabled in the live Stripe account, but its hostname is not the current default URL of the owner-confirmed Finance Render service. Treat as an unresolved lifecycle/ownership item, not as proven legacy or duplicate infrastructure.",
+      "mutationStatus": "not-changed"
+    }
+  ],
+  "supersededWebhookObservations": [
+    {
+      "endpointId": "we_1TkXz5PKr4joNbEcCgfa1PBb",
+      "url": "https://ryzywoktpmyhwzxmstyu.supabase.co/functions/v1/stripe-webhook",
+      "priorFinding": "wildcard event subscription",
+      "currentStatus": "not-present-in-current-live-endpoint-list",
+      "disposition": "historical snapshot superseded; do not use as current configuration evidence"
+    },
+    {
+      "endpointId": "we_1TgOLPPKr4joNbEcBDbZlGD1",
+      "url": "https://finance-7clq.onrender.com/api/stripe-webhook",
+      "priorFinding": "second production webhook destination",
+      "currentStatus": "not-present-in-current-live-endpoint-list",
+      "disposition": "historical snapshot superseded; known Render service remains active but this Stripe endpoint ID is not current"
     }
   ],
   "subprocessorSourceReview": {
@@ -195,18 +254,12 @@
   },
   "openFindings": [
     {
-      "id": "STRIPE-WEBHOOK-MINIMIZATION-001",
+      "id": "STRIPE-WEBHOOK-OWNERSHIP-002",
       "severity": "medium",
-      "status": "open-owner-action-required-for-production-mutation",
-      "finding": "The Supabase Stripe webhook endpoint is subscribed to all Stripe events while its function handles only checkout.session.completed, customer.subscription.updated and customer.subscription.deleted.",
-      "recommendedAction": "Narrow the Stripe webhook endpoint's enabled event set to the receiver's required events after confirming no external consumer depends on the wildcard subscription.",
+      "status": "review-required-before-production-mutation",
+      "finding": "Three enabled livemode webhook endpoints exist. The Supabase endpoint is provider-managed and clearly attributable; the intended current ownership/necessity of financekey.app and finance-renewed.onrender.com is not established by the available CAPITAL-AI evidence.",
+      "recommendedAction": "Confirm endpoint ownership and canonical webhook architecture before disabling, deleting or changing either unresolved endpoint. Reconcile the Stripe endpoint inventory with the owner-confirmed production-host inventory.",
       "mutationStatus": "not-applied"
-    },
-    {
-      "id": "STRIPE-DUAL-WEBHOOK-001",
-      "severity": "info",
-      "status": "review-required",
-      "finding": "Stripe currently delivers production webhook data to both Supabase Edge Functions and the Render Finance service. Validate whether both paths remain intentionally required and define one canonical ownership model to avoid duplicated processing/drift."
     },
     {
       "id": "STRIPE-ONWARD-TIA-001",
@@ -215,10 +268,25 @@
       "finding": "DPA/DTA and current provider-list evidence establish contractual mechanisms and potential onward recipients, but a CAPITAL-AI-specific assessment of actual onward transfers and supplementary-measure/TIA necessity remains incomplete."
     }
   ],
+  "closedOrSupersededFindings": [
+    {
+      "id": "STRIPE-WEBHOOK-MINIMIZATION-001",
+      "status": "superseded-by-current-live-configuration",
+      "finding": "The earlier wildcard subscription finding was tied to endpoint we_1TkXz5PKr4joNbEcCgfa1PBb, which is no longer present. The current Supabase endpoint we_1Tis8RPKr4joNbEc4vuhefcZ is application-managed and uses an explicit event set.",
+      "mutationStatus": "no-manual-mutation-performed"
+    },
+    {
+      "id": "STRIPE-DUAL-WEBHOOK-001",
+      "status": "superseded-by-current-three-endpoint-inventory",
+      "finding": "The earlier two-endpoint topology is no longer current. It is replaced by the ownership/lifecycle finding STRIPE-WEBHOOK-OWNERSHIP-002."
+    }
+  ],
   "limitations": [
-    "No production Stripe configuration was changed during this evidence review.",
+    "No production Stripe, Render or Supabase configuration was changed during this evidence reconciliation.",
+    "An enabled livemode Stripe endpoint proves current account configuration, not that the receiver is healthy, owned by CAPITAL-AI or still business-required.",
     "The global Stripe subprocessor list identifies potential recipients but does not expose per-customer infrastructure routing.",
     "A successful Stripe Link transaction proves use of that payment method for at least one observed transaction, not its continued availability in the current checkout configuration.",
+    "The Supabase managed webhook's exact receiver implementation was not reclassified from repository assumptions; this reconciliation relies on current Stripe application metadata plus active Supabase Edge Function inventory for ownership scope.",
     "This flow mapping does not claim GDPR compliance or a completed TIA."
   ]
 }
