@@ -2,12 +2,12 @@
 
 Status: **COMPLETE / VERIFIED PASS**  
 Date: 2026-08-19  
-Closure baseline: `main@2d8e482174e97601d4343249e50d208ccf6f6355`  
+Closure baseline: `main@eb75921316943c7b3cfaba4d185e2b7f47eb6853` (PR #433 merged; closure branch deleted)  
 Authority: ADR-0066, ESS-0022, `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`, M10 Threat Model
 
 ## 1. Purpose
 
-This document is the durable M10 closure record. It consolidates the implemented passkey-only Owner CI-authorization chain, Phase-6 assurance, Controlled Cutover, production deployment and the post-cutover live exit matrix.
+This document is the durable M10 closure record. It consolidates the implemented passkey-only Owner CI-authorization chain, Phase-6 assurance, Controlled Cutover, production deployment, the post-cutover live exit matrix, and the final Human-merged closure provenance.
 
 M10 authorizes only `AUTHORIZE_PR_CI`. Human Merge remains a separate Human-only action. No checkbox, Viewed state, emoji, comment, label, reaction or generic GitHub review state is a CI authorization credential.
 
@@ -30,7 +30,8 @@ All M10 Exit-Gate controls are satisfied:
 | Legacy authorization retirement | PASS | no checkbox/emoji/Viewed/reaction authorization path |
 | Human-only Merge separation | PASS | passkey authorization never grants merge |
 | Audit correlation | PASS | Owner begin/complete → dispatch → workflow-gate claims correlated in M5 |
-| Roadmap / Runbook / Traceability sync | PASS via this closure work package | authoritative docs synchronized together |
+| Roadmap / Runbook / Traceability sync | PASS | authoritative docs synchronized; closure PR #433 Human-merged |
+| Branch lifecycle | PASS | `agent/m10-closure-verified-pass` deleted after PR #433 merge |
 
 ## 3. Implemented authorization chain
 
@@ -87,6 +88,12 @@ Recovery-head correlation: **1 approval / 1 consumption / 1 accepted dispatch / 
 
 The already-authorized `build-and-test` job from the recovery run was manually re-run. The new runner reached only the M10 gate; the already-finalized consumption was denied, checkout was skipped, and every downstream expensive step was skipped. No additional consumption was created.
 
+### Final closure merge and lifecycle
+
+Closure PR #433 was reconciled to then-current `main@3ed2b2e9c9421bc979ca2487610a6a49a655e888`, then Owner-authorized on exact head `f0dc5b05094cc3e9b890856780c90b2a73946f66`. The authorized `workflow_dispatch` run `32236394031` completed `build-and-test = SUCCESS` on that exact head. Human Merge remained separate and produced merge commit `eb75921316943c7b3cfaba4d185e2b7f47eb6853` on `main`.
+
+After merge, the remote closure branch `agent/m10-closure-verified-pass` was absent/deleted. This satisfies the DevelopmentChain Branch Lifecycle Policy and provides the final `Merge SHA → Branch Deleted` trace.
+
 ## 5. Negative assurance coverage
 
 Live and deterministic evidence jointly cover:
@@ -133,7 +140,8 @@ This is consistent with enterprise least-privilege, short-lived workload identit
 | Head drift | ordinary CI reruns | stale approvals cannot authorize changed state |
 | Legacy checkbox/emoji | retired transitional history | no authorization role |
 | Audit | generic CI evidence | immutable approval/consumption/OIDC/M5 correlation |
-| Merge | Human-only | Human-only |
+| Merge | Human-only | Human-only; closure landed as `eb759213…` |
+| Branch lifecycle | closure branch pending deletion | closure branch deleted after Human merge |
 
 ## 8. Residual operational obligations
 
@@ -150,3 +158,4 @@ If M10 later becomes unhealthy, remain fail-closed and repair/revert through a f
 - `docs/evidence/m10/M10_CONTROLLED_CUTOVER_2026-08-19.md`
 - closed assurance PR #431 / final probe evidence `M10_POST_CUTOVER_ASSURANCE_2026-08-19.md`
 - Controlled-Cutover PR #429
+- Closure PR #433 → Human merge `eb75921316943c7b3cfaba4d185e2b7f47eb6853`; closure branch deleted
