@@ -22,7 +22,7 @@ function modelRegistryView(model: ScoringModelDescriptor) {
   };
 }
 
-async function respondWithCanonicalStandardCryptoScore(
+async function respondWithCanonicalCryptoScore(
   req: express.Request,
   res: express.Response,
 ): Promise<express.Response> {
@@ -35,16 +35,18 @@ async function respondWithCanonicalStandardCryptoScore(
   }
 
   const symbol = String(req.params.symbol || '').toUpperCase().trim();
+  const meme = isMemeCoin(symbol);
   const dispatch = await dispatchCanonicalScore({
     symbol,
     assetClass: 'crypto',
+    subtype: meme ? 'memecoin' : undefined,
     source: 'request',
   });
 
   if (dispatch.status !== 'DISPATCHED') {
     return res.status(422).json({
       symbol,
-      isMemeCoin: false,
+      isMemeCoin: meme,
       scoreBasis: 'unavailable',
       scoreEligible: false,
       assetId: dispatch.asset.assetId,
@@ -58,7 +60,7 @@ async function respondWithCanonicalStandardCryptoScore(
   if (canonical.status !== 'READY' || !assessment.analysis) {
     return res.status(422).json({
       symbol,
-      isMemeCoin: false,
+      isMemeCoin: meme,
       scoreBasis: 'unavailable',
       scoreEligible: false,
       assetId: asset.assetId,
@@ -73,7 +75,7 @@ async function respondWithCanonicalStandardCryptoScore(
 
   return res.json({
     symbol,
-    isMemeCoin: false,
+    isMemeCoin: meme,
     scoreBasis: 'canonical-dispatcher',
     scoreEligible: true,
     assetId: asset.assetId,
@@ -87,42 +89,38 @@ async function respondWithCanonicalStandardCryptoScore(
 }
 
 /**
- * SC-2 Phase C2 compatibility boundary.
+ * SC-2 Phase C3 compatibility boundary.
  *
- * These handlers are mounted before the historical server.application.ts routes. Standard-Crypto
- * requests therefore terminate here and cannot reach direct CryptoScoringService execution.
- * MemeCoin requests intentionally call next() and remain a visible C3 migration item.
+ * All Crypto requests, including Meme-Crypto, terminate here and execute only through the
+ * canonical ScoringDispatcher. The historical server.application.ts MemeCoinScoringService
+ * handlers remain shadowed compatibility dead code until a later composition-root deletion pass.
  */
 export function createLegacyScoringCompatibilityRouter(): express.Router {
   const router = express.Router();
 
-  router.get('/api/crypto-scoring/:symbol', async (req, res, next) => {
-    const symbol = String(req.params.symbol || '').toUpperCase().trim();
-    if (isMemeCoin(symbol)) return next();
+  router.get('/api/crypto-scoring/:symbol', async (req, res) => {
     try {
-      return await respondWithCanonicalStandardCryptoScore(req, res);
+      return await respondWithCanonicalCryptoScore(req, res);
     } catch (error: any) {
       return res.status(500).json({ error: error?.message || 'Canonical scoring failed.' });
     }
   });
 
-  router.post('/api/crypto-scoring/:symbol', express.json(), async (req, res, next) => {
+  router.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
     const symbol = String(req.params.symbol || '').toUpperCase().trim();
-    if (isMemeCoin(symbol)) return next();
-
     const customInputs = req.body && typeof req.body === 'object' ? req.body : {};
     if (Object.keys(customInputs).length > 0) {
       return res.status(422).json({
         symbol,
         status: 'CUSTOM_SCORING_INPUTS_DISABLED',
         scoreEligible: false,
-        error: 'Caller-provided scoring inputs are not accepted by the canonical Standard-Crypto scoring path.',
+        error: 'Caller-provided scoring inputs are not accepted by the canonical Crypto scoring path.',
         canonicalEndpoint: '/api/crypto/score',
       });
     }
 
     try {
-      return await respondWithCanonicalStandardCryptoScore(req, res);
+      return await respondWithCanonicalCryptoScore(req, res);
     } catch (error: any) {
       return res.status(500).json({ error: error?.message || 'Canonical scoring failed.' });
     }

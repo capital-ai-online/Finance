@@ -13,7 +13,21 @@ import { validateRawMaterialInput } from '../schemas/rawMaterialsValidation';
 import { RAW_MATERIALS_DATABASE } from '../config/rawMaterialsConfig';
 import { getAssetCatalogEntry } from '../lib/assetSearchCatalog';
 import { getTwelveDataCommodityEvidence } from '../services/commodityMarketEvidence';
-import { scoreCommodityMarketEvidence } from '../services/commodityEvidenceScoring';
+import { dispatchCanonicalScore, type ScoringModelDescriptor } from '../platform/Scoring';
+
+function modelRegistryView(model: ScoringModelDescriptor) {
+  return {
+    registryVersion: model.registryVersion,
+    modelId: model.modelId,
+    version: model.version,
+    alias: model.alias,
+    lifecycle: model.lifecycle,
+    executorKey: model.executorKey,
+    featureContractVersion: model.featureContractVersion,
+    resultContractVersion: model.resultContractVersion,
+    evidencePolicy: model.evidencePolicy,
+  };
+}
 
 export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, anthropicClient: Anthropic | null = null, openaiClient: OpenAI | null = null): express.Router {
   const router = express.Router();
@@ -46,7 +60,8 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
 
   /**
    * GET /api/raw-materials/verified-score/:symbol
-   * Approved canonical commodity market-evidence score. No registry/bootstrap values participate.
+   * Approved canonical commodity market-evidence score. Evidence acquisition is domain-specific;
+   * model resolution and execution authority are owned exclusively by ScoringDispatcher.
    */
   router.get('/verified-score/:symbol', async (req, res) => {
     const symbol = String(req.params.symbol || '').toUpperCase().trim();
@@ -56,12 +71,31 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
     }
     try {
       const evidence = await getTwelveDataCommodityEvidence(symbol, 90);
-      const result = scoreCommodityMarketEvidence(evidence);
-      const canonical = result.canonical;
+      const dispatch = await dispatchCanonicalScore({
+        symbol,
+        name: asset.name,
+        assetClass: 'commodity',
+        subtype: asset.subtype,
+        source: 'catalog',
+        execution: { kind: 'commodity-evidence', evidence },
+      });
+      if (dispatch.status !== 'DISPATCHED') {
+        return res.status(422).json({
+          symbol,
+          assetId: dispatch.asset.assetId,
+          modelRegistry: dispatch.model ? modelRegistryView(dispatch.model) : null,
+          ...dispatch.canonical,
+          reason: dispatch.reason,
+        });
+      }
+
+      const result = dispatch.assessment;
+      const canonical = dispatch.canonical;
       return res.status(canonical.status === 'READY' ? 200 : 422).json({
         symbol,
-        status: canonical.status,
-        score: canonical.final_score,
+        assetId: dispatch.asset.assetId,
+        modelRegistry: modelRegistryView(dispatch.model),
+        ...canonical,
         score10: canonical.score,
         scoreSemantic: result.scoreSemantic,
         contractVersion: result.contractVersion,
@@ -70,7 +104,6 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
         evidenceIds: result.evidenceIds,
         factors: result.factors,
         reasoning: result.reasoning,
-        integrity: canonical.integrity,
         providerSymbol: evidence.providerSymbol,
       });
     } catch (error) {
@@ -78,7 +111,7 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
         symbol,
         status: 'SOURCE_UNAVAILABLE',
         score: null,
-        contractVersion: 'commodity-evidence-scoring/1.0.0',
+        final_score: null,
         reason: error instanceof Error ? error.message : String(error),
       });
     }
@@ -87,6 +120,7 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
   /**
    * POST /api/raw-materials/analyze
    * Executes full multi-agent structural analysis for a specific material.
+   * This remains research/enrichment only and never enters canonical ranking/eligibility.
    */
   router.post('/analyze', async (req, res) => {
     try {
@@ -96,7 +130,7 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
       }
 
       const payload = await orchestrator.analyzeMaterial(name, customInput);
-      res.json({ ...payload, scoreSemantic: 'legacy-structural-research', canonical: false, marketEvidenceVerified: false });
+      res.json({ ...payload, scoreSemantic: 'legacy-structural-research', canonical: false, scoreEligible: false, marketEvidenceVerified: false });
     } catch (error: any) {
       console.error('[RawMaterialsRouter] Error analyzing material:', error);
       res.status(500).json({ error: error.message || 'Internal Server Error' });
@@ -116,7 +150,7 @@ export function createRawMaterialsRouter(aiClient: AiGenerationClient | null, an
       }
 
       const payload = RawMaterialsScoringService.scoreMaterial(validation.validatedData);
-      res.json({ ...payload, scoreSemantic: 'legacy-structural-research', canonical: false, marketEvidenceVerified: false });
+      res.json({ ...payload, scoreSemantic: 'legacy-structural-research', canonical: false, scoreEligible: false, marketEvidenceVerified: false });
     } catch (error: any) {
       console.error('[RawMaterialsRouter] Error scoring material:', error);
       res.status(500).json({ error: error.message || 'Internal Server Error' });
