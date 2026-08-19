@@ -1,18 +1,18 @@
 # Screening · Scoring · Market Data — Single Point of Trust Roadmap
 
 **Document ID:** SC-MD-SPT-0001  
-**Version:** 1.0.7  
+**Version:** 1.0.13  
 **Status:** ACTIVE — CANONICAL EXECUTION AUTHORITY  
-**Stand:** 2026-08-16  
-**Repository-Baseline:** `main` (SC-1 / SC-3 / SC-4 Phase A / SC-7 Phase A–C; SC-5 Phase A–D code; Phase B PR may still be open)  
+**Stand:** 2026-08-19  
+**Repository-Baseline:** `main@275fdf4c` + Integrationsbranch `agent/sc2-stack-main-sync`  
 **Owner:** SvenKulessa  
-**Authority:** DOCUMENTATION_HYGIENE_POLICY · ROADMAP_CONSOLIDATION_MASTER_INDEX · ADR-0020 / ADR-0041 · ESS EventMesh/Traceability
+**Authority:** DOCUMENTATION_HYGIENE_POLICY · GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY / ADR-0086 · ROADMAP_CONSOLIDATION_MASTER_INDEX · ADR-0020 / ADR-0041 · ESS EventMesh/Traceability
 
 ---
 
 ## 1. Zweck
 
-Dieses Dokument ist der **Single Point of Trust (SPT)** für die Screening-/Scoring-/Market-Data-Wertschöpfungskette der CAPITAL-AI Multi-Asset-Plattform (8 Assetklassen, Universal-Asset-Interface-Ziel, Score-Kontrakte, Market-Data-Gateways).
+Dieses Dokument ist der **Single Point of Trust (SPT)** für die Screening-/Scoring-/Market-Data-Wertschöpfungskette der CAPITAL-AI Multi-Asset-Plattform (Universal-Asset-Interface-Ziel, Score-Kontrakte, Market-Data-Gateways).
 
 Es ersetzt als Ausführungsautorität:
 
@@ -22,106 +22,139 @@ Es ersetzt als Ausführungsautorität:
 | `docs/architecture/ENTERPRISE_SCREENING_REMEDIATION_2026-08.md` | Enger Remediation-Scope | **ARCHIVED** → `docs/archive/legacy/` |
 | Parallel-Remediation-Branches / Ad-hoc-Screening-Todos | Fragmentiert | **FORBIDDEN** — nur über dieses SPT |
 
-**Keine parallele Remediation.** Alle offenen Screening-/Scoring-/MD-Arbeiten werden ausschließlich hier getrackt.
+**Keine parallele Remediation und keine parallele Scoring-Architektur.** Alle offenen Screening-/Scoring-/MD-Arbeiten werden ausschließlich hier getrackt. ADR-0087 konkretisiert UAI + ScoringModelRegistry; ADR-0088/0089 integrieren Research-Evidence/Gemini ausschließlich als Acquisition-Adapter vor dem Evidence Gate; ADR-0090 macht diesen Gemini-Pfad Free-Tier-only und verbietet Paid Mode. ADR-0086 bleibt die auf `main` gemergte Governance-Authority-/Supersession-Entscheidung und ist nicht Teil der SC-2-Fachnummerierung.
 
 ---
 
-## 2. Code-vs-Docs-Synthese (Update 2026-08-16)
+## 2. Code-vs-Docs-Synthese (Update 2026-08-19)
 
 ### 2.1 Was der Code heute liefert
 
 | Schicht | Code-Pfad | Reife |
 |---|---|---|
 | Market-Data Gateway | `src/platform/MarketData/` | **SC-4 Matrix/Health + SC-5 CoinGecko canonical multi-field** |
-| Provider | TwelveData, FMP Index, CoinGecko (price + marketCap/supply on Canonical); CoinAPI/EODHD/TwelveData(crypto) gateway adapters registered (SC-5 Phase D, unconsumed); Alpaca shadow | **Kern live** |
+| Provider | TwelveData, FMP Index, CoinGecko; CoinAPI/EODHD/TwelveData(crypto) gateway adapters registered, unconsumed; Alpaca shadow | **Kern live** |
 | Evidence / Consensus | Snapshot/Spot consensus, traditional/commodity/macro evidence | **Stark ausgebaut** |
-| Scoring-Engines | Base/DeFi, crypto 9-Faktor, meme, raw materials, traditional, verified technical | **Multi-Engine, noch fragmentiert** |
-| Ranking / Eligibility | `ranking.service` + SC-7 composite opt-in (Phase A–C: orchestrator, valuation.service, cryptoRoutes) | **Crypto-lastig; alle Payload-Level-Konsumenten wired** |
-| Classification | Adapter + expanded deterministic table (SC-1) | **Canonical exit path** |
-| Unified DQ/Confidence | `CompositeDataQuality` (SC-3); impact flags false | **Foundation + ranking consumer map** |
+| Research Evidence | `src/platform/ResearchEvidence/` + `server/researchEvidence/` | **SC-2 A.5/A.6: Contract + server-only Gemini Shadow; default-off, Free-Tier-only, keine Score-Wirkung** |
+| Scoring-Engines | Base/DeFi, crypto 9-Faktor, meme, raw materials, traditional, verified technical | **Multi-Engine; A1/A2 Konsolidierung gestartet** |
+| UAI / Model Registry | `src/platform/Scoring/` | **SC-2 Phase A Foundation: UAI + fail-closed Champion Resolver** |
+| Ranking / Eligibility | `ranking.service` + SC-7 composite opt-in | **Crypto-lastig; cross-asset noch offen** |
+| Classification | Adapter + expanded deterministic table | **Canonical exit path** |
+| Unified DQ/Confidence | `CompositeDataQuality`; impact flags false | **Foundation + consumer map** |
 
 ### 2.2 Verbleibende Lücken
 
-1. scoreImpact / rankingImpact noch Owner-gated (`false`)
-2. Ranking-Generalisierung cross-asset (Overall / Category / Tier / Growth) — alle drei Payload-Level-Konsumenten (Orchestrator, valuation.service, cryptoRoutes) nutzen seit Phase C denselben SC-3-Opt-in-Pfad; echte Composite-Berechnung an den beiden letztgenannten Stellen bleibt offen
-3. Multi-provider crypto quorum + `executionPriceEligible` — Gateway-Adapter (CoinAPI/EODHD/TwelveData) seit SC-5 Phase D registriert, aber noch **nicht konsumiert**; Verdrahtung + Flip bleiben Owner-gated
-4. Model registry & UAI adapters (SC-2)
-5. Alpaca primary promotion (ADR-0041 Owner gate)
-6. Horizon / Walk-Forward backtests (SC-8)
+1. scoreImpact / rankingImpact weiterhin Owner-gated (`false`)
+2. Ranking-Generalisierung cross-asset offen
+3. Multi-provider crypto quorum + `executionPriceEligible` weiterhin offen; vorhandene Gateway-Adapter noch unconsumed
+4. **SC-2 Consumer Migration:** alle produktiven Score-Entry-Points noch über Registry/Dispatcher + CanonicalScoreResult vereinheitlichen
+5. **Gemini Shadow Validation:** PR #416 CI ist vollständig PASS; Main-Sync-PR-CI, interner Shadow-Consumer sowie Coverage/Latenz/Quota-Messung bleiben offen; Free-Tier-Key und Billing-Attestation sind operativ gesetzt, Shadow bleibt deaktiviert
+6. **Evidence Promotion:** reale Source-/Lizenz-/Field-Policies und Promotion von validierten Research Candidates zu ScoringEvidenceRef separat Owner-gated
+7. Alpaca primary promotion Owner-gated
+8. SC-8 vollständige Drift-/Golden-/Walk-Forward-Governance offen
 
 ---
 
 ## 3. Kanonische Wertschöpfungskette (SPT-Modell)
 
 ```text
-[Providers] → MarketDataGateway (CB/Cache/RL/Coalesce + ProviderMatrix)
-                    ↓
-            DataQualityService + Evidence/Consensus Services
-                    ↓
-            Classification (Asset Class / Category / Tier)
-                    ↓
-            Scoring Engines (per class / model registry)
-                    ↓
-            Confidence + DQ Composite → Ranking / Eligibility / SLO
-                    ↓
-            EventMesh (score.* / data.*) + Traceability + Supervisor
-                    ↓
-            API / Screener UI / Alerts / Backtest Evidence
+[Asset Catalog / Request]
+          ↓
+Universal Asset Interface (identity only)
+          ↓
+ ┌──────────────────────────────────────────────────────────────────┐
+ │ Evidence Acquisition                                             │
+ │ Market Providers -> MarketDataGateway                            │
+ │ Research Providers -> ResearchEvidenceAdapter                    │
+ │   optional GeminiResearchTransport                               │
+ │     -> canonical Free-Tier-only factory (server-only/off)        │
+ │     -> AI_DISCOVERED_EVIDENCE (scoreEligible=false)              │
+ │     -> Source Validation                                         │
+ │     -> future field-specific Evidence Promotion                  │
+ └──────────────────────────────┬───────────────────────────────────┘
+                                ↓
+                DataQualityService + Evidence/Consensus Services
+                                ↓
+                Classification (Asset Class / Category / Tier)
+                                ↓
+                        Feature Contract
+                                ↓
+                ScoringModelRegistry (canonical champion only)
+                                ↓
+                Scoring Executor Adapter -> CanonicalScoreResult
+                                ↓
+                Confidence + DQ Composite -> Ranking / Eligibility / SLO
+                                ↓
+                EventMesh + Traceability + Supervisor
+                                ↓
+                API / Screener UI / Alerts / Backtest Evidence
 ```
 
-**Harter Vertrag:** Universal Asset Interface (Adapter), Score-Kontrakt, fail-closed Evidence, keine Symbol-Hash-/Random-Walk-Finanzlogik.
+**Harter Vertrag:** UAI Identity, ScoringModelRegistry, CanonicalScoreResult und fail-closed Evidence. LLM-/Research-Output ist niemals direkt verifizierte Finanz-Evidence. Gemini Shadow ist Acquisition-only und Free-Tier-only; `AI_DISCOVERED_EVIDENCE` bleibt `scoreEligible=false`. Fehlende validierte Evidence oder Modelauflösung bleibt `SCORE_NOT_COMPUTABLE`.
 
 ---
 
 ## 4. Ausführungs-Backlog (SC-*)
 
-| ID | Titel | Priorität | Status (2026-08-16) | DoD (kurz) |
+| ID | Titel | Priorität | Status (2026-08-19) | DoD (kurz) |
 |---|---|---|---|---|
 | **SC-0** | Baseline freeze & inventory | P0 | **LANDED** | SPT gemerged |
 | **SC-1** | Classification consolidation | P0 | **LANDED** | Canonical schema; deterministic coverage |
-| **SC-2** | Model registry & UAI adapters | P1 | OPEN | model_registry; UAI adapters |
+| **SC-2** | Model registry & UAI adapters | P1 | **IN IMPLEMENTATION — A + A.5 + A.6 + Free-Tier hardening; Main-Sync läuft** | UAI + registry + zero-cost research shadow + all score consumers via one dispatcher + canonical result |
 | **SC-3** | Unified DQ + Confidence composite | P0 | **FOUNDATION LANDED** | Composite; impact off |
 | **SC-4** | Gateway hardening & provider matrix | P1 | **Phase A LANDED** | Matrix + RL + supervisor health |
-| **SC-5** | Live coverage expansion | P1 | **Phase A–D code; Phase B PR may be open** | Canonical multi-field on gateway; CoinAPI/EODHD/TwelveData crypto adapters registered (Phase D); execution quorum still open |
-| **SC-6** | Scoring integrity & lineage | P1 | PARTIAL | calculation_version + lineage |
-| **SC-7** | Ranking generalization | P1 | **Phase A–C LANDED** | valuation.service/cryptoRoutes now wired (Phase C); cross-asset modes still open; impact off |
-| **SC-8** | Horizon / Walk-Forward backtests | P2 | OPEN | Drift-Evidence; golden-set regression |
+| **SC-5** | Live coverage expansion | P1 | **Phase A–D code** | execution quorum still open |
+| **SC-6** | Scoring integrity & lineage | P1 | PARTIAL | contract unification continues with SC-2 |
+| **SC-7** | Ranking generalization | P1 | **Phase A–C LANDED** | cross-asset modes still open; impact off |
+| **SC-8** | Horizon / Walk-Forward backtests | P2 | FOUNDATION/PARTIAL | drift + golden-set + full walk-forward governance open |
 
-**Kritischer Pfad:** SC-0 → SC-1 + SC-3 → SC-4 → SC-5 → SC-2/SC-6 → SC-7 (full) → SC-8.
+**Kritischer Pfad:** SC-0 → SC-1 + SC-3 → SC-4 → SC-5 → **SC-2/SC-6 consolidation** → SC-7 full → SC-8.
 
 ---
 
 ## 5. Authority & Mutationsregeln
 
 1. Runtime-/Code-/Produktions-Evidence  
-2. Explizite Human/Owner-Freigabe  
-3. Spezifische ADR/ESS (Market Data: ADR-0020, ADR-0041; Screening-SLO: ADR-0028)  
+2. Explizite Human/Owner-Freigabe + Accepted ADR im jeweiligen Scope  
+3. Spezifische ESS/Governance Policies gemäß `GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY` / ADR-0086  
 4. **Dieses SPT (SC-MD-SPT-0001)**  
 5. ROADMAP_CONSOLIDATION_MASTER_INDEX  
 6. Historische/archivierte Docs
 
-Mutation von Scoring-Gewichten, Eligibility-Schwellen, Provider-Routing, Live-Gates oder **scoreImpact/rankingImpact** erfordert Owner-Freigabe.
+Mutation von Scoring-Gewichten, Eligibility-Schwellen, Market-Data-Provider-Routing, Live-Gates oder **scoreImpact/rankingImpact** erfordert Owner-Freigabe.
+
+ADR-0090 überschreibt für Gemini Research Shadow die frühere konfigurierbare Paid-/USD-Kostensteuerung: der kanonische Server-Entry-Point ist **Free-Tier-only**, pinnt `gemini-2.5-flash`, verbietet Paid Mode und verlangt zusätzlich eine Operator-Attestation, dass der `GEMINI_API_KEY` zu einem Google-Projekt ohne Billing-Verknüpfung gehört. Der Owner hat am 2026-08-19 bestätigt, dass der Free-Tier-Key ohne Billing in `finance-secrets.env` liegt; im Render-Service ist `GEMINI_RESEARCH_FREE_TIER_ATTESTED=true` gesetzt. Der unabhängige Kill-Switch bleibt `GEMINI_RESEARCH_SHADOW_ENABLED=false`, daher entsteht weiterhin kein Gemini-Traffic. Der Blueprint behält `GEMINI_RESEARCH_FREE_TIER_ATTESTED=false` als sicheren Default für neue Deployments. Eine Score-Evidence-Promotion bleibt ein eigenes field-spezifisches Gate.
+
+### Main-Korrelation 2026-08-19
+
+Die ursprüngliche SC-2-Stack-Basis lag auf `345b2bd3`. `main` rückte zunächst durch Governance/Regulatory Hardening auf `f8a1630a` und anschließend durch M10 Phase 4 auf `275fdf4c` vor. PR #416 wurde in `agent/gemini-research-evidence-adapter` gemerged. Für die Main-Integration wurde deshalb **kein alter Stack-Branch rebasierend über `main` gelegt**, sondern `agent/sc2-stack-main-sync` frisch von `main@275fdf4c` erstellt und nur der fachliche SC-2-Delta reappliziert.
+
+Korrelationsergebnis:
+
+- ADR-0086 bleibt ausschließlich Governance Authority auf `main`; SC-2 verwendet ADR-0087–ADR-0090.
+- `AGENTS.md`, Governance Authority, AI-Governance-Supabase-Sink und M10 Phase 4 bleiben vollständig aus `main` erhalten.
+- Die beiden Systemadmin-Testdateien aus dem alten Stack werden nicht übernommen; `main` bleibt dort autoritativ.
+- `docs/governance/document-registry.json` wird additiv zusammengeführt: Main-Governance-Einträge bleiben unverändert, SC-2-ADR/Evidence/Runbook-Einträge werden ergänzt.
+- Die M10-Phase-4-Dateien haben keinen Pfad- oder Runtime-Konflikt mit Scoring/ResearchEvidence.
 
 ---
 
 ## 6. Related
 
-- `docs/roadmaps/work-packages/SC-1_CLASSIFICATION_CONSOLIDATION.md`
-- `docs/roadmaps/work-packages/SC-3_UNIFIED_DQ_CONFIDENCE.md`
-- `docs/roadmaps/work-packages/SC-4_GATEWAY_HARDENING_PROVIDER_MATRIX.md`
-- `docs/roadmaps/work-packages/SC-5_LIVE_COVERAGE_EXPANSION.md`
-- `docs/roadmaps/work-packages/SC-7_RANKING_COMPOSITE_OPT_IN.md`
-- `docs/evidence/sc-md/`
-- `src/platform/MarketData/ProviderMatrix.ts`
-- `src/platform/MarketData/providers/CoinGeckoMarketDataProvider.ts`
-- `src/platform/MarketData/providers/CoinAPIMarketDataProvider.ts`
-- `src/platform/MarketData/providers/EODHDMarketDataProvider.ts`
-- `src/services/cryptoQuoteEvidence.ts`
-- `src/services/cryptoSnapshotProvider.ts`
-- `src/services/valuation.service.ts`
-- `src/routes/cryptoRoutes.ts`
-- `src/services/ranking.service.ts`
+- `docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md`
+- `docs/adr/ADR-0087-single-scoring-architecture-uai-model-registry.md`
+- `docs/adr/ADR-0088-gemini-research-evidence-reentry-boundary.md`
+- `docs/adr/ADR-0089-gemini-research-shadow-runtime.md`
+- `docs/adr/ADR-0090-gemini-free-tier-only-zero-cost-policy.md`
+- `docs/evidence/sc-md/SC2_A1_A2_BASELINE_2026-08-19.md`
+- `docs/evidence/sc-md/SC2_GEMINI_RESEARCH_EVIDENCE_ADAPTER_2026-08-19.md`
+- `docs/evidence/sc-md/SC2_GEMINI_SHADOW_TRANSPORT_2026-08-19.md`
+- `docs/evidence/sc-md/SC2_GEMINI_FREE_TIER_ONLY_2026-08-19.md`
+- `docs/runbooks/GEMINI_RESEARCH_SHADOW.md`
+- `src/platform/Scoring/`
+- `src/platform/ResearchEvidence/`
+- `server/researchEvidence/`
 
 ---
 
-*SC-5 Phase D + SC-7 Phase C 2026-08-16 (CoinAPI/EODHD/TwelveData crypto gateway adapters registered, unconsumed; valuation.service/cryptoRoutes wired to SC-3 opt-in, numeric no-op). Keine scoreImpact-Mutation. Keine executionPriceEligible-Flip. Merge nur nach Owner-Review.*
+*SC-2 A1/A2 + A.5/A.6 Free-Tier hardening 2026-08-19: UAI/Model Registry + ResearchEvidenceAdapter + server-only Gemini Shadow Transport + Zero-Cost Policy werden auf einem frischen Main-Sync-Branch konsolidiert. Shadow bleibt default-off, billing-free/free-tier-only, secret-/rate-/quota-/circuit-/health-/telemetry-gated und ohne Score-/Ranking-/Market-Data-Routing-Impact. Main-Integration erst nach PR-CI und Human Merge.*
