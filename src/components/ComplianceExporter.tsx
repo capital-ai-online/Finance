@@ -13,6 +13,15 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { PdfExportModal } from './PdfExportModal';
 import { ComplianceConsentWrapper } from './ComplianceConsentModal';
+import {
+  CAPITAL_AI_VERSION,
+  PDF_BRAND,
+  PDF_NOTICES,
+  applyPdfDocumentMetadata,
+  createPdfReportMetadata,
+  drawCapitalAiFooter,
+  drawCapitalAiRunningHeader,
+} from '../platform/PdfReporting/pdfBrand';
 
 interface RegistryAsset {
   symbol: string;
@@ -99,46 +108,33 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
         unit: 'mm',
         format: 'a4'
       });
+      const reportMetadata = createPdfReportMetadata('compliance');
+      applyPdfDocumentMetadata(
+        doc,
+        reportMetadata,
+        'CAPITAL-AI Compliance Self-Check',
+        'Interner quantitativer Compliance- und Datenschutz-Selbstcheck',
+      );
 
-      const primaryColor = [176, 38, 255]; // Neon Purple
-      const secondaryColor = [6, 182, 212]; // Neon Cyan
-      const textColorDark = [15, 23, 42]; // Slate 900
-      const textColorLight = [100, 116, 139]; // Slate 500
-      const lightBg = [248, 250, 252]; // Slate 50
-      const gridBorder = [226, 232, 240]; // Slate 200
+      const primaryColor = PDF_BRAND.colors.gold;
+      const secondaryColor = PDF_BRAND.colors.cyan;
+      const textColorDark = PDF_BRAND.colors.textPrimary;
+      const textColorLight = PDF_BRAND.colors.textSecondary;
+      const lightBg = PDF_BRAND.colors.surfaceLight;
+      const gridBorder = PDF_BRAND.colors.borderLight;
 
-      // Helper for drawing a clean colored banner
+      // Canonical running header and footer from the shared PDF brand layer.
       const drawHeader = (pageNum: number) => {
-        // Top colored tab
-        doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        doc.rect(0, 0, 210, 6, 'F');
-
-        // Document ID & Page indicator
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text(`CAPITAL-AI COMPLIANCE AUDIT TRAIL • REPORT ID: AIF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`, 14, 13);
-        doc.text(`SEITE ${pageNum} VON 2`, 196, 13, { align: 'right' });
-
-        // Divider
-        doc.setDrawColor(gridBorder[0], gridBorder[1], gridBorder[2]);
-        doc.setLineWidth(0.3);
-        doc.line(14, 15, 196, 15);
+        drawCapitalAiRunningHeader(doc, reportMetadata, pageNum, 2);
       };
 
       const drawFooter = (pageNum: number) => {
-        const y = 282;
-        // Divider
-        doc.setDrawColor(gridBorder[0], gridBorder[1], gridBorder[2]);
-        doc.setLineWidth(0.3);
-        doc.line(14, y - 5, 196, y - 5);
-
-        // Footer labels
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7.5);
-        doc.setTextColor(120, 120, 120);
-        doc.text('Dieses Dokument wurde elektronisch generiert und bedarf keiner handschriftlichen Unterschrift.', 14, y);
-        doc.text('Interner DSGVO-Selbstcheck-Bericht • Version 0.7.0 (Beta-Phase)', 196, y, { align: 'right' });
+        drawCapitalAiFooter(doc, reportMetadata, {
+          y: 282,
+          notice: PDF_NOTICES.internalCompliance,
+          pageNumber: pageNum,
+          pageCount: 2,
+        });
       };
 
       // ==========================================
@@ -157,18 +153,18 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
       doc.setTextColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       doc.text('PROPORTIONALER QUANT-AUDIT UND RISIKO-EVALUIERUNGSBERICHT', 14, 32.5);
 
-      // Status Stamp (Green Approved Badge)
-      doc.setFillColor(240, 253, 244); // light green bg
-      doc.setDrawColor(34, 197, 94); // green border
+      // Internal review badge; intentionally not represented as external certification.
+      doc.setFillColor(240, 253, 244);
+      doc.setDrawColor(34, 197, 94);
       doc.setLineWidth(0.5);
       doc.rect(148, 20, 48, 14, 'FD');
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.5);
-      doc.setTextColor(22, 101, 52); // green text
-      doc.text('COMPLIANCE-STATUS:', 152, 25);
+      doc.setTextColor(22, 101, 52);
+      doc.text('PRÜFSTATUS:', 152, 25);
       doc.setFontSize(10.5);
-      doc.text('VERIFIZIERT ✓', 152, 31);
+      doc.text('INTERNER CHECK', 152, 31);
 
       // Audit Metadata Box
       doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
@@ -194,14 +190,14 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
       doc.text('Prüfungszeitpunkt:', 18, 55);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
-      doc.text(new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }) + ' (Europe/Berlin)', 54, 55);
+      doc.text(reportMetadata.generatedAt.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }) + ' (Europe/Berlin)', 54, 55);
 
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       doc.text('System-Version:', 18, 60);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
-      doc.text('0.5.4 (Unified Beta Release)', 54, 60);
+      doc.text(`${reportMetadata.version} (Beta Release)`, 54, 60);
 
       // Right col of parameter box
       doc.setFont('helvetica', 'normal');
@@ -223,7 +219,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
       doc.text('Prüfungsprotokoll:', 118, 60);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
-      doc.text('GDPR/DSGVO Filter OK', 152, 60);
+      doc.text('Interner Datenschutz-Selbstcheck', 152, 60);
 
       // SECTION 1: PORTFOLIO METRICS
       doc.setFont('helvetica', 'bold');
@@ -258,7 +254,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
       doc.setFont('helvetica', 'bold');
       doc.text('2.89', 95, 94);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(34, 197, 94); // green
+      doc.setTextColor(34, 197, 94);
       doc.text('Ausgezeichnetes Risikoprofil', 140, 94);
       doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
 
@@ -310,7 +306,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
         // Best 2
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8);
-        doc.setTextColor(22, 101, 52); // green
+        doc.setTextColor(22, 101, 52);
         doc.text('TOP OUTPERFORMER (BEST):', 18, y + 6);
 
         best.forEach((asset, idx) => {
@@ -324,7 +320,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
 
         // Worst 2
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(153, 27, 27); // red
+        doc.setTextColor(153, 27, 27);
         doc.text('TOP UNDERPERFORMER (WORST):', 18, y + 11);
 
         worst.forEach((asset, idx) => {
@@ -348,7 +344,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
       drawUniverseRow('FOREX NEBULA (Globale Währungspaare)', forexGroup.best, forexGroup.worst, 174);
       drawUniverseRow('COMMODITY NEBULA (Edelmetalle & Globale Rohstoffe)', commodityGroup.best, commodityGroup.worst, 194);
 
-      // Section 2.5 Compliance routing disclosure
+      // Section 2.5 routing disclosure. This is intentionally descriptive, not a compliance certification.
       doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
       doc.setDrawColor(gridBorder[0], gridBorder[1], gridBorder[2]);
       doc.rect(14, 214, 182, 28, 'FD');
@@ -356,17 +352,17 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8.5);
       doc.setTextColor(textColorDark[0], textColorDark[1], textColorDark[2]);
-      doc.text('MODELLUNABHÄNGIGE AUTO-ROUTER VERIFIKATION (DSGVO-KONFORM)', 18, 220);
+      doc.text('MODELLUNABHÄNGIGE AUTO-ROUTER PRÜFUNG (INTERN)', 18, 220);
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
       doc.setTextColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       
       const disclosureLines = [
-        'Die quantitativen Handelsergebnisse und Asset-Rankings werden vollautomatisch über den intelligenten',
-        'Model-Router von CAPITAL-AI prozessiert. Je nach Kritikalität werden sensible Reviews datenschutzkonform',
-        'über lokale LLM-Filter (Llama/Mistral) im europäischen Rechtsraum verarbeitet, um den Abfluss geschützter',
-        'Unternehmensdaten vollständig zu verhindern. Der Abgleich mit der API-Datenbank erfolgt ohne PII-Leaks.'
+        'Quantitative Ergebnisse und Asset-Rankings werden über den konfigurierten CAPITAL-AI Model-Router verarbeitet.',
+        'Sensible Datenpfade unterliegen den im System implementierten Datenschutz-, Zugriffs- und Logging-Kontrollen.',
+        'Lokale oder regionale Modellpfade können gemäß Routing-Policy genutzt werden; konkrete Provider- und',
+        'Regionseigenschaften sind anhand der jeweiligen Laufzeit-Evidence zu prüfen und werden hier nicht zertifiziert.'
       ];
 
       disclosureLines.forEach((line, idx) => {
@@ -409,7 +405,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.5);
       doc.setTextColor(255, 255, 255);
-      doc.text('AIF QUANT SCORE', 148, 39);
+      doc.text('CAPITAL-AI SCORE', 148, 39);
       doc.setFontSize(13);
       doc.text(`${selectedAsset.score.toFixed(1)} / 10.0`, 148, 47);
 
@@ -470,14 +466,14 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
       };
 
       drawCompliancePoint(
-        'Absolute Datenintegrität & Schutz vor Fake-Daten',
-        'Dieses System schließt jede Form von simulierten oder fiktiven Performance-Zahlen kategorisch aus. Sämtliche in diesem Bericht erfassten Finanzindikatoren beruhen auf aktiven und kryptographisch validierten Server-Endpunkten des CAPITAL-AI Asset-Registers.',
+        'Datenintegrität & Kennzeichnung von Datenquellen',
+        'Finanzindikatoren werden aus den für diesen Report abgefragten CAPITAL-AI Datenendpunkten übernommen. Datenherkunft, Fallback-Status und Laufzeit-Evidence müssen separat geprüft werden; dieser Bericht stellt keine externe Datenzertifizierung dar.',
         127
       );
 
       drawCompliancePoint(
-        'Anonymisierung & Maskierung personenbezogener Daten (PII)',
-        'Sämtliche Client-IP-Adressen, E-Mail-Adressen sowie transaktionsbezogene IDs werden vor dem Logging nach modernen kryptographischen Standards geschützt. Im öffentlichen Protokoll werden sensible Felder vollständig maskiert oder unumkehrbar gehasht.',
+        'Maskierung personenbezogener und sensibler Daten',
+        'Client-, Identitäts- und Transaktionsdaten werden gemäß den implementierten Logging-, Maskierungs- und Zugriffskontrollen verarbeitet. Umfang und Wirksamkeit dieser Kontrollen sind anhand der zugehörigen Security- und Privacy-Evidence zu bewerten.',
         143
       );
 
@@ -489,7 +485,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
 
       drawCompliancePoint(
         'MCP-zentrierte dezentrale Datenverarbeitung',
-        'Die Anbindung externer Ressourcen (z. B. Google Workspace oder dezentraler API-Feeds) erfolgt ausschließlich über standardisierte Endpunkte des Model Context Protocol (MCP). Jeglicher Zugriff ist sessiongebunden und wird nach Abmeldung rückstandslos bereinigt.',
+        'Externe Ressourcen können über standardisierte MCP- oder API-Endpunkte angebunden werden. Zugriffe sind an die jeweilige Session- und Connector-Policy gebunden; konkrete Speicher-, Lösch- und Regionsgarantien sind anhand der jeweiligen Provider-Evidence zu prüfen.',
         175
       );
 
@@ -523,16 +519,18 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
       doc.text('CAPITAL-AI AUTOMATION ENGINE', 120, 238);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(textColorLight[0], textColorLight[1], textColorLight[2]);
-      doc.text('Kryptographisches Verifikationssystem', 120, 242);
-      doc.text('Interne Prüf-Referenz: OK-0.7.0', 120, 246);
+      doc.text('Automatisiertes Report-System', 120, 242);
+      doc.text(`Interne Prüf-Referenz: ${reportMetadata.reportId}`, 120, 246);
 
       doc.setDrawColor(textColorLight[0], textColorLight[1], textColorLight[2]);
       doc.setLineWidth(0.2);
       doc.line(120, 234, 185, 234);
 
+      drawFooter(2);
+
       // The document is complete at this point, but the download is committed only
       // after the authenticated credit decision in PdfExportModal succeeded.
-      const filename = `AIF_Compliance_Report_${selectedSymbol}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      const filename = `CAPITAL_AI_Compliance_Report_${selectedSymbol}_${reportMetadata.generatedAt.toISOString().slice(0, 10)}.pdf`;
       return () => {
         doc.save(filename);
         setExportSuccess(true);
@@ -568,7 +566,7 @@ export function ComplianceExporter({ capital, selectedSymbol, userEmail, subscri
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-black tracking-widest bg-aif-neon-purple/20 text-aif-neon-purple border border-aif-neon-purple/30 uppercase">
-              Compliance-Modul 0.7.0
+              Compliance-Modul {CAPITAL_AI_VERSION}
             </span>
             <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-black tracking-widest bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 uppercase flex items-center gap-0.5">
               <ShieldCheck size={9} />
