@@ -5,7 +5,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { LandingPage } from './components/LandingPage';
-import { Dashboard } from './components/Dashboard';
 import { supabase } from './supabaseClient';
 import { Datenschutz } from './components/Datenschutz';
 import { ImpressumAgb } from './components/ImpressumAgb';
@@ -13,6 +12,10 @@ import { LoginStepUpGate } from './components/LoginStepUpGate';
 import { loginStepUpRequirement, hasPassedLoginStepUpThisTab, clearLoginStepUpMarkers } from './lib/loginStepUp';
 import { RegistrationCompletionGate } from './components/RegistrationCompletionGate';
 import { needsOnboarding } from './lib/onboarding';
+
+const LazyDashboard = React.lazy(() =>
+  import('./components/Dashboard').then(({ Dashboard }) => ({ default: Dashboard })),
+);
 
 export interface UserSession {
   type: 'guest' | 'registered';
@@ -660,13 +663,24 @@ export default function App() {
   return (
     <>
       {userSession ? (
-        <Dashboard
-          userSession={userSession}
-          onLogout={handleLogout}
-          onRegister={(name, email) => {}}
-          onLoginEmail={handleLogin}
-          onRegisterEmail={handleRegister}
-        />
+        <React.Suspense
+          fallback={(
+            <div className="min-h-screen bg-neutral-900 flex items-center justify-center" role="status" aria-live="polite">
+              <div className="text-center space-y-4">
+                <div className="w-12 h-12 border-4 border-aif-gold-DEFAULT border-t-transparent rounded-full animate-spin mx-auto" aria-hidden="true" />
+                <p className="text-xs text-white/50 font-mono uppercase tracking-widest">Dashboard wird geladen…</p>
+              </div>
+            </div>
+          )}
+        >
+          <LazyDashboard
+            userSession={userSession}
+            onLogout={handleLogout}
+            onRegister={(name, email) => {}}
+            onLoginEmail={handleLogin}
+            onRegisterEmail={handleRegister}
+          />
+        </React.Suspense>
       ) : (
         <LandingPage
           onLoginEmail={async (email, pwd) => {
