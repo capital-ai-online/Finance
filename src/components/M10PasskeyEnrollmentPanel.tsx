@@ -4,16 +4,13 @@ import { browserSupportsWebAuthn, startRegistration } from '@simplewebauthn/brow
 import { authFetch } from '../lib/authFetch';
 import { isStepUpRequired } from '../lib/stepUp';
 import { StepUpModal } from './StepUpModal';
+import { M10PrAuthorizationShadowPanel } from './M10PrAuthorizationShadowPanel';
 
 /**
- * M10 (ADR-0066, ESS-0022) Phase 3 live-wiring — the UI an Owner uses to register or revoke a
- * passkey. Per the M10 runbook, enrollment "is a Human/Owner identity operation ... Agents may
- * assist with UI/code but cannot autonomously enroll, replace or revoke Owner credentials" - this
- * component is that assistance; only a live Owner click drives navigator.credentials.create()
- * through the browser's own WebAuthn implementation, and every mutating server call still requires
- * its own fresh TOTP step-up (server/m10/credentialEnrollmentRouter.ts).
+ * M10 (ADR-0066, ESS-0022) Owner passkey console. Enrollment/revocation remains the Phase-3
+ * Human identity operation; the nested Phase-6 panel performs a real, non-authoritative Shadow
+ * assertion against a PR without dispatching CI.
  */
-
 interface M10Credential {
   credentialId: string;
   counter: number;
@@ -175,9 +172,9 @@ export function M10PasskeyEnrollmentPanel() {
         <h3 className="text-sm font-bold font-display text-white uppercase tracking-wide">Passkey-Autorisierung (M10)</h3>
       </div>
       <p className="text-xs text-white/60 leading-relaxed">
-        Registriere einen Passkey für die zukünftige Pull-Request-Autorisierung (ADR-0066). Jede
-        Aktion erfordert einen frischen TOTP-Step-Up-Nachweis, zusätzlich zur WebAuthn-Zeremonie
-        deines Authenticators.
+        Verwalte das Owner-Passkey-Credential und führe Phase-6-Shadow-Prüfungen durch. Registrierung
+        und Widerruf erfordern weiterhin einen frischen TOTP-Step-Up; die Shadow-Prüfung verwendet
+        anschließend den Passkey selbst und bleibt bis zum Controlled Cutover nicht autoritativ für CI.
       </p>
 
       {error && (
@@ -224,6 +221,8 @@ export function M10PasskeyEnrollmentPanel() {
           </div>
         ))}
       </div>
+
+      <M10PrAuthorizationShadowPanel />
 
       {pendingStepUp && (
         <StepUpModal
