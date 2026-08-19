@@ -2,7 +2,7 @@
 
 **Projekt:** capital-ai.online  
 **Repository:** SvenKulessa/Finance  
-**Version:** 1.4  
+**Version:** 1.5  
 **Stand:** 19. August 2026  
 **Owner:** Sven Kulessa / Capital-AI  
 **Bezug:** `docs/frontend/FRONTEND_ARCH.md`, `src/index.css` (@theme), public mirror: `SvenKulessa/capital-ai-frontend`
@@ -36,6 +36,7 @@ Zielbild: Vergleichbar mit modernen FinTech-/Quant-Interfaces (Linear-ähnliche 
 - Fokus-Outline, Reduced-Motion und Glassmorphism-Patterns in `index.css` / `FRONTEND_ARCH.md`
 - Dashboard-Shell und ausgewählte schwere Sekundäransichten nutzen native Dynamic Imports / `React.lazy`
 - `MarketScreener` nutzt Phase-1-Layout-/Hit-Target-Primitives und eine klar dominierende Scan-Aktion
+- bekannte Dashboard-P1-Semantikfunde (Profil, Close-Controls, Breadcrumb) sind im Source behoben
 
 **Schwächen / offene Evidence**
 - Hohe Informationsdichte in großen Komponenten (insbesondere `Dashboard.tsx`)
@@ -44,7 +45,7 @@ Zielbild: Vergleichbar mit modernen FinTech-/Quant-Interfaces (Linear-ähnliche 
 - Fehlendes starkes Produkt-Onboarding & progressive Disclosure
 - Kein Storybook / keine dokumentierte Component Library
 - Live Lighthouse-/axe-/Core-Web-Vitals-Evidence noch nicht erhoben
-- Einzelne Dashboard-Semantikfunde offen (`div onClick`, Icon-only Close-Controls)
+- app-weite 44×44-/Semantik-/Focus-Prüfung bleibt über die behobene Kernstichprobe hinaus offen
 
 ---
 
@@ -79,16 +80,16 @@ Zielbild: Vergleichbar mit modernen FinTech-/Quant-Interfaces (Linear-ähnliche 
 - [x] Dashboard-Shell via `React.lazy()` vom initialen App-Modul trennen
 - [x] Schwere Sekundäransichten `BacktestEngine`, `SentimentDashboard`, `AdminPortal` hinter native Lazy-Grenzen verschieben
 - [x] Regression Guard gegen erneute manuelle `manualChunks`-Vendor-Aufteilung ergänzen
+- [x] bekannte Dashboard-P1-Semantikfunde beheben (Profil, Drawer Close, Push Close, Breadcrumb)
+- [x] Primary-CTA-Stichprobe für MarketScreener, Free/Gast-Dashboard und Myworkspace abschließen
 - [x] Einheitliche Badge-Primitive (`StatusBadge`); siteweite Migration noch offen
-- [ ] Dashboard-P1-Semantikfunde beheben (Profil-`div onClick`, Close-Icon-Controls, Breadcrumb-Semantik)
-- [ ] Primäre CTA-Regel auf registrierte Kernansichten vollständig ausweiten
 - [ ] Score-Gauges und Multi-Faktor-Matrix visuell vervollständigen und prominent platzieren
 - [ ] Typografie-Upgrade (bestehende Poppins / Montserrat / JetBrains Mono nutzen und Tracking optimieren)
 - [ ] Icon-Library (lucide-react) vereinheitlichen
-- [ ] Button-/IconButton-/Chip-Primitives als nächstes Paket extrahieren
+- [ ] Button-/IconButton-/Chip-/Skeleton-Primitives als QW-Paket B extrahieren
 
-**Deliverables:**  
-`PHASE1_QUICK_WINS.md`, CSS-Utilities, Code-Splitting, Screener Quick Wins, Motion/Hit-Target Guards ✅ · Dashboard-Semantik + Live-Abnahme ⏳
+**QW-Paket A Status:** **SOURCE-SCOPE COMPLETE / BUILD + LIVE EVIDENCE PENDING**  
+Details: `PHASE1_QUICK_WINS.md`
 
 ---
 
@@ -129,10 +130,10 @@ Zielbild: Vergleichbar mit modernen FinTech-/Quant-Interfaces (Linear-ähnliche 
 - [x] Touch-optimierte Controls in Enterprise / Universe / AssetUniverse / MarketScreener
 - [x] Dashboard-Sprungnavigation 44×44 trotz kompakter Darstellung
 - [x] MarketScreener Search-/Remove-/Error-Semantik verbessert
-- [ ] Dashboard P1-Semantikfunde beheben
+- [x] bekannte Dashboard-P1-Semantikfunde behoben
 - [ ] Mobile Informationsarchitektur optimieren
 - [ ] Vollständige Screenreader-Unterstützung
-- [ ] Kontrast- und Fokus-Optimierung
+- [ ] Kontrast- und Fokus-Optimierung app-weit
 - [x] Reduced-Motion Support (`prefers-reduced-motion` in `index.css`)
 - [ ] axe/Lighthouse + Tastatur-Smoke-Test als Evidence abschließen
 
@@ -158,13 +159,14 @@ Zielbild: Vergleichbar mit modernen FinTech-/Quant-Interfaces (Linear-ähnliche 
 ## 4. Quick Wins — aktueller Status
 
 1. **Mehr Abstand zwischen den Hauptkarten** → ✅ Enterprise + Universe + AssetUniverse + MarketScreener
-2. **Score- und Matrix-Bereiche vollständig sichtbar und prominent** → 🟡 teilweise
+2. **Score- und Matrix-Bereiche vollständig sichtbar und prominent** → 🟡 teilweise; Folgearbeit
 3. **Einheitliche Status-Badges** → 🟡 `StatusBadge`-Primitive live; siteweite Migration offen
-4. **Mobile Chip-/Button-Größen** → 🟡 44×44-Policy auf Kern-Surfaces erweitert; weitere Icon-Controls offen
+4. **Mobile Chip-/Button-Größen** → 🟡 44×44-Policy auf Kern-Surfaces und identifizierte Dashboard-P1-Controls erweitert; app-weite Migration offen
 5. **Hintergrund / Neural-Pulse abschwächen** → ✅ Motion reduziert + Reduced Motion + Dashboard/Landing-Layer gedämpft
-6. **Klare primäre Aktion pro Viewport** → 🟡 MarketScreener + Free/Gast-Upgrade klar; registrierte Kernansichten noch prüfen
+6. **Klare primäre Aktion pro Viewport** → ✅ Kernstichprobe; app-weite Design-System-Regel folgt
 7. **Critical-Path entlasten** → ✅ Dashboard-Shell + Backtest/Sentiment/Admin native lazy; Build-Evidence offen
 8. **Chunk-Regressionsschutz** → ✅ kein `manualChunks`; statischer Test schützt Strategie
+9. **Dashboard-Semantik** → ✅ identifizierte P1/P2-Kernfunde behoben und durch Regressionstest geschützt
 
 Details: `docs/frontend/PHASE1_QUICK_WINS.md`
 
@@ -186,14 +188,13 @@ Details: `docs/frontend/PHASE1_QUICK_WINS.md`
 
 ## 6. Nächste Schritte
 
-1. QW-Paket A: P1-Dashboard-Semantikfunde direkt im Source beheben
-2. QW-Paket A: Production Build / Async-Chunk-Evidence verifizieren
-3. QW-Paket A: Lighthouse / axe / Keyboard-Smoke-Evidence eintragen
-4. QW-Paket A: Primary-CTA-Audit für registrierte Dashboard-/Workspace-Ansichten abschließen
-5. Danach QW-Paket B: Button / IconButton / Chip / Skeleton-Primitives
-6. Danach Phase 2 systematisch fortsetzen (IA, Progressive Disclosure, Onboarding)
-7. Öffentlicher Mirror `SvenKulessa/capital-ai-frontend` nur bei bewusstem Synchronisationsbedarf aktualisieren
+1. **QW-Paket A verifizieren:** Klasse-C-CI/Production Build durchführen und Async-Chunk-Evidence festhalten
+2. **QW-Paket A verifizieren:** Lighthouse / axe / Tastatur-Smoke-Evidence eintragen
+3. **QW-Paket B:** `Button` / `IconButton` / `Chip` / `Skeleton`-Primitives extrahieren und app-weite Migration beginnen
+4. **Phase 2:** IA, Progressive Disclosure, Produkt-Onboarding und Loading/Empty States systematisch fortsetzen
+5. **Data Viz:** Score-/Matrix-Prominenz und nicht-farbabhängige Chart-Semantik verbessern
+6. Öffentlicher Mirror `SvenKulessa/capital-ai-frontend` nur bei bewusstem Synchronisationsbedarf aktualisieren
 
 ---
 
-*Dokument erstellt am 16.08.2026 · Version 1.4 / QW-Paket A fortgeführt am 19.08.2026.*
+*Dokument erstellt am 16.08.2026 · Version 1.5 / QW-Paket A Source-Scope abgeschlossen am 19.08.2026; Build/Live Evidence pending.*
