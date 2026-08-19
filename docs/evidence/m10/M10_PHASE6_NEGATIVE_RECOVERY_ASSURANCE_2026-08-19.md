@@ -155,19 +155,13 @@ This does **not** mark M10 itself `COMPLETE`: the authoritative passkey CI gate,
 
 ## Final validation and main correlation
 
-The frozen assurance head was validated through the PR's documentation-only CI and Governance path:
+The assurance head was validated through the PR's documentation-only CI and Governance path, and the final correlation record itself was subsequently validated through CI #1845 and Governance #1162.
 
-- CI #1841 — **PASS**;
-- Governance #1159 — **PASS**;
-- Class D documentation fast path — **PASS**;
-- workflow-security scope — **PASS / no workflow changes**;
-- canonical PR-template contract — **PASS**.
-
-Immediately afterward, current `main` advanced by 19 commits from `24b70a79...` to `4c280fb5...`. Correlation of that complete main range found changes only in SC-2 scoring/DeFi code, tests, work claims, scoring roadmaps and document registry. No M10, WebAuthn, M10 Supabase, CI workflow or PR-governance implementation file changed. Therefore the new main commits do not invalidate or alter the Phase-6 assurance result. The assurance PR is intentionally not rebased because its lifecycle is close-without-merge; the Controlled Cutover will start from fresh current main.
+Current main had advanced by 19 commits from `24b70a79...` to `4c280fb5...`. Correlation of that complete main range found changes only in SC-2 scoring/DeFi code, tests, work claims, scoring roadmaps and document registry. No M10, WebAuthn, M10 Supabase, CI workflow or PR-governance implementation file changed. Therefore the new main commits do not invalidate or alter the Phase-6 assurance result. The assurance PR is intentionally not rebased because its lifecycle is close-without-merge; the Controlled Cutover will start from fresh current main.
 
 ## Lifecycle
 
 - PR #426 is an evidence-only assurance probe.
 - It must not be merged into `main`.
-- Close PR #426 after this final correlation record; do not merge it.
+- Close PR #426 after this record; do not merge it.
 - Controlled Cutover must start on a new branch created fresh from then-current `main` and requires its own explicit PR authorization / Human merge boundary.
