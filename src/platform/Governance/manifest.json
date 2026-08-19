@@ -1,0 +1,30 @@
+{
+  "name": "Governance",
+  "version": "1.0.0",
+  "status": "foundation",
+  "owner": "CAPITAL-AI Owner",
+  "description": "Cross-cutting governance control-plane contracts for stable authority/control identities, lifecycle resolution and evidence trust classes.",
+  "category": "platform",
+  "layer": "CrossCutting",
+  "repository": "Finance",
+  "authorityId": "AUTH-GOV-CONTROL-PLANE",
+  "trustRoot": "AGENTS.md",
+  "registries": [
+    "docs/governance/authority-registry.json",
+    "docs/governance/control-catalog.json",
+    "docs/adr/registry.json"
+  ],
+  "dependencies": [],
+  "forbiddenResponsibilities": [
+    "self-authorize merge",
+    "self-authorize production mutation",
+    "duplicate Documentary content governance",
+    "duplicate Vocabulary governance",
+    "store reusable credentials"
+  ],
+  "standards": [
+    "ISO/IEC 42001:2023 benchmark",
+    "NIST SP 800-218 SSDF v1.1",
+    "NIST SP 800-218A"
+  ]
+}
