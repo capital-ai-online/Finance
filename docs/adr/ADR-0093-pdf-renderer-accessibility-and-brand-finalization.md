@@ -1,11 +1,13 @@
 # ADR-0093: PDF Renderer Accessibility and Brand Finalization
 
 - **Status:** ACCEPTED
-- **Implementation-Status:** 🟡 IN PROGRESS
+- **Implementation-Status:** ✅ COMPLETE / LANDED
 - **Datum:** 2026-08-19
 - **Owner:** CAPITAL-AI Owner
 - **Scope:** PDF Branding P1/P2, renderer capability boundaries, tagged PDF strategy, render regression
 - **Parent:** ADR-0091
+- **Landed via:** PR #436
+- **Merge-Commit:** `f5d39288d3b854d5a84001ed0f4046f29e5cc840`
 
 ## Kontext
 
@@ -123,12 +125,21 @@ Ein Render-Smoke ist kein Ersatz für eine formale PDF/UA-Konformitätsprüfung;
 
 ## Verifikation / Abschluss
 
-ADR-0093 kann auf `✅ COMPLETE` gesetzt werden, wenn:
+ADR-0093 ist abgeschlossen. Die ursprünglich definierten Abschlusskriterien wurden erfüllt:
 
-1. P1/P2-Roadmap fachlich abgearbeitet ist,
-2. zentrale Emblem-/Wordmark-/Accessibility-Contracts umgesetzt sind,
-3. NotebookLM standardmäßig tagged PDF/UA-1 erzeugt,
-4. Regressionstests und Render-Smoke-Tools vorhanden sind,
-5. Dokument-Registry und Evidence aktualisiert sind,
-6. Branch gegen den aktuellen `main` abgeglichen ist,
-7. nach PR-Erstellung verfügbare CI-/Governance-Ergebnisse dokumentiert sind.
+1. P1/P2-Roadmap fachlich abgearbeitet,
+2. zentrale Emblem-/Wordmark-/Accessibility-Contracts umgesetzt,
+3. NotebookLM standardmäßig auf tagged PDF/UA-1 konfiguriert,
+4. Regressionstests und Render-Smoke-Tools vorhanden,
+5. Dokument-Registry und Evidence aktualisiert,
+6. Implementierungsbranch vor Merge wiederholt gegen den aktuellen `main` abgeglichen und synchronisiert,
+7. verfügbare PR-CI-/Governance-Ergebnisse dokumentiert.
+
+### Post-Merge-Nachweis
+
+- PR #436 wurde am 2026-08-19 Human-gemerged.
+- Merge-Commit auf `main`: `f5d39288d3b854d5a84001ed0f4046f29e5cc840`.
+- Finaler PR-Head vor Merge: `027c278815b465aca81b00d4435f35048b61498d`.
+- Governance Run #1239 (`32239637308`) auf diesem finalen Head: **PASS**.
+- CI Run #1917 (`32239637176`) auf diesem finalen Head: **FAIL ausschließlich am vorgeschalteten M10-CI-Autorisierungsschritt**. Checkout, Repository-Klassifikation, Dependency-Installation, TypeScript, Unit-Tests, Build und Docker-Schritte wurden nicht ausgeführt.
+- Daraus wird ausdrücklich **kein technisches Test-/Build-PASS** abgeleitet. Der Merge-/Implementierungsabschluss dokumentiert den gelandeten Code- und Governance-Zustand; formale PDF/UA-Verifikation bleibt weiterhin artefaktbezogen evidence-gated.
