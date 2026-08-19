@@ -3,7 +3,7 @@
 - **Status:** IMPLEMENTATION COMPLETE / CI EVIDENCE PENDING
 - **Owner:** CAPITAL-AI Owner
 - **Branch:** `agent/pdf-branding-p1-p2-final`
-- **Parent:** ADR-0091, ADR-0092
+- **Parent:** ADR-0091, ADR-0093
 - **Roadmap:** `docs/roadmaps/PDF_BRANDING_FINALIZATION_P1_P2_2026-08-19.md`
 - **Baseline:** `main` at PR #432 merge commit `3ed2b2e9c9421bc979ca2487610a6a49a655e888`
 
@@ -25,6 +25,14 @@ Geprüfte Primärquellen zum Umsetzungszeitpunkt:
 4. W3C PDF Accessibility Techniques — logische Struktur, Lesereihenfolge, Überschriften, Artefakte und semantische Tabellen sind eigenständige Anforderungen und dürfen nicht aus rein visueller Gestaltung abgeleitet werden.
    - https://www.w3.org/WAI/WCAG22/Techniques/pdf/
 
+## Parallel-PR-Korrelation
+
+Zum Implementierungsabschluss sind PR #433, #434 und #435 parallel offen.
+
+- Keine dieser Arbeiten verändert die aktiven PDF-Renderer- oder PDF-Branding-Runtimepfade dieses Branches.
+- `docs/governance/document-registry.json` ist ein additiver Überschneidungspunkt und muss erneut reconciled werden, falls einer dieser PRs vor dem PDF-PR in `main` landet.
+- PR #434 reserviert bereits `ADR-0092` für Privacy-Retention-Hardening. Die zunächst lokal verwendete PDF-ID `ADR-0092` wurde deshalb vor PR-Erstellung verworfen; die PDF-Entscheidung ist verbindlich **ADR-0093**.
+
 ## Umgesetzte Architektur
 
 ### 1. Design-Token Bridge
@@ -36,7 +44,7 @@ Geprüfte Primärquellen zum Umsetzungszeitpunkt:
   - liest `package.json` und Design-Tokens,
   - erzeugt den build-time Contract `__CAPITAL_AI_PDF_BRAND__`,
   - konvertiert Hex-Farben deterministisch in jsPDF-RGB-Tupel,
-  - akzeptiert `value`, `$value` sowie zukünftig einen `hex`-Wert.
+  - akzeptiert sowohl das bestehende `value` als auch `$value` für eine spätere Tokenformat-Migration.
 
 ### 2. Gemeinsame Brand-/Release-Identität
 
@@ -138,6 +146,7 @@ Bereits abgeschlossen:
 - Architektur-/Capability-Abgleich gegen aktuelle Primärquellen.
 - Branch-basierte Umsetzung gemäß P1/P2-Roadmap.
 - Regressionstests und Render-Smoke-Tooling implementiert.
+- Parallel-PR-ADR-Kollision erkannt und vor PR-Erstellung von ADR-0092 auf ADR-0093 korrigiert.
 
 Noch nach PR-Erstellung zu erfassen:
 
