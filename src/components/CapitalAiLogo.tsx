@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import { CAPITAL_AI_VERSION } from '../platform/Branding/runtimeBrand';
 
 interface CapitalAiLogoProps {
   className?: string;
@@ -8,24 +9,34 @@ interface CapitalAiLogoProps {
   version?: string;
 }
 
-export function CapitalAiLogo({ className = '', size = 160, showText = true, version = '0.7.0' }: CapitalAiLogoProps) {
+export function CapitalAiLogo({
+  className = '',
+  size = 160,
+  showText = true,
+  version = CAPITAL_AI_VERSION,
+}: CapitalAiLogoProps) {
   return (
     <div className={`flex flex-col items-center justify-center text-center ${className}`}>
-      {/* 3D Network Node Emblem */}
+      {/* 3D Network Node Emblem — colors resolve from the canonical CSS design tokens. */}
       <motion.div
         animate={{ scale: [1, 1.03, 1], rotateY: [0, 8, 0, -8, 0] }}
-        transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
+        transition={{ repeat: Infinity, duration: 8, ease: 'easeInOut' }}
         className="perspective-1000 select-none cursor-pointer"
         style={{ width: size, height: size }}
       >
-        <svg viewBox="0 0 200 180" width="100%" height="100%" className="filter drop-shadow-[0_0_25px_rgba(194,157,83,0.35)]" aria-hidden="true">
+        <svg
+          viewBox="0 0 200 180"
+          width="100%"
+          height="100%"
+          className="filter drop-shadow-[0_0_25px_rgba(245,196,83,0.3)]"
+          aria-hidden="true"
+        >
           <defs>
             <radialGradient id="gold-sphere-3d" cx="35%" cy="35%" r="65%">
-              <stop offset="0%" stopColor="#FFF4D0" />
-              <stop offset="20%" stopColor="#E5C17C" />
-              <stop offset="55%" stopColor="#BD984E" />
-              <stop offset="85%" stopColor="#87601B" />
-              <stop offset="100%" stopColor="#4A340C" />
+              <stop offset="0%" stopColor="var(--color-aif-gold-light)" />
+              <stop offset="35%" stopColor="var(--color-aif-gold-DEFAULT)" />
+              <stop offset="72%" stopColor="var(--color-aif-gold-dark)" />
+              <stop offset="100%" stopColor="var(--color-aif-gold-muted)" />
             </radialGradient>
             <filter id="glow-line" x="-10%" y="-10%" width="120%" height="120%">
               <feGaussianBlur stdDeviation="1.5" result="blur" />
@@ -34,19 +45,19 @@ export function CapitalAiLogo({ className = '', size = 160, showText = true, ver
           </defs>
 
           <g strokeOpacity="0.55" strokeWidth="1">
-            <line x1="60" y1="50" x2="140" y2="133" stroke="#A78BFA" filter="url(#glow-line)" />
-            <line x1="140" y1="48" x2="60" y2="135" stroke="#8B5CF6" />
-            <line x1="140" y1="48" x2="78" y2="93" stroke="#A78BFA" />
-            <line x1="65" y1="85" x2="140" y2="133" stroke="#8B5CF6" />
-            <line x1="60" y1="50" x2="140" y2="48" stroke="#06B6D4" />
-            <line x1="60" y1="135" x2="142" y2="90" stroke="#22D3EE" filter="url(#glow-line)" />
-            <line x1="100" y1="145" x2="65" y2="85" stroke="#22D3EE" />
-            <line x1="105" y1="55" x2="65" y2="85" stroke="#06B6D4" />
-            <line x1="65" y1="85" x2="142" y2="90" stroke="#06B6D4" />
-            <line x1="100" y1="100" x2="60" y2="50" stroke="#22D3EE" />
+            <line x1="60" y1="50" x2="140" y2="133" stroke="var(--color-aif-neon-purple)" filter="url(#glow-line)" />
+            <line x1="140" y1="48" x2="60" y2="135" stroke="var(--color-aif-neon-purple)" />
+            <line x1="140" y1="48" x2="78" y2="93" stroke="var(--color-aif-neon-purple)" />
+            <line x1="65" y1="85" x2="140" y2="133" stroke="var(--color-aif-neon-purple)" />
+            <line x1="60" y1="50" x2="140" y2="48" stroke="var(--color-aif-neon-cyan)" />
+            <line x1="60" y1="135" x2="142" y2="90" stroke="var(--color-aif-neon-cyan)" filter="url(#glow-line)" />
+            <line x1="100" y1="145" x2="65" y2="85" stroke="var(--color-aif-neon-cyan)" />
+            <line x1="105" y1="55" x2="65" y2="85" stroke="var(--color-aif-neon-cyan)" />
+            <line x1="65" y1="85" x2="142" y2="90" stroke="var(--color-aif-neon-cyan)" />
+            <line x1="100" y1="100" x2="60" y2="50" stroke="var(--color-aif-neon-cyan)" />
           </g>
 
-          <g stroke="#C29D53" strokeWidth="2.5" strokeOpacity="0.85">
+          <g stroke="var(--color-aif-gold-DEFAULT)" strokeWidth="2.5" strokeOpacity="0.85">
             <line x1="60" y1="50" x2="78" y2="93" />
             <line x1="78" y1="93" x2="60" y2="135" />
             <line x1="60" y1="135" x2="100" y2="145" />
@@ -77,7 +88,7 @@ export function CapitalAiLogo({ className = '', size = 160, showText = true, ver
 
       {showText && (
         <div className="mt-4 flex flex-col items-center">
-          <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#F0D597] via-[#D4A017] to-[#F0D597] tracking-[0.1em] font-display uppercase mr-[-0.1em]">
+          <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-aif-gold-light via-aif-gold-DEFAULT to-aif-gold-dark tracking-[0.1em] font-display uppercase mr-[-0.1em]">
             CAPITAL-AI
           </h1>
           <p className="text-[10px] text-white/50 font-mono tracking-[0.3em] uppercase mt-1.5 mr-[-0.3em]">
