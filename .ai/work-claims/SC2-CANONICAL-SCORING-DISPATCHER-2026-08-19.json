@@ -26,6 +26,7 @@
     "tests/unit/cryptoScoreRegistryConsumer.test.ts",
     "tests/unit/cryptoListTop10RegistryConsumers.test.ts",
     "tests/unit/cryptoAnalyzeResearchBoundary.test.ts",
+    "tests/unit/scoringVisualDataIntegrityP0.test.ts",
     "docs/evidence/sc-md/SC2_CANONICAL_SCORING_DISPATCHER_2026-08-19.md",
     "docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md",
     "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md",
