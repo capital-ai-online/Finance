@@ -1,11 +1,11 @@
 # SC-2 — Model Registry & Universal Asset Interface
 
 **SPT:** `SC-MD-SPT-0001`  
-**Version:** 1.0.5  
-**Status:** IN IMPLEMENTATION — Phase C2a Standard-Crypto composition-root operational exit  
-**Execution Branch:** `agent/sc2-composition-root-crypto-exit`  
-**Baseline:** `main@4c280fb53e74e38d571e4b44b620a7b33681e0be`  
-**Historical Integration:** PR #418 stack; PR #421 `/score`; PR #424 `/list` + `/top10`; PR #427 C1 dispatcher; all Human-merged after required main revalidation  
+**Version:** 1.0.6  
+**Status:** IN IMPLEMENTATION — Phase C2b physical Standard-Crypto legacy cleanup  
+**Execution Branch:** `agent/sc2-physical-legacy-crypto-cleanup`  
+**Baseline:** `main@afc8e56de7deebab879f054eb03e099bf516eb1b`  
+**Historical Integration:** PR #418 stack; PR #421 `/score`; PR #424 `/list` + `/top10`; PR #427 C1 dispatcher; PR #428 C2a operational exit; all Human-merged after required main revalidation  
 **Start:** 2026-08-19  
 **ADRs:** ADR-0087, ADR-0088, ADR-0089, ADR-0090
 
@@ -42,7 +42,7 @@ Kein öffentlicher Score-Pfad darf langfristig Modellwahl, Evidence-Bypass oder 
 | `/api/crypto/list`, `/top10` | C1 Dispatcher auf main | kanonisch |
 | `/api/crypto/analyze` | Research/Enrichment-only seit C1 | kanonische Research-Grenze |
 | `DeFiOrchestration` | konsumiert kanonischen `/api/crypto/score` seit C1 | kanonisch |
-| `server.application.ts` Standard-Crypto | historischer Legacy-Code; C2a produktiv umgangen | Dead Code sicher entfernen |
+| `server.application.ts` Standard-Crypto | C2a produktiv umgangen; C2b physischer Cleanup aktiv | Standard-Crypto-Legacy vollständig entfernen |
 | `scoring.service.ts` Base/DeFi | Legacy Aggregator | kein produktiver Standard-Crypto-Consumer; später Retire |
 | `cryptoScoringService.ts` | deterministische verified Domain Engine | Executor hinter Dispatcher |
 | Meme direct score | separater Contract | C3 Migration/Canonical adapter |
@@ -140,7 +140,7 @@ Evidence: `docs/evidence/sc-md/SC2_CANONICAL_SCORING_DISPATCHER_2026-08-19.md`.
 
 ### C2 — Composition Root / Legacy Standard-Crypto Exit
 
-#### C2a — Operational Exit
+#### C2a — Operational Exit — LANDED
 
 - [x] Application Market-Data Runtime erkennt Standard-Crypto vor dem Legacy-Enricher
 - [x] Standard-Crypto Market-Data-Score ausschließlich über `ScoringDispatcher`
@@ -152,17 +152,24 @@ Evidence: `docs/evidence/sc-md/SC2_CANONICAL_SCORING_DISPATCHER_2026-08-19.md`.
 - [x] `/api/charts-scoring` explizit `simulation-only`, `scoreEligible=false`, `productionScoring=false`
 - [x] Meme-Pfade bleiben absichtlich C3 und fallen durch den Compatibility Router
 - [x] strukturelle/behavior Regressionstests ergänzt
-- [ ] PR-CI/Governance auf exaktem C2a-Head
-- [ ] Human Merge + finaler Main-Abgleich
-
-#### C2b — Physical Legacy Cleanup
-
-- [ ] nun operativ unerreichbaren Standard-Crypto-Zweig aus `server.application.ts::calculateAssetScore()` entfernen
-- [ ] nun operativ unerreichbare Standard-Crypto-GET/POST-Handler aus `server.application.ts` entfernen oder vollständig in modularen Router verschieben
-- [ ] alten `/api/charts-scoring` Handler aus `server.application.ts` entfernen, sobald Compatibility Route auf main liegt
-- [ ] nicht mehr benötigte Standard-Crypto Legacy-Imports aus `server.application.ts` entfernen
+- [x] PR #428 finaler Head `b34cbf2f` — CI #1849 + Governance #1166/#1167 PASS
+- [x] Human Merge PR #428 -> `main@0d84e479ea97c97490dd65bea85fad2ec76ee157`
 
 Evidence: `docs/evidence/sc-md/SC2_COMPOSITION_ROOT_CRYPTO_EXIT_2026-08-19.md`.
+
+#### C2b — Physical Legacy Cleanup — ACTIVE
+
+- [x] Cold-Start-Fallback von `/api/market-data` ebenfalls hinter `enrichStandardCryptoWithCanonicalScore()` geschlossen
+- [x] operativ überholten Standard-Crypto-Zweig aus `server.application.ts::calculateAssetScore()` entfernt
+- [x] direkte Standard-Crypto Base/DeFi-/Heuristik-Imports und Aufrufe aus `server.application.ts` entfernt
+- [x] historischen `/api/charts-scoring` Handler aus `server.application.ts` physisch entfernt; Authority verbleibt im Simulation-only Compatibility Router
+- [x] historische `/api/crypto-scoring/:symbol` GET/POST-Bodies auf Meme-only reduziert; Standard-Crypto erreicht sie nur bei Wiring-Regression und wird dann `SCORING_BOUNDARY_VIOLATION` fail-closed abgewiesen
+- [x] struktureller C2b-Regressionstest ergänzt
+- [x] Branch unmittelbar vor PR gegen aktuellen `main@afc8e56d` revalidiert; PR #414 0 Pfadoverlap, PR #429 0 Pfadoverlap aber CI-/Governance-Prozesskorrelation
+- [ ] PR-CI/Governance auf exaktem C2b-Head
+- [ ] Human Merge + finaler Main-Abgleich
+
+Evidence: `docs/evidence/sc-md/SC2_PHYSICAL_LEGACY_CRYPTO_CLEANUP_2026-08-19.md`.
 
 ### C3 — Global Multi-Asset Exit
 
@@ -188,20 +195,19 @@ Evidence: `docs/evidence/sc-md/SC2_COMPOSITION_ROOT_CRYPTO_EXIT_2026-08-19.md`.
 
 ## Enterprise-/FinTech-Abgleich — verifiziert 2026-08-19
 
-Die am 17.04.2026 veröffentlichte Federal Reserve/OCC/FDIC Revised Guidance on Model Risk Management (SR 26-2) dient als aktueller Enterprise-Benchmark für den deterministischen Modellbestand. Das relevante Engineering-Muster ist die Verbindung von intended model use, inventory, governance/controls, validation, Dokumentation und laufendem Monitoring. C1/C2 reduzieren deshalb produktive Modellexecution-Surfaces und binden Standard-Crypto-Ausgänge an eine identifizierbare Registry-/Dispatcher-Autorität.
+Die am 17.04.2026 veröffentlichte Federal Reserve/OCC/FDIC Revised Guidance on Model Risk Management (SR 26-2) dient als aktueller Enterprise-Benchmark für den deterministischen Modellbestand. Das relevante Engineering-Muster ist die Verbindung von intended model use, inventory, governance/controls, validation, Dokumentation und laufendem Monitoring. C1/C2 reduzieren deshalb produktive Modellexecution-Surfaces und binden Standard-Crypto-Ausgänge an eine identifizierbare Registry-/Dispatcher-Autorität. C2b entfernt zusätzlich physische Fallback-Ausführungsflächen, damit deklarierter Model Use und tatsächlich erreichbarer Runtime-Graph übereinstimmen.
 
 NIST AI RMF 1.0 bleibt ergänzender freiwilliger Lifecycle-/Traceability-Benchmark; NIST weist aktuell darauf hin, dass AI RMF 1.0 überarbeitet wird. Eine spätere finale Revision wird nicht vorweggenommen.
 
 ## Main-Korrelation 2026-08-19
 
-- PR #424 wurde nach zwischenzeitlichem Merge von PR #425 erneut gegen den aktualisierten Main geprüft; finaler Head `476c3dc8` bestand CI #1829 und Governance #1146.
 - PR #427 C1 bestand final CI #1837 + Governance #1155 und wurde Human-gemerged.
-- Aktueller C2a-Baseline-Commit ist `main@4c280fb53e74e38d571e4b44b620a7b33681e0be`.
-- C2a-Branch `agent/sc2-composition-root-crypto-exit` wurde frisch von genau diesem Main-Commit erstellt.
-- Open PR #426: M10 Evidence-Scope; Korrelation vor C2a-PR erneut prüfen.
-- Open PR #414: Privacy/DSGVO-Scope; Korrelation vor C2a-PR erneut prüfen.
-- `ADR-0086` bleibt Governance Authority; SC-2 verwendet ADR-0087–ADR-0090.
-- Vor PR-Erstellung und erneut vor Merge-Readiness erfolgt ein Branch-vs-current-main-Abgleich.
+- PR #428 C2a bestand final CI #1849 + Governance #1166/#1167 und wurde Human-gemerged.
+- C2b wurde initial von `main@0d84e479ea97c97490dd65bea85fad2ec76ee157` erstellt.
+- Während der Implementierung wurde PR #414 nach `main` gemerged. #414 hat 0 Dateipfadoverlap mit den sieben C2b-Dateien; C2b wurde deshalb vor PR-Erstellung per Merge-Sync auf `main@afc8e56de7deebab879f054eb03e099bf516eb1b` gebracht. Ergebnis vor PR: `behind=0`, Merge-Base exakt aktueller Main.
+- Open PR #429 hat 0 Dateipfadoverlap mit C2b, verändert aber PR-Template und CI-Workflow. Falls #429 vor C2b-Merge-Readiness landet, wird der Branch erneut synchronisiert und der dann autoritative Passkey-/CI-Prozess befolgt.
+- PR #414 hat zusätzlich eine zweite ADR-Datei mit Nummer ADR-0086 eingebracht. Diese Nummern-/Authority-Kollision ist außerhalb des C2b-Scope und muss separat durch Governance bereinigt werden; C2b interpretiert `ADR-0086` weiterhin ausschließlich als die bereits bestehende Governance Authority, wenn diese im SC-MD-SPT referenziert wird.
+- `ADR-0087` bleibt die fachliche Single-Scoring-Architecture-Authority für C2b.
 
 ## Definition of Done SC-2
 

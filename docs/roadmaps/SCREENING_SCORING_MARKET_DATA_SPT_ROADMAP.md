@@ -1,10 +1,10 @@
 # Screening · Scoring · Market Data — Single Point of Trust Roadmap
 
 **Document ID:** SC-MD-SPT-0001  
-**Version:** 1.0.17  
+**Version:** 1.0.19  
 **Status:** ACTIVE — CANONICAL EXECUTION AUTHORITY  
 **Stand:** 2026-08-19  
-**Repository-Baseline:** `main@4c280fb53e74e38d571e4b44b620a7b33681e0be` + Execution Branch `agent/sc2-composition-root-crypto-exit`  
+**Repository-Baseline:** `main@afc8e56de7deebab879f054eb03e099bf516eb1b` + Execution Branch `agent/sc2-physical-legacy-crypto-cleanup`  
 **Owner:** SvenKulessa  
 **Authority:** DOCUMENTATION_HYGIENE_POLICY · GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY / ADR-0086 · ROADMAP_CONSOLIDATION_MASTER_INDEX · ADR-0020 / ADR-0041 · ESS EventMesh/Traceability
 
@@ -14,7 +14,7 @@
 
 Dieses Dokument ist der **Single Point of Trust (SPT)** für die Screening-/Scoring-/Market-Data-Wertschöpfungskette der CAPITAL-AI Multi-Asset-Plattform.
 
-**Keine parallele Remediation und keine parallele Scoring-Architektur.** Alle offenen Screening-/Scoring-/MD-Arbeiten werden ausschließlich hier getrackt. ADR-0087 konkretisiert UAI + ScoringModelRegistry; ADR-0088/0089 integrieren Research-Evidence/Gemini ausschließlich als Acquisition-Adapter vor dem Evidence Gate; ADR-0090 macht diesen Gemini-Pfad Free-Tier-only und verbietet Paid Mode. ADR-0086 bleibt die gemergte Governance-Authority-/Supersession-Entscheidung und ist nicht Teil der SC-2-Fachnummerierung.
+**Keine parallele Remediation und keine parallele Scoring-Architektur.** Alle offenen Screening-/Scoring-/MD-Arbeiten werden ausschließlich hier getrackt. ADR-0087 konkretisiert UAI + ScoringModelRegistry; ADR-0088/0089 integrieren Research-Evidence/Gemini ausschließlich als Acquisition-Adapter vor dem Evidence Gate; ADR-0090 macht diesen Gemini-Pfad Free-Tier-only und verbietet Paid Mode. Die bereits etablierte Governance-Authority-/Supersession-Entscheidung bleibt die hier gemeinte ADR-0086-Authority; die durch PR #414 zusätzlich eingeführte zweite ADR-Datei mit derselben Nummer ist eine separate Governance-Nummernkollision und keine SC-2-Authority.
 
 ---
 
@@ -30,7 +30,7 @@ Dieses Dokument ist der **Single Point of Trust (SPT)** für die Screening-/Scor
 | Research Evidence | `src/platform/ResearchEvidence/` + `server/researchEvidence/` | **SC-2 A.5/A.6 auf main; Gemini default-off/Free-Tier-only/keine Score-Wirkung** |
 | Scoring-Engines | Base/DeFi, crypto 9-Faktor, meme, raw materials, traditional, verified technical | **Multi-Engine; Konsolidierung aktiv** |
 | UAI / Model Registry | `src/platform/Scoring/` | **Foundation + Standard-Crypto Consumer auf main** |
-| Canonical Dispatcher | `src/platform/Scoring/ScoringDispatcher.ts` | **C1 LANDED; C2a Composition-Root Operational Exit aktiv** |
+| Canonical Dispatcher | `src/platform/Scoring/ScoringDispatcher.ts` | **C1 + C2a LANDED; C2b Physical Cleanup aktiv** |
 | Ranking / Eligibility | `ranking.service` + SC-7 composite opt-in | **Crypto-lastig; cross-asset noch offen** |
 | Classification | Adapter + expanded deterministic table | **Canonical exit path** |
 | Unified DQ/Confidence | `CompositeDataQuality`; impact flags false | **Foundation + consumer map** |
@@ -40,13 +40,12 @@ Dieses Dokument ist der **Single Point of Trust (SPT)** für die Screening-/Scor
 1. scoreImpact / rankingImpact weiterhin Owner-gated (`false`)
 2. Ranking-Generalisierung cross-asset offen
 3. Multi-provider crypto quorum + `executionPriceEligible` weiterhin offen
-4. **SC-2 C2a:** Standard-Crypto Composition-Root-/Legacy-Ausgänge produktiv hinter Dispatcher bzw. Simulation-only — aktueller Branch
-5. **SC-2 C2b:** operativ unerreichbaren Standard-Crypto-Dead-Code aus `server.application.ts` physisch entfernen
-6. **SC-2 C3:** Traditional/Commodity/Sovereign/Meme/Raw-Materials mit CanonicalResultAdapter/Dispatcher vereinheitlichen
-7. **Gemini Shadow Validation:** interner Shadow-Consumer sowie Coverage/Latenz/Quota-Messung offen; Shadow bleibt deaktiviert
-8. **Evidence Promotion:** reale Source-/Lizenz-/Field-Policies und Promotion zu `ScoringEvidenceRef` separat Owner-gated
-9. Alpaca primary promotion Owner-gated
-10. SC-8 vollständige Drift-/Golden-/Walk-Forward-Governance offen
+4. **SC-2 C2b:** physische Standard-Crypto-Legacy-Ausführung aus `server.application.ts` entfernen und Cold-Start-Fallback an kanonische Enrichment-Grenze binden — aktueller Branch
+5. **SC-2 C3:** Traditional/Commodity/Sovereign/Meme/Raw-Materials mit CanonicalResultAdapter/Dispatcher vereinheitlichen
+6. **Gemini Shadow Validation:** interner Shadow-Consumer sowie Coverage/Latenz/Quota-Messung offen; Shadow bleibt deaktiviert
+7. **Evidence Promotion:** reale Source-/Lizenz-/Field-Policies und Promotion zu `ScoringEvidenceRef` separat Owner-gated
+8. Alpaca primary promotion Owner-gated
+9. SC-8 vollständige Drift-/Golden-/Walk-Forward-Governance offen
 
 ---
 
@@ -91,11 +90,11 @@ API / Screener UI / Alerts / Backtest Evidence
 |---|---|---|---|---|
 | **SC-0** | Baseline freeze & inventory | P0 | **LANDED** | SPT gemerged |
 | **SC-1** | Classification consolidation | P0 | **LANDED** | Canonical schema; deterministic coverage |
-| **SC-2** | Model registry & UAI adapters | P1 | **IN IMPLEMENTATION — C1 LANDED; C2a active** | alle produktiven Score-Consumer via UAI + Registry + einen Dispatcher + canonical result |
+| **SC-2** | Model registry & UAI adapters | P1 | **IN IMPLEMENTATION — C1/C2a LANDED; C2b active** | alle produktiven Score-Consumer via UAI + Registry + einen Dispatcher + canonical result |
 | **SC-3** | Unified DQ + Confidence composite | P0 | **FOUNDATION LANDED** | Composite; impact off |
 | **SC-4** | Gateway hardening & provider matrix | P1 | **Phase A LANDED** | Matrix + RL + supervisor health |
 | **SC-5** | Live coverage expansion | P1 | **Phase A–D code** | execution quorum still open |
-| **SC-6** | Scoring integrity & lineage | P1 | **PARTIAL — Crypto Dispatcher/Registry lineage landed; C2a active** | contract unification continues with SC-2 |
+| **SC-6** | Scoring integrity & lineage | P1 | **PARTIAL — Crypto Dispatcher/Registry lineage landed; C2b active** | contract unification continues with SC-2 |
 | **SC-7** | Ranking generalization | P1 | **Phase A–C LANDED** | cross-asset modes still open; impact off |
 | **SC-8** | Horizon / Walk-Forward backtests | P2 | FOUNDATION/PARTIAL | drift + golden-set + full walk-forward governance open |
 
@@ -107,7 +106,7 @@ API / Screener UI / Alerts / Backtest Evidence
 
 1. Runtime-/Code-/Produktions-Evidence  
 2. Explizite Human/Owner-Freigabe + Accepted ADR  
-3. Spezifische ESS/Governance Policies gemäß ADR-0086  
+3. Spezifische ESS/Governance Policies gemäß der etablierten Governance Authority  
 4. **Dieses SPT (SC-MD-SPT-0001)**  
 5. ROADMAP_CONSOLIDATION_MASTER_INDEX  
 6. Historische/archivierte Docs
@@ -120,25 +119,28 @@ ADR-0090 bleibt für Gemini Research Shadow autoritativ: Free-Tier-only, `gemini
 
 - PR #421 (`/api/crypto/score` Registry-Consumer) wurde nach PR #422 auf aktuellem Main revalidiert und Human-gemerged.
 - PR #424 migrierte `/api/crypto/list` + `/top10` und wurde nach erneutem Main-Abgleich Human-gemerged.
-- PR #427 führte C1 `ScoringDispatcher`, Research-only `/analyze` und den kanonischen DeFi-UI-Score ein. Finaler Head `0a46cec3` bestand CI #1837 + Governance #1155 und wurde Human-gemerged.
-- Aktuelle C2a-Baseline ist `main@4c280fb53e74e38d571e4b44b620a7b33681e0be`.
-- `agent/sc2-composition-root-crypto-exit` wurde frisch von diesem Stand erstellt.
-- Open PR #426 ist M10-Evidence-only; Open PR #414 ist Privacy/DSGVO. Beide werden vor C2a-PR erneut auf Pfad-/Semantik-Korrelation geprüft.
+- PR #427 führte C1 `ScoringDispatcher`, Research-only `/analyze` und den kanonischen DeFi-UI-Score ein; Human-gemerged.
+- PR #428 führte C2a Composition-Root-/Legacy-Operational-Exit ein; finaler Head `b34cbf2f` bestand CI #1849 + Governance #1166/#1167 und wurde Human-gemerged.
+- C2b wurde initial von `main@0d84e479ea97c97490dd65bea85fad2ec76ee157` erstellt.
+- Während der C2b-Implementierung wurde PR #414 nach `main` gemerged. #414 hat **0 direkten Pfadoverlap** mit den sieben C2b-Dateien; der C2b-Branch wurde deshalb vor PR-Erstellung per Merge-Sync auf `main@afc8e56de7deebab879f054eb03e099bf516eb1b` gebracht und danach erneut `0 behind` verifiziert.
+- PR #414 brachte zusätzlich eine zweite ADR-Datei mit Nummer ADR-0086 ein. Diese Nummern-/Authority-Kollision ist außerhalb des C2b-Scope und als separates Governance-Remediation-Item zu behandeln; SC-2 verwendet für die Facharchitektur ADR-0087.
+- Open PR #429 hat **0 Dateipfadoverlap** mit C2b, verändert jedoch PR-Template und CI-Workflow für den M10 Controlled Cutover. Falls #429 vor C2b-Merge-Readiness landet, wird C2b erneut gegen den dann aktuellen Main synchronisiert und der dann autoritative Passkey-/CI-Prozess befolgt.
+- C2b-Scan entdeckte einen zusätzlichen Cold-Start-Edge im `/api/market-data`-Fallback; dieser ist im Branch vor Löschung des Legacy-Zweigs an dieselbe kanonische Standard-Crypto-Enrichment-Grenze gebunden.
 
 ### Phase-C-Scope-Entscheidung
 
 Phase C bleibt sequenziell und erzeugt keine zweite Roadmap:
 
 - **C1 — LANDED:** Standard-Crypto Router/UI + Research Boundary -> `ScoringDispatcher`
-- **C2a — ACTIVE:** Market-Data Runtime + Legacy Standard-Crypto Endpoints -> Dispatcher; Chart-Score -> Simulation-only
-- **C2b — NEXT:** unerreichbaren Standard-Crypto-Dead-Code aus `server.application.ts` physisch entfernen
+- **C2a — LANDED:** Market-Data Runtime + Legacy Standard-Crypto Endpoints -> Dispatcher; Chart-Score -> Simulation-only
+- **C2b — ACTIVE:** Cold-Start-Edge schließen; physische Standard-Crypto-Legacy-Imports/Zweige/duplizierte Handler aus `server.application.ts` entfernen
 - **C3 — OPEN:** verbleibende Assetklassen -> CanonicalResultAdapter + Dispatcher; danach repo-weite Single-Dispatcher-Proof
 
 Global Phase C wird erst nach C2b + C3 als abgeschlossen markiert.
 
 ### Enterprise-/FinTech-Benchmark — verifiziert 2026-08-19
 
-Als aktueller Enterprise-Benchmark dient die am 17.04.2026 veröffentlichte Federal Reserve/OCC/FDIC **Revised Guidance on Model Risk Management (SR 26-2)**. Für CAPITAL-AI ist besonders das Engineering-Muster relevant, intended model use, Model Inventory, Governance/Controls, Validierung, Dokumentation und Monitoring an einer nachvollziehbaren Modell-Lifecycle-Grenze zusammenzuführen. C1/C2 reduzieren deshalb produktive Modellexecution-Surfaces und erzwingen für Standard-Crypto eine identifizierbare Registry-/Dispatcher-Autorität. Daraus wird keine konkrete aufsichtsrechtliche Anwendbarkeit behauptet.
+Als aktueller Enterprise-Benchmark dient die am 17.04.2026 veröffentlichte Federal Reserve/OCC/FDIC **Revised Guidance on Model Risk Management (SR 26-2)**. Für CAPITAL-AI ist besonders das Engineering-Muster relevant, intended model use, Model Inventory, Governance/Controls, Validierung, Dokumentation und Monitoring an einer nachvollziehbaren Modell-Lifecycle-Grenze zusammenzuführen. C1/C2 reduzieren deshalb produktive Modellexecution-Surfaces und erzwingen für Standard-Crypto eine identifizierbare Registry-/Dispatcher-Autorität. C2b entfernt zudem physische Fallback-Ausführungsflächen, damit deklarierter Model Use und tatsächlich erreichbarer Runtime-Graph übereinstimmen. Daraus wird keine konkrete aufsichtsrechtliche Anwendbarkeit behauptet.
 
 NIST AI RMF 1.0 dient ergänzend als freiwilliger Lifecycle-/Traceability-Benchmark. NIST weist aktuell darauf hin, dass AI RMF 1.0 überarbeitet wird; dieses SPT unterstellt keine bereits finale Nachfolgeversion.
 
@@ -156,6 +158,7 @@ NIST AI RMF 1.0 dient ergänzend als freiwilliger Lifecycle-/Traceability-Benchm
 - `docs/evidence/sc-md/SC2_CRYPTO_LIST_TOP10_REGISTRY_CONSUMERS_2026-08-19.md`
 - `docs/evidence/sc-md/SC2_CANONICAL_SCORING_DISPATCHER_2026-08-19.md`
 - `docs/evidence/sc-md/SC2_COMPOSITION_ROOT_CRYPTO_EXIT_2026-08-19.md`
+- `docs/evidence/sc-md/SC2_PHYSICAL_LEGACY_CRYPTO_CLEANUP_2026-08-19.md`
 - `docs/evidence/sc-md/SC2_GEMINI_RESEARCH_EVIDENCE_ADAPTER_2026-08-19.md`
 - `docs/evidence/sc-md/SC2_GEMINI_SHADOW_TRANSPORT_2026-08-19.md`
 - `docs/evidence/sc-md/SC2_GEMINI_FREE_TIER_ONLY_2026-08-19.md`
@@ -166,4 +169,4 @@ NIST AI RMF 1.0 dient ergänzend als freiwilliger Lifecycle-/Traceability-Benchm
 
 ---
 
-*SC-2 Stand 2026-08-19: C1 ist auf `main@4c280fb5` gelandet. C2a erzwingt den kanonischen Standard-Crypto-Dispatcher jetzt auch für Market-Data-/Legacy-Compatibility-Ausgänge und trennt Charts-Scoring explizit als nicht-produktive Simulation. C2b/C3 bleiben sichtbar offen; Gemini Shadow bleibt default-off.*
+*SC-2 Stand 2026-08-19: C1 und C2a sind auf Main gelandet. C2b ist auf `main@afc8e56d` synchronisiert, entfernt die physische Standard-Crypto-Legacy-Ausführung aus `server.application.ts` und schließt den Cold-Start-Fallback an dieselbe kanonische Dispatcher-Grenze. C3 bleibt sichtbar offen; Gemini Shadow bleibt default-off.*
