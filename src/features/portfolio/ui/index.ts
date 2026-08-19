@@ -1,7 +1,4 @@
-// Transitional facade: implementations are migrated from src/components slice by slice.
+// Initial verified facade. Weitere Portfolio-Views werden nach Contract-Verifikation ergänzt.
 export { Watchlist } from '../../../components/Watchlist';
-export { FavoriteAssetPatternSlots } from '../../../components/FavoriteAssetPatternSlots';
 export { PortfolioPerformance } from '../../../components/PortfolioPerformance';
-export { PortfolioBacktester } from '../../../components/PortfolioBacktester';
 export { BacktestEngine } from '../../../components/BacktestEngine';
-export { MonteCarloDetailed } from '../../../components/MonteCarloDetailed';

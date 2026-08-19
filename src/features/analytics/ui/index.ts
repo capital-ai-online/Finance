@@ -1,7 +1,4 @@
-// Transitional facade: implementations are migrated from src/components slice by slice.
+// Initial verified facade. Nur im aktuellen Composition Root nachgewiesene Exporte.
 export { Charts } from '../../../components/Charts';
 export { HeatmapCreator } from '../../../components/HeatmapCreator';
-export { QuantumGraph } from '../../../components/QuantumGraph';
 export { RealTimeRiskAssessment } from '../../../components/RealTimeRiskAssessment';
-export { PerformanceDashboard } from '../../../components/PerformanceDashboard';
-export { EnterpriseAnalysisPanels } from '../../../components/EnterpriseAnalysisPanels';

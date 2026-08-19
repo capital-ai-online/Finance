@@ -1,20 +1,4 @@
-// Transitional facade: implementations are migrated from src/components slice by slice.
-export { ComplianceBadge } from '../../../components/ComplianceBadge';
-export { ComplianceConsentModal } from '../../../components/ComplianceConsentModal';
-export { ComplianceNotifications } from '../../../components/ComplianceNotifications';
-export { SecurityComplianceAuditor } from '../../../components/SecurityComplianceAuditor';
+// Initial verified facade. Admin-intern komponierte Module bleiben bis zur nächsten Slice-Migration Legacy-Implementierungen.
 export { SecurityRadarBadge } from '../../../components/SecurityRadarBadge';
-export { AuditLog } from '../../../components/AuditLog';
-export { AuditLogs } from '../../../components/AuditLogs';
-export { AuditLogManager } from '../../../components/AuditLogManager';
-export { AdminPanel } from '../../../components/AdminPanel';
 export { AdminPortal } from '../../../components/AdminPortal';
-export { SupervisorDashboard } from '../../../components/SupervisorDashboard';
-export { DocumentHygienePanel } from '../../../components/DocumentHygienePanel';
-export { VersionManagerPanel } from '../../../components/VersionManagerPanel';
-export { AdrForm } from '../../../components/AdrForm';
-export { AuthStateDebugger } from '../../../components/AuthStateDebugger';
 export { SystemLatencyMonitor } from '../../../components/SystemLatencyMonitor';
-export { SeoDashboard } from '../../../components/SeoDashboard';
-export { MarkdownOrchestrator } from '../../../components/MarkdownOrchestrator';
-export { OrchestratorPanel } from '../../../components/OrchestratorPanel';

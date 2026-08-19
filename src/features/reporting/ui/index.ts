@@ -1,3 +1,2 @@
-// Transitional facade: implementations are migrated from src/components slice by slice.
+// Initial verified facade.
 export { ComplianceExporter } from '../../../components/ComplianceExporter';
-export { PdfExportModal } from '../../../components/PdfExportModal';

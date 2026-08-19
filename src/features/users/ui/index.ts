@@ -1,4 +1,3 @@
-// Transitional facade: implementations are migrated from src/components slice by slice.
+// Initial verified facade. Weitere Module werden nach Import-/Contract-Verifikation ergänzt.
 export { LoginStepUpGate } from '../../../components/LoginStepUpGate';
 export { RegistrationCompletionGate } from '../../../components/RegistrationCompletionGate';
-export { StepUpModal } from '../../../components/StepUpModal';

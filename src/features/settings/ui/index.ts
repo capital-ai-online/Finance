@@ -1,4 +1,2 @@
-// Transitional facade: implementations are migrated from src/components slice by slice.
+// Initial verified facade. Weitere Settings-Module werden sliceweise migriert.
 export { ProfilePage } from '../../../components/ProfilePage';
-export { PasskeySettings } from '../../../components/PasskeySettings';
-export { TotpSettings } from '../../../components/TotpSettings';

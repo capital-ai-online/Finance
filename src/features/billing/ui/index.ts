@@ -1,5 +1,4 @@
-// Transitional facade: implementations are migrated from src/components slice by slice.
+// Initial verified facade. Weitere Billing-Views werden sliceweise migriert.
 export { Abonnements } from '../../../components/Abonnements';
-export { Checkout } from '../../../components/Checkout';
 export { SubscriptionModal } from '../../../components/SubscriptionModal';
 export { GuestCliffhangerModal } from '../../../components/GuestCliffhangerModal';
