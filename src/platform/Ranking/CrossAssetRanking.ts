@@ -15,11 +15,7 @@ interface PreparedCandidate {
   comparisonBasis: CrossAssetRankingCohort['comparisonBasis'];
 }
 
-function exclusion(
-  candidate: CanonicalRankingCandidate,
-  reason: CrossAssetRankingExclusion['reason'],
-  detail?: string,
-): CrossAssetRankingExclusion {
+function exclusion(candidate: CanonicalRankingCandidate, reason: CrossAssetRankingExclusion['reason'], detail?: string): CrossAssetRankingExclusion {
   return {
     assetId: candidate.asset.assetId,
     symbol: candidate.asset.symbol,
@@ -55,11 +51,7 @@ function validateSharedAdmission(candidate: CanonicalRankingCandidate): CrossAss
     !lineage.featureVersion ||
     !lineage.scoringVersion
   ) {
-    return exclusion(
-      candidate,
-      'MODEL_LINEAGE_MISSING',
-      'Dispatcher/registry/model/executor/result/feature/scoring lineage is required for ranking.',
-    );
+    return exclusion(candidate, 'MODEL_LINEAGE_MISSING', 'Dispatcher/registry/model/executor/result/feature/scoring lineage is required for ranking.');
   }
   if (!candidate.governance) return exclusion(candidate, 'GOVERNANCE_EVIDENCE_MISSING');
   if (!candidate.governance.eligible) return exclusion(candidate, 'GOVERNANCE_INELIGIBLE', candidate.governance.eligibilityStatus);
@@ -152,11 +144,6 @@ function isExclusion(value: PreparedCandidate | CrossAssetRankingExclusion): val
   return 'reason' in value;
 }
 
-/**
- * Build deterministic ranking cohorts without hidden comparability assumptions. The default cohort
- * is the same intended-use contract: model id/version + asset class + feature contract + scoring
- * contract. Cross-segment/model cohorts require separately verified normalized comparison evidence.
- */
 export function rankCanonicalUniverse(
   candidates: readonly CanonicalRankingCandidate[],
   mode: CrossAssetRankingMode,
@@ -192,21 +179,29 @@ export function rankCanonicalUniverse(
         mode,
         comparisonBasis: members[0].comparisonBasis,
         crossCohortOrder: false,
-        entries: ordered.map((item, index) => ({
-          assetId: item.candidate.asset.assetId,
-          symbol: item.candidate.asset.symbol,
-          assetClass: item.candidate.asset.assetClass,
-          mode,
-          cohortKey: key,
-          rank: index + 1,
-          rankingValue: item.rankingValue,
-          canonicalScore: item.candidate.canonical.score as number,
-          dataQuality: item.candidate.canonical.integrity.dataQuality,
-          modelId: item.candidate.canonical.integrity.modelId as string,
-          modelVersion: item.candidate.canonical.integrity.modelVersion as string,
-          dispatcherVersion: item.candidate.canonical.integrity.dispatcherVersion as string,
-          tieBreaker: item.candidate.asset.assetId,
-        })),
+        entries: ordered.map((item, index) => {
+          const integrity = item.candidate.canonical.integrity;
+          return {
+            assetId: item.candidate.asset.assetId,
+            symbol: item.candidate.asset.symbol,
+            assetClass: item.candidate.asset.assetClass,
+            mode,
+            cohortKey: key,
+            rank: index + 1,
+            rankingValue: item.rankingValue,
+            canonicalScore: item.candidate.canonical.score as number,
+            dataQuality: integrity.dataQuality,
+            dispatcherVersion: integrity.dispatcherVersion as string,
+            modelRegistryVersion: integrity.modelRegistryVersion as string,
+            modelId: integrity.modelId as string,
+            modelVersion: integrity.modelVersion as string,
+            executorKey: integrity.executorKey as string,
+            resultContractVersion: integrity.resultContractVersion as string,
+            featureVersion: integrity.featureVersion,
+            scoringVersion: integrity.scoringVersion,
+            tieBreaker: item.candidate.asset.assetId,
+          };
+        }),
       };
     });
 
