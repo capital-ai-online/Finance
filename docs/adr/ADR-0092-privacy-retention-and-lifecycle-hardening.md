@@ -5,7 +5,7 @@
 **Status:** Accepted for implementation  
 **Date:** 2026-08-19  
 **Scope:** CAPITAL-AI / Finance repository and productive Supabase project `ryzywoktpmyhwzxmstyu`  
-**Authority:** Controller decision; follows ADR-0094 / `AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19` and ADR-0086 / `AUTH-ADR-VENDOR-PRIVACY-EVIDENCE-2026-08-19`
+**Authority:** Controller decision; follows ADR-0095 / `AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19` and ADR-0086 / `AUTH-ADR-VENDOR-PRIVACY-EVIDENCE-2026-08-19`
 
 ## Context
 
