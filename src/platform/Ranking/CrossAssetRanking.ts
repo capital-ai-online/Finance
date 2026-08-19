@@ -33,62 +33,31 @@ function normalizedKey(value: string): string {
   return encodeURIComponent(value.trim().toLowerCase());
 }
 
-function validateSharedAdmission(
-  candidate: CanonicalRankingCandidate,
-): CrossAssetRankingExclusion | null {
+function validateSharedAdmission(candidate: CanonicalRankingCandidate): CrossAssetRankingExclusion | null {
   if (candidate.canonical.status !== 'READY') {
     return exclusion(candidate, 'SCORE_NOT_READY', `canonical_status=${candidate.canonical.status}`);
   }
-
   if (!Number.isFinite(candidate.canonical.score) || !Number.isFinite(candidate.canonical.final_score)) {
     return exclusion(candidate, 'SCORE_VALUE_INVALID', 'READY canonical result carries a non-finite score.');
   }
-
   if (candidate.canonical.integrity.assetId !== candidate.asset.assetId) {
-    return exclusion(
-      candidate,
-      'IDENTITY_MISMATCH',
-      `uai=${candidate.asset.assetId}; canonical=${candidate.canonical.integrity.assetId}`,
-    );
+    return exclusion(candidate, 'IDENTITY_MISMATCH', `uai=${candidate.asset.assetId}; canonical=${candidate.canonical.integrity.assetId}`);
   }
 
   const lineage = candidate.canonical.integrity;
-  if (
-    !lineage.dispatcherVersion ||
-    !lineage.modelId ||
-    !lineage.modelVersion ||
-    !lineage.executorKey ||
-    !lineage.resultContractVersion
-  ) {
-    return exclusion(
-      candidate,
-      'MODEL_LINEAGE_MISSING',
-      'Dispatcher/model/executor/result-contract lineage is required for cross-asset ranking.',
-    );
+  if (!lineage.dispatcherVersion || !lineage.modelId || !lineage.modelVersion || !lineage.executorKey || !lineage.resultContractVersion) {
+    return exclusion(candidate, 'MODEL_LINEAGE_MISSING', 'Dispatcher/model/executor/result-contract lineage is required for cross-asset ranking.');
   }
-
   if (!candidate.governance) return exclusion(candidate, 'GOVERNANCE_EVIDENCE_MISSING');
-  if (!candidate.governance.eligible) {
-    return exclusion(candidate, 'GOVERNANCE_INELIGIBLE', candidate.governance.eligibilityStatus);
-  }
+  if (!candidate.governance.eligible) return exclusion(candidate, 'GOVERNANCE_INELIGIBLE', candidate.governance.eligibilityStatus);
   if (candidate.governance.sourceConflict) return exclusion(candidate, 'SOURCE_CONFLICT');
-  if (
-    candidate.governance.operationsState === 'UNAVAILABLE' ||
-    candidate.governance.operationsState === 'NO_RUNTIME_EVIDENCE'
-  ) {
-    return exclusion(
-      candidate,
-      'OPERATIONS_EVIDENCE_UNAVAILABLE',
-      `operationsState=${candidate.governance.operationsState}`,
-    );
+  if (candidate.governance.operationsState === 'UNAVAILABLE' || candidate.governance.operationsState === 'NO_RUNTIME_EVIDENCE') {
+    return exclusion(candidate, 'OPERATIONS_EVIDENCE_UNAVAILABLE', `operationsState=${candidate.governance.operationsState}`);
   }
-
   return null;
 }
 
-function prepareScoreComparison(
-  candidate: CanonicalRankingCandidate,
-): PreparedCandidate | CrossAssetRankingExclusion {
+function prepareScoreComparison(candidate: CanonicalRankingCandidate): PreparedCandidate | CrossAssetRankingExclusion {
   const comparison = candidate.scoreComparability;
   if (!comparison) {
     const { modelId, modelVersion } = candidate.canonical.integrity;
@@ -96,32 +65,21 @@ function prepareScoreComparison(
       candidate,
       cohortKey: `model:${normalizedKey(`${modelId}@${modelVersion}`)}|asset-class:${candidate.asset.assetClass}`,
       rankingValue: candidate.canonical.score as number,
-      comparisonBasis: 'canonical-score-same-model',
+      comparisonBasis: 'canonical-score-same-model-asset-class',
     };
   }
 
   if (!comparison.verified) return exclusion(candidate, 'COMPARABILITY_EVIDENCE_UNVERIFIED');
-  if (!Number.isFinite(comparison.normalizedValue)) {
-    return exclusion(candidate, 'COMPARABILITY_VALUE_INVALID');
-  }
+  if (!Number.isFinite(comparison.normalizedValue)) return exclusion(candidate, 'COMPARABILITY_VALUE_INVALID');
 
   const comparisonKey = comparison.comparisonKey?.trim();
   const methodVersion = comparison.methodVersion?.trim();
   if (!comparisonKey || !methodVersion) {
-    return exclusion(
-      candidate,
-      'COMPARISON_KEY_MISSING',
-      'Score comparability requires comparisonKey and methodVersion.',
-    );
+    return exclusion(candidate, 'COMPARISON_KEY_MISSING', 'Score comparability requires comparisonKey and methodVersion.');
   }
   if (!comparison.evidenceId.trim() || !comparison.observedAt.trim() || !comparison.retrievedAt.trim()) {
-    return exclusion(
-      candidate,
-      'COMPARABILITY_EVIDENCE_UNVERIFIED',
-      'Score comparability requires evidenceId, observedAt and retrievedAt.',
-    );
+    return exclusion(candidate, 'COMPARABILITY_EVIDENCE_UNVERIFIED', 'Score comparability requires evidenceId, observedAt and retrievedAt.');
   }
-
   return {
     candidate,
     cohortKey: `calibrated:${normalizedKey(comparisonKey)}|method:${normalizedKey(methodVersion)}`,
@@ -136,26 +94,19 @@ function prepareScoreMode(
 ): PreparedCandidate | CrossAssetRankingExclusion {
   const comparison = prepareScoreComparison(candidate);
   if ('reason' in comparison) return comparison;
-
   if (mode === 'category') {
     const category = candidate.category?.trim();
     if (!category) return exclusion(candidate, 'CATEGORY_MISSING');
     return { ...comparison, cohortKey: `${comparison.cohortKey}|category:${normalizedKey(category)}` };
   }
-
   if (mode === 'tier') {
-    if (candidate.tier !== 1 && candidate.tier !== 2 && candidate.tier !== 3) {
-      return exclusion(candidate, 'TIER_MISSING');
-    }
+    if (candidate.tier !== 1 && candidate.tier !== 2 && candidate.tier !== 3) return exclusion(candidate, 'TIER_MISSING');
     return { ...comparison, cohortKey: `${comparison.cohortKey}|tier:${candidate.tier}` };
   }
-
   return comparison;
 }
 
-function prepareGrowthMode(
-  candidate: CanonicalRankingCandidate,
-): PreparedCandidate | CrossAssetRankingExclusion {
+function prepareGrowthMode(candidate: CanonicalRankingCandidate): PreparedCandidate | CrossAssetRankingExclusion {
   const growth = candidate.growth;
   if (!growth) return exclusion(candidate, 'GROWTH_EVIDENCE_MISSING');
   if (!growth.verified) return exclusion(candidate, 'GROWTH_EVIDENCE_UNVERIFIED');
@@ -163,13 +114,8 @@ function prepareGrowthMode(
   const comparisonKey = growth.comparisonKey?.trim();
   if (!comparisonKey) return exclusion(candidate, 'COMPARISON_KEY_MISSING');
   if (!growth.evidenceId.trim() || !growth.observedAt.trim() || !growth.retrievedAt.trim()) {
-    return exclusion(
-      candidate,
-      'GROWTH_EVIDENCE_UNVERIFIED',
-      'Growth evidence requires evidenceId, observedAt and retrievedAt.',
-    );
+    return exclusion(candidate, 'GROWTH_EVIDENCE_UNVERIFIED', 'Growth evidence requires evidenceId, observedAt and retrievedAt.');
   }
-
   return {
     candidate,
     cohortKey: `growth:${normalizedKey(comparisonKey)}`,
@@ -178,18 +124,13 @@ function prepareGrowthMode(
   };
 }
 
-function prepareCandidate(
-  candidate: CanonicalRankingCandidate,
-  mode: CrossAssetRankingMode,
-): PreparedCandidate | CrossAssetRankingExclusion {
+function prepareCandidate(candidate: CanonicalRankingCandidate, mode: CrossAssetRankingMode): PreparedCandidate | CrossAssetRankingExclusion {
   const admissionFailure = validateSharedAdmission(candidate);
   if (admissionFailure) return admissionFailure;
   return mode === 'growth' ? prepareGrowthMode(candidate) : prepareScoreMode(candidate, mode);
 }
 
-function isExclusion(
-  value: PreparedCandidate | CrossAssetRankingExclusion,
-): value is CrossAssetRankingExclusion {
+function isExclusion(value: PreparedCandidate | CrossAssetRankingExclusion): value is CrossAssetRankingExclusion {
   return 'reason' in value;
 }
 
@@ -213,7 +154,6 @@ export function rankCanonicalUniverse(
       continue;
     }
     seenAssetIds.add(candidate.asset.assetId);
-
     const result = prepareCandidate(candidate, mode);
     if (isExclusion(result)) excluded.push(result);
     else prepared.push(result);
@@ -229,9 +169,7 @@ export function rankCanonicalUniverse(
   const cohorts: CrossAssetRankingCohort[] = [...grouped.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([key, members]) => {
-      const ordered = [...members].sort(
-        (a, b) => b.rankingValue - a.rankingValue || a.candidate.asset.assetId.localeCompare(b.candidate.asset.assetId),
-      );
+      const ordered = [...members].sort((a, b) => b.rankingValue - a.rankingValue || a.candidate.asset.assetId.localeCompare(b.candidate.asset.assetId));
       return {
         key,
         mode,
@@ -257,8 +195,7 @@ export function rankCanonicalUniverse(
 
   excluded.sort((a, b) => a.assetId.localeCompare(b.assetId) || a.reason.localeCompare(b.reason));
   const rankedCount = cohorts.reduce((sum, cohort) => sum + cohort.entries.length, 0);
-  const status: CrossAssetRankingResult['status'] =
-    rankedCount === 0 ? 'NO_RANKABLE_ASSETS' : excluded.length > 0 ? 'PARTIAL' : 'READY';
+  const status: CrossAssetRankingResult['status'] = rankedCount === 0 ? 'NO_RANKABLE_ASSETS' : excluded.length > 0 ? 'PARTIAL' : 'READY';
 
   return {
     contractVersion: CROSS_ASSET_RANKING_CONTRACT_VERSION,
