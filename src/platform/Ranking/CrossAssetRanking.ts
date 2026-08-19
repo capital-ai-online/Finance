@@ -37,11 +37,7 @@ function validateSharedAdmission(
   candidate: CanonicalRankingCandidate,
 ): CrossAssetRankingExclusion | null {
   if (candidate.canonical.status !== 'READY') {
-    return exclusion(
-      candidate,
-      'SCORE_NOT_READY',
-      `canonical_status=${candidate.canonical.status}`,
-    );
+    return exclusion(candidate, 'SCORE_NOT_READY', `canonical_status=${candidate.canonical.status}`);
   }
 
   if (!Number.isFinite(candidate.canonical.score) || !Number.isFinite(candidate.canonical.final_score)) {
@@ -71,19 +67,11 @@ function validateSharedAdmission(
     );
   }
 
-  if (!candidate.governance) {
-    return exclusion(candidate, 'GOVERNANCE_EVIDENCE_MISSING');
-  }
+  if (!candidate.governance) return exclusion(candidate, 'GOVERNANCE_EVIDENCE_MISSING');
   if (!candidate.governance.eligible) {
-    return exclusion(
-      candidate,
-      'GOVERNANCE_INELIGIBLE',
-      candidate.governance.eligibilityStatus,
-    );
+    return exclusion(candidate, 'GOVERNANCE_INELIGIBLE', candidate.governance.eligibilityStatus);
   }
-  if (candidate.governance.sourceConflict) {
-    return exclusion(candidate, 'SOURCE_CONFLICT');
-  }
+  if (candidate.governance.sourceConflict) return exclusion(candidate, 'SOURCE_CONFLICT');
   if (
     candidate.governance.operationsState === 'UNAVAILABLE' ||
     candidate.governance.operationsState === 'NO_RUNTIME_EVIDENCE'
@@ -106,15 +94,13 @@ function prepareScoreComparison(
     const { modelId, modelVersion } = candidate.canonical.integrity;
     return {
       candidate,
-      cohortKey: `model:${normalizedKey(`${modelId}@${modelVersion}`)}`,
+      cohortKey: `model:${normalizedKey(`${modelId}@${modelVersion}`)}|asset-class:${candidate.asset.assetClass}`,
       rankingValue: candidate.canonical.score as number,
       comparisonBasis: 'canonical-score-same-model',
     };
   }
 
-  if (!comparison.verified) {
-    return exclusion(candidate, 'COMPARABILITY_EVIDENCE_UNVERIFIED');
-  }
+  if (!comparison.verified) return exclusion(candidate, 'COMPARABILITY_EVIDENCE_UNVERIFIED');
   if (!Number.isFinite(comparison.normalizedValue)) {
     return exclusion(candidate, 'COMPARABILITY_VALUE_INVALID');
   }
@@ -128,11 +114,7 @@ function prepareScoreComparison(
       'Score comparability requires comparisonKey and methodVersion.',
     );
   }
-  if (
-    !comparison.evidenceId.trim() ||
-    !comparison.observedAt.trim() ||
-    !comparison.retrievedAt.trim()
-  ) {
+  if (!comparison.evidenceId.trim() || !comparison.observedAt.trim() || !comparison.retrievedAt.trim()) {
     return exclusion(
       candidate,
       'COMPARABILITY_EVIDENCE_UNVERIFIED',
@@ -158,20 +140,14 @@ function prepareScoreMode(
   if (mode === 'category') {
     const category = candidate.category?.trim();
     if (!category) return exclusion(candidate, 'CATEGORY_MISSING');
-    return {
-      ...comparison,
-      cohortKey: `${comparison.cohortKey}|category:${normalizedKey(category)}`,
-    };
+    return { ...comparison, cohortKey: `${comparison.cohortKey}|category:${normalizedKey(category)}` };
   }
 
   if (mode === 'tier') {
     if (candidate.tier !== 1 && candidate.tier !== 2 && candidate.tier !== 3) {
       return exclusion(candidate, 'TIER_MISSING');
     }
-    return {
-      ...comparison,
-      cohortKey: `${comparison.cohortKey}|tier:${candidate.tier}`,
-    };
+    return { ...comparison, cohortKey: `${comparison.cohortKey}|tier:${candidate.tier}` };
   }
 
   return comparison;
@@ -208,9 +184,7 @@ function prepareCandidate(
 ): PreparedCandidate | CrossAssetRankingExclusion {
   const admissionFailure = validateSharedAdmission(candidate);
   if (admissionFailure) return admissionFailure;
-  return mode === 'growth'
-    ? prepareGrowthMode(candidate)
-    : prepareScoreMode(candidate, mode);
+  return mode === 'growth' ? prepareGrowthMode(candidate) : prepareScoreMode(candidate, mode);
 }
 
 function isExclusion(
@@ -220,9 +194,10 @@ function isExclusion(
 }
 
 /**
- * Build deterministic ranking cohorts across canonical assets without creating a hidden global
- * comparability assumption. Different model families naturally form separate cohorts. Cross-model
- * cohorts require separately verified normalized score-comparability evidence.
+ * Build deterministic ranking cohorts without creating hidden comparability assumptions. Even when
+ * the same model version serves multiple asset classes, the default cohort remains asset-class
+ * scoped because intended use, feature coverage and weighting can differ by segment. Cross-asset
+ * or cross-model cohorts require separately verified normalized score-comparability evidence.
  */
 export function rankCanonicalUniverse(
   candidates: readonly CanonicalRankingCandidate[],
@@ -255,11 +230,8 @@ export function rankCanonicalUniverse(
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([key, members]) => {
       const ordered = [...members].sort(
-        (a, b) =>
-          b.rankingValue - a.rankingValue ||
-          a.candidate.asset.assetId.localeCompare(b.candidate.asset.assetId),
+        (a, b) => b.rankingValue - a.rankingValue || a.candidate.asset.assetId.localeCompare(b.candidate.asset.assetId),
       );
-
       return {
         key,
         mode,
@@ -284,7 +256,6 @@ export function rankCanonicalUniverse(
     });
 
   excluded.sort((a, b) => a.assetId.localeCompare(b.assetId) || a.reason.localeCompare(b.reason));
-
   const rankedCount = cohorts.reduce((sum, cohort) => sum + cohort.entries.length, 0);
   const status: CrossAssetRankingResult['status'] =
     rankedCount === 0 ? 'NO_RANKABLE_ASSETS' : excluded.length > 0 ? 'PARTIAL' : 'READY';
