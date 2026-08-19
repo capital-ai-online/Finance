@@ -3,7 +3,7 @@
 **Date:** 2026-08-19  
 **Controller:** Sven Michael Kulessa  
 **Repository:** `SvenKulessa/Finance`  
-**Scope:** Current CAPITAL-AI processing inventory after PR #414 and ADR-0091 remediation  
+**Scope:** Current CAPITAL-AI processing inventory after PR #414 and ADR-0092 remediation  
 **Status:** Screening recorded; not a legal opinion and not a substitute for a full DSFA where the high-risk threshold is met
 
 ## 1. Purpose
