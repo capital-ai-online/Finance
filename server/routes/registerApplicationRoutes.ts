@@ -59,10 +59,9 @@ export function registerApplicationRoutes(
   // unknown paths return real 404 instead of the SPA shell.
   installProductionSoft404Intercept();
 
-  // SC-2 Phase C2: intercept historical scoring endpoints before the legacy declarations in
-  // server.application.ts. Standard-Crypto terminates at the canonical dispatcher here;
-  // caller-indicator chart scoring is explicitly simulation-only. Meme requests intentionally
-  // fall through to their existing C3 migration path.
+  // SC-2 Phase C3: intercept historical Crypto scoring endpoints before the legacy declarations
+  // in server.application.ts. Standard- and Meme-Crypto terminate at the canonical dispatcher;
+  // caller-indicator chart scoring remains explicitly simulation-only.
   app.use(createLegacyScoringCompatibilityRouter());
 
   // Domain route factories keep the exact provider contract currently used by

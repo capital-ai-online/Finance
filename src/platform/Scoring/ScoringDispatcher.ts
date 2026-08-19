@@ -45,26 +45,17 @@ export interface CryptoCanonicalScoringDispatchRequest extends CanonicalScoringD
 
 export interface TraditionalCanonicalScoringDispatchRequest extends CanonicalScoringDispatchBaseRequest {
   assetClass: 'stock' | 'forex' | 'index';
-  execution?: {
-    kind: 'traditional';
-    inputs: TraditionalAssetScoringInputs;
-  };
+  execution?: { kind: 'traditional'; inputs: TraditionalAssetScoringInputs };
 }
 
 export interface CommodityCanonicalScoringDispatchRequest extends CanonicalScoringDispatchBaseRequest {
   assetClass: 'commodity';
-  execution?: {
-    kind: 'commodity-evidence';
-    evidence: CommodityMarketEvidence;
-  };
+  execution?: { kind: 'commodity-evidence'; evidence: CommodityMarketEvidence };
 }
 
 export interface SovereignCanonicalScoringDispatchRequest extends CanonicalScoringDispatchBaseRequest {
   assetClass: 'bond';
-  execution?: {
-    kind: 'sovereign-benchmark-evidence';
-    evidence: BondEvidenceResult;
-  };
+  execution?: { kind: 'sovereign-benchmark-evidence'; evidence: BondEvidenceResult };
 }
 
 export type CanonicalScoringDispatchRequest =
@@ -105,29 +96,17 @@ interface CanonicalScoringDispatchSuccess<TAssessment> {
   assessment: TAssessment;
 }
 
-export type CryptoCanonicalScoringDispatchResult =
-  | CanonicalScoringDispatchFailure
-  | CanonicalScoringDispatchSuccess<VerifiedCryptoTechnicalAssessment>;
-export type TraditionalCanonicalScoringDispatchResult =
-  | CanonicalScoringDispatchFailure
-  | CanonicalScoringDispatchSuccess<TraditionalCanonicalScoringAssessment>;
-export type CommodityCanonicalScoringDispatchResult =
-  | CanonicalScoringDispatchFailure
-  | CanonicalScoringDispatchSuccess<CommodityEvidenceScoringResult>;
-export type SovereignCanonicalScoringDispatchResult =
-  | CanonicalScoringDispatchFailure
-  | CanonicalScoringDispatchSuccess<SovereignBenchmarkScoringResult>;
+export type CryptoCanonicalScoringDispatchResult = CanonicalScoringDispatchFailure | CanonicalScoringDispatchSuccess<VerifiedCryptoTechnicalAssessment>;
+export type TraditionalCanonicalScoringDispatchResult = CanonicalScoringDispatchFailure | CanonicalScoringDispatchSuccess<TraditionalCanonicalScoringAssessment>;
+export type CommodityCanonicalScoringDispatchResult = CanonicalScoringDispatchFailure | CanonicalScoringDispatchSuccess<CommodityEvidenceScoringResult>;
+export type SovereignCanonicalScoringDispatchResult = CanonicalScoringDispatchFailure | CanonicalScoringDispatchSuccess<SovereignBenchmarkScoringResult>;
 export type CanonicalScoringDispatchResult =
   | CryptoCanonicalScoringDispatchResult
   | TraditionalCanonicalScoringDispatchResult
   | CommodityCanonicalScoringDispatchResult
   | SovereignCanonicalScoringDispatchResult;
 
-function bindCanonicalTraceability(
-  canonical: CanonicalScoreResult,
-  asset: UniversalAssetIdentity,
-  model: ScoringModelDescriptor,
-): CanonicalScoreResult {
+function bindCanonicalTraceability(canonical: CanonicalScoreResult, asset: UniversalAssetIdentity, model: ScoringModelDescriptor): CanonicalScoreResult {
   return {
     ...canonical,
     integrity: {
@@ -150,6 +129,7 @@ function buildDispatchFailure(
   asset: UniversalAssetIdentity,
   reason: string,
   model: ScoringModelDescriptor | null = null,
+  missingField: 'scoringModel' | 'scoringEvidence' = 'scoringModel',
 ): CanonicalScoringDispatchFailure {
   return {
     status: 'SCORE_NOT_COMPUTABLE',
@@ -171,7 +151,7 @@ function buildDispatchFailure(
         scoringVersion: model?.modelId && model?.version ? `${model.modelId}/${model.version}` : CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
         coverage: 0,
         evidence: [],
-        missingFields: ['scoringEvidence'],
+        missingFields: [missingField],
         reason,
         dispatcherVersion: CANONICAL_SCORING_DISPATCHER_VERSION,
         modelRegistryVersion: model?.registryVersion,
@@ -194,32 +174,15 @@ function commonBindingReady(model: ScoringModelDescriptor): boolean {
 
 /**
  * SC-2 Phase C canonical model-execution boundary.
- *
  * Callers provide UAI identity plus an asset-class-specific verified feature/evidence contract.
  * The dispatcher resolves the canonical champion, validates executor/evidence/result bindings and
- * is the only productive layer allowed to invoke a domain scoring engine. Acquisition remains in
- * domain adapters; model selection and execution authority do not.
+ * is the only productive layer allowed to invoke a domain scoring engine.
  */
-export function dispatchCanonicalScore(
-  input: CryptoCanonicalScoringDispatchRequest,
-  dependencies?: Readonly<CanonicalScoringDispatcherDependencies>,
-): Promise<CryptoCanonicalScoringDispatchResult>;
-export function dispatchCanonicalScore(
-  input: TraditionalCanonicalScoringDispatchRequest,
-  dependencies?: Readonly<CanonicalScoringDispatcherDependencies>,
-): Promise<TraditionalCanonicalScoringDispatchResult>;
-export function dispatchCanonicalScore(
-  input: CommodityCanonicalScoringDispatchRequest,
-  dependencies?: Readonly<CanonicalScoringDispatcherDependencies>,
-): Promise<CommodityCanonicalScoringDispatchResult>;
-export function dispatchCanonicalScore(
-  input: SovereignCanonicalScoringDispatchRequest,
-  dependencies?: Readonly<CanonicalScoringDispatcherDependencies>,
-): Promise<SovereignCanonicalScoringDispatchResult>;
-export function dispatchCanonicalScore(
-  input: CanonicalScoringDispatchRequest,
-  dependencies?: Readonly<CanonicalScoringDispatcherDependencies>,
-): Promise<CanonicalScoringDispatchResult>;
+export function dispatchCanonicalScore(input: CryptoCanonicalScoringDispatchRequest, dependencies?: Readonly<CanonicalScoringDispatcherDependencies>): Promise<CryptoCanonicalScoringDispatchResult>;
+export function dispatchCanonicalScore(input: TraditionalCanonicalScoringDispatchRequest, dependencies?: Readonly<CanonicalScoringDispatcherDependencies>): Promise<TraditionalCanonicalScoringDispatchResult>;
+export function dispatchCanonicalScore(input: CommodityCanonicalScoringDispatchRequest, dependencies?: Readonly<CanonicalScoringDispatcherDependencies>): Promise<CommodityCanonicalScoringDispatchResult>;
+export function dispatchCanonicalScore(input: SovereignCanonicalScoringDispatchRequest, dependencies?: Readonly<CanonicalScoringDispatcherDependencies>): Promise<SovereignCanonicalScoringDispatchResult>;
+export function dispatchCanonicalScore(input: CanonicalScoringDispatchRequest, dependencies?: Readonly<CanonicalScoringDispatcherDependencies>): Promise<CanonicalScoringDispatchResult>;
 export async function dispatchCanonicalScore(
   input: CanonicalScoringDispatchRequest,
   dependencies: Readonly<CanonicalScoringDispatcherDependencies> = {},
@@ -235,17 +198,11 @@ export async function dispatchCanonicalScore(
 
   const registry = dependencies.registry ?? scoringModelRegistry;
   const resolution = registry.resolve(asset);
-  if (resolution.status !== 'RESOLVED') {
-    return buildDispatchFailure(asset, resolution.reason);
-  }
+  if (resolution.status !== 'RESOLVED') return buildDispatchFailure(asset, resolution.reason);
 
   const model = resolution.model;
   if (!commonBindingReady(model)) {
-    return buildDispatchFailure(
-      asset,
-      `Resolved model ${model.modelId}@${model.version} violates the canonical evidence/result binding required by ${CANONICAL_SCORING_DISPATCHER_VERSION}.`,
-      model,
-    );
+    return buildDispatchFailure(asset, `Resolved model ${model.modelId}@${model.version} violates the canonical evidence/result binding required by ${CANONICAL_SCORING_DISPATCHER_VERSION}.`, model);
   }
 
   if (asset.assetClass === 'crypto') {
@@ -255,14 +212,7 @@ export async function dispatchCanonicalScore(
     const cryptoExecutor = dependencies.cryptoExecutor ?? evaluateVerifiedCryptoTechnicalScore;
     const assessment = await cryptoExecutor(asset.symbol);
     const canonical = bindCanonicalTraceability(assessment.canonical, asset, model);
-    return {
-      status: 'DISPATCHED',
-      dispatcherVersion: CANONICAL_SCORING_DISPATCHER_VERSION,
-      asset,
-      model,
-      canonical,
-      assessment: { ...assessment, canonical },
-    };
+    return { status: 'DISPATCHED', dispatcherVersion: CANONICAL_SCORING_DISPATCHER_VERSION, asset, model, canonical, assessment: { ...assessment, canonical } };
   }
 
   if (asset.assetClass === 'stock' || asset.assetClass === 'forex' || asset.assetClass === 'index') {
@@ -270,19 +220,12 @@ export async function dispatchCanonicalScore(
       return buildDispatchFailure(asset, `Unexpected traditional executor binding: ${model.executorKey}.`, model);
     }
     if (!input.execution || input.execution.kind !== 'traditional') {
-      return buildDispatchFailure(asset, 'Verified Traditional scoring inputs are required before model execution.', model);
+      return buildDispatchFailure(asset, 'Verified Traditional scoring inputs are required before model execution.', model, 'scoringEvidence');
     }
     const executor = dependencies.traditionalExecutor ?? executeTraditionalCanonicalScore;
     const assessment = executor(asset, input.execution.inputs);
     const canonical = bindCanonicalTraceability(assessment.canonical, asset, model);
-    return {
-      status: 'DISPATCHED',
-      dispatcherVersion: CANONICAL_SCORING_DISPATCHER_VERSION,
-      asset,
-      model,
-      canonical,
-      assessment: { ...assessment, canonical },
-    };
+    return { status: 'DISPATCHED', dispatcherVersion: CANONICAL_SCORING_DISPATCHER_VERSION, asset, model, canonical, assessment: { ...assessment, canonical } };
   }
 
   if (asset.assetClass === 'commodity') {
@@ -290,19 +233,12 @@ export async function dispatchCanonicalScore(
       return buildDispatchFailure(asset, `Unexpected commodity executor binding: ${model.executorKey}.`, model);
     }
     if (!input.execution || input.execution.kind !== 'commodity-evidence') {
-      return buildDispatchFailure(asset, 'Verified commodity market evidence is required before model execution.', model);
+      return buildDispatchFailure(asset, 'Verified commodity market evidence is required before model execution.', model, 'scoringEvidence');
     }
     const executor = dependencies.commodityExecutor ?? executeCommodityCanonicalScore;
     const assessment = executor(input.execution.evidence);
     const canonical = bindCanonicalTraceability(assessment.canonical, asset, model);
-    return {
-      status: 'DISPATCHED',
-      dispatcherVersion: CANONICAL_SCORING_DISPATCHER_VERSION,
-      asset,
-      model,
-      canonical,
-      assessment: { ...assessment, canonical },
-    };
+    return { status: 'DISPATCHED', dispatcherVersion: CANONICAL_SCORING_DISPATCHER_VERSION, asset, model, canonical, assessment: { ...assessment, canonical } };
   }
 
   if (asset.assetClass === 'bond') {
@@ -310,19 +246,12 @@ export async function dispatchCanonicalScore(
       return buildDispatchFailure(asset, `Unexpected sovereign executor binding: ${model.executorKey}.`, model);
     }
     if (!input.execution || input.execution.kind !== 'sovereign-benchmark-evidence') {
-      return buildDispatchFailure(asset, 'Verified sovereign benchmark evidence is required before model execution.', model);
+      return buildDispatchFailure(asset, 'Verified sovereign benchmark evidence is required before model execution.', model, 'scoringEvidence');
     }
     const executor = dependencies.sovereignExecutor ?? executeSovereignBenchmarkCanonicalScore;
     const assessment = executor(asset, input.execution.evidence);
     const canonical = bindCanonicalTraceability(assessment.canonical, asset, model);
-    return {
-      status: 'DISPATCHED',
-      dispatcherVersion: CANONICAL_SCORING_DISPATCHER_VERSION,
-      asset,
-      model,
-      canonical,
-      assessment: { ...assessment, canonical },
-    };
+    return { status: 'DISPATCHED', dispatcherVersion: CANONICAL_SCORING_DISPATCHER_VERSION, asset, model, canonical, assessment: { ...assessment, canonical } };
   }
 
   return buildDispatchFailure(asset, `No executor adapter is registered for ${asset.assetClass}.`, model);
