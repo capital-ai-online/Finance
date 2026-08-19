@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1.0.0",
+  "registryAuthorityId": "AUTH-GOV-ADR-REGISTRY",
+  "version": "1.0.0",
+  "date": "2026-08-19",
+  "canonicalLocation": "docs/adr",
+  "rules": {
+    "newRecordPattern": "ADR-NNNN-<slug>.md",
+    "displayIdMustBeUniqueAcrossActiveRecords": true,
+    "authorityIdMustBeGloballyUnique": true,
+    "authorityIdIsImmutable": true,
+    "versionRequired": true,
+    "dateRequired": true,
+    "lifecycleRequired": true,
+    "historicalRecordsRetained": true,
+    "recencyRule": "newer version/date takes precedence only within the same authorityId unless an explicit supersedes edge exists",
+    "supersessionRequiresImpactPackage": true
+  },
+  "lifecycle": [
+    "proposed",
+    "accepted",
+    "accepted-for-implementation",
+    "resolved",
+    "superseded",
+    "historical",
+    "rejected"
+  ],
+  "migratedRecords": [
+    {
+      "authorityId": "AUTH-ADR-ESS-NAMESPACE-CLEANUP-2026-08-16",
+      "displayId": "ADR-0085",
+      "version": "1.0.0",
+      "date": "2026-08-16",
+      "lifecycle": "accepted",
+      "path": "docs/adr/ADR-0085-ess-namespace-cleanup-and-registry-backfill.md",
+      "legacyAliases": [],
+      "supersedes": []
+    },
+    {
+      "authorityId": "AUTH-ADR-VENDOR-PRIVACY-EVIDENCE-2026-08-19",
+      "displayId": "ADR-0086",
+      "version": "1.0.0",
+      "date": "2026-08-19",
+      "lifecycle": "accepted-for-implementation",
+      "path": "docs/adr/ADR-0086-vendor-privacy-evidence-governance.md",
+      "legacyAliases": [],
+      "supersedes": []
+    },
+    {
+      "authorityId": "AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19",
+      "displayId": "ADR-0094",
+      "version": "1.0.0",
+      "date": "2026-08-19",
+      "lifecycle": "accepted",
+      "path": "docs/adr/ADR-0094-privacy-governance-single-source-of-truth.md",
+      "legacyAliases": [
+        {
+          "displayId": "ADR-0085",
+          "reason": "legacy duplicate introduced by privacy remediation before namespace reconciliation"
+        }
+      ],
+      "supersedes": []
+    },
+    {
+      "authorityId": "AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19",
+      "displayId": "ADR-0095",
+      "version": "1.0.0",
+      "date": "2026-08-19",
+      "lifecycle": "proposed",
+      "path": "docs/adr/ADR-0095-governance-control-plane-authority-and-supersession.md",
+      "legacyAliases": [
+        {
+          "displayId": "ADR-0086",
+          "reason": "legacy duplicate governance-supersession draft; renumbered because ADR-0086 is already vendor privacy governance"
+        }
+      ],
+      "supersedes": []
+    }
+  ],
+  "legacyIndex": {
+    "path": "docs/adr/adr_history.json",
+    "status": "compatibility-index",
+    "rule": "legacy records remain traceable; every ADR touched after this control-plane cutover must be registered here before becoming merge-ready"
+  }
+}
