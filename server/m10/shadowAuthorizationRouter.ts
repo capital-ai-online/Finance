@@ -1,8 +1,8 @@
 // M10 (ADR-0066, ESS-0022) Phase 6 — production Shadow Mode HTTP wiring.
 //
 // This router exercises the real Owner WebAuthn assertion path against live GitHub PR state while
-// the simplified pre-M10 CI path remains authoritative. It NEVER imports or invokes Phase-5 CI
-// consumption/dispatch. Successful assertions persist only to m10_shadow_evaluations.
+// the simplified pre-M10 CI path remains authoritative. It never invokes Phase-5 CI consumption or
+// any GitHub Actions trigger. Successful assertions persist only to m10_shadow_evaluations.
 import express from 'express';
 import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
 import { checkAdminAccess } from '../../src/platform/Security/authMiddleware';
