@@ -1,10 +1,11 @@
 # Open-Source Media Rendering Evidence - 2026-08-19
 
-- **Status:** IMPLEMENTATION / PRE-PR VALIDATION
+- **Status:** IMPLEMENTATION COMPLETE / PR VALIDATION PENDING
 - **Owner:** CAPITAL-AI Owner
 - **Authority:** ADR-0094, SEO-GM-ROADMAP-0002 / WP-N3
 - **Branch:** `agent/pdf-media-open-source-rendering`
 - **Initial Main:** `59a2755de53297a934b062b380a313d68cd47492`
+- **Final Pre-PR Main:** `59a2755de53297a934b062b380a313d68cd47492`
 
 ## Anlass
 
@@ -78,6 +79,7 @@ Wichtig: Der lokale FFmpeg-Build enthält `--enable-gpl` und ist **kein** akzept
 - Python `py_compile`: **PASS** für alle drei neuen Python-Module;
 - statischer Source-/Manifest-Contract-Smoke: **PASS**;
 - generischer Image-Render: **PASS**, 7 Assets inkl. Manifest;
+- Graham Image-Render: **PASS**, 9 Assets inkl. Manifest;
 - FFmpeg ohne Override: **PASS als negativer Test**, Exit 2 mit `gpl-build-detected`-DENY;
 - Developer-Video-Smoke mit explizitem Override: **PASS**, MP4 `1080x1920`, Codec `mpeg4`, 18.0 s;
 - PDF Companion Image-Smoke auf lokalem 3-Seiten-PDF: **PASS**, 6 Assets;
@@ -85,6 +87,15 @@ Wichtig: Der lokale FFmpeg-Build enthält `--enable-gpl` und ist **kein** akzept
 - Manifest enthält Source-PDF SHA, Asset-SHAs, Dimensionen, Dauer, FFmpeg-Profil und `publishReady=false`.
 
 Diese Developer-Smokes ersetzen keine spätere Repository-CI und keine FFmpeg-Lizenzfreigabe des produktiven Betriebsartefakts.
+
+## Finaler Pre-PR Main-/Parallel-PR-Abgleich
+
+- `main`: `59a2755de53297a934b062b380a313d68cd47492`;
+- Branch nach Dokumentationsabschluss: `4 ahead / 0 behind`, Merge-Base exakt current main;
+- effektiver Scope: 12 Dateien;
+- PR #439: 0 direkter Dateioverlap; README/`package.json` werden bewusst nicht geändert;
+- PR #442: 0 direkter Dateioverlap; Document Registry wird bewusst nicht geändert;
+- keine Supabase-/Stripe-/Render-/Workflow-/Runtime-Produktionsmutation.
 
 ## Vorher / Nachher
 
@@ -106,4 +117,5 @@ Diese Developer-Smokes ersetzen keine spätere Repository-CI und keine FFmpeg-Li
 - produktiver FFmpeg-Build muss als LGPL-kompatibles Artefakt festgelegt/verifiziert werden;
 - Web-/UI-Wiring für „Render Asset“ ist nicht Teil dieses ersten isolierten Slices;
 - generative Hintergrundbilder sind optionaler Provider-Scope und dürfen brandkritischen Text nicht rendern;
-- formal verifizierte PDF/UA-Eigenschaften bleiben ausschließlich beim PDF-Renderer-/Validatorpfad.
+- formal verifizierte PDF/UA-Eigenschaften bleiben ausschließlich beim PDF-Renderer-/Validatorpfad;
+- Repository-CI/Governance wird erst nach PR-Erstellung ausgeführt und danach hier bzw. im PR dokumentiert.
