@@ -2,7 +2,7 @@
   "$schema": "https://design-tokens.github.io/community-group/format/",
   "name": "capital-ai-design-tokens",
   "version": "0.6.0-phase0",
-  "description": "Formalized design tokens extracted from src/index.css @theme and FRONTEND_ARCH.md. Source of truth for Phase 0–1.",
+  "description": "Formalized design tokens extracted from src/index.css @theme and FRONTEND_ARCH.md. Source of truth for Phase 0–1 and renderer-specific print adapters.",
   "color": {
     "background": { "value": "#18181b", "type": "color", "css": "--color-background" },
     "foreground": { "value": "#FFFFFF", "type": "color", "css": "--color-foreground" },
@@ -35,6 +35,13 @@
     "surface": {
       "glass": { "value": "rgba(10, 10, 10, 0.4)", "type": "color", "note": "bg-neutral-950/40" },
       "elevated": { "value": "rgba(24, 24, 27, 0.85)", "type": "color" }
+    },
+    "print": {
+      "textPrimary": { "value": "#1D2430", "type": "color", "note": "Primary text on light PDF surfaces" },
+      "textSecondary": { "value": "#64748B", "type": "color", "note": "Secondary metadata on light PDF surfaces" },
+      "surfaceLight": { "value": "#F8FAFC", "type": "color", "note": "Light report panel background" },
+      "borderLight": { "value": "#E2E8F0", "type": "color", "note": "Light report divider and table border" },
+      "link": { "value": "#005F66", "type": "color", "note": "High-contrast print link derived from the cyan brand family" }
     }
   },
   "font": {

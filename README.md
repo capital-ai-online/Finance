@@ -43,16 +43,36 @@ Der Prozesseinstieg `server.ts` bleibt bewusst dünn. Middleware, Routen, Provid
 | Authentifizierung und Daten | Supabase |
 | Payments | Stripe |
 | Tests und Qualität | Vitest, Node Test Runner, TypeScript, Repository- und Governance-Prüfungen |
-| Dokumente | jsPDF |
+| Dokumente | jsPDF 4.2.1 für Client-Reports; WeasyPrint 69.0 für gebrandete/tagged NotebookLM-PDFs; Poppler für Render-Smoke |
 | Betrieb | Docker, Render, GitHub Actions |
 
 Google Gemini und `@google/genai` gehören nicht mehr zur aktiven Anwendungsarchitektur.
+
+## PDF-Renderer und Branding
+
+PDF-Ausgaben verwenden einen gemeinsamen CAPITAL-AI Brand-/Metadaten-Contract und dieselben Design-Tokens wie das Produktdesign.
+
+- **Client-Reports:** `src/platform/PdfReporting/pdfBrand.ts` + jsPDF. Das Accessibility-Profil `client-jsPDF` setzt Sprache und Metadaten, behauptet aber bewusst keine PDF/UA-/Tagged-PDF-Konformität.
+- **Documentation-as-Code / NotebookLM:** `scripts/docs/export_notebooklm_pdfs.py` + WeasyPrint 69.0. Dieser Pfad erzeugt semantisches, tagged PDF/UA-1 und wird separat über `scripts/docs/verify_pdf_render.py` geprüft.
+- **Branding:** Gold `#F5C453`, Cyan `#0DDDDD`, Purple `#B026FF` und Print-Neutralfarben stammen aus `docs/frontend/design-tokens.json`.
+- **Evidence-Gate:** Accessibility- oder regulatorische Konformität wird nicht allein aus Branding oder Renderer-Konfiguration abgeleitet; entsprechende Aussagen benötigen eine eigene Verifikation/Evidence.
+
+Reproduzierbarer Documentation-PDF-Smoke:
+
+```bash
+pip install -r scripts/docs/requirements-notebooklm-pdf.txt
+python3 scripts/docs/export_notebooklm_pdfs.py --smoke --out-dir /tmp/capital-ai-pdf-smoke
+python3 scripts/docs/verify_pdf_render.py \
+  /tmp/capital-ai-pdf-smoke/CAPITAL_AI_NotebookLM_PDF_UA_Smoke.pdf \
+  --expect-tagged yes
+```
 
 ## Voraussetzungen
 
 - Node.js `>=24.18.0 <25`
 - npm in einer mit Node.js 24 kompatiblen Version
 - Zugriff auf die erforderlichen Entwicklungsvariablen gemäß `.env.example`
+- optional für Documentation-PDFs: Python `>=3.10`, die gepinnten Abhängigkeiten aus `scripts/docs/requirements-notebooklm-pdf.txt` und Poppler-CLI-Tools für Render-Verifikation
 
 Produktive Zugangsdaten gehören ausschließlich in die dafür vorgesehenen Secret Stores. Sie dürfen weder in die README noch in Commits, Logs, Client-Bundles oder Pull-Request-Beschreibungen aufgenommen werden.
 
@@ -80,7 +100,7 @@ npm run predeploy:check
 |---|---|
 | `npm run dev` | Entwicklungsserver über `tsx server.ts` starten |
 | `npm run lint` | TypeScript-Prüfung ohne Ausgabe von Build-Dateien |
-| `npm test` | Vitest- und PR-Governance-Tests ausführen |
+| `npm test` | Vitest- und PR-Governance-Tests einschließlich PDF-Brand-/Renderer-Guards ausführen |
 | `npm run build` | Sicherheitsinvarianten prüfen, Frontend bauen, öffentliche Routen vor-rendern, Server bündeln und Release-Manifest erzeugen |
 | `npm run predeploy:check` | Deployment-Bereitschaft und Supply-Chain-Provenance prüfen |
 | `npm run repository:validate` | Repository-Konventionen validieren |
@@ -107,7 +127,7 @@ CAPITAL-AI verwendet mehrere technische und organisatorische Kontrollschichten:
 - Supply-Chain-Provenance und Release-Manifeste
 - Human-/Owner-Review vor geschützten Repository-Mutationen
 
-Diese Kontrollen unterstützen Datenschutz, Nachvollziehbarkeit und regulatorische Governance. Aussagen über DSGVO-, MiFID-II-, BaFin- oder AI-Act-Konformität setzen jedoch eine jeweils aktuelle fachliche und rechtliche Prüfung sowie belastbare Produktions-Evidence voraus.
+Diese Kontrollen unterstützen Datenschutz, Nachvollziehbarkeit und regulatorische Governance. Aussagen über DSGVO-, MiFID-II-, BaFin-, BFSG-, PDF/UA- oder AI-Act-Konformität setzen jedoch eine jeweils aktuelle fachliche/technische und gegebenenfalls rechtliche Prüfung sowie belastbare Produktions-Evidence voraus.
 
 ## Entwicklungs- und Änderungsprozess
 
