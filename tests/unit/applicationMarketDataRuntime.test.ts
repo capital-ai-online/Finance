@@ -7,9 +7,9 @@ const mocks = vi.hoisted(() => ({
     backgroundRefresh: () => options.refresh(),
     getCached: () => null,
   })),
-  canonicalCryptoEnrich: vi.fn(async (asset: any) => ({
+  canonicalEnrich: vi.fn(async (asset: any) => ({
     ...asset,
-    score: 8.6,
+    score: asset.type === 'crypto' ? 8.6 : 86,
     scoreBasis: 'canonical-dispatcher',
   })),
 }));
@@ -23,14 +23,14 @@ vi.mock('../../server/marketData/marketDataRuntimeFacade', () => ({
 }));
 
 vi.mock('../../server/marketData/canonicalCryptoScoreEnrichment', () => ({
-  isStandardCryptoMarketDataAsset: (asset: any) => asset?.type === 'crypto' && asset?.subtype !== 'memecoin',
-  enrichStandardCryptoWithCanonicalScore: mocks.canonicalCryptoEnrich,
+  isCanonicalScorableMarketDataAsset: (asset: any) => ['crypto', 'stock', 'forex', 'commodity', 'index', 'bond'].includes(asset?.type),
+  enrichAssetWithCanonicalScore: mocks.canonicalEnrich,
 }));
 
 import { createApplicationMarketDataRuntime } from '../../server/marketData/createApplicationMarketDataRuntime';
 
 describe('application market-data runtime wiring', () => {
-  it('forwards the canonical provider universe and routes Standard-Crypto through the canonical enrichment guard', async () => {
+  it('routes every scorable financial asset class through canonical enrichment before legacy callbacks', async () => {
     const fallbackAssets = [
       { symbol: 'BTC', type: 'crypto', price: 1, change24h: 0 },
       { symbol: 'AAPL', type: 'stock', price: 100, change24h: 1 },
@@ -78,12 +78,16 @@ describe('application market-data runtime wiring', () => {
     const refreshOptions = mocks.runRefresh.mock.calls[0]?.[0] as any;
     const btc = { symbol: 'BTC', type: 'crypto', price: 1, change24h: 0 };
     const stock = { symbol: 'AAPL', type: 'stock', price: 100, change24h: 1 };
+    const macro = { symbol: 'VIX', type: 'macro', price: 20, change24h: 0 };
 
     await refreshOptions.enrichAsset(btc);
-    expect(mocks.canonicalCryptoEnrich).toHaveBeenCalledWith(btc);
-    expect(enrichAsset).not.toHaveBeenCalledWith(btc);
-
     await refreshOptions.enrichAsset(stock);
-    expect(enrichAsset).toHaveBeenCalledWith(stock);
+    expect(mocks.canonicalEnrich).toHaveBeenCalledWith(btc);
+    expect(mocks.canonicalEnrich).toHaveBeenCalledWith(stock);
+    expect(enrichAsset).not.toHaveBeenCalledWith(btc);
+    expect(enrichAsset).not.toHaveBeenCalledWith(stock);
+
+    await refreshOptions.enrichAsset(macro);
+    expect(enrichAsset).toHaveBeenCalledWith(macro);
   });
 });
