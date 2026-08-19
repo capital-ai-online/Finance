@@ -1033,8 +1033,8 @@ app.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
 // GET all registry assets (highly efficient, zero rate-limit risk)
 
 
-// GET /api/market-sentiment wird vom modularen fail-closed Router bereitgestellt.\
-\
+// GET /api/market-sentiment wird vom modularen fail-closed Router bereitgestellt.
+
 // POST Simulate real-time market sentiment shock scenarios
 // ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): Nutzerentscheidung - auf die Anthropic -> OpenAI
 // -> Anthropic-/OpenAI-Kette umgestellt (kein Google-Search-Grounding hier, anders als /api/market-sentiment
