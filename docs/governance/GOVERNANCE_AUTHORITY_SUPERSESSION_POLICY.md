@@ -2,10 +2,10 @@
 
 **Document ID:** `GOV-AUTH-SUPERSESSION-0001`  
 **Authority ID:** `AUTH-GOV-SUPERSESSION-POLICY`  
-**Status:** OWNER-DIRECTED — effective after Human Merge of ADR-0095  
+**Status:** OWNER-DIRECTED — effective after Human Merge of ADR-0096  
 **Version:** `1.1.0`  
 **Date:** `2026-08-19`  
-**Authority:** `ADR-0095` / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`; existing higher Accepted Decisions remain controlling until merge
+**Authority:** `ADR-0096` / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`; existing higher Accepted Decisions remain controlling until merge
 
 ## Purpose
 
