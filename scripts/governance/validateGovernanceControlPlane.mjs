@@ -39,6 +39,7 @@ const REQUIRED = [
   'AGENTS.md',
   'CLAUDE.md',
   '.github/copilot-instructions.md',
+  'docs/architecture/ROADMAP.md',
   'docs/governance/authority-registry.json',
   'docs/governance/control-catalog.json',
   'docs/adr/registry.json',
@@ -57,6 +58,7 @@ if (errors.length === 0) {
   const agents = read('AGENTS.md');
   const claude = read('CLAUDE.md');
   const copilot = read('.github/copilot-instructions.md');
+  const currentRoadmap = read('docs/architecture/ROADMAP.md');
 
   if (!agents.includes('AUTH-GOV-AGENT-TRUST-ROOT')) {
     fail('TRUST_ROOT_ID_MISSING', 'AGENTS.md must declare AUTH-GOV-AGENT-TRUST-ROOT.');
@@ -67,6 +69,19 @@ if (errors.length === 0) {
     if (!/non-authoritative|no independent repository-wide governance authority/i.test(content)) {
       fail('ADAPTER_AUTHORITY_AMBIGUOUS', `${adapter} must declare itself non-authoritative.`);
     }
+  }
+
+  if (!currentRoadmap.includes('AUTH-GOV-DEVELOPMENT-CHAIN-STATUS')) {
+    fail('CURRENT_ROADMAP_AUTHORITY_MISSING', 'docs/architecture/ROADMAP.md must declare its stable current-state authority ID.');
+  }
+  if (!/M10 PR-CI passkey enforcement is currently `SUSPENDED \/ OFF`/i.test(currentRoadmap)) {
+    fail('CURRENT_ROADMAP_M10_STATE_INVALID', 'Current-state roadmap must state that M10 PR-CI passkey enforcement is suspended/off.');
+  }
+  if (/Current enforced M10 state\s*[—-]\s*COMPLETE\s*\/\s*VERIFIED PASS/i.test(currentRoadmap)) {
+    fail('CURRENT_ROADMAP_LEGACY_M10_ENFORCEMENT', 'Current-state roadmap must not present historical M10 VERIFIED PASS as current enforcement.');
+  }
+  if (!/DEVELOPMENT_CHAIN_ROADMAP\.md.*historical\/non-authorizing/i.test(currentRoadmap)) {
+    fail('LEGACY_DEVELOPMENT_ROADMAP_NOT_CLASSIFIED', 'Current-state roadmap must classify the older DevelopmentChain roadmap as historical/non-authorizing.');
   }
 
   const authorityRegistry = json('docs/governance/authority-registry.json');
@@ -195,6 +210,21 @@ if (errors.length === 0) {
     if (registeredAuthority && registeredAuthority.version !== adr.version) {
       fail('ADR_AUTHORITY_VERSION_MISMATCH', `${adr.displayId}: ADR registry=${adr.version}, authority registry=${registeredAuthority.version}`);
     }
+
+    for (const alias of adr.legacyAliases ?? []) {
+      if (!alias.path) continue;
+      if (!exists(alias.path)) {
+        fail('ADR_LEGACY_REDIRECT_MISSING', `${adr.displayId}: ${alias.path}`);
+        continue;
+      }
+      const redirect = read(alias.path);
+      if (!/Legacy ADR Redirect\s*[—-]\s*NON-AUTHORIZING/i.test(redirect)) {
+        fail('ADR_LEGACY_REDIRECT_NOT_MARKED', `${adr.displayId}: ${alias.path}`);
+      }
+      if (!redirect.includes(adr.authorityId) || !redirect.includes(adr.path)) {
+        fail('ADR_LEGACY_REDIRECT_TARGET_MISMATCH', `${adr.displayId}: ${alias.path}`);
+      }
+    }
   }
 
   const skillsDir = abs('.ai/skills');
@@ -213,13 +243,9 @@ if (errors.length === 0) {
     fail('DUPLICATE_ACTIVE_ESS_ID', `${id}: ${files}`);
   }
 
-  const forbiddenLegacyPaths = [
-    '.ai/skills/ESS-0012-Enterprise-Vocabulary-Terminology-Governance.md',
-    'docs/adr/ADR-0085-privacy-governance-single-source-of-truth.md',
-    'docs/adr/ADR-0086-governance-authority-supersession-and-regulatory-control-mapping.md',
-  ];
-  for (const file of forbiddenLegacyPaths) {
-    if (exists(file)) fail('LEGACY_ACTIVE_COLLISION_REMAINS', file);
+  const forbiddenActiveLegacySkill = '.ai/skills/ESS-0012-Enterprise-Vocabulary-Terminology-Governance.md';
+  if (exists(forbiddenActiveLegacySkill)) {
+    fail('LEGACY_ACTIVE_ESS_COLLISION_REMAINS', forbiddenActiveLegacySkill);
   }
 
   if (!exists('docs/archive/governance/superseded/ESS-0012-Enterprise-Vocabulary-Terminology-Governance.md')) {
