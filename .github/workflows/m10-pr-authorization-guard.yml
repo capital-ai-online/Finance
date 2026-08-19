@@ -1,0 +1,37 @@
+name: M10 PR Authorization Guard
+run-name: >-
+  PR #${{ github.event.pull_request.number }} – M10 Passkey-Autorisierung erforderlich
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# This workflow is intentionally separate from ci.yml.
+# It provides a cheap fail-closed PR signal without ever creating the canonical
+# `build-and-test` check context that is reserved for main push or an authoritative
+# M10 workflow_dispatch after Owner passkey verification.
+permissions: {}
+
+concurrency:
+  group: M10-PR-Guard-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  authorization-required:
+    name: m10-authorization-required
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Owner-Passkey für teure PR-CI verlangen
+        shell: bash
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = 'pull_request'
+          test -n "$PR_NUMBER"
+          test -n "$HEAD_SHA"
+          echo "M10 DENY: PR #${PR_NUMBER} auf Head ${HEAD_SHA} hat durch diesen PR-Event keine Autorisierung für teure CI."
+          echo "Owner-Passkey AUTHORIZE_PR_CI muss den separaten ci.yml workflow_dispatch für exakt diesen Head auslösen."
+          exit 1
