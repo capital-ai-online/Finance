@@ -1,9 +1,11 @@
 # ADR-0092 — Privacy Retention and Lifecycle Hardening
 
+**Authority ID:** `AUTH-ADR-PRIVACY-RETENTION-2026-08-19`  
+**Version:** `1.0.0`  
 **Status:** Accepted for implementation  
 **Date:** 2026-08-19  
 **Scope:** CAPITAL-AI / Finance repository and productive Supabase project `ryzywoktpmyhwzxmstyu`  
-**Authority:** Controller decision; follows ADR-0085 privacy remediation and ADR-0086 vendor-evidence governance
+**Authority:** Controller decision; follows ADR-0095 / `AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19` and ADR-0086 / `AUTH-ADR-VENDOR-PRIVACY-EVIDENCE-2026-08-19`
 
 ## Context
 

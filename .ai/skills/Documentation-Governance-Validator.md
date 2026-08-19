@@ -2,57 +2,51 @@
 skill:
   id: SKILL-GOV-0001
   name: Documentation Governance Validator
-  version: 1.0.0
+  version: 1.1.0
   status: Enterprise Approved
-  maturity: Gold Standard
   owner: Documentary Engine
-  category: Enterprise Governance
+  category: Documentation Governance
   priority: High
 
 capital_ai:
   platform: CAPITAL-AI Core
   repository: Finance
-  architecture: Enterprise
   lifecycle: AI Native Development Lifecycle
 
 classification:
   type: Operational Skill
-  role: Handlungsanweisung für KI-Systeme zur Governance-Prüfung
+  role: Provider-neutral execution guidance for documentation-governance checks
   specification: ESS-0012
   contractAuthority: ESS-0012-CONTRACTS
+  globalTrustRoot: AGENTS.md
+  globalGovernanceComponent: src/platform/Governance
   note: >
-    Dieser Skill ist kein ESS-Dokument und belegt keine ESS-Nummer. Er beschreibt
-    ausschliesslich die Anwendung des in ESS-0012 spezifizierten Validators.
-    Bei Abweichungen gelten ESS-0012 und ESS-0012-CONTRACTS.
+    This skill is not an ESS, ADR, global policy or authorization source. It only explains
+    how to apply documentation-domain validation. AGENTS.md and the Governance Control Plane
+    resolve repository-wide authority and protected-action boundaries.
 
 authority:
-
   controls:
-    - Governance-Prüflauf
-    - Befunderzeugung
-    - Berichtsanforderung
-
+    - Documentation validation execution
+    - Documentation finding generation
+    - Documentation report input generation
   cannot_modify:
     - Enterprise Specifications
     - Architecture Decision Records
     - Enterprise Contracts
-    - Dokumentation
+    - Governance authority registries
+    - Governance control catalog
+    - Documentation source content during the same unreviewed validation step
     - Knowledge Graph
     - Digital Twin
-    - Registry
+    - Repository or production authorization state
 
 crossReference:
   dependsOn:
+    - AGENTS.md
     - ESS-0012
     - ESS-0012-CONTRACTS
-  relatedEss:
-    - ESS-0001-CONTRACTS
-    - ESS-0002
-    - ESS-0003
-    - ESS-0010
-    - ESS-0011
-  relatedAdr:
-    - ADR-0014
+    - src/platform/Governance
   relatedComponents:
     - src/platform/Documentary/Governance
   relatedSkills:
@@ -60,263 +54,97 @@ crossReference:
     - .ai/skills/ESS-0012-Contracts.md
 
 created: 2026-07-31
+updated: 2026-08-19
 ---
 
 # Documentation Governance Validator
 
-## Zweck dieses Skills
+## Purpose
 
-Dieser Skill beschreibt, **wie** ein KI-System den Documentation Governance Validator anwendet.
+`SKILL-GOV-0001` is the operational adapter for the **documentation-domain** validator defined by ESS-0012 and ESS-0012-CONTRACTS.
 
-Er ersetzt keine Spezifikation. Die verbindlichen Regeln stehen in
+It does not define repository-wide governance and is not a second Agent Trust Root. Every model, coding agent, MCP host and automation client resolves `/AGENTS.md` first. Repository-wide stable authority/control identity is resolved by `src/platform/Governance` and the canonical registries.
 
-ESS-0012 — Spezifikation
+## Core rule
 
-ESS-0012-CONTRACTS — Regelwerk, Scoring, Events
+> The documentation validator detects and reports documentary findings. It does not authorize, approve or mutate protected state.
 
-Bei jeder Abweichung zwischen diesem Skill und den ESS-Dokumenten gelten die ESS-Dokumente.
+Validation output is evidence. It does not authorize PR creation, Human Merge, production deployment, IAM changes, billing changes or external provider mutation.
 
----
+## Scope
 
-# Grundregel
+The skill may apply ESS-0012 documentation rules to:
 
-> Der Validator stellt fest. Er entscheidet nicht. Er korrigiert nicht.
+- canonical document placement;
+- document registry structure and target existence;
+- required metadata, version, language and lifecycle;
+- documentary references to ADR/ESS/contracts;
+- documentation completeness and structural consistency;
+- documentation-related traceability findings;
+- generated documentation/report hygiene.
 
-Ein KI-System, das eine Änderung vornimmt, prüft sie **vor** der Übergabe an die nächste
-Stufe der Wertschöpfungskette.
+Global authority conflicts, stable `AUTH-*`/`CTRL-*` identity, Human Merge and protected mutation decisions are outside this skill and belong to the Governance Control Plane.
 
-Ein KI-System behebt einen Befund niemals im selben Arbeitsschritt, in dem es ihn erzeugt hat,
-ohne die Korrektur erneut zu prüfen.
-
----
-
-# Aufgaben
-
-| Aufgabe | Beschreibung |
-|---|---|
-| Prüflauf ausführen | Neun Prüfbereiche gemäß ESS-0012 Chapter 3 |
-| Befunde erzeugen | jeweils mit Regel-ID, Severity und Nachweis |
-| Kennzahlen berechnen | Governance Score, Repository Health, Documentation Quality |
-| Berichte anfordern | zehn Berichte gemäß ESS-0012 Chapter 5 |
-| Events veröffentlichen | sechs Events gemäß ESS-0012-CONTRACTS Chapter 4 |
-| Supervisor informieren | bei Severity Critical und High |
-
----
-
-# Trigger
-
-Der Skill wird verbindlich angewendet bei
-
-| Auslöser | Umfang |
-|---|---|
-| vor jeder Übergabe an die nächste Stufe der Wertschöpfungskette | inkrementell |
-| nach jeder Dokumentenerzeugung | inkrementell |
-| nach jeder Metadatenänderung | inkrementell |
-| bei ESS-Änderung | vollständig |
-| bei ADR-Änderung | vollständig |
-| bei Versionsänderung | vollständig |
-| vor jeder Release-Vorbereitung | vollständig |
-| bei zeitgesteuerter Vollprüfung | vollständig |
-
-Vor jeder Produktionsfreigabe ist ein vollständiger Durchlauf verbindlich.
-
----
-
-# Validierungsregeln
-
-Das vollständige Regelwerk umfasst **57 Regeln in neun Bereichen** und steht in
-ESS-0012-CONTRACTS Chapter 2.
-
-Übersicht der Bereiche:
-
-| Kürzel | Bereich | Regeln |
-|---|---|---|
-| `GOV-ESS-*` | ESS-Konsistenz | 8 |
-| `GOV-ADR-*` | ADR-Konsistenz | 8 |
-| `GOV-REPO-*` | Repository-Metadaten | 9 |
-| `GOV-CONTRACT-*` | Contract-Konsistenz | 6 |
-| `GOV-DOC-*` | Dokumentationsqualität | 7 |
-| `GOV-TRACE-*` | Traceability | 4 |
-| `GOV-KG-*` | Knowledge Graph | 5 |
-| `GOV-TWIN-*` | Digital Twin | 5 |
-| `GOV-VER-*` | Versionierung | 5 |
-
-Die Regeln werden in diesem Skill **nicht wiederholt**. Er verweist ausschließlich.
-
----
-
-# Anwendungsreihenfolge
+## Execution sequence
 
 ```text
-1. Regelwerk aus ESS-0012-CONTRACTS laden
-2. Prüfbereiche in fester Reihenfolge ausführen
-3. Befunde mit Nachweis sammeln
-4. Kennzahlen berechnen
-5. Berichte anfordern
-6. Events veröffentlichen
-7. Bei Critical: Supervisor informieren und anhalten
+1. Resolve /AGENTS.md and effective global controls.
+2. Load ESS-0012 and ESS-0012-CONTRACTS for documentation-domain rules.
+3. Determine the changed documentation scope.
+4. Execute applicable documentary checks.
+5. Record findings with stable rule ID, severity and evidence.
+6. Report non-verifiable checks explicitly rather than inventing PASS evidence.
+7. Re-run affected checks after a correction before closure.
 ```
 
-Die Reihenfolge ist verbindlich und darf nicht verändert werden.
+The skill must not create new validation rules ad hoc. New global governance controls belong in the Control Catalog; new documentary rules require the effective ESS/contract change process.
 
----
+## Trigger model
 
-# Nachweispflicht
+Run documentation validation when required by the effective control/check classification, especially after:
 
-Jeder Befund führt verbindlich einen Nachweis gemäß ESS-0012-CONTRACTS Chapter 1.
+- documentation creation or material metadata changes;
+- ADR/ESS changes affecting documentary references;
+- document registry changes;
+- release/version changes that project into documentation;
+- repository hygiene changes;
+- explicit pre-release documentation checks.
 
-Zulässig sind
+A generic value-chain handoff does not independently become a new authorization gate merely because this skill exists.
 
-`FileReference`, `RegistryEntry`, `KnowledgeNode`, `TwinDelta`, `MatrixLink`, `VersionValue`
+## Finding evidence
 
-**Nicht zulässig** ist ein Befund, der ausschließlich auf einer Vermutung beruht.
+A finding must contain reproducible evidence such as a file/path reference, registry entry, stable authority/control reference, traceability link or version value. If evidence cannot be obtained, report `NOT_AVAILABLE` / non-verifiable state instead of fabricating a finding or PASS.
 
-Findet ein KI-System keinen Nachweis, meldet es keinen Befund — es meldet die
-Nichtprüfbarkeit.
+## Boundary with the Governance Control Plane
 
----
+```text
+/AGENTS.md
+   |
+   v
+src/platform/Governance
+   |  stable authority/control resolution
+   |
+   +--> src/platform/Documentary/Governance
+          |
+          +--> SKILL-GOV-0001 operational documentation checks
+```
 
-# Reports
+The documentation layer consumes global identity/authority. It never supersedes it.
 
-Zehn Berichte gemäß ESS-0012 Chapter 5:
+## Provider neutrality
 
-Documentation Health · Governance · ESS Coverage · ADR Coverage · Traceability ·
-Repository Health · Digital Twin · Knowledge Graph · Contract · Architecture Compliance
+This operational skill does not maintain a separate list of current AI providers. All active/retired model or agent profiles are resolved from the current Agent Trust Root and effective capability-plane controls. Provider/model identity never changes documentary rule severity or grants authority.
 
-Ablage: `docs/quality/`
+## Implementation state
 
-Die physische Erzeugung erfolgt durch die Documentary Engine. Der Validator liefert die Daten.
+The canonical global structural validator is `scripts/governance/validateGovernanceControlPlane.mjs` and is separate from this documentation-domain skill.
 
----
+PR #439 contains reusable `DocumentationHygieneValidator` implementation work. It remains parked while the Governance Control Plane is established. After Governance merge, that implementation should be synchronized and adapted to this documentation-only boundary rather than recreated.
 
-# ETM-Integration
+## Version history
 
-Der Validator **verwendet** die Traceability Matrix aus ESS-0011.
-
-Er erzeugt sie nicht und verändert sie nicht.
-
-Fehlt die Matrix, gilt `GOV-TRACE-001` (Severity High) und der Traceability-Prüfbereich wird
-ausgesetzt — er wird niemals übersprungen ohne Befund.
-
-Coverage-Schwellwerte und Orphan-Klassen stehen ausschließlich in ESS-0011-CONTRACTS.
-
----
-
-# Documentary-Integration
-
-Der Validator ist Bestandteil der Documentary Engine (ESS-0010) und läuft **nach** ihr.
-
-Er verwendet:
-
-Knowledge Graph · Enterprise Registry · Digital Twin · erzeugte Dokumentation
-
-Er schreibt in keine dieser Quellen zurück.
-
----
-
-# Versionierungsregeln
-
-Der Version Manager leitet aus den Befunden ab:
-
-| Befundklasse | Versionsauswirkung |
-|---|---|
-| Breaking Change ohne ADR | blockiert Release |
-| Contract-Widerspruch | Major |
-| neue Regel oder Komponente | Minor |
-| Dokumentationslücke | Patch |
-
-Der Validator empfiehlt keine Version. Er liefert die Befunde, aus denen der Version Manager
-sie ableitet.
-
----
-
-# Pflichten je KI-System
-
-| System | Pflicht |
-|---|---|
-| **Claude Code** | prüft Implementierung und Repository-Änderungen vor Übergabe an die Documentary Engine |
-| **Google AI Studio** | prüft Entwürfe vor Übergabe an Claude Code |
-| **ChatGPT** | prüft Architektur- und Governance-Vorschläge vor Aufnahme in ESS oder ADR |
-| **Future Enterprise AI** | identische Pflicht nach Governance-Prüfung |
-
-Verbindlich für alle:
-
-✗ keine eigenen Prüfregeln
-
-✗ keine Deaktivierung von Regeln
-
-✗ keine Änderung von Schweregraden
-
-✗ keine Prüfergebnisse ohne Ausführung
-
-✗ kein Schließen eines Befundes ohne Korrektur
-
-✗ keine Selbstfreigabe bei Critical-Befunden
-
----
-
-# Abbruchbedingungen
-
-Der Prüflauf bricht ab bei
-
-fehlendem Regelwerk
-
-nicht lesbarem Repository
-
-fehlendem Knowledge Graph (`GOV-KG-001`, Critical)
-
-fehlendem Digital Twin (`GOV-TWIN-001`, Critical)
-
-nicht reproduzierbarem Ergebnis
-
-Jeder Abbruch erzeugt ein Fehler-Event und wird dem Supervisor gemeldet.
-
----
-
-# Aktueller Anwendungsstand
-
-Dieser Skill ist **spezifiziert, nicht ausführbar**.
-
-Die Ausführung setzt die Umsetzungsstufen 1 bis 4 aus
-`docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md` voraus — insbesondere den Enterprise
-Event Bus und die Validator-Basisklasse.
-
-Bis dahin wenden KI-Systeme die Regeln aus ESS-0012-CONTRACTS **manuell** an und
-dokumentieren das Ergebnis im jeweiligen Arbeitsergebnis.
-
-Eine manuelle Anwendung ersetzt keine automatisierte Prüfung und ist als solche zu
-kennzeichnen.
-
----
-
-# Related Documents
-
-ESS-0012 — Documentation Governance
-
-ESS-0012-CONTRACTS — Documentation Governance Contracts
-
-ESS-0010 — Documentary Engine
-
-ESS-0011 — Enterprise Traceability
-
-ESS-0001-CONTRACTS — Chapter 8, Chapter 9, Chapter 12, Chapter 15, Chapter 18
-
-ADR-0014 — Documentation Governance Validator
-
----
-
-# Version History
-
-| Version | Status | Beschreibung |
-|----------|--------|--------------|
-| 1.0.0 | Initial Release | Erste Fassung des Governance-Skills |
-
----
-
-# End of Document
-
-SKILL-GOV-0001
-
-CAPITAL-AI Documentation Governance Validator
-
-Version 1.0.0
+| Version | Date | Status | Change |
+|---|---|---|---|
+| 1.0.0 | 2026-07-31 | Enterprise Approved | Initial operational skill |
+| 1.1.0 | 2026-08-19 | Enterprise Approved | Subordinated to `/AGENTS.md`; removed stale provider-specific/global handoff policy; narrowed to documentation-domain validation |
