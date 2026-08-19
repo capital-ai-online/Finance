@@ -133,6 +133,16 @@
       "path": "docs/adr/ADR-0090-gemini-free-tier-only-zero-cost-policy.md"
     },
     {
+      "documentId": "DOC-ADR-0091",
+      "type": "architecture-decision",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "PDF Branding P0 / Owner-requested remediation",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/adr/ADR-0091-pdf-brand-and-report-integrity-source-of-truth.md"
+    },
+    {
       "documentId": "DOC-ROADMAP-SC-MD-SPT-0001",
       "type": "roadmap",
       "owner": "CAPITAL-AI Owner",
