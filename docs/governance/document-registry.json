@@ -137,7 +137,7 @@
       "type": "roadmap",
       "owner": "CAPITAL-AI Owner",
       "authority": "DOCUMENTATION_HYGIENE_POLICY + ADR-0086 + Owner decision",
-      "version": "1.0.18",
+      "version": "1.0.19",
       "language": "de",
       "lifecycle": "approved",
       "path": "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md"
