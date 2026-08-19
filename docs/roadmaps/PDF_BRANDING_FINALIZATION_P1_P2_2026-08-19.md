@@ -1,10 +1,10 @@
 # PDF Branding Finalization Roadmap — P1/P2
 
-- **Status:** IN PROGRESS
+- **Status:** IMPLEMENTATION COMPLETE / FINAL MAIN + PR VALIDATION PENDING
 - **Datum:** 2026-08-19
 - **Owner:** CAPITAL-AI Owner
 - **Branch:** `agent/pdf-branding-p1-p2-final`
-- **Parent:** ADR-0091 / PR #432
+- **Parent:** ADR-0091 / ADR-0093 / PR #432
 - **Ziel:** PDF-Branding nach P0 visuell, technisch und accessibility-seitig abschließen, ohne unbelegte Konformitätsclaims einzuführen.
 
 ## Ausgangslage
@@ -29,67 +29,73 @@ P0 hat aktive jsPDF-Reports auf einen gemeinsamen Brand-/Metadaten-Contract geho
 
 ### P1.1 Design-Token Bridge
 
-- [ ] PDF-Brandwerte werden build-time aus `docs/frontend/design-tokens.json` abgeleitet.
-- [ ] Test stellt sicher, dass PDF- und CSS-Kernfarben nicht driften.
-- [ ] Keine neue unabhängige Farbpalette in Exportern.
+- [x] PDF-Brandwerte werden build-time aus `docs/frontend/design-tokens.json` abgeleitet.
+- [x] Test stellt sicher, dass PDF- und CSS-Kernfarben nicht driften.
+- [x] Keine neue unabhängige Farbpalette in Exportern.
 
 ### P1.2 Emblem und Wordmark
 
-- [ ] Gemeinsames Vektor-Emblem für jsPDF implementieren.
-- [ ] Gemeinsames CAPITAL-AI Wordmark implementieren.
-- [ ] Report-Header und Running-Header auf Emblem/Wordmark umstellen.
-- [ ] `CapitalAiLogo` verwendet kanonische CSS-Tokens und keine veraltete Default-Version.
+- [x] Gemeinsames Vektor-Emblem für jsPDF implementiert.
+- [x] Gemeinsames CAPITAL-AI Wordmark implementiert.
+- [x] Report-Header und Running-Header auf Emblem/Wordmark umgestellt.
+- [x] `CapitalAiLogo` verwendet kanonische CSS-Tokens und keine veraltete Default-Version.
 
 ### P1.3 Typografie
 
-- [ ] Rollen für Display, Body und Mono dokumentieren.
-- [ ] Client-PDF verwendet deterministische PDF-safe Fallbacks statt nicht eingebettete Webfonts vorzutäuschen.
-- [ ] NotebookLM nutzt druckstabile lokale Fallbacks, aber dieselben Rollen und Farben.
+- [x] Rollen für Display, Body und Mono dokumentiert.
+- [x] Client-PDF verwendet deterministische PDF-safe Fallbacks statt nicht eingebettete Webfonts vorzutäuschen.
+- [x] NotebookLM nutzt druckstabile lokale Fallbacks, aber dieselben Rollen und Farben.
 
 ### P1.4 NotebookLM Internal Brand
 
-- [ ] Navy-Sonderpalette entfernen.
-- [ ] Cover, TOC, Tabellen, Codeblöcke und Running Header an CAPITAL-AI Gold/Cyan/Purple ausrichten.
-- [ ] Semantisches HTML mit `header`, `nav`, `main`, `article` und sauberer Heading-Hierarchie.
-- [ ] Generator-Abhängigkeiten reproduzierbar dokumentieren/pinnen.
+- [x] Navy-Sonderpalette entfernt.
+- [x] Cover, TOC, Tabellen, Codeblöcke und Running Header an CAPITAL-AI Gold/Cyan/Purple ausgerichtet.
+- [x] Semantisches HTML mit `header`, `nav`, `main`, `article` und sauberer Heading-Hierarchie.
+- [x] Generator-Abhängigkeiten reproduzierbar dokumentiert/gepinnt.
 
 ## P2 — Accessibility und Qualitätsgates
 
 ### P2.1 Accessibility Profiles
 
-- [ ] Zentrale Renderer-Profile definieren:
+- [x] Zentrale Renderer-Profile definiert:
   - `client-jsPDF`: language + metadata, **nicht** PDF/UA.
-  - `documentation-weasyprint`: tagged PDF/UA-1.
-- [ ] Accessibility-Claims bleiben evidence-gated.
+  - `documentation-weasyprint`: tagged PDF/UA-1 candidate.
+- [x] Accessibility-Claims bleiben evidence-gated.
 
 ### P2.2 WeasyPrint PDF/UA
 
-- [ ] `pdf_variant="pdf/ua-1"` aktivieren.
-- [ ] `pdf_tags=True` aktivieren.
-- [ ] Dokument-Sprache, Titel, Autor und semantische Struktur setzen.
-- [ ] Smoke-Modus für kleinen deterministischen PDF/UA-Test hinzufügen.
+- [x] `pdf_variant="pdf/ua-1"` aktiviert.
+- [x] `pdf_tags=True` aktiviert.
+- [x] Dokument-Sprache, Titel, Autor und semantische Struktur gesetzt.
+- [x] Smoke-Modus für kleinen deterministischen PDF/UA-Test hinzugefügt.
 
 ### P2.3 Client-jsPDF Accessibility Baseline
 
-- [ ] Dokument-Sprache `de-DE` setzen.
-- [ ] Accessibility-Profil in Metadaten/Contract abbilden.
-- [ ] Keine PDF/UA-/BFSG-Zertifizierungsbehauptung.
+- [x] Dokument-Sprache `de-DE` gesetzt.
+- [x] Accessibility-Profil in Metadaten/Contract abgebildet.
+- [x] Keine PDF/UA-/BFSG-Zertifizierungsbehauptung.
 
 ### P2.4 Render-/Regression-Gates
 
-- [ ] jsPDF Brand-Smoke als deterministisches Test-PDF erzeugbar machen.
-- [ ] Poppler-basierter Verifier für `pdfinfo`, `pdftotext`, `pdftoppm` bereitstellen.
-- [ ] A4/Page/Text/Brand-Render-Invarianten prüfen.
-- [ ] PDF/UA-Smoke muss als `Tagged: yes` erkannt werden.
-- [ ] Unit-Tests schützen Brand-, Token- und Accessibility-Contracts.
+- [x] jsPDF Brand-Smoke als echtes Test-PDF erzeugbar.
+- [x] Poppler-basierter Verifier für `pdfinfo`, `pdftotext`, `pdftoppm` bereitgestellt.
+- [x] A4/Page/Text/Brand-Render-Invarianten abgebildet.
+- [x] PDF/UA-Smoke kann auf `Tagged: yes` geprüft werden.
+- [x] Unit-Tests schützen Brand-, Token- und Accessibility-Contracts.
 
 ### P2.5 Governance-Abschluss
 
-- [ ] ADR-0092 dokumentiert Renderer-/Accessibility-Grenze.
-- [ ] Dokument-Registry aktualisiert.
-- [ ] Implementierungs-Evidence mit Vorher/Nachher-Matrix erstellen.
-- [ ] Branch unmittelbar vor Abschluss gegen aktuelles `main` vergleichen.
-- [ ] Erst nach PR-Erstellung kostenrelevante CI/Build-Läufe zulassen.
+- [x] ADR-0093 dokumentiert Renderer-/Accessibility-Grenze. Die zunächst reservierte 0092 wurde nach Erkennung der Parallel-PR-#434-Kollision verworfen.
+- [x] Dokument-Registry aktualisiert; finale Nummernkorrektur auf ADR-0093 ist Bestandteil dieses Branches.
+- [x] Implementierungs-Evidence mit Vorher/Nachher-Matrix erstellt.
+- [ ] Branch unmittelbar vor PR-Erstellung gegen aktuelles `main` vergleichen und bei Main-Advance korrelieren.
+- [x] Kostenrelevante CI/Build-Läufe werden erst nach PR-Erstellung zugelassen.
+
+## Parallel-PR-Korrelation
+
+Zum Implementierungsabschluss sind #433, #434 und #435 offen. Direkte fachliche PDF-/Runtime-Pfadüberschneidungen wurden nicht festgestellt. `docs/governance/document-registry.json` ist jedoch ein additiver Governance-Hotspot aller drei Parallel-PRs und muss bei einem vorherigen Merge erneut reconciled werden.
+
+Besonderer Fund: PR #434 reserviert `ADR-0092` für Privacy-Hardening. Die PDF-Entscheidung verwendet deshalb `ADR-0093`.
 
 ## Definition of Done
 
