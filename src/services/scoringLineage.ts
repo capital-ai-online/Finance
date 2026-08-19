@@ -1,10 +1,24 @@
+import type { ScoringModelDescriptor } from '../platform/Scoring/contracts';
 import type { CanonicalScoreResult } from '../types/scoringIntegrity';
 import type { CryptoScoringInputs } from '../types/crypto';
 import type { VerifiedFieldProvenance } from './cryptoSnapshotProvider';
 
+export interface ScoringModelLineageRef {
+  registryVersion: string;
+  modelId: string;
+  version: string;
+  alias: string;
+  lifecycle: string;
+  executorKey: string;
+  featureContractVersion: string;
+  resultContractVersion: string;
+  evidencePolicy: string;
+}
+
 export interface ScoringLineage {
   correlationId: string;
   assetId: string;
+  model?: ScoringModelLineageRef;
   providers: string[];
   retrieval: {
     history?: { cacheMode: string; degraded: boolean };
@@ -25,6 +39,7 @@ export function buildScoringLineage(input: {
   canonical: CanonicalScoreResult;
   scoringInputs: CryptoScoringInputs;
   fieldProvenance: VerifiedFieldProvenance[];
+  model?: ScoringModelDescriptor;
   providerState?: {
     history?: { cacheMode: string; degraded: boolean };
     snapshot?: { cacheMode: string; degraded: boolean };
@@ -38,6 +53,17 @@ export function buildScoringLineage(input: {
   return {
     correlationId: input.correlationId,
     assetId: input.assetId,
+    model: input.model ? {
+      registryVersion: input.model.registryVersion,
+      modelId: input.model.modelId,
+      version: input.model.version,
+      alias: input.model.alias,
+      lifecycle: input.model.lifecycle,
+      executorKey: input.model.executorKey,
+      featureContractVersion: input.model.featureContractVersion,
+      resultContractVersion: input.model.resultContractVersion,
+      evidencePolicy: input.model.evidencePolicy,
+    } : undefined,
     providers: [...input.canonical.integrity.providers],
     retrieval: {
       history: input.providerState?.history ? { ...input.providerState.history } : undefined,
