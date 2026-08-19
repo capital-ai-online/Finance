@@ -5,6 +5,11 @@ import {
   type ScoringModelResolution,
   type UniversalAssetIdentity,
 } from './contracts';
+import {
+  COMMODITY_EVIDENCE_EXECUTOR_KEY,
+  SOVEREIGN_BENCHMARK_EXECUTOR_KEY,
+  TRADITIONAL_SCORING_EXECUTOR_KEY,
+} from './ScoringExecutorAdapters';
 
 export const VERIFIED_CRYPTO_TECHNICAL_EXECUTOR_KEY =
   'verifiedCryptoTechnicalScoring.evaluateVerifiedCryptoTechnicalScore' as const;
@@ -33,12 +38,12 @@ const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
     lifecycle: 'canonical',
     assetClasses: ['stock', 'forex', 'index'],
     featureContractVersion: 'traditional-features/2.1.0',
-    resultContractVersion: 'traditional-scoring-result/2.1.0',
+    resultContractVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
     evidencePolicy: 'verified-required',
-    executorKey: 'traditionalAssetScoring.TraditionalAssetScoringService',
+    executorKey: TRADITIONAL_SCORING_EXECUTOR_KEY,
     priority: 100,
-    canonicalResultAdapterRequired: true,
-    notes: 'Evidence-aware engine; route layer still has to adapt its legacy result into CanonicalScoreResult.',
+    canonicalResultAdapterRequired: false,
+    notes: 'Evidence-aware stock/forex/index model normalized by the C3 CanonicalResultAdapter.',
   },
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
@@ -48,12 +53,12 @@ const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
     lifecycle: 'canonical',
     assetClasses: ['commodity'],
     featureContractVersion: 'commodity-market-evidence/1.0.0',
-    resultContractVersion: 'registry-evidence-score/1.0.0',
+    resultContractVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
     evidencePolicy: 'verified-required',
-    executorKey: 'registryRoutes.scoreCommodityMarketEvidence',
+    executorKey: COMMODITY_EVIDENCE_EXECUTOR_KEY,
     priority: 100,
-    canonicalResultAdapterRequired: true,
-    notes: 'ADR-0033 evidence scoring; extraction from registryRoutes is a consolidation follow-up.',
+    canonicalResultAdapterRequired: false,
+    notes: 'ADR-0033 verified commodity market-evidence scorer executed only behind ScoringDispatcher.',
   },
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
@@ -64,11 +69,11 @@ const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
     assetClasses: ['bond'],
     instrumentKinds: ['government-benchmark-yield'],
     featureContractVersion: 'sovereign-benchmark-yield-features/1.0.0',
-    resultContractVersion: 'registry-evidence-score/1.0.0',
+    resultContractVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
     evidencePolicy: 'verified-required',
-    executorKey: 'registryRoutes.scoreSovereignBenchmarkEvidence',
+    executorKey: SOVEREIGN_BENCHMARK_EXECUTOR_KEY,
     priority: 100,
-    canonicalResultAdapterRequired: true,
+    canonicalResultAdapterRequired: false,
     notes: 'Only approved sovereign benchmark yield instruments are supported. Individual bond scoring remains blocked by ADR-0022.',
   },
 ] as const;

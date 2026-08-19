@@ -29,6 +29,15 @@ export interface ScoringIntegrityMetadata {
   evidence: ScoringEvidenceRef[];
   missingFields: string[];
   reason?: string;
+  /** SC-2 C3 traceability: canonical model-execution authority. */
+  dispatcherVersion?: string;
+  modelRegistryVersion?: string;
+  modelId?: string;
+  modelVersion?: string;
+  modelAlias?: string;
+  modelLifecycle?: string;
+  executorKey?: string;
+  resultContractVersion?: string;
 }
 
 export interface UnavailableScoreResult {
