@@ -187,7 +187,7 @@
       "type": "roadmap",
       "owner": "CAPITAL-AI Owner",
       "authority": "DOCUMENTATION_HYGIENE_POLICY + ADR-0086 + Owner decision",
-      "version": "1.0.20",
+      "version": "1.0.21",
       "language": "de",
       "lifecycle": "approved",
       "path": "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md"
@@ -201,6 +201,16 @@
       "language": "de",
       "lifecycle": "reviewed",
       "path": "docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md"
+    },
+    {
+      "documentId": "DOC-WORK-PACKAGE-SC-7-RANKING-GENERALIZATION",
+      "type": "work-package",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "SC-MD-SPT-0001",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "reviewed",
+      "path": "docs/roadmaps/work-packages/SC-7_RANKING_COMPOSITE_OPT_IN.md"
     },
     {
       "documentId": "DOC-EVIDENCE-SC2-A1-A2-2026-08-19",
@@ -271,6 +281,16 @@
       "language": "mixed",
       "lifecycle": "reviewed",
       "path": "docs/evidence/sc-md/SC2_GLOBAL_MULTI_ASSET_EXIT_2026-08-19.md"
+    },
+    {
+      "documentId": "DOC-EVIDENCE-SC7-CROSS-ASSET-RANKING-2026-08-19",
+      "type": "implementation-evidence",
+      "owner": "CAPITAL-AI",
+      "authority": "SC-7 / SC-MD-SPT-0001",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "reviewed",
+      "path": "docs/evidence/sc-md/SC7_CROSS_ASSET_RANKING_GENERALIZATION_2026-08-19.md"
     },
     {
       "documentId": "DOC-EVIDENCE-SC2-GEMINI-RESEARCH-2026-08-19",
