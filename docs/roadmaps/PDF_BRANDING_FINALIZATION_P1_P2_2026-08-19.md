@@ -1,9 +1,12 @@
 # PDF Branding Finalization Roadmap — P1/P2
 
-- **Status:** IMPLEMENTATION COMPLETE / PR VALIDATION PENDING
+- **Status:** ✅ COMPLETE / LANDED
 - **Datum:** 2026-08-19
 - **Owner:** CAPITAL-AI Owner
-- **Branch:** `agent/pdf-branding-p1-p2-final`
+- **Implementation-Branch:** `agent/pdf-branding-p1-p2-final`
+- **Post-Merge-Closure:** `agent/pdf-branding-post-merge-closure`
+- **Landed via:** PR #436
+- **Merge-Commit:** `f5d39288d3b854d5a84001ed0f4046f29e5cc840`
 - **Parent:** ADR-0091 / ADR-0093 / PR #432
 - **Ziel:** PDF-Branding nach P0 visuell, technisch und accessibility-seitig abschließen, ohne unbelegte Konformitätsclaims einzuführen.
 
@@ -16,6 +19,8 @@ P0 hat aktive jsPDF-Reports auf einen gemeinsamen Brand-/Metadaten-Contract geho
 3. NotebookLM-/WeasyPrint-Branding,
 4. Accessibility-/Tagged-PDF-Strategie,
 5. Render-/Regression-Gates.
+
+Diese Punkte sind mit PR #436 implementiert und auf `main` gelandet.
 
 ## Enterprise-/State-of-the-Art-Leitplanken
 
@@ -85,30 +90,41 @@ P0 hat aktive jsPDF-Reports auf einen gemeinsamen Brand-/Metadaten-Contract geho
 
 ### P2.5 Governance-Abschluss
 
-- [x] ADR-0093 dokumentiert Renderer-/Accessibility-Grenze. Die zunächst reservierte 0092 wurde nach Erkennung der Parallel-PR-#434-Kollision verworfen.
-- [x] Dokument-Registry auf ADR-0093 und die P1/P2-Artefakte aktualisiert.
+- [x] ADR-0093 dokumentiert Renderer-/Accessibility-Grenze; ADR-0092 bleibt der Privacy-Entscheidung aus PR #434 vorbehalten.
+- [x] Dokument-Registry enthält ADR-0093 und die P1/P2-Artefakte.
 - [x] Implementierungs-Evidence mit Vorher/Nachher-Matrix erstellt.
-- [x] Branch unmittelbar vor PR-Erstellung gegen aktuelles `main` verglichen: `23 ahead / 0 behind`, Merge-Base `3ed2b2e9c9421bc979ca2487610a6a49a655e888`.
-- [x] Kostenrelevante CI/Build-Läufe werden erst nach PR-Erstellung zugelassen.
+- [x] Kostenrelevante CI/Build-Läufe wurden nicht vor PR-Erstellung gestartet.
+- [x] Implementierungsbranch mehrfach gegen fortgeschrittene Main-Stände synchronisiert.
+- [x] PR #433/M10-Closure-Korrelation additiv übernommen.
+- [x] PR #437/M10-Post-Merge-Traceability vor dem finalen #436-Merge ebenfalls über aktuellen Main aufgenommen.
+- [x] PR #436 Human-gemerged; Merge-Commit `f5d39288d3b854d5a84001ed0f4046f29e5cc840`.
+- [x] Finaler Governance Run #1239 (`32239637308`) auf Head `027c278815b465aca81b00d4435f35048b61498d`: PASS.
+- [x] Finaler ordinary CI Run #1917 (`32239637176`) dokumentiert: M10-Autorisierung stoppte vor Checkout; keine falsche Test-/Build-PASS-Aussage.
 
-## Parallel-PR-Korrelation
+## Parallel-PR-Korrelation und Merge-Race
 
-Zum Implementierungsabschluss sind #433, #434 und #435 offen.
+Die P1/P2-Implementierung wurde während ihrer Laufzeit gegen parallele Änderungen korreliert:
 
-- **PR #433:** direkter Overlap ausschließlich `docs/governance/document-registry.json`.
-- **PR #435:** direkter Overlap ausschließlich `docs/governance/document-registry.json`.
-- **PR #434:** kein direkter Dateioverlap; seine Privacy-Entscheidung reserviert jedoch `ADR-0092`, weshalb die PDF-Entscheidung auf `ADR-0093` verschoben wurde.
+- **PR #433:** M10 Closure; vor #436 gemerged. Direkter Overlap war ausschließlich `docs/governance/document-registry.json`; additiv reconciled.
+- **PR #437:** M10 Post-Merge Traceability; vor dem finalen #436-Merge auf `main` gelandet und durch die letzte Branch-Synchronisierung übernommen.
+- **PR #434:** kein direkter Dateioverlap mit dem PDF-Scope; `ADR-0092` bleibt Privacy vorbehalten.
+- **PR #435:** direkter Overlap mit dem PDF-Scope ausschließlich über `docs/governance/document-registry.json`; kein Scoring-/Runtime-Code wurde von #436 überschrieben.
 
-Falls #433 oder #435 vor diesem PDF-PR in `main` landen, wird die Registry vor Merge additiv reconciled. Falls irgendein Parallel-PR `main` vor dem PDF-Merge verändert, wird gemäß Projektregel der gesamte Branch erneut gegen den dann aktuellen Main-Stand korreliert.
+Der finale Merge von PR #436 basiert auf einem zuletzt gegen den fortgeschrittenen Main-Stand synchronisierten Head. Post-Merge ist `main@f5d39288d3b854d5a84001ed0f4046f29e5cc840` die kanonische P1/P2-Landing-Baseline.
 
-## Definition of Done
+## Definition of Done — Abschluss
 
-P1/P2 gelten als fachlich implementiert, wenn:
+P1/P2 sind abgeschlossen:
 
-1. alle aktiven jsPDF-Reports Emblem, Wordmark, gemeinsame Tokens, Metadaten und Accessibility-Profil aus dem zentralen Contract beziehen;
-2. NotebookLM-PDFs die CAPITAL-AI Internal Brand verwenden und standardmäßig tagged PDF/UA-1 erzeugen;
-3. kein aktiver PDF-Pfad einen unbelegten Accessibility-/Compliance-Claim enthält;
-4. statische Regressionstests und Render-Smoke-Tools im Repository vorhanden sind;
-5. Governance-/Dokumentationsartefakte aktualisiert sind;
-6. der finale Branch-Main-Abgleich ohne unbehandelte Korrelation abgeschlossen ist;
-7. CI-Ergebnisse nach PR-Erstellung dokumentiert werden. Ein externes Human-/Passkey-Gate darf nicht durch Code umgangen werden.
+1. alle aktiven jsPDF-Reports beziehen Emblem, Wordmark, gemeinsame Tokens, Metadaten und Accessibility-Profil aus dem zentralen Contract;
+2. NotebookLM-PDFs verwenden die CAPITAL-AI Internal Brand und sind auf tagged PDF/UA-1 konfiguriert;
+3. kein aktiver PDF-Pfad enthält einen unbelegten Accessibility-/Compliance-Claim;
+4. statische Regressionstests und Render-Smoke-Tools sind im Repository vorhanden;
+5. Governance-/Dokumentationsartefakte sind aktualisiert;
+6. der finale Branch-Main-Abgleich wurde ohne unbehandelte Korrelation abgeschlossen;
+7. verfügbare CI-/Governance-Ergebnisse sind dokumentiert;
+8. PR #436 ist Human-gemerged und der Scope ist auf `main` gelandet.
+
+### Residualer Verifikationshinweis
+
+Der finale ordinary CI-Lauf auf dem letzten PR-Head wurde vom M10-Autorisierungsgate **vor** Checkout/TypeScript/Tests/Build beendet. Deshalb existiert aus diesem Lauf kein technischer Test-/Build-PASS. Das ändert den gelandeten Implementierungsstatus nicht, begrenzt aber die belastbare technische Evidence. Formale PDF/UA-Konformität bleibt unabhängig davon weiterhin artefaktbezogen zu verifizieren und darf nicht aus der Renderer-Konfiguration allein abgeleitet werden.
