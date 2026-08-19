@@ -1,162 +1,103 @@
 # M10 Post-Cutover Assurance — 2026-08-19
 
-Status: LIVE EXIT ASSURANCE IN PROGRESS  
+Status: **LIVE EXIT MATRIX VERIFIED PASS — FINAL TRACEABILITY SYNC PENDING**  
 Branch: `agent/m10-post-cutover-assurance`  
-Baseline: `main@00be77c39ed0bf24bb6328fa941b35adf3999b7f`  
-Production baseline: Render `Finance` live on the same Controlled-Cutover merge commit before probe creation  
+Initial baseline: `main@00be77c39ed0bf24bb6328fa941b35adf3999b7f`  
+Current correlated main after PR #430 merge: `2d8e482174e97601d4343249e50d208ccf6f6355`  
 Authority: ADR-0066, ESS-0022, M10 Threat Model, `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`
 
 ## Purpose
 
-Prove the Human-merged and production-deployed M10 Controlled Cutover against a fresh real pull request. This probe changes documentation only and exists to exercise the authorization boundary; it does not change runtime, workflows, credentials, database schema, billing, IAM or production configuration.
+Prove the Human-merged and production-deployed M10 Controlled Cutover against a fresh real pull request. This probe is documentation-only and changes no runtime, workflow, credential, schema, billing, IAM or production configuration. Human Merge remains separate from `AUTHORIZE_PR_CI`.
 
-The probe PR is not itself Merge authority. Human Merge remains separate. After the live exit matrix is complete, this probe should be closed rather than used as a shortcut to merge evidence. Durable final M10 closure/traceability is synchronized through a separate fresh-main documentation work package after the live matrix is complete.
+This probe is not intended to merge. After the live matrix is frozen and correlated, PR #431 is closed. Durable M10 closure/traceability is performed separately from fresh `main`.
 
-## Preflight
+## Preflight and correlation
 
-- Controlled-Cutover PR #429 was Human-merged to `main@00be77c39ed0bf24bb6328fa941b35adf3999b7f`.
-- Render deployed that exact merge commit to production before this assurance branch was created.
-- `M10_GITHUB_TOKEN` remains the read-only trusted PR-state resolver credential.
-- `M10_GITHUB_DISPATCH_TOKEN` was Owner-confirmed as separately provisioned for Actions write and the service was redeployed before #429 merge.
-- Production `ci.yml` now treats ordinary `pull_request` events as non-authoritative and denies before checkout/npm/test/build/docker.
-- Authorized expensive PR CI requires `workflow_dispatch` on the exact same-repository PR branch/head, GitHub Actions OIDC workload identity, and one unredeemed M10 consumption capability.
-- Open PR #430 is SC-2/C2b and has no path overlap with this M10 evidence file.
+- Controlled-Cutover PR #429 was Human-merged to `main@00be77c39ed0bf24bb6328fa941b35adf3999b7f` and deployed to Render before probe creation.
+- `M10_GITHUB_TOKEN` remained the read-only trusted PR-state resolver credential.
+- `M10_GITHUB_DISPATCH_TOKEN` was separately provisioned for Actions write before cutover merge.
+- Probe branch was created fresh from then-current main.
+- At creation, open PR #430 had zero path overlap with this M10 evidence file.
+- During assurance, PR #430 was Human-merged. Main advanced to `2d8e482174e97601d4343249e50d208ccf6f6355` and the probe branch was conflict-free synchronized by bot.
+- Recovery test head after that synchronization: `6e448ba752daa89ac91394c2c7ebc08de5da07f8`.
+- Pre-freeze branch correlation: `ahead=3`, `behind=0`, merge-base exact current main; functional branch difference remained only this evidence file.
 
-## Current GitHub/OIDC benchmark
+## Live matrix
 
-The production design is aligned to GitHub's current Actions security model:
+### PC-1 — ordinary PR event cheap DENY
 
-- `id-token: write` permits a job to request a GitHub OIDC JWT and does not grant repository-resource write access by itself;
-- GitHub OIDC identity exposes workload claims including repository, ref, SHA, event, run ID and workflow reference;
-- the workflow gate binds those signed workload claims conjunctively with the one-time M10 consumption;
-- an ordinary PR event is therefore intentionally insufficient to authorize expensive CI.
+**PASS — LIVE.** Initial CI `#1872` failed exactly at `M10 CI-Autorisierung vor teuren Schritten prüfen`. Checkout, classifier, npm, dependency audit, TypeScript, Unit, Production Build, CSP, predeploy, Docker and image build were skipped. Governance `#1194` passed.
 
-## Live observations — first stable head
+### PC-2 — real authoritative Owner passkey
 
-Initial probe head: `da92c86d4aeff96dfeec65a9eada1f98cead2351`.
-
-- Ordinary PR CI run `#1872` failed exactly at `M10 CI-Autorisierung vor teuren Schritten prüfen`; checkout, classifier, npm, TypeScript, Unit, build, CSP, predeploy and Docker/image steps were skipped.
-- Governance run `#1194` passed.
-- One real authoritative Owner WebAuthn authorization created exactly one consumed approval/consumption chain for the initial head.
-- Authorized GitHub workflow run `32228796660` / CI `#1873` was a `workflow_dispatch` on the exact same-repository branch and exact approved head.
-- Production M5 audit recorded `m10_ci_workflow_gate_claim` with `githubOidcVerified=true`, `currentPrStateReResolved=true` and `singleUseWorkflowGate=true` before the consumption transitioned to `DISPATCHED`.
-- CI `#1873` passed. Because the probe is class D, Node/npm/audit/TypeScript/Unit/build/Docker remained intentionally skipped after the successful authorization gate.
-- A second real Owner authorization on the unchanged initial head created a second immutable approval, but the CI consumer returned `DEDUPE_HEAD`: the second approval remained unconsumed and no second consumption, accepted dispatch or workflow-gate success was created.
-- Exactly-once correlation on the initial head after duplicate test: 2 approvals, 1 consumption, 1 accepted dispatch, 1 successful workflow-gate claim.
-
-## Mandatory post-cutover live matrix
-
-### PC-1 — ordinary PR event must be cheap DENY
-
-Expected:
-
-- the initial `pull_request`-triggered `build-and-test` starts only far enough to create the required check context;
-- `M10 CI-Autorisierung vor teuren Schritten prüfen` returns DENY;
-- checkout, npm install, dependency audit, TypeScript, Unit, Production Build, CSP, deployment readiness, Docker and image build do not run.
-
-Status: **PASS — LIVE**. CI `#1872` denied at the first M10 step and all expensive steps were skipped.
-
-### PC-2 — real authoritative Owner passkey authorization
-
-Expected:
-
-- CAPITAL-AI authoritative M10 panel resolves this open PR and exact current head;
-- real Owner WebAuthn assertion succeeds;
-- immutable `m10_approval_evidence` is created for action `AUTHORIZE_PR_CI`;
-- exactly one matching `m10_ci_consumptions` row is claimed;
-- GitHub workflow dispatch targets this exact same-repository branch/head.
-
-Status: **PASS — LIVE** on initial head `da92c86d4aeff96dfeec65a9eada1f98cead2351`.
+**PASS — LIVE.** On initial head `da92c86d4aeff96dfeec65a9eada1f98cead2351`, the authoritative Owner WebAuthn flow created immutable `m10_approval_evidence` for `AUTHORIZE_PR_CI` and exactly one matching CI consumption.
 
 ### PC-3 — exactly one authorized current-head CI
 
-Expected:
+**PASS — LIVE.** GitHub run `32228796660` / CI `#1873` was a `workflow_dispatch` on exact branch/head `da92c86d...`, passed the production OIDC/workflow gate, transitioned the single consumption `PENDING -> DISPATCHED`, and completed `build-and-test` successfully. Because the probe was class D, npm/test/build/docker remained intentionally skipped after gate success.
 
-- dispatched `build-and-test` runs on the approved head SHA;
-- workflow obtains a valid GitHub Actions OIDC identity;
-- production workflow gate verifies signed identity + current GitHub PR state + immutable approval + PENDING consumption;
-- the single winner atomically transitions `PENDING -> DISPATCHED` before checkout/npm/build;
-- classified CI then runs and completes successfully.
+### PC-4 — duplicate / replay at Owner authorization boundary
 
-Status: **PASS — LIVE**. Run `32228796660` / CI `#1873` completed successfully on the exact approved initial head; OIDC/current-state/single-use gate evidence is present in M5 audit.
+**PASS — LIVE.** A second Owner authorization on unchanged `da92c86d...` created a second immutable approval, but the atomic consumer returned `DEDUPE_HEAD`. That approval remained unconsumed. No second consumption, accepted dispatch or workflow-gate success was created.
 
-### PC-4 — replay / duplicate authorization
+Initial-head exactly-once correlation after duplicate test: **2 approvals / 1 consumption / 1 accepted dispatch / 1 workflow-gate success**.
 
-Expected:
+### PC-5 — manual Actions replay / malformed gate boundary
 
-- the same approval/consumption cannot start a second expensive run;
-- duplicate/replayed consumption is DENY/DEDUPE before expensive CI.
+**PASS — LIVE + DETERMINISTIC.** After successful recovery run `32231008414`, the already-authorized `build-and-test` job was manually re-run. GitHub created a real Actions runner/OIDC context, but the underlying M10 consumption was already terminal. The second job attempt failed at the first M10 authorization step and checkout plus every downstream step was skipped. No extra consumption was created.
 
-Status: **PASS — LIVE**. A second Owner assertion on the unchanged initial head produced an immutable approval but was rejected by the consumer with `DEDUPE_HEAD`; the second approval remains unconsumed. No second consumption, accepted dispatch or workflow-gate success exists.
+Deterministic regression coverage additionally denies wrong/missing OIDC audience, repository, ref, head, run, event and workflow claims; expired OIDC; forged signature; non-RS256 JOSE; consumption context mismatch; changed file-set/diff; already-finalized consumption; audit failure; malformed refs.
 
-### PC-5 — malformed/manual dispatch
+### PC-6 — stale approval after head/base change
 
-Expected:
+**PASS — LIVE.** A documentation-only commit advanced the probe from `da92c86d...` to `b7eb7af5...`. CI `#1874` again cheap-DENYed at the first M10 step and all expensive work was skipped. The duplicate-test approval remained unconsumed and bound to old head `da92c86d...`; no consumption for the new head was created.
 
-- a dispatch without the valid conjunction of exact-context GitHub OIDC identity and unredeemed M10 consumption cannot enter expensive CI.
+Subsequently PR #430 merged, advancing main to `2d8e4821...`. The probe branch reconciled to head `6e448ba7...` without M10 path conflict. Old approvals remained bound to their old base/head context and did not authorize the reconciled head.
 
-Deterministic forged/malformed OIDC and capability cases are already covered by the Controlled-Cutover regression suite. Live assurance will verify the actual production workflow boundary without weakening or fabricating credentials.
+### PC-7 — fresh authoritative recovery
 
-Status: PENDING final correlation. No forged credential or synthetic bypass will be introduced into production solely for assurance.
+**PASS — LIVE.** Fresh Owner authorization on reconciled base `2d8e482174e97601d4343249e50d208ccf6f6355` and head `6e448ba752daa89ac91394c2c7ebc08de5da07f8` created approval `4mfDfSI5AHQYktmo-NDUoQ`, exactly one matching consumption, and GitHub workflow run `32231008414` / CI `#1878`.
 
-### PC-6 — stale approval after PR-head change
+M5 audit recorded `githubOidcVerified=true`, `currentPrStateReResolved=true`, `singleUseWorkflowGate=true`; the consumption transitioned to `DISPATCHED` with no failure reason. Run `#1878` completed successfully on the exact approved head.
 
-Expected:
-
-- after this probe head is changed by a harmless documentation commit, the previous approval/state cannot authorize the new head;
-- stale base/head/file-set/diff context is DENY.
-
-Status: **IN PROGRESS**. This commit intentionally advances the probe head after PC-1..PC-4. The second duplicate-test approval remains unconsumed and is cryptographically/contextually bound to old head `da92c86d4aeff96dfeec65a9eada1f98cead2351`. After the new head is observed, assurance must confirm that this stale approval creates no consumption/dispatch for the new head and that the ordinary synchronize event is again cheap-DENY.
-
-### PC-7 — fresh recovery on new stable head
-
-Expected:
-
-- a fresh Owner challenge/assertion against the new stable head succeeds;
-- exactly one new authorized CI run may execute for that new approved head.
-
-Status: PENDING until PC-6 stale-state isolation is verified on the newly advanced head.
+Recovery-head correlation: **1 approval / 1 consumption / 1 accepted dispatch / 1 successful workflow-gate claim**.
 
 ### PC-8 — legacy signals remain non-authoritative
 
-Expected:
+**PASS — STRUCTURAL / DETERMINISTIC.** The controlled-cutover source contract asserts that `ci.yml` contains no `okay`, `💪`, reaction or Viewed authorization path. Normal PR CI authority is Passkey + immutable approval + single-use consumption + exact-context GitHub OIDC. Human Merge remains separate.
 
-- checkbox, Viewed, emoji/reaction, label and PR text have no CI authority;
-- Human Merge remains separate from `AUTHORIZE_PR_CI`.
+### PC-9 — audit correlation and exit assessment
 
-Status: PENDING final structural/audit correlation; no legacy signal is used in this probe.
+**PASS FOR LIVE MATRIX.** Production audit evidence correlates Owner begin/complete, accepted dispatch, OIDC workflow-gate claim, exact repository/PR/head and run IDs for both successfully authorized heads. Exactly one successful consumption/CI chain exists per approved head. Duplicate/replay, stale-state isolation and fresh recovery are proven.
 
-### PC-9 — audit correlation and final exit gate
+## Evidence summary
 
-Expected final evidence correlation:
+| Control | Before live probe | Verified outcome |
+|---|---|---|
+| Ordinary PR event | cutover only implemented | cheap DENY before checkout live proven |
+| Owner passkey | authoritative runtime deployed | immutable exact-head approval live proven |
+| CI dispatch | implemented | exactly one exact-head dispatch on two distinct approved heads |
+| Runner identity | OIDC implemented | signed OIDC + current-state re-resolve live proven |
+| Consumption | atomic foundation | one `PENDING -> DISPATCHED` winner per approved head |
+| Replay | deterministic tests | Owner duplicate + Actions job rerun live DENY |
+| Head/base drift | deterministic tests | stale approvals ineffective after real head/base change |
+| Recovery | Phase-6 Shadow PASS | fresh authoritative recovery PASS |
+| Legacy signals | retired by policy | structurally no CI authority |
+| Human Merge | separate | remained separate throughout |
 
-- immutable approval evidence;
-- exact-head consumption lifecycle;
-- GitHub workflow run / OIDC workload correlation;
-- M5 append-only audit events;
-- no more than one expensive CI per approved head;
-- recovery PASS;
-- no weak fallback authority.
+## Remaining closure work
 
-Only after these checks and final Roadmap/Evidence/Traceability synchronization may M10 be marked `COMPLETE / VERIFIED PASS`.
+The **live Post-Cutover Matrix is VERIFIED PASS**, but M10 is not yet marked `COMPLETE / VERIFIED PASS` in authoritative project documentation. A separate fresh-main closure work package must synchronize:
 
-Status: IN PROGRESS.
+- M10 runbook status and exit gate;
+- enterprise roadmap / M10 milestone status;
+- final durable evidence / traceability references;
+- document registry entries where applicable;
+- final main/open-PR correlation.
+
+No weaker checkbox/emoji/text/reaction fallback may be introduced during closure.
 
 ## Safety / rollback
 
-This probe is documentation-only and does not mutate production runtime or external configuration. Expected M10 approval/consumption rows are part of the production authorization contract under test. If the authoritative path fails, fail closed: do not restore automatic expensive PR CI or legacy checkbox/emoji authorization. Any runtime/workflow repair requires a separate fresh-main Human-authorized branch and PR.
-
-## Before / After target
-
-| Control | Pre-live-proof state | Current proof state |
-|---|---|---|
-| Ordinary PR event | Cutover implementation merged | PC-1 live PASS: cheap DENY before expensive steps |
-| Owner passkey | authoritative code deployed | PC-2 live PASS on initial head |
-| CI dispatch | implemented | PC-3 live PASS: exactly one exact-head dispatch |
-| Runner identity | implemented OIDC gate | signed exact-context OIDC accepted; M5 correlated |
-| Consumption | atomic foundation | single `PENDING -> DISPATCHED` winner proven |
-| Replay | deterministic tests | PC-4 live PASS: duplicate head DEDUPE, no second dispatch |
-| Head drift | deterministic tests | PC-6 in progress using this docs-only head advance |
-| Recovery | Phase-6 Shadow PASS | PC-7 pending on new stable head |
-| Human Merge | separate by policy | remains separate; probe remains Draft/open |
-| M10 status | not COMPLETE | COMPLETE only after remaining live matrix + traceability |
+This probe is documentation-only. Expected M10 approval/consumption rows are production authorization evidence, not configuration mutation. If the cutover path later fails, remain fail-closed and repair through a separate Human-authorized fresh-main branch. Do not restore legacy automatic expensive PR CI or checkbox/emoji authorization.
