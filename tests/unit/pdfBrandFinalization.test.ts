@@ -99,7 +99,7 @@ describe('P1/P2 CAPITAL-AI PDF brand finalization', () => {
     expect(notebook).toContain('<main>');
     expect(notebook).toContain('<article class="doc"');
     expect(notebook).not.toContain('#10233d');
-    expect(notebook).toContain('docs/frontend/design-tokens.json');
+    expect(notebook).toContain('DESIGN_TOKENS_PATH = REPO_ROOT / "docs" / "frontend" / "design-tokens.json"');
   });
 
   it('pins the PDF renderer toolchain and supplies an independent render verifier', () => {
