@@ -67,6 +67,29 @@ python3 scripts/docs/verify_pdf_render.py \
   --expect-tagged yes
 ```
 
+<!-- README_VERSION_MATRIX:START -->
+### Automatisch synchronisierte Runtime-Versionen
+
+> Dieser Block wird deterministisch aus den kanonischen Repository-Deklarationen erzeugt. Änderungen bitte nicht manuell pflegen; `npm run readme:sync` aktualisiert ihn und `npm run readme:check` blockiert Drift.
+
+| Komponente | Repository-Version | Authority |
+|---|---:|---|
+| CAPITAL-AI Plattform | `0.6.0` | `package.json#version` |
+| Node.js Runtime | `24.18.0` | `.nvmrc` |
+| Node.js Engine | `>=24.18.0 <25` | `package.json#engines.node` |
+| TypeScript | `~5.8.2` | `package.json#devDependencies` |
+| React | `^19.0.1` | `package.json#dependencies` |
+| Vite | `^6.2.3` | `package.json` |
+| Tailwind CSS | `^4.1.14` | `package.json#devDependencies` |
+| OpenAI SDK | `^7.3.0` | `package.json#dependencies` |
+| Anthropic SDK | `^0.115.0` | `package.json#dependencies` |
+| Supabase JS | `^2.108.2` | `package.json#dependencies` |
+| Stripe Server SDK | `^22.3.0` | `package.json#dependencies` |
+| Stripe Browser SDK | `^9.8.0` | `package.json#dependencies` |
+| Express | `^4.21.2` | `package.json#dependencies` |
+| Vitest | `^4.1.10` | `package.json#devDependencies` |
+<!-- README_VERSION_MATRIX:END -->
+
 ## Voraussetzungen
 
 - Node.js `>=24.18.0 <25`
@@ -91,6 +114,8 @@ Die Anwendung ist lokal standardmäßig unter `http://localhost:3000` erreichbar
 
 ```bash
 npm run lint
+npm run readme:check
+npm run docs:hygiene:check
 npm test
 npm run build
 npm run predeploy:check
@@ -100,6 +125,9 @@ npm run predeploy:check
 |---|---|
 | `npm run dev` | Entwicklungsserver über `tsx server.ts` starten |
 | `npm run lint` | TypeScript-Prüfung ohne Ausgabe von Build-Dateien |
+| `npm run readme:sync` | README-Versionen und Runtime-Matrix deterministisch aus Repository-Authorities synchronisieren |
+| `npm run readme:check` | Versions- und Dependency-Drift in der README fail-closed erkennen |
+| `npm run docs:hygiene:check` | Root-Policy, Document Registry, Lifecycle-/Sprachwerte und Registry-Zielpfade fail-closed validieren |
 | `npm test` | Vitest- und PR-Governance-Tests einschließlich PDF-Brand-/Renderer-Guards ausführen |
 | `npm run build` | Sicherheitsinvarianten prüfen, Frontend bauen, öffentliche Routen vor-rendern, Server bündeln und Release-Manifest erzeugen |
 | `npm run predeploy:check` | Deployment-Bereitschaft und Supply-Chain-Provenance prüfen |
