@@ -8,32 +8,34 @@ const request = {
   prNumber: 417,
   baseSha: 'base-sha',
   headSha: 'head-sha',
+  headRef: 'agent/m10-test-pr',
   authorizationDigest: 'a'.repeat(64),
   action: 'AUTHORIZE_PR_CI' as const,
 };
 
 describe('createM10GithubActionsDispatcher', () => {
-  it('performs exactly one workflow_dispatch request with M10-bound inputs', async () => {
-    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => new Response(null, {
-      status: 204,
-      headers: { 'x-github-request-id': 'req-1' },
-    }));
+  it('performs exactly one workflow_dispatch request on the exact PR head ref with M10-bound inputs', async () => {
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => new Response(
+      JSON.stringify({ workflow_run_id: 99117 }),
+      { status: 200, headers: { 'Content-Type': 'application/json', 'x-github-request-id': 'req-1' } },
+    ));
     const dispatcher = createM10GithubActionsDispatcher({
       token: 'secret-token',
-      workflowFile: 'm10-authorized-ci.yml',
+      workflowFile: 'ci.yml',
       fetchImpl: fetchImpl as typeof fetch,
     });
 
     const result = await dispatcher.dispatch(request);
 
-    expect(result).toEqual({ accepted: true, reference: 'req-1' });
+    expect(result).toEqual({ accepted: true, reference: '99117' });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     const [url, init] = fetchImpl.mock.calls[0];
-    expect(String(url)).toContain('/actions/workflows/m10-authorized-ci.yml/dispatches');
+    expect(String(url)).toContain('/actions/workflows/ci.yml/dispatches');
     expect(init?.method).toBe('POST');
     expect(init?.headers).toMatchObject({ Authorization: 'Bearer secret-token' });
     expect(JSON.parse(String(init?.body))).toEqual({
-      ref: 'main',
+      ref: 'agent/m10-test-pr',
+      return_run_details: true,
       inputs: {
         m10_consumption_id: 'consume-1',
         m10_approval_id: 'approval-1',
@@ -46,10 +48,24 @@ describe('createM10GithubActionsDispatcher', () => {
     });
   });
 
-  it('returns accepted=false for a non-204 response and does not retry', async () => {
-    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => new Response('forbidden', { status: 403 }));
+  it('accepts the legacy empty-body 204 success response and does not retry', async () => {
+    const fetchImpl = vi.fn(async () => new Response(null, {
+      status: 204,
+      headers: { 'x-github-request-id': 'req-204' },
+    }));
     const dispatcher = createM10GithubActionsDispatcher({
-      token: 'secret-token', workflowFile: 'm10-authorized-ci.yml', fetchImpl: fetchImpl as typeof fetch,
+      token: 'secret-token', workflowFile: 'ci.yml', fetchImpl: fetchImpl as typeof fetch,
+    });
+
+    const result = await dispatcher.dispatch(request);
+    expect(result).toEqual({ accepted: true, reference: 'req-204' });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns accepted=false for a rejected response and does not retry', async () => {
+    const fetchImpl = vi.fn(async () => new Response('forbidden', { status: 403 }));
+    const dispatcher = createM10GithubActionsDispatcher({
+      token: 'secret-token', workflowFile: 'ci.yml', fetchImpl: fetchImpl as typeof fetch,
     });
 
     const result = await dispatcher.dispatch(request);
@@ -57,14 +73,19 @@ describe('createM10GithubActionsDispatcher', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
-  it('fails before any network call when token or workflow target is invalid', async () => {
-    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => new Response(null, { status: 204 }));
+  it('fails before any network call when token, workflow target, or head ref is invalid', async () => {
+    const fetchImpl = vi.fn(async () => new Response(null, { status: 204 }));
     expect(() => createM10GithubActionsDispatcher({
-      token: '   ', workflowFile: 'm10-authorized-ci.yml', fetchImpl: fetchImpl as typeof fetch,
+      token: '   ', workflowFile: 'ci.yml', fetchImpl: fetchImpl as typeof fetch,
     })).toThrow(/token/i);
     expect(() => createM10GithubActionsDispatcher({
       token: 'secret', workflowFile: '../ci.yml', fetchImpl: fetchImpl as typeof fetch,
     })).toThrow(/Workflow/i);
+
+    const dispatcher = createM10GithubActionsDispatcher({
+      token: 'secret', workflowFile: 'ci.yml', fetchImpl: fetchImpl as typeof fetch,
+    });
+    await expect(dispatcher.dispatch({ ...request, headRef: '../main' })).rejects.toThrow(/Head-Ref/i);
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 });
