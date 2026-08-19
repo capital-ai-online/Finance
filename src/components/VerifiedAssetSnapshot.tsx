@@ -130,18 +130,27 @@ export function VerifiedAssetSnapshot({
           const body = await response.json().catch(() => ({}));
           const observations = Array.isArray(body?.observations) ? body.observations : [];
           const price = finitePositive(body?.canonicalValue);
-          const providers = unique(observations
-            .map((entry: any) => entry?.provider)
-            .filter((provider: unknown): provider is string => typeof provider === 'string'));
-          const evidenceIds = unique(observations
-            .map((entry: any) => entry?.evidenceId)
-            .filter((id: unknown): id is string => typeof id === 'string'));
+          const providers = unique([
+            ...strings(body?.providers),
+            ...observations
+              .map((entry: any) => entry?.provider)
+              .filter((provider: unknown): provider is string => typeof provider === 'string'),
+          ]);
+          const evidenceIds = unique([
+            ...strings(body?.evidenceIds),
+            ...observations
+              .map((entry: any) => entry?.evidenceId)
+              .filter((id: unknown): id is string => typeof id === 'string'),
+          ]);
+          const units = unique(observations
+            .map((entry: any) => entry?.unit)
+            .filter((unit: unknown): unit is string => typeof unit === 'string'));
           const observedAt = latestTimestamp(observations.map((entry: any) => entry?.observedAt));
 
           setQuote({
             status: response.ok && body?.status === 'CONSENSUS' && price !== null ? 'READY' : typeof body?.status === 'string' ? body.status : 'DATA_UNAVAILABLE',
             price: response.ok && body?.status === 'CONSENSUS' ? price : null,
-            unit: typeof body?.unit === 'string' ? body.unit : price !== null ? 'USD' : null,
+            unit: units.length === 1 ? units[0] : null,
             providers,
             evidenceIds,
             observedAt,
