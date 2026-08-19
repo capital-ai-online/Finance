@@ -30,6 +30,20 @@ export interface CrossAssetRankingGovernance {
 }
 
 /**
+ * Cross-model score comparability is never inferred from equal-looking numeric scales. A caller
+ * must provide a separately validated normalization result with method/evidence lineage.
+ */
+export interface ScoreComparabilityEvidence {
+  normalizedValue: number;
+  comparisonKey: string;
+  methodVersion: string;
+  evidenceId: string;
+  observedAt: string;
+  retrievedAt: string;
+  verified: boolean;
+}
+
+/**
  * Growth is never inferred from the canonical score. A caller must provide separately verified,
  * horizon-specific evidence plus a comparison key whose semantics were established upstream.
  */
@@ -50,10 +64,11 @@ export interface CanonicalRankingCandidate {
   /** Optional peer metadata. Required by tier mode. */
   tier?: 1 | 2 | 3 | null;
   /**
-   * Optional validated score-comparability key. When omitted, the model id + version becomes the
-   * cohort boundary, so outputs from different model families are never silently interleaved.
+   * Optional verified normalization evidence. When omitted, model id + version remains the cohort
+   * boundary. Supplying only a label is insufficient: a normalized value and method lineage are
+   * required before different model families can share a ranking cohort.
    */
-  scoreComparisonKey?: string | null;
+  scoreComparability?: ScoreComparabilityEvidence | null;
   /** Required by growth mode; ignored by score-based modes. */
   growth?: GrowthRankingEvidence | null;
   /** Explicit governance evidence is required for admission. */
@@ -71,6 +86,8 @@ export type CrossAssetRankingExclusionReason =
   | 'OPERATIONS_EVIDENCE_UNAVAILABLE'
   | 'CATEGORY_MISSING'
   | 'TIER_MISSING'
+  | 'COMPARABILITY_EVIDENCE_UNVERIFIED'
+  | 'COMPARABILITY_VALUE_INVALID'
   | 'GROWTH_EVIDENCE_MISSING'
   | 'GROWTH_EVIDENCE_UNVERIFIED'
   | 'GROWTH_VALUE_INVALID'
@@ -105,7 +122,10 @@ export interface RankedCanonicalAsset {
 export interface CrossAssetRankingCohort {
   key: string;
   mode: CrossAssetRankingMode;
-  comparisonBasis: 'canonical-score' | 'verified-growth-evidence';
+  comparisonBasis:
+    | 'canonical-score-same-model'
+    | 'verified-normalized-score'
+    | 'verified-growth-evidence';
   /** Cross-cohort positions are intentionally undefined. */
   crossCohortOrder: false;
   entries: RankedCanonicalAsset[];
