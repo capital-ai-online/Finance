@@ -21,6 +21,14 @@ import {
   PieChart
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
+import {
+  PDF_BRAND,
+  PDF_NOTICES,
+  applyPdfDocumentMetadata,
+  createPdfReportMetadata,
+  drawCapitalAiFooter,
+  drawCapitalAiReportHeader,
+} from '../platform/PdfReporting/pdfBrand';
 import { PdfExportModal } from './PdfExportModal';
 import { PortfolioBacktester } from './PortfolioBacktester';
 import { 
@@ -296,32 +304,14 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
     if (!hasSimulated || chartData.length === 0) return;
     
     const doc = new jsPDF();
-    
-    // Header banner (Charcoal block with gold accents)
-    doc.setFillColor(15, 15, 15);
-    doc.rect(0, 0, 210, 38, 'F');
-    
-    // Gold line under header
-    doc.setFillColor(245, 196, 83);
-    doc.rect(0, 38, 210, 2, 'F');
-    
-    // Header Typography
-    doc.setTextColor(245, 196, 83);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(20);
-    doc.text('CAPITAL-AI', 15, 18);
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text('AUTOMATED QUANT BACKTESTING ENGINE REPORT', 15, 28);
-    
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(245, 196, 83);
-    doc.text('SYSTEM: AUTO-ROUTER', 152, 18);
-    doc.setTextColor(200, 200, 200);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`DATUM: ${new Date().toLocaleDateString('de-DE')}`, 152, 28);
+    const reportMetadata = createPdfReportMetadata('backtest');
+    applyPdfDocumentMetadata(
+      doc,
+      reportMetadata,
+      `CAPITAL-AI Backtest ${ticker} ${strategy}`,
+      'Quantitativer Backtest-Bericht',
+    );
+    drawCapitalAiReportHeader(doc, reportMetadata, 'AUTOMATED QUANT BACKTESTING ENGINE REPORT');
     
     // Section 1: Meta Configuration
     let y = 50;
@@ -329,7 +319,7 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.text('1. SIMULATIONSPARAMETER & KONFIGURATION', 15, y);
-    doc.setDrawColor(245, 196, 83);
+    doc.setDrawColor(...PDF_BRAND.colors.gold);
     doc.setLineWidth(0.5);
     doc.line(15, y + 2, 195, y + 2);
     
@@ -501,15 +491,13 @@ export function BacktestEngine({ selectedSymbol = 'BTC', userCapital = 150000, t
       doc.setTextColor(120, 120, 120);
       doc.text(`... und ${trades.length - 15} weitere Transaktionen. Laden Sie das vollstaendige CSV-Protokoll fuer alle Details herunter.`, 15, y + 6);
     }
+
+    drawCapitalAiFooter(doc, reportMetadata, {
+      y: 285,
+      notice: PDF_NOTICES.informational,
+    });
     
-    // Page bottom footer
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(140, 140, 140);
-    doc.text('Dieses Dokument wurde automatisch von CAPITAL-AI generiert. DSGVO-konforme quantitative Echtzeitanalyse.', 15, 285);
-    doc.text('Sven Kulessa • sven.kulessa@gmail.com • Compliant with Art. 30 GDPR / BFSG Accessibility Standards.', 15, 289);
-    
-    doc.save(`CAPITAL_AI_Backtest_${ticker}_${strategy}.pdf`);
+    doc.save(`CAPITAL_AI_Backtest_${ticker}_${strategy}_${reportMetadata.generatedAt.toISOString().slice(0, 10)}.pdf`);
   };
 
   const activeTickerInfo = availableTickers.find(t => t.symbol === ticker) || availableTickers[0] || TICKERS[0];
