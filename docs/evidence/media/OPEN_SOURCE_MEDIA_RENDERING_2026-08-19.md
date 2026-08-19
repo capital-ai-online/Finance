@@ -91,7 +91,7 @@ Diese Developer-Smokes ersetzen keine spätere Repository-CI und keine FFmpeg-Li
 ## Finaler Pre-PR Main-/Parallel-PR-Abgleich
 
 - `main`: `59a2755de53297a934b062b380a313d68cd47492`;
-- Branch nach Dokumentationsabschluss: `4 ahead / 0 behind`, Merge-Base exakt current main;
+- Merge-Base exakt current main; Branch `behind=0`;
 - effektiver Scope: 12 Dateien;
 - PR #439: 0 direkter Dateioverlap; README/`package.json` werden bewusst nicht geändert;
 - PR #442: 0 direkter Dateioverlap; Document Registry wird bewusst nicht geändert;
