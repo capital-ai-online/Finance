@@ -2,7 +2,7 @@
 
 **Roadmap ID:** `GOV-CP-2026-08-19`  
 **Authority ID:** `AUTH-GOV-CONTROL-PLANE-ROADMAP`  
-**Version:** `1.1.0`  
+**Version:** `1.2.0`  
 **Date:** `2026-08-19`  
 **Owner:** CAPITAL-AI Owner  
 **Baseline:** `main@59a2755de53297a934b062b380a313d68cd47492`  
@@ -63,12 +63,12 @@ No repository statement may imply ISO certification or regulatory applicability 
 |---|---|---|---|
 | G0 | Agent Trust Root | `AGENTS.md` single repository-wide agent authority; provider adapters thin | **IMPLEMENTED** |
 | G1 | Stable identity | `AUTH-*`, `CTRL-*`, ADR registry and explicit aliases/supersession rules | **IMPLEMENTED** |
-| G2 | Namespace remediation | resolve ADR-0085/ADR-0086 and ESS-0012 collisions without losing historical evidence | **IMPLEMENTED** |
+| G2 | Namespace remediation | resolve ADR-0085/ADR-0086 and ESS-0012 collisions and prevent open-PR namespace races | **IMPLEMENTED** |
 | G3 | Governance Core | central `src/platform/Governance` boundary plus deterministic validator | **IMPLEMENTED** |
 | G4 | Documentation hygiene | canonical folder/lifecycle rules; reuse #439 after governance merge | **FOUNDATION IMPLEMENTED; #439 REUSE DEFERRED** |
 | G5 | Pre-PR evidence | schema for sandbox/local preflight bound to exact candidate SHA | **IMPLEMENTED** |
 | G6 | CI/Deployment alignment | hosted `build-and-test` independent; exact-SHA main deploy authority; M10 suspended | **POLICY/CONTROL MODEL ALIGNED** |
-| G7 | Parked PR reconciliation | rebase/adapt #439 and #442 after governance merge | **POST-MERGE OUTSTANDING** |
+| G7 | Parked/parallel PR reconciliation | rebase/adapt #439/#442; re-correlate #446 ADR namespace | **POST-MERGE / PRE-PR RECHECK OUTSTANDING** |
 
 ## 5. Quick wins implemented in this branch
 
@@ -83,8 +83,13 @@ No repository statement may imply ISO certification or regulatory applicability 
 9. Added canonical document lifecycle/folder hygiene policy.
 10. Added exact-SHA `developer-preflight` evidence schema for future local/approved-sandbox/ChatGPT execution when the complete candidate snapshot is available.
 11. Updated current Human PR and Development Chain policies to the actual M10-suspended / exact-SHA deployment architecture.
-12. Reclassified the earlier Governance Hardening roadmap as historical so it cannot be mistaken for current M10/authority state.
+12. Reclassified the earlier Governance Hardening roadmap and supersession package as historical so they cannot be mistaken for current M10/authority state.
 13. Added Owner-visible Governance Control Plane supersession diff/impact evidence.
+14. Reconciled `docs/architecture/ROADMAP.md` as the canonical current-state DevelopmentChain index and separated historical M10 verification from current `SUSPENDED/OFF` enforcement.
+15. Preserved old ADR links through explicitly non-authorizing legacy redirect stubs rather than broken links or duplicate active ADRs.
+16. Detected open PR #446 as an active `ADR-0094` namespace writer and reallocated this branch to conflict-free `ADR-0095` (privacy) and `ADR-0096` (Governance) without changing stable Authority IDs.
+17. Classified ESS-0019 as the subordinate agent capability/risk/audit/execution plane rather than a second repository trust root.
+18. Narrowed the legacy Documentation Governance operational skill to documentation-domain validation and removed stale provider/global handoff policy.
 
 ## 6. Pull-request / CI cost strategy
 
@@ -100,27 +105,29 @@ Until this roadmap is merged:
 
 - PR #439 remains Draft; its documentation-hygiene implementation is reusable input but not global governance authority.
 - PR #442 remains Draft; its ranking implementation may remain parked, but registry/authority references must be reconciled against the new governance baseline before merge-readiness.
-- Parallel work should avoid `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `docs/governance/**`, `docs/adr/**`, `.ai/registry/**`, `.ai/skills/ESS-*Governance*`, `scripts/governance/**` and `src/platform/Governance/**`.
+- PR #446 is a Draft PDF/media implementation and currently reserves `ADR-0094`; it has no direct Governance file overlap but is a shared ADR-namespace writer and must be rechecked immediately before Governance PR creation.
+- Parallel work should avoid `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `docs/governance/**`, `docs/adr/**`, `.ai/registry/**`, `.ai/skills/ESS-*Governance*`, `scripts/governance/**` and `src/platform/Governance/**` unless explicitly sequenced.
 
 ## 8. Definition of Done
 
 - [x] `AGENTS.md` is defined as the only repository-wide AI-agent trust root.
 - [x] Provider/model adapters contain no independent global governance policy.
 - [x] Stable `AUTH-*` and `CTRL-*` identities are machine-readable and collision-checkable.
-- [x] Known duplicate active ADR identifiers are resolved and historical aliases retained.
+- [x] Known duplicate active ADR identifiers are resolved and historical aliases retained without broken links.
+- [x] Open-PR ADR namespace correlation is represented and PR #446's ADR-0094 allocation is not duplicated by this branch.
 - [x] Known duplicate active ESS-0012 identity is resolved in favor of registered Documentation Governance; Vocabulary Governance resolves to ESS-0017.
-- [x] Central ADR registry defines version/date/lifecycle/supersession rules.
+- [x] Central ADR registry defines version/date/lifecycle/supersession/legacy-redirect rules.
 - [x] Global governance code resides under `src/platform/Governance`; Documentary Governance is explicitly documentation-scoped.
-- [x] Structural validator implementation fails closed by design for duplicate active IDs, broken registry targets and competing adapter authority; it is wired into Vitest.
+- [x] Structural validator implementation fails closed by design for duplicate active IDs, broken registry targets, invalid redirects, stale current-state M10 claims and competing adapter authority; it is wired into Vitest.
 - [x] ISO/IEC 42001 / NIST SSDF crosswalk exists without a certification claim.
 - [x] Pre-PR evidence contract binds technical evidence to exact base/head SHAs and marks it non-authorizing.
-- [x] Owner-visible supersession diff/impact package exists.
+- [x] Owner-visible supersession diff/impact package exists and includes #439/#442/#446 correlation.
 - [ ] Execute available low-cost/pre-PR structural validation against the exact final candidate snapshot.
-- [ ] Final branch is re-synchronized with then-current `main` and open PR correlations are re-evaluated immediately before PR creation.
+- [ ] Final branch is re-synchronized with then-current `main` and **all open PR file/semantic/ADR-namespace correlations** are re-evaluated immediately before PR creation.
 - [ ] One consolidated PR is created only after the final sync and explicit PR authorization.
 - [ ] Independent hosted CI passes on the final PR head.
 - [ ] Human/Owner merge remains separate and explicit.
-- [ ] After Governance merge, reconcile parked #439 and #442 against the new baseline.
+- [ ] After Governance merge, reconcile parked #439/#442 and the then-current state of #446 against the new baseline.
 
 ## 9. Validation boundary
 
