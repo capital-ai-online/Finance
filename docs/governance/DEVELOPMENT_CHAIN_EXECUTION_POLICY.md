@@ -1,34 +1,48 @@
 # DEVELOPMENT Chain Execution Policy
 
-Status: ACTIVE  
-Date: 2026-08-12  
-Updated: 2026-08-19  
-Scope: CAPITAL-AI `SvenKulessa/Finance`  
-Authority: `docs/architecture/ROADMAP.md`, `docs/roadmaps/AI_AGENT_M0_M9_IMPLEMENTATION_ROADMAP.md`, ESS-0019, ESS-0021, ADR-0057..0066, **Accepted ADR-0069 Nachtrag 2026-08-16**  
-Design reference only: ADR-0039 (`PROPOSED`)
+**Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-EXECUTION`  
+**Status:** ACTIVE  
+**Version:** `2.0.0`  
+**Date:** 2026-08-12  
+**Updated:** 2026-08-19  
+**Scope:** CAPITAL-AI `SvenKulessa/Finance`  
+**Parent trust root:** `/AGENTS.md`  
+**Decision references:** Accepted ADR-0069 incl. Owner addendum 2026-08-16, effective Roadmap/ESS/ADR authorities, ADR-0095 after Human Merge
 
-## Zweck
+## Purpose and boundary
 
-Diese Policy definiert die verbindliche Ausführungslogik der CAPITAL-AI DEVELOPMENT Chain. Sie trennt Architektur-/Dokumentationsautorität, Repository-Implementierung, externe Plattformmutation, Verifikation und Human/Owner-Autorität voneinander.
+This policy defines the execution sequence that separates repository implementation, Human Merge, external platform mutation and verification. It is subordinate to `/AGENTS.md` and the stable Governance Control Plane and does not independently grant protected mutation authority.
 
-Sie erteilt selbst **keine** Mutationsberechtigung. Jede konkrete Mutation benötigt die für den Roadmap-Punkt geltende ADR/ESS/REM-/Approval-Kette.
+A concrete external mutation requires the applicable effective Roadmap/ADR/ESS/REM/Owner approval chain.
 
-**Stand 2026-08-16:** Pre-CI-Owner-Gate mit Checkboxen und Review `💪`/`okay` ist **retired**. Merge bleibt Human/Owner-only. Ab **M10 Controlled Cutover** Passkey/WebAuthn für CI-Autorisierung.
+## Current transition state
 
-**Authority rule 2026-08-19:** Proposed/Draft material does not silently become protected-action authority. Conflict resolution follows `GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md` after Human Merge of ADR-0086; until then applicable law, explicit Owner decisions and Accepted ADRs remain controlling.
+As of the Owner-directed M10 recovery on 2026-08-19:
 
-## Kanonische Kette
+- former checkbox/Files-Viewed/emoji authorization rituals are retired;
+- M10 Passkey `AUTHORIZE_PR_CI` is **SUSPENDED / OFF**;
+- normal PR technical CI proceeds without an M10 passkey;
+- Human Merge remains mandatory;
+- Render native Auto Deploy remains off;
+- verified `main` CI is the production deployment authority.
+
+Historical M10 `VERIFIED PASS` evidence does not automatically reactivate the PR-CI gate. Reactivation requires a new explicit Owner decision and validated security/governance change.
+
+## Canonical chain
 
 ```text
 READ-ONLY BASELINE
 → GAP / ROADMAP PACKAGE
-→ ESS / ADR / RUNBOOK / TRACEABILITY
+→ AUTHORITY / RISK / REUSE PRE-CHECK
 → FRESH SCOPED BRANCH FROM CURRENT MAIN
 → REPOSITORY IMPLEMENTATION
-→ PR / GOVERNANCE CHECKS / CI (ohne Checkbox-/Emoji-Gate)
+→ CHEAP / SANDBOX PRE-PR VALIDATION WHERE ACTUALLY AVAILABLE
+→ FINAL MAIN RE-SYNC + OPEN-PR CORRELATION
+→ PR / GOVERNANCE CHECKS / TECHNICAL CI
+→ HUMAN MERGE DECISION
 → HUMAN MERGE
-→ BRANCH DELETE
-→ READ-ONLY PRE-MUTATION CHECK (wenn externe Mutation erforderlich)
+→ BRANCH RETIREMENT
+→ READ-ONLY PRE-MUTATION CHECK (if external mutation is required)
 → EXPLICIT OWNER MUTATION APPROVAL
 → NON-AUTHORIZING MUTATION HANDOFF
 → AUTHORIZED EXECUTION HOST / MUTATION EXECUTOR
@@ -38,100 +52,106 @@ READ-ONLY BASELINE
 → NEXT PHASE
 ```
 
-Ab **M10** (nach `VERIFIED PASS` Controlled Cutover): vor teurer CI zusätzlich Passkey-`AUTHORIZE_PR_CI` laut M10-Runbook.
+A step marked REQUIRED for the concrete work package cannot be skipped.
 
-Ein Schritt darf nicht übersprungen werden, wenn er für den konkreten Roadmap-Punkt als `REQUIRED` markiert ist.
+## Core execution controls
 
-## Grundprinzipien
+1. **Roadmap/authority before mutation.** No external platform mutation without scope, authority and rollback classification.
+2. **Fresh branch.** Repository edits occur only on a fresh scoped branch from current `main`; direct edits to `main` are prohibited.
+3. **One work item / one branch.** A merged branch is not reused; rollback uses a fresh branch from then-current `main`.
+4. **Final main synchronization.** Immediately before PR creation, refresh `main`, correlate new merges and adapt/revalidate the candidate.
+5. **Concurrent writer control.** Open PR changed-file and semantic overlap is inspected before new writes and again before PR creation; overlap is sequenced/rescoped rather than silently merged.
+6. **Fail closed.** Missing, conflicting or non-resolvable protected authority causes STOP.
+7. **Human Merge.** Agents do not self-merge and technical evidence does not authorize merge.
+8. **Authority is not transport.** ChatGPT, Claude, Grok, MCP, SDK, GitHub Actions and provider identity do not create authority.
+9. **Evidence is not authority.** Test/build logs, PR bodies, labels, reactions and reports cannot grant protected permission.
+10. **No secrets in evidence.** Reusable credentials, private passkey material, raw sensitive tokens and equivalent secrets are excluded.
+11. **Protected external mutation is separate.** Repository merge does not imply Supabase/Stripe/Render/DNS/IAM/billing mutation permission.
+12. **No self-elevation.** Agents/executors cannot expand their own mandate, capabilities or Owner gates.
 
-1. **Roadmap vor Mutation.** Keine externe Plattformmutation ohne vorherige Roadmap-/ADR-/Runbook-Klassifikation.
-2. **Sequenzielle Phasen.** M6–M10 bleiben geblockt, bis der jeweilige Vorgänger `VERIFIED PASS` ist.
-3. **Fail closed.** Fehlende, abgelaufene, widersprüchliche oder nicht persistierbare Autorisierung führt zu `DENY/STOP`.
-4. **Human Merge.** `MERGE` bleibt Human/Owner-only und wird keinem Agenten als Capability übertragen. Checkbox-/Emoji-Zeremonien sind keine Merge-Voraussetzung mehr.
-5. **Keine Self-Authority.** Ein Agent darf REM, Capability-Grenzen, Owner-Gates, Audit-Controls oder Kill-Switches nicht zu seinen Gunsten erweitern.
-6. **Evidence vor Statusfortschritt.** Ein Roadmap-Punkt wird erst nach positiver/negativer Verifikation und belastbarer Evidence geschlossen.
-7. **Keine Secrets in Evidence.** Reusable Credentials, TOTP-Codes/Secrets, Passkey Private Keys, Biometriedaten, rohe Tokens und vollständige sensible Requests/Responses dürfen nicht persistiert werden.
-8. **Ein Work Item = ein Branch = ein PR.** Branches werden nicht für nachfolgende Roadmap-Punkte wiederverwendet.
-9. **Parallelität nur ohne Schreibkonflikt.** Aktive PRs/Branches werden vor Schreibarbeit auf Changed-File-Overlap geprüft.
-10. **Transport ist keine Autorität.** ChatGPT Connector, Claude Tooling, Grok, MCP, SDK, GitHub Actions oder andere Hosts erhalten Autorität ausschließlich aus der Control Plane.
+## Pre-PR technical evidence
 
-## Rollen und Ausführungsgrenzen
+Branch-local or approved sandbox checks should be used before PR creation when the exact repository snapshot is actually available to that execution environment. A model must not claim PASS for checks it did not execute.
 
-### Human / Owner
+Pre-PR evidence uses the `developer-preflight` trust class defined by `docs/governance/control-plane/pre-pr-build-evidence.schema.json` and is bound to exact base/head SHAs. It is non-authorizing.
 
-Behält mindestens:
+GitHub hosted `build-and-test` remains the independent technical validation for the final PR head.
 
-- Architektur-/Roadmap-Freigabe bei sicherheitsrelevanten Entscheidungen;
-- finale Merge-Autorität (explizite Anweisung; kein Agent-Self-Merge);
-- ab M10 Controlled Cutover: Passkey-Autorisierung für `AUTHORIZE_PR_CI` und privilegierte Step-ups;
-- explizite Freigabe externer Produktionsmutationen;
-- Owner/Admin-IAM-Elevation, MFA/Break-Glass und Recovery;
-- Secret Disclosure/Rotation mit erweitertem Scope;
-- destruktive Produktionsdatenoperationen;
-- Live Billing/Money/Entitlement;
-- Produktionsressourcen-Löschung;
-- DNS/TLS/Domain-Ownership;
-- Security-Control-Abschwächung.
+## Human / Owner boundary
 
-### Roadmap / Architecture / Documentation Plane
+Human/Owner retains at least:
 
-Darf read-only analysieren, Gaps klassifizieren, Roadmap-/ESS-/ADR-/Runbook-/Traceability-/Evidence-Vorgaben erstellen und Mutation Work Orders vorbereiten.
+- final merge authority;
+- explicit protected external mutation approval;
+- Owner/Admin IAM elevation and recovery/break-glass;
+- secret disclosure/rotation outside pre-approved narrow automation;
+- destructive production data operations;
+- live billing/money/entitlement mutation;
+- production resource deletion;
+- DNS/TLS/domain ownership changes;
+- security-control weakening;
+- future M10 reactivation.
 
-### Agent Execution Plane
+## Agent execution plane
 
-Aktive Provider-/Client-Profile werden ausschließlich über **Accepted ESS-0019** bestimmt. Stand der dortigen Owner-Klarstellung 2026-08-16: ChatGPT, Claude und Grok können je nach Profil Research-/Execution-Clients sein; Google AI Studio, Gemini und NotebookLM sind für die aktive DEVELOPMENT Chain **RETIRED**. Kein Providername verleiht Autorität.
+Agent/provider profiles may research and implement only within the current authority, branch and capability scope. Provider/model identity never grants Owner or production authority.
 
-Repository-Implementierung erfolgt nur innerhalb der gewährten Capability-/Roadmap-/Branch-Grenzen. Externe Plattformmutationen (z. B. Stripe, Supabase, Render) sind davon getrennt.
+Active agent tooling must start from `/AGENTS.md`. Provider-specific instruction files are non-authoritative adapters.
 
-### Production Integration / Mutation Plane
+## Production integration / mutation plane
 
-Kein bestimmter Modellanbieter besitzt diese Plane. Externe Produktionsmutation erfolgt ausschließlich über einen autorisierten Execution Host / Mutation Executor mit Roadmap, Owner Approval, Handoff, Capability und Audit Evidence. Transport oder Provideridentität ersetzen diese Autorität nicht.
+External production mutations occur only through an authorized execution host with current authority, explicit approval where required, target/fingerprint verification, audit evidence and rollback definition.
 
-### Systemadmin / Mutation Executor
+A mutation handoff is an instruction package, not an authorization artifact by itself.
 
-Nur innerhalb eines gültigen, Human/Owner-approved Mandats. Executor darf `MERGE` nicht ausführen und keine Reserved Human/Owner Actions über Handoff delegieren.
+## Deployment authority
 
-## Parallel Work / Concurrent Writer Gate
-
-Vor jedem neuen Schreib-Workitem: aktuellen `main` SHA, offene PRs/Changed Files und Zielpfade prüfen; bei Overlap `STOP/RESCOPE/SEQUENCE`.
-
-## Branch- und Clone-Lifecycle
+Current production promotion path:
 
 ```text
-current main → fresh scoped branch → commits → PR → Human merge → branch delete
+Human Merge
+→ main
+→ build-and-test
+→ supply-chain attestation
+→ exact-SHA Render deploy hook
+→ post-deployment identity verification
 ```
 
-Details: `docs/governance/DEVELOPMENT_CHAIN_BRANCH_LIFECYCLE_POLICY.md`.
+Render native Auto Deploy remains off. A second deploy authority requires an explicit architecture/security decision.
 
-## PR-/CI-Klassifikation
+## PR / check classification
 
-Es gilt `docs/governance/PR_CHECK_CLASSIFICATION.md` (D/C/R/M). Owner-Checkbox-/Emoji-Gate ist retired.
+`docs/governance/PR_CHECK_CLASSIFICATION.md` determines applicable technical check class. M10 passkey is not a current prerequisite while suspended.
 
-## Mutation State Vocabulary
+## Mutation state vocabulary
 
 `NOT REQUIRED` | `PLANNED` | `HUMAN APPROVED` | `MUTATED` | `VERIFIED PASS` | `FAILED / ROLLED BACK`
 
-## Mutation Handoff
+## Evidence minimum
 
-Nicht autorisierender Arbeitsauftrag. Authority: Accepted/Active Roadmap/ADR/ESS + Human/Owner Approval + REM / Agent IAM + M5 Audit. Proposed/Draft material allein ist nicht ausreichend.
+Where applicable, retain:
 
-## Evidence Minimum
+- baseline and candidate SHAs;
+- stable authority/control references;
+- branch / PR / final head / merge SHA;
+- check class and validation result;
+- mutation class and target;
+- pre/post verification;
+- approval evidence for protected actions;
+- audit references;
+- rollback state;
+- next gate.
 
-Baseline SHA, Authority refs with lifecycle/status, Branch/PR/Head/Merge SHA, Checkklasse, Mutation Class, Pre/Post Verification, Approval Evidence (wenn erforderlich; ab M10 Passkey-Evidence), Audit refs, Rollback State, Next Gate.
+## Stop / rollback rules
 
-## Stop- und Rollback-Regeln
+STOP on unexpected target, unreviewed main drift, unresolved open-PR write overlap, missing required approval, missing audit persistence for protected mutation, failed pre-check, unknown high-impact side effect, failed/inconclusive post-verification or unresolved higher-authority conflict.
 
-`STOP` bei unerwartetem Target, Baseline-Drift, fehlender Approval Evidence, Open-PR-Overlap, fehlender Audit-Persistenz, fehlgeschlagenem Pre-Check, unbekanntem Side Effect, Post-Mutation FAILED/INCONCLUSIVE oder ungelöstem Authority-Konflikt.
+Repository rollback uses a fresh branch from current `main`; external rollback follows the applicable protected runbook/approval process.
 
-## Phase-spezifische Runbooks
+## Runbooks and historical phase material
 
-- M5A: `docs/runbooks/M5A_SUPABASE_TOTP_AAL2_HARDENING.md`
-- M6: `docs/runbooks/M6_SUPPLY_CHAIN_PROVENANCE.md`
-- M7: `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md`
-- M8: `docs/runbooks/M8_AGENT_CUTOVER.md`
-- M9: `docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md`
-- M10: `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`
+Existing M5–M10 runbooks remain available for domain/recovery evidence. M10 material is retained as historical/reactivation design while its PR-CI passkey gate is suspended. A runbook does not become current authority solely because it exists.
 
-## Closure Rule
+## Closure rule
 
-Eine Phase wird nur geschlossen, wenn Roadmap, detaillierte Roadmap, Traceability, betroffene ESS/ADR, Evidence und Mutation State konsistent sind. Der Abschluss eines PRs allein ist kein DevelopmentChain Exit Gate.
+A work package closes only when implementation, current authority, required validation/evidence, main correlation and any external mutation verification are consistent. A PR merge alone is not sufficient closure for work that includes production mutation.
