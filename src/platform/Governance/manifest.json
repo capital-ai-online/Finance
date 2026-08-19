@@ -1,9 +1,9 @@
 {
   "name": "Governance",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "status": "foundation",
   "owner": "CAPITAL-AI Owner",
-  "description": "Cross-cutting governance control-plane contracts for stable authority/control identities, lifecycle resolution, evidence trust classes and single instruction-surface enforcement.",
+  "description": "Cross-cutting governance control-plane contracts for stable authority/control identities, lifecycle resolution, evidence trust classes, repository-quality evidence and single instruction-surface enforcement.",
   "category": "platform",
   "layer": "CrossCutting",
   "repository": "Finance",
@@ -14,8 +14,12 @@
     "docs/governance/control-catalog.json",
     "docs/adr/registry.json"
   ],
+  "contracts": [
+    "repository-quality-observation/1.0.0"
+  ],
   "dependencies": [],
   "forbiddenResponsibilities": [
+    "execute domain validators",
     "self-authorize merge",
     "self-authorize production mutation",
     "duplicate Documentary content governance",
