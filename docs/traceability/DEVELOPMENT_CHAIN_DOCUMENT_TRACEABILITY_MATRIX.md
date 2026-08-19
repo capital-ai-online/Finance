@@ -2,7 +2,7 @@
 
 Status: PROPOSED
 Date: 2026-08-19
-M10 closure baseline: `main@2d8e482174e97601d4343249e50d208ccf6f6355`
+M10 closure baseline: `main@eb75921316943c7b3cfaba4d185e2b7f47eb6853` (PR #433 merged; closure branch deleted)
 
 ## Zweck
 
@@ -38,7 +38,7 @@ Diese Matrix zeigt für jeden DEVELOPMENT Chain Roadmap-Punkt die normative Auth
 | M7 | **COMPLETE / VERIFIED PASS** (2026-08-14) | ADR-0061 | `AI_AGENT_DEPLOYMENT_IDENTITY.md`, `docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md` | read-only Render preflight done; provenance-gated deploy merged and confirmed on a real push; `verify-deployment-identity` CI job failed its first real run (JSON-body-only read, production identity is header-only), root cause found and fixed, second real push run confirmed it end-to-end against the live Render deploy; Owner performed a real deploy-hook rotation, independently confirmed via GitHub Actions log, Render deploy history, and verify-deployment-identity PASS; Owner performed a real Render Dashboard rollback to a prior deploy plus its roll-forward to current `main` (via merge of PR #277), both independently confirmed (GitHub Actions log, Render deploy history, verify-deployment-identity PASS); all 10 Required Negative Tests now have a concrete, automated, passing test (`docs/evidence/m7/M7_REQUIRED_NEGATIVE_TESTS_EVIDENCE.md`) | `docs/evidence/m7/M7_PHASE0_AND_REPOSITORY_CONTROLS_EVIDENCE.md`, `docs/runbooks/M7_DEPLOY_HOOK_ROTATION_HANDOFF.md`, `docs/runbooks/M7_ROLLBACK_VERIFICATION_HANDOFF.md`, `docs/evidence/m7/M7_REQUIRED_NEGATIVE_TESTS_EVIDENCE.md` | `MERGED, ALL REQUIRED MUTATIONS VERIFIED PASS, ALL 9 EXIT GATE CRITERIA MET (docs/runbooks/M7_DEPLOYMENT_IDENTITY_MUTATION.md "Exit Gate Closure")` | all required platform mutations VERIFIED PASS — met |
 | M8 | **COMPLETE / VERIFIED PASS** (2026-08-16, all 9 Exit Gate items PASS) | ADR-0062 + ESS-0019 | Provider Profile Contract + `docs/runbooks/M8_AGENT_CUTOVER.md` | Provider Registry/Policy-Equivalence verified; live SA3B/SA4 caller wired; rollback-to-read-only verified; PR #308 binds request/trace/session correlation plus provider/model/tool attribution across authorization and outcome with tamper/missing-identity DENY tests; full repository-wide router-mount audit confirmed Exit-Gate-Punkt 4 / Cutover-Sequenz-Punkt 6 vacuously satisfied; `externalHostConfigurationVerified` for `chatgpt-github-connector` verified read-only 2026-08-16 → READY on all 6 fields; Exit-Gate-Punkt 2 closed under Owner-accepted scope decision (2026-08-16) — supported privileged providers = mutating providers with a production host (`chatgpt-github-connector` only); canonical provider set corrected 2026-08-16 (PR #365) to ChatGPT/Claude/Grok — `claude-code-cli` and `grok-xai-connector` both structurally BLOCKED, explicitly not supported privileged paths; `google-ai-studio`/`notebooklm`/`gemini` now RETIRED (DENY) | `docs/evidence/m8/M8_CLOSURE_EVIDENCE.md`; `docs/evidence/m8/M8_EXIT_GATE_ITEM2_SCOPE_DECISION.md`; `docs/evidence/m8/M8_EXTERNAL_HOST_CONFIGURATION_VERIFIED_EVIDENCE.md`; `docs/evidence/m8/M8_PHASE0_AND_PROVIDER_PROFILE_EVIDENCE.md`; `docs/evidence/m8/M8_AUDIT_CORRELATION_EXIT_GATE_7_EVIDENCE.md`; `docs/evidence/m8/M8_PROVIDER_BYPASS_ROUTE_AUDIT_EXIT_GATE_4_EVIDENCE.md`; `docs/evidence/m8/M8_I1_CUTOVER_READINESS_MATRIX_AND_EXIT_GATE_SYNC_EVIDENCE.md` | `PR #308 MERGED; POINT 7 VERIFIED PASS; POINT 4 VERIFIED PASS; POINT 2 OWNER_ACCEPTED 2026-08-16; M8 CLOSED — M9 unblocked, each drill separately Owner-authorized` | equivalent provider policy + rollback + audit correlation + bypass-route-audit + external-host-config + Exit-Gate-2 scope decision — all VERIFIED PASS |
 | M9 | **COMPLETE / VERIFIED PASS** | ADR-0063 + M9 closure scope decision | `docs/runbooks/M9_ASSURANCE_INCIDENT_BREAK_GLASS.md` | kill-switch / audit / recovery controls | `docs/evidence/m9/M9_CLOSURE_EVIDENCE.md` | closure evidence verified | M10 prerequisite satisfied |
-| M10 | **COMPLETE / VERIFIED PASS** | ADR-0066 + ESS-0022 | M10 Threat Model + `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md` | trusted PR resolver + WebAuthn exact-state approval + atomic CI consumption + exact-head `workflow_dispatch` + GitHub Actions OIDC + single-use workflow gate | `docs/evidence/m10/M10_CLOSURE_EVIDENCE_2026-08-19.md`; Phase-6/Cutover evidence; closed live-assurance PR #431 | `MERGED/DEPLOYED CONTROLLED CUTOVER; LIVE EXIT MATRIX VERIFIED PASS` | passkey-only CI gate VERIFIED PASS; legacy auth absent; Human Merge separate |
+| M10 | **COMPLETE / VERIFIED PASS** | ADR-0066 + ESS-0022 | M10 Threat Model + `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md` | trusted PR resolver + WebAuthn exact-state approval + atomic CI consumption + exact-head `workflow_dispatch` + GitHub Actions OIDC + single-use workflow gate | `docs/evidence/m10/M10_CLOSURE_EVIDENCE_2026-08-19.md`; Phase-6/Cutover evidence; closed live-assurance PR #431 | `MERGED/DEPLOYED CONTROLLED CUTOVER; LIVE EXIT MATRIX VERIFIED PASS; CLOSURE PR #433 MERGED @ eb759213; BRANCH DELETED` | passkey-only CI gate VERIFIED PASS; legacy auth absent; Human Merge separate |
 
 ## Requirement-to-Evidence Rules
 
@@ -124,14 +124,16 @@ ADR-0066 / ESS-0022
 → fresh recovery
 → durable M5 audit correlation
 → M10_CLOSURE_EVIDENCE_2026-08-19.md
+→ Closure PR #433 Human merge `eb75921316943c7b3cfaba4d185e2b7f47eb6853`
+→ closure branch `agent/m10-closure-verified-pass` deleted
 → COMPLETE / VERIFIED PASS
 ```
 
-The Controlled-Cutover implementation branch is absent after Human merge. The M10 closure branch must be deleted after its Human merge according to the Branch Lifecycle Policy.
+The Controlled-Cutover implementation branch is absent after Human merge. The M10 closure branch `agent/m10-closure-verified-pass` is also absent after the Human merge of PR #433, satisfying the Branch Lifecycle Policy.
 
 ## Branch Closure Trace
 
-Every merged repository work item needs `branchDeleted=true` or equivalent Evidence. Cloned repositories/worktrees are cleaned after required Evidence retention. Merged or superseded branches are never reused for new work.
+Every merged repository work item needs `branchDeleted=true` or equivalent Evidence. For M10 Closure: `branchDeleted=true` for `agent/m10-closure-verified-pass` after PR #433 merged as `eb75921316943c7b3cfaba4d185e2b7f47eb6853`. Cloned repositories/worktrees are cleaned after required Evidence retention. Merged or superseded branches are never reused for new work.
 
 ## Mutation State Vocabulary
 
@@ -146,4 +148,4 @@ Every merged repository work item needs `branchDeleted=true` or equivalent Evide
 
 A DEVELOPMENT Chain Roadmap item is closed only when Authority, implementation/Handoff, tests, Evidence, mutation state, Roadmap, Branch Lifecycle and Traceability are consistent and the Next Gate is explicit.
 
-For M10, these closure conditions are satisfied by the Human-merged/deployed Controlled Cutover, the production live assurance matrix and this synchronized closure work package. Any future SA5/external mutation is a new separately authorized work package; M10 completion is a prerequisite fact, not mutation authority.
+For M10, these closure conditions are satisfied by the Human-merged/deployed Controlled Cutover, the production live assurance matrix, PR #433 merged on `main@eb75921316943c7b3cfaba4d185e2b7f47eb6853`, the deleted closure branch, and this synchronized closure work package. Any future SA5/external mutation is a new separately authorized work package; M10 completion is a prerequisite fact, not mutation authority.
