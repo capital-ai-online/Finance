@@ -1,5 +1,7 @@
 # ADR-0094: Open-Source PDF Companion and Short-Media Rendering
 
+- **Authority ID:** `AUTH-ADR-OPEN-SOURCE-MEDIA-RENDERING-2026-08-19`
+- **Version:** `1.0.0`
 - **Status:** ACCEPTED
 - **Implementation-Status:** 🟡 IN PROGRESS
 - **Datum:** 2026-08-19
@@ -7,6 +9,12 @@
 - **Scope:** PDF companion exports, deterministic image rendering, short-video rendering, WP-N3 renderer selection
 - **Parents:** ADR-0091, ADR-0093, SEO-GM-ROADMAP-0002 / WP-N3
 - **Authorization:** Owner-/Chat-Priorität 2026-08-19: PDF-Exports weiterentwickeln und Bilder/Short-Videos mit Open-Source-Lösungen integrieren.
+
+## Namespace-Koordination
+
+`ADR-0094` ist für diesen PR die kanonische Display-ID. Die parallele Governance-Control-Plane-Bereinigung reserviert diese Nummer ausdrücklich für PR #446 und verwendet für ihre eigenen migrierten Entscheidungen `ADR-0095` (Privacy Governance) und `ADR-0096` (Governance Control Plane).
+
+Die unveränderliche Identität dieser Entscheidung ist `AUTH-ADR-OPEN-SOURCE-MEDIA-RENDERING-2026-08-19`; eine spätere Pfad- oder Display-ID-Migration darf diese Authority-ID nicht ändern. Vor Merge bleibt der normale Current-`main`-/Open-PR-Korrelationscheck erforderlich.
 
 ## Kontext
 
@@ -78,84 +86,38 @@ Der Renderer verwendet im Baseline-Profil den eingebauten `mpeg4` Video-Encoder 
 - maximal 60 Sekunden Gesamtdauer,
 - einzelne Szene 1-20 Sekunden,
 - begrenzte Textlängen,
-- lokale PDFs: maximal 5 Seiten pro Companion-Export,
-- Subprozesse nur mit Argumentlisten, `shell=False` und Timeout.
+- maximal 5 PDF-Seiten pro Companion-Render-Aufruf.
 
-### 7. Nicht ausgewählte Alternativen
-
-#### MoneyPrinterTurbo
-
-Technisch geeignet und MIT-lizenziert, aber für diesen Scope nicht eingebettet. Es bringt eine wesentlich größere LLM-/TTS-/Provider-/Download-/Video-Oberfläche mit und würde bestehende CAPITAL-AI Content-/Publishing-Grenzen teilweise duplizieren. Es bleibt ein möglicher **isolierter Adapter** für spätere, explizit genehmigte generative Szenenproduktion.
-
-#### Remotion
-
-Technisch sehr geeignet für React-basierte Video-Templates, wird jedoch nicht als Baseline gewählt. Die aktuelle Remotion-Lizenz ist nicht für alle kommerziellen Organisations-/Automationsszenarien kostenlos und erzeugt damit zusätzlichen Lizenz-/Lock-in-Review.
-
-#### Sharp
-
-Sharp ist performant und Apache-2.0-lizenziert. Für diesen Scope würde es jedoch eine zusätzliche native Node/libvips-Abhängigkeit in der Web-Toolchain erzeugen. Der PDF-/Documentation-nahe Python-Sidecar mit Pillow ist kleiner und vermeidet Konflikte mit der bestehenden Node-Runtime.
-
-## Security und Compliance
-
-- keine Remote-Medien im Renderer;
-- keine generativen Finanzzahlen oder unkontrollierten Text-Overlays;
-- SHA-256 für alle finalen Assets;
-- Quell-PDF-SHA im Companion-Manifest;
-- bestehende SSRF-Validierung in `server/socialMedia/mediaAssetValidation.ts` bleibt vor Publishing maßgeblich;
-- bestehende hash-gebundene Owner-Freigabe bleibt maßgeblich;
-- kein Auto-Publish;
-- keine Aussage, dass Media-Rendering PDF/UA, BFSG, WCAG oder regulatorische Konformität herstellt.
-
-## Primärquellen / Projektquellen
-
-- FFmpeg Legal: https://ffmpeg.org/legal.html
-- FFmpeg Download/Releases: https://ffmpeg.org/download.html
-- Pillow Security Policy: https://github.com/python-pillow/Pillow/security/policy
-- Pillow 12.3.0: https://pillow.readthedocs.io/en/stable/releasenotes/12.3.0.html
-- Sharp: https://sharp.pixelplumbing.com/
-- MoneyPrinterTurbo: https://github.com/harry0703/MoneyPrinterTurbo
-- Remotion License: https://www.remotion.dev/license
-- CAPITAL-AI canonical roadmap: `docs/roadmaps/SEO_GOOGLE_MARKETING_CONSOLIDATED_ROADMAP.md`
-- CAPITAL-AI media validation: `server/socialMedia/mediaAssetValidation.ts`
+Ungültige oder übergroße Eingaben werden vor Decoder-/Renderer-Aufruf abgelehnt.
 
 ## Konsequenzen
 
 ### Positiv
 
-- PDF-Ausgaben werden ohne Änderung des Quell-PDFs direkt für Social-/Preview-Nutzung wiederverwendbar;
-- Images und Shorts sind reproduzierbar und brand-token-basiert;
-- keine zweite Social-Publishing-Plattform;
-- niedriger Vendor-Lock-in;
-- Renderer kann offline/lokal betrieben werden;
-- Lizenzprofil und Asset-Provenance sind maschinenlesbar.
+- reproduzierbare, brandkonforme Bild- und Short-Assets;
+- etablierte Open-Source-Decoder/Renderer statt eigener Codec-/Pixelimplementierung;
+- PDF-Renderer bleibt unverändert und getrennt;
+- kein Publishing-/Credential-Scope im Renderer;
+- SHA-gebundene Provenance und Human-Freigabe bleiben erhalten.
 
-### Trade-offs
+### Trade-offs / Restrisiken
 
-- initiale Shorts sind bewusst text-/frame-basiert und ohne TTS;
-- die Web-App erhält in diesem Scope noch keinen synchronen Video-Rendering-Endpunkt;
-- ein produktiver FFmpeg-Build muss separat als LGPL-kompatibles Betriebsartefakt geprüft werden;
-- generative Hintergründe/FLUX bleiben optional und außerhalb des brandkritischen Textpfads.
+- Poppler/FFmpeg bleiben native Toolchain-Abhängigkeiten der lokalen Content-Pipeline;
+- ein produktiver/distributabler FFmpeg-Build muss separat auf das erlaubte Lizenzprofil geprüft werden;
+- generative Hintergründe, TTS und automatische Veröffentlichung bleiben bewusst außerhalb dieses Work Packages.
 
-## Nicht-Ziele
+## Validierung
 
-- kein Auto-Publish;
-- kein neuer Social-OAuth-Stack;
-- keine externe Media-URL-Ingestion;
-- kein TTS-Provider in diesem ersten WP-N3-Slice;
-- keine Änderung von Score-/Market-Data-Logik;
-- keine Supabase-/Render-/Stripe-Produktionsmutation;
-- keine formale PDF/UA-Zertifizierung.
+Vor Merge-Readiness sind mindestens erforderlich:
 
-## Verifikation / Abschluss
+1. deterministische Image-Smokes;
+2. PDF-Companion-Smoke auf lokalem PDF;
+3. FFmpeg-buildconf Negativtest;
+4. bounded-input/remote-URL Negativtests;
+5. TypeScript/Unit/Production-Build gemäß Repository-Classifier;
+6. finaler Current-`main`-/Open-PR-Korrelationscheck;
+7. Human/CODEOWNER Review und separate Merge-Entscheidung.
 
-ADR-0094 kann auf `✅ COMPLETE` gesetzt werden, wenn:
+## Rollback
 
-1. generischer Image-/Short-Renderer vorhanden ist;
-2. PDF Companion Export vorhanden ist;
-3. Graham-Fair-Value-Paket ein ausführbares Render-Manifest besitzt;
-4. Pillow/FFmpeg/Poppler-Sicherheits- und Lizenzgates im Code/Tests verankert sind;
-5. lokaler Image-Smoke sowie PDF-Companion-Smoke erfolgreich sind;
-6. ein lokaler GPL-FFmpeg-Build standardmäßig korrekt verweigert wird;
-7. optionaler Developer-Video-Smoke separat als nicht-produktionsfreigegeben dokumentiert ist;
-8. Branch vor PR gegen aktuellen `main` und Parallel-PRs korreliert ist;
-9. nach PR-Erstellung erforderliche Repository-Checks dokumentiert sind.
+Repository-only: Human-gated Revert dieses PRs. Erzeugte lokale Assets können verworfen werden. Keine externe Plattform- oder Produktionsmutation ist zurückzurollen.
