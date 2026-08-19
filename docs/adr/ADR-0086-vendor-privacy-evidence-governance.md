@@ -5,7 +5,7 @@
 - **Status:** Accepted for implementation in PR #414
 - **Date:** 2026-08-19
 - **Owner:** Sven Michael Kulessa
-- **Related:** ADR-0094 / `AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19`, `docs/compliance/vendor-evidence/vendor-inventory.json`
+- **Related:** ADR-0095 / `AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19`, `docs/compliance/vendor-evidence/vendor-inventory.json`
 
 ## Context
 
