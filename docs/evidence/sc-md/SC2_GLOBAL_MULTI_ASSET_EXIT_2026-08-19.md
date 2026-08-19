@@ -3,8 +3,10 @@
 **Evidence ID:** `SC2-GLOBAL-MULTI-ASSET-EXIT-2026-08-19`  
 **SPT:** `SC-MD-SPT-0001`  
 **Authority:** ADR-0087 + SC-2 Work Package  
-**Baseline:** `main@2d8e482174e97601d4343249e50d208ccf6f6355`  
+**Initial Baseline:** `main@2d8e482174e97601d4343249e50d208ccf6f6355`  
+**Synchronized Baseline:** `main@3ed2b2e9c9421bc979ca2487610a6a49a655e888` after Human Merge of PR #432  
 **Execution Branch:** `agent/sc2-global-multi-asset-exit`  
+**Pull Request:** #435  
 **Status:** `IMPLEMENTED_PENDING_M10_AUTHORIZED_CI`  
 **Date:** 2026-08-19
 
@@ -38,7 +40,7 @@ No score weights, factor formulas, ranking thresholds or provider promotion poli
 | Sovereign benchmark yield | `sovereign-benchmark-yield-scoring@1.0.0` | existing sovereign evidence scorer | `CanonicalScoreResult` |
 | Individual bonds | none | blocked by Registry | `SCORE_NOT_COMPUTABLE` |
 
-Traditional model math is unchanged. The new adapter only converts its existing 0..100 output and field provenance into the canonical 0..10 / 0..100 result contract.
+Traditional model math is unchanged. The adapter only converts its existing 0..100 output and field provenance into the canonical 0..10 / 0..100 result contract.
 
 ### 2.2 Registry authority and traceability
 
@@ -51,7 +53,7 @@ All four productive model descriptors now declare `scoring-integrity/1.0.0` as r
 - executor key;
 - result contract version.
 
-This metadata is carried in `CanonicalScoreResult.integrity` and is also exposed by the registry scoring lineage.
+This metadata is carried in `CanonicalScoreResult.integrity` and is also exposed by registry scoring lineage.
 
 ### 2.3 Productive route exits
 
@@ -129,15 +131,25 @@ C3 adds/updates structural and unit contracts for:
 - Raw-Materials structural scoring remaining non-productive;
 - existing C2 composition tests updated to the global C3 invariant.
 
-Full TypeScript/unit/build validation is intentionally deferred until a PR is technically necessary. After M10 Controlled Cutover, expensive PR CI requires the Owner Passkey/WebAuthn `AUTHORIZE_PR_CI` flow on the exact current PR head.
+Full TypeScript/unit/build validation is now gated by PR #435. After M10 Controlled Cutover, expensive PR CI requires the Owner Passkey/WebAuthn `AUTHORIZE_PR_CI` flow on the exact current PR head.
 
-## 6. Enterprise / FinTech architecture comparison
+## 6. Main / parallel-work correlation
+
+- C3 started from `main@2d8e482174e97601d4343249e50d208ccf6f6355`.
+- Immediately before PR creation, C3 was `6 ahead / 0 behind` with 22 changed files.
+- PR #432 had one direct overlap: `docs/governance/document-registry.json`; its change was additive (`DOC-ADR-0091`) and all other #432 files were disjoint from C3.
+- PR #432 merged during the PR-creation race, moving `main` to `3ed2b2e9c9421bc979ca2487610a6a49a655e888`.
+- C3 was therefore synchronized by a two-parent merge commit. The complete #432 tree was retained; the Document Registry contains both `DOC-ADR-0091` and the C3 evidence/version entries.
+- PR #433 remains open and overlaps only `docs/governance/document-registry.json`; its four M10 closure entries are additive and must be re-applied if #433 lands before C3 merge-readiness.
+- No scoring/runtime file overlaps #432 or #433.
+
+## 7. Enterprise / FinTech architecture comparison
 
 C3 reduces model-use surfaces to one explicit inventory/routing/execution authority and makes model identity/version/use traceable at runtime. This is consistent with the model-use, inventory, governance, validation, documentation and monitoring pattern used as the CAPITAL-AI enterprise benchmark from the 2026 Revised Guidance on Model Risk Management (SR 26-2). NIST AI RMF remains the complementary lifecycle/traceability benchmark.
 
 No claim of a specific regulatory classification or mandatory applicability is made by this engineering comparison.
 
-## 7. Before / after
+## 8. Before / after
 
 | Area | Before C3 | C3 branch |
 |---|---|---|
@@ -154,11 +166,10 @@ No claim of a specific regulatory classification or mandatory applicability is m
 | Model lineage | fragmented | UAI + registry/model/executor metadata |
 | Productive execution authority | multiple | one `ScoringDispatcher` |
 
-## 8. Remaining gates
+## 9. Remaining gates
 
-- final branch-vs-current-main/Open-PR correlation before PR;
-- PR creation only when needed for repository validation;
-- M10 Owner-Passkey authorization for expensive CI on exact head;
-- Governance + required CI PASS;
-- post-CI main race check;
+- Governance PASS on final head;
+- Owner Passkey/WebAuthn `AUTHORIZE_PR_CI` for the exact final PR #435 head;
+- required Class C CI PASS;
+- post-CI current-main/Open-PR race check and Registry reconciliation if needed;
 - separate Human/CODEOWNER merge decision.

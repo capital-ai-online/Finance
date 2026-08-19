@@ -4,7 +4,8 @@
 **Version:** 1.0.7  
 **Status:** IN IMPLEMENTATION — Phase C3 global multi-asset exit implemented, validation pending  
 **Execution Branch:** `agent/sc2-global-multi-asset-exit`  
-**Baseline:** `main@2d8e482174e97601d4343249e50d208ccf6f6355`  
+**Pull Request:** #435  
+**Baseline:** `main@3ed2b2e9c9421bc979ca2487610a6a49a655e888`  
 **Historical Integration:** PR #418 stack; #421 `/score`; #424 `/list` + `/top10`; #427 C1; #428 C2a; #430 C2b; all Human-merged after required main revalidation  
 **Start:** 2026-08-19  
 **ADRs:** ADR-0087, ADR-0088, ADR-0089, ADR-0090
@@ -156,11 +157,12 @@ Evidence: `docs/evidence/sc-md/SC2_PHYSICAL_LEGACY_CRYPTO_CLEANUP_2026-08-19.md`
 - [x] repo-weite Traceability enthält UAI assetId + modelId/version/alias/executor
 - [x] repo-weiter struktureller Test beweist Single-Dispatcher-Reachability-Invariante
 - [x] bestehende C2 Runtime-/Composition-Tests auf globale C3-Semantik aktualisiert
-- [ ] finaler Branch-vs-current-main-/Open-PR-Abgleich vor PR
-- [ ] PR nur wenn für CI/Governance zwingend erforderlich
+- [x] PR #435 erst nach Abschluss der statischen Pre-PR-Arbeit für zwingende Repository-Validierung erstellt
+- [x] PR-Creation-Race mit Merge von #432 erkannt und Branch verlustfrei auf `main@3ed2b2e9...` synchronisiert; `DOC-ADR-0091` erhalten
+- [ ] Governance PASS auf finalem Head
 - [ ] M10 Owner-Passkey `AUTHORIZE_PR_CI` auf exaktem PR-Head
-- [ ] required CI + Governance PASS
-- [ ] Post-CI Main-Race-Check
+- [ ] required CI PASS
+- [ ] Post-CI Main-/Open-PR-Race-Check; #433 Registry-Einträge bei vorherigem Merge additiv reconciliieren
 - [ ] Human/CODEOWNER Merge
 
 **Global Phase C bleibt `IN IMPLEMENTATION`, bis C3 validiert und Human-gemerged ist.**
@@ -187,9 +189,10 @@ NIST AI RMF 1.0 bleibt ergänzender freiwilliger Lifecycle-/Traceability-Benchma
 - PR #427 C1 Human-gemerged.
 - PR #428 C2a Human-gemerged.
 - PR #430 C2b Human-gemerged. Unmittelbar davor wurde PR #429 M10 Controlled Cutover gemerged; #430 wurde danach mit `main@00be77c3...` synchronisiert und enthielt gegen diese Basis weiterhin exakt die sieben C2b-Dateien.
-- Aktueller C3-Startpunkt: `main@2d8e482174e97601d4343249e50d208ccf6f6355`.
-- C3 Branch: `agent/sc2-global-multi-asset-exit`.
-- Zum C3-Start war nur PR #431 offen; M10-Evidence-Scope, kein direkter Scoring-Dateipfadoverlap.
+- C3 startete von `main@2d8e482174e97601d4343249e50d208ccf6f6355` auf `agent/sc2-global-multi-asset-exit`.
+- Beim statischen Pre-PR-Abgleich war C3 `6 ahead / 0 behind`, 22 Dateien. PR #432 und #433 hatten jeweils nur `docs/governance/document-registry.json` als direkten Overlap; keine Scoring-/Runtime-Datei.
+- Während PR #435 angelegt wurde, merge-te #432 und verschob Main auf `3ed2b2e9c9421bc979ca2487610a6a49a655e888`. C3 wurde sofort als zweiparentiger Main-Sync reconciled; alle #432-Dateien und `DOC-ADR-0091` sind erhalten.
+- PR #433 ist weiterhin additive M10-Closure-Parallel-Arbeit und muss bei vorherigem Merge vor C3-Merge-Readiness in der Document Registry berücksichtigt werden.
 - Nach #429 gilt für neue kostenintensive PR-CI der M10 Passkey/WebAuthn `AUTHORIZE_PR_CI`-Pfad; Human Merge bleibt separat.
 - Die durch PR #414 entstandene ADR-0086-Nummernkollision bleibt separates Governance-Remediation-Item; ADR-0087 ist die fachliche Single-Scoring-Architecture-Authority.
 

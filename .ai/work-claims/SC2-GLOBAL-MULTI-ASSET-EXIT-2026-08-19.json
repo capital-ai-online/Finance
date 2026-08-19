@@ -12,7 +12,7 @@
   "startedAt": "2026-08-19T09:59:00+02:00",
   "baseBranch": "main",
   "baseSha": "2d8e482174e97601d4343249e50d208ccf6f6355",
-  "pullRequest": null,
+  "pullRequest": 435,
   "claimedPaths": [
     ".ai/work-claims/SC2-GLOBAL-MULTI-ASSET-EXIT-2026-08-19.json",
     "src/platform/Scoring/ScoringExecutorAdapters.ts",

@@ -4,7 +4,7 @@
 **Version:** 1.0.20  
 **Status:** ACTIVE — CANONICAL EXECUTION AUTHORITY  
 **Stand:** 2026-08-19  
-**Repository-Baseline:** `main@2d8e482174e97601d4343249e50d208ccf6f6355` + Execution Branch `agent/sc2-global-multi-asset-exit`  
+**Repository-Baseline:** `main@3ed2b2e9c9421bc979ca2487610a6a49a655e888` + PR #435 / `agent/sc2-global-multi-asset-exit`  
 **Owner:** SvenKulessa  
 **Authority:** DOCUMENTATION_HYGIENE_POLICY · GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY / ADR-0086 · ROADMAP_CONSOLIDATION_MASTER_INDEX · ADR-0020 / ADR-0041 · ESS EventMesh/Traceability
 
@@ -28,7 +28,7 @@ Dieses Dokument ist der **Single Point of Trust (SPT)** für die Screening-/Scor
 | Provider | TwelveData, FMP Index, CoinGecko; weitere Gateway-Adapter registriert; Alpaca shadow | **Kern live** |
 | Evidence / Consensus | Snapshot/Spot consensus, traditional/commodity/macro evidence | **stark ausgebaut** |
 | Research Evidence | `src/platform/ResearchEvidence/` + `server/researchEvidence/` | **Gemini default-off/Free-Tier-only/keine Score-Wirkung** |
-| UAI / Model Registry | `src/platform/Scoring/` | **Foundation auf main; C3 Multi-Asset Binding im Branch** |
+| UAI / Model Registry | `src/platform/Scoring/` | **Foundation auf main; C3 Multi-Asset Binding in PR #435** |
 | Canonical Dispatcher | `src/platform/Scoring/ScoringDispatcher.ts` | **C1/C2 landed; C3 Crypto/Traditional/Commodity/Sovereign Binding implementiert, CI offen** |
 | Scoring-Engines | verified Crypto, Traditional, Commodity Evidence, Sovereign Benchmark; Legacy Research Engines | **produktive Konsolidierung C3 aktiv** |
 | Ranking / Eligibility | `ranking.service` + SC-7 composite opt-in | **Crypto-lastig; cross-asset noch offen** |
@@ -36,7 +36,7 @@ Dieses Dokument ist der **Single Point of Trust (SPT)** für die Screening-/Scor
 
 ### 2.2 Verbleibende Lücken
 
-1. **SC-2 C3 Validation/Merge:** Multi-Asset Single-Dispatcher-Code ist implementiert; finaler Main-Abgleich, M10-authorisierte CI/Governance und Human Merge offen.
+1. **SC-2 C3 Validation/Merge:** Multi-Asset Single-Dispatcher-Code ist implementiert; M10-authorisierte CI/Governance und Human Merge offen.
 2. scoreImpact / rankingImpact weiterhin Owner-gated (`false`).
 3. Ranking-Generalisierung cross-asset offen.
 4. Multi-provider crypto quorum + `executionPriceEligible` offen.
@@ -89,7 +89,7 @@ API / Screener UI / Alerts / Backtest Evidence
 |---|---|---|---|---|
 | **SC-0** | Baseline freeze & inventory | P0 | **LANDED** | SPT gemerged |
 | **SC-1** | Classification consolidation | P0 | **LANDED** | Canonical schema; deterministic coverage |
-| **SC-2** | Model registry & UAI adapters | P1 | **IN IMPLEMENTATION — C1/C2 landed; C3 code implemented, validation pending** | alle produktiven Score-Consumer via UAI + Registry + einen Dispatcher + canonical result |
+| **SC-2** | Model registry & UAI adapters | P1 | **IN IMPLEMENTATION — C1/C2 landed; C3 PR #435 validation pending** | alle produktiven Score-Consumer via UAI + Registry + einen Dispatcher + canonical result |
 | **SC-3** | Unified DQ + Confidence composite | P0 | **FOUNDATION LANDED** | Composite; impact off |
 | **SC-4** | Gateway hardening & provider matrix | P1 | **Phase A LANDED** | Matrix + RL + supervisor health |
 | **SC-5** | Live coverage expansion | P1 | **Phase A–D code** | execution quorum still open |
@@ -122,9 +122,10 @@ ADR-0090 bleibt für Gemini Research Shadow autoritativ: Free-Tier-only, `gemini
 - PR #428 führte C2a Composition-Root-/Legacy-Operational-Exit ein; Human-gemerged.
 - PR #430 führte C2b Physical Standard-Crypto Cleanup ein; Human-gemerged auf `main@2d8e482174e97601d4343249e50d208ccf6f6355`.
 - Unmittelbar vor #430 wurde PR #429 **M10 Controlled Cutover** gemerged. #430 wurde danach mit dem neuen Main synchronisiert; gegen die neue #429-Basis blieb der #430-Scope exakt sieben C2b-Dateien.
+- C3 startete frisch von `main@2d8e4821...` auf `agent/sc2-global-multi-asset-exit` und wurde erst nach Abschluss der statischen Pre-PR-Arbeit als Draft PR #435 geöffnet.
+- Während der PR-Erstellung merge-te PR #432 und verschob Main auf `3ed2b2e9c9421bc979ca2487610a6a49a655e888`. C3 wurde sofort als echter zweiparentiger Sync auf diesen Main gebracht. `DOC-ADR-0091` und alle #432-Dateien bleiben erhalten.
+- PR #433 ist weiter offen; direkter C3-Overlap ausschließlich `docs/governance/document-registry.json`, dort additive M10-Closure-Einträge. Falls #433 vorher landet, muss die Registry vor C3-Merge-Readiness neu zusammengesetzt werden.
 - Nach #429 ist teure PR-CI nur über die PR-state-gebundene Owner-Passkey/WebAuthn-Transaktion `AUTHORIZE_PR_CI` für den exakten aktuellen Head zulässig; Human Merge bleibt separat.
-- C3 wurde frisch von `main@2d8e4821...` auf `agent/sc2-global-multi-asset-exit` erstellt.
-- Beim C3-Start war nur PR #431 offen; M10-Post-Cutover-Evidence, kein direkter Scoring-Pfadoverlap.
 - Die ADR-0086-Nummernkollision aus PR #414 bleibt außerhalb SC-2; ADR-0087 ist fachliche Single-Scoring-Authority.
 
 ### Phase-C-Scope-Entscheidung
@@ -134,7 +135,7 @@ Phase C bleibt sequenziell und erzeugt keine zweite Roadmap:
 - **C1 — LANDED:** Standard-Crypto Router/UI + Research Boundary -> `ScoringDispatcher`.
 - **C2a — LANDED:** Market-Data Runtime + Legacy Standard-Crypto Endpoints -> Dispatcher; Chart-Score -> Simulation-only.
 - **C2b — LANDED:** physische Standard-Crypto-Legacy-Ausführung entfernt; Cold-Start geschlossen.
-- **C3 — IMPLEMENTED, VALIDATION PENDING:**
+- **C3 — IMPLEMENTED, VALIDATION PENDING (PR #435):**
   - Traditional CanonicalResultAdapter;
   - Commodity/Sovereign Dispatcher binding;
   - Registry verified score/batch/context -> Dispatcher;
@@ -143,7 +144,8 @@ Phase C bleibt sequenziell und erzeugt keine zweite Roadmap:
   - Raw-Materials structural score remains non-productive research;
   - all scorable market-data classes intercepted before legacy scorer;
   - UAI/model/executor lineage attached;
-  - repo-wide Single-Dispatcher structural proof prepared.
+  - repo-wide Single-Dispatcher structural proof prepared;
+  - PR #432 main-race reconciled; #433 additive Registry correlation tracked.
 
 Global Phase C wird erst nach C3 required CI/Governance + Human Merge als abgeschlossen markiert.
 
@@ -179,4 +181,4 @@ NIST AI RMF 1.0 dient ergänzend als freiwilliger Lifecycle-/Traceability-Benchm
 
 ---
 
-*SC-2 Stand 2026-08-19: C1, C2a und C2b sind Human-gemerged. C3 Multi-Asset Single-Dispatcher-Code ist auf `agent/sc2-global-multi-asset-exit` von `main@2d8e4821...` implementiert; ein PR wird erst für die zwingende M10-authorisierte Repository-Validierung geöffnet. Gemini Shadow bleibt default-off.*
+*SC-2 Stand 2026-08-19: C1, C2a und C2b sind Human-gemerged. C3 Multi-Asset Single-Dispatcher-Code ist in Draft PR #435 gegen `main@3ed2b2e9...` implementiert; als nächste zwingende Stufe folgt Governance plus die separate M10 Owner-Passkey-Autorisierung für teure CI auf dem exakten finalen Head. Gemini Shadow bleibt default-off.*
