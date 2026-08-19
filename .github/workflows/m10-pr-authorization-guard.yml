@@ -1,28 +1,29 @@
-name: M10 PR Authorization Guard
+name: M10 PR Event Boundary
 run-name: >-
-  PR #${{ github.event.pull_request.number }} – M10 Passkey-Autorisierung erforderlich
+  PR #${{ github.event.pull_request.number }} – M10 PR-Event isoliert
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
 # This workflow is intentionally separate from ci.yml.
-# It provides a cheap fail-closed PR signal without ever creating the canonical
-# `build-and-test` check context that is reserved for main push or an authoritative
-# M10 workflow_dispatch after Owner passkey verification.
+# A successful result means only that an ordinary PR lifecycle event is structurally isolated
+# from the expensive CI path. It MUST NOT claim whether the current head has or has not already
+# received an Owner-passkey authorization. The authoritative authorization evidence is the
+# exact-head `build-and-test` produced by the M10 workflow_dispatch after OIDC/single-use redemption.
 permissions: {}
 
 concurrency:
-  group: M10-PR-Guard-${{ github.event.pull_request.number }}
+  group: M10-PR-Boundary-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
-  authorization-required:
-    name: m10-authorization-required
+  pr-event-boundary:
+    name: m10-pr-event-boundary
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - name: Owner-Passkey für teure PR-CI verlangen
+      - name: Ordinary PR-Event vom autorisierten CI-Pfad isolieren
         shell: bash
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -32,6 +33,5 @@ jobs:
           test "$GITHUB_EVENT_NAME" = 'pull_request'
           test -n "$PR_NUMBER"
           test -n "$HEAD_SHA"
-          echo "M10 DENY: PR #${PR_NUMBER} auf Head ${HEAD_SHA} hat durch diesen PR-Event keine Autorisierung für teure CI."
-          echo "Owner-Passkey AUTHORIZE_PR_CI muss den separaten ci.yml workflow_dispatch für exakt diesen Head auslösen."
-          exit 1
+          echo "M10 BOUNDARY PASS: PR #${PR_NUMBER} auf Head ${HEAD_SHA} kann durch diesen PR-Event keine teure CI autorisieren oder starten."
+          echo "Dieser Guard bewertet keinen Passkey-Autorisierungszustand. Maßgeblich ist ausschließlich build-and-test aus dem exakten autorisierten M10 workflow_dispatch."
