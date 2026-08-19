@@ -110,7 +110,7 @@ body,
   animation: brandBorderPulse 3.5s ease-in-out infinite;
 }
 
-/* Phase 1 utilities — glass panel stack + BFSG hit targets */
+/* Phase 1 utilities — glass panel stack + 44px project hit-target policy */
 .ui-panel {
   background-color: rgba(10, 10, 10, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -130,8 +130,21 @@ body,
   min-width: var(--ui-hit-min);
 }
 
-/* Soften decorative neural SVG layers site-wide when present */
-.neural-decor {
+/* Dashboard jump navigation is intentionally compact visually, but keeps the 44px target policy. */
+nav[aria-label="Sprungnavigation Hauptseite"] > a,
+nav[aria-label="Sprungnavigation Hauptseite"] > button {
+  min-height: var(--ui-hit-min);
+  min-width: var(--ui-hit-min);
+}
+
+/*
+ * Soften decorative neural layers. `.neural-decor` remains the preferred explicit utility.
+ * The two root-scoped selectors cover the existing Dashboard/LandingPage call-sites without
+ * rewriting those large components solely to add one class.
+ */
+.neural-decor,
+#root > div.min-h-screen > div.fixed.inset-0.z-0.pointer-events-none.opacity-50,
+#root > main#main-content > div.absolute.inset-0.z-0.opacity-75 {
   opacity: 0.4;
   pointer-events: none;
 }
