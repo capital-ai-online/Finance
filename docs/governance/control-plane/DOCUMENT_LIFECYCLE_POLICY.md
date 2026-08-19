@@ -4,7 +4,7 @@
 **Authority ID:** `AUTH-GOV-DOCUMENT-LIFECYCLE`  
 **Version:** `1.1.0`  
 **Date:** `2026-08-19`  
-**Status:** OWNER-DIRECTED — effective with ADR-0095 after Human Merge
+**Status:** OWNER-DIRECTED — effective with ADR-0096 after Human Merge
 
 ## Purpose
 
@@ -99,7 +99,7 @@ Recency is meaningful only within one stable authority/document identity. A newe
 
 ## Relationship to parked PR #439
 
-PR #439 contains reusable documentation-hygiene logic and version-projection work. After ADR-0095 is merged, that implementation should be synchronized and adapted so its `DocumentationHygieneValidator` enforces this documentary boundary while consuming stable identities from the global Governance component. A second independent global governance implementation must not be created.
+PR #439 contains reusable documentation-hygiene logic and version-projection work. After ADR-0096 is merged, that implementation should be synchronized and adapted so its `DocumentationHygieneValidator` enforces this documentary boundary while consuming stable identities from the global Governance component. A second independent global governance implementation must not be created.
 
 ## Enforcement transition
 
