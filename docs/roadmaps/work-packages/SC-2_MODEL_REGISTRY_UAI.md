@@ -1,11 +1,11 @@
 # SC-2 — Model Registry & Universal Asset Interface
 
 **SPT:** `SC-MD-SPT-0001`  
-**Version:** 1.0.2  
-**Status:** IN IMPLEMENTATION — Phase A first productive registry consumer  
-**Execution Branch:** `agent/sc2-crypto-score-registry-consumer`  
-**Baseline:** `main@ca968b2563975df64245cb88ee45a7c04019a3a1`  
-**Historical Integration:** PR #418 merged after post-#419 revalidation  
+**Version:** 1.0.3  
+**Status:** IN IMPLEMENTATION — Phase B Crypto list/top10 registry migration  
+**Execution Branch:** `agent/sc2-crypto-list-top10-registry-consumers`  
+**Baseline:** `main@5976e4d2eb1c0d11303322b027b8be42e261583a`  
+**Historical Integration:** PR #418 stack merge; PR #421 first productive registry consumer landed after post-#422 revalidation  
 **Start:** 2026-08-19  
 **ADRs:** ADR-0087, ADR-0088, ADR-0089, ADR-0090
 
@@ -46,8 +46,8 @@ Kein öffentlicher Score-Pfad darf langfristig Modellwahl, Evidence-Bypass oder 
 
 | Pfad | heutige Rolle | Ziel |
 |---|---|---|
-| `/api/crypto/score` | verified, fail-closed, CanonicalScoreResult | erster Registry-Consumer |
-| `/api/crypto/list`, `/top10` | verified crypto + ranking | auf denselben Registry/Dispatcher ziehen |
+| `/api/crypto/score` | verified, fail-closed, CanonicalScoreResult | **LANDED: erster Registry-Consumer** |
+| `/api/crypto/list`, `/top10` | verified crypto + ranking | **aktueller Phase-B-Schritt: auf dieselbe Registry-Authority** |
 | `/api/crypto/analyze` | Agent + Market-Mix; kann Parallelscore erzeugen | Research/Enrichment; kein alternativer Canonical Score |
 | `scoring.service.ts` Base/DeFi | Legacy Aggregator | Domain-Executor nur hinter Evidence/Registry oder retire |
 | `cryptoScoringService.ts` | deterministische Engine im verified path | bleibt Executor, nicht Architektur |
@@ -70,7 +70,7 @@ Vollständige Baseline: `docs/evidence/sc-md/SC2_A1_A2_BASELINE_2026-08-19.md`.
 - [x] fail-closed Resolver bei fehlendem oder mehrdeutigem Champion
 - [x] vorhandene verifizierte Model-Familien initial registriert
 - [x] Unit-Tests für Identity, Routing, Bond-Gate und Ambiguität
-- [x] erster produktiver Consumer: `/api/crypto/score` — auf `agent/sc2-crypto-score-registry-consumer` implementiert, PR/CI pending
+- [x] erster produktiver Consumer `/api/crypto/score` auf `main`
 
 #### Phase A first productive consumer — `/api/crypto/score`
 
@@ -83,8 +83,8 @@ Vollständige Baseline: `docs/evidence/sc-md/SC2_A1_A2_BASELINE_2026-08-19.md`.
 - [x] additive `modelRegistry`-Metadaten im Score-Result
 - [x] Scoring-Lineage enthält UAI assetId + Registry modelId/version/alias/executor/Contracts
 - [x] Score-Mathematik, Ranking und Eligibility unverändert
-- [ ] PR-CI auf exaktem Branch-Head
-- [ ] Human Merge + finaler Main-Abgleich
+- [x] post-#422 PR-CI auf exaktem Head `c8764901`: CI #1815 PASS / Governance #1134 PASS
+- [x] Human Merge PR #421 -> `main@5976e4d2eb1c0d11303322b027b8be42e261583a`
 
 Evidence: `docs/evidence/sc-md/SC2_CRYPTO_SCORE_REGISTRY_CONSUMER_2026-08-19.md`.
 
@@ -136,7 +136,7 @@ Owner-gated Aktivierungsstufe aus ADR-0088/ADR-0089; Zero-Cost-Policy konkretisi
 - [x] Render Service Attestation gesetzt: `GEMINI_RESEARCH_FREE_TIER_ATTESTED=true`; `GEMINI_RESEARCH_FREE_TIER_ONLY=true`
 - [x] Render Shadow Kill-Switch bleibt ausdrücklich `GEMINI_RESEARCH_SHADOW_ENABLED=false`
 - [x] PR #416 CI #1790: TypeScript, komplette Unit-Suite, Production Build, CSP, Deployment Readiness und Docker PASS
-- [x] Main-Sync PR #418: nach Merge von PR #419 erneut gegen `main@51cb1cda` validiert; CI #1799 + Governance #1121 PASS; Human Merge `main@ca968b25`
+- [x] Main-Sync PR #418: nach Merge von PR #419 erneut validiert; CI #1799 + Governance #1121 PASS; Human Merge `main@ca968b25`
 - [ ] Shadow-Consumer gezielt verdrahten und Coverage/Latenz/Quota messen
 - [ ] reale Source-Policy + Lizenzfreigaben je Domain/Field
 - [ ] field-spezifische Promotion zu `ScoringEvidenceRef` — separat Owner-gated
@@ -150,12 +150,27 @@ Runbook: `docs/runbooks/GEMINI_RESEARCH_SHADOW.md`.
 ### Phase B — Consumer Migration
 
 - [x] `/api/crypto/score` über UAI + Registry-Resolution; bestehender verified Executor bleibt unverändert
-- [ ] `/api/crypto/list` + `/api/crypto/top10` über dieselbe Registry-Resolution
+- [x] `/api/crypto/list` + `/api/crypto/top10` über dieselbe Registry-Resolution — **Implementation auf aktuellem Execution Branch; PR/CI/Human Merge noch offen**
 - [ ] Traditional stock/forex/index mit CanonicalResultAdapter
 - [ ] Commodity/Sovereign Executor aus `registryRoutes` extrahieren
 - [ ] Registry routes über UAI + Registry-Resolution
 - [ ] Meme/Raw-Materials direkte Modellwahl hinter kanonische Adapter setzen oder retire
 - [ ] `/api/crypto/analyze` auf Research-/Enrichment-Semantik begrenzen; Research Evidence ausschließlich über `ResearchEvidenceAdapter`
+
+#### Phase B Crypto list/top10 migration
+
+- [x] `assetRegistry`-Assets werden mit UAI-Quelle `registry` normalisiert
+- [x] `/list` führt Registry-Resolution vor verified Scoring aus
+- [x] `/top10` führt Registry-Resolution vor verified Scoring aus
+- [x] inkompatible Registry-Auflösung ruft keinen Scoring-Executor auf
+- [x] `/list` hält auch Registry-Fehler im vollständigen `CanonicalScoreResult`-Envelope
+- [x] `/top10` schließt nicht auflösbare Assets vor Ranking/Eligibility aus
+- [x] UAI assetId + Model Registry Metadata in erfolgreiche `/list`-/`/top10`-Responses und Lineage aufgenommen
+- [x] Score-Mathematik, Ranking/Eligibility, Provider- und Evidence-Gates unverändert
+- [ ] PR-CI auf exaktem Branch-Head
+- [ ] Human Merge + finaler Main-Abgleich
+
+Evidence: `docs/evidence/sc-md/SC2_CRYPTO_LIST_TOP10_REGISTRY_CONSUMERS_2026-08-19.md`.
 
 ### Phase C — Single Dispatcher Exit
 
@@ -177,24 +192,34 @@ Runbook: `docs/runbooks/GEMINI_RESEARCH_SHADOW.md`.
 - keine öffentliche Gemini-Research-Route in Phase A.6;
 - **keine kostenpflichtige Gemini-Nutzung**.
 
-## Enterprise-/FinTech-Abgleich
+## Enterprise-/FinTech-Abgleich — verifiziert 2026-08-19
 
-Die Registry übernimmt zentrale Versionierung, kontrollierte Deployment-Aliase, nachvollziehbare Modellmetadaten und fail-closed Promotion. Der erste produktive Consumer verschiebt nun auch die tatsächliche Modellwahl aus der Route in diese Registry und schreibt die Auswahl in die Scoring-Lineage. Das folgt dem 2026 aktualisierten Model-Risk-Governance-Muster aus Federal Reserve/OCC/FDIC: Model Use, Model Inventory, Dokumentation und Controls werden als zusammenhängender Lifecycle behandelt. Die regulatorische Guidance ist hier ein Governance-Benchmark; sie wird nicht als Aussage über eine konkrete aufsichtsrechtliche Einstufung von CAPITAL-AI verwendet.
+Die Registry übernimmt zentrale Versionierung, kontrollierte Deployment-Aliase, nachvollziehbare Modellmetadaten und fail-closed Promotion. Nach `/score` verschiebt der aktuelle Phase-B-Schritt auch für `/list` und `/top10` die tatsächliche Modellautorität aus den Routes in dieselbe Registry und schreibt die Auswahl in die Scoring-Lineage.
 
-UAI/Evidence-Trennung verhindert weiterhin, dass Asset-Katalogdaten oder AI-Outputs stillschweigend zu Finanz-Evidence werden. Der Gemini-Shadow-Transport bleibt vor dem Evidence Gate, ist explizit rate-/circuit-/quota-begrenzt und liefert nur zitierte Research Candidates. ADR-0090 ergänzt eine Kosten-Trust-Boundary: der kanonische Runtime-Entry-Point ist Free-Tier-only, Paid Mode ist verboten und Billing-Freiheit wird zusätzlich operator-attestiert. Produktive Score-Wirkung erfordert weiterhin einen separat versionierten und reviewbaren Evidence-/Feature-Contract. Outcome-/Walk-Forward-Validierung bleibt SC-8.
+Das folgt dem am 17.04.2026 veröffentlichten Federal Reserve/OCC/FDIC Model-Risk-Governance-Muster (SR 26-2): risikobasierte Model Use, Model Inventory, Dokumentation, Governance/Controls, Validierung und laufendes Monitoring werden als zusammenhängender Lifecycle behandelt. Die Guidance fokussiert traditionelle statistische/quantitative und nicht-generative/nicht-agentische AI-Modelle. Sie wird hier als technischer Enterprise-Benchmark genutzt; daraus wird keine konkrete aufsichtsrechtliche Einstufung von CAPITAL-AI abgeleitet.
+
+NIST AI RMF 1.0 bleibt ergänzender freiwilliger Benchmark für Governance, Inventory, Traceability und Lifecycle-Risikomanagement. NIST weist aktuell darauf hin, dass AI RMF 1.0 überarbeitet wird; SC-2 unterstellt keine bereits finale Nachfolgeversion.
+
+UAI/Evidence-Trennung verhindert weiterhin, dass Asset-Katalogdaten oder AI-Outputs stillschweigend zu Finanz-Evidence werden. Gemini bleibt vor dem Evidence Gate und default-off. Produktive Score-Wirkung erfordert weiterhin separat versionierte und reviewbare Evidence-/Feature-Contracts. Outcome-/Walk-Forward-Validierung bleibt SC-8.
 
 ## Main-Korrelation 2026-08-19
 
-Der historische SC-2-Stack basierte auf `345b2bd3`. `main` rückte über Governance/Regulatory Hardening, M10 Phase 4 und PR #419 M10 Phase 5 auf `51cb1cdac9cb25d303f306d40c5b27b83ba954de` vor. PR #418 wurde danach auf `ad61a7ec` erneut gegen diesen Stand validiert (CI #1799 und Governance #1121 PASS) und als `ca968b2563975df64245cb88ee45a7c04019a3a1` Human-gemerged.
+PR #421 wurde nach dem vorherigen Merge von PR #422 erneut gegen `main@3ed1d6063394a65e9bdc0b46629929ebfc9ff067` validiert. Der Revalidation-Head `c8764901` bestand CI #1815 und Governance #1134 und wurde Human-gemerged. Aktuelle SC-2-Baseline ist damit `main@5976e4d2eb1c0d11303322b027b8be42e261583a`.
 
-Der aktuelle Execution-Branch `agent/sc2-crypto-score-registry-consumer` wurde frisch von `main@ca968b25` erstellt. Open PR #414 hat keinen Pfad-Overlap mit diesem Work Package.
+Der aktuelle Execution-Branch `agent/sc2-crypto-list-top10-registry-consumers` wurde frisch von diesem Commit erstellt.
+
+Open-PR-Korrelation bei Branch-Start:
+
+- PR #423: ausschließlich `docs/evidence/m10/M10_SHADOW_ASSURANCE_PROBE_2_2026-08-19.md`; kein Pfad-Overlap.
+- PR #414: Privacy/Legal/Runtime-Scope; kein Pfad-Overlap mit den hier beanspruchten SC-2-Dateien.
 
 Korrelationsentscheidungen:
 
 - `ADR-0086` bleibt Governance Authority; SC-2 verwendet `ADR-0087`–`ADR-0090`.
-- M10 Phase 5 (`server/m10/**`, zugehörige Migration/Tests) bleibt unverändert aus `main` erhalten.
-- PR #414 verändert keine der in diesem Work Package beanspruchten Scoring-/Research-/Roadmap-Dateien; dessen separate ADR-0086-Nummernkollision bleibt außerhalb SC-2.
-- der neue Consumer führt keine zweite Engine oder Dispatcher-Architektur ein; die Route nutzt weiterhin den bestehenden verified Executor, aber nur nach Registry-Autorisierung.
+- M10 Shadow Assurance bleibt fachlich getrennt von Scoring Model Selection.
+- `/list` und `/top10` verwenden denselben Resolver/Executor-Vertrag wie `/score`, erzeugen aber noch **keinen** Phase-C-Dispatcher.
+- Registry-Fehler bleiben fail-closed; Top10 kann bei fehlender Model-Autorisierung kein Asset aufnehmen.
+- Vor PR-Abschluss wird der Branch erneut gegen den dann aktuellen `main` korreliert.
 
 ## Definition of Done SC-2
 

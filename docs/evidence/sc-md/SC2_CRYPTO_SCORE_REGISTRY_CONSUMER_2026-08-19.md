@@ -4,15 +4,15 @@
 **Work Package:** `SC-2`  
 **Phase:** A — first productive consumer  
 **Branch:** `agent/sc2-crypto-score-registry-consumer`  
-**Baseline:** `main@ca968b2563975df64245cb88ee45a7c04019a3a1`  
+**Original Baseline:** `main@ca968b2563975df64245cb88ee45a7c04019a3a1`  
 **Authority:** ADR-0087 + SC-MD-SPT-0001  
-**Status:** IMPLEMENTED — PR/CI PENDING
+**Status:** LANDED — PR #421 / post-#422 CI #1815 + Governance #1134 / `main@5976e4d2eb1c0d11303322b027b8be42e261583a`
 
 ## 1. Purpose
 
-This increment closes the remaining SC-2 Phase-A foundation item: `POST /api/crypto/score` becomes the first productive consumer whose model selection is controlled by the canonical UAI + `ScoringModelRegistry` path.
+This increment closed the remaining SC-2 Phase-A foundation item: `POST /api/crypto/score` became the first productive consumer whose model selection is controlled by the canonical UAI + `ScoringModelRegistry` path.
 
-It deliberately does **not** introduce the Phase-C single dispatcher yet. The existing verified crypto technical executor remains the scoring engine; the route may invoke it only after a successful registry resolution and an explicit compatibility check.
+It deliberately did **not** introduce the Phase-C single dispatcher. The existing verified crypto technical executor remains the scoring engine; the route may invoke it only after a successful registry resolution and an explicit compatibility check.
 
 ## 2. Before
 
@@ -29,7 +29,7 @@ Consequences:
 
 ### 3.1 UAI-first resolution
 
-`POST /api/crypto/score` now constructs a request-sourced UAI identity (`crypto:<SYMBOL>`) and resolves it through the canonical `ScoringModelRegistry` before any scoring executor is called.
+`POST /api/crypto/score` constructs a request-sourced UAI identity (`crypto:<SYMBOL>`) and resolves it through the canonical `ScoringModelRegistry` before any scoring executor is called.
 
 ### 3.2 Fail-closed executor binding
 
@@ -44,7 +44,7 @@ Any incompatible registry state returns `SCORE_NOT_COMPUTABLE` before the scorin
 
 ### 3.3 Model lineage
 
-The score response remains backward-compatible with the existing string field `model: technical-provenance`, while adding `assetId` and `modelRegistry` metadata. `ScoringLineage` now optionally records:
+The score response remains backward-compatible with the existing string field `model: technical-provenance`, while adding `assetId` and `modelRegistry` metadata. `ScoringLineage` records:
 
 - registry version;
 - model ID/version/alias/lifecycle;
@@ -53,7 +53,7 @@ The score response remains backward-compatible with the existing string field `m
 - result contract version;
 - evidence policy.
 
-The migrated endpoint writes the UAI asset ID into lineage. `/api/crypto/list` and `/api/crypto/top10` remain unchanged in this increment and are the next crypto consumer-migration step.
+The migrated endpoint writes the UAI asset ID into lineage.
 
 ## 4. Preserved invariants
 
@@ -67,30 +67,24 @@ The migrated endpoint writes the UAI asset ID into lineage. `/api/crypto/list` a
 - Gemini Shadow remains disabled;
 - no Render, Supabase or Stripe mutation.
 
-## 5. Negative-test intent
+## 5. Validation and merge evidence
 
-Tests cover:
+The original PR was re-correlated after PR #422 changed `main`. PR #422 contributed only M10 Shadow-Assurance documentation and had no path overlap with the SC-2 implementation.
 
-1. normal BTC request resolves to UAI `crypto:BTC` and `crypto-technical-provenance@0.6.3`;
-2. a canonical registry descriptor pointing at a different executor fails closed;
-3. a descriptor requiring a result adapter fails closed;
-4. the `/score` route source contract resolves the registry policy before calling the verified scoring executor;
-5. scoring lineage records the resolved model identity/version/alias and UAI asset ID.
+Final validated PR #421 head: `c876490121616007ab3fd758ed9af102a86d831c`.
 
-Full repository validation is intentionally deferred to GitHub CI after PR creation, per repository cost policy.
+- CI #1815: **SUCCESS** — repository integrity, TypeScript, full unit suite, production build, CSP and deployment readiness passed; Docker checks were workflow-correctly skipped for class C.
+- Governance #1134: **SUCCESS** — cost gate, workflow security and canonical PR contract passed.
+- Final pre-merge correlation: `0 behind` current `main@3ed1d6063394a65e9bdc0b46629929ebfc9ff067`.
+- Human merge: PR #421 -> `main@5976e4d2eb1c0d11303322b027b8be42e261583a`.
+- Merge commit tree equals the validated PR-head tree `d843405e16ff1882d56c13e8cc4b9f32037ab952`.
 
 ## 6. Enterprise / FinTech benchmark
 
-The design is aligned with the April 17, 2026 Federal Reserve/OCC/FDIC Revised Guidance on Model Risk Management as a model-governance benchmark: model use should be tied to intended purpose, supported by governance/controls, a sufficiently informative model inventory and ongoing documentation/monitoring. CAPITAL-AI applies that principle by moving productive model selection into a versioned registry and persisting the selected model metadata in execution lineage.
+The implementation remains aligned with the April 17, 2026 Federal Reserve/OCC/FDIC Revised Guidance on Model Risk Management as a model-governance benchmark: intended model use, model inventory, documentation, governance/controls and monitoring should be connected across the model lifecycle. The guidance explicitly focuses on traditional statistical/quantitative and non-generative/non-agentic AI models; that makes its engineering principles particularly relevant to CAPITAL-AI's deterministic scoring path, without asserting regulatory applicability to CAPITAL-AI.
 
-The EU AI Act Articles 11 and 12 are used as an additional traceability/documentation benchmark, not as a claim that this deterministic scoring path is legally classified as a high-risk AI system. The relevant engineering principle is that system versions, interactions and operational events should remain technically documentable and traceable.
+NIST AI RMF 1.0 remains a voluntary supporting benchmark for lifecycle governance, inventory and traceability. As of 2026-08-19 NIST states that AI RMF 1.0 is being revised, so this repository does not claim a later final NIST framework version.
 
-NIST AI RMF remains a general governance benchmark for lifecycle risk management and traceability. The actual scoring engine remains deterministic; Gemini stays isolated behind the ResearchEvidence boundary.
+## 7. Next roadmap step
 
-## 7. Next roadmap step after merge
-
-After this PR is Human-merged and re-correlated with then-current `main`, continue Phase B crypto migration:
-
-1. move `/api/crypto/list` and `/api/crypto/top10` onto the same registry-resolution policy;
-2. then consolidate the three crypto entry points behind the Phase-C canonical scoring dispatcher;
-3. only after the scoring migration gates are stable continue the separately controlled Gemini Shadow consumer/source-policy work.
+Phase B continues with `/api/crypto/list` and `/api/crypto/top10` on the same UAI + Registry resolution policy. After all three Crypto score consumers are registry-authorized, Phase C can introduce the one canonical scoring dispatcher and remove productive route-level direct engine imports.
