@@ -5,8 +5,8 @@
 //   -> atomic Phase-5 consumption -> exactly one workflow_dispatch against the same PR branch.
 //
 // GitHub Actions path:
-//   workflow_dispatch -> POST /workflow-gate with the high-entropy consumptionId -> fresh GitHub
-//   PR-state/ref resolution -> atomic PENDING -> DISPATCHED redemption -> only then expensive CI.
+//   workflow_dispatch -> GitHub Actions OIDC + one-time consumption -> fresh GitHub PR-state/ref
+//   resolution -> atomic PENDING -> DISPATCHED redemption -> only then expensive CI.
 //
 // Human merge remains separate. This router does not merge pull requests.
 import express from 'express';
@@ -24,6 +24,7 @@ import { issueM10Challenge } from './challengeIssuance';
 import { verifyM10OwnerAssertion } from './assertionVerification';
 import { createRealGithubApiFetch, resolveTrustedPrState } from './githubPrStateResolver';
 import { resolveTrustedM10DispatchRef } from './githubPrDispatchRef';
+import { verifyGithubActionsOidcToken } from './githubActionsOidc';
 import {
   createSupabaseM10ApprovalStore,
   createSupabaseM10AssertionCredentialStore,
@@ -37,6 +38,8 @@ import { claimM10WorkflowGate } from './workflowGateSupabaseStore';
 export const m10AuthoritativeAuthorizationRouter = express.Router();
 
 const M10_CI_WORKFLOW_FILE = 'ci.yml';
+const M10_CI_WORKFLOW_PATH = '.github/workflows/ci.yml';
+const M10_CI_WORKFLOW_NAME = 'CI';
 
 function resolverToken(): string | null {
   return process.env.M10_GITHUB_TOKEN?.trim() || null;
@@ -227,8 +230,6 @@ m10AuthoritativeAuthorizationRouter.post('/complete', async (req, res) => {
     return res.status(403).json({ error: result.reason });
   }
 
-  // Audit the human authorization before any CI consumption/dispatch. If durable audit is down,
-  // fail closed even though the cryptographic approval evidence already exists.
   const approvalAudit = traceId('m10-authorize-approved');
   try {
     await writeAgentAuditEvent({
@@ -322,20 +323,14 @@ m10AuthoritativeAuthorizationRouter.post('/complete', async (req, res) => {
   });
 });
 
-// GitHub Actions does not possess a CAPITAL-AI browser session. This endpoint is therefore a
-// capability endpoint, not a user endpoint: the unguessable single-use consumptionId is the bearer
-// capability. Before burning it, the server re-resolves current GitHub PR state and the exact PR
-// branch ref. No raw credential material is accepted or returned and the capability itself is never
-// persisted into audit logs before redemption.
+// GitHub Actions has no CAPITAL-AI browser session. The gate therefore requires two independent
+// workload proofs before touching the durable consumption: (1) a signed, short-lived GitHub Actions
+// OIDC token bound to the exact repository/ref/head/run/workflow and (2) the unguessable, single-use
+// M10 consumption capability. Current PR state is then re-resolved a final time before redemption.
 m10AuthoritativeAuthorizationRouter.post('/workflow-gate', async (req, res) => {
   const ip = getClientIp(req as any);
   if (!checkRateLimit(`m10-workflow-gate:${ip}`, 30, 5 * 60_000)) {
     return res.status(429).json({ error: 'M10 workflow gate rate limit exceeded.' });
-  }
-
-  const githubToken = resolverToken();
-  if (!githubToken) {
-    return res.status(503).json({ error: 'M10 workflow gate is fail-closed: GitHub resolver is unavailable.' });
   }
 
   const body = req.body || {};
@@ -349,19 +344,44 @@ m10AuthoritativeAuthorizationRouter.post('/workflow-gate', async (req, res) => {
     authorizationDigest: typeof body.authorizationDigest === 'string' ? body.authorizationDigest : '',
     action: body.action,
   };
+  const workflowRunId = typeof body.workflowRunId === 'string' ? body.workflowRunId : '';
+  const workflowRef = typeof body.workflowRef === 'string' ? body.workflowRef : '';
 
   if (
     !requested.consumptionId || !requested.approvalId || requested.repository !== SYSTEMADMIN_REPOSITORY
     || !Number.isInteger(requested.prNumber) || requested.prNumber <= 0
-    || !requested.baseSha || !requested.headSha || !/^[0-9a-f]{64}$/.test(requested.authorizationDigest)
+    || !requested.baseSha || !requested.headSha || !/^[0-9a-f]{40}$/.test(requested.headSha)
+    || !/^[0-9a-f]{64}$/.test(requested.authorizationDigest)
     || requested.action !== 'AUTHORIZE_PR_CI'
+    || !/^\d{1,30}$/.test(workflowRunId)
+    || !workflowRef.startsWith('refs/heads/')
   ) {
     return res.status(400).json({ error: 'Invalid M10 workflow gate context.' });
   }
 
-  const workflowRunId = typeof body.workflowRunId === 'string' ? body.workflowRunId.slice(0, 100) : undefined;
-  const workflowRef = typeof body.workflowRef === 'string' ? body.workflowRef.slice(0, 300) : '';
-  if (!workflowRef) return res.status(400).json({ error: 'GitHub workflow ref is required.' });
+  const authorization = req.get('authorization') || '';
+  const oidcToken = authorization.startsWith('Bearer ') ? authorization.slice('Bearer '.length).trim() : '';
+  if (!oidcToken) {
+    return res.status(401).json({ error: 'GitHub Actions OIDC bearer token is required.', verdict: 'DENY' });
+  }
+
+  const oidc = await verifyGithubActionsOidcToken({
+    token: oidcToken,
+    repository: requested.repository,
+    runId: workflowRunId,
+    ref: workflowRef,
+    headSha: requested.headSha,
+    workflowFile: M10_CI_WORKFLOW_PATH,
+    workflowName: M10_CI_WORKFLOW_NAME,
+  });
+  if (oidc.verdict === 'DENY') {
+    return res.status(403).json({ error: oidc.reason, verdict: 'DENY' });
+  }
+
+  const githubToken = resolverToken();
+  if (!githubToken) {
+    return res.status(503).json({ error: 'M10 workflow gate is fail-closed: GitHub resolver is unavailable.' });
+  }
 
   const githubApiFetch = createRealGithubApiFetch(githubToken);
   const current = await resolveTrustedPrState(
@@ -400,6 +420,7 @@ m10AuthoritativeAuthorizationRouter.post('/workflow-gate', async (req, res) => {
     action: requested.action as 'AUTHORIZE_PR_CI',
   };
   const capabilityHash = hashOpaqueToken(requested.consumptionId);
+  const oidcJtiHash = hashOpaqueToken(oidc.identity.jti);
   const gateTrace = traceId('m10-workflow-gate');
 
   const claim = await claimM10WorkflowGate(
@@ -419,6 +440,7 @@ m10AuthoritativeAuthorizationRouter.post('/workflow-gate', async (req, res) => {
           headSha: gateInput.headSha,
           consumptionCapabilityHash: capabilityHash,
           workflowRef,
+          oidcJtiHash,
         },
         capability: 'AUTHORIZE_PR_CI',
         riskClass: 'HIGH',
@@ -430,7 +452,15 @@ m10AuthoritativeAuthorizationRouter.post('/workflow-gate', async (req, res) => {
         commitSha: gateInput.headSha,
         workflowRunId,
         result: 'PENDING',
-        metadata: { singleUseWorkflowGate: true, currentPrStateReResolved: true },
+        metadata: {
+          singleUseWorkflowGate: true,
+          currentPrStateReResolved: true,
+          githubOidcVerified: true,
+          githubActor: oidc.identity.actor,
+          githubActorId: oidc.identity.actorId,
+          githubRunAttempt: oidc.identity.runAttempt,
+          runnerEnvironment: oidc.identity.runnerEnvironment,
+        },
       });
     },
   );
@@ -442,8 +472,6 @@ m10AuthoritativeAuthorizationRouter.post('/workflow-gate', async (req, res) => {
     });
   }
 
-  // Best-effort terminal audit; the pre-finalize audit plus immutable consumption transition are
-  // already durable. A logging outage after the atomic claim must not re-open the one-time gate.
   const successTrace = traceId('m10-workflow-gate-success');
   await writeAgentAuditEvent({
     requestId: successTrace,
@@ -457,6 +485,7 @@ m10AuthoritativeAuthorizationRouter.post('/workflow-gate', async (req, res) => {
       prNumber: gateInput.prNumber,
       headSha: gateInput.headSha,
       consumptionCapabilityHash: capabilityHash,
+      oidcJtiHash,
     },
     capability: 'AUTHORIZE_PR_CI',
     riskClass: 'HIGH',
@@ -468,7 +497,7 @@ m10AuthoritativeAuthorizationRouter.post('/workflow-gate', async (req, res) => {
     commitSha: gateInput.headSha,
     workflowRunId,
     result: 'SUCCESS',
-    metadata: { singleUseWorkflowGate: true, currentPrStateReResolved: true },
+    metadata: { singleUseWorkflowGate: true, currentPrStateReResolved: true, githubOidcVerified: true },
   }).catch(() => {});
 
   res.setHeader('Cache-Control', 'no-store');

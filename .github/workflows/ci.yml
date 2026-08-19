@@ -57,6 +57,7 @@ concurrency:
 # M10 Controlled Cutover:
 # - normal PR events fail before checkout/npm/build;
 # - only a successfully redeemed Owner-Passkey M10 consumption may enter expensive PR CI;
+# - workflow-gate redemption additionally requires a short-lived signed GitHub Actions OIDC token;
 # - PR #429 is the unique one-time bootstrap used to validate this cutover before the new endpoint
 #   can exist on the default branch; it has no authority for any future PR after Human merge;
 # - main push build/deploy remains separate from PR-head CI authorization;
@@ -64,6 +65,10 @@ concurrency:
 jobs:
   build-and-test:
     name: build-and-test
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -117,6 +122,20 @@ jobs:
               # could accidentally include it in runner output; the server audit stores only its hash.
               echo "::add-mask::$M10_CONSUMPTION_ID"
 
+              # Defense in depth: the one-time input is not accepted as the sole caller identity.
+              # Request a short-lived GitHub-signed OIDC JWT for this exact workload. id-token:write
+              # permits token issuance only; it does not grant repository-resource write access.
+              oidc_separator='?'
+              case "$ACTIONS_ID_TOKEN_REQUEST_URL" in *\?*) oidc_separator='&' ;; esac
+              oidc_response=$(curl --fail-with-body --silent --show-error \
+                --connect-timeout 10 --max-time 30 \
+                --header "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+                "${ACTIONS_ID_TOKEN_REQUEST_URL}${oidc_separator}audience=https%3A%2F%2Fcapital-ai.online%2Fm10-workflow-gate")
+              m10_oidc_token=$(python3 -c 'import json,sys; value=json.load(sys.stdin).get("value", ""); print(value)' <<< "$oidc_response")
+              test -n "$m10_oidc_token"
+              echo "::add-mask::$m10_oidc_token"
+              unset oidc_response
+
               gate_payload="$RUNNER_TEMP/m10-workflow-gate-${GITHUB_RUN_ID}.json"
               cleanup_gate_payload() { rm -f "$gate_payload"; }
               trap cleanup_gate_payload EXIT
@@ -142,9 +161,11 @@ jobs:
                 --connect-timeout 10 --max-time 30 \
                 --request POST \
                 --header 'Content-Type: application/json' \
+                --header "Authorization: Bearer $m10_oidc_token" \
                 --data-binary "@$gate_payload" \
                 'https://capital-ai.online/api/m10/credential-enrollment/authorize/workflow-gate'
 
+              unset m10_oidc_token
               echo 'mode=m10-authorized' >> "$GITHUB_OUTPUT"
               ;;
 
