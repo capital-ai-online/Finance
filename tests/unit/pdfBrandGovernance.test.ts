@@ -54,15 +54,18 @@ describe('P0 CAPITAL-AI PDF brand governance', () => {
     expect(complianceSource).toContain('drawCapitalAiRunningHeader(doc, reportMetadata');
   });
 
-  it('derives the report version from package.json at build time', () => {
+  it('derives the shared runtime/report version from package.json at build time', () => {
     const packageJson = JSON.parse(read('package.json')) as { version: string };
     const viteConfig = read('vite.config.ts');
     const brandContract = read('src/platform/PdfReporting/pdfBrand.ts');
+    const runtimeBrand = read('src/platform/Branding/runtimeBrand.ts');
 
     expect(packageJson.version).toMatch(/^\d+\.\d+\.\d+(?:[-+].+)?$/);
     expect(viteConfig).toContain("fs.readFileSync(path.resolve(__dirname, 'package.json')");
     expect(viteConfig).toContain('__CAPITAL_AI_VERSION__');
-    expect(brandContract).toContain('CAPITAL_AI_VERSION = __CAPITAL_AI_VERSION__');
+    expect(runtimeBrand).toContain('CAPITAL_AI_VERSION = __CAPITAL_AI_VERSION__');
+    expect(brandContract).toContain("from '../Branding/runtimeBrand'");
+    expect(brandContract).toContain('export { CAPITAL_AI_VERSION }');
   });
 
   it('keeps the archived risk module free of executable PDF/export code', () => {

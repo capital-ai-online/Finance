@@ -1,0 +1,8 @@
+# Reproducible Documentation-as-Code PDF toolchain.
+#
+# WeasyPrint 69 exposes the PDF/UA/tagging options used by
+# export_notebooklm_pdfs.py. Poppler CLI tools (pdfinfo, pdftotext, pdftoppm)
+# are OS-level verification dependencies and are intentionally not Python deps.
+Markdown==3.10.2
+WeasyPrint==69.0
+Pygments==2.20.0
