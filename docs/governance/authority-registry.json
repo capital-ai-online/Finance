@@ -2,7 +2,7 @@
   "schemaVersion": "1.0.0",
   "registryAuthorityId": "AUTH-GOV-AUTHORITY-REGISTRY",
   "trustRoot": "AGENTS.md",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "effectiveDate": "2026-08-19",
   "identityRule": "authorityId is immutable and path-independent; display IDs and paths may change only with traceable migration metadata",
   "entries": [
@@ -19,6 +19,54 @@
       "aliases": []
     },
     {
+      "authorityId": "AUTH-GOV-AUTHORITY-REGISTRY",
+      "kind": "governance-registry",
+      "displayId": "Authority Registry",
+      "version": "1.1.0",
+      "lifecycle": "owner-directed",
+      "date": "2026-08-19",
+      "path": "docs/governance/authority-registry.json",
+      "scope": "stable authority identity resolution",
+      "precedenceTier": 3,
+      "aliases": []
+    },
+    {
+      "authorityId": "AUTH-GOV-CONTROL-CATALOG",
+      "kind": "governance-registry",
+      "displayId": "Control Catalog",
+      "version": "1.0.0",
+      "lifecycle": "owner-directed",
+      "date": "2026-08-19",
+      "path": "docs/governance/control-catalog.json",
+      "scope": "operative repository governance controls",
+      "precedenceTier": 3,
+      "aliases": []
+    },
+    {
+      "authorityId": "AUTH-GOV-ADR-REGISTRY",
+      "kind": "governance-registry",
+      "displayId": "ADR Registry",
+      "version": "1.0.0",
+      "lifecycle": "owner-directed",
+      "date": "2026-08-19",
+      "path": "docs/adr/registry.json",
+      "scope": "ADR version, date, lifecycle and supersession identity",
+      "precedenceTier": 3,
+      "aliases": []
+    },
+    {
+      "authorityId": "AUTH-GOV-CONTROL-PLANE",
+      "kind": "platform-governance-component",
+      "displayId": "Governance Control Plane",
+      "version": "1.0.0",
+      "lifecycle": "owner-directed",
+      "date": "2026-08-19",
+      "path": "src/platform/Governance/README.md",
+      "scope": "cross-cutting governance component boundary and contracts",
+      "precedenceTier": 3,
+      "aliases": []
+    },
+    {
       "authorityId": "AUTH-GOV-SUPERSESSION-POLICY",
       "kind": "governance-policy",
       "displayId": "GOV-AUTH-SUPERSESSION-0001",
@@ -28,6 +76,30 @@
       "path": "docs/governance/GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md",
       "scope": "authority resolution and semantic supersession",
       "precedenceTier": 3,
+      "aliases": []
+    },
+    {
+      "authorityId": "AUTH-GOV-CONTROL-PLANE-ROADMAP",
+      "kind": "roadmap",
+      "displayId": "GOV-CP-2026-08-19",
+      "version": "1.0.0",
+      "lifecycle": "owner-directed",
+      "date": "2026-08-19",
+      "path": "docs/roadmaps/GOVERNANCE_CONTROL_PLANE_CONSOLIDATION_2026-08-19.md",
+      "scope": "governance consolidation execution plan",
+      "precedenceTier": 4,
+      "aliases": []
+    },
+    {
+      "authorityId": "AUTH-GOV-STANDARDS-CROSSWALK",
+      "kind": "governance-benchmark",
+      "displayId": "DOC-GOV-STANDARDS-CROSSWALK-2026-08-19",
+      "version": "1.0.0",
+      "lifecycle": "reviewed",
+      "date": "2026-08-19",
+      "path": "docs/governance/control-plane/STANDARDS_CROSSWALK.md",
+      "scope": "ISO/IEC 42001 and NIST SSDF engineering crosswalk",
+      "precedenceTier": 4,
       "aliases": []
     },
     {
@@ -51,6 +123,18 @@
       "date": "2026-08-19",
       "path": "docs/adr/ADR-0086-vendor-privacy-evidence-governance.md",
       "scope": "vendor privacy and transfer evidence governance",
+      "precedenceTier": 2,
+      "aliases": []
+    },
+    {
+      "authorityId": "AUTH-ADR-PRIVACY-RETENTION-2026-08-19",
+      "kind": "adr",
+      "displayId": "ADR-0092",
+      "version": "1.0.0",
+      "lifecycle": "accepted-for-implementation",
+      "date": "2026-08-19",
+      "path": "docs/adr/ADR-0092-privacy-retention-and-lifecycle-hardening.md",
+      "scope": "privacy retention and lifecycle hardening",
       "precedenceTier": 2,
       "aliases": []
     },
