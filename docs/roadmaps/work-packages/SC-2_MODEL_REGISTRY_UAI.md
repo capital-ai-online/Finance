@@ -4,7 +4,7 @@
 **Version:** 1.0.6  
 **Status:** IN IMPLEMENTATION — Phase C2b physical Standard-Crypto legacy cleanup  
 **Execution Branch:** `agent/sc2-physical-legacy-crypto-cleanup`  
-**Baseline:** `main@0d84e479ea97c97490dd65bea85fad2ec76ee157`  
+**Baseline:** `main@afc8e56de7deebab879f054eb03e099bf516eb1b`  
 **Historical Integration:** PR #418 stack; PR #421 `/score`; PR #424 `/list` + `/top10`; PR #427 C1 dispatcher; PR #428 C2a operational exit; all Human-merged after required main revalidation  
 **Start:** 2026-08-19  
 **ADRs:** ADR-0087, ADR-0088, ADR-0089, ADR-0090
@@ -165,7 +165,7 @@ Evidence: `docs/evidence/sc-md/SC2_COMPOSITION_ROOT_CRYPTO_EXIT_2026-08-19.md`.
 - [x] historischen `/api/charts-scoring` Handler aus `server.application.ts` physisch entfernt; Authority verbleibt im Simulation-only Compatibility Router
 - [x] historische `/api/crypto-scoring/:symbol` GET/POST-Bodies auf Meme-only reduziert; Standard-Crypto erreicht sie nur bei Wiring-Regression und wird dann `SCORING_BOUNDARY_VIOLATION` fail-closed abgewiesen
 - [x] struktureller C2b-Regressionstest ergänzt
-- [ ] Branch unmittelbar vor PR gegen aktuellen `main` + offene PRs revalidieren
+- [x] Branch unmittelbar vor PR gegen aktuellen `main@afc8e56d` revalidiert; PR #414 0 Pfadoverlap, PR #429 0 Pfadoverlap aber CI-/Governance-Prozesskorrelation
 - [ ] PR-CI/Governance auf exaktem C2b-Head
 - [ ] Human Merge + finaler Main-Abgleich
 
@@ -203,11 +203,11 @@ NIST AI RMF 1.0 bleibt ergänzender freiwilliger Lifecycle-/Traceability-Benchma
 
 - PR #427 C1 bestand final CI #1837 + Governance #1155 und wurde Human-gemerged.
 - PR #428 C2a bestand final CI #1849 + Governance #1166/#1167 und wurde Human-gemerged.
-- Aktueller C2b-Baseline-Commit ist `main@0d84e479ea97c97490dd65bea85fad2ec76ee157`.
-- C2b-Branch `agent/sc2-physical-legacy-crypto-cleanup` wurde frisch von genau diesem Main-Commit erstellt.
-- Beim C2b-Scan wurde ein Cold-Start-Edge gefunden: `/api/market-data` konnte bei erstem Providerfehler direkt `enrichMarketDataAsset()` aufrufen. Dieser Edge wird vor physischer Löschung mit derselben kanonischen Standard-Crypto-Enrichment-Grenze geschlossen.
-- Offene PRs werden unmittelbar vor C2b-PR und erneut vor Merge-Readiness auf Pfad-/Semantik-Korrelation geprüft; insbesondere M10-Cutover-Änderungen können den CI-Autorisierungsprozess beeinflussen.
-- `ADR-0086` bleibt Governance Authority; SC-2 verwendet ADR-0087–ADR-0090.
+- C2b wurde initial von `main@0d84e479ea97c97490dd65bea85fad2ec76ee157` erstellt.
+- Während der Implementierung wurde PR #414 nach `main` gemerged. #414 hat 0 Dateipfadoverlap mit den sieben C2b-Dateien; C2b wurde deshalb vor PR-Erstellung per Merge-Sync auf `main@afc8e56de7deebab879f054eb03e099bf516eb1b` gebracht. Ergebnis vor PR: `behind=0`, Merge-Base exakt aktueller Main.
+- Open PR #429 hat 0 Dateipfadoverlap mit C2b, verändert aber PR-Template und CI-Workflow. Falls #429 vor C2b-Merge-Readiness landet, wird der Branch erneut synchronisiert und der dann autoritative Passkey-/CI-Prozess befolgt.
+- PR #414 hat zusätzlich eine zweite ADR-Datei mit Nummer ADR-0086 eingebracht. Diese Nummern-/Authority-Kollision ist außerhalb des C2b-Scope und muss separat durch Governance bereinigt werden; C2b interpretiert `ADR-0086` weiterhin ausschließlich als die bereits bestehende Governance Authority, wenn diese im SC-MD-SPT referenziert wird.
+- `ADR-0087` bleibt die fachliche Single-Scoring-Architecture-Authority für C2b.
 
 ## Definition of Done SC-2
 
