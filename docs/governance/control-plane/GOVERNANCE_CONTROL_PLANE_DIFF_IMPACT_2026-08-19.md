@@ -1,7 +1,7 @@
 # Governance Control Plane — Supersession Diff & Impact
 
 **Document ID:** `DOC-GOV-CONTROL-PLANE-IMPACT-2026-08-19`  
-**Version:** `1.0.0`  
+**Version:** `1.1.0`  
 **Date:** `2026-08-19`  
 **Status:** OWNER REVIEW / IMPLEMENTATION EVIDENCE  
 **Decision authority:** `ADR-0095` / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`  
@@ -24,21 +24,24 @@ The Owner directed that repository governance duplication and contradictory poli
 |---|---|---|---|
 | `AGENTS.md` plus independent global rules in `CLAUDE.md` | `AGENTS.md` Trust Root + thin adapters | `AUTH-GOV-AGENT-TRUST-ROOT` | removes policy mirror; protected boundaries preserved |
 | provider/model instructions could repeat global security/CI rules | adapters may only contain host-specific non-authoritative execution notes | adapter IDs only | prevents provider-specific policy drift |
+| ESS-0019 named a universal AI agent control plane | retained as subordinate capability/risk/audit/execution plane under `/AGENTS.md` | `AUTH-ESS-AI-AGENT-CAPABILITY-PLANE` | no capability removal; makes explicit that ESS-0019 is not a second trust root |
+| `SKILL-GOV-0001` carried retired provider assignments and generic value-chain handoff obligations | documentation-only operational skill under ESS-0012 + global Governance boundary | stable skill ID retained | removes stale provider/global process mirror without weakening documentary validation |
 | two active ADRs displayed as `ADR-0085` | ESS namespace ADR remains `ADR-0085`; privacy decision becomes `ADR-0094` | privacy keeps `AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19`; old 0085 retained as legacy alias | namespace repair only; privacy decision substance unchanged |
 | vendor privacy ADR and governance draft both displayed as `ADR-0086` | vendor privacy remains `ADR-0086`; governance decision becomes `ADR-0095` | governance uses `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`; old 0086 is legacy alias | removes ambiguous display identity and expands governance decision to current Owner scope |
 | two active `.ai/skills` files declared `ESS-0012` | Documentation Governance retains ESS-0012; vocabulary draft removed from active skills and archived; ESS-0017 remains Vocabulary Governance | `AUTH-ESS-DOCUMENTATION-GOVERNANCE` and `AUTH-ESS-VOCABULARY-GOVERNANCE` | removes active duplicate; historical proposal retained |
 | Documentary Governance was a plausible global governance implementation location | new cross-cutting `src/platform/Governance` component | `AUTH-GOV-CONTROL-PLANE` | explicit component boundary; Documentary remains documentation-only |
 | authority inferred from path/display number/prose | stable `AUTH-*` + `CTRL-*` registries | path-independent IDs | deterministic identity and reduced text/regex brittleness |
 | old recency language could be interpreted at document level | same-authority version/date ordering; cross-authority replacement requires explicit supersession | stable `authorityId` | newer document alone cannot manufacture authority |
+| previous Governance Hardening roadmap could be read as current M10/authority status | retained with explicit historical/superseded annotation | documentary identity retained | preserves evidence while preventing current-state confusion |
 | M10 historical docs could imply future automatic reactivation | M10 explicitly `SUSPENDED/OFF` in current trust root/policy | current Owner state | no passkey gate until new explicit decision |
 
 ## 3. Operational impact
 
 ### Agent behavior
 
-Before: an agent could encounter materially overlapping repository-wide rules in `AGENTS.md`, `CLAUDE.md`, governance policies and domain documents.
+Before: an agent could encounter materially overlapping repository-wide rules in `AGENTS.md`, `CLAUDE.md`, operational skills, governance policies and domain documents.
 
-After: every agent starts at `/AGENTS.md`, resolves stable registries, then follows only effective domain authorities for the requested scope.
+After: every agent starts at `/AGENTS.md`, resolves stable registries, then follows only effective subordinate domain authorities for the requested scope. ESS-0019 remains the provider-neutral capability/execution contract and does not become a second trust root.
 
 ### Pull Requests / CI
 
@@ -56,7 +59,7 @@ No production mutation is performed by this governance branch. Existing producti
 
 **Improvement:** removes competing agent policy mirrors, makes protected authority machine-resolvable, prevents duplicate active governance identities and requires fail-closed handling of unresolved structural conflicts.
 
-**No privilege expansion:** the branch does not delegate merge, Owner IAM, secret access, destructive data operations, billing mutation, provider control-plane mutation or deployment authority.
+**No privilege expansion:** the branch does not delegate merge, Owner IAM, secret access, destructive data operations, billing mutation, provider control-plane mutation or deployment authority. ESS-0019 capability ceilings and risk classes remain intact but explicitly subordinate to the repository trust root.
 
 **Residual risk:** legacy historical/current documents may still contain old naked display-number references. The compatibility registry retains aliases; every touched/new ADR must use stable identity metadata after cutover. Bulk historical rewrite is intentionally avoided to preserve evidence and limit unrelated churn.
 
@@ -69,7 +72,8 @@ The control-plane structure is aligned to ISO/IEC 42001:2023 management-system c
 - historical ADR/ESS/evidence content is retained or represented by explicit historical aliases/archive records;
 - applied database migration files are not rewritten solely to change historical ADR comments;
 - former display IDs remain traceable but are non-canonical when marked legacy;
-- current/migrated decisions use stable `authorityId` values.
+- current/migrated decisions use stable `authorityId` values;
+- operational skills are treated as execution guidance, not independent authority.
 
 ## 7. Open-PR impact
 
@@ -80,6 +84,8 @@ The Draft PR contains useful documentation-hygiene implementation. It is parked 
 ### PR #442
 
 The Draft ranking PR is functionally independent but writes `docs/governance/document-registry.json`. It remains parked and must be synchronized with the new governance baseline before merge-readiness.
+
+At the latest branch integrity check there is no direct changed-file overlap between this Governance branch and either parked PR; the correlation is architectural/registry-related and is intentionally sequenced after Governance merge.
 
 ## 8. Rollback
 
