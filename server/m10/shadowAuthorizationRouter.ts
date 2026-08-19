@@ -4,7 +4,10 @@
 // the simplified pre-M10 CI path remains authoritative. It never invokes Phase-5 CI consumption or
 // any GitHub Actions trigger. Successful assertions persist only to m10_shadow_evaluations.
 import express from 'express';
-import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
+import type {
+  AuthenticationResponseJSON,
+  PublicKeyCredentialRequestOptionsJSON,
+} from '@simplewebauthn/server';
 import { checkAdminAccess } from '../../src/platform/Security/authMiddleware';
 import { OWNER_ONLY_ROLES } from '../../src/platform/Security/types';
 import {
@@ -52,11 +55,15 @@ async function requireOwner(req: express.Request, res: express.Response, zone: s
  * Pass that value directly to @simplewebauthn/browser. Sending it through a server-side options
  * generator as a custom string would UTF-8/base64url encode it again and break Phase-4
  * expectedChallenge equality.
+ *
+ * The explicit return contract is intentional: this path constructs browser-facing JSON manually
+ * to preserve the canonical challenge, so TypeScript must enforce the complete WebAuthn request
+ * shape (including required PublicKeyCredentialDescriptor fields) before it can reach production.
  */
 export async function buildM10ShadowAuthenticationOptions(
   challenge: string,
   credentials: readonly Readonly<{ credentialId: string; transports: readonly string[] }>[],
-) {
+): Promise<PublicKeyCredentialRequestOptionsJSON> {
   if (!challenge || credentials.length === 0) {
     throw new Error('M10 Shadow benötigt eine Challenge und mindestens ein aktives Owner-Credential.');
   }
@@ -65,9 +72,10 @@ export async function buildM10ShadowAuthenticationOptions(
     challenge,
     rpId: M10_RP_ID,
     timeout: M10_CHALLENGE_TTL_MS,
-    userVerification: 'required' as const,
+    userVerification: 'required',
     allowCredentials: credentials.map(credential => ({
       id: credential.credentialId,
+      type: 'public-key',
       transports: [...credential.transports] as any,
     })),
   };
