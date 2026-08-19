@@ -3,9 +3,10 @@
 **Document ID:** SC2-PHYSICAL-LEGACY-CRYPTO-CLEANUP-2026-08-19  
 **Date:** 2026-08-19  
 **Authority:** SC-MD-SPT-0001 · ADR-0087  
-**Baseline:** `main@0d84e479ea97c97490dd65bea85fad2ec76ee157`  
+**Initial Baseline:** `main@0d84e479ea97c97490dd65bea85fad2ec76ee157`  
+**Pre-PR Synchronized Baseline:** `main@afc8e56de7deebab879f054eb03e099bf516eb1b`  
 **Execution Branch:** `agent/sc2-physical-legacy-crypto-cleanup`  
-**Status:** IMPLEMENTED — PR/CI/Main-revalidation pending
+**Status:** IMPLEMENTED — pre-PR main correlation complete; PR/CI pending
 
 ## Objective
 
@@ -71,6 +72,16 @@ The historical `/api/crypto-scoring/:symbol` GET/POST bodies are now Meme-only f
 5. direct `CryptoScoringService` Standard-Crypto handler calls are absent;
 6. an explicit fail-closed boundary violation remains as defense in depth.
 
+## Pre-PR main / parallel-work correlation
+
+During C2b implementation, PR #414 merged after the branch had been created. `main` advanced from `0d84e479...` to `afc8e56d...`.
+
+- PR #414 changed 35 Privacy/DSGVO/runtime/migration/test files.
+- **Path overlap with the seven C2b files: 0.**
+- The C2b branch was merged with `main@afc8e56d...` before PR creation; resulting compare: `ahead=8`, `behind=0`, merge-base exactly `afc8e56d...`.
+- Open PR #429 changes M10 controlled-cutover, PR template and CI workflow files but has **0 path overlap** with C2b. It has a process correlation: if merged before C2b merge-readiness, C2b must re-sync and obey the then-current passkey/CI authorization flow rather than bypass it.
+- PR #414 also landed a separate `ADR-0086-vendor-privacy-evidence-governance.md` while the repository already contains the SC-2-referenced Governance Authority ADR-0086. This numbering/authority collision is recorded as an unrelated governance remediation item; C2b does not silently modify Privacy ADRs.
+
 ## Non-goals / protected invariants
 
 Unchanged in C2b:
@@ -93,7 +104,7 @@ C2b reduces the number of physical model-execution surfaces and removes a fallba
 
 - implementation: complete on execution branch;
 - structural regression test: added;
-- branch-vs-current-main correlation: required again before PR;
+- pre-PR branch-vs-current-main correlation: complete (`main@afc8e56d...`, behind=0);
 - repository CI/Governance: must run only after PR creation;
 - Human Merge: required;
 - C3: remains open after C2b.
