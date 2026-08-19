@@ -1,64 +1,64 @@
-# Governance Supersession Diff & Impact — 2026-08-19
+# Governance Supersession Diff & Impact — Historical Package
 
-**Document ID:** GOV-SUPERSESSION-IMPACT-2026-08-19  
-**Status:** OWNER REVIEW PACKAGE — proposed branch changes only  
-**Baseline:** `main@345b2bd3f0a9d61ba4f07182b6e892da5cf3b52d`
+**Document ID:** `GOV-SUPERSESSION-IMPACT-2026-08-19`  
+**Lifecycle:** `HISTORICAL / SUPERSEDED / NON-AUTHORIZING`  
+**Original baseline:** `main@345b2bd3f0a9d61ba4f07182b6e892da5cf3b52d`  
+**Current replacement:** `docs/governance/control-plane/GOVERNANCE_CONTROL_PLANE_DIFF_IMPACT_2026-08-19.md`  
+**Current decision:** `ADR-0095` / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`
 
-## Decision scope
+## Historical purpose
 
-This package covers only the known conflict around the retired pre-CI PR-body checkbox / Files-Viewed / `💪` or `okay` ritual and the interpretation of `PROPOSED` documents as normative authority.
+This package originally covered the narrower conflict around the retired PR-body checkbox / Files-Viewed / `💪` / `okay` ritual and the interpretation of `PROPOSED` documents as normative authority.
 
-No historical evidence is deleted or archived by this branch.
+It is retained as historical evidence of the earlier governance-hardening step. It is **not the current Owner-review package** for Governance Control Plane consolidation and MUST NOT be used to infer the current M10 enforcement state.
 
-## Authority comparison
+## Historical authority comparison
 
-| Artifact | Current lifecycle / authority | Relevant statement | Assessment |
-|---|---|---|---|
-| `docs/adr/ADR-0069-human-owner-comment-gate-and-dispatched-pr-ci.md` | **ACCEPTED**, Owner addendum 2026-08-16 | checkbox/emoji ritual retired; Human Merge remains | controlling Accepted Decision |
-| `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md` | REQUIRED, updated 2026-08-16 | ritual retired; simplified pre-M10 CI | aligned |
-| `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md` | ACTIVE, updated 2026-08-16 | ritual retired; M10 later uses Passkey | aligned |
-| `AGENTS.md` Systemadmin exception section | root governance | still says current-head review + Viewed attestations mandatory | stale/current-facing conflict |
-| `docs/governance/CAPITAL_AI_GOVERNANCE_LIBRARY_REPORT_2026-08-15.md` | dated report | labels Diff + Viewed + emoji review as non-negotiable | historical snapshot presented too strongly for current use |
-| `.github/policies/main-production-protection.expected.json` | machine-readable expected state | promotion notes still say Human/Owner head-bound gate remains unchanged | historical decision residue without later explicit current-state override |
-| `docs/adr/ADR-0039-human-authorized-pr-creation-and-advisory-governance.md` | **PROPOSED** | per-PR human creation authorization and advisory process rules | may inform process; must not be sole Accepted authority |
+At the time of the original package, the following observations were recorded:
 
-## Semantic diff
-
-### A. PR pre-CI authorization
-
-**Before (stale references):**
-
-```text
-PR → Owner body checkboxes → all files Viewed → current-head review 💪/okay → expensive CI → Human Merge
-```
-
-**After (current Accepted authority):**
-
-```text
-Pre-M10: PR → Governance/technical CI → Human/Owner merge decision → Human Merge
-Post-M10 controlled cutover: PR → Passkey AUTHORIZE_PR_CI → CI → Human/Owner merge decision → Human Merge
-```
-
-### B. Proposed-document authority
-
-**Before:** `PROPOSED` ADRs can appear in `Authority:` lists without qualification, allowing readers/agents to infer normative authority.
-
-**After:** Proposed/Draft material is explicitly design input only. Protected actions require separate Accepted/Active authority.
-
-## Impact analysis
-
-| Dimension | Impact |
+| Artifact | Historical observation |
 |---|---|
-| Merge authority | unchanged: Human/Owner-only |
-| Technical CI | no new checkbox/emoji gate; pre-M10 behavior remains current policy |
-| M10 | unchanged: Passkey/WebAuthn cutover remains future controlled gate; no completion claimed |
-| Agent capabilities | no elevation; agents still cannot merge or self-authorize HIGH/CRITICAL work |
-| Recovery | ADR-0069 anti-self-bootstrap invariants remain intact |
-| Historical evidence | retained; reclassified as historical where necessary, not rewritten as if it never happened |
-| Security | removes ambiguous weaker legacy authorization signals from current-facing governance |
-| Regulatory | improves traceability and accountable human oversight; does not itself establish legal applicability |
-| Rollback | revert this PR on a fresh branch; historical source documents remain available |
+| Accepted ADR-0069 Owner addendum | checkbox/emoji ritual retired; Human Merge remained |
+| Human Owner PR Approval Policy | aligned to the retired ritual at that time |
+| Development Chain policy | aligned to pre-/future-M10 transition language at that time |
+| `AGENTS.md` | still contained stale Viewed/current-head wording in one section |
+| Governance Library report | dated snapshot exposed retired ritual too strongly for current use |
+| main-production expected policy | contained historical promotion residue |
+| Proposed ADR-0039 | design input only, not sole Accepted authority |
 
-## Owner decision required
+These observations are historical and have since been incorporated or superseded by the Governance Control Plane work.
 
-Human Merge of the resulting PR constitutes acceptance of this semantic normalization for repository governance. If rejected, no supersession becomes effective on `main`.
+## Historical semantic diff
+
+The package distinguished the retired legacy flow:
+
+```text
+PR → Owner body checkboxes → all files Viewed → current-head review → expensive CI → Human Merge
+```
+
+from the then-planned/transition flow. Since then, M10 was implemented and historically verified, and PR #445 subsequently suspended M10 PR-CI enforcement. Therefore this older package is no longer a reliable current-state description.
+
+## Current interpretation
+
+Use the current Governance Control Plane sources instead:
+
+- `/AGENTS.md`;
+- `docs/governance/authority-registry.json`;
+- `docs/governance/control-catalog.json`;
+- `docs/architecture/ROADMAP.md`;
+- `docs/governance/control-plane/GOVERNANCE_CONTROL_PLANE_DIFF_IMPACT_2026-08-19.md`.
+
+Current relevant state:
+
+```text
+normal PR technical CI
+→ M10 passkey enforcement SUSPENDED / OFF
+→ Human/Owner merge decision
+→ Human Merge
+```
+
+Historical M10 evidence remains retained but cannot reactivate the control by citation or recency.
+
+## Evidence preservation
+
+No historical evidence is deleted by this reclassification. This file remains available to explain the earlier normalization step, while its normative role is explicitly retired.
