@@ -25,6 +25,7 @@ import { m10CredentialEnrollmentRouter } from '../m10/credentialEnrollmentRouter
 import { registerTrailingSlashNormalize } from '../middleware/seoUrlNormalize';
 import { installProductionSoft404Intercept } from '../runtime/spaFallback';
 import { seoEngineRouter } from './seoEngineRoutes';
+import { createLegacyScoringCompatibilityRouter } from './legacyScoringCompatibilityRoutes';
 
 export interface ApplicationRouteProviders {
   ai: any | null;
@@ -36,7 +37,7 @@ export interface ApplicationRouteProviders {
  * Canonical route composition for the production Express application.
  *
  * This module intentionally owns only router mounting and prefixes. It does not
- * own Stripe raw-body ingress, global middleware ordering, provider creation,
+ * own Stripe raw-body ingress, global middleware ordering, provider construction,
  * scoring semantics or runtime lifecycle. Those remain separate architecture
  * boundaries under ADR-0014.
  *
@@ -57,6 +58,12 @@ export function registerApplicationRoutes(
   // SEO D3: wrap production SPA catch-all (registered later in startServer) so
   // unknown paths return real 404 instead of the SPA shell.
   installProductionSoft404Intercept();
+
+  // SC-2 Phase C2: intercept historical scoring endpoints before the legacy declarations in
+  // server.application.ts. Standard-Crypto terminates at the canonical dispatcher here;
+  // caller-indicator chart scoring is explicitly simulation-only. Meme requests intentionally
+  // fall through to their existing C3 migration path.
+  app.use(createLegacyScoringCompatibilityRouter());
 
   // Domain route factories keep the exact provider contract currently used by
   // server.application.ts. Missing AI providers remain fail-open where the
