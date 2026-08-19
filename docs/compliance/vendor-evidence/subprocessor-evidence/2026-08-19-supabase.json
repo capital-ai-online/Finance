@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "controller": "Sven Michael Kulessa",
+  "project": "CAPITAL-AI",
+  "vendorId": "supabase",
+  "evidenceType": "subprocessor-snapshot",
+  "reviewedAt": "2026-08-19",
+  "sourceDocument": {
+    "title": "Supabase Subprocessors",
+    "versionDate": "2026-06-01",
+    "officialIndex": "https://supabase.com/legal/customer-resources/subprocessor-list",
+    "officialPdf": "https://supabase.com/legal/subprocessor-list/June-1-2026.pdf",
+    "sizeBytes": 63579,
+    "sha256": "e85324d3d26fd754755a8cbcf8ddf3f1e8b04f164eb4959a63e53f6aa3f5fa6d",
+    "retrievedAt": "2026-08-19"
+  },
+  "subprocessors": [
+    {"name":"Supabase, Inc.","processing":"Provision of support services"},
+    {"name":"Active Campaign, LLC d/b/a Postmark","processing":"Communication with Authorized Users in connection with the provision of the Services and support"},
+    {"name":"Amazon Web Services, Inc","processing":"Provision of hosting services"},
+    {"name":"Atlassian Corporation Plc","processing":"Provision of status page services"},
+    {"name":"Braintrust Data, Inc","processing":"Provision of monitoring and tracing"},
+    {"name":"Clay Labs Inc.","processing":"Provision of customer insight services"},
+    {"name":"Clazar, Inc","processing":"Provision of marketplace services"},
+    {"name":"Cloudflare, Inc","processing":"Provision of hosting services"},
+    {"name":"ConfigCat Korlátolt Felelősségű Társaság","processing":"Feature flagging"},
+    {"name":"Google, LLC","processing":"Provision of hosting services"},
+    {"name":"Fly.io, Inc","processing":"Provision of hosting services"},
+    {"name":"FrontApp, Inc","processing":"Communication with Authorized Users in connection with the provision of the Services and support"},
+    {"name":"Functional Software, Inc d/b/a Sentry","processing":"Error monitoring and tracing"},
+    {"name":"Github, Inc","processing":"Authorized Users account authentication"},
+    {"name":"Hex Technologies, Inc","processing":"Provision of data analytics services"},
+    {"name":"Hubspot, Inc","processing":"Communication with Authorized Users in connection with the provision of the Services and support"},
+    {"name":"Notion Labs, Inc","processing":"Communication with Authorized Users in connection with the provision of the Services and support"},
+    {"name":"Sublime Security Inc","processing":"Email Security"},
+    {"name":"Latacora, LLC","processing":"Managed Security Service Provider"},
+    {"name":"OpenAI, LLC","processing":"Provision of natural language processing and generation services"},
+    {"name":"PandaDoc, Inc","processing":"Communication with Authorized Users in connection with the provision of the Services and support"},
+    {"name":"Slack Technologies, LLC","processing":"Communication with Authorized Users in connection with the provision of the Services and support"},
+    {"name":"Upstash, Inc","processing":"Provision of serverless data hosting services"},
+    {"name":"Vercel, Inc","processing":"Provision of hosting services"}
+  ],
+  "changeNotification": {
+    "mechanism": "Supabase provides a subscription mechanism for Subprocessor List updates.",
+    "contractualNotice": "At least 30 days' notice of proposed changes if Customer subscribes.",
+    "capitalAiSubscriptionStatus": "unverified"
+  },
+  "assessment": {
+    "snapshotStatus": "verified",
+    "capitalAiDataFlowMappingStatus": "pending",
+    "locationAndThirdCountryMappingStatus": "pending",
+    "transferMechanismAssessmentStatus": "pending",
+    "tiaStatus": "pending"
+  },
+  "limitations": [
+    "Presence on the vendor-wide list does not prove that every listed subprocessor receives CAPITAL-AI Covered Data.",
+    "The snapshot does not establish processing locations, actual third-country transfers, adequacy coverage or supplementary measures for CAPITAL-AI.",
+    "Do not treat this snapshot as a completed TIA."
+  ]
+}

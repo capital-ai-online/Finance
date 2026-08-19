@@ -8,6 +8,7 @@ import { hygieneRouter } from '../documentHygiene';
 import { systemEventsRouter } from '../systemEvents';
 import { versionManagerRouter } from '../../src/platform/VersionManager/versionManager';
 import { stepUpRouter } from '../stepUp';
+import { privacyRouter } from '../privacy';
 import { complianceRouter } from '../../src/platform/Compliance/router';
 import { scoreValidationRouter } from '../scoreValidation';
 import { alertsRouter } from '../alerts';
@@ -78,6 +79,7 @@ export function registerApplicationRoutes(
   app.use('/api/admin', systemEventsRouter);
   app.use('/api/admin', versionManagerRouter);
   app.use('/api/auth', stepUpRouter);
+  app.use('/api/privacy', privacyRouter);
   app.use('/api/compliance', complianceRouter);
   app.use('/api/scoring', scoreValidationRouter);
   app.use('/api/scoring/explain', createScoreExplainabilityRouter(ai, anthropic, openai));
