@@ -4,7 +4,7 @@
 **Lifecycle:** `HISTORICAL / SUPERSEDED / NON-AUTHORIZING`  
 **Original baseline:** `main@345b2bd3f0a9d61ba4f07182b6e892da5cf3b52d`  
 **Current replacement:** `docs/governance/control-plane/GOVERNANCE_CONTROL_PLANE_DIFF_IMPACT_2026-08-19.md`  
-**Current decision:** `ADR-0095` / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`
+**Current decision:** `ADR-0096` / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`
 
 ## Historical purpose
 
