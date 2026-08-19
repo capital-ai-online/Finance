@@ -8,6 +8,7 @@ const root = process.cwd();
 interface AdrRegistryRecord {
   authorityId: string;
   displayId: string;
+  version: string;
   lifecycle: string;
   path: string;
 }
@@ -33,7 +34,7 @@ describe('Governance Control Plane', () => {
     }).not.toThrow();
   });
 
-  it('represents merged ADR-0094 and ADR-0096 as accepted records, not open-PR reservations', () => {
+  it('keeps merged ADR-0094 accepted while ADR-0096 v1.1 remains a proposed amendment until Human Merge', () => {
     const registry = JSON.parse(
       fs.readFileSync(path.join(root, 'docs/adr/registry.json'), 'utf8'),
     ) as AdrRegistry;
@@ -48,7 +49,8 @@ describe('Governance Control Plane', () => {
     });
     expect(adr0096).toMatchObject({
       authorityId: 'AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19',
-      lifecycle: 'accepted',
+      version: '1.1.0',
+      lifecycle: 'proposed',
       path: 'docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md',
     });
     expect(registry.parallelNamespaceReservations).toEqual([]);

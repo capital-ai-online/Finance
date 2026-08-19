@@ -12,7 +12,7 @@ export interface RegistryEntry {
   authority: string;
   version: string;
   language: 'de' | 'en' | 'mixed' | string;
-  lifecycle: 'draft' | 'generated' | 'reviewed' | 'approved' | 'superseded' | 'archived' | string;
+  lifecycle: 'draft' | 'generated' | 'reviewed' | 'approved' | 'superseded' | 'archived' | 'suspended' | string;
   path: string;
 }
 
@@ -28,17 +28,14 @@ export interface DocumentationHygieneFinding {
   path?: string;
 }
 
-// Documentary Governance is intentionally subordinate to the repository-wide
-// Governance Control Plane. AGENTS.md is the only repository instruction root;
-// provider-specific policy mirrors such as CLAUDE.md are not valid root documents.
 const ALLOWED_ROOT_MARKDOWN = new Set(['README.md', 'AGENTS.md']);
 const ALLOWED_LANGUAGES = new Set(['de', 'en', 'mixed']);
-const ALLOWED_LIFECYCLES = new Set(['draft', 'generated', 'reviewed', 'approved', 'superseded', 'archived']);
+const ALLOWED_LIFECYCLES = new Set(['draft', 'generated', 'reviewed', 'approved', 'superseded', 'archived', 'suspended']);
 const SEMVER = /^\d+\.\d+\.\d+$/;
 const DOCUMENT_ID = /^DOC-[A-Z0-9-]+$/;
 
-function finding(code: string, message: string, path?: string): DocumentationHygieneFinding {
-  return path ? { code, message, path } : { code, message };
+function finding(code: string, message: string, filePath?: string): DocumentationHygieneFinding {
+  return filePath ? { code, message, path: filePath } : { code, message };
 }
 
 function duplicateValues(values: string[]): string[] {
@@ -52,8 +49,15 @@ function duplicateValues(values: string[]): string[] {
 }
 
 function readRegistry(repoRoot: string): DocumentRegistry {
-  const registryPath = path.join(repoRoot, DOCUMENT_REGISTRY_PATH);
-  return JSON.parse(fs.readFileSync(registryPath, 'utf8')) as DocumentRegistry;
+  return JSON.parse(fs.readFileSync(path.join(repoRoot, DOCUMENT_REGISTRY_PATH), 'utf8')) as DocumentRegistry;
+}
+
+function resolveRegistryTarget(repoRoot: string, documentPath: string): string | null {
+  if (!documentPath || path.isAbsolute(documentPath)) return null;
+  const absoluteRoot = path.resolve(repoRoot);
+  const target = path.resolve(repoRoot, documentPath);
+  if (target !== absoluteRoot && !target.startsWith(`${absoluteRoot}${path.sep}`)) return null;
+  return target;
 }
 
 export function collectDocumentationHygieneFindings(repoRoot = process.cwd()): DocumentationHygieneFinding[] {
@@ -106,8 +110,12 @@ export function collectDocumentationHygieneFindings(repoRoot = process.cwd()): D
     if (!SEMVER.test(String(entry.version ?? ''))) findings.push(finding('DOCUMENT_VERSION_INVALID', `${documentId}: invalid version ${String(entry.version ?? '')}`, documentPath));
     if (!ALLOWED_LANGUAGES.has(String(entry.language ?? ''))) findings.push(finding('DOCUMENT_LANGUAGE_INVALID', `${documentId}: invalid language ${String(entry.language ?? '')}`, documentPath));
     if (!ALLOWED_LIFECYCLES.has(String(entry.lifecycle ?? ''))) findings.push(finding('DOCUMENT_LIFECYCLE_INVALID', `${documentId}: invalid lifecycle ${String(entry.lifecycle ?? '')}`, documentPath));
-    if (!documentPath || !fs.existsSync(path.join(repoRoot, documentPath))) {
-      findings.push(finding('DOCUMENT_TARGET_MISSING', `${documentId}: registry target does not exist.`, documentPath || DOCUMENT_REGISTRY_PATH));
+
+    const target = resolveRegistryTarget(repoRoot, documentPath);
+    if (!target) {
+      findings.push(finding('DOCUMENT_PATH_INVALID', `${documentId}: path must remain repository-relative.`, documentPath || DOCUMENT_REGISTRY_PATH));
+    } else if (!fs.existsSync(target)) {
+      findings.push(finding('DOCUMENT_TARGET_MISSING', `${documentId}: registry target does not exist.`, documentPath));
     }
   }
 

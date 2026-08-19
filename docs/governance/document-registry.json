@@ -1,12 +1,12 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.2.0",
   "authority": "docs/governance/DOCUMENTATION_HYGIENE_POLICY.md",
   "entries": [
     {
       "documentId": "DOC-ROOT-README",
       "type": "repository-overview",
       "owner": "CAPITAL-AI",
-      "authority": "Repository",
+      "authority": "package.json#version / deterministic README projection",
       "version": "0.6.0",
       "language": "mixed",
       "lifecycle": "approved",
@@ -36,11 +36,21 @@
       "documentId": "DOC-GOV-DOCUMENTATION-HYGIENE",
       "type": "governance-policy",
       "owner": "CAPITAL-AI",
-      "authority": "H0-H4-H5",
+      "authority": "H0-H4-H5 / ADR-0096 Documentation-only boundary",
       "version": "1.0.0",
       "language": "mixed",
       "lifecycle": "generated",
       "path": "docs/governance/DOCUMENTATION_HYGIENE_POLICY.md"
+    },
+    {
+      "documentId": "DOC-GOV-DOCUMENT-LIFECYCLE-2026-08-19",
+      "type": "governance-policy",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "AUTH-GOV-DOCUMENT-LIFECYCLE / ADR-0096",
+      "version": "1.3.0",
+      "language": "mixed",
+      "lifecycle": "reviewed",
+      "path": "docs/governance/control-plane/DOCUMENT_LIFECYCLE_POLICY.md"
     },
     {
       "documentId": "DOC-GOV-AUTH-SUPERSESSION",
@@ -73,13 +83,73 @@
       "path": "docs/governance/control-plane/GOVERNANCE_CONTROL_PLANE_DIFF_IMPACT_2026-08-19.md"
     },
     {
+      "documentId": "DOC-GOV-M10-PREREQ-IMPACT-2026-08-19",
+      "type": "owner-review-evidence",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "ADR-0096 / WP-GOV-M10-PREREQ-2026-08-19",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "reviewed",
+      "path": "docs/governance/control-plane/GOVERNANCE_M10_PREREQUISITES_DIFF_IMPACT_2026-08-19.md"
+    },
+    {
+      "documentId": "DOC-WP-GOV-M10-PREREQ-2026-08-19",
+      "type": "work-package",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "ADR-0096 / Owner chat priority 2026-08-19",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "reviewed",
+      "path": "docs/roadmaps/work-packages/GOVERNANCE_M10_PREREQUISITES_2026-08-19.md"
+    },
+    {
+      "documentId": "DOC-ADR-0004-SUSPENDED",
+      "type": "architecture-decision",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "AUTH-ADR-LEGACY-BRANDING-PANEL-0004 / ADR-0096 suspension",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "suspended",
+      "path": "docs/adr/suspended/ADR-0004-branding-and-panel-removal.md"
+    },
+    {
+      "documentId": "DOC-ESS-0004-SUSPENDED",
+      "type": "enterprise-specification",
+      "owner": "Platform Director",
+      "authority": "ESS-0004 / ADR-0096 suspension",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "suspended",
+      "path": "docs/archive/governance/suspended/ESS-0004-Enterprise-Version-Manager.md"
+    },
+    {
+      "documentId": "DOC-ADR-0094",
+      "type": "architecture-decision",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "AUTH-ADR-OPEN-SOURCE-MEDIA-RENDERING-2026-08-19",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "approved",
+      "path": "docs/adr/ADR-0094-open-source-pdf-companion-and-short-media-rendering.md"
+    },
+    {
+      "documentId": "DOC-ADR-0095",
+      "type": "architecture-decision",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "approved",
+      "path": "docs/adr/ADR-0095-privacy-governance-single-source-of-truth.md"
+    },
+    {
       "documentId": "DOC-ADR-0096",
       "type": "architecture-decision",
       "owner": "CAPITAL-AI Owner",
       "authority": "AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "language": "mixed",
-      "lifecycle": "approved",
+      "lifecycle": "draft",
       "path": "docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md"
     },
     {
@@ -161,26 +231,6 @@
       "language": "de",
       "lifecycle": "approved",
       "path": "docs/adr/ADR-0093-pdf-renderer-accessibility-and-brand-finalization.md"
-    },
-    {
-      "documentId": "DOC-ADR-0094",
-      "type": "architecture-decision",
-      "owner": "CAPITAL-AI Owner",
-      "authority": "AUTH-ADR-OPEN-SOURCE-MEDIA-RENDERING-2026-08-19",
-      "version": "1.0.0",
-      "language": "mixed",
-      "lifecycle": "approved",
-      "path": "docs/adr/ADR-0094-open-source-pdf-companion-and-short-media-rendering.md"
-    },
-    {
-      "documentId": "DOC-ADR-0095",
-      "type": "architecture-decision",
-      "owner": "CAPITAL-AI Owner",
-      "authority": "AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19",
-      "version": "1.0.0",
-      "language": "mixed",
-      "lifecycle": "approved",
-      "path": "docs/adr/ADR-0095-privacy-governance-single-source-of-truth.md"
     },
     {
       "documentId": "DOC-ROADMAP-PDF-BRANDING-P1-P2-2026-08-19",
@@ -366,7 +416,7 @@
       "documentId": "DOC-EVIDENCE-M10-CLOSURE-2026-08-19",
       "type": "closure-evidence",
       "owner": "CAPITAL-AI Owner",
-      "authority": "ADR-0066 + ESS-0022 + M10 Exit Gate",
+      "authority": "ADR-0066 + ESS-0022 + M10 Exit Gate / historical non-reactivating evidence",
       "version": "1.0.0",
       "language": "mixed",
       "lifecycle": "reviewed",

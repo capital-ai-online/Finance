@@ -27,6 +27,7 @@
     "status:scan-drift": "tsx scripts/automation/scanStatusEventDrift.ts",
     "hygiene:sweep": "tsx scripts/automation/sweepDocumentaryBranding.ts",
     "docs:hygiene:check": "tsx scripts/automation/validateDocumentationHygiene.ts",
+    "governance:control-plane": "node scripts/governance/validateGovernanceControlPlane.mjs",
     "predeploy:check": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/verifyDeploymentReadiness.ts && npm run supplychain:provenance && npm run supplychain:verify",
     "release:version": "tsx scripts/automation/releaseVersion.ts",
     "release:manifest": "tsx scripts/automation/buildRuntimeReleaseManifest.ts",

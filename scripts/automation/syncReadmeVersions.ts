@@ -18,12 +18,12 @@ function main(): void {
   const checkOnly = process.argv.includes('--check');
 
   if (expected === readme) {
-    console.log('[readme-sync] README canonical declarations and version matrix are current.');
+    console.log('[readme-sync] README deterministic projection is current.');
     return;
   }
 
   if (checkOnly) {
-    console.error('[readme-sync] README version declarations are stale. Run: npm run readme:sync');
+    console.error('[readme-sync] README projection drift detected. Run: npm run readme:sync');
     process.exitCode = 1;
     return;
   }

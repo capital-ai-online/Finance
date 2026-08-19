@@ -25,7 +25,6 @@ function runGuardProbe(targetRelativePath) {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'capital-ai-r002-'));
   fs.mkdirSync(path.join(tempRoot, 'docs'), { recursive: true });
   fs.mkdirSync(path.join(tempRoot, 'uploads'), { recursive: true });
-
   const script = `
     const fs = require('node:fs');
     try {
@@ -35,13 +34,7 @@ function runGuardProbe(targetRelativePath) {
       process.stdout.write(String(error && error.code || error));
     }
   `;
-
-  const result = spawnSync(process.execPath, ['-e', script], {
-    cwd: tempRoot,
-    encoding: 'utf8',
-    env: productionProbeEnv(),
-  });
-
+  const result = spawnSync(process.execPath, ['-e', script], { cwd: tempRoot, encoding: 'utf8', env: productionProbeEnv() });
   fs.rmSync(tempRoot, { recursive: true, force: true });
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
@@ -50,28 +43,19 @@ function runWatcherProbe(targetRelativePath) {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'capital-ai-r002-watch-'));
   fs.mkdirSync(path.join(tempRoot, 'docs'), { recursive: true });
   fs.mkdirSync(path.join(tempRoot, 'uploads'), { recursive: true });
-
   const script = `
     const fs = require('node:fs');
-    const watcher = fs.watch(${JSON.stringify(targetRelativePath)}, () => {
-      process.stdout.write('WATCH_EVENT');
-    });
+    const watcher = fs.watch(${JSON.stringify(targetRelativePath)}, () => process.stdout.write('WATCH_EVENT'));
     const hasContract = watcher && typeof watcher.close === 'function' && typeof watcher.unref === 'function';
     if (hasContract) watcher.close();
     process.stdout.write(hasContract ? 'WATCH_SUPPRESSED' : 'WATCH_INVALID');
   `;
-
-  const result = spawnSync(process.execPath, ['-e', script], {
-    cwd: tempRoot,
-    encoding: 'utf8',
-    env: productionProbeEnv(),
-  });
-
+  const result = spawnSync(process.execPath, ['-e', script], { cwd: tempRoot, encoding: 'utf8', env: productionProbeEnv() });
   fs.rmSync(tempRoot, { recursive: true, force: true });
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
 
-function runHttpProbe(method, requestPath, extraEnv = {}, cwd = repoRoot) {
+function runHttpProbe(method, requestPath, cwd = repoRoot) {
   const script = `
     const http = require('node:http');
     const server = http.createServer((req, res) => {
@@ -88,19 +72,12 @@ function runHttpProbe(method, requestPath, extraEnv = {}, cwd = repoRoot) {
         });
         const text = await response.text();
         process.stdout.write(JSON.stringify({ status: response.status, body: text }));
-      } catch (error) {
-        process.stdout.write(JSON.stringify({ status: 0, error: String(error) }));
       } finally {
         server.close();
       }
     });
   `;
-
-  return spawnSync(process.execPath, ['-e', script], {
-    cwd,
-    encoding: 'utf8',
-    env: productionProbeEnv(extraEnv),
-  });
+  return spawnSync(process.execPath, ['-e', script], { cwd, encoding: 'utf8', env: productionProbeEnv() });
 }
 
 function parseLastJsonObject(stdout) {
@@ -115,24 +92,14 @@ function buildReleaseManifestFixture() {
   fs.copyFileSync(path.join(repoRoot, 'package.json'), path.join(tempRoot, 'package.json'));
   fs.copyFileSync(path.join(repoRoot, 'package-lock.json'), path.join(tempRoot, 'package-lock.json'));
   fs.writeFileSync(path.join(tempRoot, 'docs', 'architecture', 'fixture.md'), '# Immutable Documentary Fixture\n', 'utf8');
-
   const commitSha = 'fedcba9876543210fedcba9876543210fedcba98';
   const result = spawnSync(tsxBin, [releaseManifestBuilder], {
     cwd: tempRoot,
     encoding: 'utf8',
-    env: {
-      ...process.env,
-      RELEASE_SOURCE_COMMIT: commitSha,
-      SOURCE_DATE_EPOCH: '1786147200',
-    },
+    env: { ...process.env, RELEASE_SOURCE_COMMIT: commitSha, SOURCE_DATE_EPOCH: '1786147200' },
   });
   assert.equal(result.status, 0, result.stderr || result.stdout);
-
-  return {
-    tempRoot,
-    commitSha,
-    manifestPath: path.join(tempRoot, 'dist', 'control-plane', 'release-manifest.json'),
-  };
+  return { tempRoot, commitSha, manifestPath: path.join(tempRoot, 'dist', 'control-plane', 'release-manifest.json') };
 }
 
 test('R-002 blocks production writes to repository-style docs', () => {
@@ -141,13 +108,13 @@ test('R-002 blocks production writes to repository-style docs', () => {
   assert.match(result.stdout, /CAPITAL_AI_RUNTIME_ARTIFACT_READ_ONLY/);
 });
 
-test('R-002 blocks legacy Document Hygiene local authority', () => {
+test('R-002 keeps retired Document Hygiene state write-protected', () => {
   const result = runGuardProbe('uploads/document_hygiene.json');
   assert.equal(result.status, 0);
   assert.match(result.stdout, /CAPITAL_AI_RUNTIME_ARTIFACT_READ_ONLY/);
 });
 
-test('R-002 blocks legacy Version Manager local authority', () => {
+test('R-002 keeps retired Version Manager state write-protected', () => {
   const result = runGuardProbe('uploads/version_manager.json');
   assert.equal(result.status, 0);
   assert.match(result.stdout, /CAPITAL_AI_RUNTIME_ARTIFACT_READ_ONLY/);
@@ -166,7 +133,7 @@ test('R-002 suppresses production file watchers on docs', () => {
   assert.doesNotMatch(result.stdout, /WATCH_EVENT/);
 });
 
-test('R-002 rejects legacy production Documentary mutations with a control-plane contract', () => {
+test('R-002 rejects retired production Documentary and VersionManager mutations', () => {
   for (const requestPath of [
     '/api/docs-file',
     '/api/admin/hygiene/review',
@@ -183,7 +150,15 @@ test('R-002 rejects legacy production Documentary mutations with a control-plane
   }
 });
 
-test('R-002 build step emits immutable release and Documentary evidence', () => {
+test('R-002 does not intercept GET /api/admin/version before Express authorization', () => {
+  const result = runHttpProbe('GET', '/api/admin/version');
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const probe = parseLastJsonObject(result.stdout);
+  assert.equal(probe.status, 599);
+  assert.match(probe.body, /fallbackHandlerReached/);
+});
+
+test('R-002 build step still emits immutable release and Documentary evidence', () => {
   const fixture = buildReleaseManifestFixture();
   try {
     const manifest = JSON.parse(fs.readFileSync(fixture.manifestPath, 'utf8'));
@@ -201,43 +176,9 @@ test('R-002 build step emits immutable release and Documentary evidence', () => 
   }
 });
 
-test('R-002 serves production version identity from immutable build manifest', () => {
-  const fixture = buildReleaseManifestFixture();
-  try {
-    const manifest = JSON.parse(fs.readFileSync(fixture.manifestPath, 'utf8'));
-    const result = runHttpProbe('GET', '/api/admin/version', {}, fixture.tempRoot);
-    assert.equal(result.status, 0, result.stderr || result.stdout);
-    const probe = parseLastJsonObject(result.stdout);
-    assert.equal(probe.status, 200);
-    const payload = JSON.parse(probe.body);
-    assert.equal(payload.state.version, '0.6.0');
-    assert.equal(payload.state.commitSha, fixture.commitSha);
-    assert.equal(payload.state.buildIdentity, manifest.buildIdentity);
-    assert.equal(payload.state.documentaryTreeSha256, manifest.inputs.documentaryTreeSha256);
-    assert.equal(payload.state.source, 'immutable-build-manifest');
-    assert.equal(payload.state.readOnly, true);
-    assert.equal(payload.workspace.mutationAuthority, 'ci-or-authenticated-control-plane');
-  } finally {
-    fs.rmSync(fixture.tempRoot, { recursive: true, force: true });
-  }
-});
-
-test('R-002 keeps package/deploy metadata only as compatibility fallback when no manifest exists', () => {
-  const commitSha = '0123456789abcdef0123456789abcdef01234567';
-  const result = runHttpProbe('GET', '/api/admin/version', { RENDER_GIT_COMMIT: commitSha });
-  assert.equal(result.status, 0);
-  const probe = parseLastJsonObject(result.stdout);
-  assert.equal(probe.status, 200);
-  const payload = JSON.parse(probe.body);
-  assert.equal(payload.state.version, '0.6.0');
-  assert.equal(payload.state.commitSha, commitSha);
-  assert.equal(payload.state.source, 'immutable-package-runtime-fallback');
-});
-
-test('production build emits the immutable manifest and Docker preloads the R-002 guard', () => {
+test('production build emits immutable manifest and Docker preloads R-002 guard', () => {
   const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
   assert.match(packageJson.scripts.build, /buildRuntimeReleaseManifest\.ts/);
-
   const dockerfile = fs.readFileSync(path.join(repoRoot, 'Dockerfile'), 'utf8');
   assert.match(dockerfile, /CAPITAL_AI_RUNTIME_ARTIFACT_MODE=readonly/);
   assert.match(dockerfile, /NODE_OPTIONS=--import=\/app\/server\/runtime\/runtimeArtifactGuard\.mjs/);

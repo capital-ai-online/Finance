@@ -26,7 +26,7 @@ function createFixture(): string {
   write(root, 'package-lock.json', JSON.stringify({ name: 'capital-ai', version: '0.6.0', lockfileVersion: 3, packages: { '': { name: 'capital-ai', version: '0.6.0' } } }, null, 2));
   write(root, 'metadata.json', JSON.stringify({ name: 'Capital-AI', version: '0.6.0' }, null, 2));
   write(root, 'README.md', '[![Version](Version-0.6.0_Beta)]');
-  write(root, 'AGENTS.md', 'The platform is pinned to Version 0.6.0 (Beta).');
+  write(root, 'AGENTS.md', '**Control Plane Version:** 2.1.0');
   write(root, 'docs/code-quality/CODE_QUALITY_STANDARDS.md', '**Version:** 0.6.0\nPinned to **Version 0.6.0**.');
   write(root, 'docs/ceo/EXECUTIVE_SUMMARY.md', '**Version:** 0.6.0 (Beta-Phase)');
   write(root, 'docs/API.md', '*Verified under CAPITAL-AI Platform Specification Version 0.6.0.*');
@@ -38,12 +38,12 @@ function request(overrides: Partial<ReleaseVersionRequest> = {}): ReleaseVersion
   return {
     targetVersion: '0.7.0',
     classification: 'MINOR',
-    workPackages: ['PR-54', 'PR-56'],
-    adrs: ['ADR-0032', 'ADR-0033'],
+    workPackages: ['PR-449'],
+    adrs: ['ADR-0030', 'ADR-0096'],
     migrations: ['none'],
-    risks: ['provider availability remains plan-dependent'],
+    risks: ['none'],
     rollbackBoundary: 'Rollback to the exact prior accepted 0.6.0 artifact.',
-    acceptanceRequirements: ['production smoke tests', 'provider health evidence'],
+    acceptanceRequirements: ['production smoke tests'],
     ...overrides,
   };
 }
@@ -83,18 +83,25 @@ describe('ADR-0030 release version gate', () => {
     expect(() => buildReleaseVersionPlan(root, request())).toThrow('package-lock.json ist nicht versionskonsistent');
   });
 
-  it('updates package metadata and every governed mirror together, then can restore atomically', () => {
+  it('updates authority and direct mirrors while keeping README derived and AGENTS untouched', () => {
     const root = createFixture();
+    const originalReadme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+    const originalAgents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
     const plan = buildReleaseVersionPlan(root, request());
-    const originals = applyReleaseVersionPlan(root, plan);
 
+    expect(plan.updatedFiles).toContain('README.md');
+    expect(plan.updatedFiles).not.toContain('AGENTS.md');
+
+    const originals = applyReleaseVersionPlan(root, plan);
     expect(() => assertAppliedVersionConsistency(root, '0.7.0')).not.toThrow();
-    expect(fs.readFileSync(path.join(root, 'README.md'), 'utf8')).toContain('Version-0.7.0_Beta');
+    expect(fs.readFileSync(path.join(root, 'README.md'), 'utf8')).toBe(originalReadme);
+    expect(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8')).toBe(originalAgents);
     expect(fs.readFileSync(path.join(root, 'index.html'), 'utf8')).toContain('Version 0.7.0');
 
     restoreReleaseVersionFiles(root, originals);
     expect(JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version).toBe('0.6.0');
     expect(JSON.parse(fs.readFileSync(path.join(root, 'package-lock.json'), 'utf8')).packages[''].version).toBe('0.6.0');
+    expect(fs.readFileSync(path.join(root, 'README.md'), 'utf8')).toBe(originalReadme);
   });
 
   it('refuses MINOR release plans without ADR traceability or production acceptance requirements', () => {

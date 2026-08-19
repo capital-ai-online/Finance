@@ -8,10 +8,17 @@ export interface PackageVersionAuthority {
   devDependencies?: Record<string, string>;
 }
 
-function dependencyVersion(pkg: PackageVersionAuthority, name: string): string {
-  const value = pkg.dependencies?.[name] ?? pkg.devDependencies?.[name];
-  if (!value) throw new Error(`[readme-version] Dependency declaration missing: ${name}`);
+function requiredValue(value: string | undefined, authority: string): string {
+  if (!value) throw new Error(`[readme-version] Dependency declaration missing: ${authority}`);
   return value;
+}
+
+function dependencyVersion(pkg: PackageVersionAuthority, name: string): string {
+  return requiredValue(pkg.dependencies?.[name], `package.json#dependencies.${name}`);
+}
+
+function devDependencyVersion(pkg: PackageVersionAuthority, name: string): string {
+  return requiredValue(pkg.devDependencies?.[name], `package.json#devDependencies.${name}`);
 }
 
 function replaceRequired(content: string, pattern: RegExp, replacement: string, label: string): string {
@@ -25,24 +32,24 @@ export function renderReadmeVersionMatrix(pkg: PackageVersionAuthority, nodeRunt
     ['CAPITAL-AI Plattform', pkg.version, '`package.json#version`'],
     ['Node.js Runtime', nodeRuntime, '`.nvmrc`'],
     ['Node.js Engine', pkg.engines?.node ?? 'UNDECLARED', '`package.json#engines.node`'],
-    ['TypeScript', dependencyVersion(pkg, 'typescript'), '`package.json#devDependencies`'],
-    ['React', dependencyVersion(pkg, 'react'), '`package.json#dependencies`'],
-    ['Vite', dependencyVersion(pkg, 'vite'), '`package.json`'],
-    ['Tailwind CSS', dependencyVersion(pkg, 'tailwindcss'), '`package.json#devDependencies`'],
-    ['OpenAI SDK', dependencyVersion(pkg, 'openai'), '`package.json#dependencies`'],
-    ['Anthropic SDK', dependencyVersion(pkg, '@anthropic-ai/sdk'), '`package.json#dependencies`'],
-    ['Supabase JS', dependencyVersion(pkg, '@supabase/supabase-js'), '`package.json#dependencies`'],
-    ['Stripe Server SDK', dependencyVersion(pkg, 'stripe'), '`package.json#dependencies`'],
-    ['Stripe Browser SDK', dependencyVersion(pkg, '@stripe/stripe-js'), '`package.json#dependencies`'],
-    ['Express', dependencyVersion(pkg, 'express'), '`package.json#dependencies`'],
-    ['Vitest', dependencyVersion(pkg, 'vitest'), '`package.json#devDependencies`'],
+    ['TypeScript', devDependencyVersion(pkg, 'typescript'), '`package.json#devDependencies.typescript`'],
+    ['React', dependencyVersion(pkg, 'react'), '`package.json#dependencies.react`'],
+    ['Vite', devDependencyVersion(pkg, 'vite'), '`package.json#devDependencies.vite`'],
+    ['Tailwind CSS', devDependencyVersion(pkg, 'tailwindcss'), '`package.json#devDependencies.tailwindcss`'],
+    ['OpenAI SDK', dependencyVersion(pkg, 'openai'), '`package.json#dependencies.openai`'],
+    ['Anthropic SDK', dependencyVersion(pkg, '@anthropic-ai/sdk'), '`package.json#dependencies.@anthropic-ai/sdk`'],
+    ['Supabase JS', dependencyVersion(pkg, '@supabase/supabase-js'), '`package.json#dependencies.@supabase/supabase-js`'],
+    ['Stripe Server SDK', dependencyVersion(pkg, 'stripe'), '`package.json#dependencies.stripe`'],
+    ['Stripe Browser SDK', dependencyVersion(pkg, '@stripe/stripe-js'), '`package.json#dependencies.@stripe/stripe-js`'],
+    ['Express', dependencyVersion(pkg, 'express'), '`package.json#dependencies.express`'],
+    ['Vitest', devDependencyVersion(pkg, 'vitest'), '`package.json#devDependencies.vitest`'],
   ];
 
   return [
     README_VERSION_MATRIX_START,
     '### Automatisch synchronisierte Runtime-Versionen',
     '',
-    '> Dieser Block wird deterministisch aus den kanonischen Repository-Deklarationen erzeugt. Änderungen bitte nicht manuell pflegen; `npm run readme:sync` aktualisiert ihn und `npm run readme:check` blockiert Drift.',
+    '> **Projektionsvertrag:** `package.json#version` ist die einzige Plattformversions-Authority. Dieser README-Block ist eine deterministische, read-only Projektion aus kanonischen Repository-Deklarationen. `npm run readme:sync` aktualisiert ihn; `npm run readme:check` blockiert Drift.',
     '',
     '| Komponente | Repository-Version | Authority |',
     '|---|---:|---|',
@@ -51,10 +58,7 @@ export function renderReadmeVersionMatrix(pkg: PackageVersionAuthority, nodeRunt
   ].join('\n');
 }
 
-export function synchronizeReadmeCanonicalDeclarations(
-  readme: string,
-  pkg: PackageVersionAuthority,
-): string {
+export function synchronizeReadmeCanonicalDeclarations(readme: string, pkg: PackageVersionAuthority): string {
   const engine = pkg.engines?.node;
   if (!engine) throw new Error('[readme-version] package.json#engines.node is required.');
 
@@ -84,11 +88,7 @@ export function synchronizeReadmeVersionMatrix(readme: string, matrix: string): 
   return `${readme.slice(0, anchorIndex)}\n\n${matrix}\n${readme.slice(anchorIndex)}`;
 }
 
-export function buildExpectedReadme(
-  readme: string,
-  pkg: PackageVersionAuthority,
-  nodeRuntime: string,
-): string {
+export function buildExpectedReadme(readme: string, pkg: PackageVersionAuthority, nodeRuntime: string): string {
   const canonical = synchronizeReadmeCanonicalDeclarations(readme, pkg);
   return synchronizeReadmeVersionMatrix(canonical, renderReadmeVersionMatrix(pkg, nodeRuntime));
 }

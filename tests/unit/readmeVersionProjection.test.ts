@@ -11,7 +11,6 @@ const pkg: PackageVersionAuthority = {
   engines: { node: '>=24.18.0 <25' },
   dependencies: {
     react: '^19.0.1',
-    vite: '^6.2.3',
     openai: '^7.3.0',
     '@anthropic-ai/sdk': '^0.115.0',
     '@supabase/supabase-js': '^2.108.2',
@@ -21,6 +20,7 @@ const pkg: PackageVersionAuthority = {
   },
   devDependencies: {
     typescript: '~5.8.2',
+    vite: '^6.2.3',
     tailwindcss: '^4.1.14',
     vitest: '^4.1.10',
   },
@@ -49,9 +49,10 @@ describe('README version projection', () => {
     expect(expected).toContain('Version 0.7.0 befindet sich');
     expect(expected).toContain('Plattformversion: `0.7.0 Beta`');
     expect(expected).toContain('- Node.js `>=24.18.0 <25`');
+    expect(expected).toContain('`package.json#version` ist die einzige Plattformversions-Authority');
     expect(expected).toContain('| CAPITAL-AI Plattform | `0.7.0` | `package.json#version` |');
     expect(expected).toContain('| Node.js Runtime | `24.18.0` | `.nvmrc` |');
-    expect(expected).toContain('| OpenAI SDK | `^7.3.0` | `package.json#dependencies` |');
+    expect(expected).toContain('| OpenAI SDK | `^7.3.0` | `package.json#dependencies.openai` |');
     expect(expected).toContain(README_VERSION_MATRIX_START);
     expect(expected).toContain(README_VERSION_MATRIX_END);
     expect(buildExpectedReadme(expected, pkg, '24.18.0')).toBe(expected);
