@@ -7,69 +7,23 @@ import { syncBuiltinESMExports } from 'node:module';
 /**
  * R-002 / DC-005 / DC-006
  *
- * Production web containers must not mutate repository-style documentation or
- * local release-governance state. The guard is intentionally narrow: uploads
- * that belong to normal application workflows remain writable, while docs/**
- * and the two legacy governance JSON files are fail-closed.
+ * Production web containers must not mutate repository documentation or legacy
+ * local governance state. `uploads/document_hygiene.json` and
+ * `uploads/version_manager.json` remain protected only as retired write targets;
+ * neither file is a current authority.
  *
- * The same production boundary owns the compatibility contract for legacy
- * Documentary / Version Manager HTTP routes. Mutations are rejected before
- * Express can execute filesystem-writing handlers. GET /api/admin/version is
- * served from an immutable build manifest when present, with package/deploy
- * metadata retained only as a compatibility fallback.
+ * HTTP mutations on retired Documentary/VersionManager endpoints are rejected
+ * before Express can reach any legacy handler. Authenticated GET projections are
+ * deliberately NOT intercepted here: `/api/admin/version` must pass through the
+ * normal Express authorization middleware and the read-only Release Control Plane.
  */
 
-const RELEASE_MANIFEST_CONTRACT = 'capital-ai-runtime-release-manifest/1.0.0';
 const cwd = path.resolve(process.cwd());
 const docsRoot = path.resolve(cwd, 'docs');
-const releaseManifestPath = path.resolve(cwd, 'dist', 'control-plane', 'release-manifest.json');
 const protectedFiles = new Set([
   path.resolve(cwd, 'uploads', 'document_hygiene.json'),
   path.resolve(cwd, 'uploads', 'version_manager.json'),
 ]);
-
-function readPackageVersion() {
-  try {
-    const pkg = JSON.parse(fs.readFileSync(path.resolve(cwd, 'package.json'), 'utf8'));
-    return typeof pkg.version === 'string' && pkg.version.trim() ? pkg.version.trim() : 'unknown';
-  } catch {
-    return 'unknown';
-  }
-}
-
-function readImmutableReleaseManifest() {
-  if (!fs.existsSync(releaseManifestPath)) return null;
-  const parsed = JSON.parse(fs.readFileSync(releaseManifestPath, 'utf8'));
-  if (
-    parsed?.contract !== RELEASE_MANIFEST_CONTRACT ||
-    parsed?.mutable !== false ||
-    typeof parsed?.version !== 'string' ||
-    typeof parsed?.buildIdentity !== 'string'
-  ) {
-    throw new Error('R-002 invalid immutable release manifest. Production release identity cannot be trusted.');
-  }
-  return parsed;
-}
-
-const releaseManifest = readImmutableReleaseManifest();
-const immutableReleaseIdentity = Object.freeze({
-  version: releaseManifest?.version ?? readPackageVersion(),
-  commitSha:
-    releaseManifest?.sourceCommit ||
-    process.env.RENDER_GIT_COMMIT ||
-    process.env.GIT_COMMIT ||
-    process.env.SOURCE_VERSION ||
-    null,
-  buildIdentity: releaseManifest?.buildIdentity ?? null,
-  manifestContract: releaseManifest?.contract ?? null,
-  packageLockSha256: releaseManifest?.inputs?.packageLockSha256 ?? null,
-  documentaryTreeSha256: releaseManifest?.inputs?.documentaryTreeSha256 ?? null,
-  documentaryFileCount: releaseManifest?.inputs?.documentaryFileCount ?? null,
-  serviceId: process.env.RENDER_SERVICE_ID || null,
-  instanceId: process.env.RENDER_INSTANCE_ID || null,
-  hostname: process.env.RENDER_EXTERNAL_HOSTNAME || null,
-  source: releaseManifest ? 'immutable-build-manifest' : 'immutable-package-runtime-fallback',
-});
 
 function resolveFsPath(value) {
   if (typeof value === 'string' || Buffer.isBuffer(value)) {
@@ -92,7 +46,7 @@ export function assertRuntimeArtifactWritable(value, operation = 'write') {
   const resolved = resolveFsPath(value);
   const error = new Error(
     `R-002 runtime artifact immutability: ${operation} denied for ${resolved}. ` +
-    'Repository documentation and release-governance artifacts are read-only in the production web runtime.',
+    'Repository documentation and retired governance state are read-only in the production web runtime.',
   );
   error.code = 'CAPITAL_AI_RUNTIME_ARTIFACT_READ_ONLY';
   throw error;
@@ -186,50 +140,17 @@ function isControlPlaneMutation(method, pathname) {
 function installControlPlaneHttpBoundary() {
   const originalEmit = http.Server.prototype.emit;
   http.Server.prototype.emit = function guardedServerEmit(eventName, ...args) {
-    if (eventName !== 'request') {
-      return originalEmit.call(this, eventName, ...args);
-    }
+    if (eventName !== 'request') return originalEmit.call(this, eventName, ...args);
 
     const [req, res] = args;
     const method = String(req?.method || 'GET').toUpperCase();
     const pathname = getRequestPath(req);
 
-    if (method === 'GET' && pathname === '/api/admin/version') {
-      writeJsonResponse(res, 200, {
-        success: true,
-        state: {
-          version: immutableReleaseIdentity.version,
-          buildNumber: null,
-          releaseDate: null,
-          gitTag: immutableReleaseIdentity.commitSha ? `git:${immutableReleaseIdentity.commitSha}` : null,
-          dockerTag: null,
-          releaseNotes: 'Immutable production release identity derived from controlled build evidence.',
-          history: [],
-          source: immutableReleaseIdentity.source,
-          commitSha: immutableReleaseIdentity.commitSha,
-          buildIdentity: immutableReleaseIdentity.buildIdentity,
-          manifestContract: immutableReleaseIdentity.manifestContract,
-          packageLockSha256: immutableReleaseIdentity.packageLockSha256,
-          documentaryTreeSha256: immutableReleaseIdentity.documentaryTreeSha256,
-          documentaryFileCount: immutableReleaseIdentity.documentaryFileCount,
-          serviceId: immutableReleaseIdentity.serviceId,
-          instanceId: immutableReleaseIdentity.instanceId,
-          hostname: immutableReleaseIdentity.hostname,
-          readOnly: true,
-        },
-        workspace: {
-          source: 'production-runtime-read-only',
-          mutationAuthority: 'ci-or-authenticated-control-plane',
-        },
-      });
-      return true;
-    }
-
     if (isControlPlaneMutation(method, pathname)) {
       writeJsonResponse(res, 409, {
-        error: 'Production runtime is read-only for Documentary and release-governance mutations.',
+        error: 'Production runtime is read-only for Documentary and retired release-governance mutations.',
         code: 'READ_ONLY_CONTROL_PLANE_REQUIRED',
-        mutationAuthority: 'ci-or-authenticated-control-plane',
+        mutationAuthority: 'controlled-release-version-gate',
         path: pathname,
       });
       return true;
@@ -243,23 +164,17 @@ function installGuard() {
   const enabled = process.env.NODE_ENV === 'production' && process.env.CAPITAL_AI_RUNTIME_ARTIFACT_MODE === 'readonly';
   if (!enabled) return;
 
-  for (const name of ['writeFileSync', 'appendFileSync', 'truncateSync', 'unlinkSync', 'rmSync', 'rmdirSync', 'mkdirSync']) {
-    wrapSync(name);
-  }
+  for (const name of ['writeFileSync', 'appendFileSync', 'truncateSync', 'unlinkSync', 'rmSync', 'rmdirSync', 'mkdirSync']) wrapSync(name);
   wrapSync('copyFileSync', 1);
   wrapDualPathSync('renameSync');
 
-  for (const name of ['writeFile', 'appendFile', 'truncate', 'unlink', 'rm', 'rmdir', 'mkdir']) {
-    wrapPromise(name);
-  }
+  for (const name of ['writeFile', 'appendFile', 'truncate', 'unlink', 'rm', 'rmdir', 'mkdir']) wrapPromise(name);
   wrapPromise('copyFile', 1);
 
   installProtectedPathWatcherBoundary();
   installControlPlaneHttpBoundary();
   syncBuiltinESMExports();
-  console.info(
-    `[RuntimeArtifactGuard] R-002 production read-only boundary enabled for release ${immutableReleaseIdentity.version} (${immutableReleaseIdentity.source}).`,
-  );
+  console.info('[RuntimeArtifactGuard] R-002 production read-only boundary enabled.');
 }
 
 installGuard();

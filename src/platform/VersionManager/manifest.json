@@ -1,49 +1,71 @@
 {
   "name": "VersionManager",
-  "version": "1.1.0",
-  "status": "implemented",
+  "version": "1.2.0",
+  "status": "compatibility-read-only",
   "owner": "CAPITAL-AI",
-  "description": "Enterprise Version Manager: verwaltet Plattformversion/Buildnummer und erweitert die Release-Governance um einen Naming & Repository Convention Validator fuer Projektidentitaet, Version-Synchronitaet, Namenskonventionen, Case-Kollisionen und Enterprise Exceptions.",
+  "description": "Compatibility namespace for the authenticated read-only platform-version projection and the independent read-only Repository Convention Validator. It does not own platform-version state or mutation.",
   "category": "platform",
+  "governance": {
+    "authority": "ADR-0096 / CTRL-GOV-VERSION-001",
+    "historicalEss": "ESS-0004 SUSPENDED",
+    "platformVersionAuthority": "package.json#version",
+    "mutationAuthority": "src/platform/Release/Services/releaseVersionGate.ts"
+  },
   "ess": [
     "ESS-0001",
-    "ESS-0001-CONTRACTS",
+    "ESS-0001-CONTRACTS"
+  ],
+  "historicalEss": [
     "ESS-0004"
   ],
   "adr": [
-    "ADR-0011",
-    "ADR-0020"
+    "ADR-0020",
+    "ADR-0030",
+    "ADR-0096"
   ],
   "dependencies": [
-    "server/systemEvents.ts",
-    "server/documentHygiene.ts",
-    "server/iam/authMiddleware.ts",
-    "server/iam/types.ts"
+    "src/platform/Release/Services/platformVersionControlPlane.ts",
+    "src/platform/Security/authMiddleware.ts",
+    "src/platform/Security/types.ts"
   ],
   "capabilities": [
-    "version-state-management",
-    "release-document-generation",
+    "authenticated-read-only-version-projection",
     "naming-repository-convention-validation"
   ],
+  "forbiddenCapabilities": [
+    "version-state-management",
+    "runtime-version-bump",
+    "release-document-generation",
+    "automatic-adr-generation",
+    "automatic-compliance-document-generation",
+    "product-version-mirroring-into-AGENTS.md"
+  ],
   "interfaces": [
+    "GET /api/admin/version",
     "scripts/automation/validateRepositoryConventions.ts"
   ],
   "events": {
     "produces": [],
     "consumes": [],
-    "note": "ARCH-AUDIT-0002 (J5): die Komponente protokolliert ueber logSystemEvent(); ein Enterprise-Event-Bus-Adapter ist weiterhin nicht implementiert."
+    "note": "The compatibility version adapter does not emit or consume version mutation events."
   },
   "knowledge": [
     ".ai/registry/exception-registry.json"
   ],
   "contracts": [
+    "platform-version-control-plane/1.0.0",
+    "CTRL-GOV-VERSION-001",
     "ESS-0001-CONTRACTS Chapter 8 — Naming Contract",
     "ESS-0001-CONTRACTS Chapter 16 — Exception Contract / Repository Governance"
   ],
   "documentation": [
     "README.md",
-    "docs/adr/ADR-0020-version-manager-repository-convention-validator.md"
+    "docs/adr/ADR-0020-version-manager-repository-convention-validator.md",
+    "docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md"
   ],
-  "tests": [],
-  "note": "ADR-0020: Der Validator ist read-only. Strict Mode blockiert nur bei Severity=error; Advisory Mode meldet alle Findings ohne Blockade. Ausnahmegenehmigungen bleiben ausserhalb der Komponente."
+  "tests": [
+    "repositoryConventionValidator.test.ts",
+    "scripts/pr/runtimeArtifactImmutability.test.mjs"
+  ],
+  "note": "Legacy uploads/version_manager.json, POST /api/admin/version/bump, event-chain mutation and automatic document generation are suspended/non-authorizing. Version transitions occur only through the controlled Release Version Gate."
 }

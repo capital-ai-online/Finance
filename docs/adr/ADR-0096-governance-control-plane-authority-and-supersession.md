@@ -1,47 +1,46 @@
 # ADR-0096 — Governance Control Plane, Stable Authority and Supersession
 
 **Authority ID:** `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`  
-**Version:** `1.0.0`  
+**Version:** `1.1.0`  
 **Status:** PROPOSED — Owner-directed implementation; effective after Human Merge  
 **Date:** `2026-08-19`  
 **Decision Owner:** CAPITAL-AI Owner  
-**Scope:** repository governance authority, agent trust root, stable identities, ADR/ESS lifecycle, documentation governance boundaries and pre-PR evidence
+**Scope:** repository governance authority, agent trust root, stable identities, ADR/ESS lifecycle, Documentation-only governance boundaries, platform-version authority, projections and M10 prerequisite remediation
 
-**Legacy alias:** `ADR-0086` — the earlier governance-supersession draft used a display number already occupied by Accepted Vendor Privacy Evidence Governance. The temporary branch-local `ADR-0095` allocation was not merged and was moved to `ADR-0096` after open PR #446 was identified as the active writer for ADR-0094, which required the privacy namespace repair to use ADR-0095.
+**Legacy alias:** `ADR-0086` — historical governance-supersession draft number; `ADR-0086` is already occupied by Vendor Privacy Evidence Governance.
 
 ## Context
 
-The repository accumulated strong individual controls but exposed them through multiple partially overlapping governance architectures: root agent directives, provider-specific instructions, governance policies, Documentary Governance, ADR/ESS registries, workflow prose and historical reports. The result was ambiguous authority resolution and several concrete namespace collisions.
+The repository accumulated strong individual controls but exposed them through overlapping governance architectures: root agent directives, Documentary Governance, ADR/ESS registries, legacy version-management runtime behavior, release projections, workflow prose and historical reports. The result was ambiguous authority resolution and concrete namespace/versioning conflicts.
 
-Known collisions at this decision point include:
+PR #447 established the first Governance Control Plane baseline. The subsequent M10 prerequisite gate and parked PR #439 exposed remaining correlations:
 
-- two active documents using display number `ADR-0085` for unrelated Accepted decisions;
-- two documents using display number `ADR-0086`, one Accepted vendor-privacy decision and one governance-supersession draft;
-- open PR #446 independently allocating `ADR-0094`, requiring this governance branch to avoid that namespace while it remains an active parallel writer;
-- two active `.ai/skills` documents declaring `ESS-0012`, while the ESS registry assigns `ESS-0012` to Documentation Governance and Vocabulary Governance is already represented by `ESS-0017`;
-- `CLAUDE.md` carrying independent global policy content in parallel with `AGENTS.md`;
-- global repository governance logic conceptually overlapping `src/platform/Documentary/Governance`.
+- `package.json#version` was already the practical release source while legacy VersionManager state persisted a second version;
+- `AGENTS.md` had been removed from current version-consistency tests but remained in the Release Version Gate mirror list;
+- README carried manually duplicated platform/runtime version declarations;
+- `/api/admin/version/bump` and `uploads/version_manager.json` remained mutable legacy paths;
+- legacy VersionManager execution automatically generated ADR/compliance/document content as a side effect of version changes;
+- the production runtime guard answered `GET /api/admin/version` before Express authorization middleware;
+- ADR-0014 / ESS-0012 define useful Documentation Governance but must not become a repository-wide authority plane;
+- ADR-0004 and ESS-0004 contain obsolete hard-coded/current-version semantics;
+- after PR #446 merged, ADR-0094 remained incorrectly represented as an open parallel namespace reservation.
 
-The Owner directed that these governance defects be resolved before further feature work becomes merge-ready, that `AGENTS.md` become the single point of trust for all models/agents, that ADRs be centrally versioned and dated, and that the governance structure align to ISO/IEC 42001 and NIST SSDF practices without making false certification claims.
+The Owner directed that these defects be resolved in one Governance work package, with no new feature or M10-reactivation PR interposed.
 
 ## Decision
 
 ### 1. Single agent trust root
 
-`/AGENTS.md` becomes the single repository-wide trust root for every AI model, coding agent, MCP host and automation client.
-
-Provider/tool files such as `CLAUDE.md` and `.github/copilot-instructions.md` become thin non-authoritative adapters. They may contain host-specific execution notes but may not independently define global security, data-integrity, branch, PR, CI, merge or production-mutation rules.
+`/AGENTS.md` is the single repository-wide trust root and instruction surface for every AI model, coding agent, MCP host and automation client. Provider-specific repository instruction mirrors remain absent/non-authoritative.
 
 ### 2. Stable machine-readable identities
 
-Governance identity is decoupled from file path and human display number.
-
 - `AUTH-*` identifies an authority/decision immutably.
 - `CTRL-*` identifies an enforceable governance control immutably.
-- `DOC-*` remains documentary identity.
+- `DOC-*` identifies documentary artifacts.
 - ADR and ESS numbers remain human/traceability display aliases.
 
-Renumbering or moving an artifact does not change its stable authority identity.
+Paths and display numbers may move under controlled migration without changing stable identity.
 
 ### 3. Canonical registries
 
@@ -49,100 +48,161 @@ The control plane uses:
 
 - `docs/governance/authority-registry.json` for stable authority identities and current locations;
 - `docs/governance/control-catalog.json` for operative controls;
-- `docs/adr/registry.json` for new/migrated ADR versions, dates, lifecycle and supersession;
-- `.ai/registry/ess-registry.json` for ESS allocation;
+- `docs/adr/registry.json` for ADR identity/version/date/lifecycle/supersession;
+- `.ai/registry/ess-registry.json` for ESS allocation/lifecycle;
 - `docs/governance/document-registry.json` for documentary inventory.
 
-Document inventory does not outrank authority registries or Accepted decisions.
+Document inventory and evidence do not outrank an effective authority/control.
 
-### 4. ADR location, versioning and recency
+### 4. ADR lifecycle, recency and suspension
 
-Formal ADRs live only under `docs/adr/` and its lifecycle subdirectories. Every new or migrated ADR has a stable `authorityId`, unique active display number, semantic version, decision date and lifecycle.
+Formal ADRs live under `docs/adr/` and lifecycle subdirectories. New or materially migrated ADRs have stable `authorityId`, unique active display ID, semantic version, date and lifecycle.
 
-For two artifacts representing the **same `authorityId`**, the newer effective semantic version takes precedence. If semantic versions are equal, the later effective date takes precedence.
+For the same `authorityId`, newer effective semantic version/date can supersede an older version. Across different authorities, recency alone is non-authorizing; explicit scope/supersession and Owner-visible impact analysis are required.
 
-For different `authorityId` values, recency alone is non-authorizing. Supersession requires an explicit relationship, equal-or-higher authority for the same scope, Owner-visible semantic diff/impact evidence and no conflicting higher authority or binding obligation.
+`suspended` is an explicit non-authorizing lifecycle. Suspended ADR/ESS artifacts remain traceable but cannot authorize implementation, version mutation, merge, production behavior or M10 reactivation.
 
-### 5. Namespace repair
+### 5. Namespace state
 
-- Existing `ADR-0085 — ESS Namespace Cleanup and Registry Backfill` retains `ADR-0085`.
-- Existing Vendor Privacy Evidence Governance retains `ADR-0086`.
-- Open PR #446 retains its own branch-local `ADR-0094` allocation while it remains the active writer for that display ID.
-- Privacy Governance Single Source of Truth is renumbered to `ADR-0095` while retaining immutable stable Authority ID `AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19` and historical `ADR-0085` alias.
-- This governance decision uses `ADR-0096`, retaining its immutable stable Authority ID and the former governance-draft `ADR-0086` only as a historical alias.
-- Registered Documentation Governance retains `ESS-0012`.
-- The unregistered proposed `ESS-0012` vocabulary draft is removed from the active `.ai/skills` namespace, retained as historical evidence and superseded by the existing `ESS-0017 Vocabulary Governance` specification.
+- ADR-0085 remains ESS Namespace Cleanup.
+- ADR-0086 remains Vendor Privacy Evidence Governance.
+- ADR-0094 is now a normal Accepted record because PR #446 merged into `main`; its former open-PR reservation is removed.
+- ADR-0095 remains Privacy Governance Single Source of Truth.
+- this decision remains ADR-0096.
+- Documentation Governance retains ESS-0012; the historical duplicate vocabulary ESS remains superseded by ESS-0017.
 
-### 6. Global governance component boundary
+### 6. Global Governance versus Documentary Governance
 
 Cross-cutting repository governance belongs to `src/platform/Governance`.
 
-`src/platform/Documentary/Governance` remains scoped to documentation-domain governance and may provide documentary validation services, but it is not a repository-wide authorization control plane.
+ADR-0014 and ESS-0012 remain active **only in Documentation-only scope**. They may define documentary validation, metadata, lifecycle findings and read-only hygiene services. They do not define repository-wide authorization, merge authority, production mutation authority, platform-version authority or agent trust-root precedence.
 
-### 7. Policy-as-code and structural validation
+Any historical ADR-0014 / ESS-0012 language that assigns global authority or a mutating Version Manager role is scope-superseded by this section. The useful Documentation Hygiene implementation from parked PR #439 is reused under `src/platform/Documentary/Governance/Services/DocumentationHygieneValidator.ts` rather than recreated as a competing control plane.
 
-Governance validation resolves stable structured identities rather than arbitrary prose substrings. The repository adds `scripts/governance/validateGovernanceControlPlane.mjs` to fail closed on structural defects including duplicate stable IDs, duplicate active ADR/ESS IDs, missing registry targets, invalid legacy redirects, stale current-state M10 claims and competing provider-adapter authority.
+### 7. Single platform-version authority
 
-Existing specialized validators remain reusable where their domain is narrower and non-duplicative.
+`package.json#version` is the **only current platform-version authority**.
 
-### 8. Pre-PR technical evidence
+The architecture is:
 
-A standard `developer-preflight` evidence schema binds pre-PR build/test evidence to exact `baseMainSha` and `candidateHeadSha` values. Such evidence may be produced by a local runner, an approved sandbox or ChatGPT only when the exact repository snapshot is actually available to that execution environment.
+```text
+package.json#version
+   |
+   +--> Release Version Gate        explicit controlled mutation
+   +--> README Projection           deterministic derived documentation
+   +--> Platform Version Projection read-only runtime/admin view
 
-Pre-PR evidence is never merge or production authority. The independent GitHub hosted `build-and-test` remains required on the final PR head.
+AGENTS.md Control Plane Version     independent governance metadata
+```
 
-### 9. Current M10 and deployment state
+Consequences:
 
-M10 Passkey PR-CI authorization remains suspended/off according to the Owner-directed recovery state established before this decision. This ADR does not reactivate it.
+- `AGENTS.md` is removed from all product-version mirror/update contracts;
+- README is a deterministic projection generated by `readmeVersionProjection.ts` / `readme:sync` and cannot become a second authority;
+- `src/platform/Release/Services/platformVersionControlPlane.ts` provides the single read-only runtime/API projection service;
+- `src/platform/VersionManager/platformVersionAuthority.ts` is only a compatibility re-export;
+- `src/platform/VersionManager/versionManager.ts` is only an authenticated read-only compatibility router;
+- `uploads/version_manager.json`, autonomous bump logic and VersionManager document generation are retired/non-authorizing;
+- version changes occur only through the controlled Release Version Gate under ADR-0030.
+
+### 8. Suspension of obsolete version authorities
+
+`ADR-0004 — Branding, Header und Panel-Entfernung` is moved to `docs/adr/suspended/` because it embeds an obsolete current product-version projection (`0.5.4`) in a broader UI/branding decision.
+
+`ESS-0004 — Enterprise Version Manager` is removed from active `.ai/skills` and moved to `docs/archive/governance/suspended/` because its statement that the Version Manager determines the version and its legacy component model conflict with the single-authority Release architecture.
+
+References in other active documents to ESS-0004 or “Version Manager” as the current platform-version authority are non-authorizing compatibility/history references. For current execution they resolve to `package.json#version` plus the Release Control Plane unless a newer explicit decision states otherwise. Those documents are not globally suspended when their remaining domain scope is valid.
+
+### 9. Runtime authorization boundary
+
+The production runtime artifact guard may deny retired write endpoints before Express, but it must **not** serve `GET /api/admin/version` itself. The GET projection must reach the normal Express route and `checkAdminAccess` authorization middleware. A runtime shortcut cannot bypass AuthN/AuthZ merely to expose immutable release metadata.
+
+### 10. Policy-as-code and structural validation
+
+`scripts/governance/validateGovernanceControlPlane.mjs` remains the canonical repository structural validator and is extended to fail closed on:
+
+- stable Authority/Control/ADR identity collisions;
+- stale ADR namespace reservations;
+- suspended ADR/ESS path/lifecycle inconsistencies;
+- competing agent instruction surfaces;
+- platform-version authority ambiguity;
+- AGENTS product-version mirroring;
+- README projection drift contract;
+- mutable/duplicated VersionManager router behavior;
+- retired VersionManager JSON state or ADR/document generators;
+- runtime version-GET AuthZ bypass patterns;
+- Documentation Hygiene service/boundary absence;
+- incomplete M10 prerequisite state.
+
+Specialized validators remain reusable only where their domain is narrower and non-duplicative.
+
+### 11. Current M10 state
+
+M10 Passkey PR-CI authorization remains `SUSPENDED / OFF`. This ADR and work package do **not** reactivate it.
+
+Reactivation eligibility requires, in order:
+
+1. ADR / Authority cleanup;
+2. Documentary separation;
+3. README projection;
+4. Documentation Hygiene;
+5. router cleanup;
+6. one platform-version authority;
+7. structural validation;
+8. independent hosted CI on the exact candidate head;
+9. a new explicit Human/Owner decision.
+
+Historical M10 evidence cannot satisfy step 9.
+
+### 12. Deployment and standards posture
 
 Render native auto-deploy remains off. Production promotion authority remains verified `main` CI -> supply-chain attestation -> exact-SHA Render deploy hook -> post-deployment identity verification.
 
-### 10. Standards posture
-
-The control-plane management model uses ISO/IEC 42001:2023 as the primary AIMS/continual-improvement design benchmark and NIST SP 800-218 SSDF v1.1 plus SP 800-218A as secure-development baselines.
-
-This architectural alignment does not assert certification, regulated-entity status, high-risk AI classification or full legal compliance.
+The control-plane management model uses ISO/IEC 42001:2023 as an AIMS/continual-improvement benchmark and final NIST SSDF v1.1 / SP 800-218A as secure-development baselines. This does not assert certification or complete legal compliance.
 
 ## Consequences
 
 ### Positive
 
-- every model resolves global governance through one trust root;
-- ADR/ESS display-number collisions stop being identity collisions;
-- concurrent PR namespace writers are treated as first-class governance correlations;
-- current authority is machine-resolvable and path-independent;
-- historical decisions remain traceable without remaining active policy mirrors;
-- documentation governance and global governance have explicit boundaries;
-- future tests can validate structured identities rather than brittle comment/prose substrings;
-- governance changes become easier to audit and supersede predictably.
+- one resolvable platform-version authority;
+- no version mutation hidden behind an admin UI or local JSON state;
+- no automatic ADR/compliance-document generation as a version side effect;
+- README/runtime/API views become projections rather than authorities;
+- Governance Control Plane version and product version cannot overwrite each other;
+- Documentary Governance is useful but structurally bounded;
+- production version GET retains intended admin authorization;
+- suspended historical decisions remain traceable without remaining operative;
+- structural validation covers the M10 prerequisite chain.
 
 ### Trade-offs
 
-- existing legacy ADRs remain on a compatibility index until touched/migrated;
-- parked PRs #439 and #442 require post-merge reconciliation against the new authority/control model;
-- PR #446 must be re-correlated immediately before the governance PR because it is an active ADR namespace writer;
-- additional registry metadata must be maintained for new governance changes;
-- a full ChatGPT pre-PR build cannot be claimed until the execution environment has the complete exact candidate repository snapshot.
+- historical documents still contain compatibility references that must be interpreted through this scope resolution;
+- `src/platform/VersionManager` remains temporarily as a compatibility namespace until callers are migrated;
+- full ESS-0012 semantic validation remains incremental beyond the integrated hygiene service;
+- hosted CI and a separate Owner decision remain outstanding after code completion.
 
 ## Security and integrity impact
 
-This decision does not delegate Human Merge, Owner IAM, secret access, production mutation or billing authority. It removes ambiguous policy mirrors and therefore reduces accidental authorization drift.
+The change removes a production authorization bypass opportunity, removes mutable duplicate version state, removes automatic repository-document generation from a runtime version endpoint and keeps all production/IAM/billing/provider mutation authority unchanged.
 
-No production data, provider configuration or external control plane is mutated by this repository refactor.
+No Supabase, Stripe, Render, secret, production data or external control-plane mutation is performed by this work package.
 
 ## Verification / Definition of Done
 
-1. `AGENTS.md` is the single global agent trust root and adapters are thin.
-2. stable authority/control registries exist and validate uniquely.
-3. ADR-0085/0086 collisions are repaired with historical aliases and active parallel ADR allocations are conflict-checked.
-4. active ESS-0012 duplicate is removed from `.ai/skills` and archived as superseded by ESS-0017.
-5. global governance component exists under `src/platform/Governance`.
-6. structural governance validator passes on the final candidate.
-7. ISO/IEC 42001 / NIST SSDF crosswalk exists with no false certification claim.
-8. pre-PR evidence schema exists and is explicitly non-authorizing.
-9. branch is re-synchronized with then-current `main` and all open PR namespace/file correlations immediately before PR creation.
-10. final hosted GitHub checks pass and Human Merge remains separate.
+1. `AGENTS.md` remains the sole global agent trust root and contains no product-version mirror contract.
+2. `package.json#version` is structurally enforced as the sole platform-version authority.
+3. README projection is deterministic and drift-checked.
+4. Documentation Hygiene executes through the reusable service/CLI; the legacy standalone hygiene test is absent.
+5. VersionManager HTTP/UI are read-only and no legacy bump/state/document-generator behavior remains active.
+6. production runtime guard does not intercept admin version GET before authorization.
+7. ADR-0004 and ESS-0004 are registered/placed as suspended.
+8. ADR-0014 / ESS-0012 are bounded to Documentation-only scope.
+9. ADR-0094 is migrated from stale PR reservation to normal registered Accepted record.
+10. structural Governance validation passes on the final candidate.
+11. branch is synchronized with then-current `main` and correlated open writers immediately before final PR readiness.
+12. hosted GitHub checks pass on the exact final head.
+13. Human Merge and any M10 reactivation remain separate explicit Owner decisions.
 
 ## Rollback
 
-Use a new rollback branch from then-current `main` and revert the consolidated governance PR as a reviewed unit. Restore aliases/paths only if necessary for compatibility; do not resurrect duplicate active authority identities. External production rollback is not applicable because this ADR itself changes repository governance only.
+Use a new rollback branch from then-current `main` and revert the Governance remediation PR as a reviewed unit. Do not resurrect mutable VersionManager state or an AuthZ-bypassing runtime GET shortcut merely to restore historical behavior. External production rollback is not applicable to the repository-governance decision itself.

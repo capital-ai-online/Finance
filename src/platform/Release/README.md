@@ -5,185 +5,155 @@
 **Status:** Development  
 **Component Version:** `1.1.0`  
 **Owner:** Platform Director  
-**Governance:** ADR-0030 / GOV-VER-002  
-**Runtime Contract:** `release-version-gate/1.0.0`
+**Governance:** ADR-0030 + ADR-0096 / CTRL-GOV-VERSION-001  
+**Runtime Contract:** `release-version-gate/1.1.0` + `platform-version-control-plane/1.0.0`
 
 ---
 
 ## Purpose
 
-The Release component governs CAPITAL-AI platform-version advancement and release-candidate evidence.
-It does not decide that a feature is ready by itself and it never creates a final Git tag.
+The Release component governs CAPITAL-AI platform-version advancement, read-only platform-version projection and release-candidate evidence.
 
-`package.json#version` remains the single source of truth for the currently released platform version.
-The Release component reads that value at execution time; this document intentionally does not pin a
-separate current platform version.
+`package.json#version` is the **single platform-version authority**. The Release component reads that value at execution time; this document intentionally does not pin a separate current platform version.
 
-A version changes only at the dedicated Release Version Gate defined by ADR-0030.
+A version changes only at the dedicated Release Version Gate defined by ADR-0030. ADR-0096 resolves legacy VersionManager authority/state semantics as suspended/non-authorizing.
 
 ---
 
-## Controlled Command
+## Authority and projection model
+
+```text
+package.json#version                    <- sole platform-version authority
+        |
+        +--> releaseVersionGate.ts      <- controlled explicit mutation
+        +--> readmeVersionProjection.ts <- deterministic documentation projection
+        +--> platformVersionControlPlane.ts <- read-only runtime/admin projection
+
+AGENTS.md Control Plane Version         <- independent Governance metadata
+```
+
+`AGENTS.md` is never a product-version mirror. README is never an authority. `uploads/version_manager.json` and `/api/admin/version/bump` are retired legacy paths and cannot determine or mutate the platform version.
+
+---
+
+## Controlled command
 
 ```bash
 npm run release:version -- \
   --target=0.7.0 \
   --classification=MINOR \
-  --work-packages=PR-54,PR-56 \
-  --adrs=ADR-0032,ADR-0033 \
+  --work-packages=PR-449 \
+  --adrs=ADR-0030,ADR-0096 \
   --migrations=none \
-  --risks="provider availability remains plan-dependent" \
+  --risks=none \
   --rollback-boundary="Rollback to the exact prior accepted artifact" \
-  --acceptance="production smoke tests,provider health evidence"
+  --acceptance="production smoke tests"
 ```
 
-The command is a **dry run by default**. It validates the requested transition and all mandatory
-release metadata without changing files.
-
-Only an intentional execution with `--apply` may mutate governed version declarations:
-
-```bash
-npm run release:version -- <same arguments> --apply
-```
+The command is a **dry run by default**. Only an intentional execution with `--apply` may mutate the platform-version authority and controlled technical mirrors.
 
 ---
 
-## Fail-Closed Rules
+## Versioned artifacts
+
+### Authority
+
+1. `package.json#version`
+
+### Lockfile synchronization
+
+2. root `package-lock.json#version`
+3. `package-lock.json#packages[""]#version`
+
+### Direct technical mirrors
+
+4. `metadata.json`
+5. `docs/code-quality/CODE_QUALITY_STANDARDS.md`
+6. `docs/ceo/EXECUTIVE_SUMMARY.md`
+7. `docs/API.md`
+8. `index.html`
+
+### Derived projection
+
+9. `README.md`, regenerated through `npm run readme:sync`
+
+`README.md` is included in the atomic rollback set but is not rewritten by generic mirror logic. `AGENTS.md` is excluded from both product-version mutation and consistency projection.
+
+---
+
+## Fail-closed rules
 
 The gate rejects a request when, among other conditions:
 
 - the target is not strict `MAJOR.MINOR.PATCH` SemVer;
 - the target is not greater than the current release;
-- a PATCH skips more than one patch level;
-- a MINOR skips a minor line or does not reset patch to zero;
-- a MAJOR is not the next major `.0.0` version;
-- PATCH/MINOR/MAJOR classification does not match the requested transition;
-- a MINOR/MAJOR has no ADR traceability;
-- a MAJOR has no dedicated GA ADR;
-- work-package scope, rollback boundary, known risks or production-acceptance requirements are missing;
-- `package.json` and the root `package-lock.json` version are already inconsistent;
-- a governed mirror declaration cannot be synchronized;
-- any mandatory post-update release check fails.
+- the transition skips an allowed PATCH/MINOR/MAJOR boundary;
+- classification does not match the requested transition;
+- required work-package, ADR, rollback, risk or production-acceptance evidence is absent;
+- `package.json` and root lockfile metadata already disagree;
+- a required direct mirror or README projection is absent;
+- deterministic README synchronization fails;
+- Documentation Hygiene or Governance Control Plane validation fails;
+- TypeScript, targeted version tests, build or predeploy gates fail.
 
-There is no best-effort or partial version bump. If an apply-stage gate fails, the version files are
-restored to their pre-gate content.
+There is no best-effort or partial version bump. On apply-stage failure the gate restores the complete authority/projection rollback set.
 
 ---
 
-## Governed Version Declarations
+## Mandatory apply gates
 
-The gate synchronizes:
-
-1. `package.json`
-2. root `package-lock.json#version`
-3. `package-lock.json#packages[""]#version`
-4. `metadata.json`
-5. `README.md`
-6. `AGENTS.md`
-7. `docs/code-quality/CODE_QUALITY_STANDARDS.md`
-8. `docs/ceo/EXECUTIVE_SUMMARY.md`
-9. `docs/API.md`
-10. `index.html`
-
-The regression test `tests/unit/platformVersionConsistency.test.ts` independently verifies the
-source-of-truth relationship.
-
----
-
-## Mandatory Apply Gates
-
-After synchronization, the release command executes:
+After changing `package.json#version` and direct technical mirrors, the controlled release path executes:
 
 ```text
+npm run readme:sync
 npm run lint
-npx vitest run tests/unit/platformVersionConsistency.test.ts
+npx vitest run tests/unit/platformVersionConsistency.test.ts tests/unit/readmeVersionProjection.test.ts
+npm run readme:check
+npm run docs:hygiene:check
+npm run governance:control-plane
 npm run build
 npm run predeploy:check
 ```
 
-Any non-zero result aborts the release-version operation and restores the governed version files.
-
-The normal repository CI still runs independently after the change is committed; the local gate is
-not a substitute for GitHub CI.
+Hosted GitHub CI remains an independent exact-head verification and is not replaced by these local gates.
 
 ---
 
-## Release Candidate Evidence
+## Runtime/admin projection
 
-Only after all apply-stage gates pass, the command creates:
+`src/platform/Release/Services/platformVersionControlPlane.ts` reads `package.json#version` and, when present, validates the immutable runtime release manifest against that authority.
 
-```text
-docs/releases/candidates/RELEASE_CANDIDATE_<target-version>.md
-```
+The compatibility endpoint remains `/api/admin/version`, but it is routed through the normal Express admin authorization middleware. The production runtime guard may reject retired writes but must not answer this authenticated GET before AuthN/AuthZ.
 
-The candidate record contains:
-
-- source and target version;
-- PATCH/MINOR/MAJOR classification;
-- work-package / PR scope;
-- ADR scope;
-- migration scope;
-- known risks;
-- rollback boundary;
-- production-acceptance requirements;
-- version-gate evidence;
-- explicit status `VERSIONED_RC_PENDING_PRODUCTION_ACCEPTANCE`;
-- explicit `NOT_CREATED` final-tag state.
-
-The exact candidate commit SHA is resolved by GitHub CI / the production acceptance record. The
-candidate evidence file cannot safely embed the SHA of the same commit that contains the file,
-because doing so would create an impossible self-referential commit hash.
+No HTTP endpoint in `src/platform/VersionManager` may bump a version, persist local version state, generate ADR/compliance documents or execute a version event chain.
 
 ---
 
-## Production Acceptance and Final Tag
+## Release candidate evidence and final tag
 
-This component deliberately **does not** implement `git tag`.
+After all apply-stage gates pass, the command writes `docs/releases/candidates/RELEASE_CANDIDATE_<target-version>.md`. The record is evidence, not production acceptance.
 
-The lifecycle boundary is:
-
-```text
-Development
-  -> Integration / Scope Freeze
-  -> Release Version Gate
-  -> Versioned Release Candidate
-  -> Production Deployment
-  -> Production Acceptance
-  -> immutable tag vMAJOR.MINOR.PATCH
-  -> Traceability Closure
-```
-
-A failed candidate must never be tagged as the released platform version. A final tag may be created
-only after the exact deployed commit has a closed production acceptance record.
-
-Historical final tags must never be moved to different commits.
+This component deliberately does **not** create a final Git tag. A final immutable `vMAJOR.MINOR.PATCH` tag remains prohibited until the exact deployed commit has an accepted production record.
 
 ---
 
 ## Tests
 
-- `tests/unit/releaseVersionGate.test.ts`
-  - exact next PATCH/MINOR/MAJOR transitions;
-  - classification mismatch rejection;
-  - GA ADR requirement;
-  - package-lock drift rejection;
-  - synchronized update and rollback;
-  - mandatory ADR / acceptance traceability.
-- `tests/unit/platformVersionConsistency.test.ts`
-  - strict SemVer source of truth;
-  - package-lock root consistency;
-  - metadata consistency;
-  - governed declaration consistency.
+- `tests/unit/releaseVersionGate.test.ts` — transition classification, fail-closed metadata, direct mirrors, README rollback, AGENTS exclusion.
+- `tests/unit/platformVersionConsistency.test.ts` — `package.json` SemVer and current projection consistency; independent Governance Control Plane version contract for AGENTS.
+- `tests/unit/readmeVersionProjection.test.ts` — deterministic/idempotent README projection and malformed-input failure.
+- `scripts/pr/runtimeArtifactImmutability.test.mjs` — retired write denial and proof that admin version GET is not intercepted before Express authorization.
 
 ---
 
-## Enterprise References
+## Enterprise references
 
 - `docs/adr/resolved/ADR-0030-platform-version-release-lifecycle.md`
+- `docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md`
 - `ESS-0001`
 - `ESS-0001-CONTRACTS`
 - `ESS-0007` — Enterprise Release Center
+- suspended historical `ESS-0004` under `docs/archive/governance/suspended/`
 - `src/platform/Traceability`
 
-The implementation does not change the application version by itself. A version increase remains a
-separate, explicit release operation under ADR-0030.
+A version increase remains a separate, explicit Release operation. Neither Documentary Governance nor the VersionManager compatibility namespace can manufacture a platform-version transition.

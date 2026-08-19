@@ -3,28 +3,27 @@
 **Domain:** Documentary  
 **Authority:** `ESS-0012 — Documentation Governance`  
 **Global governance dependency:** `src/platform/Governance` / `/AGENTS.md`  
-**Version:** `1.1.0`  
-**Status:** specified; documentation-domain implementation may be added incrementally
+**Version:** `1.2.0`  
+**Status:** partial implementation — read-only hygiene service operational; broader ESS-0012 rule suite incremental
 
 ## Purpose
 
 The Documentation Governance Validator belongs to the Documentary domain. It validates **documentary structure and metadata** and produces findings. It does not define repository-wide authorization, agent authority, merge policy, production mutation authority or global governance precedence.
 
-The repository-wide governance control plane is `src/platform/Governance`, resolved from `/AGENTS.md`, `docs/governance/authority-registry.json` and `docs/governance/control-catalog.json`.
+The repository-wide Governance Control Plane is `src/platform/Governance`, resolved from `/AGENTS.md`, `docs/governance/authority-registry.json` and `docs/governance/control-catalog.json`.
 
-## Responsibilities
+## Implemented service
 
-Documentation Governance may validate:
+`Services/DocumentationHygieneValidator.ts` is the canonical read-only hygiene service. It was adapted from the reusable implementation parked in PR #439 and enforces:
 
-- canonical document placement and root-Markdown allowlists;
-- document registry structure, paths and metadata;
-- required document version/language/lifecycle metadata;
-- documentary references to ESS/ADR/contract identities;
-- documentation completeness and structural consistency;
-- documentation-related traceability findings;
-- documentary version projection and hygiene.
+- root Markdown allowlist (`README.md`, `AGENTS.md` only);
+- document-registry schema and authority;
+- unique document IDs and paths;
+- required type/owner/authority/version/language/lifecycle metadata;
+- `suspended` as an explicit governance lifecycle;
+- repository-relative registry target paths and target existence.
 
-It may emit findings/reports and expose reusable validation services to Documentary workflows.
+The CLI adapter is `scripts/automation/validateDocumentationHygiene.ts` and is exposed as `npm run docs:hygiene:check`.
 
 ## Explicit non-responsibilities
 
@@ -36,7 +35,8 @@ Documentation Governance MUST NOT:
 - reinterpret an ADR/ESS lifecycle contrary to `src/platform/Governance` resolution;
 - authorize production, IAM, billing, secret or external provider mutations;
 - duplicate global workflow/CI/deployment policy;
-- treat documentation recency alone as authority.
+- treat documentation recency alone as authority;
+- mutate a document merely because validation found a defect.
 
 ## Boundary with the global Governance component
 
@@ -47,7 +47,7 @@ src/platform/Governance
   -> authority resolution
 
 src/platform/Documentary/Governance
-  -> document hygiene
+  -> document hygiene service
   -> metadata and registry validation
   -> documentary consistency findings
 ```
@@ -56,15 +56,17 @@ Documentation Governance consumes global stable identities; it does not own them
 
 ## Canonical inputs
 
-- `ESS-0012 — Documentation Governance`
+- `ESS-0012 — Documentation Governance` — Documentation-only scope under ADR-0096
 - `ESS-0012-CONTRACTS`
 - `docs/governance/document-registry.json`
 - `docs/governance/DOCUMENTATION_HYGIENE_POLICY.md`
 - global governance contracts from `src/platform/Governance`
 
-## Implementation guidance
+## Implementation state
 
-The reusable hygiene logic proposed in parked PR #439 is compatible with this domain **only after** it is adapted to this boundary. Its useful validation implementation should be reused rather than recreated, but it must not become a competing repository-wide governance control plane.
+The useful hygiene implementation from parked PR #439 is now reused in the current Governance work package. The former standalone `tests/unit/documentationHygiene.test.ts` is intentionally retired; hygiene executes as a reusable service/CLI gate instead of duplicating repository-policy logic in a test file.
+
+This does **not** claim that all historical 57 ESS-0012 rules are implemented. Additional semantic Documentary validators remain separate incremental work unless explicitly brought into scope.
 
 ## Decision model
 
