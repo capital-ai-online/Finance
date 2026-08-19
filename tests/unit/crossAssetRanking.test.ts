@@ -102,29 +102,45 @@ describe('SC-7 cross-asset ranking generalization', () => {
     expect(RANKING_SCORE_IMPACT_ENABLED).toBe(false);
   });
 
-  it('isolates default cohorts by model version AND asset class', () => {
+  it('isolates default cohorts by intended-use contract', () => {
+    const featureDrift = candidate({
+      symbol: 'TSLA', assetClass: 'stock', score: 89,
+      modelId: 'traditional-scoring', modelVersion: '2.1.0',
+    });
+    featureDrift.canonical.integrity.featureVersion = 'test-features/2.0.0';
+
     const result = rankCanonicalUniverse(
       [
         candidate({ symbol: 'BTC', assetClass: 'crypto', score: 9.1, modelId: 'crypto-technical-provenance', modelVersion: '0.6.3' }),
         candidate({ symbol: 'AAPL', assetClass: 'stock', score: 87, modelId: 'traditional-scoring', modelVersion: '2.1.0' }),
         candidate({ symbol: 'MSFT', assetClass: 'stock', score: 82, modelId: 'traditional-scoring', modelVersion: '2.1.0' }),
         candidate({ symbol: 'EURUSD', assetClass: 'forex', score: 91, modelId: 'traditional-scoring', modelVersion: '2.1.0' }),
+        featureDrift,
       ],
       'overall',
     );
 
     expect(result.status).toBe('READY');
-    expect(result.cohorts).toHaveLength(3);
+    expect(result.cohorts).toHaveLength(4);
     expect(result.cohorts.every((cohort) => cohort.crossCohortOrder === false)).toBe(true);
-    expect(result.cohorts.every((cohort) => cohort.comparisonBasis === 'canonical-score-same-model-asset-class')).toBe(true);
+    expect(result.cohorts.every((cohort) => cohort.comparisonBasis === 'canonical-score-same-intended-use-contract')).toBe(true);
 
-    const stocks = result.cohorts.find((cohort) => cohort.key.includes('asset-class:stock'));
-    expect(stocks?.entries.map((entry) => entry.symbol)).toEqual(['AAPL', 'MSFT']);
-    expect(stocks?.entries.map((entry) => entry.rank)).toEqual([1, 2]);
+    const baseStocks = result.cohorts.find((cohort) =>
+      cohort.key.includes('asset-class:stock') && cohort.key.includes('test-features%2F1.0.0'),
+    );
+    expect(baseStocks?.entries.map((entry) => entry.symbol)).toEqual(['AAPL', 'MSFT']);
+    expect(baseStocks?.entries.map((entry) => entry.rank)).toEqual([1, 2]);
 
     const forex = result.cohorts.find((cohort) => cohort.key.includes('asset-class:forex'));
     expect(forex?.entries.map((entry) => entry.symbol)).toEqual(['EURUSD']);
-    expect(result.cohorts.some((cohort) => cohort.entries.some((entry) => entry.symbol === 'AAPL') && cohort.entries.some((entry) => entry.symbol === 'EURUSD'))).toBe(false);
+    expect(result.cohorts.some((cohort) =>
+      cohort.entries.some((entry) => entry.symbol === 'AAPL') &&
+      cohort.entries.some((entry) => entry.symbol === 'EURUSD'),
+    )).toBe(false);
+    expect(result.cohorts.some((cohort) =>
+      cohort.entries.some((entry) => entry.symbol === 'AAPL') &&
+      cohort.entries.some((entry) => entry.symbol === 'TSLA'),
+    )).toBe(false);
   });
 
   it('allows cross-model and cross-asset ranking only with verified normalized evidence', () => {
@@ -143,7 +159,6 @@ describe('SC-7 cross-asset ranking generalization', () => {
       ],
       'overall',
     );
-
     expect(result.cohorts).toHaveLength(1);
     expect(result.cohorts[0].entries.map((entry) => entry.symbol)).toEqual(['BTC', 'AAPL']);
     expect(result.cohorts[0].entries.map((entry) => entry.rankingValue)).toEqual([91, 87]);
@@ -215,7 +230,7 @@ describe('SC-7 cross-asset ranking generalization', () => {
     identityDrift.canonical.integrity.assetId = 'crypto:WRONG';
 
     const noLineage = candidate({ symbol: 'SOL', assetClass: 'crypto', score: 8.5, modelId: 'crypto-technical-provenance', modelVersion: '0.6.3' });
-    delete noLineage.canonical.integrity.dispatcherVersion;
+    delete noLineage.canonical.integrity.modelRegistryVersion;
 
     const unavailable = candidate({ symbol: 'AAPL', assetClass: 'stock', score: 82, modelId: 'traditional-scoring', modelVersion: '2.1.0' });
     unavailable.governance = { eligible: true, operationsState: 'NO_RUNTIME_EVIDENCE' };
