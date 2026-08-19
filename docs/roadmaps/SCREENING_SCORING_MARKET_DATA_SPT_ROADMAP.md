@@ -1,10 +1,10 @@
 # Screening · Scoring · Market Data — Single Point of Trust Roadmap
 
 **Document ID:** SC-MD-SPT-0001  
-**Version:** 1.0.13  
+**Version:** 1.0.14  
 **Status:** ACTIVE — CANONICAL EXECUTION AUTHORITY  
 **Stand:** 2026-08-19  
-**Repository-Baseline:** `main@275fdf4c` + Integrationsbranch `agent/sc2-stack-main-sync`  
+**Repository-Baseline:** `main@ca968b25` + Execution Branch `agent/sc2-crypto-score-registry-consumer`  
 **Owner:** SvenKulessa  
 **Authority:** DOCUMENTATION_HYGIENE_POLICY · GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY / ADR-0086 · ROADMAP_CONSOLIDATION_MASTER_INDEX · ADR-0020 / ADR-0041 · ESS EventMesh/Traceability
 
@@ -35,9 +35,9 @@ Es ersetzt als Ausführungsautorität:
 | Market-Data Gateway | `src/platform/MarketData/` | **SC-4 Matrix/Health + SC-5 CoinGecko canonical multi-field** |
 | Provider | TwelveData, FMP Index, CoinGecko; CoinAPI/EODHD/TwelveData(crypto) gateway adapters registered, unconsumed; Alpaca shadow | **Kern live** |
 | Evidence / Consensus | Snapshot/Spot consensus, traditional/commodity/macro evidence | **Stark ausgebaut** |
-| Research Evidence | `src/platform/ResearchEvidence/` + `server/researchEvidence/` | **SC-2 A.5/A.6: Contract + server-only Gemini Shadow; default-off, Free-Tier-only, keine Score-Wirkung** |
-| Scoring-Engines | Base/DeFi, crypto 9-Faktor, meme, raw materials, traditional, verified technical | **Multi-Engine; A1/A2 Konsolidierung gestartet** |
-| UAI / Model Registry | `src/platform/Scoring/` | **SC-2 Phase A Foundation: UAI + fail-closed Champion Resolver** |
+| Research Evidence | `src/platform/ResearchEvidence/` + `server/researchEvidence/` | **SC-2 A.5/A.6 auf main: Contract + server-only Gemini Shadow; default-off, Free-Tier-only, keine Score-Wirkung** |
+| Scoring-Engines | Base/DeFi, crypto 9-Faktor, meme, raw materials, traditional, verified technical | **Multi-Engine; Konsolidierung aktiv** |
+| UAI / Model Registry | `src/platform/Scoring/` | **SC-2 Foundation auf main; `/api/crypto/score` erster produktiver Registry-Consumer auf Execution Branch** |
 | Ranking / Eligibility | `ranking.service` + SC-7 composite opt-in | **Crypto-lastig; cross-asset noch offen** |
 | Classification | Adapter + expanded deterministic table | **Canonical exit path** |
 | Unified DQ/Confidence | `CompositeDataQuality`; impact flags false | **Foundation + consumer map** |
@@ -47,8 +47,8 @@ Es ersetzt als Ausführungsautorität:
 1. scoreImpact / rankingImpact weiterhin Owner-gated (`false`)
 2. Ranking-Generalisierung cross-asset offen
 3. Multi-provider crypto quorum + `executionPriceEligible` weiterhin offen; vorhandene Gateway-Adapter noch unconsumed
-4. **SC-2 Consumer Migration:** alle produktiven Score-Entry-Points noch über Registry/Dispatcher + CanonicalScoreResult vereinheitlichen
-5. **Gemini Shadow Validation:** PR #416 CI ist vollständig PASS; Main-Sync-PR-CI, interner Shadow-Consumer sowie Coverage/Latenz/Quota-Messung bleiben offen; Free-Tier-Key und Billing-Attestation sind operativ gesetzt, Shadow bleibt deaktiviert
+4. **SC-2 Consumer Migration:** `/api/crypto/score` ist als erster Registry-Consumer implementiert; `/api/crypto/list`, `/top10` sowie die übrigen Asset-Domänen müssen noch über Registry/Dispatcher + CanonicalScoreResult vereinheitlicht werden
+5. **Gemini Shadow Validation:** Main-Sync PR #418 ist nach PR #419 erneut vollständig validiert und gemerged; interner Shadow-Consumer sowie Coverage/Latenz/Quota-Messung bleiben offen; Free-Tier-Key und Billing-Attestation sind operativ gesetzt, Shadow bleibt deaktiviert
 6. **Evidence Promotion:** reale Source-/Lizenz-/Field-Policies und Promotion von validierten Research Candidates zu ScoringEvidenceRef separat Owner-gated
 7. Alpaca primary promotion Owner-gated
 8. SC-8 vollständige Drift-/Golden-/Walk-Forward-Governance offen
@@ -100,11 +100,11 @@ Universal Asset Interface (identity only)
 |---|---|---|---|---|
 | **SC-0** | Baseline freeze & inventory | P0 | **LANDED** | SPT gemerged |
 | **SC-1** | Classification consolidation | P0 | **LANDED** | Canonical schema; deterministic coverage |
-| **SC-2** | Model registry & UAI adapters | P1 | **IN IMPLEMENTATION — A + A.5 + A.6 + Free-Tier hardening; Main-Sync läuft** | UAI + registry + zero-cost research shadow + all score consumers via one dispatcher + canonical result |
+| **SC-2** | Model registry & UAI adapters | P1 | **IN IMPLEMENTATION — Foundation/Research stack LANDED; `/api/crypto/score` first consumer in branch** | UAI + registry + zero-cost research shadow + all score consumers via one dispatcher + canonical result |
 | **SC-3** | Unified DQ + Confidence composite | P0 | **FOUNDATION LANDED** | Composite; impact off |
 | **SC-4** | Gateway hardening & provider matrix | P1 | **Phase A LANDED** | Matrix + RL + supervisor health |
 | **SC-5** | Live coverage expansion | P1 | **Phase A–D code** | execution quorum still open |
-| **SC-6** | Scoring integrity & lineage | P1 | PARTIAL | contract unification continues with SC-2 |
+| **SC-6** | Scoring integrity & lineage | P1 | PARTIAL — model registry lineage added for first consumer | contract unification continues with SC-2 |
 | **SC-7** | Ranking generalization | P1 | **Phase A–C LANDED** | cross-asset modes still open; impact off |
 | **SC-8** | Horizon / Walk-Forward backtests | P2 | FOUNDATION/PARTIAL | drift + golden-set + full walk-forward governance open |
 
@@ -127,15 +127,23 @@ ADR-0090 überschreibt für Gemini Research Shadow die frühere konfigurierbare 
 
 ### Main-Korrelation 2026-08-19
 
-Die ursprüngliche SC-2-Stack-Basis lag auf `345b2bd3`. `main` rückte zunächst durch Governance/Regulatory Hardening auf `f8a1630a` und anschließend durch M10 Phase 4 auf `275fdf4c` vor. PR #416 wurde in `agent/gemini-research-evidence-adapter` gemerged. Für die Main-Integration wurde deshalb **kein alter Stack-Branch rebasierend über `main` gelegt**, sondern `agent/sc2-stack-main-sync` frisch von `main@275fdf4c` erstellt und nur der fachliche SC-2-Delta reappliziert.
+Der historische SC-2-Stack lag auf `345b2bd3`. `main` rückte durch Governance/Regulatory Hardening, M10 Phase 4 und PR #419 M10 Phase 5 auf `51cb1cdac9cb25d303f306d40c5b27b83ba954de` vor. PR #418 wurde danach auf dem synchronisierten Head `ad61a7ec` erneut vollständig geprüft: CI #1799 und Governance #1121 waren erfolgreich. Der Human-Merge von PR #418 erzeugte `main@ca968b2563975df64245cb88ee45a7c04019a3a1`; Merge-Commit und geprüfter PR-Head besaßen denselben Tree.
 
-Korrelationsergebnis:
+Der nächste SC-2-Execution-Branch `agent/sc2-crypto-score-registry-consumer` startet frisch von `main@ca968b25`.
 
-- ADR-0086 bleibt ausschließlich Governance Authority auf `main`; SC-2 verwendet ADR-0087–ADR-0090.
-- `AGENTS.md`, Governance Authority, AI-Governance-Supabase-Sink und M10 Phase 4 bleiben vollständig aus `main` erhalten.
-- Die beiden Systemadmin-Testdateien aus dem alten Stack werden nicht übernommen; `main` bleibt dort autoritativ.
-- `docs/governance/document-registry.json` wird additiv zusammengeführt: Main-Governance-Einträge bleiben unverändert, SC-2-ADR/Evidence/Runbook-Einträge werden ergänzt.
-- Die M10-Phase-4-Dateien haben keinen Pfad- oder Runtime-Konflikt mit Scoring/ResearchEvidence.
+Korrelationsergebnis für diesen Schritt:
+
+- `/api/crypto/score` darf als erster produktiver Consumer Registry-Auswahl erzwingen, ohne Score-Mathematik oder Evidence-Provider anzufassen.
+- `ScoringModelRegistry` bleibt Metadaten-/Routing-Authority; der bestehende verified crypto scorer bleibt Domain Executor.
+- Model ID/version/alias/executor/Contract-Metadaten werden additiv in die Lineage aufgenommen; die Legacy-Response `model: technical-provenance` bleibt kompatibel.
+- M10 Phase 5 aus PR #419 bleibt unverändert und hat keinen Pfad-Overlap mit Scoring/ResearchEvidence.
+- Open PR #414 hat keinen Dateipfad-Overlap mit diesem Work Package. Seine separate ADR-0086-Nummernkollision wird nicht in SC-2 übernommen.
+
+### Enterprise-/FinTech-Benchmark
+
+Für Model-Risk-Governance wird die am 17.04.2026 veröffentlichte Federal Reserve/OCC/FDIC **Revised Guidance on Model Risk Management** als aktueller Enterprise-Benchmark herangezogen: Model Use, Model Inventory, Dokumentation, Governance/Controls und laufendes Monitoring sollen nachvollziehbar zusammengeführt werden. Die produktive Registry-Auflösung plus persistierbare Model-Lineage setzt genau diese technische Kontrollrichtung um, ohne eine regulatorische Anwendbarkeit auf CAPITAL-AI zu behaupten.
+
+EU AI Act Art. 11/12 und NIST AI RMF dienen ergänzend als technische Benchmarks für versionierte Dokumentation, Traceability und Lifecycle-Governance. Auch daraus wird keine rechtliche High-Risk-Klassifikation dieses deterministischen Scoring-Pfads abgeleitet.
 
 ---
 
@@ -147,6 +155,7 @@ Korrelationsergebnis:
 - `docs/adr/ADR-0089-gemini-research-shadow-runtime.md`
 - `docs/adr/ADR-0090-gemini-free-tier-only-zero-cost-policy.md`
 - `docs/evidence/sc-md/SC2_A1_A2_BASELINE_2026-08-19.md`
+- `docs/evidence/sc-md/SC2_CRYPTO_SCORE_REGISTRY_CONSUMER_2026-08-19.md`
 - `docs/evidence/sc-md/SC2_GEMINI_RESEARCH_EVIDENCE_ADAPTER_2026-08-19.md`
 - `docs/evidence/sc-md/SC2_GEMINI_SHADOW_TRANSPORT_2026-08-19.md`
 - `docs/evidence/sc-md/SC2_GEMINI_FREE_TIER_ONLY_2026-08-19.md`
@@ -157,4 +166,4 @@ Korrelationsergebnis:
 
 ---
 
-*SC-2 A1/A2 + A.5/A.6 Free-Tier hardening 2026-08-19: UAI/Model Registry + ResearchEvidenceAdapter + server-only Gemini Shadow Transport + Zero-Cost Policy werden auf einem frischen Main-Sync-Branch konsolidiert. Shadow bleibt default-off, billing-free/free-tier-only, secret-/rate-/quota-/circuit-/health-/telemetry-gated und ohne Score-/Ranking-/Market-Data-Routing-Impact. Main-Integration erst nach PR-CI und Human Merge.*
+*SC-2 Stand 2026-08-19: Foundation + ResearchEvidence/Gemini-Free-Tier-Stack sind auf `main@ca968b25` gelandet. Der nächste Roadmap-Schritt migriert `/api/crypto/score` als ersten produktiven Consumer auf UAI + ScoringModelRegistry mit fail-closed Executor-Bindung und Model-Lineage. `/api/crypto/list` und `/top10` folgen danach; Gemini Shadow bleibt weiterhin default-off.*
