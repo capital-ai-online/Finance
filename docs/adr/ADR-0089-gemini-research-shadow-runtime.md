@@ -1,14 +1,14 @@
-# ADR-0088: Server-only Gemini Research Shadow Runtime
+# ADR-0089: Server-only Gemini Research Shadow Runtime
 
 - **Status:** Accepted
 - **Datum:** 2026-08-19
 - **Owner-Entscheidung:** „server-only GeminiResearchTransport im Shadow Mode, weiterhin default-off, mit Feature Flag, Secret-Wiring, Rate-/Cost-Budget, Circuit Breaker, Provider Health und Audit-Telemetrie. ausführen“
-- **Authority:** SC-MD-SPT-0001 + ADR-0086 + ADR-0087
-- **Ersetzt/erweitert:** ADR-0087 §4 und das dort definierte Aktivierungs-Gate werden für die server-only Shadow-Runtime konkretisiert. ADR-0072 bleibt für produktive Gemini-Nutzung außerhalb dieser Research-Evidence-Grenze wirksam.
+- **Authority:** SC-MD-SPT-0001 + ADR-0087 + ADR-0088
+- **Ersetzt/erweitert:** ADR-0088 §4 und das dort definierte Aktivierungs-Gate werden für die server-only Shadow-Runtime konkretisiert. ADR-0072 bleibt für produktive Gemini-Nutzung außerhalb dieser Research-Evidence-Grenze wirksam.
 
 ## Kontext
 
-ADR-0087 hat die providerneutrale Research-/Extraction-/Evidence-Discovery-Grenze geschaffen und Gemini als möglichen Adapter vorbereitet. Diese ADR aktiviert **nicht** Gemini als Scoring- oder Marktprovider. Sie liefert ausschließlich die serverseitige Transport- und Resilience-Schicht, die später kontrolliert Shadow-Traffic erzeugen kann.
+ADR-0088 hat die providerneutrale Research-/Extraction-/Evidence-Discovery-Grenze geschaffen und Gemini als möglichen Adapter vorbereitet. Diese ADR aktiviert **nicht** Gemini als Scoring- oder Marktprovider. Sie liefert ausschließlich die serverseitige Transport- und Resilience-Schicht, die später kontrolliert Shadow-Traffic erzeugen kann.
 
 Die Runtime muss auch bei vorhandenem API-Key fail-closed bleiben: Ohne explizites Feature Flag, Modell und reale Kostenparameter darf kein Request an Google gesendet werden.
 
@@ -95,7 +95,7 @@ Audit-/Telemetry-Metadaten enthalten ausschließlich technische Metadaten wie:
 - berechnete Kosten und Budgetstände;
 - Circuit-/Fehlerstatus.
 
-Nicht geloggt werden API-Key, Prompt/Query, URLs, Rohantwort oder extrahierte Claim-Werte. `auditReference` verweist auf ADR-0087; die Telemetrie ist operative Evidence, keine neue Autorisierungs-Authority.
+Nicht geloggt werden API-Key, Prompt/Query, URLs, Rohantwort oder extrahierte Claim-Werte. `auditReference` verweist auf ADR-0088; die Telemetrie ist operative Evidence, keine neue Autorisierungs-Authority.
 
 ### 9. Keine automatische Score-Evidence-Promotion
 
@@ -128,8 +128,8 @@ Auch nach erfolgreichem Shadow-Call bleibt jeder Output `AI_DISCOVERED_EVIDENCE`
 ## Referenzen
 
 - ADR-0072
-- ADR-0086
 - ADR-0087
+- ADR-0088
 - `server/researchEvidence/geminiResearchTransport.ts`
 - `src/platform/ResearchEvidence/GeminiResearchEvidenceAdapter.ts`
 - `scripts/security/secretFileManifest.ts`

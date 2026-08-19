@@ -1,9 +1,9 @@
-# ADR-0087: Kontrollierte Gemini-Rückkehr als Research-/Extraction-/Evidence-Discovery-Adapter
+# ADR-0088: Kontrollierte Gemini-Rückkehr als Research-/Extraction-/Evidence-Discovery-Adapter
 
 - **Status:** Accepted
 - **Datum:** 2026-08-19
 - **Owner-Entscheidung:** „Research-/Extraction-/Evidence-Discovery-Adapter erstellen um eine Rückkehr der Gemini API möglich zu machen.“
-- **Authority:** SC-MD-SPT-0001 + ADR-0086 (eine kanonische Scoring-Architektur)
+- **Authority:** SC-MD-SPT-0001 + ADR-0087 (eine kanonische Scoring-Architektur)
 - **Bezug zu ADR-0072:** ADR-0072 bleibt für Runtime, Dependencies, Keys und produktive Gemini-Nutzung wirksam. Diese ADR erlaubt zunächst nur die providerneutrale, dormant Re-Entry-Grenze und definiert die Bedingungen einer späteren expliziten Aktivierung.
 
 ## Kontext
@@ -108,7 +108,7 @@ Ein separater, explizit Owner-genehmigter Schritt ist erforderlich, bevor Gemini
 ## Referenzen
 
 - `docs/adr/ADR-0072-alpaca-shadow-and-gemini-retirement.md`
-- `docs/adr/ADR-0086-single-scoring-architecture-uai-model-registry.md`
+- `docs/adr/ADR-0087-single-scoring-architecture-uai-model-registry.md`
 - `docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md`
 - `docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md`
 - `src/platform/ResearchEvidence/`

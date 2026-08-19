@@ -71,7 +71,7 @@ export function classifyResearchSource(
   matchedEntry?: ResearchEvidenceSourcePolicyEntry;
 } {
   const validated = validatePublicResearchUrl(rawUrl);
-  if (!validated.ok) return { sourceClass: 'unknown', allowedUses: [] };
+  if (validated.ok === false) return { sourceClass: 'unknown', allowedUses: [] };
   const matchedEntry = policy.entries.find((entry) => matchesEntry(validated.hostname, entry));
   if (!matchedEntry) return { sourceClass: 'unknown', allowedUses: ['research'] };
   return {
@@ -103,7 +103,7 @@ export function validateResearchEvidenceCandidate(
 ): ResearchEvidenceValidationResult {
   const reasons: string[] = [];
   const url = validatePublicResearchUrl(candidate.source.url);
-  if (!url.ok) reasons.push(url.reason);
+  if (url.ok === false) reasons.push(url.reason);
   if (candidate.citation.url !== candidate.source.url) reasons.push('Citation URL does not match candidate source URL.');
   if (!candidate.claim.field.trim()) reasons.push('Claim field is empty.');
   if (!validClaimValue(candidate.claim.value)) reasons.push('Claim value is not finite/serializable.');

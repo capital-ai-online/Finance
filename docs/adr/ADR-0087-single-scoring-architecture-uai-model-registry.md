@@ -1,4 +1,4 @@
-# ADR-0086: Eine kanonische Scoring-Architektur mit UAI und ScoringModelRegistry
+# ADR-0087: Eine kanonische Scoring-Architektur mit UAI und ScoringModelRegistry
 
 - **Status:** Accepted
 - **Datum:** 2026-08-19

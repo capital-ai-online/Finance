@@ -113,7 +113,8 @@ function compactText(value: unknown, max: number): string | undefined {
 }
 
 function normalizeClaimValue(value: unknown): ResearchClaimValue | undefined {
-  if (value === null || typeof value === 'boolean') return value;
+  if (value === null) return null;
+  if (typeof value === 'boolean') return value;
   if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
   if (typeof value === 'string') return value.slice(0, 4096);
   return undefined;
@@ -176,7 +177,7 @@ export class GeminiResearchEvidenceAdapter implements ResearchEvidenceAdapter {
       };
     }
 
-    const invalidUrl = urls.find((url) => !validatePublicResearchUrl(url).ok);
+    const invalidUrl = urls.find((url) => validatePublicResearchUrl(url).ok === false);
     if (invalidUrl) {
       return {
         adapterId: this.descriptor.id,
@@ -241,7 +242,7 @@ export class GeminiResearchEvidenceAdapter implements ResearchEvidenceAdapter {
       citationIndexes.forEach((citationIndex) => {
         const citation = citations[citationIndex];
         const validated = validatePublicResearchUrl(citation.url);
-        if (!validated.ok) {
+        if (validated.ok === false) {
           diagnostics.push(`Claim ${claimIndex}/citation ${citationIndex} discarded: ${validated.reason}`);
           return;
         }
