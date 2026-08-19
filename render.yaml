@@ -7,7 +7,10 @@ services:
     region: frankfurt
     plan: starter
     numInstances: 1
-    autoDeployTrigger: checksPass
+    # Production deploy authority is GitHub CI: verified main -> supply-chain attestation ->
+    # exact-SHA Render deploy hook -> post-deploy identity verification. Keep Render auto-deploy
+    # off to avoid a second, un-attested deployment control plane.
+    autoDeployTrigger: off
     healthCheckPath: /healthz
     # ADR-0037: stay below Render's 30s default termination window so the application can
     # stop scheduling work, drain HTTP requests and exit before a forced termination.
