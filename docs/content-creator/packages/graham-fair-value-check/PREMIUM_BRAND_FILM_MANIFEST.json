@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "slug": "capital-ai-graham-buffett-premium-brand-film",
+  "title": "CAPITAL-AI Graham + Buffett Value Intelligence",
+  "durationSeconds": 45,
+  "fps": 24,
+  "renderFps": 6,
+  "width": 1920,
+  "height": 1080,
+  "disclaimer": "Keine Anlageberatung. Quantitative Analyse auf dokumentierter Datenbasis.",
+  "headlineSequence": [
+    "DATA",
+    "EVIDENCE",
+    "MODELS",
+    "RISK",
+    "INTELLIGENCE"
+  ],
+  "scenes": [
+    { "kind": "origin", "start": 0, "end": 5 },
+    { "kind": "data", "start": 5, "end": 10, "headline": "DATA" },
+    { "kind": "evidence", "start": 10, "end": 15, "headline": "EVIDENCE" },
+    { "kind": "models", "start": 15, "end": 23, "headline": "MODELS" },
+    { "kind": "risk", "start": 23, "end": 29, "headline": "RISK" },
+    { "kind": "intelligence", "start": 29, "end": 35, "headline": "INTELLIGENCE" },
+    { "kind": "traceability", "start": 35, "end": 40 },
+    { "kind": "final", "start": 40, "end": 45 }
+  ],
+  "valueChecks": [
+    "INTRINSIC VALUE",
+    "MARGIN OF SAFETY",
+    "EARNINGS QUALITY",
+    "BALANCE-SHEET STRENGTH",
+    "FREE CASH FLOW",
+    "CAPITAL EFFICIENCY",
+    "DEBT RESILIENCE",
+    "ECONOMIC MOAT",
+    "VALUATION DISCIPLINE"
+  ],
+  "finalStatement": "QUANTITATIVE INTELLIGENCE FOR COMPLEX MARKETS",
+  "publishReady": false
+}
