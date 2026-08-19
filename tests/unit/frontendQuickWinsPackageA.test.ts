@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 const appPath = path.join(process.cwd(), 'src/App.tsx');
 const marketScreenerPath = path.join(process.cwd(), 'src/components/MarketScreener.tsx');
 const indexCssPath = path.join(process.cwd(), 'src/index.css');
+const viteConfigPath = path.join(process.cwd(), 'vite.config.ts');
 const lazyViewFacades = [
   ['BacktestEngine', 'BacktestEngineImpl'],
   ['SentimentDashboard', 'SentimentDashboardImpl'],
@@ -37,6 +38,23 @@ describe('Frontend Quick Wins package A', () => {
     expect(facade).toContain('<React.Suspense');
     expect(facade).toContain('role="status"');
     expect(facade).toContain('aria-live="polite"');
+  });
+
+  it('keeps heavy dependencies behind the secondary-view implementation boundaries', () => {
+    const backtest = readSource(path.join(process.cwd(), 'src/components/BacktestEngineImpl.tsx'));
+    const sentiment = readSource(path.join(process.cwd(), 'src/components/SentimentDashboardImpl.tsx'));
+    const admin = readSource(path.join(process.cwd(), 'src/components/AdminPortalImpl.tsx'));
+
+    expect(backtest).toContain("from 'jspdf'");
+    expect(backtest).toContain("from 'recharts'");
+    expect(sentiment).toContain("from 'recharts'");
+    expect(admin).toContain("from './AdminPanel'");
+  });
+
+  it('does not reintroduce manual Rollup vendor chunking', () => {
+    const viteConfig = readSource(viteConfigPath);
+
+    expect(viteConfig).not.toContain('manualChunks');
   });
 
   it('uses the Phase-1 layout and 44px hit-target primitives in MarketScreener', () => {
