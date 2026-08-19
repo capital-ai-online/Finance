@@ -1,6 +1,6 @@
 # PDF Branding Finalization Roadmap — P1/P2
 
-- **Status:** IMPLEMENTATION COMPLETE / FINAL MAIN + PR VALIDATION PENDING
+- **Status:** IMPLEMENTATION COMPLETE / PR VALIDATION PENDING
 - **Datum:** 2026-08-19
 - **Owner:** CAPITAL-AI Owner
 - **Branch:** `agent/pdf-branding-p1-p2-final`
@@ -86,16 +86,20 @@ P0 hat aktive jsPDF-Reports auf einen gemeinsamen Brand-/Metadaten-Contract geho
 ### P2.5 Governance-Abschluss
 
 - [x] ADR-0093 dokumentiert Renderer-/Accessibility-Grenze. Die zunächst reservierte 0092 wurde nach Erkennung der Parallel-PR-#434-Kollision verworfen.
-- [x] Dokument-Registry aktualisiert; finale Nummernkorrektur auf ADR-0093 ist Bestandteil dieses Branches.
+- [x] Dokument-Registry auf ADR-0093 und die P1/P2-Artefakte aktualisiert.
 - [x] Implementierungs-Evidence mit Vorher/Nachher-Matrix erstellt.
-- [ ] Branch unmittelbar vor PR-Erstellung gegen aktuelles `main` vergleichen und bei Main-Advance korrelieren.
+- [x] Branch unmittelbar vor PR-Erstellung gegen aktuelles `main` verglichen: `23 ahead / 0 behind`, Merge-Base `3ed2b2e9c9421bc979ca2487610a6a49a655e888`.
 - [x] Kostenrelevante CI/Build-Läufe werden erst nach PR-Erstellung zugelassen.
 
 ## Parallel-PR-Korrelation
 
-Zum Implementierungsabschluss sind #433, #434 und #435 offen. Direkte fachliche PDF-/Runtime-Pfadüberschneidungen wurden nicht festgestellt. `docs/governance/document-registry.json` ist jedoch ein additiver Governance-Hotspot aller drei Parallel-PRs und muss bei einem vorherigen Merge erneut reconciled werden.
+Zum Implementierungsabschluss sind #433, #434 und #435 offen.
 
-Besonderer Fund: PR #434 reserviert `ADR-0092` für Privacy-Hardening. Die PDF-Entscheidung verwendet deshalb `ADR-0093`.
+- **PR #433:** direkter Overlap ausschließlich `docs/governance/document-registry.json`.
+- **PR #435:** direkter Overlap ausschließlich `docs/governance/document-registry.json`.
+- **PR #434:** kein direkter Dateioverlap; seine Privacy-Entscheidung reserviert jedoch `ADR-0092`, weshalb die PDF-Entscheidung auf `ADR-0093` verschoben wurde.
+
+Falls #433 oder #435 vor diesem PDF-PR in `main` landen, wird die Registry vor Merge additiv reconciled. Falls irgendein Parallel-PR `main` vor dem PDF-Merge verändert, wird gemäß Projektregel der gesamte Branch erneut gegen den dann aktuellen Main-Stand korreliert.
 
 ## Definition of Done
 
