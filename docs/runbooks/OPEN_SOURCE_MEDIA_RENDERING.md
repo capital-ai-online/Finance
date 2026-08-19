@@ -4,7 +4,7 @@ Authority: ADR-0094 / SEO-GM-ROADMAP-0002 WP-N3
 
 ## Zweck
 
-Lokale, deterministische CAPITAL-AI Bilder, Short-Frames und PDF Companion Assets erzeugen. Kein Publish, kein OAuth, keine externen Media-URLs.
+Lokale, deterministische CAPITAL-AI Bilder, Short-Frames, 16:9 Brand-Filme und PDF Companion Assets erzeugen. Kein Publish, kein OAuth, keine externen Media-URLs.
 
 ## Voraussetzungen
 
@@ -53,6 +53,27 @@ python3 scripts/media/render_content_assets.py \
 ```
 
 Dieser Override ist **keine Produktions-/Distributionsfreigabe**. Ein `--enable-nonfree` Build wird immer abgelehnt.
+
+## 2a. 16:9 Premium Brand Film erzeugen
+
+Der additive Cinematic-Renderer verwendet weiterhin Pillow + FFmpeg und die bestehenden CAPITAL-AI Design-Tokens/Lizenz-Gates. Es werden keine Remote-Medien geladen und keine Publishing-Credentials benötigt.
+
+```bash
+python3 scripts/media/render_cinematic_brand_film.py \
+  --manifest docs/content-creator/packages/graham-fair-value-check/PREMIUM_BRAND_FILM_MANIFEST.json \
+  --output /tmp/CAPITAL-AI_Graham_Buffett_Premium_Brand_Film_45s.mp4
+```
+
+Der kanonische Graham/Buffett Brand Film rendert:
+
+- 1920x1080 (16:9),
+- 24 fps,
+- exakt 45 Sekunden,
+- deterministische Pillow-Motion-Graphics mit FFmpeg-Frame-Interpolation,
+- keinen Audio-/TTS-Track,
+- ein SHA-256-Asset-Manifest mit `publishReady=false`.
+
+Ein lokaler `--enable-gpl`-Build darf auch hier nur mit `--allow-gpl-ffmpeg` für einen Developer-Smoke genutzt werden. Für Veröffentlichung/Distribution muss erneut mit geprüftem LGPL-kompatiblem FFmpeg-Build gerendert werden.
 
 ## 3. PDF Companion Bundle
 
