@@ -8,7 +8,7 @@ function read(relativePath: string): string {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 }
 
-describe('privacy retention hardening (ADR-0091)', () => {
+describe('privacy retention hardening (ADR-0092)', () => {
   const migration = read('supabase/migrations/20260819103000_privacy_retention_lifecycle_hardening.sql');
 
   it('repairs all social-media persistence tables idempotently', () => {
