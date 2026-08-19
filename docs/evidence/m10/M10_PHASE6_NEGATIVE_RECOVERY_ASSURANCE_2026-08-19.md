@@ -3,7 +3,8 @@
 Status: VERIFIED PASS — SHADOW / NEGATIVE / RECOVERY ASSURANCE COMPLETE  
 Date: 2026-08-19  
 Branch: `agent/m10-phase6-negative-recovery-assurance`  
-Baseline after correlation: `main@24b70a794a7ce7dad62197f42a8948b347dbfbc3`  
+Original assurance baseline: `main@24b70a794a7ce7dad62197f42a8948b347dbfbc3`  
+Final lifecycle correlation: `main@4c280fb53e74e38d571e4b44b620a7b33681e0be`  
 Authority: ADR-0066, ESS-0022, `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`, M10 Threat Model
 
 ## Purpose
@@ -152,21 +153,21 @@ Therefore **Phase 6 Shadow / Negative / Recovery Assurance = VERIFIED PASS**.
 
 This does **not** mark M10 itself `COMPLETE`: the authoritative passkey CI gate, exactly-one approved-head CI proof, unapproved-CI suppression and post-cutover negative tests remain part of the separate Controlled Cutover work package.
 
-## Final validation
+## Final validation and main correlation
 
-The final assurance evidence was validated through the PR's documentation-only CI and Governance path. Immediately before lifecycle close, the branch was re-correlated with current `main@24b70a794a7ce7dad62197f42a8948b347dbfbc3` at `0 behind`, with the M10 evidence file as the only branch delta.
+The frozen assurance head was validated through the PR's documentation-only CI and Governance path:
 
-Final validated checks before lifecycle close:
-
-- CI #1840 — **PASS**;
-- Governance #1158 — **PASS**;
+- CI #1841 — **PASS**;
+- Governance #1159 — **PASS**;
 - Class D documentation fast path — **PASS**;
 - workflow-security scope — **PASS / no workflow changes**;
 - canonical PR-template contract — **PASS**.
+
+Immediately afterward, current `main` advanced by 19 commits from `24b70a79...` to `4c280fb5...`. Correlation of that complete main range found changes only in SC-2 scoring/DeFi code, tests, work claims, scoring roadmaps and document registry. No M10, WebAuthn, M10 Supabase, CI workflow or PR-governance implementation file changed. Therefore the new main commits do not invalidate or alter the Phase-6 assurance result. The assurance PR is intentionally not rebased because its lifecycle is close-without-merge; the Controlled Cutover will start from fresh current main.
 
 ## Lifecycle
 
 - PR #426 is an evidence-only assurance probe.
 - It must not be merged into `main`.
-- Close PR #426 after this evidence is recorded; do not merge it.
+- Close PR #426 after this final correlation record; do not merge it.
 - Controlled Cutover must start on a new branch created fresh from then-current `main` and requires its own explicit PR authorization / Human merge boundary.
