@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "SC2-CRYPTO-LIST-TOP10-REGISTRY-CONSUMERS-2026-08-19",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "SC-2 Phase B — migrate GET /api/crypto/list and GET /api/crypto/top10 to UAI + ScoringModelRegistry",
+  "startedAt": "2026-08-19T03:54:00.000Z",
+  "baseBranch": "main",
+  "baseSha": "5976e4d2eb1c0d11303322b027b8be42e261583a",
+  "pullRequest": null,
+  "claimedPaths": [
+    ".ai/work-claims/SC2-CRYPTO-LIST-TOP10-REGISTRY-CONSUMERS-2026-08-19.json",
+    "src/platform/Scoring/CryptoScoreExecutionPolicy.ts",
+    "src/routes/cryptoRoutes.ts",
+    "tests/unit/cryptoListTop10RegistryConsumers.test.ts",
+    "docs/evidence/sc-md/SC2_CRYPTO_SCORE_REGISTRY_CONSUMER_2026-08-19.md",
+    "docs/evidence/sc-md/SC2_CRYPTO_LIST_TOP10_REGISTRY_CONSUMERS_2026-08-19.md",
+    "docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md",
+    "docs/governance/document-registry.json"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}

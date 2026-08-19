@@ -1,4 +1,5 @@
-import { CANONICAL_SCORE_RESULT_CONTRACT_VERSION, type ScoringModelResolution } from './contracts';
+import { CANONICAL_SCORE_RESULT_CONTRACT_VERSION, type ScoringModelResolution, type UniversalAssetSource } from './contracts';
+import type { CanonicalScoreResult } from '../../types/scoringIntegrity';
 import {
   ScoringModelRegistry,
   VERIFIED_CRYPTO_TECHNICAL_EXECUTOR_KEY,
@@ -9,16 +10,19 @@ import { createUniversalAssetIdentity } from './UniversalAssetAdapter';
 export interface CryptoScoreExecutionRequest {
   symbol: string;
   name?: string;
+  subtype?: string;
+  source?: UniversalAssetSource;
 }
 
 type ScoringModelResolver = Pick<ScoringModelRegistry, 'resolve'>;
+type CryptoScoreResolutionFailure = Extract<ScoringModelResolution, { status: 'SCORE_NOT_COMPUTABLE' }>;
 
 /**
- * SC-2 Phase A first-consumer policy.
+ * SC-2 crypto-consumer execution policy.
  *
- * The route may execute crypto scoring only after UAI construction and canonical registry
- * resolution. A registry descriptor that points at a different executor, requires a result
- * adapter, or does not emit the canonical result contract fails closed. This keeps model
+ * Productive crypto consumers may execute scoring only after UAI construction and canonical
+ * registry resolution. A registry descriptor that points at a different executor, requires a
+ * result adapter, or does not emit the canonical result contract fails closed. This keeps model
  * selection in the registry without prematurely introducing the Phase-C single dispatcher.
  */
 export function resolveCryptoScoreExecution(
@@ -28,8 +32,9 @@ export function resolveCryptoScoreExecution(
   const asset = createUniversalAssetIdentity({
     symbol: input.symbol,
     name: input.name,
+    subtype: input.subtype,
     assetClass: 'crypto',
-    source: 'request',
+    source: input.source ?? 'request',
   });
   const resolution = registry.resolve(asset);
   if (resolution.status !== 'RESOLVED') return resolution;
@@ -49,4 +54,31 @@ export function resolveCryptoScoreExecution(
   }
 
   return resolution;
+}
+
+/**
+ * Keep registry-resolution failures inside the public CanonicalScoreResult envelope without
+ * pretending that market evidence or a feature contract was evaluated. No scoring executor runs.
+ */
+export function buildCryptoRegistryResolutionFailure(
+  resolution: Readonly<CryptoScoreResolutionFailure>,
+): CanonicalScoreResult {
+  return {
+    status: 'SCORE_NOT_COMPUTABLE',
+    score: null,
+    final_score: null,
+    integrity: {
+      status: 'SCORE_NOT_COMPUTABLE',
+      assetId: resolution.asset.assetId,
+      providers: [],
+      retrievedAt: new Date().toISOString(),
+      dataQuality: 'unknown',
+      featureVersion: 'model-registry-unresolved',
+      scoringVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
+      coverage: 0,
+      evidence: [],
+      missingFields: ['scoringModel'],
+      reason: resolution.reason,
+    },
+  };
 }
