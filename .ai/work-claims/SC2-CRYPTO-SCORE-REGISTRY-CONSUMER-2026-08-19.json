@@ -1,0 +1,42 @@
+{
+  "claimId": "SC2-CRYPTO-SCORE-REGISTRY-CONSUMER-2026-08-19",
+  "workPackage": "SC-2",
+  "roadmap": "SC-MD-SPT-0001",
+  "title": "Route POST /api/crypto/score through UAI and the canonical ScoringModelRegistry",
+  "status": "implemented_pending_ci",
+  "createdAt": "2026-08-19",
+  "owner": "SvenKulessa",
+  "branch": "agent/sc2-crypto-score-registry-consumer",
+  "baseMainSha": "ca968b2563975df64245cb88ee45a7c04019a3a1",
+  "claimedPaths": [
+    ".ai/work-claims/SC2-CRYPTO-SCORE-REGISTRY-CONSUMER-2026-08-19.json",
+    "src/platform/Scoring/ScoringModelRegistry.ts",
+    "src/platform/Scoring/CryptoScoreExecutionPolicy.ts",
+    "src/platform/Scoring/index.ts",
+    "src/routes/cryptoRoutes.ts",
+    "src/services/scoringLineage.ts",
+    "tests/unit/cryptoScoreRegistryConsumer.test.ts",
+    "tests/unit/scoringLineage.test.ts",
+    "docs/evidence/sc-md/SC2_CRYPTO_SCORE_REGISTRY_CONSUMER_2026-08-19.md",
+    "docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md",
+    "docs/governance/document-registry.json"
+  ],
+  "invariants": [
+    "POST /api/crypto/score resolves a UAI identity before model execution",
+    "only the canonical champion returned by ScoringModelRegistry may authorize execution",
+    "the consumer fails closed if executor binding, evidence policy or result contract is incompatible",
+    "existing verified market-data evidence gates remain authoritative",
+    "score math, ranking thresholds and eligibility semantics are unchanged",
+    "model registry metadata is added to scoring lineage",
+    "Gemini Research Shadow remains disabled and has no score impact"
+  ],
+  "nonGoals": [
+    "do not migrate /api/crypto/list or /api/crypto/top10 in this work item",
+    "do not introduce the Phase-C single dispatcher yet",
+    "do not change scoring weights, ranking or eligibility",
+    "do not enable Gemini provider traffic",
+    "do not mutate Render, Supabase or Stripe"
+  ],
+  "releaseCondition": "Release coordination metadata when this work is merged, closed, superseded or abandoned."
+}

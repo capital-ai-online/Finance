@@ -14,6 +14,7 @@ import { getCryptoSpotConsensus } from '../services/cryptoSpotConsensus';
 import { getLiveCryptoSnapshotConsensus } from '../services/liveCryptoSnapshotConsensus';
 import { evaluateCryptoSnapshotIntegrity } from '../services/cryptoSnapshotIntegrity';
 import { recordMarketIntegrityObservation } from '../platform/Supervisor/marketIntegrityRuntime';
+import { resolveCryptoScoreExecution } from '../platform/Scoring';
 
 function requestCorrelationId(req: express.Request): string {
   const incoming = req.header('x-correlation-id');
@@ -252,11 +253,44 @@ export function createCryptoRouter(
 
       const symbol = String(payload.symbol).toUpperCase().trim();
       const classification = payload.classification || ClassificationService.classifyAsset(symbol);
+      const execution = resolveCryptoScoreExecution({ symbol, name: String(payload.asset_name) });
+      if (execution.status !== 'RESOLVED') {
+        return res.status(422).json({
+          asset_name: payload.asset_name,
+          symbol,
+          assetId: execution.asset.assetId,
+          model: null,
+          modelRegistry: null,
+          classification,
+          status: 'SCORE_NOT_COMPUTABLE',
+          score: null,
+          final_score: null,
+          correlationId,
+          reason: execution.reason,
+          rank_score: null,
+          eligible_for_top10: false,
+          scoreBasis: 'unavailable' as const,
+        });
+      }
+
+      const registeredModel = execution.model;
+      const modelRegistry = {
+        registryVersion: registeredModel.registryVersion,
+        modelId: registeredModel.modelId,
+        version: registeredModel.version,
+        alias: registeredModel.alias,
+        lifecycle: registeredModel.lifecycle,
+        executorKey: registeredModel.executorKey,
+        featureContractVersion: registeredModel.featureContractVersion,
+        resultContractVersion: registeredModel.resultContractVersion,
+        evidencePolicy: registeredModel.evidencePolicy,
+      };
       const assessment = await evaluateVerifiedCryptoTechnicalScore(symbol);
       const canonical = assessment.canonical;
       const lineage = buildScoringLineage({
         correlationId,
-        assetId: symbol,
+        assetId: execution.asset.assetId,
+        model: registeredModel,
         canonical,
         scoringInputs: assessment.inputs,
         fieldProvenance: assessment.fieldProvenance,
@@ -267,7 +301,9 @@ export function createCryptoRouter(
         return res.status(422).json({
           asset_name: payload.asset_name,
           symbol,
+          assetId: execution.asset.assetId,
           model: 'technical-provenance',
+          modelRegistry,
           classification,
           ...canonical,
           rank_score: null,
@@ -292,7 +328,9 @@ export function createCryptoRouter(
       res.json({
         asset_name: payload.asset_name,
         symbol,
+        assetId: execution.asset.assetId,
         model: 'technical-provenance',
+        modelRegistry,
         classification,
         ...canonical,
         inputs: assessment.inputs,

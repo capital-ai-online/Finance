@@ -6,6 +6,9 @@ import {
   type UniversalAssetIdentity,
 } from './contracts';
 
+export const VERIFIED_CRYPTO_TECHNICAL_EXECUTOR_KEY =
+  'verifiedCryptoTechnicalScoring.evaluateVerifiedCryptoTechnicalScore' as const;
+
 const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
@@ -17,7 +20,7 @@ const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
     featureContractVersion: 'crypto-technical-features/0.6.3',
     resultContractVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
     evidencePolicy: 'verified-required',
-    executorKey: 'verifiedCryptoTechnicalScoring.evaluateVerifiedCryptoTechnicalScore',
+    executorKey: VERIFIED_CRYPTO_TECHNICAL_EXECUTOR_KEY,
     priority: 100,
     canonicalResultAdapterRequired: false,
     notes: 'Current verified crypto path. Simulated/bootstrap values are not scoring evidence.',
