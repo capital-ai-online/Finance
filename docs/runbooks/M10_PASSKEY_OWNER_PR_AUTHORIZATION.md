@@ -95,8 +95,10 @@ These controls are satisfied by the combined deterministic and production-live e
 
 ```text
 NORMAL PR EVENT
-→ dedicated cheap `m10-authorization-required` guard
-→ DENY before checkout/npm/build
+→ dedicated cheap `m10-pr-event-boundary`
+→ validates PR event metadata only
+→ PASS means only: this event is structurally isolated from expensive CI
+→ MUST NOT claim whether the current head is passkey-authorized or not
 → canonical required `build-and-test` context is NOT created
 → no expensive CI
 
@@ -116,7 +118,7 @@ OWNER IN CAPITAL-AI
 → atomic PENDING -> DISPATCHED
 → only winner proceeds to checkout/npm/test/build/docker as classified
 → canonical required `build-and-test` attaches to the approved head
-→ later ordinary PR lifecycle events can only create `m10-authorization-required`, never replace `build-and-test`
+→ later ordinary PR lifecycle events can only create `m10-pr-event-boundary`, never replace or contradict `build-and-test`
 → Human Merge remains separate
 ```
 
@@ -146,8 +148,10 @@ OIDC and the one-time M10 consumption are conjunctive controls: both are require
 
 ### Workflow fail-closed requirements
 
-- ordinary `pull_request` events are handled only by the dedicated `m10-pr-authorization-guard.yml` workflow, which fails before checkout and MUST NOT create the canonical `build-and-test` check context;
-- `.github/workflows/ci.yml` accepts only `push` to `main` and authoritative `workflow_dispatch`; a normal PR lifecycle event has no execution path in the expensive-CI workflow;
+- ordinary `pull_request` events are handled only by the dedicated `m10-pr-authorization-guard.yml` workflow; that workflow is a **non-authoritative event-boundary check** and MUST NOT infer, cache or contradict durable passkey authorization state;
+- the event-boundary check may succeed after validating that the event is an ordinary PR lifecycle event, because success means only that this event cannot enter the expensive CI path;
+- fail-closed authorization is enforced by `.github/workflows/ci.yml`, which accepts only `push` to `main` and authoritative `workflow_dispatch`; a normal PR lifecycle event has no execution path in the expensive-CI workflow;
+- before Owner passkey authorization, the canonical required `build-and-test` result for the current PR head is absent; only an authoritative M10 dispatch can create it;
 - `workflow_dispatch` must target the same-repository PR branch whose current head equals the approved SHA;
 - dispatched inputs carry consumption/approval/PR/base/head/digest/action context;
 - before checkout/npm/build, the workflow obtains GitHub Actions OIDC and redeems OIDC + the single-use consumption capability at the production M10 workflow-gate endpoint;
@@ -162,13 +166,16 @@ OIDC and the one-time M10 consumption are conjunctive controls: both are require
 
 A production observation after M10 closure exposed a GitHub check-identity defect without invalidating the underlying WebAuthn/OIDC authorization chain: an authorized `workflow_dispatch` could complete `build-and-test` successfully on the exact head, and a later `pull_request` lifecycle event on the same head could create another job with the same `build-and-test` name and intentionally fail at the M10 pre-check. GitHub would then present the later red check under the same identity.
 
-The corrective invariant is therefore stricter than the original cutover wording:
+A second live observation on PR #440 showed that making the separate cheap PR guard itself always fail is also semantically incorrect: the guard has no durable M10 state input and therefore cannot truthfully report that an already-authorized exact head is "not authorized". The authoritative workflow for the same head independently proved `AUTHORIZED` through passkey evidence, GitHub Actions OIDC and single-use workflow-gate redemption.
+
+The corrective invariant is therefore:
 
 1. ordinary PR events and expensive CI MUST use different workflow/check identities;
-2. ordinary PR events remain fail-closed before checkout/npm/build;
+2. ordinary PR events remain structurally excluded from expensive CI, but their cheap boundary check is non-authoritative with respect to passkey state and does not fail merely because the event is ordinary;
 3. `build-and-test` is reserved for `main` push or an authoritative M10 `workflow_dispatch` only;
-4. PR lifecycle events such as `ready_for_review` cannot overwrite or collide with an already-authorized `build-and-test` result on the same head;
-5. the retired PR #429 bootstrap path is removed from the active CI workflow.
+4. only the exact-head authoritative `build-and-test` result represents the CI outcome after successful M10 authorization;
+5. PR lifecycle events such as `ready_for_review` cannot overwrite or contradict an already-authorized `build-and-test` result on the same head;
+6. the retired PR #429 bootstrap path is removed from the active CI workflow.
 
 This is an orchestration correction, not a relaxation of M10. Passkey verification, exact-head binding, atomic single-use consumption, GitHub Actions OIDC verification and Human-only Merge remain unchanged.
 
