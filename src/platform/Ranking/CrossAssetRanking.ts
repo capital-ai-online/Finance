@@ -98,27 +98,69 @@ function validateSharedAdmission(
   return null;
 }
 
-function scoreComparisonKey(candidate: CanonicalRankingCandidate): string {
-  const explicit = candidate.scoreComparisonKey?.trim();
-  if (explicit) return `score:${normalizedKey(explicit)}`;
-  const { modelId, modelVersion } = candidate.canonical.integrity;
-  return `model:${normalizedKey(`${modelId}@${modelVersion}`)}`;
+function prepareScoreComparison(
+  candidate: CanonicalRankingCandidate,
+): PreparedCandidate | CrossAssetRankingExclusion {
+  const comparison = candidate.scoreComparability;
+  if (!comparison) {
+    const { modelId, modelVersion } = candidate.canonical.integrity;
+    return {
+      candidate,
+      cohortKey: `model:${normalizedKey(`${modelId}@${modelVersion}`)}`,
+      rankingValue: candidate.canonical.score as number,
+      comparisonBasis: 'canonical-score-same-model',
+    };
+  }
+
+  if (!comparison.verified) {
+    return exclusion(candidate, 'COMPARABILITY_EVIDENCE_UNVERIFIED');
+  }
+  if (!Number.isFinite(comparison.normalizedValue)) {
+    return exclusion(candidate, 'COMPARABILITY_VALUE_INVALID');
+  }
+
+  const comparisonKey = comparison.comparisonKey?.trim();
+  const methodVersion = comparison.methodVersion?.trim();
+  if (!comparisonKey || !methodVersion) {
+    return exclusion(
+      candidate,
+      'COMPARISON_KEY_MISSING',
+      'Score comparability requires comparisonKey and methodVersion.',
+    );
+  }
+  if (
+    !comparison.evidenceId.trim() ||
+    !comparison.observedAt.trim() ||
+    !comparison.retrievedAt.trim()
+  ) {
+    return exclusion(
+      candidate,
+      'COMPARABILITY_EVIDENCE_UNVERIFIED',
+      'Score comparability requires evidenceId, observedAt and retrievedAt.',
+    );
+  }
+
+  return {
+    candidate,
+    cohortKey: `calibrated:${normalizedKey(comparisonKey)}|method:${normalizedKey(methodVersion)}`,
+    rankingValue: comparison.normalizedValue,
+    comparisonBasis: 'verified-normalized-score',
+  };
 }
 
 function prepareScoreMode(
   candidate: CanonicalRankingCandidate,
   mode: Exclude<CrossAssetRankingMode, 'growth'>,
 ): PreparedCandidate | CrossAssetRankingExclusion {
-  const base = scoreComparisonKey(candidate);
+  const comparison = prepareScoreComparison(candidate);
+  if ('reason' in comparison) return comparison;
 
   if (mode === 'category') {
     const category = candidate.category?.trim();
     if (!category) return exclusion(candidate, 'CATEGORY_MISSING');
     return {
-      candidate,
-      cohortKey: `${base}|category:${normalizedKey(category)}`,
-      rankingValue: candidate.canonical.score as number,
-      comparisonBasis: 'canonical-score',
+      ...comparison,
+      cohortKey: `${comparison.cohortKey}|category:${normalizedKey(category)}`,
     };
   }
 
@@ -127,19 +169,12 @@ function prepareScoreMode(
       return exclusion(candidate, 'TIER_MISSING');
     }
     return {
-      candidate,
-      cohortKey: `${base}|tier:${candidate.tier}`,
-      rankingValue: candidate.canonical.score as number,
-      comparisonBasis: 'canonical-score',
+      ...comparison,
+      cohortKey: `${comparison.cohortKey}|tier:${candidate.tier}`,
     };
   }
 
-  return {
-    candidate,
-    cohortKey: base,
-    rankingValue: candidate.canonical.score as number,
-    comparisonBasis: 'canonical-score',
-  };
+  return comparison;
 }
 
 function prepareGrowthMode(
@@ -186,8 +221,8 @@ function isExclusion(
 
 /**
  * Build deterministic ranking cohorts across canonical assets without creating a hidden global
- * comparability assumption. Different model families naturally form separate cohorts unless an
- * upstream validation process supplies the same explicit scoreComparisonKey.
+ * comparability assumption. Different model families naturally form separate cohorts. Cross-model
+ * cohorts require separately verified normalized score-comparability evidence.
  */
 export function rankCanonicalUniverse(
   candidates: readonly CanonicalRankingCandidate[],
