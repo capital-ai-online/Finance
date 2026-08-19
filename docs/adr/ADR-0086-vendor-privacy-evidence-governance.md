@@ -1,9 +1,11 @@
 # ADR-0086 — Vendor Privacy Evidence Governance
 
+- **Authority ID:** `AUTH-ADR-VENDOR-PRIVACY-EVIDENCE-2026-08-19`
+- **Version:** `1.0.0`
 - **Status:** Accepted for implementation in PR #414
 - **Date:** 2026-08-19
 - **Owner:** Sven Michael Kulessa
-- **Related:** ADR-0085, `docs/compliance/vendor-evidence/vendor-inventory.json`
+- **Related:** ADR-0095 / `AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19`, `docs/compliance/vendor-evidence/vendor-inventory.json`
 
 ## Context
 
