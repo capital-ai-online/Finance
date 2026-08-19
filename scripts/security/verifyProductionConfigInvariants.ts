@@ -13,8 +13,26 @@ const checks: Check[] = [
   {
     id: 'PCG-001',
     file: 'render.yaml',
-    description: 'Production deploys must wait for repository checks',
-    includes: 'autoDeployTrigger: checksPass',
+    description: 'Render auto-deploy must remain off when GitHub CI is the production deployment authority',
+    includes: 'autoDeployTrigger: off',
+  },
+  {
+    id: 'PCG-012',
+    file: '.github/workflows/ci.yml',
+    description: 'Production deployment must require a successful main push',
+    includes: "github.event_name == 'push' && github.ref == 'refs/heads/main'",
+  },
+  {
+    id: 'PCG-013',
+    file: '.github/workflows/ci.yml',
+    description: 'Production deployment must depend on build/test and supply-chain attestation',
+    includes: 'needs: [build-and-test, supply-chain-attestation]',
+  },
+  {
+    id: 'PCG-014',
+    file: '.github/workflows/ci.yml',
+    description: 'Render deployment must be bound to the exact verified commit SHA',
+    includes: 'ref=${VERIFIED_COMMIT_SHA}',
   },
   {
     id: 'PCG-002',

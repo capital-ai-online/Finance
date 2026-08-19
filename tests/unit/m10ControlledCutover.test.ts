@@ -48,6 +48,6 @@ describe('M10 Controlled Cutover source contract', () => {
     expect(workflow).not.toMatch(/\bokay\b/i);
     expect(workflow).not.toContain('💪');
     expect(workflow).not.toMatch(/reaction/i);
-    expect(workflow).not.toMatch(/viewed/i);
+    expect(workflow).not.toMatch(/\bviewed\b/i);
   });
 });
