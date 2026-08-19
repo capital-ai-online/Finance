@@ -49,9 +49,9 @@ async function requireOwner(req: express.Request, res: express.Response, zone: s
 
 /**
  * `issueM10Challenge()` already creates the canonical WebAuthn challenge as base64url bytes.
- * Pass that value directly to @simplewebauthn/browser. Feeding the string through
- * generateAuthenticationOptions() as a custom string would UTF-8/base64url encode it again and
- * break Phase-4 expectedChallenge equality.
+ * Pass that value directly to @simplewebauthn/browser. Sending it through a server-side options
+ * generator as a custom string would UTF-8/base64url encode it again and break Phase-4
+ * expectedChallenge equality.
  */
 export async function buildM10ShadowAuthenticationOptions(
   challenge: string,
