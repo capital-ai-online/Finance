@@ -37,8 +37,6 @@ function assertRequiredFile(file) {
 
 const REQUIRED = [
   'AGENTS.md',
-  'CLAUDE.md',
-  '.github/copilot-instructions.md',
   'docs/architecture/ROADMAP.md',
   'docs/governance/authority-registry.json',
   'docs/governance/control-catalog.json',
@@ -54,21 +52,21 @@ const REQUIRED = [
 
 for (const file of REQUIRED) assertRequiredFile(file);
 
+for (const forbiddenInstructionMirror of ['CLAUDE.md', '.github/copilot-instructions.md']) {
+  if (exists(forbiddenInstructionMirror)) {
+    fail('PROVIDER_INSTRUCTION_MIRROR_PRESENT', `${forbiddenInstructionMirror} must remain absent; AGENTS.md is the sole repository instruction surface.`);
+  }
+}
+
 if (errors.length === 0) {
   const agents = read('AGENTS.md');
-  const claude = read('CLAUDE.md');
-  const copilot = read('.github/copilot-instructions.md');
   const currentRoadmap = read('docs/architecture/ROADMAP.md');
 
   if (!agents.includes('AUTH-GOV-AGENT-TRUST-ROOT')) {
     fail('TRUST_ROOT_ID_MISSING', 'AGENTS.md must declare AUTH-GOV-AGENT-TRUST-ROOT.');
   }
-
-  for (const [adapter, content] of [['CLAUDE.md', claude], ['.github/copilot-instructions.md', copilot]]) {
-    if (!content.includes('AGENTS.md')) fail('ADAPTER_TRUST_ROOT_MISSING', `${adapter} must point to AGENTS.md.`);
-    if (!/non-authoritative|no independent repository-wide governance authority/i.test(content)) {
-      fail('ADAPTER_AUTHORITY_AMBIGUOUS', `${adapter} must declare itself non-authoritative.`);
-    }
+  if (!/single repository-wide trust root and repository instruction surface/i.test(agents)) {
+    fail('TRUST_ROOT_SURFACE_AMBIGUOUS', 'AGENTS.md must declare itself the single repository instruction surface.');
   }
 
   if (!currentRoadmap.includes('AUTH-GOV-DEVELOPMENT-CHAIN-STATUS')) {
@@ -95,21 +93,11 @@ if (errors.length === 0) {
   const activeAdrDisplayIds = new Set(activeAdrs.map((item) => item.displayId));
   const namespaceReservations = adrRegistry.parallelNamespaceReservations ?? [];
 
-  for (const id of duplicates(authorities.map((item) => item.authorityId))) {
-    fail('DUPLICATE_AUTHORITY_ID', id);
-  }
-  for (const id of duplicates(controls.map((item) => item.controlId))) {
-    fail('DUPLICATE_CONTROL_ID', id);
-  }
-  for (const id of duplicates(activeAdrs.map((item) => item.displayId))) {
-    fail('DUPLICATE_ACTIVE_ADR_DISPLAY_ID', id);
-  }
-  for (const id of duplicates(adrs.map((item) => item.authorityId))) {
-    fail('DUPLICATE_ADR_AUTHORITY_ID', id);
-  }
-  for (const id of duplicates(namespaceReservations.map((item) => item.displayId))) {
-    fail('DUPLICATE_PARALLEL_ADR_RESERVATION', id);
-  }
+  for (const id of duplicates(authorities.map((item) => item.authorityId))) fail('DUPLICATE_AUTHORITY_ID', id);
+  for (const id of duplicates(controls.map((item) => item.controlId))) fail('DUPLICATE_CONTROL_ID', id);
+  for (const id of duplicates(activeAdrs.map((item) => item.displayId))) fail('DUPLICATE_ACTIVE_ADR_DISPLAY_ID', id);
+  for (const id of duplicates(adrs.map((item) => item.authorityId))) fail('DUPLICATE_ADR_AUTHORITY_ID', id);
+  for (const id of duplicates(namespaceReservations.map((item) => item.displayId))) fail('DUPLICATE_PARALLEL_ADR_RESERVATION', id);
 
   for (const reservation of namespaceReservations) {
     const displayId = String(reservation.displayId ?? '');
@@ -117,57 +105,26 @@ if (errors.length === 0) {
     const reservedPath = String(reservation.path ?? '').trim();
     const observedHead = String(reservation.observedHead ?? '');
 
-    if (!/^ADR-\d{4}$/.test(displayId)) {
-      fail('PARALLEL_ADR_RESERVATION_ID_INVALID', displayId || '<missing displayId>');
-    }
-    if (!source || !reservedPath) {
-      fail('PARALLEL_ADR_RESERVATION_METADATA_MISSING', `${displayId || '<missing displayId>'}: source/path required`);
-    }
-    if (observedHead && !/^[0-9a-f]{40}$/.test(observedHead)) {
-      fail('PARALLEL_ADR_RESERVATION_HEAD_INVALID', `${displayId}: ${observedHead}`);
-    }
-    if (activeAdrDisplayIds.has(displayId)) {
-      fail('PARALLEL_ADR_NAMESPACE_COLLISION', `${displayId} is both reserved by ${source || '<unknown source>'} and allocated to an active ADR in this branch.`);
-    }
+    if (!/^ADR-\d{4}$/.test(displayId)) fail('PARALLEL_ADR_RESERVATION_ID_INVALID', displayId || '<missing displayId>');
+    if (!source || !reservedPath) fail('PARALLEL_ADR_RESERVATION_METADATA_MISSING', `${displayId || '<missing displayId>'}: source/path required`);
+    if (observedHead && !/^[0-9a-f]{40}$/.test(observedHead)) fail('PARALLEL_ADR_RESERVATION_HEAD_INVALID', `${displayId}: ${observedHead}`);
+    if (activeAdrDisplayIds.has(displayId)) fail('PARALLEL_ADR_NAMESPACE_COLLISION', `${displayId} is both reserved by ${source || '<unknown source>'} and allocated to an active ADR in this branch.`);
   }
 
   const authorityIds = new Set(authorities.map((item) => item.authorityId));
   const authorityById = new Map(authorities.map((item) => [item.authorityId, item]));
 
   for (const authority of authorities) {
-    if (!/^AUTH-[A-Z0-9-]+$/.test(String(authority.authorityId ?? ''))) {
-      fail('INVALID_AUTHORITY_ID', String(authority.authorityId));
-    }
-    if (!authority.path || !exists(authority.path)) {
-      fail('AUTHORITY_TARGET_MISSING', `${authority.authorityId}: ${authority.path ?? '<missing path>'}`);
-    }
-    if (!/^\d+\.\d+\.\d+$/.test(String(authority.version ?? ''))) {
-      fail('AUTHORITY_VERSION_INVALID', `${authority.authorityId}: ${authority.version ?? '<missing>'}`);
-    }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(authority.date ?? ''))) {
-      fail('AUTHORITY_DATE_INVALID', `${authority.authorityId}: ${authority.date ?? '<missing>'}`);
-    }
+    if (!/^AUTH-[A-Z0-9-]+$/.test(String(authority.authorityId ?? ''))) fail('INVALID_AUTHORITY_ID', String(authority.authorityId));
+    if (!authority.path || !exists(authority.path)) fail('AUTHORITY_TARGET_MISSING', `${authority.authorityId}: ${authority.path ?? '<missing path>'}`);
+    if (!/^\d+\.\d+\.\d+$/.test(String(authority.version ?? ''))) fail('AUTHORITY_VERSION_INVALID', `${authority.authorityId}: ${authority.version ?? '<missing>'}`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(authority.date ?? ''))) fail('AUTHORITY_DATE_INVALID', `${authority.authorityId}: ${authority.date ?? '<missing>'}`);
   }
 
   const registryContracts = [
-    {
-      id: authorityRegistry.registryAuthorityId,
-      declaredVersion: authorityRegistry.version,
-      expectedPath: 'docs/governance/authority-registry.json',
-      name: 'authority registry',
-    },
-    {
-      id: catalog.catalogAuthorityId,
-      declaredVersion: catalog.version,
-      expectedPath: 'docs/governance/control-catalog.json',
-      name: 'control catalog',
-    },
-    {
-      id: adrRegistry.registryAuthorityId,
-      declaredVersion: adrRegistry.version,
-      expectedPath: 'docs/adr/registry.json',
-      name: 'ADR registry',
-    },
+    { id: authorityRegistry.registryAuthorityId, declaredVersion: authorityRegistry.version, expectedPath: 'docs/governance/authority-registry.json', name: 'authority registry' },
+    { id: catalog.catalogAuthorityId, declaredVersion: catalog.version, expectedPath: 'docs/governance/control-catalog.json', name: 'control catalog' },
+    { id: adrRegistry.registryAuthorityId, declaredVersion: adrRegistry.version, expectedPath: 'docs/adr/registry.json', name: 'ADR registry' },
   ];
 
   for (const registry of registryContracts) {
@@ -176,66 +133,47 @@ if (errors.length === 0) {
       fail('REGISTRY_AUTHORITY_UNRESOLVED', `${registry.name}: ${registry.id ?? '<missing>'}`);
       continue;
     }
-    if (authority.path !== registry.expectedPath) {
-      fail('REGISTRY_AUTHORITY_PATH_MISMATCH', `${registry.name}: ${authority.path} != ${registry.expectedPath}`);
-    }
-    if (authority.version !== registry.declaredVersion) {
-      fail('REGISTRY_VERSION_MISMATCH', `${registry.name}: registry=${registry.declaredVersion}, authority=${authority.version}`);
-    }
+    if (authority.path !== registry.expectedPath) fail('REGISTRY_AUTHORITY_PATH_MISMATCH', `${registry.name}: ${authority.path} != ${registry.expectedPath}`);
+    if (authority.version !== registry.declaredVersion) fail('REGISTRY_VERSION_MISMATCH', `${registry.name}: registry=${registry.declaredVersion}, authority=${authority.version}`);
   }
 
   for (const control of controls) {
-    if (!/^CTRL-[A-Z0-9-]+$/.test(String(control.controlId ?? ''))) {
-      fail('INVALID_CONTROL_ID', String(control.controlId));
-    }
-    if (!['required', 'advisory', 'informational'].includes(control.status)) {
-      fail('INVALID_CONTROL_STATUS', `${control.controlId}: ${control.status}`);
-    }
+    if (!/^CTRL-[A-Z0-9-]+$/.test(String(control.controlId ?? ''))) fail('INVALID_CONTROL_ID', String(control.controlId));
+    if (!['required', 'advisory', 'informational'].includes(control.status)) fail('INVALID_CONTROL_STATUS', `${control.controlId}: ${control.status}`);
     for (const authorityRef of control.authorityRefs ?? []) {
-      if (!authorityIds.has(authorityRef)) {
-        fail('UNRESOLVED_CONTROL_AUTHORITY', `${control.controlId}: ${authorityRef}`);
-      }
+      if (!authorityIds.has(authorityRef)) fail('UNRESOLVED_CONTROL_AUTHORITY', `${control.controlId}: ${authorityRef}`);
     }
     for (const evidencePath of control.evidence ?? []) {
-      if (evidencePath && !exists(evidencePath)) {
-        fail('CONTROL_EVIDENCE_TARGET_MISSING', `${control.controlId}: ${evidencePath}`);
-      }
+      if (evidencePath && !exists(evidencePath)) fail('CONTROL_EVIDENCE_TARGET_MISSING', `${control.controlId}: ${evidencePath}`);
     }
   }
 
   const m10Control = controls.find((item) => item.controlId === 'CTRL-CI-M10-001');
-  if (!m10Control || !/suspended|off/i.test(String(m10Control.requirement ?? ''))) {
+  const m10Requirement = String(m10Control?.requirement ?? '');
+  if (!m10Control || !/suspended|off/i.test(m10Requirement)) {
     fail('M10_TRANSITION_STATE_MISSING', 'CTRL-CI-M10-001 must explicitly preserve the current suspended/off state.');
+  }
+  for (const requiredReactivationTopic of ['duplicate', 'Documentary', 'README', 'router', 'Version']) {
+    if (!m10Requirement.includes(requiredReactivationTopic)) {
+      fail('M10_REACTIVATION_CRITERIA_INCOMPLETE', `CTRL-CI-M10-001 must cover ${requiredReactivationTopic} before reactivation.`);
+    }
   }
 
   for (const adr of adrs) {
-    if (!authorityIds.has(adr.authorityId)) {
-      fail('ADR_AUTHORITY_UNRESOLVED', `${adr.displayId}: ${adr.authorityId}`);
-    }
+    if (!authorityIds.has(adr.authorityId)) fail('ADR_AUTHORITY_UNRESOLVED', `${adr.displayId}: ${adr.authorityId}`);
     if (!adr.path || !exists(adr.path)) {
       fail('ADR_TARGET_MISSING', `${adr.displayId}: ${adr.path ?? '<missing path>'}`);
       continue;
     }
     const text = read(adr.path);
-    if (!text.includes(adr.displayId)) {
-      fail('ADR_DISPLAY_ID_MISMATCH', `${adr.path} does not contain ${adr.displayId}.`);
-    }
-    if (!/^AUTH-[A-Z0-9-]+$/.test(String(adr.authorityId ?? ''))) {
-      fail('ADR_AUTHORITY_ID_INVALID', `${adr.displayId}: ${adr.authorityId}`);
-    }
-    if (!/^\d+\.\d+\.\d+$/.test(String(adr.version ?? ''))) {
-      fail('ADR_VERSION_INVALID', `${adr.displayId}: ${adr.version}`);
-    }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(adr.date ?? ''))) {
-      fail('ADR_DATE_INVALID', `${adr.displayId}: ${adr.date}`);
-    }
+    if (!text.includes(adr.displayId)) fail('ADR_DISPLAY_ID_MISMATCH', `${adr.path} does not contain ${adr.displayId}.`);
+    if (!/^AUTH-[A-Z0-9-]+$/.test(String(adr.authorityId ?? ''))) fail('ADR_AUTHORITY_ID_INVALID', `${adr.displayId}: ${adr.authorityId}`);
+    if (!/^\d+\.\d+\.\d+$/.test(String(adr.version ?? ''))) fail('ADR_VERSION_INVALID', `${adr.displayId}: ${adr.version}`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(adr.date ?? ''))) fail('ADR_DATE_INVALID', `${adr.displayId}: ${adr.date}`);
+
     const registeredAuthority = authorityById.get(adr.authorityId);
-    if (registeredAuthority && registeredAuthority.path !== adr.path) {
-      fail('ADR_AUTHORITY_PATH_MISMATCH', `${adr.displayId}: ADR registry=${adr.path}, authority registry=${registeredAuthority.path}`);
-    }
-    if (registeredAuthority && registeredAuthority.version !== adr.version) {
-      fail('ADR_AUTHORITY_VERSION_MISMATCH', `${adr.displayId}: ADR registry=${adr.version}, authority registry=${registeredAuthority.version}`);
-    }
+    if (registeredAuthority && registeredAuthority.path !== adr.path) fail('ADR_AUTHORITY_PATH_MISMATCH', `${adr.displayId}: ADR registry=${adr.path}, authority registry=${registeredAuthority.path}`);
+    if (registeredAuthority && registeredAuthority.version !== adr.version) fail('ADR_AUTHORITY_VERSION_MISMATCH', `${adr.displayId}: ADR registry=${adr.version}, authority registry=${registeredAuthority.version}`);
 
     for (const alias of adr.legacyAliases ?? []) {
       if (!alias.path) continue;
@@ -244,12 +182,8 @@ if (errors.length === 0) {
         continue;
       }
       const redirect = read(alias.path);
-      if (!/Legacy ADR Redirect\s*[—-]\s*NON-AUTHORIZING/i.test(redirect)) {
-        fail('ADR_LEGACY_REDIRECT_NOT_MARKED', `${adr.displayId}: ${alias.path}`);
-      }
-      if (!redirect.includes(adr.authorityId) || !redirect.includes(adr.path)) {
-        fail('ADR_LEGACY_REDIRECT_TARGET_MISMATCH', `${adr.displayId}: ${alias.path}`);
-      }
+      if (!/Legacy ADR Redirect\s*[—-]\s*NON-AUTHORIZING/i.test(redirect)) fail('ADR_LEGACY_REDIRECT_NOT_MARKED', `${adr.displayId}: ${alias.path}`);
+      if (!redirect.includes(adr.authorityId) || !redirect.includes(adr.path)) fail('ADR_LEGACY_REDIRECT_TARGET_MISMATCH', `${adr.displayId}: ${alias.path}`);
     }
   }
 
@@ -263,16 +197,13 @@ if (errors.length === 0) {
       if (match) essIds.push({ id: match[1], file: rel('.ai/skills', entry.name) });
     }
   }
-  const duplicateEss = duplicates(essIds.map((item) => item.id));
-  for (const id of duplicateEss) {
+  for (const id of duplicates(essIds.map((item) => item.id))) {
     const files = essIds.filter((item) => item.id === id).map((item) => item.file).join(', ');
     fail('DUPLICATE_ACTIVE_ESS_ID', `${id}: ${files}`);
   }
 
   const forbiddenActiveLegacySkill = '.ai/skills/ESS-0012-Enterprise-Vocabulary-Terminology-Governance.md';
-  if (exists(forbiddenActiveLegacySkill)) {
-    fail('LEGACY_ACTIVE_ESS_COLLISION_REMAINS', forbiddenActiveLegacySkill);
-  }
+  if (exists(forbiddenActiveLegacySkill)) fail('LEGACY_ACTIVE_ESS_COLLISION_REMAINS', forbiddenActiveLegacySkill);
 
   if (!exists('docs/archive/governance/superseded/ESS-0012-Enterprise-Vocabulary-Terminology-Governance.md')) {
     warn('ESS_LEGACY_ARCHIVE_MISSING', 'Expected superseded ESS-0012 vocabulary draft archive is missing.');
