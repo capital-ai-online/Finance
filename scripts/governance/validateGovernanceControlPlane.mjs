@@ -35,6 +35,11 @@ function assertRequiredFile(file) {
   if (!exists(file)) fail('MISSING_REQUIRED_FILE', file);
 }
 
+function declaredAdrStatus(text) {
+  const match = text.match(/^\s*(?:-\s*)?\*\*Status:\*\*\s*(.+)$/mi);
+  return match?.[1]?.trim() ?? '';
+}
+
 const REQUIRED = [
   'AGENTS.md',
   'docs/architecture/ROADMAP.md',
@@ -104,11 +109,14 @@ if (errors.length === 0) {
     const source = String(reservation.source ?? '').trim();
     const reservedPath = String(reservation.path ?? '').trim();
     const observedHead = String(reservation.observedHead ?? '');
+    const status = String(reservation.status ?? '');
 
     if (!/^ADR-\d{4}$/.test(displayId)) fail('PARALLEL_ADR_RESERVATION_ID_INVALID', displayId || '<missing displayId>');
     if (!source || !reservedPath) fail('PARALLEL_ADR_RESERVATION_METADATA_MISSING', `${displayId || '<missing displayId>'}: source/path required`);
     if (observedHead && !/^[0-9a-f]{40}$/.test(observedHead)) fail('PARALLEL_ADR_RESERVATION_HEAD_INVALID', `${displayId}: ${observedHead}`);
+    if (status !== 'parallel-open-pr-reservation') fail('PARALLEL_ADR_RESERVATION_STATUS_INVALID', `${displayId}: ${status || '<missing status>'}`);
     if (activeAdrDisplayIds.has(displayId)) fail('PARALLEL_ADR_NAMESPACE_COLLISION', `${displayId} is both reserved by ${source || '<unknown source>'} and allocated to an active ADR in this branch.`);
+    if (reservedPath && exists(reservedPath)) fail('STALE_PARALLEL_ADR_RESERVATION', `${displayId}: reserved path ${reservedPath} already exists in the repository; convert the reservation to a normal ADR record.`);
   }
 
   const authorityIds = new Set(authorities.map((item) => item.authorityId));
@@ -171,9 +179,24 @@ if (errors.length === 0) {
     if (!/^\d+\.\d+\.\d+$/.test(String(adr.version ?? ''))) fail('ADR_VERSION_INVALID', `${adr.displayId}: ${adr.version}`);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(adr.date ?? ''))) fail('ADR_DATE_INVALID', `${adr.displayId}: ${adr.date}`);
 
+    const status = declaredAdrStatus(text);
+    if (!status) {
+      fail('ADR_DECLARED_STATUS_MISSING', `${adr.displayId}: ${adr.path}`);
+    } else if (adr.lifecycle === 'proposed' && !/proposed/i.test(status)) {
+      fail('ADR_LIFECYCLE_STATUS_MISMATCH', `${adr.displayId}: registry=${adr.lifecycle}, document=${status}`);
+    } else if (['accepted', 'accepted-for-implementation'].includes(adr.lifecycle) && (!/accepted/i.test(status) || /proposed/i.test(status))) {
+      fail('ADR_LIFECYCLE_STATUS_MISMATCH', `${adr.displayId}: registry=${adr.lifecycle}, document=${status}`);
+    }
+
     const registeredAuthority = authorityById.get(adr.authorityId);
     if (registeredAuthority && registeredAuthority.path !== adr.path) fail('ADR_AUTHORITY_PATH_MISMATCH', `${adr.displayId}: ADR registry=${adr.path}, authority registry=${registeredAuthority.path}`);
     if (registeredAuthority && registeredAuthority.version !== adr.version) fail('ADR_AUTHORITY_VERSION_MISMATCH', `${adr.displayId}: ADR registry=${adr.version}, authority registry=${registeredAuthority.version}`);
+    if (registeredAuthority && ['accepted', 'accepted-for-implementation'].includes(adr.lifecycle) && /proposed/i.test(String(registeredAuthority.lifecycle ?? ''))) {
+      fail('ADR_AUTHORITY_LIFECYCLE_MISMATCH', `${adr.displayId}: ADR registry=${adr.lifecycle}, authority registry=${registeredAuthority.lifecycle}`);
+    }
+    if (registeredAuthority && adr.lifecycle === 'proposed' && /accepted|active/i.test(String(registeredAuthority.lifecycle ?? ''))) {
+      fail('ADR_AUTHORITY_LIFECYCLE_MISMATCH', `${adr.displayId}: ADR registry=${adr.lifecycle}, authority registry=${registeredAuthority.lifecycle}`);
+    }
 
     for (const alias of adr.legacyAliases ?? []) {
       if (!alias.path) continue;
