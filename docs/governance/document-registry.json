@@ -143,20 +143,20 @@
       "path": "docs/adr/ADR-0091-pdf-brand-and-report-integrity-source-of-truth.md"
     },
     {
-      "documentId": "DOC-ADR-0092",
+      "documentId": "DOC-ADR-0093",
       "type": "architecture-decision",
       "owner": "CAPITAL-AI Owner",
       "authority": "ADR-0091 / PDF Branding P1-P2 Finalization",
       "version": "1.0.0",
       "language": "de",
       "lifecycle": "approved",
-      "path": "docs/adr/ADR-0092-pdf-renderer-accessibility-and-brand-finalization.md"
+      "path": "docs/adr/ADR-0093-pdf-renderer-accessibility-and-brand-finalization.md"
     },
     {
       "documentId": "DOC-ROADMAP-PDF-BRANDING-P1-P2-2026-08-19",
       "type": "roadmap",
       "owner": "CAPITAL-AI Owner",
-      "authority": "ADR-0091 + ADR-0092 + Owner-requested finalization",
+      "authority": "ADR-0091 + ADR-0093 + Owner-requested finalization",
       "version": "1.0.0",
       "language": "de",
       "lifecycle": "reviewed",
@@ -166,7 +166,7 @@
       "documentId": "DOC-EVIDENCE-PDF-BRANDING-P1-P2-2026-08-19",
       "type": "implementation-evidence",
       "owner": "CAPITAL-AI",
-      "authority": "ADR-0091 + ADR-0092",
+      "authority": "ADR-0091 + ADR-0093",
       "version": "1.0.0",
       "language": "de",
       "lifecycle": "reviewed",
