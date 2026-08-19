@@ -14,7 +14,7 @@ const request = {
 
 describe('createM10GithubActionsDispatcher', () => {
   it('performs exactly one workflow_dispatch request with M10-bound inputs', async () => {
-    const fetchImpl = vi.fn(async () => new Response(null, {
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => new Response(null, {
       status: 204,
       headers: { 'x-github-request-id': 'req-1' },
     }));
@@ -47,7 +47,7 @@ describe('createM10GithubActionsDispatcher', () => {
   });
 
   it('returns accepted=false for a non-204 response and does not retry', async () => {
-    const fetchImpl = vi.fn(async () => new Response('forbidden', { status: 403 }));
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => new Response('forbidden', { status: 403 }));
     const dispatcher = createM10GithubActionsDispatcher({
       token: 'secret-token', workflowFile: 'm10-authorized-ci.yml', fetchImpl: fetchImpl as typeof fetch,
     });
@@ -58,7 +58,7 @@ describe('createM10GithubActionsDispatcher', () => {
   });
 
   it('fails before any network call when token or workflow target is invalid', async () => {
-    const fetchImpl = vi.fn();
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => new Response(null, { status: 204 }));
     expect(() => createM10GithubActionsDispatcher({
       token: '   ', workflowFile: 'm10-authorized-ci.yml', fetchImpl: fetchImpl as typeof fetch,
     })).toThrow(/token/i);
