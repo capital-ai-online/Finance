@@ -1,9 +1,9 @@
 {
   "name": "Governance",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "foundation",
   "owner": "CAPITAL-AI Owner",
-  "description": "Cross-cutting governance control-plane contracts for stable authority/control identities, lifecycle resolution and evidence trust classes.",
+  "description": "Cross-cutting governance control-plane contracts for stable authority/control identities, lifecycle resolution, evidence trust classes and single instruction-surface enforcement.",
   "category": "platform",
   "layer": "CrossCutting",
   "repository": "Finance",
@@ -20,11 +20,13 @@
     "self-authorize production mutation",
     "duplicate Documentary content governance",
     "duplicate Vocabulary governance",
+    "create provider-specific repository instruction mirrors",
     "store reusable credentials"
   ],
   "standards": [
     "ISO/IEC 42001:2023 benchmark",
-    "NIST SP 800-218 SSDF v1.1",
-    "NIST SP 800-218A"
+    "NIST SP 800-218 SSDF v1.1 final",
+    "NIST SP 800-218A final",
+    "NIST SP 800-218 Rev.1 / SSDF v1.2 draft monitored only"
   ]
 }
