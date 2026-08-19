@@ -2,7 +2,7 @@
 
 Status date: 2026-08-19
 Baseline branch: `main`
-Baseline commit: `4c280fb53e74e38d571e4b44b620a7b33681e0be` (PR #427 merge)
+Closure baseline commit: `2d8e482174e97601d4343249e50d208ccf6f6355` (PR #430 merge; M10 closure candidate is based exactly on this main)
 Platform version: `0.6.0`
 Canonical role: current-state DevelopmentChain status index. Historical detail remains in ADR/evidence documents.
 Operational roadmap: `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`.
@@ -13,7 +13,7 @@ Every merged DevelopmentChain step MUST update this file with the new `main` SHA
 
 Documentation readiness and execution authorization are distinct states. A prepared Runbook/ESS/Threat Model does not unblock a phase whose predecessor gate is incomplete.
 
-This Controlled-Cutover work package updates the M10/CI-authorization sections only. Unrelated historical M5A-M9 status text is not re-adjudicated here unless required for the already-accepted M10 prerequisite statement; broader roadmap reconciliation is a separate governance task.
+This M10 closure work package updates the M10/CI-authorization sections only. Unrelated historical M5A-M9 status text is not re-adjudicated here unless required for the already-accepted M10 prerequisite statement; broader roadmap reconciliation is a separate governance task.
 
 ## DevelopmentChain execution invariant
 
@@ -53,26 +53,13 @@ Repository rollback uses a new revert/rollback branch from current `main`, not a
 
 Human File Review and Human Merge are distinct from expensive-CI authorization. Green CI never authorizes merge.
 
-### Current pre-M10 state — until Controlled Cutover is Human-merged and deployed
+### Historical pre-M10 state — RETIRED
 
-```text
-PR OPEN/UPDATE
-→ normal pull_request CI event
-→ scope-aware build-and-test
-→ HUMAN FILE REVIEW
-→ HUMAN MERGE
-```
+Before the Human-merged/deployed M10 Controlled Cutover, normal `pull_request` events could enter scope-aware `build-and-test` automatically. That execution model is historical and is no longer the normal expensive-PR-CI authorization path.
 
-Rules:
+PR-body checkboxes, Files-Viewed state, `💪`/`okay`, comments, labels and reactions were already retired as CI authorization signals by the ADR-0069 Owner addendum on 2026-08-16 and remain retired.
 
-- PR-body checkboxes, Files-Viewed state, `💪`/`okay`, comments, labels and reactions are **not** CI authorization signals; they were retired by the ADR-0069 Owner addendum on 2026-08-16;
-- documentation-only changes use the docs fast path;
-- green CI is technical Evidence, not merge authorization;
-- AI clients stop before merge unless separate Human merge authority exists.
-
-Authority: ADR-0069 Owner addendum 2026-08-16 and `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`.
-
-### M10 Controlled-Cutover target — Passkey-only expensive-CI authorization
+### Current enforced M10 state — COMPLETE / VERIFIED PASS
 
 ```text
 PR OPEN/UPDATE
@@ -80,14 +67,16 @@ PR OPEN/UPDATE
 → OWNER FILE REVIEW
 → EXACT PR STATE RESOLUTION
 → CAPITAL-AI WEBAUTHN/PASSKEY APPROVAL
+→ IMMUTABLE APPROVAL EVIDENCE
 → ATOMIC ONE-HEAD CONSUMPTION
 → EXACT SAME-REPO PR-BRANCH workflow_dispatch
+→ GITHUB ACTIONS OIDC WORKLOAD IDENTITY
 → SINGLE-USE SERVER WORKFLOW GATE
 → ONE scope-aware build-and-test on approved head
 → HUMAN MERGE
 ```
 
-After verified cutover:
+Verified invariants:
 
 - Human File Review remains mandatory for merge governance but is not a machine CI credential;
 - passkey/WebAuthn is the sole normal cryptographic Owner authorization for expensive PR CI;
@@ -96,8 +85,11 @@ After verified cutover:
 - immutable approval Evidence persists before CI dispatch;
 - the current same-repository PR branch is re-resolved and must still point at the approved head before durable claim;
 - exactly one approval/head claim creates a high-entropy single-use CI consumption capability;
-- GitHub workflow dispatch targets the exact PR branch; the workflow must redeem that capability server-side before checkout/npm/test/build/docker;
-- manual/malformed/replayed workflow dispatches fail before expensive work;
+- GitHub workflow dispatch targets the exact PR branch;
+- the workflow obtains short-lived GitHub Actions OIDC and must redeem OIDC + the one-time capability server-side before checkout/npm/test/build/docker;
+- CAPITAL-AI verifies OIDC signature/issuer/audience plus exact repository/ref/SHA/run/workflow claims and re-resolves PR state immediately before redemption;
+- manual/malformed/replayed workflow attempts fail before expensive work;
+- successful required `build-and-test` is bound to the approved current head;
 - `💪`, `okay`, PR-body Owner checkboxes, comments, reactions, labels, Viewed-state and generic GitHub review state do not authorize CI;
 - Human merge remains separate.
 
@@ -107,6 +99,7 @@ Authorities:
 - `.ai/skills/ESS-0022-Passkey-Only-Owner-PR-Authorization.md`
 - `docs/architecture/ai-agent/M10_PASSKEY_OWNER_PR_AUTHORIZATION_THREAT_MODEL.md`
 - `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`
+- `docs/evidence/m10/M10_CLOSURE_EVIDENCE_2026-08-19.md`
 
 ## Roadmap package before privileged autonomous agents
 
@@ -178,14 +171,15 @@ Repository/governance milestones relevant to this work package:
 
 - M0–M4 are complete.
 - M5 append-only audit is verified and is used by M10 authorization/workflow-gate evidence.
+- M9 is `COMPLETE / VERIFIED PASS` and satisfied the M10 prerequisite gate.
 - PR #217 merged the M10 passkey-only target architecture.
-- M10 Phases 1-5 are implemented; Phase-5 atomic claim enforces one consumption per exact PR head.
-- Phase 6 Shadow Mode is deployed; a real Owner passkey is enrolled.
-- Phase-6 production assurance on 2026-08-19 verified real Owner `APPROVED_SHADOW`, closed-PR fail-closed, challenge freshness/replay controls, deterministic state-drift denial, recovery on a fresh changed head, durable audit correlation, and zero authoritative approval/CI consumption from Shadow.
-- The single-device live drift timing exercise was inconclusive and is not counted as live drift PASS; deterministic Phase-4 tests cover exact base/head/file-set/diff drift denial.
-- Owner explicitly authorized creation of the separate M10 Controlled-Cutover PR on 2026-08-19.
-- Controlled Cutover requires separate read-only resolver and Actions-write dispatcher credentials. The existing `M10_GITHUB_TOKEN` remains resolver-only; `M10_GITHUB_DISPATCH_TOKEN` must be provisioned server-side before Human merge to avoid fail-closed CI lockout.
-- M10 remains **not COMPLETE** until post-merge production evidence proves one authorized current-head expensive CI, no expensive CI for unapproved events, replay/drift/recovery controls, immutable audit correlation and Human-only Merge separation.
+- M10 Phases 1-5 implemented trusted PR-state resolution, challenge/credential/assertion verification, immutable approval evidence and atomic exact-head CI consumption.
+- Phase 6 Shadow Mode reached `VERIFIED PASS` with real Owner WebAuthn, negative/recovery evidence and zero authoritative Shadow-side CI effects.
+- Controlled-Cutover PR #429 was Human-merged and deployed. Resolver and dispatcher credentials are separated; GitHub Actions OIDC is conjunctive with the one-time M10 consumption.
+- Post-cutover assurance PR #431 proved ordinary-event cheap DENY, real authoritative exact-head Owner approvals, exactly one authorized CI per approved head, duplicate/replay DENY, stale-state isolation, fresh recovery, OIDC/current-state workflow-gate verification and Human-only Merge separation.
+- The single-device Phase-6 live drift timing exercise remained explicitly inconclusive and is not misrepresented; deterministic drift tests plus post-cutover stale-state isolation provide the required invariant evidence.
+- M10 is therefore **COMPLETE / VERIFIED PASS** under ADR-0066/ESS-0022 and `docs/evidence/m10/M10_CLOSURE_EVIDENCE_2026-08-19.md`.
+- M10 completion satisfies the M10 prerequisite for later SA5 design, but it does **not** authorize SA5 or any external production mutation. SA5 still needs its own accepted authority, exact Owner approval, fresh branch, least-privilege execution and pre/post mutation Evidence.
 
 Historical DevelopmentChain statuses outside the M10 scope remain governed by their own accepted evidence/roadmaps and are not silently rewritten by this work package.
 
@@ -197,15 +191,15 @@ Historical DevelopmentChain statuses outside the M10 scope remain governed by th
 | M1 Git Guardrails | COMPLETE | COMPLETE | Owner/GitHub governance | policy validation | preserve |
 | M2 Architecture/Documentation | COMPLETE | COMPLETE | ESS-0019 + ADR-0057..0063 | documentation only | synchronized |
 | M2G Documentation Freeze | COMPLETE | COMPLETE | Freeze policy | freeze verification | sequential implementation |
-| M3 CI Hardening | COMPLETE | COMPLETE | ADR-0053/0060 + CI policy | scope-aware `build-and-test`; pre-M10 automatic PR path | replaced by M10 only after verified cutover |
+| M3 CI Hardening | COMPLETE | COMPLETE | ADR-0053/0060 + CI policy | scope-aware `build-and-test`; historical pre-M10 automatic path retired | preserve M10 gate |
 | M4 Agent IAM | COMPLETE | COMPLETE | ADR-0058 + ESS-0018/0019 | negative IAM tests | preserve |
 | M5 Observability/Telemetry/Audit | **VERIFIED PASS** | COMPLETE | ADR-0056/0059 + M5 Evidence | append-only durable audit | preserve |
 | M5A Supabase Native MFA/AAL2 | historical status retained outside this M10 work package | existing authority | ESS-0020 + ADR-0064 + ADR-0003.5 | see M5A evidence/runbook | separate reconciliation |
 | M6 Supply Chain | historical status retained outside this M10 work package | existing authority | ADR-0060 | see M6 evidence/runbook | separate reconciliation |
 | M7 Deployment Identity / Platform Mutation | historical status retained outside this M10 work package | existing authority | ADR-0061 | see M7 evidence/runbook | separate reconciliation |
 | M8 Agent Cutover | historical status retained outside this M10 work package | existing authority | ADR-0062 + ESS-0019 | see M8 evidence/runbook | separate reconciliation |
-| M9 Assurance | **prerequisite VERIFIED PASS for M10** | COMPLETE for M10 prerequisite | ADR-0063 + M9 closure evidence | injection/replay/exfiltration/audit/kill-switch/break-glass/rollback assurance | preserve |
-| M10 Passkey-only Owner PR Authorization | **CONTROLLED CUTOVER IN IMPLEMENTATION** | PHASES 1-6 VERIFIED / CUTOVER RUNBOOK READY | ADR-0066 + ESS-0022 | Human merge/deploy → real authorized current-head CI → unapproved no-expensive-CI → replay/drift/recovery → audit/traceability | `COMPLETE / VERIFIED PASS` only after post-cutover exit gate |
+| M9 Assurance | **COMPLETE / VERIFIED PASS** | COMPLETE | ADR-0063 + M9 closure evidence | assurance exit gate closed | preserve |
+| M10 Passkey-only Owner PR Authorization | **COMPLETE / VERIFIED PASS** | COMPLETE | ADR-0066 + ESS-0022 | Phase 6 + Cutover + production exact-head/negative/replay/drift/recovery/OIDC/audit matrix PASS | preserve; later SA5 requires separate authorization |
 
 ## Phase execution documents
 
@@ -232,8 +226,9 @@ Traceability:
 - Kraken remains public REST Evidence only;
 - protected `main` + bounded required CI;
 - Human File Review remains mandatory for merge governance;
-- pre-M10 normal PR events remain authoritative only until Controlled Cutover is Human-merged/deployed;
-- after verified M10 cutover, exact-state WebAuthn/passkey is the sole normal expensive-PR-CI authorization signal;
+- exact-state WebAuthn/passkey is the sole normal expensive-PR-CI authorization signal;
+- successful authorized `build-and-test` must correspond to the current approved PR head;
+- GitHub Actions OIDC + one-time M10 consumption are conjunctive before expensive CI;
 - checkbox/Viewed/emoji/text/label/reaction signals never regain CI authority;
 - AI agents cannot self-approve or autonomously merge;
 - privileged autonomous agents require approved Roadmap/ESS/ADR scope and verified execution controls;
@@ -242,6 +237,8 @@ Traceability:
 
 ## Current next action
 
-**M10 Controlled Cutover is the currently Owner-authorized work package.** Implement and validate the authoritative Passkey → atomic consumption → exact same-repository PR-ref dispatch → single-use workflow-gate path on a fresh branch from current `main`; create the PR before running cost-causing CI; preserve the current pre-M10 path for this one bootstrap PR only; require separate server-side Actions-write credential provisioning before Human merge; after Human merge/deployment execute the live current-head / no-unapproved-expensive-CI / replay / drift / recovery matrix before declaring M10 `COMPLETE / VERIFIED PASS`.
+**M10 is closed at `COMPLETE / VERIFIED PASS`.** No further M10 implementation phase is pending. Preserve the passkey/OIDC/one-time-consumption control as an operational invariant and handle any future defect through fail-closed incident/recovery plus a fresh Human-authorized branch.
+
+M10 completion removes the *prerequisite blocker* for later SA5 design only. It does not authorize SA5, production mutation, new IAM scope, deploys or merge. Any such work requires its own current-main correlation, authority package and explicit Human/Owner authorization.
 
 No statement in this M10 synchronization silently supersedes unrelated accepted M5A-M9 evidence; broader historical roadmap cleanup requires a separate correlation review.

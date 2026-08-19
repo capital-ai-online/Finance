@@ -1,6 +1,6 @@
 # M10 — Passkey-only Human/Owner PR Authorization Runbook
 
-Status: CONTROLLED CUTOVER IN IMPLEMENTATION — Phases 1-6 are implemented; Phase 6 production Shadow/Negative/Recovery assurance reached `VERIFIED PASS` on 2026-08-19. PR #429 implements the Controlled-Cutover repository path. M10 is **not `COMPLETE / VERIFIED PASS`** until the Human-merged/default-branch workflow is deployed and the post-cutover exact-head CI, unapproved-DENY, replay and recovery checks below are proven in production.
+Status: **COMPLETE / VERIFIED PASS** — Phases 1-6, Controlled Cutover, production deployment and the post-cutover live matrix are verified. Durable closure evidence: `docs/evidence/m10/M10_CLOSURE_EVIDENCE_2026-08-19.md`.
 Date: 2026-08-12  
 Updated: 2026-08-19  
 Authority: ADR-0066, ESS-0022, M10 Threat Model, DEVELOPMENT Chain Execution Policy, HUMAN_OWNER_PR_APPROVAL_POLICY, ADR-0069 Owner addendum 2026-08-16
@@ -13,7 +13,7 @@ Use a CAPITAL-AI WebAuthn/passkey transaction bound to the exact current PR stat
 
 Human-only **Merge** remains mandatory and separate. An M10 CI authorization can never authorize merge.
 
-## Prerequisite Gate
+## Prerequisite Gate — VERIFIED PASS
 
 Before Controlled Cutover:
 
@@ -25,7 +25,7 @@ Before Controlled Cutover:
 - a real Owner passkey is enrolled;
 - Phase-6 Shadow, negative and recovery assurance is `VERIFIED PASS`.
 
-As of 2026-08-19 these prerequisites are satisfied for Controlled-Cutover implementation.
+All prerequisites were satisfied before Controlled Cutover.
 
 ## Phase 1 — Trusted PR State Resolver — VERIFIED
 
@@ -57,7 +57,7 @@ A real active Owner credential exists in production. Agents may assist with UI/c
 
 On approval: re-resolve PR state; reject drift; verify challenge, RP ID, origin, credential, signature, UP/UV; persist immutable approval Evidence; keep the result single-use for CI consumption. Any failure → `DENY`.
 
-## Phase 5 — Atomic CI Consumption — VERIFIED FOUNDATION
+## Phase 5 — Atomic CI Consumption — VERIFIED
 
 Before CI dispatch: re-resolve state; compare to approved context; resolve the current same-repository PR branch and require it still points to the approved head; atomically claim approval + exact PR head; issue exactly one dispatch attempt. Duplicate → `DENY/DEDUPE`.
 
@@ -81,17 +81,17 @@ Verified evidence includes:
 
 The attempted single-device live head-drift timing exercise was explicitly `INCONCLUSIVE` because the drift commit occurred after a valid assertion; it is not represented as a live negative PASS. The mandatory drift invariant is covered by deterministic verifier tests.
 
-## Mandatory Negative Tests
+## Mandatory Negative Tests — VERIFIED PASS
 
 Required matrix: wrong Owner, wrong RP/origin, UP/UV false, invalid signature, expired/replayed challenge, revoked credential, wrong repo/PR, changed base/head/file-set/diff, unavailable resolver/verifier/audit, already consumed approval, forged legacy `💪`/checkbox/label/reaction, agent self-approval and weak recovery fallback.
 
 Controlled-Cutover additions include fork/cross-repository heads, malformed/ambiguous Git refs, forged/manual workflow dispatch, missing/wrong-audience/expired/forged GitHub Actions OIDC identity, wrong OIDC repository/ref/SHA/run/workflow claims, and duplicate workflow-gate redemption.
 
-These tests may be satisfied by deterministic automated evidence where deliberately reproducing the failure in production would add risk without increasing assurance. Post-cutover live checks are still mandatory for the actual CI gate and replay/authorization boundary.
+These controls are satisfied by the combined deterministic and production-live evidence recorded in `docs/evidence/m10/M10_CLOSURE_EVIDENCE_2026-08-19.md`. Deliberately reproducing unsafe forged credentials in production is not required where deterministic cryptographic boundary tests provide stronger and safer assurance.
 
-## Controlled Cutover — IMPLEMENTATION IN PROGRESS
+## Controlled Cutover — VERIFIED PASS
 
-### Target control flow
+### Enforced control flow
 
 ```text
 NORMAL PR EVENT
@@ -103,7 +103,7 @@ OWNER IN CAPITAL-AI
 → Owner WebAuthn/passkey assertion
 → immutable approval Evidence
 → exact same-repository PR branch/head re-resolution
-→ atomic one-head/one-approval consumption claim
+→ atomic one-head consumption claim
 → exactly one GitHub workflow_dispatch to that branch
 → workflow obtains short-lived GitHub Actions OIDC identity
 → workflow presents OIDC identity + single-use consumptionId to CAPITAL-AI workflow gate
@@ -143,66 +143,62 @@ OIDC and the one-time M10 consumption are conjunctive controls: both are require
 
 ### Workflow fail-closed requirements
 
-- `pull_request` events may create the required check context but must fail before expensive steps unless they are the explicitly documented one-time Controlled-Cutover bootstrap PR #429;
+- ordinary `pull_request` events may create the required check context but fail before expensive steps;
 - `workflow_dispatch` must target the same-repository PR branch whose current head equals the approved SHA;
-- dispatched inputs must carry consumption/approval/PR/base/head/digest/action context;
-- before checkout/npm/build, the workflow must obtain GitHub Actions OIDC and redeem OIDC + the single-use consumption capability at the production M10 workflow-gate endpoint;
+- dispatched inputs carry consumption/approval/PR/base/head/digest/action context;
+- before checkout/npm/build, the workflow obtains GitHub Actions OIDC and redeems OIDC + the single-use consumption capability at the production M10 workflow-gate endpoint;
 - unknown, malformed, mismatched, replayed or already-finalized capabilities deny before expensive CI;
 - invalid/missing/stale/wrong-audience/wrong-context OIDC identities deny before expensive CI;
-- a manually initiated workflow dispatch without both valid workload identity and an unredeemed M10 capability must not start expensive CI;
+- a manually initiated workflow rerun/dispatch without both valid workload identity and an unredeemed M10 capability cannot start expensive CI;
 - the required job name remains `build-and-test` so the current-head successful authorized run can satisfy branch protection;
 - main-push supply-chain/deployment jobs remain separate from PR-head CI authorization.
 
-### Post-merge Controlled-Cutover verification
+### Post-merge Controlled-Cutover verification — VERIFIED PASS
 
-Only after Human merge and production deployment:
+Production probe PR #431 proved:
 
-1. confirm `M10_GITHUB_TOKEN` and the separate `M10_GITHUB_DISPATCH_TOKEN` are both configured server-side without exposing values;
-2. create/open a fresh test PR from then-current `main`;
-3. verify its ordinary PR event fails before checkout/npm/test/build/docker and therefore starts no expensive CI;
-4. perform a real Owner passkey authorization for that exact current head;
-5. verify exactly one authorized `build-and-test` runs on that head, presents a valid GitHub OIDC workload identity and passes the production workflow gate;
-6. replay the same authorization/consumption and verify no second expensive run can start;
-7. verify a malformed/manual dispatch cannot pass OIDC + consumption gates;
-8. mutate the test PR head and verify old approval/state cannot authorize the new head;
-9. recover using a fresh challenge/approval on the new stable head;
-10. confirm Human Merge remains independent and no checkbox/emoji/label/reaction path authorizes CI;
-11. correlate immutable approval, consumption, OIDC/workflow and M5 audit evidence;
-12. synchronize final Evidence/Roadmap/Traceability, then and only then mark M10 `COMPLETE / VERIFIED PASS`.
+1. separate resolver and dispatcher credentials configured server-side without exposing values — PASS;
+2. fresh test PR from then-current `main` — PASS;
+3. ordinary PR event denied before checkout/npm/test/build/docker — PASS (`#1872`, repeated on later heads);
+4. real Owner passkey authorization for exact current head — PASS;
+5. exactly one authorized `build-and-test` on exact approved head with GitHub OIDC/workflow-gate verification — PASS (`32228796660` / `#1873`);
+6. duplicate authorization/consumption created no second expensive run — PASS (`DEDUPE_HEAD`);
+7. manual Actions rerun after consumption finalization denied before checkout — PASS;
+8. changed PR state did not inherit old approval authority — PASS;
+9. fresh challenge/approval on new stable head recovered correctly — PASS (`32231008414` / `#1878`);
+10. Human Merge remained independent and no checkbox/emoji/label/reaction path authorized CI — PASS;
+11. immutable approval, consumption, OIDC/workflow and M5 audit evidence correlated — PASS;
+12. final Evidence/Roadmap/Traceability synchronized — PASS via M10 closure work package.
 
 ## Legacy Cleanup
 
-Checkbox- and emoji-based CI authorization was retired on 2026-08-16. Controlled Cutover must preserve that retirement:
+Checkbox- and emoji-based CI authorization was retired on 2026-08-16. Controlled Cutover preserves that retirement:
 
-- no workflow parser may consume emoji/text/Viewed/checklist/label/reaction as CI authorization;
+- no workflow parser consumes emoji/text/Viewed/checklist/label/reaction as CI authorization;
 - historical Evidence references remain historical only;
 - Human merge remains separate.
 
 ## Rollback
 
-### Before Human merge of Controlled Cutover
-
-Do not change production. The simplified pre-M10 automatic PR CI path remains authoritative.
-
-### After Controlled Cutover merge but before post-cutover `VERIFIED PASS`
+### After M10 enforcement
 
 Fail closed rather than silently restoring a weak authorization signal. If the authoritative path cannot safely dispatch CI, stop expensive PR CI and repair through a fresh, Human-authorized rollback/fix branch. Do not restore emoji/checkbox authorization.
 
-### After M10 enforcement
-
 Activate the pre-approved incident/recovery process and restore only a verified safe gate through controlled change. Human Merge remains separate throughout recovery.
 
-## Exit Gate
+## Exit Gate — 10/10 SATISFIED
 
-M10 is `COMPLETE / VERIFIED PASS` only when:
+M10 is `COMPLETE / VERIFIED PASS` because:
 
-1. M9 prerequisite PASS;
-2. PR-bound WebAuthn Owner assertion is the enforced normal CI authorization;
-3. all negative/replay/freshness/revocation/OIDC tests PASS;
-4. recovery PASS;
-5. immutable audit PASS;
-6. one expensive CI per approved head proven;
-7. no checkbox/emoji authorization path remains;
-8. Human-only Merge preserved;
-9. Evidence/Roadmap/Traceability synchronized;
-10. implementation work branch deleted after Human merge.
+1. M9 prerequisite PASS — satisfied;
+2. PR-bound WebAuthn Owner assertion is the enforced normal CI authorization — satisfied;
+3. all negative/replay/freshness/revocation/OIDC tests PASS — satisfied;
+4. recovery PASS — satisfied;
+5. immutable audit PASS — satisfied;
+6. one expensive CI per approved head proven — satisfied on two distinct approved heads;
+7. no checkbox/emoji authorization path remains — satisfied;
+8. Human-only Merge preserved — satisfied;
+9. Evidence/Roadmap/Traceability synchronized — satisfied by the closure work package;
+10. Controlled-Cutover implementation branch is absent after Human merge; the closure branch must likewise be deleted after Human merge.
+
+Canonical closure evidence: `docs/evidence/m10/M10_CLOSURE_EVIDENCE_2026-08-19.md`.
