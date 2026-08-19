@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "SC2-COMPOSITION-ROOT-CRYPTO-EXIT-2026-08-19",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "SC-2 Phase C2a — Standard-Crypto composition-root operational exit",
+  "startedAt": "2026-08-19T07:07:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "4c280fb53e74e38d571e4b44b620a7b33681e0be",
+  "pullRequest": 428,
+  "claimedPaths": [
+    ".ai/work-claims/SC2-COMPOSITION-ROOT-CRYPTO-EXIT-2026-08-19.json",
+    "server/marketData/canonicalCryptoScoreEnrichment.ts",
+    "server/marketData/createApplicationMarketDataRuntime.ts",
+    "server/routes/legacyScoringCompatibilityRoutes.ts",
+    "server/routes/registerApplicationRoutes.ts",
+    "tests/unit/canonicalCryptoCompositionExit.test.ts",
+    "tests/unit/applicationMarketDataRuntime.test.ts",
+    "docs/evidence/sc-md/SC2_COMPOSITION_ROOT_CRYPTO_EXIT_2026-08-19.md",
+    "docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md",
+    "docs/governance/document-registry.json"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}
