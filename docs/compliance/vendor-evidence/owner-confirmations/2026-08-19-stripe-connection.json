@@ -4,17 +4,21 @@
   "project": "CAPITAL-AI",
   "vendorId": "stripe",
   "confirmedAt": "2026-08-19",
-  "assertionType": "connected-account-identity",
-  "status": "verified-via-connected-account",
+  "assertionType": "connected-account-identity-and-production-scope",
+  "status": "owner-confirmed-and-verified-via-connected-account",
   "assertion": {
     "accountId": "acct_1TbfHJPKr4joNbEc",
     "displayName": "CAPITAL-AI",
-    "connectionVerified": true
+    "connectionVerified": true,
+    "onlyProductionStripeAccount": true,
+    "liveModeInUse": true
   },
-  "source": "Stripe connected account API",
+  "sources": [
+    "Stripe connected account API",
+    "controller confirmation in chat on 2026-08-19"
+  ],
   "limitations": [
-    "This verifies the connected Stripe account identity only.",
-    "It does not by itself establish whether this is the only Stripe account used for production.",
-    "It does not establish live-mode processing scope, GDPR role allocation, DPA execution, transfer mechanism, TIA status, or subprocessor completeness."
+    "This verifies the connected Stripe account identity and owner-confirmed production account scope/live-mode use.",
+    "It does not by itself establish GDPR role allocation, DPA execution, transfer mechanism, TIA status, contractual processing region, or subprocessor completeness."
   ]
 }
