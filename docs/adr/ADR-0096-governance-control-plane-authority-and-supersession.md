@@ -2,7 +2,7 @@
 
 **Authority ID:** `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`  
 **Version:** `1.0.0`  
-**Status:** PROPOSED — Owner-directed implementation; effective after Human Merge  
+**Status:** Accepted — Human Merge completed via PR #447 on 2026-08-19  
 **Date:** `2026-08-19`  
 **Decision Owner:** CAPITAL-AI Owner  
 **Scope:** repository governance authority, agent trust root, stable identities, ADR/ESS lifecycle, documentation governance boundaries and pre-PR evidence
