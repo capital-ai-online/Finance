@@ -1,13 +1,11 @@
 import React from 'react';
 
-type SentimentDashboardProps = React.ComponentProps<(typeof import('./SentimentDashboardImpl'))['SentimentDashboard']>;
-
 const LazySentimentDashboard = React.lazy(async () => {
   const { SentimentDashboard } = await import('./SentimentDashboardImpl');
   return { default: SentimentDashboard };
 });
 
-export function SentimentDashboard(props: SentimentDashboardProps) {
+export function SentimentDashboard() {
   return (
     <React.Suspense
       fallback={(
@@ -16,7 +14,7 @@ export function SentimentDashboard(props: SentimentDashboardProps) {
         </div>
       )}
     >
-      <LazySentimentDashboard {...props} />
+      <LazySentimentDashboard />
     </React.Suspense>
   );
 }
