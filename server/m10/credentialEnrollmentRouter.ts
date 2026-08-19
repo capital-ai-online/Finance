@@ -6,8 +6,7 @@
 //
 // This router is code an agent built to assist the Owner - it does not and cannot perform an
 // enrollment itself. Every mutating enrollment route requires a live, already-authenticated Owner
-// session plus a fresh TOTP step-up; Phase-6 Shadow authorization is nested below /shadow and uses
-// the enrolled passkey itself as the strong authorization ceremony.
+// session plus a fresh TOTP step-up. M10 CI authorization uses the enrolled passkey itself.
 import express from 'express';
 import { checkAdminAccess, requireStepUp } from '../../src/platform/Security/authMiddleware';
 import { OWNER_ONLY_ROLES } from '../../src/platform/Security/types';
@@ -24,6 +23,7 @@ import {
 import { writeAgentAuditEvent } from '../agentAudit/agentAuditWriter';
 import { checkRateLimit, getClientIp } from '../../src/platform/Security/rateLimiter';
 import { m10ShadowAuthorizationRouter } from './shadowAuthorizationRouter';
+import { m10AuthoritativeAuthorizationRouter } from './authoritativeAuthorizationRouter';
 
 export const m10CredentialEnrollmentRouter = express.Router();
 
@@ -196,6 +196,8 @@ m10CredentialEnrollmentRouter.get('/credentials', async (req, res) => {
   res.json({ credentials });
 });
 
-// Phase 6 is nested under the already-mounted M10 Owner route to avoid introducing a second public
-// route-composition boundary. Shadow endpoints cannot dispatch or consume CI approvals.
+// Shadow remains a non-authoritative diagnostic/evidence surface. It cannot consume or dispatch CI.
 m10CredentialEnrollmentRouter.use('/shadow', m10ShadowAuthorizationRouter);
+
+// Controlled Cutover authoritative path. Human merge remains a separate GitHub action outside M10.
+m10CredentialEnrollmentRouter.use('/authorize', m10AuthoritativeAuthorizationRouter);

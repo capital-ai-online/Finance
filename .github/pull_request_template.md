@@ -6,7 +6,9 @@
 >
 > **Governance-Contract:** Jeder Pull Request gegen `main` MUSS diese vollständige Vorlage verwenden. Abschnitte dürfen nicht entfernt oder frei ersetzt werden; nicht zutreffende Angaben werden mit `N/A` begründet.
 >
-> **Merge-Vereinfachung (2026-08-16):** Pre-CI-Owner-Checkboxen und Review `💪`/`okay` sind **retired**. Technische CI startet ohne diese Zeremonie. Merge bleibt Human/Owner-only. Ab Development-Chain **M10** gilt Passkey/WebAuthn-Autorisierung.
+> **Merge-Vereinfachung (2026-08-16):** Pre-CI-Owner-Checkboxen, Files-Viewed als Maschinen-Gate und Review `💪`/`okay` sind **retired**. Sie autorisieren weder CI noch Merge. Merge bleibt Human/Owner-only.
+>
+> **M10:** Nach verifiziertem Controlled Cutover autorisiert ausschließlich eine PR-state-gebundene Owner-Passkey/WebAuthn-Transaktion `AUTHORIZE_PR_CI` für teure PR-CI. Vor dem verifizierten Cutover bleibt der dokumentierte Pre-M10-Pfad aktiv. CI-Autorisierung und Merge bleiben getrennte Human-Gates.
 >
 > **Marker-Hinweis:** HTML-Kommentare (`<!-- CAPITAL_AI_* -->`) sind kanonisch. Zusätzlich stehen sichtbare `` `CAPITAL_AI_*` ``-Zeilen als Fallback, falls ein API-/Connector den Kommentar strippt. Baseline-IDs dürfen weder entfernt, dupliziert noch verschoben werden.
 
@@ -69,7 +71,7 @@ Beschreibe präzise, was geändert wurde und warum. Nicht zusammenhängende Änd
 - [ ] Keine Zugangsdaten, Secrets oder Tokens wurden in Source, Logs, PR-Body oder Modellkontext aufgenommen.
 - [ ] Authentifizierung/Autorisierung bleibt, wo erforderlich, fail-closed.
 - [ ] Externe, Tool- und Retrieval-Inhalte werden als nicht vertrauenswürdige Eingaben behandelt.
-- [ ] Hochriskante oder destruktive Aktionen behalten Human-Approval-Gates (Merge; ab M10 Passkey für CI-Autorisierung; externe Mutation).
+- [ ] Hochriskante oder destruktive Aktionen behalten Human-Approval-Gates (Merge; nach M10-Cutover Passkey für teure PR-CI; externe Mutation).
 - [ ] Neue/geänderte Workflows verwenden unveränderliche Action-SHAs und explizite Minimalberechtigungen.
 
 ### Threat Model
@@ -95,15 +97,15 @@ Ein **Rollback-Runbook** beschreibt vor einer Mutation den sicheren Weg zurück 
 
 ## 8. Merge-Autorisierung (vereinfacht)
 
-> **Retired (2026-08-16):** PR-Body-Owner-Checkboxen und Current-Head-Review `💪`/`okay` sind keine CI- oder Merge-Voraussetzung mehr.
+> **Retired (2026-08-16):** PR-Body-Owner-Checkboxen, Files-Viewed als Maschinen-Gate und Current-Head-Review `💪`/`okay` sind keine CI- oder Merge-Voraussetzung mehr.
 >
-> **Aktuell:** Technische CI läuft ohne diese Zeremonie. Der Owner entscheidet über den Merge; Agenten mergen nicht.
+> **Vor verifiziertem M10-Cutover:** Technische PR-CI verwendet den dokumentierten Pre-M10-Pfad. Der Owner entscheidet separat über den Merge; Agenten mergen nicht.
 >
-> **Ab M10:** Passkey/WebAuthn-Transaction für `AUTHORIZE_PR_CI` gemäß `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`.
+> **Nach verifiziertem M10-Cutover:** Eine Owner-Passkey/WebAuthn-Transaktion für `AUTHORIZE_PR_CI` ist die einzige normale Autorisierung für teure PR-CI gemäß `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`. Human Merge bleibt separat.
 
 - **Human-/CODEOWNER-Merge erforderlich:** Ja
 - **Agent-Self-Merge:** Nein
-- **Empfohlen vor Merge:** Diff unter *Files changed* lesen (nicht CI-blockierend)
+- **Empfohlen vor Merge:** Diff unter *Files changed* lesen (nicht selbst CI-autorisierend)
 
 ## 9. PR-Checkklasse und auszuführende Checks
 
@@ -159,7 +161,7 @@ Zusätzlich: Roadmap/ADR/ESS, Owner Mutation Approval, Pre-/Post-Mutation Verifi
 - [ ] Docker/Runtime PASS oder N/A
 - [ ] Pre-/Post-Mutation Verification PASS oder N/A
 - [ ] `build-and-test` PASS
-- [ ] Owner-Gate Checkbox/Emoji — N/A (retired 2026-08-16)
+- [ ] Checkbox/Viewed/Emoji/Text/Label/Reaction als CI-Gate — N/A (retired; darf nicht autorisieren)
 
 ## 11. Risiko und Rücksetzung
 

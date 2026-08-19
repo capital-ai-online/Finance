@@ -5,10 +5,10 @@
   "ruleset_name": "main-production-protection",
   "authority": {
     "current_as_of": "2026-08-19",
-    "accepted_decision": "ADR-0069 including Owner addendum 2026-08-16",
-    "pre_m10_ci_authorization": "Technical CI starts on normal PR events without legacy checkbox/Viewed/emoji gate.",
-    "merge_authorization": "Human/Owner-only; CI success never authorizes merge.",
-    "m10_future_state": "After controlled cutover, Passkey/WebAuthn AUTHORIZE_PR_CI becomes the strong CI-authorization layer; Human Merge remains separate.",
+    "accepted_decision": "ADR-0069 including Owner addendum 2026-08-16 + ADR-0066/ESS-0022 M10 Controlled Cutover",
+    "pre_m10_ci_authorization": "Historical state before M10 Controlled Cutover: technical CI started on normal PR events without legacy checkbox/Viewed/emoji authorization.",
+    "merge_authorization": "Human/Owner-only; M10 CI authorization and CI success never authorize merge.",
+    "m10_future_state": "Controlled-Cutover target: normal PR events fail cheaply before expensive CI; a PR-state-bound Owner Passkey/WebAuthn AUTHORIZE_PR_CI approval is atomically consumed exactly once and dispatches build-and-test on the approved current head through a single-use server workflow gate. This becomes enforced only after Human merge/deployment and post-cutover verification.",
     "historical_decision_records_are_non_normative": true
   },
   "required": {
@@ -24,17 +24,18 @@
     "bypass_actors": []
   },
   "promotion": {
-    "state": "pending_owner_ruleset_cutover",
+    "state": "m10_controlled_cutover_pending_human_merge_and_postmerge_verification",
     "current_server_ruleset": "active",
     "shadow_check": null,
-    "promotion_gate": "COMPLETED: real head-bound parallel PASS on PR #308 and PR #309; Shadow retirement authorized by Owner selection 1 on 2026-08-15.",
-    "rollback": "Disable or edit the ruleset if any required check becomes missing, ambiguous, skipped unexpectedly, or failing without a documented cause. Preserve normal PR workflow and repair on a fresh branch.",
+    "promotion_gate": "M10 Phase-6 Shadow/Negative/Recovery assurance VERIFIED PASS on 2026-08-19. Controlled-Cutover code still requires Human merge, deployment, exactly-one approved current-head build-and-test, unapproved no-expensive-CI evidence, replay/drift/recovery checks and final traceability sync before M10 COMPLETE.",
+    "rollback": "Before cutover merge, preserve the simplified pre-M10 PR CI path. After cutover merge, fail closed and repair through a fresh Human-authorized branch; never restore emoji/checkbox/Viewed/label/reaction authorization as a fallback.",
     "historical_decision_2026-08-14": "At that date, Owner required the then-existing Human/Owner comment-gate and head-bound evidence during the capital-ai-ci migration. This is retained as historical evidence only and was superseded for current process by the Accepted ADR-0069 Owner addendum dated 2026-08-16.",
     "decision_2026-08-14b": "Owner created the live ruleset with deletion_protection deliberately left disabled: in the current single-owner topology, enabling it forced a bypass actor entry to remain administrable, which would itself reintroduce a bypass exception. Accepted residual risk: main can currently be deleted without a ruleset block. Revisit once a second trusted reviewer identity exists (see single_owner_topology.promotion_condition). Owner also enabled require_code_owner_review; .github/CODEOWNERS received a `* @SvenKulessa` catch-all the same day so the rule covers paths beyond the previously explicit list.",
     "decision_2026-08-14c": "GitHub Advanced Security CodeQL was evaluated against the already-active Snyk Code check (context code/snyk) and found redundant for SAST coverage (both do semantic source-code vulnerability analysis; Snyk Code needs no GitHub Actions runtime, matching ADR-0070's no-new-workflow design). Owner decided against CodeQL as a required check. GitGuardian Security Checks and both Snyk contexts (security/snyk, code/snyk) passed on three independent head-bound pull requests (#249, #250, #251), exceeding ADR-0070's two-head promotion gate, and were promoted to required checks with Owner approval. See docs/evidence/security/GITGUARDIAN_SNYK_BASELINE_2026-08-14.md.",
     "decision_2026-08-15": "Snyk's private-test quota was exhausted (external Snyk-side account limit, both security/snyk and code/snyk contexts started reporting 'error'/'You have used your limit of private tests' regardless of actual scan outcome), permanently blocking merge on at least 3 concurrently open pull requests (#295, #296, #297) despite ADR-0070's Rollback step 1. Owner removed both security/snyk and code/snyk from the live ruleset on 2026-08-15. GitGuardian Security Checks remains required and unaffected.",
     "historical_decision_2026_08_15_ci_consolidation": "Owner selected consolidation option 1: build-and-test remains the sole repository-hosted technical Required Check; capital-ai-ci was removed after parallel evidence on PR #308 and PR #309. The sentence in the original record that the Human/Owner head-bound gate remained unchanged was true for 2026-08-15 only and is non-normative after the 2026-08-16 ADR-0069 Owner addendum.",
-    "decision_2026-08-16_owner_gate_retired": "Owner retired PR-body checkbox, Files-Viewed and current-head emoji/text authorization as prerequisites for CI. Pre-M10 technical CI uses normal PR events; Merge remains Human/Owner-only. Reintroduction requires a dedicated ADR and Shadow-to-Cutover path. M10 introduces Passkey/WebAuthn AUTHORIZE_PR_CI only after controlled cutover."
+    "decision_2026-08-16_owner_gate_retired": "Owner retired PR-body checkbox, Files-Viewed and current-head emoji/text authorization as prerequisites for CI. Pre-M10 technical CI uses normal PR events; Merge remains Human/Owner-only. Reintroduction requires a dedicated ADR and Shadow-to-Cutover path.",
+    "decision_2026-08-19_m10_controlled_cutover": "After real Phase-6 Owner WebAuthn Shadow, negative and recovery assurance, Owner authorized creation of the M10 Controlled-Cutover PR. Target design keeps required check context build-and-test, denies ordinary PR events before expensive steps, dispatches only to the exact same-repository approved PR branch/head, and requires one-time server redemption of the durable M10 consumption capability before expensive CI. Human merge remains separate."
   },
   "single_owner_topology": {
     "observed_collaborators": 1,
