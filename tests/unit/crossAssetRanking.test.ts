@@ -102,7 +102,7 @@ describe('SC-7 cross-asset ranking generalization', () => {
     expect(RANKING_SCORE_IMPACT_ENABLED).toBe(false);
   });
 
-  it('isolates default cohorts by intended-use contract', () => {
+  it('isolates default cohorts by intended-use contract and projects complete lineage', () => {
     const featureDrift = candidate({
       symbol: 'TSLA', assetClass: 'stock', score: 89,
       modelId: 'traditional-scoring', modelVersion: '2.1.0',
@@ -130,6 +130,16 @@ describe('SC-7 cross-asset ranking generalization', () => {
     );
     expect(baseStocks?.entries.map((entry) => entry.symbol)).toEqual(['AAPL', 'MSFT']);
     expect(baseStocks?.entries.map((entry) => entry.rank)).toEqual([1, 2]);
+    expect(baseStocks?.entries[0]).toEqual(expect.objectContaining({
+      dispatcherVersion: 'canonical-scoring-dispatcher/1.1.0',
+      modelRegistryVersion: SCORING_MODEL_REGISTRY_VERSION,
+      modelId: 'traditional-scoring',
+      modelVersion: '2.1.0',
+      executorKey: 'traditional-scoring.executor',
+      resultContractVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
+      featureVersion: 'test-features/1.0.0',
+      scoringVersion: 'traditional-scoring@2.1.0',
+    }));
 
     const forex = result.cohorts.find((cohort) => cohort.key.includes('asset-class:forex'));
     expect(forex?.entries.map((entry) => entry.symbol)).toEqual(['EURUSD']);
