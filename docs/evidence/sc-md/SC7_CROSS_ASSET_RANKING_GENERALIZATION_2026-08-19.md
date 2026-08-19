@@ -9,15 +9,18 @@
 
 ## 1. Context
 
-SC-2 C3 is Human-merged and the productive scoring chain now converges on UAI + ScoringModelRegistry + ScoringDispatcher + CanonicalScoreResult. The next SPT critical-path item is SC-7 full ranking generalization.
+SC-2 C3 is Human-merged and the productive scoring chain converges on UAI + ScoringModelRegistry + ScoringDispatcher + CanonicalScoreResult. The next SPT critical-path item is SC-7 ranking generalization.
 
-The historical `src/services/ranking.service.ts` remains Crypto-specific: its numeric rank formula consumes Crypto classification tier, liquidity and DQ. Reusing that formula for stock/forex/index/commodity/bond would silently introduce incomparable factors and is therefore prohibited.
+The historical `src/services/ranking.service.ts` remains Crypto-specific: its numeric rank formula consumes Crypto classification tier, liquidity and DQ. Reusing that formula for stock/forex/index/commodity/bond would silently introduce incomparable factors and is prohibited.
 
-A second comparability issue is visible in the C3 market-data compatibility contract: Crypto score presentation retains the historical 0..10 scale, while other financial asset classes retain 0..100 presentation. Equal-looking canonical score fields across different model families must therefore not be treated as globally calibrated values.
+Two additional comparability risks were found during Phase-D static review:
+
+1. the C3 market-data compatibility contract preserves historical presentation scales — Crypto 0..10, other financial asset classes 0..100;
+2. `traditional-scoring@2.1.0` is one registry model id/version but its intended-use segments do not have identical math: Stock uses `STOCK_SCORING_WEIGHTS`, whereas Forex and Index use `FX_SCORING_WEIGHTS`.
+
+Therefore **same model id/version is not sufficient evidence of cross-asset comparability**.
 
 ## 2. Phase-D architecture
-
-New platform boundary:
 
 ```text
 CanonicalScoreResult + UAI
@@ -45,28 +48,34 @@ Files:
 
 ## 3. Ranking modes
 
-Phase D implements the SPT modes as a shadow projection:
+Phase D implements shadow projections for:
 
 - `overall`
 - `category`
 - `tier`
 - `growth`
 
-The word "overall" does **not** mean that unrelated model families are automatically interleaved. It means overall ordering inside a proven comparison cohort.
+"Overall" means overall ordering **inside a proven comparison cohort**. It does not create a universal cross-asset rank by itself.
 
-### 3.1 Same-model score cohorts
+### 3.1 Default score cohorts
 
-Without additional calibration evidence, the default score cohort is:
+Without separate normalization evidence the default cohort is:
 
 ```text
-model:<modelId>@<modelVersion>
+model:<modelId>@<modelVersion>|asset-class:<assetClass>
 ```
 
-This permits, for example, stock/forex/index assets using the same `traditional-scoring@2.1.0` model to share a cohort while keeping Crypto, Commodity and Sovereign model outputs separate.
+Examples:
 
-### 3.2 Cross-model comparability
+- `traditional-scoring@2.1.0 + stock` is separate from
+- `traditional-scoring@2.1.0 + forex`, which is separate from
+- `traditional-scoring@2.1.0 + index`.
 
-Cross-model ordering requires `ScoreComparabilityEvidence`:
+This is intentionally stricter than model-version grouping because model intended use, factor coverage and weighting can differ by asset segment.
+
+### 3.2 Cross-model / cross-asset comparability
+
+Ordering across those default cohorts requires `ScoreComparabilityEvidence`:
 
 - `normalizedValue`
 - `comparisonKey`
@@ -76,87 +85,86 @@ Cross-model ordering requires `ScoreComparabilityEvidence`:
 - `retrievedAt`
 - `verified=true`
 
-A label/key by itself is not enough. Unverified or non-finite normalization evidence fails closed. Phase D does **not** implement the calibration/normalization method itself; that requires separate validation evidence before a production impact gate can be considered.
+A key/label alone is insufficient. Unverified or non-finite normalization evidence fails closed. Phase D does **not** invent or implement a calibration method; calibration remains a separately validated work item.
 
 ### 3.3 Category / tier
 
-Category and tier are peer-group refinements on top of the score-comparability cohort. Missing metadata excludes the candidate instead of substituting an invented category/tier.
+Category and tier refine an already-valid score-comparability cohort. Missing metadata excludes the candidate rather than inventing a category/tier.
 
 ### 3.4 Growth
 
-Growth is not inferred from a score or model subcomponent. `growth` mode requires separate verified `GrowthRankingEvidence` with a shared comparison contract. Missing/unverified growth evidence fails closed.
+Growth is never inferred from canonical score or model subcomponents. `growth` mode requires separate verified `GrowthRankingEvidence` with a shared comparison contract. Missing/unverified evidence fails closed.
 
 ## 4. Admission / fail-closed rules
 
 A candidate is excluded when any of the following applies:
 
-- CanonicalScoreResult is not `READY`.
-- score/final_score is non-finite.
-- UAI assetId and score integrity assetId differ.
-- dispatcher/model/executor/result-contract lineage is missing.
-- governance evidence is missing or explicitly ineligible.
-- source conflict is present.
-- operations state is `UNAVAILABLE` or `NO_RUNTIME_EVIDENCE`.
-- required category/tier/growth/comparability evidence is absent or invalid.
-- duplicate UAI identity appears in the same ranking universe.
+- CanonicalScoreResult is not `READY`;
+- score/final_score is non-finite;
+- UAI assetId and score-integrity assetId differ;
+- dispatcher/model/executor/result-contract lineage is missing;
+- governance evidence is missing or explicitly ineligible;
+- source conflict is present;
+- operations state is `UNAVAILABLE` or `NO_RUNTIME_EVIDENCE`;
+- required category/tier/growth/comparability evidence is absent or invalid;
+- duplicate UAI identity appears in the ranking universe.
 
-`DEGRADED` remains admissible, matching the existing SC-7 governance posture; Phase D does not create a new threshold.
+`DEGRADED` remains admissible, matching the existing SC-7 governance posture; Phase D does not invent a new operations threshold.
 
 ## 5. Determinism
 
-Within a cohort:
+Within each valid cohort:
 
 1. ranking value descending;
-2. exact ties resolved only by `assetId` ascending.
+2. exact ties resolved only by stable `assetId` ascending.
 
-No hidden liquidity, tier, provider, model-family or asset-class factor is introduced as a tie-breaker.
-
-Cross-cohort order is explicitly undefined (`crossCohortOrder=false`).
+No hidden liquidity, tier, provider, asset-class or model-family factor is applied as a tie-breaker. Cross-cohort order is explicitly undefined (`crossCohortOrder=false`).
 
 ## 6. Non-impact invariants
 
-Phase D intentionally leaves all existing productive behavior unchanged:
+Phase D intentionally leaves productive behavior unchanged:
 
-- `RANKING_SCORE_IMPACT_ENABLED=false` remains unchanged.
-- `CROSS_ASSET_RANKING_IMPACT_ENABLED=false` is hard-coded.
-- Existing Crypto ranking formula weights `0.70 / 0.15 / 0.10 / 0.05` are untouched.
-- Existing Top-10 eligibility thresholds are untouched.
-- Existing Crypto routes are untouched.
-- No market-data ordering or UI ranking is changed.
-- No score, ranking, provider-routing, billing, IAM, Supabase, Stripe or Render mutation occurs.
-- No model weights/formulas are changed.
+- `RANKING_SCORE_IMPACT_ENABLED=false` remains unchanged;
+- `CROSS_ASSET_RANKING_IMPACT_ENABLED=false` is hard-coded;
+- Crypto ranking weights `0.70 / 0.15 / 0.10 / 0.05` are untouched;
+- Top-10 eligibility thresholds are untouched;
+- existing Crypto routes are untouched;
+- no market-data/API/UI ordering is changed;
+- no score, provider-routing, billing, IAM, Supabase, Stripe or Render mutation occurs;
+- no scoring-model weights or formulas are changed.
 
 ## 7. Static regression contract
 
-`tests/unit/crossAssetRanking.test.ts` covers:
+`tests/unit/crossAssetRanking.test.ts` is prepared to prove:
 
-1. both legacy and cross-asset ranking impact flags remain false;
-2. different model families are not interleaved by default;
-3. cross-model ranking requires verified normalized comparison evidence;
-4. unverified comparability evidence fails closed;
-5. category/tier peer metadata is mandatory for those modes;
-6. growth uses only verified growth evidence;
-7. governance, identity and model-lineage failures exclude candidates;
-8. duplicate identities are rejected;
-9. deterministic assetId tie-breaking.
+1. legacy and cross-asset ranking impact flags remain false;
+2. default cohorts are isolated by **model version and asset class**;
+3. Stock/Forex sharing `traditional-scoring@2.1.0` are not interleaved by default;
+4. cross-model/cross-asset ranking requires verified normalized evidence;
+5. unverified comparability evidence fails closed;
+6. category/tier metadata is mandatory for those modes;
+7. growth uses only verified Growth evidence;
+8. governance, identity, lineage and operations defects exclude candidates;
+9. duplicate identities are rejected;
+10. assetId is the deterministic tie-breaker.
 
-Repository TypeScript/unit/build execution is intentionally not performed before the PR in accordance with the repository cost policy. The separate M10 CI-authorization defect is being handled in parallel by the Owner and is not used to weaken these Phase-D invariants.
+Repository TypeScript/unit/build execution is intentionally not performed before PR creation under the repository cost policy. The Owner-managed M10 authorization defect is tracked separately and is not used to weaken Phase-D controls.
 
 ## 8. Enterprise / FinTech benchmark
 
 Engineering benchmark only; no assertion of direct regulatory applicability.
 
-- Federal Reserve SR 26-2 (2026) emphasizes risk-based model use, validation, model inventory, governance/controls, documentation and monitoring. Phase D keeps ranking use bounded by explicit model lineage and prevents unvalidated cross-model output comparability.
-- NIST AI RMF 1.0 (currently under revision) emphasizes lifecycle governance, measurement and documented go/no-go decisions. Phase D therefore separates implementation from productive ranking impact and requires explicit evidence for calibration/growth comparisons.
+- Federal Reserve SR 26-2 (2026) emphasizes risk-based intended model use, validation, model inventory, governance/controls, documentation and monitoring. Phase D treats output comparability as a model-use assumption requiring evidence rather than assuming it from shared identifiers or numeric ranges.
+- NIST AI RMF 1.0 (under revision) emphasizes lifecycle governance, measurement and documented go/no-go decisions. Phase D therefore separates implementation, comparison measurement/evidence and later productive activation.
 
 ## 9. Remaining SC-7 work
 
-Phase D is a foundation, not the production activation step. Still open:
+Phase D is a foundation, not a production activation step. Still open:
 
-1. validated normalization/calibration methodology for any intended cross-model global cohort;
-2. a canonical source for category/tier peer metadata outside Crypto where required;
+1. validated normalization/calibration methodology for any intended cross-asset/cross-model cohort;
+2. canonical category/tier peer metadata for non-Crypto assets where required;
 3. verified GrowthRankingEvidence acquisition and comparison contracts;
 4. shadow consumer/observability over real multi-asset universes;
 5. drift/outcome analysis before activation;
 6. explicit Owner decision before any `rankingImpactEnabled` change;
-7. final repository CI/Governance and Human Merge.
+7. repository CI/Governance and Human Merge.
