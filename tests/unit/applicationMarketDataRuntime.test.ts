@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  runRefresh: vi.fn(async () => []),
+  runRefresh: vi.fn(async (_options: any) => []),
   createRuntime: vi.fn((options: any) => ({
     get: () => options.refresh(),
     backgroundRefresh: () => options.refresh(),
