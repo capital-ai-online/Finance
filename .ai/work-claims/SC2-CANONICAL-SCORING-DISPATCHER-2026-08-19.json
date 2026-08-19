@@ -8,7 +8,7 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT / GitHub Connector"
   },
-  "workItem": "SC-2 Phase C1 — canonical standard-Crypto scoring dispatcher exit",
+  "workItem": "SC-2 Phase C1 — canonical standard-Crypto router/UI dispatcher exit",
   "startedAt": "2026-08-19T06:32:00+02:00",
   "baseBranch": "main",
   "baseSha": "24b70a794a7ce7dad62197f42a8948b347dbfbc3",
@@ -22,7 +22,6 @@
     "src/orchestrator/cryptoOrchestrator.ts",
     "src/types/crypto.types.ts",
     "src/components/DeFiOrchestration.tsx",
-    "server.application.ts",
     "tests/unit/scoringDispatcher.test.ts",
     "tests/unit/cryptoScoreRegistryConsumer.test.ts",
     "tests/unit/cryptoListTop10RegistryConsumers.test.ts",
