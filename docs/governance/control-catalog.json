@@ -1,10 +1,11 @@
 {
   "schemaVersion": "1.0.0",
   "catalogAuthorityId": "AUTH-GOV-CONTROL-CATALOG",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "effectiveDate": "2026-08-19",
   "controls": [
     {"controlId":"CTRL-GOV-TRUST-001","title":"Single agent trust root","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT"],"requirement":"AGENTS.md is the only repository-wide AI-agent governance authority; provider adapters may not define competing global rules.","evidence":["AGENTS.md","CLAUDE.md",".github/copilot-instructions.md"]},
+    {"controlId":"CTRL-GOV-AGENT-PLANE-001","title":"Agent capability plane is subordinate to repository governance","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-ESS-AI-AGENT-CAPABILITY-PLANE"],"requirement":"ESS-0019 defines provider-neutral capability, risk, audit and execution-plane contracts; it is not a second repository trust root and cannot supersede AGENTS.md or manufacture Human/Owner authority.","evidence":[".ai/skills/ESS-0019-Universal-AI-Agent-Control-Plane.md"]},
     {"controlId":"CTRL-GOV-AUTH-001","title":"Stable authority identity","status":"required","authorityRefs":["AUTH-GOV-AGENT-TRUST-ROOT","AUTH-GOV-AUTHORITY-REGISTRY"],"requirement":"Every new normative governance artifact has one immutable AUTH-* identity independent of path or display number.","evidence":["docs/governance/authority-registry.json"]},
     {"controlId":"CTRL-GOV-AUTH-002","title":"Deterministic supersession","status":"required","authorityRefs":["AUTH-GOV-SUPERSESSION-POLICY"],"requirement":"Recency only orders versions of the same stable authority identity; cross-authority replacement requires an explicit supersedes edge and Owner-visible impact analysis.","evidence":["docs/governance/GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md","docs/governance/control-plane/GOVERNANCE_CONTROL_PLANE_DIFF_IMPACT_2026-08-19.md"]},
     {"controlId":"CTRL-GOV-NS-001","title":"Unique active ADR and ESS namespaces","status":"required","authorityRefs":["AUTH-ADR-ESS-NAMESPACE-CLEANUP-2026-08-16","AUTH-GOV-AGENT-TRUST-ROOT"],"requirement":"No two active ADR or ESS artifacts may expose the same canonical display ID. Historical aliases remain explicit and non-authorizing.","evidence":["docs/adr/registry.json",".ai/registry/ess-registry.json"]},
