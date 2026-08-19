@@ -11,7 +11,7 @@
 
 Formale Extraktion und Erweiterung der Design-Tokens als Single Source of Truth für Phase 0–1. Runtime bleibt Tailwind CSS 4 `@theme` in `src/index.css`; JSON dient Dokumentation, Audits sowie als build-time Quelle für renderer-spezifische Adapter.
 
-Für PDF-Ausgaben gilt seit ADR-0091/ADR-0092: `vite.config.ts` liest die benötigten Produkt-/Print-Tokens und injiziert daraus den Renderer-Contract `__CAPITAL_AI_PDF_BRAND__`. Aktive PDF-Komponenten pflegen dadurch keine eigene Farbpalette.
+Für PDF-Ausgaben gilt seit ADR-0091/ADR-0093: `vite.config.ts` liest die benötigten Produkt-/Print-Tokens und injiziert daraus den Renderer-Contract `__CAPITAL_AI_PDF_BRAND__`. Aktive PDF-Komponenten pflegen dadurch keine eigene Farbpalette.
 
 > **Format-Hinweis:** Das bestehende JSON-Artefakt verwendet weiterhin das historisch eingeführte `value`/`type`-Format. Die PDF-Bridge kann zusätzlich `$value` lesen, eine vollständige repository-weite Migration auf den stabilen DTCG-2025.10-Contract ist jedoch ein eigener Design-System-Change und nicht Teil der PDF-Finalisierung.
 
