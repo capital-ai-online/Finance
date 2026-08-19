@@ -29,6 +29,8 @@ const input = {
   prNumber: 428,
   baseSha: 'base-sha-1',
   headSha: 'head-sha-1',
+  changedFileSetHash: 'b'.repeat(64),
+  diffReviewDigest: 'c'.repeat(64),
   authorizationDigest: 'a'.repeat(64),
   action: 'AUTHORIZE_PR_CI' as const,
 };
@@ -49,6 +51,8 @@ const approvalRow = {
   pr_number: input.prNumber,
   base_sha: input.baseSha,
   head_sha: input.headSha,
+  changed_file_set_hash: input.changedFileSetHash,
+  diff_review_digest: input.diffReviewDigest,
   authorization_digest: input.authorizationDigest,
   action: input.action,
   consumed_at: '2026-08-19T05:00:00.000Z',
@@ -78,9 +82,20 @@ describe('claimM10WorkflowGate', () => {
     });
   });
 
-  it('denies a context mismatch without burning the single-use capability', async () => {
+  it('denies a consumption context mismatch without burning the single-use capability', async () => {
     const consumption = chain({ data: { ...consumptionRow, head_sha: 'different-head' }, error: null });
     mocks.from.mockReturnValue(consumption);
+
+    const result = await claimM10WorkflowGate(input, vi.fn());
+
+    expect(result.status).toBe('DENY_CONTEXT_MISMATCH');
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it('denies changed file-set/diff context even when base/head still match', async () => {
+    const consumption = chain({ data: consumptionRow, error: null });
+    const approval = chain({ data: { ...approvalRow, diff_review_digest: 'd'.repeat(64) }, error: null });
+    mocks.from.mockImplementation((table: string) => table === 'm10_ci_consumptions' ? consumption : approval);
 
     const result = await claimM10WorkflowGate(input, vi.fn());
 
