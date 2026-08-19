@@ -1,9 +1,10 @@
 // M10 Controlled Cutover — server-side single-use gate for dispatched GitHub Actions runs.
 //
 // The high-entropy Phase-5 consumptionId acts as a one-time capability. A workflow_dispatch run
-// must present it together with the exact approved context before any expensive CI step. The only
-// winner atomically transitions the durable consumption PENDING -> DISPATCHED through the existing
-// Phase-5 RPC; replays and manually fabricated dispatches fail closed.
+// must present it together with exact trusted PR context before any expensive CI step. The caller
+// re-resolves the current GitHub base/head/file-set/diff immediately before this store check. The
+// only winner atomically transitions the durable consumption PENDING -> DISPATCHED through the
+// existing Phase-5 RPC; replays and manually fabricated dispatches fail closed.
 import { getPrivilegedServerSupabase, isPrivilegedSupabaseConfigured } from '../db';
 
 export interface M10WorkflowGateInput {
@@ -13,6 +14,8 @@ export interface M10WorkflowGateInput {
   prNumber: number;
   baseSha: string;
   headSha: string;
+  changedFileSetHash: string;
+  diffReviewDigest: string;
   authorizationDigest: string;
   action: 'AUTHORIZE_PR_CI';
 }
@@ -45,6 +48,8 @@ interface ApprovalRow {
   pr_number: number;
   base_sha: string;
   head_sha: string;
+  changed_file_set_hash: string;
+  diff_review_digest: string;
   authorization_digest: string;
   action: 'AUTHORIZE_PR_CI';
   consumed_at: string | null;
@@ -89,7 +94,7 @@ export async function claimM10WorkflowGate(
 
   const { data: approvalData, error: approvalError } = await supabase
     .from('m10_approval_evidence')
-    .select('approval_id, repository, pr_number, base_sha, head_sha, authorization_digest, action, consumed_at')
+    .select('approval_id, repository, pr_number, base_sha, head_sha, changed_file_set_hash, diff_review_digest, authorization_digest, action, consumed_at')
     .eq('approval_id', input.approvalId)
     .maybeSingle();
 
@@ -107,10 +112,12 @@ export async function claimM10WorkflowGate(
     || approval.pr_number !== input.prNumber
     || approval.base_sha !== input.baseSha
     || approval.head_sha !== input.headSha
+    || approval.changed_file_set_hash !== input.changedFileSetHash
+    || approval.diff_review_digest !== input.diffReviewDigest
     || approval.authorization_digest !== input.authorizationDigest
     || approval.action !== input.action
   ) {
-    return { status: 'DENY_CONTEXT_MISMATCH', reason: 'M10 approval evidence does not match the workflow gate request.' };
+    return { status: 'DENY_CONTEXT_MISMATCH', reason: 'M10 approval evidence does not match the current trusted workflow-gate context.' };
   }
 
   if (beforeFinalize) {
