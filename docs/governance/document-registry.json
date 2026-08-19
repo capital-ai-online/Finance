@@ -177,7 +177,7 @@
       "type": "roadmap",
       "owner": "CAPITAL-AI Owner",
       "authority": "DOCUMENTATION_HYGIENE_POLICY + ADR-0086 + Owner decision",
-      "version": "1.0.19",
+      "version": "1.0.20",
       "language": "de",
       "lifecycle": "approved",
       "path": "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md"
@@ -187,7 +187,7 @@
       "type": "work-package",
       "owner": "CAPITAL-AI Owner",
       "authority": "SC-MD-SPT-0001 + ADR-0087 + ADR-0088 + ADR-0089 + ADR-0090",
-      "version": "1.0.6",
+      "version": "1.0.7",
       "language": "de",
       "lifecycle": "reviewed",
       "path": "docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md"
@@ -251,6 +251,16 @@
       "language": "mixed",
       "lifecycle": "reviewed",
       "path": "docs/evidence/sc-md/SC2_PHYSICAL_LEGACY_CRYPTO_CLEANUP_2026-08-19.md"
+    },
+    {
+      "documentId": "DOC-EVIDENCE-SC2-GLOBAL-MULTI-ASSET-EXIT-2026-08-19",
+      "type": "implementation-evidence",
+      "owner": "CAPITAL-AI",
+      "authority": "SC-2 / ADR-0087",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "reviewed",
+      "path": "docs/evidence/sc-md/SC2_GLOBAL_MULTI_ASSET_EXIT_2026-08-19.md"
     },
     {
       "documentId": "DOC-EVIDENCE-SC2-GEMINI-RESEARCH-2026-08-19",
