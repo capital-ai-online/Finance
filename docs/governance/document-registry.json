@@ -271,6 +271,46 @@
       "language": "de",
       "lifecycle": "approved",
       "path": "docs/runbooks/GEMINI_RESEARCH_SHADOW.md"
+    },
+    {
+      "documentId": "DOC-RUNBOOK-M10-PASSKEY-OWNER-PR-AUTH",
+      "type": "runbook",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "ADR-0066 + ESS-0022",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "approved",
+      "path": "docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md"
+    },
+    {
+      "documentId": "DOC-EVIDENCE-M10-CLOSURE-2026-08-19",
+      "type": "closure-evidence",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "ADR-0066 + ESS-0022 + M10 Exit Gate",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "reviewed",
+      "path": "docs/evidence/m10/M10_CLOSURE_EVIDENCE_2026-08-19.md"
+    },
+    {
+      "documentId": "DOC-ROADMAP-CAPITAL-AI-ENTERPRISE",
+      "type": "roadmap",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "DEVELOPMENT Chain Execution Policy",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "approved",
+      "path": "docs/architecture/ROADMAP.md"
+    },
+    {
+      "documentId": "DOC-TRACEABILITY-DEVELOPMENT-CHAIN",
+      "type": "traceability-matrix",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "DEVELOPMENT Chain Execution Policy",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "reviewed",
+      "path": "docs/traceability/DEVELOPMENT_CHAIN_DOCUMENT_TRACEABILITY_MATRIX.md"
     }
   ]
 }
