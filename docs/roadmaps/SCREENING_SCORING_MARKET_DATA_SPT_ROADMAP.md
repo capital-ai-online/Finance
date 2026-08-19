@@ -1,10 +1,10 @@
 # Screening · Scoring · Market Data — Single Point of Trust Roadmap
 
 **Document ID:** SC-MD-SPT-0001  
-**Version:** 1.0.18  
+**Version:** 1.0.19  
 **Status:** ACTIVE — CANONICAL EXECUTION AUTHORITY  
 **Stand:** 2026-08-19  
-**Repository-Baseline:** `main@0d84e479ea97c97490dd65bea85fad2ec76ee157` + Execution Branch `agent/sc2-physical-legacy-crypto-cleanup`  
+**Repository-Baseline:** `main@afc8e56de7deebab879f054eb03e099bf516eb1b` + Execution Branch `agent/sc2-physical-legacy-crypto-cleanup`  
 **Owner:** SvenKulessa  
 **Authority:** DOCUMENTATION_HYGIENE_POLICY · GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY / ADR-0086 · ROADMAP_CONSOLIDATION_MASTER_INDEX · ADR-0020 / ADR-0041 · ESS EventMesh/Traceability
 
@@ -14,7 +14,7 @@
 
 Dieses Dokument ist der **Single Point of Trust (SPT)** für die Screening-/Scoring-/Market-Data-Wertschöpfungskette der CAPITAL-AI Multi-Asset-Plattform.
 
-**Keine parallele Remediation und keine parallele Scoring-Architektur.** Alle offenen Screening-/Scoring-/MD-Arbeiten werden ausschließlich hier getrackt. ADR-0087 konkretisiert UAI + ScoringModelRegistry; ADR-0088/0089 integrieren Research-Evidence/Gemini ausschließlich als Acquisition-Adapter vor dem Evidence Gate; ADR-0090 macht diesen Gemini-Pfad Free-Tier-only und verbietet Paid Mode. ADR-0086 bleibt die gemergte Governance-Authority-/Supersession-Entscheidung und ist nicht Teil der SC-2-Fachnummerierung.
+**Keine parallele Remediation und keine parallele Scoring-Architektur.** Alle offenen Screening-/Scoring-/MD-Arbeiten werden ausschließlich hier getrackt. ADR-0087 konkretisiert UAI + ScoringModelRegistry; ADR-0088/0089 integrieren Research-Evidence/Gemini ausschließlich als Acquisition-Adapter vor dem Evidence Gate; ADR-0090 macht diesen Gemini-Pfad Free-Tier-only und verbietet Paid Mode. Die bereits etablierte Governance-Authority-/Supersession-Entscheidung bleibt die hier gemeinte ADR-0086-Authority; die durch PR #414 zusätzlich eingeführte zweite ADR-Datei mit derselben Nummer ist eine separate Governance-Nummernkollision und keine SC-2-Authority.
 
 ---
 
@@ -106,7 +106,7 @@ API / Screener UI / Alerts / Backtest Evidence
 
 1. Runtime-/Code-/Produktions-Evidence  
 2. Explizite Human/Owner-Freigabe + Accepted ADR  
-3. Spezifische ESS/Governance Policies gemäß ADR-0086  
+3. Spezifische ESS/Governance Policies gemäß der etablierten Governance Authority  
 4. **Dieses SPT (SC-MD-SPT-0001)**  
 5. ROADMAP_CONSOLIDATION_MASTER_INDEX  
 6. Historische/archivierte Docs
@@ -121,10 +121,11 @@ ADR-0090 bleibt für Gemini Research Shadow autoritativ: Free-Tier-only, `gemini
 - PR #424 migrierte `/api/crypto/list` + `/top10` und wurde nach erneutem Main-Abgleich Human-gemerged.
 - PR #427 führte C1 `ScoringDispatcher`, Research-only `/analyze` und den kanonischen DeFi-UI-Score ein; Human-gemerged.
 - PR #428 führte C2a Composition-Root-/Legacy-Operational-Exit ein; finaler Head `b34cbf2f` bestand CI #1849 + Governance #1166/#1167 und wurde Human-gemerged.
-- Aktuelle C2b-Baseline ist `main@0d84e479ea97c97490dd65bea85fad2ec76ee157`.
-- `agent/sc2-physical-legacy-crypto-cleanup` wurde frisch von diesem Stand erstellt.
-- C2b-Scan entdeckte einen zusätzlichen Cold-Start-Edge im `/api/market-data`-Fallback; dieser wird vor Löschung des Legacy-Zweigs an dieselbe kanonische Standard-Crypto-Enrichment-Grenze gebunden.
-- Offene PRs #429 (M10 Controlled Cutover) und #414 (Privacy/DSGVO) werden unmittelbar vor C2b-PR und erneut vor Merge-Readiness auf Pfad-/Semantik-Korrelation geprüft.
+- C2b wurde initial von `main@0d84e479ea97c97490dd65bea85fad2ec76ee157` erstellt.
+- Während der C2b-Implementierung wurde PR #414 nach `main` gemerged. #414 hat **0 direkten Pfadoverlap** mit den sieben C2b-Dateien; der C2b-Branch wurde deshalb vor PR-Erstellung per Merge-Sync auf `main@afc8e56de7deebab879f054eb03e099bf516eb1b` gebracht und danach erneut `0 behind` verifiziert.
+- PR #414 brachte zusätzlich eine zweite ADR-Datei mit Nummer ADR-0086 ein. Diese Nummern-/Authority-Kollision ist außerhalb des C2b-Scope und als separates Governance-Remediation-Item zu behandeln; SC-2 verwendet für die Facharchitektur ADR-0087.
+- Open PR #429 hat **0 Dateipfadoverlap** mit C2b, verändert jedoch PR-Template und CI-Workflow für den M10 Controlled Cutover. Falls #429 vor C2b-Merge-Readiness landet, wird C2b erneut gegen den dann aktuellen Main synchronisiert und der dann autoritative Passkey-/CI-Prozess befolgt.
+- C2b-Scan entdeckte einen zusätzlichen Cold-Start-Edge im `/api/market-data`-Fallback; dieser ist im Branch vor Löschung des Legacy-Zweigs an dieselbe kanonische Standard-Crypto-Enrichment-Grenze gebunden.
 
 ### Phase-C-Scope-Entscheidung
 
@@ -168,4 +169,4 @@ NIST AI RMF 1.0 dient ergänzend als freiwilliger Lifecycle-/Traceability-Benchm
 
 ---
 
-*SC-2 Stand 2026-08-19: C1 und C2a sind auf `main@0d84e479` gelandet. C2b entfernt jetzt die physische Standard-Crypto-Legacy-Ausführung aus `server.application.ts` und schließt den Cold-Start-Fallback an dieselbe kanonische Dispatcher-Grenze. C3 bleibt sichtbar offen; Gemini Shadow bleibt default-off.*
+*SC-2 Stand 2026-08-19: C1 und C2a sind auf Main gelandet. C2b ist auf `main@afc8e56d` synchronisiert, entfernt die physische Standard-Crypto-Legacy-Ausführung aus `server.application.ts` und schließt den Cold-Start-Fallback an dieselbe kanonische Dispatcher-Grenze. C3 bleibt sichtbar offen; Gemini Shadow bleibt default-off.*
