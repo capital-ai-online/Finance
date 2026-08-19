@@ -11,18 +11,17 @@ describe('P0 Scoring-Datenintegrität', () => {
     expect(rows.every(row => row.scoreStatus === 'DATA_UNAVAILABLE')).toBe(true);
   });
 
-  it('nimmt nur tatsächlich vorhandene numerische DeFi-Faktoren in das Radar auf', () => {
+  it('nimmt nur tatsächlich vorhandene numerische kanonische Crypto-Faktoren in das DeFi-Radar auf', () => {
     const radar = buildDefiRadarData({
-      tokenomics: 71,
-      networkActivity: null,
+      fundamentals: 71,
+      technicalStrength: null,
       liquidity: undefined,
-      security: Number.NaN,
-      utility: 64,
+      risk: 36,
     });
 
     expect(radar).toEqual([
-      { name: 'Tokenomics (Supply-Ratio)', wert: 71, max: 100 },
-      { name: 'Adoption & Nutzen', wert: 64, max: 100 },
+      { name: 'Fundamentaldaten', wert: 71, max: 100 },
+      { name: 'Risiko-Qualität', wert: 64, max: 100 },
     ]);
   });
 

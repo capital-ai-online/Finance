@@ -7,7 +7,6 @@ import { CryptoOrchestrator } from '../orchestrator/cryptoOrchestrator';
 import { ClassificationService } from '../services/classification.service';
 import { calculateRankScore, isTop10Eligible } from '../services/ranking.service';
 import { assetRegistry } from '../lib/assetRegistry';
-import { evaluateVerifiedCryptoTechnicalScore } from '../services/verifiedCryptoTechnicalScoring';
 import { computeTradeSetupLevels } from '../services/tradeSetupLevels';
 import { buildScoringLineage } from '../services/scoringLineage';
 import { getCryptoSpotConsensus } from '../services/cryptoSpotConsensus';
@@ -15,8 +14,7 @@ import { getLiveCryptoSnapshotConsensus } from '../services/liveCryptoSnapshotCo
 import { evaluateCryptoSnapshotIntegrity } from '../services/cryptoSnapshotIntegrity';
 import { recordMarketIntegrityObservation } from '../platform/Supervisor/marketIntegrityRuntime';
 import {
-  buildCryptoRegistryResolutionFailure,
-  resolveCryptoScoreExecution,
+  dispatchCanonicalScore,
   type ScoringModelDescriptor,
 } from '../platform/Scoring';
 
@@ -55,26 +53,26 @@ export function createCryptoRouter(
       const list = await Promise.all(cryptoAssets.map(async (asset) => {
         const correlationId = `${rootCorrelationId}:${asset.symbol}`;
         const classification = ClassificationService.classifyAsset(asset.symbol);
-        const execution = resolveCryptoScoreExecution({
+        const dispatch = await dispatchCanonicalScore({
           symbol: asset.symbol,
           name: asset.name,
+          assetClass: 'crypto',
           subtype: asset.subtype,
           source: 'registry',
         });
 
-        if (execution.status !== 'RESOLVED') {
-          const canonical = buildCryptoRegistryResolutionFailure(execution);
+        if (dispatch.status !== 'DISPATCHED') {
           return {
             symbol: asset.symbol,
             name: asset.name,
-            assetId: execution.asset.assetId,
-            modelRegistry: null,
+            assetId: dispatch.asset.assetId,
+            modelRegistry: dispatch.model ? modelRegistryView(dispatch.model) : null,
             category_main: classification.category_main,
             category_sub: classification.category_sub,
             tier: classification.tier,
             classification,
-            ...canonical,
-            reason: execution.reason,
+            ...dispatch.canonical,
+            reason: dispatch.reason,
             rank_score: null,
             eligible_for_top10: false,
             provenance: [],
@@ -84,13 +82,13 @@ export function createCryptoRouter(
           };
         }
 
-        const registeredModel = execution.model;
+        const registeredModel = dispatch.model;
         const modelRegistry = modelRegistryView(registeredModel);
-        const assessment = await evaluateVerifiedCryptoTechnicalScore(asset.symbol);
-        const canonical = assessment.canonical;
+        const assessment = dispatch.assessment;
+        const canonical = dispatch.canonical;
         const lineage = buildScoringLineage({
           correlationId,
-          assetId: execution.asset.assetId,
+          assetId: dispatch.asset.assetId,
           model: registeredModel,
           canonical,
           scoringInputs: assessment.inputs,
@@ -102,7 +100,7 @@ export function createCryptoRouter(
           return {
             symbol: asset.symbol,
             name: asset.name,
-            assetId: execution.asset.assetId,
+            assetId: dispatch.asset.assetId,
             modelRegistry,
             category_main: classification.category_main,
             category_sub: classification.category_sub,
@@ -130,7 +128,7 @@ export function createCryptoRouter(
         return {
           symbol: asset.symbol,
           name: asset.name,
-          assetId: execution.asset.assetId,
+          assetId: dispatch.asset.assetId,
           modelRegistry,
           category_main: classification.category_main,
           category_sub: classification.category_sub,
@@ -142,8 +140,6 @@ export function createCryptoRouter(
           decisionDesc: assessment.analysis.decisionDesc,
           risk_level: assessment.analysis.risk_level,
           reasoning: assessment.analysis.reasoning,
-          // SC-7 Phase C: explicit SC-3 opt-in path (same value as rankPayload.data_quality.level;
-          // numerically identical to the previous default-fallback call).
           rank_score: calculateRankScore(rankPayload, canonical.final_score, {
             compositeLevel: canonical.integrity.dataQuality,
           }),
@@ -279,7 +275,14 @@ export function createCryptoRouter(
       if (!targetSymbol || typeof targetSymbol !== 'string' || targetSymbol.trim() === '') {
         return res.status(400).json({ error: 'Cryptocurrency "symbol" is required.' });
       }
-      const payload = await orchestrator.analyzeCrypto(targetSymbol.toUpperCase().trim(), customInput);
+      if (customInput && typeof customInput === 'object' && Object.keys(customInput).length > 0) {
+        return res.status(422).json({
+          status: 'RESEARCH_ONLY',
+          scoreEligible: false,
+          error: 'Caller-provided scoring overrides are not accepted by the research/enrichment endpoint.',
+        });
+      }
+      const payload = await orchestrator.analyzeCrypto(targetSymbol.toUpperCase().trim());
       res.json(payload);
     } catch (error: any) {
       console.error('[CryptoRouter] Error analyzing crypto asset:', error);
@@ -307,32 +310,36 @@ export function createCryptoRouter(
 
       const symbol = String(payload.symbol).toUpperCase().trim();
       const classification = payload.classification || ClassificationService.classifyAsset(symbol);
-      const execution = resolveCryptoScoreExecution({ symbol, name: String(payload.asset_name) });
-      if (execution.status !== 'RESOLVED') {
-        const canonical = buildCryptoRegistryResolutionFailure(execution);
+      const dispatch = await dispatchCanonicalScore({
+        symbol,
+        name: String(payload.asset_name),
+        assetClass: 'crypto',
+        source: 'request',
+      });
+      if (dispatch.status !== 'DISPATCHED') {
         return res.status(422).json({
           asset_name: payload.asset_name,
           symbol,
-          assetId: execution.asset.assetId,
+          assetId: dispatch.asset.assetId,
           model: null,
-          modelRegistry: null,
+          modelRegistry: dispatch.model ? modelRegistryView(dispatch.model) : null,
           classification,
-          ...canonical,
+          ...dispatch.canonical,
           correlationId,
-          reason: execution.reason,
+          reason: dispatch.reason,
           rank_score: null,
           eligible_for_top10: false,
           scoreBasis: 'unavailable' as const,
         });
       }
 
-      const registeredModel = execution.model;
+      const registeredModel = dispatch.model;
       const modelRegistry = modelRegistryView(registeredModel);
-      const assessment = await evaluateVerifiedCryptoTechnicalScore(symbol);
-      const canonical = assessment.canonical;
+      const assessment = dispatch.assessment;
+      const canonical = dispatch.canonical;
       const lineage = buildScoringLineage({
         correlationId,
-        assetId: execution.asset.assetId,
+        assetId: dispatch.asset.assetId,
         model: registeredModel,
         canonical,
         scoringInputs: assessment.inputs,
@@ -344,7 +351,7 @@ export function createCryptoRouter(
         return res.status(422).json({
           asset_name: payload.asset_name,
           symbol,
-          assetId: execution.asset.assetId,
+          assetId: dispatch.asset.assetId,
           model: 'technical-provenance',
           modelRegistry,
           classification,
@@ -371,7 +378,7 @@ export function createCryptoRouter(
       res.json({
         asset_name: payload.asset_name,
         symbol,
-        assetId: execution.asset.assetId,
+        assetId: dispatch.asset.assetId,
         model: 'technical-provenance',
         modelRegistry,
         classification,
@@ -384,8 +391,6 @@ export function createCryptoRouter(
         risk_level: assessment.analysis.risk_level,
         reasoning: assessment.analysis.reasoning,
         alerts: assessment.analysis.alerts,
-        // SC-7 Phase C: explicit SC-3 opt-in path (same value as rankPayload.data_quality.level;
-        // numerically identical to the previous default-fallback call).
         rank_score: calculateRankScore(rankPayload, canonical.final_score, {
           compositeLevel: canonical.integrity.dataQuality,
         }),
@@ -411,18 +416,19 @@ export function createCryptoRouter(
       const evaluated = await Promise.all(cryptoAssets.map(async (asset) => {
         const correlationId = `${rootCorrelationId}:${asset.symbol}`;
         const classification = ClassificationService.classifyAsset(asset.symbol);
-        const execution = resolveCryptoScoreExecution({
+        const dispatch = await dispatchCanonicalScore({
           symbol: asset.symbol,
           name: asset.name,
+          assetClass: 'crypto',
           subtype: asset.subtype,
           source: 'registry',
         });
-        if (execution.status !== 'RESOLVED') return null;
+        if (dispatch.status !== 'DISPATCHED') return null;
 
-        const registeredModel = execution.model;
+        const registeredModel = dispatch.model;
         const modelRegistry = modelRegistryView(registeredModel);
-        const assessment = await evaluateVerifiedCryptoTechnicalScore(asset.symbol);
-        const canonical = assessment.canonical;
+        const assessment = dispatch.assessment;
+        const canonical = dispatch.canonical;
         if (canonical.status !== 'READY' || !assessment.analysis) return null;
 
         const rankPayload = {
@@ -435,7 +441,7 @@ export function createCryptoRouter(
         const eligible = assessment.rankingEvidenceReady && isTop10Eligible(rankPayload);
         const lineage = buildScoringLineage({
           correlationId,
-          assetId: execution.asset.assetId,
+          assetId: dispatch.asset.assetId,
           model: registeredModel,
           canonical,
           scoringInputs: assessment.inputs,
@@ -446,12 +452,10 @@ export function createCryptoRouter(
         return {
           symbol: asset.symbol,
           name: asset.name,
-          assetId: execution.asset.assetId,
+          assetId: dispatch.asset.assetId,
           modelRegistry,
           classification,
           final_score: canonical.final_score,
-          // SC-7 Phase C: explicit SC-3 opt-in path (same value as rankPayload.data_quality.level;
-          // numerically identical to the previous default-fallback call).
           rank_score: calculateRankScore(rankPayload, canonical.final_score, {
             compositeLevel: canonical.integrity.dataQuality,
           }),
