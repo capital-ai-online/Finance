@@ -1,21 +1,25 @@
 # PDF Branding P1/P2 Finalization Evidence — 2026-08-19
 
-- **Status:** IMPLEMENTATION COMPLETE / CI EVIDENCE PENDING
+- **Status:** ✅ LANDED / GOVERNANCE VERIFIED
 - **Owner:** CAPITAL-AI Owner
-- **Branch:** `agent/pdf-branding-p1-p2-final`
+- **Implementation-Branch:** `agent/pdf-branding-p1-p2-final`
+- **Post-Merge-Closure:** `agent/pdf-branding-post-merge-closure`
 - **Parent:** ADR-0091, ADR-0093
 - **Roadmap:** `docs/roadmaps/PDF_BRANDING_FINALIZATION_P1_P2_2026-08-19.md`
-- **Baseline:** `main` at PR #432 merge commit `3ed2b2e9c9421bc979ca2487610a6a49a655e888`
+- **PR:** #436
+- **Final PR Head:** `027c278815b465aca81b00d4435f35048b61498d`
+- **Merge-Commit:** `f5d39288d3b854d5a84001ed0f4046f29e5cc840`
+- **Landing-Baseline:** `main@f5d39288d3b854d5a84001ed0f4046f29e5cc840`
 
 ## Ziel
 
-Nach P0 werden die verbleibenden PDF-Branding- und Renderer-Lücken geschlossen: konsistente visuelle Identität, gemeinsame Token-Herkunft, echte tagged-PDF-Fähigkeit im Documentation-as-Code-Pfad sowie ehrliche Capability-Grenzen für clientseitige jsPDF-Berichte.
+Nach P0 wurden die verbleibenden PDF-Branding- und Renderer-Lücken geschlossen: konsistente visuelle Identität, gemeinsame Token-Herkunft, tagged-PDF-Fähigkeit im Documentation-as-Code-Pfad sowie ehrliche Capability-Grenzen für clientseitige jsPDF-Berichte.
 
 ## Enterprise-/State-of-the-Art-Benchmark
 
 Geprüfte Primärquellen zum Umsetzungszeitpunkt:
 
-1. W3C Design Tokens Community Group 2025.10 — stabiler, interoperabler Token-Referenzrahmen. Die bestehende Repository-Datei wird in diesem PDF-Scope bewusst **nicht** vollständig auf das neue `$value`/`$type`-Format migriert; die PDF-Bridge liest `value` und `$value`, um eine spätere Migration nicht zu blockieren.
+1. W3C Design Tokens Community Group 2025.10 — interoperabler Token-Referenzrahmen. Die bestehende Repository-Datei wurde in diesem PDF-Scope bewusst **nicht** vollständig auf das neue `$value`/`$type`-Format migriert; die PDF-Bridge liest `value` und `$value`, um eine spätere Migration nicht zu blockieren.
    - https://www.designtokens.org/tr/2025.10/format/
 2. WeasyPrint 69 — unterstützt `pdf_variant="pdf/ua-1"` und `pdf_tags=True`. Die Gültigkeit einer PDF/UA-Ausgabe hängt weiterhin von korrekter HTML-Semantik und Verifikation ab.
    - https://doc.courtbouillon.org/weasyprint/stable/api_reference.html
@@ -25,23 +29,12 @@ Geprüfte Primärquellen zum Umsetzungszeitpunkt:
 4. W3C PDF Accessibility Techniques — logische Struktur, Lesereihenfolge, Überschriften, Artefakte und semantische Tabellen sind eigenständige Anforderungen und dürfen nicht aus rein visueller Gestaltung abgeleitet werden.
    - https://www.w3.org/WAI/WCAG22/Techniques/pdf/
 
-## Parallel-PR-Korrelation
-
-Zum Implementierungsabschluss sind PR #433, #434 und #435 parallel offen.
-
-- **#433:** direkter Dateioverlap nur `docs/governance/document-registry.json`.
-- **#435:** direkter Dateioverlap nur `docs/governance/document-registry.json`.
-- **#434:** kein direkter Dateioverlap; der Branch reserviert aber `ADR-0092` für Privacy-Retention-Hardening.
-- Die zunächst lokal verwendete PDF-ID `ADR-0092` wurde deshalb vor PR-Erstellung verworfen; die PDF-Entscheidung ist verbindlich **ADR-0093**.
-
-Falls #433 oder #435 zuerst landen, ist die Registry additiv zu reconciliieren. Jeder weitere Main-Advance löst vor Merge erneut den vorgeschriebenen Gesamtvergleich des PDF-Branches gegen `main` aus.
-
 ## Umgesetzte Architektur
 
 ### 1. Design-Token Bridge
 
 - `docs/frontend/design-tokens.json`
-  - neue Print-Tokens für Text, Flächen, Border und Link,
+  - Print-Tokens für Text, Flächen, Border und Link,
   - Produktfarben Gold/Cyan/Purple bleiben upstream.
 - `vite.config.ts`
   - liest `package.json` und Design-Tokens,
@@ -60,7 +53,7 @@ Falls #433 oder #435 zuerst landen, ist die Registry additiv zu reconciliieren. 
 
 ### 3. jsPDF Brand Contract
 
-`src/platform/PdfReporting/pdfBrand.ts` enthält nun:
+`src/platform/PdfReporting/pdfBrand.ts` enthält:
 
 - design-token-abgeleiteten PDF-Brand-Contract,
 - gemeinsames Vektor-Network-Node-Emblem,
@@ -139,23 +132,52 @@ Wichtig: `client-jsPDF` behauptet ausdrücklich **keine** PDF/UA-, Tagged-PDF-, 
 | Regression | P0 Source-Guards | Source + echtes jsPDF-Smoke + Poppler-Render-Verifier |
 | Konformitätsaussage | Risiko visueller Ableitung | evidence-gated, Renderer-Capability explizit |
 
-## Verifikationsstatus
+## Parallel-PR- und Main-Korrelation
 
-Vor PR-Erstellung wurden **keine kostenrelevanten Build-/Volltest-Läufe** gestartet. Das entspricht der Repository-Kostenregel.
+Während der Implementierung wurden fortlaufende Main-Änderungen nach Projektregel korreliert und in den Branch aufgenommen:
 
-Bereits abgeschlossen:
+- PR #433 M10 Closure landete vor #436. Direkter PDF-Overlap: nur `docs/governance/document-registry.json`; additive Reconciliation durchgeführt.
+- PR #437 M10 Post-Merge Traceability landete ebenfalls vor dem finalen #436-Merge. Der PDF-Branch wurde danach erneut mit `main` synchronisiert.
+- PR #434 hatte keinen direkten PDF-Dateioverlap; `ADR-0092` blieb Privacy vorbehalten und PDF nutzt `ADR-0093`.
+- PR #435 hatte nur `docs/governance/document-registry.json` als direkten Overlap; kein Scoring-/Runtime-Pfad wurde durch #436 verändert.
 
-- Quellpfad-Inventar: drei aktive jsPDF-Generatoren + ein WeasyPrint-Generator; kein weiterer produktiver PDF-Erzeuger gefunden.
-- Architektur-/Capability-Abgleich gegen aktuelle Primärquellen.
-- Branch-basierte Umsetzung gemäß P1/P2-Roadmap.
-- Regressionstests und Render-Smoke-Tooling implementiert.
-- Parallel-PR-ADR-Kollision erkannt und vor PR-Erstellung von ADR-0092 auf ADR-0093 korrigiert.
-- Pre-PR-Main-Abgleich: `23 ahead / 0 behind`, Merge-Base `3ed2b2e9c9421bc979ca2487610a6a49a655e888`.
+Die finale #436-Landing-Baseline ist `main@f5d39288d3b854d5a84001ed0f4046f29e5cc840`.
 
-Noch nach PR-Erstellung zu erfassen:
+## PR-/CI-/Governance-Evidence
 
-- Governance-Workflow,
-- TypeScript/Vitest/Build gemäß PR-Checkklasse, sofern das aktive M10-Human-Gate die Ausführung autorisiert,
-- optionaler WeasyPrint/Poppler-Smoke in einer Umgebung mit den gepinnten Python-/OS-Abhängigkeiten.
+### Merge
 
-Ein fehlender Human-/Passkey-Gate-Nachweis wird **nicht** durch Änderung oder Abschwächung des CI-Gates umgangen.
+- PR #436: **Human-gemerged** am 2026-08-19.
+- Finaler PR-Head: `027c278815b465aca81b00d4435f35048b61498d`.
+- Merge-Commit: `f5d39288d3b854d5a84001ed0f4046f29e5cc840`.
+
+### Governance
+
+- PR Governance Run #1239, Run ID `32239637308`.
+- Head: `027c278815b465aca81b00d4435f35048b61498d`.
+- Ergebnis: **SUCCESS / PASS**.
+
+### CI
+
+- CI Run #1917, Run ID `32239637176`.
+- Head: `027c278815b465aca81b00d4435f35048b61498d`.
+- Ergebnis: **FAIL am Schritt `M10 CI-Autorisierung vor teuren Schritten prüfen`**.
+- Danach wurden Checkout, Prüfumfang-Klassifikation, Repository-Integrität, Node-Setup, Dependency-Installation, TypeScript, Unit-Tests, Production Build, CSP, Deployment Readiness und Docker-Schritte **skipped**.
+
+Daraus folgt:
+
+- Es existiert auf dem finalen #436-Head ein belastbarer Governance-PASS.
+- Es existiert aus CI #1917 **kein** TypeScript-/Unit-/Build-PASS und auch **kein beobachteter technischer Fehler** in diesen Schritten, weil sie nicht ausgeführt wurden.
+- Dieser Abschlussdatensatz darf deshalb nicht als Ersatz für technische CI-Evidence oder formale PDF/UA-Konformitätsprüfung verwendet werden.
+
+## Abschlussbewertung
+
+**P1/P2 ist implementiert und auf `main` gelandet.** Die Dokumentations- und Governance-Evidence ist geschlossen, ohne das M10-Gate oder die Capability-Grenzen nachträglich umzudeuten.
+
+Verbleibende fachliche Grenze:
+
+- `client-jsPDF` bleibt `metadata-only` und nicht PDF/UA.
+- `documentation-weasyprint` bleibt ein `tagged-pdf-ua-1-candidate`, bis ein konkretes erzeugtes Artefakt erfolgreich verifiziert wurde.
+- Render-Smoke ist keine formale PDF/UA-Zertifizierung.
+
+Damit ist ADR-0093 auf `✅ COMPLETE / LANDED` gesetzt; weitere PDF/UA- oder regulatorische Claims benötigen einen separaten verifizierten Evidence-Pfad.
