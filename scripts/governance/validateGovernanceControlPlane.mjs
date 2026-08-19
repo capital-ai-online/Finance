@@ -91,6 +91,9 @@ if (errors.length === 0) {
   const authorities = authorityRegistry.entries ?? [];
   const controls = catalog.controls ?? [];
   const adrs = adrRegistry.migratedRecords ?? [];
+  const activeAdrs = adrs.filter((item) => !['superseded', 'historical', 'rejected'].includes(item.lifecycle));
+  const activeAdrDisplayIds = new Set(activeAdrs.map((item) => item.displayId));
+  const namespaceReservations = adrRegistry.parallelNamespaceReservations ?? [];
 
   for (const id of duplicates(authorities.map((item) => item.authorityId))) {
     fail('DUPLICATE_AUTHORITY_ID', id);
@@ -98,11 +101,34 @@ if (errors.length === 0) {
   for (const id of duplicates(controls.map((item) => item.controlId))) {
     fail('DUPLICATE_CONTROL_ID', id);
   }
-  for (const id of duplicates(adrs.filter((item) => !['superseded', 'historical', 'rejected'].includes(item.lifecycle)).map((item) => item.displayId))) {
+  for (const id of duplicates(activeAdrs.map((item) => item.displayId))) {
     fail('DUPLICATE_ACTIVE_ADR_DISPLAY_ID', id);
   }
   for (const id of duplicates(adrs.map((item) => item.authorityId))) {
     fail('DUPLICATE_ADR_AUTHORITY_ID', id);
+  }
+  for (const id of duplicates(namespaceReservations.map((item) => item.displayId))) {
+    fail('DUPLICATE_PARALLEL_ADR_RESERVATION', id);
+  }
+
+  for (const reservation of namespaceReservations) {
+    const displayId = String(reservation.displayId ?? '');
+    const source = String(reservation.source ?? '').trim();
+    const reservedPath = String(reservation.path ?? '').trim();
+    const observedHead = String(reservation.observedHead ?? '');
+
+    if (!/^ADR-\d{4}$/.test(displayId)) {
+      fail('PARALLEL_ADR_RESERVATION_ID_INVALID', displayId || '<missing displayId>');
+    }
+    if (!source || !reservedPath) {
+      fail('PARALLEL_ADR_RESERVATION_METADATA_MISSING', `${displayId || '<missing displayId>'}: source/path required`);
+    }
+    if (observedHead && !/^[0-9a-f]{40}$/.test(observedHead)) {
+      fail('PARALLEL_ADR_RESERVATION_HEAD_INVALID', `${displayId}: ${observedHead}`);
+    }
+    if (activeAdrDisplayIds.has(displayId)) {
+      fail('PARALLEL_ADR_NAMESPACE_COLLISION', `${displayId} is both reserved by ${source || '<unknown source>'} and allocated to an active ADR in this branch.`);
+    }
   }
 
   const authorityIds = new Set(authorities.map((item) => item.authorityId));
