@@ -1,6 +1,6 @@
 # WP-N3 Open-Source Media Rendering
 
-- **Status:** IN IMPLEMENTATION
+- **Status:** IMPLEMENTATION COMPLETE / PR VALIDATION PENDING
 - **Datum:** 2026-08-19
 - **Owner:** CAPITAL-AI Owner
 - **Authority:** SEO-GM-ROADMAP-0002 / WP-N3 + ADR-0094 + Owner-Priorität 2026-08-19
@@ -61,12 +61,17 @@ Die bereits vorhandene SocialMediaEngine um einen kleinen, ersetzbaren und offli
 - [x] Developer-Video-Smoke dokumentieren;
 - [x] PDF Companion Smoke dokumentieren;
 - [x] Source-/Governance-Tests ergänzen;
-- [ ] finaler Main-/Parallel-PR-Abgleich;
-- [ ] PR erst danach erstellen;
+- [x] finaler Main-/Parallel-PR-Abgleich: `main@59a2755de53297a934b062b380a313d68cd47492`, Branch vor PR `3 ahead / 0 behind`; offene #439/#442 ohne direkten Dateioverlap;
+- [x] PR erst nach dem finalen Pre-PR-Abgleich erstellen;
 - [ ] Post-PR Repository-Checks ausführen und Evidence ergänzen.
+
+## Parallel-PR-Korrelation
+
+- **PR #439:** README, `package.json` und Version-/Documentation-Hygiene-Automation; 0 direkter Dateioverlap. Deshalb werden README und `package.json` in diesem WP-N3-Slice bewusst nicht geändert.
+- **PR #442:** SC-7 Ranking + `docs/governance/document-registry.json`; 0 direkter Dateioverlap. Deshalb wird die Registry in diesem Slice bewusst nicht geändert und eine additive Registry-Nachpflege kann nach Landung der Parallel-PRs erfolgen.
 
 ## Definition of Done
 
-WP-N3 Slice ist fachlich abgeschlossen, wenn alle P1-P4-Punkte und die Pre-PR-P5-Punkte abgeschlossen sind, keine bestehende Social-/PDF-Authority umgangen wird und der finale Branch-Diff gegen aktuellen `main` korreliert ist.
+P1-P4 sowie alle Pre-PR-P5-Punkte sind abgeschlossen. Der WP-N3-Slice bleibt bis zu den nach PR-Erstellung erforderlichen Repository-Checks auf `PR VALIDATION PENDING`.
 
 Nicht Teil dieses Work Packages: Auto-Publish, TTS, generative Background Provider, Datenbank-/Storage-Mutation oder ein eigener Video-Codec.
