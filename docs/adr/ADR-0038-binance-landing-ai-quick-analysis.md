@@ -87,6 +87,41 @@ Diese Erweiterung ändert die ursprünglichen Entscheidungen 1–8 nicht, ergän
 - Fail-Closed-/No-Demo-Data-Eigenschaften (Punkte 5–8 der ursprünglichen Entscheidung) gelten
   identisch für beide Aufrufkontexte, da beide dieselbe Kernfunktion verwenden.
 
+## Nachtrag 2026-08-20 — Assetklassenkorrekte Datendarstellung im Enterprise Scorer
+
+Die Enterprise-Scorer-Integration wird gegenüber dem Nachtrag vom 2026-08-08 präzisiert. Die
+Binance-Kurzanalyse ist eine **Krypto-spezifische** Capability und wird im Frontend nur noch dann
+gerendert, wenn das aktuell ausgewählte Registry-Asset den Typ `crypto` besitzt. Aktien, Forex,
+Indizes, Rohstoffe und Anleihen werden nicht mehr an die Binance-Kurzanalyse weitergereicht.
+Damit kann ein Nicht-Krypto-Symbol nicht mehr durch die USDT-Normalisierung als scheinbares
+Binance-Spot-Instrument dargestellt werden.
+
+Unmittelbar nach dem Asset-Kopfbereich rendert der Enterprise Scorer stattdessen für jede
+Assetklasse die gemeinsame read-only Komponente `src/components/VerifiedAssetSnapshot.tsx`.
+Sie verwendet ausschließlich bereits freigegebene Datenverträge:
+
+- Krypto-Preis: `GET /api/crypto/price-consensus/:symbol`;
+- Aktien/Forex/Indizes: `GET /api/registry/assets/:symbol/verified-quote`;
+- Rohstoffe und Sovereign-Benchmark-Anleihen: kein ersatzweiser Execution-Quote; die UI weist
+  explizit auf die getrennte Research-/History-Evidence hin;
+- Score, Coverage, Data Quality, Provider und Evidence stammen weiterhin aus dem kanonischen
+  Scoring-Ergebnis und dessen Integrity-/Provenance-Metadaten.
+
+Der Enterprise Scorer verwendet für alle nicht-kryptographischen Assetklassen den bereits
+vorhandenen `verified-score`-Pfad. Damit werden die freigegebenen Commodity-Evidence- und
+Sovereign-Benchmark-Scoring-Verträge nicht länger durch eine veraltete Frontend-Sperre verdeckt.
+Einzelanleihen außerhalb des freigegebenen Sovereign-Benchmark-Mappings bleiben unverändert
+fail-closed und erhalten keinen Ersatzscore.
+
+Die neue Darstellungsreihenfolge lautet:
+Asset-Suche → Asset-Kopfbereich → verifizierte Asset-Daten → bei Krypto optional Binance-
+Kurzanalyse → Scoring-/Faktor-/Evidence-Detailansichten.
+
+Die Änderung führt weder neue Marktanbieter noch neue Runtime-Abhängigkeiten ein. Insbesondere
+werden die statischen Bootstrapwerte aus `assetRegistry` weiterhin ausschließlich für
+Katalog-/Identity-Zwecke verwendet und nicht als verifizierte Preise oder Marktbeobachtungen
+angezeigt.
+
 ## Verifikation vor `resolved/`
 
 - TypeScript-/Vite-Build erfolgreich.
@@ -95,6 +130,9 @@ Diese Erweiterung ändert die ursprünglichen Entscheidungen 1–8 nicht, ergän
 - Binance-Ausfall/Timeout erzeugt 502 und keine Demo-Daten.
 - Rate-Limit erzeugt 429.
 - Landing-Widget erscheint ausschließlich im öffentlichen Landing-Hero.
+- Enterprise-Binance-Kurzanalyse wird ausschließlich für Registry-Assets vom Typ `crypto` gerendert.
+- Die gemeinsame Asset-Datenübersicht zeigt keine `assetRegistry`-Bootstrapwerte als Marktdaten an.
+- Commodity- und Sovereign-Benchmark-Assets nutzen im Enterprise Scorer den freigegebenen `verified-score`-Pfad.
 - CI vollständig grün.
 
 Erst nach diesen Nachweisen darf `Implementation-Status` auf `✅ COMPLETE` gesetzt und der ADR nach `docs/adr/resolved/` verschoben werden.
