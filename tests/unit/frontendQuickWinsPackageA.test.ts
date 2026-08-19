@@ -3,6 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const appPath = path.join(process.cwd(), 'src/App.tsx');
+const dashboardPath = path.join(process.cwd(), 'src/components/Dashboard.tsx');
 const marketScreenerPath = path.join(process.cwd(), 'src/components/MarketScreener.tsx');
 const indexCssPath = path.join(process.cwd(), 'src/index.css');
 const viteConfigPath = path.join(process.cwd(), 'vite.config.ts');
@@ -55,6 +56,18 @@ describe('Frontend Quick Wins package A', () => {
     const viteConfig = readSource(viteConfigPath);
 
     expect(viteConfig).not.toContain('manualChunks');
+  });
+
+  it('keeps Dashboard navigation and dismiss controls semantic and touch-sized', () => {
+    const dashboard = readSource(dashboardPath);
+
+    expect(dashboard).toContain('aria-label="Hauptmenü schließen"');
+    expect(dashboard).toContain('href="#profil"');
+    expect(dashboard).toContain('aria-label="Mein Profil verwalten"');
+    expect(dashboard).not.toContain("<div \n                  onClick={() => navigateTo('profil')}");
+    expect(dashboard).toContain('className="ui-hit inline-flex items-center rounded-lg px-2');
+    expect(dashboard).toContain('aria-label={`Benachrichtigung ${notif.symbol} schließen`}');
+    expect(dashboard).toContain('<X size={12} aria-hidden="true" />');
   });
 
   it('uses the Phase-1 layout and 44px hit-target primitives in MarketScreener', () => {
