@@ -1,12 +1,12 @@
 # Screening · Scoring · Market Data — Single Point of Trust Roadmap
 
 **Document ID:** SC-MD-SPT-0001  
-**Version:** 1.0.21  
+**Version:** 1.0.22  
 **Status:** ACTIVE — CANONICAL EXECUTION AUTHORITY  
 **Stand:** 2026-08-19  
-**Repository-Baseline:** `main@8cf8ba6a0be86c022e7fc71667271f97b686b2fd` + `agent/sc7-cross-asset-ranking-generalization`  
+**Repository-Baseline:** `main@71bce3d07133e2a7d408af179c2325e6d5114d5a` + PR #450 consolidation  
 **Owner:** SvenKulessa  
-**Authority:** DOCUMENTATION_HYGIENE_POLICY · GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY / ADR-0086 · ROADMAP_CONSOLIDATION_MASTER_INDEX · ADR-0020 / ADR-0041 · ESS EventMesh/Traceability
+**Authority:** DOCUMENTATION_HYGIENE_POLICY · GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY / ADR-0096 / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19` · ROADMAP_CONSOLIDATION_MASTER_INDEX · ADR-0020 / ADR-0041 · ESS EventMesh/Traceability
 
 ---
 
@@ -26,7 +26,7 @@ Single Point of Trust für die Screening-/Scoring-/Market-Data-Wertschöpfungske
 | UAI / Registry | `src/platform/Scoring/` | **C3 LANDED** |
 | Dispatcher | `ScoringDispatcher.ts` | **ein produktiver Multi-Asset Execution Exit** |
 | Scoring Integrity | `CanonicalScoreResult.integrity` | **UAI + Dispatcher + Registry + Model + Executor + Feature lineage** |
-| Ranking | `ranking.service` + `src/platform/Ranking/` | A–C LANDED · **D IMPLEMENTED/SHADOW** |
+| Ranking | `ranking.service` + `src/platform/Ranking/` | A–C LANDED · **D IMPLEMENTED/SHADOW IN PR #450 CONSOLIDATION** |
 | DQ / Confidence | `CompositeDataQuality` | Foundation; impact off |
 
 ### Verbleibende Lücken
@@ -98,7 +98,7 @@ API / UI / Alerts / Backtest Evidence
 | SC-4 | Gateway hardening | P1 | Phase A LANDED | matrix/health |
 | SC-5 | Live coverage | P1 | Phase A–D code | execution quorum open |
 | SC-6 | Scoring integrity & lineage | P1 | **CORE LANDED WITH C3** | execution lineage |
-| SC-7 | Ranking generalization | P1 | **A–C LANDED · D IMPLEMENTED/SHADOW** | intended-use cohorts; impact off |
+| SC-7 | Ranking generalization | P1 | **A–C LANDED · D CONSOLIDATED/SHADOW IN PR #450** | intended-use cohorts; impact off |
 | SC-8 | Walk-Forward / backtests | P2 | FOUNDATION/PARTIAL | drift/golden/full governance open |
 
 **Kritischer Pfad:** SC-0 → SC-1 + SC-3 → SC-4 → SC-5 → SC-2/SC-6 LANDED → **SC-7 D/E** → SC-8.
@@ -125,7 +125,9 @@ Scoring-Gewichte, Eligibility-Schwellen, Provider-Routing, Live-Gates sowie `sco
 - #429: M10 Controlled Cutover LANDED.
 - #435: C3 Global Multi-Asset Single-Dispatcher Exit LANDED; Merge-Commit `78d1ba83...` enthält final synchronisierten Head `8c4f45c4...`.
 - #438: post-C3 Main-Fortschritt; SC-7 Startbaseline `main@8cf8ba6a...`.
-- Der Owner bearbeitet den M10-CI-Autorisierungsfehler parallel und hat die fachliche Roadmap-Fortsetzung ausdrücklich freigegeben. M10 wird dadurch weder deaktiviert noch umgangen.
+- #442: SC-7 Phase D wurde am 2026-08-19 in den Branch von PR #450 konsolidiert; PR #450 ist damit der neue Review-/Startpunkt, bis ein separater Human Merge nach `main` erfolgt.
+- `main` bleibt während dieser Konsolidierung unverändert auf `71bce3d07133e2a7d408af179c2325e6d5114d5a`.
+- M10 bleibt `SUSPENDED/OFF`; die Konsolidierung reaktiviert keine CI-/Merge-/Produktionsautorität.
 
 ### SC-7 Phase D
 
@@ -161,4 +163,4 @@ Engineering-Benchmark, keine Behauptung direkter regulatorischer Anwendbarkeit: 
 
 ---
 
-*Stand 2026-08-19: SC-2/C3 und SC-6 Core-Lineage sind Human-gemerged. SC-7 Phase D ist shadow/read-only implementiert. Ranking-/Score-Impact, Cross-Cohort-Kalibrierung und Gemini Shadow bleiben deaktiviert bzw. separat Owner-gated.*
+*Stand 2026-08-19: SC-2/C3 und SC-6 Core-Lineage sind Human-gemerged. SC-7 Phase D ist in PR #450 shadow/read-only konsolidiert, aber noch nicht nach `main` Human-gemergt. Ranking-/Score-Impact, Cross-Cohort-Kalibrierung und Gemini Shadow bleiben deaktiviert bzw. separat Owner-gated.*
