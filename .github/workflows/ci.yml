@@ -2,15 +2,11 @@ name: CI
 run-name: >-
   ${{ github.event_name == 'push'
       && format('main – CI-Prüfung für {0}', github.sha)
-      || github.event_name == 'workflow_dispatch'
-      && format('M10 PR #{0} – autorisierte CI für {1}', inputs.m10_pr_number, inputs.m10_head_sha)
-      || format('PR #{0} – CI-Prüfung', github.event.pull_request.number) }}
+      || format('M10 PR #{0} – autorisierte CI für {1}', inputs.m10_pr_number, inputs.m10_head_sha) }}
 
 on:
   push:
     branches: [main]
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       m10_consumption_id:
@@ -49,17 +45,17 @@ permissions:
   pull-requests: read
 
 concurrency:
-  # PR synchronizations may cancel older cheap PR checks. Authorized M10 dispatches use their own
-  # run id so an unrelated event cannot cancel a consumed one-time authorization mid-build.
-  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.pull_request.number || github.ref }}
+  # Authorized M10 dispatches use their own run id so an unrelated event cannot cancel a consumed
+  # one-time authorization mid-build. main pushes remain serialized per ref.
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}
   cancel-in-progress: true
 
 # M10 Controlled Cutover:
-# - normal PR events fail before checkout/npm/build;
+# - ordinary PR events are handled by the separate m10-pr-guard workflow and never create the
+#   canonical required `build-and-test` check context;
 # - only a successfully redeemed Owner-Passkey M10 consumption may enter expensive PR CI;
 # - workflow-gate redemption additionally requires a short-lived signed GitHub Actions OIDC token;
-# - PR #429 is the unique one-time bootstrap used to validate this cutover before the new endpoint
-#   can exist on the default branch; it has no authority for any future PR after Human merge;
+# - the historical PR #429 bootstrap is retired and has no execution path here;
 # - main push build/deploy remains separate from PR-head CI authorization;
 # - Human Merge is always separate.
 jobs:
@@ -77,8 +73,6 @@ jobs:
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          M10_BOOTSTRAP_PR: '429'
           M10_CONSUMPTION_ID: ${{ inputs.m10_consumption_id }}
           M10_APPROVAL_ID: ${{ inputs.m10_approval_id }}
           M10_PR_NUMBER: ${{ inputs.m10_pr_number }}
@@ -93,17 +87,6 @@ jobs:
             push)
               test "$GITHUB_REF" = 'refs/heads/main'
               echo 'mode=main-push' >> "$GITHUB_OUTPUT"
-              ;;
-
-            pull_request)
-              if [ "$PR_NUMBER" = "$M10_BOOTSTRAP_PR" ]; then
-                echo 'M10 Controlled-Cutover bootstrap: PR #429 darf einmalig den vollständigen Pre-Cutover-CI-Pfad validieren.'
-                echo 'mode=cutover-bootstrap' >> "$GITHUB_OUTPUT"
-                exit 0
-              fi
-
-              echo 'M10 DENY: normaler PR-Event ist keine Autorisierung für teure CI. Owner-Passkey AUTHORIZE_PR_CI erforderlich.' >&2
-              exit 1
               ;;
 
             workflow_dispatch)
