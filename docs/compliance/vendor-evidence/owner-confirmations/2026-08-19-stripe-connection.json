@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "controller": "Sven Michael Kulessa",
+  "project": "CAPITAL-AI",
+  "vendorId": "stripe",
+  "confirmedAt": "2026-08-19",
+  "assertionType": "connected-account-identity-and-production-scope",
+  "status": "owner-confirmed-and-verified-via-connected-account",
+  "assertion": {
+    "accountId": "acct_1TbfHJPKr4joNbEc",
+    "displayName": "CAPITAL-AI",
+    "connectionVerified": true,
+    "onlyProductionStripeAccount": true,
+    "liveModeInUse": true
+  },
+  "sources": [
+    "Stripe connected account API",
+    "controller confirmation in chat on 2026-08-19"
+  ],
+  "limitations": [
+    "This verifies the connected Stripe account identity and owner-confirmed production account scope/live-mode use.",
+    "It does not by itself establish GDPR role allocation, DPA execution, transfer mechanism, TIA status, contractual processing region, or subprocessor completeness."
+  ]
+}

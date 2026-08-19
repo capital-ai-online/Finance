@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0.0",
+  "controller": "Sven Michael Kulessa",
+  "project": "CAPITAL-AI",
+  "vendorId": "stripe",
+  "evidenceType": "subprocessor-snapshot",
+  "reviewedAt": "2026-08-19",
+  "sourceDocument": {
+    "title": "Stripe Sub-Processors List / Service Providers, Sub-Processors & Affiliates",
+    "versionDate": "2025-12-20",
+    "sizeBytes": 1402287,
+    "sha256": "e5a426f669fd62e70d828a0f6ba74ad0bf44156f7d2a1b04c02a74928a45234c",
+    "officialSource": "https://stripe.com/legal/service-providers",
+    "retainedArtifactReference": "controller-provided project-chat attachment: Stripe Service Providers, Sub-Processors & Affiliates.pdf",
+    "retainedArtifactControlStatus": "hash-verified; durable restricted-vault locator not yet registered"
+  },
+  "scope": {
+    "accountId": "acct_1TbfHJPKr4joNbEc",
+    "accountCountry": "DE",
+    "productionUse": "payments, subscriptions, billing"
+  },
+  "snapshotAssessment": {
+    "status": "snapshot-verified-scope-pending",
+    "finding": "Stripe publishes third-party Sub-processors, service providers and Affiliates with data categories, processing purpose and entity country. The list includes processing locations both within and outside the EEA.",
+    "capitalAiActualRoutingStatus": "pending",
+    "thirdCountryApplicabilityStatus": "pending-per-subprocessor-and-service",
+    "transferMechanismAssessmentStatus": "pending"
+  },
+  "representativeFindings": [
+    {
+      "name": "Amazon Web Services, Inc.",
+      "data": "Business User and Representative data and End Customer data",
+      "purpose": "Cloud service provider",
+      "entityCountry": "United States"
+    },
+    {
+      "name": "Salesforce, Inc.",
+      "data": "Information provided in communications with Stripe",
+      "purpose": "Customer service platform",
+      "entityCountry": "United States"
+    },
+    {
+      "name": "Twilio, Inc.",
+      "data": "Business User data and End Customer data",
+      "purpose": "Cloud communications, two-factor authentication and user support",
+      "entityCountry": "United States"
+    },
+    {
+      "name": "TELUS International (Cda)",
+      "data": "Information included in Stripe support queries",
+      "purpose": "Business User support",
+      "entityCountry": "Ireland"
+    },
+    {
+      "name": "PPRO Payment Services S.A.",
+      "data": "End Customer and Business User data",
+      "purpose": "Payment method integration service provider",
+      "entityCountry": "Luxembourg"
+    }
+  ],
+  "affiliateFindings": {
+    "emeaContractEntity": "Stripe Payments Europe Limited — Ireland",
+    "emeaControllerEntity": "Stripe Technology Company Limited — Ireland, described as a data controller with primary responsibility for processing Personal Data outside the Americas together with relevant local regulated entities and SPEL",
+    "note": "Affiliate involvement depends on Business User location, End Customer location and Stripe services used."
+  },
+  "changeNotification": {
+    "mechanism": "Stripe provides a subscription mechanism for email notifications of Sub-processor-list updates.",
+    "noticePeriod": "at least 30 days before addition of one or more Sub-processors if the Business User subscribes",
+    "objectionPeriod": "30 days after notice/update on legitimate grounds",
+    "capitalAiSubscriptionStatus": "unverified"
+  },
+  "limitations": [
+    "Presence on Stripe's global list does not prove that every listed Sub-processor or Affiliate receives CAPITAL-AI Personal Data.",
+    "A CAPITAL-AI-specific mapping of enabled Stripe products to actual Sub-processors and processing locations remains pending.",
+    "This snapshot does not constitute a completed transfer impact assessment.",
+    "The source PDF itself is not committed to the repository."
+  ]
+}
