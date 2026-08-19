@@ -154,11 +154,19 @@ This does **not** mark M10 itself `COMPLETE`: the authoritative passkey CI gate,
 
 ## Final validation
 
-Final evidence head prior to close was validated through the PR's documentation-only CI and Governance path. The assurance branch was re-correlated with current `main@24b70a794a7ce7dad62197f42a8948b347dbfbc3` at `0 behind`, with the M10 evidence file as the only branch delta.
+The final assurance evidence was validated through the PR's documentation-only CI and Governance path. Immediately before lifecycle close, the branch was re-correlated with current `main@24b70a794a7ce7dad62197f42a8948b347dbfbc3` at `0 behind`, with the M10 evidence file as the only branch delta.
+
+Final validated checks before lifecycle close:
+
+- CI #1840 — **PASS**;
+- Governance #1158 — **PASS**;
+- Class D documentation fast path — **PASS**;
+- workflow-security scope — **PASS / no workflow changes**;
+- canonical PR-template contract — **PASS**.
 
 ## Lifecycle
 
-- PR #426 remains an evidence-only assurance probe.
+- PR #426 is an evidence-only assurance probe.
 - It must not be merged into `main`.
-- Close PR #426 after this final evidence update is recorded; do not merge it.
+- Close PR #426 after this evidence is recorded; do not merge it.
 - Controlled Cutover must start on a new branch created fresh from then-current `main` and requires its own explicit PR authorization / Human merge boundary.
