@@ -12,7 +12,7 @@
   "startedAt": "2026-08-19T07:58:00+02:00",
   "baseBranch": "main",
   "baseSha": "0d84e479ea97c97490dd65bea85fad2ec76ee157",
-  "pullRequest": null,
+  "pullRequest": 430,
   "claimedPaths": [
     ".ai/work-claims/SC2-PHYSICAL-LEGACY-CRYPTO-CLEANUP-2026-08-19.json",
     "server.application.ts",
