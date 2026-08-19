@@ -5,8 +5,9 @@
 // passes its own already-unique zone string as the requireStepUp() purpose).
 //
 // This router is code an agent built to assist the Owner - it does not and cannot perform an
-// enrollment itself. Every mutating route requires a live, already-authenticated Owner session plus
-// a fresh TOTP step-up; nothing here can be invoked by an agent acting on its own initiative.
+// enrollment itself. Every mutating enrollment route requires a live, already-authenticated Owner
+// session plus a fresh TOTP step-up; Phase-6 Shadow authorization is nested below /shadow and uses
+// the enrolled passkey itself as the strong authorization ceremony.
 import express from 'express';
 import { checkAdminAccess, requireStepUp } from '../../src/platform/Security/authMiddleware';
 import { OWNER_ONLY_ROLES } from '../../src/platform/Security/types';
@@ -22,6 +23,7 @@ import {
 } from './credentialEnrollmentSupabaseStore';
 import { writeAgentAuditEvent } from '../agentAudit/agentAuditWriter';
 import { checkRateLimit, getClientIp } from '../../src/platform/Security/rateLimiter';
+import { m10ShadowAuthorizationRouter } from './shadowAuthorizationRouter';
 
 export const m10CredentialEnrollmentRouter = express.Router();
 
@@ -193,3 +195,7 @@ m10CredentialEnrollmentRouter.get('/credentials', async (req, res) => {
   const credentials = await credentialStore.listActiveForOwner(SYSTEMADMIN_OWNER_ACTOR_ID);
   res.json({ credentials });
 });
+
+// Phase 6 is nested under the already-mounted M10 Owner route to avoid introducing a second public
+// route-composition boundary. Shadow endpoints cannot dispatch or consume CI approvals.
+m10CredentialEnrollmentRouter.use('/shadow', m10ShadowAuthorizationRouter);
