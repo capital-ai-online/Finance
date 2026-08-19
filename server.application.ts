@@ -65,33 +65,65 @@ registerOutboxJobHandler('subscription_confirmation_mail', processSubscriptionCo
 dotenv.config();
 
 const app = express();
+// Security-Audit (WebscanRadar, 02.08.2026): "Server-Versions-Disclosure" - Express setzte
+// standardmaessig den Header X-Powered-By: Express, was Angreifern das Suchen nach
+// versions-spezifischen Exploits erleichtert. disable('x-powered-by') unterdrueckt den Header
+// vollstaendig (Aequivalent zu Nginx' server_tokens off; / PHPs expose_php = Off).
 app.disable('x-powered-by');
 const PORT = resolveRuntimePort(getCleanEnv('PORT'));
 
+// Audit ARCH-AUDIT-0002 (S4): weist als erste Middleware jedem Request eine Correlation-ID
+// zu, damit nachfolgende Logs (CORS-Block, Rate-Limit, IAM-Pruefung, Route-Handler,
+// Fehlerbehandlung) demselben Request zugeordnet werden koennen.
 app.use(requestContext);
+// Audit ARCH-AUDIT-0002 (H6): zeichnet Request-Zaehler/-Fehler/-Latenz fuer /metrics auf
+// (Prometheus-Exposition-Format, siehe server/metrics.ts). Frueh montiert, damit auch von
+// spaeteren Middlewares/Routen abgelehnte Requests (CORS-Block, Rate-Limit) erfasst werden.
 app.use(metricsMiddleware);
 
+// ---------------------------------------------------------
+// Compliance-Review Punkt 1: Prozessweites Sicherheitsnetz gegen unbehandelte
+// Promise-Rejections/Exceptions. Ersetzt keinen sauberen try/catch in einzelnen
+// Handlern (die bleiben die erste Verteidigungslinie), verhindert aber, dass ein
+// übersehener Fall den gesamten Prozess unkontrolliert abstürzen lässt.
+// ---------------------------------------------------------
 process.on('unhandledRejection', (reason) => {
   console.error('[PROCESS][UNHANDLED REJECTION]', reason);
 });
 process.on('uncaughtException', (err) => {
   console.error('[PROCESS][UNCAUGHT EXCEPTION]', err);
+  // Bewusst kein process.exit(): ein einzelner unerwarteter Fehler soll nicht den
+  // gesamten Server für alle Nutzer beenden. Stattdessen wird geloggt, damit das
+  // Monitoring (Compliance-Review Punkt 3) den Vorfall sichtbar macht.
 });
+
+// ---------------------------------------------------------
+// ADR-0009 — CORS Hardening. Ersetzt die vorherige OWASP-Mitigation, die via
+// `origin.endsWith('.run.app')` / `origin.startsWith('https://ais-')` faktisch
+// jede beliebige Cloud-Run-Domain als vertrauenswürdig behandelte - ein Wildcard
+// in Verkleidung, genau das, was ADR-0009 explizit verbietet.
+// Zusätzlich fehlte die echte Produktionsdomain in der bisherigen Liste.
+// ---------------------------------------------------------
 
 const isProductionEnv = getCleanEnv('NODE_ENV') === 'production';
 
+// Produktionsdomains: fest codiert, keine Muster-/Suffix-Prüfung (ADR-0009 Regel 1+2).
 const PRODUCTION_ORIGINS = [
   'https://capital-ai.online',
   'https://www.capital-ai.online',
 ];
 
 function isLocalDevOrigin(origin: string): boolean {
+  // Nur exakt localhost/127.0.0.1 mit optionalem Port - kein Teilstring-Match,
+  // der z.B. auf "http://localhost.attacker.com" anspringen könnte.
   return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 }
 
 function isOriginAllowed(origin: string): boolean {
   if (PRODUCTION_ORIGINS.includes(origin)) return true;
-  if (!isProductionEnv && isLocalDevOrigin(origin)) return true;
+  if (!isProductionEnv) {
+    if (isLocalDevOrigin(origin)) return true;
+  }
   return false;
 }
 
@@ -111,16 +143,22 @@ async function logBlockedOrigin(origin: string, req: express.Request) {
       reason: `Blocked CORS Origin: ${origin}`,
     });
   } catch (err: any) {
+    // Audit ARCH-AUDIT-0002 (AUD2-F-020): best-effort bleibt bewusst (Request nicht blockieren),
+    // aber der Fehler war zuvor unsichtbar.
     serverLogger.error('security_events-Insert fehlgeschlagen', { requestId: req.requestId, error: err?.message || String(err) });
   }
 }
 
 app.use((req, res, next) => {
+  // 1. CORS-Allowlist-Prüfung (ADR-0009): keine dynamische Freigabe unbekannter
+  // Domains, jede Origin wird explizit gegen eine feste Liste geprüft.
   const origin = req.headers.origin;
 
   if (origin) {
     if (isOriginAllowed(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
+      // Credentials nur setzen, wenn die Origin tatsächlich validiert wurde
+      // (ADR-0009: "Voraussetzung: Origin muss vorher validiert sein.").
       res.setHeader('Access-Control-Allow-Credentials', 'true');
     } else {
       logBlockedOrigin(origin, req).catch((err) => {
@@ -129,28 +167,72 @@ app.use((req, res, next) => {
       if (req.method === 'OPTIONS') {
         return res.status(403).json({ error: 'Origin nicht erlaubt.' });
       }
+      // Kein ACAO-Header -> der Browser blockiert die Antwort clientseitig.
     }
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  // ADR-0009 listet zusätzlich `x-orchestrator-admin-token` als erlaubten Header.
+  // Bewusst NICHT übernommen: dieser Header gehörte zum in ADR-0003.5 entfernten
+  // Legacy-Token-Mechanismus (server/orchestrator.ts nutzt jetzt ausschließlich
+  // JWT via checkAdminAccess()). Ihn hier wieder zuzulassen würde der eigentlichen,
+  // bereits umgesetzten Architektur widersprechen - bitte ADR-0009 entsprechend
+  // aktualisieren/dieses Feld als überholt markieren.
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, stripe-signature');
 
+  // Preflight: nur erlaubte Origins erhalten 200 OK (ADR-0009 "Preflight Handling").
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
 
+  // 2. HTTP Security Headers Hardening (OWASP Compliance). Audit ARCH-AUDIT-0002 (N7)
+  // nennt "Helmet" als Massnahme; bewusst kein zusaetzliches Paket eingefuehrt, weil
+  // dieser Block bereits alle sicherheitsrelevanten Header setzt, die Helmet default-
+  // maessig liefern wuerde (CSP, X-Content-Type-Options, Referrer-Policy, HSTS,
+  // Clickjacking-Schutz via frame-ancestors) - inklusive der projektspezifischen
+  // ADR-0009-Origin-Allowlist-Logik, die eine generische Helmet-Konfiguration erst
+  // wieder nachbilden muesste. Ein zweites Paket mit eigener Default-CSP wuerde mit
+  // dieser bestehenden Logik kollidieren statt sie wiederzuverwenden.
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // Security-Audit (WebscanRadar, 02.08.2026): "X-Frame-Options fehlt" (MEDIUM, -10 Punkte) -
+  // ohne diesen Header war die Seite per <iframe> einbettbar (Clickjacking). SAMEORIGIN passt
+  // zur bereits gesetzten CSP frame-ancestors 'self'-Regel weiter unten (redundante, aber von
+  // aelteren Browsern ohne CSP-Unterstuetzung benoetigte Absicherung).
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
 
+  // Content-Security-Policy: frame-ancestors an dieselbe Allowlist-Logik wie CORS
+  // angeglichen (dieselbe `*.run.app`-Wildcard-Schwäche betraf zuvor auch hier
+  // die Clickjacking-Absicherung, siehe ADR-0009-Geist auch wenn nicht wörtlich
+  // Teil des ADR-Texts).
   const frameAncestors = [
     "'self'",
     ...(!isProductionEnv ? ["http://localhost:*"] : []),
   ].join(' ');
+  // Audit ARCH-AUDIT-0002 (N7): script-src und style-src ohne 'unsafe-inline'/'unsafe-eval'
+  // in Produktion. Der Vite-Produktionsbuild enthaelt weder Inline-<script>- noch
+  // Inline-<style>-Tags (nur externe, gehashte Dateien unter /assets, siehe
+  // dist/index.html); React setzt Inline-Styles ueber die DOM-CSSOM-Eigenschaft
+  // (element.style.xxx), nicht ueber das style=""-Attribut, und ist von style-src
+  // nicht betroffen. Verifiziert per Playwright-Konsolen-Check (securitypolicyviolation-
+  // Events) gegen den echten Produktionsbuild ueber mehrere Navigationspfade - keine
+  // CSP-Violation-Reports (tiefere, nur eingeloggt erreichbare Ansichten wurden mangels
+  // Testzugangsdaten in dieser Umgebung nicht erreicht, sollten aber denselben
+  // externen-Assets-Build durchlaufen). Im Entwicklungsmodus benoetigt Vites HMR-Client
+  // weiterhin 'unsafe-inline'/'unsafe-eval', daher dort unveraendert gelockert.
+  // CookieHub (Cookie-Consent-Banner) und Google Analytics (gtag.js, nur nach Einwilligung
+  // geladen, siehe Inline-Script in index.html) muessen hier explizit erlaubt werden - ohne
+  // diese beiden Hosts blockiert der Browser die Skripte still per CSP-Violation, das Banner
+  // erscheint nie und GA erhaelt selbst nach Opt-in keine Daten.
   const scriptSrc = isProductionEnv
     ? "'self' https://*.stripe.com https://cdn.cookiehub.eu https://www.googletagmanager.com"
     : "'self' 'unsafe-inline' 'unsafe-eval' https://*.stripe.com https://cdn.cookiehub.eu https://www.googletagmanager.com";
+  // CookieHub laedt sein eigenes Stylesheet von cdn.cookiehub.eu (siehe window.__cookiehub.css
+  // im ausgelieferten Snippet) - ohne diesen Host in style-src blockiert der Browser das
+  // Stylesheet per CSP (Konsolen-Meldung "Refused to apply style..."), das Banner-Markup wird
+  // zwar ins DOM injiziert, bleibt aber komplett unformatiert/unsichtbar, obwohl weder Skript-
+  // Laden noch die vom Server ausgelieferte Konfiguration selbst einen Fehler zeigen.
   res.setHeader(
     'Content-Security-Policy',
     "default-src 'self' https:; " +
@@ -162,6 +244,21 @@ app.use((req, res, next) => {
     `frame-ancestors ${frameAncestors};`
   );
 
+  // Audit ARCH-AUDIT-0002 (N7, CSRF-Anteil): kein CSRF-Token-Mechanismus implementiert,
+  // weil er hier keine reale Schutzwirkung haette - dieses Ergebnis, nicht eine
+  // Unterlassung. Klassisches CSRF nutzt aus, dass Browser Session-Cookies automatisch
+  // an denselben Origin anhaengen; diese Anwendung setzt und liest an keiner Stelle
+  // Cookies (grep ueber src/ und server/ bestaetigt: 0 Treffer fuer res.cookie/
+  // req.cookies/document.cookie/cookie-parser), der Supabase-Client
+  // (src/supabaseClient.ts) nutzt die Standardkonfiguration mit localStorage-basierter
+  // Session, und jede geschuetzte Route verlangt einen expliziten
+  // `Authorization: Bearer <token>`-Header (server/iam/authMiddleware.ts), den ein
+  // fremder Origin nicht automatisch mitschicken kann. Ein CSRF-Token waere daher
+  // Security-Theater fuer ein Bedrohungsmodell, das hier nicht zutrifft. Sollte
+  // zukuenftig Cookie-basierte Session-Authentifizierung eingefuehrt werden, muss
+  // diese Einschaetzung neu bewertet werden.
+
+  // Strict-Transport-Security (HSTS) in production
   if (isProductionEnv) {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
@@ -169,6 +266,13 @@ app.use((req, res, next) => {
   next();
 });
 
+// Security-Audit (WebscanRadar, 02.08.2026): "Standard-Pfade erreichbar" (LOW) - die App ist
+// eine reine React-SPA (kein PHP/WordPress-Backend), aber der SPA-Catch-all am Ende der Route-
+// Kette (app.get('*', ...) -> index.html) beantwortete JEDE URL mit HTTP 200, auch klassische
+// Scanner-Koeder-Pfade wie /wp-config.php. Das ist kein echter Leak (keine Secrets im Inhalt),
+// verschleiert aber gegenueber automatisierten Scans nicht, dass hier nichts dergleichen
+// existiert. Diese Pfade jetzt frueh und explizit mit 404 beantworten, statt sie durch die
+// gesamte Middleware-Kette bis zum SPA-Fallback laufen zu lassen.
 const PROBE_PATH_PATTERNS = [
   /\.php$/i,
   /^\/wp-(admin|login|content|includes|json)(\/|$)/i,
@@ -184,13 +288,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// 1. STRIPE WEBHOOK ENDPOINT (Must be placed BEFORE express.json() to get raw request body)
 const webhookHandler = async (req: express.Request, res: express.Response) => {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = getCleanEnv('STRIPE_WEBHOOK_SECRET');
 
   if (!sig || !webhookSecret) {
-    console.warn('⚠️ Stripe Webhook called, but stripe-signature or STRIPE_WEBHOOK_SECRET is missing.');
-    return res.status(400).send('Webhook Error: Missing signature or webhook secret.');
+    console.warn("⚠️ Stripe Webhook called, but stripe-signature or STRIPE_WEBHOOK_SECRET is missing.");
+    return res.status(400).send("Webhook Error: Missing signature or webhook secret.");
   }
 
   let event: Stripe.Event;
@@ -198,7 +303,7 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
     const stripe = getStripeInstance();
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err: any) {
-    console.error('❌ Stripe Webhook signature verification failed:', err.message);
+    console.error(`❌ Stripe Webhook signature verification failed:`, err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -206,7 +311,7 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
     await handleWebhookEvent(event);
     res.json({ received: true });
   } catch (err: any) {
-    console.error('❌ Webhook handling error:', err);
+    console.error(`❌ Webhook handling error:`, err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -214,6 +319,14 @@ const webhookHandler = async (req: express.Request, res: express.Response) => {
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), webhookHandler);
 app.post('/billing/webhook', express.raw({ type: 'application/json' }), webhookHandler);
 
+// Audit ARCH-AUDIT-0002 (AUD2-F-015, S3): zuvor gab es kein Rate-Limiting, das PAUSCHAL fuer
+// jede Route greift - nur einzelne Admin-/Auth-Zonen (server/iam/rateLimiter.ts) und die ueber
+// orchestrator.handle() gefuehrten Markt-/Scoring-Routen (src/lib/requestOrchestrator.ts) waren
+// begrenzt. Wiederverwendet denselben In-Memory-Limiter wie die Admin-Zonen statt eine weitere
+// Rate-Limiting-Implementierung einzufuehren. Grosszuegig genug fuer normale Nutzung, faengt
+// aber Endpunkte ab, die keine eigene Begrenzung haben (z.B. statische Registry-Reads).
+// Greift NICHT fuer die beiden Webhook-Routen oben, da diese als spezifische Routen bereits
+// VOR dieser globalen Middleware registriert sind und den Request-Zyklus selbst abschliessen.
 app.use((req, res, next) => {
   const ip = getClientIp(req as any);
   if (!checkRateLimit(`global:${ip}`, 300, 60_000)) {
@@ -225,26 +338,38 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
+// Gemini wurde anwendungsweit entfernt. Der Legacy-Kompatibilitätsparameter bleibt bis zur
+// vollständigen Router-Signaturbereinigung bewusst null und kann keinen Provideraufruf auslösen.
 const ai: any = null;
 
+// Audit ARCH-AUDIT-0002 (J3, Kapitel 14.6): optionaler Anthropic-Client fuer den
+// providerübergreifenden Rückfall der KI-Agenten. Ohne ANTHROPIC_API_KEY bleibt
+// anthropic === null - die Agenten verhalten sich dann exakt wie vor J3 (fail-open).
 let anthropic: any = null;
 try {
   if (isAnthropicConfigured()) {
     anthropic = getAnthropicInstance();
   }
 } catch (e) {
-  console.warn('Failed to retrieve Anthropic instance on boot:', e);
+  console.warn("Failed to retrieve Anthropic instance on boot:", e);
 }
 
+// Audit ARCH-AUDIT-0002 (J3-Folge, Kapitel 14.6): dritter Provider in der Kette. Reihenfolge
+// (Nutzerpriorisierung nach Bereitstellung aller drei Keys): Anthropic -> OpenAI
+// (agentModelRouting.ts). Ohne OPENAI_API_KEY bleibt openai === null - fail-open.
 let openai: any = null;
 try {
   if (isOpenAIConfigured()) {
     openai = getOpenAIInstance();
   }
 } catch (e) {
-  console.warn('Failed to retrieve OpenAI instance on boot:', e);
+  console.warn("Failed to retrieve OpenAI instance on boot:", e);
 }
 
+// Health-Check-Endpunkt fuer Deployment-Plattformen (Audit ARCH-AUDIT-0002, Befund AUD2-F: kein
+// Health-Check vorhanden). Bewusst ohne Netzwerkaufrufe an Drittanbieter - ein Health-Check muss
+// schnell und unabhaengig von externen Ausfaellen antworten. `configured` spiegelt nur, ob die
+// jeweilige Umgebungsvariable gesetzt ist, keine Live-Erreichbarkeit.
 app.get('/healthz', (req, res) => {
   res.json({
     status: 'ok',
@@ -259,6 +384,12 @@ app.get('/healthz', (req, res) => {
   });
 });
 
+// Audit ARCH-AUDIT-0002 (H6): Prometheus-Exposition-Format, siehe server/metrics.ts.
+// Bewusst NICHT ueber checkAdminAccess/Supabase geschuetzt - Metrics-Scraper koennen in der
+// Regel keinen interaktiven Login durchfuehren, und die Metrik-Erfassung soll auch dann
+// funktionieren, wenn Supabase nicht erreichbar ist (das ist selbst ein moeglicher
+// Beobachtungsfall). Stattdessen ein statisches Token (METRICS_TOKEN) - fail-closed: ohne
+// gesetztes Token ist der Endpunkt gesperrt, kein Fallback auf "offen".
 app.get('/metrics', (req, res) => {
   const expectedToken = getCleanEnv('METRICS_TOKEN');
   if (!expectedToken) {
@@ -272,8 +403,30 @@ app.get('/metrics', (req, res) => {
   res.send(renderMetrics());
 });
 
+// Mount Modular Router Sub-systems
+//
+// Gemini wurde entfernt; der Kompatibilitätsparameter `ai` ist strikt null.
+// ADR-0014 Phase 3.1: canonical route composition. This module intentionally owns only router
+// mounting/prefixes - Stripe raw-body ingress, global middleware ordering, provider construction
+// and runtime-secret validation all remain owned above, unchanged (see
+// server/routes/registerApplicationRoutes.ts's own doc comment).
 registerApplicationRoutes(app, { ai, anthropic, openai });
 
+// Define patterns, application areas, and pattern-aware asset scoring helpers
+//
+// Audit ARCH-AUDIT-0002 (J1, Kapitel 10.1/14.6, Datenqualitaetsschicht): diese Funktion weist
+// JEDEM Symbol einen benannten Chart-Pattern zu, unabhaengig vom tatsaechlichen aktuellen
+// Kursverlauf - entweder hartkodiert (BTC ist IMMER "Bullish Engulfing", egal was der reale
+// Chart zeigt) oder ueber einen Zeichen-Hash-Fallback fuer alle anderen Symbole. Keine dieser
+// Zuweisungen basiert auf echter Mustererkennung. Bleibt NUR als interner Eingabewert fuer den
+// bestehenden Heuristik-Score-Pfad in calculateAssetScore() erhalten (Indizes/Anleihen und
+// Aktien/Forex ohne echte Datenquelle, siehe dort) - unveraendertes Verhalten, kein Regressions-
+// risiko fuer die bereits ehrlich als 'heuristic' gekennzeichneten Scores.
+//
+// Fuer das AN NUTZER AUSGELIEFERTE `pattern`-Feld (Watchlist, ComplianceExporter,
+// CryptoEnterpriseEvaluator) wird stattdessen computeDisplayTrendLabel() verwendet: eine echte,
+// aus tatsaechlicher Kurshistorie berechnete Trend-Klassifikation, oder undefined statt eines
+// erfundenen Namens, wenn keine echte Historie vorliegt.
 function getAssetPatternForSymbol(symbol: string): string {
   const s = symbol.toUpperCase().trim();
   if (s.startsWith('BTC')) return 'Bullish Engulfing';
@@ -284,6 +437,7 @@ function getAssetPatternForSymbol(symbol: string): string {
   if (s.startsWith('GLD')) return 'Inverted Head & Shoulders';
   if (s.startsWith('EURUSD') || s.startsWith('EUR/USD')) return 'Bearish Harami';
 
+  // Deterministic fallback based on symbol characters
   const charSum = s.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const patterns = [
     'Falling Wedge',
@@ -300,6 +454,9 @@ function getAssetPatternForSymbol(symbol: string): string {
 async function computeDisplayTrendLabel(symbol: string): Promise<string | undefined> {
   const s = symbol.toUpperCase().trim();
   try {
+    // Audit ARCH-AUDIT-0002 (J1-Folge): Indizes haben keine Historie in assetRegistry
+    // (das wuerde einen FMP-API-Key im client-gebuendelten assetRegistry.ts erfordern),
+    // sondern im serverseitigen FMP-Cache (server/fmpIndices.ts).
     if (INDEX_FMP_TICKERS[s]) {
       const points = getCachedIndexHistory(s);
       if (!points || points.length < 2) return undefined;
@@ -331,11 +488,20 @@ function getApplicationAreaForSymbol(symbol: string, type: string): string {
   return 'Andere';
 }
 
+// Audit ARCH-AUDIT-0002 (Befund AUD2-F-001, Kapitel 6, sowie S1/S2/S5, S6 Kapitel 14.3):
+// Standard-Crypto ist seit SC-2 C2a/C2b aus dieser Legacy-Berechnung entfernt und darf nur noch
+// über UAI -> ScoringModelRegistry -> ScoringDispatcher bewertet werden. Diese Funktion bleibt
+// bis C3 ausschließlich für Meme-Crypto sowie die noch nicht migrierten Traditional-/Commodity-
+// und Index-/Bond-Pfade bestehen. Die Herkunft jedes Legacy-score-Feldes bleibt gekennzeichnet.
 const MEME_COIN_SYMBOLS = ['DOGE', 'SHIB', 'PEPE', 'WIF', 'BONK', 'FLOKI', 'POPCAT', 'BRETT', 'MOG', 'BOME'];
 
 type ScoreBasis = 'market-data' | 'heuristic' | undefined;
 interface AssetScoreResult { score: number; basis: ScoreBasis }
 
+/**
+ * Audit ARCH-AUDIT-0002 (H1): basis spiegelt die TATSAECHLICH verwendete Berechnung wider.
+ * SC-2 C2b: Standard-Crypto ist hier explizit fail-closed; nur Meme-Crypto verbleibt bis C3.
+ */
 async function calculateAssetScore(symbol: string, type: string, change24h: number, baseScore?: number): Promise<AssetScoreResult> {
   const s = symbol.toUpperCase().trim();
   if (type === 'crypto') {
@@ -349,6 +515,8 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
 
   if (type === 'commodity') {
     try {
+      // Core raw material scoring utilizing the multi-agent/deterministic scoring service of the Rohstoff-Orchestrator
+      // The scoring engine calculates a 0-100 score which we return directly for a unified 0-100 scale.
       const payload = RawMaterialsScoringService.scoreMaterial({ name: s });
       return { score: Math.min(100.0, Math.max(0.0, Number(payload.scores.final_score.toFixed(1)))), basis: undefined };
     } catch (err) {
@@ -356,6 +524,9 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
     }
   }
 
+  // Audit ARCH-AUDIT-0002 (H1): echte technische (+ bei Aktien fundamentale) Bewertungslogik,
+  // ersetzt die Hash-Pattern-Heuristik unten fuer diese Anlageklassen (Anleihen bleiben auf
+  // der Heuristik - es existiert fuer sie aktuell keine Live-Kursquelle).
   if (type === 'stock' || type === 'forex') {
     try {
       let fundamentals: { peRatio?: number; dividendYieldPct?: number; profitMarginPct?: number } | undefined;
@@ -368,11 +539,19 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
       if (result.usedFactors.length > 0) {
         return { score: result.score, basis: 'market-data' };
       }
+      // Keine reale Datenquelle fuer dieses Symbol verfuegbar (weder Historie noch
+      // Fundamentaldaten) - auf die Heuristik unten zurueckfallen. basis bleibt unten
+      // korrekt 'heuristic', TROTZ Anlagetyp stock/forex.
     } catch (err: any) {
       console.warn(`[TraditionalAssetScoring Fallback] Failed for ${s}, using momentum fallback:`, err?.message || err);
     }
   }
 
+  // Audit ARCH-AUDIT-0002 (J1-Folge): echte technische Bewertung fuer Indizes ueber FMP
+  // (server/fmpIndices.ts) - rein technisch wie Forex (keine Unternehmensbilanz). Faellt auf
+  // die Heuristik zurueck, solange der FMP-Historie-Cache fuer dieses Symbol noch nicht
+  // gefuellt ist (Rate-Limit-bewusstes, schrittweises Befuellen, siehe
+  // server/marketData/fmpIndexProviderStage.ts).
   if (type === 'index' && INDEX_FMP_TICKERS[s]) {
     try {
       ensureIndexHistoryFresh(s).catch(() => {});
@@ -389,9 +568,11 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
     }
   }
 
+  // 1. Calculate base momentum score (scaled to 10-100 scale)
   const normBaseScore = baseScore !== undefined ? (baseScore > 10.0 ? baseScore : baseScore * 10) : undefined;
   let baseMomentum = normBaseScore !== undefined ? normBaseScore : (50.0 + (change24h > 0 ? Math.min(40.0, change24h * 5) : Math.max(-40.0, change24h * 5)));
 
+  // 2. Adjust based on patterns (scaled to 10-100 scale)
   const pattern = getAssetPatternForSymbol(s);
   let patternBoost = 0;
   if (pattern === 'Bullish Engulfing') patternBoost = 45;
@@ -405,6 +586,7 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
 
   let finalScore = baseMomentum + patternBoost;
 
+  // Ensure strong bullish patterns like Bullish Engulfing keep their high rating!
   if (pattern === 'Bullish Engulfing') {
     if (finalScore < 82) {
       finalScore = 82 + (change24h > 0 ? Math.min(10.0, change24h * 2) : Math.max(-10.0, change24h * 2));
@@ -415,11 +597,15 @@ async function calculateAssetScore(symbol: string, type: string, change24h: numb
   return { score: clamped, basis: (type === 'index' || type === 'bond' || type === 'stock' || type === 'forex') ? 'heuristic' : undefined };
 }
 
+// Fallback mock data with realistic slightly fluctuating stats on demand
 const FALLBACK_ASSETS = [
+  // Cryptos
   { symbol: 'BTC', name: 'Bitcoin', type: 'crypto', price: 68500.0, change24h: 2.45, grahamScore: 0, momentum: 7.2, risk: 'High', status: 'Verifiziert', marketCap: 1340.0, dividendYield: 0.0, volume24h: 28500.0, score: 8.5, pattern: 'Bullish Engulfing', applicationArea: 'DeFi & Smart Contracts' },
   { symbol: 'ETH', name: 'Ethereum', type: 'crypto', price: 3450.0, change24h: -1.2, grahamScore: 0, momentum: 5.8, risk: 'High', status: 'Verifiziert', marketCap: 415.0, dividendYield: 0.0, volume24h: 15200.0, score: 7.4, pattern: 'Hammer Support', applicationArea: 'Webanwendungen' },
   { symbol: 'SOL', name: 'Solana', type: 'crypto', price: 145.2, change24h: 5.8, grahamScore: 0, momentum: 8.5, risk: 'High', status: 'Verifiziert', marketCap: 67.5, dividendYield: 0.0, volume24h: 3800.0, score: 8.6, pattern: 'Morning Star', applicationArea: 'Webanwendungen' },
   { symbol: 'ADA', name: 'Cardano', type: 'crypto', price: 0.42, change24h: -0.8, grahamScore: 0, momentum: 4.5, risk: 'High', status: 'Verifiziert', marketCap: 15.1, dividendYield: 0.0, volume24h: 420.0, score: 6.5, pattern: 'Double Bottom', applicationArea: 'Webanwendungen' },
+
+  // Stocks
   { symbol: 'AAPL', name: 'Apple Inc.', type: 'stock', price: 189.3, change24h: 1.15, grahamScore: 22.4, momentum: 6.2, risk: 'Low', status: 'Verifiziert', peRatio: 28.5, debtToEquity: 1.45, marketCap: 2950.0, dividendYield: 0.51, volume24h: 9500.0, score: 7.2, pattern: 'Cup & Handle', applicationArea: 'Unterhaltung & Services' },
   { symbol: 'MSFT', name: 'Microsoft Corp.', type: 'stock', price: 415.6, change24h: 0.85, grahamScore: 18.2, momentum: 6.8, risk: 'Low', status: 'Verifiziert', peRatio: 35.2, debtToEquity: 0.28, marketCap: 3080.0, dividendYield: 0.72, volume24h: 12400.0, score: 7.8, pattern: 'Ascending Channel', applicationArea: 'E-Commerce & Cloud' },
   { symbol: 'GOOGL', name: 'Alphabet Inc.', type: 'stock', price: 172.5, change24h: -0.42, grahamScore: 24.1, momentum: 5.5, risk: 'Low', status: 'Verifiziert', peRatio: 25.4, debtToEquity: 0.06, marketCap: 2150.0, dividendYield: 0.46, volume24h: 8100.0, score: 7.1, pattern: 'Three Inside Up', applicationArea: 'Webanwendungen' },
@@ -430,18 +616,24 @@ const FALLBACK_ASSETS = [
   { symbol: 'NFLX', name: 'Netflix Inc.', type: 'stock', price: 610.5, change24h: -0.5, grahamScore: 14.2, momentum: 5.9, risk: 'Medium', status: 'Verifiziert', peRatio: 36.5, debtToEquity: 0.85, marketCap: 265.0, dividendYield: 0.0, volume24h: 4500.0, score: 7.5, pattern: 'Morning Star', applicationArea: 'Webanwendungen' },
   { symbol: 'AMD', name: 'Advanced Micro Devices', type: 'stock', price: 160.2, change24h: 2.1, grahamScore: 10.4, momentum: 6.5, risk: 'High', status: 'Verifiziert', peRatio: 52.0, debtToEquity: 0.04, marketCap: 258.0, dividendYield: 0.0, volume24h: 7500.0, score: 7.2, pattern: 'Double Bottom', applicationArea: 'Hardware & AI' },
   { symbol: 'INTC', name: 'Intel Corp.', type: 'stock', price: 30.4, change24h: -0.95, grahamScore: 15.1, momentum: 4.1, risk: 'Low', status: 'Verifiziert', peRatio: 22.8, debtToEquity: 0.38, marketCap: 129.0, dividendYield: 1.64, volume24h: 3100.0, score: 5.4, pattern: 'Bull Flag', applicationArea: 'Hardware & AI' },
+
+  // Forex
   { symbol: 'EURUSD', name: 'Euro / US Dollar', type: 'forex', price: 1.0824, change24h: 0.12, grahamScore: 0, momentum: 5.2, risk: 'Low', status: 'Verifiziert', marketCap: 450.0, dividendYield: 0.0, volume24h: 1202.48, score: 5.5 },
   { symbol: 'GBPUSD', name: 'British Pound / US Dollar', type: 'forex', price: 1.2645, change24h: -0.15, grahamScore: 0, momentum: 4.8, risk: 'Low', status: 'Verifiziert', marketCap: 450.0, dividendYield: 0.0, volume24h: 1205.29, score: 5.0 },
   { symbol: 'USDJPY', name: 'US Dollar / Japanese Yen', type: 'forex', price: 156.85, change24h: 0.35, grahamScore: 0, momentum: 6.2, risk: 'Medium', status: 'Verifiziert', marketCap: 450.0, dividendYield: 0.0, volume24h: 1203.7, score: 6.1 },
   { symbol: 'USDCAD', name: 'US Dollar / Canadian Dollar', type: 'forex', price: 1.3652, change24h: 0.04, grahamScore: 0, momentum: 5.1, risk: 'Low', status: 'Verifiziert', marketCap: 450.0, dividendYield: 0.0, volume24h: 1201.3, score: 5.2 },
   { symbol: 'USDCHF', name: 'US Dollar / Swiss Franc', type: 'forex', price: 0.9085, change24h: -0.21, grahamScore: 0, momentum: 4.3, risk: 'Low', status: 'Verifiziert', marketCap: 450.0, dividendYield: 0.0, volume24h: 1201.82, score: 4.7 },
   { symbol: 'AUDUSD', name: 'Australian Dollar / US Dollar', type: 'forex', price: 0.6625, change24h: 0.18, grahamScore: 0, momentum: 5.4, risk: 'Low', status: 'Verifiziert', marketCap: 450.0, dividendYield: 0.0, volume24h: 1201.25, score: 5.6 },
+
+  // Commodities
   { symbol: 'GLD', name: 'Gold Spot', type: 'commodity', price: 2340.5, change24h: 0.65, grahamScore: 0, momentum: 6.5, risk: 'Low', status: 'Verifiziert', marketCap: 450.0, dividendYield: 0.0, volume24h: 360.25, score: 6.8 },
   { symbol: 'SLV', name: 'Silver Spot', type: 'commodity', price: 30.12, change24h: 1.45, grahamScore: 0, momentum: 7.2, risk: 'Medium', status: 'Verifiziert', marketCap: 450.0, dividendYield: 0.0, volume24h: 350.12, score: 7.4 },
   { symbol: 'USO', name: 'Crude Oil', type: 'commodity', price: 78.45, change24h: -1.82, grahamScore: 0, momentum: 3.5, risk: 'Medium', status: 'Verifiziert', marketCap: 450.0, dividendYield: 0.0, volume24h: 358.45, score: 4.1 },
   { symbol: 'NG=F', name: 'Natural Gas', type: 'commodity', price: 2.54, change24h: 3.12, grahamScore: 0, momentum: 7.0, risk: 'High', status: 'Verifiziert', marketCap: 180.0, dividendYield: 0.0, volume24h: 220.50, score: 6.5 },
   { symbol: 'WTI', name: 'WTI Crude Oil', type: 'commodity', price: 77.20, change24h: -1.40, grahamScore: 0, momentum: 4.2, risk: 'Medium', status: 'Verifiziert', marketCap: 1050.0, dividendYield: 0.0, volume24h: 410.80, score: 5.8 },
   { symbol: 'BRENT', name: 'Brent Crude Oil', type: 'commodity', price: 81.85, change24h: -1.25, grahamScore: 0, momentum: 4.5, risk: 'Medium', status: 'Verifiziert', marketCap: 1150.0, dividendYield: 0.0, volume24h: 460.20, score: 6.1 },
+
+  // Indices (Top 30 Indices)
   { symbol: 'GSPC', name: 'S&P 500', type: 'index', price: 5450.20, change24h: 0.45, grahamScore: 0, momentum: 5.5, risk: 'Medium', status: 'Verifiziert', marketCap: 44000.0, dividendYield: 1.35, volume24h: 4200.0, score: 7.2, pattern: 'Ascending Channel', applicationArea: 'Aktien-Benchmark' },
   { symbol: 'IXIC', name: 'NASDAQ Composite', type: 'index', price: 17850.50, change24h: 0.85, grahamScore: 0, momentum: 6.8, risk: 'Medium', status: 'Verifiziert', marketCap: 26000.0, dividendYield: 0.85, volume24h: 5100.0, score: 7.8, pattern: 'Cup & Handle', applicationArea: 'Technologie-Sektor' },
   { symbol: 'DJI', name: 'Dow Jones Industrial Average', type: 'index', price: 39120.00, change24h: 0.15, grahamScore: 0, momentum: 4.8, risk: 'Low', status: 'Verifiziert', marketCap: 11200.0, dividendYield: 1.95, volume24h: 1200.0, score: 6.5, pattern: 'Bull Flag', applicationArea: 'Industrie & Blue Chips' },
@@ -474,7 +666,15 @@ const FALLBACK_ASSETS = [
   { symbol: 'STOXX50E', name: 'EURO STOXX 50', type: 'index', price: 4950.20, change24h: 0.28, grahamScore: 0, momentum: 4.9, risk: 'Low', status: 'Verifiziert', marketCap: 3800.0, dividendYield: 3.15, volume24h: 1100.0, score: 6.4, pattern: 'Ascending Channel', applicationArea: 'Europäische Blue Chips' }
 ];
 
-const MARKET_DATA_CACHE_TTL = 60 * 1000;
+// ADR-0014 Phase 3.4: canonical application-level market-data composition. Provider ordering,
+// cache/TTL/request-coalescing and background-refresh mechanics live in the extracted
+// server/marketData/** architecture (createApplicationMarketDataRuntime and its dependency chain,
+// each already covered by dedicated unit tests). This composition root supplies only the
+// domain-specific callbacks that were previously inline in fetchLiveMarketData()/the route/the
+// startup+timer blocks below: registry synchronization, scoring/pattern enrichment, and the
+// best-effort score-snapshot/alert side effects (still Supervisor-wrapped, still fire-and-forget,
+// exactly as before).
+const MARKET_DATA_CACHE_TTL = 60 * 1000; // Cache live prices for 60 seconds
 
 function syncAssetToRegistry(asset: any) {
   assetRegistry.updateAsset(asset.symbol, {
@@ -483,7 +683,11 @@ function syncAssetToRegistry(asset: any) {
     marketCap: asset.marketCap,
     volume24h: asset.volume24h,
     score: asset.score,
+    // Audit ARCH-AUDIT-0002 (J1): pattern muss in die Registry zurueckgeschrieben werden, sonst
+    // liefert /api/registry/assets weiterhin den alten, beim Registry-Seed gesetzten Wert.
     pattern: asset.pattern,
+    // Audit ARCH-AUDIT-0002 (S1/S2/S5): reale Supply-Daten fuer Tokenomics-Scoring, nur bei
+    // Krypto-Assets von CoinGecko geliefert.
     ...(asset.circulatingSupply !== undefined ? { circulatingSupply: asset.circulatingSupply } : {}),
     ...(asset.maxSupply !== undefined ? { maxSupply: asset.maxSupply } : {}),
     ...(asset.totalSupply !== undefined ? { totalSupply: asset.totalSupply } : {}),
@@ -494,6 +698,9 @@ async function enrichMarketDataAsset(asset: any) {
   const pattern = await computeDisplayTrendLabel(asset.symbol);
   const applicationArea = getApplicationAreaForSymbol(asset.symbol, asset.type);
 
+  // C2b defense in depth: createApplicationMarketDataRuntime already intercepts Standard-Crypto
+  // during normal refreshes. The explicit guard here closes the direct cold-start fallback path
+  // below as well, so no caller of this composition-root helper can reach legacy Crypto scoring.
   if (isStandardCryptoMarketDataAsset(asset)) {
     const canonical = await enrichStandardCryptoWithCanonicalScore(asset);
     return { ...canonical, pattern, applicationArea };
@@ -508,6 +715,8 @@ const marketDataRuntime = createApplicationMarketDataRuntime({
   registryAssets: () => assetRegistry.getAssets(),
   enrichAsset: enrichMarketDataAsset,
   syncAsset: syncAssetToRegistry,
+  // Beide Callbacks geben bewusst NICHT das executeSupervised(...)-Promise zurueck (fire-and-
+  // forget) - die Antwort darf nicht auf Snapshot-/Alert-Persistierung warten, exakt wie zuvor.
   persistSnapshots: (assets) => {
     executeSupervised('recordDailySnapshots', () => recordDailySnapshots(assets.map((a: any) => ({
       symbol: a.symbol,
@@ -526,12 +735,18 @@ const marketDataRuntime = createApplicationMarketDataRuntime({
   ttlMs: MARKET_DATA_CACHE_TTL,
 });
 
+// Real, live market data endpoint. Provider ordering, cache/TTL and background-refresh mechanics
+// are owned by server/marketData/createApplicationMarketDataRuntime.ts (ADR-0014 Phase 3.4).
 app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res) => {
   try {
     const data = await marketDataRuntime.get();
     return res.json(data);
   } catch (error: any) {
     console.warn('[API Warning] Failed to retrieve live market-data, returning resilient fallback:', error.message || error);
+    // marketDataRuntime.get() already falls back to a stale cache internally on a refresh error;
+    // reaching here means there is no cache at all yet (e.g. the very first request after a cold
+    // start whose first refresh also failed). enrichMarketDataAsset has its own Standard-Crypto
+    // canonical guard, so this direct fallback cannot reopen the retired legacy scoring path.
     const dynamicFallback = await Promise.all(assetRegistry.getAssets().map(async asset => {
       const enriched = await enrichMarketDataAsset(asset);
       return { ...enriched, status: 'Fallback', dataSource: 'fallback' as const };
@@ -542,8 +757,10 @@ app.get('/api/market-data', orchestrator.handle('Market Feed'), async (req, res)
 
 const CRYPTO_SYMBOLS = ['BTC', 'ETH', 'SOL', 'ADA', 'XRP', 'DOT', 'DOGE', 'AVAX', 'LINK', 'MATIC'];
 
+// Helper to fetch daily historical data from Alpha Vantage
 async function fetchAlphaVantageDailyHistory(symbol: string, isCrypto: boolean, key: string): Promise<{ date: string, close: number }[] | null> {
   try {
+    const fn = isCrypto ? 'DIGITAL_CURRENCY_DAILY' : 'TIME_SERIES_DAILY';
     let url = '';
     if (isCrypto) {
       url = `https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_DAILY&symbol=${symbol}&market=USD&apikey=${key}`;
@@ -559,16 +776,16 @@ async function fetchAlphaVantageDailyHistory(symbol: string, isCrypto: boolean, 
     }
 
     const data: any = await res.json();
-    if (data['Note']) {
+    if (data["Note"]) {
       console.warn(`[Alpha Vantage] Rate limit reached for ${symbol}`);
       return null;
     }
-    if (data['Error Message']) {
-      console.warn(`[Alpha Vantage] Error message for ${symbol}: ${data['Error Message']}`);
+    if (data["Error Message"]) {
+      console.warn(`[Alpha Vantage] Error message for ${symbol}: ${data["Error Message"]}`);
       return null;
     }
 
-    const seriesKey = isCrypto ? 'Time Series (Digital Currency Daily)' : 'Time Series (Daily)';
+    const seriesKey = isCrypto ? "Time Series (Digital Currency Daily)" : "Time Series (Daily)";
     const series = data[seriesKey];
     if (!series) {
       console.warn(`[Alpha Vantage] No series data found under key "${seriesKey}" for ${symbol}. Response keys: ${Object.keys(data).join(', ')}`);
@@ -579,10 +796,11 @@ async function fetchAlphaVantageDailyHistory(symbol: string, isCrypto: boolean, 
     const keys = Object.keys(series);
     for (const dateStr of keys) {
       const entry = series[dateStr];
-      const closeKey = isCrypto ? '4a. close (USD)' : '4. close';
+      const closeKey = isCrypto ? "4a. close (USD)" : "4. close";
       const closeVal = parseFloat(entry[closeKey]);
       if (isNaN(closeVal)) continue;
 
+      // Convert date "YYYY-MM-DD" to "DD.MM.YY"
       const parts = dateStr.split('-');
       if (parts.length === 3) {
         const formattedDate = `${parts[2]}.${parts[1]}.${parts[0].substring(2)}`;
@@ -590,6 +808,7 @@ async function fetchAlphaVantageDailyHistory(symbol: string, isCrypto: boolean, 
       }
     }
 
+    // Sort chronologically (earliest to latest)
     history.sort((a, b) => {
       const partsA = a.date.split('.');
       const partsB = b.date.split('.');
@@ -609,6 +828,7 @@ async function fetchAlphaVantageDailyHistory(symbol: string, isCrypto: boolean, 
   }
 }
 
+// Real-time on-demand Alpha Vantage Quote Proxy
 app.get('/api/alpha-vantage-quote', orchestrator.handle('Alpha Vantage Quote'), async (req, res) => {
   const { symbol } = req.query;
   const key = process.env.ALPHA_VANTAGE_KEY;
@@ -637,20 +857,20 @@ app.get('/api/alpha-vantage-quote', orchestrator.handle('Alpha Vantage Quote'), 
     }
 
     const data: any = await response.json();
-    if (data['Note']) {
+    if (data["Note"]) {
       return res.status(429).json({ error: 'Alpha Vantage Rate-Limit erreicht (5 Anfragen pro Minute). Bitte kurz warten.' });
     }
-    if (data['Error Message']) {
-      return res.status(400).json({ error: `Fehler von Alpha Vantage: ${data['Error Message']}` });
+    if (data["Error Message"]) {
+      return res.status(400).json({ error: `Fehler von Alpha Vantage: ${data["Error Message"]}` });
     }
 
     if (isCrypto) {
-      const rateObj = data['Realtime Currency Exchange Rate'];
+      const rateObj = data["Realtime Currency Exchange Rate"];
       if (!rateObj) {
         return res.status(444).json({ error: 'Keine Wechselkursdaten gefunden.', raw: data });
       }
-      const price = parseFloat(rateObj['5. Exchange Rate']);
-      const lastRefreshed = rateObj['6. Last Refreshed'];
+      const price = parseFloat(rateObj["5. Exchange Rate"]);
+      const lastRefreshed = rateObj["6. Last Refreshed"];
       res.json({
         symbol: rawSymbol,
         price,
@@ -659,21 +879,21 @@ app.get('/api/alpha-vantage-quote', orchestrator.handle('Alpha Vantage Quote'), 
         timestamp: lastRefreshed
       });
     } else {
-      const quoteObj = data['Global Quote'];
+      const quoteObj = data["Global Quote"];
       if (!quoteObj || Object.keys(quoteObj).length === 0) {
         return res.status(444).json({ error: 'Keine Kursdaten für dieses Symbol gefunden.', raw: data });
       }
-      const price = parseFloat(quoteObj['05. price']);
-      const changePercentStr = quoteObj['10. change percent'] || '0%';
+      const price = parseFloat(quoteObj["05. price"]);
+      const changePercentStr = quoteObj["10. change percent"] || "0%";
       const change24h = parseFloat(changePercentStr.replace('%', ''));
-      const volume = parseFloat(quoteObj['06. volume']);
+      const volume = parseFloat(quoteObj["06. volume"]);
       res.json({
         symbol: rawSymbol,
         price,
         change24h: isNaN(change24h) ? 0.0 : change24h,
         volume: isNaN(volume) ? undefined : volume,
         source: 'Alpha Vantage',
-        timestamp: quoteObj['07. latest trading day']
+        timestamp: quoteObj["07. latest trading day"]
       });
     }
   } catch (err: any) {
@@ -681,21 +901,31 @@ app.get('/api/alpha-vantage-quote', orchestrator.handle('Alpha Vantage Quote'), 
   }
 });
 
+
+// ADR-0014 Phase 3.2: GET /api/docs-file is now owned by the canonical, read-only documentation
+// boundary (server/routes/documentationRoutes.ts). The POST write handler below is deliberately
+// NOT migrated - it mutates repository documentation at runtime, which R-002 requires production
+// runtime artifacts to never do. Its retirement remains a separate, dedicated governance change
+// (see documentationRoutes.ts's own doc comment and tests/server/domainDecompositionPhase32.contract.test.ts).
 app.use(createDocumentationRouter());
 
+// Endpoint to write or update local documentation files in the /docs folder (staging/git integration support)
 app.post('/api/docs-file', express.json(), (req, res) => {
   const { path: docPath, content } = req.body;
   if (!docPath || content === undefined) {
     return res.status(400).json({ error: 'Path and content parameters are required.' });
   }
 
+  // Sanitize path to prevent directory traversal
   const sanitizedPath = String(docPath)
-    .replace(/\.\./g, '')
-    .replace(/\\/g, '/')
+    .replace(/\.\./g, '') // Remove parent directory attempts
+    .replace(/\\/g, '/')   // Normalize slashes
     .trim();
 
+  // Construct absolute file path
   const absolutePath = path.join(process.cwd(), 'docs', sanitizedPath);
 
+  // Verify that the file remains within the /docs folder
   if (!absolutePath.startsWith(path.join(process.cwd(), 'docs'))) {
     return res.status(403).json({ error: 'Access denied: Path lies outside of secure /docs boundary.' });
   }
@@ -712,8 +942,20 @@ app.post('/api/docs-file', express.json(), (req, res) => {
   }
 });
 
+
+
+
+
+// ADR-0014 Phase 3.2: GET /api/backtest-history is now owned by the canonical history boundary
+// (server/routes/historyRoutes.ts) - identical registry-backed semantics, same range handling.
 app.use(createHistoryRouter());
 
+// SC-2 C2b: `/api/charts-scoring` is owned by legacyScoringCompatibilityRoutes.ts as an
+// explicitly NON_PRODUCTION_SIMULATION surface. The superseded local handler was removed.
+
+// Meme-only fallback handlers. Standard-Crypto is intercepted by the earlier compatibility
+// router and must never reach this historical boundary. If route ordering regresses, deny rather
+// than silently reintroducing a direct Standard-Crypto model-selection/execution path.
 app.get('/api/crypto-scoring/:symbol', async (req, res) => {
   const quota = await enforceScreeningQuota(req);
   if (!quota.allowed) {
@@ -747,6 +989,7 @@ app.get('/api/crypto-scoring/:symbol', async (req, res) => {
   });
 });
 
+// Meme-only what-if fallback until C3 migrates Meme scoring behind the canonical dispatcher.
 app.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
   const quota = await enforceScreeningQuota(req);
   if (!quota.allowed) {
@@ -787,6 +1030,18 @@ app.post('/api/crypto-scoring/:symbol', express.json(), async (req, res) => {
   });
 });
 
+// GET all registry assets (highly efficient, zero rate-limit risk)
+
+
+// GET /api/market-sentiment wird vom modularen fail-closed Router bereitgestellt.\
+\
+// POST Simulate real-time market sentiment shock scenarios
+// ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): Nutzerentscheidung - auf die Anthropic -> OpenAI
+// -> Anthropic-/OpenAI-Kette umgestellt (kein Google-Search-Grounding hier, anders als /api/market-sentiment
+// oben - reine Reasoning-Aufgabe ohne Gemini-spezifische Abhaengigkeit). Ueber
+// generateStructuredWithFallback statt responseMimeType: der bisherige Ansatz (JSON-Format nur
+// im Prompt beschrieben) funktioniert bei Gemini leidlich, bei Anthropic/OpenAI unzuverlaessig
+// ohne echtes Schema - responseSchema/tool_choice/response_format erzwingen die Form strukturell.
 app.post('/api/market-sentiment/simulate-shock', express.json(), orchestrator.handle('Market Sentiment Simulator'), async (req, res) => {
   if (!anthropic && !openai) {
     return res.status(500).json({ error: 'Kein KI-Provider konfiguriert (ANTHROPIC_API_KEY oder OPENAI_API_KEY erforderlich).' });
@@ -836,32 +1091,39 @@ Berechne den potenziellen Einfluss: originalScore (0-100, normales Sentiment vor
     res.json(result.data);
   } catch (error: any) {
     console.error('Error simulating market sentiment shock:', error);
-
+    
+    // Quantitative simulation fallback to avoid failure
     let originalScore = 55;
     let newScore = 40;
-    let impactLabel = 'Negativ';
-    let riskLevel = 'Hoch';
-
+    let impactLabel = "Negativ";
+    let riskLevel = "Hoch";
+    
     if (shockScenario.toLowerCase().includes('senkt') || shockScenario.toLowerCase().includes('cut') || shockScenario.toLowerCase().includes('beat') || shockScenario.toLowerCase().includes('positive')) {
       newScore = 75;
-      impactLabel = 'Positiv';
-      riskLevel = 'Niedrig';
+      impactLabel = "Positiv";
+      riskLevel = "Niedrig";
     }
-
+    
     res.json({
       originalScore,
       newScore,
       impactLabel,
       transmissionMechanism: `Die Simulation prognostiziert, dass "${shockScenario}" signifikante makroökonomische Ströme auslöst. Bei ${symbol} führt dies zu einer unmittelbaren Umschichtung von Liquidität und einer Anpassung der Risikoprämien im ${assetClass}-Sektor.`,
       predictedDrivers: [
-        { text: `Unmittelbare Markt-Reaktion auf "${shockScenario}"`, impact: impactLabel === 'Positiv' ? 'Bullisch' : 'Bearisch' },
-        { text: 'Umschichtung von Portfolio-Liquidität', impact: 'Neutral' }
+        { text: `Unmittelbare Markt-Reaktion auf "${shockScenario}"`, impact: impactLabel === "Positiv" ? "Bullisch" : "Bearisch" },
+        { text: `Umschichtung von Portfolio-Liquidität`, impact: "Neutral" }
       ],
       riskLevel
     });
   }
 });
 
+
+// POST AI-driven portfolio allocation analysis
+// ARCH-AUDIT-0002 (J3-Folge/J4, Kapitel 14.6): Nutzerentscheidung - auf die Anthropic -> OpenAI
+// -> Anthropic-/OpenAI-Kette umgestellt, aus denselben Gruenden wie beim Sentiment-Schock-Endpunkt oben
+// (reine Reasoning-Aufgabe, kein Gemini-spezifisches Feature, echtes Schema statt
+// responseMimeType-Konvention).
 app.post('/api/portfolio-review', express.json(), orchestrator.handle('Portfolio Review'), async (req, res) => {
   if (!anthropic && !openai) {
     return res.status(500).json({ error: 'Kein KI-Provider konfiguriert (ANTHROPIC_API_KEY oder OPENAI_API_KEY erforderlich).' });
@@ -903,8 +1165,9 @@ Generiere ein professionelles, fundiertes Review in deutscher Sprache: executive
 
     res.json(result.data);
   } catch (error: any) {
-    console.log('[System Notice] Portfolio Review generator: utilizing quantitative dynamic metrics.');
-
+    console.log("[System Notice] Portfolio Review generator: utilizing quantitative dynamic metrics.");
+    
+    // Compute a high-quality analysis based on actual provided portfolio metrics
     const alloc = Array.isArray(allocation) ? allocation : [];
     const isCryptoHeavy = alloc.some((item: any) => {
       const isCrypto = ['BTC', 'ETH', 'SOL', 'ADA'].includes(String(item.symbol || '').toUpperCase());
@@ -917,8 +1180,8 @@ Generiere ein professionelles, fundiertes Review in deutscher Sprache: executive
     const maxDd = metrics3Y?.maxDrawdown || metrics1Y?.maxDrawdown || 15;
     const annualReturn = metrics3Y?.strategyReturn || metrics1Y?.strategyReturn || 10;
 
-    let executiveSummary = '';
-    let riskAssessment = '';
+    let executiveSummary = "";
+    let riskAssessment = "";
     const optimizations = [];
 
     if (sharpe >= 1.5) {
@@ -933,47 +1196,66 @@ Generiere ein professionelles, fundiertes Review in deutscher Sprache: executive
     }
 
     if (isCryptoHeavy) {
-      optimizations.push('Reduzierung des hohen Krypto-Gewichts (aktuell über 30%) zur drastischen Senkung der Portfolio-Volatilität und des maximalen Drawdowns.');
+      optimizations.push("Reduzierung des hohen Krypto-Gewichts (aktuell über 30%) zur drastischen Senkung der Portfolio-Volatilität und des maximalen Drawdowns.");
     } else if (!isCryptoHeavy && alloc.length > 0) {
-      optimizations.push('Erwägen Sie eine kleine, kontrollierte Beimischung (3-5%) von etablierten Kryptowerten (BTC/ETH), um das Gesamtrenditepotenzial bei moderatem Risikoaufschlag zu optimieren.');
+      optimizations.push("Erwägen Sie eine kleine, kontrollierte Beimischung (3-5%) von etablierten Kryptowerten (BTC/ETH), um das Gesamtrenditepotenzial bei moderatem Risikoaufschlag zu optimieren.");
     }
 
     if (!hasGold) {
-      optimizations.push('Integration einer defensiven, unkorrelierten Komponente wie Gold (GLD) mit 5-10% Gewichtung zur signifikanten Absicherung bei geopolitischen Krisen und globalen Markt-Drawdowns.');
+      optimizations.push("Integration einer defensiven, unkorrelierten Komponente wie Gold (GLD) mit 5-10% Gewichtung zur signifikanten Absicherung bei geopolitischen Krisen und globalen Markt-Drawdowns.");
     } else {
-      optimizations.push('Systematisches, antizyklisches Rebalancing des Gold-Anteils zur kontinuierlichen Gewährleistung der Absicherungsfunktion.');
+      optimizations.push("Systematisches, antizyklisches Rebalancing des Gold-Anteils zur kontinuierlichen Gewährleistung der Absicherungsfunktion.");
     }
 
     if (maxDd > 20) {
-      optimizations.push('Erhöhung des Anteils an liquiden Blue-Chip-Aktien oder konservativen Devisen (z.B. USDCHF), um den maximalen Drawdown unter die kritische Schwelle von 20% zu stabilisieren.');
+      optimizations.push(`Erhöhung des Anteils an liquiden Blue-Chip-Aktien oder konservativen Devisen (z.B. USDCHF), um den maximalen Drawdown unter die kritische Schwelle von 20% zu stabilisieren.`);
     } else {
-      optimizations.push('Optimierung der Rebalancing-Frequenz (z.B. quartalsweise), um Marktgewinne systematisch zu sichern und Abweichungen von der strategischen Asset-Allokation zu minimieren.');
+      optimizations.push("Optimierung der Rebalancing-Frequenz (z.B. quartalsweise), um Marktgewinne systematisch zu sichern und Abweichungen von der strategischen Asset-Allokation zu minimieren.");
     }
 
-    res.json({
+    const fallbackReview = {
       executiveSummary,
       riskAssessment,
       optimizations
-    });
+    };
+
+    res.json(fallbackReview);
   }
 });
 
+
 async function startServer() {
+  // Deploy-Härtung: Secrets VOR jedem anderen Startup-Schritt prüfen. Bewusst
+  // synchron und ganz am Anfang, weil validateRuntimeSecrets() in Produktion bei
+  // fehlenden/unplausiblen kritischen Secrets process.exit(1) auslöst - der Server
+  // soll dann gar nicht erst anfangen, Verbindungen anzunehmen.
   validateRuntimeSecrets(isProductionEnv);
+
+  // Compliance-Review Punkt 2: IAM-Schema-Health-Check EINMALIG beim Start, statt
+  // stillschweigend erst beim ersten Admin-Request zu bemerken, dass profiles.iam_role
+  // fehlt. Blockiert den Start nicht (ein vorübergehend nicht erreichbares Supabase soll
+  // nicht den ganzen Server verhindern) - checkAdminAccess() bleibt aber fail-closed,
+  // falls der Check fehlschlägt.
   await runIamSchemaHealthCheck();
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: 'spa',
+      appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
+    // SEO-GM-ROADMAP-0002 / WP-D3: no directory redirect (avoids Q2 vs S2 prerender dir ping-pong);
+    // public HTML is owned by the allow-list SPA fallback (unknown → real 404).
     app.use(express.static(distPath, { redirect: false, index: false }));
     registerProductionSpaFallback(app, distPath);
   }
 
+  // Compliance-Review Punkt 1: globale Express-Error-Middleware (4 Argumente = von
+  // Express als Error-Handler erkannt) als letztes Glied der Kette. Fängt alles ab,
+  // was über asyncHandler()/next(err) hierher durchgereicht wird, statt dass der
+  // Request ohne Antwort hängen bleibt oder der Prozess abstürzt.
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     serverLogger.error('Unbehandelter Route-Fehler', {
       requestId: req.requestId,
@@ -990,16 +1272,20 @@ async function startServer() {
   let marketDataRefreshTimer: NodeJS.Timeout | null = null;
   let shutdownStarted = false;
 
-  const httpServer = app.listen(PORT, '0.0.0.0', () => {
+  const httpServer = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
-
+    
+    // Production remains immutable/read-only; the watcher only starts in writable non-production runtimes.
     startRecursiveFileWatcher();
 
+    // One best-effort, read-only Market Data GET verifies Alpaca configuration/authentication.
+    // The diagnostic is deliberately redacted and never affects readiness, canonical prices or scores.
     void runAlpacaShadowStartupSmoke()
       .then((summary) => serverLogger.info('Alpaca shadow startup smoke', summary))
       .catch(() => serverLogger.warn('Alpaca shadow startup smoke failed without a provider observation.'));
-
-    console.log('[Market Data] Initiating background fetch to populate AssetRegistry...');
+    
+    // Start automatic background market data fetching to keep the assetRegistry fresh
+    console.log("[Market Data] Initiating background fetch to populate AssetRegistry...");
     marketDataRuntime.backgroundRefresh().then(data => {
       if (data) {
         console.log(`[Market Data] Successfully pre-cached ${data.length} assets on startup.`);
@@ -1011,16 +1297,24 @@ async function startServer() {
     marketDataRefreshTimer = setInterval(async () => {
       const data = await marketDataRuntime.backgroundRefresh();
       if (data) {
-        console.log('[Market Data] Background cache refresh completed.');
+        console.log("[Market Data] Background cache refresh completed.");
       } else {
-        console.warn('[Market Data] Background refresh failed.');
+        console.warn("[Market Data] Background refresh failed.");
       }
-    }, 60 * 1000);
+    }, 60 * 1000); // refresh every 60s
 
+    // ADR-0054 / R-101: start the durable outbox worker poll loop (job handlers registered
+    // above, at module load). No-op per tick in local development without Supabase configured.
     startOutboxWorker();
+
+    // ADR-0037 / security hardening: diagnostics expose configuration presence only.
+    // Never log key prefixes, lengths or partial Price IDs in production telemetry.
     serverLogger.info('Stripe configuration validation', getStripeConfigurationStatus(getCleanEnv));
   });
 
+  // ADR-0037: Render sends SIGTERM during deploy/restart. Stop periodic work first, then
+  // drain the HTTP server. A bounded force-exit stays below Render's 30 second shutdown
+  // window so the old instance cannot linger indefinitely.
   const shutdown = (signal: 'SIGTERM' | 'SIGINT') => {
     if (shutdownStarted) return;
     shutdownStarted = true;
