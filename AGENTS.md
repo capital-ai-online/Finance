@@ -2,6 +2,14 @@
 
 This document contains persistent rules, architectural standards, and data integrity mandates that apply to all current and future modules, components, and backend logics of the CAPITAL-AI platform.
 
+## Governance authority resolution
+
+Agents MUST resolve conflicting instructions according to `docs/governance/GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md` once ADR-0086 is Human-merged. Until then, existing applicable law, explicit Human/Owner decisions and Accepted ADRs remain controlling.
+
+Document recency alone does not create authority. `PROPOSED`, `DRAFT` or `NOT ENABLED` ADR/ESS material may be used as design input but MUST NOT be treated as the sole authorization for merge, production mutation, capability elevation, security-control weakening or semantic supersession of an Accepted Decision.
+
+Historical evidence remains historical evidence. It must not be silently deleted merely because a later Accepted Decision changed the current process.
+
 ---
 
 ## 🛡️ Critical Directive: Zero-Breach Data Integrity & Access Habilitation
@@ -40,11 +48,11 @@ All modules, components, and backend systems MUST enforce the following core dir
 
 ---
 
-## 🔒 Human-Authorized Pull Request & Multi-Agent Coordination — ADR-0039
+## 🔒 Human-Authorized Pull Request & Multi-Agent Coordination
 
 This section is provider-neutral and applies to **all AI models, MCP hosts, LLM gateways, coding agents and human-assisted automation**.
 
-Where this section conflicts with the former timing-/pipeline-control rules introduced by ADR-0036, **ADR-0039 supersedes those process-control rules**.
+`ADR-0039-human-authorized-pr-creation-and-advisory-governance.md` remains `PROPOSED` and is therefore a design/process reference, not the sole Accepted authority. Current PR/CI authority is resolved through the root directives, Accepted ADR-0069 including the Owner addendum dated 2026-08-16, `HUMAN_OWNER_PR_APPROVAL_POLICY.md`, and `DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`.
 
 ### Mandatory PR creation authorization
 
@@ -55,10 +63,10 @@ Before ChatGPT creates **every new Pull Request**, ChatGPT MUST:
 1. inspect the intended scope and current `main`;
 2. perform the available read-only production-baseline and concurrent-PR checks;
 3. summarize the intended PR scope, relevant risks, technical validation evidence, production drift and any detected overlap;
-4. explicitly ask the user whether this specific Pull Request may be created; and
-5. wait for an explicit affirmative answer before creating that Pull Request.
+4. obtain explicit user authorization for that specific Pull Request, unless a separately Accepted and currently valid Roadmap Execution Mandate explicitly grants standing PR-creation authority for the exact scope; and
+5. keep that authorization single-use and scope-bound.
 
-Approval is **single-use and scope-bound**. Approval for one PR, one previous action, one build, one branch or one merge MUST NOT be reused as authorization for a different PR. A materially expanded scope requires a new authorization request.
+A materially expanded scope requires a new authorization decision unless the expansion remains explicitly inside an active mandate.
 
 ### No PR creation deadline
 
@@ -77,7 +85,7 @@ current production commit -> current main -> candidate branch
 However:
 
 - production drift MUST NOT fail the sandbox/build pipeline solely because drift exists;
-- production baseline evidence should be reported to the user before PR creation and rechecked before protected release/deployment actions;
+- production baseline evidence should be reported before PR creation and rechecked before protected release/deployment actions;
 - a human operator decides whether identified drift requires rebase, rescope, sequencing or release deferral.
 
 `scripts/pr/productionPreflight.mjs` remains an on-demand diagnostic utility, not a mandatory build-pipeline authorization gate.
@@ -86,7 +94,7 @@ However:
 
 Concurrent work still requires coordination, but build CI MUST NOT reject a technically valid candidate solely because another PR lacks a work claim or overlaps a claimed scope.
 
-Before asking for PR creation approval, ChatGPT SHOULD inspect open PR changed files and available work-claim metadata. If overlap is detected, ChatGPT MUST disclose it and recommend one of:
+Before PR creation, agents SHOULD inspect open PR changed files and available work-claim metadata. If overlap is detected, the agent MUST disclose it and recommend one of:
 
 - rescope the candidate;
 - sequence the changes;
@@ -111,9 +119,13 @@ Pull Request CI is limited to technical candidate integrity, including as applic
 
 Technical CI MUST NOT infer human approval from a green result.
 
+**Current pre-M10 rule:** the former PR-body checkbox / Files-Viewed / current-head `💪` or `okay` ritual was retired by the Accepted ADR-0069 Owner addendum on 2026-08-16. Technical CI therefore starts without that legacy ceremony. Historical evidence may still describe it.
+
+**M10 rule:** after Controlled Cutover, Passkey/WebAuthn `AUTHORIZE_PR_CI` becomes the strong CI-authorization layer exactly as defined by the M10 runbook. Agents MUST NOT claim that cutover, Owner enrollment or recovery verification is complete without the required Human/Owner evidence.
+
 ### PR body / review evidence
 
-The canonical PR template should record that explicit PR-creation authorization was obtained, but that record is review evidence rather than a sandbox-build authorization mechanism.
+The canonical PR template records scope, authority, risk, baseline, validation and Human Merge requirements. PR-body metadata is evidence; it does not independently manufacture protected authority.
 
 ### MCP / LLM gateway security boundary
 
@@ -131,9 +143,20 @@ New/modified workflows must use explicit least-privilege permissions, immutable 
 
 ### Merge authority
 
-CI success is necessary but not sufficient. AI agents do not self-approve architecture/security changes. Human/CODEOWNER approval remains required where repository rules or the change risk require it.
+CI success is necessary but not sufficient. AI agents do not self-approve architecture/security changes. **MERGE remains Human/Owner-only** and requires a separate explicit Human merge decision for the concrete PR.
 
-Normative details: `docs/architecture/PR_MULTI_AGENT_GOVERNANCE.md` and `docs/adr/ADR-0039-human-authorized-pr-creation-and-advisory-governance.md`.
+Normative/current details:
+
+- `docs/adr/ADR-0069-human-owner-comment-gate-and-dispatched-pr-ci.md`
+- `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`
+- `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`
+- `docs/governance/PR_CHECK_CLASSIFICATION.md`
+- `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`
+
+Design/reference detail:
+
+- `docs/adr/ADR-0039-human-authorized-pr-creation-and-advisory-governance.md` (`PROPOSED`)
+- `docs/architecture/PR_MULTI_AGENT_GOVERNANCE.md`
 
 ---
 
@@ -157,13 +180,13 @@ While the REM is valid and the requested work is completely inside its declared 
 
 The agent MUST NOT ask again for per-PR creation authorization when the PR is fully covered by the active REM. The PR body must name the `mandateId` and Roadmap work package.
 
-If no valid REM exists, or if scope/target/risk materially expands, the normal ADR-0039 per-PR authorization rule applies immediately.
+If no valid REM exists, or if scope/target/risk materially expands, the normal per-PR authorization rule applies immediately.
 
 ### Non-delegable boundary
 
-`MERGE` is never delegated. Human/Owner current-head review, Viewed attestations, scope-appropriate CI and a separate explicit Human merge instruction remain mandatory.
+`MERGE` is never delegated. Scope-appropriate CI, current diff review and a separate explicit Human merge instruction remain mandatory. The historical checkbox/Files-Viewed/emoji ceremony is **not** a current prerequisite. After M10 Controlled Cutover, the runbook-defined Passkey/WebAuthn authorization applies to `AUTHORIZE_PR_CI` without delegating Merge.
 
-Owner/admin IAM elevation, Owner MFA/break-glass, secret disclosure, destructive production data operations, live billing-money/entitlement mutations, production-resource deletion, DNS/TLS/domain ownership changes, security-control weakening and expansion of the agent's own REM remain Human/Owner-only unless a future dedicated ADR explicitly replaces one boundary with equivalent or stronger assurance.
+Owner/admin IAM elevation, Owner MFA/break-glass, secret disclosure, destructive production data operations, live billing-money/entitlement mutations, production-resource deletion, DNS/TLS/domain ownership changes, security-control weakening and expansion of the agent's own REM remain Human/Owner-only unless a future dedicated Accepted ADR explicitly replaces one boundary with equivalent or stronger assurance.
 
 External production mutation authority is not implied by the Systemadmin role. It requires separate REM-bound technical Control-Plane enforcement and verification before use.
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AGENT_CAPABILITIES } from '../../src/platform/Security/agentIam';
 import {
   ROADMAP_EXECUTION_MUTATION_CLASSES,
@@ -17,6 +17,8 @@ import {
   type SystemadminChatExecutionCheckpoint,
   type SystemadminChatExecutionProfileRequest,
 } from '../../src/platform/Security/systemadminExecutionProfile';
+
+const TEST_NOW = '2026-08-12T06:30:00.000Z';
 
 const prohibitedMutationClasses: readonly RoadmapExecutionMutationClass[] = [
   ROADMAP_EXECUTION_MUTATION_CLASSES.MERGE,
@@ -114,7 +116,7 @@ function authorization(
       openPullRequestChangedPaths: [],
       ciBudgetExceeded: false,
       unchangedHeadAlreadyValidated: false,
-      now: '2026-08-12T06:30:00.000Z',
+      now: TEST_NOW,
       ...executionOverrides,
     },
   };
@@ -138,6 +140,15 @@ function profileRequest(
     },
   };
 }
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date(TEST_NOW));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('SA2 Systemadmin Chat Execution Profile', () => {
   it('keeps the delegated capability surface exact and excludes deploy/production/merge', () => {
