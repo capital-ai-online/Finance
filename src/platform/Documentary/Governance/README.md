@@ -1,165 +1,71 @@
 # Documentation Governance Validator
 
-## Enterprise Component
-
-Status: Unspecified (vollständig spezifiziert per ESS-0012, jedoch 0 Code-Dateien — siehe „Implementierungsstand" unten)
-
-Version: 1.0.0
-
-Layer: Documentary
-
-Owner: Documentary Engine
-
----
+**Domain:** Documentary  
+**Authority:** `ESS-0012 — Documentation Governance`  
+**Global governance dependency:** `src/platform/Governance` / `/AGENTS.md`  
+**Version:** `1.1.0`  
+**Status:** specified; documentation-domain implementation may be added incrementally
 
 ## Purpose
 
-Der Documentation Governance Validator ist die Prüfinstanz der Documentary Engine.
+The Documentation Governance Validator belongs to the Documentary domain. It validates **documentary structure and metadata** and produces findings. It does not define repository-wide authorization, agent authority, merge policy, production mutation authority or global governance precedence.
 
-Er überprüft sämtliche Dokumentation, Regeln, Metadaten und Beziehungen des Repositories
-automatisch auf Konsistenz, Vollständigkeit und Governance-Konformität.
+The repository-wide governance control plane is `src/platform/Governance`, resolved from `/AGENTS.md`, `docs/governance/authority-registry.json` and `docs/governance/control-catalog.json`.
 
-Er erzeugt ausschließlich Befunde und Berichte.
+## Responsibilities
 
-Er trifft keine Entscheidungen, verändert keine Dokumentation und behebt keine Verstöße.
+Documentation Governance may validate:
 
----
+- canonical document placement and root-Markdown allowlists;
+- document registry structure, paths and metadata;
+- required document version/language/lifecycle metadata;
+- documentary references to ESS/ADR/contract identities;
+- documentation completeness and structural consistency;
+- documentation-related traceability findings;
+- documentary version projection and hygiene.
 
-## Abgrenzung
+It may emit findings/reports and expose reusable validation services to Documentary workflows.
 
-| Instanz | Verantwortung |
-|---|---|
-| Documentary Engine (ESS-0010) | erzeugt Wissen und Dokumentation |
-| **Governance Validator (ESS-0012)** | **prüft Dokumentation und Governance** |
-| Enterprise Traceability (ESS-0011) | verknüpft Artefakte bidirektional |
-| Supervisor (ESS-0002) | bewertet Befunde und eskaliert |
-| Platform Director (ESS-0003) | entscheidet |
+## Explicit non-responsibilities
 
-Der Validator stellt fest. Der Supervisor bewertet. Der Platform Director entscheidet.
+Documentation Governance MUST NOT:
 
----
+- define or supersede the repository-wide agent trust root;
+- create a second authority registry or control catalog;
+- decide Human/Owner authorization or merge eligibility;
+- reinterpret an ADR/ESS lifecycle contrary to `src/platform/Governance` resolution;
+- authorize production, IAM, billing, secret or external provider mutations;
+- duplicate global workflow/CI/deployment policy;
+- treat documentation recency alone as authority.
 
-## Struktur
+## Boundary with the global Governance component
 
 ```text
-Governance/
-  Contracts/    komponentenspezifische Contracts
-  Validators/   Einzelvalidatoren je Prüfbereich
-  Rules/        Regelwerk, deklarativ
-  Services/     Ausführung und Orchestrierung
-  Reports/      Berichtserzeugung
-  Events/       Event-Erzeugung und -Konsum
-  Models/       Datenmodelle
-  Interfaces/   öffentliche Schnittstellen
+src/platform/Governance
+  -> stable authority/control/evidence contracts
+  -> global structural governance validation
+  -> authority resolution
+
+src/platform/Documentary/Governance
+  -> document hygiene
+  -> metadata and registry validation
+  -> documentary consistency findings
 ```
 
-Jedes Unterverzeichnis besitzt genau eine Verantwortung gemäß ESS-0001-CONTRACTS Chapter 3.
+Documentation Governance consumes global stable identities; it does not own them.
 
----
+## Canonical inputs
 
-## Prüfbereiche
+- `ESS-0012 — Documentation Governance`
+- `ESS-0012-CONTRACTS`
+- `docs/governance/document-registry.json`
+- `docs/governance/DOCUMENTATION_HYGIENE_POLICY.md`
+- global governance contracts from `src/platform/Governance`
 
-| Bereich | Gegenstand |
-|---|---|
-| ESS | doppelte Regeln, fehlende Referenzen, ungültige Nummern, fehlende Cross-References, Widersprüche |
-| ADR | fehlende Referenzen, Widersprüche, veraltete ADRs, Breaking Changes ohne ADR |
-| Repository | README, CHANGELOG, manifest.json, component.yaml, Ownership |
-| Contracts | Duplikate, Widersprüche, ungültige und nicht referenzierte Contracts |
-| Dokumentation | Vollständigkeit, Aktualität, Versionierung, Konsistenz, Struktur, Formatierung |
-| Traceability | fehlende Beziehungen entlang ESS → ADR → Code → Test → Doku → Version → Release |
-| Knowledge Graph | verwaiste Knoten, doppelte, fehlende und inkonsistente Beziehungen |
-| Digital Twin | fehlende, neue, gelöschte und nicht synchronisierte Komponenten |
-| Versionierung | Versionskonflikte über Dokument-, Komponenten-, Repository-, ESS- und ADR-Version |
+## Implementation guidance
 
----
+The reusable hygiene logic proposed in parked PR #439 is compatible with this domain **only after** it is adapted to this boundary. Its useful validation implementation should be reused rather than recreated, but it must not become a competing repository-wide governance control plane.
 
-## ESS Reference
+## Decision model
 
-ESS-0012 — Documentation Governance
-
-ESS-0012-CONTRACTS — Documentation Governance Contracts
-
-ESS-0010 — Documentary Engine
-
-ESS-0011 — Enterprise Traceability
-
-ESS-0001-CONTRACTS — Master Enterprise Standard
-
----
-
-## ADR References
-
-ADR-0014 — Documentation Governance Validator
-
-ADR-0013 — ESS Documentation Responsibility Consolidation
-
-ADR-0010 — Enterprise Standard Extension
-
----
-
-## Dependencies
-
-Zulässig: Core, Shared, Registry, Discovery, Knowledge
-
-Unzulässig: VersionManager, Supervisor, PlatformDirector
-
-Die Kommunikation nach oben erfolgt ausschließlich über Enterprise Events.
-
----
-
-## Events
-
-**Erzeugt**
-
-DocumentationValidatedEvent
-
-GovernanceViolationDetectedEvent
-
-DuplicateContractDetectedEvent
-
-TraceabilityViolationEvent
-
-DigitalTwinOutOfSyncEvent
-
-RepositoryHealthUpdatedEvent
-
-**Konsumiert**
-
-RepositoryScannedEvent
-
-KnowledgeUpdatedEvent
-
-TwinSynchronizedEvent
-
-ComponentRegisteredEvent
-
-DocumentationGeneratedEvent
-
-VersionChangedEvent
-
----
-
-## Implementierungsstand
-
-Diese Komponente ist **spezifiziert, nicht implementiert**.
-
-Die Implementierung setzt die Umsetzungsstufen 1 bis 4 aus
-`docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md` voraus:
-
-| Stufe | Voraussetzung | Zustand |
-|---|---|---|
-| 1 | JSON-Schemata, vollständige Metadaten | offen |
-| 2 | Core, Interfaces, Models, Registry | offen |
-| 3 | Enterprise Event Bus | offen |
-| 4 | Validator-Basisklasse, Quality Gates | offen |
-
-Ohne diese Grundlagen wäre der Validator ein isoliertes Skript ohne Event-Anbindung,
-ohne Registry-Eintrag und ohne Twin-Integration — und damit selbst ein Governance-Verstoß.
-
----
-
-## Notes
-
-Spezifikation vollständig in ESS-0012 und ESS-0012-CONTRACTS.
-
-Skill-Beschreibung unter `.ai/skills/Documentation-Governance-Validator.md`.
+This component detects and reports documentary findings. Global authority resolution and protected-action decisions remain outside Documentary and are resolved through the Governance Control Plane and Human/Owner gates.
