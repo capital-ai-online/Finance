@@ -152,9 +152,13 @@ Therefore **Phase 6 Shadow / Negative / Recovery Assurance = VERIFIED PASS**.
 
 This does **not** mark M10 itself `COMPLETE`: the authoritative passkey CI gate, exactly-one approved-head CI proof, unapproved-CI suppression and post-cutover negative tests remain part of the separate Controlled Cutover work package.
 
+## Final validation
+
+Final evidence head prior to close was validated through the PR's documentation-only CI and Governance path. The assurance branch was re-correlated with current `main@24b70a794a7ce7dad62197f42a8948b347dbfbc3` at `0 behind`, with the M10 evidence file as the only branch delta.
+
 ## Lifecycle
 
 - PR #426 remains an evidence-only assurance probe.
 - It must not be merged into `main`.
-- After the final Documentation Fast Path, Governance and branch-vs-main correlation succeed, close PR #426.
+- Close PR #426 after this final evidence update is recorded; do not merge it.
 - Controlled Cutover must start on a new branch created fresh from then-current `main` and requires its own explicit PR authorization / Human merge boundary.
