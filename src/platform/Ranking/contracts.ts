@@ -5,8 +5,8 @@ import type { CanonicalScoreResult, DataQualityLevel } from '../../types/scoring
  * SC-7 cross-asset ranking contract.
  *
  * This layer ranks already-canonical results. It never executes a scoring model, changes a score,
- * or invents cross-model comparability. Cohort membership is explicit and cross-cohort ordering is
- * forbidden until a separately validated comparability contract exists.
+ * or invents cross-model/cross-segment comparability. Cohort membership is explicit and
+ * cross-cohort ordering is forbidden until a separately validated comparability contract exists.
  */
 export const CROSS_ASSET_RANKING_CONTRACT_VERSION = 'cross-asset-ranking/1.0.0' as const;
 
@@ -30,8 +30,9 @@ export interface CrossAssetRankingGovernance {
 }
 
 /**
- * Cross-model score comparability is never inferred from equal-looking numeric scales. A caller
- * must provide a separately validated normalization result with method/evidence lineage.
+ * Cross-model/cross-segment score comparability is never inferred from equal-looking numeric
+ * scales. A caller must provide a separately validated normalization result with method/evidence
+ * lineage before candidates from different default cohorts can share an ordering.
  */
 export interface ScoreComparabilityEvidence {
   normalizedValue: number;
@@ -64,9 +65,9 @@ export interface CanonicalRankingCandidate {
   /** Optional peer metadata. Required by tier mode. */
   tier?: 1 | 2 | 3 | null;
   /**
-   * Optional verified normalization evidence. When omitted, model id + version remains the cohort
-   * boundary. Supplying only a label is insufficient: a normalized value and method lineage are
-   * required before different model families can share a ranking cohort.
+   * Optional verified normalization evidence. When omitted, model id + version + asset class is
+   * the cohort boundary. Supplying only a label is insufficient: a normalized value and method
+   * lineage are required before different model/segment cohorts can share a ranking cohort.
    */
   scoreComparability?: ScoreComparabilityEvidence | null;
   /** Required by growth mode; ignored by score-based modes. */
@@ -123,7 +124,7 @@ export interface CrossAssetRankingCohort {
   key: string;
   mode: CrossAssetRankingMode;
   comparisonBasis:
-    | 'canonical-score-same-model'
+    | 'canonical-score-same-model-asset-class'
     | 'verified-normalized-score'
     | 'verified-growth-evidence';
   /** Cross-cohort positions are intentionally undefined. */
