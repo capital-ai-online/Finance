@@ -2,7 +2,7 @@
 
 Status date: 2026-08-19
 Baseline branch: `main`
-Closure baseline commit: `2d8e482174e97601d4343249e50d208ccf6f6355` (PR #430 merge; M10 closure candidate is based exactly on this main)
+Closure baseline commit: `eb75921316943c7b3cfaba4d185e2b7f47eb6853` (PR #433 merge; M10 closure is landed on main)
 Platform version: `0.6.0`
 Canonical role: current-state DevelopmentChain status index. Historical detail remains in ADR/evidence documents.
 Operational roadmap: `docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md`.
@@ -177,6 +177,7 @@ Repository/governance milestones relevant to this work package:
 - Phase 6 Shadow Mode reached `VERIFIED PASS` with real Owner WebAuthn, negative/recovery evidence and zero authoritative Shadow-side CI effects.
 - Controlled-Cutover PR #429 was Human-merged and deployed. Resolver and dispatcher credentials are separated; GitHub Actions OIDC is conjunctive with the one-time M10 consumption.
 - Post-cutover assurance PR #431 proved ordinary-event cheap DENY, real authoritative exact-head Owner approvals, exactly one authorized CI per approved head, duplicate/replay DENY, stale-state isolation, fresh recovery, OIDC/current-state workflow-gate verification and Human-only Merge separation.
+- Closure PR #433 was Human-merged as `eb75921316943c7b3cfaba4d185e2b7f47eb6853`; the remote branch `agent/m10-closure-verified-pass` was deleted after merge in accordance with the Branch Lifecycle Policy.
 - The single-device Phase-6 live drift timing exercise remained explicitly inconclusive and is not misrepresented; deterministic drift tests plus post-cutover stale-state isolation provide the required invariant evidence.
 - M10 is therefore **COMPLETE / VERIFIED PASS** under ADR-0066/ESS-0022 and `docs/evidence/m10/M10_CLOSURE_EVIDENCE_2026-08-19.md`.
 - M10 completion satisfies the M10 prerequisite for later SA5 design, but it does **not** authorize SA5 or any external production mutation. SA5 still needs its own accepted authority, exact Owner approval, fresh branch, least-privilege execution and pre/post mutation Evidence.
