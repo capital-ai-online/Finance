@@ -1,7 +1,7 @@
 # CAPITAL-AI Enterprise DevelopmentChain — Current-State Index
 
 **Authority ID:** `AUTH-GOV-DEVELOPMENT-CHAIN-STATUS`  
-**Version:** `2.0.0`  
+**Version:** `2.1.0`  
 **Status date:** `2026-08-19`  
 **Current repository baseline:** `main@59a2755de53297a934b062b380a313d68cd47492` — PR #445 merge  
 **Platform version:** `0.6.0`  
@@ -10,9 +10,9 @@
 
 ## Canonical role
 
-This file is the **current-state DevelopmentChain status index**. It intentionally does not duplicate detailed historical phase narratives. Historical implementation detail remains in the corresponding ADR, ESS, runbook and `docs/evidence/**` records.
+This file is the **current-state DevelopmentChain status index**. Historical implementation detail remains in ADR, ESS, runbook and `docs/evidence/**` records.
 
-`docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` is retained as an older implementation-roadmap snapshot and is **historical/non-authorizing for current execution state**. Current execution authority is resolved from `/AGENTS.md`, the Governance Control Plane registries and the effective DevelopmentChain/Human-Owner policies.
+`docs/roadmaps/DEVELOPMENT_CHAIN_ROADMAP.md` is an older implementation-roadmap snapshot and is **historical/non-authorizing for current execution state**.
 
 ## Current governance operating state
 
@@ -30,32 +30,15 @@ READ-ONLY BASELINE
 → VERIFIED MAIN DEPLOYMENT PATH, WHEN APPLICABLE
 ```
 
-Current policy authorities:
-
-- `/AGENTS.md` / `AUTH-GOV-AGENT-TRUST-ROOT`;
-- `docs/governance/authority-registry.json`;
-- `docs/governance/control-catalog.json`;
-- `docs/governance/DEVELOPMENT_CHAIN_EXECUTION_POLICY.md`;
-- `docs/governance/HUMAN_OWNER_PR_APPROVAL_POLICY.md`;
-- effective Accepted ADR/ESS authorities for the concrete work scope.
+Current policy resolves through `/AGENTS.md`, stable Governance/ADR/ESS registries, the Control Catalog, DevelopmentChain Execution Policy, Human Owner PR Approval Policy and effective domain authorities.
 
 ## M10 — historical verification versus current enforcement
 
-### Historical evidence
-
-M10 Passkey/WebAuthn `AUTHORIZE_PR_CI` was implemented, cut over and recorded as `COMPLETE / VERIFIED PASS` in the M10 evidence chain. Those records remain valid historical implementation and assurance evidence, including:
-
-- `docs/adr/ADR-0066-passkey-only-owner-pr-authorization.md`;
-- `.ai/skills/ESS-0022-Passkey-Only-Owner-PR-Authorization.md`;
-- `docs/architecture/ai-agent/M10_PASSKEY_OWNER_PR_AUTHORIZATION_THREAT_MODEL.md`;
-- `docs/runbooks/M10_PASSKEY_OWNER_PR_AUTHORIZATION.md`;
-- `docs/evidence/m10/M10_CLOSURE_EVIDENCE_2026-08-19.md`.
-
-### Current enforcement state
+M10 Passkey/WebAuthn `AUTHORIZE_PR_CI` has historical `COMPLETE / VERIFIED PASS` evidence. Those records remain valid historical evidence but **do not represent current enforcement**.
 
 **M10 PR-CI passkey enforcement is currently `SUSPENDED / OFF`.**
 
-After the deployment-recovery work merged in PR #445, normal Pull Request technical CI must not require an M10 Passkey. Historical M10 evidence, ADRs, ESS documents or runbooks do not automatically reactivate that gate.
+On current `main`, `.github/workflows/ci.yml` sets `M10_CI_GATE_ENABLED: 'false'`. Normal Pull Request technical CI therefore does not require M10 Passkey authorization; manual M10 `workflow_dispatch` is denied while the switch is off.
 
 Current PR path:
 
@@ -67,11 +50,22 @@ PR OPEN / UPDATE
 → Human Merge
 ```
 
-A future M10 reactivation requires a **new explicit Owner decision**, current-main correlation, architecture/security impact analysis and validated fail-closed implementation. Reactivation is not a documentation-only change.
+### Mandatory blockers before M10 reactivation
+
+M10 MUST remain off until all of the following are resolved and evidenced on then-current `main`:
+
+1. no duplicate or ambiguous ADR, ESS, Authority or current-state references remain in the correlated architecture;
+2. `src/platform/Governance` and `src/platform/Documentary/Governance` have one explicit non-overlapping responsibility model;
+3. README version projection/documentary hygiene and Version Manager/Release version contracts resolve to one current version source of truth;
+4. router-related governance/version references identified during cleanup are reconciled and cannot act as a second current-state source;
+5. structural Governance validation and independent hosted CI pass on the exact final candidate head;
+6. a new explicit Human/Owner decision approves controlled M10 reactivation.
+
+Historical M10 ADR/ESS/runbook/evidence cannot satisfy item 6 or reactivate the gate by citation.
 
 ## Deployment authority — current state
 
-Render native Auto Deploy is off. The current production-promotion authority is:
+Render native Auto Deploy is off. Current production promotion authority is:
 
 ```text
 Human Merge
@@ -82,59 +76,43 @@ Human Merge
 → post-deployment identity verification
 ```
 
-This current path was successfully exercised after PR #445. A second automatic Render deployment authority must not be introduced without an explicit architecture/security decision.
+A second automatic deployment authority requires a separate architecture/security decision.
 
-## DevelopmentChain phase status
+## DevelopmentChain / Governance status
 
-The table below separates historical phase completion evidence from **current enforcement state**. Earlier phase detail is not re-adjudicated by this governance cleanup.
-
-| Phase / area | Historical evidence state | Current interpretation |
+| Area | Historical evidence | Current state |
 |---|---|---|
-| M0–M8 DevelopmentChain foundations | retained in existing ADR/ESS/evidence | preserved; no current-state rewrite in this governance package |
-| M9 Assurance | historical closure/evidence retained | not a current PR-CI authorization mechanism |
-| M10 Passkey Owner PR Authorization | **historically COMPLETE / VERIFIED PASS** | **enforcement SUSPENDED / OFF** |
-| Human Merge | established control | **REQUIRED / current** |
-| GitHub hosted build-and-test | established control | **REQUIRED according to check class / current** |
-| Supply-chain attestation | established release control | **current for main production promotion** |
+| M0–M8 foundations | retained | preserved |
+| M9 Assurance | retained | not a current PR-CI authorization mechanism |
+| M10 Passkey Owner PR Authorization | historically COMPLETE / VERIFIED PASS | **SUSPENDED / OFF** |
+| Human Merge | established | **REQUIRED** |
+| GitHub hosted build-and-test | established | **REQUIRED according to check class** |
 | Render native auto-deploy | historical/native option | **OFF** |
-| Exact-SHA Render deploy hook | established release control | **current production deploy authority** |
-| Governance Control Plane consolidation | new Owner-directed work | **IN PROGRESS on `governance/control-plane-foundation-iso42001-ssdf`** |
+| exact-SHA Render deploy hook | established | **current production deploy authority** |
+| Governance Control Plane | Owner-directed | **IN PROGRESS on governance branch** |
+| #439 Documentary/README/versioning | reusable implementation | **parked pending Governance reconciliation** |
+| #442 Ranking | feature implementation | **parked pending Governance reconciliation** |
+| #446 Media ADR-0094 | parallel feature PR | **stable ADR reservation; new exact-head CI required before merge** |
 
 ## Agent capability architecture
 
-ESS-0019 remains the accepted provider-neutral **agent capability/risk/audit/execution plane**. Its own invariant `AI product != trust root` remains aligned with the current architecture.
-
-It is subordinate to `/AGENTS.md` and does not create a second repository trust root. Provider/model identity never creates Human/Owner authority.
+ESS-0019 remains the accepted provider-neutral capability/risk/audit/execution plane and is subordinate to `/AGENTS.md`. Repository-level provider instruction files are intentionally absent.
 
 ## Protected current invariants
 
 - no direct agent changes on `main`;
-- fresh scoped branch per work package;
-- final `main` synchronization immediately before PR creation;
-- open-PR semantic/file correlation before merge-readiness;
-- no fabricated build/test or production evidence;
-- technical evidence does not authorize merge;
-- Human/Owner-only merge remains separate;
-- M10 remains suspended until a new explicit Owner reactivation decision;
-- security-critical ambiguity fails closed;
-- no raw reusable credentials in model-visible evidence;
+- one scoped branch per work package;
+- final main synchronization and open-PR semantic/namespace correlation;
+- no fabricated evidence;
+- Human/Owner-only merge;
+- M10 remains off until the explicit reactivation exit criteria above are satisfied;
+- fail-closed treatment of security-critical ambiguity;
+- no reusable credentials in model-visible evidence;
 - external production mutations remain separately authorized;
-- Render native auto-deploy remains off under the current single-deployment-authority architecture;
-- exact deployed SHA must be independently verifiable;
-- historical evidence is retained and cannot silently regain current authority.
+- Render native auto-deploy remains off;
+- exact deployed SHA remains independently verifiable;
+- historical evidence cannot silently regain current authority.
 
 ## Current next action
 
-The repository-wide governance priority is the **Governance Control Plane consolidation** defined by `GOV-CP-2026-08-19`.
-
-Until that package is Human-merged:
-
-- PR #439 remains parked as reusable Documentation Hygiene implementation work;
-- PR #442 remains parked as feature work requiring post-governance authority/registry reconciliation;
-- new feature work must not become merge-ready while a correlated critical governance conflict remains unresolved.
-
-After the Governance Control Plane is merged, re-synchronize #439 and #442 with the new `main`, adapt their governance/registry references, run the applicable independent checks and then resume their normal Human-reviewed lifecycle.
-
-## Historical references
-
-Detailed phase history remains intentionally in existing evidence and runbooks. This current-state index supersedes older roadmap snapshots only for **current execution-state interpretation**; it does not rewrite or invalidate historical evidence.
+Complete Governance Control Plane consolidation and then reconcile #439/#442 and the then-current #446 state against the merged Governance baseline. M10 reactivation is not an active roadmap step until the documented blockers are closed.
