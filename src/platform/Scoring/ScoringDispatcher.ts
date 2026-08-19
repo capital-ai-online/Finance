@@ -205,7 +205,7 @@ export async function dispatchCanonicalScore(
     return buildDispatchFailure(asset, `Resolved model ${model.modelId}@${model.version} violates the canonical evidence/result binding required by ${CANONICAL_SCORING_DISPATCHER_VERSION}.`, model);
   }
 
-  if (asset.assetClass === 'crypto') {
+  if (input.assetClass === 'crypto') {
     if (model.executorKey !== VERIFIED_CRYPTO_TECHNICAL_EXECUTOR_KEY) {
       return buildDispatchFailure(asset, `Unexpected crypto executor binding: ${model.executorKey}.`, model);
     }
@@ -215,7 +215,7 @@ export async function dispatchCanonicalScore(
     return { status: 'DISPATCHED', dispatcherVersion: CANONICAL_SCORING_DISPATCHER_VERSION, asset, model, canonical, assessment: { ...assessment, canonical } };
   }
 
-  if (asset.assetClass === 'stock' || asset.assetClass === 'forex' || asset.assetClass === 'index') {
+  if (input.assetClass === 'stock' || input.assetClass === 'forex' || input.assetClass === 'index') {
     if (model.executorKey !== TRADITIONAL_SCORING_EXECUTOR_KEY) {
       return buildDispatchFailure(asset, `Unexpected traditional executor binding: ${model.executorKey}.`, model);
     }
@@ -228,7 +228,7 @@ export async function dispatchCanonicalScore(
     return { status: 'DISPATCHED', dispatcherVersion: CANONICAL_SCORING_DISPATCHER_VERSION, asset, model, canonical, assessment: { ...assessment, canonical } };
   }
 
-  if (asset.assetClass === 'commodity') {
+  if (input.assetClass === 'commodity') {
     if (model.executorKey !== COMMODITY_EVIDENCE_EXECUTOR_KEY) {
       return buildDispatchFailure(asset, `Unexpected commodity executor binding: ${model.executorKey}.`, model);
     }
@@ -241,7 +241,7 @@ export async function dispatchCanonicalScore(
     return { status: 'DISPATCHED', dispatcherVersion: CANONICAL_SCORING_DISPATCHER_VERSION, asset, model, canonical, assessment: { ...assessment, canonical } };
   }
 
-  if (asset.assetClass === 'bond') {
+  if (input.assetClass === 'bond') {
     if (model.executorKey !== SOVEREIGN_BENCHMARK_EXECUTOR_KEY) {
       return buildDispatchFailure(asset, `Unexpected sovereign executor binding: ${model.executorKey}.`, model);
     }
