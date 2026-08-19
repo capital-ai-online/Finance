@@ -5,6 +5,7 @@ import {
   rankCanonicalUniverse,
   type CanonicalRankingCandidate,
   type GrowthRankingEvidence,
+  type ScoreComparabilityEvidence,
 } from '../../src/platform/Ranking';
 import {
   CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
@@ -12,6 +13,7 @@ import {
   UNIVERSAL_ASSET_CONTRACT_VERSION,
   type UniversalAssetClass,
 } from '../../src/platform/Scoring/contracts';
+import { RANKING_SCORE_IMPACT_ENABLED } from '../../src/services/ranking.service';
 
 function candidate(options: {
   symbol: string;
@@ -21,7 +23,7 @@ function candidate(options: {
   modelVersion: string;
   category?: string;
   tier?: 1 | 2 | 3;
-  scoreComparisonKey?: string;
+  scoreComparability?: ScoreComparabilityEvidence;
   growth?: GrowthRankingEvidence;
 }): CanonicalRankingCandidate {
   const assetId = `${options.assetClass}:${options.symbol.toUpperCase()}`;
@@ -60,12 +62,28 @@ function candidate(options: {
     },
     category: options.category,
     tier: options.tier,
-    scoreComparisonKey: options.scoreComparisonKey,
+    scoreComparability: options.scoreComparability,
     growth: options.growth,
     governance: {
       eligible: true,
       operationsState: 'HEALTHY',
     },
+  };
+}
+
+function comparability(
+  normalizedValue: number,
+  comparisonKey = 'global-calibrated-score:v1',
+  methodVersion = 'cross-model-calibration/1.0.0',
+): ScoreComparabilityEvidence {
+  return {
+    normalizedValue,
+    comparisonKey,
+    methodVersion,
+    evidenceId: `calibration-${normalizedValue}`,
+    observedAt: '2026-08-19T09:59:00.000Z',
+    retrievedAt: '2026-08-19T10:00:00.000Z',
+    verified: true,
   };
 }
 
@@ -81,12 +99,13 @@ function growth(value: number, comparisonKey = 'total-return-pct:30d:v1'): Growt
 }
 
 describe('SC-7 cross-asset ranking generalization', () => {
-  it('is shadow-only and keeps productive ranking impact disabled', () => {
+  it('is shadow-only and keeps both legacy and cross-asset ranking impact disabled', () => {
     expect(CROSS_ASSET_RANKING_CONTRACT_VERSION).toBe('cross-asset-ranking/1.0.0');
     expect(CROSS_ASSET_RANKING_IMPACT_ENABLED).toBe(false);
+    expect(RANKING_SCORE_IMPACT_ENABLED).toBe(false);
   });
 
-  it('does not interleave different model families without an explicit comparability key', () => {
+  it('does not interleave different model families without verified normalization evidence', () => {
     const result = rankCanonicalUniverse(
       [
         candidate({
@@ -99,14 +118,14 @@ describe('SC-7 cross-asset ranking generalization', () => {
         candidate({
           symbol: 'AAPL',
           assetClass: 'stock',
-          score: 8.7,
+          score: 87,
           modelId: 'traditional-scoring',
           modelVersion: '2.1.0',
         }),
         candidate({
           symbol: 'EURUSD',
           assetClass: 'forex',
-          score: 8.2,
+          score: 82,
           modelId: 'traditional-scoring',
           modelVersion: '2.1.0',
         }),
@@ -117,12 +136,13 @@ describe('SC-7 cross-asset ranking generalization', () => {
     expect(result.status).toBe('READY');
     expect(result.cohorts).toHaveLength(2);
     expect(result.cohorts.every((cohort) => cohort.crossCohortOrder === false)).toBe(true);
+    expect(result.cohorts.every((cohort) => cohort.comparisonBasis === 'canonical-score-same-model')).toBe(true);
     const traditional = result.cohorts.find((cohort) => cohort.entries.some((entry) => entry.symbol === 'AAPL'));
     expect(traditional?.entries.map((entry) => entry.symbol)).toEqual(['AAPL', 'EURUSD']);
     expect(traditional?.entries.map((entry) => entry.rank)).toEqual([1, 2]);
   });
 
-  it('allows cross-model ranking only when an upstream validated scoreComparisonKey is explicit', () => {
+  it('allows cross-model ranking only with verified normalized comparison evidence', () => {
     const result = rankCanonicalUniverse(
       [
         candidate({
@@ -131,15 +151,15 @@ describe('SC-7 cross-asset ranking generalization', () => {
           score: 9.1,
           modelId: 'crypto-technical-provenance',
           modelVersion: '0.6.3',
-          scoreComparisonKey: 'calibrated-global-v1',
+          scoreComparability: comparability(91),
         }),
         candidate({
           symbol: 'AAPL',
           assetClass: 'stock',
-          score: 8.7,
+          score: 87,
           modelId: 'traditional-scoring',
           modelVersion: '2.1.0',
-          scoreComparisonKey: 'calibrated-global-v1',
+          scoreComparability: comparability(87),
         }),
       ],
       'overall',
@@ -147,7 +167,23 @@ describe('SC-7 cross-asset ranking generalization', () => {
 
     expect(result.cohorts).toHaveLength(1);
     expect(result.cohorts[0].entries.map((entry) => entry.symbol)).toEqual(['BTC', 'AAPL']);
-    expect(result.cohorts[0].comparisonBasis).toBe('canonical-score');
+    expect(result.cohorts[0].entries.map((entry) => entry.rankingValue)).toEqual([91, 87]);
+    expect(result.cohorts[0].comparisonBasis).toBe('verified-normalized-score');
+  });
+
+  it('rejects asserted cross-model comparability when normalization evidence is unverified', () => {
+    const unverified = candidate({
+      symbol: 'BTC',
+      assetClass: 'crypto',
+      score: 9.1,
+      modelId: 'crypto-technical-provenance',
+      modelVersion: '0.6.3',
+      scoreComparability: { ...comparability(91), verified: false },
+    });
+
+    const result = rankCanonicalUniverse([unverified], 'overall');
+    expect(result.status).toBe('NO_RANKABLE_ASSETS');
+    expect(result.excluded[0].reason).toBe('COMPARABILITY_EVIDENCE_UNVERIFIED');
   });
 
   it('keeps category and tier modes inside explicit peer cohorts and fails closed on missing metadata', () => {
@@ -195,7 +231,7 @@ describe('SC-7 cross-asset ranking generalization', () => {
         candidate({
           symbol: 'AAPL',
           assetClass: 'stock',
-          score: 8.5,
+          score: 85,
           modelId: 'traditional-scoring',
           modelVersion: '2.1.0',
           tier: 1,
@@ -203,7 +239,7 @@ describe('SC-7 cross-asset ranking generalization', () => {
         candidate({
           symbol: 'EURUSD',
           assetClass: 'forex',
-          score: 8.1,
+          score: 81,
           modelId: 'traditional-scoring',
           modelVersion: '2.1.0',
         }),
@@ -230,7 +266,7 @@ describe('SC-7 cross-asset ranking generalization', () => {
         candidate({
           symbol: 'AAPL',
           assetClass: 'stock',
-          score: 8.5,
+          score: 85,
           modelId: 'traditional-scoring',
           modelVersion: '2.1.0',
           growth: growth(8.2),
@@ -288,7 +324,7 @@ describe('SC-7 cross-asset ranking generalization', () => {
     const unavailable = candidate({
       symbol: 'AAPL',
       assetClass: 'stock',
-      score: 8.2,
+      score: 82,
       modelId: 'traditional-scoring',
       modelVersion: '2.1.0',
     });
@@ -310,14 +346,14 @@ describe('SC-7 cross-asset ranking generalization', () => {
     const a = candidate({
       symbol: 'AAA',
       assetClass: 'stock',
-      score: 8,
+      score: 80,
       modelId: 'traditional-scoring',
       modelVersion: '2.1.0',
     });
     const b = candidate({
       symbol: 'BBB',
       assetClass: 'stock',
-      score: 8,
+      score: 80,
       modelId: 'traditional-scoring',
       modelVersion: '2.1.0',
     });
