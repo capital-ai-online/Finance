@@ -3,7 +3,7 @@
   "version": "1.10.0",
   "status": "development",
   "owner": "CAPITAL-AI",
-  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Status-Event Drift Detection/Updater, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Generatoren/Renderer und D7 Knowledge Projection.",
+  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Documentation-Hygiene-Service, Status-Event Drift Detection/Updater, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Generatoren/Renderer und D7 Knowledge Projection.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -18,12 +18,15 @@
     "ESS-0017-CONTRACTS"
   ],
   "adr": [
+    "ADR-0014",
     "ADR-0018",
-    "ADR-0046"
+    "ADR-0046",
+    "ADR-0096"
   ],
   "dependencies": [
     "src/platform/Vocabulary",
-    "src/platform/VersionManager",
+    "src/platform/Release",
+    "src/platform/Governance",
     "src/platform/EventMesh"
   ],
   "events": {
@@ -35,7 +38,7 @@
       "RepositoryScannedEvent",
       "PlatformDecisionEvent"
     ],
-    "note": "Status-event drift detector is read-only Discovery input (Phase B). Phase C updater proposes header-only changes via Draft-PR (dryRun default true); never silent main write."
+    "note": "Status-event drift detector is read-only Discovery input. Documentation Hygiene is a read-only validation service. Phase C updater proposes header-only changes via Draft-PR (dryRun default true); never silent main write."
   },
   "knowledge": [
     "Knowledge/DocumentaryKnowledgeProjection.ts"
@@ -46,6 +49,7 @@
   "contracts": [
     "Contracts/BilingualDocumentReference.ts",
     "Versioning/DocumentaryVersion.ts",
+    "Governance/Services/DocumentationHygieneValidator.ts",
     "Discovery/CodeEvidence.ts",
     "Discovery/StatusEventEvidence.ts",
     "Discovery/StatusEventDriftDetector.ts",
@@ -61,6 +65,7 @@
   ],
   "documentation": [
     "README.md",
+    "Governance/README.md",
     "Architecture/documentary-baseline.json",
     "../../../../docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md",
     "../../../../docs/architecture/DOCUMENTARY_STATUS_EVENT_DRIFT_CONTRACT.md",
@@ -94,6 +99,7 @@
       "Engine",
       "Events",
       "Generators",
+      "Governance",
       "Interfaces",
       "Knowledge",
       "Lifecycle",
@@ -103,7 +109,6 @@
     ],
     "plannedAreas": [
       "Architecture",
-      "Governance",
       "Mermaid",
       "Migration",
       "Plugins"
@@ -114,5 +119,5 @@
     "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
     "platformVersion": "../../../package.json#version"
   },
-  "note": "Phase B StatusEventDriftDetector is read-only. Phase C StatusEventDriftUpdater is header-only, allowlisted, dryRun-default, Draft-PR only."
+  "note": "Documentation Governance is partially implemented as a read-only hygiene service; the broader ESS-0012 rule suite remains incremental. Platform version is read directly through the Release Control Plane, never through mutable VersionManager state."
 }

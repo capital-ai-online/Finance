@@ -37,17 +37,30 @@ function assertRequiredFile(file) {
 
 const REQUIRED = [
   'AGENTS.md',
+  'README.md',
+  'package.json',
   'docs/architecture/ROADMAP.md',
   'docs/governance/authority-registry.json',
   'docs/governance/control-catalog.json',
+  'docs/governance/document-registry.json',
   'docs/adr/registry.json',
+  '.ai/registry/ess-registry.json',
   'docs/governance/control-plane/README.md',
   'docs/governance/control-plane/STANDARDS_CROSSWALK.md',
   'docs/governance/control-plane/DOCUMENT_LIFECYCLE_POLICY.md',
   'docs/governance/control-plane/GOVERNANCE_CONTROL_PLANE_DIFF_IMPACT_2026-08-19.md',
+  'docs/governance/control-plane/GOVERNANCE_M10_PREREQUISITES_DIFF_IMPACT_2026-08-19.md',
   'docs/governance/control-plane/pre-pr-build-evidence.schema.json',
+  'docs/roadmaps/work-packages/GOVERNANCE_M10_PREREQUISITES_2026-08-19.md',
   'src/platform/Governance/README.md',
   'src/platform/Governance/manifest.json',
+  'src/platform/Documentary/Governance/Services/DocumentationHygieneValidator.ts',
+  'src/platform/Release/Services/platformVersionControlPlane.ts',
+  'src/platform/Release/Services/readmeVersionProjection.ts',
+  'scripts/automation/validateDocumentationHygiene.ts',
+  'scripts/automation/syncReadmeVersions.ts',
+  'docs/adr/suspended/ADR-0004-branding-and-panel-removal.md',
+  'docs/archive/governance/suspended/ESS-0004-Enterprise-Version-Manager.md',
 ];
 
 for (const file of REQUIRED) assertRequiredFile(file);
@@ -58,15 +71,44 @@ for (const forbiddenInstructionMirror of ['CLAUDE.md', '.github/copilot-instruct
   }
 }
 
+if (exists('tests/unit/documentationHygiene.test.ts')) {
+  fail('LEGACY_HYGIENE_TEST_PRESENT', 'tests/unit/documentationHygiene.test.ts must remain removed; documentation hygiene is enforced by the canonical service/CLI.');
+}
+if (exists('.ai/skills/ESS-0004-Enterprise-Version-Manager.md')) {
+  fail('LEGACY_VERSION_MANAGER_ESS_ACTIVE', 'ESS-0004 must remain suspended/archived and absent from the active .ai/skills namespace.');
+}
+if (exists('docs/adr/ADR-0004-branding-and-panel-removal.md')) {
+  fail('LEGACY_ADR_0004_ACTIVE', 'ADR-0004 must remain suspended under docs/adr/suspended/.');
+}
+
 if (errors.length === 0) {
   const agents = read('AGENTS.md');
+  const readme = read('README.md');
+  const packageJson = json('package.json');
+  const currentVersion = String(packageJson.version ?? '');
   const currentRoadmap = read('docs/architecture/ROADMAP.md');
+
+  if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(currentVersion)) {
+    fail('PLATFORM_VERSION_AUTHORITY_INVALID', `package.json#version must be strict SemVer: ${currentVersion || '<missing>'}`);
+  }
 
   if (!agents.includes('AUTH-GOV-AGENT-TRUST-ROOT')) {
     fail('TRUST_ROOT_ID_MISSING', 'AGENTS.md must declare AUTH-GOV-AGENT-TRUST-ROOT.');
   }
   if (!/single repository-wide trust root and repository instruction surface/i.test(agents)) {
     fail('TRUST_ROOT_SURFACE_AMBIGUOUS', 'AGENTS.md must declare itself the single repository instruction surface.');
+  }
+  for (const forbiddenProductVersionMirror of ['package.json#version', 'Plattformversion:', 'Platform Version:']) {
+    if (agents.includes(forbiddenProductVersionMirror)) {
+      fail('AGENTS_PRODUCT_VERSION_MIRROR', `AGENTS.md must not mirror product-version authority: ${forbiddenProductVersionMirror}`);
+    }
+  }
+
+  if (!readme.includes('README_VERSION_MATRIX:START') || !readme.includes('README_VERSION_MATRIX:END')) {
+    fail('README_VERSION_PROJECTION_MISSING', 'README must contain deterministic managed version-matrix markers.');
+  }
+  if (!readme.includes('`package.json#version` ist die einzige Plattformversions-Authority')) {
+    fail('README_VERSION_AUTHORITY_AMBIGUOUS', 'README must explicitly identify package.json#version as the sole platform-version authority.');
   }
 
   if (!currentRoadmap.includes('AUTH-GOV-DEVELOPMENT-CHAIN-STATUS')) {
@@ -82,14 +124,97 @@ if (errors.length === 0) {
     fail('LEGACY_DEVELOPMENT_ROADMAP_NOT_CLASSIFIED', 'Current-state roadmap must classify the older DevelopmentChain roadmap as historical/non-authorizing.');
   }
 
+  const versionRouter = read('src/platform/VersionManager/versionManager.ts');
+  const versionAuthorityCompatibility = read('src/platform/VersionManager/platformVersionAuthority.ts');
+  const versionControlPlane = read('src/platform/Release/Services/platformVersionControlPlane.ts');
+  const releaseVersionGate = read('src/platform/Release/Services/releaseVersionGate.ts');
+  const releaseVersion = read('scripts/automation/releaseVersion.ts');
+  const routeComposition = read('server/routes/registerApplicationRoutes.ts');
+  const versionManagerPanel = read('src/components/VersionManagerPanel.tsx');
+  const runtimeGuard = read('server/runtime/runtimeArtifactGuard.mjs');
+  const hygieneService = read('src/platform/Documentary/Governance/Services/DocumentationHygieneValidator.ts');
+
+  if (!versionRouter.includes("versionManagerRouter.get('/version'")) {
+    fail('VERSION_ROUTER_READ_PROJECTION_MISSING', 'VersionManager compatibility router must expose GET /version.');
+  }
+  if (/versionManagerRouter\.(post|put|patch|delete)\s*\(/.test(versionRouter)) {
+    fail('VERSION_ROUTER_MUTATION_PRESENT', 'VersionManager compatibility router must be read-only.');
+  }
+  for (const forbiddenLegacyMarker of ['/version/bump', 'version_manager.json', 'executeEnterpriseEventChain', 'writeFileSync', 'ADR_DIR', 'generatedDocs', 'DEFAULT_STATE']) {
+    if (versionRouter.includes(forbiddenLegacyMarker)) fail('LEGACY_VERSION_MANAGER_BEHAVIOR_PRESENT', forbiddenLegacyMarker);
+  }
+  if (!versionAuthorityCompatibility.includes("from '../Release/Services/platformVersionControlPlane'")) {
+    fail('VERSION_AUTHORITY_COMPATIBILITY_DUPLICATED', 'VersionManager platformVersionAuthority must only re-export the Release control plane.');
+  }
+  if (!versionControlPlane.includes("PLATFORM_VERSION_AUTHORITY = 'package.json#version'")) {
+    fail('VERSION_CONTROL_PLANE_AUTHORITY_MISSING', 'Release platform version control plane must bind to package.json#version.');
+  }
+  if (!versionControlPlane.includes('readOnly: true')) {
+    fail('VERSION_CONTROL_PLANE_NOT_READ_ONLY', 'Projection service must mark its output read-only.');
+  }
+  if (/['"]AGENTS\.md['"]/.test(releaseVersionGate)) {
+    fail('RELEASE_GATE_AGENTS_PRODUCT_MIRROR', 'Release Version Gate must not list AGENTS.md as a product-version file.');
+  }
+  if (!releaseVersionGate.includes("const DERIVED_PROJECTIONS = ['README.md']")) {
+    fail('RELEASE_GATE_README_PROJECTION_MISSING', 'Release Version Gate must classify README as a derived projection/rollback artifact.');
+  }
+  for (const requiredReleaseGate of [
+    "runGate('npm', ['run', 'readme:sync'])",
+    "runGate('npm', ['run', 'readme:check'])",
+    "runGate('npm', ['run', 'docs:hygiene:check'])",
+    "runGate('npm', ['run', 'governance:control-plane'])",
+  ]) {
+    if (!releaseVersion.includes(requiredReleaseGate)) fail('RELEASE_STRUCTURAL_GATE_MISSING', requiredReleaseGate);
+  }
+
+  const mountCount = (routeComposition.match(/app\.use\('\/api\/admin',\s*versionManagerRouter\)/g) ?? []).length;
+  if (mountCount !== 1) fail('VERSION_ROUTER_MOUNT_COUNT_INVALID', `Expected exactly one /api/admin VersionManager mount, found ${mountCount}.`);
+
+  if (versionManagerPanel.includes('/api/admin/version/bump') || /performVersionBump|StepUpModal|isBumping/.test(versionManagerPanel)) {
+    fail('VERSION_UI_MUTATION_PRESENT', 'VersionManagerPanel must be a read-only projection UI.');
+  }
+
+  if (/method\s*===\s*['"]GET['"]\s*&&\s*pathname\s*===\s*['"]\/api\/admin\/version['"]/.test(runtimeGuard)) {
+    fail('RUNTIME_VERSION_GET_AUTHZ_BYPASS', 'Runtime guard must not intercept GET /api/admin/version before Express authorization.');
+  }
+  if (!runtimeGuard.includes("pathname === '/api/admin/version/bump'")) {
+    fail('RUNTIME_LEGACY_VERSION_MUTATION_DENY_MISSING', 'Runtime guard must continue to fail closed on the retired version bump path.');
+  }
+
+  if (!hygieneService.includes("new Set(['README.md', 'AGENTS.md'])")) {
+    fail('HYGIENE_ROOT_ALLOWLIST_INVALID', 'Documentation Hygiene root allowlist must contain only README.md and AGENTS.md.');
+  }
+  if (!hygieneService.includes("'suspended'")) {
+    fail('HYGIENE_SUSPENDED_LIFECYCLE_MISSING', 'Documentation Hygiene must understand the suspended lifecycle.');
+  }
+  if (hygieneService.includes('CLAUDE.md')) {
+    fail('HYGIENE_PROVIDER_MIRROR_ALLOWED', 'Documentation Hygiene must not allow CLAUDE.md as a root document.');
+  }
+
+  const suspendedAdr = read('docs/adr/suspended/ADR-0004-branding-and-panel-removal.md');
+  const suspendedEss = read('docs/archive/governance/suspended/ESS-0004-Enterprise-Version-Manager.md');
+  if (!/Status:\*?\*?\s*`?SUSPENDED`?/i.test(suspendedAdr)) {
+    fail('ADR_0004_NOT_SUSPENDED', 'Archived ADR-0004 must be marked SUSPENDED.');
+  }
+  if (!/status:\s*Suspended/i.test(suspendedEss) && !/Status:\*?\*?\s*`?SUSPENDED`?/i.test(suspendedEss)) {
+    fail('ESS_0004_NOT_SUSPENDED', 'Archived ESS-0004 must be marked SUSPENDED.');
+  }
+
+  const adr0096 = read('docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md');
+  for (const scopeMarker of ['ADR-0014', 'ESS-0012', 'ESS-0004', 'package.json#version', 'Documentation-only']) {
+    if (!adr0096.includes(scopeMarker)) fail('ADR_0096_SCOPE_SUPERSESSION_INCOMPLETE', `ADR-0096 must explicitly resolve ${scopeMarker}.`);
+  }
+
   const authorityRegistry = json('docs/governance/authority-registry.json');
   const catalog = json('docs/governance/control-catalog.json');
   const adrRegistry = json('docs/adr/registry.json');
+  const essRegistry = json('.ai/registry/ess-registry.json');
 
   const authorities = authorityRegistry.entries ?? [];
   const controls = catalog.controls ?? [];
   const adrs = adrRegistry.migratedRecords ?? [];
-  const activeAdrs = adrs.filter((item) => !['superseded', 'historical', 'rejected'].includes(item.lifecycle));
+  const inactiveAdrLifecycles = new Set(['superseded', 'historical', 'rejected', 'suspended']);
+  const activeAdrs = adrs.filter((item) => !inactiveAdrLifecycles.has(item.lifecycle));
   const activeAdrDisplayIds = new Set(activeAdrs.map((item) => item.displayId));
   const namespaceReservations = adrRegistry.parallelNamespaceReservations ?? [];
 
@@ -104,11 +229,13 @@ if (errors.length === 0) {
     const source = String(reservation.source ?? '').trim();
     const reservedPath = String(reservation.path ?? '').trim();
     const observedHead = String(reservation.observedHead ?? '');
-
     if (!/^ADR-\d{4}$/.test(displayId)) fail('PARALLEL_ADR_RESERVATION_ID_INVALID', displayId || '<missing displayId>');
     if (!source || !reservedPath) fail('PARALLEL_ADR_RESERVATION_METADATA_MISSING', `${displayId || '<missing displayId>'}: source/path required`);
     if (observedHead && !/^[0-9a-f]{40}$/.test(observedHead)) fail('PARALLEL_ADR_RESERVATION_HEAD_INVALID', `${displayId}: ${observedHead}`);
     if (activeAdrDisplayIds.has(displayId)) fail('PARALLEL_ADR_NAMESPACE_COLLISION', `${displayId} is both reserved by ${source || '<unknown source>'} and allocated to an active ADR in this branch.`);
+  }
+  if (namespaceReservations.some((item) => item.displayId === 'ADR-0094' || /PR #446/i.test(String(item.source ?? '')))) {
+    fail('STALE_MERGED_ADR_RESERVATION', 'Merged PR #446 / ADR-0094 must not remain a parallel-open-PR reservation.');
   }
 
   const authorityIds = new Set(authorities.map((item) => item.authorityId));
@@ -148,13 +275,23 @@ if (errors.length === 0) {
     }
   }
 
+  const versionControl = controls.find((item) => item.controlId === 'CTRL-GOV-VERSION-001');
+  if (!versionControl || !/package\.json#version/.test(String(versionControl.requirement ?? ''))) {
+    fail('VERSION_AUTHORITY_CONTROL_MISSING', 'CTRL-GOV-VERSION-001 must identify package.json#version as the sole platform-version authority.');
+  }
+
+  const hygieneControl = controls.find((item) => item.controlId === 'CTRL-GOV-DOC-HYGIENE-001');
+  if (!hygieneControl || !/read-only/i.test(String(hygieneControl.requirement ?? ''))) {
+    fail('DOCUMENTARY_HYGIENE_CONTROL_MISSING', 'CTRL-GOV-DOC-HYGIENE-001 must bind hygiene to a read-only Documentary service.');
+  }
+
   const m10Control = controls.find((item) => item.controlId === 'CTRL-CI-M10-001');
   const m10Requirement = String(m10Control?.requirement ?? '');
   if (!m10Control || !/suspended|off/i.test(m10Requirement)) {
     fail('M10_TRANSITION_STATE_MISSING', 'CTRL-CI-M10-001 must explicitly preserve the current suspended/off state.');
   }
-  for (const requiredReactivationTopic of ['duplicate', 'Documentary', 'README', 'router', 'Version']) {
-    if (!m10Requirement.includes(requiredReactivationTopic)) {
+  for (const requiredReactivationTopic of ['ADR', 'Authority', 'Documentary', 'README', 'Hygiene', 'router', 'Version', 'structural', 'hosted CI', 'Owner']) {
+    if (!m10Requirement.toLowerCase().includes(requiredReactivationTopic.toLowerCase())) {
       fail('M10_REACTIVATION_CRITERIA_INCOMPLETE', `CTRL-CI-M10-001 must cover ${requiredReactivationTopic} before reactivation.`);
     }
   }
@@ -174,6 +311,9 @@ if (errors.length === 0) {
     const registeredAuthority = authorityById.get(adr.authorityId);
     if (registeredAuthority && registeredAuthority.path !== adr.path) fail('ADR_AUTHORITY_PATH_MISMATCH', `${adr.displayId}: ADR registry=${adr.path}, authority registry=${registeredAuthority.path}`);
     if (registeredAuthority && registeredAuthority.version !== adr.version) fail('ADR_AUTHORITY_VERSION_MISMATCH', `${adr.displayId}: ADR registry=${adr.version}, authority registry=${registeredAuthority.version}`);
+    if (adr.lifecycle === 'suspended' && registeredAuthority && registeredAuthority.lifecycle !== 'suspended') {
+      fail('SUSPENDED_ADR_AUTHORITY_LIFECYCLE_MISMATCH', `${adr.displayId}: ADR registry is suspended but authority registry is ${registeredAuthority.lifecycle}.`);
+    }
 
     for (const alias of adr.legacyAliases ?? []) {
       if (!alias.path) continue;
@@ -185,6 +325,24 @@ if (errors.length === 0) {
       if (!/Legacy ADR Redirect\s*[—-]\s*NON-AUTHORIZING/i.test(redirect)) fail('ADR_LEGACY_REDIRECT_NOT_MARKED', `${adr.displayId}: ${alias.path}`);
       if (!redirect.includes(adr.authorityId) || !redirect.includes(adr.path)) fail('ADR_LEGACY_REDIRECT_TARGET_MISMATCH', `${adr.displayId}: ${alias.path}`);
     }
+  }
+
+  const adr0094 = adrs.find((item) => item.displayId === 'ADR-0094');
+  if (!adr0094 || adr0094.lifecycle !== 'accepted' || adr0094.authorityId !== 'AUTH-ADR-OPEN-SOURCE-MEDIA-RENDERING-2026-08-19') {
+    fail('ADR_0094_MERGED_STATE_NOT_REGISTERED', 'Merged ADR-0094 from PR #446 must be registered as accepted with its stable authority ID.');
+  }
+
+  const ess0004 = (essRegistry.entries ?? []).find((item) => item.id === 'ESS-0004');
+  if (!ess0004 || String(ess0004.status).toLowerCase() !== 'suspended') {
+    fail('ESS_0004_REGISTRY_NOT_SUSPENDED', 'ESS registry must mark ESS-0004 suspended.');
+  }
+  if (ess0004?.document !== 'docs/archive/governance/suspended/ESS-0004-Enterprise-Version-Manager.md') {
+    fail('ESS_0004_ARCHIVE_PATH_INVALID', String(ess0004?.document));
+  }
+
+  const ess0012 = (essRegistry.entries ?? []).find((item) => item.id === 'ESS-0012');
+  if (!ess0012 || !/documentation-only/i.test(String(ess0012.scope ?? ess0012.rationale ?? ''))) {
+    fail('ESS_0012_SCOPE_AMBIGUOUS', 'ESS-0012 registry metadata must explicitly restrict it to documentation-only governance.');
   }
 
   const skillsDir = abs('.ai/skills');

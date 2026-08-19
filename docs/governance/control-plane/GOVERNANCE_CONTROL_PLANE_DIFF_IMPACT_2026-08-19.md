@@ -1,11 +1,11 @@
 # Governance Control Plane — Supersession Diff & Impact
 
 **Document ID:** `DOC-GOV-CONTROL-PLANE-IMPACT-2026-08-19`  
-**Version:** `1.3.0`  
+**Version:** `1.4.0`  
 **Date:** `2026-08-19`  
-**Status:** OWNER REVIEW / IMPLEMENTATION EVIDENCE  
+**Status:** POST-MERGE RECONCILIATION EVIDENCE — sections 1–9 preserve the pre-merge review snapshot; section 10 records the landed state  
 **Decision authority:** `ADR-0096` / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`  
-**Branch:** `governance/control-plane-foundation-iso42001-ssdf`
+**Original branch:** `governance/control-plane-foundation-iso42001-ssdf`
 
 ## 1. Owner-directed scope
 
@@ -104,3 +104,19 @@ No external production rollback is required for this repository governance refac
 ## 9. Owner decision record
 
 The Owner explicitly instructed this cleanup, archive treatment, removal of Claude/Copilot repository instruction files, PR #446 correlation remediation and continued M10 suspension on 2026-08-19. Effectiveness on `main` remains contingent on Human Merge of the resulting Governance Pull Request.
+
+## 10. Post-merge closure addendum — 2026-08-19
+
+Sections 1–9 above are intentionally retained as the Owner-visible **pre-merge** impact package and are not rewritten to simulate a different review-time state.
+
+Landed facts now superseding only their operational status, not their historical evidentiary value:
+
+- Governance PR #447 was Human-merged as commit `0b904c10e46723cb80a7ba12781c3847005c4715`; its final-head Governance, CI and Google-Marketing workflows completed successfully.
+- ADR-0096 therefore crossed its explicit `effective after Human Merge` gate and is now `Accepted`; the Authority/Supersession and Document Lifecycle policies are active.
+- Media PR #446 subsequently Human-merged as current baseline commit `71bce3d07133e2a7d408af179c2325e6d5114d5a`.
+- ADR-0094 is consequently no longer a parallel open-PR reservation. Its stable Authority ID is registered as a normal Accepted ADR/Authority entry.
+- ADR-0085/0086 compatibility files remain non-authorizing redirects; no historical link is deleted and no stable Authority ID is reused.
+- M10 remains `SUSPENDED/OFF`; this lifecycle reconciliation grants no new CI, merge, IAM, deployment or production-mutation capability.
+- PRs #439 and #442 remain separate follow-up correlations and are not silently absorbed by this closure.
+
+The follow-up branch `agent/governance-control-plane-postmerge-closure` changes only repository Governance/ADR metadata, the existing structural validator and its unit contract. No external state mutation is required.
