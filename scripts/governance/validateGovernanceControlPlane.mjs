@@ -36,7 +36,7 @@ function assertRequiredFile(file) {
 }
 
 function declaredAdrStatus(text) {
-  const match = text.match(/^\s*(?:-\s*)?\*\*Status:\*\*\s*(.+)$/mi);
+  const match = text.match(/^\s*(?:-\s*)?(?:\*\*Status:\*\*|Status:)\s*(.+)$/mi);
   return match?.[1]?.trim() ?? '';
 }
 
