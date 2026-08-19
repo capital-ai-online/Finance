@@ -28,10 +28,12 @@ export const PRIVACY_REQUEST_TYPES = [
 ] as const;
 
 export type PrivacyRequestType = (typeof PRIVACY_REQUEST_TYPES)[number];
+export type ProcessingLifecycle = 'active' | 'conditional' | 'planned';
 
 export interface ProcessingActivity {
   id: string;
   title: string;
+  lifecycle: ProcessingLifecycle;
   purpose: string;
   dataCategories: string[];
   legalBasis: string;
@@ -45,6 +47,7 @@ export const PROCESSING_ACTIVITIES: ProcessingActivity[] = [
   {
     id: 'account-profile',
     title: 'Konto, Authentifizierung und Profil',
+    lifecycle: 'active',
     purpose: 'Registrierung, Anmeldung, Kontoverwaltung, Tarifzuordnung und Absicherung des Kontozugriffs.',
     dataCategories: [
       'E-Mail-Adresse',
@@ -66,6 +69,7 @@ export const PROCESSING_ACTIVITIES: ProcessingActivity[] = [
   {
     id: 'billing-subscription',
     title: 'Abonnement und Zahlungsabwicklung',
+    lifecycle: 'active',
     purpose: 'Tarifverwaltung, Zahlungsabwicklung, Berechtigungsprüfung und Abrechnungsnachweise.',
     dataCategories: ['E-Mail-Adresse', 'Nutzer-ID', 'Tarif-/Abonnementstatus', 'Stripe-Referenzkennungen', 'Rechnungs-/Transaktionsmetadaten'],
     legalBasis:
@@ -80,6 +84,7 @@ export const PROCESSING_ACTIVITIES: ProcessingActivity[] = [
   {
     id: 'consent-evidence',
     title: 'Nachweis von Einwilligungen und Kenntnisnahmen',
+    lifecycle: 'active',
     purpose: 'Nachweis, welche Fassung von AGB/Datenschutzhinweisen akzeptiert bzw. zur Kenntnis genommen und ob optionales Marketing erlaubt wurde.',
     dataCategories: ['Nutzer-ID', 'Dokumentversion', 'Zeitstempel', 'Entscheidungsstatus', 'gehashte IP-Adresse'],
     legalBasis:
@@ -94,6 +99,7 @@ export const PROCESSING_ACTIVITIES: ProcessingActivity[] = [
   {
     id: 'security-iam',
     title: 'Security-, IAM- und Missbrauchsprotokollierung',
+    lifecycle: 'active',
     purpose: 'Erkennung und Abwehr unberechtigter Zugriffe, Rate-Limit-Missbrauch, Rollenänderungen und sicherheitskritischer Aktionen.',
     dataCategories: ['Nutzer-ID', 'IP-Adresse', 'User-Agent', 'Geräte-/Endpoint-Metadaten', 'Security-Event', 'Rollen-/Audit-Metadaten'],
     legalBasis:
@@ -108,6 +114,7 @@ export const PROCESSING_ACTIVITIES: ProcessingActivity[] = [
   {
     id: 'analytics-advertising',
     title: 'Reichweitenmessung und Werbung',
+    lifecycle: 'conditional',
     purpose: 'Optionale Nutzungsstatistik und optionale Werbeauslieferung.',
     dataCategories: ['Online-Kennungen', 'Cookie-/Consent-Informationen', 'Nutzungs- und Geräteinformationen', 'gekürzte/technisch verarbeitete IP-Informationen beim Provider'],
     legalBasis:
@@ -122,6 +129,7 @@ export const PROCESSING_ACTIVITIES: ProcessingActivity[] = [
   {
     id: 'social-publishing',
     title: 'Verknüpfte Social-Media-Konten und Publishing',
+    lifecycle: 'conditional',
     purpose: 'Vom Nutzer angeforderte Verknüpfung externer Social-Media-Konten sowie Veröffentlichung und Nachverfolgung von Posts.',
     dataCategories: ['Plattform', 'Accountname/Handle', 'Avatar-URL', 'Scopes', 'externe Account-ID', 'verschlüsselte Access-/Refresh-Tokens', 'Publishing-Historie'],
     legalBasis:
@@ -130,12 +138,13 @@ export const PROCESSING_ACTIVITIES: ProcessingActivity[] = [
     transfer:
       'Je nach verbundener Plattform ist eine Drittlandverarbeitung wahrscheinlich. Die konkreten Empfänger und Transfermechanismen richten sich nach der aktiv verbundenen Plattform und deren aktueller Vertragslage.',
     retention:
-      'Bis zur Trennung des jeweiligen Kontos bzw. Kontolöschung; kurzlebige OAuth-State-Daten werden nach Ablauf automatisierbar bereinigt. Publishing-Historie bleibt bis zur Löschung bzw. bis zum Ende ihres Zwecks gespeichert.',
+      'Bis zur Trennung des jeweiligen Kontos bzw. Kontolöschung; kurzlebige OAuth-State-Daten werden nach Ablauf automatisiert bereinigt. Publishing-Historie bleibt bis zur Löschung bzw. bis zum Ende ihres Zwecks gespeichert.',
     technicalControls: ['AES-256-GCM für OAuth-Tokens', 'PKCE/State-Prüfung', 'Service-Role-only Tabellen', 'keine Token-Ausgabe an den Browser'],
   },
   {
     id: 'alerts',
     title: 'E-Mail-Alerts',
+    lifecycle: 'conditional',
     purpose: 'Versand vom Nutzer angeforderter Markt-/Score-Benachrichtigungen.',
     dataCategories: ['E-Mail-Adresse', 'Symbol/Asset', 'Schwellenwert/Regel', 'Bestätigungsstatus', 'letzter Versandzeitpunkt'],
     legalBasis:
@@ -144,30 +153,32 @@ export const PROCESSING_ACTIVITIES: ProcessingActivity[] = [
     transfer:
       'Abhängig vom tatsächlich konfigurierten E-Mail-Dienst; Vendor-Evidence ist separat zu pflegen.',
     retention:
-      'Bis zur Abmeldung/Deaktivierung. Nicht bestätigte Anmeldungen werden nach 14 Tagen automatisierbar bereinigt.',
+      'Bis zur Abmeldung/Deaktivierung. Nicht bestätigte Anmeldungen werden nach 14 Tagen automatisiert bereinigt.',
     technicalControls: ['Double-Opt-in', 'Unsubscribe-Token', 'Service-Role-only Datenbankzugriff'],
   },
   {
     id: 'usage-quota',
     title: 'Nutzungs- und Quota-Steuerung',
+    lifecycle: 'active',
     purpose: 'Durchsetzung tarifabhängiger Nutzungsgrenzen und Missbrauchsschutz.',
     dataCategories: ['E-Mail-Adresse', 'Quota-Typ', 'Nutzungszähler', 'Zeitfenster'],
     legalBasis: 'Art. 6 Abs. 1 lit. b DSGVO für tarifabhängige Leistungserbringung sowie Art. 6 Abs. 1 lit. f DSGVO für Missbrauchsschutz.',
     recipients: ['Supabase', 'autorisierte Backend-Prozesse'],
     transfer: 'Abhängig von der eingesetzten Datenbank-Infrastruktur und deren Subprozessoren.',
-    retention: 'Inaktive Quota-Datensätze werden nach 90 Tagen ohne Aktualisierung automatisierbar bereinigt.',
+    retention: 'Inaktive Quota-Datensätze werden nach 90 Tagen ohne Aktualisierung automatisiert bereinigt.',
     technicalControls: ['serverseitige Durchsetzung', 'Service-Role-only Tabelle'],
   },
   {
     id: 'privacy-requests',
     title: 'Betroffenenrechte und Datenschutzanfragen',
+    lifecycle: 'active',
     purpose: 'Bearbeitung und Nachweis von Auskunft, Berichtigung, Löschung, Einschränkung, Widerspruch und Datenübertragbarkeit.',
     dataCategories: ['Nutzer-ID', 'Anfragetyp', 'optionale Beschreibung', 'Bearbeitungsstatus', 'Zeitstempel und Frist'],
     legalBasis: 'Art. 6 Abs. 1 lit. c DSGVO zur Erfüllung gesetzlicher Betroffenenrechte und Nachweispflichten.',
     recipients: ['autorisierte Datenschutz-/Supportprozesse', 'Supabase'],
     transfer: 'Kein zusätzlicher Drittlandtransfer durch den Request-Workflow beabsichtigt; Infrastruktur bleibt separat zu bewerten.',
-    retention: 'Abgeschlossene Anfragen werden für Accountability-Zwecke maximal drei Jahre nach Abschluss vorgehalten und danach automatisierbar bereinigt.',
-    technicalControls: ['authentifizierter Zugriff', 'RLS', 'serverseitige Request-Erstellung', 'keine Rohdaten in Request-Logs'],
+    retention: 'Abgeschlossene Anfragen werden für Accountability-Zwecke maximal drei Jahre nach Abschluss vorgehalten und danach automatisiert bereinigt, sofern kein aktiver Preservation-/Legal-Hold entgegensteht.',
+    technicalControls: ['authentifizierter Zugriff', 'RLS', 'serverseitige Request-Erstellung', 'Status-State-Machine', 'keine Rohdaten in Request-Logs'],
   },
 ];
 
