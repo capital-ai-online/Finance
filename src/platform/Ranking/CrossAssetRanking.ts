@@ -45,8 +45,21 @@ function validateSharedAdmission(candidate: CanonicalRankingCandidate): CrossAss
   }
 
   const lineage = candidate.canonical.integrity;
-  if (!lineage.dispatcherVersion || !lineage.modelId || !lineage.modelVersion || !lineage.executorKey || !lineage.resultContractVersion) {
-    return exclusion(candidate, 'MODEL_LINEAGE_MISSING', 'Dispatcher/model/executor/result-contract lineage is required for cross-asset ranking.');
+  if (
+    !lineage.dispatcherVersion ||
+    !lineage.modelRegistryVersion ||
+    !lineage.modelId ||
+    !lineage.modelVersion ||
+    !lineage.executorKey ||
+    !lineage.resultContractVersion ||
+    !lineage.featureVersion ||
+    !lineage.scoringVersion
+  ) {
+    return exclusion(
+      candidate,
+      'MODEL_LINEAGE_MISSING',
+      'Dispatcher/registry/model/executor/result/feature/scoring lineage is required for ranking.',
+    );
   }
   if (!candidate.governance) return exclusion(candidate, 'GOVERNANCE_EVIDENCE_MISSING');
   if (!candidate.governance.eligible) return exclusion(candidate, 'GOVERNANCE_INELIGIBLE', candidate.governance.eligibilityStatus);
@@ -60,12 +73,17 @@ function validateSharedAdmission(candidate: CanonicalRankingCandidate): CrossAss
 function prepareScoreComparison(candidate: CanonicalRankingCandidate): PreparedCandidate | CrossAssetRankingExclusion {
   const comparison = candidate.scoreComparability;
   if (!comparison) {
-    const { modelId, modelVersion } = candidate.canonical.integrity;
+    const { modelId, modelVersion, featureVersion, scoringVersion } = candidate.canonical.integrity;
     return {
       candidate,
-      cohortKey: `model:${normalizedKey(`${modelId}@${modelVersion}`)}|asset-class:${candidate.asset.assetClass}`,
+      cohortKey: [
+        `model:${normalizedKey(`${modelId}@${modelVersion}`)}`,
+        `asset-class:${candidate.asset.assetClass}`,
+        `feature:${normalizedKey(featureVersion)}`,
+        `scoring:${normalizedKey(scoringVersion)}`,
+      ].join('|'),
       rankingValue: candidate.canonical.score as number,
-      comparisonBasis: 'canonical-score-same-model-asset-class',
+      comparisonBasis: 'canonical-score-same-intended-use-contract',
     };
   }
 
@@ -135,10 +153,9 @@ function isExclusion(value: PreparedCandidate | CrossAssetRankingExclusion): val
 }
 
 /**
- * Build deterministic ranking cohorts without creating hidden comparability assumptions. Even when
- * the same model version serves multiple asset classes, the default cohort remains asset-class
- * scoped because intended use, feature coverage and weighting can differ by segment. Cross-asset
- * or cross-model cohorts require separately verified normalized score-comparability evidence.
+ * Build deterministic ranking cohorts without hidden comparability assumptions. The default cohort
+ * is the same intended-use contract: model id/version + asset class + feature contract + scoring
+ * contract. Cross-segment/model cohorts require separately verified normalized comparison evidence.
  */
 export function rankCanonicalUniverse(
   candidates: readonly CanonicalRankingCandidate[],
