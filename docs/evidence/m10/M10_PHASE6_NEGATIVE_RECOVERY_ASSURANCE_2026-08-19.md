@@ -114,3 +114,5 @@ This evidence package may be marked `VERIFIED PASS` only after N1, N2 and R1 are
 5. audit correlation is present for the observed decisions.
 
 Controlled Cutover remains a separate fresh-main branch/PR and is not authorized by this evidence-only PR.
+
+N2 marker: documentation-only state-change commit for the live assurance exercise.
