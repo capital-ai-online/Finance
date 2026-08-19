@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "1.0.0",
+  "slug": "graham-fair-value-check",
+  "title": "Graham Fair Value Check",
+  "subtitle": "Earnings Power + Buchwert + Sicherheitsmarge - quantitativ und ohne Hype.",
+  "disclaimer": "Keine Anlageberatung. Nur quantitative Berechnung auf dokumentierter Datenbasis.",
+  "scenes": [
+    {
+      "title": "Graham Fair Value Check",
+      "body": "Wie CAPITAL-AI den Graham Fair Value berechnet - ohne Hype.",
+      "durationSeconds": 4,
+      "disclaimer": "Keine Anlageberatung. Nur quantitative Berechnung."
+    },
+    {
+      "title": "Drei Bausteine",
+      "body": "Earnings Power, Buchwert und Sicherheitsmarge werden getrennt nachvollziehbar gemacht.",
+      "durationSeconds": 8
+    },
+    {
+      "title": "Methodik",
+      "body": "Historische und sektorale Multiplikatoren werden mit einer transparenten Risikoadjustierung kombiniert.",
+      "durationSeconds": 9
+    },
+    {
+      "title": "Ergebnis lesen",
+      "body": "Ausgegeben werden ein Fair-Value-Bereich und eine Confidence-Metrik - keine Kursprognose.",
+      "durationSeconds": 9
+    },
+    {
+      "title": "Sicherheitsmarge",
+      "body": "Marktpreis und Fair-Value-Bereich werden als mathematische Relation dargestellt, nicht als Kauf- oder Verkaufssignal.",
+      "durationSeconds": 9
+    },
+    {
+      "title": "CAPITAL-AI",
+      "body": "Keine Prognose. Keine Anlageberatung. Nur Mathematik und belegbare Daten.",
+      "durationSeconds": 7,
+      "disclaimer": "Keine Anlageberatung. Nur quantitative Berechnung."
+    }
+  ]
+}
