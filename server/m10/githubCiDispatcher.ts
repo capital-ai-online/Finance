@@ -6,6 +6,7 @@
 // consumptionId before any expensive step; merely possessing GitHub Actions write access is not an
 // alternative authorization path.
 import type { M10CiDispatcher, M10CiDispatchRequest } from './atomicCiConsumption';
+import { isSafeM10HeadRef } from './githubPrDispatchRef';
 
 export interface M10GithubDispatcherOptions {
   token: string;
@@ -30,7 +31,7 @@ function validateWorkflowFile(workflowFile: string): string {
 
 function validateHeadRef(headRef: string): string {
   const ref = headRef.trim();
-  if (!ref || !/^[A-Za-z0-9._/-]+$/.test(ref) || ref.startsWith('/') || ref.endsWith('/')) {
+  if (!isSafeM10HeadRef(ref)) {
     throw new Error('Ungültiger GitHub-PR-Head-Ref für M10-CI-Dispatch.');
   }
   return ref;

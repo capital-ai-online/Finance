@@ -1,6 +1,6 @@
 # M10 Controlled Cutover Evidence — 2026-08-19
 
-Status: IMPLEMENTATION IN PROGRESS — PR / CI / HUMAN MERGE / POST-MERGE LIVE VERIFICATION PENDING  
+Status: IMPLEMENTATION IN PROGRESS — PR #429 / CI / HUMAN MERGE / POST-MERGE LIVE VERIFICATION PENDING  
 Branch: `agent/m10-controlled-cutover`  
 Baseline: `main@4c280fb53e74e38d571e4b44b620a7b33681e0be`  
 Authority: ADR-0066, ESS-0022, M10 Threat Model, M10 Runbook, ADR-0069 Owner addendum 2026-08-16
@@ -45,7 +45,7 @@ The resolver credential is not widened to Actions write.
 - PR is still open;
 - current head SHA still equals the approved head SHA;
 - the head repository is the same repository, not a fork/cross-repository head;
-- current head branch/ref has a valid shape.
+- current head branch/ref satisfies the explicit fail-closed Git-ref subset used by M10.
 
 GitHub `workflow_dispatch` is then sent to this exact PR branch rather than `main`.
 
@@ -100,24 +100,25 @@ Primary references:
 
 ## Required-check rollout and bootstrap
 
-`build-and-test` remains the required repository-hosted check context. The final `ci.yml` change will be added **after this PR exists**, because the Controlled-Cutover PR itself must be able to run the pre-cutover full CI before the new production M10 endpoint is Human-merged/deployed.
+`build-and-test` remains the required repository-hosted check context. The final `ci.yml` change was added only **after PR #429 existed**, so the Controlled-Cutover PR itself can run the pre-cutover full CI before the new production M10 endpoint is Human-merged/deployed.
 
-The final workflow will contain one explicit, unique bootstrap exception bound to this Controlled-Cutover PR number. That exception exists only to validate the cutover code/workflow before it can become the default-branch production gate. After Human merge, that PR number cannot authorize any future open PR.
+The workflow contains one explicit, unique bootstrap exception bound to PR #429. That exception exists only to validate the cutover code/workflow before it can become the default-branch production gate. After Human merge, PR #429 cannot authorize any future open PR.
 
 For all other PRs after cutover:
 
 - the ordinary PR-event `build-and-test` job fails before checkout and therefore before npm/test/build/docker;
 - only a valid `workflow_dispatch` with a freshly unredeemed M10 consumption capability may cross the workflow gate and enter expensive CI.
 
-Bootstrap PR number: **PENDING PR CREATION**.
+Bootstrap PR number: **#429**.
 
 ## Regression coverage in this branch
 
-Tests are being added for:
+Tests cover:
 
 - exact same-repository head-ref resolution;
 - head drift denial before durable claim;
 - fork/cross-repository head denial;
+- strict rejection of traversal-/ambiguous Git-ref shapes such as `../main`;
 - exact-ref workflow dispatch and dispatch-input binding;
 - accepted dispatch remaining `PENDING` until workflow gate;
 - context mismatch/replay/audit-failure denial at workflow gate;
@@ -125,7 +126,7 @@ Tests are being added for:
 - structural absence of legacy checkbox/emoji/label/reaction authorization from the cutover workflow;
 - authoritative UI/router wiring and separate resolver/dispatcher credential roles.
 
-Repository test execution is intentionally deferred until after PR creation under the GitHub-cost policy.
+Repository test execution was intentionally deferred until after PR creation under the GitHub-cost policy. Initial CI #1851 reached the full Unit-Test phase after Governance, workflow-security, dependency audit and TypeScript had passed; it exposed a stricter negative-test expectation for malformed Git branch refs. The implementation was hardened rather than weakening that DENY assertion, and a new full CI run is required on the corrected head.
 
 ## Pre-merge operational prerequisite
 

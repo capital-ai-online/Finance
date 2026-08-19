@@ -24,6 +24,26 @@ function nonEmpty(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+/**
+ * Deliberately stricter than Git's full ref grammar. M10 only needs ordinary branch names and must
+ * reject traversal-/ref-ambiguity shapes before they reach workflow_dispatch. In particular Git
+ * check-ref-format rejects `..`, `.lock` suffixes, leading-dot path components, empty components
+ * and trailing dots; keeping the same fail-closed subset here makes the server boundary explicit.
+ */
+export function isSafeM10HeadRef(value: string): boolean {
+  if (!value || value !== value.trim() || value.length > 255) return false;
+  if (!/^[A-Za-z0-9._/-]+$/.test(value)) return false;
+  if (value.startsWith('/') || value.endsWith('/') || value.endsWith('.')) return false;
+  if (value.includes('..') || value.includes('//')) return false;
+
+  const components = value.split('/');
+  return components.every(component => (
+    component.length > 0
+    && !component.startsWith('.')
+    && !component.endsWith('.lock')
+  ));
+}
+
 export async function resolveTrustedM10DispatchRef(
   input: Readonly<{ repository: string; prNumber: number; expectedHeadSha: string }>,
   githubApiFetch: GithubApiFetch,
@@ -63,7 +83,7 @@ export async function resolveTrustedM10DispatchRef(
   if (headSha !== input.expectedHeadSha) {
     return { verdict: 'DENY', reason: 'PR head changed while resolving the CI dispatch ref.' };
   }
-  if (!/^[A-Za-z0-9._/-]+$/.test(headRef) || headRef.startsWith('/') || headRef.endsWith('/')) {
+  if (!isSafeM10HeadRef(headRef)) {
     return { verdict: 'DENY', reason: 'GitHub PR head ref has an invalid shape.' };
   }
 
