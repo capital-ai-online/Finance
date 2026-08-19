@@ -1,4 +1,4 @@
--- ADR-0091 / post-PR414 privacy hardening
+-- ADR-0092 / post-PR414 privacy hardening
 --
 -- Repairs production drift discovered on 2026-08-19:
 --   * the repository-defined social-media persistence tables are absent in production,
@@ -291,7 +291,7 @@ grant execute on function public.purge_expired_privacy_operational_data(timestam
   to service_role;
 
 comment on function public.purge_expired_privacy_operational_data(timestamptz) is
-  'ADR-0091 fail-safe privacy retention. Service-role-only, concurrency-safe, table-presence-aware and retention-hold-aware; business/statutory billing records remain outside generic purge.';
+  'ADR-0092 fail-safe privacy retention. Service-role-only, concurrency-safe, table-presence-aware and retention-hold-aware; business/statutory billing records remain outside generic purge.';
 
 -- ---------------------------------------------------------------------------
 -- 4. Scheduled execution (pg_cron is enabled in the production project)
@@ -314,7 +314,7 @@ begin
       'select public.purge_expired_privacy_operational_data();'
     );
   else
-    raise exception 'pg_cron extension is required for ADR-0091 scheduled privacy retention';
+    raise exception 'pg_cron extension is required for ADR-0092 scheduled privacy retention';
   end if;
 end;
 $$;
