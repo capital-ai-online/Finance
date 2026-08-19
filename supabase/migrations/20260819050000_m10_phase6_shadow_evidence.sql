@@ -1,8 +1,16 @@
--- M10 (ADR-0066, ESS-0022) Phase 6 — immutable Shadow Mode evidence.
+-- M10 (ADR-0066, ESS-0022) Phase 6 — immutable Shadow Mode evidence and prerequisite hardening.
 -- Shadow evidence is intentionally separate from m10_approval_evidence so it can never be
 -- consumed by Phase 5 as an authoritative CI approval.
 
 begin;
+
+-- Production preflight found residual REFERENCES/TRIGGER/TRUNCATE privileges from the earlier
+-- Phase-3 table creation. RLS is not a substitute for table-level least privilege (notably TRUNCATE),
+-- so normalize both legacy M10 credential tables to server-only access before enabling Shadow Mode.
+revoke all on table public.m10_owner_credentials from anon, authenticated, service_role;
+revoke all on table public.m10_registration_challenges from anon, authenticated, service_role;
+grant select, insert, update on table public.m10_owner_credentials to service_role;
+grant select, insert, update on table public.m10_registration_challenges to service_role;
 
 -- Supabase Performance Advisor follow-up from the production Phase-5 migration verification.
 create index if not exists m10_approval_evidence_credential_id_idx
