@@ -75,6 +75,7 @@ export type ConsumeM10ApprovalResult =
 function sameApprovalContext(
   approval: Readonly<M10ApprovalEvidence>,
   current: Readonly<{
+    ownerId: string;
     repository: string;
     prNumber: number;
     baseBranch: string;
@@ -85,7 +86,9 @@ function sameApprovalContext(
     action: 'AUTHORIZE_PR_CI';
   }>,
 ): boolean {
-  return approval.context.repository === current.repository
+  return approval.ownerId === current.ownerId
+    && approval.context.ownerId === current.ownerId
+    && approval.context.repository === current.repository
     && approval.context.prNumber === current.prNumber
     && approval.context.baseBranch === current.baseBranch
     && approval.context.baseSha === current.baseSha
@@ -134,7 +137,7 @@ export async function consumeM10ApprovalForCi(
   if (resolved.verdict === 'DENY') return { verdict: 'DENY', reason: resolved.reason };
 
   if (!sameApprovalContext(approval, resolved.state)) {
-    return { verdict: 'DENY', reason: 'PR-Zustand hat sich seit Owner-Approval geändert; CI wird nicht gestartet.' };
+    return { verdict: 'DENY', reason: 'PR-/Owner-Zustand hat sich seit Owner-Approval geändert; CI wird nicht gestartet.' };
   }
 
   const consumptionId = generateOpaqueToken(16);
