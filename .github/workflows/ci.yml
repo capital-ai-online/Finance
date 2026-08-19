@@ -48,13 +48,24 @@ permissions:
   contents: read
   pull-requests: read
 
+env:
+  # Owner-authorized operational switch (2026-08-19). The M10 implementation remains in this
+  # workflow for audit/rollback, but normal PR CI no longer consumes or requires an M10 passkey.
+  # Manual workflow_dispatch is still denied while this switch is off, so disabling M10 cannot
+  # become an alternate unreviewed CI/deployment entry point.
+  M10_CI_GATE_ENABLED: 'false'
+
 concurrency:
   # PR synchronizations may cancel older cheap PR checks. Authorized M10 dispatches use their own
   # run id so an unrelated event cannot cancel a consumed one-time authorization mid-build.
   group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-# M10 Controlled Cutover:
+# M10 Controlled Cutover implementation is retained but operationally disabled by
+# M10_CI_GATE_ENABLED=false. Human/CODEOWNER merge remains separate and mandatory.
+# Production deployment authority remains verified main CI -> supply-chain attestation ->
+# exact-SHA Render deploy hook -> post-deploy identity verification.
+# Historical rules retained for rollback/audit when M10_CI_GATE_ENABLED=true:
 # - normal PR events fail before checkout/npm/build;
 # - only a successfully redeemed Owner-Passkey M10 consumption may enter expensive PR CI;
 # - workflow-gate redemption additionally requires a short-lived signed GitHub Actions OIDC token;
@@ -92,6 +103,28 @@ jobs:
           M10_ACTION: ${{ inputs.m10_action }}
         run: |
           set -euo pipefail
+
+          if [ "${M10_CI_GATE_ENABLED:-false}" != 'true' ]; then
+            case "$EVENT_NAME" in
+              push)
+                test "$GITHUB_REF" = 'refs/heads/main'
+                echo 'mode=main-push' >> "$GITHUB_OUTPUT"
+                ;;
+              pull_request)
+                echo 'Owner-authorized operating mode: M10 CI gate is disabled; normal scope-classified PR CI proceeds.'
+                echo 'mode=m10-disabled-owner-override' >> "$GITHUB_OUTPUT"
+                ;;
+              workflow_dispatch)
+                echo 'M10 is operationally disabled: manual workflow_dispatch is not an alternate CI authorization path.' >&2
+                exit 1
+                ;;
+              *)
+                echo "Unsupported CI event while M10 is disabled: $EVENT_NAME" >&2
+                exit 1
+                ;;
+            esac
+            exit 0
+          fi
 
           case "$EVENT_NAME" in
             push)
