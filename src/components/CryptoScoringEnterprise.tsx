@@ -32,6 +32,7 @@ import { StatusBadge } from './StatusBadge';
 import { assetRegistry } from '../lib/assetRegistry';
 import { EnterpriseAnalysisPanels } from './EnterpriseAnalysisPanels';
 import { EnterpriseBinanceQuickAnalysis } from './EnterpriseBinanceQuickAnalysis';
+import { VerifiedAssetSnapshot } from './VerifiedAssetSnapshot';
 import type { TradeSetupLevels } from '../services/tradeSetupLevels';
 
 export interface CryptoScoringEnterpriseProps {
@@ -48,11 +49,13 @@ type AssetType = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';
 
 type ProvenanceEntry = {
   provider?: string;
+  source?: string;
   field?: string;
   sourcePath?: string;
   observedAt?: string;
   retrievedAt?: string;
   evidenceId?: string;
+  id?: string;
   value?: number;
   normalizedValue?: number;
 };
@@ -223,7 +226,7 @@ function buildCryptoView(body: any, symbol: string, assetName: string): Enterpri
     rawFactors: extractRawFactors(body?.inputs),
     providers: strings(integrity?.providers ?? body?.providers),
     evidenceIds: Array.isArray(integrity?.evidence)
-      ? integrity.evidence.map((item: any) => item?.evidenceId).filter((item: unknown): item is string => typeof item === 'string')
+      ? integrity.evidence.map((item: any) => item?.evidenceId ?? item?.id).filter((item: unknown): item is string => typeof item === 'string')
       : strings(body?.evidenceIds),
     provenance: Array.isArray(body?.provenance) ? body.provenance : [],
     coverage: finite(integrity?.coverage),
@@ -235,13 +238,21 @@ function buildCryptoView(body: any, symbol: string, assetName: string): Enterpri
 }
 
 function buildTraditionalView(body: any, symbol: string, assetName: string, assetType: AssetType): EnterpriseViewModel {
+  const integrity = body?.integrity ?? {};
   const provenance: ProvenanceEntry[] = Array.isArray(body?.provenance) ? body.provenance : [];
   const factorNames = strings(body?.usedFactors);
+  const backendFactors = body?.factors && typeof body.factors === 'object' ? body.factors as Record<string, unknown> : {};
   const factors = factorNames.flatMap((name) => {
     const entry = provenance.find((item) => item?.field === name);
-    const score = finite(entry?.normalizedValue) ?? finite(entry?.value);
+    const score = finite(backendFactors[name]) ?? finite(entry?.normalizedValue) ?? finite(entry?.value);
     return score === null ? [] : [{ name, score }];
   });
+  const integrityEvidenceIds = Array.isArray(integrity?.evidence)
+    ? integrity.evidence.map((item: any) => item?.evidenceId ?? item?.id).filter((item: unknown): item is string => typeof item === 'string')
+    : [];
+  const derivedCoverage = factorNames.length > 0
+    ? factorNames.length / Math.max(factorNames.length + strings(body?.missingFactors).length, 1)
+    : null;
   return {
     status: typeof body?.status === 'string' ? body.status : 'SCORE_NOT_COMPUTABLE',
     symbol,
@@ -259,24 +270,14 @@ function buildTraditionalView(body: any, symbol: string, assetName: string, asse
     alerts: [],
     factors,
     rawFactors: [],
-    providers: strings(body?.providers),
-    evidenceIds: strings(body?.evidenceIds),
+    providers: strings(integrity?.providers).length ? strings(integrity?.providers) : strings(body?.providers),
+    evidenceIds: integrityEvidenceIds.length ? integrityEvidenceIds : strings(body?.evidenceIds),
     provenance,
-    coverage: factorNames.length > 0 ? factorNames.length / Math.max(factorNames.length + strings(body?.missingFactors).length, 1) : null,
-    dataQuality: body?.status === 'READY' ? 'verified' : null,
-    featureVersion: typeof body?.lineage?.featureVersion === 'string' ? body.lineage.featureVersion : null,
-    scoringVersion: typeof body?.lineage?.scoringVersion === 'string' ? body.lineage.scoringVersion : null,
-    reason: typeof body?.reason === 'string' ? body.reason : null,
-  };
-}
-
-function unavailable(symbol: string, assetName: string, assetType: AssetType, reason: string): EnterpriseViewModel {
-  return {
-    status: 'SCORE_NOT_COMPUTABLE', symbol, assetName, assetType, score: null, rankScore: null,
-    eligibleForTop10: false, tradeSetup: null,
-    decision: null, decisionName: null, decisionDesc: null, riskLevel: null, reasoning: [], alerts: [], factors: [],
-    rawFactors: [], providers: [], evidenceIds: [], provenance: [], coverage: null, dataQuality: null,
-    featureVersion: null, scoringVersion: null, reason,
+    coverage: finite(integrity?.coverage) ?? derivedCoverage,
+    dataQuality: typeof integrity?.dataQuality === 'string' ? integrity.dataQuality : body?.status === 'READY' ? 'verified' : null,
+    featureVersion: typeof integrity?.featureVersion === 'string' ? integrity.featureVersion : typeof body?.lineage?.featureVersion === 'string' ? body.lineage.featureVersion : null,
+    scoringVersion: typeof integrity?.scoringVersion === 'string' ? integrity.scoringVersion : typeof body?.lineage?.scoringVersion === 'string' ? body.lineage.scoringVersion : null,
+    reason: typeof body?.reason === 'string' ? body.reason : typeof integrity?.reason === 'string' ? integrity.reason : null,
   };
 }
 
@@ -411,6 +412,8 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
 
   const assets = useMemo(() => assetRegistry.getAssets(), []);
   const selectedAsset = useMemo(() => assets.find((asset) => asset.symbol.toUpperCase() === symbol), [assets, symbol]);
+  const selectedAssetType = (selectedAsset?.type ?? result?.assetType ?? 'crypto') as AssetType;
+  const showBinanceQuickAnalysis = selectedAssetType === 'crypto';
 
   const searchResults = useMemo(() => {
     const query = searchValue.trim().toLowerCase();
@@ -423,6 +426,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
   async function loadEvaluation() {
     setLoading(true);
     setRequestError(null);
+    setResult(null);
     try {
       const assetType = (selectedAsset?.type ?? 'crypto') as AssetType;
       const assetName = selectedAsset?.name ?? symbol;
@@ -437,15 +441,10 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
         return;
       }
 
-      if (assetType === 'stock' || assetType === 'forex' || assetType === 'index') {
-        const response = await fetch(`/api/registry/assets/${encodeURIComponent(symbol)}/verified-score`);
-        const body = await response.json().catch(() => null);
-        if (!body || typeof body !== 'object') throw new Error('Ungültige Antwort des verifizierten Scoring-Endpunkts.');
-        setResult(buildTraditionalView(body, symbol, assetName, assetType));
-        return;
-      }
-
-      setResult(unavailable(symbol, assetName, assetType, `Für ${TYPE_LABEL[assetType]} ist die Suche vollständig verfügbar, aber noch kein freigegebener provenance-backed kanonischer Scoring-Contract aktiv. Es werden keine Ersatzscores erzeugt.`));
+      const response = await fetch(`/api/registry/assets/${encodeURIComponent(symbol)}/verified-score`);
+      const body = await response.json().catch(() => null);
+      if (!body || typeof body !== 'object') throw new Error('Ungültige Antwort des verifizierten Scoring-Endpunkts.');
+      setResult(buildTraditionalView(body, symbol, assetName, assetType));
     } catch (error: any) {
       setRequestError(error?.message || 'Enterprise-Bewertung konnte nicht geladen werden.');
       setResult(null);
@@ -543,9 +542,26 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
         <button type="button" onClick={() => void loadEvaluation()} disabled={loading} className="inline-flex items-center justify-center gap-2 px-4 min-h-11 rounded-xl border border-white/15 bg-white/5 text-xs font-bold text-white/80 hover:bg-white/10 disabled:opacity-50"><RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Neu prüfen</button>
       </div>
 
-      <div className="relative z-20">
-        <EnterpriseBinanceQuickAnalysis symbol={symbol} />
-      </div>
+      {result && (
+        <VerifiedAssetSnapshot
+          symbol={result.symbol}
+          assetName={result.assetName}
+          assetType={result.assetType}
+          scoringStatus={result.status}
+          score={result.score}
+          coverage={result.coverage}
+          dataQuality={result.dataQuality}
+          scoringProviders={result.providers}
+          scoringEvidenceIds={result.evidenceIds}
+          provenance={result.provenance}
+        />
+      )}
+
+      {showBinanceQuickAnalysis && (
+        <div className="relative z-20">
+          <EnterpriseBinanceQuickAnalysis symbol={symbol} />
+        </div>
+      )}
 
       <div className="relative z-10 flex flex-wrap gap-2">{TIMEFRAMES.map((item) => <button type="button" key={item.value} onClick={() => onChangeTimeframe?.(item.value)} className={`rounded-md px-3 min-h-11 text-[9px] font-mono border transition-all ${timeframe === item.value ? 'border-white/30 bg-white/10 text-white' : 'border-white/5 text-white/35 hover:text-white/60'}`} title="Zeitrahmen ist Analysekontext und verändert keinen kanonischen Score im Browser.">{item.label}</button>)}</div>
 
