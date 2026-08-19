@@ -7,7 +7,7 @@
 **Updated:** 2026-08-19  
 **Scope:** CAPITAL-AI `SvenKulessa/Finance`  
 **Parent trust root:** `/AGENTS.md`  
-**Decision references:** Accepted ADR-0069 incl. Owner addendum 2026-08-16, effective Roadmap/ESS/ADR authorities, ADR-0096 after Human Merge
+**Decision references:** Accepted ADR-0069 incl. Owner addendum 2026-08-16, effective Roadmap/ESS/ADR authorities, Accepted ADR-0096 / `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`
 
 ## Purpose and boundary
 
@@ -118,40 +118,3 @@ Human Merge
 ```
 
 Render native Auto Deploy remains off. A second deploy authority requires an explicit architecture/security decision.
-
-## PR / check classification
-
-`docs/governance/PR_CHECK_CLASSIFICATION.md` determines applicable technical check class. M10 passkey is not a current prerequisite while suspended.
-
-## Mutation state vocabulary
-
-`NOT REQUIRED` | `PLANNED` | `HUMAN APPROVED` | `MUTATED` | `VERIFIED PASS` | `FAILED / ROLLED BACK`
-
-## Evidence minimum
-
-Where applicable, retain:
-
-- baseline and candidate SHAs;
-- stable authority/control references;
-- branch / PR / final head / merge SHA;
-- check class and validation result;
-- mutation class and target;
-- pre/post verification;
-- approval evidence for protected actions;
-- audit references;
-- rollback state;
-- next gate.
-
-## Stop / rollback rules
-
-STOP on unexpected target, unreviewed main drift, unresolved open-PR write overlap, missing required approval, missing audit persistence for protected mutation, failed pre-check, unknown high-impact side effect, failed/inconclusive post-verification or unresolved higher-authority conflict.
-
-Repository rollback uses a fresh branch from current `main`; external rollback follows the applicable protected runbook/approval process.
-
-## Runbooks and historical phase material
-
-Existing M5–M10 runbooks remain available for domain/recovery evidence. M10 material is retained as historical/reactivation design while its PR-CI passkey gate is suspended. A runbook does not become current authority solely because it exists.
-
-## Closure rule
-
-A work package closes only when implementation, current authority, required validation/evidence, main correlation and any external mutation verification are consistent. A PR merge alone is not sufficient closure for work that includes production mutation.
