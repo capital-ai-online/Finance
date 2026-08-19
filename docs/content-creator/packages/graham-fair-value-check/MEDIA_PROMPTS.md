@@ -1,47 +1,82 @@
 # Media-Prompts & Produktionsanweisungen
 
-## 1. Thumbnail
+## 1. Kanonischer deterministischer Renderer
 
-**Prompt (FLUX / vergleichbar):**
+Für brandkritische CAPITAL-AI Medien ist der primäre Pfad jetzt der repository-interne Open-Source-Renderer aus ADR-0094:
 
+```bash
+python3 -m pip install -r scripts/media/requirements-content-media.txt
+python3 scripts/media/render_content_assets.py \
+  --manifest docs/content-creator/packages/graham-fair-value-check/MEDIA_RENDER_MANIFEST.json \
+  --out-dir /tmp/capital-ai-graham-media
 ```
-Clean professional financial thumbnail, dark navy background, subtle cyan and soft gold accents, minimal mathematical formula overlay showing "Earnings + Book Value + Margin of Safety", elegant modern fintech style, sharp typography, high contrast, no people, no stock photos, no fake charts or numbers, precise and trustworthy aesthetic, 16:9 aspect ratio
-```
 
-**Text-Overlay:**
-- Oben klein: `CAPITAL-AI`
-- Mitte groß: `Graham Fair Value Check`
-- Unten klein: `Quantitative Bewertung`
+Er erzeugt reproduzierbar:
 
-**Formate:** 1280×720 (YouTube), 1200×628 (LinkedIn/Facebook), 1080×1080 (Fallback)  
-**Dateiname:** `graham-fair-value-check-thumbnail-v1.png`
+- 1280x720 Thumbnail,
+- 1080x1080 Social Card,
+- 1080x1920 Vertical Cover,
+- 1080x1920 Szenenframes,
+- Asset-Manifest mit SHA-256 und `publishReady=false`.
+
+Brandfarben und Texte werden deterministisch aus CAPITAL-AI Design-Tokens/Manifest gerendert. Ein generatives Bildmodell darf brandkritische Texte, Formeln, Scores oder Disclaimer nicht ersetzen.
 
 ---
 
-## 2. Short-Video (45–60 s) — TikTok / Reels / YouTube Shorts
+## 2. Optionaler generativer Hintergrund-Prompt
+
+Ein FLUX-kompatibles oder vergleichbares Open-Source-Bildmodell kann später **nur als optionaler Hintergrund-/Illustrationsprovider** hinter der Media-Provider-Boundary genutzt werden. Text-/Zahlen-Overlay bleibt deterministisch.
+
+**Prompt:**
+
+```text
+Clean professional financial abstract background, CAPITAL-AI dark charcoal canvas, subtle cyan, purple and soft gold network accents, minimal mathematical geometry, no words, no letters, no numbers, no people, no stock photos, no fake charts, precise institutional fintech aesthetic, high contrast, 16:9
+```
+
+Kein generativer Output darf als Finanzdaten-Evidence behandelt werden.
+
+---
+
+## 3. Short-Video (45-60 s) - TikTok / Reels / YouTube Shorts
+
+Das ausführbare Storyboard liegt in `MEDIA_RENDER_MANIFEST.json` und bleibt innerhalb von 60 Sekunden.
 
 | Zeit | Bild / Aktion | Text-Overlay | Voiceover (optional) |
 |------|---------------|--------------|----------------------|
-| 0–3 s | Dunkler Hintergrund, Logo | „Graham Fair Value Check“ | „Wie CAPITAL-AI den Graham Fair Value berechnet – ohne Hype.“ |
-| 3–12 s | Drei Bausteine nacheinander | Earnings Power / Buchwert / Sicherheitsmarge | „Drei Kernbausteine: Earnings Power, Buchwert und Sicherheitsmarge.“ |
-| 12–22 s | Formel-Übersicht | Earnings + Book Value + Margin of Safety | „Kombiniert mit Multiplikatoren und Risikoadjustierung.“ |
-| 22–35 s | Anonymisierter Score-Snapshot | Numerischer Fair-Value-Bereich + Confidence | „Ergebnis: Fair-Value-Bereich und Confidence-Metrik.“ |
-| 35–48 s | Gegenüberstellung | Kurs < FV → positive Marge / Kurs > FV → engere Marge | „So wird das Ergebnis gelesen – rein mathematisch.“ |
-| 48–58 s | Disclaimer | Keine Anlageberatung. Nur quantitative Berechnung. | „Keine Prognose. Keine Anlageberatung.“ |
-| 58–60 s | Logo | CAPITAL-AI | — |
+| 0-4 s | CAPITAL-AI Brand Frame | Graham Fair Value Check | „Wie CAPITAL-AI den Graham Fair Value berechnet - ohne Hype.“ |
+| 4-12 s | Drei Bausteine | Earnings Power / Buchwert / Sicherheitsmarge | „Drei Kernbausteine: Earnings Power, Buchwert und Sicherheitsmarge.“ |
+| 12-21 s | Methodik | Multiplikatoren + Risikoadjustierung | „Kombiniert mit historischen und sektoralen Multiplikatoren sowie einer Risikoadjustierung.“ |
+| 21-30 s | Ergebnis lesen | Fair-Value-Bereich + Confidence | „Ergebnis: Fair-Value-Bereich und Confidence-Metrik.“ |
+| 30-39 s | Sicherheitsmarge | mathematische Relation, kein Signal | „So wird das Ergebnis gelesen - rein mathematisch.“ |
+| 39-46 s | End Card | Keine Prognose. Keine Anlageberatung. | „Keine Prognose. Keine Anlageberatung.“ |
 
-**Format:** 1080×1920 (9:16)  
-**Dateiname:** `graham-fair-value-check-short-v1.mp4`
+**Format:** 1080x1920 (9:16)  
+**Dateiname:** `graham-fair-value-check-short-1080x1920.mp4`
 
-**Voiceover Short (TTS):**  
-„Wie CAPITAL-AI den Graham Fair Value berechnet – ohne Hype. Drei Kernbausteine: Earnings Power, Buchwert und Sicherheitsmarge. Diese werden mit historischen und sektoralen Multiplikatoren sowie einer Risikoadjustierung kombiniert. Das Ergebnis ist ein numerischer Fair-Value-Bereich und eine Confidence-Metrik. So wird das Ergebnis gelesen – rein mathematisch. Keine Prognose. Keine Anlageberatung. Nur Mathematik und belegbare Daten.“
+Video-Rendering:
+
+```bash
+python3 scripts/media/render_content_assets.py \
+  --manifest docs/content-creator/packages/graham-fair-value-check/MEDIA_RENDER_MANIFEST.json \
+  --out-dir /tmp/capital-ai-graham-media \
+  --video
+```
+
+Der FFmpeg-Build wird vor Ausführung auf GPL/nonfree-Compile-Flags geprüft. Details: `docs/runbooks/OPEN_SOURCE_MEDIA_RENDERING.md`.
+
+**Voiceover Short (optional / noch kein TTS-Provider in diesem Slice):**  
+„Wie CAPITAL-AI den Graham Fair Value berechnet - ohne Hype. Drei Kernbausteine: Earnings Power, Buchwert und Sicherheitsmarge. Diese werden mit historischen und sektoralen Multiplikatoren sowie einer Risikoadjustierung kombiniert. Das Ergebnis ist ein numerischer Fair-Value-Bereich und eine Confidence-Metrik. So wird das Ergebnis gelesen - rein mathematisch. Keine Prognose. Keine Anlageberatung. Nur Mathematik und belegbare Daten.“
 
 ---
 
-## 3. Produktions-Checkliste
+## 4. Produktions-Checkliste
 
-- [ ] Keine echten Kursdaten oder Ticker im Video
+- [ ] Keine echten Kursdaten oder Ticker ohne freigegebene Evidence
 - [ ] Keine Gewinnversprechen oder Zukunftsaussagen
-- [ ] Disclaimer mindestens 2× sichtbar (Anfang + Ende)
+- [ ] Disclaimer mindestens am Anfang + Ende sichtbar
 - [ ] Schriftgröße mobil lesbar
-- [ ] Dateien nach Fertigstellung hashen
+- [ ] Renderer-Manifest vorhanden
+- [ ] alle finalen Assets SHA-256-gehasht
+- [ ] `publishReady=false` bleibt bis SocialMediaEngine Validation + Human Approval
+- [ ] kein `--enable-nonfree` FFmpeg-Build
+- [ ] produktiver FFmpeg-Build separat lizenz-/security-geprüft
