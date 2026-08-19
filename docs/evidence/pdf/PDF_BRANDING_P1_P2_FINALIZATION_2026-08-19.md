@@ -29,9 +29,12 @@ Geprüfte Primärquellen zum Umsetzungszeitpunkt:
 
 Zum Implementierungsabschluss sind PR #433, #434 und #435 parallel offen.
 
-- Keine dieser Arbeiten verändert die aktiven PDF-Renderer- oder PDF-Branding-Runtimepfade dieses Branches.
-- `docs/governance/document-registry.json` ist ein additiver Überschneidungspunkt und muss erneut reconciled werden, falls einer dieser PRs vor dem PDF-PR in `main` landet.
-- PR #434 reserviert bereits `ADR-0092` für Privacy-Retention-Hardening. Die zunächst lokal verwendete PDF-ID `ADR-0092` wurde deshalb vor PR-Erstellung verworfen; die PDF-Entscheidung ist verbindlich **ADR-0093**.
+- **#433:** direkter Dateioverlap nur `docs/governance/document-registry.json`.
+- **#435:** direkter Dateioverlap nur `docs/governance/document-registry.json`.
+- **#434:** kein direkter Dateioverlap; der Branch reserviert aber `ADR-0092` für Privacy-Retention-Hardening.
+- Die zunächst lokal verwendete PDF-ID `ADR-0092` wurde deshalb vor PR-Erstellung verworfen; die PDF-Entscheidung ist verbindlich **ADR-0093**.
+
+Falls #433 oder #435 zuerst landen, ist die Registry additiv zu reconciliieren. Jeder weitere Main-Advance löst vor Merge erneut den vorgeschriebenen Gesamtvergleich des PDF-Branches gegen `main` aus.
 
 ## Umgesetzte Architektur
 
@@ -147,6 +150,7 @@ Bereits abgeschlossen:
 - Branch-basierte Umsetzung gemäß P1/P2-Roadmap.
 - Regressionstests und Render-Smoke-Tooling implementiert.
 - Parallel-PR-ADR-Kollision erkannt und vor PR-Erstellung von ADR-0092 auf ADR-0093 korrigiert.
+- Pre-PR-Main-Abgleich: `23 ahead / 0 behind`, Merge-Base `3ed2b2e9c9421bc979ca2487610a6a49a655e888`.
 
 Noch nach PR-Erstellung zu erfassen:
 
