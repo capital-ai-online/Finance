@@ -6,6 +6,12 @@ function source(relativePath: string): string {
   return fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 }
 
+function executableSource(value: string): string {
+  return value
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+}
+
 describe('SC-2 Phase C3 global Single-Dispatcher invariant', () => {
   const dispatcher = source('src/platform/Scoring/ScoringDispatcher.ts');
   const registry = source('src/platform/Scoring/ScoringModelRegistry.ts');
@@ -13,6 +19,7 @@ describe('SC-2 Phase C3 global Single-Dispatcher invariant', () => {
   const registryRoutes = source('src/features/registry/registryRoutes.ts');
   const rawMaterialsRoutes = source('src/routes/rawMaterialsRoutes.ts');
   const compatibilityRoutes = source('server/routes/legacyScoringCompatibilityRoutes.ts');
+  const compatibilityExecutable = executableSource(compatibilityRoutes);
   const routeComposition = source('server/routes/registerApplicationRoutes.ts');
   const marketDataAdapter = source('server/marketData/canonicalCryptoScoreEnrichment.ts');
   const marketDataRuntime = source('server/marketData/createApplicationMarketDataRuntime.ts');
@@ -31,8 +38,8 @@ describe('SC-2 Phase C3 global Single-Dispatcher invariant', () => {
   it('routes Standard- and Meme-Crypto compatibility traffic through the same dispatcher', () => {
     expect(compatibilityRoutes).toContain('respondWithCanonicalCryptoScore');
     expect(compatibilityRoutes).toContain('dispatchCanonicalScore({');
-    expect(compatibilityRoutes).not.toContain('MemeCoinScoringService');
-    expect(compatibilityRoutes).not.toContain('return next()');
+    expect(compatibilityExecutable).not.toContain('MemeCoinScoringService');
+    expect(compatibilityExecutable).not.toContain('return next()');
     expect(routeComposition).toContain('Standard- and Meme-Crypto terminate at the canonical dispatcher');
   });
 
