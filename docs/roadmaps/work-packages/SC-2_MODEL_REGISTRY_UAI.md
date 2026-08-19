@@ -5,7 +5,7 @@
 **Parent Branch:** `agent/gemini-research-evidence-adapter`  
 **Current Child Branch:** `agent/gemini-free-tier-only`  
 **Start:** 2026-08-19  
-**ADRs:** ADR-0086, ADR-0087, ADR-0088, ADR-0089
+**ADRs:** ADR-0087, ADR-0088, ADR-0089, ADR-0090
 
 ## Ziel
 
@@ -86,7 +86,7 @@ Evidence: `docs/evidence/sc-md/SC2_GEMINI_RESEARCH_EVIDENCE_ADAPTER_2026-08-19.m
 
 ### Phase A.6 — Server-only Gemini Research Shadow Runtime
 
-Owner-gated Aktivierungsstufe aus ADR-0087/ADR-0088; Zero-Cost-Policy konkretisiert durch ADR-0089.
+Owner-gated Aktivierungsstufe aus ADR-0088/ADR-0089; Zero-Cost-Policy konkretisiert durch ADR-0090.
 
 - [x] REST `GeminiResearchTransport` gegen Interactions API
 - [x] server-only; keine öffentliche Route / kein Startup-Traffic
@@ -109,14 +109,15 @@ Owner-gated Aktivierungsstufe aus ADR-0087/ADR-0088; Zero-Cost-Policy konkretisi
 - [x] Modell-/Paid-Preis-Overrides aus kanonischem Entry-Point entfernt/ignoriert
 - [x] lokale Input-/Output-/Search-Unit-Costs auf 0 erzwungen
 - [x] `GEMINI_RESEARCH_FREE_TIER_ONLY=true`
-- [x] `GEMINI_RESEARCH_FREE_TIER_ATTESTED=false` Default / zweiter Kill-Switch
+- [x] `GEMINI_RESEARCH_FREE_TIER_ATTESTED=false` sicherer Blueprint-Default / zweiter Kill-Switch
 - [x] Free-Tier-Key muss aus Projekt ohne Billing-Verknüpfung stammen
 - [x] lokales hartes Request-Cap 100/Tag; Blueprint Default 50/Tag
 - [x] Canonical server index exponiert keinen Paid-Runtime-Factory
 - [x] Free-Tier-Regressionstests implementiert
+- [x] Owner bestätigt 2026-08-19: Free-Tier `GEMINI_API_KEY` ohne Billing liegt in `finance-secrets.env`
+- [x] Render Service Attestation gesetzt: `GEMINI_RESEARCH_FREE_TIER_ATTESTED=true`; `GEMINI_RESEARCH_FREE_TIER_ONLY=true`
+- [x] Render Shadow Kill-Switch bleibt ausdrücklich `GEMINI_RESEARCH_SHADOW_ENABLED=false`
 - [ ] vollständiges `vitest`/`tsc` CI-PASS-Evidence
-- [ ] realen **Free-Tier** `GEMINI_API_KEY` in Render Secret File setzen — Owner/Deployment-Aktion
-- [ ] Billing-freies Google-Projekt prüfen und danach `GEMINI_RESEARCH_FREE_TIER_ATTESTED=true` setzen
 - [ ] Shadow-Consumer gezielt verdrahten und Coverage/Latenz/Quota messen
 - [ ] reale Source-Policy + Lizenzfreigaben je Domain/Field
 - [ ] field-spezifische Promotion zu `ScoringEvidenceRef` — separat Owner-gated
@@ -158,7 +159,11 @@ Runbook: `docs/runbooks/GEMINI_RESEARCH_SHADOW.md`.
 
 ## Enterprise-/FinTech-Abgleich
 
-Die Registry übernimmt zentrale Versionierung, kontrollierte Deployment-Aliase, nachvollziehbare Modellmetadaten und fail-closed Promotion. UAI/Evidence-Trennung verhindert, dass Asset-Katalogdaten oder AI-Outputs stillschweigend zu Finanz-Evidence werden. Der Gemini-Shadow-Transport bleibt vor dem Evidence Gate, ist explizit rate-/circuit-/quota-begrenzt und liefert nur zitierte Research Candidates. ADR-0089 ergänzt eine Kosten-Trust-Boundary: der kanonische Runtime-Entry-Point ist Free-Tier-only, Paid Mode ist verboten und Billing-Freiheit wird zusätzlich operator-attestiert. Produktive Score-Wirkung erfordert weiterhin einen separat versionierten und reviewbaren Evidence-/Feature-Contract. Outcome-/Walk-Forward-Validierung bleibt SC-8.
+Die Registry übernimmt zentrale Versionierung, kontrollierte Deployment-Aliase, nachvollziehbare Modellmetadaten und fail-closed Promotion. UAI/Evidence-Trennung verhindert, dass Asset-Katalogdaten oder AI-Outputs stillschweigend zu Finanz-Evidence werden. Der Gemini-Shadow-Transport bleibt vor dem Evidence Gate, ist explizit rate-/circuit-/quota-begrenzt und liefert nur zitierte Research Candidates. ADR-0090 ergänzt eine Kosten-Trust-Boundary: der kanonische Runtime-Entry-Point ist Free-Tier-only, Paid Mode ist verboten und Billing-Freiheit wird zusätzlich operator-attestiert. Produktive Score-Wirkung erfordert weiterhin einen separat versionierten und reviewbaren Evidence-/Feature-Contract. Outcome-/Walk-Forward-Validierung bleibt SC-8.
+
+## Main-Korrelation 2026-08-19
+
+`main` ist während der Branch-Arbeit von `345b2bd3` auf `f8a1630a` vorgerückt. Die neuen Main-Commits enthalten Governance-Authority-/Regulatory-Hardening und belegen `ADR-0086`. Daraus folgt die kollisionsfreie SC-2-Nummerierung `ADR-0087`–`ADR-0090`. Der neue zentrale Governance Document Registry wird auf dem Child-Branch übernommen und um die SC-2-Dokumente ergänzt. Die neuen `server/aiGovernanceSupabaseSink.ts`-/`server/ai.ts`-Änderungen haben keinen direkten Runtime-Pfad zum Gemini Research Transport und erfordern keine parallele Provider-/Telemetry-Architektur.
 
 ## Definition of Done SC-2
 
