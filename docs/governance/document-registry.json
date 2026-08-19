@@ -16,8 +16,8 @@
       "documentId": "DOC-GOV-AGENTS",
       "type": "governance",
       "owner": "CAPITAL-AI",
-      "authority": "ADR-0069 + HUMAN_OWNER_PR_APPROVAL_POLICY",
-      "version": "1.1.0",
+      "authority": "ADR-0039",
+      "version": "1.0.0",
       "language": "en",
       "lifecycle": "approved",
       "path": "AGENTS.md"
@@ -53,47 +53,7 @@
       "path": "docs/governance/DOCUMENTATION_HYGIENE_POLICY.md"
     },
     {
-      "documentId": "DOC-GOV-AUTH-SUPERSESSION",
-      "type": "governance-policy",
-      "owner": "CAPITAL-AI Owner",
-      "authority": "ADR-0086 (merged Human/Owner decision)",
-      "version": "1.0.0",
-      "language": "mixed",
-      "lifecycle": "approved",
-      "path": "docs/governance/GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY.md"
-    },
-    {
-      "documentId": "DOC-GOV-SUPERSESSION-IMPACT-2026-08-19",
-      "type": "owner-review-evidence",
-      "owner": "CAPITAL-AI Owner",
-      "authority": "ADR-0086 review package",
-      "version": "1.0.0",
-      "language": "mixed",
-      "lifecycle": "reviewed",
-      "path": "docs/governance/GOVERNANCE_SUPERSESSION_DIFF_IMPACT_2026-08-19.md"
-    },
-    {
-      "documentId": "DOC-COMPLIANCE-AI-FINTECH-CONTROLS-2026-08-19",
-      "type": "compliance-control-matrix",
-      "owner": "Security & Compliance",
-      "authority": "ADR-0086 review baseline",
-      "version": "1.0.0",
-      "language": "mixed",
-      "lifecycle": "reviewed",
-      "path": "docs/compliance/AI_FINTECH_REGULATORY_CONTROL_MATRIX_2026-08-19.md"
-    },
-    {
-      "documentId": "DOC-ROADMAP-GOV-HARDENING-2026-08-19",
-      "type": "roadmap",
-      "owner": "CAPITAL-AI Owner",
-      "authority": "Owner-requested governance hardening / ADR-0086",
-      "version": "1.0.0",
-      "language": "mixed",
-      "lifecycle": "reviewed",
-      "path": "docs/roadmaps/GOVERNANCE_HARDENING_2026-08-19.md"
-    },
-    {
-      "documentId": "ADR-0087",
+      "documentId": "DOC-ADR-0087",
       "type": "architecture-decision",
       "owner": "CAPITAL-AI Owner",
       "authority": "SC-MD-SPT-0001 / Owner decision",
@@ -103,7 +63,7 @@
       "path": "docs/adr/ADR-0087-single-scoring-architecture-uai-model-registry.md"
     },
     {
-      "documentId": "ADR-0088",
+      "documentId": "DOC-ADR-0088",
       "type": "architecture-decision",
       "owner": "CAPITAL-AI Owner",
       "authority": "ADR-0087 / SC-MD-SPT-0001 / Owner decision",
@@ -113,7 +73,7 @@
       "path": "docs/adr/ADR-0088-gemini-research-evidence-reentry-boundary.md"
     },
     {
-      "documentId": "ADR-0089",
+      "documentId": "DOC-ADR-0089",
       "type": "architecture-decision",
       "owner": "CAPITAL-AI Owner",
       "authority": "ADR-0088 / SC-MD-SPT-0001 / Owner decision",
@@ -123,7 +83,7 @@
       "path": "docs/adr/ADR-0089-gemini-research-shadow-runtime.md"
     },
     {
-      "documentId": "ADR-0090",
+      "documentId": "DOC-ADR-0090",
       "type": "architecture-decision",
       "owner": "CAPITAL-AI Owner",
       "authority": "ADR-0089 / SC-MD-SPT-0001 / Owner decision",
@@ -133,17 +93,17 @@
       "path": "docs/adr/ADR-0090-gemini-free-tier-only-zero-cost-policy.md"
     },
     {
-      "documentId": "SC-MD-SPT-0001",
+      "documentId": "DOC-ROADMAP-SC-MD-SPT-0001",
       "type": "roadmap",
       "owner": "CAPITAL-AI Owner",
-      "authority": "ADR-0086 + ADR-0087",
+      "authority": "DOCUMENTATION_HYGIENE_POLICY / Owner decision",
       "version": "1.0.12",
       "language": "de",
       "lifecycle": "approved",
       "path": "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md"
     },
     {
-      "documentId": "SC-2-MODEL-REGISTRY-UAI",
+      "documentId": "DOC-WORK-PACKAGE-SC-2-MODEL-REGISTRY-UAI",
       "type": "work-package",
       "owner": "CAPITAL-AI Owner",
       "authority": "SC-MD-SPT-0001 + ADR-0087 + ADR-0088 + ADR-0089 + ADR-0090",
@@ -153,7 +113,7 @@
       "path": "docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md"
     },
     {
-      "documentId": "SC2-EVIDENCE-A1-A2-2026-08-19",
+      "documentId": "DOC-EVIDENCE-SC2-A1-A2-2026-08-19",
       "type": "implementation-evidence",
       "owner": "CAPITAL-AI",
       "authority": "SC-2 / ADR-0087",
@@ -163,7 +123,7 @@
       "path": "docs/evidence/sc-md/SC2_A1_A2_BASELINE_2026-08-19.md"
     },
     {
-      "documentId": "SC2-EVIDENCE-GEMINI-RESEARCH-2026-08-19",
+      "documentId": "DOC-EVIDENCE-SC2-GEMINI-RESEARCH-2026-08-19",
       "type": "implementation-evidence",
       "owner": "CAPITAL-AI",
       "authority": "SC-2 / ADR-0088",
@@ -173,7 +133,7 @@
       "path": "docs/evidence/sc-md/SC2_GEMINI_RESEARCH_EVIDENCE_ADAPTER_2026-08-19.md"
     },
     {
-      "documentId": "SC2-EVIDENCE-GEMINI-SHADOW-2026-08-19",
+      "documentId": "DOC-EVIDENCE-SC2-GEMINI-SHADOW-2026-08-19",
       "type": "implementation-evidence",
       "owner": "CAPITAL-AI",
       "authority": "SC-2 / ADR-0089",
@@ -183,7 +143,7 @@
       "path": "docs/evidence/sc-md/SC2_GEMINI_SHADOW_TRANSPORT_2026-08-19.md"
     },
     {
-      "documentId": "SC2-EVIDENCE-GEMINI-FREE-TIER-2026-08-19",
+      "documentId": "DOC-EVIDENCE-SC2-GEMINI-FREE-TIER-2026-08-19",
       "type": "implementation-evidence",
       "owner": "CAPITAL-AI",
       "authority": "SC-2 / ADR-0090",
@@ -193,7 +153,7 @@
       "path": "docs/evidence/sc-md/SC2_GEMINI_FREE_TIER_ONLY_2026-08-19.md"
     },
     {
-      "documentId": "RUNBOOK-GEMINI-RESEARCH-SHADOW",
+      "documentId": "DOC-RUNBOOK-GEMINI-RESEARCH-SHADOW",
       "type": "runbook",
       "owner": "CAPITAL-AI",
       "authority": "ADR-0088 + ADR-0089 + ADR-0090",
