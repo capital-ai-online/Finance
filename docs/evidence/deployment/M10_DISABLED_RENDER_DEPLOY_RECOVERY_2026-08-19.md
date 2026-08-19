@@ -1,6 +1,6 @@
 # M10 Disabled / Render Deploy Recovery Evidence — 2026-08-19
 
-**Status:** OWNER-AUTHORIZED OPERATIONAL EXCEPTION / PR PENDING  
+**Status:** OWNER-AUTHORIZED OPERATIONAL EXCEPTION / PR #445 OPEN  
 **Repository:** `SvenKulessa/Finance`  
 **Branch:** `fix/m10-off-render-deploy-recovery`  
 **Initial base:** `main@f151cd272353bc1db92bc1e9e1029833188eee3c`  
@@ -17,34 +17,50 @@ Correlated M10 design authorities are not Accepted Decisions:
 
 The repository M10 implementation and historical evidence are therefore retained for audit and rollback, but the operational PR-CI gate is disabled by the explicit Owner-controlled workflow switch `M10_CI_GATE_ENABLED=false`. This change does not authorize merge; Human/CODEOWNER merge remains a separate boundary.
 
-## Incident correlation
+## Incident correlation and recovery timeline
 
-Render's last confirmed live deployment is commit `b22327b17a23455347b19ab4ec12ed784045c0dc`, produced by the deploy-hook path after PR #437. No later Render deploy object was present during this recovery analysis even though `main` had advanced through subsequent Human merges, including the TypeScript remediation in PR #443 and the CI invariant remediation in PR #444.
+At the start of this recovery analysis, Render's last confirmed live deployment was commit `b22327b17a23455347b19ab4ec12ed784045c0dc`, produced by the deploy-hook path after PR #437. At that point no later Render deploy object was present even though `main` had advanced through subsequent Human merges, including the TypeScript remediation in PR #443 and the CI invariant remediation in PR #444.
 
-The repository already contained the correct production deployment chain:
+During preparation of PR #445 the external production state changed: Render subsequently accepted the existing GitHub deploy-hook path for the already-Human-merged PR #444 main commit `f151cd272353bc1db92bc1e9e1029833188eee3c`.
+
+Confirmed Render recovery object:
+
+- Deploy ID: `dep-da2qqqegekts73bgir20`
+- Commit: `f151cd272353bc1db92bc1e9e1029833188eee3c`
+- Trigger: `deploy_hook`
+- Started: `2026-08-19T13:19:37Z`
+- Finished: `2026-08-19T13:21:05Z`
+- Status at re-verification: `live`
+
+`main` remained exactly `f151cd272353bc1db92bc1e9e1029833188eee3c` at the same re-verification point. Therefore the historical production drift of 78 commits observed during the incident is now **0 commits** and the production deployment identity is again aligned with current `main`.
+
+This does not make the control-plane fix obsolete. It proves that Render itself can still accept the canonical deploy hook and narrows the incident to CI/control-plane stability rather than a persistent Render platform inability to deploy.
+
+The repository's intended production deployment chain remains:
 
 `verified main build -> supply-chain attestation -> exact-SHA Render deploy hook -> post-deploy identity verification`
 
-The failure boundary was therefore upstream of Render: PR validation was repeatedly blocked by M10 and related CI failures, preventing a stable reviewed path to a new verified main deployment. Render Auto-Deploy was also disabled in the live service, while `render.yaml` still declared `checksPass`, creating configuration drift and an ambiguous second deployment authority.
+The incident boundary was upstream of Render for the stalled interval: PR validation was repeatedly blocked by M10 and related CI failures, delaying a stable reviewed path to a new verified main deployment. Render Auto-Deploy was also disabled in the live service, while `render.yaml` still declared `checksPass`, creating configuration drift and an ambiguous second deployment authority. PR #445 removes that ambiguity by aligning the Blueprint to `off` and retaining GitHub CI as the single automatic production authority.
 
 ## TypeScript remediation correlation
 
 The observed TypeScript `TS2339` failure in `ScoringDispatcher.ts` was already remediated and Human-merged by PR #443. The fix narrows the discriminated request union on `input.assetClass` before accessing `input.execution`. This recovery branch is based after PR #443 and deliberately does not duplicate or rewrite that fix.
 
-PR #444 subsequently repaired two brittle unit invariants and was also merged before this branch was created. The branch therefore starts from a baseline containing both remediations.
+PR #444 subsequently repaired two brittle unit invariants and was also merged before this branch was created. The branch therefore starts from a baseline containing both remediations. PR #444 is now also the confirmed live Render production commit.
 
 ## Semantic diff and operational impact
 
-| Area | Before | Recovery state |
+| Area | Incident / before | Recovery state |
 |---|---|---|
 | PR CI authorization | M10 passkey consumption required for ordinary PR CI; ordinary PR events could stop before technical checks | M10 implementation retained, but `M10_CI_GATE_ENABLED=false` lets ordinary PRs enter the existing scope-classified CI path |
 | Manual dispatch | M10 `workflow_dispatch` could consume an authorization | While M10 is disabled, manual dispatch is explicitly denied and cannot become a bypass |
 | Human merge | Separate Human boundary | Unchanged; still separate and mandatory |
 | Render auto-deploy | Live service `off`, repository Blueprint `checksPass` | Blueprint aligned to `off` |
 | Production deploy authority | GitHub main CI deploy hook, but Blueprint implied a second checks-based path | Single explicit authority: verified main CI -> attestation -> exact-SHA deploy hook |
-| Deployment identity | Production still reports PR #437 commit | Next successful Human-merged main pipeline is expected to deploy its exact verified SHA and post-verify it |
+| Deployment identity | Incident observation: production was stuck at PR #437 / `b22327b...`, 78 commits behind `main` | Re-verification during PR #445 preparation: Render is live on PR #444 / `f151cd2...`, exactly current `main`; drift = 0 |
 | Application SemVer | `0.6.0` | Unchanged; deployment revision is bound to exact commit SHA. Automatic SemVer/README projection remains separately tracked by PR #439 |
-| TypeScript TS2339 | Previously blocked an authorized M10 build | Already fixed by merged PR #443 and inherited by this branch |
+| TypeScript TS2339 | Previously blocked an authorized M10 build | Already fixed by merged PR #443, inherited by this branch, and TypeScript/Lint passed on PR #445's first CI head |
+| Unit invariants | Later brittle failures blocked CI | Already fixed by merged PR #444 and inherited by this branch |
 
 ## Security impact
 
@@ -61,8 +77,10 @@ N/A for this control-plane recovery. No customer data, billing entitlement, Stri
 1. Do not merge if post-PR technical checks expose a regression.
 2. If the branch is merged and the CI exception must be reverted, Human-revert the merge commit or set `M10_CI_GATE_ENABLED=true` in a separately reviewed PR.
 3. Keep Render Auto-Deploy `off`; do not compensate for CI failure by enabling an independent automatic deploy path.
-4. If a post-merge Render deployment fails health/identity verification, retain the prior live Render revision and remediate through a fresh Human-gated branch.
+4. If a later post-merge Render deployment fails health/identity verification, retain or restore the last verified healthy Render revision and remediate through a fresh Human-gated branch.
 
-## Validation plan
+## Validation evidence and plan
 
-No cost-incurring build/test was executed before PR creation. After PR creation, the existing Class-R pipeline must validate workflow security, TypeScript, unit tests, production build/predeploy, Docker hardening/image invariants and the new CI/Render control-plane regression test. Before PR creation, this branch must be compared again with the then-current `main` and open parallel PRs.
+No cost-incurring build/test was executed before PR creation. After PR #445 was created, the Class-R workflow started through the ordinary `pull_request` path without passkey consumption. On the initial PR head, the M10 authorization step completed successfully in disabled-owner-override mode, repository integrity passed, `npm ci` passed, production dependency audit passed, and TypeScript/Lint passed before the evidence refresh commit was created.
+
+The final PR head must rerun and pass the complete Class-R pipeline: governance/security, dependency audit, TypeScript, unit tests, production build/CSP/predeploy, Docker hardening/image invariants, and the CI/Render control-plane regression test. Immediately before PR creation the branch was compared to then-current `main` and open parallel PRs; it was `4 ahead / 0 behind` with exact merge-base `main@f151cd272353bc1db92bc1e9e1029833188eee3c`. The post-incident production re-verification also confirmed `main` remained on that exact SHA.
