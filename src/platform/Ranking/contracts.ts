@@ -14,26 +14,16 @@ export const CROSS_ASSET_RANKING_CONTRACT_VERSION = 'cross-asset-ranking/1.0.0' 
 export const CROSS_ASSET_RANKING_IMPACT_ENABLED = false as const;
 
 export type CrossAssetRankingMode = 'overall' | 'category' | 'tier' | 'growth';
-
-export type RankingOperationsState =
-  | 'HEALTHY'
-  | 'DEGRADED'
-  | 'UNAVAILABLE'
-  | 'NO_RUNTIME_EVIDENCE';
+export type RankingOperationsState = 'HEALTHY' | 'DEGRADED' | 'UNAVAILABLE' | 'NO_RUNTIME_EVIDENCE';
 
 export interface CrossAssetRankingGovernance {
-  /** Explicit screening/governance admission. Absence or false fails closed. */
   eligible: boolean;
   eligibilityStatus?: string;
   operationsState?: RankingOperationsState;
   sourceConflict?: boolean;
 }
 
-/**
- * Cross-model/cross-segment score comparability is never inferred from equal-looking numeric
- * scales. A caller must provide a separately validated normalization result with method/evidence
- * lineage before candidates from different default cohorts can share an ordering.
- */
+/** Cross-cohort score comparability requires separately validated normalization evidence. */
 export interface ScoreComparabilityEvidence {
   normalizedValue: number;
   comparisonKey: string;
@@ -44,10 +34,7 @@ export interface ScoreComparabilityEvidence {
   verified: boolean;
 }
 
-/**
- * Growth is never inferred from the canonical score. A caller must provide separately verified,
- * horizon-specific evidence plus a comparison key whose semantics were established upstream.
- */
+/** Growth is never inferred from canonical score; it requires horizon-specific verified evidence. */
 export interface GrowthRankingEvidence {
   value: number;
   comparisonKey: string;
@@ -60,19 +47,15 @@ export interface GrowthRankingEvidence {
 export interface CanonicalRankingCandidate {
   asset: UniversalAssetIdentity;
   canonical: CanonicalScoreResult;
-  /** Optional peer metadata. Required by category mode. */
   category?: string | null;
-  /** Optional peer metadata. Required by tier mode. */
   tier?: 1 | 2 | 3 | null;
   /**
-   * Optional verified normalization evidence. When omitted, model id + version + asset class is
-   * the cohort boundary. Supplying only a label is insufficient: a normalized value and method
-   * lineage are required before different model/segment cohorts can share a ranking cohort.
+   * When absent, the default cohort is bounded by model id/version + asset class + feature contract
+   * + scoring contract. Different default cohorts can share an ordering only through verified
+   * normalization evidence.
    */
   scoreComparability?: ScoreComparabilityEvidence | null;
-  /** Required by growth mode; ignored by score-based modes. */
   growth?: GrowthRankingEvidence | null;
-  /** Explicit governance evidence is required for admission. */
   governance?: CrossAssetRankingGovernance | null;
 }
 
@@ -116,7 +99,6 @@ export interface RankedCanonicalAsset {
   modelId: string;
   modelVersion: string;
   dispatcherVersion: string;
-  /** Stable deterministic tie-breaker; no hidden financial factor is applied. */
   tieBreaker: string;
 }
 
@@ -124,10 +106,9 @@ export interface CrossAssetRankingCohort {
   key: string;
   mode: CrossAssetRankingMode;
   comparisonBasis:
-    | 'canonical-score-same-model-asset-class'
+    | 'canonical-score-same-intended-use-contract'
     | 'verified-normalized-score'
     | 'verified-growth-evidence';
-  /** Cross-cohort positions are intentionally undefined. */
   crossCohortOrder: false;
   entries: RankedCanonicalAsset[];
 }
