@@ -7,10 +7,12 @@ const read = (relative: string) => fs.readFileSync(path.join(root, relative), 'u
 
 const core = read('scripts/media/capital_ai_media.py');
 const renderer = read('scripts/media/render_content_assets.py');
+const cinematicRenderer = read('scripts/media/render_cinematic_brand_film.py');
 const pdfCompanion = read('scripts/docs/export_pdf_media_bundle.py');
 const requirements = read('scripts/media/requirements-content-media.txt');
 const example = JSON.parse(read('scripts/media/examples/capital_ai_media_manifest.json'));
 const graham = JSON.parse(read('docs/content-creator/packages/graham-fair-value-check/MEDIA_RENDER_MANIFEST.json'));
+const grahamFilm = JSON.parse(read('docs/content-creator/packages/graham-fair-value-check/PREMIUM_BRAND_FILM_MANIFEST.json'));
 
 function totalDuration(manifest: { scenes: Array<{ durationSeconds: number }> }): number {
   return manifest.scenes.reduce((sum, scene) => sum + scene.durationSeconds, 0);
@@ -27,12 +29,14 @@ describe('ADR-0094 open-source media rendering contract', () => {
     expect(core).toContain('load_brand_palette');
     expect(core).not.toContain('requests.');
     expect(core).not.toContain('httpx.');
+    expect(cinematicRenderer).toContain('load_brand_palette');
   });
 
   it('keeps subprocess execution shell-free and bounded', () => {
     expect(core).toContain('shell=False');
     expect(core).toContain('timeout=timeout');
     expect(core).not.toContain('shell=True');
+    expect(cinematicRenderer).not.toContain('shell=True');
   });
 
   it('fails closed on FFmpeg nonfree and defaults GPL builds to DENY', () => {
@@ -41,6 +45,9 @@ describe('ADR-0094 open-source media rendering contract', () => {
     expect(core).toContain('allow_gpl_ffmpeg');
     expect(core).toContain('lgpl-compatible-build-candidate');
     expect(core).toContain('"-c:v", "mpeg4"');
+    expect(cinematicRenderer).toContain('inspect_ffmpeg');
+    expect(cinematicRenderer).toContain('enforce_ffmpeg_license_profile');
+    expect(cinematicRenderer).toContain("'-c:v','mpeg4'");
   });
 
   it('does not accept remote media URLs in deterministic manifests', () => {
@@ -48,11 +55,14 @@ describe('ADR-0094 open-source media rendering contract', () => {
     expect(renderer).toContain('mediaUrl');
     expect(renderer).toContain('imageUrl');
     expect(renderer).toContain('sourceUrl');
+    expect(cinematicRenderer).toContain('remote media URLs are not accepted');
   });
 
   it('keeps generated assets outside publish authority', () => {
     expect(core).toContain('"publishReady": False');
     expect(core).toContain('hash-bound human approval');
+    expect(cinematicRenderer).toContain("'publishReady':False");
+    expect(cinematicRenderer).toContain('hash-bound human approval');
   });
 
   it('bounds PDF companion extraction and preserves PDF conformance boundaries', () => {
@@ -79,5 +89,30 @@ describe('ADR-0094 open-source media rendering contract', () => {
     expect(graham.scenes[0].disclaimer).toMatch(/Keine Anlageberatung/);
     expect(finalScene?.disclaimer).toMatch(/Keine Anlageberatung/);
     expect(JSON.stringify(graham)).not.toMatch(/BUY|SELL|Kaufempfehlung|Verkaufsempfehlung/i);
+  });
+
+  it('defines a bounded 45 second Graham/Buffett 16:9 premium film contract', () => {
+    expect(grahamFilm.schemaVersion).toBe('1.0.0');
+    expect(grahamFilm.width).toBe(1920);
+    expect(grahamFilm.height).toBe(1080);
+    expect(grahamFilm.fps).toBe(24);
+    expect(grahamFilm.renderFps).toBeGreaterThan(0);
+    expect(grahamFilm.renderFps).toBeLessThanOrEqual(grahamFilm.fps);
+    expect(grahamFilm.durationSeconds).toBe(45);
+    expect(grahamFilm.scenes).toHaveLength(8);
+    expect(grahamFilm.headlineSequence).toEqual(['DATA', 'EVIDENCE', 'MODELS', 'RISK', 'INTELLIGENCE']);
+    expect(grahamFilm.valueChecks).toHaveLength(9);
+    expect(grahamFilm.finalStatement).toBe('QUANTITATIVE INTELLIGENCE FOR COMPLEX MARKETS');
+    expect(grahamFilm.publishReady).toBe(false);
+    expect(grahamFilm.disclaimer).toMatch(/Keine Anlageberatung/);
+    expect(JSON.stringify(grahamFilm)).not.toMatch(/https?:\/\//i);
+    expect(JSON.stringify(grahamFilm)).not.toMatch(/BUY|SELL|Kaufempfehlung|Verkaufsempfehlung/i);
+  });
+
+  it('keeps the premium film silent, deterministic and outside external runtime dependencies', () => {
+    expect(cinematicRenderer).toContain("'-an'");
+    expect(cinematicRenderer).toContain('Pillow');
+    expect(cinematicRenderer).not.toMatch(/remotion|moviepy|blender/i);
+    expect(cinematicRenderer).not.toMatch(/requests|httpx|urllib\.request/i);
   });
 });
