@@ -91,6 +91,116 @@
       "language": "mixed",
       "lifecycle": "reviewed",
       "path": "docs/roadmaps/GOVERNANCE_HARDENING_2026-08-19.md"
+    },
+    {
+      "documentId": "DOC-ADR-0087",
+      "type": "architecture-decision",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "SC-MD-SPT-0001 / Owner decision",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/adr/ADR-0087-single-scoring-architecture-uai-model-registry.md"
+    },
+    {
+      "documentId": "DOC-ADR-0088",
+      "type": "architecture-decision",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "ADR-0087 / SC-MD-SPT-0001 / Owner decision",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/adr/ADR-0088-gemini-research-evidence-reentry-boundary.md"
+    },
+    {
+      "documentId": "DOC-ADR-0089",
+      "type": "architecture-decision",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "ADR-0088 / SC-MD-SPT-0001 / Owner decision",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/adr/ADR-0089-gemini-research-shadow-runtime.md"
+    },
+    {
+      "documentId": "DOC-ADR-0090",
+      "type": "architecture-decision",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "ADR-0089 / SC-MD-SPT-0001 / Owner decision",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/adr/ADR-0090-gemini-free-tier-only-zero-cost-policy.md"
+    },
+    {
+      "documentId": "DOC-ROADMAP-SC-MD-SPT-0001",
+      "type": "roadmap",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "DOCUMENTATION_HYGIENE_POLICY + ADR-0086 + Owner decision",
+      "version": "1.0.13",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md"
+    },
+    {
+      "documentId": "DOC-WORK-PACKAGE-SC-2-MODEL-REGISTRY-UAI",
+      "type": "work-package",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "SC-MD-SPT-0001 + ADR-0087 + ADR-0088 + ADR-0089 + ADR-0090",
+      "version": "1.0.1",
+      "language": "de",
+      "lifecycle": "reviewed",
+      "path": "docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md"
+    },
+    {
+      "documentId": "DOC-EVIDENCE-SC2-A1-A2-2026-08-19",
+      "type": "implementation-evidence",
+      "owner": "CAPITAL-AI",
+      "authority": "SC-2 / ADR-0087",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "reviewed",
+      "path": "docs/evidence/sc-md/SC2_A1_A2_BASELINE_2026-08-19.md"
+    },
+    {
+      "documentId": "DOC-EVIDENCE-SC2-GEMINI-RESEARCH-2026-08-19",
+      "type": "implementation-evidence",
+      "owner": "CAPITAL-AI",
+      "authority": "SC-2 / ADR-0088",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "reviewed",
+      "path": "docs/evidence/sc-md/SC2_GEMINI_RESEARCH_EVIDENCE_ADAPTER_2026-08-19.md"
+    },
+    {
+      "documentId": "DOC-EVIDENCE-SC2-GEMINI-SHADOW-2026-08-19",
+      "type": "implementation-evidence",
+      "owner": "CAPITAL-AI",
+      "authority": "SC-2 / ADR-0089",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "reviewed",
+      "path": "docs/evidence/sc-md/SC2_GEMINI_SHADOW_TRANSPORT_2026-08-19.md"
+    },
+    {
+      "documentId": "DOC-EVIDENCE-SC2-GEMINI-FREE-TIER-2026-08-19",
+      "type": "implementation-evidence",
+      "owner": "CAPITAL-AI",
+      "authority": "SC-2 / ADR-0090",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "reviewed",
+      "path": "docs/evidence/sc-md/SC2_GEMINI_FREE_TIER_ONLY_2026-08-19.md"
+    },
+    {
+      "documentId": "DOC-RUNBOOK-GEMINI-RESEARCH-SHADOW",
+      "type": "runbook",
+      "owner": "CAPITAL-AI",
+      "authority": "ADR-0088 + ADR-0089 + ADR-0090",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/runbooks/GEMINI_RESEARCH_SHADOW.md"
     }
   ]
 }
