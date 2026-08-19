@@ -7,6 +7,11 @@ const mocks = vi.hoisted(() => ({
     backgroundRefresh: () => options.refresh(),
     getCached: () => null,
   })),
+  canonicalCryptoEnrich: vi.fn(async (asset: any) => ({
+    ...asset,
+    score: 8.6,
+    scoreBasis: 'canonical-dispatcher',
+  })),
 }));
 
 vi.mock('../../server/marketData/marketDataCompatibilityFacade', () => ({
@@ -17,16 +22,21 @@ vi.mock('../../server/marketData/marketDataRuntimeFacade', () => ({
   createMarketDataRuntimeFacade: mocks.createRuntime,
 }));
 
+vi.mock('../../server/marketData/canonicalCryptoScoreEnrichment', () => ({
+  isStandardCryptoMarketDataAsset: (asset: any) => asset?.type === 'crypto' && asset?.subtype !== 'memecoin',
+  enrichStandardCryptoWithCanonicalScore: mocks.canonicalCryptoEnrich,
+}));
+
 import { createApplicationMarketDataRuntime } from '../../server/marketData/createApplicationMarketDataRuntime';
 
 describe('application market-data runtime wiring', () => {
-  it('forwards the canonical provider universe and application callbacks', async () => {
+  it('forwards the canonical provider universe and routes Standard-Crypto through the canonical enrichment guard', async () => {
     const fallbackAssets = [
       { symbol: 'BTC', type: 'crypto', price: 1, change24h: 0 },
       { symbol: 'AAPL', type: 'stock', price: 100, change24h: 1 },
     ];
     const registryAssets = vi.fn(() => fallbackAssets);
-    const enrichAsset = vi.fn(async (asset: any) => asset);
+    const enrichAsset = vi.fn(async (asset: any) => ({ ...asset, enrichedBy: 'legacy' }));
     const syncAsset = vi.fn();
     const persistSnapshots = vi.fn();
     const evaluateAlerts = vi.fn();
@@ -59,10 +69,21 @@ describe('application market-data runtime wiring', () => {
       forexTickers: ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCAD', 'USDCHF', 'AUDUSD'],
       commodityTickers: ['XAUUSD', 'XAGUSD', 'CL.F', 'NG.F', 'CO.F'],
       registryAssets,
-      enrichAsset,
+      enrichAsset: expect.any(Function),
       persistSnapshots,
       evaluateAlerts,
       onProviderFailure,
     }));
+
+    const refreshOptions = mocks.runRefresh.mock.calls[0]?.[0] as any;
+    const btc = { symbol: 'BTC', type: 'crypto', price: 1, change24h: 0 };
+    const stock = { symbol: 'AAPL', type: 'stock', price: 100, change24h: 1 };
+
+    await refreshOptions.enrichAsset(btc);
+    expect(mocks.canonicalCryptoEnrich).toHaveBeenCalledWith(btc);
+    expect(enrichAsset).not.toHaveBeenCalledWith(btc);
+
+    await refreshOptions.enrichAsset(stock);
+    expect(enrichAsset).toHaveBeenCalledWith(stock);
   });
 });
