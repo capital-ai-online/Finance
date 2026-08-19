@@ -8,7 +8,7 @@ import { M10_CHALLENGE_TTL_MS } from '../../server/m10/challengeIssuance';
 const repoRoot = process.cwd();
 
 describe('M10 Phase 6 Shadow Mode boundary', () => {
-  it('passes the canonical stored challenge through unchanged and requires RP/UV/credential binding', async () => {
+  it('passes the canonical stored challenge through unchanged and emits a complete WebAuthn credential descriptor', async () => {
     const canonicalChallenge = 'base64url-canonical-challenge';
     const options = await buildM10ShadowAuthenticationOptions(canonicalChallenge, [
       { credentialId: 'cred-1', transports: ['internal'] },
@@ -19,7 +19,11 @@ describe('M10 Phase 6 Shadow Mode boundary', () => {
     expect(options.timeout).toBe(M10_CHALLENGE_TTL_MS);
     expect(options.userVerification).toBe('required');
     expect(options.allowCredentials).toEqual([
-      expect.objectContaining({ id: 'cred-1', transports: ['internal'] }),
+      {
+        id: 'cred-1',
+        type: 'public-key',
+        transports: ['internal'],
+      },
     ]);
   });
 
