@@ -1,10 +1,10 @@
 # Screening · Scoring · Market Data — Single Point of Trust Roadmap
 
 **Document ID:** SC-MD-SPT-0001  
-**Version:** 1.0.10  
+**Version:** 1.0.11  
 **Status:** ACTIVE — CANONICAL EXECUTION AUTHORITY  
 **Stand:** 2026-08-19  
-**Repository-Baseline:** `main@345b2bd3` + SC-2 parent `agent/a1-a2-scoring-consolidation@60bb16d9` + child `agent/gemini-research-evidence-adapter` (pre-PR)  
+**Repository-Baseline:** `main@345b2bd3` + SC-2 parent chain through `agent/gemini-research-evidence-adapter` + current child `agent/gemini-free-tier-only` (pre-PR)  
 **Owner:** SvenKulessa  
 **Authority:** DOCUMENTATION_HYGIENE_POLICY · ROADMAP_CONSOLIDATION_MASTER_INDEX · ADR-0020 / ADR-0041 · ESS EventMesh/Traceability
 
@@ -22,7 +22,7 @@ Es ersetzt als Ausführungsautorität:
 | `docs/architecture/ENTERPRISE_SCREENING_REMEDIATION_2026-08.md` | Enger Remediation-Scope | **ARCHIVED** → `docs/archive/legacy/` |
 | Parallel-Remediation-Branches / Ad-hoc-Screening-Todos | Fragmentiert | **FORBIDDEN** — nur über dieses SPT |
 
-**Keine parallele Remediation und keine parallele Scoring-Architektur.** Alle offenen Screening-/Scoring-/MD-Arbeiten werden ausschließlich hier getrackt. ADR-0086 konkretisiert UAI + ScoringModelRegistry; ADR-0087/0088 integrieren Research-Evidence/Gemini ausschließlich als Acquisition-Adapter vor dem Evidence Gate.
+**Keine parallele Remediation und keine parallele Scoring-Architektur.** Alle offenen Screening-/Scoring-/MD-Arbeiten werden ausschließlich hier getrackt. ADR-0086 konkretisiert UAI + ScoringModelRegistry; ADR-0087/0088 integrieren Research-Evidence/Gemini ausschließlich als Acquisition-Adapter vor dem Evidence Gate; ADR-0089 macht diesen Gemini-Pfad Free-Tier-only und verbietet Paid Mode.
 
 ---
 
@@ -35,7 +35,7 @@ Es ersetzt als Ausführungsautorität:
 | Market-Data Gateway | `src/platform/MarketData/` | **SC-4 Matrix/Health + SC-5 CoinGecko canonical multi-field** |
 | Provider | TwelveData, FMP Index, CoinGecko; CoinAPI/EODHD/TwelveData(crypto) gateway adapters registered, unconsumed; Alpaca shadow | **Kern live** |
 | Evidence / Consensus | Snapshot/Spot consensus, traditional/commodity/macro evidence | **Stark ausgebaut** |
-| Research Evidence | `src/platform/ResearchEvidence/` + `server/researchEvidence/` | **SC-2 A.5/A.6: Contract + server-only Gemini Shadow Transport; default-off, keine Score-Wirkung** |
+| Research Evidence | `src/platform/ResearchEvidence/` + `server/researchEvidence/` | **SC-2 A.5/A.6: Contract + server-only Gemini Shadow; default-off, Free-Tier-only, keine Score-Wirkung** |
 | Scoring-Engines | Base/DeFi, crypto 9-Faktor, meme, raw materials, traditional, verified technical | **Multi-Engine; A1/A2 Konsolidierung gestartet** |
 | UAI / Model Registry | `src/platform/Scoring/` | **SC-2 Phase A Foundation im Parent-Branch: UAI + fail-closed Champion Resolver** |
 | Ranking / Eligibility | `ranking.service` + SC-7 composite opt-in | **Crypto-lastig; cross-asset noch offen** |
@@ -48,7 +48,7 @@ Es ersetzt als Ausführungsautorität:
 2. Ranking-Generalisierung cross-asset offen
 3. Multi-provider crypto quorum + `executionPriceEligible` weiterhin offen; vorhandene Gateway-Adapter noch unconsumed
 4. **SC-2 Consumer Migration:** alle produktiven Score-Entry-Points noch über Registry/Dispatcher + CanonicalScoreResult vereinheitlichen
-5. **Gemini Shadow Validation:** vollständiges CI-PASS, realer Owner-Secret-Wert, interner Shadow-Consumer sowie Coverage/Kosten/Latenz-Messung offen
+5. **Gemini Shadow Validation:** vollständiges CI-PASS, realer Free-Tier-Key, Billing-freies Google-Projekt + Attestation, interner Shadow-Consumer sowie Coverage/Latenz/Quota-Messung offen
 6. **Evidence Promotion:** reale Source-/Lizenz-/Field-Policies und Promotion von validierten Research Candidates zu ScoringEvidenceRef separat Owner-gated
 7. Alpaca primary promotion Owner-gated
 8. SC-8 vollständige Drift-/Golden-/Walk-Forward-Governance offen
@@ -62,15 +62,16 @@ Es ersetzt als Ausführungsautorität:
           ↓
 Universal Asset Interface (identity only)
           ↓
- ┌────────────────────────────────────────────────────────────────┐
- │ Evidence Acquisition                                           │
- │ Market Providers -> MarketDataGateway                          │
- │ Research Providers -> ResearchEvidenceAdapter                  │
- │   optional GeminiResearchTransport (server-only shadow/off)    │
- │     -> AI_DISCOVERED_EVIDENCE (scoreEligible=false)            │
- │     -> Source Validation                                       │
- │     -> future field-specific Evidence Promotion                │
- └──────────────────────────────┬─────────────────────────────────┘
+ ┌──────────────────────────────────────────────────────────────────┐
+ │ Evidence Acquisition                                             │
+ │ Market Providers -> MarketDataGateway                            │
+ │ Research Providers -> ResearchEvidenceAdapter                    │
+ │   optional GeminiResearchTransport                               │
+ │     -> canonical Free-Tier-only factory (server-only/off)        │
+ │     -> AI_DISCOVERED_EVIDENCE (scoreEligible=false)              │
+ │     -> Source Validation                                         │
+ │     -> future field-specific Evidence Promotion                  │
+ └──────────────────────────────┬───────────────────────────────────┘
                                 ↓
                 DataQualityService + Evidence/Consensus Services
                                 ↓
@@ -89,7 +90,7 @@ Universal Asset Interface (identity only)
                 API / Screener UI / Alerts / Backtest Evidence
 ```
 
-**Harter Vertrag:** UAI Identity, ScoringModelRegistry, CanonicalScoreResult und fail-closed Evidence. LLM-/Research-Output ist niemals direkt verifizierte Finanz-Evidence. Gemini Shadow ist Acquisition-only; `AI_DISCOVERED_EVIDENCE` bleibt `scoreEligible=false`. Fehlende validierte Evidence oder Modelauflösung bleibt `SCORE_NOT_COMPUTABLE`.
+**Harter Vertrag:** UAI Identity, ScoringModelRegistry, CanonicalScoreResult und fail-closed Evidence. LLM-/Research-Output ist niemals direkt verifizierte Finanz-Evidence. Gemini Shadow ist Acquisition-only und Free-Tier-only; `AI_DISCOVERED_EVIDENCE` bleibt `scoreEligible=false`. Fehlende validierte Evidence oder Modelauflösung bleibt `SCORE_NOT_COMPUTABLE`.
 
 ---
 
@@ -99,7 +100,7 @@ Universal Asset Interface (identity only)
 |---|---|---|---|---|
 | **SC-0** | Baseline freeze & inventory | P0 | **LANDED** | SPT gemerged |
 | **SC-1** | Classification consolidation | P0 | **LANDED** | Canonical schema; deterministic coverage |
-| **SC-2** | Model registry & UAI adapters | P1 | **IN IMPLEMENTATION — A + A.5 + A.6** | UAI + registry + research shadow + all score consumers via one dispatcher + canonical result |
+| **SC-2** | Model registry & UAI adapters | P1 | **IN IMPLEMENTATION — A + A.5 + A.6 + Free-Tier hardening** | UAI + registry + zero-cost research shadow + all score consumers via one dispatcher + canonical result |
 | **SC-3** | Unified DQ + Confidence composite | P0 | **FOUNDATION LANDED** | Composite; impact off |
 | **SC-4** | Gateway hardening & provider matrix | P1 | **Phase A LANDED** | Matrix + RL + supervisor health |
 | **SC-5** | Live coverage expansion | P1 | **Phase A–D code** | execution quorum still open |
@@ -115,14 +116,14 @@ Universal Asset Interface (identity only)
 
 1. Runtime-/Code-/Produktions-Evidence  
 2. Explizite Human/Owner-Freigabe  
-3. Spezifische ADR/ESS (inkl. ADR-0086, ADR-0087, ADR-0088)  
+3. Spezifische ADR/ESS (inkl. ADR-0086, ADR-0087, ADR-0088, ADR-0089)  
 4. **Dieses SPT (SC-MD-SPT-0001)**  
 5. ROADMAP_CONSOLIDATION_MASTER_INDEX  
 6. Historische/archivierte Docs
 
 Mutation von Scoring-Gewichten, Eligibility-Schwellen, Market-Data-Provider-Routing, Live-Gates oder **scoreImpact/rankingImpact** erfordert Owner-Freigabe.
 
-ADR-0088 erlaubt ausschließlich einen server-only Gemini Research Shadow Transport. Das Feature Flag bleibt in Render default `false`; der Branch enthält keinen realen Gemini-Key und keine öffentliche Route. Aktivierung erfordert Owner-seitig Secret + Modell + aktuelle Preisparameter + USD-Budget. Eine Score-Evidence-Promotion bleibt ein eigenes field-spezifisches Gate.
+ADR-0089 überschreibt für Gemini Research Shadow die frühere konfigurierbare Paid-/USD-Kostensteuerung: der kanonische Server-Entry-Point ist **Free-Tier-only**, pinnt `gemini-2.5-flash`, verbietet Paid Mode und verlangt zusätzlich eine Operator-Attestation, dass der `GEMINI_API_KEY` zu einem Google-Projekt ohne Billing-Verknüpfung gehört. Render bleibt mit `GEMINI_RESEARCH_SHADOW_ENABLED=false` und `GEMINI_RESEARCH_FREE_TIER_ATTESTED=false` default-off. Eine Score-Evidence-Promotion bleibt ein eigenes field-spezifisches Gate.
 
 ---
 
@@ -132,9 +133,11 @@ ADR-0088 erlaubt ausschließlich einen server-only Gemini Research Shadow Transp
 - `docs/adr/ADR-0086-single-scoring-architecture-uai-model-registry.md`
 - `docs/adr/ADR-0087-gemini-research-evidence-reentry-boundary.md`
 - `docs/adr/ADR-0088-gemini-research-shadow-runtime.md`
+- `docs/adr/ADR-0089-gemini-free-tier-only-zero-cost-policy.md`
 - `docs/evidence/sc-md/SC2_A1_A2_BASELINE_2026-08-19.md`
 - `docs/evidence/sc-md/SC2_GEMINI_RESEARCH_EVIDENCE_ADAPTER_2026-08-19.md`
 - `docs/evidence/sc-md/SC2_GEMINI_SHADOW_TRANSPORT_2026-08-19.md`
+- `docs/evidence/sc-md/SC2_GEMINI_FREE_TIER_ONLY_2026-08-19.md`
 - `docs/runbooks/GEMINI_RESEARCH_SHADOW.md`
 - `src/platform/Scoring/`
 - `src/platform/ResearchEvidence/`
@@ -142,4 +145,4 @@ ADR-0088 erlaubt ausschließlich einen server-only Gemini Research Shadow Transp
 
 ---
 
-*SC-2 A1/A2 + A.5/A.6 2026-08-19: UAI/Model Registry im Parent; ResearchEvidenceAdapter + server-only Gemini Shadow Transport im Child. Shadow bleibt default-off, secret-/rate-/cost-/circuit-/health-/telemetry-gated und ohne Score-/Ranking-/Market-Data-Routing-Impact. Merge nur nach CI, Main-Korrelationscheck und Owner-Review.*
+*SC-2 A1/A2 + A.5/A.6 Free-Tier hardening 2026-08-19: UAI/Model Registry im Parent; ResearchEvidenceAdapter + server-only Gemini Shadow Transport im Child; Zero-Cost-Policy im aktuellen Child `agent/gemini-free-tier-only`. Shadow bleibt default-off, billing-free/free-tier-only, secret-/rate-/quota-/circuit-/health-/telemetry-gated und ohne Score-/Ranking-/Market-Data-Routing-Impact. Merge nur nach CI, Main-Korrelationscheck und Owner-Review.*
