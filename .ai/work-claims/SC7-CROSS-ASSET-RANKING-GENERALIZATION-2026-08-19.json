@@ -12,7 +12,7 @@
   "startedAt": "2026-08-19T12:37:00+02:00",
   "baseBranch": "main",
   "baseSha": "8cf8ba6a0be86c022e7fc71667271f97b686b2fd",
-  "pullRequest": null,
+  "pullRequest": 442,
   "claimedPaths": [
     ".ai/work-claims/SC7-CROSS-ASSET-RANKING-GENERALIZATION-2026-08-19.json",
     "src/platform/Ranking/contracts.ts",
