@@ -1,7 +1,7 @@
 # Gemini Research Evidence Shadow — Runbook
 
 **Status:** DEFAULT-OFF / SERVER-ONLY / FREE-TIER-ONLY  
-**Authority:** ADR-0087, ADR-0088, ADR-0089, SC-MD-SPT-0001
+**Authority:** ADR-0088, ADR-0089, ADR-0090, SC-MD-SPT-0001
 
 ## Zweck
 
@@ -21,6 +21,18 @@ Stand 2026-08-19 dokumentiert Google für `gemini-2.5-flash`:
 
 Diese externen Bedingungen können sich ändern. **Vor jeder erstmaligen Aktivierung und nach jeder relevanten Google-Preis-/Quota-Änderung ist die offizielle Gemini Pricing/Billing/Rate-Limit-Dokumentation erneut zu prüfen.**
 
+## Aktueller Betriebszustand — 2026-08-19
+
+Owner-Attestation:
+
+- `GEMINI_API_KEY` liegt in der kanonischen `finance-secrets.env`;
+- der zugehörige Gemini/Google API-Key stammt laut Owner-Bestätigung aus einem Projekt ohne Billing;
+- Render Service `Finance`: `GEMINI_RESEARCH_FREE_TIER_ONLY=true`;
+- Render Service `Finance`: `GEMINI_RESEARCH_FREE_TIER_ATTESTED=true`;
+- Render Service `Finance`: `GEMINI_RESEARCH_SHADOW_ENABLED=false`.
+
+Damit ist die Free-Tier-/Billing-Voraussetzung erfüllt, **der Providertraffic bleibt aber weiterhin deaktiviert**. Der Blueprint behält `GEMINI_RESEARCH_FREE_TIER_ATTESTED=false` als sicheren Default für neue oder neu provisionierte Umgebungen; die aktuelle Service-Attestation ist eine explizite Operator-Konfiguration.
+
 ## Aktivierungsbedingungen
 
 Vor `GEMINI_RESEARCH_SHADOW_ENABLED=true` müssen alle Bedingungen erfüllt sein:
@@ -28,11 +40,12 @@ Vor `GEMINI_RESEARCH_SHADOW_ENABLED=true` müssen alle Bedingungen erfüllt sein
 1. `GEMINI_API_KEY` liegt ausschließlich in `/etc/secrets/finance-secrets.env`;
 2. der Key gehört zu einem Google/Gemini-Projekt **ohne Billing-Verknüpfung**;
 3. `GEMINI_RESEARCH_FREE_TIER_ONLY=true`;
-4. nach manueller Billing-Kontrolle wird `GEMINI_RESEARCH_FREE_TIER_ATTESTED=true` gesetzt;
+4. nach manueller Billing-Kontrolle ist `GEMINI_RESEARCH_FREE_TIER_ATTESTED=true` gesetzt;
 5. das aktuelle Google-Free-Tier-Angebot unterstützt weiterhin das im Code gepinnte `gemini-2.5-flash` für Search/URL Context/Structured Output;
-6. der lokale Request-Budgetwert liegt innerhalb des Code-Caps.
+6. der lokale Request-Budgetwert liegt innerhalb des Code-Caps;
+7. die Free-Tier-Runtime ist im deployten Commit enthalten und CI/TypeScript-Validierung ist bestanden.
 
-Fehlt eine dieser Bedingungen, liefert der kanonische Free-Tier-Factory keinen aktiven Transport/Adapter.
+Fehlt eine dieser Bedingungen, darf der kanonische Free-Tier-Factory keinen aktiven Transport/Adapter bereitstellen.
 
 **Wichtig:** Ein API-Key selbst trägt keinen belastbaren Billing-Status. Die Attestation ist daher ein expliziter Operator-/Deployment-Gate. Wird Billing später an das Google-Projekt gekoppelt, muss `GEMINI_RESEARCH_FREE_TIER_ATTESTED` sofort wieder auf `false` gesetzt und Shadow-Traffic gestoppt werden.
 
