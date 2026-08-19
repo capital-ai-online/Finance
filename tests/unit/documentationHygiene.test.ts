@@ -23,7 +23,7 @@ const repositoryRoot = process.cwd();
 const registryPath = path.join(repositoryRoot, 'docs/governance/document-registry.json');
 const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8')) as DocumentRegistry;
 
-const ALLOWED_ROOT_MARKDOWN = new Set(['README.md', 'AGENTS.md', 'CLAUDE.md']);
+const ALLOWED_ROOT_MARKDOWN = new Set(['README.md', 'AGENTS.md']);
 const ALLOWED_LANGUAGES = new Set(['de', 'en', 'mixed']);
 const ALLOWED_LIFECYCLES = new Set(['draft', 'generated', 'reviewed', 'approved', 'superseded', 'archived']);
 

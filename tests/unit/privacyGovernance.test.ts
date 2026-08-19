@@ -14,7 +14,7 @@ function read(relativePath: string): string {
   return fs.readFileSync(path.join(root, relativePath), 'utf8');
 }
 
-describe('ADR-0085 privacy governance', () => {
+describe('ADR-0095 privacy governance', () => {
   it('uses Sven Michael Kulessa as the canonical natural-person controller', () => {
     expect(CONTROLLER).toMatchObject({
       name: 'Sven Michael Kulessa',

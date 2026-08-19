@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 // GOV-VER-001 / GOV-VER-002: package.json is the platform-version source of truth.
 // The release gate keeps current, canonical release declarations aligned.
-// Historical evidence under docs/archive/ intentionally preserves its original versions.
+// Governance control-plane versions and archived evidence are separate version domains.
 
 const repoRoot = process.cwd();
 const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
@@ -29,7 +29,6 @@ describe('GOV-VER-001/GOV-VER-002 platform version consistency', () => {
 
   const currentDeclarationFiles = [
     'README.md',
-    'AGENTS.md',
     'docs/code-quality/CODE_QUALITY_STANDARDS.md',
     'docs/ceo/EXECUTIVE_SUMMARY.md',
     'index.html',
@@ -42,6 +41,12 @@ describe('GOV-VER-001/GOV-VER-002 platform version consistency', () => {
       expect(code).toContain(currentVersion);
     },
   );
+
+  it('keeps the AGENTS governance version outside the platform-release projection contract', () => {
+    const agents = read('AGENTS.md');
+    expect(agents).toMatch(/\*\*Control Plane Version:\*\* `\d+\.\d+\.\d+`/);
+    expect(currentDeclarationFiles).not.toContain('AGENTS.md');
+  });
 
   it('does not declare a stale pre-0.6.0 platform version in current release declarations', () => {
     for (const relativePath of currentDeclarationFiles) {

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.0.1",
   "claimId": "PR-vocabulary-governance-roadmap",
   "status": "superseded",
   "exclusive": true,
@@ -14,7 +14,7 @@
   "baseSha": "584d8d4f67af1ab0c8f063e71bcd3db530771bff",
   "claimedPaths": [
     ".ai/work-claims/PR-vocabulary-governance-roadmap.json",
-    ".ai/skills/ESS-0012-Enterprise-Vocabulary-Terminology-Governance.md",
+    "docs/archive/governance/superseded/ESS-0012-Enterprise-Vocabulary-Terminology-Governance.md",
     ".github/pull_request_template.md",
     "scripts/pr/lib.mjs",
     "scripts/pr/renderPullRequestBody.mjs",
@@ -23,6 +23,11 @@
     "docs/adr/ADR-0055-event-driven-value-chain-governance-integration.md",
     "docs/architecture/VOCABULARY_GOVERNANCE_MIGRATION_ROADMAP.md"
   ],
+  "canonicalSuccessor": {
+    "displayId": "ESS-0017",
+    "authorityId": "AUTH-ESS-VOCABULARY-GOVERNANCE",
+    "path": ".ai/skills/ESS-0017-Vocabulary-Governance.md"
+  },
   "releaseCondition": "Claim is released when the governance roadmap PR is merged or closed.",
-  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete."
+  "supersededReason": "No open pull request references this claim as of the 2026-08-14 security audit; work item is historically complete. The unregistered ESS-0012 vocabulary draft was archived on 2026-08-19 because ESS-0012 is canonically Documentation Governance and Vocabulary Governance is represented by ESS-0017."
 }
