@@ -72,8 +72,11 @@ function writeCandidateEvidence(plan: ReturnType<typeof buildReleaseVersionPlan>
     `## Production Acceptance Requirements\n\n${request.acceptanceRequirements.map(item => `- ${item}`).join('\n')}\n\n` +
     `## Version Gate Evidence\n\n` +
     `The controlled release command completed all mandatory local gates after synchronizing the governed version declarations:\n\n` +
+    `- \`npm run readme:sync\`\n` +
     `- \`npm run lint\`\n` +
     `- \`npx vitest run tests/unit/platformVersionConsistency.test.ts\`\n` +
+    `- \`npm run readme:check\`\n` +
+    `- \`npm run docs:hygiene:check\`\n` +
     `- \`npm run build\`\n` +
     `- \`npm run predeploy:check\`\n\n` +
     `This record is **not** production acceptance. The final immutable tag \`v${plan.targetVersion}\` remains prohibited until the exact deployed commit has an accepted production record. The exact candidate SHA is supplied by GitHub CI / the production acceptance record because a file cannot contain the SHA of the commit that contains itself without creating a self-reference.\n`;
@@ -110,9 +113,12 @@ function main(): void {
   let evidencePath: string | null = null;
   try {
     originals = applyReleaseVersionPlan(repoRoot, plan);
+    runGate('npm', ['run', 'readme:sync']);
     assertAppliedVersionConsistency(repoRoot, plan.targetVersion);
     runGate('npm', ['run', 'lint']);
     runGate('npx', ['vitest', 'run', 'tests/unit/platformVersionConsistency.test.ts']);
+    runGate('npm', ['run', 'readme:check']);
+    runGate('npm', ['run', 'docs:hygiene:check']);
     runGate('npm', ['run', 'build']);
     runGate('npm', ['run', 'predeploy:check']);
     evidencePath = writeCandidateEvidence(plan);
