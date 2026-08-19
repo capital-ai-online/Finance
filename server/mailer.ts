@@ -4,6 +4,7 @@
 // dort bereits ueber Jahre gegen reale SMTP-Server gehaertet) statt einer eigenen
 // Protokoll-Implementierung. Alle Zugangsdaten ausschliesslich ueber Umgebungsvariablen.
 
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import nodemailer from 'nodemailer';
@@ -34,6 +35,28 @@ function getTransporter() {
   return transporter;
 }
 
+/**
+ * Privacy-safe operational correlation. Raw checkout session IDs and recipient addresses are
+ * deliberately excluded from logs; a short SHA-256 reference is sufficient to correlate retries.
+ */
+function logCorrelationRef(value: string): string {
+  return crypto.createHash('sha256').update(value).digest('hex').slice(0, 12);
+}
+
+/**
+ * Mail/SMTP provider errors can echo recipient addresses or provider payload fragments. Keep
+ * application logs on a stable error taxonomy instead of copying provider error messages.
+ */
+function mailerErrorCode(err: unknown): string {
+  if (err && typeof err === 'object') {
+    const code = (err as { code?: unknown }).code;
+    if (typeof code === 'string' && /^[A-Z0-9_-]{1,64}$/i.test(code)) {
+      return code;
+    }
+  }
+  return 'mail-operation-failed';
+}
+
 export interface SendMailParams {
   to: string;
   subject: string;
@@ -60,11 +83,12 @@ export async function sendMail(params: SendMailParams): Promise<{ success: boole
       html: params.html,
       text: params.text || params.html.replace(/<[^>]+>/g, ''),
     });
-    console.log(`[Mailer] E-Mail an ${params.to} gesendet: "${params.subject}"`);
+    console.log('[Mailer] E-Mail erfolgreich versendet.');
     return { success: true };
-  } catch (err: any) {
-    console.error(`[Mailer] Versand an ${params.to} fehlgeschlagen:`, err?.message || err);
-    return { success: false, error: err?.message || 'unknown' };
+  } catch (err: unknown) {
+    const error = mailerErrorCode(err);
+    console.error(`[Mailer] Versand fehlgeschlagen (${error}).`);
+    return { success: false, error };
   }
 }
 
@@ -107,7 +131,8 @@ function buildOwnerSubscriptionNotificationEmail(
       ? `${(data.amountTotal / 100).toFixed(2)} ${data.currency.toUpperCase()}`
       : 'unbekannt';
   return {
-    subject: `Neues Abo aktiviert: ${data.planId} (${customerEmail || data.userId || 'unbekannt'})`,
+    // Do not put customer identifiers into the subject: SMTP/provider logs commonly retain it.
+    subject: `Neues Abo aktiviert: ${data.planId}`,
     html: `
       <div style="font-family: sans-serif;">
         <h3>Neue Abo-Aktivierung</h3>
@@ -190,8 +215,9 @@ async function claimSubscriptionConfirmation(sessionId: string): Promise<Confirm
     });
     if (error) throw error;
     return data === true ? { status: 'claimed' } : { status: 'duplicate' };
-  } catch (err: any) {
-    console.error('[Mailer] Atomic confirmation reservation in Supabase failed; mail send blocked:', err?.message || err);
+  } catch (err: unknown) {
+    const error = mailerErrorCode(err);
+    console.error(`[Mailer] Atomic confirmation reservation in Supabase failed; mail send blocked (${error}).`);
     return { status: 'unavailable', error: 'confirmation-reservation-failed' };
   }
 }
@@ -221,6 +247,7 @@ async function scheduleConfirmationMailRetry(
   to: string,
   message: { subject: string; html: string }
 ): Promise<void> {
+  const ref = logCorrelationRef(sessionId);
   try {
     const result = await enqueueOutboxJob({
       jobType: 'subscription_confirmation_mail',
@@ -228,10 +255,11 @@ async function scheduleConfirmationMailRetry(
       payload: { kind, to, subject: message.subject, html: message.html, sessionId },
     });
     if (result.enqueued) {
-      console.log(`[Mailer] Outbox-Retry fuer ${kind}-Bestaetigungsmail eingeplant (Session ${sessionId}, Job ${result.jobId}).`);
+      console.log(`[Mailer] Outbox-Retry fuer ${kind}-Bestaetigungsmail eingeplant (Ref ${ref}, Job ${result.jobId}).`);
     }
-  } catch (err: any) {
-    console.error(`[Mailer] Outbox-Retry fuer ${kind}-Bestaetigungsmail konnte nicht eingeplant werden (Session ${sessionId}):`, err?.message || err);
+  } catch (err: unknown) {
+    const error = mailerErrorCode(err);
+    console.error(`[Mailer] Outbox-Retry fuer ${kind}-Bestaetigungsmail konnte nicht eingeplant werden (Ref ${ref}, ${error}).`);
   }
 }
 
@@ -250,7 +278,7 @@ export async function processSubscriptionConfirmationMailJob(
   }
   const result = await sendMail({ to, subject, html });
   if (!result.success) {
-    throw new Error(result.error || `send failed for ${kind} confirmation mail (Session ${sessionId})`);
+    throw new Error(result.error || `send failed for ${kind} confirmation mail (Ref ${logCorrelationRef(sessionId || 'missing')})`);
   }
 }
 
@@ -282,9 +310,10 @@ export async function sendSubscriptionConfirmation(
     };
   }
 
+  const ref = logCorrelationRef(sessionId);
   const reservation = await claimSubscriptionConfirmation(sessionId);
   if (reservation.status === 'duplicate') {
-    console.log(`[Mailer] Abo-Bestaetigung fuer Session ${sessionId} bereits reserviert/versendet - Duplikat uebersprungen.`);
+    console.log(`[Mailer] Abo-Bestaetigung bereits reserviert/versendet - Duplikat uebersprungen (Ref ${ref}).`);
     return {
       skippedAsDuplicate: true,
       customer: { attempted: false, success: false },
@@ -310,17 +339,17 @@ export async function sendSubscriptionConfirmation(
   const customerResult =
     customerOutcome.status === 'fulfilled'
       ? customerOutcome.value
-      : { success: false, error: customerOutcome.reason?.message || 'unknown' };
+      : { success: false, error: mailerErrorCode(customerOutcome.reason) };
   const ownerResult =
     ownerOutcome.status === 'fulfilled'
       ? ownerOutcome.value
-      : { success: false, error: ownerOutcome.reason?.message || 'unknown' };
+      : { success: false, error: mailerErrorCode(ownerOutcome.reason) };
 
   if (customerAttempted) {
     console.log(
       customerResult.success
-        ? `[Mailer] Abo-Bestaetigung an Kunde ${customerEmail} gesendet (Session ${sessionId}).`
-        : `[Mailer] Abo-Bestaetigung an Kunde ${customerEmail} fehlgeschlagen (Session ${sessionId}): ${customerResult.error}`
+        ? `[Mailer] Abo-Bestaetigung an Kunden gesendet (Ref ${ref}).`
+        : `[Mailer] Abo-Bestaetigung an Kunden fehlgeschlagen (Ref ${ref}, ${customerResult.error}).`
     );
     if (!customerResult.success) {
       await scheduleConfirmationMailRetry(
@@ -331,12 +360,12 @@ export async function sendSubscriptionConfirmation(
       );
     }
   } else {
-    console.warn(`[Mailer] Keine Kunden-E-Mail fuer Session ${sessionId} bekannt - Bestaetigung nicht versendet, Owner-Benachrichtigung erfolgt trotzdem.`);
+    console.warn(`[Mailer] Keine Kunden-E-Mail fuer Abo-Bestaetigung vorhanden; Owner-Benachrichtigung erfolgt trotzdem (Ref ${ref}).`);
   }
   console.log(
     ownerResult.success
-      ? `[Mailer] Owner-Benachrichtigung an ${ownerEmail} gesendet (Session ${sessionId}).`
-      : `[Mailer] Owner-Benachrichtigung an ${ownerEmail} fehlgeschlagen (Session ${sessionId}): ${ownerResult.error}`
+      ? `[Mailer] Owner-Benachrichtigung gesendet (Ref ${ref}).`
+      : `[Mailer] Owner-Benachrichtigung fehlgeschlagen (Ref ${ref}, ${ownerResult.error}).`
   );
   if (!ownerResult.success) {
     await scheduleConfirmationMailRetry(
