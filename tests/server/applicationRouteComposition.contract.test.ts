@@ -15,6 +15,7 @@ const expectedMounts = [
   "app.use('/api/admin', systemEventsRouter);",
   "app.use('/api/admin', versionManagerRouter);",
   "app.use('/api/auth', stepUpRouter);",
+  "app.use('/api/privacy', privacyRouter);",
   "app.use('/api/compliance', complianceRouter);",
   "app.use('/api/scoring', scoreValidationRouter);",
   "app.use('/api/scoring/explain', createScoreExplainabilityRouter(ai, anthropic, openai));",

@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "1.0.0",
+  "controller": "Sven Michael Kulessa",
+  "project": "CAPITAL-AI",
+  "vendorId": "render",
+  "evidenceType": "contract-evidence",
+  "reviewedAt": "2026-08-19",
+  "scope": {
+    "workspace": "AICapital",
+    "serviceId": "srv-d91o1o9o3t8c73edi55g",
+    "serviceName": "Finance",
+    "branch": "main",
+    "processingStatus": "active-owner-confirmed"
+  },
+  "document": {
+    "title": "Render Data Processing Addendum",
+    "version": "2024.12.19",
+    "sizeBytes": 292811,
+    "sha256": "6bad228f1f15add2f0b82534056092798835b600879071e5cb448d558b3316a7",
+    "officialSource": "https://render.com/dpa",
+    "retainedArtifact": {
+      "provider": "Google Drive",
+      "fileId": "1yBm1cxxkHhRI8NEZMf0AbMysSkPz8g0H",
+      "fileName": "gdpr-dpa-2025.pdf",
+      "controlStatus": "controlled private evidence-vault reference"
+    }
+  },
+  "contractAssessment": {
+    "status": "electronically-incorporated",
+    "termsEffectiveVersion": "2026-07-10",
+    "termsSource": "https://render.com/terms",
+    "basis": [
+      "Render Terms bind use/acceptance of the Service and incorporate the Data Processing Addendum into the Agreement.",
+      "The DPA supplements the Render Terms of Service."
+    ],
+    "exactCustomerAcceptanceTimestamp": null,
+    "signatureClaim": "not-claimed"
+  },
+  "roleAssessment": {
+    "status": "verified-scoped",
+    "vendorRole": "processor for Customer Personal Data under the DPA, subject to the DPA's role-specific exceptions",
+    "scopeLimitation": "Company Account Data and Company Usage Data may be processed under a different role and are not globally classified as processor data by this evidence."
+  },
+  "regionAssessment": {
+    "observedTechnicalRegion": "render:frankfurt",
+    "contractualFinding": "The DPA does not establish complete EU-only processing; contractual transfer provisions must be assessed independently of the observed service region.",
+    "euOnlyClaim": "not-claimed"
+  },
+  "transferAssessment": {
+    "status": "pending",
+    "contractualMechanismsObserved": [
+      "Data Privacy Framework where applicable",
+      "EU Standard Contractual Clauses as applicable"
+    ],
+    "actualThirdCountryFlowsVerified": false,
+    "tiaStatus": "pending"
+  },
+  "limitations": [
+    "Subprocessor snapshot and change-notification posture remain pending.",
+    "Observed Frankfurt deployment is technical evidence only and is not treated as contractual EU-only residency.",
+    "DPA evidence verification does not by itself establish GDPR compliance."
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "1.0.0",
+  "controller": "Sven Michael Kulessa",
+  "project": "CAPITAL-AI",
+  "vendorId": "stripe",
+  "evidenceType": "contract-evidence",
+  "reviewedAt": "2026-08-19",
+  "scope": {
+    "accountId": "acct_1TbfHJPKr4joNbEc",
+    "displayName": "CAPITAL-AI",
+    "accountCountry": "DE",
+    "accountType": "standard",
+    "businessType": "individual",
+    "processingStatus": "active-owner-confirmed",
+    "stripeAccountEvidence": "connected Stripe API",
+    "stripeTosAcceptanceAt": "2026-06-21T08:31:57Z"
+  },
+  "documents": {
+    "dpa": {
+      "title": "Data Processing Agreement",
+      "version": "last-updated-2025-11-18",
+      "sizeBytes": 1070883,
+      "sha256": "a0385a4a9d4a96f292dd9d642a80a54565e2da978853c216e8d471014b8c8331",
+      "officialSource": "https://stripe.com/legal/dpa",
+      "retainedArtifactReference": "controller-provided project-chat attachment: Data Processing Agreement-stripe.pdf",
+      "retainedArtifactControlStatus": "hash-verified; durable restricted-vault locator not yet registered"
+    },
+    "dataTransfersAddendum": {
+      "title": "Data Transfers Addendum",
+      "version": "last-updated-2025-11-18",
+      "sizeBytes": 249054,
+      "sha256": "9e900d824be5aa4af574067b5da78b35158d28245617f4a8878d89eccef3e104",
+      "officialSource": "https://stripe.com/legal/dta",
+      "retainedArtifactReference": "controller-provided project-chat attachment: Data Transfers Addendum-stripe.pdf",
+      "retainedArtifactControlStatus": "hash-verified; durable restricted-vault locator not yet registered"
+    },
+    "servicesAgreementOverview": {
+      "title": "Stripe Services Agreement — Overview & FAQs",
+      "sizeBytes": 177346,
+      "sha256": "fb02355ffb156c1894bc3354006334f5b050685e1049a109c528f64dedd80173",
+      "retainedArtifactReference": "controller-provided project-chat attachment: Stripe Services Agreement - Overview & FAQs.pdf",
+      "retainedArtifactControlStatus": "hash-verified; durable restricted-vault locator not yet registered",
+      "limitation": "The supplied overview/FAQ is informational and is not itself the full Stripe Services Agreement. Account-specific TOS acceptance is separately evidenced by the connected Stripe API."
+    }
+  },
+  "contractAssessment": {
+    "status": "electronically-incorporated",
+    "contractingEntity": "Stripe Payments Europe, Limited (SPEL)",
+    "contractingEntityBasis": "The DPA states that an account located outside North or South America enters the DPA with SPEL; the connected production account reports country DE.",
+    "incorporationBasis": [
+      "The DPA is subject to and forms part of the Agreement.",
+      "The connected Stripe account records TOS acceptance at 2026-06-21T08:31:57Z."
+    ],
+    "exactAccountTosAcceptanceTimestamp": "2026-06-21T08:31:57Z",
+    "signatureClaim": "not-claimed"
+  },
+  "roleAssessment": {
+    "status": "verified-scoped",
+    "finding": "Stripe has mixed legal roles. When processing Personal Data on behalf of CAPITAL-AI under the DPA, Stripe acts as Data Processor. For specified purposes including fraud/risk prevention, financial-provider selection, legal/regulatory compliance, relationship management and product analysis/development, Stripe acts as Data Controller.",
+    "scopeLimitation": "Do not classify Stripe globally as processor or controller; role is purpose- and processing-specific."
+  },
+  "transferAssessment": {
+    "status": "pending",
+    "thirdCountryTransferContractuallyAcknowledged": true,
+    "finding": "The DPA states that User transfers Personal Data to Stripe, LLC in the United States as necessary to provide the Services and that Stripe/Affiliates may transfer Personal Data globally.",
+    "mechanisms": {
+      "precedence": [
+        "Data Privacy Framework",
+        "EEA SCCs or UK International Data Transfer Addendum as applicable"
+      ],
+      "dpf": "Stripe, LLC states that it is self-certified under the Data Privacy Framework.",
+      "sccModules": [
+        "Module 1 controller-to-controller",
+        "Module 2 controller-to-processor",
+        "Module 3 processor-to-processor"
+      ]
+    },
+    "capitalAiTransferFlowMappingStatus": "pending",
+    "tiaStatus": "pending",
+    "note": "Contractual transfer mechanisms are evidenced, but this record does not claim that a CAPITAL-AI-specific transfer assessment/TIA is complete."
+  },
+  "securityAssessment": {
+    "evidencedControls": [
+      "written information security and privacy programs",
+      "need-to-know/confidentiality controls",
+      "data incident notification without undue delay and for GDPR/UK GDPR no later than 48 hours after awareness",
+      "audit reports/security questionnaires",
+      "PCI Level 1 where applicable",
+      "SOC 1 and SOC 2 reports produced annually",
+      "TLS 1.2 in transit, mTLS internally, AES-256 at rest",
+      "payment-card and bank-account tokenization"
+    ],
+    "certificationClaimScope": "provider contractual/security evidence only; not a CAPITAL-AI GDPR certification"
+  },
+  "limitations": [
+    "The original contractual PDFs are not committed to source control.",
+    "Durable restricted-vault locators for the controller-provided Stripe artifacts remain to be registered.",
+    "The Services Agreement Overview/FAQ does not replace the full Services Agreement.",
+    "Subprocessor snapshot evidence is maintained separately.",
+    "DPA/DTA evidence does not by itself establish completed GDPR transfer compliance or an approved TIA."
+  ]
+}
