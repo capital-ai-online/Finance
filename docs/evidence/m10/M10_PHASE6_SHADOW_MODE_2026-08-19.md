@@ -12,12 +12,12 @@ Branch baseline: `main@ca968b2563975df64245cb88ee45a7c04019a3a1`
 - Production Supabase contains one active, non-revoked Owner passkey credential for `SvenKulessa` (credential/public-key material intentionally omitted from evidence).
 - Phase-5 production migration `m10_pr_ci_authorization` was applied after merge and registered by Supabase as version `20260819021420`. The repository filename is `20260819040000_m10_pr_ci_authorization.sql`; this connector-assigned version difference is recorded and is not silently rewritten.
 
-## 2. Phase-5 production post-verification
+## 2. Phase-5 production post-verification and Phase-6 preflight findings
 
-Effective database controls were verified after migration:
+Effective database controls were verified after the Phase-5 production migration:
 
 - RLS enabled on `m10_authorization_challenges`, `m10_approval_evidence`, and `m10_ci_consumptions`;
-- `anon` and `authenticated` have no table privileges on these M10 tables;
+- `anon` and `authenticated` have no table privileges on these Phase-5 M10 tables;
 - `service_role` has only the explicitly required table privileges;
 - `claim_m10_ci_consumption` and `finalize_m10_ci_dispatch` are executable by `service_role` and not by `anon`/`authenticated`;
 - lifecycle/immutability triggers are installed on all three tables;
@@ -25,7 +25,15 @@ Effective database controls were verified after migration:
 
 Supabase Security Advisor reports `RLS enabled, no policy` as INFO for the Phase-5 M10 tables. This is intentional deny-by-default because browser roles have no grants and privileged server access is explicit. Performance Advisor identified one M10-specific missing covering index on `m10_approval_evidence.credential_id`; Phase 6 adds that index additively.
 
-## 3. Shadow architecture
+A separate production privilege preflight identified legacy Phase-3 grants on `m10_owner_credentials` and `m10_registration_challenges`: both `anon` and `authenticated` retained `REFERENCES`, `TRIGGER`, and `TRUNCATE`. These rights are unnecessary for the Owner-only server contract, and table-level `TRUNCATE` must not be treated as protected by row-level filtering. The Phase-6 migration therefore normalizes both tables with `REVOKE ALL` for browser roles and explicitly regrants only `SELECT, INSERT, UPDATE` to `service_role`. No production grant mutation is performed before Human merge of the Phase-6 PR.
+
+## 3. WebAuthn challenge compatibility finding
+
+`issueM10Challenge()` already creates the protocol challenge as cryptographically random base64url bytes and stores that exact value for Phase-4 `expectedChallenge` verification. During Phase-6 pre-PR review, the first Shadow options implementation was found to pass this already-encoded string through `generateAuthenticationOptions({ challenge })`.
+
+Current SimpleWebAuthn v13 behavior treats a supplied string custom challenge as UTF-8 input and base64url-encodes it for the browser. That would have transformed the stored canonical M10 challenge and caused a real assertion to disagree with the Phase-4 `expectedChallenge` value. The implementation was corrected before PR creation: Phase 6 now builds the browser authentication-options JSON with the stored base64url challenge copied **unchanged**, while still binding RP ID, two-minute timeout, required user verification and the enrolled credential IDs. A regression test verifies byte-string identity and statically prevents reintroduction of `generateAuthenticationOptions()` in this Shadow path.
+
+## 4. Shadow architecture
 
 Phase 6 introduces a deliberately non-authoritative path:
 
@@ -40,19 +48,21 @@ Structural separation is deliberate:
 - the Shadow router has no import/reference to `consumeM10ApprovalForCi`, `githubCiDispatcher`, or `workflow_dispatch`;
 - the current simplified PR CI remains authoritative until Controlled Cutover.
 
-## 4. Implementation scope
+## 5. Implementation scope
 
 - `supabase/migrations/20260819050000_m10_phase6_shadow_evidence.sql`
+  - removes residual browser privileges from Phase-3 M10 credential/challenge tables and restores only the required service-role rights;
   - immutable Shadow Evidence table;
   - RLS + no browser grants;
-  - service-role SELECT/INSERT only;
-  - additive covering index for Phase-5 credential FK Advisor finding.
+  - service-role SELECT/INSERT only for Shadow Evidence;
+  - additive covering index for the Phase-5 credential FK Advisor finding.
 - `server/m10/shadowApprovalSupabaseStore.ts`
   - non-consumable Shadow Evidence store;
   - safe recent-evidence view without credential/challenge identifiers.
 - `server/m10/shadowAuthorizationRouter.ts`
   - Owner-only status/begin/complete endpoints;
   - live GitHub PR re-resolution;
+  - canonical stored WebAuthn challenge passed through unchanged;
   - required RP-ID/User Verification;
   - M5 audit before returning a usable challenge and after verification;
   - explicit `authoritativeForCi=false` / `dispatchEnabled=false` contract.
@@ -67,20 +77,22 @@ Structural separation is deliberate:
   - registers `M10_GITHUB_TOKEN` as a server-only secret while preserving the Gemini key added by merged PR #418.
 - targeted tests enforce the non-authoritative boundary.
 
-## 5. Mandatory negative/recovery evidence mapping
+## 6. Mandatory negative/recovery evidence mapping
 
 Already covered by Phase-4/5 tests: wrong owner, wrong/stale PR state, changed base/head/file-set/diff, unknown/revoked credential, invalid signature, replay/consumed challenge, counter CAS failure, approval persistence failure, already-consumed approval, duplicate exact head, resolver/store failure, and uncertain dispatch no-retry semantics.
 
 Phase-6-specific tests additionally prove:
 
 - no active credential -> no Shadow authentication ceremony;
+- canonical stored challenge is not transformed by a second encoder;
 - Shadow store writes only to `m10_shadow_evaluations`;
 - Shadow router has no Phase-5 consumption/dispatch capability;
-- browser roles have no Shadow table access and Shadow evidence is append-only.
+- browser roles have no Shadow table access and Shadow evidence is append-only;
+- the migration revokes residual browser privileges from the two Phase-3 M10 persistence tables.
 
 A **real Owner WebAuthn assertion** is still mandatory before Phase 6 can be marked `VERIFIED PASS`. Unit tests cannot substitute for possession of the authenticator private key.
 
-## 6. Production gates still open
+## 7. Production gates still open
 
 1. Human merge of the Phase-6 PR.
 2. Apply `20260819050000_m10_phase6_shadow_evidence.sql` to production and repeat Supabase security/performance verification.
@@ -90,7 +102,7 @@ A **real Owner WebAuthn assertion** is still mandatory before Phase 6 can be mar
 6. Verify production `APPROVED_SHADOW` evidence, matching M5 audit, no matching Phase-5 CI consumption, and unchanged simplified CI authority.
 7. Only after Shadow + mandatory negative + recovery evidence is `VERIFIED PASS` may a separate Controlled-Cutover branch change GitHub workflow authority.
 
-## 7. Current verdict
+## 8. Current verdict
 
 **Phase 6 implementation: READY FOR PR VALIDATION.**  
 **Phase 6 operational assurance: NOT YET VERIFIED PASS.**  
