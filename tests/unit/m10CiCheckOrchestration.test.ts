@@ -20,12 +20,14 @@ describe('M10 CI check orchestration', () => {
     expect(ciWorkflow).not.toContain("M10 Controlled-Cutover bootstrap: PR #429");
   });
 
-  it('handles ordinary PR lifecycle events in a separate cheap fail-closed guard', () => {
+  it('handles ordinary PR lifecycle events in a separate cheap non-authoritative boundary', () => {
     expect(prGuardWorkflow).toMatch(/^\s{2}pull_request:/m);
     expect(prGuardWorkflow).toContain('types: [opened, synchronize, reopened, ready_for_review]');
-    expect(prGuardWorkflow).toContain('name: m10-authorization-required');
-    expect(prGuardWorkflow).toContain('exit 1');
-    expect(prGuardWorkflow).not.toContain('build-and-test');
+    expect(prGuardWorkflow).toContain('name: m10-pr-event-boundary');
+    expect(prGuardWorkflow).toContain('M10 BOUNDARY PASS');
+    expect(prGuardWorkflow).toContain('bewertet keinen Passkey-Autorisierungszustand');
+    expect(prGuardWorkflow).not.toContain('M10 DENY');
+    expect(prGuardWorkflow).not.toContain('exit 1');
     expect(prGuardWorkflow).not.toContain('actions/checkout');
     expect(prGuardWorkflow).not.toContain('actions/setup-node');
     expect(prGuardWorkflow).not.toContain('npm ');
