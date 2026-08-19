@@ -6,14 +6,14 @@ begin;
 create table if not exists public.m10_authorization_challenges (
   challenge_id text primary key,
   challenge text not null,
-  owner_actor_id text not null,
-  repository text not null,
+  owner_actor_id text not null check (owner_actor_id = 'SvenKulessa'),
+  repository text not null check (repository = 'SvenKulessa/Finance'),
   pr_number integer not null check (pr_number > 0),
   base_branch text not null,
   base_sha text not null,
   head_sha text not null,
-  changed_file_set_hash text not null,
-  diff_review_digest text not null,
+  changed_file_set_hash text not null check (changed_file_set_hash ~ '^[0-9a-f]{64}$'),
+  diff_review_digest text not null check (diff_review_digest ~ '^[0-9a-f]{64}$'),
   action text not null check (action = 'AUTHORIZE_PR_CI'),
   issued_at timestamptz not null,
   expires_at timestamptz not null,
@@ -32,17 +32,17 @@ create index if not exists m10_authorization_challenges_head_idx
 
 create table if not exists public.m10_approval_evidence (
   approval_id text primary key,
-  owner_actor_id text not null,
+  owner_actor_id text not null check (owner_actor_id = 'SvenKulessa'),
   credential_id text not null references public.m10_owner_credentials(credential_id) on delete restrict,
   challenge_id text not null unique references public.m10_authorization_challenges(challenge_id) on delete restrict,
   authorization_digest text not null unique,
-  repository text not null,
+  repository text not null check (repository = 'SvenKulessa/Finance'),
   pr_number integer not null check (pr_number > 0),
   base_branch text not null,
   base_sha text not null,
   head_sha text not null,
-  changed_file_set_hash text not null,
-  diff_review_digest text not null,
+  changed_file_set_hash text not null check (changed_file_set_hash ~ '^[0-9a-f]{64}$'),
+  diff_review_digest text not null check (diff_review_digest ~ '^[0-9a-f]{64}$'),
   action text not null check (action = 'AUTHORIZE_PR_CI'),
   approved_at timestamptz not null,
   consumed_at timestamptz null,
@@ -57,7 +57,7 @@ create index if not exists m10_approval_evidence_head_idx
 create table if not exists public.m10_ci_consumptions (
   consumption_id text primary key,
   approval_id text not null unique references public.m10_approval_evidence(approval_id) on delete restrict,
-  repository text not null,
+  repository text not null check (repository = 'SvenKulessa/Finance'),
   pr_number integer not null check (pr_number > 0),
   head_sha text not null,
   authorization_digest text not null,
@@ -85,6 +85,49 @@ grant select, insert, update on table public.m10_authorization_challenges to ser
 grant select, insert on table public.m10_approval_evidence to service_role;
 grant select on table public.m10_ci_consumptions to service_role;
 
+create or replace function public.guard_m10_authorization_challenge_mutation()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if tg_op = 'INSERT' then
+    if new.consumed_at is null and new.revoked_at is null then
+      return new;
+    end if;
+    raise exception 'm10_authorization_challenges must be inserted UNUSED';
+  end if;
+
+  if tg_op = 'DELETE' then
+    raise exception 'm10_authorization_challenges cannot be deleted';
+  end if;
+
+  if old.consumed_at is null
+     and old.revoked_at is null
+     and (
+       (new.consumed_at is not null and new.revoked_at is null)
+       or (new.consumed_at is null and new.revoked_at is not null)
+     )
+     and (
+       to_jsonb(new) - array['consumed_at', 'revoked_at']
+     ) = (
+       to_jsonb(old) - array['consumed_at', 'revoked_at']
+     ) then
+    return new;
+  end if;
+
+  raise exception 'm10_authorization_challenges context is immutable and lifecycle transition is single-use';
+end;
+$$;
+
+revoke all on function public.guard_m10_authorization_challenge_mutation() from public;
+
+drop trigger if exists m10_authorization_challenges_guard on public.m10_authorization_challenges;
+create trigger m10_authorization_challenges_guard
+before insert or update or delete on public.m10_authorization_challenges
+for each row execute function public.guard_m10_authorization_challenge_mutation();
+
 create or replace function public.guard_m10_approval_evidence_mutation()
 returns trigger
 language plpgsql
@@ -92,6 +135,13 @@ security definer
 set search_path = public, pg_temp
 as $$
 begin
+  if tg_op = 'INSERT' then
+    if new.consumed_at is null then
+      return new;
+    end if;
+    raise exception 'm10_approval_evidence must be inserted unconsumed';
+  end if;
+
   if tg_op = 'DELETE' then
     raise exception 'm10_approval_evidence is immutable and cannot be deleted';
   end if;
@@ -110,7 +160,7 @@ revoke all on function public.guard_m10_approval_evidence_mutation() from public
 
 drop trigger if exists m10_approval_evidence_guard on public.m10_approval_evidence;
 create trigger m10_approval_evidence_guard
-before update or delete on public.m10_approval_evidence
+before insert or update or delete on public.m10_approval_evidence
 for each row execute function public.guard_m10_approval_evidence_mutation();
 
 create or replace function public.guard_m10_ci_consumption_mutation()
@@ -120,6 +170,15 @@ security definer
 set search_path = public, pg_temp
 as $$
 begin
+  if tg_op = 'INSERT' then
+    if new.dispatch_state = 'PENDING'
+       and new.dispatch_completed_at is null
+       and new.failure_reason is null then
+      return new;
+    end if;
+    raise exception 'm10_ci_consumptions must be inserted PENDING';
+  end if;
+
   if tg_op = 'DELETE' then
     raise exception 'm10_ci_consumptions is immutable and cannot be deleted';
   end if;
@@ -143,7 +202,7 @@ revoke all on function public.guard_m10_ci_consumption_mutation() from public;
 
 drop trigger if exists m10_ci_consumptions_guard on public.m10_ci_consumptions;
 create trigger m10_ci_consumptions_guard
-before update or delete on public.m10_ci_consumptions
+before insert or update or delete on public.m10_ci_consumptions
 for each row execute function public.guard_m10_ci_consumption_mutation();
 
 create or replace function public.claim_m10_ci_consumption(
