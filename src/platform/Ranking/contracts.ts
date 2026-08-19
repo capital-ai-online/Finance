@@ -3,14 +3,9 @@ import type { CanonicalScoreResult, DataQualityLevel } from '../../types/scoring
 
 /**
  * SC-7 cross-asset ranking contract.
- *
- * This layer ranks already-canonical results. It never executes a scoring model, changes a score,
- * or invents cross-model/cross-segment comparability. Cohort membership is explicit and
- * cross-cohort ordering is forbidden until a separately validated comparability contract exists.
+ * Ranks canonical results only; never executes a model or invents comparability.
  */
 export const CROSS_ASSET_RANKING_CONTRACT_VERSION = 'cross-asset-ranking/1.0.0' as const;
-
-/** Hard gate: Phase D is shadow/read-only and must not alter productive ranking decisions. */
 export const CROSS_ASSET_RANKING_IMPACT_ENABLED = false as const;
 
 export type CrossAssetRankingMode = 'overall' | 'category' | 'tier' | 'growth';
@@ -23,7 +18,6 @@ export interface CrossAssetRankingGovernance {
   sourceConflict?: boolean;
 }
 
-/** Cross-cohort score comparability requires separately validated normalization evidence. */
 export interface ScoreComparabilityEvidence {
   normalizedValue: number;
   comparisonKey: string;
@@ -34,7 +28,6 @@ export interface ScoreComparabilityEvidence {
   verified: boolean;
 }
 
-/** Growth is never inferred from canonical score; it requires horizon-specific verified evidence. */
 export interface GrowthRankingEvidence {
   value: number;
   comparisonKey: string;
@@ -50,9 +43,8 @@ export interface CanonicalRankingCandidate {
   category?: string | null;
   tier?: 1 | 2 | 3 | null;
   /**
-   * When absent, the default cohort is bounded by model id/version + asset class + feature contract
-   * + scoring contract. Different default cohorts can share an ordering only through verified
-   * normalization evidence.
+   * Without verified normalization, cohort identity is bounded by model id/version + asset class +
+   * feature/scoring contract. Different intended-use contracts cannot share an ordering implicitly.
    */
   scoreComparability?: ScoreComparabilityEvidence | null;
   growth?: GrowthRankingEvidence | null;
@@ -96,9 +88,14 @@ export interface RankedCanonicalAsset {
   rankingValue: number;
   canonicalScore: number;
   dataQuality: DataQualityLevel;
+  dispatcherVersion: string;
+  modelRegistryVersion: string;
   modelId: string;
   modelVersion: string;
-  dispatcherVersion: string;
+  executorKey: string;
+  resultContractVersion: string;
+  featureVersion: string;
+  scoringVersion: string;
   tieBreaker: string;
 }
 
