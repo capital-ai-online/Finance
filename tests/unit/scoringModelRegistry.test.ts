@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
+  COMMODITY_EVIDENCE_EXECUTOR_KEY,
   SCORING_MODEL_REGISTRY_VERSION,
+  SOVEREIGN_BENCHMARK_EXECUTOR_KEY,
   ScoringModelRegistry,
+  TRADITIONAL_SCORING_EXECUTOR_KEY,
   adaptCatalogCandidateToUniversal,
   adaptRegistryAssetToUniversal,
   createUniversalAssetIdentity,
@@ -55,7 +58,7 @@ describe('SC-2 ScoringModelRegistry', () => {
     expect(resolution.model.canonicalResultAdapterRequired).toBe(false);
   });
 
-  it('routes stock/forex/index to one traditional model family', () => {
+  it('routes stock/forex/index to one canonical-result traditional model family', () => {
     for (const assetClass of ['stock', 'forex', 'index'] as const) {
       const resolution = scoringModelRegistry.resolve(
         createUniversalAssetIdentity({ symbol: 'TEST', assetClass }),
@@ -64,12 +67,22 @@ describe('SC-2 ScoringModelRegistry', () => {
       if (resolution.status === 'RESOLVED') {
         expect(resolution.model.modelId).toBe('traditional-scoring');
         expect(resolution.model.version).toBe('2.1.0');
-        expect(resolution.model.canonicalResultAdapterRequired).toBe(true);
+        expect(resolution.model.resultContractVersion).toBe(CANONICAL_SCORE_RESULT_CONTRACT_VERSION);
+        expect(resolution.model.executorKey).toBe(TRADITIONAL_SCORING_EXECUTOR_KEY);
+        expect(resolution.model.canonicalResultAdapterRequired).toBe(false);
       }
     }
   });
 
-  it('resolves only approved sovereign benchmark-yield bond semantics', () => {
+  it('binds commodity and approved sovereign benchmark models to dispatcher executor adapters', () => {
+    const commodity = scoringModelRegistry.resolve(createUniversalAssetIdentity({ symbol: 'GLD', assetClass: 'commodity' }));
+    expect(commodity.status).toBe('RESOLVED');
+    if (commodity.status === 'RESOLVED') {
+      expect(commodity.model.executorKey).toBe(COMMODITY_EVIDENCE_EXECUTOR_KEY);
+      expect(commodity.model.resultContractVersion).toBe(CANONICAL_SCORE_RESULT_CONTRACT_VERSION);
+      expect(commodity.model.canonicalResultAdapterRequired).toBe(false);
+    }
+
     const benchmark = scoringModelRegistry.resolve(createUniversalAssetIdentity({
       symbol: 'GB_DE_10Y',
       assetClass: 'bond',
@@ -78,6 +91,9 @@ describe('SC-2 ScoringModelRegistry', () => {
     expect(benchmark.status).toBe('RESOLVED');
     if (benchmark.status === 'RESOLVED') {
       expect(benchmark.model.modelId).toBe('sovereign-benchmark-yield-scoring');
+      expect(benchmark.model.executorKey).toBe(SOVEREIGN_BENCHMARK_EXECUTOR_KEY);
+      expect(benchmark.model.resultContractVersion).toBe(CANONICAL_SCORE_RESULT_CONTRACT_VERSION);
+      expect(benchmark.model.canonicalResultAdapterRequired).toBe(false);
     }
 
     const individualBond = scoringModelRegistry.resolve(createUniversalAssetIdentity({

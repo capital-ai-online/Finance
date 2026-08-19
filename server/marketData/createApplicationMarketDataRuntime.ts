@@ -3,8 +3,8 @@ import type { StooqFallbackAsset } from './stooqProviderStage';
 import { runMarketDataCompatibilityRefresh } from './marketDataCompatibilityFacade';
 import { createMarketDataRuntimeFacade } from './marketDataRuntimeFacade';
 import {
-  enrichStandardCryptoWithCanonicalScore,
-  isStandardCryptoMarketDataAsset,
+  enrichAssetWithCanonicalScore,
+  isCanonicalScorableMarketDataAsset,
 } from './canonicalCryptoScoreEnrichment';
 
 const STOCK_TICKERS = ['AAPL.US', 'MSFT.US', 'GOOGL.US', 'AMZN.US', 'NVDA.US', 'TSLA.US', 'META.US', 'NFLX.US', 'AMD.US', 'INTC.US'];
@@ -26,13 +26,11 @@ export interface ApplicationMarketDataRuntimeOptions {
 /**
  * Canonical application-level composition for CAPITAL-AI market data.
  *
- * The server composition root supplies only domain callbacks (enrichment, registry sync and
- * best-effort side effects). Provider ordering, compatibility fallback completion, cache TTL
- * and request coalescing stay owned by the extracted market-data architecture.
- *
- * SC-2 Phase C2: Standard-Crypto never enters the legacy server.application.ts enrichment
- * callback. It is scored exclusively through UAI -> ScoringModelRegistry -> ScoringDispatcher.
- * Meme/Traditional/Commodity remain on their existing paths until their explicit C3 adapters.
+ * Provider ordering, cache/TTL and compatibility fallback completion stay owned by the market-data
+ * architecture. Since SC-2 C3 every scorable financial asset class is intercepted before the
+ * legacy composition-root enrichment callback and enters its domain evidence adapter followed by
+ * UAI -> ScoringModelRegistry -> ScoringDispatcher. A missing evidence contract yields score=null;
+ * no asset class may fall through to a productive heuristic model-selection path.
  */
 export function createApplicationMarketDataRuntime(options: ApplicationMarketDataRuntimeOptions) {
   return createMarketDataRuntimeFacade({
@@ -45,8 +43,8 @@ export function createApplicationMarketDataRuntime(options: ApplicationMarketDat
       forexTickers: FOREX_TICKERS,
       commodityTickers: COMMODITY_TICKERS,
       registryAssets: options.registryAssets,
-      enrichAsset: (asset) => isStandardCryptoMarketDataAsset(asset)
-        ? enrichStandardCryptoWithCanonicalScore(asset)
+      enrichAsset: (asset) => isCanonicalScorableMarketDataAsset(asset)
+        ? enrichAssetWithCanonicalScore(asset)
         : options.enrichAsset(asset),
       persistSnapshots: options.persistSnapshots,
       evaluateAlerts: options.evaluateAlerts,
