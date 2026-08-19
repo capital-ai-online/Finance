@@ -1,8 +1,8 @@
 // M10 (ADR-0066, ESS-0022) Phase 6 — non-authoritative Shadow Mode persistence.
 //
-// This store intentionally implements ONLY the Phase-4 approval write contract. It is not a
-// M10ConsumableApprovalStore and therefore cannot be passed to Phase 5 CI consumption. Shadow
-// assertions prove the real Owner WebAuthn path while the existing simplified CI remains authoritative.
+// This store intentionally implements ONLY the Phase-4 approval write contract. It exposes no
+// Phase-5 consumption contract and therefore cannot authorize CI. Shadow assertions prove the real
+// Owner WebAuthn path while the existing simplified CI remains authoritative.
 import { getPrivilegedServerSupabase, isPrivilegedSupabaseConfigured } from '../db';
 import type { M10ApprovalEvidence, M10ApprovalEvidenceStore } from './assertionVerification';
 
