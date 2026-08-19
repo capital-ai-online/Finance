@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "controller": "Sven Michael Kulessa",
+  "project": "CAPITAL-AI",
+  "vendorId": "stripe",
+  "confirmedAt": "2026-08-19",
+  "assertionType": "connected-account-identity",
+  "status": "verified-via-connected-account",
+  "assertion": {
+    "accountId": "acct_1TbfHJPKr4joNbEc",
+    "displayName": "CAPITAL-AI",
+    "connectionVerified": true
+  },
+  "source": "Stripe connected account API",
+  "limitations": [
+    "This verifies the connected Stripe account identity only.",
+    "It does not by itself establish whether this is the only Stripe account used for production.",
+    "It does not establish live-mode processing scope, GDPR role allocation, DPA execution, transfer mechanism, TIA status, or subprocessor completeness."
+  ]
+}
