@@ -44,6 +44,8 @@ const REQUIRED = [
   'docs/adr/registry.json',
   'docs/governance/control-plane/README.md',
   'docs/governance/control-plane/STANDARDS_CROSSWALK.md',
+  'docs/governance/control-plane/DOCUMENT_LIFECYCLE_POLICY.md',
+  'docs/governance/control-plane/GOVERNANCE_CONTROL_PLANE_DIFF_IMPACT_2026-08-19.md',
   'docs/governance/control-plane/pre-pr-build-evidence.schema.json',
   'src/platform/Governance/README.md',
   'src/platform/Governance/manifest.json',
@@ -59,6 +61,7 @@ if (errors.length === 0) {
   if (!agents.includes('AUTH-GOV-AGENT-TRUST-ROOT')) {
     fail('TRUST_ROOT_ID_MISSING', 'AGENTS.md must declare AUTH-GOV-AGENT-TRUST-ROOT.');
   }
+
   for (const [adapter, content] of [['CLAUDE.md', claude], ['.github/copilot-instructions.md', copilot]]) {
     if (!content.includes('AGENTS.md')) fail('ADAPTER_TRUST_ROOT_MISSING', `${adapter} must point to AGENTS.md.`);
     if (!/non-authoritative|no independent repository-wide governance authority/i.test(content)) {
@@ -88,6 +91,8 @@ if (errors.length === 0) {
   }
 
   const authorityIds = new Set(authorities.map((item) => item.authorityId));
+  const authorityById = new Map(authorities.map((item) => [item.authorityId, item]));
+
   for (const authority of authorities) {
     if (!/^AUTH-[A-Z0-9-]+$/.test(String(authority.authorityId ?? ''))) {
       fail('INVALID_AUTHORITY_ID', String(authority.authorityId));
@@ -100,6 +105,41 @@ if (errors.length === 0) {
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(authority.date ?? ''))) {
       fail('AUTHORITY_DATE_INVALID', `${authority.authorityId}: ${authority.date ?? '<missing>'}`);
+    }
+  }
+
+  const registryContracts = [
+    {
+      id: authorityRegistry.registryAuthorityId,
+      declaredVersion: authorityRegistry.version,
+      expectedPath: 'docs/governance/authority-registry.json',
+      name: 'authority registry',
+    },
+    {
+      id: catalog.catalogAuthorityId,
+      declaredVersion: catalog.version,
+      expectedPath: 'docs/governance/control-catalog.json',
+      name: 'control catalog',
+    },
+    {
+      id: adrRegistry.registryAuthorityId,
+      declaredVersion: adrRegistry.version,
+      expectedPath: 'docs/adr/registry.json',
+      name: 'ADR registry',
+    },
+  ];
+
+  for (const registry of registryContracts) {
+    const authority = authorityById.get(registry.id);
+    if (!authority) {
+      fail('REGISTRY_AUTHORITY_UNRESOLVED', `${registry.name}: ${registry.id ?? '<missing>'}`);
+      continue;
+    }
+    if (authority.path !== registry.expectedPath) {
+      fail('REGISTRY_AUTHORITY_PATH_MISMATCH', `${registry.name}: ${authority.path} != ${registry.expectedPath}`);
+    }
+    if (authority.version !== registry.declaredVersion) {
+      fail('REGISTRY_VERSION_MISMATCH', `${registry.name}: registry=${registry.declaredVersion}, authority=${authority.version}`);
     }
   }
 
@@ -122,7 +162,15 @@ if (errors.length === 0) {
     }
   }
 
+  const m10Control = controls.find((item) => item.controlId === 'CTRL-CI-M10-001');
+  if (!m10Control || !/suspended|off/i.test(String(m10Control.requirement ?? ''))) {
+    fail('M10_TRANSITION_STATE_MISSING', 'CTRL-CI-M10-001 must explicitly preserve the current suspended/off state.');
+  }
+
   for (const adr of adrs) {
+    if (!authorityIds.has(adr.authorityId)) {
+      fail('ADR_AUTHORITY_UNRESOLVED', `${adr.displayId}: ${adr.authorityId}`);
+    }
     if (!adr.path || !exists(adr.path)) {
       fail('ADR_TARGET_MISSING', `${adr.displayId}: ${adr.path ?? '<missing path>'}`);
       continue;
@@ -139,6 +187,13 @@ if (errors.length === 0) {
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(adr.date ?? ''))) {
       fail('ADR_DATE_INVALID', `${adr.displayId}: ${adr.date}`);
+    }
+    const registeredAuthority = authorityById.get(adr.authorityId);
+    if (registeredAuthority && registeredAuthority.path !== adr.path) {
+      fail('ADR_AUTHORITY_PATH_MISMATCH', `${adr.displayId}: ADR registry=${adr.path}, authority registry=${registeredAuthority.path}`);
+    }
+    if (registeredAuthority && registeredAuthority.version !== adr.version) {
+      fail('ADR_AUTHORITY_VERSION_MISMATCH', `${adr.displayId}: ADR registry=${adr.version}, authority registry=${registeredAuthority.version}`);
     }
   }
 
