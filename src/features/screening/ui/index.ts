@@ -1,6 +1,6 @@
 // Transitional facade: implementations are migrated from src/components slice by slice.
-export * from '../../../components/Screener';
-export * from '../../../components/MarketScreener';
-export * from '../../../components/AssetUniverseDashboard';
-export * from '../../../components/UniverseBestWorst';
-export * from '../../../components/RawMaterialsDashboard';
+export { Screener } from '../../../components/Screener';
+export { MarketScreener } from '../../../components/MarketScreener';
+export { AssetUniverseDashboard } from '../../../components/AssetUniverseDashboard';
+export { UniverseBestWorst } from '../../../components/UniverseBestWorst';
+export { RawMaterialsDashboard } from '../../../components/RawMaterialsDashboard';

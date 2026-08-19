@@ -1,5 +1,5 @@
 // Co-located with the existing news feature backend surface.
-export * from '../../../components/RealtimeAiNewsfeed';
-export * from '../../../components/Newsticker';
-export * from '../../../components/MarketSentiment';
-export * from '../../../components/SentimentDashboard';
+export { RealtimeAiNewsfeed } from '../../../components/RealtimeAiNewsfeed';
+export { Newsticker } from '../../../components/Newsticker';
+export { MarketSentiment } from '../../../components/MarketSentiment';
+export { SentimentDashboard } from '../../../components/SentimentDashboard';

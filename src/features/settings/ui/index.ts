@@ -1,4 +1,4 @@
 // Transitional facade: implementations are migrated from src/components slice by slice.
-export * from '../../../components/ProfilePage';
-export * from '../../../components/PasskeySettings';
-export * from '../../../components/TotpSettings';
+export { ProfilePage } from '../../../components/ProfilePage';
+export { PasskeySettings } from '../../../components/PasskeySettings';
+export { TotpSettings } from '../../../components/TotpSettings';

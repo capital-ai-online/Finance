@@ -1,7 +1,7 @@
 // Transitional facade: implementations are migrated from src/components slice by slice.
-export * from '../../../components/Watchlist';
-export * from '../../../components/FavoriteAssetPatternSlots';
-export * from '../../../components/PortfolioPerformance';
-export * from '../../../components/PortfolioBacktester';
-export * from '../../../components/BacktestEngine';
-export * from '../../../components/MonteCarloDetailed';
+export { Watchlist } from '../../../components/Watchlist';
+export { FavoriteAssetPatternSlots } from '../../../components/FavoriteAssetPatternSlots';
+export { PortfolioPerformance } from '../../../components/PortfolioPerformance';
+export { PortfolioBacktester } from '../../../components/PortfolioBacktester';
+export { BacktestEngine } from '../../../components/BacktestEngine';
+export { MonteCarloDetailed } from '../../../components/MonteCarloDetailed';

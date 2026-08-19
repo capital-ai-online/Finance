@@ -1,5 +1,5 @@
 // Transitional facade: implementations are migrated from src/components slice by slice.
-export * from '../../../components/Abonnements';
-export * from '../../../components/Checkout';
-export * from '../../../components/SubscriptionModal';
-export * from '../../../components/GuestCliffhangerModal';
+export { Abonnements } from '../../../components/Abonnements';
+export { Checkout } from '../../../components/Checkout';
+export { SubscriptionModal } from '../../../components/SubscriptionModal';
+export { GuestCliffhangerModal } from '../../../components/GuestCliffhangerModal';
