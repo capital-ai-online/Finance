@@ -10,6 +10,7 @@ Der `FinTechCore` ist die versionierte finanzielle Workflow-Composition-Schicht 
 - FT-1 Runtime-Modi: ausschließlich `RESEARCH` und `PAPER`
 - FT-2A: provenance-aware Primary-/Secondary-Analyseprofile
 - FT-2B: kategoriespezifische Feature-/Evidence-Contracts und Verified-Snapshot-Adapter
+- FT-2C: detector-agnostische Pattern Detection Contracts, Reliability Registry und Multi-Timeframe Research Resolver
 - keine externe Plattformmutation
 - keine Exchange-/Custody-Side-Effects
 
@@ -99,6 +100,57 @@ market data   != TVL / protocol revenue / reserve quality
 
 Der Adapter führt selbst keinen Provider-I/O aus und erzeugt keinen Score. Degraded/last-known-good Providerdaten werden als `STALE` markiert.
 
+## FT-2C Technical Pattern Engine Foundation
+
+Die Pattern-Schicht ist in vier Authorities getrennt:
+
+1. `PatternDetectionContracts.ts` — detector-agnostischer OHLCV-/Detector-SPI.
+2. `PatternReliabilityRegistry.ts` — immutable Exact-Key Reliability Registry.
+3. `PatternSignalResolver.ts` — deterministische Multi-Timeframe-/Kontextauflösung.
+4. `PatternResearchEngine.ts` — Composition der drei Schichten für Research/Paper.
+
+### Exact-key Reliability
+
+Ein Reliability Record gilt ausschließlich für:
+
+```text
+assetId
++ analysis profile
++ timeframe
++ market regime
++ patternId
++ validationVersion
+```
+
+Es gibt keinen globalen Cross-Asset-/Cross-Timeframe-/Cross-Regime-Fallback.
+
+Die Owner-Defaults für mindestens 100 Beobachtungen, 730/180 Tage Train/Validation, Walk-forward sowie Fees/Slippage/Funding werden als **Research-Validation**, nicht als Produktions-/Trading-Policy behandelt. Ein Registry Record kann seinen Status nicht selbst auf `VALIDATED` setzen; der Registry lädt ihn nur, wenn die deterministische Reevaluation denselben Status ergibt.
+
+### Pattern-Konfliktauflösung
+
+Der Resolver erzeugt keinen neuen gewichteten Pattern Score. Die Source-Priorität wird lexikographisch angewendet:
+
+```text
+higher timeframe
+  > pattern group / structure priority
+  > breakout evidence
+  > volume confirmation
+  > context / relevant level
+  > market-regime fit
+```
+
+Gegenläufige Pattern mit identischer Priorität bleiben `CONFLICTING_EVIDENCE`. Niedriger priorisierte Gegensignale werden als `suppressed` erhalten, nicht gelöscht.
+
+Jedes Ergebnis bleibt:
+
+```text
+scoreEligible     = false
+executionEligible = false
+authority         = RESEARCH_CONTEXT_ONLY
+```
+
+TA-Lib oder eine andere technische Analysebibliothek ist in FT-2C noch nicht gebunden. Der Detector-SPI erlaubt einen späteren separat geprüften PoC, ohne Reliability, Kontext oder Governance an eine externe Library zu delegieren.
+
 ## Workflow-State-Machine
 
 ```text
@@ -126,6 +178,8 @@ Ein terminaler Run wird nicht implizit wieder geöffnet. Retry/Replay benötigt 
 - Missing Evidence wird nicht synthetisch ergänzt.
 - Unknown Feature Evidence wird nicht implizit promotet.
 - Fehlende Hard Gates führen fail-closed zu `NOT_COMPUTABLE`; ein verifiziertes `false` blockiert den Feature Contract.
+- Pattern ohne exakte validierte Reliability wird nicht als Research-Kontext ausgewählt.
+- Gleichrangige Richtungswidersprüche werden nicht künstlich aufgelöst.
 - Side-effecting Actions bleiben bis zu späteren Roadmap-Gates unverdrahtet.
 - Generische Retry-Mechanismen dürfen später keine Live-Order ohne proven end-to-end Idempotency wiederholen.
 
