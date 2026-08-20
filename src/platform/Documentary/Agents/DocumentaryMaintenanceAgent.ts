@@ -105,15 +105,21 @@ function resolveFile(repoRoot: string, relativePath: string): string {
   return absolute;
 }
 
-function readPatchableDocument(repoRoot: string, relativePath: string): string {
-  if (!isAutomaticDocumentPatchPathAllowed(relativePath)) {
-    throw new Error(`[DocumentaryMaintenanceAgent] path is review-only: ${relativePath}`);
-  }
+function assertRegularNonSymlinkFile(repoRoot: string, relativePath: string): string {
   const absolute = resolveFile(repoRoot, relativePath);
   const stat = fs.lstatSync(absolute);
   if (!stat.isFile() || stat.isSymbolicLink()) {
     throw new Error(`[DocumentaryMaintenanceAgent] path must be a regular non-symlink file: ${relativePath}`);
   }
+  return absolute;
+}
+
+function readPatchableDocument(repoRoot: string, relativePath: string): string {
+  if (!isAutomaticDocumentPatchPathAllowed(relativePath)) {
+    throw new Error(`[DocumentaryMaintenanceAgent] path is review-only: ${relativePath}`);
+  }
+  const absolute = assertRegularNonSymlinkFile(repoRoot, relativePath);
+  const stat = fs.statSync(absolute);
   if (stat.size > MAX_DOCUMENT_BYTES) {
     throw new Error(`[DocumentaryMaintenanceAgent] document exceeds ${MAX_DOCUMENT_BYTES} bytes: ${relativePath}`);
   }
@@ -209,6 +215,10 @@ export async function planDocumentaryMaintenance(options: {
       skipped.push({ path: documentPath, reason: 'Semantic provider returned empty content.' });
       continue;
     }
+    if (Buffer.byteLength(proposal.content, 'utf8') > MAX_DOCUMENT_BYTES) {
+      skipped.push({ path: documentPath, reason: `Semantic provider content exceeds ${MAX_DOCUMENT_BYTES} bytes.` });
+      continue;
+    }
     const proposedHash = sha256(proposal.content);
     if (proposedHash === currentHash) {
       skipped.push({ path: documentPath, reason: 'Semantic provider produced no content change.' });
@@ -261,7 +271,7 @@ export function applyDocumentaryMaintenancePlan(options: {
     throw new Error(`[DocumentaryMaintenanceAgent] baseline hygiene is not clean (${preFindings.length} finding(s)); refusing mutation.`);
   }
 
-  const registryAbsolute = resolveFile(repoRoot, DOCUMENT_REGISTRY_PATH);
+  const registryAbsolute = assertRegularNonSymlinkFile(repoRoot, DOCUMENT_REGISTRY_PATH);
   const registryOriginal = fs.readFileSync(registryAbsolute, 'utf8');
   const registry = JSON.parse(registryOriginal) as DocumentRegistryEnvelope;
   const originals = new Map<string, string>();
@@ -275,6 +285,9 @@ export function applyDocumentaryMaintenancePlan(options: {
       }
       if (sha256(patch.proposedContent) !== patch.proposedSha256) {
         throw new Error(`[DocumentaryMaintenanceAgent] proposed content hash mismatch: ${patch.path}`);
+      }
+      if (Buffer.byteLength(patch.proposedContent, 'utf8') > MAX_DOCUMENT_BYTES) {
+        throw new Error(`[DocumentaryMaintenanceAgent] proposed content exceeds ${MAX_DOCUMENT_BYTES} bytes before apply: ${patch.path}`);
       }
       originals.set(patch.path, currentContent);
       fs.writeFileSync(resolveFile(repoRoot, patch.path), patch.proposedContent, 'utf8');
