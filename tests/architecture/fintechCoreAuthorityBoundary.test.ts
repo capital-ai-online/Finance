@@ -1,0 +1,44 @@
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
+
+const FOUNDATION_FILES = [
+  '../../src/platform/FinTechCore/CoreContracts.ts',
+  '../../src/platform/FinTechCore/CoreModuleRegistry.ts',
+  '../../src/platform/FinTechCore/CoreEngine.ts',
+  '../../src/platform/FinTechCore/CryptoModuleContracts.ts',
+  '../../src/platform/FinTechCore/Runtime/WorkflowStateMachine.ts',
+  '../../src/platform/FinTechCore/Modules/Crypto/CryptoCoreModule.ts',
+  '../../src/platform/FinTechCore/index.ts',
+] as const;
+
+const FORBIDDEN_DIRECT_AUTHORITIES = [
+  'verifiedCryptoTechnicalScoring',
+  'cryptoScoringService',
+  'ScoringExecutorAdapters',
+  'generateCryptoScores',
+  'calculateBaseScore',
+  'calculateDefiScore',
+  '@supabase/supabase-js',
+  'kraken-api',
+] as const;
+
+describe('FinTech Core FT-1 authority boundary', () => {
+  it('does not import productive domain scorers, database clients or exchange clients directly', () => {
+    for (const relativeFile of FOUNDATION_FILES) {
+      const source = readFileSync(new URL(relativeFile, import.meta.url), 'utf8');
+      for (const forbidden of FORBIDDEN_DIRECT_AUTHORITIES) {
+        expect(source, `${relativeFile} must not reference ${forbidden}`).not.toContain(forbidden);
+      }
+    }
+  });
+
+  it('keeps Crypto Module 01 non-live during the FT-1 foundation phase', () => {
+    const source = readFileSync(
+      new URL('../../src/platform/FinTechCore/Modules/Crypto/CryptoCoreModule.ts', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toContain("supportedOperatingModes: Object.freeze(['RESEARCH', 'PAPER'])");
+    expect(source).not.toContain("supportedOperatingModes: Object.freeze(['RESEARCH', 'PAPER', 'GUARDED_LIVE'");
+  });
+});
