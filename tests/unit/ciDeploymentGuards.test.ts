@@ -56,4 +56,15 @@ describe('CI deployment jobs only run on push to main', () => {
     expect(attestation).toContain('id-token: write');
     expect(attestation).not.toContain('contents: write');
   });
+
+  it('binds Quality evidence and the Docker image build to the exact checked-out source commit', () => {
+    const yaml = workflow();
+    const buildAndTest = jobBlock(yaml, 'build-and-test');
+
+    expect(yaml).toContain("RELEASE_SOURCE_COMMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.m10_head_sha || github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}");
+    expect(buildAndTest).toContain('test "$RELEASE_SOURCE_COMMIT" = "$(git rev-parse HEAD)"');
+    expect(buildAndTest).toContain('--build-arg RELEASE_SOURCE_COMMIT="$RELEASE_SOURCE_COMMIT"');
+    expect(buildAndTest).toContain('--tag "capital-ai-ci:$RELEASE_SOURCE_COMMIT"');
+    expect(buildAndTest).not.toContain('capital-ai-ci:${{ github.sha }}');
+  });
 });

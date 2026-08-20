@@ -7,6 +7,7 @@ import {
   type QualityExecutionPhase,
   type QualityExecutionRecord,
 } from '../../src/platform/Quality/Execution/QualityExecutionEvidence';
+import { resolveSourceCommit } from './sourceIdentity';
 
 const phase = process.argv[2] as QualityExecutionPhase | undefined;
 if (phase !== 'test' && phase !== 'build') {
@@ -30,9 +31,8 @@ if (phase === 'build' && releaseManifestScript !== expectedReleaseManifestScript
 }
 
 function fullGitSha(): string {
-  const result = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' });
-  const sha = result.stdout?.trim() ?? '';
-  if (result.status !== 0 || !/^[0-9a-f]{40}$/i.test(sha)) {
+  const sha = resolveSourceCommit(repoRoot)?.trim() ?? '';
+  if (!/^[0-9a-f]{40}$/i.test(sha)) {
     throw new Error('[QualityExecution] unable to resolve full Git HEAD SHA.');
   }
   return sha;
