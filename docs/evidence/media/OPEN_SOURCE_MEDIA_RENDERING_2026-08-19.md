@@ -1,11 +1,15 @@
 # Open-Source Media Rendering Evidence - 2026-08-19
 
-- **Status:** IMPLEMENTATION COMPLETE / PR VALIDATION PENDING
+- **Status:** VERIFIED / MERGED
 - **Owner:** CAPITAL-AI Owner
 - **Authority:** ADR-0094, SEO-GM-ROADMAP-0002 / WP-N3
-- **Branch:** `agent/pdf-media-open-source-rendering`
+- **Implementation-Branch:** `agent/pdf-media-open-source-rendering`
 - **Initial Main:** `59a2755de53297a934b062b380a313d68cd47492`
 - **Final Pre-PR Main:** `59a2755de53297a934b062b380a313d68cd47492`
+- **Final PR Head:** `c972ac8051c98f1b0c4ee25eb1d029bf15ead927`
+- **Final Pre-Merge Main:** `0b904c10e46723cb80a7ba12781c3847005c4715`
+- **Merge-Commit:** `71bce3d07133e2a7d408af179c2325e6d5114d5a`
+- **Governance-Sync:** 2026-08-20
 
 ## Anlass
 
@@ -23,7 +27,7 @@ Vor Umsetzung waren bereits vorhanden:
 - hash-gebundene Human-Freigabe;
 - Storyboard/Prompts für das Graham-Fair-Value-Content-Paket.
 
-Nicht vorhanden war der in WP-N3 noch offene Renderer.
+Nicht vorhanden war der in WP-N3 noch offene deterministische Bild-/Short-Renderer.
 
 ## OSS Make-or-Buy Review
 
@@ -86,16 +90,34 @@ Wichtig: Der lokale FFmpeg-Build enthält `--enable-gpl` und ist **kein** akzept
 - PDF Companion Developer-Video-Smoke: **PASS**, 7 Assets inkl. MP4;
 - Manifest enthält Source-PDF SHA, Asset-SHAs, Dimensionen, Dauer, FFmpeg-Profil und `publishReady=false`.
 
-Diese Developer-Smokes ersetzen keine spätere Repository-CI und keine FFmpeg-Lizenzfreigabe des produktiven Betriebsartefakts.
-
 ## Finaler Pre-PR Main-/Parallel-PR-Abgleich
 
 - `main`: `59a2755de53297a934b062b380a313d68cd47492`;
 - Merge-Base exakt current main; Branch `behind=0`;
 - effektiver Scope: 12 Dateien;
-- PR #439: 0 direkter Dateioverlap; README/`package.json` werden bewusst nicht geändert;
-- PR #442: 0 direkter Dateioverlap; Document Registry wird bewusst nicht geändert;
+- PR #439: 0 direkter Dateioverlap; README/`package.json` wurden bewusst nicht geändert;
+- PR #442: 0 direkter Dateioverlap; Document Registry wurde bewusst nicht geändert;
 - keine Supabase-/Stripe-/Render-/Workflow-/Runtime-Produktionsmutation.
+
+## Post-PR / Merge Evidence
+
+PR #446 wurde nach erneutem Main-Sync auf Exact Head `c972ac8051c98f1b0c4ee25eb1d029bf15ead927` validiert und durch den Repository Owner gemergt.
+
+- CI #1971: **PASS**;
+- Governance #1304: **PASS**;
+- Governance nach PR-Body-Sync #1306: **PASS**;
+- TypeScript/Lint: **PASS**;
+- Unit Tests: **PASS**;
+- Production Build: **PASS**;
+- Production CSP: **PASS**;
+- Production Config / Deployment Readiness / Predeploy: **PASS**;
+- finaler Pre-Merge Main-Race-Check: `behind=0`;
+- finaler Pre-Merge-main: `0b904c10e46723cb80a7ba12781c3847005c4715`;
+- Human-/Owner-Merge: 2026-08-19;
+- Merge-Commit: `71bce3d07133e2a7d408af179c2325e6d5114d5a`;
+- Post-Merge-Korrelation: PR-Head ist Bestandteil von `main`; zwischen PR-Head und dem Mergezustand besteht kein zusätzlicher Media-Dateidiff.
+
+Damit ist der damalige Status `PR VALIDATION PENDING` historisch erledigt und darf nicht mehr als aktueller Implementierungsstatus verwendet werden.
 
 ## Vorher / Nachher
 
@@ -113,9 +135,9 @@ Diese Developer-Smokes ersetzen keine spätere Repository-CI und keine FFmpeg-Li
 
 ## Residual Gaps
 
-- TTS/Voiceover bleibt separater WP-N3-Folgeschritt;
+- TTS/Voiceover bleibt separater Media-Creation-Folgeschritt;
 - produktiver FFmpeg-Build muss als LGPL-kompatibles Artefakt festgelegt/verifiziert werden;
 - Web-/UI-Wiring für „Render Asset“ ist nicht Teil dieses ersten isolierten Slices;
 - generative Hintergrundbilder sind optionaler Provider-Scope und dürfen brandkritischen Text nicht rendern;
 - formal verifizierte PDF/UA-Eigenschaften bleiben ausschließlich beim PDF-Renderer-/Validatorpfad;
-- Repository-CI/Governance wird erst nach PR-Erstellung ausgeführt und danach hier bzw. im PR dokumentiert.
+- Asset Registry/Storage, skalierbare Render-Worker und Auto-Publish bleiben separate, Owner-gated Folgearbeiten.
