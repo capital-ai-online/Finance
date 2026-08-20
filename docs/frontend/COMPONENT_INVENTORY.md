@@ -16,6 +16,20 @@ Verbindliche Abgrenzung:
 
 ---
 
+## Application Composition — BB-1
+
+| Verantwortung | Kanonischer Pfad | Legacy-/Compatibility-Pfad | Status |
+|---|---|---|---|
+| Application Composition Root | `src/app/App.tsx` | `src/App.tsx` | BB-1 implementiert; Root-Pfad ist dünne Compatibility-Fassade |
+| Session/Auth Composition | `src/app/auth/SessionComposition.tsx` | zuvor Bestandteil von `src/App.tsx` | BB-1 extrahiert; bestehende Security-Semantik erhalten |
+| Route/Presentation Composition | `src/app/routing/AppRoutes.tsx` | zuvor Bestandteil von `src/App.tsx` | BB-1 extrahiert; öffentliche Pfade und Landing/Dashboard-Auswahl erhalten |
+| Presentation Session Type | `src/app/types/UserSession.ts` | zuvor Interface in `src/App.tsx` | BB-1 extrahiert; Root re-exportiert Typ temporär für Legacy-Consumer |
+| App Shell | `src/app/AppShell.tsx` | N/A | kanonisch seit Foundation |
+
+BB-1 verschiebt keine fachliche Feature-Implementierung. `Dashboard.tsx`, Landing-/Legal-Komponenten sowie Auth-Gates bleiben bis zu ihren jeweiligen Wellen an den bisherigen physischen Pfaden und werden lediglich durch die neue Composition-Schicht konsumiert.
+
+---
+
 ## Kanonische Shared-Primitives
 
 | Komponente | Kanonischer Pfad | Legacy-/Compatibility-Pfad | Status |
@@ -37,7 +51,7 @@ Verbindliche Abgrenzung:
 
 | Komponente | Datei unter `src/components/` | Ziel-/Ownership-Slice |
 |---|---|---|
-| Dashboard | `Dashboard.tsx` | `src/app` / Dashboard-Composition, schrittweise zu zerlegen |
+| Dashboard | `Dashboard.tsx` | `src/app/dashboard` / Dashboard-Composition, in BB-2 zu zerlegen |
 | AssetUniverseDashboard | `AssetUniverseDashboard.tsx` | `src/features/screening/ui` |
 | UniverseBestWorst | `UniverseBestWorst.tsx` | `src/features/screening/ui` |
 | Screener | `Screener.tsx` | `src/features/screening/ui` |
@@ -112,6 +126,8 @@ Die physische Migration einer Komponente darf diese Contracts nicht verändern.
 | Checkout | `Checkout.tsx` | `src/features/billing/ui` |
 | GuestCliffhangerModal | `GuestCliffhangerModal.tsx` | `src/features/billing/ui` bzw. Public-Consumer nach Dependency-Audit |
 
+Die Auth-Gates selbst bleiben in BB-1 physisch unverändert; nur ihre globale Composition wurde aus dem historischen Root-App-Modul nach `src/app/auth/SessionComposition.tsx` verschoben.
+
 ---
 
 ## Compliance, Admin, Governance — derzeitige Legacy-Implementierungen
@@ -179,7 +195,8 @@ Die physische Migration einer Komponente darf diese Contracts nicht verändern.
 4. Dieses Inventory dokumentiert nach jeder Migrationswelle den realen physischen Pfad, Ziel-/Ownership-Slice und Compatibility-Status.
 5. Fachliche Runtime-/Data-/Scoring-Regeln werden nur referenziert und nicht hier erneut normiert.
 6. Ein Legacy-Eintrag darf erst entfernt werden, wenn keine produktive Implementierung bzw. kein erforderlicher Compatibility-Export mehr vorhanden ist.
+7. Application-Composition-Logik darf nach BB-1 nicht wieder in die Root-Compatibility-Fassade `src/App.tsx` zurückwandern.
 
 ---
 
-*Erstellt am 16.08.2026 im Rahmen der Frontend-Roadmap. Am 20.08.2026 auf die `app/features/shared`-Architektur und das Projection-not-Redefinition-Prinzip ausgerichtet.*
+*Erstellt am 16.08.2026 im Rahmen der Frontend-Roadmap. Am 20.08.2026 auf die `app/features/shared`-Architektur, das Projection-not-Redefinition-Prinzip und BB-1 Application Composition ausgerichtet.*
