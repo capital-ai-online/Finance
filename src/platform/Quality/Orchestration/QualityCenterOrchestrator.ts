@@ -14,16 +14,18 @@ import {
 import { Chapter12ValidatorRunner } from '../../Validators/Chapter12ValidatorRunner';
 import { MandatoryValidatorCatalog } from '../../Validators/MandatoryValidatorCatalog';
 import { CoverageCollector } from '../Coverage/CoverageCollector';
+import { readQualityExecutionEvidence, type QualityExecutionEvidenceSnapshot } from '../Execution/QualityExecutionEvidence';
 import { QualityGateRunner } from '../Gates/QualityGateRunner';
 import { QualityScoreCalculator } from '../Scoring/QualityScoreCalculator';
 import { TechnicalDebtRegister } from '../TechnicalDebt/TechnicalDebtRegister';
 
-export const QUALITY_CENTER_ORCHESTRATOR_VERSION = 'quality-center-orchestrator/1.3.0' as const;
+export const QUALITY_CENTER_ORCHESTRATOR_VERSION = 'quality-center-orchestrator/1.4.0' as const;
 
 export interface QualityCenterRunRequest extends RepositoryQualityObservationRequest {
   scoreMeasurements?: readonly QualityScoreMeasurement[];
   coverageSnapshot?: QualityCoverageSnapshot;
   previousOverallScore?: number | null;
+  executionEvidence?: QualityExecutionEvidenceSnapshot | null;
 }
 
 export interface QualityCenterOrchestratorDependencies {
@@ -98,11 +100,19 @@ export class QualityCenterOrchestrator {
         repoRoot,
         repositoryObservation.checkedAt,
       );
-      const gateReport = this.gateRunner.run(repositoryObservation);
+      const executionEvidence = request.executionEvidence !== undefined
+        ? request.executionEvidence
+        : repositoryObservation.sourceCommit
+          ? readQualityExecutionEvidence(repoRoot, repositoryObservation.sourceCommit)
+          : null;
+      const gateReport = this.gateRunner.run(repositoryObservation, {
+        chapter12Validation,
+        executionEvidence,
+      });
       const qualityScore = this.scoreCalculator.calculate(request.scoreMeasurements ?? []);
       const technicalDebt = this.technicalDebtRegister.snapshot();
 
-      const validationBlocking = repositoryObservation.blocking || chapter12Validation.blocking;
+      const validationBlocking = repositoryObservation.blocking || chapter12Validation.blocking || gateReport.blocking;
       publish(validationBlocking ? 'ValidationFailedEvent' : 'ValidationCompletedEvent', {
         checkedAt: repositoryObservation.checkedAt,
         overallStatus: repositoryObservation.overallStatus,
@@ -115,6 +125,8 @@ export class QualityCenterOrchestrator {
         chapter12Passed: chapter12Validation.passed,
         chapter12Failed: chapter12Validation.failed,
         chapter12NotAvailable: chapter12Validation.notAvailable,
+        gateStatus: gateReport.overallStatus,
+        executionEvidenceAvailable: Boolean(executionEvidence),
       });
 
       for (const gate of gateReport.gates) {
