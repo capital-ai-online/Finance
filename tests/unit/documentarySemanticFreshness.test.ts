@@ -47,4 +47,28 @@ describe('Documentary semantic freshness analyzer', () => {
     expect(report.findings.find((finding) => finding.documentId === 'DOC-RUN')?.candidate).toBe(true);
     expect(report.findings.find((finding) => finding.documentId === 'DOC-OLD')?.candidate).toBe(false);
   });
+
+  it('does not follow symlinked registered documents during freshness discovery', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'doc-freshness-symlink-'));
+    write(root, 'outside.md', '# Outside\nImplementation: `src/platform/Foo/service.ts`\n');
+    fs.mkdirSync(path.join(root, 'docs/architecture'), { recursive: true });
+    fs.symlinkSync('../../outside.md', path.join(root, 'docs/architecture/LINK.md'));
+    write(root, 'docs/governance/document-registry.json', registry([
+      { documentId: 'DOC-LINK', type: 'architecture', owner: 'CAPITAL-AI', authority: 'ESS-0010', version: '1.0.0', language: 'en', lifecycle: 'approved', path: 'docs/architecture/LINK.md' },
+    ]));
+
+    const report = analyzeSemanticFreshness({ repoRoot: root, correlationId: 'symlink-doc', sourceCommit: 'c'.repeat(40), sourceChanges: [{ path: 'src/platform/Foo/service.ts' }] });
+    const finding = report.findings[0];
+    expect(finding.contentSha256).toBeNull();
+    expect(finding.candidate).toBe(false);
+  });
+
+  it('rejects a symlinked canonical Document Registry', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'doc-registry-symlink-'));
+    write(root, 'registry-target.json', registry([]));
+    fs.mkdirSync(path.join(root, 'docs/governance'), { recursive: true });
+    fs.symlinkSync('../../registry-target.json', path.join(root, 'docs/governance/document-registry.json'));
+
+    expect(() => analyzeSemanticFreshness({ repoRoot: root, correlationId: 'symlink-registry', sourceCommit: 'd'.repeat(40) })).toThrow(/regular non-symlink file/);
+  });
 });
