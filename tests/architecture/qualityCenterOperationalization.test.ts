@@ -19,13 +19,15 @@ describe('Quality Center operationalization boundary', () => {
     expect(runner).toContain('if (exitCode !== 0) removeQualitySnapshots();');
   });
 
-  it('keeps the runtime API read-only, IAM-protected and snapshot-backed', () => {
+  it('keeps the runtime API read-only, IAM-protected, release-bound and snapshot-backed', () => {
     const route = read('server/qualityCenter.ts');
     const composition = read('server/routes/registerApplicationRoutes.ts');
 
     expect(route).toContain("qualityCenterRouter.get('/'");
     expect(route).toContain("checkAdminAccess(req, 'quality-center:read', DIAGNOSTIC_ZONE_ROLES)");
-    expect(route).toContain('readQualityCenterReport(process.cwd())');
+    expect(route).toContain('readPlatformVersionProjection(process.cwd())');
+    expect(route).toContain('readQualityCenterReport(process.cwd(), expectedSourceCommit)');
+    expect(route).toContain("code: 'quality_release_identity_not_available'");
     expect(route).toContain("res.setHeader('Cache-Control', 'no-store')");
     expect(route).toContain("code: 'quality_snapshot_not_available'");
     expect(route).not.toMatch(/qualityCenterRouter\.(post|put|patch|delete)\(/);
@@ -54,6 +56,8 @@ describe('Quality Center operationalization boundary', () => {
     expect(store).not.toContain("'quality-center-report/1.3.0'");
     expect(store).toContain('QUALITY_CENTER_REPORT_SCHEMA');
     expect(store).toContain('QUALITY_CENTER_CONTRACT_VERSION');
+    expect(store).toContain('expectedSourceCommit');
+    expect(store).toContain('parsed.repositoryObservation.sourceCommit.toLowerCase()');
     expect(dockerfile).toContain('COPY --from=builder --chown=root:root /app/dist ./dist');
     expect(dockerfile).toContain('chmod -R a-w /app/dist /app/server');
   });

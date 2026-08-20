@@ -38,7 +38,7 @@ describe('QualityCenterSnapshotStore', () => {
       '.quality/quality-center-report.json',
       'dist/quality/quality-center-report.json',
     ]);
-    const loaded = readQualityCenterReport(root);
+    const loaded = readQualityCenterReport(root, 'a'.repeat(40));
     expect(loaded?.report.schemaVersion).toBe('quality-center-report/1.3.0');
     expect(loaded?.report.repositoryObservation.sourceCommit).toBe('a'.repeat(40));
     expect(loaded?.sourcePath).toBe('dist/quality/quality-center-report.json');
@@ -49,12 +49,26 @@ describe('QualityCenterSnapshotStore', () => {
     expect(() => persistQualityCenterReport(root, report('not-a-commit'))).toThrow(/commit-unbound/);
   });
 
+  it('rejects a valid snapshot when its commit does not match the expected runtime release', () => {
+    const root = tempRoot();
+    persistQualityCenterReport(root, report('a'.repeat(40)));
+
+    expect(readQualityCenterReport(root, 'b'.repeat(40))).toBeNull();
+  });
+
+  it('rejects malformed expected runtime identities instead of weakening the commit check', () => {
+    const root = tempRoot();
+    persistQualityCenterReport(root, report());
+
+    expect(readQualityCenterReport(root, 'not-a-commit')).toBeNull();
+  });
+
   it('ignores malformed runtime snapshot and falls back to valid working evidence', () => {
     const root = tempRoot();
     persistQualityCenterReport(root, report());
     fs.writeFileSync(path.join(root, 'dist/quality/quality-center-report.json'), '{invalid', 'utf8');
 
-    const loaded = readQualityCenterReport(root);
+    const loaded = readQualityCenterReport(root, 'a'.repeat(40));
     expect(loaded?.sourcePath).toBe('.quality/quality-center-report.json');
   });
 });

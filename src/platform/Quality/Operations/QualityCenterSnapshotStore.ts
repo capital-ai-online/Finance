@@ -9,14 +9,17 @@ import {
 export const QUALITY_CENTER_SNAPSHOT_RELATIVE_PATH = 'dist/quality/quality-center-report.json' as const;
 export const QUALITY_CENTER_WORKING_SNAPSHOT_RELATIVE_PATH = '.quality/quality-center-report.json' as const;
 
+function isFullGitSha(value: unknown): value is string {
+  return typeof value === 'string' && /^[0-9a-f]{40}$/i.test(value);
+}
+
 function isValidReport(value: unknown): value is QualityCenterReport {
   if (!value || typeof value !== 'object') return false;
   const report = value as Partial<QualityCenterReport>;
   if (report.schemaVersion !== QUALITY_CENTER_REPORT_SCHEMA) return false;
   if (report.contractVersion !== QUALITY_CENTER_CONTRACT_VERSION) return false;
   if (typeof report.checkedAt !== 'string' || Number.isNaN(Date.parse(report.checkedAt))) return false;
-  const commit = report.repositoryObservation?.sourceCommit;
-  if (typeof commit !== 'string' || !/^[0-9a-f]{40}$/i.test(commit)) return false;
+  if (!isFullGitSha(report.repositoryObservation?.sourceCommit)) return false;
   return true;
 }
 
@@ -49,7 +52,12 @@ export interface QualityCenterSnapshotReadResult {
   sourcePath: string;
 }
 
-export function readQualityCenterReport(repoRoot: string): QualityCenterSnapshotReadResult | null {
+export function readQualityCenterReport(
+  repoRoot: string,
+  expectedSourceCommit?: string | null,
+): QualityCenterSnapshotReadResult | null {
+  if (expectedSourceCommit != null && !isFullGitSha(expectedSourceCommit)) return null;
+
   const candidates = [
     path.join(repoRoot, QUALITY_CENTER_SNAPSHOT_RELATIVE_PATH),
     path.join(repoRoot, QUALITY_CENTER_WORKING_SNAPSHOT_RELATIVE_PATH),
@@ -60,6 +68,9 @@ export function readQualityCenterReport(repoRoot: string): QualityCenterSnapshot
     try {
       const parsed = JSON.parse(fs.readFileSync(candidate, 'utf8')) as unknown;
       if (!isValidReport(parsed)) continue;
+      if (expectedSourceCommit && parsed.repositoryObservation.sourceCommit.toLowerCase() !== expectedSourceCommit.toLowerCase()) {
+        continue;
+      }
       return Object.freeze({
         report: parsed,
         sourcePath: path.relative(repoRoot, candidate).replace(/\\/g, '/'),
