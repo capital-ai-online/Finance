@@ -32,12 +32,14 @@ authority:
     - Technical Debt Register
     - Testabdeckung
     - QM Dokumentationskonsistenz
+    - Quality Event Publication
   collaborates:
     - Documentary Engine
     - Supervisor
     - Platform Director
     - Governance Control Plane
     - Security & Compliance
+    - Enterprise Event Mesh
     - Release Center
   cannot_modify:
     - Enterprise Specifications
@@ -60,11 +62,13 @@ crossReference:
     - ESS-0010
     - ESS-0011
     - ESS-0012
+    - ESS-0013
     - ESS-0017
   relatedAdr:
     - ADR-0010
     - ADR-0012
     - ADR-0016
+    - ADR-0018
     - ADR-0030
     - ADR-0096
   relatedComponents:
@@ -72,6 +76,7 @@ crossReference:
     - src/platform/Validators
     - src/platform/Governance
     - src/platform/Compliance
+    - src/platform/EventMesh
     - src/platform/Documentary/Governance
     - src/platform/Vocabulary
     - src/platform/Release
@@ -81,6 +86,7 @@ crossReference:
     - .ai/skills/ESS-0001-Contracts.md
     - .ai/skills/ESS-0006-Security-Compliance.md
     - .ai/skills/ESS-0012-Documentation-Governance.md
+    - .ai/skills/ESS-0013-Enterprise-Event-Mesh.md
     - .ai/skills/ESS-0017-Vocabulary-Governance.md
 
 created: 2026-07-31
@@ -109,6 +115,7 @@ Ein Quality Gate ohne ausfuehrbare oder nachvollziehbar als fehlend ausgewiesene
 | ESS-0001-CONTRACTS Chapter 11 / ESS-0006 | Security-/Compliance-Regeln und Evidence-Semantik |
 | ESS-0012-CONTRACTS | Documentation-Governance-Regelwerk |
 | ESS-0011-CONTRACTS | Traceability-/Coverage-Achsen |
+| ESS-0013 | EventMesh-Katalog, Routing und Event-Vertrag |
 | ESS-0017 | Vocabulary-/Terminologie-Regeln |
 | Governance Control Plane | neutrale, wiederverwendbare Authority-/Evidence-Vertraege |
 | **ESS-0005** | **Ausfuehrung, Aggregation und Messung im Quality Center** |
@@ -118,6 +125,8 @@ Ein Quality Gate ohne ausfuehrbare oder nachvollziehbar als fehlend ausgewiesene
 Das Quality Center konsumiert den neutralen Repository-Quality-Evidence-Vertrag aus `src/platform/Governance` und die zentrale Registry aus `src/platform/Validators`.
 
 Fachliche Cross-Domain-Validatoren werden ueber eine Composition-Schicht injiziert. Dadurch entstehen keine direkten Quality-Abhaengigkeiten, die Governance-, Compliance-, Release-, Documentary- oder Vocabulary-Authority duplizieren.
+
+Die EventMesh-Anbindung erfolgt ebenfalls ueber eine Composition-Schicht und den bereits bestehenden EventBus. Es wird keine zweite Event-Infrastruktur eingefuehrt.
 
 Das Quality Center besitzt insbesondere keine Merge-, Release-, Deployment-, IAM- oder Produktionsmutations-Authority.
 
@@ -156,9 +165,9 @@ Verantwortung:
 
 `src/platform/Quality/Contracts/QualityCenterContract.ts`
 
-Der Vertrag `quality-center-contract/1.0.0` verbindet Repository-Evidence, Gate-Ergebnisse, Quality-Messungen und Technical-Debt-Evidence zu einem einheitlichen Quality-Center-Report.
+Der Vertrag `quality-center-contract/1.1.0` verbindet Repository-Evidence, Gate-Ergebnisse, Quality-Messungen, Coverage, Event-Publikationsstatus und Technical-Debt-Evidence zu einem einheitlichen Quality-Center-Report.
 
-Dieser Vertrag ist eine Orchestrierungs- und Evidence-Schnittstelle. Er ersetzt keine bestehende Governance- oder Compliance-Authority.
+Dieser Vertrag ist eine Orchestrierungs- und Evidence-Schnittstelle. Er ersetzt keine bestehende Governance-, Compliance- oder EventMesh-Authority.
 
 ## QualityGateRunner
 
@@ -199,51 +208,18 @@ Jede Messung besitzt einen Wertebereich 0..100 sowie eine Source und Authority-R
 
 Die Implementierung erzeugt keinen Gesamtwert aus einer unvollstaendigen Messmenge. Ein vollstaendiger Gesamtwert wird deterministisch aus den sieben vorhandenen Messachsen berechnet; die Schwellwerte verbleiben unveraendert in Chapter 12.
 
-## TechnicalDebtRegister
+Aktuell reale Messquellen:
 
-`src/platform/Quality/TechnicalDebt/TechnicalDebtRegister.ts`
+- Test Score aus der gemessenen Belegung der sieben Pflicht-Testbereiche;
+- Security Score aus der bereits bestehenden SecurityComplianceAuditor-Aggregation der `SECURITY`-Scanner.
 
-Jede technische Schuld besitzt mindestens:
-
-- ID
-- betroffene Komponente
-- Ursache
-- Auswirkung
-- Aufwand
-- Prioritaet
-- Zielversion
-- Erstellungszeitpunkt
-- Source-Referenzen
-- Status
-
-Ein Eintrag wird niemals stillschweigend ueberschrieben, geloescht oder geschlossen. `resolve()` verlangt Resolution-Evidence und einen nachvollziehbaren Abschlusszeitpunkt.
-
-## DocumentationConsistencyValidator
-
-`src/platform/Quality/Validators/DocumentationConsistencyValidator.ts`
-
-Der Validator ergaenzt den bestehenden Documentation-Hygiene-Validator ausschließlich um QM-spezifische Konsistenzpruefungen:
-
-- Quality-/Validator-Manifeste;
-- ESS-0005-/README-/Registry-Versionskonsistenz;
-- deklarierte Quality-Vertraege;
-- Existenz deklarierter Quality-Tests;
-- CLI-Vertrag;
-- veraltete No-Implementation-Aussagen.
-
-Er dupliziert keine der 57 Documentation-Governance-Regeln aus ESS-0012-CONTRACTS.
-
-## QualityCenterOrchestrator
-
-`src/platform/Quality/Orchestration/QualityCenterOrchestrator.ts`
-
-Der Orchestrator erzeugt aus Coordinator, GateRunner, ScoreCalculator und TechnicalDebtRegister einen zusammenhaengenden, read-only Quality-Center-Report.
-
-Der Report fuehrt Governance- und Compliance-Referenzen explizit mit und traegt einen non-authorizing Contract-Hinweis.
+Documentation, Architecture, Knowledge, Metadata und Twin bleiben ohne autoritative numerische Messquelle explizit offen.
 
 ## CoverageCollector
 
-Der CoverageCollector bleibt Teil des ESS-0005-Zielbilds. Ein produktiver Collector darf erst als implementiert gelten, wenn reale Messdaten aus den vorgesehenen Testbereichen vorliegen:
+`src/platform/Quality/Coverage/CoverageCollector.ts`
+
+Der CoverageCollector misst reale Testdateien in:
 
 ```text
 tests/unit
@@ -255,7 +231,31 @@ tests/performance
 tests/e2e
 ```
 
-Verzeichnisexistenz allein ist keine Coverage-Evidence.
+Nur ausfuehrbare `*.test.*`-/`*.spec.*`-Dateien gelten als Testbereich-Evidence. Verzeichnisexistenz und `.gitkeep` gelten nicht als Coverage.
+
+Optional liest der Collector reale Code-Coverage aus `coverage/coverage-summary.json` oder `.quality/coverage-summary.json`. Ohne ein solches Artefakt bleiben Statement-, Branch-, Function- und Line-Coverage `NOT_AVAILABLE`.
+
+## TechnicalDebtRegister
+
+`src/platform/Quality/TechnicalDebt/TechnicalDebtRegister.ts`
+
+Jede technische Schuld besitzt mindestens ID, betroffene Komponente, Ursache, Auswirkung, Aufwand, Prioritaet, Zielversion, Erstellungszeitpunkt, Source-Referenzen und Status.
+
+Ein Eintrag wird niemals stillschweigend ueberschrieben, geloescht oder geschlossen. `resolve()` verlangt Resolution-Evidence und einen nachvollziehbaren Abschlusszeitpunkt.
+
+## DocumentationConsistencyValidator
+
+`src/platform/Quality/Validators/DocumentationConsistencyValidator.ts`
+
+ergaenzt den bestehenden Documentation-Hygiene-Validator ausschliesslich um QM-spezifische Konsistenzpruefungen. Er dupliziert keine der 57 Documentation-Governance-Regeln aus ESS-0012-CONTRACTS.
+
+## QualityCenterOrchestrator
+
+`src/platform/Quality/Orchestration/QualityCenterOrchestrator.ts`
+
+erzeugt aus Coordinator, GateRunner, ScoreCalculator, CoverageCollector und TechnicalDebtRegister einen zusammenhaengenden, read-only Quality-Center-Report.
+
+Event-Publikationsfehler werden als Evidence ausgewiesen und verleihen dem Quality Center keine zusaetzliche Authority.
 
 ---
 
@@ -298,6 +298,12 @@ threshold(lifecycle)
 
 Der Core implementiert die Messwertberechnung. Lifecycle-Schwellwerte werden nicht im Quality Center neu definiert oder veraendert.
 
+## ICoverageCollector
+
+```text
+collect(repoRoot, checkedAt) -> QualityCoverageSnapshot
+```
+
 ## ITechnicalDebtRegister
 
 ```text
@@ -315,7 +321,7 @@ run(scope) -> QualityCenterReport
 
 ---
 
-# Chapter 4 — Governance- und Compliance-Orchestrierung
+# Chapter 4 — Governance-, Compliance- und EventMesh-Orchestrierung
 
 ## Governance
 
@@ -333,6 +339,22 @@ Mapping fuer die Quality-Orchestrierung:
 
 Die Original-Severity bleibt als `sourceSeverity` erhalten. Das Mapping veraendert keine Compliance-Regel und keine ISO-Zuordnung.
 
+Der Security Score verwendet dieselbe gerundete arithmetische Mittelwertbildung der `SECURITY`-Scanner wie `src/platform/Compliance/store.ts`.
+
+## EventMesh
+
+`scripts/automation/qualityEventMeshSink.ts` publiziert ueber den bestehenden `eventMeshBus`. Die Quality-Events sind im zentralen `STANDARD_EVENT_CATALOG` registriert.
+
+Der Quality-Center-CLI publiziert real:
+
+- `ValidationStartedEvent`;
+- `ValidationCompletedEvent` / `ValidationFailedEvent`;
+- `QualityGatePassedEvent` / `QualityGateFailedEvent`;
+- `QualityScoreChangedEvent`, wenn ein vorheriger vollstaendiger Score vorliegt und sich aendert;
+- `CoverageCalculatedEvent`.
+
+`TechnicalDebtDetectedEvent` und `TechnicalDebtResolvedEvent` sind katalogisiert, werden aber erst dann als produktiv erzeugt bewertet, wenn `TechnicalDebtRegister.record()` und `resolve()` selbst an einen Event-Sink gekoppelt sind.
+
 ## Supervisor
 
 Das Quality Center liefert Evidence, Gate-Ergebnisse, Messungen und Debt-Status. Eine technische `blocking`-Kennzeichnung ist ein Evidence-Zustand und keine eigenstaendige Human-/Supervisor-Freigabeentscheidung.
@@ -343,21 +365,20 @@ Die Plattformversions-Authority bleibt unter ADR-0096 `package.json#version` ueb
 
 ---
 
-# Chapter 5 — Events
+# Chapter 5 — Testarchitektur
 
-Der in ESS-0005 definierte Zielkatalog bleibt:
+Die vorgesehenen Testbereiche sind codebasiert belegt. Quality-spezifische Pruefungen existieren mindestens in:
 
-- ValidationStartedEvent
-- ValidationCompletedEvent
-- ValidationFailedEvent
-- QualityGatePassedEvent
-- QualityGateFailedEvent
-- QualityScoreChangedEvent
-- TechnicalDebtDetectedEvent
-- TechnicalDebtResolvedEvent
-- CoverageCalculatedEvent
+- `tests/unit/coverageCollector.test.ts`;
+- `tests/contract/qualityCenterContract.test.ts`;
+- `tests/architecture/qualityCenterBoundary.test.ts`;
+- `tests/security/qualityCenterAuthorityBoundary.test.ts`;
+- `tests/performance/qualityCenterDeterminism.test.ts`;
+- `tests/e2e/qualityCenterOrchestration.test.ts`.
 
-Der aktuelle Quality-Center-Core erzeugt **keine synthetischen EventMesh-Events**. Events duerfen erst nach realer EventMesh-Integration als implementiert deklariert werden.
+`tests/integration` war bereits mit realen Integrationstests belegt.
+
+Testdatei-Coverage ist kein Ersatz fuer einen bestandenen Testlauf. Der Test-Gate-Status bleibt daher ohne Execution-Evidence `NOT_AVAILABLE`.
 
 ---
 
@@ -369,22 +390,25 @@ Der aktuelle Quality-Center-Core erzeugt **keine synthetischen EventMesh-Events*
 - zentrale ValidatorRegistry;
 - RepositoryQualityCoordinator;
 - Composition-Adapter fuer Platform Version, Documentation Hygiene, QM Documentation Consistency, Repository Conventions, Vocabulary und Compliance;
-- QualityCenterContract;
+- QualityCenterContract `1.1.0`;
 - QualityGateRunner fuer alle acht Gate-IDs mit Evidence-Coverage-Semantik;
 - QualityScoreCalculator;
+- CoverageCollector mit realer Pflicht-Testbereich-Messung und optionaler Code-Coverage-Ingestion;
+- reale Test- und Security-Score-Provider;
 - TechnicalDebtRegister;
 - QualityCenterOrchestrator;
 - QM-Dokumentationskonsistenz-Validator;
+- EventMesh-Publikation fuer Quality-Lifecycle-/Gate-/Coverage-Ereignisse;
 - CLI `npm run repository:quality:check`;
-- gezielte Unit-Tests fuer Registry, Coordinator, Adapter, Gates, Scoring, Debt, Dokumentationskonsistenz und Orchestrator.
+- Unit-, Contract-, Architecture-, Security-, Performance-, Integration- und E2E-Testbereiche mit realen Testdateien.
 
 ## Noch nicht als vollstaendig implementiert zu bewerten
 
 - komplette Abdeckung aller Pflichtvalidatoren aus Chapter 12;
-- vollstaendige Evidence-Abdeckung aller acht Gates;
-- produktiver CoverageCollector mit realen Coverage-Messungen;
-- reale Measurement-Provider fuer alle sieben Quality-Score-Achsen;
-- EventMesh-Integration der Quality Events.
+- vollstaendige Execution-Evidence aller acht Gates, insbesondere Contract/Test/Build;
+- reale Measurement-Provider fuer Documentation, Architecture, Knowledge, Metadata und Twin;
+- Statement-/Branch-/Function-/Line-Coverage ohne erzeugtes Coverage-Artefakt;
+- Technical-Debt-Events direkt aus Debt-Mutationsoperationen.
 
 Diese offenen Punkte werden transparent als fehlende Evidence behandelt und niemals als PASS oder Messwert simuliert.
 
@@ -404,7 +428,7 @@ Keine stille Schliessung technischer Schulden.
 
 Keine Aenderung von Quality-Schwellwerten durch das Quality Center.
 
-Keine Duplikation von Governance-, Compliance-, Security-, Release-, Vocabulary- oder Documentation-Regeln.
+Keine Duplikation von Governance-, Compliance-, Security-, Release-, EventMesh-, Vocabulary- oder Documentation-Regeln.
 
 Keine Merge-, Release-, Deployment- oder Produktionsautorisierung durch Quality Evidence.
 
@@ -415,12 +439,12 @@ Keine Merge-, Release-, Deployment- oder Produktionsautorisierung durch Quality 
 Das vollstaendige ESS-0005-Zielbild ist erreicht, wenn:
 
 - saemtliche Pflichtvalidatoren aus Chapter 12 registriert und ausfuehrbar sind;
-- saemtliche acht Quality Gates vollstaendige Evidence besitzen;
+- saemtliche acht Quality Gates vollstaendige Execution-Evidence besitzen;
 - saemtliche sieben Quality-Metriken aus realen Messquellen deterministisch berechnet werden;
 - die vorgesehenen Testbereiche mit realer Coverage-Evidence belegt sind;
 - technische Schulden vollstaendig erfasst und evidenzbasiert geschlossen werden;
 - QM-Dokumentation und Implementierungsmetadaten driftfrei bleiben;
-- reale Quality Events ueber EventMesh integriert sind.
+- alle vorgesehenen Quality Events real ueber EventMesh erzeugt werden.
 
 ---
 
@@ -440,4 +464,14 @@ ESS-0005 bleibt die verbindliche Komponentenspezifikation des Quality Centers. D
 | Version | Status | Beschreibung |
 |---|---|---|
 | 1.0.0 | Initial Release | Erste Komponentenspezifikation des Quality Center |
-| 1.1.0 | Implementation sync | ADR-0096-/Repository-Quality-Abgleich; Quality-Center-Core dokumentiert, keine neue Rule-/Threshold-Authority |
+| 1.1.0 | Implementation sync | ADR-0096-/P0-P2-Abgleich und codebasierte Quality-Center-Core-Orchestrierung mit Coverage, Scoring-Providern und EventMesh-Integration |
+
+---
+
+# End of Document
+
+ESS-0005
+
+CAPITAL-AI Quality Center
+
+Version 1.1.0
