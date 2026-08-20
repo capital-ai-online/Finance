@@ -8,6 +8,7 @@ import {
   git,
   listAddedClaimFiles,
   readJsonFile,
+  renderProductionBaselineBlock,
   PR_TEMPLATE_VERSION,
 } from './lib.mjs';
 
@@ -16,31 +17,46 @@ const headRef = process.env.PR_HEAD_REF || 'HEAD';
 const baselinePath = process.env.PR_BASELINE_OUTPUT || 'artifacts/pr/production-baseline.json';
 const templatePath = process.env.PR_TEMPLATE_PATH || '.github/pull_request_template.md';
 const outputPath = process.env.PR_BODY_OUTPUT || 'artifacts/pr/pull-request-body.md';
+const allowClaimless = process.env.PR_ALLOW_CLAIMLESS === 'true';
 
 if (!fs.existsSync(templatePath)) fail(`PR-Vorlage nicht gefunden: ${templatePath}`);
 if (!fs.existsSync(baselinePath)) fail(`Produktions-Baseline nicht gefunden: ${baselinePath}`);
 
 const claims = listAddedClaimFiles(baseRef, headRef);
-if (claims.length !== 1) fail(`Für die PR-Erzeugung ist genau ein neuer Work-Claim erforderlich; gefunden: ${claims.length}.`);
+if (claims.length > 1) {
+  fail(`Für die PR-Erzeugung ist höchstens ein neuer Work-Claim zulässig; gefunden: ${claims.length}.`);
+}
+if (claims.length === 0 && !allowClaimless) {
+  fail('Für den Agenten-PR-Pfad ist genau ein neuer Work-Claim erforderlich. Claimlose Human/API/Connector-Pfade müssen PR_ALLOW_CLAIMLESS=true explizit setzen.');
+}
 
-const claimPath = claims[0];
+let claimPath = 'N/A (kein neuer Work-Claim im Diff)';
 let claim;
-if (headRef === 'HEAD') {
-  claim = readJsonFile(claimPath);
+if (claims.length === 1) {
+  claimPath = claims[0];
+  claim = headRef === 'HEAD'
+    ? readJsonFile(claimPath)
+    : JSON.parse(git(['show', `${headRef}:${claimPath}`]));
 } else {
-  claim = JSON.parse(git(['show', `${headRef}:${claimPath}`]));
+  claim = {
+    claimId: 'N/A (kein neuer Work-Claim im Diff)',
+    workItemDE: process.env.PR_WORK_ITEM_DE || process.env.PR_TITLE || 'Autorisierter Human/API/Connector-Änderungsantrag',
+    agent: {
+      provider: process.env.PR_AGENT_PROVIDER || 'N/A (Human/API/Connector-Pfad)',
+      model: process.env.PR_AGENT_MODEL || 'N/A',
+      executionSurface: process.env.PR_AGENT_SURFACE || 'GitHub API/UI/Connector',
+    },
+  };
 }
 
 const baseline = readJsonFile(baselinePath);
+const productionBaselineBlock = renderProductionBaselineBlock(baseline);
 const template = fs.readFileSync(templatePath, 'utf8');
 const headBranch = process.env.PR_HEAD_BRANCH || (() => {
   const value = git(['rev-parse', '--abbrev-ref', headRef]);
   return value === 'HEAD' ? process.env.GITHUB_REF_NAME || 'detached-head' : value;
 })();
 
-// Sichtbare Pull-Request-Inhalte sind repositoryweit deutsch. Ein Agent kann optional
-// workItemDE/titleDE liefern. Fehlt eine deutsche Fassung, wird kein englischer Work-Item-Text
-// in die sichtbare PR-Oberfläche übernommen; die technische Detailquelle bleibt der Work-Claim.
 const germanWorkItem = String(
   claim.workItemDE
   || claim.workItemDe
@@ -56,14 +72,7 @@ const replacements = {
   AGENT_PROVIDER: claim.agent?.provider || 'unbekannt',
   AGENT_MODEL: claim.agent?.model || 'unbekannt',
   AGENT_SURFACE: claim.agent?.executionSurface || 'unbekannt',
-  PRODUCTION_VERSION: baseline.production?.version || 'nicht-verfügbar',
-  PRODUCTION_SHA: baseline.production?.commitSha || 'nicht-verfügbar',
-  PRODUCTION_BRANCH: baseline.production?.branch || 'nicht-verfügbar',
-  MAIN_SHA: baseline.main?.sha || 'unbekannt',
-  HEAD_SHA: baseline.head?.sha || 'unbekannt',
-  PROD_TO_MAIN_COMMITS: baseline.drift?.productionToMainCommits ?? 'unbekannt',
-  MAIN_TO_HEAD_COMMITS: baseline.drift?.mainToHeadCommits ?? 'unbekannt',
-  BASELINE_GENERATED_AT: baseline.generatedAt || new Date().toISOString(),
+  PRODUCTION_BASELINE_BLOCK: productionBaselineBlock,
 };
 
 let body = template;
@@ -73,12 +82,18 @@ for (const [key, value] of Object.entries(replacements)) {
 
 const unresolved = [...body.matchAll(/\{\{([A-Z0-9_]+)\}\}/g)].map((match) => match[1]);
 if (unresolved.length > 0) {
-  fail(`PR-Vorlage enthält noch nicht aufgelöste Platzhalter: ${[...new Set(unresolved)].join(', ')}`);
+  fail(`PR-Vorlage enthält noch nicht aufgelöste Vorlagenplatzhalter: ${[...new Set(unresolved)].join(', ')}`);
 }
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, body, 'utf8');
 
 const title = `Agenten-Änderung: ${germanWorkItem}`.slice(0, 240);
-appendGithubOutput({ pr_body_output: outputPath, pr_title: title, claim_id: claim.claimId, claim_file: claimPath });
-console.log(`[PR-VORLAGE] ${outputPath} aus deutscher Vorlage v${PR_TEMPLATE_VERSION} für ${claim.claimId} erzeugt.`);
+appendGithubOutput({
+  pr_body_output: outputPath,
+  pr_title: title,
+  claim_id: claim.claimId,
+  claim_file: claimPath,
+  baseline_id: baseline.baselineId,
+});
+console.log(`[PR-VORLAGE] ${outputPath} aus deutscher Vorlage v${PR_TEMPLATE_VERSION} mit atomarer Baseline ${baseline.baselineId} erzeugt.`);

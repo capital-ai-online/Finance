@@ -66,6 +66,7 @@ jobs:
         id: baseline
         working-directory: candidate
         env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
           PR_BASE_REF: origin/main
           PR_HEAD_REF: HEAD
           PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
@@ -81,7 +82,7 @@ jobs:
           PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
         run: node ../policy/scripts/pr/validateWorkClaim.mjs
 
-      - name: Kanonischen deutschen PR-Text erzeugen
+      - name: Kanonischen deutschen PR-Text aus trusted-main Vorlage erzeugen
         id: render
         working-directory: candidate
         env:
@@ -89,6 +90,7 @@ jobs:
           PR_HEAD_REF: HEAD
           PR_HEAD_BRANCH: ${{ inputs.head_branch }}
           PR_BASELINE_OUTPUT: artifacts/pr/production-baseline.json
+          PR_TEMPLATE_PATH: ../policy/.github/pull_request_template.md
           PR_BODY_OUTPUT: artifacts/pr/pull-request-body.md
         run: node ../policy/scripts/pr/renderPullRequestBody.mjs
 
