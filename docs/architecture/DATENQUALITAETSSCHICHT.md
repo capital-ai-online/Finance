@@ -31,11 +31,11 @@ Commit), macht es zu einer benannten, verbindlichen Konvention, und dokumentiert
 konkret geschlossenen Datenpunkt-Lücke. **Versionierung von Korrekturen** ist bewusst NICHT
 Bestandteil dieses Dokuments — siehe „Nicht Bestandteil" unten.
 
-> **Authoritative amendment 2026-08-20:** Abschnitt 6 / ADR-0097 präzisiert die heutige
-> produktive Trennung zwischen metadata-only Asset-Katalog, verifizierter Display-Evidence und
-> kanonischem Scoring. Historische `fallback`-/`simulated`-Felder in den Abschnitten 1–5 sind
-> Compatibility-/Entwicklungshistorie und dürfen nicht als aktuelle verifizierte UI-Evidence
-> interpretiert werden.
+> **Current-state alignment 2026-08-20:** Abschnitt 6 richtet die heutige Datenqualitätsprojektion
+> auf ADR-0032 und `SC-MD-SPT-0001` v1.1.0 aus. Die zugehörige Implementation-/Consumer-
+> Revalidation liegt in `docs/adr/evidence/ADR-0032-REVALIDATION-2026-08-20-VERIFIED-DISPLAY.md`.
+> Historische `fallback`-/`simulated`-Felder in den Abschnitten 1–5 sind Compatibility-/
+> Entwicklungshistorie und dürfen nicht als aktuelle verifizierte UI-Evidence interpretiert werden.
 
 ---
 
@@ -80,7 +80,7 @@ einem Platzhalterwert gefüllt**.
 
 Jeder Aufruf liefert zusätzlich `usedFactors`/`missingFactors` zurück — die Lücke ist damit nicht
 nur behandelt, sondern auch sichtbar. Für aktuelle produktive Modellwahl/Scoring bleibt
-ADR-0087 / SC-2 C3 maßgeblich; ADR-0097 verändert diese Authority nicht.
+ADR-0087 / SC-2 C3 maßgeblich. Die ADR-0032-Revalidation verändert diese Authority nicht.
 
 ## 3. Geschlossene Lücke: das `pattern`-Feld
 
@@ -101,11 +101,11 @@ Diese Auflistung wird zur Traceability erhalten; spätere Korrekturen sind marki
   deterministische Schlüsselwort-Heuristik ohne Kennzeichnung.~~ **Behoben 2026-08-15** durch
   `sentimentBasis: 'heuristic'`.
 - ~~**H1-Fundamentaldaten:** Rohwerte ohne durchgereichte Provenance-Zeitstempel.~~ **Überholt / geschlossen.**
-  `server/stockFundamentals.ts` führt `FinancialFieldProvenance[]`; ADR-0097 nutzt diese
-  Provenance für die direkte verifizierte Display-Hydration.
+  `server/stockFundamentals.ts` führt `FinancialFieldProvenance[]`; der ADR-0032-
+  Revalidation-Pfad nutzt diese Provenance für die direkte verifizierte Display-Hydration.
 - **`CryptoEnterpriseEvaluator.tsx`:** historischer Befund zu hartkodierten Fallback-Werten.
   Falls ein entsprechender Legacy-Pfad noch existiert, bleibt er ein separater Remediation-Scope;
-  ADR-0097 autorisiert keine solchen Fallbacks.
+  ADR-0032 und SC-MD-SPT-0001 autorisieren keine solchen Fallbacks.
 
 ## 5. Nachtrag 2026-08-15 — P2-1 Bestandsaufnahme deckt zwei veraltete Aussagen auf
 
@@ -121,9 +121,10 @@ wurden dadurch als veraltet identifiziert:
   exportiert `FinancialFieldProvenance[]` je Fundamentaldaten-Feld inklusive
   `retrievedAt`/`observedAt`.
 
-## 6. Authoritative Amendment 2026-08-20 — ADR-0097 Verified Asset Display
+## 6. Current-State Alignment 2026-08-20 — ADR-0032 Revalidation / SC-MD-SPT
 
-ADR-0097 schließt die Vertragslücke zwischen Katalog und sichtbaren Finanzwerten.
+ADR-0032 trennt bereits Katalog und verifizierte Market Evidence. Die Revalidation vom 2026-08-20
+schließt die Consumer-/Darstellungslücke, ohne eine zweite Architekturentscheidung einzuführen.
 
 ### 6.1 Drei getrennte Ebenen
 
@@ -139,13 +140,15 @@ UI / Research Consumer
 Canonical Scoring bleibt separat unter ADR-0087 / ScoringDispatcher.
 ```
 
-- `GET /api/registry/assets` ist **Katalog-/Metadata-Authority** und darf ungeprüfte Bootstrap-
+- `GET /api/registry/assets` ist **Katalog-/Metadata-Quelle** und darf ungeprüfte Bootstrap-
   Zahlen nicht als verifizierte Marktwerte freigeben.
 - `GET /api/registry/assets/:symbol/verified-display` liefert den read-only Contract
   `verified-asset-display/1.0.0` mit Wert, Provider, Evidence IDs, Zeitstempeln und Status.
 - Fehlende Daten bleiben `PARTIAL` oder `SOURCE_UNAVAILABLE`; fachlich unpassende Metriken werden
   `NOT_APPLICABLE` statt mit Ersatzwerten gefüllt.
 - Der Display-Contract ist `executionPriceEligible=false`.
+- Für Consumer mit eigenem Feature-/Quota-Contract liegt das Entitlement-Gate vor kostenrelevantem
+  Provider-I/O; Buffett folgt ADR-0034.
 
 ### 6.2 Fundamentals
 
@@ -158,7 +161,8 @@ Quelle für vorhandene Aktien-Fundamental-Felder genutzt werden. Feld-Provenance
 Der Buffett/Graham-Consumer ist **stock-only**. Seine Such-/Auswahlliste enthält ausschließlich
 Aktien. Ein global ausgewähltes Crypto-/Forex-/Commodity-/Index-/Bond-Symbol wird nicht in die
 Buffett-Auswahl übernommen. Synthetic EPS-/Score-/„fehlende Kennzahl = PASS“-Fallbacks sind nicht
-zulässig.
+zulässig. Die kanonische Sub-Chain in SC-MD-SPT-0001 verlangt zusätzlich die serverseitige
+ADR-0034-Autorisierung vor der Verified-Display-Hydration.
 
 ### 6.4 Background Provider Refresh
 
@@ -173,6 +177,9 @@ Cache-Freshness und Provider-Polling sind getrennte Verträge:
   enrichiert/persistiert; angehängte Registry-Fallbackzeilen lösen kein zusätzliches
   Evidence-/History-/Scoring-Fan-out aus.
 
+Diese Regeln sind Runtime-Implementierung unter ADR-0041 / ESS-0016 und ADR-0083 / ADR-0075;
+SC-MD-SPT-0001 ordnet sie in die homogene Wertschöpfungskette ein.
+
 Damit supersediert Abschnitt 6 jede historische Lesart der Abschnitte 1–5, nach der
 `fallback`/`simulated` als verifizierte öffentliche Finanzdaten oder 60 Sekunden als zwingende
 Provider-Polling-Cadence verstanden werden könnten.
@@ -181,12 +188,19 @@ Provider-Polling-Cadence verstanden werden könnten.
 
 - **Versionierung von Korrekturen.** Eine echte Korrektur-Historie existiert nicht als eigener
   revisionsfähiger Contract. Das bleibt ein eigenständiges Vorhaben.
-- Vollständige Migration aller Legacy-Consumer. ADR-0097 definiert das Muster, autorisiert aber
-  kein ungezieltes Refactoring außerhalb des jeweiligen Arbeitspakets.
+- Vollständige Migration aller Legacy-Consumer. SC-MD-SPT-0001 und die ADR-0032-Revalidation
+  definieren das Muster, autorisieren aber kein ungezieltes Refactoring außerhalb des jeweiligen
+  Arbeitspakets.
 
 ## Verwandte Dokumente
 
-- `docs/adr/ADR-0097-verified-asset-display-progressive-hydration.md`
+- `docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md`
+- `docs/adr/resolved/ADR-0032-asset-catalog-market-evidence-separation.md`
+- `docs/adr/evidence/ADR-0032-REVALIDATION-2026-08-20-VERIFIED-DISPLAY.md`
+- `docs/adr/ADR-0034-central-subscription-entitlements-and-buffett-access.md`
+- `docs/adr/ADR-0041-enterprise-market-data-provider-and-mcp-architecture.md`
+- `docs/adr/ADR-0083-server-runtime-architecture-consolidation.md`
+- `docs/adr/ADR-0087-single-scoring-architecture-uai-model-registry.md`
 - `docs/evidence/sc-md/SC2_GLOBAL_MULTI_ASSET_EXIT_2026-08-19.md`
 - `docs/backend/BACKEND_ARCH.md`
 - `docs/architecture/PHASE-3.4.6-MARKET-DATA-COMPATIBILITY-FACADE.md`
