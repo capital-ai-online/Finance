@@ -173,6 +173,27 @@ function keyId(key: PatternReliabilityKey): string {
   ].map(part => encodeURIComponent(part)).join('|');
 }
 
+function validateRecord(record: PatternReliabilityRecord): void {
+  if (record.registryVersion !== PATTERN_RELIABILITY_REGISTRY_VERSION) {
+    throw new Error(`[PatternReliabilityRegistry] unsupported registry version: ${record.registryVersion}.`);
+  }
+  if (record.authority !== 'RESEARCH_VALIDATION_NOT_PRODUCTION_POLICY') {
+    throw new Error('[PatternReliabilityRegistry] invalid authority marker.');
+  }
+  if (record.evidenceRefs.length === 0) {
+    throw new Error('[PatternReliabilityRegistry] reliability record requires evidence references.');
+  }
+  if (!Number.isFinite(Date.parse(record.validatedAt))) {
+    throw new Error('[PatternReliabilityRegistry] reliability record validatedAt is invalid.');
+  }
+  const expected = evaluatePatternReliability(record.key, record.metrics);
+  if (record.status !== expected.status) {
+    throw new Error(
+      `[PatternReliabilityRegistry] record status ${record.status} does not match deterministic evaluation ${expected.status}.`,
+    );
+  }
+}
+
 export function createPatternReliabilityRecord(input: Readonly<{
   key: PatternReliabilityKey;
   metrics: PatternReliabilityMetrics;
@@ -209,6 +230,7 @@ export class PatternReliabilityRegistry {
   constructor(records: readonly PatternReliabilityRecord[] = []) {
     const index = new Map<string, PatternReliabilityRecord>();
     for (const record of records) {
+      validateRecord(record);
       const id = keyId(record.key);
       if (index.has(id)) throw new Error(`[PatternReliabilityRegistry] duplicate key: ${id}.`);
       index.set(id, record);
