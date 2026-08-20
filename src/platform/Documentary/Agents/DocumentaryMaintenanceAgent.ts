@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import {
   DOCUMENT_REGISTRY_PATH,
   collectDocumentationHygieneFindings,
@@ -119,6 +120,23 @@ function readPatchableDocument(repoRoot: string, relativePath: string): string {
   return fs.readFileSync(absolute, 'utf8');
 }
 
+function currentGitBranch(repoRoot: string): string {
+  let branch = '';
+  try {
+    branch = execFileSync('git', ['branch', '--show-current'], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }).trim();
+  } catch {
+    throw new Error('[DocumentaryMaintenanceAgent] repository branch could not be verified before apply.');
+  }
+  if (!branch) {
+    throw new Error('[DocumentaryMaintenanceAgent] detached or unresolved Git branch is not eligible for apply.');
+  }
+  return branch;
+}
+
 function nextPatchVersion(version: string): string {
   const match = version.match(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
   if (!match) throw new Error(`[DocumentaryMaintenanceAgent] invalid document SemVer: ${version}`);
@@ -229,6 +247,10 @@ export function applyDocumentaryMaintenancePlan(options: {
   const repoRoot = path.resolve(options.repoRoot ?? process.cwd());
   if (!MAINTENANCE_BRANCH.test(options.branchName) || options.branchName === 'main') {
     throw new Error(`[DocumentaryMaintenanceAgent] mutation requires an isolated agent/documentary-maintenance-* branch, got: ${options.branchName}`);
+  }
+  const checkedOutBranch = currentGitBranch(repoRoot);
+  if (checkedOutBranch !== options.branchName) {
+    throw new Error(`[DocumentaryMaintenanceAgent] checked-out branch mismatch: expected ${options.branchName}, got ${checkedOutBranch}.`);
   }
   if (options.plan.patches.length === 0) {
     return { correlationId: options.plan.correlationId, branchName: options.branchName, changedPaths: [], versionChanges: [] };
