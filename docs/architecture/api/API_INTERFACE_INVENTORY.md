@@ -2,7 +2,7 @@
 
 **Status:** INITIAL DISCOVERY — QA pending  
 **Governance:** ESS-0015  
-**Snapshot:** 2026-08-03; ADR-0097 correlation amendment 2026-08-20
+**Snapshot:** 2026-08-03; SC-MD-SPT / ADR-0032 revalidation correlation amendment 2026-08-20
 
 ## Purpose
 
@@ -16,7 +16,7 @@ Dieses Dokument ist die kanonische menschenlesbare Sicht auf externe Schnittstel
 | API-MARKET-KRAKEN-001 | Kraken API | crypto market-data / exchange | backend | none (public `api.kraken.com` ticker); ~~`KRAKEN_API_KEY`/`KRAKEN_API_SECRET`/`API_KEY`/`API_SECRET`~~ removed 2026-08-11 — never read by any code path | `server/marketData/cryptoProviderChain.ts` | NOT_TESTED | EVALUATE |
 | API-MARKET-COINGECKO-001 | CoinGecko Crypto Data | market-data | backend/services | provider public/API contract | `cryptoHistoryProvider.ts`, `cryptoSnapshotProvider.ts`, `liveCryptoSnapshotConsensus.ts` | NOT_TESTED | EVALUATE |
 | API-MARKET-COINMARKETCAP-001 | CoinMarketCap | crypto market-data | backend | ~~`COINMARKETCAP_API_KEY`~~ (removed) | Removed 2026-08-11: adapter, provider-registry entry, secret-manifest key and `.env.example` declarations deleted; crypto snapshot quorum now runs CoinGecko-only (single-source, so `getLiveCryptoSnapshotConsensus` consistently reports `INSUFFICIENT_SOURCES` per fail-closed policy) | REMOVED | REMOVED |
-| API-MARKET-FMP-001 | Financial Modeling Prep | market-data / fundamentals-enrichment | Render backend | `FMP_API_KEY` | `server/fmpIndices.ts`, `server/stockFundamentals.ts`, provider registry, `render.yaml`; ADR-0097 reuses FMP as bounded secondary stock-fundamentals enrichment | NOT_TESTED | EVALUATE |
+| API-MARKET-FMP-001 | Financial Modeling Prep | market-data / fundamentals-enrichment | Render backend | `FMP_API_KEY` | `server/fmpIndices.ts`, `server/stockFundamentals.ts`, provider registry, `render.yaml`; ADR-0032 revalidation reuses FMP as bounded secondary stock-fundamentals enrichment under ADR-0041 / ESS-0016 | NOT_TESTED | EVALUATE |
 | API-MARKET-ALPHAVANTAGE-001 | Alpha Vantage | market-data/fundamentals | Render backend | `ALPHA_VANTAGE_KEY` | `server/stockFundamentals.ts`, provider registry, `.env.example`, `render.yaml` | NOT_TESTED | EVALUATE |
 | API-MARKET-ALPACA-001 | Alpaca | market-data candidate | production candidate | API credential(s), exact canonical variable names to verify against production config | Secret-Bereitstellung reported; no active code evidence found in current branch | NOT_TESTED | EVALUATE |
 | API-MARKET-COINAPI-001 | CoinAPI | market-data | backend | `COIN_API_KEY` | `.env.example`, `render.yaml`, external market-data adapters | NOT_TESTED | EVALUATE |
@@ -44,9 +44,11 @@ Dieses Dokument ist die kanonische menschenlesbare Sicht auf externe Schnittstel
 | API-SOCIAL-004 | X OAuth | social publishing | backend | `X_CLIENT_ID`, `X_CLIENT_SECRET` | `.env.example`, `render.yaml` | NOT_TESTED | EVALUATE |
 | API-SOCIAL-005 | Facebook OAuth | social publishing | backend | `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET` | `.env.example`, `render.yaml` | NOT_TESTED | EVALUATE |
 
-### ADR-0097 internal read contract (2026-08-20)
+### SC-MD-SPT / ADR-0032 internal read contract (2026-08-20)
 
-ADR-0097 adds `GET /api/registry/assets/:symbol/verified-display` (`verified-asset-display/1.0.0`) as a server-side, read-only composition of **existing** provider/evidence adapters. It does not change the `EVALUATE`/`KEEP` decision state of any external provider and is not a scoring authority or execution-price contract. `GET /api/registry/assets` remains metadata-only for verified finance fields.
+The ADR-0032 revalidation implements `GET /api/registry/assets/:symbol/verified-display` (`verified-asset-display/1.0.0`) as a server-side, read-only composition of **existing** provider/evidence adapters and the Display/Research lane of `SC-MD-SPT-0001`. It does not change the `EVALUATE`/`KEEP` decision state of any external provider and is not a scoring authority or execution-price contract. `GET /api/registry/assets` remains metadata-only for verified finance fields.
+
+For Buffett, the homogeneous SPT sequence additionally requires the existing ADR-0034 endpoint `POST /api/entitlements/warren-buffett/authorize` before provider-relevant display hydration.
 
 ## 2. Environment Variable Inventory
 
@@ -57,7 +59,7 @@ ADR-0097 adds `GET /api/registry/assets/:symbol/verified-display` (`verified-ass
 
 ### Market Data / FinTech / Macro / News
 - `ALPHA_VANTAGE_KEY` — SECRET — Alpha Vantage.
-- `FMP_API_KEY` — SECRET — Financial Modeling Prep; declared in Render manifest but absent from root `.env.example` at this snapshot: documentation drift finding. ADR-0097 also reuses it through `server/stockFundamentals.ts` as bounded secondary fundamentals enrichment.
+- `FMP_API_KEY` — SECRET — Financial Modeling Prep; declared in Render manifest but absent from root `.env.example` at this snapshot: documentation drift finding. The ADR-0032 revalidation also reuses it through `server/stockFundamentals.ts` as bounded secondary fundamentals enrichment under the existing provider architecture.
 - `COINMARKETCAP_API_KEY` — REMOVED 2026-08-11 — CoinMarketCap integration decommissioned; no longer read anywhere in the codebase, no longer part of the secret file manifest or `.env.example`.
 - `COIN_API_KEY` — SECRET — CoinAPI.
 - `EODHD_API_KEY` — SECRET — EODHD.
@@ -121,7 +123,7 @@ Client IDs are identifiers; client secrets are SECRET and server-only.
 5. **Stripe publishable-key drift:** `.env.example` uses `VITE_STRIPE_PUBLISHABLE_KEY`; `render.yaml` declares `STRIPE_PUBLISHABLE_KEY`. Call-site/build-time usage must determine the canonical name.
 6. **Two env example files exist** (`.env.example` and `server/_.env.example`) with divergent variable sets. They must be reconciled after inventory, not used as independent sources of truth.
 7. **Alpaca:** credential presence is reported in production, but exact variable names and runtime consumer still require deployment/config evidence.
-8. **ADR-0097 FMP role clarification (2026-08-20):** `server/stockFundamentals.ts` reuses the existing FMP integration as a secondary fundamentals-enrichment source. This is an inventory correction/reuse decision, not a provider promotion.
+8. **FMP role clarification (2026-08-20):** `server/stockFundamentals.ts` reuses the existing FMP integration as a secondary fundamentals-enrichment source under ADR-0041 / ESS-0016. This is an inventory correction/reuse decision, not a provider promotion or new provider authority.
 
 ## 4. Inventory Completion Rule
 
@@ -145,4 +147,4 @@ A variable is classified as `ACTIVE` only when both configuration and runtime/co
 
 ## Decision constraint
 
-No provider listed as `EVALUATE` becomes a new canonical FinTech data path until the ESS-0015 inventory, QA report and subsequent provider architecture ADR are complete. ADR-0097's reuse of an existing adapter does not itself promote that provider.
+No provider listed as `EVALUATE` becomes a new canonical FinTech data path until the ESS-0015 inventory, QA report and subsequent provider architecture ADR are complete. Reuse of an existing adapter by `verified-asset-display/1.0.0` does not itself promote that provider; provider authority remains governed by ADR-0041 / ESS-0016 and the relevant accepted asset-class evidence contracts.
