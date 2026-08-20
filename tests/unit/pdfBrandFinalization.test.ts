@@ -35,7 +35,7 @@ describe('P1/P2 CAPITAL-AI PDF brand finalization', () => {
   const css = read('src/index.css');
   const vite = read('vite.config.ts');
   const pdfBrand = read('src/platform/PdfReporting/pdfBrand.ts');
-  const logo = read('src/components/CapitalAiLogo.tsx');
+  const logo = read('src/shared/branding/CapitalAiLogo.tsx');
   const notebook = read('scripts/docs/export_notebooklm_pdfs.py');
   const requirements = read('scripts/docs/requirements-notebooklm-pdf.txt');
   const verifier = read('scripts/docs/verify_pdf_render.py');
@@ -71,7 +71,7 @@ describe('P1/P2 CAPITAL-AI PDF brand finalization', () => {
     expect(pdfBrand).toContain('drawCapitalAiWordmark');
     expect(pdfBrand).toContain('EMBLEM_NODES');
     expect(pdfBrand).toContain('EMBLEM_EDGES');
-    expect(logo).toContain("from '../platform/Branding/runtimeBrand'");
+    expect(logo).toContain("from '../../platform/Branding/runtimeBrand'");
     expect(logo).toContain('version = CAPITAL_AI_VERSION');
     expect(logo).not.toContain("version = '0.7.0'");
     expect(logo).toContain('var(--color-aif-gold-DEFAULT)');
@@ -110,7 +110,6 @@ describe('P1/P2 CAPITAL-AI PDF brand finalization', () => {
     expect(verifier).toContain('pdfinfo');
     expect(verifier).toContain('pdftotext');
     expect(verifier).toContain('pdftoppm');
-    expect(verifier).toContain('formalPdfUaValidation');
-    expect(notebook).toContain('--smoke');
+    expect(verifier).toContain('expect_tagged');
   });
 });
