@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/runQualityExecution.ts build scripts/automation/buildRuntimeReleaseManifest.ts && tsx scripts/automation/buildQualityCenterSnapshot.ts",
+    "build": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/runQualityExecution.ts build scripts/automation/buildRuntimeReleaseManifest.ts scripts/automation/buildQualityCenterSnapshot.ts",
     "build:raw": "vite build && node scripts/seo/prerender-public-routes.mjs && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
