@@ -14,10 +14,15 @@ function fixture(): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'qm-doc-'));
   write(root, 'src/platform/Quality/manifest.json', JSON.stringify({
     version: '1.1.0',
-    contracts: ['repository-quality-observation/1.1.0', 'quality-center-contract/1.1.0'],
+    contracts: [
+      'repository-quality-observation/1.1.0',
+      'quality-center-contract/1.2.0',
+      'chapter12-validator-contract/1.0.0',
+      'chapter12-validation-report/1.0.0',
+    ],
     tests: ['tests/unit/validatorRegistry.test.ts'],
   }));
-  write(root, 'src/platform/Validators/manifest.json', JSON.stringify({ status: 'implemented', interfaces: ['ValidatorRegistry'] }));
+  write(root, 'src/platform/Validators/manifest.json', JSON.stringify({ status: 'implemented', interfaces: ['ValidatorRegistry', 'Chapter12ValidatorRunner'] }));
   write(root, '.ai/registry/ess-registry.json', JSON.stringify({ entries: [{ id: 'ESS-0005', version: '1.1.0' }] }));
   write(root, '.ai/skills/ESS-0005-Quality-Center.md', '---\nskill:\n  id: ESS-0005\n  version: 1.1.0\ncapital_ai:\n  platform: CAPITAL-AI\n---\n');
   write(root, 'src/platform/Quality/README.md', '# Quality\n\nVersion: 1.1.0\n');
