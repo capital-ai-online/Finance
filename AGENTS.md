@@ -81,6 +81,16 @@ Direct edits to `main` are prohibited. One work item uses one scoped branch. Rol
 
 Pre-PR evidence is technical evidence only and must be bound to the exact candidate snapshot. Immediately before PR creation, refresh `main`, correlate new merges/open PRs, synchronize, resolve semantic conflicts and repeat necessary low-cost checks.
 
+### Canonical PR-body contract for every creation surface
+
+Before **any** Pull Request creation mutation through GitHub UI automation, API, MCP, connector, CLI or an agent tool, the creator MUST read the current `main` version of `.github/pull_request_template.md` and derive the PR body from that complete canonical template. A free-form replacement body is prohibited.
+
+The rendered body MUST preserve the exact `CAPITAL_AI_PR_TEMPLATE_VERSION` marker, every required section, the production-baseline governance IDs, and the explicit Human/CODEOWNER merge boundary. Every `{{...}}` placeholder MUST be resolved before the create call; non-applicable fields use a justified `N/A` rather than deleting sections or markers.
+
+For an agent branch with exactly one new `.ai/work-claims/*.json` claim, use the trusted `open-agent-draft-pr.yml` / `scripts/pr/renderPullRequestBody.mjs` path where available. For an authorized Human/UI/API/MCP/Connector path with no new claim, render the same current-`main` template directly and set claim-only fields to justified `N/A`; do not invent a claim solely to satisfy PR creation.
+
+The PR body contract MUST be checked **before** the external create mutation. Creating a non-conforming PR and relying on CI to repair it afterwards is prohibited because it produces avoidable failing runs and bypasses the intended pre-mutation governance boundary. If the client cannot read the current canonical template or cannot preserve its required markers/sections, PR creation stops fail-closed.
+
 Avoid unnecessary paid GitHub CI/build/test runs before PR creation. After PR creation, use the smallest sufficient checks first and complete required checks before merge.
 
 ## 6. Human Authority and Protected Actions

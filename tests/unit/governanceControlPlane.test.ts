@@ -163,13 +163,12 @@ describe('Governance Control Plane', () => {
     }).not.toThrow();
   });
 
-  it('keeps merged ADR-0094 accepted while ADR-0096 v1.1 remains a proposed amendment until Human Merge', () => {
-    const registry = JSON.parse(
-      fs.readFileSync(path.join(root, 'docs/adr/registry.json'), 'utf8'),
-    ) as { migratedRecords: Array<{ authorityId: string; displayId: string; version: string; lifecycle: string; path: string }>; parallelNamespaceReservations: JsonRecord[] };
-
-    const adr0094 = registry.migratedRecords.find((record) => record.displayId === 'ADR-0094');
-    const adr0096 = registry.migratedRecords.find((record) => record.displayId === 'ADR-0096');
+  it('keeps ADR-0096 v1.2 synchronized across ADR, Authority and Document registries', () => {
+    const fixture = readFixture();
+    const adr0096 = fixture.adrRegistry.migratedRecords.find((record) => record.displayId === 'ADR-0096');
+    const authority0096 = fixture.authorityRegistry.entries.find((record) => record.authorityId === 'AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19');
+    const document0096 = fixture.documentRegistry.entries.find((record) => record.documentId === 'DOC-ADR-0096');
+    const adr0094 = fixture.adrRegistry.migratedRecords.find((record) => record.displayId === 'ADR-0094');
 
     expect(adr0094).toMatchObject({
       authorityId: 'AUTH-ADR-OPEN-SOURCE-MEDIA-RENDERING-2026-08-19',
@@ -178,10 +177,12 @@ describe('Governance Control Plane', () => {
     });
     expect(adr0096).toMatchObject({
       authorityId: 'AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19',
-      version: '1.1.0',
+      version: '1.2.0',
       lifecycle: 'proposed',
       path: 'docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md',
     });
-    expect(registry.parallelNamespaceReservations).toEqual([]);
+    expect(authority0096).toMatchObject({ version: '1.2.0' });
+    expect(document0096).toMatchObject({ version: '1.2.0' });
+    expect(fixture.adrRegistry.parallelNamespaceReservations).toEqual([]);
   });
 });

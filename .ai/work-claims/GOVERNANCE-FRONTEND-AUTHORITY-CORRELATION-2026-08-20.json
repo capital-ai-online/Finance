@@ -13,9 +13,19 @@
   "startedAt": "2026-08-20T17:43:00+02:00",
   "baseBranch": "main",
   "branch": "governance/frontend-authority-correlation-2026-08-20",
-  "baseSha": "6b61c63a8d66b933c824b698d81ea242e202cb47",
-  "lastMainSyncSha": "6b61c63a8d66b933c824b698d81ea242e202cb47",
+  "initialBaseSha": "6b61c63a8d66b933c824b698d81ea242e202cb47",
+  "baseSha": "caa6c6881cc043c8323451e489b98ea4b7ca3436",
+  "lastMainSyncSha": "caa6c6881cc043c8323451e489b98ea4b7ca3436",
+  "mainSyncObservedAt": "2026-08-20T23:27:00+02:00",
   "pullRequest": null,
+  "parallelWriterFindings": [
+    {
+      "pullRequest": 461,
+      "branch": "feature/media-creation-mc1-media-project-v2",
+      "overlap": ["docs/adr/registry.json", "docs/governance/authority-registry.json"],
+      "resolution": "No shared Authority ID or ADR display-ID allocation. ADR-0098 remains owned by PR #461; this work does not copy, reserve or redefine its authority. Registry file overlap must be re-correlated before merge."
+    }
+  ],
   "claimedPaths": [
     ".ai/work-claims/GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20.json",
     ".ai/work-claims/DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20.json",

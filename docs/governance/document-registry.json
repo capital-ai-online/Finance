@@ -47,7 +47,7 @@
       "projectionOf": [],
       "normative": false,
       "normativeScope": [],
-      "version": "1.4.1",
+      "version": "1.5.1",
       "language": "de",
       "lifecycle": "approved",
       "path": "docs/frontend/FRONTEND_ROADMAP.md"
@@ -212,7 +212,7 @@
       "type": "architecture-decision",
       "owner": "CAPITAL-AI Owner",
       "authority": "AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "language": "mixed",
       "lifecycle": "draft",
       "path": "docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md"
