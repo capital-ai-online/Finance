@@ -97,7 +97,7 @@ function unavailableBase(symbol: string, name: string, assetClass: VerifiedAsset
 async function cryptoDisplay(symbol: string, name: string): Promise<VerifiedAssetDisplay> {
   const snapshot = await getVerifiedCryptoSnapshot(symbol, { maxAttempts: 1 });
   let price = finite(snapshot?.priceUsd);
-  let providers = snapshot ? [snapshot.provider] : [];
+  let providers: string[] = snapshot ? [snapshot.provider] : [];
   let evidenceIds = snapshot
     ? Object.values(snapshot.provenance)
         .filter((item): item is NonNullable<typeof item> => Boolean(item))
