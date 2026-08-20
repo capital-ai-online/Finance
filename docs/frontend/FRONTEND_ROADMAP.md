@@ -2,10 +2,10 @@
 
 **Projekt:** capital-ai.online  
 **Repository:** SvenKulessa/Finance  
-**Version:** 1.4  
+**Version:** 1.4.1  
 **Stand:** 20. August 2026  
 **Owner:** Sven Kulessa / Capital-AI  
-**Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`  
+**Normative Frontend-Authority:** `AUTH-FRONTEND-PRESENTATION-ARCHITECTURE` / `docs/frontend/FRONTEND_ARCH.md`  
 **Bestandsnachweis:** `docs/frontend/COMPONENT_INVENTORY.md`
 
 Dieses Dokument ist die **kanonische Frontend-Migrations- und UX-Roadmap**. Es definiert Reihenfolge, Status und geplante Arbeit, aber **keine** eigene Source-Tree-, Dependency-, Market-Data-, Scoring-, Entitlement- oder Governance-Authority.
@@ -46,8 +46,8 @@ Zielbild: modernes FinTech-/Quant-Interface mit klarer Trennung zwischen Applica
 - Multi-Asset-Scoring-/Screening-Funktionalität vorhanden,
 - Responsive Basis und Motion-Integration,
 - Fokus-Outline und Reduced-Motion-Support,
-- `app/features/shared`-Strukturbaseline über PR #459,
-- Shared-Primitives und Architektur-Gate im Konsolidierungsbranch vorhanden.
+- `app/features/shared`-Strukturbaseline seit Merge von PR #459 auf `main`,
+- Shared-Primitives und Architektur-Gate auf `main` vorhanden.
 
 ### Strukturelle Restschuld
 
@@ -58,9 +58,9 @@ Zielbild: modernes FinTech-/Quant-Interface mit klarer Trennung zwischen Applica
 
 ---
 
-## 3. Architektur-Baseline — PR #459
+## 3. Architektur-Baseline — PR #459 (gemergt)
 
-PR #459 etabliert die strukturelle Voraussetzung für alle folgenden Migrationswellen:
+PR #459 hat die strukturelle Voraussetzung für alle folgenden Migrationswellen auf `main` etabliert:
 
 ```text
 src/app
@@ -81,7 +81,7 @@ Bereits umgesetzt in dieser Baseline:
 - Legacy-Pfade für bereits migrierte Komponenten nur als Compatibility-Exports,
 - `frontend:architecture:check` als strukturelles Gate.
 
-Die Aktivierung auf `main` erfolgt ausschließlich durch den normalen Human-/CODEOWNER-gesteuerten Merge-Prozess. Diese Roadmap behandelt PR #459 als strukturelle Baseline der Migration, nicht als fachliche Runtime-Authority.
+PR #459 ist historische Merge-Evidence für diese Baseline, aber keine fachliche Runtime-Authority. Die fortlaufende normative Frontend-Struktur wird ausschließlich durch `AUTH-FRONTEND-PRESENTATION-ARCHITECTURE` / `FRONTEND_ARCH.md` bestimmt.
 
 ---
 
@@ -91,7 +91,7 @@ Jede Welle muss einzeln mergebar und rücksetzbar bleiben. Vor jeder Welle wird 
 
 ### Welle 0 — Foundation / Architecture Baseline
 
-**Scope:** PR #459 abschließen.
+**Scope:** durch PR #459 abgeschlossen.
 
 - [x] `app/features/shared` etablieren.
 - [x] Shared-Primitives physisch verschieben.
@@ -99,7 +99,7 @@ Jede Welle muss einzeln mergebar und rücksetzbar bleiben. Vor jeder Welle wird 
 - [x] Feature-UI-Fassaden etablieren.
 - [x] Frontend-Architecture-Gate integrieren.
 - [x] Frontend-Dokumentrollen entkoppeln: Architektur = normativ, Inventory = deskriptiv, Roadmap = Planung.
-- [ ] Human-/CODEOWNER-Merge von PR #459.
+- [x] Human-/CODEOWNER-Merge von PR #459.
 
 ### Welle 1 — Application Composition
 
@@ -346,13 +346,12 @@ Eine Migrationswelle darf keine bestehende Runtime-/Scoring-/IAM-/Compliance-/Go
 
 ## 8. Nächste Schritte
 
-1. PR #459 vollständig validieren und Human-/CODEOWNER-gesteuert mergen.
-2. Danach Welle 1 `App.tsx` / Application Composition als eigenen Branch/PR beginnen.
-3. Anschließend Dashboard-Composition separat entkoppeln.
-4. Physische Feature-Migration nur in kleinen, fachlich zusammengehörigen Wellen durchführen.
-5. Nach jeder Welle Inventory aktualisieren und Architektur-/Authority-Drift prüfen.
-6. Live Lighthouse-/axe-Baseline ergänzen.
+1. Welle 1 `App.tsx` / Application Composition als eigenen Branch/PR beginnen.
+2. Anschließend Dashboard-Composition separat entkoppeln.
+3. Physische Feature-Migration nur in kleinen, fachlich zusammengehörigen Wellen durchführen.
+4. Nach jeder Welle Inventory aktualisieren und Architektur-/Authority-Drift prüfen.
+5. Live Lighthouse-/axe-Baseline ergänzen.
 
 ---
 
-*Ursprung: Frontend-Roadmap vom 16.08.2026. Version 1.4 vom 20.08.2026 konsolidiert die `app/features/shared`-Architektur, die schrittweise Big-Bang-Auflösung und das Projection-not-Redefinition-Prinzip.*
+*Ursprung: Frontend-Roadmap vom 16.08.2026. Version 1.4.1 vom 20.08.2026 korrigiert den Status nach Merge von PR #459 und bindet die Roadmap maschinenlesbar an `AUTH-FRONTEND-PRESENTATION-ARCHITECTURE`; die Roadmap bleibt non-authorizing.*
