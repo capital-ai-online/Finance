@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.0.0",
   "claimId": "VERIFIED-ASSET-DISPLAY-HYDRATION-2026-08-20",
   "status": "active",
   "exclusive": true,
@@ -8,23 +8,22 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub + Render connectors"
   },
-  "workItem": "Owner Chat-Priorität 2026-08-20: Asset-Werte über eine progressive verifizierte Display-Hydration verfügbar machen und den Buffett Value Check aus dem metadata-only Registry-Contract lösen.",
+  "workItem": "Owner Chat-Priorität 2026-08-20: verifizierte Asset-Werte über progressive Display-Hydration integrieren, Buffett auf Aktien begrenzen, korrelierte Architektur-/API-Dokumente konsolidieren und den Background-Provider-Refresh auf 90 Sekunden drosseln.",
   "authority": [
     "Owner Chat-Priorität 2026-08-20",
     "ADR-0097",
     "ADR-0041",
-    "ARCH-DATENQ-0001"
+    "ARCH-DATENQ-0001",
+    "SC2-GLOBAL-MULTI-ASSET-EXIT-2026-08-19"
   ],
   "startedAt": "2026-08-20T03:48:00+02:00",
   "baseBranch": "main",
-  "baseSha": "73d27b7a586722d968a972b07a8e73a10f777782",
+  "baseSha": "f1dff495fe792a4d4a26a3513f0525b4974bd349",
   "branch": "fix/verified-asset-values-buffett-hydration",
   "pullRequest": null,
+  "supersedesClaim": "BUFFETT-VALUE-CHECK-NULL-PRICE-FIX-2026-08-14",
   "renderEvidence": {
-    "workspaceId": "tea-d90o4rj7uimc739i86ug",
-    "serviceId": "srv-d91o1o9o3t8c73edi55g",
-    "productionCommit": "73d27b7a586722d968a972b07a8e73a10f777782",
-    "finding": "TwelveData/EODHD circuit breakers and CoinGecko HTTP 429 observed; eager full-catalog hydration prohibited by ADR-0097."
+    "finding": "TwelveData/EODHD circuit breakers and CoinGecko HTTP 429 were observed; eager full-catalog hydration is prohibited and background provider refresh is constrained to a 90-second cadence."
   },
   "claimedPaths": [
     "server/stockFundamentals.ts",
@@ -32,12 +31,25 @@
     "src/services/verifiedAssetDisplay.ts",
     "server/routes/verifiedAssetDisplayRoutes.ts",
     "server/routes/registerApplicationRoutes.ts",
+    "server/marketData/cryptoPrimaryProviderStage.ts",
+    "server/marketData/marketDataCompatibilityFacade.ts",
+    "server/marketData/marketDataRuntimeFacade.ts",
+    "server/marketData/createApplicationMarketDataRuntime.ts",
     "src/components/BuffetValueCheck.tsx",
     "tests/unit/buffetValueCheck.test.ts",
+    "tests/unit/cryptoSnapshotProvider.test.ts",
+    "tests/unit/marketDataCompatibilityFacade.test.ts",
+    "tests/unit/marketDataRuntimeFacade.test.ts",
     "tests/unit/verifiedAssetDisplayContract.test.ts",
     "docs/adr/ADR-0097-verified-asset-display-progressive-hydration.md",
     "docs/adr/registry.json",
     "docs/governance/authority-registry.json",
+    "docs/architecture/DATENQUALITAETSSCHICHT.md",
+    "docs/backend/BACKEND_ARCH.md",
+    "docs/architecture/PHASE-3.4.6-MARKET-DATA-COMPATIBILITY-FACADE.md",
+    "docs/architecture/api/API_INTERFACE_INVENTORY.md",
+    "docs/frontend/COMPONENT_INVENTORY.md",
+    "docs/frontend/FRONTEND_ARCH.md",
     ".ai/work-claims/BUFFETT-VALUE-CHECK-NULL-PRICE-FIX-2026-08-14.json",
     ".ai/work-claims/VERIFIED-ASSET-DISPLAY-HYDRATION-2026-08-20.json"
   ],
