@@ -3,7 +3,7 @@
   "version": "1.1.0",
   "status": "implemented",
   "owner": "CAPITAL-AI",
-  "description": "ESS-0005 Quality Center: executable Chapter-12 validation, commit-bound Contract/Test/Build evidence, eight quality gates, deterministic quality scoring, technical-debt and coverage evidence, EventMesh lifecycle publication, read-only SC-MD-SPT FinTech value-chain homogeneity projection and build-persisted QualityCenterReport operationalization.",
+  "description": "ESS-0005 Quality Center: executable Chapter-12 validation, commit-bound Contract/Test/Build evidence, eight quality gates, deterministic quality scoring, technical-debt and coverage evidence, EventMesh lifecycle publication, read-only SC-MD-SPT FinTech value-chain homogeneity projection and release-bound QualityCenterReport operationalization.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -23,7 +23,8 @@
   ],
   "dependencies": [
     "src/platform/Governance",
-    "src/platform/Validators"
+    "src/platform/Validators",
+    "src/platform/Release"
   ],
   "events": {
     "produces": [
@@ -116,6 +117,7 @@
       "Quality hot-path isolation validation for MarketData, Scoring, Ranking, Orchestrator and application runtime",
       "shared QualityCenterReport composition factory for CLI and build snapshot",
       "atomic commit-bound QualityCenterReport snapshot in .quality and dist/quality",
+      "runtime snapshot-to-release commit equality through the existing platformVersionControlPlane",
       "read-only IAM-protected Quality Center admin API",
       "Quality Evidence Panel in the existing Performance-Zentrale with no synthetic fallback values"
     ],
@@ -128,9 +130,9 @@
     },
     "intentionalEvidenceBoundaries": [
       "Documentation, Architecture, Knowledge, Metadata and Twin quality-score axes remain absent until an existing authority defines a deterministic numeric source; Quality Center never invents a formula.",
-      "line/branch/function/statement coverage remains NOT_AVAILABLE unless a real coverage-summary artifact exists.",
+      "line/branch/function/statement coverage remains NOT_AVAILABLE unless a real coverage-summary artifact exists; enabling mandatory Vitest coverage requires an explicit dependency/CI-cost decision.",
       "FinTech value-chain projection validates structural/evidence connectivity and hot-path isolation; it never changes financial scores, confidence, ranking, provider routing or eligibility.",
-      "Historical Quality trend persistence remains outside this slice until an existing persistence authority and explicit production-mutation approval define the storage path."
+      "Commit-bound CI artifact history is identified but not published in this slice because the workflow mutation was blocked by the connector security gate; long-term product-side Quality trend persistence also remains outside this slice until an existing persistence authority and explicit production-mutation approval define the storage path."
     ],
     "remainingContractScope": []
   },

@@ -1,15 +1,17 @@
 # Quality Center Completion
 
-**Status:** CONTRACT COMPLETE — OPERATIONALIZATION IMPLEMENTED ON FEATURE BRANCH; EXACT-HEAD CI VALIDATION PENDING
+**Status:** CONTRACT COMPLETE — OPERATIONALIZATION IN DRAFT PR #464; EXACT-HEAD CI VALIDATION PENDING
 
 **Completion PR:** #457 (merged)  
+**Operationalization PR:** #464  
 **Operationalization branch:** `agent/quality-center-operationalization`  
+**Synchronized base:** `main@cb07abdeb871c1c7ba682fecfa91faa4a8de852e`  
 **Authority:** ESS-0005 + ESS-0001-CONTRACTS Chapter 12  
 **FinTech chain authority:** `SC-MD-SPT-0001`
 
 ## Ziel
 
-Der Quality-Center-Core ist abgeschlossen und wird auf dem Operationalisierungs-Branch ohne zweite Rule-, Governance-, Compliance-, Event-, Traceability-, Scoring- oder Ranking-Authority fuer Build und Administrator-UI nutzbar gemacht.
+Der Quality-Center-Core ist abgeschlossen und wird ohne zweite Rule-, Governance-, Compliance-, Event-, Traceability-, Scoring- oder Ranking-Authority fuer Build, Runtime und Administrator-UI nutzbar gemacht.
 
 Ausfuehrbarkeit, Konformitaet, Messwertverfuegbarkeit und operative Darstellung bleiben strikt getrennte Zustaende. Fehlende Evidence wird nicht als PASS oder Ersatzscore simuliert.
 
@@ -29,23 +31,11 @@ Ausfuehrbarkeit, Konformitaet, Messwertverfuegbarkeit und operative Darstellung 
 | FinTech Value Chain | 14-stufige read-only Projektion |
 | Hot-Path-Isolation | maschinenlesbar pruefbar |
 | Build-Snapshot | `.quality/quality-center-report.json` + `dist/quality/quality-center-report.json` |
+| Runtime Identity | Snapshot-Commit muss bestehendem Release-Manifest-/PlatformVersion-Commit entsprechen |
 | Admin API | `GET /api/admin/quality-center`, read-only und IAM-geschuetzt |
 | Quality Panel | bestehende Performance-Zentrale, keine neue Authority |
 
-## Acht Quality Gates
-
-1. Contract-Konformitaet
-2. Architektur-Konformitaet
-3. Versionskonformitaet
-4. Dokumentationsstatus
-5. Teststatus
-6. Sicherheitsauswirkungen
-7. Compliance-Auswirkungen
-8. Build-Ergebnis
-
-`PASS` setzt vollstaendige Evidence voraus. `FAIL` entsteht bei realen Fehlern. Fehlende oder commitfremde Evidence bleibt `NOT_AVAILABLE`.
-
-## Execution-Evidence
+## Execution-Evidence und Build-Finalisierung
 
 `npm test` und `npm run build` erzeugen Quality-Evidence ausschliesslich aus den real ausgefuehrten Prozessen. Die Evidence ist an den exakten Git-Head gebunden.
 
@@ -53,10 +43,22 @@ Der Build-Pfad erhaelt die bestehenden Schutzinvarianten:
 
 - `verifyGoogleMarketingInvariants.ts` bleibt vor dem Build sichtbar und aktiv;
 - `buildRuntimeReleaseManifest.ts` bleibt verpflichtender Build-Finalizer;
-- Build-PASS wird erst nach erfolgreichem Runtime-Release-Manifest geschrieben;
-- der Quality-Center-Snapshot wird erst **danach** aus dem bestehenden `QualityCenterReport` erzeugt.
+- der Quality-Snapshot wird innerhalb des bestehenden `runQualityExecution`-Wrappers erzeugt;
+- ein Snapshotfehler entfernt teilweise Snapshot-Artefakte und kann keine gruene Build-Evidence hinterlassen;
+- der externe kanonische `package.json#build`-Vertrag bleibt unveraendert.
 
-Der Snapshot erzeugt keine neue Gate- oder Release-Semantik. Er macht die bereits vorhandene Evidence fuer Runtime und UI lesbar.
+## Runtime-Identitaetsbindung
+
+Die read-only Admin-API verwendet keine eigene Commit-Authority. Sie liest den bestehenden `platformVersionControlPlane`, der im gebauten Runtime-Artefakt den immutable Release Manifest konsumiert.
+
+Der Snapshot wird nur ausgeliefert, wenn:
+
+```text
+QualityCenterReport.repositoryObservation.sourceCommit
+  == PlatformVersionProjection.commitSha
+```
+
+Fehlt die Release-Identitaet oder stimmt der Commit nicht ueberein, antwortet der Quality-Endpunkt fail-closed mit `503`.
 
 ## Quality Score
 
@@ -75,47 +77,23 @@ Keine eindeutige numerische Formel ist aktuell normativ definiert fuer:
 
 Dafuer werden **keine** Ersatzformeln eingefuehrt. Der Gesamt-Quality-Score bleibt bei unvollstaendiger Messmenge bewusst `PARTIAL`/`NOT_AVAILABLE`.
 
-# Homogenitaetspruefung FinTech-Wertschoepfungskette
+## Code Coverage
+
+Der `CoverageCollector` kann reale `coverage-summary.json`-Evidence konsumieren. Der aktuelle Dependency-Graph installiert jedoch keinen Coverage-Provider; `@vitest/coverage-v8` ist lediglich eine optionale Vitest-Peer-Capability.
+
+Eine verpflichtende Coverage-Erzeugung wuerde eine neue Dev-Dependency, Lockfile-Aenderung und zusaetzliche CI-Laufzeit/Kosten einfuehren. Diese Entscheidung wird in PR #464 nicht implizit getroffen. Bis dahin bleiben Statements/Branches/Functions/Lines korrekt `NOT_AVAILABLE`.
+
+## Historische Quality-Trends
+
+Ein langfristiger produktiver Trend-Store wird nicht stillschweigend eingefuehrt. Eine commitgebundene GitHub-Workflow-Artefakt-Historie ist als repository-seitiger naechster Schritt identifiziert; die zugehoerige Workflow-Mutation wurde in dieser Session durch das Connector-Sicherheitsgate blockiert und nicht umgangen.
+
+## Homogenitaetspruefung FinTech-Wertschoepfungskette
 
 Die Panel-Projektion orientiert sich ausschliesslich an der kanonischen Stufendefinition in `FintechValueChainQualityProjection.ts` unter Authority `SC-MD-SPT-0001`.
 
 Eine Stufe gilt als `CONNECTED`, wenn ihre kanonischen Runtime-Artefakte und Test-/Evidence-Artefakte vorhanden sind. Der Gesamtstatus `homogeneous=true` setzt zusaetzlich voraus, dass die finanzielle Hot Path keine direkte Quality-Abhaengigkeit besitzt.
 
-Gepruefte Hot Paths umfassen MarketData, Scoring, Ranking, Orchestrierung und Application Runtime. Diese Entkopplung ist beabsichtigt: Quality ist eine seitliche Evidence-/Observability-Schicht und darf nicht in Market-Data-Werte, Scoring, Confidence, Ranking, Eligibility oder Provider-Routing eingreifen.
-
-## Operationalisierung
-
-```text
-QualityCenterOrchestrator
-  -> QualityCenterReport 1.3.0
-  -> gemeinsame repositoryQualityReport.ts Factory
-       -> CLI repository:quality:check
-       -> Build Snapshot
-  -> QualityCenterSnapshotStore
-       -> .quality/quality-center-report.json
-       -> dist/quality/quality-center-report.json
-  -> GET /api/admin/quality-center
-  -> Performance-Zentrale / Quality Evidence Panel
-```
-
-Wesentliche Invarianten:
-
-- genau ein Quality-Report-Vertrag;
-- keine Live-Repository-Analyse pro HTTP-Request;
-- API ausschliesslich read-only;
-- bestehendes IAM (`checkAdminAccess`, `DIAGNOSTIC_ZONE_ROLES`);
-- `Cache-Control: no-store`;
-- ungueltige oder commit-ungebundene Snapshots werden verworfen;
-- kein Supabase-/Render-/Stripe-/Storage-Write;
-- keine zweite Frontend-Authority; die Governance-UI-Fassade referenziert die bestehende Admin-Komponente;
-- kein Quality-Import in die finanzielle Hot Path.
-
-## Bewusst verbleibende Evidence-Grenzen
-
-- Code-Coverage bleibt `NOT_AVAILABLE`, solange kein echtes Coverage-Summary-Artefakt produziert wird.
-- Fuenf numerische Quality-Achsen bleiben ohne Score, solange keine bestehende Authority ihre Formel definiert.
-- Historische Quality-Trends werden noch nicht in einen produktiven Datenspeicher geschrieben. Das waere eine eigene Persistenz-/Produktionsmutation und benoetigt eine separat autorisierte Entscheidung.
-- Ein GitHub-Actions-Artifact-Upload ist nicht Teil dieses Slices; der runtime-faehige Snapshot liegt bereits im Build-`dist`.
+Diese Entkopplung ist beabsichtigt: Quality ist eine seitliche Evidence-/Observability-Schicht und darf nicht in Market-Data-Werte, Scoring, Confidence, Ranking, Eligibility oder Provider-Routing eingreifen.
 
 ## Abschlusskriterien Core
 
@@ -123,7 +101,6 @@ Wesentliche Invarianten:
 - [x] Konformitaetsreport getrennt von Implementierungsabdeckung
 - [x] 8/8 Quality Gates evidence-basiert
 - [x] Contract/Test/Build commitgebunden
-- [x] Quality Dokumentation synchronisiert
 - [x] FinTech-Wertschoepfungskette als read-only Panel-Projektion integriert
 - [x] Hot-Path-Isolation als Architekturtest verankert
 - [x] keine Duplikation fachlicher Authorities
@@ -134,12 +111,15 @@ Wesentliche Invarianten:
 - [x] gemeinsame Report-Factory fuer CLI und Snapshot
 - [x] commitgebundene atomare Snapshot-Persistenz
 - [x] Build-Snapshot unter `dist/quality`
+- [x] Snapshot-Commit gegen bestehende Runtime Release Identity gebunden
 - [x] IAM-geschuetzte read-only Admin API
 - [x] Quality Evidence Panel in bestehender Admin-Oberflaeche
 - [x] keine externe Plattformmutation
+- [x] fehlende Score-Formeln und Coverage-Provider bleiben explizite Evidence-Grenzen statt erfundener Werte
+- [ ] commitgebundene CI-Artefakt-Historie — Workflow-Mutation noch offen
 - [ ] Exact-Head TypeScript/Lint PASS
 - [ ] Exact-Head Unit/Architecture Tests PASS
 - [ ] Exact-Head Production Build PASS
 - [ ] Exact-Head Governance/Security PASS
 
-Die offenen Checkboxen sind ausschliesslich Validierungsnachweise des Operationalisierungs-Heads und werden erst nach den zugehoerigen CI-Laeufen als PASS gewertet.
+Die offenen Checkboxen sind Validierungs-/Evidence-Nachweise und werden erst nach den zugehoerigen CI-Laeufen oder einer spaeter autorisierten Workflow-Aenderung auf PASS gesetzt.
