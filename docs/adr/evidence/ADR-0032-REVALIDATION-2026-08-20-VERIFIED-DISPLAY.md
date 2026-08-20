@@ -6,7 +6,7 @@
 **Date:** `2026-08-20`  
 **Parent decision:** ADR-0032 — Asset Catalog and Market Evidence Separation  
 **Execution authority:** `SC-MD-SPT-0001`  
-**Correlated authorities:** ADR-0034 · ADR-0041 / ESS-0016 · ADR-0083 / ADR-0075 · ADR-0087  
+**Correlated authorities:** ADR-0034 · ADR-0041 / ESS-0016 · ADR-0083 / ADR-0075 · ADR-0087 · ESS-0005 Quality Center  
 **Work item:** Owner Chat-Priorität 2026-08-20 — verifizierte Asset-Werte, Buffett stock-only, Dokumentkonsolidierung und 90-Sekunden-Background-Refresh  
 **Pull Request:** Draft PR #458  
 
@@ -80,14 +80,35 @@ Display-/Research-Werte sind nicht automatisch Scoring-Evidence und niemals alle
 
 ### 2.5 ADR-0034 — Buffett Entitlement
 
-ADR-0034 ist die bestehende Authority für Buffett-Zugriff und Quota. Die Korrelation zeigt eine noch offene Consumer-Abweichung im Draft PR #458:
+ADR-0034 ist die bestehende Authority für Buffett-Zugriff und Quota. Der zuvor festgestellte Consumer-Gap ist im Draft PR #458 geschlossen:
 
-- `BuffetValueCheck.tsx` filtert den Catalog bereits auf `stock`;
-- anschließend lädt der Consumer aktuell direkt `/verified-display`;
-- die bereits vorhandene serverseitige Autorisierung `POST /api/entitlements/warren-buffett/authorize` wird noch nicht vorgeschaltet;
-- `server/entitlements.ts` validiert derzeit Catalog-Presence, aber nicht vor Quota-Verbrauch explizit `asset.type === 'stock'`.
+- `BuffetValueCheck.tsx` filtert den Catalog ausschließlich auf `stock`;
+- für das ausgewählte Symbol ruft der Consumer **zuerst** `POST /api/entitlements/warren-buffett/authorize` auf;
+- `/verified-display` wird nur bei HTTP-Erfolg und `allowed === true` aufgerufen;
+- `server/entitlements.ts` lehnt `asset.type !== 'stock'` mit `asset-not-eligible` ab;
+- diese Domain-Prüfung erfolgt **vor** `enforceBuffettValueCheckQuota()`, damit ungültige Assetklassen weder Quota verbrauchen noch Provider-Hydration auslösen.
 
-**Revalidation-Gate:** Vor Merge muss die Buffett-Kette entitlement-first und serverseitig stock-only fail-closed sein.
+Damit ist die Buffett-Subchain entitlement-first und serverseitig stock-only fail-closed.
+
+### 2.6 Finaler Main-Sync / Quality Center
+
+Während der Umsetzung wurde PR #457 in `main` gemergt. `main` rückte dadurch auf `a8d384154ff2eb1bfe74108eb4a4119cbab2a040` vor. Der Feature-Branch wurde anschließend verlustfrei mit diesem Stand synchronisiert.
+
+PR #457 führte eine read-only `FintechValueChainQualityProjection` ein, deren Authority bereits `SC-MD-SPT-0001` ist. Die Projektion bildete zunächst die ältere 14-stufige Scoring-zentrierte Kette ab. Um nach dem Main-Sync keinen neuen semantischen Drift zu erzeugen, wurde sie auf die konsolidierte SPT-v1.1-Struktur erweitert:
+
+- Request Intake;
+- Identity / Access;
+- Entitlement / Usage;
+- Asset Discovery / UAI;
+- Orchestration / Runtime Guard;
+- Evidence Acquisition;
+- Data Validation / Provenance / DQ;
+- Verified Display / Research Lane;
+- kanonische Scoring-/Ranking-Stufen;
+- EventMesh / Traceability / Supervisor;
+- Delivery Surfaces.
+
+Die Quality-Projektion bleibt ausdrücklich **read-only und non-authorizing**; sie verändert keine IAM-, Entitlement-, Provider-, Scoring-, Ranking-, Release- oder Deployment-Entscheidung.
 
 ---
 
@@ -152,14 +173,19 @@ Quote-/Alert-/Backtest-Consumer teilen die Stufen bis zur Evidence-Validierung u
 10. Runtime Facade erzwingt mindestens 90 Sekunden zwischen tatsächlichen Background-Provider-Refreshes.
 11. Die fachlichen Korrelationen sind in `SC-MD-SPT-0001` v1.1.0 als eine homogene Wertschöpfungskette konsolidiert.
 12. Datenqualitäts-, Backend-, API-, Frontend- und Phase-3.4.6-Projektionen referenzieren ADR-0032 / SC-MD-SPT-0001 sowie die jeweils zuständige Parent-Authority.
-13. Die im Draft zunächst angelegte ADR-0097-Datei wurde entfernt; ADR- und Authority-Registry entsprechen für diesen Scope wieder exakt `main` und enthalten keine zweite Verified-Display-Authority.
+13. Die im Draft zunächst angelegte ADR-0097-Datei wurde entfernt; ADR- und Authority-Registry entsprechen für diesen Scope wieder `main` und enthalten keine zweite Verified-Display-Authority.
 14. Diese Revalidation ist als `draft` im Document Registry registriert; die SPT-Registry-Version wurde auf 1.1.0 synchronisiert.
+15. Buffett autorisiert das ausgewählte Aktiensymbol serverseitig vor der Verified-Display-Hydration.
+16. Der Buffett-Entitlement-Endpunkt lehnt Nicht-Aktien vor Quota-Verbrauch ab.
+17. Unit-/Contract-Regressionen prüfen Authorization-before-Hydration und Stock-Gate-before-Quota strukturell.
+18. Der Branch ist mit `main@a8d384154ff2eb1bfe74108eb4a4119cbab2a040` synchronisiert; die aus PR #457 stammende Quality-Projektion wurde semantisch auf SPT v1.1 ausgerichtet.
 
 ### Noch offen vor Merge-Readiness
 
-1. Buffett-Consumer ruft serverseitige ADR-0034-Autorisierung **vor** `/verified-display` auf.
-2. Buffett-Entitlement lehnt Nicht-Aktien vor Quota-Verbrauch ab.
-3. TypeScript-, Unit-, Contract-, Governance- und Build-Evidence wird auf dem finalen PR-Head erhoben.
+1. TypeScript-/Lint-Evidence auf dem finalen PR-Head.
+2. Unit-/Contract-/Architecture-Test-Evidence auf dem finalen PR-Head.
+3. Production-Build-Evidence auf dem finalen PR-Head.
+4. Governance-/Security-Gates auf dem finalen PR-Head.
 
 ---
 
@@ -190,10 +216,12 @@ Das ist keine semantische Supersession von ADR-0032: die ältere Entscheidung bl
 - Kein Bootstrap-/Synthetic-Wert wird zu verified finance evidence hochgestuft.
 - Fehlende Evidence bleibt fail-closed/partial/unavailable.
 - Display-Contract bleibt `executionPriceEligible=false`.
-- Buffett-Quota-/Entitlement-Gate bleibt serverseitige Authority.
+- Buffett-Quota-/Entitlement-Gate ist serverseitige Authority und wird vor Provider-Hydration ausgeführt.
+- Nicht-Aktien werden vor Quota-Verbrauch abgewiesen.
 - Keine AuthN-/AuthZ- oder IAM-Abschwächung.
 - Keine Render-, Supabase- oder Stripe-Mutation durch diese Revalidation.
 - Operational Telemetry und revisionsrelevante Audit-Evidence bleiben getrennte Verantwortungsbereiche.
+- Quality Center bleibt read-only/non-authorizing und referenziert die fachliche SPT-Authority nur zur Strukturprüfung.
 
 ---
 
@@ -201,16 +229,17 @@ Das ist keine semantische Supersession von ADR-0032: die ältere Entscheidung bl
 
 Vor Abschluss dieser Revalidation müssen mindestens erfüllt sein:
 
-1. finaler Main-Sync und Korrelation zu parallel gemergten Änderungen;
-2. keine aktive zweite ADR-/Authority-ID für den Verified-Display-Scope — **strukturell erfüllt im aktuellen Branch**;
-3. Buffett entitlement-first + stock-only server validation;
-4. Unit-/Contract-Test für Verified Display und Buffett Stock-only;
-5. Test der Entitlement-Reihenfolge und Nicht-Aktien-DENY-Regel;
-6. Test der 90-Sekunden-Cadence inklusive Foreground-Refresh-Verschiebung;
-7. Dokumentations-/Registry-Hygiene;
-8. TypeScript/Lint;
-9. Production Build;
-10. erforderliche PR-Governance-/Security-Checks.
+1. finaler Main-Sync und Korrelation zu parallel gemergten Änderungen — **erfüllt für `main@a8d384154ff2eb1bfe74108eb4a4119cbab2a040`; PR #457 korreliert**;
+2. keine aktive zweite ADR-/Authority-ID für den Verified-Display-Scope — **erfüllt**;
+3. Buffett entitlement-first + stock-only server validation — **implementiert, finale Test-Evidence ausstehend**;
+4. Unit-/Contract-Test für Verified Display und Buffett Stock-only — **Tests vorhanden, finaler Lauf ausstehend**;
+5. Test der Entitlement-Reihenfolge und Nicht-Aktien-DENY-Regel — **Tests vorhanden, finaler Lauf ausstehend**;
+6. Test der 90-Sekunden-Cadence inklusive Foreground-Refresh-Verschiebung — **Tests vorhanden, finaler Lauf ausstehend**;
+7. Quality-Projection-Korrelation mit SPT v1.1 — **implementiert, finaler Architecture-Test ausstehend**;
+8. Dokumentations-/Registry-Hygiene — **finaler Governance-Lauf ausstehend**;
+9. TypeScript/Lint — **ausstehend**;
+10. Production Build — **ausstehend**;
+11. erforderliche PR-Governance-/Security-Checks — **ausstehend**.
 
 Bis die verbleibenden technischen Gates erfüllt sind, bleibt dieses Evidence-Dokument `draft` und ADR-0032 wird nicht als erneut vollständig verifiziert behauptet.
 
@@ -226,6 +255,7 @@ Bis die verbleibenden technischen Gates erfüllt sind, bleibt dieses Evidence-Do
 - Runtime: `docs/adr/ADR-0083-server-runtime-architecture-consolidation.md`, `docs/adr/ADR-0075-phase-3-4-7-runtime-facade.md`
 - Buffett Entitlement: `docs/adr/ADR-0034-central-subscription-entitlements-and-buffett-access.md`
 - Scoring: `docs/adr/ADR-0087-single-scoring-architecture-uai-model-registry.md`
+- Quality projection: `src/platform/Quality/ValueChain/FintechValueChainQualityProjection.ts`
 - PR: #458
 
-**Revalidation state:** DRAFT — Architektur-/Dokumentkorrelation konsolidiert; technische Buffett-Entitlement- und finale Validierungs-Gates noch offen.
+**Revalidation state:** DRAFT — Architektur-/Dokumentkorrelation, Buffett-Entitlement-P0-Gates und Main-/Quality-Korrelation sind umgesetzt; finale technische Validierungs-Evidence steht noch aus.
