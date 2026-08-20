@@ -5,7 +5,7 @@ import {
 } from '../../src/platform/Validators/MandatoryValidatorCatalog';
 
 describe('MandatoryValidatorCatalog', () => {
-  it('represents the exact 16 Chapter-12 mandatory validators without inventing coverage', () => {
+  it('represents the exact 16 Chapter-12 mandatory validators as executable capabilities', () => {
     const snapshot = new MandatoryValidatorCatalog().snapshot();
 
     expect(CHAPTER_12_MANDATORY_VALIDATORS).toEqual([
@@ -26,10 +26,9 @@ describe('MandatoryValidatorCatalog', () => {
       'KnowledgeValidator',
       'TwinValidator',
     ]);
-    expect(snapshot).toMatchObject({ total: 16, available: 5, partial: 3, notAvailable: 8, complete: false });
-    expect(snapshot.validators.find((item) => item.name === 'NamingValidator')?.availability).toBe('AVAILABLE');
-    expect(snapshot.validators.find((item) => item.name === 'KnowledgeValidator')?.availability).toBe('NOT_AVAILABLE');
-    expect(snapshot.validators.find((item) => item.name === 'TwinValidator')?.availability).toBe('NOT_AVAILABLE');
+    expect(snapshot).toMatchObject({ total: 16, available: 16, partial: 0, notAvailable: 0, complete: true });
+    expect(snapshot.validators.every((item) => item.availability === 'AVAILABLE')).toBe(true);
+    expect(snapshot.validators.every((item) => item.sources.includes('src/platform/Validators/Chapter12ValidatorRunner.ts'))).toBe(true);
   });
 
   it('rejects duplicate bindings instead of allowing ambiguous authority', () => {

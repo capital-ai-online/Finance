@@ -2,10 +2,12 @@ import type {
   RepositoryQualityDomain,
   RepositoryQualityObservation,
 } from '../../Governance/Contracts/RepositoryQualityEvidence';
+import type { Chapter12ValidationReport } from '../../Validators/Chapter12ValidatorContract';
 import type { MandatoryValidatorCoverageSnapshot } from '../../Validators/MandatoryValidatorCatalog';
+import type { FintechValueChainQualityReport } from '../ValueChain/FintechValueChainQualityProjection';
 
-export const QUALITY_CENTER_CONTRACT_VERSION = 'quality-center-contract/1.1.0' as const;
-export const QUALITY_CENTER_REPORT_SCHEMA = 'quality-center-report/1.1.0' as const;
+export const QUALITY_CENTER_CONTRACT_VERSION = 'quality-center-contract/1.3.0' as const;
+export const QUALITY_CENTER_REPORT_SCHEMA = 'quality-center-report/1.3.0' as const;
 export const QUALITY_CENTER_NON_AUTHORIZING_STATEMENT =
   'Quality Center results are evidence and measurement only. Governance, Compliance, Supervisor and Human/CODEOWNER controls retain their existing authority; Quality Center cannot authorize merge, release, deployment or production mutation.' as const;
 
@@ -188,9 +190,11 @@ export interface QualityCenterReport {
   checkedAt: string;
   repositoryObservation: RepositoryQualityObservation;
   mandatoryValidators: MandatoryValidatorCoverageSnapshot;
+  chapter12Validation: Chapter12ValidationReport;
   gateReport: QualityGateReport;
   qualityScore: QualityScoreSnapshot;
   coverage: QualityCoverageSnapshot;
+  fintechValueChain: FintechValueChainQualityReport;
   technicalDebt: TechnicalDebtSnapshot;
   eventPublication: QualityEventPublicationSummary;
   governanceRefs: readonly string[];

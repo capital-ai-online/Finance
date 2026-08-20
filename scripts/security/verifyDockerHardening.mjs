@@ -18,6 +18,9 @@ const requirements = [
   ['private runtime temp permissions', /chmod\s+0700\s+\/tmp\/capitalai/],
   ['container healthcheck', /HEALTHCHECK[\s\S]*\/healthz/],
   ['direct node PID 1 command', /CMD\s*\[\s*"node"\s*,\s*"dist\/server\.cjs"\s*\]/],
+  ['explicit CI source-commit build arg', /^ARG\s+RELEASE_SOURCE_COMMIT\s*$/m],
+  ['explicit Render source-commit fallback arg', /^ARG\s+RENDER_GIT_COMMIT\s*$/m],
+  ['source commit scoped to build command', /RUN\s+RELEASE_SOURCE_COMMIT="\$\{RELEASE_SOURCE_COMMIT:-\$RENDER_GIT_COMMIT\}"\s+npm run build/],
 ];
 
 const forbidden = [
@@ -26,6 +29,7 @@ const forbidden = [
   ['root runtime user', /^USER\s+root\s*$/m],
   ['production npm shim command', /CMD\s*\[\s*"npm"/],
   ['runtime artifacts owned by application user', /COPY\s+--from=builder\s+--chown=capitalai:capitalai/],
+  ['source commit persisted as image ENV', /^ENV\s+RELEASE_SOURCE_COMMIT\b/m],
 ];
 
 const ignoreRequirements = [
