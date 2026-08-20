@@ -73,4 +73,40 @@ describe('Documentary Maintenance Agent', () => {
     const plan = await planDocumentaryMaintenance({ repoRoot: root, freshness, recommendation, provider });
     expect(() => applyDocumentaryMaintenancePlan({ repoRoot: root, branchName: 'agent/documentary-maintenance-main-deny', plan })).toThrow(/checked-out branch mismatch/);
   });
+
+  it('skips semantic proposals that exceed the document size boundary', async () => {
+    const root = setupRepo();
+    const freshness = analyzeSemanticFreshness({ repoRoot: root, correlationId: 'oversized-proposal', sourceCommit: 'e'.repeat(40), sourceChanges: [{ path: 'src/platform/Foo/service.ts' }] });
+    const recommendation = observeDocumentaryMaintenance(freshness, []);
+    const oversizedProvider: DocumentarySemanticMaintenanceProvider = {
+      async assessFreshness() {
+        return { stale: true, confidence: 0.99, reason: 'Test oversized proposal.', provider: 'test:model', evidenceIds: ['E-1'] };
+      },
+      async proposeUpdate() {
+        return { content: 'x'.repeat((256 * 1024) + 1), provider: 'test:model', evidenceIds: ['E-2'] };
+      },
+    };
+    const plan = await planDocumentaryMaintenance({ repoRoot: root, freshness, recommendation, provider: oversizedProvider });
+    expect(plan.patches).toHaveLength(0);
+    expect(plan.skipped.some((item) => item.reason.includes('exceeds 262144 bytes'))).toBe(true);
+  });
+
+  it('rejects a symlinked canonical Document Registry before mutation', async () => {
+    const root = setupRepo();
+    const freshness = analyzeSemanticFreshness({ repoRoot: root, correlationId: 'registry-symlink', sourceCommit: 'f'.repeat(40), sourceChanges: [{ path: 'src/platform/Foo/service.ts' }] });
+    const recommendation = observeDocumentaryMaintenance(freshness, []);
+    const plan = await planDocumentaryMaintenance({ repoRoot: root, freshness, recommendation, provider });
+    git(root, ['switch', '-c', 'agent/documentary-maintenance-registry-symlink']);
+
+    const registryPath = path.join(root, 'docs/governance/document-registry.json');
+    const targetPath = path.join(root, 'docs/governance/document-registry-target.json');
+    fs.renameSync(registryPath, targetPath);
+    fs.symlinkSync('document-registry-target.json', registryPath);
+
+    expect(() => applyDocumentaryMaintenancePlan({
+      repoRoot: root,
+      branchName: 'agent/documentary-maintenance-registry-symlink',
+      plan,
+    })).toThrow(/regular non-symlink file/);
+  });
 });
