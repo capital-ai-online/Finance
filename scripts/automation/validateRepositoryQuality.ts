@@ -1,4 +1,6 @@
 import { RepositoryQualityCoordinator } from '../../src/platform/Quality/RepositoryQuality/RepositoryQualityCoordinator';
+import { QualityCenterOrchestrator } from '../../src/platform/Quality/Orchestration/QualityCenterOrchestrator';
+import { ValidatorRegistry } from '../../src/platform/Validators/ValidatorRegistry';
 import { createDefaultRepositoryQualityAdapters } from './repositoryQualityAdapters';
 
 function resolveSourceCommit(): string | null {
@@ -6,11 +8,13 @@ function resolveSourceCommit(): string | null {
   return /^[0-9a-f]{40}$/i.test(candidate) ? candidate : null;
 }
 
-const coordinator = new RepositoryQualityCoordinator(createDefaultRepositoryQualityAdapters());
-const observation = coordinator.observe({
+const registry = new ValidatorRegistry(createDefaultRepositoryQualityAdapters());
+const coordinator = new RepositoryQualityCoordinator(registry);
+const qualityCenter = new QualityCenterOrchestrator(coordinator);
+const report = qualityCenter.run({
   repoRoot: process.cwd(),
   sourceCommit: resolveSourceCommit(),
 });
 
-process.stdout.write(`${JSON.stringify(observation, null, 2)}\n`);
-if (observation.blocking) process.exitCode = 1;
+process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+if (report.repositoryObservation.blocking || report.gateReport.blocking) process.exitCode = 1;

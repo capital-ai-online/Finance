@@ -2,7 +2,7 @@
 
 ## Enterprise Component
 
-Status: Unspecified
+Status: Implemented Core Registry
 
 Version: 1.0.0
 
@@ -12,39 +12,31 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Fuer diese Komponente existiert keine funktionale Spezifikation. Der urspruengliche, vom
-Enterprise Bootstrapper generierte Platzhaltertext ("Describe the responsibility of the
-Validators component.") wurde entfernt, um keine nicht existierende Spezifikation vorzutaeuschen
-(No-Demo-Data-Policy, docs/DATENSCHUTZ_PROTOKOLL.md).
+`src/platform/Validators` stellt die zentrale, regelneutrale Validator Registry fuer das Quality Center bereit.
 
----
+Die Registry besitzt **keine fachliche Rule-Authority**. Sie registriert und loest Validatoren nach Quality-Domaene auf. Fachregeln verbleiben in den jeweils zustaendigen Komponenten, insbesondere Governance/Documentary, Vocabulary, Release sowie Security & Compliance.
+
+## Implemented
+
+- `ValidatorRegistry.ts`
+- deterministische Registrierung und Aufloesung je Quality-Domaene
+- Duplicate-Domain-DENY
+- kanonische Reihenfolge gemaess `REPOSITORY_QUALITY_REQUIRED_DOMAINS`
+- Composition vorhandener Domain-Validatoren ohne Regelduplikation
+
+Die derzeitige Registry-Abdeckung ist eine operative Teilmenge der in ESS-0001-CONTRACTS Chapter 12 vorgesehenen Pflichtvalidatoren. Nicht vorhandene Validator-Evidence darf nicht als PASS interpretiert werden.
 
 ## ESS Reference
 
-ESS-0001
-
-ESS-0001-CONTRACTS
-
----
-
-## ADR References
-
-None
-
----
+- ESS-0001
+- ESS-0001-CONTRACTS Chapter 12
+- ESS-0005 — Quality Center
+- ESS-0006 — Security & Compliance
 
 ## Dependencies
 
-Keine - es existiert kein Code.
+- `src/platform/Governance/Contracts/RepositoryQualityEvidence.ts`
 
----
+## Authority Boundary
 
-## Events
-
-Keine - es existiert kein Code.
-
----
-
-## Notes
-
-ARCH-AUDIT-0002 (J5, 2026-08-02): fuer diese Komponente existiert ausser dem vom Enterprise Bootstrapper generierten Platzhaltertext keine funktionale Spezifikation und kein Code. Status auf 'unspecified' korrigiert, um den Zustand ehrlich abzubilden - vorher suggerierte 'development' aktive Arbeit, die nicht stattfindet. Die Komponente kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden.
+Die Registry darf weder Regeln, Severity-Stufen oder Schwellwerte definieren noch Merge, Release, Deployment oder Produktionsmutationen autorisieren.

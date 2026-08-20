@@ -1,26 +1,48 @@
 {
   "name": "Validators",
   "version": "1.0.0",
-  "status": "unspecified",
+  "status": "implemented-core-registry",
   "owner": "CAPITAL-AI",
-  "description": "",
+  "description": "Central rule-neutral ValidatorRegistry for ESS-0005 Quality Center; domain rules remain in their owning Governance, Compliance, Release, Documentary and Vocabulary components.",
   "category": "platform",
   "ess": [
     "ESS-0001",
-    "ESS-0001-CONTRACTS"
+    "ESS-0001-CONTRACTS",
+    "ESS-0005",
+    "ESS-0006"
   ],
-  "adr": [],
-  "dependencies": [],
+  "adr": [
+    "ADR-0016",
+    "ADR-0096"
+  ],
+  "dependencies": [
+    "src/platform/Governance"
+  ],
   "events": {
     "produces": [],
     "consumes": []
   },
   "knowledge": [],
-  "interfaces": [],
-  "contracts": [],
+  "interfaces": [
+    "ValidatorRegistry"
+  ],
+  "contracts": [
+    "repository-quality-observation/1.1.0"
+  ],
   "documentation": [
     "README.md"
   ],
-  "tests": [],
-  "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): fuer diese Komponente existiert ausser dem vom Enterprise Bootstrapper generierten Platzhaltertext keine funktionale Spezifikation und kein Code. Status auf 'unspecified' korrigiert, um den Zustand ehrlich abzubilden - vorher suggerierte 'development' aktive Arbeit, die nicht stattfindet. Die Komponente kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden."
+  "tests": [
+    "tests/unit/validatorRegistry.test.ts"
+  ],
+  "implementation": {
+    "implementedAreas": [
+      "central validator registration",
+      "deterministic domain resolution",
+      "duplicate validator rejection"
+    ],
+    "remainingContractScope": [
+      "full coverage of all mandatory Chapter-12 validators"
+    ]
+  }
 }

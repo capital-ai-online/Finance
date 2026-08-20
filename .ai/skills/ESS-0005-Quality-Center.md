@@ -21,31 +21,33 @@ classification:
   contractAuthority: ESS-0001-CONTRACTS
   note: >
     Dieses Dokument spezifiziert ausschliesslich die Komponente src/platform/Quality.
-    Validator-Basisvertrag, Severity-Stufen und Quality Gates verbleiben in
-    ESS-0001-CONTRACTS Chapter 12.
+    Validator-Basisvertrag, Severity-Stufen, Quality Gates, Metriken und Schwellwerte
+    verbleiben in ESS-0001-CONTRACTS Chapter 12.
 
 authority:
-
   controls:
-    - Validator Registry
+    - Validator Registry Integration
     - Quality Gate Ausfuehrung
     - Quality Score Berechnung
     - Technical Debt Register
     - Testabdeckung
-
+    - QM Dokumentationskonsistenz
   collaborates:
     - Documentary Engine
     - Supervisor
     - Platform Director
     - Governance Control Plane
+    - Security & Compliance
     - Release Center
-
   cannot_modify:
     - Enterprise Specifications
     - Architecture Decision Records
     - Enterprise Contracts
     - Quellcode
     - Schwellwerte
+    - Governance Authorities
+    - Compliance Regeln
+    - IAM Berechtigungen
 
 crossReference:
   dependsOn:
@@ -54,25 +56,30 @@ crossReference:
   relatedEss:
     - ESS-0002
     - ESS-0003
+    - ESS-0006
     - ESS-0010
     - ESS-0011
     - ESS-0012
     - ESS-0017
   relatedAdr:
     - ADR-0010
+    - ADR-0012
     - ADR-0016
+    - ADR-0030
     - ADR-0096
   relatedComponents:
     - src/platform/Quality
+    - src/platform/Validators
     - src/platform/Governance
+    - src/platform/Compliance
     - src/platform/Documentary/Governance
     - src/platform/Vocabulary
     - src/platform/Release
-    - src/platform/Validators
     - src/platform/Telemetry
     - tests
   relatedSkills:
     - .ai/skills/ESS-0001-Contracts.md
+    - .ai/skills/ESS-0006-Security-Compliance.md
     - .ai/skills/ESS-0012-Documentation-Governance.md
     - .ai/skills/ESS-0017-Vocabulary-Governance.md
 
@@ -84,409 +91,353 @@ updated: 2026-08-20
 
 ## Enterprise Purpose
 
-Dieses Dokument spezifiziert die Komponente `src/platform/Quality`.
+`src/platform/Quality` ist die zentrale Ausfuehrungs-, Mess- und Orchestrierungsgrenze fuer die in ESS-0001-CONTRACTS Chapter 12 definierten Validation-&-Quality-Contracts.
 
-ESS-0001-CONTRACTS Chapter 12 definiert die verbindlichen Validierungs- und
-Qualitätsverträge — 16 Pflichtvalidatoren, Severity-Stufen, acht Quality Gates.
+Das Quality Center **fuehrt aus und misst**. Es legt keine fachlichen Regeln, Severity-Stufen, Schwellwerte, Governance-Authorities oder Compliance-Anforderungen fest.
 
-Dieses Dokument beschreibt ausschließlich, **wie** das Quality Center diese Verträge
-ausführt.
-
-Es definiert keine Regeln, keine Schweregrade und keine Schwellwerte.
+Ein Quality Gate ohne ausfuehrbare oder nachvollziehbar als fehlend ausgewiesene Evidence darf niemals als bestanden gelten. Ein Score darf niemals manuell gesetzt oder aus fehlender Evidence konstruiert werden.
 
 ---
 
-# Abgrenzung
+# Chapter 1 — Position und Abgrenzung
 
-| Dokument | Verantwortung |
+## Normative Verantwortungen
+
+| Authority | Verantwortung |
 |---|---|
-| ESS-0001-CONTRACTS Chapter 12 | Validator-Vertrag, Severity, Quality Gates, Metriken |
-| ESS-0011-CONTRACTS | Coverage-Achsen der Traceability |
-| ESS-0012-CONTRACTS | Governance-Regelwerk |
-| **ESS-0005** | **Komponentenspezifikation Quality Center** |
+| ESS-0001-CONTRACTS Chapter 12 | Validator-Vertrag, Severity, acht Quality Gates, Quality-Metriken, Schwellwerte |
+| ESS-0001-CONTRACTS Chapter 11 / ESS-0006 | Security-/Compliance-Regeln und Evidence-Semantik |
+| ESS-0012-CONTRACTS | Documentation-Governance-Regelwerk |
+| ESS-0011-CONTRACTS | Traceability-/Coverage-Achsen |
+| ESS-0017 | Vocabulary-/Terminologie-Regeln |
+| Governance Control Plane | neutrale, wiederverwendbare Authority-/Evidence-Vertraege |
+| **ESS-0005** | **Ausfuehrung, Aggregation und Messung im Quality Center** |
 
-Das Quality Center **führt aus**. Es legt nicht fest.
+## Dependency Boundary
 
----
+Das Quality Center konsumiert den neutralen Repository-Quality-Evidence-Vertrag aus `src/platform/Governance` und die zentrale Registry aus `src/platform/Validators`.
 
-# Enterprise Principle
+Fachliche Cross-Domain-Validatoren werden ueber eine Composition-Schicht injiziert. Dadurch entstehen keine direkten Quality-Abhaengigkeiten, die Governance-, Compliance-, Release-, Documentary- oder Vocabulary-Authority duplizieren.
 
-Qualität ist keine Bewertung.
-
-Qualität ist eine Messung.
-
-Ein Quality Gate ohne ausführbare Prüfung ist eine Absichtserklärung.
-
-Ein Score, der manuell gesetzt werden kann, ist kein Score.
+Das Quality Center besitzt insbesondere keine Merge-, Release-, Deployment-, IAM- oder Produktionsmutations-Authority.
 
 ---
 
-# Position in der Architektur
+# Chapter 2 — Komponentenarchitektur
 
-Querschnittsmodul gemäß ESS-0001-CONTRACTS Chapter 16.
+## ValidatorRegistry
 
-Zulässige Abhängigkeiten: Core, Shared.
+`src/platform/Validators/ValidatorRegistry.ts`
 
-Zusätzlich lesend: Registry, Knowledge, Documentary — zur Auswertung der Prüfgegenstände.
+Verantwortung:
 
-Unzulässig: Version Manager, Supervisor, Platform Director.
+- Registrierung und Aufloesung zentral konsumierter Validatoren;
+- deterministische Reihenfolge;
+- Duplicate-Domain-DENY;
+- Erweiterbarkeit fuer die Pflichtvalidatoren aus Chapter 12.
 
-Für repository-weite Quality-Observation wird der neutrale Evidence-Contract aus
-`src/platform/Governance` konsumiert. Cross-Domain-Validatoren werden über eine externe
-Composition-Schicht injiziert; dadurch entstehen keine direkten Quality-Abhängigkeiten auf
-Release, VersionManager, Documentary Governance oder Vocabulary.
+Die Registry definiert keine Validator-Regel selbst. Der vollstaendige Pflichtvalidator-Katalog bleibt durch ESS-0001-CONTRACTS autoritativ; noch nicht angebundene Validatoren werden nicht als vorhanden behauptet.
 
----
+## RepositoryQualityCoordinator
 
-# End of Chapter 1
+`src/platform/Quality/RepositoryQuality/RepositoryQualityCoordinator.ts`
 
----
+Verantwortung:
 
-# Chapter 2
+- Ausfuehrung der registrierten Repository-Quality-Validatoren;
+- normalisierte Evidence gemaess `repository-quality-observation/1.1.0`;
+- deterministische Reihenfolge;
+- `PASS`, `WARN`, `FAIL`, `NOT_AVAILABLE`;
+- fail-closed bei fehlenden oder fehlerhaften Pflichtvalidatoren;
+- optionale Bindung an einen vollstaendigen Source-Commit;
+- ausdrueckliche Kennzeichnung als non-authorizing Evidence.
 
-# Komponentenarchitektur
+## QualityCenterContract
 
-## Kernkomponenten
+`src/platform/Quality/Contracts/QualityCenterContract.ts`
 
-### ValidatorRegistry
+Der Vertrag `quality-center-contract/1.0.0` verbindet Repository-Evidence, Gate-Ergebnisse, Quality-Messungen und Technical-Debt-Evidence zu einem einheitlichen Quality-Center-Report.
 
-Registrierung und Auflösung sämtlicher Validatoren.
+Dieser Vertrag ist eine Orchestrierungs- und Evidence-Schnittstelle. Er ersetzt keine bestehende Governance- oder Compliance-Authority.
 
-Verantwortung
+## QualityGateRunner
 
-Registrierung der 16 Pflichtvalidatoren aus Chapter 12
+`src/platform/Quality/Gates/QualityGateRunner.ts`
 
-Registrierung zusätzlicher Validatoren
+Die acht Gate-IDs entsprechen Chapter 12:
 
-Versionierung der Validatoren
+1. Contract-Konformitaet
+2. Architektur-Konformitaet
+3. Versionskonformitaet
+4. Dokumentationsstatus
+5. Teststatus
+6. Sicherheitsauswirkungen
+7. Compliance-Auswirkungen
+8. Build-Ergebnis
 
-Auflösung von Ausführungsreihenfolgen
+Ein Gate mit blockierender Evidence ist `FAIL`.
 
----
+Ein Gate ohne vollstaendige technische Evidence ist `NOT_AVAILABLE` und wird niemals zu PASS hochgestuft.
 
-### GateRunner
+Ein Gate ist nur `PASS`, wenn die fuer dieses Gate benoetigte Evidence vollstaendig vorliegt und keinen blockierenden Befund enthaelt.
 
-Ausführung der acht Quality Gates.
+## QualityScoreCalculator
 
-Verantwortung
+`src/platform/Quality/Scoring/QualityScoreCalculator.ts`
 
-Zuordnung Validator zu Gate
+Verbindliche Achsen gemaess Chapter 12:
 
-Ausführung in fester Reihenfolge
+- Documentation Score
+- Test Score
+- Architecture Score
+- Security Score
+- Knowledge Score
+- Metadata Score
+- Twin Score
 
-Aggregation der Ergebnisse
+Jede Messung besitzt einen Wertebereich 0..100 sowie eine Source und Authority-Referenzen. Fehlende Messachsen werden explizit ausgewiesen. Ein Quality Score wird niemals manuell gesetzt.
 
-Gate-Entscheidung bestanden oder nicht bestanden
+Die Implementierung erzeugt keinen Gesamtwert aus einer unvollstaendigen Messmenge. Ein vollstaendiger Gesamtwert wird deterministisch aus den sieben vorhandenen Messachsen berechnet; die Schwellwerte verbleiben unveraendert in Chapter 12.
 
-Ein Gate gilt ausschließlich als bestanden, wenn keine Critical- und keine High-Befunde
-vorliegen.
+## TechnicalDebtRegister
 
----
+`src/platform/Quality/TechnicalDebt/TechnicalDebtRegister.ts`
 
-### ScoreCalculator
+Jede technische Schuld besitzt mindestens:
 
-Berechnung der Qualitätskennzahlen aus Chapter 12.
+- ID
+- betroffene Komponente
+- Ursache
+- Auswirkung
+- Aufwand
+- Prioritaet
+- Zielversion
+- Erstellungszeitpunkt
+- Source-Referenzen
+- Status
 
-Documentation Score
+Ein Eintrag wird niemals stillschweigend ueberschrieben, geloescht oder geschlossen. `resolve()` verlangt Resolution-Evidence und einen nachvollziehbaren Abschlusszeitpunkt.
 
-Test Score
+## DocumentationConsistencyValidator
 
-Architecture Score
+`src/platform/Quality/Validators/DocumentationConsistencyValidator.ts`
 
-Security Score
+Der Validator ergaenzt den bestehenden Documentation-Hygiene-Validator ausschließlich um QM-spezifische Konsistenzpruefungen:
 
-Knowledge Score
+- Quality-/Validator-Manifeste;
+- ESS-0005-/README-/Registry-Versionskonsistenz;
+- deklarierte Quality-Vertraege;
+- Existenz deklarierter Quality-Tests;
+- CLI-Vertrag;
+- veraltete No-Implementation-Aussagen.
 
-Metadata Score
+Er dupliziert keine der 57 Documentation-Governance-Regeln aus ESS-0012-CONTRACTS.
 
-Twin Score
+## QualityCenterOrchestrator
 
-Sämtliche Werte werden ausschließlich berechnet.
+`src/platform/Quality/Orchestration/QualityCenterOrchestrator.ts`
 
----
+Der Orchestrator erzeugt aus Coordinator, GateRunner, ScoreCalculator und TechnicalDebtRegister einen zusammenhaengenden, read-only Quality-Center-Report.
 
-### TechnicalDebtRegister
+Der Report fuehrt Governance- und Compliance-Referenzen explizit mit und traegt einen non-authorizing Contract-Hinweis.
 
-Erfassung technischer Schulden gemäß Chapter 12.
+## CoverageCollector
 
-Verantwortung
-
-Aufnahme mit ID, Ursache, Auswirkung, Aufwand, Priorität, Zielversion
-
-Verfolgung bis zur Behebung
-
-Meldung wachsender Schulden
-
-Technische Schulden werden niemals stillschweigend geschlossen.
-
----
-
-### CoverageCollector
-
-Sammlung der Testabdeckung aus den Testbereichen gemäß Chapter 12.
+Der CoverageCollector bleibt Teil des ESS-0005-Zielbilds. Ein produktiver Collector darf erst als implementiert gelten, wenn reale Messdaten aus den vorgesehenen Testbereichen vorliegen:
 
 ```text
-tests/unit  tests/integration  tests/contract
-tests/architecture  tests/security  tests/performance  tests/e2e
+tests/unit
+tests/integration
+tests/contract
+tests/architecture
+tests/security
+tests/performance
+tests/e2e
 ```
 
----
-
-### RepositoryQualityCoordinator — P0-P2 Baseline
-
-Der `RepositoryQualityCoordinator` ist die erste ausführbare Teilimplementierung des
-Quality Centers. Er aggregiert ausschließlich bereits erzeugte, normalisierte und
-read-only Quality Evidence.
-
-Verantwortung
-
-- deterministische Reihenfolge erforderlicher Quality-Domänen;
-- Aggregation zu `PASS`, `WARN`, `FAIL` oder `NOT_AVAILABLE`;
-- fail-closed Evidence bei fehlenden/fehlerhaften Adaptern;
-- Bindung an optionalen vollständigen Source-Commit;
-- ausdrückliche Kennzeichnung als non-authorizing Evidence.
-
-Er definiert keine Validator-Regeln, keine Schwellwerte, keine Release-Entscheidung und
-keine Mutation. Die vollständige ValidatorRegistry und die acht Quality Gates bleiben ein
-separater inkrementeller ESS-0005-Scope.
+Verzeichnisexistenz allein ist keine Coverage-Evidence.
 
 ---
 
-# End of Chapter 2
-
----
-
-# Chapter 3
-
-# Interfaces
+# Chapter 3 — Interfaces
 
 ## IValidatorRegistry
 
 ```text
-register(validator)      Aufnahme eines Validators
-resolve(contractArea)    Validatoren je Vertragsbereich
-list()                   sämtliche registrierten Validatoren
+register(validator)
+resolve(domain)
+list()
+domains()
 ```
+
+## RepositoryQualityObservation
+
+```text
+observe(scope)
+```
+
+Contract: `repository-quality-observation/1.1.0`
 
 ## IQualityGate
 
 ```text
-identifier()             Gate-Kennung
-validators()             zugeordnete Validatoren
-execute(scope)           Ausführung
-result()                 bestanden oder nicht bestanden
+identifier()
+validators()
+execute(scope)
+result()
 ```
+
+Ausfuehrbare Core-Entsprechung: `QualityGateRunner.run(observation)`.
 
 ## IScoreCalculator
 
 ```text
-calculate(component)     sämtliche Kennzahlen
-threshold(lifecycle)     Schwellwert je Lebenszyklus
+calculate(measurements)
+threshold(lifecycle)
 ```
+
+Der Core implementiert die Messwertberechnung. Lifecycle-Schwellwerte werden nicht im Quality Center neu definiert oder veraendert.
 
 ## ITechnicalDebtRegister
 
 ```text
-record(debt)             Aufnahme
-list(component)          Schulden je Komponente
-resolve(id, evidence)    Schließen mit Nachweis
+record(debt)
+list(component?)
+resolve(id, evidence)
+snapshot()
 ```
 
-## RepositoryQualityObservation — P0-P2
+## IQualityCenter
 
 ```text
-observe(scope)           read-only Quality-Evidence-Aggregation
+run(scope) -> QualityCenterReport
 ```
 
-Der konkrete Evidence-Contract ist `repository-quality-observation/1.0.0` in
-`src/platform/Governance/Contracts/RepositoryQualityEvidence.ts` und darf keine
-Autorisierungswirkung entfalten.
-
 ---
 
-# End of Chapter 3
+# Chapter 4 — Governance- und Compliance-Orchestrierung
 
----
+## Governance
 
-# Chapter 4
+`src/platform/Governance` stellt den neutralen Evidence-Vertrag bereit. Governance fuehrt keine Quality-Validatoren aus und das Quality Center darf Governance-Authorities nicht veraendern.
 
-# Events
+## Compliance
 
-## Erzeugte Events
+Die bestehende Compliance-Komponente und `runAllScanners()` bleiben unveraendert fachliche Source-of-Evidence. Der Quality-Adapter projiziert reale Scanner-Ergebnisse in den gemeinsamen Evidence-Vertrag.
 
-ValidationStartedEvent
+Mapping fuer die Quality-Orchestrierung:
 
-ValidationCompletedEvent
+- `CRITICAL` / `HIGH` -> blockierende `error` Evidence;
+- `MEDIUM` -> `warning`;
+- `LOW` -> `info`.
 
-ValidationFailedEvent
-
-QualityGatePassedEvent
-
-QualityGateFailedEvent
-
-QualityScoreChangedEvent
-
-TechnicalDebtDetectedEvent
-
-TechnicalDebtResolvedEvent
-
-CoverageCalculatedEvent
-
-## Konsumierte Events
-
-ImplementationCompletedEvent
-
-DocumentationGeneratedEvent
-
-KnowledgeUpdatedEvent
-
-TwinSynchronizedEvent
-
-VersionCalculatedEvent
-
-Die Event-Liste beschreibt den Zielzustand des vollständigen Quality Centers. Die P0-P2
-Repository-Quality-Baseline erzeugt und konsumiert bewusst keine synthetischen EventMesh-Events.
-
----
-
-# End of Chapter 4
-
----
-
-# Chapter 5
-
-# Integration
+Die Original-Severity bleibt als `sourceSeverity` erhalten. Das Mapping veraendert keine Compliance-Regel und keine ISO-Zuordnung.
 
 ## Supervisor
 
-Das Quality Center liefert dem Supervisor gemäß ESS-0002 Gate-Ergebnisse, Befunde und
-Kennzahlen. Der Supervisor bewertet und blockiert.
+Das Quality Center liefert Evidence, Gate-Ergebnisse, Messungen und Debt-Status. Eine technische `blocking`-Kennzeichnung ist ein Evidence-Zustand und keine eigenstaendige Human-/Supervisor-Freigabeentscheidung.
 
-Das Quality Center blockiert selbst nicht — es stellt fest.
+## Release / Version
 
-Ein `blocking: true` in `RepositoryQualityObservation` kennzeichnet deshalb ausschließlich
-einen technischen Fail-closed-Befund. Es ist keine Merge-, Release- oder
-Produktionsautorisierung und keine eigenständige Supervisor-Entscheidung.
-
-## Release / Platform Version Authority
-
-ADR-0096 ersetzt die historische mutierende Version-Manager-Authority. Die aktuelle
-Plattformversions-Authority ist ausschließlich `package.json#version` über den Release
-Control Plane.
-
-P0-P2 liest diese Projektion ausschließlich über einen Composition-Adapter. Das Quality
-Center besitzt keine direkte Release-/VersionManager-Abhängigkeit und verändert keine Version.
-
-## Governance Validator
-
-ESS-0012 ist ein Validator im Sinne von Chapter 12. Sein Regelwerk verbleibt in
-ESS-0012-CONTRACTS und ist unter ADR-0096 auf Documentation-only Scope begrenzt.
-
-P0-P2 konsumiert den bereits implementierten read-only Documentation-Hygiene-Service über
-die Composition-Schicht. Die spätere formale Registrierung in einer vollständigen
-ValidatorRegistry bleibt inkrementeller ESS-0005-Scope.
-
-## Vocabulary Governance
-
-ESS-0017 bleibt die fachliche Authority für kanonische Terminologie. P0-P2 normalisiert
-vorhandene Vocabulary-Findings lediglich in den gemeinsamen Quality-Evidence-Contract und
-erfindet keine Naming-/Terminologie-Regeln.
-
-## Enterprise Traceability
-
-Die Test-Achse der Matrix speist sich aus den Ergebnissen des Quality Center.
+Die Plattformversions-Authority bleibt unter ADR-0096 `package.json#version` ueber den Release Control Plane. Quality liest diese Projektion nur read-only.
 
 ---
 
-# Bekannter Bestand
+# Chapter 5 — Events
 
-Der historische Initialzustand mit null Testdateien und null Validatoren ist nicht mehr
-aktuell. Das Repository besitzt inzwischen eine breite Vitest-/Node-Testbasis sowie mehrere
-ausführbare, domänenspezifische Validatoren.
+Der in ESS-0005 definierte Zielkatalog bleibt:
 
-Mit Repository Quality P0-P2 ist `src/platform/Quality` erstmals teilweise implementiert:
+- ValidationStartedEvent
+- ValidationCompletedEvent
+- ValidationFailedEvent
+- QualityGatePassedEvent
+- QualityGateFailedEvent
+- QualityScoreChangedEvent
+- TechnicalDebtDetectedEvent
+- TechnicalDebtResolvedEvent
+- CoverageCalculatedEvent
 
-- `repository-quality-observation/1.0.0` als neutraler Governance-Evidence-Contract;
-- `RepositoryQualityCoordinator` als read-only Aggregator;
-- Composition-Adapter für Platform Version, Documentation Hygiene,
-  Repository Conventions und Vocabulary Governance;
-- gezielte Unit-Tests für Aggregation, Fail-closed-Verhalten und Adapter-Mapping;
-- `npm run repository:quality:check` als read-only CLI-Einstieg.
+Der aktuelle Quality-Center-Core erzeugt **keine synthetischen EventMesh-Events**. Events duerfen erst nach realer EventMesh-Integration als implementiert deklariert werden.
 
-Nicht als umgesetzt gelten dadurch die vollständige ValidatorRegistry, sämtliche 16
-Pflichtvalidatoren, alle acht Quality Gates, ScoreCalculator, TechnicalDebtRegister und
-CoverageCollector. Diese bleiben inkrementelle Folgearbeit gemäß ESS-0005 und
-ESS-0001-CONTRACTS Chapter 12.
+---
+
+# Chapter 6 — Implementierungsstatus 2026-08-20
+
+## Implementiert
+
+- neutraler Governance-Evidence-Contract;
+- zentrale ValidatorRegistry;
+- RepositoryQualityCoordinator;
+- Composition-Adapter fuer Platform Version, Documentation Hygiene, QM Documentation Consistency, Repository Conventions, Vocabulary und Compliance;
+- QualityCenterContract;
+- QualityGateRunner fuer alle acht Gate-IDs mit Evidence-Coverage-Semantik;
+- QualityScoreCalculator;
+- TechnicalDebtRegister;
+- QualityCenterOrchestrator;
+- QM-Dokumentationskonsistenz-Validator;
+- CLI `npm run repository:quality:check`;
+- gezielte Unit-Tests fuer Registry, Coordinator, Adapter, Gates, Scoring, Debt, Dokumentationskonsistenz und Orchestrator.
+
+## Noch nicht als vollstaendig implementiert zu bewerten
+
+- komplette Abdeckung aller Pflichtvalidatoren aus Chapter 12;
+- vollstaendige Evidence-Abdeckung aller acht Gates;
+- produktiver CoverageCollector mit realen Coverage-Messungen;
+- reale Measurement-Provider fuer alle sieben Quality-Score-Achsen;
+- EventMesh-Integration der Quality Events.
+
+Diese offenen Punkte werden transparent als fehlende Evidence behandelt und niemals als PASS oder Messwert simuliert.
 
 ---
 
 # Enterprise Rules
 
-Kein Contract ohne Validator.
+Kein Contract ohne Validator-Abdeckung.
 
-Kein Quality Gate ohne ausführbare Prüfung.
+Kein Quality Gate ohne ausfuehrbare oder explizit fehlend ausgewiesene Evidence.
 
-Keine Kennzahl ohne Berechnung.
+Keine Kennzahl ohne Messung.
 
-Keine Integration mit Critical-Befunden.
+Keine manuelle Vergabe von Quality Scores.
 
-Keine Änderung von Schwellwerten durch das Quality Center.
+Keine stille Schliessung technischer Schulden.
 
-Keine Blockade durch das Quality Center selbst.
+Keine Aenderung von Quality-Schwellwerten durch das Quality Center.
+
+Keine Duplikation von Governance-, Compliance-, Security-, Release-, Vocabulary- oder Documentation-Regeln.
+
+Keine Merge-, Release-, Deployment- oder Produktionsautorisierung durch Quality Evidence.
 
 ---
 
 # Success Criteria
 
-✓ sämtliche 16 Pflichtvalidatoren registriert und ausführbar
+Das vollstaendige ESS-0005-Zielbild ist erreicht, wenn:
 
-✓ sämtliche acht Quality Gates ausführbar
-
-✓ sämtliche Kennzahlen deterministisch berechnet
-
-✓ sämtliche Testbereiche belegt
-
-✓ technische Schulden vollständig erfasst
-
-✓ keine nicht konforme Änderung integrierbar
+- saemtliche Pflichtvalidatoren aus Chapter 12 registriert und ausfuehrbar sind;
+- saemtliche acht Quality Gates vollstaendige Evidence besitzen;
+- saemtliche sieben Quality-Metriken aus realen Messquellen deterministisch berechnet werden;
+- die vorgesehenen Testbereiche mit realer Coverage-Evidence belegt sind;
+- technische Schulden vollstaendig erfasst und evidenzbasiert geschlossen werden;
+- QM-Dokumentation und Implementierungsmetadaten driftfrei bleiben;
+- reale Quality Events ueber EventMesh integriert sind.
 
 ---
 
 # Enterprise Final Summary
 
-**Document ID** ESS-0005
+**Document ID:** ESS-0005  
+**Titel:** CAPITAL-AI Quality Center  
+**Status:** Enterprise Specification  
+**Version:** 1.1.0
 
-**Titel** CAPITAL-AI Quality Center
+## Governance Statement
 
-**Status** Enterprise Specification
+ESS-0005 bleibt die verbindliche Komponentenspezifikation des Quality Centers. Dieses Implementation-Sync aendert keine Quality-Regeln, Severity-Stufen oder Lifecycle-Schwellwerte; es aktualisiert den realen Umsetzungsstand innerhalb der bereits bestehenden Authority-Grenzen.
 
-**Version** 1.1.0
-
----
-
-# Governance Statement
-
-ESS-0005 ist die verbindliche Komponentenspezifikation des Quality Center.
-
-Abweichungen erfordern eine neue Architecture Decision Record. Die Version 1.1.0 ändert
-keine Quality-Regeln oder Schwellenwerte; sie synchronisiert den Implementierungsstand mit
-ADR-0096 und der P0-P2-Teilimplementierung.
-
----
-
-# Version History
+## Version History
 
 | Version | Status | Beschreibung |
-|----------|--------|--------------|
+|---|---|---|
 | 1.0.0 | Initial Release | Erste Komponentenspezifikation des Quality Center |
-| 1.1.0 | Implementation sync | ADR-0096-/P0-P2-Abgleich; read-only Repository Quality Baseline dokumentiert, keine Regel-/Threshold-Aenderung |
-
----
-
-# End of Document
-
-ESS-0005
-
-CAPITAL-AI Quality Center
-
-Version 1.1.0
+| 1.1.0 | Implementation sync | ADR-0096-/Repository-Quality-Abgleich; Quality-Center-Core dokumentiert, keine neue Rule-/Threshold-Authority |

@@ -1,54 +1,81 @@
 {
   "name": "Quality",
   "version": "1.1.0",
-  "status": "partial-implementation",
+  "status": "core-implementation",
   "owner": "CAPITAL-AI",
-  "description": "ESS-0005 Quality Center baseline with read-only repository-quality evidence aggregation; domain rules remain in their owning components.",
+  "description": "ESS-0005 Quality Center core: validator registry integration, non-authorizing Governance/Compliance orchestration, eight-gate evidence evaluation, deterministic quality scoring, technical-debt management and QM documentation consistency.",
   "category": "platform",
   "ess": [
     "ESS-0001",
     "ESS-0001-CONTRACTS",
-    "ESS-0005"
+    "ESS-0005",
+    "ESS-0006",
+    "ESS-0012",
+    "ESS-0017"
   ],
   "adr": [
+    "ADR-0012",
     "ADR-0016",
+    "ADR-0030",
     "ADR-0096"
   ],
   "dependencies": [
-    "src/platform/Governance"
+    "src/platform/Governance",
+    "src/platform/Validators"
   ],
   "events": {
     "produces": [],
     "consumes": [],
-    "note": "P0-P2 is synchronous read-only evidence aggregation and does not synthesize platform events."
+    "note": "Current core is synchronous read-only quality evidence/orchestration and does not synthesize EventMesh events."
   },
   "knowledge": [],
   "interfaces": [
-    "RepositoryQualityCoordinator"
+    "RepositoryQualityCoordinator",
+    "QualityCenterOrchestrator",
+    "QualityGateRunner",
+    "QualityScoreCalculator",
+    "TechnicalDebtRegister",
+    "DocumentationConsistencyValidator"
   ],
   "contracts": [
-    "repository-quality-observation/1.0.0"
+    "repository-quality-observation/1.1.0",
+    "quality-center-contract/1.0.0"
   ],
   "documentation": [
-    "README.md"
+    "README.md",
+    "docs/architecture/REPOSITORY_QUALITY_P0_P2_IMPLEMENTATION.md",
+    "docs/architecture/QUALITY_CENTER_CORE_ORCHESTRATION.md"
   ],
   "tests": [
     "tests/unit/repositoryQualityCoordinator.test.ts",
-    "tests/unit/repositoryQualityAdapters.test.ts"
+    "tests/unit/repositoryQualityAdapters.test.ts",
+    "tests/unit/validatorRegistry.test.ts",
+    "tests/unit/qualityGateRunner.test.ts",
+    "tests/unit/qualityScoreCalculator.test.ts",
+    "tests/unit/technicalDebtRegister.test.ts",
+    "tests/unit/documentationConsistencyValidator.test.ts",
+    "tests/unit/qualityCenterOrchestrator.test.ts"
   ],
   "implementation": {
-    "level": "partial",
+    "level": "core",
     "implementedAreas": [
       "RepositoryQualityCoordinator",
-      "RepositoryQualityObservation aggregation"
-    ],
-    "plannedAreas": [
-      "ValidatorRegistry",
-      "full Quality Gate Runner",
-      "ScoreCalculator",
+      "ValidatorRegistry integration",
+      "QualityCenterContract",
+      "eight-gate evidence runner",
+      "QualityScoreCalculator",
       "TechnicalDebtRegister",
-      "CoverageCollector"
+      "QM DocumentationConsistencyValidator",
+      "Governance evidence integration",
+      "Compliance scanner evidence integration"
+    ],
+    "remainingContractScope": [
+      "complete evidence coverage for all eight quality gates",
+      "complete coverage of all mandatory Chapter-12 validators",
+      "CoverageCollector and measured coverage ingestion",
+      "measured providers for all seven Quality Score axes",
+      "real EventMesh integration for ESS-0005 lifecycle events"
     ]
   },
-  "note": "P0-P2 implements the first executable ESS-0005 baseline without moving domain authority into Quality."
+  "authorityBoundary": "Quality results are measurement/evidence only and cannot authorize merge, release, deployment, production mutation, policy changes or privilege elevation."
 }

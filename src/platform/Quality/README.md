@@ -2,7 +2,7 @@
 
 ## Enterprise Component
 
-Status: Partial Implementation
+Status: Core Implementation
 
 Version: 1.1.0
 
@@ -12,56 +12,72 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-`src/platform/Quality` is the execution and aggregation boundary defined by ESS-0005. It executes quality measurements; it does not define domain rules, severities, authorities or release permissions.
+`src/platform/Quality` ist die Ausfuehrungs-, Mess- und Orchestrierungsgrenze des Quality Centers gemaess ESS-0005. Das Quality Center definiert **keine** fachlichen Governance-, Compliance-, Security-, Release- oder Dokumentationsregeln und besitzt keine Merge-/Release-/Deployment-Authority.
 
-The P0-P2 repository-quality baseline introduces a read-only `RepositoryQualityCoordinator` that aggregates normalized evidence supplied by adapters. The coordinator depends only on the neutral Governance evidence contract and does not directly import Release, Documentary, VersionManager or Vocabulary implementations.
+## Implemented Quality Center Core
 
-## Implemented Baseline — P0-P2
+- `RepositoryQuality/RepositoryQualityCoordinator.ts` — normalisierte read-only Repository-Evidence;
+- `Contracts/QualityCenterContract.ts` — verbindender, non-authorizing Quality-Center-Vertrag;
+- `Gates/QualityGateRunner.ts` — acht Chapter-12-Gates mit ehrlicher Evidence-Coverage;
+- `Scoring/QualityScoreCalculator.ts` — sieben 0..100-Messachsen; keine manuellen Scores;
+- `TechnicalDebt/TechnicalDebtRegister.ts` — explizites Erfassen und evidenzpflichtiges Schliessen technischer Schulden;
+- `Validators/DocumentationConsistencyValidator.ts` — QM-spezifische Dokument-/Manifest-Konsistenz;
+- `Orchestration/QualityCenterOrchestrator.ts` — einheitlicher Quality-Center-Report;
+- zentrale `src/platform/Validators/ValidatorRegistry`;
+- Composition-Adapter auf vorhandene Release-, Documentary-, Repository-, Vocabulary- sowie Security/Compliance-Pruefungen.
 
-- P0: shared `repository-quality-observation/1.0.0` evidence contract in `src/platform/Governance/Contracts/RepositoryQualityEvidence.ts`;
-- P1: `RepositoryQuality/RepositoryQualityCoordinator.ts` with deterministic domain ordering, aggregation and fail-closed `NOT_AVAILABLE` evidence;
-- P2: composition-layer adapters for existing platform-version, documentation-hygiene, repository-convention and vocabulary validators;
-- CLI composition root: `npm run repository:quality:check`;
-- no source mutation, no auto-fix, no merge/release/deploy authorization.
-
-The broader ESS-0005 target (full validator registry, all eight quality gates, score calculator, technical-debt register and coverage collector) remains incremental and must not be inferred as implemented from this baseline.
-
-## Boundary
+## Contract Chain
 
 ```text
-Governance evidence contract
-        |
-        v
-RepositoryQualityCoordinator (Quality)
-        ^
-        |
-composition adapters
-   |      |       |       |
-Release  Docs  Repository Vocabulary
+Governance Evidence Contract (neutral, read-only)
+                 |
+                 v
+        ValidatorRegistry
+                 |
+                 v
+ RepositoryQualityCoordinator
+                 |
+        +--------+---------+
+        |        |         |
+    GateRunner  Scoring  TechnicalDebtRegister
+        \        |         /
+         QualityCenterOrchestrator
+                 |
+                 v
+      Quality Center Report
+                 ^
+                 |
+      Compliance Evidence Adapter
 ```
 
-Adapters translate existing validator output only. They may not introduce new rules or override the owning domain's authority.
+Governance stellt nur den neutralen Evidence-Vertrag bereit. Compliance bleibt fachliche Authority fuer die bestehenden Scanner und deren Findings. Das Quality Center konsumiert deren Ergebnisse, veraendert aber keine Compliance-Regel.
 
-## ESS Reference
+## Quality Gate Semantics
 
-- ESS-0001
-- ESS-0001-CONTRACTS
+Die acht Gates entsprechen ESS-0001-CONTRACTS Chapter 12. Ein Gate mit unvollstaendiger technischer Evidence wird als `NOT_AVAILABLE` ausgegeben und niemals zu PASS hochgestuft. Blockierende Evidence ergibt `FAIL`.
+
+Der aktuelle Core besitzt vollstaendige Evidence fuer Versions- und QM-Dokumentationsstatus. Contract-, Test- und Build-Gates sowie Teile von Architektur/Security/Compliance benoetigen weitere bestehende oder kuenftige Validator-Evidence und bleiben bis dahin transparent `NOT_AVAILABLE`, sofern kein blockierender Befund vorliegt.
+
+## Quality Scoring
+
+Die sieben verbindlichen Achsen sind Documentation, Test, Architecture, Security, Knowledge, Metadata und Twin. Jede Messung muss einen Wert 0..100 sowie eine Source besitzen. Ein Gesamtwert wird nur bei vollstaendiger Messmenge ausgegeben; fehlende Messachsen werden explizit ausgewiesen.
+
+## Technical Debt
+
+Technische Schulden werden mit ID, Ursache, Auswirkung, Aufwand, Prioritaet, Zielversion und Source-Referenzen registriert. Ein Eintrag kann nur mit Resolution-Evidence geschlossen werden und wird niemals stillschweigend ueberschrieben oder entfernt.
+
+## ESS / ADR References
+
+- ESS-0001-CONTRACTS Chapter 11 und 12
 - ESS-0005 — Quality Center
+- ESS-0006 — Security & Compliance
 - ESS-0012 — Documentation Governance
 - ESS-0017 — Vocabulary Governance
-
-## ADR References
-
+- ADR-0012 — SecurityComplianceAuditor
 - ADR-0016 — ESS Component Specifications
 - ADR-0030 — Release Version Gate
-- ADR-0096 — Governance Control Plane / single authority boundary
-
-## Dependencies
-
-- `src/platform/Governance` — shared non-authorizing evidence contract.
-
-Domain validators are supplied through composition adapters outside the Quality component and therefore do not become direct Quality dependencies.
+- ADR-0096 — Governance Control Plane
 
 ## Events
 
-None in P0-P2. Repository-quality observation is synchronous/read-only evidence and does not synthesize EventMesh events.
+Der Core erzeugt noch keine synthetischen EventMesh-Events. Die in ESS-0005 beschriebenen Events bleiben Zielzustand und duerfen erst bei realer EventMesh-Integration als implementiert deklariert werden.
