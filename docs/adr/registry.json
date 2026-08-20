@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "registryAuthorityId": "AUTH-GOV-ADR-REGISTRY",
-  "version": "1.5.0",
-  "date": "2026-08-19",
+  "version": "1.6.0",
+  "date": "2026-08-20",
   "canonicalLocation": "docs/adr",
   "rules": {
     "newRecordPattern": "ADR-NNNN-<slug>.md",
@@ -28,7 +28,8 @@
     {"authorityId":"AUTH-ADR-PRIVACY-RETENTION-2026-08-19","displayId":"ADR-0092","version":"1.0.0","date":"2026-08-19","lifecycle":"accepted-for-implementation","path":"docs/adr/ADR-0092-privacy-retention-and-lifecycle-hardening.md","legacyAliases":[],"supersedes":[]},
     {"authorityId":"AUTH-ADR-OPEN-SOURCE-MEDIA-RENDERING-2026-08-19","displayId":"ADR-0094","version":"1.0.0","date":"2026-08-19","lifecycle":"accepted","path":"docs/adr/ADR-0094-open-source-pdf-companion-and-short-media-rendering.md","legacyAliases":[],"supersedes":[],"note":"Migrated from parallel PR #446 namespace reservation after PR #446 merged into main before this Governance work package."},
     {"authorityId":"AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19","displayId":"ADR-0095","version":"1.0.0","date":"2026-08-19","lifecycle":"accepted","path":"docs/adr/ADR-0095-privacy-governance-single-source-of-truth.md","legacyAliases":[{"displayId":"ADR-0085","path":"docs/adr/ADR-0085-privacy-governance-single-source-of-truth.md","lifecycle":"legacy-redirect","reason":"legacy duplicate introduced by privacy remediation before namespace reconciliation"}],"supersedes":[]},
-    {"authorityId":"AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19","displayId":"ADR-0096","version":"1.1.0","date":"2026-08-19","lifecycle":"proposed","path":"docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md","legacyAliases":[{"displayId":"ADR-0086","path":"docs/adr/ADR-0086-governance-authority-supersession-and-regulatory-control-mapping.md","lifecycle":"legacy-redirect","reason":"legacy duplicate governance-supersession draft; renumbered because ADR-0086 is already vendor privacy governance"}],"supersedes":[]}
+    {"authorityId":"AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19","displayId":"ADR-0096","version":"1.1.0","date":"2026-08-19","lifecycle":"proposed","path":"docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md","legacyAliases":[{"displayId":"ADR-0086","path":"docs/adr/ADR-0086-governance-authority-supersession-and-regulatory-control-mapping.md","lifecycle":"legacy-redirect","reason":"legacy duplicate governance-supersession draft; renumbered because ADR-0086 is already vendor privacy governance"}],"supersedes":[]},
+    {"authorityId":"AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20","displayId":"ADR-0098","version":"1.0.0","date":"2026-08-20","lifecycle":"proposed","path":"docs/adr/ADR-0098-fintech-core-engine-crypto-module-01.md","legacyAliases":[],"supersedes":[],"note":"FT-CORE-CRYPTO-01: FinTech Core Engine authority boundary with Crypto as Module 01; ADR-0087/SC-2 scoring authority remains protected."}
   ],
   "parallelNamespaceReservations": [],
   "legacyIndex": {
