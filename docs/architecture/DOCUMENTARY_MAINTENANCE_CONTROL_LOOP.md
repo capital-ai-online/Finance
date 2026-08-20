@@ -3,7 +3,8 @@
 Status: IMPLEMENTATION CANDIDATE / DRAFT-PR BOUNDARY  
 Date: 2026-08-20  
 Authority: ESS-0010 + ESS-0002 + ESS-0003 + ESS-0019 + ADR-0096 + ADR-0097  
-Roadmap: Documentary D7/D9, E1/E6, H1/H5
+Roadmap: Documentary D7/D9, E1/E6, H1/H5  
+FinTech value-chain authority: SC-MD-SPT-0001
 
 ## Purpose
 
@@ -86,6 +87,22 @@ Before apply, the current document SHA must match the observed SHA. Apply is bra
 
 The telemetry contract contains no document body, prompt, diff, user identifier, credential or secret. It is a Documentary maintenance slice only and does not create or replace a central Observability platform.
 
+### SC-MD-SPT-0001 value-chain integration
+
+Documentary Maintenance is a **read-only Documentation/Evidence sidecar** around the existing `VC-13-EVENT-TRACEABILITY-SUPERVISOR` stage. It is not a fifteenth financial runtime stage.
+
+The existing Quality projection `fintech-value-chain-quality/1.0.0` remains the repository-native structural/evidence check for the 14-stage value chain. Documentary does not become a Quality authority and Quality does not authorize Documentary mutation.
+
+The integration contract is deliberately one-way with respect to financial runtime semantics:
+
+- Documentary may consume governed repository/change/evidence context and Supervisor/Platform Director evidence;
+- Documentary may emit documentation, maintenance health and PR-review evidence;
+- Documentary must not import or call MarketData, Scoring, Ranking, Eligibility or delivery hotpaths;
+- Documentary must not change market data, classification, score, confidence, ranking, eligibility, provider routing, release or deployment decisions;
+- MarketData, Scoring, Ranking, Orchestrator and application runtime must not gain a direct Documentary or Quality mutation dependency.
+
+The `Supervisor/manifest.json` change is therefore a VC-13 evidence-surface extension only: `decisionAuthority=false` and `mutationAuthority=false` remain explicit.
+
 ### Git host / Draft-PR handoff
 
 `scripts/automation/runDocumentaryMaintenanceControlLoop.ts`:
@@ -115,9 +132,9 @@ The implementation provides explicit package scripts:
 - `documentary:maintenance` — controlled host entry point;
 - `documentary:maintenance:test` — targeted unit suite;
 - `documentary:maintenance:validate` — deterministic closure validator;
-- `documentary:maintenance:prepr` — targeted tests + Documentation Hygiene + Governance Control Plane + closure validator.
+- `documentary:maintenance:prepr` — targeted tests + TypeScript check + Documentation Hygiene + Governance Control Plane + Repository Quality + closure validator.
 
-The closure validator verifies the exact Work Claim ↔ branch diff set, current-main synchronization, ADR-0097 identity, Authority Registry identity, Document Registry records, manifest contracts/tests/version, protected document prefixes, narrow staging and branch/Draft-PR safety markers. `git diff --check` is part of the validator.
+The closure validator verifies the exact Work Claim ↔ branch diff set, current-main synchronization, ADR-0097 identity, Authority Registry identity, Document Registry records, manifest contracts/tests/version, SC-MD-SPT-0001 sidecar metadata and hot-path isolation markers, protected document prefixes, narrow staging and branch/Draft-PR safety markers. `git diff --check` is part of the validator.
 
 ## Protected classes
 
@@ -131,6 +148,6 @@ For a semantically patched registered document only its Document Registry versio
 
 ## Failure model
 
-The loop fails closed on dirty/stale host baseline, sourceCommit/main mismatch, Documentation Hygiene findings, missing/mismatched Supervisor evidence, invalid Platform Director decision, missing Agent IAM capability, existing remote branch collision, protected path, symlink/path traversal, oversized document, content-hash drift, invalid document SemVer, post-apply hygiene failure, staged-scope mismatch, `main` changing before PR handoff or unavailable AI provider.
+The loop fails closed on dirty/stale host baseline, sourceCommit/main mismatch, Documentation Hygiene findings, missing/mismatched Supervisor evidence, invalid Platform Director decision, missing Agent IAM capability, existing remote branch collision, protected path, symlink/path traversal, oversized document, content-hash drift, invalid document SemVer, post-apply hygiene failure, staged-scope mismatch, `main` changing before PR handoff, SC-MD-SPT sidecar/hot-path boundary drift or unavailable AI provider.
 
 A post-push handoff error triggers best-effort remote branch cleanup. No failure path falls back to direct `main` mutation.
