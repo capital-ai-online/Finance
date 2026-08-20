@@ -11,8 +11,8 @@ import {
 
 describe('Quality Center contract', () => {
   it('keeps the ESS-0005 contract surface complete and non-authorizing', () => {
-    expect(QUALITY_CENTER_CONTRACT_VERSION).toBe('quality-center-contract/1.2.0');
-    expect(QUALITY_CENTER_REPORT_SCHEMA).toBe('quality-center-report/1.2.0');
+    expect(QUALITY_CENTER_CONTRACT_VERSION).toBe('quality-center-contract/1.3.0');
+    expect(QUALITY_CENTER_REPORT_SCHEMA).toBe('quality-center-report/1.3.0');
     expect(QUALITY_GATE_IDS).toHaveLength(8);
     expect(QUALITY_SCORE_AXES).toHaveLength(7);
     expect(QUALITY_TEST_AREAS).toEqual([
