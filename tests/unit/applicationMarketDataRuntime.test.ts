@@ -27,7 +27,10 @@ vi.mock('../../server/marketData/canonicalCryptoScoreEnrichment', () => ({
   enrichAssetWithCanonicalScore: mocks.canonicalEnrich,
 }));
 
-import { createApplicationMarketDataRuntime } from '../../server/marketData/createApplicationMarketDataRuntime';
+import {
+  APPLICATION_BACKGROUND_REFRESH_INTERVAL_MS,
+  createApplicationMarketDataRuntime,
+} from '../../server/marketData/createApplicationMarketDataRuntime';
 
 describe('application market-data runtime wiring', () => {
   it('routes every scorable financial asset class through canonical enrichment before legacy callbacks', async () => {
@@ -57,10 +60,12 @@ describe('application market-data runtime wiring', () => {
 
     await runtime.get();
 
+    expect(APPLICATION_BACKGROUND_REFRESH_INTERVAL_MS).toBe(90_000);
     expect(mocks.createRuntime).toHaveBeenCalledWith(expect.objectContaining({
       syncAsset,
       onRefreshFailure,
       ttlMs: 60_000,
+      backgroundRefreshIntervalMs: 90_000,
       refresh: expect.any(Function),
     }));
     expect(mocks.runRefresh).toHaveBeenCalledWith(expect.objectContaining({

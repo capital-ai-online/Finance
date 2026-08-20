@@ -7,6 +7,29 @@
 ## 🗺️ Architectural Concept: Event-Driven SPA
 The frontend is constructed as an **Event-Driven Single Page Application (SPA)** that runs within isolated, secure browser contexts. We combine deep cyber-slate aesthetics with strict performance, responsiveness, and accessibility guidelines.
 
+### Financial-data consumer boundary — ADR-0032 / SC-MD-SPT-0001 alignment (2026-08-20)
+
+Financial UI modules must distinguish catalog metadata from verified observations and preserve the canonical request sequence:
+
+```text
+request / user interaction
+  -> identity / access
+  -> entitlement / usage gate where applicable
+  -> /api/registry/assets metadata
+  -> user selects a valid domain asset
+  -> applicable verified quote/context/display endpoint
+  -> value + status + provenance + freshness
+  -> deterministic domain analysis / presentation
+```
+
+- `/api/registry/assets` is not a verified price/fundamentals source; ADR-0032 owns this invariant.
+- Missing evidence remains unavailable/partial; UI code must not manufacture finance defaults.
+- Domain-specific components may narrow the global asset catalog to their valid domain.
+- `BuffetValueCheck.tsx` is therefore **stock-only** and consumes `verified-asset-display/1.0.0` per selected stock.
+- Before Buffett provider hydration, the server-side ADR-0034 entitlement/quota contract must authorize the selected stock.
+- The verified display contract is research/display evidence and not an execution-price contract.
+- A display or deterministic domain-analysis result must not be represented as an ADR-0087 `CanonicalScoreResult` unless it actually traversed the canonical scoring Dispatcher chain.
+
 ---
 
 ## 🎨 Visual Identity & Glassmorphism Design System
@@ -43,7 +66,7 @@ The codebase enforces a highly modular, decoupled structure:
   └── components/        # Independent, single-purpose, isolated UI nodes
         ├── Screener.tsx          # Real-time quantitative stock screener
         ├── BacktestEngine.tsx    # Interactive portfolio backtesting mask
-        ├── BuffetValueCheck.tsx  # Benjamin Graham DCF calculator
+        ├── BuffetValueCheck.tsx  # Stock-only Graham/DCF; entitlement-first verified display + fundamentals
         └── MarkdownOrchestrator.tsx # Interactive documentation & compliance hub
 ```
 
