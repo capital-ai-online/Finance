@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.1.0",
+  "claimId": "GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20",
+  "status": "active",
+  "lifecycle": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "CAPITAL-AI Governance & Architecture Correlation Remediation: Frontend document roles, authority projections, ADR-0005 lifecycle, ADR namespace reservations and deterministic governance validation under ADR-0096.",
+  "startedAt": "2026-08-20T17:43:00+02:00",
+  "baseBranch": "main",
+  "branch": "governance/frontend-authority-correlation-2026-08-20",
+  "baseSha": "6b61c63a8d66b933c824b698d81ea242e202cb47",
+  "lastMainSyncSha": "6b61c63a8d66b933c824b698d81ea242e202cb47",
+  "pullRequest": null,
+  "claimedPaths": [
+    ".ai/work-claims/GOVERNANCE-FRONTEND-AUTHORITY-CORRELATION-2026-08-20.json",
+    ".ai/work-claims/DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20.json",
+    "docs/adr/ADR-0005-frontend-module-integration.md",
+    "docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md",
+    "docs/adr/registry.json",
+    "docs/frontend/FRONTEND_ARCH.md",
+    "docs/frontend/COMPONENT_INVENTORY.md",
+    "docs/frontend/FRONTEND_ROADMAP.md",
+    "docs/governance/authority-registry.json",
+    "docs/governance/control-catalog.json",
+    "docs/governance/document-registry.json",
+    "docs/governance/control-plane/README.md",
+    "docs/governance/control-plane/DOCUMENT_LIFECYCLE_POLICY.md",
+    "scripts/governance/validateGovernanceControlPlane.mjs",
+    "tests/unit/governanceControlPlane.test.ts"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}
