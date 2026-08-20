@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   UNAVAILABLE_VALUE,
@@ -69,5 +71,21 @@ describe('Compliance PDF data formatting', () => {
     expect(getComplianceStatus(asset())).toBe('SCORE_NOT_COMPUTABLE');
     expect(getComplianceStatus(asset({ scoreStatus: null }))).toBe('DATA_UNAVAILABLE');
     expect(getComplianceStatus(asset({ status: 'READY' }))).toBe('READY');
+  });
+
+  it('keeps the exporter off direct nullable numeric/string method calls', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/ComplianceExporter.tsx'),
+      'utf8',
+    );
+
+    expect(source).not.toContain('asset.score.toFixed');
+    expect(source).not.toContain('selectedAsset.score.toFixed');
+    expect(source).not.toContain('selectedAsset.change24h.toFixed');
+    expect(source).not.toContain('selectedAsset.drift.toFixed');
+    expect(source).not.toContain('selectedAsset.risk.toUpperCase');
+    expect(source).toContain('formatFixedMetric(selectedAsset.score, 1)');
+    expect(source).toContain('formatCurrencyMetric(selectedAsset.price)');
+    expect(source).toContain('getComplianceStatus(selectedAsset)');
   });
 });
