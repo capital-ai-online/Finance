@@ -132,4 +132,40 @@ describe('market-data runtime facade', () => {
     await Promise.all([first, second]);
     expect(refresh).toHaveBeenCalledTimes(2);
   });
+
+  it('recalculates a queued background deadline after a foreground refresh', async () => {
+    vi.useFakeTimers();
+    let clock = 0;
+    const refresh = vi.fn(async () => [asset('BTC', 10)]);
+    const runtime = createMarketDataRuntimeFacade({
+      refresh,
+      syncAsset: vi.fn(),
+      ttlMs: 1,
+      backgroundRefreshIntervalMs: 90_000,
+      now: () => clock,
+    });
+
+    await runtime.backgroundRefresh();
+    clock = 60_000;
+    const queuedBackground = runtime.backgroundRefresh();
+
+    // Cache is stale and a foreground read refreshes at t=70s.
+    clock = 70_000;
+    await runtime.get();
+    expect(refresh).toHaveBeenCalledTimes(2);
+
+    // Original t=90s background deadline is no longer eligible; it must be moved to t=160s.
+    clock = 90_000;
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(refresh).toHaveBeenCalledTimes(2);
+
+    clock = 159_999;
+    await vi.advanceTimersByTimeAsync(69_999);
+    expect(refresh).toHaveBeenCalledTimes(2);
+
+    clock = 160_000;
+    await vi.advanceTimersByTimeAsync(1);
+    await queuedBackground;
+    expect(refresh).toHaveBeenCalledTimes(3);
+  });
 });
