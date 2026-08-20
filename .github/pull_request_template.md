@@ -1,5 +1,5 @@
-<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.4.0 -->
-`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.4.0`
+<!-- CAPITAL_AI_PR_TEMPLATE_VERSION: 1.5.0 -->
+`CAPITAL_AI_PR_TEMPLATE_VERSION: 1.5.0`
 # CAPITAL-AI Änderungsantrag (Pull Request)
 
 > Diese Vorlage ist verbindlich. Maschinenverwaltete Baseline-Felder dürfen nicht gelöscht werden.
@@ -10,7 +10,7 @@
 >
 > **M10:** Nach verifiziertem Controlled Cutover autorisiert ausschließlich eine PR-state-gebundene Owner-Passkey/WebAuthn-Transaktion `AUTHORIZE_PR_CI` für teure PR-CI. Vor dem verifizierten Cutover bleibt der dokumentierte Pre-M10-Pfad aktiv. CI-Autorisierung und Merge bleiben getrennte Human-Gates.
 >
-> **Marker-Hinweis:** HTML-Kommentare (`<!-- CAPITAL_AI_* -->`) sind kanonisch. Zusätzlich stehen sichtbare `` `CAPITAL_AI_*` ``-Zeilen als Fallback, falls ein API-/Connector den Kommentar strippt. Baseline-IDs dürfen weder entfernt, dupliziert noch verschoben werden.
+> **Baseline-Hinweis:** Abschnitt 3 wird ausschließlich als atomarer Block aus `scripts/pr/productionPreflight.mjs` + `scripts/pr/renderPullRequestBody.mjs` erzeugt. Einzelwerte dürfen nicht manuell geschätzt, ersetzt oder mit `nicht-verfügbar` befüllt werden. Die `Baseline-ID` bindet Produktions-, `main`- und PR-Head-Identität content-addressed zusammen.
 
 ## 1. Arbeitsauftrag
 
@@ -31,25 +31,13 @@
 
 ## 3. Produktions-Baseline — maschinenverwalteter / beratender Nachweis
 
-<!-- CAPITAL_AI_PRODUCTION_BASELINE_START -->
-`CAPITAL_AI_PRODUCTION_BASELINE_START`
-- **Produktions-URL:** `https://capital-ai.online/healthz`
-- **Produktionsversion:** `{{PRODUCTION_VERSION}}`
-- **Produktions-Commit:** `{{PRODUCTION_SHA}}`
-- **Produktions-Branch:** `{{PRODUCTION_BRANCH}}`
-- **Aktueller main-Commit:** `{{MAIN_SHA}}`
-- **PR-Head-Commit:** `{{HEAD_SHA}}`
-- **Abweichung Produktion → main:** `{{PROD_TO_MAIN_COMMITS}}` Commit(s)
-- **Abweichung main → PR-Head:** `{{MAIN_TO_HEAD_COMMITS}}` Commit(s)
-- **Baseline erzeugt am:** `{{BASELINE_GENERATED_AT}}`
-`CAPITAL_AI_PRODUCTION_BASELINE_END`
-<!-- CAPITAL_AI_PRODUCTION_BASELINE_END -->
+{{PRODUCTION_BASELINE_BLOCK}}
 
 ## 4. Umfang / Multi-Agent-Koordination
 
 - [ ] Der vorgesehene Umfang ist dokumentiert.
 - [ ] Überschneidungen mit geänderten Dateien offener PRs wurden geprüft, sofern verfügbar.
-- [ ] Erkannte Überschneidungen oder Konfliktrisiken wurden vor PR-Erstellung offengelegt.
+- [ ] Erkannte Überschidungen oder Konfliktrisiken wurden vor PR-Erstellung offengelegt.
 - [ ] Metadaten oder Arbeiten anderer Agenten wurden nicht stillschweigend übernommen.
 
 ## 5. Änderungszusammenfassung
