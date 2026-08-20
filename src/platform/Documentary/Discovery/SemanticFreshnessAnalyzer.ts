@@ -86,6 +86,13 @@ function resolveRepoPath(repoRoot: string, relativePath: string): string | null 
   return absolute;
 }
 
+function readRegularNonSymlinkText(absolutePath: string): string | null {
+  if (!fs.existsSync(absolutePath)) return null;
+  const stat = fs.lstatSync(absolutePath);
+  if (!stat.isFile() || stat.isSymbolicLink()) return null;
+  return fs.readFileSync(absolutePath, 'utf8');
+}
+
 function semanticToken(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '');
 }
@@ -152,7 +159,11 @@ export function analyzeSemanticFreshness(options: {
   }
 
   const registryPath = path.join(repoRoot, DOCUMENT_REGISTRY_PATH);
-  const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8')) as DocumentRegistryEnvelope;
+  const registryText = readRegularNonSymlinkText(registryPath);
+  if (registryText === null) {
+    throw new Error('[SemanticFreshnessAnalyzer] document registry must be a readable regular non-symlink file.');
+  }
+  const registry = JSON.parse(registryText) as DocumentRegistryEnvelope;
   if (!Array.isArray(registry.entries)) throw new Error('[SemanticFreshnessAnalyzer] document registry entries are invalid.');
 
   const sourceChanges = (options.sourceChanges ?? [])
@@ -164,9 +175,7 @@ export function analyzeSemanticFreshness(options: {
   for (const entry of registry.entries) {
     const mutationClass = classifyDocumentMutation(entry);
     const absolute = resolveRepoPath(repoRoot, entry.path);
-    const content = absolute && fs.existsSync(absolute) && fs.statSync(absolute).isFile()
-      ? fs.readFileSync(absolute, 'utf8')
-      : null;
+    const content = absolute ? readRegularNonSymlinkText(absolute) : null;
     const reasons = new Set<FreshnessReasonCode>();
     const relatedSources = new Set<string>();
 
