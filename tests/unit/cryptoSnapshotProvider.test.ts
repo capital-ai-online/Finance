@@ -12,13 +12,15 @@ import {
 
 function payload() {
   return {
+    last_updated: '2026-08-02T06:00:00.000Z',
     market_data: {
+      current_price: { usd: 3_450.25 },
+      price_change_percentage_24h: -1.2,
       market_cap: { usd: 400_000_000_000 },
       total_volume: { usd: 20_000_000_000 },
       circulating_supply: 120_000_000,
       max_supply: null,
       total_supply: 120_000_000,
-      last_updated: '2026-08-02T06:00:00.000Z',
     },
   };
 }
@@ -30,7 +32,7 @@ afterEach(() => {
 });
 
 describe('cryptoSnapshotProvider provenance', () => {
-  it('returns verified fields with source paths and timestamps', async () => {
+  it('returns verified display and market fields with source paths and timestamps', async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify(payload()), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -41,8 +43,12 @@ describe('cryptoSnapshotProvider provenance', () => {
       nowMs: () => Date.parse('2026-08-02T06:00:01.000Z'),
     });
 
+    expect(snapshot?.priceUsd).toBe(3_450.25);
+    expect(snapshot?.change24hPct).toBe(-1.2);
     expect(snapshot?.marketCapUsd).toBe(400_000_000_000);
     expect(snapshot?.volume24hUsd).toBe(20_000_000_000);
+    expect(snapshot?.provenance.priceUsd?.sourcePath).toBe('market_data.current_price.usd');
+    expect(snapshot?.provenance.change24hPct?.sourcePath).toBe('market_data.price_change_percentage_24h');
     expect(snapshot?.provenance.marketCapUsd?.sourcePath).toBe('market_data.market_cap.usd');
     expect(snapshot?.provenance.maxSupply?.value).toBeNull();
     expect(snapshot?.observedAt).toBe('2026-08-02T06:00:00.000Z');
@@ -77,8 +83,6 @@ describe('SC-5 Phase B matrix guards', () => {
   it('returns last-known-good when rate-limit budget is exhausted', async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify(payload()), { status: 200 }));
     const fetchImpl = fetchMock as unknown as typeof fetch;
-    // Mutable clock: second call must advance past cacheTtlMs=0 so the
-    // rate-limit path is reached instead of an equal-timestamp cache-hit.
     let now = Date.parse('2026-08-16T12:00:00.000Z');
     const nowMs = () => now;
     const budget = new RateLimitBudget({
@@ -95,7 +99,7 @@ describe('SC-5 Phase B matrix guards', () => {
     expect(first?.cacheMode).toBe('fresh');
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    now += 1; // expire zero-TTL cache entry
+    now += 1;
 
     const second = await getVerifiedCryptoSnapshot('ETH', {
       fetchImpl,
