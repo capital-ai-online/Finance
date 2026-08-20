@@ -37,7 +37,7 @@
 
 - [ ] Der vorgesehene Umfang ist dokumentiert.
 - [ ] Überschneidungen mit geänderten Dateien offener PRs wurden geprüft, sofern verfügbar.
-- [ ] Erkannte Überschidungen oder Konfliktrisiken wurden vor PR-Erstellung offengelegt.
+- [ ] Erkannte Überschneidungen oder Konfliktrisiken wurden vor PR-Erstellung offengelegt.
 - [ ] Metadaten oder Arbeiten anderer Agenten wurden nicht stillschweigend übernommen.
 
 ## 5. Änderungszusammenfassung
