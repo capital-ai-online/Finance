@@ -47,7 +47,7 @@ describe('FinTech Core operating-mode and approval contracts', () => {
     )).toBe(false);
 
     expect(isOrderIntentEligibleForRealExecution(
-      orderIntent({ complianceApproval: 'REVIEW_REQUIRED' as never }),
+      orderIntent({ complianceApproval: 'PENDING' }),
       'GUARDED_LIVE',
     )).toBe(false);
   });
