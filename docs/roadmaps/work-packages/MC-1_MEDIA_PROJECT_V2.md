@@ -1,11 +1,12 @@
 # MC-1 — MediaProject v2
 
-- **Status:** IMPLEMENTATION COMPLETE / PRE-PR VALIDATION PENDING
+- **Status:** PRE-PR VALIDATED / PR PENDING
 - **Date:** 2026-08-20
 - **Owner:** CAPITAL-AI Owner
 - **Authority:** Owner chat priority 2026-08-20 + ADR-0098 + ADR-0094 + ARCH-CONTENT-0001
 - **Branch:** `feature/media-creation-mc1-media-project-v2`
 - **Base:** `main@6b61c63a8d66b933c824b698d81ea242e202cb47`
+- **Evidence:** `docs/evidence/media/MC1_MEDIA_PROJECT_V2_PREPR_2026-08-20.md`
 
 ## Goal
 
@@ -36,7 +37,7 @@ The slice must preserve the existing SocialMediaEngine publishing/OAuth authorit
 - [x] asset-reference integrity and media-kind matching;
 - [x] transition existence/same-track/adjacency validation;
 - [x] deterministic chart-label requirement;
-- [x] dangerous/remote source/asset reference DENY;
+- [x] URI-scheme source/asset reference DENY;
 - [x] traversal/absolute-path DENY;
 - [x] `publishReady=true` DENY.
 
@@ -85,7 +86,7 @@ Invariants:
 
 1. MediaProject cannot publish or grant approval.
 2. No OAuth/social tokens or infrastructure credentials enter the contract.
-3. Arbitrary remote URLs are not trusted asset/source references.
+3. URI/remote references are not trusted asset/source references.
 4. Existing publishing `mediaUrl` validation remains separate and authoritative.
 5. Existing hash-bound Human Approval remains separate and authoritative.
 6. Financial/brand-critical text stays deterministic.
@@ -110,17 +111,19 @@ Invariants:
 
 Before PR creation:
 
-- [ ] inspect complete branch diff and changed-file scope;
-- [ ] TypeScript no-emit check or equivalent targeted compile;
-- [ ] targeted MediaProject v2 unit/contract checks;
-- [ ] parse JSON Schema and registry JSON;
-- [ ] Governance Control Plane structural validation where locally available;
-- [ ] verify no dependency/workflow/deployment files changed;
-- [ ] re-fetch current `main` immediately before PR;
-- [ ] correlate new Main changes across contracts, architecture, dependencies, APIs, security/governance and documentation;
-- [ ] synchronize branch to exact current `main` if needed;
-- [ ] repeat necessary targeted checks after synchronization.
+- [x] complete branch diff and changed-file scope inspected;
+- [x] targeted TypeScript 5.8.3 no-emit compile PASS after fixing two detected type issues;
+- [x] targeted MediaProject v2 semantic runtime smoke PASS (`1380` frames / `6` Graham layers);
+- [x] negative smokes PASS for `publish_ready_forbidden`, URI `asset_reference_invalid` and `track_layer_overlap`;
+- [x] no dependency/workflow/deployment files changed;
+- [x] ADR-0098 namespace checked against repository/open PRs before allocation;
+- [x] ADR/Authority registry versions and stable-ID/path correlation updated together;
+- [x] final current `main` re-fetched immediately before PR: `6b61c63a8d66b933c824b698d81ea242e202cb47`;
+- [x] open PR correlation repeated immediately before PR: none open;
+- [x] branch merge-base exact current main, `behind_by=0`;
+- [x] no additional synchronization required after final gate because `main` did not advance;
+- [ ] authoritative repository-wide Governance/Documentation/Quality/unit/build checks — intentionally deferred to post-PR CI per repository cost policy.
 
 ## Definition of Done
 
-MC-1 is complete only when P1–P4 pass targeted validation, the branch is current with `main`, ADR-0098/registries are consistent, PR checks pass and Human/Owner performs a separate merge decision.
+P1–P4 and the pre-PR gate are complete. MC-1 becomes merge-ready only after post-PR repository checks pass and Human/Owner performs a separate merge decision.
