@@ -1,9 +1,9 @@
 {
   "name": "FinTechCore",
   "version": "0.1.0",
-  "status": "foundation",
+  "status": "in-implementation",
   "owner": "CAPITAL-AI",
-  "description": "Financial workflow composition layer. Crypto is Module 01; FT-1 supports research/paper only and preserves ScoringDispatcher, Governance, Compliance, Quality and Supervisor authority boundaries.",
+  "description": "Financial workflow composition layer. Crypto is Module 01; FT-1 supports research/paper only and FT-2A adds provenance-aware category-profile resolution while preserving ScoringDispatcher, Governance, Compliance, Quality and Supervisor authority boundaries.",
   "category": "platform",
   "roadmap": [
     "FT-CORE-CRYPTO-01"
@@ -13,12 +13,13 @@
     "ADR-0098"
   ],
   "dependencies": [
-    "src/platform/Scoring/contracts.ts"
+    "src/platform/Scoring/contracts.ts",
+    "src/types/crypto.types.ts"
   ],
   "events": {
     "produces": [],
     "consumes": [],
-    "note": "FT-1 defines DomainEvent contracts only. Runtime EventMesh publication and durable financial event persistence are later roadmap phases."
+    "note": "FT-1/FT-2A define DomainEvent and analysis-evidence contracts only. Runtime EventMesh publication and durable financial event persistence are later roadmap phases."
   },
   "interfaces": [
     "FinTechCoreEngine",
@@ -30,6 +31,7 @@
     "FinTechCoreOrderIntent",
     "FinTechCoreWorkflowState",
     "CryptoCategoryAnalysisProfile",
+    "CryptoCategoryProfileResolution",
     "PatternEvidence"
   ],
   "contracts": [
@@ -38,13 +40,15 @@
     "fintech-core/engine/0.1.0",
     "fintech-core/workflow-state-machine/0.1.0",
     "fintech-core.crypto/contracts/0.1.0",
-    "fintech-core.crypto/0.1.0"
+    "fintech-core.crypto/0.1.0",
+    "fintech-core.crypto/category-profile-resolver/0.1.0"
   ],
   "documentation": [
     "README.md",
     "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
     "docs/adr/ADR-0098-fintech-core-engine-crypto-module-01.md",
-    "docs/evidence/fintech-core/FT0_CRYPTO_MODULE_FOUNDATION_2026-08-20.md"
+    "docs/evidence/fintech-core/FT0_CRYPTO_MODULE_FOUNDATION_2026-08-20.md",
+    "docs/evidence/fintech-core/FT1_CORE_ENGINE_FOUNDATION_2026-08-20.md"
   ],
   "tests": [
     "tests/unit/fintechCoreContracts.test.ts",
@@ -52,10 +56,11 @@
     "tests/unit/fintechCoreModuleRegistry.test.ts",
     "tests/unit/fintechCoreWorkflowStateMachine.test.ts",
     "tests/unit/fintechCoreEngine.test.ts",
+    "tests/unit/fintechCoreCryptoCategoryProfileResolver.test.ts",
     "tests/architecture/fintechCoreAuthorityBoundary.test.ts"
   ],
   "implementation": {
-    "level": "ft1-foundation",
+    "level": "ft2a-foundation",
     "implementedAreas": [
       "core contracts",
       "immutable module registry",
@@ -63,15 +68,19 @@
       "side-effect-free core engine",
       "Crypto Module 01 research/paper descriptor",
       "category analysis profile contracts",
+      "provenance-aware primary/secondary profile resolution",
+      "agent-research non-promotion boundary",
+      "conditional semantic qualifier gates",
       "pattern and reliability contracts"
     ],
     "blockedAreas": [
       "guarded live",
       "production execution",
       "durable financial workflow persistence",
+      "category feature acquisition/promotion",
       "risk/compliance execution adapters",
       "exchange/custody adapters"
     ]
   },
-  "authorityBoundary": "FinTechCore composes financial workflows but cannot select or calculate productive scores outside ScoringModelRegistry/ScoringDispatcher and cannot replace IAM, Compliance, Quality, Governance, Supervisor, Release or Deployment authorities."
+  "authorityBoundary": "FinTechCore composes financial workflows and analysis-profile evidence but cannot select or calculate productive scores outside ScoringModelRegistry/ScoringDispatcher and cannot replace IAM, Compliance, Quality, Governance, Supervisor, Release or Deployment authorities."
 }
