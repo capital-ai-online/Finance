@@ -33,13 +33,25 @@ const REQUIRED_FILES = [
   'src/platform/Governance/Contracts/RepositoryQualityEvidence.ts',
   'src/platform/Quality/manifest.json',
   'src/platform/Quality/RepositoryQuality/RepositoryQualityCoordinator.ts',
+  'src/platform/Quality/ValueChain/FintechValueChainQualityProjection.ts',
   'src/platform/Security/agentIam.ts',
   'src/platform/Supervisor/documentaryMaintenanceObservation.ts',
+  'src/platform/Supervisor/manifest.json',
   'tests/unit/documentaryMaintenanceAgent.test.ts',
   'tests/unit/documentaryMaintenanceGitHost.test.ts',
   'tests/unit/documentaryMaintenanceObservability.test.ts',
   'tests/unit/documentaryMaintenanceOrchestrator.test.ts',
   'tests/unit/documentarySemanticFreshness.test.ts',
+];
+
+const DOCUMENTARY_MAINTENANCE_SOURCES = [
+  'scripts/automation/runDocumentaryMaintenanceControlLoop.ts',
+  'server/documentaryMaintenanceAiAdapter.ts',
+  'src/platform/Documentary/Agents/DocumentaryMaintenanceAgent.ts',
+  'src/platform/Documentary/Discovery/SemanticFreshnessAnalyzer.ts',
+  'src/platform/Documentary/Observability/DocumentaryMaintenanceObservability.ts',
+  'src/platform/Documentary/Orchestration/DocumentaryMaintenanceOrchestrator.ts',
+  'src/platform/Supervisor/documentaryMaintenanceObservation.ts',
 ];
 
 function fail(message) {
@@ -108,6 +120,8 @@ for (const marker of [
   originMainSha,
   currentBranch,
   'repository:quality:check',
+  'SC-MD-SPT-0001',
+  'VC-13-EVENT-TRACEABILITY-SUPERVISOR',
   claim.claimId,
   'itself was not mutated',
 ]) {
@@ -140,12 +154,28 @@ const qualityManifest = json('src/platform/Quality/manifest.json');
 if (!(qualityManifest.contracts ?? []).includes('quality-center-contract/1.3.0')) {
   fail('current-main Quality Center contract 1.3.0 is missing.');
 }
+if (!(qualityManifest.contracts ?? []).includes('fintech-value-chain-quality/1.0.0')) {
+  fail('current-main FinTech value-chain quality projection contract is missing.');
+}
 const validatorCoverage = qualityManifest.implementation?.mandatoryValidatorImplementationCoverage;
 if (!validatorCoverage || validatorCoverage.total !== 16 || validatorCoverage.available !== 16 || validatorCoverage.notAvailable !== 0) {
   fail('current-main Quality Center mandatory-validator implementation coverage is not the expected 16/16 baseline.');
 }
 if (!String(qualityManifest.authorityBoundary ?? '').includes('cannot authorize merge')) {
   fail('current-main Quality Center must remain non-authorizing for merge.');
+}
+
+const valueChainProjection = read('src/platform/Quality/ValueChain/FintechValueChainQualityProjection.ts');
+for (const marker of [
+  "FINTECH_VALUE_CHAIN_AUTHORITY = 'SC-MD-SPT-0001'",
+  "id: 'VC-13-EVENT-TRACEABILITY-SUPERVISOR'",
+  "'src/platform/Supervisor/manifest.json'",
+  "'src/platform/MarketData/MarketDataGateway.ts'",
+  "'src/platform/Scoring/ScoringDispatcher.ts'",
+  "'src/services/ranking.service.ts'",
+  'This projection is read-only structural/evidence validation.',
+]) {
+  if (!valueChainProjection.includes(marker)) fail(`current-main value-chain projection marker missing: ${marker}.`);
 }
 
 const agentIam = read('src/platform/Security/agentIam.ts');
@@ -201,6 +231,40 @@ for (const testPath of [
 }
 if (!(documentaryManifest.implementation?.implementedAreas ?? []).includes('Observability')) {
   fail('Documentary manifest must declare the implemented maintenance Observability slice.');
+}
+
+const valueChainIntegration = documentaryManifest.valueChainIntegration;
+if (!valueChainIntegration || valueChainIntegration.authority !== 'SC-MD-SPT-0001') {
+  fail('Documentary manifest must declare SC-MD-SPT-0001 value-chain integration.');
+}
+if (valueChainIntegration.role !== 'read-only-documentation-evidence-sidecar') {
+  fail('Documentary value-chain role must remain read-only documentation/evidence sidecar.');
+}
+if (valueChainIntegration.observedStage !== 'VC-13-EVENT-TRACEABILITY-SUPERVISOR') {
+  fail('Documentary value-chain integration must remain attached to VC-13 evidence context.');
+}
+if (valueChainIntegration.runtimeStage !== false || valueChainIntegration.directHotPathDependency !== false) {
+  fail('Documentary must not become a financial runtime stage or direct financial-hotpath dependency.');
+}
+if (valueChainIntegration.qualityProjection !== 'fintech-value-chain-quality/1.0.0') {
+  fail('Documentary value-chain integration must reuse the current Quality projection.');
+}
+for (const forbiddenDependency of ['src/platform/Quality', 'src/platform/MarketData', 'src/platform/Scoring', 'src/platform/Ranking']) {
+  if ((documentaryManifest.dependencies ?? []).includes(forbiddenDependency)) {
+    fail(`Documentary manifest must not add forbidden financial/quality mutation dependency: ${forbiddenDependency}.`);
+  }
+}
+
+const supervisorManifest = json('src/platform/Supervisor/manifest.json');
+if (supervisorManifest.documentaryMaintenance?.decisionAuthority !== false || supervisorManifest.documentaryMaintenance?.mutationAuthority !== false) {
+  fail('Supervisor Documentary maintenance surface must remain observation/evidence-only.');
+}
+
+const forbiddenHotPathReference = /(?:platform\/(?:MarketData|Scoring|Ranking)|services\/ranking\.service|orchestrator\/cryptoOrchestrator|server\.application)/;
+for (const sourcePath of DOCUMENTARY_MAINTENANCE_SOURCES) {
+  if (forbiddenHotPathReference.test(read(sourcePath))) {
+    fail(`Documentary maintenance source directly references a financial/application hotpath: ${sourcePath}.`);
+  }
 }
 
 const host = read('scripts/automation/runDocumentaryMaintenanceControlLoop.ts');
