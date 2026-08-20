@@ -3,8 +3,8 @@ import type {
   RepositoryQualityObservation,
 } from '../../Governance/Contracts/RepositoryQualityEvidence';
 
-export const QUALITY_CENTER_CONTRACT_VERSION = 'quality-center-contract/1.0.0' as const;
-export const QUALITY_CENTER_REPORT_SCHEMA = 'quality-center-report/1.0.0' as const;
+export const QUALITY_CENTER_CONTRACT_VERSION = 'quality-center-contract/1.1.0' as const;
+export const QUALITY_CENTER_REPORT_SCHEMA = 'quality-center-report/1.1.0' as const;
 export const QUALITY_CENTER_NON_AUTHORIZING_STATEMENT =
   'Quality Center results are evidence and measurement only. Governance, Compliance, Supervisor and Human/CODEOWNER controls retain their existing authority; Quality Center cannot authorize merge, release, deployment or production mutation.' as const;
 
@@ -75,6 +75,77 @@ export interface QualityScoreSnapshot {
   missingAxes: readonly QualityScoreAxis[];
 }
 
+export const QUALITY_TEST_AREAS = [
+  'unit',
+  'integration',
+  'contract',
+  'architecture',
+  'security',
+  'performance',
+  'e2e',
+] as const;
+
+export type QualityTestArea = typeof QUALITY_TEST_AREAS[number];
+
+export interface QualityTestAreaCoverage {
+  area: QualityTestArea;
+  path: string;
+  testFiles: readonly string[];
+  testCount: number;
+}
+
+export interface QualityCodeCoverageMetrics {
+  statements: number | null;
+  branches: number | null;
+  functions: number | null;
+  lines: number | null;
+}
+
+export interface QualityCoverageSnapshot {
+  schemaVersion: 'quality-coverage/1.0.0';
+  checkedAt: string;
+  populatedAreas: number;
+  totalAreas: number;
+  testAreaCoveragePercent: number;
+  testAreas: readonly QualityTestAreaCoverage[];
+  codeCoverage: Readonly<{
+    status: 'AVAILABLE' | 'NOT_AVAILABLE';
+    source: string | null;
+    metrics: QualityCodeCoverageMetrics | null;
+  }>;
+  authorityRefs: readonly string[];
+}
+
+export const QUALITY_CENTER_EVENT_NAMES = [
+  'ValidationStartedEvent',
+  'ValidationCompletedEvent',
+  'ValidationFailedEvent',
+  'QualityGatePassedEvent',
+  'QualityGateFailedEvent',
+  'QualityScoreChangedEvent',
+  'TechnicalDebtDetectedEvent',
+  'TechnicalDebtResolvedEvent',
+  'CoverageCalculatedEvent',
+] as const;
+
+export type QualityCenterEventName = typeof QUALITY_CENTER_EVENT_NAMES[number];
+
+export interface QualityEventSink {
+  publish(eventName: QualityCenterEventName, payload: Readonly<Record<string, unknown>>): void;
+}
+
+export interface QualityEventPublicationFailure {
+  eventName: QualityCenterEventName;
+  message: string;
+}
+
+export interface QualityEventPublicationSummary {
+  attempted: number;
+  published: number;
+  failed: number;
+  failures: readonly QualityEventPublicationFailure[];
+}
+
 export type TechnicalDebtPriority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 export type TechnicalDebtEffort = 'UNASSESSED' | 'SMALL' | 'MEDIUM' | 'LARGE';
 export type TechnicalDebtStatus = 'OPEN' | 'RESOLVED';
@@ -108,7 +179,9 @@ export interface QualityCenterReport {
   repositoryObservation: RepositoryQualityObservation;
   gateReport: QualityGateReport;
   qualityScore: QualityScoreSnapshot;
+  coverage: QualityCoverageSnapshot;
   technicalDebt: TechnicalDebtSnapshot;
+  eventPublication: QualityEventPublicationSummary;
   governanceRefs: readonly string[];
   complianceRefs: readonly string[];
   nonAuthorizingStatement: typeof QUALITY_CENTER_NON_AUTHORIZING_STATEMENT;
