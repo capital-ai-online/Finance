@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   ChevronDown,
   Database,
-  Info,
   Scale,
   Search,
   ShieldCheck,
@@ -26,6 +25,12 @@ interface CatalogAsset {
   name: string;
   type: AssetClass;
   subtype?: string;
+}
+
+export function filterBuffettStockCatalog(assets: CatalogAsset[]): CatalogAsset[] {
+  return assets
+    .filter((asset) => asset.type === 'stock')
+    .sort((left, right) => left.symbol.localeCompare(right.symbol));
 }
 
 interface VerifiedAssetFundamentals {
@@ -127,7 +132,7 @@ function calculateDcfValue(
 
 export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValueCheckProps) {
   const [catalog, setCatalog] = useState<CatalogAsset[]>([]);
-  const [activeSymbol, setActiveSymbol] = useState(selectedSymbol.toUpperCase());
+  const [activeSymbol, setActiveSymbol] = useState('');
   const [display, setDisplay] = useState<VerifiedAssetDisplay | null>(null);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [valueLoading, setValueLoading] = useState(false);
@@ -152,10 +157,6 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
   }, [triggerAttempt]);
 
   useEffect(() => {
-    setActiveSymbol(selectedSymbol.toUpperCase());
-  }, [selectedSymbol]);
-
-  useEffect(() => {
     let cancelled = false;
     setCatalogLoading(true);
     fetch('/api/registry/assets')
@@ -168,7 +169,15 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
         const assets = Array.isArray(body)
           ? body.filter((item): item is CatalogAsset => Boolean(item?.symbol && item?.name && item?.type))
           : [];
-        setCatalog(assets);
+        const stocks = filterBuffettStockCatalog(assets);
+        setCatalog(stocks);
+        const requested = selectedSymbol.toUpperCase();
+        const preferred = stocks.find(asset => asset.symbol.toUpperCase() === requested)
+          ?? stocks.find(asset => asset.symbol.toUpperCase() === 'AAPL')
+          ?? stocks[0]
+          ?? null;
+        setActiveSymbol(preferred?.symbol.toUpperCase() ?? '');
+        if (!preferred) setLoadError('Keine Aktien im Asset-Katalog verfügbar.');
       })
       .catch(error => {
         if (!cancelled) setLoadError(error instanceof Error ? error.message : String(error));
@@ -180,6 +189,20 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
   }, []);
 
   useEffect(() => {
+    if (catalog.length === 0) return;
+    const requested = selectedSymbol.toUpperCase();
+    const requestedStock = catalog.find(asset => asset.symbol.toUpperCase() === requested);
+    if (requestedStock) {
+      setActiveSymbol(requestedStock.symbol.toUpperCase());
+      return;
+    }
+    if (!catalog.some(asset => asset.symbol.toUpperCase() === activeSymbol)) {
+      const fallback = catalog.find(asset => asset.symbol.toUpperCase() === 'AAPL') ?? catalog[0];
+      setActiveSymbol(fallback.symbol.toUpperCase());
+    }
+  }, [activeSymbol, catalog, selectedSymbol]);
+
+  useEffect(() => {
     if (!activeSymbol) return;
     let cancelled = false;
     setValueLoading(true);
@@ -188,36 +211,32 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
     fetch(`/api/registry/assets/${encodeURIComponent(activeSymbol)}/verified-display`)
       .then(async response => {
         const body = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(body?.reason ?? 'Verifizierte Asset-Daten konnten nicht geladen werden.');
+        if (!response.ok) throw new Error(body?.reason ?? 'Verifizierte Aktien-Daten konnten nicht geladen werden.');
         return body as VerifiedAssetDisplay;
       })
       .then(body => {
         if (cancelled) return;
+        if (body.assetClass !== 'stock') {
+          throw new Error('Buffett Value Check akzeptiert ausschließlich Aktien.');
+        }
         setDisplay(body);
-        if (body.assetClass === 'stock') {
-          const verifiedPrice = finite(body.price);
-          const verifiedEps = finite(body.fundamentals?.epsTtm);
-          if (verifiedPrice !== null && verifiedPrice > 0) {
-            setCustomPrice(verifiedPrice);
-            setPriceInputSource('verified');
-          } else {
-            setCustomPrice(0);
-            setPriceInputSource('missing');
-          }
-          if (verifiedEps !== null && verifiedEps > 0) {
-            setEps(verifiedEps);
-            setEpsInputSource('verified');
-          } else {
-            setEps(0);
-            setEpsInputSource('missing');
-          }
-          setGrowth(8.0);
+        const verifiedPrice = finite(body.price);
+        const verifiedEps = finite(body.fundamentals?.epsTtm);
+        if (verifiedPrice !== null && verifiedPrice > 0) {
+          setCustomPrice(verifiedPrice);
+          setPriceInputSource('verified');
         } else {
-          setEps(0);
-          setEpsInputSource('missing');
           setCustomPrice(0);
           setPriceInputSource('missing');
         }
+        if (verifiedEps !== null && verifiedEps > 0) {
+          setEps(verifiedEps);
+          setEpsInputSource('verified');
+        } else {
+          setEps(0);
+          setEpsInputSource('missing');
+        }
+        setGrowth(8.0);
       })
       .catch(error => {
         if (!cancelled) setLoadError(error instanceof Error ? error.message : String(error));
@@ -235,20 +254,16 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
 
   const filteredAssets = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    const filtered = query
-      ? catalog.filter(asset => asset.symbol.toLowerCase().includes(query) || asset.name.toLowerCase().includes(query))
-      : catalog;
-    return [...filtered].sort((a, b) => {
-      const stockPriority = Number(b.type === 'stock') - Number(a.type === 'stock');
-      return stockPriority || a.symbol.localeCompare(b.symbol);
-    });
+    if (!query) return catalog;
+    return catalog.filter(asset =>
+      asset.symbol.toLowerCase().includes(query) || asset.name.toLowerCase().includes(query),
+    );
   }, [catalog, searchQuery]);
 
-  const isStock = display?.assetClass === 'stock';
   const verifiedFcf = finite(display?.fundamentals?.freeCashFlowPerShare);
   const dcfBase = verifiedFcf !== null && verifiedFcf > 0 ? verifiedFcf : eps;
   const dcfBaseLabel = verifiedFcf !== null && verifiedFcf > 0 ? 'Free Cash Flow / Aktie' : 'EPS als Proxy';
-  const modelReady = Boolean(isStock && eps > 0 && customPrice > 0);
+  const modelReady = Boolean(display?.assetClass === 'stock' && eps > 0 && customPrice > 0);
   const fullyEvidenceBacked = Boolean(
     modelReady
     && epsInputSource === 'verified'
@@ -268,7 +283,7 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
 
   const pillars = useMemo(() => {
     const f = display?.fundamentals;
-    if (!isStock || !f) return [];
+    if (!f) return [];
     return [
       {
         title: 'Positive Ertragskraft (EPS TTM)',
@@ -286,7 +301,7 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
         title: 'Verschuldung (Debt-to-Equity)',
         status: f.debtToEquity !== null ? `${formatBuffettMetric(f.debtToEquity)}x` : 'Nicht verfügbar',
         fulfilled: f.debtToEquity !== null && f.debtToEquity >= 0 && f.debtToEquity < 1,
-        description: 'Fehlende Verschuldungsdaten gelten nicht mehr automatisch als bestanden.',
+        description: 'Fehlende Verschuldungsdaten gelten nicht automatisch als bestanden.',
       },
       {
         title: 'Bewertung (P/E Ratio)',
@@ -295,19 +310,11 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
         description: 'Der Check wird nur aus einem belegten P/E-Wert abgeleitet; Nullwerte werden ausgeschlossen.',
       },
     ];
-  }, [display, isStock]);
+  }, [display]);
 
   const fulfilledCount = pillars.filter(item => item.fulfilled).length;
 
   const verdict = useMemo(() => {
-    if (!isStock) {
-      return {
-        signal: 'NICHT ANWENDBAR',
-        label: 'Buffett/Graham-Unternehmensbewertung nicht anwendbar',
-        description: 'Für diese Assetklasse existieren Unternehmenskennzahlen wie EPS und Free Cash Flow nicht in derselben fachlichen Bedeutung. Der Marktwert wird oben weiterhin aus verifizierter Evidence angezeigt.',
-        classes: 'border-sky-500/20 bg-sky-500/5 text-sky-200',
-      };
-    }
     if (!modelReady || marginOfSafety === null) {
       return {
         signal: 'NICHT BERECHENBAR',
@@ -348,13 +355,13 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
       description: 'Der Marktpreis liegt über dem modellierten inneren Wert. Dies ist ein Bewertungsbefund, keine Kauf- oder Verkaufsempfehlung.',
       classes: 'border-rose-500/20 bg-rose-500/5 text-rose-200',
     };
-  }, [display?.reason, fullyEvidenceBacked, isStock, marginOfSafety, modelReady]);
+  }, [display?.reason, fullyEvidenceBacked, marginOfSafety, modelReady]);
 
   if (catalogLoading && catalog.length === 0) {
     return (
       <div className="bg-zinc-800/60 border border-white/10 rounded-2xl p-8 min-h-[350px] flex flex-col items-center justify-center">
         <Activity className="w-7 h-7 animate-spin text-aif-gold-DEFAULT mb-3" />
-        <p className="text-[12px] font-mono text-white/50 uppercase tracking-widest">Lade Asset-Katalog...</p>
+        <p className="text-[12px] font-mono text-white/50 uppercase tracking-widest">Lade Aktien-Katalog...</p>
       </div>
     );
   }
@@ -371,7 +378,7 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
           </div>
           <h2 className="text-2xl font-black text-white font-display mt-1.5">Buffett Value Check & DCF Analysator</h2>
           <p className="text-sm text-white/60 mt-1 max-w-3xl">
-            Asset-Katalog und Marktbeobachtung sind getrennt. Werte werden erst bei Auswahl über den verifizierten Evidence-Layer geladen; Bootstrap- oder Demo-Werte werden nicht verwendet.
+            Der Buffett Value Check ist auf Unternehmensaktien begrenzt. Marktpreis und Fundamentals werden erst bei Auswahl über den verifizierten Evidence-Layer geladen; Bootstrap- oder Demo-Werte werden nicht verwendet.
           </p>
         </div>
 
@@ -383,15 +390,15 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
             className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-3 flex items-center gap-3 text-left relative z-40"
           >
             <div className="w-11 h-11 rounded-lg bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 flex items-center justify-center font-mono font-black text-aif-gold-DEFAULT text-sm shrink-0">
-              {activeSymbol}
+              {activeSymbol || '—'}
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm font-bold text-white flex items-center gap-1">
-                <span className="truncate">{activeAsset?.name ?? display?.name ?? activeSymbol}</span>
+                <span className="truncate">{activeAsset?.name ?? display?.name ?? 'Aktie auswählen'}</span>
                 <ChevronDown size={14} className="text-white/40" />
               </div>
               <div className="flex items-center gap-2 mt-1 text-[10px] font-mono uppercase">
-                <span className="text-white/40">{display?.assetClass ?? activeAsset?.type ?? 'Asset'}</span>
+                <span className="text-white/40">Aktie</span>
                 <span className="text-emerald-300 normal-case">
                   {valueLoading ? 'Wert wird verifiziert…' : display?.value !== null && display?.value !== undefined
                     ? `${formatBuffettMetric(display.value)} ${display.unit ?? ''}`
@@ -409,7 +416,7 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
                   type="text"
                   value={searchQuery}
                   onChange={event => setSearchQuery(event.target.value)}
-                  placeholder="Symbol oder Name suchen..."
+                  placeholder="Aktien-Symbol oder Unternehmen suchen..."
                   className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-aif-gold-DEFAULT font-mono"
                   autoFocus
                 />
@@ -430,10 +437,10 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
                       <div className="font-mono font-bold text-[11px] text-white">{asset.symbol}</div>
                       <div className="text-[10px] text-white/45 truncate">{asset.name}</div>
                     </div>
-                    <span className="text-[9px] uppercase font-mono text-white/35 shrink-0">{asset.type} · bei Auswahl laden</span>
+                    <span className="text-[9px] uppercase font-mono text-white/35 shrink-0">Aktie · bei Auswahl laden</span>
                   </button>
                 ))}
-                {filteredAssets.length === 0 && <div className="py-5 text-center text-xs text-white/40">Keine Assets gefunden.</div>}
+                {filteredAssets.length === 0 && <div className="py-5 text-center text-xs text-white/40">Keine Aktien gefunden.</div>}
               </div>
             </div>
           )}
@@ -449,29 +456,29 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-5">
         <div className="bg-black/20 border border-white/10 rounded-xl p-3">
-          <div className="text-[10px] uppercase tracking-wider text-white/40 font-mono">Verifizierter {display?.valueKind === 'yield' ? 'Renditewert' : 'Marktwert'}</div>
+          <div className="text-[10px] uppercase tracking-wider text-white/40 font-mono">Verifizierter Marktpreis</div>
           <div className="mt-1 text-xl font-mono font-black text-white">
             {valueLoading ? '…' : display?.value === null || display?.value === undefined ? '—' : `${formatBuffettMetric(display.value)} ${display.unit ?? ''}`}
           </div>
         </div>
         <div className="bg-black/20 border border-white/10 rounded-xl p-3">
-          <div className="text-[10px] uppercase tracking-wider text-white/40 font-mono">24h Änderung</div>
-          <div className="mt-1 text-xl font-mono font-black text-white">{display?.change24hPct === null || display?.change24hPct === undefined ? '—' : `${display.change24hPct >= 0 ? '+' : ''}${display.change24hPct.toFixed(2)}%`}</div>
+          <div className="text-[10px] uppercase tracking-wider text-white/40 font-mono">P/E</div>
+          <div className="mt-1 text-xl font-mono font-black text-white">{display?.fundamentals?.peRatio === null || display?.fundamentals?.peRatio === undefined ? '—' : `${formatBuffettMetric(display.fundamentals.peRatio)}x`}</div>
         </div>
         <div className="bg-black/20 border border-white/10 rounded-xl p-3">
-          <div className="text-[10px] uppercase tracking-wider text-white/40 font-mono">Market Cap</div>
-          <div className="mt-1 text-xl font-mono font-black text-white">{display?.marketCap === null || display?.marketCap === undefined ? '—' : `${formatBuffettMetric(display.marketCap)} USD`}</div>
+          <div className="text-[10px] uppercase tracking-wider text-white/40 font-mono">EPS TTM</div>
+          <div className="mt-1 text-xl font-mono font-black text-white">{display?.fundamentals?.epsTtm === null || display?.fundamentals?.epsTtm === undefined ? '—' : `${formatBuffettMetric(display.fundamentals.epsTtm)} USD`}</div>
         </div>
         <div className="bg-black/20 border border-white/10 rounded-xl p-3">
-          <div className="text-[10px] uppercase tracking-wider text-white/40 font-mono">24h Volumen</div>
-          <div className="mt-1 text-xl font-mono font-black text-white">{display?.volume24h === null || display?.volume24h === undefined ? '—' : `${formatBuffettMetric(display.volume24h)} USD`}</div>
+          <div className="text-[10px] uppercase tracking-wider text-white/40 font-mono">FCF / Aktie</div>
+          <div className="mt-1 text-xl font-mono font-black text-white">{display?.fundamentals?.freeCashFlowPerShare === null || display?.fundamentals?.freeCashFlowPerShare === undefined ? '—' : `${formatBuffettMetric(display.fundamentals.freeCashFlowPerShare)} USD`}</div>
         </div>
       </div>
 
       <div className="mb-6 rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-3 text-[11px] text-white/60">
         <div className="flex items-center gap-2 text-emerald-300 font-semibold">
           <ShieldCheck size={14} />
-          <span>Verified Asset Display · {display?.status ?? 'Lädt'} · keine Bootstrap-Ersatzwerte</span>
+          <span>Verified Asset Display · {display?.status ?? 'Lädt'} · Aktien-only · keine Bootstrap-Ersatzwerte</span>
         </div>
         <div className="mt-1">
           Provider: {display?.providers?.length ? display.providers.join(', ') : '—'} · Evidence IDs: {display?.evidenceIds?.length ?? 0} · Beobachtet: {formatObservedAt(display?.observedAt ?? null)}
@@ -479,217 +486,203 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
         {display?.reason && <div className="mt-1 text-amber-200/80">{display.reason}</div>}
       </div>
 
-      {!isStock ? (
-        <div className="rounded-2xl border border-sky-500/20 bg-sky-500/5 p-6">
-          <div className="flex items-start gap-3">
-            <Info className="text-sky-300 shrink-0 mt-0.5" size={20} />
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <div className="xl:col-span-5 space-y-5">
+          <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4 space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <span className="text-sm font-bold text-white uppercase tracking-wider">Bewertungsparameter</span>
+              <Database size={15} className="text-aif-gold-DEFAULT" />
+            </div>
+
             <div>
-              <h3 className="text-lg font-bold text-white">Buffett Value Check: nicht anwendbar auf {display?.assetClass ?? activeAsset?.type ?? 'diese Assetklasse'}</h3>
-              <p className="text-sm text-white/60 mt-2 leading-relaxed">
-                Der Marktwert bleibt sichtbar, aber Graham-/DCF-Unternehmenskennzahlen werden nicht auf Krypto, Forex, Rohstoffe, Indizes oder Anleiherenditen übertragen. Dadurch wird „Nicht verfügbar“ von fachlich „Nicht anwendbar“ getrennt.
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          <div className="xl:col-span-5 space-y-5">
-            <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4 space-y-4">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <span className="text-sm font-bold text-white uppercase tracking-wider">Bewertungsparameter</span>
-                <Database size={15} className="text-aif-gold-DEFAULT" />
+              <div className="flex justify-between text-[11px] font-mono text-white/55 mb-1.5">
+                <span>EPS TTM</span>
+                <span className={epsInputSource === 'verified' ? 'text-emerald-300' : epsInputSource === 'manual' ? 'text-amber-300' : 'text-white/35'}>
+                  {eps > 0 ? `${eps.toFixed(2)} USD · ${epsInputSource === 'verified' ? 'verifiziert' : 'manuell'}` : 'Nicht verfügbar'}
+                </span>
               </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] font-mono text-white/55 mb-1.5">
-                  <span>EPS TTM</span>
-                  <span className={epsInputSource === 'verified' ? 'text-emerald-300' : epsInputSource === 'manual' ? 'text-amber-300' : 'text-white/35'}>
-                    {eps > 0 ? `${eps.toFixed(2)} USD · ${epsInputSource === 'verified' ? 'verifiziert' : 'manuell'}` : 'Nicht verfügbar'}
-                  </span>
-                </div>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={eps || ''}
-                  onChange={event => {
-                    const value = Math.max(0, Number(event.target.value));
-                    setEps(Number.isFinite(value) ? value : 0);
-                    setEpsInputSource(value > 0 ? 'manual' : 'missing');
-                  }}
-                  className="w-full bg-zinc-900/80 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-aif-gold-DEFAULT font-mono"
-                  placeholder="Verifiziertes EPS fehlt"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] font-mono text-white/55 mb-1.5">
-                  <span>Wachstumsannahme (g)</span><span className="text-aif-gold-DEFAULT">{growth.toFixed(1)}%</span>
-                </div>
-                <input type="range" min="0" max="30" step="0.5" value={growth} onChange={event => setGrowth(Number(event.target.value))} className="w-full accent-aif-gold-DEFAULT" />
-                <p className="text-[10px] text-white/35 mt-1">Explizite Modellannahme, kein gemessener Datenpunkt.</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <label className="text-[10px] uppercase tracking-wider text-white/45 font-mono">
-                  WACC / Diskontsatz
-                  <input type="number" min="1" step="0.1" value={discountRate} onChange={event => setDiscountRate(Math.max(1, Number(event.target.value)))} className="mt-1 w-full bg-zinc-900/80 border border-white/20 rounded-lg px-2.5 py-2 text-sm text-white" />
-                </label>
-                <label className="text-[10px] uppercase tracking-wider text-white/45 font-mono">
-                  Terminal Multiple
-                  <input type="number" min="5" step="1" value={terminalMultiple} onChange={event => setTerminalMultiple(Math.max(5, Number(event.target.value)))} className="mt-1 w-full bg-zinc-900/80 border border-white/20 rounded-lg px-2.5 py-2 text-sm text-white" />
-                </label>
-              </div>
-
-              <div className="flex gap-2">
-                {[3, 5, 7, 10].map(years => (
-                  <button key={years} type="button" onClick={() => setProjectionYears(years)} className={`flex-1 py-1.5 rounded border text-[11px] font-mono ${projectionYears === years ? 'border-aif-gold-DEFAULT bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT' : 'border-white/10 text-white/50'}`}>{years}J</button>
-                ))}
-              </div>
-
-              <div className="border-t border-white/10 pt-3">
-                <label className="text-[10px] uppercase tracking-wider text-white/45 font-mono">Vergleichspreis</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={customPrice || ''}
-                  onChange={event => {
-                    const value = Math.max(0, Number(event.target.value));
-                    setCustomPrice(Number.isFinite(value) ? value : 0);
-                    setPriceInputSource(value > 0 ? 'manual' : 'missing');
-                  }}
-                  className="mt-1 w-full bg-zinc-900/80 border border-white/20 rounded-lg px-3 py-2 text-base font-bold text-white font-mono"
-                  placeholder="Verifizierter Preis fehlt"
-                />
-                <p className="text-[10px] mt-1 text-white/35">Quelle: {priceInputSource === 'verified' ? 'Verified Asset Display' : priceInputSource === 'manual' ? 'manueller Szenariowert' : 'nicht verfügbar'}</p>
-              </div>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={eps || ''}
+                onChange={event => {
+                  const value = Math.max(0, Number(event.target.value));
+                  setEps(Number.isFinite(value) ? value : 0);
+                  setEpsInputSource(value > 0 ? 'manual' : 'missing');
+                }}
+                className="w-full bg-zinc-900/80 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-aif-gold-DEFAULT font-mono"
+                placeholder="Verifiziertes EPS fehlt"
+              />
             </div>
 
-            <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4">
-              <div className="text-xs font-bold text-white uppercase tracking-wider mb-3">Verifizierte Fundamentals</div>
-              <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                {[
-                  ['P/E', display?.fundamentals?.peRatio, 'x'],
-                  ['Debt/Equity', display?.fundamentals?.debtToEquity, 'x'],
-                  ['Dividendenrendite', display?.fundamentals?.dividendYieldPct, '%'],
-                  ['Nettomarge', display?.fundamentals?.profitMarginPct, '%'],
-                  ['EPS TTM', display?.fundamentals?.epsTtm, 'USD/Aktie'],
-                  ['FCF/Aktie', display?.fundamentals?.freeCashFlowPerShare, 'USD/Aktie'],
-                ].map(([label, value, unit]) => (
-                  <div key={String(label)} className="bg-black/20 rounded-lg border border-white/5 p-2">
-                    <div className="text-white/35">{String(label)}</div>
-                    <div className="text-white font-bold mt-1">{value === null || value === undefined ? '—' : `${formatBuffettMetric(value)} ${String(unit)}`}</div>
-                  </div>
-                ))}
+            <div>
+              <div className="flex justify-between text-[11px] font-mono text-white/55 mb-1.5">
+                <span>Wachstumsannahme (g)</span><span className="text-aif-gold-DEFAULT">{growth.toFixed(1)}%</span>
               </div>
-            </div>
-          </div>
-
-          <div className="xl:col-span-7 space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4">
-                <div className="text-[10px] uppercase text-white/40 font-mono">Graham Value</div>
-                <div className="text-2xl font-black text-white font-mono mt-3">{grahamValue === null ? '—' : `${formatBuffettMetric(grahamValue)} USD`}</div>
-              </div>
-              <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4">
-                <div className="text-[10px] uppercase text-white/40 font-mono">DCF · {dcfBaseLabel}</div>
-                <div className="text-2xl font-black text-white font-mono mt-3">{dcfValue === null ? '—' : `${formatBuffettMetric(dcfValue)} USD`}</div>
-              </div>
-              <div className="bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 rounded-xl p-4">
-                <div className="text-[10px] uppercase text-aif-gold-DEFAULT font-mono">Modellkonsens</div>
-                <div className="text-2xl font-black text-aif-gold-DEFAULT font-mono mt-3">{consensusValue === null ? '—' : `${formatBuffettMetric(consensusValue)} USD`}</div>
-              </div>
+              <input type="range" min="0" max="30" step="0.5" value={growth} onChange={event => setGrowth(Number(event.target.value))} className="w-full accent-aif-gold-DEFAULT" />
+              <p className="text-[10px] text-white/35 mt-1">Explizite Modellannahme, kein gemessener Datenpunkt.</p>
             </div>
 
-            <div className="flex gap-2 bg-white/5 border border-white/10 p-1 rounded-lg">
-              {([
-                ['dcf', 'DCF Modell'],
-                ['graham', 'Graham Formel'],
-                ['evidence', 'Evidence'],
-              ] as const).map(([id, label]) => (
-                <button key={id} type="button" onClick={() => setActiveTab(id)} className={`flex-1 py-2 rounded-md text-[11px] font-bold uppercase font-mono ${activeTab === id ? 'bg-aif-gold-DEFAULT text-black' : 'text-white/55'}`}>{label}</button>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="text-[10px] uppercase tracking-wider text-white/45 font-mono">
+                WACC / Diskontsatz
+                <input type="number" min="1" step="0.1" value={discountRate} onChange={event => setDiscountRate(Math.max(1, Number(event.target.value)))} className="mt-1 w-full bg-zinc-900/80 border border-white/20 rounded-lg px-2.5 py-2 text-sm text-white" />
+              </label>
+              <label className="text-[10px] uppercase tracking-wider text-white/45 font-mono">
+                Terminal Multiple
+                <input type="number" min="5" step="1" value={terminalMultiple} onChange={event => setTerminalMultiple(Math.max(5, Number(event.target.value)))} className="mt-1 w-full bg-zinc-900/80 border border-white/20 rounded-lg px-2.5 py-2 text-sm text-white" />
+              </label>
+            </div>
+
+            <div className="flex gap-2">
+              {[3, 5, 7, 10].map(years => (
+                <button key={years} type="button" onClick={() => setProjectionYears(years)} className={`flex-1 py-1.5 rounded border text-[11px] font-mono ${projectionYears === years ? 'border-aif-gold-DEFAULT bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT' : 'border-white/10 text-white/50'}`}>{years}J</button>
               ))}
             </div>
 
-            <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4">
-              {activeTab === 'dcf' && (
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-bold text-white mb-3"><Activity size={14} className="text-cyan-300" />DCF Projektion</div>
-                  <p className="text-[11px] text-white/45 mb-3">Basis: {dcfBaseLabel}. Free Cash Flow wird bevorzugt; EPS dient nur als sichtbar gekennzeichneter Proxy, wenn FCF fehlt.</p>
-                  {dcfResult ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-[11px] font-mono">
-                        <thead><tr className="text-white/35 border-b border-white/10"><th className="text-left py-2">Jahr</th><th className="text-right">Projiziert</th><th className="text-right">Barwert</th></tr></thead>
-                        <tbody>
-                          {dcfResult.steps.map(step => <tr key={step.year} className="border-b border-white/5"><td className="py-2 text-white/60">{step.year}</td><td className="text-right text-white">{step.projected.toFixed(2)}</td><td className="text-right text-cyan-300">{step.presentValue.toFixed(2)}</td></tr>)}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : <div className="text-sm text-amber-200">DCF nicht berechenbar: verifizierte oder manuell gesetzte positive Eingaben fehlen.</div>}
-                </div>
-              )}
-
-              {activeTab === 'graham' && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-bold text-white"><Scale size={14} className="text-amber-300" />Graham-Formel</div>
-                  <div className="text-[12px] font-mono text-white/70 bg-black/20 border border-white/5 rounded-lg p-3">V = (EPS × (8.5 + 2g) × {bondYieldFactor}) / {aaaBondYield}</div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className="text-[10px] text-white/45 uppercase font-mono">Zins-Multiplikator<input type="number" step="0.1" min="0.1" value={bondYieldFactor} onChange={event => setBondYieldFactor(Math.max(0.1, Number(event.target.value)))} className="mt-1 w-full bg-zinc-900 border border-white/20 rounded px-2 py-2 text-white" /></label>
-                    <label className="text-[10px] text-white/45 uppercase font-mono">AAA-Rendite (%)<input type="number" step="0.1" min="0.1" value={aaaBondYield} onChange={event => setAaaBondYield(Math.max(0.1, Number(event.target.value)))} className="mt-1 w-full bg-zinc-900 border border-white/20 rounded px-2 py-2 text-white" /></label>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'evidence' && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-bold text-white"><ShieldCheck size={14} className="text-emerald-300" />Daten-Lineage</div>
-                  <div className="text-[11px] text-white/55 space-y-1">
-                    <div>Contract: <span className="font-mono text-white">{display?.contractVersion ?? '—'}</span></div>
-                    <div>Provider: <span className="font-mono text-white">{display?.providers?.join(', ') || '—'}</span></div>
-                    <div>Evidence IDs: <span className="font-mono text-white">{display?.evidenceIds?.length ?? 0}</span></div>
-                    <div>Observed At: <span className="font-mono text-white">{formatObservedAt(display?.observedAt ?? null)}</span></div>
-                    <div>Execution-Preis: <span className="font-mono text-white">Nein · Display/Research Evidence</span></div>
-                  </div>
-                </div>
-              )}
+            <div className="border-t border-white/10 pt-3">
+              <label className="text-[10px] uppercase tracking-wider text-white/45 font-mono">Vergleichspreis</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={customPrice || ''}
+                onChange={event => {
+                  const value = Math.max(0, Number(event.target.value));
+                  setCustomPrice(Number.isFinite(value) ? value : 0);
+                  setPriceInputSource(value > 0 ? 'manual' : 'missing');
+                }}
+                className="mt-1 w-full bg-zinc-900/80 border border-white/20 rounded-lg px-3 py-2 text-base font-bold text-white font-mono"
+                placeholder="Verifizierter Preis fehlt"
+              />
+              <p className="text-[10px] mt-1 text-white/35">Quelle: {priceInputSource === 'verified' ? 'Verified Asset Display' : priceInputSource === 'manual' ? 'manueller Szenariowert' : 'nicht verfügbar'}</p>
             </div>
+          </div>
 
-            <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-bold text-white uppercase">Buffett Fundamental-Evidence-Checkliste</span>
-                <span className="text-aif-gold-DEFAULT font-mono text-xs">{fulfilledCount} / {pillars.length}</span>
-              </div>
-              <div className="space-y-2">
-                {pillars.map(item => (
-                  <div key={item.title} className="flex items-start gap-2.5 bg-black/20 border border-white/5 rounded-lg p-3">
-                    {item.fulfilled ? <CheckCircle2 size={15} className="text-emerald-400 shrink-0 mt-0.5" /> : <AlertCircle size={15} className="text-amber-300 shrink-0 mt-0.5" />}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex justify-between gap-3"><span className="text-sm font-bold text-white">{item.title}</span><span className="text-[10px] font-mono text-white/50 shrink-0">{item.status}</span></div>
-                      <p className="text-[10px] text-white/40 mt-1">{item.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className={`border rounded-xl p-4 ${verdict.classes}`}>
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-[10px] uppercase tracking-wider font-mono">Bewertungsurteil</div>
-                <div className="text-[10px] uppercase tracking-wider font-mono font-bold">{verdict.signal}</div>
-              </div>
-              <div className="text-base font-black text-white mt-1">{verdict.label}</div>
-              <p className="text-sm text-white/65 mt-1.5 leading-relaxed">{verdict.description}</p>
-              {marginOfSafety !== null && <div className="mt-3 text-xs font-mono text-white/50">Marktpreis {customPrice.toFixed(2)} USD · Modellkonsens {consensusValue?.toFixed(2)} USD · MoS {marginOfSafety >= 0 ? '+' : ''}{marginOfSafety}%</div>}
+          <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4">
+            <div className="text-xs font-bold text-white uppercase tracking-wider mb-3">Verifizierte Fundamentals</div>
+            <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+              {[
+                ['P/E', display?.fundamentals?.peRatio, 'x'],
+                ['Debt/Equity', display?.fundamentals?.debtToEquity, 'x'],
+                ['Dividendenrendite', display?.fundamentals?.dividendYieldPct, '%'],
+                ['Nettomarge', display?.fundamentals?.profitMarginPct, '%'],
+                ['EPS TTM', display?.fundamentals?.epsTtm, 'USD/Aktie'],
+                ['FCF/Aktie', display?.fundamentals?.freeCashFlowPerShare, 'USD/Aktie'],
+              ].map(([label, value, unit]) => (
+                <div key={String(label)} className="bg-black/20 rounded-lg border border-white/5 p-2">
+                  <div className="text-white/35">{String(label)}</div>
+                  <div className="text-white font-bold mt-1">{value === null || value === undefined ? '—' : `${formatBuffettMetric(value)} ${String(unit)}`}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      )}
+
+        <div className="xl:col-span-7 space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4">
+              <div className="text-[10px] uppercase text-white/40 font-mono">Graham Value</div>
+              <div className="text-2xl font-black text-white font-mono mt-3">{grahamValue === null ? '—' : `${formatBuffettMetric(grahamValue)} USD`}</div>
+            </div>
+            <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4">
+              <div className="text-[10px] uppercase text-white/40 font-mono">DCF · {dcfBaseLabel}</div>
+              <div className="text-2xl font-black text-white font-mono mt-3">{dcfValue === null ? '—' : `${formatBuffettMetric(dcfValue)} USD`}</div>
+            </div>
+            <div className="bg-aif-gold-DEFAULT/10 border border-aif-gold-DEFAULT/20 rounded-xl p-4">
+              <div className="text-[10px] uppercase text-aif-gold-DEFAULT font-mono">Modellkonsens</div>
+              <div className="text-2xl font-black text-aif-gold-DEFAULT font-mono mt-3">{consensusValue === null ? '—' : `${formatBuffettMetric(consensusValue)} USD`}</div>
+            </div>
+          </div>
+
+          <div className="flex gap-2 bg-white/5 border border-white/10 p-1 rounded-lg">
+            {([
+              ['dcf', 'DCF Modell'],
+              ['graham', 'Graham Formel'],
+              ['evidence', 'Evidence'],
+            ] as const).map(([id, label]) => (
+              <button key={id} type="button" onClick={() => setActiveTab(id)} className={`flex-1 py-2 rounded-md text-[11px] font-bold uppercase font-mono ${activeTab === id ? 'bg-aif-gold-DEFAULT text-black' : 'text-white/55'}`}>{label}</button>
+            ))}
+          </div>
+
+          <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4">
+            {activeTab === 'dcf' && (
+              <div>
+                <div className="flex items-center gap-2 text-sm font-bold text-white mb-3"><Activity size={14} className="text-cyan-300" />DCF Projektion</div>
+                <p className="text-[11px] text-white/45 mb-3">Basis: {dcfBaseLabel}. Free Cash Flow wird bevorzugt; EPS dient nur als sichtbar gekennzeichneter Proxy, wenn FCF fehlt.</p>
+                {dcfResult ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-[11px] font-mono">
+                      <thead><tr className="text-white/35 border-b border-white/10"><th className="text-left py-2">Jahr</th><th className="text-right">Projiziert</th><th className="text-right">Barwert</th></tr></thead>
+                      <tbody>
+                        {dcfResult.steps.map(step => <tr key={step.year} className="border-b border-white/5"><td className="py-2 text-white/60">{step.year}</td><td className="text-right text-white">{step.projected.toFixed(2)}</td><td className="text-right text-cyan-300">{step.presentValue.toFixed(2)}</td></tr>)}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : <div className="text-sm text-amber-200">DCF nicht berechenbar: verifizierte oder manuell gesetzte positive Eingaben fehlen.</div>}
+              </div>
+            )}
+
+            {activeTab === 'graham' && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm font-bold text-white"><Scale size={14} className="text-amber-300" />Graham-Formel</div>
+                <div className="text-[12px] font-mono text-white/70 bg-black/20 border border-white/5 rounded-lg p-3">V = (EPS × (8.5 + 2g) × {bondYieldFactor}) / {aaaBondYield}</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="text-[10px] text-white/45 uppercase font-mono">Zins-Multiplikator<input type="number" step="0.1" min="0.1" value={bondYieldFactor} onChange={event => setBondYieldFactor(Math.max(0.1, Number(event.target.value)))} className="mt-1 w-full bg-zinc-900 border border-white/20 rounded px-2 py-2 text-white" /></label>
+                  <label className="text-[10px] text-white/45 uppercase font-mono">AAA-Rendite (%)<input type="number" step="0.1" min="0.1" value={aaaBondYield} onChange={event => setAaaBondYield(Math.max(0.1, Number(event.target.value)))} className="mt-1 w-full bg-zinc-900 border border-white/20 rounded px-2 py-2 text-white" /></label>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'evidence' && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm font-bold text-white"><ShieldCheck size={14} className="text-emerald-300" />Daten-Lineage</div>
+                <div className="text-[11px] text-white/55 space-y-1">
+                  <div>Contract: <span className="font-mono text-white">{display?.contractVersion ?? '—'}</span></div>
+                  <div>Provider: <span className="font-mono text-white">{display?.providers?.join(', ') || '—'}</span></div>
+                  <div>Evidence IDs: <span className="font-mono text-white">{display?.evidenceIds?.length ?? 0}</span></div>
+                  <div>Observed At: <span className="font-mono text-white">{formatObservedAt(display?.observedAt ?? null)}</span></div>
+                  <div>Execution-Preis: <span className="font-mono text-white">Nein · Display/Research Evidence</span></div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-zinc-800/75 border border-white/10 rounded-xl p-4">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-sm font-bold text-white uppercase">Buffett Fundamental-Evidence-Checkliste</span>
+              <span className="text-aif-gold-DEFAULT font-mono text-xs">{fulfilledCount} / {pillars.length}</span>
+            </div>
+            <div className="space-y-2">
+              {pillars.map(item => (
+                <div key={item.title} className="flex items-start gap-2.5 bg-black/20 border border-white/5 rounded-lg p-3">
+                  {item.fulfilled ? <CheckCircle2 size={15} className="text-emerald-400 shrink-0 mt-0.5" /> : <AlertCircle size={15} className="text-amber-300 shrink-0 mt-0.5" />}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex justify-between gap-3"><span className="text-sm font-bold text-white">{item.title}</span><span className="text-[10px] font-mono text-white/50 shrink-0">{item.status}</span></div>
+                    <p className="text-[10px] text-white/40 mt-1">{item.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={`border rounded-xl p-4 ${verdict.classes}`}>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-[10px] uppercase tracking-wider font-mono">Bewertungsurteil</div>
+              <div className="text-[10px] uppercase tracking-wider font-mono font-bold">{verdict.signal}</div>
+            </div>
+            <div className="text-base font-black text-white mt-1">{verdict.label}</div>
+            <p className="text-sm text-white/65 mt-1.5 leading-relaxed">{verdict.description}</p>
+            {marginOfSafety !== null && <div className="mt-3 text-xs font-mono text-white/50">Marktpreis {customPrice.toFixed(2)} USD · Modellkonsens {consensusValue?.toFixed(2)} USD · MoS {marginOfSafety >= 0 ? '+' : ''}{marginOfSafety}%</div>}
+          </div>
+        </div>
+      </div>
 
       <div className="mt-6 bg-aif-gold-DEFAULT/[0.03] border border-aif-gold-DEFAULT/15 rounded-xl p-3 flex items-start gap-3">
         <BookOpen className="text-aif-gold-DEFAULT/70 shrink-0 mt-0.5" size={16} />
         <p className="text-[11px] text-white/50 leading-relaxed">
-          Der Buffett/Graham-Bereich ist ein Bewertungsmodell. Provider-Evidence, Modellannahmen und manuelle Overrides bleiben getrennt sichtbar; fehlende Daten werden weder automatisch als bestanden gewertet noch durch pauschale Ersatzwerte ersetzt.
+          Der Buffett/Graham-Bereich ist ausschließlich für Unternehmensaktien vorgesehen. Provider-Evidence, Modellannahmen und manuelle Overrides bleiben getrennt sichtbar; fehlende Daten werden weder automatisch als bestanden gewertet noch durch pauschale Ersatzwerte ersetzt.
         </p>
       </div>
     </div>
