@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.1.0",
   "claimId": "BUFFETT-VALUE-CHECK-NULL-PRICE-FIX-2026-08-14",
-  "status": "active",
-  "exclusive": true,
+  "status": "verified",
+  "exclusive": false,
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6",
@@ -10,13 +10,15 @@
   },
   "workItem": "Buffett Value Check gegen fehlende Registry-Preise absichern und die Fehlergrenze beim Öffnen verhindern.",
   "startedAt": "2026-08-14T18:20:00Z",
+  "verifiedAt": "2026-08-14T18:34:01Z",
   "baseBranch": "main",
   "baseSha": "e2dc1d11926af62baeb62feafb959fe258143936",
-  "pullRequest": null,
+  "pullRequest": 259,
+  "mergeCommitSha": "9f1516f2c7858aa4d8b0595f1b2766d71ba40b8d",
   "claimedPaths": [
     "src/components/BuffetValueCheck.tsx",
     "tests/unit/buffetValueCheck.test.ts",
     ".ai/work-claims/BUFFETT-VALUE-CHECK-NULL-PRICE-FIX-2026-08-14.json"
   ],
-  "releaseCondition": "Claim is released when the pull request is merged, closed, superseded or abandoned; after merge the remote branch is deleted."
+  "releaseCondition": "Satisfied: PR #259 was merged on 2026-08-14; this metadata no longer holds an exclusive path claim."
 }
