@@ -24,6 +24,13 @@ import {
   validateContinuousVocabularyGovernance,
   type ContinuousGovernanceReport,
 } from '../../src/platform/Vocabulary/Validators/ContinuousGovernanceValidator';
+import { runAllScanners } from '../../src/platform/Compliance/scanners';
+import type { ScannerResult, Severity } from '../../src/platform/Compliance/types';
+import {
+  QM_DOCUMENTATION_CONSISTENCY_VALIDATOR_VERSION,
+  validateQmDocumentationConsistency,
+  type DocumentationConsistencyReport,
+} from '../../src/platform/Quality/Validators/DocumentationConsistencyValidator';
 
 function errorMessage(error: unknown): string {
   if (error instanceof Error && error.message.trim()) return error.message.trim();
@@ -127,6 +134,45 @@ export function createDocumentationHygieneQualityAdapter(
             severity: 'error',
             message: `Documentation hygiene validation failed closed: ${errorMessage(error)}`,
             evidenceRefs: ['ESS-0012', 'ADR-0014', 'ADR-0096'],
+          }],
+        });
+      }
+    },
+  });
+}
+
+export function createDocumentationConsistencyQualityAdapter(
+  validate: typeof validateQmDocumentationConsistency = validateQmDocumentationConsistency,
+): RepositoryQualityAdapter {
+  return Object.freeze({
+    domain: 'documentation-consistency' as const,
+    run: ({ repoRoot, checkedAt }: RepositoryQualityAdapterContext) => {
+      try {
+        const report: DocumentationConsistencyReport = validate(repoRoot, checkedAt);
+        return frozenResult({
+          domain: 'documentation-consistency',
+          status: statusFromFindings(report.findings, report.blocking),
+          blocking: report.blocking,
+          checkedAt,
+          source: QM_DOCUMENTATION_CONSISTENCY_VALIDATOR_VERSION,
+          authorityRefs: ['ESS-0005', 'ESS-0012', 'ADR-0014', 'ADR-0096'],
+          findings: report.findings,
+          metrics: { findingCount: report.findings.length },
+        });
+      } catch (error) {
+        return frozenResult({
+          domain: 'documentation-consistency',
+          status: 'FAIL',
+          blocking: true,
+          checkedAt,
+          source: QM_DOCUMENTATION_CONSISTENCY_VALIDATOR_VERSION,
+          authorityRefs: ['ESS-0005', 'ESS-0012', 'ADR-0014', 'ADR-0096'],
+          findings: [{
+            domain: 'documentation-consistency',
+            ruleId: 'QM-DOC-UNAVAILABLE',
+            severity: 'error',
+            message: `QM documentation consistency validation failed closed: ${errorMessage(error)}`,
+            evidenceRefs: ['ESS-0005', 'ESS-0012', 'ADR-0014', 'ADR-0096'],
           }],
         });
       }
@@ -248,11 +294,81 @@ export function createVocabularyQualityAdapter(
   });
 }
 
+function mapComplianceSeverity(severity: Severity): RepositoryQualitySeverity {
+  if (severity === 'CRITICAL' || severity === 'HIGH') return 'error';
+  if (severity === 'MEDIUM') return 'warning';
+  return 'info';
+}
+
+function mapComplianceResults(results: readonly ScannerResult[], checkedAt: string): RepositoryQualityCheckResult {
+  const findings: RepositoryQualityFinding[] = results.flatMap((result) =>
+    result.findings.map((item) => ({
+      domain: 'compliance' as const,
+      ruleId: result.id,
+      severity: mapComplianceSeverity(item.severity),
+      sourceSeverity: item.severity,
+      message: `${item.title}: ${item.description}`,
+      path: item.filePath,
+      evidenceRefs: [item.complianceReference, ...result.isoControls, 'ESS-0006', 'ADR-0012'],
+    })),
+  );
+  const blocking = findings.some((item) => item.severity === 'error');
+  const complianceScores = results.map((result) => result.complianceScore);
+  const riskScores = results.map((result) => result.riskScore);
+
+  return frozenResult({
+    domain: 'compliance',
+    status: statusFromFindings(findings, blocking),
+    blocking,
+    checkedAt,
+    source: 'src/platform/Compliance/scanners.ts',
+    authorityRefs: ['ESS-0001-CONTRACTS Chapter 11', 'ESS-0006', 'ADR-0012'],
+    findings,
+    metrics: {
+      scannerCount: results.length,
+      findingCount: findings.length,
+      minimumComplianceScore: complianceScores.length ? Math.min(...complianceScores) : null,
+      maximumRiskScore: riskScores.length ? Math.max(...riskScores) : null,
+    },
+  });
+}
+
+export function createComplianceQualityAdapter(
+  run: typeof runAllScanners = runAllScanners,
+): RepositoryQualityAdapter {
+  return Object.freeze({
+    domain: 'compliance' as const,
+    run: ({ checkedAt }: RepositoryQualityAdapterContext) => {
+      try {
+        return mapComplianceResults(run(), checkedAt);
+      } catch (error) {
+        return frozenResult({
+          domain: 'compliance',
+          status: 'FAIL',
+          blocking: true,
+          checkedAt,
+          source: 'src/platform/Compliance/scanners.ts',
+          authorityRefs: ['ESS-0001-CONTRACTS Chapter 11', 'ESS-0006', 'ADR-0012'],
+          findings: [{
+            domain: 'compliance',
+            ruleId: 'QUALITY-COMPLIANCE-UNAVAILABLE',
+            severity: 'error',
+            message: `Compliance scanner integration failed closed: ${errorMessage(error)}`,
+            evidenceRefs: ['ESS-0006', 'ADR-0012'],
+          }],
+        });
+      }
+    },
+  });
+}
+
 export function createDefaultRepositoryQualityAdapters(): readonly RepositoryQualityAdapter[] {
   return Object.freeze([
     createPlatformVersionQualityAdapter(),
     createDocumentationHygieneQualityAdapter(),
+    createDocumentationConsistencyQualityAdapter(),
     createRepositoryConventionQualityAdapter(),
     createVocabularyQualityAdapter(),
+    createComplianceQualityAdapter(),
   ]);
 }
