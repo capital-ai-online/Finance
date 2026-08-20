@@ -23,7 +23,8 @@ Documentary remains a documentation/evidence sidecar to the financial value chai
 - semantic patch proposals only for non-protected documents;
 - SHA-bound TOCTOU protection;
 - deterministic patch SemVer increment;
-- lifecycle reset to `generated` after automatic modification.
+- lifecycle reset to `generated` after automatic modification;
+- actual checked-out Git branch must equal the authorized maintenance branch before Apply.
 
 ### P0 — Supervisor / Governance / Platform Director wiring
 
@@ -33,6 +34,7 @@ Documentary remains a documentation/evidence sidecar to the financial value chai
 - exact Supervisor evidence binding in `PlatformDecisionRecord`;
 - existing Protected Decision Boundary reused;
 - existing Agent IAM `ANALYZE`/`PLAN`/`BRANCH`/`COMMIT`/`PR` reused;
+- execution-request `killSwitchActive` propagated to Agent IAM, never hard-coded inactive;
 - no Merge/Deploy/Production capability.
 
 ### P0 — SC-MD-SPT-0001 value-chain boundary
@@ -82,7 +84,7 @@ Documentary remains a documentation/evidence sidecar to the financial value chai
 - Documentary component version synchronized with README;
 - package scripts for controlled host, targeted tests, closure validator and pre-PR aggregate;
 - Work Claim must equal the actual branch diff exactly;
-- closure validator checks `git diff --check`, current-main synchronization, Registry/Authority/Manifest consistency, SC-MD-SPT-0001 sidecar/hot-path boundaries, protected paths and narrow Git staging;
+- closure validator checks `git diff --check`, current-main synchronization, Registry/Authority/Manifest consistency, SC-MD-SPT-0001 sidecar/hot-path boundaries, Agent-IAM kill-switch propagation, actual branch verification, protected paths and narrow Git staging;
 - final Main-correlation evidence records the synchronized Quality Center / Chapter-12 completion and its architectural impact.
 
 ## Reuse decisions
@@ -101,6 +103,8 @@ Documentary remains a documentation/evidence sidecar to the financial value chai
 
 - no direct `main` mutation;
 - source evidence must be current-main-bound;
+- actual checked-out branch must equal the authorized maintenance branch before apply;
+- Agent-IAM kill-switch state is propagated from the execution request and can block mutation;
 - no model-selected capabilities;
 - untrusted document/diff/RAG content is data, not instructions;
 - protected document classes are review-only;
@@ -139,6 +143,8 @@ The closure validator additionally checks:
 - Documentary manifest version/contracts/tests/implemented areas;
 - current-main Quality Center contract/validator baseline and final Main-sync evidence;
 - SC-MD-SPT-0001 sidecar metadata, VC-13 projection identity and forbidden direct financial-hotpath imports;
+- Agent-IAM kill-switch propagation and rejection of a hard-coded inactive kill switch;
+- actual checked-out branch verification in the exported Apply contract;
 - protected review-only prefixes;
 - explicit-path staging and reuse of `open-agent-draft-pr.yml`.
 
