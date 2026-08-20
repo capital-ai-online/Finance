@@ -14,16 +14,17 @@
   "baseBranch": "main",
   "branch": "governance/frontend-authority-correlation-2026-08-20",
   "initialBaseSha": "6b61c63a8d66b933c824b698d81ea242e202cb47",
-  "baseSha": "caa6c6881cc043c8323451e489b98ea4b7ca3436",
-  "lastMainSyncSha": "caa6c6881cc043c8323451e489b98ea4b7ca3436",
-  "mainSyncObservedAt": "2026-08-20T23:27:00+02:00",
+  "baseSha": "cb07abdeb871c1c7ba682fecfa91faa4a8de852e",
+  "lastMainSyncSha": "cb07abdeb871c1c7ba682fecfa91faa4a8de852e",
+  "mainSyncObservedAt": "2026-08-20T23:48:49+02:00",
   "pullRequest": 463,
   "parallelWriterFindings": [
     {
       "pullRequest": 461,
+      "state": "merged-before-final-readiness-sync",
       "branch": "feature/media-creation-mc1-media-project-v2",
       "overlap": ["docs/adr/registry.json", "docs/governance/authority-registry.json"],
-      "resolution": "No shared Authority ID or ADR display-ID allocation. ADR-0098 remains owned by PR #461; this work does not copy, reserve or redefine its authority. Registry file overlap must be re-correlated before merge."
+      "resolution": "PR #461 merged into main as cb07abdeb871c1c7ba682fecfa91faa4a8de852e. ADR-0098 and AUTH-ADR-MEDIA-PROJECT-V2-2026-08-20 were preserved verbatim in the semantic registry merge; no shared Authority ID or ADR display-ID collision exists."
     }
   ],
   "claimedPaths": [
