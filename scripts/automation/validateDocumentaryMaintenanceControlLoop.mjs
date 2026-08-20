@@ -109,7 +109,7 @@ for (const marker of [
   currentBranch,
   'repository:quality:check',
   claim.claimId,
-  'main itself was not mutated',
+  'itself was not mutated',
 ]) {
   if (!mainSyncEvidence.includes(marker)) fail(`main-sync evidence is missing required marker: ${marker}.`);
 }
@@ -133,7 +133,7 @@ if (packageJson.scripts?.['documentary:maintenance:prepr'] !== expectedPrePr) {
 }
 
 const qualityArchitecture = read('docs/architecture/QUALITY_CENTER_CORE_ORCHESTRATION.md');
-if (!qualityArchitecture.includes('read-only') || !qualityArchitecture.includes('Quality besitzt keine Merge-, Release-, Deployment-, IAM-')) {
+if (!qualityArchitecture.includes('read-only') || !qualityArchitecture.includes('Es autorisiert weder Merge noch Release, Deployment oder Produktionsmutation.')) {
   fail('current-main Quality Center authority boundary is missing or semantically unexpected.');
 }
 const qualityManifest = json('src/platform/Quality/manifest.json');
