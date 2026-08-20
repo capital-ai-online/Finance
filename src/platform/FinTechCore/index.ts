@@ -10,6 +10,7 @@ export * from './Modules/Crypto/Adapters/VerifiedCryptoSnapshotFeatureAdapter';
 export * from './Modules/Crypto/Pattern/PatternDetectionContracts';
 export * from './Modules/Crypto/Pattern/PatternReliabilityRegistry';
 export * from './Modules/Crypto/Pattern/PatternSignalResolver';
+export * from './Modules/Crypto/Pattern/PatternResearchEngine';
 
 import { FinTechCoreEngine } from './CoreEngine';
 import { FinTechCoreModuleRegistry } from './CoreModuleRegistry';
