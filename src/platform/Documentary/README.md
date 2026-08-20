@@ -63,6 +63,14 @@ Die AI-Ausführung verwendet über `server/documentaryMaintenanceAiAdapter.ts` d
 
 `scripts/automation/runDocumentaryMaintenanceControlLoop.ts` verlangt einen sauberen Checkout des exakten aktuellen `main`. `sourceCommit` muss genau diesem Main-SHA entsprechen. Vor Branch-Erstellung wird ein gleichnamiger Remote-Agent-Branch abgelehnt; bei Fehlern nach einem Push wird ein noch nicht übergebenes Remote-Artefakt best-effort wieder entfernt. Der Host stage-t nur explizite Patch-/Claim-Pfade, führt lokale Governance-Hygiene aus und nutzt anschließend den bestehenden Workflow `.github/workflows/open-agent-draft-pr.yml`. Wenn sich `main` vor dem PR-Handoff ändert, wird der Kandidat verworfen und muss auf der neuen Baseline neu erzeugt werden.
 
+### SC-MD-SPT-0001 Wertschöpfungsketten-Anbindung
+
+Der Maintenance-Pfad ist im Component Manifest ausdrücklich als `read-only-documentation-evidence-sidecar` an `SC-MD-SPT-0001` deklariert. Die fachliche Einordnung erfolgt um `VC-13-EVENT-TRACEABILITY-SUPERVISOR`; Documentary wird **nicht** zu einer zusätzlichen Finanz-Runtime-Stufe.
+
+Die bestehende Quality-Projektion `fintech-value-chain-quality/1.0.0` bleibt die read-only Struktur-/Evidence-Prüfung der 14-stufigen Kette. Documentary darf weder MarketData, Classification, Scoring, Confidence, Ranking, Eligibility noch Provider-Routing, Release oder Deployment beeinflussen. Ebenso dürfen die Financial Hotpaths keine direkte Documentary- oder Quality-Mutationsabhängigkeit erhalten.
+
+Die Supervisor-Erweiterung dient ausschließlich als Evidence-Oberfläche. `decisionAuthority=false` und `mutationAuthority=false` bleiben explizit; die eigentliche Entscheidung verbleibt beim Platform Director und die Git-Mutation bei den separat autorisierten Agent-IAM-Capabilities.
+
 ### D9 Maintenance Observability
 
 `Observability/DocumentaryMaintenanceObservability.ts` erzeugt einen korrelations- und commitgebundenen Health Snapshot mit ausschließlich aggregierten Zählwerten/Ratios: Registry Coverage, Freshness Ratio, Orphan Rate, Kandidaten, geplante Patches, übersprungene Patches und angewendete Dokumente. Dokumentkörper, Prompts, Diffs, Nutzerkennungen und Secrets werden nicht in den strukturierten Telemetrievertrag aufgenommen. Dieser Slice ersetzt keine zentrale Observability-Plattform und beansprucht nicht die vollständige D9-Umsetzung.
@@ -70,10 +78,10 @@ Die AI-Ausführung verwendet über `server/documentaryMaintenanceAiAdapter.ts` d
 ### Lokaler Pre-PR-Closure
 
 - `npm run documentary:maintenance:test` — gezielte Unit-Tests des Control Loops.
-- `npm run documentary:maintenance:validate` — Registry-, Authority-, Claim-, Branch- und Scope-Konsistenz.
-- `npm run documentary:maintenance:prepr` — gezielte Tests + Documentation Hygiene + Governance Control Plane + Closure Validator.
+- `npm run documentary:maintenance:validate` — Registry-, Authority-, Claim-, Branch-, Wertschöpfungsketten- und Scope-Konsistenz.
+- `npm run documentary:maintenance:prepr` — gezielte Tests + TypeScript-Check + Documentation Hygiene + Governance Control Plane + Repository Quality + Closure Validator.
 
-Der Closure Validator verlangt, dass der Work Claim exakt den tatsächlichen Diff gegen `origin/main` abdeckt und dass der Branch unmittelbar auf dem aktuellen `origin/main` basiert. Dadurch wird eine veraltete oder überbreite Claim-/Registry-Fassung vor PR-Reife fail-closed zurückgewiesen.
+Der Closure Validator verlangt, dass der Work Claim exakt den tatsächlichen Diff gegen `origin/main` abdeckt und dass der Branch unmittelbar auf dem aktuellen `origin/main` basiert. Zusätzlich prüft er die SC-MD-SPT-0001-Sidecar-Deklaration, die bestehende 14-stufige Quality-Projektion und das Verbot direkter Documentary-Abhängigkeiten auf Financial Hotpaths. Dadurch werden veraltete, überbreite oder wertschöpfungskettenwidrige Fassungen vor PR-Reife fail-closed zurückgewiesen.
 
 ## Documentation Governance
 
@@ -121,7 +129,7 @@ Weiterhin geplant: `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-
 
 ## Boundaries
 
-Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation, keine zweite Event-, Knowledge-, Governance-, Observability- oder Plattformversions-Authority. Maintenance-Mutation ist ausschließlich branchbasiert; kein Auto-Merge, kein Deploy und keine Production Mutation.
+Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation, keine zweite Event-, Knowledge-, Governance-, Observability- oder Plattformversions-Authority. Maintenance-Mutation ist ausschließlich branchbasiert; kein Auto-Merge, kein Deploy und keine Production Mutation. Die SC-MD-SPT-0001-Anbindung bleibt read-only Evidence/Documentation und darf keine Financial-Runtime-Semantik verändern.
 
 ## ESS / ADR
 
@@ -132,6 +140,7 @@ Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation,
 - ESS-0011 — Enterprise Traceability
 - ESS-0012 — Documentation Governance (Documentation-only Scope)
 - ESS-0019 — Universal AI Agent Control Plane
+- SC-MD-SPT-0001 — Screening / Scoring / Market Data / SPT value-chain authority
 - ADR-0014 — Documentation Governance Validator
 - ADR-0046 — Vocabulary Governance Authority and Namespace
 - ADR-0096 — Governance Control Plane / Authority Boundary
