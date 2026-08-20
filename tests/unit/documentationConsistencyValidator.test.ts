@@ -16,9 +16,10 @@ function fixture(): string {
     version: '1.1.0',
     contracts: [
       'repository-quality-observation/1.1.0',
-      'quality-center-contract/1.2.0',
+      'quality-center-contract/1.3.0',
       'chapter12-validator-contract/1.0.0',
       'chapter12-validation-report/1.0.0',
+      'fintech-value-chain-quality/1.0.0',
     ],
     tests: ['tests/unit/validatorRegistry.test.ts'],
   }));
