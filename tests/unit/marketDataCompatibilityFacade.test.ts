@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { runMarketDataCompatibilityRefresh } from '../../server/marketData/marketDataCompatibilityFacade';
+import type { MarketDataAsset } from '../../server/marketData/marketDataCoordinator';
 
 const fallbackAssets = [
   { symbol: 'BTC', type: 'crypto', price: 1, change24h: 0, dataSource: 'fallback' as const },
@@ -32,8 +33,8 @@ describe('marketDataCompatibilityFacade', () => {
   });
 
   it('runs snapshot and alert side effects only for provider-observed rows', async () => {
-    const persistSnapshots = vi.fn(async () => undefined);
-    const evaluateAlerts = vi.fn(async () => undefined);
+    const persistSnapshots = vi.fn(async (_assets: MarketDataAsset[]) => undefined);
+    const evaluateAlerts = vi.fn(async (_assets: MarketDataAsset[]) => undefined);
 
     await expect(runMarketDataCompatibilityRefresh({
       fallbackAssets,
