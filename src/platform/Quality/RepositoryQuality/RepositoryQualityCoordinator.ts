@@ -10,8 +10,9 @@ import {
   type RepositoryQualityObservation,
   type RepositoryQualityStatus,
 } from '../../Governance/Contracts/RepositoryQualityEvidence';
+import { ValidatorRegistry } from '../../Validators/ValidatorRegistry';
 
-export const REPOSITORY_QUALITY_COORDINATOR_VERSION = 'repository-quality-coordinator/1.0.0' as const;
+export const REPOSITORY_QUALITY_COORDINATOR_VERSION = 'repository-quality-coordinator/1.1.0' as const;
 
 export interface RepositoryQualityObservationRequest {
   repoRoot?: string;
@@ -93,19 +94,14 @@ function aggregateStatus(checks: readonly RepositoryQualityCheckResult[]): Repos
 }
 
 export class RepositoryQualityCoordinator {
-  private readonly adapters = new Map<RepositoryQualityDomain, RepositoryQualityAdapter>();
+  private readonly registry: ValidatorRegistry;
   private readonly requiredDomains: readonly RepositoryQualityDomain[];
 
   constructor(
-    adapters: readonly RepositoryQualityAdapter[],
+    validators: readonly RepositoryQualityAdapter[] | ValidatorRegistry,
     requiredDomains: readonly RepositoryQualityDomain[] = REPOSITORY_QUALITY_REQUIRED_DOMAINS,
   ) {
-    for (const adapter of adapters) {
-      if (this.adapters.has(adapter.domain)) {
-        throw new Error(`[RepositoryQualityCoordinator] duplicate adapter for domain ${adapter.domain}.`);
-      }
-      this.adapters.set(adapter.domain, adapter);
-    }
+    this.registry = validators instanceof ValidatorRegistry ? validators : new ValidatorRegistry(validators);
     this.requiredDomains = Object.freeze([...new Set(requiredDomains)]);
   }
 
@@ -115,24 +111,24 @@ export class RepositoryQualityCoordinator {
     const repoRoot = request.repoRoot ?? process.cwd();
 
     const checks = this.requiredDomains.map((domain) => {
-      const adapter = this.adapters.get(domain);
-      if (!adapter) {
+      const validator = this.registry.resolve(domain);
+      if (!validator) {
         return unavailableCheck(
           domain,
           checkedAt,
-          'QUALITY-ADAPTER-MISSING',
-          `No repository quality adapter is registered for required domain ${domain}.`,
+          'QUALITY-VALIDATOR-MISSING',
+          `No repository quality validator is registered for required domain ${domain}.`,
         );
       }
 
       try {
-        const result = adapter.run({ repoRoot, checkedAt });
+        const result = validator.run({ repoRoot, checkedAt });
         if (result.domain !== domain) {
           return unavailableCheck(
             domain,
             checkedAt,
-            'QUALITY-ADAPTER-DOMAIN-MISMATCH',
-            `Adapter registered for ${domain} returned evidence for ${result.domain}.`,
+            'QUALITY-VALIDATOR-DOMAIN-MISMATCH',
+            `Validator registered for ${domain} returned evidence for ${result.domain}.`,
           );
         }
         return normalizeCheck(result, checkedAt);
@@ -140,8 +136,8 @@ export class RepositoryQualityCoordinator {
         return unavailableCheck(
           domain,
           checkedAt,
-          'QUALITY-ADAPTER-ERROR',
-          `Repository quality adapter ${domain} failed closed: ${normalizeError(error)}`,
+          'QUALITY-VALIDATOR-ERROR',
+          `Repository quality validator ${domain} failed closed: ${normalizeError(error)}`,
         );
       }
     });

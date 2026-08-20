@@ -1,26 +1,63 @@
 {
   "name": "Validators",
-  "version": "1.0.0",
-  "status": "unspecified",
+  "version": "1.1.0",
+  "status": "implemented-core-registry",
   "owner": "CAPITAL-AI",
-  "description": "",
+  "description": "Central rule-neutral ValidatorRegistry plus machine-readable coverage catalog for the exact 16 ESS-0001-CONTRACTS Chapter-12 mandatory validators. Domain rules remain in their owning components.",
   "category": "platform",
   "ess": [
     "ESS-0001",
-    "ESS-0001-CONTRACTS"
+    "ESS-0001-CONTRACTS",
+    "ESS-0005",
+    "ESS-0006",
+    "ESS-0013"
   ],
-  "adr": [],
-  "dependencies": [],
+  "adr": [
+    "ADR-0012",
+    "ADR-0016",
+    "ADR-0018",
+    "ADR-0096"
+  ],
+  "dependencies": [
+    "src/platform/Governance"
+  ],
   "events": {
     "produces": [],
     "consumes": []
   },
   "knowledge": [],
-  "interfaces": [],
-  "contracts": [],
+  "interfaces": [
+    "ValidatorRegistry",
+    "MandatoryValidatorCatalog"
+  ],
+  "contracts": [
+    "repository-quality-observation/1.1.0",
+    "mandatory-validator-coverage/1.0.0"
+  ],
   "documentation": [
     "README.md"
   ],
-  "tests": [],
-  "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): fuer diese Komponente existiert ausser dem vom Enterprise Bootstrapper generierten Platzhaltertext keine funktionale Spezifikation und kein Code. Status auf 'unspecified' korrigiert, um den Zustand ehrlich abzubilden - vorher suggerierte 'development' aktive Arbeit, die nicht stattfindet. Die Komponente kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden."
+  "tests": [
+    "tests/unit/validatorRegistry.test.ts",
+    "tests/unit/mandatoryValidatorCatalog.test.ts"
+  ],
+  "implementation": {
+    "implementedAreas": [
+      "central validator registration",
+      "deterministic domain resolution",
+      "duplicate validator rejection",
+      "exact Chapter-12 mandatory-validator identity catalog",
+      "machine-readable AVAILABLE/PARTIAL/NOT_AVAILABLE coverage without invented PASS"
+    ],
+    "coverageBaseline": {
+      "total": 16,
+      "available": 5,
+      "partial": 3,
+      "notAvailable": 8
+    },
+    "remainingContractScope": [
+      "implement or bind authoritative execution sources for the validators currently PARTIAL or NOT_AVAILABLE",
+      "do not duplicate domain rules merely to increase the coverage count"
+    ]
+  }
 }

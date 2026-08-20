@@ -15,14 +15,17 @@
     "docs/adr/registry.json"
   ],
   "contracts": [
-    "repository-quality-observation/1.0.0"
+    "repository-quality-observation/1.1.0"
   ],
   "dependencies": [],
   "forbiddenResponsibilities": [
     "execute domain validators",
+    "define quality scoring policy",
+    "execute Quality Center gates",
     "self-authorize merge",
     "self-authorize production mutation",
     "duplicate Documentary content governance",
+    "duplicate Compliance scanner semantics",
     "duplicate Vocabulary governance",
     "create provider-specific repository instruction mirrors",
     "store reusable credentials"
