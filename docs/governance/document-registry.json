@@ -1,7 +1,72 @@
 {
-  "schemaVersion": "1.2.0",
+  "schemaVersion": "1.3.0",
   "authority": "docs/governance/DOCUMENTATION_HYGIENE_POLICY.md",
+  "roleModel": {
+    "allowedDocumentRoles": ["authority", "projection", "inventory", "roadmap", "evidence", "specification"],
+    "rule": "Projection, inventory and roadmap documents may reference authorities but must not redefine their normative scope.",
+    "financialRuntimeScopes": ["financial-runtime", "market-data", "scoring", "ranking", "financial-eligibility", "runtime-evidence"]
+  },
   "entries": [
+    {
+      "documentId": "DOC-FRONTEND-ARCH",
+      "type": "architecture",
+      "documentRole": "authority",
+      "owner": "CAPITAL-AI",
+      "authority": "AUTH-FRONTEND-PRESENTATION-ARCHITECTURE",
+      "authorityRefs": ["AUTH-FRONTEND-PRESENTATION-ARCHITECTURE"],
+      "projectionOf": [],
+      "normative": true,
+      "normativeScope": ["frontend-source-tree", "frontend-dependencies", "presentation-architecture"],
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/frontend/FRONTEND_ARCH.md"
+    },
+    {
+      "documentId": "DOC-FRONTEND-COMPONENT-INVENTORY",
+      "type": "inventory",
+      "documentRole": "inventory",
+      "owner": "CAPITAL-AI",
+      "authority": "AUTH-FRONTEND-PRESENTATION-ARCHITECTURE",
+      "authorityRefs": ["AUTH-FRONTEND-PRESENTATION-ARCHITECTURE"],
+      "projectionOf": ["AUTH-FRONTEND-PRESENTATION-ARCHITECTURE"],
+      "normative": false,
+      "normativeScope": [],
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/frontend/COMPONENT_INVENTORY.md"
+    },
+    {
+      "documentId": "DOC-FRONTEND-ROADMAP",
+      "type": "roadmap",
+      "documentRole": "roadmap",
+      "owner": "CAPITAL-AI",
+      "authority": "AUTH-FRONTEND-PRESENTATION-ARCHITECTURE",
+      "authorityRefs": ["AUTH-FRONTEND-PRESENTATION-ARCHITECTURE"],
+      "projectionOf": [],
+      "normative": false,
+      "normativeScope": [],
+      "version": "1.4.1",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/frontend/FRONTEND_ROADMAP.md"
+    },
+    {
+      "documentId": "DOC-ADR-0005-HISTORICAL",
+      "type": "architecture-decision",
+      "documentRole": "authority",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "AUTH-ADR-FRONTEND-MODULE-INTEGRATION-0005",
+      "authorityRefs": ["AUTH-ADR-FRONTEND-MODULE-INTEGRATION-0005"],
+      "projectionOf": [],
+      "normative": false,
+      "normativeScope": [],
+      "version": "1.1.0",
+      "language": "de",
+      "lifecycle": "historical",
+      "path": "docs/adr/ADR-0005-frontend-module-integration.md"
+    },
     {
       "documentId": "DOC-ROOT-README",
       "type": "repository-overview",
