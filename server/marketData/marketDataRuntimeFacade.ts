@@ -23,7 +23,7 @@ export function createMarketDataRuntimeFacade(options: MarketDataRuntimeFacadeOp
 
   let cached: MarketDataAsset[] | null = null;
   let lastRefreshAt = 0;
-  let lastBackgroundRefreshStartedAt: number | null = null;
+  let lastProviderRefreshStartedAt: number | null = null;
   let activeRefresh: Promise<MarketDataAsset[]> | null = null;
   let scheduledBackgroundRefresh: Promise<MarketDataAsset[] | null> | null = null;
 
@@ -33,6 +33,11 @@ export function createMarketDataRuntimeFacade(options: MarketDataRuntimeFacadeOp
 
   const refreshAndSync = (): Promise<MarketDataAsset[]> => {
     if (activeRefresh) return activeRefresh;
+
+    // Every actual provider refresh — foreground or background — advances the shared cadence
+    // anchor. This prevents a queued background tick from firing shortly after a foreground
+    // refresh and bypassing the provider-budget interval.
+    lastProviderRefreshStartedAt = now();
 
     // Coalesce the complete refresh transaction, not only provider I/O. Cache mutation and
     // registry synchronization must therefore execute exactly once for all concurrent callers.
@@ -56,7 +61,6 @@ export function createMarketDataRuntimeFacade(options: MarketDataRuntimeFacadeOp
   };
 
   const runBackgroundRefresh = async (): Promise<MarketDataAsset[] | null> => {
-    lastBackgroundRefreshStartedAt = now();
     try {
       return await refreshAndSync();
     } catch (error) {
@@ -78,21 +82,21 @@ export function createMarketDataRuntimeFacade(options: MarketDataRuntimeFacadeOp
   };
 
   const backgroundRefresh = (): Promise<MarketDataAsset[] | null> => {
-    if (backgroundRefreshIntervalMs === 0 || lastBackgroundRefreshStartedAt === null) {
+    if (backgroundRefreshIntervalMs === 0 || lastProviderRefreshStartedAt === null) {
       return runBackgroundRefresh();
     }
 
-    const remainingMs = backgroundRefreshIntervalMs - (now() - lastBackgroundRefreshStartedAt);
+    const remainingMs = backgroundRefreshIntervalMs - (now() - lastProviderRefreshStartedAt);
     if (remainingMs <= 0) return runBackgroundRefresh();
     if (scheduledBackgroundRefresh) return scheduledBackgroundRefresh;
 
     scheduledBackgroundRefresh = new Promise((resolve) => {
-      const timer = setTimeout(async () => {
-        try {
-          resolve(await runBackgroundRefresh());
-        } finally {
-          scheduledBackgroundRefresh = null;
-        }
+      const timer = setTimeout(() => {
+        // A foreground refresh may have happened while this timer was waiting. Clear the
+        // scheduled handle first and re-enter backgroundRefresh() so the cadence is recalculated
+        // instead of blindly triggering provider I/O at the old deadline.
+        scheduledBackgroundRefresh = null;
+        void backgroundRefresh().then(resolve);
       }, remainingMs);
       if (typeof (timer as any).unref === 'function') (timer as any).unref();
     });
