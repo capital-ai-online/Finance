@@ -5,12 +5,14 @@
 Immediately before PR creation the repository was re-read.
 
 - current `main`: `cb07abdeb871c1c7ba682fecfa91faa4a8de852e`
-- MC-2 branch head before this evidence commit: `fd53b1535a427696be1213ee608850ae5b16a8d1`
-- compare state: `ahead_by=3`, `behind_by=0`
+- MC-2 branch head before the final evidence updates: `fd53b1535a427696be1213ee608850ae5b16a8d1`
+- initial final-gate compare state: `ahead_by=3`, `behind_by=0`
 - merge base: `cb07abdeb871c1c7ba682fecfa91faa4a8de852e`
 - no new `main` commit appeared after branch creation; no code rebase/merge was required.
 
 ## Parallel PR correlation
+
+### PR #463 — Frontend/Governance control plane
 
 PR #463 remains `open`, `draft=true`, `mergeable=true`.
 
@@ -27,15 +29,30 @@ This prevents MC-2 from becoming a second writer to the files currently owned by
 
 If PR #463 merges before MC-2 Human Merge, MC-2 must be synchronized again and its frontend projection revalidated against the newly merged governance metadata.
 
+### PR #464 — Quality Center operationalization
+
+A new parallel PR #464 appeared during the final race check. Its changed-file list was inspected before MC-2 PR creation.
+
+PR #464 changes Quality Center automation/runtime/admin UI files and `package.json`, including `src/components/PerformanceDashboard.tsx`, `src/components/QualityCenterPanel.tsx`, `src/features/governance/ui/index.ts` and Quality platform/server/test files.
+
+There is **no direct file overlap** with MC-2. In particular PR #464 does not change:
+
+- `src/app/routing/AppRoutes.tsx`;
+- `src/features/social/ui/**`;
+- `src/platform/SocialMediaEngine/**`;
+- MC-2 tests or MC-2 documentation.
+
+Architecturally PR #464 remains a Governance/Quality projection, while MC-2 remains a Social/Media vertical slice. If PR #464 merges before MC-2 Human Merge, the mandatory pre-merge main synchronization still applies, but no current semantic contract conflict was identified.
+
 ## Scope verification
 
-Final branch diff before this evidence commit contains 14 files:
+Final MC-2 branch diff contains 15 files:
 
 - 10 application/domain/UI files;
 - 1 unit-test file;
-- 3 MC-2-specific documentation/evidence/runbook files.
+- 4 MC-2-specific documentation/evidence/runbook files.
 
-No dependency, lockfile, workflow, Docker, server publishing route, provider, Supabase, Render, Stripe or production deployment file is changed.
+No dependency, lockfile, workflow, Docker, server publishing route, provider, Supabase, Render, Stripe or production deployment file is changed by MC-2.
 
 ## Local low-cost checks
 
@@ -72,4 +89,4 @@ Verified in final diff:
 
 ## PR readiness
 
-**READY FOR PR CREATION**, subject to one final `main` SHA check after this evidence-only commit. Human Merge remains a separate gate.
+**READY FOR PR CREATION**, subject to one final `main` SHA/compare check after this evidence-only update. Human Merge remains a separate gate.
