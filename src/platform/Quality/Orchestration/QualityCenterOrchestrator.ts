@@ -18,8 +18,9 @@ import { readQualityExecutionEvidence, type QualityExecutionEvidenceSnapshot } f
 import { QualityGateRunner } from '../Gates/QualityGateRunner';
 import { QualityScoreCalculator } from '../Scoring/QualityScoreCalculator';
 import { TechnicalDebtRegister } from '../TechnicalDebt/TechnicalDebtRegister';
+import { FintechValueChainQualityProjection } from '../ValueChain/FintechValueChainQualityProjection';
 
-export const QUALITY_CENTER_ORCHESTRATOR_VERSION = 'quality-center-orchestrator/1.4.0' as const;
+export const QUALITY_CENTER_ORCHESTRATOR_VERSION = 'quality-center-orchestrator/1.5.0' as const;
 
 export interface QualityCenterRunRequest extends RepositoryQualityObservationRequest {
   scoreMeasurements?: readonly QualityScoreMeasurement[];
@@ -35,6 +36,7 @@ export interface QualityCenterOrchestratorDependencies {
   scoreCalculator?: QualityScoreCalculator;
   technicalDebtRegister?: TechnicalDebtRegister;
   coverageCollector?: CoverageCollector;
+  fintechValueChainProjection?: FintechValueChainQualityProjection;
   eventSink?: QualityEventSink;
 }
 
@@ -50,6 +52,7 @@ export class QualityCenterOrchestrator {
   private readonly scoreCalculator: QualityScoreCalculator;
   private readonly technicalDebtRegister: TechnicalDebtRegister;
   private readonly coverageCollector: CoverageCollector;
+  private readonly fintechValueChainProjection: FintechValueChainQualityProjection;
   private readonly eventSink?: QualityEventSink;
 
   constructor(
@@ -63,6 +66,7 @@ export class QualityCenterOrchestrator {
     this.scoreCalculator = dependencies.scoreCalculator ?? new QualityScoreCalculator();
     this.technicalDebtRegister = dependencies.technicalDebtRegister ?? new TechnicalDebtRegister([], this.eventSink);
     this.coverageCollector = dependencies.coverageCollector ?? new CoverageCollector();
+    this.fintechValueChainProjection = dependencies.fintechValueChainProjection ?? new FintechValueChainQualityProjection();
   }
 
   run(request: QualityCenterRunRequest = {}): QualityCenterReport {
@@ -110,6 +114,7 @@ export class QualityCenterOrchestrator {
         executionEvidence,
       });
       const qualityScore = this.scoreCalculator.calculate(request.scoreMeasurements ?? []);
+      const fintechValueChain = this.fintechValueChainProjection.project(repoRoot, repositoryObservation.checkedAt);
       const technicalDebt = this.technicalDebtRegister.snapshot();
 
       const validationBlocking = repositoryObservation.blocking || chapter12Validation.blocking || gateReport.blocking;
@@ -127,6 +132,10 @@ export class QualityCenterOrchestrator {
         chapter12NotAvailable: chapter12Validation.notAvailable,
         gateStatus: gateReport.overallStatus,
         executionEvidenceAvailable: Boolean(executionEvidence),
+        fintechValueChainHomogeneous: fintechValueChain.homogeneous,
+        fintechValueChainConnectedStages: fintechValueChain.connectedStages,
+        fintechValueChainTotalStages: fintechValueChain.totalStages,
+        qualityHotPathIsolated: fintechValueChain.hotPathIsolation.isolated,
       });
 
       for (const gate of gateReport.gates) {
@@ -177,6 +186,7 @@ export class QualityCenterOrchestrator {
         gateReport,
         qualityScore,
         coverage,
+        fintechValueChain,
         technicalDebt,
         eventPublication: Object.freeze({
           attempted,
@@ -188,8 +198,10 @@ export class QualityCenterOrchestrator {
           'ESS-0001-CONTRACTS Chapter 12',
           'ESS-0005',
           'ADR-0096',
+          'SC-MD-SPT-0001',
           repositoryObservation.schemaVersion,
           chapter12Validation.schemaVersion,
+          fintechValueChain.schemaVersion,
         ]),
         complianceRefs: Object.freeze([
           'ESS-0001-CONTRACTS Chapter 11',
