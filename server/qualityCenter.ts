@@ -17,8 +17,16 @@ qualityCenterRouter.get('/', async (req, res) => {
 
   res.setHeader('Cache-Control', 'no-store');
 
-  const release = readPlatformVersionProjection(process.cwd());
-  const expectedSourceCommit = release.commitSha;
+  let expectedSourceCommit: string | null = null;
+  try {
+    expectedSourceCommit = readPlatformVersionProjection(process.cwd()).commitSha;
+  } catch {
+    return res.status(503).json({
+      error: 'Runtime Release Identity ist nicht verfügbar.',
+      code: 'quality_release_identity_not_available',
+    });
+  }
+
   if (typeof expectedSourceCommit !== 'string' || !/^[0-9a-f]{40}$/i.test(expectedSourceCommit)) {
     return res.status(503).json({
       error: 'Runtime Release Identity ist nicht verfügbar.',

@@ -28,7 +28,7 @@ Ausfuehrbarkeit, Konformitaet, Messwertverfuegbarkeit und operative Darstellung 
 | Testbereich-Coverage | 7/7 maschinenlesbar |
 | Code-Coverage | nur bei realem `coverage-summary.json`, sonst `NOT_AVAILABLE` |
 | Quality Events | bestehender EventMesh |
-| FinTech Value Chain | 14-stufige read-only Projektion |
+| FinTech Value Chain | 18-stufige read-only Projektion |
 | Hot-Path-Isolation | maschinenlesbar pruefbar |
 | Build-Snapshot | `.quality/quality-center-report.json` + `dist/quality/quality-center-report.json` |
 | Runtime Identity | Snapshot-Commit muss bestehendem Release-Manifest-/PlatformVersion-Commit entsprechen |
@@ -58,7 +58,7 @@ QualityCenterReport.repositoryObservation.sourceCommit
   == PlatformVersionProjection.commitSha
 ```
 
-Fehlt die Release-Identitaet oder stimmt der Commit nicht ueberein, antwortet der Quality-Endpunkt fail-closed mit `503`.
+Fehlt die Release-Identitaet, ist das Manifest ungueltig oder stimmt der Commit nicht ueberein, antwortet der Quality-Endpunkt fail-closed mit `503`.
 
 ## Quality Score
 
@@ -85,11 +85,30 @@ Eine verpflichtende Coverage-Erzeugung wuerde eine neue Dev-Dependency, Lockfile
 
 ## Historische Quality-Trends
 
-Ein langfristiger produktiver Trend-Store wird nicht stillschweigend eingefuehrt. Eine commitgebundene GitHub-Workflow-Artefakt-Historie ist als repository-seitiger naechster Schritt identifiziert; die zugehoerige Workflow-Mutation wurde in dieser Session durch das Connector-Sicherheitsgate blockiert und nicht umgangen.
+Ein langfristiger produktiver Trend-Store wird nicht stillschweigend eingefuehrt. Eine commitgebundene GitHub-Workflow-Artefakt-Historie bleibt ein separater repository-seitiger Folgeschritt und benoetigt eine eigenstaendig autorisierte Workflow-Security-Aenderung. Eine produktive Zeitreihe benoetigt zusaetzlich eine explizite Persistenz-/Produktionsentscheidung.
 
 ## Homogenitaetspruefung FinTech-Wertschoepfungskette
 
-Die Panel-Projektion orientiert sich ausschliesslich an der kanonischen Stufendefinition in `FintechValueChainQualityProjection.ts` unter Authority `SC-MD-SPT-0001`.
+Die Panel-Projektion orientiert sich ausschliesslich an den **18** kanonischen Stufen in `FintechValueChainQualityProjection.ts` unter Authority `SC-MD-SPT-0001`:
+
+- Request Intake;
+- Identity / Access;
+- Entitlement / Usage Gate;
+- Asset Discovery / Universal Asset Identity;
+- Orchestration / Runtime Guard;
+- Market-Data / Evidence Acquisition;
+- Data Validation / Provenance / DQ;
+- Verified Display / Research Lane;
+- Classification + Feature Contract;
+- ScoringModelRegistry;
+- ScoringDispatcher;
+- Domain Executor Adapter;
+- CanonicalScoreResult + execution lineage;
+- Confidence / DQ Composite;
+- Ranking comparability gate;
+- Ranking / Eligibility / SLO;
+- EventMesh / Traceability / Supervisor;
+- API / UI / Alerts / downstream evidence.
 
 Eine Stufe gilt als `CONNECTED`, wenn ihre kanonischen Runtime-Artefakte und Test-/Evidence-Artefakte vorhanden sind. Der Gesamtstatus `homogeneous=true` setzt zusaetzlich voraus, dass die finanzielle Hot Path keine direkte Quality-Abhaengigkeit besitzt.
 
@@ -101,7 +120,7 @@ Diese Entkopplung ist beabsichtigt: Quality ist eine seitliche Evidence-/Observa
 - [x] Konformitaetsreport getrennt von Implementierungsabdeckung
 - [x] 8/8 Quality Gates evidence-basiert
 - [x] Contract/Test/Build commitgebunden
-- [x] FinTech-Wertschoepfungskette als read-only Panel-Projektion integriert
+- [x] 18-stufige FinTech-Wertschoepfungskette als read-only Panel-Projektion integriert
 - [x] Hot-Path-Isolation als Architekturtest verankert
 - [x] keine Duplikation fachlicher Authorities
 - [x] Completion PR #457 wurde in `main` gemerged
@@ -113,13 +132,14 @@ Diese Entkopplung ist beabsichtigt: Quality ist eine seitliche Evidence-/Observa
 - [x] Build-Snapshot unter `dist/quality`
 - [x] Snapshot-Commit gegen bestehende Runtime Release Identity gebunden
 - [x] IAM-geschuetzte read-only Admin API
+- [x] neue Admin-Route in das bestehende M8-Bypass-Audit aufgenommen
 - [x] Quality Evidence Panel in bestehender Admin-Oberflaeche
 - [x] keine externe Plattformmutation
 - [x] fehlende Score-Formeln und Coverage-Provider bleiben explizite Evidence-Grenzen statt erfundener Werte
-- [ ] commitgebundene CI-Artefakt-Historie — Workflow-Mutation noch offen
+- [ ] commitgebundene CI-Artefakt-Historie — separate Workflow-Security-Aenderung erforderlich
 - [ ] Exact-Head TypeScript/Lint PASS
 - [ ] Exact-Head Unit/Architecture Tests PASS
 - [ ] Exact-Head Production Build PASS
 - [ ] Exact-Head Governance/Security PASS
 
-Die offenen Checkboxen sind Validierungs-/Evidence-Nachweise und werden erst nach den zugehoerigen CI-Laeufen oder einer spaeter autorisierten Workflow-Aenderung auf PASS gesetzt.
+Die offenen Checkboxen sind Validierungs-/Evidence-Nachweise und werden erst nach den zugehoerigen CI-Laeufen oder einer separat autorisierten Workflow-Aenderung auf PASS gesetzt.

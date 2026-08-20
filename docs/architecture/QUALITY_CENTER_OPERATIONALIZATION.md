@@ -19,10 +19,11 @@ Die Operationalisierung besteht aus vier Schichten:
 ## Sicherheits- und Authority-Grenzen
 
 - Der Endpoint besitzt ausschliesslich `GET`.
+- Die Route ist als admin-nahe Oberflaeche im bestehenden M8-Provider-Bypass-Audit registriert.
 - Kein Supabase-, Render-, Stripe-, IAM-, Billing-, Scoring- oder Ranking-Write wird hinzugefuegt.
 - Der Server erzeugt bei einem Request keinen Live-Repository-Scan. Er liest nur den beim Build erzeugten Snapshot.
 - Fehlende, ungueltige oder commit-ungebundene Snapshots ergeben `503 quality_snapshot_not_available`.
-- Eine fehlende oder ungueltige Runtime-Release-Identitaet ergibt `503 quality_release_identity_not_available`.
+- Eine fehlende, ungueltige oder nicht lesbare Runtime-Release-Identitaet ergibt `503 quality_release_identity_not_available`.
 - Der Snapshot muss `quality-center-report/1.3.0`, `quality-center-contract/1.3.0`, einen gueltigen Timestamp und einen exakten 40-stelligen Source-Commit enthalten.
 - Der Snapshot-Commit muss zur Laufzeit exakt dem bestehenden `platformVersionControlPlane`-/Release-Manifest-Commit entsprechen.
 - Die UI behandelt `null`/`NOT_AVAILABLE` explizit und erzeugt keine Ersatzscores.
@@ -54,6 +55,12 @@ Docker runtime
 
 Der bestehende Runtime Release Manifest wird durch den nachfolgenden Quality-Snapshot nicht invalidiert, da sein Build-Identity-Material Package-/Lock-/Documentary-Inputs und nicht den `dist`-Dateibaum hasht.
 
+## FinTech-Projektion
+
+Die Operationalisierung zeigt die bereits bestehende **18-stufige** `SC-MD-SPT-0001`-Projektion. Die Zahl der Stufen wird nicht in der UI neu definiert, sondern aus `FintechValueChainQualityProjection.ts` bzw. dem daraus erzeugten `QualityCenterReport` abgeleitet.
+
+Quality bleibt Sidecar-Evidence: keine direkte Abhaengigkeit der finanziellen Hot Path, keine Aenderung an Market Data, Scoring, Confidence, Ranking, Eligibility oder Provider-Routing.
+
 ## Frontend-Integration
 
 Die bestehende Frontend-Migrationsauthority erlaubt aktuell Admin-intern komponierte Module weiterhin als Legacy-Implementierung unter `src/components`, waehrend `src/features/governance/ui/index.ts` die kanonische Governance-Fassade bildet.
@@ -70,9 +77,9 @@ Die neue `repositoryQualityReport.ts`-Factory extrahiert lediglich die bisher di
 
 ### Historische Quality-Trends
 
-Der aktuelle Snapshot ist commitgebunden, aber noch nicht als laengerfristige Zeitreihe persistiert. Eine vorgesehene rein repository-seitige Option ist ein GitHub-Workflow-Artefakt pro exaktem Commit. Die entsprechende Workflow-Mutation wurde in dieser Session vom Connector-Sicherheitsgate blockiert und daher **nicht** umgangen oder als umgesetzt dokumentiert.
+Der aktuelle Snapshot ist commitgebunden, aber noch nicht als laengerfristige Zeitreihe persistiert. Eine repository-seitige Option ist ein GitHub-Workflow-Artefakt pro exaktem Commit. Diese Aenderung ist **nicht** Bestandteil des aktuellen Branchstandes und benoetigt eine separat autorisierte Workflow-Security-Aenderung.
 
-Eine produktive Trend-Persistenz in Supabase oder einem anderen Application Store bleibt ausserhalb dieses PRs, da dies eine eigene Persistenz-/Produktionsmutation und Authority-Entscheidung waere.
+Eine produktive Trend-Persistenz in Supabase oder einem anderen Application Store bleibt ebenfalls ausserhalb dieses PRs, da dies eine eigene Persistenz-/Produktionsmutation und Authority-Entscheidung waere.
 
 ### Code Coverage
 
@@ -97,13 +104,15 @@ Documentation, Architecture, Knowledge, Metadata und Twin bleiben ohne numerisch
 - [x] Build erzeugt runtime-faehigen Snapshot
 - [x] Snapshot wird zur Laufzeit gegen die bestehende Release-Commit-Identity verifiziert
 - [x] read-only, IAM-geschuetzte Admin-API
+- [x] M8-Bypass-Audit und Evidence fuer die neue Admin-Route erweitert
 - [x] bestehende Admin-/Performance-Oberflaeche projiziert den Report
+- [x] 18-stufige aktuelle FinTech-Projektion dokumentiert
 - [x] keine erfundenen Messwerte
 - [x] keine neue finanzielle Hot-Path-Abhaengigkeit
 - [x] keine externe Plattformmutation
 - [x] fehlende numerische Score-Authorities bleiben explizite Evidence-Grenzen
 - [x] Code-Coverage bleibt bis zur expliziten Dependency-/CI-Entscheidung fail-safe `NOT_AVAILABLE`
-- [ ] commitgebundene CI-Artefakt-Historie — Workflow-Mutation noch offen
+- [ ] commitgebundene CI-Artefakt-Historie — separate Workflow-Security-Aenderung erforderlich
 - [ ] Exact-Head TypeScript/Lint PASS
 - [ ] Exact-Head Unit/Architecture Tests PASS
 - [ ] Exact-Head Production Build PASS
