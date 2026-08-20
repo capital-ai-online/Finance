@@ -15,7 +15,7 @@ import { resolveSourceCommit } from './sourceIdentity';
 
 const phase = process.argv[2] as QualityExecutionPhase | undefined;
 if (phase !== 'test' && phase !== 'build') {
-  console.error('[QualityExecution] usage: tsx scripts/automation/runQualityExecution.ts <test|build> [release-manifest-script] [quality-snapshot-script]');
+  console.error('[QualityExecution] usage: tsx scripts/automation/runQualityExecution.ts <test|build> [release-manifest-script]');
   process.exit(2);
 }
 
@@ -24,7 +24,6 @@ const npmExecutable = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const npxExecutable = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const rawScript = phase === 'test' ? 'test:raw' : 'build:raw';
 const releaseManifestScript = phase === 'build' ? process.argv[3] : undefined;
-const qualitySnapshotScript = phase === 'build' ? process.argv[4] : undefined;
 const expectedReleaseManifestScript = 'scripts/automation/buildRuntimeReleaseManifest.ts';
 const expectedQualitySnapshotScript = 'scripts/automation/buildQualityCenterSnapshot.ts';
 const command = phase === 'build'
@@ -33,10 +32,6 @@ const command = phase === 'build'
 
 if (phase === 'build' && releaseManifestScript !== expectedReleaseManifestScript) {
   console.error(`[QualityExecution] build requires the canonical release-manifest finalizer: ${expectedReleaseManifestScript}`);
-  process.exit(2);
-}
-if (phase === 'build' && qualitySnapshotScript !== expectedQualitySnapshotScript) {
-  console.error(`[QualityExecution] build requires the canonical Quality Center snapshot finalizer: ${expectedQualitySnapshotScript}`);
   process.exit(2);
 }
 

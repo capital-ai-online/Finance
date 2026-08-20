@@ -6,16 +6,17 @@ const root = process.cwd();
 const read = (relative: string) => fs.readFileSync(path.join(root, relative), 'utf8');
 
 describe('Quality Center operationalization boundary', () => {
-  it('packages the existing QualityCenterReport only after commit-bound build evidence', () => {
+  it('keeps the canonical build command stable and finalizes the snapshot inside commit-bound build evidence', () => {
     const pkg = JSON.parse(read('package.json')) as { scripts?: Record<string, string> };
-    const build = String(pkg.scripts?.build ?? '');
-    const evidence = 'runQualityExecution.ts build scripts/automation/buildRuntimeReleaseManifest.ts';
-    const snapshot = 'buildQualityCenterSnapshot.ts';
+    const runner = read('scripts/automation/runQualityExecution.ts');
+    const canonicalBuild = 'tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/runQualityExecution.ts build scripts/automation/buildRuntimeReleaseManifest.ts';
 
-    expect(build).toContain(evidence);
-    expect(build).toContain(snapshot);
-    expect(build.indexOf(snapshot)).toBeGreaterThan(build.indexOf(evidence));
+    expect(pkg.scripts?.build).toBe(canonicalBuild);
     expect(pkg.scripts?.['repository:quality:snapshot']).toBe('tsx scripts/automation/buildQualityCenterSnapshot.ts');
+    expect(runner).toContain("const expectedQualitySnapshotScript = 'scripts/automation/buildQualityCenterSnapshot.ts';");
+    expect(runner).toContain("writeRecords('PASS', 0);");
+    expect(runner).toContain("run(npxExecutable, ['tsx', expectedQualitySnapshotScript])");
+    expect(runner).toContain('if (exitCode !== 0) removeQualitySnapshots();');
   });
 
   it('keeps the runtime API read-only, IAM-protected and snapshot-backed', () => {
