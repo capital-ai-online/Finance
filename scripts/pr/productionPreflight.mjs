@@ -39,6 +39,27 @@ function ensureCommitAvailable(sha) {
   }
 }
 
+function correlateDeploymentIdentity(payloadDeployment, headerDeployment) {
+  const fields = ['version', 'commitSha', 'branch', 'repoSlug', 'provider'];
+  const deployment = {};
+
+  for (const field of fields) {
+    const payloadValue = String(payloadDeployment?.[field] || '').trim();
+    const headerValue = String(headerDeployment?.[field] || '').trim();
+
+    if (payloadValue && headerValue && payloadValue !== headerValue) {
+      fail(
+        `Production identity correlation failed for ${field}: ` +
+          `JSON payload reports ${payloadValue}, response header reports ${headerValue}.`,
+      );
+    }
+
+    deployment[field] = payloadValue || headerValue || null;
+  }
+
+  return deployment;
+}
+
 async function fetchProductionHealth() {
   let response;
   try {
@@ -75,7 +96,7 @@ async function fetchProductionHealth() {
 
   return {
     payload,
-    deployment: payload?.deployment || headerDeployment,
+    deployment: correlateDeploymentIdentity(payload?.deployment || {}, headerDeployment),
   };
 }
 
