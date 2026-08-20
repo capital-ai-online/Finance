@@ -1,17 +1,12 @@
 {
   "name": "FinTechCore",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "status": "in-implementation",
   "owner": "CAPITAL-AI",
-  "description": "Financial workflow composition layer. Crypto is Module 01; FT-1 supports research/paper only, FT-2A adds provenance-aware category-profile resolution, FT-2B adds fail-closed category feature contracts, and FT-2C adds detector-agnostic pattern validation/reliability/context resolution without trading or scoring authority.",
+  "description": "Financial workflow composition layer. Crypto is Module 01; FT-0 through FT-2C are implemented as research/paper foundations without trading or scoring authority.",
   "category": "platform",
-  "roadmap": [
-    "FT-CORE-CRYPTO-01"
-  ],
-  "adr": [
-    "ADR-0087",
-    "ADR-0098"
-  ],
+  "roadmap": ["FT-CORE-CRYPTO-01"],
+  "adr": ["ADR-0087", "ADR-0099"],
   "dependencies": [
     "src/platform/Scoring/contracts.ts",
     "src/types/crypto.types.ts",
@@ -59,12 +54,13 @@
   "documentation": [
     "README.md",
     "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
-    "docs/adr/ADR-0098-fintech-core-engine-crypto-module-01.md",
+    "docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md",
     "docs/evidence/fintech-core/FT0_CRYPTO_MODULE_FOUNDATION_2026-08-20.md",
     "docs/evidence/fintech-core/FT1_CORE_ENGINE_FOUNDATION_2026-08-20.md",
     "docs/evidence/fintech-core/FT2A_CRYPTO_CATEGORY_PROFILE_RESOLUTION_2026-08-20.md",
     "docs/evidence/fintech-core/FT2B_CRYPTO_CATEGORY_FEATURE_CONTRACTS_2026-08-20.md",
-    "docs/evidence/fintech-core/FT2C_PATTERN_ENGINE_FOUNDATION_2026-08-20.md"
+    "docs/evidence/fintech-core/FT2C_PATTERN_ENGINE_FOUNDATION_2026-08-20.md",
+    "docs/evidence/fintech-core/FT_SYNC_CHAT_TRANSFER_2026-08-21.md"
   ],
   "tests": [
     "tests/unit/fintechCoreContracts.test.ts",
@@ -94,7 +90,7 @@
       "provenance-aware primary/secondary profile resolution",
       "agent-research non-promotion boundary",
       "conditional semantic qualifier gates",
-      "profile-specific feature definition catalogs for L1/L2/DeFi/RWA/NFT/Stablecoin/Exchange Token/GameFi/AI-DePIN",
+      "profile-specific feature definition catalogs",
       "fail-closed required and hard-gate evidence semantics",
       "universal market/supply evidence separation",
       "pure verified Crypto snapshot feature adapter",
@@ -115,5 +111,5 @@
       "exchange/custody adapters"
     ]
   },
-  "authorityBoundary": "FinTechCore composes financial workflows and typed analysis evidence but cannot select or calculate productive scores outside ScoringModelRegistry/ScoringDispatcher. Category and pattern evidence remain non-authorizing. PatternResearchEngine is research-context-only, requires exact reliability evidence and cannot create an OrderIntent. FinTechCore cannot replace IAM, Compliance, Quality, Governance, Supervisor, Release or Deployment authorities."
+  "authorityBoundary": "FinTechCore composes financial workflows and typed analysis evidence but cannot select or calculate productive scores outside ScoringModelRegistry/ScoringDispatcher. Category and pattern evidence remain non-authorizing. PatternResearchEngine is research-context-only and cannot create an OrderIntent. FinTechCore cannot replace IAM, Compliance, Quality, Governance, Supervisor, Release or Deployment authorities."
 }

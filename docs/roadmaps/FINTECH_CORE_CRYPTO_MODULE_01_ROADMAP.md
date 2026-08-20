@@ -1,282 +1,160 @@
 # CAPITAL-AI FinTech Core Engine — Module 01 Enterprise Crypto Orchestration
 
 **Roadmap-ID:** `FT-CORE-CRYPTO-01`  
-**Version:** 1.0.0  
-**Status:** IN IMPLEMENTATION — FT-0/FT-1 foundation started  
-**Owner-Prioritaet:** Chat-Prioritaet 2026-08-20  
+**Version:** 1.1.0  
+**Status:** IN IMPLEMENTATION — FT-0 bis FT-2C umgesetzt; FT-3 als naechstes persistentes Gate  
+**Owner-Prioritaet:** Chat-Prioritaet 2026-08-20; Synchronisierung/Projekt-Chat-Transfer 2026-08-21  
 **Execution Branch:** `feat/fintech-core-crypto-module-01`  
-**Base:** `main@f1dff495fe792a4d4a26a3513f0525b4974bd349`  
+**Original Base:** `main@f1dff495fe792a4d4a26a3513f0525b4974bd349`  
+**Current Sync Baseline:** `main@95dea79cb6c67d7925af2b4c6df59c53baf2b46f`  
 **Work Claim:** `FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20`  
-**Primary Architecture Decision:** `ADR-0098` (proposed; namespace must be revalidated immediately before PR creation)  
+**Primary Architecture Decision:** `ADR-0099` (`proposed`; remapped from the pre-reservation FinTech draft ADR-0098 after namespace collision with Media Project v2)  
 **Protected Scoring Authority:** `ADR-0087`, `SC-2`, `ScoringModelRegistry`, `ScoringDispatcher`
 
 ## 1. Ziel
 
-Der Enterprise Crypto Orchestrator wird als **erstes fachliches Modul der CAPITAL-AI FinTech Core Engine** aufgebaut. Er ist keine Trading-Strategie und keine zweite Scoring-Engine. Er kontrolliert den reproduzierbaren, auditierbaren Workflow von Datenaufnahme und Research bis zu Risiko, Compliance, Portfolio, Execution und Reconciliation.
+Der Enterprise Crypto Orchestrator ist das erste fachliche Modul der CAPITAL-AI FinTech Core Engine. Er komponiert einen reproduzierbaren und auditierbaren Finanz-Workflow, ist aber weder Trading-Strategie noch zweite Scoring-Engine.
 
-Die vom Owner bereitgestellte Quelle `FinTech Enterprise Orchestration Modell` erweitert diesen Scope um:
+Der Scope umfasst:
 
-- kategoriespezifische Crypto-Analysemodelle,
-- Unterklassen/Kategorien fuer L1, L2, DeFi, RWA, NFT, Stablecoin, Exchange Token, GameFi, AI/DePIN und Meme,
-- eine priorisierte Pattern-Analyse,
-- Multi-Timeframe- und Marktregime-Kontext,
-- rollierende Pattern-Reliability statt statischer Erfolgsversprechen,
-- deterministische Risk-/Compliance-Gates vor jeder kapitalwirksamen Aktion.
+- kategoriespezifische Crypto-Analyseprofile,
+- provenance-faehige Feature-/Evidence-Contracts,
+- technische Pattern- und Multi-Timeframe-Analyse,
+- asset-/timeframe-/regime-spezifische Pattern Reliability,
+- spaetere Risk-/Compliance-/Execution-/Reconciliation-Gates,
+- durable Workflow- und Decision-Evidence ab FT-3.
 
 ## 2. Nicht verhandelbare Architektur-Invarianten
 
-1. **Keine zweite Scoring Authority.** Produktive Scores entstehen ausschliesslich ueber `ScoringModelRegistry -> ScoringDispatcher -> CanonicalScoreResult`.
-2. **CryptoOrchestrator bleibt Research/Enrichment.** Agenten-Ausgaben bleiben `scoreEligible=false`, bis ein separat freigegebener Evidence-Promotion-Contract existiert.
-3. **Category- und Pattern-Analyse liefern Evidence/Features, keine direkten Kapitalentscheidungen.**
-4. **Risk und Compliance sind explizite Gates.** Kein `OrderIntent` ohne deterministische `APPROVED`-Entscheidungen beider Schichten.
-5. **LLM/Agenten besitzen keine direkte Exchange-, Wallet-, Private-Key-, Risk-Limit- oder Compliance-Bypass-Capability.**
-6. **EventMesh ist kein alleiniger Financial Ledger.** In-Memory-Events duerfen Telemetrie/Koordination liefern; autoritative Workflow-/Decision-Evidence wird spaeter durable persistiert.
-7. **Idempotenz vor Retry.** Side-effecting Aktionen wie Orders/Withdrawals duerfen nicht mit einem generischen Retry-Wrapper wiederholt werden, wenn kein end-to-end Idempotency Contract besteht.
-8. **Missing Evidence bleibt missing.** Keine synthetischen Finanzwerte, Pattern-Edges, Category-Metriken oder PASS-Zustaende.
-9. **Research-, Paper-, Guarded-Live-, Production- und Emergency-Modi verwenden denselben fachlichen Workflow, aber unterschiedliche Execution-Policies.**
-10. **Governance/Quality/Supervisor bleiben getrennte Authorities.** FinTech Core konsumiert deren Evidence/Entscheidungen, ersetzt sie aber nicht.
+1. Produktive Scores entstehen ausschliesslich ueber `ScoringModelRegistry -> ScoringDispatcher -> CanonicalScoreResult`.
+2. `CryptoOrchestrator` bleibt Research/Enrichment und `scoreEligible=false`.
+3. Category-/Pattern-Analyse liefert Evidence/Features, keine direkte Kapitalentscheidung.
+4. Missing oder stale Evidence wird nicht synthetisch zu `0`, `PASS` oder einer Erfolgswahrscheinlichkeit umgedeutet.
+5. Pattern Reliability ist exact-key gebunden an Asset, Profil, Timeframe, Regime, Pattern und Validation-Version.
+6. FinTech Core ersetzt keine IAM-, Compliance-, Quality-, Governance-, Supervisor-, Release- oder Deployment-Authority.
+7. Side-effecting Actions benoetigen vor Retry end-to-end Idempotency.
+8. `GUARDED_LIVE` und `PRODUCTION` bleiben blockiert, bis die spaeteren Gates explizit erfuellt sind.
+9. EventMesh ist kein alleiniger Financial Ledger.
+10. Keine produktive Supabase-/Render-/Exchange-/Custody-Mutation in FT-0 bis FT-2C.
 
-## 3. Main-Baseline und Korrelationen
+## 3. Main-Korrelation 2026-08-21
 
-### 3.1 Aktueller Main
+Vor dem Sync war der Branch 62 Commits vor und 135 Commits hinter `main`.
 
-Branchstart erfolgte von:
+Direkt relevante neue Main-Regeln:
 
-`f1dff495fe792a4d4a26a3513f0525b4974bd349`
+- ADR-0098 ist auf `main` fuer `Media Project v2 Timeline Contract` belegt.
+- `docs/adr/registry.json` verlangt fuer neue ADRs eine nachvollziehbare Namespace-Reservierung.
+- Governance-/Documentary- und PR-Baseline-Regeln auf `main` bleiben fuehrend.
 
-Dieser Stand enthaelt insbesondere:
+Folge fuer diesen Workstream:
 
-- PR #455: zentrales Quality Center als non-authorizing Evidence-/Orchestration-Schicht,
-- PR #456: Compliance-PDF Null-Safety,
-- SC-2 Single-Dispatcher-Architektur fuer produktive Multi-Asset-Scores.
+- der FinTech-Draft wird auf `ADR-0099` remapped,
+- historische FT-0..FT-2C-Evidence bleibt erhalten,
+- das Sync-Evidence-Dokument erklaert die historische ADR-0098-Referenz eindeutig,
+- keine neue parallele Scoring-, Queue- oder Governance-Authority wird eingefuehrt.
 
-### 3.2 Parallel offene PRs
+## 4. Aktueller Implementierungsstand
 
-- **PR #457** — Quality Center Completion. Kein FinTech-Core-Authority-Transfer vorgesehen; vor PR-Erstellung muss Dateioverlap erneut geprueft werden.
-- **PR #458** — Verified Asset Display/Buffett Hydration. Belegt `ADR-0097`; deshalb verwendet dieser Workstream vorlaeufig `ADR-0098`.
-
-### 3.3 Bestehende wiederzuverwendende Komponenten
-
-- `src/orchestrator/cryptoOrchestrator.ts`
-- `src/services/classification.service.ts`
-- `src/services/classificationAdapter.ts`
-- `src/types/crypto.types.ts`
-- `src/platform/Scoring/ScoringModelRegistry.ts`
-- `src/platform/Scoring/ScoringDispatcher.ts`
-- `src/platform/Supervisor/**`
-- `src/platform/EventMesh/**`
-- `src/platform/Traceability/**`
-- `src/platform/Quality/**`
-- `src/platform/Compliance/**`
-- `server/outbox.ts` / `server/outboxWorker.ts`
-- Supabase `outbox_jobs`, `agent_audit_events`, `score_snapshots`, `ai_governance_evaluations`
-
-## 4. Zielarchitektur
-
-```text
-User / API / Supervisor
-        |
-        v
-CAPITAL-AI FinTech Core Engine
-        |
-        +--> Module 01: Crypto
-                |
-                +--> Asset Identity / Classification
-                +--> Category Evidence Resolver
-                +--> Category Analysis Profile
-                +--> Market / On-Chain / Fundamental Evidence
-                +--> Technical Pattern Engine
-                +--> Multi-Timeframe Resolver
-                +--> Market Regime Filter
-                +--> Canonical Feature Contract
-                +--> ScoringModelRegistry
-                +--> ScoringDispatcher
-                +--> CanonicalScoreResult
-                +--> Portfolio Target
-                +--> Deterministic Risk Gate
-                +--> Compliance Gate
-                +--> Signed / Hashed OrderIntent
-                +--> Execution Gateway
-                +--> Reconciliation
-                +--> Audit / Traceability
-```
-
-## 5. Kategoriespezifische Analyse
-
-Die bestehende kanonische CAPITAL-AI Crypto-Taxonomie wird **nicht ersetzt**. Sie wird um einen analytischen Profile-Layer ergaenzt.
-
-### 5.1 Analyseprofile aus der Owner-Quelle
-
-| Profil | Schwerpunkt | Initiale Quelle |
+| Phase | Status | Evidenz |
 |---|---|---|
-| L1 | Fundamentals, On-Chain, Security, Tokenomics, Technicals | Owner-Orchestration-Modell |
-| L2/Rollup | Usage, Sequencer Economics, DA, Bridge/Liveness, Unlocks | Owner-Orchestration-Modell |
-| DeFi | Revenue, TVL Quality, Protocol/Oracle/Smart-Contract Risk | Owner-Orchestration-Modell |
-| RWA | Backing, Legal/Custody, Yield, Redemption, Liquidity | Owner-Orchestration-Modell |
-| NFT | Collection Quality, Liquidity, Rarity, Community, Wash-Trade Penalty | Owner-Orchestration-Modell |
-| Stablecoin | Peg, Reserves, Redemption, Liquidity | Owner-Orchestration-Modell |
-| Exchange Token | Exchange Revenue, Utility, Burn, Reserves, Counterparty Risk | Owner-Orchestration-Modell |
-| GameFi | DAU, DAU/MAU, Revenue, Retention, NFT Activity, Utility | Owner-Orchestration-Modell |
-| AI/DePIN | Active Nodes, Useful Work, Revenue, Customer Growth, Utilization, Utility | Owner-Orchestration-Modell |
-| Meme | eigener Profile-Slot; Formel bleibt bis belastbare Evidence vorliegt `PENDING_EVIDENCE` | keine belastbare Spezialformel in der bereitgestellten Quelle |
+| FT-0 Contract Freeze & Governance Baseline | DONE | `FT0_CRYPTO_MODULE_FOUNDATION_2026-08-20.md` |
+| FT-1 FinTech Core Engine Foundation | DONE | `FT1_CORE_ENGINE_FOUNDATION_2026-08-20.md` |
+| FT-2A Crypto Category Profile Resolution | DONE | `FT2A_CRYPTO_CATEGORY_PROFILE_RESOLUTION_2026-08-20.md` |
+| FT-2B Category-specific Feature Contracts | DONE | `FT2B_CRYPTO_CATEGORY_FEATURE_CONTRACTS_2026-08-20.md` |
+| FT-2C Technical Pattern Engine Foundation | DONE | `FT2C_PATTERN_ENGINE_FOUNDATION_2026-08-20.md` |
+| FT-3 Durable Workflow & Traceability | PLANNED | Migration/Security Review ausstehend |
+| FT-4 Research & Paper Trading | PLANNED | nach FT-3 |
+| FT-5 Deterministic Risk + Compliance | PLANNED | nach FT-4 |
+| FT-6 OrderIntent & Reconciliation | PLANNED | nach FT-5 |
+| FT-7 Guarded Live / Single CEX | BLOCKED | FT-0..FT-6 muessen bestehen |
+| FT-8 Enterprise Production Hardening | PLANNED | nach Guarded-Live-Gates |
+| FT-9 DeFi / DEX / Cross-Chain | PLANNED | spaetere Expansion |
 
-### 5.2 Multi-Label-Regel
+## 5. FT-0 — DONE
 
-Ein Asset darf mehrere fachliche Tags besitzen. Der bestehende `category_main` bleibt kompatibel; der neue Analyse-Layer kann spaeter `primaryProfile` und `secondaryProfiles` fuehren. Sekundaerprofile duerfen keine doppelten Gewichte oder mehrfaches Scoring erzeugen.
+Umgesetzt:
 
-### 5.3 Normalisierung
+- Work Claim und Roadmap,
+- Core-/Crypto-Contract-Versionen,
+- Operating-Mode-Contract,
+- Category Analysis Profile Contract,
+- Pattern-/Reliability-/Validation-Contracts,
+- Authority-Boundary-Tests,
+- fail-closed Research-/Scoring-Trennung.
 
-Vergleiche erfolgen primaer innerhalb fachlich vergleichbarer Profile. Ein RWA-Token darf nicht allein ueber dieselben Merkmale wie ein Meme- oder L1-Asset gerankt werden.
+Governance-Migration beim 2026-08-21-Sync:
 
-## 6. Pattern-Analyse
+- FinTech ADR von der historischen Vorreservierungsnummer `ADR-0098` auf `ADR-0099` verschoben,
+- aktueller Main-Stand und ADR-Registry-Regeln korreliert.
 
-### 6.1 Prioritaetsgruppen
+## 6. FT-1 — DONE
 
-| Rang | Gruppe | Startgewicht |
-|---:|---|---:|
-| 1 | Structure Reversal | 1.00 |
-| 2 | Structure Continuation | 0.90 |
-| 3 | Breakout Structure | 0.85 |
-| 4 | Wedge | 0.80 |
-| 5 | Candlestick Reversal | 0.65 |
-| 6 | Candlestick Continuation | 0.60 |
-| 7 | Single Candle | 0.40 |
-| 8 | Micro Pattern | 0.25 |
+Umgesetzt:
 
-Diese Werte sind **Research-Startgewichte**, keine Erfolgswahrscheinlichkeiten.
+- `FinTechCoreEngine`,
+- `FinTechCoreModuleRegistry`,
+- `FinTechCoreModule` Contract,
+- `WorkflowContext`, `DomainEvent`, `DecisionRecord`, `OrderIntent`,
+- deterministische `WorkflowStateMachine`,
+- Crypto Module Descriptor `fintech-core.crypto`,
+- Runtime-Modi fuer diese Phase nur `RESEARCH` und `PAPER`,
+- explizite Trennung `RETRY_SAFE` / `SIDE_EFFECTING`.
 
-### 6.2 Pattern Evidence
+Keine Exchange-/Custody-Side-Effects.
 
-Ein erkanntes Pattern muss mindestens folgende Dimensionen fuehren:
+## 7. FT-2A — DONE
 
-- geometrische Pattern-Qualitaet,
-- Trend-/Support-/Resistance-Kontext,
-- Volumenbestaetigung,
-- Breakout-Qualitaet,
-- Retest,
-- Higher-Timeframe-Bestaetigung,
-- Marktregime,
-- asset-/timeframe-spezifischer historischer Edge,
-- Data Quality,
-- Evidence-Referenzen und Version.
+Umgesetzt:
 
-### 6.3 Konfliktregeln
+- Wiederverwendung der kanonischen `CryptoCategory`,
+- separater analytischer Profile-Layer,
+- provenance-aware Primary-/Secondary-Profile,
+- deterministic/evidence-backed Merge,
+- Agent-/LLM-Research kann kein Secondary Profile promoten,
+- Unknown/nicht belegte Klassen bleiben fail-closed.
 
-1. Higher Timeframe vor Lower Timeframe.
-2. Strukturmuster vor Einzelkerzen.
-3. Bestaetigter Breakout vor unbestaetigtem Muster.
-4. Volumenbestaetigung vor reinem Preispattern.
-5. relevantes Level vor Range-Mitte.
-6. Regime-konformes Muster vor Regime-Konflikt.
-7. Asset-/Timeframe-spezifische Statistik vor allgemeiner Literaturstatistik.
+## 8. FT-2B — DONE
 
-### 6.4 Pattern Reliability
+Typed Feature-/Evidence-Contracts existieren fuer:
 
-Reliability wird nicht global hartkodiert. Zielschluessel:
+- Layer 1,
+- Layer 2 / Rollup,
+- DeFi,
+- RWA,
+- NFT,
+- Stablecoin,
+- Exchange Token,
+- GameFi,
+- AI/DePIN.
 
-```text
-assetId x analysisProfile x timeframe x marketRegime x patternId x validationVersion
-```
+Der Verified-Crypto-Snapshot-Adapter ueberfuehrt nur universelle Markt-/Supply-Evidence. Marktvolumen, Market Cap, Supply oder Preisveraenderung ersetzen keine kategoriespezifische Evidence.
 
-Bewertet werden mindestens:
+Meme bleibt ohne belastbare Spezialformel `PENDING_EVIDENCE`.
 
-- Anzahl Beobachtungen,
-- Win Rate,
-- Avg Win / Avg Loss,
-- Expectancy,
-- Profit Factor,
-- Max Drawdown,
-- Netto-PnL nach Fees/Spread/Slippage/Funding,
-- Walk-forward-/Out-of-sample-Ergebnis.
+## 9. FT-2C — DONE als Research Foundation
 
-## 7. Roadmap
+Umgesetzt:
 
-### FT-0 — Contract Freeze & Governance Baseline
+- detector-agnostischer OHLCV-/Pattern-SPI,
+- immutable Exact-Key `PatternReliabilityRegistry`,
+- deterministische Multi-Timeframe-/Kontextauflosung,
+- `PatternResearchEngine`,
+- Walk-forward-/Out-of-sample- und Kostenparameter als Research-Validation-Gates,
+- Konflikte bleiben explizite `CONFLICTING_EVIDENCE`,
+- kein synthetischer Pattern-Composite-Score,
+- `scoreEligible=false`, `executionEligible=false`, `authority=RESEARCH_CONTEXT_ONLY`.
 
-**Status:** IN IMPLEMENTATION
+### Offene FT-2C-Folgeschritte
 
-**Ziel:** Architecture Boundary festschreiben, bevor Runtime-Verhalten geaendert wird.
+- 1h/4h-Pattern nur nach Reliability-/Conflict-Gate als begrenztes Feature weiterfuehren,
+- kein Double Counting zwischen Timeframes/Pattern-Evidence,
+- externe Detector-Bibliothek erst nach separatem PoC und Supply-Chain-/Lizenzpruefung,
+- TA-Lib bleibt bevorzugter PoC-Kandidat, ist aber noch keine Dependency.
 
-- [x] frischen Branch vom aktuellen `main` anlegen
-- [x] Work Claim anlegen
-- [x] komplette Implementierungsroadmap anlegen
-- [ ] ADR-0098 als `proposed` anlegen und vor PR final in Registry/Document Registry registrieren
-- [ ] FinTech-Core-/Crypto-Contract-Versionen einfuehren
-- [ ] Category Analysis Profile Contract einfuehren
-- [ ] Pattern Group / Pattern Evidence / Validation Contract einfuehren
-- [ ] Operating-Mode-Contract definieren
-- [ ] Authority-Boundary-Tests anlegen
+## 10. FT-3 — Durable Workflow & Traceability — PLANNED
 
-**Exit:** keine produktive Score-/Execution-Aenderung; Contracts und Governance sind reviewbar und fail-closed.
-
-### FT-1 — FinTech Core Engine Foundation
-
-**Status:** PLANNED
-
-- `FinTechCoreEngine`
-- `CoreModuleRegistry`
-- `CoreModule` Contract
-- `WorkflowContext`
-- `DomainEvent`
-- `DecisionRecord`
-- `OrderIntent`
-- Crypto als `moduleId = fintech-core.crypto`
-- explizite Trennung `RETRY_SAFE` vs. `SIDE_EFFECTING`
-- Supervisor-Routing spaeter auf `FinTechCore -> CryptoModule`, ohne Supervisor zur Finanzentscheidungsinstanz zu machen
-
-**Exit:** Crypto-Modul kann einen rein research/paper-faehigen Workflow deterministisch komponieren; keine Exchange-Side-Effects.
-
-### FT-2A — Crypto Category Taxonomy & Profile Resolution
-
-**Status:** PLANNED
-
-- bestehende kanonische `CryptoCategory` weiterverwenden
-- analytische Profile separat modellieren
-- primary/secondary Profile mit Evidence-Provenance
-- keine Kategorie aus LLM-Output ohne deterministic/evidence-backed Merge
-- `Unknown`/nicht abgedeckte Klassen fail-closed auf `generic/PENDING_EVIDENCE`
-- CoinGecko-Tags nur als externe Classification Evidence, nicht als alleinige Authority
-
-### FT-2B — Category-specific Feature Contracts
-
-**Status:** PLANNED
-
-Implementierung und Validierung je Profil:
-
-- L1 Security/Network/Tokenomics
-- L2 Usage/DA/Bridge/Sequencer/Unlock
-- DeFi Revenue/TVL Quality/Protocol Risk
-- RWA Backing/Legal/Custody/Redemption
-- NFT Liquidity/Rarity/Wash Trading
-- Stablecoin Peg/Reserves/Redemption
-- Exchange Token Revenue/Utility/Reserve Transparency/Counterparty Risk
-- GameFi Product Usage/Retention/Economics
-- AI/DePIN Network Usage/Useful Work/Economics
-- Meme erst nach separater evidenzbasierter Formel
-
-**Hard rule:** Missing category evidence -> `NOT_COMPUTABLE` bzw. reduzierte Coverage, niemals synthetischer Ersatz.
-
-### FT-2C — Technical Pattern Engine
-
-**Status:** PLANNED
-
-- Pattern-Katalog + Gruppenprioritaet
-- deterministische Detection
-- Context/Volume/Breakout/Retest
-- Multi-Timeframe Resolution
-- Regime Filter
-- Pattern Reliability Registry
-- Walk-forward-/OOS-Backtesting
-- Kosten-/Funding-/Slippage-Beruecksichtigung
-- keine Pattern-Aussage als direkte Orderfreigabe
-
-**Open-Source-Gate:** TA-Lib wird vor Integration separat auf Node/Docker-Build, License, Supply Chain, Pattern-Semantik und Maintenance getestet. Keine Dependency-Aufnahme in FT-0/FT-1.
-
-### FT-3 — Durable Workflow & Traceability
-
-**Status:** PLANNED
-
-Ziel-Supabase-Schema, erst nach Migration-Review/Owner-Mutationsfreigabe:
+Zielbild nach separatem Migration-/Security-Review:
 
 ```text
 fintech_core.workflow_runs
@@ -286,260 +164,86 @@ fintech_core.order_intents
 fintech_core.reconciliation_records
 ```
 
-Reuse:
+Wiederverwendung vor Eigenentwicklung:
 
-- `public.agent_audit_events`
-- `public.score_snapshots`
-- `public.outbox_jobs`
-- bestehende Traceability/EventMesh-Vertraege
+- `public.outbox_jobs`,
+- `public.agent_audit_events`,
+- `public.score_snapshots`,
+- bestehende Traceability/EventMesh-Vertraege.
 
-Pflicht-IDs:
+`pgmq` darf nicht parallel als zweite Queue-Authority eingefuehrt werden. Eine Konvergenz-/Ablosungsentscheidung braucht einen eigenen Architekturentscheid.
 
-- `runId`
-- `traceId`
-- `correlationId`
-- `causationId`
-- `strategyId`
-- `portfolioId`
-- `decisionVersion`
-- `idempotencyKey`
+Vor einer produktiven Supabase-Mutation sind mindestens Schema-/Privilege-/RLS-/Security-Review und die dafuer vorgesehene Produktionsfreigabe erforderlich.
 
-**Queue-Entscheidung:** bestehendes `outbox_jobs` zuerst wiederverwenden. `pgmq` ist bereits vorhanden, wird aber nicht parallel als zweite Queue-Authority eingefuehrt. Eine spaetere Konvergenz benoetigt eigenes ADR/Benchmark.
+## 11. FT-4 bis FT-9
 
-### FT-4 — Research & Paper Trading
+### FT-4 Research & Paper Trading
 
-**Status:** PLANNED
+- durable/replay-faehiger Paper Workflow,
+- explizit simulierte Balances,
+- Fees/Slippage/Funding in Evidence,
+- kein reales Kapital.
 
-Workflow bis mindestens:
+### FT-5 Deterministic Risk + Compliance
 
-```text
-MARKET_DATA_RECEIVED
-DATA_VALIDATED
-MARKET_REGIME_CLASSIFIED
-SIGNAL_GENERATED
-ASSET_SCORED
-PORTFOLIO_TARGET_CALCULATED
-PRE_TRADE_RISK_CHECK
-COMPLIANCE_DECIDED
-PAPER_ORDER_EXECUTED
-POSITION_UPDATED
-POST_TRADE_RISK_CHECK
-RECONCILIATION_COMPLETED
-AUDIT_RECORD_FINALIZED
-```
+- Exposure-/Order-/Drawdown-/Liquidity-/Staleness-/Counterparty-Gates,
+- KYC/KYB-/AML-/Sanctions-/Wallet-/Jurisdiction-Integrationspunkte,
+- `OrderIntent` ohne Risk=APPROVED und Compliance=APPROVED unmoeglich.
 
-- kein reales Kapital
-- simulierte Balances explizit markiert
-- Slippage/Fees/Funding in Paper Evidence
-- deterministische Replay-Faehigkeit
+### FT-6 OrderIntent & Reconciliation
 
-### FT-5 — Deterministic Risk + Compliance by Design
+- immutable/hash-bound OrderIntent,
+- TTL und Price/Quantity/Slippage Bounds,
+- Idempotency/Client-Order-ID,
+- Reconciliation- und Crash-/Duplicate-Tests.
 
-**Status:** PLANNED
+### FT-7 Guarded Live
 
-Risk Controls:
+Blockiert bis FT-0..FT-6 bestanden sind. Genau ein CEX-Adapter, Human Approval, Kill Switch, Circuit Breakers und keine Agent-Key-Capability.
 
-- max position / portfolio exposure
-- max order size
-- daily loss / drawdown
-- spread / slippage / orderbook depth
-- stale/contradictory data
-- concentration/correlation
-- venue health
-- stablecoin/counterparty risk
+### FT-8 Enterprise Hardening
 
-Compliance Controls:
+BCP/DR, Custody-Boundary, Multi-Venue, OpenTelemetry/W3C Trace Context, SLOs, Audit Retention, Chaos/Failover und regulatorische Exportfaehigkeit.
 
-- KYC/KYB boundary
-- AML / transaction monitoring
-- sanctions
-- wallet risk
-- Travel Rule integration point
-- asset/jurisdiction allow/deny
-- RWA legal/custody gate
-- market abuse/wash trading evidence
-- regulatory exportability
+### FT-9 DeFi / DEX / Cross-Chain
 
-**Exit:** `OrderIntent` ist ohne `Risk=APPROVED` und `Compliance=APPROVED` unmoeglich.
+DEX/Aggregator-, Smart-Contract-, Bridge-, Oracle- und Cross-Chain-Risk/Settlement-Gates.
 
-### FT-6 — OrderIntent, Paper Ledger & Reconciliation
+## 12. Offene Projekt-Chat-Punkte
 
-**Status:** PLANNED
+Noch **nicht** als erledigt uebertragen:
 
-- immutable/hash-bound `OrderIntent`
-- TTL/expiry
-- approved price/quantity/slippage bounds
-- idempotency/client-order-id
-- double-entry paper ledger
-- exchange/custody/ledger/blockchain reconciliation contract
-- duplicate/retry/crash tests
+- erneute Pruefung der externen/Drive-Quell-PDF, falls fuer konkrete Formeln erforderlich,
+- FT-3 Supabase-Migration,
+- privater Storage-/Evidence-Bucket,
+- Pattern-Badge-/UI-Integration,
+- produktive Risk-/Compliance-/Execution-Adapter,
+- Render-/Supabase-Produktionsmutationen,
+- Guarded Live/Production,
+- PR/Merge.
 
-### FT-7 — Guarded Live / Single CEX
+## 13. Security / Compliance / Data Integrity
 
-**Status:** BLOCKED UNTIL FT-0..FT-6 PASS
+Der aktuelle Sync veraendert keine produktiven Finanzwerte und keine Laufzeitintegration ausserhalb des FinTechCore-Branch-Scopes.
 
-- genau ein CEX-Adapter
-- Human Approval fuer definierte Schwellen
-- kill switch / emergency mode
-- circuit breakers
-- venue health
-- signed OrderIntent-only Execution Gateway
-- keine LLM-/Agent-Key-Capability
-- kein generischer Supervisor-Retry fuer Side Effects
+Weiterhin verpflichtend:
 
-### FT-8 — Enterprise Production Hardening
+- fail-closed bei fehlender/staler Evidence,
+- keine zweite Scoring Authority,
+- keine direkte LLM-/Agent-Side-Effect-Capability,
+- Idempotency vor Side-Effect-Retry,
+- provenance-faehige Evidence,
+- klare Runtime-Modi,
+- Human/Governance-Gates fuer spaetere produktive Mutationen.
 
-**Status:** PLANNED
+## 14. Open Source / Plugins
 
-- Custody/MPC/Multisig integration boundary
-- segregation client/proprietary assets
-- BCP/DR
-- multi-venue routing
-- observability via OpenTelemetry/W3C trace context
-- append-only/retention-faehige Audit Evidence
-- capacity/latency/SLOs
-- chaos/failover tests
-- regulatorische Reporting-/Export-Schnittstellen
+- Bestehende Repository-Funktionen bleiben fuehrend.
+- GitHub wird fuer Branch-/Registry-/PR-Governance genutzt.
+- Supabase und Render werden erst in den dafuer vorgesehenen produktiven Phasen mutiert.
+- TA-Lib: BSD-3-Clause, gepflegter PoC-Kandidat fuer Standard-Indikatoren/Candlestick-Primitives; keine Integration in diesem Sync.
+- Projektspezifische Context-/Reliability-/Governance-Semantik bleibt CAPITAL-AI-eigene Schicht.
 
-### FT-9 — DeFi / DEX / Cross-Chain Expansion
+## 15. Naechster fachlicher Schritt
 
-**Status:** PLANNED
-
-- DEX/Aggregator Adapter
-- smart-contract risk
-- bridge risk
-- oracle risk
-- lending/yield constraints
-- cross-chain reconciliation
-- DeFi-spezifische Execution-/Settlement-Policies
-
-## 8. Betriebsmodi
-
-| Mode | Market/Research | Score | Portfolio | Real Execution |
-|---|---|---|---|---|
-| RESEARCH | ja | canonical/read-only | optional simulation | nein |
-| PAPER | ja | canonical | simuliert | nein |
-| GUARDED_LIVE | ja | canonical | real limits | nur approved |
-| PRODUCTION | ja | canonical | real | policy-controlled |
-| EMERGENCY | eingeschraenkt | read-only | reduce/cancel policy | keine neuen Orders |
-
-Mode-Wechsel sind Governance-Entscheidungen und werden nicht von LLMs autonom vorgenommen.
-
-## 9. Supabase-Plan
-
-### Ist
-
-- Projekt `AIFINANCIAL`, Region `eu-west-1`, healthy
-- PostgreSQL 17
-- `pgmq 1.5.1` vorhanden
-- `outbox_jobs` vorhanden
-- Agent-/Score-/Governance-Audit-Evidence vorhanden
-
-### Umsetzung
-
-- FT-0..FT-2: **keine produktive DB-Mutation**
-- FT-3: Migration zuerst im Repository, Review + Security Advisor + Owner Mutation Approval, danach kontrollierte Anwendung
-- private/non-browser-exposed `fintech_core`-Strukturen bevorzugen
-- keine `anon`/`authenticated` Grants ohne expliziten Use Case
-- RLS/Privileges defense-in-depth
-- keine Service-Role-Secrets im Client
-
-## 10. Render-Plan
-
-### Ist
-
-- Service `Finance`
-- Docker Runtime
-- Frankfurt
-- `main`
-- Auto Deploy off
-- aktueller Live-Deploy: `f1dff495...`
-
-### Umsetzung
-
-- FT-0..FT-2: keine Render-Mutation
-- keine Preview-Service-Neuanlage ohne klaren Kosten-/Security-Nutzen
-- Guarded-Live erst nach Runbook, Kill Switch, Metrics und Owner Approval
-- spaetere Performance-/Execution-SLOs gegen reale Render-Metriken pruefen
-
-## 11. Open-Source-/Dependency-Entscheidungen
-
-| Option | Fit | Maintenance | Lizenz | Integration | Entscheidung |
-|---|---|---|---|---|---|
-| TA-Lib Core | hoch fuer Indicators/Candlesticks | aktiv, Release 2026 | BSD-3-Clause | native C/Docker Binding erforderlich | spaeterer PoC-Kandidat |
-| technicalindicators | guter TS-Fit | npm Release stark veraltet | MIT | einfach | nicht fuer Enterprise-Kern bevorzugt |
-| Tulip Indicators | Indicators/Candles | geringer/unklarer aktueller Takt | LGPL | C/Binding + Copyleft-Bewertung | derzeit nicht bevorzugt |
-| Eigenentwicklung aller Indicator-Funktionen | technisch moeglich | eigene Last | intern | hoch | vermeiden |
-| Eigenentwicklung CAPITAL-AI Context/Reliability Layer | erforderlich | intern | intern | kompatibel | begruendet: projektspezifische Governance/Evidence-Semantik |
-
-TA-Lib oder andere Bibliotheken duerfen Pattern-Erkennung unterstuetzen, aber niemals Scoring-/Risk-/Execution-Authority uebernehmen.
-
-## 12. Security / Compliance / Data Integrity
-
-### Threats
-
-- doppelte Orders durch Retry nach unklarem Venue-Ergebnis
-- Look-ahead-/Backtest-Leakage
-- synthetische oder stale Evidence
-- Category Misclassification
-- Pattern Overfitting
-- LLM Prompt/Tool Escalation
-- Key/Secret Leakage
-- Compliance Bypass
-- Event loss bei Prozess-/Worker-Ausfall
-- Cross-venue race conditions
-
-### Controls
-
-- deterministic gates
-- evidence provenance + timestamps
-- idempotency keys
-- immutable decision versions
-- no direct LLM side effects
-- explicit operating mode
-- fail-closed missing data
-- durable workflow state
-- append-only audit trail
-- human approval fuer hochriskante Mutationen
-
-## 13. Validierungsstrategie
-
-Vor jedem PR:
-
-1. Diff und Dateiscope pruefen.
-2. Open-PR-Korrelationen pruefen.
-3. lokalen/statischen TypeScript-/Contract-/Unit-Test-Pfad bevorzugen.
-4. keine kostenverursachende GitHub-CI vor PR-Erstellung ausloesen.
-5. direkt vor PR `main` erneut laden.
-6. Branch gegen neuen `main` synchronisieren.
-7. semantische Korrelationen zu Scoring, Quality, Governance, Supabase, Render und offenen ADRs pruefen.
-8. lokale/kostenfreie Checks erneut ausfuehren.
-
-Nach PR-Erstellung gelten die Repository-Gates inkl. M10-/CI-Autorisierungsprozess.
-
-## 14. Definition of Done
-
-Module 01 gilt erst als Enterprise-ready, wenn:
-
-- [ ] keine zweite produktive Scoring-Authority existiert
-- [ ] Category-/Pattern-Evidence versioniert und provenance-faehig ist
-- [ ] Pattern Reliability walk-forward/OOS validiert wird
-- [ ] Risk/Compliance vor OrderIntent fail-closed sind
-- [ ] Side Effects idempotent und crash-safe sind
-- [ ] Research/Paper/Guarded-Live/Production/Emergency eindeutig getrennt sind
-- [ ] durable Workflow-/Decision-/Audit-Evidence existiert
-- [ ] Reconciliation pruefbar ist
-- [ ] Security/Compliance/Governance/Quality-Gates PASS sind
-- [ ] aktueller Main-Sync unmittelbar vor Merge erneut bewertet wurde
-- [ ] Dokumentation, ADR/ESS/Traceability und Runtime-Verhalten konsistent sind
-
-## 15. Aktueller naechster Schritt
-
-FT-0 wird im aktuellen Branch mit einem **non-authorizing Contract-Fundament** begonnen:
-
-1. `ADR-0098` proposed,
-2. `src/platform/FinTechCore/CryptoModuleContracts.ts`,
-3. Unit Tests fuer Profile-/Pattern-Invarianten,
-4. danach `CoreModule`/`WorkflowContext`/`OperatingMode` ohne Runtime-Wiring.
-
-Supervisor-, Supabase- und Render-Mutationen bleiben bis zu den dafuer vorgesehenen Roadmap-Gates unberuehrt.
+Nach Abschluss des Main-/Governance-Syncs ist **FT-3 Durable Workflow & Traceability** der naechste Roadmap-Block. Vor einer Migration werden bestehende Supabase-/Outbox-/Audit-Primitives erneut gegen den dann aktuellen `main` geprueft; es wird keine zweite Persistenz- oder Queue-Authority parallel aufgebaut.

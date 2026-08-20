@@ -1,11 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 
-export const PR_TEMPLATE_VERSION = '1.4.0';
+export const PR_TEMPLATE_VERSION = '1.5.0';
 export const PR_TEMPLATE_MARKER = `CAPITAL_AI_PR_TEMPLATE_VERSION: ${PR_TEMPLATE_VERSION}`;
 export const DEFAULT_PRODUCTION_HEALTH_URL = 'https://capital-ai.online/healthz';
 export const MAX_PR_START_DELAY_MS = 15 * 60 * 1000;
+export const PRODUCTION_BASELINE_SCHEMA_VERSION = '1.1.0';
+export const PRODUCTION_BASELINE_START = 'CAPITAL_AI_PRODUCTION_BASELINE_START';
+export const PRODUCTION_BASELINE_END = 'CAPITAL_AI_PRODUCTION_BASELINE_END';
 
 export function fail(message) {
   throw new Error(message);
@@ -255,6 +259,112 @@ export function compareSemver(a, b) {
     if (left[i] < right[i]) return -1;
   }
   return 0;
+}
+
+export function productionBaselineIdentity(baseline) {
+  return {
+    schemaVersion: String(baseline?.schemaVersion || ''),
+    productionUrl: String(baseline?.productionUrl || ''),
+    productionStatus: String(baseline?.production?.status || ''),
+    productionVersion: String(baseline?.production?.version || ''),
+    productionSha: String(baseline?.production?.commitSha || '').toLowerCase(),
+    productionBranch: String(baseline?.production?.branch || ''),
+    productionRepo: String(baseline?.production?.repoSlug || ''),
+    productionProvider: String(baseline?.production?.provider || ''),
+    mainSha: String(baseline?.main?.sha || '').toLowerCase(),
+    headSha: String(baseline?.head?.sha || '').toLowerCase(),
+    headVersion: String(baseline?.head?.version || ''),
+    productionToMainCommits: Number(baseline?.drift?.productionToMainCommits),
+    mainToHeadCommits: Number(baseline?.drift?.mainToHeadCommits),
+  };
+}
+
+export function computeProductionBaselineId(baseline) {
+  const canonical = JSON.stringify(productionBaselineIdentity(baseline));
+  return `sha256:${createHash('sha256').update(canonical, 'utf8').digest('hex')}`;
+}
+
+export function validateProductionBaselineForPr(baseline) {
+  const errors = [];
+  const identity = productionBaselineIdentity(baseline);
+
+  if (identity.schemaVersion !== PRODUCTION_BASELINE_SCHEMA_VERSION) {
+    errors.push(`schemaVersion must be ${PRODUCTION_BASELINE_SCHEMA_VERSION}`);
+  }
+  if (identity.productionUrl !== DEFAULT_PRODUCTION_HEALTH_URL) {
+    errors.push(`productionUrl must be ${DEFAULT_PRODUCTION_HEALTH_URL}`);
+  }
+  if (identity.productionStatus !== 'ok') errors.push('production.status must be ok');
+  if (!semverTuple(identity.productionVersion)) errors.push('production.version must be semantic x.y.z');
+  if (!/^[0-9a-f]{40}$/i.test(identity.productionSha)) errors.push('production.commitSha must be a full 40-character SHA');
+  if (identity.productionBranch !== 'main') errors.push('production.branch must be main');
+  if (!identity.productionRepo) errors.push('production.repoSlug is required');
+  if (!/^[0-9a-f]{40}$/i.test(identity.mainSha)) errors.push('main.sha must be a full 40-character SHA');
+  if (!/^[0-9a-f]{40}$/i.test(identity.headSha)) errors.push('head.sha must be a full 40-character SHA');
+  if (!semverTuple(identity.headVersion)) errors.push('head.version must be semantic x.y.z');
+  if (!Number.isInteger(identity.productionToMainCommits) || identity.productionToMainCommits < 0) {
+    errors.push('drift.productionToMainCommits must be a non-negative integer');
+  }
+  if (!Number.isInteger(identity.mainToHeadCommits) || identity.mainToHeadCommits < 0) {
+    errors.push('drift.mainToHeadCommits must be a non-negative integer');
+  }
+  if (!baseline?.generatedAt || Number.isNaN(Date.parse(baseline.generatedAt))) {
+    errors.push('generatedAt must be an ISO-8601 timestamp');
+  } else if (Date.parse(baseline.generatedAt) > Date.now() + 5 * 60 * 1000) {
+    errors.push('generatedAt must not be materially in the future');
+  }
+  if (baseline?.bootstrap === true) errors.push('bootstrap baselines are not valid for normal PRs');
+  if (baseline?.checks?.productionHealthy !== true) errors.push('checks.productionHealthy must be true');
+  if (baseline?.checks?.immutableProductionIdentity !== true) errors.push('checks.immutableProductionIdentity must be true');
+  if (baseline?.checks?.productionBranchIsMain !== true) errors.push('checks.productionBranchIsMain must be true');
+  if (baseline?.checks?.productionIsAncestorOfMain !== true) errors.push('checks.productionIsAncestorOfMain must be true');
+  if (baseline?.checks?.branchContainsCurrentMain !== true) errors.push('checks.branchContainsCurrentMain must be true');
+
+  const expectedId = computeProductionBaselineId(baseline);
+  if (String(baseline?.baselineId || '') !== expectedId) {
+    errors.push(`baselineId mismatch; expected ${expectedId}`);
+  }
+
+  return errors;
+}
+
+export function renderProductionBaselineBlock(baseline) {
+  const errors = validateProductionBaselineForPr(baseline);
+  if (errors.length > 0) {
+    fail(`Produktions-Baseline ist nicht PR-renderfähig: ${errors.join('; ')}`);
+  }
+
+  return [
+    `<!-- ${PRODUCTION_BASELINE_START} -->`,
+    `\`${PRODUCTION_BASELINE_START}\``,
+    `- **Baseline-ID:** \`${baseline.baselineId}\``,
+    `- **Produktions-URL:** \`${baseline.productionUrl}\``,
+    `- **Produktionsversion:** \`${baseline.production.version}\``,
+    `- **Produktions-Commit:** \`${baseline.production.commitSha}\``,
+    `- **Produktions-Branch:** \`${baseline.production.branch}\``,
+    `- **Aktueller main-Commit:** \`${baseline.main.sha}\``,
+    `- **PR-Head-Commit:** \`${baseline.head.sha}\``,
+    `- **Abweichung Produktion → main:** \`${baseline.drift.productionToMainCommits}\` Commit(s)`,
+    `- **Abweichung main → PR-Head:** \`${baseline.drift.mainToHeadCommits}\` Commit(s)`,
+    `- **Baseline erzeugt am:** \`${baseline.generatedAt}\``,
+    `\`${PRODUCTION_BASELINE_END}\``,
+    `<!-- ${PRODUCTION_BASELINE_END} -->`,
+  ].join('\n');
+}
+
+export function extractProductionBaselineBlock(body) {
+  const text = String(body || '');
+  const start = `<!-- ${PRODUCTION_BASELINE_START} -->`;
+  const end = `<!-- ${PRODUCTION_BASELINE_END} -->`;
+  const startAt = text.indexOf(start);
+  const endAt = text.indexOf(end, startAt + start.length);
+  if (startAt < 0 || endAt < 0) return null;
+  return text.slice(startAt, endAt + end.length);
+}
+
+export function extractBaselineGeneratedAt(block) {
+  const match = String(block || '').match(/- \*\*Baseline erzeugt am:\*\* `([^`]+)`/);
+  return match ? match[1] : null;
 }
 
 /** True if body contains HTML-comment form and/or visible backtick form of a governance ID. */

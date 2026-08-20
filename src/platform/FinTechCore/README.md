@@ -5,7 +5,7 @@ Der `FinTechCore` ist die versionierte finanzielle Workflow-Composition-Schicht 
 ## Aktueller Implementierungsstand
 
 - Roadmap: `FT-CORE-CRYPTO-01`
-- Architekturentscheidung: `ADR-0098` (`proposed`)
+- Architekturentscheidung: `ADR-0099` (`proposed`)
 - erstes Modul: `fintech-core.crypto`
 - FT-1 Runtime-Modi: ausschließlich `RESEARCH` und `PAPER`
 - FT-2A: provenance-aware Primary-/Secondary-Analyseprofile

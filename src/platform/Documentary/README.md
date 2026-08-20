@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.10.0
+Version: 1.12.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,7 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, Status-Event Drift Detection (Phase B, read-only), Status-Event Drift Updater (Phase C, header-only, Draft-PR / dryRun default), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer und D7 Knowledge Projection.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer, D7 Knowledge Projection sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich eines D9-Maintenance-Observability-Slices.
 
 ## Implemented Scope
 
@@ -30,6 +30,10 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Discovery/StatusEventEvidence.ts`
 - `Discovery/StatusEventDriftDetector.ts`
 - `Discovery/StatusEventDriftUpdater.ts`
+- `Discovery/SemanticFreshnessAnalyzer.ts`
+- `Agents/DocumentaryMaintenanceAgent.ts`
+- `Orchestration/DocumentaryMaintenanceOrchestrator.ts`
+- `Observability/DocumentaryMaintenanceObservability.ts`
 - `Models/DocumentaryDocument.ts`
 - `Models/DocumentaryProvenance.ts`
 - `Interfaces/IDocumentaryEngine.ts`
@@ -43,29 +47,63 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Knowledge/DocumentaryKnowledgeProjection.ts`
 - `Architecture/documentary-baseline.json`
 
+## Documentary Maintenance Control Loop
+
+ADR-0097 ergänzt die bestehende Struktur um einen branchbasierten Maintenance-Pfad:
+
+`Semantic Freshness -> Supervisor Recommendation -> Platform Director Decision -> Agent IAM/Compliance -> Maintenance Agent -> isolated branch -> existing Draft-PR workflow`.
+
+Der `SemanticFreshnessAnalyzer` korreliert registrierte Dokumente deterministisch mit Source-Änderungen und unterstützt periodische Vollscans. Der Supervisor erzeugt daraus Evidence/Recommendation, trifft aber weiterhin keine Entscheidung. Der Orchestrator bindet die Recommendation an eine freigegebene Platform-Director-Entscheidung und die bestehenden Agent-IAM-Capabilities.
+
+Der Maintenance Agent ist Patch-only. Er darf semantische Volltextänderungen ausschließlich auf nicht geschützten `docs/`-Pfaden planen/anwenden. ADRs, Governance, Compliance, Security, Legal, Evidence, Archive und Release-Evidence sind Review-only. `main` ist kein zulässiges Apply-Ziel.
+
+Bei einer tatsächlich angewendeten semantischen Dokumentänderung wird die Dokumentversion im kanonischen Document Registry deterministisch um genau eine Patchversion erhöht und der Lifecycle auf `generated` gesetzt. Das Modell bestimmt weder Version noch Approval-Status.
+
+Die AI-Ausführung verwendet über `server/documentaryMaintenanceAiAdapter.ts` die bereits vorhandene providerneutrale Anthropic/OpenAI-Kette, RAG-Evidence und AI-Evaluation-Governance. Es wird kein zweites Agent-/Provider-Framework eingeführt.
+
+`scripts/automation/runDocumentaryMaintenanceControlLoop.ts` verlangt einen sauberen Checkout des exakten aktuellen `main`. `sourceCommit` muss genau diesem Main-SHA entsprechen. Vor Branch-Erstellung wird ein gleichnamiger Remote-Agent-Branch abgelehnt; bei Fehlern nach einem Push wird ein noch nicht übergebenes Remote-Artefakt best-effort wieder entfernt. Der Host stage-t nur explizite Patch-/Claim-Pfade, führt lokale Governance-Hygiene aus und nutzt anschließend den bestehenden Workflow `.github/workflows/open-agent-draft-pr.yml`. Wenn sich `main` vor dem PR-Handoff ändert, wird der Kandidat verworfen und muss auf der neuen Baseline neu erzeugt werden.
+
+### SC-MD-SPT-0001 Wertschöpfungsketten-Anbindung
+
+Der Maintenance-Pfad ist im Component Manifest ausdrücklich als `read-only-documentation-evidence-sidecar` an `SC-MD-SPT-0001` deklariert. Die fachliche Einordnung erfolgt um `VC-13-EVENT-TRACEABILITY-SUPERVISOR`; Documentary wird **nicht** zu einer zusätzlichen Finanz-Runtime-Stufe.
+
+Die bestehende Quality-Projektion `fintech-value-chain-quality/1.0.0` bleibt die read-only Struktur-/Evidence-Prüfung der 14-stufigen Kette. Documentary darf weder MarketData, Classification, Scoring, Confidence, Ranking, Eligibility noch Provider-Routing, Release oder Deployment beeinflussen. Ebenso dürfen die Financial Hotpaths keine direkte Documentary- oder Quality-Mutationsabhängigkeit erhalten.
+
+Die Supervisor-Erweiterung dient ausschließlich als Evidence-Oberfläche. `decisionAuthority=false` und `mutationAuthority=false` bleiben explizit; die eigentliche Entscheidung verbleibt beim Platform Director und die Git-Mutation bei den separat autorisierten Agent-IAM-Capabilities.
+
+### D9 Maintenance Observability
+
+`Observability/DocumentaryMaintenanceObservability.ts` erzeugt einen korrelations- und commitgebundenen Health Snapshot mit ausschließlich aggregierten Zählwerten/Ratios: Registry Coverage, Freshness Ratio, Orphan Rate, Kandidaten, geplante Patches, übersprungene Patches und angewendete Dokumente. Dokumentkörper, Prompts, Diffs, Nutzerkennungen und Secrets werden nicht in den strukturierten Telemetrievertrag aufgenommen. Dieser Slice ersetzt keine zentrale Observability-Plattform und beansprucht nicht die vollständige D9-Umsetzung.
+
+### Lokaler Pre-PR-Closure
+
+- `npm run documentary:maintenance:test` — gezielte Unit-Tests des Control Loops.
+- `npm run documentary:maintenance:validate` — Registry-, Authority-, Claim-, Branch-, Wertschöpfungsketten- und Scope-Konsistenz.
+- `npm run documentary:maintenance:prepr` — gezielte Tests + TypeScript-Check + Documentation Hygiene + Governance Control Plane + Repository Quality + Closure Validator.
+
+Der Closure Validator verlangt, dass der Work Claim exakt den tatsächlichen Diff gegen `origin/main` abdeckt und dass der Branch unmittelbar auf dem aktuellen `origin/main` basiert. Zusätzlich prüft er die SC-MD-SPT-0001-Sidecar-Deklaration, die bestehende 14-stufige Quality-Projektion und das Verbot direkter Documentary-Abhängigkeiten auf Financial Hotpaths. Dadurch werden veraltete, überbreite oder wertschöpfungskettenwidrige Fassungen vor PR-Reife fail-closed zurückgewiesen.
+
 ## Documentation Governance
 
 Der Namespace `Governance/` bleibt gemäß ADR-0014 / ESS-0012 ausschließlich **Documentation-only**. Der integrierte `DocumentationHygieneValidator` prüft Root-Markdown, Document Registry, Lifecycle-/Sprachwerte und Registry-Zielpfade read-only und fail-closed. Er definiert keine globale Repository-Authority, keine Merge-Entscheidung und keine Produktionsmutationsberechtigung.
 
-Die vollständige historische ESS-0012-Regelmenge ist nicht pauschal als umgesetzt zu interpretieren; weitere semantische Validatoren bleiben inkrementelle Documentary-Arbeit. Repository-weite Authority-Auflösung verbleibt im Governance Control Plane unter `src/platform/Governance` und ADR-0096.
+Repository-weite Authority-Auflösung verbleibt im Governance Control Plane unter `src/platform/Governance` und ADR-0096. Der ADR-0097 Maintenance Agent konsumiert diese Authorities lediglich und kann sie nicht überschreiben.
 
 ## D7 Knowledge Integration
 
 D7 erzeugt aus einem bereits gouvernierten `DocumentaryDocument` eine deterministische Knowledge-Projektion mit Dokumentknoten, gerichteten Beziehungen, Source Commit, Dokument-Fingerprint, Concept-IDs, Traceability-IDs, Provenance-Referenzen und SHA-256-Prüfsumme.
 
-Die Projektion ist ausschließlich ein Übergabevertrag an die in ESS-0009 spezifizierte zentrale Knowledge Engine. Sie persistiert keine Daten in `.ai/knowledge/`, startet keinen Knowledge Build und führt keine zweite Knowledge Registry ein. `src/platform/Knowledge` bleibt eine eigenständige Authority und ist bis zu einem separaten Implementierungsscope weiterhin specification-only.
+Die Projektion ist ausschließlich ein Übergabevertrag an die in ESS-0009 spezifizierte zentrale Knowledge Engine. Sie persistiert keine Daten in `.ai/knowledge/`, startet keinen Knowledge Build und führt keine zweite Knowledge Registry ein.
 
 ## D6 Generators & Renderer
 
 D6 rendert ausschließlich bereits erzeugte `DocumentaryDocument`-Modelle. Unterstützt werden die Dokumenttypen `architecture`, `component`, `api`, `runbook`, `release-evidence` und `handoff` mit dokumenttyp-spezifischen Abschnittsprofilen.
 
-Als primäres Ausgabeformat wird deterministisches Markdown erzeugt. Für jedes Dokument können DE- und EN-Artefakte mit lokalisierten Metadatenüberschriften erstellt werden. Dateinamen, Provenance, Concept-IDs und Traceability-IDs werden stabil normalisiert und sortiert.
-
 Der Renderer verändert weder den Lifecycle-Status noch den Dokument-Fingerprint. Er führt keine Freigabe, Persistenz, Source-Code-Mutation oder Event-Publikation durch.
 
 ## D4 Review & Lifecycle Governance
 
-Der kontrollierte Lifecycle lautet `generated -> reviewed -> approved`. Nach Approval sind `approved -> superseded`, `approved -> archived` und `superseded -> archived` zulässig. `suspended` ist im repository-weiten Governance Control Plane zusätzlich für explizit pausierte normative Altverträge verfügbar. Jeder Documentary-Übergang benötigt eine explizite Actor-ID, passende Aktion, einen Zeitpunkt und mindestens eine Evidence-Referenz.
+Der kontrollierte Lifecycle lautet `generated -> reviewed -> approved`. Nach Approval sind `approved -> superseded`, `approved -> archived` und `superseded -> archived` zulässig. `suspended` ist im repository-weiten Governance Control Plane zusätzlich für explizit pausierte normative Altverträge verfügbar.
 
 ## D5 / E1 / E4 Traceability & Event Value Chain
 
@@ -80,25 +118,30 @@ Der kontrollierte Lifecycle lautet `generated -> reviewed -> approved`. Nach App
 - Component Version: `manifest.json#version`.
 - Document Schema Version: `DOCUMENTARY_DOCUMENT_SCHEMA_VERSION`.
 - Platform Version: ausschließlich `package.json#version`, gelesen über den Release Control Plane.
+- Semantisch aktualisierte Dokumente: Patchversion im `docs/governance/document-registry.json`, Lifecycle zurück auf `generated`.
 - `AGENTS.md` besitzt eine unabhängige Governance Control Plane Version und ist kein Produktversionsmirror.
 
 ## Implementation Baseline
 
-Aktuell implementiert: `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Governance` (Hygiene-Service), `Interfaces`, `Knowledge`, `Lifecycle`, `Models`, `Traceability`, `Versioning`.
+Aktuell implementiert: `Agents`, `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Governance` (Hygiene-Service), `Interfaces`, `Knowledge`, `Lifecycle`, `Models`, `Observability` (Maintenance Slice), `Orchestration`, `Traceability`, `Versioning`.
 
-Weiterhin geplant: `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen und zusätzliche ESS-0012-Validatoren.
+Weiterhin geplant: `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen und zusätzliche ESS-0012-Validatoren. Diese Bereiche gehören nicht zum ADR-0097-Maintenance-Work-Package.
 
 ## Boundaries
 
-Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation, keine zweite Event- oder Knowledge-Infrastruktur und keine zweite Plattformversions-Authority. Phase-C Status-Header-Updates erfolgen nur header-only, allowlisted, dryRun-default und über Draft-PR.
+Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation, keine zweite Event-, Knowledge-, Governance-, Observability- oder Plattformversions-Authority. Maintenance-Mutation ist ausschließlich branchbasiert; kein Auto-Merge, kein Deploy und keine Production Mutation. Die SC-MD-SPT-0001-Anbindung bleibt read-only Evidence/Documentation und darf keine Financial-Runtime-Semantik verändern.
 
 ## ESS / ADR
 
+- ESS-0002 — Supervisor Architect
+- ESS-0003 — Platform Director
 - ESS-0009 — Enterprise Knowledge Platform
 - ESS-0010 — Documentary Engine
 - ESS-0011 — Enterprise Traceability
 - ESS-0012 — Documentation Governance (Documentation-only Scope)
-- ESS-0017 / ESS-0017-CONTRACTS — Vocabulary Governance
+- ESS-0019 — Universal AI Agent Control Plane
+- SC-MD-SPT-0001 — Screening / Scoring / Market Data / SPT value-chain authority
 - ADR-0014 — Documentation Governance Validator
-- ADR-0096 — Governance Control Plane / Authority Boundary
 - ADR-0046 — Vocabulary Governance Authority and Namespace
+- ADR-0096 — Governance Control Plane / Authority Boundary
+- ADR-0097 — Documentary Maintenance Agent Control Loop

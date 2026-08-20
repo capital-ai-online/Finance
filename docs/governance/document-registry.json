@@ -1,7 +1,72 @@
 {
-  "schemaVersion": "1.2.0",
+  "schemaVersion": "1.3.0",
   "authority": "docs/governance/DOCUMENTATION_HYGIENE_POLICY.md",
+  "roleModel": {
+    "allowedDocumentRoles": ["authority", "projection", "inventory", "roadmap", "evidence", "specification"],
+    "rule": "Projection, inventory and roadmap documents may reference authorities but must not redefine their normative scope.",
+    "financialRuntimeScopes": ["financial-runtime", "market-data", "scoring", "ranking", "financial-eligibility", "runtime-evidence"]
+  },
   "entries": [
+    {
+      "documentId": "DOC-FRONTEND-ARCH",
+      "type": "architecture",
+      "documentRole": "authority",
+      "owner": "CAPITAL-AI",
+      "authority": "AUTH-FRONTEND-PRESENTATION-ARCHITECTURE",
+      "authorityRefs": ["AUTH-FRONTEND-PRESENTATION-ARCHITECTURE"],
+      "projectionOf": [],
+      "normative": true,
+      "normativeScope": ["frontend-source-tree", "frontend-dependencies", "presentation-architecture"],
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/frontend/FRONTEND_ARCH.md"
+    },
+    {
+      "documentId": "DOC-FRONTEND-COMPONENT-INVENTORY",
+      "type": "inventory",
+      "documentRole": "inventory",
+      "owner": "CAPITAL-AI",
+      "authority": "AUTH-FRONTEND-PRESENTATION-ARCHITECTURE",
+      "authorityRefs": ["AUTH-FRONTEND-PRESENTATION-ARCHITECTURE"],
+      "projectionOf": ["AUTH-FRONTEND-PRESENTATION-ARCHITECTURE"],
+      "normative": false,
+      "normativeScope": [],
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/frontend/COMPONENT_INVENTORY.md"
+    },
+    {
+      "documentId": "DOC-FRONTEND-ROADMAP",
+      "type": "roadmap",
+      "documentRole": "roadmap",
+      "owner": "CAPITAL-AI",
+      "authority": "AUTH-FRONTEND-PRESENTATION-ARCHITECTURE",
+      "authorityRefs": ["AUTH-FRONTEND-PRESENTATION-ARCHITECTURE"],
+      "projectionOf": [],
+      "normative": false,
+      "normativeScope": [],
+      "version": "1.5.1",
+      "language": "de",
+      "lifecycle": "approved",
+      "path": "docs/frontend/FRONTEND_ROADMAP.md"
+    },
+    {
+      "documentId": "DOC-ADR-0005-HISTORICAL",
+      "type": "architecture-decision",
+      "documentRole": "authority",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "AUTH-ADR-FRONTEND-MODULE-INTEGRATION-0005",
+      "authorityRefs": ["AUTH-ADR-FRONTEND-MODULE-INTEGRATION-0005"],
+      "projectionOf": [],
+      "normative": false,
+      "normativeScope": [],
+      "version": "1.1.0",
+      "language": "de",
+      "lifecycle": "historical",
+      "path": "docs/adr/ADR-0005-frontend-module-integration.md"
+    },
     {
       "documentId": "DOC-ROOT-README",
       "type": "repository-overview",
@@ -147,10 +212,40 @@
       "type": "architecture-decision",
       "owner": "CAPITAL-AI Owner",
       "authority": "AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "language": "mixed",
       "lifecycle": "draft",
       "path": "docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md"
+    },
+    {
+      "documentId": "DOC-ADR-0097",
+      "type": "architecture-decision",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "AUTH-ADR-DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "draft",
+      "path": "docs/adr/ADR-0097-documentary-maintenance-agent-control-loop.md"
+    },
+    {
+      "documentId": "DOC-ARCH-DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20",
+      "type": "architecture",
+      "owner": "CAPITAL-AI",
+      "authority": "ADR-0097 + ESS-0010",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "generated",
+      "path": "docs/architecture/DOCUMENTARY_MAINTENANCE_CONTROL_LOOP.md"
+    },
+    {
+      "documentId": "DOC-WP-DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20",
+      "type": "work-package",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "Owner chat priority 2026-08-20 + ADR-0097",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "generated",
+      "path": "docs/roadmaps/work-packages/DOCUMENTARY_MAINTENANCE_CONTROL_LOOP_2026-08-20.md"
     },
     {
       "documentId": "DOC-COMPLIANCE-AI-FINTECH-CONTROLS-2026-08-19",
