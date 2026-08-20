@@ -24,6 +24,7 @@
     "privacy:evidence:verify": "node scripts/governance/verifyVendorPrivacyEvidence.mjs --strict",
     "repository:validate": "tsx scripts/automation/validateRepositoryConventions.ts",
     "repository:validate:advisory": "tsx scripts/automation/validateRepositoryConventions.ts --advisory",
+    "repository:quality:check": "tsx scripts/automation/validateRepositoryQuality.ts",
     "status:scan-drift": "tsx scripts/automation/scanStatusEventDrift.ts",
     "hygiene:sweep": "tsx scripts/automation/sweepDocumentaryBranding.ts",
     "docs:hygiene:check": "tsx scripts/automation/validateDocumentationHygiene.ts",

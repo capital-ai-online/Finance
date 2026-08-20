@@ -1,26 +1,54 @@
 {
   "name": "Quality",
-  "version": "1.0.0",
-  "status": "unspecified",
+  "version": "1.1.0",
+  "status": "partial-implementation",
   "owner": "CAPITAL-AI",
-  "description": "",
+  "description": "ESS-0005 Quality Center baseline with read-only repository-quality evidence aggregation; domain rules remain in their owning components.",
   "category": "platform",
   "ess": [
     "ESS-0001",
-    "ESS-0001-CONTRACTS"
+    "ESS-0001-CONTRACTS",
+    "ESS-0005"
   ],
-  "adr": [],
-  "dependencies": [],
+  "adr": [
+    "ADR-0016",
+    "ADR-0096"
+  ],
+  "dependencies": [
+    "src/platform/Governance"
+  ],
   "events": {
     "produces": [],
-    "consumes": []
+    "consumes": [],
+    "note": "P0-P2 is synchronous read-only evidence aggregation and does not synthesize platform events."
   },
   "knowledge": [],
-  "interfaces": [],
-  "contracts": [],
+  "interfaces": [
+    "RepositoryQualityCoordinator"
+  ],
+  "contracts": [
+    "repository-quality-observation/1.0.0"
+  ],
   "documentation": [
     "README.md"
   ],
-  "tests": [],
-  "note": "ARCH-AUDIT-0002 (J5, 2026-08-02): fuer diese Komponente existiert ausser dem vom Enterprise Bootstrapper generierten Platzhaltertext keine funktionale Spezifikation und kein Code. Status auf 'unspecified' korrigiert, um den Zustand ehrlich abzubilden - vorher suggerierte 'development' aktive Arbeit, die nicht stattfindet. Die Komponente kann bei Bedarf zu einem spaeteren Zeitpunkt spezifiziert und implementiert werden."
+  "tests": [
+    "tests/unit/repositoryQualityCoordinator.test.ts",
+    "tests/unit/repositoryQualityAdapters.test.ts"
+  ],
+  "implementation": {
+    "level": "partial",
+    "implementedAreas": [
+      "RepositoryQualityCoordinator",
+      "RepositoryQualityObservation aggregation"
+    ],
+    "plannedAreas": [
+      "ValidatorRegistry",
+      "full Quality Gate Runner",
+      "ScoreCalculator",
+      "TechnicalDebtRegister",
+      "CoverageCollector"
+    ]
+  },
+  "note": "P0-P2 implements the first executable ESS-0005 baseline without moving domain authority into Quality."
 }

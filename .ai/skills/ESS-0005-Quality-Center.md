@@ -2,7 +2,7 @@
 skill:
   id: ESS-0005
   name: Quality Center
-  version: 1.0.0
+  version: 1.1.0
   status: Enterprise Approved
   maturity: Gold Standard
   owner: Platform Director
@@ -37,7 +37,7 @@ authority:
     - Documentary Engine
     - Supervisor
     - Platform Director
-    - Version Manager
+    - Governance Control Plane
     - Release Center
 
   cannot_modify:
@@ -57,19 +57,27 @@ crossReference:
     - ESS-0010
     - ESS-0011
     - ESS-0012
+    - ESS-0017
   relatedAdr:
     - ADR-0010
     - ADR-0016
+    - ADR-0096
   relatedComponents:
     - src/platform/Quality
+    - src/platform/Governance
+    - src/platform/Documentary/Governance
+    - src/platform/Vocabulary
+    - src/platform/Release
     - src/platform/Validators
     - src/platform/Telemetry
     - tests
   relatedSkills:
     - .ai/skills/ESS-0001-Contracts.md
     - .ai/skills/ESS-0012-Documentation-Governance.md
+    - .ai/skills/ESS-0017-Vocabulary-Governance.md
 
 created: 2026-07-31
+updated: 2026-08-20
 ---
 
 # Quality Center
@@ -122,6 +130,11 @@ Zulässige Abhängigkeiten: Core, Shared.
 Zusätzlich lesend: Registry, Knowledge, Documentary — zur Auswertung der Prüfgegenstände.
 
 Unzulässig: Version Manager, Supervisor, Platform Director.
+
+Für repository-weite Quality-Observation wird der neutrale Evidence-Contract aus
+`src/platform/Governance` konsumiert. Cross-Domain-Validatoren werden über eine externe
+Composition-Schicht injiziert; dadurch entstehen keine direkten Quality-Abhängigkeiten auf
+Release, VersionManager, Documentary Governance oder Vocabulary.
 
 ---
 
@@ -219,6 +232,26 @@ tests/architecture  tests/security  tests/performance  tests/e2e
 
 ---
 
+### RepositoryQualityCoordinator — P0-P2 Baseline
+
+Der `RepositoryQualityCoordinator` ist die erste ausführbare Teilimplementierung des
+Quality Centers. Er aggregiert ausschließlich bereits erzeugte, normalisierte und
+read-only Quality Evidence.
+
+Verantwortung
+
+- deterministische Reihenfolge erforderlicher Quality-Domänen;
+- Aggregation zu `PASS`, `WARN`, `FAIL` oder `NOT_AVAILABLE`;
+- fail-closed Evidence bei fehlenden/fehlerhaften Adaptern;
+- Bindung an optionalen vollständigen Source-Commit;
+- ausdrückliche Kennzeichnung als non-authorizing Evidence.
+
+Er definiert keine Validator-Regeln, keine Schwellwerte, keine Release-Entscheidung und
+keine Mutation. Die vollständige ValidatorRegistry und die acht Quality Gates bleiben ein
+separater inkrementeller ESS-0005-Scope.
+
+---
+
 # End of Chapter 2
 
 ---
@@ -258,6 +291,16 @@ record(debt)             Aufnahme
 list(component)          Schulden je Komponente
 resolve(id, evidence)    Schließen mit Nachweis
 ```
+
+## RepositoryQualityObservation — P0-P2
+
+```text
+observe(scope)           read-only Quality-Evidence-Aggregation
+```
+
+Der konkrete Evidence-Contract ist `repository-quality-observation/1.0.0` in
+`src/platform/Governance/Contracts/RepositoryQualityEvidence.ts` und darf keine
+Autorisierungswirkung entfalten.
 
 ---
 
@@ -301,6 +344,9 @@ TwinSynchronizedEvent
 
 VersionCalculatedEvent
 
+Die Event-Liste beschreibt den Zielzustand des vollständigen Quality Centers. Die P0-P2
+Repository-Quality-Baseline erzeugt und konsumiert bewusst keine synthetischen EventMesh-Events.
+
 ---
 
 # End of Chapter 4
@@ -318,15 +364,33 @@ Kennzahlen. Der Supervisor bewertet und blockiert.
 
 Das Quality Center blockiert selbst nicht — es stellt fest.
 
-## Version Manager
+Ein `blocking: true` in `RepositoryQualityObservation` kennzeichnet deshalb ausschließlich
+einen technischen Fail-closed-Befund. Es ist keine Merge-, Release- oder
+Produktionsautorisierung und keine eigenständige Supervisor-Entscheidung.
 
-Liefert die Qualitätsachse der Versionsbewertung: nicht bestandene Gates blockieren eine
-Release-Vorbereitung gemäß Chapter 9.
+## Release / Platform Version Authority
+
+ADR-0096 ersetzt die historische mutierende Version-Manager-Authority. Die aktuelle
+Plattformversions-Authority ist ausschließlich `package.json#version` über den Release
+Control Plane.
+
+P0-P2 liest diese Projektion ausschließlich über einen Composition-Adapter. Das Quality
+Center besitzt keine direkte Release-/VersionManager-Abhängigkeit und verändert keine Version.
 
 ## Governance Validator
 
-ESS-0012 ist ein Validator im Sinne von Chapter 12 und wird über die ValidatorRegistry
-registriert. Sein Regelwerk verbleibt in ESS-0012-CONTRACTS.
+ESS-0012 ist ein Validator im Sinne von Chapter 12. Sein Regelwerk verbleibt in
+ESS-0012-CONTRACTS und ist unter ADR-0096 auf Documentation-only Scope begrenzt.
+
+P0-P2 konsumiert den bereits implementierten read-only Documentation-Hygiene-Service über
+die Composition-Schicht. Die spätere formale Registrierung in einer vollständigen
+ValidatorRegistry bleibt inkrementeller ESS-0005-Scope.
+
+## Vocabulary Governance
+
+ESS-0017 bleibt die fachliche Authority für kanonische Terminologie. P0-P2 normalisiert
+vorhandene Vocabulary-Findings lediglich in den gemeinsamen Quality-Evidence-Contract und
+erfindet keine Naming-/Terminologie-Regeln.
 
 ## Enterprise Traceability
 
@@ -336,18 +400,23 @@ Die Test-Achse der Matrix speist sich aus den Ergebnissen des Quality Center.
 
 # Bekannter Bestand
 
-Das Repository enthält derzeit **null Testdateien** und **null Validatoren**.
+Der historische Initialzustand mit null Testdateien und null Validatoren ist nicht mehr
+aktuell. Das Repository besitzt inzwischen eine breite Vitest-/Node-Testbasis sowie mehrere
+ausführbare, domänenspezifische Validatoren.
 
-`package.json` kennt keinen Test-Runner; `npm run lint` führt ausschließlich `tsc --noEmit`
-aus.
+Mit Repository Quality P0-P2 ist `src/platform/Quality` erstmals teilweise implementiert:
 
-Damit ist kein einziges Quality Gate ausführbar. Die acht Gates aus Chapter 1 existieren
-ausschließlich als Vertrag.
+- `repository-quality-observation/1.0.0` als neutraler Governance-Evidence-Contract;
+- `RepositoryQualityCoordinator` als read-only Aggregator;
+- Composition-Adapter für Platform Version, Documentation Hygiene,
+  Repository Conventions und Vocabulary Governance;
+- gezielte Unit-Tests für Aggregation, Fail-closed-Verhalten und Adapter-Mapping;
+- `npm run repository:quality:check` als read-only CLI-Einstieg.
 
-Dies ist der schwerwiegendste offene Punkt der Plattform: Ohne ausführbare Prüfungen bleibt
-jede Regel dieses Standards eine Absichtserklärung.
-
-Umsetzung gemäß Stufe 4 aus `docs/architecture/REPOSITORY_STRUCTURE_ANALYSIS.md`.
+Nicht als umgesetzt gelten dadurch die vollständige ValidatorRegistry, sämtliche 16
+Pflichtvalidatoren, alle acht Quality Gates, ScoreCalculator, TechnicalDebtRegister und
+CoverageCollector. Diese bleiben inkrementelle Folgearbeit gemäß ESS-0005 und
+ESS-0001-CONTRACTS Chapter 12.
 
 ---
 
@@ -391,7 +460,7 @@ Keine Blockade durch das Quality Center selbst.
 
 **Status** Enterprise Specification
 
-**Version** 1.0.0
+**Version** 1.1.0
 
 ---
 
@@ -399,7 +468,9 @@ Keine Blockade durch das Quality Center selbst.
 
 ESS-0005 ist die verbindliche Komponentenspezifikation des Quality Center.
 
-Abweichungen erfordern eine neue Architecture Decision Record.
+Abweichungen erfordern eine neue Architecture Decision Record. Die Version 1.1.0 ändert
+keine Quality-Regeln oder Schwellenwerte; sie synchronisiert den Implementierungsstand mit
+ADR-0096 und der P0-P2-Teilimplementierung.
 
 ---
 
@@ -408,6 +479,7 @@ Abweichungen erfordern eine neue Architecture Decision Record.
 | Version | Status | Beschreibung |
 |----------|--------|--------------|
 | 1.0.0 | Initial Release | Erste Komponentenspezifikation des Quality Center |
+| 1.1.0 | Implementation sync | ADR-0096-/P0-P2-Abgleich; read-only Repository Quality Baseline dokumentiert, keine Regel-/Threshold-Aenderung |
 
 ---
 
@@ -417,4 +489,4 @@ ESS-0005
 
 CAPITAL-AI Quality Center
 
-Version 1.0.0
+Version 1.1.0
