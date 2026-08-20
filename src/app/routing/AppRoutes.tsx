@@ -1,4 +1,4 @@
-/**
+/** 
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -8,6 +8,7 @@ import { Dashboard } from '../../components/Dashboard';
 import { Datenschutz } from '../../components/Datenschutz';
 import { ImpressumAgb } from '../../components/ImpressumAgb';
 import { LandingPage } from '../../components/LandingPage';
+import { MediaStudio } from '../../features/social/ui';
 import type { UserSession } from '../types/UserSession';
 
 interface AppRoutesProps {
@@ -99,6 +100,30 @@ export function AppRoutes({
             </span>
           </div>
           <ImpressumAgb initialTab="agb" />
+        </div>
+      </div>
+    );
+  }
+
+  if (userSession && (currentPath === '/media-studio' || currentPath === '/media-studio/')) {
+    return (
+      <div className="min-h-screen bg-black px-4 py-6 text-white sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1680px] space-y-5">
+          <header className="flex flex-col gap-3 rounded-xl border border-white/10 bg-[#0d0e12]/85 p-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-mono text-[10px] font-black uppercase tracking-[0.24em] text-aif-gold-DEFAULT">
+                CAPITAL-AI / SOCIAL / MEDIA
+              </p>
+              <h1 className="mt-1 text-lg font-black text-white">Media Creation Studio</h1>
+            </div>
+            <a
+              href="/"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aif-gold-DEFAULT"
+            >
+              ← Zurück zum Cockpit
+            </a>
+          </header>
+          <MediaStudio />
         </div>
       </div>
     );

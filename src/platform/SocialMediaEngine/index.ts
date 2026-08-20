@@ -10,4 +10,6 @@ export * from './types';
 export * from './SocialMediaGeneratorService';
 export * from './Contracts/MediaProject';
 export * from './Contracts/MediaProjectValidation';
+export * from './Editing/MediaProjectEditing';
+export * from './Editing/MediaStudioTemplates';
 export * from './Rendering/LegacyMediaRenderManifestAdapter';
