@@ -1,9 +1,9 @@
 {
   "name": "FinTechCore",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "status": "in-implementation",
   "owner": "CAPITAL-AI",
-  "description": "Financial workflow composition layer. Crypto is Module 01; FT-1 supports research/paper only, FT-2A adds provenance-aware category-profile resolution and FT-2B adds fail-closed category feature contracts plus a pure adapter for verified Crypto snapshot evidence.",
+  "description": "Financial workflow composition layer. Crypto is Module 01; FT-1 supports research/paper only, FT-2A adds provenance-aware category-profile resolution, FT-2B adds fail-closed category feature contracts, and FT-2C adds detector-agnostic pattern validation/reliability/context resolution without trading or scoring authority.",
   "category": "platform",
   "roadmap": [
     "FT-CORE-CRYPTO-01"
@@ -15,7 +15,7 @@
   "dependencies": [
     "src/platform/Scoring/contracts.ts",
     "src/types/crypto.types.ts",
-    "src/services/cryptoSnapshotProvider.ts (type-only in FT-2B adapter)"
+    "src/services/cryptoSnapshotProvider.ts"
   ],
   "events": {
     "produces": [],
@@ -35,7 +35,11 @@
     "CryptoCategoryProfileResolution",
     "CryptoCategoryFeatureContract",
     "CryptoFeatureEvidence",
-    "PatternEvidence"
+    "PatternEvidence",
+    "PatternDetector",
+    "PatternReliabilityRegistry",
+    "PatternSignalResolution",
+    "PatternResearchEngine"
   ],
   "contracts": [
     "fintech-core/contracts/0.1.0",
@@ -46,7 +50,11 @@
     "fintech-core.crypto/0.1.0",
     "fintech-core.crypto/category-profile-resolver/0.1.0",
     "fintech-core.crypto/category-features/0.1.0",
-    "fintech-core.crypto/verified-snapshot-feature-adapter/0.1.0"
+    "fintech-core.crypto/verified-snapshot-feature-adapter/0.1.0",
+    "fintech-core.crypto/pattern-detection/0.1.0",
+    "fintech-core.crypto/pattern-reliability-registry/0.1.0",
+    "fintech-core.crypto/pattern-signal-resolver/0.1.0",
+    "fintech-core.crypto/pattern-research-engine/0.1.0"
   ],
   "documentation": [
     "README.md",
@@ -55,7 +63,8 @@
     "docs/evidence/fintech-core/FT0_CRYPTO_MODULE_FOUNDATION_2026-08-20.md",
     "docs/evidence/fintech-core/FT1_CORE_ENGINE_FOUNDATION_2026-08-20.md",
     "docs/evidence/fintech-core/FT2A_CRYPTO_CATEGORY_PROFILE_RESOLUTION_2026-08-20.md",
-    "docs/evidence/fintech-core/FT2B_CRYPTO_CATEGORY_FEATURE_CONTRACTS_2026-08-20.md"
+    "docs/evidence/fintech-core/FT2B_CRYPTO_CATEGORY_FEATURE_CONTRACTS_2026-08-20.md",
+    "docs/evidence/fintech-core/FT2C_PATTERN_ENGINE_FOUNDATION_2026-08-20.md"
   ],
   "tests": [
     "tests/unit/fintechCoreContracts.test.ts",
@@ -66,10 +75,15 @@
     "tests/unit/fintechCoreCryptoCategoryProfileResolver.test.ts",
     "tests/unit/fintechCoreCryptoCategoryFeatureContracts.test.ts",
     "tests/unit/fintechCoreVerifiedCryptoSnapshotFeatureAdapter.test.ts",
+    "tests/unit/fintechCorePatternDetectionContracts.test.ts",
+    "tests/unit/fintechCorePatternReliabilityRegistry.test.ts",
+    "tests/unit/fintechCorePatternReliabilityIntegrity.test.ts",
+    "tests/unit/fintechCorePatternSignalResolver.test.ts",
+    "tests/unit/fintechCorePatternResearchEngine.test.ts",
     "tests/architecture/fintechCoreAuthorityBoundary.test.ts"
   ],
   "implementation": {
-    "level": "ft2b-contract-foundation",
+    "level": "ft2c-pattern-foundation",
     "implementedAreas": [
       "core contracts",
       "immutable module registry",
@@ -84,7 +98,11 @@
       "fail-closed required and hard-gate evidence semantics",
       "universal market/supply evidence separation",
       "pure verified Crypto snapshot feature adapter",
-      "pattern and reliability contracts"
+      "detector-agnostic OHLCV pattern SPI",
+      "exact-key asset/profile/timeframe/regime/pattern/version reliability registry",
+      "walk-forward and cost-aware research reliability validation",
+      "deterministic multi-timeframe pattern context resolution without synthetic composite score",
+      "pattern research engine with injected detector and no provider/scoring/execution side effects"
     ],
     "blockedAreas": [
       "guarded live",
@@ -92,9 +110,10 @@
       "durable financial workflow persistence",
       "live acquisition of missing category-specific metrics",
       "category feature promotion into a canonical scoring model",
+      "concrete TA-Lib or other detector runtime binding",
       "risk/compliance execution adapters",
       "exchange/custody adapters"
     ]
   },
-  "authorityBoundary": "FinTechCore composes financial workflows and typed analysis evidence but cannot select or calculate productive scores outside ScoringModelRegistry/ScoringDispatcher. Verified market/supply fields remain evidence only and may not be reinterpreted as category features without an explicit reviewed adapter. FinTechCore cannot replace IAM, Compliance, Quality, Governance, Supervisor, Release or Deployment authorities."
+  "authorityBoundary": "FinTechCore composes financial workflows and typed analysis evidence but cannot select or calculate productive scores outside ScoringModelRegistry/ScoringDispatcher. Category and pattern evidence remain non-authorizing. PatternResearchEngine is research-context-only, requires exact reliability evidence and cannot create an OrderIntent. FinTechCore cannot replace IAM, Compliance, Quality, Governance, Supervisor, Release or Deployment authorities."
 }
