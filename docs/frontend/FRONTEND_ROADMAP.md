@@ -2,7 +2,7 @@
 
 **Projekt:** capital-ai.online  
 **Repository:** SvenKulessa/Finance  
-**Version:** 1.4  
+**Version:** 1.5  
 **Stand:** 20. August 2026  
 **Owner:** Sven Kulessa / Capital-AI  
 **Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`  
@@ -46,21 +46,23 @@ Zielbild: modernes FinTech-/Quant-Interface mit klarer Trennung zwischen Applica
 - Multi-Asset-Scoring-/Screening-Funktionalität vorhanden,
 - Responsive Basis und Motion-Integration,
 - Fokus-Outline und Reduced-Motion-Support,
-- `app/features/shared`-Strukturbaseline über PR #459,
-- Shared-Primitives und Architektur-Gate im Konsolidierungsbranch vorhanden.
+- `app/features/shared`-Strukturbaseline durch gemergten PR #459,
+- Shared-Primitives und Architektur-Gate auf `main`,
+- BB-1 Application Composition auf Branch `refactor/frontend-bb1-app-composition-2026-08-20` implementiert und noch nicht gemergt.
 
 ### Strukturelle Restschuld
 
-- große Composition-Komponenten wie `App.tsx` und `Dashboard.tsx`,
+- `Dashboard.tsx` bleibt ein großer zentraler Kopplungspunkt,
 - viele fachliche Implementierungen liegen physisch noch in `src/components/`,
 - Feature-`ui/index.ts` dienen teilweise noch als Strangler-Fassaden auf Legacy-Pfade,
-- einzelne historische Frontend-Dokumente enthielten Pfad- oder Fachregeln außerhalb ihrer Dokumentrolle; diese Roadmap richtet sich deshalb explizit nach `FRONTEND_ARCH.md`.
+- Legacy-Type-Consumer können während der Migration noch über die Root-Compatibility-Fassade auf `UserSession` zugreifen,
+- die physischen Feature-Migrationen BB-3 bis BB-9 stehen noch aus.
 
 ---
 
 ## 3. Architektur-Baseline — PR #459
 
-PR #459 etabliert die strukturelle Voraussetzung für alle folgenden Migrationswellen:
+PR #459 ist am 20. August 2026 gemergt und etabliert die strukturelle Voraussetzung für alle folgenden Migrationswellen:
 
 ```text
 src/app
@@ -70,7 +72,7 @@ src/features/<domain>/ui
 src/shared
 ```
 
-Bereits umgesetzt in dieser Baseline:
+Umgesetzt auf `main`:
 
 - `src/app/AppShell.tsx`,
 - Feature-UI-Fassaden für Public, Users, Settings, Screening, Crypto, Stocks, Analytics, News, Portfolio, Billing, Reporting, Social und Governance,
@@ -78,10 +80,9 @@ Bereits umgesetzt in dieser Baseline:
 - `CapitalAiLogo` → `src/shared/branding/CapitalAiLogo.tsx`,
 - `Button`, `Card`, `Input`, `Modal`, `Tooltip`, `Skeleton`, `EmptyState` → `src/shared/ui`,
 - `NeuralBackground` → `src/shared/visuals`,
-- Legacy-Pfade für bereits migrierte Komponenten nur als Compatibility-Exports,
-- `frontend:architecture:check` als strukturelles Gate.
-
-Die Aktivierung auf `main` erfolgt ausschließlich durch den normalen Human-/CODEOWNER-gesteuerten Merge-Prozess. Diese Roadmap behandelt PR #459 als strukturelle Baseline der Migration, nicht als fachliche Runtime-Authority.
+- Legacy-Pfade für bereits migrierte Shared-Bausteine nur als Compatibility-Exports,
+- `frontend:architecture:check` als strukturelles Gate,
+- klare Dokumentrollen nach `Projection, not Redefinition`.
 
 ---
 
@@ -89,41 +90,61 @@ Die Aktivierung auf `main` erfolgt ausschließlich durch den normalen Human-/COD
 
 Jede Welle muss einzeln mergebar und rücksetzbar bleiben. Vor jeder Welle wird gegen den aktuellen `main` synchronisiert und auf offene PR-/Pfadkorrelationen geprüft.
 
-### Welle 0 — Foundation / Architecture Baseline
-
-**Scope:** PR #459 abschließen.
+### Welle 0 / BB-0 — Foundation / Architecture Baseline — **DONE**
 
 - [x] `app/features/shared` etablieren.
 - [x] Shared-Primitives physisch verschieben.
 - [x] Compatibility-Exports für bereits migrierte Shared-Bausteine.
 - [x] Feature-UI-Fassaden etablieren.
 - [x] Frontend-Architecture-Gate integrieren.
-- [x] Frontend-Dokumentrollen entkoppeln: Architektur = normativ, Inventory = deskriptiv, Roadmap = Planung.
-- [ ] Human-/CODEOWNER-Merge von PR #459.
+- [x] Frontend-Dokumentrollen entkoppeln.
+- [x] Human-/CODEOWNER-Merge von PR #459.
 
-### Welle 1 — Application Composition
+### Welle 1 / BB-1 — Application Composition — **IMPLEMENTED ON BRANCH / VALIDATION PENDING**
 
-**Ziel:** `App.tsx` von Auth-/Session-/Routing-/Provider-Verantwortungen entkoppeln.
+**Branch:** `refactor/frontend-bb1-app-composition-2026-08-20`
 
-Vorgesehene Struktur:
+**Ziel:** historischen Root `src/App.tsx` von Auth-/Session-/Routing-Verantwortungen entkoppeln.
+
+Implementierte Struktur:
 
 ```text
 src/app/
 ├── App.tsx
 ├── AppShell.tsx
-├── routing/
 ├── auth/
-├── providers/
-└── types/
+│   └── SessionComposition.tsx
+├── routing/
+│   └── AppRoutes.tsx
+├── types/
+│   └── UserSession.ts
+├── index.ts
+└── README.md
 ```
 
-Regeln:
+Umgesetzt:
 
-- `src/App.tsx` bleibt während der Migration dünne Compatibility-Fassade.
-- AuthN/AuthZ-/MFA-/Onboarding-Verhalten wird nicht neu definiert, sondern unverändert aus bestehenden IAM-/Security-Authorities konsumiert.
-- Keine gleichzeitige physische Verschiebung großer Feature-Flächen in diesem PR.
+- [x] `UserSession`/`SubscriptionTier` aus historischem Root extrahiert.
+- [x] Supabase-Session-Lifecycle, Onboarding, Login-Step-Up, Password-Recovery und globale 401-Behandlung in `SessionComposition.tsx` komponiert.
+- [x] öffentliche Legal-Pfade sowie Landing-/Dashboard-Auswahl nach `AppRoutes.tsx` extrahiert.
+- [x] `src/app/App.tsx` als kanonischen Composition Root etabliert.
+- [x] `src/App.tsx` auf dünne Compatibility-Fassade reduziert.
+- [x] Architektur-Gate um BB-1-Pfade und Root-Fassadenregel erweitert.
+- [x] App-README, Frontend-Architektur und Component Inventory aktualisiert.
+- [ ] finaler Main-Sync unmittelbar vor PR-Readiness.
+- [ ] TypeScript / Unit-/Contract-Tests / Production Build / Architecture Gate auf finalem Head.
+- [ ] deutscher Draft PR.
+- [ ] Human-/CODEOWNER-Merge.
 
-### Welle 2 — Dashboard Composition
+Bewusst **nicht** Bestandteil von BB-1:
+
+- keine Dashboard-Zerlegung,
+- keine physische Feature-Migration,
+- kein neues Routing-Framework,
+- keine Änderung der IAM-/AuthN-/AuthZ-/MFA-Semantik,
+- keine Backend-/Supabase-/Stripe-/Render-Mutation.
+
+### Welle 2 / BB-2 — Dashboard Composition — **NEXT**
 
 **Ziel:** `Dashboard.tsx` als zentralen Kopplungspunkt zerlegen.
 
@@ -143,9 +164,10 @@ Regeln:
 
 - Dashboard-Composition konsumiert Feature-Fassaden statt direkter `./Component`-Imports.
 - Fachliche Komponenten bleiben in dieser Welle zunächst in ihren bestehenden Slices/Legacy-Pfaden.
+- `UserSession`-Consumer werden auf die kanonische nicht-zirkuläre Contract-Grenze umgestellt.
 - Keine Änderung fachlicher Scoring-/Market-Data-/Entitlement-Contracts.
 
-### Welle 3 — Public / Users / Settings / Billing
+### Welle 3 / BB-3 — Public / Users / Settings / Billing
 
 Physisch verschieben:
 
@@ -161,7 +183,7 @@ Physisch verschieben:
 
 Ziele: `features/public`, `features/users`, `features/settings`, `features/billing`.
 
-### Welle 4 — Screening & Discovery
+### Welle 4 / BB-4 — Screening & Discovery
 
 Physisch verschieben:
 
@@ -175,7 +197,7 @@ Ziel: `features/screening/ui`.
 
 Financial-Data-Regeln werden nur über die zuständigen Parent-Authorities konsumiert; diese Roadmap definiert keine eigene Request-Sequenz.
 
-### Welle 5 — News / Sentiment / Social / Reporting
+### Welle 5 / BB-5 — News / Sentiment / Social / Reporting
 
 Physisch verschieben:
 
@@ -190,7 +212,7 @@ Physisch verschieben:
 
 Ziele: `features/news`, `features/social`, `features/reporting`.
 
-### Welle 6 — Analytics / Crypto / Data Visualization
+### Welle 6 / BB-6 — Analytics / Crypto / Data Visualization
 
 Physisch verschieben und bei Bedarf zerlegen:
 
@@ -206,7 +228,7 @@ Physisch verschieben und bei Bedarf zerlegen:
 
 Nur nach nachgewiesener Fachneutralität dürfen generische Visual-Primitives nach `src/shared` verschoben werden.
 
-### Welle 7 — Portfolio / Risk / Backtesting
+### Welle 7 / BB-7 — Portfolio / Risk / Backtesting
 
 Physisch verschieben:
 
@@ -220,7 +242,7 @@ Physisch verschieben:
 
 Ziel: `features/portfolio/ui` bzw. fachlich passende Slices.
 
-### Welle 8 — Governance / Admin / Compliance UI
+### Welle 8 / BB-8 — Governance / Admin / Compliance UI
 
 Physisch verschieben:
 
@@ -237,7 +259,7 @@ Ziel: `features/governance/ui`.
 
 Die UI bleibt Consumer bestehender Governance-/Supervisor-/Compliance-Authorities; keine Platform-Authority wird in den Frontend-Slice verschoben.
 
-### Welle 9 — Stocks / Buffett
+### Welle 9 / BB-9 — Stocks / Buffett
 
 `BuffetValueCheck.tsx` wird bewusst **spät und separat** physisch nach `features/stocks/ui` verschoben.
 
@@ -250,13 +272,21 @@ Voraussetzungen:
 
 Diese Roadmap normiert die Financial-Subchain nicht; fachlich maßgeblich bleiben `SC-MD-SPT-0001`, ADR-0032, ADR-0034, ADR-0041/ESS-0016 und ADR-0087.
 
-### Welle 10 — Legacy Exit
+### Welle 10 / BB-10 — Legacy Exit
 
 - alle produktiven Inbound-Imports auf kanonische Pfade umstellen,
 - Compatibility-Exports nur bei `0` verbleibenden produktiven Legacy-Consumern entfernen,
 - `src/components/` erst löschen, wenn dort keine produktive Implementierung mehr liegt,
 - Component Inventory final auf kanonische Pfade aktualisieren,
 - Architektur-Gate um nicht mehr benötigte Legacy-Ausnahmen bereinigen.
+
+### Welle 11 / BB-11 — Closure
+
+- finale Architektur-/Dokumentrollen validieren,
+- alle Legacy-Ausnahmen aus dem Architektur-Gate entfernen, die nicht mehr benötigt werden,
+- TypeScript, Unit-/Contract-/Architecture-Tests und Production Build auf dem vollständigen Zielzustand ausführen,
+- Documentation Hygiene und Governance Control Plane gegen den finalen Frontend-Zustand prüfen,
+- keine neue fachliche Authority im Frontend zurücklassen.
 
 ---
 
@@ -346,13 +376,13 @@ Eine Migrationswelle darf keine bestehende Runtime-/Scoring-/IAM-/Compliance-/Go
 
 ## 8. Nächste Schritte
 
-1. PR #459 vollständig validieren und Human-/CODEOWNER-gesteuert mergen.
-2. Danach Welle 1 `App.tsx` / Application Composition als eigenen Branch/PR beginnen.
-3. Anschließend Dashboard-Composition separat entkoppeln.
-4. Physische Feature-Migration nur in kleinen, fachlich zusammengehörigen Wellen durchführen.
-5. Nach jeder Welle Inventory aktualisieren und Architektur-/Authority-Drift prüfen.
+1. BB-1 Branch gegen den dann aktuellen `main` revalidieren und Pfadkorrelationen erneut prüfen.
+2. BB-1 Architecture Gate, TypeScript, Tests und Production Build auf dem finalen Head ausführen.
+3. BB-1 als deutschen Draft PR zur Human-/CODEOWNER-Prüfung bereitstellen.
+4. Erst nach BB-1-Merge BB-2 Dashboard Composition auf frischem Branch beginnen.
+5. Nach jeder Welle Inventory und Roadmap aktualisieren und Architecture-/Authority-Drift prüfen.
 6. Live Lighthouse-/axe-Baseline ergänzen.
 
 ---
 
-*Ursprung: Frontend-Roadmap vom 16.08.2026. Version 1.4 vom 20.08.2026 konsolidiert die `app/features/shared`-Architektur, die schrittweise Big-Bang-Auflösung und das Projection-not-Redefinition-Prinzip.*
+*Ursprung: Frontend-Roadmap vom 16.08.2026. Version 1.5 vom 20.08.2026 dokumentiert den Merge der Foundation und den implementierten BB-1 Application-Composition-Schnitt.*
