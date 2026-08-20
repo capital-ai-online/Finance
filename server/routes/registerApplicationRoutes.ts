@@ -16,6 +16,7 @@ import { supervisorRouter } from '../supervisorRouter';
 import { createAgentEvaluationRouter } from '../agentEvaluationRouter';
 import { createScoreExplainabilityRouter } from '../scoreExplainability';
 import { adminDiagnosticsRouter } from '../adminDiagnostics';
+import { qualityCenterRouter } from '../qualityCenter';
 import { newsRouter } from '../../src/features/news/newsRoutes';
 import { registryRouter } from '../../src/features/registry/registryRoutes';
 import { aiRouter } from '../ai';
@@ -84,6 +85,8 @@ export function registerApplicationRoutes(
   app.use('/api/scoring', scoreValidationRouter);
   app.use('/api/scoring/explain', createScoreExplainabilityRouter(ai, anthropic, openai));
   app.use('/api/admin/diagnostics', adminDiagnosticsRouter);
+  // ESS-0005: read-only projection of the build-persisted QualityCenterReport.
+  app.use('/api/admin/quality-center', qualityCenterRouter);
   app.use('/api/alerts', alertsRouter);
   app.use('/api/admin/supervisor', supervisorRouter);
   app.use('/api/admin/agent-evaluation', createAgentEvaluationRouter(ai, anthropic, openai));
