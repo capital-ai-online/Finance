@@ -2,6 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { validateGovernanceRegistryRelations } from './controlPlaneRegistryRules.mjs';
 
 const root = process.cwd();
 const errors = [];
@@ -52,6 +53,10 @@ const REQUIRED = [
   'docs/governance/control-plane/GOVERNANCE_M10_PREREQUISITES_DIFF_IMPACT_2026-08-19.md',
   'docs/governance/control-plane/pre-pr-build-evidence.schema.json',
   'docs/roadmaps/work-packages/GOVERNANCE_M10_PREREQUISITES_2026-08-19.md',
+  'docs/frontend/FRONTEND_ARCH.md',
+  'docs/frontend/COMPONENT_INVENTORY.md',
+  'docs/frontend/FRONTEND_ROADMAP.md',
+  'docs/adr/ADR-0005-frontend-module-integration.md',
   'src/platform/Governance/README.md',
   'src/platform/Governance/manifest.json',
   'src/platform/Documentary/Governance/Services/DocumentationHygieneValidator.ts',
@@ -205,8 +210,14 @@ if (errors.length === 0) {
     if (!adr0096.includes(scopeMarker)) fail('ADR_0096_SCOPE_SUPERSESSION_INCOMPLETE', `ADR-0096 must explicitly resolve ${scopeMarker}.`);
   }
 
+  const adr0005Text = read('docs/adr/ADR-0005-frontend-module-integration.md');
+  if (!/HISTORICAL\s*[—-]\s*NON-AUTHORIZING/i.test(adr0005Text)) {
+    fail('ADR_0005_TEXT_LIFECYCLE_INVALID', 'ADR-0005 must be explicitly marked HISTORICAL — NON-AUTHORIZING.');
+  }
+
   const authorityRegistry = json('docs/governance/authority-registry.json');
   const catalog = json('docs/governance/control-catalog.json');
+  const documentRegistry = json('docs/governance/document-registry.json');
   const adrRegistry = json('docs/adr/registry.json');
   const essRegistry = json('.ai/registry/ess-registry.json');
 
@@ -215,27 +226,14 @@ if (errors.length === 0) {
   const adrs = adrRegistry.migratedRecords ?? [];
   const inactiveAdrLifecycles = new Set(['superseded', 'historical', 'rejected', 'suspended']);
   const activeAdrs = adrs.filter((item) => !inactiveAdrLifecycles.has(item.lifecycle));
-  const activeAdrDisplayIds = new Set(activeAdrs.map((item) => item.displayId));
-  const namespaceReservations = adrRegistry.parallelNamespaceReservations ?? [];
 
   for (const id of duplicates(authorities.map((item) => item.authorityId))) fail('DUPLICATE_AUTHORITY_ID', id);
   for (const id of duplicates(controls.map((item) => item.controlId))) fail('DUPLICATE_CONTROL_ID', id);
   for (const id of duplicates(activeAdrs.map((item) => item.displayId))) fail('DUPLICATE_ACTIVE_ADR_DISPLAY_ID', id);
   for (const id of duplicates(adrs.map((item) => item.authorityId))) fail('DUPLICATE_ADR_AUTHORITY_ID', id);
-  for (const id of duplicates(namespaceReservations.map((item) => item.displayId))) fail('DUPLICATE_PARALLEL_ADR_RESERVATION', id);
 
-  for (const reservation of namespaceReservations) {
-    const displayId = String(reservation.displayId ?? '');
-    const source = String(reservation.source ?? '').trim();
-    const reservedPath = String(reservation.path ?? '').trim();
-    const observedHead = String(reservation.observedHead ?? '');
-    if (!/^ADR-\d{4}$/.test(displayId)) fail('PARALLEL_ADR_RESERVATION_ID_INVALID', displayId || '<missing displayId>');
-    if (!source || !reservedPath) fail('PARALLEL_ADR_RESERVATION_METADATA_MISSING', `${displayId || '<missing displayId>'}: source/path required`);
-    if (observedHead && !/^[0-9a-f]{40}$/.test(observedHead)) fail('PARALLEL_ADR_RESERVATION_HEAD_INVALID', `${displayId}: ${observedHead}`);
-    if (activeAdrDisplayIds.has(displayId)) fail('PARALLEL_ADR_NAMESPACE_COLLISION', `${displayId} is both reserved by ${source || '<unknown source>'} and allocated to an active ADR in this branch.`);
-  }
-  if (namespaceReservations.some((item) => item.displayId === 'ADR-0094' || /PR #446/i.test(String(item.source ?? '')))) {
-    fail('STALE_MERGED_ADR_RESERVATION', 'Merged PR #446 / ADR-0094 must not remain a parallel-open-PR reservation.');
+  for (const finding of validateGovernanceRegistryRelations({ authorityRegistry, adrRegistry, documentRegistry })) {
+    fail(finding.code, finding.message);
   }
 
   const authorityIds = new Set(authorities.map((item) => item.authorityId));
@@ -283,6 +281,16 @@ if (errors.length === 0) {
   const hygieneControl = controls.find((item) => item.controlId === 'CTRL-GOV-DOC-HYGIENE-001');
   if (!hygieneControl || !/read-only/i.test(String(hygieneControl.requirement ?? ''))) {
     fail('DOCUMENTARY_HYGIENE_CONTROL_MISSING', 'CTRL-GOV-DOC-HYGIENE-001 must bind hygiene to a read-only Documentary service.');
+  }
+
+  const documentRoleControl = controls.find((item) => item.controlId === 'CTRL-GOV-DOC-ROLE-001');
+  if (!documentRoleControl || !/non-normative/i.test(String(documentRoleControl.requirement ?? ''))) {
+    fail('DOCUMENT_ROLE_CONTROL_MISSING', 'CTRL-GOV-DOC-ROLE-001 must enforce non-normative inventory/roadmap roles.');
+  }
+
+  const reservationControl = controls.find((item) => item.controlId === 'CTRL-GOV-ADR-RESERVATION-001');
+  if (!reservationControl || !/live GitHub/i.test(String(reservationControl.requirement ?? ''))) {
+    fail('ADR_RESERVATION_CONTROL_MISSING', 'CTRL-GOV-ADR-RESERVATION-001 must keep deterministic CI independent of live GitHub access.');
   }
 
   const m10Control = controls.find((item) => item.controlId === 'CTRL-CI-M10-001');
