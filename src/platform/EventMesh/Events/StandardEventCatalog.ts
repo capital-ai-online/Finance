@@ -29,7 +29,7 @@ export const STANDARD_EVENT_CATALOG: StandardEventDefinition[] = [
   // gekennzeichnet, statt einen Katalogeintrag ohne Producer vorzutaeuschen.
   { name: 'TraceabilityBuildStartedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
   { name: 'TraceabilityBuildFailedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
-  { name: 'CoverageCalculatedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
+  { name: 'CoverageCalculatedEvent', category: 'Traceability Events', essReferences: ['ESS-0011', 'ESS-0005'], adrReferences: ['ADR-0015', 'ADR-0018'] },
   { name: 'OrphanDetectedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
   { name: 'TraceabilityReportGeneratedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0015', 'ADR-0018'] },
   { name: 'KnowledgeUpdatedEvent', category: 'Knowledge Events', essReferences: ['ESS-0001-CONTRACTS', 'ESS-0009'], adrReferences: ['ADR-0018'] },
@@ -61,6 +61,16 @@ export const STANDARD_EVENT_CATALOG: StandardEventDefinition[] = [
   { name: 'DependencyMappedEvent', category: 'Traceability Events', essReferences: ['ESS-0011'], adrReferences: ['ADR-0018'] },
   { name: 'KnowledgeRelationCreatedEvent', category: 'Knowledge Events', essReferences: ['ESS-0009'], adrReferences: ['ADR-0018'] },
   { name: 'KnowledgeValidationCompletedEvent', category: 'Knowledge Events', essReferences: ['ESS-0009'], adrReferences: ['ADR-0018'] },
+
+  // --- ESS-0005 Quality Center Lifecycle Events -----------------------------------
+  { name: 'ValidationStartedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
+  { name: 'ValidationCompletedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
+  { name: 'ValidationFailedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
+  { name: 'QualityGatePassedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
+  { name: 'QualityGateFailedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
+  { name: 'QualityScoreChangedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
+  { name: 'TechnicalDebtDetectedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
+  { name: 'TechnicalDebtResolvedEvent', category: 'Quality Events', essReferences: ['ESS-0005'], adrReferences: ['ADR-0018', 'ADR-0096'] },
 
   // --- EventMesh-eigene operative Meta-Events (manifest.json, events.produces) ---
   { name: 'EventRegisteredEvent', category: 'System Events', essReferences: ['ESS-0013'], adrReferences: ['ADR-0018'] },

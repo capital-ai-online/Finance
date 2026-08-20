@@ -1,4 +1,4 @@
-export const REPOSITORY_QUALITY_OBSERVATION_SCHEMA = 'repository-quality-observation/1.0.0' as const;
+export const REPOSITORY_QUALITY_OBSERVATION_SCHEMA = 'repository-quality-observation/1.1.0' as const;
 export const REPOSITORY_QUALITY_TRUST_CLASS = 'read-only-governance-observation' as const;
 export const REPOSITORY_QUALITY_NON_AUTHORIZING_STATEMENT =
   'Repository quality evidence is read-only technical evidence. It does not authorize merge, release, deployment, production mutation, policy changes or privilege elevation.' as const;
@@ -6,8 +6,10 @@ export const REPOSITORY_QUALITY_NON_AUTHORIZING_STATEMENT =
 export const REPOSITORY_QUALITY_REQUIRED_DOMAINS = [
   'platform-version',
   'documentation-hygiene',
+  'documentation-consistency',
   'repository-conventions',
   'vocabulary',
+  'compliance',
 ] as const;
 
 export type RepositoryQualityDomain = typeof REPOSITORY_QUALITY_REQUIRED_DOMAINS[number];
@@ -22,6 +24,7 @@ export interface RepositoryQualityFinding {
   path?: string;
   expected?: string;
   actual?: string;
+  sourceSeverity?: string;
   evidenceRefs?: readonly string[];
 }
 
