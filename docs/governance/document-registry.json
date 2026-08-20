@@ -287,10 +287,20 @@
       "type": "roadmap",
       "owner": "CAPITAL-AI Owner",
       "authority": "DOCUMENTATION_HYGIENE_POLICY + ADR-0096 / AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19 + Owner decision",
-      "version": "1.0.22",
+      "version": "1.1.0",
       "language": "de",
       "lifecycle": "approved",
       "path": "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md"
+    },
+    {
+      "documentId": "DOC-EVIDENCE-ADR0032-VERIFIED-DISPLAY-2026-08-20",
+      "type": "implementation-evidence",
+      "owner": "CAPITAL-AI",
+      "authority": "ADR-0032 + SC-MD-SPT-0001 + Owner Chat-Priorität 2026-08-20",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "draft",
+      "path": "docs/adr/evidence/ADR-0032-REVALIDATION-2026-08-20-VERIFIED-DISPLAY.md"
     },
     {
       "documentId": "DOC-WORK-PACKAGE-SC-2-MODEL-REGISTRY-UAI",
