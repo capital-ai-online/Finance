@@ -9,6 +9,8 @@ const FOUNDATION_FILES = [
   '../../src/platform/FinTechCore/Runtime/WorkflowStateMachine.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/CryptoCoreModule.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/CryptoCategoryProfileResolver.ts',
+  '../../src/platform/FinTechCore/Modules/Crypto/CryptoCategoryFeatureContracts.ts',
+  '../../src/platform/FinTechCore/Modules/Crypto/Adapters/VerifiedCryptoSnapshotFeatureAdapter.ts',
   '../../src/platform/FinTechCore/index.ts',
 ] as const;
 
@@ -23,7 +25,7 @@ const FORBIDDEN_DIRECT_AUTHORITIES = [
   'kraken-api',
 ] as const;
 
-describe('FinTech Core FT-1/FT-2A authority boundary', () => {
+describe('FinTech Core FT-1/FT-2 authority boundary', () => {
   it('does not import productive domain scorers, database clients or exchange clients directly', () => {
     for (const relativeFile of FOUNDATION_FILES) {
       const source = readFileSync(new URL(relativeFile, import.meta.url), 'utf8');
@@ -31,6 +33,18 @@ describe('FinTech Core FT-1/FT-2A authority boundary', () => {
         expect(source, `${relativeFile} must not reference ${forbidden}`).not.toContain(forbidden);
       }
     }
+  });
+
+  it('keeps the verified snapshot adapter pure and prevents provider I/O from moving into FinTech Core', () => {
+    const source = readFileSync(
+      new URL('../../src/platform/FinTechCore/Modules/Crypto/Adapters/VerifiedCryptoSnapshotFeatureAdapter.ts', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toContain("import type {");
+    expect(source).not.toContain('getVerifiedCryptoSnapshot(');
+    expect(source).not.toContain('fetch(');
+    expect(source).not.toContain('axios');
   });
 
   it('keeps Crypto Module 01 non-live during the foundation phase', () => {
