@@ -43,10 +43,15 @@ describe('frontend financial data contract regression gate', () => {
     expect(code).toContain('tradeSetup');
   });
 
-  it('Buffett is stock-only and hydrates finance values through the verified display boundary', () => {
+  it('Buffett is stock-only, entitlement-first and hydrates finance values through the verified display boundary', () => {
     const code = source('src/components/BuffetValueCheck.tsx');
+    const authorizeIndex = code.indexOf('/api/entitlements/warren-buffett/authorize');
+    const displayIndex = code.indexOf('/verified-display');
+
     expect(code).toContain("asset.type === 'stock'");
-    expect(code).toContain('/verified-display');
+    expect(authorizeIndex).toBeGreaterThanOrEqual(0);
+    expect(displayIndex).toBeGreaterThan(authorizeIndex);
+    expect(code).toContain("authorizationBody.allowed !== true");
     expect(code).toContain('verified-asset-display/1.0.0');
     expect(code).toContain('Aktien-Symbol oder Unternehmen suchen');
     expect(code).toContain('Buffett Value Check akzeptiert ausschließlich Aktien.');
