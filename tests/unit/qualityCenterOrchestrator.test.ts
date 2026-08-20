@@ -20,11 +20,12 @@ describe('QualityCenterOrchestrator', () => {
     const coordinator = new RepositoryQualityCoordinator(registry);
     const report = new QualityCenterOrchestrator(coordinator).run({ checkedAt: '2026-08-20T00:00:00.000Z' });
 
-    expect(report.contractVersion).toBe('quality-center-contract/1.1.0');
+    expect(report.contractVersion).toBe('quality-center-contract/1.2.0');
     expect(report.governanceRefs).toContain('ADR-0096');
     expect(report.complianceRefs).toContain('ESS-0006');
     expect(report.nonAuthorizingStatement).toContain('cannot authorize merge');
-    expect(report.mandatoryValidators).toMatchObject({ total: 16, available: 5, partial: 3, notAvailable: 8, complete: false });
+    expect(report.mandatoryValidators).toMatchObject({ total: 16, available: 16, partial: 0, notAvailable: 0, complete: true });
+    expect(report.chapter12Validation).toMatchObject({ total: 16, executed: 16 });
     expect(report.qualityScore.status).toBe('NOT_AVAILABLE');
     expect(report.coverage.schemaVersion).toBe('quality-coverage/1.0.0');
   });
