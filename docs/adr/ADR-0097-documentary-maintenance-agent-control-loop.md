@@ -58,9 +58,11 @@ Before the semantic agent may plan a patch, the orchestrator requires a valid ap
 
 Repository mutations additionally require explicit `BRANCH`, `COMMIT` and, only when Draft-PR dispatch is enabled, `PR` grants. There remains no Agent IAM `MERGE` capability.
 
+The host propagates the request's Agent IAM `killSwitchActive` state into every authorization decision. It must never hard-code an inactive kill switch. An active kill switch therefore prevents mutating capabilities at the existing deny-by-default Agent IAM boundary.
+
 ### 5. Branch-only patch application and deterministic document versioning
 
-A semantic patch may be applied only on `agent/documentary-maintenance-*`. `main` is rejected unconditionally.
+A semantic patch may be applied only on `agent/documentary-maintenance-*`. `main` is rejected unconditionally. The Apply contract verifies the **actual checked-out Git branch** and requires it to equal the authorized `branchName`; a caller-supplied maintenance-looking string alone is insufficient.
 
 Every patch is protected by repository-relative path validation, non-symlink checks, file-size bounds and pre-/post-plan SHA-256 checks. A TOCTOU mismatch aborts the operation.
 
@@ -100,7 +102,7 @@ Immediately before remote handoff, `origin/main` is fetched again. If `main` cha
 
 ### 11. Governance/Registry/Validation closure is deterministic
 
-The branch provides `documentary:maintenance:test`, `documentary:maintenance:validate` and `documentary:maintenance:prepr` scripts. The closure validator checks exact Work Claim ↔ changed-file equality, branch synchronization with current `origin/main`, `git diff --check`, ADR/Authority/Document Registry identities, Documentary manifest version/contracts/tests, the SC-MD-SPT-0001 sidecar boundary, protected path classes, explicit staging and reuse of the existing Draft-PR workflow.
+The branch provides `documentary:maintenance:test`, `documentary:maintenance:validate` and `documentary:maintenance:prepr` scripts. The closure validator checks exact Work Claim ↔ changed-file equality, branch synchronization with current `origin/main`, `git diff --check`, ADR/Authority/Document Registry identities, Documentary manifest version/contracts/tests, the SC-MD-SPT-0001 sidecar boundary, kill-switch propagation, actual checked-out branch verification, protected path classes, explicit staging and reuse of the existing Draft-PR workflow.
 
 This validator complements — and does not replace — the canonical Documentation Hygiene, Governance Control Plane and Repository Quality gates.
 
@@ -111,6 +113,7 @@ The host may run targeted/local low-cost checks before PR creation. Full hosted 
 ## Security and data-integrity impact
 
 - deny-by-default Agent IAM is reused;
+- Agent IAM kill-switch state is propagated rather than hard-coded inactive;
 - Platform Director approval is bound to the Supervisor recommendation identity;
 - current Main SHA is bound to the semantic source evidence;
 - prompt-injection content is treated as data rather than instructions;
@@ -118,6 +121,7 @@ The host may run targeted/local low-cost checks before PR creation. Full hosted 
 - content hashes prevent stale-plan application;
 - symlinks/path traversal are rejected;
 - automatic content changes cannot remain `approved` in the registry;
+- actual checked-out branch must equal the authorized maintenance branch before apply;
 - remote agent-branch collisions are rejected;
 - post-push handoff failures attempt remote cleanup;
 - `main` is never an eligible mutation target;
@@ -133,9 +137,9 @@ No Supabase, Stripe, Render, production data, secrets or external infrastructure
 2. Supervisor recommendation evidence is deterministic and fail-closed on hygiene findings.
 3. Platform Director and Supervisor evidence must match before agent planning.
 4. Current `sourceCommit` equals the exact current Main SHA before semantic analysis.
-5. Agent IAM grants are required for analysis, planning and Git mutations.
+5. Agent IAM grants are required for analysis, planning and Git mutations; kill-switch state is propagated to the IAM decision.
 6. Semantic full-content mutation is denied for protected document classes.
-7. Patch apply is denied on `main` and outside `agent/documentary-maintenance-*`.
+7. Patch apply is denied on `main`, outside `agent/documentary-maintenance-*`, and whenever the actual checked-out branch differs from the authorized branch identity.
 8. Applied documents receive deterministic patch-version increments and `generated` lifecycle.
 9. Existing remote branch identity cannot be silently reused.
 10. Existing Draft-PR workflow is reused.
