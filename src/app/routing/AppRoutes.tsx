@@ -16,7 +16,6 @@ interface AppRoutesProps {
   clearJustLoggedOut: () => void;
   handleLogin: (email: string, password: string) => Promise<void>;
   handleRegister: (name: string, email: string, password: string) => Promise<void>;
-  handleGuestLogin: (secretKey?: string) => Promise<void>;
   handleLogout: () => Promise<void>;
 }
 
@@ -33,7 +32,6 @@ export function AppRoutes({
   clearJustLoggedOut,
   handleLogin,
   handleRegister,
-  handleGuestLogin,
   handleLogout,
 }: AppRoutesProps) {
   const [currentPath] = useState(() => {
@@ -124,9 +122,8 @@ export function AppRoutes({
         clearJustLoggedOut();
         await handleLogin(email, password);
       }}
-      onGuestLogin={async () => {
-        clearJustLoggedOut();
-        await handleGuestLogin();
+      onGuestLogin={() => {
+        // Compatibility prop until LandingPage API cleanup: guest access is disabled.
       }}
       onRegisterEmail={async (name, email, password) => {
         clearJustLoggedOut();
