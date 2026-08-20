@@ -109,7 +109,7 @@ describe('P1/P2 CAPITAL-AI PDF brand finalization', () => {
     expect(requirements).not.toMatch(/PyMuPDF|fitz/i);
     expect(verifier).toContain('pdfinfo');
     expect(verifier).toContain('pdftotext');
-    expect(verifier).toContain('pdffonts');
+    expect(verifier).toContain('pdftoppm');
     expect(verifier).toContain('expect_tagged');
   });
 });
