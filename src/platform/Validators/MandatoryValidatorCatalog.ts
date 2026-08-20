@@ -1,6 +1,6 @@
 import type { RepositoryQualityDomain } from '../Governance/Contracts/RepositoryQualityEvidence';
 
-export const MANDATORY_VALIDATOR_CATALOG_VERSION = 'mandatory-validator-catalog/1.0.0' as const;
+export const MANDATORY_VALIDATOR_CATALOG_VERSION = 'mandatory-validator-catalog/1.1.0' as const;
 export const MANDATORY_VALIDATOR_COVERAGE_SCHEMA = 'mandatory-validator-coverage/1.0.0' as const;
 
 export const CHAPTER_12_MANDATORY_VALIDATORS = [
@@ -45,142 +45,57 @@ export interface MandatoryValidatorCoverageSnapshot {
   validators: readonly MandatoryValidatorBinding[];
 }
 
-const DEFAULT_BINDINGS: readonly MandatoryValidatorBinding[] = Object.freeze([
-  {
-    name: 'RepositoryStructureValidator',
-    availability: 'PARTIAL',
-    sources: ['src/platform/VersionManager/repositoryConventionValidator.ts'],
-    coveredDomains: ['repository-conventions'],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 2', 'ESS-0001-CONTRACTS Chapter 12', 'ADR-0076', 'ADR-0096'],
-    note: 'Existing repository conventions cover naming/collision/integrity subsets, not the full Chapter-2 structure contract.',
-  },
-  {
-    name: 'DirectoryResponsibilityValidator',
-    availability: 'NOT_AVAILABLE',
-    sources: [],
-    coveredDomains: [],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 2', 'ESS-0001-CONTRACTS Chapter 12'],
-    note: 'No dedicated executable directory-responsibility validator is currently authoritative.',
-  },
-  {
-    name: 'NamingValidator',
-    availability: 'AVAILABLE',
-    sources: ['src/platform/VersionManager/repositoryConventionValidator.ts'],
-    coveredDomains: ['repository-conventions'],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 2', 'ESS-0001-CONTRACTS Chapter 12', 'ADR-0076', 'ADR-0096'],
-    note: 'Existing repository-convention validation supplies executable naming evidence; no naming rules are duplicated here.',
-  },
-  {
-    name: 'LayerValidator',
-    availability: 'NOT_AVAILABLE',
-    sources: [],
-    coveredDomains: [],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 12'],
-    note: 'Architecture tests exist, but no reusable runtime LayerValidator source is currently authoritative.',
-  },
-  {
-    name: 'DependencyValidator',
-    availability: 'NOT_AVAILABLE',
-    sources: [],
-    coveredDomains: [],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 12'],
-    note: 'No dedicated reusable runtime DependencyValidator has been identified.',
-  },
-  {
-    name: 'InterfaceValidator',
-    availability: 'NOT_AVAILABLE',
-    sources: [],
-    coveredDomains: [],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 12'],
-    note: 'No dedicated executable InterfaceValidator has been identified.',
-  },
-  {
-    name: 'ManifestValidator',
-    availability: 'PARTIAL',
-    sources: ['src/platform/Quality/Validators/DocumentationConsistencyValidator.ts'],
-    coveredDomains: ['documentation-consistency'],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 12', 'ESS-0005', 'ESS-0012', 'ADR-0096'],
-    note: 'QM manifest consistency is executable, but this is not a repository-wide ManifestValidator.',
-  },
-  {
-    name: 'ComponentValidator',
-    availability: 'NOT_AVAILABLE',
-    sources: [],
-    coveredDomains: [],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 12'],
-    note: 'No dedicated executable ComponentValidator has been identified.',
-  },
-  {
-    name: 'MetadataValidator',
-    availability: 'NOT_AVAILABLE',
-    sources: [],
-    coveredDomains: [],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 12'],
-    note: 'Existing metadata tests do not constitute a reusable runtime MetadataValidator.',
-  },
-  {
-    name: 'DocumentationValidator',
-    availability: 'AVAILABLE',
-    sources: [
-      'src/platform/Documentary/Governance/Services/DocumentationHygieneValidator.ts',
-      'src/platform/Quality/Validators/DocumentationConsistencyValidator.ts',
-    ],
-    coveredDomains: ['documentation-hygiene', 'documentation-consistency'],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 12', 'ESS-0012', 'ADR-0014', 'ADR-0096'],
-    note: 'Existing Documentary/QM validators supply executable documentation evidence without moving rule authority into Quality.',
-  },
-  {
-    name: 'EventValidator',
-    availability: 'PARTIAL',
-    sources: [
-      'src/platform/EventMesh/Registry/EventRegistry.ts',
-      'src/platform/EventMesh/Events/StandardEventCatalog.ts',
-    ],
-    coveredDomains: [],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 8', 'ESS-0001-CONTRACTS Chapter 12', 'ESS-0013', 'ADR-0018'],
-    note: 'Event registration/catalog enforcement exists, but no complete Chapter-12 EventValidator is exposed as a Quality adapter.',
-  },
-  {
-    name: 'VersionValidator',
-    availability: 'AVAILABLE',
-    sources: ['src/platform/Release/Services/platformVersionControlPlane.ts'],
-    coveredDomains: ['platform-version'],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 12', 'ADR-0030', 'ADR-0096'],
-    note: 'The Release control-plane provides the authoritative read-only version projection.',
-  },
-  {
-    name: 'SecurityValidator',
-    availability: 'AVAILABLE',
-    sources: ['src/platform/Compliance/scanners.ts#SEC-*'],
-    coveredDomains: ['compliance'],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 11', 'ESS-0001-CONTRACTS Chapter 12', 'ESS-0006', 'ADR-0012'],
-    note: 'Security evidence is sourced from existing SecurityComplianceAuditor SEC scanners; rules remain owned by Security/Compliance.',
-  },
-  {
-    name: 'ComplianceValidator',
-    availability: 'AVAILABLE',
-    sources: ['src/platform/Compliance/scanners.ts'],
-    coveredDomains: ['compliance'],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 11', 'ESS-0001-CONTRACTS Chapter 12', 'ESS-0006', 'ADR-0012'],
-    note: 'Existing SecurityComplianceAuditor scanners provide executable compliance evidence.',
-  },
-  {
-    name: 'KnowledgeValidator',
-    availability: 'NOT_AVAILABLE',
-    sources: [],
-    coveredDomains: [],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 12', 'ESS-0009'],
-    note: 'No authoritative executable KnowledgeValidator is currently available.',
-  },
-  {
-    name: 'TwinValidator',
-    availability: 'NOT_AVAILABLE',
-    sources: [],
-    coveredDomains: [],
-    authorityRefs: ['ESS-0001-CONTRACTS Chapter 12'],
-    note: 'No authoritative executable TwinValidator is currently available.',
-  },
-]);
+const RUNNER_SOURCE = 'src/platform/Validators/Chapter12ValidatorRunner.ts';
+
+const AUTHORITIES: Record<MandatoryValidatorName, readonly string[]> = {
+  RepositoryStructureValidator: ['ESS-0001-CONTRACTS Chapter 2', 'ESS-0001-CONTRACTS Chapter 16'],
+  DirectoryResponsibilityValidator: ['ESS-0001-CONTRACTS Chapter 3'],
+  NamingValidator: ['ESS-0001-CONTRACTS Chapter 5', 'ADR-0076'],
+  LayerValidator: ['ESS-0001-CONTRACTS Chapter 4', 'ESS-0001-CONTRACTS Chapter 6', 'ESS-0001-CONTRACTS Chapter 16'],
+  DependencyValidator: ['ESS-0001-CONTRACTS Chapter 4', 'ESS-0001-CONTRACTS Chapter 6'],
+  InterfaceValidator: ['ESS-0001-CONTRACTS Chapter 4', 'ESS-0001-CONTRACTS Chapter 7'],
+  ManifestValidator: ['ESS-0001-CONTRACTS Chapter 7'],
+  ComponentValidator: ['ESS-0001-CONTRACTS Chapter 7'],
+  MetadataValidator: ['ESS-0001-CONTRACTS Chapter 7', 'ESS-0001-CONTRACTS Chapter 11', 'ESS-0001-CONTRACTS Chapter 12'],
+  DocumentationValidator: ['ESS-0001-CONTRACTS Chapter 12', 'ESS-0012', 'ADR-0014'],
+  EventValidator: ['ESS-0001-CONTRACTS Chapter 8', 'ESS-0013', 'ADR-0018'],
+  VersionValidator: ['ESS-0001-CONTRACTS Chapter 9', 'ESS-0001-CONTRACTS Chapter 12', 'ADR-0030', 'ADR-0096'],
+  SecurityValidator: ['ESS-0001-CONTRACTS Chapter 11', 'ESS-0001-CONTRACTS Chapter 12', 'ESS-0006', 'ADR-0012'],
+  ComplianceValidator: ['ESS-0001-CONTRACTS Chapter 11', 'ESS-0001-CONTRACTS Chapter 12', 'ESS-0006', 'ADR-0012'],
+  KnowledgeValidator: ['ESS-0001-CONTRACTS Chapter 15', 'ESS-0009'],
+  TwinValidator: ['ESS-0001-CONTRACTS Chapter 18'],
+};
+
+const DOMAIN_BINDINGS: Partial<Record<MandatoryValidatorName, readonly RepositoryQualityDomain[]>> = {
+  NamingValidator: ['repository-conventions'],
+  DocumentationValidator: ['documentation-hygiene', 'documentation-consistency'],
+  VersionValidator: ['platform-version'],
+  SecurityValidator: ['compliance'],
+  ComplianceValidator: ['compliance'],
+};
+
+const ADDITIONAL_SOURCES: Partial<Record<MandatoryValidatorName, readonly string[]>> = {
+  NamingValidator: ['src/platform/VersionManager/repositoryConventionValidator.ts'],
+  DocumentationValidator: [
+    'src/platform/Documentary/Governance/Services/DocumentationHygieneValidator.ts',
+    'src/platform/Quality/Validators/DocumentationConsistencyValidator.ts',
+  ],
+  EventValidator: ['src/platform/EventMesh/Events/StandardEventCatalog.ts'],
+  VersionValidator: ['src/platform/Release/Services/platformVersionControlPlane.ts'],
+  SecurityValidator: ['src/platform/Compliance/scanners.ts'],
+  ComplianceValidator: ['src/platform/Compliance/scanners.ts'],
+};
+
+const DEFAULT_BINDINGS: readonly MandatoryValidatorBinding[] = Object.freeze(
+  CHAPTER_12_MANDATORY_VALIDATORS.map((name) => Object.freeze({
+    name,
+    availability: 'AVAILABLE' as const,
+    sources: Object.freeze([RUNNER_SOURCE, ...(ADDITIONAL_SOURCES[name] ?? [])]),
+    coveredDomains: Object.freeze([...(DOMAIN_BINDINGS[name] ?? [])]),
+    authorityRefs: Object.freeze([...AUTHORITIES[name]]),
+    note: 'Executable Chapter-12 validator is available. Availability describes executable validation capability, not repository conformance; real findings remain PASS/FAIL/NOT_AVAILABLE evidence.',
+  })),
+);
 
 function freezeBinding(binding: MandatoryValidatorBinding): MandatoryValidatorBinding {
   return Object.freeze({

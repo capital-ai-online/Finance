@@ -8,6 +8,10 @@ RUN npm ci
 
 COPY . .
 
+# Exact source identity is non-sensitive build metadata. Git metadata stays excluded from context.
+ARG RELEASE_SOURCE_COMMIT
+ARG RENDER_GIT_COMMIT
+
 # Vite build-time values are public client configuration only. Never pass secrets via ARG.
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_PUBLISHABLE_KEY
@@ -20,7 +24,9 @@ ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
     VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY \
     VITE_GA_MEASUREMENT_ID=$VITE_GA_MEASUREMENT_ID
 
-RUN npm run build
+# CI injects RELEASE_SOURCE_COMMIT explicitly; Render can provide RENDER_GIT_COMMIT.
+# The identity is scoped to this build command and is not persisted into the runtime image.
+RUN RELEASE_SOURCE_COMMIT="${RELEASE_SOURCE_COMMIT:-$RENDER_GIT_COMMIT}" npm run build
 
 FROM node:24.18.0-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS runner
 WORKDIR /app
