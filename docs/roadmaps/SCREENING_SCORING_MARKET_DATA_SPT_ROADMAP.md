@@ -4,7 +4,7 @@
 **Version:** 1.1.0  
 **Status:** ACTIVE — CANONICAL EXECUTION AUTHORITY  
 **Stand:** 2026-08-20  
-**Repository-Baseline:** `main@f1dff495fe792a4d4a26a3513f0525b4974bd349` + Draft PR #458  
+**Repository-Baseline:** `main@a8d384154ff2eb1bfe74108eb4a4119cbab2a040` + Draft PR #458  
 **Owner:** SvenKulessa  
 **Authority:** DOCUMENTATION_HYGIENE_POLICY · GOVERNANCE_AUTHORITY_SUPERSESSION_POLICY / ADR-0096 · ROADMAP_CONSOLIDATION_MASTER_INDEX · ADR-0032 · ADR-0041 / ESS-0016 · ADR-0087 · ESS EventMesh/Traceability · Owner Chat-Priorität 2026-08-20
 
@@ -12,7 +12,7 @@
 
 ## 1. Zweck
 
-Single Point of Trust für die **Screening-/Scoring-/Market-Data-Wertschöpfungskette** der CAPITAL-AI Multi-Asset-Plattform. Diese Fassung konsolidiert die bislang getrennt beschriebenen Market-Data-, Evidence-, Scoring-, Display-, Buffett-, Telemetry-, Compliance- und Documentary-Korrelationen in **eine homogene fachliche Kette**, ohne eine zweite Runtime-, Scoring-, Governance- oder Dokumentations-Authority zu erzeugen.
+Single Point of Trust für die **Screening-/Scoring-/Market-Data-Wertschöpfungskette** der CAPITAL-AI Multi-Asset-Plattform. Diese Fassung konsolidiert die bislang getrennt beschriebenen Market-Data-, Evidence-, Scoring-, Display-, Buffett-, Telemetry-, Compliance-, Quality- und Documentary-Korrelationen in **eine homogene fachliche Kette**, ohne eine zweite Runtime-, Scoring-, Governance- oder Dokumentations-Authority zu erzeugen.
 
 Leitregeln:
 
@@ -21,8 +21,8 @@ Leitregeln:
 3. **Providerzugriff über bestehende Data Plane.** ADR-0041 / ESS-0016 bleiben Parent-Authority für Gateway, Provenance, Freshness, Rate Limits, Cache, Coalescing und Circuit Breaker.
 4. **Ein produktiver Scoring Exit.** ADR-0087 bleibt fachliche UAI/Model-Registry/Single-Dispatcher-Authority.
 5. **Display ist keine Scoring-Authority.** `verified-asset-display/1.0.0` ist eine read-only Presentation-/Research-Projektion aus vorhandener Evidence.
-6. **Entitlement vor kostenrelevantem Consumer-I/O.** Buffett muss die serverseitige ADR-0034-Autorisierung vor der Asset-Auswertung durchlaufen.
-7. **Audit und Telemetry bleiben getrennt.** Operational Telemetry misst die Kette; EventMesh/Traceability/Compliance/Documentary liefern Governance-/Audit-Evidence.
+6. **Entitlement vor kostenrelevantem Consumer-I/O.** Buffett durchläuft die serverseitige ADR-0034-Autorisierung vor der Asset-Auswertung; Nicht-Aktien werden vor Quota-Verbrauch abgewiesen.
+7. **Audit, Quality und Telemetry bleiben getrennt.** Operational Telemetry misst die Kette; Quality projiziert sie read-only; EventMesh/Traceability/Compliance/Documentary liefern Governance-/Audit-Evidence.
 
 ADR-0088/0089/0090 begrenzen Research/Gemini weiterhin auf Acquisition-only, default-off und Free-Tier-only; Research-/LLM-Ausgabe ist keine direkte Score- oder Market-Evidence.
 
@@ -35,12 +35,13 @@ ADR-0088/0089/0090 begrenzen Research/Gemini weiterhin auf Acquisition-only, def
 | Catalog / Provenance | ADR-0032 | Trennung Asset Catalog ↔ verifizierte Market Evidence; No-Demo-/Fail-Closed-Invariante | **Parent-Authority**; durch PR #458 erneut berührt, Revalidation bleibt bis zu technischen Gates `draft` |
 | Traditional Quote / Eligibility | ADR-0025 | `traditional-quote/1.0.0`, Screening-/Alert-Referenzwerte | spezialisierter Contract; Proposed-Dokument ist keine höhere Authority als ADR-0032/0041 |
 | Index / Commodity / Sovereign Evidence | ADR-0033 | assetklassenspezifische Evidence-Contracts | **Accepted / resolved**; Semantik bleibt unverändert |
-| Buffett Access | ADR-0034 | serverseitige Subscription-/Quota-Autorisierung | **Accepted**; vor Buffett-Hydration verbindlich |
+| Buffett Access | ADR-0034 | serverseitige Subscription-/Quota-Autorisierung | **Accepted**; entitlement-first und stock-only im PR #458 umgesetzt |
 | Provider Data Plane | ADR-0041 + ESS-0016 | Gateway, Provider-Adapter, Freshness, Provenance, Resilience | **Parent-Authority** |
 | Runtime Facade | ADR-0075 + ADR-0083 | Cache/Coalescing/Background Refresh innerhalb kanonischer Serverstruktur | ADR-0083 Parent; ADR-0075 Implementierungsentscheidung/Phase |
 | Scoring | ADR-0087 + SC-2 Evidence | UAI, Model Registry, Dispatcher, Executor, CanonicalScoreResult | **einzige produktive Scoring-Authority** |
 | Ranking / Comparability | SC-7 | Intended-Use-Kohorten, Normalisierungs-/Comparability-Gates | Shadow/Owner-gated wie dokumentiert |
 | Operational Telemetry | ADR-0056 + `src/platform/Telemetry/contracts.ts` | messbare Stufen der FinTech-Kette | querliegende Telemetry-Projektion, keine Audit-Authority |
+| Quality Projection | ESS-0005 + `FintechValueChainQualityProjection` | read-only Struktur-/Evidence-Prüfung gegen diesen SPT | **non-authorizing**; nach PR #457 auf SPT v1.1 korreliert |
 | Compliance | ADR-0007 + Security/Compliance Authorities | Data Integrity, Datenschutz, deterministische Analyse, Audit, Export | querliegende Kontrollkette |
 | Documentary / Change Governance | ESS-0010/0011/0012 + `DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP` | Change → Evidence → Traceability → Quality/Security/Compliance → Release | separate **Change-/Governance-Kette**, nicht Runtime-Datenpfad |
 | Verified Asset Display | `verified-asset-display/1.0.0` + ADR-0032-Revalidation 2026-08-20 | per-symbol Presentation-/Research-Projektion | **keine neue Authority** |
@@ -143,6 +144,18 @@ Die vorhandenen `FinTechValueChainStage`-Werte bleiben der operative Mess-Contra
 
 EventMesh, Audit, Traceability und Documentary werden absichtlich **nicht** als zusätzliche Telemetry-Nutzdatenbank modelliert. Telemetry darf nur auf deren Evidence referenzieren.
 
+### 3.3 Quality-Mapping
+
+Die aus PR #457 stammende `FintechValueChainQualityProjection` referenziert diesen SPT als Authority, besitzt aber keine Entscheidungsbefugnis. Nach dem finalen Main-Sync wird die SPT-v1.1-Kette dort in 18 strukturelle Evidence-Stufen projiziert. Neu gegenüber der ursprünglich gemergten 14-Stufen-Projektion sind insbesondere:
+
+- Request Intake;
+- Identity / Access;
+- Entitlement / Usage;
+- Orchestration / Runtime Guard;
+- Verified Display / Research Lane.
+
+Die bestehenden Scoring-, Ranking-, EventMesh-/Traceability- und Delivery-Stufen bleiben erhalten. Quality prüft ausschließlich Artifact-/Evidence-Verbindungen und Hot-Path-Isolation.
+
 ---
 
 ## 4. Buffett Value Check — kanonische Sub-Chain
@@ -176,7 +189,7 @@ Verbindliche Regeln:
 
 - ausschließlich `assetClass/type === stock`;
 - serverseitige ADR-0034-Autorisierung **vor** kosten-/quota-relevantem Provider-I/O;
-- der Entitlement-Endpunkt muss Nicht-Aktien für Buffett fail-closed ablehnen, bevor Quota verbraucht wird;
+- der Entitlement-Endpunkt lehnt Nicht-Aktien für Buffett fail-closed ab, bevor Quota verbraucht wird;
 - kein synthetisches EPS, kein pauschaler Score, kein automatisches PASS bei fehlenden Fundamentals;
 - manuelle Modellannahmen sind erlaubt, aber als Szenarioannahmen zu kennzeichnen;
 - `verified-asset-display/1.0.0` bleibt `executionPriceEligible=false`;
@@ -184,7 +197,12 @@ Verbindliche Regeln:
 
 ### Aktueller PR-#458-Korrelationsbefund
 
-Der Branch filtert die Buffett-Suche bereits korrekt auf Aktien und lädt danach `verified-display`. Die serverseitige ADR-0034-Autorisierung wird in `BuffetValueCheck.tsx` jedoch noch **nicht** vorgeschaltet; `server/entitlements.ts` validiert aktuell Catalog-Presence, aber noch nicht `asset.type === 'stock'`. Diese beiden Punkte sind die verbleibenden P0-Code-Gaps aus der Korrelationsanalyse.
+Die beiden zuvor offenen P0-Code-Gaps sind geschlossen:
+
+1. `BuffetValueCheck.tsx` ruft `/api/entitlements/warren-buffett/authorize` vor `/verified-display` auf und hydratisiert nur bei `allowed === true`.
+2. `server/entitlements.ts` lehnt `asset.type !== 'stock'` mit `asset-not-eligible` **vor** `enforceBuffettValueCheckQuota()` ab.
+
+Damit kann eine nicht zulässige Assetklasse weder Buffett-Quota konsumieren noch Provider-/Fundamentals-I/O auslösen. Regressionstests sichern beide Reihenfolgen strukturell ab.
 
 ---
 
@@ -193,12 +211,13 @@ Der Branch filtert die Buffett-Suche bereits korrekt auf Aktien und lädt danach
 | Schicht | Code-Pfad | Reife / Befund |
 |---|---|---|
 | Asset Catalog | `src/lib/assetSearchCatalog.ts`, Registry Routes | metadata-only / ADR-0032-konform |
+| Identity / Access | `src/platform/Security/authMiddleware.ts` | bestehende serverseitige IAM/AAL2-Grenze |
+| Entitlement / Usage | `server/entitlements.ts` | Buffett stock-only fail-closed vor Quota umgesetzt |
 | Market Data | `src/platform/MarketData/` + `server/marketData/` | SC-4/SC-5 Foundation + canonical provider controls |
 | Runtime Guard | `marketDataRuntimeFacade.ts`, compatibility facade | 60-s Cache; PR #458 ergänzt mindestens 90-s Background Provider-I/O |
 | Evidence / Consensus | domain evidence + DQ services | stark ausgebaut; fail-closed |
 | Verified Display | `src/services/verifiedAssetDisplay.ts` | PR #458: per-symbol read-only Presentation Projection |
-| Buffett | `src/components/BuffetValueCheck.tsx` | PR #458: stock-only + verified fundamentals; **Entitlement-Vorschaltung offen** |
-| Buffett Entitlement | `server/entitlements.ts` | Contract vorhanden; stock-only server validation offen |
+| Buffett | `src/components/BuffetValueCheck.tsx` | stock-only + entitlement-first + verified fundamentals |
 | Research Evidence | `src/platform/ResearchEvidence/`, `server/researchEvidence/` | Gemini default-off, keine Score-Wirkung |
 | UAI / Registry | `src/platform/Scoring/` | **C3 LANDED** |
 | Dispatcher | `ScoringDispatcher.ts` | **ein produktiver Multi-Asset Execution Exit** |
@@ -206,6 +225,7 @@ Der Branch filtert die Buffett-Suche bereits korrekt auf Aktien und lädt danach
 | Ranking | `ranking.service` + `src/platform/Ranking/` | A–C LANDED; D shadow/konsolidiert |
 | DQ / Confidence | `CompositeDataQuality` | Foundation; impact off |
 | Telemetry | `src/platform/Telemetry/contracts.ts` | operative Wertschöpfungsstufen vorhanden; fachliche Substufen werden hierauf gemappt |
+| Quality | `src/platform/Quality/ValueChain/FintechValueChainQualityProjection.ts` | PR #457 read-only Foundation; in PR #458 auf SPT-v1.1-Korrelation erweitert |
 
 ---
 
@@ -218,8 +238,9 @@ Der Branch filtert die Buffett-Suche bereits korrekt auf Aktien und lädt danach
 | ADR-0041 / ESS-0016 | Provider-/Resilience-Regeln | unverändert Parent; 90-s Cadence ist Runtime-Implementierung darunter |
 | ADR-0075 / ADR-0083 | Cache/Runtime-/Composition-Verantwortung | Runtime-Änderung dort einordnen; kein zweiter Runtime-Contract |
 | ADR-0087 / SC-2 | Scoring | unverändert; Display/Buffett dürfen keinen `CanonicalScoreResult` simulieren |
-| ADR-0034 | Buffett Entitlement | in Sub-Chain nach vorne ziehen; verbleibende Consumer-Lücke schließen |
+| ADR-0034 | Buffett Entitlement | entitlement-first und stock-only im Consumer-/Serverpfad umgesetzt |
 | ADR-0056 / Telemetry Contract | operative Value-Chain-Namen | als Messprojektion beibehalten; keine zweite fachliche Kette |
+| ESS-0005 / Quality Projection | strukturelle Quality-Sicht auf SPT | nach PR-#457-Merge auf SPT v1.1 ausgerichtet; bleibt non-authorizing |
 | ADR-0007 | Compliance Value Chain | cross-cutting Controls/Evidence, nicht als zweiter Market-Data-Datenpfad |
 | Documentary Event Value Chain | Repository-/Change-Lifecycle | cross-cutting Change-Governance; nicht Runtime Request Flow |
 | `DATENQUALITAETSSCHICHT.md` | historische live/fallback-/Provenance-Aussagen | auf ADR-0032 + diese SPT-Kette projiziert |
@@ -237,6 +258,7 @@ Der Branch filtert die Buffett-Suche bereits korrekt auf Aktien und lädt danach
 - [x] Authority Registry für diesen Scope auf `main` zurückgeführt.
 - [x] Datenqualitäts-, Backend-, API-, Frontend- und Phase-3.4.6-Projektionen auf Parent-Authorities ausgerichtet.
 - [x] Market-Data-Facade-Kommentar auf ADR-0032 / SPT ausgerichtet.
+- [x] PR-#457-Quality-Projektion gegen SPT v1.1 korreliert.
 
 ---
 
@@ -244,9 +266,10 @@ Der Branch filtert die Buffett-Suche bereits korrekt auf Aktien und lädt danach
 
 ### P0 vor Merge von PR #458
 
-1. Buffett-Consumer muss `/api/entitlements/warren-buffett/authorize` vor `verified-display` aufrufen.
-2. Buffett-Entitlement-Endpunkt muss Nicht-Aktien fail-closed ablehnen, bevor Quota konsumiert wird.
-3. TypeScript/Unit-/Contract-/Governance-Checks nach dem Code-Gate ausführen.
+1. TypeScript/Lint auf dem finalen PR-Head validieren.
+2. Unit-/Contract-/Architecture-Tests einschließlich Buffett-Entitlement, Verified Display, 90-s Runtime und Quality Projection validieren.
+3. Production Build sowie Governance-/Security-Gates validieren.
+4. Unmittelbar nach der letzten Änderung den dann aktuellen `main` nochmals prüfen; neue Main-Änderungen gegebenenfalls erneut korrelieren.
 
 ### Bestehender SPT-Backlog
 
@@ -271,12 +294,12 @@ Der Branch filtert die Buffett-Suche bereits korrekt auf Aktien und lädt danach
 | SC-3 | Unified DQ + Confidence | P0 | FOUNDATION LANDED | impact off |
 | SC-4 | Gateway hardening | P1 | Phase A LANDED | matrix/health |
 | SC-5 | Live coverage | P1 | Phase A–D code | execution quorum open |
-| SC-5D | Verified Display / Consumer Revalidation | P0 | **ARCH CONSOLIDATED · CODE GATES OPEN · PR #458** | ADR-0032 revalidated; entitlement-first Buffett; no duplicate authority |
+| SC-5D | Verified Display / Consumer Revalidation | P0 | **ARCH + CODE CONSOLIDATED · VALIDATION OPEN · PR #458** | ADR-0032 revalidated; entitlement-first Buffett; no duplicate authority |
 | SC-6 | Scoring integrity & lineage | P1 | **CORE LANDED WITH C3** | execution lineage |
 | SC-7 | Ranking generalization | P1 | **A–C LANDED · D SHADOW/CONSOLIDATED** | intended-use cohorts; impact off |
 | SC-8 | Walk-Forward / backtests | P2 | FOUNDATION/PARTIAL | drift/golden/full governance open |
 
-**Kritischer Pfad für PR #458:** Buffett Entitlement Gate → lokale/PR-Checks → finaler Main-Sync → Merge-Review.
+**Kritischer Pfad für PR #458:** technische Validierung → finaler Main-Korrelationscheck → Human Merge-Review.
 
 ---
 
@@ -291,17 +314,19 @@ Der Branch filtert die Buffett-Suche bereits korrekt auf Aktien und lädt danach
 
 Scoring-Gewichte, Eligibility-Schwellen, Provider-Routing, Live-Gates sowie `scoreImpact/rankingImpact` bleiben Owner-gated. Display-/UI-Code darf diese Grenzen nicht indirekt verändern.
 
-Externe Plattformmutation ist **nicht** Bestandteil der Dokumentkonsolidierung. Render/Supabase/Stripe bleiben unverändert.
+Externe Plattformmutation ist **nicht** Bestandteil dieser Umsetzung. Render/Supabase/Stripe bleiben unverändert.
 
 ---
 
 ## 10. Main- und PR-Korrelation
 
-- Aktueller bestätigter Main für diese Konsolidierung: `f1dff495fe792a4d4a26a3513f0525b4974bd349`.
-- PR #458 arbeitet auf `fix/verified-asset-values-buffett-hydration`; der Branch wurde nach der Dokumentkonsolidierung erneut mit `main` verglichen und war dabei `0` Commits hinter `main`.
-- Offener PR #457 verändert Quality-Center-/Validator-/Build-Orchestrierungsdateien; kein direkter Dateiüberschnitt mit dem bisherigen PR-#458-Scope wurde festgestellt.
-- Die Konsolidierung löst **keine** GitHub-CI, Render-, Supabase- oder Stripe-Mutation aus.
-- Vor Merge-Readiness ist gemäß Pflicht-Gate **erneut** der dann aktuelle `main` zu laden und semantisch zu korrelieren; der aktuelle 0-behind-Befund ersetzt diesen finalen Gate nicht.
+- Aktueller synchronisierter Main: `a8d384154ff2eb1bfe74108eb4a4119cbab2a040`.
+- PR #458 arbeitet auf `fix/verified-asset-values-buffett-hydration`; der Branch wurde nach dem Merge von PR #457 verlustfrei synchronisiert und war danach `0` Commits hinter `main`.
+- PR #457 brachte Quality-Center-, Validator-, Build-/CI- und Value-Chain-Projection-Änderungen nach `main`.
+- Es bestand kein direkter Datei-Konflikt mit dem vorbestehenden PR-#458-Scope; semantisch relevant war jedoch `FintechValueChainQualityProjection`, weil sie `SC-MD-SPT-0001` als Authority referenziert.
+- Diese Projektion ist im Branch auf die SPT-v1.1-Struktur einschließlich Identity, Entitlement, Runtime Guard und Verified Display / Research Lane ausgerichtet worden, ohne ihre read-only/non-authorizing Grenze zu verändern.
+- Die zuvor fehlgeschlagene Governance-Baseline auf einem älteren PR-Head war ausschließlich Folge des zwischenzeitlichen Main-Fortschritts; sie ist keine fachliche oder technische Buffett-/Market-Data-Fehlermeldung.
+- Vor Merge-Readiness ist gemäß Pflicht-Gate **nach der letzten Branch-Änderung nochmals** der aktuelle `main` zu laden und semantisch zu korrelieren.
 
 ---
 
@@ -309,7 +334,7 @@ Externe Plattformmutation ist **nicht** Bestandteil der Dokumentkonsolidierung. 
 
 Die Struktur folgt dem Repository-Prinzip „eine Authority, mehrere nachvollziehbare Views“ und entspricht dem Grundgedanken von ISO/IEC/IEEE 42010, Architekturbeziehungen und Stakeholder-Concerns konsistent in einer Architecture Description zu halten. Für Datenherkunft wird die bestehende CAPITAL-AI-Provenance-Struktur beibehalten; Provider, Evidence, Aktivitäten und Ableitung bleiben nachvollziehbar im Sinne etablierter Provenance-Modelle. Value-Stream-Mapping wird als Beziehung von Wertstufen zu Capabilities/Information/Controls verwendet, nicht als Anlass für eine zweite technische Pipeline.
 
-Keine neue Open-Source-Runtime ist für diese Konsolidierung erforderlich. Bestehende Repository-Contracts sind funktional und architektonisch geeigneter als die Einführung eines zusätzlichen Frameworks.
+Die serverseitige Buffett-Authorisierung folgt dem Least-Privilege-/Complete-Mediation-Grundsatz: UI-Filter sind UX, die fachliche Zulässigkeit wird serverseitig vor Quota-/Provider-I/O entschieden. Keine neue Open-Source-Runtime ist für diese Konsolidierung erforderlich; bestehende Repository-Contracts sind funktional und architektonisch geeigneter als ein zusätzlicher Framework-Stack.
 
 ---
 
@@ -323,6 +348,7 @@ Keine neue Open-Source-Runtime ist für diese Konsolidierung erforderlich. Beste
 - `docs/adr/ADR-0034-central-subscription-entitlements-and-buffett-access.md`
 - `docs/adr/ADR-0041-enterprise-market-data-provider-and-mcp-architecture.md`
 - `.ai/skills/ESS-0016-Enterprise-Market-Data-Provider-MCP-Governance.md`
+- `.ai/skills/ESS-0005-Quality-Center.md`
 - `docs/adr/ADR-0075-phase-3-4-7-runtime-facade.md`
 - `docs/adr/ADR-0083-server-runtime-architecture-consolidation.md`
 - `docs/adr/ADR-0087-single-scoring-architecture-uai-model-registry.md`
@@ -333,9 +359,10 @@ Keine neue Open-Source-Runtime ist für diese Konsolidierung erforderlich. Beste
 - `docs/roadmaps/work-packages/SC-7_RANKING_COMPOSITE_OPT_IN.md`
 - `docs/evidence/sc-md/SC2_GLOBAL_MULTI_ASSET_EXIT_2026-08-19.md`
 - `src/platform/Telemetry/contracts.ts`
+- `src/platform/Quality/ValueChain/FintechValueChainQualityProjection.ts`
 - `src/platform/Scoring/`
 - `src/platform/Ranking/`
 
 ---
 
-*Stand 2026-08-20: Die fachliche Market-Data-/Screening-/Scoring-Wertschöpfungskette ist als einheitlicher SPT konsolidiert. Verified Display und Buffett sind als Presentation-/Analysis-Lane eingeordnet; sie erzeugen keine zweite Scoring- oder Market-Data-Authority. Die Dokument-/Authority-Konsolidierung ist abgeschlossen. PR #458 bleibt Draft, bis das Buffett-Entitlement-Code-Gate und die technische Validierung abgeschlossen sind.*
+*Stand 2026-08-20: Die fachliche Market-Data-/Screening-/Scoring-Wertschöpfungskette ist als einheitlicher SPT konsolidiert. Verified Display und Buffett sind als Presentation-/Analysis-Lane eingeordnet; sie erzeugen keine zweite Scoring- oder Market-Data-Authority. Die Dokument-/Authority-Konsolidierung, Buffett-Entitlement-P0-Gates und PR-#457-Quality-Korrelation sind umgesetzt. PR #458 bleibt Draft, bis die finale technische Validierung und der letzte Main-Korrelationscheck abgeschlossen sind.*
