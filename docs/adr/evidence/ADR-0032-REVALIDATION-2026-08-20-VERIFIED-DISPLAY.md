@@ -150,22 +150,24 @@ Quote-/Alert-/Backtest-Consumer teilen die Stufen bis zur Evidence-Validierung u
 8. Compatibility Refresh enrichiert/persistiert nur provider-beobachtete Live-Zeilen.
 9. Periodischer CoinGecko-Pfad wird im Background auf das konfigurierte Core-Universum begrenzt.
 10. Runtime Facade erzwingt mindestens 90 Sekunden zwischen tatsächlichen Background-Provider-Refreshes.
+11. Die fachlichen Korrelationen sind in `SC-MD-SPT-0001` v1.1.0 als eine homogene Wertschöpfungskette konsolidiert.
+12. Datenqualitäts-, Backend-, API-, Frontend- und Phase-3.4.6-Projektionen referenzieren ADR-0032 / SC-MD-SPT-0001 sowie die jeweils zuständige Parent-Authority.
+13. Die im Draft zunächst angelegte ADR-0097-Datei wurde entfernt; ADR- und Authority-Registry entsprechen für diesen Scope wieder exakt `main` und enthalten keine zweite Verified-Display-Authority.
+14. Diese Revalidation ist als `draft` im Document Registry registriert; die SPT-Registry-Version wurde auf 1.1.0 synchronisiert.
 
 ### Noch offen vor Merge-Readiness
 
 1. Buffett-Consumer ruft serverseitige ADR-0034-Autorisierung **vor** `/verified-display` auf.
 2. Buffett-Entitlement lehnt Nicht-Aktien vor Quota-Verbrauch ab.
-3. Alle Dokumentprojektionen referenzieren ADR-0032 / SC-MD-SPT-0001 und die jeweils spezifischen Parent-Authorities statt ADR-0097.
-4. ADR-0097 wird aus aktivem ADR-/Authority-Namespace entfernt.
-5. TypeScript-, Unit-, Contract-, Governance- und Build-Evidence wird auf dem finalen PR-Head erhoben.
+3. TypeScript-, Unit-, Contract-, Governance- und Build-Evidence wird auf dem finalen PR-Head erhoben.
 
 ---
 
-## 5. ADR-0097-Disposition
+## 5. Historische Disposition des verworfenen ADR-0097-Entwurfs
 
-Der Draft-PR führte zunächst `ADR-0097 — Verified Asset Display & Progressive Hydration Boundary` mit einer neuen Authority ID ein. Die vollständige Korrelationsprüfung zeigt jedoch:
+Der Draft-PR führte zunächst `ADR-0097 — Verified Asset Display & Progressive Hydration Boundary` mit einer neuen Authority ID ein. Die vollständige Korrelationsprüfung zeigte jedoch:
 
-| ADR-0097-Inhalt | Bereits vorhandene Authority |
+| Entwurfsinhalt | Bereits vorhandene Authority |
 |---|---|
 | Catalog ≠ Evidence | ADR-0032 |
 | Provider Provenance / Resilience | ADR-0041 / ESS-0016 |
@@ -175,9 +177,9 @@ Der Draft-PR führte zunächst `ADR-0097 — Verified Asset Display & Progressiv
 | Buffett stock-only | Domain-/Consumer-Regel unter ADR-0032 + ADR-0034 |
 | Dokument-/Work-Claim-Lifecycle | bestehende Governance Policies |
 
-Daher wird ADR-0097 **nicht als zweite aktive Authority fortgeführt**. Die fachlich neuen Implementierungsdetails bleiben über dieses Revalidation-Dokument, `SC-MD-SPT-0001`, Code, Tests und PR-Evidence vollständig traceable.
+Der Entwurf wird deshalb **nicht als zweite aktive Authority fortgeführt und ist im Branch entfernt**. Die fachlich neuen Implementierungsdetails bleiben über dieses Revalidation-Dokument, `SC-MD-SPT-0001`, Code, Tests und PR-Evidence vollständig traceable.
 
-Das ist keine semantische Supersession von ADR-0032: die ältere Entscheidung bleibt fachlich gültig; die Implementierung wird erneut gegen sie ausgerichtet.
+Das ist keine semantische Supersession von ADR-0032: die ältere Entscheidung bleibt fachlich gültig; die Implementierung wird erneut gegen sie ausgerichtet. Ein neues `DOC-ADR-0097` ist folglich nicht erforderlich.
 
 ---
 
@@ -200,7 +202,7 @@ Das ist keine semantische Supersession von ADR-0032: die ältere Entscheidung bl
 Vor Abschluss dieser Revalidation müssen mindestens erfüllt sein:
 
 1. finaler Main-Sync und Korrelation zu parallel gemergten Änderungen;
-2. keine aktive zweite ADR-/Authority-ID für den Verified-Display-Scope;
+2. keine aktive zweite ADR-/Authority-ID für den Verified-Display-Scope — **strukturell erfüllt im aktuellen Branch**;
 3. Buffett entitlement-first + stock-only server validation;
 4. Unit-/Contract-Test für Verified Display und Buffett Stock-only;
 5. Test der Entitlement-Reihenfolge und Nicht-Aktien-DENY-Regel;
@@ -210,7 +212,7 @@ Vor Abschluss dieser Revalidation müssen mindestens erfüllt sein:
 9. Production Build;
 10. erforderliche PR-Governance-/Security-Checks.
 
-Bis diese Gates erfüllt sind, bleibt dieses Evidence-Dokument `draft` und ADR-0032 wird nicht als erneut vollständig verifiziert behauptet.
+Bis die verbleibenden technischen Gates erfüllt sind, bleibt dieses Evidence-Dokument `draft` und ADR-0032 wird nicht als erneut vollständig verifiziert behauptet.
 
 ---
 
@@ -226,4 +228,4 @@ Bis diese Gates erfüllt sind, bleibt dieses Evidence-Dokument `draft` und ADR-0
 - Scoring: `docs/adr/ADR-0087-single-scoring-architecture-uai-model-registry.md`
 - PR: #458
 
-**Revalidation state:** DRAFT — Architekturkorrelation konsolidiert; technische P0-Gates und finale PR-Evidence noch offen.
+**Revalidation state:** DRAFT — Architektur-/Dokumentkorrelation konsolidiert; technische Buffett-Entitlement- und finale Validierungs-Gates noch offen.
