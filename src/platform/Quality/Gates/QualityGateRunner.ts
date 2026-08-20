@@ -79,20 +79,24 @@ export const QUALITY_GATE_DEFINITIONS: readonly QualityGateDefinition[] = Object
   }),
 ]);
 
+function validators(...names: MandatoryValidatorName[]): readonly MandatoryValidatorName[] {
+  return Object.freeze(names);
+}
+
 const VALIDATORS_BY_GATE: Readonly<Record<QualityGateDefinition['id'], readonly MandatoryValidatorName[]>> = Object.freeze({
-  'GATE-1-CONTRACT': Object.freeze([
+  'GATE-1-CONTRACT': validators(
     'InterfaceValidator', 'ManifestValidator', 'ComponentValidator', 'MetadataValidator',
-  ]),
-  'GATE-2-ARCHITECTURE': Object.freeze([
+  ),
+  'GATE-2-ARCHITECTURE': validators(
     'RepositoryStructureValidator', 'DirectoryResponsibilityValidator', 'NamingValidator', 'LayerValidator',
     'DependencyValidator', 'EventValidator', 'KnowledgeValidator', 'TwinValidator',
-  ]),
-  'GATE-3-VERSION': Object.freeze(['VersionValidator']),
-  'GATE-4-DOCUMENTATION': Object.freeze(['DocumentationValidator']),
-  'GATE-5-TEST': Object.freeze([]),
-  'GATE-6-SECURITY': Object.freeze(['SecurityValidator']),
-  'GATE-7-COMPLIANCE': Object.freeze(['ComplianceValidator']),
-  'GATE-8-BUILD': Object.freeze([]),
+  ),
+  'GATE-3-VERSION': validators('VersionValidator'),
+  'GATE-4-DOCUMENTATION': validators('DocumentationValidator'),
+  'GATE-5-TEST': validators(),
+  'GATE-6-SECURITY': validators('SecurityValidator'),
+  'GATE-7-COMPLIANCE': validators('ComplianceValidator'),
+  'GATE-8-BUILD': validators(),
 });
 
 const EXECUTION_PHASE_BY_GATE: Partial<Record<QualityGateDefinition['id'], QualityExecutionPhase>> = Object.freeze({
