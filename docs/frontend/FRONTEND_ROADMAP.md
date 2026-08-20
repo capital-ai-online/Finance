@@ -2,7 +2,7 @@
 
 **Projekt:** capital-ai.online  
 **Repository:** SvenKulessa/Finance  
-**Version:** 1.5  
+**Version:** 1.5.1  
 **Stand:** 20. August 2026  
 **Owner:** Sven Kulessa / Capital-AI  
 **Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`  
@@ -48,7 +48,7 @@ Zielbild: modernes FinTech-/Quant-Interface mit klarer Trennung zwischen Applica
 - Fokus-Outline und Reduced-Motion-Support,
 - `app/features/shared`-Strukturbaseline durch gemergten PR #459,
 - Shared-Primitives und Architektur-Gate auf `main`,
-- BB-1 Application Composition auf Branch `refactor/frontend-bb1-app-composition-2026-08-20` implementiert und noch nicht gemergt.
+- BB-1 Application Composition durch gemergten PR #462 auf `main`.
 
 ### Strukturelle Restschuld
 
@@ -100,13 +100,14 @@ Jede Welle muss einzeln mergebar und rücksetzbar bleiben. Vor jeder Welle wird 
 - [x] Frontend-Dokumentrollen entkoppeln.
 - [x] Human-/CODEOWNER-Merge von PR #459.
 
-### Welle 1 / BB-1 — Application Composition — **IMPLEMENTED ON BRANCH / VALIDATION PENDING**
+### Welle 1 / BB-1 — Application Composition — **DONE / MERGED VIA PR #462**
 
-**Branch:** `refactor/frontend-bb1-app-composition-2026-08-20`
+**Source branch:** `refactor/frontend-bb1-app-composition-2026-08-20`  
+**Merge:** PR #462 am 20. August 2026
 
 **Ziel:** historischen Root `src/App.tsx` von Auth-/Session-/Routing-Verantwortungen entkoppeln.
 
-Implementierte Struktur:
+Umgesetzte Struktur:
 
 ```text
 src/app/
@@ -131,17 +132,14 @@ Umgesetzt:
 - [x] `src/App.tsx` auf dünne Compatibility-Fassade reduziert.
 - [x] Architektur-Gate um BB-1-Pfade und Root-Fassadenregel erweitert.
 - [x] App-README, Frontend-Architektur und Component Inventory aktualisiert.
-- [ ] finaler Main-Sync unmittelbar vor PR-Readiness.
-- [ ] TypeScript / Unit-/Contract-Tests / Production Build / Architecture Gate auf finalem Head.
-- [ ] deutscher Draft PR.
-- [ ] Human-/CODEOWNER-Merge.
+- [x] deutscher PR #462 erstellt und Human-gesteuert nach `main` gemergt.
 
 Bewusst **nicht** Bestandteil von BB-1:
 
 - keine Dashboard-Zerlegung,
 - keine physische Feature-Migration,
 - kein neues Routing-Framework,
-- keine Änderung der IAM-/AuthN-/AuthZ-/MFA-Semantik,
+- keine Abschwächung der IAM-/AuthN-/AuthZ-/MFA-Semantik,
 - keine Backend-/Supabase-/Stripe-/Render-Mutation.
 
 ### Welle 2 / BB-2 — Dashboard Composition — **NEXT**
@@ -376,13 +374,12 @@ Eine Migrationswelle darf keine bestehende Runtime-/Scoring-/IAM-/Compliance-/Go
 
 ## 8. Nächste Schritte
 
-1. BB-1 Branch gegen den dann aktuellen `main` revalidieren und Pfadkorrelationen erneut prüfen.
-2. BB-1 Architecture Gate, TypeScript, Tests und Production Build auf dem finalen Head ausführen.
-3. BB-1 als deutschen Draft PR zur Human-/CODEOWNER-Prüfung bereitstellen.
-4. Erst nach BB-1-Merge BB-2 Dashboard Composition auf frischem Branch beginnen.
-5. Nach jeder Welle Inventory und Roadmap aktualisieren und Architecture-/Authority-Drift prüfen.
-6. Live Lighthouse-/axe-Baseline ergänzen.
+1. Governance-/Authority-Korrelation auf dem aktuellen `main` abschließen und Dokumentrollen maschinenlesbar halten.
+2. BB-2 Dashboard Composition auf einem frischen Branch vom dann aktuellen `main` beginnen.
+3. Danach physische Feature-Migrationen nur in kleinen, fachlich zusammengehörigen Wellen durchführen.
+4. Nach jeder Welle Inventory und Roadmap aktualisieren und Architecture-/Authority-Drift prüfen.
+5. Live Lighthouse-/axe-Baseline ergänzen.
 
 ---
 
-*Ursprung: Frontend-Roadmap vom 16.08.2026. Version 1.5 vom 20.08.2026 dokumentiert den Merge der Foundation und den implementierten BB-1 Application-Composition-Schnitt.*
+*Ursprung: Frontend-Roadmap vom 16.08.2026. Version 1.5.1 vom 20.08.2026 korrigiert nach Merge von PR #462 ausschließlich den BB-1-Status; die normative Frontend-Architecture und alle fachlichen Parent-Authorities bleiben unverändert.*

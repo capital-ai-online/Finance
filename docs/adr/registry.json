@@ -1,7 +1,7 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "registryAuthorityId": "AUTH-GOV-ADR-REGISTRY",
-  "version": "1.7.0",
+  "version": "1.9.0",
   "date": "2026-08-20",
   "canonicalLocation": "docs/adr",
   "rules": {
@@ -16,6 +16,9 @@
     "legacyRedirectsAllowed": true,
     "legacyRedirectMustBeNonAuthorizing": true,
     "openPrNamespaceCorrelationRequired": true,
+    "reservationRequiredBeforeNewAdr": true,
+    "reservationRequiredFields": ["displayId","branch","source","path","observedHead","state","reservedAt"],
+    "activeReservationState": "active",
     "suspendedRecordsAreNonAuthorizing": true,
     "recencyRule": "newer version/date takes precedence only within the same authorityId unless an explicit supersedes edge exists",
     "supersessionRequiresImpactPackage": true
@@ -23,16 +26,24 @@
   "lifecycle": ["proposed","accepted","accepted-for-implementation","resolved","suspended","superseded","historical","rejected"],
   "migratedRecords": [
     {"authorityId":"AUTH-ADR-LEGACY-BRANDING-PANEL-0004","displayId":"ADR-0004","version":"1.0.0","date":"2026-07-10","lifecycle":"suspended","path":"docs/adr/suspended/ADR-0004-branding-and-panel-removal.md","legacyAliases":[],"supersedes":[],"note":"Suspended 2026-08-19 because the historical decision embedded obsolete platform-version projection semantics; retained as non-authorizing history."},
+    {"authorityId":"AUTH-ADR-FRONTEND-MODULE-INTEGRATION-0005","displayId":"ADR-0005","version":"1.1.0","date":"2026-08-20","lifecycle":"historical","path":"docs/adr/ADR-0005-frontend-module-integration.md","legacyAliases":[],"supersedes":[],"note":"Code revalidation 2026-08-20 found no active Module Federation remote, iframe/PostMessage integration, URL-token propagation, shared-auth LocalStorage contract or aif- Tailwind namespace. Retained as historical/non-authorizing; current IAM/CSP/CORS and FRONTEND_ARCH authorities govern current behavior."},
     {"authorityId":"AUTH-ADR-ESS-NAMESPACE-CLEANUP-2026-08-16","displayId":"ADR-0085","version":"1.0.0","date":"2026-08-16","lifecycle":"accepted","path":"docs/adr/ADR-0085-ess-namespace-cleanup-and-registry-backfill.md","legacyAliases":[],"supersedes":[]},
     {"authorityId":"AUTH-ADR-VENDOR-PRIVACY-EVIDENCE-2026-08-19","displayId":"ADR-0086","version":"1.0.0","date":"2026-08-19","lifecycle":"accepted-for-implementation","path":"docs/adr/ADR-0086-vendor-privacy-evidence-governance.md","legacyAliases":[],"supersedes":[]},
     {"authorityId":"AUTH-ADR-PRIVACY-RETENTION-2026-08-19","displayId":"ADR-0092","version":"1.0.0","date":"2026-08-19","lifecycle":"accepted-for-implementation","path":"docs/adr/ADR-0092-privacy-retention-and-lifecycle-hardening.md","legacyAliases":[],"supersedes":[]},
     {"authorityId":"AUTH-ADR-OPEN-SOURCE-MEDIA-RENDERING-2026-08-19","displayId":"ADR-0094","version":"1.0.0","date":"2026-08-19","lifecycle":"accepted","path":"docs/adr/ADR-0094-open-source-pdf-companion-and-short-media-rendering.md","legacyAliases":[],"supersedes":[],"note":"Migrated from parallel PR #446 namespace reservation after PR #446 merged into main before this Governance work package."},
     {"authorityId":"AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19","displayId":"ADR-0095","version":"1.0.0","date":"2026-08-19","lifecycle":"accepted","path":"docs/adr/ADR-0095-privacy-governance-single-source-of-truth.md","legacyAliases":[{"displayId":"ADR-0085","path":"docs/adr/ADR-0085-privacy-governance-single-source-of-truth.md","lifecycle":"legacy-redirect","reason":"legacy duplicate introduced by privacy remediation before namespace reconciliation"}],"supersedes":[]},
-    {"authorityId":"AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19","displayId":"ADR-0096","version":"1.1.0","date":"2026-08-19","lifecycle":"proposed","path":"docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md","legacyAliases":[{"displayId":"ADR-0086","path":"docs/adr/ADR-0086-governance-authority-supersession-and-regulatory-control-mapping.md","lifecycle":"legacy-redirect","reason":"legacy duplicate governance-supersession draft; renumbered because ADR-0086 is already vendor privacy governance"}],"supersedes":[]},
+    {"authorityId":"AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19","displayId":"ADR-0096","version":"1.2.0","date":"2026-08-20","lifecycle":"proposed","path":"docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md","legacyAliases":[{"displayId":"ADR-0086","path":"docs/adr/ADR-0086-governance-authority-supersession-and-regulatory-control-mapping.md","lifecycle":"legacy-redirect","reason":"legacy duplicate governance-supersession draft; renumbered because ADR-0086 is already vendor privacy governance"}],"supersedes":[]},
     {"authorityId":"AUTH-ADR-DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20","displayId":"ADR-0097","version":"1.0.0","date":"2026-08-20","lifecycle":"proposed","path":"docs/adr/ADR-0097-documentary-maintenance-agent-control-loop.md","legacyAliases":[],"supersedes":[],"note":"Owner-directed Documentary maintenance control-loop implementation candidate; effective only after Human Merge."},
     {"authorityId":"AUTH-ADR-MEDIA-PROJECT-V2-2026-08-20","displayId":"ADR-0098","version":"1.0.0","date":"2026-08-20","lifecycle":"proposed","path":"docs/adr/ADR-0098-media-project-v2-timeline-contract.md","legacyAliases":[],"supersedes":[],"note":"MC-1 canonical MediaProject v2 timeline/domain contract; implementation candidate effective only after Human Merge."}
   ],
   "parallelNamespaceReservations": [],
+  "reservationContract": {
+    "states": ["active","released","stale"],
+    "requiredForStateActive": ["displayId","branch","source","path","observedHead","state","reservedAt"],
+    "sourceMeaning": "Pull Request number, work item or other traceable writer source; deterministic CI never resolves this field through live GitHub access.",
+    "releaseRule": "merge, close, supersession or abandonment transitions the reservation away from active",
+    "staleRule": "an active reservation whose observedHead no longer equals the reserving branch head, or whose source is known merged/closed by preflight evidence, must be released or marked stale before merge-readiness"
+  },
   "legacyIndex": {
     "path": "docs/adr/adr_history.json",
     "status": "compatibility-index",
