@@ -3,7 +3,7 @@
   "version": "1.1.0",
   "status": "core-implementation",
   "owner": "CAPITAL-AI",
-  "description": "ESS-0005 Quality Center core: validator registry and mandatory-validator coverage, non-authorizing Governance/Compliance orchestration, eight-gate evidence evaluation, deterministic quality scoring, technical-debt management, measured test-area coverage, QM documentation consistency and EventMesh lifecycle publication.",
+  "description": "ESS-0005 Quality Center: executable Chapter-12 validation, non-authorizing Governance/Compliance orchestration, eight-gate evidence evaluation, deterministic quality scoring, technical-debt management, measured test-area coverage, QM documentation consistency and EventMesh lifecycle publication.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -38,12 +38,13 @@
       "CoverageCalculatedEvent"
     ],
     "consumes": [],
-    "note": "Quality lifecycle events use the existing EventMesh composition adapter. TechnicalDebtRegister publishes Detect/Resolve events when composed with the same abstract QualityEventSink. Event delivery never authorizes merge/release/deployment/production mutation."
+    "note": "Quality lifecycle events use the existing EventMesh composition adapter. Event delivery never authorizes merge, release, deployment or production mutation."
   },
   "knowledge": [],
   "interfaces": [
     "RepositoryQualityCoordinator",
     "QualityCenterOrchestrator",
+    "Chapter12ValidatorRunner",
     "QualityGateRunner",
     "QualityScoreCalculator",
     "CoverageCollector",
@@ -52,21 +53,25 @@
   ],
   "contracts": [
     "repository-quality-observation/1.1.0",
-    "quality-center-contract/1.1.0",
+    "quality-center-contract/1.2.0",
     "mandatory-validator-coverage/1.0.0",
+    "chapter12-validator-contract/1.0.0",
+    "chapter12-validation-report/1.0.0",
     "quality-coverage/1.0.0",
     "technical-debt-register/1.1.0"
   ],
   "documentation": [
     "README.md",
     "docs/architecture/REPOSITORY_QUALITY_P0_P2_IMPLEMENTATION.md",
-    "docs/architecture/QUALITY_CENTER_CORE_ORCHESTRATION.md"
+    "docs/architecture/QUALITY_CENTER_CORE_ORCHESTRATION.md",
+    "docs/architecture/QUALITY_CENTER_COMPLETION.md"
   ],
   "tests": [
     "tests/unit/repositoryQualityCoordinator.test.ts",
     "tests/unit/repositoryQualityAdapters.test.ts",
     "tests/unit/validatorRegistry.test.ts",
     "tests/unit/mandatoryValidatorCatalog.test.ts",
+    "tests/unit/chapter12ValidatorRunner.test.ts",
     "tests/unit/qualityGateRunner.test.ts",
     "tests/unit/qualityScoreCalculator.test.ts",
     "tests/unit/technicalDebtRegister.test.ts",
@@ -85,7 +90,8 @@
       "RepositoryQualityCoordinator",
       "ValidatorRegistry integration",
       "exact Chapter-12 mandatory-validator coverage catalog",
-      "QualityCenterContract",
+      "Chapter12ValidatorRunner for all 16 mandatory validator identities",
+      "QualityCenterContract 1.2.0 with Chapter-12 validation report",
       "eight-gate evidence runner",
       "QualityScoreCalculator",
       "CoverageCollector with executable-test-area measurement and optional code-coverage ingestion",
@@ -97,15 +103,15 @@
       "Compliance scanner evidence integration",
       "EventMesh lifecycle publication through existing EventBus"
     ],
-    "mandatoryValidatorCoverage": {
+    "mandatoryValidatorImplementationCoverage": {
       "total": 16,
-      "available": 5,
-      "partial": 3,
-      "notAvailable": 8
+      "available": 16,
+      "partial": 0,
+      "notAvailable": 0,
+      "note": "Implementation availability is not repository conformance. Chapter12ValidationReport carries actual PASS/FAIL/NOT_AVAILABLE evidence."
     },
     "remainingContractScope": [
-      "complete execution sources for the mandatory validators currently PARTIAL or NOT_AVAILABLE",
-      "complete evidence coverage for Contract/Test/Build and all eight quality gates",
+      "complete execution evidence for Contract/Test/Build and all eight quality gates",
       "measured providers for Documentation, Architecture, Knowledge, Metadata and Twin score axes",
       "line/branch/function/statement coverage requires a real coverage-summary artifact and remains NOT_AVAILABLE when absent"
     ]
