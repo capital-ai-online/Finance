@@ -189,27 +189,23 @@ export function MediaStudio() {
   };
 
   const undo = () => {
-    setPast((history) => {
-      const previous = history.at(-1);
-      if (!previous) return history;
-      setFuture((next) => [structuredClone(project), ...next].slice(0, HISTORY_LIMIT));
-      setProject(previous);
-      setEditErrors([]);
-      setPlayheadFrame((frame) => Math.min(frame, Math.max(0, previous.durationFrames - 1)));
-      return history.slice(0, -1);
-    });
+    const previous = past.at(-1);
+    if (!previous) return;
+    setPast(past.slice(0, -1));
+    setFuture([structuredClone(project), ...future].slice(0, HISTORY_LIMIT));
+    setProject(previous);
+    setEditErrors([]);
+    setPlayheadFrame((frame) => Math.min(frame, Math.max(0, previous.durationFrames - 1)));
   };
 
   const redo = () => {
-    setFuture((history) => {
-      const next = history[0];
-      if (!next) return history;
-      setPast((previous) => [...previous.slice(-(HISTORY_LIMIT - 1)), structuredClone(project)]);
-      setProject(next);
-      setEditErrors([]);
-      setPlayheadFrame((frame) => Math.min(frame, Math.max(0, next.durationFrames - 1)));
-      return history.slice(1);
-    });
+    const next = future[0];
+    if (!next) return;
+    setFuture(future.slice(1));
+    setPast([...past.slice(-(HISTORY_LIMIT - 1)), structuredClone(project)]);
+    setProject(next);
+    setEditErrors([]);
+    setPlayheadFrame((frame) => Math.min(frame, Math.max(0, next.durationFrames - 1)));
   };
 
   const resetProject = () => {
