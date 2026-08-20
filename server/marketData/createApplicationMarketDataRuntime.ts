@@ -10,6 +10,7 @@ import {
 const STOCK_TICKERS = ['AAPL.US', 'MSFT.US', 'GOOGL.US', 'AMZN.US', 'NVDA.US', 'TSLA.US', 'META.US', 'NFLX.US', 'AMD.US', 'INTC.US'];
 const FOREX_TICKERS = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCAD', 'USDCHF', 'AUDUSD'];
 const COMMODITY_TICKERS = ['XAUUSD', 'XAGUSD', 'CL.F', 'NG.F', 'CO.F'];
+export const APPLICATION_BACKGROUND_REFRESH_INTERVAL_MS = 90_000;
 
 export interface ApplicationMarketDataRuntimeOptions {
   fallbackAssets: StooqFallbackAsset[];
@@ -31,10 +32,15 @@ export interface ApplicationMarketDataRuntimeOptions {
  * legacy composition-root enrichment callback and enters its domain evidence adapter followed by
  * UAI -> ScoringModelRegistry -> ScoringDispatcher. A missing evidence contract yields score=null;
  * no asset class may fall through to a productive heuristic model-selection path.
+ *
+ * Background provider refresh is throttled to a 90-second cadence at this boundary even if a
+ * legacy composition-root timer invokes backgroundRefresh() more frequently. Calls inside the
+ * throttle window are coalesced into the next eligible refresh instead of triggering provider I/O.
  */
 export function createApplicationMarketDataRuntime(options: ApplicationMarketDataRuntimeOptions) {
   return createMarketDataRuntimeFacade({
     ttlMs: options.ttlMs,
+    backgroundRefreshIntervalMs: APPLICATION_BACKGROUND_REFRESH_INTERVAL_MS,
     syncAsset: options.syncAsset,
     onRefreshFailure: options.onRefreshFailure,
     refresh: () => runMarketDataCompatibilityRefresh({

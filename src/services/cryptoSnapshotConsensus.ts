@@ -2,13 +2,14 @@ import type { CryptoSnapshotField } from './cryptoSnapshotProvider';
 import {
   evaluateSnapshotFieldConsensus,
   type SnapshotConsensusStatus,
+  type SnapshotField,
   type SnapshotFieldObservation,
 } from './marketSnapshotConsensus';
 
 export const CRYPTO_SNAPSHOT_CONSENSUS_VERSION = 'crypto-snapshot-consensus/1.1.0';
 
 export interface SnapshotFieldProvenance {
-  field: CryptoSnapshotField;
+  field: SnapshotField;
   provider: string;
   sourcePath: string;
   observedAt: string;
@@ -70,12 +71,14 @@ function toObservation(symbol: string, item: SnapshotFieldProvenance): SnapshotF
  * A field requires at least two independent AND semantically compatible observations.
  * Missing semantic scope is intentionally excluded from quorum. Exchange-local values are never
  * combined with global aggregates, and conflicts never produce a synthetic canonical value.
+ * Percentage-change display evidence is deliberately excluded from this quorum contract because
+ * marketSnapshotConsensus has no cross-provider policy for that field.
  */
 export function evaluateCryptoSnapshotConsensus(
   symbol: string,
   provenance: SnapshotFieldProvenance[],
 ): CryptoSnapshotConsensusResult {
-  const fields: CryptoSnapshotField[] = [
+  const fields: SnapshotField[] = [
     'marketCapUsd',
     'volume24hUsd',
     'circulatingSupply',

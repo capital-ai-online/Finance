@@ -26,6 +26,7 @@ import { registerTrailingSlashNormalize } from '../middleware/seoUrlNormalize';
 import { installProductionSoft404Intercept } from '../runtime/spaFallback';
 import { seoEngineRouter } from './seoEngineRoutes';
 import { createLegacyScoringCompatibilityRouter } from './legacyScoringCompatibilityRoutes';
+import { verifiedAssetDisplayRouter } from './verifiedAssetDisplayRoutes';
 
 export interface ApplicationRouteProviders {
   ai: any | null;
@@ -90,6 +91,9 @@ export function registerApplicationRoutes(
   app.use('/api/systemadmin/break-glass', breakGlassRouter);
   app.use('/api/m10/credential-enrollment', m10CredentialEnrollmentRouter);
   app.use('/api/news', newsRouter);
+  // Progressive verified display hydration is mounted before the generic registry router. The
+  // catalog itself stays metadata-only; this route owns the per-symbol observation hydration.
+  app.use('/api/registry', verifiedAssetDisplayRouter);
   app.use('/api/registry', registryRouter);
   app.use('/api/social-media', socialMediaRouter);
   // SEO S1: keyword register, content inventory, rank snapshots (admin-only).
