@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { RepositoryQualityFinding } from '../../Governance/Contracts/RepositoryQualityEvidence';
 
-export const QM_DOCUMENTATION_CONSISTENCY_VALIDATOR_VERSION = 'qm-documentation-consistency-validator/1.0.0' as const;
+export const QM_DOCUMENTATION_CONSISTENCY_VALIDATOR_VERSION = 'qm-documentation-consistency-validator/1.1.0' as const;
 
 export interface DocumentationConsistencyReport {
   checkedAt: string;
@@ -121,7 +121,7 @@ export function validateQmDocumentationConsistency(
 
   if (qualityManifest) {
     const contracts = Array.isArray(qualityManifest.contracts) ? qualityManifest.contracts : [];
-    for (const contract of ['repository-quality-observation/1.1.0', 'quality-center-contract/1.0.0']) {
+    for (const contract of ['repository-quality-observation/1.1.0', 'quality-center-contract/1.1.0']) {
       if (!contracts.includes(contract)) {
         findings.push(finding('QM-DOC-011', `Quality manifest is missing contract ${contract}.`, qualityManifestPath, contract));
       }
