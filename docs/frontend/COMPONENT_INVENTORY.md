@@ -1,10 +1,10 @@
 # CAPITAL-AI Frontend – Component Inventory
 
-**Stand:** 16. August 2026  
+**Stand:** 20. August 2026  
 **Quelle:** `src/components/` (Finance-Repo)  
 **Namenskonvention:** PascalCase, Dateiname = Komponentenname
 
-Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grundlage für Phase 0 der Frontend-Roadmap.
+Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grundlage für die Frontend-Roadmap. ADR-0097 ergänzt die verbindliche Datenvertragsgrenze für finanzielle Anzeige-Consumer.
 
 ---
 
@@ -35,7 +35,7 @@ Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grun
 | Komponente | Datei | Kurzbeschreibung |
 |------------|-------|------------------|
 | CryptoScoringEnterprise | `CryptoScoringEnterprise.tsx` | Enterprise-Crypto-Scoring (nutzt StatusBadge) |
-| BuffetValueCheck | `BuffetValueCheck.tsx` | Graham/Buffett Value-Check |
+| BuffetValueCheck | `BuffetValueCheck.tsx` | **Stock-only** Graham/Buffett-/DCF-Bewertung; Such-/Auswahlliste enthält ausschließlich Aktien und lädt Marktpreis/Fundamentals progressiv über `verified-asset-display/1.0.0`. Keine Bootstrap-/synthetischen EPS-/Score-Fallbacks. |
 | BacktestEngine | `BacktestEngine.tsx` | Backtesting-Engine |
 | PortfolioBacktester | `PortfolioBacktester.tsx` | Portfolio-Backtester |
 | PortfolioPerformance | `PortfolioPerformance.tsx` | Portfolio-Performance |
@@ -51,6 +51,13 @@ Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grun
 | RawMaterialsDashboard | `RawMaterialsDashboard.tsx` | Rohstoff-Dashboard |
 | DeFiOrchestration | `DeFiOrchestration.tsx` | DeFi-Orchestrierung |
 
+### Financial-data consumer rule (ADR-0097)
+
+- `/api/registry/assets` wird im Frontend als Katalog-/Metadata-Quelle behandelt.
+- Markt-/Fundamentalwerte werden über verifizierte Evidence-/Quote-/Display-Verträge nachgeladen.
+- Ein fachlich spezialisierter Consumer darf seine Assetklassen enger begrenzen als der globale Multi-Asset-Katalog; `BuffetValueCheck` ist deshalb ausschließlich für `stock` sichtbar/auswählbar.
+- Fehlende Evidence darf nicht in `0`, Default-Scores oder still bestandene Finanzkriterien umgewandelt werden.
+
 ---
 
 ## Sentiment, News & AI
@@ -60,7 +67,7 @@ Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grun
 | SentimentDashboard | `SentimentDashboard.tsx` | Sentiment-Dashboard |
 | MarketSentiment | `MarketSentiment.tsx` | Markt-Sentiment |
 | RealtimeAiNewsfeed | `RealtimeAiNewsfeed.tsx` | AI-Newsfeed |
-| Newsticker | `Newsticker.tsx` | Newsticker |
+| Newsticker | `Newsticker.tsx` | Newsticker; Katalogauswahl plus verifizierte Score-/Quote-Evidence |
 | MarkdownOrchestrator | `MarkdownOrchestrator.tsx` | Markdown-/Dokumentations-Orchestrierung |
 | OrchestratorPanel | `OrchestratorPanel.tsx` | Orchestrator-Panel |
 | InteractModule | `InteractModule.tsx` | Interaktionsmodul |
@@ -91,7 +98,7 @@ Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grun
 |------------|-------|------------------|
 | ComplianceBadge | `ComplianceBadge.tsx` | Compliance-Badge |
 | ComplianceConsentModal | `ComplianceConsentModal.tsx` | Consent-Modal |
-| ComplianceExporter | `ComplianceExporter.tsx` | Compliance-Export |
+| ComplianceExporter | `ComplianceExporter.tsx` | Compliance-Export; nullable/fail-closed Registry-Werte werden defensiv dargestellt |
 | ComplianceNotifications | `ComplianceNotifications.tsx` | Compliance-Benachrichtigungen |
 | SecurityComplianceAuditor | `SecurityComplianceAuditor.tsx` | Security/Compliance-Auditor |
 | SecurityRadarBadge | `SecurityRadarBadge.tsx` | Security-Radar-Badge |
@@ -120,7 +127,7 @@ Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grun
 | Datenschutz | `Datenschutz.tsx` | Datenschutz |
 | ImpressumAgb | `ImpressumAgb.tsx` | Impressum / AGB |
 | PdfExportModal | `PdfExportModal.tsx` | PDF-Export-Modal |
-| PriceAlert | `PriceAlert.tsx` | Preis-Alerts |
+| PriceAlert | `PriceAlert.tsx` | Preis-Alerts; Katalog zur Auswahl, alert-fähige verifizierte Quote separat |
 | SocialAccountManager | `SocialAccountManager.tsx` | Social-Account-Verwaltung |
 | SocialDirectPublisherModal | `SocialDirectPublisherModal.tsx` | Social-Publisher-Modal |
 | ErrorBoundary | `ErrorBoundary.tsx` | Error Boundary |
@@ -144,10 +151,10 @@ Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grun
 ## Hinweise zur Weiterentwicklung
 
 1. Neue UI-Komponenten in `src/components/` anlegen und hier dokumentieren.
-2. Wiederverwendbare Primitives (Button, Badge, Card, Gauge, Chip) schrittweise extrahieren (Phase 1).
-3. StatusBadge ist der erste formalisierte Primitive — weitere Call-Sites in Phase 1.
-4. Dieses Inventory ist die Basis für Storybook und die Frontend-Roadmap Phase 0.
+2. Wiederverwendbare Primitives (Button, Badge, Card, Gauge, Chip) schrittweise extrahieren.
+3. Finanzdaten-Consumer müssen die Katalog-/Evidence-Trennung aus ADR-0097 einhalten.
+4. Multi-Asset-Verfügbarkeit des globalen Katalogs verpflichtet fachlich spezialisierte Module nicht zur Unterstützung fachfremder Assetklassen.
 
 ---
 
-*Erstellt am 16.08.2026 im Rahmen der Frontend-Roadmap. StatusBadge ergänzt 16.08.2026.*
+*Erstellt am 16.08.2026 im Rahmen der Frontend-Roadmap; ADR-0097-Korrelation am 20.08.2026 konsolidiert.*
