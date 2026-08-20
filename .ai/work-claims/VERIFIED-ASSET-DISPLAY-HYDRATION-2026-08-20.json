@@ -8,25 +8,29 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub + Render connectors"
   },
-  "workItem": "Owner Chat-Priorität 2026-08-20: verifizierte Asset-Werte über progressive Display-Hydration integrieren, Buffett auf Aktien begrenzen, korrelierte Architektur-/API-Dokumente konsolidieren und den Background-Provider-Refresh auf 90 Sekunden drosseln.",
+  "workItem": "Owner Chat-Priorität 2026-08-20: verifizierte Asset-Werte über progressive Display-Hydration integrieren, Buffett auf Aktien begrenzen, korrelierte Architektur-/API-Dokumente in der kanonischen SC-MD-SPT-Wertschöpfungskette konsolidieren und den Background-Provider-Refresh auf 90 Sekunden drosseln.",
   "authority": [
     "Owner Chat-Priorität 2026-08-20",
-    "ADR-0097",
+    "SC-MD-SPT-0001",
+    "ADR-0032",
+    "ADR-0034",
     "ADR-0041",
-    "ARCH-DATENQ-0001",
-    "SC2-GLOBAL-MULTI-ASSET-EXIT-2026-08-19"
+    "ESS-0016",
+    "ADR-0083",
+    "ADR-0087"
   ],
   "startedAt": "2026-08-20T03:48:00+02:00",
   "baseBranch": "main",
   "baseSha": "f1dff495fe792a4d4a26a3513f0525b4974bd349",
   "branch": "fix/verified-asset-values-buffett-hydration",
-  "pullRequest": null,
+  "pullRequest": 458,
   "supersedesClaim": "BUFFETT-VALUE-CHECK-NULL-PRICE-FIX-2026-08-14",
   "renderEvidence": {
     "finding": "TwelveData/EODHD circuit breakers and CoinGecko HTTP 429 were observed; eager full-catalog hydration is prohibited and background provider refresh is constrained to a 90-second cadence."
   },
   "claimedPaths": [
     "server/stockFundamentals.ts",
+    "server/entitlements.ts",
     "src/services/cryptoSnapshotProvider.ts",
     "src/services/verifiedAssetDisplay.ts",
     "server/routes/verifiedAssetDisplayRoutes.ts",
@@ -43,9 +47,9 @@
     "tests/unit/marketDataCompatibilityFacade.test.ts",
     "tests/unit/marketDataRuntimeFacade.test.ts",
     "tests/unit/verifiedAssetDisplayContract.test.ts",
-    "docs/adr/ADR-0097-verified-asset-display-progressive-hydration.md",
-    "docs/adr/registry.json",
-    "docs/governance/authority-registry.json",
+    "docs/adr/evidence/ADR-0032-REVALIDATION-2026-08-20-VERIFIED-DISPLAY.md",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md",
+    "docs/governance/document-registry.json",
     "docs/architecture/DATENQUALITAETSSCHICHT.md",
     "docs/backend/BACKEND_ARCH.md",
     "docs/architecture/PHASE-3.4.6-MARKET-DATA-COMPATIBILITY-FACADE.md",
