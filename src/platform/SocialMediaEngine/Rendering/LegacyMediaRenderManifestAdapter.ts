@@ -14,7 +14,7 @@ const LEGACY_MIN_TOTAL_SECONDS = 5;
 const LEGACY_MAX_TOTAL_SECONDS = 60;
 const LEGACY_MIN_SCENE_SECONDS = 1;
 const LEGACY_MAX_SCENE_SECONDS = 20;
-const DANGEROUS_SCHEME = /^(?:https?|data|file|ftp|gopher):/i;
+const URI_SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/;
 
 export interface LegacyMediaRenderSceneV1 {
   title: string;
@@ -48,8 +48,8 @@ function requireBoundedText(value: unknown, field: string, maxChars: number): st
 
 function requireSafeReference(value: string, field: string): string {
   const normalized = value.trim().replace(/\\/g, '/');
-  if (!normalized || DANGEROUS_SCHEME.test(normalized) || normalized.startsWith('/') || normalized.split('/').includes('..')) {
-    throw new Error(`${field} must be an opaque or repository-relative reference without a remote/dangerous URL.`);
+  if (!normalized || URI_SCHEME.test(normalized) || normalized.startsWith('/') || normalized.split('/').includes('..')) {
+    throw new Error(`${field} must be an opaque or repository-relative reference without a URI scheme, absolute path or traversal path.`);
   }
   return normalized;
 }
