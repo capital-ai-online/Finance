@@ -54,12 +54,26 @@ export function registerApplicationRoutes(
 ): void {
   const { ai, anthropic, openai } = providers;
 
+  // SEO Q2: normalize /path/ → /path before domain routers handle the request.
   registerTrailingSlashNormalize(app);
+
+  // SEO D3: wrap production SPA catch-all (registered later in startServer) so
+  // unknown paths return real 404 instead of the SPA shell.
   installProductionSoft404Intercept();
+
+  // SC-2 Phase C3: intercept historical Crypto scoring endpoints before the legacy declarations
+  // in server.application.ts. Standard- and Meme-Crypto terminate at the canonical dispatcher;
+  // caller-indicator chart scoring remains explicitly simulation-only.
   app.use(createLegacyScoringCompatibilityRouter());
 
+  // Domain route factories keep the exact provider contract currently used by
+  // server.application.ts. Missing AI providers remain fail-open where the
+  // underlying route factories already define deterministic fallbacks.
   app.use('/api/raw-materials', createRawMaterialsRouter(ai, anthropic, openai));
   app.use('/api/crypto', createCryptoRouter(ai, anthropic, openai));
+
+  // Existing production prefixes are intentionally preserved byte-for-byte at
+  // the HTTP-contract level. No alias or compatibility route is introduced here.
   app.use('/api/stripe', stripeRouter);
   app.use('/api/orchestrator', orchestratorRouter);
   app.use('/api/admin/hygiene', hygieneRouter);
@@ -71,6 +85,7 @@ export function registerApplicationRoutes(
   app.use('/api/scoring', scoreValidationRouter);
   app.use('/api/scoring/explain', createScoreExplainabilityRouter(ai, anthropic, openai));
   app.use('/api/admin/diagnostics', adminDiagnosticsRouter);
+  // ESS-0005: read-only projection of the build-persisted QualityCenterReport.
   app.use('/api/admin/quality-center', qualityCenterRouter);
   app.use('/api/alerts', alertsRouter);
   app.use('/api/admin/supervisor', supervisorRouter);
@@ -79,9 +94,12 @@ export function registerApplicationRoutes(
   app.use('/api/systemadmin/break-glass', breakGlassRouter);
   app.use('/api/m10/credential-enrollment', m10CredentialEnrollmentRouter);
   app.use('/api/news', newsRouter);
+  // Progressive verified display hydration is mounted before the generic registry router. The
+  // catalog itself stays metadata-only; this route owns the per-symbol observation hydration.
   app.use('/api/registry', verifiedAssetDisplayRouter);
   app.use('/api/registry', registryRouter);
   app.use('/api/social-media', socialMediaRouter);
+  // SEO S1: keyword register, content inventory, rank snapshots (admin-only).
   app.use('/api/seo', seoEngineRouter);
   app.use('/api', aiRouter);
 }

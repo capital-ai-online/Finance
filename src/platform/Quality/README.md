@@ -2,7 +2,7 @@
 
 ## Enterprise Component
 
-Status: Implemented
+Status: Implemented / Operationalized
 
 Version: 1.1.0
 
@@ -14,7 +14,7 @@ Owner: CAPITAL-AI
 
 `src/platform/Quality` ist die read-only Ausfuehrungs-, Mess- und Orchestrierungsgrenze des Quality Centers gemaess ESS-0005. Das Quality Center definiert **keine** fachlichen Governance-, Compliance-, Security-, Release-, Market-Data-, Scoring- oder Ranking-Regeln und besitzt keine Merge-/Release-/Deployment-/Produktionsauthority.
 
-Der maschinenlesbare Panel-Datenvertrag ist `QualityCenterReport` (`quality-center-contract/1.3.0`). Ein separates Frontend-Panel ist keine Authority; UI-Darstellungen duerfen ausschliesslich diesen Evidence-Vertrag projizieren.
+Der maschinenlesbare Panel-Datenvertrag ist `QualityCenterReport` (`quality-center-contract/1.3.0`). Das visuelle Panel ist keine eigene Authority; es projiziert ausschliesslich diesen Evidence-Vertrag.
 
 ## Implemented Quality Center
 
@@ -29,7 +29,30 @@ Der maschinenlesbare Panel-Datenvertrag ist `QualityCenterReport` (`quality-cent
 - `Validators/DocumentationConsistencyValidator.ts` — QM-Dokument-/Manifest-Konsistenz;
 - `ValueChain/FintechValueChainQualityProjection.ts` — read-only Homogenitaetsprojektion der kanonischen SC-MD-SPT-FinTech-Wertschoepfungskette;
 - `Orchestration/QualityCenterOrchestrator.ts` — einheitlicher Quality-Center-Report;
+- `Operations/QualityCenterSnapshotStore.ts` — atomare, commitgebundene Persistenz des bestehenden Reports fuer Build und Runtime;
 - bestehende Governance-, Compliance-, Documentary-, Release-, EventMesh- und Traceability-Authorities werden adaptiert, nicht kopiert.
+
+## Operationalisierung
+
+Die operative Kette verwendet weiterhin genau einen fachlichen Datenvertrag:
+
+```text
+QualityCenterOrchestrator
+  -> QualityCenterReport 1.3.0
+  -> buildQualityCenterSnapshot.ts
+  -> .quality/quality-center-report.json
+  -> dist/quality/quality-center-report.json
+  -> GET /api/admin/quality-center
+  -> Performance-Zentrale / Quality Evidence Panel
+```
+
+`scripts/automation/repositoryQualityReport.ts` ist die gemeinsame Composition-Factory fuer CLI-Validierung und Build-Snapshot. Dadurch existiert keine zweite Quality-Orchestrierung.
+
+`npm run build` erzeugt den Runtime-Snapshot erst nach dem bestehenden Google-Marketing-Guard, dem realen Production Build, dem Runtime Release Manifest und der commitgebundenen Build-Evidence. Ungueltige oder nicht an einen exakten 40-stelligen Commit gebundene Reports werden nicht persistiert.
+
+Der Runtime-Endpoint ist ausschliesslich `GET`, verwendet die bestehende `checkAdminAccess`-/`DIAGNOSTIC_ZONE_ROLES`-Boundary, setzt `Cache-Control: no-store` und fuehrt keinen Live-Repository-Scan aus. Fehlt ein gueltiger Build-Snapshot, wird `503 quality_snapshot_not_available` ausgegeben statt Ersatzdaten zu erzeugen.
+
+Die UI ist in die bestehende Performance-Zentrale eingebettet und ueber die kanonische Governance-UI-Fassade auffindbar. Sie zeigt Gates, Validatorabdeckung, FinTech-Kette, Coverage, Technical Debt, Source Commit und den vorhandenen Quality Score Status. `null` und `NOT_AVAILABLE` werden sichtbar belassen.
 
 ## Mandatory Validator Coverage
 
@@ -60,24 +83,7 @@ Contract/Test/Build werden nicht aus Dateiexistenz abgeleitet. `npm test` und `n
 
 ## FinTech Value Chain / Quality Panel
 
-Die kanonische SC-MD-SPT-Kette wird als read-only Panel-Projektion in 14 Stufen geprueft:
-
-```text
-Asset Catalog / Request
-  -> Universal Asset Identity
-  -> Evidence Acquisition
-  -> Evidence / Data Quality Gate
-  -> Classification + Feature Contract
-  -> ScoringModelRegistry
-  -> ScoringDispatcher
-  -> Domain Executor Adapter
-  -> CanonicalScoreResult + execution lineage
-  -> Confidence / DQ Composite
-  -> Ranking comparability gate
-  -> Ranking / Eligibility / SLO
-  -> EventMesh / Traceability / Supervisor
-  -> API / UI / Alerts / downstream evidence
-```
+Die kanonische SC-MD-SPT-Kette wird als read-only Panel-Projektion in 14 Stufen geprueft. Die konkrete Stufendefinition liegt ausschliesslich in `FintechValueChainQualityProjection.ts`; das Frontend rendert deren Ergebnis und fuehrt keine eigene Kettenlogik ein.
 
 Eine Stufe ist `CONNECTED`, wenn ihre kanonischen Runtime- und Test-/Evidence-Artefakte vorhanden sind. `homogeneous=true` verlangt zusaetzlich Hot-Path-Isolation: MarketDataGateway, ScoringDispatcher, Executor, Ranking, Orchestrator und Application Runtime duerfen keine direkte Quality-Abhaengigkeit erhalten.
 
@@ -111,6 +117,8 @@ ESS-0001-CONTRACTS definiert fuer Documentation, Architecture, Knowledge, Metada
 ## Technical Debt
 
 Technische Schulden werden mit ID, Ursache, Auswirkung, Aufwand, Prioritaet, Zielversion und Source-Referenzen registriert. Ein Eintrag kann nur mit Resolution-Evidence geschlossen werden. Detect-/Resolve-Events werden ueber den bestehenden EventMesh-Sink publiziert; Transportfehler werden als Evidence festgehalten.
+
+Der aktuelle Build-Snapshot bildet den Zustand des bestehenden Registers ab. Historische Trend-Persistenz oder ein produktiver Debt-Write-Store werden in diesem Slice bewusst nicht eingefuehrt; eine solche Persistenz benoetigt eine separat autorisierte Storage-/Produktionsentscheidung.
 
 ## Authority Boundaries
 

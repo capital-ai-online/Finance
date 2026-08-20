@@ -3,7 +3,7 @@
   "version": "1.1.0",
   "status": "implemented",
   "owner": "CAPITAL-AI",
-  "description": "ESS-0005 Quality Center: executable Chapter-12 validation, commit-bound Contract/Test/Build evidence, eight quality gates, deterministic quality scoring, technical-debt and coverage evidence, EventMesh lifecycle publication and read-only SC-MD-SPT FinTech value-chain homogeneity projection.",
+  "description": "ESS-0005 Quality Center: executable Chapter-12 validation, commit-bound Contract/Test/Build evidence, eight quality gates, deterministic quality scoring, technical-debt and coverage evidence, EventMesh lifecycle publication, read-only SC-MD-SPT FinTech value-chain homogeneity projection and build-persisted QualityCenterReport operationalization.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -50,7 +50,9 @@
     "CoverageCollector",
     "TechnicalDebtRegister",
     "DocumentationConsistencyValidator",
-    "FintechValueChainQualityProjection"
+    "FintechValueChainQualityProjection",
+    "QualityCenterSnapshotStore",
+    "GET /api/admin/quality-center"
   ],
   "contracts": [
     "repository-quality-observation/1.1.0",
@@ -67,7 +69,8 @@
     "README.md",
     "docs/architecture/REPOSITORY_QUALITY_P0_P2_IMPLEMENTATION.md",
     "docs/architecture/QUALITY_CENTER_CORE_ORCHESTRATION.md",
-    "docs/architecture/QUALITY_CENTER_COMPLETION.md"
+    "docs/architecture/QUALITY_CENTER_COMPLETION.md",
+    "docs/architecture/QUALITY_CENTER_OPERATIONALIZATION.md"
   ],
   "tests": [
     "tests/unit/repositoryQualityCoordinator.test.ts",
@@ -82,15 +85,17 @@
     "tests/unit/documentationConsistencyValidator.test.ts",
     "tests/unit/qualityCenterOrchestrator.test.ts",
     "tests/unit/coverageCollector.test.ts",
+    "tests/unit/qualityCenterSnapshotStore.test.ts",
     "tests/contract/qualityCenterContract.test.ts",
     "tests/architecture/qualityCenterBoundary.test.ts",
     "tests/architecture/qualityFintechValueChainProjection.test.ts",
+    "tests/architecture/qualityCenterOperationalization.test.ts",
     "tests/security/qualityCenterAuthorityBoundary.test.ts",
     "tests/performance/qualityCenterDeterminism.test.ts",
     "tests/e2e/qualityCenterOrchestration.test.ts"
   ],
   "implementation": {
-    "level": "contract-complete",
+    "level": "contract-complete-operationalized",
     "implementedAreas": [
       "RepositoryQualityCoordinator",
       "ValidatorRegistry integration",
@@ -108,7 +113,11 @@
       "Governance and Compliance evidence integration",
       "EventMesh lifecycle publication through existing EventBus",
       "read-only 14-stage SC-MD-SPT FinTech value-chain homogeneity projection",
-      "Quality hot-path isolation validation for MarketData, Scoring, Ranking, Orchestrator and application runtime"
+      "Quality hot-path isolation validation for MarketData, Scoring, Ranking, Orchestrator and application runtime",
+      "shared QualityCenterReport composition factory for CLI and build snapshot",
+      "atomic commit-bound QualityCenterReport snapshot in .quality and dist/quality",
+      "read-only IAM-protected Quality Center admin API",
+      "Quality Evidence Panel in the existing Performance-Zentrale with no synthetic fallback values"
     ],
     "mandatoryValidatorImplementationCoverage": {
       "total": 16,
@@ -120,7 +129,8 @@
     "intentionalEvidenceBoundaries": [
       "Documentation, Architecture, Knowledge, Metadata and Twin quality-score axes remain absent until an existing authority defines a deterministic numeric source; Quality Center never invents a formula.",
       "line/branch/function/statement coverage remains NOT_AVAILABLE unless a real coverage-summary artifact exists.",
-      "FinTech value-chain projection validates structural/evidence connectivity and hot-path isolation; it never changes financial scores, confidence, ranking, provider routing or eligibility."
+      "FinTech value-chain projection validates structural/evidence connectivity and hot-path isolation; it never changes financial scores, confidence, ranking, provider routing or eligibility.",
+      "Historical Quality trend persistence remains outside this slice until an existing persistence authority and explicit production-mutation approval define the storage path."
     ],
     "remainingContractScope": []
   },

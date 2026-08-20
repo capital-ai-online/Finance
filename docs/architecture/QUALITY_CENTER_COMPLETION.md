@@ -1,17 +1,17 @@
 # Quality Center Completion
 
-**Status:** IMPLEMENTATION COMPLETE — EXACT-HEAD CI VALIDATION PENDING
+**Status:** CONTRACT COMPLETE — OPERATIONALIZATION IMPLEMENTED ON FEATURE BRANCH; EXACT-HEAD CI VALIDATION PENDING
 
-**Branch:** `agent/quality-center-completion`  
-**PR:** #457  
+**Completion PR:** #457 (merged)  
+**Operationalization branch:** `agent/quality-center-operationalization`  
 **Authority:** ESS-0005 + ESS-0001-CONTRACTS Chapter 12  
 **FinTech chain authority:** `SC-MD-SPT-0001`
 
 ## Ziel
 
-Dieser Folgepfad vervollstaendigt die bestehende Quality-Center-Architektur ohne zweite Rule-, Governance-, Compliance-, Event-, Traceability-, Scoring- oder Ranking-Authority.
+Der Quality-Center-Core ist abgeschlossen und wird auf dem Operationalisierungs-Branch ohne zweite Rule-, Governance-, Compliance-, Event-, Traceability-, Scoring- oder Ranking-Authority fuer Build und Administrator-UI nutzbar gemacht.
 
-Ausfuehrbarkeit, Konformitaet und Messwertverfuegbarkeit sind strikt getrennte Zustaende. Fehlende Evidence wird nicht als PASS oder Ersatzscore simuliert.
+Ausfuehrbarkeit, Konformitaet, Messwertverfuegbarkeit und operative Darstellung bleiben strikt getrennte Zustaende. Fehlende Evidence wird nicht als PASS oder Ersatzscore simuliert.
 
 ## Codebasierter Abschluss
 
@@ -28,6 +28,9 @@ Ausfuehrbarkeit, Konformitaet und Messwertverfuegbarkeit sind strikt getrennte Z
 | Quality Events | bestehender EventMesh |
 | FinTech Value Chain | 14-stufige read-only Projektion |
 | Hot-Path-Isolation | maschinenlesbar pruefbar |
+| Build-Snapshot | `.quality/quality-center-report.json` + `dist/quality/quality-center-report.json` |
+| Admin API | `GET /api/admin/quality-center`, read-only und IAM-geschuetzt |
+| Quality Panel | bestehende Performance-Zentrale, keine neue Authority |
 
 ## Acht Quality Gates
 
@@ -50,7 +53,10 @@ Der Build-Pfad erhaelt die bestehenden Schutzinvarianten:
 
 - `verifyGoogleMarketingInvariants.ts` bleibt vor dem Build sichtbar und aktiv;
 - `buildRuntimeReleaseManifest.ts` bleibt verpflichtender Build-Finalizer;
-- Build-PASS wird erst nach erfolgreichem Runtime-Release-Manifest geschrieben.
+- Build-PASS wird erst nach erfolgreichem Runtime-Release-Manifest geschrieben;
+- der Quality-Center-Snapshot wird erst **danach** aus dem bestehenden `QualityCenterReport` erzeugt.
+
+Der Snapshot erzeugt keine neue Gate- oder Release-Semantik. Er macht die bereits vorhandene Evidence fuer Runtime und UI lesbar.
 
 ## Quality Score
 
@@ -67,72 +73,51 @@ Keine eindeutige numerische Formel ist aktuell normativ definiert fuer:
 - Metadata;
 - Twin.
 
-Dafuer werden **keine** Ersatzformeln eingefuehrt. Der Gesamt-Quality-Score bleibt bei unvollstaendiger Messmenge bewusst `PARTIAL`/`NOT_AVAILABLE`. Dies schliesst den Implementierungspunkt fail-safe ab, ohne neue fachliche Authority zu erzeugen.
+Dafuer werden **keine** Ersatzformeln eingefuehrt. Der Gesamt-Quality-Score bleibt bei unvollstaendiger Messmenge bewusst `PARTIAL`/`NOT_AVAILABLE`.
 
 # Homogenitaetspruefung FinTech-Wertschoepfungskette
 
-Die Panel-Projektion orientiert sich an der kanonischen SC-MD-SPT-Kette:
+Die Panel-Projektion orientiert sich ausschliesslich an der kanonischen Stufendefinition in `FintechValueChainQualityProjection.ts` unter Authority `SC-MD-SPT-0001`.
+
+Eine Stufe gilt als `CONNECTED`, wenn ihre kanonischen Runtime-Artefakte und Test-/Evidence-Artefakte vorhanden sind. Der Gesamtstatus `homogeneous=true` setzt zusaetzlich voraus, dass die finanzielle Hot Path keine direkte Quality-Abhaengigkeit besitzt.
+
+Gepruefte Hot Paths umfassen MarketData, Scoring, Ranking, Orchestrierung und Application Runtime. Diese Entkopplung ist beabsichtigt: Quality ist eine seitliche Evidence-/Observability-Schicht und darf nicht in Market-Data-Werte, Scoring, Confidence, Ranking, Eligibility oder Provider-Routing eingreifen.
+
+## Operationalisierung
 
 ```text
-Asset Catalog / Request
-  -> Universal Asset Identity
-  -> Evidence Acquisition
-  -> Evidence / Data Quality Gate
-  -> Classification + Feature Contract
-  -> ScoringModelRegistry
-  -> ScoringDispatcher
-  -> Domain Executor Adapter
-  -> CanonicalScoreResult + execution lineage
-  -> Confidence / DQ Composite
-  -> Ranking comparability gate
-  -> Ranking / Eligibility / SLO
-  -> EventMesh / Traceability / Supervisor
-  -> API / UI / Alerts / downstream evidence
+QualityCenterOrchestrator
+  -> QualityCenterReport 1.3.0
+  -> gemeinsame repositoryQualityReport.ts Factory
+       -> CLI repository:quality:check
+       -> Build Snapshot
+  -> QualityCenterSnapshotStore
+       -> .quality/quality-center-report.json
+       -> dist/quality/quality-center-report.json
+  -> GET /api/admin/quality-center
+  -> Performance-Zentrale / Quality Evidence Panel
 ```
 
-## Homogenitaetsmodell
+Wesentliche Invarianten:
 
-Eine Stufe gilt als `CONNECTED`, wenn ihre kanonischen Runtime-Artefakte und Test-/Evidence-Artefakte vorhanden sind.
+- genau ein Quality-Report-Vertrag;
+- keine Live-Repository-Analyse pro HTTP-Request;
+- API ausschliesslich read-only;
+- bestehendes IAM (`checkAdminAccess`, `DIAGNOSTIC_ZONE_ROLES`);
+- `Cache-Control: no-store`;
+- ungueltige oder commit-ungebundene Snapshots werden verworfen;
+- kein Supabase-/Render-/Stripe-/Storage-Write;
+- keine zweite Frontend-Authority; die Governance-UI-Fassade referenziert die bestehende Admin-Komponente;
+- kein Quality-Import in die finanzielle Hot Path.
 
-Der Gesamtstatus `homogeneous=true` setzt zusaetzlich voraus, dass die finanzielle Hot Path keine direkte Quality-Abhaengigkeit besitzt.
+## Bewusst verbleibende Evidence-Grenzen
 
-Gepruefte Hot Paths:
+- Code-Coverage bleibt `NOT_AVAILABLE`, solange kein echtes Coverage-Summary-Artefakt produziert wird.
+- Fuenf numerische Quality-Achsen bleiben ohne Score, solange keine bestehende Authority ihre Formel definiert.
+- Historische Quality-Trends werden noch nicht in einen produktiven Datenspeicher geschrieben. Das waere eine eigene Persistenz-/Produktionsmutation und benoetigt eine separat autorisierte Entscheidung.
+- Ein GitHub-Actions-Artifact-Upload ist nicht Teil dieses Slices; der runtime-faehige Snapshot liegt bereits im Build-`dist`.
 
-- MarketDataGateway;
-- ScoringDispatcher;
-- ScoringExecutorAdapters;
-- Ranking Service;
-- Crypto Orchestrator;
-- Application Runtime.
-
-Diese Entkopplung ist beabsichtigt: Quality ist eine seitliche Evidence-/Observability-Schicht und darf nicht in Market-Data-Werte, Scoring, Confidence, Ranking, Eligibility oder Provider-Routing eingreifen.
-
-## Wertschöpfungsketten-Matrix
-
-| Stufe | Quality-Anbindung | Authority bleibt bei |
-|---|---|---|
-| Asset Catalog / Request | Runtime + Tests als Evidence | Asset Registry / Request Layer |
-| Universal Asset Identity | Struktur-/Contract-Evidence | Scoring Identity Contract |
-| Evidence Acquisition | Gateway-/Adapter-Evidence | MarketData |
-| Data Quality Gate | Composite-DQ-Evidence | MarketData / DQ |
-| Classification + Feature Contract | Contract-/Test-Evidence | Classification / Scoring Contract |
-| Model Registry | Registry-Evidence | Scoring |
-| Dispatcher | Dispatcher-Evidence | Scoring |
-| Domain Executor | Executor-Evidence | Domain Scoring Services |
-| Canonical Score + Lineage | Lineage-Tests | Scoring Contract / Traceability |
-| Confidence / DQ | Confidence-/DQ-Evidence | MarketData / Scoring |
-| Ranking Comparability | Ranking-Contract-Evidence | Ranking |
-| Ranking / Eligibility / SLO | Runtime-/SLO-Evidence | Ranking / Screening Governance |
-| EventMesh / Traceability / Supervisor | Manifest-/Test-Evidence | jeweilige Platform-Authority |
-| API / UI / Alerts | Surface-/Contract-Evidence | Application / UI / Alert Layer |
-
-## Architekturentscheidung
-
-Es wird **kein** Quality-Import in die finanzielle Hot Path eingebaut. Eine solche Kopplung waere keine homogenere Integration, sondern eine zweite Entscheidungs-/Abhaengigkeitsschicht und wuerde die bestehende Wertschoepfungsketten-Authority verformen.
-
-Das Quality Panel ist daher der `QualityCenterReport` als read-only Projektion. Ein spaeteres visuelles Frontend darf diesen Report darstellen, erhaelt dadurch aber keine neue Authority.
-
-## Abschlusskriterien
+## Abschlusskriterien Core
 
 - [x] 16/16 Validatoren ausfuehrbar
 - [x] Konformitaetsreport getrennt von Implementierungsabdeckung
@@ -142,8 +127,19 @@ Das Quality Panel ist daher der `QualityCenterReport` als read-only Projektion. 
 - [x] FinTech-Wertschoepfungskette als read-only Panel-Projektion integriert
 - [x] Hot-Path-Isolation als Architekturtest verankert
 - [x] keine Duplikation fachlicher Authorities
-- [ ] Exact-Head Governance PASS
-- [ ] Exact-Head Google-Marketing-Guard PASS
-- [ ] Exact-Head Klasse-R-CI / `build-and-test` PASS
+- [x] Completion PR #457 wurde in `main` gemerged
 
-Die letzten drei Punkte sind Validierungsnachweise und werden erst nach den GitHub-Actions des finalen Heads auf `PASS` gesetzt.
+## Abschlusskriterien Operationalisierung
+
+- [x] gemeinsame Report-Factory fuer CLI und Snapshot
+- [x] commitgebundene atomare Snapshot-Persistenz
+- [x] Build-Snapshot unter `dist/quality`
+- [x] IAM-geschuetzte read-only Admin API
+- [x] Quality Evidence Panel in bestehender Admin-Oberflaeche
+- [x] keine externe Plattformmutation
+- [ ] Exact-Head TypeScript/Lint PASS
+- [ ] Exact-Head Unit/Architecture Tests PASS
+- [ ] Exact-Head Production Build PASS
+- [ ] Exact-Head Governance/Security PASS
+
+Die offenen Checkboxen sind ausschliesslich Validierungsnachweise des Operationalisierungs-Heads und werden erst nach den zugehoerigen CI-Laeufen als PASS gewertet.
