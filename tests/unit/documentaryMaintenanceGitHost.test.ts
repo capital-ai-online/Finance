@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildMaintenanceBranchName, buildRuntimeWorkClaim } from '../../scripts/automation/runDocumentaryMaintenanceControlLoop';
 
@@ -12,5 +14,11 @@ describe('Documentary maintenance Git host helpers', () => {
     expect(claim.baseBranch).toBe('main');
     expect(claim.claimedPaths).toEqual(['docs/architecture/FOO.md', 'docs/governance/document-registry.json']);
     expect(claim.claimedPaths).not.toContain('**');
+  });
+
+  it('propagates the execution kill switch instead of hard-coding mutation enablement', () => {
+    const host = fs.readFileSync(path.resolve('scripts/automation/runDocumentaryMaintenanceControlLoop.ts'), 'utf8');
+    expect(host).toContain('killSwitchActive: request.killSwitchActive ?? false');
+    expect(host).not.toContain('killSwitchActive: false');
   });
 });
