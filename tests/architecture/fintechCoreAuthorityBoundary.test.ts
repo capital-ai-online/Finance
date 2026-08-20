@@ -11,6 +11,9 @@ const FOUNDATION_FILES = [
   '../../src/platform/FinTechCore/Modules/Crypto/CryptoCategoryProfileResolver.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/CryptoCategoryFeatureContracts.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/Adapters/VerifiedCryptoSnapshotFeatureAdapter.ts',
+  '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternDetectionContracts.ts',
+  '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternReliabilityRegistry.ts',
+  '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternSignalResolver.ts',
   '../../src/platform/FinTechCore/index.ts',
 ] as const;
 
@@ -45,6 +48,21 @@ describe('FinTech Core FT-1/FT-2 authority boundary', () => {
     expect(source).not.toContain('getVerifiedCryptoSnapshot(');
     expect(source).not.toContain('fetch(');
     expect(source).not.toContain('axios');
+  });
+
+  it('keeps FT-2C detector-agnostic and does not silently bind an external TA runtime', () => {
+    const patternFiles = [
+      '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternDetectionContracts.ts',
+      '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternReliabilityRegistry.ts',
+      '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternSignalResolver.ts',
+    ] as const;
+
+    for (const relativeFile of patternFiles) {
+      const source = readFileSync(new URL(relativeFile, import.meta.url), 'utf8');
+      expect(source).not.toMatch(/from\s+['"](?:talib|technicalindicators|tulind)['"]/i);
+      expect(source).not.toContain('OrderIntent');
+      expect(source).not.toContain('dispatchCanonicalScore(');
+    }
   });
 
   it('keeps Crypto Module 01 non-live during the foundation phase', () => {
