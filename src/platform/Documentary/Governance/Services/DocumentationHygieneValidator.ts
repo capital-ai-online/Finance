@@ -12,7 +12,7 @@ export interface RegistryEntry {
   authority: string;
   version: string;
   language: 'de' | 'en' | 'mixed' | string;
-  lifecycle: 'draft' | 'generated' | 'reviewed' | 'approved' | 'superseded' | 'archived' | 'suspended' | string;
+  lifecycle: 'draft' | 'generated' | 'reviewed' | 'approved' | 'superseded' | 'archived' | 'suspended' | 'historical' | string;
   path: string;
 }
 
@@ -30,7 +30,7 @@ export interface DocumentationHygieneFinding {
 
 const ALLOWED_ROOT_MARKDOWN = new Set(['README.md', 'AGENTS.md']);
 const ALLOWED_LANGUAGES = new Set(['de', 'en', 'mixed']);
-const ALLOWED_LIFECYCLES = new Set(['draft', 'generated', 'reviewed', 'approved', 'superseded', 'archived', 'suspended']);
+const ALLOWED_LIFECYCLES = new Set(['draft', 'generated', 'reviewed', 'approved', 'superseded', 'archived', 'suspended', 'historical']);
 const SEMVER = /^\d+\.\d+\.\d+$/;
 const DOCUMENT_ID = /^DOC-[A-Z0-9-]+$/;
 
