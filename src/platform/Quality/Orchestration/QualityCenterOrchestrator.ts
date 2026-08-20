@@ -11,13 +11,14 @@ import {
   type QualityEventSink,
   type QualityScoreMeasurement,
 } from '../Contracts/QualityCenterContract';
+import { Chapter12ValidatorRunner } from '../../Validators/Chapter12ValidatorRunner';
 import { MandatoryValidatorCatalog } from '../../Validators/MandatoryValidatorCatalog';
 import { CoverageCollector } from '../Coverage/CoverageCollector';
 import { QualityGateRunner } from '../Gates/QualityGateRunner';
 import { QualityScoreCalculator } from '../Scoring/QualityScoreCalculator';
 import { TechnicalDebtRegister } from '../TechnicalDebt/TechnicalDebtRegister';
 
-export const QUALITY_CENTER_ORCHESTRATOR_VERSION = 'quality-center-orchestrator/1.2.0' as const;
+export const QUALITY_CENTER_ORCHESTRATOR_VERSION = 'quality-center-orchestrator/1.3.0' as const;
 
 export interface QualityCenterRunRequest extends RepositoryQualityObservationRequest {
   scoreMeasurements?: readonly QualityScoreMeasurement[];
@@ -27,6 +28,7 @@ export interface QualityCenterRunRequest extends RepositoryQualityObservationReq
 
 export interface QualityCenterOrchestratorDependencies {
   mandatoryValidatorCatalog?: MandatoryValidatorCatalog;
+  chapter12ValidatorRunner?: Chapter12ValidatorRunner;
   gateRunner?: QualityGateRunner;
   scoreCalculator?: QualityScoreCalculator;
   technicalDebtRegister?: TechnicalDebtRegister;
@@ -41,6 +43,7 @@ function errorMessage(error: unknown): string {
 
 export class QualityCenterOrchestrator {
   private readonly mandatoryValidatorCatalog: MandatoryValidatorCatalog;
+  private readonly chapter12ValidatorRunner: Chapter12ValidatorRunner;
   private readonly gateRunner: QualityGateRunner;
   private readonly scoreCalculator: QualityScoreCalculator;
   private readonly technicalDebtRegister: TechnicalDebtRegister;
@@ -53,6 +56,7 @@ export class QualityCenterOrchestrator {
   ) {
     this.eventSink = dependencies.eventSink;
     this.mandatoryValidatorCatalog = dependencies.mandatoryValidatorCatalog ?? new MandatoryValidatorCatalog();
+    this.chapter12ValidatorRunner = dependencies.chapter12ValidatorRunner ?? new Chapter12ValidatorRunner();
     this.gateRunner = dependencies.gateRunner ?? new QualityGateRunner();
     this.scoreCalculator = dependencies.scoreCalculator ?? new QualityScoreCalculator();
     this.technicalDebtRegister = dependencies.technicalDebtRegister ?? new TechnicalDebtRegister([], this.eventSink);
@@ -82,23 +86,35 @@ export class QualityCenterOrchestrator {
 
     try {
       const repositoryObservation = this.coordinator.observe(request);
+      const repoRoot = request.repoRoot ?? process.cwd();
       const mandatoryValidators = this.mandatoryValidatorCatalog.snapshot();
+      const chapter12Validation = this.chapter12ValidatorRunner.run({
+        repoRoot,
+        checkedAt: repositoryObservation.checkedAt,
+        sourceCommit: repositoryObservation.sourceCommit,
+        repositoryObservation,
+      });
       const coverage = request.coverageSnapshot ?? this.coverageCollector.collect(
-        request.repoRoot ?? process.cwd(),
+        repoRoot,
         repositoryObservation.checkedAt,
       );
       const gateReport = this.gateRunner.run(repositoryObservation);
       const qualityScore = this.scoreCalculator.calculate(request.scoreMeasurements ?? []);
       const technicalDebt = this.technicalDebtRegister.snapshot();
 
-      publish(repositoryObservation.blocking ? 'ValidationFailedEvent' : 'ValidationCompletedEvent', {
+      const validationBlocking = repositoryObservation.blocking || chapter12Validation.blocking;
+      publish(validationBlocking ? 'ValidationFailedEvent' : 'ValidationCompletedEvent', {
         checkedAt: repositoryObservation.checkedAt,
         overallStatus: repositoryObservation.overallStatus,
-        blocking: repositoryObservation.blocking,
+        blocking: validationBlocking,
         findings: repositoryObservation.summary.findings,
         mandatoryValidatorsAvailable: mandatoryValidators.available,
         mandatoryValidatorsPartial: mandatoryValidators.partial,
         mandatoryValidatorsNotAvailable: mandatoryValidators.notAvailable,
+        chapter12Status: chapter12Validation.overallStatus,
+        chapter12Passed: chapter12Validation.passed,
+        chapter12Failed: chapter12Validation.failed,
+        chapter12NotAvailable: chapter12Validation.notAvailable,
       });
 
       for (const gate of gateReport.gates) {
@@ -145,6 +161,7 @@ export class QualityCenterOrchestrator {
         checkedAt: repositoryObservation.checkedAt,
         repositoryObservation,
         mandatoryValidators,
+        chapter12Validation,
         gateReport,
         qualityScore,
         coverage,
@@ -160,6 +177,7 @@ export class QualityCenterOrchestrator {
           'ESS-0005',
           'ADR-0096',
           repositoryObservation.schemaVersion,
+          chapter12Validation.schemaVersion,
         ]),
         complianceRefs: Object.freeze([
           'ESS-0001-CONTRACTS Chapter 11',
