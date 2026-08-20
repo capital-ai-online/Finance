@@ -8,6 +8,7 @@ const FOUNDATION_FILES = [
   '../../src/platform/FinTechCore/CryptoModuleContracts.ts',
   '../../src/platform/FinTechCore/Runtime/WorkflowStateMachine.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/CryptoCoreModule.ts',
+  '../../src/platform/FinTechCore/Modules/Crypto/CryptoCategoryProfileResolver.ts',
   '../../src/platform/FinTechCore/index.ts',
 ] as const;
 
@@ -22,7 +23,7 @@ const FORBIDDEN_DIRECT_AUTHORITIES = [
   'kraken-api',
 ] as const;
 
-describe('FinTech Core FT-1 authority boundary', () => {
+describe('FinTech Core FT-1/FT-2A authority boundary', () => {
   it('does not import productive domain scorers, database clients or exchange clients directly', () => {
     for (const relativeFile of FOUNDATION_FILES) {
       const source = readFileSync(new URL(relativeFile, import.meta.url), 'utf8');
@@ -32,7 +33,7 @@ describe('FinTech Core FT-1 authority boundary', () => {
     }
   });
 
-  it('keeps Crypto Module 01 non-live during the FT-1 foundation phase', () => {
+  it('keeps Crypto Module 01 non-live during the foundation phase', () => {
     const source = readFileSync(
       new URL('../../src/platform/FinTechCore/Modules/Crypto/CryptoCoreModule.ts', import.meta.url),
       'utf8',
