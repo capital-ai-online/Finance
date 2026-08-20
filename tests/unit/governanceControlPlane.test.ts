@@ -15,7 +15,6 @@ type RegistryFixture = {
 };
 
 async function loadRuleValidator() {
-  // @ts-expect-error Runtime-governance rules intentionally remain a Node ESM module consumed by the canonical CLI.
   const module = await import('../../scripts/governance/controlPlaneRegistryRules.mjs');
   return module.validateGovernanceRegistryRelations as (fixture: RegistryFixture) => Finding[];
 }
