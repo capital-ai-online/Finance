@@ -137,7 +137,13 @@ export function validateQmDocumentationConsistency(
 
   if (packageJson) {
     if (packageJson.scripts?.['repository:quality:check'] !== 'tsx scripts/automation/validateRepositoryQuality.ts') {
-      findings.push(finding('QM-DOC-015', 'Quality CLI contract and package script are inconsistent.', packagePath, 'tsx scripts/automation/validateRepositoryQuality.ts', String(packageJson.scripts?.['repository:quality:check'] ?? 'missing'));
+      findings.push(finding(
+        'QM-DOC-015',
+        'Quality CLI contract and package script are inconsistent.',
+        packagePath,
+        'tsx scripts/automation/validateRepositoryQuality.ts',
+        String(packageJson.scripts?.['repository:quality:check'] ?? 'missing'),
+      ));
     }
   }
 
