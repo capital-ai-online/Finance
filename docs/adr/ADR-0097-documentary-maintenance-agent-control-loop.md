@@ -1,11 +1,11 @@
 # ADR-0097 — Documentary Maintenance Agent Control Loop
 
 **Authority ID:** `AUTH-ADR-DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20`  
-**Version:** `1.0.0`  
+**Version:** `1.1.0`  
 **Status:** `PROPOSED` — implementation candidate; effective only after Human Merge  
 **Date:** `2026-08-20`  
 **Decision Owner:** CAPITAL-AI Owner  
-**Scope:** Documentary semantic freshness, Supervisor/Platform-Director authorization wiring, branch-only document mutation, deterministic document versioning, maintenance observability and Draft-PR handoff
+**Scope:** Documentary semantic freshness, Supervisor/Platform-Director authorization wiring, branch-only document mutation, deterministic document versioning, maintenance observability, SC-MD-SPT-0001 evidence-sidecar integration and Draft-PR handoff
 
 ## Context
 
@@ -27,6 +27,8 @@ isolated branch -> bounded patch -> Draft PR
 ```
 
 The loop must not turn the Supervisor, Documentary, Observability telemetry or an AI provider into a new repository authority.
+
+The repository-wide FinTech value chain `SC-MD-SPT-0001` is separately projected by Quality as 14 read-only structural/evidence stages. Documentary maintenance must integrate with that chain as supporting documentation/evidence capability only; it must not become a fifteenth financial runtime stage or influence market data, classification, scoring, confidence, ranking, eligibility, provider routing, release or deployment decisions.
 
 ## Decision
 
@@ -82,19 +84,27 @@ Prompt inputs explicitly treat document text, diffs and retrieved chunks as untr
 
 No document body, prompt, diff, user identifier, secret or credential is included in the telemetry contract. This is a Documentary maintenance-specific D9 slice and does not replace a central observability platform.
 
-### 9. Existing Draft-PR workflow is reused
+### 9. SC-MD-SPT-0001 integration is sidecar-only and non-authorizing
+
+Documentary maintenance is attached to the FinTech value chain as a read-only Documentation/Evidence sidecar around `VC-13-EVENT-TRACEABILITY-SUPERVISOR`. The existing Quality projection `fintech-value-chain-quality/1.0.0` remains the repository-native structural/evidence check for the 14-stage value chain.
+
+This integration does **not** add Documentary as a runtime stage. Documentary does not import or call MarketData, Scoring, Ranking, Eligibility or delivery hotpaths and does not become a dependency of those hotpaths. It consumes governed repository/change/evidence context and emits documentation/maintenance evidence only.
+
+Direct effects on market data, classification, scoring, confidence, ranking, eligibility, provider routing, release, deployment or production mutation are forbidden. Quality remains read-only and non-authorizing; Documentary does not depend on Quality for mutation authority.
+
+### 10. Existing Draft-PR workflow is reused
 
 The Git host creates a fresh branch from exact fetched `origin/main`, writes only the approved patch set plus one bounded work claim, runs local structural governance checks, stages only explicit paths, commits and pushes the branch. It then dispatches the existing `.github/workflows/open-agent-draft-pr.yml` instead of implementing a second PR path.
 
 Immediately before remote handoff, `origin/main` is fetched again. If `main` changed during the run, the candidate is rejected and must be regenerated from the newer main. Evidence-bound semantic patches are not silently rebased.
 
-### 10. Governance/Registry/Validation closure is deterministic
+### 11. Governance/Registry/Validation closure is deterministic
 
-The branch provides `documentary:maintenance:test`, `documentary:maintenance:validate` and `documentary:maintenance:prepr` scripts. The closure validator checks exact Work Claim ↔ changed-file equality, branch synchronization with current `origin/main`, `git diff --check`, ADR/Authority/Document Registry identities, Documentary manifest version/contracts/tests, protected path classes, explicit staging and reuse of the existing Draft-PR workflow.
+The branch provides `documentary:maintenance:test`, `documentary:maintenance:validate` and `documentary:maintenance:prepr` scripts. The closure validator checks exact Work Claim ↔ changed-file equality, branch synchronization with current `origin/main`, `git diff --check`, ADR/Authority/Document Registry identities, Documentary manifest version/contracts/tests, the SC-MD-SPT-0001 sidecar boundary, protected path classes, explicit staging and reuse of the existing Draft-PR workflow.
 
-This validator complements — and does not replace — the canonical Documentation Hygiene and Governance Control Plane gates.
+This validator complements — and does not replace — the canonical Documentation Hygiene, Governance Control Plane and Repository Quality gates.
 
-### 11. No pre-PR expensive CI and no merge/deploy
+### 12. No pre-PR expensive CI and no merge/deploy
 
 The host may run targeted/local low-cost checks before PR creation. Full hosted CI remains a post-PR concern. The Maintenance Agent cannot merge, deploy or perform production mutation.
 
@@ -112,7 +122,8 @@ The host may run targeted/local low-cost checks before PR creation. Full hosted 
 - post-push handoff failures attempt remote cleanup;
 - `main` is never an eligible mutation target;
 - no Merge/Deploy/Production capability is granted;
-- telemetry excludes document content, prompts, diffs, user identifiers and secrets.
+- telemetry excludes document content, prompts, diffs, user identifiers and secrets;
+- no MarketData/Scoring/Ranking/Eligibility hotpath obtains a Documentary or Quality mutation dependency.
 
 No Supabase, Stripe, Render, production data, secrets or external infrastructure are mutated by this architecture.
 
@@ -130,9 +141,10 @@ No Supabase, Stripe, Render, production data, secrets or external infrastructure
 10. Existing Draft-PR workflow is reused.
 11. Final `main` drift aborts PR handoff.
 12. D9 maintenance health telemetry is content-free and correlation-bound.
-13. Work Claim, ADR Registry, Authority Registry, Document Registry and component manifest are mutually consistent.
-14. Targeted unit/type/structural checks pass before PR readiness.
-15. Merge remains a separate Human/Owner action.
+13. Documentary is declared and validated as a non-authorizing SC-MD-SPT-0001 sidecar around VC-13, not a financial runtime stage.
+14. Work Claim, ADR Registry, Authority Registry, Document Registry and component manifest are mutually consistent.
+15. Targeted unit/type/structural/repository-quality checks pass before PR readiness.
+16. Merge remains a separate Human/Owner action.
 
 ## Rollback
 
