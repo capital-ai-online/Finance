@@ -35,7 +35,7 @@ Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grun
 | Komponente | Datei | Kurzbeschreibung |
 |------------|-------|------------------|
 | CryptoScoringEnterprise | `CryptoScoringEnterprise.tsx` | Enterprise-Crypto-Scoring (nutzt StatusBadge) |
-| BuffetValueCheck | `BuffetValueCheck.tsx` | **Stock-only** Graham/Buffett Value-Check; Auswahl enthält ausschließlich Aktien und lädt Marktpreis/Fundamentals progressiv über `verified-asset-display/1.0.0` (ADR-0097). |
+| BuffetValueCheck | `BuffetValueCheck.tsx` | **Stock-only** Graham/Buffett Value-Check; Auswahl enthält ausschließlich Aktien und lädt Marktpreis/Fundamentals progressiv über `verified-asset-display/1.0.0` als Display/Research-Lane von SC-MD-SPT-0001. ADR-0034-Entitlement muss vor Provider-Hydration greifen. |
 | BacktestEngine | `BacktestEngine.tsx` | Backtesting-Engine |
 | PortfolioBacktester | `PortfolioBacktester.tsx` | Portfolio-Backtester |
 | PortfolioPerformance | `PortfolioPerformance.tsx` | Portfolio-Performance |
@@ -51,9 +51,11 @@ Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grun
 | RawMaterialsDashboard | `RawMaterialsDashboard.tsx` | Rohstoff-Dashboard |
 | DeFiOrchestration | `DeFiOrchestration.tsx` | DeFi-Orchestrierung |
 
-### ADR-0097 Financial-Data Consumer Rule
+### Financial-Data Consumer Rule — ADR-0032 / SC-MD-SPT-0001
 
 `/api/registry/assets` bleibt Katalog-/Metadata-Quelle. Fachliche Markt-/Fundamentalwerte werden über den jeweils verifizierten Evidence-/Display-Contract geladen. Ein fachlich spezialisierter Consumer darf den globalen Multi-Asset-Katalog enger begrenzen; `BuffetValueCheck` ist deshalb ausschließlich für `stock` auswählbar.
+
+Für geschützte/quotierte Analysefunktionen wird die SPT-Reihenfolge `Identity → Entitlement/Usage → Evidence Hydration → Analysis` eingehalten. Für Buffett ist `POST /api/entitlements/warren-buffett/authorize` unter ADR-0034 die serverseitige Autorisierungsgrenze.
 
 ---
 
@@ -154,4 +156,4 @@ Dieses Inventory listet die aktuellen UI-/Feature-Komponenten und dient als Grun
 
 ---
 
-*Erstellt am 16.08.2026 im Rahmen der Frontend-Roadmap. ADR-0097-Korrelation ergänzt am 20.08.2026.*
+*Erstellt am 16.08.2026 im Rahmen der Frontend-Roadmap. ADR-0032-/SC-MD-SPT-Korrelation ergänzt am 20.08.2026.*
