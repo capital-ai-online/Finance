@@ -26,147 +26,163 @@ Aktiv
 > mit Lücken. CAPITAL-AI erfasst Daten, besitzt aber keine Datenqualitätsschicht.
 
 Dieses Dokument schreibt fest, was seit diesem Befund bereits als **Herkunfts-** und
-**Lückenbehandlungs-Pattern** entstanden ist, macht es zu einer benannten Konvention und hält
-historische Entwicklungsschritte nachvollziehbar. Seit 2026-08-20 ergänzt ADR-0097 diese
-Konvention um die kanonische Trennung zwischen metadata-only Asset-Katalog und verifizierter
-Display-Evidence. **Versionierung von Korrekturen** ist weiterhin nicht Bestandteil dieses
-Dokuments — siehe „Nicht Bestandteil" unten.
+**Lückenbehandlungs-Pattern** entstanden ist (verstreut über D1, S1/S2/S5, S6, H1 und diesen
+Commit), macht es zu einer benannten, verbindlichen Konvention, und dokumentiert einen
+konkret geschlossenen Datenpunkt-Lücke. **Versionierung von Korrekturen** ist bewusst NICHT
+Bestandteil dieses Dokuments — siehe „Nicht Bestandteil" unten.
+
+> **Authoritative amendment 2026-08-20:** Abschnitt 6 / ADR-0097 präzisiert die heutige
+> produktive Trennung zwischen metadata-only Asset-Katalog, verifizierter Display-Evidence und
+> kanonischem Scoring. Historische `fallback`-/`simulated`-Felder in den Abschnitten 1–5 sind
+> Compatibility-/Entwicklungshistorie und dürfen nicht als aktuelle verifizierte UI-Evidence
+> interpretiert werden.
 
 ---
 
-## 1. Herkunfts-Pattern (historische Compatibility-Sicht)
+## 1. Herkunfts-Pattern (Provenance)
 
-Die nachfolgenden Felder bleiben als historische bzw. Legacy-Compatibility-Sicht relevant:
+Drei Felder, konsistent über die historische Codebasis verwendet:
 
 | Feld | Werte | Bedeutung | Wo gesetzt |
 |---|---|---|---|
-| `dataSource` | `'live' \| 'fallback'` | Provider-beobachtete Zeile vs. Compatibility-/Registry-Fallback | Market-Data-Runtime |
-| `scoreBasis` | `'market-data' \| 'heuristic' \| 'synthetic' \| undefined` | Herkunft historischer/Compatibility-Scorepfade | Legacy-/Compatibility-Code |
-| `source` (Kurshistorie) | `'live' \| 'simulated'` | Herkunft älterer History-Contracts | `src/lib/assetRegistry.ts` |
-
-**Wichtig seit ADR-0097:** `fallback` oder `simulated` ist **keine verifizierte öffentliche
-Markt-Evidence**. Diese Werte dürfen nicht allein aufgrund ihrer Präsenz als aktuelle Preis-,
-Fundamental- oder Scoringdaten an einen produktiven UI-Consumer ausgeliefert werden.
+| `dataSource` | `'live' \| 'fallback'` | Live-Marktdaten-Fetch erfolgreich vs. statischer Notfall-Snapshot (`FALLBACK_ASSETS`, historische Compatibility-Sicht) | Market-Data Compatibility Runtime |
+| `scoreBasis` | `'market-data' \| 'heuristic' \| 'synthetic' \| undefined` | Womit ein historischer/Compatibility-Score tatsächlich berechnet wurde | Legacy-/Compatibility-Scoring |
+| `source` (Kurshistorie) | `'live' \| 'simulated'` | Ob ältere History-Contracts echte historische Kurse oder eine simulierte Reihe liefern | `src/lib/assetRegistry.ts`, `getHistory()` |
 
 **Historische Abdeckung nach Anlageklasse:**
 
-| Klasse | Compatibility-Preis | Score-/Evidence-Pfad | Historische Sicht |
+| Klasse | `dataSource` (Preis) | `scoreBasis` (Score) | `source` (Historie) |
 |---|---|---|---|
-| Crypto | live/fallback | kanonische Crypto-Evidence/Dispatcher | Legacy-History kann `simulated` kennen; Verified Display nicht |
-| Aktien | live/fallback | Traditional Evidence/Dispatcher + Fundamentals | Verified Display verlangt Provider-Evidence |
-| Forex | live/fallback | Traditional Evidence/Dispatcher | Verified Display verlangt Provider-Evidence |
-| Indizes | live/fallback | FMP/Traditional Evidence/Dispatcher | provider-/mappingabhängig |
-| Rohstoffe | live/fallback | Commodity Evidence/Dispatcher | provider-/mappingabhängig |
-| Sovereign Benchmarks | Rendite-Evidence | Sovereign Evidence/Dispatcher | Einzelanleihen ohne Mapping fail-closed |
+| Crypto (Standard) | ✅ live/fallback | ✅ `market-data` | ✅ live/simulated (CoinGecko) |
+| Crypto (Meme) | ✅ live/fallback | ✅ `market-data` | ✅ live/simulated |
+| DeFi | ✅ live/fallback | ✅ `market-data` | ✅ live/simulated |
+| Rohstoffe | ✅ live/fallback | — (dedizierte Fachengine, siehe S6) | n/a |
+| Aktien | ✅ live/fallback | ✅ `market-data`/`heuristic` (H1) | ✅ live/simulated (Stooq) |
+| Forex | ✅ live/fallback | ✅ `market-data`/`heuristic` (H1) | ✅ live/simulated (Stooq, seit H1) |
+| Indizes | ✅ live/fallback (seit J1-Folge, FMP) | ✅ `market-data`/`heuristic` | ✅ live (FMP, `server/fmpIndices.ts`) — schrittweise befüllt, rate-limit-bewusst |
+| Anleihen | ⚠️ historische Compatibility-Zeile `fallback` | historischer `heuristic`-Pfad | siehe Nachtrag Abschnitt 5 / heutige Sovereign-Evidence |
 
-Die frühere Aussage, ein kompletter Live-Zustand solle sich über „mehrere 60s-Zyklen“ aufbauen,
-ist seit ADR-0097 zu präzisieren: **Cache-TTL und Provider-Polling-Cadence sind getrennt.** Der
-Compatibility-Cache kann weiterhin 60 Sekunden frisch sein; periodisches Provider-I/O wird
-mindestens auf eine 90-Sekunden-Cadence begrenzt und auf tatsächlich provider-beobachtete Zeilen
-beschränkt.
+**Nachtrag (J1-Folge, 2026-08-01):** die Indizes-Lücke unten wurde geschlossen, nachdem der
+Nutzer einen eigenen FMP-API-Key bereitgestellt hat (`FMP_API_KEY`, `server/fmpIndices.ts`).
+FMPs Batch-Quote-Endpunkte erfordern einen Ultimate/Enterprise-Plan (nicht vorhanden) — Quotes
+und Historie werden daher einzeln je Symbol mit Cache + globalem Cooldown abgerufen (identisches
+Muster wie `server/stockFundamentals.ts`, H1). Die damalige Formulierung eines Aufbaus „über
+mehrere 60s-Zyklen“ beschreibt den historischen Runtime-Stand; die aktuelle Provider-Polling-
+Cadence wird in Abschnitt 6 präzisiert.
 
 ## 2. Lückenbehandlung (Gap Handling)
 
-`renormalizeAndScore()` bzw. die kanonischen Domain-/Dispatcher-Verträge behandeln fehlende
-Scoringfaktoren fail-closed bzw. durch dokumentierte Gewichtungsnormalisierung. Für die
-Darstellung gilt zusätzlich:
+`renormalizeAndScore()` (`src/services/realMarketSignals.ts`) ist die kanonische
+Lückenbehandlungs-Funktion für die dort angebundenen Faktorpfade: fehlt ein Eingangsfaktor für ein
+Symbol (keine reale Datenquelle), wird er aus der gewichteten Summe ausgeschlossen und sein
+Gewichtsanteil proportional auf die vorhandenen Faktoren umgelegt — **niemals geschätzt oder mit
+einem Platzhalterwert gefüllt**.
 
-- fehlende Markt-/Fundamental-Evidence wird nicht geschätzt;
-- metadata-only Katalogwerte werden nicht als Marktwerte interpretiert;
-- `PARTIAL` und `SOURCE_UNAVAILABLE` sind zulässige Zustände;
-- `NOT_APPLICABLE` trennt fachlich nicht anwendbare Kennzahlen von fehlender Datenquelle;
-- Bootstrap-, Demo- oder simulierte Werte dürfen keine verifizierte Display-Evidence ersetzen.
-
-Scoring und Display bleiben getrennte Verträge. ADR-0087 / SC-2 C3 bleibt die Authority für
-produktive Modellwahl und Scoring; ADR-0097 definiert nur die read-only Darstellungs-/Evidence-
-Grenze.
+Jeder Aufruf liefert zusätzlich `usedFactors`/`missingFactors` zurück — die Lücke ist damit nicht
+nur behandelt, sondern auch sichtbar. Für aktuelle produktive Modellwahl/Scoring bleibt
+ADR-0087 / SC-2 C3 maßgeblich; ADR-0097 verändert diese Authority nicht.
 
 ## 3. Geschlossene Lücke: das `pattern`-Feld
 
-**Befund.** Historisch wies `getAssetPatternForSymbol()` jedem Symbol einen benannten
-Chart-Pattern zu, teilweise hartkodiert oder hashbasiert. Diese Zuweisungen waren keine echte
-Mustererkennung.
+**Befund.** `getAssetPatternForSymbol()` wies historisch jedem Symbol einen benannten
+Chart-Pattern zu — teilweise hartkodiert, teilweise hashbasiert. Keine dieser Zuweisungen basierte
+auf echter Mustererkennung. Das Feld wurde ohne ausreichende Herkunftskennzeichnung an Nutzer
+ausgeliefert.
 
-**Fix.** Nutzerseitig ausgelieferte Trend-/Pattern-Darstellung verwendet nur reale History-
-Evidence oder bleibt leer. Historische interne Heuristikpfade dürfen nicht als verifizierte
-Display-Evidence interpretiert werden.
+**Fix.** Das an Nutzer ausgelieferte `pattern`-/Trend-Feld wird nur aus echter Kurshistorie
+abgeleitet oder bleibt ohne echte History-Evidence leer. Historische interne Heuristikbausteine
+sind keine verifizierte UI-Evidence.
 
-## 4. Bekannte und historische Lücken
+## 4. Bekannte, noch offene Lücken (historische Liste)
 
-- ~~**News-Sentiment:** heuristische Klassifikation ohne Kennzeichnung.~~ **Behoben 2026-08-15**
-  durch `sentimentBasis: 'heuristic'`.
-- ~~**H1-Fundamentaldaten-Provenance:** Rohwerte ohne durchgereichte Zeitstempel.~~ **Überholt.**
-  `server/stockFundamentals.ts` führt feldbezogene `FinancialFieldProvenance[]`; ADR-0097 macht
-  diese Daten über den Verified-Display-Contract direkt nutzbar.
-- **`CryptoEnterpriseEvaluator.tsx`:** historischer Befund zu hartkodierten Fallback-Werten bleibt
-  als separater Scope bestehen, sofern der aktuelle Codepfad ihn noch enthält. ADR-0097 autorisiert
-  ausdrücklich keine solchen Fallbacks.
+Diese Auflistung wird zur Traceability erhalten; spätere Korrekturen sind markiert:
 
-## 5. Nachtrag 2026-08-15 — P2-1 Bestandsaufnahme
+- ~~**News-Sentiment** (`src/features/news/newsRoutes.ts`, `classifyNewsSentiment()`): eine
+  deterministische Schlüsselwort-Heuristik ohne Kennzeichnung.~~ **Behoben 2026-08-15** durch
+  `sentimentBasis: 'heuristic'`.
+- ~~**H1-Fundamentaldaten:** Rohwerte ohne durchgereichte Provenance-Zeitstempel.~~ **Überholt / geschlossen.**
+  `server/stockFundamentals.ts` führt `FinancialFieldProvenance[]`; ADR-0097 nutzt diese
+  Provenance für die direkte verifizierte Display-Hydration.
+- **`CryptoEnterpriseEvaluator.tsx`:** historischer Befund zu hartkodierten Fallback-Werten.
+  Falls ein entsprechender Legacy-Pfad noch existiert, bleibt er ein separater Remediation-Scope;
+  ADR-0097 autorisiert keine solchen Fallbacks.
 
-Die P2-1-Bestandsaufnahme
-`docs/evidence/p2-1/P2_1_SA_P07_DATA_QUALITY_LINEAGE_INVENTORY.md` hat historische Aussagen
-korrigiert:
+## 5. Nachtrag 2026-08-15 — P2-1 Bestandsaufnahme deckt zwei veraltete Aussagen auf
 
-- Sovereign Benchmark Evidence existiert über `src/services/eodhdBondEvidence.ts` und die
-  freigegebene Sovereign-Scoring-Grenze; Einzelanleihen ohne Mapping bleiben gesperrt.
-- `server/stockFundamentals.ts` besitzt bereits feldbezogene Provenance mit `retrievedAt` und
-  `observedAt`.
-- News-Sentiment wird als heuristisch gekennzeichnet.
+Im Rahmen der Roadmap-Priorität P2-1 (Datenqualitätsmetriken) wurde eine vollständige read-only
+Bestandsaufnahme der Provenance-/Lineage-/Provider-Health-Infrastruktur durchgeführt:
+`docs/evidence/p2-1/P2_1_SA_P07_DATA_QUALITY_LINEAGE_INVENTORY.md`. Zwei Aussagen dieses Dokuments
+wurden dadurch als veraltet identifiziert:
 
-## 6. Nachtrag 2026-08-20 — Verified Asset Display als kanonische UI-Evidence-Grenze
+- **Abschnitt 1, Anleihen-Zeile:** „Historie ❌ nicht abgedeckt" ist überholt. `src/services/
+  eodhdBondEvidence.ts` liefert seit ADR-0033 real evidenzbasierte Rendite-Historie
+  (EODHD `*.GBOND`); Einzelanleihen bleiben ohne freigegebenes Mapping nicht score-/displayfähig.
+- **Abschnitt 4, H1-Fundamentaldaten-Zeitstempel:** überholt. `server/stockFundamentals.ts`
+  exportiert `FinancialFieldProvenance[]` je Fundamentaldaten-Feld inklusive
+  `retrievedAt`/`observedAt`.
 
-ADR-0097 schließt die zentrale Vertragslücke zwischen Asset-Katalog und sichtbaren Finanzwerten.
+## 6. Authoritative Amendment 2026-08-20 — ADR-0097 Verified Asset Display
 
-### 6.1 Katalog vs. Observation
+ADR-0097 schließt die Vertragslücke zwischen Katalog und sichtbaren Finanzwerten.
 
-`GET /api/registry/assets` ist ein **Asset-Katalog**. Er darf Identität, Name, Klasse, Mapping-
-und Contract-Metadaten liefern, aber Bootstrap-/Compatibility-Zahlen werden nicht automatisch als
-verifizierte Finanzbeobachtung freigegeben.
+### 6.1 Drei getrennte Ebenen
 
-Für per-Symbol-Darstellung gilt:
+```text
+Asset Catalog (metadata-only)
+        |
+        v
+Verified Observation / Display Evidence
+        |
+        v
+UI / Research Consumer
 
-`GET /api/registry/assets/:symbol/verified-display`
+Canonical Scoring bleibt separat unter ADR-0087 / ScoringDispatcher.
+```
 
-mit Contract `verified-asset-display/1.0.0`.
+- `GET /api/registry/assets` ist **Katalog-/Metadata-Authority** und darf ungeprüfte Bootstrap-
+  Zahlen nicht als verifizierte Marktwerte freigeben.
+- `GET /api/registry/assets/:symbol/verified-display` liefert den read-only Contract
+  `verified-asset-display/1.0.0` mit Wert, Provider, Evidence IDs, Zeitstempeln und Status.
+- Fehlende Daten bleiben `PARTIAL` oder `SOURCE_UNAVAILABLE`; fachlich unpassende Metriken werden
+  `NOT_APPLICABLE` statt mit Ersatzwerten gefüllt.
+- Der Display-Contract ist `executionPriceEligible=false`.
 
-Der Contract liefert, soweit fachlich verfügbar:
+### 6.2 Fundamentals
 
-- Wert + Einheit;
-- Provider;
-- Evidence IDs;
-- `observedAt` / `retrievedAt`;
-- `READY | PARTIAL | SOURCE_UNAVAILABLE | NOT_APPLICABLE`;
-- Aktien-Fundamentals mit Feld-Provenance;
-- `executionPriceEligible=false`.
-
-### 6.2 Aktien-Fundamentals
-
-`server/stockFundamentals.ts` bleibt die kanonische Fundamentals-Grenze. Alpha Vantage bleibt
-primäre Quelle; der bereits vorhandene FMP-Provider kann als Secondary-/Enrichment-Quelle für
-P/E, EPS TTM, Debt-to-Equity, Dividendenrendite, Nettomarge und Free Cash Flow pro Aktie genutzt
-werden. Es entsteht keine zweite Fundamentals-Authority.
+`server/stockFundamentals.ts` bleibt die bestehende Fundamentals-Grenze. Alpha Vantage ist der
+primäre Fundamentals-Pfad; das bereits integrierte FMP kann als bounded Secondary-/Enrichment-
+Quelle für vorhandene Aktien-Fundamental-Felder genutzt werden. Feld-Provenance bleibt erhalten.
 
 ### 6.3 Buffett Value Check
 
-Der Buffett/Graham-Consumer ist fachlich **stock-only**. Seine Suche enthält nur Aktien; ein
-extern/global ausgewähltes Nicht-Aktien-Symbol wird nicht als Buffett-Asset übernommen. Damit
-werden Crypto, Forex, Rohstoffe, Indizes und Bonds nicht mehr in eine Unternehmensbewertung
-gezogen.
+Der Buffett/Graham-Consumer ist **stock-only**. Seine Such-/Auswahlliste enthält ausschließlich
+Aktien. Ein global ausgewähltes Crypto-/Forex-/Commodity-/Index-/Bond-Symbol wird nicht in die
+Buffett-Auswahl übernommen. Synthetic EPS-/Score-/„fehlende Kennzahl = PASS“-Fallbacks sind nicht
+zulässig.
 
-### 6.4 Provider-Budget
+### 6.4 Background Provider Refresh
 
-Der Compatibility-Refresh enrichiert und persistiert nur provider-beobachtete `dataSource='live'`
-Zeilen. Registry-Fallbackzeilen lösen kein zusätzliches Scoring-/History-/Fundamental-Fan-out aus.
-Der Background-Provider-Refresh wird über die Runtime-Facade auf **90 Sekunden** gedrosselt;
-frühere Aufrufe werden auf den nächsten zulässigen Zeitpunkt verschoben und koalesziert.
+Cache-Freshness und Provider-Polling sind getrennte Verträge:
+
+- Compatibility-Cache-TTL: weiterhin 60 Sekunden;
+- tatsächliches periodisches Provider-I/O: **mindestens 90 Sekunden**;
+- frühe Background-Aufrufe werden verschoben und koalesziert;
+- auch ein zwischenzeitlicher Foreground-Provider-Refresh verschiebt den nächsten zulässigen
+  Background-Zeitpunkt;
+- nur provider-beobachtete `dataSource='live'`-Zeilen werden im periodischen Compatibility-Pfad
+  enrichiert/persistiert; angehängte Registry-Fallbackzeilen lösen kein zusätzliches
+  Evidence-/History-/Scoring-Fan-out aus.
+
+Damit supersediert Abschnitt 6 jede historische Lesart der Abschnitte 1–5, nach der
+`fallback`/`simulated` als verifizierte öffentliche Finanzdaten oder 60 Sekunden als zwingende
+Provider-Polling-Cadence verstanden werden könnten.
 
 ## Nicht Bestandteil dieses Dokuments
 
-- **Versionierung von Korrekturen.** Eine explizite Korrektur-Historie über einzelne
-  Datenänderungen bleibt ein eigenständiges Vorhaben.
-- Vollständige Migration aller Legacy-Consumer von `/api/market-data`; ADR-0097 definiert das
-  Muster, autorisiert aber kein ungezieltes Refactoring außerhalb seines Scopes.
+- **Versionierung von Korrekturen.** Eine echte Korrektur-Historie existiert nicht als eigener
+  revisionsfähiger Contract. Das bleibt ein eigenständiges Vorhaben.
+- Vollständige Migration aller Legacy-Consumer. ADR-0097 definiert das Muster, autorisiert aber
+  kein ungezieltes Refactoring außerhalb des jeweiligen Arbeitspakets.
 
 ## Verwandte Dokumente
 
@@ -176,5 +192,6 @@ frühere Aufrufe werden auf den nächsten zulässigen Zeitpunkt verschoben und k
 - `docs/architecture/PHASE-3.4.6-MARKET-DATA-COMPATIBILITY-FACADE.md`
 - `docs/architecture/api/API_INTERFACE_INVENTORY.md`
 - `docs/DATENSCHUTZ_PROTOKOLL.md` — No-Demo-Data-Policy
+- `src/services/realMarketSignals.ts`
 - `server/stockFundamentals.ts`
 - `src/services/verifiedAssetDisplay.ts`
