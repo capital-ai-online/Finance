@@ -71,11 +71,13 @@ The analyzer never writes files.
 
 The orchestrator validates the existing Platform Director protected-decision boundary and requires an exact Supervisor evidence binding. It composes with existing provider-neutral Agent IAM for `ANALYZE` and `PLAN`. Repository mutation capabilities are checked separately for `BRANCH`, `COMMIT` and `PR`.
 
+The host propagates `killSwitchActive` from the execution request into the Agent-IAM context. An active kill switch therefore remains effective for mutating capabilities and cannot be silently overridden by the Documentary host.
+
 ### DocumentaryMaintenanceAgent
 
 The agent uses an injected semantic provider. It first assesses whether a deterministic candidate is actually stale; if stale above the confidence threshold, it proposes complete updated document content. The agent never selects its own target outside the deterministic candidate list and cannot patch review-only paths.
 
-Before apply, the current document SHA must match the observed SHA. Apply is branch-only, transactional for document files plus registry, and re-runs Documentation Hygiene after mutation.
+Before apply, the current document SHA must match the observed SHA. Apply is branch-only, transactional for document files plus registry, and re-runs Documentation Hygiene after mutation. The exported Apply contract resolves the actual checked-out Git branch itself and requires it to equal the authorized `agent/documentary-maintenance-*` branch; a caller-supplied branch string alone cannot authorize mutation.
 
 ### AI adapter
 
@@ -109,19 +111,20 @@ The `Supervisor/manifest.json` change is therefore a VC-13 evidence-surface exte
 
 1. requires a clean worktree at exact current `main`;
 2. requires request `sourceCommit` to equal the exact fetched current `main` SHA;
-3. resolves freshness/Supervisor evidence and validates the Platform Director decision before branch creation;
-4. requires explicit Agent IAM grants and only requires `PR` when Draft-PR dispatch is enabled;
-5. derives a unique `agent/documentary-maintenance-*` branch and refuses to reuse an existing remote branch;
-6. creates the branch from exact `origin/main`;
-7. applies only the approved patch plan;
-8. increments document patch versions and downgrades changed documents to `generated`;
-9. creates exactly one bounded work claim;
-10. stages only explicit changed paths;
-11. runs Documentation Hygiene and Governance checks;
-12. fetches `main` again immediately before remote handoff and aborts if it moved;
-13. pushes the candidate branch;
-14. dispatches the existing `open-agent-draft-pr.yml` workflow;
-15. best-effort deletes an orphaned remote candidate if a post-push failure occurs before successful handoff.
+3. propagates request `killSwitchActive` into the existing Agent-IAM authorization context;
+4. resolves freshness/Supervisor evidence and validates the Platform Director decision before branch creation;
+5. requires explicit Agent IAM grants and only requires `PR` when Draft-PR dispatch is enabled;
+6. derives a unique `agent/documentary-maintenance-*` branch and refuses to reuse an existing remote branch;
+7. creates the branch from exact `origin/main`;
+8. applies only the approved patch plan after the Apply contract verifies the actual checked-out branch identity;
+9. increments document patch versions and downgrades changed documents to `generated`;
+10. creates exactly one bounded work claim;
+11. stages only explicit changed paths;
+12. runs Documentation Hygiene and Governance checks;
+13. fetches `main` again immediately before remote handoff and aborts if it moved;
+14. pushes the candidate branch;
+15. dispatches the existing `open-agent-draft-pr.yml` workflow;
+16. best-effort deletes an orphaned remote candidate if a post-push failure occurs before successful handoff.
 
 A no-change semantic plan removes the empty local maintenance branch instead of leaving branch debris. No merge, deployment or production mutation is implemented.
 
@@ -134,7 +137,7 @@ The implementation provides explicit package scripts:
 - `documentary:maintenance:validate` — deterministic closure validator;
 - `documentary:maintenance:prepr` — targeted tests + TypeScript check + Documentation Hygiene + Governance Control Plane + Repository Quality + closure validator.
 
-The closure validator verifies the exact Work Claim ↔ branch diff set, current-main synchronization, ADR-0097 identity, Authority Registry identity, Document Registry records, manifest contracts/tests/version, SC-MD-SPT-0001 sidecar metadata and hot-path isolation markers, protected document prefixes, narrow staging and branch/Draft-PR safety markers. `git diff --check` is part of the validator.
+The closure validator verifies the exact Work Claim ↔ branch diff set, current-main synchronization, ADR-0097 identity, Authority Registry identity, Document Registry records, manifest contracts/tests/version, SC-MD-SPT-0001 sidecar metadata and hot-path isolation markers, kill-switch propagation, actual checked-out branch verification, protected document prefixes, narrow staging and branch/Draft-PR safety markers. `git diff --check` is part of the validator.
 
 ## Protected classes
 
@@ -148,6 +151,6 @@ For a semantically patched registered document only its Document Registry versio
 
 ## Failure model
 
-The loop fails closed on dirty/stale host baseline, sourceCommit/main mismatch, Documentation Hygiene findings, missing/mismatched Supervisor evidence, invalid Platform Director decision, missing Agent IAM capability, existing remote branch collision, protected path, symlink/path traversal, oversized document, content-hash drift, invalid document SemVer, post-apply hygiene failure, staged-scope mismatch, `main` changing before PR handoff, SC-MD-SPT sidecar/hot-path boundary drift or unavailable AI provider.
+The loop fails closed on dirty/stale host baseline, sourceCommit/main mismatch, active Agent-IAM kill switch for mutation, Documentation Hygiene findings, missing/mismatched Supervisor evidence, invalid Platform Director decision, missing Agent IAM capability, existing remote branch collision, actual checked-out branch mismatch, protected path, symlink/path traversal, oversized document, content-hash drift, invalid document SemVer, post-apply hygiene failure, staged-scope mismatch, `main` changing before PR handoff, SC-MD-SPT sidecar/hot-path boundary drift or unavailable AI provider.
 
 A post-push handoff error triggers best-effort remote branch cleanup. No failure path falls back to direct `main` mutation.
