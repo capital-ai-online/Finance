@@ -141,8 +141,8 @@ function compareCandidates(left: PatternResolvedCandidate, right: PatternResolve
  * Resolves validated pattern evidence into research context only.
  *
  * Exact asset/profile/timeframe/regime reliability is mandatory. Lower-priority contradictory
- * evidence is retained as suppressed context. Opposing directions with exactly equal governed
- * precedence remain an explicit conflict rather than being broken by an arbitrary formula.
+ * evidence is retained as suppressed context. Any direction disagreement with exactly equal
+ * governed precedence remains an explicit conflict rather than being broken by an arbitrary rule.
  */
 export function resolvePatternSignal(input: Readonly<{
   profileId: CryptoAnalysisProfileId;
@@ -217,12 +217,10 @@ export function resolvePatternSignal(input: Readonly<{
   const sorted = [...accepted].sort(compareCandidates);
   const primary = sorted[0];
   const equalPrecedence = sorted.filter(candidate => samePrecedence(candidate, primary));
-  const opposingAtTop = equalPrecedence.filter(candidate =>
-    candidate.evidence.direction !== primary.evidence.direction
-    && candidate.evidence.direction !== 'NEUTRAL'
-    && primary.evidence.direction !== 'NEUTRAL');
+  const directionDisagreementAtTop = equalPrecedence.some(candidate =>
+    candidate.evidence.direction !== primary.evidence.direction);
 
-  if (opposingAtTop.length > 0) {
+  if (directionDisagreementAtTop) {
     return Object.freeze({
       resolverVersion: PATTERN_SIGNAL_RESOLVER_VERSION,
       disposition: 'CONFLICTING_EVIDENCE' as const,
@@ -231,7 +229,7 @@ export function resolvePatternSignal(input: Readonly<{
       supporting: Object.freeze(equalPrecedence),
       suppressed: Object.freeze(sorted.filter(candidate => !equalPrecedence.includes(candidate))),
       rejected: Object.freeze(rejected),
-      reasons: Object.freeze(['Opposing validated patterns have equal governed precedence; no direction is selected.']),
+      reasons: Object.freeze(['Validated patterns disagree on direction at equal governed precedence; no direction is selected.']),
       scoreEligible: false as const,
       executionEligible: false as const,
       authority: 'RESEARCH_CONTEXT_ONLY' as const,
