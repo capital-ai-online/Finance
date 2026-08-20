@@ -1,7 +1,7 @@
 # ADR-0097 — Documentary Maintenance Agent Control Loop
 
 **Authority ID:** `AUTH-ADR-DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20`  
-**Version:** `1.1.0`  
+**Version:** `1.0.0`  
 **Status:** `PROPOSED` — implementation candidate; effective only after Human Merge  
 **Date:** `2026-08-20`  
 **Decision Owner:** CAPITAL-AI Owner  
