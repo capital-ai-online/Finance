@@ -8,8 +8,8 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT GitHub Connector"
   },
-  "workItem": "Owner chat priority 2026-08-20 + Documentary roadmap D7/D9/E1/E6/H1/H5: dedicated Documentary Maintenance Agent, Supervisor/Platform Director/Governance wiring, repository-wide semantic freshness, deterministic document versioning, maintenance observability, isolated branch/Draft-PR path, plus Governance/Registry/Validation closure against the synchronized current main.",
-  "workItemDE": "Documentary Maintenance Control Loop einschließlich Governance-, Registry-, Evidence- und Validation-Closure gegen den synchronisierten aktuellen main-Stand.",
+  "workItem": "Owner chat priority 2026-08-20 + Documentary roadmap D7/D9/E1/E6/H1/H5: dedicated Documentary Maintenance Agent, Supervisor/Platform Director/Governance wiring, repository-wide semantic freshness, deterministic document versioning, maintenance observability, isolated branch/Draft-PR path, SC-MD-SPT-0001-conformant read-only VC-13 documentation/evidence sidecar integration, plus Governance/Registry/Evidence/Validation closure against the synchronized current main.",
+  "workItemDE": "Documentary Maintenance Control Loop einschließlich SC-MD-SPT-0001-konformer read-only VC-13-Dokumentations-/Evidence-Sidecar-Anbindung sowie Governance-, Registry-, Evidence- und Validation-Closure gegen den synchronisierten aktuellen main-Stand.",
   "startedAt": "2026-08-20T01:22:00+02:00",
   "baseBranch": "main",
   "baseSha": "a8d384154ff2eb1bfe74108eb4a4119cbab2a040",
