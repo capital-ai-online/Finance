@@ -7,12 +7,14 @@
 ## Status
 
 **ACTIVE — CANONICAL EXECUTION AUTHORITY (Domain SEO / Google Marketing / Content Distribution)**  
-Stand: 2026-08-16  
-Baseline: `main` (ADR-0082; WP-S1 VERIFIED; WP-D3 Soft-404 VERIFIED PR #360; **Q3 Search Console Domain property VERIFIED**; **WP-D1/D2 VERIFIED** PR #375 + Owner Rich Results Test; **WP-S2 Prerender VERIFIED** ADR-0084)  
+Stand: 2026-08-20  
+Baseline: `main` (ADR-0082; WP-S1 VERIFIED; WP-D3 Soft-404 VERIFIED PR #360; **Q3 Search Console Domain property VERIFIED**; **WP-D1/D2 VERIFIED** PR #375 + Owner Rich Results Test; **WP-S2 Prerender VERIFIED** ADR-0084; **WP-N3 deterministic Media Renderer VERIFIED** PR #446 + ADR-0094)  
 Owner: SvenKulessa  
-Authority-Bindung: ADR-0035, ADR-0042, ADR-0080 (ACCEPTED), ADR-0082 (SeoEngine), ADR-0084 (Prerender), ADR-0085 (ESS-Nummernraum), ESS-0014, ESS-0024 (ACCEPTED), ADR-0071, ESS-0023
+Authority-Bindung: ADR-0035, ADR-0042, ADR-0080 (ACCEPTED), ADR-0082 (SeoEngine), ADR-0084 (Prerender), ADR-0085 (ESS-Nummernraum), ADR-0094 (Media Rendering), ESS-0014, ESS-0024 (ACCEPTED), ADR-0071, ESS-0023
 
 > **Nummernkorrekturen 2026-08-16.** Die Marketing-Boundary-Entscheidung wurde bis v0002.7 als *ADR-0068* zitiert; unter **ADR-0081** wurde sie auf **ADR-0080** umgenummert. Die Nummer 0068 gehört seither ausschließlich zu `ADR-0068-first-bounded-autonomous-work-package.md`, einer **Systemadmin**-Entscheidung unter ESS-0021. Die zugehörige Spezifikation wurde unter **ADR-0085** von *ESS-0022* auf **ESS-0024** umgenummert; ESS-0022 bleibt die Passkey/M10-Spezifikation. Mappings: `docs/governance/ADR_CROSSREF_INVENTORY_2026-08-16.md`, `.ai/registry/ess-registry.json`.
+
+> **Media-Governance-Sync 2026-08-20.** Die in v0002.13 noch offene Make-or-Buy-/Renderer-Aussage für deterministische Bild-/Short-Ausgabe ist durch **ADR-0094** und den gemergten **PR #446** überholt. Der vorhandene Pillow/Poppler/FFmpeg-Slice ist verifiziert. TTS, generative Background-/B-Roll-Provider, Media-Studio-UI, Asset Registry/Storage und skalierbare Render-Worker bleiben separate Folgefähigkeiten und dürfen nicht als Begründung verwendet werden, die bereits entschiedene Renderer-Baseline erneut als offen zu behandeln.
 
 ## Zweck
 
@@ -65,7 +67,7 @@ Die folgenden Dokumente gelten ab Merge dieses Standes als **SUPERSEDED** für P
 
 1. Verifizierte Runtime-/Production-Evidence und Code auf `main`
 2. Ausdrückliche Human/Owner-Freigabe (ADR-0039, Protected Change ADR-0035)
-3. ESS-0014, ADR-0035, ADR-0042, ADR-0082, ADR-0084 und akzeptierte ADRs dieses Programms
+3. ESS-0014, ADR-0035, ADR-0042, ADR-0082, ADR-0084, ADR-0094 und akzeptierte ADRs dieses Programms
 4. **Dieses Dokument (SEO-GM-ROADMAP-0002)**
 5. Fachliche Block-Notes und Runbooks unter `docs/seo/`, `docs/runbooks/`
 6. Historische / als SUPERSEDED markierte Roadmaps
@@ -94,7 +96,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Agen
 
 ---
 
-## 4. Ist-Stand (Evidence, 2026-08-16)
+## 4. Ist-Stand (Evidence, 2026-08-20)
 
 ### 4.1 Technical SEO / SeoEngine
 
@@ -135,6 +137,7 @@ Bei Widerspruch gilt die restriktivere, aktuellere und spezifischere Regel. Agen
 | `POST /api/social-media/generate` (WP-N1) | **VORHANDEN** — `server/socialMedia/textContentGeneration.ts`, Route in `src/routes/socialMediaRoutes.ts`; Feature-Flag `CONTENT_GENERATION_ENABLED` |
 | Skript-Vorlagen (WP-N2) | **VORHANDEN** — `server/socialMedia/scriptTemplates.ts` (`buildScriptPackage`), Tests |
 | Asset-Validierung (WP-N3, Plane 7) | **VORHANDEN** — `server/socialMedia/mediaAssetValidation.ts`; schliesst SSRF ueber `mediaUrl` (der YouTube-Publisher holt die URL serverseitig ab) |
+| Deterministic Media Renderer (WP-N3 / ADR-0094) | **VERIFIED / MERGED** — PR #446; Pillow 12.3.0 + Poppler + FFmpeg Adapter; Thumbnail/Square/Vertical/9:16-Frames, PDF Companion und optional MP4; SHA-256-Manifeste; `publishReady=false`; keine Publishing-Credentials |
 | Approval-Gate (WP-N4) | **VORHANDEN inkl. Hash-Bindung** — Freigabe ist an Inhalt, Medien-Asset und Plattform-Set gebunden; Abweichung → DENY |
 | Marketing Agent MA0–MA7 | **DRAFT**, keine Runtime-Capability |
 | ADR-0080 / ESS-0024 | **ACCEPTED** (Owner 2026-08-16); Execution Policy bleibt DRAFT / NOT ACTIVE |
@@ -148,7 +151,7 @@ Präfixe bleiben kompatibel zur etablierten Q/D/S/N/H/J-Konvention; Marketing-Ph
 ### 5.1 Fundament & Messbarkeit (Fortsetzung Q/D)
 
 | ID | Inhalt | Abhängigkeit | DoD (kurz) |
-|----|--------|--------------|------------|
+|----|--------|--------------|-----|
 | WP-Q-CLOSE | Q2 Server-Trailing-Slash, Q3 Owner-Verify + Sitemap-Submit | Owner | Server-301 live; **Q3 VERIFIED** (Domain `capital-ai.online`, Sitemap Success 2026-08-16) |
 | WP-D1 | JSON-LD Organization/WebSite/SoftwareApplication | Q | **VERIFIED** — PR #375; Owner Rich Results Test 2026-08-16 |
 | WP-D2 | Routen-spezifische Title/Meta (Legal + Feature) | Q | **VERIFIED** — unique titles public routes + client sync (PR #375) |
@@ -172,13 +175,37 @@ Präfixe bleiben kompatibel zur etablierten Q/D/S/N/H/J-Konvention; Marketing-Ph
 | WP-M0 | Governance-Paket: ESS-0024, ADR-0080, Policy, Traceability, inaktives Profil | Human Review | **ERFÜLLT** — Owner-ACCEPT 2026-08-16; Dokumente accepted, **keine** Runtime-Capability |
 | WP-N1 | `POST /api/social-media/generate` + Prompt-Orchestrierung | M0, bestehende Types | **ERFÜLLT** — Text-Packages ohne Publish; Route + `generateTextContent` + Tests |
 | WP-N2 | Skript-Vorlagen (Tweet, Community, Podcast, Short-Video) | N1 | **ERFÜLLT** — `scriptTemplates.ts` + `scriptTemplates.test.ts` |
-| WP-N3 | Media-Rendering (TTS/Video) als **ersetzbare Sidecar-Adapter** | N1, **Make-or-Buy Owner (offen)** | **Asset-Validierung ERFÜLLT** — `mediaUrl` wird vor jedem Plattform-Aufruf geprüft (https-only, keine Zugangsdaten, keine privaten/Loopback-/Link-Local-/CGNAT-Ziele, DNS-Auflösung muss öffentlich sein); Verstoß → HTTP 400 mit `media_url_*`-Code; 12 Negativtests. **Renderer-Auswahl weiterhin offen** und Owner-Entscheidung. |
+| WP-N3 | Media-Rendering als **ersetzbare Sidecar-Adapter** | N1, ADR-0094 | **DETERMINISTIC RENDERER VERIFIED** — Asset-Validierung + PR #446: Pillow/Poppler/FFmpeg für deterministische Bilder, PDF Companions und Short-MP4; Exact-Head-CI/Governance PASS; Human Merge 2026-08-19. **TTS und generative Provider sind separate Folgefähigkeiten**, nicht eine offene Wiederholung der Renderer-Auswahl. |
 | WP-N4 | Content-Kalender + hash-gebundene Owner-Freigabe | N1 | **Hash-Bindung ERFÜLLT** — sha256 über Titel, Captions, Hashtags, Medien-URL, Medientyp und Plattform-Set; Mismatch → HTTP 403 `approval_content_mismatch`; 7 Negativtests. Content-Kalender (Scheduling-UI) weiterhin offen. |
 | WP-M5 | Erster bounded Marketing-Repo-Pilot (Docs/Contracts) | SA Host VERIFIED + M0 | Audit-before-side-effect, Human Merge |
 | WP-M6 | Controlled External Publishing Architecture | N4, starke Owner-Approval | Default `CONTENT_AUTO_PUBLISH_ENABLED=false` |
 | WP-H1 | Weitere Plattformen (LinkedIn, …) über SocialMediaEngine | M6 | Kein zweites Token-System |
 | WP-H2 | Google Admin/Write nur hinter ESS-0014 Gateway | ADR-0035 DoD | OWNER + Step-up |
 | WP-H3 | Feedback-Loop GSC/GA4 → ContentPerformanceScore | D5, S1 | Empfehlungen, kein Self-Publish |
+
+#### 5.3.1 Media Creation Tool Evolution (MC)
+
+Owner-Priorität 2026-08-20: Der verifizierte WP-N3-Renderer wird **evolutionär** zum Media Creation Tool ausgebaut. Es entsteht kein paralleler zweiter Media-/Publishing-Stack. Die vorhandene SocialMediaEngine bleibt Distribution Authority; ADR-0094 bleibt Baseline für deterministische Bild-/PDF-/Short-Ausgabe.
+
+| MC | Priorität | Ziel | Status / DoD |
+|---|---|---|---|
+| **MC-0** | P0 | Governance & Supersession | **IMPLEMENTATION COMPLETE / PR VALIDATION PENDING** — WP-N3/ADR-0094/Evidence auf realen Merge-Status synchronisieren; alte „Renderer offen“-Aussage entfernen; Folgescope explizit trennen |
+| **MC-1** | P0 | MediaProject v2 | Kanonisches versioniertes Projekt-/Scene-/Track-/Layer-/RenderRecipe-Modell; kompatibler Adapter zum bestehenden Manifest |
+| **MC-2** | P0 | Media Studio MVP | React/Vite Studio mit Scene Navigator, Timeline, Properties, Brand Presets, 16:9/1:1/9:16 Preview und Undo/Redo |
+| **MC-3** | P1 | Motion Engine 2.0 | Keyframes, Easing, Transitions, Masking, Camera Moves, Data-/Chart-Motion und wiederverwendbare CAPITAL-AI Motion Primitives |
+| **MC-4** | P1 | Audio, TTS & Captions | Provider-neutraler TTS-Layer, SSML/Aussprachetests, Audio-Tracks, Captions/SRT/VTT; Finanzbegriffe und Zahlen benchmarken |
+| **MC-5** | P1 | Generative Visual Layer | Austauschbare Image-/Edit-Provider nur für kreative Hintergründe/B-Roll; Finanzzahlen, Brand-Text und Disclaimer bleiben deterministisch |
+| **MC-6** | P0 vor Publishing | Asset Registry & Approval Integration | Immutable Asset IDs, SHA-256, technische Metadaten, Source/Provider/Recipe, Approval-Bindung und first-party Delivery-Pfad |
+| **MC-7** | P1 | Render Job Platform | Isolierte Queue/Worker-Pipeline mit Idempotency, Retry, Cancel, Progress, Timeout und Ressourcenlimits |
+| **MC-8** | P1 | Provenance & Automated QC | Render-QC, `ffprobe`, Brand Contract Tests, Golden/Visual Regression und Content-Provenance; C2PA separat lizenz-/toolchain-geprüft |
+| **MC-9** | P2 | Advanced Formats | Longform, Podcast, Carousel, PDF→Video, Kapitel und kontrollierte Multi-Platform-Derivate |
+| **MC-10** | P2 | Analytics Feedback | Performance-Evidence in Template-/Format-Empfehlungen rückführen; keine selbstautorisierende Veröffentlichung |
+
+**Ausführungsreihenfolge:** `MC-0 → MC-1 → MC-2 → MC-3 → MC-6 → MC-4 → MC-7 → MC-5 → MC-8 → MC-9 → MC-10`.
+
+**Architekturregel:** `Evidence/ContentPackage → MediaProject/RenderRecipe → Brand & Compliance Gate → austauschbare Media Provider → FFmpeg Assembly → QC → Asset Registry/Hash → Human Approval → bestehende SocialMediaEngine`.
+
+**Reuse-first:** bestehende Design Tokens, Pillow/Poppler/FFmpeg, PDF Companion, `ScriptScene`, `audioSsml`, Asset Validation, Approval Hashing und Social Publisher werden erweitert statt dupliziert. Zusätzliche Frameworks/Provider benötigen je MC-Slice einen dokumentierten Fit-/Security-/Lizenz-/Lock-in-Check; keine ungeprüfte Core-Abhängigkeit.
 
 ### 5.4 Autonomie & Monetarisierung (J + Revenue)
 
@@ -245,7 +272,7 @@ Präfixe bleiben kompatibel zur etablierten Q/D/S/N/H/J-Konvention; Marketing-Ph
 | Workflow (n8n o. ä.) | Interne Orchestrierung in Sandbox | Produktions-Secrets im Worker |
 | Media (TTS/Video OSS) | Sidecar mit validiertem Input/Output-Hash | Direktzugriff auf Social OAuth |
 
-Auswahl und Einführung jedes Adapters: eigener kleiner ADR-Nachtrag + Supply-Chain-Check (M6-Provenance-Prinzipien).
+Auswahl und Einführung jedes Adapters: eigener kleiner ADR-Nachtrag + Supply-Chain-Check (M6-Provenance-Prinzipien), sofern die bestehende ADR-/Contract-Baseline nicht bereits ausreicht. Vor Eigenentwicklung sind Repository-/native Funktionen, vorhandene Plugins und etablierte Open-Source-Lösungen zu bewerten.
 
 ---
 
@@ -270,19 +297,21 @@ Programm gilt als abgeschlossen, wenn:
 
 ---
 
-## 10. Sofortige nächste Schritte (Stand 2026-08-16, nach WP-S2 VERIFIED)
+## 10. Sofortige nächste Schritte (Stand 2026-08-20)
 
 1. ~~**Owner:** FK RESTRICT Apply (`20260815220000`) + Ledger-Abgleich~~ — angewendet 2026-08-15.
 2. ~~**Owner:** Search Console Property verifizieren (WP-Q-CLOSE / Q3)~~ — **VERIFIED** 2026-08-16 (Domain `capital-ai.online`, Ownership bestätigt, Sitemap Success).
 3. ~~ADR-Draft SeoEngine nummerieren~~ — **ADR-0082** Accepted (Kollisionscheck nach PR #345: 0075–0081 belegt).
-4. ~~ADR-0080 + ESS-0024 Owner-Review (WP-M0)~~ — **ERFÜLLT** (Owner-ACCEPT 2026-08-16). Review-Paket: `docs/governance/WP_M0_OWNER_REVIEW_PACKAGE.md`; drei Befunde vorher behoben (B1/B2 unter ADR-0085, B3 durch Ausarbeitung von ADR-0080). Kein Runtime-Enablement: Execution Policy §18 bleibt unerfüllt, Profil bleibt `READ/ANALYZE/PLAN`. Nächstes Marketing-Paket: **WP-N1**.
+4. ~~ADR-0080 + ESS-0024 Owner-Review (WP-M0)~~ — **ERFÜLLT** (Owner-ACCEPT 2026-08-16). Kein Runtime-Enablement: Execution Policy §18 bleibt unerfüllt, Profil bleibt `READ/ANALYZE/PLAN`.
 5. ~~WP-D3 Soft-404~~ — **VERIFIED** (PR #360; prod curl 2026-08-16).
 6. ~~**WP-D1 / D2**~~ — **VERIFIED** (PR #375 merged; prod unique titles; Owner Rich Results Test success for Legal-Unterseiten 2026-08-16).
 7. ~~**WP-S2** formal Prerender-ADR~~ — **VERIFIED** (**ADR-0084** Accepted 2026-08-16; code already live).
-8. Optional: **WP-D5** Search Console MCP Read (Credentials Owner-separat).
-9. Optional follow-up: shared Legal-Copy-Module für noscript/body; single source `routeSeo` ↔ prerender.
+8. ~~**WP-N3 deterministic Media Renderer**~~ — **VERIFIED** (ADR-0094 + PR #446; Exact-Head-CI/Governance PASS; Human Merge 2026-08-19). TTS/generative Provider bleiben separater Folgescope.
+9. **Media Creation MC-1:** nach Human Merge von MC-0 das kanonische `MediaProject v2`-/RenderRecipe-Modell spezifizieren; bestehendes Manifest rückwärtskompatibel adaptieren, keine zweite Publishing-Authority.
+10. Optional: **WP-D5** Search Console MCP Read (Credentials Owner-separat).
+11. Optional follow-up: shared Legal-Copy-Module für noscript/body; single source `routeSeo` ↔ prerender.
 
-Vollständiger Übergabekontext: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`. Canonical ADRs: `docs/adr/ADR-0082-seo-engine-platform-module.md`, `docs/adr/ADR-0084-prerender-public-routes.md`. Q3 Runbook: `docs/seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md`.
+Vollständiger Übergabekontext: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`. Canonical ADRs: `docs/adr/ADR-0082-seo-engine-platform-module.md`, `docs/adr/ADR-0084-prerender-public-routes.md`, `docs/adr/ADR-0094-open-source-pdf-companion-and-short-media-rendering.md`. Q3 Runbook: `docs/seo/Q3_SEARCH_CONSOLE_VERIFY_RUNBOOK.md`. Media Evidence: `docs/evidence/media/OPEN_SOURCE_MEDIA_RENDERING_2026-08-19.md`.
 
 ---
 
@@ -301,6 +330,7 @@ Vollständiger Übergabekontext: `docs/seo/HANDOFF_WP_S1_NEXT_2026-08-15.md`. Ca
 | 0002.8 | 2026-08-16 | **WP-M0 Review-Paket** `docs/governance/WP_M0_OWNER_REVIEW_PACKAGE.md` erstellt; drei blockierende Befunde erhoben. Zugleich **Nummernkorrektur ADR-0068 → ADR-0080** (Marketing-Boundary) nach ADR-0081 in 21 Fundstellen ueber neun Dateien. Keine Statusaenderung. |
 | 0002.9 | 2026-08-16 | **ESS-Nummernraum bereinigt (ADR-0085)** — Marketing-Spezifikation von ESS-0022 auf **ESS-0024** umgenummert (ESS-0022 bleibt Passkey/M10); Registry um ESS-0019 bis ESS-0024 ergaenzt, `freeNumberSpaceStartsAt` = ESS-0025. WP-M0-Befunde B1 und B2 geschlossen. |
 | 0002.10 | 2026-08-16 | **ADR-0080 auf Repository-Standard ausgearbeitet** — Context, fuenf verworfene Alternativen, Consequences, sechs Security-Invarianten, pruefbare DoD, `Implementation-Status`. Entscheidung inhaltlich unveraendert. WP-M0-Befund B3 geschlossen. |
-| 0002.13 | 2026-08-16 | **WP-N3 Asset-Validierung** — `mediaUrl` war voellig ungeprueft, obwohl `platformPublishers.ts` sie serverseitig per `fetch` abruft (SSRF-Vektor: Cloud-Metadata 169.254.169.254, Loopback, interne Hosts). ESS-0024 §13 fordert `invalid/private media URL -> DENY`; der Test existierte nicht. Neue providerneutrale Validierung inkl. IPv6-Expansion (der URL-Parser normalisiert `::ffff:169.254.169.254` zu Hex, eine Regex auf die Dotted-Form waere ein Bypass gewesen); 12 Negativtests. Renderer-Auswahl (Make-or-Buy) bleibt Owner-Entscheidung. |
-| 0002.12 | 2026-08-16 | **WP-N4 Hash-Bindung** — Owner-Freigabe war ein blosses Token: `consumeForPublish` prueft nur Existenz, Nutzer und Status, nie den Inhalt. Freigabe fuer Inhalt A konnte Inhalt B veroeffentlichen (ESS-0024 §10 / ADR-0080 Invariante 5 verletzt). Jetzt sha256-gebunden inkl. Plattform-Set und Medien-Asset; 7 Negativtests. Zugleich Ist-Stand-Korrektur: **WP-N1 und WP-N2 waren bereits implementiert**, die Roadmap fuehrte sie als fehlend. |
 | 0002.11 | 2026-08-16 | **WP-M0 ERFÜLLT — Owner-ACCEPT** fuer ESS-0024 und ADR-0080 (Antwort im Claim `WP-M0-MARKETING-GOVERNANCE-OWNER-ACCEPT-2026-08-16` woertlich protokolliert). Status PROPOSED → ACCEPTED, Registry-Eintrag ESS-0024 → published. **Keine Runtime-Capability**; Execution Policy bleibt DRAFT / NOT ACTIVE. |
+| 0002.12 | 2026-08-16 | **WP-N4 Hash-Bindung** — Owner-Freigabe war ein blosses Token: `consumeForPublish` prueft nur Existenz, Nutzer und Status, nie den Inhalt. Freigabe fuer Inhalt A konnte Inhalt B veroeffentlichen (ESS-0024 §10 / ADR-0080 Invariante 5 verletzt). Jetzt sha256-gebunden inkl. Plattform-Set und Medien-Asset; 7 Negativtests. Zugleich Ist-Stand-Korrektur: **WP-N1 und WP-N2 waren bereits implementiert**, die Roadmap fuehrte sie als fehlend. |
+| 0002.13 | 2026-08-16 | **WP-N3 Asset-Validierung** — `mediaUrl` war voellig ungeprueft, obwohl `platformPublishers.ts` sie serverseitig per `fetch` abruft (SSRF-Vektor: Cloud-Metadata 169.254.169.254, Loopback, interne Hosts). ESS-0024 §13 fordert `invalid/private media URL -> DENY`; der Test existierte nicht. Neue providerneutrale Validierung inkl. IPv6-Expansion; 12 Negativtests. Renderer-Auswahl war zu diesem Zeitpunkt noch Owner-Entscheidung. |
+| **0002.14** | **2026-08-20** | **MC-0 Media Governance & Supersession Sync** — durch ADR-0094 + PR #446 entschiedenen und verifizierten Pillow/Poppler/FFmpeg-Renderer in §4/§5/§10 nachgezogen; veraltete „Renderer-Auswahl offen“-Aussage beendet; TTS/generative Provider/Studio/Asset Registry/Worker als separate Folgefähigkeiten abgegrenzt; MC-0…MC-10 evolutionär in diese kanonische Roadmap integriert statt eine parallele Media-Roadmap zu erzeugen. |
