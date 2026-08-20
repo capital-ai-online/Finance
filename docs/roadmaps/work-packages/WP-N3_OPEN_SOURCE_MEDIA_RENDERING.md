@@ -1,10 +1,13 @@
 # WP-N3 Open-Source Media Rendering
 
-- **Status:** IMPLEMENTATION COMPLETE / PR VALIDATION PENDING
+- **Status:** VERIFIED / MERGED
 - **Datum:** 2026-08-19
+- **Governance-Sync:** 2026-08-20
 - **Owner:** CAPITAL-AI Owner
 - **Authority:** SEO-GM-ROADMAP-0002 / WP-N3 + ADR-0094 + Owner-Priorität 2026-08-19
-- **Branch:** `agent/pdf-media-open-source-rendering`
+- **Implementation-Branch:** `agent/pdf-media-open-source-rendering`
+- **Merge-PR:** #446
+- **Merge-Commit:** `71bce3d07133e2a7d408af179c2325e6d5114d5a`
 
 ## Ziel
 
@@ -61,17 +64,23 @@ Die bereits vorhandene SocialMediaEngine um einen kleinen, ersetzbaren und offli
 - [x] Developer-Video-Smoke dokumentieren;
 - [x] PDF Companion Smoke dokumentieren;
 - [x] Source-/Governance-Tests ergänzen;
-- [x] finaler Main-/Parallel-PR-Abgleich: Merge-Base exakt `main@59a2755de53297a934b062b380a313d68cd47492`, `behind=0`; offene #439/#442 ohne direkten Dateioverlap;
-- [x] PR erst nach dem finalen Pre-PR-Abgleich erstellen;
-- [ ] Post-PR Repository-Checks ausführen und Evidence ergänzen.
+- [x] finaler Main-/Parallel-PR-Abgleich vor PR-Erstellung durchgeführt;
+- [x] PR erst nach dem finalen Pre-PR-Abgleich erstellt;
+- [x] Post-PR Repository-Checks auf Exact Head `c972ac8051c98f1b0c4ee25eb1d029bf15ead927` ausgeführt: CI #1971 PASS, Governance #1304/#1306 PASS, TypeScript/Lint PASS, Unit Tests PASS, Production Build PASS, CSP PASS, Production Config/Deployment Readiness/Predeploy PASS;
+- [x] Human-/Owner-Merge am 2026-08-19 abgeschlossen; Merge-Commit `71bce3d07133e2a7d408af179c2325e6d5114d5a`.
 
 ## Parallel-PR-Korrelation
 
-- **PR #439:** README, `package.json` und Version-/Documentation-Hygiene-Automation; 0 direkter Dateioverlap. Deshalb werden README und `package.json` in diesem WP-N3-Slice bewusst nicht geändert.
-- **PR #442:** SC-7 Ranking + `docs/governance/document-registry.json`; 0 direkter Dateioverlap. Deshalb wird die Registry in diesem Slice bewusst nicht geändert und eine additive Registry-Nachpflege kann nach Landung der Parallel-PRs erfolgen.
+Historische Pre-Merge-Korrelation aus PR #446:
+
+- **PR #439:** README, `package.json` und Version-/Documentation-Hygiene-Automation; 0 direkter Dateioverlap.
+- **PR #442:** SC-7 Ranking + `docs/governance/document-registry.json`; 0 direkter Dateioverlap.
+- Vor Merge wurde der Branch zusätzlich mit `main@0b904c10e46723cb80a7ba12781c3847005c4715` synchronisiert; der effektive Media-Diff blieb auf 12 Scope-Dateien begrenzt.
 
 ## Definition of Done
 
-P1-P4 sowie alle Pre-PR-P5-Punkte sind abgeschlossen. Der WP-N3-Slice bleibt bis zu den nach PR-Erstellung erforderlichen Repository-Checks auf `PR VALIDATION PENDING`.
+P1-P5 sind erfüllt. Der WP-N3-Renderer-Slice ist durch PR #446 gemergt und über Exact-Head-CI/Governance sowie den finalen Main-Abgleich verifiziert.
+
+Die Bezeichnung `WP-N3` in der älteren Fassung von `SEO-GM-ROADMAP-0002` enthielt zusätzlich TTS als künftige Media-Fähigkeit. ADR-0094 und dieses Work Package entscheiden und verifizieren den **deterministischen Bild-/PDF-/Short-Renderer**. TTS, generative Background Provider, Asset Registry/Storage, Media-Studio-UI und Auto-Publish bleiben eigenständige Folgeschritte und dürfen nicht als Begründung verwendet werden, die bereits getroffene Renderer-Auswahl wieder als „offen“ zu behandeln.
 
 Nicht Teil dieses Work Packages: Auto-Publish, TTS, generative Background Provider, Datenbank-/Storage-Mutation oder ein eigener Video-Codec.
