@@ -34,6 +34,8 @@
     "server/stockFundamentals.ts",
     "server/entitlements.ts",
     "src/services/cryptoSnapshotProvider.ts",
+    "src/services/cryptoSnapshotConsensus.ts",
+    "src/services/liveCryptoSnapshotConsensus.ts",
     "src/services/verifiedAssetDisplay.ts",
     "server/routes/verifiedAssetDisplayRoutes.ts",
     "server/routes/registerApplicationRoutes.ts",
