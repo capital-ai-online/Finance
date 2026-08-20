@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.1.0",
+  "claimId": "VERIFIED-ASSET-DISPLAY-HYDRATION-2026-08-20",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub + Render connectors"
+  },
+  "workItem": "Owner Chat-Priorität 2026-08-20: Asset-Werte über eine progressive verifizierte Display-Hydration verfügbar machen und den Buffett Value Check aus dem metadata-only Registry-Contract lösen.",
+  "authority": [
+    "Owner Chat-Priorität 2026-08-20",
+    "ADR-0097",
+    "ADR-0041",
+    "ARCH-DATENQ-0001"
+  ],
+  "startedAt": "2026-08-20T03:48:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "73d27b7a586722d968a972b07a8e73a10f777782",
+  "branch": "fix/verified-asset-values-buffett-hydration",
+  "pullRequest": null,
+  "renderEvidence": {
+    "workspaceId": "tea-d90o4rj7uimc739i86ug",
+    "serviceId": "srv-d91o1o9o3t8c73edi55g",
+    "productionCommit": "73d27b7a586722d968a972b07a8e73a10f777782",
+    "finding": "TwelveData/EODHD circuit breakers and CoinGecko HTTP 429 observed; eager full-catalog hydration prohibited by ADR-0097."
+  },
+  "claimedPaths": [
+    "server/stockFundamentals.ts",
+    "src/services/cryptoSnapshotProvider.ts",
+    "src/services/verifiedAssetDisplay.ts",
+    "server/routes/verifiedAssetDisplayRoutes.ts",
+    "server/routes/registerApplicationRoutes.ts",
+    "src/components/BuffetValueCheck.tsx",
+    "tests/unit/buffetValueCheck.test.ts",
+    "tests/unit/verifiedAssetDisplayContract.test.ts",
+    "docs/adr/ADR-0097-verified-asset-display-progressive-hydration.md",
+    "docs/adr/registry.json",
+    "docs/governance/authority-registry.json",
+    ".ai/work-claims/BUFFETT-VALUE-CHECK-NULL-PRICE-FIX-2026-08-14.json",
+    ".ai/work-claims/VERIFIED-ASSET-DISPLAY-HYDRATION-2026-08-20.json"
+  ],
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}
