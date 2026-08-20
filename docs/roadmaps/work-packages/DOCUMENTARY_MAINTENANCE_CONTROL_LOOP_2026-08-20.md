@@ -2,15 +2,17 @@
 
 **Status:** VALIDATION CANDIDATE  
 **Date:** 2026-08-20  
-**Owner Priority:** Chat instruction 2026-08-20 — complete the missing Documentary Maintenance Agent, Supervisor/Governance wiring, automatic branch/Draft-PR path, repository-wide semantic freshness and Governance/Registry/Validation closure.  
+**Owner Priority:** Chat instruction 2026-08-20 — complete the missing Documentary Maintenance Agent, Supervisor/Governance wiring, automatic branch/Draft-PR path, repository-wide semantic freshness, SC-MD-SPT-0001-conformant evidence-sidecar integration and Governance/Registry/Validation closure.  
 **Roadmap Traceability:** `DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` D7, D9, E1, E6, H1, H5  
-**Authorities:** ESS-0002, ESS-0003, ESS-0010, ESS-0019, ADR-0096, ADR-0097
+**Authorities:** ESS-0002, ESS-0003, ESS-0010, ESS-0019, ADR-0096, ADR-0097, SC-MD-SPT-0001
 
 ## Goal
 
 Close the gap between Documentary observation and governed document maintenance while preserving the repository authority hierarchy:
 
 `Supervisor -> Platform Director -> authorized Documentary Agent -> isolated patch branch -> Draft PR`.
+
+Documentary remains a documentation/evidence sidecar to the financial value chain and never becomes a financial runtime stage or decision authority.
 
 ## Scope
 
@@ -32,6 +34,15 @@ Close the gap between Documentary observation and governed document maintenance 
 - existing Protected Decision Boundary reused;
 - existing Agent IAM `ANALYZE`/`PLAN`/`BRANCH`/`COMMIT`/`PR` reused;
 - no Merge/Deploy/Production capability.
+
+### P0 — SC-MD-SPT-0001 value-chain boundary
+
+- Documentary is a `read-only-documentation-evidence-sidecar` around `VC-13-EVENT-TRACEABILITY-SUPERVISOR`;
+- Documentary is not a fifteenth financial runtime stage;
+- existing `fintech-value-chain-quality/1.0.0` remains the repository-native read-only structural/evidence projection;
+- no direct Documentary dependency from MarketData, Scoring, Ranking, Eligibility, Orchestrator or application hotpaths;
+- no Documentary mutation effect on market data, classification, scoring, confidence, ranking, eligibility, provider routing, release or deployment;
+- Supervisor Documentary evidence keeps `decisionAuthority=false` and `mutationAuthority=false`.
 
 ### P0 — Automatic branch and Draft-PR handoff
 
@@ -71,8 +82,8 @@ Close the gap between Documentary observation and governed document maintenance 
 - Documentary component version synchronized with README;
 - package scripts for controlled host, targeted tests, closure validator and pre-PR aggregate;
 - Work Claim must equal the actual branch diff exactly;
-- closure validator checks `git diff --check`, current-main synchronization, Registry/Authority/Manifest consistency, protected paths and narrow Git staging;
-- final Main-correlation evidence records the intervening Repository Quality P0-P2 merge and its architectural impact.
+- closure validator checks `git diff --check`, current-main synchronization, Registry/Authority/Manifest consistency, SC-MD-SPT-0001 sidecar/hot-path boundaries, protected paths and narrow Git staging;
+- final Main-correlation evidence records the synchronized Quality Center / Chapter-12 completion and its architectural impact.
 
 ## Reuse decisions
 
@@ -82,7 +93,8 @@ Close the gap between Documentary observation and governed document maintenance 
 - Reuse Anthropic/OpenAI clients and `agentModelRouting`.
 - Reuse repository RAG retrieval and AI evaluation tracking.
 - Reuse `open-agent-draft-pr.yml`.
-- Reuse the current-main read-only Repository Quality evidence/coordinator as an additional validation gate.
+- Reuse the current-main read-only Repository Quality / Quality Center projection as an additional validation gate.
+- Reuse `FintechValueChainQualityProjection`; do not introduce a second value-chain model.
 - Do not introduce `@openai/agents`, OPA, a second EventMesh, a second version authority, another PR workflow or another Observability authority in this work package.
 
 ## Security / Integrity gates
@@ -99,6 +111,7 @@ Close the gap between Documentary observation and governed document maintenance 
 - main movement invalidates the candidate before remote PR handoff;
 - post-push handoff errors do not intentionally leave branch debris;
 - observability excludes sensitive content;
+- no direct financial-hotpath dependency or financial decision effect;
 - no hosted full CI before PR.
 
 ## Local validation before PR readiness
@@ -113,7 +126,7 @@ It combines, in order:
 - `npm run lint` for repository-wide TypeScript static validation;
 - `npm run docs:hygiene:check`;
 - `npm run governance:control-plane`;
-- `npm run repository:quality:check` inherited from current `main` as read-only aggregated quality evidence;
+- `npm run repository:quality:check` inherited from current `main` as read-only aggregated quality/value-chain evidence;
 - `npm run documentary:maintenance:validate`.
 
 The closure validator additionally checks:
@@ -124,7 +137,8 @@ The closure validator additionally checks:
 - ADR-0097 Registry + Authority Registry consistency;
 - Document Registry entries for ADR/architecture/work-package artifacts;
 - Documentary manifest version/contracts/tests/implemented areas;
-- current-main Repository Quality baseline and final Main-sync evidence;
+- current-main Quality Center contract/validator baseline and final Main-sync evidence;
+- SC-MD-SPT-0001 sidecar metadata, VC-13 projection identity and forbidden direct financial-hotpath imports;
 - protected review-only prefixes;
 - explicit-path staging and reuse of `open-agent-draft-pr.yml`.
 
@@ -136,6 +150,7 @@ The closure validator additionally checks:
 - Supabase/Stripe mutation;
 - rewriting historical evidence;
 - changing existing domain business logic;
+- adding Documentary as a financial value-chain runtime stage;
 - replacing the legacy interactive Document Hygiene UI/runtime in this work package;
 - Documentary Mermaid/Migration/Plugin implementation outside the ADR-0097 maintenance scope;
 - complete enterprise Observability implementation outside the maintenance health slice.
