@@ -1,5 +1,6 @@
 const NON_AUTHORIZING_LIFECYCLES = new Set(['suspended', 'historical', 'superseded', 'rejected', 'archived']);
 const RESERVATION_STATES = new Set(['active', 'released', 'stale']);
+const DOCUMENT_ROLES = new Set(['authority', 'projection', 'inventory', 'roadmap', 'evidence', 'specification']);
 const FINANCIAL_RUNTIME_SCOPES = new Set([
   'financial-runtime',
   'market-data',
@@ -92,6 +93,10 @@ export function validateGovernanceRegistryRelations({ authorityRegistry, adrRegi
   for (const document of documents) {
     if (!document.documentRole) continue;
 
+    if (!DOCUMENT_ROLES.has(document.documentRole)) {
+      deny('DOCUMENT_ROLE_INVALID', `${document.documentId}: ${document.documentRole}`);
+    }
+
     for (const authorityRef of document.authorityRefs ?? []) {
       if (!authorityIds.has(authorityRef)) {
         deny('DOCUMENT_AUTHORITY_REF_UNKNOWN', `${document.documentId}: ${authorityRef}`);
@@ -110,6 +115,9 @@ export function validateGovernanceRegistryRelations({ authorityRegistry, adrRegi
       }
     }
 
+    if (document.documentRole === 'projection' && document.normative !== false) {
+      deny('PROJECTION_NORMATIVE_AUTHORITY_CLAIM', document.documentId);
+    }
     if (document.documentRole === 'inventory' && document.normative !== false) {
       deny('INVENTORY_NORMATIVE_AUTHORITY_CLAIM', document.documentId);
     }
