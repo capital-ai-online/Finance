@@ -1,9 +1,9 @@
 {
   "name": "Validators",
   "version": "1.1.0",
-  "status": "implemented-core-registry",
+  "status": "implemented",
   "owner": "CAPITAL-AI",
-  "description": "Central rule-neutral ValidatorRegistry plus machine-readable coverage catalog for the exact 16 ESS-0001-CONTRACTS Chapter-12 mandatory validators. Domain rules remain in their owning components.",
+  "description": "Central rule-neutral ValidatorRegistry, exact Chapter-12 capability catalog and executable Chapter12ValidatorRunner for all 16 mandatory validators. Domain rule authority remains in the owning components.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -28,18 +28,22 @@
   "knowledge": [],
   "interfaces": [
     "ValidatorRegistry",
-    "MandatoryValidatorCatalog"
+    "MandatoryValidatorCatalog",
+    "Chapter12ValidatorRunner"
   ],
   "contracts": [
     "repository-quality-observation/1.1.0",
-    "mandatory-validator-coverage/1.0.0"
+    "mandatory-validator-coverage/1.0.0",
+    "chapter12-validator-contract/1.0.0",
+    "chapter12-validation-report/1.0.0"
   ],
   "documentation": [
     "README.md"
   ],
   "tests": [
     "tests/unit/validatorRegistry.test.ts",
-    "tests/unit/mandatoryValidatorCatalog.test.ts"
+    "tests/unit/mandatoryValidatorCatalog.test.ts",
+    "tests/unit/chapter12ValidatorRunner.test.ts"
   ],
   "implementation": {
     "implementedAreas": [
@@ -47,17 +51,16 @@
       "deterministic domain resolution",
       "duplicate validator rejection",
       "exact Chapter-12 mandatory-validator identity catalog",
-      "machine-readable AVAILABLE/PARTIAL/NOT_AVAILABLE coverage without invented PASS"
+      "all 16 mandatory validator capabilities executable",
+      "actual validation findings separated from implementation availability",
+      "existing Naming, Documentation, Version, Security and Compliance authorities adapted instead of duplicated"
     ],
-    "coverageBaseline": {
+    "implementationCoverage": {
       "total": 16,
-      "available": 5,
-      "partial": 3,
-      "notAvailable": 8
+      "available": 16,
+      "partial": 0,
+      "notAvailable": 0
     },
-    "remainingContractScope": [
-      "implement or bind authoritative execution sources for the validators currently PARTIAL or NOT_AVAILABLE",
-      "do not duplicate domain rules merely to increase the coverage count"
-    ]
+    "conformanceNote": "Executable capability does not imply repository conformance. Chapter12ValidationReport remains the authoritative runtime evidence for PASS/FAIL/NOT_AVAILABLE results."
   }
 }
