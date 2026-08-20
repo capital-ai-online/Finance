@@ -40,6 +40,20 @@ entitlementsRouter.post('/warren-buffett/authorize', express.json(), async (req,
     });
   }
 
+  // ADR-0034 + ADR-0032 revalidation: Buffett is a stock-only domain consumer.
+  // Reject an ineligible catalog asset before quota enforcement so invalid asset classes cannot
+  // consume quota or reach downstream verified-display/provider hydration.
+  if (asset.type !== 'stock') {
+    return res.status(422).json({
+      allowed: false,
+      symbol,
+      assetType: asset.type,
+      reason: 'asset-not-eligible',
+      contractVersion: 'subscription-entitlements/1.0.0',
+      rule: 'Warren Buffett Value Check is available for stocks only.',
+    });
+  }
+
   const quota = await enforceBuffettValueCheckQuota(req, symbol);
   const plan = getPlanEntitlements(quota.tier);
   const unlimited = plan.buffettValueCheck === 'unlimited';

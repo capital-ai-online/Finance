@@ -59,7 +59,7 @@ src/
 │   ├── ui/
 │   ├── branding/
 │   └── visuals/
-├── components/                     # Legacy-/Compatibility-Zone
+├── components/                     # Legacy-/Compatibility-Zone während Strangler-Migration
 └── platform/                       # unveränderte Enterprise-Plattformmodule
 ```
 
@@ -92,7 +92,7 @@ Governance / Audit / Administration
 
 Daten-, Scoring-, Compliance- und Governance-Entscheidungen verbleiben in den bestehenden Backend-/Platform-Authorities. Die UI stellt sie dar und löst ausschließlich erlaubte Benutzeraktionen aus.
 
-## 5. Financial-data Consumer Boundary
+## 5. Financial-data Consumer Boundary — ADR-0032 / SC-MD-SPT-0001
 
 Finanzielle UI-Module müssen Katalogmetadaten von verifizierten Beobachtungen trennen und folgende Request-Reihenfolge erhalten:
 
@@ -107,13 +107,14 @@ request / user interaction
   → deterministische Domain-Analyse / Darstellung
 ```
 
-- `/api/registry/assets` ist keine verifizierte Preis-/Fundamentalsquelle.
-- Fehlende Evidence bleibt unavailable/partial; UI-Code erzeugt keine Finanz-Defaults.
+- `/api/registry/assets` ist **keine** verifizierte Preis-/Fundamentalsquelle; ADR-0032 bleibt für diese Invariante autoritativ.
+- Fehlende Evidence bleibt `unavailable`/`partial`; UI-Code erzeugt keine Finanz-Defaults.
 - Domänenspezifische Komponenten dürfen den globalen Asset-Katalog auf ihre gültige Domäne einschränken.
-- Der Buffett-/Graham-Pfad bleibt **stock-only** und wird über `features/stocks/ui` eingeordnet; seine laufende Verified-Display-Hydration wird durch diese Ordnerkonsolidierung nicht überschrieben.
-- Vor providergebundener Hydration gelten die bestehenden Entitlement-/Quota-Contracts.
-- Verified Display ist Research-/Presentation-Evidence und kein Execution-Price-Contract.
-- Ein Display- oder Domain-Analyse-Ergebnis darf nicht als kanonisches Scoring-Ergebnis dargestellt werden, wenn es die autoritative Scoring-Dispatcher-Kette nicht durchlaufen hat.
+- `BuffetValueCheck.tsx` bleibt **stock-only** und konsumiert pro ausgewählter Aktie `verified-asset-display/1.0.0`.
+- Vor der Buffett-Provider-Hydration muss der serverseitige ADR-0034 Entitlement-/Quota-Contract die ausgewählte Aktie autorisieren.
+- Verified Display ist Research-/Presentation-Evidence und **kein** Execution-Price-Contract.
+- Ein Display- oder deterministisches Domain-Analyse-Ergebnis darf nicht als ADR-0087 `CanonicalScoreResult` dargestellt werden, sofern es nicht die kanonische Scoring-Dispatcher-Kette durchlaufen hat.
+- Die mit PR #458 gemergte Verified-Asset-Display-/Buffett-Hydration ist Teil der aktuellen Main-Baseline und wird durch die Ordnerkonsolidierung nicht überschrieben. Eine spätere physische Verschiebung des Buffett-UI-Pfads muss diese Contracts unverändert erhalten.
 
 ## 6. Shared Design System
 
@@ -157,9 +158,10 @@ Die Konsolidierung ist **strangler-basiert**, nicht Big Bang:
 1. `app/features/shared` und Dependency Rules etablieren.
 2. Shared-Primitives physisch verschieben; alte Pfade werden Compatibility-Exports.
 3. Bestehende Fachkomponenten über Feature-UI-Fassaden in die Wertschöpfung einordnen.
-4. Große Komponenten (`Dashboard.tsx`, `LandingPage.tsx`, Admin-Flächen) anschließend sliceweise zerlegen, ohne laufende fachliche PRs zu überschreiben.
-5. Nach Migration aller Consumer die jeweiligen Legacy-Exports aus `src/components/` entfernen.
-6. `src/components/` wird am Ende gelöscht, sobald keine produktive Implementierung mehr darin verbleibt.
+4. Große Komponenten (`App.tsx`, `Dashboard.tsx`, `LandingPage.tsx`, Admin-/Analyseflächen) anschließend in einzeln mergebaren Wellen zerlegen und verschieben.
+5. Vor jeder Welle `main` synchronisieren und offene PRs auf Pfadkorrelationen prüfen.
+6. Nach Migration aller Consumer die jeweiligen Legacy-Exports aus `src/components/` entfernen.
+7. `src/components/` wird am Ende gelöscht, sobald keine produktive Implementierung mehr darin verbleibt.
 
 ## 10. Architektur-Gate
 
