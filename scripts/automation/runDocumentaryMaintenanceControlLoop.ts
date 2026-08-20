@@ -21,7 +21,7 @@ import {
 } from '../../src/platform/Documentary/Observability/DocumentaryMaintenanceObservability';
 import { DocumentaryMaintenanceAiAdapter } from '../../server/documentaryMaintenanceAiAdapter';
 
-export const DOCUMENTARY_MAINTENANCE_HOST_VERSION = 'documentary-maintenance-git-host/1.1.0' as const;
+export const DOCUMENTARY_MAINTENANCE_HOST_VERSION = 'documentary-maintenance-git-host/1.1.1' as const;
 const CLAIM_SCHEMA_VERSION = '1.0.0';
 const BRANCH_PREFIX = 'agent/documentary-maintenance-';
 
@@ -34,6 +34,7 @@ export interface DocumentaryMaintenanceControlLoopRequest {
   grantedCapabilities: AgentCapability[];
   targetResource: string;
   riskClass?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  killSwitchActive?: boolean;
   minConfidence?: number;
 }
 
@@ -112,7 +113,7 @@ function authorizationContext(request: DocumentaryMaintenanceControlLoopRequest)
     riskClass: request.riskClass ?? 'MEDIUM',
     environment: 'development',
     targetResource: request.targetResource,
-    killSwitchActive: false,
+    killSwitchActive: request.killSwitchActive ?? false,
   };
 }
 
