@@ -5,11 +5,11 @@ import type {
 import { runAllScanners } from '../../src/platform/Compliance/scanners';
 import type { ScannerResult } from '../../src/platform/Compliance/types';
 
-export const QUALITY_SCORE_PROVIDER_VERSION = 'repository-quality-score-providers/1.0.0' as const;
+export const QUALITY_SCORE_PROVIDER_VERSION = 'repository-quality-score-providers/1.0.1' as const;
 
-function average(values: readonly number[]): number | null {
+function complianceAverage(values: readonly number[]): number | null {
   if (values.length === 0) return null;
-  return Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 100) / 100;
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 }
 
 export function createTestCoverageScoreMeasurement(
@@ -26,9 +26,9 @@ export function createTestCoverageScoreMeasurement(
 export function createSecurityScoreMeasurement(
   scannerResults: readonly ScannerResult[] = runAllScanners(),
 ): QualityScoreMeasurement | null {
-  // Reuses the established SecurityComplianceAuditor aggregation semantics from
-  // src/platform/Compliance/store.ts: arithmetic mean of SECURITY scanner complianceScore values.
-  const score = average(
+  // Exact reuse of the established SecurityComplianceAuditor aggregation semantics from
+  // src/platform/Compliance/store.ts: rounded arithmetic mean of SECURITY complianceScore values.
+  const score = complianceAverage(
     scannerResults
       .filter((scanner) => scanner.type === 'SECURITY')
       .map((scanner) => scanner.complianceScore),
