@@ -1,78 +1,210 @@
-# 🎨 Frontend Architecture & Interface Guidelines
-**Project: CAPITAL-AI**  
-**Framework:** React 19 / Vite 6 / Tailwind CSS 4 / Motion  
+# CAPITAL-AI Frontend Architecture & Interface Guidelines
 
----
+**Status:** Canonical Frontend Architecture  
+**Stand:** 20. August 2026  
+**Framework:** React 19 / Vite 6 / Tailwind CSS 4 / Motion
 
-## 🗺️ Architectural Concept: Event-Driven SPA
-The frontend is constructed as an **Event-Driven Single Page Application (SPA)** that runs within isolated, secure browser contexts. We combine deep cyber-slate aesthetics with strict performance, responsiveness, and accessibility guidelines.
+## 1. Architekturposition und Dokumentrolle
 
-### Financial-data consumer boundary — ADR-0032 / SC-MD-SPT-0001 alignment (2026-08-20)
+Das Frontend ist die **Presentation- und Interaction-Schicht** der bestehenden CAPITAL-AI Architektur. Es wird ausdrücklich **kein** zusätzliches `src/platform/Frontend` und kein paralleler Root wie `src/frontend/` eingeführt.
 
-Financial UI modules must distinguish catalog metadata from verified observations and preserve the canonical request sequence:
+Die bestehenden Enterprise-Module unter `src/platform/` bleiben fachliche und Governance-Authorities. Das Frontend projiziert deren Zustände und fachliche Feature-Ergebnisse in Benutzeroberflächen.
 
 ```text
-request / user interaction
-  -> identity / access
-  -> entitlement / usage gate where applicable
-  -> /api/registry/assets metadata
-  -> user selects a valid domain asset
-  -> applicable verified quote/context/display endpoint
-  -> value + status + provenance + freshness
-  -> deterministic domain analysis / presentation
+main.tsx
+   ↓
+src/app                      Application Composition
+   ↓
+src/features/<domain>/ui     fachliche Vertical Slices
+   ↓
+src/shared                   fachneutrale UI / Branding / Visuals
+   ↓
+Services / Platform / API    bestehende Fach- und Laufzeitarchitektur
 ```
 
-- `/api/registry/assets` is not a verified price/fundamentals source; ADR-0032 owns this invariant.
-- Missing evidence remains unavailable/partial; UI code must not manufacture finance defaults.
-- Domain-specific components may narrow the global asset catalog to their valid domain.
-- `BuffetValueCheck.tsx` is therefore **stock-only** and consumes `verified-asset-display/1.0.0` per selected stock.
-- Before Buffett provider hydration, the server-side ADR-0034 entitlement/quota contract must authorize the selected stock.
-- The verified display contract is research/display evidence and not an execution-price contract.
-- A display or deterministic domain-analysis result must not be represented as an ADR-0087 `CanonicalScoreResult` unless it actually traversed the canonical scoring Dispatcher chain.
+### 1.1 Normative Grenze dieses Dokuments
 
----
+`FRONTEND_ARCH.md` ist die **normative Source-Tree-, Dependency- und Presentation-Architecture-Authority** für den React-Client. Es besitzt ausdrücklich **keine** eigene Market-Data-, Scoring-, Entitlement-, IAM-, Compliance- oder Governance-Authority.
 
-## 🎨 Visual Identity & Glassmorphism Design System
+Die Dokumentrollen sind verbindlich getrennt:
 
-### 1. Cyber Slate Aesthetic & Palette
-- **Main Canvas Background**: Deep, rich absolute black (`bg-black`) to ensure maximum visual contrast and legibility under varying lighting conditions.
-- **Glassmorphism Panels**: Interactive modules, cards, and drawers are rendered as semi-transparent dark slate backings styled with fine border borders:
-  ```tailwind
-  bg-neutral-950/40 border border-white/10 backdrop-blur-md rounded-xl p-6
-  ```
-- **Branding Highlights**:
-  * **Cyber Green (Success)**: Reflects validated parameters, stable setups, or favorable scoring states (`text-green-400`).
-  * **AIF Gold (Premium Highlight)**: Used strictly for premium features, high-priority scoring tiers, and focal calls-to-action (`text-aif-gold-DEFAULT`).
-  * **Neon Purple / Cyan**: Abstract background neural vector paths to reinforce the high-performance AI engine concept.
+| Dokument | Rolle | Darf normative Architekturregeln definieren? |
+|---|---|---|
+| `docs/frontend/FRONTEND_ARCH.md` | Frontend-Struktur, Dependency-Richtung, Presentation-/Interaction-Grenzen | **Ja, ausschließlich für Frontend-/Presentation-Struktur** |
+| `docs/frontend/COMPONENT_INVENTORY.md` | Ist-Bestand und Migrationsstatus von UI-Komponenten | **Nein** |
+| `docs/frontend/FRONTEND_ROADMAP.md` | Reihenfolge und Status der Frontend-Migration | **Nein; verweist auf diese Architektur** |
+| `docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md` | kanonische Screening-/Scoring-/Market-Data-Wertschöpfungskette | **Ja, für diesen fachlichen Runtime-Scope** |
+| ADR-/ESS-Dokumente | jeweilige fachliche Architektur-/Governance-Entscheidung | **Ja, im jeweiligen Scope** |
 
-### 2. Kinetic Interaction Design (Motion Guidelines)
-Every transition, page load, or button interaction must feel responsive, organic, and fluid.
-* Use `motion` for staggered listings, fade-ins, and drawer slide-overs.
-* Keep exit animation times tight (`duration: 0.2`) to maintain a snappy, high-speed UX feel.
+Damit gilt das Prinzip **Projection, not Redefinition**: Das Frontend konsumiert fachliche Contracts und projiziert sie, kopiert deren normative Ablaufdefinitionen aber nicht in dieses Dokument.
 
----
+Für die AI-Entwicklungswertschöpfungskette bleibt die bestehende Reihenfolge Development/Implementation → Documentary → Supervisor → Platform Director → Release → Production unverändert. Die Frontend-Konsolidierung verändert keine Authority dieser Kette; sie ordnet ausschließlich die Presentation-Schicht.
 
-## 📦 Directory Structure Standards
+`ADR-0005` bleibt die historische Frontend-Modul-Integrationsentscheidung. Diese Source-Tree-Konsolidierung aktiviert ausdrücklich **keine** historischen Federation-, iframe- oder URL-Token-Propagation-Mechanismen; aktuelle IAM-, CSP-, CORS- und Security-Contracts haben Vorrang.
 
-The codebase enforces a highly modular, decoupled structure:
+## 2. Kanonische Ordnerstruktur
 
+```text
+src/
+├── main.tsx
+├── App.tsx                         # bestehender Composition Root während Migration
+├── app/
+│   ├── AppShell.tsx                # fachneutraler Shell-Baustein
+│   ├── index.ts
+│   └── README.md
+├── features/
+│   ├── README.md
+│   ├── index.ts                    # UI-Namespace-Fassaden
+│   ├── public/ui/
+│   ├── users/ui/
+│   ├── settings/ui/
+│   ├── screening/ui/
+│   ├── crypto/ui/
+│   ├── stocks/ui/
+│   ├── analytics/ui/
+│   ├── news/                       # bestehende Feature-Logik bleibt erhalten
+│   │   ├── newsRoutes.ts
+│   │   └── ui/
+│   ├── portfolio/ui/
+│   ├── billing/ui/
+│   ├── reporting/ui/
+│   ├── social/ui/
+│   ├── governance/ui/
+│   └── registry/                   # bestehende Registry-Fachlogik
+├── shared/
+│   ├── ui/
+│   ├── branding/
+│   └── visuals/
+├── components/                     # Legacy-/Compatibility-Zone während Strangler-Migration
+└── platform/                       # unveränderte Enterprise-Plattformmodule
 ```
-/src
-  ├── main.tsx           # Clean React 19 mounting and routing entry
-  ├── App.tsx            # Main layout controller and session context synchronizer
-  ├── index.css          # Tailwind CSS 4 directives, custom system-font rules
-  ├── types.ts           # Unified type, interface, and enum declarations
-  ├── hooks/             # Reactive state hooks (e.g. useSubscription)
-  └── components/        # Independent, single-purpose, isolated UI nodes
-        ├── Screener.tsx          # Real-time quantitative stock screener
-        ├── BacktestEngine.tsx    # Interactive portfolio backtesting mask
-        ├── BuffetValueCheck.tsx  # Stock-only Graham/DCF; entitlement-first verified display + fundamentals
-        └── MarkdownOrchestrator.tsx # Interactive documentation & compliance hub
+
+## 3. Dependency Rules
+
+1. `app` darf `features` und `shared` konsumieren.
+2. `features` dürfen `shared` sowie bestehende Services/Platform/API-Verträge konsumieren.
+3. `shared` darf **nicht** von `features`, `app` oder fachlichen Legacy-Komponenten abhängen.
+4. `platform` darf nicht von React-UI oder Feature-UI abhängen.
+5. Neue fachliche React-Komponenten werden nicht mehr direkt unter `src/components/` angelegt.
+6. Während der Migration dürfen Feature-`ui/index.ts` bestehende Legacy-Komponenten re-exportieren. Diese Fassaden sind Übergangspunkte, keine zweite Implementierung.
+7. `src/components/` ist ausschließlich Legacy-/Compatibility-Zone; dort entsteht keine neue fachliche oder gemeinsame Basisimplementierung.
+
+## 4. Wertschöpfungsbezogene UI-Verantwortung
+
+Die Feature-Slices spiegeln vorhandene Produktfähigkeiten, ohne eine neue fachliche Authority zu erzeugen:
+
+```text
+Public / Access
+      ↓
+Screening & Asset Discovery
+      ↓
+Analysis / Scoring / Intelligence
+      ↓
+Portfolio & Decision Support
+      ↓
+Reporting / Social Distribution
+      ↓
+Governance / Audit / Administration
 ```
 
----
+Diese Darstellung beschreibt **UI-Verantwortungsbereiche**, nicht die kanonische Financial-Runtime-Sequenz. Daten-, Scoring-, Compliance- und Governance-Entscheidungen verbleiben in den bestehenden Backend-/Platform-Authorities. Die UI stellt deren Ergebnisse dar und löst ausschließlich erlaubte Benutzeraktionen aus.
 
-## 📱 Mobile-First Desktop Precision (BFSG Accessibility)
-* **Hit Target Sizing**: In accordance with German **BFSG** and European **EN 301 549** standards, all touch-sensitive navigation items, action chips, and buttons must have a minimum tap area of **44x44px**.
-* **Responsive Reflows**: Enforce mobile-first responsive grid layouts (e.g., `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3`) to guarantee perfect responsiveness across mobile smartphones, tablets, and 4K desktop screens.
-* **Reactive Size Handling**: Never hardcode dimensions for charts, tables, or canvases. Always bind them to parent nodes using ResizeObservers or responsive layouts to adapt instantly to viewport changes.
+## 5. Fachliche Contract Boundaries — Projection, not Redefinition
+
+Dieses Dokument definiert bewusst **keine eigene Financial-Data-Request-Sequenz**. Die jeweils aktuelle fachliche Reihenfolge und die dazugehörigen Runtime-/Evidence-Grenzen werden ausschließlich von den bestehenden Authorities definiert.
+
+| Concern | Kanonische Authority | Rolle des Frontends |
+|---|---|---|
+| Asset Catalog ↔ Market Evidence | `ADR-0032` | read-only Consumer / Darstellung von Discovery- und Evidence-Zuständen |
+| Buffett Access / Quota | `ADR-0034` | Consumer der serverseitigen Autorisierungsentscheidung |
+| Provider Data Plane / Provenance / Freshness | `ADR-0041` + `ESS-0016` | Darstellung bereits autorisierter und validierter Evidence |
+| Screening-/Scoring-/Market-Data-Wertschöpfungskette | `SC-MD-SPT-0001` | Presentation Projection; keine zweite Ablaufdefinition |
+| Canonical Scoring | `ADR-0087` | Darstellung autoritativ erzeugter Scoring-Ergebnisse |
+| Verified Asset Display | `verified-asset-display/1.0.0` + ADR-0032-Revalidation | read-only Research-/Presentation-Consumer; keine neue Authority |
+| IAM / Security / Compliance | jeweils aktuelle Security-/IAM-/Compliance-Authorities | Clientseitige Darstellung und erlaubte Interaktion; keine Abschwächung serverseitiger Gates |
+
+### 5.1 Verbindliche Frontend-Invarianten
+
+Frontend-Code darf fachliche Zustände nicht hochstufen, synthetisch vervollständigen oder durch lokale UI-Regeln neu autorisieren.
+
+Insbesondere gilt:
+
+- Catalog Metadata wird nicht zu Market Evidence.
+- `unavailable`, `partial`, `DATA_UNAVAILABLE` oder vergleichbare Fail-Closed-Zustände bleiben sichtbar und werden nicht durch synthetische Finanzwerte ersetzt.
+- Ein serverseitiges Entitlement-/IAM-DENY wird clientseitig nicht umgangen oder in ALLOW umgedeutet.
+- Display-/Research-Ergebnisse werden nicht als `CanonicalScoreResult` oder Execution-Price-Evidence ausgegeben, sofern der zuständige autoritative Contract dies nicht erlaubt.
+- Domänenspezifische UI darf einen globalen Katalog auf die zulässige Domäne einschränken, ohne daraus eine neue Registry-/Eligibility-Authority abzuleiten.
+- Bei physischen Pfadverschiebungen müssen die konsumierten fachlichen Contracts semantisch unverändert bleiben.
+- Änderungen an der Financial-Runtime-Sequenz werden **nicht** in `FRONTEND_ARCH.md` normiert, sondern in der zuständigen Parent-Authority (`SC-MD-SPT-0001` bzw. ADR/ESS) vorgenommen und hier ausschließlich referenziert.
+
+Dadurch kann sich die fachliche Wertschöpfungskette weiterentwickeln, ohne dass `FRONTEND_ARCH.md` eine konkurrierende oder veraltete Kopie konserviert.
+
+## 6. Shared Design System
+
+Kanonische Shared-Primitives:
+
+- `Button`
+- `Card`
+- `Input`
+- `Modal`
+- `Tooltip`
+- `Skeleton`
+- `EmptyState`
+- `StatusBadge`
+- `CapitalAiLogo`
+- `NeuralBackground`
+
+Die bisherigen Pfade unter `src/components/` bleiben bei migrierten Shared-Bausteinen nur als dünne Compatibility-Exports erhalten. Fachliche Komponenten dürfen Shared-Primitives konsumieren, aber keine parallelen Basisimplementierungen etablieren.
+
+## 7. Visual Identity
+
+- Canvas: dunkle neutrale Oberfläche; semantische Surface-Tokens sind gegenüber lokalen Hex-Werten zu bevorzugen.
+- CAPITAL-AI Gold: Premium-/Primärfokus.
+- Cyan/Purple: sekundäre AI-/Live-Akzente; nicht als gleichrangige Primärsignale verwenden.
+- Glassmorphism bleibt ein unterstützendes Surface-Pattern, kein Selbstzweck.
+- Dekorative Neural-Geometrie wird zentral über `shared/visuals` konsolidiert.
+- Motion muss `prefers-reduced-motion` respektieren.
+
+## 8. Accessibility
+
+- Interaktive Ziele mindestens 44×44 px, soweit durch Komponententyp sinnvoll.
+- Fokuszustände bleiben sichtbar und farbunabhängig verständlich.
+- Statuskommunikation nutzt Text/Icon zusätzlich zu Farbe.
+- Dialoge besitzen semantische Dialogrollen und Escape-/Close-Verhalten.
+- Loading- und Empty-States werden über gemeinsame Primitives dargestellt.
+- Charts und komplexe Visualisierungen erhalten textuelle Beschreibungen bzw. zugängliche Alternativen.
+
+## 9. Migrationsstrategie
+
+Die Konsolidierung ist **strangler-basiert**, nicht Big Bang:
+
+1. `app/features/shared` und Dependency Rules etablieren.
+2. Shared-Primitives physisch verschieben; alte Pfade werden Compatibility-Exports.
+3. Bestehende Fachkomponenten über Feature-UI-Fassaden in die Wertschöpfung einordnen.
+4. Große Komponenten (`App.tsx`, `Dashboard.tsx`, `LandingPage.tsx`, Admin-/Analyseflächen) anschließend in einzeln mergebaren Wellen zerlegen und verschieben.
+5. Vor jeder Welle `main` synchronisieren und offene PRs auf Pfadkorrelationen prüfen.
+6. Für jede Welle die betroffene Parent-Authority ermitteln; fachliche Contracts werden referenziert, nicht in Frontend-Dokumenten dupliziert.
+7. Nach Migration aller Consumer die jeweiligen Legacy-Exports aus `src/components/` entfernen.
+8. `src/components/` wird am Ende gelöscht, sobald keine produktive Implementierung mehr darin verbleibt.
+
+## 10. Architektur-Gate und Dokumentationskonsistenz
+
+`npm run frontend:architecture:check` prüft aktuell:
+
+- Vorhandensein der kanonischen Schichten und Feature-UI-Einstiege,
+- Vorhandensein der zentralen Shared-Primitives,
+- Erhalt der bestehenden Registry-Fachlogik innerhalb `src/features/registry`,
+- Abwesenheit paralleler Frontend-Roots (`src/frontend`, `src/ui`),
+- Dependency-Richtung der Shared-Schicht,
+- korrekte Compatibility-Exports der bereits migrierten Shared-Primitives,
+- Einbindung des Architektur-Gates in den bestehenden Quality-Center-Testpfad.
+
+Der Check läuft innerhalb von `test:raw` und damit unter der aktuellen Quality-Center-Orchestrierung.
+
+Zusätzlich gilt als Governance-Regel für Frontend-Dokumente:
+
+1. `FRONTEND_ARCH.md` ist die einzige normative Frontend-Source-Tree-/Dependency-Authority.
+2. `COMPONENT_INVENTORY.md` beschreibt ausschließlich Ist-Bestand und Migrationsstatus.
+3. `FRONTEND_ROADMAP.md` beschreibt ausschließlich Reihenfolge, Status und geplante Arbeit.
+4. Fachliche Runtime-/Data-/Scoring-Regeln müssen auf ihre Parent-Authority verweisen statt sie erneut vollständig zu definieren.
+5. Wird eine Parent-Authority geändert, müssen abhängige Frontend-Dokumente auf veraltete Projektionen geprüft werden; eine duplizierte Ablaufdefinition ist als Dokumentationsdrift zu behandeln.
