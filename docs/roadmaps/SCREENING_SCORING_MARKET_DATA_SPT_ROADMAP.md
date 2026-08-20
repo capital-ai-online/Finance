@@ -298,10 +298,10 @@ Externe Plattformmutation ist **nicht** Bestandteil der Dokumentkonsolidierung. 
 ## 10. Main- und PR-Korrelation
 
 - Aktueller bestätigter Main für diese Konsolidierung: `f1dff495fe792a4d4a26a3513f0525b4974bd349`.
-- PR #458 arbeitet auf `fix/verified-asset-values-buffett-hydration` und ist nach der Dokumentkonsolidierung weiterhin `0` Commits hinter `main`.
+- PR #458 arbeitet auf `fix/verified-asset-values-buffett-hydration`; der Branch wurde nach der Dokumentkonsolidierung erneut mit `main` verglichen und war dabei `0` Commits hinter `main`.
 - Offener PR #457 verändert Quality-Center-/Validator-/Build-Orchestrierungsdateien; kein direkter Dateiüberschnitt mit dem bisherigen PR-#458-Scope wurde festgestellt.
 - Die Konsolidierung löst **keine** GitHub-CI, Render-, Supabase- oder Stripe-Mutation aus.
-- Vor Merge-Readiness ist erneut der aktuelle `main` zu laden und semantisch zu korrelieren.
+- Vor Merge-Readiness ist gemäß Pflicht-Gate **erneut** der dann aktuelle `main` zu laden und semantisch zu korrelieren; der aktuelle 0-behind-Befund ersetzt diesen finalen Gate nicht.
 
 ---
 
