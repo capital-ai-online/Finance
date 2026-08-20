@@ -271,11 +271,15 @@ const host = read('scripts/automation/runDocumentaryMaintenanceControlLoop.ts');
 for (const requiredMarker of [
   'sourceCommit must equal current main',
   'remote branch already exists; refusing to reuse mutable agent branch',
+  'killSwitchActive: request.killSwitchActive ?? false',
   "['push', 'origin', '--delete', branchName]",
   "['add', '--', ...changedPaths]",
   "'open-agent-draft-pr.yml'",
 ]) {
   if (!host.includes(requiredMarker)) fail(`Git host safety marker missing: ${requiredMarker}.`);
+}
+if (host.includes('killSwitchActive: false')) {
+  fail('Git host must not hard-code an inactive Agent IAM kill switch.');
 }
 if (host.includes("['add', '-A']") || host.includes("['add', '.']") || host.includes('git add -A') || host.includes('git add .')) {
   fail('Git host contains a broad staging pattern.');
@@ -286,6 +290,8 @@ for (const marker of [
   'agent/documentary-maintenance-',
   "entry.lifecycle = 'generated'",
   'TOCTOU check failed before apply',
+  'checked-out branch mismatch',
+  "execFileSync('git', ['branch', '--show-current']",
 ]) {
   if (!agent.includes(marker)) fail(`Maintenance Agent integrity marker missing: ${marker}.`);
 }
