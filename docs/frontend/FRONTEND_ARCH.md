@@ -13,6 +13,8 @@ Die bestehenden Enterprise-Module unter `src/platform/` bleiben fachliche und Go
 ```text
 main.tsx
    ↓
+src/App.tsx                  Compatibility-Fassade während Migration
+   ↓
 src/app                      Application Composition
    ↓
 src/features/<domain>/ui     fachliche Vertical Slices
@@ -47,9 +49,16 @@ Für die AI-Entwicklungswertschöpfungskette bleibt die bestehende Reihenfolge D
 ```text
 src/
 ├── main.tsx
-├── App.tsx                         # bestehender Composition Root während Migration
+├── App.tsx                         # dünne Compatibility-Fassade auf src/app/App.tsx
 ├── app/
+│   ├── App.tsx                     # kanonischer Application Composition Root
 │   ├── AppShell.tsx                # fachneutraler Shell-Baustein
+│   ├── auth/
+│   │   └── SessionComposition.tsx  # bestehender Session/Auth-/Security-Gate-Lifecycle
+│   ├── routing/
+│   │   └── AppRoutes.tsx           # öffentliche Pfade + Landing/Dashboard Composition
+│   ├── types/
+│   │   └── UserSession.ts          # Presentation-Session-Vertrag
 │   ├── index.ts
 │   └── README.md
 ├── features/
@@ -62,7 +71,7 @@ src/
 │   ├── crypto/ui/
 │   ├── stocks/ui/
 │   ├── analytics/ui/
-│   ├── news/                       # bestehende Feature-Logik bleibt erhalten
+│   ├── news/
 │   │   ├── newsRoutes.ts
 │   │   └── ui/
 │   ├── portfolio/ui/
@@ -70,7 +79,7 @@ src/
 │   ├── reporting/ui/
 │   ├── social/ui/
 │   ├── governance/ui/
-│   └── registry/                   # bestehende Registry-Fachlogik
+│   └── registry/
 ├── shared/
 │   ├── ui/
 │   ├── branding/
@@ -78,6 +87,16 @@ src/
 ├── components/                     # Legacy-/Compatibility-Zone während Strangler-Migration
 └── platform/                       # unveränderte Enterprise-Plattformmodule
 ```
+
+`src/app/providers/` ist ein zulässiger Zielpfad für künftig tatsächlich extrahierte globale Provider. Ein leerer Ordner wird nicht als Architektur-Placeholder verlangt; die kanonische Struktur dokumentiert nur real vorhandene Composition-Verantwortung.
+
+### 2.1 BB-1 Application-Composition-Grenzen
+
+- `src/app/App.tsx` komponiert ausschließlich die App-Schichten und enthält keine fachliche Feature-/Runtime-Authority.
+- `src/app/auth/SessionComposition.tsx` kapselt den bestehenden Supabase-Session-Lifecycle sowie Onboarding-, Login-Step-Up-, Password-Recovery- und Unauthorized-Gates. Die Datei **konsumiert** bestehende IAM-/Security-Regeln und darf diese nicht abschwächen oder neu autorisieren.
+- `src/app/routing/AppRoutes.tsx` hält die bestehende leichte Pfadkomposition für öffentliche Legal-Seiten sowie Landing-/Dashboard-Auswahl. Die Einführung eines neuen Routing-Frameworks ist keine implizite Folge dieser Architektur.
+- `src/app/types/UserSession.ts` ist der kanonische Presentation-Typvertrag für die Session. Er ersetzt keine Backend-/IAM-Identity-Authority.
+- `src/App.tsx` darf während der Migration nur Compatibility-Exports enthalten und keine neue Composition-, Auth-, Routing- oder Feature-Logik aufnehmen.
 
 ## 3. Dependency Rules
 
@@ -88,6 +107,8 @@ src/
 5. Neue fachliche React-Komponenten werden nicht mehr direkt unter `src/components/` angelegt.
 6. Während der Migration dürfen Feature-`ui/index.ts` bestehende Legacy-Komponenten re-exportieren. Diese Fassaden sind Übergangspunkte, keine zweite Implementierung.
 7. `src/components/` ist ausschließlich Legacy-/Compatibility-Zone; dort entsteht keine neue fachliche oder gemeinsame Basisimplementierung.
+8. `src/App.tsx` ist eine temporäre Compatibility-Fassade und darf nicht wieder zum Implementierungsort für Application Composition werden.
+9. Feature-Code darf nicht von `src/app` abhängen. Gemeinsame Presentation-Typen, die fachlich von Features benötigt werden, müssen langfristig an die engste nicht-zirkuläre Contract-Grenze migriert werden; BB-1 erhält bestehende Legacy-Type-Compatibility bis zur jeweiligen Feature-Welle.
 
 ## 4. Wertschöpfungsbezogene UI-Verantwortung
 
@@ -176,12 +197,12 @@ Die bisherigen Pfade unter `src/components/` bleiben bei migrierten Shared-Baust
 
 ## 9. Migrationsstrategie
 
-Die Konsolidierung ist **strangler-basiert**, nicht Big Bang:
+Die Konsolidierung ist **strangler-basiert**, nicht Big Bang als einzelner Massen-PR:
 
-1. `app/features/shared` und Dependency Rules etablieren.
-2. Shared-Primitives physisch verschieben; alte Pfade werden Compatibility-Exports.
-3. Bestehende Fachkomponenten über Feature-UI-Fassaden in die Wertschöpfung einordnen.
-4. Große Komponenten (`App.tsx`, `Dashboard.tsx`, `LandingPage.tsx`, Admin-/Analyseflächen) anschließend in einzeln mergebaren Wellen zerlegen und verschieben.
+1. `app/features/shared` und Dependency Rules etablieren. — abgeschlossen mit PR #459.
+2. Application Composition aus dem historischen Root `src/App.tsx` nach `src/app` extrahieren. — BB-1.
+3. Dashboard-Composition als eigene Welle zerlegen. — BB-2.
+4. Bestehende Fachkomponenten anschließend in einzeln mergebaren Feature-Wellen physisch verschieben.
 5. Vor jeder Welle `main` synchronisieren und offene PRs auf Pfadkorrelationen prüfen.
 6. Für jede Welle die betroffene Parent-Authority ermitteln; fachliche Contracts werden referenziert, nicht in Frontend-Dokumenten dupliziert.
 7. Nach Migration aller Consumer die jeweiligen Legacy-Exports aus `src/components/` entfernen.
@@ -192,6 +213,9 @@ Die Konsolidierung ist **strangler-basiert**, nicht Big Bang:
 `npm run frontend:architecture:check` prüft aktuell:
 
 - Vorhandensein der kanonischen Schichten und Feature-UI-Einstiege,
+- Vorhandensein der BB-1-Application-Composition-Pfade,
+- `src/App.tsx` als dünne Compatibility-Fassade,
+- `src/app/App.tsx` als Composition von `SessionComposition` und `AppRoutes`,
 - Vorhandensein der zentralen Shared-Primitives,
 - Erhalt der bestehenden Registry-Fachlogik innerhalb `src/features/registry`,
 - Abwesenheit paralleler Frontend-Roots (`src/frontend`, `src/ui`),

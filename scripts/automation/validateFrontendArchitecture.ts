@@ -5,8 +5,12 @@ const ROOT = process.cwd();
 
 const requiredPaths = [
   'src/app/README.md',
+  'src/app/App.tsx',
   'src/app/AppShell.tsx',
   'src/app/index.ts',
+  'src/app/auth/SessionComposition.tsx',
+  'src/app/routing/AppRoutes.tsx',
+  'src/app/types/UserSession.ts',
   'src/features/README.md',
   'src/features/index.ts',
   'src/features/registry/registryRoutes.ts',
@@ -81,6 +85,30 @@ for (const [legacyPath, canonicalImport] of [
   if (!content.includes(canonicalImport)) findings.push(`${legacyPath} is not a compatibility export to ${canonicalImport}.`);
 }
 
+const rootAppPath = path.join(ROOT, 'src/App.tsx');
+if (!fs.existsSync(rootAppPath)) {
+  findings.push('missing root App compatibility facade: src/App.tsx');
+} else {
+  const rootApp = fs.readFileSync(rootAppPath, 'utf8');
+  if (!rootApp.includes("export { default } from './app/App'")) {
+    findings.push('src/App.tsx must remain a thin compatibility facade to src/app/App.tsx during BB-1+ migration.');
+  }
+  if (!rootApp.includes("from './app/types/UserSession'")) {
+    findings.push('src/App.tsx must preserve the UserSession compatibility type export during migration.');
+  }
+  if (/useState|useEffect|supabase|LandingPage|Dashboard/.test(rootApp)) {
+    findings.push('src/App.tsx contains composition/auth implementation instead of remaining a compatibility facade.');
+  }
+}
+
+const canonicalAppPath = path.join(ROOT, 'src/app/App.tsx');
+if (fs.existsSync(canonicalAppPath)) {
+  const canonicalApp = fs.readFileSync(canonicalAppPath, 'utf8');
+  if (!canonicalApp.includes('SessionComposition') || !canonicalApp.includes('AppRoutes')) {
+    findings.push('src/app/App.tsx must compose SessionComposition and AppRoutes.');
+  }
+}
+
 try {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')) as { scripts?: Record<string, string> };
   if (pkg.scripts?.['frontend:architecture:check'] !== 'tsx scripts/automation/validateFrontendArchitecture.ts') {
@@ -99,4 +127,4 @@ if (findings.length > 0) {
   process.exit(1);
 }
 
-console.log(`[frontend-architecture] PASS: ${requiredPaths.length} canonical paths verified; dependency and compatibility boundaries intact.`);
+console.log(`[frontend-architecture] PASS: ${requiredPaths.length} canonical paths verified; BB-1 app composition, dependency and compatibility boundaries intact.`);
