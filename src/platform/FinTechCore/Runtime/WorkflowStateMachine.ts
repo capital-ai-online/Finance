@@ -29,15 +29,21 @@ export type FinTechCoreWorkflowTransitionResult =
       readonly reason: string;
     };
 
+function freezeTransitions(
+  ...statuses: FinTechCoreWorkflowStatus[]
+): readonly FinTechCoreWorkflowStatus[] {
+  return Object.freeze(statuses);
+}
+
 const ALLOWED_TRANSITIONS: Readonly<Record<FinTechCoreWorkflowStatus, readonly FinTechCoreWorkflowStatus[]>> =
   Object.freeze({
-    CREATED: Object.freeze(['RUNNING', 'REJECTED', 'FAILED', 'EMERGENCY_STOPPED']),
-    RUNNING: Object.freeze(['WAITING_FOR_APPROVAL', 'COMPLETED', 'REJECTED', 'FAILED', 'EMERGENCY_STOPPED']),
-    WAITING_FOR_APPROVAL: Object.freeze(['RUNNING', 'REJECTED', 'FAILED', 'EMERGENCY_STOPPED']),
-    COMPLETED: Object.freeze([]),
-    REJECTED: Object.freeze([]),
-    FAILED: Object.freeze([]),
-    EMERGENCY_STOPPED: Object.freeze([]),
+    CREATED: freezeTransitions('RUNNING', 'REJECTED', 'FAILED', 'EMERGENCY_STOPPED'),
+    RUNNING: freezeTransitions('WAITING_FOR_APPROVAL', 'COMPLETED', 'REJECTED', 'FAILED', 'EMERGENCY_STOPPED'),
+    WAITING_FOR_APPROVAL: freezeTransitions('RUNNING', 'REJECTED', 'FAILED', 'EMERGENCY_STOPPED'),
+    COMPLETED: freezeTransitions(),
+    REJECTED: freezeTransitions(),
+    FAILED: freezeTransitions(),
+    EMERGENCY_STOPPED: freezeTransitions(),
   });
 
 export function getAllowedFinTechCoreTransitions(
