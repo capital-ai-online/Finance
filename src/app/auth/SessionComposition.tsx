@@ -21,7 +21,6 @@ export interface SessionCompositionValue {
   clearJustLoggedOut: () => void;
   handleLogin: (email: string, password: string) => Promise<void>;
   handleRegister: (name: string, email: string, password: string) => Promise<void>;
-  handleGuestLogin: (secretKey?: string) => Promise<void>;
   handleLogout: () => Promise<void>;
 }
 
@@ -36,21 +35,12 @@ interface AuthErrorState {
   receivedId?: string;
 }
 
-const guestSession = (): UserSession => ({
-  type: 'guest',
-  name: 'Gast-User',
-  email: 'gast@capital-ai.de',
-  subscriptionTier: 'Free',
-});
-
 /**
  * BB-1 Application Composition boundary.
  *
- * This component owns session restoration, Supabase auth lifecycle, onboarding,
- * login step-up, password recovery and global unauthorized handling. It does
- * not decide application routes or feature composition.
- *
- * Security semantics are intentionally preserved from the former root App.tsx.
+ * Owns authenticated session restoration, Supabase auth lifecycle, onboarding,
+ * login step-up, password recovery and global unauthorized handling.
+ * Anonymous and guest sessions are intentionally not supported.
  */
 export function SessionComposition({ children }: SessionCompositionProps) {
   const [userSession, setUserSession] = useState<UserSession | null>(null);
@@ -72,28 +62,32 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     }
   };
 
+  const rejectAnonymousSession = async () => {
+    updateUserSession(null);
+    if (supabase) {
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.warn('[Auth] Anonymous session cleanup failed:', err);
+      }
+    }
+    setLoading(false);
+  };
+
   const handleSupabaseSession = async (session: any) => {
     const user = session.user;
+
+    if (!user || user.is_anonymous) {
+      await rejectAnonymousSession();
+      return;
+    }
+
     const email = user.email || '';
-    const isAnonymous = user.is_anonymous || false;
     const name =
       user.user_metadata?.full_name ||
       user.user_metadata?.name ||
       email.split('@')[0] ||
-      (isAnonymous ? 'Gast-User' : 'User');
-
-    if (isAnonymous) {
-      updateUserSession({
-        type: 'guest',
-        name: 'Gast-User',
-        email: email || 'gast@capital-ai.de',
-        subscriptionTier: 'Free',
-        accessToken: session.access_token,
-        id: user.id,
-      });
-      setLoading(false);
-      return;
-    }
+      'User';
 
     try {
       const res = await fetch(`/api/stripe/user-subscription?userId=${encodeURIComponent(user.id)}`, {
@@ -153,6 +147,11 @@ export function SessionComposition({ children }: SessionCompositionProps) {
   };
 
   const establishSession = async (session: any) => {
+    if (!session?.user || session.user.is_anonymous) {
+      await rejectAnonymousSession();
+      return;
+    }
+
     if (await needsOnboarding(session)) {
       setPendingOnboardingSession(session);
       setLoading(false);
@@ -172,7 +171,7 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     let hasLocalSession = false;
 
     // ADR-0003.5: development auto-login remains double-gated by exact local
-    // hostname plus explicit build flag. This is deliberately unchanged.
+    // hostname plus explicit build flag.
     const isExplicitLocalDev =
       typeof window !== 'undefined' &&
       (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
@@ -197,23 +196,27 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     if (localSessionJson) {
       try {
         const parsed = JSON.parse(localSessionJson);
-        if (
-          parsed &&
-          parsed.email &&
-          (parsed.type !== 'registered' || !parsed.id || hasPassedLoginStepUpThisTab(parsed.id))
-        ) {
+        const isRegisteredSession = parsed?.type === 'registered' && parsed?.email;
+        const canUseFastPath =
+          isRegisteredSession &&
+          (!parsed.id || hasPassedLoginStepUpThisTab(parsed.id));
+
+        if (canUseFastPath) {
           setUserSession(parsed);
           setLoading(false);
           hasLocalSession = true;
+        } else if (parsed?.type === 'guest') {
+          localStorage.removeItem('mcc_user_session');
         }
       } catch (e) {
         console.error('Failed to parse local session', e);
+        localStorage.removeItem('mcc_user_session');
       }
     }
 
     if (!supabase) {
       if (!hasLocalSession) {
-        setUserSession(guestSession());
+        updateUserSession(null);
       }
       setLoading(false);
       return;
@@ -226,15 +229,15 @@ export function SessionComposition({ children }: SessionCompositionProps) {
           establishSession(session);
         } else {
           if (!hasLocalSession) {
-            updateUserSession(guestSession());
+            updateUserSession(null);
           }
           setLoading(false);
         }
       })
       .catch((err) => {
-        console.warn('Supabase getSession failed, using local cache state:', err);
+        console.warn('Supabase getSession failed, using authenticated local cache state:', err);
         if (!hasLocalSession) {
-          updateUserSession(guestSession());
+          updateUserSession(null);
         }
         setLoading(false);
       });
@@ -249,10 +252,10 @@ export function SessionComposition({ children }: SessionCompositionProps) {
       }
 
       if (session) {
-        establishSession(session);
+        await establishSession(session);
       } else {
         if (event === 'SIGNED_OUT') {
-          updateUserSession(guestSession());
+          updateUserSession(null);
         }
         setLoading(false);
       }
@@ -303,30 +306,6 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     }
   };
 
-  const handleGuestLogin = async (secretKey?: string) => {
-    const hasSecretKey =
-      secretKey === 'CAPITAL_AI_SECRET_KEY_2026' ||
-      (typeof window !== 'undefined' && window.location.search.includes('secret=CAPITAL_AI_SECRET_KEY_2026'));
-
-    if (!hasSecretKey) {
-      console.error('[SECURITY] Gastmodus ist schreibgeschützt und deaktiviert.');
-      alert('Zugriff verweigert: Der Gastmodus wurde deaktiviert und ist schreibgeschützt.');
-      return;
-    }
-
-    if (supabase) {
-      const { error } = await supabase.auth.signInAnonymously();
-      if (!error) return;
-    }
-
-    updateUserSession({
-      type: 'guest',
-      name: 'Gast-User (Admin-Bypass)',
-      email: 'gast@capital-ai.de',
-      subscriptionTier: 'Free',
-    });
-  };
-
   const handleSetNewPassword = async (newPassword: string) => {
     setPasswordRecoveryError(null);
 
@@ -374,7 +353,8 @@ export function SessionComposition({ children }: SessionCompositionProps) {
 
     clearLoginStepUpMarkers();
     setPendingStepUpSession(null);
-    updateUserSession(guestSession());
+    setPendingOnboardingSession(null);
+    updateUserSession(null);
     setJustLoggedOut(true);
     setTimeout(() => {
       setJustLoggedOut(false);
@@ -615,7 +595,6 @@ export function SessionComposition({ children }: SessionCompositionProps) {
     clearJustLoggedOut: () => setJustLoggedOut(false),
     handleLogin,
     handleRegister,
-    handleGuestLogin,
     handleLogout,
   });
 }
