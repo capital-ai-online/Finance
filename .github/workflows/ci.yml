@@ -54,6 +54,9 @@ env:
   # Manual workflow_dispatch is still denied while this switch is off, so disabling M10 cannot
   # become an alternate unreviewed CI/deployment entry point.
   M10_CI_GATE_ENABLED: 'false'
+  # Single exact source identity shared by Quality evidence, release metadata and Docker builds.
+  # PR runs bind to the actual PR head, not GitHub's synthetic merge commit.
+  RELEASE_SOURCE_COMMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.m10_head_sha || github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
 
 concurrency:
   # PR synchronizations may cancel older cheap PR checks. Authorized M10 dispatches use their own
@@ -300,11 +303,17 @@ jobs:
 
       - name: Produktions-Docker-Image bauen und prüfen
         if: steps.scope.outputs.docker_image == 'true'
+        shell: bash
         run: |
-          docker build --tag capital-ai-ci:${{ github.sha }} .
-          test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{.Config.User}}')" = "capitalai"
-          test "$(docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
-          docker image inspect capital-ai-ci:${{ github.sha }} --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
+          set -euo pipefail
+          test "$RELEASE_SOURCE_COMMIT" = "$(git rev-parse HEAD)"
+          docker build \
+            --build-arg RELEASE_SOURCE_COMMIT="$RELEASE_SOURCE_COMMIT" \
+            --tag "capital-ai-ci:$RELEASE_SOURCE_COMMIT" \
+            .
+          test "$(docker image inspect "capital-ai-ci:$RELEASE_SOURCE_COMMIT" --format '{{.Config.User}}')" = "capitalai"
+          test "$(docker image inspect "capital-ai-ci:$RELEASE_SOURCE_COMMIT" --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
+          docker image inspect "capital-ai-ci:$RELEASE_SOURCE_COMMIT" --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
 
   deploy-production:
     name: Deployment verifiziert / Render-Produktion

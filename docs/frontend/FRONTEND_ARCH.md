@@ -24,6 +24,8 @@ Services / Platform / API    bestehende Fach- und Laufzeitarchitektur
 
 Für die AI-Entwicklungswertschöpfungskette bleibt die bestehende Reihenfolge Development/Implementation → Documentary → Supervisor → Platform Director → Release → Production unverändert. Die Frontend-Konsolidierung verändert keine Authority dieser Kette; sie ordnet ausschließlich die Presentation-Schicht.
 
+`ADR-0005` bleibt die historische Frontend-Modul-Integrationsentscheidung. Diese Source-Tree-Konsolidierung aktiviert ausdrücklich **keine** historischen Federation-, iframe- oder URL-Token-Propagation-Mechanismen; aktuelle IAM-, CSP-, CORS- und Security-Contracts haben Vorrang.
+
 ## 2. Kanonische Ordnerstruktur
 
 ```text
@@ -31,7 +33,9 @@ src/
 ├── main.tsx
 ├── App.tsx                         # bestehender Composition Root während Migration
 ├── app/
-│   └── README.md                   # Shell/Navigation/Provider-Regeln
+│   ├── AppShell.tsx                # fachneutraler Shell-Baustein
+│   ├── index.ts
+│   └── README.md
 ├── features/
 │   ├── README.md
 │   ├── index.ts                    # UI-Namespace-Fassaden
@@ -88,19 +92,47 @@ Governance / Audit / Administration
 
 Daten-, Scoring-, Compliance- und Governance-Entscheidungen verbleiben in den bestehenden Backend-/Platform-Authorities. Die UI stellt sie dar und löst ausschließlich erlaubte Benutzeraktionen aus.
 
-## 5. Shared Design System
+## 5. Financial-data Consumer Boundary
 
-Kanonische Shared-Flächen:
+Finanzielle UI-Module müssen Katalogmetadaten von verifizierten Beobachtungen trennen und folgende Request-Reihenfolge erhalten:
 
-- `src/shared/ui/StatusBadge.tsx` — Status-/Datenverfügbarkeits-Primitive.
-- `src/shared/branding/CapitalAiLogo.tsx` — Marken-/Versionsprojektion.
-- `src/shared/visuals/NeuralBackground.tsx` — wiederverwendbarer dekorativer Neural-Layer.
+```text
+request / user interaction
+  → identity / access
+  → entitlement / usage gate, sofern erforderlich
+  → /api/registry/assets metadata
+  → Auswahl eines gültigen Domain-Assets
+  → anwendbarer verified quote/context/display endpoint
+  → value + status + provenance + freshness
+  → deterministische Domain-Analyse / Darstellung
+```
 
-Die bisherigen Pfade unter `src/components/` bleiben bei migrierten Shared-Bausteinen nur als dünne Compatibility-Exports erhalten.
+- `/api/registry/assets` ist keine verifizierte Preis-/Fundamentalsquelle.
+- Fehlende Evidence bleibt unavailable/partial; UI-Code erzeugt keine Finanz-Defaults.
+- Domänenspezifische Komponenten dürfen den globalen Asset-Katalog auf ihre gültige Domäne einschränken.
+- Der Buffett-/Graham-Pfad bleibt **stock-only** und wird über `features/stocks/ui` eingeordnet; seine laufende Verified-Display-Hydration wird durch diese Ordnerkonsolidierung nicht überschrieben.
+- Vor providergebundener Hydration gelten die bestehenden Entitlement-/Quota-Contracts.
+- Verified Display ist Research-/Presentation-Evidence und kein Execution-Price-Contract.
+- Ein Display- oder Domain-Analyse-Ergebnis darf nicht als kanonisches Scoring-Ergebnis dargestellt werden, wenn es die autoritative Scoring-Dispatcher-Kette nicht durchlaufen hat.
 
-Weitere Primitives wie `Button`, `Card`, `Modal`, `Input`, `Tooltip`, `Skeleton` und `EmptyState` werden bei der nächsten Extraktion nach `src/shared/ui` verschoben und nicht parallel neu implementiert.
+## 6. Shared Design System
 
-## 6. Visual Identity
+Kanonische Shared-Primitives:
+
+- `Button`
+- `Card`
+- `Input`
+- `Modal`
+- `Tooltip`
+- `Skeleton`
+- `EmptyState`
+- `StatusBadge`
+- `CapitalAiLogo`
+- `NeuralBackground`
+
+Die bisherigen Pfade unter `src/components/` bleiben bei migrierten Shared-Bausteinen nur als dünne Compatibility-Exports erhalten. Fachliche Komponenten dürfen Shared-Primitives konsumieren, aber keine parallelen Basisimplementierungen etablieren.
+
+## 7. Visual Identity
 
 - Canvas: dunkle neutrale Oberfläche; semantische Surface-Tokens sind gegenüber lokalen Hex-Werten zu bevorzugen.
 - CAPITAL-AI Gold: Premium-/Primärfokus.
@@ -109,31 +141,36 @@ Weitere Primitives wie `Button`, `Card`, `Modal`, `Input`, `Tooltip`, `Skeleton`
 - Dekorative Neural-Geometrie wird zentral über `shared/visuals` konsolidiert.
 - Motion muss `prefers-reduced-motion` respektieren.
 
-## 7. Accessibility
+## 8. Accessibility
 
 - Interaktive Ziele mindestens 44×44 px, soweit durch Komponententyp sinnvoll.
 - Fokuszustände bleiben sichtbar und farbunabhängig verständlich.
 - Statuskommunikation nutzt Text/Icon zusätzlich zu Farbe.
+- Dialoge besitzen semantische Dialogrollen und Escape-/Close-Verhalten.
+- Loading- und Empty-States werden über gemeinsame Primitives dargestellt.
 - Charts und komplexe Visualisierungen erhalten textuelle Beschreibungen bzw. zugängliche Alternativen.
 
-## 8. Migrationsstrategie
+## 9. Migrationsstrategie
 
 Die Konsolidierung ist **strangler-basiert**, nicht Big Bang:
 
-1. Neue Architekturpfade und Dependency Rules etablieren.
+1. `app/features/shared` und Dependency Rules etablieren.
 2. Shared-Primitives physisch verschieben; alte Pfade werden Compatibility-Exports.
-3. Bestehende Komponenten über Feature-UI-Fassaden einordnen.
-4. Große Komponenten (`Dashboard.tsx`, `LandingPage.tsx`, Admin-Flächen) anschließend sliceweise zerlegen.
+3. Bestehende Fachkomponenten über Feature-UI-Fassaden in die Wertschöpfung einordnen.
+4. Große Komponenten (`Dashboard.tsx`, `LandingPage.tsx`, Admin-Flächen) anschließend sliceweise zerlegen, ohne laufende fachliche PRs zu überschreiben.
 5. Nach Migration aller Consumer die jeweiligen Legacy-Exports aus `src/components/` entfernen.
 6. `src/components/` wird am Ende gelöscht, sobald keine produktive Implementierung mehr darin verbleibt.
 
-## 9. Architektur-Gate
+## 10. Architektur-Gate
 
 `npm run frontend:architecture:check` prüft:
 
 - Vorhandensein der kanonischen Schichten und Feature-UI-Einstiege,
+- Vorhandensein der zentralen Shared-Primitives,
+- Erhalt der bestehenden Registry-Fachlogik innerhalb `src/features/registry`,
 - Abwesenheit paralleler Frontend-Roots (`src/frontend`, `src/ui`),
 - Dependency-Richtung der Shared-Schicht,
-- korrekte Compatibility-Exports der bereits migrierten Shared-Primitives.
+- korrekte Compatibility-Exports der bereits migrierten Shared-Primitives,
+- Einbindung des Architektur-Gates in den bestehenden Quality-Center-Testpfad.
 
-Der Check ist Bestandteil von `npm test`.
+Der Check läuft innerhalb von `test:raw` und damit unter der aktuellen Quality-Center-Orchestrierung.

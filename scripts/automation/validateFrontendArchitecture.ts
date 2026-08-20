@@ -5,10 +5,21 @@ const ROOT = process.cwd();
 
 const requiredPaths = [
   'src/app/README.md',
+  'src/app/AppShell.tsx',
+  'src/app/index.ts',
   'src/features/README.md',
   'src/features/index.ts',
+  'src/features/registry/registryRoutes.ts',
+  'src/features/registry/verifiedCatalogScoring.ts',
   'src/shared/README.md',
+  'src/shared/ui/Button.tsx',
+  'src/shared/ui/Card.tsx',
+  'src/shared/ui/EmptyState.tsx',
+  'src/shared/ui/Input.tsx',
+  'src/shared/ui/Modal.tsx',
+  'src/shared/ui/Skeleton.tsx',
   'src/shared/ui/StatusBadge.tsx',
+  'src/shared/ui/Tooltip.tsx',
   'src/shared/branding/CapitalAiLogo.tsx',
   'src/shared/visuals/NeuralBackground.tsx',
   'src/features/public/ui/index.ts',
@@ -57,11 +68,30 @@ for (const file of walk(path.join(ROOT, 'src/shared')).filter((name) => /\.(ts|t
   }
 }
 
-const statusCompat = fs.readFileSync(path.join(ROOT, 'src/components/StatusBadge.tsx'), 'utf8');
-if (!statusCompat.includes("../shared/ui/StatusBadge")) findings.push('StatusBadge legacy path is not a compatibility export to src/shared/ui.');
+for (const [legacyPath, canonicalImport] of [
+  ['src/components/StatusBadge.tsx', '../shared/ui/StatusBadge'],
+  ['src/components/CapitalAiLogo.tsx', '../shared/branding/CapitalAiLogo'],
+] as const) {
+  const absolute = path.join(ROOT, legacyPath);
+  if (!fs.existsSync(absolute)) {
+    findings.push(`missing compatibility export: ${legacyPath}`);
+    continue;
+  }
+  const content = fs.readFileSync(absolute, 'utf8');
+  if (!content.includes(canonicalImport)) findings.push(`${legacyPath} is not a compatibility export to ${canonicalImport}.`);
+}
 
-const logoCompat = fs.readFileSync(path.join(ROOT, 'src/components/CapitalAiLogo.tsx'), 'utf8');
-if (!logoCompat.includes("../shared/branding/CapitalAiLogo")) findings.push('CapitalAiLogo legacy path is not a compatibility export to src/shared/branding.');
+try {
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')) as { scripts?: Record<string, string> };
+  if (pkg.scripts?.['frontend:architecture:check'] !== 'tsx scripts/automation/validateFrontendArchitecture.ts') {
+    findings.push('package.json frontend:architecture:check does not target the canonical validator.');
+  }
+  if (!String(pkg.scripts?.['test:raw'] ?? '').includes('npm run frontend:architecture:check')) {
+    findings.push('package.json test:raw does not include frontend:architecture:check.');
+  }
+} catch (error) {
+  findings.push(`package.json cannot be validated: ${error instanceof Error ? error.message : String(error)}`);
+}
 
 if (findings.length > 0) {
   console.error(`[frontend-architecture] ${findings.length} violation(s)`);
@@ -69,4 +99,4 @@ if (findings.length > 0) {
   process.exit(1);
 }
 
-console.log(`[frontend-architecture] PASS: ${requiredPaths.length} canonical paths verified; no parallel frontend root detected.`);
+console.log(`[frontend-architecture] PASS: ${requiredPaths.length} canonical paths verified; dependency and compatibility boundaries intact.`);

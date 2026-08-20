@@ -19,4 +19,4 @@ main.tsx -> app -> features -> shared
 
 `shared` darf niemals von `features` oder `app` abhängen. `features` dürfen nicht von `app` abhängen.
 
-`src/App.tsx` bleibt während der schrittweisen Migration der bestehende Composition Root. Neue Composition-Helfer werden unter `src/app/` angelegt und anschließend kontrolliert aus `App.tsx` bzw. `main.tsx` konsumiert.
+`AppShell.tsx` ist der kanonische fachneutrale Shell-Baustein für Header, Navigation und Main-Content. `src/App.tsx` bleibt während der strangler-basierten Migration noch Composition Root; neue Composition-Helfer werden unter `src/app/` angelegt und anschließend kontrolliert aus `App.tsx` bzw. `main.tsx` konsumiert.
