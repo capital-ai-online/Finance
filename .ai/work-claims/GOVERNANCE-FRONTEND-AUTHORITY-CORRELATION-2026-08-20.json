@@ -30,6 +30,7 @@
     "docs/governance/document-registry.json",
     "docs/governance/control-plane/README.md",
     "docs/governance/control-plane/DOCUMENT_LIFECYCLE_POLICY.md",
+    "scripts/governance/controlPlaneRegistryRules.mjs",
     "scripts/governance/validateGovernanceControlPlane.mjs",
     "tests/unit/governanceControlPlane.test.ts"
   ],
