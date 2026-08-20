@@ -3,6 +3,8 @@
 import fs from 'node:fs';
 import {
   PR_TEMPLATE_MARKER,
+  PRODUCTION_BASELINE_END,
+  PRODUCTION_BASELINE_START,
   bodyHasGovernanceId,
   extractBaselineGeneratedAt,
   extractProductionBaselineBlock,
@@ -50,6 +52,11 @@ function bodyHasEvidenceToken(bodyText, token) {
   return false;
 }
 
+function occurrenceCount(text, needle) {
+  if (!needle) return 0;
+  return String(text || '').split(needle).length - 1;
+}
+
 if (!body.includes(PR_TEMPLATE_MARKER)) {
   fail(`PR #${prNumber} verwendet nicht den Marker der kanonischen Vorlage: ${PR_TEMPLATE_MARKER}`);
 }
@@ -77,13 +84,21 @@ if (missingSections.length > 0) {
   fail(`PR #${prNumber} enthält nicht alle Pflichtabschnitte der kanonischen Vorlage: ${missingSections.join(', ')}`);
 }
 
-const requiredIds = [
-  'CAPITAL_AI_PRODUCTION_BASELINE_START',
-  'CAPITAL_AI_PRODUCTION_BASELINE_END',
-];
+const requiredIds = [PRODUCTION_BASELINE_START, PRODUCTION_BASELINE_END];
 const missingIds = requiredIds.filter((id) => !bodyHasGovernanceId(body, id));
 if (missingIds.length > 0) {
   fail(`PR #${prNumber} fehlt mindestens eine maschinenlesbare Governance-ID: ${missingIds.join(', ')}`);
+}
+
+for (const id of requiredIds) {
+  const commentMarker = `<!-- ${id} -->`;
+  const visibleMarker = `\`${id}\``;
+  if (occurrenceCount(body, commentMarker) !== 1 || occurrenceCount(body, visibleMarker) !== 1) {
+    fail(
+      `PR #${prNumber} muss ${id} genau einmal als HTML-Kommentar und genau einmal sichtbar enthalten. ` +
+        `Duplizierte Baseline-Blöcke sind nicht zulässig.`,
+    );
+  }
 }
 
 const unresolved = [...body.matchAll(/\{\{([A-Z0-9_]+)\}\}/g)].map((match) => match[1]);
