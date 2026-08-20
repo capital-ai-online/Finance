@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1.0",
   "claimId": "BUFFETT-VALUE-CHECK-NULL-PRICE-FIX-2026-08-14",
-  "status": "verified",
+  "status": "suspended",
   "exclusive": false,
   "agent": {
     "provider": "OpenAI",
@@ -11,6 +11,11 @@
   "workItem": "Buffett Value Check gegen fehlende Registry-Preise absichern und die Fehlergrenze beim Öffnen verhindern.",
   "startedAt": "2026-08-14T18:20:00Z",
   "verifiedAt": "2026-08-14T18:34:01Z",
+  "suspendedAt": "2026-08-20T11:09:00Z",
+  "suspendedReason": "Der historische Null-Safety-Scope aus PR #259 ist abgeschlossen und wird durch den verifizierten Asset-Display-/Buffett-Stock-Only-Scope ersetzt. Der Claim darf keine aktuelle Exklusivität mehr ausdrücken.",
+  "supersededBy": "VERIFIED-ASSET-DISPLAY-HYDRATION-2026-08-20",
+  "archiveEligible": true,
+  "archiveNote": "Archivierungsbereit. Im Repository existiert derzeit kein kanonischer .ai/work-claims/archive-Pfad; deshalb verbleibt die historische Datei bis zu einer separaten Archiv-Namespace-Entscheidung an ihrem bestehenden Pfad.",
   "baseBranch": "main",
   "baseSha": "e2dc1d11926af62baeb62feafb959fe258143936",
   "pullRequest": 259,
@@ -20,5 +25,5 @@
     "tests/unit/buffetValueCheck.test.ts",
     ".ai/work-claims/BUFFETT-VALUE-CHECK-NULL-PRICE-FIX-2026-08-14.json"
   ],
-  "releaseCondition": "Satisfied: PR #259 was merged on 2026-08-14; this metadata no longer holds an exclusive path claim."
+  "releaseCondition": "Satisfied by merged PR #259. Claim is suspended, non-exclusive and superseded by VERIFIED-ASSET-DISPLAY-HYDRATION-2026-08-20."
 }
