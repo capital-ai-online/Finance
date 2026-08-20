@@ -40,6 +40,7 @@
     "docs/governance/document-registry.json",
     "docs/governance/control-plane/README.md",
     "docs/governance/control-plane/DOCUMENT_LIFECYCLE_POLICY.md",
+    "src/platform/Documentary/Governance/Services/DocumentationHygieneValidator.ts",
     "scripts/governance/controlPlaneRegistryRules.mjs",
     "scripts/governance/validateGovernanceControlPlane.mjs",
     "scripts/pr/validateWorkClaim.mjs",
