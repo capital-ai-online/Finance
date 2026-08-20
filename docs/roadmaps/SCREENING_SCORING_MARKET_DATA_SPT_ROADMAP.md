@@ -32,7 +32,7 @@ ADR-0088/0089/0090 begrenzen Research/Gemini weiterhin auf Acquisition-only, def
 
 | Ebene | Kanonische Quelle | Rolle in dieser Wertschöpfungskette | Status / Behandlung |
 |---|---|---|---|
-| Catalog / Provenance | ADR-0032 | Trennung Asset Catalog ↔ verifizierte Market Evidence; No-Demo-/Fail-Closed-Invariante | **Parent-Authority**; durch PR #458 erneut berührt und zu revalidieren |
+| Catalog / Provenance | ADR-0032 | Trennung Asset Catalog ↔ verifizierte Market Evidence; No-Demo-/Fail-Closed-Invariante | **Parent-Authority**; durch PR #458 erneut berührt, Revalidation bleibt bis zu technischen Gates `draft` |
 | Traditional Quote / Eligibility | ADR-0025 | `traditional-quote/1.0.0`, Screening-/Alert-Referenzwerte | spezialisierter Contract; Proposed-Dokument ist keine höhere Authority als ADR-0032/0041 |
 | Index / Commodity / Sovereign Evidence | ADR-0033 | assetklassenspezifische Evidence-Contracts | **Accepted / resolved**; Semantik bleibt unverändert |
 | Buffett Access | ADR-0034 | serverseitige Subscription-/Quota-Autorisierung | **Accepted**; vor Buffett-Hydration verbindlich |
@@ -44,11 +44,11 @@ ADR-0088/0089/0090 begrenzen Research/Gemini weiterhin auf Acquisition-only, def
 | Compliance | ADR-0007 + Security/Compliance Authorities | Data Integrity, Datenschutz, deterministische Analyse, Audit, Export | querliegende Kontrollkette |
 | Documentary / Change Governance | ESS-0010/0011/0012 + `DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP` | Change → Evidence → Traceability → Quality/Security/Compliance → Release | separate **Change-/Governance-Kette**, nicht Runtime-Datenpfad |
 | Verified Asset Display | `verified-asset-display/1.0.0` + ADR-0032-Revalidation 2026-08-20 | per-symbol Presentation-/Research-Projektion | **keine neue Authority** |
-| ADR-0097 | Draft-PR-Artefakt | enthielt überwiegend bereits vorhandene Entscheidungen | **vor Merge zu retiren/konsolidieren**, nicht als zweite Authority fortführen |
+| verworfener ADR-0097-Entwurf | historisches Draft-PR-Artefakt | enthielt überwiegend bereits vorhandene Entscheidungen | **aus Branch/Registries entfernt**; nur als Disposition in Evidence/Traceability erwähnt |
 
-### 2.1 Supersession-Regel für ADR-0097
+### 2.1 Disposition des verworfenen ADR-0097-Entwurfs
 
-Die Korrelation zeigt **keine neue Architekturentscheidung**, die ADR-0032/0041/0087 ablösen müsste. ADR-0097 darf deshalb nicht durch bloße Neuheit eine zweite Authority erzeugen. Seine fachlich neuen Implementierungsdetails werden wie folgt verteilt:
+Die Korrelation zeigte **keine neue Architekturentscheidung**, die ADR-0032/0041/0087 ablösen müsste. Der zunächst angelegte ADR-0097-Entwurf wurde deshalb aus dem aktiven ADR-/Authority-Namespace entfernt. Seine fachlich neuen Implementierungsdetails sind wie folgt eingeordnet:
 
 - `verified-asset-display/1.0.0` → ADR-0032-Revalidation / diese SPT-Kette;
 - progressive per-symbol Hydration → Provider-/Consumer-Implementierung unter ADR-0032 + ADR-0041;
@@ -57,7 +57,7 @@ Die Korrelation zeigt **keine neue Architekturentscheidung**, die ADR-0032/0041/
 - Work-Claim-Lifecycle → bestehende Governance-/Coordination-Regeln;
 - Scoring bleibt vollständig unter ADR-0087.
 
-Damit ist **kein semantisches Supersession-Paket gegen ADR-0032 erforderlich**, weil deren Entscheidung unverändert richtig bleibt; behoben wird Implementation-/Consumer-Drift.
+Damit ist **kein semantisches Supersession-Paket gegen ADR-0032 erforderlich**, weil deren Entscheidung unverändert richtig bleibt; behoben wird Implementation-/Consumer-Drift. Für diesen Scope existiert weder ein aktiver ADR-0097-Registry-Eintrag noch eine `AUTH-ADR-VERIFIED-ASSET-DISPLAY-*`-Authority.
 
 ---
 
@@ -184,7 +184,7 @@ Verbindliche Regeln:
 
 ### Aktueller PR-#458-Korrelationsbefund
 
-Der Branch filtert die Buffett-Suche bereits korrekt auf Aktien und lädt danach `verified-display`. Die serverseitige ADR-0034-Autorisierung wird in `BuffetValueCheck.tsx` jedoch noch **nicht** vorgeschaltet; `server/entitlements.ts` validiert aktuell Catalog-Presence, aber noch nicht `asset.type === 'stock'`. Beide Punkte sind P0-Gaps vor Merge-Readiness.
+Der Branch filtert die Buffett-Suche bereits korrekt auf Aktien und lädt danach `verified-display`. Die serverseitige ADR-0034-Autorisierung wird in `BuffetValueCheck.tsx` jedoch noch **nicht** vorgeschaltet; `server/entitlements.ts` validiert aktuell Catalog-Presence, aber noch nicht `asset.type === 'stock'`. Diese beiden Punkte sind die verbleibenden P0-Code-Gaps aus der Korrelationsanalyse.
 
 ---
 
@@ -218,14 +218,25 @@ Der Branch filtert die Buffett-Suche bereits korrekt auf Aktien und lädt danach
 | ADR-0041 / ESS-0016 | Provider-/Resilience-Regeln | unverändert Parent; 90-s Cadence ist Runtime-Implementierung darunter |
 | ADR-0075 / ADR-0083 | Cache/Runtime-/Composition-Verantwortung | Runtime-Änderung dort einordnen; kein zweiter Runtime-Contract |
 | ADR-0087 / SC-2 | Scoring | unverändert; Display/Buffett dürfen keinen `CanonicalScoreResult` simulieren |
-| ADR-0034 | Buffett Entitlement | in Sub-Chain nach vorne ziehen; derzeitige Consumer-Lücke schließen |
+| ADR-0034 | Buffett Entitlement | in Sub-Chain nach vorne ziehen; verbleibende Consumer-Lücke schließen |
 | ADR-0056 / Telemetry Contract | operative Value-Chain-Namen | als Messprojektion beibehalten; keine zweite fachliche Kette |
 | ADR-0007 | Compliance Value Chain | cross-cutting Controls/Evidence, nicht als zweiter Market-Data-Datenpfad |
 | Documentary Event Value Chain | Repository-/Change-Lifecycle | cross-cutting Change-Governance; nicht Runtime Request Flow |
-| `DATENQUALITAETSSCHICHT.md` | historische live/fallback-/Provenance-Aussagen | Projection auf ADR-0032 + diese SPT-Kette |
-| `BACKEND_ARCH.md` | Runtime-/Fallback-Darstellung | Projection auf ADR-0032/0041/0083 + diese SPT-Kette |
-| API / Frontend Inventories | Consumer-/Provider-Sicht | Projection, keine Authority |
-| ADR-0097 | weitgehende Authority-Duplikation | vor Merge aus aktivem ADR-/Authority-Namespace entfernen; Inhalte in Revalidation/SPT erhalten |
+| `DATENQUALITAETSSCHICHT.md` | historische live/fallback-/Provenance-Aussagen | auf ADR-0032 + diese SPT-Kette projiziert |
+| `BACKEND_ARCH.md` | Runtime-/Fallback-Darstellung | auf ADR-0032/0041/0083 + diese SPT-Kette projiziert |
+| API / Frontend Inventories | Consumer-/Provider-Sicht | auf Parent-Authorities projiziert; keine Authority |
+| verworfener ADR-0097-Entwurf | weitgehende Authority-Duplikation | **entfernt**; Inhalte in ADR-0032-Revalidation/SPT erhalten |
+
+### Dokumentkonsolidierung — Status
+
+- [x] SPT als homogene fachliche Wertschöpfungskette konsolidiert.
+- [x] ADR-0032-Revalidation als nicht-autorisierende Implementation Evidence angelegt.
+- [x] Document Registry auf SPT v1.1.0 + Revalidation Evidence synchronisiert.
+- [x] ADR-0097-Datei entfernt.
+- [x] ADR Registry für diesen Scope auf `main` zurückgeführt.
+- [x] Authority Registry für diesen Scope auf `main` zurückgeführt.
+- [x] Datenqualitäts-, Backend-, API-, Frontend- und Phase-3.4.6-Projektionen auf Parent-Authorities ausgerichtet.
+- [x] Market-Data-Facade-Kommentar auf ADR-0032 / SPT ausgerichtet.
 
 ---
 
@@ -235,9 +246,7 @@ Der Branch filtert die Buffett-Suche bereits korrekt auf Aktien und lädt danach
 
 1. Buffett-Consumer muss `/api/entitlements/warren-buffett/authorize` vor `verified-display` aufrufen.
 2. Buffett-Entitlement-Endpunkt muss Nicht-Aktien fail-closed ablehnen, bevor Quota konsumiert wird.
-3. ADR-0097 als zweite Authority retiren; Verweise auf ADR-0032-Revalidation / SC-MD-SPT-0001 umstellen.
-4. Dokumentprojektionen (`DATENQUALITAETSSCHICHT`, Backend, API, Frontend, Phase 3.4.6) auf dieselben Parent-Authorities ausrichten.
-5. TypeScript/Unit-/Contract-/Governance-Checks nach Dokumentkonsolidierung ausführen.
+3. TypeScript/Unit-/Contract-/Governance-Checks nach dem Code-Gate ausführen.
 
 ### Bestehender SPT-Backlog
 
@@ -262,12 +271,12 @@ Der Branch filtert die Buffett-Suche bereits korrekt auf Aktien und lädt danach
 | SC-3 | Unified DQ + Confidence | P0 | FOUNDATION LANDED | impact off |
 | SC-4 | Gateway hardening | P1 | Phase A LANDED | matrix/health |
 | SC-5 | Live coverage | P1 | Phase A–D code | execution quorum open |
-| SC-5D | Verified Display / Consumer Revalidation | P0 | **IN PR #458** | ADR-0032 revalidated; entitlement-first Buffett; no duplicate authority |
+| SC-5D | Verified Display / Consumer Revalidation | P0 | **ARCH CONSOLIDATED · CODE GATES OPEN · PR #458** | ADR-0032 revalidated; entitlement-first Buffett; no duplicate authority |
 | SC-6 | Scoring integrity & lineage | P1 | **CORE LANDED WITH C3** | execution lineage |
 | SC-7 | Ranking generalization | P1 | **A–C LANDED · D SHADOW/CONSOLIDATED** | intended-use cohorts; impact off |
 | SC-8 | Walk-Forward / backtests | P2 | FOUNDATION/PARTIAL | drift/golden/full governance open |
 
-**Kritischer Pfad für PR #458:** Authority-Konsolidierung → Buffett Entitlement Gate → dokumentierte Parent-Verweise → lokale/PR-Checks → finaler Main-Sync → Merge-Review.
+**Kritischer Pfad für PR #458:** Buffett Entitlement Gate → lokale/PR-Checks → finaler Main-Sync → Merge-Review.
 
 ---
 
@@ -289,7 +298,7 @@ Externe Plattformmutation ist **nicht** Bestandteil der Dokumentkonsolidierung. 
 ## 10. Main- und PR-Korrelation
 
 - Aktueller bestätigter Main für diese Konsolidierung: `f1dff495fe792a4d4a26a3513f0525b4974bd349`.
-- PR #458 arbeitet auf `fix/verified-asset-values-buffett-hydration` und war unmittelbar vor dieser Konsolidierung `0` Commits hinter `main`.
+- PR #458 arbeitet auf `fix/verified-asset-values-buffett-hydration` und ist nach der Dokumentkonsolidierung weiterhin `0` Commits hinter `main`.
 - Offener PR #457 verändert Quality-Center-/Validator-/Build-Orchestrierungsdateien; kein direkter Dateiüberschnitt mit dem bisherigen PR-#458-Scope wurde festgestellt.
 - Die Konsolidierung löst **keine** GitHub-CI, Render-, Supabase- oder Stripe-Mutation aus.
 - Vor Merge-Readiness ist erneut der aktuelle `main` zu laden und semantisch zu korrelieren.
@@ -308,6 +317,7 @@ Keine neue Open-Source-Runtime ist für diese Konsolidierung erforderlich. Beste
 
 - `docs/adr/resolved/ADR-0032-asset-catalog-market-evidence-separation.md`
 - `docs/adr/evidence/ADR-0032-REVALIDATION-2026-08-08-R001.md`
+- `docs/adr/evidence/ADR-0032-REVALIDATION-2026-08-20-VERIFIED-DISPLAY.md`
 - `docs/adr/ADR-0025-verified-traditional-quotes-and-screening-eligibility.md`
 - `docs/adr/resolved/ADR-0033-index-provider-mapping-commodity-sovereign-evidence-scoring.md`
 - `docs/adr/ADR-0034-central-subscription-entitlements-and-buffett-access.md`
@@ -328,4 +338,4 @@ Keine neue Open-Source-Runtime ist für diese Konsolidierung erforderlich. Beste
 
 ---
 
-*Stand 2026-08-20: Die fachliche Market-Data-/Screening-/Scoring-Wertschöpfungskette ist als einheitlicher SPT konsolidiert. Verified Display und Buffett sind als Presentation-/Analysis-Lane eingeordnet; sie erzeugen keine zweite Scoring- oder Market-Data-Authority. PR #458 bleibt Draft, bis die identifizierten P0-Korrelations-Gaps geschlossen und die technische Validierung durchgeführt sind.*
+*Stand 2026-08-20: Die fachliche Market-Data-/Screening-/Scoring-Wertschöpfungskette ist als einheitlicher SPT konsolidiert. Verified Display und Buffett sind als Presentation-/Analysis-Lane eingeordnet; sie erzeugen keine zweite Scoring- oder Market-Data-Authority. Die Dokument-/Authority-Konsolidierung ist abgeschlossen. PR #458 bleibt Draft, bis das Buffett-Entitlement-Code-Gate und die technische Validierung abgeschlossen sind.*
