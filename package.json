@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "tsx server.ts",
-    "build": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/runQualityExecution.ts build scripts/automation/buildRuntimeReleaseManifest.ts",
+    "build": "tsx scripts/security/verifyGoogleMarketingInvariants.ts && tsx scripts/automation/runQualityExecution.ts build scripts/automation/buildRuntimeReleaseManifest.ts && tsx scripts/automation/buildQualityCenterSnapshot.ts",
     "build:raw": "vite build && node scripts/seo/prerender-public-routes.mjs && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
@@ -27,6 +27,7 @@
     "repository:validate": "tsx scripts/automation/validateRepositoryConventions.ts",
     "repository:validate:advisory": "tsx scripts/automation/validateRepositoryConventions.ts --advisory",
     "repository:quality:check": "tsx scripts/automation/validateRepositoryQuality.ts",
+    "repository:quality:snapshot": "tsx scripts/automation/buildQualityCenterSnapshot.ts",
     "frontend:architecture:check": "tsx scripts/automation/validateFrontendArchitecture.ts",
     "status:scan-drift": "tsx scripts/automation/scanStatusEventDrift.ts",
     "hygiene:sweep": "tsx scripts/automation/sweepDocumentaryBranding.ts",
