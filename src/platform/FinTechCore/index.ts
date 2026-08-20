@@ -4,6 +4,7 @@ export * from './CoreEngine';
 export * from './CryptoModuleContracts';
 export * from './Runtime/WorkflowStateMachine';
 export * from './Modules/Crypto/CryptoCoreModule';
+export * from './Modules/Crypto/CryptoCategoryProfileResolver';
 
 import { FinTechCoreEngine } from './CoreEngine';
 import { FinTechCoreModuleRegistry } from './CoreModuleRegistry';
