@@ -14,13 +14,14 @@ Die vorhandene Repository-Quality-Baseline ist zu einem zentral orchestrierten Q
 |---|---|---|
 | Governance Evidence Contract | `src/platform/Governance/Contracts/RepositoryQualityEvidence.ts` | neutraler, non-authorizing Evidence-Umschlag |
 | Validator Registry | `src/platform/Validators/ValidatorRegistry.ts` | zentrale Registrierung/Aufloesung vorhandener Validatoren |
+| Mandatory Validator Catalog | `src/platform/Validators/MandatoryValidatorCatalog.ts` | exakte 16er-Chapter-12-Coverage mit AVAILABLE/PARTIAL/NOT_AVAILABLE |
 | Repository Quality Coordinator | `src/platform/Quality/RepositoryQuality/RepositoryQualityCoordinator.ts` | deterministische Evidence-Aggregation |
-| Quality Center Contract | `src/platform/Quality/Contracts/QualityCenterContract.ts` | Quality-Report-, Gate-, Score-, Coverage-, Event- und Debt-Vertrag |
+| Quality Center Contract | `src/platform/Quality/Contracts/QualityCenterContract.ts` | Quality-Report-, Gate-, Score-, Validator-Coverage-, Coverage-, Event- und Debt-Vertrag |
 | Coverage Collector | `src/platform/Quality/Coverage/CoverageCollector.ts` | reale Testdatei-Abdeckung und optionale Code-Coverage-Artefakte |
 | Gate Runner | `src/platform/Quality/Gates/QualityGateRunner.ts` | Auswertung der acht Chapter-12-Gates |
 | Score Calculator | `src/platform/Quality/Scoring/QualityScoreCalculator.ts` | deterministische 0..100-Messachsen |
 | Score Provider | `scripts/automation/repositoryQualityScoreProviders.ts` | reale Test-/Security-Messquellen ohne Ersatzwerte |
-| Technical Debt Register | `src/platform/Quality/TechnicalDebt/TechnicalDebtRegister.ts` | technische Schulden mit evidenzpflichtigem Abschluss |
+| Technical Debt Register | `src/platform/Quality/TechnicalDebt/TechnicalDebtRegister.ts` | technische Schulden mit evidenzpflichtigem Abschluss und Event-Publikation |
 | QM Documentation Validator | `src/platform/Quality/Validators/DocumentationConsistencyValidator.ts` | Konsistenz von QM-Spezifikation, README, Manifest, Tests und CLI |
 | Orchestrator | `src/platform/Quality/Orchestration/QualityCenterOrchestrator.ts` | zusammenhaengender Quality-Center-Report |
 | Compliance Adapter | `scripts/automation/repositoryQualityAdapters.ts` | reine Projektion vorhandener `runAllScanners()`-Evidence |
@@ -29,14 +30,30 @@ Die vorhandene Repository-Quality-Baseline ist zu einem zentral orchestrierten Q
 ## Authority Boundary
 
 ```text
-Governance ---- Evidence Contract --------+
-                                          |
-Compliance ---- existing scanners --------+--> Quality Center --> Evidence/Measurement
-                                          |          |
-Other domain validators ------------------+          +--> existing EventMesh
+Governance ---- Evidence Contract ----------------+
+                                                  |
+Compliance ---- existing scanners ----------------+--> Quality Center --> Evidence/Measurement
+                                                  |          |
+Other domain validators --------------------------+          +--> existing EventMesh
+                                                  |
+Chapter-12 mandatory identities -> coverage only -+
 ```
 
 Das Quality Center darf keine Domain-Regel, Severity, Schwelle, IAM-Berechtigung oder Governance-Authority veraendern. Es darf keine Merge-, Release-, Deployment- oder Produktionsmutation autorisieren.
+
+## Pflichtvalidator-Katalog
+
+ESS-0001-CONTRACTS Chapter 12 definiert exakt 16 Pflichtvalidatoren. Der Code bildet diese Identitaeten in `MandatoryValidatorCatalog` 1:1 ab und bindet nur nachweisbar vorhandene Sources.
+
+Aktuelle Baseline:
+
+| Status | Anzahl | Bedeutung |
+|---|---:|---|
+| AVAILABLE | 5 | autoritative ausfuehrbare Source vorhanden |
+| PARTIAL | 3 | relevante Teil-Evidence vorhanden, Pflichtvertrag aber nicht vollstaendig |
+| NOT_AVAILABLE | 8 | keine hinreichende autoritative Runtime-Evidence vorhanden |
+
+Der Katalog definiert **keine** Validator-Regel neu. Fehlende Implementierungen bleiben als `NOT_AVAILABLE` sichtbar. Dadurch wird die Chapter-12-Anforderung maschinenlesbar, ohne acht fehlende Validatoren zu erfinden oder Teil-Evidence als PASS auszugeben.
 
 ## Gate-Semantik
 
@@ -77,19 +94,20 @@ Weitere Achsen bleiben ohne autoritative numerische Messquelle bewusst offen.
 
 Technical Debt wird explizit erfasst. Ein Eintrag kann nur mit nichtleerer Resolution-Evidence geschlossen werden. Das Register besitzt keinen stillen Auto-Close-, Delete- oder Auto-Fix-Pfad.
 
+Bei injiziertem `QualityEventSink` erzeugt `record()` `TechnicalDebtDetectedEvent` und `resolve()` `TechnicalDebtResolvedEvent`. Der Register-Snapshot fuehrt Event-Publikationsstatus und Fehler. Ein Transportfehler veraendert keine Governance-Authority und fuehrt nicht zu einer stillen Ruecknahme eines bereits protokollierten Debt-Zustands.
+
 ## EventMesh
 
-Der Quality-Center-Orchestrator publiziert ueber den existierenden EventMesh:
+Der Quality-Center-Core publiziert ueber den existierenden EventMesh-Sink:
 
 - `ValidationStartedEvent`;
 - `ValidationCompletedEvent` / `ValidationFailedEvent`;
 - `QualityGatePassedEvent` / `QualityGateFailedEvent`;
 - `QualityScoreChangedEvent` bei nachgewiesener Score-Aenderung;
-- `CoverageCalculatedEvent`.
+- `CoverageCalculatedEvent`;
+- `TechnicalDebtDetectedEvent` / `TechnicalDebtResolvedEvent` bei Debt-Mutationen eines mit Sink komponierten Registers.
 
-Die Event-Namen sind im zentralen `STANDARD_EVENT_CATALOG` registriert. Publikationsfehler werden als `eventPublication` im Quality-Center-Report sichtbar und veraendern keine Quality-/Governance-Authority.
-
-`TechnicalDebtDetectedEvent` und `TechnicalDebtResolvedEvent` sind katalogisiert, aber Debt-Mutationen selbst sind noch nicht mit dem Event-Sink gekoppelt.
+Die Event-Namen sind im zentralen `STANDARD_EVENT_CATALOG` registriert. Publikationsfehler werden als Evidence sichtbar und veraendern keine Quality-/Governance-Authority.
 
 ## Dokumentationskonsistenz
 
@@ -108,6 +126,8 @@ Er ersetzt nicht den bestehenden Documentation Hygiene Validator aus ESS-0012, s
 
 Zusätzlich zu den bestehenden Unit-/Integrationstests existieren Quality-spezifische Tests in:
 
+- `tests/unit/mandatoryValidatorCatalog.test.ts`;
+- `tests/unit/technicalDebtRegister.test.ts`;
 - `tests/contract/qualityCenterContract.test.ts`;
 - `tests/architecture/qualityCenterBoundary.test.ts`;
 - `tests/security/qualityCenterAuthorityBoundary.test.ts`;
@@ -117,9 +137,8 @@ Zusätzlich zu den bestehenden Unit-/Integrationstests existieren Quality-spezif
 ## Noch offen innerhalb des bestehenden ESS-0005-Zielbilds
 
 - vollstaendige Execution-Evidence fuer Contract-, Test- und Build-Gate;
-- vollstaendige Abdeckung aller Pflichtvalidatoren aus Chapter 12;
+- echte Implementierung/Anbindung der aktuell `PARTIAL` oder `NOT_AVAILABLE` markierten Chapter-12-Pflichtvalidatoren;
 - reale numerische Provider fuer Documentation, Architecture, Knowledge, Metadata und Twin;
-- echte Statement-/Branch-/Function-/Line-Coverage erst nach Erzeugung eines Coverage-Artefakts;
-- Event-Publikation direkt aus `TechnicalDebtRegister.record()` / `resolve()`.
+- echte Statement-/Branch-/Function-/Line-Coverage erst nach Erzeugung eines Coverage-Artefakts.
 
 Diese offenen Punkte bleiben maschinenlesbar unvollstaendig und werden nicht als PASS oder Score simuliert.

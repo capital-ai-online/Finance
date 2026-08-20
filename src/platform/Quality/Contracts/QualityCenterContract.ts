@@ -2,6 +2,7 @@ import type {
   RepositoryQualityDomain,
   RepositoryQualityObservation,
 } from '../../Governance/Contracts/RepositoryQualityEvidence';
+import type { MandatoryValidatorCoverageSnapshot } from '../../Validators/MandatoryValidatorCatalog';
 
 export const QUALITY_CENTER_CONTRACT_VERSION = 'quality-center-contract/1.1.0' as const;
 export const QUALITY_CENTER_REPORT_SCHEMA = 'quality-center-report/1.1.0' as const;
@@ -166,10 +167,11 @@ export interface TechnicalDebtItem {
 }
 
 export interface TechnicalDebtSnapshot {
-  schemaVersion: 'technical-debt-register/1.0.0';
+  schemaVersion: 'technical-debt-register/1.1.0';
   open: number;
   resolved: number;
   items: readonly TechnicalDebtItem[];
+  eventPublication: QualityEventPublicationSummary;
 }
 
 export interface QualityCenterReport {
@@ -177,6 +179,7 @@ export interface QualityCenterReport {
   contractVersion: typeof QUALITY_CENTER_CONTRACT_VERSION;
   checkedAt: string;
   repositoryObservation: RepositoryQualityObservation;
+  mandatoryValidators: MandatoryValidatorCoverageSnapshot;
   gateReport: QualityGateReport;
   qualityScore: QualityScoreSnapshot;
   coverage: QualityCoverageSnapshot;

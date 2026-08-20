@@ -1,9 +1,13 @@
 import type {
+  QualityCenterEventName,
+  QualityEventPublicationFailure,
+  QualityEventPublicationSummary,
+  QualityEventSink,
   TechnicalDebtItem,
   TechnicalDebtSnapshot,
 } from '../Contracts/QualityCenterContract';
 
-export const TECHNICAL_DEBT_REGISTER_VERSION = 'technical-debt-register/1.0.0' as const;
+export const TECHNICAL_DEBT_REGISTER_VERSION = 'technical-debt-register/1.1.0' as const;
 
 export interface TechnicalDebtRecordInput extends Omit<TechnicalDebtItem, 'status' | 'resolvedAt' | 'resolutionEvidenceRefs'> {
   status?: never;
@@ -32,14 +36,45 @@ function validateRecord(input: TechnicalDebtRecordInput): void {
   }
 }
 
+function errorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) return error.message.trim();
+  return String(error);
+}
+
 export class TechnicalDebtRegister {
   private readonly entries = new Map<string, TechnicalDebtItem>();
+  private attemptedEvents = 0;
+  private publishedEvents = 0;
+  private readonly eventFailures: QualityEventPublicationFailure[] = [];
 
-  constructor(initialItems: readonly TechnicalDebtItem[] = []) {
+  constructor(
+    initialItems: readonly TechnicalDebtItem[] = [],
+    private readonly eventSink?: QualityEventSink,
+  ) {
     for (const item of initialItems) {
       if (this.entries.has(item.id)) throw new Error(`[TechnicalDebtRegister] duplicate debt id ${item.id}.`);
       this.entries.set(item.id, cloneItem(item));
     }
+  }
+
+  private publish(eventName: QualityCenterEventName, payload: Readonly<Record<string, unknown>>): void {
+    if (!this.eventSink) return;
+    this.attemptedEvents += 1;
+    try {
+      this.eventSink.publish(eventName, payload);
+      this.publishedEvents += 1;
+    } catch (error) {
+      this.eventFailures.push(Object.freeze({ eventName, message: errorMessage(error) }));
+    }
+  }
+
+  private eventPublication(): QualityEventPublicationSummary {
+    return Object.freeze({
+      attempted: this.attemptedEvents,
+      published: this.publishedEvents,
+      failed: this.eventFailures.length,
+      failures: Object.freeze([...this.eventFailures]),
+    });
   }
 
   record(input: TechnicalDebtRecordInput): TechnicalDebtItem {
@@ -55,6 +90,14 @@ export class TechnicalDebtRegister {
       resolutionEvidenceRefs: [],
     });
     this.entries.set(item.id, item);
+    this.publish('TechnicalDebtDetectedEvent', {
+      id: item.id,
+      component: item.component,
+      priority: item.priority,
+      targetVersion: item.targetVersion,
+      createdAt: item.createdAt,
+      sourceRefs: item.sourceRefs,
+    });
     return item;
   }
 
@@ -86,16 +129,23 @@ export class TechnicalDebtRegister {
       resolutionEvidenceRefs: Object.freeze([...evidenceRefs]),
     });
     this.entries.set(id, resolved);
+    this.publish('TechnicalDebtResolvedEvent', {
+      id: resolved.id,
+      component: resolved.component,
+      resolvedAt,
+      resolutionEvidenceRefs: resolved.resolutionEvidenceRefs,
+    });
     return resolved;
   }
 
   snapshot(): TechnicalDebtSnapshot {
     const items = this.list();
     return Object.freeze({
-      schemaVersion: 'technical-debt-register/1.0.0' as const,
+      schemaVersion: 'technical-debt-register/1.1.0' as const,
       open: items.filter((item) => item.status === 'OPEN').length,
       resolved: items.filter((item) => item.status === 'RESOLVED').length,
       items,
+      eventPublication: this.eventPublication(),
     });
   }
 }

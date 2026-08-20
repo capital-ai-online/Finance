@@ -1,18 +1,21 @@
 {
   "name": "Validators",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "status": "implemented-core-registry",
   "owner": "CAPITAL-AI",
-  "description": "Central rule-neutral ValidatorRegistry for ESS-0005 Quality Center; domain rules remain in their owning Governance, Compliance, Release, Documentary and Vocabulary components.",
+  "description": "Central rule-neutral ValidatorRegistry plus machine-readable coverage catalog for the exact 16 ESS-0001-CONTRACTS Chapter-12 mandatory validators. Domain rules remain in their owning components.",
   "category": "platform",
   "ess": [
     "ESS-0001",
     "ESS-0001-CONTRACTS",
     "ESS-0005",
-    "ESS-0006"
+    "ESS-0006",
+    "ESS-0013"
   ],
   "adr": [
+    "ADR-0012",
     "ADR-0016",
+    "ADR-0018",
     "ADR-0096"
   ],
   "dependencies": [
@@ -24,25 +27,37 @@
   },
   "knowledge": [],
   "interfaces": [
-    "ValidatorRegistry"
+    "ValidatorRegistry",
+    "MandatoryValidatorCatalog"
   ],
   "contracts": [
-    "repository-quality-observation/1.1.0"
+    "repository-quality-observation/1.1.0",
+    "mandatory-validator-coverage/1.0.0"
   ],
   "documentation": [
     "README.md"
   ],
   "tests": [
-    "tests/unit/validatorRegistry.test.ts"
+    "tests/unit/validatorRegistry.test.ts",
+    "tests/unit/mandatoryValidatorCatalog.test.ts"
   ],
   "implementation": {
     "implementedAreas": [
       "central validator registration",
       "deterministic domain resolution",
-      "duplicate validator rejection"
+      "duplicate validator rejection",
+      "exact Chapter-12 mandatory-validator identity catalog",
+      "machine-readable AVAILABLE/PARTIAL/NOT_AVAILABLE coverage without invented PASS"
     ],
+    "coverageBaseline": {
+      "total": 16,
+      "available": 5,
+      "partial": 3,
+      "notAvailable": 8
+    },
     "remainingContractScope": [
-      "full coverage of all mandatory Chapter-12 validators"
+      "implement or bind authoritative execution sources for the validators currently PARTIAL or NOT_AVAILABLE",
+      "do not duplicate domain rules merely to increase the coverage count"
     ]
   }
 }

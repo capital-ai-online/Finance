@@ -3,7 +3,7 @@
   "version": "1.1.0",
   "status": "core-implementation",
   "owner": "CAPITAL-AI",
-  "description": "ESS-0005 Quality Center core: validator registry integration, non-authorizing Governance/Compliance orchestration, eight-gate evidence evaluation, deterministic quality scoring, technical-debt management, measured test-area coverage, QM documentation consistency and EventMesh lifecycle publication.",
+  "description": "ESS-0005 Quality Center core: validator registry and mandatory-validator coverage, non-authorizing Governance/Compliance orchestration, eight-gate evidence evaluation, deterministic quality scoring, technical-debt management, measured test-area coverage, QM documentation consistency and EventMesh lifecycle publication.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -33,10 +33,12 @@
       "QualityGatePassedEvent",
       "QualityGateFailedEvent",
       "QualityScoreChangedEvent",
+      "TechnicalDebtDetectedEvent",
+      "TechnicalDebtResolvedEvent",
       "CoverageCalculatedEvent"
     ],
     "consumes": [],
-    "note": "QualityCenterOrchestrator publishes lifecycle evidence through the existing EventMesh composition adapter. Event delivery has no merge/release/production authorization effect. TechnicalDebtDetectedEvent/TechnicalDebtResolvedEvent remain catalogued target events until debt mutations are wired to an event sink."
+    "note": "Quality lifecycle events use the existing EventMesh composition adapter. TechnicalDebtRegister publishes Detect/Resolve events when composed with the same abstract QualityEventSink. Event delivery never authorizes merge/release/deployment/production mutation."
   },
   "knowledge": [],
   "interfaces": [
@@ -51,7 +53,9 @@
   "contracts": [
     "repository-quality-observation/1.1.0",
     "quality-center-contract/1.1.0",
-    "quality-coverage/1.0.0"
+    "mandatory-validator-coverage/1.0.0",
+    "quality-coverage/1.0.0",
+    "technical-debt-register/1.1.0"
   ],
   "documentation": [
     "README.md",
@@ -62,6 +66,7 @@
     "tests/unit/repositoryQualityCoordinator.test.ts",
     "tests/unit/repositoryQualityAdapters.test.ts",
     "tests/unit/validatorRegistry.test.ts",
+    "tests/unit/mandatoryValidatorCatalog.test.ts",
     "tests/unit/qualityGateRunner.test.ts",
     "tests/unit/qualityScoreCalculator.test.ts",
     "tests/unit/technicalDebtRegister.test.ts",
@@ -79,23 +84,29 @@
     "implementedAreas": [
       "RepositoryQualityCoordinator",
       "ValidatorRegistry integration",
+      "exact Chapter-12 mandatory-validator coverage catalog",
       "QualityCenterContract",
       "eight-gate evidence runner",
       "QualityScoreCalculator",
       "CoverageCollector with executable-test-area measurement and optional code-coverage ingestion",
       "real Test Score provider from mandatory test-area coverage",
       "real Security Score provider from established SecurityComplianceAuditor aggregation semantics",
-      "TechnicalDebtRegister",
+      "TechnicalDebtRegister with evidence-required resolution and lifecycle event publication",
       "QM DocumentationConsistencyValidator",
       "Governance evidence integration",
       "Compliance scanner evidence integration",
       "EventMesh lifecycle publication through existing EventBus"
     ],
+    "mandatoryValidatorCoverage": {
+      "total": 16,
+      "available": 5,
+      "partial": 3,
+      "notAvailable": 8
+    },
     "remainingContractScope": [
+      "complete execution sources for the mandatory validators currently PARTIAL or NOT_AVAILABLE",
       "complete evidence coverage for Contract/Test/Build and all eight quality gates",
-      "complete coverage of all mandatory Chapter-12 validators",
       "measured providers for Documentation, Architecture, Knowledge, Metadata and Twin score axes",
-      "TechnicalDebtDetectedEvent and TechnicalDebtResolvedEvent publication from debt mutation operations",
       "line/branch/function/statement coverage requires a real coverage-summary artifact and remains NOT_AVAILABLE when absent"
     ]
   },

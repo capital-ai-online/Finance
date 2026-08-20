@@ -11,12 +11,13 @@ import {
   type QualityEventSink,
   type QualityScoreMeasurement,
 } from '../Contracts/QualityCenterContract';
+import { MandatoryValidatorCatalog } from '../../Validators/MandatoryValidatorCatalog';
 import { CoverageCollector } from '../Coverage/CoverageCollector';
 import { QualityGateRunner } from '../Gates/QualityGateRunner';
 import { QualityScoreCalculator } from '../Scoring/QualityScoreCalculator';
 import { TechnicalDebtRegister } from '../TechnicalDebt/TechnicalDebtRegister';
 
-export const QUALITY_CENTER_ORCHESTRATOR_VERSION = 'quality-center-orchestrator/1.1.0' as const;
+export const QUALITY_CENTER_ORCHESTRATOR_VERSION = 'quality-center-orchestrator/1.2.0' as const;
 
 export interface QualityCenterRunRequest extends RepositoryQualityObservationRequest {
   scoreMeasurements?: readonly QualityScoreMeasurement[];
@@ -25,6 +26,7 @@ export interface QualityCenterRunRequest extends RepositoryQualityObservationReq
 }
 
 export interface QualityCenterOrchestratorDependencies {
+  mandatoryValidatorCatalog?: MandatoryValidatorCatalog;
   gateRunner?: QualityGateRunner;
   scoreCalculator?: QualityScoreCalculator;
   technicalDebtRegister?: TechnicalDebtRegister;
@@ -38,6 +40,7 @@ function errorMessage(error: unknown): string {
 }
 
 export class QualityCenterOrchestrator {
+  private readonly mandatoryValidatorCatalog: MandatoryValidatorCatalog;
   private readonly gateRunner: QualityGateRunner;
   private readonly scoreCalculator: QualityScoreCalculator;
   private readonly technicalDebtRegister: TechnicalDebtRegister;
@@ -48,11 +51,12 @@ export class QualityCenterOrchestrator {
     private readonly coordinator: RepositoryQualityCoordinator,
     dependencies: QualityCenterOrchestratorDependencies = {},
   ) {
+    this.eventSink = dependencies.eventSink;
+    this.mandatoryValidatorCatalog = dependencies.mandatoryValidatorCatalog ?? new MandatoryValidatorCatalog();
     this.gateRunner = dependencies.gateRunner ?? new QualityGateRunner();
     this.scoreCalculator = dependencies.scoreCalculator ?? new QualityScoreCalculator();
-    this.technicalDebtRegister = dependencies.technicalDebtRegister ?? new TechnicalDebtRegister();
+    this.technicalDebtRegister = dependencies.technicalDebtRegister ?? new TechnicalDebtRegister([], this.eventSink);
     this.coverageCollector = dependencies.coverageCollector ?? new CoverageCollector();
-    this.eventSink = dependencies.eventSink;
   }
 
   run(request: QualityCenterRunRequest = {}): QualityCenterReport {
@@ -78,6 +82,7 @@ export class QualityCenterOrchestrator {
 
     try {
       const repositoryObservation = this.coordinator.observe(request);
+      const mandatoryValidators = this.mandatoryValidatorCatalog.snapshot();
       const coverage = request.coverageSnapshot ?? this.coverageCollector.collect(
         request.repoRoot ?? process.cwd(),
         repositoryObservation.checkedAt,
@@ -91,6 +96,9 @@ export class QualityCenterOrchestrator {
         overallStatus: repositoryObservation.overallStatus,
         blocking: repositoryObservation.blocking,
         findings: repositoryObservation.summary.findings,
+        mandatoryValidatorsAvailable: mandatoryValidators.available,
+        mandatoryValidatorsPartial: mandatoryValidators.partial,
+        mandatoryValidatorsNotAvailable: mandatoryValidators.notAvailable,
       });
 
       for (const gate of gateReport.gates) {
@@ -136,6 +144,7 @@ export class QualityCenterOrchestrator {
         contractVersion: QUALITY_CENTER_CONTRACT_VERSION,
         checkedAt: repositoryObservation.checkedAt,
         repositoryObservation,
+        mandatoryValidators,
         gateReport,
         qualityScore,
         coverage,
