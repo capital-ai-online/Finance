@@ -1,0 +1,136 @@
+# Documentary Maintenance Control Loop
+
+Status: IMPLEMENTATION CANDIDATE / DRAFT-PR BOUNDARY  
+Date: 2026-08-20  
+Authority: ESS-0010 + ESS-0002 + ESS-0003 + ESS-0019 + ADR-0096 + ADR-0097  
+Roadmap: Documentary D7/D9, E1/E6, H1/H5
+
+## Purpose
+
+This component closes the missing Documentary maintenance loop without creating a second Governance, Versioning, EventMesh, Observability or AI-provider authority.
+
+```text
+Document Registry + source-change evidence
+                 |
+                 v
+      SemanticFreshnessAnalyzer
+                 |
+                 v
+        Supervisor observation
+      finding / recommendation
+                 |
+                 v
+       Platform Director decision
+                 |
+          exact evidence bind
+                 v
+ DocumentaryMaintenanceOrchestrator
+       Agent IAM + Governance
+                 |
+                 v
+    DocumentaryMaintenanceAgent
+       semantic patch plan only
+                 |
+        isolated branch only
+                 v
+  deterministic apply + version bump
+                 |
+      maintenance health snapshot
+                 |
+        local governance checks
+                 |
+      final current-main gate
+                 |
+                 v
+ existing open-agent-draft-pr workflow
+                 |
+                 v
+              Draft PR
+                 |
+                 v
+       Human review / hosted CI
+                 |
+                 v
+        Human/Owner merge only
+```
+
+## Components
+
+### SemanticFreshnessAnalyzer
+
+Reads the canonical Document Registry and produces deterministic freshness candidates. Targeted scans correlate changed repository paths with document references, declared dependencies and component semantic scope. A periodic scan with no source-path filter includes every active registered document as an AI-assessment candidate.
+
+The analyzer never writes files.
+
+### Supervisor Documentary observation
+
+`documentaryMaintenanceObservation.ts` transforms freshness and Documentation Hygiene findings into immutable recommendation evidence. Hygiene violations block automation. Protected documents are surfaced as review-required rather than patchable. The Supervisor still never approves the task.
+
+### DocumentaryMaintenanceOrchestrator
+
+The orchestrator validates the existing Platform Director protected-decision boundary and requires an exact Supervisor evidence binding. It composes with existing provider-neutral Agent IAM for `ANALYZE` and `PLAN`. Repository mutation capabilities are checked separately for `BRANCH`, `COMMIT` and `PR`.
+
+### DocumentaryMaintenanceAgent
+
+The agent uses an injected semantic provider. It first assesses whether a deterministic candidate is actually stale; if stale above the confidence threshold, it proposes complete updated document content. The agent never selects its own target outside the deterministic candidate list and cannot patch review-only paths.
+
+Before apply, the current document SHA must match the observed SHA. Apply is branch-only, transactional for document files plus registry, and re-runs Documentation Hygiene after mutation.
+
+### AI adapter
+
+`server/documentaryMaintenanceAiAdapter.ts` reuses existing Anthropic/OpenAI routing and repository RAG evidence. Document bodies, source diffs and retrieval chunks are explicitly treated as untrusted data. The model cannot influence capabilities, branch selection, lifecycle transitions or version numbers.
+
+### D9 Maintenance observability
+
+`src/platform/Documentary/Observability/DocumentaryMaintenanceObservability.ts` derives an immutable health snapshot from freshness, Supervisor recommendation, plan and apply evidence. The snapshot exposes only counts and ratios such as registry coverage, freshness, orphan rate, candidate count, planned/skipped patches and applied documents.
+
+The telemetry contract contains no document body, prompt, diff, user identifier, credential or secret. It is a Documentary maintenance slice only and does not create or replace a central Observability platform.
+
+### Git host / Draft-PR handoff
+
+`scripts/automation/runDocumentaryMaintenanceControlLoop.ts`:
+
+1. requires a clean worktree at exact current `main`;
+2. requires request `sourceCommit` to equal the exact fetched current `main` SHA;
+3. resolves freshness/Supervisor evidence and validates the Platform Director decision before branch creation;
+4. requires explicit Agent IAM grants and only requires `PR` when Draft-PR dispatch is enabled;
+5. derives a unique `agent/documentary-maintenance-*` branch and refuses to reuse an existing remote branch;
+6. creates the branch from exact `origin/main`;
+7. applies only the approved patch plan;
+8. increments document patch versions and downgrades changed documents to `generated`;
+9. creates exactly one bounded work claim;
+10. stages only explicit changed paths;
+11. runs Documentation Hygiene and Governance checks;
+12. fetches `main` again immediately before remote handoff and aborts if it moved;
+13. pushes the candidate branch;
+14. dispatches the existing `open-agent-draft-pr.yml` workflow;
+15. best-effort deletes an orphaned remote candidate if a post-push failure occurs before successful handoff.
+
+A no-change semantic plan removes the empty local maintenance branch instead of leaving branch debris. No merge, deployment or production mutation is implemented.
+
+### Governance / Registry / Validation closure
+
+The implementation provides explicit package scripts:
+
+- `documentary:maintenance` — controlled host entry point;
+- `documentary:maintenance:test` — targeted unit suite;
+- `documentary:maintenance:validate` — deterministic closure validator;
+- `documentary:maintenance:prepr` — targeted tests + Documentation Hygiene + Governance Control Plane + closure validator.
+
+The closure validator verifies the exact Work Claim ↔ branch diff set, current-main synchronization, ADR-0097 identity, Authority Registry identity, Document Registry records, manifest contracts/tests/version, protected document prefixes, narrow staging and branch/Draft-PR safety markers. `git diff --check` is part of the validator.
+
+## Protected classes
+
+Semantic full-content auto-patching is prohibited for `docs/adr/**`, `docs/archive/**`, `docs/compliance/**`, `docs/evidence/**`, `docs/governance/**`, `docs/legal/**`, `docs/security/**`, `docs/release/**` and all root files including `AGENTS.md` and `README.md`. These artifacts remain visible as review-required candidates where relevant.
+
+## Versioning contract
+
+The platform version remains `package.json#version` and is not changed by Documentary maintenance. Documentary component version remains `src/platform/Documentary/manifest.json#version`.
+
+For a semantically patched registered document only its Document Registry version is incremented by one patch version and lifecycle is set to `generated`. Review/approval remains a separate governed transition.
+
+## Failure model
+
+The loop fails closed on dirty/stale host baseline, sourceCommit/main mismatch, Documentation Hygiene findings, missing/mismatched Supervisor evidence, invalid Platform Director decision, missing Agent IAM capability, existing remote branch collision, protected path, symlink/path traversal, oversized document, content-hash drift, invalid document SemVer, post-apply hygiene failure, staged-scope mismatch, `main` changing before PR handoff or unavailable AI provider.
+
+A post-push handoff error triggers best-effort remote branch cleanup. No failure path falls back to direct `main` mutation.

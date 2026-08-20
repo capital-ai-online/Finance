@@ -153,6 +153,36 @@
       "path": "docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md"
     },
     {
+      "documentId": "DOC-ADR-0097",
+      "type": "architecture-decision",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "AUTH-ADR-DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "draft",
+      "path": "docs/adr/ADR-0097-documentary-maintenance-agent-control-loop.md"
+    },
+    {
+      "documentId": "DOC-ARCH-DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20",
+      "type": "architecture",
+      "owner": "CAPITAL-AI",
+      "authority": "ADR-0097 + ESS-0010",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "generated",
+      "path": "docs/architecture/DOCUMENTARY_MAINTENANCE_CONTROL_LOOP.md"
+    },
+    {
+      "documentId": "DOC-WP-DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20",
+      "type": "work-package",
+      "owner": "CAPITAL-AI Owner",
+      "authority": "Owner chat priority 2026-08-20 + ADR-0097",
+      "version": "1.0.0",
+      "language": "mixed",
+      "lifecycle": "generated",
+      "path": "docs/roadmaps/work-packages/DOCUMENTARY_MAINTENANCE_CONTROL_LOOP_2026-08-20.md"
+    },
+    {
       "documentId": "DOC-COMPLIANCE-AI-FINTECH-CONTROLS-2026-08-19",
       "type": "compliance-control-matrix",
       "owner": "Security & Compliance",
