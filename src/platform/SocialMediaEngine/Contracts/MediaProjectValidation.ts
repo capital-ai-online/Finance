@@ -25,7 +25,7 @@ const SLUG = /^[a-z0-9][a-z0-9-]{0,79}$/;
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 const SHA256 = /^[0-9a-f]{64}$/i;
 const MIME = /^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/i;
-const DANGEROUS_SCHEME = /^(?:https?|data|file|ftp|gopher):/i;
+const URI_SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/;
 
 const TRACK_LAYER_COMPATIBILITY: Record<MediaTrackKind, ReadonlySet<MediaLayer['kind']>> = {
   video: new Set(['scene', 'image']),
@@ -48,14 +48,17 @@ function isIntegerInRange(value: unknown, min: number, max: number): value is nu
   return Number.isInteger(value) && Number(value) >= min && Number(value) <= max;
 }
 
-function isNonEmptyString(value: unknown, maxChars = MEDIA_PROJECT_LIMITS.maxTextChars): value is string {
+function isNonEmptyString(
+  value: unknown,
+  maxChars: number = MEDIA_PROJECT_LIMITS.maxTextChars,
+): value is string {
   return typeof value === 'string' && value.trim().length > 0 && value.length <= maxChars;
 }
 
 function isSafeOpaqueOrRelativeReference(value: unknown): value is string {
   if (!isNonEmptyString(value, 512)) return false;
   const text = value.trim();
-  if (DANGEROUS_SCHEME.test(text)) return false;
+  if (URI_SCHEME.test(text)) return false;
   if (text.startsWith('/') || text.startsWith('\\')) return false;
   const normalized = text.replace(/\\/g, '/');
   return !normalized.split('/').some((part) => part === '..');
@@ -86,7 +89,7 @@ function validateAsset(asset: unknown, index: number, errors: MediaProjectValida
   if (!isNonEmptyString(asset.id, 128) || !ID.test(asset.id)) add(errors, 'asset_id_invalid', `${path}.id`, 'Asset id is invalid.');
   if (!['image', 'audio', 'video'].includes(String(asset.kind))) add(errors, 'asset_kind_invalid', `${path}.kind`, 'Unsupported asset kind.');
   if (!['local-file', 'asset-registry', 'generated'].includes(String(asset.sourceType))) add(errors, 'asset_source_type_invalid', `${path}.sourceType`, 'Unsupported asset source type.');
-  if (!isSafeOpaqueOrRelativeReference(asset.reference)) add(errors, 'asset_reference_invalid', `${path}.reference`, 'Asset reference must be opaque or repository-relative and must not be a remote/dangerous URL.');
+  if (!isSafeOpaqueOrRelativeReference(asset.reference)) add(errors, 'asset_reference_invalid', `${path}.reference`, 'Asset reference must be opaque or repository-relative and must not use a URI scheme, absolute path or traversal path.');
   if (asset.sha256 !== undefined && (typeof asset.sha256 !== 'string' || !SHA256.test(asset.sha256))) add(errors, 'asset_sha256_invalid', `${path}.sha256`, 'sha256 must be 64 hexadecimal characters.');
   if (asset.mimeType !== undefined && (typeof asset.mimeType !== 'string' || !MIME.test(asset.mimeType))) add(errors, 'asset_mime_invalid', `${path}.mimeType`, 'mimeType is invalid.');
   for (const dimension of ['width', 'height'] as const) {
@@ -157,11 +160,12 @@ export function validateMediaProjectV2(input: unknown): MediaProjectValidationRe
     if (input.canvas.pixelAspectRatio !== undefined) validateRate(input.canvas.pixelAspectRatio, 'canvas.pixelAspectRatio', errors);
   }
 
-  const durationFramesOk = isIntegerInRange(input.durationFrames, 1, Number.MAX_SAFE_INTEGER);
+  const projectDurationFrames = input.durationFrames;
+  const durationFramesOk = isIntegerInRange(projectDurationFrames, 1, Number.MAX_SAFE_INTEGER);
   if (!durationFramesOk) add(errors, 'duration_frames_invalid', 'durationFrames', 'durationFrames must be a positive integer.');
   if (rateOk && durationFramesOk) {
     const rate = input.timebase as { numerator: number; denominator: number };
-    const seconds = input.durationFrames * rate.denominator / rate.numerator;
+    const seconds = projectDurationFrames * rate.denominator / rate.numerator;
     if (!Number.isFinite(seconds) || seconds > MEDIA_PROJECT_LIMITS.maxDurationSeconds) add(errors, 'duration_limit_exceeded', 'durationFrames', `Project duration must not exceed ${MEDIA_PROJECT_LIMITS.maxDurationSeconds} seconds.`);
   }
 
@@ -225,7 +229,7 @@ export function validateMediaProjectV2(input: unknown): MediaProjectValidationRe
         if (!isIntegerInRange(duration, 1, Number.MAX_SAFE_INTEGER)) add(errors, 'layer_duration_invalid', `${layerPath}.range.durationFrames`, 'durationFrames must be a positive integer.');
         if (Number.isInteger(start) && Number.isInteger(duration)) {
           const end = Number(start) + Number(duration);
-          if (durationFramesOk && end > Number(input.durationFrames)) add(errors, 'layer_out_of_project_bounds', `${layerPath}.range`, 'Layer extends beyond project duration.');
+          if (durationFramesOk && end > projectDurationFrames) add(errors, 'layer_out_of_project_bounds', `${layerPath}.range`, 'Layer extends beyond project duration.');
           ranges.push({ start: Number(start), end, path: layerPath });
         }
       }
@@ -304,7 +308,7 @@ export function validateMediaProjectV2(input: unknown): MediaProjectValidationRe
     add(errors, 'source_not_object', 'source', 'source must be an object.');
   } else {
     if (!['legacy-render-manifest', 'script-scene', 'content-package', 'manual'].includes(String(input.source.type))) add(errors, 'source_type_invalid', 'source.type', 'Unsupported source type.');
-    if (!isSafeOpaqueOrRelativeReference(input.source.reference)) add(errors, 'source_reference_invalid', 'source.reference', 'source.reference must not be a remote/dangerous URL or traversal path.');
+    if (!isSafeOpaqueOrRelativeReference(input.source.reference)) add(errors, 'source_reference_invalid', 'source.reference', 'source.reference must not use a URI scheme, absolute path or traversal path.');
     if (input.source.sha256 !== undefined && (typeof input.source.sha256 !== 'string' || !SHA256.test(input.source.sha256))) add(errors, 'source_sha256_invalid', 'source.sha256', 'source sha256 must be 64 hexadecimal characters.');
   }
 
