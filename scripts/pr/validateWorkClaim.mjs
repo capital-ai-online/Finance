@@ -35,6 +35,19 @@ function readClaimAtRef(claimPath) {
   return JSON.parse(content);
 }
 
+function readJsonAtRef(ref, filePath) {
+  return JSON.parse(git(['show', `${ref}:${filePath}`]));
+}
+
+function listWorkClaimsAtRef(ref) {
+  const output = git(['ls-tree', '-r', '--name-only', ref, '--', '.ai/work-claims']);
+  if (!output) return [];
+  return output
+    .split(/\r?\n/)
+    .map(normalizeRepoPath)
+    .filter((entry) => entry.endsWith('.json'));
+}
+
 async function fetchPullFiles(number) {
   return githubPaginated(`/repos/${repository}/pulls/${number}/files`, token);
 }
@@ -111,9 +124,69 @@ if (claim) {
 }
 
 const openPulls = await githubPaginated(`/repos/${repository}/pulls?state=open&base=main`, token);
+const openPullByNumber = new Map(openPulls.map((pr) => [Number(pr.number), pr]));
+const openPullByBranch = new Map(openPulls.map((pr) => [String(pr.head?.ref ?? ''), pr]));
 const otherPulls = openPulls.filter((pr) => !prNumber || pr.number !== prNumber);
 const warnings = [];
 const currentChangedFiles = changedFiles.filter((file) => !isClaimMetadataPath(file));
+
+// Existing work claims are the single path-writer coordination mechanism. A claim that is still
+// active/exclusive on main after its PR was merged/closed is stale coordination metadata; this
+// live preflight reports it, while deterministic CI remains independent of GitHub API state.
+for (const baseClaimPath of listWorkClaimsAtRef(baseRef)) {
+  let baseClaim;
+  try {
+    baseClaim = readJsonAtRef(baseRef, baseClaimPath);
+  } catch (error) {
+    warnings.push(`Base work claim ${baseClaimPath} cannot be parsed: ${error instanceof Error ? error.message : String(error)}`);
+    continue;
+  }
+
+  if (baseClaim?.status !== 'active' || baseClaim?.exclusive !== true) continue;
+
+  const linkedPr = Number(baseClaim.pullRequest || baseClaim.pull_request || 0);
+  const linkedBranch = String(baseClaim.branch || '').trim();
+  if (linkedPr > 0) {
+    if (!openPullByNumber.has(linkedPr)) {
+      warnings.push(`Stale active/exclusive base claim ${baseClaimPath}: linked PR #${linkedPr} is no longer open. Release the claim before treating its claimedPaths as current writer authority.`);
+    }
+    continue;
+  }
+
+  if (linkedBranch) {
+    if (!openPullByBranch.has(linkedBranch)) {
+      warnings.push(`Potential stale active/exclusive base claim ${baseClaimPath}: branch ${linkedBranch} has no open PR against main. Correlate branch lifecycle and release the claim if merged/closed/abandoned.`);
+    }
+  } else {
+    warnings.push(`Uncorrelatable active/exclusive base claim ${baseClaimPath}: no pullRequest or branch metadata is available. Treat claimedPaths as a governance finding until lifecycle is resolved.`);
+  }
+}
+
+// ADR namespace reservations are not path locks. They are correlated here against live PR heads,
+// but their merge-gating state is validated separately and deterministically from docs/adr/registry.json.
+try {
+  const adrRegistry = readJsonAtRef(headRef, 'docs/adr/registry.json');
+  const activeReservations = (adrRegistry.parallelNamespaceReservations ?? []).filter((entry) => entry.state === 'active');
+  for (const reservation of activeReservations) {
+    const displayId = String(reservation.displayId ?? '<missing displayId>');
+    const branch = String(reservation.branch ?? '').trim();
+    const source = String(reservation.source ?? '').trim();
+    const sourcePrMatch = source.match(/(?:PR|pull request)\s*#?\s*(\d+)/i);
+    const sourcePr = sourcePrMatch ? Number(sourcePrMatch[1]) : 0;
+    const correlatedPr = sourcePr > 0 ? openPullByNumber.get(sourcePr) : openPullByBranch.get(branch);
+
+    if (sourcePr > 0 && !correlatedPr) {
+      warnings.push(`Stale ADR reservation ${displayId}: source PR #${sourcePr} is no longer open. Transition reservation state before merge-readiness.`);
+      continue;
+    }
+
+    if (correlatedPr && reservation.observedHead && String(reservation.observedHead).toLowerCase() !== String(correlatedPr.head?.sha ?? '').toLowerCase()) {
+      warnings.push(`Stale ADR reservation ${displayId}: observedHead ${reservation.observedHead} differs from live PR #${correlatedPr.number} head ${correlatedPr.head?.sha}. Refresh or release the reservation.`);
+    }
+  }
+} catch (error) {
+  warnings.push(`ADR namespace reservations could not be correlated from ${headRef}: ${error instanceof Error ? error.message : String(error)}`);
+}
 
 for (const other of otherPulls) {
   const otherState = await fetchClaimForOtherPr(other);
@@ -153,7 +226,7 @@ if (warnings.length > 0) {
   for (const message of warnings) warn(message);
   console.log('[PR-COORDINATION] Conflicts are advisory. Report them to the user before PR creation or merge; do not treat them as sandbox/build failures.');
 } else {
-  console.log('[PR-COORDINATION] No changed-file or advisory-claim overlap detected against current open PRs.');
+  console.log('[PR-COORDINATION] No changed-file, claim-lifecycle, ADR-reservation or advisory-claim overlap detected against current open PRs.');
 }
 
 console.log(`[PR-COORDINATION] ${changedFiles.length} changed file(s) inspected. No PR creation deadline applies.`);

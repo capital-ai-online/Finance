@@ -15,7 +15,6 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const root = process.cwd();
-const routesFile = path.join(root, 'server/routes/registerApplicationRoutes.ts');
 
 interface GuardedMount {
   mountPrefix: string;
@@ -28,6 +27,7 @@ const GUARDED_MOUNTS: readonly GuardedMount[] = [
   { mountPrefix: '/api/admin', routerFile: 'server/systemEvents.ts', expectedGuard: 'checkAdminAccess' },
   { mountPrefix: '/api/admin', routerFile: 'src/platform/VersionManager/versionManager.ts', expectedGuard: 'checkAdminAccess' },
   { mountPrefix: '/api/admin/diagnostics', routerFile: 'server/adminDiagnostics.ts', expectedGuard: 'checkAdminAccess' },
+  { mountPrefix: '/api/admin/quality-center', routerFile: 'server/qualityCenter.ts', expectedGuard: 'checkAdminAccess' },
   { mountPrefix: '/api/admin/supervisor', routerFile: 'server/supervisorRouter.ts', expectedGuard: 'checkAdminAccess' },
   { mountPrefix: '/api/admin/agent-evaluation', routerFile: 'server/agentEvaluationRouter.ts', expectedGuard: 'checkAdminAccess' },
   { mountPrefix: '/api/internal/systemadmin-execution', routerFile: 'server/systemadmin/systemadminExecutionBrokerRouter.ts', expectedGuard: 'verifyGitHubActionsOidcToken' },
