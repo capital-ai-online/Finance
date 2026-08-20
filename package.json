@@ -27,6 +27,7 @@
     "repository:validate": "tsx scripts/automation/validateRepositoryConventions.ts",
     "repository:validate:advisory": "tsx scripts/automation/validateRepositoryConventions.ts --advisory",
     "repository:quality:check": "tsx scripts/automation/validateRepositoryQuality.ts",
+    "repository:quality:snapshot": "tsx scripts/automation/buildQualityCenterSnapshot.ts",
     "frontend:architecture:check": "tsx scripts/automation/validateFrontendArchitecture.ts",
     "status:scan-drift": "tsx scripts/automation/scanStatusEventDrift.ts",
     "hygiene:sweep": "tsx scripts/automation/sweepDocumentaryBranding.ts",
