@@ -35,12 +35,14 @@ function appendMissingFallbackAssets(
 }
 
 /**
- * Compatibility facade for the legacy `fetchLiveMarketData()` call sites.
+ * Compatibility facade for the legacy `/api/market-data` call sites.
  *
- * This module is deliberately responsible only for composition. Provider-specific I/O,
- * scoring/enrichment and persistence remain injected or delegated to the canonical
- * market-data modules. This keeps the eventual `server.application.ts` cutover small while
- * preserving the existing fail-open and No-Demo-Data semantics.
+ * Periodic refresh is deliberately restricted to evidence enrichment of assets that were actually
+ * observed by a provider in the current refresh (`dataSource=live`). Catalog/bootstrap fallback
+ * rows remain compatibility metadata and MUST NOT trigger downstream history/fundamental/scoring
+ * provider calls. This prevents the full AssetRegistry from turning every 60s/periodic market-data
+ * refresh into a global evidence crawl. New and long-tail assets use their per-symbol verified
+ * contracts instead (ADR-0097).
  */
 export async function runMarketDataCompatibilityRefresh(
   options: MarketDataCompatibilityFacadeOptions,
@@ -55,13 +57,16 @@ export async function runMarketDataCompatibilityRefresh(
   return refreshMarketData({
     providerStages,
     appendMissingFallbackAssets: assets => appendMissingFallbackAssets(assets, options.registryAssets()),
-    enrichAssets: assets => Promise.all(assets.map(options.enrichAsset)),
+    enrichAssets: assets => Promise.all(assets.map(asset =>
+      asset.dataSource === 'live' ? options.enrichAsset(asset) : Promise.resolve(asset)
+    )),
     persistSnapshots: async assets => {
-      // Both side effects are best-effort at the coordinator boundary. A failure here must
-      // not invalidate otherwise usable market data returned to the caller.
+      // Only provider-observed rows may participate in periodic snapshots/alerts. Compatibility
+      // fallback rows can carry historical bootstrap values and therefore are not evidence.
+      const liveAssets = assets.filter(asset => asset.dataSource === 'live');
       const tasks: Promise<unknown>[] = [];
-      if (options.persistSnapshots) tasks.push(Promise.resolve(options.persistSnapshots(assets)));
-      if (options.evaluateAlerts) tasks.push(Promise.resolve(options.evaluateAlerts(assets)));
+      if (options.persistSnapshots && liveAssets.length > 0) tasks.push(Promise.resolve(options.persistSnapshots(liveAssets)));
+      if (options.evaluateAlerts && liveAssets.length > 0) tasks.push(Promise.resolve(options.evaluateAlerts(liveAssets)));
       await Promise.allSettled(tasks);
     },
     onProviderFailure: options.onProviderFailure,
