@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "Owner Chat-Prioritaet 2026-08-20 — CAPITAL-AI FinTech Core Engine, Module 01 Enterprise Crypto Orchestration inkl. Category-/Pattern-Analyse",
+  "startedAt": "2026-08-20T15:23:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "f1dff495fe792a4d4a26a3513f0525b4974bd349",
+  "pullRequest": null,
+  "claimedPaths": [
+    ".ai/work-claims/FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20.json",
+    "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
+    "docs/adr/ADR-0098-fintech-core-engine-crypto-module-01.md",
+    "src/platform/FinTechCore/**",
+    "tests/unit/fintechCoreCryptoContracts.test.ts"
+  ],
+  "protectedExistingAuthorities": [
+    "ADR-0087 / SC-2 Single Scoring Architecture",
+    "ScoringModelRegistry",
+    "ScoringDispatcher",
+    "CryptoOrchestrator research-enrichment boundary",
+    "Quality Center non-authorizing evidence boundary",
+    "Governance / Compliance / Supervisor authority boundaries"
+  ],
+  "externalMutationScope": "none-in-ft0-ft1",
+  "releaseCondition": "Coordination metadata is released when the associated work is merged, closed, superseded or abandoned."
+}
