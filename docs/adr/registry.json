@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "registryAuthorityId": "AUTH-GOV-ADR-REGISTRY",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "date": "2026-08-20",
   "canonicalLocation": "docs/adr",
   "rules": {
@@ -29,7 +29,7 @@
     {"authorityId":"AUTH-ADR-OPEN-SOURCE-MEDIA-RENDERING-2026-08-19","displayId":"ADR-0094","version":"1.0.0","date":"2026-08-19","lifecycle":"accepted","path":"docs/adr/ADR-0094-open-source-pdf-companion-and-short-media-rendering.md","legacyAliases":[],"supersedes":[],"note":"Migrated from parallel PR #446 namespace reservation after PR #446 merged into main before this Governance work package."},
     {"authorityId":"AUTH-ADR-PRIVACY-SINGLE-SOURCE-2026-08-19","displayId":"ADR-0095","version":"1.0.0","date":"2026-08-19","lifecycle":"accepted","path":"docs/adr/ADR-0095-privacy-governance-single-source-of-truth.md","legacyAliases":[{"displayId":"ADR-0085","path":"docs/adr/ADR-0085-privacy-governance-single-source-of-truth.md","lifecycle":"legacy-redirect","reason":"legacy duplicate introduced by privacy remediation before namespace reconciliation"}],"supersedes":[]},
     {"authorityId":"AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19","displayId":"ADR-0096","version":"1.1.0","date":"2026-08-19","lifecycle":"proposed","path":"docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md","legacyAliases":[{"displayId":"ADR-0086","path":"docs/adr/ADR-0086-governance-authority-supersession-and-regulatory-control-mapping.md","lifecycle":"legacy-redirect","reason":"legacy duplicate governance-supersession draft; renumbered because ADR-0086 is already vendor privacy governance"}],"supersedes":[]},
-    {"authorityId":"AUTH-ADR-VERIFIED-ASSET-DISPLAY-2026-08-20","displayId":"ADR-0097","version":"1.0.0","date":"2026-08-20","lifecycle":"accepted-for-implementation","path":"docs/adr/ADR-0097-verified-asset-display-progressive-hydration.md","legacyAliases":[],"supersedes":[]}
+    {"authorityId":"AUTH-ADR-VERIFIED-ASSET-DISPLAY-2026-08-20","displayId":"ADR-0097","version":"1.1.0","date":"2026-08-20","lifecycle":"accepted-for-implementation","path":"docs/adr/ADR-0097-verified-asset-display-progressive-hydration.md","legacyAliases":[],"supersedes":[],"note":"v1.1 consolidates correlated data-quality/backend/API/frontend documentation, stock-only Buffett selection and the 90-second background provider-refresh cadence."}
   ],
   "parallelNamespaceReservations": [],
   "legacyIndex": {
