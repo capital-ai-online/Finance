@@ -3,7 +3,7 @@
   "version": "1.1.0",
   "status": "core-implementation",
   "owner": "CAPITAL-AI",
-  "description": "ESS-0005 Quality Center core: validator registry integration, non-authorizing Governance/Compliance orchestration, eight-gate evidence evaluation, deterministic quality scoring, technical-debt management and QM documentation consistency.",
+  "description": "ESS-0005 Quality Center core: validator registry integration, non-authorizing Governance/Compliance orchestration, eight-gate evidence evaluation, deterministic quality scoring, technical-debt management, measured test-area coverage, QM documentation consistency and EventMesh lifecycle publication.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -11,11 +11,13 @@
     "ESS-0005",
     "ESS-0006",
     "ESS-0012",
+    "ESS-0013",
     "ESS-0017"
   ],
   "adr": [
     "ADR-0012",
     "ADR-0016",
+    "ADR-0018",
     "ADR-0030",
     "ADR-0096"
   ],
@@ -24,9 +26,17 @@
     "src/platform/Validators"
   ],
   "events": {
-    "produces": [],
+    "produces": [
+      "ValidationStartedEvent",
+      "ValidationCompletedEvent",
+      "ValidationFailedEvent",
+      "QualityGatePassedEvent",
+      "QualityGateFailedEvent",
+      "QualityScoreChangedEvent",
+      "CoverageCalculatedEvent"
+    ],
     "consumes": [],
-    "note": "Current core is synchronous read-only quality evidence/orchestration and does not synthesize EventMesh events."
+    "note": "QualityCenterOrchestrator publishes lifecycle evidence through the existing EventMesh composition adapter. Event delivery has no merge/release/production authorization effect. TechnicalDebtDetectedEvent/TechnicalDebtResolvedEvent remain catalogued target events until debt mutations are wired to an event sink."
   },
   "knowledge": [],
   "interfaces": [
@@ -34,12 +44,14 @@
     "QualityCenterOrchestrator",
     "QualityGateRunner",
     "QualityScoreCalculator",
+    "CoverageCollector",
     "TechnicalDebtRegister",
     "DocumentationConsistencyValidator"
   ],
   "contracts": [
     "repository-quality-observation/1.1.0",
-    "quality-center-contract/1.0.0"
+    "quality-center-contract/1.1.0",
+    "quality-coverage/1.0.0"
   ],
   "documentation": [
     "README.md",
@@ -54,7 +66,13 @@
     "tests/unit/qualityScoreCalculator.test.ts",
     "tests/unit/technicalDebtRegister.test.ts",
     "tests/unit/documentationConsistencyValidator.test.ts",
-    "tests/unit/qualityCenterOrchestrator.test.ts"
+    "tests/unit/qualityCenterOrchestrator.test.ts",
+    "tests/unit/coverageCollector.test.ts",
+    "tests/contract/qualityCenterContract.test.ts",
+    "tests/architecture/qualityCenterBoundary.test.ts",
+    "tests/security/qualityCenterAuthorityBoundary.test.ts",
+    "tests/performance/qualityCenterDeterminism.test.ts",
+    "tests/e2e/qualityCenterOrchestration.test.ts"
   ],
   "implementation": {
     "level": "core",
@@ -64,17 +82,21 @@
       "QualityCenterContract",
       "eight-gate evidence runner",
       "QualityScoreCalculator",
+      "CoverageCollector with executable-test-area measurement and optional code-coverage ingestion",
+      "real Test Score provider from mandatory test-area coverage",
+      "real Security Score provider from established SecurityComplianceAuditor aggregation semantics",
       "TechnicalDebtRegister",
       "QM DocumentationConsistencyValidator",
       "Governance evidence integration",
-      "Compliance scanner evidence integration"
+      "Compliance scanner evidence integration",
+      "EventMesh lifecycle publication through existing EventBus"
     ],
     "remainingContractScope": [
-      "complete evidence coverage for all eight quality gates",
+      "complete evidence coverage for Contract/Test/Build and all eight quality gates",
       "complete coverage of all mandatory Chapter-12 validators",
-      "CoverageCollector and measured coverage ingestion",
-      "measured providers for all seven Quality Score axes",
-      "real EventMesh integration for ESS-0005 lifecycle events"
+      "measured providers for Documentation, Architecture, Knowledge, Metadata and Twin score axes",
+      "TechnicalDebtDetectedEvent and TechnicalDebtResolvedEvent publication from debt mutation operations",
+      "line/branch/function/statement coverage requires a real coverage-summary artifact and remains NOT_AVAILABLE when absent"
     ]
   },
   "authorityBoundary": "Quality results are measurement/evidence only and cannot authorize merge, release, deployment, production mutation, policy changes or privilege elevation."
