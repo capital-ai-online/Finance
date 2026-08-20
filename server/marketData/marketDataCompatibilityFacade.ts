@@ -42,7 +42,7 @@ function appendMissingFallbackAssets(
  * rows remain compatibility metadata and MUST NOT trigger downstream history/fundamental/scoring
  * provider calls. This prevents the full AssetRegistry from turning every 60s/periodic market-data
  * refresh into a global evidence crawl. New and long-tail assets use their per-symbol verified
- * contracts instead (ADR-0097).
+ * contracts instead (ADR-0032 revalidation / SC-MD-SPT-0001).
  */
 export async function runMarketDataCompatibilityRefresh(
   options: MarketDataCompatibilityFacadeOptions,
