@@ -41,6 +41,29 @@ describe('CoverageCollector', () => {
       source: 'coverage/coverage-summary.json',
       metrics: { statements: 91.2, branches: 82.5, functions: 88.1, lines: 92.4 },
     });
+    if (result.codeCoverage.status !== 'AVAILABLE') throw new Error('expected complete code coverage');
+    expect(result.codeCoverage.metrics.lines.toFixed(2)).toBe('92.40');
+  });
+
+  it('fails closed for incomplete coverage-summary evidence instead of exposing nullable metrics', () => {
+    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'capital-ai-quality-'));
+    created.push(repoRoot);
+    fs.mkdirSync(path.join(repoRoot, 'coverage'), { recursive: true });
+    fs.writeFileSync(path.join(repoRoot, 'coverage', 'coverage-summary.json'), JSON.stringify({
+      total: {
+        statements: { pct: 91.2 },
+        branches: { pct: 82.5 },
+        functions: { pct: null },
+      },
+    }));
+
+    const result = new CoverageCollector().collect(repoRoot, '2026-08-20T00:00:00.000Z');
+
+    expect(result.codeCoverage).toEqual({
+      status: 'NOT_AVAILABLE',
+      source: null,
+      metrics: null,
+    });
   });
 
   it('does not invent code coverage when no artifact exists', () => {

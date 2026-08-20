@@ -77,7 +77,7 @@ tests/e2e
 
 Nur echte `*.test.*`-/`*.spec.*`-Dateien zaehlen. `.gitkeep` oder reine Verzeichnisexistenz sind keine Evidence. Die sieben Bereiche sind im aktuellen Branch mit realen Tests belegt.
 
-Optional werden `coverage/coverage-summary.json` oder `.quality/coverage-summary.json` eingelesen. Ohne solches Artefakt bleiben Statements/Branches/Functions/Lines `NOT_AVAILABLE`.
+Optional werden `coverage/coverage-summary.json` oder `.quality/coverage-summary.json` eingelesen. `AVAILABLE` ist dabei eine starke Invariante: Statements, Branches, Functions und Lines muessen jeweils einen endlichen `pct`-Wert von 0..100 enthalten. Unvollstaendige oder ungueltige Coverage-Artefakte werden fail-closed als `NOT_AVAILABLE` behandelt; innerhalb von `AVAILABLE.metrics` existieren keine `null`-Werte. Ohne ein solches vollstaendiges Artefakt bleibt Code Coverage `NOT_AVAILABLE`.
 
 ## Scoring-Semantik
 
@@ -139,6 +139,6 @@ Zusätzlich zu den bestehenden Unit-/Integrationstests existieren Quality-spezif
 - vollstaendige Execution-Evidence fuer Contract-, Test- und Build-Gate;
 - echte Implementierung/Anbindung der aktuell `PARTIAL` oder `NOT_AVAILABLE` markierten Chapter-12-Pflichtvalidatoren;
 - reale numerische Provider fuer Documentation, Architecture, Knowledge, Metadata und Twin;
-- echte Statement-/Branch-/Function-/Line-Coverage erst nach Erzeugung eines Coverage-Artefakts.
+- echte Statement-/Branch-/Function-/Line-Coverage erst nach Erzeugung eines vollstaendigen Coverage-Artefakts.
 
 Diese offenen Punkte bleiben maschinenlesbar unvollstaendig und werden nicht als PASS oder Score simuliert.

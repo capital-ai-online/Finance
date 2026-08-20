@@ -96,11 +96,23 @@ export interface QualityTestAreaCoverage {
 }
 
 export interface QualityCodeCoverageMetrics {
-  statements: number | null;
-  branches: number | null;
-  functions: number | null;
-  lines: number | null;
+  statements: number;
+  branches: number;
+  functions: number;
+  lines: number;
 }
+
+export type QualityCodeCoverageEvidence =
+  | Readonly<{
+      status: 'AVAILABLE';
+      source: string;
+      metrics: Readonly<QualityCodeCoverageMetrics>;
+    }>
+  | Readonly<{
+      status: 'NOT_AVAILABLE';
+      source: null;
+      metrics: null;
+    }>;
 
 export interface QualityCoverageSnapshot {
   schemaVersion: 'quality-coverage/1.0.0';
@@ -109,11 +121,7 @@ export interface QualityCoverageSnapshot {
   totalAreas: number;
   testAreaCoveragePercent: number;
   testAreas: readonly QualityTestAreaCoverage[];
-  codeCoverage: Readonly<{
-    status: 'AVAILABLE' | 'NOT_AVAILABLE';
-    source: string | null;
-    metrics: QualityCodeCoverageMetrics | null;
-  }>;
+  codeCoverage: QualityCodeCoverageEvidence;
   authorityRefs: readonly string[];
 }
 

@@ -59,14 +59,23 @@ function readCodeCoverage(repoRoot: string): QualityCoverageSnapshot['codeCovera
         total?: Record<string, unknown>;
       };
       const total = parsed.total ?? {};
+      const statements = readPct(total.statements);
+      const branches = readPct(total.branches);
+      const functions = readPct(total.functions);
+      const lines = readPct(total.lines);
+
+      // AVAILABLE is a strong runtime invariant: all four canonical Istanbul summary
+      // percentages must be present and valid. Returning a partially-populated metrics
+      // object makes consumers vulnerable to null.toFixed() failures and overstates
+      // the completeness of the evidence.
+      if (statements === null || branches === null || functions === null || lines === null) continue;
+
       const metrics: QualityCodeCoverageMetrics = {
-        statements: readPct(total.statements),
-        branches: readPct(total.branches),
-        functions: readPct(total.functions),
-        lines: readPct(total.lines),
+        statements,
+        branches,
+        functions,
+        lines,
       };
-      const available = Object.values(metrics).some((value) => value !== null);
-      if (!available) continue;
 
       return Object.freeze({
         status: 'AVAILABLE' as const,
