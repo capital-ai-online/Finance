@@ -66,6 +66,14 @@ interface VerifiedAssetDisplay {
   reason: string | null;
 }
 
+interface BuffettAuthorizationResponse {
+  allowed?: boolean;
+  reason?: string;
+  rule?: string;
+  assetType?: AssetClass;
+  contractVersion?: 'subscription-entitlements/1.0.0';
+}
+
 interface BuffetValueCheckProps {
   selectedSymbol: string;
   triggerAttempt?: (actionName: string, onExecute: () => void) => void;
@@ -208,20 +216,35 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
     setValueLoading(true);
     setLoadError(null);
     setDisplay(null);
-    fetch(`/api/registry/assets/${encodeURIComponent(activeSymbol)}/verified-display`)
-      .then(async response => {
+
+    const authorizeAndHydrate = async () => {
+      try {
+        const authorizationResponse = await fetch('/api/entitlements/warren-buffett/authorize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbol: activeSymbol }),
+        });
+        const authorizationBody = await authorizationResponse.json().catch(() => ({})) as BuffettAuthorizationResponse;
+        if (!authorizationResponse.ok || authorizationBody.allowed !== true) {
+          throw new Error(
+            authorizationBody.rule
+            ?? authorizationBody.reason
+            ?? 'Buffett Value Check ist für dieses Asset oder Abonnement nicht freigegeben.',
+          );
+        }
+        if (cancelled) return;
+
+        const response = await fetch(`/api/registry/assets/${encodeURIComponent(activeSymbol)}/verified-display`);
         const body = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(body?.reason ?? 'Verifizierte Aktien-Daten konnten nicht geladen werden.');
-        return body as VerifiedAssetDisplay;
-      })
-      .then(body => {
         if (cancelled) return;
-        if (body.assetClass !== 'stock') {
+        const verifiedBody = body as VerifiedAssetDisplay;
+        if (verifiedBody.assetClass !== 'stock') {
           throw new Error('Buffett Value Check akzeptiert ausschließlich Aktien.');
         }
-        setDisplay(body);
-        const verifiedPrice = finite(body.price);
-        const verifiedEps = finite(body.fundamentals?.epsTtm);
+        setDisplay(verifiedBody);
+        const verifiedPrice = finite(verifiedBody.price);
+        const verifiedEps = finite(verifiedBody.fundamentals?.epsTtm);
         if (verifiedPrice !== null && verifiedPrice > 0) {
           setCustomPrice(verifiedPrice);
           setPriceInputSource('verified');
@@ -237,13 +260,14 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
           setEpsInputSource('missing');
         }
         setGrowth(8.0);
-      })
-      .catch(error => {
+      } catch (error) {
         if (!cancelled) setLoadError(error instanceof Error ? error.message : String(error));
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setValueLoading(false);
-      });
+      }
+    };
+
+    void authorizeAndHydrate();
     return () => { cancelled = true; };
   }, [activeSymbol]);
 
@@ -378,7 +402,7 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
           </div>
           <h2 className="text-2xl font-black text-white font-display mt-1.5">Buffett Value Check & DCF Analysator</h2>
           <p className="text-sm text-white/60 mt-1 max-w-3xl">
-            Der Buffett Value Check ist auf Unternehmensaktien begrenzt. Marktpreis und Fundamentals werden erst bei Auswahl über den verifizierten Evidence-Layer geladen; Bootstrap- oder Demo-Werte werden nicht verwendet.
+            Der Buffett Value Check ist auf Unternehmensaktien begrenzt. Marktpreis und Fundamentals werden erst nach serverseitiger Entitlement-/Quota-Freigabe über den verifizierten Evidence-Layer geladen; Bootstrap- oder Demo-Werte werden nicht verwendet.
           </p>
         </div>
 
@@ -400,7 +424,7 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
               <div className="flex items-center gap-2 mt-1 text-[10px] font-mono uppercase">
                 <span className="text-white/40">Aktie</span>
                 <span className="text-emerald-300 normal-case">
-                  {valueLoading ? 'Wert wird verifiziert…' : display?.value !== null && display?.value !== undefined
+                  {valueLoading ? 'Freigabe & Wert werden geprüft…' : display?.value !== null && display?.value !== undefined
                     ? `${formatBuffettMetric(display.value)} ${display.unit ?? ''}`
                     : 'Kein verifizierter Wert'}
                 </span>
@@ -478,7 +502,7 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
       <div className="mb-6 rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-3 text-[11px] text-white/60">
         <div className="flex items-center gap-2 text-emerald-300 font-semibold">
           <ShieldCheck size={14} />
-          <span>Verified Asset Display · {display?.status ?? 'Lädt'} · Aktien-only · keine Bootstrap-Ersatzwerte</span>
+          <span>Verified Asset Display · {display?.status ?? 'Lädt'} · Aktien-only · entitlement-first · keine Bootstrap-Ersatzwerte</span>
         </div>
         <div className="mt-1">
           Provider: {display?.providers?.length ? display.providers.join(', ') : '—'} · Evidence IDs: {display?.evidenceIds?.length ?? 0} · Beobachtet: {formatObservedAt(display?.observedAt ?? null)}
@@ -682,7 +706,7 @@ export function BuffetValueCheck({ selectedSymbol, triggerAttempt }: BuffetValue
       <div className="mt-6 bg-aif-gold-DEFAULT/[0.03] border border-aif-gold-DEFAULT/15 rounded-xl p-3 flex items-start gap-3">
         <BookOpen className="text-aif-gold-DEFAULT/70 shrink-0 mt-0.5" size={16} />
         <p className="text-[11px] text-white/50 leading-relaxed">
-          Der Buffett/Graham-Bereich ist ausschließlich für Unternehmensaktien vorgesehen. Provider-Evidence, Modellannahmen und manuelle Overrides bleiben getrennt sichtbar; fehlende Daten werden weder automatisch als bestanden gewertet noch durch pauschale Ersatzwerte ersetzt.
+          Der Buffett/Graham-Bereich ist ausschließlich für Unternehmensaktien vorgesehen. Die serverseitige Entitlement-/Quota-Freigabe erfolgt vor der Datenhydration; Provider-Evidence, Modellannahmen und manuelle Overrides bleiben getrennt sichtbar. Fehlende Daten werden weder automatisch als bestanden gewertet noch durch pauschale Ersatzwerte ersetzt.
         </p>
       </div>
     </div>
