@@ -14,6 +14,7 @@ const FOUNDATION_FILES = [
   '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternDetectionContracts.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternReliabilityRegistry.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternSignalResolver.ts',
+  '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternResearchEngine.ts',
   '../../src/platform/FinTechCore/index.ts',
 ] as const;
 
@@ -55,6 +56,7 @@ describe('FinTech Core FT-1/FT-2 authority boundary', () => {
       '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternDetectionContracts.ts',
       '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternReliabilityRegistry.ts',
       '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternSignalResolver.ts',
+      '../../src/platform/FinTechCore/Modules/Crypto/Pattern/PatternResearchEngine.ts',
     ] as const;
 
     for (const relativeFile of patternFiles) {
