@@ -4,206 +4,234 @@
 **Status:** IMPLEMENTED IN STACKED DRAFT PR #474 / VALIDATION & EXTERNAL PRODUCTION GATES OPEN  
 **Branch:** `agent/governance-convergence-runtime-execution-2026-08-21`  
 **Upstream PR:** `#471` (`agent/hosted-validation-cost-s0-s3-2026-08-21`)  
-**Initial/Pre-PR main:** `6c90c04de8924b8783f23ab4789afa810e9ea3a8`  
-**Primary authorities:** ADR-0096, ADR-0037, ADR-0044, ADR-0059, ADR-0018, AGENTS.md  
+**Parallel Scoring PR:** `#475` (`feature/fintech-orchestrator-p0-multiclass-integrity`)  
+**Current main at continuation check:** `6c90c04de8924b8783f23ab4789afa810e9ea3a8`  
+**Primary authorities:** ADR-0096, ADR-0037, ADR-0044, ADR-0054, ADR-0059, ADR-0018, ADR-0087, AGENTS.md  
 **Non-scope:** M10 reactivation, Render/Supabase/Stripe production mutation, new scoring authority, new Vocabulary/Transparency authority
 
 ## 1. Ziel
 
-Dieses Paket konsolidiert die noch offenen Governance- und Runtime-Gaps aus den parallel geführten CAPITAL-AI-Governance-Arbeiten in **einer** umsetzbaren Kette. Es erzeugt keine neue Governance Control Plane und keine neue Master-Roadmap. Bestehende Authorities werden wiederverwendet und nur dort ergänzt, wo aktueller Code oder direkte UI-Consumer noch gegen diese Authorities driften.
+Dieses Paket konsolidiert offene Governance- und Runtime-Gaps in **einer** Wertschöpfungskette. Es erzeugt weder eine zweite Governance Control Plane noch eine zweite Durable-Worker-/Retry-Architektur.
 
 ```text
 AGENTS.md / ADR-0096 Governance Control Plane
         |
-        +--> bestehende ADR/ESS/Vocabulary/Transparency Authorities
+        +--> ADR-0087 Scoring Authority
+        |        UAI -> Evidence -> Model Registry -> ScoringDispatcher
         |
-        +--> Supervisor + Domain Orchestrators        [fachliche Authority]
-        |          |
-        |          +--> AsyncExecutionPort            [nur Ausführungsmechanik]
-        |                    |
-        |                    +--> Inline Adapter       [heutiger Default]
-        |                    +--> externer Adapter     [zukünftig, eigener Cutover]
+        +--> ADR-0054 Durable Background Job Authority
+        |        public.outbox_jobs
+        |          -> server/outbox.ts
+        |          -> server/outboxWorker.ts
+        |          -> bounded drain seam
+        |                 |
+        |                 +--> current in-process polling host
+        |                 +--> future external execution host (optional)
         |
-        +--> Operational System Event Journal          [UI/Observability Read Model]
-        |          |
+        +--> Operational System Event Journal
         |          X  keine Security-/Agent-Audit-Authority
-        |          |
-        |          +--> Supabase durable projection   [nach Production-Handoff]
         |
-        +--> SupervisorDashboard                       [read-only Projektion]
-                   X  keine simulierten Mutationen oder Betriebswerte
+        +--> ADR-0059 Agent Audit / OTEL
+        |
+        +--> SupervisorDashboard
+                   read-only / observed-only projection
 ```
 
-## 2. Konsolidierter Abgleich der Governance-Stränge
+## 2. Aktueller Main-/PR-Korrelationscheck
 
-| Themenstrang | Aktuelle Authority / Evidence | Konsolidierte Entscheidung |
-|---|---|---|
-| Governance Control Plane / Supersession | ADR-0096 + Authority/Control/Document/ADR/ESS Registries | Wiederverwenden; keine zweite Registry/Policy-Ebene |
-| Canonical Vocabulary Registry / UI Message Catalog | bestehende Vocabulary-Authorities + ADR-0096-Control-Plane-Validierung | Nicht neu definieren; nur abhängige Authority |
-| AI Content Transparency Contract | bestehende Architecture/Compliance/Roadmap-Referenzen | Keine Parallelarchitektur; Runtime-Persistenz-Evidence bleibt eigener Follow-up-Gate |
-| Documentary Hygiene / Versioning | ADR-0044 + Documentary Maintenance Control Loop | Production immutable/read-only; keine Runtime-Dokumentmutation |
-| M10 / teure CI / Self-Heal | PR #471 + M10-Governance | PR #471 ist Upstream; M10 bleibt suspended/off |
-| Agent Audit / OTEL | ADR-0059 + `agent_audit_events` + Telemetry | Unverändert; System Event Journal darf diese Authority nicht duplizieren |
-| Event Mesh | ADR-0018 | Bleibt in-process Transport; kein Distributed Queue Claim |
-| Render Stateless / Worker Separation | ADR-0037 + historischer Render-Audit | Providerneutralen Execution-Port implementieren; Render Workflows erst als späterer Adapter |
-| System Events / Agent Dashboard | Legacy `server/systemEvents.ts` | Synthetic/File-State entfernen; nur operational read model/runtime-derived state |
-| Agent Registration | Legacy Runtime-Route erzeugte Docs/ADRs | Runtime-Mutation stilllegen; Architekturänderung Branch/Registry/PR |
-| Supervisor UI | Legacy simulierte Infrastruktur-/Backup-/Alert-/Circuit-Breaker-Daten und Mutationen | Direkten Consumer auf read-only, observed-only Projektion konsolidieren |
+Am Fortsetzungspunkt wurde der Zustand erneut geprüft:
 
-## 3. Upstream PR #471 und Stacking
+- `main = 6c90c04de8924b8783f23ab4789afa810e9ea3a8`;
+- PR #471: offen, Draft, mergefähig, Head `b8a78220c671df8cb3c35dfc5ba719b972e6ce69`;
+- PR #474: offen, Draft, mergefähig, auf PR #471 gestapelt;
+- PR #475: offen, Draft, mergefähig, Head `42691ac327e02645677e9b6cfb0fd3fb34572c42`;
+- PR #474 ist gegenüber `main` **0 Commits behind**; Merge-Base ist exakt der aktuelle Main;
+- PR #471 ist gegenüber `main` ebenfalls **0 Commits behind**;
+- zwischen #471, #474 und #475 besteht kein direkter Changed-File-Overlap.
 
-PR #471 basierte ursprünglich auf `7d173d3239fdbe31216354fc848f948d517069f6`. Vor diesem Paket wurde er gegen `main` `6c90c04de8924b8783f23ab4789afa810e9ea3a8` geprüft.
+### Semantische Korrelation mit PR #475
 
-Ergebnis:
+PR #475 definiert `ScoringDispatcher` weiterhin als **einzige produktive Multi-Asset-Scoring-Execution-Authority**. PR #474 ändert keine Scoring-Registry, keinen Dispatcher, kein Ranking und keine Universe-SLA-Authority.
 
-- `main` war 69 Commits weiter;
-- keiner der 15 durch PR #471 geänderten Pfade war in diesen Main-Änderungen erneut verändert worden;
-- der PR-Branch wurde ohne Force-Update mit `main` zusammengeführt;
-- synchronisierter PR-Head: `b8a78220c671df8cb3c35dfc5ba719b972e6ce69`;
-- dieser Branch wurde direkt auf diesem Head angelegt;
-- unmittelbar vor Draft PR #474 war `main` unverändert und PR #471 weiterhin offen/draft/mergefähig.
+`server/marketData/canonicalCryptoScoreEnrichment.ts` ist auf PR #474 und PR #475 identisch und delegiert weiterhin ausschließlich an `dispatchCanonicalScore`. Damit bleibt die fachliche Kette eindeutig:
 
 ```text
-main
-  -> PR #471: Hosted validation cost / shadow attestation / self-heal suspension
-       -> PR #474: Governance/runtime/UI convergence
+Market Data
+  -> Evidence / Canonical Enrichment
+  -> ScoringDispatcher (ADR-0087)
+  -> CanonicalScoreResult
 ```
 
-Die Scopes bleiben getrennt. PR #474 ändert keine PR-471-Workflow-/Shadow-Attestation-Datei.
+## 3. Gefundene und behobene Restkorrelation: Durable Worker Authority
+
+Der vertiefte Authority-Check hat einen wichtigen Drift in der ersten PR-474-Iteration identifiziert:
+
+- ADR-0054 ist bereits **Accepted** und **VERIFIED PASS IN PRODUCTION**;
+- `public.outbox_jobs` + `server/outbox.ts` besitzen die generische Queue-/Lease-/Retry-/Dead-Letter-Authority;
+- `server/outboxWorker.ts` besitzt die generische `job_type -> handler` Dispatch-Authority;
+- der provisorische `AsyncExecutionPort` hätte daneben einen zweiten generischen Durable-Execution-Pfad ermöglicht.
+
+Das wäre eine Doppelarchitektur gewesen. Daher wird diese erste Implementierungsrichtung superseded **innerhalb desselben Branches**, bevor sie gemergt wird.
+
+### Korrektur
+
+- `AsyncExecutionPort` wird vollständig entfernt;
+- `createApplicationMarketDataRuntime()` wird auf den bestehenden direkten Callback-Vertrag zurückgeführt;
+- Snapshot-/Alert-Folgearbeit wird nicht über eine neue Parallel-Queue geroutet;
+- ADR-0054 bleibt die einzige durable Background-Job-Authority;
+- `server/outboxWorker.ts` erhält lediglich `drainOutboxJobs()` als bounded reuse seam;
+- der bestehende Poll-Loop verwendet denselben Drain;
+- ein späterer Render-Workflows-Host dürfte ausschließlich diesen bestehenden Outbox-Drain ausführen.
+
+### Harte Authority-Grenze für externe Execution Hosts
+
+Ein externer Host darf **nicht** besitzen:
+
+- Queue Persistence;
+- Retry Budget;
+- Lease Ownership Semantics;
+- Dead-Letter State;
+- `job_type -> handler` Business Routing;
+- Scoring-/Domain-Routing;
+- IAM-/Mutation-Entscheidungen.
+
+Diese bleiben bei ADR-0054 bzw. den bestehenden Domain-/Governance-Authorities.
 
 ## 4. P0 — Operational System Event Integrity
 
 ### Ausgangslage
 
-`server/systemEvents.ts` verwendete `uploads/system_events.json` als instanzlokalen State und erzeugte beim Fehlen der Datei synthetische Ereignisse. Damit konnten UI-Einträge wie echte Produktionshistorie erscheinen, obwohl sie nicht beobachtet worden waren.
+`server/systemEvents.ts` verwendete `uploads/system_events.json` als instanzlokalen State und erzeugte beim Fehlen der Datei synthetische Ereignisse.
 
 ### Umsetzung
 
-- `uploads/system_events.json` vollständig entfernt;
-- keine Synthetic/Seed Events mehr;
+- Local-FS-System-Event-Authority entfernt;
+- Synthetic/Seed Events entfernt;
 - `OperationalSystemEventJournal` eingeführt;
 - non-production: bounded memory projection;
 - Production mit konfiguriertem Supabase: `system_event_journal` als durable Operational Projection;
-- Production ohne durable Store: explizit `degraded`, **kein** Local-FS-Fallback;
-- API liefert `authority=operational-read-model` und `auditAuthority=false`;
-- SSE und ADR-0018 Event Mesh bleiben additive Projektionen.
+- Production ohne durable Store: explizit `degraded`, kein Local-FS-Fallback;
+- API kennzeichnet `authority=operational-read-model` und `auditAuthority=false`.
 
-`system_event_journal` ist ausdrücklich **kein** Security-/Compliance-/Agent-Audit-Store. ADR-0059 und `agent_audit_events` bleiben für AI-assisted command audit/correlation allein zuständig.
+ADR-0059 und `agent_audit_events` bleiben alleinige Audit-/Correlation-Authority für AI-assisted Commands.
 
-Die Supabase-Migration ist nur repositoryseitige Deployment-Vorbereitung und wurde in diesem Paket **nicht** gegen Production angewendet.
+## 5. P0 — Legacy Agent Registration / Dokumentmutation
 
-## 5. P0 — Legacy Agent Registration / ADR Generation
+Stillgelegt wurden:
 
-Der alte `/agents/register`-Endpoint konnte lokale Agent-State-Dateien, Change-/Risk-Dokumente und selbst vergebene ADR-Nummern erzeugen. Das widersprach ADR-0044 und ADR-0096 inklusive Namespace Reservation und Branch/PR-Governance.
+- lokale Agent Registry als Runtime-Authority;
+- manuelle Runtime-State-Fabrikation;
+- Runtime-ADR-Nummernvergabe per Dateiscan;
+- Runtime-Erzeugung von Change-/Risk-/Governance-Dokumenten.
 
-Umsetzung:
-
-- Dateisystem-Agent-Registry entfernt;
-- Agentenanzeige nur process-local Operational Telemetry;
-- Aktivität ausschließlich aus echten `updateAgentActivity()`-Aufrufen;
-- manuelles Status-Toggling -> `RUNTIME_DERIVED_STATE_REQUIRED`;
-- Runtime-Agent-Registrierung -> `REPOSITORY_CONTROL_PLANE_REQUIRED`;
-- keine Runtime-ADR-/Risk-/Change-Dokumentgenerierung mehr.
-
-Neue Agent-/Orchestrator-Architektur bleibt eine normale Repository-Änderung: aktuelles Main -> Work Claim/ADR-Reservation falls erforderlich -> Code/Docs -> PR -> Human Merge.
+Neue Agent-/Orchestrator-Architektur läuft ausschließlich über Repository Control Plane, Current-Main-Abgleich, bestehende Registry-/ADR-/ESS-Gates und PR.
 
 ## 6. P0 — Supervisor UI Consumer Convergence
 
-Der bisherige `SupervisorDashboard.tsx` enthielt trotz bereits dokumentierter No-Demo-Data-Bereinigungen noch mehrere synthetische oder nur lokal simulierte Betriebsbehauptungen, unter anderem:
+`SupervisorDashboard.tsx` wurde auf eine **read-only, observed-only Projektion** reduziert.
 
-- Cloud-Run-/Firestore-/GCP-Angaben trotz Render/Supabase-Architektur;
-- feste Health-/Latency-/Cost-Werte;
-- erfundene Circuit-Breaker-Zustände und lokale Toggle-Mutationen;
-- simulierte Alarmtrigger, die als System Events protokolliert wurden;
-- ein „Backup“-Button, der kein Backup ausführte, aber einen festen SHA-/Erfolgsclaim erzeugte;
-- Runtime-Agent-Register/Toggle-UI gegen inzwischen stillgelegte Backend-Grenzen;
-- harte Gemini-/Version-/Infrastrukturwerte ohne aktuelle Evidence.
+Entfernt wurden unter anderem:
 
-Umsetzung:
+- synthetische Cloud-/Firestore-/GCP-Angaben;
+- feste Health-/Latency-/Cost-Werte ohne Evidence;
+- simulierte Backup-/Alert-/Circuit-Breaker-Erfolgsmeldungen;
+- Runtime-Agent-Register/Toggle-UI;
+- harte Provider-/Version-/Infrastrukturbehauptungen ohne aktuelle Evidence.
 
-- Dashboard als **read-only Operational Projection** neu gefasst;
-- ausschließlich echte Antworten von RequestOrchestrator, Supervisor, Agent- und Orchestrator-Projektionen werden angezeigt;
-- fehlende Evidence erscheint als `nicht instrumentiert`;
-- keine Circuit-Breaker-, Alert-, Backup- oder Agent-Architecture-Mutation im Dashboard;
-- keine Synthetic Terminal-/Infrastructure-/Cost-History;
-- VersionManager und M10-Passkey bleiben in ihren bestehenden separaten Authority-Komponenten eingebettet;
-- Backend- und Frontend-Semantik sind damit konsistent.
+Fehlende Messwerte werden als `nicht instrumentiert` dargestellt.
 
-## 7. P1 — Provider-neutral Async Execution Boundary
+## 7. P1 — Bestehende Durable Execution Authority für externe Hosts öffnen
 
-ADR-0037 §3.3 hat die Trennung von Request Plane und Background Execution bereits entschieden. Deshalb wird **keine neue ADR und keine zweite Orchestrator-Authority** erzeugt.
+ADR-0037 verlangt weiterhin die Trennung von Request Plane und Background Execution Plane. ADR-0054 hat zwischenzeitlich bereits die kanonische durable Job-Schicht geschaffen.
 
-Implementiert wurde `src/platform/Supervisor/Execution/AsyncExecutionPort.ts`:
+Daraus ergibt sich jetzt die homogene Zielarchitektur:
 
-- serialisierbarer Task-Envelope;
-- stabile `taskType`, `taskId`, `correlationId`;
-- Execution Policy als Retry-/Timeout-Hinweis;
-- providerneutraler `AsyncExecutionPort`;
-- `InlineAsyncExecutionPort` als kompatibler Default;
-- explizites Verbot, Domain-Orchestrator, Scoring-Modell, Policy-Outcome oder Mutation Authority zu wählen.
+```text
+Render Web Service
+  -> HTTP/API/Auth
+  -> enqueue_outbox_job(...) für idempotente durable Side-Effect-/Background-Jobs
 
-`createApplicationMarketDataRuntime()` führt Snapshot-Persistierung und Alert-Auswertung bereits über diese Grenze. Der Default bleibt inline und erhält das heutige Verhalten. Ein späterer Render-Workflows-Adapter kann dieselben Envelopes durable ausführen, ohne Domain-Routing zu übernehmen.
+Supabase
+  -> outbox_jobs
+  -> lease/retry/backoff/dead-letter
 
-**Bewusst nicht umgesetzt:**
+Execution Host
+  -> drainOutboxJobs(leaseOwner, maxJobs)
+  -> processOneOutboxJob(...)
+  -> bestehende ADR-0054 Handler Registry
+```
 
-- kein Render SDK;
-- keine zweite `workflows/`-Businessarchitektur;
-- keine `render.yaml`-Pseudo-Konfiguration für Workflows;
-- keine Production-Aktivierung;
-- keine Änderung an `requestOrchestrator`;
-- keine Änderung an ScoringDispatcher/Domain-Orchestratoren.
+Der aktuelle Host bleibt der bestehende In-Process-Poll-Loop. Ein späterer Render-Workflows-Pilot wäre **nur ein alternativer Host dieses Drains**, keine neue Queue- oder Orchestrator-Architektur.
 
-## 8. Dokumenten-State-Konvergenz
+## 8. Render Workflows — zulässiger Integrationspfad
 
-Der historische `RENDER_STATELESS_WEB_TIER_AUDIT_2026-08-03.md` wird nicht gelöscht oder rückwirkend umgeschrieben, weil er Audit-Evidence zum damaligen Zustand enthält.
+Ein Render-Workflows-Pilot ist erst zulässig, wenn er folgende Regeln einhält:
 
-`RENDER_RUNTIME_ASYNC_EXECUTION_STATUS_2026-08-21.md` ist stattdessen eine aktuelle, nicht konkurrierende Statusprojektion und ordnet alte Findings in `REMEDIATED`, `PARTIAL`, `OPEN` und `PRODUCTION-GATE` ein.
+1. `outbox_jobs` bleibt durable Source of Truth;
+2. Render Workflow speichert keinen konkurrierenden Job-Lifecycle als fachliche Authority;
+3. Render-Retries dürfen Outbox-Retry nicht duplizieren; Provider-Retry maximal für Wake-up/Transport, nicht für Jobsemantik;
+4. Workflow ruft bounded `drainOutboxJobs()` auf;
+5. Handler bleiben ausschließlich in `server/outboxWorker.ts` registriert;
+6. Domain-/Scoring-Routing bleibt außerhalb des Workflow-Hosts;
+7. neue Market-/Snapshot-/Alert-Jobtypen müssen vor Externalisierung idempotent und ADR-0054-konform sein;
+8. Production-Aktivierung benötigt eigenen Owner-Handoff, Rollback und Cost Evidence.
 
-## 9. Offene externe Gates
+## 9. Dokumenten-State-Konvergenz
 
-Absichtlich nicht durch Repository-Code als erledigt deklariert:
+Der historische `RENDER_STATELESS_WEB_TIER_AUDIT_2026-08-03.md` bleibt unveränderte historische Evidence.
 
-1. Supabase-Migration `system_event_journal` nach Owner-Precheck in Production anwenden und Postcheck/Evidence erzeugen.
-2. Danach Production-Durability des System-Event-Read-Models verifizieren.
-3. Render Workflows nur als `AsyncExecutionPort`-Adapter pilotieren; kein direkter Domain-Orchestrator.
-4. Pilot zunächst niedrigriskant; Market Refresh/Alerts erst nach Retry-/Idempotency-/Cost-Evidence extern umstellen.
-5. Alert Delivery Outbox / Atomic Claim bleibt gesonderter P1-Datenintegritätsbefund.
+`RENDER_RUNTIME_ASYNC_EXECUTION_STATUS_2026-08-21.md` projiziert den aktuellen Stand und verweist nun explizit auf ADR-0054 als bereits vorhandene Durable-Worker-Authority.
+
+## 10. Offene externe Gates
+
+1. `system_event_journal` nach Owner-Precheck in Production anwenden und Postcheck/Evidence erzeugen.
+2. Production-Durability der Operational Event Projection verifizieren.
+3. Neue Background-Jobtypen nur über ADR-0054-Outbox integrieren.
+4. Alert Delivery benötigt vor Externalisierung einen idempotenten/atomic Side-Effect-Vertrag.
+5. Market Refresh Scheduling/Leader Ownership bleibt eigener ADR-0037-Restpunkt.
 6. Replica-invariante kritische Rate Limits bleiben Voraussetzung vor Scale-out.
-7. M10 bleibt suspended/off bis zur eigenen Owner-Entscheidungskette.
-8. AI Content Transparency Runtime-Persistenz muss gegen die bestehende Contract-Authority separat nachgewiesen werden; dieses Paket definiert sie nicht neu.
+7. M10 bleibt suspended/off bis zur separaten Owner-Entscheidungskette.
+8. AI Content Transparency Runtime-Persistenz bleibt eigene bestehende Contract-Authority.
 
-## 10. Tests / Negative Assurance
+## 11. Tests / Negative Assurance
 
-Neue Tests sichern:
+Gesichert werden:
 
 - keine synthetische System-Event-Historie;
-- kein `uploads/system_events.json` / `uploads/agents_registry.json`;
+- kein Local-FS-System-/Agent-Registry-State als Production-Authority;
 - keine Runtime-ADR-/Dokumentgenerierung;
-- fehlende Production-Durability wird als degraded sichtbar;
-- durable Operational Projection bleibt `auditAuthority=false`;
-- Async Execution Envelope fail-closed bei ungültigen Metadaten / unbekannten Task Types;
-- kanonischer Async Port enthält keine Render-Abhängigkeit und keine Domain-Orchestrator-Authority;
-- Supervisor UI enthält keine bekannten Synthetic-Infra-/Backup-/Alert-Claims und keine retired Agent-Mutation-Endpunkte.
+- Operational Journal bleibt `auditAuthority=false`;
+- Supervisor UI bleibt frei von bekannten Synthetic-Infra-/Mutation-Claims;
+- `processOneOutboxJob()` behält ADR-0054-Semantik;
+- `drainOutboxJobs()` verarbeitet ausschließlich über dieselbe Outbox-/Handler-Authority;
+- kein zweiter Async-/Render-Task-Port bleibt im produktiven Architekturpfad.
 
-## 11. Definition of Done
+## 12. CI-Historie dieser Iteration
 
-- [x] PR #471 gegen aktuellen Main geprüft und konfliktfrei synchronisiert.
-- [x] neuer Branch direkt auf synchronisiertem PR-471-Head erstellt.
-- [x] exklusiver Work Claim mit Authority-/Pfadgrenzen angelegt.
-- [x] Synthetic System Event Seeds entfernt.
-- [x] Production Local-FS-System-Event-Authority entfernt.
-- [x] Runtime Agent Registry File Authority entfernt.
-- [x] Runtime ADR-/Dokument-Generator stillgelegt.
-- [x] operative Agent-State-Manipulation stillgelegt; Status runtime-derived.
-- [x] direkter Supervisor-UI-Consumer auf observed-only/read-only Semantik konsolidiert.
-- [x] providerneutraler AsyncExecutionPort implementiert.
-- [x] Market Snapshot-/Alert-Folgejobs über Execution Boundary geführt, Default weiterhin inline.
-- [x] Supabase-Migration als nicht angewandter Production-Handoff vorbereitet.
-- [x] historische Render-Findings als aktuelle Statusprojektion neu bewertet.
-- [x] keine neue Vocabulary-, Transparency-, Audit-, Documentary-, Scoring- oder Orchestrator-Authority angelegt.
-- [x] Draft PR #474 auf PR #471 gestapelt.
-- [ ] finaler Abgleich gegen den dann aktuellen `main` vor Retarget auf `main`.
-- [ ] finaler Abgleich gegen den dann aktuellen PR-471-Head vor Retarget.
-- [ ] kanonische Production-Baseline nach Retarget auf `main` maschinell rendern.
-- [ ] Repository-/CI-Validierung auf finalem gestapeltem/retargeted Head.
+Der erste PR-474-CI-Lauf erreichte:
+
+- Repository Integrity PASS;
+- `npm ci` PASS;
+- `npm audit` PASS mit 0 Vulnerabilities;
+- TypeScript PASS;
+- 1705 Unit Tests PASS und genau 1 Failure.
+
+Der einzelne Failure war ein Test, der noch Callback-Identität statt Boundary-Verhalten erwartete. Bei der anschließenden Authority-Prüfung wurde jedoch zusätzlich der ADR-0054-Doppelungsdrift gefunden. Deshalb wird nicht nur der Test angepasst, sondern die überflüssige AsyncExecutionPort-Architektur vollständig entfernt und die vorhandene Outbox-Authority wiederverwendet.
+
+## 13. Definition of Done
+
+- [x] aktueller Main erneut geprüft: `6c90c04d…`.
+- [x] PR #471 weiterhin 0 behind / mergefähig.
+- [x] PR #474 weiterhin korrekt auf #471 gestapelt.
+- [x] PR #475 auf direkte und semantische Korrelation geprüft.
+- [x] kein direkter Dateioverlap #471/#474/#475.
+- [x] ScoringDispatcher bleibt alleinige Scoring-Authority.
+- [x] ADR-0054 als bereits vorhandene Durable-Worker-Authority erkannt.
+- [x] provisorische doppelte AsyncExecutionPort-Authority zur Entfernung vorgesehen.
+- [x] bounded Outbox-Drain als Reuse-Seam umgesetzt.
+- [x] System Event / Agent / Supervisor Governance-Konvergenz umgesetzt.
+- [ ] finalen PR-474-Head nach Authority-Korrektur vollständig in CI validieren.
+- [ ] vor Retarget/Merge erneut aktuellen Main und offene PRs korrelieren.
+- [ ] PR #471 zuerst abschließen oder Scope explizit auflösen.
+- [ ] danach PR #474 auf `main` retargeten und kanonische Production-Baseline maschinell erzeugen.
 - [ ] separate Owner-Freigabe für jede Supabase-/Render-Production-Mutation.

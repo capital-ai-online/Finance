@@ -8,8 +8,8 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT / GitHub Connector"
   },
-  "workItem": "Governance convergence, operational system-event integrity and provider-neutral asynchronous execution boundary without duplicate authorities",
-  "workItemDE": "Konsolidiertes Governance-Arbeitspaket für State-/Dokumenten-Konvergenz, System-Event-Integrität und eine providerneutrale asynchrone Execution-Grenze ohne Doppelarchitekturen",
+  "workItem": "Governance convergence, operational system-event integrity and reuse of the canonical ADR-0054 durable outbox execution authority without duplicate worker architecture",
+  "workItemDE": "Konsolidiertes Governance-Arbeitspaket für State-/Dokumenten-Konvergenz, System-Event-Integrität und Wiederverwendung der kanonischen ADR-0054-Outbox-/Worker-Authority ohne Doppelarchitekturen",
   "startedAt": "2026-08-21T20:33:00+02:00",
   "baseBranch": "agent/hosted-validation-cost-s0-s3-2026-08-21",
   "baseSha": "b8a78220c671df8cb3c35dfc5ba719b972e6ce69",
@@ -21,12 +21,11 @@
     ".ai/work-claims/GOVERNANCE-CONVERGENCE-RUNTIME-EXECUTION-2026-08-21.json",
     "server/systemEvents.ts",
     "server/systemEvents/systemEventJournal.ts",
-    "server/marketData/createApplicationMarketDataRuntime.ts",
-    "src/platform/Supervisor/Execution/AsyncExecutionPort.ts",
+    "server/outboxWorker.ts",
     "src/components/SupervisorDashboard.tsx",
     "supabase/migrations/20260821183300_system_event_journal.sql",
     "tests/unit/systemEventJournal.test.ts",
-    "tests/unit/asyncExecutionPort.test.ts",
+    "tests/unit/outboxWorker.test.ts",
     "tests/unit/supervisorDashboardGovernance.test.ts",
     "docs/roadmaps/work-packages/GOVERNANCE_CONVERGENCE_RUNTIME_EXECUTION_2026-08-21.md",
     "docs/architecture/RENDER_RUNTIME_ASYNC_EXECUTION_STATUS_2026-08-21.md"
@@ -36,27 +35,40 @@
     "ADR-0096 Governance Control Plane and canonical registries",
     "ADR-0037 Render request-plane/background-execution separation",
     "ADR-0044 production runtime artifact immutability",
+    "ADR-0054 durable worker/outbox/lease",
     "ADR-0059 durable agent audit and OpenTelemetry correlation",
     "ADR-0018 Event Mesh",
+    "ADR-0087 single scoring architecture / ScoringDispatcher authority",
     "ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
     "Canonical Vocabulary Registry / UI Message Catalog authorities",
     "AI Content Transparency Contract authorities",
     "PR #471 hosted-validation cost-control and shadow-attestation scope"
   ],
   "correlation": {
-    "mainAtStartAndPrePr": "6c90c04de8924b8783f23ab4789afa810e9ea3a8",
+    "mainAtStartPrePrAndContinuation": "6c90c04de8924b8783f23ab4789afa810e9ea3a8",
+    "branchVsMain": {
+      "behindBy": 0,
+      "mergeBase": "6c90c04de8924b8783f23ab4789afa810e9ea3a8"
+    },
     "upstreamPr": {
       "number": 471,
       "headAfterMainSync": "b8a78220c671df8cb3c35dfc5ba719b972e6ce69",
       "directPathOverlap": []
+    },
+    "parallelScoringPr": {
+      "number": 475,
+      "headAtCorrelation": "42691ac327e02645677e9b6cfb0fd3fb34572c42",
+      "directPathOverlap": [],
+      "semanticBoundary": "PR #475 keeps ScoringDispatcher as the sole productive scoring execution authority. This work item does not alter ScoringDispatcher, model routing, ranking, UniverseSla or canonical score enrichment."
     },
     "stackedPr": {
       "number": 474,
       "base": "agent/hosted-validation-cost-s0-s3-2026-08-21",
       "draft": true
     },
-    "finding": "The work item is stacked on the synchronized PR #471 head. It projects/reuses existing Governance, Documentary, audit, Supervisor and Render authorities rather than introducing a second control plane, audit stack, domain orchestrator or roadmap authority. The Supervisor UI is included as the direct consumer of the retired runtime mutation and synthetic telemetry surfaces so backend and frontend remain semantically aligned."
+    "authorityCorrection": "Deep correlation found that the provisional AsyncExecutionPort duplicated ADR-0054's already accepted generic durable job retry/handler-dispatch authority. The duplicate port and its market-data callback wiring are therefore removed. ADR-0054 public.outbox_jobs + server/outbox.ts + server/outboxWorker.ts remain the single durable background job authority; this work item only adds a bounded drain seam for possible external execution hosts.",
+    "finding": "Governance, Documentary, audit, scoring and worker authorities are reused rather than duplicated. Supervisor UI is included only as the direct consumer of retired runtime mutation/synthetic telemetry surfaces."
   },
-  "externalMutationScope": "none; Supabase migration is repository-only handoff and is not applied to production by this work item",
-  "releaseCondition": "Release after stacked PR merge/closure/supersession/abandonment. Production activation of the durable system-event table or a Render Workflows adapter requires a separate Owner-authorized production handoff."
+  "externalMutationScope": "none; Supabase system_event_journal migration is repository-only handoff and is not applied to production by this work item",
+  "releaseCondition": "Release after stacked PR merge/closure/supersession/abandonment. Production activation of system_event_journal or any Render Workflows host requires a separate Owner-authorized production handoff. Any external worker host must invoke the existing ADR-0054 outbox drain and must not own queue, retry, lease, dead-letter or domain-routing semantics."
 }
