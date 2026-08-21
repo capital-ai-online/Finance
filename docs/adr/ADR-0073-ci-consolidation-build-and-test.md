@@ -216,3 +216,60 @@ Architektur und die Produktions-Main-Pipeline bleiben dabei unverändert.
 Für einen isolierten Rollback von P1 kann `pr-governance.yml` auf die letzte verifizierte
 Mehrjob-Struktur zurückgesetzt werden. Required Checks, M10-Switch und `ci.yml` werden dabei nicht
 verändert.
+
+## Betriebs-Addendum 2026-08-21 — P2B Production-CI Runner-Konsolidierung
+
+P2B konsolidiert ausschließlich die Runner-Topologie der bereits verpflichtenden Main-Production-
+Kette. Die Sicherheits- und Autoritätssemantik bleibt bestehen.
+
+Vor P2B wurden nach einem erfolgreichen `build-and-test` zwei weitere technische Vorbereitungspfade
+und ein separater Deployment-Identity-Pfad auf eigenen `ubuntu-latest`-Runnern ausgeführt. Dadurch
+wurden derselbe Main-SHA, Node-Abhängigkeiten, Build und Predeploy mehrfach vorbereitet.
+
+Die neue Topologie besteht aus genau zwei Runnern:
+
+1. **`build-and-test`** erzeugt den einzigen vollständigen Main-Build. Nur auf `push` nach `main`
+   erzwingt derselbe Runner anschließend die CI-Provenance-Bindung, installiert den immutable
+   gepinnten Cosign-Installer, signiert `provenance.json` keyless und verifiziert die Signatur gegen
+   `ci.yml@refs/heads/main` sowie den GitHub-OIDC-Issuer. Zusätzlich wird der bestehende
+   `verifyDeploymentIdentity.ts` aus exakt diesem Main-Build als standalone Node-24-Bundle erzeugt.
+2. **`deploy-production`** bleibt der einzige `environment: production`-Job. Er lädt das
+   SHA-benannte Build-Artefakt aus demselben Workflow-Lauf, prüft vor jeder Mutation
+   `release-manifest.sourceCommit === github.sha`, löst erst danach den Render-Hook mit exakt diesem
+   SHA aus und führt anschließend den gebündelten Deployment-Identity-Verifier aus.
+
+Der Production-Job führt bewusst **kein Checkout, kein `npm ci` und keinen Build** aus. Dadurch
+wird die privilegierte Environment-Oberfläche nicht durch Repository-Code oder Dependency-
+Lifecycle-Skripte erweitert.
+
+P2B entfernt die separaten Job-IDs `supply-chain-attestation` und `verify-deployment-identity`,
+nicht jedoch deren Funktionen. Supply-Chain-Signatur, 90-Tage-Evidence, Render-Deployment und
+post-deploy Exact-SHA-Verifikation bleiben verpflichtende Steps im erfolgreichen Main-Push-Pfad.
+
+Die OIDC-Berechtigung `id-token: write` verbleibt auf `build-and-test`, wo sie bereits vor P2B für
+das historische M10-Modell vorhanden war. P2B reaktiviert M10 nicht; `M10_CI_GATE_ENABLED` bleibt
+`false`.
+
+Workflow-Artefakte dienen ausschließlich als jobübergreifender Handoff desselben Workflow-Laufs.
+Der Deployment-Job akzeptiert kein externes Build und validiert das Release-Manifest erneut gegen
+`github.sha`, bevor der Render-Deploy-Hook aufgerufen wird.
+
+### P2B Verifikationsinvarianten
+
+- `ci.yml` besitzt genau zwei `runs-on: ubuntu-latest`-Jobs.
+- `npm run build` erscheint nur einmal im Workflow.
+- `npm ci` erscheint nur einmal im Workflow.
+- Provenance `--require-ci`, Cosign-Signatur und Signaturprüfung laufen nur für Main-Push.
+- `deploy-production` bleibt `environment: production` und `needs: [build-and-test]`.
+- Production enthält kein Checkout, kein `npm ci`, keinen Build.
+- Release-Manifest-SHA wird vor Render-Mutation gegen `github.sha` geprüft.
+- Render-Hook und post-deploy Health-Verifikation verwenden denselben SHA.
+- Supply-Chain- und Deployment-Identity-Evidence bleiben 90 Tage erhalten.
+
+Die detaillierte Implementierungs-Evidence liegt in
+`docs/evidence/P2B_PRODUCTION_CI_RUNNER_CONSOLIDATION_2026-08-21.md`.
+
+Ein isolierter P2B-Rollback darf die frühere Vier-Runner-Topologie wiederherstellen, jedoch nur mit
+vollständiger Provenance-/Sigstore-/Production-Environment-/Exact-SHA-Funktionalität. M10,
+Required-Check-Kontexte und Human/CODEOWNER-Merge-Authority dürfen durch einen P2B-Rollback nicht
+verändert werden.
