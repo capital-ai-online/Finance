@@ -173,9 +173,11 @@ Dabei gelten weiterhin:
 
 ## 7. Validierungsstatus
 
-- statischer Architektur-/Code-Review: durchgeführt;
-- zusätzliche P0-Negativkontrollen für Fingerprint-Versionen und stale `VERIFIED`-Evidence: implementiert;
-- TypeScript / fokussierte Unit Tests / vollständige lokale Tests: **noch auszuführen**;
-- finaler Main-Sync: **noch auszuführen**;
+- statischer Architektur-/Code-Review: **PASS**;
+- zusätzliche P0-Negativkontrollen für Fingerprint-Versionen und stale `VERIFIED`-Evidence: **implementiert**;
+- isolierter TypeScript-Compile der beiden neu gehärteten Contract-Module plus Runtime-Negativcheck für Versionsbindung/Freshness in der lokalen ChatGPT-Sandbox: **PASS**;
+- repositoryweiter TypeScript-Check und Vitest-Suite: **vor PR nicht ausführbar, da der GitHub-Connector keinen lokalen privaten Repository-Checkout materialisiert; nicht als PASS behauptet**;
+- finaler Main-Load/Korrelationscheck: **PASS — `main@6c90c04de8924b8783f23ab4789afa810e9ea3a8`, Branch 21 ahead / 0 behind vor diesem Evidence-Status-Commit**;
+- offene PRs #471 und #474: **kein direkter Dateioverlap mit dem P0-Scoring-Scope**;
 - Pull Request: **noch nicht erstellt**;
 - kostenverursachende GitHub-CI: gemäß Projektregel erst nach PR-Erstellung.
