@@ -32,6 +32,7 @@ Implemented Compliance integration points:
 
 Not part of FT-5:
 
+- binding approvals into an execution-eligible `OrderIntent`;
 - live order signing/routing/execution;
 - exchange or custody credentials;
 - settlement/reconciliation semantics;
@@ -46,7 +47,7 @@ Reused:
 
 - `FinTechCoreDecisionRecord` from FT-1/FT-3;
 - append-only `fintech_core.decision_records` through the existing FT-3 persistence port;
-- `FinTechCoreOrderIntent` approval fields and the existing real-execution guard;
+- existing `FinTechCoreOrderIntent` approval fields only as a future FT-6 contract dependency, not modified by FT-5;
 - FT-4 `PaperFixedPoint` representation for deterministic monetary thresholds/evidence;
 - UAI/run/trace/correlation/decision identity.
 
@@ -63,21 +64,9 @@ No duplicate Compliance, IAM or Scoring authority was created.
 
 `RiskComplianceContracts.ts` defines versioned inputs without embedding regulatory/business thresholds into executable source code.
 
-`FinTechCoreRiskPolicySnapshot` supplies:
+`FinTechCoreRiskPolicySnapshot` supplies policy identity/version, fixed-point order/exposure limits, drawdown/liquidity/freshness thresholds, expected portfolio/liquidity/market/counterparty Evidence Authorities and policy evidence refs.
 
-- policy identity/version;
-- fixed-point order/exposure limits;
-- drawdown/liquidity/freshness thresholds;
-- expected portfolio/liquidity/market/counterparty Evidence Authorities;
-- policy evidence refs.
-
-`FinTechCoreCompliancePolicySnapshot` supplies:
-
-- policy identity/version;
-- the explicit set of required controls;
-- an expected Evidence Authority per required control;
-- maximum evidence age;
-- policy evidence refs.
+`FinTechCoreCompliancePolicySnapshot` supplies policy identity/version, the explicit set of required controls, an expected Evidence Authority per required control, maximum evidence age and policy evidence refs.
 
 The core **does not infer** whether KYC, KYB, Travel Rule or another control is legally required. That remains external policy/compliance authority.
 
@@ -92,13 +81,7 @@ A PASS result is insufficient by itself. Evidence must also satisfy:
 - valid observed timestamp;
 - configured freshness limit.
 
-Risk-specific evidence is separately provenance-bound for:
-
-- order notional;
-- portfolio exposure/equity;
-- liquidity;
-- market freshness;
-- counterparty.
+Risk-specific evidence is separately provenance-bound for order notional, portfolio exposure/equity, liquidity, market freshness and counterparty.
 
 Authority mismatch, missing/stale evidence or invalid provenance produces `NOT_COMPUTABLE` and cannot become approval.
 
@@ -130,33 +113,21 @@ atoms: integer encoded as string
 scale: decimal scale
 ```
 
-`BigInt` comparisons and integer basis-point arithmetic are used for:
+`BigInt` comparisons and integer basis-point arithmetic are used for order-notional limits, gross-exposure limits, drawdown bps and liquidity coverage bps. This avoids binary floating-point money-state drift inside the gate engine.
 
-- order-notional limits;
-- gross-exposure limits;
-- drawdown bps;
-- liquidity coverage bps.
+## 7. OrderIntent Boundary — Deferred to FT-6
 
-This avoids binary floating-point money-state drift inside the gate engine.
-
-## 7. OrderIntent Boundary
-
-`authorizeOrderIntentForHandoff()` can only create an approval-bound immutable copy when:
-
-- Risk outcome = `APPROVED`;
-- Compliance outcome = `APPROVED`;
-- workflow/trace/correlation/asset/decision identity matches;
-- operating mode is `GUARDED_LIVE` or `PRODUCTION`.
-
-Crypto Module 01 still advertises only `RESEARCH` and `PAPER`, therefore FT-5 does not activate a live path.
-
-In `PAPER`, Risk and Compliance can be evaluated, but:
+FT-5 intentionally produces **decisions only**. `FinTechCorePreTradeAuthorizationDecision` therefore declares:
 
 ```text
 executionHandoffEligible = false
 ```
 
-The helper does not sign, persist, route or execute an order. FT-6/FT-7 remain responsible for those contracts and gates.
+for every operating mode, including manually constructed `GUARDED_LIVE` or `PRODUCTION` contexts.
+
+FT-5 contains no helper that writes `riskApproval=APPROVED` or `complianceApproval=APPROVED` into an `OrderIntent`. Binding decisions/hashes/policy versions to an immutable OrderIntent belongs to FT-6 together with TTL, price/quantity/slippage bounds, client-order identity and reconciliation semantics.
+
+Crypto Module 01 still advertises only `RESEARCH` and `PAPER`, so there is no live module capability in FT-5.
 
 ## 8. Durable Decision Evidence
 
@@ -165,14 +136,7 @@ The helper does not sign, persist, route or execute an order. FT-6/FT-7 remain r
 - `PRE_TRADE_RISK_GATE`
 - `PRE_TRADE_COMPLIANCE_GATE`
 
-The existing decision schema carries:
-
-- run/trace/correlation/module/asset identity;
-- decision version;
-- policy ID/version;
-- input/output hashes;
-- evidence refs;
-- decision timestamp/outcome.
+The existing decision schema carries run/trace/correlation/module/asset identity, decision version, policy ID/version, input/output hashes, evidence refs and decision timestamp/outcome.
 
 No new table or Supabase migration is required for FT-5.
 
@@ -233,7 +197,7 @@ Architecture tests enforce that FT-5 gate files do not import:
 - Kraken/CCXT/Binance/Coinbase execution clients;
 - productive scoring implementations.
 
-Crypto Module 01 remains non-live through FT-5.
+Crypto Module 01 remains non-live through FT-5. FT-5 does not create an execution-eligible OrderIntent handoff.
 
 ## 12. Validation Status
 
@@ -248,7 +212,7 @@ Implemented unit/negative test coverage includes:
 - PASS evidence from wrong authority;
 - manual-review propagation;
 - PAPER evaluation with execution handoff blocked;
-- approval/identity-bound future handoff contract;
+- manually constructed `GUARDED_LIVE` evaluation with execution handoff still blocked;
 - mapping into FT-3 decision records.
 
 Per repository cost/governance policy, GitHub CI has **not** been started before PR creation. No new Supabase/Render/Stripe mutation was required for FT-5.
@@ -258,6 +222,7 @@ Per repository cost/governance policy, GitHub CI has **not** been started before
 After FT-5, the next roadmap block is FT-6 `OrderIntent & Reconciliation`:
 
 - immutable/hash-bound OrderIntent;
+- binding of FT-5 Risk/Compliance Decisions to OrderIntent approval state;
 - TTL and price/quantity/slippage bounds;
 - idempotency/client-order identity;
 - typed reconciliation/settlement semantics;
