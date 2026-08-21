@@ -546,6 +546,16 @@
       "language": "mixed",
       "lifecycle": "reviewed",
       "path": "docs/traceability/DEVELOPMENT_CHAIN_DOCUMENT_TRACEABILITY_MATRIX.md"
+    },
+    {
+      "documentId": "DOC-EVIDENCE-SC6-DEFILLAMA-2026-08-21",
+      "type": "implementation-evidence",
+      "owner": "CAPITAL-AI",
+      "authority": "ADR-0100 / ADR-0041",
+      "version": "1.0.0",
+      "language": "de",
+      "lifecycle": "reviewed",
+      "path": "docs/evidence/sc-md/SC6_DEFILLAMA_DEFI_EVIDENCE_PROVIDER_2026-08-21.md"
     }
   ]
 }

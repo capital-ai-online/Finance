@@ -217,7 +217,9 @@ BCP/DR, Custody-Boundary, Multi-Venue, OpenTelemetry/W3C Trace Context, SLOs, Au
 
 ### FT-9 DeFi / DEX / Cross-Chain
 
-DEX/Aggregator-, Smart-Contract-, Bridge-, Oracle- und Cross-Chain-Risk/Settlement-Gates.
+DEX/Aggregator-, Smart-Contract-, Bridge-, Oracle- und Cross-Chain-Risk/Settlement-Gates. Bleibt weiterhin `PLANNED`/blockiert bis FT-0..FT-8 bestanden sind.
+
+**Evidence-Vorarbeit (ADR-0100, 2026-08-21):** Ein DeFiLlama-Free-Tier-Provider liefert bereits Protokoll-TVL/Fees/Revenue als `CryptoFeatureEvidence` (`protocol.tvlUsd`/`feesUsd`/`revenueUsd`) im Rollout-Status *evidence_only* — ohne ScoringDispatcher-Anbindung, ohne zweiten Dispatcher/Orchestrator und ohne dieses Gate zu verschieben. Siehe `docs/evidence/sc-md/SC6_DEFILLAMA_DEFI_EVIDENCE_PROVIDER_2026-08-21.md`. Die eigentliche FT-9-Scoring-Aktivierung bleibt separate, Owner-freigegebene Folgearbeit.
 
 ## 10. Offene Projekt-Chat-Punkte
 

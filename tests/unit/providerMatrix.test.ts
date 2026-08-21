@@ -137,6 +137,16 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
     expect(afterSkip?.diagnosticCode).toBe('rate_limited');
   });
 
+  it('registers DeFiLlama as a not_wired evidence-only entry that stays out of gateway routing', () => {
+    const entry = getProviderMatrixEntry('defillama');
+    expect(entry?.gatewayStatus).toBe('not_wired');
+    expect(entry?.capabilities).toEqual(['fundamentals']);
+    expect(entry?.assetClasses).toEqual(['crypto']);
+    // not_wired must stay excluded from gateway-relevant helpers so it cannot silently join routing/RL wiring.
+    expect(rateLimitOverridesFromMatrix().defillama).toBeUndefined();
+    expect(providersBehindGateway().some((e) => e.id === 'defillama')).toBe(false);
+  });
+
   it('matrix entries have positive rate-limit and circuit policies', () => {
     for (const entry of PROVIDER_MATRIX) {
       expect(entry.rateLimit.capacity).toBeGreaterThan(0);

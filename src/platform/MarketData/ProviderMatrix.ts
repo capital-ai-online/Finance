@@ -11,7 +11,7 @@ import type {
   ProviderRole,
 } from './contracts';
 
-export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.4.0' as const;
+export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.5.0' as const;
 
 export type ProviderGatewayStatus =
   | 'behind_gateway'
@@ -180,6 +180,25 @@ export const PROVIDER_MATRIX: readonly ProviderMatrixEntry[] = [
     circuitBreaker: { failureThreshold: 3, cooldownMs: 30_000 },
     gatewayStatus: 'legacy_off_gateway',
     notes: 'Legacy fallback paths; optional SC-5 later migration.',
+  },
+  {
+    id: 'defillama',
+    displayName: 'DeFiLlama',
+    role: 'secondary',
+    capabilities: ['fundamentals'],
+    assetClasses: ['crypto'],
+    enabled: true,
+    priority: 90,
+    rateLimit: { capacity: 30, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
+    gatewayStatus: 'not_wired',
+    notes:
+      'ADR-0100: free-tier (api.llama.fi, no key) DeFi protocol TVL/fees/revenue evidence via ' +
+      'DefiLlamaProtocolProvider + defiProtocolEvidence.ts. Not a MarketDataProvider (no per-symbol ' +
+      'price snapshot semantics) and intentionally not routed through MarketDataGateway; consumed ' +
+      'directly for FinTechCore CryptoFeatureEvidence (protocol.tvlUsd/feesUsd/revenueUsd). Evidence-only ' +
+      'rollout stage; does not feed ScoringDispatcher and does not change any existing score. Reuses this ' +
+      'matrix entry only for its own CircuitBreaker/RateLimitBudget policy, not gateway routing.',
   },
 ] as const;
 
