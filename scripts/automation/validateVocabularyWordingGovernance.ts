@@ -4,12 +4,13 @@ import { execFileSync } from 'node:child_process';
 import {
   createDefaultUiMessageCatalog,
   createDefaultVocabularyRegistry,
+  createVocabularyWordingSnapshot,
   FINTECH_VALUE_CHAIN_STAGE_IDS,
   fintechWordingBindings,
-  projectVocabularyGovernance,
   scanWordingUsages,
   validateFintechWordingBindings,
 } from '../../src/platform/Vocabulary';
+import { projectVocabularyWordingThroughDocumentary } from '../../src/platform/Documentary/Knowledge/VocabularyWordingDocumentaryProjection';
 
 const root = process.cwd();
 const registry = createDefaultVocabularyRegistry();
@@ -30,13 +31,34 @@ for (const stageId of FINTECH_VALUE_CHAIN_STAGE_IDS) {
 
 const usages = scanWordingUsages(root, messages, fintechWordingBindings);
 const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
-const projection = projectVocabularyGovernance(sourceCommit, registry, messages, usages, fintechWordingBindings);
+const snapshot = createVocabularyWordingSnapshot(sourceCommit, registry, messages, usages, fintechWordingBindings);
+const projection = projectVocabularyWordingThroughDocumentary({
+  snapshot,
+  generatedAt: new Date().toISOString(),
+  correlationId: `vocabulary-wording:${sourceCommit}`,
+  causationId: `vocabulary-wording:${sourceCommit}`,
+  repoRoot: root,
+});
 
-if (projection.documentary.fintechStageIds.length !== FINTECH_VALUE_CHAIN_STAGE_IDS.length) {
-  throw new Error('[VOCABULARY-WORDING] projection does not cover the complete FinTech value chain.');
+if (snapshot.stages.length !== FINTECH_VALUE_CHAIN_STAGE_IDS.length) {
+  throw new Error('[VOCABULARY-WORDING] snapshot does not cover the complete FinTech value chain.');
 }
-if (projection.mutationAuthority !== false || projection.financialDecisionAuthority !== false) {
+if (
+  snapshot.mutationAuthority !== false
+  || snapshot.financialDecisionAuthority !== false
+  || projection.mutationAuthority !== false
+  || projection.financialDecisionAuthority !== false
+) {
   throw new Error('[VOCABULARY-WORDING] projection authority boundary is invalid.');
+}
+if (projection.document.sourceCommit !== sourceCommit.toLowerCase()) {
+  throw new Error('[VOCABULARY-WORDING] Documentary projection is not bound to the current commit.');
+}
+if (projection.knowledge.sourceCommit !== projection.document.sourceCommit) {
+  throw new Error('[VOCABULARY-WORDING] Documentary Knowledge projection source commit drift detected.');
+}
+if (projection.traceability.documentFingerprint !== projection.document.fingerprint) {
+  throw new Error('[VOCABULARY-WORDING] Documentary Traceability projection fingerprint drift detected.');
 }
 
 console.log('[VOCABULARY-WORDING] PASS');
@@ -44,4 +66,6 @@ console.log(`[VOCABULARY-WORDING] concepts=${registry.list().length}`);
 console.log(`[VOCABULARY-WORDING] messages=${messages.list().length}`);
 console.log(`[VOCABULARY-WORDING] stages=${fintechWordingBindings.length}`);
 console.log(`[VOCABULARY-WORDING] usages=${usages.list().length}`);
-console.log(`[VOCABULARY-WORDING] checksum=${projection.checksum}`);
+console.log(`[VOCABULARY-WORDING] snapshotChecksum=${snapshot.checksum}`);
+console.log(`[VOCABULARY-WORDING] documentaryFingerprint=${projection.document.fingerprint}`);
+console.log(`[VOCABULARY-WORDING] knowledgeChecksum=${projection.knowledge.checksum}`);
