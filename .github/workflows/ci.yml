@@ -82,6 +82,7 @@ jobs:
   build-and-test:
     name: build-and-test
     permissions:
+      actions: read
       contents: read
       pull-requests: read
       id-token: write
@@ -216,7 +217,71 @@ jobs:
               ;;
           esac
 
+      - name: P0 CI-Kostenkontrolle — exakten PR-Snapshot wiederverwenden
+        id: cost_control
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v8.0.0
+        env:
+          CURRENT_PR_NUMBER: ${{ github.event.pull_request.number }}
+          CURRENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          CURRENT_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = Number(process.env.CURRENT_PR_NUMBER);
+            const headSha = process.env.CURRENT_HEAD_SHA;
+            const baseSha = process.env.CURRENT_BASE_SHA;
+
+            const currentRun = await github.rest.actions.getWorkflowRun({
+              owner,
+              repo,
+              run_id: context.runId,
+            });
+            const workflowId = currentRun.data.workflow_id;
+
+            const successfulRuns = await github.paginate(
+              github.rest.actions.listWorkflowRunsForRepo,
+              {
+                owner,
+                repo,
+                event: 'pull_request',
+                head_sha: headSha,
+                status: 'success',
+                per_page: 100,
+              },
+            );
+
+            const reusable = successfulRuns.find((run) => {
+              if (run.id === context.runId || run.workflow_id !== workflowId) return false;
+              const correlatedPr = (run.pull_requests ?? []).find((pr) => pr.number === prNumber);
+              return correlatedPr?.head?.sha === headSha
+                && correlatedPr?.base?.sha === baseSha;
+            });
+
+            if (!reusable) {
+              core.setOutput('reuse_exact_snapshot', 'false');
+              core.info(`Kein früherer PASS für PR #${prNumber} mit head=${headSha} und base=${baseSha}; vollständige scope-klassifizierte CI bleibt erforderlich.`);
+              return;
+            }
+
+            core.setOutput('reuse_exact_snapshot', 'true');
+            core.setOutput('reused_run_id', String(reusable.id));
+            core.setOutput('reused_run_number', String(reusable.run_number));
+            core.notice(`CI-Cost-Control: exakter PR-Snapshot bereits erfolgreich in CI Run #${reusable.run_number} validiert; Checkout/npm/Test/Build werden nicht erneut ausgeführt.`);
+            await core.summary
+              .addHeading('P0 CI Cost Control')
+              .addRaw(`Exakter Snapshot bereits validiert: PR #${prNumber}, head \`${headSha}\`, base \`${baseSha}\`, wiederverwendeter CI Run #${reusable.run_number}.`)
+              .write();
+
+      - name: Exakten CI-PASS wiederverwenden
+        if: steps.cost_control.outputs.reuse_exact_snapshot == 'true'
+        run: |
+          echo "P0 Cost-Control: build-and-test PASS wird aus CI Run #${{ steps.cost_control.outputs.reused_run_number }} für denselben PR-Head und dieselbe Base wiederverwendet."
+          echo "M10 bleibt deaktiviert; diese Deduplizierung ist keine Autorisierung und erweitert keine Merge-/Deployment-Rechte."
+
       - name: Repository auschecken
+        if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.m10_head_sha || github.event_name == 'push' && github.sha || github.event.pull_request.head.sha }}
@@ -225,6 +290,7 @@ jobs:
 
       - name: Prüfumfang klassifizieren (D/C/R)
         id: scope
+        if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -237,6 +303,7 @@ jobs:
           node scripts/pr/classifyPrScope.mjs
 
       - name: Scope-Zusammenfassung
+        if: steps.cost_control.outputs.reuse_exact_snapshot != 'true'
         run: |
           echo "m10_mode=${{ steps.m10_authorization.outputs.mode }}"
           echo "class=${{ steps.scope.outputs.class }}"
