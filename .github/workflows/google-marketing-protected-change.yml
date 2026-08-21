@@ -17,6 +17,8 @@ concurrency:
 # - Für Pull Requests läuft dieselbe Schutzverdrahtung im bereits allokierten pr-governance Runner.
 # - Die vollständige technische Google-Marketing-Validierung bleibt zentral in ci.yml / npm build /
 #   predeploy:check. Dieser Workflow ist nur noch ein manueller Diagnose-Fallback.
+# - Der manuelle Fallback führt den fail-closed Consent-Runtime-Test weiterhin real aus; dadurch
+#   bleibt GMG-034 erfüllt, ohne für jeden PR einen separaten Hosted Runner zu starten.
 jobs:
   protected-change-guard:
     name: Geschützte Marketing-Konfiguration manuell prüfen
@@ -30,5 +32,17 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: Node.js für manuelle Consent-Diagnose einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v4.4.0
+        with:
+          node-version: 24.18.0
+          cache: npm
+
+      - name: Abhängigkeiten reproduzierbar installieren
+        run: npm ci
+
       - name: Schutzvertrag und zentrale CI-Evidence statisch prüfen
         run: node scripts/security/verifyGoogleMarketingProtectedWiring.mjs --force
+
+      - name: Consent-Runtime fail-closed prüfen
+        run: npx vitest run tests/unit/googleMarketingConsent.test.ts
