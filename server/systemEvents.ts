@@ -7,8 +7,13 @@ import {
   operationalSystemEventJournal,
   type SystemEvent,
 } from './systemEvents/systemEventJournal';
+import {
+  orchestratorAgentRuntimeProjection,
+  type OrchestratorAgentRuntimeView,
+} from '../src/orchestrator/agentRuntimeProjection';
 
 export type { SystemEvent } from './systemEvents/systemEventJournal';
+export type Agent = OrchestratorAgentRuntimeView;
 
 export const systemEventsRouter = express.Router();
 
@@ -121,83 +126,12 @@ systemEventsRouter.get('/doc-status', async (req, res) => {
 // -----------------------------------------------------------------------------
 // Agent operational projection
 // -----------------------------------------------------------------------------
-// This is deliberately process-local telemetry. It is not an agent registry authority and it is
-// never written to the Render filesystem. Canonical agent/provider/domain identities remain owned
-// by their existing code/config registries and Supervisor contracts.
-
-export interface Agent {
-  id: string;
-  name: string;
-  role: string;
-  status: 'IDLE' | 'ACTIVE';
-  activeTask: string;
-  queriesCount: number;
-  model: string;
-  performance: string;
-  isCustom?: boolean;
-}
-
-const DEFAULT_AGENTS: Agent[] = [
-  {
-    id: 'ag_allocator',
-    name: 'Analysis Pipeline',
-    role: 'Fundamentals / network activity telemetry',
-    status: 'IDLE',
-    activeTask: 'Keine aktive Aufgabe',
-    queriesCount: 0,
-    model: 'provider-neutral',
-    performance: 'N/A',
-  },
-  {
-    id: 'ag_risk',
-    name: 'Risk Pipeline',
-    role: 'Risk observation telemetry',
-    status: 'IDLE',
-    activeTask: 'Keine aktive Aufgabe',
-    queriesCount: 0,
-    model: 'provider-neutral',
-    performance: 'N/A',
-  },
-  {
-    id: 'ag_scanner',
-    name: 'Research Scanner',
-    role: 'Classification / research telemetry',
-    status: 'IDLE',
-    activeTask: 'Keine aktive Aufgabe',
-    queriesCount: 0,
-    model: 'provider-neutral',
-    performance: 'N/A',
-  },
-  {
-    id: 'ag_auditor',
-    name: 'Compliance Observation',
-    role: 'Compliance observation telemetry',
-    status: 'IDLE',
-    activeTask: 'Keine aktive Aufgabe',
-    queriesCount: 0,
-    model: 'provider-neutral',
-    performance: 'N/A',
-  },
-];
-
-const agentsRegistry: Agent[] = DEFAULT_AGENTS.map((agent) => ({ ...agent }));
+// The existing orchestrator composition owns which agents actually exist. This HTTP layer only
+// exposes a read projection of descriptors registered by constructed orchestrators; it does not
+// maintain a second static registry or permit runtime registration.
 
 export function getAgentsRegistry(): Agent[] {
-  return agentsRegistry.map((agent) => ({ ...agent }));
-}
-
-export function updateAgentActivity(id: string, activeTask: string, isStarting: boolean): void {
-  const agent = agentsRegistry.find((candidate) => candidate.id === id);
-  if (!agent) return;
-
-  if (isStarting) {
-    agent.status = 'ACTIVE';
-    agent.activeTask = activeTask;
-    agent.queriesCount += 1;
-  } else {
-    agent.status = 'IDLE';
-    agent.activeTask = 'Keine aktive Aufgabe';
-  }
+  return orchestratorAgentRuntimeProjection.list();
 }
 
 systemEventsRouter.get('/agents', async (req, res) => {
@@ -208,7 +142,7 @@ systemEventsRouter.get('/agents', async (req, res) => {
   res.json({
     success: true,
     agents: getAgentsRegistry(),
-    registryAuthority: 'operational-projection-only',
+    registryAuthority: 'orchestrator-runtime-composition',
   });
 });
 
@@ -233,7 +167,7 @@ systemEventsRouter.post('/agents/register', async (req, res) => {
 });
 
 /** Manual status toggles would fabricate operational state. Runtime status is derived only from
- * real updateAgentActivity() calls made by active orchestrator execution. */
+ * real orchestrator activity and cannot be changed through this HTTP surface. */
 systemEventsRouter.post('/agents/toggle', async (req, res) => {
   const authz = await checkAdminAccess(req, 'agents:toggle', SUPERVISOR_ZONE_ROLES);
   if (!authz.authorized) {
@@ -252,7 +186,8 @@ systemEventsRouter.get('/orchestrators/status', async (req, res) => {
   }
 
   // These records describe code-wired capabilities, not measured network health. Therefore no
-  // synthetic latency or fabricated activity timestamp is returned.
+  // synthetic latency or fabricated activity timestamp is returned. Agent counts are derived from
+  // the same constructed-orchestrator projection used by GET /agents.
   res.json({
     success: true,
     timestamp: new Date().toISOString(),
@@ -263,7 +198,7 @@ systemEventsRouter.get('/orchestrators/status', async (req, res) => {
         name: 'Crypto Orchestrator',
         status: 'AVAILABLE',
         latency: null,
-        agentsCount: 4,
+        agentsCount: orchestratorAgentRuntimeProjection.countForOrchestrator('crypto_orchestrator'),
         lastActive: null,
         type: 'Crypto & DeFi research/enrichment',
       },
@@ -272,7 +207,7 @@ systemEventsRouter.get('/orchestrators/status', async (req, res) => {
         name: 'Raw Materials Orchestrator',
         status: 'AVAILABLE',
         latency: null,
-        agentsCount: 4,
+        agentsCount: orchestratorAgentRuntimeProjection.countForOrchestrator('rawmaterials_orchestrator'),
         lastActive: null,
         type: 'Macroeconomic & Commodities Valuation',
       },

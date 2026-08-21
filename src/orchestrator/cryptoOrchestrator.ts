@@ -19,7 +19,41 @@ import {
   CLASSIFICATION_ADAPTER_VERSION,
 } from '../services/classificationAdapter';
 import type { CryptoCategory, CryptoSubCategory, CryptoTier, CryptoAnalysisPayload } from '../types/crypto.types';
-import { updateAgentActivity } from '../../server/systemEvents';
+import {
+  orchestratorAgentRuntimeProjection,
+  type OrchestratorAgentDescriptor,
+} from './agentRuntimeProjection';
+
+export const CRYPTO_ORCHESTRATOR_AGENT_DESCRIPTORS: readonly OrchestratorAgentDescriptor[] = [
+  {
+    id: 'crypto.classification',
+    name: 'Crypto Classification Agent',
+    role: 'Deterministic/agent classification research',
+    orchestratorId: 'crypto_orchestrator',
+    model: 'provider-neutral',
+  },
+  {
+    id: 'crypto.onchain',
+    name: 'Crypto On-Chain Agent',
+    role: 'On-chain research telemetry',
+    orchestratorId: 'crypto_orchestrator',
+    model: 'provider-neutral',
+  },
+  {
+    id: 'crypto.sentiment',
+    name: 'Crypto Sentiment Agent',
+    role: 'Market sentiment research telemetry',
+    orchestratorId: 'crypto_orchestrator',
+    model: 'provider-neutral',
+  },
+  {
+    id: 'crypto.risk',
+    name: 'Crypto Risk Agent',
+    role: 'Crypto risk research telemetry',
+    orchestratorId: 'crypto_orchestrator',
+    model: 'provider-neutral',
+  },
+];
 
 export class CryptoOrchestrator {
   private ai: AiGenerationClient | null;
@@ -34,6 +68,7 @@ export class CryptoOrchestrator {
     this.onChainAgent = new CryptoOnChainAgent(aiClient, anthropicClient, openaiClient);
     this.sentimentAgent = new CryptoSentimentAgent(aiClient, anthropicClient, openaiClient);
     this.riskAgent = new CryptoRiskAgent(aiClient, anthropicClient, openaiClient);
+    orchestratorAgentRuntimeProjection.registerMany(CRYPTO_ORCHESTRATOR_AGENT_DESCRIPTORS);
   }
 
   /**
@@ -49,9 +84,10 @@ export class CryptoOrchestrator {
     const symbol = coin.toUpperCase().trim();
     console.log(`[Crypto Orchestrator] Initializing research/enrichment pipeline for: "${symbol}"`);
 
-    updateAgentActivity('ag_scanner', `Klassifiziert ${symbol} und sammelt Marktstimmung`, true);
-    updateAgentActivity('ag_allocator', `Analysiert On-Chain Metriken für ${symbol}`, true);
-    updateAgentActivity('ag_risk', `Analysiert Risikoindikatoren für ${symbol}`, true);
+    orchestratorAgentRuntimeProjection.updateActivity('crypto.classification', `Klassifiziert ${symbol}`, true);
+    orchestratorAgentRuntimeProjection.updateActivity('crypto.onchain', `Analysiert On-Chain Metriken für ${symbol}`, true);
+    orchestratorAgentRuntimeProjection.updateActivity('crypto.sentiment', `Analysiert Marktstimmung für ${symbol}`, true);
+    orchestratorAgentRuntimeProjection.updateActivity('crypto.risk', `Analysiert Risikoindikatoren für ${symbol}`, true);
 
     let agentClassificationRaw, onchain, sentiment, risk;
     try {
@@ -62,9 +98,10 @@ export class CryptoOrchestrator {
         this.riskAgent.analyze(symbol),
       ]);
     } finally {
-      updateAgentActivity('ag_scanner', 'Keine aktive Aufgabe', false);
-      updateAgentActivity('ag_allocator', 'Keine aktive Aufgabe', false);
-      updateAgentActivity('ag_risk', 'Keine aktive Aufgabe', false);
+      orchestratorAgentRuntimeProjection.updateActivity('crypto.classification', 'Keine aktive Aufgabe', false);
+      orchestratorAgentRuntimeProjection.updateActivity('crypto.onchain', 'Keine aktive Aufgabe', false);
+      orchestratorAgentRuntimeProjection.updateActivity('crypto.sentiment', 'Keine aktive Aufgabe', false);
+      orchestratorAgentRuntimeProjection.updateActivity('crypto.risk', 'Keine aktive Aufgabe', false);
     }
 
     const asset = assetRegistry.getAsset(symbol);
