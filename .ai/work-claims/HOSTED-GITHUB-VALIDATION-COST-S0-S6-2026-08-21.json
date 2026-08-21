@@ -47,7 +47,21 @@
     "openPullRequestsAtImplementationStart": [],
     "directPathOverlap": [],
     "replacesUnmergedWorkingBranch": "agent/hosted-validation-cost-supersession-2026-08-21",
-    "finding": "S0-S6 continues on the fresh branch rooted at the exact PR #469 main merge. Required CI, GitGuardian, M10 state and production promotion remain unchanged. S5 only consolidates/suspends auxiliary non-required runner paths that were correlated as cost or governance amplifiers."
+    "finding": "S0-S6 continues on the fresh branch rooted at the exact PR #469 main merge. Required CI, GitGuardian, M10 state and production promotion remain unchanged. S5 only consolidates/suspends auxiliary non-required runner paths that were correlated as cost or governance amplifiers.",
+    "finalPrePrCorrelation": {
+      "checkedMainSha": "7d173d3239fdbe31216354fc848f948d517069f6",
+      "openPullRequests": [
+        {
+          "number": 470,
+          "title": "[CAPITAL-AI] FinTech Core FT-4/FT-5 Paper Trading & Deterministic Risk",
+          "head": "feat/fintech-core-ft4-research-paper-trading-2026-08-21",
+          "base": "main"
+        }
+      ],
+      "directPathOverlap": [],
+      "semanticConflict": false,
+      "finding": "PR #470 is confined to FinTech Core paper trading/risk-compliance, Supabase migration and its ADR/registry/evidence scope. It shares no changed path with this hosted-validation cost-control work item and creates no competing authority for this supersession."
+    }
   },
   "externalMutationScope": "none",
   "activationState": "S5_MERGE_CANDIDATE_S4_S6_SHADOW_ONLY",
