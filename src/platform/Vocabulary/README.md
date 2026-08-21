@@ -15,7 +15,8 @@ Canonical Vocabulary Registry
 UI Message Catalog
         -> React / PDF / E-Mail / SEO / Accessibility
         -> Wording Usage Index
-        -> Documentary / Knowledge / Traceability Projection
+        -> neutral Vocabulary Wording Snapshot
+        -> existing Documentary / D7 Knowledge / Traceability contracts
         -> generated GitHub Wiki (VW-6, not yet active)
 ```
 
@@ -37,8 +38,6 @@ The former phase-based Vocabulary migration/status architecture is superseded as
 - declared placeholders;
 - fail-closed validation.
 
-Example:
-
 ```ts
 import {
   createDefaultUiMessageCatalog,
@@ -47,7 +46,6 @@ import {
 
 const registry = createDefaultVocabularyRegistry();
 const messages = createDefaultUiMessageCatalog(registry);
-
 messages.get('screening.request.title')?.text.de; // Analyse starten
 ```
 
@@ -76,11 +74,17 @@ It does not infer usage from similar natural-language strings and does not mutat
 
 Read-only adapters exist for React, PDF, E-Mail, SEO and Accessibility. Context mismatches, retired messages and missing declared placeholder values fail closed.
 
-### VW-5 — Documentary / Knowledge / Traceability projection
+### VW-5 — Documentary / Knowledge / Traceability handoff
 
-`projectVocabularyGovernance()` produces a deterministic exact-commit-bound projection containing Documentary summary metadata, Knowledge nodes/relationships, Traceability edges and a SHA-256 checksum.
+`createVocabularyWordingSnapshot()` produces a deterministic exact-commit-bound, non-authorizing snapshot of Concepts, Messages, actual usages and FinTech bindings.
 
-The projection is an interchange/handoff contract only. It does not persist a second Knowledge Graph or Traceability Store.
+`src/platform/Documentary/Knowledge/VocabularyWordingDocumentaryProjection.ts` consumes that snapshot and reuses the existing canonical contracts:
+
+- `DocumentaryDocument` / `createDocumentaryDocument()`;
+- D7 `projectDocumentaryKnowledge()`;
+- `buildDocumentaryTraceabilityRecord()`.
+
+This avoids a second Knowledge Graph, Traceability model or persistence layer. Vocabulary itself retains no dependency on Documentary.
 
 ## Canonical Concept access
 
@@ -96,20 +100,12 @@ vocabulary.getDisplayName('Subscription', 'de'); // Abonnement
 
 ## Validation
 
-Targeted local check:
-
 ```text
+npm run vocabulary:wording:test
 npm run vocabulary:wording:check
 ```
 
-Focused tests live under `src/platform/Vocabulary/Tests/` and cover:
-
-- canonical Registry contracts;
-- VW-1 Message Catalog;
-- VW-2 complete 18-stage binding;
-- VW-3 Usage Index;
-- VW-4 Delivery Adapter boundaries;
-- VW-5 deterministic projection.
+Focused tests cover canonical Registry contracts, VW-1 Message Catalog, complete VW-2 18-stage binding, VW-3 Usage Index, VW-4 Delivery boundaries and the VW-5 Documentary D7/Traceability handoff.
 
 ## Boundaries
 
