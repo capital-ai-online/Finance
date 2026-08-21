@@ -1,103 +1,117 @@
-# CAPITAL-AI — Render Runtime & Async Execution Status Projection
+# CAPITAL-AI — Render Runtime & Background Execution Status Projection
 
 **Projection date:** 2026-08-21  
 **Document role:** non-authorizing status projection  
 **Historical parent:** `docs/architecture/RENDER_STATELESS_WEB_TIER_AUDIT_2026-08-03.md`  
-**Current authorities:** ADR-0037, ADR-0044, ADR-0052, ADR-0054, ADR-0059, ADR-0096  
+**Current authorities:** ADR-0037, ADR-0044, ADR-0052, ADR-0054, ADR-0059, ADR-0092, ADR-0096  
 **Work package:** `WP-GOV-RUNTIME-CONVERGENCE-2026-08-21`
 
 ## Purpose
 
-Der Audit vom 03.08.2026 bleibt unveränderte historische Evidence. Dieses Dokument projiziert die damaligen Findings auf den aktuellen Repository-Stand und korrigiert insbesondere die Background-Execution-Authority: ADR-0054 hat bereits eine produktionsverifizierte generische durable Outbox-/Worker-Schicht geschaffen. Eine zweite Queue-/Retry-/Handler-Dispatch-Architektur ist daher nicht zulässig.
+Der Audit vom 03.08.2026 bleibt historische Evidence. Diese Projektion ordnet die damaligen Findings gegen den heutigen Repository-Stand ein und verhindert zwei Parallelarchitekturen:
+
+1. kein zweites Durable-Worker-/Retry-Control-Plane neben ADR-0054;
+2. kein zweites persistentes Audit-/Security-/Retention-System für reine Operational-Telemetrie.
 
 ## Findings Projection
 
 | ID | Historischer Befund | Status 2026-08-21 | Aktuelle Evidence / Konsequenz |
 |---|---|---|---|
-| RND2-F-001 | Subscription entitlement mit lokalem Production-Fallback | `REMEDIATED` | Production fällt bei fehlender privilegierter DB fail-closed; lokale Subscription nur non-production. |
-| RND2-F-002 | PDF Credits local-only/non-atomic | `REMEDIATED` | ADR-0052 + Supabase Ledger/RPC; Local JSON nur Development-Fallback. |
-| RND2-F-003 | System-/Audit-Events ephemer + Synthetic Seeds | `REPO-REMEDIATED / PROD-GATE` | Synthetic/File-State entfernt; `system_event_journal` vorbereitet. Operational-only, ersetzt ADR-0059 Audit nicht. |
-| RND2-F-004 | Agent Registry instanzlokal | `REMEDIATED / BY DESIGN` | File Registry entfernt. Dashboard-State ist runtime-derived Telemetrie, keine Registry-Authority. |
+| RND2-F-001 | Subscription entitlement mit lokalem Production-Fallback | `REMEDIATED` | Production ist für authoritative Entitlements DB-/fail-closed; lokale Daten nur non-authoritative/non-production. |
+| RND2-F-002 | PDF Credits local-only/non-atomic | `REMEDIATED` | ADR-0052 + Supabase Ledger/RPC. |
+| RND2-F-003 | System-/Audit-Events ephemer + Synthetic Seeds | `REMEDIATED BY AUTHORITY SPLIT` | Synthetic/File-State entfernt. Operational Events sind bewusst bounded+ephemeral; Security Evidence bleibt `security_events`, Agent/Action Audit bleibt ADR-0059. Keine zweite durable Tabelle. |
+| RND2-F-004 | Agent Registry instanzlokal | `REMEDIATED / BY DESIGN` | File Registry entfernt; Dashboard-State runtime-derived und keine Registry-Authority. |
 | RND2-F-005 | Documentary mutiert Production-Dateien | `REMEDIATED` | ADR-0044 blockiert Production-Runtime-Dokumentmutationen. |
-| RND2-F-006 | Version Manager local/mutable/version drift | `REMEDIATED` | ADR-0044 + ADR-0096; immutable Release-/Repository-Authority. |
-| RND2-F-007 | Market Refresh ohne distributed ownership | `OPEN / PARTIAL` | Durable Job Authority existiert via ADR-0054; periodisches Refresh Scheduling/Leader Ownership ist noch nicht aus dem Web-Prozess herausgelöst. |
-| RND2-F-008 | Score snapshot idempotency | `CONTROL PRESENT` | Bestehende DB-Idempotency bleibt; keine Parallelarchitektur eingeführt. |
-| RND2-F-009 | Alert Send nicht duplicate-safe | `OPEN` | Vor Externalisierung muss Alert Delivery als idempotenter ADR-0054-Job/Atomic-Claim-Vertrag modelliert werden. |
-| RND2-F-010 | Event Mesh ist in-process | `BY DESIGN` | ADR-0018 bleibt In-Process Transport und wird nicht zur Queue umgedeutet. |
+| RND2-F-006 | Version Manager local/mutable/version drift | `REMEDIATED` | Repository-/Release-Authority gemäß ADR-0044/ADR-0096. |
+| RND2-F-007 | Market Refresh ohne distributed ownership | `OPEN / PARTIAL` | ADR-0054 besitzt Durable Jobs; periodisches Refresh Scheduling/Leader Ownership ist noch nicht aus dem Web-Prozess gelöst. |
+| RND2-F-008 | Score snapshot idempotency | `CONTROL PRESENT` | Bestehende Scoring-/Persistence-Invarianten bleiben; keine neue Scoring-Authority. |
+| RND2-F-009 | Alert Send nicht duplicate-safe | `OPEN` | Vor Externalisierung muss Alert Delivery als idempotenter ADR-0054-Job-/Atomic-Claim-Vertrag modelliert werden. |
+| RND2-F-010 | Event Mesh ist in-process | `BY DESIGN` | ADR-0018 bleibt In-Process Transport; Legacy `SystemAuditEvent` ist operational signal, kein Audit Ledger. |
 | RND2-F-011 | kritische Rate Limits process-local | `OPEN / BY DESIGN` | RequestOrchestrator bleibt HTTP Admission Control; replica-invariante Rate Limits vor Scale-out erforderlich. |
-| RND2-F-012 | kein generischer durable Background Execution Contract | `REMEDIATED` | ADR-0054 `public.outbox_jobs` + `server/outbox.ts` + `server/outboxWorker.ts` sind bereits Accepted und VERIFIED PASS IN PRODUCTION. |
+| RND2-F-012 | kein generischer durable Background Execution Contract | `REMEDIATED` | ADR-0054 `outbox_jobs` + `server/outbox.ts` + `server/outboxWorker.ts` sind Accepted und production-verified. |
 | RND2-F-013 | ADR-Nummernkollision / parallele Writer | `REMEDIATED` | ADR-0096 Registry/Reservations; Legacy Runtime-ADR-Generator stillgelegt. |
 
-## Canonical execution boundary
+## Canonical execution and evidence boundaries
 
 ```text
-HTTP / API
-   |
-   +--> RequestOrchestrator
-   |      HTTP admission / bounded request queue only
-   |
-   +--> Domain / Scoring Authorities
-   |      UAI -> Evidence -> ScoringModelRegistry -> ScoringDispatcher
-   |
-   +--> durable background side effect required?
-           |
-           v
-      ADR-0054 Outbox Authority
-      public.outbox_jobs
-           |
-           v
-      server/outbox.ts
-      lease / retry / backoff / dead-letter
-           |
-           v
-      server/outboxWorker.ts
-      job_type -> handler
-           |
-           v
-      drainOutboxJobs(...)
-           |
-      +----+---------------------+
-      |                          |
-      v                          v
-current in-process poll    future external host
-                          (e.g. Render Workflows)
+HTTP/API
+  -> RequestOrchestrator                       [request admission only]
+
+Financial decision path
+  -> Evidence / UAI / Registry
+  -> ScoringDispatcher                         [single scoring authority]
+
+Durable background jobs
+  -> public.outbox_jobs
+  -> server/outbox.ts                          [lease/retry/backoff/dead-letter]
+  -> server/outboxWorker.ts                    [job_type -> handler]
+  -> drainOutboxJobs(...)                      [bounded host seam]
+
+Security denial evidence
+  -> public.security_events
+
+Agent / privileged action audit
+  -> ADR-0059 / agent_audit_events / OTEL
+
+Operational UI events
+  -> bounded in-memory projection              [ephemeral, no PII persistence]
+  -> AuditLog / Notifications                  [read-only, non-audit]
+
+Systemadmin repository mutations
+  -> ESS-0021 / ADR-0065 / ADR-0079            [separate Owner-authorized host]
 ```
 
-## Authority correction made in PR #474
+## Why Operational Events remain ephemeral
 
-Eine erste Iteration von PR #474 enthielt einen providerneutralen `AsyncExecutionPort`. Der erneute Current-Main-/Authority-Abgleich zeigte jedoch, dass ADR-0054 bereits dieselbe generische durable Retry-/Handler-Dispatch-Verantwortung besitzt. Dieser Port wird deshalb entfernt, bevor der PR gemergt wird.
+ADR-0037 allows non-authoritative diagnostics in the web process. Persisting the UI projection in a new Supabase table would introduce:
 
-`createApplicationMarketDataRuntime()` bleibt bei seinen bestehenden direkten Snapshot-/Alert-Callbacks. Eine spätere Externalisierung darf diese Callbacks nicht einfach in eine neue Queue verschieben, sondern muss passende idempotente ADR-0054-Jobtypen definieren.
+- a second log lifecycle;
+- duplicate actor/IP PII;
+- a second retention surface beside ADR-0092;
+- ambiguous overlap with `security_events` and ADR-0059.
+
+Therefore the correct architecture is not “make every log durable”, but “send durable evidence to its canonical owner and keep the dashboard projection explicitly disposable”.
 
 ## Render Workflows readiness
 
-Render Workflows darf in der Zielarchitektur **kein zweites Job Control Plane** werden. Ein zulässiger Pilot ist nur ein alternativer Execution Host für den bestehenden Outbox-Drain:
+Render Workflows may not become another job control plane. The only permitted architectural role is a future **background-job execution host** for the existing ADR-0054 drain.
 
-- `outbox_jobs` bleibt durable Source of Truth;
-- Lease, Attempts, Backoff und Dead-Letter bleiben ausschließlich in ADR-0054;
-- Handler-Registry bleibt ausschließlich `server/outboxWorker.ts`;
-- Render darf weder Scoring- noch Domain-Routing entscheiden;
-- Provider-Retry darf die Outbox-Retry-Semantik nicht duplizieren;
-- ein Workflow-Aufruf darf bounded `drainOutboxJobs(leaseOwner, maxJobs)` ausführen;
-- bei Workflow-/Host-Ausfall bleiben Jobs in Supabase pending/processing/reclaimable.
+A compliant adapter/host must satisfy:
 
-Damit entsteht ein Hosting-Wechsel, keine neue Wertschöpfungs- oder Governance-Authority.
+- `outbox_jobs` remains durable source of truth;
+- lease/retry/backoff/dead-letter stays in ADR-0054;
+- handler routing stays in `server/outboxWorker.ts`;
+- provider retries do not duplicate job retries;
+- host may invoke bounded `drainOutboxJobs(leaseOwner, maxJobs)`;
+- no ScoringDispatcher/domain/IAM/governance decisions occur in the host;
+- the host is distinct from the Systemadmin GitHub Actions execution host and cannot perform repository mutations;
+- host failure leaves durable jobs reclaimable through the existing Outbox semantics.
 
-## Production gates
+## Systemadmin boundary
 
-Vor einem Render-Workflows-Cutover müssen mindestens erfüllt sein:
+ESS-0021 / ADR-0065 / ADR-0079 govern Owner-approved repository mutations. That execution path has OIDC, policy, durable audit and exact mutation capability binding.
 
-1. aktueller Main-/Open-PR-Korrelationscheck;
-2. Owner-freigegebener Render-Handoff mit Rollback;
-3. alle zu externalisierenden Jobtypen ADR-0054-konform und idempotent;
-4. keine doppelte Retry-/Dead-Letter-Semantik im Render-Layer;
-5. bounded Drain und Lease Owner eindeutig instrumentiert;
-6. Task-/Correlation-/Cost-Evidence pro Execution Host;
-7. negative Tests für Replay, stale lease, host failure und duplicate wake-up;
-8. Market Refresh Scheduling/Leader Ownership separat lösen;
-9. replica-invariante kritische Rate Limits vor Scale-out;
-10. keine M10-/IAM-/Billing-/Governance-Critical-Abhängigkeit von einem neuen Host ohne eigene Owner-Entscheidung.
+The ADR-0054 outbox drain must never be used as a shortcut for:
+
+- GitHub branch/commit/PR actions;
+- approval/passkey/REM gates;
+- arbitrary tools or shell commands;
+- privileged governance/IAM mutations.
+
+Likewise the Systemadmin host is not a general background-job queue.
+
+## Remaining production gates for a future Render host
+
+1. fresh current-main/open-PR correlation;
+2. separate Owner-approved Render production handoff;
+3. idempotent ADR-0054 job types for every workload being moved;
+4. bounded drain / unique lease-owner telemetry;
+5. no duplicated provider-level retry/dead-letter semantics;
+6. cost evidence per workload;
+7. negative tests for duplicate wake-up, stale lease, crash-after-handler and host outage;
+8. separate solution for periodic Market Refresh scheduling/leader ownership;
+9. replica-invariant critical rate limits before horizontal web scaling.
 
 ## Conclusion
 
-Die Durable-Worker-Frage ist repositoryseitig nicht mehr offen: ADR-0054 ist die Single Authority für generische durable Background Jobs. Der verbleibende Render-Schritt ist ausschließlich die optionale Verlagerung des **Execution Hosts** für denselben Outbox-Drain sowie die noch offene Scheduler-/Leader-Trennung aus ADR-0037. Dadurch bleibt die Wertschöpfungskette homogen und verhindert eine zweite Queue-, Retry- oder Orchestrator-Architektur.
+The durable worker architecture already exists and remains ADR-0054. Operational UI telemetry does not need a second durable database. The remaining Render opportunity is therefore limited to changing **where the existing outbox drain executes**, while the queue, retry, audit, security, scoring, privacy and Systemadmin authorities remain unchanged.

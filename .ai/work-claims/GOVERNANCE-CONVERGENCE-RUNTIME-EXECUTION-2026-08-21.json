@@ -8,8 +8,8 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT / GitHub Connector"
   },
-  "workItem": "Governance convergence, operational system-event integrity and reuse of the canonical ADR-0054 durable outbox execution authority without duplicate worker architecture",
-  "workItemDE": "Konsolidiertes Governance-Arbeitspaket für State-/Dokumenten-Konvergenz, System-Event-Integrität und Wiederverwendung der kanonischen ADR-0054-Outbox-/Worker-Authority ohne Doppelarchitekturen",
+  "workItem": "Governance convergence, non-authoritative operational telemetry and reuse of the canonical ADR-0054 durable outbox authority without duplicate logging, audit, security, scoring or execution control planes",
+  "workItemDE": "Konsolidiertes Governance-Arbeitspaket für State-/Dokumenten-Konvergenz, nicht-autorisierende Operational-Telemetrie und Wiederverwendung der kanonischen ADR-0054-Outbox-/Worker-Authority ohne doppelte Logging-, Audit-, Security-, Scoring- oder Execution-Control-Planes",
   "startedAt": "2026-08-21T20:33:00+02:00",
   "baseBranch": "agent/hosted-validation-cost-s0-s3-2026-08-21",
   "baseSha": "b8a78220c671df8cb3c35dfc5ba719b972e6ce69",
@@ -23,10 +23,14 @@
     "server/systemEvents/systemEventJournal.ts",
     "server/outboxWorker.ts",
     "src/components/SupervisorDashboard.tsx",
-    "supabase/migrations/20260821183300_system_event_journal.sql",
+    "src/components/AuditLog.tsx",
+    "src/components/ComplianceNotifications.tsx",
+    "src/platform/EventMesh/Services/SystemAuditBridge.ts",
+    "src/platform/EventMesh/Events/StandardEventCatalog.ts",
     "tests/unit/systemEventJournal.test.ts",
     "tests/unit/outboxWorker.test.ts",
     "tests/unit/supervisorDashboardGovernance.test.ts",
+    "tests/unit/operationalEventUiGovernance.test.ts",
     "docs/roadmaps/work-packages/GOVERNANCE_CONVERGENCE_RUNTIME_EXECUTION_2026-08-21.md",
     "docs/architecture/RENDER_RUNTIME_ASYNC_EXECUTION_STATUS_2026-08-21.md"
   ],
@@ -37,8 +41,11 @@
     "ADR-0044 production runtime artifact immutability",
     "ADR-0054 durable worker/outbox/lease",
     "ADR-0059 durable agent audit and OpenTelemetry correlation",
-    "ADR-0018 Event Mesh",
+    "public.security_events security-denial audit authority",
+    "ADR-0018 Event Mesh in-process transport",
     "ADR-0087 single scoring architecture / ScoringDispatcher authority",
+    "ADR-0092 privacy retention and lifecycle authority",
+    "ESS-0021 + ADR-0065 + ADR-0079 Systemadmin governed repository-mutation execution host",
     "ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
     "Canonical Vocabulary Registry / UI Message Catalog authorities",
     "AI Content Transparency Contract authorities",
@@ -59,16 +66,22 @@
       "number": 475,
       "headAtCorrelation": "42691ac327e02645677e9b6cfb0fd3fb34572c42",
       "directPathOverlap": [],
-      "semanticBoundary": "PR #475 keeps ScoringDispatcher as the sole productive scoring execution authority. This work item does not alter ScoringDispatcher, model routing, ranking, UniverseSla or canonical score enrichment."
+      "semanticBoundary": "PR #475 keeps ScoringDispatcher as the sole productive scoring execution authority. PR #474 does not alter scoring routing, model registry, ranking, Universe SLA or canonical enrichment."
     },
     "stackedPr": {
       "number": 474,
       "base": "agent/hosted-validation-cost-s0-s3-2026-08-21",
       "draft": true
     },
-    "authorityCorrection": "Deep correlation found that the provisional AsyncExecutionPort duplicated ADR-0054's already accepted generic durable job retry/handler-dispatch authority. The duplicate port and its market-data callback wiring are therefore removed. ADR-0054 public.outbox_jobs + server/outbox.ts + server/outboxWorker.ts remain the single durable background job authority; this work item only adds a bounded drain seam for possible external execution hosts.",
-    "finding": "Governance, Documentary, audit, scoring and worker authorities are reused rather than duplicated. Supervisor UI is included only as the direct consumer of retired runtime mutation/synthetic telemetry surfaces."
+    "authorityCorrections": [
+      "Removed provisional AsyncExecutionPort because ADR-0054 already owns generic durable job queue/retry/handler dispatch.",
+      "Removed proposed durable system_event_journal persistence because public.security_events and ADR-0059 already own durable security/audit evidence; bounded operational telemetry is intentionally ephemeral under ADR-0037.",
+      "Retired manual system-event creation and SSE compatibility surface so operational state remains runtime-derived and authenticated UI consumers do not fabricate compliance/audit evidence.",
+      "Reclassified the legacy Event Mesh SystemAuditEvent name as non-authorizing operational telemetry and removed actor/IP PII from that bridge.",
+      "Kept the Systemadmin execution host separate: it governs Owner-authorized repository mutations and cannot be replaced or bypassed by the ADR-0054 background-job drain."
+    ],
+    "finding": "The value chain now reuses distinct canonical authorities for governance, scoring, durable background jobs, security events, agent audit, privacy retention, Systemadmin mutations and in-process telemetry without a second control plane."
   },
-  "externalMutationScope": "none; Supabase system_event_journal migration is repository-only handoff and is not applied to production by this work item",
-  "releaseCondition": "Release after stacked PR merge/closure/supersession/abandonment. Production activation of system_event_journal or any Render Workflows host requires a separate Owner-authorized production handoff. Any external worker host must invoke the existing ADR-0054 outbox drain and must not own queue, retry, lease, dead-letter or domain-routing semantics."
+  "externalMutationScope": "none; this work item now introduces no Supabase schema migration and performs no Render, Supabase, Stripe or IAM production mutation",
+  "releaseCondition": "Release after stacked PR merge/closure/supersession/abandonment. A future Render Workflows pilot requires a separate Owner-authorized production handoff and may only host the existing ADR-0054 outbox drain; it cannot own queue, retry, lease, dead-letter, domain-routing or Systemadmin mutation semantics."
 }

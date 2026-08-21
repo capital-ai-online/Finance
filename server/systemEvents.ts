@@ -13,55 +13,41 @@ export type { SystemEvent } from './systemEvents/systemEventJournal';
 export const systemEventsRouter = express.Router();
 
 /**
- * Compatibility projection used by existing in-process callers.
- * The authoritative durable read path is the authenticated async route below. No file-backed or
- * synthetic fallback exists anymore.
+ * Bounded compatibility projection used by existing in-process callers.
+ * This is explicitly ephemeral operational telemetry, not an audit/security/business-state source.
  */
 export function getSystemEvents(): SystemEvent[] {
   return operationalSystemEventJournal.getRecent();
 }
 
-let clients: express.Response[] = [];
-
+/**
+ * Compatibility producer for existing call sites.
+ *
+ * `userEmail` and `ip` remain accepted so callers do not need a parallel migration, but they are
+ * deliberately NOT persisted or exposed by the operational projection. Durable actor/security
+ * evidence belongs to the existing security_events / ADR-0059 audit authorities.
+ */
 export function logSystemEvent(
   type: SystemEvent['type'],
   action: string,
-  userEmail: string,
+  _userEmail: string,
   details: string,
   status: SystemEvent['status'],
-  ip?: string,
+  _ip?: string,
 ): void {
-  const newEvent = operationalSystemEventJournal.record({
+  operationalSystemEventJournal.record({
     type,
     action,
-    userEmail: userEmail || 'system',
     details,
     status,
-    ip,
   });
 
-  const eventPayload = JSON.stringify(newEvent);
-  clients.forEach((client) => {
-    try {
-      client.write(`data: ${eventPayload}\n\n`);
-    } catch (err) {
-      console.error('SSE failed to write to a client:', err);
-    }
-  });
-
-  // ADR-0018 Event Mesh remains an additive in-process transport. It is not the durable journal
-  // and it does not become an authorization or audit authority through this projection.
+  // ADR-0018 Event Mesh remains additive in-process telemetry only. The legacy event name
+  // `SystemAuditEvent` is retained for catalog compatibility but does not create audit authority.
   try {
-    publishSystemAuditEvent({
-      type,
-      action,
-      userEmail: newEvent.userEmail,
-      details,
-      status,
-      ip,
-    });
+    publishSystemAuditEvent({ type, action, details, status });
   } catch (meshErr) {
-    console.error('[EventMesh] SystemAuditEvent konnte nicht veröffentlicht werden:', meshErr);
+    console.error('[EventMesh] Operational SystemAuditEvent konnte nicht veröffentlicht werden:', meshErr);
   }
 }
 
@@ -79,58 +65,23 @@ systemEventsRouter.get('/system-events', async (req, res) => {
       durability: snapshot.durability,
       authority: snapshot.authority,
       auditAuthority: snapshot.auditAuthority,
+      piiPersistence: snapshot.piiPersistence,
     },
   });
 });
 
-systemEventsRouter.get('/system-events/stream', async (req, res) => {
-  const authz = await checkAdminAccess(req, 'system-events:stream');
-  if (!authz.authorized) {
-    return res.status(403).json({ error: 'Access Denied: Restricted to administrators only.' });
-  }
-
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no');
-  res.flushHeaders();
-
-  clients.push(res);
-  const keepAliveInterval = setInterval(() => {
-    try {
-      res.write(': keepalive\n\n');
-    } catch {
-      clearInterval(keepAliveInterval);
-    }
-  }, 20_000);
-
-  req.on('close', () => {
-    clearInterval(keepAliveInterval);
-    clients = clients.filter((client) => client !== res);
-  });
-});
-
+/**
+ * Retired manual event mutation surface. Operational state must be runtime-derived; allowing an
+ * admin form to create events would fabricate monitoring/compliance history.
+ */
 systemEventsRouter.post('/system-events', async (req, res) => {
   const authz = await checkAdminAccess(req, 'system-events:write');
   if (!authz.authorized) {
     return res.status(403).json({ error: 'Access Denied: Restricted to administrators only.' });
   }
-
-  const { type, action, details, status, targetEmail } = req.body;
-  if (!type || !action || !details) {
-    return res.status(400).json({ error: 'Type, action and details are required.' });
-  }
-
-  logSystemEvent(type, action, targetEmail || authz.actorLabel, details, status || 'SUCCESS');
-  const snapshot = await operationalSystemEventJournal.list(100);
-  res.json({
-    success: true,
-    events: snapshot.events,
-    journal: {
-      durability: snapshot.durability,
-      authority: snapshot.authority,
-      auditAuthority: snapshot.auditAuthority,
-    },
+  return res.status(409).json({
+    error: 'Operational events are runtime-derived and cannot be manually registered.',
+    code: 'RUNTIME_DERIVED_OPERATIONAL_EVENT_REQUIRED',
   });
 });
 

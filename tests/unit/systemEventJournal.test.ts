@@ -1,79 +1,61 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it, vi } from 'vitest';
-import {
-  OperationalSystemEventJournal,
-  type SystemEvent,
-  type SystemEventDurableStore,
-} from '../../server/systemEvents/systemEventJournal';
+import { describe, expect, it } from 'vitest';
+import { OperationalSystemEventJournal } from '../../server/systemEvents/systemEventJournal';
 
 describe('OperationalSystemEventJournal governance boundary', () => {
   it('stores only real recorded events and never invents seed history', async () => {
-    const journal = new OperationalSystemEventJournal({ production: false });
+    const journal = new OperationalSystemEventJournal();
     expect(journal.getRecent()).toEqual([]);
 
     const event = journal.record({
       type: 'MARKET_DATA',
       action: 'Refresh Completed',
-      userEmail: 'system',
       details: 'Provider-observed refresh completed.',
       status: 'SUCCESS',
     });
 
     const snapshot = await journal.list();
-    expect(snapshot.authority).toBe('operational-read-model');
-    expect(snapshot.auditAuthority).toBe(false);
-    expect(snapshot.durability).toBe('memory-only');
+    expect(snapshot).toEqual(expect.objectContaining({
+      durability: 'ephemeral',
+      authority: 'operational-read-model',
+      auditAuthority: false,
+      piiPersistence: false,
+    }));
     expect(snapshot.events).toHaveLength(1);
     expect(snapshot.events[0].id).toBe(event.id);
   });
 
-  it('uses a durable store when configured without changing audit authority', async () => {
-    const durable: SystemEvent[] = [];
-    const store: SystemEventDurableStore = {
-      append: vi.fn(async (event) => {
-        durable.unshift({ ...event });
-      }),
-      list: vi.fn(async (limit) => durable.slice(0, limit)),
-    };
-    const journal = new OperationalSystemEventJournal({ durableStore: store, production: true });
+  it('is bounded and does not expose actor or IP fields', async () => {
+    const journal = new OperationalSystemEventJournal({ maxRecent: 2 });
+    journal.record({ type: 'ORCHESTRATOR', action: 'A', details: 'one', status: 'SUCCESS' });
+    journal.record({ type: 'ORCHESTRATOR', action: 'B', details: 'two', status: 'SUCCESS' });
+    journal.record({ type: 'ORCHESTRATOR', action: 'C', details: 'three', status: 'SUCCESS' });
 
-    journal.record({
-      type: 'ORCHESTRATOR',
-      action: 'Research Pipeline Executed',
-      userEmail: 'system',
-      details: 'Actual execution telemetry.',
-      status: 'SUCCESS',
-    });
-    await vi.waitFor(() => expect(store.append).toHaveBeenCalledTimes(1));
-
-    const snapshot = await journal.list();
-    expect(snapshot.durability).toBe('durable');
-    expect(snapshot.auditAuthority).toBe(false);
-    expect(snapshot.events).toHaveLength(1);
+    const events = (await journal.list()).events;
+    expect(events.map((event) => event.action)).toEqual(['C', 'B']);
+    expect(events[0]).not.toHaveProperty('userEmail');
+    expect(events[0]).not.toHaveProperty('ip');
   });
 
-  it('marks missing production durability as degraded instead of writing a local file', async () => {
-    const onPersistenceError = vi.fn();
-    const journal = new OperationalSystemEventJournal({
-      production: true,
-      onPersistenceError,
-    });
+  it('does not create a second durable logging or retention authority', () => {
+    const journalSource = fs.readFileSync(
+      path.join(process.cwd(), 'server/systemEvents/systemEventJournal.ts'),
+      'utf8',
+    );
+    const migrationPath = path.join(
+      process.cwd(),
+      'supabase/migrations/20260821183300_system_event_journal.sql',
+    );
 
-    journal.record({
-      type: 'SECURITY',
-      action: 'Operational Projection Test',
-      userEmail: 'system',
-      details: 'No durable store configured.',
-      status: 'WARNING',
-    });
-    const snapshot = await journal.list();
-
-    expect(snapshot.durability).toBe('degraded');
-    expect(onPersistenceError).toHaveBeenCalledTimes(1);
+    expect(journalSource).not.toContain('getPrivilegedServerSupabase');
+    expect(journalSource).not.toContain("from('system_event_journal')");
+    expect(journalSource).toContain('public.security_events');
+    expect(journalSource).toContain('ADR-0059');
+    expect(fs.existsSync(migrationPath)).toBe(false);
   });
 
-  it('retires legacy file state, synthetic seeds and runtime ADR generation', () => {
+  it('retires legacy file state, synthetic seeds and runtime mutation surfaces', () => {
     const source = fs.readFileSync(path.join(process.cwd(), 'server/systemEvents.ts'), 'utf8');
     expect(source).not.toContain('uploads/system_events.json');
     expect(source).not.toContain('uploads/agents_registry.json');
@@ -81,6 +63,8 @@ describe('OperationalSystemEventJournal governance boundary', () => {
     expect(source).not.toContain('Model Routing Swapped');
     expect(source).not.toContain('fs.writeFileSync');
     expect(source).not.toContain('Find next ADR number');
+    expect(source).not.toContain("get('/system-events/stream'");
+    expect(source).toContain('RUNTIME_DERIVED_OPERATIONAL_EVENT_REQUIRED');
     expect(source).toContain('REPOSITORY_CONTROL_PLANE_REQUIRED');
     expect(source).toContain('RUNTIME_DERIVED_STATE_REQUIRED');
   });
