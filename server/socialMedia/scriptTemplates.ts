@@ -5,6 +5,12 @@
  */
 
 import { SUPPORT_EMAIL } from '../../src/config/ownerConfig';
+import {
+  CAPITAL_AI_EMOJI,
+  CAPITAL_AI_EMOJI_TAG,
+  MARKETING_EMOJI_LEXICON,
+  decorateMarketingText,
+} from './marketingEmojiLexicon';
 
 export type TemplateLocale = 'de' | 'en';
 
@@ -37,6 +43,9 @@ export interface MarketingPack {
   hashtags: string[];
   ctaButtonText: string;
   supportEmail: string;
+  brandEmoji: string;
+  brandEmojiTag: string;
+  standaloneEmojiTags: string[];
 }
 
 export interface ScriptPackage {
@@ -60,13 +69,19 @@ const DISCLAIMER_EN =
   'Not investment advice. Educational content by CAPITAL-AI. Past performance is not indicative of future results.';
 
 const EMOJI = {
-  intelligence: '🧠',
-  security: '🔐',
-  warning: '⚠️',
-  access: '🎫',
-  finance: '🏦',
-  support: '📧',
-  breakPattern: '⛓️‍💥',
+  capitalAi: CAPITAL_AI_EMOJI,
+  intelligence: MARKETING_EMOJI_LEXICON.intelligence.emoji,
+  security: MARKETING_EMOJI_LEXICON.security.emoji,
+  warning: MARKETING_EMOJI_LEXICON.warning.emoji,
+  access: MARKETING_EMOJI_LEXICON.access.emoji,
+  finance: MARKETING_EMOJI_LEXICON.governance.emoji,
+  support: MARKETING_EMOJI_LEXICON.support.emoji,
+  breakPattern: MARKETING_EMOJI_LEXICON.breakPattern.emoji,
+  momentum: MARKETING_EMOJI_LEXICON.momentum.emoji,
+  celebration: MARKETING_EMOJI_LEXICON.celebration.emoji,
+  topScore: MARKETING_EMOJI_LEXICON.topScore.emoji,
+  bigBang: MARKETING_EMOJI_LEXICON.bigBang.emoji,
+  luckyWingsTag: MARKETING_EMOJI_LEXICON.luckyWingsTag.emoji,
 } as const;
 
 function normalizeTopic(value: string): string {
@@ -100,7 +115,7 @@ function buildThread(
 ): ThreadTweet[] {
   if (locale === 'en') {
     return [
-      { index: 1, text: `1/ ${EMOJI.intelligence} ${topic} — a structured learning thread (not advice).` },
+      { index: 1, text: `1/ ${EMOJI.capitalAi} ${EMOJI.intelligence} ${topic} — a structured learning thread (not advice).` },
       { index: 2, text: `2/ ${EMOJI.finance} Define the question clearly. What decision are you actually trying to improve?${note ? ` Context: ${note}` : ''}` },
       { index: 3, text: `3/ ${EMOJI.security} Separate facts from narratives. Prefer primary sources and transparent methods.` },
       { index: 4, text: `4/ ${EMOJI.warning} Risk first: what can go wrong, and how would you notice early?` },
@@ -110,7 +125,7 @@ function buildThread(
   }
 
   return [
-    { index: 1, text: `1/ ${EMOJI.intelligence} ${topic} — Lern-Thread (keine Beratung).` },
+    { index: 1, text: `1/ ${EMOJI.capitalAi} ${EMOJI.intelligence} ${topic} — Lern-Thread (keine Beratung).` },
     { index: 2, text: `2/ ${EMOJI.finance} Frage schärfen: Welche Entscheidung soll besser werden?${note ? ` Kontext: ${note}` : ''}` },
     { index: 3, text: `3/ ${EMOJI.security} Fakten von Narrativen trennen. Primärquellen und transparente Methoden bevorzugen.` },
     { index: 4, text: `4/ ${EMOJI.warning} Risiko zuerst: Was kann schiefgehen — und woran merkst du es früh?` },
@@ -186,8 +201,8 @@ function buildMarketingPack(
     ? `${EMOJI.breakPattern} Process over hype.`
     : `${EMOJI.breakPattern} Prozess statt Hype.`;
   const title = locale === 'en'
-    ? `${EMOJI.intelligence} Learning note: ${topic}`
-    : `${EMOJI.intelligence} Lernnotiz: ${topic}`;
+    ? `${EMOJI.capitalAi} ${EMOJI.intelligence} Learning note: ${topic}`
+    : `${EMOJI.capitalAi} ${EMOJI.intelligence} Lernnotiz: ${topic}`;
 
   const longDescription = [
     title,
@@ -205,7 +220,7 @@ function buildMarketingPack(
   ].join('\n');
 
   const instagramCaption = [
-    `${EMOJI.intelligence} ${topic}`,
+    `${EMOJI.capitalAi} ${EMOJI.intelligence} ${topic}`,
     '',
     note || fallback,
     '',
@@ -220,8 +235,9 @@ function buildMarketingPack(
   ].join('\n');
 
   const tiktokDescription = [
-    `${EMOJI.intelligence} ${topic} — ${locale === 'en' ? 'education only' : 'nur Bildung'}.`,
+    `${EMOJI.capitalAi} ${EMOJI.intelligence} ${topic} — ${locale === 'en' ? 'education only' : 'nur Bildung'}.`,
     `${EMOJI.security} ${locale === 'en' ? 'Transparent process' : 'Transparenter Prozess'}. ${EMOJI.warning} ${locale === 'en' ? 'Risk stays visible' : 'Risiko bleibt sichtbar'}.`,
+    note || fallback,
     `${EMOJI.access} ${cta}`,
     support,
     disclaimer,
@@ -229,7 +245,7 @@ function buildMarketingPack(
   ].join('\n');
 
   const youtubeDescription = [
-    `${EMOJI.intelligence} ${topic}`,
+    `${EMOJI.capitalAi} ${EMOJI.intelligence} ${topic}`,
     '',
     note || fallback,
     '',
@@ -245,7 +261,7 @@ function buildMarketingPack(
   ].join('\n');
 
   const facebookPost = [
-    `${EMOJI.intelligence} ${topic}`,
+    `${EMOJI.capitalAi} ${EMOJI.intelligence} ${topic}`,
     '',
     note || fallback,
     '',
@@ -269,6 +285,9 @@ function buildMarketingPack(
     hashtags,
     ctaButtonText: cta,
     supportEmail: SUPPORT_EMAIL,
+    brandEmoji: CAPITAL_AI_EMOJI,
+    brandEmojiTag: CAPITAL_AI_EMOJI_TAG,
+    standaloneEmojiTags: [EMOJI.luckyWingsTag],
   };
 }
 
@@ -278,11 +297,12 @@ export function buildScriptPackage(input: ScriptTemplateInput): ScriptPackage {
 
   const locale: TemplateLocale = input.locale === 'en' ? 'en' : 'de';
   const note = input.contextNote?.trim().slice(0, 280);
+  const socialNote = note ? decorateMarketingText(note) : undefined;
   const cta = input.ctaText?.trim() || (locale === 'en' ? 'Learn more on CAPITAL-AI' : 'Mehr erfahren auf CAPITAL-AI');
   const hostA = input.hostAName?.trim() || 'Alex';
   const hostB = input.hostBName?.trim() || 'Sam';
   const disclaimer = locale === 'en' ? DISCLAIMER_EN : DISCLAIMER_DE;
-  const thread = buildThread(locale, topic, note, cta, disclaimer);
+  const thread = buildThread(locale, topic, socialNote, cta, disclaimer);
 
   return {
     topic,
@@ -294,7 +314,7 @@ export function buildScriptPackage(input: ScriptTemplateInput): ScriptPackage {
     thread,
     podcastOutline: buildPodcast(locale, topic, note, cta, disclaimer, hostA, hostB),
     youtubeLongformOutline: buildYoutube(locale, topic, note, cta, disclaimer),
-    marketingPack: buildMarketingPack(locale, topic, note, cta, disclaimer, thread),
+    marketingPack: buildMarketingPack(locale, topic, socialNote, cta, disclaimer, thread),
     disclaimer,
     authorship: 'ai_assisted',
     humanReviewed: false,
