@@ -38,6 +38,7 @@ export type ExternalControlState =
 export interface ExternalControlEvidence<TControl extends string = string> {
   readonly controlId: TControl;
   readonly state: ExternalControlState;
+  readonly authorityId: string;
   readonly provider: string;
   readonly observedAt: string;
   readonly evidenceRefs: readonly string[];
@@ -45,8 +46,9 @@ export interface ExternalControlEvidence<TControl extends string = string> {
 }
 
 /**
- * Thresholds are supplied by an external, versioned policy authority. FinTechCore evaluates the
- * snapshot deterministically but does not own the business/regulatory truth behind the values.
+ * Thresholds and expected evidence authorities are supplied by an external, versioned policy
+ * authority. FinTechCore evaluates the snapshot deterministically but does not own the
+ * business/regulatory truth behind the values or authority assignments.
  */
 export interface FinTechCoreRiskPolicySnapshot {
   readonly contractVersion: typeof FINTECH_CORE_RISK_COMPLIANCE_CONTRACT_VERSION;
@@ -59,29 +61,41 @@ export interface FinTechCoreRiskPolicySnapshot {
   readonly minLiquidityCoverageBps: number;
   readonly maxMarketDataAgeSeconds: number;
   readonly maxCounterpartyEvidenceAgeSeconds: number;
+  readonly portfolioEvidenceAuthorityId: string;
+  readonly liquidityEvidenceAuthorityId: string;
+  readonly marketEvidenceAuthorityId: string;
+  readonly counterpartyAuthorityId: string;
   readonly evidenceRefs: readonly string[];
 }
 
 export interface FinTechCoreRiskEvidenceSnapshot {
   readonly orderNotional: PaperFixedPoint;
+  readonly orderEvidenceRefs: readonly string[];
   readonly projectedGrossExposure: PaperFixedPoint;
   readonly peakEquity: PaperFixedPoint;
   readonly currentEquity: PaperFixedPoint;
+  readonly portfolioEvidenceAuthorityId: string;
+  readonly portfolioEvidenceRefs: readonly string[];
   readonly availableLiquidity: PaperFixedPoint;
+  readonly liquidityEvidenceAuthorityId: string;
+  readonly liquidityEvidenceRefs: readonly string[];
   readonly marketDataObservedAt: string;
+  readonly marketEvidenceAuthorityId: string;
   readonly marketEvidenceRefs: readonly string[];
   readonly counterparty: ExternalControlEvidence<'COUNTERPARTY'>;
 }
 
 /**
- * `requiredControls` is intentionally explicit. FinTechCore does not infer whether KYC, KYB,
- * Travel Rule or another control is legally required for a transaction or jurisdiction.
+ * `requiredControls` and `controlAuthorityIds` are intentionally explicit. FinTechCore does not
+ * infer whether KYC, KYB, Travel Rule or another control is legally required for a transaction or
+ * jurisdiction, and it does not accept PASS evidence from an authority not bound by the snapshot.
  */
 export interface FinTechCoreCompliancePolicySnapshot {
   readonly contractVersion: typeof FINTECH_CORE_RISK_COMPLIANCE_CONTRACT_VERSION;
   readonly policyId: string;
   readonly policyVersion: string;
   readonly requiredControls: readonly ComplianceControlId[];
+  readonly controlAuthorityIds: Readonly<Partial<Record<ComplianceControlId, string>>>;
   readonly maxEvidenceAgeSeconds: number;
   readonly evidenceRefs: readonly string[];
 }
