@@ -119,14 +119,7 @@ react | pdf | email | seo | accessibility | shared
 
 Message Keys sind stabile technische Identity. Textänderungen ändern den Key nicht automatisch.
 
-Der Catalog muss fail-closed reagieren auf:
-
-- ungültige Key-Struktur;
-- ungültige Version;
-- fehlende DE/EN-Texte;
-- unbekannte Concept IDs;
-- inkonsistente Placeholder-Verträge;
-- Key-Kollisionen.
+Der Catalog muss fail-closed reagieren auf ungültige Key-Struktur, ungültige Version, fehlende DE/EN-Texte, unbekannte Concept IDs, inkonsistente Placeholder-Verträge und Key-Kollisionen.
 
 VW-1 bis VW-5 implementieren nur deterministische deklarierte Placeholder-Ersetzung. Vollständige Unicode-MessageFormat-2-Semantik wird nicht behauptet.
 
@@ -136,15 +129,7 @@ VW-1 bis VW-5 implementieren nur deterministische deklarierte Placeholder-Ersetz
 
 Vocabulary/Wording wird als read-only Cross-Cutting Projection an `SC-MD-SPT-0001` angebunden und niemals als zusätzliche Financial Runtime Stage.
 
-Jede der 18 aktuellen Stufen besitzt genau ein Stage Binding mit:
-
-- `stageId`;
-- `stageName`;
-- `conceptIds`;
-- `messageKeys`;
-- `authorityReferences`;
-- `financialDecisionAuthority: false`;
-- `mutationAuthority: false`.
+Jede der 18 aktuellen Stufen besitzt genau ein Stage Binding mit `stageId`, `stageName`, `conceptIds`, `messageKeys`, `authorityReferences`, `financialDecisionAuthority: false` und `mutationAuthority: false`.
 
 Die Stage IDs müssen gegen die bestehende `FintechValueChainQualityProjection` geprüft werden. Eine parallele Financial-Stage-Authority ist verboten.
 
@@ -156,14 +141,7 @@ Fail-closed Zustände (`DATA_UNAVAILABLE`, DENY, partial, ineligible oder semant
 
 # Chapter 9 — Wording Usage Index — VW-3
 
-Ein Usage Record enthält mindestens:
-
-- `messageKey`;
-- `conceptIds`;
-- Delivery Surface;
-- `sourcePath`;
-- optional Feature/Route;
-- optional `fintechStageIds`.
+Ein Usage Record enthält mindestens `messageKey`, `conceptIds`, Delivery Surface, `sourcePath` sowie optional Feature/Route und `fintechStageIds`.
 
 Der Scanner erfasst nur explizite stabile Message-Key-Referenzen in Source-Dateien. Er darf keine Nutzung aus ähnlichem Freitext ableiten.
 
@@ -183,13 +161,7 @@ Der Usage Index ist read-only Evidence und autorisiert keine Source Mutation.
 
 # Chapter 10 — Delivery Adapter Contract — VW-4
 
-Read-only Delivery Adapter existieren für:
-
-- React;
-- PDF;
-- E-Mail;
-- SEO;
-- Accessibility.
+Read-only Delivery Adapter existieren für React, PDF, E-Mail, SEO und Accessibility.
 
 Ein context-spezifischer Message Key darf nur über die passende Surface ausgeliefert werden. `shared` ist surfaceübergreifend zulässig. Retired Messages und fehlende Placeholder Values werden fail-closed abgelehnt.
 
@@ -197,19 +169,31 @@ Die Adapter erzeugen keine Financial-, Legal-, Compliance-, Security- oder Billi
 
 ---
 
-# Chapter 11 — Documentary / Knowledge / Traceability Projection — VW-5
+# Chapter 11 — Documentary / Knowledge / Traceability Handoff — VW-5
 
-VW-5 erzeugt eine deterministische, commitgebundene Projection mit:
+VW-5 darf keinen zweiten Knowledge Graph und keinen zweiten Traceability Contract erzeugen.
 
-- Documentary Summary;
-- Concept-, Message-, Source-, FinTech-Stage- und Authority-Nodes;
-- Beziehungen `HAS_MESSAGE`, `USED_BY`, `PROJECTS_STAGE`, `GOVERNED_BY`;
-- Traceability Edges;
+Vocabulary erzeugt einen neutralen `VocabularyWordingSnapshot` mit:
+
+- exact source commit SHA;
+- Concept summary;
+- Message summary;
+- tatsächlichen Usage Records;
+- allen 18 FinTech Stage Bindings;
+- Authority References;
 - SHA-256 Checksum;
 - `mutationAuthority: false`;
 - `financialDecisionAuthority: false`.
 
-Die Projection ist ein Handoff Contract. Sie persistiert keinen zweiten Knowledge Graph, keinen zweiten Traceability Store und publiziert noch nicht in das GitHub Wiki.
+Der Snapshot darf keine Documentary-, Knowledge- oder Traceability-Runtime importieren.
+
+Der Documentary-Adapter konsumiert diesen Snapshot und MUSS die bestehenden kanonischen Contracts wiederverwenden:
+
+1. `createDocumentaryDocument()` für das Handoff-Dokument;
+2. D7 `projectDocumentaryKnowledge()` für die Knowledge-Projektion;
+3. `buildDocumentaryTraceabilityRecord()` für die Traceability-Projektion.
+
+Message Keys, beobachtete Source Paths und FinTech Stage IDs werden als Documentary content/traceability IDs transportiert; Concept IDs verwenden das bestehende D7-Relationship-Modell. Der Adapter persistiert keinen zweiten Graph/Store und publiziert noch nicht in das GitHub Wiki.
 
 ---
 
@@ -247,6 +231,7 @@ Semantische Wording-Änderungen mit Security-, Compliance-, Legal-, Billing-, IA
 - Alle 18 `SC-MD-SPT-0001`-Stufen besitzen read-only Wording Bindings.
 - Usage Index liefert ausschließlich evidenzbasierte Reverse Impact Information.
 - Delivery Adapter respektieren Surface Boundaries.
-- Documentary/Knowledge/Traceability Projection ist commitgebunden und deterministisch.
+- VW-5 Snapshot ist commitgebunden und deterministisch.
+- Documentary verwendet für VW-5 die bestehenden DocumentaryDocument-, D7-Knowledge- und DocumentaryTraceability-Contracts.
 - Keine zweite Knowledge-, Traceability-, Event- oder Financial Runtime Authority entsteht.
 - GitHub Wiki bleibt bis VW-6 unpubliziert.
