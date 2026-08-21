@@ -1,15 +1,16 @@
 # SC-2 — Model Registry & Universal Asset Interface
 
 **SPT:** `SC-MD-SPT-0001`  
-**Version:** 1.0.9  
-**Status:** C3 LANDED — P0 VALIDATED — P1 UNIVERSE AVAILABILITY IN VALIDATION  
+**Version:** 1.0.10  
+**Status:** C3 LANDED — P0 VALIDATED — P1 UNIVERSE AVAILABILITY VALIDATED  
 **Execution Branch:** `feature/fintech-orchestrator-p0-multiclass-integrity`  
-**Pull Request:** #475 (Draft)  
+**Pull Request:** #475 — Ready for Review  
 **Baseline:** `main@6c90c04de8924b8783f23ab4789afa810e9ea3a8`  
+**Validated application head:** `779ec87fa7b214c37387ed0a8c30abfe02809eb0`  
 **Historical Integration:** PR #418 stack; #421 `/score`; #424 `/list` + `/top10`; #427 C1; #428 C2a; #430 C2b; #435 C3 global multi-asset exit; all Human-merged after required main revalidation  
 **Start:** 2026-08-19  
 **P0-Revalidation:** 2026-08-21  
-**P1-Start:** 2026-08-21  
+**P1-Validation:** 2026-08-21  
 **ADRs:** ADR-0087, ADR-0088, ADR-0089, ADR-0090
 
 ## Ziel
@@ -191,7 +192,7 @@ Evidence: `docs/evidence/sc-md/SC2_PHYSICAL_LEGACY_CRYPTO_CLEANUP_2026-08-19.md`
 - [x] finalen `main` vor Draft PR geladen und Branch als 0 behind bestätigt
 - [x] Draft PR #475 nach erfolgreichem Main-Sync erstellt
 
-## Phase E — P1 Universe Availability — IN VALIDATION
+## Phase E — P1 Universe Availability — VALIDATED
 
 **Priorität:** expliziter P1-Folgeauftrag vom 2026-08-21.  
 **Evidence:** `docs/evidence/sc-md/SC2_P1_UNIVERSE_AVAILABILITY_2026-08-21.md`.
@@ -205,13 +206,19 @@ Evidence: `docs/evidence/sc-md/SC2_PHYSICAL_LEGACY_CRYPTO_CLEANUP_2026-08-19.md`
 - [x] `UniverseBestWorst` um reale SLA-Anzeige je Klasse/Unterkategorie ergänzt
 - [x] bestehendes 50-Symbol-Batch-Limit erkannt und durch sequenzielle Batches `<=50` eingehalten
 - [x] Kandidatenscope bleibt maximal 24 je Assetklasse; keine Filler/Synthetic/Demo-Daten
-- [x] P1 TypeScript PASS im ersten CI-Lauf
-- [x] P1 Unit-Suite PASS im ersten CI-Lauf — 283 Testdateien / 1713 Tests PASS, 2 skipped
+- [x] erster P1-Lauf: TypeScript PASS
+- [x] erster P1-Lauf: Unit-Suite PASS — 283 Testdateien / 1713 Tests PASS, 2 skipped
 - [x] Production-Build-Ursache auf serverseitigen Scoring-Barrel im Browsergraphen eingegrenzt
 - [x] Browser-/Server-Importgrenze ohne Polyfill/neue Dependency korrigiert
 - [x] Regressionstest gegen erneuten `platform/Scoring`-Barrel-/`node:crypto`-Leakage ergänzt
-- [ ] finaler TypeScript-/Unit-/Production-Build-/CSP-/Deployment-Readiness-Lauf auf Fix-Head
-- [ ] finaler Current-Main-/Open-PR-Race-Check nach grünem P1-CI
+- [x] finaler P1 Klasse-C-Lauf auf Application-Head `779ec87fa7b214c37387ed0a8c30abfe02809eb0`: TypeScript PASS
+- [x] finaler P1 Klasse-C-Lauf: vollständige Unit-Suite PASS
+- [x] finaler P1 Klasse-C-Lauf: Production Build PASS
+- [x] finaler P1 Klasse-C-Lauf: CSP PASS
+- [x] finaler P1 Klasse-C-Lauf: Deployment Readiness PASS
+- [x] Workflow Run #2199 / `32528148989`: PASS
+- [x] finaler Current-Main-/Open-PR-Race-Check nach grünem P1-CI: PASS
+- [x] PR #475 nach erfolgreichem Pflicht-Gate auf Ready for Review gesetzt
 
 ## Change Boundaries / Nicht-Ziele
 
@@ -255,21 +262,24 @@ P1 orientiert die Availability-Auswertung an real beobachteter Runtime-Evidence 
 - vor P1 erneut `main@6c90c04de8924b8783f23ab4789afa810e9ea3a8` geladen; Branch 24 ahead / 0 behind.
 - offene PRs #471 und #474 geprüft; kein direkter Dateioverlap mit P1.
 - erster P1-Head `42691ac327e02645677e9b6cfb0fd3fb34572c42`: TypeScript und vollständige Unit-Suite PASS.
-- der erste P1 Production Build identifizierte ausschließlich eine Browser-/Server-Importgrenze über den Scoring-Barrel; fachliche P1-Tests blieben grün.
-- Importgrenze wird auf demselben Branch ohne Polyfill oder neue Dependency korrigiert; danach ist ein erneuter finaler CI- und Main-Race-Check verpflichtend.
+- erster P1 Production Build identifizierte ausschließlich eine Browser-/Server-Importgrenze über den Scoring-Barrel; fachliche P1-Tests blieben grün.
+- Application-Fix-Head `779ec87fa7b214c37387ed0a8c30abfe02809eb0`: finaler Klasse-C-Lauf #2199 vollständig PASS einschließlich Production Build, CSP und Deployment Readiness.
+- nach finalem CI erneut `main@6c90c04de8924b8783f23ab4789afa810e9ea3a8` geladen: Branch 26 ahead / 0 behind, Merge-Base exakt `main`.
+- PR #471 und #474 erneut dateibasiert korreliert; kein direkter Dateioverlap mit P0/P1.
+- keine Git-, semantischen oder architektonischen Konflikte festgestellt; kein Rebase/Merge erforderlich.
 
 ## Definition of Done SC-2 P0/P1
 
-SC-2 besitzt seit C3 genau einen produktiven UAI-/Registry-/Dispatcher-Exit. P0 ist technisch validiert. P1 gilt als abgeschlossen, wenn:
+SC-2 besitzt seit C3 genau einen produktiven UAI-/Registry-/Dispatcher-Exit. P0 und P1 sind technisch validiert:
 
-1. produktive Modell- und Faktorautorität eindeutig und versioniert bleibt;
-2. Challenger keine implizite Score-Wirkung besitzen;
-3. Evidence-/Freshness-Gates fail-closed bleiben;
-4. effektive Feature-/Weight-Semantik reproduzierbar und revisionssensitiv in der Lineage gebunden ist;
-5. Universe Availability ausschließlich reale, zugelassene UAI-Identitäten zählt;
-6. Top-Level- und bestehende Unterkategorie-SLAs den realen Zustand gegen Ziel 24 ausweisen;
-7. der UI-/Batch-Pfad keine serverseitige 50-Symbol-Grenze still überschreitet;
-8. Browser-/Server-Importgrenzen ohne Polyfill-Leakage eingehalten werden;
-9. TypeScript, vollständige Unit-Suite, Production Build, CSP und Deployment Readiness auf dem finalen P1-Head PASS sind;
-10. Branch nach finalem CI erneut mit aktuellem `main` und offenen Parallel-PRs korreliert wurde;
-11. Merge ausschließlich Human/CODEOWNER-gated erfolgt.
+1. produktive Modell- und Faktorautorität bleibt eindeutig und versioniert;
+2. Challenger besitzen keine implizite Score-Wirkung;
+3. Evidence-/Freshness-Gates bleiben fail-closed;
+4. effektive Feature-/Weight-Semantik ist reproduzierbar und revisionssensitiv in der Lineage gebunden;
+5. Universe Availability zählt ausschließlich reale, zugelassene UAI-Identitäten;
+6. Top-Level- und bestehende Unterkategorie-SLAs weisen den realen Zustand gegen Ziel 24 aus;
+7. der UI-/Batch-Pfad überschreitet die serverseitige 50-Symbol-Grenze nicht still;
+8. Browser-/Server-Importgrenzen werden ohne Polyfill-Leakage eingehalten;
+9. TypeScript, vollständige Unit-Suite, Production Build, CSP und Deployment Readiness sind auf dem finalen Application-Head PASS;
+10. Branch wurde nach finalem CI erneut mit aktuellem `main` und offenen Parallel-PRs korreliert;
+11. PR #475 ist Ready for Review; Merge bleibt ausschließlich Human/CODEOWNER-gated.

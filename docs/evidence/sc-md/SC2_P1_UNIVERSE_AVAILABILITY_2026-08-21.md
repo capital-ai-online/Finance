@@ -2,8 +2,9 @@
 
 **Authority:** `SC-MD-SPT-0001` → `SC-2_MODEL_REGISTRY_UAI` → ADR-0087  
 **Branch:** `feature/fintech-orchestrator-p0-multiclass-integrity`  
-**PR:** #475 (Draft; P0 + P1 continuation by explicit owner instruction)  
+**PR:** #475 — Ready for Review; Human/CODEOWNER Merge erforderlich  
 **Baseline at P1 start:** `main@6c90c04de8924b8783f23ab4789afa810e9ea3a8`  
+**Final validated application head:** `779ec87fa7b214c37387ed0a8c30abfe02809eb0`  
 **P0 CI before P1:** PASS — TypeScript, Unit Tests, Production Build, CSP, Deployment Readiness.
 
 ## 1. Ziel
@@ -121,14 +122,22 @@ P1 misst reale Verfügbarkeit; es garantiert nicht künstlich, dass jede Klasse/
 
 Ein späterer Schritt darf eine persistente Availability-Historie oder OpenTelemetry-Metriken ergänzen, aber nur durch Wiederverwendung der bestehenden Screening-/Telemetry-Authority und nach separatem Precheck. Eine Datenbank oder ein periodischer Warmup wird in P1 bewusst nicht eingeführt.
 
-## 11. Validierungsstatus
+## 11. Finaler Validierungsstatus
 
 - P0 CI vor P1: **PASS**;
 - P1 statischer Architektur-/Scope-Check: **PASS**;
-- erste P1-CI: **TypeScript PASS**;
-- erste P1-CI: **Unit Tests PASS — 283 Testdateien bestanden, 1713 Tests bestanden, 2 Tests übersprungen**;
-- erste P1-CI: **Production Build FAIL ausschließlich an Browser-/Server-Barrel-Grenze (`node:crypto`)**;
-- gezielter Import-Grenzfix ohne neue Dependency: **implementiert**;
-- Regressionstest gegen erneuten serverseitigen Barrel-Import: **implementiert**;
-- finaler P1 TypeScript-/Unit-/Build-/CSP-/Deployment-Readiness-Lauf auf Fix-Head: **ausstehend**;
-- finaler Main-/Open-PR-Sync vor Merge-Bereitschaft: **ausstehend**.
+- erster P1-Lauf: **TypeScript PASS**;
+- erster P1-Lauf: **Unit Tests PASS — 283 Testdateien bestanden, 1713 Tests bestanden, 2 Tests übersprungen**;
+- erster P1-Lauf: Production Build identifizierte ausschließlich die Browser-/Server-Barrel-Grenze (`node:crypto`);
+- gezielter Import-Grenzfix ohne neue Dependency: **PASS**;
+- Regressionstest gegen erneuten serverseitigen Barrel-Import: **PASS**;
+- finaler P1 Klasse-C-Lauf auf `779ec87fa7b214c37387ed0a8c30abfe02809eb0`: **PASS**;
+- TypeScript: **PASS**;
+- vollständige Unit-Suite: **PASS**;
+- Production Build: **PASS**;
+- Produktions-CSP: **PASS**;
+- Produktionskonfiguration / Deployment Readiness: **PASS**;
+- Workflow Run #2199 / `32528148989`: **PASS**;
+- Render-Produktionsdeployment: korrekt **übersprungen**, da PR #475 noch nicht gemergt ist;
+- finaler Main-/Open-PR-Sync nach grünem P1-CI: **PASS** — `main@6c90c04de8924b8783f23ab4789afa810e9ea3a8`, Branch 26 ahead / 0 behind, Merge-Base exakt `main`, kein direkter Dateioverlap mit PR #471/#474;
+- PR #475: **Ready for Review**, mergeable; Human/CODEOWNER Review und Human-gated Merge bleiben erforderlich.
