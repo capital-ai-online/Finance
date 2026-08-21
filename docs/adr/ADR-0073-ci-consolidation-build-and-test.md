@@ -55,13 +55,52 @@ Eine spätere physische Löschung der Datei bleibt möglich, erfordert aber eine
 Human/Owner-reviewten Änderungspfad für `verifyChangedWorkflowSecurity.mjs` und ist nicht
 Bestandteil dieser Entscheidung.
 
+## Betriebs-Addendum 2026-08-21 — Cost-Control bei suspendiertem M10
+
+Die repository-weite Owner-Entscheidung in `AGENTS.md` vom 2026-08-19 suspendiert die
+M10-Passkey-Autorisierung für normale PR-CI. Diese spätere Owner-Entscheidung bleibt
+unverändert: `M10_CI_GATE_ENABLED` bleibt `false`; Cost-Control darf M10 weder implizit noch
+explizit reaktivieren.
+
+Zur Vermeidung nachgewiesener mehrfacher Vollausführungen desselben PR-Snapshots wird der
+kanonische `build-and-test`-Pfad um eine **Exact-Snapshot-Deduplizierung** erweitert. Ein bereits
+erfolgreicher CI-Lauf darf nur wiederverwendet werden, wenn alle folgenden Identitäten identisch
+sind:
+
+1. derselbe kanonische CI-Workflow (`workflow_id`),
+2. dieselbe Pull-Request-Nummer,
+3. exakt derselbe PR-Head-SHA,
+4. exakt derselbe PR-Base-SHA,
+5. der frühere Lauf ist erfolgreich abgeschlossen.
+
+Die Base-SHA-Bindung ist eine Sicherheits- und Integritätsinvariante: Bewegt sich `main`, ist ein
+früherer PASS selbst bei unverändertem Head nicht wiederverwendbar. Ein neuer Head-SHA invalidiert
+die Wiederverwendung ebenfalls. In beiden Fällen läuft der vollständige scope-klassifizierte
+CI-Pfad erneut.
+
+Die Deduplizierung ist ausschließlich eine Kostenoptimierung innerhalb desselben Required Checks:
+
+- sie erzeugt keinen zweiten Check-Namen und keinen synthetischen PASS-Reporter;
+- sie ist keine Human-, Owner-, M10-, Merge- oder Deployment-Autorisierung;
+- sie benötigt nur lesenden Zugriff auf GitHub-Actions-Läufe (`actions: read`);
+- sie ist ausschließlich für `pull_request` aktiv;
+- `push` auf `main` wird niemals aus einem PR-PASS wiederverwendet und durchläuft weiterhin die
+  vollständige Produktions-Build-/Attestation-/Deployment-Kette;
+- `workflow_dispatch` bleibt bei suspendiertem M10 als alternativer CI-Einstieg gesperrt.
+
+Die bereits vorhandene monatliche Kostenkontrolle in `pr-governance.yml` bleibt für optionale
+Advisory-Prüfungen zuständig. Sie wird nicht als zweite technische CI-Authority dupliziert. Die
+Exact-Snapshot-Deduplizierung adressiert dagegen unmittelbar die kostenintensive Pflicht-CI und
+bleibt damit innerhalb der ADR-0073-Single-`build-and-test`-Architektur.
+
 ## Sicherheitsinvarianten
 
 - Checkout exakt des aktuellen PR-Heads.
-- Read-only Workflow-Permissions.
+- Read-only Workflow-Permissions; `actions: read` ist nur für den Exact-Snapshot-Lookup zulässig.
 - `persist-credentials: false`.
-- Fail-closed Owner-Gate vor kostenintensivem PR-Build.
-- Neue Commits invalidieren die Head-Freigabe.
+- M10-Passkey bleibt entsprechend der aktuellen Owner-Authority suspendiert/off.
+- Kostenkontrolle darf keine Autorisierungs- oder Merge-Authority erzeugen.
+- Neue Commits oder ein neuer Base-SHA invalidieren eine frühere Snapshot-Wiederverwendung.
 - Separate menschliche Merge-Anweisung bleibt erforderlich.
 - Workflow-/Ruleset-Reparatur erfolgt über frischen Branch und normalen PR.
 
@@ -87,6 +126,14 @@ Der nächste reale Pull Request muss zeigen:
 - kein erwarteter oder hängender `capital-ai-ci`-Kontext;
 - Merge bleibt ohne Owner-Gate oder ohne `build-and-test` blockiert.
 
+Für das Cost-Control-Addendum gilt zusätzlich:
+
+- der erste neue PR-Snapshot führt die erforderliche scope-klassifizierte CI real aus;
+- ein erneuter Event für exakt denselben Workflow/PR/Head/Base darf die erfolgreiche Snapshot-
+  Evidence wiederverwenden und Checkout/npm/Test/Build/Docker überspringen;
+- ein neuer Head oder ein neuer Base-SHA muss wieder eine reale CI-Ausführung erzwingen;
+- `main`-Pushes dürfen nie über die PR-Snapshot-Wiederverwendung abgekürzt werden.
+
 ## Rollback
 
 Vor Merge: Ruleset-Cutover zurücknehmen und PR offen lassen.
@@ -94,3 +141,7 @@ Nach Merge: frischen Recovery-Branch erstellen, in `capital-ai-ci-shadow.yml` de
 `pull_request`-Trigger (`branches: [main]`, `types: [opened, synchronize, reopened, edited]`)
 wieder eintragen, PASS abwarten und erst danach `capital-ai-ci` wieder als Required Check
 aktivieren.
+
+Für einen isolierten Rollback der P0-Cost-Control wird ausschließlich die Exact-Snapshot-
+Deduplizierung aus `ci.yml` entfernt; `M10_CI_GATE_ENABLED=false`, die Single-`build-and-test`-
+Architektur und die Produktions-Main-Pipeline bleiben dabei unverändert.
