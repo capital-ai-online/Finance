@@ -4,7 +4,7 @@
 
 ### Version
 
-1.5.0
+1.8.0
 
 ### Status
 
@@ -14,224 +14,143 @@ Proposed Enterprise Specification — effective after Human Merge
 
 ## Dokumentklassifizierung
 
-Dieses Dokument definiert ausschließlich Vocabulary-, Terminology-, Naming-, Message-, Usage- und Projection-Verträge für ESS-0017.
+Dieses Dokument definiert ausschließlich Vocabulary-, Terminology-, Naming-, Message-, Usage-, Delivery-, Wiki-Projection-, Migration- und Closure-Verträge für ESS-0017.
 
-Es definiert keine globale Repository-, Financial-Runtime-, Event-, Security-, Compliance-, IAM-, Billing-, Release-, Deployment- oder Documentation-Governance. Diese verbleiben in den jeweils zuständigen Authorities. Bei Konflikt gilt die repositoryweite Authority Resolution; Recency, Übersetzung oder UI-Projektion erzeugen keine höhere Authority.
+Es definiert keine globale Repository-, Financial-Runtime-, Event-, Security-, Compliance-, IAM-, Billing-, Release-, Deployment- oder Documentation-Governance. Diese verbleiben in den zuständigen Authorities. Recency, Übersetzung, Wiki oder UI-Projektion erzeugen keine höhere Authority.
 
 ---
 
 # Chapter 1 — Canonical Concept Contract
 
-Jeder Vocabulary-Eintrag besitzt verbindlich:
+Jeder Vocabulary-Eintrag besitzt stabilen `id`, `canonicalCodeTerm`, DE/EN-Namen und Definitionen, Aliase, Forbidden Terms, Category, Status, Version sowie ESS-/ADR-/Traceability-Referenzen.
 
-- `id`
-- `canonicalCodeTerm`
-- `displayNameDE`
-- `displayNameEN`
-- `definitionDE`
-- `definitionEN`
-- `aliases`
-- `forbiddenTerms`
-- `category`
-- `status`
-- `version`
-- `essReferences`
-- `adrReferences`
-- `traceabilityReferences`
+Concept IDs folgen `VOC-<CATEGORY>-<NNNN>`, werden nicht wiederverwendet und bleiben nach Deprecation/Retirement für historische Resolution verfügbar.
 
-Concept IDs folgen `VOC-<CATEGORY>-<NNNN>`, sind unveränderlich und werden nach Retirement nie wiederverwendet.
+W3C SKOS ist Referenzmodell für eine spätere explizite Trennung von Preferred-, Alternative- und Hidden-Labels. `forbiddenTerms` bleibt eine CAPITAL-AI-Governance-Erweiterung.
 
-W3C SKOS ist Referenzmodell für die spätere explizite Trennung von Preferred-, Alternative- und Hidden-Labels. `forbiddenTerms` bleibt eine CAPITAL-AI-Governance-Erweiterung und ist nicht mit Hidden Labels gleichzusetzen.
+# Chapter 2 — Naming / Safe Rename Contract
 
----
+Technische Identifier und stabile UI Message Keys sind Englisch. Ein aktiver technischer Rename bleibt am bestehenden Safe Rename Gate gebunden und darf nicht allein durch Vocabulary autorisiert werden.
 
-# Chapter 2 — Naming Contract
+# Chapter 3 — Source Authority Contract
 
-Technische Identifier, einschließlich stabiler UI Message Keys, sind Englisch. Bestehende Runtime-Identifier werden nicht allein aus Vocabulary-Gründen umbenannt; aktive Renames bleiben am Safe Rename Gate gebunden.
+Kanonische Vocabulary-/Wording-Entscheidungen dürfen aus aktuellen fachlichen Runtime Contracts, ESS/Contracts, Accepted/aktiven ADRs, Registry-Einträgen, Traceability Evidence, aktuellen Architecture Specifications und revalidierter Domain-Dokumentation abgeleitet werden.
 
-Human-facing DE/EN-Varianten müssen dieselben Concept IDs referenzieren. Ein Sprachwechsel darf keine technische Identity, Authority oder fachliche Entscheidung verändern.
+Nicht automatisch autoritativ sind Legacy-Dokumente, historische Snapshots, superseded Roadmaps/Blueprints, GitHub Wiki, unrevalidierte Provider-/Modelldokumentation oder neuere Dateien allein aufgrund ihres Datums.
 
----
+# Chapter 4 — UI Message Catalog Contract — VW-1
 
-# Chapter 3 — Alias / Forbidden-Term Contract
+Jede governed Message besitzt stabilen englischen `key`, `text.de`, `text.en`, mindestens eine `conceptId`, Context, Status, Version, deklarierte Placeholder sowie zusätzliche fachliche Authorities falls erforderlich.
 
-- Aliase müssen eindeutig einem Concept zugeordnet sein.
-- Aliase dürfen nicht mit einem aktiven kanonischen Term eines anderen Concepts kollidieren.
-- Forbidden Terms dürfen in neuem governed content nicht als Preferred Bezeichnung eingeführt werden.
-- Historische Vorkommen bleiben Evidence und werden nicht blind ersetzt.
-- Legacy-/Hidden-Term-Semantik ist such-/migrationsorientiert und niemals Preferred UI Output.
-
----
-
-# Chapter 4 — Safe Rename Contract
-
-Vor einem aktiven technischen Rename sind mindestens Repository-References, Imports/Exports, dynamische Imports, Routes/APIs/Schemas, Config/Environment-References, Regex/Naming Policies, Filesystem Casing, TypeScript/Lint, relevante Tests, Production Build und Deployment Readiness zu prüfen.
-
-Ergebnis:
-
-```text
-SAFE | CONDITIONAL | BLOCKED
-```
-
-Nur `SAFE` darf automatisiert vorbereitet werden.
-
----
-
-# Chapter 5 — Event Boundary
-
-Vocabulary führt keinen zweiten Event Bus ein. Neue Vocabulary Events dürfen nur über die bestehende EventMesh registriert werden und nur dann, wenn kein semantisch äquivalentes kanonisches Event existiert.
-
----
-
-# Chapter 6 — Source Authority Contract
-
-Zulässige Quellen für kanonische Vocabulary-/Wording-Entscheidungen sind aktuelle fachliche Runtime Contracts, ESS/Contracts, aktive beziehungsweise Accepted ADRs, Registry-Einträge, Traceability Evidence, aktuelle Architecture Specifications und revalidierte Domain-Dokumentation.
-
-Nicht automatisch autoritativ sind:
-
-- Legacy-Dokumente;
-- historische Evidence/Snapshots;
-- superseded Roadmaps/Blueprints;
-- GitHub-Wiki-Seiten;
-- nicht revalidierte Provider-/Modell-Dokumentation;
-- neuere Dateien allein aufgrund ihres Datums.
-
----
-
-# Chapter 7 — UI Message Catalog Contract — VW-1
-
-Jeder governed Message-Eintrag besitzt mindestens:
-
-- stabilen englischen `key`;
-- `text.de` und `text.en`;
-- mindestens eine referenzierte `conceptId`;
-- `context`;
-- `status`;
-- `version`;
-- deklarierte `placeholders`, falls dynamisch;
-- `authorityReferences`, wenn zusätzliche fachliche Authority erforderlich ist.
-
-Initial zulässige Contexts:
+Zulässige Contexts:
 
 ```text
 react | pdf | email | seo | accessibility | shared
 ```
 
-Message Keys sind stabile technische Identity. Textänderungen ändern den Key nicht automatisch.
+Fail-closed sind ungültige Keys/Versionen, fehlende DE/EN-Texte, unbekannte Concepts, Key-Kollisionen, doppelte/ungültige Placeholder, deklarierte Placeholder die in einer Sprache fehlen sowie im Text vorhandene aber nicht deklarierte Placeholder.
 
-Der Catalog muss fail-closed reagieren auf ungültige Key-Struktur, ungültige Version, fehlende DE/EN-Texte, unbekannte Concept IDs, inkonsistente Placeholder-Verträge und Key-Kollisionen.
+# Chapter 5 — FinTech Value-Chain Wording Projection — VW-2
 
-VW-1 bis VW-5 implementieren nur deterministische deklarierte Placeholder-Ersetzung. Vollständige Unicode-MessageFormat-2-Semantik wird nicht behauptet.
+Vocabulary/Wording ist eine read-only Cross-Cutting Projection von `SC-MD-SPT-0001` und niemals eine zusätzliche Financial Runtime Stage.
 
----
+Jede der 18 aktuellen Stufen besitzt genau ein Binding mit `stageId`, `stageName`, `conceptIds`, `messageKeys`, `authorityReferences`, `financialDecisionAuthority: false` und `mutationAuthority: false`.
 
-# Chapter 8 — FinTech Value-Chain Wording Projection — VW-2
+Die Stage IDs werden gegen die bestehende Quality Value-Chain Projection korreliert. Vocabulary darf IAM, Entitlements, Market Data, Evidence, Provenance, Classification, Scoring, Confidence, Ranking, Eligibility, Provider Routing, Release oder Deployment nicht verändern.
 
-Vocabulary/Wording wird als read-only Cross-Cutting Projection an `SC-MD-SPT-0001` angebunden und niemals als zusätzliche Financial Runtime Stage.
+# Chapter 6 — Wording Usage Index — VW-3
 
-Jede der 18 aktuellen Stufen besitzt genau ein Stage Binding mit `stageId`, `stageName`, `conceptIds`, `messageKeys`, `authorityReferences`, `financialDecisionAuthority: false` und `mutationAuthority: false`.
+Usage Records enthalten Message Key, Concepts, Delivery Surface, Source Path sowie optional Feature/Route und FinTech Stage IDs. Der Scanner erfasst nur explizite stabile Keys und darf Nutzung nicht aus ähnlichem Freitext erfinden.
 
-Die Stage IDs müssen gegen die bestehende `FintechValueChainQualityProjection` geprüft werden. Eine parallele Financial-Stage-Authority ist verboten.
-
-Vocabulary/Wording darf keine Entscheidung verändern über IAM, Entitlements, Market Data, Evidence, Provenance, Classification, Scoring, Confidence, Ranking, Eligibility, Provider Routing, Release oder Deployment.
-
-Fail-closed Zustände (`DATA_UNAVAILABLE`, DENY, partial, ineligible oder semantisch äquivalent) dürfen nicht durch Darstellung hochgestuft werden.
-
----
-
-# Chapter 9 — Wording Usage Index — VW-3
-
-Ein Usage Record enthält mindestens `messageKey`, `conceptIds`, Delivery Surface, `sourcePath` sowie optional Feature/Route und `fintechStageIds`.
-
-Der Scanner erfasst nur explizite stabile Message-Key-Referenzen in Source-Dateien. Er darf keine Nutzung aus ähnlichem Freitext ableiten.
-
-Reverse Impact muss mindestens abbilden:
+Reverse Impact:
 
 ```text
-Concept
- -> Message Keys
- -> Source Paths / Features / Routes
- -> Delivery Surfaces
- -> FinTech Stage References
+Concept -> Message Keys -> Source/Feature/Route -> Surface -> FinTech Stage
 ```
 
-Der Usage Index ist read-only Evidence und autorisiert keine Source Mutation.
+Der Index ist read-only Evidence.
 
----
+# Chapter 7 — Delivery Adapter Contract — VW-4
 
-# Chapter 10 — Delivery Adapter Contract — VW-4
+Read-only Adapter existieren für React, PDF, E-Mail, SEO und Accessibility. Context-spezifische Messages dürfen nicht über eine andere Surface ausgeliefert werden; `shared` ist wiederverwendbar. Retired Messages oder fehlende Placeholder-Werte fail-closed.
 
-Read-only Delivery Adapter existieren für React, PDF, E-Mail, SEO und Accessibility.
+# Chapter 8 — Documentary / Knowledge / Traceability Handoff — VW-5
 
-Ein context-spezifischer Message Key darf nur über die passende Surface ausgeliefert werden. `shared` ist surfaceübergreifend zulässig. Retired Messages und fehlende Placeholder Values werden fail-closed abgelehnt.
+Vocabulary erzeugt ausschließlich einen neutralen, exact-commit-bound `VocabularyWordingSnapshot` mit Concepts, Messages, tatsächlichen Usage Records, 18-stage Bindings, Authorities, Checksum und expliziten Non-Authority-Flags.
 
-Die Adapter erzeugen keine Financial-, Legal-, Compliance-, Security- oder Billing-Authority.
+Documentary konsumiert diesen Snapshot und verwendet ausschließlich bestehende Contracts:
 
----
+1. `createDocumentaryDocument()`;
+2. D7 `projectDocumentaryKnowledge()`;
+3. `buildDocumentaryTraceabilityRecord()`.
 
-# Chapter 11 — Documentary / Knowledge / Traceability Handoff — VW-5
+Ein zweiter Knowledge Graph oder Traceability Store ist verboten.
 
-VW-5 darf keinen zweiten Knowledge Graph und keinen zweiten Traceability Contract erzeugen.
+# Chapter 9 — GitHub Wiki Projection — VW-6
 
-Vocabulary erzeugt einen neutralen `VocabularyWordingSnapshot` mit:
+Die Wiki-Projektion ist deterministisch, exact-commit-bound und nicht autoritativ. Managed Markdown darf nur aus kanonischen Repositorydaten erzeugt werden.
 
-- exact source commit SHA;
-- Concept summary;
-- Message summary;
-- tatsächlichen Usage Records;
-- allen 18 FinTech Stage Bindings;
-- Authority References;
-- SHA-256 Checksum;
-- `mutationAuthority: false`;
-- `financialDecisionAuthority: false`.
+Der Sync-Vertrag verlangt:
 
-Der Snapshot darf keine Documentary-, Knowledge- oder Traceability-Runtime importieren.
+- bestehendes Git-Checkout mit Origin `Finance.wiki.git`;
+- sauberen Worktree;
+- Dry-Run als Default;
+- explizites `--apply` vor Dateimutationen;
+- separates `--push` vor Netzwerkpublikation;
+- ausschließlich verwaltete Pages/Manifest im Staging;
+- niemals automatische Rückschreibung von Wiki zu Repository Authorities.
 
-Der Documentary-Adapter konsumiert diesen Snapshot und MUSS die bestehenden kanonischen Contracts wiederverwenden:
+Wiki-Publikation ist keine Merge-/Release-/Production-Authority.
 
-1. `createDocumentaryDocument()` für das Handoff-Dokument;
-2. D7 `projectDocumentaryKnowledge()` für die Knowledge-Projektion;
-3. `buildDocumentaryTraceabilityRecord()` für die Traceability-Projektion.
+# Chapter 10 — Controlled Wording Migration — VW-7
 
-Message Keys, beobachtete Source Paths und FinTech Stage IDs werden als Documentary content/traceability IDs transportiert; Concept IDs verwenden das bestehende D7-Relationship-Modell. Der Adapter persistiert keinen zweiten Graph/Store und publiziert noch nicht in das GitHub Wiki.
+Jede Source-Migration wird explizit als Candidate mit stabiler Migration-ID, exact `sourcePath`, exact aktuellem `literal`, canonical `messageKey`, Surface und `automaticApplyAllowed: false` erfasst.
 
----
-
-# Chapter 12 — GitHub Wiki Projection Boundary
-
-GitHub Wiki ist ausschließlich eine später in VW-6 erzeugte one-way menschenlesbare Projektion:
+States:
 
 ```text
-Finance.git authorities
- -> deterministic generated Markdown
- -> controlled Wiki sync
- -> Finance.wiki.git
+OPEN      governed literal remains queued
+MIGRATED  stable Message Key replaces the literal
+DRIFT     mapping is ambiguous or broken
 ```
 
-Wiki-Content ist niemals Authority und darf nicht automatisch in Registry, ESS, ADR oder Message Catalog zurückschreiben.
+`OPEN` ist zulässiger messbarer Migrations-Backlog. `DRIFT` blockiert das Governance-Gate. Blindes repositoryweites Regex-/Text-Replacement ist verboten.
 
----
+Security-, Compliance-, Legal-, Billing-, IAM- oder Financial-Wording benötigt weiterhin die zuständige Parent Authority; Vocabulary darf solche Aussagen nicht eigenständig semantisch verändern.
 
-# Chapter 13 — Supersession / Approval Contract
+# Chapter 11 — Continuous Governance / Closure — VW-8
 
-`VOCABULARY-WORDING-WIKI-SUPERSESSION-0001` ersetzt die bisherigen phasenbasierten Vocabulary-Migrations-/Statusdokumente als aktuelle Architekturprojektion nach Human Merge.
+Die vorhandene Repository-Test-/Quality-Kette wird wiederverwendet. Es entsteht kein zweiter CI-Control-Plane.
 
-Historische Dokumente bleiben Evidence. Physische Archivierung erfolgt erst nach Reference-/Registry-Korrelation.
+Closure muss mindestens prüfen:
 
-Semantische Wording-Änderungen mit Security-, Compliance-, Legal-, Billing-, IAM- oder Financial-Impact benötigen zusätzlich die zuständige fachliche Authority und Human/Owner Review.
+- Vocabulary-Manifest/ESS-Registry-Versionen und `ADR-0078`;
+- VW-0 bis VW-8 Completion Metadata;
+- vollständige 18-stage Coverage;
+- `financialDecisionAuthority=false` und `mutationAuthority=false`;
+- deterministische Wiki-Projektion und Publish-Gates;
+- null `DRIFT` im Migrationsplan;
+- erforderliche Architecture-/Work-Package-Artefakte;
+- bestehende Documentary-/Knowledge-/Traceability-Reuse-Boundary.
 
----
+Der normale Repository-Testpfad darf die read-only Vocabulary Governance Checks aufrufen. Kostenverursachende Hosted CI bleibt post-PR gemäß Repository-Governance.
 
-# Success Criteria through VW-5
+# Chapter 12 — Supersession / Human Approval
 
-- Canonical Concepts sind deterministisch validierbar.
-- DE/EN Mapping referenziert dieselbe Concept Identity.
-- Aktive Vocabulary References verwenden ADR-0078 statt der historischen ADR-0046-Display-ID.
-- UI Message Catalog validiert stabile Keys, DE/EN, Concepts und Placeholder.
-- Alle 18 `SC-MD-SPT-0001`-Stufen besitzen read-only Wording Bindings.
-- Usage Index liefert ausschließlich evidenzbasierte Reverse Impact Information.
-- Delivery Adapter respektieren Surface Boundaries.
-- VW-5 Snapshot ist commitgebunden und deterministisch.
-- Documentary verwendet für VW-5 die bestehenden DocumentaryDocument-, D7-Knowledge- und DocumentaryTraceability-Contracts.
-- Keine zweite Knowledge-, Traceability-, Event- oder Financial Runtime Authority entsteht.
-- GitHub Wiki bleibt bis VW-6 unpubliziert.
+`VOCABULARY-WORDING-WIKI-SUPERSESSION-0001` ersetzt nach Human Merge die früheren phasenbasierten Vocabulary-Migrations-/Statusdokumente als aktuelle Architekturprojektion. Historische Dokumente bleiben Evidence und werden nur nach Reference-/Registry-Korrelation archiviert.
+
+Semantische Änderungen mit Security-, Compliance-, Legal-, Billing-, IAM- oder Financial-Impact benötigen zuständige fachliche Authority und Human/Owner Review.
+
+# Success Criteria through VW-8
+
+- Canonical Concepts/DE-EN mappings bleiben deterministisch und collision-checked.
+- Aktive Vocabulary Authority referenziert `ADR-0078`.
+- Message Catalog, Placeholder-Contract und Delivery Boundaries sind fail-closed.
+- Alle 18 `SC-MD-SPT-0001` Stufen besitzen read-only Bindings.
+- Usage Index liefert evidenzbasierte Reverse-Impact-Daten.
+- Documentary nutzt bestehende D7-/Traceability-Contracts.
+- Wiki-Projektion ist deterministisch, one-way und nicht autoritativ.
+- Controlled Migration macht Hardcoding-Debt als `OPEN` sichtbar und blockiert `DRIFT`.
+- Continuous Governance ist in die bestehende Test-/Quality-Kette integriert.
+- Keine zweite Knowledge-, Traceability-, Event-, Financial Runtime-, CI- oder Release-Authority entsteht.
+- Keine externe Wiki-/Supabase-/Render-/Stripe-/IAM-/Production-Mutation wird durch diesen Contract autorisiert.
