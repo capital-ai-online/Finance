@@ -34,6 +34,21 @@ export interface MarketEvidenceQualityRecord {
   readonly evidenceRef: string | null;
 }
 
+function isIsoTimestamp(value: string | null): value is string {
+  return Boolean(value && Number.isFinite(Date.parse(value)));
+}
+
+function isFiniteNonNegative(value: number | null): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+function hasAdmissibleFreshness(evidence: MarketEvidenceQualityRecord): boolean {
+  return isFiniteNonNegative(evidence.freshness.ageMs)
+    && isFiniteNonNegative(evidence.freshness.maxAgeMs)
+    && evidence.freshness.ageMs <= evidence.freshness.maxAgeMs
+    && isIsoTimestamp(evidence.freshness.evaluatedAt);
+}
+
 export function isAdmissibleMarketEvidence(
   evidence: MarketEvidenceQualityRecord,
 ): evidence is MarketEvidenceQualityRecord & {
@@ -42,21 +57,38 @@ export function isAdmissibleMarketEvidence(
   readonly evidenceRef: string;
 } {
   return evidence.qualityStatus === 'VERIFIED'
-    && Boolean(evidence.observedAt)
-    && Boolean(evidence.evidenceRef)
-    && Boolean(evidence.providerId)
-    && Boolean(evidence.capability)
-    && Boolean(evidence.field);
+    && isIsoTimestamp(evidence.observedAt)
+    && isIsoTimestamp(evidence.retrievedAt)
+    && Boolean(evidence.evidenceRef?.trim())
+    && Boolean(evidence.assetId.trim())
+    && Boolean(evidence.providerId.trim())
+    && Boolean(evidence.capability.trim())
+    && Boolean(evidence.field.trim())
+    && hasAdmissibleFreshness(evidence);
 }
 
 export function assertMarketEvidenceContract(record: MarketEvidenceQualityRecord): void {
   if (record.contractVersion !== MARKET_EVIDENCE_DQ_CONTRACT_VERSION) {
     throw new Error('MARKET_EVIDENCE_DQ_CONTRACT_VERSION_MISMATCH');
   }
-  if (!record.assetId || !record.providerId || !record.capability || !record.field || !record.retrievedAt) {
+  if (!record.assetId.trim() || !record.providerId.trim() || !record.capability.trim() || !record.field.trim()) {
     throw new Error('MARKET_EVIDENCE_DQ_REQUIRED_FIELD_MISSING');
   }
-  if (record.qualityStatus === 'VERIFIED' && (!record.observedAt || !record.evidenceRef)) {
-    throw new Error('MARKET_EVIDENCE_DQ_VERIFIED_REQUIRES_PROVENANCE');
+  if (!isIsoTimestamp(record.retrievedAt) || !isIsoTimestamp(record.freshness.evaluatedAt)) {
+    throw new Error('MARKET_EVIDENCE_DQ_INVALID_TIMESTAMP');
+  }
+  if (
+    (record.freshness.ageMs !== null && !isFiniteNonNegative(record.freshness.ageMs))
+    || (record.freshness.maxAgeMs !== null && !isFiniteNonNegative(record.freshness.maxAgeMs))
+  ) {
+    throw new Error('MARKET_EVIDENCE_DQ_INVALID_FRESHNESS');
+  }
+  if (record.qualityStatus === 'VERIFIED') {
+    if (!isIsoTimestamp(record.observedAt) || !record.evidenceRef?.trim()) {
+      throw new Error('MARKET_EVIDENCE_DQ_VERIFIED_REQUIRES_PROVENANCE');
+    }
+    if (!hasAdmissibleFreshness(record)) {
+      throw new Error('MARKET_EVIDENCE_DQ_VERIFIED_REQUIRES_FRESH_EVIDENCE');
+    }
   }
 }
