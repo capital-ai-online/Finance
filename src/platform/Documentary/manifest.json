@@ -1,9 +1,9 @@
 {
   "name": "Documentary",
-  "version": "1.12.1",
+  "version": "1.12.0",
   "status": "development",
   "owner": "CAPITAL-AI",
-  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Documentation Hygiene, Status Drift, semantischem Maintenance Agent, Supervisor/Platform-Director-Orchestrierung, Maintenance Observability, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Renderer und Knowledge Projection einschließlich des VW-5 Vocabulary/Wording-Handoffs.",
+  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Documentation Hygiene, Status Drift, semantischem Maintenance Agent, Supervisor/Platform-Director-Orchestrierung, Maintenance Observability, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Renderer und Knowledge Projection.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -23,7 +23,7 @@
   "adr": [
     "ADR-0014",
     "ADR-0018",
-    "ADR-0078",
+    "ADR-0046",
     "ADR-0096",
     "ADR-0097"
   ],
@@ -39,12 +39,12 @@
   "events": {
     "produces": ["DocumentationGeneratedEvent", "DocumentationValidatedEvent"],
     "consumes": ["RepositoryScannedEvent", "PlatformDecisionEvent"],
-    "note": "Semantic freshness, VW-5 wording handoff and Maintenance Agent do not create a new event authority. Existing EventMesh names remain canonical."
+    "note": "Semantic freshness and Maintenance Agent do not create a new event authority. Supervisor recommendation and PlatformDecisionRecord are evidence/authorization inputs. Existing EventMesh names remain canonical."
   },
   "valueChainIntegration": {
     "authority": "SC-MD-SPT-0001",
     "role": "read-only-documentation-evidence-sidecar",
-    "observedStage": "VC-17-EVENT-TRACEABILITY-SUPERVISOR",
+    "observedStage": "VC-13-EVENT-TRACEABILITY-SUPERVISOR",
     "runtimeStage": false,
     "directHotPathDependency": false,
     "qualityProjection": "fintech-value-chain-quality/1.0.0",
@@ -58,10 +58,7 @@
       "production-mutation"
     ]
   },
-  "knowledge": [
-    "Knowledge/DocumentaryKnowledgeProjection.ts",
-    "Knowledge/VocabularyWordingDocumentaryProjection.ts"
-  ],
+  "knowledge": ["Knowledge/DocumentaryKnowledgeProjection.ts"],
   "interfaces": ["Interfaces/IDocumentaryEngine.ts"],
   "contracts": [
     "Contracts/BilingualDocumentReference.ts",
@@ -82,8 +79,7 @@
     "Events/DocumentaryEvents.ts",
     "Lifecycle/DocumentaryLifecycle.ts",
     "Generators/DocumentaryRenderer.ts",
-    "Knowledge/DocumentaryKnowledgeProjection.ts",
-    "Knowledge/VocabularyWordingDocumentaryProjection.ts"
+    "Knowledge/DocumentaryKnowledgeProjection.ts"
   ],
   "documentation": [
     "README.md",
@@ -98,8 +94,7 @@
     "../../../../docs/architecture/DOCUMENTARY_D5_E1_E4_TRACEABILITY_EVENTS.md",
     "../../../../docs/architecture/DOCUMENTARY_D4_REVIEW_LIFECYCLE_GOVERNANCE.md",
     "../../../../docs/architecture/DOCUMENTARY_D6_GENERATORS_RENDERERS.md",
-    "../../../../docs/architecture/DOCUMENTARY_D7_KNOWLEDGE_INTEGRATION.md",
-    "../../../../docs/architecture/VOCABULARY_WORDING_WIKI_ARCHITECTURE.md"
+    "../../../../docs/architecture/DOCUMENTARY_D7_KNOWLEDGE_INTEGRATION.md"
   ],
   "tests": [
     "tests/unit/bilingualDocumentaryProjection.test.ts",
@@ -117,8 +112,7 @@
     "tests/unit/documentaryTraceabilityEvents.test.ts",
     "tests/unit/documentaryVersionAuthority.test.ts",
     "tests/unit/statusEventDriftDetector.test.ts",
-    "tests/unit/statusEventDriftUpdater.test.ts",
-    "src/platform/Vocabulary/Tests/vocabularyGovernanceProjection.test.ts"
+    "tests/unit/statusEventDriftUpdater.test.ts"
   ],
   "implementation": {
     "level": "partial",
@@ -138,8 +132,7 @@
       "Observability",
       "Orchestration",
       "Traceability",
-      "Versioning",
-      "VocabularyWordingHandoff"
+      "Versioning"
     ],
     "plannedAreas": ["Architecture", "Mermaid", "Migration", "Plugins"]
   },
@@ -148,5 +141,5 @@
     "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
     "platformVersion": "../../../package.json#version"
   },
-  "note": "VW-5 reuses the canonical DocumentaryDocument, D7 DocumentaryKnowledgeProjection and DocumentaryTraceability contracts for Vocabulary/Wording; no second Knowledge or Traceability model is introduced. SC-MD-SPT-0001 integration is a read-only VC-17 documentation/evidence sidecar and never a financial runtime stage. ADR-0097 maintenance remains branch-only and Human-Merge-bound; no autonomous merge, deploy or production mutation."
+  "note": "ADR-0097 maintenance is branch-only and Draft-PR-bound. AI output is advisory; versions/lifecycle/path boundaries are deterministic. Protected ADR/Governance/Compliance/Security/Evidence/Archive/Release documents remain review-only. D9 maintenance observability emits counts/ratios only, never document bodies, prompts, diffs, user identifiers or secrets. SC-MD-SPT-0001 integration is a read-only VC-13 documentation/evidence sidecar and never a financial runtime stage. No autonomous merge, deploy or production mutation."
 }
