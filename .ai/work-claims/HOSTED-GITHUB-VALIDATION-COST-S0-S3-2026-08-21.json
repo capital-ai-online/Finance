@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "HOSTED-GITHUB-VALIDATION-COST-S0-S3-2026-08-21",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "S0-S3 cost-specific assessment of GitHub-hosted PR validation after PR #469, including cost baseline, detection/coverage classification, failure yield and supersession decision without activating any validation disablement",
+  "workItemDE": "S0-S3 Kosten-/Nutzenanalyse der GitHub-hosted PR-Validierung nach PR #469; keine Deaktivierung ohne separaten Owner-Cutover",
+  "startedAt": "2026-08-21T10:43:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "7d173d3239fdbe31216354fc848f948d517069f6",
+  "lastSyncedMainSha": "7d173d3239fdbe31216354fc848f948d517069f6",
+  "branch": "agent/hosted-validation-cost-s0-s3-2026-08-21",
+  "pullRequest": null,
+  "claimedPaths": [
+    ".ai/work-claims/HOSTED-GITHUB-VALIDATION-COST-S0-S3-2026-08-21.json",
+    "docs/governance/supersessions/HOSTED_GITHUB_VALIDATION_COST_SUPERSESSION_2026-08-21.md",
+    "docs/evidence/HOSTED_GITHUB_VALIDATION_COST_S0_S3_2026-08-21.md"
+  ],
+  "protectedExistingAuthorities": [
+    "AGENTS.md AUTH-GOV-AGENT-TRUST-ROOT, especially mandatory independent hosted GitHub checks and Human/CODEOWNER merge",
+    "ADR-0073 build-and-test as the sole repository-hosted technical Required Check",
+    "main-production-protection expected required checks: build-and-test + GitGuardian Security Checks",
+    "AGENTS.md M10 SUSPENDED/OFF",
+    "production main pipeline: Sigstore/OIDC, production environment, exact-SHA Render deployment and post-deploy identity verification"
+  ],
+  "correlation": {
+    "currentMain": "7d173d3239fdbe31216354fc848f948d517069f6",
+    "mergedPullRequests": [469],
+    "openPullRequests": [],
+    "directPathOverlap": [],
+    "replacesUnmergedWorkingBranch": "agent/hosted-validation-cost-supersession-2026-08-21",
+    "finding": "PR #469 is fully merged into current main and deployed on Render at the exact merge SHA. The earlier supersession proposal branch was never merged and has no repository authority. This fresh branch records S0-S3 evidence only and does not modify workflows, rulesets, AGENTS.md or production."
+  },
+  "externalMutationScope": "none",
+  "activationState": "PROPOSED_NOT_ENABLED",
+  "releaseCondition": "Release claim after merge, closure, supersession or abandonment. Any hosted-validation disablement requires a separate explicit Owner ACCEPT/MODIFY and coordinated cutover."
+}
