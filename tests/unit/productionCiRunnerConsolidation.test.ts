@@ -19,6 +19,10 @@ function jobBlock(yaml: string, jobId: string): string {
 }
 
 describe('P2B production CI runner consolidation', () => {
+  it('keeps M10 operationally disabled while changing only production runner topology', () => {
+    expect(workflow()).toContain("M10_CI_GATE_ENABLED: 'false'");
+  });
+
   it('keeps exactly two hosted runners in the CI workflow', () => {
     const yaml = workflow();
     expect((yaml.match(/runs-on: ubuntu-latest/g) ?? []).length).toBe(2);
@@ -30,7 +34,6 @@ describe('P2B production CI runner consolidation', () => {
 
   it('signs provenance inside the already verified main build', () => {
     const build = jobBlock(workflow(), 'build-and-test');
-    expect(build).toContain("M10_CI_GATE_ENABLED");
     expect(build).toContain('npm run build');
     expect(build).toContain('npm run predeploy:check');
     expect(build).toContain('verifySupplyChainProvenance.ts --require-ci');
