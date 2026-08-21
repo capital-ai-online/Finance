@@ -37,4 +37,16 @@ describe('VW-1 UI Message Catalog', () => {
       placeholders: ['name'],
     })).toThrow(/PLACEHOLDER_MISMATCH/);
   });
+
+  it('rejects placeholders that occur in message text without an explicit contract declaration', () => {
+    const catalog = new UiMessageCatalog(createDefaultVocabularyRegistry());
+    expect(() => catalog.register({
+      key: 'example.undeclaredPlaceholder',
+      text: { de: 'Hallo {name}', en: 'Hello {name}' },
+      conceptIds: ['VOC-PRODUCT-0101'],
+      context: 'shared',
+      status: 'approved',
+      version: '1.0.0',
+    })).toThrow(/UNDECLARED_PLACEHOLDER/);
+  });
 });
