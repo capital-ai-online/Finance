@@ -66,8 +66,8 @@ concurrency:
 
 # M10 Controlled Cutover implementation is retained but operationally disabled by
 # M10_CI_GATE_ENABLED=false. Human/CODEOWNER merge remains separate and mandatory.
-# Production deployment authority remains verified main CI -> supply-chain attestation ->
-# exact-SHA Render deploy hook -> post-deploy identity verification.
+# Production deployment authority remains verified main CI with inline supply-chain attestation ->
+# production-environment-bound exact-SHA Render deploy -> post-deploy identity verification.
 # Historical rules retained for rollback/audit when M10_CI_GATE_ENABLED=true:
 # - normal PR events fail before checkout/npm/build;
 # - only a successfully redeemed Owner-Passkey M10 consumption may enter expensive PR CI;
@@ -406,6 +406,18 @@ jobs:
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
             dist/security/provenance.json
 
+      - name: P2B Post-Deploy-Verifier aus exaktem main-Build bundeln
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p artifacts/deployment
+          npx esbuild scripts/deployment/verifyDeploymentIdentity.ts \
+            --bundle \
+            --platform=node \
+            --format=esm \
+            --target=node24 \
+            --outfile=artifacts/deployment/verifyDeploymentIdentity.mjs
+          node --check artifacts/deployment/verifyDeploymentIdentity.mjs
+
       - name: P2B Supply-Chain-Artefakte aus demselben main-Build ablegen
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -416,6 +428,7 @@ jobs:
             dist/security/provenance.json
             dist/security/provenance.json.sigstore.json
             dist/control-plane/release-manifest.json
+            artifacts/deployment/verifyDeploymentIdentity.mjs
           retention-days: 90
           if-no-files-found: error
 
@@ -425,10 +438,39 @@ jobs:
     if: ${{ needs.build-and-test.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     environment: production
     permissions:
-      contents: read
+      actions: read
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
+      - name: P2B verifizierte main-Artefakte aus demselben Workflow-Lauf laden
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: supply-chain-provenance-${{ github.sha }}
+          path: p2b-runtime
+
+      - name: Node.js für standalone Post-Deploy-Verifikation einrichten
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: '24.18.0'
+
+      - name: P2B Artefakt-Identität vor Production-Mutation prüfen
+        env:
+          VERIFIED_COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const manifestPath = 'p2b-runtime/dist/control-plane/release-manifest.json';
+          const verifierPath = 'p2b-runtime/artifacts/deployment/verifyDeploymentIdentity.mjs';
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+          if (manifest.sourceCommit !== process.env.VERIFIED_COMMIT_SHA) {
+            throw new Error(`Release-Manifest ist an ${manifest.sourceCommit} statt ${process.env.VERIFIED_COMMIT_SHA} gebunden.`);
+          }
+          if (!fs.existsSync(verifierPath)) {
+            throw new Error('Standalone Deployment-Identity-Verifier fehlt im verifizierten Build-Artefakt.');
+          }
+          NODE
+
       - name: Render-Deployment für verifizierten main-Commit auslösen
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
@@ -442,32 +484,17 @@ jobs:
             --request POST \
             "${RENDER_DEPLOY_HOOK_URL}${separator}ref=${VERIFIED_COMMIT_SHA}"
 
-      - name: Repository für post-deploy Verifikation auschecken
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          ref: ${{ github.sha }}
-          fetch-depth: 1
-          persist-credentials: false
-
-      - name: Node.js für post-deploy Verifikation einrichten
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          node-version: '24.18.0'
-          cache: 'npm'
-
-      - name: Abhängigkeiten für post-deploy Verifikation installieren
-        run: npm ci
-
       - name: Deployte Commit-Identität und Health gegen erwarteten main-Commit verifizieren
         env:
           VERIFIED_COMMIT_SHA: ${{ github.sha }}
-        run: npx tsx scripts/deployment/verifyDeploymentIdentity.ts
+          DEPLOYMENT_VERIFY_EVIDENCE_OUTPUT: p2b-runtime/artifacts/deployment/deployment-identity-evidence.json
+        run: node p2b-runtime/artifacts/deployment/verifyDeploymentIdentity.mjs
 
       - name: Deployment-Identitäts-Evidence als Workflow-Artefakt ablegen
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: deployment-identity-evidence-${{ github.sha }}
-          path: artifacts/deployment/deployment-identity-evidence.json
+          path: p2b-runtime/artifacts/deployment/deployment-identity-evidence.json
           retention-days: 90
           if-no-files-found: error
