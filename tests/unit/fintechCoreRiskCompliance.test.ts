@@ -21,6 +21,7 @@ import { UNIVERSAL_ASSET_CONTRACT_VERSION } from '../../src/platform/Scoring/con
 
 const evaluatedAt = '2026-08-21T08:00:00.000Z';
 const fp = (atoms: string, scale = 2) => Object.freeze({ atoms, scale });
+const authorityFor = (controlId: string) => `AUTH-FT5-${controlId}`;
 
 const baseContext: FinTechCoreWorkflowContext = {
   contractVersion: FINTECH_CORE_CONTRACT_VERSION,
@@ -49,6 +50,7 @@ function control(
   return Object.freeze({
     controlId,
     state,
+    authorityId: authorityFor(controlId),
     provider: `verified-${controlId.toLowerCase()}-provider`,
     observedAt: '2026-08-21T07:59:30.000Z',
     evidenceRefs: [`evidence://ft5/${controlId.toLowerCase()}`],
@@ -60,6 +62,10 @@ function makeInput(context: FinTechCoreWorkflowContext = baseContext): FinTechCo
   const requiredControls: readonly ComplianceControlId[] = [
     'KYC', 'AML', 'SANCTIONS', 'WALLET_SCREENING', 'JURISDICTION', 'TRAVEL_RULE',
   ];
+  const controlAuthorityIds = Object.fromEntries(
+    requiredControls.map((controlId) => [controlId, authorityFor(controlId)]),
+  ) as Partial<Record<ComplianceControlId, string>>;
+
   return {
     context,
     evaluatedAt,
@@ -74,19 +80,30 @@ function makeInput(context: FinTechCoreWorkflowContext = baseContext): FinTechCo
       minLiquidityCoverageBps: 20000,
       maxMarketDataAgeSeconds: 60,
       maxCounterpartyEvidenceAgeSeconds: 300,
+      portfolioEvidenceAuthorityId: 'AUTH-FT5-PORTFOLIO',
+      liquidityEvidenceAuthorityId: 'AUTH-FT5-LIQUIDITY',
+      marketEvidenceAuthorityId: 'AUTH-FT5-MARKET',
+      counterpartyAuthorityId: 'AUTH-FT5-COUNTERPARTY',
       evidenceRefs: ['evidence://ft5/risk-policy'],
     },
     riskEvidence: {
       orderNotional: fp('1000000'),
+      orderEvidenceRefs: ['evidence://ft5/order'],
       projectedGrossExposure: fp('3000000'),
       peakEquity: fp('10000000'),
       currentEquity: fp('9500000'),
+      portfolioEvidenceAuthorityId: 'AUTH-FT5-PORTFOLIO',
+      portfolioEvidenceRefs: ['evidence://ft5/portfolio'],
       availableLiquidity: fp('3000000'),
+      liquidityEvidenceAuthorityId: 'AUTH-FT5-LIQUIDITY',
+      liquidityEvidenceRefs: ['evidence://ft5/liquidity'],
       marketDataObservedAt: '2026-08-21T07:59:50.000Z',
+      marketEvidenceAuthorityId: 'AUTH-FT5-MARKET',
       marketEvidenceRefs: ['evidence://ft5/market'],
       counterparty: {
         controlId: 'COUNTERPARTY',
         state: 'PASS',
+        authorityId: 'AUTH-FT5-COUNTERPARTY',
         provider: 'verified-counterparty-provider',
         observedAt: '2026-08-21T07:59:00.000Z',
         evidenceRefs: ['evidence://ft5/counterparty'],
@@ -97,6 +114,7 @@ function makeInput(context: FinTechCoreWorkflowContext = baseContext): FinTechCo
       policyId: 'compliance-policy-owner-snapshot',
       policyVersion: '1',
       requiredControls,
+      controlAuthorityIds,
       maxEvidenceAgeSeconds: 300,
       evidenceRefs: ['evidence://ft5/compliance-policy'],
     },
@@ -107,7 +125,7 @@ function makeInput(context: FinTechCoreWorkflowContext = baseContext): FinTechCo
 }
 
 describe('FinTech Core FT-5 deterministic risk + compliance', () => {
-  it('approves all deterministic risk gates when evidence is complete and inside policy limits', () => {
+  it('approves all deterministic risk gates when evidence is complete, authority-bound and inside policy limits', () => {
     const decision = evaluateDeterministicRiskGates(makeInput());
     expect(decision.outcome).toBe('APPROVED');
     expect(decision.gates.map((item) => item.gateId)).toEqual([
@@ -126,14 +144,20 @@ describe('FinTech Core FT-5 deterministic risk + compliance', () => {
     expect(decision.gates.find((item) => item.gateId === 'ORDER_NOTIONAL')?.outcome).toBe('REJECTED');
   });
 
-  it('fails closed as NOT_COMPUTABLE when market evidence is stale', () => {
+  it('fails closed as NOT_COMPUTABLE when market evidence is stale or comes from the wrong authority', () => {
     const input = makeInput();
-    const decision = evaluateDeterministicRiskGates({
+    const stale = evaluateDeterministicRiskGates({
       ...input,
       riskEvidence: { ...input.riskEvidence, marketDataObservedAt: '2026-08-21T07:50:00.000Z' },
     });
-    expect(decision.outcome).toBe('NOT_COMPUTABLE');
-    expect(decision.gates.find((item) => item.gateId === 'STALENESS')?.outcome).toBe('NOT_COMPUTABLE');
+    expect(stale.outcome).toBe('NOT_COMPUTABLE');
+    expect(stale.gates.find((item) => item.gateId === 'STALENESS')?.outcome).toBe('NOT_COMPUTABLE');
+
+    const wrongAuthority = evaluateDeterministicRiskGates({
+      ...input,
+      riskEvidence: { ...input.riskEvidence, marketEvidenceAuthorityId: 'AUTH-UNTRUSTED' },
+    });
+    expect(wrongAuthority.outcome).toBe('NOT_COMPUTABLE');
   });
 
   it('does not invent a missing required compliance control', () => {
@@ -148,7 +172,7 @@ describe('FinTech Core FT-5 deterministic risk + compliance', () => {
     expect(decision.controls.find((item) => item.gateId === 'SANCTIONS')?.outcome).toBe('NOT_COMPUTABLE');
   });
 
-  it('rejects authoritative sanctions failure and propagates manual-review evidence', () => {
+  it('rejects authoritative sanctions failure and blocks a PASS from an unbound authority', () => {
     const input = makeInput();
     const rejected = evaluateDeterministicComplianceGates({
       ...input,
@@ -158,6 +182,18 @@ describe('FinTech Core FT-5 deterministic risk + compliance', () => {
     });
     expect(rejected.outcome).toBe('REJECTED');
 
+    const wrongAuthorityEvidence = { ...control('SANCTIONS'), authorityId: 'AUTH-UNTRUSTED' };
+    const wrongAuthority = evaluateDeterministicComplianceGates({
+      ...input,
+      complianceEvidence: {
+        controls: { ...input.complianceEvidence.controls, SANCTIONS: wrongAuthorityEvidence },
+      },
+    });
+    expect(wrongAuthority.outcome).toBe('NOT_COMPUTABLE');
+  });
+
+  it('propagates manual-review evidence without turning it into approval', () => {
+    const input = makeInput();
     const review = evaluateDeterministicComplianceGates({
       ...input,
       complianceEvidence: {
@@ -174,7 +210,7 @@ describe('FinTech Core FT-5 deterministic risk + compliance', () => {
     expect(authorization.executionHandoffEligible).toBe(false);
   });
 
-  it('requires both approvals and exact workflow identity before creating an authorized handoff copy', () => {
+  it('requires both approvals, a future live handoff mode and exact workflow identity', () => {
     const liveContext: FinTechCoreWorkflowContext = { ...baseContext, operatingMode: 'GUARDED_LIVE' };
     const input = makeInput(liveContext);
     const authorization = evaluatePreTradeAuthorization(input);
