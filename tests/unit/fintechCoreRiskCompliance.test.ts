@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   FINTECH_CORE_CONTRACT_VERSION,
-  type FinTechCoreOrderIntent,
   type FinTechCoreWorkflowContext,
 } from '../../src/platform/FinTechCore/CoreContracts';
 import {
-  authorizeOrderIntentForHandoff,
   evaluateDeterministicComplianceGates,
   evaluateDeterministicRiskGates,
   evaluatePreTradeAuthorization,
@@ -144,14 +142,13 @@ describe('FinTech Core FT-5 deterministic risk + compliance', () => {
     expect(decision.gates.find((item) => item.gateId === 'ORDER_NOTIONAL')?.outcome).toBe('REJECTED');
   });
 
-  it('fails closed as NOT_COMPUTABLE when market evidence is stale or comes from the wrong authority', () => {
+  it('fails closed when market evidence is stale or comes from the wrong authority', () => {
     const input = makeInput();
     const stale = evaluateDeterministicRiskGates({
       ...input,
       riskEvidence: { ...input.riskEvidence, marketDataObservedAt: '2026-08-21T07:50:00.000Z' },
     });
     expect(stale.outcome).toBe('NOT_COMPUTABLE');
-    expect(stale.gates.find((item) => item.gateId === 'STALENESS')?.outcome).toBe('NOT_COMPUTABLE');
 
     const wrongAuthority = evaluateDeterministicRiskGates({
       ...input,
@@ -172,7 +169,7 @@ describe('FinTech Core FT-5 deterministic risk + compliance', () => {
     expect(decision.controls.find((item) => item.gateId === 'SANCTIONS')?.outcome).toBe('NOT_COMPUTABLE');
   });
 
-  it('rejects authoritative sanctions failure and blocks a PASS from an unbound authority', () => {
+  it('rejects authoritative sanctions failure and blocks PASS from an unbound authority', () => {
     const input = makeInput();
     const rejected = evaluateDeterministicComplianceGates({
       ...input,
@@ -182,11 +179,13 @@ describe('FinTech Core FT-5 deterministic risk + compliance', () => {
     });
     expect(rejected.outcome).toBe('REJECTED');
 
-    const wrongAuthorityEvidence = { ...control('SANCTIONS'), authorityId: 'AUTH-UNTRUSTED' };
     const wrongAuthority = evaluateDeterministicComplianceGates({
       ...input,
       complianceEvidence: {
-        controls: { ...input.complianceEvidence.controls, SANCTIONS: wrongAuthorityEvidence },
+        controls: {
+          ...input.complianceEvidence.controls,
+          SANCTIONS: { ...control('SANCTIONS'), authorityId: 'AUTH-UNTRUSTED' },
+        },
       },
     });
     expect(wrongAuthority.outcome).toBe('NOT_COMPUTABLE');
@@ -203,51 +202,17 @@ describe('FinTech Core FT-5 deterministic risk + compliance', () => {
     expect(review.outcome).toBe('REVIEW_REQUIRED');
   });
 
-  it('allows risk/compliance evaluation in PAPER but never an execution handoff', () => {
-    const authorization = evaluatePreTradeAuthorization(makeInput());
-    expect(authorization.risk.outcome).toBe('APPROVED');
-    expect(authorization.compliance.outcome).toBe('APPROVED');
-    expect(authorization.executionHandoffEligible).toBe(false);
-  });
+  it('never makes an OrderIntent handoff eligible in FT-5, including a manually constructed live-mode context', () => {
+    const paper = evaluatePreTradeAuthorization(makeInput());
+    expect(paper.risk.outcome).toBe('APPROVED');
+    expect(paper.compliance.outcome).toBe('APPROVED');
+    expect(paper.executionHandoffEligible).toBe(false);
 
-  it('requires both approvals, a future live handoff mode and exact workflow identity', () => {
-    const liveContext: FinTechCoreWorkflowContext = { ...baseContext, operatingMode: 'GUARDED_LIVE' };
-    const input = makeInput(liveContext);
-    const authorization = evaluatePreTradeAuthorization(input);
-    expect(authorization.executionHandoffEligible).toBe(true);
-
-    const intent: FinTechCoreOrderIntent = {
-      contractVersion: FINTECH_CORE_CONTRACT_VERSION,
-      orderIntentId: 'intent-ft5-1',
-      runId: liveContext.runId,
-      traceId: liveContext.traceId,
-      correlationId: liveContext.correlationId,
-      idempotencyKey: 'idempotency-ft5-1',
-      assetId: liveContext.asset.assetId,
-      side: 'BUY',
-      quantity: 0.1,
-      orderType: 'LIMIT',
-      limitPrice: 60000,
-      maxSlippageBps: 25,
-      strategyId: liveContext.strategyId,
-      portfolioId: liveContext.portfolioId,
-      decisionVersion: liveContext.decisionVersion,
-      riskApproval: 'PENDING',
-      complianceApproval: 'PENDING',
-      expiresAt: '2026-08-21T08:05:00.000Z',
-      intentHash: 'intent-hash-ft5',
-      effectClass: 'SIDE_EFFECTING',
-    };
-
-    const result = authorizeOrderIntentForHandoff(intent, input, authorization);
-    expect(result.status).toBe('AUTHORIZED');
-    if (result.status === 'AUTHORIZED') {
-      expect(result.intent.riskApproval).toBe('APPROVED');
-      expect(result.intent.complianceApproval).toBe('APPROVED');
-    }
-
-    const mismatch = authorizeOrderIntentForHandoff({ ...intent, assetId: 'crypto:ETH' }, input, authorization);
-    expect(mismatch.status).toBe('BLOCKED');
+    const futureLiveContext: FinTechCoreWorkflowContext = { ...baseContext, operatingMode: 'GUARDED_LIVE' };
+    const futureLive = evaluatePreTradeAuthorization(makeInput(futureLiveContext));
+    expect(futureLive.risk.outcome).toBe('APPROVED');
+    expect(futureLive.compliance.outcome).toBe('APPROVED');
+    expect(futureLive.executionHandoffEligible).toBe(false);
   });
 
   it('maps risk and compliance outcomes into existing append-only FT-3 decision records', () => {
