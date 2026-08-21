@@ -307,9 +307,18 @@ export function createCryptoRouter(
           error: 'Caller-provided financial scores are not accepted by the production scoring endpoint because provenance cannot be verified.',
         });
       }
+      if (Object.prototype.hasOwnProperty.call(payload, 'classification')) {
+        return res.status(422).json({
+          status: 'CALLER_CLASSIFICATION_NOT_ALLOWED',
+          score: null,
+          final_score: null,
+          correlationId,
+          error: 'Caller-provided classification has no productive score, ranking, tier, confidence or eligibility authority.',
+        });
+      }
 
       const symbol = String(payload.symbol).toUpperCase().trim();
-      const classification = payload.classification || ClassificationService.classifyAsset(symbol);
+      const classification = ClassificationService.classifyAsset(symbol);
       const dispatch = await dispatchCanonicalScore({
         symbol,
         name: String(payload.asset_name),
