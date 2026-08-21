@@ -33,7 +33,7 @@ import {
 } from '../../server/marketData/createApplicationMarketDataRuntime';
 
 describe('application market-data runtime wiring', () => {
-  it('routes every scorable financial asset class through canonical enrichment before legacy callbacks', async () => {
+  it('routes scoring through the canonical dispatcher and follow-up work through the execution boundary', async () => {
     const fallbackAssets = [
       { symbol: 'BTC', type: 'crypto', price: 1, change24h: 0 },
       { symbol: 'AAPL', type: 'stock', price: 100, change24h: 1 },
@@ -75,8 +75,8 @@ describe('application market-data runtime wiring', () => {
       commodityTickers: ['XAUUSD', 'XAGUSD', 'CL.F', 'NG.F', 'CO.F'],
       registryAssets,
       enrichAsset: expect.any(Function),
-      persistSnapshots,
-      evaluateAlerts,
+      persistSnapshots: expect.any(Function),
+      evaluateAlerts: expect.any(Function),
       onProviderFailure,
     }));
 
@@ -94,5 +94,12 @@ describe('application market-data runtime wiring', () => {
 
     await refreshOptions.enrichAsset(macro);
     expect(enrichAsset).toHaveBeenCalledWith(macro);
+
+    expect(refreshOptions.persistSnapshots).not.toBe(persistSnapshots);
+    expect(refreshOptions.evaluateAlerts).not.toBe(evaluateAlerts);
+    await refreshOptions.persistSnapshots(fallbackAssets);
+    await refreshOptions.evaluateAlerts(fallbackAssets);
+    expect(persistSnapshots).toHaveBeenCalledWith(fallbackAssets);
+    expect(evaluateAlerts).toHaveBeenCalledWith(fallbackAssets);
   });
 });
