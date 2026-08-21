@@ -30,6 +30,7 @@ export type {
 } from './Messages/UiMessage';
 export { UiMessageCatalog } from './Messages/UiMessageCatalog';
 export { seedMessages } from './Messages/seedMessages';
+export { migrationMessages } from './Messages/migrationMessages';
 export { UiMessageValidator } from './Validators/UiMessageValidator';
 export {
   FINTECH_VALUE_CHAIN_STAGE_IDS,
@@ -59,6 +60,7 @@ import { VocabularyRegistry } from './Registry/VocabularyRegistry';
 import { seedConcepts } from './Registry/seedConcepts';
 import { UiMessageCatalog } from './Messages/UiMessageCatalog';
 import { seedMessages } from './Messages/seedMessages';
+import { migrationMessages } from './Messages/migrationMessages';
 
 export function createDefaultVocabularyRegistry(): VocabularyRegistry {
   const registry = new VocabularyRegistry();
@@ -68,6 +70,6 @@ export function createDefaultVocabularyRegistry(): VocabularyRegistry {
 
 export function createDefaultUiMessageCatalog(registry = createDefaultVocabularyRegistry()): UiMessageCatalog {
   const catalog = new UiMessageCatalog(registry);
-  catalog.registerAll(seedMessages);
+  catalog.registerAll([...seedMessages, ...migrationMessages]);
   return catalog;
 }
