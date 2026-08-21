@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "VW-0-VW8-VOCABULARY-WORDING-WIKI-2026-08-21",
+  "status": "active",
+  "exclusive": true,
+  "branch": "feature/vocabulary-wording-wiki-vw0-vw5-2026-08-21",
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT GitHub Connector"
+  },
+  "workItem": "Owner chat priority 2026-08-21: implement and close Vocabulary/Wording/Wiki work packages VW-0 through VW-8 on one branch, including canonical message governance, complete read-only 18-stage FinTech wording projection, usage/impact evidence, delivery adapters, Documentary D7/Traceability reuse, deterministic one-way GitHub Wiki projection, controlled incremental wording migration, and continuous governance/release closure before creating the pull request.",
+  "workItemDE": "Owner-Chat-Priorität 2026-08-21: Vocabulary-/Wording-/Wiki-Arbeitspakete VW-0 bis VW-8 auf einem Branch vollständig umsetzen und vor dem Pull Request schließen – inklusive kanonischem Message-Governance-Vertrag, vollständiger read-only 18-stufiger FinTech-Wording-Projektion, Usage-/Impact-Evidence, Delivery-Adaptern, Documentary-D7-/Traceability-Wiederverwendung, deterministischer one-way GitHub-Wiki-Projektion, kontrollierter inkrementeller Wording-Migration sowie Continuous-Governance-/Release-Closure.",
+  "startedAt": "2026-08-21T23:07:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "6c90c04de8924b8783f23ab4789afa810e9ea3a8",
+  "claimedPaths": [
+    ".ai/registry/ess-registry.json",
+    ".ai/skills/ESS-0017-*.md",
+    ".ai/work-claims/VW-0-VW8-VOCABULARY-WORDING-WIKI-2026-08-21.json",
+    "docs/architecture/VOCABULARY_GOVERNANCE_MIGRATION_ROADMAP.md",
+    "docs/architecture/VOCABULARY_WORDING_WIKI_ARCHITECTURE.md",
+    "docs/governance/vocabulary/**",
+    "docs/roadmaps/work-packages/VW-*.md",
+    "package.json",
+    "scripts/automation/renderVocabularyWiki.ts",
+    "scripts/automation/syncVocabularyWiki.ts",
+    "scripts/automation/validateVocabularyGovernanceClosure.ts",
+    "scripts/automation/validateVocabularyWordingGovernance.ts",
+    "scripts/automation/validateWordingMigration.ts",
+    "src/platform/Documentary/Knowledge/VocabularyWordingDocumentaryProjection.ts",
+    "src/platform/Vocabulary/**"
+  ],
+  "nonGoals": [
+    "Autonomous or pre-PR publication to Finance.wiki.git",
+    "Blind or automatic migration of OPEN hardcoded wording candidates",
+    "Repository-wide mass replacement of user-facing strings",
+    "Supabase Render Stripe IAM Billing or production mutation",
+    "Financial runtime market-data scoring confidence ranking or eligibility behavior changes",
+    "A second Event Bus Knowledge Graph Traceability Store CI control plane or release authority"
+  ],
+  "releaseCondition": "Claim is released when the resulting pull request is merged, closed, superseded or abandoned. Human/CODEOWNER merge remains mandatory."
+}
