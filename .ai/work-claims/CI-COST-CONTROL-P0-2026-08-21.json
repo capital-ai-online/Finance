@@ -25,7 +25,8 @@
     "tests/unit/prGovernanceRunnerConsolidation.test.ts",
     "tests/unit/agentPrBranchSyncCostControl.test.ts",
     "docs/adr/ADR-0073-ci-consolidation-build-and-test.md",
-    "docs/runbooks/CI_BUILD_AND_TEST_CONSOLIDATION.md"
+    "docs/runbooks/CI_BUILD_AND_TEST_CONSOLIDATION.md",
+    "docs/evidence/P2_AGENT_PR_SYNC_FANOUT_CONTROL_2026-08-21.md"
   ],
   "protectedExistingAuthorities": [
     "AGENTS.md M10 SUSPENDED/OFF",
