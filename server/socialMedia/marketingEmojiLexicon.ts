@@ -110,7 +110,8 @@ export function resolveMarketingEmojis(text: string): string[] {
   if (!normalized) return [];
 
   const matches: string[] = [];
-  for (const semantic of Object.values(MARKETING_EMOJI_LEXICON)) {
+  const semantics = Object.values(MARKETING_EMOJI_LEXICON) as MarketingEmojiSemantic[];
+  for (const semantic of semantics) {
     if (semantic.autoApply === false) continue;
     if (!semantic.keywords.some((keyword) => normalized.includes(normalize(keyword)))) continue;
     if (!matches.includes(semantic.emoji)) matches.push(semantic.emoji);
