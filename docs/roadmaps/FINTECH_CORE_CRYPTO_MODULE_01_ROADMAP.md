@@ -1,14 +1,14 @@
 # CAPITAL-AI FinTech Core Engine — Module 01 Enterprise Crypto Orchestration
 
 **Roadmap-ID:** `FT-CORE-CRYPTO-01`  
-**Version:** 1.1.0  
-**Status:** IN IMPLEMENTATION — FT-0 bis FT-2C umgesetzt; FT-3 als naechstes persistentes Gate  
+**Version:** 1.2.0  
+**Status:** IN IMPLEMENTATION — FT-0 bis FT-3 umgesetzt; FT-4 als naechster Roadmap-Block  
 **Owner-Prioritaet:** Chat-Prioritaet 2026-08-20; Synchronisierung/Projekt-Chat-Transfer 2026-08-21  
-**Execution Branch:** `feat/fintech-core-crypto-module-01`  
+**Execution Branch:** `feat/fintech-core-ft3-durable-traceability-v2-2026-08-21`  
 **Original Base:** `main@f1dff495fe792a4d4a26a3513f0525b4974bd349`  
-**Current Sync Baseline:** `main@95dea79cb6c67d7925af2b4c6df59c53baf2b46f`  
-**Work Claim:** `FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20`  
-**Primary Architecture Decision:** `ADR-0099` (`proposed`; remapped from the pre-reservation FinTech draft ADR-0098 after namespace collision with Media Project v2)  
+**FT-3 Continuation Baseline:** `main@5595ec0abe1f1b6755620f3435badbf874d54aba`  
+**Work Claim:** `FINTECH-CORE-FT3-DURABLE-TRACEABILITY-2026-08-21`  
+**Primary Architecture Decision:** `ADR-0099`  
 **Protected Scoring Authority:** `ADR-0087`, `SC-2`, `ScoringModelRegistry`, `ScoringDispatcher`
 
 ## 1. Ziel
@@ -21,8 +21,8 @@ Der Scope umfasst:
 - provenance-faehige Feature-/Evidence-Contracts,
 - technische Pattern- und Multi-Timeframe-Analyse,
 - asset-/timeframe-/regime-spezifische Pattern Reliability,
-- spaetere Risk-/Compliance-/Execution-/Reconciliation-Gates,
-- durable Workflow- und Decision-Evidence ab FT-3.
+- durable Workflow-/Event-/Decision-Evidence,
+- spaetere Risk-/Compliance-/Execution-/Reconciliation-Gates.
 
 ## 2. Nicht verhandelbare Architektur-Invarianten
 
@@ -35,24 +35,19 @@ Der Scope umfasst:
 7. Side-effecting Actions benoetigen vor Retry end-to-end Idempotency.
 8. `GUARDED_LIVE` und `PRODUCTION` bleiben blockiert, bis die spaeteren Gates explizit erfuellt sind.
 9. EventMesh ist kein alleiniger Financial Ledger.
-10. Keine produktive Supabase-/Render-/Exchange-/Custody-Mutation in FT-0 bis FT-2C.
+10. `public.outbox_jobs` bleibt die bestehende Queue-/Lease-Authority; FT-3 fuehrt keine zweite Queue ein.
+11. Das private Schema `fintech_core` wird nicht fuer Browserrollen geoeffnet.
+12. Service-seitige Persistenz bleibt fail-closed und fuehrt keine Execution-Side-Effects aus.
 
 ## 3. Main-Korrelation 2026-08-21
 
-Vor dem Sync war der Branch 62 Commits vor und 135 Commits hinter `main`.
+Der Foundation-Branch wurde vor PR #467 gegen `main@95dea79cb6c67d7925af2b4c6df59c53baf2b46f` synchronisiert. PR #467 wurde anschliessend gemergt und machte die FT-0..FT-2C-Vertraege sowie ADR-0099 auf `main` kanonisch.
 
-Direkt relevante neue Main-Regeln:
+Aktuelle FT-3-Baseline:
 
-- ADR-0098 ist auf `main` fuer `Media Project v2 Timeline Contract` belegt.
-- `docs/adr/registry.json` verlangt fuer neue ADRs eine nachvollziehbare Namespace-Reservierung.
-- Governance-/Documentary- und PR-Baseline-Regeln auf `main` bleiben fuehrend.
+`main@5595ec0abe1f1b6755620f3435badbf874d54aba`
 
-Folge fuer diesen Workstream:
-
-- der FinTech-Draft wird auf `ADR-0099` remapped,
-- historische FT-0..FT-2C-Evidence bleibt erhalten,
-- das Sync-Evidence-Dokument erklaert die historische ADR-0098-Referenz eindeutig,
-- keine neue parallele Scoring-, Queue- oder Governance-Authority wird eingefuehrt.
+Der urspruengliche FT-3-Persistenzbranch war nach dem Merge 69 Commits hinter `main`. Statt Force-Rebase/Overwrite wurde ein neuer Fortsetzungsbranch direkt vom aktuellen `main` erstellt und die verifizierten FT-3-Artefakte dort sauber uebernommen.
 
 ## 4. Aktueller Implementierungsstand
 
@@ -63,7 +58,7 @@ Folge fuer diesen Workstream:
 | FT-2A Crypto Category Profile Resolution | DONE | `FT2A_CRYPTO_CATEGORY_PROFILE_RESOLUTION_2026-08-20.md` |
 | FT-2B Category-specific Feature Contracts | DONE | `FT2B_CRYPTO_CATEGORY_FEATURE_CONTRACTS_2026-08-20.md` |
 | FT-2C Technical Pattern Engine Foundation | DONE | `FT2C_PATTERN_ENGINE_FOUNDATION_2026-08-20.md` |
-| FT-3 Durable Workflow & Traceability | PLANNED | Migration/Security Review ausstehend |
+| FT-3 Durable Workflow & Traceability | DONE | `FT3_DURABLE_WORKFLOW_TRACEABILITY_2026-08-21.md` |
 | FT-4 Research & Paper Trading | PLANNED | nach FT-3 |
 | FT-5 Deterministic Risk + Compliance | PLANNED | nach FT-4 |
 | FT-6 OrderIntent & Reconciliation | PLANNED | nach FT-5 |
@@ -81,12 +76,8 @@ Umgesetzt:
 - Category Analysis Profile Contract,
 - Pattern-/Reliability-/Validation-Contracts,
 - Authority-Boundary-Tests,
-- fail-closed Research-/Scoring-Trennung.
-
-Governance-Migration beim 2026-08-21-Sync:
-
-- FinTech ADR von der historischen Vorreservierungsnummer `ADR-0098` auf `ADR-0099` verschoben,
-- aktueller Main-Stand und ADR-Registry-Regeln korreliert.
+- fail-closed Research-/Scoring-Trennung,
+- ADR-Namespace-Korrelation auf `ADR-0099` bei stabiler Authority-ID.
 
 ## 6. FT-1 — DONE
 
@@ -98,7 +89,7 @@ Umgesetzt:
 - `WorkflowContext`, `DomainEvent`, `DecisionRecord`, `OrderIntent`,
 - deterministische `WorkflowStateMachine`,
 - Crypto Module Descriptor `fintech-core.crypto`,
-- Runtime-Modi fuer diese Phase nur `RESEARCH` und `PAPER`,
+- Runtime-Modi fuer die Foundation nur `RESEARCH` und `PAPER`,
 - explizite Trennung `RETRY_SAFE` / `SIDE_EFFECTING`.
 
 Keine Exchange-/Custody-Side-Effects.
@@ -138,7 +129,7 @@ Umgesetzt:
 
 - detector-agnostischer OHLCV-/Pattern-SPI,
 - immutable Exact-Key `PatternReliabilityRegistry`,
-- deterministische Multi-Timeframe-/Kontextauflosung,
+- deterministische Multi-Timeframe-/Kontextaufloesung,
 - `PatternResearchEngine`,
 - Walk-forward-/Out-of-sample- und Kostenparameter als Research-Validation-Gates,
 - Konflikte bleiben explizite `CONFLICTING_EVIDENCE`,
@@ -150,11 +141,13 @@ Umgesetzt:
 - 1h/4h-Pattern nur nach Reliability-/Conflict-Gate als begrenztes Feature weiterfuehren,
 - kein Double Counting zwischen Timeframes/Pattern-Evidence,
 - externe Detector-Bibliothek erst nach separatem PoC und Supply-Chain-/Lizenzpruefung,
-- TA-Lib bleibt bevorzugter PoC-Kandidat, ist aber noch keine Dependency.
+- TA-Lib bleibt bevorzugter PoC-Kandidat, ist aber keine aktuelle Dependency.
 
-## 10. FT-3 — Durable Workflow & Traceability — PLANNED
+## 10. FT-3 — Durable Workflow & Traceability — DONE
 
-Zielbild nach separatem Migration-/Security-Review:
+### 10.1 Private Persistenz
+
+Produktiv vorhanden:
 
 ```text
 fintech_core.workflow_runs
@@ -164,16 +157,68 @@ fintech_core.order_intents
 fintech_core.reconciliation_records
 ```
 
-Wiederverwendung vor Eigenentwicklung:
+Eigenschaften:
+
+- privates Schema;
+- RLS als Defense in Depth;
+- `anon`/`authenticated` ohne Schema-Zugriff;
+- `service_role` mit Least Privilege;
+- append-only Event-/Decision-/OrderIntent-/Reconciliation-Evidence;
+- immutable Workflow-Identitaet/-Kontext;
+- Workflow-Lifecycle-Updates nur fuer `status`, `sequence`, `updated_at`, `completed_at`;
+- Correlation-/Trace-/FK-Indexes fuer Audit-Rekonstruktion.
+
+### 10.2 Wiederverwendung
+
+Weiterhin fuehrend:
 
 - `public.outbox_jobs`,
 - `public.agent_audit_events`,
 - `public.score_snapshots`,
 - bestehende Traceability/EventMesh-Vertraege.
 
-`pgmq` darf nicht parallel als zweite Queue-Authority eingefuehrt werden. Eine Konvergenz-/Ablosungsentscheidung braucht einen eigenen Architekturentscheid.
+`pgmq` oder eine andere zweite Queue-Authority wurde nicht eingefuehrt.
 
-Vor einer produktiven Supabase-Mutation sind mindestens Schema-/Privilege-/RLS-/Security-Review und die dafuer vorgesehene Produktionsfreigabe erforderlich.
+### 10.3 Application Persistence Boundary
+
+Neu:
+
+- `FinTechCorePersistencePort` als storage-agnostischer Domain-Port;
+- `server/fintechCorePersistence.ts` als privilegierter Supabase-Adapter;
+- fuenf versionierte `public` RPCs als schmale serverseitige Entry-Points.
+
+Die RPCs:
+
+- sind `SECURITY INVOKER`,
+- sind nur fuer `service_role` ausfuehrbar,
+- geben `anon`/`authenticated` kein EXECUTE,
+- oeffnen das private Schema nicht fuer Browser/Data API,
+- erzwingen idempotente Replays bzw. Compare-and-Set bei Workflow-Transitions,
+- fuehren keine Order aus.
+
+### 10.4 Production Verification
+
+Produktionsmigrationen:
+
+- `20260821000550` — `fintech_core_durable_traceability`
+- `20260821000558` — `fintech_core_durable_traceability_least_privilege`
+- `20260821000716` — `fintech_core_fk_indexes`
+- `20260821003628` — `fintech_core_rpc_persistence_boundary`
+
+Verifiziert:
+
+- service-role-only Function EXECUTE;
+- `SECURITY INVOKER` fuer alle fuenf RPCs;
+- idempotente Create-/Event-/Decision-/OrderIntent-Replays;
+- compare-and-set Workflow Transition und Replay;
+- conflicting Event-ID/Payload wird abgelehnt;
+- keine Verifikationsdaten nach Rollback;
+- keine neuen `fintech_core` Security-Advisor-Findings;
+- keine unindexierten `fintech_core` Foreign Keys.
+
+### 10.5 Bewusst nicht in FT-3 erfunden
+
+Der DB-Scaffold fuer `reconciliation_records` ist vorhanden. Ein typed Application-Reconciliation-Contract wird erst in FT-6 eingefuehrt, weil die aktuell kanonischen FinTechCore-Vertraege noch keine Settlement-/Custody-Semantik definieren.
 
 ## 11. FT-4 bis FT-9
 
@@ -195,6 +240,7 @@ Vor einer produktiven Supabase-Mutation sind mindestens Schema-/Privilege-/RLS-/
 - immutable/hash-bound OrderIntent,
 - TTL und Price/Quantity/Slippage Bounds,
 - Idempotency/Client-Order-ID,
+- typed Reconciliation-/Settlement-Vertrag,
 - Reconciliation- und Crash-/Duplicate-Tests.
 
 ### FT-7 Guarded Live
@@ -211,39 +257,38 @@ DEX/Aggregator-, Smart-Contract-, Bridge-, Oracle- und Cross-Chain-Risk/Settleme
 
 ## 12. Offene Projekt-Chat-Punkte
 
-Noch **nicht** als erledigt uebertragen:
+Noch nicht als erledigt markiert:
 
-- erneute Pruefung der externen/Drive-Quell-PDF, falls fuer konkrete Formeln erforderlich,
-- FT-3 Supabase-Migration,
+- erneute externe/Drive-Quellpruefung, falls konkrete Formeln erforderlich werden,
 - privater Storage-/Evidence-Bucket,
 - Pattern-Badge-/UI-Integration,
 - produktive Risk-/Compliance-/Execution-Adapter,
-- Render-/Supabase-Produktionsmutationen,
 - Guarded Live/Production,
-- PR/Merge.
+- FT-4 bis FT-9,
+- Merge des FT-3-PRs.
 
 ## 13. Security / Compliance / Data Integrity
 
-Der aktuelle Sync veraendert keine produktiven Finanzwerte und keine Laufzeitintegration ausserhalb des FinTechCore-Branch-Scopes.
-
 Weiterhin verpflichtend:
 
-- fail-closed bei fehlender/staler Evidence,
+- fail-closed bei fehlender/staler Evidence oder Persistenzfehlern,
 - keine zweite Scoring Authority,
 - keine direkte LLM-/Agent-Side-Effect-Capability,
 - Idempotency vor Side-Effect-Retry,
 - provenance-faehige Evidence,
 - klare Runtime-Modi,
+- Least Privilege und private financial persistence,
 - Human/Governance-Gates fuer spaetere produktive Mutationen.
 
 ## 14. Open Source / Plugins
 
 - Bestehende Repository-Funktionen bleiben fuehrend.
 - GitHub wird fuer Branch-/Registry-/PR-Governance genutzt.
-- Supabase und Render werden erst in den dafuer vorgesehenen produktiven Phasen mutiert.
-- TA-Lib: BSD-3-Clause, gepflegter PoC-Kandidat fuer Standard-Indikatoren/Candlestick-Primitives; keine Integration in diesem Sync.
+- Supabase/PostgreSQL ist die bestehende FT-3-Persistenzplattform.
+- Kein neuer Postgres-Client wurde aufgenommen; `@supabase/supabase-js` plus bestehender privilegierter Server-Client werden wiederverwendet.
+- TA-Lib bleibt BSD-3-Clause-PoC-Kandidat fuer spaetere technische Indikator-/Candlestick-Primitives; keine aktuelle Integration.
 - Projektspezifische Context-/Reliability-/Governance-Semantik bleibt CAPITAL-AI-eigene Schicht.
 
 ## 15. Naechster fachlicher Schritt
 
-Nach Abschluss des Main-/Governance-Syncs ist **FT-3 Durable Workflow & Traceability** der naechste Roadmap-Block. Vor einer Migration werden bestehende Supabase-/Outbox-/Audit-Primitives erneut gegen den dann aktuellen `main` geprueft; es wird keine zweite Persistenz- oder Queue-Authority parallel aufgebaut.
+Nach FT-3 ist **FT-4 Research & Paper Trading** der naechste fachliche Roadmap-Block. Vor dessen Umsetzung ist der FT-3-Branch gemaess Governance erneut gegen den dann aktuellen `main` zu korrelieren und ueber einen eigenen PR mit Post-PR-CI zu validieren.

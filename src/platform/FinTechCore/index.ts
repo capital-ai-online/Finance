@@ -3,6 +3,7 @@ export * from './CoreModuleRegistry';
 export * from './CoreEngine';
 export * from './CryptoModuleContracts';
 export * from './Runtime/WorkflowStateMachine';
+export * from './Persistence/FinTechCorePersistencePort';
 export * from './Modules/Crypto/CryptoCoreModule';
 export * from './Modules/Crypto/CryptoCategoryProfileResolver';
 export * from './Modules/Crypto/CryptoCategoryFeatureContracts';
