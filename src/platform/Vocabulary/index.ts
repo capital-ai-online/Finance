@@ -45,16 +45,15 @@ export { WordingUsageIndex, scanWordingUsages } from './Usage/WordingUsageIndex'
 export { MessageDeliveryAdapter, type MessageValues } from './Delivery/MessageDeliveryAdapter';
 export { createMessageDeliveryAdapters, type MessageDeliveryAdapters } from './Delivery/createMessageDeliveryAdapters';
 export {
-  projectVocabularyGovernance,
-  VOCABULARY_GOVERNANCE_NON_AUTHORIZING_STATEMENT,
-  VOCABULARY_GOVERNANCE_PROJECTION_AUTHORITY,
-  VOCABULARY_GOVERNANCE_PROJECTION_SCHEMA,
-  type VocabularyDocumentaryProjection,
-  type VocabularyGovernanceProjection,
-  type VocabularyKnowledgeNode,
-  type VocabularyKnowledgeRelationship,
-  type VocabularyTraceabilityEdge,
-} from './Projection/VocabularyGovernanceProjection';
+  createVocabularyWordingSnapshot,
+  VOCABULARY_WORDING_NON_AUTHORIZING_STATEMENT,
+  VOCABULARY_WORDING_SNAPSHOT_AUTHORITY,
+  VOCABULARY_WORDING_SNAPSHOT_SCHEMA,
+  type VocabularyWordingConceptSnapshot,
+  type VocabularyWordingMessageSnapshot,
+  type VocabularyWordingSnapshot,
+  type VocabularyWordingStageSnapshot,
+} from './Projection/VocabularyWordingSnapshot';
 
 import { VocabularyRegistry } from './Registry/VocabularyRegistry';
 import { seedConcepts } from './Registry/seedConcepts';
