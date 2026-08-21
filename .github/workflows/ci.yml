@@ -382,13 +382,52 @@ jobs:
           test "$(docker image inspect "capital-ai-ci:$RELEASE_SOURCE_COMMIT" --format '{{json .Config.Cmd}}')" = '["node","dist/server.cjs"]'
           docker image inspect "capital-ai-ci:$RELEASE_SOURCE_COMMIT" --format '{{json .Config.Healthcheck.Test}}' | grep -q '/healthz'
 
+      - name: P2B Provenance-Bindung an gehosteten main-Build erzwingen
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npx tsx scripts/security/verifySupplyChainProvenance.ts --require-ci
+
+      - name: P2B cosign für main-Provenance installieren
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
+      - name: P2B Provenance keyless signieren (Sigstore/Fulcio/Rekor)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          cosign sign-blob --yes \
+            --bundle dist/security/provenance.json.sigstore.json \
+            dist/security/provenance.json
+
+      - name: P2B Signatur gegen erwartete Workflow-Identität verifizieren
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          cosign verify-blob \
+            --bundle dist/security/provenance.json.sigstore.json \
+            --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            dist/security/provenance.json
+
+      - name: P2B Supply-Chain-Artefakte aus demselben main-Build ablegen
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: supply-chain-provenance-${{ github.sha }}
+          path: |
+            dist/security/sbom.cdx.json
+            dist/security/provenance.json
+            dist/security/provenance.json.sigstore.json
+            dist/control-plane/release-manifest.json
+          retention-days: 90
+          if-no-files-found: error
+
   deploy-production:
     name: Deployment verifiziert / Render-Produktion
-    needs: [build-and-test, supply-chain-attestation]
-    if: ${{ needs.build-and-test.result == 'success' && needs.supply-chain-attestation.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: [build-and-test]
+    if: ${{ needs.build-and-test.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     environment: production
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 12
     steps:
       - name: Render-Deployment für verifizierten main-Commit auslösen
         env:
@@ -403,28 +442,20 @@ jobs:
             --request POST \
             "${RENDER_DEPLOY_HOOK_URL}${separator}ref=${VERIFIED_COMMIT_SHA}"
 
-  verify-deployment-identity:
-    name: Deployment-Identität post-verifizieren
-    needs: [deploy-production]
-    if: ${{ needs.deploy-production.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Repository auschecken
+      - name: Repository für post-deploy Verifikation auschecken
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 1
           persist-credentials: false
 
-      - name: Node.js einrichten
+      - name: Node.js für post-deploy Verifikation einrichten
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: '24.18.0'
           cache: 'npm'
 
-      - name: Abhängigkeiten installieren
+      - name: Abhängigkeiten für post-deploy Verifikation installieren
         run: npm ci
 
       - name: Deployte Commit-Identität und Health gegen erwarteten main-Commit verifizieren
@@ -438,68 +469,5 @@ jobs:
         with:
           name: deployment-identity-evidence-${{ github.sha }}
           path: artifacts/deployment/deployment-identity-evidence.json
-          retention-days: 90
-          if-no-files-found: error
-
-  supply-chain-attestation:
-    name: Supply-Chain-Provenance / Attestation
-    needs: [build-and-test]
-    if: ${{ needs.build-and-test.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    permissions:
-      contents: read
-      id-token: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Vertrauenswürdigen main-Stand auschecken
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          ref: main
-          fetch-depth: 1
-          persist-credentials: false
-
-      - name: Node.js einrichten
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          node-version: '24.18.0'
-          cache: 'npm'
-
-      - name: Abhängigkeiten installieren
-        run: npm ci
-
-      - name: Produktions-Build und Supply-Chain-Kette erzeugen
-        run: |
-          npm run build
-          npm run predeploy:check
-
-      - name: Provenance-Bindung an gehosteten Build-Pfad erzwingen
-        run: npx tsx scripts/security/verifySupplyChainProvenance.ts --require-ci
-
-      - name: cosign installieren
-        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
-
-      - name: Provenance keyless signieren (Sigstore/Fulcio/Rekor)
-        run: |
-          cosign sign-blob --yes \
-            --bundle dist/security/provenance.json.sigstore.json \
-            dist/security/provenance.json
-
-      - name: Signatur gegen erwartete Workflow-Identität verifizieren
-        run: |
-          cosign verify-blob \
-            --bundle dist/security/provenance.json.sigstore.json \
-            --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/ci.yml@refs/heads/main" \
-            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-            dist/security/provenance.json
-
-      - name: Supply-Chain-Artefakte als Workflow-Artefakt ablegen
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: supply-chain-provenance-${{ github.sha }}
-          path: |
-            dist/security/sbom.cdx.json
-            dist/security/provenance.json
-            dist/security/provenance.json.sigstore.json
-            dist/control-plane/release-manifest.json
           retention-days: 90
           if-no-files-found: error
