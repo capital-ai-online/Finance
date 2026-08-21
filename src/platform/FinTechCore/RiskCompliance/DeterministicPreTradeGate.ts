@@ -254,32 +254,27 @@ export function evaluateDeterministicComplianceGates(
 export function evaluatePreTradeAuthorization(
   input: FinTechCorePreTradeEvaluationInput,
 ): FinTechCorePreTradeAuthorizationDecision {
-  if (input.context.operatingMode === 'RESEARCH' || input.context.operatingMode === 'EMERGENCY') {
-    const risk = evaluateDeterministicRiskGates(input);
-    const compliance = evaluateDeterministicComplianceGates(input);
-    return Object.freeze({
-      contractVersion: FINTECH_CORE_RISK_COMPLIANCE_CONTRACT_VERSION,
-      risk,
-      compliance,
-      executionHandoffEligible: false,
-      evaluatedAt: input.evaluatedAt,
-    });
-  }
-
   const risk = evaluateDeterministicRiskGates(input);
   const compliance = evaluateDeterministicComplianceGates(input);
+  const liveHandoffMode = input.context.operatingMode === 'GUARDED_LIVE'
+    || input.context.operatingMode === 'PRODUCTION';
+
   return Object.freeze({
     contractVersion: FINTECH_CORE_RISK_COMPLIANCE_CONTRACT_VERSION,
     risk,
     compliance,
-    executionHandoffEligible: risk.outcome === 'APPROVED' && compliance.outcome === 'APPROVED',
+    executionHandoffEligible: liveHandoffMode
+      && risk.outcome === 'APPROVED'
+      && compliance.outcome === 'APPROVED',
     evaluatedAt: input.evaluatedAt,
   });
 }
 
 /**
- * Creates an approval-bound immutable copy only after both FT-5 gates pass and identity matches.
- * This function does not sign, persist, route or execute the intent; FT-6/FT-7 own those concerns.
+ * Creates an approval-bound immutable copy only after both FT-5 gates pass, a future live-capable
+ * mode is explicitly present and identity matches. This function does not sign, persist, route or
+ * execute the intent; FT-6/FT-7 own those concerns. Crypto Module 01 still does not activate live
+ * modes in FT-5.
  */
 export function authorizeOrderIntentForHandoff(
   intent: FinTechCoreOrderIntent,
@@ -290,7 +285,7 @@ export function authorizeOrderIntentForHandoff(
   if (!authorization.executionHandoffEligible
     || authorization.risk.outcome !== 'APPROVED'
     || authorization.compliance.outcome !== 'APPROVED') {
-    return Object.freeze({ status: 'BLOCKED', reason: 'Risk and compliance must both be APPROVED.' });
+    return Object.freeze({ status: 'BLOCKED', reason: 'Risk and compliance must both be APPROVED in an eligible live handoff mode.' });
   }
   if (intent.runId !== context.runId
     || intent.traceId !== context.traceId
