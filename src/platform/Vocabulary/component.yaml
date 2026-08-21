@@ -14,11 +14,13 @@ component:
 purposeDE: >
   Kanonische Registry für Terminologie und zweisprachiges Produkt-Wording mit
   Message Catalog, FinTech-Wertschöpfungsketten-Projektion, Usage Index,
-  Delivery-Adaptern und deterministischer Documentary-/Knowledge-/Traceability-Projektion.
+  Delivery-Adaptern und neutralem, commitgebundenem Wording-Snapshot für den
+  bestehenden Documentary-/Knowledge-/Traceability-Handoff.
 purposeEN: >
   Canonical registry for terminology and bilingual product wording with a
   Message Catalog, FinTech value-chain projection, Usage Index, delivery adapters
-  and deterministic Documentary/Knowledge/Traceability projection.
+  and a neutral commit-bound wording snapshot consumed by the existing
+  Documentary/Knowledge/Traceability handoff.
 
 responsibilities:
   - Canonical concept identities
@@ -29,7 +31,7 @@ responsibilities:
   - Read-only 18-stage SC-MD-SPT-0001 wording bindings
   - Evidence-based Wording Usage Index
   - React PDF Email SEO Accessibility delivery adapters
-  - Commit-bound Documentary Knowledge Traceability projection
+  - Commit-bound neutral Vocabulary Wording Snapshot
 
 notResponsibleFor:
   - Financial runtime decisions
@@ -38,6 +40,7 @@ notResponsibleFor:
   - IAM entitlement billing or compliance authorization
   - Active code renames outside Safe Rename Gate
   - Event routing
+  - Documentary Knowledge or Traceability implementation
   - Knowledge Graph persistence
   - Traceability persistence
   - GitHub Wiki publication before VW-6
@@ -51,7 +54,7 @@ structure:
   ValueChain: Read-only FinTech stage bindings
   Usage: Source usage index and reverse-impact evidence
   Delivery: Surface-specific read-only message adapters
-  Projection: Documentary Knowledge Traceability handoff
+  Projection: Neutral Vocabulary Wording Snapshot
   Services: Read-oriented terminology access
   Validators: Concept message and cross-contract validation
   Tests: Contract tests
@@ -74,7 +77,13 @@ interfaces:
   - ValueChain/FintechWordingBinding.ts
   - Usage/WordingUsage.ts
   - Delivery/MessageDeliveryAdapter.ts
-  - Projection/VocabularyGovernanceProjection.ts
+  - Projection/VocabularyWordingSnapshot.ts
+
+integration:
+  documentaryConsumer: src/platform/Documentary/Knowledge/VocabularyWordingDocumentaryProjection.ts
+  rule: >
+    Vocabulary does not depend on Documentary. Documentary consumes the neutral snapshot and reuses
+    DocumentaryDocument, DocumentaryKnowledgeProjection and DocumentaryTraceability contracts.
 
 references:
   ess:
@@ -93,9 +102,11 @@ references:
 
 implementationStatusDE: >
   VW-0 bis VW-5 implementiert. Message Catalog, 18-stufige FinTech-Wording-Projektion,
-  Usage Index, Delivery Adapter und commitgebundene Documentary-/Knowledge-/Traceability-Projektion
-  sind vorhanden. Wiki-Publish und UI-Massenmigration bleiben VW-6/VW-7.
+  Usage Index, Delivery Adapter und commitgebundener neutraler Wording-Snapshot sind vorhanden.
+  Documentary konsumiert den Snapshot über bestehende D7-/Traceability-Contracts.
+  Wiki-Publish und UI-Massenmigration bleiben VW-6/VW-7.
 implementationStatusEN: >
   VW-0 through VW-5 implemented. Message Catalog, complete 18-stage FinTech wording projection,
-  Usage Index, delivery adapters and commit-bound Documentary/Knowledge/Traceability projection
-  are present. Wiki publish and mass UI migration remain VW-6/VW-7.
+  Usage Index, delivery adapters and a commit-bound neutral wording snapshot are present.
+  Documentary consumes the snapshot through existing D7/Traceability contracts.
+  Wiki publish and mass UI migration remain VW-6/VW-7.
