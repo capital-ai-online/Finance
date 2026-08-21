@@ -21,8 +21,9 @@
     ".ai/work-claims/GOVERNANCE-CONVERGENCE-RUNTIME-EXECUTION-2026-08-21.json",
     "server/systemEvents.ts",
     "server/systemEvents/systemEventJournal.ts",
+    "server/marketData/createApplicationMarketDataRuntime.ts",
     "src/platform/Supervisor/Execution/AsyncExecutionPort.ts",
-    "supabase/migrations/20260821210000_system_event_journal.sql",
+    "supabase/migrations/20260821183300_system_event_journal.sql",
     "tests/unit/systemEventJournal.test.ts",
     "tests/unit/asyncExecutionPort.test.ts",
     "docs/roadmaps/work-packages/GOVERNANCE_CONVERGENCE_RUNTIME_EXECUTION_2026-08-21.md",
@@ -47,8 +48,8 @@
       "headAfterMainSync": "b8a78220c671df8cb3c35dfc5ba719b972e6ce69",
       "directPathOverlap": []
     },
-    "finding": "The work item is stacked on the synchronized PR #471 head. It must project/reuse existing Governance, Documentary, audit, Supervisor and Render authorities rather than introducing a second control plane, audit stack, domain orchestrator or roadmap authority."
+    "finding": "The work item is stacked on the synchronized PR #471 head. It projects/reuses existing Governance, Documentary, audit, Supervisor and Render authorities rather than introducing a second control plane, audit stack, domain orchestrator or roadmap authority."
   },
   "externalMutationScope": "none; Supabase migration is repository-only handoff and is not applied to production by this work item",
-  "releaseCondition": "Release after stacked PR merge/closure/supersession/abandonment. Production activation of a durable system-event table or Render Workflows adapter requires a separate Owner-authorized production handoff."
+  "releaseCondition": "Release after stacked PR merge/closure/supersession/abandonment. Production activation of the durable system-event table or a Render Workflows adapter requires a separate Owner-authorized production handoff."
 }
