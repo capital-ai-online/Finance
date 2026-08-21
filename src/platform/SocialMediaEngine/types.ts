@@ -111,6 +111,11 @@ export interface GeneratedMediaItem {
     twitterThread: string[];
     instagramCaption: string;
     tiktokDescription: string;
+    /** Added by the maintained CAPITAL-AI template path. Optional here for compatibility
+     * with legacy handover producers that do not yet emit the expanded channel pack. */
+    youtubeDescription?: string;
+    facebookPost?: string;
+    supportEmail?: string;
     hashtags: string[];
     ctaButtonText: string;
   };
