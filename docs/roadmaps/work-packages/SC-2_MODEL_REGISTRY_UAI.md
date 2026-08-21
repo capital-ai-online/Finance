@@ -1,13 +1,14 @@
 # SC-2 — Model Registry & Universal Asset Interface
 
 **SPT:** `SC-MD-SPT-0001`  
-**Version:** 1.0.7  
-**Status:** IN IMPLEMENTATION — Phase C3 global multi-asset exit implemented, validation pending  
-**Execution Branch:** `agent/sc2-global-multi-asset-exit`  
-**Pull Request:** #435  
-**Baseline:** `main@3ed2b2e9c9421bc979ca2487610a6a49a655e888`  
-**Historical Integration:** PR #418 stack; #421 `/score`; #424 `/list` + `/top10`; #427 C1; #428 C2a; #430 C2b; all Human-merged after required main revalidation  
+**Version:** 1.0.8  
+**Status:** C3 LANDED — P0 MULTI-CLASS INTEGRITY IN IMPLEMENTATION  
+**Execution Branch:** `feature/fintech-orchestrator-p0-multiclass-integrity`  
+**Pull Request:** pending  
+**Baseline:** `main@6c90c04de8924b8783f23ab4789afa810e9ea3a8`  
+**Historical Integration:** PR #418 stack; #421 `/score`; #424 `/list` + `/top10`; #427 C1; #428 C2a; #430 C2b; #435 C3 global multi-asset exit; all Human-merged after required main revalidation  
 **Start:** 2026-08-19  
+**P0-Revalidation:** 2026-08-21  
 **ADRs:** ADR-0087, ADR-0088, ADR-0089, ADR-0090
 
 ## Ziel
@@ -37,7 +38,7 @@ Kein öffentlicher produktiver Score-Pfad darf Modellwahl, Evidence-Bypass oder 
 
 ## A1 — Architecture Freeze & Parallel-Path Inventory
 
-| Pfad | Rolle nach C3-Branch | Ziel |
+| Pfad | Rolle nach C3 | Ziel |
 |---|---|---|
 | `/api/crypto/score`, `/list`, `/top10` | Dispatcher | kanonisch |
 | `/api/crypto/analyze` | Research/Enrichment-only | keine Score-Wirkung |
@@ -103,10 +104,10 @@ Runbook: `docs/runbooks/GEMINI_RESEARCH_SHADOW.md`.
 
 - [x] `/api/crypto/score` über UAI + Registry — PR #421
 - [x] `/api/crypto/list` + `/api/crypto/top10` — PR #424
-- [x] Traditional stock/forex/index mit CanonicalResultAdapter — C3 Branch
-- [x] Commodity/Sovereign Executor hinter Dispatcher gebunden — C3 Branch
-- [x] Registry routes über UAI + Registry + Dispatcher — C3 Branch
-- [x] Meme produktiv über Crypto-Champion/Dispatcher; Raw-Materials Structural Score research-only — C3 Branch
+- [x] Traditional stock/forex/index mit CanonicalResultAdapter — C3
+- [x] Commodity/Sovereign Executor hinter Dispatcher gebunden — C3
+- [x] Registry routes über UAI + Registry + Dispatcher — C3
+- [x] Meme produktiv über Crypto-Champion/Dispatcher; Raw-Materials Structural Score research-only — C3
 - [x] `/api/crypto/analyze` Research-/Enrichment-only — PR #427
 
 ## Phase C — Single Dispatcher Exit
@@ -145,7 +146,7 @@ Evidence: `docs/evidence/sc-md/SC2_COMPOSITION_ROOT_CRYPTO_EXIT_2026-08-19.md`.
 
 Evidence: `docs/evidence/sc-md/SC2_PHYSICAL_LEGACY_CRYPTO_CLEANUP_2026-08-19.md`.
 
-### C3 — Global Multi-Asset Exit — IMPLEMENTED, VALIDATION PENDING
+### C3 — Global Multi-Asset Exit — LANDED
 
 - [x] Traditional/Commodity/Sovereign/Meme/Raw-Materials produktive Adapter in Dispatcher gebunden bzw. Research-only retired
 - [x] Registry productive scoring routes importieren keine Traditional/Commodity/Sovereign Scoring Engine direkt
@@ -157,45 +158,84 @@ Evidence: `docs/evidence/sc-md/SC2_PHYSICAL_LEGACY_CRYPTO_CLEANUP_2026-08-19.md`
 - [x] repo-weite Traceability enthält UAI assetId + modelId/version/alias/executor
 - [x] repo-weiter struktureller Test beweist Single-Dispatcher-Reachability-Invariante
 - [x] bestehende C2 Runtime-/Composition-Tests auf globale C3-Semantik aktualisiert
-- [x] PR #435 erst nach Abschluss der statischen Pre-PR-Arbeit für zwingende Repository-Validierung erstellt
-- [x] PR-Creation-Race mit Merge von #432 erkannt und Branch verlustfrei auf `main@3ed2b2e9...` synchronisiert; `DOC-ADR-0091` erhalten
-- [ ] Governance PASS auf finalem Head
-- [ ] M10 Owner-Passkey `AUTHORIZE_PR_CI` auf exaktem PR-Head
-- [ ] required CI PASS
-- [ ] Post-CI Main-/Open-PR-Race-Check; #433 Registry-Einträge bei vorherigem Merge additiv reconciliieren
-- [ ] Human/CODEOWNER Merge
+- [x] Governance/required CI auf finalem PR-Head abgeschlossen
+- [x] M10 Owner-Passkey `AUTHORIZE_PR_CI` auf finalem PR-Head erfolgt
+- [x] finaler Main-/Open-PR-Race-Check abgeschlossen
+- [x] Human Merge PR #435
 
-**Global Phase C bleibt `IN IMPLEMENTATION`, bis C3 validiert und Human-gemerged ist.**
+**Global Phase C ist mit PR #435 LANDED.** Die produktive Execution-Authority bleibt ein einzelner `ScoringDispatcher`.
 
-## Nicht-Ziele
+## Phase D — P0 Multi-Class Integrity Hardening — IN IMPLEMENTATION
 
-- keine Änderung von Scoring-Gewichten;
+**Priorität:** P0 aus dem Scoring-Architektur-Precheck vom 2026-08-21.  
+**Evidence:** `docs/evidence/sc-md/SC2_P0_MULTICLASS_INTEGRITY_2026-08-21.md`.
+
+- [x] Crypto Champion auf `crypto-technical-provenance@0.7.0` versioniert
+- [x] Meme-/DeFi-Modelle ausschließlich als `challenger`, `research-only`, `scoreEligible=false`
+- [x] `exchange_liquidity` und `regime_bonus` aus produktiver Crypto-Faktorautorität entfernt
+- [x] Caller-Classification aus Rank-Score-/Top-N-Autorität entfernt
+- [x] `scoring-integrity/1.1.0` um effektive Feature-/Weight-Lineage erweitert
+- [x] deterministische SHA-256 Effective-Feature-/Weight-Fingerprints implementiert
+- [x] Evidence-Contract-Version in Feature-/Weight-Fingerprint gebunden
+- [x] Nominal-Weights-Version in Effective-Weight-Fingerprint gebunden
+- [x] `market-evidence-dq/1.0.0` als assetklassenneutrales Evidence-/Freshness-Envelope ergänzt
+- [x] `VERIFIED` ohne Provenance oder innerhalb des Labels bereits veraltete Evidence fail-closed
+- [x] `universe-sla/1.0.0` mit realem 24-Asset-Ziel je Klasse/Unterkategorie und No-Demo-Semantik ergänzt
+- [x] fokussierte P0-Negativ-/Replay-Regressionen ergänzt
+- [x] ADR-0087 innerhalb bestehender Authority revalidiert; keine neue ADR erzeugt
+- [x] P0-Evidence dokumentiert
+- [ ] TypeScript-/fokussierte Unit-Test-Validierung lokal/kostenarm ausführen
+- [ ] vollständige lokale/kostenarme Scope-Validierung soweit verfügbar
+- [ ] finalen `main` erneut laden, neue Main-Änderungen korrelieren und Branch synchronisieren
+- [ ] Draft PR erst nach erfolgreichem finalen Main-Sync erstellen
+
+### P1-Folgepunkt nach P0
+
+`UniverseSla` wird in die bestehende Discovery-/Evidence-Admission-/UI-Kette verdrahtet. Ziel ist die reale Verfügbarkeit von mindestens 24 Assets je Klasse/Unterkategorie. Fehlende Abdeckung bleibt transparent und darf weder durch synthetische Assets noch durch einen parallelen Provider-/Dispatcher-Pfad geschlossen werden.
+
+## Change Boundaries / Nicht-Ziele
+
+- C3 selbst änderte keine Scoring-Gewichte; die aktuelle P0-Härtung enthält **eine explizit versionierte Crypto-0.7.0-Modelländerung**, die nicht symmetrisch belegbare Legacy-Faktoren aus der kanonischen Faktorautorität entfernt.
 - keine Änderung von Ranking-/Eligibility-Schwellen;
 - kein `scoreImpact`-/`rankingImpact`-Flip;
 - kein Market-Data-Provider-Routing-/executionPriceEligible-Flip;
 - keine neuen synthetischen/LLM-basierten Finanzmerkmale;
 - keine automatische Evidence-Promotion aus AI-Ausgaben;
-- keine Gemini-Aufnahme in Anthropic/OpenAI-Agent-Routing;
-- **keine kostenpflichtige Gemini-Nutzung**.
+- keine neue Scoring-, Dispatcher-, Governance- oder Provenance-Architektur;
+- keine kostenpflichtige Provider-Nutzung als Voraussetzung dieser P0-Härtung.
 
-## Enterprise-/FinTech-Abgleich — verifiziert 2026-08-19
+## Enterprise-/FinTech-Abgleich — revalidiert 2026-08-21
 
-Die am 17.04.2026 veröffentlichte Federal Reserve/OCC/FDIC Revised Guidance on Model Risk Management (SR 26-2) dient als aktueller Enterprise-Benchmark für den deterministischen Modellbestand. Das relevante Engineering-Muster ist die Verbindung von intended model use, inventory, governance/controls, validation, Dokumentation und laufendem Monitoring. C3 reduziert die verbleibenden produktiven Multi-Asset-Modellexecution-Surfaces auf eine identifizierbare UAI-/Registry-/Dispatcher-Autorität und bindet Modell-ID, Version, Alias und Executor an die Runtime-Lineage.
+Die am 17.04.2026 veröffentlichte Federal Reserve/OCC/FDIC Revised Guidance on Model Risk Management (SR 26-2 / OCC Bulletin 2026-13) dient weiterhin als aktueller Enterprise-Benchmark für den deterministischen Modellbestand. Das relevante Engineering-Muster ist die Verbindung von intended model use, inventory, governance/controls, validation, Dokumentation und laufendem Monitoring. P0 stärkt insbesondere Model Inventory/Champion Authority, Evidence-Qualität, revisionssensitive Lineage und reproduzierbare effektive Gewichte.
 
-NIST AI RMF 1.0 bleibt ergänzender freiwilliger Lifecycle-/Traceability-Benchmark; NIST weist aktuell darauf hin, dass AI RMF 1.0 überarbeitet wird. Eine spätere finale Revision wird nicht vorweggenommen.
+NIST AI RMF 1.0 bleibt ergänzender freiwilliger Lifecycle-/Traceability-/TEVV-Benchmark. Etablierte OSS-Muster aus MLflow Model Registry, OpenLineage und Feast wurden geprüft; ein Runtime-Einbau wurde für P0 verworfen, weil die vorhandene Git-gesteuerte Registry-/Evidence-/Lineage-Architektur bereits dieselbe fachliche Rolle erfüllt und zusätzliche Komponenten Duplikation, Dependencies und Betriebsaufwand erzeugen würden.
 
-## Main-Korrelation 2026-08-19
+## Main-Korrelation
+
+### 2026-08-19 — C3
 
 - PR #427 C1 Human-gemerged.
 - PR #428 C2a Human-gemerged.
-- PR #430 C2b Human-gemerged. Unmittelbar davor wurde PR #429 M10 Controlled Cutover gemerged; #430 wurde danach mit `main@00be77c3...` synchronisiert und enthielt gegen diese Basis weiterhin exakt die sieben C2b-Dateien.
-- C3 startete von `main@2d8e482174e97601d4343249e50d208ccf6f6355` auf `agent/sc2-global-multi-asset-exit`.
-- Beim statischen Pre-PR-Abgleich war C3 `6 ahead / 0 behind`, 22 Dateien. PR #432 und #433 hatten jeweils nur `docs/governance/document-registry.json` als direkten Overlap; keine Scoring-/Runtime-Datei.
-- Während PR #435 angelegt wurde, merge-te #432 und verschob Main auf `3ed2b2e9c9421bc979ca2487610a6a49a655e888`. C3 wurde sofort als zweiparentiger Main-Sync reconciled; alle #432-Dateien und `DOC-ADR-0091` sind erhalten.
-- PR #433 ist weiterhin additive M10-Closure-Parallel-Arbeit und muss bei vorherigem Merge vor C3-Merge-Readiness in der Document Registry berücksichtigt werden.
-- Nach #429 gilt für neue kostenintensive PR-CI der M10 Passkey/WebAuthn `AUTHORIZE_PR_CI`-Pfad; Human Merge bleibt separat.
-- Die durch PR #414 entstandene ADR-0086-Nummernkollision bleibt separates Governance-Remediation-Item; ADR-0087 ist die fachliche Single-Scoring-Architecture-Authority.
+- PR #430 C2b Human-gemerged.
+- C3 wurde mehrfach mit zwischenzeitlichen Main-Merges reconciled und schließlich via PR #435 Human-gemerged.
+- ADR-0087 bleibt die fachliche Single-Scoring-Architecture-Authority.
+
+### 2026-08-21 — P0 Multi-Class Integrity
+
+- P0-Branch wurde von `main@6c90c04de8924b8783f23ab4789afa810e9ea3a8` übernommen.
+- initialer Compare: 15 Commits ahead / 0 behind; Merge-Base exakt dieser Main-Commit.
+- der Branch setzt auf dem bereits gemergten C3-Dispatcher auf und erzeugt keinen zweiten Execution-Pfad.
+- vor Draft-PR-Erstellung ist ein **erneuter** Current-Main-Load samt semantischer Korrelation und Synchronisierung verpflichtend.
 
 ## Definition of Done SC-2
 
-SC-2 ist erst `LANDED`, wenn alle produktiven Score-Einstiegspunkte über UAI + Registry + einen kanonischen Dispatcher laufen und kein paralleler Model-Selection-Pfad mehr einen extern sichtbaren produktiven Score erzeugen kann. Research-/AI-Provider dürfen nur über die kanonische Research/Evidence-Grenze einspeisen. Vor PR-Abschluss wird jeder ausführende Branch erneut gegen den aktuellen `main` verglichen und bei Korrelationen angepasst. Seit M10 Controlled Cutover muss kostenintensive PR-CI zusätzlich für den exakten aktuellen Head durch den Owner-Passkey-Pfad autorisiert werden.
+SC-2 besitzt seit C3 genau einen produktiven UAI-/Registry-/Dispatcher-Exit. Weitere Härtungen dürfen diese Authority nur versioniert erweitern, nicht duplizieren. Für die aktuelle P0-Phase gilt als abgeschlossen, wenn:
+
+1. produktive Modell- und Faktorautorität eindeutig und versioniert ist;
+2. Challenger keine implizite Score-Wirkung besitzen;
+3. Evidence-/Freshness-Gates fail-closed sind;
+4. effektive Feature-/Weight-Semantik reproduzierbar und revisionssensitiv in der Lineage gebunden ist;
+5. das 24-Asset-Ziel ausschließlich aus realen, zugelassenen Assets bewertet wird;
+6. fokussierte und erforderliche lokale/kostenarme Validierung erfolgreich ist;
+7. Branch unmittelbar vor PR gegen den aktuellen `main` synchronisiert und auf semantische Korrelationen geprüft wurde;
+8. erst danach der Draft PR erstellt wird; kostenverursachende GitHub-CI folgt erst nach PR-Erstellung.
