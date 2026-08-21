@@ -1,6 +1,7 @@
 // ADR-0054 / R-101: the outbox worker must dispatch a claimed job to its registered handler,
 // complete on success, and record a failure (never throw out of the poll loop) on handler error
-// or on a missing handler registration.
+// or on a missing handler registration. The bounded drain seam is the only reusable execution
+// entry point for future external worker hosts; durable retry authority remains the outbox.
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,7 +17,12 @@ vi.mock('../../server/outbox', () => ({
   failOutboxJob: mocks.failOutboxJob,
 }));
 
-import { processOneOutboxJob, registerOutboxJobHandler } from '../../server/outboxWorker';
+import {
+  drainOutboxJobs,
+  OUTBOX_MAX_JOBS_PER_DRAIN,
+  processOneOutboxJob,
+  registerOutboxJobHandler,
+} from '../../server/outboxWorker';
 
 describe('server/outboxWorker (ADR-0054 / R-101)', () => {
   beforeEach(() => {
@@ -71,5 +77,25 @@ describe('server/outboxWorker (ADR-0054 / R-101)', () => {
       expect.stringContaining('unregistered_job_type_xyz'),
     );
     expect(mocks.completeOutboxJob).not.toHaveBeenCalled();
+  });
+
+  it('drains a bounded number of jobs through the existing ADR-0054 authority', async () => {
+    const handler = vi.fn().mockResolvedValue(undefined);
+    registerOutboxJobHandler('drain_job', handler);
+    mocks.claimOutboxJob
+      .mockResolvedValueOnce({
+        jobId: 'job-4', jobType: 'drain_job', payload: { seq: 1 }, attempts: 1, maxAttempts: 5,
+      })
+      .mockResolvedValueOnce({
+        jobId: 'job-5', jobType: 'drain_job', payload: { seq: 2 }, attempts: 1, maxAttempts: 5,
+      })
+      .mockResolvedValueOnce(null);
+
+    await expect(drainOutboxJobs('external-host-1', 10)).resolves.toBe(2);
+    expect(handler).toHaveBeenNthCalledWith(1, { seq: 1 });
+    expect(handler).toHaveBeenNthCalledWith(2, { seq: 2 });
+    expect(mocks.completeOutboxJob).toHaveBeenNthCalledWith(1, 'job-4', 'external-host-1');
+    expect(mocks.completeOutboxJob).toHaveBeenNthCalledWith(2, 'job-5', 'external-host-1');
+    expect(OUTBOX_MAX_JOBS_PER_DRAIN).toBe(25);
   });
 });

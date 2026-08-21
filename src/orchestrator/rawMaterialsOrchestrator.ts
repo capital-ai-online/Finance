@@ -13,7 +13,41 @@ import { RiskAgent } from '../agents/riskAgent';
 import { ValuationAgent } from '../agents/valuationAgent';
 import { RawMaterialsScoringService } from '../services/rawMaterialsScoring';
 import { findRawMaterialConfig } from '../config/rawMaterialsConfig';
-import { updateAgentActivity } from '../../server/systemEvents';
+import {
+  orchestratorAgentRuntimeProjection,
+  type OrchestratorAgentDescriptor,
+} from './agentRuntimeProjection';
+
+export const RAW_MATERIALS_ORCHESTRATOR_AGENT_DESCRIPTORS: readonly OrchestratorAgentDescriptor[] = [
+  {
+    id: 'rawmaterials.classification',
+    name: 'Raw Materials Classification Agent',
+    role: 'Raw-material classification research',
+    orchestratorId: 'rawmaterials_orchestrator',
+    model: 'provider-neutral',
+  },
+  {
+    id: 'rawmaterials.fundamentals',
+    name: 'Raw Materials Fundamentals Agent',
+    role: 'Geology/fundamentals research',
+    orchestratorId: 'rawmaterials_orchestrator',
+    model: 'provider-neutral',
+  },
+  {
+    id: 'rawmaterials.risk',
+    name: 'Raw Materials Risk Agent',
+    role: 'Geopolitical and macro risk research',
+    orchestratorId: 'rawmaterials_orchestrator',
+    model: 'provider-neutral',
+  },
+  {
+    id: 'rawmaterials.valuation',
+    name: 'Raw Materials Valuation Agent',
+    role: 'Strategic valuation research',
+    orchestratorId: 'rawmaterials_orchestrator',
+    model: 'provider-neutral',
+  },
+];
 
 export class RawMaterialsOrchestrator {
   private ai: AiGenerationClient | null;
@@ -31,6 +65,7 @@ export class RawMaterialsOrchestrator {
     this.fundamentalsAgent = new FundamentalsAgent(aiClient, anthropicClient, openaiClient);
     this.riskAgent = new RiskAgent(aiClient, anthropicClient, openaiClient);
     this.valuationAgent = new ValuationAgent(aiClient, anthropicClient, openaiClient);
+    orchestratorAgentRuntimeProjection.registerMany(RAW_MATERIALS_ORCHESTRATOR_AGENT_DESCRIPTORS);
   }
 
   /**
@@ -40,9 +75,10 @@ export class RawMaterialsOrchestrator {
   public async analyzeMaterial(name: string, customInput?: Partial<RawMaterialInput>): Promise<AnalysisPayload> {
     console.log(`[Master Orchestrator] Initializing multi-agent pipeline for raw material: "${name}"`);
 
-    updateAgentActivity('ag_scanner', `Klassifiziert Rohstoff ${name}`, true);
-    updateAgentActivity('ag_allocator', `Analysiert fundamentale Faktoren & Bewertung für ${name}`, true);
-    updateAgentActivity('ag_risk', `Analysiert geopolitische und makroökonomische Risiken für ${name}`, true);
+    orchestratorAgentRuntimeProjection.updateActivity('rawmaterials.classification', `Klassifiziert Rohstoff ${name}`, true);
+    orchestratorAgentRuntimeProjection.updateActivity('rawmaterials.fundamentals', `Analysiert fundamentale Faktoren für ${name}`, true);
+    orchestratorAgentRuntimeProjection.updateActivity('rawmaterials.risk', `Analysiert geopolitische und makroökonomische Risiken für ${name}`, true);
+    orchestratorAgentRuntimeProjection.updateActivity('rawmaterials.valuation', `Analysiert strategische Bewertung für ${name}`, true);
 
     let classification, fundamentals, risk, valuation;
     try {
@@ -54,9 +90,10 @@ export class RawMaterialsOrchestrator {
         this.valuationAgent.analyze(name)
       ]);
     } finally {
-      updateAgentActivity('ag_scanner', `Keine aktive Aufgabe`, false);
-      updateAgentActivity('ag_allocator', `Keine aktive Aufgabe`, false);
-      updateAgentActivity('ag_risk', `Keine aktive Aufgabe`, false);
+      orchestratorAgentRuntimeProjection.updateActivity('rawmaterials.classification', 'Keine aktive Aufgabe', false);
+      orchestratorAgentRuntimeProjection.updateActivity('rawmaterials.fundamentals', 'Keine aktive Aufgabe', false);
+      orchestratorAgentRuntimeProjection.updateActivity('rawmaterials.risk', 'Keine aktive Aufgabe', false);
+      orchestratorAgentRuntimeProjection.updateActivity('rawmaterials.valuation', 'Keine aktive Aufgabe', false);
     }
 
     // 2. Resolve database defaults for fields that are not covered by the agents
