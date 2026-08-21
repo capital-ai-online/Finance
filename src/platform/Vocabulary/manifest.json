@@ -3,7 +3,7 @@
   "version": "1.5.0",
   "status": "implemented",
   "owner": "Platform Director",
-  "description": "Canonical Vocabulary Registry plus governed UI Message Catalog, FinTech wording projection, Usage Index, delivery adapters and deterministic Documentary/Knowledge/Traceability handoff.",
+  "description": "Canonical Vocabulary Registry plus governed UI Message Catalog, FinTech wording projection, Usage Index, delivery adapters and deterministic Documentary handoff snapshot.",
   "category": "platform",
   "layer": "CrossCutting",
   "lifecycle": "Operational",
@@ -37,12 +37,12 @@
     "ValueChain/FintechWordingBinding.ts",
     "Usage/WordingUsage.ts",
     "Delivery/MessageDeliveryAdapter.ts",
-    "Projection/VocabularyGovernanceProjection.ts"
+    "Projection/VocabularyWordingSnapshot.ts"
   ],
   "contracts": [
     "ESS-0017-CONTRACTS",
     "fintech-value-chain-wording/1.0.0",
-    "vocabulary-governance-projection/1.0.0"
+    "vocabulary-wording-snapshot/1.0.0"
   ],
   "events": {
     "produces": [],
@@ -57,6 +57,11 @@
     "financialDecisionAuthority": false,
     "mutationAuthority": false,
     "qualityProjectionCorrelation": "src/platform/Quality/ValueChain/FintechValueChainQualityProjection.ts"
+  },
+  "documentaryHandoff": {
+    "snapshot": "Projection/VocabularyWordingSnapshot.ts",
+    "consumer": "src/platform/Documentary/Knowledge/VocabularyWordingDocumentaryProjection.ts",
+    "rule": "Vocabulary does not depend on Documentary; Documentary consumes the snapshot and reuses DocumentaryDocument, D7 Knowledge and DocumentaryTraceability contracts."
   },
   "documentation": [
     "README.md",
@@ -82,7 +87,8 @@
       "FintechValueChainWordingBindings",
       "WordingUsageIndex",
       "DeliveryAdapters",
-      "DocumentaryKnowledgeTraceabilityProjection"
+      "VocabularyWordingSnapshot",
+      "DocumentaryD7TraceabilityHandoff"
     ],
     "plannedAreas": [
       "VW-6 GitHub Wiki renderer and controlled sync",
@@ -92,8 +98,9 @@
   },
   "validation": {
     "targetedCommand": "npm run vocabulary:wording:check",
+    "targetedTests": "npm run vocabulary:wording:test",
     "stageDriftCheck": true,
     "exactCommitProjectionBinding": true
   },
-  "implementationStatus": "VW-0 through VW-5 implemented as a dependency-free, read-only wording governance and evidence-projection slice. No Wiki publish, UI mass migration, external platform mutation or financial runtime authority is introduced."
+  "implementationStatus": "VW-0 through VW-5 implemented as a dependency-free, read-only wording governance and evidence-handoff slice. Documentary consumes the neutral snapshot through existing D7 Knowledge and Traceability contracts. No Wiki publish, UI mass migration, external platform mutation or financial runtime authority is introduced."
 }
