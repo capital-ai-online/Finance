@@ -123,8 +123,6 @@ function evaluateExternalControl<TControl extends string>(
       return gate(controlId, 'REVIEW_REQUIRED', evidence.reason?.trim() || `${controlId} requires review.`, refs);
     case 'MISSING':
       return gate(controlId, 'NOT_COMPUTABLE', evidence.reason?.trim() || `${controlId} evidence is missing.`, refs);
-    case 'STALE':
-      return gate(controlId, 'NOT_COMPUTABLE', evidence.reason?.trim() || `${controlId} evidence is stale.`, refs);
   }
 }
 
