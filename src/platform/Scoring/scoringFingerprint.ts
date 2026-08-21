@@ -41,6 +41,10 @@ function finite(value: number | null | undefined): value is number {
  * Deterministic lineage for the weights that were actually eligible for one model evaluation.
  * Missing features remain in the canonical representation with zero effective weight; this makes
  * dynamic renormalization replayable and prevents nominal/effective-weight drift from being hidden.
+ *
+ * The fingerprints bind the governing contract versions, not only the observed numeric shape. A
+ * replay therefore cannot silently reuse the same fingerprint after an evidence or weight-contract
+ * revision whose current values happen to remain numerically identical.
  */
 export function buildEffectiveScoringFingerprintMetadata(
   input: EffectiveScoringFingerprintInput,
@@ -68,12 +72,15 @@ export function buildEffectiveScoringFingerprintMetadata(
     fingerprintVersion: EFFECTIVE_SCORING_FINGERPRINT_VERSION,
     modelVersion: input.modelVersion,
     featureContractVersion: input.featureContractVersion,
+    evidenceContractVersion: input.evidenceContractVersion,
     features: effectiveFeatures,
   };
   const weightCanonical = {
     fingerprintVersion: EFFECTIVE_SCORING_FINGERPRINT_VERSION,
     modelVersion: input.modelVersion,
     featureContractVersion: input.featureContractVersion,
+    nominalWeightsVersion: input.nominalWeightsVersion,
+    evidenceContractVersion: input.evidenceContractVersion,
     features: effectiveFeatures.map((feature) => ({
       ...feature,
       effectiveWeight: effectiveWeights[feature.key],
