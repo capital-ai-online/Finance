@@ -39,9 +39,9 @@
   "correlation": {
     "currentMain": "5595ec0abe1f1b6755620f3435badbf874d54aba",
     "mergedPullRequestsSinceStart": [467],
-    "openPullRequests": [],
+    "openPullRequests": [468],
     "directPathOverlap": [],
-    "finding": "Current main is unchanged after the P1 sync and there are no open PRs. P2 changes only agent-PR synchronization timing: automatic main-push sync excludes drafts, ready_for_review syncs the exact event PR, manual workflow_dispatch remains an explicit recovery path. ADR-0036 ancestry is preserved."
+    "finding": "PR #468 is a draft FT-3 FinTechCore/Supabase persistence change with 14 changed files and no overlap with the ten P0/P1/P2 CI-cost-control paths. Current main remains unchanged and the cost-control branch is based exactly on that main. P2 preserves ADR-0036 ancestry while excluding draft agent PRs from automatic main-push synchronization fan-out."
   },
   "externalMutationScope": "none",
   "releaseCondition": "Release claim after merge, closure, supersession or abandonment."
