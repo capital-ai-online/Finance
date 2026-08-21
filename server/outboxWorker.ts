@@ -1,4 +1,4 @@
-// ADR-0054 / R-101 -- Outbox worker poll loop.
+// ADR-0054 / R-101 -- canonical durable outbox worker.
 //
 // Polls public.outbox_jobs (via server/outbox.ts's claimOutboxJob) and dispatches each claimed
 // job to the handler registered for its job_type, then completes or records-and-backs-off the
@@ -58,9 +58,28 @@ export interface OutboxWorkerOptions {
 }
 
 const DEFAULT_INTERVAL_MS = 15_000;
-// Hard cap per tick so a pathological backlog cannot starve the event loop indefinitely; the
-// remainder is picked up on the next tick.
-const MAX_JOBS_PER_TICK = 25;
+export const OUTBOX_MAX_JOBS_PER_DRAIN = 25;
+
+/**
+ * Canonical bounded execution seam for ADR-0054 jobs.
+ *
+ * This function intentionally reuses the existing outbox queue/lease/retry/dead-letter authority.
+ * A future external execution host (including Render Workflows) may invoke this bounded drain, but
+ * MUST NOT introduce a second durable queue, retry budget, dead-letter store or job-type routing
+ * authority. Provider-level retries should therefore be disabled or limited to the wake-up call;
+ * retry ownership remains in public.outbox_jobs / server/outbox.ts.
+ */
+export async function drainOutboxJobs(
+  leaseOwner: string,
+  maxJobs = OUTBOX_MAX_JOBS_PER_DRAIN,
+): Promise<number> {
+  const boundedMax = Math.max(1, Math.min(Math.floor(maxJobs), OUTBOX_MAX_JOBS_PER_DRAIN));
+  let processed = 0;
+  while (processed < boundedMax && (await processOneOutboxJob(leaseOwner))) {
+    processed += 1;
+  }
+  return processed;
+}
 
 /** Starts the poll loop. Idempotent -- a second call while already running is a no-op. */
 export function startOutboxWorker(options: OutboxWorkerOptions = {}): void {
@@ -72,10 +91,7 @@ export function startOutboxWorker(options: OutboxWorkerOptions = {}): void {
 
   const tick = async () => {
     try {
-      let processed = 0;
-      while (processed < MAX_JOBS_PER_TICK && (await processOneOutboxJob(workerId as string))) {
-        processed += 1;
-      }
+      await drainOutboxJobs(workerId as string);
     } catch (err: any) {
       console.error('[Outbox Worker] Poll tick failed:', err?.message || err);
     }

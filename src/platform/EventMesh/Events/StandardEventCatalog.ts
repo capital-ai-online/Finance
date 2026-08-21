@@ -80,7 +80,8 @@ export const STANDARD_EVENT_CATALOG: StandardEventDefinition[] = [
   { name: 'ConsumerUnsubscribedEvent', category: 'System Events', essReferences: ['ESS-0013'], adrReferences: ['ADR-0018'] },
   { name: 'EventSchemaIncompatibleEvent', category: 'System Events', essReferences: ['ESS-0013-CONTRACTS'], adrReferences: ['ADR-0018'] },
 
-  // --- Bruecken-Event fuer den bestehenden Audit-Log-Mechanismus (ADR-0018,
-  //     Folgeentscheidung 3) - additiv, ersetzt server/systemEvents.ts nicht. ------
+  // --- Legacy event name retained for compatibility with the former system-events bridge.
+  //     The event is now an operational in-process signal only. Durable audit/security authority
+  //     belongs to ADR-0059 / agent_audit_events and public.security_events, not Event Mesh. ---
   { name: 'SystemAuditEvent', category: 'System Events', essReferences: ['ESS-0013'], adrReferences: ['ADR-0018'] },
 ];
