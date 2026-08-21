@@ -55,7 +55,7 @@ Eine spätere physische Löschung der Datei bleibt möglich, erfordert aber eine
 Human/Owner-reviewten Änderungspfad für `verifyChangedWorkflowSecurity.mjs` und ist nicht
 Bestandteil dieser Entscheidung.
 
-## Betriebs-Addendum 2026-08-21 — Cost-Control bei suspendiertem M10
+## Betriebs-Addendum 2026-08-21 — P0 Cost-Control bei suspendiertem M10
 
 Die repository-weite Owner-Entscheidung in `AGENTS.md` vom 2026-08-19 suspendiert die
 M10-Passkey-Autorisierung für normale PR-CI. Diese spätere Owner-Entscheidung bleibt
@@ -93,14 +93,70 @@ Advisory-Prüfungen zuständig. Sie wird nicht als zweite technische CI-Authorit
 Exact-Snapshot-Deduplizierung adressiert dagegen unmittelbar die kostenintensive Pflicht-CI und
 bleibt damit innerhalb der ADR-0073-Single-`build-and-test`-Architektur.
 
+## Betriebs-Addendum 2026-08-21 — P1 Governance-Runner-Konsolidierung
+
+Die Analyse der PR-Governance ergab einen zweiten Kostenmultiplikator: `pr-governance.yml` startete
+für dasselbe PR-Ereignis mehrere getrennte `ubuntu-latest`-Jobs für Kosten-Gate,
+Workflow-Security, Repository-Advisory und PR-Vorlagenvertrag. Kurze Einzeljobs erzeugen damit
+unnötigen Hosted-Runner- und Billing-Overhead, obwohl sie denselben PR-Head und denselben trusted
+`main`-Policy-Stand prüfen.
+
+Die Governance-Prüfungen werden deshalb in **einen einzigen read-only Ubuntu-Job** konsolidiert.
+Die logischen Kontrollen bleiben als getrennte Steps erhalten:
+
+1. trusted `main` Policy einmal auschecken,
+2. Kandidaten-Head einmal auschecken,
+3. aktuellen `main` in den Kandidaten importieren,
+4. Node.js einmalig initialisieren,
+5. PR-Scope mit dem **trusted-main** Klassifikator bestimmen,
+6. 3.000-Minuten-Cost-Gate für das optionale Repository-Advisory prüfen,
+7. bei Workflow-Änderungen `verifyChangedWorkflowSecurity.mjs` aus trusted `main` fail-closed ausführen,
+8. optionale Repository-Konventionen nur unterhalb des bestehenden Kosten-Gates ausführen,
+9. Produktions-Baseline und kanonischen PR-Body-Vertrag unverändert fail-closed prüfen.
+
+### Autoritäts- und Ruleset-Grenzen
+
+Die Konsolidierung verändert **keinen Required-Check-Vertrag**. Der kanonische
+`main-production-protection`-Sollstand verlangt weiterhin ausschließlich:
+
+- `build-and-test`,
+- `GitGuardian Security Checks`.
+
+Die früheren Governance-Jobnamen sind keine Required-Check-Kontexte und dürfen daher ohne
+Ruleset-Cutover in einen internen Governance-Job überführt werden. Die Prüfungen selbst bleiben
+bestehen; lediglich die Runner-Topologie wird konsolidiert.
+
+Das M10-Modell bleibt unverändert suspendiert/off. Das Kosten-Gate ist weiterhin ausschließlich
+eine Steuerung für **optionale Advisory-Arbeit** und erzeugt weder CI-Autorisierung noch
+Merge-Authority.
+
+### Zusätzliche Härtung
+
+Die Scope-Klassifikation wird im konsolidierten Job nicht mehr aus dem PR-kontrollierten
+Kandidatenpfad aufgerufen, sondern aus dem vertrauenswürdigen `main`-Policy-Checkout. Sie arbeitet
+weiterhin im Kandidaten-Repository gegen `origin/main...HEAD`, wodurch ein PR seine eigene
+Klassifikation nicht durch Änderung von `scripts/pr/classifyPrScope.mjs` manipulieren kann.
+
+### Ereignisverhalten
+
+- `opened`, `reopened`, `synchronize`, `ready_for_review`: ein Governance-Runner.
+- `edited`: ein Governance-Runner; Cost-Gate, Scope-/Workflow-Security und Advisory werden
+  übersprungen, der vollständige Baseline-/PR-Body-Vertrag läuft erneut.
+- `merge_group`: wie zuvor kein PR-Governance-Runner, da die Jobs auf `pull_request` begrenzt sind.
+- der historische M10-Fix-Branch behält seine bestehende Ausnahme ausschließlich für den
+  PR-Template-Vertrag; Kosten-/Workflow-Prüfungen bleiben davon getrennt.
+
 ## Sicherheitsinvarianten
 
 - Checkout exakt des aktuellen PR-Heads.
-- Read-only Workflow-Permissions; `actions: read` ist nur für den Exact-Snapshot-Lookup zulässig.
+- Read-only Workflow-Permissions; `actions: read` ist nur für Cost-Control-/Budget-Lookups zulässig.
 - `persist-credentials: false`.
 - M10-Passkey bleibt entsprechend der aktuellen Owner-Authority suspendiert/off.
 - Kostenkontrolle darf keine Autorisierungs- oder Merge-Authority erzeugen.
 - Neue Commits oder ein neuer Base-SHA invalidieren eine frühere Snapshot-Wiederverwendung.
+- Workflow-Security bleibt fail-closed und wird aus trusted `main` ausgeführt.
+- PR-Scope-Klassifikation wird aus trusted `main` ausgeführt.
+- Produktions-Baseline und PR-Body-Vertrag bleiben fail-closed.
 - Separate menschliche Merge-Anweisung bleibt erforderlich.
 - Workflow-/Ruleset-Reparatur erfolgt über frischen Branch und normalen PR.
 
@@ -117,6 +173,9 @@ Vor dem Merge dieses ADR-/Workflow-PRs muss der Owner:
    `.github/policies/main-production-protection.expected.json` prüfen.
 7. Erst anschließend den PR mergen.
 
+Für das P1-Addendum ist **keine zusätzliche Ruleset-Mutation** erforderlich, weil keiner der
+konsolidierten Governance-Jobnamen als Required-Check-Kontext im Sollzustand registriert ist.
+
 ## Verifikation nach Merge
 
 Der nächste reale Pull Request muss zeigen:
@@ -126,13 +185,21 @@ Der nächste reale Pull Request muss zeigen:
 - kein erwarteter oder hängender `capital-ai-ci`-Kontext;
 - Merge bleibt ohne Human/CODEOWNER-Freigabe oder ohne `build-and-test` blockiert.
 
-Für das Cost-Control-Addendum gilt zusätzlich:
+Für das P0-Cost-Control-Addendum gilt zusätzlich:
 
 - der erste neue PR-Snapshot führt die erforderliche scope-klassifizierte CI real aus;
 - ein erneuter Event für exakt denselben Workflow/PR/Head/Base darf die erfolgreiche Snapshot-
   Evidence wiederverwenden und Checkout/npm/Test/Build/Docker überspringen;
 - ein neuer Head oder ein neuer Base-SHA muss wieder eine reale CI-Ausführung erzwingen;
 - `main`-Pushes dürfen nie über die PR-Snapshot-Wiederverwendung abgekürzt werden.
+
+Für das P1-Addendum gilt zusätzlich:
+
+- ein normales PR-Ereignis startet in `pr-governance.yml` höchstens einen `ubuntu-latest`-Job;
+- Workflow-Änderungen werden weiterhin gegen die trusted-main Security-Policy validiert;
+- unterhalb des Monatsbudgets darf das Repository-Advisory innerhalb desselben Runners laufen;
+- oberhalb/bei pausiertem Advisory entstehen keine zusätzlichen Runner;
+- `edited` führt weiterhin den vollständigen PR-Baseline-/Body-Vertrag aus.
 
 ## Rollback
 
@@ -145,3 +212,7 @@ aktivieren.
 Für einen isolierten Rollback der P0-Cost-Control wird ausschließlich die Exact-Snapshot-
 Deduplizierung aus `ci.yml` entfernt; `M10_CI_GATE_ENABLED=false`, die Single-`build-and-test`-
 Architektur und die Produktions-Main-Pipeline bleiben dabei unverändert.
+
+Für einen isolierten Rollback von P1 kann `pr-governance.yml` auf die letzte verifizierte
+Mehrjob-Struktur zurückgesetzt werden. Required Checks, M10-Switch und `ci.yml` werden dabei nicht
+verändert.
