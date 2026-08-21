@@ -1,4 +1,4 @@
-import type { FinTechCoreDecisionOutcome, FinTechCoreOrderIntent } from '../CoreContracts';
+import type { FinTechCoreDecisionOutcome } from '../CoreContracts';
 import type { PaperFixedPoint } from '../PaperTrading/PaperTradingContracts';
 import {
   FINTECH_CORE_RISK_COMPLIANCE_CONTRACT_VERSION,
@@ -7,7 +7,6 @@ import {
   type FinTechCoreComplianceGateDecision,
   type FinTechCoreCompliancePolicySnapshot,
   type FinTechCoreGateEvaluation,
-  type FinTechCoreOrderIntentAuthorizationResult,
   type FinTechCorePreTradeAuthorizationDecision,
   type FinTechCorePreTradeEvaluationInput,
   type FinTechCoreRiskGateDecision,
@@ -171,6 +170,7 @@ export function evaluateDeterministicRiskGates(
     evidence.portfolioEvidenceAuthorityId,
     policy.portfolioEvidenceAuthorityId,
   ) && validRefs(evidence.portfolioEvidenceRefs);
+
   gates.push(projectedExposure === null || projectedExposure < 0n || !portfolioAuthorityValid
     ? gate('GROSS_EXPOSURE', 'NOT_COMPUTABLE', 'projected gross exposure authority/provenance is invalid or incomplete.', evidence.portfolioEvidenceRefs)
     : projectedExposure > maxExposure
@@ -192,6 +192,7 @@ export function evaluateDeterministicRiskGates(
     evidence.liquidityEvidenceAuthorityId,
     policy.liquidityEvidenceAuthorityId,
   ) && validRefs(evidence.liquidityEvidenceRefs);
+
   if (availableLiquidity === null || availableLiquidity < 0n || orderNotional === null || orderNotional <= 0n || !liquidityAuthorityValid) {
     gates.push(gate('LIQUIDITY', 'NOT_COMPUTABLE', 'liquidity authority/provenance is invalid or coverage cannot be computed.', evidence.liquidityEvidenceRefs));
   } else {
@@ -206,20 +207,20 @@ export function evaluateDeterministicRiskGates(
     evidence.marketEvidenceAuthorityId,
     policy.marketEvidenceAuthorityId,
   );
+
   gates.push(marketAge === null || !validRefs(evidence.marketEvidenceRefs) || !marketAuthorityValid
     ? gate('STALENESS', 'NOT_COMPUTABLE', 'market evidence freshness/authority/provenance is incomplete.', evidence.marketEvidenceRefs)
     : marketAge > policy.maxMarketDataAgeSeconds
       ? gate('STALENESS', 'NOT_COMPUTABLE', `market evidence age ${marketAge}s exceeds the versioned policy maximum.`, evidence.marketEvidenceRefs)
       : gate('STALENESS', 'APPROVED', `market evidence age ${marketAge}s is within the versioned policy maximum.`, evidence.marketEvidenceRefs));
 
-  const counterparty = evaluateExternalControl(
+  gates.push(evaluateExternalControl(
     evidence.counterparty,
     'COUNTERPARTY' as const,
     policy.counterpartyAuthorityId,
     evaluatedAt,
     policy.maxCounterpartyEvidenceAgeSeconds,
-  );
-  gates.push(counterparty);
+  ));
 
   const outcome = aggregateOutcome(gates);
   return Object.freeze({
@@ -281,6 +282,7 @@ export function evaluateDeterministicComplianceGates(
     policy.maxEvidenceAgeSeconds,
   ));
   const outcome = aggregateOutcome(controls);
+
   return Object.freeze({
     contractVersion: FINTECH_CORE_RISK_COMPLIANCE_CONTRACT_VERSION,
     policyId: policy.policyId,
@@ -292,58 +294,21 @@ export function evaluateDeterministicComplianceGates(
   });
 }
 
+/**
+ * FT-5 evaluates and records Risk/Compliance decisions only. It deliberately never makes an
+ * OrderIntent execution-handoff eligible; approval binding to OrderIntent is an FT-6 concern.
+ */
 export function evaluatePreTradeAuthorization(
   input: FinTechCorePreTradeEvaluationInput,
 ): FinTechCorePreTradeAuthorizationDecision {
   const risk = evaluateDeterministicRiskGates(input);
   const compliance = evaluateDeterministicComplianceGates(input);
-  const liveHandoffMode = input.context.operatingMode === 'GUARDED_LIVE'
-    || input.context.operatingMode === 'PRODUCTION';
 
   return Object.freeze({
     contractVersion: FINTECH_CORE_RISK_COMPLIANCE_CONTRACT_VERSION,
     risk,
     compliance,
-    executionHandoffEligible: liveHandoffMode
-      && risk.outcome === 'APPROVED'
-      && compliance.outcome === 'APPROVED',
+    executionHandoffEligible: false as const,
     evaluatedAt: input.evaluatedAt,
-  });
-}
-
-/**
- * Creates an approval-bound immutable copy only after both FT-5 gates pass, a future live-capable
- * mode is explicitly present and identity matches. This function does not sign, persist, route or
- * execute the intent; FT-6/FT-7 own those concerns. Crypto Module 01 still does not activate live
- * modes in FT-5.
- */
-export function authorizeOrderIntentForHandoff(
-  intent: FinTechCoreOrderIntent,
-  input: FinTechCorePreTradeEvaluationInput,
-  authorization: FinTechCorePreTradeAuthorizationDecision,
-): FinTechCoreOrderIntentAuthorizationResult {
-  const context = input.context;
-  if (!authorization.executionHandoffEligible
-    || authorization.risk.outcome !== 'APPROVED'
-    || authorization.compliance.outcome !== 'APPROVED') {
-    return Object.freeze({ status: 'BLOCKED', reason: 'Risk and compliance must both be APPROVED in an eligible live handoff mode.' });
-  }
-  if (intent.runId !== context.runId
-    || intent.traceId !== context.traceId
-    || intent.correlationId !== context.correlationId
-    || intent.assetId !== context.asset.assetId
-    || intent.decisionVersion !== context.decisionVersion) {
-    return Object.freeze({ status: 'BLOCKED', reason: 'OrderIntent identity does not match the evaluated workflow context.' });
-  }
-  if (intent.effectClass !== 'SIDE_EFFECTING') {
-    return Object.freeze({ status: 'BLOCKED', reason: 'OrderIntent effect class is invalid.' });
-  }
-  return Object.freeze({
-    status: 'AUTHORIZED',
-    intent: Object.freeze({
-      ...intent,
-      riskApproval: 'APPROVED' as const,
-      complianceApproval: 'APPROVED' as const,
-    }),
   });
 }
