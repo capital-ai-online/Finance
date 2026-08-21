@@ -1,6 +1,5 @@
 import type {
   FinTechCoreDecisionOutcome,
-  FinTechCoreOrderIntent,
   FinTechCoreWorkflowContext,
 } from '../CoreContracts';
 import type { PaperFixedPoint } from '../PaperTrading/PaperTradingContracts';
@@ -131,11 +130,12 @@ export interface FinTechCoreComplianceGateDecision {
   readonly evaluatedAt: string;
 }
 
+/** FT-5 produces decisions only. FT-6 owns approval binding to OrderIntent and reconciliation. */
 export interface FinTechCorePreTradeAuthorizationDecision {
   readonly contractVersion: typeof FINTECH_CORE_RISK_COMPLIANCE_CONTRACT_VERSION;
   readonly risk: FinTechCoreRiskGateDecision;
   readonly compliance: FinTechCoreComplianceGateDecision;
-  readonly executionHandoffEligible: boolean;
+  readonly executionHandoffEligible: false;
   readonly evaluatedAt: string;
 }
 
@@ -147,24 +147,6 @@ export interface FinTechCorePreTradeEvaluationInput {
   readonly compliancePolicy: FinTechCoreCompliancePolicySnapshot;
   readonly complianceEvidence: FinTechCoreComplianceEvidenceSnapshot;
 }
-
-export type FinTechCoreAuthorizedOrderIntent = Omit<
-  FinTechCoreOrderIntent,
-  'riskApproval' | 'complianceApproval'
-> & {
-  readonly riskApproval: 'APPROVED';
-  readonly complianceApproval: 'APPROVED';
-};
-
-export type FinTechCoreOrderIntentAuthorizationResult =
-  | {
-      readonly status: 'AUTHORIZED';
-      readonly intent: FinTechCoreAuthorizedOrderIntent;
-    }
-  | {
-      readonly status: 'BLOCKED';
-      readonly reason: string;
-    };
 
 /**
  * Integration point only. Concrete KYC/KYB/AML/Sanctions/Wallet/Jurisdiction providers remain
