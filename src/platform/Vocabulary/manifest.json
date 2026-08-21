@@ -1,50 +1,99 @@
 {
   "name": "Vocabulary",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "status": "implemented",
   "owner": "Platform Director",
-  "description": "Canonical Vocabulary Registry for terminology, naming, bilingual wording and controlled alias governance across CAPITAL-AI.",
+  "description": "Canonical Vocabulary Registry plus governed UI Message Catalog, FinTech wording projection, Usage Index, delivery adapters and deterministic Documentary/Knowledge/Traceability handoff.",
   "category": "platform",
   "layer": "CrossCutting",
   "lifecycle": "Operational",
   "health": "Unknown",
   "repository": "Finance",
+  "effectiveAfter": "Human Merge",
   "ess": [
     "ESS-0001-CONTRACTS",
-    "ESS-0017",
-    "ESS-0017-CONTRACTS",
     "ESS-0012",
-    "ESS-0013"
+    "ESS-0013",
+    "ESS-0017",
+    "ESS-0017-CONTRACTS"
   ],
   "adr": [
-    "ADR-0046"
+    "ADR-0078"
   ],
   "dependencies": [],
   "forbiddenDependencies": [
     "src/platform/EventMesh/Core",
     "src/platform/Knowledge",
     "src/platform/Traceability",
-    "src/platform/Documentary"
+    "src/platform/Documentary",
+    "src/platform/MarketData",
+    "src/platform/Scoring",
+    "src/platform/Ranking"
   ],
   "interfaces": [
-    "IVocabularyRegistry"
+    "IVocabularyRegistry",
+    "Messages/UiMessage.ts",
+    "Messages/UiMessageCatalog.ts",
+    "ValueChain/FintechWordingBinding.ts",
+    "Usage/WordingUsage.ts",
+    "Delivery/MessageDeliveryAdapter.ts",
+    "Projection/VocabularyGovernanceProjection.ts"
   ],
   "contracts": [
-    "ESS-0017-CONTRACTS"
+    "ESS-0017-CONTRACTS",
+    "fintech-value-chain-wording/1.0.0",
+    "vocabulary-governance-projection/1.0.0"
   ],
   "events": {
     "produces": [],
     "consumes": [],
-    "note": "Phase 2 registers no new event names. Event integration follows only after EventCatalog compatibility validation."
+    "note": "VW-0 through VW-5 introduce no second Event authority. Event integration remains subordinate to the canonical EventMesh."
+  },
+  "valueChainIntegration": {
+    "authority": "SC-MD-SPT-0001",
+    "role": "read-only-wording-projection",
+    "stageCoverage": 18,
+    "runtimeStage": false,
+    "financialDecisionAuthority": false,
+    "mutationAuthority": false,
+    "qualityProjectionCorrelation": "src/platform/Quality/ValueChain/FintechValueChainQualityProjection.ts"
   },
   "documentation": [
     "README.md",
     "CHANGELOG.md",
     "component.yaml",
-    "docs/architecture/VOCABULARY_GOVERNANCE_MIGRATION_ROADMAP.md"
+    "docs/architecture/VOCABULARY_WORDING_WIKI_ARCHITECTURE.md",
+    "docs/governance/vocabulary/VOCABULARY_WORDING_WIKI_SUPERSESSION_2026-08-21.md"
   ],
   "tests": [
+    "src/platform/Vocabulary/Tests/vocabularyRegistry.test.ts",
+    "src/platform/Vocabulary/Tests/uiMessageCatalog.test.ts",
+    "src/platform/Vocabulary/Tests/fintechWordingBindings.test.ts",
+    "src/platform/Vocabulary/Tests/wordingUsageIndex.test.ts",
+    "src/platform/Vocabulary/Tests/messageDeliveryAdapter.test.ts",
+    "src/platform/Vocabulary/Tests/vocabularyGovernanceProjection.test.ts",
     "tests/unit/bilingualDocumentaryProjection.test.ts"
   ],
-  "implementationStatus": "Phase 2 core implemented: typed canonical concepts, deterministic validation, collision detection, bilingual mappings, immutable registry snapshots and initial seed concepts. No active code rename and no EventMesh runtime coupling."
+  "implementation": {
+    "completedWorkPackages": ["VW-0", "VW-1", "VW-2", "VW-3", "VW-4", "VW-5"],
+    "implementedAreas": [
+      "CanonicalVocabularyRegistry",
+      "UiMessageCatalog",
+      "FintechValueChainWordingBindings",
+      "WordingUsageIndex",
+      "DeliveryAdapters",
+      "DocumentaryKnowledgeTraceabilityProjection"
+    ],
+    "plannedAreas": [
+      "VW-6 GitHub Wiki renderer and controlled sync",
+      "VW-7 hardcoded user-facing string migration",
+      "VW-8 continuous governance and release closure"
+    ]
+  },
+  "validation": {
+    "targetedCommand": "npm run vocabulary:wording:check",
+    "stageDriftCheck": true,
+    "exactCommitProjectionBinding": true
+  },
+  "implementationStatus": "VW-0 through VW-5 implemented as a dependency-free, read-only wording governance and evidence-projection slice. No Wiki publish, UI mass migration, external platform mutation or financial runtime authority is introduced."
 }
