@@ -12,6 +12,9 @@ const FOUNDATION_FILES = [
   '../../src/platform/FinTechCore/PaperTrading/PaperTradingContracts.ts',
   '../../src/platform/FinTechCore/PaperTrading/PaperTradingEngine.ts',
   '../../src/platform/FinTechCore/PaperTrading/PaperTradingWorkflowService.ts',
+  '../../src/platform/FinTechCore/RiskCompliance/RiskComplianceContracts.ts',
+  '../../src/platform/FinTechCore/RiskCompliance/DeterministicPreTradeGate.ts',
+  '../../src/platform/FinTechCore/RiskCompliance/RiskComplianceDecisionRecords.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/CryptoCoreModule.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/CryptoCategoryProfileResolver.ts',
   '../../src/platform/FinTechCore/Modules/Crypto/CryptoCategoryFeatureContracts.ts',
@@ -34,7 +37,7 @@ const FORBIDDEN_DIRECT_AUTHORITIES = [
   'kraken-api',
 ] as const;
 
-describe('FinTech Core FT-1 through FT-4 authority boundary', () => {
+describe('FinTech Core FT-1 through FT-5 authority boundary', () => {
   it('does not import productive domain scorers, database clients or exchange clients directly', () => {
     for (const relativeFile of FOUNDATION_FILES) {
       const source = readFileSync(new URL(relativeFile, import.meta.url), 'utf8');
@@ -88,7 +91,24 @@ describe('FinTech Core FT-1 through FT-4 authority boundary', () => {
     }
   });
 
-  it('keeps Crypto Module 01 non-live through FT-4', () => {
+  it('keeps FT-5 deterministic and prevents LLM/provider/exchange code from becoming risk or compliance authority', () => {
+    const gateFiles = [
+      '../../src/platform/FinTechCore/RiskCompliance/RiskComplianceContracts.ts',
+      '../../src/platform/FinTechCore/RiskCompliance/DeterministicPreTradeGate.ts',
+      '../../src/platform/FinTechCore/RiskCompliance/RiskComplianceDecisionRecords.ts',
+    ] as const;
+
+    for (const relativeFile of gateFiles) {
+      const source = readFileSync(new URL(relativeFile, import.meta.url), 'utf8');
+      expect(source).not.toMatch(/from\s+['"].*(?:agents|agentModelRouting|aiSchema)/i);
+      expect(source).not.toMatch(/from\s+['"](?:openai|@anthropic-ai\/sdk|kraken-api|ccxt|binance|coinbase)['"]/i);
+      expect(source).not.toContain('generateStructuredWithFallback(');
+      expect(source).not.toContain('fetch(');
+      expect(source).not.toContain('getPrivilegedServerSupabase(');
+    }
+  });
+
+  it('keeps Crypto Module 01 non-live through FT-5', () => {
     expect(CRYPTO_CORE_MODULE_DESCRIPTOR.supportedOperatingModes).toEqual(['RESEARCH', 'PAPER']);
     expect(CRYPTO_CORE_MODULE_DESCRIPTOR.supportedOperatingModes).not.toContain('GUARDED_LIVE');
     expect(CRYPTO_CORE_MODULE_DESCRIPTOR.supportedOperatingModes).not.toContain('PRODUCTION');
