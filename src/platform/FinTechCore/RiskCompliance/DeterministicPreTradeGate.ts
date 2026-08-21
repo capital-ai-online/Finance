@@ -68,6 +68,10 @@ function gate<TGate extends string>(
   return Object.freeze({ gateId, outcome, reason, evidenceRefs: uniqueRefs(evidenceRefs) });
 }
 
+function authorityMatches(actual: string, expected: string): boolean {
+  return Boolean(actual.trim()) && actual === expected;
+}
+
 function invalidRiskPolicy(policy: FinTechCoreRiskPolicySnapshot): string | null {
   if (policy.contractVersion !== FINTECH_CORE_RISK_COMPLIANCE_CONTRACT_VERSION) return 'risk policy contract version is invalid';
   if (!policy.policyId.trim() || !policy.policyVersion.trim() || !validRefs(policy.evidenceRefs)) return 'risk policy identity/evidence is incomplete';
@@ -79,17 +83,30 @@ function invalidRiskPolicy(policy: FinTechCoreRiskPolicySnapshot): string | null
   if (!Number.isInteger(policy.minLiquidityCoverageBps) || policy.minLiquidityCoverageBps < 0) return 'risk policy minLiquidityCoverageBps is invalid';
   if (!Number.isInteger(policy.maxMarketDataAgeSeconds) || policy.maxMarketDataAgeSeconds < 0) return 'risk policy maxMarketDataAgeSeconds is invalid';
   if (!Number.isInteger(policy.maxCounterpartyEvidenceAgeSeconds) || policy.maxCounterpartyEvidenceAgeSeconds < 0) return 'risk policy maxCounterpartyEvidenceAgeSeconds is invalid';
+  if (!policy.portfolioEvidenceAuthorityId.trim()
+    || !policy.liquidityEvidenceAuthorityId.trim()
+    || !policy.marketEvidenceAuthorityId.trim()
+    || !policy.counterpartyAuthorityId.trim()) {
+    return 'risk policy evidence authority bindings are incomplete';
+  }
   return null;
 }
 
 function evaluateExternalControl<TControl extends string>(
   evidence: ExternalControlEvidence<TControl> | undefined,
   controlId: TControl,
+  expectedAuthorityId: string,
   evaluatedAt: string,
   maxAgeSeconds: number,
 ): FinTechCoreGateEvaluation<TControl> {
   if (!evidence) return gate(controlId, 'NOT_COMPUTABLE', `${controlId} evidence is missing.`, []);
   const refs = evidence.evidenceRefs;
+  if (evidence.controlId !== controlId) {
+    return gate(controlId, 'NOT_COMPUTABLE', `${controlId} evidence control identity does not match the requested gate.`, refs);
+  }
+  if (!authorityMatches(evidence.authorityId, expectedAuthorityId)) {
+    return gate(controlId, 'NOT_COMPUTABLE', `${controlId} evidence authority does not match the versioned policy binding.`, refs);
+  }
   if (!evidence.provider.trim() || !validRefs(refs)) {
     return gate(controlId, 'NOT_COMPUTABLE', `${controlId} evidence provenance is incomplete.`, refs);
   }
@@ -144,41 +161,53 @@ export function evaluateDeterministicRiskGates(
 
   const gates: FinTechCoreGateEvaluation<RiskGateId>[] = [];
 
-  gates.push(orderNotional === null || orderNotional <= 0n
-    ? gate('ORDER_NOTIONAL', 'NOT_COMPUTABLE', 'order notional is invalid or non-positive.', policyRefs)
+  gates.push(orderNotional === null || orderNotional <= 0n || !validRefs(evidence.orderEvidenceRefs)
+    ? gate('ORDER_NOTIONAL', 'NOT_COMPUTABLE', 'order notional/provenance is invalid or incomplete.', evidence.orderEvidenceRefs)
     : orderNotional > maxOrder
-      ? gate('ORDER_NOTIONAL', 'REJECTED', 'order notional exceeds the versioned policy limit.', policyRefs)
-      : gate('ORDER_NOTIONAL', 'APPROVED', 'order notional is within the versioned policy limit.', policyRefs));
+      ? gate('ORDER_NOTIONAL', 'REJECTED', 'order notional exceeds the versioned policy limit.', uniqueRefs(policyRefs, evidence.orderEvidenceRefs))
+      : gate('ORDER_NOTIONAL', 'APPROVED', 'order notional is within the versioned policy limit.', uniqueRefs(policyRefs, evidence.orderEvidenceRefs)));
 
-  gates.push(projectedExposure === null || projectedExposure < 0n
-    ? gate('GROSS_EXPOSURE', 'NOT_COMPUTABLE', 'projected gross exposure is invalid.', policyRefs)
+  const portfolioAuthorityValid = authorityMatches(
+    evidence.portfolioEvidenceAuthorityId,
+    policy.portfolioEvidenceAuthorityId,
+  ) && validRefs(evidence.portfolioEvidenceRefs);
+  gates.push(projectedExposure === null || projectedExposure < 0n || !portfolioAuthorityValid
+    ? gate('GROSS_EXPOSURE', 'NOT_COMPUTABLE', 'projected gross exposure authority/provenance is invalid or incomplete.', evidence.portfolioEvidenceRefs)
     : projectedExposure > maxExposure
-      ? gate('GROSS_EXPOSURE', 'REJECTED', 'projected gross exposure exceeds the versioned policy limit.', policyRefs)
-      : gate('GROSS_EXPOSURE', 'APPROVED', 'projected gross exposure is within the versioned policy limit.', policyRefs));
+      ? gate('GROSS_EXPOSURE', 'REJECTED', 'projected gross exposure exceeds the versioned policy limit.', uniqueRefs(policyRefs, evidence.portfolioEvidenceRefs))
+      : gate('GROSS_EXPOSURE', 'APPROVED', 'projected gross exposure is within the versioned policy limit.', uniqueRefs(policyRefs, evidence.portfolioEvidenceRefs)));
 
-  if (peakEquity === null || currentEquity === null || peakEquity <= 0n || currentEquity < 0n) {
-    gates.push(gate('DRAWDOWN', 'NOT_COMPUTABLE', 'equity evidence is invalid.', policyRefs));
+  if (peakEquity === null || currentEquity === null || peakEquity <= 0n || currentEquity < 0n || !portfolioAuthorityValid) {
+    gates.push(gate('DRAWDOWN', 'NOT_COMPUTABLE', 'equity authority/provenance is invalid or incomplete.', evidence.portfolioEvidenceRefs));
   } else {
     const drawdownBps = currentEquity >= peakEquity
       ? 0n
       : ((peakEquity - currentEquity) * BPS_DENOMINATOR + peakEquity - 1n) / peakEquity;
     gates.push(drawdownBps > BigInt(policy.maxDrawdownBps)
-      ? gate('DRAWDOWN', 'REJECTED', `drawdown ${drawdownBps} bps exceeds the versioned policy limit.`, policyRefs)
-      : gate('DRAWDOWN', 'APPROVED', `drawdown ${drawdownBps} bps is within the versioned policy limit.`, policyRefs));
+      ? gate('DRAWDOWN', 'REJECTED', `drawdown ${drawdownBps} bps exceeds the versioned policy limit.`, uniqueRefs(policyRefs, evidence.portfolioEvidenceRefs))
+      : gate('DRAWDOWN', 'APPROVED', `drawdown ${drawdownBps} bps is within the versioned policy limit.`, uniqueRefs(policyRefs, evidence.portfolioEvidenceRefs)));
   }
 
-  if (availableLiquidity === null || availableLiquidity < 0n || orderNotional === null || orderNotional <= 0n) {
-    gates.push(gate('LIQUIDITY', 'NOT_COMPUTABLE', 'liquidity coverage cannot be computed.', policyRefs));
+  const liquidityAuthorityValid = authorityMatches(
+    evidence.liquidityEvidenceAuthorityId,
+    policy.liquidityEvidenceAuthorityId,
+  ) && validRefs(evidence.liquidityEvidenceRefs);
+  if (availableLiquidity === null || availableLiquidity < 0n || orderNotional === null || orderNotional <= 0n || !liquidityAuthorityValid) {
+    gates.push(gate('LIQUIDITY', 'NOT_COMPUTABLE', 'liquidity authority/provenance is invalid or coverage cannot be computed.', evidence.liquidityEvidenceRefs));
   } else {
     const coverageBps = (availableLiquidity * BPS_DENOMINATOR) / orderNotional;
     gates.push(coverageBps < BigInt(policy.minLiquidityCoverageBps)
-      ? gate('LIQUIDITY', 'REJECTED', `liquidity coverage ${coverageBps} bps is below the versioned policy minimum.`, policyRefs)
-      : gate('LIQUIDITY', 'APPROVED', `liquidity coverage ${coverageBps} bps meets the versioned policy minimum.`, policyRefs));
+      ? gate('LIQUIDITY', 'REJECTED', `liquidity coverage ${coverageBps} bps is below the versioned policy minimum.`, uniqueRefs(policyRefs, evidence.liquidityEvidenceRefs))
+      : gate('LIQUIDITY', 'APPROVED', `liquidity coverage ${coverageBps} bps meets the versioned policy minimum.`, uniqueRefs(policyRefs, evidence.liquidityEvidenceRefs)));
   }
 
   const marketAge = ageSeconds(evidence.marketDataObservedAt, evaluatedAt);
-  gates.push(marketAge === null || !validRefs(evidence.marketEvidenceRefs)
-    ? gate('STALENESS', 'NOT_COMPUTABLE', 'market evidence freshness/provenance is incomplete.', evidence.marketEvidenceRefs)
+  const marketAuthorityValid = authorityMatches(
+    evidence.marketEvidenceAuthorityId,
+    policy.marketEvidenceAuthorityId,
+  );
+  gates.push(marketAge === null || !validRefs(evidence.marketEvidenceRefs) || !marketAuthorityValid
+    ? gate('STALENESS', 'NOT_COMPUTABLE', 'market evidence freshness/authority/provenance is incomplete.', evidence.marketEvidenceRefs)
     : marketAge > policy.maxMarketDataAgeSeconds
       ? gate('STALENESS', 'NOT_COMPUTABLE', `market evidence age ${marketAge}s exceeds the versioned policy maximum.`, evidence.marketEvidenceRefs)
       : gate('STALENESS', 'APPROVED', `market evidence age ${marketAge}s is within the versioned policy maximum.`, evidence.marketEvidenceRefs));
@@ -186,6 +215,7 @@ export function evaluateDeterministicRiskGates(
   const counterparty = evaluateExternalControl(
     evidence.counterparty,
     'COUNTERPARTY' as const,
+    policy.counterpartyAuthorityId,
     evaluatedAt,
     policy.maxCounterpartyEvidenceAgeSeconds,
   );
@@ -198,7 +228,14 @@ export function evaluateDeterministicRiskGates(
     policyVersion: policy.policyVersion,
     outcome,
     gates: Object.freeze(gates),
-    evidenceRefs: uniqueRefs(policyRefs, evidence.marketEvidenceRefs, evidence.counterparty.evidenceRefs),
+    evidenceRefs: uniqueRefs(
+      policyRefs,
+      evidence.orderEvidenceRefs,
+      evidence.portfolioEvidenceRefs,
+      evidence.liquidityEvidenceRefs,
+      evidence.marketEvidenceRefs,
+      evidence.counterparty.evidenceRefs,
+    ),
     evaluatedAt,
   });
 }
@@ -209,6 +246,9 @@ function invalidCompliancePolicy(policy: FinTechCoreCompliancePolicySnapshot): s
   if (!Number.isInteger(policy.maxEvidenceAgeSeconds) || policy.maxEvidenceAgeSeconds < 0) return 'compliance maxEvidenceAgeSeconds is invalid';
   if (policy.requiredControls.length === 0) return 'compliance policy must explicitly declare at least one required control';
   if (new Set(policy.requiredControls).size !== policy.requiredControls.length) return 'compliance policy contains duplicate required controls';
+  if (policy.requiredControls.some((controlId) => !policy.controlAuthorityIds[controlId]?.trim())) {
+    return 'compliance policy must bind every required control to an evidence authority';
+  }
   return null;
 }
 
@@ -236,6 +276,7 @@ export function evaluateDeterministicComplianceGates(
   const controls = requiredControls.map((controlId) => evaluateExternalControl(
     evidence.controls[controlId],
     controlId,
+    policy.controlAuthorityIds[controlId]!,
     evaluatedAt,
     policy.maxEvidenceAgeSeconds,
   ));
