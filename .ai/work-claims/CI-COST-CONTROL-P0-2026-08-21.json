@@ -15,16 +15,19 @@
   "baseSha": "a0663563a6a01bbdf292db8796c1b291bdd8ee57",
   "lastSyncedMainSha": "a0663563a6a01bbdf292db8796c1b291bdd8ee57",
   "branch": "agent/ci-cost-control-p0-2026-08-21",
-  "pullRequest": null,
+  "pullRequest": 469,
   "claimedPaths": [
     ".ai/work-claims/CI-COST-CONTROL-P0-2026-08-21.json",
     ".github/workflows/ci.yml",
     ".github/workflows/pr-governance.yml",
     ".github/workflows/sync-agent-pr-branches.yml",
+    "scripts/security/verifyProductionConfigInvariants.ts",
     "tests/unit/ciCostControl.test.ts",
     "tests/unit/prGovernanceRunnerConsolidation.test.ts",
     "tests/unit/agentPrBranchSyncCostControl.test.ts",
     "tests/unit/productionCiRunnerConsolidation.test.ts",
+    "tests/unit/ciDeploymentGuards.test.ts",
+    "tests/unit/ciDeploymentControlPlane.test.ts",
     "docs/adr/ADR-0073-ci-consolidation-build-and-test.md",
     "docs/runbooks/CI_BUILD_AND_TEST_CONSOLIDATION.md",
     "docs/evidence/P2_AGENT_PR_SYNC_FANOUT_CONTROL_2026-08-21.md",
@@ -43,9 +46,9 @@
   "correlation": {
     "currentMain": "a0663563a6a01bbdf292db8796c1b291bdd8ee57",
     "mergedPullRequestsSinceStart": [467, 468],
-    "openPullRequests": [],
+    "openPullRequests": [469],
     "directPathOverlap": [],
-    "finding": "PR #468 was merged into main and changed only FT-3 FinTechCore/Supabase scope. The branch was merged with current main without force-push or direct path conflict. P2B changes only CI runner topology while preserving source/provenance/Sigstore/production-environment/Render/exact-SHA trust boundaries."
+    "finding": "PR #469 is the only open PR and is this claim's own branch. The first hosted run on head 29feca6067089bbdcfecb812ea535ba443b654b7 reached npm ci, audit and TypeScript successfully, then exposed legacy M7 unit/config invariants that still encoded the pre-P2B four-job topology. The correction updates those guards to the preserved P2B trust semantics without weakening main-only, Sigstore, production-environment, Render or exact-SHA controls."
   },
   "externalMutationScope": "none",
   "releaseCondition": "Release claim after merge, closure, supersession or abandonment."
