@@ -3,6 +3,7 @@ import type {
   FinTechCoreDomainEvent,
 } from '../src/platform/FinTechCore/CoreContracts';
 import type {
+  FinTechCoreDomainEventReaderPort,
   FinTechCoreOrderIntentPersistenceInput,
   FinTechCorePersistencePort,
   FinTechCoreWorkflowRunPersistenceInput,
@@ -45,6 +46,62 @@ async function callPersistenceRpc(
   return data;
 }
 
+function requiredString(row: Record<string, unknown>, key: string): string {
+  const value = row[key];
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error(`[FinTechCore][Persistence] domain-event replay row is missing ${key}.`);
+  }
+  return value;
+}
+
+function optionalString(row: Record<string, unknown>, key: string): string | undefined {
+  const value = row[key];
+  if (value === null || value === undefined) return undefined;
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error(`[FinTechCore][Persistence] domain-event replay row has invalid ${key}.`);
+  }
+  return value;
+}
+
+function stringArray(row: Record<string, unknown>, key: string): readonly string[] {
+  const value = row[key];
+  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string' || !item.trim())) {
+    throw new Error(`[FinTechCore][Persistence] domain-event replay row has invalid ${key}.`);
+  }
+  return Object.freeze([...value]);
+}
+
+function recordPayload(row: Record<string, unknown>): Readonly<Record<string, unknown>> {
+  const value = row.payload;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('[FinTechCore][Persistence] domain-event replay row has invalid payload.');
+  }
+  return Object.freeze({ ...(value as Record<string, unknown>) });
+}
+
+function mapDomainEventRow(value: unknown): FinTechCoreDomainEvent {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('[FinTechCore][Persistence] domain-event replay returned a non-object row.');
+  }
+  const row = value as Record<string, unknown>;
+  return Object.freeze({
+    contractVersion: requiredString(row, 'contract_version') as FinTechCoreDomainEvent['contractVersion'],
+    eventId: requiredString(row, 'event_id'),
+    eventType: requiredString(row, 'event_type'),
+    eventVersion: requiredString(row, 'event_version'),
+    runId: requiredString(row, 'run_id'),
+    traceId: requiredString(row, 'trace_id'),
+    correlationId: requiredString(row, 'correlation_id'),
+    causationId: optionalString(row, 'causation_id'),
+    moduleId: requiredString(row, 'module_id'),
+    assetId: requiredString(row, 'asset_id'),
+    decisionVersion: requiredString(row, 'decision_version'),
+    occurredAt: requiredString(row, 'occurred_at'),
+    evidenceRefs: stringArray(row, 'evidence_refs'),
+    payload: recordPayload(row),
+  });
+}
+
 function assertWorkflowCreationInput(input: FinTechCoreWorkflowRunPersistenceInput): void {
   const { context, state } = input;
   if (state.runId !== context.runId) {
@@ -84,14 +141,15 @@ function assertWorkflowTransitionInput(input: FinTechCoreWorkflowTransitionPersi
 }
 
 /**
- * FT-3 production durability adapter.
+ * FT-3/FT-4 production durability adapter.
  *
  * The private `fintech_core` schema is intentionally not exposed through the Data API. This
  * adapter therefore calls narrowly-scoped public RPC entrypoints that are EXECUTE-granted only to
- * `service_role`; those RPCs run SECURITY INVOKER and write the private tables with the caller's
- * already-scoped privileges. No browser/RLS client, queue, score or execution capability is added.
+ * `service_role`; those RPCs run SECURITY INVOKER and use the caller's already-scoped private
+ * table privileges. FT-4 adds read-only domain-event replay without adding browser access.
  */
-export class SupabaseFinTechCorePersistenceAdapter implements FinTechCorePersistencePort {
+export class SupabaseFinTechCorePersistenceAdapter
+implements FinTechCorePersistencePort, FinTechCoreDomainEventReaderPort {
   async createWorkflowRun(input: FinTechCoreWorkflowRunPersistenceInput): Promise<void> {
     assertWorkflowCreationInput(input);
     const { context, state } = input;
@@ -152,6 +210,25 @@ export class SupabaseFinTechCorePersistenceAdapter implements FinTechCorePersist
     }, 'FinTech Core domain-event append');
   }
 
+  async listDomainEvents(runId: string): Promise<readonly FinTechCoreDomainEvent[]> {
+    if (!runId.trim()) {
+      throw new Error('[FinTechCore][Persistence] runId is required for domain-event replay.');
+    }
+    const context = 'FinTech Core domain-event replay';
+    assertPrivilegedSupabaseConfigured(context);
+    const supabase = getPrivilegedServerSupabase();
+    const { data, error } = await supabase.rpc('fintech_core_list_domain_events_v1', {
+      p_run_id: runId,
+    });
+    if (error) {
+      throw new Error(`[FinTechCore][Persistence] ${context} failed: ${errorMessage(error)}`);
+    }
+    if (!Array.isArray(data)) {
+      throw new Error(`[FinTechCore][Persistence] ${context} returned an invalid row set.`);
+    }
+    return Object.freeze(data.map(mapDomainEventRow));
+  }
+
   async appendDecisionRecord(record: FinTechCoreDecisionRecord): Promise<void> {
     await callPersistenceRpc('fintech_core_append_decision_record_v1', {
       p_decision_id: record.decisionId,
@@ -201,6 +278,7 @@ export class SupabaseFinTechCorePersistenceAdapter implements FinTechCorePersist
   }
 }
 
-export function createSupabaseFinTechCorePersistenceAdapter(): FinTechCorePersistencePort {
+export function createSupabaseFinTechCorePersistenceAdapter():
+FinTechCorePersistencePort & FinTechCoreDomainEventReaderPort {
   return new SupabaseFinTechCorePersistenceAdapter();
 }
