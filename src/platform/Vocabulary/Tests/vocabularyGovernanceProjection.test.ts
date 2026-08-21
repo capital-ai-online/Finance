@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   createDefaultUiMessageCatalog,
   createDefaultVocabularyRegistry,
+  createVocabularyWordingSnapshot,
   fintechWordingBindings,
-  projectVocabularyGovernance,
   WordingUsageIndex,
 } from '../index';
+import { projectVocabularyWordingThroughDocumentary } from '../../Documentary/Knowledge/VocabularyWordingDocumentaryProjection';
 
-describe('VW-5 Vocabulary governance projection', () => {
-  it('produces deterministic Documentary/Knowledge/Traceability evidence without mutation authority', () => {
+describe('VW-5 Vocabulary wording Documentary projection', () => {
+  it('reuses the canonical Documentary D7 Knowledge and Traceability contracts deterministically', () => {
     const registry = createDefaultVocabularyRegistry();
     const catalog = createDefaultUiMessageCatalog(registry);
     const usage = new WordingUsageIndex(catalog);
@@ -22,23 +23,32 @@ describe('VW-5 Vocabulary governance projection', () => {
     });
 
     const sourceCommit = 'a'.repeat(40);
-    const first = projectVocabularyGovernance(sourceCommit, registry, catalog, usage, fintechWordingBindings);
-    const second = projectVocabularyGovernance(sourceCommit, registry, catalog, usage, fintechWordingBindings);
+    const snapshot = createVocabularyWordingSnapshot(sourceCommit, registry, catalog, usage, fintechWordingBindings);
+    const input = {
+      snapshot,
+      generatedAt: '2026-08-21T21:00:00.000Z',
+      correlationId: 'VW-5-test',
+      causationId: 'VW-5-test',
+    };
+    const first = projectVocabularyWordingThroughDocumentary(input);
+    const second = projectVocabularyWordingThroughDocumentary(input);
 
-    expect(first.checksum).toBe(second.checksum);
-    expect(first.documentary.fintechStageIds).toHaveLength(18);
-    expect(first.documentary.sourcePaths).toContain('src/features/screening/ui/Example.tsx');
-    expect(first.knowledge.relationships.some((edge) => edge.type === 'HAS_MESSAGE')).toBe(true);
-    expect(first.knowledge.relationships.some((edge) => edge.type === 'USED_BY')).toBe(true);
-    expect(first.traceability.length).toBe(first.knowledge.relationships.length);
+    expect(snapshot.stages).toHaveLength(18);
+    expect(snapshot.usages[0].sourcePath).toBe('src/features/screening/ui/Example.tsx');
+    expect(first.document.fingerprint).toBe(second.document.fingerprint);
+    expect(first.knowledge.checksum).toBe(second.knowledge.checksum);
+    expect(first.knowledge.nodes[0].conceptIds).toContain('VOC-ANALYTICS-0001');
+    expect(first.knowledge.relationships.some((edge) => edge.type === 'REFERENCES_CONCEPT')).toBe(true);
+    expect(first.traceability.documentFingerprint).toBe(first.document.fingerprint);
+    expect(first.traceability.sourceCommit).toBe(sourceCommit);
     expect(first.financialDecisionAuthority).toBe(false);
     expect(first.mutationAuthority).toBe(false);
   });
 
-  it('requires an exact source commit for audit binding', () => {
+  it('requires an exact source commit before Documentary handoff', () => {
     const registry = createDefaultVocabularyRegistry();
     const catalog = createDefaultUiMessageCatalog(registry);
-    expect(() => projectVocabularyGovernance('main', registry, catalog, new WordingUsageIndex(catalog), fintechWordingBindings))
+    expect(() => createVocabularyWordingSnapshot('main', registry, catalog, new WordingUsageIndex(catalog), fintechWordingBindings))
       .toThrow(/exact 40-character source commit SHA/);
   });
 });
