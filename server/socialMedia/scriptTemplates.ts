@@ -32,6 +32,8 @@ export interface MarketingPack {
   twitterThread: string[];
   instagramCaption: string;
   tiktokDescription: string;
+  youtubeDescription: string;
+  facebookPost: string;
   hashtags: string[];
   ctaButtonText: string;
   supportEmail: string;
@@ -226,11 +228,44 @@ function buildMarketingPack(
     hashtags.join(' '),
   ].join('\n');
 
+  const youtubeDescription = [
+    `${EMOJI.intelligence} ${topic}`,
+    '',
+    note || fallback,
+    '',
+    `${EMOJI.finance} ${locale === 'en' ? 'Structured financial analysis and education.' : 'Strukturierte Finanzanalyse und Finanzbildung.'}`,
+    ...conceptLines,
+    '',
+    `${EMOJI.access} ${cta}`,
+    support,
+    '',
+    disclaimer,
+    '',
+    hashtags.join(' '),
+  ].join('\n');
+
+  const facebookPost = [
+    `${EMOJI.intelligence} ${topic}`,
+    '',
+    note || fallback,
+    '',
+    ...conceptLines,
+    '',
+    `${EMOJI.access} ${cta}`,
+    support,
+    '',
+    disclaimer,
+    '',
+    hashtags.join(' '),
+  ].join('\n');
+
   return {
     linkedinPost: longDescription,
     twitterThread: thread.map((entry) => entry.text),
     instagramCaption,
     tiktokDescription,
+    youtubeDescription,
+    facebookPost,
     hashtags,
     ctaButtonText: cta,
     supportEmail: SUPPORT_EMAIL,
