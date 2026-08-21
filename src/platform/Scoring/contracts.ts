@@ -7,8 +7,9 @@ import type { MarketDataAssetClass } from '../MarketData/contracts';
  * research never become part of asset identity; they enter through evidence/feature contracts.
  */
 export const UNIVERSAL_ASSET_CONTRACT_VERSION = 'uai/1.0.0' as const;
-export const SCORING_MODEL_REGISTRY_VERSION = 'scoring-model-registry/1.0.0' as const;
-export const CANONICAL_SCORE_RESULT_CONTRACT_VERSION = 'scoring-integrity/1.0.0' as const;
+export const SCORING_MODEL_REGISTRY_VERSION = 'scoring-model-registry/1.1.0' as const;
+export const LEGACY_CANONICAL_SCORE_RESULT_CONTRACT_VERSION = 'scoring-integrity/1.0.0' as const;
+export const CANONICAL_SCORE_RESULT_CONTRACT_VERSION = 'scoring-integrity/1.1.0' as const;
 
 export type UniversalAssetClass = Exclude<MarketDataAssetClass, 'macro'>;
 export type UniversalAssetSource = 'registry' | 'catalog' | 'request';
@@ -57,6 +58,8 @@ export interface ScoringModelDescriptor {
   evidencePolicy: ScoringEvidencePolicy;
   executorKey: string;
   priority: number;
+  /** Explicit authority gate. Challenger/research models must set this to false. */
+  scoreEligible?: boolean;
   /** True while an existing engine still needs wrapping into CanonicalScoreResult. */
   canonicalResultAdapterRequired: boolean;
   notes?: string;
