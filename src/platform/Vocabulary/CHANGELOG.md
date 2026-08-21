@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.8.0 — 2026-08-21
+
+### Deutsch
+
+- VW-6: deterministische, exact-commit-gebundene GitHub-Wiki-Projektion mit fünf verwalteten Seiten implementiert.
+- Wiki-Sync standardmäßig als Dry-Run ausgelegt; `--apply` ist für lokale Mutation und zusätzlich `--push` für Veröffentlichung erforderlich.
+- Wiki-Ziel wird auf ein sauberes `Finance.wiki.git`-Checkout begrenzt; Wiki bleibt explizit non-authoritative und one-way.
+- VW-7: fünf reale `MarketScreener`-Wordings unverändert als governed Message-Baseline aufgenommen und einen expliziten Source/Literal/Message-Key-Migrationsplan eingeführt.
+- VW-7 unterscheidet `OPEN`, `MIGRATED` und blockierendes `DRIFT`; automatische Source-Mutation bleibt deaktiviert.
+- Browser-sicheren Message-Resolver ohne Node-only Imports oder zusätzliche Dependency ergänzt.
+- VW-8: Wiki-, Migrations- und Closure-Validatoren in die bestehende Repository-Test-/Quality-Kette integriert.
+- ESS Registry in-place auf ESS-0017 / ESS-0017-CONTRACTS `1.8.0` und `ADR-0078` synchronisiert; kein zweiter Registry-/CI-Control-Plane eingeführt.
+- Keine externe Wiki-, Supabase-, Render-, Stripe-, IAM- oder Production-Mutation ausgeführt.
+
+### English
+
+- VW-6: implemented deterministic exact-commit-bound GitHub Wiki projection with five managed pages.
+- Wiki sync defaults to dry-run; local mutation requires `--apply` and publication additionally requires `--push`.
+- Wiki target is restricted to a clean `Finance.wiki.git` checkout; Wiki remains explicitly non-authoritative and one-way.
+- VW-7: captured five real `MarketScreener` wordings unchanged as governed messages and introduced an explicit source/literal/message-key migration plan.
+- VW-7 distinguishes `OPEN`, `MIGRATED` and blocking `DRIFT`; automatic source mutation remains disabled.
+- Added a browser-safe message resolver without Node-only imports or a new dependency.
+- VW-8: integrated Wiki, migration and closure validators into the existing repository test/quality chain.
+- Synchronized the existing ESS Registry in place to ESS-0017 / ESS-0017-CONTRACTS `1.8.0` and `ADR-0078`; no second registry or CI control plane was introduced.
+- No external Wiki, Supabase, Render, Stripe, IAM or production mutation was executed.
+
 ## 1.5.0 — 2026-08-21
 
 ### Deutsch
@@ -10,9 +36,9 @@
 - VW-2: 18 zusätzliche kanonische Concepts und read-only Wording Bindings für alle aktuellen `SC-MD-SPT-0001`-Stufen implementiert.
 - VW-3: evidenzbasierten Wording Usage Index mit explizitem Message-Key-Scanner und Reverse Impact Analysis implementiert.
 - VW-4: read-only Delivery Adapter für React, PDF, E-Mail, SEO und Accessibility implementiert.
-- VW-5: neutralen, commitgebundenen Vocabulary-Wording-Snapshot mit SHA-256-Checksum implementiert; der Documentary-Handoff verwendet anschließend die bereits bestehenden `DocumentaryDocument`-, D7-Knowledge- und Documentary-Traceability-Contracts statt eines zweiten Graph-/Traceability-Modells.
+- VW-5: neutralen, commitgebundenen Vocabulary-Wording-Snapshot mit SHA-256-Checksum implementiert; Documentary verwendet bestehende `DocumentaryDocument`-, D7-Knowledge- und Documentary-Traceability-Contracts.
 - Targeted Tests und Validatoren `npm run vocabulary:wording:test` / `npm run vocabulary:wording:check` ergänzt.
-- Keine neue Runtime-Dependency, kein GitHub-Wiki-Publish, keine UI-Massenmigration und keine Financial-/IAM-/Billing-/Production-Mutation eingeführt.
+- Keine neue Runtime-Dependency und keine Financial-/IAM-/Billing-/Production-Mutation eingeführt.
 
 ### English
 
@@ -22,9 +48,7 @@
 - VW-2: implemented 18 additional canonical Concepts and read-only wording bindings for all current `SC-MD-SPT-0001` stages.
 - VW-3: implemented an evidence-based Wording Usage Index with explicit Message-Key scanning and reverse-impact analysis.
 - VW-4: implemented read-only delivery adapters for React, PDF, email, SEO and accessibility.
-- VW-5: implemented a neutral commit-bound Vocabulary wording snapshot with SHA-256 checksum; the Documentary handoff then reuses the existing `DocumentaryDocument`, D7 Knowledge and Documentary Traceability contracts rather than creating a second graph/traceability model.
-- Added targeted `npm run vocabulary:wording:test` and `npm run vocabulary:wording:check` validation commands.
-- Added no runtime dependency, Wiki publish, mass UI migration or Financial/IAM/Billing/production mutation.
+- VW-5: implemented a neutral commit-bound Vocabulary wording snapshot with SHA-256 checksum; Documentary reuses existing D7/Traceability contracts.
 
 ## 1.0.0 — 2026-08-09
 
