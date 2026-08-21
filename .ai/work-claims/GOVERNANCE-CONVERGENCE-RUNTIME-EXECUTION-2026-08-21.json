@@ -23,9 +23,11 @@
     "server/systemEvents/systemEventJournal.ts",
     "server/marketData/createApplicationMarketDataRuntime.ts",
     "src/platform/Supervisor/Execution/AsyncExecutionPort.ts",
+    "src/components/SupervisorDashboard.tsx",
     "supabase/migrations/20260821183300_system_event_journal.sql",
     "tests/unit/systemEventJournal.test.ts",
     "tests/unit/asyncExecutionPort.test.ts",
+    "tests/unit/supervisorDashboardGovernance.test.ts",
     "docs/roadmaps/work-packages/GOVERNANCE_CONVERGENCE_RUNTIME_EXECUTION_2026-08-21.md",
     "docs/architecture/RENDER_RUNTIME_ASYNC_EXECUTION_STATUS_2026-08-21.md"
   ],
@@ -53,7 +55,7 @@
       "base": "agent/hosted-validation-cost-s0-s3-2026-08-21",
       "draft": true
     },
-    "finding": "The work item is stacked on the synchronized PR #471 head. It projects/reuses existing Governance, Documentary, audit, Supervisor and Render authorities rather than introducing a second control plane, audit stack, domain orchestrator or roadmap authority."
+    "finding": "The work item is stacked on the synchronized PR #471 head. It projects/reuses existing Governance, Documentary, audit, Supervisor and Render authorities rather than introducing a second control plane, audit stack, domain orchestrator or roadmap authority. The Supervisor UI is included as the direct consumer of the retired runtime mutation and synthetic telemetry surfaces so backend and frontend remain semantically aligned."
   },
   "externalMutationScope": "none; Supabase migration is repository-only handoff and is not applied to production by this work item",
   "releaseCondition": "Release after stacked PR merge/closure/supersession/abandonment. Production activation of the durable system-event table or a Render Workflows adapter requires a separate Owner-authorized production handoff."
