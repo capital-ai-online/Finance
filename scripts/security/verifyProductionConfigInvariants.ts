@@ -25,8 +25,26 @@ const checks: Check[] = [
   {
     id: 'PCG-013',
     file: '.github/workflows/ci.yml',
-    description: 'Production deployment must depend on build/test and supply-chain attestation',
-    includes: 'needs: [build-and-test, supply-chain-attestation]',
+    description: 'Production deployment must depend on the successful build-and-test trust boundary',
+    includes: 'needs: [build-and-test]',
+  },
+  {
+    id: 'PCG-015',
+    file: '.github/workflows/ci.yml',
+    description: 'The consolidated main build must still require hosted supply-chain provenance',
+    includes: 'verifySupplyChainProvenance.ts --require-ci',
+  },
+  {
+    id: 'PCG-016',
+    file: '.github/workflows/ci.yml',
+    description: 'The consolidated main build must still verify Sigstore provenance before deployment',
+    includes: 'cosign verify-blob',
+  },
+  {
+    id: 'PCG-017',
+    file: '.github/workflows/ci.yml',
+    description: 'Production mutation must reject an artifact whose release-manifest commit differs from github.sha',
+    includes: 'manifest.sourceCommit !== process.env.VERIFIED_COMMIT_SHA',
   },
   {
     id: 'PCG-014',

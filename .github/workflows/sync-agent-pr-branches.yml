@@ -1,21 +1,26 @@
 name: Agenten-PR-Branches synchronisieren
-run-name: Offene Agenten-PR-Branches auf aktuellen main-Stand bringen
+run-name: >-
+  ${{ github.event_name == 'pull_request'
+      && format('Agenten-PR #{0} bei Review-Bereitschaft mit main synchronisieren', github.event.pull_request.number)
+      || github.event_name == 'workflow_dispatch'
+      && 'Agenten-PR-Branches manuell mit main synchronisieren'
+      || 'Review-bereite Agenten-PR-Branches auf aktuellen main-Stand bringen' }}
 
-# Root cause of the recurring "PR-Vorlagenvertrag" / productionPreflight.mjs failures:
-# scripts/pr/productionPreflight.mjs requires every PR head to contain the current main
-# commit (deployment-guard / traceability invariant, see ADR-0036). That invariant is
-# intentionally strict and must not be weakened (CLAUDE.md protected-change rule). But
-# this repository merges into main very frequently, so any agent-authored PR branch that
-# stays open for a while goes stale between creation and merge, and the check keeps
-# failing until someone manually rebases.
+# ADR-0036 / productionPreflight.mjs requires the current main commit to be an ancestor of a
+# merge-ready PR head. That invariant remains strict. Cost control therefore changes only WHEN an
+# agent branch is synchronized:
+# - main push: sync review-ready agent PRs, but deliberately leave draft PRs untouched;
+# - ready_for_review: sync exactly the PR that just left draft state;
+# - workflow_dispatch: explicit recovery/maintenance path that may sync drafts as well.
 #
-# This workflow removes the manual step: whenever main advances, it asks GitHub to merge
-# the latest main into every open PR whose head branch uses an agent prefix (matching the
-# prefixes already allowed by open-agent-draft-pr.yml). The ancestry check itself is left
-# completely untouched; branches simply stop going stale.
+# This prevents every main merge from fanning out into synchronize -> CI + Governance runs for all
+# long-lived drafts while preserving automatic current-main ancestry before review/merge.
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+    types: [ready_for_review]
   workflow_dispatch: {}
 
 permissions:
@@ -23,31 +28,54 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: sync-agent-pr-branches
+  # A ready_for_review sync must not cancel a repository-wide main-push sync for other PRs.
+  group: sync-agent-pr-branches-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'main' }}
   cancel-in-progress: true
 
 jobs:
   sync-branches:
-    name: Offene Agenten-PRs auf main aktualisieren
+    name: Agenten-PRs kontrolliert auf main aktualisieren
+    # Fork PRs never receive a write-capable runner. Main-push/manual events remain allowed.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: Offene Agenten-PR-Branches per Update-Branch-API synchronisieren
+      - name: Review-bereite Agenten-PRs per Update-Branch-API synchronisieren
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
 
-          prs="$(gh pr list --repo "$REPO" --state open --json number,headRefName,isCrossRepository --limit 200)"
+          if [ "$EVENT_NAME" = 'pull_request' ]; then
+            # ready_for_review is a single-PR transition. Keep the operation scoped to that PR.
+            prs="$(gh pr view "$EVENT_PR_NUMBER" --repo "$REPO" \
+              --json number,headRefName,headRefOid,baseRefName,isCrossRepository,isDraft \
+              | jq -c '[.]')"
+          else
+            prs="$(gh pr list --repo "$REPO" --state open \
+              --json number,headRefName,headRefOid,baseRefName,isCrossRepository,isDraft \
+              --limit 200)"
+          fi
+
           count="$(echo "$prs" | jq 'length')"
-          echo "Offene PRs insgesamt: $count"
+          echo "Zu bewertende PRs: $count (event=$EVENT_NAME)"
 
           echo "$prs" | jq -c '.[]' | while read -r pr; do
             number="$(echo "$pr" | jq -r '.number')"
             head="$(echo "$pr" | jq -r '.headRefName')"
+            head_sha="$(echo "$pr" | jq -r '.headRefOid')"
+            base="$(echo "$pr" | jq -r '.baseRefName')"
             cross="$(echo "$pr" | jq -r '.isCrossRepository')"
+            draft="$(echo "$pr" | jq -r '.isDraft')"
+
+            if [ "$base" != 'main' ]; then
+              echo "PR #$number ($head): Base ist $base statt main, uebersprungen."
+              continue
+            fi
 
             case "$head" in
               agent/*|claude/*|gemini/*|copilot/*|ai/*) ;;
@@ -57,19 +85,39 @@ jobs:
                 ;;
             esac
 
-            if [ "$cross" = "true" ]; then
+            if [ "$cross" = 'true' ]; then
               echo "PR #$number ($head): Fork-PR, kein Auto-Sync moeglich."
               continue
             fi
 
-            echo "PR #$number ($head): Sync mit main anstossen..."
-            if gh api --method PUT "repos/$REPO/pulls/$number/update-branch" >/dev/null 2>err.log; then
+            if [ "$EVENT_NAME" = 'push' ] && [ "$draft" = 'true' ]; then
+              echo "PR #$number ($head): Draft bleibt bei main-Push bewusst unsynchronisiert (P2 Cost-Control)."
+              continue
+            fi
+
+            if [ "$EVENT_NAME" = 'pull_request' ] && [ "$draft" = 'true' ]; then
+              echo "PR #$number ($head): ready_for_review Event meldet weiterhin Draft; fail-closed uebersprungen."
+              continue
+            fi
+
+            if ! printf '%s' "$head_sha" | grep -Eq '^[0-9a-f]{40}$'; then
+              echo "PR #$number ($head): ungueltiger Head-SHA, fail-closed uebersprungen."
+              continue
+            fi
+
+            echo "PR #$number ($head): Sync mit main fuer beobachteten Head $head_sha anstossen..."
+            if gh api --method PUT \
+              -H 'Accept: application/vnd.github+json' \
+              "repos/$REPO/pulls/$number/update-branch" \
+              -f "expected_head_sha=$head_sha" >/dev/null 2>err.log; then
               echo "PR #$number ($head): Update-Branch angestossen."
             elif grep -q '"status": *"422"' err.log 2>/dev/null || grep -qi '422' err.log 2>/dev/null; then
-              echo "PR #$number ($head): bereits aktuell oder Update laeuft schon (422), uebersprungen."
+              echo "PR #$number ($head): bereits aktuell, Head inzwischen geaendert oder Update laeuft schon (422); kein zweiter Sync."
             else
               echo "PR #$number ($head): Sync fehlgeschlagen:"
               cat err.log
+              rm -f err.log
+              exit 1
             fi
             rm -f err.log
           done
