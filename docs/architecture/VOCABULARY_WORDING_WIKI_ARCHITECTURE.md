@@ -1,7 +1,7 @@
 # CAPITAL-AI Vocabulary, Wording & Wiki Architecture
 
 **Status:** Implementation Candidate — effective after Human Merge  
-**Version:** 1.5.0  
+**Version:** 1.8.0  
 **Date:** 2026-08-21  
 **Authority:** `ESS-0017` / `ESS-0017-CONTRACTS` / `ADR-0078`  
 **Financial parent authority:** `SC-MD-SPT-0001` — read-only projection only  
@@ -10,180 +10,105 @@
 ## 1. Architecture
 
 ```text
-┌──────────────────────────────────┐
-│ Canonical Vocabulary Registry    │
-│ Concept IDs / DE+EN / aliases    │
-│ forbidden terms / authority      │
-└──────────────┬───────────────────┘
-               │ validates
-               ▼
-┌──────────────────────────────────┐
-│ UI Message Catalog               │
-│ stable key / DE+EN / Concepts    │
-│ context / status / version       │
-└──────────────┬───────────────────┘
-               │
-       ┌───────┼────────┬──────────┐
-       ▼       ▼        ▼          ▼
-     React    PDF     E-Mail       SEO
-       │
-       ▼
-┌──────────────────────────────────┐
-│ Wording Usage Index              │
-│ key -> source/feature/surface     │
-│     -> FinTech stage             │
-└──────────────┬───────────────────┘
-               │
-               ▼
-┌──────────────────────────────────┐
-│ Neutral Vocabulary Wording       │
-│ Snapshot                         │
-└──────────────┬───────────────────┘
-               │ consumed by
-               ▼
-┌──────────────────────────────────┐
-│ Existing DocumentaryDocument     │
-│ -> D7 Knowledge Projection       │
-│ -> Documentary Traceability      │
-└──────────────┬───────────────────┘
-               │ VW-6 generated
-               ▼
-┌──────────────────────────────────┐
-│ GitHub Wiki                      │
-│ human-readable projection only   │
-└──────────────────────────────────┘
+Canonical Vocabulary Registry
+        validates
+UI Message Catalog
+        -> React / PDF / E-Mail / SEO / Accessibility
+        -> Wording Usage Index
+        -> neutral Vocabulary Wording Snapshot
+        -> existing DocumentaryDocument / D7 Knowledge / DocumentaryTraceability
+        -> deterministic generated Wiki pages
+        -> controlled Wiki sync (dry-run by default)
+        -> explicit incremental source migration plan
+        -> existing Repository Quality / test chain
 ```
 
-**Projection, not Redefinition:** Vocabulary/Wording describes and validates terminology and presentation contracts. It never becomes a Financial Runtime, IAM, Billing, Compliance, Knowledge, Traceability, EventMesh, Release or Deployment authority.
+**Projection, not Redefinition:** Vocabulary/Wording validates terminology and presentation contracts. It never becomes Financial Runtime, IAM, Billing, Compliance, Knowledge, Traceability, EventMesh, CI, Release, Deployment or production authority.
 
-## 2. Canonical Concept layer
+## 2. Canonical concepts and messages — VW-1/VW-2
 
-`src/platform/Vocabulary/Registry/seedConcepts.ts` contains the current seed baseline. Existing Concepts remain stable; VW-2 adds Concepts covering each of the 18 current `SC-MD-SPT-0001` stages.
+`src/platform/Vocabulary/Registry/seedConcepts.ts` remains the canonical Concept baseline. It includes Concepts covering all 18 current `SC-MD-SPT-0001` stages. `Messages/UiMessageCatalog.ts` validates stable DE/EN Message Keys, Concept references, contexts, versions and declared placeholder contracts.
 
-W3C SKOS is the reference model for future separation of preferred, alternative and hidden lexical labels. The current TypeScript registry remains authoritative; no RDF store is introduced.
+W3C SKOS remains the reference model for future preferred/alternative/hidden lexical-label separation. Unicode MessageFormat 2 remains an interoperability target; no RDF store or localization runtime dependency is introduced by VW-0 through VW-8.
 
-## 3. UI Message Catalog — VW-1
-
-Implementation:
-
-- `Messages/UiMessage.ts`
-- `Messages/UiMessageCatalog.ts`
-- `Messages/seedMessages.ts`
-- `Validators/UiMessageValidator.ts`
-
-The Catalog validates stable keys, SemVer-like message versions, DE/EN content, Concept references and declared placeholders. Unknown Concepts or invalid contracts fail closed.
-
-Message Format 2 is treated as a future interoperability target. VW-1 through VW-5 do not claim full MF2 runtime semantics and add no external localization dependency.
-
-## 4. FinTech wording bindings — VW-2
-
-Implementation:
-
-- `ValueChain/FintechWordingBinding.ts`
-- `ValueChain/fintechWordingBindings.ts`
-
-All 18 current stages are represented exactly once. Every binding has:
+Every FinTech wording binding remains:
 
 ```text
 financialDecisionAuthority = false
 mutationAuthority = false
 ```
 
-The targeted validation command correlates these stage IDs against `src/platform/Quality/ValueChain/FintechValueChainQualityProjection.ts`; Vocabulary does not import or duplicate its runtime behavior.
+## 3. Usage and delivery — VW-3/VW-4
 
-## 5. Wording Usage Index — VW-3
-
-Implementation:
-
-- `Usage/WordingUsage.ts`
-- `Usage/WordingUsageIndex.ts`
-
-The scanner records only explicit stable Message-Key references in configured application/server source roots. It does not infer usage from similar natural-language text.
-
-Reverse impact:
+`WordingUsageIndex` records only explicit stable Message-Key references and provides reverse-impact evidence:
 
 ```text
-Concept
- -> Message Keys
- -> Source Paths / Features / Routes
- -> Delivery Surfaces
- -> FinTech Stage References
+Concept -> Message Key -> Source/Feature/Route -> Surface -> FinTech Stage
 ```
 
-This is read-only Evidence. Hardcoded UI wording migration remains VW-7.
+Read-only delivery adapters exist for React, PDF, E-Mail, SEO and Accessibility. Context mismatches, retired messages and invalid placeholder values fail closed.
 
-## 6. Delivery adapters — VW-4
+## 4. Documentary handoff — VW-5
 
-Implementation:
+Vocabulary defines no second Knowledge/Traceability model. `createVocabularyWordingSnapshot()` emits an exact-commit-bound neutral snapshot. `src/platform/Documentary/Knowledge/VocabularyWordingDocumentaryProjection.ts` consumes it and reuses:
 
-- `Delivery/MessageDeliveryAdapter.ts`
-- `Delivery/createMessageDeliveryAdapters.ts`
+1. `createDocumentaryDocument()`;
+2. D7 `projectDocumentaryKnowledge()`;
+3. `buildDocumentaryTraceabilityRecord()`.
 
-Adapters exist for React, PDF, E-Mail, SEO and Accessibility. `shared` messages may cross surfaces; context-specific messages may not. Missing placeholder values and retired messages fail closed.
+Vocabulary itself retains no Documentary dependency.
 
-No adapter may upgrade a fail-closed financial/security state or authorize a legal/compliance claim.
+## 5. GitHub Wiki projection — VW-6
 
-## 7. Documentary / Knowledge / Traceability handoff — VW-5
+`Wiki/VocabularyWikiProjection.ts` deterministically renders five managed pages:
 
-Vocabulary deliberately does **not** define a second Knowledge Graph or Traceability model.
+- `Home.md`
+- `Canonical-Vocabulary.md`
+- `UI-Message-Catalog.md`
+- `FinTech-Value-Chain.md`
+- `Vocabulary-Governance-Boundary.md`
 
-Vocabulary implementation:
+Properties:
 
-- `Projection/VocabularyWordingSnapshot.ts`
+- exact source commit SHA required;
+- stable SHA-256 checksums;
+- no generated timestamps or model prose;
+- every page states that the Finance repository remains authoritative;
+- `repositoryAuthoritative=false` and `mutationAuthority=false`.
 
-Documentary adapter:
+`renderVocabularyWiki.ts` is check-only by default. `syncVocabularyWiki.ts` requires an existing clean Git checkout whose origin resolves to `Finance.wiki.git`; `--apply` is required before local mutation and `--push` before network publication. No Wiki publication is executed by this PR-preparation scope.
 
-- `src/platform/Documentary/Knowledge/VocabularyWordingDocumentaryProjection.ts`
+## 6. Controlled wording migration — VW-7
 
-### Input
+VW-7 deliberately avoids a repository-wide blind replacement. Existing copy is first captured unchanged in `migrationMessages.ts`, then mapped through `WordingMigrationPlan.ts` using exact source path, literal and Message Key.
 
-- exact source commit SHA;
-- canonical Vocabulary Registry;
-- UI Message Catalog;
-- Wording Usage Index;
-- 18-stage FinTech bindings.
-
-### Step 1 — neutral snapshot
-
-`createVocabularyWordingSnapshot()` produces a deterministic read-only snapshot with:
-
-- canonical Concept summary;
-- Message summary;
-- actual Usage records;
-- all 18 FinTech stage bindings;
-- authority references;
-- SHA-256 checksum;
-- `mutationAuthority=false`;
-- `financialDecisionAuthority=false`.
-
-Vocabulary retains no direct dependency on Documentary, Knowledge or Traceability.
-
-### Step 2 — canonical Documentary reuse
-
-`projectVocabularyWordingThroughDocumentary()` consumes the snapshot and reuses the existing platform contracts:
-
-1. `createDocumentaryDocument()` creates the governed handoff document;
-2. D7 `projectDocumentaryKnowledge()` creates the Knowledge projection;
-3. `buildDocumentaryTraceabilityRecord()` creates the Traceability record.
-
-Message Keys, FinTech Stage IDs and observed Source Paths are encoded as Documentary traceability IDs/content; Concept IDs use the existing D7 `REFERENCES_CONCEPT` relationship model.
-
-No separate graph node type, graph persistence, traceability store or event bus is introduced.
-
-## 8. GitHub Wiki boundary
-
-VW-6 will produce a one-way generated Wiki projection:
+States:
 
 ```text
-Finance.git authorities
- -> deterministic generated Markdown
- -> controlled sync
- -> Finance.wiki.git
+OPEN      governed hardcoded literal remains queued
+MIGRATED  source uses the stable Message Key
+DRIFT     mapping is ambiguous or broken
 ```
 
-Manual Wiki content is non-authoritative and must never automatically back-propagate into Registry, ESS, ADR or Message Catalog.
+`OPEN` remains accepted incremental debt. `DRIFT` blocks governance. The initial baseline contains five real `MarketScreener` wordings; it does **not** claim that every hardcoded UI string has already been migrated.
 
-## 9. Security and data-integrity invariants
+The browser resolver imports only browser-safe Vocabulary modules and introduces no Node polyfill or external dependency.
+
+## 7. Continuous governance / release closure — VW-8
+
+The existing repository validation architecture is reused. No second workflow or CI control plane is introduced.
+
+Commands:
+
+```text
+npm run vocabulary:wording:test
+npm run vocabulary:governance:check
+npm run vocabulary:governance:prepr
+```
+
+The governance chain checks Catalog/bindings, Wiki determinism, migration drift and VW-0…VW-8 closure metadata. `test:raw` invokes the read-only governance check. Hosted GitHub CI remains post-PR according to repository cost policy.
+
+## 8. Security and data-integrity invariants
 
 Vocabulary/Wording must not:
 
@@ -193,9 +118,11 @@ Vocabulary/Wording must not:
 - bypass IAM, Entitlement or Billing DENY;
 - turn `DATA_UNAVAILABLE`, partial or ineligible into a favorable state;
 - authorize Compliance/Legal wording without the applicable parent authority;
-- authorize Merge, Release, Deployment or production mutation.
+- back-propagate Wiki edits into repository authorities;
+- automatically mutate OPEN VW-7 source candidates;
+- authorize Merge, Release, Deployment, Wiki publication or production mutation.
 
-## 10. Work-package status
+## 9. Work-package status
 
 | Package | Scope | Status on branch |
 |---|---|---|
@@ -205,17 +132,10 @@ Vocabulary/Wording must not:
 | VW-3 | Wording Usage Index | implemented |
 | VW-4 | React/PDF/E-Mail/SEO adapters | implemented |
 | VW-5 | Documentary D7 / Traceability handoff | implemented |
-| VW-6 | Wiki renderer / controlled sync | pending |
-| VW-7 | hardcoded UI wording migration | pending |
-| VW-8 | continuous governance / release closure | pending |
+| VW-6 | deterministic Wiki renderer / controlled sync | implemented; not externally published |
+| VW-7 | controlled incremental wording migration baseline | implemented; OPEN candidates remain |
+| VW-8 | continuous governance / release closure | implemented |
 
-## 11. Validation
+## 10. Governance and rollback
 
-Targeted cheap/local commands:
-
-```text
-npm run vocabulary:wording:test
-npm run vocabulary:wording:check
-```
-
-The validation checks the Catalog, all 18 bindings, stage-ID correlation, actual key usages, exact commit-bound snapshot and the canonical Documentary D7/Traceability handoff. Hosted GitHub CI remains post-PR according to repository cost governance.
+ESS Registry is synchronized in place; no second registry is created. `ESS-0017` remains `Proposed` until Human Merge. Rollback is repository-level `git revert`; this branch performs no Supabase, Render, Stripe, IAM, Wiki or production mutation.
