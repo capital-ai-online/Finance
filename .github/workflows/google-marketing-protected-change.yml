@@ -1,84 +1,27 @@
 name: Google-Marketing-Schutzprüfung
-run-name: >-
-  ${{ github.event_name == 'pull_request'
-      && format('PR #{0} – Google-Marketing-Schutzprüfung', github.event.pull_request.number)
-      || 'Google-Marketing-Schutzprüfung' }}
+run-name: Manuelle Google-Marketing-Schutzdiagnose
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'index.html'
-      - 'public/cookiehub-init.js'
-      - 'public/google-analytics-consent.js'
-      - 'server/securityResponse.ts'
-      - 'server/logger.ts'
-      - 'src/platform/Security/types.ts'
-      - 'src/platform/Security/authMiddleware.ts'
-      - 'src/services/cookieHubConsentBridge.ts'
-      - 'scripts/security/verifyGoogleMarketingInvariants.ts'
-      - 'tests/unit/googleMarketingConsent.test.ts'
-      - 'tests/unit/securityResponse.test.ts'
-      - 'tests/unit/securityResponse.production.test.ts'
-      - 'package.json'
-      - '.github/workflows/ci.yml'
-      - '.github/workflows/google-marketing-protected-change.yml'
-      - '.github/CODEOWNERS'
-      - '.dockerignore'
-      - 'CLAUDE.md'
-      - '.ai/skills/ESS-0014-*'
-      - '.ai/registry/ess-registry.json'
-      - 'docs/adr/ADR-0035-*'
-      - 'docs/adr/ADR-0040-*'
-      - 'docs/adr/ADR-0042-*'
-      - 'docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md'
-      - 'docs/runbooks/GOOGLE_ANALYTICS_SETUP.md'
-  push:
-    branches: [main]
-    paths:
-      - 'index.html'
-      - 'public/cookiehub-init.js'
-      - 'public/google-analytics-consent.js'
-      - 'server/securityResponse.ts'
-      - 'server/logger.ts'
-      - 'src/platform/Security/types.ts'
-      - 'src/platform/Security/authMiddleware.ts'
-      - 'src/services/cookieHubConsentBridge.ts'
-      - 'scripts/security/verifyGoogleMarketingInvariants.ts'
-      - 'tests/unit/googleMarketingConsent.test.ts'
-      - 'tests/unit/securityResponse.test.ts'
-      - 'tests/unit/securityResponse.production.test.ts'
-      - 'package.json'
-      - '.github/workflows/ci.yml'
-      - '.github/workflows/google-marketing-protected-change.yml'
-      - '.github/CODEOWNERS'
-      - '.dockerignore'
-      - 'CLAUDE.md'
-      - '.ai/skills/ESS-0014-*'
-      - '.ai/registry/ess-registry.json'
-      - 'docs/adr/ADR-0035-*'
-      - 'docs/adr/ADR-0040-*'
-      - 'docs/adr/ADR-0042-*'
-      - 'docs/architecture/CAPITAL_AI_GOOGLE_MARKETING_MCP_ARCHITECTURE.md'
-      - 'docs/runbooks/GOOGLE_ANALYTICS_SETUP.md'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: google-marketing-guard-${{ github.event.pull_request.number || github.ref }}
+  group: google-marketing-guard-manual-${{ github.ref }}
   cancel-in-progress: true
 
-# Die vollständige technische Validierung liegt ausschließlich in ci.yml.
-# Dieser spezialisierte Guard darf keine zweite npm-ci/Test/Build-Pipeline erzeugen.
-# Er prüft ausschließlich, dass die geschützten Invarianten und ihre zentrale CI-Evidence
-# weiterhin korrekt verdrahtet sind.
+# S5 Cost-Control:
+# - Der automatische PR-/main-Runner ist stillgelegt, um die GitHub-Minutenrundung für einen
+#   wenige Sekunden langen statischen Guard zu vermeiden.
+# - Für Pull Requests läuft dieselbe Schutzverdrahtung im bereits allokierten pr-governance Runner.
+# - Die vollständige technische Google-Marketing-Validierung bleibt zentral in ci.yml / npm build /
+#   predeploy:check. Dieser Workflow ist nur noch ein manueller Diagnose-Fallback.
 jobs:
   protected-change-guard:
-    name: Geschützte Marketing-Konfiguration prüfen
+    name: Geschützte Marketing-Konfiguration manuell prüfen
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 3
 
     steps:
       - name: Quellcode ohne persistierte Zugangsdaten auschecken
@@ -88,54 +31,4 @@ jobs:
           persist-credentials: false
 
       - name: Schutzvertrag und zentrale CI-Evidence statisch prüfen
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -Fxq '.github/*' .dockerignore
-          grep -Fxq '!.github/workflows/' .dockerignore
-          grep -Fxq '.github/workflows/*' .dockerignore
-          grep -Fxq '!.github/workflows/google-marketing-protected-change.yml' .dockerignore
-
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          package = json.loads(Path('package.json').read_text(encoding='utf-8'))
-          scripts = package.get('scripts', {})
-          for script_name in ('build', 'predeploy:check'):
-              command = scripts.get(script_name, '')
-              if 'verifyGoogleMarketingInvariants.ts' not in command:
-                  raise SystemExit(
-                      f'Google-Marketing-Invariant-Guard fehlt im npm-Script {script_name}.'
-                  )
-
-          production_test = Path('tests/unit/securityResponse.production.test.ts')
-          if not production_test.is_file():
-              raise SystemExit('Produktions-CSP-Testdatei fehlt.')
-
-          ci = Path('.github/workflows/ci.yml').read_text(encoding='utf-8')
-          required = {
-              'unit': 'run: npm test',
-              'build': 'run: npm run build',
-              'production_csp': 'run: npx vitest run tests/unit/securityResponse.production.test.ts',
-              'predeploy': 'npm run predeploy:check',
-          }
-          missing = [name for name, marker in required.items() if marker not in ci]
-          if missing:
-              raise SystemExit(
-                  'Zentrale CI-Evidence fehlt: ' + ', '.join(missing)
-              )
-
-          build_pos = ci.index(required['build'])
-          production_pos = ci.index(required['production_csp'])
-          predeploy_pos = ci.index(required['predeploy'])
-          if not build_pos < production_pos < predeploy_pos:
-              raise SystemExit(
-                  'Produktions-CSP-Test muss nach npm run build und vor predeploy:check laufen.'
-              )
-
-          if ci.count(required['production_csp']) != 1:
-              raise SystemExit('Produktions-CSP-Test muss genau einmal zentral verdrahtet sein.')
-
-          print('[GOOGLE-MARKETING-GUARD] Zentrale CI-Evidence ist vollständig und geordnet.')
-          PY
+        run: node scripts/security/verifyGoogleMarketingProtectedWiring.mjs --force

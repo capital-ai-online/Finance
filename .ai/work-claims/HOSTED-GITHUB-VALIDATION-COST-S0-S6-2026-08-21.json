@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "HOSTED-GITHUB-VALIDATION-COST-S0-S6-2026-08-21",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "S0-S6 hosted GitHub validation cost/value assessment, shadow exact-snapshot attestation contract, auxiliary runner consolidation, autonomous self-heal suspension and negative assurance without replacing Required Checks",
+  "workItemDE": "S0-S6 Kosten-/Nutzenanalyse der GitHub-hosted Validierung, Shadow-Attestation, Konsolidierung kurzer Runner und Suspendierung des autonomen Self-Heal-Pfads ohne Required-Check-Cutover",
+  "startedAt": "2026-08-21T10:43:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "7d173d3239fdbe31216354fc848f948d517069f6",
+  "lastSyncedMainSha": "7d173d3239fdbe31216354fc848f948d517069f6",
+  "branch": "agent/hosted-validation-cost-s0-s3-2026-08-21",
+  "pullRequest": null,
+  "claimedPaths": [
+    ".ai/work-claims/HOSTED-GITHUB-VALIDATION-COST-S0-S6-2026-08-21.json",
+    ".github/policies/pre-pr-attestation-trust.shadow.json",
+    ".github/workflows/google-marketing-protected-change.yml",
+    ".github/workflows/pr-governance.yml",
+    ".github/workflows/self-heal-ci.yml",
+    "docs/evidence/HOSTED_GITHUB_VALIDATION_COST_S0_S3_2026-08-21.md",
+    "docs/evidence/HOSTED_GITHUB_VALIDATION_COST_S4_S6_2026-08-21.md",
+    "docs/governance/supersessions/HOSTED_GITHUB_VALIDATION_COST_SUPERSESSION_S0_S6_2026-08-21.md",
+    "docs/runbooks/PRE_PR_SHADOW_ATTESTATION.md",
+    "scripts/pr/googleMarketingProtectedWiring.test.mjs",
+    "scripts/pr/shadowAttestation.mjs",
+    "scripts/pr/shadowAttestation.test.mjs",
+    "scripts/security/verifyGoogleMarketingProtectedWiring.mjs",
+    "tests/unit/googleMarketingGuardConsolidation.test.ts",
+    "tests/unit/selfHealSuspension.test.ts"
+  ],
+  "protectedExistingAuthorities": [
+    "AGENTS.md AUTH-GOV-AGENT-TRUST-ROOT and canonical PR creation contract",
+    "ADR-0073 build-and-test as sole repository-hosted technical Required Check",
+    "main-production-protection expected required checks: build-and-test + GitGuardian Security Checks",
+    "AGENTS.md M10 SUSPENDED/OFF",
+    "Human/CODEOWNER merge authority",
+    "production main pipeline: Sigstore/OIDC, production environment, exact-SHA Render deployment and post-deploy identity verification"
+  ],
+  "correlation": {
+    "currentMainAtImplementationStart": "7d173d3239fdbe31216354fc848f948d517069f6",
+    "mergedPullRequests": [469],
+    "openPullRequestsAtImplementationStart": [],
+    "directPathOverlap": [],
+    "replacesUnmergedWorkingBranch": "agent/hosted-validation-cost-supersession-2026-08-21",
+    "finding": "S0-S6 continues on the fresh branch rooted at the exact PR #469 main merge. Required CI, GitGuardian, M10 state and production promotion remain unchanged. S5 only consolidates/suspends auxiliary non-required runner paths that were correlated as cost or governance amplifiers."
+  },
+  "externalMutationScope": "none",
+  "activationState": "S5_MERGE_CANDIDATE_S4_S6_SHADOW_ONLY",
+  "releaseCondition": "Release claim after merge, closure, supersession or abandonment. Any deterministic hosted-validation replacement or trusted signer provisioning requires separate real shadow evidence and explicit Owner cutover."
+}
