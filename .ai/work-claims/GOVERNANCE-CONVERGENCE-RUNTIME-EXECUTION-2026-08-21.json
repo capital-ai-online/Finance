@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "claimId": "GOVERNANCE-CONVERGENCE-RUNTIME-EXECUTION-2026-08-21",
-  "status": "active",
+  "status": "implemented-pending-validation",
   "exclusive": true,
   "agent": {
     "provider": "OpenAI",
@@ -16,7 +16,7 @@
   "lastSyncedMainSha": "6c90c04de8924b8783f23ab4789afa810e9ea3a8",
   "branch": "agent/governance-convergence-runtime-execution-2026-08-21",
   "upstreamPullRequest": 471,
-  "pullRequest": null,
+  "pullRequest": 474,
   "claimedPaths": [
     ".ai/work-claims/GOVERNANCE-CONVERGENCE-RUNTIME-EXECUTION-2026-08-21.json",
     "server/systemEvents.ts",
@@ -42,11 +42,16 @@
     "PR #471 hosted-validation cost-control and shadow-attestation scope"
   ],
   "correlation": {
-    "mainAtStart": "6c90c04de8924b8783f23ab4789afa810e9ea3a8",
+    "mainAtStartAndPrePr": "6c90c04de8924b8783f23ab4789afa810e9ea3a8",
     "upstreamPr": {
       "number": 471,
       "headAfterMainSync": "b8a78220c671df8cb3c35dfc5ba719b972e6ce69",
       "directPathOverlap": []
+    },
+    "stackedPr": {
+      "number": 474,
+      "base": "agent/hosted-validation-cost-s0-s3-2026-08-21",
+      "draft": true
     },
     "finding": "The work item is stacked on the synchronized PR #471 head. It projects/reuses existing Governance, Documentary, audit, Supervisor and Render authorities rather than introducing a second control plane, audit stack, domain orchestrator or roadmap authority."
   },
