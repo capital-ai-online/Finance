@@ -1,10 +1,10 @@
 import {
   UNIVERSE_SLA_CONTRACT_VERSION,
-  createUniversalAssetIdentity,
   evaluateUniverseSla,
   type UniverseSlaResult,
-  type UniversalAssetClass,
-} from '../platform/Scoring';
+} from '../platform/Scoring/UniverseSla';
+import { createUniversalAssetIdentity } from '../platform/Scoring/UniversalAssetAdapter';
+import type { UniversalAssetClass } from '../platform/Scoring/contracts';
 
 export const UNIVERSE_AVAILABILITY_PROJECTION_VERSION = 'universe-availability-projection/1.0.0' as const;
 
@@ -77,6 +77,9 @@ function cleanStrings(values: readonly string[] | undefined): string[] {
  * Builds the read-only P1 availability projection from already discovered catalog identities and
  * already executed runtime evidence results. It never performs provider I/O and never creates
  * filler assets. READY alone is not enough: at least one provider and evidence id must be present.
+ *
+ * Browser-facing consumers import this module. Keep dependencies on browser-safe scoring contracts
+ * explicit instead of importing the Scoring barrel, which also exports server-only fingerprint code.
  */
 export function buildUniverseAvailabilityProjection(
   catalog: readonly UniverseAvailabilityCatalogAsset[],

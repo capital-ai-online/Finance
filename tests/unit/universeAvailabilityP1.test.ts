@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { buildUniverseAvailabilityProjection } from '../../src/services/universeAvailability';
 
@@ -22,6 +23,16 @@ function readyRows(count: number) {
 }
 
 describe('P1 universe availability projection', () => {
+  it('keeps browser-facing availability code isolated from the server-only Scoring barrel', () => {
+    const source = readFileSync(new URL('../../src/services/universeAvailability.ts', import.meta.url), 'utf8');
+
+    expect(source).not.toContain("from '../platform/Scoring';");
+    expect(source).not.toContain('node:crypto');
+    expect(source).toContain("from '../platform/Scoring/UniverseSla'");
+    expect(source).toContain("from '../platform/Scoring/UniversalAssetAdapter'");
+    expect(source).toContain("from '../platform/Scoring/contracts'");
+  });
+
   it('reports AVAILABLE only when 24 real evidence-backed identities are present', () => {
     const projection = buildUniverseAvailabilityProjection(stockCatalog(24), readyRows(24));
     const stock = projection.classes.find(item => item.assetClass === 'stock');

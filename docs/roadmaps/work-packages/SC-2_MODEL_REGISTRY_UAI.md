@@ -1,14 +1,15 @@
 # SC-2 — Model Registry & Universal Asset Interface
 
 **SPT:** `SC-MD-SPT-0001`  
-**Version:** 1.0.8  
-**Status:** C3 LANDED — P0 MULTI-CLASS INTEGRITY IN IMPLEMENTATION  
+**Version:** 1.0.9  
+**Status:** C3 LANDED — P0 VALIDATED — P1 UNIVERSE AVAILABILITY IN VALIDATION  
 **Execution Branch:** `feature/fintech-orchestrator-p0-multiclass-integrity`  
-**Pull Request:** pending  
+**Pull Request:** #475 (Draft)  
 **Baseline:** `main@6c90c04de8924b8783f23ab4789afa810e9ea3a8`  
 **Historical Integration:** PR #418 stack; #421 `/score`; #424 `/list` + `/top10`; #427 C1; #428 C2a; #430 C2b; #435 C3 global multi-asset exit; all Human-merged after required main revalidation  
 **Start:** 2026-08-19  
 **P0-Revalidation:** 2026-08-21  
+**P1-Start:** 2026-08-21  
 **ADRs:** ADR-0087, ADR-0088, ADR-0089, ADR-0090
 
 ## Ziel
@@ -165,7 +166,7 @@ Evidence: `docs/evidence/sc-md/SC2_PHYSICAL_LEGACY_CRYPTO_CLEANUP_2026-08-19.md`
 
 **Global Phase C ist mit PR #435 LANDED.** Die produktive Execution-Authority bleibt ein einzelner `ScoringDispatcher`.
 
-## Phase D — P0 Multi-Class Integrity Hardening — IN IMPLEMENTATION
+## Phase D — P0 Multi-Class Integrity Hardening — VALIDATED
 
 **Priorität:** P0 aus dem Scoring-Architektur-Precheck vom 2026-08-21.  
 **Evidence:** `docs/evidence/sc-md/SC2_P0_MULTICLASS_INTEGRITY_2026-08-21.md`.
@@ -184,31 +185,54 @@ Evidence: `docs/evidence/sc-md/SC2_PHYSICAL_LEGACY_CRYPTO_CLEANUP_2026-08-19.md`
 - [x] fokussierte P0-Negativ-/Replay-Regressionen ergänzt
 - [x] ADR-0087 innerhalb bestehender Authority revalidiert; keine neue ADR erzeugt
 - [x] P0-Evidence dokumentiert
-- [ ] TypeScript-/fokussierte Unit-Test-Validierung lokal/kostenarm ausführen
-- [ ] vollständige lokale/kostenarme Scope-Validierung soweit verfügbar
-- [ ] finalen `main` erneut laden, neue Main-Änderungen korrelieren und Branch synchronisieren
-- [ ] Draft PR erst nach erfolgreichem finalen Main-Sync erstellen
+- [x] TypeScript PASS auf P0-Head `3af223c8ec7115f838ff0ec21188c7927fb5da8b`
+- [x] vollständige Unit-Suite PASS auf P0-Head
+- [x] Production Build/CSP/Deployment Readiness PASS auf P0-Head
+- [x] finalen `main` vor Draft PR geladen und Branch als 0 behind bestätigt
+- [x] Draft PR #475 nach erfolgreichem Main-Sync erstellt
 
-### P1-Folgepunkt nach P0
+## Phase E — P1 Universe Availability — IN VALIDATION
 
-`UniverseSla` wird in die bestehende Discovery-/Evidence-Admission-/UI-Kette verdrahtet. Ziel ist die reale Verfügbarkeit von mindestens 24 Assets je Klasse/Unterkategorie. Fehlende Abdeckung bleibt transparent und darf weder durch synthetische Assets noch durch einen parallelen Provider-/Dispatcher-Pfad geschlossen werden.
+**Priorität:** expliziter P1-Folgeauftrag vom 2026-08-21.  
+**Evidence:** `docs/evidence/sc-md/SC2_P1_UNIVERSE_AVAILABILITY_2026-08-21.md`.
+
+- [x] `universe-availability-projection/1.0.0` als read-only Runtime Projection implementiert
+- [x] ausschließlich bestehende Katalogidentitäten und reale Runtime-Evidence als Eingänge
+- [x] `READY` + Provider + Evidence-ID + bestehende Screening-Eligibility als Availability-Gate
+- [x] Top-Level-Ziel 24 je Assetklasse über `universe-sla/1.0.0`
+- [x] Ziel 24 je bestehender Unterkategorie (`subtype`, ersatzweise `instrumentKind`)
+- [x] `screeningBatchGovernance` um nicht-autorisierende Universe-Projection ergänzt
+- [x] `UniverseBestWorst` um reale SLA-Anzeige je Klasse/Unterkategorie ergänzt
+- [x] bestehendes 50-Symbol-Batch-Limit erkannt und durch sequenzielle Batches `<=50` eingehalten
+- [x] Kandidatenscope bleibt maximal 24 je Assetklasse; keine Filler/Synthetic/Demo-Daten
+- [x] P1 TypeScript PASS im ersten CI-Lauf
+- [x] P1 Unit-Suite PASS im ersten CI-Lauf — 283 Testdateien / 1713 Tests PASS, 2 skipped
+- [x] Production-Build-Ursache auf serverseitigen Scoring-Barrel im Browsergraphen eingegrenzt
+- [x] Browser-/Server-Importgrenze ohne Polyfill/neue Dependency korrigiert
+- [x] Regressionstest gegen erneuten `platform/Scoring`-Barrel-/`node:crypto`-Leakage ergänzt
+- [ ] finaler TypeScript-/Unit-/Production-Build-/CSP-/Deployment-Readiness-Lauf auf Fix-Head
+- [ ] finaler Current-Main-/Open-PR-Race-Check nach grünem P1-CI
 
 ## Change Boundaries / Nicht-Ziele
 
-- C3 selbst änderte keine Scoring-Gewichte; die aktuelle P0-Härtung enthält **eine explizit versionierte Crypto-0.7.0-Modelländerung**, die nicht symmetrisch belegbare Legacy-Faktoren aus der kanonischen Faktorautorität entfernt.
-- keine Änderung von Ranking-/Eligibility-Schwellen;
+- C3 selbst änderte keine Scoring-Gewichte; P0 enthält **eine explizit versionierte Crypto-0.7.0-Modelländerung**, die nicht symmetrisch belegbare Legacy-Faktoren aus der kanonischen Faktorautorität entfernt.
+- P1 ändert keine Scoring-Gewichte, Ranking-/Eligibility-Schwellen oder Model-Selection.
 - kein `scoreImpact`-/`rankingImpact`-Flip;
 - kein Market-Data-Provider-Routing-/executionPriceEligible-Flip;
 - keine neuen synthetischen/LLM-basierten Finanzmerkmale;
 - keine automatische Evidence-Promotion aus AI-Ausgaben;
-- keine neue Scoring-, Dispatcher-, Governance- oder Provenance-Architektur;
-- keine kostenpflichtige Provider-Nutzung als Voraussetzung dieser P0-Härtung.
+- keine neue Scoring-, Dispatcher-, Governance-, Discovery- oder Provenance-Architektur;
+- P1 erhöht die Zahl der vorgesehenen 24 Kandidaten je Assetklasse nicht; die Batch-Korrektur verhindert nur serverseitiges Abschneiden nach 50 Symbolen;
+- keine zusätzliche Datenbank, persistente Availability-Historie oder periodischer Provider-Warmup;
+- keine Browser-Polyfills für serverseitiges `node:crypto`.
 
 ## Enterprise-/FinTech-Abgleich — revalidiert 2026-08-21
 
 Die am 17.04.2026 veröffentlichte Federal Reserve/OCC/FDIC Revised Guidance on Model Risk Management (SR 26-2 / OCC Bulletin 2026-13) dient weiterhin als aktueller Enterprise-Benchmark für den deterministischen Modellbestand. Das relevante Engineering-Muster ist die Verbindung von intended model use, inventory, governance/controls, validation, Dokumentation und laufendem Monitoring. P0 stärkt insbesondere Model Inventory/Champion Authority, Evidence-Qualität, revisionssensitive Lineage und reproduzierbare effektive Gewichte.
 
 NIST AI RMF 1.0 bleibt ergänzender freiwilliger Lifecycle-/Traceability-/TEVV-Benchmark. Etablierte OSS-Muster aus MLflow Model Registry, OpenLineage und Feast wurden geprüft; ein Runtime-Einbau wurde für P0 verworfen, weil die vorhandene Git-gesteuerte Registry-/Evidence-/Lineage-Architektur bereits dieselbe fachliche Rolle erfüllt und zusätzliche Komponenten Duplikation, Dependencies und Betriebsaufwand erzeugen würden.
+
+P1 orientiert die Availability-Auswertung an real beobachteter Runtime-Evidence statt an bloßer Katalogpräsenz. Ein zusätzlicher SLO-/Telemetry-Stack wurde verworfen; die bestehende Screening-Governance und der vorhandene UI-Evaluationspfad werden wiederverwendet.
 
 ## Main-Korrelation
 
@@ -223,19 +247,29 @@ NIST AI RMF 1.0 bleibt ergänzender freiwilliger Lifecycle-/Traceability-/TEVV-B
 ### 2026-08-21 — P0 Multi-Class Integrity
 
 - P0-Branch wurde von `main@6c90c04de8924b8783f23ab4789afa810e9ea3a8` übernommen.
-- initialer Compare: 15 Commits ahead / 0 behind; Merge-Base exakt dieser Main-Commit.
-- der Branch setzt auf dem bereits gemergten C3-Dispatcher auf und erzeugt keinen zweiten Execution-Pfad.
-- vor Draft-PR-Erstellung ist ein **erneuter** Current-Main-Load samt semantischer Korrelation und Synchronisierung verpflichtend.
+- Draft PR #475 wurde erst nach erneutem Main-Load und 0-behind-Check erstellt.
+- P0-Head `3af223c8ec7115f838ff0ec21188c7927fb5da8b` bestand TypeScript, vollständige Unit-Suite, Production Build, CSP und Deployment Readiness.
 
-## Definition of Done SC-2
+### 2026-08-21 — P1 Universe Availability
 
-SC-2 besitzt seit C3 genau einen produktiven UAI-/Registry-/Dispatcher-Exit. Weitere Härtungen dürfen diese Authority nur versioniert erweitern, nicht duplizieren. Für die aktuelle P0-Phase gilt als abgeschlossen, wenn:
+- vor P1 erneut `main@6c90c04de8924b8783f23ab4789afa810e9ea3a8` geladen; Branch 24 ahead / 0 behind.
+- offene PRs #471 und #474 geprüft; kein direkter Dateioverlap mit P1.
+- erster P1-Head `42691ac327e02645677e9b6cfb0fd3fb34572c42`: TypeScript und vollständige Unit-Suite PASS.
+- der erste P1 Production Build identifizierte ausschließlich eine Browser-/Server-Importgrenze über den Scoring-Barrel; fachliche P1-Tests blieben grün.
+- Importgrenze wird auf demselben Branch ohne Polyfill oder neue Dependency korrigiert; danach ist ein erneuter finaler CI- und Main-Race-Check verpflichtend.
 
-1. produktive Modell- und Faktorautorität eindeutig und versioniert ist;
+## Definition of Done SC-2 P0/P1
+
+SC-2 besitzt seit C3 genau einen produktiven UAI-/Registry-/Dispatcher-Exit. P0 ist technisch validiert. P1 gilt als abgeschlossen, wenn:
+
+1. produktive Modell- und Faktorautorität eindeutig und versioniert bleibt;
 2. Challenger keine implizite Score-Wirkung besitzen;
-3. Evidence-/Freshness-Gates fail-closed sind;
+3. Evidence-/Freshness-Gates fail-closed bleiben;
 4. effektive Feature-/Weight-Semantik reproduzierbar und revisionssensitiv in der Lineage gebunden ist;
-5. das 24-Asset-Ziel ausschließlich aus realen, zugelassenen Assets bewertet wird;
-6. fokussierte und erforderliche lokale/kostenarme Validierung erfolgreich ist;
-7. Branch unmittelbar vor PR gegen den aktuellen `main` synchronisiert und auf semantische Korrelationen geprüft wurde;
-8. erst danach der Draft PR erstellt wird; kostenverursachende GitHub-CI folgt erst nach PR-Erstellung.
+5. Universe Availability ausschließlich reale, zugelassene UAI-Identitäten zählt;
+6. Top-Level- und bestehende Unterkategorie-SLAs den realen Zustand gegen Ziel 24 ausweisen;
+7. der UI-/Batch-Pfad keine serverseitige 50-Symbol-Grenze still überschreitet;
+8. Browser-/Server-Importgrenzen ohne Polyfill-Leakage eingehalten werden;
+9. TypeScript, vollständige Unit-Suite, Production Build, CSP und Deployment Readiness auf dem finalen P1-Head PASS sind;
+10. Branch nach finalem CI erneut mit aktuellem `main` und offenen Parallel-PRs korreliert wurde;
+11. Merge ausschließlich Human/CODEOWNER-gated erfolgt.

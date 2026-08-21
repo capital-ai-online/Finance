@@ -78,6 +78,12 @@ Die UI zeigt je Assetklasse `availableCount / 24` und den kanonischen SLA-Status
 
 READY ohne Evidence-Lineage zählt nicht als verfügbar. Providerfehler werden sichtbar degradiert. Fehlende Assets bleiben fehlend.
 
+### Frontend-/Server-Grenze
+
+Die erste P1-CI-Ausführung bestand TypeScript und die vollständige Unit-Suite, identifizierte im Production Build jedoch einen Architekturgrenzfehler: der browserseitig importierte Availability-Service nutzte den `platform/Scoring`-Barrel, der auch das serverseitige `scoringFingerprint.ts` mit `node:crypto` exportiert.
+
+Die Korrektur führt **keinen Crypto-Polyfill und keine neue Dependency** ein. `universeAvailability.ts` importiert ausschließlich die browser-sicheren Verträge `UniverseSla`, `UniversalAssetAdapter` und `contracts` direkt. Ein Regressionstest verhindert die erneute Einführung des serverseitigen Barrel-Imports in diesen Browserpfad.
+
 ## 7. Security / Integrity / Governance
 
 - keine Secrets oder Credentials;
@@ -87,7 +93,8 @@ READY ohne Evidence-Lineage zählt nicht als verfügbar. Providerfehler werden s
 - keine synthetischen Assets;
 - keine automatische Evidence-Promotion;
 - keine Änderung an Score-Gewichten, Ranking-Schwellen oder Dispatcher-Routing;
-- kein harter Produktionsblock durch Universe SLA (`hardMinimum=false` bleibt erhalten).
+- kein harter Produktionsblock durch Universe SLA (`hardMinimum=false` bleibt erhalten);
+- keine Browser-Polyfills für serverseitige Kryptografie; Server-/Browser-Grenze bleibt explizit.
 
 ## 8. Best-Practice-Abgleich
 
@@ -105,6 +112,7 @@ P1 deckt mindestens ab:
 - Screening-Governance liefert `universeSla`, ohne Score zu ändern;
 - UI behält den vorhandenen 24-Kandidaten-Scope;
 - Batch-Anfragen bleiben bei höchstens 50 Symbolen und verhindern stilles Server-Truncation;
+- Browserpfad importiert nicht den serverseitigen Scoring-Barrel/`node:crypto`;
 - keine Random-/Synthetic-Fill-Logik.
 
 ## 10. Offene Folgepunkte
@@ -117,5 +125,10 @@ Ein späterer Schritt darf eine persistente Availability-Historie oder OpenTelem
 
 - P0 CI vor P1: **PASS**;
 - P1 statischer Architektur-/Scope-Check: **PASS**;
-- P1 Unit-/TypeScript-/Build-CI: nach Commit erneut auszuführen;
-- finaler Main-Sync vor Merge-Bereitschaft: erneut erforderlich.
+- erste P1-CI: **TypeScript PASS**;
+- erste P1-CI: **Unit Tests PASS — 283 Testdateien bestanden, 1713 Tests bestanden, 2 Tests übersprungen**;
+- erste P1-CI: **Production Build FAIL ausschließlich an Browser-/Server-Barrel-Grenze (`node:crypto`)**;
+- gezielter Import-Grenzfix ohne neue Dependency: **implementiert**;
+- Regressionstest gegen erneuten serverseitigen Barrel-Import: **implementiert**;
+- finaler P1 TypeScript-/Unit-/Build-/CSP-/Deployment-Readiness-Lauf auf Fix-Head: **ausstehend**;
+- finaler Main-/Open-PR-Sync vor Merge-Bereitschaft: **ausstehend**.
