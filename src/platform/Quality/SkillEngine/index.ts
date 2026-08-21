@@ -1,5 +1,5 @@
 export { errorClasses, errorClassById } from './errorClasses';
-export { skillCatalog, skillById } from './skillCatalog';
+export { skillCatalog, skillById } from './effectiveSkillCatalog';
 export { SKILL_VERIFICATION_RESULT_SCHEMA } from './outputSchema';
 export { SKILL_ENGINE_CACHE_KEY, SKILL_ENGINE_SYSTEM_PROMPT, SKILL_ENGINE_VERSION, compileSkillPrompt } from './promptCompiler';
 export { buildVocabularyInventory } from './inventory';
