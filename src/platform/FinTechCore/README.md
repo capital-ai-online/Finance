@@ -13,7 +13,7 @@ Der `FinTechCore` ist die versionierte finanzielle Workflow-Composition-Schicht 
 - FT-2C: detector-agnostische Pattern Detection Contracts, Reliability Registry und Multi-Timeframe Research Resolver
 - FT-3: private durable Workflow-/Event-/Decision-/OrderIntent-Persistenz sowie service-role-only Application Boundary
 - FT-4: deterministic, durable/replay-faehiges Paper Trading mit explizit simulierten Balances und Cost Evidence
-- FT-5: deterministic Pre-Trade Risk + Compliance Gates mit versionierter Policy-/Authority-Bindung
+- FT-5: deterministic Pre-Trade Risk + Compliance Decisions mit versionierter Policy-/Authority-Bindung
 - keine reale Exchange-/Custody-Ausfuehrung
 
 ## Authority Boundary
@@ -130,7 +130,7 @@ FT-5 fuegt `RiskCompliance/` als pure, provider-neutrale Domain-Schicht hinzu.
 
 ### Deterministische Risk Gates
 
-`DeterministicPreTradeGate.ts` bewertet sechs versionierte Gates:
+`DeterministicPreTradeGate.ts` bewertet:
 
 ```text
 ORDER_NOTIONAL
@@ -165,7 +165,7 @@ Ein Control kann `PASS`, `FAIL`, `MISSING`, `STALE` oder `REVIEW_REQUIRED` liefe
 
 ### Keine LLM-Autorisierung
 
-Bestehende AI-/Research-Risk-Agents duerfen FT-5-Evidence anreichern, aber niemals eine Risk- oder Compliance-Freigabe autorisieren. Die FT-5-Architekturtests verbieten direkte AI-/Agent-/Provider-/Exchange-Imports in der Gate-Schicht.
+Bestehende AI-/Research-Risk-Agents duerfen Kontext anreichern, aber niemals eine Risk- oder Compliance-Freigabe autorisieren. Die FT-5-Architekturtests verbieten direkte AI-/Agent-/Provider-/Exchange-Imports in der Gate-Schicht.
 
 ### Decision Evidence Reuse
 
@@ -178,20 +178,21 @@ PRE_TRADE_COMPLIANCE_GATE
 
 Input-/Output-Hashes bleiben Infrastrukturverantwortung; der Domain-Layer erzeugt keine zweite Hashing-Authority.
 
-### OrderIntent Handoff
+### OrderIntent bleibt FT-6
 
-Ein approval-bound OrderIntent-Handoff ist nur moeglich, wenn:
+FT-5 bindet seine Entscheidungen **nicht** in ein execution-eligible `OrderIntent`. Der Contract erzwingt deshalb fuer jedes FT-5-Ergebnis:
 
-- Risk = `APPROVED`,
-- Compliance = `APPROVED`,
-- Run/Trace/Correlation/Asset/Decision-Version exakt passen,
-- der Operating Mode `GUARDED_LIVE` oder `PRODUCTION` ist.
+```text
+executionHandoffEligible = false
+```
 
-Crypto Module 01 aktiviert diese Modi in FT-5 **nicht**. `PAPER` darf Risk/Compliance evaluieren, aber `executionHandoffEligible` bleibt dort immer `false`. FT-5 signiert, routet, persistiert oder exekutiert keine Order.
+Das gilt auch fuer manuell konstruierte `GUARDED_LIVE`-/`PRODUCTION`-Kontexte. Die Bindung von Risk-/Compliance-Decision-Hashes und Policy-Versionen an einen immutable OrderIntent, dessen TTL/Bounds/Idempotency sowie Reconciliation gehoeren vollstaendig zu FT-6.
+
+Crypto Module 01 unterstuetzt durch FT-5 weiterhin nur `RESEARCH` und `PAPER`.
 
 ### OSS-/Policy-Engine-Entscheidung
 
-OPA und Cedar wurden als etablierte Apache-2.0 Policy-Engines bewertet. Beide sind fuer komplexe zentrale Policy-as-Code-Szenarien geeignet. FT-5 integriert sie noch nicht, weil der aktuelle Scope nur eine kleine typed Evaluation bestehender extern versionierter Policy-Snapshots benoetigt und eine zusaetzliche Policy-Runtime/DSL eine neue Authority-/Dependency-Oberflaeche erzeugen wuerde.
+OPA und Cedar wurden als etablierte Apache-2.0 Policy-Engines bewertet. Beide sind fuer komplexe zentrale Policy-as-Code-Szenarien geeignet. FT-5 integriert sie nicht, weil der aktuelle Scope nur eine kleine typed Evaluation extern versionierter Policy-Snapshots benoetigt und eine zusaetzliche Policy-Runtime/DSL eine neue Authority-/Dependency-Oberflaeche erzeugen wuerde.
 
 ## Workflow-State-Machine
 
@@ -212,6 +213,7 @@ CREATED
 - Missing/Stale/Mismatched-Authority Evidence wird nicht synthetisch ergaenzt.
 - Pattern Evidence bleibt nicht-authorizing.
 - Paper Trading erzeugt keinen echten execution-authorizing OrderIntent-Handoff.
+- FT-5 erzeugt ausschließlich Decisions; `executionHandoffEligible` bleibt compile-time `false`.
 - Risk-/Compliance-Freigaben sind deterministisch; LLM-/Agent-Output kann sie nicht erteilen.
 - Compliance Requirements und Authority-Bindings kommen aus versionierten externen Policy-Snapshots.
 - Service-role RPCs oeffnen das private Finanzschema nicht fuer Browserrollen.
