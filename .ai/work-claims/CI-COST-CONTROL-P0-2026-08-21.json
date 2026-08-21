@@ -1,1 +1,40 @@
-{"schemaVersion":"1.0.0","claimId":"CI-COST-CONTROL-P0-2026-08-21","status":"active","exclusive":true,"agent":{"provider":"OpenAI","model":"GPT-5.6 Sol","executionSurface":"ChatGPT / GitHub Connector"},"workItem":"Owner-Prioritaet 2026-08-21 — P0 GitHub Actions Linux-Minuten reduzieren; M10 Passkey bleibt deaktiviert, Cost-Control wird ohne neue Autorisierungs-Authority wiederhergestellt","startedAt":"2026-08-21T02:14:00+02:00","baseBranch":"main","baseSha":"95dea79cb6c67d7925af2b4c6df59c53baf2b46f","lastSyncedMainSha":"95dea79cb6c67d7925af2b4c6df59c53baf2b46f","claimedPaths":[".ai/work-claims/CI-COST-CONTROL-P0-2026-08-21.json",".github/workflows/ci.yml","tests/unit/ciCostControl.test.ts","docs/adr/ADR-0073-ci-consolidation-build-and-test.md","docs/runbooks/CI_BUILD_AND_TEST_CONSOLIDATION.md"],"protectedExistingAuthorities":["AGENTS.md M10 SUSPENDED/OFF","ADR-0073 single build-and-test technical CI authority","Human/CODEOWNER merge authority","verified main production deployment chain"],"correlation":{"currentMain":"95dea79cb6c67d7925af2b4c6df59c53baf2b46f","openPullRequests":[467],"directPathOverlap":[],"finding":"PR #467 is FinTechCore/ADR-registry scoped and does not modify the claimed CI workflow/runbook paths."},"externalMutationScope":"none","releaseCondition":"Release claim after merge, closure, supersession or abandonment."}
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CI-COST-CONTROL-P0-2026-08-21",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "Owner-Prioritaet 2026-08-21 — P0 GitHub Actions Linux-Minuten reduzieren; M10 Passkey bleibt deaktiviert, Cost-Control wird ohne neue Autorisierungs-Authority wiederhergestellt",
+  "workItemDE": "P0 GitHub-Actions-Cost-Control ohne M10-Passkey-Reaktivierung",
+  "startedAt": "2026-08-21T02:14:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "95dea79cb6c67d7925af2b4c6df59c53baf2b46f",
+  "lastSyncedMainSha": "95dea79cb6c67d7925af2b4c6df59c53baf2b46f",
+  "branch": "agent/ci-cost-control-p0-2026-08-21",
+  "pullRequest": null,
+  "claimedPaths": [
+    ".ai/work-claims/CI-COST-CONTROL-P0-2026-08-21.json",
+    ".github/workflows/ci.yml",
+    "tests/unit/ciCostControl.test.ts",
+    "docs/adr/ADR-0073-ci-consolidation-build-and-test.md",
+    "docs/runbooks/CI_BUILD_AND_TEST_CONSOLIDATION.md"
+  ],
+  "protectedExistingAuthorities": [
+    "AGENTS.md M10 SUSPENDED/OFF",
+    "ADR-0073 single build-and-test technical CI authority",
+    "Human/CODEOWNER merge authority",
+    "verified main production deployment chain"
+  ],
+  "correlation": {
+    "currentMain": "95dea79cb6c67d7925af2b4c6df59c53baf2b46f",
+    "openPullRequests": [467],
+    "directPathOverlap": [],
+    "finding": "PR #467 is FinTechCore/ADR-registry scoped and does not modify the claimed CI workflow/runbook paths."
+  },
+  "externalMutationScope": "none",
+  "releaseCondition": "Release claim after merge, closure, supersession or abandonment."
+}
