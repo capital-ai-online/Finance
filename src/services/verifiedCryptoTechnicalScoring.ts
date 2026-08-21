@@ -11,7 +11,14 @@ import {
   scoreVolatility,
   type ReturnStats,
 } from './realMarketSignals';
-import { CRYPTO_SCORING_WEIGHTS, CryptoScoringService } from './cryptoScoringService';
+import {
+  CRYPTO_INVERTED_SCORING_FIELDS,
+  CRYPTO_SCORING_NOMINAL_WEIGHTS_VERSION,
+  CRYPTO_SCORING_WEIGHTS,
+  CRYPTO_TECHNICAL_FEATURE_CONTRACT_VERSION,
+  CRYPTO_TECHNICAL_MODEL_VERSION,
+  CryptoScoringService,
+} from './cryptoScoringService';
 import {
   buildReadyScore,
   buildUnavailableScore,
@@ -27,6 +34,8 @@ import {
   type VerifiedFieldProvenance,
 } from './cryptoSnapshotProvider';
 import { recordProviderHealth } from '../platform/Supervisor/providerHealth';
+import { MARKET_EVIDENCE_DQ_CONTRACT_VERSION } from '../platform/MarketData/evidenceQualityContracts';
+import { buildEffectiveScoringFingerprintMetadata } from '../platform/Scoring/scoringFingerprint';
 
 export interface VerifiedCryptoTechnicalAssessment {
   canonical: CanonicalScoreResult;
@@ -205,7 +214,6 @@ export async function evaluateVerifiedCryptoTechnicalScore(
     relative_strength: inputs.relative_strength !== undefined ? inputs.relative_strength * 100 : undefined,
     avg_daily_volume: inputs.avg_daily_volume !== undefined ? inputs.avg_daily_volume * 100 : undefined,
     supply_dynamics: inputs.supply_dynamics !== undefined ? inputs.supply_dynamics * 100 : undefined,
-    regime_bonus: undefined,
     data_quality_risk: inputs.data_quality_risk !== undefined ? inputs.data_quality_risk * 100 : undefined,
   };
 
@@ -230,18 +238,35 @@ export async function evaluateVerifiedCryptoTechnicalScore(
     minimumHistoryPoints: 20,
     historyPoints: history?.points.length ?? 0,
     maxAgeMs: 4 * 24 * 60 * 60 * 1000,
-    scoringVersion: 'crypto-technical-provenance/0.6.3',
+    scoringVersion: CRYPTO_TECHNICAL_MODEL_VERSION,
   });
+  const effectiveLineage = buildEffectiveScoringFingerprintMetadata({
+    modelVersion: CRYPTO_TECHNICAL_MODEL_VERSION,
+    featureContractVersion: CRYPTO_TECHNICAL_FEATURE_CONTRACT_VERSION,
+    nominalWeightsVersion: CRYPTO_SCORING_NOMINAL_WEIGHTS_VERSION,
+    evidenceContractVersion: MARKET_EVIDENCE_DQ_CONTRACT_VERSION,
+    values,
+    nominalWeights: CRYPTO_SCORING_WEIGHTS,
+    invertedFields: CRYPTO_INVERTED_SCORING_FIELDS,
+  });
+  const gateWithLineage = {
+    ...gate,
+    integrity: {
+      ...gate.integrity,
+      ...effectiveLineage,
+      featureVersion: CRYPTO_TECHNICAL_FEATURE_CONTRACT_VERSION,
+    },
+  };
 
   const providerState = {
     history: history ? { cacheMode: history.cacheMode, degraded: history.degraded, provider: history.provider } : undefined,
     snapshot: snapshot ? { cacheMode: snapshot.cacheMode, degraded: snapshot.degraded, provider: snapshot.provider } : undefined,
   };
 
-  if (!gate.ready) {
-    return { canonical: buildUnavailableScore(gate), inputs, analysis: null, fieldProvenance, rankingEvidenceReady, providerState, priceStats };
+  if (!gateWithLineage.ready) {
+    return { canonical: buildUnavailableScore(gateWithLineage), inputs, analysis: null, fieldProvenance, rankingEvidenceReady, providerState, priceStats };
   }
 
-  const analysis = CryptoScoringService.scoreCrypto(inputs, '0.6.3-verified-multiprovider');
-  return { canonical: buildReadyScore(analysis.final_score, gate), inputs, analysis, fieldProvenance, rankingEvidenceReady, providerState, priceStats };
+  const analysis = CryptoScoringService.scoreCrypto(inputs, '0.7.0-verified-multiprovider');
+  return { canonical: buildReadyScore(analysis.final_score, gateWithLineage), inputs, analysis, fieldProvenance, rankingEvidenceReady, providerState, priceStats };
 }

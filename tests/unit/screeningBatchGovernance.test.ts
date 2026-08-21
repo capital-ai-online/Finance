@@ -34,6 +34,10 @@ describe('screeningBatchGovernance', () => {
     expect(result.results[0].screeningEligibility.status).toBe('ELIGIBLE');
     expect(result.results[0].screeningOperations.scoreImpactEnabled).toBe(false);
     expect(result.results[0].screeningSloEvidence.hardScreeningBlockEnabled).toBe(false);
+    expect(result.results[0].universeSla?.availableCount).toBe(1);
+    expect(result.results[0].universeSla?.targetCount).toBe(24);
+    expect(result.results[0].universeSla?.status).toBe('INSUFFICIENT_REAL_UNIVERSE');
+    expect(result.universeAvailability.authority).toBe('read-only-runtime-projection');
   });
 
   it('rejects otherwise valid screening evidence after the 24-hour freshness boundary', () => {
@@ -55,6 +59,7 @@ describe('screeningBatchGovernance', () => {
     expect(result.results[0].score).toBe(7.4);
     expect(result.results[0].screeningEligibility.eligible).toBe(false);
     expect(result.results[0].screeningEligibility.status).toBe('STALE_EVIDENCE');
+    expect(result.results[0].universeSla?.status).toBe('EVIDENCE_INSUFFICIENT');
   });
 
   it('keeps non-computable results ineligible instead of fabricating a score', () => {
@@ -72,6 +77,7 @@ describe('screeningBatchGovernance', () => {
 
     expect(result.results[0].score).toBeNull();
     expect(result.results[0].screeningEligibility.eligible).toBe(false);
+    expect(result.results[0].universeSla?.availableCount).toBe(0);
     expect(result.providerSlaState).toBe('NO_RUNTIME_EVIDENCE');
   });
 });

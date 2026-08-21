@@ -14,30 +14,29 @@ import {
   computeRsi,
   renormalizeAndScore,
 } from './realMarketSignals';
-import { getKrakenSpotMarketEvidence } from './krakenSpotMarketEvidence';
 
-// Audit ARCH-AUDIT-0002 (AUD2-F-001, S1/S2/S5): konsolidierte, kanonische Nicht-Meme-
-// Krypto-Scoring-Engine. Ersetzt die zuvor parallel gepflegten, redundanten Implementierungen
-// in src/lib/cryptoScoring.ts (freie Funktionen, direkt im Scoring-Tab von
-// CryptoScoringEnterprise.tsx verwendet) und die hier zuvor eigene, hash-basierte
-// generateCryptoInputs()-Variante. Gewichte summieren auf 1.00; data_quality_risk ist
-// invertiert (hoeheres Risiko = schlechter). Fehlt ein Faktor fuer ein Symbol (keine reale
-// Kurshistorie/Provider-Evidence), wird sein Gewichtsanteil dynamisch auf die vorhandenen Faktoren
-// umgelegt (renormalizeAndScore(), siehe realMarketSignals.ts) statt geschaetzt zu werden.
+/**
+ * crypto-technical-provenance/0.7.0 canonical nominal weights.
+ * exchange_liquidity and regime_bonus are deliberately excluded from the productive alpha/quality
+ * score because the verified scoring path does not provide them as symmetric canonical evidence.
+ * Missing admitted factors continue to be dynamically renormalized from these nominal weights.
+ */
 export const CRYPTO_SCORING_WEIGHTS = {
-  trend: 0.20,
-  momentum: 0.16,
-  volatility_quality: 0.12,
-  breakout_quality: 0.10,
-  relative_strength: 0.12,
-  avg_daily_volume: 0.08,
-  exchange_liquidity: 0.04,
-  supply_dynamics: 0.08,
-  regime_bonus: 0.06,
-  data_quality_risk: 0.04,
+  trend: 0.2222222222,
+  momentum: 0.1777777778,
+  volatility_quality: 0.1333333333,
+  breakout_quality: 0.1111111111,
+  relative_strength: 0.1333333333,
+  avg_daily_volume: 0.0888888889,
+  supply_dynamics: 0.0888888889,
+  data_quality_risk: 0.0444444445,
 } as const;
 
-const INVERTED_FIELDS = new Set(['data_quality_risk']);
+export const CRYPTO_SCORING_NOMINAL_WEIGHTS_VERSION = 'crypto-technical-weights/0.7.0' as const;
+export const CRYPTO_TECHNICAL_FEATURE_CONTRACT_VERSION = 'crypto-technical-features/0.7.0' as const;
+export const CRYPTO_TECHNICAL_MODEL_VERSION = 'crypto-technical-provenance/0.7.0' as const;
+
+export const CRYPTO_INVERTED_SCORING_FIELDS: ReadonlySet<string> = new Set(['data_quality_risk']);
 
 export const CRYPTO_DECISION_THRESHOLDS = [
   { low: 90, high: 100, label: "A_setup", name: "A-Setup", desc: "Höchste Priorität. Enges Monitoring. Trade-Kandidat." },
@@ -48,11 +47,8 @@ export const CRYPTO_DECISION_THRESHOLDS = [
 ];
 
 export class CryptoScoringService {
-  /**
-   * Berechnet den Enterprise-Score aus real anbindbaren Faktoren (dynamische Neugewichtung
-   * fehlender Faktoren statt fester 23-Faktoren-Formel).
-   */
-  public static scoreCrypto(inputs: CryptoScoringInputs, version: string = "0.6.0"): CryptoAnalysisPayload {
+  /** Berechnet den kanonischen Crypto-Score nur aus im 0.7.0-Vertrag registrierten Faktoren. */
+  public static scoreCrypto(inputs: CryptoScoringInputs, version: string = "0.7.0"): CryptoAnalysisPayload {
     const x = inputs;
     const values: Record<string, number | undefined> = {
       trend: x.trend !== undefined ? x.trend * 100 : undefined,
@@ -61,23 +57,20 @@ export class CryptoScoringService {
       breakout_quality: x.breakout_quality !== undefined ? x.breakout_quality * 100 : undefined,
       relative_strength: x.relative_strength !== undefined ? x.relative_strength * 100 : undefined,
       avg_daily_volume: x.avg_daily_volume !== undefined ? x.avg_daily_volume * 100 : undefined,
-      exchange_liquidity: x.exchange_liquidity !== undefined ? x.exchange_liquidity * 100 : undefined,
       supply_dynamics: x.supply_dynamics !== undefined ? x.supply_dynamics * 100 : undefined,
-      regime_bonus: x.regime_bonus !== undefined ? x.regime_bonus * 100 : undefined,
       data_quality_risk: x.data_quality_risk !== undefined ? x.data_quality_risk * 100 : undefined,
     };
 
-    const { score: final_score, usedFactors, missingFactors } = renormalizeAndScore(values, CRYPTO_SCORING_WEIGHTS, INVERTED_FIELDS);
+    const { score: final_score, usedFactors, missingFactors } = renormalizeAndScore(values, CRYPTO_SCORING_WEIGHTS, CRYPTO_INVERTED_SCORING_FIELDS);
 
-    const positiveKeys = Object.keys(CRYPTO_SCORING_WEIGHTS).filter(k => !INVERTED_FIELDS.has(k));
-    const riskKeys = Object.keys(CRYPTO_SCORING_WEIGHTS).filter(k => INVERTED_FIELDS.has(k));
+    const positiveKeys = Object.keys(CRYPTO_SCORING_WEIGHTS).filter(k => !CRYPTO_INVERTED_SCORING_FIELDS.has(k));
+    const riskKeys = Object.keys(CRYPTO_SCORING_WEIGHTS).filter(k => CRYPTO_INVERTED_SCORING_FIELDS.has(k));
     const positiveOnly = renormalizeAndScore(values, Object.fromEntries(positiveKeys.map(k => [k, CRYPTO_SCORING_WEIGHTS[k as keyof typeof CRYPTO_SCORING_WEIGHTS]])), new Set());
     const riskOnly = riskKeys.length > 0
-      ? renormalizeAndScore(values, Object.fromEntries(riskKeys.map(k => [k, CRYPTO_SCORING_WEIGHTS[k as keyof typeof CRYPTO_SCORING_WEIGHTS]])), INVERTED_FIELDS)
+      ? renormalizeAndScore(values, Object.fromEntries(riskKeys.map(k => [k, CRYPTO_SCORING_WEIGHTS[k as keyof typeof CRYPTO_SCORING_WEIGHTS]])), CRYPTO_INVERTED_SCORING_FIELDS)
       : { score: 0, usedFactors: [] as string[] };
     const base_score = Number(positiveOnly.score.toFixed(2));
     const risk_penalty = Number((100 - riskOnly.score).toFixed(2));
-    const regime_bonus_val = x.regime_bonus !== undefined ? Number((x.regime_bonus * 20).toFixed(2)) : 0;
 
     let decision = "reject";
     let decisionName = "Reject";
@@ -104,7 +97,6 @@ export class CryptoScoringService {
     if ((x.momentum ?? 0) > 0.7) reasoning.push("Hohes bullisches Momentum (Rate-of-Change, echte Kurshistorie).");
     if ((x.relative_strength ?? 0) > 0.7) reasoning.push("Überragende relative Stärke (RSI, echte Kurshistorie).");
     if ((x.avg_daily_volume ?? 0) > 0.7) reasoning.push("Hervorragende reale globale Liquidität (nur mit verifizierter Provider-Evidence).");
-    if ((x.exchange_liquidity ?? 0) > 0.7) reasoning.push("Hohe verifizierte Kraken-Spot-Liquidität (exchange-lokale Evidence).");
     if (missingFactors.length > 0) {
       reasoning.push(`Ohne reale Datenquelle fuer dieses Symbol: ${missingFactors.join(', ')} (Gewichtsanteil dynamisch auf die vorhandenen Faktoren umgelegt).`);
     }
@@ -125,10 +117,8 @@ export class CryptoScoringService {
 
     const dataCompletenessRatio = usedFactors.length / (usedFactors.length + missingFactors.length || 1);
     const technicalStrength = Math.round((((x.trend ?? 0) + (x.momentum ?? 0)) / 2) * 100);
-    const availableLiquidity = [x.avg_daily_volume, x.exchange_liquidity]
-      .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
-    const liquidityPct = availableLiquidity.length > 0
-      ? Math.round((availableLiquidity.reduce((sum, value) => sum + value, 0) / availableLiquidity.length) * 100)
+    const liquidityPct = typeof x.avg_daily_volume === 'number' && Number.isFinite(x.avg_daily_volume)
+      ? Math.round(x.avg_daily_volume * 100)
       : 0;
     const riskScoreValue = Math.round(risk_penalty);
 
@@ -138,7 +128,8 @@ export class CryptoScoringService {
       final_score: Number(final_score.toFixed(2)),
       base_score,
       risk_penalty,
-      regime_bonus: regime_bonus_val,
+      // Backward-compatible output property only; regime_bonus has zero authority in 0.7.0.
+      regime_bonus: 0,
       decision,
       decisionName,
       decisionDesc,
@@ -173,21 +164,15 @@ export class CryptoScoringService {
     };
   }
 
-  /**
-   * R-001 / ADR-0032: Der synchrone Pfad darf keine Legacy-AssetRegistry-Finanzwerte
-   * (marketCap, volume24h, Supply, change24h) in scorefaehige Evidence umwandeln.
-   * Ohne einen expliziten Provider-Evidence-Contract bleiben diese Faktoren undefined.
-   */
   public static generateCryptoInputsSync(symbol: string, _change24h: number): CryptoScoringInputs {
     const s = symbol.toUpperCase().trim();
     return { coin: s };
   }
 
   /**
-   * Bezieht historienbasierte Faktoren aus einer als `live` markierten Kurshistorie und
-   * exchange-lokale Liquiditaet aus dem oeffentlichen Kraken-Spot-Ticker. Registry-/Bootstrap-
-   * Finanzwerte werden nicht als Scoring-Evidence verwendet. Fehlt Provider-Evidence, bleibt
-   * der jeweilige Faktor undefined und wird im Scoring dynamisch herausnormalisiert.
+   * Historienbasierte Faktoren bleiben verifizierte Score-Evidence. Venue-spezifische Kraken-
+   * Liquidität wird nicht mehr in diesem Canonical-Score-Input erzeugt; sie bleibt separaten
+   * Market-Quality/Execution-Risk-Pfaden vorbehalten.
    */
   public static async generateCryptoInputs(symbol: string, change24h: number): Promise<CryptoScoringInputs> {
     const s = symbol.toUpperCase().trim();
@@ -198,7 +183,6 @@ export class CryptoScoringService {
     let breakout_quality: number | undefined;
     let volatility_quality: number | undefined;
     let relative_strength: number | undefined;
-    let exchange_liquidity: number | undefined;
     let data_quality_risk: number | undefined;
 
     try {
@@ -220,13 +204,6 @@ export class CryptoScoringService {
       // Fail closed: keine echte Historie -> keine historienbasierten Faktoren.
     }
 
-    try {
-      const kraken = await getKrakenSpotMarketEvidence(s);
-      if (kraken) exchange_liquidity = kraken.liquidityScore;
-    } catch {
-      // Fail closed: keine Kraken-Evidence -> kein exchange_liquidity-Faktor.
-    }
-
     return {
       ...base,
       trend,
@@ -234,7 +211,6 @@ export class CryptoScoringService {
       volatility_quality,
       breakout_quality,
       relative_strength,
-      exchange_liquidity,
       data_quality_risk,
     };
   }

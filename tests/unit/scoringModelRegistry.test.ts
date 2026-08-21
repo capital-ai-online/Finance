@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
   COMMODITY_EVIDENCE_EXECUTOR_KEY,
+  LEGACY_CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
   SCORING_MODEL_REGISTRY_VERSION,
   SOVEREIGN_BENCHMARK_EXECUTOR_KEY,
   ScoringModelRegistry,
@@ -53,12 +54,12 @@ describe('SC-2 ScoringModelRegistry', () => {
     expect(resolution.status).toBe('RESOLVED');
     if (resolution.status !== 'RESOLVED') return;
     expect(resolution.model.modelId).toBe('crypto-technical-provenance');
-    expect(resolution.model.version).toBe('0.6.3');
+    expect(resolution.model.version).toBe('0.7.0');
     expect(resolution.model.resultContractVersion).toBe(CANONICAL_SCORE_RESULT_CONTRACT_VERSION);
     expect(resolution.model.canonicalResultAdapterRequired).toBe(false);
   });
 
-  it('routes stock/forex/index to one canonical-result traditional model family', () => {
+  it('routes stock/forex/index to the existing traditional model family without forcing a P0 contract migration', () => {
     for (const assetClass of ['stock', 'forex', 'index'] as const) {
       const resolution = scoringModelRegistry.resolve(
         createUniversalAssetIdentity({ symbol: 'TEST', assetClass }),
@@ -67,19 +68,19 @@ describe('SC-2 ScoringModelRegistry', () => {
       if (resolution.status === 'RESOLVED') {
         expect(resolution.model.modelId).toBe('traditional-scoring');
         expect(resolution.model.version).toBe('2.1.0');
-        expect(resolution.model.resultContractVersion).toBe(CANONICAL_SCORE_RESULT_CONTRACT_VERSION);
+        expect(resolution.model.resultContractVersion).toBe(LEGACY_CANONICAL_SCORE_RESULT_CONTRACT_VERSION);
         expect(resolution.model.executorKey).toBe(TRADITIONAL_SCORING_EXECUTOR_KEY);
         expect(resolution.model.canonicalResultAdapterRequired).toBe(false);
       }
     }
   });
 
-  it('binds commodity and approved sovereign benchmark models to dispatcher executor adapters', () => {
+  it('binds commodity and approved sovereign benchmark models to their existing dispatcher contracts', () => {
     const commodity = scoringModelRegistry.resolve(createUniversalAssetIdentity({ symbol: 'GLD', assetClass: 'commodity' }));
     expect(commodity.status).toBe('RESOLVED');
     if (commodity.status === 'RESOLVED') {
       expect(commodity.model.executorKey).toBe(COMMODITY_EVIDENCE_EXECUTOR_KEY);
-      expect(commodity.model.resultContractVersion).toBe(CANONICAL_SCORE_RESULT_CONTRACT_VERSION);
+      expect(commodity.model.resultContractVersion).toBe(LEGACY_CANONICAL_SCORE_RESULT_CONTRACT_VERSION);
       expect(commodity.model.canonicalResultAdapterRequired).toBe(false);
     }
 
@@ -92,7 +93,7 @@ describe('SC-2 ScoringModelRegistry', () => {
     if (benchmark.status === 'RESOLVED') {
       expect(benchmark.model.modelId).toBe('sovereign-benchmark-yield-scoring');
       expect(benchmark.model.executorKey).toBe(SOVEREIGN_BENCHMARK_EXECUTOR_KEY);
-      expect(benchmark.model.resultContractVersion).toBe(CANONICAL_SCORE_RESULT_CONTRACT_VERSION);
+      expect(benchmark.model.resultContractVersion).toBe(LEGACY_CANONICAL_SCORE_RESULT_CONTRACT_VERSION);
       expect(benchmark.model.canonicalResultAdapterRequired).toBe(false);
     }
 
@@ -104,7 +105,7 @@ describe('SC-2 ScoringModelRegistry', () => {
     expect(individualBond.status).toBe('SCORE_NOT_COMPUTABLE');
   });
 
-  it('fails closed on equal-priority champion ambiguity instead of choosing by iteration order', () => {
+  it('fails closed at registration on equal-priority champion ambiguity', () => {
     const make = (modelId: string): ScoringModelDescriptor => ({
       registryVersion: SCORING_MODEL_REGISTRY_VERSION,
       modelId,
@@ -119,13 +120,9 @@ describe('SC-2 ScoringModelRegistry', () => {
       priority: 100,
       canonicalResultAdapterRequired: false,
     });
-    const registry = new ScoringModelRegistry([make('a'), make('b')]);
-    const resolution = registry.resolve(createUniversalAssetIdentity({ symbol: 'AAPL', assetClass: 'stock' }));
 
-    expect(resolution.status).toBe('SCORE_NOT_COMPUTABLE');
-    if (resolution.status === 'SCORE_NOT_COMPUTABLE') {
-      expect(resolution.reason).toContain('Ambiguous canonical scoring model routing');
-    }
+    expect(() => new ScoringModelRegistry([make('a'), make('b')]))
+      .toThrow('SCORING_MODEL_REGISTRY_AMBIGUOUS_SCOPE:stock/*:a@1.0.0:b@1.0.0');
   });
 
   it('never promotes legacy models as fallback champions', () => {

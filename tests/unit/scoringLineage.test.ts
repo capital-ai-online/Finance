@@ -40,7 +40,7 @@ describe('scoring lineage', () => {
     expect(lineage.correlationId).toBe('req-123:ETH');
     expect(lineage.assetId).toBe('crypto:ETH');
     expect(lineage.model?.modelId).toBe('crypto-technical-provenance');
-    expect(lineage.model?.version).toBe('0.6.3');
+    expect(lineage.model?.version).toBe('0.7.0');
     expect(lineage.model?.alias).toBe('champion');
     expect(lineage.features).toEqual(['momentum', 'trend']);
     expect(lineage.provenanceFields).toEqual(['marketCapUsd']);

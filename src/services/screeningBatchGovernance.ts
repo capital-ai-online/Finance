@@ -3,6 +3,10 @@ import { evaluateScreeningEligibility } from './screeningEligibility';
 import { buildScreeningOperationsReport } from './screeningOperations';
 import { buildScreeningSlaReport } from './screeningSla';
 import { buildScreeningSloEvidenceRecord } from './screeningSloEvidence';
+import {
+  buildUniverseAvailabilityProjection,
+  isUniverseAssetClass,
+} from './universeAvailability';
 
 export interface ScreeningBatchItem {
   correlationId: string;
@@ -32,7 +36,7 @@ export function decorateScreeningBatchWithGovernance(
   options: ScreeningBatchGovernanceOptions = {},
 ) {
   const sla = buildScreeningSlaReport(telemetry);
-  const results = items.map(item => {
+  const governedResults = items.map(item => {
     const providers = Array.isArray(item.providers) ? item.providers.filter(Boolean) : [];
     const evidenceIds = Array.isArray(item.evidenceIds) ? item.evidenceIds.filter(Boolean) : [];
     const score = typeof item.score === 'number' && Number.isFinite(item.score) ? item.score : null;
@@ -58,11 +62,32 @@ export function decorateScreeningBatchWithGovernance(
     return { ...item, screeningEligibility: eligibility, screeningOperations, screeningSloEvidence };
   });
 
+  const universeAvailability = buildUniverseAvailabilityProjection(
+    governedResults.map(item => ({ symbol: item.symbol, type: item.assetType })),
+    governedResults.map(item => ({
+      symbol: item.symbol,
+      assetType: item.assetType,
+      status: item.status,
+      providers: item.providers,
+      evidenceIds: item.evidenceIds,
+      screeningEligible: item.screeningEligibility.eligible,
+    })),
+  );
+  const universeByClass = new Map(universeAvailability.classes.map(entry => [entry.assetClass, entry.topLevel]));
+  const results = governedResults.map(item => ({
+    ...item,
+    universeSla: isUniverseAssetClass(item.assetType)
+      ? universeByClass.get(item.assetType) ?? null
+      : null,
+  }));
+
   return {
     screeningOperationsContractVersion: 'screening-operations/1.0.0' as const,
     screeningSloEvidenceContractVersion: 'screening-slo-evidence/1.0.0' as const,
+    universeAvailabilityContractVersion: universeAvailability.contractVersion,
     providerSlaState: sla.state,
     eligible: results.filter(item => item.screeningEligibility.eligible).length,
+    universeAvailability,
     results,
   };
 }

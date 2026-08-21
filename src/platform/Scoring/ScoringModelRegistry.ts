@@ -1,5 +1,6 @@
 import {
   CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
+  LEGACY_CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
   SCORING_MODEL_REGISTRY_VERSION,
   type ScoringModelDescriptor,
   type ScoringModelResolution,
@@ -13,22 +14,56 @@ import {
 
 export const VERIFIED_CRYPTO_TECHNICAL_EXECUTOR_KEY =
   'verifiedCryptoTechnicalScoring.evaluateVerifiedCryptoTechnicalScore' as const;
+export const RESEARCH_ONLY_CHALLENGER_EXECUTOR_KEY = 'research-only:not-executable' as const;
 
 const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
     modelId: 'crypto-technical-provenance',
-    version: '0.6.3',
+    version: '0.7.0',
     alias: 'champion',
     lifecycle: 'canonical',
     assetClasses: ['crypto'],
-    featureContractVersion: 'crypto-technical-features/0.6.3',
+    featureContractVersion: 'crypto-technical-features/0.7.0',
     resultContractVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
     evidencePolicy: 'verified-required',
     executorKey: VERIFIED_CRYPTO_TECHNICAL_EXECUTOR_KEY,
     priority: 100,
+    scoreEligible: true,
     canonicalResultAdapterRequired: false,
-    notes: 'Current verified crypto path. Simulated/bootstrap values are not scoring evidence.',
+    notes: 'Verified crypto champion. Simulated/bootstrap values and caller classification are not scoring evidence.',
+  },
+  {
+    registryVersion: SCORING_MODEL_REGISTRY_VERSION,
+    modelId: 'crypto-meme-integrity',
+    version: '0.1.0',
+    alias: 'challenger',
+    lifecycle: 'challenger',
+    assetClasses: ['crypto'],
+    featureContractVersion: 'fintech-core.crypto/category-features/0.1.0',
+    resultContractVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
+    evidencePolicy: 'research-only',
+    executorKey: RESEARCH_ONLY_CHALLENGER_EXECUTOR_KEY,
+    priority: 10,
+    scoreEligible: false,
+    canonicalResultAdapterRequired: true,
+    notes: 'Meme research challenger only. Missing evidence is NOT_COMPUTABLE; no productive routing before validation/promotion.',
+  },
+  {
+    registryVersion: SCORING_MODEL_REGISTRY_VERSION,
+    modelId: 'crypto-defi-fundamental',
+    version: '0.1.0',
+    alias: 'challenger',
+    lifecycle: 'challenger',
+    assetClasses: ['crypto'],
+    featureContractVersion: 'fintech-core.crypto/category-features/0.1.0',
+    resultContractVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
+    evidencePolicy: 'research-only',
+    executorKey: RESEARCH_ONLY_CHALLENGER_EXECUTOR_KEY,
+    priority: 10,
+    scoreEligible: false,
+    canonicalResultAdapterRequired: true,
+    notes: 'DeFi fundamental research challenger reusing FinTech Core category feature contracts and hard gates.',
   },
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
@@ -38,12 +73,13 @@ const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
     lifecycle: 'canonical',
     assetClasses: ['stock', 'forex', 'index'],
     featureContractVersion: 'traditional-features/2.1.0',
-    resultContractVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
+    resultContractVersion: LEGACY_CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
     evidencePolicy: 'verified-required',
     executorKey: TRADITIONAL_SCORING_EXECUTOR_KEY,
     priority: 100,
+    scoreEligible: true,
     canonicalResultAdapterRequired: false,
-    notes: 'Evidence-aware stock/forex/index model normalized by the C3 CanonicalResultAdapter.',
+    notes: 'Evidence-aware stock/forex/index model normalized by the C3 CanonicalResultAdapter. Integrity 1.0.0 retained until its dedicated migration.',
   },
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
@@ -53,12 +89,13 @@ const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
     lifecycle: 'canonical',
     assetClasses: ['commodity'],
     featureContractVersion: 'commodity-market-evidence/1.0.0',
-    resultContractVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
+    resultContractVersion: LEGACY_CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
     evidencePolicy: 'verified-required',
     executorKey: COMMODITY_EVIDENCE_EXECUTOR_KEY,
     priority: 100,
+    scoreEligible: true,
     canonicalResultAdapterRequired: false,
-    notes: 'ADR-0033 verified commodity market-evidence scorer executed only behind ScoringDispatcher.',
+    notes: 'ADR-0033 verified commodity market-evidence scorer executed only behind ScoringDispatcher. Integrity 1.0.0 retained until its dedicated migration.',
   },
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
@@ -69,12 +106,13 @@ const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
     assetClasses: ['bond'],
     instrumentKinds: ['government-benchmark-yield'],
     featureContractVersion: 'sovereign-benchmark-yield-features/1.0.0',
-    resultContractVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
+    resultContractVersion: LEGACY_CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
     evidencePolicy: 'verified-required',
     executorKey: SOVEREIGN_BENCHMARK_EXECUTOR_KEY,
     priority: 100,
+    scoreEligible: true,
     canonicalResultAdapterRequired: false,
-    notes: 'Only approved sovereign benchmark yield instruments are supported. Individual bond scoring remains blocked by ADR-0022.',
+    notes: 'Only approved sovereign benchmark yield instruments are supported. Individual bond scoring remains blocked by ADR-0022. Integrity 1.0.0 retained until dedicated migration.',
   },
 ] as const;
 
@@ -90,15 +128,35 @@ function matches(model: ScoringModelDescriptor, asset: UniversalAssetIdentity): 
   return true;
 }
 
+function routingScope(model: ScoringModelDescriptor): readonly string[] {
+  if (model.instrumentKinds && model.instrumentKinds.length > 0) {
+    return model.assetClasses.flatMap((assetClass) => model.instrumentKinds!.map((instrumentKind) => `${assetClass}/${instrumentKind}`));
+  }
+  return model.assetClasses.map((assetClass) => `${assetClass}/*`);
+}
+
 export class ScoringModelRegistry {
   private readonly models: readonly ScoringModelDescriptor[];
 
   constructor(models: readonly ScoringModelDescriptor[] = DEFAULT_MODELS) {
     const seen = new Set<string>();
+    const canonicalScopes = new Map<string, string>();
     for (const model of models) {
       const key = modelKey(model);
       if (seen.has(key)) throw new Error(`SCORING_MODEL_REGISTRY_DUPLICATE:${key}`);
       seen.add(key);
+
+      if (model.lifecycle === 'canonical' && model.alias === 'champion') {
+        if (model.scoreEligible === false) throw new Error(`SCORING_MODEL_REGISTRY_CANONICAL_NOT_SCORE_ELIGIBLE:${key}`);
+        for (const scope of routingScope(model)) {
+          const existing = canonicalScopes.get(scope);
+          if (existing) throw new Error(`SCORING_MODEL_REGISTRY_AMBIGUOUS_SCOPE:${scope}:${existing}:${key}`);
+          canonicalScopes.set(scope, key);
+        }
+      }
+      if (model.lifecycle === 'challenger' && model.scoreEligible !== false) {
+        throw new Error(`SCORING_MODEL_REGISTRY_CHALLENGER_SCORE_ELIGIBLE:${key}`);
+      }
     }
     this.models = [...models].map((model) => Object.freeze({ ...model }));
   }
@@ -117,7 +175,7 @@ export class ScoringModelRegistry {
    */
   public resolve(asset: UniversalAssetIdentity): ScoringModelResolution {
     const candidates = this.models
-      .filter((model) => model.lifecycle === 'canonical' && model.alias === 'champion' && matches(model, asset))
+      .filter((model) => model.lifecycle === 'canonical' && model.alias === 'champion' && model.scoreEligible !== false && matches(model, asset))
       .sort((a, b) => b.priority - a.priority || modelKey(a).localeCompare(modelKey(b)));
 
     if (candidates.length === 0) {
