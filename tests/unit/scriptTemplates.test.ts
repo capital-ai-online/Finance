@@ -20,6 +20,8 @@ describe('scriptTemplates (N2)', () => {
       pkg.marketingPack.linkedinPost,
       pkg.marketingPack.instagramCaption,
       pkg.marketingPack.tiktokDescription,
+      pkg.marketingPack.youtubeDescription,
+      pkg.marketingPack.facebookPost,
       pkg.marketingPack.twitterThread.join('\n'),
     ];
 
@@ -33,6 +35,7 @@ describe('scriptTemplates (N2)', () => {
     expect(pkg.marketingPack.linkedinPost).toContain('⚠️');
     expect(pkg.marketingPack.linkedinPost).toContain('🎫');
     expect(pkg.marketingPack.linkedinPost).toContain('📧');
+    expect(pkg.marketingPack.facebookPost).toContain('⛓️‍💥');
   });
 
   it('rejects empty topic', () => {
