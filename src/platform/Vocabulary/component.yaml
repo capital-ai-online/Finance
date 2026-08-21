@@ -1,7 +1,7 @@
 component:
   name: Vocabulary
   displayName: Canonical Vocabulary & Wording
-  version: 1.5.0
+  version: 1.8.0
   status: implemented
   lifecycle: Operational
   health: Unknown
@@ -13,25 +13,27 @@ component:
 
 purposeDE: >
   Kanonische Registry für Terminologie und zweisprachiges Produkt-Wording mit
-  Message Catalog, FinTech-Wertschöpfungsketten-Projektion, Usage Index,
-  Delivery-Adaptern und neutralem, commitgebundenem Wording-Snapshot für den
-  bestehenden Documentary-/Knowledge-/Traceability-Handoff.
+  Message Catalog, vollständiger read-only FinTech-Projektion, Usage Index,
+  Delivery-Adaptern, Documentary-Handoff, deterministischer Wiki-Projektion,
+  kontrollierter Source-Migration und kontinuierlicher Governance.
 purposeEN: >
   Canonical registry for terminology and bilingual product wording with a
-  Message Catalog, FinTech value-chain projection, Usage Index, delivery adapters
-  and a neutral commit-bound wording snapshot consumed by the existing
-  Documentary/Knowledge/Traceability handoff.
+  governed message catalog, complete read-only FinTech projection, usage index,
+  delivery adapters, Documentary handoff, deterministic Wiki projection,
+  controlled source migration and continuous governance.
 
 responsibilities:
   - Canonical concept identities
   - German and English preferred display mappings
   - Alias and forbidden-term governance
-  - Deterministic collision detection
   - Governed UI Message Catalog
   - Read-only 18-stage SC-MD-SPT-0001 wording bindings
   - Evidence-based Wording Usage Index
   - React PDF Email SEO Accessibility delivery adapters
   - Commit-bound neutral Vocabulary Wording Snapshot
+  - Deterministic non-authoritative GitHub Wiki projection
+  - Controlled incremental source wording migration
+  - Read-only continuous governance and closure validation
 
 notResponsibleFor:
   - Financial runtime decisions
@@ -41,22 +43,24 @@ notResponsibleFor:
   - Active code renames outside Safe Rename Gate
   - Event routing
   - Documentary Knowledge or Traceability implementation
-  - Knowledge Graph persistence
-  - Traceability persistence
-  - GitHub Wiki publication before VW-6
+  - Knowledge Graph or Traceability persistence
+  - Autonomous Wiki publication
+  - Automatic migration of OPEN wording candidates
   - Merge release deployment or production mutation
 
 structure:
   Domain: Canonical concept contracts
   Interfaces: Public registry interfaces
   Registry: Canonical in-memory registry and seed concepts
-  Messages: Governed bilingual UI Message Catalog
+  Messages: Governed bilingual UI Message Catalog and migration baseline
   ValueChain: Read-only FinTech stage bindings
   Usage: Source usage index and reverse-impact evidence
-  Delivery: Surface-specific read-only message adapters
+  Delivery: Surface-specific read-only message adapters and browser resolver
   Projection: Neutral Vocabulary Wording Snapshot
+  Wiki: Deterministic generated Wiki projection
+  Migration: Explicit source-literal-message migration plan
   Services: Read-oriented terminology access
-  Validators: Concept message and cross-contract validation
+  Validators: Concept message cross-contract and closure validation
   Tests: Contract tests
 
 dependencies:
@@ -78,12 +82,18 @@ interfaces:
   - Usage/WordingUsage.ts
   - Delivery/MessageDeliveryAdapter.ts
   - Projection/VocabularyWordingSnapshot.ts
+  - Wiki/VocabularyWikiProjection.ts
+  - Migration/WordingMigrationPlan.ts
 
 integration:
   documentaryConsumer: src/platform/Documentary/Knowledge/VocabularyWordingDocumentaryProjection.ts
+  wikiRenderer: scripts/automation/renderVocabularyWiki.ts
+  wikiSync: scripts/automation/syncVocabularyWiki.ts
+  migrationValidator: scripts/automation/validateWordingMigration.ts
+  closureValidator: scripts/automation/validateVocabularyGovernanceClosure.ts
   rule: >
-    Vocabulary does not depend on Documentary. Documentary consumes the neutral snapshot and reuses
-    DocumentaryDocument, DocumentaryKnowledgeProjection and DocumentaryTraceability contracts.
+    Vocabulary remains dependency-free relative to Documentary/Knowledge/Traceability and financial hotpaths.
+    Wiki is one-way/non-authoritative, source migration is explicit/non-automatic, and repository quality is reused.
 
 references:
   ess:
@@ -99,14 +109,15 @@ references:
   documentation:
     - docs/architecture/VOCABULARY_WORDING_WIKI_ARCHITECTURE.md
     - docs/governance/vocabulary/VOCABULARY_WORDING_WIKI_SUPERSESSION_2026-08-21.md
+    - docs/roadmaps/work-packages/VW-6_GITHUB_WIKI_PROJECTION_2026-08-21.md
+    - docs/roadmaps/work-packages/VW-7_CONTROLLED_WORDING_MIGRATION_2026-08-21.md
+    - docs/roadmaps/work-packages/VW-8_CONTINUOUS_GOVERNANCE_RELEASE_CLOSURE_2026-08-21.md
 
 implementationStatusDE: >
-  VW-0 bis VW-5 implementiert. Message Catalog, 18-stufige FinTech-Wording-Projektion,
-  Usage Index, Delivery Adapter und commitgebundener neutraler Wording-Snapshot sind vorhanden.
-  Documentary konsumiert den Snapshot über bestehende D7-/Traceability-Contracts.
-  Wiki-Publish und UI-Massenmigration bleiben VW-6/VW-7.
+  VW-0 bis VW-8 branchbasiert implementiert. Wiki-Projektion ist deterministisch und standardmäßig Dry-Run;
+  externe Wiki-Publikation wurde nicht ausgeführt. VW-7 stellt eine kontrollierte Migrationsbaseline bereit;
+  verbleibende OPEN-Kandidaten bleiben messbarer inkrementeller Backlog. Continuous Governance verwendet die bestehende Test-/Quality-Kette.
 implementationStatusEN: >
-  VW-0 through VW-5 implemented. Message Catalog, complete 18-stage FinTech wording projection,
-  Usage Index, delivery adapters and a commit-bound neutral wording snapshot are present.
-  Documentary consumes the snapshot through existing D7/Traceability contracts.
-  Wiki publish and mass UI migration remain VW-6/VW-7.
+  VW-0 through VW-8 are implemented on the branch. Wiki projection is deterministic and dry-run by default;
+  no external Wiki publication was executed. VW-7 provides a controlled migration baseline while remaining OPEN candidates
+  stay measurable incremental backlog. Continuous governance reuses the existing test/quality chain.
