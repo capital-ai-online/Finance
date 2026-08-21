@@ -8,8 +8,8 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT / GitHub Connector"
   },
-  "workItem": "Owner-Prioritaet 2026-08-21 — GitHub Actions Linux-Minuten reduzieren: P0 Exact-Snapshot-Deduplizierung, P1 Governance-Runner-Konsolidierung und P2 Main-Push-Fan-out-Control fuer Agenten-PR-Synchronisierung; M10 Passkey bleibt deaktiviert",
-  "workItemDE": "P0/P1/P2 GitHub-Actions-Cost-Control ohne M10-Passkey-Reaktivierung",
+  "workItem": "Owner-Prioritaet 2026-08-21 — GitHub Actions Linux-Minuten reduzieren: P0 Exact-Snapshot-Deduplizierung, P1 Governance-Runner-Konsolidierung, P2A Agent-PR-Sync-Fan-out-Control und P2B Production-CI-Runner-Konsolidierung; M10 Passkey bleibt deaktiviert",
+  "workItemDE": "P0/P1/P2A/P2B GitHub-Actions-Cost-Control ohne M10-Passkey-Reaktivierung",
   "startedAt": "2026-08-21T02:14:00+02:00",
   "baseBranch": "main",
   "baseSha": "5595ec0abe1f1b6755620f3435badbf874d54aba",
@@ -24,24 +24,28 @@
     "tests/unit/ciCostControl.test.ts",
     "tests/unit/prGovernanceRunnerConsolidation.test.ts",
     "tests/unit/agentPrBranchSyncCostControl.test.ts",
+    "tests/unit/productionCiRunnerConsolidation.test.ts",
     "docs/adr/ADR-0073-ci-consolidation-build-and-test.md",
     "docs/runbooks/CI_BUILD_AND_TEST_CONSOLIDATION.md",
-    "docs/evidence/P2_AGENT_PR_SYNC_FANOUT_CONTROL_2026-08-21.md"
+    "docs/evidence/P2_AGENT_PR_SYNC_FANOUT_CONTROL_2026-08-21.md",
+    "docs/evidence/P2B_PRODUCTION_CI_RUNNER_CONSOLIDATION_2026-08-21.md"
   ],
   "protectedExistingAuthorities": [
     "AGENTS.md M10 SUSPENDED/OFF",
     "ADR-0036 current-main ancestry / productionPreflight fail-closed invariant",
+    "ADR-0060 supply-chain provenance / Sigstore trust chain",
+    "ADR-0061 post-deploy deployment identity / exact-SHA verification",
     "ADR-0073 single build-and-test technical CI authority",
     "main-production-protection required checks: build-and-test + GitGuardian Security Checks",
-    "Human/CODEOWNER merge authority",
-    "verified main production deployment chain"
+    "production environment deployment boundary",
+    "Human/CODEOWNER merge authority"
   ],
   "correlation": {
     "currentMain": "5595ec0abe1f1b6755620f3435badbf874d54aba",
     "mergedPullRequestsSinceStart": [467],
     "openPullRequests": [468],
     "directPathOverlap": [],
-    "finding": "PR #468 is a draft FT-3 FinTechCore/Supabase persistence change with 14 changed files and no overlap with the ten P0/P1/P2 CI-cost-control paths. Current main remains unchanged and the cost-control branch is based exactly on that main. P2 preserves ADR-0036 ancestry while excluding draft agent PRs from automatic main-push synchronization fan-out."
+    "finding": "PR #468 is Ready for Review and remains FT-3 FinTechCore/Supabase scoped with 14 changed files and no direct overlap with the P0/P1/P2A/P2B CI-cost-control paths. P2B changes only ci.yml runner topology and preserves the existing source/provenance/Sigstore/production-environment/Render/exact-SHA trust chain."
   },
   "externalMutationScope": "none",
   "releaseCondition": "Release claim after merge, closure, supersession or abandonment."
