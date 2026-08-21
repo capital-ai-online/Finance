@@ -54,7 +54,17 @@ describe('P2 agent PR main-sync cost control', () => {
     const yaml = workflow();
     expect(yaml).toContain("grep -Eq '^[0-9a-f]{40}$'");
     expect(yaml).toContain('-f "expected_head_sha=$head_sha"');
-    expect(yaml).toContain("bereits aktuell, Head inzwischen geaendert oder Update laeuft schon (422)");
+    expect(yaml).toContain('bereits aktuell, Head inzwischen geaendert oder Update laeuft schon (422)');
+  });
+
+  it('treats only the GitHub stacked-PR update-branch 403 as a nonfatal platform limitation', () => {
+    const yaml = workflow();
+    expect(yaml).toContain("Updating a stacked PR's branch via this endpoint is not supported");
+    expect(yaml).toContain("&& grep -qi '403' err.log");
+    expect(yaml).toContain('Stacked PR erkannt; GitHub update-branch ist fuer diesen Zustand nicht unterstuetzt (403).');
+    expect(yaml).toContain('current-main ancestry bleibt vor Merge durch die bestehende PR-Governance fail-closed erzwungen.');
+    expect(yaml).toContain('cat err.log');
+    expect(yaml).toContain('exit 1');
   });
 
   it('does not let a single ready-for-review sync cancel a repository-wide main sync', () => {

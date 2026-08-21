@@ -21,8 +21,8 @@ concurrency:
 
 # Kostenrichtlinie:
 # - Der vollständige Build/Test-Lauf liegt ausschließlich in ci.yml.
-# - Governance-/Template-/Workflow-Security-Prüfungen teilen sich einen Ubuntu-Runner, damit
-#   GitHub Actions kurze Einzeljobs nicht separat auf volle billable minutes aufrunden muss.
+# - Governance-/Template-/Workflow-Security-/Google-Wiring-Prüfungen teilen sich einen Ubuntu-Runner,
+#   damit GitHub Actions kurze Einzeljobs nicht separat auf volle billable minutes aufrunden muss.
 # - Das 3000-Minuten-Gate steuert ausschließlich das optionale Repository-Advisory und erzeugt
 #   keine CI-/Merge-Autorisierung. M10 bleibt davon vollständig getrennt.
 jobs:
@@ -119,13 +119,28 @@ jobs:
           PR_HEAD_REF: HEAD
         run: node "$POLICY_ROOT/scripts/security/verifyChangedWorkflowSecurity.mjs"
 
+      - name: Google-Marketing Schutzverdrahtung im bestehenden Governance-Runner prüfen
+        if: github.event.action != 'edited'
+        working-directory: candidate
+        env:
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+        run: |
+          set -euo pipefail
+          if [ -f ../policy/scripts/security/verifyGoogleMarketingProtectedWiring.mjs ]; then
+            node ../policy/scripts/security/verifyGoogleMarketingProtectedWiring.mjs
+          else
+            echo "Bootstrap: trusted main enthält den neuen Wiring-Validator noch nicht; der bisherige separate Google-Marketing-Workflow auf main bleibt für diesen Cutover die unabhängige Kontrolle."
+            node scripts/security/verifyGoogleMarketingProtectedWiring.mjs
+          fi
+
       - name: Repository-Konventionen — Advisory wegen Kostenpolicy überspringen
         if: github.event.action != 'edited' && steps.cost_gate.outputs.gate_active == 'true'
         run: echo "Repository-Advisory ist durch die bestehende Kostenpolicy pausiert; Pflicht-Governance und build-and-test bleiben unberührt."
 
       - name: Repository-Konventionen — Docs-/No-App-Fast-Path
         if: github.event.action != 'edited' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory != 'true'
-        run: echo "Klasse D / kein App-Scope: advisory npm-Validierung entfällt (Kostensparpfad)."
+        run: 'echo "Klasse D / kein App-Scope: advisory npm-Validierung entfällt (Kostensparpfad)."'
 
       - name: Repository-Advisory Abhängigkeiten installieren
         if: github.event.action != 'edited' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory == 'true'
