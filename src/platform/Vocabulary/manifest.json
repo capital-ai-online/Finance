@@ -37,6 +37,7 @@
     "Delivery/MessageDeliveryAdapter.ts",
     "Projection/VocabularyWordingSnapshot.ts",
     "Wiki/VocabularyWikiProjection.ts",
+    "Wiki/VocabularyWikiRemotePolicy.ts",
     "Migration/WordingMigrationPlan.ts"
   ],
   "contracts": [
@@ -66,13 +67,15 @@
   },
   "wikiProjection": {
     "renderer": "Wiki/VocabularyWikiProjection.ts",
+    "remotePolicy": "Wiki/VocabularyWikiRemotePolicy.ts",
     "renderCommand": "npm run vocabulary:wiki:render",
     "checkCommand": "npm run vocabulary:wiki:check",
     "syncCommand": "npm run vocabulary:wiki:sync",
     "defaultMode": "dry-run",
     "repositoryAuthoritative": false,
     "mutationAuthority": false,
-    "publishRequires": ["--apply", "--push"]
+    "publishRequires": ["--apply", "--push"],
+    "remotePolicyMode": "exact-github-allowlist-no-embedded-credentials"
   },
   "wordingMigration": {
     "plan": "Migration/WordingMigrationPlan.ts",
@@ -89,7 +92,8 @@
     "docs/governance/vocabulary/VOCABULARY_WORDING_WIKI_SUPERSESSION_2026-08-21.md",
     "docs/roadmaps/work-packages/VW-6_GITHUB_WIKI_PROJECTION_2026-08-21.md",
     "docs/roadmaps/work-packages/VW-7_CONTROLLED_WORDING_MIGRATION_2026-08-21.md",
-    "docs/roadmaps/work-packages/VW-8_CONTINUOUS_GOVERNANCE_RELEASE_CLOSURE_2026-08-21.md"
+    "docs/roadmaps/work-packages/VW-8_CONTINUOUS_GOVERNANCE_RELEASE_CLOSURE_2026-08-21.md",
+    "docs/security/VOCABULARY_WIKI_SYNC_THREAT_MODEL_2026-08-21.md"
   ],
   "tests": [
     "src/platform/Vocabulary/Tests/vocabularyRegistry.test.ts",
@@ -113,6 +117,7 @@
       "VocabularyWordingSnapshot",
       "DocumentaryD7TraceabilityHandoff",
       "GitHubWikiProjection",
+      "GitHubWikiRemotePolicy",
       "ControlledWordingMigration",
       "ContinuousGovernanceClosure"
     ],
@@ -127,8 +132,9 @@
     "stageDriftCheck": true,
     "exactCommitProjectionBinding": true,
     "wikiDeterminismCheck": true,
+    "wikiRemoteAllowlistCheck": true,
     "migrationDriftCheck": true,
     "closureValidator": "scripts/automation/validateVocabularyGovernanceClosure.ts"
   },
-  "implementationStatus": "VW-0 through VW-8 implemented as a dependency-free, read-only governance control plane. Wiki output is generated and non-authoritative, source wording migration is controlled and incremental, and continuous checks are integrated into the existing repository test chain. No external platform, financial runtime, IAM, Billing, Wiki publish or production mutation is performed by this branch."
+  "implementationStatus": "VW-0 through VW-8 implemented as a dependency-free, read-only governance control plane. Wiki output is generated and non-authoritative, the optional sync path is exact-remote allowlisted and explicit-apply/push gated, source wording migration is controlled and incremental, and continuous checks are integrated into the existing repository test chain. No external platform, financial runtime, IAM, Billing, Wiki publish or production mutation is performed by this branch."
 }
