@@ -10,8 +10,8 @@
 - VW-2: 18 zusätzliche kanonische Concepts und read-only Wording Bindings für alle aktuellen `SC-MD-SPT-0001`-Stufen implementiert.
 - VW-3: evidenzbasierten Wording Usage Index mit explizitem Message-Key-Scanner und Reverse Impact Analysis implementiert.
 - VW-4: read-only Delivery Adapter für React, PDF, E-Mail, SEO und Accessibility implementiert.
-- VW-5: deterministische, commitgebundene Documentary-/Knowledge-/Traceability-Projektion mit SHA-256-Checksum und expliziten Non-Authority-Flags implementiert.
-- Targeted Validator `npm run vocabulary:wording:check` ergänzt.
+- VW-5: neutralen, commitgebundenen Vocabulary-Wording-Snapshot mit SHA-256-Checksum implementiert; der Documentary-Handoff verwendet anschließend die bereits bestehenden `DocumentaryDocument`-, D7-Knowledge- und Documentary-Traceability-Contracts statt eines zweiten Graph-/Traceability-Modells.
+- Targeted Tests und Validatoren `npm run vocabulary:wording:test` / `npm run vocabulary:wording:check` ergänzt.
 - Keine neue Runtime-Dependency, kein GitHub-Wiki-Publish, keine UI-Massenmigration und keine Financial-/IAM-/Billing-/Production-Mutation eingeführt.
 
 ### English
@@ -22,8 +22,8 @@
 - VW-2: implemented 18 additional canonical Concepts and read-only wording bindings for all current `SC-MD-SPT-0001` stages.
 - VW-3: implemented an evidence-based Wording Usage Index with explicit Message-Key scanning and reverse-impact analysis.
 - VW-4: implemented read-only delivery adapters for React, PDF, email, SEO and accessibility.
-- VW-5: implemented a deterministic commit-bound Documentary/Knowledge/Traceability projection with SHA-256 checksum and explicit non-authority flags.
-- Added the targeted `npm run vocabulary:wording:check` validator.
+- VW-5: implemented a neutral commit-bound Vocabulary wording snapshot with SHA-256 checksum; the Documentary handoff then reuses the existing `DocumentaryDocument`, D7 Knowledge and Documentary Traceability contracts rather than creating a second graph/traceability model.
+- Added targeted `npm run vocabulary:wording:test` and `npm run vocabulary:wording:check` validation commands.
 - Added no runtime dependency, Wiki publish, mass UI migration or Financial/IAM/Billing/production mutation.
 
 ## 1.0.0 — 2026-08-09
