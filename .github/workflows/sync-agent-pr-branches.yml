@@ -113,6 +113,12 @@ jobs:
               echo "PR #$number ($head): Update-Branch angestossen."
             elif grep -q '"status": *"422"' err.log 2>/dev/null || grep -qi '422' err.log 2>/dev/null; then
               echo "PR #$number ($head): bereits aktuell, Head inzwischen geaendert oder Update laeuft schon (422); kein zweiter Sync."
+            elif grep -qi "Updating a stacked PR's branch via this endpoint is not supported" err.log 2>/dev/null \
+              && grep -qi '403' err.log 2>/dev/null; then
+              # GitHub intentionally refuses update-branch while the PR is still represented as a stack.
+              # This is not a permission failure and must not masquerade as a broken baseline. We also do
+              # not invent a second merge/rebase path here: ADR-0036 remains the final current-main gate.
+              echo "PR #$number ($head): Stacked PR erkannt; GitHub update-branch ist fuer diesen Zustand nicht unterstuetzt (403). Kein Auto-Sync ausgefuehrt; current-main ancestry bleibt vor Merge durch die bestehende PR-Governance fail-closed erzwungen."
             else
               echo "PR #$number ($head): Sync fehlgeschlagen:"
               cat err.log
