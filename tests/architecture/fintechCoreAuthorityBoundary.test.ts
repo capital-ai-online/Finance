@@ -37,6 +37,12 @@ const FORBIDDEN_DIRECT_AUTHORITIES = [
   'kraken-api',
 ] as const;
 
+const FT5_FILES = [
+  '../../src/platform/FinTechCore/RiskCompliance/RiskComplianceContracts.ts',
+  '../../src/platform/FinTechCore/RiskCompliance/DeterministicPreTradeGate.ts',
+  '../../src/platform/FinTechCore/RiskCompliance/RiskComplianceDecisionRecords.ts',
+] as const;
+
 describe('FinTech Core FT-1 through FT-5 authority boundary', () => {
   it('does not import productive domain scorers, database clients or exchange clients directly', () => {
     for (const relativeFile of FOUNDATION_FILES) {
@@ -92,13 +98,7 @@ describe('FinTech Core FT-1 through FT-5 authority boundary', () => {
   });
 
   it('keeps FT-5 deterministic and prevents LLM/provider/exchange code from becoming risk or compliance authority', () => {
-    const gateFiles = [
-      '../../src/platform/FinTechCore/RiskCompliance/RiskComplianceContracts.ts',
-      '../../src/platform/FinTechCore/RiskCompliance/DeterministicPreTradeGate.ts',
-      '../../src/platform/FinTechCore/RiskCompliance/RiskComplianceDecisionRecords.ts',
-    ] as const;
-
-    for (const relativeFile of gateFiles) {
+    for (const relativeFile of FT5_FILES) {
       const source = readFileSync(new URL(relativeFile, import.meta.url), 'utf8');
       expect(source).not.toMatch(/from\s+['"].*(?:agents|agentModelRouting|aiSchema)/i);
       expect(source).not.toMatch(/from\s+['"](?:openai|@anthropic-ai\/sdk|kraken-api|ccxt|binance|coinbase)['"]/i);
@@ -106,6 +106,23 @@ describe('FinTech Core FT-1 through FT-5 authority boundary', () => {
       expect(source).not.toContain('fetch(');
       expect(source).not.toContain('getPrivilegedServerSupabase(');
     }
+  });
+
+  it('defers all FT-5 OrderIntent approval binding and execution handoff to FT-6', () => {
+    for (const relativeFile of FT5_FILES) {
+      const source = readFileSync(new URL(relativeFile, import.meta.url), 'utf8');
+      expect(source).not.toContain('FinTechCoreOrderIntent');
+      expect(source).not.toContain('riskApproval');
+      expect(source).not.toContain('complianceApproval');
+      expect(source).not.toContain('appendOrderIntent(');
+      expect(source).not.toContain('isOrderIntentEligibleForRealExecution(');
+    }
+
+    const gateSource = readFileSync(
+      new URL('../../src/platform/FinTechCore/RiskCompliance/DeterministicPreTradeGate.ts', import.meta.url),
+      'utf8',
+    );
+    expect(gateSource).toContain('executionHandoffEligible: false as const');
   });
 
   it('keeps Crypto Module 01 non-live through FT-5', () => {
