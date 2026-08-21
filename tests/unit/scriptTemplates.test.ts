@@ -35,6 +35,15 @@ describe('scriptTemplates (N2)', () => {
     expect(pkg.marketingPack.linkedinPost).toContain('⚠️');
     expect(pkg.marketingPack.linkedinPost).toContain('🎫');
     expect(pkg.marketingPack.linkedinPost).toContain('📧');
+  });
+
+  it('uses the pattern-break emoji when no context note is supplied', () => {
+    const pkg = buildScriptPackage({
+      topic: 'Datenqualität',
+      locale: 'de',
+    });
+
+    expect(pkg.marketingPack.linkedinPost).toContain('⛓️‍💥');
     expect(pkg.marketingPack.facebookPost).toContain('⛓️‍💥');
   });
 
