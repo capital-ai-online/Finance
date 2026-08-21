@@ -119,7 +119,8 @@ Canonical Vocabulary Registry
 UI Message Catalog
         -> React / PDF / E-Mail / SEO / Accessibility
         -> Wording Usage Index
-        -> Documentary / Knowledge / Traceability Projection
+        -> neutral Vocabulary Wording Snapshot
+        -> existing DocumentaryDocument / D7 Knowledge / DocumentaryTraceability
         -> generated GitHub Wiki
 ```
 
@@ -221,30 +222,23 @@ Hardcoded legacy UI strings are intentionally not mass-migrated before VW-7.
 
 ## 8. Delivery adapters — VW-4
 
-The catalog exposes read-only adapters for:
-
-- React;
-- PDF;
-- E-Mail;
-- SEO;
-- Accessibility.
-
-A context-specific message cannot be delivered through another surface. `shared` messages may be reused across surfaces. Retired messages and missing placeholders fail closed.
+The catalog exposes read-only adapters for React, PDF, E-Mail, SEO and Accessibility. A context-specific message cannot be delivered through another surface; `shared` messages may be reused across surfaces. Retired messages and missing placeholders fail closed.
 
 These adapters do not grant legal, compliance, financial or security authority to message text.
 
-## 9. Documentary / Knowledge / Traceability Projection — VW-5
+## 9. Documentary / Knowledge / Traceability Handoff — VW-5
 
-VW-5 produces a deterministic, commit-bound projection containing:
+VW-5 deliberately avoids a parallel Knowledge-/Traceability model.
 
-- Documentary summary metadata;
-- Concept, Message, Source, FinTech-Stage and Authority nodes;
-- deterministic Knowledge relationships;
-- traceability edges;
-- SHA-256 checksum;
-- explicit non-authorizing flags.
+Vocabulary produces an exact-commit-bound `VocabularyWordingSnapshot` containing Concepts, Messages, actual Usage records, 18-stage bindings, authority references, checksum and explicit non-authorizing flags.
 
-The projection is a handoff contract only. It does not persist a second Knowledge Graph or Traceability Store and does not publish to the Wiki yet. Wiki generation/sync remains VW-6.
+The Documentary adapter `Knowledge/VocabularyWordingDocumentaryProjection.ts` then reuses the existing canonical platform contracts:
+
+1. `createDocumentaryDocument()`;
+2. D7 `projectDocumentaryKnowledge()`;
+3. `buildDocumentaryTraceabilityRecord()`.
+
+Vocabulary therefore retains no direct dependency on Documentary, Knowledge or Traceability, while the existing Documentary layer remains the sole Knowledge-/Traceability handoff. No Wiki publishing occurs before VW-6.
 
 ## 10. Security / Compliance / Data Integrity Boundary
 
@@ -270,7 +264,7 @@ Implemented on the current branch through VW-5:
 - VW-2 18-stage FinTech Concept/Message bindings;
 - VW-3 Wording Usage Index and source scanner;
 - VW-4 delivery adapters;
-- VW-5 deterministic Documentary/Knowledge/Traceability projection;
+- VW-5 neutral Vocabulary snapshot plus canonical Documentary D7/Traceability handoff;
 - targeted tests and local validation entrypoint.
 
 Not yet implemented by this scope:
