@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1.0",
   "registryAuthorityId": "AUTH-GOV-ADR-REGISTRY",
-  "version": "1.13.0",
+  "version": "1.14.0",
   "date": "2026-08-21",
   "canonicalLocation": "docs/adr",
   "rules": {
@@ -35,7 +35,7 @@
     {"authorityId":"AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19","displayId":"ADR-0096","version":"1.2.0","date":"2026-08-20","lifecycle":"proposed","path":"docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md","legacyAliases":[{"displayId":"ADR-0086","path":"docs/adr/ADR-0086-governance-authority-supersession-and-regulatory-control-mapping.md","lifecycle":"legacy-redirect","reason":"legacy duplicate governance-supersession draft; renumbered because ADR-0086 is already vendor privacy governance"}],"supersedes":[]},
     {"authorityId":"AUTH-ADR-DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20","displayId":"ADR-0097","version":"1.0.0","date":"2026-08-20","lifecycle":"proposed","path":"docs/adr/ADR-0097-documentary-maintenance-agent-control-loop.md","legacyAliases":[],"supersedes":[],"note":"Owner-directed Documentary maintenance control-loop implementation candidate; effective only after Human Merge."},
     {"authorityId":"AUTH-ADR-MEDIA-PROJECT-V2-2026-08-20","displayId":"ADR-0098","version":"1.0.0","date":"2026-08-20","lifecycle":"proposed","path":"docs/adr/ADR-0098-media-project-v2-timeline-contract.md","legacyAliases":[],"supersedes":[],"note":"MC-1 canonical MediaProject v2 timeline/domain contract; implementation candidate effective only after Human Merge."},
-    {"authorityId":"AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20","displayId":"ADR-0099","version":"1.3.0","date":"2026-08-21","lifecycle":"proposed","path":"docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md","legacyAliases":[],"supersedes":[],"note":"FinTech Core Crypto Module 01 financial-workflow composition through FT-4: FT-3 private durable persistence and service-role-only SECURITY INVOKER application boundary plus deterministic event-sourced PAPER accounting/replay with no real capital capability. Display ID was remapped from the branch-local pre-reservation ADR-0098 draft after main allocated ADR-0098 to Media Project v2; authorityId remains stable."}
+    {"authorityId":"AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20","displayId":"ADR-0099","version":"1.4.0","date":"2026-08-21","lifecycle":"proposed","path":"docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md","legacyAliases":[],"supersedes":[],"note":"FinTech Core Crypto Module 01 financial-workflow composition through FT-5: FT-3 private durable persistence, FT-4 deterministic event-sourced PAPER accounting/replay, and FT-5 deterministic policy-neutral pre-trade Risk/Compliance evaluation with exact Evidence Authority binding and no live execution capability. Display ID was remapped from the branch-local pre-reservation ADR-0098 draft after main allocated ADR-0098 to Media Project v2; authorityId remains stable."}
   ],
   "parallelNamespaceReservations": [
     {"displayId":"ADR-0099","branch":"feat/fintech-core-crypto-module-01","source":"Owner Chat-Prioritaet 2026-08-21 / FinTech branch main-sync","path":"docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md","observedHead":"eae6d0cbf1d4193d20520a4c5e62d6dc140302d8","state":"released","reservedAt":"2026-08-21T01:31:00+02:00","releasedAt":"2026-08-21T01:31:00+02:00","releaseReason":"reservation consumed by ADR-0099 registration in the same branch sync sequence"}
