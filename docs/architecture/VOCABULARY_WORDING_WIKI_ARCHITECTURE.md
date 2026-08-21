@@ -36,8 +36,15 @@
                │
                ▼
 ┌──────────────────────────────────┐
-│ Documentary / Knowledge /        │
-│ Traceability Projection          │
+│ Neutral Vocabulary Wording       │
+│ Snapshot                         │
+└──────────────┬───────────────────┘
+               │ consumed by
+               ▼
+┌──────────────────────────────────┐
+│ Existing DocumentaryDocument     │
+│ -> D7 Knowledge Projection       │
+│ -> Documentary Traceability      │
 └──────────────┬───────────────────┘
                │ VW-6 generated
                ▼
@@ -116,13 +123,19 @@ Adapters exist for React, PDF, E-Mail, SEO and Accessibility. `shared` messages 
 
 No adapter may upgrade a fail-closed financial/security state or authorize a legal/compliance claim.
 
-## 7. Documentary / Knowledge / Traceability projection — VW-5
+## 7. Documentary / Knowledge / Traceability handoff — VW-5
 
-Implementation:
+Vocabulary deliberately does **not** define a second Knowledge Graph or Traceability model.
 
-- `Projection/VocabularyGovernanceProjection.ts`
+Vocabulary implementation:
 
-Input:
+- `Projection/VocabularyWordingSnapshot.ts`
+
+Documentary adapter:
+
+- `src/platform/Documentary/Knowledge/VocabularyWordingDocumentaryProjection.ts`
+
+### Input
 
 - exact source commit SHA;
 - canonical Vocabulary Registry;
@@ -130,16 +143,32 @@ Input:
 - Wording Usage Index;
 - 18-stage FinTech bindings.
 
-Output:
+### Step 1 — neutral snapshot
 
-- Documentary summary;
-- Concept, Message, Source, FinTech-Stage and Authority nodes;
-- `HAS_MESSAGE`, `USED_BY`, `PROJECTS_STAGE`, `GOVERNED_BY` relationships;
-- Traceability edges;
+`createVocabularyWordingSnapshot()` produces a deterministic read-only snapshot with:
+
+- canonical Concept summary;
+- Message summary;
+- actual Usage records;
+- all 18 FinTech stage bindings;
+- authority references;
 - SHA-256 checksum;
-- explicit non-authorizing flags.
+- `mutationAuthority=false`;
+- `financialDecisionAuthority=false`.
 
-The projection does not persist a second Knowledge Graph or Traceability Store. It is a deterministic handoff to the existing Documentary/Knowledge/Traceability architecture.
+Vocabulary retains no direct dependency on Documentary, Knowledge or Traceability.
+
+### Step 2 — canonical Documentary reuse
+
+`projectVocabularyWordingThroughDocumentary()` consumes the snapshot and reuses the existing platform contracts:
+
+1. `createDocumentaryDocument()` creates the governed handoff document;
+2. D7 `projectDocumentaryKnowledge()` creates the Knowledge projection;
+3. `buildDocumentaryTraceabilityRecord()` creates the Traceability record.
+
+Message Keys, FinTech Stage IDs and observed Source Paths are encoded as Documentary traceability IDs/content; Concept IDs use the existing D7 `REFERENCES_CONCEPT` relationship model.
+
+No separate graph node type, graph persistence, traceability store or event bus is introduced.
 
 ## 8. GitHub Wiki boundary
 
@@ -175,17 +204,18 @@ Vocabulary/Wording must not:
 | VW-2 | 18-stage FinTech Concept baseline | implemented |
 | VW-3 | Wording Usage Index | implemented |
 | VW-4 | React/PDF/E-Mail/SEO adapters | implemented |
-| VW-5 | Documentary/Knowledge/Traceability projection | implemented |
+| VW-5 | Documentary D7 / Traceability handoff | implemented |
 | VW-6 | Wiki renderer / controlled sync | pending |
 | VW-7 | hardcoded UI wording migration | pending |
 | VW-8 | continuous governance / release closure | pending |
 
 ## 11. Validation
 
-Targeted cheap/local command:
+Targeted cheap/local commands:
 
 ```text
+npm run vocabulary:wording:test
 npm run vocabulary:wording:check
 ```
 
-The command validates the Catalog, all 18 bindings, stage-ID correlation, actual key usages and a commit-bound projection. Hosted GitHub CI remains post-PR according to repository cost governance.
+The validation checks the Catalog, all 18 bindings, stage-ID correlation, actual key usages, exact commit-bound snapshot and the canonical Documentary D7/Traceability handoff. Hosted GitHub CI remains post-PR according to repository cost governance.
