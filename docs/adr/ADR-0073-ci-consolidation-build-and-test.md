@@ -124,7 +124,7 @@ Der nächste reale Pull Request muss zeigen:
 - `build-and-test` auf dem aktuellen Head PASS;
 - GitGuardian PASS;
 - kein erwarteter oder hängender `capital-ai-ci`-Kontext;
-- Merge bleibt ohne Owner-Gate oder ohne `build-and-test` blockiert.
+- Merge bleibt ohne Human/CODEOWNER-Freigabe oder ohne `build-and-test` blockiert.
 
 Für das Cost-Control-Addendum gilt zusätzlich:
 
