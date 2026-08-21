@@ -36,6 +36,7 @@ export interface UiMessageFinding {
     | 'DUPLICATE_PLACEHOLDER'
     | 'INVALID_PLACEHOLDER'
     | 'PLACEHOLDER_MISMATCH'
+    | 'UNDECLARED_PLACEHOLDER'
     | 'UNKNOWN_CONCEPT'
     | 'KEY_COLLISION';
   messageKey: string;
