@@ -1,14 +1,14 @@
 # ADR-0099 — CAPITAL-AI FinTech Core Engine: Crypto Module 01
 
 - **Authority ID:** `AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20`
-- **Version:** 1.2.0
+- **Version:** 1.3.0
 - **Date:** 2026-08-21
 - **Lifecycle:** proposed
-- **Owner Priority:** Chat-Prioritaet 2026-08-20; Main-Sync/Projekt-Chat-Transfer und FT-3-Fortsetzung 2026-08-21
+- **Owner Priority:** Chat-Prioritaet 2026-08-20; FT-3/FT-4-Fortsetzung 2026-08-21
 - **Roadmap:** `FT-CORE-CRYPTO-01`
-- **Work Claim:** `FINTECH-CORE-FT3-DURABLE-TRACEABILITY-2026-08-21`
-- **Branch:** `feat/fintech-core-ft3-durable-traceability-v2-2026-08-21`
-- **Current Main Baseline:** `5595ec0abe1f1b6755620f3435badbf874d54aba`
+- **Work Claim:** `FINTECH-CORE-FT4-RESEARCH-PAPER-TRADING-2026-08-21`
+- **Branch:** `feat/fintech-core-ft4-research-paper-trading-2026-08-21`
+- **Current Main Baseline:** `a0663563a6a01bbdf292db8796c1b291bdd8ee57`
 - **Supersedes:** none
 - **Protected authority:** ADR-0087 / SC-2 Single Scoring Architecture
 
@@ -16,7 +16,7 @@
 
 ## Context
 
-CAPITAL-AI besitzt bereits eine produktive Single-Dispatcher-Scoring-Architektur sowie einen Crypto-Research-Pfad. FinTech Core muss deshalb finanzielle Workflows komponieren, ohne eine parallele Scoring-, Governance-, IAM-, Compliance- oder Execution-Authority einzufuehren.
+CAPITAL-AI besitzt bereits eine produktive Single-Dispatcher-Scoring-Architektur sowie einen Crypto-Research-Pfad. FinTech Core muss finanzielle Workflows komponieren, ohne eine parallele Scoring-, Governance-, IAM-, Compliance- oder Execution-Authority einzufuehren.
 
 Geschuetzte Scoring-Kette:
 
@@ -30,48 +30,36 @@ verified Evidence / Feature Contract
 
 `CryptoOrchestrator` bleibt Research/Enrichment und `scoreEligible=false`.
 
-Mit dem Merge von PR #467 sind die FT-0..FT-2C FinTechCore-Vertraege kanonisch auf `main`. FT-3 fuegt nun durable Workflow-/Event-/Decision-Evidence sowie einen serverseitigen Persistenzadapter hinzu, ohne die bestehenden Authority Boundaries zu verschieben.
+PR #467 machte FT-0..FT-2C und diese Authority auf `main` kanonisch. PR #468 machte FT-3 Durable Workflow & Traceability kanonisch. FT-4 fuegt darauf einen ausschliesslich simulierten, durable/replay-faehigen Paper-Workflow auf bestehenden Domain Events hinzu. Produktive Scoring-, Risk-, Compliance- und Execution-Authority bleibt unveraendert.
 
 ## Decision
 
-CAPITAL-AI fuehrt die Plattformgrenze
-
-```text
-src/platform/FinTechCore/
-```
-
-mit dem ersten Modul
-
-```text
-moduleId = fintech-core.crypto
-```
-
-fort. FinTech Core ist eine **financial workflow composition authority**, keine Scoring- oder Trading-Strategie.
+CAPITAL-AI fuehrt die Plattformgrenze `src/platform/FinTechCore/` mit `moduleId = fintech-core.crypto` als **financial workflow composition authority** fort. Sie ist keine Trading-Strategie und kein Broker/Exchange Gateway.
 
 ### 1. Authority Boundaries
 
 FinTech Core darf besitzen:
 
-- Workflow-Lifecycle und Workflow-Korrelation,
-- versionierte Decision-/Domain-Event-/OrderIntent-Contracts,
-- Operating-Mode-Enforcement,
-- geordnete Composition von Category-, Pattern-, Scoring-, Portfolio-, Risk-, Compliance- und spaeter Execution-Adaptern,
-- Orchestration-Level-Idempotency und Reconciliation-Anforderungen,
-- durable Workflow-/Event-/Decision-/Intent-Evidence innerhalb des privaten `fintech_core` Schemas.
+- Workflow-Lifecycle und Workflow-Korrelation;
+- versionierte Decision-/Domain-Event-/OrderIntent-Contracts;
+- Operating-Mode-Enforcement;
+- Composition von Category-, Pattern-, Scoring-, Portfolio-, Risk-, Compliance- und spaeter Execution-Adaptern;
+- Orchestration-Level-Idempotency und Reconciliation-Anforderungen;
+- durable Workflow-/Event-/Decision-/Intent-Evidence im privaten `fintech_core` Schema;
+- deterministische fiktive Paper-Accounting-/Replay-Semantik.
 
 FinTech Core darf nicht besitzen:
 
-- produktive Score-Berechnung oder Modellselektion ausserhalb `ScoringModelRegistry`/`ScoringDispatcher`,
-- IAM/AuthN/AuthZ-Policy,
-- Compliance-Policy-Definitionen,
-- Quality-/Governance-/Supervisor-Authority,
-- Deployment-/Release-Authority,
-- Exchange-Credentials, Wallet Private Keys oder Custody-Secrets,
-- autonome Execution ohne spaetere Risk-/Compliance-/Human-Gates.
+- produktive Score-Berechnung oder Modellselektion ausserhalb `ScoringModelRegistry`/`ScoringDispatcher`;
+- IAM/AuthN/AuthZ-Policy;
+- Compliance-Policy-Definitionen;
+- Quality-/Governance-/Supervisor-Authority;
+- Deployment-/Release-Authority;
+- Exchange-Credentials, Wallet Private Keys oder Custody-Secrets;
+- autonome Execution ohne spaetere Risk-/Compliance-/Human-Gates;
+- reale Kapitalbewegung im FT-4 Paper Workflow.
 
 ### 2. CryptoOrchestrator bleibt Research-only
-
-Die bestehende Research-Grenze bleibt erhalten:
 
 ```text
 mode = research-enrichment
@@ -88,15 +76,11 @@ Nicht belastbar belegte Spezialformeln bleiben `PENDING_EVIDENCE`; es werden kei
 
 ### 4. Feature Evidence ist provenance- und freshness-faehig
 
-Category Feature Contracts muessen Availability, Observed/Retrieved Timestamps, Provider/Evidence-Referenzen und Requirement-Klassen ausdruecken.
-
-Missing oder stale Evidence darf nicht als `0`, `PASS` oder implizit gute Datenqualitaet interpretiert werden.
+Category Feature Contracts muessen Availability, Observed/Retrieved Timestamps, Provider/Evidence-Referenzen und Requirement-Klassen ausdruecken. Missing oder stale Evidence darf nicht als `0`, `PASS` oder implizit gute Datenqualitaet interpretiert werden.
 
 ### 5. Pattern Analysis ist Research Evidence
 
-Pattern Detection, Reliability und Multi-Timeframe Resolution bleiben nicht-authorizing.
-
-Ein Pattern-Ergebnis ist:
+Pattern Detection, Reliability und Multi-Timeframe Resolution bleiben nicht-authorizing:
 
 ```text
 scoreEligible     = false
@@ -108,7 +92,7 @@ Es gibt keinen separaten produktiven Pattern Score.
 
 ### 6. Pattern Reliability ist Exact-Key
 
-Reliability wird mindestens ueber folgende Identitaet gebunden:
+Reliability wird mindestens gebunden an:
 
 ```text
 assetId
@@ -119,25 +103,11 @@ assetId
 + validationVersion
 ```
 
-Kein globaler Cross-Asset-, Cross-Timeframe- oder Cross-Regime-Fallback ist zulaessig.
-
-Research-Validation umfasst mindestens:
-
-- Mindestanzahl Beobachtungen,
-- Train-/Validation-Fenster,
-- Walk-forward/OOS,
-- Fees,
-- Slippage,
-- Funding,
-- nachvollziehbare Validation-Version.
-
-Startwerte aus Quellen sind Research-Defaults und keine produktive Risk Policy.
+Kein Cross-Asset-/Cross-Timeframe-/Cross-Regime-Fallback ist zulaessig. Research Validation umfasst Mindestbeobachtungen, Train-/Validation-Fenster, Walk-forward/OOS, Fees, Slippage, Funding und Validation-Version. Defaults sind Research-Parameter, keine produktive Risk Policy.
 
 ### 7. Multi-Timeframe-Konflikte bleiben explizit
 
-Der Resolver darf widerspruechliche Evidence nicht synthetisch glattziehen. Higher-Timeframe-/Structure-/Breakout-/Volume-/Context-/Regime-Prioritaeten koennen Evidence ordnen; gleichrangige Gegensignale bleiben `CONFLICTING_EVIDENCE`.
-
-Ein spaeteres 1h/4h Feature darf nur reliability-/conflict-gated, begrenzt und ohne Double Counting eingefuehrt werden.
+Higher-Timeframe-/Structure-/Breakout-/Volume-/Context-/Regime-Prioritaeten koennen Evidence ordnen; gleichrangige Gegensignale bleiben `CONFLICTING_EVIDENCE`. Ein spaeteres 1h/4h Feature darf nur reliability-/conflict-gated, begrenzt und ohne Double Counting eingefuehrt werden.
 
 ### 8. Operating Modes
 
@@ -149,19 +119,17 @@ Vertraglich vorgesehen:
 - `PRODUCTION`
 - `EMERGENCY`
 
-FT-1/FT-2 implementieren nur Research/Paper-Faehigkeit. FT-3 persistiert den Operating Mode als Workflow-Kontext, aktiviert aber keine zusaetzliche Execution-Faehigkeit. Ein LLM darf keinen autonomeren/permissiveren Modus aktivieren.
+Crypto Module 01 unterstuetzt durch FT-4 nur `RESEARCH` und `PAPER`. `GUARDED_LIVE` und `PRODUCTION` bleiben blockiert. Ein LLM darf keinen permissiveren Modus aktivieren.
 
 ### 9. Retry und Side Effects
 
-Aktionen werden als `RETRY_SAFE` oder `SIDE_EFFECTING` unterschieden.
+Aktionen werden als `RETRY_SAFE` oder `SIDE_EFFECTING` unterschieden. Live Orders, Withdrawals, Settlement und Custody benoetigen end-to-end Idempotency, Client-/Venue-Order-IDs und definierte Recovery-Semantik, bevor Retry erlaubt ist.
 
-Live Orders, Withdrawals, Settlement und Custody benoetigen end-to-end Idempotency, Client-/Venue-Order-IDs und definierte Recovery-Semantik, bevor Retry erlaubt ist.
-
-FT-3 `order_intents` sind ausschließlich durable Intent-/Evidence-Records. Persistenz ist keine Execution.
+FT-3 `order_intents` sind durable Intent-/Evidence-Records und keine Execution. FT-4 Paper Fills sind Simulation Events und erzeugen keinen realen OrderIntent.
 
 ### 10. Durable Workflow State — FT-3
 
-FT-3 implementiert das private Schema:
+Das private Schema besitzt:
 
 ```text
 fintech_core.workflow_runs
@@ -173,90 +141,139 @@ fintech_core.reconciliation_records
 
 Eigenschaften:
 
-- `workflow_runs` ist current-state durable persistence mit immutable identity/context und no-delete;
-- `domain_events`, `decision_records`, `order_intents`, `reconciliation_records` sind append-only Evidence;
-- Correlation/Trace/Decision-Version bleibt ueber die Tabellen hinweg nachvollziehbar;
-- OrderIntent besitzt DB-seitige Idempotency-Identitaet und Hash-Bindung;
-- Reconciliation ist in FT-3 nur ein Evidence-Scaffold; Settlement-/Custody-Finalitaet wird nicht behauptet;
-- RLS und Least Privilege bleiben Defense in Depth;
-- `anon` und `authenticated` erhalten keinen Zugriff auf das private Schema;
-- `service_role` erhaelt nur die fuer FT-3 erforderlichen Rechte.
+- `workflow_runs` ist durable current state mit immutable identity/context und no-delete;
+- Domain Events, Decisions, OrderIntents und Reconciliation Records sind append-only Evidence;
+- Correlation/Trace/Decision-Version ist reconstructable;
+- OrderIntent ist idempotency-/hash-bound Evidence;
+- Reconciliation ist bis FT-6 nur Scaffold und behauptet keine Settlement-Finalitaet;
+- RLS + Least Privilege bleiben Defense in Depth;
+- `anon`/`authenticated` erhalten keinen Zugriff auf das private Schema;
+- `service_role` besitzt nur die benoetigten Rechte.
 
-Bestehende Repository-/Plattformprimitiven werden weiterverwendet, insbesondere `public.outbox_jobs`, `public.agent_audit_events`, `public.score_snapshots` und bestehende Traceability/EventMesh-Vertraege.
+Bestehende Plattformprimitiven werden wiederverwendet, insbesondere `public.outbox_jobs`, `public.agent_audit_events`, `public.score_snapshots` und bestehende Traceability/EventMesh-Vertraege. Keine zweite Queue-Authority wird eingefuehrt.
 
-Keine zweite Queue-Authority wird parallel eingefuehrt.
+### 11. Application Persistence Boundary — FT-3
 
-### 11. Application Persistence Boundary
+Der Domain-Port bleibt storage-agnostisch:
 
-Der Domain-Layer erhaelt einen storage-agnostischen Port:
-
-```text
-src/platform/FinTechCore/Persistence/FinTechCorePersistencePort.ts
-```
+`src/platform/FinTechCore/Persistence/FinTechCorePersistencePort.ts`
 
 Die konkrete Supabase-Bindung bleibt serverseitig:
 
+`server/fintechCorePersistence.ts`
+
+Der Core importiert keine Supabase-Library. Das private Schema wird nicht fuer Browser/Data API geoeffnet. Schmale `public` RPCs verwenden `SECURITY INVOKER`, entziehen EXECUTE fuer `PUBLIC`/`anon`/`authenticated`, erlauben nur `service_role`, greifen vollqualifiziert auf `fintech_core.*` zu und erzwingen Replay/CAS ohne neue Risk-/Execution-Authority.
+
+### 12. FT-4 Paper Accounting Boundary
+
+FT-4 ist eine Simulation Boundary:
+
 ```text
-server/fintechCorePersistence.ts
+operatingMode = PAPER
+accountingMode = CASH_LONG_ONLY
+real capital = false
+exchange routing = false
+custody/wallet capability = false
 ```
 
-Der Core importiert keine Supabase-Library und behaelt seine deterministische/domain-orientierte Grenze.
+Ein Paper Account modelliert ausschliesslich fiktive Quote-/Asset-Balances, Average Entry Price, Gross Realized PnL sowie kumulierte Fees/Funding.
 
-Da `fintech_core` bewusst nicht als Browser/Data-API-Schema geoeffnet wird und das Repository bereits einen gehaerteten privilegierten Supabase-Client besitzt, wird **kein neuer direkter PostgreSQL-Client** eingefuehrt. Stattdessen verwendet der Server fuenf schmale `public` RPC Entry-Points.
+Geld-/Mengenwerte werden als JSON-safe Fixed Point `atoms + scale` persistiert und im Domain-Layer mit `BigInt` berechnet. Damit wird binäre Floating-Point-Rundung nicht zur Accounting-Authority.
 
-Die RPCs muessen:
+FT-4 implementiert absichtlich kein Short Selling, Margin oder Leverage. Ein SELL ueber den fiktiven Bestand wird fail-closed abgelehnt.
 
-- `SECURITY INVOKER` verwenden;
-- `PUBLIC`, `anon` und `authenticated` EXECUTE entziehen;
-- EXECUTE nur `service_role` geben;
-- vollqualifiziert auf `fintech_core.*` zugreifen;
-- Idempotent Replay bzw. Compare-and-Set fuer Workflow-Zustand durchsetzen;
-- keine Risk-/Compliance-/Execution-Authority hinzufuegen.
+### 13. FT-4 Explicit Cost Evidence
 
-Dies vermeidet sowohl eine Data-API-Oeffnung des privaten Finanzschemas als auch `SECURITY DEFINER`-Privilege-Elevation.
+Jeder simulierte Fill muss Kostenannahmen explizit tragen:
 
-### 12. Reconciliation Contract bleibt FT-6
+- Fee bps;
+- Slippage bps;
+- Funding Amount oder ausdrueckliches `NOT_APPLICABLE` mit Begruendung;
+- Evidence-Refs fuer Markt-/Kostenannahmen.
 
-Die Tabelle `fintech_core.reconciliation_records` ist durable Evidence-Vorbereitung. Ein typed Application-Reconciliation-Port wird in FT-3 **nicht erfunden**, weil die kanonischen FinTechCore-Vertraege noch keine Settlement-/Custody-Statussemantik definieren.
+Es gibt keine versteckten Nullkosten und keine Aussage, dass Paper-Fills reale Venue-Fills garantieren oder exakt replizieren.
 
-Die Semantik und der typed Adapter gehoeren zu FT-6 `OrderIntent & Reconciliation`.
+Gross Realized PnL wird getrennt von Fees/Funding gehalten, damit Cost Attribution auditierbar bleibt.
 
-### 13. External Platform Mutations
+### 14. FT-4 Event-Sourced Replay
 
-FT-3 verwendet produktive Supabase-Migrationen unter dem dafuer vorgesehenen Migration-/Security-/Governance-Gate.
+FT-4 fuehrt keine zweite Paper-Ledger-Tabelle ein. Das bestehende append-only Journal `fintech_core.domain_events` ist die durable Source fuer Paper State:
 
-Keine FT-3-Mutation erfolgt an:
+```text
+PAPER_ACCOUNT_INITIALIZED   paperSequence=0
+PAPER_FILL_SIMULATED        paperSequence=1..N
+```
 
-- Render,
-- Stripe,
-- IAM,
-- Scoring-Authority,
+`PaperTradingWorkflowService` rekonstruiert vor jeder neuen Simulation den State aus durable Events. `PaperTradingEngine` re-simuliert gespeicherte Fill-Berechnungen; manipulierte, korrelationsfremde, causation-falsche oder nicht-kontinuierliche Eventfolgen werden abgelehnt.
+
+Die DB erzwingt zusaetzlich:
+
+- kanonische Paper Contract-/Kind-/Sequence-Felder;
+- genau eine Initialisierung pro Run;
+- eindeutige `paperSequence` pro Run;
+- Initialisierung ohne Causation;
+- Fill mit positiver Sequence und Causation.
+
+### 15. FT-4 Replay Reader
+
+Der read-only Domain-Port `FinTechCoreDomainEventReaderPort` wird serverseitig ueber `public.fintech_core_list_domain_events_v1(text)` umgesetzt.
+
+Der RPC:
+
+- ist `SECURITY INVOKER`;
+- hat kein EXECUTE fuer `PUBLIC`, `anon`, `authenticated`;
+- ist nur fuer `service_role` ausfuehrbar;
+- oeffnet das private Schema nicht fuer Browserrollen;
+- verleiht keine Mutation-/Execution-Authority.
+
+### 16. Reconciliation Contract bleibt FT-6
+
+`fintech_core.reconciliation_records` bleibt Evidence-Scaffold. Ein typed Application-Reconciliation-/Settlement-Contract wird erst in FT-6 eingefuehrt, wenn die notwendige Settlement-/Custody-Semantik definiert ist.
+
+### 17. External Platform Mutations
+
+FT-3 und FT-4 verwenden produktive Supabase-Migrationen unter Migration-/Security-/Governance-Gates.
+
+FT-4 mutiert nicht:
+
+- Render;
+- Stripe;
+- IAM;
+- Scoring Authority;
 - Exchange/Custody.
 
-### 14. Open Source / Dependency Decision
+### 18. Open Source / Dependency Decision
 
-PostgreSQL/Supabase und die vorhandene `@supabase/supabase-js` Serverintegration reichen fuer FT-3 aus.
+FT-3 verwendet bestehendes PostgreSQL/Supabase und `@supabase/supabase-js`; kein direkter `pg`-Client wurde eingefuehrt.
 
-Ein zusaetzlicher `pg`-Client wurde geprueft, aber nicht aufgenommen: funktionaler Mehrwert ist fuer diesen Scope geringer als zusaetzliche Dependency-/Secret-/Connection-Pool-/Wartungsoberflaeche.
+Fuer FT-4 wurden etablierte Trading Engines geprueft:
 
-TA-Lib bleibt ein bevorzugter spaeterer PoC-Kandidat fuer Standard-Indikatoren/Candlestick-Primitives. Es uebernimmt weder Reliability-, Context-, Scoring-, Risk- noch Governance-Authority.
+- **QuantConnect LEAN:** Apache-2.0, sehr umfangreiche Backtest/Paper-/Fill-/Fee-/Slippage-Funktionalitaet, aber grosser C#-Runtime- und Parallel-Execution-Footprint.
+- **NautilusTrader:** aktiv gepflegte deterministische/event-driven Trading-Plattform, LGPL-3.0, aber zusaetzlicher Rust/Python-Stack und breitere Trading-Engine-Authority.
+
+Beide werden in FT-4 nicht integriert. Die benoetigte fehlende Funktion ist eine kleine CAPITAL-AI-spezifische Domain Simulation; Workflow, UAI, Persistence, Event Journal und Audit existieren bereits. Die Integration eines kompletten externen Trading Runtimes waere funktional und architektonisch ueberdimensioniert.
+
+TA-Lib bleibt ein spaeterer PoC-Kandidat fuer Standard-Indikatoren/Candlestick-Primitives und uebernimmt keine Reliability-, Context-, Scoring-, Risk- oder Governance-Authority.
 
 ## Implemented Scope
 
 Als implementiert und durch Code/DB/Evidence belegt gelten:
 
-- FT-0 Contract/Governance Foundation,
-- FT-1 Core Engine Foundation,
-- FT-2A Category Profile Resolution,
-- FT-2B Category Feature Contracts,
-- FT-2C Pattern Engine Research Foundation,
-- FT-3 private durable persistence,
-- FT-3 least-privilege/append-only database guards,
-- FT-3 storage-agnostic persistence port,
-- FT-3 service-role-only Supabase RPC adapter boundary,
-- FT-3 idempotency/compare-and-set production verification.
+- FT-0 Contract/Governance Foundation;
+- FT-1 Core Engine Foundation;
+- FT-2A Category Profile Resolution;
+- FT-2B Category Feature Contracts;
+- FT-2C Pattern Engine Research Foundation;
+- FT-3 private durable persistence und least-privilege/append-only Guards;
+- FT-3 storage-agnostic persistence port und service-role-only Supabase RPC Boundary;
+- FT-4 deterministic Paper Trading Contracts/Engine;
+- FT-4 fictional fixed-point balances;
+- FT-4 explicit Fee/Slippage/Funding Evidence;
+- FT-4 event-sourced durable Replay;
+- FT-4 service-role-only domain-event reader;
+- FT-4 DB-level Paper Payload/Sequence/Causation Guards.
 
-Nicht umgesetzt bleiben FT-4+ sowie produktive Risk-/Compliance-/Execution-/Settlement-Integrationen.
+Nicht umgesetzt bleiben FT-5+ sowie produktive Risk-/Compliance-/Execution-/Settlement-Integrationen.
 
 ## Alternatives Considered
 
@@ -274,76 +291,80 @@ Nicht umgesetzt bleiben FT-4+ sowie produktive Risk-/Compliance-/Execution-/Sett
 
 ### New Kafka/NATS/Temporal/pgmq or second queue
 
-**Rejected for FT-3.** `public.outbox_jobs` ist bereits die etablierte durable Queue-/Lease-Primitive.
+**Rejected through FT-4.** `public.outbox_jobs` ist bereits die etablierte durable Queue-/Lease-Primitive; Paper State benoetigt keine zweite Queue.
+
+### Separate Paper Ledger table
+
+**Rejected for FT-4.** Durable Domain Events koennen den Paper State deterministisch rekonstruieren. Eine weitere Current-State-/Ledger-Authority waere dupliziert und muesste separat synchronisiert werden.
+
+### QuantConnect LEAN or NautilusTrader runtime integration
+
+**Rejected for FT-4.** Beide sind etablierte und geeignete Referenzarchitekturen, aber fuer den engen Paper-Scope deutlich groesser als die fehlende Domain-Funktion und erzeugen zusaetzliche Runtime-/Dependency-/Governance-/Lock-in-Flaechen.
 
 ### Expose `fintech_core` directly through Supabase Data API
 
-**Rejected.** Financial workflow/evidence persistence bleibt private. Browserrollen benoetigen keinen direkten Zugriff.
+**Rejected.** Financial workflow/evidence persistence bleibt private.
 
-### Add a direct Node PostgreSQL client
+### Direct Node PostgreSQL client / SECURITY DEFINER reader
 
-**Rejected for FT-3.** Der vorhandene privilegierte Supabase-Serverpfad plus eingeschraenkte RPCs hat geringeren Integrations-/Security-/Wartungsaufwand.
-
-### SECURITY DEFINER RPCs
-
-**Rejected.** Der `service_role` besitzt bereits die erforderlichen eingeschraenkten Tabellenrechte; `SECURITY INVOKER` vermeidet unnoetige Rechteerhoehung.
+**Rejected.** Der vorhandene privilegierte Supabase-Serverpfad plus `SECURITY INVOKER` RPC hat geringere Integrations-/Privilege-Oberflaeche.
 
 ## Consequences
 
 Positiv:
 
-- klare FinTech-Workflow-Grenze,
-- Erhalt der Single-Scoring-Authority,
-- durable/auditierbare Workflow-/Event-/Decision-/Intent-Evidence,
-- private financial persistence,
-- explizite idempotente Replay-Semantik,
-- compare-and-set Workflow-Transitions,
-- kein neuer DB-Client oder Queue-Stack,
-- produktive Side Effects bleiben durch spaetere Gates blockiert.
+- klare FinTech-Workflow-Grenze und Erhalt der Single-Scoring-Authority;
+- durable/auditierbare Workflow-/Paper-Evidence;
+- private financial persistence;
+- deterministische Fixed-Point Paper Accounting Semantik;
+- explizite Kostenannahmen statt versteckter Backtest-Optimismus;
+- tamper-detecting Replay;
+- keine neue Queue, Ledger-Tabelle oder Trading Runtime;
+- reales Kapital und Side Effects bleiben blockiert.
 
 Kosten/Risiken:
 
-- zusaetzliche Contract-/Versionierungsdisziplin,
-- RPC- und DB-Schema muessen gemeinsam migriert/versioniert werden,
-- Pattern Reliability benoetigt weiterhin historische Daten und belastbare Backtests,
-- Guarded Live bleibt absichtlich weit hinter Foundation-/Persistence-Phasen.
+- Contract-/Versionierungsdisziplin nimmt zu;
+- Paper Simulation ist kein Beweis fuer reale Fill-/Liquidity-Qualitaet;
+- CASH_LONG_ONLY deckt Margin/Short/Derivatives bewusst noch nicht ab;
+- produktive Risk/Compliance und Reconciliation fehlen bis FT-5/FT-6;
+- Guarded Live bleibt absichtlich blockiert.
 
 ## Validation Obligations
 
-Vor FT-3 PR/Merge-Readiness:
+Vor jedem PR:
 
-- aktuellen `main` erneut laden,
-- neue Main-Aenderungen und semantische Korrelationen pruefen,
-- Governance-/Registry-Konsistenz pruefen,
-- Diff/Scope pruefen,
-- lokale/statische/kostenguenstige Tests vorziehen,
-- keine kostenverursachende CI vor PR manuell starten,
+- aktuellen `main` erneut laden und semantische Korrelationen pruefen;
+- Governance-/Registry-Konsistenz und Diff/Scope pruefen;
+- lokale/statische/kostenguenstige Tests bevorzugen;
+- keine kostenverursachende GitHub CI vor PR manuell starten;
 - Post-PR-CI vor Merge ausfuehren.
 
-Produktiv fuer FT-3 verifiziert:
+Produktiv fuer FT-3 verifiziert sind service-role-only SECURITY-INVOKER RPCs, append-only/least-privilege Persistence, idempotente Replays/CAS und Advisor Checks.
 
-- `SECURITY INVOKER` auf allen fuenf RPCs,
-- kein EXECUTE fuer `anon`/`authenticated`,
-- EXECUTE fuer `service_role`,
-- idempotente Workflow-/Event-/Decision-/OrderIntent-Replays,
-- compare-and-set Workflow-Transition,
-- conflicting Event-ID/Payload wird abgelehnt,
-- keine persistierten Verifikationsdaten nach Rollback,
-- keine neuen `fintech_core` Security-Advisor-Findings,
-- keine unindexierten `fintech_core` Foreign Keys.
+Produktiv fuer FT-4 verifiziert:
+
+- Migration `20260821071823 / fintech_core_paper_replay_reader`;
+- Reader und Guard `SECURITY DEFINER=false`;
+- Reader EXECUTE nur `service_role`;
+- RLS bleibt aktiv;
+- Paper Guard + Unique Indizes vorhanden;
+- service-role Reader rekonstruiert Init/Fill Sequence `[0,1]`;
+- Duplicate Sequence und zweite Initialisierung werden abgelehnt;
+- Fill ohne Causation wird abgelehnt;
+- Transaktions-Rollback hinterlaesst 0 Testdaten;
+- keine neuen FT-4 Security-/unindexed-FK Advisor Findings.
 
 Vor Guarded Live zusaetzlich mindestens:
 
-- deterministic replay,
-- idempotency/crash recovery,
-- negative Risk-/Compliance-Tests,
-- Data-Quality/Staleness-Failure-Tests,
-- Audit-Reconstruction,
-- Reconciliation,
-- Kill-Switch/Emergency-Runbook,
-- Human Approval Policy,
+- deterministic Risk + Compliance Gates (FT-5);
+- typed OrderIntent/Reconciliation und Crash/Duplicate Recovery (FT-6);
+- Data-Quality/Staleness-Failure-Tests;
+- Audit-Reconstruction;
+- Kill-Switch/Emergency-Runbook;
+- Human Approval Policy;
 - Security-/Compliance-Review.
 
 ## Status
 
-`PROPOSED` — FT-0 bis FT-3 sind implementiert. Produktive Scoring-, Risk-, Compliance- oder Execution-Authority wird durch diesen Entscheid nicht veraendert. FT-4 Research & Paper Trading ist der naechste Roadmap-Block.
+`PROPOSED` — FT-0 bis FT-4 sind implementiert; FT-4 ist bis zur Post-PR-CI noch merge-pending. Produktive Scoring-, Risk-, Compliance- oder Execution-Authority wird nicht veraendert. **FT-5 Deterministic Risk + Compliance** ist der naechste Roadmap-Block.
