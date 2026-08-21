@@ -1,7 +1,7 @@
 component:
   name: Vocabulary
-  displayName: Canonical Vocabulary Registry
-  version: 1.0.0
+  displayName: Canonical Vocabulary & Wording
+  version: 1.5.0
   status: implemented
   lifecycle: Operational
   health: Unknown
@@ -9,34 +9,51 @@ component:
   category: platform
   layer: CrossCutting
   repository: Finance
+  effectiveAfter: Human Merge
 
 purposeDE: >
-  Zentrale kanonische Registry fuer Terminologie, Naming, zweisprachige Wortwahl,
-  Aliase und verbotene Begriffe innerhalb von CAPITAL-AI.
+  Kanonische Registry für Terminologie und zweisprachiges Produkt-Wording mit
+  Message Catalog, FinTech-Wertschöpfungsketten-Projektion, Usage Index,
+  Delivery-Adaptern und deterministischer Documentary-/Knowledge-/Traceability-Projektion.
 purposeEN: >
-  Central canonical registry for terminology, naming, bilingual wording, aliases
-  and forbidden terms across CAPITAL-AI.
+  Canonical registry for terminology and bilingual product wording with a
+  Message Catalog, FinTech value-chain projection, Usage Index, delivery adapters
+  and deterministic Documentary/Knowledge/Traceability projection.
 
 responsibilities:
   - Canonical concept identities
-  - German and English display mappings
+  - German and English preferred display mappings
   - Alias and forbidden-term governance
   - Deterministic collision detection
-  - Read-only terminology resolution for downstream components
+  - Governed UI Message Catalog
+  - Read-only 18-stage SC-MD-SPT-0001 wording bindings
+  - Evidence-based Wording Usage Index
+  - React PDF Email SEO Accessibility delivery adapters
+  - Commit-bound Documentary Knowledge Traceability projection
 
 notResponsibleFor:
-  - Active code renames
+  - Financial runtime decisions
+  - Market data or evidence mutation
+  - Scoring confidence ranking or eligibility
+  - IAM entitlement billing or compliance authorization
+  - Active code renames outside Safe Rename Gate
   - Event routing
-  - Knowledge Graph storage
-  - Traceability storage
-  - Documentation generation
+  - Knowledge Graph persistence
+  - Traceability persistence
+  - GitHub Wiki publication before VW-6
+  - Merge release deployment or production mutation
 
 structure:
   Domain: Canonical concept contracts
   Interfaces: Public registry interfaces
   Registry: Canonical in-memory registry and seed concepts
+  Messages: Governed bilingual UI Message Catalog
+  ValueChain: Read-only FinTech stage bindings
+  Usage: Source usage index and reverse-impact evidence
+  Delivery: Surface-specific read-only message adapters
+  Projection: Documentary Knowledge Traceability handoff
   Services: Read-oriented terminology access
-  Validators: Concept and collision validation
+  Validators: Concept message and cross-contract validation
   Tests: Contract tests
 
 dependencies:
@@ -46,9 +63,18 @@ dependencies:
     - src/platform/Knowledge
     - src/platform/Traceability
     - src/platform/Documentary
+    - src/platform/MarketData
+    - src/platform/Scoring
+    - src/platform/Ranking
 
 interfaces:
   - IVocabularyRegistry
+  - Messages/UiMessage.ts
+  - Messages/UiMessageCatalog.ts
+  - ValueChain/FintechWordingBinding.ts
+  - Usage/WordingUsage.ts
+  - Delivery/MessageDeliveryAdapter.ts
+  - Projection/VocabularyGovernanceProjection.ts
 
 references:
   ess:
@@ -58,11 +84,18 @@ references:
     - ESS-0017
     - ESS-0017-CONTRACTS
   adr:
-    - ADR-0046
+    - ADR-0078
+  authorities:
+    - SC-MD-SPT-0001
   documentation:
-    - docs/architecture/VOCABULARY_GOVERNANCE_MIGRATION_ROADMAP.md
+    - docs/architecture/VOCABULARY_WORDING_WIKI_ARCHITECTURE.md
+    - docs/governance/vocabulary/VOCABULARY_WORDING_WIKI_SUPERSESSION_2026-08-21.md
 
 implementationStatusDE: >
-  Phase-2-Kern implementiert. Keine aktiven Renames und keine neuen Event-Typen.
+  VW-0 bis VW-5 implementiert. Message Catalog, 18-stufige FinTech-Wording-Projektion,
+  Usage Index, Delivery Adapter und commitgebundene Documentary-/Knowledge-/Traceability-Projektion
+  sind vorhanden. Wiki-Publish und UI-Massenmigration bleiben VW-6/VW-7.
 implementationStatusEN: >
-  Phase 2 core implemented. No active renames and no new event types.
+  VW-0 through VW-5 implemented. Message Catalog, complete 18-stage FinTech wording projection,
+  Usage Index, delivery adapters and commit-bound Documentary/Knowledge/Traceability projection
+  are present. Wiki publish and mass UI migration remain VW-6/VW-7.
