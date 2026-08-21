@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "GOVERNANCE-CONVERGENCE-RUNTIME-EXECUTION-2026-08-21",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "Governance convergence, operational system-event integrity and provider-neutral asynchronous execution boundary without duplicate authorities",
+  "workItemDE": "Konsolidiertes Governance-Arbeitspaket für State-/Dokumenten-Konvergenz, System-Event-Integrität und eine providerneutrale asynchrone Execution-Grenze ohne Doppelarchitekturen",
+  "startedAt": "2026-08-21T20:33:00+02:00",
+  "baseBranch": "agent/hosted-validation-cost-s0-s3-2026-08-21",
+  "baseSha": "b8a78220c671df8cb3c35dfc5ba719b972e6ce69",
+  "lastSyncedMainSha": "6c90c04de8924b8783f23ab4789afa810e9ea3a8",
+  "branch": "agent/governance-convergence-runtime-execution-2026-08-21",
+  "upstreamPullRequest": 471,
+  "pullRequest": null,
+  "claimedPaths": [
+    ".ai/work-claims/GOVERNANCE-CONVERGENCE-RUNTIME-EXECUTION-2026-08-21.json",
+    "server/systemEvents.ts",
+    "server/systemEvents/systemEventJournal.ts",
+    "src/platform/Supervisor/Execution/AsyncExecutionPort.ts",
+    "supabase/migrations/20260821210000_system_event_journal.sql",
+    "tests/unit/systemEventJournal.test.ts",
+    "tests/unit/asyncExecutionPort.test.ts",
+    "docs/roadmaps/work-packages/GOVERNANCE_CONVERGENCE_RUNTIME_EXECUTION_2026-08-21.md",
+    "docs/architecture/RENDER_RUNTIME_ASYNC_EXECUTION_STATUS_2026-08-21.md"
+  ],
+  "protectedExistingAuthorities": [
+    "AGENTS.md / AUTH-GOV-AGENT-TRUST-ROOT",
+    "ADR-0096 Governance Control Plane and canonical registries",
+    "ADR-0037 Render request-plane/background-execution separation",
+    "ADR-0044 production runtime artifact immutability",
+    "ADR-0059 durable agent audit and OpenTelemetry correlation",
+    "ADR-0018 Event Mesh",
+    "ROADMAP_CONSOLIDATION_MASTER_INDEX.md",
+    "Canonical Vocabulary Registry / UI Message Catalog authorities",
+    "AI Content Transparency Contract authorities",
+    "PR #471 hosted-validation cost-control and shadow-attestation scope"
+  ],
+  "correlation": {
+    "mainAtStart": "6c90c04de8924b8783f23ab4789afa810e9ea3a8",
+    "upstreamPr": {
+      "number": 471,
+      "headAfterMainSync": "b8a78220c671df8cb3c35dfc5ba719b972e6ce69",
+      "directPathOverlap": []
+    },
+    "finding": "The work item is stacked on the synchronized PR #471 head. It must project/reuse existing Governance, Documentary, audit, Supervisor and Render authorities rather than introducing a second control plane, audit stack, domain orchestrator or roadmap authority."
+  },
+  "externalMutationScope": "none; Supabase migration is repository-only handoff and is not applied to production by this work item",
+  "releaseCondition": "Release after stacked PR merge/closure/supersession/abandonment. Production activation of a durable system-event table or Render Workflows adapter requires a separate Owner-authorized production handoff."
+}
