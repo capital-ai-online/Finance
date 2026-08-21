@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Activity, AlertTriangle, Award, Clock, Compass, Layers, Orbit, Percent, RefreshCw, ShieldCheck, TrendingUp } from 'lucide-react';
 import { AssetLogo } from './AssetLogo';
 import { StatusBadge } from './StatusBadge';
+import { buildUniverseAvailabilityProjection } from '../services/universeAvailability';
 
 type AssetType = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond';
 type AssetRow = {
@@ -11,14 +12,24 @@ type AssetRow = {
   score: number | null;
   status: string;
   providers: string[];
+  evidenceIds: string[];
+  screeningEligible?: boolean;
   reasoning: string[];
   reason?: string;
 };
-type CatalogAsset = { symbol?: string; name?: string; type?: AssetType; origin?: string };
+type CatalogAsset = {
+  symbol?: string;
+  name?: string;
+  type?: AssetType;
+  subtype?: string;
+  instrumentKind?: string;
+  origin?: string;
+};
 
 interface UniverseBestWorstProps { onSelectAsset?: (symbol: string) => void; }
 
 const RANKING_CANDIDATE_LIMIT = 24;
+const VERIFIED_SCORE_BATCH_LIMIT = 50;
 
 const GROUPS = [
   { id: 'crypto', name: 'Crypto Cosmos', type: 'crypto' as const, icon: Orbit, description: 'Digitale Leitwährungen & Token' },
@@ -32,6 +43,17 @@ const GROUPS = [
 function finiteScore(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return null;
   return Number((value <= 10 ? value * 10 : value).toFixed(1));
+}
+
+function stringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0) : [];
+}
+
+function evidenceIdList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item: any) => typeof item === 'string' ? item : item?.evidenceId ?? item?.id)
+    .filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
 }
 
 function reasoningList(value: unknown): string[] {
@@ -49,6 +71,14 @@ function selectRankingCandidates(sourceCatalog: CatalogAsset[], type: AssetType)
       return String(a.symbol).localeCompare(String(b.symbol));
     })
     .slice(0, RANKING_CANDIDATE_LIMIT);
+}
+
+function chunkVerifiedScoreCandidates(candidates: CatalogAsset[]): CatalogAsset[][] {
+  const chunks: CatalogAsset[][] = [];
+  for (let index = 0; index < candidates.length; index += VERIFIED_SCORE_BATCH_LIMIT) {
+    chunks.push(candidates.slice(index, index + VERIFIED_SCORE_BATCH_LIMIT));
+  }
+  return chunks;
 }
 
 async function fetchJson(url: string, init?: RequestInit, timeoutMs = 6500): Promise<any> {
@@ -124,13 +154,18 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
           body: JSON.stringify({ symbol: asset.symbol, asset_name: asset.name }),
         });
         const score = finiteScore(result.body?.final_score);
+        const status = typeof result.body?.status === 'string' ? result.body.status : (result.ok ? 'SCORE_NOT_COMPUTABLE' : `HTTP_${result.status}`);
+        const providers = stringList(result.body?.integrity?.providers ?? result.body?.providers);
+        const evidenceIds = evidenceIdList(result.body?.integrity?.evidence ?? result.body?.evidenceIds);
         next[asset.symbol] = {
           symbol: asset.symbol,
           name: asset.name,
           type: 'crypto',
-          score: result.body?.status === 'READY' ? score : null,
-          status: result.body?.status || (result.ok ? 'SCORE_NOT_COMPUTABLE' : `HTTP_${result.status}`),
-          providers: Array.isArray(result.body?.integrity?.providers) ? result.body.integrity.providers : [],
+          score: status === 'READY' ? score : null,
+          status,
+          providers,
+          evidenceIds,
+          screeningEligible: status === 'READY' && providers.length > 0 && evidenceIds.length > 0,
           reasoning: reasoningList(result.body?.reasoning),
           reason: typeof result.body?.reason === 'string' ? result.body.reason : undefined,
         };
@@ -142,19 +177,21 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
           score: null,
           status: err?.name === 'AbortError' ? 'PROVIDER_TIMEOUT' : 'PROVIDER_UNAVAILABLE',
           providers: [],
+          evidenceIds: [],
+          screeningEligible: false,
           reasoning: [],
           reason: err?.message || 'Crypto-Scoring konnte nicht geladen werden.',
         };
       }
     }));
 
-    if (traditional.length) {
+    for (const batch of chunkVerifiedScoreCandidates(traditional)) {
+      const seen = new Set<string>();
       try {
-        const symbols = traditional.map(asset => asset.symbol).filter(Boolean).join(',');
+        const symbols = batch.map(asset => asset.symbol).filter(Boolean).join(',');
         const body = await fetchJson(`/api/registry/assets/verified-scores?symbols=${encodeURIComponent(symbols)}`, undefined, 12000);
-        const seen = new Set<string>();
         for (const row of body?.results ?? []) {
-          const asset = traditional.find(item => item.symbol === row?.symbol);
+          const asset = batch.find(item => item.symbol === row?.symbol);
           if (!asset?.symbol || !asset.name || !asset.type) continue;
           seen.add(asset.symbol);
           const score = finiteScore(row?.score);
@@ -164,12 +201,14 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
             type: asset.type,
             score: row?.status === 'READY' ? score : null,
             status: typeof row?.status === 'string' ? row.status : 'SCORE_NOT_COMPUTABLE',
-            providers: Array.isArray(row?.providers) ? row.providers : [],
+            providers: stringList(row?.providers),
+            evidenceIds: evidenceIdList(row?.evidenceIds),
+            screeningEligible: row?.screeningEligibility?.eligible === true,
             reasoning: reasoningList(row?.reasoning),
             reason: typeof row?.reason === 'string' ? row.reason : undefined,
           };
         }
-        for (const asset of traditional) {
+        for (const asset of batch) {
           if (!asset.symbol || !asset.name || !asset.type || seen.has(asset.symbol)) continue;
           next[asset.symbol] = {
             symbol: asset.symbol,
@@ -178,12 +217,14 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
             score: null,
             status: 'SCORE_NOT_COMPUTABLE',
             providers: [],
+            evidenceIds: [],
+            screeningEligible: false,
             reasoning: [],
             reason: 'Kein Ergebnis im verifizierten Batch-Scoring zurückgegeben.',
           };
         }
       } catch (err: any) {
-        for (const asset of traditional) {
+        for (const asset of batch) {
           if (!asset.symbol || !asset.name || !asset.type) continue;
           next[asset.symbol] = {
             symbol: asset.symbol,
@@ -192,6 +233,8 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
             score: null,
             status: err?.name === 'AbortError' ? 'PROVIDER_TIMEOUT' : 'PROVIDER_UNAVAILABLE',
             providers: [],
+            evidenceIds: [],
+            screeningEligible: false,
             reasoning: [],
             reason: err?.message || 'Verifiziertes Batch-Scoring konnte nicht geladen werden.',
           };
@@ -219,6 +262,20 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
       .filter(row => row.status === 'READY' && row.score !== null)
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
     const unavailable = allRows.filter(row => row.status !== 'READY' || row.score === null);
+    const projection = buildUniverseAvailabilityProjection(
+      candidates,
+      allRows.map(row => ({
+        symbol: row.symbol,
+        assetType: row.type,
+        status: row.status,
+        providers: row.providers,
+        evidenceIds: row.evidenceIds,
+        screeningEligible: row.screeningEligible,
+      })),
+    );
+    const universe = projection.classes.find(entry => entry.assetClass === group.type);
+    const universeSla = universe?.topLevel ?? null;
+    const subcategories = universe?.subcategories ?? [];
     return {
       ...group,
       best: readyRows.slice(0, 3),
@@ -227,12 +284,16 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
       candidatesInGroup: candidates.length,
       unavailable,
       coverage: candidates.length ? Math.round((readyRows.length / candidates.length) * 100) : 0,
+      universeSla,
+      universeSubcategories: subcategories,
+      availableSubcategories: subcategories.filter(item => item.status === 'AVAILABLE').length,
     };
   }), [scores, catalog]);
 
   const totalReady = grouped.reduce((sum, group) => sum + group.readyCount, 0);
   const totalCandidates = grouped.reduce((sum, group) => sum + group.candidatesInGroup, 0);
   const totalCoverage = totalCandidates ? Math.round((totalReady / totalCandidates) * 100) : 0;
+  const availableClasses = grouped.filter(group => group.universeSla?.status === 'AVAILABLE').length;
 
   if (error) return <div className="ui-panel text-center"><AlertTriangle className="mx-auto text-red-400" size={30} /><p className="mt-3 text-sm font-bold text-white">Ladefehler</p><p className="mt-1 text-xs text-white/50">{error}</p></div>;
 
@@ -244,9 +305,10 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
             <span className="px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-purple-500/15 text-purple-400 border border-purple-500/25 uppercase">CAPITAL-AI QUANT-SYSTEM</span>
             <span className="px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 uppercase flex items-center gap-1"><Activity size={10} /> Progressive Scoring</span>
             <span className="px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-white/5 text-white/60 border border-white/10 uppercase flex items-center gap-1"><ShieldCheck size={10} /> {totalReady}/{totalCandidates || '–'} verifiziert · {totalCoverage}% Coverage</span>
+            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-white/5 text-white/60 border border-white/10 uppercase flex items-center gap-1"><ShieldCheck size={10} /> Universe SLA {availableClasses}/{GROUPS.length} Klassen</span>
           </div>
           <h2 className="text-lg font-black font-display text-white uppercase tracking-wider flex items-center gap-2"><Award className="text-purple-400" size={18} /> Universe TOP Rankings</h2>
-          <p className="text-xs text-white/50 mt-2 max-w-2xl leading-relaxed">Bis zu {RANKING_CANDIDATE_LIMIT} priorisierte Kandidaten je Assetklasse werden evidence-basiert ausgewertet. Fehlende Scores bleiben sichtbar und werden nie durch Ersatzwerte ersetzt.</p>
+          <p className="text-xs text-white/50 mt-2 max-w-2xl leading-relaxed">Bis zu {RANKING_CANDIDATE_LIMIT} priorisierte Kandidaten je Assetklasse werden evidence-basiert ausgewertet. Der 24er-SLA zählt ausschließlich READY-Assets mit Provider- und Evidence-Nachweis; fehlende Werte werden nie aufgefüllt.</p>
         </div>
         <div className="flex flex-col items-start sm:items-end gap-2">
           <button onClick={() => void refreshScores(catalog)} disabled={!catalog.length || scoreLoading} className="ui-hit min-h-11 inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 text-xs text-white/70 disabled:opacity-40 hover:bg-white/10 transition-colors"><RefreshCw size={13} className={scoreLoading ? 'animate-spin' : ''} /> Aktualisieren</button>
@@ -257,6 +319,7 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {grouped.map(group => {
           const Icon = group.icon;
+          const universeSla = group.universeSla;
           return (
             <div key={group.id} className="rounded-xl border border-white/10 bg-black/30 p-5 min-h-72 flex flex-col">
               <div className="flex items-center gap-3 border-b border-white/10 pb-4">
@@ -264,8 +327,11 @@ export function UniverseBestWorst({ onSelectAsset }: UniverseBestWorstProps) {
                 <div className="min-w-0 flex-1">
                   <h3 className="text-xs font-black uppercase text-white">{group.name}</h3>
                   <p className="text-[10px] text-white/40 mt-0.5">{group.description}</p>
+                  {group.universeSubcategories.length > 0 && <p className="text-[8px] font-mono text-white/25 mt-1">Unterkategorien: {group.availableSubcategories}/{group.universeSubcategories.length} erfüllen das 24er-Ziel</p>}
                 </div>
-                <span className="shrink-0 text-[9px] font-mono font-bold text-white/40 bg-white/5 rounded px-1.5 py-0.5">{group.readyCount}/{group.candidatesInGroup || '–'} · {group.coverage}%</span>
+                <span className="shrink-0 text-[9px] font-mono font-bold text-white/40 bg-white/5 rounded px-1.5 py-0.5" title={universeSla?.reason}>
+                  {universeSla ? `${universeSla.availableCount}/${universeSla.targetCount} · ${universeSla.status}` : `${group.readyCount}/${group.candidatesInGroup || '–'}`}
+                </span>
               </div>
               <div className="mt-5 space-y-5 flex-1">
                 <AssetBlock title="Top 3 Best" rows={group.best} tone="best" onSelectAsset={onSelectAsset} pending={scoreLoading} />
