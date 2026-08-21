@@ -3,122 +3,92 @@
 Authority: `ESS-0017` / `ESS-0017-CONTRACTS`  
 Architecture decision: `ADR-0078`  
 Financial parent authority: `SC-MD-SPT-0001` (read-only projection only)  
-Implementation baseline: VW-0 through VW-5
+Component version: `1.8.0`  
+Implementation baseline: VW-0 through VW-8
 
 ## Purpose
 
-`src/platform/Vocabulary` is CAPITAL-AI's canonical terminology and product-wording control plane. It owns stable Concept IDs and governed DE/EN wording contracts, but it does not own Financial Runtime, IAM, Billing, Compliance, EventMesh, Knowledge, Traceability, Release or Deployment decisions.
+`src/platform/Vocabulary` is CAPITAL-AI's canonical terminology and product-wording control plane. It owns stable Concept IDs and governed DE/EN wording contracts, but no Financial Runtime, IAM, Billing, Compliance, EventMesh, Knowledge, Traceability, CI, Release, Deployment or production authority.
 
 ```text
 Canonical Vocabulary Registry
-        validates
-UI Message Catalog
-        -> React / PDF / E-Mail / SEO / Accessibility
-        -> Wording Usage Index
-        -> neutral Vocabulary Wording Snapshot
-        -> existing Documentary / D7 Knowledge / Traceability contracts
-        -> generated GitHub Wiki (VW-6, not yet active)
+ -> UI Message Catalog
+ -> Delivery Adapters / Usage Index
+ -> neutral Vocabulary Wording Snapshot
+ -> existing Documentary D7 / Traceability
+ -> generated GitHub Wiki projection
+ -> controlled incremental source migration
+ -> existing repository validation chain
 ```
 
-The governing architecture rule is **Projection, not Redefinition**.
+The governing rule is **Projection, not Redefinition**.
 
-## Implemented areas
+## VW-0 through VW-5
 
-### VW-0 — Supersession
+- VW-0 — Supersession and authority consolidation around `ADR-0078`.
+- VW-1 — typed bilingual UI Message Catalog with stable keys and fail-closed placeholder validation.
+- VW-2 — read-only Concept/Message bindings for all 18 current `SC-MD-SPT-0001` stages.
+- VW-3 — evidence-based Wording Usage Index and reverse impact.
+- VW-4 — read-only React/PDF/E-Mail/SEO/Accessibility delivery adapters.
+- VW-5 — neutral exact-commit-bound Vocabulary snapshot consumed through existing DocumentaryDocument, D7 Knowledge and DocumentaryTraceability contracts.
 
-The former phase-based Vocabulary migration/status architecture is superseded as the current architecture projection by `docs/architecture/VOCABULARY_WORDING_WIKI_ARCHITECTURE.md` after Human Merge. Historical phase documents remain Evidence until reference-safe archival.
-
-### VW-1 — UI Message Catalog
-
-- typed `UiMessageDefinition`;
-- stable English message keys;
-- DE/EN text;
-- Concept-ID references;
-- context, lifecycle and version;
-- declared placeholders;
-- fail-closed validation.
-
-```ts
-import {
-  createDefaultUiMessageCatalog,
-  createDefaultVocabularyRegistry,
-} from './index';
-
-const registry = createDefaultVocabularyRegistry();
-const messages = createDefaultUiMessageCatalog(registry);
-messages.get('screening.request.title')?.text.de; // Analyse starten
-```
-
-### VW-2 — FinTech value-chain wording projection
-
-The component contains a read-only Concept/Message binding for all 18 current `SC-MD-SPT-0001` stages. Every binding explicitly sets:
+Every financial binding remains:
 
 ```text
 financialDecisionAuthority = false
 mutationAuthority = false
 ```
 
-The targeted validator checks the stage IDs against the existing Quality projection instead of creating a second financial runtime model.
+## VW-6 — GitHub Wiki
 
-### VW-3 — Wording Usage Index
+`Wiki/VocabularyWikiProjection.ts` renders deterministic managed Markdown. `renderVocabularyWiki.ts` is check-only by default. `syncVocabularyWiki.ts` accepts only an existing clean `Finance.wiki.git` checkout; mutation requires `--apply` and publication additionally requires `--push`.
 
-`scanWordingUsages()` scans explicit stable Message-Key references in configured source roots and builds deterministic reverse-impact Evidence:
+The Wiki is always a human-readable projection. It is never an authority source, and this branch does not publish it externally before PR.
+
+## VW-7 — controlled source migration
+
+`Migration/WordingMigrationPlan.ts` tracks exact source/literal/Message-Key mappings with `automaticApplyAllowed: false`.
 
 ```text
-Concept -> Message Keys -> Source Paths / Features -> Surfaces -> FinTech Stages
+OPEN      governed literal remains queued
+MIGRATED  source references the stable Message Key
+DRIFT     mapping is ambiguous/broken and blocks governance
 ```
 
-It does not infer usage from similar natural-language strings and does not mutate source files.
+The current baseline governs five real `MarketScreener` strings. They remain explicit incremental migration debt where still `OPEN`; this component does not claim a completed repository-wide UI text migration.
 
-### VW-4 — Delivery adapters
+A browser-safe resolver is available at `Delivery/browserMessageCatalog.ts` without Node-only dependencies.
 
-Read-only adapters exist for React, PDF, E-Mail, SEO and Accessibility. Context mismatches, retired messages and missing declared placeholder values fail closed.
-
-### VW-5 — Documentary / Knowledge / Traceability handoff
-
-`createVocabularyWordingSnapshot()` produces a deterministic exact-commit-bound, non-authorizing snapshot of Concepts, Messages, actual usages and FinTech bindings.
-
-`src/platform/Documentary/Knowledge/VocabularyWordingDocumentaryProjection.ts` consumes that snapshot and reuses the existing canonical contracts:
-
-- `DocumentaryDocument` / `createDocumentaryDocument()`;
-- D7 `projectDocumentaryKnowledge()`;
-- `buildDocumentaryTraceabilityRecord()`.
-
-This avoids a second Knowledge Graph, Traceability model or persistence layer. Vocabulary itself retains no dependency on Documentary.
-
-## Canonical Concept access
-
-```ts
-import { createDefaultVocabularyRegistry, VocabularyService } from './index';
-
-const registry = createDefaultVocabularyRegistry();
-const vocabulary = new VocabularyService(registry);
-
-vocabulary.getCanonicalTerm('Abonnement'); // Subscription
-vocabulary.getDisplayName('Subscription', 'de'); // Abonnement
-```
-
-## Validation
+## VW-8 — continuous governance
 
 ```text
 npm run vocabulary:wording:test
-npm run vocabulary:wording:check
+npm run vocabulary:governance:check
+npm run vocabulary:governance:prepr
 ```
 
-Focused tests cover canonical Registry contracts, VW-1 Message Catalog, complete VW-2 18-stage binding, VW-3 Usage Index, VW-4 Delivery boundaries and the VW-5 Documentary D7/Traceability handoff.
+The checks cover Message contracts, 18-stage correlation, Documentary handoff, Wiki determinism, migration drift and VW-0…VW-8 closure metadata. The existing `test:raw` path invokes the read-only Vocabulary governance gate.
+
+## Canonical access
+
+```ts
+import { createDefaultVocabularyRegistry, createDefaultUiMessageCatalog, VocabularyService } from './index';
+
+const registry = createDefaultVocabularyRegistry();
+const vocabulary = new VocabularyService(registry);
+const messages = createDefaultUiMessageCatalog(registry);
+
+vocabulary.getCanonicalTerm('Abonnement'); // Subscription
+messages.get('screening.action.start')?.text.de; // Screening starten
+```
 
 ## Boundaries
 
 - no direct Financial Hotpath mutation dependency;
 - no synthetic upgrade of `DATA_UNAVAILABLE`, DENY, partial or ineligible states;
-- no autonomous legal/compliance approval;
-- no second Event Bus, Knowledge Graph or Traceability Store;
-- no Wiki back-propagation into Repository authorities;
+- no autonomous Legal/Compliance approval;
+- no second Event Bus, Knowledge Graph, Traceability Store or CI control plane;
+- no Wiki back-propagation;
+- no blind/automatic source-string replacement;
 - no automatic code rename outside the Safe Rename Gate;
-- no Merge, Release, Deployment or production mutation authority.
-
-## Next packages
-
-- VW-6 — deterministic GitHub Wiki renderer and controlled one-way sync;
-- VW-7 — incremental migration of hardcoded user-facing strings;
-- VW-8 — continuous governance and release closure.
+- no Merge, Release, Deployment, Wiki publication or production mutation authority.
