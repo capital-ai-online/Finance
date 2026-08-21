@@ -73,7 +73,7 @@ describe('SC-2 canonical scoring dispatcher', () => {
     expect(cryptoExecutor).toHaveBeenCalledWith('BTC');
     if (result.status === 'DISPATCHED') {
       expect(result.model.modelId).toBe('crypto-technical-provenance');
-      expect(result.model.version).toBe('0.6.3');
+      expect(result.model.version).toBe('0.7.0');
       expect(result.canonical.status).toBe('READY');
     }
   });
