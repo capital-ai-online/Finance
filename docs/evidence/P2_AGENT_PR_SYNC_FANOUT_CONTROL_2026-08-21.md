@@ -51,6 +51,31 @@ zweiten konkurrierenden Sync.
 Dadurch kann ein paralleler Commit nicht durch einen auf veraltetem Zustand basierenden
 Update-Branch-Aufruf überholt werden.
 
+## Stack-403-Härtung — 2026-08-22
+
+Beim Übergang von PR #474 in den Review-Zustand antwortete GitHubs Update-Branch-API trotz
+korrekter Repository-Schreibrechte mit dem spezifischen Fehler:
+`403 Updating a stacked PR's branch via this endpoint is not supported.`
+
+Der Befund entstand aus der temporären Stack-Repräsentation #471 → #474 und ist **kein**
+Produktions-Baseline-, Permission- oder Scoring-Fehler. Die PR-Governance von #474 selbst war grün.
+Die Produktions-Baseline bildete währenddessen korrekt den damals noch laufenden Render-Rollout ab.
+Nach dem Deployment von Merge #474 war `Production = main@7047f1f1993e0b79589e0790bb855000534b0638`.
+
+Die Sync-Policy behandelt deshalb ausschließlich die Kombination aus
+
+- HTTP `403` **und**
+- der exakten GitHub-Meldung `Updating a stacked PR's branch via this endpoint is not supported`
+
+als nicht-fatalen Plattformzustand. Ein generischer `403`, ein anderer API-Fehler oder ein
+unbekannter Fehler bleibt weiterhin fail-closed und beendet den Workflow mit Fehler.
+
+Wichtig: Die Änderung führt **keinen** alternativen Merge-, Rebase- oder Stack-Auflösungsmechanismus
+ein. Wenn GitHub `update-branch` für den Stack nicht unterstützt, wird kein Auto-Sync ausgeführt.
+ADR-0036 / `productionPreflight.mjs` erzwingt vor einer merge-bereiten PR weiterhin, dass der
+aktuelle `main` vollständig im PR-Head enthalten ist. Damit bleibt die bestehende Single Authority
+für Baseline-/Main-Ancestry unverändert.
+
 ## Concurrency
 
 Main-Push-/Manual-Synchronisationen nutzen weiterhin eine gemeinsame `main`-Concurrency-Gruppe.
@@ -65,7 +90,8 @@ review-bereite PRs abbrechen.
 - kein `pull_request_target`;
 - keine externen Actions / kein unpinned `uses:`;
 - keine Secrets, Render-, Stripe- oder Supabase-Mutation;
-- keine Änderung der M10-, Merge-, Required-Check- oder Deployment-Authority.
+- keine Änderung der M10-, Merge-, Required-Check- oder Deployment-Authority;
+- Stack-403-Ausnahme ist message- und statusgebunden; generische `403` bleiben fail-closed.
 
 ## Regressionstest
 
@@ -77,6 +103,7 @@ review-bereite PRs abbrechen.
 - Single-PR-Scope beim Übergang aus Draft;
 - Agenten-Allowlist und Base=`main`;
 - `headRefOid` / `expected_head_sha`-Bindung;
+- exakte Stack-403-Erkennung ohne generisches 403-Bypass;
 - getrennte Concurrency für Main-Sync und Ready-PR;
 - keine externen Actions.
 
@@ -88,6 +115,10 @@ automatisch erzeugten Update-Branch-Synchronisationen von ungefähr `D + R` auf 
 Der große Nutzen entsteht bei langlebigen Drafts während paralleler Entwicklung: Sie werden nicht
 mehr nach jedem Main-Merge künstlich mit einem neuen Head versehen und lösen dadurch nicht erneut
 CI + Governance aus.
+
+Die Stack-403-Härtung verhindert zusätzlich einen irreführenden fehlgeschlagenen Workflow-Lauf,
+wenn GitHub die Update-Branch-Operation aufgrund der eigenen Stack-Repräsentation ablehnt. Sie
+startet keinen Ersatzlauf und erzeugt dadurch keinen zusätzlichen CI-Fan-out.
 
 ## Bewusst nicht Bestandteil dieses P2-Schritts
 
@@ -101,6 +132,7 @@ post-deploy Exact-SHA-Verifikation ohne Permission-Ausweitung erhalten bleiben.
 
 ## Rollback
 
-Für einen isolierten Rollback wird `sync-agent-pr-branches.yml` auf die vorherige Strategie
-zurückgesetzt, bei der jeder offene Agenten-PR nach jedem Main-Push aktualisiert wird.
-`ci.yml`, `pr-governance.yml`, M10 und die Production-Deployment-Kette werden dabei nicht geändert.
+Für einen isolierten Rollback der Stack-403-Härtung werden die spezifische 403-Behandlung und der
+zugehörige Regressionstest revertiert. Der bestehende Update-Branch-Pfad, ADR-0036,
+`productionPreflight.mjs`, `ci.yml`, `pr-governance.yml`, M10 und die Production-Deployment-Kette
+bleiben unverändert.
