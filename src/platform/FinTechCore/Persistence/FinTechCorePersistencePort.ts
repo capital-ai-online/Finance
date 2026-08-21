@@ -36,3 +36,11 @@ export interface FinTechCorePersistencePort {
   appendDecisionRecord(record: FinTechCoreDecisionRecord): Promise<void>;
   appendOrderIntent(input: FinTechCoreOrderIntentPersistenceInput): Promise<void>;
 }
+
+/**
+ * Read-only replay boundary introduced by FT-4. Implementations may return domain events from a
+ * private durable journal, but this port grants no mutation, execution or browser-access authority.
+ */
+export interface FinTechCoreDomainEventReaderPort {
+  listDomainEvents(runId: string): Promise<readonly FinTechCoreDomainEvent[]>;
+}
