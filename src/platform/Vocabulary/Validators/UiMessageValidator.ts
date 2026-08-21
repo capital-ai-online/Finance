@@ -3,9 +3,14 @@ import type { UiMessageDefinition, UiMessageFinding } from '../Messages/UiMessag
 const MESSAGE_KEY_PATTERN = /^[a-z][A-Za-z0-9]*(?:\.[a-z][A-Za-z0-9]*)+$/;
 const SEMVER_PATTERN = /^\d+\.\d+\.\d+$/;
 const PLACEHOLDER_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/;
+const PLACEHOLDER_TOKEN_PATTERN = /\{([A-Za-z][A-Za-z0-9_]*)\}/g;
 
 function placeholderToken(name: string): string {
   return `{${name}}`;
+}
+
+function extractPlaceholders(text: string): string[] {
+  return [...text.matchAll(PLACEHOLDER_TOKEN_PATTERN)].map((match) => match[1]);
 }
 
 export class UiMessageValidator {
@@ -45,6 +50,7 @@ export class UiMessageValidator {
     }
 
     const placeholders = message.placeholders ?? [];
+    const declared = new Set(placeholders);
     const normalized = new Set<string>();
     for (const placeholder of placeholders) {
       if (!PLACEHOLDER_PATTERN.test(placeholder)) {
@@ -70,6 +76,18 @@ export class UiMessageValidator {
             code: 'PLACEHOLDER_MISMATCH',
             messageKey: message.key,
             message: `Declared placeholder ${placeholder} is missing from ${locale.toUpperCase()} text.`,
+          });
+        }
+      }
+    }
+
+    for (const locale of ['de', 'en'] as const) {
+      for (const placeholder of new Set(extractPlaceholders(message.text[locale]))) {
+        if (!declared.has(placeholder)) {
+          findings.push({
+            code: 'UNDECLARED_PLACEHOLDER',
+            messageKey: message.key,
+            message: `Placeholder ${placeholder} occurs in ${locale.toUpperCase()} text but is not declared.`,
           });
         }
       }
