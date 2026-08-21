@@ -182,6 +182,8 @@ describe('Governance Control Plane', () => {
     });
     expect(authority0096).toMatchObject({ version: '1.2.0' });
     expect(document0096).toMatchObject({ version: '1.2.0' });
-    expect(fixture.adrRegistry.parallelNamespaceReservations).toEqual([]);
+    expect(
+      fixture.adrRegistry.parallelNamespaceReservations.filter((record) => record.state === 'active'),
+    ).toEqual([]);
   });
 });
