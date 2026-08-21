@@ -22,6 +22,7 @@
     "docs/architecture/VOCABULARY_WORDING_WIKI_ARCHITECTURE.md",
     "docs/governance/vocabulary/**",
     "docs/roadmaps/work-packages/VW-*.md",
+    "docs/security/VOCABULARY_WIKI_SYNC_THREAT_MODEL_2026-08-21.md",
     "package.json",
     "scripts/automation/renderVocabularyWiki.ts",
     "scripts/automation/syncVocabularyWiki.ts",
