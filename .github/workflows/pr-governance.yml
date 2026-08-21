@@ -19,165 +19,20 @@ concurrency:
   group: pr-governance-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-# Kostenrichtlinie: Der vollständige Build/Test-Lauf liegt ausschließlich in ci.yml.
-# Dieser Workflow darf keine zweite npm-ci/Test/Build-Pipeline für denselben PR-SHA erzeugen.
+# Kostenrichtlinie:
+# - Der vollständige Build/Test-Lauf liegt ausschließlich in ci.yml.
+# - Governance-/Template-/Workflow-Security-Prüfungen teilen sich einen Ubuntu-Runner, damit
+#   GitHub Actions kurze Einzeljobs nicht separat auf volle billable minutes aufrunden muss.
+# - Das 3000-Minuten-Gate steuert ausschließlich das optionale Repository-Advisory und erzeugt
+#   keine CI-/Merge-Autorisierung. M10 bleibt davon vollständig getrennt.
 jobs:
-  check-cost-gate:
-    name: Kosten-Gate (nur advisory Job)
-    if: github.event_name == 'pull_request' && github.event.action != 'edited'
+  governance:
+    name: PR Governance (Kosten / Workflow / Vorlage)
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 12
     permissions:
       actions: read
-    outputs:
-      gate_active: ${{ steps.gate.outputs.gate_active }}
-    steps:
-      - name: Datum- und Monats-Minutenbudget prüfen
-        id: gate
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v8.0.0
-        env:
-          BUDGET_MINUTES: '3000'
-          REACTIVATE_AT: '2026-09-01T00:00:00Z'
-        with:
-          script: |
-            const budgetMinutes = Number(process.env.BUDGET_MINUTES);
-            const reactivateAt = new Date(process.env.REACTIVATE_AT);
-            const now = new Date();
-
-            if (now < reactivateAt) {
-              core.info(`Vor ${process.env.REACTIVATE_AT}: advisory Job pausiert (Kostenpolicy).`);
-              core.setOutput('gate_active', 'true');
-              return;
-            }
-
-            const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
-            let usedMs = 0;
-            for await (const response of github.paginate.iterator(
-              github.rest.actions.listWorkflowRunsForRepo,
-              { owner: context.repo.owner, repo: context.repo.repo, created: `>=${monthStart}`, per_page: 100 }
-            )) {
-              for (const run of response.data) {
-                if (!run.run_started_at || !run.updated_at) continue;
-                usedMs += new Date(run.updated_at) - new Date(run.run_started_at);
-              }
-            }
-            const usedMinutes = usedMs / 60000;
-            core.info(`Actions-Laufzeit seit Monatsbeginn (alle Workflows, Naeherung): ${usedMinutes.toFixed(1)} / ${budgetMinutes} Minuten.`);
-            core.setOutput('gate_active', usedMinutes >= budgetMinutes ? 'true' : 'false');
-
-  repository-conventions-advisory:
-    name: Repository-Konventionen – Hinweis
-    needs: [check-cost-gate]
-    if: needs.check-cost-gate.outputs.gate_active != 'true' && github.event_name == 'pull_request' && github.event.action != 'edited'
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
-
-    steps:
-      - name: Kandidaten ohne persistierte Zugangsdaten auschecken
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Scope klassifizieren
-        id: scope
-        env:
-          EVENT_NAME: pull_request
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: node scripts/pr/classifyPrScope.mjs
-
-      - name: Docs-only — npm ci überspringen
-        if: steps.scope.outputs.npm_advisory != 'true'
-        run: echo "Klasse D / kein App-Scope: advisory npm-Validierung entfällt (Kostensparpfad)."
-
-      - name: Node.js einrichten
-        if: steps.scope.outputs.npm_advisory == 'true'
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
-        with:
-          node-version: '24.18.0'
-          cache: npm
-
-      - name: Abhängigkeiten installieren
-        if: steps.scope.outputs.npm_advisory == 'true'
-        env:
-          GITHUB_TOKEN: ''
-          GH_TOKEN: ''
-        run: npm ci --ignore-scripts
-
-      - name: Repository-Konventionen beratend prüfen
-        if: steps.scope.outputs.npm_advisory == 'true'
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ''
-          GH_TOKEN: ''
-        run: npm run repository:validate:advisory
-
-  workflow-security:
-    name: Sicherheit geänderter Workflows
-    if: github.event_name == 'pull_request' && github.event.action != 'edited'
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
-
-    steps:
-      - name: Kandidaten-Head auschecken (für Scope)
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Scope klassifizieren
-        id: scope
-        env:
-          EVENT_NAME: pull_request
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: node scripts/pr/classifyPrScope.mjs
-
-      - name: Keine Workflow-Änderung — Prüfung entfällt
-        if: steps.scope.outputs.workflow_security != 'true'
-        run: echo "Keine .github/workflows/**-Änderung im Diff — Workflow-Security-Check nicht erforderlich."
-
-      - name: Vertrauenswürdige Sicherheitsrichtlinie aus main auschecken
-        if: steps.scope.outputs.workflow_security == 'true'
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
-        with:
-          ref: main
-          path: policy
-          fetch-depth: 1
-          persist-credentials: false
-
-      - name: Kandidaten ohne persistierte Zugangsdaten auschecken
-        if: steps.scope.outputs.workflow_security == 'true'
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 / Node 24
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: candidate
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Aktuellen vertrauenswürdigen main-Stand importieren
-        if: steps.scope.outputs.workflow_security == 'true'
-        working-directory: candidate
-        run: git fetch --no-tags ../policy main:refs/remotes/origin/main
-
-      - name: Sicherheit geänderter Workflows validieren
-        if: steps.scope.outputs.workflow_security == 'true'
-        working-directory: candidate
-        env:
-          POLICY_ROOT: ../policy
-          PR_BASE_REF: origin/main
-          PR_HEAD_REF: HEAD
-        run: node "$POLICY_ROOT/scripts/security/verifyChangedWorkflowSecurity.mjs"
-
-  pr-template-contract:
-    name: PR-Vorlagenvertrag (kanonisch)
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref != 'agent/fix-unit-invariants-m10-bypass'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
       contents: read
       pull-requests: read
 
@@ -198,16 +53,99 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Aktuellen main-Stand für Baseline und Claim-Diff importieren
+      - name: Aktuellen main-Stand in Kandidaten-Repository importieren
         working-directory: candidate
         run: git fetch --no-tags ../policy main:refs/remotes/origin/main
 
-      - name: Node.js einrichten
+      - name: Node.js einmalig für Governance-Prüfungen einrichten
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0 / Node 24 action runtime
         with:
           node-version: '24.18.0'
 
+      - name: PR-Scope mit trusted-main Klassifikator bestimmen
+        id: scope
+        if: github.event.action != 'edited'
+        working-directory: candidate
+        env:
+          EVENT_NAME: pull_request
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node ../policy/scripts/pr/classifyPrScope.mjs
+
+      - name: Kosten-Gate für optionales Repository-Advisory prüfen
+        id: cost_gate
+        if: github.event.action != 'edited'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v8.0.0
+        env:
+          BUDGET_MINUTES: '3000'
+          REACTIVATE_AT: '2026-09-01T00:00:00Z'
+        with:
+          script: |
+            const budgetMinutes = Number(process.env.BUDGET_MINUTES);
+            const reactivateAt = new Date(process.env.REACTIVATE_AT);
+            const now = new Date();
+
+            if (now < reactivateAt) {
+              core.info(`Vor ${process.env.REACTIVATE_AT}: Repository-Advisory pausiert (Kostenpolicy).`);
+              core.setOutput('gate_active', 'true');
+              return;
+            }
+
+            const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+            let usedMs = 0;
+            for await (const response of github.paginate.iterator(
+              github.rest.actions.listWorkflowRunsForRepo,
+              { owner: context.repo.owner, repo: context.repo.repo, created: `>=${monthStart}`, per_page: 100 }
+            )) {
+              for (const run of response.data) {
+                if (!run.run_started_at || !run.updated_at) continue;
+                usedMs += new Date(run.updated_at) - new Date(run.run_started_at);
+              }
+            }
+            const usedMinutes = usedMs / 60000;
+            core.info(`Actions-Laufzeit seit Monatsbeginn (alle Workflows, Naeherung): ${usedMinutes.toFixed(1)} / ${budgetMinutes} Minuten.`);
+            core.setOutput('gate_active', usedMinutes >= budgetMinutes ? 'true' : 'false');
+
+      - name: Keine Workflow-Änderung — Workflow-Security entfällt
+        if: github.event.action != 'edited' && steps.scope.outputs.workflow_security != 'true'
+        run: echo "Keine .github/workflows/**-Änderung im Diff — Workflow-Security-Validierung ist nicht erforderlich."
+
+      - name: Sicherheit geänderter Workflows gegen trusted main validieren
+        if: github.event.action != 'edited' && steps.scope.outputs.workflow_security == 'true'
+        working-directory: candidate
+        env:
+          POLICY_ROOT: ../policy
+          PR_BASE_REF: origin/main
+          PR_HEAD_REF: HEAD
+        run: node "$POLICY_ROOT/scripts/security/verifyChangedWorkflowSecurity.mjs"
+
+      - name: Repository-Konventionen — Advisory wegen Kostenpolicy überspringen
+        if: github.event.action != 'edited' && steps.cost_gate.outputs.gate_active == 'true'
+        run: echo "Repository-Advisory ist durch die bestehende Kostenpolicy pausiert; Pflicht-Governance und build-and-test bleiben unberührt."
+
+      - name: Repository-Konventionen — Docs-/No-App-Fast-Path
+        if: github.event.action != 'edited' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory != 'true'
+        run: echo "Klasse D / kein App-Scope: advisory npm-Validierung entfällt (Kostensparpfad)."
+
+      - name: Repository-Advisory Abhängigkeiten installieren
+        if: github.event.action != 'edited' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory == 'true'
+        working-directory: candidate
+        env:
+          GITHUB_TOKEN: ''
+          GH_TOKEN: ''
+        run: npm ci --ignore-scripts
+
+      - name: Repository-Konventionen beratend prüfen
+        if: github.event.action != 'edited' && steps.cost_gate.outputs.gate_active != 'true' && steps.scope.outputs.npm_advisory == 'true'
+        working-directory: candidate
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ''
+          GH_TOKEN: ''
+        run: npm run repository:validate:advisory
+
       - name: Produktions-Baseline über trusted-main Policy erzeugen
+        if: github.event.pull_request.head.ref != 'agent/fix-unit-invariants-m10-bypass'
         working-directory: candidate
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -220,6 +158,7 @@ jobs:
         run: node ../policy/scripts/pr/productionPreflight.mjs
 
       - name: Kanonische PR-Vorlage fail-closed prüfen
+        if: github.event.pull_request.head.ref != 'agent/fix-unit-invariants-m10-bypass'
         working-directory: candidate
         env:
           GITHUB_TOKEN: ${{ github.token }}
