@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { CRYPTO_CORE_MODULE_DESCRIPTOR } from '../../src/platform/FinTechCore/Modules/Crypto/CryptoCoreModule';
 
 const FOUNDATION_FILES = [
   '../../src/platform/FinTechCore/CoreContracts.ts',
@@ -68,12 +69,8 @@ describe('FinTech Core FT-1/FT-2 authority boundary', () => {
   });
 
   it('keeps Crypto Module 01 non-live during the foundation phase', () => {
-    const source = readFileSync(
-      new URL('../../src/platform/FinTechCore/Modules/Crypto/CryptoCoreModule.ts', import.meta.url),
-      'utf8',
-    );
-
-    expect(source).toContain("supportedOperatingModes: Object.freeze(['RESEARCH', 'PAPER'])");
-    expect(source).not.toContain("supportedOperatingModes: Object.freeze(['RESEARCH', 'PAPER', 'GUARDED_LIVE'");
+    expect(CRYPTO_CORE_MODULE_DESCRIPTOR.supportedOperatingModes).toEqual(['RESEARCH', 'PAPER']);
+    expect(CRYPTO_CORE_MODULE_DESCRIPTOR.supportedOperatingModes).not.toContain('GUARDED_LIVE');
+    expect(CRYPTO_CORE_MODULE_DESCRIPTOR.supportedOperatingModes).not.toContain('PRODUCTION');
   });
 });
