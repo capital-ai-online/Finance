@@ -35,6 +35,7 @@ for (const relative of [
   'docs/roadmaps/work-packages/VW-6_GITHUB_WIKI_PROJECTION_2026-08-21.md',
   'docs/roadmaps/work-packages/VW-7_CONTROLLED_WORDING_MIGRATION_2026-08-21.md',
   'docs/roadmaps/work-packages/VW-8_CONTINUOUS_GOVERNANCE_RELEASE_CLOSURE_2026-08-21.md',
+  'docs/security/VOCABULARY_WIKI_SYNC_THREAT_MODEL_2026-08-21.md',
 ]) {
   if (!fs.existsSync(path.join(root, relative))) throw new Error(`[VOCABULARY-CLOSURE] required artifact missing: ${relative}`);
 }
@@ -46,6 +47,7 @@ if (drift.length > 0) throw new Error(`[VOCABULARY-CLOSURE] wording migration dr
 const wikiSync = fs.readFileSync(path.join(root, 'scripts/automation/syncVocabularyWiki.ts'), 'utf8');
 if (!wikiSync.includes("const apply = process.argv.includes('--apply')")) throw new Error('[VOCABULARY-CLOSURE] Wiki sync must remain explicit-apply gated.');
 if (!wikiSync.includes("const push = process.argv.includes('--push')")) throw new Error('[VOCABULARY-CLOSURE] Wiki push must remain separately gated.');
+if (!wikiSync.includes('isAllowedVocabularyWikiRemote')) throw new Error('[VOCABULARY-CLOSURE] Wiki sync must enforce the canonical remote allowlist.');
 
 console.log('[VOCABULARY-CLOSURE] PASS');
 console.log(`[VOCABULARY-CLOSURE] packages=${expectedPackages.length}`);
