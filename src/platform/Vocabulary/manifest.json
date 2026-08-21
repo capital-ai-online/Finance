@@ -1,9 +1,9 @@
 {
   "name": "Vocabulary",
-  "version": "1.5.0",
+  "version": "1.8.0",
   "status": "implemented",
   "owner": "Platform Director",
-  "description": "Canonical Vocabulary Registry plus governed UI Message Catalog, FinTech wording projection, Usage Index, delivery adapters and deterministic Documentary handoff snapshot.",
+  "description": "Canonical Vocabulary Registry with governed UI Message Catalog, 18-stage FinTech wording projection, Usage Index, delivery adapters, Documentary handoff, generated Wiki projection, controlled wording migration and continuous governance closure.",
   "category": "platform",
   "layer": "CrossCutting",
   "lifecycle": "Operational",
@@ -17,9 +17,7 @@
     "ESS-0017",
     "ESS-0017-CONTRACTS"
   ],
-  "adr": [
-    "ADR-0078"
-  ],
+  "adr": ["ADR-0078"],
   "dependencies": [],
   "forbiddenDependencies": [
     "src/platform/EventMesh/Core",
@@ -37,17 +35,20 @@
     "ValueChain/FintechWordingBinding.ts",
     "Usage/WordingUsage.ts",
     "Delivery/MessageDeliveryAdapter.ts",
-    "Projection/VocabularyWordingSnapshot.ts"
+    "Projection/VocabularyWordingSnapshot.ts",
+    "Wiki/VocabularyWikiProjection.ts",
+    "Migration/WordingMigrationPlan.ts"
   ],
   "contracts": [
     "ESS-0017-CONTRACTS",
     "fintech-value-chain-wording/1.0.0",
-    "vocabulary-wording-snapshot/1.0.0"
+    "vocabulary-wording-snapshot/1.0.0",
+    "vocabulary-wiki-projection/1.0.0"
   ],
   "events": {
     "produces": [],
     "consumes": [],
-    "note": "VW-0 through VW-5 introduce no second Event authority. Event integration remains subordinate to the canonical EventMesh."
+    "note": "VW-0 through VW-8 introduce no second Event authority. Event integration remains subordinate to the canonical EventMesh."
   },
   "valueChainIntegration": {
     "authority": "SC-MD-SPT-0001",
@@ -63,12 +64,32 @@
     "consumer": "src/platform/Documentary/Knowledge/VocabularyWordingDocumentaryProjection.ts",
     "rule": "Vocabulary does not depend on Documentary; Documentary consumes the snapshot and reuses DocumentaryDocument, D7 Knowledge and DocumentaryTraceability contracts."
   },
+  "wikiProjection": {
+    "renderer": "Wiki/VocabularyWikiProjection.ts",
+    "renderCommand": "npm run vocabulary:wiki:render",
+    "checkCommand": "npm run vocabulary:wiki:check",
+    "syncCommand": "npm run vocabulary:wiki:sync",
+    "defaultMode": "dry-run",
+    "repositoryAuthoritative": false,
+    "mutationAuthority": false,
+    "publishRequires": ["--apply", "--push"]
+  },
+  "wordingMigration": {
+    "plan": "Migration/WordingMigrationPlan.ts",
+    "mode": "controlled-incremental",
+    "automaticApplyAllowed": false,
+    "blockingState": "DRIFT",
+    "nonBlockingDebtState": "OPEN"
+  },
   "documentation": [
     "README.md",
     "CHANGELOG.md",
     "component.yaml",
     "docs/architecture/VOCABULARY_WORDING_WIKI_ARCHITECTURE.md",
-    "docs/governance/vocabulary/VOCABULARY_WORDING_WIKI_SUPERSESSION_2026-08-21.md"
+    "docs/governance/vocabulary/VOCABULARY_WORDING_WIKI_SUPERSESSION_2026-08-21.md",
+    "docs/roadmaps/work-packages/VW-6_GITHUB_WIKI_PROJECTION_2026-08-21.md",
+    "docs/roadmaps/work-packages/VW-7_CONTROLLED_WORDING_MIGRATION_2026-08-21.md",
+    "docs/roadmaps/work-packages/VW-8_CONTINUOUS_GOVERNANCE_RELEASE_CLOSURE_2026-08-21.md"
   ],
   "tests": [
     "src/platform/Vocabulary/Tests/vocabularyRegistry.test.ts",
@@ -77,10 +98,12 @@
     "src/platform/Vocabulary/Tests/wordingUsageIndex.test.ts",
     "src/platform/Vocabulary/Tests/messageDeliveryAdapter.test.ts",
     "src/platform/Vocabulary/Tests/vocabularyGovernanceProjection.test.ts",
+    "src/platform/Vocabulary/Tests/vocabularyWikiProjection.test.ts",
+    "src/platform/Vocabulary/Tests/wordingMigrationPlan.test.ts",
     "tests/unit/bilingualDocumentaryProjection.test.ts"
   ],
   "implementation": {
-    "completedWorkPackages": ["VW-0", "VW-1", "VW-2", "VW-3", "VW-4", "VW-5"],
+    "completedWorkPackages": ["VW-0", "VW-1", "VW-2", "VW-3", "VW-4", "VW-5", "VW-6", "VW-7", "VW-8"],
     "implementedAreas": [
       "CanonicalVocabularyRegistry",
       "UiMessageCatalog",
@@ -88,19 +111,24 @@
       "WordingUsageIndex",
       "DeliveryAdapters",
       "VocabularyWordingSnapshot",
-      "DocumentaryD7TraceabilityHandoff"
+      "DocumentaryD7TraceabilityHandoff",
+      "GitHubWikiProjection",
+      "ControlledWordingMigration",
+      "ContinuousGovernanceClosure"
     ],
     "plannedAreas": [
-      "VW-6 GitHub Wiki renderer and controlled sync",
-      "VW-7 hardcoded user-facing string migration",
-      "VW-8 continuous governance and release closure"
+      "Incremental execution of OPEN VW-7 component migrations as normal feature changes"
     ]
   },
   "validation": {
-    "targetedCommand": "npm run vocabulary:wording:check",
+    "targetedCommand": "npm run vocabulary:governance:check",
     "targetedTests": "npm run vocabulary:wording:test",
+    "prePrCommand": "npm run vocabulary:governance:prepr",
     "stageDriftCheck": true,
-    "exactCommitProjectionBinding": true
+    "exactCommitProjectionBinding": true,
+    "wikiDeterminismCheck": true,
+    "migrationDriftCheck": true,
+    "closureValidator": "scripts/automation/validateVocabularyGovernanceClosure.ts"
   },
-  "implementationStatus": "VW-0 through VW-5 implemented as a dependency-free, read-only wording governance and evidence-handoff slice. Documentary consumes the neutral snapshot through existing D7 Knowledge and Traceability contracts. No Wiki publish, UI mass migration, external platform mutation or financial runtime authority is introduced."
+  "implementationStatus": "VW-0 through VW-8 implemented as a dependency-free, read-only governance control plane. Wiki output is generated and non-authoritative, source wording migration is controlled and incremental, and continuous checks are integrated into the existing repository test chain. No external platform, financial runtime, IAM, Billing, Wiki publish or production mutation is performed by this branch."
 }
