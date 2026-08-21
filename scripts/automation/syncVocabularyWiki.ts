@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { createDefaultUiMessageCatalog, createDefaultVocabularyRegistry } from '../../src/platform/Vocabulary';
 import { fintechWordingBindings } from '../../src/platform/Vocabulary/ValueChain/fintechWordingBindings';
 import { renderVocabularyWikiProjection } from '../../src/platform/Vocabulary/Wiki/VocabularyWikiProjection';
+import { isAllowedVocabularyWikiRemote } from '../../src/platform/Vocabulary/Wiki/VocabularyWikiRemotePolicy';
 
 function argValue(name: string): string | undefined {
   const prefix = `${name}=`;
@@ -25,8 +26,8 @@ const wikiDir = path.resolve(repoRoot, wikiDirArg);
 if (!fs.existsSync(path.join(wikiDir, '.git'))) throw new Error('[VOCABULARY-WIKI-SYNC] wiki-dir must be an existing Git checkout.');
 
 const remote = git(wikiDir, ['remote', 'get-url', 'origin']);
-if (!/(?:^|[/:])Finance\.wiki\.git$/i.test(remote)) {
-  throw new Error(`[VOCABULARY-WIKI-SYNC] origin is not the CAPITAL-AI Finance Wiki repository: ${remote}`);
+if (!isAllowedVocabularyWikiRemote(remote)) {
+  throw new Error('[VOCABULARY-WIKI-SYNC] origin is not an exact allowlisted CAPITAL-AI Finance Wiki GitHub remote.');
 }
 if (git(wikiDir, ['status', '--porcelain'])) throw new Error('[VOCABULARY-WIKI-SYNC] Wiki checkout must be clean before sync.');
 if (push && !apply) throw new Error('[VOCABULARY-WIKI-SYNC] --push requires --apply.');
@@ -37,7 +38,7 @@ const projection = renderVocabularyWikiProjection(sourceCommit, registry, messag
 const managedFiles = projection.pages.map((item) => item.filename);
 
 console.log(`[VOCABULARY-WIKI-SYNC] sourceCommit=${projection.sourceCommit}`);
-console.log(`[VOCABULARY-WIKI-SYNC] wikiOrigin=${remote}`);
+console.log('[VOCABULARY-WIKI-SYNC] wikiOrigin=allowlisted-github-finance-wiki');
 console.log(`[VOCABULARY-WIKI-SYNC] managedPages=${managedFiles.join(',')}`);
 console.log(`[VOCABULARY-WIKI-SYNC] checksum=${projection.checksum}`);
 
