@@ -5,6 +5,7 @@ import type { TraditionalAssetScoringInputs } from '../../services/traditionalAs
 import type { CanonicalScoreResult } from '../../types/scoringIntegrity';
 import {
   CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
+  LEGACY_CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
   type ScoringModelDescriptor,
   type UniversalAssetClass,
   type UniversalAssetIdentity,
@@ -167,8 +168,11 @@ function buildDispatchFailure(
 }
 
 function commonBindingReady(model: ScoringModelDescriptor): boolean {
+  const supportedResultContract = model.resultContractVersion === CANONICAL_SCORE_RESULT_CONTRACT_VERSION
+    || model.resultContractVersion === LEGACY_CANONICAL_SCORE_RESULT_CONTRACT_VERSION;
   return model.evidencePolicy === 'verified-required'
-    && model.resultContractVersion === CANONICAL_SCORE_RESULT_CONTRACT_VERSION
+    && model.scoreEligible !== false
+    && supportedResultContract
     && model.canonicalResultAdapterRequired === false;
 }
 
