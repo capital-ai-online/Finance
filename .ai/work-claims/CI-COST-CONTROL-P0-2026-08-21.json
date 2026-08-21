@@ -12,8 +12,8 @@
   "workItemDE": "P0/P1/P2A/P2B GitHub-Actions-Cost-Control ohne M10-Passkey-Reaktivierung",
   "startedAt": "2026-08-21T02:14:00+02:00",
   "baseBranch": "main",
-  "baseSha": "5595ec0abe1f1b6755620f3435badbf874d54aba",
-  "lastSyncedMainSha": "5595ec0abe1f1b6755620f3435badbf874d54aba",
+  "baseSha": "a0663563a6a01bbdf292db8796c1b291bdd8ee57",
+  "lastSyncedMainSha": "a0663563a6a01bbdf292db8796c1b291bdd8ee57",
   "branch": "agent/ci-cost-control-p0-2026-08-21",
   "pullRequest": null,
   "claimedPaths": [
@@ -41,11 +41,11 @@
     "Human/CODEOWNER merge authority"
   ],
   "correlation": {
-    "currentMain": "5595ec0abe1f1b6755620f3435badbf874d54aba",
-    "mergedPullRequestsSinceStart": [467],
-    "openPullRequests": [468],
+    "currentMain": "a0663563a6a01bbdf292db8796c1b291bdd8ee57",
+    "mergedPullRequestsSinceStart": [467, 468],
+    "openPullRequests": [],
     "directPathOverlap": [],
-    "finding": "PR #468 is Ready for Review and remains FT-3 FinTechCore/Supabase scoped with 14 changed files and no direct overlap with the P0/P1/P2A/P2B CI-cost-control paths. P2B changes only ci.yml runner topology and preserves the existing source/provenance/Sigstore/production-environment/Render/exact-SHA trust chain."
+    "finding": "PR #468 was merged into main and changed only FT-3 FinTechCore/Supabase scope. The branch was merged with current main without force-push or direct path conflict. P2B changes only CI runner topology while preserving source/provenance/Sigstore/production-environment/Render/exact-SHA trust boundaries."
   },
   "externalMutationScope": "none",
   "releaseCondition": "Release claim after merge, closure, supersession or abandonment."
