@@ -273,3 +273,119 @@ Nach Merge mit einem geeigneten realen PR verifizieren:
 - M10-Passkey bleibt suspendiert;
 - unveränderte Human/CODEOWNER-Mergegrenze;
 - unveränderte Produktions-Main-Pipeline.
+
+## P2B Runbook — Production-CI auf zwei Runner konsolidieren
+
+Dieses P2B-Runbook **ersetzt für die Runner-Topologie** die vorstehende historische Aussage
+„unveränderte Produktions-Main-Pipeline“. Gemeint war dort die unveränderte Sicherheitssemantik;
+P2B konsolidiert nun bewusst die technische Runner-Topologie.
+
+### Solltopologie nach P2B
+
+```text
+push main
+→ build-and-test
+   → Full Scope R
+   → npm ci / audit / lint / unit / build / CSP / predeploy / Docker
+   → verifySupplyChainProvenance --require-ci
+   → cosign sign-blob
+   → cosign verify-blob
+   → standalone verifyDeploymentIdentity.mjs bundeln
+   → SHA-benanntes Supply-Chain-Artefakt hochladen
+→ deploy-production [environment: production]
+   → SHA-benanntes Artefakt desselben Workflow-Laufs herunterladen
+   → release-manifest.sourceCommit == github.sha prüfen
+   → Render Hook ref=github.sha
+   → standalone Deployment-Identity-Verifier
+   → Deployment-Evidence hochladen
+```
+
+Es existieren danach keine separaten Jobs mehr mit den IDs:
+
+- `supply-chain-attestation`
+- `verify-deployment-identity`
+
+Ihre Sicherheitsfunktionen sind in den zwei verbleibenden Trust Boundaries erhalten.
+
+### Production-Environment-Grenze
+
+`deploy-production` bleibt der einzige Job mit:
+
+```yaml
+environment: production
+```
+
+Der Job darf **kein** Repository-Checkout, `npm ci`, `npm run build` oder andere Dependency-
+Lifecycle-Ausführung enthalten. Er konsumiert ausschließlich das durch den erfolgreichen Main-
+Build erzeugte Workflow-Artefakt.
+
+Vor dem Render-Hook muss zwingend gelten:
+
+```text
+release-manifest.sourceCommit == github.sha
+standalone deployment verifier exists
+```
+
+Erst danach darf `RENDER_DEPLOY_HOOK_URL` mit `ref=${github.sha}` aufgerufen werden.
+
+### Supply-Chain-Handoff
+
+`build-and-test` erzeugt den vollständigen Build nur einmal. `npm run predeploy:check` erzeugt die
+bestehende SBOM-/Provenance-Kette. Danach wird mit `--require-ci` die gehostete Builder-Bindung
+erzwungen und die Provenance mit Sigstore/Fulcio/Rekor signiert und sofort gegen die erwartete
+Workflow-Identität verifiziert.
+
+Der standalone Deployment-Verifier wird aus dem bereits versionierten
+`scripts/deployment/verifyDeploymentIdentity.ts` mit dem vorhandenen `esbuild` erzeugt. Dadurch
+entsteht **keine zweite Verifikationslogik**.
+
+### Erwartete Runner-/Installationswirkung
+
+Pro erfolgreichem `main`-Push:
+
+| Metrik | Vor P2B | Nach P2B |
+|---|---:|---:|
+| `ubuntu-latest` Jobs in `ci.yml` | 4 | 2 |
+| `npm ci` | 3 | 1 |
+| `npm run build` | 2 | 1 |
+| `npm run predeploy:check` | 2 | 1 |
+| Repository-Checkouts | 3 | 1 |
+
+### P2B Pre-Merge-Verifikation
+
+1. `M10_CI_GATE_ENABLED` bleibt exakt `false`.
+2. `tests/unit/productionCiRunnerConsolidation.test.ts` muss PASS sein.
+3. `ci.yml` besitzt genau zwei `runs-on: ubuntu-latest`.
+4. Workflow-Security aus trusted `main` muss alle geänderten Workflows akzeptieren.
+5. Alle externen Actions bleiben immutable auf 40-stellige SHAs gepinnt.
+6. `build-and-test` besitzt weiterhin `id-token: write` für OIDC/Sigstore.
+7. `deploy-production` besitzt keine Contents-Schreibrechte und keinen Checkout/npm/build-Pfad.
+8. Required Checks bleiben `build-and-test` + GitGuardian; keine Ruleset-Mutation für P2B.
+9. Vor PR/Draft-PR erneut aktuellen `main` und alle offenen PRs korrelieren.
+
+### P2B Post-Merge-Verifikation
+
+Der erste reale Main-Push nach Merge muss zeigen:
+
+1. `build-and-test` real PASS einschließlich Provenance `--require-ci`.
+2. Cosign `sign-blob` und `verify-blob` PASS.
+3. Supply-Chain-Artefakt enthält SBOM, Provenance, Sigstore-Bundle, Release-Manifest und standalone
+   Deployment-Verifier.
+4. `deploy-production` lädt exakt dieses Artefakt und akzeptiert dessen Release-Manifest-SHA.
+5. Render wird mit exakt `github.sha` ausgelöst.
+6. `/healthz` meldet anschließend denselben SHA und Status `ok`.
+7. Deployment-Identity-Evidence wird unter dem SHA-benannten 90-Tage-Artefakt gespeichert.
+
+### P2B Rollback
+
+Ein isolierter Rollback darf die frühere Vier-Runner-Struktur wiederherstellen, aber niemals:
+
+- Sigstore-Signatur/Verifikation entfernen,
+- den `production`-Environment-Schutz umgehen,
+- `ref=${github.sha}` aufweichen,
+- post-deploy Exact-SHA-Verifikation entfernen,
+- M10 reaktivieren,
+- Required-Check-Namen verändern.
+
+Die Implementierungs-Evidence ist in
+`docs/evidence/P2B_PRODUCTION_CI_RUNNER_CONSOLIDATION_2026-08-21.md` dokumentiert.
