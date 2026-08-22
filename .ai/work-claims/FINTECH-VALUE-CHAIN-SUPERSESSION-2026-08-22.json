@@ -42,6 +42,7 @@
     "tests/unit/cryptoResearchModelContracts.test.ts",
     "tests/unit/defiProtocolEvidence.test.ts",
     "tests/unit/fintechCoreContracts.test.ts",
+    "tests/unit/fintechOrchestratorP0Integrity.test.ts",
     "tests/unit/governanceControlPlane.test.ts",
     "tests/unit/sc2GlobalSingleDispatcher.test.ts"
   ],
@@ -67,7 +68,8 @@
     "legacyMemeWeightedFormulaClassifiedNonAuthorizing": true,
     "memePricePathCorrelationBound": true,
     "defiScaleActivityCorrelationBound": true,
-    "defillamaEvidenceOnly": true
+    "defillamaEvidenceOnly": true,
+    "pr484HostedRegressionFinding": "tests/unit/fintechOrchestratorP0Integrity.test.ts still queried superseded Meme/DeFi model version 0.1.0; expectation update to 0.2.0 is in-scope regression maintenance"
   },
   "supersessionB": {
     "workItem": "Meme Coin and DeFi Model Supersession",
@@ -77,7 +79,8 @@
     "modelPromotionPerformed": false,
     "newDispatcherOrRegistryCreated": false,
     "memeModel": "crypto-meme-integrity@0.2.0 challenger/research-only/not-executable",
-    "defiModel": "crypto-defi-fundamental@0.2.0 challenger/research-only/not-executable"
+    "defiModel": "crypto-defi-fundamental@0.2.0 challenger/research-only/not-executable",
+    "futureFullOrchestratorScoring": "separate follow-up model-promotion/scoring package; must reuse existing ScoringModelRegistry/ScoringDispatcher and evidence/DQ/fingerprint authorities"
   },
   "securityMutationBoundary": {
     "runtimeSecurityMutationAuthorized": true,
