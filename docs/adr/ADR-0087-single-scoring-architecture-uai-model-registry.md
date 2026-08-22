@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Datum:** 2026-08-19
-- **Revalidierung:** 2026-08-21 — P0 Multi-Class Integrity
+- **Revalidierung:** 2026-08-22 — Meme/DeFi Model Supersession
 - **Owner-Entscheidung:** „Es sollen keine parallel Architekturen mehr entstehen und am Ende eine komplett Architektur entstehen, die sich in das FinTech Wertschöpfungs Ökosystem einbindet.“
 - **Authority:** `SC-MD-SPT-0001` bleibt kanonische Ausführungsautorität.
 
@@ -48,16 +48,16 @@ LLM-/Agent-Ausgaben dürfen keine verifizierten Finanzmerkmale ersetzen. AI kann
 
 Eine mögliche erneute Gemini-Anbindung ist **nicht Bestandteil von A1/A2**. ADR-0072 bleibt gültig. Jede Wiedereinführung benötigt eine neue explizite ADR und darf nur als Adapter innerhalb derselben Acquisition-/Evidence-Architektur erfolgen; ein `GEMINI_API_KEY` darf keinen separaten Scoring-Pfad reaktivieren.
 
-## Aktueller Registry-Stand nach P0-Härtung
+## Aktueller Registry-Stand nach Supersession B
 
-| Modell | Assets | Status | Result Contract |
-|---|---|---|---|
-| `crypto-technical-provenance@0.7.0` | crypto | canonical/champion | `scoring-integrity/1.1.0` |
-| `crypto-meme-integrity@0.1.0` | crypto | challenger/research-only, `scoreEligible=false` | `scoring-integrity/1.1.0` |
-| `crypto-defi-fundamental@0.1.0` | crypto | challenger/research-only, `scoreEligible=false` | `scoring-integrity/1.1.0` |
-| `traditional-scoring@2.1.0` | stock/forex/index | canonical/champion | `scoring-integrity/1.0.0` |
-| `commodity-evidence-scoring@1.0.0` | commodity | canonical/champion | `scoring-integrity/1.0.0` |
-| `sovereign-benchmark-yield-scoring@1.0.0` | bond `government-benchmark-yield` | canonical/champion | `scoring-integrity/1.0.0` |
+| Modell | Assets | Status | Feature Contract | Result Contract |
+|---|---|---|---|---|
+| `crypto-technical-provenance@0.7.0` | crypto | canonical/champion | `crypto-technical-features/0.7.0` | `scoring-integrity/1.1.0` |
+| `crypto-meme-integrity@0.2.0` | crypto | challenger/research-only, `scoreEligible=false` | `crypto-meme-research-features/0.2.0` | `scoring-integrity/1.1.0` |
+| `crypto-defi-fundamental@0.2.0` | crypto | challenger/research-only, `scoreEligible=false` | `crypto-defi-research-features/0.2.0` | `scoring-integrity/1.1.0` |
+| `traditional-scoring@2.1.0` | stock/forex/index | canonical/champion | `traditional-features/2.1.0` | `scoring-integrity/1.0.0` |
+| `commodity-evidence-scoring@1.0.0` | commodity | canonical/champion | `commodity-market-evidence/1.0.0` | `scoring-integrity/1.0.0` |
+| `sovereign-benchmark-yield-scoring@1.0.0` | bond `government-benchmark-yield` | canonical/champion | `sovereign-benchmark-yield-features/1.0.0` | `scoring-integrity/1.0.0` |
 
 Individuelle Bonds bleiben gemäß ADR-0022 ohne ausreichende Evidence nicht scorebar.
 
@@ -73,7 +73,15 @@ Die P0-Härtung erweitert **keine** Authority und führt keinen zweiten Dispatch
 6. **No-Demo Universe SLA:** Der Zielwert beträgt 24 reale, identity-deduped und evidence-admitted Assets je Assetklasse sowie je ausgewiesener Unterkategorie. Bei geringerer realer Verfügbarkeit wird `INSUFFICIENT_REAL_UNIVERSE`, `PROVIDER_DEGRADED` oder `EVIDENCE_INSUFFICIENT` ausgewiesen; Filler, synthetische Assets oder Interpolation sind verboten.
 7. **Single Dispatcher bleibt erhalten:** Alle produktiven Domain-Executors bleiben hinter `ScoringDispatcher`; die P0-Härtung ändert weder diese Topologie noch führt sie einen parallelen Model-Selection-Pfad ein.
 
-Diese Revalidierung ist eine Härtung bestehender ADR-0087-Verträge. Eine neue ADR wäre nur erforderlich, wenn Model-Execution-Authority, Evidence-Trust-Boundary, produktive Promotion-Regeln oder Ranking-/Eligibility-Autorität fachlich geändert würden.
+## Revalidierung 2026-08-22 — Meme/DeFi Model Supersession
+
+Supersession B ändert keine produktive Modellautorität. Sie entfernt stattdessen zwei Modellkorrelationen aus der Zukunftsprojektion:
+
+1. **Meme:** Die historische 35/25/20/20-Formel aus `MemeCoinScoringService` ist nicht kanonisch und wird nicht in den Challenger übernommen. Trend, Momentum und Volatilität werden als korrelierte `meme-price-path`-Evidence gebunden. Contract-/Manipulationsrisiko ist zwingende Promotion-Voraussetzung. Es existieren keine ausführbaren Meme-Gewichte.
+2. **DeFi:** TVL, Fees und Revenue bleiben Raw Evidence, sind aber als `defi-scale-activity` correlation-bound. Eine spätere Promotion muss De-Korrelation oder einen validierten Latent-Factor nachweisen; drei unabhängige additive positive Gewichte sind nicht zulässig.
+3. **DeFiLlama:** ADR-0100 akzeptiert DeFiLlama ausschließlich als Evidence-Provider. `READY` verlangt vollständig VERIFIED Evidence; ein komplett stale Set ist explizit `STALE`. Providerstatus oder Providername darf nie Gewicht/Eligibility beeinflussen.
+4. **No Score Promotion:** `crypto-meme-integrity@0.2.0` und `crypto-defi-fundamental@0.2.0` bleiben `challenger`, `scoreEligible=false`, `research-only:not-executable`.
+5. **Fingerprint-Gate:** Kein Weight-Fingerprint wird für nicht-existierende Gewichte erfunden. Erst eine spätere Owner-approved Promotion darf versionierte Gewichte einführen und muss dann die bestehende `scoringFingerprint` Authority für Effective-Feature-/Effective-Weight-Lineage nutzen.
 
 ## Konsequenzen
 
@@ -94,16 +102,19 @@ Diese Revalidierung ist eine Härtung bestehender ADR-0087-Verträge. Eine neue 
 6. direkte Parallel-Model-Selection wird entfernt;
 7. P0 Runtime-Lineage bindet effektive Feature-/Weight-Semantik und Evidence-Vertrag revisionssicher;
 8. Universe-SLA wird produktiv nur aus real entdeckten und zugelassenen Assets gespeist;
-9. Main-Sync/Korrelationsprüfung vor PR-Erstellung und erneut vor Merge.
+9. Meme/DeFi-Challenger bleiben ohne validierte Evidence/Weights/Promotion nicht ausführbar;
+10. Main-Sync/Korrelationsprüfung vor PR-Erstellung und erneut vor Merge.
 
 ## Referenzen
 
 - `docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md`
 - `docs/roadmaps/work-packages/SC-2_MODEL_REGISTRY_UAI.md`
 - `docs/evidence/sc-md/SC2_P0_MULTICLASS_INTEGRITY_2026-08-21.md`
-- ADR-0022, ADR-0032, ADR-0033, ADR-0072
+- `docs/evidence/sc-md/SC2_MEME_DEFI_MODEL_SUPERSESSION_2026-08-22.md`
+- ADR-0022, ADR-0032, ADR-0033, ADR-0072, ADR-0100
 - `src/services/scoringIntegrity.ts`
 - `src/platform/MarketData/contracts.ts`
 - `src/platform/MarketData/evidenceQualityContracts.ts`
 - `src/platform/Scoring/scoringFingerprint.ts`
+- `src/platform/Scoring/CryptoResearchModelContracts.ts`
 - `src/platform/Scoring/UniverseSla.ts`
