@@ -45,7 +45,8 @@
     "docs/adr/registry.json",
     "docs/governance/authority-registry.json",
     "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md",
-    "docs/runbooks/FINTECH_CORE_FT6B_SUPABASE_ROLLBACK.md"
+    "docs/runbooks/FINTECH_CORE_FT6B_SUPABASE_ROLLBACK.md",
+    "docs/security/FINTECH_CORE_FT6B_ORDER_INTENT_RECONCILIATION_THREAT_MODEL_2026-08-22.md"
   ],
   "protectedExistingAuthorities": [
     "ADR-0087 / ScoringModelRegistry / ScoringDispatcher",
@@ -83,7 +84,8 @@
     "anonExecute": false,
     "authenticatedExecute": false,
     "serviceRoleExecute": true,
-    "rollbackRunbook": "docs/runbooks/FINTECH_CORE_FT6B_SUPABASE_ROLLBACK.md"
+    "rollbackRunbook": "docs/runbooks/FINTECH_CORE_FT6B_SUPABASE_ROLLBACK.md",
+    "threatModel": "docs/security/FINTECH_CORE_FT6B_ORDER_INTENT_RECONCILIATION_THREAT_MODEL_2026-08-22.md"
   },
   "correlation": {
     "currentMainAtStart": "b180d56a37762c6a558a9b3488ce4f36c70fa2e9",
