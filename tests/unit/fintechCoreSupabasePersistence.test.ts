@@ -10,11 +10,10 @@ vi.mock('../../server/db', () => ({
   getPrivilegedServerSupabase: vi.fn(() => ({ rpc: mocks.rpc })),
 }));
 
-import {
-  SupabaseFinTechCorePersistenceAdapter,
-} from '../../server/fintechCorePersistence';
+import { SupabaseFinTechCorePersistenceAdapter } from '../../server/fintechCorePersistence';
 import {
   FINTECH_CORE_CONTRACT_VERSION,
+  FINTECH_CORE_ORDER_INTENT_CONTRACT_VERSION,
   type FinTechCoreDecisionRecord,
   type FinTechCoreDomainEvent,
   type FinTechCoreOrderIntent,
@@ -55,7 +54,6 @@ describe('SupabaseFinTechCorePersistenceAdapter', () => {
   it('persists canonical workflow identity through the service-role-only creation RPC', async () => {
     const adapter = new SupabaseFinTechCorePersistenceAdapter();
     const state = createInitialFinTechCoreWorkflowState(context);
-
     await adapter.createWorkflowRun({ context, state, evidenceRefs: ['evidence://ft3/create'] });
 
     expect(mocks.assertConfigured).toHaveBeenCalledWith('FinTech Core workflow creation');
@@ -77,9 +75,7 @@ describe('SupabaseFinTechCorePersistenceAdapter', () => {
     const initial = createInitialFinTechCoreWorkflowState(context);
     const invalid = { ...initial, status: 'RUNNING' as const, sequence: 1 };
 
-    await expect(adapter.createWorkflowRun({ context, state: invalid })).rejects.toThrow(
-      'CREATED sequence 0',
-    );
+    await expect(adapter.createWorkflowRun({ context, state: invalid })).rejects.toThrow('CREATED sequence 0');
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
 
@@ -87,11 +83,9 @@ describe('SupabaseFinTechCorePersistenceAdapter', () => {
     const adapter = new SupabaseFinTechCorePersistenceAdapter();
     const initial = createInitialFinTechCoreWorkflowState(context);
     const transitioned = transitionFinTechCoreWorkflow(initial, 'RUNNING', '2026-08-21T00:31:00.000Z');
-    expect(transitioned.status).toBe('TRANSITIONED');
     if (transitioned.status !== 'TRANSITIONED') throw new Error('test setup failed');
 
     await adapter.persistWorkflowTransition({ previousState: initial, nextState: transitioned.state });
-
     expect(mocks.rpc).toHaveBeenCalledWith('fintech_core_advance_workflow_run_v1', {
       p_run_id: context.runId,
       p_expected_status: 'CREATED',
@@ -112,7 +106,6 @@ describe('SupabaseFinTechCorePersistenceAdapter', () => {
     if (completed.status !== 'TRANSITIONED') throw new Error('test setup failed');
 
     await adapter.persistWorkflowTransition({ previousState: running.state, nextState: completed.state });
-
     expect(mocks.rpc).toHaveBeenCalledWith('fintech_core_advance_workflow_run_v1', expect.objectContaining({
       p_expected_status: 'RUNNING',
       p_next_status: 'COMPLETED',
@@ -139,7 +132,6 @@ describe('SupabaseFinTechCorePersistenceAdapter', () => {
     };
 
     await adapter.appendDomainEvent(event);
-
     expect(mocks.rpc).toHaveBeenCalledWith('fintech_core_append_domain_event_v1', expect.objectContaining({
       p_event_id: 'event-ft3-1',
       p_run_id: context.runId,
@@ -169,7 +161,6 @@ describe('SupabaseFinTechCorePersistenceAdapter', () => {
     };
 
     await adapter.appendDecisionRecord(record);
-
     expect(mocks.rpc).toHaveBeenCalledWith('fintech_core_append_decision_record_v1', expect.objectContaining({
       p_decision_id: 'decision-ft3-1',
       p_outcome: 'REVIEW_REQUIRED',
@@ -178,10 +169,12 @@ describe('SupabaseFinTechCorePersistenceAdapter', () => {
     }));
   });
 
-  it('persists OrderIntent evidence with idempotency and approval state but performs no execution', async () => {
+  it('keeps legacy UNBOUND intent evidence on v1 while serializing fixed point exactly', async () => {
     const adapter = new SupabaseFinTechCorePersistenceAdapter();
     const intent: FinTechCoreOrderIntent = {
       contractVersion: FINTECH_CORE_CONTRACT_VERSION,
+      orderIntentContractVersion: FINTECH_CORE_ORDER_INTENT_CONTRACT_VERSION,
+      bindingState: 'UNBOUND',
       orderIntentId: 'intent-ft3-1',
       runId: context.runId,
       traceId: context.traceId,
@@ -189,24 +182,27 @@ describe('SupabaseFinTechCorePersistenceAdapter', () => {
       idempotencyKey: 'intent-key-ft3-1',
       assetId: context.asset.assetId,
       side: 'BUY',
-      quantity: 0.01,
+      quantity: { atoms: '1', scale: 2 },
       orderType: 'LIMIT',
-      limitPrice: 50000,
+      priceBounds: { limitPrice: { atoms: '5000000', scale: 2 } },
       maxSlippageBps: 25,
       strategyId: context.strategyId,
       portfolioId: context.portfolioId,
       decisionVersion: context.decisionVersion,
       riskApproval: 'PENDING',
       complianceApproval: 'PENDING',
+      createdAt: '2026-08-21T00:31:45.000Z',
       expiresAt: '2030-01-01T00:00:00.000Z',
       intentHash: 'intent-hash-ft3-1',
       effectClass: 'SIDE_EFFECTING',
     };
 
     await adapter.appendOrderIntent({ intent, evidenceRefs: ['evidence://ft3/intent'] });
-
+    expect(mocks.assertConfigured).toHaveBeenCalledWith('FinTech Core legacy UNBOUND order-intent append');
     expect(mocks.rpc).toHaveBeenCalledWith('fintech_core_append_order_intent_v1', expect.objectContaining({
       p_order_intent_id: 'intent-ft3-1',
+      p_quantity: '0.01',
+      p_limit_price: '50000.00',
       p_idempotency_key: 'intent-key-ft3-1',
       p_risk_approval: 'PENDING',
       p_compliance_approval: 'PENDING',
