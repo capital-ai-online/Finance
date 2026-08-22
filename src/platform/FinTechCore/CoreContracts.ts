@@ -145,6 +145,14 @@ export interface FinTechCoreModule {
   readonly descriptor: FinTechCoreModuleDescriptor;
 }
 
+/**
+ * Effective FT-6 operating-mode policy.
+ *
+ * GUARDED_LIVE and PRODUCTION remain vocabulary reserved for FT-7+ forward compatibility, but
+ * they intentionally expose no order or execution capability until a separately reviewed
+ * architecture/security decision changes this policy. Keeping the declarative policy fail-closed
+ * prevents future callers from inferring a capability that the FT-6 execution gate does not grant.
+ */
 export const FINTECH_CORE_OPERATING_MODE_POLICY = Object.freeze({
   RESEARCH: {
     realExecutionAllowed: false,
@@ -157,14 +165,14 @@ export const FINTECH_CORE_OPERATING_MODE_POLICY = Object.freeze({
     newOrdersAllowed: true,
   },
   GUARDED_LIVE: {
-    realExecutionAllowed: true,
-    simulatedExecutionAllowed: true,
-    newOrdersAllowed: true,
+    realExecutionAllowed: false,
+    simulatedExecutionAllowed: false,
+    newOrdersAllowed: false,
   },
   PRODUCTION: {
-    realExecutionAllowed: true,
-    simulatedExecutionAllowed: true,
-    newOrdersAllowed: true,
+    realExecutionAllowed: false,
+    simulatedExecutionAllowed: false,
+    newOrdersAllowed: false,
   },
   EMERGENCY: {
     realExecutionAllowed: false,
