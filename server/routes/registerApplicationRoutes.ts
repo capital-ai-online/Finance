@@ -58,6 +58,9 @@ export function registerApplicationRoutes(
   registerTrailingSlashNormalize(app);
   installProductionSoft404Intercept();
 
+  // SC-2 Phase C3: intercept historical Crypto scoring endpoints before the legacy declarations
+  // in server.application.ts. Standard- and Meme-Crypto terminate at the canonical dispatcher;
+  // caller-indicator chart scoring remains explicitly simulation-only.
   app.use(createLegacyScoringCompatibilityRouter());
 
   app.use('/api/raw-materials', createRawMaterialsRouter(ai, anthropic, openai));
