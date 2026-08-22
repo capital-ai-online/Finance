@@ -23,7 +23,7 @@
   "adr": [
     "ADR-0014",
     "ADR-0018",
-    "ADR-0046",
+    "ADR-0078",
     "ADR-0096",
     "ADR-0097"
   ],
@@ -44,10 +44,11 @@
   "valueChainIntegration": {
     "authority": "SC-MD-SPT-0001",
     "role": "read-only-documentation-evidence-sidecar",
-    "observedStage": "VC-13-EVENT-TRACEABILITY-SUPERVISOR",
+    "observedStage": "VC-17-EVENT-TRACEABILITY-SUPERVISOR",
     "runtimeStage": false,
     "directHotPathDependency": false,
     "qualityProjection": "fintech-value-chain-quality/1.0.0",
+    "qualityStageCount": 18,
     "forbiddenEffects": [
       "market-data-mutation",
       "classification-or-scoring-mutation",
@@ -141,5 +142,5 @@
     "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
     "platformVersion": "../../../package.json#version"
   },
-  "note": "ADR-0097 maintenance is branch-only and Draft-PR-bound. AI output is advisory; versions/lifecycle/path boundaries are deterministic. Protected ADR/Governance/Compliance/Security/Evidence/Archive/Release documents remain review-only. D9 maintenance observability emits counts/ratios only, never document bodies, prompts, diffs, user identifiers or secrets. SC-MD-SPT-0001 integration is a read-only VC-13 documentation/evidence sidecar and never a financial runtime stage. No autonomous merge, deploy or production mutation."
+  "note": "ADR-0097 maintenance is branch-only and Draft-PR-bound. AI output is advisory; versions/lifecycle/path boundaries are deterministic. Protected ADR/Governance/Compliance/Security/Evidence/Archive/Release documents remain review-only. D9 maintenance observability emits counts/ratios only, never document bodies, prompts, diffs, user identifiers or secrets. SC-MD-SPT-0001 integration is a read-only VC-17 documentation/evidence sidecar over the current 18-stage Quality projection and never a financial runtime stage. No autonomous merge, deploy or production mutation."
 }
