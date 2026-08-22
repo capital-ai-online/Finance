@@ -1,11 +1,10 @@
 import type { CryptoFeatureEvidence } from '../platform/FinTechCore/Modules/Crypto/CryptoCategoryFeatureContracts';
 import {
-  adaptCoinGlassDerivativesEvidence,
-  adaptCoinGlassUnlockEvidence,
+  adaptDexScreenerTokenEvidence,
   adaptDuneSavedQueryEvidence,
   adaptGoPlusTokenSecurityEvidence,
-  adaptLunarCrushSocialEvidence,
-  adaptMessariProtocolUsageEvidence,
+  adaptKrakenFuturesAnalyticsEvidence,
+  adaptSourcifyContractVerificationEvidence,
   type GovernedDuneFeatureMapping,
 } from '../platform/FinTechCore/Modules/Crypto/Adapters/ExtendedCryptoEvidenceAdapters';
 import { adaptGoPlusSolanaEvidence } from '../platform/FinTechCore/Modules/Crypto/Adapters/GoPlusSolanaEvidenceAdapter';
@@ -14,14 +13,14 @@ import {
   GoPlusSolanaTokenSecurityProvider,
   type GoPlusSolanaTokenSecurityEvidence,
 } from '../platform/MarketData/providers/GoPlusSolanaTokenSecurityProvider';
-import { CoinGlassCryptoEvidenceProvider } from '../platform/MarketData/providers/CoinGlassCryptoEvidenceProvider';
-import { LunarCrushSocialEvidenceProvider } from '../platform/MarketData/providers/LunarCrushSocialEvidenceProvider';
-import { MessariProtocolEvidenceProvider } from '../platform/MarketData/providers/MessariProtocolEvidenceProvider';
+import { KrakenFuturesAnalyticsProvider } from '../platform/MarketData/providers/KrakenFuturesAnalyticsProvider';
+import { DexScreenerTokenEvidenceProvider } from '../platform/MarketData/providers/DexScreenerTokenEvidenceProvider';
+import { SourcifyContractVerificationProvider } from '../platform/MarketData/providers/SourcifyContractVerificationProvider';
 import { DuneQueryEvidenceProvider } from '../platform/MarketData/providers/DuneQueryEvidenceProvider';
-import { NewsApiEvidenceProvider, type NewsApiArticleEvidence } from '../platform/MarketData/providers/NewsApiEvidenceProvider';
+import { GdeltNewsEvidenceProvider, type GdeltArticleEvidence } from '../platform/MarketData/providers/GdeltNewsEvidenceProvider';
 import { fetchDefiProtocolEvidence, type DefiProtocolEvidenceResult } from './defiProtocolEvidence';
 
-export const CRYPTO_EXTENDED_EVIDENCE_CONTRACT_VERSION = 'crypto-extended-evidence/1.2.0' as const;
+export const CRYPTO_EXTENDED_EVIDENCE_CONTRACT_VERSION = 'crypto-extended-evidence/1.3.0' as const;
 
 export type CryptoExtendedEvidenceStatus = 'READY' | 'PARTIAL' | 'NOT_AVAILABLE';
 
@@ -31,26 +30,37 @@ export interface GovernedDuneEvidenceRequest {
   readonly mappings: readonly GovernedDuneFeatureMapping[];
 }
 
+export interface GovernedDexScreenerIdentity {
+  readonly chainId: string;
+  readonly tokenAddress: string;
+}
+
 export interface CryptoExtendedEvidenceRequest {
   readonly symbol: string;
   /** Trusted EVM provider identity resolved outside user/LLM input. */
   readonly goPlusIdentity?: GoPlusTokenIdentity;
   /** Trusted Solana mint resolved outside user/LLM input. Mutually exclusive with goPlusIdentity. */
   readonly goPlusSolanaMintAddress?: string;
-  /** Exact provider slug/ID; never derive via fuzzy name matching. */
-  readonly messariProtocolIdentifier?: string;
-  /** LunarCrush topic; defaults to normalized symbol if no curated topic is supplied. */
-  readonly lunarCrushTopic?: string;
+  /** Exact DEX Screener chain slug + token address from the governed identity registry. */
+  readonly dexScreenerIdentity?: GovernedDexScreenerIdentity;
+  /** Exact public Kraken Futures market symbol from the governed identity registry. */
+  readonly krakenFuturesSymbol?: string;
   readonly includeDefiLlama?: boolean;
-  readonly includeUnlocks?: boolean;
   readonly includeNews?: boolean;
-  /** Raw NewsAPI query. Defaults to the exact symbol plus crypto context. */
   readonly newsQuery?: string;
   readonly dune?: readonly GovernedDuneEvidenceRequest[];
 }
 
 export interface CryptoEvidenceProviderState {
-  readonly provider: 'defillama' | 'goplus' | 'goplus-solana' | 'coinglass' | 'lunarcrush' | 'messari' | 'dune' | 'newsapi';
+  readonly provider:
+    | 'defillama'
+    | 'goplus'
+    | 'goplus-solana'
+    | 'kraken-futures-public'
+    | 'dexscreener'
+    | 'sourcify'
+    | 'dune'
+    | 'gdelt';
   readonly status: string;
   readonly reason?: string;
 }
@@ -61,10 +71,10 @@ export interface CryptoExtendedEvidenceResult {
   readonly symbol: string;
   readonly retrievedAt: string;
   readonly evidence: readonly CryptoFeatureEvidence[];
-  /** Solana-specific facts not semantically equivalent to the generic EVM feature catalog. */
+  /** Solana-specific facts without a generic semantic mapping stay separate. */
   readonly solanaSecurity: GoPlusSolanaTokenSecurityEvidence | null;
-  /** Text evidence remains separate from numeric/category features until a governed NLP model promotes it. */
-  readonly newsArticles: readonly NewsApiArticleEvidence[];
+  /** News metadata stays outside numeric/category features and has no direct score authority. */
+  readonly newsArticles: readonly GdeltArticleEvidence[];
   readonly providers: readonly CryptoEvidenceProviderState[];
   readonly verifiedFeatureCount: number;
   readonly unavailableFeatureCount: number;
@@ -76,11 +86,11 @@ export interface CryptoExtendedEvidenceResult {
 export interface CryptoExtendedEvidenceDependencies {
   readonly goPlus?: GoPlusTokenSecurityProvider;
   readonly goPlusSolana?: GoPlusSolanaTokenSecurityProvider;
-  readonly coinGlass?: CoinGlassCryptoEvidenceProvider;
-  readonly lunarCrush?: LunarCrushSocialEvidenceProvider;
-  readonly messari?: MessariProtocolEvidenceProvider;
+  readonly krakenFutures?: KrakenFuturesAnalyticsProvider;
+  readonly dexScreener?: DexScreenerTokenEvidenceProvider;
+  readonly sourcify?: SourcifyContractVerificationProvider;
   readonly dune?: DuneQueryEvidenceProvider;
-  readonly newsApi?: NewsApiEvidenceProvider;
+  readonly gdelt?: GdeltNewsEvidenceProvider;
   readonly defiFetcher?: (symbol: string) => Promise<DefiProtocolEvidenceResult>;
   readonly nowMs?: () => number;
 }
@@ -92,10 +102,8 @@ function providerState(provider: CryptoEvidenceProviderState['provider'], status
 /**
  * Read-only evidence composition for crypto research categories.
  *
- * The service never calls ScoringDispatcher, never derives policy PASS from provider facts and
- * never fabricates values. Text/news evidence and Solana-only security facts remain separate from
- * generic numeric feature evidence unless an explicit semantic adapter exists. Provider identity
- * mappings must be trusted, exact and server-side.
+ * Active defaults are restricted to keyless/free providers plus Dune's explicitly attested
+ * free-tier read path. There is no CoinGlass, LunarCrush, NewsAPI, automatic paid overage or x402.
  */
 export async function fetchCryptoExtendedEvidence(
   request: CryptoExtendedEvidenceRequest,
@@ -104,7 +112,7 @@ export async function fetchCryptoExtendedEvidence(
   const symbol = request.symbol.toUpperCase().trim();
   const nowMs = dependencies.nowMs ?? Date.now;
   const evidence: CryptoFeatureEvidence[] = [];
-  const newsArticles: NewsApiArticleEvidence[] = [];
+  const newsArticles: GdeltArticleEvidence[] = [];
   const providers: CryptoEvidenceProviderState[] = [];
   let solanaSecurity: GoPlusSolanaTokenSecurityEvidence | null = null;
 
@@ -112,35 +120,23 @@ export async function fetchCryptoExtendedEvidence(
     throw new Error('GOPLUS_IDENTITY_AMBIGUOUS: EVM and Solana identities are mutually exclusive.');
   }
 
-  const coinGlass = dependencies.coinGlass ?? new CoinGlassCryptoEvidenceProvider({ nowMs });
-  const lunarCrush = dependencies.lunarCrush ?? new LunarCrushSocialEvidenceProvider({ nowMs });
-  const coreTasks: Promise<void>[] = [
-    coinGlass.getDerivativesEvidence(symbol).then((result) => {
-      evidence.push(...adaptCoinGlassDerivativesEvidence(result));
-      providers.push(providerState('coinglass', result.status, result.reason));
-    }),
-    lunarCrush.getSocialEvidence(request.lunarCrushTopic ?? symbol.toLowerCase()).then((result) => {
-      evidence.push(...adaptLunarCrushSocialEvidence(result));
-      providers.push(providerState('lunarcrush', result.status, result.reason));
-    }),
-  ];
-
-  if (request.includeUnlocks !== false) {
-    coreTasks.push(coinGlass.getUnlockEvidence(symbol).then((result) => {
-      evidence.push(...adaptCoinGlassUnlockEvidence(result));
-      providers.push(providerState('coinglass', `unlock:${result.status}`, result.reason));
-    }));
-  }
+  const tasks: Promise<void>[] = [];
 
   if (request.goPlusIdentity) {
     const goPlus = dependencies.goPlus ?? new GoPlusTokenSecurityProvider({ nowMs });
-    coreTasks.push(goPlus.getTokenSecurity(request.goPlusIdentity).then((result) => {
+    tasks.push(goPlus.getTokenSecurity(request.goPlusIdentity).then((result) => {
       evidence.push(...adaptGoPlusTokenSecurityEvidence(result));
       providers.push(providerState('goplus', result.status, result.reason));
     }));
+
+    const sourcify = dependencies.sourcify ?? new SourcifyContractVerificationProvider({ nowMs });
+    tasks.push(sourcify.getContractVerification(request.goPlusIdentity.chainId, request.goPlusIdentity.contractAddress).then((result) => {
+      evidence.push(...adaptSourcifyContractVerificationEvidence(result));
+      providers.push(providerState('sourcify', result.status, result.reason));
+    }));
   } else if (request.goPlusSolanaMintAddress) {
     const goPlusSolana = dependencies.goPlusSolana ?? new GoPlusSolanaTokenSecurityProvider({ nowMs });
-    coreTasks.push(goPlusSolana.getTokenSecurity(request.goPlusSolanaMintAddress).then((result) => {
+    tasks.push(goPlusSolana.getTokenSecurity(request.goPlusSolanaMintAddress).then((result) => {
       solanaSecurity = result;
       evidence.push(...adaptGoPlusSolanaEvidence(result));
       providers.push(providerState('goplus-solana', result.status, result.reason));
@@ -149,48 +145,54 @@ export async function fetchCryptoExtendedEvidence(
     providers.push(providerState('goplus', 'UNSUPPORTED_ASSET', 'No governed EVM contract or Solana mint identity mapping is available.'));
   }
 
-  if (request.messariProtocolIdentifier) {
-    const messari = dependencies.messari ?? new MessariProtocolEvidenceProvider({ nowMs });
-    coreTasks.push(messari.getProtocolUsage(request.messariProtocolIdentifier).then((result) => {
-      evidence.push(...adaptMessariProtocolUsageEvidence(result));
-      providers.push(providerState('messari', result.status, result.reason));
+  if (request.dexScreenerIdentity) {
+    const dexScreener = dependencies.dexScreener ?? new DexScreenerTokenEvidenceProvider({ nowMs });
+    tasks.push(dexScreener.getTokenPairs(request.dexScreenerIdentity.chainId, request.dexScreenerIdentity.tokenAddress).then((result) => {
+      evidence.push(...adaptDexScreenerTokenEvidence(result));
+      providers.push(providerState('dexscreener', result.status, result.reason));
     }));
-  } else {
-    providers.push(providerState('messari', 'UNSUPPORTED_ASSET', 'No governed Messari protocol identifier is available.'));
+  }
+
+  if (request.krakenFuturesSymbol) {
+    const krakenFutures = dependencies.krakenFutures ?? new KrakenFuturesAnalyticsProvider({ nowMs });
+    tasks.push(krakenFutures.getAnalytics(request.krakenFuturesSymbol).then((result) => {
+      evidence.push(...adaptKrakenFuturesAnalyticsEvidence(result));
+      providers.push(providerState('kraken-futures-public', result.status, result.reason));
+    }));
   }
 
   if (request.includeDefiLlama) {
     const fetcher = dependencies.defiFetcher ?? ((value: string) => fetchDefiProtocolEvidence(value));
-    coreTasks.push(fetcher(symbol).then((result) => {
+    tasks.push(fetcher(symbol).then((result) => {
       evidence.push(...result.evidence);
       providers.push(providerState('defillama', result.status));
     }));
   }
 
   if (request.includeNews) {
-    const newsApi = dependencies.newsApi ?? new NewsApiEvidenceProvider({ nowMs });
-    coreTasks.push(newsApi.searchEverything(request.newsQuery ?? `${symbol} AND (crypto OR cryptocurrency)`, 20).then((result) => {
+    const gdelt = dependencies.gdelt ?? new GdeltNewsEvidenceProvider({ nowMs });
+    tasks.push(gdelt.searchArticles(request.newsQuery ?? `"${symbol}" (crypto OR cryptocurrency OR market)`, 20, '1d').then((result) => {
       newsArticles.push(...result.articles);
-      providers.push(providerState('newsapi', result.status, result.reason));
+      providers.push(providerState('gdelt', result.status, result.reason));
     }));
   }
 
   if (request.dune && request.dune.length > 0) {
     const dune = dependencies.dune ?? new DuneQueryEvidenceProvider({ nowMs });
     for (const governed of request.dune) {
-      coreTasks.push(dune.getLatestSavedQuery(governed.queryId, governed.expectedColumns).then((result) => {
+      tasks.push(dune.getLatestSavedQuery(governed.queryId, governed.expectedColumns).then((result) => {
         evidence.push(...adaptDuneSavedQueryEvidence(result, governed.mappings));
         providers.push(providerState('dune', result.status, result.reason));
       }));
     }
   }
 
-  await Promise.all(coreTasks);
+  await Promise.all(tasks);
 
   const verifiedFeatureCount = evidence.filter((item) => item.status === 'VERIFIED').length;
   const unavailableFeatureCount = evidence.length - verifiedFeatureCount;
   const hasVerifiedEvidence = verifiedFeatureCount > 0 || newsArticles.length > 0 || solanaSecurity?.status === 'VERIFIED';
-  const hasUnavailable = unavailableFeatureCount > 0 || providers.some((item) => !item.status.includes('VERIFIED') && item.status !== 'READY');
+  const hasUnavailable = unavailableFeatureCount > 0 || providers.some((item) => !['VERIFIED', 'READY'].includes(item.status));
   const status: CryptoExtendedEvidenceStatus = !hasVerifiedEvidence
     ? 'NOT_AVAILABLE'
     : hasUnavailable
