@@ -1,18 +1,17 @@
 # ADR-0099 — CAPITAL-AI FinTech Core Engine: Crypto Module 01
 
 - **Authority ID:** `AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20`
-- **Version:** 1.6.0
+- **Version:** 1.7.0
 - **Date:** 2026-08-22
-- **Lifecycle:** proposed
+- **Lifecycle:** accepted
 - **Roadmap:** `FT-CORE-CRYPTO-01`
-- **Execution Branch:** `feat/fintech-core-ft6-orderintent-reconciliation-2026-08-22`
-- **Branch Start Baseline:** `b180d56a37762c6a558a9b3488ce4f36c70fa2e9`
 - **FT-6A predecessor:** PR #481 merged
+- **FT-6B closure:** PR #483 merged into `main@571de76e4d5f1d33460bf129d2231885dfde9584`
 - **Protected authority:** ADR-0087 / Single Scoring Architecture
 
 ## Context
 
-CAPITAL-AI besitzt eine produktive Single-Dispatcher-Scoring-Architektur und einen separaten Crypto-Research-Pfad. Der FinTech Core soll Finanz-Workflows komponieren, ohne eine parallele Scoring-, Evidence-, Governance-, Compliance-Policy-, IAM-, Queue-, Persistence-, Execution- oder Custody-Authority zu schaffen.
+CAPITAL-AI besitzt eine produktive Single-Dispatcher-Scoring-Architektur und einen separaten Crypto-Research-Pfad. Der FinTech Core komponiert Finanz-Workflows, ohne eine parallele Scoring-, Evidence-, Governance-, Compliance-Policy-, IAM-, Queue-, Persistence-, Execution- oder Custody-Authority zu schaffen.
 
 Geschuetzte Scoring-Kette:
 
@@ -66,6 +65,8 @@ EMERGENCY     -> keine neue Order
 ```
 
 Der Real-Execution-Eligibility-Helper bleibt fuer FT-6 hard-blocked. Jede Freischaltung ist FT-7+ und benoetigt eine separate Architektur-/Security-Entscheidung.
+
+> Post-Merge-Korrelationshinweis: `FINTECH_CORE_OPERATING_MODE_POLICY` enthaelt derzeit noch eine future-capability Projektion fuer `GUARDED_LIVE`/`PRODUCTION`. Diese Projektion besitzt keine Execution-Authority und wird in der Supersession `FINTECH-VALUE-CHAIN-SUPERSESSION-2026-08-22` als security-relevante, explizit freizugebende fail-closed Code-Normalisierung gefuehrt.
 
 ## Persistence Authority
 
@@ -199,10 +200,12 @@ Hard Rules:
 
 ## Persistence Evolution / Supabase Mutation
 
-`FinTechCorePersistencePort` besitzt genau einen `appendOrderIntent`-Pfad. Der Serveradapter darf versionierte RPCs routen:
+`FinTechCorePersistencePort` besitzt genau einen `appendOrderIntent`-Pfad. Der Serveradapter routet versionierte RPCs:
 
-- v1 fuer `UNBOUND` Legacy Evidence;
-- v2 fuer canonical `BOUND` FT-6 Evidence.
+- v2 fuer canonical `BOUND` FT-6B Evidence;
+- v1 nur als `UNBOUND` Legacy-/Research-Kompatibilitaet.
+
+Der v1-Pfad ist keine zweite OrderIntent-Authority und darf keine FT-7-/Execution-Berechtigung begruenden. Seine physische Entfernung erfordert Consumer-/Replay-/Bestandsdaten-Evidence und, soweit die Persistence-/Security-Boundary betroffen ist, eine separate Owner-Freigabe.
 
 Repository-Migration:
 
@@ -262,18 +265,14 @@ Positiv:
 
 Trade-offs:
 
-- Legacy `numeric`-Felder bleiben vorerst als Compatibility Projection bestehen;
-- FT-6B schliesst noch keine reale Execution an;
+- Legacy `numeric`-Felder und der v1-`UNBOUND`-Write bleiben vorerst Compatibility Projection;
+- FT-6B schliesst keine reale Execution an;
 - Event-Namen und Live-Settlement bleiben spaeteren expliziten Decisions vorbehalten.
 
-## Validation / Closure
+## Post-Merge Closure
 
-Vor Merge bleiben erforderlich:
+PR #483 ist Human-gemergt. FT-6B ist damit auf `main` abgeschlossen. Die nachgelagerte Supersession A normalisiert ausschliesslich Lifecycle-/Current-State-Projektionen und identifiziert verbleibende Legacy-/Security-Korrelationen.
 
-1. aktueller Main-/Open-PR-Korrelationsabgleich;
-2. PR nach kanonischer Governance-Vorlage;
-3. Hosted TypeScript/Lint/Unit-/Architecture-/Governance-Checks erst nach PR-Erstellung;
-4. Behebung echter CI-Befunde;
-5. finaler Authority-/Scope-Review.
+Naechster produktiver Architekturabschnitt bleibt **FT-7 Guarded Live** und ist weiterhin blockiert, bis eine separate Architektur-/Security-Entscheidung einschliesslich Owner-Gate vorliegt.
 
-FT-7 bleibt blockiert, bis FT-6B gemergt und separat eine Guarded-Live-Entscheidung getroffen wurde.
+Meme-Coin-/DeFi-Modellsemantik wird nicht in dieser Authority-Normalisierung veraendert; sie wird in einer separaten Supersession B gegen den dann aktuellen `main` neu modelliert.
