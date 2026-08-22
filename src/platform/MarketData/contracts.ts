@@ -1,5 +1,5 @@
 export const MARKET_DATA_CONTRACT_VERSION = 'market-data/1.0.0' as const;
-export const MARKET_DATA_HISTORY_CONTRACT_VERSION = 'market-data-history/1.1.0' as const;
+export const MARKET_DATA_HISTORY_CONTRACT_VERSION = 'market-data-history/1.0.0' as const;
 
 export type MarketDataAssetClass = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond' | 'macro';
 export type ProviderCapability = 'snapshot' | 'quote' | 'trade' | 'history' | 'bars' | 'fundamentals';
@@ -32,8 +32,8 @@ export interface HistoryRequest {
   to?: string;
   maxPoints?: number;
   /**
-   * Optional canonical bar resolution. Providers that support only EOD history may ignore an
-   * absent value but must fail closed when an explicitly requested interval is unsupported.
+   * Optional bar resolution. This is a backward-compatible capability extension of the existing
+   * history contract; providers must fail closed when an explicit interval is unsupported.
    */
   barInterval?: MarketDataBarInterval;
   includeShadow?: boolean;
