@@ -5,11 +5,12 @@
 **Start baseline:** `main@571de76e4d5f1d33460bf129d2231885dfde9584`  
 **Trigger:** Human Merge of PR #483  
 **Open PRs at start:** 0  
-**Supersession policy:** `GOV-AUTH-SUPERSESSION-0001`
+**Supersession policy:** `GOV-AUTH-SUPERSESSION-0001`  
+**Supersession B:** integrated in the same branch by explicit Owner direction on 2026-08-22
 
 ## 1. Purpose
 
-This package removes post-merge state drift from the FinTech Enterprise value chain without creating a second scoring, evidence, governance, persistence, queue, execution or vocabulary authority.
+This package removes post-merge state drift from the FinTech Enterprise value chain and finalizes the Meme/DeFi research-model supersession without creating a second scoring, evidence, governance, persistence, queue, execution or vocabulary authority.
 
 The canonical value chain remains:
 
@@ -33,25 +34,21 @@ UAI
 
 ## 2. Authority classification
 
-| Artifact / path | Classification before supersession | Finding | Supersession action |
-|---|---|---|---|
-| `ADR-0087` | canonical scoring authority | no drift | protect unchanged |
-| `ADR-0099` | stable FinTech Core authority, lifecycle still `proposed` | PR #483 has been Human-merged; lifecycle and branch metadata are stale | same-authority lifecycle/version normalization to `1.7.0 / accepted`; no new authorityId |
-| `docs/adr/registry.json` | canonical ADR registry | ADR-0099 still `1.6.0 / proposed` | synchronize to `1.7.0 / accepted` |
-| `docs/governance/authority-registry.json` | canonical authority registry | ADR-0099 still `owner-directed-proposed` | synchronize stable authority identity to `1.7.0 / accepted` |
-| `docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md` | roadmap projection | still says FT-6B PR pending / branch implementation | project FT-6B as DONE / MERGED #483 |
-| `src/platform/FinTechCore/README.md` | component projection | still contains pre-merge closure gates and `ADR-0099 (proposed)` | replace with post-merge current-state projection |
-| `src/platform/FinTechCore/manifest.json` | component inventory/projection | stale FT-6B and security-projection state | synchronize to applied/verified FT-6B state and version `0.6.1` after fail-closed hardening |
-| `docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md` | architecture projection | canonical topology correct but historical architecture reports can still be misread as current | retain as current projection and add explicit historical supersession index |
-| `FT6A_*` / older FT evidence | historical evidence | obsolete as current state but valid audit evidence | retain; do not rewrite or delete |
-| FT-6B work claim | coordination metadata | `status=active` is schema-constrained historical coordination metadata after merge | do not reinterpret as runtime/architecture authority |
-| `ADR-0100` / DeFiLlama | proposed DeFi evidence-provider decision | semantically correlated with requested Meme/DeFi remodeling | isolate for separate Supersession B; no model/scoring semantics changed here |
+| Artifact / path | Finding | Supersession action |
+|---|---|---|
+| `ADR-0087` | canonical scoring authority | revalidated; single registry/dispatcher preserved; Meme/DeFi challengers updated to 0.2.0 without promotion |
+| `ADR-0099` | stale post-PR-483 lifecycle projection | normalized to `1.7.0 / accepted`, stable authorityId retained |
+| `ADR-0100` | implemented provider remained `proposed` | normalized to `1.1.0 / accepted` for evidence-only DeFiLlama authority; no scoring authority |
+| ADR / Authority registries | stale ADR-0099/0100 state | synchronized to current lifecycle/version |
+| FinTechCore roadmap / README / manifest | pre-merge and pre-supersession projections | synchronized to FT-6B merged, fail-closed execution policy and Meme/DeFi non-executable challenger state |
+| historical Enterprise FinTech reports | old multi-engine/current-state semantics | retained as historical/non-authorizing for traceability |
+| `MemeCoinScoringService` weighted formula | historical 35/25/20/20 formula with incomplete risk evidence | explicitly non-authorizing; not copied into Meme 0.2.0 research contract |
+| DeFi TVL/fees/revenue | correlated protocol scale/activity observations | correlation-bound as `defi-scale-activity` before any future weighting |
+| legacy v1 UNBOUND OrderIntent RPC | compatibility write path | retained as legacy/research compatibility only; v2 BOUND remains canonical FT-6B path |
 
 ## 3. Runtime / legacy-path correlation
 
 ### 3.1 Canonical FT-6B OrderIntent path
-
-New FT-6B execution-relevant PAPER OrderIntents are deterministic `BOUND` intents and persist through:
 
 ```text
 FinTechCoreOrderIntent
@@ -60,32 +57,11 @@ FinTechCoreOrderIntent
   -> fintech_core_append_order_intent_v2
 ```
 
-### 3.2 Legacy FT-3/FT-6 OrderIntent compatibility path
+The v1 UNBOUND RPC remains compatibility evidence only. It is not a second OrderIntent authority.
 
-`server/fintechCorePersistence.ts` still contains a v1 write route for `bindingState=UNBOUND`:
+### 3.2 Shadowed Crypto/Meme composition-root handlers
 
-```text
-UNBOUND
-  -> fintech_core_append_order_intent_v1
-```
-
-This route is **not** a second OrderIntent authority. It is a compatibility path for legacy/research persistence evidence.
-
-Physical removal is intentionally not performed in this supersession without all of the following evidence:
-
-1. no active runtime producer still emits `UNBOUND` intents;
-2. no recovery/replay path depends on the v1 RPC;
-3. existing persisted rows are not made unreadable or misleading;
-4. rollback remains possible without deleting audit evidence;
-5. separate owner approval exists if the removal changes a security/execution boundary or external persistence contract.
-
-Until then, v1 is classified `legacy-compatibility / non-canonical-write-path` and v2 remains the only canonical BOUND FT-6B persistence path.
-
-### 3.3 Shadowed Crypto/Meme composition-root handlers
-
-`server.application.ts` still contains historical Meme-Crypto handler bodies and the `MemeCoinScoringService` import. They are **not the productive HTTP scoring authority** because `registerApplicationRoutes(...)` is mounted earlier and `server/routes/legacyScoringCompatibilityRoutes.ts` terminates Standard- and Meme-Crypto requests through `dispatchCanonicalScore(...)`.
-
-Current effective chain:
+`server.application.ts` still contains historical Meme-Crypto handler bodies, but the canonical compatibility router is mounted first and terminates requests through `dispatchCanonicalScore(...)`.
 
 ```text
 /api/crypto-scoring/:symbol
@@ -95,45 +71,17 @@ Current effective chain:
   -> ScoringModelRegistry / ScoringDispatcher
 ```
 
-The later `server.application.ts` handlers are therefore `shadowed-dead-compatibility-debt`, not a parallel live scoring path.
+`tests/unit/sc2GlobalSingleDispatcher.test.ts` protects this ordering so the legacy Meme service cannot silently regain productive routing authority.
 
-This supersession adds a static regression guard in `tests/unit/sc2GlobalSingleDispatcher.test.ts` that verifies:
+### 3.3 Historical architecture projections
 
-- the canonical route composition mount exists;
-- the historical GET/POST handlers occur only after that mount;
-- the compatibility router is actually mounted;
-- the compatibility executable source contains no `MemeCoinScoringService` direct execution.
-
-Physical deletion from the large composition root is deferred until a bounded decomposition/removal pass can preserve unrelated route behavior. The authority defect is closed now: a route-order regression that would reactivate the old handlers is test-detectable.
-
-### 3.4 Historical FinTech architecture projections
-
-The repository contains dated architecture/audit reports that accurately describe earlier states but conflict with the current Single-Dispatcher/FinTechCore topology if read as current architecture:
-
-- `docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md` — 2026-07-31 audit snapshot;
-- `docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_NACHAUDIT.md` — 2026-08-02 audit snapshot;
-- `docs/architecture/ENTERPRISE_FINTECH_FINALIZATION_REPORT.md` — 2026-07-31 remediation/finalization snapshot;
-- `docs/architecture/ENTERPRISE_SCREENING_SCORING_MASTER_ARCHITECTURE.md` — pre-ADR-0087 multi-engine blueprint.
-
-These files are retained for audit/RAG/reference stability and are explicitly classified in the current `ORCHESTRATORS_AND_SCORING_ENGINES.md` projection as `historical / non-authorizing`. Their old direct-service topology, old model weights, provider assumptions and production-readiness scores do not override ADR-0087, ADR-0099, current registries or runtime contracts.
-
-A physical archive move is not performed in this package because current repository consumers include documentation export/RAG/test references. Moving them without consumer migration would trade semantic drift for broken traceability.
+The dated Enterprise FinTech architecture/audit reports remain for audit/RAG/export stability but are explicitly non-authorizing. Their old multi-engine topology, weights, readiness statements or provider assumptions cannot override ADR-0087, ADR-0099, ADR-0100, current registries or runtime contracts.
 
 ## 4. Owner-approved fail-closed operating-mode correction
 
-The supersession found a real policy projection contradiction:
+The Owner explicitly approved the correction on **2026-08-22 at 04:23 CEST**.
 
-```text
-FINTECH_CORE_OPERATING_MODE_POLICY
-GUARDED_LIVE.realExecutionAllowed = true
-PRODUCTION.realExecutionAllowed   = true
-```
-
-while `isOrderIntentEligibleForRealExecution(...)` and the effective FT-6B authority hard-block real execution for every mode.
-
-The Owner explicitly approved the fail-closed correction on **2026-08-22 at 04:23 CEST**. The mutation is repository-only and introduces no external or production capability.
-
-Effective FT-6B policy after the approved correction:
+Effective FT-6B policy:
 
 ```text
 RESEARCH      -> real=false, simulated=false, newOrders=false
@@ -143,95 +91,102 @@ PRODUCTION    -> real=false, simulated=false, newOrders=false
 EMERGENCY     -> real=false, simulated=false, newOrders=false
 ```
 
-`GUARDED_LIVE` and `PRODUCTION` remain forward-compatible vocabulary only. Any later enabling requires a separate FT-7+ architecture/security decision and must not be inferred from the enum or mode name.
+`GUARDED_LIVE` and `PRODUCTION` remain FT-7+ vocabulary only. `isOrderIntentEligibleForRealExecution(...)` remains false for every mode.
 
-Regression coverage in `tests/unit/fintechCoreContracts.test.ts` now asserts:
+## 5. Supersession B — Meme Coin & DeFi model remodeling
 
-- `realExecutionAllowed=false` for every operating mode;
-- simulated execution and new orders are permitted only for `PAPER`;
-- `isOrderIntentEligibleForRealExecution(...)` remains false for every mode.
+The Owner subsequently directed that Supersession B be finalized **before** the single PR rather than waiting for a second branch/PR. The work claim records this consolidation explicitly.
 
-Security effect: stricter fail-closed projection, no privilege increase, no execution activation, no Supabase mutation and no change to persisted financial evidence.
+### Meme 0.2.0
 
-## 5. Supersession semantics
+`crypto-meme-integrity@0.2.0`:
 
-This package does not create a replacement `AUTH-*` identity for ADR-0099. The semantic authority remains:
+- challenger / research-only / `scoreEligible=false`;
+- executor `research-only:not-executable`;
+- feature contract `crypto-meme-research-features/0.2.0`;
+- no executable weights;
+- trend, momentum and volatility quality are one correlation group (`meme-price-path`);
+- liquidity cannot substitute for community/manipulation evidence;
+- governed contract-integrity and manipulation-risk evidence are required before any future promotion;
+- the legacy Meme 35/25/20/20 formula is not promoted or reused as canonical model semantics.
 
-```text
-AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20
-```
+### DeFi 0.2.0
 
-The changes are same-authority post-merge lifecycle/current-state normalization plus removal of stale projections. Historical evidence remains non-authorizing and traceable.
+`crypto-defi-fundamental@0.2.0`:
 
-No accepted higher-tier authority is superseded.
+- challenger / research-only / `scoreEligible=false`;
+- executor `research-only:not-executable`;
+- feature contract `crypto-defi-research-features/0.2.0`;
+- no executable weights;
+- TVL, fees and revenue are bound to `defi-scale-activity` and cannot be independently additively weighted without validated de-correlation/latent-factor transformation;
+- smart-contract and oracle-risk hard-gate evidence remains mandatory for future score admission.
 
-## 6. Code-/governance regression guards
+### DeFiLlama freshness
 
-Three code-level regression guards are included:
+`defi-protocol-evidence/1.1.0` is fail-closed:
 
-1. `tests/unit/governanceControlPlane.test.ts`
-   - requires ADR-0099 to remain `1.7.0 / accepted` in ADR and Authority registries;
-   - preserves the stable ADR-0099 authorityId/path.
-2. `tests/unit/sc2GlobalSingleDispatcher.test.ts`
-   - requires canonical Crypto/Meme compatibility routing to be mounted before shadowed historical composition-root handlers;
-   - keeps the Compatibility Router free of direct Meme scoring execution.
-3. `tests/unit/fintechCoreContracts.test.ts`
-   - requires the complete FT-6 operating-mode policy to remain fail-closed;
-   - permits simulated/new-order capability only for PAPER;
-   - keeps real execution hard-blocked for every mode.
+- `READY` only when all emitted evidence is `VERIFIED`;
+- mixed verified/nonverified evidence -> `PARTIAL`;
+- no verified item but stale evidence present -> explicit `STALE`;
+- unavailable/invalid-only evidence -> `SOURCE_UNAVAILABLE`;
+- no missing/stale value becomes 0 or PASS.
 
-These tests harden the supersession without introducing a new runtime authority.
+ADR-0100 remains evidence-only. No provider-to-score bypass exists.
 
-## 7. Operational impact
+## 6. Fingerprint / model-promotion boundary
+
+No fake effective-weight fingerprint is emitted for Meme/DeFi because there are no executable weights. A future promotion must introduce versioned weights, nominal-weights version, DQ/freshness contract and the existing ADR-0087 `scoringFingerprint` effective-feature/effective-weight lineage in one reviewed model change.
+
+The canonical crypto champion remains unchanged:
+
+`crypto-technical-provenance@0.7.0`
+
+Classification as Meme or DeFi does not select a challenger as productive fallback.
+
+## 7. Regression guards
+
+The branch now includes guards for:
+
+1. ADR-0099 registry synchronization;
+2. canonical compatibility router ordering before shadowed Meme handlers;
+3. FT-6 fail-closed operating-mode policy;
+4. Meme/DeFi 0.2.0 non-executable challenger state;
+5. Meme price-path correlation binding;
+6. DeFi scale/activity correlation binding;
+7. unchanged crypto champion resolution;
+8. stale DeFi evidence never becoming `READY`.
+
+## 8. Operational / security impact
 
 - no Supabase mutation;
 - no new schema/table/queue/event journal;
+- no Render/Stripe mutation;
 - no new runtime dependency;
 - no score/model promotion;
-- no DeFi/Meme model change;
+- no second registry/dispatcher/provider gateway;
 - no exchange/custody/live execution capability;
 - no deletion of financial audit evidence;
-- no change to productive ScoringDispatcher routing semantics;
-- FinTechCore component version `0.6.1` records the fail-closed policy hardening.
+- productive `ScoringDispatcher` routing remains unchanged;
+- FinTechCore manifest version `0.6.2` records the complete supersession state.
 
-## 8. Security impact
-
-The Owner-approved operating-mode mutation is **fail-closed**: it removes stale declarative capabilities from `GUARDED_LIVE` and `PRODUCTION` rather than granting new ones.
-
-The supersession preserves:
-
-- FT-5 deterministic Risk/Compliance Decision authority;
-- service-role-only private `fintech_core` persistence;
-- FT-6B fixed-point financial representation;
-- FT-6B deterministic idempotency/integrity;
-- `public.outbox_jobs` queue authority;
-- ADR-0087 Single-Dispatcher scoring boundary;
-- FT-7+ live-execution gate.
-
-Rollback is a repository revert of this supersession. No external state rollback is necessary because the correction performs no database, IAM, exchange or deployment mutation.
+The security correction is strictly fail-closed and removes declarative capabilities; it grants none.
 
 ## 9. Regulatory impact
 
-No legal applicability, policy threshold or customer-facing financial decision rule is changed. The correction reduces ambiguity around a blocked future execution capability.
+No legal applicability, policy threshold, customer-facing financial decision rule or live execution eligibility is expanded. The package reduces ambiguity and prevents unvalidated category-model signals from becoming financial decisions.
 
 ## 10. Evidence retention / archive rule
 
-Historical evidence is retained. Files are not deleted merely because a newer phase exists. A document is archived/suspended only when it is an obsolete current-source candidate and the lifecycle policy permits the move without breaking traceability.
+Historical evidence remains retained and non-authorizing. Physical moves/deletes are deferred where current RAG/export/test consumers would lose traceability. Semantic supersession is encoded in current authority projections rather than rewriting history.
 
-For FT-6A/FT-6B evidence and dated Enterprise FinTech audits, retention is preferred over rewrite or deletion because these files document actual implementation/audit sequence. Current-state ambiguity is resolved through explicit de-authorizing projection metadata instead of historical rewriting.
+## 11. Remaining future work — promotion, not architecture creation
 
-## 11. Separate Supersession B — Meme Coin & DeFi Model Remodeling
+Meme remains blocked from productive category scoring until contract/manipulation evidence, DQ/freshness policy, validation and versioned weights/fingerprints are approved.
 
-The following scope is explicitly **out of this package** and begins from then-current `main` after Supersession A:
+DeFi remains blocked from productive category scoring until protocol/token identity, multi-chain/fork handling, double-counted TVL treatment, correlation/latent-factor validation, DQ/freshness policy and out-of-sample validation are approved.
 
-- re-model Meme Coin and DeFi category feature contracts;
-- re-evaluate ADR-0100 and DeFiLlama evidence-provider placement;
-- prevent latent-factor/double-counting correlations across market, liquidity, activity and protocol metrics;
-- define versioned baseline/challenger lifecycle through the existing `ScoringModelRegistry` / `ScoringDispatcher` only;
-- preserve explicit missing/stale/not-computable semantics;
-- keep `CryptoOrchestrator` research/enrichment-only and `scoreEligible=false`;
-- no second scoring/evidence/dispatcher/orchestrator authority.
+These are **promotion blockers inside the existing architecture**. They are not justification for another dispatcher, registry, orchestrator or persistence authority.
 
 ## 12. Rollback
 
-Documentation/current-state normalization, regression guards and the fail-closed policy correction can be reverted by reverting the supersession PR. No production database rollback is required because this package performs no external mutation.
+All changes in this combined Supersession A+B package are repository code/document/test changes. `git revert` restores the prior state. Existing DeFi provider/evidence kill switches can additionally disable DeFiLlama acquisition. No production database, IAM, billing, secret or deployment rollback is required.
