@@ -56,7 +56,6 @@ describe('Meme/DeFi research model contracts 0.3.0', () => {
     expect(new Set(scaleActivity.map((feature) => feature.correlationGroup))).toEqual(new Set(['defi-scale-activity']));
 
     const groups = new Set(CRYPTO_DEFI_RESEARCH_MODEL_CONTRACT.features.map((feature) => feature.correlationGroup));
-    expect(groups).toEqual(expect.objectContaining ? groups : groups);
     expect(groups.has('defi-utilization')).toBe(true);
     expect(groups.has('defi-contract-security')).toBe(true);
     expect(groups.has('defi-oracle-integrity')).toBe(true);
