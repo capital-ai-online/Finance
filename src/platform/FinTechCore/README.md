@@ -5,7 +5,7 @@ Der `FinTechCore` ist die versionierte finanzielle Workflow-Composition-Schicht 
 ## Aktueller Implementierungsstand
 
 - Roadmap: `FT-CORE-CRYPTO-01`
-- Architekturentscheidung: `ADR-0099` (`proposed`)
+- Architekturentscheidung: `ADR-0099` (`accepted`)
 - Protected Scoring Authority: `ADR-0087`
 - erstes Modul: `fintech-core.crypto`
 - FT-1: Core Engine, Module Registry, deterministic Workflow State Machine
@@ -16,8 +16,9 @@ Der `FinTechCore` ist die versionierte finanzielle Workflow-Composition-Schicht 
 - FT-4: deterministic, replay-faehiges Paper Trading
 - FT-5: deterministic Pre-Trade Risk + Compliance Decisions
 - FT-6A: Decision-/Hash-Binding Foundation, gemergt mit PR #481
-- FT-6B: single canonical OrderIntent, gemeinsames Fixed Point, deterministic Approval Binding, typed Reconciliation und v2 Persistence Boundary
+- FT-6B: single canonical OrderIntent, gemeinsames Fixed Point, deterministic Approval Binding, typed Reconciliation und v2 Persistence Boundary, gemergt mit PR #483
 - reale Exchange-/Custody-Ausfuehrung: **nicht freigeschaltet**
+- FT-7 Guarded Live: **blockiert bis separate Architektur-/Security-Entscheidung**
 
 ## Authority Boundary
 
@@ -181,6 +182,24 @@ Post-Mutation-Verifikation:
 
 Der Security Advisor meldete nach der Mutation keine FT-6B-spezifische neue Schwachstelle. Bereits bestehende Advisor-Hinweise ausserhalb des FT-6B-Scopes bleiben separat zu behandeln.
 
+## Legacy Compatibility
+
+`server/fintechCorePersistence.ts` besitzt weiterhin einen v1-RPC-Pfad fuer `bindingState=UNBOUND`. Dieser Pfad ist **Legacy-/Research-Kompatibilitaet**, nicht die kanonische FT-6B-Persistenz fuer BOUND Intents.
+
+Kanonisch:
+
+```text
+BOUND -> fintech_core_append_order_intent_v2
+```
+
+Legacy:
+
+```text
+UNBOUND -> fintech_core_append_order_intent_v1
+```
+
+Eine physische Entfernung des v1-Pfads erfolgt erst nach Consumer-/Replay-/Bestandsdaten-Nachweis und gegebenenfalls separater Owner-Freigabe fuer die Persistence-/Security-Boundary.
+
 ## EventMesh
 
 FT-6B fuehrt keine spekulativen Event-Namen ein. Solange kein eindeutiger kanonischer FT-6 Event Catalog vorliegt, bleibt typed durable Reconciliation Evidence fuehrend. Ein Mismatch wird ueber `supervisorEscalationRequired=true` sichtbar gemacht.
@@ -196,14 +215,21 @@ FT-6B fuehrt keine spekulativen Event-Namen ein. Solange kein eindeutiger kanoni
 - `public.outbox_jobs` bleibt einzige Queue-/Lease-Authority.
 - Exchange-/Custody-/Wallet-Adapter, reales Settlement und Live-Routing bleiben FT-7+.
 
-## Closure Gates
+### Offener korrelierter Security-Befund
 
-Vor Merge von FT-6B bleiben erforderlich:
+Die Supersession `FINTECH-VALUE-CHAIN-SUPERSESSION-2026-08-22` hat eine stale future-capability Projektion in `FINTECH_CORE_OPERATING_MODE_POLICY` identifiziert. Der effektive FT-6B-Helper blockiert reale Execution bereits fail-closed. Eine Code-Normalisierung der Policy wird wegen der Security-/Execution-Relevanz erst nach expliziter Owner-Freigabe vorbereitet.
 
-1. aktueller Main-/Open-PR-Korrelationsabgleich;
-2. Draft/PR nach kanonischer Governance-Vorlage;
-3. Hosted TypeScript/Lint/Unit-/Architecture-/Governance-Checks erst nach PR-Erstellung;
-4. Auswertung und Behebung echter CI-Befunde;
-5. finaler Scope-/Authority-Review.
+## Current-State Closure
 
-`GUARDED_LIVE` und `PRODUCTION` bleiben trotz angewendeter Persistence-Migration blockiert und erfordern FT-7+ mit eigener Architektur-/Security-Entscheidung.
+FT-6B ist mit PR #483 auf `main` gemergt. Fruehere Angaben wie „PR pending“, „Branch implementiert“ oder „vor Merge erforderlich“ sind fuer den aktuellen Zustand superseded.
+
+Aktuell gilt:
+
+```text
+FT-0 ... FT-6B = DONE on main
+FT-7 = BLOCKED
+FT-8 = PLANNED
+FT-9 = PLANNED
+```
+
+Die separate Meme-Coin-/DeFi-Modell-Supersession beginnt erst nach Abschluss dieser Authority-/Legacy-Bereinigung gegen den dann aktuellen `main`.
