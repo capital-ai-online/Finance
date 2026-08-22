@@ -1,0 +1,247 @@
+import type { DevelopmentRecommendation, QuickWinDefinition, VerificationSkill } from './types';
+
+const qw = (id: string, title: string, outcome: string): QuickWinDefinition => ({
+  id,
+  title,
+  outcome,
+  effort: 'low',
+});
+
+const dev = (id: string, title: string, benefit: string): DevelopmentRecommendation => ({
+  id,
+  title,
+  benefit,
+  horizon: 'next',
+});
+
+export const skillCatalog: VerificationSkill[] = [
+  {
+    id: 'VERIFY-ARCHITECTURE', label: 'Architecture', component: 'Architecture', componentPaths: ['src/platform/Architecture', 'docs/architecture'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Topologie, Layering, Dependency- und Authority-Boundaries der Gesamtarchitektur.',
+    authorities: ['AGENTS.md', 'ESS-0001-CONTRACTS', 'docs/governance/authority-registry.json'],
+    focus: ['Layer- und Dependency-Richtung', 'parallele Architekturen', 'Trust- und Runtime-Boundaries'],
+    errorClassIds: ['EC-02', 'EC-03', 'EC-04', 'EC-10', 'EC-17', 'EC-19'],
+    vocabularyTerms: ['Architecture', 'Component', 'Dependency', 'Authority', 'ControlPlane', 'DataPlane', 'RuntimePath'],
+    quickWins: [qw('QW-ARCH-1', 'Dependency-Graph vervollständigen', 'Fehlende oder widersprüchliche Kanten werden sichtbar.'), qw('QW-ARCH-2', 'Authority-Dubletten markieren', 'Konkurrierende Sources of Truth werden früh blockiert.')],
+    developments: [dev('F-ARCH-1', 'Architecture-as-Code Validator', 'Automatisiert Layer-, Dependency- und Authority-Prüfungen.')],
+  },
+  {
+    id: 'VERIFY-PLATFORM-DIRECTOR', label: 'Platform Director', component: 'PlatformDirector', componentPaths: ['src/platform/PlatformDirector'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Decision Authority, Delegation und genehmigte Mutation Boundaries.', authorities: ['AGENTS.md', 'ESS-0003', 'ESS-0001-CONTRACTS'],
+    focus: ['Decision Authority', 'Supervisor-Handoffs', 'Approval Boundary'], errorClassIds: ['EC-02', 'EC-04', 'EC-10', 'EC-11', 'EC-17'],
+    vocabularyTerms: ['PlatformDirector', 'Decision', 'Approval', 'Recommendation', 'Delegation', 'Mutation'],
+    quickWins: [qw('QW-PD-1', 'Decision-Owner je Pfad ausweisen', 'Jede Entscheidung besitzt genau eine Authority.')], developments: [dev('F-PD-1', 'Decision Graph', 'Entscheidungen werden mit Evidence und Authority deterministisch rückverfolgbar.')],
+  },
+  {
+    id: 'VERIFY-SUPERVISOR', label: 'Supervisor', component: 'Supervisor', componentPaths: ['src/platform/Supervisor'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Aggregation, Recommendation, Escalation und Trennung von Empfehlung und Mutation.', authorities: ['AGENTS.md', 'ESS-0002', 'ESS-0003'],
+    focus: ['Recommendation vs. Decision', 'Escalation', 'Agent-/Orchestrator-Koordination'], errorClassIds: ['EC-02', 'EC-04', 'EC-10', 'EC-16', 'EC-17', 'EC-22'],
+    vocabularyTerms: ['Supervisor', 'Recommendation', 'Escalation', 'Finding', 'ApprovalRequest'],
+    quickWins: [qw('QW-SUP-1', 'Recommendation typisieren', 'Empfehlung und autorisierte Entscheidung sind technisch unterscheidbar.')], developments: [dev('F-SUP-1', 'Evidence Bundle Evaluation', 'Supervisor-Befunde erhalten standardisierte Evidenzpakete.')],
+  },
+  {
+    id: 'VERIFY-VERSION-MANAGER', label: 'Version Manager', component: 'VersionManager', componentPaths: ['src/platform/VersionManager'], priority: 'P1', executionProfile: 'standard',
+    scope: 'Component-, Platform-, Schema-, Dokument- und Release-Versionen.', authorities: ['AGENTS.md', 'ESS-0004', 'src/platform/VersionManager/manifest.json'],
+    focus: ['Version Authority', 'Lifecycle vs. Version Category', 'Release-Synchronität'], errorClassIds: ['EC-02', 'EC-07', 'EC-08', 'EC-10', 'EC-19'],
+    vocabularyTerms: ['Version', 'Revision', 'Lifecycle', 'Release', 'Deprecated', 'Archived', 'Superseded'],
+    quickWins: [qw('QW-VER-1', 'Versionsarten auf Authority mappen', 'Jede Versionsart erhält eine eindeutige Quelle.')], developments: [dev('F-VER-1', 'Cross-Artifact Drift Detector', 'Versionsdrift wird vor Release automatisch erkannt.')],
+  },
+  {
+    id: 'VERIFY-DOCUMENTARY', label: 'Documentary', component: 'Documentary', componentPaths: ['src/platform/Documentary', 'docs'], priority: 'P1', executionProfile: 'standard',
+    scope: 'Code↔Dokument-Synchronität, Provenance, Lifecycle, Supersession und Dokumenthygiene.', authorities: ['AGENTS.md', 'ESS-0001', 'ESS-0010', 'ESS-0012'],
+    focus: ['Status- und Event-Drift', 'Supersession', 'Provenance'], errorClassIds: ['EC-07', 'EC-08', 'EC-09', 'EC-10', 'EC-18', 'EC-19'],
+    vocabularyTerms: ['Document', 'Evidence', 'Provenance', 'Supersession', 'Suspension', 'Archive', 'Maintenance', 'Drift'],
+    quickWins: [qw('QW-DOC-1', 'Orphan-Dokumente inventarisieren', 'Nicht autoritative oder verwaiste Dokumente werden sichtbar.')], developments: [dev('F-DOC-1', 'Documentation Digital Twin', 'Dokumentzustand und Codezustand können deterministisch reconciliert werden.')],
+  },
+  {
+    id: 'VERIFY-KNOWLEDGE', label: 'Knowledge', component: 'Knowledge', componentPaths: ['src/platform/Knowledge'], priority: 'P2', executionProfile: 'standard',
+    scope: 'Knowledge Sources, Provenance, Freshness, Projektionen und Entity Identity.', authorities: ['ESS-0009', 'AGENTS.md'],
+    focus: ['Source Authority', 'Freshness', 'Knowledge-Dubletten'], errorClassIds: ['EC-02', 'EC-08', 'EC-09', 'EC-10', 'EC-18'],
+    vocabularyTerms: ['KnowledgeEntity', 'Fact', 'Source', 'Projection', 'Provenance', 'Freshness', 'Confidence'],
+    quickWins: [qw('QW-KNW-1', 'Knowledge ohne Source markieren', 'Nicht belegte Wissenseinträge werden isoliert.')], developments: [dev('F-KNW-1', 'Vocabulary-verknüpfter Knowledge Graph', 'Wissen nutzt stabile Concept IDs statt lose Strings.')],
+  },
+  {
+    id: 'VERIFY-DISCOVERY', label: 'Discovery', component: 'Discovery', componentPaths: ['src/platform/Discovery'], priority: 'P1', executionProfile: 'standard',
+    scope: 'Repository-, Component-, Contract-, API- und Artifact-Discovery.', authorities: ['ESS-0001', 'ESS-0010', 'AGENTS.md'],
+    focus: ['Coverage', 'Ignore Rules', 'Archive Leakage'], errorClassIds: ['EC-01', 'EC-08', 'EC-10', 'EC-18', 'EC-19'],
+    vocabularyTerms: ['Discovery', 'Scan', 'Artifact', 'Candidate', 'IgnoreRule', 'RepositoryState'],
+    quickWins: [qw('QW-DIS-1', 'Discovery Coverage Report', 'Nicht erfasste aktive Pfade werden sichtbar.')], developments: [dev('F-DIS-1', 'Incremental Discovery', 'Hash-basierte Scans reduzieren Laufzeit und Kosten.')],
+  },
+  {
+    id: 'VERIFY-REGISTRY', label: 'Registry', component: 'Registry', componentPaths: ['src/platform/Registry'], priority: 'P1', executionProfile: 'standard',
+    scope: 'Eindeutige IDs, Ownership, Lifecycle, Referenzen und Registry Authority.', authorities: ['ESS-0001-CONTRACTS', 'AGENTS.md'],
+    focus: ['Duplicate IDs', 'Orphans', 'Registry Authority'], errorClassIds: ['EC-01', 'EC-02', 'EC-10', 'EC-17', 'EC-18'],
+    vocabularyTerms: ['Registry', 'Entry', 'Identifier', 'Authority', 'Owner', 'Registration'],
+    quickWins: [qw('QW-REG-1', 'Duplicate-/Orphan-Scan', 'Registry-Kollisionen werden deterministisch erkannt.')], developments: [dev('F-REG-1', 'Enterprise Registry Resolver', 'Registries erhalten eine einheitliche read-only Auflösungsschicht.')],
+  },
+  {
+    id: 'VERIFY-SHARED', label: 'Shared', component: 'Shared', componentPaths: ['src/platform/Shared'], priority: 'P2', executionProfile: 'fast',
+    scope: 'Domänenneutrale Shared-Primitives und Dependency Hygiene.', authorities: ['ESS-0001-CONTRACTS'],
+    focus: ['Domain Leakage', 'Reverse Dependencies', 'Utility Duplication'], errorClassIds: ['EC-03', 'EC-04', 'EC-17', 'EC-18'],
+    vocabularyTerms: ['SharedPrimitive', 'Utility', 'CommonType', 'CrossCutting'], quickWins: [qw('QW-SHR-1', 'Fachliche Imports inventarisieren', 'Domänenlogik in Shared wird sichtbar.')], developments: [dev('F-SHR-1', 'Shared Dependency Guard', 'Compile-/Test-Gates verhindern Fachlogik in Shared.')],
+  },
+  {
+    id: 'VERIFY-CORE', label: 'Core', component: 'Core', componentPaths: ['src/platform/Core'], priority: 'P1', executionProfile: 'standard',
+    scope: 'Fundamentale Primitive, Abstraktionen und unterste Dependency-Schicht.', authorities: ['ESS-0001-CONTRACTS'],
+    focus: ['Reverse Dependencies', 'Primitive Scope', 'Layer Foundation'], errorClassIds: ['EC-03', 'EC-04', 'EC-17'],
+    vocabularyTerms: ['Core', 'Primitive', 'Foundation', 'RuntimePrimitive', 'BaseContract'], quickWins: [qw('QW-CORE-1', 'Reverse Dependencies markieren', 'Core-Abhängigkeiten auf höhere Layer werden blockierbar.')], developments: [dev('F-CORE-1', 'Layer Boundary Enforcement', 'Architecture Tests erzwingen die Dependency-Richtung.')],
+  },
+  {
+    id: 'VERIFY-CONTRACTS', label: 'Contracts', component: 'Contracts', componentPaths: ['src/platform/Contracts', 'docs/contracts'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Contract Ownership, Versionierung, Schema-Kompatibilität und Consumer Coverage.', authorities: ['ESS-0001-CONTRACTS', 'AGENTS.md'],
+    focus: ['Contract↔Implementation', 'Breaking Changes', 'Ownership'], errorClassIds: ['EC-02', 'EC-05', 'EC-07', 'EC-10', 'EC-13', 'EC-18'],
+    vocabularyTerms: ['Contract', 'Precondition', 'Postcondition', 'Invariant', 'Compatibility', 'BreakingChange'], quickWins: [qw('QW-CON-1', 'Contract Coverage Matrix', 'Contracts ohne Implementierung oder Tests werden sichtbar.')], developments: [dev('F-CON-1', 'Compatibility Gate', 'Breaking Changes werden vor Integration maschinenlesbar erkannt.')],
+  },
+  {
+    id: 'VERIFY-INTERFACES', label: 'Interfaces', component: 'Interfaces', componentPaths: ['src/platform/Interfaces'], priority: 'P1', executionProfile: 'standard',
+    scope: 'Public API Surface, Implementierungen, Consumer und Dependency Inversion.', authorities: ['ESS-0001-CONTRACTS'],
+    focus: ['Orphan Interfaces', 'Semantic Compatibility', 'Port/Adapter Boundaries'], errorClassIds: ['EC-03', 'EC-04', 'EC-05', 'EC-13', 'EC-18'],
+    vocabularyTerms: ['Interface', 'Port', 'Adapter', 'Implementation', 'Consumer'], quickWins: [qw('QW-INT-1', 'Orphan Interfaces inventarisieren', 'Unbenutzte oder nicht implementierte Interfaces werden sichtbar.')], developments: [dev('F-INT-1', 'Interface Compatibility Validator', 'API-Verträge werden automatisiert gegen Implementierungen geprüft.')],
+  },
+  {
+    id: 'VERIFY-MODELS', label: 'Models', component: 'Models', componentPaths: ['src/platform/Models', 'src/types', 'src/schemas'], priority: 'P1', executionProfile: 'standard',
+    scope: 'Domain Models, DTOs, Schemas, Enums, Status- und Lifecycle-Modelle.', authorities: ['ESS-0001-CONTRACTS', 'ESS-0017'],
+    focus: ['Semantic Duplicates', 'Schema Drift', 'Enum Drift'], errorClassIds: ['EC-05', 'EC-07', 'EC-09', 'EC-17', 'EC-18'],
+    vocabularyTerms: ['Entity', 'ValueObject', 'DTO', 'Schema', 'State', 'Status', 'Lifecycle'], quickWins: [qw('QW-MOD-1', 'Model Duplicate Matrix', 'Semantisch gleiche Modelle werden korreliert.')], developments: [dev('F-MOD-1', 'Canonical Model Registry', 'Stabile Modellidentitäten reduzieren Schema-Drift.')],
+  },
+  {
+    id: 'VERIFY-VALIDATORS', label: 'Validators', component: 'Validators', componentPaths: ['src/platform/Validators'], priority: 'P1', executionProfile: 'standard',
+    scope: 'Zuordnung von Validatoren zu aktiven Contracts und Governance Controls.', authorities: ['ESS-0005', 'ESS-0001-CONTRACTS'],
+    focus: ['Validator Authority', 'Coverage', 'Finding Codes'], errorClassIds: ['EC-05', 'EC-10', 'EC-13', 'EC-17', 'EC-18'],
+    vocabularyTerms: ['Validator', 'Rule', 'Violation', 'Severity', 'Gate'], quickWins: [qw('QW-VAL-1', 'Contract↔Validator Matrix', 'Nicht validierte Contracts werden sichtbar.')], developments: [dev('F-VAL-1', 'Unified Finding Codes', 'Alle Validatoren liefern stabile maschinenlesbare Befundcodes.')],
+  },
+  {
+    id: 'VERIFY-GENERATORS', label: 'Generators', component: 'Generators', componentPaths: ['src/platform/Generators'], priority: 'P2', executionProfile: 'fast',
+    scope: 'Deterministische Generierung, Templates, Inputs, Provenance und Versionierung.', authorities: ['ESS-0001-CONTRACTS', 'ESS-0012'],
+    focus: ['Generated vs. Canonical', 'Reproducibility', 'Template Authority'], errorClassIds: ['EC-02', 'EC-07', 'EC-08', 'EC-18'],
+    vocabularyTerms: ['Generator', 'Template', 'GeneratedArtifact', 'SourceTemplate'], quickWins: [qw('QW-GEN-1', 'Generated-Artefakte kennzeichnen', 'Generierte Projektionen werden nicht mit Authorities verwechselt.')], developments: [dev('F-GEN-1', 'Provenance Hashing', 'Generierung wird reproduzierbar und auditierbar.')],
+  },
+  {
+    id: 'VERIFY-PLUGINS', label: 'Plugins', component: 'Plugins', componentPaths: ['src/platform/Plugins'], priority: 'P1', executionProfile: 'standard',
+    scope: 'Plugin Boundaries, Capabilities, Permissions und Dependency Isolation.', authorities: ['ESS-0001-CONTRACTS', 'AGENTS.md'],
+    focus: ['Capability Scope', 'Permission Boundaries', 'Extension Authority'], errorClassIds: ['EC-03', 'EC-04', 'EC-11', 'EC-17', 'EC-21'],
+    vocabularyTerms: ['Plugin', 'Capability', 'Permission', 'ExtensionPoint', 'Adapter'], quickWins: [qw('QW-PLG-1', 'Capability/Permission Inventory', 'Überprivilegierte Plugins werden sichtbar.')], developments: [dev('F-PLG-1', 'Capability Sandbox', 'Plugins erhalten explizit begrenzte Ausführungsrechte.')],
+  },
+  {
+    id: 'VERIFY-EVENTS', label: 'Events', component: 'Events', componentPaths: ['src/platform/Events'], priority: 'P1', executionProfile: 'standard',
+    scope: 'Event Types, Compatibility-Verwendungen und Legacy-Eventnamen.', authorities: ['ESS-0013', 'ESS-0013-CONTRACTS'],
+    focus: ['Canonical Names', 'Legacy Events', 'Payload Contract'], errorClassIds: ['EC-05', 'EC-06', 'EC-09', 'EC-18', 'EC-19'],
+    vocabularyTerms: ['Event', 'EventType', 'Producer', 'Consumer', 'Payload'], quickWins: [qw('QW-EVT-1', 'Legacy Event Names inventarisieren', 'Nichtkanonische Eventnamen werden sichtbar.')], developments: [dev('F-EVT-1', 'EventMesh-only Resolution', 'Eventnamen werden ausschließlich über den kanonischen Katalog aufgelöst.')],
+  },
+  {
+    id: 'VERIFY-EVENT-MESH', label: 'Event Mesh', component: 'EventMesh', componentPaths: ['src/platform/EventMesh'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Event Catalog, Producer/Consumer Mapping, Versionierung und Delivery Semantics.', authorities: ['ESS-0013', 'ESS-0013-CONTRACTS', 'AGENTS.md'],
+    focus: ['Catalog Authority', 'Producer/Consumer Coverage', 'Delivery/Replay'], errorClassIds: ['EC-02', 'EC-05', 'EC-06', 'EC-10', 'EC-21', 'EC-22'],
+    vocabularyTerms: ['EventMesh', 'EventCatalog', 'Producer', 'Consumer', 'Replay', 'Delivery', 'EventContract'], quickWins: [qw('QW-MESH-1', 'Unregistrierte Producer/Consumer erkennen', 'Runtime-Eventdrift wird früh sichtbar.')], developments: [dev('F-MESH-1', 'Event Topology Digital Twin', 'Runtime- und deklarierte Eventtopologie werden automatisch abgeglichen.')],
+  },
+  {
+    id: 'VERIFY-TRACEABILITY', label: 'Traceability', component: 'Traceability', componentPaths: ['src/platform/Traceability', 'docs/traceability'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Requirement → Authority → Contract → Code → Test → Evidence.', authorities: ['ESS-0011', 'AGENTS.md'],
+    focus: ['Broken Links', 'Orphans', 'Evidence Coverage'], errorClassIds: ['EC-02', 'EC-08', 'EC-10', 'EC-13', 'EC-18'],
+    vocabularyTerms: ['Trace', 'Evidence', 'Requirement', 'Coverage', 'Orphan', 'Provenance'], quickWins: [qw('QW-TRC-1', 'Orphan Detector über alle Artefakte', 'Nicht rückverfolgbare Artefakte werden priorisierbar.')], developments: [dev('F-TRC-1', 'Enterprise Traceability Graph', 'Cross-Domain-Evidence wird navigierbar und maschinenprüfbar.')],
+  },
+  {
+    id: 'VERIFY-TELEMETRY', label: 'Telemetry', component: 'Telemetry', componentPaths: ['src/platform/Telemetry'], priority: 'P2', executionProfile: 'fast',
+    scope: 'Metriken, Logs, Traces, Cardinality, Datenschutz und Kosten.', authorities: ['ESS-0005', 'ESS-0006'],
+    focus: ['Signal Quality', 'PII', 'Cardinality/Cost'], errorClassIds: ['EC-11', 'EC-12', 'EC-14', 'EC-20'],
+    vocabularyTerms: ['Metric', 'Trace', 'Span', 'Log', 'Signal', 'Cardinality', 'SLI', 'SLO'], quickWins: [qw('QW-TEL-1', 'High-Cardinality Signale markieren', 'Telemetry-Kosten und Datenschutzrisiken sinken.')], developments: [dev('F-TEL-1', 'Component SLOs', 'Qualität und Kosten werden pro Komponente messbar.')],
+  },
+  {
+    id: 'VERIFY-QUALITY', label: 'Quality Center', component: 'Quality', componentPaths: ['src/platform/Quality'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Quality Gates, Finding-Semantik, Test Coverage und read-only Evaluation Authority.', authorities: ['ESS-0005', 'AGENTS.md'],
+    focus: ['Quality Authority', 'Gate Consistency', 'Evidence-only Measurement'], errorClassIds: ['EC-02', 'EC-05', 'EC-10', 'EC-13', 'EC-14', 'EC-17'],
+    vocabularyTerms: ['QualityGate', 'Finding', 'Severity', 'Score', 'Coverage'], quickWins: [qw('QW-QLT-1', 'Finding Codes vereinheitlichen', 'Quality-Ergebnisse werden stabil korrelierbar.')], developments: [dev('F-QLT-1', 'Skill Engine Verification Projection', 'Komponentenprüfungen werden als read-only Quality-Evidence standardisiert.')],
+  },
+  {
+    id: 'VERIFY-SECURITY', label: 'Security', component: 'Security', componentPaths: ['src/platform/Security', 'docs/security'], priority: 'P0', executionProfile: 'deep',
+    scope: 'AuthN, AuthZ, Secrets, Trust Boundaries, Supply Chain und Mutation Authorization.', authorities: ['ESS-0006', 'AGENTS.md'],
+    focus: ['Least Privilege', 'Mutation Approval', 'Secret/Identity Boundaries'], errorClassIds: ['EC-02', 'EC-04', 'EC-10', 'EC-11', 'EC-13', 'EC-21'],
+    vocabularyTerms: ['Authentication', 'Authorization', 'Secret', 'Principal', 'Permission', 'Mutation', 'TrustBoundary'], quickWins: [qw('QW-SEC-1', 'Mutation Paths inventarisieren', 'Unklare oder unautorisierte Mutationen werden P0-sichtbar.')], developments: [dev('F-SEC-1', 'Policy-as-Code Approval Scope', 'Administrationsfreigaben werden explizit, scoped und auditierbar.')],
+  },
+  {
+    id: 'VERIFY-COMPLIANCE', label: 'Compliance', component: 'Compliance', componentPaths: ['src/platform/Compliance', 'docs/compliance'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Policies, Datenschutz, Auditability, AI Transparency, Retention und Evidence.', authorities: ['ESS-0006', 'AGENTS.md'],
+    focus: ['Policy↔Control↔Evidence', 'PII/Retention', 'AI Transparency'], errorClassIds: ['EC-02', 'EC-10', 'EC-11', 'EC-12', 'EC-13'],
+    vocabularyTerms: ['Compliance', 'Policy', 'Evidence', 'Retention', 'Transparency', 'Auditability', 'DataSubject'], quickWins: [qw('QW-CMP-1', 'Policy-Control-Evidence Matrix', 'Regulatorische Lücken werden ohne neue Policy-Hierarchie sichtbar.')], developments: [dev('F-CMP-1', 'Continuous Compliance Evidence', 'Bestehende Controls erhalten kontinuierliche Nachweise.')],
+  },
+  {
+    id: 'VERIFY-RELEASE', label: 'Release', component: 'Release', componentPaths: ['src/platform/Release'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Release Authority, Promotion, Rollback, Version und Attestation.', authorities: ['ESS-0007', 'AGENTS.md'],
+    focus: ['Release Authority', 'Exact-SHA Promotion', 'Rollback'], errorClassIds: ['EC-02', 'EC-05', 'EC-07', 'EC-10', 'EC-11', 'EC-16'],
+    vocabularyTerms: ['Release', 'Deployment', 'Promotion', 'Rollback', 'Artifact', 'Environment'], quickWins: [qw('QW-REL-1', 'Release↔Commit↔Evidence Trace', 'Jede Promotion wird auf einen exakten Snapshot zurückgeführt.')], developments: [dev('F-REL-1', 'Release Attestations', 'Supply-Chain- und Release-Evidence werden deterministisch verbunden.')],
+  },
+  {
+    id: 'VERIFY-GOVERNANCE', label: 'Governance', component: 'Governance', componentPaths: ['src/platform/Governance', 'docs/governance'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Authority Registry, ADR/ESS Status, Supersession und Approval Rules.', authorities: ['AGENTS.md', 'docs/governance/authority-registry.json', 'docs/governance/control-catalog.json'],
+    focus: ['Stable Authority IDs', 'Supersession', 'Approval Boundary'], errorClassIds: ['EC-01', 'EC-02', 'EC-09', 'EC-10', 'EC-17', 'EC-19'],
+    vocabularyTerms: ['Governance', 'Authority', 'Decision', 'Policy', 'Approval', 'Supersession', 'Exception'], quickWins: [qw('QW-GOV-1', 'Aktive Authority Map', 'Konkurrierende oder historische Authorities werden getrennt.')], developments: [dev('F-GOV-1', 'Machine-readable Governance Resolver', 'Authority-Auflösung wird zentral und deterministisch.')],
+  },
+  {
+    id: 'VERIFY-VOCABULARY', label: 'Vocabulary', component: 'Vocabulary', componentPaths: ['src/platform/Vocabulary'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Concept IDs, DE/EN-Terms, Aliases, Forbidden Terms und Usage.', authorities: ['ESS-0017', 'ESS-0017-CONTRACTS', 'AGENTS.md'],
+    focus: ['Concept Identity', 'Alias Collision', 'Forbidden Terms'], errorClassIds: ['EC-02', 'EC-08', 'EC-09', 'EC-10', 'EC-17', 'EC-19'],
+    vocabularyTerms: ['VocabularyGovernance', 'CanonicalConcept', 'ConceptId', 'Alias', 'ForbiddenTerm', 'PreferredTerm'], quickWins: [qw('QW-VOC-1', 'Unknown-Term Inventory', 'Begriffe ohne kanonische Concept ID werden sichtbar.')], developments: [dev('F-VOC-1', 'Vocabulary Usage Linter', 'UI, Code und Dokumentation werden gegen dieselben Concepts validiert.')],
+  },
+  {
+    id: 'VERIFY-FINTECH-CORE', label: 'FinTech Core', component: 'FinTechCore', componentPaths: ['src/platform/FinTechCore'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Asset-Class Contracts, Category Profiles, Eligibility, Scoring und Ranking Boundaries.', authorities: ['AGENTS.md', 'ADR-0099', 'src/platform/FinTechCore/manifest.json'],
+    focus: ['Zero Interpolation', 'Scoring/Classification Contracts', 'Cross-Asset Reuse'], errorClassIds: ['EC-04', 'EC-05', 'EC-10', 'EC-13', 'EC-15', 'EC-16', 'EC-17'],
+    vocabularyTerms: ['Screening', 'AssetClass', 'Category', 'Eligibility', 'Score', 'Confidence', 'Ranking', 'Evidence', 'Pattern'], quickWins: [qw('QW-FTC-1', 'Scoring Contract Coverage', 'Jede Scoring-Stufe wird mit Contract und Evidence verbunden.')], developments: [dev('F-FTC-1', 'Multi-Asset Domain Contracts', 'Gemeinsame Basiskontrakte reduzieren assetklassenspezifische Doppelarchitektur.')],
+  },
+  {
+    id: 'VERIFY-MARKET-DATA', label: 'Market Data', component: 'MarketData', componentPaths: ['src/platform/MarketData', 'src/services'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Provider Provenance, Timestamps, Freshness, Symbol Mapping, Fallbacks und Missing Data.', authorities: ['AGENTS.md', 'src/platform/MarketData'],
+    focus: ['Real Data', 'Provider Provenance', 'Fallback Semantics'], errorClassIds: ['EC-05', 'EC-10', 'EC-13', 'EC-15', 'EC-20', 'EC-21'],
+    vocabularyTerms: ['MarketData', 'Provider', 'Quote', 'Candle', 'Timestamp', 'Freshness', 'MissingData', 'Provenance'], quickWins: [qw('QW-MKT-1', 'Provider/Fallback Inventory', 'Stille Fallbacks und ungeklärte Datenquellen werden sichtbar.')], developments: [dev('F-MKT-1', 'Evidence Envelope', 'Provider-unabhängige Provenance begleitet jeden kritischen Datensatz.')],
+  },
+  {
+    id: 'VERIFY-BRANDING', label: 'Branding', component: 'Branding', componentPaths: ['src/platform/Branding', 'src/components'], priority: 'P2', executionProfile: 'fast',
+    scope: 'Design Tokens, Typografie, Logo, Naming, Disclaimer und Design Authority.', authorities: ['src/platform/Branding', 'ESS-0017'],
+    focus: ['Design Token Authority', 'Legacy Branding', 'UI Wording'], errorClassIds: ['EC-02', 'EC-08', 'EC-09', 'EC-17', 'EC-19'],
+    vocabularyTerms: ['Brand', 'DesignToken', 'Heading', 'Badge', 'Disclaimer', 'ProductName'], quickWins: [qw('QW-BRD-1', 'Legacy Token Inventory', 'Alte Farb-/Brandingquellen werden identifiziert.')], developments: [dev('F-BRD-1', 'Canonical Brand Tokens', 'Designwerte werden als Single Source of Truth bereitgestellt.')],
+  },
+  {
+    id: 'VERIFY-ORCHESTRATORS', label: 'Orchestrators', component: 'Orchestrators', componentPaths: ['src/orchestrator', 'server/orchestrator.ts', 'src/lib/requestOrchestrator.ts'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Dispatcher → Orchestrator → Agent/Service → Evidence → Result.', authorities: ['ESS-0008', 'AGENTS.md', 'docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md'],
+    focus: ['Routing Authority', 'Duplicate Pipelines', 'Cross-Asset Boundaries'], errorClassIds: ['EC-03', 'EC-04', 'EC-05', 'EC-16', 'EC-17', 'EC-21', 'EC-22'],
+    vocabularyTerms: ['Dispatcher', 'Orchestrator', 'ScoringEngine', 'Pipeline', 'Stage', 'Classification', 'Ranking'], quickWins: [qw('QW-ORC-1', 'Runtime Call Graph', 'Doppelte Routing- und Orchestratorpfade werden sichtbar.')], developments: [dev('F-ORC-1', 'Contracted Multi-Asset Dispatch', 'Ein Dispatcher kann domänenspezifische Orchestratoren ohne Doppelrouting bedienen.')],
+  },
+  {
+    id: 'VERIFY-AGENTS', label: 'Agents', component: 'Agents', componentPaths: ['src/agents'], priority: 'P1', executionProfile: 'deep',
+    scope: 'Agent Inputs/Outputs, Capability, Tool-Nutzung, Determinismus und Supervisor Integration.', authorities: ['ESS-0008', 'AGENTS.md'],
+    focus: ['Capability Scope', 'Mutation Rights', 'Reproducibility'], errorClassIds: ['EC-01', 'EC-04', 'EC-05', 'EC-10', 'EC-11', 'EC-16', 'EC-21'],
+    vocabularyTerms: ['Agent', 'Capability', 'Tool', 'Recommendation', 'Action', 'Mutation'], quickWins: [qw('QW-AGT-1', 'Agent Capability Matrix', 'Tools, Inputs, Outputs und Rechte werden pro Agent sichtbar.')], developments: [dev('F-AGT-1', 'Capability Registry', 'Supervisor-kontrollierte Ausführung kann auf stabile Capabilities zugreifen.')],
+  },
+  {
+    id: 'VERIFY-API-RUNTIME', label: 'API Runtime', component: 'APIRuntime', componentPaths: ['server', 'server.application.ts', 'src/routes'], priority: 'P0', executionProfile: 'deep',
+    scope: 'API-Routen, Auth, Validation, Error Mapping, Rate Limits und Service Boundaries.', authorities: ['AGENTS.md', 'docs/architecture/api/API_INTERFACE_INVENTORY.md'],
+    focus: ['Route↔Contract', 'AuthZ', 'Error/Rate-limit Semantics'], errorClassIds: ['EC-04', 'EC-05', 'EC-10', 'EC-11', 'EC-13', 'EC-16', 'EC-21'],
+    vocabularyTerms: ['API', 'Route', 'Handler', 'Request', 'Response', 'RateLimit', 'ErrorContract'], quickWins: [qw('QW-API-1', 'Route↔Handler↔Contract Inventory', 'Ungeschützte oder nicht dokumentierte APIs werden sichtbar.')], developments: [dev('F-API-1', 'Contract Tests pro Route', 'API-Kompatibilität wird automatisiert nachweisbar.')],
+  },
+  {
+    id: 'VERIFY-FRONTEND', label: 'Frontend', component: 'Frontend', componentPaths: ['src/components'], priority: 'P1', executionProfile: 'standard',
+    scope: 'UI-Komponenten, Routes, State, API Contracts, Wording und No-Demo-Data Darstellung.', authorities: ['AGENTS.md', 'ESS-0017'],
+    focus: ['UI Contract Drift', 'Vocabulary Usage', 'Synthetic Display Data'], errorClassIds: ['EC-05', 'EC-08', 'EC-09', 'EC-13', 'EC-15', 'EC-17', 'EC-22'],
+    vocabularyTerms: ['UserInterface', 'Component', 'MessageKey', 'DesignToken', 'Screening', 'Subscription'], quickWins: [qw('QW-FE-1', 'Hardcoded Terms gegen Vocabulary prüfen', 'UI-Wording wird auf Concept IDs rückführbar.')], developments: [dev('F-FE-1', 'UI Message Catalog', 'Stabile Message Keys verbinden UI-Texte mit Vocabulary Concepts.')],
+  },
+  {
+    id: 'VERIFY-DATA-PERSISTENCE', label: 'Data Persistence', component: 'DataPersistence', componentPaths: ['supabase', 'sql'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Schemas, Migrationen, RLS, Ownership, Retention und Referential Integrity.', authorities: ['AGENTS.md', 'ESS-0006'],
+    focus: ['RLS/AuthZ', 'Migration Order', 'Schema↔Model Drift'], errorClassIds: ['EC-05', 'EC-07', 'EC-10', 'EC-11', 'EC-12', 'EC-15', 'EC-22'],
+    vocabularyTerms: ['Database', 'Migration', 'RowLevelSecurity', 'Retention', 'ReferentialIntegrity', 'Owner'], quickWins: [qw('QW-DB-1', 'Schema↔Application Drift Report', 'Persistenz und Anwendungstypen werden korreliert.')], developments: [dev('F-DB-1', 'Database Contract Registry', 'Migrationen und Runtime-Modelle erhalten stabile Contracts.')],
+  },
+  {
+    id: 'VERIFY-PROVIDERS', label: 'Providers', component: 'Providers', componentPaths: ['src/services', 'server'], priority: 'P0', executionProfile: 'deep',
+    scope: 'Externe Market-, AI-, Analytics-, Billing- und Infrastrukturprovider.', authorities: ['AGENTS.md'],
+    focus: ['Capabilities/Cost', 'Credentials', 'Fallback/Failure Modes'], errorClassIds: ['EC-05', 'EC-11', 'EC-12', 'EC-15', 'EC-20', 'EC-21'],
+    vocabularyTerms: ['Provider', 'Capability', 'Credential', 'RateLimit', 'Fallback', 'Provenance', 'Cost'], quickWins: [qw('QW-PRV-1', 'Provider Capability/Cost Matrix', 'Doppelte Providerpfade und unnötige Kosten werden sichtbar.')], developments: [dev('F-PRV-1', 'Provider Adapter Contract', 'Provider können ohne Änderung fachlicher Contracts ausgetauscht werden.')],
+  },
+  {
+    id: 'VERIFY-DEPLOYMENT', label: 'Deployment', component: 'Deployment', componentPaths: ['.github/workflows', 'render.yaml', 'Dockerfile'], priority: 'P0', executionProfile: 'deep',
+    scope: 'GitHub Actions, Build/Test, Secrets, Environment Mapping und Deployment Authority.', authorities: ['AGENTS.md', 'ESS-0007'],
+    focus: ['Exact-SHA Deployment', 'Secrets', 'Required Checks/Cost'], errorClassIds: ['EC-02', 'EC-07', 'EC-10', 'EC-11', 'EC-13', 'EC-16', 'EC-20', 'EC-21'],
+    vocabularyTerms: ['Deployment', 'Pipeline', 'Workflow', 'Environment', 'Secret', 'Attestation', 'Rollback'], quickWins: [qw('QW-DEP-1', 'Deployment Path Inventory', 'Alle produktionswirksamen Pfade werden auf eine Authority zurückgeführt.')], developments: [dev('F-DEP-1', 'Environment Drift Detection', 'Konfiguration und Deployment-State werden vor Promotion abgeglichen.')],
+  },
+];
+
+export const skillById = new Map(skillCatalog.map((entry) => [entry.id, entry]));
