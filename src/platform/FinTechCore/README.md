@@ -14,6 +14,8 @@ Der `FinTechCore` ist die versionierte finanzielle Workflow-Composition-Schicht 
 - FT-3: private durable Workflow-/Event-/Decision-/OrderIntent-Persistenz sowie service-role-only Application Boundary
 - FT-4: deterministic, durable/replay-faehiges Paper Trading mit explizit simulierten Balances und Cost Evidence
 - FT-5: deterministic Pre-Trade Risk + Compliance Decisions mit versionierter Policy-/Authority-Bindung
+- FT-6A: PAPER-only Decision-Hash-Bindung an immutable OrderIntent, Idempotency/Client-Order-ID und typed Reconciliation
+- DeFiLlama: read-only DeFi-Evidence-Vorarbeit; keine direkte Score-/Order-Authority
 - keine reale Exchange-/Custody-Ausfuehrung
 
 ## Authority Boundary
@@ -176,23 +178,72 @@ PRE_TRADE_RISK_GATE
 PRE_TRADE_COMPLIANCE_GATE
 ```
 
-Input-/Output-Hashes bleiben Infrastrukturverantwortung; der Domain-Layer erzeugt keine zweite Hashing-Authority.
+Input-/Output-Hashes bleiben auditierbare, append-only Evidence.
 
-### OrderIntent bleibt FT-6
+## FT-6A OrderIntent Decision Binding & Reconciliation
 
-FT-5 bindet seine Entscheidungen **nicht** in ein execution-eligible `OrderIntent`. Der Contract erzwingt deshalb fuer jedes FT-5-Ergebnis:
+FT-6A implementiert die Kontrollschicht zwischen FT-5 und einer spaeteren, separat autorisierten Execution-Schicht.
+
+```text
+approved FT-5 Risk Decision
+  + approved FT-5 Compliance Decision
+  + exact Run/Trace/Correlation/Asset/Decision identity
+  + decision output hashes
+      ↓
+FinTechCoreBoundOrderIntent
+      ↓
+intentHash + idempotencyKey + clientOrderId + TTL + price/quantity/slippage bounds
+      ↓
+append-only private persistence
+      ↓
+Decision ↔ OrderIntent reconciliation
+```
+
+### Bindungsregeln
+
+`OrderIntent/OrderIntentBinding.ts` akzeptiert nur:
+
+- `PAPER` Operating Mode;
+- `PRE_TRADE_RISK_GATE = APPROVED`;
+- `PRE_TRADE_COMPLIANCE_GATE = APPROVED`;
+- identische `runId`, `traceId`, `correlationId`, `moduleId`, `assetId`, `decisionVersion`;
+- vorhandene Decision Output Hashes;
+- positive Quantity;
+- gueltige Price-/Slippage-Bounds;
+- `expiresAt > createdAt`;
+- Intent Creation nach den referenzierten Decisions.
+
+`riskApproval` und `complianceApproval` werden **nicht vom Aufrufer gesetzt**, sondern aus den Decision Records abgeleitet. Risk-/Compliance-Decision-ID, Output Hash, Policy-Version, Workflow-Identitaet, Bounds und Evidence werden in den deterministischen SHA-256 `intentHash` gebunden.
+
+Der Contract liefert weiterhin:
 
 ```text
 executionHandoffEligible = false
 ```
 
-Das gilt auch fuer manuell konstruierte `GUARDED_LIVE`-/`PRODUCTION`-Kontexte. Die Bindung von Risk-/Compliance-Decision-Hashes und Policy-Versionen an einen immutable OrderIntent, dessen TTL/Bounds/Idempotency sowie Reconciliation gehoeren vollstaendig zu FT-6.
+Damit kann FT-6A keinen realen Trade autorisieren.
 
-Crypto Module 01 unterstuetzt durch FT-5 weiterhin nur `RESEARCH` und `PAPER`.
+### Reconciliation
 
-### OSS-/Policy-Engine-Entscheidung
+`Reconciliation/ReconciliationContracts.ts` validiert bei Replay erneut:
 
-OPA und Cedar wurden als etablierte Apache-2.0 Policy-Engines bewertet. Beide sind fuer komplexe zentrale Policy-as-Code-Szenarien geeignet. FT-5 integriert sie nicht, weil der aktuelle Scope nur eine kleine typed Evaluation extern versionierter Policy-Snapshots benoetigt und eine zusaetzliche Policy-Runtime/DSL eine neue Authority-/Dependency-Oberflaeche erzeugen wuerde.
+- Decision Types und Outcomes;
+- Workflow-/Asset-Identitaet;
+- Decision IDs;
+- Decision Output Hashes;
+- abgeleitete Approval States.
+
+Ein Drift oder Tampering wird `MISMATCH` und nie automatisch repariert/promoviert. Die implementierte Reconciliation behauptet weder Settlement-Finality noch reale Execution.
+
+### Private Persistenz
+
+Die Branch-Migration `20260822002500_fintech_core_ft6_order_intent_reconciliation.sql` erweitert die vorhandene FT-3-Struktur um Decision-Binding-Felder, `client_order_id`, Foreign Keys zu append-only Decision Records sowie service-role-only `SECURITY INVOKER` RPCs.
+
+**Die Migration ist in diesem Branch vorbereitet, aber nicht produktiv angewendet.**
+
+## Drive-Quelle und Data Quality
+
+Die Drive-Referenz `FinTech Enterprise Orchestration Modell_1881859777413601727.pdf` wird als Architektur-/Best-Practice-Input verwendet, nicht als neue Runtime-Authority. Insbesondere der dort beispielhaft genannte DQ-Schwellenwert `0.80` wird nicht global hardcodiert. Fuehrend bleiben die bestehenden `MarketEvidenceQualityRecord`-Semantiken und extern versionierten Risk-/Feature-Policies.
 
 ## Workflow-State-Machine
 
@@ -209,16 +260,26 @@ CREATED
 ## Security / Data Integrity
 
 - Module Topology ist zur Laufzeit nicht mutierbar.
-- Crypto Module 01 unterstuetzt auch nach FT-5 nur `RESEARCH` und `PAPER`.
+- Crypto Module 01 unterstuetzt in FT-6A weiterhin nur `RESEARCH` und `PAPER`; OrderIntent Binding selbst ist PAPER-only.
 - Missing/Stale/Mismatched-Authority Evidence wird nicht synthetisch ergaenzt.
 - Pattern Evidence bleibt nicht-authorizing.
-- Paper Trading erzeugt keinen echten execution-authorizing OrderIntent-Handoff.
-- FT-5 erzeugt ausschließlich Decisions; `executionHandoffEligible` bleibt compile-time `false`.
-- Risk-/Compliance-Freigaben sind deterministisch; LLM-/Agent-Output kann sie nicht erteilen.
-- Compliance Requirements und Authority-Bindings kommen aus versionierten externen Policy-Snapshots.
+- Paper Trading verwendet kein reales Kapital.
+- FT-5 Freigaben sind deterministisch; LLM-/Agent-Output kann sie nicht erteilen.
+- FT-6 Approval States werden aus append-only Decision Records abgeleitet und hash-gebunden.
+- Intent-/Idempotency-/Client-Order-ID-Kollisionen sind fail-closed.
+- Reconciliation-Mismatch bleibt sichtbare Evidence.
 - Service-role RPCs oeffnen das private Finanzschema nicht fuer Browserrollen.
-- Side-effecting Live-Aktionen bleiben bis FT-6/FT-7 unverdrahtet.
+- `public.outbox_jobs` bleibt die einzige Queue-/Lease-Authority.
+- Side-effecting Live-Aktionen, Exchange-/Custody-/Wallet-Adapter und Settlement-Finality bleiben unverdrahtet.
 
-## Naechster Roadmap-Block
+## Naechste Roadmap-Schritte
 
-Nach FT-5 folgt **FT-6 OrderIntent & Reconciliation**. Guarded Live und Production bleiben weiterhin blockiert.
+FT-6A ist auf dem Branch implementiert. Vor Abschluss von FT-6 bleiben:
+
+1. Hosted CI/Governance fuer den finalen Branch-Snapshot;
+2. separat autorisierte Anwendung/Verification der FT-6 SQL-Migration;
+3. `ORDER_INTENT_PAPER_FILL` Reconciliation gegen Paper-Replay;
+4. Crash-/Duplicate-/Replay-Verifikation der DB-RPCs;
+5. 24-Asset Crypto Universe Availability-/Evidence-Admittance-Nachweis auf der bestehenden SC-2/Universe-SLA-Kette.
+
+`GUARDED_LIVE` und `PRODUCTION` bleiben FT-7+ und sind nicht durch FT-6A freigeschaltet.
