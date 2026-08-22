@@ -34,6 +34,12 @@ export interface NewsApiEvidenceProviderOptions {
   readonly baseUrl?: string;
 }
 
+function validApiKey(value: string | null | undefined): string | null {
+  const candidate = value?.trim() ?? '';
+  if (!candidate || candidate.startsWith('MY_') || candidate.toLowerCase().includes('test') || candidate.length <= 5) return null;
+  return candidate;
+}
+
 function failure(
   status: NewsApiEvidenceStatus,
   query: string,
@@ -79,7 +85,7 @@ export class NewsApiEvidenceProvider {
     const env = options.env ?? process.env;
     const transport: ResearchEvidenceProviderHttpOptions = {
       baseUrl: options.baseUrl ?? NEWS_API_BASE_URL,
-      apiKey: options.apiKey ?? env.NEWS_API_KEY ?? null,
+      apiKey: validApiKey(options.apiKey ?? env.NEWS_API_KEY),
       fetchImpl: options.fetchImpl,
       timeoutMs: options.timeoutMs,
       nowMs: options.nowMs,
