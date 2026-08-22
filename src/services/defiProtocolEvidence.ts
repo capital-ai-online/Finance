@@ -19,11 +19,12 @@ import {
 } from '../platform/FinTechCore/Modules/Crypto/Adapters/DefiLlamaProtocolFeatureAdapter';
 import type { CryptoFeatureEvidence } from '../platform/FinTechCore/Modules/Crypto/CryptoCategoryFeatureContracts';
 
-export const DEFI_PROTOCOL_EVIDENCE_CONTRACT_VERSION = 'defi-protocol-evidence/1.0.0' as const;
+export const DEFI_PROTOCOL_EVIDENCE_CONTRACT_VERSION = 'defi-protocol-evidence/1.1.0' as const;
 
 export type DefiProtocolEvidenceStatus =
   | 'READY'
   | 'PARTIAL'
+  | 'STALE'
   | 'UNSUPPORTED_ASSET'
   | 'SOURCE_UNAVAILABLE'
   | 'DISABLED';
@@ -80,6 +81,23 @@ function unavailableResult(
 }
 
 /**
+ * Derives the service-level state without treating stale evidence as verified/admissible.
+ * READY therefore means every emitted feature is VERIFIED. STALE is explicit and never aliases
+ * READY/PARTIAL verified coverage; mixed verified+nonverified evidence is PARTIAL.
+ */
+export function deriveDefiProtocolEvidenceStatus(
+  evidence: readonly CryptoFeatureEvidence[],
+): DefiProtocolEvidenceStatus {
+  if (evidence.length === 0) return 'SOURCE_UNAVAILABLE';
+  const verifiedCount = evidence.filter((item) => item.status === 'VERIFIED').length;
+  const staleCount = evidence.filter((item) => item.status === 'STALE').length;
+  if (verifiedCount === evidence.length) return 'READY';
+  if (verifiedCount > 0) return 'PARTIAL';
+  if (staleCount > 0) return 'STALE';
+  return 'SOURCE_UNAVAILABLE';
+}
+
+/**
  * Fetches DeFiLlama TVL/fees/revenue evidence for one registry symbol and maps it onto
  * `CryptoFeatureEvidence` for `protocol.tvlUsd`/`protocol.feesUsd`/`protocol.revenueUsd`.
  * Never invents a value: an unmapped symbol, a disabled flag, or an unavailable upstream all
@@ -113,13 +131,9 @@ export async function fetchDefiProtocolEvidence(
     ...adaptDefiLlamaFeesToFeatureEvidence(feesResult),
   ]);
 
-  const usableCount = evidence.filter((item) => item.status === 'VERIFIED' || item.status === 'STALE').length;
-  const status: DefiProtocolEvidenceStatus =
-    usableCount === 0 ? 'SOURCE_UNAVAILABLE' : usableCount === evidence.length ? 'READY' : 'PARTIAL';
-
   return {
     contractVersion: DEFI_PROTOCOL_EVIDENCE_CONTRACT_VERSION,
-    status,
+    status: deriveDefiProtocolEvidenceStatus(evidence),
     symbol,
     slug,
     evidence,
