@@ -62,6 +62,38 @@ export type FinTechCoreOrderIntentBindingResult =
       executionHandoffEligible: false;
     }>;
 
+export interface FinTechCoreOrderIntentIntegritySource {
+  readonly orderIntentId: string;
+  readonly runId: string;
+  readonly traceId: string;
+  readonly correlationId: string;
+  readonly assetId: string;
+  readonly strategyId?: string;
+  readonly portfolioId?: string;
+  readonly decisionVersion: string;
+  readonly side: FinTechCoreOrderIntent['side'];
+  readonly quantity: FinTechCoreFixedPoint;
+  readonly orderType: FinTechCoreOrderIntent['orderType'];
+  readonly priceBounds: FinTechCoreOrderPriceBounds;
+  readonly maxSlippageBps: number;
+  readonly createdAt: string;
+  readonly expiresAt: string;
+  readonly riskDecisionId: string;
+  readonly riskDecisionHash: string;
+  readonly riskPolicyId: string;
+  readonly riskPolicyVersion: string;
+  readonly complianceDecisionId: string;
+  readonly complianceDecisionHash: string;
+  readonly compliancePolicyId: string;
+  readonly compliancePolicyVersion: string;
+}
+
+export interface FinTechCoreOrderIntentIntegrity {
+  readonly idempotencyKey: string;
+  readonly clientOrderId: string;
+  readonly intentHash: string;
+}
+
 function deny(
   code: FinTechCoreOrderIntentBindingFailureCode,
   reason: string,
@@ -161,6 +193,57 @@ function normalizePriceBounds(
   return normalized;
 }
 
+function immutableExecutionPayload(source: FinTechCoreOrderIntentIntegritySource): Readonly<Record<string, unknown>> {
+  return Object.freeze({
+    orderIntentContractVersion: FINTECH_CORE_ORDER_INTENT_CONTRACT_VERSION,
+    bindingVersion: FINTECH_CORE_ORDER_INTENT_BINDING_VERSION,
+    contractVersion: FINTECH_CORE_CONTRACT_VERSION,
+    orderIntentId: source.orderIntentId,
+    runId: source.runId,
+    traceId: source.traceId,
+    correlationId: source.correlationId,
+    assetId: source.assetId,
+    strategyId: source.strategyId ?? null,
+    portfolioId: source.portfolioId ?? null,
+    decisionVersion: source.decisionVersion,
+    side: source.side,
+    quantity: source.quantity,
+    orderType: source.orderType,
+    priceBounds: source.priceBounds,
+    maxSlippageBps: source.maxSlippageBps,
+    createdAt: source.createdAt,
+    expiresAt: source.expiresAt,
+    riskDecisionId: source.riskDecisionId,
+    riskDecisionHash: source.riskDecisionHash,
+    riskPolicyId: source.riskPolicyId,
+    riskPolicyVersion: source.riskPolicyVersion,
+    complianceDecisionId: source.complianceDecisionId,
+    complianceDecisionHash: source.complianceDecisionHash,
+    compliancePolicyId: source.compliancePolicyId,
+    compliancePolicyVersion: source.compliancePolicyVersion,
+  });
+}
+
+/** Deterministically reproduces all replay identities and the immutable intent hash. */
+export function deriveOrderIntentIntegrity(
+  source: FinTechCoreOrderIntentIntegritySource,
+): FinTechCoreOrderIntentIntegrity {
+  const payload = immutableExecutionPayload(source);
+  const idempotencyKey = sha256({
+    purpose: 'FINTECH_CORE_ORDER_INTENT_IDEMPOTENCY',
+    payload,
+  });
+  const clientOrderHash = sha256({
+    purpose: 'FINTECH_CORE_CLIENT_ORDER_ID',
+    orderIntentId: source.orderIntentId,
+    runId: source.runId,
+    assetId: source.assetId,
+  });
+  const clientOrderId = `cai_${clientOrderHash.slice('sha256:'.length, 'sha256:'.length + 32)}`;
+  const intentHash = sha256({ ...payload, clientOrderId, idempotencyKey });
+  return Object.freeze({ idempotencyKey, clientOrderId, intentHash });
+}
+
 export function isOrderIntentExpired(intent: FinTechCoreOrderIntent, observedAt: string): boolean {
   if (!isIsoTimestamp(observedAt) || !isIsoTimestamp(intent.expiresAt)) return true;
   return Date.parse(observedAt) >= Date.parse(intent.expiresAt);
@@ -185,7 +268,6 @@ export function bindApprovedOrderIntent(
       `FT-6 OrderIntent binding is PAPER-only; received ${context.operatingMode}.`,
     );
   }
-
   if (riskDecision.decisionType !== FINTECH_CORE_RISK_DECISION_TYPE) {
     return deny('RISK_DECISION_TYPE_MISMATCH', 'Risk decision type is not PRE_TRADE_RISK_GATE.');
   }
@@ -265,17 +347,14 @@ export function bindApprovedOrderIntent(
     `decision://${complianceDecision.decisionId}`,
   ]);
 
-  const immutableExecutionPayload = Object.freeze({
-    orderIntentContractVersion: FINTECH_CORE_ORDER_INTENT_CONTRACT_VERSION,
-    bindingVersion: FINTECH_CORE_ORDER_INTENT_BINDING_VERSION,
-    contractVersion: FINTECH_CORE_CONTRACT_VERSION,
+  const integritySource: FinTechCoreOrderIntentIntegritySource = Object.freeze({
     orderIntentId: input.orderIntentId,
     runId: context.runId,
     traceId: context.traceId,
     correlationId: context.correlationId,
     assetId: context.asset.assetId,
-    strategyId: context.strategyId ?? null,
-    portfolioId: context.portfolioId ?? null,
+    strategyId: context.strategyId,
+    portfolioId: context.portfolioId,
     decisionVersion: context.decisionVersion,
     side: input.side,
     quantity,
@@ -293,24 +372,7 @@ export function bindApprovedOrderIntent(
     compliancePolicyId: complianceDecision.policyId,
     compliancePolicyVersion: complianceDecision.policyVersion,
   });
-
-  const idempotencyKey = sha256({
-    purpose: 'FINTECH_CORE_ORDER_INTENT_IDEMPOTENCY',
-    payload: immutableExecutionPayload,
-  });
-  const clientOrderHash = sha256({
-    purpose: 'FINTECH_CORE_CLIENT_ORDER_ID',
-    orderIntentId: input.orderIntentId,
-    runId: context.runId,
-    assetId: context.asset.assetId,
-  });
-  const clientOrderId = `cai_${clientOrderHash.slice('sha256:'.length, 'sha256:'.length + 32)}`;
-
-  const intentHash = sha256({
-    ...immutableExecutionPayload,
-    clientOrderId,
-    idempotencyKey,
-  });
+  const integrity = deriveOrderIntentIntegrity(integritySource);
 
   const intent: FinTechCoreOrderIntent = Object.freeze({
     contractVersion: FINTECH_CORE_CONTRACT_VERSION,
@@ -318,11 +380,11 @@ export function bindApprovedOrderIntent(
     bindingState: 'BOUND',
     bindingVersion: FINTECH_CORE_ORDER_INTENT_BINDING_VERSION,
     orderIntentId: input.orderIntentId,
-    clientOrderId,
+    clientOrderId: integrity.clientOrderId,
     runId: context.runId,
     traceId: context.traceId,
     correlationId: context.correlationId,
-    idempotencyKey,
+    idempotencyKey: integrity.idempotencyKey,
     assetId: context.asset.assetId,
     side: input.side,
     quantity,
@@ -344,7 +406,7 @@ export function bindApprovedOrderIntent(
     compliancePolicyVersion: complianceDecision.policyVersion,
     createdAt: input.createdAt,
     expiresAt: input.expiresAt,
-    intentHash,
+    intentHash: integrity.intentHash,
     effectClass: 'SIDE_EFFECTING',
   });
 
