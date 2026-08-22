@@ -21,6 +21,7 @@ describe('SC-2 Phase C3 global Single-Dispatcher invariant', () => {
   const compatibilityRoutes = source('server/routes/legacyScoringCompatibilityRoutes.ts');
   const compatibilityExecutable = executableSource(compatibilityRoutes);
   const routeComposition = source('server/routes/registerApplicationRoutes.ts');
+  const applicationComposition = source('server.application.ts');
   const marketDataAdapter = source('server/marketData/canonicalCryptoScoreEnrichment.ts');
   const marketDataRuntime = source('server/marketData/createApplicationMarketDataRuntime.ts');
 
@@ -41,6 +42,20 @@ describe('SC-2 Phase C3 global Single-Dispatcher invariant', () => {
     expect(compatibilityExecutable).not.toContain('MemeCoinScoringService');
     expect(compatibilityExecutable).not.toContain('return next()');
     expect(routeComposition).toContain('Standard- and Meme-Crypto terminate at the canonical dispatcher');
+  });
+
+  it('mounts canonical compatibility routing before shadowed composition-root Crypto handlers', () => {
+    const canonicalMount = applicationComposition.indexOf(
+      'registerApplicationRoutes(app, { ai, anthropic, openai });',
+    );
+    const legacyGet = applicationComposition.indexOf("app.get('/api/crypto-scoring/:symbol'");
+    const legacyPost = applicationComposition.indexOf("app.post('/api/crypto-scoring/:symbol'");
+
+    expect(canonicalMount).toBeGreaterThanOrEqual(0);
+    expect(legacyGet).toBeGreaterThan(canonicalMount);
+    expect(legacyPost).toBeGreaterThan(canonicalMount);
+    expect(routeComposition.indexOf('app.use(createLegacyScoringCompatibilityRouter());'))
+      .toBeGreaterThanOrEqual(0);
   });
 
   it('intercepts every scorable market-data class before legacy composition-root scoring', () => {
