@@ -3,8 +3,8 @@ skill:
   id: ESS-0017
   name: Vocabulary Governance
   version: 1.8.0
-  status: Proposed
-  maturity: Implementation Candidate
+  status: Published
+  maturity: Operational
   owner: Platform Director
   category: Enterprise Architecture
   priority: High
@@ -20,7 +20,7 @@ classification:
   role: Canonical Vocabulary, Wording and generated Wiki Projection Governance
   contractAuthority: ESS-0001-CONTRACTS
   ownContracts: ESS-0017-CONTRACTS
-  effectiveAfter: Human Merge
+  effectiveAfter: Human Merge satisfied by PR #477
   note: >
     Vocabulary/Wording is cross-cutting presentation governance only. It does not
     own Financial Runtime, IAM, Billing, Compliance, EventMesh, Knowledge,
@@ -72,7 +72,7 @@ crossReference:
     - docs/governance/vocabulary/VOCABULARY_WORDING_WIKI_SUPERSESSION_2026-08-21.md
 
 created: 2026-08-09
-updated: 2026-08-21
+updated: 2026-08-22
 ---
 
 # ESS-0017 — Vocabulary Governance
@@ -96,7 +96,7 @@ It does not replace Documentation Governance, Documentary, Knowledge, Traceabili
 9. Wording may describe financial/security states but cannot upgrade or mutate them.
 10. Newer files, translations or Wiki pages do not supersede higher authority by date alone.
 11. Existing hardcoded wording is migrated incrementally through explicit source/literal/key mappings; blind repository-wide replacements are prohibited.
-12. Human Merge remains required for this specification to become effective.
+12. Human Merge of PR #477 satisfied the activation condition for this v1.8.0 specification; later changes remain subject to normal Human/CODEOWNER merge governance.
 
 ## 3. Canonical architecture
 
@@ -145,7 +145,7 @@ VW-6 renders a deterministic set of managed Markdown pages from canonical reposi
 - requires explicit `--apply` for local Wiki mutation and separate `--push` for publication;
 - never back-propagates Wiki edits into Registry, ESS, ADR or Message Catalog.
 
-No Wiki publication is part of this branch before PR creation.
+Wiki publication remains a separate explicit action and is not implied by repository merge.
 
 ## 6. VW-7 — controlled wording migration
 
@@ -159,7 +159,7 @@ MIGRATED  source uses the stable Message Key and no longer embeds the literal
 DRIFT     source/message relation is ambiguous or broken
 ```
 
-`OPEN` is measurable technical debt and is permitted for incremental feature migration. `DRIFT` fails closed. The first baseline governs five current `MarketScreener` strings without claiming that all repository UI wording has already been migrated.
+`OPEN` is measurable technical debt and is permitted for incremental feature migration. `DRIFT` fails closed. The initial baseline governs selected `MarketScreener` strings without claiming that all repository UI wording has already been migrated.
 
 ## 7. VW-8 — continuous governance and release closure
 
@@ -191,11 +191,11 @@ Vocabulary/Wording must never:
 
 ## 9. Supersession
 
-`VOCABULARY-WORDING-WIKI-SUPERSESSION-0001` replaces the former phase-based Vocabulary migration/status documents as the current architecture projection after Human Merge. Historical documents remain non-authorizing Evidence until reference-safe archival.
+`VOCABULARY-WORDING-WIKI-SUPERSESSION-0001` is the current Vocabulary/Wording/Wiki architecture projection following Human Merge of PR #477. Historical phase-based Vocabulary migration/status documents remain non-authorizing Evidence until reference-safe archival.
 
 ## 10. Implementation status
 
-Implemented on the branch through VW-8:
+Operational on `main` through VW-8:
 
 - VW-0 authority/supersession consolidation;
 - VW-1 UI Message Catalog;
@@ -207,4 +207,4 @@ Implemented on the branch through VW-8:
 - VW-7 controlled incremental migration baseline with explicit OPEN/DRIFT/MIGRATED states;
 - VW-8 continuous governance and closure validation integrated into the existing repository test chain.
 
-The remaining OPEN VW-7 source candidates are normal incremental migration debt, not a second architecture and not an assertion that all user-facing strings have already been migrated.
+Remaining OPEN VW-7 source candidates are normal incremental migration debt, not a second architecture and not an assertion that all user-facing strings have already been migrated.
