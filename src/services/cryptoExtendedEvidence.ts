@@ -1,5 +1,6 @@
 import type { CryptoFeatureEvidence } from '../platform/FinTechCore/Modules/Crypto/CryptoCategoryFeatureContracts';
 import {
+  adaptBinancePublicAnalyticsEvidence,
   adaptDexScreenerTokenEvidence,
   adaptDuneSavedQueryEvidence,
   adaptGoPlusTokenSecurityEvidence,
@@ -13,6 +14,7 @@ import {
   GoPlusSolanaTokenSecurityProvider,
   type GoPlusSolanaTokenSecurityEvidence,
 } from '../platform/MarketData/providers/GoPlusSolanaTokenSecurityProvider';
+import { BinancePublicAnalyticsProvider } from '../platform/MarketData/providers/BinancePublicAnalyticsProvider';
 import { KrakenFuturesAnalyticsProvider } from '../platform/MarketData/providers/KrakenFuturesAnalyticsProvider';
 import { DexScreenerTokenEvidenceProvider } from '../platform/MarketData/providers/DexScreenerTokenEvidenceProvider';
 import { SourcifyContractVerificationProvider } from '../platform/MarketData/providers/SourcifyContractVerificationProvider';
@@ -20,7 +22,7 @@ import { DuneQueryEvidenceProvider } from '../platform/MarketData/providers/Dune
 import { GdeltNewsEvidenceProvider, type GdeltArticleEvidence } from '../platform/MarketData/providers/GdeltNewsEvidenceProvider';
 import { fetchDefiProtocolEvidence, type DefiProtocolEvidenceResult } from './defiProtocolEvidence';
 
-export const CRYPTO_EXTENDED_EVIDENCE_CONTRACT_VERSION = 'crypto-extended-evidence/1.3.0' as const;
+export const CRYPTO_EXTENDED_EVIDENCE_CONTRACT_VERSION = 'crypto-extended-evidence/1.4.0' as const;
 
 export type CryptoExtendedEvidenceStatus = 'READY' | 'PARTIAL' | 'NOT_AVAILABLE';
 
@@ -37,12 +39,11 @@ export interface GovernedDexScreenerIdentity {
 
 export interface CryptoExtendedEvidenceRequest {
   readonly symbol: string;
-  /** Trusted EVM provider identity resolved outside user/LLM input. */
   readonly goPlusIdentity?: GoPlusTokenIdentity;
-  /** Trusted Solana mint resolved outside user/LLM input. Mutually exclusive with goPlusIdentity. */
   readonly goPlusSolanaMintAddress?: string;
-  /** Exact DEX Screener chain slug + token address from the governed identity registry. */
   readonly dexScreenerIdentity?: GovernedDexScreenerIdentity;
+  /** Exact Binance USD-M futures symbol from the governed identity registry. */
+  readonly binanceFuturesSymbol?: string;
   /** Exact public Kraken Futures market symbol from the governed identity registry. */
   readonly krakenFuturesSymbol?: string;
   readonly includeDefiLlama?: boolean;
@@ -56,6 +57,7 @@ export interface CryptoEvidenceProviderState {
     | 'defillama'
     | 'goplus'
     | 'goplus-solana'
+    | 'binance-public'
     | 'kraken-futures-public'
     | 'dexscreener'
     | 'sourcify'
@@ -71,9 +73,7 @@ export interface CryptoExtendedEvidenceResult {
   readonly symbol: string;
   readonly retrievedAt: string;
   readonly evidence: readonly CryptoFeatureEvidence[];
-  /** Solana-specific facts without a generic semantic mapping stay separate. */
   readonly solanaSecurity: GoPlusSolanaTokenSecurityEvidence | null;
-  /** News metadata stays outside numeric/category features and has no direct score authority. */
   readonly newsArticles: readonly GdeltArticleEvidence[];
   readonly providers: readonly CryptoEvidenceProviderState[];
   readonly verifiedFeatureCount: number;
@@ -86,6 +86,7 @@ export interface CryptoExtendedEvidenceResult {
 export interface CryptoExtendedEvidenceDependencies {
   readonly goPlus?: GoPlusTokenSecurityProvider;
   readonly goPlusSolana?: GoPlusSolanaTokenSecurityProvider;
+  readonly binancePublic?: BinancePublicAnalyticsProvider;
   readonly krakenFutures?: KrakenFuturesAnalyticsProvider;
   readonly dexScreener?: DexScreenerTokenEvidenceProvider;
   readonly sourcify?: SourcifyContractVerificationProvider;
@@ -101,9 +102,9 @@ function providerState(provider: CryptoEvidenceProviderState['provider'], status
 
 /**
  * Read-only evidence composition for crypto research categories.
- *
- * Active defaults are restricted to keyless/free providers plus Dune's explicitly attested
- * free-tier read path. There is no CoinGlass, LunarCrush, NewsAPI, automatic paid overage or x402.
+ * Binance Public + Kraken Public are the primary market/derivatives suppliers. Their observations
+ * remain independently attributable to avoid correlated double counting. Other providers are
+ * specialist/secondary evidence sources. No provider can authorize a score or trade here.
  */
 export async function fetchCryptoExtendedEvidence(
   request: CryptoExtendedEvidenceRequest,
@@ -145,12 +146,14 @@ export async function fetchCryptoExtendedEvidence(
     providers.push(providerState('goplus', 'UNSUPPORTED_ASSET', 'No governed EVM contract or Solana mint identity mapping is available.'));
   }
 
-  if (request.dexScreenerIdentity) {
-    const dexScreener = dependencies.dexScreener ?? new DexScreenerTokenEvidenceProvider({ nowMs });
-    tasks.push(dexScreener.getTokenPairs(request.dexScreenerIdentity.chainId, request.dexScreenerIdentity.tokenAddress).then((result) => {
-      evidence.push(...adaptDexScreenerTokenEvidence(result));
-      providers.push(providerState('dexscreener', result.status, result.reason));
+  if (request.binanceFuturesSymbol) {
+    const binance = dependencies.binancePublic ?? new BinancePublicAnalyticsProvider({ nowMs });
+    tasks.push(binance.getAnalytics(request.binanceFuturesSymbol).then((result) => {
+      evidence.push(...adaptBinancePublicAnalyticsEvidence(result));
+      providers.push(providerState('binance-public', result.status, result.reason));
     }));
+  } else {
+    providers.push(providerState('binance-public', 'UNSUPPORTED_ASSET', 'No governed Binance futures market identity is available.'));
   }
 
   if (request.krakenFuturesSymbol) {
@@ -158,6 +161,16 @@ export async function fetchCryptoExtendedEvidence(
     tasks.push(krakenFutures.getAnalytics(request.krakenFuturesSymbol).then((result) => {
       evidence.push(...adaptKrakenFuturesAnalyticsEvidence(result));
       providers.push(providerState('kraken-futures-public', result.status, result.reason));
+    }));
+  } else {
+    providers.push(providerState('kraken-futures-public', 'UNSUPPORTED_ASSET', 'No governed Kraken futures market identity is available.'));
+  }
+
+  if (request.dexScreenerIdentity) {
+    const dexScreener = dependencies.dexScreener ?? new DexScreenerTokenEvidenceProvider({ nowMs });
+    tasks.push(dexScreener.getTokenPairs(request.dexScreenerIdentity.chainId, request.dexScreenerIdentity.tokenAddress).then((result) => {
+      evidence.push(...adaptDexScreenerTokenEvidence(result));
+      providers.push(providerState('dexscreener', result.status, result.reason));
     }));
   }
 
