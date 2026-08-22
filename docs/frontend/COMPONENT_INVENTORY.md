@@ -1,6 +1,6 @@
 # CAPITAL-AI Frontend – Component Inventory
 
-**Stand:** 20. August 2026  
+**Stand:** 23. August 2026  
 **Dokumentrolle:** Ist-Bestand und Migrationsstatus  
 **Normative Frontend-Authority:** `docs/frontend/FRONTEND_ARCH.md`
 
@@ -53,11 +53,14 @@ BB-1 verschiebt keine fachliche Feature-Implementierung. `Dashboard.tsx`, Landin
 |---|---|---|
 | Dashboard | `Dashboard.tsx` | `src/app/dashboard` / Dashboard-Composition, in BB-2 zu zerlegen |
 | AssetUniverseDashboard | `AssetUniverseDashboard.tsx` | `src/features/screening/ui` |
-| UniverseBestWorst | `UniverseBestWorst.tsx` | `src/features/screening/ui` |
+| RankingBoard | N/A (kanonisch unter Feature-Slice) | `src/features/screening/ui/RankingBoard.tsx` — **produktive** Ranking-Fläche (Top/Worst 3, Sentiment, Momentum, Pattern); ersetzt UniverseBestWorst |
+| UniverseBestWorst | `UniverseBestWorst.tsx` | `src/features/screening/ui/UniverseBestWorst.tsx` — **nur noch Compatibility-Alias** → `RankingBoard as UniverseBestWorst` |
 | Screener | `Screener.tsx` | `src/features/screening/ui` |
 | MarketScreener | `MarketScreener.tsx` | `src/features/screening/ui` |
 | Watchlist | `Watchlist.tsx` | `src/features/portfolio/ui` |
 | FavoriteAssetPatternSlots | `FavoriteAssetPatternSlots.tsx` | `src/features/portfolio/ui` |
+
+Development-Einstieg für Agents: `AGENTS.md` §12 (Screening Ranking Board / homogene Wertschöpfungskette).
 
 ---
 
@@ -199,4 +202,4 @@ Die Auth-Gates selbst bleiben in BB-1 physisch unverändert; nur ihre globale Co
 
 ---
 
-*Erstellt am 16.08.2026 im Rahmen der Frontend-Roadmap. Am 20.08.2026 auf die `app/features/shared`-Architektur, das Projection-not-Redefinition-Prinzip und BB-1 Application Composition ausgerichtet.*
+*Erstellt am 16.08.2026 im Rahmen der Frontend-Roadmap. Am 20.08.2026 auf die `app/features/shared`-Architektur, das Projection-not-Redefinition-Prinzip und BB-1 Application Composition ausgerichtet. Am 23.08.2026 RankingBoard als Ersatz von UniverseBestWorst dokumentiert.*
