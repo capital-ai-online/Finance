@@ -65,9 +65,16 @@
   ],
   "correlation": {
     "mainAtStart": "c1a81db2f75d9fbb0fb17ce4e6440967189ad6be",
+    "mainAtLatestCheck": "c1a81db2f75d9fbb0fb17ce4e6440967189ad6be",
     "pr484Merged": true,
     "openPullRequestsAtStart": 0,
+    "openPullRequestsAtLatestCheck": 0,
     "directOpenPrFileOverlap": false,
+    "branchAheadByBeforeThisMetadataCommit": 17,
+    "branchBehindBy": 0,
+    "mergeBaseMatchesCurrentMain": true,
+    "changedFilesBeforeThisMetadataCommit": 15,
+    "allChangedFilesClaimed": true,
     "newScoringRegistryAllowed": false,
     "newScoringDispatcherAllowed": false,
     "newPatternAuthorityAllowed": false,
@@ -77,6 +84,7 @@
   },
   "implementationBoundary": {
     "memeDefiModelStage": "research-evaluator-and-orchestrator-binding",
+    "researchModelVersion": "0.3.0",
     "canonicalModelPromotionPerformed": false,
     "scoreEligible": false,
     "executionEligible": false,
@@ -84,6 +92,16 @@
     "reason": "Full source-defined models are implemented for deterministic research validation first. Canonical/productive promotion remains a separate Owner-approved ScoringModelRegistry/ScoringDispatcher decision after evidence coverage, regression, backtesting and correlation validation.",
     "missingEvidenceDefault": "NOT_COMPUTABLE",
     "ft7GatePreserved": true
+  },
+  "validation": {
+    "strictTypeScriptCoreModules": "PASS",
+    "strictTypeScriptScope": [
+      "CryptoCategoryResearchScoring.ts",
+      "CryptoOrchestratorResearchModels.ts",
+      "CryptoResearchModelContracts.ts"
+    ],
+    "hostedCiTriggered": false,
+    "reasonHostedCiNotTriggered": "Repository cost policy allows hosted build/test only after Pull Request creation; no Pull Request has been requested for this branch yet."
   },
   "releaseCondition": "Coordination metadata is released when the implementation is merged, closed, superseded or abandoned."
 }
