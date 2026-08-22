@@ -6,7 +6,7 @@
   "agent": {
     "provider": "OpenAI",
     "model": "GPT-5.6 Sol",
-    "executionSurface": "ChatGPT / GitHub Connector"
+    "executionSurface": "ChatGPT / GitHub Connector / Supabase Connector"
   },
   "workItem": "FT-6B canonical OrderIntent fixed-point hardening, deterministic approval binding and typed reconciliation closure",
   "startedAt": "2026-08-22T02:47:00+02:00",
@@ -67,14 +67,28 @@
     "newQueue": false,
     "newRuntimeDependency": false
   },
-  "externalMutationScope": "none; migration is repository-only and not applied to Supabase",
+  "externalMutationScope": "Supabase AIFINANCIAL: additive FT-6B migration applied after explicit owner authorization; no live-execution capability",
+  "supabaseMutation": {
+    "authorized": true,
+    "applied": true,
+    "project": "AIFINANCIAL",
+    "projectRef": "ryzywoktpmyhwzxmstyu",
+    "repositoryMigration": "20260822011500_fintech_core_ft6b_fixed_point_reconciliation.sql",
+    "remoteMigrationVersion": "20260822012200",
+    "remoteMigrationName": "fintech_core_ft6b_fixed_point_reconciliation",
+    "securityInvokerVerified": true,
+    "anonExecute": false,
+    "authenticatedExecute": false,
+    "serviceRoleExecute": true
+  },
   "correlation": {
     "currentMainAtStart": "b180d56a37762c6a558a9b3488ce4f36c70fa2e9",
-    "openPr482DirectFileOverlap": false,
-    "pr481Merged": true
+    "openPr482DirectFileOverlapAtStart": false,
+    "pr481Merged": true,
+    "prePrRecheckRequired": true
   },
   "verification": {
-    "status": "implemented_pending_pre_pr_validation_and_post_pr_ci",
+    "status": "supabase_applied_and_verified_pending_pre_pr_main_correlation_and_post_pr_ci",
     "negativeCasesCovered": [
       "missing risk decision",
       "missing compliance decision",
@@ -90,7 +104,8 @@
       "guarded-live and production hard block",
       "private persistence denial"
     ],
-    "newProductionMutation": false
+    "newProductionMutation": true,
+    "newRealExecutionCapability": false
   },
-  "releaseCondition": "Release claim when FT-6B scope is merged, superseded or abandoned. Production migration verification remains a separate mutation-gated action."
+  "releaseCondition": "Release claim when FT-6B scope is merged, superseded or abandoned. FT-7 remains a separate mutation/security gate."
 }
