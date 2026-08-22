@@ -69,7 +69,7 @@ describe('Crypto orchestrator added-kit research models', () => {
     });
     expect(result.status).toBe('READY');
     expect(result.effectiveFlowWeights.openInterestChange).toBe(0);
-    expect(Object.values(result.effectiveFlowWeights).reduce((sum, value) => sum + value, 0)).toBeCloseTo(1, 10);
+    expect((Object.values(result.effectiveFlowWeights) as number[]).reduce((sum, value) => sum + value, 0)).toBeCloseTo(1, 10);
     expect(result.missingFields).toContain('openInterestChange');
     expect(result.extendedFeatureCoverage).toBe(1);
   });
