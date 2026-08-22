@@ -6,7 +6,7 @@ import type {
 } from '../types/scoringIntegrity';
 
 export const FEATURE_VERSION = 'financial-features/1.0.0';
-export const SCORING_INTEGRITY_VERSION = 'scoring-integrity/1.0.0';
+export const SCORING_INTEGRITY_VERSION = 'scoring-integrity/1.1.0';
 
 export interface DataQualityGateInput {
   assetId: string;

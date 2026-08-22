@@ -8,7 +8,7 @@ import type { TraditionalAssetScoringInputs } from '../../src/services/tradition
  * These are synthetic TEST FIXTURES, not production financial observations. They exist only to
  * verify deterministic formula stability and must never be exposed as market evidence.
  */
-export const SCORING_GOLDEN_DATASET_VERSION = 'scoring-golden/1.0.0';
+export const SCORING_GOLDEN_DATASET_VERSION = 'scoring-golden/1.1.0';
 
 export const cryptoGoldenCase: { input: CryptoScoringInputs; expectedFinalScore: number } = {
   input: {
@@ -24,8 +24,9 @@ export const cryptoGoldenCase: { input: CryptoScoringInputs; expectedFinalScore:
     regime_bonus: 0.5,
     data_quality_risk: 0.1,
   },
-  // Positive factors contribute 48.0 points; inverted data-quality-risk contributes 3.6.
-  expectedFinalScore: 51.6,
+  // Crypto 0.7.0 deliberately ignores legacy compatibility fields exchange_liquidity/regime_bonus.
+  // The golden value locks the canonical 0.7 factor authority and deterministic renormalization.
+  expectedFinalScore: 51.78,
 };
 
 export const memeGoldenCase: { input: MemeCoinInputs; expectedFinalScore: number } = {

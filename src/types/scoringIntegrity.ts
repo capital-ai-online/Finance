@@ -16,6 +16,12 @@ export interface ScoringEvidenceRef {
   kind: 'market-history' | 'market-snapshot' | 'fundamental' | 'user-input';
 }
 
+export interface EffectiveFeatureIntegrity {
+  readonly key: string;
+  readonly status: 'PRESENT' | 'MISSING';
+  readonly inverted: boolean;
+}
+
 export interface ScoringIntegrityMetadata {
   status: ScoringAvailabilityStatus;
   assetId: string;
@@ -38,6 +44,17 @@ export interface ScoringIntegrityMetadata {
   modelLifecycle?: string;
   executorKey?: string;
   resultContractVersion?: string;
+  /**
+   * scoring-integrity/1.1.0 effective-execution lineage. Optional at the TypeScript migration
+   * boundary so legacy 1.0.0 model adapters remain compatible; mandatory for models declaring
+   * resultContractVersion=scoring-integrity/1.1.0.
+   */
+  effectiveFeatureFingerprint?: string;
+  effectiveWeightFingerprint?: string;
+  effectiveFeatures?: readonly EffectiveFeatureIntegrity[];
+  effectiveWeights?: Readonly<Record<string, number>>;
+  nominalWeightsVersion?: string;
+  evidenceContractVersion?: string;
 }
 
 export interface UnavailableScoreResult {
