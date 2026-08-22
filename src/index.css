@@ -1,24 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@700&family=Poppins:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800;900&family=JetBrains+Mono:wght@400;700&family=Poppins:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-background: #18181b;
+  /* Branding Manifest v6.0 — canonical web projection */
+  --color-background: #08080C;
   --color-foreground: #FFFFFF;
-  
-  --color-aif-gold-light: #FFF2B2;
-  --color-aif-gold-DEFAULT: #F5C453;
-  --color-aif-gold-dark: #D4A017;
-  --color-aif-gold-muted: #8A640F;
-  
-  --color-aif-neon-cyan: #0DDDDD;
-  --color-aif-neon-purple: #B026FF;
+  --color-border: #252529;
+  --color-surface: #121215;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A1A1AA;
+
+  --color-brand-primary: #F9BF21;
+  --color-brand-accent: #8D26FF;
+  --color-brand-success: #44DE88;
+  --color-brand-danger: #F87171;
+
+  /*
+   * Compatibility aliases only. New UI code must use brand-* tokens.
+   * Manifest v6.0 forbids Cyan as UI branding, so the historical cyan alias
+   * intentionally resolves to the canonical Purple accent.
+   */
+  --color-aif-gold-light: #F9BF21;
+  --color-aif-gold-DEFAULT: #F9BF21;
+  --color-aif-gold-dark: #F9BF21;
+  --color-aif-gold-muted: #F9BF21;
+  --color-aif-neon-cyan: #8D26FF;
+  --color-aif-neon-purple: #8D26FF;
 
   --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Phase 1: slower / quieter decorative motion (was 1.5s–3s with aggressive scale) */
   --animate-neural-pulse: neuralPulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-neural-pulse-fast: neuralPulse 3.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-gold-shimmer: goldShimmer 12s linear infinite;
@@ -28,12 +40,12 @@
     0%, 100% {
       opacity: 0.85;
       transform: scale(1);
-      filter: drop-shadow(0 0 12px rgba(245, 196, 83, 0.35));
+      filter: drop-shadow(0 0 12px rgba(249, 191, 33, 0.35));
     }
     50% {
       opacity: 0.7;
       transform: scale(1.02);
-      filter: drop-shadow(0 0 20px rgba(245, 196, 83, 0.5));
+      filter: drop-shadow(0 0 20px rgba(249, 191, 33, 0.5));
     }
   }
 
@@ -45,7 +57,7 @@
     50% {
       opacity: 0.45;
       transform: scale(1.03);
-      filter: drop-shadow(0 0 8px rgba(13, 221, 221, 0.45));
+      filter: drop-shadow(0 0 8px rgba(141, 38, 255, 0.45));
     }
   }
 
@@ -56,7 +68,7 @@
 }
 
 :root {
-  --background: #18181b;
+  --background: #08080C;
   --foreground: #FFFFFF;
   --ui-section-gap: 2rem;
   --ui-card-gap: 1.5rem;
@@ -77,7 +89,16 @@ body,
   font-family: var(--font-sans);
 }
 
-/* Custom Brand Border Circulating & Pulsing Animations — Phase 1: quieter */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+}
+
+/* Custom Brand Border Circulating & Pulsing Animations — Manifest v6 palette */
 @keyframes brandBorderRotate {
   0% {
     transform: rotate(0deg);
@@ -90,15 +111,13 @@ body,
 @keyframes brandBorderPulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 18px rgba(245, 196, 83, 0.18),
-                0 0 24px rgba(13, 221, 221, 0.1),
-                0 0 24px rgba(176, 38, 255, 0.1);
+    box-shadow: 0 0 18px rgba(249, 191, 33, 0.18),
+                0 0 24px rgba(141, 38, 255, 0.1);
   }
   50% {
     transform: scale(1.01);
-    box-shadow: 0 0 28px rgba(245, 196, 83, 0.32),
-                0 0 32px rgba(13, 221, 221, 0.2),
-                0 0 32px rgba(176, 38, 255, 0.2);
+    box-shadow: 0 0 28px rgba(249, 191, 33, 0.32),
+                0 0 32px rgba(141, 38, 255, 0.2);
   }
 }
 
@@ -110,10 +129,10 @@ body,
   animation: brandBorderPulse 3.5s ease-in-out infinite;
 }
 
-/* Phase 1 utilities — glass panel stack + BFSG hit targets */
+/* Shared glass panel stack + BFSG hit targets */
 .ui-panel {
-  background-color: rgba(10, 10, 10, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(18, 18, 21, 0.72);
+  border: 1px solid #252529;
   backdrop-filter: blur(12px);
   border-radius: 1rem;
   padding: 1.5rem;
@@ -138,11 +157,11 @@ body,
 
 /* Base focus outline required by accessibility guidelines */
 *:focus-visible {
-  outline: 2px solid #F5C453 !important;
+  outline: 2px solid #F9BF21 !important;
   outline-offset: 4px !important;
 }
 
-/* Phase 1 / WCAG: respect reduced motion — kill decorative animation */
+/* WCAG: respect reduced motion — kill decorative animation */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -160,7 +179,6 @@ body,
     transition: none !important;
   }
 
-  /* Keep spinners readable as static indicator when reduced motion is on */
   .animate-spin {
     opacity: 0.7;
   }
