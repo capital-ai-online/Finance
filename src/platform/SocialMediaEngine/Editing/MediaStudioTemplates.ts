@@ -142,7 +142,7 @@ export function createCapitalAiProTrialCouponProject(
     },
     source: {
       type: 'manual',
-      reference: 'media-studio:coupon-promo:pro-trial-3d',
+      reference: 'media-studio/coupon-promo/pro-trial-3d',
     },
     disclosure: {
       defaultDisclaimer: 'Nur Informations- und Bildungszwecke. Keine Anlageberatung oder Empfehlung. Bedingungen des Angebots beachten.',
