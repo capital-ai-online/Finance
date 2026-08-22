@@ -44,7 +44,8 @@
     "docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md",
     "docs/adr/registry.json",
     "docs/governance/authority-registry.json",
-    "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md"
+    "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md",
+    "docs/runbooks/FINTECH_CORE_FT6B_SUPABASE_ROLLBACK.md"
   ],
   "protectedExistingAuthorities": [
     "ADR-0087 / ScoringModelRegistry / ScoringDispatcher",
@@ -81,7 +82,8 @@
     "securityInvokerVerified": true,
     "anonExecute": false,
     "authenticatedExecute": false,
-    "serviceRoleExecute": true
+    "serviceRoleExecute": true,
+    "rollbackRunbook": "docs/runbooks/FINTECH_CORE_FT6B_SUPABASE_ROLLBACK.md"
   },
   "correlation": {
     "currentMainAtStart": "b180d56a37762c6a558a9b3488ce4f36c70fa2e9",
