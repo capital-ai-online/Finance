@@ -21,7 +21,7 @@
   "providerDecisions": {
     "defillama": "existing canonical DeFi TVL/fees/revenue evidence provider; retain ADR-0100 evidence-only authority",
     "goplus": "token contract/honeypot/tax/mint/blacklist/proxy/holder/liquidity-lock security evidence",
-    "coinglass": "crypto derivatives and market-microstructure evidence: OI/funding/liquidations/orderbook/bars",
+    "coinglass": "crypto derivatives and market-microstructure evidence: OI/funding/liquidations/orderbook/bars/unlocks",
     "lunarcrush": "social sentiment/mentions/engagement/creator/spam evidence",
     "messari": "standardized protocol/on-chain usage evidence where DeFiLlama does not provide the required feature",
     "dune": "governed custom-query fallback for protocol-specific on-chain evidence not standardized by the preceding providers"
@@ -41,6 +41,7 @@
     ".ai/work-claims/CRYPTO-EVIDENCE-PROVIDER-ADAPTERS-2026-08-22.json",
     "src/platform/MarketData/contracts.ts",
     "src/platform/MarketData/ProviderMatrix.ts",
+    "src/platform/MarketData/providers/ResearchEvidenceProviderHttp.ts",
     "src/platform/MarketData/providers/GoPlusTokenSecurityProvider.ts",
     "src/platform/MarketData/providers/CoinGlassCryptoEvidenceProvider.ts",
     "src/platform/MarketData/providers/LunarCrushSocialEvidenceProvider.ts",
@@ -53,6 +54,7 @@
     ".env.example",
     "tests/unit/providerMatrix.test.ts",
     "tests/unit/cryptoExtendedEvidenceAdapters.test.ts",
+    "tests/unit/cryptoExtendedEvidenceProviders.test.ts",
     "docs/evidence/sc-md/SC4_CRYPTO_EXTENDED_EVIDENCE_PROVIDERS_2026-08-22.md"
   ],
   "securityBoundary": {
@@ -62,6 +64,11 @@
     "providerOutputCanAuthorizeTrade": false,
     "liveExecutionChanged": false,
     "externalMutationPerformed": false
+  },
+  "transportConsolidation": {
+    "sharedTransport": "ResearchEvidenceProviderHttp",
+    "reuses": ["ProviderMatrix", "RateLimitBudget", "CircuitBreaker"],
+    "perProviderHttpInfrastructureCreated": false
   },
   "correlationRules": [
     "DeFiLlama remains authoritative for existing TVL/fees/revenue evidence; Messari must not silently replace those fields.",
