@@ -1,7 +1,10 @@
 import type { GoPlusTokenIdentity } from './providers/GoPlusTokenSecurityProvider';
-import type { GovernedDuneEvidenceRequest } from '../../services/cryptoExtendedEvidence';
+import type {
+  GovernedDexScreenerIdentity,
+  GovernedDuneEvidenceRequest,
+} from '../../services/cryptoExtendedEvidence';
 
-export const CRYPTO_EVIDENCE_IDENTITY_REGISTRY_VERSION = 'crypto-evidence-identity-registry/1.0.0' as const;
+export const CRYPTO_EVIDENCE_IDENTITY_REGISTRY_VERSION = 'crypto-evidence-identity-registry/1.1.0' as const;
 
 export interface CryptoEvidenceIdentityRecord {
   readonly symbol: string;
@@ -9,13 +12,13 @@ export interface CryptoEvidenceIdentityRecord {
   readonly goPlusEvm?: GoPlusTokenIdentity;
   /** Exact Solana SPL/SPL-2022 mint address. */
   readonly goPlusSolanaMintAddress?: string;
-  /** Exact Messari protocol identifier; never fuzzy-matched from a symbol/name. */
-  readonly messariProtocolIdentifier?: string;
-  /** Optional curated LunarCrush topic override. */
-  readonly lunarCrushTopic?: string;
-  /** Owner-reviewed saved query IDs and output mappings. */
+  /** Exact DEX Screener chain slug + token address. No fuzzy symbol lookup. */
+  readonly dexScreener?: GovernedDexScreenerIdentity;
+  /** Exact public Kraken Futures Charts market symbol; omitted if the asset has no governed market. */
+  readonly krakenFuturesSymbol?: string;
+  /** Owner-reviewed Dune saved query IDs, expected schemas and feature mappings. */
   readonly dune?: readonly GovernedDuneEvidenceRequest[];
-  /** Human-verifiable identity source references, e.g. official project/provider pages. */
+  /** Human-verifiable identity source references, preferably official project/provider pages. */
   readonly sourceRefs: readonly string[];
   readonly verifiedAt: string;
   readonly reviewedBy: string;
@@ -25,10 +28,10 @@ export interface CryptoEvidenceIdentityRecord {
 /**
  * Canonical registry intentionally starts empty.
  *
- * Contract addresses, Solana mints, provider protocol IDs and Dune query IDs are high-impact
- * identity data. They MUST be added by reviewed repository change with source references; the
- * runtime never guesses these values from ticker symbols. Existing DeFiLlama slug authority in
- * assetRegistry/fetchDefiProtocolEvidence is deliberately not duplicated here.
+ * Contract addresses, Solana mints, DEX token identities, Kraken Futures symbols and Dune query
+ * IDs are high-impact identity data. They MUST be added by reviewed repository change with source
+ * references; runtime code never guesses these values from ticker symbols. Existing DeFiLlama
+ * slug authority in assetRegistry/fetchDefiProtocolEvidence is deliberately not duplicated here.
  */
 export const CRYPTO_EVIDENCE_IDENTITY_RECORDS: readonly CryptoEvidenceIdentityRecord[] = Object.freeze([]);
 
@@ -38,6 +41,14 @@ function validateRecord(record: CryptoEvidenceIdentityRecord): void {
   }
   if (record.goPlusEvm && record.goPlusSolanaMintAddress) {
     throw new Error(`CRYPTO_EVIDENCE_IDENTITY_AMBIGUOUS_CHAIN:${record.symbol}`);
+  }
+  if (record.krakenFuturesSymbol && !/^[A-Z0-9_.-]{2,40}$/.test(record.krakenFuturesSymbol)) {
+    throw new Error(`CRYPTO_EVIDENCE_IDENTITY_INVALID_KRAKEN_MARKET:${record.symbol}`);
+  }
+  if (record.dexScreener) {
+    if (!/^[a-z0-9_-]{1,30}$/.test(record.dexScreener.chainId) || record.dexScreener.tokenAddress.length < 20) {
+      throw new Error(`CRYPTO_EVIDENCE_IDENTITY_INVALID_DEXSCREENER:${record.symbol}`);
+    }
   }
   if (record.sourceRefs.length === 0 || !record.verifiedAt || !record.reviewedBy) {
     throw new Error(`CRYPTO_EVIDENCE_IDENTITY_MISSING_GOVERNANCE:${record.symbol}`);
