@@ -65,9 +65,9 @@ Die AI-Ausführung verwendet über `server/documentaryMaintenanceAiAdapter.ts` d
 
 ### SC-MD-SPT-0001 Wertschöpfungsketten-Anbindung
 
-Der Maintenance-Pfad ist im Component Manifest ausdrücklich als `read-only-documentation-evidence-sidecar` an `SC-MD-SPT-0001` deklariert. Die fachliche Einordnung erfolgt um `VC-13-EVENT-TRACEABILITY-SUPERVISOR`; Documentary wird **nicht** zu einer zusätzlichen Finanz-Runtime-Stufe.
+Der Maintenance-Pfad ist im Component Manifest ausdrücklich als `read-only-documentation-evidence-sidecar` an `SC-MD-SPT-0001` deklariert. Die fachliche Einordnung erfolgt um `VC-17-EVENT-TRACEABILITY-SUPERVISOR`; Documentary wird **nicht** zu einer zusätzlichen Finanz-Runtime-Stufe.
 
-Die bestehende Quality-Projektion `fintech-value-chain-quality/1.0.0` bleibt die read-only Struktur-/Evidence-Prüfung der 14-stufigen Kette. Documentary darf weder MarketData, Classification, Scoring, Confidence, Ranking, Eligibility noch Provider-Routing, Release oder Deployment beeinflussen. Ebenso dürfen die Financial Hotpaths keine direkte Documentary- oder Quality-Mutationsabhängigkeit erhalten.
+Die bestehende Quality-Projektion `fintech-value-chain-quality/1.0.0` bleibt die read-only Struktur-/Evidence-Prüfung der **18-stufigen** Kette. Documentary darf weder MarketData, Classification, Scoring, Confidence, Ranking, Eligibility noch Provider-Routing, Release oder Deployment beeinflussen. Ebenso dürfen die Financial Hotpaths keine direkte Documentary- oder Quality-Mutationsabhängigkeit erhalten.
 
 Die Supervisor-Erweiterung dient ausschließlich als Evidence-Oberfläche. `decisionAuthority=false` und `mutationAuthority=false` bleiben explizit; die eigentliche Entscheidung verbleibt beim Platform Director und die Git-Mutation bei den separat autorisierten Agent-IAM-Capabilities.
 
@@ -81,7 +81,7 @@ Die Supervisor-Erweiterung dient ausschließlich als Evidence-Oberfläche. `deci
 - `npm run documentary:maintenance:validate` — Registry-, Authority-, Claim-, Branch-, Wertschöpfungsketten- und Scope-Konsistenz.
 - `npm run documentary:maintenance:prepr` — gezielte Tests + TypeScript-Check + Documentation Hygiene + Governance Control Plane + Repository Quality + Closure Validator.
 
-Der Closure Validator verlangt, dass der Work Claim exakt den tatsächlichen Diff gegen `origin/main` abdeckt und dass der Branch unmittelbar auf dem aktuellen `origin/main` basiert. Zusätzlich prüft er die SC-MD-SPT-0001-Sidecar-Deklaration, die bestehende 14-stufige Quality-Projektion und das Verbot direkter Documentary-Abhängigkeiten auf Financial Hotpaths. Dadurch werden veraltete, überbreite oder wertschöpfungskettenwidrige Fassungen vor PR-Reife fail-closed zurückgewiesen.
+Der Closure Validator verlangt, dass der Work Claim exakt den tatsächlichen Diff gegen `origin/main` abdeckt und dass der Branch unmittelbar auf dem aktuellen `origin/main` basiert. Zusätzlich prüft er die SC-MD-SPT-0001-Sidecar-Deklaration, die bestehende **18-stufige** Quality-Projektion und das Verbot direkter Documentary-Abhängigkeiten auf Financial Hotpaths. Dadurch werden veraltete, überbreite oder wertschöpfungskettenwidrige Fassungen vor PR-Reife fail-closed zurückgewiesen.
 
 ## Documentation Governance
 
@@ -142,6 +142,6 @@ Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation,
 - ESS-0019 — Universal AI Agent Control Plane
 - SC-MD-SPT-0001 — Screening / Scoring / Market Data / SPT value-chain authority
 - ADR-0014 — Documentation Governance Validator
-- ADR-0046 — Vocabulary Governance Authority and Namespace
+- ADR-0078 — Vocabulary Governance Authority and Namespace
 - ADR-0096 — Governance Control Plane / Authority Boundary
 - ADR-0097 — Documentary Maintenance Agent Control Loop
