@@ -11,35 +11,16 @@ import { RateLimitBudget } from '../../src/platform/MarketData/RateLimitBudget';
 import { CircuitBreaker } from '../../src/platform/MarketData/CircuitBreaker';
 import { MarketDataGateway } from '../../src/platform/MarketData/MarketDataGateway';
 import { ProviderRegistry } from '../../src/platform/MarketData/ProviderRegistry';
-import {
-  MARKET_DATA_CONTRACT_VERSION,
-  type MarketDataProvider,
-  type SnapshotRequest,
-} from '../../src/platform/MarketData/contracts';
-import {
-  getProviderHealth,
-  resetProviderHealth,
-} from '../../src/platform/Supervisor/providerHealth';
+import { MARKET_DATA_CONTRACT_VERSION, type MarketDataProvider, type SnapshotRequest } from '../../src/platform/MarketData/contracts';
+import { getProviderHealth, resetProviderHealth } from '../../src/platform/Supervisor/providerHealth';
 
 beforeEach(() => resetProviderHealth());
 
-const request: SnapshotRequest = {
-  symbol: 'AAPL',
-  assetClass: 'stock',
-  correlationId: 'sc4-test',
-  maxAgeMs: 90_000,
-};
+const request: SnapshotRequest = { symbol: 'AAPL', assetClass: 'stock', correlationId: 'sc4-test', maxAgeMs: 90_000 };
 
 function mockProvider(id: string, state: 'LIVE' | 'UNAVAILABLE' = 'LIVE'): MarketDataProvider {
   return {
-    descriptor: {
-      id,
-      role: 'primary',
-      capabilities: ['snapshot'],
-      assetClasses: ['stock'],
-      enabled: true,
-      priority: 1,
-    },
+    descriptor: { id, role: 'primary', capabilities: ['snapshot'], assetClasses: ['stock'], enabled: true, priority: 1 },
     getSnapshot: vi.fn(async (input) => ({
       contractVersion: MARKET_DATA_CONTRACT_VERSION,
       provider: id,
@@ -63,7 +44,7 @@ function mockProvider(id: string, state: 'LIVE' | 'UNAVAILABLE' = 'LIVE'): Marke
 
 describe('SC-4/SC-5 ProviderMatrix', () => {
   it('has stable contract version and required gateway providers', () => {
-    expect(PROVIDER_MATRIX_VERSION).toBe('provider-matrix/1.6.0');
+    expect(PROVIDER_MATRIX_VERSION).toBe('provider-matrix/1.7.0');
     expect(getProviderMatrixEntry('twelvedata')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('fmp-index')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('coingecko')?.gatewayStatus).toBe('behind_gateway');
@@ -71,9 +52,7 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
     expect(getProviderMatrixEntry('coinapi')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('eodhd')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('twelvedata')?.assetClasses).toContain('crypto');
-    expect(providersBehindGateway().map((e) => e.id)).toEqual(
-      expect.arrayContaining(['twelvedata', 'fmp-index', 'coingecko', 'coinapi', 'eodhd']),
-    );
+    expect(providersBehindGateway().map((e) => e.id)).toEqual(expect.arrayContaining(['twelvedata', 'fmp-index', 'coingecko', 'coinapi', 'eodhd']));
     expect(providersLegacyOffGateway().some((e) => e.id === 'stooq')).toBe(true);
   });
 
@@ -86,17 +65,13 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
     expect(overrides.coinapi?.capacity).toBe(20);
     expect(overrides.eodhd?.capacity).toBe(15);
     expect(overrides.stooq).toBeUndefined();
-    for (const id of ['defillama', 'goplus', 'coinglass', 'lunarcrush', 'messari', 'dune']) {
+    for (const id of ['defillama', 'goplus', 'kraken-futures-public', 'dexscreener', 'sourcify', 'dune', 'gdelt']) {
       expect(overrides[id]).toBeUndefined();
     }
   });
 
   it('RateLimitBudget applies per-provider capacity from matrix overrides', () => {
-    const budget = new RateLimitBudget({
-      capacity: 100,
-      windowMs: 60_000,
-      perProvider: { twelvedata: { capacity: 2, windowMs: 60_000 } },
-    });
+    const budget = new RateLimitBudget({ capacity: 100, windowMs: 60_000, perProvider: { twelvedata: { capacity: 2, windowMs: 60_000 } } });
     expect(budget.tryConsume('twelvedata').allowed).toBe(true);
     expect(budget.tryConsume('twelvedata').allowed).toBe(true);
     expect(budget.tryConsume('twelvedata').allowed).toBe(false);
@@ -115,19 +90,13 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
 
   it('MarketDataGateway records Supervisor health on success and rate-limit skip', async () => {
     const registry = new ProviderRegistry();
-    const primary = mockProvider('twelvedata');
-    registry.register(primary);
-    const budget = new RateLimitBudget({
-      capacity: 1,
-      windowMs: 60_000,
-      perProvider: { twelvedata: { capacity: 1, windowMs: 60_000 } },
-    });
+    registry.register(mockProvider('twelvedata'));
+    const budget = new RateLimitBudget({ capacity: 1, windowMs: 60_000, perProvider: { twelvedata: { capacity: 1, windowMs: 60_000 } } });
     const gateway = new MarketDataGateway(registry, { rateLimitBudget: budget, cacheTtlMs: 0 });
 
     const ok = await gateway.getSnapshot(request);
     expect(ok.snapshot.qualityState).toBe('LIVE');
-    const afterSuccess = getProviderHealth().find((h) => h.provider === 'twelvedata' && h.capability === 'snapshot');
-    expect(afterSuccess?.state).toBe('healthy');
+    expect(getProviderHealth().find((h) => h.provider === 'twelvedata' && h.capability === 'snapshot')?.state).toBe('healthy');
 
     const blocked = await gateway.getSnapshot(request);
     expect(blocked.skippedProviders[0]?.reason).toBe('rate_limit_budget_exhausted');
@@ -142,26 +111,29 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
     expect(entry?.capabilities).toEqual(['fundamentals']);
     expect(entry?.assetClasses).toEqual(['crypto']);
     expect(rateLimitOverridesFromMatrix().defillama).toBeUndefined();
-    expect(providersBehindGateway().some((e) => e.id === 'defillama')).toBe(false);
   });
 
-  it('keeps all extended evidence specialists outside MarketDataGateway authority', () => {
+  it('keeps all free evidence specialists outside MarketDataGateway authority', () => {
     const expected = {
       goplus: ['security', 'onchain'],
-      coinglass: ['derivatives', 'bars', 'quote'],
-      lunarcrush: ['sentiment'],
-      messari: ['fundamentals', 'onchain', 'governance'],
+      'kraken-futures-public': ['derivatives', 'bars', 'quote'],
+      dexscreener: ['snapshot', 'quote', 'onchain'],
+      sourcify: ['security', 'onchain'],
       dune: ['onchain', 'governance'],
+      gdelt: ['news'],
     } as const;
 
     for (const [id, capabilities] of Object.entries(expected)) {
       const entry = getProviderMatrixEntry(id);
       expect(entry?.gatewayStatus).toBe('not_wired');
-      expect(entry?.assetClasses).toContain('crypto');
       expect(entry?.capabilities).toEqual(capabilities);
       expect(providersBehindGateway().some((candidate) => candidate.id === id)).toBe(false);
       expect(rateLimitOverridesFromMatrix()[id]).toBeUndefined();
     }
+  });
+
+  it('does not retain excluded paid evidence-provider entries', () => {
+    for (const id of ['newsapi', 'coinglass', 'lunarcrush', 'messari']) expect(getProviderMatrixEntry(id)).toBeUndefined();
   });
 
   it('matrix entries have positive rate-limit and circuit policies', () => {
