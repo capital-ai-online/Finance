@@ -1,6 +1,9 @@
 import type { UniversalAssetIdentity } from '../Scoring/contracts';
+import type { FinTechCoreFixedPoint } from './Financial/FixedPoint';
 
 export const FINTECH_CORE_CONTRACT_VERSION = 'fintech-core/contracts/0.1.0' as const;
+export const FINTECH_CORE_ORDER_INTENT_CONTRACT_VERSION =
+  'fintech-core/order-intent/0.2.0' as const;
 
 export type FinTechCoreOperatingMode =
   | 'RESEARCH'
@@ -78,29 +81,54 @@ export interface FinTechCoreDecisionRecord {
 }
 
 export type FinTechCoreApprovalState = 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
+export type FinTechCoreOrderIntentBindingState = 'UNBOUND' | 'BOUND';
+
+export interface FinTechCoreOrderPriceBounds {
+  readonly limitPrice?: FinTechCoreFixedPoint;
+  readonly minPrice?: FinTechCoreFixedPoint;
+  readonly maxPrice?: FinTechCoreFixedPoint;
+}
 
 /**
- * Intent contract only. Creation/signing/execution is intentionally absent in FT-0.
- * A future execution adapter must additionally prove Risk=APPROVED and Compliance=APPROVED.
+ * Single canonical OrderIntent contract. FT-6B extends the FT-3 scaffold in place rather than
+ * introducing a competing bound-intent type. Every execution-relevant quantity/price uses the
+ * canonical `atoms + scale` fixed-point representation.
+ *
+ * `bindingState=UNBOUND` represents legacy/research persistence evidence only. A BOUND intent must
+ * be produced by the deterministic FT-6 binder, which derives approvals, client-order identity and
+ * idempotency from authoritative FT-5 decisions. Neither state authorizes real execution in FT-6.
  */
 export interface FinTechCoreOrderIntent {
   readonly contractVersion: typeof FINTECH_CORE_CONTRACT_VERSION;
+  readonly orderIntentContractVersion: typeof FINTECH_CORE_ORDER_INTENT_CONTRACT_VERSION;
+  readonly bindingState: FinTechCoreOrderIntentBindingState;
+  readonly bindingVersion?: string;
   readonly orderIntentId: string;
   readonly runId: string;
   readonly traceId: string;
   readonly correlationId: string;
   readonly idempotencyKey: string;
+  readonly clientOrderId?: string;
   readonly assetId: string;
   readonly side: 'BUY' | 'SELL';
-  readonly quantity: number;
+  readonly quantity: FinTechCoreFixedPoint;
   readonly orderType: 'MARKET' | 'LIMIT' | 'POST_ONLY' | 'IOC' | 'FOK' | 'TWAP' | 'VWAP';
-  readonly limitPrice?: number;
+  readonly priceBounds: FinTechCoreOrderPriceBounds;
   readonly maxSlippageBps: number;
   readonly strategyId?: string;
   readonly portfolioId?: string;
   readonly decisionVersion: string;
   readonly riskApproval: FinTechCoreApprovalState;
   readonly complianceApproval: FinTechCoreApprovalState;
+  readonly riskDecisionId?: string;
+  readonly riskDecisionHash?: string;
+  readonly riskPolicyId?: string;
+  readonly riskPolicyVersion?: string;
+  readonly complianceDecisionId?: string;
+  readonly complianceDecisionHash?: string;
+  readonly compliancePolicyId?: string;
+  readonly compliancePolicyVersion?: string;
+  readonly createdAt: string;
   readonly expiresAt: string;
   readonly intentHash: string;
   readonly effectClass: 'SIDE_EFFECTING';
@@ -150,18 +178,14 @@ export const FINTECH_CORE_OPERATING_MODE_POLICY = Object.freeze({
 }>>);
 
 /**
- * Fail-closed guard for future real execution adapters.
- * This is not a risk/compliance engine; it only enforces the orchestration contract that both
- * authoritative approvals must already exist and the current mode must permit real execution.
+ * FT-6 hard block. Contract-level modes are retained for forward compatibility, but Crypto Module
+ * 01 does not gain a real-execution handoff before the separately reviewed FT-7 cutover.
  */
 export function isOrderIntentEligibleForRealExecution(
   intent: FinTechCoreOrderIntent,
   operatingMode: FinTechCoreOperatingMode,
 ): boolean {
-  const mode = FINTECH_CORE_OPERATING_MODE_POLICY[operatingMode];
-  return mode.realExecutionAllowed
-    && mode.newOrdersAllowed
-    && intent.effectClass === 'SIDE_EFFECTING'
-    && intent.riskApproval === 'APPROVED'
-    && intent.complianceApproval === 'APPROVED';
+  void intent;
+  void operatingMode;
+  return false;
 }

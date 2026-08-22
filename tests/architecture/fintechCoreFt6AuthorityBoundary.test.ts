@@ -5,6 +5,8 @@ function read(relativePath: string): string {
   return readFileSync(new URL(relativePath, import.meta.url), 'utf8');
 }
 
+const coreContractsSource = read('../../src/platform/FinTechCore/CoreContracts.ts');
+const fixedPointSource = read('../../src/platform/FinTechCore/Financial/FixedPoint.ts');
 const orderIntentSource = read('../../src/platform/FinTechCore/OrderIntent/OrderIntentBinding.ts');
 const reconciliationSource = read('../../src/platform/FinTechCore/Reconciliation/ReconciliationContracts.ts');
 const persistenceSource = read('../../src/platform/FinTechCore/Persistence/FinTechCorePersistencePort.ts');
@@ -27,6 +29,8 @@ describe('FinTech Core FT-6 authority boundary', () => {
   it('keeps OrderIntent binding deterministic and independent of provider/agent/exchange runtimes', () => {
     for (const token of forbiddenRuntimeImports) {
       expect(orderIntentSource.toLowerCase()).not.toContain(token.toLowerCase());
+      expect(reconciliationSource.toLowerCase()).not.toContain(token.toLowerCase());
+      expect(fixedPointSource.toLowerCase()).not.toContain(token.toLowerCase());
     }
     expect(orderIntentSource).toContain("context.operatingMode !== 'PAPER'");
     expect(orderIntentSource).toContain('executionHandoffEligible: false');
@@ -34,20 +38,33 @@ describe('FinTech Core FT-6 authority boundary', () => {
     expect(orderIntentSource).toContain('PRE_TRADE_COMPLIANCE_GATE');
   });
 
-  it('keeps reconciliation evidence-only and does not assert settlement or real execution', () => {
-    for (const token of forbiddenRuntimeImports) {
-      expect(reconciliationSource.toLowerCase()).not.toContain(token.toLowerCase());
-    }
-    expect(reconciliationSource).toContain('settlementFinalityAsserted: false');
-    expect(reconciliationSource).toContain('realExecutionAsserted: false');
-    expect(reconciliationSource).toContain("? 'MATCHED'");
-    expect(reconciliationSource).toContain(": 'MISMATCH'");
+  it('uses one canonical OrderIntent and one fixed-point representation', () => {
+    expect(coreContractsSource).toContain('quantity: FinTechCoreFixedPoint');
+    expect(coreContractsSource).toContain('priceBounds: FinTechCoreOrderPriceBounds');
+    expect(coreContractsSource).not.toContain('readonly quantity: number');
+    expect(orderIntentSource).not.toContain('FinTechCoreBoundOrderIntent');
+    expect(fixedPointSource).toContain('atoms: string');
+    expect(fixedPointSource).toContain('scale: number');
   });
 
-  it('exposes persistence as a port without importing a concrete database implementation', () => {
+  it('keeps reconciliation evidence-only and unresolved mismatch non-remediating', () => {
+    expect(reconciliationSource).toContain('settlementFinalityAsserted: false');
+    expect(reconciliationSource).toContain('realExecutionAsserted: false');
+    expect(reconciliationSource).toContain('autoRepairAttempted: false');
+    expect(reconciliationSource).toContain("status === 'MISMATCH'");
+    expect(reconciliationSource).toContain('supervisorEscalationRequired');
+  });
+
+  it('exposes one OrderIntent persistence port without concrete database imports', () => {
     expect(persistenceSource).not.toContain("from '@supabase");
     expect(persistenceSource).not.toContain("from '../../../server");
-    expect(persistenceSource).toContain('appendBoundOrderIntent');
+    expect(persistenceSource).toContain('appendOrderIntent');
+    expect(persistenceSource).not.toContain('appendBoundOrderIntent');
     expect(persistenceSource).toContain('appendReconciliationRecord');
+  });
+
+  it('keeps real execution hard-blocked until FT-7+', () => {
+    expect(coreContractsSource).toContain('return false;');
+    expect(coreContractsSource).toContain('does not gain a real-execution handoff before');
   });
 });

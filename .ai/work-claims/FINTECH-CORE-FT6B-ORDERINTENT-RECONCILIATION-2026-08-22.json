@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "FINTECH-CORE-FT6B-ORDERINTENT-RECONCILIATION-2026-08-22",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector / Supabase Connector"
+  },
+  "workItem": "FT-6B canonical OrderIntent fixed-point hardening, deterministic approval binding and typed reconciliation closure",
+  "startedAt": "2026-08-22T02:47:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "b180d56a37762c6a558a9b3488ce4f36c70fa2e9",
+  "executionBranch": "feat/fintech-core-ft6-orderintent-reconciliation-2026-08-22",
+  "dependsOn": [
+    "PR #481 merged",
+    "ADR-0087",
+    "ADR-0099",
+    "FT-3 durable workflow and traceability",
+    "FT-4 deterministic paper fixed point and replay",
+    "FT-5 deterministic risk/compliance decision records"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/FINTECH-CORE-FT6B-ORDERINTENT-RECONCILIATION-2026-08-22.json",
+    "src/platform/FinTechCore/CoreContracts.ts",
+    "src/platform/FinTechCore/Financial/FixedPoint.ts",
+    "src/platform/FinTechCore/PaperTrading/PaperTradingContracts.ts",
+    "src/platform/FinTechCore/OrderIntent/OrderIntentBinding.ts",
+    "src/platform/FinTechCore/Reconciliation/ReconciliationContracts.ts",
+    "src/platform/FinTechCore/Persistence/FinTechCorePersistencePort.ts",
+    "src/platform/FinTechCore/index.ts",
+    "src/platform/FinTechCore/manifest.json",
+    "src/platform/FinTechCore/README.md",
+    "server/fintechCorePersistence.ts",
+    "supabase/migrations/20260822011500_fintech_core_ft6b_fixed_point_reconciliation.sql",
+    "tests/unit/fintechCoreContracts.test.ts",
+    "tests/unit/fintechCoreOrderIntentBinding.test.ts",
+    "tests/unit/fintechCoreSupabasePersistence.test.ts",
+    "tests/unit/fintechCoreFt6Persistence.test.ts",
+    "tests/architecture/fintechCoreFt6AuthorityBoundary.test.ts",
+    "docs/evidence/fintech-core/FT6B_ORDER_INTENT_FIXED_POINT_RECONCILIATION_2026-08-22.md",
+    "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
+    "docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md",
+    "docs/adr/registry.json",
+    "docs/governance/authority-registry.json",
+    "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md",
+    "docs/runbooks/FINTECH_CORE_FT6B_SUPABASE_ROLLBACK.md",
+    "docs/security/FINTECH_CORE_FT6B_ORDER_INTENT_RECONCILIATION_THREAT_MODEL_2026-08-22.md"
+  ],
+  "protectedExistingAuthorities": [
+    "ADR-0087 / ScoringModelRegistry / ScoringDispatcher",
+    "FT-3 private fintech_core persistence",
+    "FT-4 paper trading fixed point",
+    "FT-5 deterministic Risk/Compliance Decision Records",
+    "public.outbox_jobs queue authority",
+    "IAM / Governance / Supervisor / Release authorities",
+    "no real exchange/custody execution before FT-7"
+  ],
+  "architecture": {
+    "singleOrderIntentType": true,
+    "financialRepresentation": "atoms:string + scale:number",
+    "approvalSource": "FT-5 deterministic decision records only",
+    "clientOrderIdentityDerived": true,
+    "idempotencyDerived": true,
+    "intentHashDeterministic": true,
+    "typedReconciliation": true,
+    "mismatchAutoRepairAllowed": false,
+    "realExecutionAdded": false,
+    "newDatabaseTable": false,
+    "newQueue": false,
+    "newRuntimeDependency": false
+  },
+  "externalMutationScope": "Supabase AIFINANCIAL: additive FT-6B migration applied after explicit owner authorization; no live-execution capability",
+  "supabaseMutation": {
+    "authorized": true,
+    "applied": true,
+    "project": "AIFINANCIAL",
+    "projectRef": "ryzywoktpmyhwzxmstyu",
+    "repositoryMigration": "20260822011500_fintech_core_ft6b_fixed_point_reconciliation.sql",
+    "remoteMigrationVersion": "20260822012200",
+    "remoteMigrationName": "fintech_core_ft6b_fixed_point_reconciliation",
+    "securityInvokerVerified": true,
+    "anonExecute": false,
+    "authenticatedExecute": false,
+    "serviceRoleExecute": true,
+    "rollbackRunbook": "docs/runbooks/FINTECH_CORE_FT6B_SUPABASE_ROLLBACK.md",
+    "threatModel": "docs/security/FINTECH_CORE_FT6B_ORDER_INTENT_RECONCILIATION_THREAT_MODEL_2026-08-22.md"
+  },
+  "correlation": {
+    "currentMainAtStart": "b180d56a37762c6a558a9b3488ce4f36c70fa2e9",
+    "prePrMain": "f5b521238328a49d0c0b8c405c87d5962688453d",
+    "prePrMainMergedPr": 482,
+    "prePrOpenPullRequests": 0,
+    "prePrDirectFileOverlap": false,
+    "branchContainsCurrentMain": true,
+    "branchBehindCurrentMain": 0,
+    "pr481Merged": true,
+    "pr482MergedAndAbsorbed": true,
+    "registryDriftResolved": true
+  },
+  "verification": {
+    "status": "supabase_applied_and_verified_pre_pr_correlation_complete_pending_post_pr_ci",
+    "negativeCasesCovered": [
+      "missing risk decision",
+      "missing compliance decision",
+      "rejected/review-required decisions",
+      "workflow identity drift",
+      "policy binding gap",
+      "invalid decision time window",
+      "invalid fixed point",
+      "binary floating point cannot regain financial authority",
+      "expired intent reconciliation",
+      "policy/hash tamper mismatch",
+      "paper quantity/price mismatch",
+      "guarded-live and production hard block",
+      "private persistence denial"
+    ],
+    "newProductionMutation": true,
+    "newRealExecutionCapability": false,
+    "hostedCiStartedBeforePr": false
+  },
+  "postMergeFollowUp": {
+    "requested": true,
+    "mustStartFromThenCurrentMain": true,
+    "workPackages": [
+      "FinTech value-chain supersession for stale drafts, projections, correlations and legacy paths",
+      "separate Meme Coin and DeFi remodeling supersession without parallel scoring/evidence authorities"
+    ]
+  },
+  "releaseCondition": "Release claim when FT-6B scope is merged, superseded or abandoned. FT-7 remains a separate mutation/security gate."
+}

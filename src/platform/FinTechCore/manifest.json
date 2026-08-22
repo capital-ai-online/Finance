@@ -1,9 +1,9 @@
 {
   "name": "FinTechCore",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "status": "in-implementation",
   "owner": "CAPITAL-AI",
-  "description": "Financial workflow composition layer. Crypto is Module 01; FT-0 through FT-6A provide research/paper, durable traceability, deterministic risk/compliance and decision-bound OrderIntent/reconciliation controls without productive scoring or real execution authority.",
+  "description": "Financial workflow composition layer. Crypto Module 01 now includes FT-0 through FT-6B contracts for research/paper, durable traceability, deterministic risk/compliance, canonical fixed-point OrderIntent binding and typed reconciliation without productive scoring or real execution authority.",
   "category": "platform",
   "roadmap": ["FT-CORE-CRYPTO-01"],
   "adr": ["ADR-0087", "ADR-0099", "ADR-0100"],
@@ -16,7 +16,7 @@
   "events": {
     "produces": ["PAPER_ACCOUNT_INITIALIZED", "PAPER_FILL_SIMULATED"],
     "consumes": [],
-    "note": "FinTechCore persists append-only domain/decision/intent/reconciliation evidence through the existing private persistence boundary. Event publication does not create a second EventMesh or queue authority."
+    "note": "FT-6B intentionally adds no speculative EventMesh names. Typed append-only reconciliation evidence carries supervisorEscalationRequired until a canonical event catalog defines an unambiguous event name."
   },
   "interfaces": [
     "FinTechCoreEngine",
@@ -25,8 +25,9 @@
     "FinTechCoreWorkflowContext",
     "FinTechCoreDomainEvent",
     "FinTechCoreDecisionRecord",
+    "FinTechCoreFixedPoint",
     "FinTechCoreOrderIntent",
-    "FinTechCoreBoundOrderIntent",
+    "FinTechCoreOrderPriceBounds",
     "FinTechCoreReconciliationRecord",
     "FinTechCoreWorkflowState",
     "FinTechCorePersistencePort",
@@ -45,6 +46,7 @@
   ],
   "contracts": [
     "fintech-core/contracts/0.1.0",
+    "fintech-core/order-intent/0.2.0",
     "fintech-core/module-registry/0.1.0",
     "fintech-core/engine/0.1.0",
     "fintech-core/workflow-state-machine/0.1.0",
@@ -59,8 +61,8 @@
     "fintech-core.crypto/pattern-research-engine/0.1.0",
     "fintech-core/paper-trading/0.1.0",
     "fintech-core/risk-compliance/0.1.0",
-    "fintech-core/order-intent-binding/0.1.0",
-    "fintech-core/reconciliation/0.1.0"
+    "fintech-core/order-intent-binding/0.2.0",
+    "fintech-core/reconciliation/0.2.0"
   ],
   "documentation": [
     "README.md",
@@ -75,6 +77,7 @@
     "docs/evidence/fintech-core/FT4_RESEARCH_PAPER_TRADING_2026-08-21.md",
     "docs/evidence/fintech-core/FT5_DETERMINISTIC_RISK_COMPLIANCE_2026-08-21.md",
     "docs/evidence/fintech-core/FT6A_ORDER_INTENT_RECONCILIATION_2026-08-22.md",
+    "docs/evidence/fintech-core/FT6B_ORDER_INTENT_FIXED_POINT_RECONCILIATION_2026-08-22.md",
     "docs/evidence/fintech-core/FT_SYNC_CHAT_TRANSFER_2026-08-21.md",
     "docs/evidence/sc-md/SC6_DEFILLAMA_DEFI_EVIDENCE_PROVIDER_2026-08-21.md"
   ],
@@ -100,7 +103,7 @@
     "tests/architecture/fintechCoreFt6AuthorityBoundary.test.ts"
   ],
   "implementation": {
-    "level": "ft6a-order-intent-decision-binding-reconciliation",
+    "level": "ft6b-canonical-order-intent-fixed-point-reconciliation",
     "implementedAreas": [
       "core contracts and immutable module registry",
       "deterministic workflow state machine",
@@ -109,12 +112,15 @@
       "detector-agnostic pattern research with non-authorizing evidence",
       "private durable workflow/domain-event/decision/order-intent/reconciliation persistence",
       "deterministic replayable paper trading with explicit costs",
+      "single canonical FinTechCore fixed-point representation reused by paper and OrderIntent contracts",
       "deterministic risk and compliance gates using versioned external policy snapshots",
       "append-only risk/compliance decision evidence with input/output hashes",
-      "FT-6A PAPER-only OrderIntent binding derived from approved decision records",
-      "decision output-hash, policy, workflow, idempotency, client-order, TTL and order-bound intent fingerprint",
-      "typed decision-to-intent reconciliation with tamper mismatch evidence",
-      "service-role-only FT-6 persistence migration prepared but not applied",
+      "PAPER-only OrderIntent binding derived from approved FT-5 decision records",
+      "deterministic clientOrderId/idempotencyKey/intentHash derivation",
+      "exact decision hash and policy identity binding",
+      "typed decision-to-intent and paper-fill reconciliation with mismatch escalation evidence",
+      "single appendOrderIntent persistence port with versioned v1 legacy and v2 canonical RPC paths",
+      "service-role-only FT-6B migration prepared but not applied",
       "DeFiLlama protocol evidence provider remains evidence-only and outside scoring/order authority"
     ],
     "blockedAreas": [
@@ -122,13 +128,13 @@
       "production execution",
       "exchange/custody/wallet adapters",
       "settlement finality assertion",
-      "FT-6 production migration verification",
-      "paper-fill reconciliation closure",
+      "FT-6B production migration application and verification",
+      "canonical FT-6 EventMesh event-name publication pending event catalog authority",
       "live acquisition of remaining category-specific evidence",
       "category evidence promotion into canonical scoring without explicit model-contract approval",
       "24-asset crypto universe final availability/evidence admission proof",
       "concrete TA-Lib or other detector runtime binding"
     ]
   },
-  "authorityBoundary": "FinTechCore composes financial workflows and typed evidence but cannot select or calculate productive scores outside ScoringModelRegistry/ScoringDispatcher. CryptoOrchestrator and pattern/agent outputs remain research-only unless separately promoted by existing evidence/model contracts. FT-6A derives OrderIntent approvals only from authoritative append-only FT-5 decisions, remains PAPER-only, asserts no real execution or settlement finality, and cannot replace IAM, Compliance, Quality, Governance, Supervisor, Release or Deployment authorities."
+  "authorityBoundary": "FinTechCore composes financial workflows and typed evidence but cannot select or calculate productive scores outside ScoringModelRegistry/ScoringDispatcher. CryptoOrchestrator and pattern/agent outputs remain research-only unless separately promoted by existing evidence/model contracts. FT-6B derives OrderIntent approvals only from authoritative append-only FT-5 decisions, uses deterministic fixed point for execution-relevant financial values, remains PAPER-only, asserts no real execution or settlement finality, and cannot replace IAM, Compliance, Quality, Governance, Supervisor, Release or Deployment authorities."
 }
