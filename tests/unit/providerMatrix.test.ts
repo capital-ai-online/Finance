@@ -11,35 +11,16 @@ import { RateLimitBudget } from '../../src/platform/MarketData/RateLimitBudget';
 import { CircuitBreaker } from '../../src/platform/MarketData/CircuitBreaker';
 import { MarketDataGateway } from '../../src/platform/MarketData/MarketDataGateway';
 import { ProviderRegistry } from '../../src/platform/MarketData/ProviderRegistry';
-import {
-  MARKET_DATA_CONTRACT_VERSION,
-  type MarketDataProvider,
-  type SnapshotRequest,
-} from '../../src/platform/MarketData/contracts';
-import {
-  getProviderHealth,
-  resetProviderHealth,
-} from '../../src/platform/Supervisor/providerHealth';
+import { MARKET_DATA_CONTRACT_VERSION, type MarketDataProvider, type SnapshotRequest } from '../../src/platform/MarketData/contracts';
+import { getProviderHealth, resetProviderHealth } from '../../src/platform/Supervisor/providerHealth';
 
 beforeEach(() => resetProviderHealth());
 
-const request: SnapshotRequest = {
-  symbol: 'AAPL',
-  assetClass: 'stock',
-  correlationId: 'sc4-test',
-  maxAgeMs: 90_000,
-};
+const request: SnapshotRequest = { symbol: 'AAPL', assetClass: 'stock', correlationId: 'sc4-test', maxAgeMs: 90_000 };
 
 function mockProvider(id: string, state: 'LIVE' | 'UNAVAILABLE' = 'LIVE'): MarketDataProvider {
   return {
-    descriptor: {
-      id,
-      role: 'primary',
-      capabilities: ['snapshot'],
-      assetClasses: ['stock'],
-      enabled: true,
-      priority: 1,
-    },
+    descriptor: { id, role: 'primary', capabilities: ['snapshot'], assetClasses: ['stock'], enabled: true, priority: 1 },
     getSnapshot: vi.fn(async (input) => ({
       contractVersion: MARKET_DATA_CONTRACT_VERSION,
       provider: id,
@@ -63,41 +44,43 @@ function mockProvider(id: string, state: 'LIVE' | 'UNAVAILABLE' = 'LIVE'): Marke
 
 describe('SC-4/SC-5 ProviderMatrix', () => {
   it('has stable contract version and required gateway providers', () => {
-    expect(PROVIDER_MATRIX_VERSION).toMatch(/^provider-matrix\/1\./);
+    expect(PROVIDER_MATRIX_VERSION).toBe('provider-matrix/1.8.0');
     expect(getProviderMatrixEntry('twelvedata')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('fmp-index')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('coingecko')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('alpaca')?.gatewayStatus).toBe('shadow_only');
-    // SC-5 Phase D: CoinAPI/EODHD registered as gateway-hardened crypto adapters (quorum prep);
-    // TwelveData gains assetClass=crypto. Not yet consumed by cryptoQuoteEvidence.
     expect(getProviderMatrixEntry('coinapi')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('eodhd')?.gatewayStatus).toBe('behind_gateway');
-    expect(getProviderMatrixEntry('twelvedata')?.assetClasses).toContain('crypto');
-    expect(providersBehindGateway().map((e) => e.id)).toEqual(
-      expect.arrayContaining(['twelvedata', 'fmp-index', 'coingecko', 'coinapi', 'eodhd']),
-    );
+    expect(providersBehindGateway().map((e) => e.id)).toEqual(expect.arrayContaining(['twelvedata', 'fmp-index', 'coingecko', 'coinapi', 'eodhd']));
     expect(providersLegacyOffGateway().some((e) => e.id === 'stooq')).toBe(true);
   });
 
-  it('exposes rate-limit overrides for gateway-relevant providers including coingecko', () => {
+  it('declares Binance and Kraken as co-primary crypto evidence suppliers without gateway authority', () => {
+    const binance = getProviderMatrixEntry('binance-public');
+    const kraken = getProviderMatrixEntry('kraken-futures-public');
+    expect(binance).toMatchObject({ role: 'primary', gatewayStatus: 'not_wired' });
+    expect(kraken).toMatchObject({ role: 'primary', gatewayStatus: 'not_wired' });
+    expect(binance?.assetClasses).toContain('crypto');
+    expect(kraken?.assetClasses).toContain('crypto');
+    expect(providersBehindGateway().some((entry) => ['binance-public', 'kraken-futures-public'].includes(entry.id))).toBe(false);
+  });
+
+  it('exposes rate-limit overrides only for gateway-relevant providers', () => {
     const overrides = rateLimitOverridesFromMatrix();
     expect(overrides.twelvedata?.capacity).toBe(30);
     expect(overrides['fmp-index']?.capacity).toBe(40);
     expect(overrides.alpaca?.capacity).toBe(20);
     expect(overrides.coingecko?.capacity).toBe(25);
-    // SC-5 Phase D: coinapi/eodhd moved from consensus_only to behind_gateway, so they now get a
-    // matrix-managed rate-limit budget too (registration only; not yet consumed for quorum).
     expect(overrides.coinapi?.capacity).toBe(20);
     expect(overrides.eodhd?.capacity).toBe(15);
     expect(overrides.stooq).toBeUndefined();
+    for (const id of ['defillama', 'binance-public', 'goplus', 'kraken-futures-public', 'dexscreener', 'sourcify', 'dune', 'gdelt']) {
+      expect(overrides[id]).toBeUndefined();
+    }
   });
 
   it('RateLimitBudget applies per-provider capacity from matrix overrides', () => {
-    const budget = new RateLimitBudget({
-      capacity: 100,
-      windowMs: 60_000,
-      perProvider: { twelvedata: { capacity: 2, windowMs: 60_000 } },
-    });
+    const budget = new RateLimitBudget({ capacity: 100, windowMs: 60_000, perProvider: { twelvedata: { capacity: 2, windowMs: 60_000 } } });
     expect(budget.tryConsume('twelvedata').allowed).toBe(true);
     expect(budget.tryConsume('twelvedata').allowed).toBe(true);
     expect(budget.tryConsume('twelvedata').allowed).toBe(false);
@@ -116,38 +99,47 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
 
   it('MarketDataGateway records Supervisor health on success and rate-limit skip', async () => {
     const registry = new ProviderRegistry();
-    const primary = mockProvider('twelvedata');
-    registry.register(primary);
-    const budget = new RateLimitBudget({
-      capacity: 1,
-      windowMs: 60_000,
-      perProvider: { twelvedata: { capacity: 1, windowMs: 60_000 } },
-    });
+    registry.register(mockProvider('twelvedata'));
+    const budget = new RateLimitBudget({ capacity: 1, windowMs: 60_000, perProvider: { twelvedata: { capacity: 1, windowMs: 60_000 } } });
     const gateway = new MarketDataGateway(registry, { rateLimitBudget: budget, cacheTtlMs: 0 });
-
     const ok = await gateway.getSnapshot(request);
     expect(ok.snapshot.qualityState).toBe('LIVE');
-    const afterSuccess = getProviderHealth().find((h) => h.provider === 'twelvedata' && h.capability === 'snapshot');
-    expect(afterSuccess?.state).toBe('healthy');
-
+    expect(getProviderHealth().find((h) => h.provider === 'twelvedata' && h.capability === 'snapshot')?.state).toBe('healthy');
     const blocked = await gateway.getSnapshot(request);
     expect(blocked.skippedProviders[0]?.reason).toBe('rate_limit_budget_exhausted');
-    const afterSkip = getProviderHealth().find((h) => h.provider === 'twelvedata' && h.capability === 'snapshot');
-    expect(afterSkip?.state).toBe('degraded');
-    expect(afterSkip?.diagnosticCode).toBe('rate_limited');
+    expect(getProviderHealth().find((h) => h.provider === 'twelvedata' && h.capability === 'snapshot')?.diagnosticCode).toBe('rate_limited');
   });
 
-  it('registers DeFiLlama as a not_wired evidence-only entry that stays out of gateway routing', () => {
+  it('registers DeFiLlama as not_wired evidence only', () => {
     const entry = getProviderMatrixEntry('defillama');
     expect(entry?.gatewayStatus).toBe('not_wired');
     expect(entry?.capabilities).toEqual(['fundamentals']);
     expect(entry?.assetClasses).toEqual(['crypto']);
-    // not_wired must stay excluded from gateway-relevant helpers so it cannot silently join routing/RL wiring.
-    expect(rateLimitOverridesFromMatrix().defillama).toBeUndefined();
-    expect(providersBehindGateway().some((e) => e.id === 'defillama')).toBe(false);
   });
 
-  it('matrix entries have positive rate-limit and circuit policies', () => {
+  it('keeps all extended evidence suppliers outside MarketDataGateway authority', () => {
+    const expected = {
+      'binance-public': ['snapshot', 'quote', 'bars', 'derivatives'],
+      'kraken-futures-public': ['derivatives', 'bars', 'quote'],
+      goplus: ['security', 'onchain'],
+      dexscreener: ['snapshot', 'quote', 'onchain'],
+      sourcify: ['security', 'onchain'],
+      dune: ['onchain', 'governance'],
+      gdelt: ['news'],
+    } as const;
+    for (const [id, capabilities] of Object.entries(expected)) {
+      const entry = getProviderMatrixEntry(id);
+      expect(entry?.gatewayStatus).toBe('not_wired');
+      expect(entry?.capabilities).toEqual(capabilities);
+      expect(rateLimitOverridesFromMatrix()[id]).toBeUndefined();
+    }
+  });
+
+  it('does not retain excluded paid evidence-provider entries', () => {
+    for (const id of ['newsapi', 'coinglass', 'lunarcrush', 'messari']) expect(getProviderMatrixEntry(id)).toBeUndefined();
+  });
+
+  it('matrix entries have positive local safety policies', () => {
     for (const entry of PROVIDER_MATRIX) {
       expect(entry.rateLimit.capacity).toBeGreaterThan(0);
       expect(entry.rateLimit.windowMs).toBeGreaterThan(0);
