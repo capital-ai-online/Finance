@@ -1,10 +1,7 @@
 import type { GoPlusTokenIdentity } from './providers/GoPlusTokenSecurityProvider';
-import type {
-  GovernedDexScreenerIdentity,
-  GovernedDuneEvidenceRequest,
-} from '../../services/cryptoExtendedEvidence';
+import type { GovernedDexScreenerIdentity } from '../../services/cryptoExtendedEvidence';
 
-export const CRYPTO_EVIDENCE_IDENTITY_REGISTRY_VERSION = 'crypto-evidence-identity-registry/1.3.0' as const;
+export const CRYPTO_EVIDENCE_IDENTITY_REGISTRY_VERSION = 'crypto-evidence-identity-registry/1.4.0' as const;
 
 export interface CryptoEvidenceIdentityRecord {
   readonly symbol: string;
@@ -15,7 +12,6 @@ export interface CryptoEvidenceIdentityRecord {
   readonly binanceFuturesSymbol?: string;
   /** Exact public Kraken Futures Charts market symbol. */
   readonly krakenFuturesSymbol?: string;
-  readonly dune?: readonly GovernedDuneEvidenceRequest[];
   readonly sourceRefs: readonly string[];
   readonly verifiedAt: string;
   readonly reviewedBy: string;
@@ -27,34 +23,15 @@ export interface CryptoEvidenceIdentityRecord {
  * Binance/Kraken are both primary suppliers, but exact venue-market identities remain explicit so
  * an asset cannot silently resolve to the wrong perpetual/contract or quote currency.
  *
- * Dune rows below are Owner-supplied query metadata. Runtime admission is still fail-closed:
- * DUNE_ALLOWED_QUERY_IDS must contain the same IDs and DuneQueryEvidenceProvider validates the
- * declared result schema on every read before any value can be projected as VERIFIED evidence.
+ * Dune saved-query IDs are intentionally not stored here. They are governed by
+ * DuneSavedQueryRegistry and resolved from semantic server-side environment keys, eliminating the
+ * former duplicate authority between this asset registry and DUNE_ALLOWED_QUERY_IDS.
  */
 export const CRYPTO_EVIDENCE_IDENTITY_RECORDS: readonly CryptoEvidenceIdentityRecord[] = Object.freeze([
   Object.freeze({
     symbol: 'AAVE',
-    dune: Object.freeze([
-      Object.freeze({
-        queryId: 5833540,
-        expectedColumns: Object.freeze(['observed_at', 'active_addresses']),
-        mappings: Object.freeze([
-          Object.freeze({ featureKey: 'protocol.activeAddresses24h', column: 'active_addresses' }),
-        ]),
-      }),
-      Object.freeze({
-        queryId: 27230,
-        expectedColumns: Object.freeze(['observed_at', 'treasury_usd']),
-        mappings: Object.freeze([
-          // Raw treasury value only. It MUST NOT be treated as treasuryToMarketCap without a
-          // separately governed market-cap observation + transform contract.
-          Object.freeze({ featureKey: 'protocol.treasuryUsd', column: 'treasury_usd' }),
-        ]),
-      }),
-    ]),
     sourceRefs: Object.freeze([
-      'owner-attested:dune:https://dune.com/queries/5833540:Aave:Ethereum:Active Addresses:daily',
-      'owner-attested:dune:https://dune.com/queries/27230:Aave:Ethereum:Treasury Value Over Time:daily',
+      'owner-attested:aave-v3:ethereum:evidence-identity-contract',
     ]),
     verifiedAt: '2026-08-22T14:03:00.000Z',
     reviewedBy: 'OWNER',
