@@ -4,21 +4,18 @@ import type {
   GovernedDuneEvidenceRequest,
 } from '../../services/cryptoExtendedEvidence';
 
-export const CRYPTO_EVIDENCE_IDENTITY_REGISTRY_VERSION = 'crypto-evidence-identity-registry/1.1.0' as const;
+export const CRYPTO_EVIDENCE_IDENTITY_REGISTRY_VERSION = 'crypto-evidence-identity-registry/1.2.0' as const;
 
 export interface CryptoEvidenceIdentityRecord {
   readonly symbol: string;
-  /** Exact EVM chain ID + contract identity. Mutually exclusive with goPlusSolanaMintAddress. */
   readonly goPlusEvm?: GoPlusTokenIdentity;
-  /** Exact Solana SPL/SPL-2022 mint address. */
   readonly goPlusSolanaMintAddress?: string;
-  /** Exact DEX Screener chain slug + token address. No fuzzy symbol lookup. */
   readonly dexScreener?: GovernedDexScreenerIdentity;
-  /** Exact public Kraken Futures Charts market symbol; omitted if the asset has no governed market. */
+  /** Exact Binance USD-M futures symbol, e.g. BTCUSDT. */
+  readonly binanceFuturesSymbol?: string;
+  /** Exact public Kraken Futures Charts market symbol. */
   readonly krakenFuturesSymbol?: string;
-  /** Owner-reviewed Dune saved query IDs, expected schemas and feature mappings. */
   readonly dune?: readonly GovernedDuneEvidenceRequest[];
-  /** Human-verifiable identity source references, preferably official project/provider pages. */
   readonly sourceRefs: readonly string[];
   readonly verifiedAt: string;
   readonly reviewedBy: string;
@@ -26,12 +23,9 @@ export interface CryptoEvidenceIdentityRecord {
 }
 
 /**
- * Canonical registry intentionally starts empty.
- *
- * Contract addresses, Solana mints, DEX token identities, Kraken Futures symbols and Dune query
- * IDs are high-impact identity data. They MUST be added by reviewed repository change with source
- * references; runtime code never guesses these values from ticker symbols. Existing DeFiLlama
- * slug authority in assetRegistry/fetchDefiProtocolEvidence is deliberately not duplicated here.
+ * High-impact identities remain review-gated and are never guessed from ticker symbols.
+ * Binance/Kraken are both primary suppliers, but exact venue-market identities remain explicit so
+ * an asset cannot silently resolve to the wrong perpetual/contract or quote currency.
  */
 export const CRYPTO_EVIDENCE_IDENTITY_RECORDS: readonly CryptoEvidenceIdentityRecord[] = Object.freeze([]);
 
@@ -41,6 +35,9 @@ function validateRecord(record: CryptoEvidenceIdentityRecord): void {
   }
   if (record.goPlusEvm && record.goPlusSolanaMintAddress) {
     throw new Error(`CRYPTO_EVIDENCE_IDENTITY_AMBIGUOUS_CHAIN:${record.symbol}`);
+  }
+  if (record.binanceFuturesSymbol && !/^[A-Z0-9_]{5,30}$/.test(record.binanceFuturesSymbol)) {
+    throw new Error(`CRYPTO_EVIDENCE_IDENTITY_INVALID_BINANCE_MARKET:${record.symbol}`);
   }
   if (record.krakenFuturesSymbol && !/^[A-Z0-9_.-]{2,40}$/.test(record.krakenFuturesSymbol)) {
     throw new Error(`CRYPTO_EVIDENCE_IDENTITY_INVALID_KRAKEN_MARKET:${record.symbol}`);
