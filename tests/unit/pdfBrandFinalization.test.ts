@@ -141,7 +141,7 @@ describe('CAPITAL-AI Branding Manifest v6.1 / PDF brand projection', () => {
     expect(requirements).not.toMatch(/PyMuPDF|fitz/i);
     expect(verifier).toContain('pdfinfo');
     expect(verifier).toContain('pdftotext');
-    expect(verifier).toContain('pdoppm');
+    expect(verifier).toContain('pdftoppm');
     expect(verifier).toContain('expect_tagged');
   });
 });
