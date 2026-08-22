@@ -3,122 +3,78 @@
 - **Roadmap:** `FT-CORE-CRYPTO-01`
 - **Phase:** FT-6 OrderIntent & Reconciliation — Closure Block B
 - **Branch:** `feat/fintech-core-ft6-orderintent-reconciliation-2026-08-22`
-- **Base Main:** `b180d56a37762c6a558a9b3488ce4f36c70fa2e9`
+- **Base Main at branch start:** `b180d56a37762c6a558a9b3488ce4f36c70fa2e9`
 - **FT-6A predecessor:** PR #481 merged
 - **Primary ADR:** ADR-0099
 - **Protected ADR:** ADR-0087
-- **Owner reference:** `FinTech Enterprise Orchestration Modell_1881859777413601727.pdf` — requirement source only, not runtime authority
+- **Supabase project:** `AIFINANCIAL` / `ryzywoktpmyhwzxmstyu`
 
 ## Pre-Check
 
 | Pflichtfeld | Befund |
 |---|---|
-| Betroffener Bereich | FinTechCore `CoreContracts`, shared financial Fixed Point, OrderIntent Binding, Persistence Port/Server Adapter, Reconciliation, FT-6 tests, roadmap/ADR/architecture docs |
-| Repository-Ist-Zustand | FT-6A aus PR #481 ist auf `main@b180d56…`; initialer Binder nutzte `number` für Quantity/Price und einen zusätzlichen `FinTechCoreBoundOrderIntent`; Reconciliation war überwiegend Decision↔Intent-Scaffold |
-| Relevante Best Practices | deterministische Fixed-Point-Finanzwerte; immutable approval binding; idempotent replay; exact identity/policy/hash correlation; append-only reconciliation; least privilege; fail-closed missing/stale evidence |
-| State-of-the-Art-Features | content-addressed intent integrity; deterministic client/idempotency identity; typed expected/observed reconciliation; explicit mismatch escalation; versioned storage RPC boundary |
-| Maßgebliche Quellen | ADR-0087, ADR-0099, FT-3/FT-4/FT-5 Evidence, MiCA, DORA, EU Transfer-of-Funds/Travel Rule, EBA Travel Rule Guidelines, FATF VA/VASP targeted updates, W3C Trace Context / OpenTelemetry as later trace hardening |
-| Geeignete Open-Source-Lösungen | keine neue Runtime erforderlich; Kafka/NATS/Temporal/pgmq/Trading-Runtimes würden für FT-6 unnötige Authority-/Supply-Chain-Fläche erzeugen |
-| Geeignete vorhandene Plugins | GitHub für Repository-/PR-Korrelation; Google Drive read-only für Owner-Referenz; Supabase nur für eine später separat autorisierte DB-Mutation |
-| Zusätzlich sinnvolle Plugins | für FT-6 keine erforderlich |
-| Wiederverwendung möglich | FT-4 `atoms:string + scale:number`, FT-5 Decision Records, FT-3 private schema/tables, `FinTechCorePersistencePort`, service-role-only SECURITY INVOKER RPC Pattern, `public.outbox_jobs`, EventMesh/Traceability |
-| Wesentliche Risiken/Gaps | binary floating point im FT-6A Intent; zweiter Bound-Intent-Typ; caller-gesteuerte Client-/Idempotency-IDs; Policy-Metadaten nicht vollständig persistiert; Reconciliation ohne typed financial expected/observed fields |
-| Quick Wins | Paper Fixed Point als gemeinsamer Core-Vertrag; Bound-Typ entfernen; deterministische Identity ableiten; v2 RPC additiv statt neue Tabelle; Mismatch-Eskalationsflag statt autonomer Reparatur |
-| Empfohlener Umsetzungsweg | bestehenden `FinTechCoreOrderIntent` in place härten; FT-4 Fixed Point promoten; FT-5 exact binden; bestehende Tabellen erweitern; PAPER-only belassen; FT-7 separat |
+| Betroffener Bereich | FinTechCore Contracts, Fixed Point, OrderIntent Binding, Persistence, Reconciliation, Tests, ADR/Roadmap/README |
+| Repository-Ist-Zustand | FT-6A auf `main`; zusaetzlicher Bound-Intent-Typ und `number`-basierte Financial Fields mussten konsolidiert werden |
+| Best Practices | deterministic Fixed Point, immutable approval binding, exact identity/policy/hash correlation, idempotent replay, append-only reconciliation, least privilege, fail-closed |
+| Wiederverwendung | FT-4 Fixed Point, FT-5 Decision Records, FT-3 private schema/tables, service-role-only `SECURITY INVOKER` RPC Pattern, `public.outbox_jobs` |
+| Verbotene Parallelarchitektur | keine zweite Scoring Engine, Model Registry, Queue, Persistence, Order Ledger, Reconciliation-Tabelle oder Execution Runtime |
+| Live Scope | `RESEARCH`/`PAPER`; `GUARDED_LIVE` und `PRODUCTION` bleiben FT-7+ blockiert |
 
-## Main-/PR-Korrelation
+## Implementierung
 
-Vor Branch-Erstellung wurde `main` erneut geladen und PR #481 als gemergt bestätigt. Neuer Baseline-Commit:
+### Single Fixed-Point Authority
 
-```text
-b180d56a37762c6a558a9b3488ce4f36c70fa2e9
-```
-
-Offener PR #482 (`Skill Engine`) wurde dateibasiert geprüft. Es besteht kein direkter Datei-Overlap mit diesem FT-6B Scope. Semantisch bleibt #482 read-only Quality Control Plane und darf keine Financial Authority übernehmen.
-
-## Implementierte Änderungen
-
-### 1. Single Fixed-Point Authority
-
-`src/platform/FinTechCore/Financial/FixedPoint.ts` formalisiert die bereits in FT-4 verwendete Representation:
+`FinTechCoreFixedPoint` ist kanonisch:
 
 ```text
 atoms: string
 scale: number
 ```
 
-`PaperFixedPoint` ist nur noch ein Alias auf `FinTechCoreFixedPoint`. Es existiert keine zweite numerische Representation. Exact decimal serialization ist für Legacy-PostgreSQL-`numeric` verfügbar, ohne JavaScript binary floating point einzuführen.
+`PaperFixedPoint` ist nur noch Alias. JavaScript Binary Floating Point besitzt keine Financial Authority.
 
-### 2. Single Canonical OrderIntent
+### Single Canonical OrderIntent
 
-`FinTechCoreOrderIntent` wurde in place auf `fintech-core/order-intent/0.2.0` erweitert. Der zusätzliche FT-6A Domain-Typ `FinTechCoreBoundOrderIntent` wird nicht fortgeführt.
+`FinTechCoreOrderIntent` wurde in place auf `fintech-core/order-intent/0.2.0` gehaertet. `FinTechCoreBoundOrderIntent` wird nicht als zweite Domain-Authority fortgefuehrt.
 
-Financial fields:
+Wesentliche Felder:
 
-- `quantity: FinTechCoreFixedPoint`
-- `priceBounds.limitPrice?`
-- `priceBounds.minPrice?`
-- `priceBounds.maxPrice?`
+- `bindingState` / `bindingVersion`;
+- deterministic `clientOrderId`, `idempotencyKey`, `intentHash`;
+- `quantity: FinTechCoreFixedPoint`;
+- typed `priceBounds`;
+- Risk/Compliance Decision ID + Hash + Policy ID/Version;
+- `createdAt`, `expiresAt`;
+- `effectClass=SIDE_EFFECTING`.
 
-Binding fields:
+### Deterministic Approval Binding
 
-- `bindingState`, `bindingVersion`
-- `clientOrderId`, `idempotencyKey`
-- Risk Decision ID/Hash + Policy ID/Version
-- Compliance Decision ID/Hash + Policy ID/Version
-- `createdAt`, `expiresAt`, `intentHash`
+`bindApprovedOrderIntent(...)` akzeptiert nur PAPER und exakt passende `APPROVED` FT-5 Decision Records. Missing, stale, rejected, review-required, policy-fremde, identity-fremde oder zeitlich ungueltige Evidence wird fail-closed abgelehnt.
 
-### 3. Deterministic Binder
+### Real-Execution Hard Block
 
-`bindApprovedOrderIntent(...)` akzeptiert nur PAPER und ausschließlich authoritative FT-5 Decisions.
+```text
+RESEARCH      -> DENY
+PAPER         -> BOUND intent erlaubt; executionHandoffEligible=false
+GUARDED_LIVE  -> DENY
+PRODUCTION    -> DENY
+EMERGENCY     -> DENY
+```
 
-Fail-closed:
+FT-6B erteilt keine reale Handels-, Exchange-, Wallet- oder Custody-Capability.
 
-- Risk/Compliance fehlt;
-- falscher Decision Type;
-- Outcome != APPROVED;
-- Run/Trace/Correlation/Module/Asset/DecisionVersion Drift;
-- Decision Hash fehlt;
-- Policy ID/Version fehlt;
-- Decision vor Workflow-Start oder nach Intent Creation;
-- ungültige Fixed-Point-Werte;
-- ungültige Price Bounds;
-- ungültige/abgelaufene TTL Relation;
-- ungültige Slippage-Bounds.
+### Typed Reconciliation
 
-`clientOrderId`, `idempotencyKey` und `intentHash` werden deterministisch aus immutable Feldern abgeleitet und können nicht durch Agent-/LLM-Approval-Flags ersetzt werden.
+`FinTechCoreReconciliationRecord` fuehrt expected/observed Quantity, Price Bounds/Execution Price, Fee Evidence, Settlement State, `clientOrderId`, optional `venueOrderId`, `reconciledAt` und `supervisorEscalationRequired`.
 
-### 4. Real Execution Hard Block
+- `MATCHED`: Evidence stimmt ueberein.
+- `MISMATCH`: Drift bleibt sichtbar; keine Auto-Reparatur; Supervisor-Eskalation erforderlich.
+- `NOT_COMPUTABLE`: Observation/Evidence fehlt.
+- PAPER: `settlementState=NOT_APPLICABLE`.
 
-FT-6 schaltet weder `GUARDED_LIVE` noch `PRODUCTION` frei. Der Real-Execution-Eligibility-Helper bleibt bis FT-7 hard-blocked und liefert `false`.
+## Persistence Reuse
 
-### 5. Typed Reconciliation
-
-`FinTechCoreReconciliationRecord` enthält nun typed:
-
-- `clientOrderId`, optional `venueOrderId`;
-- expected/observed Quantity;
-- expected Price Bounds / observed Execution Price;
-- Fee Evidence;
-- Settlement State;
-- `reconciledAt`;
-- `supervisorEscalationRequired`.
-
-Decision Binding Reconciliation revalidiert Decision-/Policy-/Intent-/Idempotency-/Client-Order-Hashes und Expiry.
-
-Paper-Fill Reconciliation erzeugt:
-
-- `MATCHED` bei exact Quantity und erlaubtem Preis + computable Fee Evidence;
-- `MISMATCH` bei Drift, ohne Auto-Repair;
-- `NOT_COMPUTABLE` bei fehlender Observation/Evidence.
-
-PAPER behauptet keine Settlement-Finalität; `settlementState=NOT_APPLICABLE`.
-
-### 6. Persistence Reuse
-
-Keine neue Tabelle, kein neues Schema, keine zweite Queue.
-
-Bestehend:
+Kanonisch bleiben:
 
 ```text
 fintech_core.workflow_runs
@@ -129,81 +85,102 @@ fintech_core.reconciliation_records
 public.outbox_jobs
 ```
 
-`FinTechCorePersistencePort` besitzt wieder genau einen `appendOrderIntent`-Pfad. Der Serveradapter routet:
+Keine neue Tabelle, kein neues Schema, keine zweite Queue.
 
-- `UNBOUND` Legacy Evidence -> v1 RPC;
-- canonical `BOUND` FT-6 -> v2 RPC.
+Repository-Migration:
 
-Migration `20260822011500_fintech_core_ft6b_fixed_point_reconciliation.sql` erweitert bestehende Tabellen additiv und definiert service-role-only `SECURITY INVOKER` v2 RPCs.
+```text
+supabase/migrations/20260822011500_fintech_core_ft6b_fixed_point_reconciliation.sql
+```
 
-**Die Migration wurde nicht produktiv angewendet.**
+Sie erweitert bestehende Tabellen additiv und definiert:
 
-## Security / Least Privilege
+```text
+fintech_core.fixed_point_numeric_v1
+public.fintech_core_append_order_intent_v2
+public.fintech_core_append_reconciliation_record_v2
+```
 
-- keine Secrets hinzugefügt;
-- keine Exchange-/Wallet-/Custody-Imports im FT-6 Domain Layer;
-- keine LLM-/Agent-Imports im Approval Path;
-- private Tabellen bleiben hinter service-role-only RPCs;
-- `anon`/`authenticated` erhalten keine neue Capability;
-- `SECURITY INVOKER` bleibt bevorzugt;
-- Mismatch erzwingt Evidence/Eskalation, keine autonome Remediation.
+## Owner-autorisierte Supabase-Mutation
+
+Am **2026-08-22** wurde die bereits branchgebundene FT-6B-Migration nach expliziter Owner-Freigabe auf `AIFINANCIAL` angewendet.
+
+Supabase registrierte:
+
+```text
+20260822012200 fintech_core_ft6b_fixed_point_reconciliation
+```
+
+Der abweichende Zeitstempel gegenueber dem Repository-Dateinamen ist die Remote-Migrationshistorie des ausgefuehrten Supabase-Apply-Vorgangs; Inhalt/Name der FT-6B-Migration bleiben korreliert.
+
+### Post-Mutation Verification
+
+Verifiziert:
+
+- Migration in Remote-History vorhanden;
+- `fintech_core.fixed_point_numeric_v1`: `SECURITY INVOKER`;
+- `public.fintech_core_append_order_intent_v2`: `SECURITY INVOKER`;
+- `public.fintech_core_append_reconciliation_record_v2`: `SECURITY INVOKER`;
+- `anon EXECUTE=false` fuer alle drei Funktionen;
+- `authenticated EXECUTE=false` fuer alle drei Funktionen;
+- `service_role EXECUTE=true` fuer alle drei Funktionen;
+- keine Live-Execution-Freischaltung;
+- keine zweite Persistence-/Queue-Authority.
+
+Der Security Advisor meldete danach keine neue FT-6B-spezifische Schwachstelle. Vorhandene Advisor-Hinweise zu aelteren `public`-Tabellen bzw. Auth-Leaked-Password-Protection sind nicht durch FT-6B entstanden und werden nicht in diesem Scope veraendert.
+
+## Supabase Best-Practice-Abgleich
+
+Aktuelle Supabase-Dokumentation bestaetigt fuer Database Functions:
+
+- `SECURITY INVOKER` ist der bevorzugte Default;
+- Function `EXECUTE` ist standardmaessig breit und muss fuer geschuetzte RPCs explizit revoked werden;
+- gezieltes Re-Grant an die benoetigte Rolle entspricht Least Privilege.
+
+Der August-2026-Changelog enthaelt keine Breaking Change, die diese FT-6B-DDL betrifft.
 
 ## EventMesh-Entscheidung
 
-Vor Einführung der Kandidaten `ORDER_INTENT_CREATED`, `ORDER_INTENT_REJECTED`, `RECONCILIATION_COMPLETED`, `RECONCILIATION_MISMATCH` wurde nach einem kanonischen FT-6 Event Catalog gesucht. Kein eindeutiger kanonischer Name wurde gefunden.
-
-Daher werden in FT-6B **keine spekulativen Event-Namen** eingeführt. Typed durable reconciliation bleibt führend; `supervisorEscalationRequired=true` signalisiert Mismatch. Event-Namen benötigen eine spätere eindeutige Catalog-/Authority-Entscheidung.
+FT-6B fuehrt keine spekulativen Event-Namen ein. Ohne eindeutigen kanonischen Event Catalog bleibt durable typed Reconciliation die Evidence Authority; Mismatch wird ueber `supervisorEscalationRequired=true` signalisiert.
 
 ## Negative-Test-Abdeckung im Branch
 
-Implementiert bzw. erweitert:
+Abgedeckt sind u. a.:
 
-- Risk Decision fehlt;
-- Compliance Decision fehlt;
-- Risk REJECTED;
-- Compliance REVIEW_REQUIRED;
-- Run/Trace/Correlation/Asset/Decision-Version mismatch;
-- Policy Binding fehlt;
-- Decision Time Window invalid;
-- Intent expiry;
+- fehlende Risk-/Compliance Decision;
+- REJECTED / REVIEW_REQUIRED;
+- Run/Trace/Correlation/Asset/Decision-Version Drift;
+- fehlende Policy Binding;
+- ungueltige Decision Time Window;
 - invalid Fixed Point;
 - JavaScript-number path als Financial Authority abgelehnt;
-- live modes blockiert;
-- Policy-/Intent-Tampering -> `MISMATCH`;
-- Paper Quantity/Price mismatch -> `MISMATCH`;
+- abgelaufener Intent;
+- Policy-/Hash-Tampering -> `MISMATCH`;
+- Paper Quantity/Price Drift -> `MISMATCH`;
 - unresolved mismatch -> Supervisor-Eskalation;
-- private persistence rejection -> fail-closed;
-- BOUND persistence ohne vollständige Decision/Policy-Bindung -> reject.
+- private persistence denial;
+- BOUND Persistence ohne vollstaendige Decision/Policy-Bindung -> reject;
+- Guarded-Live/Production hard block.
 
-## Offene Validierung
+## PR-/CI-Gates
 
-Vor Draft PR wird `main` erneut geladen und der Dateioverlap offener PRs erneut geprüft. Kostenverursachende GitHub Hosted CI wird nicht manuell vor PR-Erstellung gestartet.
+Vor Draft/PR:
 
-Nach Draft PR auszuführen:
+1. aktuellen `main` erneut laden;
+2. offene PRs und Dateioverlap erneut pruefen;
+3. Branch ahead/behind und Merge-Base pruefen;
+4. Governance-/Dokumenten-Korrelation pruefen.
+
+Kostenverursachende GitHub Hosted CI wird nicht vor PR-Erstellung manuell gestartet.
+
+Nach PR:
 
 - TypeScript/Lint;
-- fokussierte Unit Tests;
-- Architecture Tests;
-- Governance Control Plane / Docs Hygiene;
-- Repository Advisory/Security Validation;
-- `build-and-test` entsprechend der ermittelten PR-Klasse.
-
-Bis zu tatsächlichen PASS-Ergebnissen wird keine PASS-Aussage für Hosted CI getroffen.
-
-## Production Mutation / Rollback
-
-Aktueller Scope ist Repository-Code/-Dokumentation. Keine Supabase-Migration wurde angewendet.
-
-Falls die FT-6B Migration später autorisiert wird:
-
-1. aktuellen Production-/Main-/Migration-Stand vorab prüfen;
-2. Least-Privilege/RLS/Function Grants verifizieren;
-3. Migration transaktional anwenden;
-4. positive + negative Persistence-Probes durchführen;
-5. Testdaten vollständig entfernen;
-6. Post-Mutation Privileges/RLS/Schema Drift prüfen;
-7. bei Fehlern Migration/RPC-Erweiterung kontrolliert rücksetzen, bevor FT-7 bewertet wird.
+- Unit-/Architecture-Tests;
+- Governance/Docs Hygiene;
+- Security/Advisory Review;
+- `build-and-test` gemaess PR-Klasse.
 
 ## Closure
 
-FT-6B ist code-/dokumentenbasiert implementiert, aber erst nach PR-/CI-Evidence und gegebenenfalls separat autorisierter DB-Verification vollständig geschlossen. `GUARDED_LIVE` und `PRODUCTION` bleiben blockiert.
+FT-6B ist code-, dokumenten- und datenbankseitig implementiert. Vollstaendige Closure setzt noch PR-/CI-Evidence und den finalen Authority-/Correlation-Review voraus. `GUARDED_LIVE` und `PRODUCTION` bleiben blockiert.
