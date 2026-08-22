@@ -8,21 +8,52 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT / GitHub Connector"
   },
-  "workItem": "Synchronize current main state and revalidate DevelopmentChain, SC-MD-SPT-0001, Documentary, Vocabulary and FinTechCore value-chain integration without introducing duplicate authorities or runtime architectures.",
+  "workItem": "Synchronize current main state and close DevelopmentChain, SC-MD-SPT-0001, Documentary, Vocabulary and AI-transparency/document-governance drift; add deterministic Archive Retention planning and offline-first ChatGPT sandbox validation; rename the legacy AI_FINTECH regulatory matrix to the canonical CAPITAL-AI matrix, synchronize document version 1.1.0, register the three new AI documents, and add one bounded Archive Retention/Sandbox threat model without duplicate authorities or runtime architectures.",
   "startedAt": "2026-08-22T11:33:00+02:00",
   "baseBranch": "main",
   "baseSha": "f01a615edfa4a87939fb07bdce08829a1b46a1e6",
   "branch": "feat/fintech-value-chain-main-sync-2026-08-22",
   "openPrCorrelation": {
-    "observedOpenPrCount": 0,
+    "observedOpenPrCount": 1,
     "overlap": false,
-    "note": "No open pull requests were present at branch creation."
+    "note": "Open PR #486 owns Branding/Frontend/MarketData scope including README.md. This branch does not modify README.md or any PR #486 changed path; the compliance, Documentary, Security, AI transparency and sandbox scope is disjoint."
   },
   "claimedPaths": [
+    ".ai/registry/ess-registry.json",
+    ".ai/skills/ESS-0017-Contracts.md",
+    ".ai/skills/ESS-0017-Vocabulary-Governance.md",
     ".ai/work-claims/FINTECH-VALUE-CHAIN-MAIN-SYNC-2026-08-22.json",
+    "docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md",
+    "docs/adr/ADR-0097-documentary-maintenance-agent-control-loop.md",
+    "docs/adr/registry.json",
+    "docs/architecture/DOCUMENTARY_ARCHIVE_RETENTION_AGENT.md",
+    "docs/architecture/DOCUMENTARY_MAINTENANCE_CONTROL_LOOP.md",
     "docs/architecture/ROADMAP.md",
+    "docs/compliance/AI_FINTECH_REGULATORY_CONTROL_MATRIX_2026-08-19.md",
+    "docs/compliance/AI_LITERACY_CONTROL.md",
+    "docs/compliance/AI_SYSTEM_INVENTORY_AND_CLASSIFICATION.md",
+    "docs/compliance/CAPITAL_AI_REGULATORY_CONTROL_MATRIX_2026-08-19.md",
+    "docs/contracts/AI_CONTENT_TRANSPARENCY_CONTRACT.md",
+    "docs/governance/CAPITAL_AI_GOVERNANCE_LIBRARY_REPORT_2026-08-15.md",
+    "docs/governance/authority-registry.json",
+    "docs/governance/document-registry.json",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md",
+    "docs/roadmaps/work-packages/DOCUMENTARY_MAINTENANCE_CONTROL_LOOP_2026-08-20.md",
+    "docs/runbooks/CHATGPT_REPOSITORY_SANDBOX.md",
+    "docs/security/ARCHIVE_RETENTION_SANDBOX_THREAT_MODEL_2026-08-22.md",
+    "package.json",
+    "scripts/automation/chatGptSandboxPolicy.mjs",
+    "scripts/automation/chatGptSandboxPolicy.test.mjs",
+    "scripts/automation/runChatGptSandboxPrePr.mjs",
+    "scripts/automation/validateDocumentaryMaintenanceControlLoop.mjs",
+    "server/ai.ts",
+    "src/components/MarketScreener.tsx",
+    "src/platform/Documentary/Agents/ArchiveRetentionAgent.ts",
+    "src/platform/Documentary/README.md",
     "src/platform/Documentary/manifest.json",
-    "src/platform/Documentary/README.md"
+    "src/services/aiContentTransparency.ts",
+    "tests/unit/aiContentTransparency.test.ts",
+    "tests/unit/archiveRetentionAgent.test.ts"
   ],
   "protectedExistingAuthorities": [
     "AGENTS.md / AUTH-GOV-AGENT-TRUST-ROOT",
@@ -31,8 +62,10 @@
     "ADR-0099 FinTechCore workflow composition authority",
     "ADR-0100 DeFiLlama evidence-only authority",
     "ESS-0017 / ADR-0078 Vocabulary Governance",
-    "ESS-0019 Universal AI Agent Control Plane"
+    "ESS-0019 Universal AI Agent Control Plane",
+    "package.json#version / Release Version Control Plane"
   ],
+  "versioningResolution": "Document version synchronization uses the active Documentary versioning/Document Registry path. Legacy src/platform/VersionManager remains read-only compatibility under ADR-0096 and is not reactivated as a second mutation authority.",
   "externalMutationScope": "none",
-  "releaseCondition": "No merge or production mutation is authorized by this claim."
+  "releaseCondition": "No merge, release, deployment or production mutation is authorized by this claim."
 }
