@@ -1,98 +1,94 @@
 # ADR-0099 — CAPITAL-AI FinTech Core Engine: Crypto Module 01
 
 - **Authority ID:** `AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20`
-- **Version:** 1.4.0
-- **Date:** 2026-08-21
+- **Version:** 1.5.0
+- **Date:** 2026-08-22
 - **Lifecycle:** proposed
-- **Owner Priority:** Chat-Prioritaet 2026-08-20; FT-3/FT-4/FT-5-Fortsetzung 2026-08-21
 - **Roadmap:** `FT-CORE-CRYPTO-01`
-- **Work Claims:** `FINTECH-CORE-FT4-RESEARCH-PAPER-TRADING-2026-08-21`, `FINTECH-CORE-FT5-DETERMINISTIC-RISK-COMPLIANCE-2026-08-21`
-- **Branch:** `feat/fintech-core-ft4-research-paper-trading-2026-08-21`
-- **Current Main Baseline:** `a0663563a6a01bbdf292db8796c1b291bdd8ee57`
-- **Supersedes:** none
-- **Protected authority:** ADR-0087 / SC-2 Single Scoring Architecture
+- **Work Claims:** `FINTECH-CORE-FT4-RESEARCH-PAPER-TRADING-2026-08-21`, `FINTECH-CORE-FT5-DETERMINISTIC-RISK-COMPLIANCE-2026-08-21`, `FINTECH-CORE-FT6B-ORDERINTENT-RECONCILIATION-2026-08-22`
+- **Execution Branch:** `feat/fintech-core-ft6-orderintent-reconciliation-2026-08-22`
+- **Current Main Baseline at FT-6B start:** `b180d56a37762c6a558a9b3488ce4f36c70fa2e9`
+- **FT-6A predecessor:** PR #481 merged
+- **Supersedes:** previous revisions of ADR-0099 only
+- **Protected authority:** ADR-0087 / Single Scoring Architecture
 
-> Namespace history: Der FinTech-Draft verwendete vor Anwendung des aktuellen Reservation-Contracts vorlaeufig `ADR-0098`. `ADR-0098` ist fuer Media Project v2 belegt. Die stabile FinTech Authority ID blieb unveraendert; der kanonische Display-Identifier ist `ADR-0099`.
+> Namespace history: Der FinTech-Draft verwendete vor Anwendung des Reservation-Contracts vorlaeufig `ADR-0098`. `ADR-0098` ist fuer Media Project v2 belegt. Die stabile FinTech Authority ID blieb unveraendert; der kanonische Display-Identifier ist `ADR-0099`.
 
 ## Context
 
-CAPITAL-AI besitzt bereits eine produktive Single-Dispatcher-Scoring-Architektur sowie einen Crypto-Research-Pfad. FinTech Core muss Finanz-Workflows komponieren, ohne parallele Scoring-, Governance-, IAM-, Compliance-Policy- oder Execution-Authorities einzufuehren.
+CAPITAL-AI besitzt eine produktive Single-Dispatcher-Scoring-Architektur und einen separaten Crypto-Research-Pfad. Der FinTech Core soll Finanz-Workflows komponieren, ohne eine parallele Scoring-, Evidence-, Governance-, Compliance-Policy-, IAM-, Queue-, Persistence-, Execution- oder Custody-Authority zu schaffen.
 
 Geschuetzte Scoring-Kette:
 
 ```text
-verified Evidence / Feature Contract
+UAI Identity
+  -> Evidence Acquisition
+  -> Evidence/Data Quality Gate
+  -> Feature Contract
   -> ScoringModelRegistry
   -> ScoringDispatcher
-  -> Domain Executor
+  -> Domain Executor Adapter
   -> CanonicalScoreResult
+  -> Ranking/Eligibility
+  -> EventMesh/Traceability/Supervisor
 ```
 
-`CryptoOrchestrator` bleibt Research/Enrichment und `scoreEligible=false`.
-
-PR #467 machte FT-0..FT-2C auf `main` kanonisch. PR #468 machte FT-3 Durable Workflow & Traceability kanonisch. FT-4 ergaenzt simuliertes event-sourced Paper Trading. FT-5 ergaenzt deterministische Risk-/Compliance-Entscheidungen, ohne OrderIntent-Approval-Bindung oder Live Execution vorzuziehen.
+`CryptoOrchestrator` bleibt Research/Enrichment und `scoreEligible=false`. DeFiLlama bleibt Evidence Acquisition und erhaelt keine direkte Score-, Ranking-, Eligibility- oder Order-Authority.
 
 ## Decision
 
-`src/platform/FinTechCore/` mit `moduleId = fintech-core.crypto` bleibt **financial workflow composition authority**. Die Schicht ist keine Trading-Strategie, Scoring Engine, Compliance-Policy-Authority oder Broker/Exchange Gateway.
+`src/platform/FinTechCore/` mit `moduleId=fintech-core.crypto` bleibt **financial workflow composition authority**. Diese Authority besitzt keine produktive Score-Berechnung, keine juristische Policy-Definition und keine autonome Execution.
 
 ### 1. Authority Boundaries
 
 FinTech Core darf besitzen:
 
-- Workflow-Lifecycle/Korrelation;
-- versionierte Decision-/Domain-Event-/OrderIntent-Contracts;
+- Workflow-Lifecycle, Run-/Trace-/Correlation-Identitaet;
+- versionierte Decision-, Domain-Event-, OrderIntent- und Reconciliation-Contracts;
 - Operating-Mode-Enforcement;
-- Composition von Category-, Pattern-, Scoring-, Portfolio-, Risk-, Compliance- und spaeter Execution-Adaptern;
-- Orchestration-Level-Idempotency/Reconciliation-Anforderungen;
-- durable Workflow-/Event-/Decision-/Intent-Evidence;
+- Composition bestehender Evidence-, Scoring-, Portfolio-, Risk-/Compliance- und spaeter Execution-Adapter;
 - deterministische Paper-Accounting-/Replay-Semantik;
-- deterministische Evaluation externer versionierter Risk-/Compliance-Policy-Snapshots.
+- deterministische Evaluation externer versionierter Risk-/Compliance-Policy-Snapshots;
+- OrderIntent-Idempotency-/Integrity-Vertraege;
+- append-only durable Evidence.
 
 FinTech Core darf nicht besitzen:
 
-- produktive Score-Berechnung oder Modellselektion ausserhalb `ScoringModelRegistry`/`ScoringDispatcher`;
+- produktive Score-Berechnung oder Model Selection ausserhalb `ScoringModelRegistry`/`ScoringDispatcher`;
 - IAM/AuthN/AuthZ-Policy;
-- regulatorische/fachliche Compliance-Policy-Definition;
-- Quality-/Governance-/Supervisor-/Deployment-/Release-Authority;
-- Exchange-Credentials, Wallet Private Keys oder Custody-Secrets;
-- LLM-/Agent-Autorisierung von Risk-/Compliance-Freigaben;
-- autonome Execution;
-- reale Kapitalbewegung durch FT-4/FT-5;
-- Bindung von Risk-/Compliance-Decisions an execution-eligible OrderIntents vor FT-6.
+- juristische/regulatorische Compliance-Policy-Definition;
+- autonome Risk-/Compliance-Freigabe durch LLM/Agenten;
+- Exchange Credentials, Wallet Private Keys oder Custody Secrets;
+- autonome Execution oder reale Kapitalbewegung in FT-0…FT-6;
+- Quality-, Governance-, Supervisor-, Release- oder Deployment-Authority.
 
-### 2. Research / Pattern Boundary
+### 2. Operating Modes
 
-Category-/Pattern-Analyse bleibt Evidence. Pattern Results bleiben:
-
-```text
-scoreEligible     = false
-executionEligible = false
-authority         = RESEARCH_CONTEXT_ONLY
-```
-
-Pattern Reliability bleibt exact-key auf Asset, Analysis Profile, Timeframe, Market Regime, Pattern und Validation-Version. Gleichrangige Konflikte bleiben `CONFLICTING_EVIDENCE`; kein Cross-Key-Fallback oder synthetischer Pattern Score.
-
-### 3. Operating Modes
-
-Vertraglich existieren `RESEARCH`, `PAPER`, `GUARDED_LIVE`, `PRODUCTION`, `EMERGENCY`. Crypto Module 01 unterstuetzt durch FT-5 weiterhin nur:
+Vertraglich existieren:
 
 ```text
 RESEARCH
 PAPER
+GUARDED_LIVE
+PRODUCTION
+EMERGENCY
 ```
 
-`GUARDED_LIVE` und `PRODUCTION` bleiben blockiert. Ein LLM darf keinen permissiveren Modus aktivieren.
+Crypto Module 01 unterstuetzt bis einschliesslich FT-6 ausschliesslich Research/Paper-Semantik.
 
-### 4. Retry / Side Effects
+```text
+RESEARCH      -> keine OrderIntent-Bindung fuer Execution
+PAPER         -> simulierte OrderIntent-/Fill-/Reconciliation-Evidence
+GUARDED_LIVE  -> blockiert
+PRODUCTION    -> blockiert
+EMERGENCY     -> keine neue Order
+```
 
-Aktionen bleiben `RETRY_SAFE` oder `SIDE_EFFECTING`. Live Orders, Withdrawals, Settlement und Custody benoetigen end-to-end Idempotency, Client-/Venue-Order-IDs und Recovery-Semantik vor Retry.
+Der Real-Execution-Eligibility-Helper ist fuer FT-6 hard-blocked. Eine Freischaltung ist ein separater FT-7+-Entscheidungs- und Sicherheitsprozess.
 
-FT-3 `order_intents` sind durable Evidence, keine Execution. FT-4 Paper Fills sind Simulation Events. FT-5 produziert nur Risk-/Compliance-Decisions und keine OrderIntent-Approval-Bindung.
+### 3. Persistence Authority
 
-### 5. FT-3 Durable Workflow / Persistence
-
-Privates Schema:
+Kanonisches privates Schema:
 
 ```text
 fintech_core.workflow_runs
@@ -102,79 +98,39 @@ fintech_core.order_intents
 fintech_core.reconciliation_records
 ```
 
-Es gelten immutable identity/context, append-only Evidence, RLS/Least Privilege und service-role-only `SECURITY INVOKER` RPCs. `anon`/`authenticated` erhalten keinen privaten Schema-Zugriff. `FinTechCorePersistencePort` bleibt storage-agnostisch; Supabase bleibt Server-Adapter. `public.outbox_jobs` bleibt Queue-/Lease-Authority.
-
-### 6. FT-4 Paper Accounting
+Kanonische Queue-/Lease-Authority:
 
 ```text
-operatingMode = PAPER
-accountingMode = CASH_LONG_ONLY
-real capital = false
-exchange routing = false
-custody/wallet capability = false
+public.outbox_jobs
 ```
 
-Paper-Geld-/Mengenwerte nutzen JSON-safe Fixed Point `atoms + scale` und `BigInt`. Short/Margin/Leverage sind nicht implementiert. Jeder Fill benoetigt explizite Fee-/Slippage-/Funding-Evidence; keine versteckten Nullkosten.
+Es werden keine zweite Queue, kein zweites Event Journal, kein zweites Order Ledger und keine zweite Reconciliation-Tabelle eingefuehrt. Kafka, NATS, Temporal und pgmq bleiben ohne neue explizite Architekturentscheidung ausserhalb dieses Scopes.
 
-### 7. FT-4 Event-Sourced Replay
+Private Persistence bleibt service-role-only hinter schmalen `SECURITY INVOKER` RPCs. `anon`/`authenticated` erhalten keine direkte private-schema Capability. RLS bleibt Defense in Depth.
 
-Keine zweite Paper-Ledger-Tabelle. Journal bleibt `fintech_core.domain_events`:
+### 4. FT-4 Canonical Financial Representation
+
+FT-4 etablierte JSON-safe Fixed Point:
 
 ```text
-PAPER_ACCOUNT_INITIALIZED   paperSequence=0
-PAPER_FILL_SIMULATED        paperSequence=1..N
+atoms: string
+scale: number
 ```
 
-Replay re-simuliert Fills und verwirft manipulierte/korrelationsfremde/causation-falsche/non-contiguous Events. DB-Guards sichern Payload, genau eine Initialisierung, eindeutige Sequence und Causation.
+FT-6B hebt exakt diese Representation zum gemeinsamen `FinTechCoreFixedPoint` an. `PaperFixedPoint` bleibt ein Typalias darauf. Dadurch existiert **eine** FinTech-Core-Finanzrepresentation.
 
-`public.fintech_core_list_domain_events_v1(text)` ist read-only, `SECURITY INVOKER`, service-role-only. Produktionsmigration `20260821071823 / fintech_core_paper_replay_reader` wurde transaktional verifiziert; 0 Testdaten verblieben.
+Execution-relevante Quantity-/Price-/Money-Werte duerfen nicht ueber JavaScript binary floating point Financial Authority zurueckgewinnen. PostgreSQL `numeric` darf als exakte Persistence-/Legacy-Projektion genutzt werden, ist aber nicht die konkurrierende Runtime-Representation.
 
-### 8. FT-5 Deterministic Risk Evaluation
+### 5. FT-5 Deterministic Risk + Compliance
 
-Risk Gates:
+FT-5 bleibt Approval Authority fuer FT-6 und erzeugt append-only `FinTechCoreDecisionRecord`s:
 
 ```text
-ORDER_NOTIONAL
-GROSS_EXPOSURE
-DRAWDOWN
-LIQUIDITY
-STALENESS
-COUNTERPARTY
+PRE_TRADE_RISK_GATE
+PRE_TRADE_COMPLIANCE_GATE
 ```
 
-`FinTechCoreRiskPolicySnapshot` liefert Policy-ID/-Version, Fixed-Point Limits, Drawdown-/Liquidity-/Freshness-Grenzen und erwartete Evidence Authorities. Der Core besitzt nur deterministische Evaluation, nicht die Authority, die Policy zu definieren.
-
-Order-, Portfolio-/Equity-, Liquidity-, Market- und Counterparty-Evidence wird separat provenance-/authority-bound geprueft.
-
-### 9. FT-5 Compliance Integration Boundary
-
-Typed Controls:
-
-```text
-KYC
-KYB
-AML
-SANCTIONS
-WALLET_SCREENING
-JURISDICTION
-TRAVEL_RULE
-```
-
-`FinTechCoreCompliancePolicySnapshot` bestimmt explizit erforderliche Controls, erwartete Authority je Control, Freshness-Limit und Policy-Evidence. Der Core inferiert **nicht**, welche Controls rechtlich anwendbar sind.
-
-Control States:
-
-```text
-PASS
-FAIL
-MISSING
-STALE
-REVIEW_REQUIRED
-```
-
-### 10. Evidence Integrity / Fail Closed
-
-PASS reicht nicht. Evidence muss zum Control passen, exakt an die erwartete `authorityId` gebunden sein, Provider/Evidence-Refs besitzen, einen gueltigen Observed Timestamp haben und Freshness-Gates bestehen.
+Risk-/Compliance-Policy-Grenzen kommen aus extern versionierten Policy Snapshots. Der Core evaluiert deterministisch, definiert aber keine rechtliche oder fachliche Policy-Wahrheit.
 
 Outcome-Prioritaet:
 
@@ -182,126 +138,248 @@ Outcome-Prioritaet:
 REJECTED > NOT_COMPUTABLE > REVIEW_REQUIRED > APPROVED
 ```
 
-Limit-/Counterparty-/Sanctions-Fail -> `REJECTED`; missing/stale/mismatched-authority -> `NOT_COMPUTABLE`; Review bleibt `REVIEW_REQUIRED`. Keine synthetischen PASS-/Zero-/Probability-Fallbacks.
+Missing/stale/wrong-authority Evidence wird niemals synthetisch zu PASS. Research Agents duerfen Kontext liefern, aber keine Freigabe autorisieren.
 
-### 11. Keine LLM-/Parallel-Compliance-Authority
+### 6. FT-6 Single Canonical OrderIntent
 
-`CryptoRiskAgent` und andere AI-/Research-Komponenten koennen Kontext liefern, aber keine FT-5-Freigabe erteilen. Architecture Tests verbieten direkte AI-/Agent-/Provider-/Exchange-/Supabase-Imports in der Gate-Schicht.
+FT-6 erweitert **`FinTechCoreOrderIntent` in place**. Der in FT-6A temporaer eingefuehrte `FinTechCoreBoundOrderIntent` wird nicht als zweite Domain-Authority fortgefuehrt.
 
-`src/platform/Compliance` bleibt SecurityComplianceAuditor-/Repository-Compliance-Komponente nach ADR-0012. ADR-0058 bleibt Agent-/Tool-Risk-Authorization. Keine dieser Authorities wird fuer Financial Pre-Trade Policy umdefiniert.
-
-### 12. FT-5 Durable Decision Evidence
-
-Keine neue Tabelle. `RiskComplianceDecisionRecords.ts` mappt auf FT-3 `FinTechCoreDecisionRecord`:
+Contract Version:
 
 ```text
-PRE_TRADE_RISK_GATE
-PRE_TRADE_COMPLIANCE_GATE
+fintech-core/order-intent/0.2.0
 ```
 
-Run/Trace/Correlation/Asset/Decision-Version, Policy-ID/-Version, Input-/Output-Hashes, Evidence-Refs und Outcome bleiben auditierbar. Hash-Berechnung bleibt Infrastrukturverantwortung.
+Execution-relevante Felder umfassen:
 
-### 13. OrderIntent Approval Binding bleibt FT-6
+- immutable `orderIntentId`;
+- `runId`, `traceId`, `correlationId`, `assetId`;
+- optional `strategyId`, `portfolioId`;
+- `decisionVersion`;
+- `side`, `orderType`;
+- `quantity: FinTechCoreFixedPoint`;
+- `priceBounds` mit optional `limitPrice`, `minPrice`, `maxPrice` als Fixed Point;
+- `maxSlippageBps`;
+- `createdAt`, `expiresAt`;
+- deterministische `clientOrderId`, `idempotencyKey`, `intentHash`;
+- Risk Decision ID/Hash + Policy ID/Version;
+- Compliance Decision ID/Hash + Policy ID/Version.
 
-FT-5 macht **kein** `OrderIntent` execution-handoff eligible. Der Contract erzwingt fuer jedes FT-5-Ergebnis:
+`bindingState=UNBOUND` ist nur Legacy-/Research-Persistence-Evidence. `bindingState=BOUND` darf nur durch den deterministischen Binder entstehen.
+
+### 7. FT-6 Approval Binding
+
+`bindApprovedOrderIntent(...)` akzeptiert ausschliesslich authoritative FT-5 Decision Records.
+
+Hard Gates:
+
+- Risk Decision vorhanden und `APPROVED`;
+- Compliance Decision vorhanden und `APPROVED`;
+- korrekter Decision Type;
+- exact `runId`, `traceId`, `correlationId`, `moduleId`, `assetId`, `decisionVersion`;
+- Decision Hash vorhanden;
+- Policy ID und Policy Version vorhanden;
+- Decision Timestamp innerhalb des aktiven Workflow-Zeitfensters und nicht nach Intent Creation;
+- gueltige Fixed-Point Quantity/Price Bounds;
+- Slippage-Bounds valide;
+- `expiresAt > createdAt`;
+- `PAPER` Operating Mode.
+
+Explizit verboten:
+
+- `PENDING`, `REVIEW_REQUIRED` oder `NOT_COMPUTABLE` automatisch auf APPROVED setzen;
+- fehlende Decision synthetisieren;
+- stale/context-fremde Decision weiterverwenden;
+- Research Agent als Approval behandeln;
+- caller-gesteuerte Approval Flags als Authority akzeptieren.
+
+### 8. Deterministic Idempotency / Replay Identity
+
+`clientOrderId`, `idempotencyKey` und `intentHash` werden deterministisch abgeleitet.
+
+Semantik:
 
 ```text
-executionHandoffEligible = false
+same identity + same payload
+  -> gleiche Replay-Identitaet / idempotenter Persistence Replay
+
+same orderIntent identity + changed payload
+  -> andere Payload-/Idempotency-Hashes
+  -> DB collision via orderIntentId/clientOrderId
+  -> reject
 ```
 
-Dies gilt unabhaengig vom Operating Mode, also auch fuer manuell konstruierte `GUARDED_LIVE`-/`PRODUCTION`-Kontexte. FT-5 besitzt keinen Helper, der `riskApproval` oder `complianceApproval` im `OrderIntent` auf `APPROVED` setzt.
+Blindes Retry einer SIDE_EFFECTING Operation bleibt verboten. FT-6 besitzt weiterhin keine reale Side-Effecting Execution-Capability.
 
-FT-6 muss Risk-/Compliance-Decision-Hashes/Policy-Versionen an den immutable OrderIntent binden und zusaetzlich TTL, Price/Quantity/Slippage Bounds, Client-Order-ID, Idempotency und Reconciliation definieren.
+### 9. Typed Reconciliation
 
-### 14. Regulatory / Best-Practice Basis
+`fintech_core.reconciliation_records` bleibt einzige Persistence Authority. Contract Version:
 
-FT-5 wurde gegen aktuelle Primaerquellen abgeglichen: MiCA Risk-/Record-Keeping, EBA ML/TF Risk Factor Guidelines fuer CASPs, EBA Travel Rule Guidelines und FATF VA/VASP Targeted Update 2026. Diese Quellen stuetzen risikobasierte, nachvollziehbare, provenance-/freshness-faehige Kontrollen. Daraus werden keine jurisdictionsspezifischen Rechtsentscheidungen hardcodiert.
+```text
+fintech-core/reconciliation/0.2.0
+```
 
-### 15. Open Source / Dependency Decision
+Typed Felder:
 
-- FT-4: QuantConnect LEAN/NautilusTrader bewertet, nicht integriert — fuer den engen Paper-Scope ueberbreite Runtime-/Execution-Flaeche.
-- FT-5: Open Policy Agent und Cedar bewertet, nicht integriert — gute Apache-2.0 Enterprise Policy Engines, aber fuer den kleinen typed Evaluator unnoetige Policy-Runtime/DSL-/Governance-Oberflaeche.
-- Plugin-Suche: kein geeigneter spezialisierter AML/KYC/Sanctions-Connector gefunden.
-- TA-Lib bleibt spaeterer Pattern-PoC-Kandidat.
+- `orderIntentId`, `clientOrderId`, optional spaetere `venueOrderId`;
+- Run/Trace/Correlation/Asset Identity;
+- expected/observed Quantity als Fixed Point;
+- expected Price Bounds / observed Execution Price;
+- Fee Evidence;
+- Settlement State;
+- `PENDING`, `MATCHED`, `MISMATCH`, `NOT_COMPUTABLE`;
+- Evidence Refs;
+- `observedAt`, `reconciledAt`;
+- `supervisorEscalationRequired`.
 
-### 16. Reconciliation bleibt FT-6
+Hard Rules:
 
-`fintech_core.reconciliation_records` bleibt Evidence-Scaffold. Typed OrderIntent-Hardening, Approval-Bindung, TTL/Bounds, Client-Order-ID sowie Application-Reconciliation-/Settlement-Semantik gehoeren zu FT-6.
+- Mismatch wird nicht automatisch korrigiert;
+- keine Balance wird interpoliert oder synthetisiert;
+- kein Settlement wird ohne Evidence als erfolgreich markiert;
+- PAPER verwendet `settlementState=NOT_APPLICABLE`;
+- `MISMATCH` setzt `supervisorEscalationRequired=true`;
+- keine autonome Supervisor-Remediation.
 
-### 17. External Platform Mutations
+`ORDER_INTENT_DECISION_BINDING` revalidiert Decision-/Policy-/Idempotency-/Client-Order-/Intent-Hash-/Expiry-Bindings.
 
-FT-3/FT-4 verwendeten produktive Supabase-Migrationen unter den vorgesehenen Gates. FT-5 benoetigt **keine** neue Supabase-, Render-, Stripe-, IAM-, Scoring-, Exchange- oder Custody-Mutation und verwendet bestehende FT-3 Decision Persistence.
+`ORDER_INTENT_PAPER_FILL` vergleicht simulierte Quantity/Price/Fee Evidence gegen den genehmigten Intent und behauptet keine reale Execution.
+
+### 10. Persistence Evolution
+
+`FinTechCorePersistencePort` besitzt genau einen `appendOrderIntent`-Pfad. Der serverseitige Adapter darf intern versionierte Persistence RPCs routen:
+
+- v1 fuer bestehende `UNBOUND` Legacy Evidence;
+- v2 fuer canonical FT-6 `BOUND` OrderIntent Evidence.
+
+Die Migration `20260822011500_fintech_core_ft6b_fixed_point_reconciliation.sql` erweitert bestehende Tabellen additiv. Sie fuehrt keine neue Tabelle oder Queue ein und bleibt `SECURITY INVOKER`/service-role-only.
+
+**Diese Migration wird durch den Repository-Commit nicht produktiv angewendet.** Eine Production Application benoetigt einen separaten Owner Mutation Gate, Rollback und Post-Verification.
+
+### 11. EventMesh / Traceability
+
+FT-6B fuehrt keine Event-Namen auf Verdacht ein. Vor Kandidaten wie `ORDER_INTENT_CREATED` oder `RECONCILIATION_MISMATCH` muss ein kanonischer Event Catalog einen eindeutigen Namen/Contract liefern. Bis dahin bleibt typed durable Reconciliation Evidence die Authority und traegt bei Drift das Supervisor-Eskalationssignal.
+
+W3C Trace Context / OpenTelemetry bleiben kompatible Zielstandards fuer FT-8, sofern nicht zuvor als vorhandene Infrastruktur wiederverwendet.
+
+### 12. Regulatory / Best-Practice Basis
+
+Die Architektur wird gegen folgende Leitplanken gepflegt:
+
+- Regulation (EU) 2023/1114 MiCA — Governance/Organisation/Record Keeping fuer Crypto-Asset-Services;
+- Regulation (EU) 2022/2554 DORA — ICT/Operational Resilience;
+- Regulation (EU) 2023/1113 Transfer of Funds / Crypto Travel Rule;
+- EBA Travel Rule Guidelines, anwendbar seit 2024-12-30;
+- FATF VA/VASP Targeted Updates;
+- W3C Trace Context / OpenTelemetry fuer spaetere interoperable Traceability.
+
+Diese Quellen begruenden nachvollziehbare, provenance-faehige, robuste Kontrollen. Der Core hardcodiert daraus **keine** jurisdictionsspezifische Legal Applicability, keine globale DQ-Schwelle und keinen Provider-PASS.
+
+### 13. Open Source / Dependency Decision
+
+Keine neue Runtime-/Library-Abhaengigkeit fuer FT-6B. Bestehende TypeScript-/Node-/PostgreSQL-/Supabase-Primitiven genuegen.
+
+Nicht integriert:
+
+- OPA/Cedar als zusaetzliche Policy Runtime;
+- LEAN/Nautilus als Trading Runtime;
+- Kafka/NATS/Temporal/pgmq;
+- CEX-/DEX-/Wallet-/Custody-SDK;
+- TA-Lib.
+
+Damit bleibt die Supply-Chain-/Operations-/Authority-Flaeche minimal.
+
+### 14. Documentation Supersession
+
+`docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md` darf keine Specialized-first-/Universal-Fallback-/Gemini- oder direkte Scoring-Engine-Topologie mehr als aktuelle Authority darstellen. Die aktuelle Dokumentation muss ADR-0087 und diese ADR-0099 spiegeln.
 
 ## Implemented Scope
 
-Implementiert und belegt:
+Auf `main` vor FT-6B vorhanden:
 
 - FT-0 Contract/Governance Foundation;
-- FT-1 Core Engine Foundation;
-- FT-2A Category Profile Resolution;
-- FT-2B Category Feature Contracts;
-- FT-2C Pattern Research Foundation;
-- FT-3 durable private Persistence / least privilege / append-only / service-role RPC Boundary;
-- FT-4 deterministic Paper Trading / Fixed-Point Balances / explicit Costs / durable Replay / Paper DB Guards;
-- FT-5 external Policy-/Evidence Contracts;
-- FT-5 deterministic Risk Gates;
-- FT-5 typed Compliance Integration Points und exact Authority/Freshness/Provenance Binding;
-- FT-5 fail-closed Missing/Stale/Review/Reject Semantik;
-- FT-5 DecisionRecord-Reuse;
-- FT-5 compile-time `executionHandoffEligible=false`;
-- FT-5 Architecture-/Negative Tests.
+- FT-1 Core Engine;
+- FT-2A/B/C Category/Pattern Research;
+- FT-3 durable private Persistence;
+- FT-4 deterministic Paper Trading / Replay;
+- FT-5 deterministic Risk + Compliance;
+- FT-6A initial Decision-bound OrderIntent/Reconciliation aus PR #481.
 
-Nicht umgesetzt bleiben FT-6+, konkrete produktive Compliance Provider, OrderIntent Approval-Bindung, Execution-/Settlement-Integrationen und Guarded Live.
+Auf dem FT-6B Branch implementiert:
+
+- shared `FinTechCoreFixedPoint`;
+- `PaperFixedPoint` als Alias statt zweite Representation;
+- Single canonical `FinTechCoreOrderIntent`;
+- keine zweite `FinTechCoreBoundOrderIntent` Domain-Authority;
+- deterministic client/idempotency/intent integrity;
+- exact Decision-/Policy-Binding;
+- PAPER-only + real-execution hard block;
+- typed reconciliation inkl. Paper Fill;
+- unresolved Mismatch Supervisor-Eskalationssignal;
+- single `appendOrderIntent` persistence port;
+- additive v2 Persistence Migration als Repository-Artefakt;
+- Negative-/Architecture-Tests;
+- Governance-/Roadmap-/Architecture-Synchronisierung.
 
 ## Alternatives Considered
 
-- **CryptoOrchestrator/CryptoRiskAgent als produktive Authority:** rejected; vermischt Research/LLM und produktive Authority.
-- **Category/Pattern Formeln direkt im ScoringDispatcher:** rejected; verletzt dessen klare Scoring-Boundary.
-- **Separate Scoring Engines:** rejected; verletzt ADR-0087/SC-2.
-- **Neue Kafka/NATS/Temporal/pgmq Queue:** rejected; `public.outbox_jobs` ist kanonisch.
-- **Separate Paper Ledger Table:** rejected; Domain Events rekonstruieren Paper State.
-- **LEAN/Nautilus Runtime:** rejected fuer FT-4 wegen ueberbreitem Footprint.
-- **OPA/Cedar Runtime:** rejected fuer FT-5 wegen unnoetiger DSL-/Runtime-/Authority-Flaeche.
-- **OrderIntent Approval-Bindung in FT-5:** rejected; explizit FT-6-Scope.
-- **Data-API-Oeffnung / SECURITY DEFINER Shortcuts:** rejected; private least-privilege financial persistence bleibt fuehrend.
+- **Bound OrderIntent als separater Domain-Typ:** rejected; erzeugt Contract-Drift und parallele Semantik.
+- **JavaScript `number` fuer Quantity/Price:** rejected; keine binary-floating-point Financial Authority.
+- **LLM/Agent als Approval:** rejected; Approval bleibt FT-5 deterministic Decision Record.
+- **Neue Reconciliation-/Ledger-Tabelle:** rejected; bestehende `reconciliation_records` bleibt Authority.
+- **Neue Queue/Workflow Runtime:** rejected; `public.outbox_jobs` und bestehende Orchestration bleiben fuehrend.
+- **Auto-Reconciliation/Auto-Repair:** rejected; Mismatch bleibt Evidence und eskaliert.
+- **FT-6 Guarded Live:** rejected; separater FT-7 Scope.
 
 ## Consequences
 
 Positiv:
 
-- Single-Scoring-Authority bleibt erhalten;
-- durable/auditierbare Workflow-/Paper-/Decision-Evidence;
-- deterministische Fixed-Point Paper Semantik;
-- deterministische versionierte Pre-Trade Risk-/Compliance-Entscheidungen;
-- klare Policy-Authority/Evaluator-Trennung;
-- exact Evidence Authority Binding;
-- keine LLM-Autorisierung;
-- keine neue DB, Queue, Policy Runtime oder Trading Runtime fuer FT-5;
-- FT-5 kann keinen Live-Handoff erzeugen.
+- eine Scoring-, eine Financial-Value-, eine OrderIntent- und eine Persistence-Authority;
+- deterministische, reproduzierbare Approval-/Replay-Identitaet;
+- keine binary-floating-point Execution Authority;
+- exakte Policy-/Decision-Traceability;
+- typed Reconciliation ohne autonomes Repair;
+- FT-7 bleibt klar getrennt.
 
 Kosten/Risiken:
 
-- Contract-/Versionierungsdisziplin steigt;
-- konkrete produktive Provider-/Policy-Snapshots muessen spaeter governance-seitig betrieben werden;
-- Paper Simulation beweist keine reale Fill-/Liquidity-Qualitaet;
-- FT-5 entscheidet keine jurisdictionsspezifische Legal Applicability;
-- OrderIntent/Reconciliation fehlt bis FT-6;
-- Guarded Live bleibt blockiert.
+- Contract-/Migration-Versionierung wird strenger;
+- v1/v2 Persistence Compatibility muss bis zur kontrollierten Migration gepflegt werden;
+- Production Verification der FT-6B Migration steht separat aus;
+- ein kanonischer FT-6 Event Catalog fehlt weiterhin;
+- Paper-Reconciliation beweist keine reale Venue-/Settlement-Qualitaet.
 
 ## Validation Obligations
 
-Vor PR:
+Vor jedem Draft/PR:
 
-- aktuellen `main` erneut laden und semantische Korrelationen pruefen;
-- Governance-/Registry-Konsistenz und Diff/Scope pruefen;
-- lokale/statische/kostenguenstige Tests bevorzugen;
-- keine kostenverursachende GitHub CI vor PR manuell starten;
-- Post-PR-CI vor Merge ausfuehren.
+1. aktuellen `main` neu laden;
+2. offene PRs/Branches und Dateioverlap pruefen;
+3. Merge-Base/ahead/behind verifizieren;
+4. Scope gegen ADR-0087/ADR-0099 korrelieren;
+5. keine kostenverursachende GitHub Hosted CI vor PR-Erstellung manuell starten.
 
-FT-4 wurde produktiv hinsichtlich Replay-RPC/DB-Guards verifiziert. FT-5 benoetigt keine Produktionsmutation; die Validierung ist Code-/Contract-/Negative-Test-/Governance-basiert und muss nach PR-Erstellung durch Repository-CI bestaetigt werden.
+Nach Draft PR:
 
-Vor Guarded Live zusaetzlich mindestens FT-6 OrderIntent/Reconciliation, konkrete produktive Risk-/Compliance Provider Governance, Data-Quality-Negativtests, Audit Reconstruction, Kill Switch/Emergency Runbook, Human Approval Policy und Security-/Compliance-Review.
+- TypeScript/Lint;
+- fokussierte Unit Tests;
+- Architecture Tests;
+- Governance Control Plane / Docs Hygiene;
+- Security/Least-Privilege statische Checks;
+- finaler Required Check `build-and-test` gemaess PR-Klasse.
 
-## Status
+Keine PASS-Aussage ohne tatsaechlichen Nachweis.
 
-`PROPOSED` — FT-0 bis FT-5 sind implementiert; FT-4/FT-5 bleiben bis zur kombinierten Post-PR-CI merge-pending. Produktive Scoring-, IAM-, Compliance-Policy- oder Execution-Authority wird nicht veraendert. **FT-6 OrderIntent & Reconciliation** ist der naechste Roadmap-Block.
+Vor einer spaeteren Supabase-Mutation zusaetzlich:
+
+- Owner Mutation Approval;
+- RLS/Privileges/SECURITY INVOKER Preflight;
+- transaktionale Migration;
+- positive/negative Persistence Probes;
+- Testdaten-Reset;
+- Post-Mutation Verification und Rollback-Nachweis.
+
+## FT-7 Boundary
+
+FT-7 Guarded Live / Single CEX darf erst bewertet werden, wenn FT-6 code-/CI-/governance-seitig geschlossen und die benoetigte Persistence-Mutation separat verifiziert ist. FT-6 selbst erteilt keine Live-Execution-Freigabe.
