@@ -47,6 +47,7 @@ export interface GoPlusTokenSecurityEvidence {
 }
 
 export interface GoPlusTokenSecurityProviderOptions {
+  /** Optional authenticated higher-quota token. Public Security API may be queried keyless. */
   readonly apiKey?: string | null;
   readonly env?: NodeJS.ProcessEnv;
   readonly fetchImpl?: typeof fetch;
@@ -130,6 +131,7 @@ export class GoPlusTokenSecurityProvider {
     const transport: ResearchEvidenceProviderHttpOptions = {
       baseUrl: options.baseUrl ?? GOPLUS_BASE_URL,
       apiKey: options.apiKey ?? env.GOPLUS_API_KEY ?? null,
+      apiKeyRequired: false,
       fetchImpl: options.fetchImpl,
       timeoutMs: options.timeoutMs,
       nowMs: options.nowMs,
