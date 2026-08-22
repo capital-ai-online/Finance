@@ -1,19 +1,20 @@
 # AI Content Transparency Contract
 
 **Contract ID:** `CONTRACT-AI-CONTENT-TRANSPARENCY-0001`  
-**Authority ID:** `AUTH-CONTRACT-AI-CONTENT-TRANSPARENCY-2026-08-22`  
+**Parent Authority:** `AUTH-ESS-AI-AGENT-CAPABILITY-PLANE` / ESS-0019  
 **Version:** `1.0.0`  
 **Status:** IMPLEMENTED ON BRANCH / EFFECTIVE AFTER HUMAN MERGE  
 **Date:** 2026-08-22
 
 ## Purpose
 
-This contract standardizes how CAPITAL-AI application surfaces identify AI-generated/AI-assisted content and expose retrieval, grounding, citation, provider/model and Human-review state without creating a second AI-provider, RAG, financial, Governance or Compliance authority.
+This contract standardizes how CAPITAL-AI application surfaces identify AI-generated/AI-assisted content and expose retrieval, grounding, citation, provider/model and Human-review state without creating a second AI-provider, RAG, financial, Governance or Compliance authority. It is a subordinate application/delivery contract under the existing provider-neutral AI Agent Capability Plane.
 
 ## Required envelope
 
 `ai-content-transparency/1.0.0` contains:
 
+- stable contract ID and existing parent Authority;
 - content origin (`human-authored`, `ai-assisted`, `ai-generated`);
 - provider and runtime model identifier;
 - prompt ID/version;
