@@ -13,9 +13,10 @@ import { CoinGlassCryptoEvidenceProvider } from '../platform/MarketData/provider
 import { LunarCrushSocialEvidenceProvider } from '../platform/MarketData/providers/LunarCrushSocialEvidenceProvider';
 import { MessariProtocolEvidenceProvider } from '../platform/MarketData/providers/MessariProtocolEvidenceProvider';
 import { DuneQueryEvidenceProvider } from '../platform/MarketData/providers/DuneQueryEvidenceProvider';
+import { NewsApiEvidenceProvider, type NewsApiArticleEvidence } from '../platform/MarketData/providers/NewsApiEvidenceProvider';
 import { fetchDefiProtocolEvidence, type DefiProtocolEvidenceResult } from './defiProtocolEvidence';
 
-export const CRYPTO_EXTENDED_EVIDENCE_CONTRACT_VERSION = 'crypto-extended-evidence/1.0.0' as const;
+export const CRYPTO_EXTENDED_EVIDENCE_CONTRACT_VERSION = 'crypto-extended-evidence/1.1.0' as const;
 
 export type CryptoExtendedEvidenceStatus = 'READY' | 'PARTIAL' | 'NOT_AVAILABLE';
 
@@ -35,11 +36,14 @@ export interface CryptoExtendedEvidenceRequest {
   readonly lunarCrushTopic?: string;
   readonly includeDefiLlama?: boolean;
   readonly includeUnlocks?: boolean;
+  readonly includeNews?: boolean;
+  /** Raw NewsAPI query. Defaults to the exact symbol plus crypto context. */
+  readonly newsQuery?: string;
   readonly dune?: readonly GovernedDuneEvidenceRequest[];
 }
 
 export interface CryptoEvidenceProviderState {
-  readonly provider: 'defillama' | 'goplus' | 'coinglass' | 'lunarcrush' | 'messari' | 'dune';
+  readonly provider: 'defillama' | 'goplus' | 'coinglass' | 'lunarcrush' | 'messari' | 'dune' | 'newsapi';
   readonly status: string;
   readonly reason?: string;
 }
@@ -50,6 +54,8 @@ export interface CryptoExtendedEvidenceResult {
   readonly symbol: string;
   readonly retrievedAt: string;
   readonly evidence: readonly CryptoFeatureEvidence[];
+  /** Text evidence remains separate from numeric/category features until a governed NLP model promotes it. */
+  readonly newsArticles: readonly NewsApiArticleEvidence[];
   readonly providers: readonly CryptoEvidenceProviderState[];
   readonly verifiedFeatureCount: number;
   readonly unavailableFeatureCount: number;
@@ -64,6 +70,7 @@ export interface CryptoExtendedEvidenceDependencies {
   readonly lunarCrush?: LunarCrushSocialEvidenceProvider;
   readonly messari?: MessariProtocolEvidenceProvider;
   readonly dune?: DuneQueryEvidenceProvider;
+  readonly newsApi?: NewsApiEvidenceProvider;
   readonly defiFetcher?: (symbol: string) => Promise<DefiProtocolEvidenceResult>;
   readonly nowMs?: () => number;
 }
@@ -76,8 +83,8 @@ function providerState(provider: CryptoEvidenceProviderState['provider'], status
  * Read-only evidence composition for the Meme/DeFi 0.3.0 research package.
  *
  * The service never calls ScoringDispatcher, never derives policy PASS from provider facts and
- * never fabricates values. Provider identity mappings (contract addresses, protocol IDs, Dune
- * queries) must already be governed by a trusted server-side registry/configuration.
+ * never fabricates values. Text/news evidence remains outside numeric feature evidence until a
+ * separately governed NLP transform exists. Provider identity mappings must be trusted and exact.
  */
 export async function fetchCryptoExtendedEvidence(
   request: CryptoExtendedEvidenceRequest,
@@ -86,6 +93,7 @@ export async function fetchCryptoExtendedEvidence(
   const symbol = request.symbol.toUpperCase().trim();
   const nowMs = dependencies.nowMs ?? Date.now;
   const evidence: CryptoFeatureEvidence[] = [];
+  const newsArticles: NewsApiArticleEvidence[] = [];
   const providers: CryptoEvidenceProviderState[] = [];
 
   const coinGlass = dependencies.coinGlass ?? new CoinGlassCryptoEvidenceProvider({ nowMs });
@@ -136,6 +144,14 @@ export async function fetchCryptoExtendedEvidence(
     }));
   }
 
+  if (request.includeNews) {
+    const newsApi = dependencies.newsApi ?? new NewsApiEvidenceProvider({ nowMs });
+    coreTasks.push(newsApi.searchEverything(request.newsQuery ?? `${symbol} AND (crypto OR cryptocurrency)`, 20).then((result) => {
+      newsArticles.push(...result.articles);
+      providers.push(providerState('newsapi', result.status, result.reason));
+    }));
+  }
+
   if (request.dune && request.dune.length > 0) {
     const dune = dependencies.dune ?? new DuneQueryEvidenceProvider({ nowMs });
     for (const governed of request.dune) {
@@ -150,11 +166,13 @@ export async function fetchCryptoExtendedEvidence(
 
   const verifiedFeatureCount = evidence.filter((item) => item.status === 'VERIFIED').length;
   const unavailableFeatureCount = evidence.length - verifiedFeatureCount;
-  const status: CryptoExtendedEvidenceStatus = verifiedFeatureCount === 0
+  const hasVerifiedEvidence = verifiedFeatureCount > 0 || newsArticles.length > 0;
+  const hasUnavailable = unavailableFeatureCount > 0 || providers.some((item) => !item.status.includes('VERIFIED') && item.status !== 'READY');
+  const status: CryptoExtendedEvidenceStatus = !hasVerifiedEvidence
     ? 'NOT_AVAILABLE'
-    : unavailableFeatureCount === 0
-      ? 'READY'
-      : 'PARTIAL';
+    : hasUnavailable
+      ? 'PARTIAL'
+      : 'READY';
 
   return Object.freeze({
     contractVersion: CRYPTO_EXTENDED_EVIDENCE_CONTRACT_VERSION,
@@ -162,6 +180,7 @@ export async function fetchCryptoExtendedEvidence(
     symbol,
     retrievedAt: new Date(nowMs()).toISOString(),
     evidence: Object.freeze([...evidence].sort((a, b) => a.key.localeCompare(b.key))),
+    newsArticles: Object.freeze([...newsArticles].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))),
     providers: Object.freeze([...providers]),
     verifiedFeatureCount,
     unavailableFeatureCount,
