@@ -1,11 +1,11 @@
 # CAPITAL-AI FinTech Core Engine — Module 01 Enterprise Crypto Orchestration
 
 **Roadmap-ID:** `FT-CORE-CRYPTO-01`  
-**Version:** 1.7.0  
-**Status:** IN IMPLEMENTATION — FT-0 bis FT-6A auf `main`; FT-6B auf Branch implementiert und Supabase-Migration angewendet  
-**Execution Branch:** `feat/fintech-core-ft6-orderintent-reconciliation-2026-08-22`  
-**Branch Start Baseline:** `main@b180d56a37762c6a558a9b3488ce4f36c70fa2e9`  
+**Version:** 1.8.0  
+**Status:** IN IMPLEMENTATION — FT-0 bis FT-6B auf `main`; FT-7 weiterhin blockiert  
+**Current baseline:** `main@571de76e4d5f1d33460bf129d2231885dfde9584`  
 **FT-6A Merge:** PR #481  
+**FT-6B Merge:** PR #483  
 **Primary Architecture Decision:** `ADR-0099`  
 **Protected Scoring Authority:** `ADR-0087`
 
@@ -61,7 +61,7 @@ UAI Identity
 | FT-4 Research & Paper Trading | DONE | deterministic Fixed Point + replay |
 | FT-5 Deterministic Risk + Compliance | DONE | versioned policy/evidence decisions |
 | FT-6A Decision Binding Foundation | DONE / MERGED #481 | initial decision/hash-bound PAPER intent + reconciliation scaffold |
-| FT-6B OrderIntent & Reconciliation Closure | IMPLEMENTED / DB APPLIED / PR PENDING | single canonical intent, shared Fixed Point, exact policy binding, deterministic replay IDs, typed reconciliation, v2 persistence |
+| FT-6B OrderIntent & Reconciliation Closure | DONE / MERGED #483 | single canonical intent, shared Fixed Point, exact policy binding, deterministic replay IDs, typed reconciliation, v2 persistence |
 | FT-7 Guarded Live / Single CEX | BLOCKED | separate explicit architecture/security decision required |
 | FT-8 Production Hardening | PLANNED | trace, SLO, BCP/DR, chaos/recovery |
 | FT-9 DEX/Bridge/Cross-Chain | PLANNED | no implementation in FT-6 |
@@ -106,6 +106,8 @@ EMERGENCY     -> DENY
 ```
 
 Der Real-Execution-Eligibility-Helper bleibt fuer FT-6 hard-blocked.
+
+Die Supersession `FINTECH-VALUE-CHAIN-SUPERSESSION-2026-08-22` hat eine verbleibende Code-Projektion identifiziert, in der `FINTECH_CORE_OPERATING_MODE_POLICY` zukuenftige Live-Capabilities noch als erlaubt markiert. Diese Projektion besitzt keine Execution-Authority; ihre fail-closed Normalisierung ist security-relevant und bleibt bis zur expliziten Owner-Freigabe unmutiert.
 
 ## 6. Typed Reconciliation
 
@@ -163,7 +165,7 @@ Post-Mutation verifiziert:
 - `service_role`: EXECUTE;
 - keine FT-7-/Live-Capability freigeschaltet.
 
-Der bestehende v1 OrderIntent-RPC bleibt Legacy-`UNBOUND`-kompatibel. Canonical `BOUND` FT-6 nutzt v2.
+Der bestehende v1 OrderIntent-RPC bleibt ausschliesslich Legacy-/Research-`UNBOUND`-Kompatibilitaet. Canonical `BOUND` FT-6B nutzt v2. Die physische v1-Entfernung ist ein separates Cleanup-Gate mit Consumer-/Replay-/Bestandsdaten-Nachweis.
 
 ## 8. EventMesh / Traceability
 
@@ -194,28 +196,23 @@ Nicht eingefuehrt:
 - CEX-/DEX-/Wallet-/Custody-SDK;
 - TA-Lib.
 
-## 11. Closure Gates
+## 11. Post-Merge Supersession / Current State
 
-Vor Draft/PR:
+Nach Merge von PR #483 gelten die frueheren FT-6B-Branch-/PR-Pending-Angaben als superseded Projektionen. Der aktuelle Status ist:
 
-1. aktuellen `main` erneut laden;
-2. offene PRs und Dateioverlap erneut pruefen;
-3. Branch ahead/behind und Merge-Base verifizieren;
-4. Governance-/Dokumenten-Korrelation pruefen;
-5. keine kostenverursachende GitHub Hosted CI vor PR-Erstellung manuell starten.
+```text
+FT-0 ... FT-6B = DONE on main
+FT-7 = BLOCKED
+FT-8 = PLANNED
+FT-9 = PLANNED
+```
 
-Nach PR:
-
-- TypeScript/Lint;
-- fokussierte Unit-/Architecture-Tests;
-- Governance Control Plane / Docs Hygiene;
-- Repository Security Checks;
-- `build-and-test` gemaess PR-Klasse.
+Historische FT-6A-/FT-6B-Evidence bleibt erhalten und nicht-authorizing.
 
 ## 12. Naechste Schritte
 
-1. FT-6B Branch gegen aktuellen Main/Open-PR-Stand korrelieren.
-2. Draft/PR mit kanonischer Governance-Vorlage erstellen.
-3. Hosted CI erst nach PR-Erstellung auswerten.
-4. Echte CI-/Governance-Befunde im Branch beheben.
-5. Erst nach vollstaendigem FT-6 Closure FT-7 Guarded Live separat bewerten.
+1. Supersession A abschliessen: Authority-/Roadmap-/README-/Manifest-Korrelationen beseitigen.
+2. Security-relevante Operating-Mode-Codeprojektion nur nach expliziter Owner-Freigabe fail-closed normalisieren und regressionssichern.
+3. Legacy v1 `UNBOUND`-Persistence-Consumer/Replay/Bestandsdaten inventarisieren; erst danach Removal bewerten.
+4. Separate Supersession B fuer Meme Coin und DeFi gegen den dann aktuellen `main` starten.
+5. FT-7 Guarded Live weiterhin separat und human-gated bewerten.
