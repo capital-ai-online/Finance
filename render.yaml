@@ -93,7 +93,7 @@ services:
       # SC-4 Dune evidence. DUNE_API_KEY stays in finance-secrets.env.
       # Default remains fail-closed FREE_TIER until entitlement is explicitly attested.
       # TRIAL_14D is supported only with explicit start/end timestamps + Owner attestation and
-      # automatically blocks at expiry. Dataset entitlement never relaxes query allowlist/no-execute.
+      # automatically blocks at expiry. Dataset entitlement never relaxes semantic query governance.
       - key: DUNE_ACCESS_MODE
         value: "FREE_TIER"
       - key: DUNE_FREE_TIER_ATTESTED
@@ -104,8 +104,19 @@ services:
         value: ""
       - key: DUNE_TRIAL_ENDS_AT
         value: ""
-      # Owner-reviewed Aave/Ethereum queries. Runtime still validates exact expected output columns.
-      - key: DUNE_ALLOWED_QUERY_IDS
-        value: "27230,5833540"
+      # Semantic query keys are the single numeric query-ID authority. The provider derives its
+      # allowlist from these values; there is no separate DUNE_ALLOWED_QUERY_IDS variable.
+      - key: DUNE_QUERY_AAVE_ACTIVE_ADDRESSES
+        value: "5833540"
+      - key: DUNE_QUERY_AAVE_TREASURY
+        value: "27230"
+      - key: DUNE_QUERY_AAVE_ORACLE_RAW
+        value: ""
+      - key: DUNE_QUERY_AAVE_ADDRESS_RETENTION
+        value: ""
+      - key: DUNE_QUERY_AAVE_TOKEN_EMISSIONS
+        value: ""
+      - key: DUNE_QUERY_AAVE_LP_CONCENTRATION
+        value: ""
       - key: DUNE_MAX_RESULT_ROWS
         value: "25"
