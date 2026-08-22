@@ -17,19 +17,24 @@ function allComponentSources(): string {
 }
 
 describe('frontend financial data contract regression gate', () => {
-  it('Best/Worst renders progressively and uses only verified score boundaries', () => {
-    const code = source('src/components/UniverseBestWorst.tsx');
+  it('Best/Worst renders progressively and uses only verified score boundaries from the canonical screening slice', () => {
+    const code = source('src/features/screening/ui/UniverseBestWorst.tsx');
     expect(code).toContain('/api/crypto/score');
     expect(code).toContain('/api/registry/assets/verified-scores');
     expect(code).toContain('Progressive Scoring');
     expect(code).toContain('AbortController');
+    expect(code).toContain('text-asset-crypto');
+    expect(code).toContain('text-asset-bond');
     expect(code).not.toMatch(/return\s+50(?:\.0)?\s*;/);
     expect(code).not.toContain('Math.random');
     expect(code).not.toContain('charCodeAt');
+
+    const compatibility = source('src/components/UniverseBestWorst.tsx');
+    expect(compatibility).toContain("../features/screening/ui/UniverseBestWorst");
   });
 
   it('Enterprise scorer supports all asset classes while canonical scoring stays backend-bound', () => {
-    const code = source('src/components/CryptoScoringEnterprise.tsx');
+    const code = source('src/features/crypto/ui/CryptoScoringEnterprise.tsx');
     expect(code).toContain('/api/crypto/score');
     expect(code).toContain('/verified-score');
     expect(code).toContain("'commodity'");
@@ -43,8 +48,8 @@ describe('frontend financial data contract regression gate', () => {
     expect(code).toContain('tradeSetup');
   });
 
-  it('places Enterprise scorer intervals directly after the Asset search and keeps them presentation-only', () => {
-    const code = source('src/components/CryptoScoringEnterprise.tsx');
+  it('binds only the supported daily interval to the existing 30x1D crypto score basis', () => {
+    const code = source('src/features/crypto/ui/CryptoScoringEnterprise.tsx');
     const assetSearchIndex = code.indexOf('Asset-Suche');
     const timeframeIndex = code.indexOf('Analyse-Zeitraum');
     const selectedAssetHeaderIndex = code.indexOf('Enterprise Universum Scorer');
@@ -55,7 +60,11 @@ describe('frontend financial data contract regression gate', () => {
     expect(selectedAssetHeaderIndex).toBeGreaterThan(timeframeIndex);
     expect(quickAnalysisIndex).toBeGreaterThan(selectedAssetHeaderIndex);
     expect(code).toContain('aria-label="Analyse-Zeitraum des Enterprise Universum Scorers"');
-    expect(code).toContain('Zeitrahmen ist Analysekontext und verändert keinen kanonischen Score im Browser.');
+    expect(code).toContain("uiTimeframe: '1 tag'");
+    expect(code).toContain("barInterval: '1d'");
+    expect(code).toContain('lookbackBars: 30');
+    expect(code).toContain("{ value: '1 tag', label: '1 Tag', scoreBound: true }");
+    expect(code).toContain('Intraday-Scores werden nicht synthetisiert.');
   });
 
   it('Buffett is stock-only, entitlement-first and hydrates finance values through the verified display boundary', () => {
@@ -87,15 +96,24 @@ describe('frontend financial data contract regression gate', () => {
     expect(code).not.toContain('AI Kurzanalyse');
   });
 
-  it('enterprise scorer AI Kurzanalyse is Binance-live-data-backed and reuses the scorer asset selection', () => {
-    const quickAnalysisCode = source('src/components/EnterpriseBinanceQuickAnalysis.tsx');
+  it('Enterprise Binance analysis reuses scorer selection and embeds verified canonical 4h bars below it', () => {
+    const quickAnalysisCode = source('src/features/crypto/ui/EnterpriseBinanceQuickAnalysis.tsx');
+    const chartCode = source('src/features/crypto/ui/EnterpriseAsset4hChart.tsx');
     expect(quickAnalysisCode).toContain('AI Kurzanalyse mit Binance Spot');
     expect(quickAnalysisCode).toContain('/api/registry/assets/');
     expect(quickAnalysisCode).toContain('/quick-analysis');
+    expect(quickAnalysisCode).toContain('<EnterpriseAsset4hChart symbol={upper} />');
     expect(quickAnalysisCode).not.toContain("useState('BTC')");
     expect(quickAnalysisCode).not.toContain('placeholder="BTC, ETH, SOL ...."');
 
-    const enterpriseScorerCode = source('src/components/CryptoScoringEnterprise.tsx');
+    expect(chartCode).toContain('/api/market-data/history/');
+    expect(chartCode).toContain('interval=4h');
+    expect(chartCode).toContain('No Chart-Score');
+    expect(chartCode).not.toContain('/api/charts-scoring');
+    expect(chartCode).not.toContain('/api/backtest-history');
+    expect(chartCode).not.toContain('Math.random');
+
+    const enterpriseScorerCode = source('src/features/crypto/ui/CryptoScoringEnterprise.tsx');
     expect(enterpriseScorerCode).toContain('EnterpriseBinanceQuickAnalysis');
     const assetSearchIndex = enterpriseScorerCode.indexOf('Asset-Suche');
     const selectedAssetHeaderIndex = enterpriseScorerCode.indexOf('Enterprise Universum Scorer');
