@@ -1,9 +1,10 @@
 import type {
   FinTechCoreDecisionRecord,
   FinTechCoreDomainEvent,
+  FinTechCoreOrderIntent,
 } from '../src/platform/FinTechCore/CoreContracts';
+import { finTechCoreFixedPointToDecimalString } from '../src/platform/FinTechCore/Financial/FixedPoint';
 import type {
-  FinTechCoreBoundOrderIntentPersistenceInput,
   FinTechCoreDomainEventReaderPort,
   FinTechCoreOrderIntentPersistenceInput,
   FinTechCorePersistencePort,
@@ -142,21 +143,45 @@ function assertWorkflowTransitionInput(input: FinTechCoreWorkflowTransitionPersi
   }
 }
 
+function assertBoundOrderIntent(intent: FinTechCoreOrderIntent): asserts intent is FinTechCoreOrderIntent & {
+  readonly bindingVersion: string;
+  readonly clientOrderId: string;
+  readonly riskDecisionId: string;
+  readonly riskDecisionHash: string;
+  readonly riskPolicyId: string;
+  readonly riskPolicyVersion: string;
+  readonly complianceDecisionId: string;
+  readonly complianceDecisionHash: string;
+  readonly compliancePolicyId: string;
+  readonly compliancePolicyVersion: string;
+} {
+  if (
+    intent.bindingState !== 'BOUND'
+    || !intent.bindingVersion?.trim()
+    || !intent.clientOrderId?.trim()
+    || !intent.riskDecisionId?.trim()
+    || !intent.riskDecisionHash?.trim()
+    || !intent.riskPolicyId?.trim()
+    || !intent.riskPolicyVersion?.trim()
+    || !intent.complianceDecisionId?.trim()
+    || !intent.complianceDecisionHash?.trim()
+    || !intent.compliancePolicyId?.trim()
+    || !intent.compliancePolicyVersion?.trim()
+  ) {
+    throw new Error('[FinTechCore][Persistence] FT-6 BOUND OrderIntent is missing immutable binding fields.');
+  }
+}
+
 /**
  * FT-3 through FT-6 production durability adapter.
- *
- * The private `fintech_core` schema is intentionally not exposed through the Data API. This
- * adapter therefore calls narrowly-scoped public RPC entrypoints that are EXECUTE-granted only to
- * `service_role`; those RPCs run SECURITY INVOKER and use the caller's already-scoped private
- * table privileges. FT-6 adds decision-bound OrderIntent/reconciliation evidence but no exchange,
- * custody or settlement side-effect capability.
+ * Private tables remain service-role-only behind narrow SECURITY INVOKER RPCs. Persistence is
+ * evidence durability only and grants no exchange, custody, settlement or execution authority.
  */
 export class SupabaseFinTechCorePersistenceAdapter
 implements FinTechCorePersistencePort, FinTechCoreDomainEventReaderPort {
   async createWorkflowRun(input: FinTechCoreWorkflowRunPersistenceInput): Promise<void> {
     assertWorkflowCreationInput(input);
     const { context, state } = input;
-
     await callPersistenceRpc('fintech_core_create_workflow_run_v1', {
       p_run_id: context.runId,
       p_contract_version: context.contractVersion,
@@ -182,7 +207,6 @@ implements FinTechCorePersistencePort, FinTechCoreDomainEventReaderPort {
     assertWorkflowTransitionInput(input);
     const { previousState, nextState } = input;
     const completedAt = TERMINAL_WORKFLOW_STATUSES.has(nextState.status) ? nextState.updatedAt : null;
-
     await callPersistenceRpc('fintech_core_advance_workflow_run_v1', {
       p_run_id: nextState.runId,
       p_expected_status: previousState.status,
@@ -220,12 +244,8 @@ implements FinTechCorePersistencePort, FinTechCoreDomainEventReaderPort {
     const context = 'FinTech Core domain-event replay';
     assertPrivilegedSupabaseConfigured(context);
     const supabase = getPrivilegedServerSupabase();
-    const { data, error } = await supabase.rpc('fintech_core_list_domain_events_v1', {
-      p_run_id: runId,
-    });
-    if (error) {
-      throw new Error(`[FinTechCore][Persistence] ${context} failed: ${errorMessage(error)}`);
-    }
+    const { data, error } = await supabase.rpc('fintech_core_list_domain_events_v1', { p_run_id: runId });
+    if (error) throw new Error(`[FinTechCore][Persistence] ${context} failed: ${errorMessage(error)}`);
     if (!Array.isArray(data)) {
       throw new Error(`[FinTechCore][Persistence] ${context} returned an invalid row set.`);
     }
@@ -255,6 +275,44 @@ implements FinTechCorePersistencePort, FinTechCoreDomainEventReaderPort {
 
   async appendOrderIntent(input: FinTechCoreOrderIntentPersistenceInput): Promise<void> {
     const intent = input.intent;
+    if (intent.bindingState === 'BOUND') {
+      assertBoundOrderIntent(intent);
+      await callPersistenceRpc('fintech_core_append_order_intent_v2', {
+        p_order_intent_id: intent.orderIntentId,
+        p_contract_version: intent.contractVersion,
+        p_order_intent_contract_version: intent.orderIntentContractVersion,
+        p_binding_version: intent.bindingVersion,
+        p_run_id: intent.runId,
+        p_trace_id: intent.traceId,
+        p_correlation_id: intent.correlationId,
+        p_client_order_id: intent.clientOrderId,
+        p_idempotency_key: intent.idempotencyKey,
+        p_asset_id: intent.assetId,
+        p_side: intent.side,
+        p_quantity_fixed: intent.quantity,
+        p_order_type: intent.orderType,
+        p_price_bounds: intent.priceBounds,
+        p_max_slippage_bps: intent.maxSlippageBps,
+        p_strategy_id: intent.strategyId ?? null,
+        p_portfolio_id: intent.portfolioId ?? null,
+        p_decision_version: intent.decisionVersion,
+        p_risk_decision_id: intent.riskDecisionId,
+        p_risk_decision_hash: intent.riskDecisionHash,
+        p_risk_policy_id: intent.riskPolicyId,
+        p_risk_policy_version: intent.riskPolicyVersion,
+        p_compliance_decision_id: intent.complianceDecisionId,
+        p_compliance_decision_hash: intent.complianceDecisionHash,
+        p_compliance_policy_id: intent.compliancePolicyId,
+        p_compliance_policy_version: intent.compliancePolicyVersion,
+        p_created_at: intent.createdAt,
+        p_expires_at: intent.expiresAt,
+        p_intent_hash: intent.intentHash,
+        p_effect_class: intent.effectClass,
+        p_evidence_refs: [...(input.evidenceRefs ?? [])],
+      }, 'FinTech Core FT-6 order-intent append');
+      return;
+    }
+
     await callPersistenceRpc('fintech_core_append_order_intent_v1', {
       p_order_intent_id: intent.orderIntentId,
       p_contract_version: intent.contractVersion,
@@ -264,9 +322,11 @@ implements FinTechCorePersistencePort, FinTechCoreDomainEventReaderPort {
       p_idempotency_key: intent.idempotencyKey,
       p_asset_id: intent.assetId,
       p_side: intent.side,
-      p_quantity: intent.quantity,
+      p_quantity: finTechCoreFixedPointToDecimalString(intent.quantity),
       p_order_type: intent.orderType,
-      p_limit_price: intent.limitPrice ?? null,
+      p_limit_price: intent.priceBounds.limitPrice
+        ? finTechCoreFixedPointToDecimalString(intent.priceBounds.limitPrice)
+        : null,
       p_max_slippage_bps: intent.maxSlippageBps,
       p_strategy_id: intent.strategyId ?? null,
       p_portfolio_id: intent.portfolioId ?? null,
@@ -277,61 +337,37 @@ implements FinTechCorePersistencePort, FinTechCoreDomainEventReaderPort {
       p_intent_hash: intent.intentHash,
       p_effect_class: intent.effectClass,
       p_evidence_refs: [...(input.evidenceRefs ?? [])],
-    }, 'FinTech Core order-intent append');
-  }
-
-  async appendBoundOrderIntent(input: FinTechCoreBoundOrderIntentPersistenceInput): Promise<void> {
-    const intent = input.intent;
-    await callPersistenceRpc('fintech_core_append_bound_order_intent_v1', {
-      p_order_intent_id: intent.orderIntentId,
-      p_contract_version: intent.contractVersion,
-      p_binding_version: intent.bindingVersion,
-      p_run_id: intent.runId,
-      p_trace_id: intent.traceId,
-      p_correlation_id: intent.correlationId,
-      p_client_order_id: intent.clientOrderId,
-      p_idempotency_key: intent.idempotencyKey,
-      p_asset_id: intent.assetId,
-      p_side: intent.side,
-      p_quantity: intent.quantity,
-      p_order_type: intent.orderType,
-      p_limit_price: intent.limitPrice ?? null,
-      p_max_slippage_bps: intent.maxSlippageBps,
-      p_strategy_id: intent.strategyId ?? null,
-      p_portfolio_id: intent.portfolioId ?? null,
-      p_decision_version: intent.decisionVersion,
-      p_risk_decision_id: intent.riskDecisionId,
-      p_risk_decision_output_hash: intent.riskDecisionOutputHash,
-      p_compliance_decision_id: intent.complianceDecisionId,
-      p_compliance_decision_output_hash: intent.complianceDecisionOutputHash,
-      p_created_at: intent.createdAt,
-      p_expires_at: intent.expiresAt,
-      p_intent_hash: intent.intentHash,
-      p_effect_class: intent.effectClass,
-      p_evidence_refs: [...(input.evidenceRefs ?? [])],
-    }, 'FinTech Core FT-6 bound order-intent append');
+    }, 'FinTech Core legacy UNBOUND order-intent append');
   }
 
   async appendReconciliationRecord(record: FinTechCoreReconciliationRecord): Promise<void> {
-    await callPersistenceRpc('fintech_core_append_reconciliation_record_v1', {
+    await callPersistenceRpc('fintech_core_append_reconciliation_record_v2', {
       p_reconciliation_id: record.reconciliationId,
+      p_reconciliation_contract_version: record.reconciliationContractVersion,
       p_run_id: record.runId,
       p_trace_id: record.traceId,
       p_correlation_id: record.correlationId,
       p_order_intent_id: record.orderIntentId,
+      p_client_order_id: record.clientOrderId,
+      p_venue_order_id: record.venueOrderId ?? null,
       p_reconciliation_type: record.reconciliationType,
       p_status: record.status,
+      p_settlement_state: record.settlementState,
       p_source_system: record.sourceSystem,
       p_target_system: record.targetSystem,
       p_asset_id: record.assetId,
+      p_expected_quantity: record.expectedQuantity,
+      p_observed_quantity: record.observedQuantity ?? null,
+      p_expected_price_bounds: record.expectedPriceBounds,
+      p_observed_execution_price: record.observedExecutionPrice ?? null,
+      p_fee_evidence: record.feeEvidence ?? null,
       p_observed_at: record.observedAt,
+      p_reconciled_at: record.reconciledAt,
       p_input_hash: record.inputHash,
       p_output_hash: record.outputHash,
       p_evidence_refs: [...record.evidenceRefs],
-      p_details: {
-        ...record.details,
-        reconciliationContractVersion: record.reconciliationContractVersion,
-      },
+      p_supervisor_escalation_required: record.supervisorEscalationRequired,
+      p_details: record.details,
     }, 'FinTech Core FT-6 reconciliation append');
   }
 }
