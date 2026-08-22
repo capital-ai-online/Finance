@@ -1,20 +1,14 @@
-// ARCH-AUDIT-0002 (H5, Kapitel 14.5): erster Schritt der Zerlegung von server.ts entlang
-// der Fachdomaenen nach src/features/ (die Domaenen-Ordner existierten bereits als leere
-// Platzhalter - .gitkeep - seit fruehen Aufgaben dieser Session, aber ohne Inhalt). /api/news
-// war die am staerksten in sich geschlossene Route in server.ts (keine Abhaengigkeit von
-// geteiltem Zustand wie assetRegistry/fetchLiveMarketData) und damit der risikoaermste erste
-// Kandidat fuer diese neue Zielstruktur. Verhalten 1:1 aus server.ts uebernommen, keine
-// funktionale Aenderung.
+// ARCH-AUDIT-0002 / SC-4: /api/news remains the product projection, while external transport,
+// rate limiting, circuit breaking and provenance now live in the shared evidence-provider layer.
 
 import express from 'express';
+import { NewsApiEvidenceProvider } from '../../platform/MarketData/providers/NewsApiEvidenceProvider';
 
 export type NewsSentiment = 'positive' | 'negative' | 'neutral';
 
 /**
- * Herkunftskennzeichnung fuer das sentiment-Feld, analog zum dataSource/scoreBasis-Muster
- * (docs/architecture/DATENQUALITAETSSCHICHT.md). classifyNewsSentiment() ist eine deterministische
- * Schluesselwort-Heuristik, keine NLP-/KI-Analyse - 'heuristic' ist damit der einzig zutreffende
- * Wert, solange kein gemessenes/modellbasiertes Sentiment existiert.
+ * Deterministic keyword heuristic only. This is deliberately NOT promoted to model/NLP evidence.
+ * Raw article provenance is supplied by NewsApiEvidenceProvider.
  */
 export type NewsSentimentBasis = 'heuristic';
 export const NEWS_SENTIMENT_BASIS: NewsSentimentBasis = 'heuristic';
@@ -22,7 +16,6 @@ export const NEWS_SENTIMENT_BASIS: NewsSentimentBasis = 'heuristic';
 const POSITIVE_KEYWORDS = ['bullish', 'surge', 'gain', 'rise', 'rally', 'growth'];
 const NEGATIVE_KEYWORDS = ['bearish', 'plummet', 'drop', 'fall', 'crash', 'risk', 'hack'];
 
-/** Rein textbasierte Sentiment-Heuristik (Schluesselwort-Abgleich) - deterministisch, keine KI. */
 export function classifyNewsSentiment(headline: string, description: string): NewsSentiment {
   const text = `${headline || ''} ${description || ''}`.toLowerCase();
   if (POSITIVE_KEYWORDS.some(kw => text.includes(kw))) return 'positive';
@@ -32,42 +25,28 @@ export function classifyNewsSentiment(headline: string, description: string): Ne
 
 export const newsRouter = express.Router();
 
-newsRouter.get('/', async (req, res) => {
-  const apiKey = process.env.NEWS_API_KEY;
+newsRouter.get('/', async (_req, res) => {
+  const provider = new NewsApiEvidenceProvider();
+  const result = await provider.searchEverything('cryptocurrency OR bitcoin OR ethereum OR finance', 10);
 
-  if (!apiKey || apiKey.startsWith('MY_') || apiKey.includes('test') || apiKey.length <= 5) {
+  if (result.status !== 'VERIFIED') {
     return res.status(503).json({
       status: 'NO_DATA',
-      reason: 'NEWS_API_KEY ist nicht konfiguriert oder ungültig.',
+      reason: result.reason ?? `NewsAPI Evidence ist nicht verfügbar (${result.status}).`,
     });
   }
 
-  try {
-    const response = await fetch(`https://newsapi.org/v2/everything?q=cryptocurrency+OR+bitcoin+OR+ethereum+OR+finance&sortBy=publishedAt&pageSize=10&apiKey=${apiKey}`);
-    if (response.ok) {
-      const data: any = await response.json();
-      if (data.status === 'ok' && Array.isArray(data.articles)) {
-        const newsItems = data.articles.slice(0, 5).map((art: any, idx: number) => ({
-          id: `news_${idx}_${Date.now()}`,
-          headline: art.title || 'Krypto Markt Update',
-          summary: art.description || art.content || 'Keine detaillierte Beschreibung verfügbar.',
-          sentiment: classifyNewsSentiment(art.title, art.description),
-          sentimentBasis: NEWS_SENTIMENT_BASIS,
-          time: new Date(art.publishedAt || Date.now()).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr',
-          source: art.source?.name || 'NewsAPI',
-        }));
-        return res.json(newsItems);
-      }
-    }
-    return res.status(503).json({
-      status: 'NO_DATA',
-      reason: 'Fehler beim Abrufen der Nachrichten von der externen NewsAPI (Antwort war fehlerhaft).',
-    });
-  } catch (error: any) {
-    console.warn('[News API] Failed to fetch from NewsAPI.org:', error.message || error);
-    return res.status(503).json({
-      status: 'NO_DATA',
-      reason: `Der externe NewsAPI-Aufruf ist fehlgeschlagen: ${error.message || error}`,
-    });
-  }
+  const newsItems = result.articles.slice(0, 5).map((article, idx) => ({
+    id: `news_${idx}_${Date.now()}`,
+    headline: article.title,
+    summary: article.description || 'Keine detaillierte Beschreibung verfügbar.',
+    sentiment: classifyNewsSentiment(article.title, article.description ?? ''),
+    sentimentBasis: NEWS_SENTIMENT_BASIS,
+    time: new Date(article.publishedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr',
+    source: article.sourceName,
+    evidenceRef: article.evidenceRef,
+    publishedAt: article.publishedAt,
+  }));
+
+  return res.json(newsItems);
 });
