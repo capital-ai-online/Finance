@@ -8,7 +8,7 @@
     "model": "GPT-5.6 Sol",
     "executionSurface": "ChatGPT / GitHub Connector"
   },
-  "workItem": "FinTech Enterprise Value Chain Authority and Legacy Supersession after PR #483",
+  "workItem": "FinTech Enterprise Value Chain Authority, Legacy Supersession and Meme/DeFi Model Supersession after PR #483",
   "startedAt": "2026-08-22T04:04:00+02:00",
   "baseBranch": "main",
   "baseSha": "571de76e4d5f1d33460bf129d2231885dfde9584",
@@ -17,13 +17,17 @@
     "PR #483 merged",
     "ADR-0087 Single Scoring Architecture",
     "ADR-0099 FinTech Core Crypto Module 01",
+    "ADR-0100 DeFiLlama evidence-provider authority",
     "GOV-AUTH-SUPERSESSION-0001",
     "DOCUMENT_LIFECYCLE_POLICY"
   ],
   "claimedPaths": [
     ".ai/work-claims/FINTECH-VALUE-CHAIN-SUPERSESSION-2026-08-22.json",
     "docs/evidence/fintech-core/FINTECH_VALUE_CHAIN_SUPERSESSION_2026-08-22.md",
+    "docs/evidence/sc-md/SC2_MEME_DEFI_MODEL_SUPERSESSION_2026-08-22.md",
+    "docs/adr/ADR-0087-single-scoring-architecture-uai-model-registry.md",
     "docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md",
+    "docs/adr/ADR-0100-defillama-defi-evidence-provider.md",
     "docs/adr/registry.json",
     "docs/governance/authority-registry.json",
     "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
@@ -31,6 +35,12 @@
     "src/platform/FinTechCore/README.md",
     "src/platform/FinTechCore/manifest.json",
     "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md",
+    "src/platform/Scoring/CryptoResearchModelContracts.ts",
+    "src/platform/Scoring/ScoringModelRegistry.ts",
+    "src/platform/Scoring/index.ts",
+    "src/services/defiProtocolEvidence.ts",
+    "tests/unit/cryptoResearchModelContracts.test.ts",
+    "tests/unit/defiProtocolEvidence.test.ts",
     "tests/unit/fintechCoreContracts.test.ts",
     "tests/unit/governanceControlPlane.test.ts",
     "tests/unit/sc2GlobalSingleDispatcher.test.ts"
@@ -38,6 +48,8 @@
   "protectedExistingAuthorities": [
     "ADR-0087 / ScoringModelRegistry / ScoringDispatcher",
     "ADR-0099 stable authorityId",
+    "ADR-0100 evidence-only provider boundary",
+    "crypto-technical-provenance@0.7.0 canonical crypto champion",
     "FT-3 private fintech_core persistence",
     "FT-5 deterministic Risk/Compliance Decision Records",
     "public.outbox_jobs queue authority",
@@ -51,12 +63,21 @@
     "directOpenPrFileOverlap": false,
     "historicalFintechArchitectureReportsClassifiedNonAuthorizing": true,
     "canonicalCompatibilityRouterShadowsLegacyCryptoHandlers": true,
-    "legacyUnboundOrderIntentV1ClassifiedNonCanonical": true
+    "legacyUnboundOrderIntentV1ClassifiedNonCanonical": true,
+    "legacyMemeWeightedFormulaClassifiedNonAuthorizing": true,
+    "memePricePathCorrelationBound": true,
+    "defiScaleActivityCorrelationBound": true,
+    "defillamaEvidenceOnly": true
   },
-  "separateFollowUp": {
+  "supersessionB": {
     "workItem": "Meme Coin and DeFi Model Supersession",
-    "mustNotBeMergedIntoThisAuthorityCleanup": true,
-    "reason": "DeFi/Meme model semantics require a distinct correlation and model-governance review after this value-chain cleanup."
+    "integratedIntoThisBranchByOwnerDirection": true,
+    "ownerDirectionObservedAt": "2026-08-22T04:32:00+02:00",
+    "reason": "Owner explicitly requested finalization of Supersession B before regression testing, main synchronization and a single Pull Request.",
+    "modelPromotionPerformed": false,
+    "newDispatcherOrRegistryCreated": false,
+    "memeModel": "crypto-meme-integrity@0.2.0 challenger/research-only/not-executable",
+    "defiModel": "crypto-defi-fundamental@0.2.0 challenger/research-only/not-executable"
   },
   "securityMutationBoundary": {
     "runtimeSecurityMutationAuthorized": true,
