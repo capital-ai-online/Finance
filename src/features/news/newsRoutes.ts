@@ -1,16 +1,11 @@
-// ARCH-AUDIT-0002 / SC-4: /api/news remains the product projection, while external transport,
-// rate limiting, circuit breaking and provenance live in the shared evidence-provider layer.
-// No route-level synthetic headline or AI-generated financial claim is permitted.
+// ARCH-AUDIT-0002 / SC-4: /api/news is a read-only product projection of external article
+// metadata. GDELT DOC 2.0 is the keyless discovery source; publisher content is never fabricated,
+// scraped into the product or granted scoring authority by this route.
 
 import express from 'express';
-import { NewsApiEvidenceProvider } from '../../platform/MarketData/providers/NewsApiEvidenceProvider';
+import { GdeltNewsEvidenceProvider } from '../../platform/MarketData/providers/GdeltNewsEvidenceProvider';
 
 export type NewsSentiment = 'positive' | 'negative' | 'neutral';
-
-/**
- * Deterministic keyword heuristic only. This is deliberately NOT promoted to model/NLP evidence.
- * Raw article provenance is supplied by NewsApiEvidenceProvider.
- */
 export type NewsSentimentBasis = 'heuristic';
 export const NEWS_SENTIMENT_BASIS: NewsSentimentBasis = 'heuristic';
 
@@ -39,7 +34,7 @@ interface NewsCacheEntry {
 
 const newsCache = new Map<string, NewsCacheEntry>();
 
-export function classifyNewsSentiment(headline: string, description: string): NewsSentiment {
+export function classifyNewsSentiment(headline: string, description = ''): NewsSentiment {
   const text = `${headline || ''} ${description || ''}`.toLowerCase();
   if (POSITIVE_KEYWORDS.some(kw => text.includes(kw))) return 'positive';
   if (NEGATIVE_KEYWORDS.some(kw => text.includes(kw))) return 'negative';
@@ -59,32 +54,8 @@ function normalizedLimit(value: unknown): number {
 }
 
 function buildProviderQuery(symbol: string | null): string {
-  if (symbol) return `"${symbol}" AND (market OR finance OR crypto OR earnings OR economy)`;
-  return '("artificial intelligence" OR AI OR finance OR markets OR cryptocurrency OR fintech)';
-}
-
-function projectArticles(
-  articles: readonly {
-    title: string;
-    description: string | null;
-    sourceName: string;
-    evidenceRef: string;
-    publishedAt: string;
-    url: string;
-  }[],
-): readonly ProjectedNewsItem[] {
-  return Object.freeze(articles.map((article, index) => Object.freeze({
-    id: `news_${index}_${encodeURIComponent(article.evidenceRef)}`,
-    headline: article.title,
-    summary: article.description || 'Keine detaillierte Beschreibung verfügbar.',
-    sentiment: classifyNewsSentiment(article.title, article.description ?? ''),
-    sentimentBasis: NEWS_SENTIMENT_BASIS,
-    time: new Date(article.publishedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr',
-    source: article.sourceName,
-    evidenceRef: article.evidenceRef,
-    publishedAt: article.publishedAt,
-    url: article.url,
-  })));
+  if (symbol) return `"${symbol}" (crypto OR cryptocurrency OR market OR finance)`;
+  return '("artificial intelligence" OR fintech OR finance OR markets OR cryptocurrency)';
 }
 
 export const newsRouter = express.Router();
@@ -102,22 +73,36 @@ newsRouter.get('/', async (req, res) => {
   const cached = newsCache.get(cacheKey);
   if (cached && cached.expiresAt > now) {
     res.setHeader('x-capital-ai-news-cache', 'hit');
+    res.setHeader('x-capital-ai-news-provider', 'gdelt');
     return res.json(cached.items.slice(0, limit));
   }
 
-  const provider = new NewsApiEvidenceProvider();
-  const result = await provider.searchEverything(query, Math.max(limit, 10));
+  const provider = new GdeltNewsEvidenceProvider();
+  const result = await provider.searchArticles(query, Math.max(limit, 10), '1d');
 
   if (result.status !== 'VERIFIED') {
     return res.status(503).json({
       status: 'NO_DATA',
-      source: 'NewsAPI',
-      reason: result.reason ?? `NewsAPI Evidence ist nicht verfügbar (${result.status}).`,
+      source: 'GDELT DOC 2.0',
+      reason: result.reason ?? `GDELT News-Evidence ist nicht verfügbar (${result.status}).`,
     });
   }
 
-  const items = projectArticles(result.articles.slice(0, MAX_NEWS_ITEMS));
+  const items: readonly ProjectedNewsItem[] = Object.freeze(result.articles.slice(0, MAX_NEWS_ITEMS).map(article => Object.freeze({
+    id: article.evidenceRef,
+    headline: article.title,
+    summary: 'Artikelmetadaten über GDELT; vollständiger Inhalt und Nutzungsrechte verbleiben beim Herausgeber.',
+    sentiment: classifyNewsSentiment(article.title),
+    sentimentBasis: NEWS_SENTIMENT_BASIS,
+    time: new Date(article.publishedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr',
+    source: article.sourceName,
+    evidenceRef: article.evidenceRef,
+    publishedAt: article.publishedAt,
+    url: article.url,
+  }))));
+
   newsCache.set(cacheKey, { expiresAt: now + NEWS_CACHE_TTL_MS, items });
   res.setHeader('x-capital-ai-news-cache', 'miss');
+  res.setHeader('x-capital-ai-news-provider', 'gdelt');
   return res.json(items.slice(0, limit));
 });
