@@ -108,7 +108,7 @@ describe('frontend financial data contract regression gate', () => {
 
     expect(chartCode).toContain('/api/market-data/history/');
     expect(chartCode).toContain('interval=4h');
-    expect(chartCode).toContain('No Chart-Score');
+    expect(chartCode).toContain('Kein Chart-Score');
     expect(chartCode).not.toContain('/api/charts-scoring');
     expect(chartCode).not.toContain('/api/backtest-history');
     expect(chartCode).not.toContain('Math.random');
