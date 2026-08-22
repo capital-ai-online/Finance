@@ -19,22 +19,23 @@
     "mustReconcileAgainstMainBeforePr": true
   },
   "providerDecisions": {
-    "defillama": "existing canonical DeFi TVL/fees/revenue evidence provider; retain ADR-0100 evidence-only authority",
+    "defillama": "existing canonical DeFi TVL/fees/revenue evidence provider; retain ADR-0100 free evidence-only authority",
     "goplus": "token contract/honeypot/tax/mint/blacklist/proxy/holder/liquidity-lock security evidence",
     "coinglass": "crypto derivatives and market-microstructure evidence: OI/funding/liquidations/orderbook/bars/unlocks",
     "lunarcrush": "social sentiment/mentions/engagement/creator/spam evidence",
     "messari": "standardized protocol/on-chain usage evidence where DeFiLlama does not provide the required feature",
-    "dune": "governed custom-query fallback for protocol-specific on-chain evidence not standardized by the preceding providers"
+    "dune": "governed custom-query fallback for protocol-specific on-chain evidence not standardized by the preceding providers",
+    "newsapi": "reuse existing NewsAPI dependency as raw article evidence; X-Api-Key header replaces query-string secret; legacy keyword sentiment remains heuristic only"
   },
   "protectedExistingAuthorities": [
     "assetRegistry as provider-identity mapping authority",
     "ProviderMatrix as provider inventory/policy authority",
     "MarketDataGateway for canonical quote/snapshot routing only",
-    "CryptoFeatureEvidence as category evidence contract",
+    "CryptoCategoryFeatureContracts as the single category evidence-definition authority",
     "ScoringModelRegistry",
     "ScoringDispatcher",
     "CanonicalScoreResult",
-    "ADR-0100 DeFiLlama evidence-only authority",
+    "ADR-0100 DeFiLlama free evidence-only authority",
     "FT-7 live execution gate"
   ],
   "claimedPaths": [
@@ -47,14 +48,19 @@
     "src/platform/MarketData/providers/LunarCrushSocialEvidenceProvider.ts",
     "src/platform/MarketData/providers/MessariProtocolEvidenceProvider.ts",
     "src/platform/MarketData/providers/DuneQueryEvidenceProvider.ts",
+    "src/platform/MarketData/providers/NewsApiEvidenceProvider.ts",
     "src/platform/FinTechCore/Modules/Crypto/CryptoCategoryFeatureContracts.ts",
     "src/platform/FinTechCore/Modules/Crypto/Adapters/ExtendedCryptoEvidenceAdapters.ts",
+    "src/platform/FinTechCore/manifest.json",
     "src/services/cryptoExtendedEvidence.ts",
+    "src/features/news/newsRoutes.ts",
     "src/lib/assetRegistry.ts",
     ".env.example",
     "tests/unit/providerMatrix.test.ts",
     "tests/unit/cryptoExtendedEvidenceAdapters.test.ts",
     "tests/unit/cryptoExtendedEvidenceProviders.test.ts",
+    "tests/unit/newsApiEvidenceProvider.test.ts",
+    "tests/unit/fintechCoreCryptoCategoryFeatureContracts.test.ts",
     "docs/evidence/sc-md/SC4_CRYPTO_EXTENDED_EVIDENCE_PROVIDERS_2026-08-22.md"
   ],
   "securityBoundary": {
@@ -63,19 +69,21 @@
     "providerOutputCanAuthorizeScore": false,
     "providerOutputCanAuthorizeTrade": false,
     "liveExecutionChanged": false,
-    "externalMutationPerformed": false
+    "externalMutationPerformed": false,
+    "defillamaProEnabled": false
   },
   "transportConsolidation": {
     "sharedTransport": "ResearchEvidenceProviderHttp",
-    "reuses": ["ProviderMatrix", "RateLimitBudget", "CircuitBreaker"],
+    "reuses": ["ProviderMatrix", "RateLimitBudget", "CircuitBreaker", "Supervisor providerHealth"],
     "perProviderHttpInfrastructureCreated": false
   },
   "correlationRules": [
-    "DeFiLlama remains authoritative for existing TVL/fees/revenue evidence; Messari must not silently replace those fields.",
+    "DeFiLlama remains authoritative for existing free TVL/fees/revenue evidence; Messari must not silently replace those fields.",
     "GoPlus security observations are security evidence, not a score or automatic PASS.",
     "LunarCrush sentiment is external evidence and must remain separable from price/volume confirmations.",
     "CoinGlass derivatives/microstructure evidence must not become an execution price authority.",
     "Dune query IDs and output schemas must be explicitly governed; no arbitrary SQL from user/model input.",
+    "NewsAPI articles are raw news evidence; deterministic keyword sentiment remains explicitly heuristic and cannot masquerade as model sentiment.",
     "Missing/stale/unknown provider fields remain NOT_AVAILABLE/STALE/INVALID and never become 0 or PASS."
   ]
 }
