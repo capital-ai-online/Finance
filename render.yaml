@@ -104,7 +104,8 @@ services:
         value: ""
       - key: DUNE_TRIAL_ENDS_AT
         value: ""
+      # Owner-reviewed Aave/Ethereum queries. Runtime still validates exact expected output columns.
       - key: DUNE_ALLOWED_QUERY_IDS
-        value: ""
+        value: "27230,5833540"
       - key: DUNE_MAX_RESULT_ROWS
         value: "25"
