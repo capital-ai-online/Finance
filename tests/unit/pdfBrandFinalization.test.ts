@@ -30,24 +30,27 @@ function tokenValue(tokens: Record<string, unknown>, ...segments: string[]): unk
   return current;
 }
 
-describe('P1/P2 CAPITAL-AI PDF brand finalization', () => {
+describe('CAPITAL-AI Branding Manifest v6 / PDF brand projection', () => {
   const tokens = JSON.parse(read('docs/frontend/design-tokens.json')) as Record<string, unknown>;
   const css = read('src/index.css');
   const vite = read('vite.config.ts');
   const pdfBrand = read('src/platform/PdfReporting/pdfBrand.ts');
   const logo = read('src/shared/branding/CapitalAiLogo.tsx');
+  const neuralBackground = read('src/shared/visuals/NeuralBackground.tsx');
   const notebook = read('scripts/docs/export_notebooklm_pdfs.py');
   const requirements = read('scripts/docs/requirements-notebooklm-pdf.txt');
   const verifier = read('scripts/docs/verify_pdf_render.py');
 
-  it('keeps product CSS and canonical color tokens aligned', () => {
+  it('keeps the Manifest v6 canonical palette aligned with the web theme', () => {
     const pairs: Array<[string[], string]> = [
       [['color', 'background'], '--color-background'],
       [['color', 'foreground'], '--color-foreground'],
-      [['color', 'aif', 'gold', 'light'], '--color-aif-gold-light'],
+      [['color', 'border'], '--color-border'],
+      [['color', 'brand', 'primary'], '--color-brand-primary'],
+      [['color', 'brand', 'accent'], '--color-brand-accent'],
+      [['color', 'brand', 'success'], '--color-brand-success'],
+      [['color', 'brand', 'danger'], '--color-brand-danger'],
       [['color', 'aif', 'gold', 'DEFAULT'], '--color-aif-gold-DEFAULT'],
-      [['color', 'aif', 'gold', 'dark'], '--color-aif-gold-dark'],
-      [['color', 'aif', 'gold', 'muted'], '--color-aif-gold-muted'],
       [['color', 'aif', 'neon', 'cyan'], '--color-aif-neon-cyan'],
       [['color', 'aif', 'neon', 'purple'], '--color-aif-neon-purple'],
     ];
@@ -55,6 +58,31 @@ describe('P1/P2 CAPITAL-AI PDF brand finalization', () => {
     for (const [tokenPath, variable] of pairs) {
       expect(tokenValue(tokens, ...tokenPath)).toBe(cssThemeValue(css, variable));
     }
+
+    expect(tokenValue(tokens, 'color', 'brand', 'primary')).toBe('#F9BF21');
+    expect(tokenValue(tokens, 'color', 'brand', 'accent')).toBe('#8D26FF');
+    expect(tokenValue(tokens, 'color', 'brand', 'success')).toBe('#44DE88');
+    expect(tokenValue(tokens, 'color', 'brand', 'danger')).toBe('#F87171');
+    expect(tokenValue(tokens, 'color', 'background')).toBe('#08080C');
+    expect(tokenValue(tokens, 'color', 'surface', 'elevated')).toBe('#121215');
+  });
+
+  it('keeps historical cyan naming as a compatibility alias to Purple, never as an active cyan value', () => {
+    expect(tokenValue(tokens, 'color', 'aif', 'neon', 'cyan')).toBe(
+      tokenValue(tokens, 'color', 'brand', 'accent'),
+    );
+    expect(css).not.toContain('#0DDDDD');
+    expect(css).not.toContain('#00D2DC');
+    expect(css).not.toContain('#00D2FF');
+  });
+
+  it('uses Inter headings, Poppins body and JetBrains Mono data typography', () => {
+    expect(tokenValue(tokens, 'font', 'display')).toContain('Inter');
+    expect(tokenValue(tokens, 'font', 'sans')).toContain('Poppins');
+    expect(tokenValue(tokens, 'font', 'mono')).toContain('JetBrains Mono');
+    expect(css).toContain('--font-display: "Inter"');
+    expect(css).toContain('h1,');
+    expect(css).not.toContain('Montserrat');
   });
 
   it('derives the PDF renderer adapter from the design-token source of truth', () => {
@@ -66,17 +94,19 @@ describe('P1/P2 CAPITAL-AI PDF brand finalization', () => {
     expect(pdfBrand).not.toContain('canvas: [24, 24, 27]');
   });
 
-  it('renders a shared vector emblem and uses one runtime release version', () => {
+  it('renders the canonical shared mark with Gold and Purple only', () => {
     expect(pdfBrand).toContain('drawCapitalAiEmblem');
     expect(pdfBrand).toContain('drawCapitalAiWordmark');
     expect(pdfBrand).toContain('EMBLEM_NODES');
     expect(pdfBrand).toContain('EMBLEM_EDGES');
     expect(logo).toContain("from '../../platform/Branding/runtimeBrand'");
     expect(logo).toContain('version = CAPITAL_AI_VERSION');
-    expect(logo).not.toContain("version = '0.7.0'");
-    expect(logo).toContain('var(--color-aif-gold-DEFAULT)');
-    expect(logo).toContain('var(--color-aif-neon-cyan)');
-    expect(logo).toContain('var(--color-aif-neon-purple)');
+    expect(logo).toContain('var(--color-brand-primary)');
+    expect(logo).toContain('var(--color-brand-accent)');
+    expect(logo).not.toContain('var(--color-aif-neon-cyan)');
+    expect(neuralBackground).toContain('var(--color-brand-primary)');
+    expect(neuralBackground).toContain('var(--color-brand-accent)');
+    expect(neuralBackground).not.toContain('bg-aif-neon-cyan');
   });
 
   it('keeps jsPDF accessibility claims capability-bounded', () => {
