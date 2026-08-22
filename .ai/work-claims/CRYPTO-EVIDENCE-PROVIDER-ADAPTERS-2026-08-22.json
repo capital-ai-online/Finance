@@ -11,7 +11,7 @@
   "workItem": "Free/open crypto evidence provider delivery, Binance/Kraken primary sourcing and bounded Dune entitlement",
   "startedAt": "2026-08-22T06:10:00+02:00",
   "baseBranch": "main",
-  "baseSha": "f01a615edfa4a87939fb07bdce08829a1b46a1e6",
+  "baseSha": "ae0156aff6574d377a4536fe0737c139cb8c9ce8",
   "executionBranch": "feat/crypto-evidence-provider-adapters-2026-08-22",
   "stackDependency": {
     "pullRequest": 485,
@@ -46,6 +46,8 @@
   ],
   "claimedPaths": [
     ".ai/work-claims/CRYPTO-EVIDENCE-PROVIDER-ADAPTERS-2026-08-22.json",
+    "package.json",
+    "package-lock.json",
     ".env.example",
     "server/_.env.example",
     "render.yaml",
@@ -111,7 +113,10 @@
     "boundedResultReadsRequired": true,
     "officialTypeScriptSdkReviewed": true,
     "sdkDependencyInstalled": false,
-    "sdkConvenienceExecutionMethodsAllowed": false
+    "sdkConvenienceExecutionMethodsAllowed": false,
+    "sdkPackageJsonDeclared": true,
+    "sdkLockfileRegenerationPending": true,
+    "krakenApiRemovedFromDependencies": true
   },
   "transportConsolidation": {
     "sharedTransport": "ResearchEvidenceProviderHttp",
@@ -126,6 +131,7 @@
     "Dune query IDs have one numeric authority through semantic DUNE_QUERY_* environment values; DuneSavedQueryRegistry owns semantic schema/mapping contracts and derives the allowlist.",
     "Dune entitlement width never expands runtime query authority; empty/unverified semantic query variables stay absent and fail closed.",
     "GDELT news metadata and deterministic headline heuristics have no direct scoring authority.",
-    "Missing/stale/unknown provider fields remain NOT_AVAILABLE/STALE/INVALID and never become 0 or PASS."
+    "Missing/stale/unknown provider fields remain NOT_AVAILABLE/STALE/INVALID and never become 0 or PASS.",
+    "package.json and package-lock.json are authorized under this claim solely for the atomic Dune SDK (@duneanalytics/client-sdk@0.4.3) declaration + lockfile regeneration and the removal of unused kraken-api; no other dependency surface changes are authorized."
   ]
 }
