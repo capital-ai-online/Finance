@@ -8,144 +8,149 @@ This runbook separates account/security/dataset mutations from repository prepar
 
 ## Phase 0 — Provider decision — COMPLETE
 
-- [x] NewsAPI.org excluded. Developer plan is not valid for staging/production, regardless of small/self-owned user count.
-- [x] CoinGlass excluded.
-- [x] LunarCrush excluded.
-- [x] Messari excluded from active default evidence architecture.
-- [x] GoPlus: keyless documented Free Security API baseline selected; no x402/Agent payment.
+- [x] Binance Public and Kraken Public selected as **co-primary crypto market/derivatives suppliers**.
+- [x] NewsAPI.org, CoinGlass, LunarCrush and Messari excluded from active SC4 defaults.
+- [x] GoPlus Free selected for EVM/Solana security evidence.
 - [x] GDELT DOC 2.0 selected for keyless news metadata/provenance.
-- [x] Kraken Futures Public Charts selected for keyless derivatives/market analytics where a governed market exists.
-- [x] DEX Screener Public API selected for keyless DEX pool/liquidity/activity evidence where a governed token identity exists.
-- [x] Sourcify API v2 selected for open-source EVM source/bytecode verification evidence.
+- [x] DEX Screener selected for keyless DEX pool/liquidity/activity evidence.
+- [x] Sourcify API v2 selected for EVM source/bytecode verification evidence.
 - [x] DeFiLlama public API remains canonical keyless DeFi TVL/fees/revenue source under ADR-0100.
-- [x] Dune may be used only on the Free plan, latest saved-query result reads only, under credit/allowlist limits.
+- [x] Dune may operate only through governed saved-query result reads under explicit `FREE_TIER` or bounded `TRIAL_14D` entitlement mode.
 
-## Phase 1 — API-key/manual account setup
+## Phase 1 — Dune account/key setup
 
-Only Dune requires a new secret for the active SC4 stack.
+- [x] Owner provisioned `DUNE_API_KEY` with read permissions in Render `finance-secrets.env` on 2026-08-22.
+- [ ] Confirm Dune extra-credit/overage spending is disabled or capped in the account/team settings.
+- [ ] Determine the entitlement mode currently applicable to the account:
+  - permanent `FREE_TIER`, or
+  - Owner-reported temporary `TRIAL_14D` fuller/full-data-source entitlement.
 
-- [ ] Create/verify a Dune Free account and generate `DUNE_API_KEY`.
-  - Sign up: `https://dune.com/auth/register`
-  - API settings: `https://dune.com/settings/api`
-  - Credit docs: `https://docs.dune.com/resources/credits-billing/how-credits-work`
-- [ ] In Dune account/team billing settings, disable or cap extra-credit spending so Free-Tier use cannot silently charge.
-- [ ] After confirming the account remains Free, set `DUNE_FREE_TIER_ATTESTED=true` in server-side production configuration.
+The exact 14-day trial term was not independently visible in the public Dune documentation reviewed on 2026-08-22. CAPITAL-AI therefore treats it as an **Owner-attested account entitlement**, not a vendor-global policy assumption.
 
-No new key is required for GoPlus Free, GDELT, Kraken Public, DEX Screener, Sourcify or DeFiLlama public endpoints.
+## Phase 2 — Dune entitlement configuration
 
-## Phase 2 — Production secret configuration
+### If using `FREE_TIER`
+
+- [ ] Set `DUNE_ACCESS_MODE=FREE_TIER`.
+- [ ] Set `DUNE_FREE_TIER_ATTESTED=true` only after confirming the account/billing boundary.
+- [ ] Keep `DUNE_TRIAL_ATTESTED=false` and trial timestamps empty.
+
+### If using the 14-day trial
+
+- [ ] Set `DUNE_ACCESS_MODE=TRIAL_14D`.
+- [ ] Set `DUNE_TRIAL_ATTESTED=true` after confirming the account actually shows the temporary entitlement.
+- [ ] Set exact UTC/ISO timestamps in `DUNE_TRIAL_STARTED_AT` and `DUNE_TRIAL_ENDS_AT`.
+- [ ] The configured window must be >0 and <=14 days.
+- [ ] Runtime will block reads before the start and automatically at/after the end timestamp.
+- [ ] Trial expiry must **not** auto-convert to paid access. Return to `FREE_TIER` requires explicit Free-Tier attestation.
+
+Dataset entitlement may be broader during the trial; runtime authority is not. Query allowlists, schema/row limits and no-execute remain identical in both modes.
+
+## Phase 3 — Production secret/configuration state
 
 Repository preparation:
 
 - [x] `NEWS_API_KEY` removed from the canonical secret manifest.
 - [x] `DUNE_API_KEY` added to `scripts/security/secretFileManifest.ts`.
-- [x] `DUNE_ALLOWED_QUERY_IDS`, `DUNE_FREE_TIER_ONLY`, `DUNE_FREE_TIER_ATTESTED` and `DUNE_MAX_RESULT_ROWS` remain non-secret governance configuration.
-- [x] GoPlus key remains optional and is not required for the canonical Free baseline.
+- [x] Dune access mode, trial timestamps/attestations, query allowlist and row cap are non-secret governance configuration.
+- [x] GoPlus key remains optional; canonical Free baseline is keyless.
+- [x] No new secret is required for Binance Public or Kraken Public.
 
-Manual after merge/deployment preparation:
+Manual production cleanup after the GDELT supersession is deployed and verified:
 
-- [ ] Add the real `DUNE_API_KEY` through the existing Render `finance-secrets.env` process.
-- [ ] Remove any obsolete `NEWS_API_KEY` value from the production secret file after the GDELT supersession is deployed and verified.
+- [ ] Remove obsolete `NEWS_API_KEY` value from the production secret file if still present.
 - [ ] Do not add CoinGlass/LunarCrush/Messari keys for SC4.
 
-## Phase 3 — Dataset / provider identity governance — OWNER DATA TASK
+## Phase 4 — Provider identity governance
 
-No symbol-to-contract/market guessing is allowed. For each supported asset create a reviewed `CryptoEvidenceIdentityRegistry` record containing only applicable fields:
+No symbol-to-contract/market guessing is allowed. For every supported asset, review only applicable fields:
 
-- canonical symbol;
-- EVM chain ID + exact contract address **or** Solana exact mint;
-- DEX Screener chain slug + exact token address;
-- Kraken Futures public market symbol where listed;
-- Dune saved query IDs + expected columns + feature mappings where needed;
-- authoritative source references used to verify every identity;
-- reviewer + verification timestamp + status.
+- canonical CAPITAL-AI symbol;
+- EVM chain ID + exact contract or Solana exact mint;
+- DEX Screener chain/token identity;
+- exact **Binance futures symbol** where applicable;
+- exact **Kraken Futures public market symbol** where applicable;
+- Dune saved query IDs + expected columns + feature mappings;
+- authoritative identity sources, reviewer and verification timestamp.
 
-Manual review groups:
+Binance and Kraken are both primary suppliers but MUST remain separately attributable. Similar observations are not automatically summed, averaged or treated as independent confirmations without a separately versioned anti-correlation/consensus transform.
 
-- [ ] Meme assets — EVM/Solana split, especially DOGE-derived ERC tokens vs native/SPL assets.
-- [ ] DeFi protocol/token identity pairs — protocol and token must not be conflated.
-- [ ] Stablecoins.
-- [ ] Layer 1 / Layer 2.
-- [ ] DEX/AMM, lending, bridges and oracles.
-- [ ] LST/restaking.
-- [ ] RWA, AI/DePIN, GameFi and exchange tokens.
+## Phase 5 — Dune query governance
 
-## Phase 4 — Dune Free-Tier saved-query governance
-
-- [ ] Create/select saved queries only for evidence not standardized by DeFiLlama/GoPlus/Kraken/DEX Screener/Sourcify.
-- [ ] Prefer narrow, low-compute public/owned queries compatible with Dune Small/Medium Free engines.
-- [ ] Record query owner, purpose, tables, exact expected columns, units and freshness window.
-- [ ] Review look-ahead leakage, correlated/double-counted features and protocol identity.
+- [ ] Create/select saved queries only for evidence not standardized by DeFiLlama/GoPlus/Binance/Kraken/DEX Screener/Sourcify.
+- [ ] Record query owner, purpose, datasets/tables, exact columns, units and freshness.
+- [ ] Review look-ahead leakage and correlated/double-counted features.
 - [ ] Add approved IDs to `DUNE_ALLOWED_QUERY_IDS`.
-- [ ] Mirror the same IDs/schemas in `CryptoEvidenceIdentityRegistry`; both gates must agree.
-- [ ] Keep `DUNE_MAX_RESULT_ROWS` at 25 unless a reviewed use case justifies another value (hard implementation cap 100).
-- [ ] Verify schema-drift and policy-block negative tests before LIVE_DATA.
-- [ ] Never enable query execution, pipeline execution, raw SQL or `ignore_max_credits_per_request`.
+- [ ] Mirror the same IDs/schemas in `CryptoEvidenceIdentityRegistry`.
+- [ ] Keep `DUNE_MAX_RESULT_ROWS=25` unless reviewed; implementation hard cap is 100.
+- [ ] Verify schema-drift, ungoverned-query and entitlement-expiry negative tests.
+- [ ] Never enable arbitrary SQL, execute-query, pipelines or credit-limit bypass.
 
-## Phase 5 — Public dataset/page governance
+## Phase 6 — Gemini Research Shadow decision
 
-For Landing Page, AI Newsfeed Viewer and every Crypto Evidence panel, verify:
+- [x] Existing ADR-0090 Gemini Free-Tier Research Shadow remains the single Gemini research path.
+- [x] Do not create a second API key in the same Google Cloud project to obtain more quota: Gemini rate limits are project-scoped, not API-key-scoped.
+- [ ] If the existing Gemini shadow is to be enabled, independently verify its Google project has the required Free-Tier/billing state and set its existing attestation according to ADR-0090.
+- [ ] A separate Google project requires a separate governance/privacy/quota decision.
+
+Gemini may summarize or reason over supplied evidence in the governed research lane. It is not a market-data provider, factual evidence authority, scoring authority or execution authority.
+
+## Phase 7 — Public dataset/page governance
+
+For Landing Page, AI Newsfeed Viewer and Crypto Evidence panels:
 
 - [ ] provider/source attribution;
 - [ ] observed/retrieved timestamp and freshness;
-- [ ] evidence status (`VERIFIED`, `STALE`, `NOT_AVAILABLE`, `INVALID`);
-- [ ] methodology: raw vs transformed vs heuristic;
+- [ ] status (`VERIFIED`, `STALE`, `NOT_AVAILABLE`, `INVALID`);
+- [ ] raw/transformed/heuristic methodology label;
 - [ ] provider usage/licensing note;
 - [ ] evidence/reference ID without secrets;
 - [ ] no-demo/no-synthetic-data handling;
-- [ ] Evidence Coverage is explicitly data coverage, not an investment/trading score;
-- [ ] retention/cache policy is compatible with provider terms;
-- [ ] GDELT projection links to publisher source and does not reproduce article bodies.
+- [ ] Evidence Coverage described as data coverage, not score/advice;
+- [ ] compatible cache/retention policy.
 
-## Phase 6 — Audit / formal-verification evidence — OWNER + GOVERNANCE TASK
+## Phase 8 — Audit / formal-verification evidence
 
-- [x] Sourcify v2 source/bytecode verification lookup added as open-source evidence.
-- [ ] Independent audit presence and exact audit report/version/source.
-- [ ] Formal-verification evidence where a project actually claims it.
-- [ ] Exploit/incident history and unresolved-exploit state.
-- [ ] Upgrade authority, multisig and timelock evidence.
-- [ ] Oracle source diversity, liveness, deviation protection and fallback design.
-- [ ] Bridge/security dependency evidence where applicable.
-- [ ] Provenance/freshness/reviewer for each hard-gate input.
+- [x] Sourcify v2 source/bytecode verification lookup added.
+- [ ] Independent audit reference/version/source.
+- [ ] Formal-verification evidence where actually claimed.
+- [ ] Exploit/incident state.
+- [ ] Upgrade authority/multisig/timelock evidence.
+- [ ] Oracle diversity/liveness/deviation/fallback evidence.
+- [ ] Bridge/security dependencies.
 
-A Sourcify match or GoPlus response is **not** an audit/formal-verification/security PASS by itself.
+A Sourcify match or GoPlus response is not an audit/formal-verification/security PASS by itself.
 
-## Phase 7 — LIVE_DATA admission
+## Phase 9 — LIVE_DATA admission
 
 Per provider/asset:
 
-- [ ] applicable identity mapping verified;
-- [ ] provider usage boundary permits the intended public display;
-- [ ] rate-limit/cost gate configured;
+- [ ] identity mapping verified;
+- [ ] source-use boundary permits intended display;
+- [ ] rate-limit/cost/entitlement gate configured;
 - [ ] freshness/DQ satisfied;
-- [ ] page governance complete;
-- [ ] provider-failure/schema-drift tests pass;
+- [ ] provider failure/schema/expiry tests pass;
 - [ ] no secret appears in browser URLs/logs.
 
-Keyless providers may become `LIVE_DATA` only after these gates; keyless does not mean ungoverned.
-
-## Phase 8 — Model validation before LIVE_SCORING
+## Phase 10 — Model validation before LIVE_SCORING
 
 - [ ] required evidence coverage complete;
 - [ ] model weights/version frozen;
 - [ ] effective-feature/effective-weight fingerprints present;
-- [ ] correlation/double-counting analysis passed;
+- [ ] correlation/double-counting analysis passed, including Binance/Kraken overlap;
 - [ ] walk-forward/out-of-sample validation passed;
 - [ ] liquidity/slippage/cost assumptions validated;
-- [ ] blocker precision/recall and false-positive/false-negative review passed;
-- [ ] manipulation/rug/exploit stress scenarios reviewed;
+- [ ] blocker precision/recall and manipulation/rug/exploit scenarios reviewed;
 - [ ] audit/formal-verification gates complete;
 - [ ] independent human review recorded.
 
-## Phase 9 — LIVE_SCORING promotion — OWNER APPROVAL COMPLETE, TECHNICAL GATES OPEN
+## Phase 11 — LIVE_SCORING promotion
 
 - [x] Owner approved **Option B — LIVE_SCORING without LIVE_EXECUTION under the documented gates** on 2026-08-22.
-- [ ] Promote a category only when every Phase 3-8 gate applicable to that category is PASS.
-- [ ] Version ScoringModelRegistry/feature contract/executor and record fingerprint at promotion.
-- [ ] Keep any failed category `NOT_COMPUTABLE`/`BLOCKED`; there is no global force-live switch.
+- [ ] Promote a category only after all applicable gates are PASS.
+- [ ] Version ScoringModelRegistry/feature contract/executor and record fingerprints.
+- [ ] Failed categories remain `NOT_COMPUTABLE`/`BLOCKED`.
 
-Current state: Meme/DeFi challengers remain non-score-eligible because required evidence/social/audit/backtest gates are still incomplete. The Owner approval is recorded and no second approval is required for the same Option-B scope once the documented gates themselves are satisfied.
+## Phase 12 — LIVE_EXECUTION / FT-7+
 
-## Phase 10 — LIVE_EXECUTION / FT-7+
-
-Not authorized. Separate project/decision required for exchange/broker/custody adapters, real-money order transport, IAM/step-up authorization, pre-trade controls, reconciliation, incident/kill-switch runbooks and explicit Owner approval.
+Not authorized. Separate decision/project required for exchange/broker/custody adapters, real-money orders, IAM/step-up authorization, pre-trade controls, reconciliation and incident/kill-switch runbooks.
