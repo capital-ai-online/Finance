@@ -11,7 +11,7 @@
   "workItem": "Free/open crypto evidence provider delivery, Binance/Kraken primary sourcing and bounded Dune entitlement",
   "startedAt": "2026-08-22T06:10:00+02:00",
   "baseBranch": "main",
-  "baseSha": "ae0156aff6574d377a4536fe0737c139cb8c9ce8",
+  "baseSha": "baef95b37726c07b283567461ce57c0a807d81e6",
   "executionBranch": "feat/crypto-evidence-provider-adapters-2026-08-22",
   "stackDependency": {
     "pullRequest": 485,
@@ -112,10 +112,10 @@
     "runtimeSchemaValidationRequired": true,
     "boundedResultReadsRequired": true,
     "officialTypeScriptSdkReviewed": true,
-    "sdkDependencyInstalled": false,
+    "sdkDependencyInstalled": true,
     "sdkConvenienceExecutionMethodsAllowed": false,
     "sdkPackageJsonDeclared": true,
-    "sdkLockfileRegenerationPending": true,
+    "sdkLockfileRegenerationPending": false,
     "krakenApiRemovedFromDependencies": true
   },
   "transportConsolidation": {
@@ -132,6 +132,6 @@
     "Dune entitlement width never expands runtime query authority; empty/unverified semantic query variables stay absent and fail closed.",
     "GDELT news metadata and deterministic headline heuristics have no direct scoring authority.",
     "Missing/stale/unknown provider fields remain NOT_AVAILABLE/STALE/INVALID and never become 0 or PASS.",
-    "package.json and package-lock.json are authorized under this claim solely for the atomic Dune SDK (@duneanalytics/client-sdk@0.4.3) declaration + lockfile regeneration and the removal of unused kraken-api; no other dependency surface changes are authorized."
+    "package.json and package-lock.json are authorized under this claim solely for the atomic Dune SDK (@duneanalytics/client-sdk@0.4.3) declaration + lockfile regeneration and the removal of unused kraken-api; no other dependency surface changes are authorized. Remaining Root-Specifier alignment (exact 0.4.3 vs lock ^0.4.3) is still in scope of this claim and must be resolved before merge."
   ]
 }
