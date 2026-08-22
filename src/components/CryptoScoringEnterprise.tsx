@@ -133,12 +133,12 @@ type TierStyle = { hex: string; text: string; bg: string; border: string; label:
 const NEUTRAL_STYLE: TierStyle = { hex: '#a1a1aa', text: 'text-white/60', bg: 'bg-white/5', border: 'border-white/10', label: 'Unbewertet' };
 
 const DECISION_STYLE: Record<string, TierStyle> = {
-  a_setup: { hex: '#34d399', text: 'text-emerald-300', bg: 'bg-emerald-500/10', border: 'border-emerald-500/25', label: 'A-Setup' },
-  tradeable_watch: { hex: '#22d3ee', text: 'text-cyan-300', bg: 'bg-cyan-500/10', border: 'border-cyan-500/25', label: 'Tradeable Watch' },
-  speculative_watch: { hex: '#fbbf24', text: 'text-amber-300', bg: 'bg-amber-500/10', border: 'border-amber-500/25', label: 'Speculative Watch' },
-  observe: { hex: '#fb923c', text: 'text-orange-300', bg: 'bg-orange-500/10', border: 'border-orange-500/25', label: 'Observe' },
-  high_risk_speculation: { hex: '#fb923c', text: 'text-orange-300', bg: 'bg-orange-500/10', border: 'border-orange-500/25', label: 'High-Risk Speculation' },
-  reject: { hex: '#fb7185', text: 'text-rose-300', bg: 'bg-rose-500/10', border: 'border-rose-500/25', label: 'Reject' },
+  a_setup: { hex: '#44DE88', text: 'text-emerald-300', bg: 'bg-emerald-500/10', border: 'border-emerald-500/25', label: 'A-Setup' },
+  tradeable_watch: { hex: '#8D26FF', text: 'text-purple-300', bg: 'bg-purple-500/10', border: 'border-purple-500/25', label: 'Tradeable Watch' },
+  speculative_watch: { hex: '#F9BF21', text: 'text-amber-300', bg: 'bg-amber-500/10', border: 'border-amber-500/25', label: 'Speculative Watch' },
+  observe: { hex: '#F9BF21', text: 'text-amber-300', bg: 'bg-amber-500/10', border: 'border-amber-500/25', label: 'Observe' },
+  high_risk_speculation: { hex: '#F87171', text: 'text-rose-300', bg: 'bg-rose-500/10', border: 'border-rose-500/25', label: 'High-Risk Speculation' },
+  reject: { hex: '#F87171', text: 'text-rose-300', bg: 'bg-rose-500/10', border: 'border-rose-500/25', label: 'Reject' },
 };
 
 function scoreTier(score: number | null, decision: string | null): TierStyle {
@@ -483,12 +483,11 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
 
   return (
     <section id="enterprise-scorer" className="scroll-mt-24 bg-neutral-950/60 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden space-y-8">
-      {/* Phase 1: softer ambient orbs */}
-      <div className="absolute -top-24 -right-24 w-96 h-96 bg-purple-500/5 blur-[130px] rounded-full pointer-events-none" />
-      <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-cyan-500/[0.03] blur-[130px] rounded-full pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-96 h-96 bg-brand-accent/5 blur-[130px] rounded-full pointer-events-none" />
+      <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-brand-primary/[0.03] blur-[130px] rounded-full pointer-events-none" />
 
-      <div className="relative z-30 rounded-2xl border border-aif-gold-DEFAULT/20 bg-black/35 p-5 space-y-4">
-        <div className="flex items-center gap-2 text-[10px] font-mono font-black uppercase tracking-widest text-aif-gold-DEFAULT"><Search size={14} /> Asset-Suche</div>
+      <div className="relative z-30 rounded-2xl border border-brand-primary/20 bg-black/35 p-5 space-y-4">
+        <div className="flex items-center gap-2 text-[10px] font-mono font-black uppercase tracking-widest text-brand-primary"><Search size={14} /> Asset-Suche</div>
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="relative flex-1">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
@@ -497,7 +496,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
               onChange={(event) => { setSearchValue(event.target.value); setSearchOpen(true); }}
               onFocus={() => setSearchOpen(true)}
               placeholder="Symbol oder Asset suchen: BTC, AAPL, EURUSD, Gold, Bond …"
-              className="w-full rounded-xl border border-white/10 bg-black/50 pl-9 pr-3 py-3 text-sm text-white outline-none focus:border-aif-gold-DEFAULT/50 min-h-11"
+              className="w-full rounded-xl border border-white/10 bg-black/50 pl-9 pr-3 py-3 text-sm text-white outline-none focus:border-brand-primary/50 min-h-11"
             />
             {searchOpen && (
               <div className="absolute left-0 right-0 top-full mt-2 max-h-80 overflow-y-auto rounded-xl border border-white/15 bg-neutral-950 shadow-2xl z-50">
@@ -517,7 +516,27 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
           </div>
           <div className="flex flex-wrap gap-2">
             {(['all', 'crypto', 'stock', 'forex', 'index', 'commodity', 'bond'] as const).map((type) => (
-              <button key={type} type="button" onClick={() => { setAssetTypeFilter(type); setSearchOpen(true); }} className={`rounded-lg border px-3 min-h-11 text-[10px] font-bold ${assetTypeFilter === type ? 'border-aif-gold-DEFAULT/50 bg-aif-gold-DEFAULT/10 text-aif-gold-DEFAULT' : 'border-white/10 text-white/45 hover:text-white'}`}>{type === 'all' ? 'Alle' : TYPE_LABEL[type]}</button>
+              <button key={type} type="button" onClick={() => { setAssetTypeFilter(type); setSearchOpen(true); }} className={`rounded-lg border px-3 min-h-11 text-[10px] font-bold ${assetTypeFilter === type ? 'border-brand-primary/50 bg-brand-primary/10 text-brand-primary' : 'border-white/10 text-white/45 hover:text-white'}`}>{type === 'all' ? 'Alle' : TYPE_LABEL[type]}</button>
+            ))}
+          </div>
+        </div>
+
+        <div className="border-t border-white/10 pt-3">
+          <div className="mb-2 flex items-center gap-2 text-[9px] font-mono font-bold uppercase tracking-widest text-white/45">
+            <Activity size={12} className="text-brand-accent" /> Analyse-Zeitraum
+          </div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Analyse-Zeitraum des Enterprise Universum Scorers">
+            {TIMEFRAMES.map((item) => (
+              <button
+                type="button"
+                key={item.value}
+                onClick={() => onChangeTimeframe?.(item.value)}
+                aria-pressed={timeframe === item.value}
+                className={`rounded-lg px-3 min-h-11 text-[9px] font-mono border transition-all ${timeframe === item.value ? 'border-brand-primary/50 bg-brand-primary/10 text-brand-primary' : 'border-white/10 text-white/40 hover:border-brand-accent/40 hover:text-white/70'}`}
+                title="Zeitrahmen ist Analysekontext und verändert keinen kanonischen Score im Browser."
+              >
+                {item.label}
+              </button>
             ))}
           </div>
         </div>
@@ -528,7 +547,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
           <AssetLogo symbol={symbol} size={48} />
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-gradient-to-r from-aif-gold-DEFAULT/20 to-purple-500/20 text-aif-gold-DEFAULT border border-aif-gold-DEFAULT/25 uppercase">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-mono font-black tracking-widest bg-gradient-to-r from-brand-primary/20 to-brand-accent/20 text-brand-primary border border-brand-primary/25 uppercase">
                 <Sparkles size={10} /> Enterprise Universum Scorer
               </span>
               <StatusBadge status={result?.status ?? (loading ? 'LOADING' : 'DATA_UNAVAILABLE')} />
@@ -546,8 +565,6 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
       <div className="relative z-20">
         <EnterpriseBinanceQuickAnalysis symbol={symbol} />
       </div>
-
-      <div className="relative z-10 flex flex-wrap gap-2">{TIMEFRAMES.map((item) => <button type="button" key={item.value} onClick={() => onChangeTimeframe?.(item.value)} className={`rounded-md px-3 min-h-11 text-[9px] font-mono border transition-all ${timeframe === item.value ? 'border-white/30 bg-white/10 text-white' : 'border-white/5 text-white/35 hover:text-white/60'}`} title="Zeitrahmen ist Analysekontext und verändert keinen kanonischen Score im Browser.">{item.label}</button>)}</div>
 
       {requestError && <div className="relative z-10 flex gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4"><AlertTriangle className="mt-0.5 shrink-0 text-red-300" size={20} /><div><p className="text-sm font-bold text-red-100">DATA_UNAVAILABLE</p><p className="text-xs text-red-100/70 mt-1">{requestError}</p></div></div>}
 
@@ -585,7 +602,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
 
               <div className="xl:col-span-3 rounded-2xl border border-white/10 bg-black/25 p-6">
                 <div className="flex items-center justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-2 text-sm font-black uppercase text-white"><RadarGlyph size={15} className="text-cyan-300" /> Multi-Faktor Bewertungsmatrix</div>
+                  <div className="flex items-center gap-2 text-sm font-black uppercase text-white"><RadarGlyph size={15} className="text-purple-300" /> Multi-Faktor Bewertungsmatrix</div>
                   <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">{radarData.length} Kriterien</span>
                 </div>
                 <p className="text-[10px] text-white/40 font-mono mb-3">State-of-the-Art institutionelles Faktormodell · dynamisch neugewichtet bei fehlenden Faktoren</p>
@@ -595,7 +612,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
 
             {result.assetType === 'crypto' && (
               <div id="trade-setup-grafik" className="scroll-mt-24 rounded-2xl border border-white/10 bg-black/25 p-6">
-                <div className="flex items-center gap-2 mb-2 text-sm font-black uppercase text-white"><Activity size={15} className="text-aif-gold-DEFAULT" /> Trade-Setup Grafik</div>
+                <div className="flex items-center gap-2 mb-2 text-sm font-black uppercase text-white"><Activity size={15} className="text-brand-primary" /> Trade-Setup Grafik</div>
                 {result.tradeSetup ? (
                   <TradeSetupLadder setup={result.tradeSetup} />
                 ) : (
@@ -620,7 +637,7 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="rounded-xl border border-white/10 bg-black/25 p-5 text-xs space-y-2.5">
-                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-white/50 mb-1"><Database size={13} className="text-cyan-300" /> Integrität & Coverage</div>
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-white/50 mb-1"><Database size={13} className="text-purple-300" /> Integrität & Coverage</div>
                 <div className="flex items-center justify-between"><span className="text-white/40">Coverage</span> <span className="text-white font-bold">{coveragePct === null ? '—' : `${coveragePct}%`}</span></div>
                 <div className="flex items-center justify-between"><span className="text-white/40">Data Quality</span> <span className="text-white font-bold">{result.dataQuality ?? '—'}</span></div>
                 <div className="flex items-center justify-between"><span className="text-white/40">Risk Level</span> <span className="text-white font-bold">{result.riskLevel ?? '—'}</span></div>
@@ -650,8 +667,8 @@ export function CryptoScoringEnterprise({ selectedSymbol, onSelectSymbol, timefr
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <div className="rounded-xl border border-white/10 bg-black/25 p-5"><h3 className="text-xs font-black uppercase text-white mb-3 flex items-center gap-2"><Layers3 size={14} className="text-aif-gold-DEFAULT" /> Reasoning</h3>{result.reasoning.length ? <div className="space-y-2">{result.reasoning.slice(0, 8).map((text, index) => <div key={index} className="rounded-lg border border-white/5 bg-white/[0.02] p-3 text-xs text-white/60">{text}</div>)}</div> : <p className="text-xs text-white/40">Keine verifizierte Begründung verfügbar.</p>}</div>
-              <div className="rounded-xl border border-white/10 bg-black/25 p-5"><h3 className="text-xs font-black uppercase text-white mb-3">Provider & Evidence</h3><div className="flex flex-wrap gap-2 mb-4">{result.providers.length ? result.providers.map((provider) => <span key={provider} className="rounded-md border border-cyan-500/15 bg-cyan-500/5 px-2 py-1 text-[10px] font-mono text-cyan-200">{provider}</span>) : <span className="text-xs text-white/40">Keine Provider-Evidence.</span>}</div><div className="text-[10px] font-mono text-white/35 space-y-1"><div>Evidence IDs: {result.evidenceIds.length}</div><div>Feature: {result.featureVersion ?? '—'}</div><div>Scoring: {result.scoringVersion ?? '—'}</div></div></div>
+              <div className="rounded-xl border border-white/10 bg-black/25 p-5"><h3 className="text-xs font-black uppercase text-white mb-3 flex items-center gap-2"><Layers3 size={14} className="text-brand-primary" /> Reasoning</h3>{result.reasoning.length ? <div className="space-y-2">{result.reasoning.slice(0, 8).map((text, index) => <div key={index} className="rounded-lg border border-white/5 bg-white/[0.02] p-3 text-xs text-white/60">{text}</div>)}</div> : <p className="text-xs text-white/40">Keine verifizierte Begründung verfügbar.</p>}</div>
+              <div className="rounded-xl border border-white/10 bg-black/25 p-5"><h3 className="text-xs font-black uppercase text-white mb-3">Provider & Evidence</h3><div className="flex flex-wrap gap-2 mb-4">{result.providers.length ? result.providers.map((provider) => <span key={provider} className="rounded-md border border-purple-500/20 bg-purple-500/5 px-2 py-1 text-[10px] font-mono text-purple-200">{provider}</span>) : <span className="text-xs text-white/40">Keine Provider-Evidence.</span>}</div><div className="text-[10px] font-mono text-white/35 space-y-1"><div>Evidence IDs: {result.evidenceIds.length}</div><div>Feature: {result.featureVersion ?? '—'}</div><div>Scoring: {result.scoringVersion ?? '—'}</div></div></div>
             </div>
 
             <EnterpriseAnalysisPanels
