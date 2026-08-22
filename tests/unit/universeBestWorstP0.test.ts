@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const code = fs.readFileSync(path.join(process.cwd(), 'src/components/UniverseBestWorst.tsx'), 'utf8');
+const code = fs.readFileSync(path.join(process.cwd(), 'src/features/screening/ui/UniverseBestWorst.tsx'), 'utf8');
+const compatibility = fs.readFileSync(path.join(process.cwd(), 'src/components/UniverseBestWorst.tsx'), 'utf8');
 
 describe('UniverseBestWorst P0 ranking coverage', () => {
   it('selects up to 24 candidates per asset class and prioritizes legacy-registry assets', () => {
@@ -28,5 +29,15 @@ describe('UniverseBestWorst P0 ranking coverage', () => {
     expect(code).toContain('candidatesInGroup');
     expect(code).toContain('totalCoverage');
     expect(code).toContain('Coverage');
+  });
+
+  it('uses semantic asset-class and score roles and leaves only a compatibility export in src/components', () => {
+    for (const token of ['asset-crypto', 'asset-stock', 'asset-index', 'asset-forex', 'asset-commodity', 'asset-bond']) {
+      expect(code).toContain(token);
+    }
+    expect(code).toContain('text-score-best');
+    expect(code).toContain('text-score-worst');
+    expect(compatibility).toContain("../features/screening/ui/UniverseBestWorst");
+    expect(compatibility).not.toContain('RANKING_CANDIDATE_LIMIT');
   });
 });

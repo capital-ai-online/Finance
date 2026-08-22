@@ -2,7 +2,7 @@
 
 [![Version](https://img.shields.io/badge/Version-0.6.0_Beta-00f0ff.svg?style=for-the-badge)](https://capital-ai.online)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D24.18_%3C25-68a063.svg?style=for-the-badge&logo=nodedotjs)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6.svg?style=for-the-badge)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/License-Proprietary-gold.svg?style=for-the-badge)](#lizenz)
 
 > CAPITAL-AI ist eine webbasierte FinTech-Plattform für Multi-Asset-Screening, quantitative Analysen, erklärbare Scorings und kontrollierte AI-gestützte Auswertungen. Version 0.6.0 befindet sich in der Beta-Phase und ist kein Ersatz für Anlage-, Rechts- oder Steuerberatung.
@@ -54,7 +54,7 @@ PDF-Ausgaben verwenden einen gemeinsamen CAPITAL-AI Brand-/Metadaten-Contract un
 
 - **Client-Reports:** `src/platform/PdfReporting/pdfBrand.ts` + jsPDF. Das Accessibility-Profil `client-jsPDF` setzt Sprache und Metadaten, behauptet aber bewusst keine PDF/UA-/Tagged-PDF-Konformität.
 - **Documentation-as-Code / NotebookLM:** `scripts/docs/export_notebooklm_pdfs.py` + WeasyPrint 69.0. Dieser Pfad erzeugt semantisches, tagged PDF/UA-1 und wird separat über `scripts/docs/verify_pdf_render.py` geprüft.
-- **Branding:** Gold `#F5C453`, Cyan `#0DDDDD`, Purple `#B026FF` und Print-Neutralfarben stammen aus `docs/frontend/design-tokens.json`.
+- **Branding Manifest v6.0:** Gold `#F9BF21`, Purple `#8D26FF`, Emerald `#44DE88`, Rose `#F87171`, Background `#08080C`/`#121215`, Inter für Überschriften, Poppins für Body und JetBrains Mono für Tech-/Dateninhalte. Die Runtime-Authority ist `docs/frontend/design-tokens.json`; Cyan/Blau ist keine aktive UI-Brandingfarbe.
 - **Evidence-Gate:** Accessibility- oder regulatorische Konformität wird nicht allein aus Branding oder Renderer-Konfiguration abgeleitet; entsprechende Aussagen benötigen eine eigene Verifikation/Evidence.
 
 Reproduzierbarer Documentation-PDF-Smoke:
