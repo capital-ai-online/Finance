@@ -22,6 +22,8 @@ export const FINTECH_CORE_ORDER_INTENT_BINDING_VERSION =
 
 export type FinTechCoreOrderIntentBindingFailureCode =
   | 'MODE_NOT_ALLOWED'
+  | 'RISK_DECISION_MISSING'
+  | 'COMPLIANCE_DECISION_MISSING'
   | 'RISK_DECISION_NOT_APPROVED'
   | 'COMPLIANCE_DECISION_NOT_APPROVED'
   | 'RISK_DECISION_TYPE_MISMATCH'
@@ -129,7 +131,6 @@ function sameDecisionContext(
 function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (!value || typeof value !== 'object') return value;
-
   const source = value as Readonly<Record<string, unknown>>;
   return Object.keys(source).sort().reduce<Record<string, unknown>>((result, key) => {
     const entry = source[key];
@@ -189,7 +190,6 @@ function normalizePriceBounds(
   ) {
     throw new Error('priceBounds.limitPrice must not exceed priceBounds.maxPrice.');
   }
-
   return normalized;
 }
 
@@ -229,10 +229,7 @@ export function deriveOrderIntentIntegrity(
   source: FinTechCoreOrderIntentIntegritySource,
 ): FinTechCoreOrderIntentIntegrity {
   const payload = immutableExecutionPayload(source);
-  const idempotencyKey = sha256({
-    purpose: 'FINTECH_CORE_ORDER_INTENT_IDEMPOTENCY',
-    payload,
-  });
+  const idempotencyKey = sha256({ purpose: 'FINTECH_CORE_ORDER_INTENT_IDEMPOTENCY', payload });
   const clientOrderHash = sha256({
     purpose: 'FINTECH_CORE_CLIENT_ORDER_ID',
     orderIntentId: source.orderIntentId,
@@ -251,31 +248,29 @@ export function isOrderIntentExpired(intent: FinTechCoreOrderIntent, observedAt:
 
 /**
  * FT-6B deterministic binding from authoritative FT-5 decision evidence to the single canonical
- * OrderIntent contract.
- *
- * PAPER is the only allowed mode. Risk/compliance approvals, policy identity, decision hashes,
- * client-order identity and idempotency are derived by this service and cannot be supplied by an
- * LLM/agent/caller as approval flags. GUARDED_LIVE and PRODUCTION remain blocked until FT-7+.
+ * OrderIntent contract. PAPER is the only allowed mode; GUARDED_LIVE and PRODUCTION remain blocked.
  */
 export function bindApprovedOrderIntent(
   input: FinTechCoreOrderIntentBindingInput,
 ): FinTechCoreOrderIntentBindingResult {
-  const { context, riskDecision, complianceDecision } = input;
+  const { context } = input;
+  const riskDecision = input.riskDecision as FinTechCoreDecisionRecord | undefined;
+  const complianceDecision = input.complianceDecision as FinTechCoreDecisionRecord | undefined;
 
   if (context.operatingMode !== 'PAPER') {
-    return deny(
-      'MODE_NOT_ALLOWED',
-      `FT-6 OrderIntent binding is PAPER-only; received ${context.operatingMode}.`,
-    );
+    return deny('MODE_NOT_ALLOWED', `FT-6 OrderIntent binding is PAPER-only; received ${context.operatingMode}.`);
+  }
+  if (!riskDecision) {
+    return deny('RISK_DECISION_MISSING', 'Authoritative FT-5 risk decision is required.');
+  }
+  if (!complianceDecision) {
+    return deny('COMPLIANCE_DECISION_MISSING', 'Authoritative FT-5 compliance decision is required.');
   }
   if (riskDecision.decisionType !== FINTECH_CORE_RISK_DECISION_TYPE) {
     return deny('RISK_DECISION_TYPE_MISMATCH', 'Risk decision type is not PRE_TRADE_RISK_GATE.');
   }
   if (complianceDecision.decisionType !== FINTECH_CORE_COMPLIANCE_DECISION_TYPE) {
-    return deny(
-      'COMPLIANCE_DECISION_TYPE_MISMATCH',
-      'Compliance decision type is not PRE_TRADE_COMPLIANCE_GATE.',
-    );
+    return deny('COMPLIANCE_DECISION_TYPE_MISMATCH', 'Compliance decision type is not PRE_TRADE_COMPLIANCE_GATE.');
   }
   if (riskDecision.outcome !== 'APPROVED') {
     return deny('RISK_DECISION_NOT_APPROVED', 'Risk decision is not APPROVED.');
@@ -284,10 +279,7 @@ export function bindApprovedOrderIntent(
     return deny('COMPLIANCE_DECISION_NOT_APPROVED', 'Compliance decision is not APPROVED.');
   }
   if (!sameDecisionContext(context, riskDecision) || !sameDecisionContext(context, complianceDecision)) {
-    return deny(
-      'DECISION_CONTEXT_MISMATCH',
-      'Risk/compliance decision identity does not match the workflow context.',
-    );
+    return deny('DECISION_CONTEXT_MISMATCH', 'Risk/compliance decision identity does not match the workflow context.');
   }
   if (!required(riskDecision.outputHash) || !required(complianceDecision.outputHash)) {
     return deny('DECISION_HASH_MISSING', 'Risk/compliance decision output hash is required.');
@@ -305,20 +297,27 @@ export function bindApprovedOrderIntent(
   }
 
   if (
-    !isIsoTimestamp(input.createdAt)
+    !isIsoTimestamp(context.startedAt)
+    || !isIsoTimestamp(input.createdAt)
     || !isIsoTimestamp(input.expiresAt)
     || !isIsoTimestamp(riskDecision.decidedAt)
     || !isIsoTimestamp(complianceDecision.decidedAt)
   ) {
-    return deny('INVALID_TIMESTAMP', 'Decision, createdAt and expiresAt timestamps must be valid ISO timestamps.');
+    return deny('INVALID_TIMESTAMP', 'Workflow, decision, createdAt and expiresAt timestamps must be valid ISO timestamps.');
   }
+  const startedAtMs = Date.parse(context.startedAt);
   const createdAtMs = Date.parse(input.createdAt);
   const expiresAtMs = Date.parse(input.expiresAt);
   if (expiresAtMs <= createdAtMs) {
     return deny('EXPIRED_INTENT', 'OrderIntent expiry must be strictly after creation.');
   }
-  if (Date.parse(riskDecision.decidedAt) > createdAtMs || Date.parse(complianceDecision.decidedAt) > createdAtMs) {
-    return deny('INVALID_TIMESTAMP', 'OrderIntent cannot predate its risk/compliance decisions.');
+  if (
+    Date.parse(riskDecision.decidedAt) < startedAtMs
+    || Date.parse(complianceDecision.decidedAt) < startedAtMs
+    || Date.parse(riskDecision.decidedAt) > createdAtMs
+    || Date.parse(complianceDecision.decidedAt) > createdAtMs
+  ) {
+    return deny('INVALID_TIMESTAMP', 'Risk/compliance decisions must belong to the active workflow time window.');
   }
 
   if (
@@ -336,10 +335,7 @@ export function bindApprovedOrderIntent(
     quantity = normalizeFinTechCoreFixedPoint(input.quantity, 'quantity');
     priceBounds = normalizePriceBounds(input.orderType, input.priceBounds);
   } catch (error) {
-    return deny(
-      'INVALID_FIXED_POINT',
-      error instanceof Error ? error.message : 'Invalid fixed-point quantity or price bound.',
-    );
+    return deny('INVALID_FIXED_POINT', error instanceof Error ? error.message : 'Invalid fixed-point quantity or price bound.');
   }
 
   const evidenceRefs = uniqueEvidenceRefs(riskDecision.evidenceRefs, complianceDecision.evidenceRefs, [
@@ -410,10 +406,5 @@ export function bindApprovedOrderIntent(
     effectClass: 'SIDE_EFFECTING',
   });
 
-  return Object.freeze({
-    status: 'BOUND' as const,
-    intent,
-    evidenceRefs,
-    executionHandoffEligible: false as const,
-  });
+  return Object.freeze({ status: 'BOUND' as const, intent, evidenceRefs, executionHandoffEligible: false as const });
 }
