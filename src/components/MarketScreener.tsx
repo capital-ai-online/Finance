@@ -452,7 +452,14 @@ export function MarketScreener({
                     <Sparkles size={13} />
                     {analysisLoading === result.symbol ? 'AI prüft Evidence…' : 'Kurze AI-Zusammenfassung'}
                   </button>
-                  {analysis[result.symbol] && <div className="prose prose-invert prose-sm max-w-none rounded-xl border border-purple-500/15 bg-purple-500/[0.04] p-3 text-[11px]"><Markdown>{analysis[result.symbol]}</Markdown></div>}
+                  {analysis[result.symbol] && (
+                    <div className="space-y-2">
+                      <div className="prose prose-invert prose-sm max-w-none rounded-xl border border-purple-500/15 bg-purple-500/[0.04] p-3 text-[11px]"><Markdown>{analysis[result.symbol]}</Markdown></div>
+                      <div className="rounded-lg border border-purple-500/10 bg-purple-500/[0.025] px-3 py-2 text-[9px] leading-relaxed text-purple-100/55" data-testid="ai-content-disclosure">
+                        <strong className="text-purple-100/75">AI-generierte Antwort.</strong> Retrieval-Evidence kann als Kontext verwendet worden sein; Retrieval allein bestätigt weder Claim-Level-Grounding noch Zitationsvollständigkeit. Die Zusammenfassung besitzt keine Scoring-, Ranking-, Eligibility- oder Anlageentscheidungs-Authority.
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </article>

@@ -1,282 +1,167 @@
 # ADR-0096 — Governance Control Plane, Stable Authority and Supersession
 
 **Authority ID:** `AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19`  
-**Version:** `1.2.0`  
-**Status:** PROPOSED — Owner-directed implementation; effective after Human Merge  
-**Date:** `2026-08-20`  
+**Version:** `1.3.0`  
+**Status:** `ACCEPTED / ACTIVE` — Governance Control Plane landed through the merged governance-consolidation sequence; revalidated 2026-08-22  
+**Date:** `2026-08-22`  
 **Decision Owner:** CAPITAL-AI Owner  
-**Scope:** repository governance authority, agent trust root, stable identities, ADR/ESS lifecycle, Documentation-only governance boundaries, document roles/projections, ADR namespace reservations, parallel-writer correlation, platform-version authority and M10 prerequisite remediation
+**Scope:** repository governance authority, agent trust root, stable identities, ADR/ESS lifecycle, Documentation-only boundaries, document roles/projections, namespace reservations, parallel-writer correlation, platform-version authority, current-state synchronization and M10 prerequisite remediation
 
-**Legacy alias:** `ADR-0086` — historical governance-supersession draft number; `ADR-0086` is already occupied by Vendor Privacy Evidence Governance.
+**Legacy alias:** historical governance draft number `ADR-0086`; active ADR-0086 belongs to Vendor Privacy Evidence Governance.
 
 ## Context
 
-The repository accumulated strong individual controls but exposed them through overlapping governance architectures: root agent directives, Documentary Governance, ADR/ESS registries, legacy version-management runtime behavior, release projections, workflow prose and historical reports. The result was ambiguous authority resolution and concrete namespace/versioning conflicts.
+The repository accumulated overlapping governance surfaces: root agent directives, Documentary Governance, ADR/ESS registries, historical Version Manager behavior, release projections, workflow prose and status reports. The Governance Control Plane was introduced and merged to make authority resolution deterministic without creating another control plane.
 
-PR #447 established the first Governance Control Plane baseline. The subsequent M10 prerequisite gate and parked PR #439 exposed remaining correlations:
-
-- `package.json#version` was already the practical release source while legacy VersionManager state persisted a second version;
-- `AGENTS.md` had been removed from current version-consistency tests but remained in the Release Version Gate mirror list;
-- README carried manually duplicated platform/runtime version declarations;
-- `/api/admin/version/bump` and `uploads/version_manager.json` remained mutable legacy paths;
-- legacy VersionManager execution automatically generated ADR/compliance/document content as a side effect of version changes;
-- the production runtime guard answered `GET /api/admin/version` before Express authorization middleware;
-- ADR-0014 / ESS-0012 define useful Documentation Governance but must not become a repository-wide authority plane;
-- ADR-0004 and ESS-0004 contain obsolete hard-coded/current-version semantics;
-- after PR #446 merged, ADR-0094 remained incorrectly represented as an open parallel namespace reservation.
-
-The 2026-08-20 correlation revalidation additionally found:
-
-- `FRONTEND_ARCH.md`, `COMPONENT_INVENTORY.md` and `FRONTEND_ROADMAP.md` already converged semantically after PR #459, but their distinct authority/projection/inventory/roadmap roles were not yet machine-readable in the Document Registry;
-- historical Frontend ADR-0005 still carried an `ACCEPTED` label although Module Federation, iframe/PostMessage, URL-token propagation, shared-auth LocalStorage and the proposed `aif-` namespace are not the current code architecture;
-- Verified Asset Display from PR #458 is a read-only Presentation/Research projection whose parent authorities remain ADR-0032, ADR-0034, ADR-0041/ESS-0016, SC-MD-SPT-0001 and ADR-0087;
-- a previously merged work package (PR #460) left its exclusive Work Claim on `main` in `active` state even though its own release condition was already satisfied;
-- the existing ADR registry contained `parallelNamespaceReservations` but did not yet define enough deterministic reservation metadata/lifecycle to prevent future parallel display-ID collisions without live GitHub access.
-
-The Owner directed that these defects be resolved inside the existing Governance Control Plane, without creating a second Frontend, Documentary, registry, lock or governance architecture.
+Post-merge revalidation shows that the architectural decision is operational. Remaining drift is therefore treated as current-state synchronization, not as a new governance architecture.
 
 ## Decision
 
-### 1. Single agent trust root
+### 1. Single repository Agent Trust Root
 
-`/AGENTS.md` is the single repository-wide trust root and instruction surface for every AI model, coding agent, MCP host and automation client. Provider-specific repository instruction mirrors remain absent/non-authoritative.
+`/AGENTS.md` is the single repository-wide instruction and trust-root surface for AI models, coding agents, MCP hosts and automation clients. Provider-specific repository instruction mirrors are non-authoritative.
 
-### 2. Stable machine-readable identities
+### 2. Stable identities
 
-- `AUTH-*` identifies an authority/decision immutably.
-- `CTRL-*` identifies an enforceable governance control immutably.
-- `DOC-*` identifies documentary artifacts.
-- ADR and ESS numbers remain human/traceability display aliases.
+- `AUTH-*` identifies an authority/decision immutably;
+- `CTRL-*` identifies an enforceable governance control;
+- `DOC-*` identifies documentary artifacts;
+- ADR/ESS numbers remain display/traceability aliases.
 
-Paths and display numbers may move under controlled migration without changing stable identity.
+Paths and display aliases may change only through traceable migration; stable authority identity does not.
 
 ### 3. Canonical registries
 
-The control plane uses:
+The control plane reuses exactly these registries:
 
-- `docs/governance/authority-registry.json` for stable authority identities and current locations;
-- `docs/governance/control-catalog.json` for operative controls;
-- `docs/adr/registry.json` for ADR identity/version/date/lifecycle/supersession and namespace reservation state;
-- `.ai/registry/ess-registry.json` for ESS allocation/lifecycle;
-- `docs/governance/document-registry.json` for documentary identity, role, scope and projection metadata.
+- `docs/governance/authority-registry.json` — stable authority identity and location;
+- `docs/governance/control-catalog.json` — operative controls;
+- `docs/adr/registry.json` — ADR identity/version/lifecycle/reservation state;
+- `.ai/registry/ess-registry.json` — ESS identity/lifecycle;
+- `docs/governance/document-registry.json` — document identity/role/projection metadata.
 
-No parallel registry is introduced. Document inventory and evidence do not outrank an effective authority/control.
+No parallel registry may outrank these sources.
 
-### 4. ADR lifecycle, recency and suspension
+### 4. Lifecycle and supersession
 
-Formal ADRs live under `docs/adr/` and lifecycle subdirectories. New or materially migrated ADRs have stable `authorityId`, unique active display ID, semantic version, date and lifecycle.
+`accepted`/active records may authorize within their declared scope. `suspended`, `superseded`, `historical` and `rejected` records are non-authorizing. Newer dates alone do not supersede a different authority; explicit scope/supersession is required.
 
-For the same `authorityId`, newer effective semantic version/date can supersede an older version. Across different authorities, recency alone is non-authorizing; explicit scope/supersession and Owner-visible impact analysis are required.
+Historical evidence remains immutable history and cannot silently regain current authority.
 
-`suspended` and `historical` are non-authorizing lifecycles. Such ADR/ESS artifacts remain traceable but cannot authorize implementation, version mutation, merge, production behavior or M10 reactivation.
+### 5. Global Governance vs Documentary Governance
 
-### 5. Namespace state
+Repository-wide governance belongs to `src/platform/Governance` and this ADR.
 
-- ADR-0085 remains ESS Namespace Cleanup.
-- ADR-0086 remains Vendor Privacy Evidence Governance.
-- ADR-0094 is a normal Accepted record because PR #446 merged into `main`; its former open-PR reservation is removed.
-- ADR-0095 remains Privacy Governance Single Source of Truth.
-- this decision remains ADR-0096.
-- ADR-0097 is allocated to Documentary Maintenance Control Loop after PR #460; a future writer may not reuse the display ID merely because another historical branch once attempted to reserve it.
-- Documentation Governance retains ESS-0012; the historical duplicate vocabulary ESS remains superseded by ESS-0017.
+ADR-0014 / ESS-0012 remain Documentation-only. They may define documentation validation, lifecycle findings and read-only hygiene but cannot define repository-wide merge, production mutation, platform-version or agent-trust-root authority.
 
-### 6. Global Governance versus Documentary Governance
+ADR-0097 extends Documentary maintenance under this boundary and cannot override the Governance Control Plane.
 
-Cross-cutting repository governance belongs to `src/platform/Governance`.
+### 6. Single platform-version authority
 
-ADR-0014 and ESS-0012 remain active **only in Documentation-only scope**. They may define documentary validation, metadata, lifecycle findings and read-only hygiene services. They do not define repository-wide authorization, merge authority, production mutation authority, platform-version authority or agent trust-root precedence.
+`package.json#version` is the sole current platform-version authority.
 
-Any historical ADR-0014 / ESS-0012 language that assigns global authority or a mutating Version Manager role is scope-superseded by this section. The useful Documentation Hygiene implementation from parked PR #439 is reused under `src/platform/Documentary/Governance/Services/DocumentationHygieneValidator.ts` rather than recreated as a competing control plane.
-
-### 7. Single platform-version authority
-
-`package.json#version` is the **only current platform-version authority**.
-
-The architecture is:
+`ESS-0004` (Enterprise Version Manager) is explicitly **SUSPENDED / archived** and is superseded for platform-version mutation authority by ADR-0096 plus `package.json#version`. Its archived document may remain as historical evidence, but it may not authorize version mutations, generated state or a parallel Version Manager control plane.
 
 ```text
 package.json#version
-   |
-   +--> Release Version Gate        explicit controlled mutation
-   +--> README Projection           deterministic derived documentation
-   +--> Platform Version Projection read-only runtime/admin view
+   ├─ Release Version Gate — controlled mutation
+   ├─ README/runtime projections — derived/read-only
+   └─ release/build evidence — derived
 
-AGENTS.md Control Plane Version     independent governance metadata
+AGENTS.md governance version — independent control-plane metadata
 ```
 
-Consequences:
+Historical VersionManager state, generated JSON and autonomous document/version side effects are non-authorizing compatibility/history surfaces.
 
-- `AGENTS.md` is removed from all product-version mirror/update contracts;
-- README is a deterministic projection generated by `readmeVersionProjection.ts` / `readme:sync` and cannot become a second authority;
-- `src/platform/Release/Services/platformVersionControlPlane.ts` provides the single read-only runtime/API projection service;
-- `src/platform/VersionManager/platformVersionAuthority.ts` is only a compatibility re-export;
-- `src/platform/VersionManager/versionManager.ts` is only an authenticated read-only compatibility router;
-- `uploads/version_manager.json`, autonomous bump logic and VersionManager document generation are retired/non-authorizing;
-- version changes occur only through the controlled Release Version Gate under ADR-0030.
+### 7. Current-state documents are projections, not second authorities
 
-### 8. Suspension of obsolete version authorities
+Current-state indexes such as `docs/architecture/ROADMAP.md` may project repository status and exact observed SHAs, but exact SHAs are validation/evidence-time facts, not permanent semantic authority.
 
-`ADR-0004 — Branding, Header und Panel-Entfernung` is moved to `docs/adr/suspended/` because it embeds an obsolete current product-version projection (`0.5.4`) in a broader UI/branding decision.
+Roadmaps, inventories and projections may reference parent authorities; they must not restate another domain's normative rule chain as a competing authority.
 
-`ESS-0004 — Enterprise Version Manager` is removed from active `.ai/skills` and moved to `docs/archive/governance/suspended/` because its statement that the Version Manager determines the version and its legacy component model conflict with the single-authority Release architecture.
+### 8. Document roles
 
-References in other active documents to ESS-0004 or “Version Manager” as the current platform-version authority are non-authorizing compatibility/history references. For current execution they resolve to `package.json#version` plus the Release Control Plane unless a newer explicit decision states otherwise. Those documents are not globally suspended when their remaining domain scope is valid.
+Document Registry roles remain bounded to `authority`, `projection`, `inventory`, `roadmap`, `evidence` and `specification` semantics. Projections/inventories/roadmaps are non-authorizing unless a separate explicit authority scope states otherwise.
 
-### 9. Runtime authorization boundary
+Frontend, Documentary, Vocabulary, Quality and Financial Runtime retain distinct domains. Presentation/documentation projections cannot acquire financial decision authority.
 
-The production runtime artifact guard may deny retired write endpoints before Express, but it must **not** serve `GET /api/admin/version` itself. The GET projection must reach the normal Express route and `checkAdminAccess` authorization middleware. A runtime shortcut cannot bypass AuthN/AuthZ merely to expose immutable release metadata.
+### 9. Parallel writers and Work Claims
 
-### 10. Policy-as-code and structural validation
+Existing `.ai/work-claims` remain the single repository coordination mechanism for scoped writers. Before any PR/Draft PR, current `main` and open PRs must be correlated for path/semantic/namespace overlap.
 
-`scripts/governance/validateGovernanceControlPlane.mjs` remains the canonical repository structural validator and is extended to fail closed on:
+Stale branches are not blindly rebased when that would import obsolete architecture. A fresh branch from current `main` plus selective semantic replay is valid when it preserves current authorities and is revalidated.
 
-- duplicate stable Authority/Control/active ADR identities;
-- duplicate active ADR reservations;
-- active ADR plus active reservation of the same display ID;
-- malformed or explicitly stale ADR reservations;
-- missing Authority targets;
-- unknown projection parents and non-authorizing parents used by active projections;
-- competing exclusive normative scopes;
-- invalid Frontend document roles and Financial Runtime scope leakage into Frontend Architecture/Roadmap;
-- ADR-0005 lifecycle/role inconsistency;
-- suspended ADR/ESS path/lifecycle inconsistencies;
-- competing agent instruction surfaces;
-- platform-version authority ambiguity;
-- AGENTS product-version mirroring;
-- README projection drift contract;
-- mutable/duplicated VersionManager router behavior;
-- retired VersionManager JSON state or ADR/document generators;
-- runtime version-GET AuthZ bypass patterns;
-- Documentation Hygiene service/boundary absence;
-- incomplete M10 prerequisite state.
+### 10. ADR namespace reservations
 
-The deterministic rule core lives in `scripts/governance/controlPlaneRegistryRules.mjs` and is invoked by the canonical validator. It is a pure testable rule library, not a second validator/authority.
+`docs/adr/registry.json#parallelNamespaceReservations` is the single ADR display-ID reservation mechanism. Active duplicate reservations, active ADR + active reservation collisions and stale reservations fail closed until resolved.
 
-`validateFrontendArchitecture.ts` remains responsible only for source-tree, dependency direction, feature/shared boundaries, legacy compatibility and parallel Frontend roots. Governance role/authority semantics are not duplicated into it.
+ADR-0097 is permanently allocated to Documentary Maintenance Control Loop after PR #460. Historical abandoned branches that used the same display ID for another concept are non-authorizing.
 
-### 11. Current M10 state
+### 11. Financial value-chain boundary
 
-M10 Passkey PR-CI authorization remains `SUSPENDED / OFF`. This ADR and work package do **not** reactivate it.
+`SC-MD-SPT-0001` remains the canonical financial value-chain authority. Governance/Quality/Documentary/Vocabulary may validate or project that chain but cannot create a second scoring/evidence/eligibility authority.
 
-Reactivation eligibility requires, in order:
+The current structural projection contains 18 stages. Documentary attaches read-only at VC-17 EventMesh/Traceability/Supervisor; delivery is VC-18. Current-state consumers must not continue using the obsolete 14-stage/VC-13 mapping.
 
-1. ADR / Authority cleanup;
-2. Documentary separation;
-3. README projection;
-4. Documentation Hygiene;
-5. router cleanup;
-6. one platform-version authority;
-7. structural validation;
-8. independent hosted CI on the exact candidate head;
-9. a new explicit Human/Owner decision.
+### 12. Repository-local/ChatGPT sandbox execution
 
-Historical M10 evidence cannot satisfy step 9.
+A ChatGPT/local sandbox may execute existing pre-PR checks on a real feature-branch checkout. It is a non-authorizing execution projection only:
 
-### 12. Deployment and standards posture
+- no automatic dependency installation;
+- no push/PR creation/merge/deploy;
+- no external platform mutation;
+- no new CI authority;
+- hosted CI still validates the exact remote PR head.
 
-Render native auto-deploy remains off. Production promotion authority remains verified `main` CI -> supply-chain attestation -> exact-SHA Render deploy hook -> post-deployment identity verification.
+The profile is defined by `docs/runbooks/CHATGPT_REPOSITORY_SANDBOX.md` and `scripts/automation/runChatGptSandboxPrePr.mjs`.
 
-The control-plane management model uses ISO/IEC 42001:2023 as an AIMS/continual-improvement benchmark and final NIST SSDF v1.1 / SP 800-218A as secure-development baselines. This does not assert certification or complete legal compliance.
+### 13. M10 state
 
-### 13. Document roles and Projection, not Redefinition
+M10 Passkey/WebAuthn `AUTHORIZE_PR_CI` remains **SUSPENDED / OFF**. Historical M10 evidence cannot reactivate it.
 
-The existing Document Registry may declare:
+Reactivation requires then-current architecture/authority cleanup, structural validation, exact-head hosted CI and a new explicit Human/Owner decision.
 
-- `documentRole`: `authority`, `projection`, `inventory`, `roadmap`, `evidence` or `specification`;
-- `normative`: boolean;
-- `normativeScope`: explicit bounded scopes;
-- `authorityRefs`: referenced Authority IDs;
-- `projectionOf`: parent Authority IDs.
+### 14. Deployment authority
 
-Declared projections, inventories and roadmaps are non-authorizing. They may summarize or project results but must not copy another domain's normative rule chain in a way that creates an implicit second authority.
+Render native Auto Deploy remains off. Production promotion authority remains the verified `main` deployment control plane. A second automatic deployment authority requires a separate architecture/security decision.
 
-For the Frontend family:
+### 15. Policy-as-code
 
-- `FRONTEND_ARCH.md` is the normative authority only for `frontend-source-tree`, `frontend-dependencies` and `presentation-architecture`;
-- `COMPONENT_INVENTORY.md` is a non-normative inventory projected from the Frontend Architecture;
-- `FRONTEND_ROADMAP.md` is a non-normative roadmap that references the Frontend Architecture;
-- Financial Runtime, Market Data, Scoring, Ranking, Financial Eligibility, Runtime Evidence and IAM remain outside Frontend authority.
+`scripts/governance/validateGovernanceControlPlane.mjs` remains the canonical structural governance validator. It must fail closed on duplicate authorities, invalid ADR reservations, missing targets, non-authorizing projections used as authorities, platform-version ambiguity, trust-root duplication, role/scope leakage and other registered control-plane invariants.
 
-Verified Asset Display remains a read-only Presentation/Research projection. Its financial parent authorities are referenced, not copied into `FRONTEND_ARCH.md`.
-
-### 14. Parallel writers, Work Claims and ADR reservations
-
-Existing `.ai/work-claims` remain the single coordination mechanism for path writers. No second lock architecture is introduced.
-
-The existing live preflight `scripts/pr/validateWorkClaim.mjs` correlates current/open PR writers and now also reports stale active/exclusive claims on `main`. Such live GitHub correlation is advisory evidence and may not become deterministic CI authority.
-
-ADR display-ID allocation uses the already existing `docs/adr/registry.json#parallelNamespaceReservations`. Before creating a new ADR, a reservation contains at least:
-
-- `displayId`,
-- `branch`,
-- `source` (PR/work item),
-- `path`,
-- `observedHead`,
-- `state`,
-- `reservedAt`.
-
-A second active reservation for the same display ID is denied. An active ADR plus active reservation for the same display ID is denied. A reservation marked stale is denied until released/refreshed. Merge, close, supersession or abandonment transitions the reservation away from active.
-
-The deterministic CI validator evaluates repository reservation state only. The live preflight may compare reservation branches/PRs and `observedHead` against GitHub, but that external observation is not required by the deterministic merge-gating rule.
-
-### 15. ADR-0005 disposition
-
-Code revalidation found no current implementation authority for the historical Module Federation, iframe/PostMessage, URL-token propagation, shared-auth LocalStorage or proposed `aif-` namespace mechanisms described by ADR-0005. Current Frontend, IAM, CSP/CORS, AuthN/AuthZ and token-handling authorities supersede those historical assumptions by scope.
-
-ADR-0005 is therefore classified **HISTORICAL — NON-AUTHORIZING**. Its old `ACCEPTED` label may not reactivate URL-token, iframe, cross-origin messaging or shared-auth storage behavior.
+Domain validators may validate their own architecture but may not duplicate repository-wide governance authority.
 
 ## Consequences
 
 ### Positive
 
-- one resolvable platform-version authority;
-- no version mutation hidden behind an admin UI or local JSON state;
-- no automatic ADR/compliance-document generation as a version side effect;
-- README/runtime/API views become projections rather than authorities;
-- Governance Control Plane version and product version cannot overwrite each other;
-- Documentary Governance is useful but structurally bounded;
-- production version GET retains intended admin authorization;
-- suspended/historical decisions remain traceable without remaining operative;
-- Frontend Architecture, Inventory and Roadmap are machine-resolvable by role and scope;
-- Financial Runtime authorities remain outside the Presentation authority;
-- ADR namespace collisions are prevented without making deterministic CI dependent on live GitHub;
-- stale Work Claims can be surfaced by the existing live preflight;
-- structural validation covers the M10 prerequisite chain.
+- one resolvable governance control plane;
+- one platform-version authority;
+- historical documents remain traceable but non-authorizing;
+- Frontend/Documentary/Vocabulary/Quality/Financial Runtime boundaries stay explicit;
+- current-state drift can be detected without hard-coding exact Git SHAs as permanent authority;
+- sandbox/local execution reduces pre-PR failure cost without weakening hosted CI or Human merge.
 
 ### Trade-offs
 
-- historical documents still contain compatibility references that must be interpreted through this scope resolution;
-- `src/platform/VersionManager` remains temporarily as a compatibility namespace until callers are migrated;
-- older Document Registry entries are not mass-rewritten merely to attach new role metadata; role fields are applied where authority resolution requires them and can be backfilled incrementally;
-- live PR/work-claim correlation remains advisory by design; deterministic CI evaluates repository state rather than remote availability;
-- hosted CI and a separate Owner decision remain outstanding after code completion.
+- historical documents can retain stale terminology and must be interpreted through lifecycle/authority resolution;
+- compatibility namespaces may remain temporarily while callers migrate;
+- current-state synchronization remains an ongoing governance obligation.
 
 ## Security and integrity impact
 
-The change removes a production authorization bypass opportunity, removes mutable duplicate version state, removes automatic repository-document generation from a runtime version endpoint, explicitly prevents historical ADR-0005 token/iframe semantics from regaining authority, and keeps all production/IAM/billing/provider mutation authority unchanged.
-
-No Supabase, Stripe, Render, secret, production data or external control-plane mutation is performed by this work package.
+This decision reduces ambiguous authority, mutable duplicate version state and accidental cross-domain authority leakage. It adds no secret, provider-write, billing, IAM or production mutation capability.
 
 ## Verification / Definition of Done
 
-1. `AGENTS.md` remains the sole global agent trust root and contains no product-version mirror contract.
-2. `package.json#version` is structurally enforced as the sole platform-version authority.
-3. README projection is deterministic and drift-checked.
-4. Documentation Hygiene executes through the reusable service/CLI; the legacy standalone hygiene test is absent.
-5. VersionManager HTTP/UI are read-only and no legacy bump/state/document-generator behavior remains active.
-6. production runtime guard does not intercept admin version GET before authorization.
-7. ADR-0004 and ESS-0004 are registered/placed as suspended.
-8. ADR-0014 / ESS-0012 are bounded to Documentation-only scope.
-9. ADR-0094 is migrated from stale PR reservation to normal registered Accepted record.
-10. ADR-0005 is registered historical/non-authorizing consistently across ADR, Authority and Document registries.
-11. Frontend Architecture/Inventory/Roadmap roles and scopes are registered and validated.
-12. duplicate/stale ADR reservations and non-authorizing projection parents fail closed.
-13. stale active/exclusive Work Claims are correlated in the existing live PR preflight.
-14. structural Governance validation passes on the final candidate.
-15. branch is synchronized with then-current `main` and correlated open writers immediately before final PR readiness.
-16. hosted GitHub checks pass on the exact final head.
-17. Human Merge and any M10 reactivation remain separate explicit Owner decisions.
-
-## Rollback
-
-Use a new rollback branch from then-current `main` and revert the Governance remediation PR as a reviewed unit. Do not resurrect mutable VersionManager state, historical ADR-0005 token/iframe semantics or an AuthZ-bypassing runtime GET shortcut merely to restore historical behavior. External production rollback is not applicable to the repository-governance decision itself.
+1. `/AGENTS.md` remains sole repository trust root.
+2. `package.json#version` remains sole platform-version authority.
+3. Authority/ADR/ESS/Document registries resolve stable identities consistently.
+4. Documentation Governance stays Documentation-only.
+5. ADR-0096 registry/file lifecycle is accepted/active.
+6. ADR-0097 resolves uniquely to Documentary Maintenance.
+7. SC-MD-SPT current projection is 18 stages; Documentary binds to VC-17.
+8. current-state indexes do not create separate version/SHA authority.
+9. ChatGPT/local sandbox is non-authorizing and offline-first.
+10. M10 remains suspended until a new Human/Owner reactivation decision.
+11. Human/CODEOWNER merge remains mandatory.

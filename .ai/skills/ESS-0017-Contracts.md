@@ -8,7 +8,7 @@
 
 ### Status
 
-Proposed Enterprise Specification — effective after Human Merge
+Published Enterprise Specification — Human Merge satisfied by PR #477
 
 ---
 
@@ -137,9 +137,9 @@ Der normale Repository-Testpfad darf die read-only Vocabulary Governance Checks 
 
 # Chapter 12 — Supersession / Human Approval
 
-`VOCABULARY-WORDING-WIKI-SUPERSESSION-0001` ersetzt nach Human Merge die früheren phasenbasierten Vocabulary-Migrations-/Statusdokumente als aktuelle Architekturprojektion. Historische Dokumente bleiben Evidence und werden nur nach Reference-/Registry-Korrelation archiviert.
+`VOCABULARY-WORDING-WIKI-SUPERSESSION-0001` ist seit Human Merge von PR #477 die aktuelle Vocabulary/Wording/Wiki-Architekturprojektion. Historische Dokumente bleiben Evidence und werden nur nach Reference-/Registry-Korrelation archiviert.
 
-Semantische Änderungen mit Security-, Compliance-, Legal-, Billing-, IAM- oder Financial-Impact benötigen zuständige fachliche Authority und Human/Owner Review.
+Semantische Änderungen mit Security-, Compliance-, Legal-, Billing-, IAM- oder Financial-Impact benötigen weiterhin die zuständige fachliche Authority und Human/Owner Review.
 
 # Success Criteria through VW-8
 

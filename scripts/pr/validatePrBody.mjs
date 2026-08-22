@@ -15,6 +15,9 @@ import {
   renderProductionBaselineBlock,
   validateProductionBaselineForPr,
 } from './lib.mjs';
+import {
+  findMissingRequiredSections,
+} from './prBodySectionContract.mjs';
 
 const repository = process.env.GITHUB_REPOSITORY;
 const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
@@ -31,18 +34,6 @@ if (!fs.existsSync(baselinePath)) fail(`Produktions-Baseline fehlt: ${baselinePa
 const pr = await githubJson(`https://api.github.com/repos/${repository}/pulls/${prNumber}`, token);
 const body = String(pr.body || '');
 const baseline = readJsonFile(baselinePath);
-
-function normalizeHeading(text) {
-  return String(text || '')
-    .replace(/[\u2014\u2013\u2212]/g, '-')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function bodyHasSection(bodyText, requiredHeading) {
-  if (bodyText.includes(requiredHeading)) return true;
-  return normalizeHeading(bodyText).includes(normalizeHeading(requiredHeading));
-}
 
 function bodyHasEvidenceToken(bodyText, token) {
   const value = String(token || '').trim();
@@ -61,25 +52,7 @@ if (!body.includes(PR_TEMPLATE_MARKER)) {
   fail(`PR #${prNumber} verwendet nicht den Marker der kanonischen Vorlage: ${PR_TEMPLATE_MARKER}`);
 }
 
-const requiredSections = [
-  '## 1. Arbeitsauftrag',
-  '## 2. Agenten-/Principal-Identität und PR-Erstellungsfreigabe',
-  '## 3. Produktions-Baseline — maschinenverwalteter / beratender Nachweis',
-  '## 4. Umfang / Multi-Agent-Koordination',
-  '## 5. Änderungszusammenfassung',
-  '## 6. Architektur- / Governance-Auswirkungen',
-  '## 7. Sicherheitsprüfung',
-  '### Threat Model',
-  '### Negative Tests',
-  '### Rollback / Runbook',
-  '## 8. Merge-Autorisierung (vereinfacht)',
-  '## 9. PR-Checkklasse und auszuführende Checks',
-  '## 10. Technische Validierungsnachweise',
-  '## 11. Risiko und Rücksetzung',
-  '## 12. Prüf- und Merge-Bereitschaft',
-];
-
-const missingSections = requiredSections.filter((heading) => !bodyHasSection(body, heading));
+const missingSections = findMissingRequiredSections(body);
 if (missingSections.length > 0) {
   fail(`PR #${prNumber} enthält nicht alle Pflichtabschnitte der kanonischen Vorlage: ${missingSections.join(', ')}`);
 }

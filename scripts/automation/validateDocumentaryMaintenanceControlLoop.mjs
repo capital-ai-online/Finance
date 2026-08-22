@@ -9,6 +9,8 @@ const CLAIM_PATH = '.ai/work-claims/DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08
 const EVIDENCE_PATH = 'docs/evidence/documentary/DOCUMENTARY_MAINTENANCE_MAIN_SYNC_2026-08-20.md';
 const EXPECTED_AUTHORITY_ID = 'AUTH-ADR-DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20';
 const EXPECTED_ADR_PATH = 'docs/adr/ADR-0097-documentary-maintenance-agent-control-loop.md';
+const EXPECTED_STAGE = 'VC-17-EVENT-TRACEABILITY-SUPERVISOR';
+const EXPECTED_STAGE_COUNT = 18;
 const EXPECTED_DOCUMENTS = new Map([
   ['DOC-ADR-0097', EXPECTED_ADR_PATH],
   ['DOC-ARCH-DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20', 'docs/architecture/DOCUMENTARY_MAINTENANCE_CONTROL_LOOP.md'],
@@ -19,6 +21,7 @@ const REQUIRED_FILES = [
   EVIDENCE_PATH,
   EXPECTED_ADR_PATH,
   'docs/architecture/DOCUMENTARY_MAINTENANCE_CONTROL_LOOP.md',
+  'docs/architecture/DOCUMENTARY_ARCHIVE_RETENTION_AGENT.md',
   'docs/architecture/QUALITY_CENTER_CORE_ORCHESTRATION.md',
   'docs/roadmaps/work-packages/DOCUMENTARY_MAINTENANCE_CONTROL_LOOP_2026-08-20.md',
   'scripts/automation/runDocumentaryMaintenanceControlLoop.ts',
@@ -26,6 +29,7 @@ const REQUIRED_FILES = [
   'scripts/automation/validateRepositoryQuality.ts',
   'server/documentaryMaintenanceAiAdapter.ts',
   'src/platform/Compliance/PolicyGate.ts',
+  'src/platform/Documentary/Agents/ArchiveRetentionAgent.ts',
   'src/platform/Documentary/Agents/DocumentaryMaintenanceAgent.ts',
   'src/platform/Documentary/Discovery/SemanticFreshnessAnalyzer.ts',
   'src/platform/Documentary/Observability/DocumentaryMaintenanceObservability.ts',
@@ -37,6 +41,7 @@ const REQUIRED_FILES = [
   'src/platform/Security/agentIam.ts',
   'src/platform/Supervisor/documentaryMaintenanceObservation.ts',
   'src/platform/Supervisor/manifest.json',
+  'tests/unit/archiveRetentionAgent.test.ts',
   'tests/unit/documentaryMaintenanceAgent.test.ts',
   'tests/unit/documentaryMaintenanceGitHost.test.ts',
   'tests/unit/documentaryMaintenanceObservability.test.ts',
@@ -47,6 +52,7 @@ const REQUIRED_FILES = [
 const DOCUMENTARY_MAINTENANCE_SOURCES = [
   'scripts/automation/runDocumentaryMaintenanceControlLoop.ts',
   'server/documentaryMaintenanceAiAdapter.ts',
+  'src/platform/Documentary/Agents/ArchiveRetentionAgent.ts',
   'src/platform/Documentary/Agents/DocumentaryMaintenanceAgent.ts',
   'src/platform/Documentary/Discovery/SemanticFreshnessAnalyzer.ts',
   'src/platform/Documentary/Observability/DocumentaryMaintenanceObservability.ts',
@@ -112,16 +118,16 @@ if (claim.status !== 'active' || claim.exclusive !== true) fail('work claim must
 const changedFilesRaw = git(['diff', '--name-only', 'origin/main...HEAD']);
 const changedFiles = changedFilesRaw ? changedFilesRaw.split(/\r?\n/).filter(Boolean) : [];
 assertExactSet('work claim claimedPaths', claim.claimedPaths ?? [], changedFiles);
-
 git(['diff', '--check', 'origin/main...HEAD']);
 
+// This file is historical PR #460 evidence. Its then-current stage labels remain immutable evidence;
+// current value-chain assertions are validated below against current code/manifest instead.
 const mainSyncEvidence = read(EVIDENCE_PATH);
 for (const marker of [
   originMainSha,
   currentBranch,
   'repository:quality:check',
   'SC-MD-SPT-0001',
-  'VC-13-EVENT-TRACEABILITY-SUPERVISOR',
   claim.claimId,
   'itself was not mutated',
 ]) {
@@ -138,6 +144,7 @@ for (const [name, expected] of Object.entries({
   'repository:quality:check': 'tsx scripts/automation/validateRepositoryQuality.ts',
   'documentary:maintenance': 'tsx scripts/automation/runDocumentaryMaintenanceControlLoop.ts',
   'documentary:maintenance:validate': 'node scripts/automation/validateDocumentaryMaintenanceControlLoop.mjs',
+  'sandbox:prepr': 'node scripts/automation/runChatGptSandboxPrePr.mjs',
 })) {
   if (packageJson.scripts?.[name] !== expected) fail(`package.json script ${name} is missing or unexpected.`);
 }
@@ -151,24 +158,19 @@ if (!qualityArchitecture.includes('read-only') || !qualityArchitecture.includes(
   fail('current-main Quality Center authority boundary is missing or semantically unexpected.');
 }
 const qualityManifest = json('src/platform/Quality/manifest.json');
-if (!(qualityManifest.contracts ?? []).includes('quality-center-contract/1.3.0')) {
-  fail('current-main Quality Center contract 1.3.0 is missing.');
-}
-if (!(qualityManifest.contracts ?? []).includes('fintech-value-chain-quality/1.0.0')) {
-  fail('current-main FinTech value-chain quality projection contract is missing.');
-}
+if (!(qualityManifest.contracts ?? []).includes('quality-center-contract/1.3.0')) fail('current-main Quality Center contract 1.3.0 is missing.');
+if (!(qualityManifest.contracts ?? []).includes('fintech-value-chain-quality/1.0.0')) fail('current-main FinTech value-chain quality projection contract is missing.');
 const validatorCoverage = qualityManifest.implementation?.mandatoryValidatorImplementationCoverage;
 if (!validatorCoverage || validatorCoverage.total !== 16 || validatorCoverage.available !== 16 || validatorCoverage.notAvailable !== 0) {
   fail('current-main Quality Center mandatory-validator implementation coverage is not the expected 16/16 baseline.');
 }
-if (!String(qualityManifest.authorityBoundary ?? '').includes('cannot authorize merge')) {
-  fail('current-main Quality Center must remain non-authorizing for merge.');
-}
+if (!String(qualityManifest.authorityBoundary ?? '').includes('cannot authorize merge')) fail('current-main Quality Center must remain non-authorizing for merge.');
 
 const valueChainProjection = read('src/platform/Quality/ValueChain/FintechValueChainQualityProjection.ts');
 for (const marker of [
   "FINTECH_VALUE_CHAIN_AUTHORITY = 'SC-MD-SPT-0001'",
-  "id: 'VC-13-EVENT-TRACEABILITY-SUPERVISOR'",
+  "id: 'VC-17-EVENT-TRACEABILITY-SUPERVISOR'",
+  "id: 'VC-18-DELIVERY-SURFACES'",
   "'src/platform/Supervisor/manifest.json'",
   "'src/platform/MarketData/MarketDataGateway.ts'",
   "'src/platform/Scoring/ScoringDispatcher.ts'",
@@ -190,17 +192,15 @@ if (!policyGate.includes('evaluateAgentPolicy') || !policyGate.includes('evaluat
 const adrRegistry = json('docs/adr/registry.json');
 const adr0097 = (adrRegistry.migratedRecords ?? []).find((item) => item.displayId === 'ADR-0097');
 if (!adr0097) fail('ADR-0097 is missing from docs/adr/registry.json.');
-if (adr0097.authorityId !== EXPECTED_AUTHORITY_ID || adr0097.path !== EXPECTED_ADR_PATH) {
-  fail('ADR-0097 registry identity/path does not match the maintenance authority.');
-}
-if (!['proposed', 'accepted', 'accepted-for-implementation'].includes(adr0097.lifecycle)) {
-  fail(`ADR-0097 lifecycle is not an active reviewable lifecycle: ${adr0097.lifecycle}.`);
-}
+if (adr0097.authorityId !== EXPECTED_AUTHORITY_ID || adr0097.path !== EXPECTED_ADR_PATH) fail('ADR-0097 registry identity/path does not match the maintenance authority.');
+if (adr0097.lifecycle !== 'accepted' || adr0097.version !== '1.1.0') fail('ADR-0097 registry must reflect accepted v1.1.0 current state.');
 
 const authorityRegistry = json('docs/governance/authority-registry.json');
 const authority = (authorityRegistry.entries ?? []).find((item) => item.authorityId === EXPECTED_AUTHORITY_ID);
 if (!authority) fail('Documentary maintenance authority is missing from authority-registry.json.');
-if (authority.path !== EXPECTED_ADR_PATH) fail('Documentary maintenance authority points to the wrong ADR path.');
+if (authority.path !== EXPECTED_ADR_PATH || authority.lifecycle !== 'accepted' || authority.version !== '1.1.0') {
+  fail('Documentary maintenance authority registry entry is not synchronized to accepted v1.1.0.');
+}
 
 const documentRegistry = json('docs/governance/document-registry.json');
 for (const [documentId, documentPath] of EXPECTED_DOCUMENTS) {
@@ -211,16 +211,18 @@ for (const [documentId, documentPath] of EXPECTED_DOCUMENTS) {
 }
 
 const documentaryManifest = json('src/platform/Documentary/manifest.json');
-if (documentaryManifest.version !== '1.12.0') fail(`Documentary component version must be 1.12.0, got ${documentaryManifest.version}.`);
+if (documentaryManifest.version !== '1.13.0') fail(`Documentary component version must be 1.13.0, got ${documentaryManifest.version}.`);
 for (const contract of [
   'Discovery/SemanticFreshnessAnalyzer.ts',
   'Agents/DocumentaryMaintenanceAgent.ts',
+  'Agents/ArchiveRetentionAgent.ts',
   'Orchestration/DocumentaryMaintenanceOrchestrator.ts',
   'Observability/DocumentaryMaintenanceObservability.ts',
 ]) {
   if (!(documentaryManifest.contracts ?? []).includes(contract)) fail(`Documentary manifest contract missing: ${contract}.`);
 }
 for (const testPath of [
+  'tests/unit/archiveRetentionAgent.test.ts',
   'tests/unit/documentaryMaintenanceAgent.test.ts',
   'tests/unit/documentaryMaintenanceGitHost.test.ts',
   'tests/unit/documentaryMaintenanceObservability.test.ts',
@@ -229,42 +231,26 @@ for (const testPath of [
 ]) {
   if (!(documentaryManifest.tests ?? []).includes(testPath)) fail(`Documentary manifest test missing: ${testPath}.`);
 }
-if (!(documentaryManifest.implementation?.implementedAreas ?? []).includes('Observability')) {
-  fail('Documentary manifest must declare the implemented maintenance Observability slice.');
-}
+if (!(documentaryManifest.implementation?.implementedAreas ?? []).includes('Observability')) fail('Documentary manifest must declare the implemented maintenance Observability slice.');
+if (!(documentaryManifest.implementation?.implementedAreas ?? []).includes('ArchiveRetention')) fail('Documentary manifest must declare ArchiveRetention implementation.');
 
 const valueChainIntegration = documentaryManifest.valueChainIntegration;
-if (!valueChainIntegration || valueChainIntegration.authority !== 'SC-MD-SPT-0001') {
-  fail('Documentary manifest must declare SC-MD-SPT-0001 value-chain integration.');
-}
-if (valueChainIntegration.role !== 'read-only-documentation-evidence-sidecar') {
-  fail('Documentary value-chain role must remain read-only documentation/evidence sidecar.');
-}
-if (valueChainIntegration.observedStage !== 'VC-13-EVENT-TRACEABILITY-SUPERVISOR') {
-  fail('Documentary value-chain integration must remain attached to VC-13 evidence context.');
-}
-if (valueChainIntegration.runtimeStage !== false || valueChainIntegration.directHotPathDependency !== false) {
-  fail('Documentary must not become a financial runtime stage or direct financial-hotpath dependency.');
-}
-if (valueChainIntegration.qualityProjection !== 'fintech-value-chain-quality/1.0.0') {
-  fail('Documentary value-chain integration must reuse the current Quality projection.');
-}
+if (!valueChainIntegration || valueChainIntegration.authority !== 'SC-MD-SPT-0001') fail('Documentary manifest must declare SC-MD-SPT-0001 value-chain integration.');
+if (valueChainIntegration.role !== 'read-only-documentation-evidence-sidecar') fail('Documentary value-chain role must remain read-only documentation/evidence sidecar.');
+if (valueChainIntegration.observedStage !== EXPECTED_STAGE) fail(`Documentary value-chain integration must be attached to ${EXPECTED_STAGE}.`);
+if (valueChainIntegration.qualityStageCount !== EXPECTED_STAGE_COUNT) fail(`Documentary qualityStageCount must be ${EXPECTED_STAGE_COUNT}.`);
+if (valueChainIntegration.runtimeStage !== false || valueChainIntegration.directHotPathDependency !== false) fail('Documentary must not become a financial runtime stage or direct financial-hotpath dependency.');
+if (valueChainIntegration.qualityProjection !== 'fintech-value-chain-quality/1.0.0') fail('Documentary value-chain integration must reuse the current Quality projection.');
 for (const forbiddenDependency of ['src/platform/Quality', 'src/platform/MarketData', 'src/platform/Scoring', 'src/platform/Ranking']) {
-  if ((documentaryManifest.dependencies ?? []).includes(forbiddenDependency)) {
-    fail(`Documentary manifest must not add forbidden financial/quality mutation dependency: ${forbiddenDependency}.`);
-  }
+  if ((documentaryManifest.dependencies ?? []).includes(forbiddenDependency)) fail(`Documentary manifest must not add forbidden financial/quality mutation dependency: ${forbiddenDependency}.`);
 }
 
 const supervisorManifest = json('src/platform/Supervisor/manifest.json');
-if (supervisorManifest.documentaryMaintenance?.decisionAuthority !== false || supervisorManifest.documentaryMaintenance?.mutationAuthority !== false) {
-  fail('Supervisor Documentary maintenance surface must remain observation/evidence-only.');
-}
+if (supervisorManifest.documentaryMaintenance?.decisionAuthority !== false || supervisorManifest.documentaryMaintenance?.mutationAuthority !== false) fail('Supervisor Documentary maintenance surface must remain observation/evidence-only.');
 
 const forbiddenHotPathReference = /(?:platform\/(?:MarketData|Scoring|Ranking)|services\/ranking\.service|orchestrator\/cryptoOrchestrator|server\.application)/;
 for (const sourcePath of DOCUMENTARY_MAINTENANCE_SOURCES) {
-  if (forbiddenHotPathReference.test(read(sourcePath))) {
-    fail(`Documentary maintenance source directly references a financial/application hotpath: ${sourcePath}.`);
-  }
+  if (forbiddenHotPathReference.test(read(sourcePath))) fail(`Documentary maintenance source directly references a financial/application hotpath: ${sourcePath}.`);
 }
 
 const host = read('scripts/automation/runDocumentaryMaintenanceControlLoop.ts');
@@ -278,12 +264,8 @@ for (const requiredMarker of [
 ]) {
   if (!host.includes(requiredMarker)) fail(`Git host safety marker missing: ${requiredMarker}.`);
 }
-if (host.includes('killSwitchActive: false')) {
-  fail('Git host must not hard-code an inactive Agent IAM kill switch.');
-}
-if (host.includes("['add', '-A']") || host.includes("['add', '.']") || host.includes('git add -A') || host.includes('git add .')) {
-  fail('Git host contains a broad staging pattern.');
-}
+if (host.includes('killSwitchActive: false')) fail('Git host must not hard-code an inactive Agent IAM kill switch.');
+if (host.includes("['add', '-A']") || host.includes("['add', '.']") || host.includes('git add -A') || host.includes('git add .')) fail('Git host contains a broad staging pattern.');
 
 const agent = read('src/platform/Documentary/Agents/DocumentaryMaintenanceAgent.ts');
 for (const marker of [
@@ -294,6 +276,17 @@ for (const marker of [
   "execFileSync('git', ['branch', '--show-current']",
 ]) {
   if (!agent.includes(marker)) fail(`Maintenance Agent integrity marker missing: ${marker}.`);
+}
+
+const archiveAgent = read('src/platform/Documentary/Agents/ArchiveRetentionAgent.ts');
+for (const marker of [
+  "'docs/archive/generated/'",
+  "'docs/archive/transient/'",
+  "'owner-approval-required'",
+  "'kill-switch-active'",
+  'mutationPerformed: false',
+]) {
+  if (!archiveAgent.includes(marker)) fail(`Archive Retention integrity marker missing: ${marker}.`);
 }
 
 const freshness = read('src/platform/Documentary/Discovery/SemanticFreshnessAnalyzer.ts');

@@ -162,7 +162,7 @@ describe('Governance Control Plane', () => {
     }).not.toThrow();
   });
 
-  it('keeps ADR-0096 v1.2 synchronized across ADR, Authority and Document registries', () => {
+  it('keeps ADR-0096 synchronized across ADR, Authority and Document registries without pinning a stale version', () => {
     const fixture = readFixture();
     const adr0096 = fixture.adrRegistry.migratedRecords.find((record) => record.displayId === 'ADR-0096');
     const authority0096 = fixture.authorityRegistry.entries.find((record) => record.authorityId === 'AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19');
@@ -174,14 +174,25 @@ describe('Governance Control Plane', () => {
       lifecycle: 'accepted',
       path: 'docs/adr/ADR-0094-open-source-pdf-companion-and-short-media-rendering.md',
     });
+
     expect(adr0096).toMatchObject({
       authorityId: 'AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19',
-      version: '1.2.0',
-      lifecycle: 'proposed',
+      lifecycle: 'accepted',
       path: 'docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md',
     });
-    expect(authority0096).toMatchObject({ version: '1.2.0' });
-    expect(document0096).toMatchObject({ version: '1.2.0' });
+    const expectedVersion = String(adr0096?.version ?? '');
+    expect(expectedVersion).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(authority0096).toMatchObject({
+      version: expectedVersion,
+      lifecycle: 'accepted',
+      path: 'docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md',
+    });
+    expect(document0096).toMatchObject({
+      authority: 'AUTH-ADR-GOVERNANCE-CONTROL-PLANE-2026-08-19',
+      version: expectedVersion,
+      lifecycle: 'approved',
+      path: 'docs/adr/ADR-0096-governance-control-plane-authority-and-supersession.md',
+    });
     expect(
       fixture.adrRegistry.parallelNamespaceReservations.filter((record) => record.state === 'active'),
     ).toEqual([]);

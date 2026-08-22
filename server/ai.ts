@@ -6,6 +6,7 @@ import { getUsageSummary, getUsageLedger, PROMPT_REGISTRY } from '../src/service
 import { retrieveRelevantChunksWithEvidence, formatChunksForPrompt } from '../src/services/rag/retrieval';
 import { generateTextWithFallback, type ChatTurn } from '../src/services/agentModelRouting';
 import { getPromptGovernanceEntry, recordAiEvaluation, getAiGovernanceInventory, type AiProvider } from '../src/services/aiGovernance';
+import { createAiContentTransparencyEnvelope } from '../src/services/aiContentTransparency';
 import { getAnthropicInstance, isAnthropicConfigured } from './anthropicClient';
 import { getOpenAIInstance, isOpenAIConfigured } from './openaiClient';
 import { SupabaseAiGovernanceSink } from './aiGovernanceSupabaseSink';
@@ -47,9 +48,16 @@ aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
       minScore: 0.5,
     });
 
-    let systemInstruction = 'You are the CAPITAL-AI Assistant, a highly professional, technically precise expert partner in quantitative finance, Graham value investing, and market analysis. Prioritize clarity and evidence.';
+    let systemInstruction = [
+      'You are the CAPITAL-AI Assistant, a highly professional, technically precise expert partner in quantitative finance, Graham value investing, and market analysis.',
+      'Prioritize clarity and evidence.',
+      'Never invent sources, citations, prices, scores or regulatory claims.',
+      'Separate source-backed facts from analysis and uncertainty.',
+      'Retrieved context alone does not prove claim-level grounding or citation completeness.',
+      'AI explanations have no financial decision, approval, ranking, eligibility, OrderIntent or execution authority.',
+    ].join(' ');
     if (retrieval.chunks.length > 0) {
-      systemInstruction += `\n\nNutze diese geprüften internen Quellen als Kontext und zitiere sie bei Übernahme:\n\n${formatChunksForPrompt(retrieval.chunks)}`;
+      systemInstruction += `\n\nNutze diese geprüften internen Quellen als Kontext. Zitiere nur Quellen, die die konkrete Aussage tatsächlich stützen; erfinde keine Referenzen:\n\n${formatChunksForPrompt(retrieval.chunks)}`;
     }
 
     const result = await generateTextWithFallback({
@@ -74,9 +82,11 @@ aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
       model: attribution.model,
       requestId: req.requestId,
       evidenceIds,
-      checks: { grounded: hasEvidence },
+      checks: {},
       outcome: hasEvidence ? 'PASS' : 'WARN',
-      notes: hasEvidence ? `RAG evidence quality: ${retrieval.evidence.evaluation.quality}.` : 'Keine Repository-Evidence verfügbar.',
+      notes: hasEvidence
+        ? `RAG evidence quality: ${retrieval.evidence.evaluation.quality}. Retrieval availability is recorded; claim-level grounding and citation completeness are not independently verified.`
+        : 'Keine Repository-Evidence verfügbar; claim-level grounding and citation completeness are not independently verified.',
     });
     const persistence = await aiGovernanceSink.write(evaluation);
 
@@ -87,6 +97,20 @@ aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
         reason: persistence.reason,
       });
     }
+
+    const transparency = createAiContentTransparencyEnvelope({
+      origin: 'ai-generated',
+      provider: attribution.modelProvider,
+      model: attribution.model,
+      promptId: 'chat-assistant',
+      promptVersion: promptEntry?.version ?? 'unregistered',
+      requestId: req.requestId,
+      retrievalId: retrieval.evidence.attribution.retrievalId,
+      evidenceIds,
+      grounding: 'not-verified',
+      citationCompleteness: 'not-verified',
+      humanReview: 'not-reviewed',
+    });
 
     res.json({
       reply: result.text,
@@ -102,6 +126,7 @@ aiRouter.post('/chat', orchestrator.handle('AI Chat'), async (req, res) => {
           reason: persistence.persisted ? undefined : persistence.reason,
         },
       },
+      transparency,
     });
   } catch (error: any) {
     console.log('[System Info] Chat finished with warning', error?.message || error);

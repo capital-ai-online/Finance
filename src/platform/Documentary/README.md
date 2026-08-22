@@ -4,7 +4,7 @@
 
 Status: Partial Implementation
 
-Version: 1.12.0
+Version: 1.13.0
 
 Component Version Authority: `manifest.json#version`
 
@@ -18,7 +18,7 @@ Owner: CAPITAL-AI
 
 ## Purpose
 
-Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer, D7 Knowledge Projection sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich eines D9-Maintenance-Observability-Slices.
+Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgebaut. Implementiert sind der bilinguale Vocabulary-Layer, D0 Version Authority, D1 Code Discovery, Documentation Hygiene als read-only Service, Status-Event Drift Detection (Phase B), Status-Event Drift Updater (Phase C, header-only), D3 Document Models/Provenance, D2 Core Engine, D5/E1/E4 Traceability/Event-Integration, D4 Review/Lifecycle Governance, D6 Generatoren/Renderer, D7 Knowledge Projection sowie der ADR-0097 Documentary Maintenance Control Loop einschließlich D9-Maintenance-Observability und eines eng begrenzten Archive-Retention-Planners.
 
 ## Implemented Scope
 
@@ -32,6 +32,7 @@ Documentary wird schrittweise zu einer ausführbaren Plattformkomponente ausgeba
 - `Discovery/StatusEventDriftUpdater.ts`
 - `Discovery/SemanticFreshnessAnalyzer.ts`
 - `Agents/DocumentaryMaintenanceAgent.ts`
+- `Agents/ArchiveRetentionAgent.ts`
 - `Orchestration/DocumentaryMaintenanceOrchestrator.ts`
 - `Observability/DocumentaryMaintenanceObservability.ts`
 - `Models/DocumentaryDocument.ts`
@@ -63,11 +64,17 @@ Die AI-Ausführung verwendet über `server/documentaryMaintenanceAiAdapter.ts` d
 
 `scripts/automation/runDocumentaryMaintenanceControlLoop.ts` verlangt einen sauberen Checkout des exakten aktuellen `main`. `sourceCommit` muss genau diesem Main-SHA entsprechen. Vor Branch-Erstellung wird ein gleichnamiger Remote-Agent-Branch abgelehnt; bei Fehlern nach einem Push wird ein noch nicht übergebenes Remote-Artefakt best-effort wieder entfernt. Der Host stage-t nur explizite Patch-/Claim-Pfade, führt lokale Governance-Hygiene aus und nutzt anschließend den bestehenden Workflow `.github/workflows/open-agent-draft-pr.yml`. Wenn sich `main` vor dem PR-Handoff ändert, wird der Kandidat verworfen und muss auf der neuen Baseline neu erzeugt werden.
 
+### Archive Retention / Löschplanung
+
+`ArchiveRetentionAgent` erweitert denselben Documentary-Agentenpfad ausschließlich um deterministische Retention-Klassifikation. `archived` bedeutet ausdrücklich **nicht** `delete-authorized`.
+
+Automatisch `delete-eligible` können nur alte, unregistrierte, unreferenzierte und deterministisch reproduzierbare Duplikate unter `docs/archive/generated/**` oder `docs/archive/transient/**` werden. Registrierte Dokumente, Authorities, Evidence, Security-/Compliance-Artefakte und referenzierte Historie bleiben erhalten. Der Agent führt selbst keine Löschung aus; `planDeletion()` liefert nur einen Owner-gated Plan mit `mutationPerformed=false`. Eine spätere physische Löschung muss als normaler, separat autorisierter Maintenance-Patch über Agent IAM, Kill Switch, Branch, PR und Human Merge laufen.
+
 ### SC-MD-SPT-0001 Wertschöpfungsketten-Anbindung
 
-Der Maintenance-Pfad ist im Component Manifest ausdrücklich als `read-only-documentation-evidence-sidecar` an `SC-MD-SPT-0001` deklariert. Die fachliche Einordnung erfolgt um `VC-13-EVENT-TRACEABILITY-SUPERVISOR`; Documentary wird **nicht** zu einer zusätzlichen Finanz-Runtime-Stufe.
+Der Maintenance-Pfad ist im Component Manifest ausdrücklich als `read-only-documentation-evidence-sidecar` an `SC-MD-SPT-0001` deklariert. Die fachliche Einordnung erfolgt um `VC-17-EVENT-TRACEABILITY-SUPERVISOR`; Documentary wird **nicht** zu einer zusätzlichen Finanz-Runtime-Stufe.
 
-Die bestehende Quality-Projektion `fintech-value-chain-quality/1.0.0` bleibt die read-only Struktur-/Evidence-Prüfung der 14-stufigen Kette. Documentary darf weder MarketData, Classification, Scoring, Confidence, Ranking, Eligibility noch Provider-Routing, Release oder Deployment beeinflussen. Ebenso dürfen die Financial Hotpaths keine direkte Documentary- oder Quality-Mutationsabhängigkeit erhalten.
+Die bestehende Quality-Projektion `fintech-value-chain-quality/1.0.0` bleibt die read-only Struktur-/Evidence-Prüfung der **18-stufigen** Kette. Documentary darf weder MarketData, Classification, Scoring, Confidence, Ranking, Eligibility noch Provider-Routing, Release oder Deployment beeinflussen. Ebenso dürfen die Financial Hotpaths keine direkte Documentary- oder Quality-Mutationsabhängigkeit erhalten.
 
 Die Supervisor-Erweiterung dient ausschließlich als Evidence-Oberfläche. `decisionAuthority=false` und `mutationAuthority=false` bleiben explizit; die eigentliche Entscheidung verbleibt beim Platform Director und die Git-Mutation bei den separat autorisierten Agent-IAM-Capabilities.
 
@@ -80,8 +87,9 @@ Die Supervisor-Erweiterung dient ausschließlich als Evidence-Oberfläche. `deci
 - `npm run documentary:maintenance:test` — gezielte Unit-Tests des Control Loops.
 - `npm run documentary:maintenance:validate` — Registry-, Authority-, Claim-, Branch-, Wertschöpfungsketten- und Scope-Konsistenz.
 - `npm run documentary:maintenance:prepr` — gezielte Tests + TypeScript-Check + Documentation Hygiene + Governance Control Plane + Repository Quality + Closure Validator.
+- `npm run sandbox:prepr` — ChatGPT/local, kostenkontrollierte Pre-PR-Projektion; ersetzt keine Hosted CI.
 
-Der Closure Validator verlangt, dass der Work Claim exakt den tatsächlichen Diff gegen `origin/main` abdeckt und dass der Branch unmittelbar auf dem aktuellen `origin/main` basiert. Zusätzlich prüft er die SC-MD-SPT-0001-Sidecar-Deklaration, die bestehende 14-stufige Quality-Projektion und das Verbot direkter Documentary-Abhängigkeiten auf Financial Hotpaths. Dadurch werden veraltete, überbreite oder wertschöpfungskettenwidrige Fassungen vor PR-Reife fail-closed zurückgewiesen.
+Der Closure Validator verlangt, dass der Work Claim exakt den tatsächlichen Diff gegen `origin/main` abdeckt und dass der Branch unmittelbar auf dem aktuellen `origin/main` basiert. Zusätzlich prüft er die SC-MD-SPT-0001-Sidecar-Deklaration, die bestehende **18-stufige** Quality-Projektion und das Verbot direkter Documentary-Abhängigkeiten auf Financial Hotpaths. Dadurch werden veraltete, überbreite oder wertschöpfungskettenwidrige Fassungen vor PR-Reife fail-closed zurückgewiesen.
 
 ## Documentation Governance
 
@@ -123,7 +131,7 @@ Der kontrollierte Lifecycle lautet `generated -> reviewed -> approved`. Nach App
 
 ## Implementation Baseline
 
-Aktuell implementiert: `Agents`, `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Governance` (Hygiene-Service), `Interfaces`, `Knowledge`, `Lifecycle`, `Models`, `Observability` (Maintenance Slice), `Orchestration`, `Traceability`, `Versioning`.
+Aktuell implementiert: `Agents`, `ArchiveRetention`, `Contracts`, `Discovery`, `Documentation`, `Engine`, `Events`, `Generators`, `Governance` (Hygiene-Service), `Interfaces`, `Knowledge`, `Lifecycle`, `Models`, `Observability` (Maintenance Slice), `Orchestration`, `Traceability`, `Versioning`.
 
 Weiterhin geplant: `Mermaid`, `Migration`, `Plugins` sowie weitere Architecture-Runtime-Funktionen und zusätzliche ESS-0012-Validatoren. Diese Bereiche gehören nicht zum ADR-0097-Maintenance-Work-Package.
 
@@ -142,6 +150,6 @@ Keine autonome Approval-Transition, keine Source-Code-Mutation durch Validation,
 - ESS-0019 — Universal AI Agent Control Plane
 - SC-MD-SPT-0001 — Screening / Scoring / Market Data / SPT value-chain authority
 - ADR-0014 — Documentation Governance Validator
-- ADR-0046 — Vocabulary Governance Authority and Namespace
+- ADR-0078 — Vocabulary Governance Authority and Namespace
 - ADR-0096 — Governance Control Plane / Authority Boundary
 - ADR-0097 — Documentary Maintenance Agent Control Loop

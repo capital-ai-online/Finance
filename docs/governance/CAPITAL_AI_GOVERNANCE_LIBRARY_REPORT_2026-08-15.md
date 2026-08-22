@@ -44,7 +44,7 @@ CAPITAL-AI betreibt eine **stark spezifizierte, fail-closed Multi-Agent-Governan
 
 ## 4. Regulatory / Benchmark Mapping
 
-Der aktuelle Mapping-Anker ist `docs/compliance/AI_FINTECH_REGULATORY_CONTROL_MATRIX_2026-08-19.md`.
+Der aktuelle Mapping-Anker ist `docs/compliance/CAPITAL_AI_REGULATORY_CONTROL_MATRIX_2026-08-19.md`.
 
 Er trennt ausdrücklich:
 

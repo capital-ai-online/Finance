@@ -1,162 +1,149 @@
 # Work Package — Documentary Maintenance Control Loop
 
-**Status:** VALIDATION CANDIDATE  
-**Date:** 2026-08-20  
-**Owner Priority:** Chat instruction 2026-08-20 — complete the missing Documentary Maintenance Agent, Supervisor/Governance wiring, automatic branch/Draft-PR path, repository-wide semantic freshness, SC-MD-SPT-0001-conformant evidence-sidecar integration and Governance/Registry/Validation closure.  
-**Roadmap Traceability:** `DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` D7, D9, E1, E6, H1, H5  
+**Status:** IMPLEMENTED / REVALIDATED  
+**Original date:** 2026-08-20  
+**Revalidated:** 2026-08-22  
+**Merged baseline:** PR #460  
 **Authorities:** ESS-0002, ESS-0003, ESS-0010, ESS-0019, ADR-0096, ADR-0097, SC-MD-SPT-0001
 
 ## Goal
 
-Close the gap between Documentary observation and governed document maintenance while preserving the repository authority hierarchy:
+Maintain a governed loop from Documentary observation to branch/Draft-PR maintenance while preserving repository authority hierarchy:
 
-`Supervisor -> Platform Director -> authorized Documentary Agent -> isolated patch branch -> Draft PR`.
+`Supervisor -> Platform Director -> authorized Documentary Agent -> isolated patch branch -> existing Draft PR`.
 
-Documentary remains a documentation/evidence sidecar to the financial value chain and never becomes a financial runtime stage or decision authority.
+Documentary remains documentation/evidence sidecar and never becomes a financial runtime stage or decision authority.
 
-## Scope
+## Implemented scope
 
-### P0 — Dedicated Documentary Maintenance Agent
+### Maintenance Agent
 
 - deterministic candidate list from Document Registry;
-- semantic freshness assessment through existing provider routing;
+- semantic freshness through existing provider routing;
 - semantic patch proposals only for non-protected documents;
 - SHA-bound TOCTOU protection;
 - deterministic patch SemVer increment;
 - lifecycle reset to `generated` after automatic modification;
-- actual checked-out Git branch must equal the authorized maintenance branch before Apply.
+- actual checked-out branch must equal authorized maintenance branch.
 
-### P0 — Supervisor / Governance / Platform Director wiring
+### Supervisor / Governance / Platform Director wiring
 
-- Supervisor recommendation evidence from freshness + hygiene;
+- deterministic Supervisor recommendation evidence;
 - fail-closed on hygiene findings;
 - exact correlation/source-commit binding;
 - exact Supervisor evidence binding in `PlatformDecisionRecord`;
-- existing Protected Decision Boundary reused;
-- existing Agent IAM `ANALYZE`/`PLAN`/`BRANCH`/`COMMIT`/`PR` reused;
-- execution-request `killSwitchActive` propagated to Agent IAM, never hard-coded inactive;
+- existing Protected Decision Boundary and Agent IAM reused;
+- request `killSwitchActive` propagated;
 - no Merge/Deploy/Production capability.
 
-### P0 — SC-MD-SPT-0001 value-chain boundary
+### SC-MD-SPT-0001 boundary
 
-- Documentary is a `read-only-documentation-evidence-sidecar` around `VC-13-EVENT-TRACEABILITY-SUPERVISOR`;
-- Documentary is not a fifteenth financial runtime stage;
-- existing `fintech-value-chain-quality/1.0.0` remains the repository-native read-only structural/evidence projection;
+- Documentary is `read-only-documentation-evidence-sidecar` around `VC-17-EVENT-TRACEABILITY-SUPERVISOR`;
+- current `fintech-value-chain-quality/1.0.0` projection contains **18 stages**;
+- Documentary is not an additional financial runtime stage;
 - no direct Documentary dependency from MarketData, Scoring, Ranking, Eligibility, Orchestrator or application hotpaths;
-- no Documentary mutation effect on market data, classification, scoring, confidence, ranking, eligibility, provider routing, release or deployment;
+- no Documentary mutation effect on financial/runtime decisions;
 - Supervisor Documentary evidence keeps `decisionAuthority=false` and `mutationAuthority=false`.
 
-### P0 — Automatic branch and Draft-PR handoff
+### Archive Retention extension
+
+- `ArchiveRetentionAgent` is part of the existing Documentary Agent surface;
+- it classifies `retain`, `owner-review` and `delete-eligible` only;
+- only reproducible/unregistered/unreferenced canonical duplicates under `docs/archive/generated/**` or `docs/archive/transient/**` may become eligible after the retention period;
+- registered/referenced/authority/evidence/security/compliance history is retained;
+- deletion planning requires Owner approval, inactive kill switch and maintenance branch;
+- agent returns `mutationPerformed=false`; physical deletion stays a normal governed patch + PR + Human merge.
+
+### Automatic branch and Draft-PR handoff
 
 - clean exact-main precondition;
-- request `sourceCommit` must equal current `main` SHA;
-- `agent/documentary-maintenance-*` branch namespace;
-- existing remote branch identity is rejected, never reused/force-updated;
-- empty/no-change local branches are removed;
-- post-push pre-handoff failures attempt remote cleanup;
-- one bounded work claim;
+- request `sourceCommit` equals current `main` SHA;
+- `agent/documentary-maintenance-*` namespace;
+- remote branch identity is never silently reused/force-updated;
+- one bounded Work Claim;
 - explicit-path staging only;
-- local Documentation Hygiene and Governance checks;
-- mandatory final `main` re-fetch before PR handoff;
-- existing `open-agent-draft-pr.yml` reused instead of a second PR implementation.
+- final `main` re-fetch before handoff;
+- existing `open-agent-draft-pr.yml` reused.
 
-### P1 — Repository-wide semantic freshness
+### Repository-wide semantic freshness
 
 - targeted source-change correlation;
-- periodic full-registry scan mode;
-- existing RAG evidence used by semantic assessment;
-- protected documents surfaced as review-only candidates;
-- no rewrite of evidence/archive/ADR/governance/compliance/security/release material.
+- periodic full-registry mode;
+- existing RAG evidence;
+- protected documents surface as review-only candidates;
+- no rewrite of historical evidence/archive/ADR/governance/compliance/security/release material.
 
-### P2 — Documentary Maintenance observability slice
+### Maintenance observability
 
-- correlation/source-commit-bound Health Snapshot;
-- metrics for registry coverage, freshness ratio, orphan rate, candidate count, planned/skipped patches and applied documents;
-- aggregate values only: no document body, prompts, diffs, user identifiers, credentials or secrets;
+- correlation/source-commit-bound health snapshot;
+- aggregate coverage/freshness/orphan/candidate/patch counts only;
+- no document bodies, prompts, diffs, user identifiers, credentials or secrets;
 - no second central Observability authority.
 
-### P0 — Governance / Registry / Validation closure
+### Validation closure
 
-- ADR-0097 in ADR Registry with stable `AUTH-*` identity;
-- ADR-0097 in repository Authority Registry;
-- ADR, architecture contract and this Work Package in Document Registry;
-- Documentary/Supervisor component manifests synchronized;
-- Documentary component version synchronized with README;
-- package scripts for controlled host, targeted tests, closure validator and pre-PR aggregate;
-- Work Claim must equal the actual branch diff exactly;
-- closure validator checks `git diff --check`, current-main synchronization, Registry/Authority/Manifest consistency, SC-MD-SPT-0001 sidecar/hot-path boundaries, Agent-IAM kill-switch propagation, actual branch verification, protected paths and narrow Git staging;
-- final Main-correlation evidence records the synchronized Quality Center / Chapter-12 completion and its architectural impact.
+- ADR-0097 stable authority identity;
+- ADR/Authority/Document registries synchronized;
+- Documentary manifest/README synchronized;
+- Work Claim must match actual branch diff for Documentary-generated maintenance branches;
+- closure validator checks `git diff --check`, current-main synchronization, Registry/Authority/Manifest consistency, VC-17/18-stage sidecar/hot-path boundaries, Agent-IAM kill switch, actual branch verification, protected paths and narrow staging.
+
+## ChatGPT/local sandbox integration
+
+The repository now exposes an offline-first, non-authorizing pre-PR execution profile:
+
+- `npm run sandbox:policy:test`
+- `npm run sandbox:prepr`
+- `npm run sandbox:prepr:full` (explicit higher-cost local test/build mode)
+
+The runner requires a real checkout with current `origin/main` and pre-provisioned `node_modules`. It never performs dependency installation, push, PR creation, merge, deployment or external platform mutation. Hosted CI remains the independent exact-remote-head gate.
 
 ## Reuse decisions
 
-- Reuse `DocumentationHygieneValidator`.
-- Reuse `PlatformDecisionRecord` and `ProtectedDecisionBoundary`.
-- Reuse `evaluateAgentPolicy` / `agentIam`.
-- Reuse Anthropic/OpenAI clients and `agentModelRouting`.
-- Reuse repository RAG retrieval and AI evaluation tracking.
-- Reuse `open-agent-draft-pr.yml`.
-- Reuse the current-main read-only Repository Quality / Quality Center projection as an additional validation gate.
-- Reuse `FintechValueChainQualityProjection`; do not introduce a second value-chain model.
-- Do not introduce `@openai/agents`, OPA, a second EventMesh, a second version authority, another PR workflow or another Observability authority in this work package.
+- reuse `DocumentationHygieneValidator`;
+- reuse `PlatformDecisionRecord` / `ProtectedDecisionBoundary`;
+- reuse `evaluateAgentPolicy` / Agent IAM;
+- reuse Anthropic/OpenAI routing and repository RAG;
+- reuse `open-agent-draft-pr.yml`;
+- reuse Repository Quality / Quality Center projection;
+- reuse `FintechValueChainQualityProjection`;
+- do not introduce another agent framework, EventMesh, version authority, PR workflow, Observability authority or CI authority.
 
-## Security / Integrity gates
+## Security / integrity gates
 
 - no direct `main` mutation;
-- source evidence must be current-main-bound;
-- actual checked-out branch must equal the authorized maintenance branch before apply;
-- Agent-IAM kill-switch state is propagated from the execution request and can block mutation;
+- source evidence current-main-bound;
+- actual branch identity verified;
+- kill switch propagated;
 - no model-selected capabilities;
-- untrusted document/diff/RAG content is data, not instructions;
-- protected document classes are review-only;
-- no symlink/path traversal;
-- no stale-plan application;
-- automatic content never remains `approved`;
-- branch collisions are fail-closed;
-- main movement invalidates the candidate before remote PR handoff;
-- post-push handoff errors do not intentionally leave branch debris;
-- observability excludes sensitive content;
-- no direct financial-hotpath dependency or financial decision effect;
-- no hosted full CI before PR.
+- untrusted document/diff/RAG content treated as data;
+- protected document classes review-only;
+- no stale-plan apply;
+- no autonomous archive deletion;
+- branch collisions fail closed;
+- final main movement invalidates candidate;
+- no direct financial-hotpath dependency;
+- no hosted full CI before PR unless required by normal post-PR governance.
 
 ## Local validation before PR readiness
 
-Primary command:
+Primary Documentary command:
 
 `npm run documentary:maintenance:prepr`
 
-It combines, in order:
+ChatGPT/local preflight projection:
 
-- targeted unit tests for freshness, agent, orchestrator, Git-host helpers and maintenance observability;
-- `npm run lint` for repository-wide TypeScript static validation;
-- `npm run docs:hygiene:check`;
-- `npm run governance:control-plane`;
-- `npm run repository:quality:check` inherited from current `main` as read-only aggregated quality/value-chain evidence;
-- `npm run documentary:maintenance:validate`.
+`npm run sandbox:prepr`
 
-The closure validator additionally checks:
-
-- exact changed-file / Work Claim equality;
-- branch merge-base equals current `origin/main`;
-- `git diff --check`;
-- ADR-0097 Registry + Authority Registry consistency;
-- Document Registry entries for ADR/architecture/work-package artifacts;
-- Documentary manifest version/contracts/tests/implemented areas;
-- current-main Quality Center contract/validator baseline and final Main-sync evidence;
-- SC-MD-SPT-0001 sidecar metadata, VC-13 projection identity and forbidden direct financial-hotpath imports;
-- Agent-IAM kill-switch propagation and rejection of a hard-coded inactive kill switch;
-- actual checked-out branch verification in the exported Apply contract;
-- protected review-only prefixes;
-- explicit-path staging and reuse of `open-agent-draft-pr.yml`.
+The Documentary closure validator validates current code/manifest against the current **18-stage** Quality projection and VC-17 sidecar binding. Historical PR #460 Evidence remains historical and is not rewritten to fabricate current stage numbering.
 
 ## Out of scope
 
 - autonomous merge;
-- release/version bump of the platform;
-- Render deployment;
-- Supabase/Stripe mutation;
+- platform release/version bump;
+- Render/Supabase/Stripe mutation;
 - rewriting historical evidence;
-- changing existing domain business logic;
-- adding Documentary as a financial value-chain runtime stage;
-- replacing the legacy interactive Document Hygiene UI/runtime in this work package;
-- Documentary Mermaid/Migration/Plugin implementation outside the ADR-0097 maintenance scope;
-- complete enterprise Observability implementation outside the maintenance health slice.
+- changing financial domain business logic;
+- adding Documentary as a financial runtime stage;
+- replacing the existing PR/CI architecture;
+- complete enterprise Observability outside the maintenance slice.

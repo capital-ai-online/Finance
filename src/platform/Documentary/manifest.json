@@ -1,9 +1,9 @@
 {
   "name": "Documentary",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "status": "development",
   "owner": "CAPITAL-AI",
-  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Documentation Hygiene, Status Drift, semantischem Maintenance Agent, Supervisor/Platform-Director-Orchestrierung, Maintenance Observability, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Renderer und Knowledge Projection.",
+  "description": "Documentary-Komponente mit Version Authority, Code Discovery, Documentation Hygiene, Status Drift, semantischem Maintenance Agent, bounded Archive Retention Planner, Supervisor/Platform-Director-Orchestrierung, Maintenance Observability, Document Models/Provenance, Core Engine, Traceability/Event-Integration, Lifecycle Governance, Renderer und Knowledge Projection.",
   "category": "platform",
   "ess": [
     "ESS-0001",
@@ -23,7 +23,7 @@
   "adr": [
     "ADR-0014",
     "ADR-0018",
-    "ADR-0046",
+    "ADR-0078",
     "ADR-0096",
     "ADR-0097"
   ],
@@ -39,15 +39,16 @@
   "events": {
     "produces": ["DocumentationGeneratedEvent", "DocumentationValidatedEvent"],
     "consumes": ["RepositoryScannedEvent", "PlatformDecisionEvent"],
-    "note": "Semantic freshness and Maintenance Agent do not create a new event authority. Supervisor recommendation and PlatformDecisionRecord are evidence/authorization inputs. Existing EventMesh names remain canonical."
+    "note": "Semantic freshness, Maintenance Agent and Archive Retention Planner do not create a new event authority. Supervisor recommendation and PlatformDecisionRecord are evidence/authorization inputs. Existing EventMesh names remain canonical."
   },
   "valueChainIntegration": {
     "authority": "SC-MD-SPT-0001",
     "role": "read-only-documentation-evidence-sidecar",
-    "observedStage": "VC-13-EVENT-TRACEABILITY-SUPERVISOR",
+    "observedStage": "VC-17-EVENT-TRACEABILITY-SUPERVISOR",
     "runtimeStage": false,
     "directHotPathDependency": false,
     "qualityProjection": "fintech-value-chain-quality/1.0.0",
+    "qualityStageCount": 18,
     "forbiddenEffects": [
       "market-data-mutation",
       "classification-or-scoring-mutation",
@@ -70,6 +71,7 @@
     "Discovery/StatusEventDriftUpdater.ts",
     "Discovery/SemanticFreshnessAnalyzer.ts",
     "Agents/DocumentaryMaintenanceAgent.ts",
+    "Agents/ArchiveRetentionAgent.ts",
     "Orchestration/DocumentaryMaintenanceOrchestrator.ts",
     "Observability/DocumentaryMaintenanceObservability.ts",
     "Models/DocumentaryDocument.ts",
@@ -87,6 +89,7 @@
     "Architecture/documentary-baseline.json",
     "../../../../docs/architecture/DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md",
     "../../../../docs/architecture/DOCUMENTARY_MAINTENANCE_CONTROL_LOOP.md",
+    "../../../../docs/architecture/DOCUMENTARY_ARCHIVE_RETENTION_AGENT.md",
     "../../../../docs/architecture/DOCUMENTARY_STATUS_EVENT_DRIFT_CONTRACT.md",
     "../../../../docs/architecture/DOCUMENTARY_D1_CODE_INTEGRATION_DISCOVERY.md",
     "../../../../docs/architecture/DOCUMENTARY_D3_DOCUMENT_MODELS_PROVENANCE.md",
@@ -97,6 +100,7 @@
     "../../../../docs/architecture/DOCUMENTARY_D7_KNOWLEDGE_INTEGRATION.md"
   ],
   "tests": [
+    "tests/unit/archiveRetentionAgent.test.ts",
     "tests/unit/bilingualDocumentaryProjection.test.ts",
     "tests/unit/documentaryCodeDiscovery.test.ts",
     "tests/unit/documentaryCoreEngine.test.ts",
@@ -118,6 +122,7 @@
     "level": "partial",
     "implementedAreas": [
       "Agents",
+      "ArchiveRetention",
       "Contracts",
       "Discovery",
       "Documentation",
@@ -141,5 +146,5 @@
     "documentSchemaVersion": "Versioning/DocumentaryVersion.ts#DOCUMENTARY_DOCUMENT_SCHEMA_VERSION",
     "platformVersion": "../../../package.json#version"
   },
-  "note": "ADR-0097 maintenance is branch-only and Draft-PR-bound. AI output is advisory; versions/lifecycle/path boundaries are deterministic. Protected ADR/Governance/Compliance/Security/Evidence/Archive/Release documents remain review-only. D9 maintenance observability emits counts/ratios only, never document bodies, prompts, diffs, user identifiers or secrets. SC-MD-SPT-0001 integration is a read-only VC-13 documentation/evidence sidecar and never a financial runtime stage. No autonomous merge, deploy or production mutation."
+  "note": "ADR-0097 maintenance is branch-only and Draft-PR-bound. ArchiveRetentionAgent classifies retention/deletion candidates but never performs physical deletion; delete-eligible plans still require explicit Owner approval, Agent-IAM/kill-switch clearance, a maintenance branch, normal PR validation and Human merge. AI output is advisory; versions/lifecycle/path boundaries are deterministic. SC-MD-SPT-0001 integration is a read-only VC-17 documentation/evidence sidecar over the current 18-stage Quality projection and never a financial runtime stage. No autonomous merge, deploy or production mutation."
 }
