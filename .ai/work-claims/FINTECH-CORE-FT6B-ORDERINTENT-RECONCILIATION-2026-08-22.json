@@ -42,6 +42,8 @@
     "docs/evidence/fintech-core/FT6B_ORDER_INTENT_FIXED_POINT_RECONCILIATION_2026-08-22.md",
     "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
     "docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md",
+    "docs/adr/registry.json",
+    "docs/governance/authority-registry.json",
     "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md"
   ],
   "protectedExistingAuthorities": [
@@ -83,12 +85,18 @@
   },
   "correlation": {
     "currentMainAtStart": "b180d56a37762c6a558a9b3488ce4f36c70fa2e9",
-    "openPr482DirectFileOverlapAtStart": false,
+    "prePrMain": "f5b521238328a49d0c0b8c405c87d5962688453d",
+    "prePrMainMergedPr": 482,
+    "prePrOpenPullRequests": 0,
+    "prePrDirectFileOverlap": false,
+    "branchContainsCurrentMain": true,
+    "branchBehindCurrentMain": 0,
     "pr481Merged": true,
-    "prePrRecheckRequired": true
+    "pr482MergedAndAbsorbed": true,
+    "registryDriftResolved": true
   },
   "verification": {
-    "status": "supabase_applied_and_verified_pending_pre_pr_main_correlation_and_post_pr_ci",
+    "status": "supabase_applied_and_verified_pre_pr_correlation_complete_pending_post_pr_ci",
     "negativeCasesCovered": [
       "missing risk decision",
       "missing compliance decision",
@@ -105,7 +113,16 @@
       "private persistence denial"
     ],
     "newProductionMutation": true,
-    "newRealExecutionCapability": false
+    "newRealExecutionCapability": false,
+    "hostedCiStartedBeforePr": false
+  },
+  "postMergeFollowUp": {
+    "requested": true,
+    "mustStartFromThenCurrentMain": true,
+    "workPackages": [
+      "FinTech value-chain supersession for stale drafts, projections, correlations and legacy paths",
+      "separate Meme Coin and DeFi remodeling supersession without parallel scoring/evidence authorities"
+    ]
   },
   "releaseCondition": "Release claim when FT-6B scope is merged, superseded or abandoned. FT-7 remains a separate mutation/security gate."
 }
