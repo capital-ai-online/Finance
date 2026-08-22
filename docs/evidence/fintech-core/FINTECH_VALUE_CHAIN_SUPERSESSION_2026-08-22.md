@@ -5,7 +5,6 @@
 **Start baseline:** `main@571de76e4d5f1d33460bf129d2231885dfde9584`  
 **Trigger:** Human Merge of PR #483  
 **Open PRs at start:** 0  
-**Pre-PR recheck:** `main@571de76e4d5f1d33460bf129d2231885dfde9584`, 0 open PRs, branch `ahead=12 / behind=0` before the final evidence update  
 **Supersession policy:** `GOV-AUTH-SUPERSESSION-0001`
 
 ## 1. Purpose
@@ -42,7 +41,7 @@ UAI
 | `docs/governance/authority-registry.json` | canonical authority registry | ADR-0099 still `owner-directed-proposed` | synchronize stable authority identity to `1.7.0 / accepted` |
 | `docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md` | roadmap projection | still says FT-6B PR pending / branch implementation | project FT-6B as DONE / MERGED #483 |
 | `src/platform/FinTechCore/README.md` | component projection | still contains pre-merge closure gates and `ADR-0099 (proposed)` | replace with post-merge current-state projection |
-| `src/platform/FinTechCore/manifest.json` | component inventory/projection | still says FT-6B migration prepared/not applied and lists migration application as blocked | synchronize to applied/verified FT-6B state; version `0.6.0` |
+| `src/platform/FinTechCore/manifest.json` | component inventory/projection | stale FT-6B and security-projection state | synchronize to applied/verified FT-6B state and version `0.6.1` after fail-closed hardening |
 | `docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md` | architecture projection | canonical topology correct but historical architecture reports can still be misread as current | retain as current projection and add explicit historical supersession index |
 | `FT6A_*` / older FT evidence | historical evidence | obsolete as current state but valid audit evidence | retain; do not rewrite or delete |
 | FT-6B work claim | coordination metadata | `status=active` is schema-constrained historical coordination metadata after merge | do not reinterpret as runtime/architecture authority |
@@ -105,7 +104,7 @@ This supersession adds a static regression guard in `tests/unit/sc2GlobalSingleD
 - the compatibility router is actually mounted;
 - the compatibility executable source contains no `MemeCoinScoringService` direct execution.
 
-Physical deletion from the large composition root is deferred until a bounded decomposition/removal pass can preserve unrelated route behavior. The important authority defect is closed now: a route-order regression that would reactivate the old handlers is test-detectable.
+Physical deletion from the large composition root is deferred until a bounded decomposition/removal pass can preserve unrelated route behavior. The authority defect is closed now: a route-order regression that would reactivate the old handlers is test-detectable.
 
 ### 3.4 Historical FinTech architecture projections
 
@@ -120,20 +119,21 @@ These files are retained for audit/RAG/reference stability and are explicitly cl
 
 A physical archive move is not performed in this package because current repository consumers include documentation export/RAG/test references. Moving them without consumer migration would trade semantic drift for broken traceability.
 
-## 4. Security-relevant correlation requiring explicit Owner approval
+## 4. Owner-approved fail-closed operating-mode correction
 
-`FINTECH_CORE_OPERATING_MODE_POLICY` currently projects:
+The supersession found a real policy projection contradiction:
 
-- `GUARDED_LIVE.realExecutionAllowed=true`;
-- `PRODUCTION.realExecutionAllowed=true`;
+```text
+FINTECH_CORE_OPERATING_MODE_POLICY
+GUARDED_LIVE.realExecutionAllowed = true
+PRODUCTION.realExecutionAllowed   = true
+```
 
-while the effective FT-6B authority and `isOrderIntentEligibleForRealExecution(...)` hard-block real execution for every mode.
+while `isOrderIntentEligibleForRealExecution(...)` and the effective FT-6B authority hard-block real execution for every mode.
 
-This is a stale future-capability projection and should be normalized fail-closed. Because the change touches an execution/security boundary, it is **not silently mutated** in this package without explicit Owner approval.
+The Owner explicitly approved the fail-closed correction on **2026-08-22 at 04:23 CEST**. The mutation is repository-only and introduces no external or production capability.
 
-### Proposed remediation
-
-For the current FT-6B effective policy:
+Effective FT-6B policy after the approved correction:
 
 ```text
 RESEARCH      -> real=false, simulated=false, newOrders=false
@@ -143,7 +143,15 @@ PRODUCTION    -> real=false, simulated=false, newOrders=false
 EMERGENCY     -> real=false, simulated=false, newOrders=false
 ```
 
-`GUARDED_LIVE` and `PRODUCTION` remain vocabulary for FT-7+ forward compatibility only. Any future enabling requires a separate FT-7+ architecture/security decision.
+`GUARDED_LIVE` and `PRODUCTION` remain forward-compatible vocabulary only. Any later enabling requires a separate FT-7+ architecture/security decision and must not be inferred from the enum or mode name.
+
+Regression coverage in `tests/unit/fintechCoreContracts.test.ts` now asserts:
+
+- `realExecutionAllowed=false` for every operating mode;
+- simulated execution and new orders are permitted only for `PAPER`;
+- `isOrderIntentEligibleForRealExecution(...)` remains false for every mode.
+
+Security effect: stricter fail-closed projection, no privilege increase, no execution activation, no Supabase mutation and no change to persisted financial evidence.
 
 ## 5. Supersession semantics
 
@@ -159,7 +167,7 @@ No accepted higher-tier authority is superseded.
 
 ## 6. Code-/governance regression guards
 
-Two code-level regression guards are included:
+Three code-level regression guards are included:
 
 1. `tests/unit/governanceControlPlane.test.ts`
    - requires ADR-0099 to remain `1.7.0 / accepted` in ADR and Authority registries;
@@ -167,6 +175,10 @@ Two code-level regression guards are included:
 2. `tests/unit/sc2GlobalSingleDispatcher.test.ts`
    - requires canonical Crypto/Meme compatibility routing to be mounted before shadowed historical composition-root handlers;
    - keeps the Compatibility Router free of direct Meme scoring execution.
+3. `tests/unit/fintechCoreContracts.test.ts`
+   - requires the complete FT-6 operating-mode policy to remain fail-closed;
+   - permits simulated/new-order capability only for PAPER;
+   - keeps real execution hard-blocked for every mode.
 
 These tests harden the supersession without introducing a new runtime authority.
 
@@ -179,13 +191,14 @@ These tests harden the supersession without introducing a new runtime authority.
 - no DeFi/Meme model change;
 - no exchange/custody/live execution capability;
 - no deletion of financial audit evidence;
-- no change to current productive scoring routing semantics.
+- no change to productive ScoringDispatcher routing semantics;
+- FinTechCore component version `0.6.1` records the fail-closed policy hardening.
 
 ## 8. Security impact
 
-Current branch work is fail-closed documentation/authority normalization plus non-mutating regression guards. The separately identified operating-mode code mutation remains blocked pending explicit Owner approval.
+The Owner-approved operating-mode mutation is **fail-closed**: it removes stale declarative capabilities from `GUARDED_LIVE` and `PRODUCTION` rather than granting new ones.
 
-The supersession must not weaken:
+The supersession preserves:
 
 - FT-5 deterministic Risk/Compliance Decision authority;
 - service-role-only private `fintech_core` persistence;
@@ -195,9 +208,11 @@ The supersession must not weaken:
 - ADR-0087 Single-Dispatcher scoring boundary;
 - FT-7+ live-execution gate.
 
+Rollback is a repository revert of this supersession. No external state rollback is necessary because the correction performs no database, IAM, exchange or deployment mutation.
+
 ## 9. Regulatory impact
 
-N/A for this cleanup package. No legal applicability, policy threshold, execution eligibility or customer-facing financial decision rule is changed.
+No legal applicability, policy threshold or customer-facing financial decision rule is changed. The correction reduces ambiguity around a blocked future execution capability.
 
 ## 10. Evidence retention / archive rule
 
@@ -219,6 +234,4 @@ The following scope is explicitly **out of this package** and begins from then-c
 
 ## 12. Rollback
 
-Documentation/current-state normalization and regression guards can be reverted by reverting the supersession commit/PR. No production database rollback is required because this package performs no external mutation.
-
-Any later runtime security mutation must carry its own negative tests and rollback path.
+Documentation/current-state normalization, regression guards and the fail-closed policy correction can be reverted by reverting the supersession PR. No production database rollback is required because this package performs no external mutation.
