@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('SC-2 crypto research/enrichment boundary', () => {
-  it('removes score, rank and value-corridor computation from CryptoOrchestrator', () => {
+  it('removes productive score, rank and value-corridor computation from CryptoOrchestrator', () => {
     const source = readFileSync(new URL('../../src/orchestrator/cryptoOrchestrator.ts', import.meta.url), 'utf8');
 
     expect(source).not.toContain('generateCryptoScores');
@@ -13,6 +13,15 @@ describe('SC-2 crypto research/enrichment boundary', () => {
     expect(source).not.toContain('calculateValueCorridor');
     expect(source).toContain("mode: 'research-enrichment'");
     expect(source).toContain('scoreEligible: false');
+  });
+
+  it('binds source-backed Meme/DeFi models only through the research evaluator boundary', () => {
+    const source = readFileSync(new URL('../../src/orchestrator/cryptoOrchestrator.ts', import.meta.url), 'utf8');
+    expect(source).toContain('analyzeCategoryResearchModels');
+    expect(source).toContain('evaluateCryptoOrchestratorResearchModels(input)');
+    expect(source).toContain('CanonicalScoreResult remains exclusively owned');
+    expect(source).toContain('FT-7 real execution remains blocked');
+    expect(source).not.toContain('dispatchCanonicalScore(');
   });
 
   it('rejects caller scoring overrides on /api/crypto/analyze', () => {
