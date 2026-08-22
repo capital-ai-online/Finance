@@ -40,7 +40,7 @@ const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
     modelId: 'crypto-meme-integrity',
-    version: '0.2.0',
+    version: '0.3.0',
     alias: 'challenger',
     lifecycle: 'challenger',
     assetClasses: ['crypto'],
@@ -51,12 +51,12 @@ const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
     priority: 10,
     scoreEligible: false,
     canonicalResultAdapterRequired: true,
-    notes: 'Supersession-B Meme research challenger. No executable weights. Correlated price-path observations must be reduced before any future promotion; missing contract/manipulation evidence remains NOT_COMPUTABLE.',
+    notes: 'Source-backed Meme research challenger with deterministic research evaluator, holder/rug/social/execution feature inventory and hard gates. Still non-executable: productive promotion requires verified provider coverage, backtesting, correlation review and explicit Owner approval.',
   },
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
     modelId: 'crypto-defi-fundamental',
-    version: '0.2.0',
+    version: '0.3.0',
     alias: 'challenger',
     lifecycle: 'challenger',
     assetClasses: ['crypto'],
@@ -67,7 +67,7 @@ const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
     priority: 10,
     scoreEligible: false,
     canonicalResultAdapterRequired: true,
-    notes: 'Supersession-B DeFi research challenger. TVL/fees/revenue remain correlation-bound raw evidence; DeFiLlama is evidence-only and stale/missing evidence never satisfies score or hard-gate semantics.',
+    notes: 'Source-backed DeFi research challenger with deterministic research evaluator across utilization, revenue, liquidity, contract security, oracle, tokenomics, governance and ecosystem factors. DeFiLlama stays evidence-only; productive promotion remains blocked pending verified coverage/backtesting.',
   },
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
