@@ -3,7 +3,7 @@ import { RateLimitBudget } from '../RateLimitBudget';
 import { getProviderMatrixEntry } from '../ProviderMatrix';
 import { recordProviderHealth, type ProviderDiagnosticCode } from '../../Supervisor/providerHealth';
 
-export const RESEARCH_EVIDENCE_HTTP_VERSION = 'research-evidence-http/1.0.0' as const;
+export const RESEARCH_EVIDENCE_HTTP_VERSION = 'research-evidence-http/1.1.0' as const;
 
 export type ResearchEvidenceHttpStatus =
   | 'READY'
@@ -26,6 +26,8 @@ export interface ResearchEvidenceHttpResult {
 export interface ResearchEvidenceProviderHttpOptions {
   readonly baseUrl: string;
   readonly apiKey?: string | null;
+  /** Defaults to true. Set false only for a provider whose official public API permits keyless use. */
+  readonly apiKeyRequired?: boolean;
   readonly fetchImpl?: typeof fetch;
   readonly timeoutMs?: number;
   readonly nowMs?: () => number;
@@ -57,6 +59,7 @@ export class ResearchEvidenceProviderHttp {
   private readonly circuitBreaker: CircuitBreaker;
   private readonly rateLimitBudget: RateLimitBudget;
   private readonly apiKey: string | null;
+  private readonly apiKeyRequired: boolean;
   private readonly authHeaders: (apiKey: string) => Readonly<Record<string, string>>;
 
   constructor(
@@ -70,6 +73,7 @@ export class ResearchEvidenceProviderHttp {
     this.timeoutMs = Math.max(250, options.timeoutMs ?? 8_000);
     this.nowMs = options.nowMs ?? Date.now;
     this.apiKey = options.apiKey?.trim() || null;
+    this.apiKeyRequired = options.apiKeyRequired !== false;
     this.authHeaders = options.authHeaders ?? ((apiKey) => ({ Authorization: `Bearer ${apiKey}` }));
     this.circuitBreaker = new CircuitBreaker({
       failureThreshold: matrix.circuitBreaker.failureThreshold,
@@ -88,7 +92,7 @@ export class ResearchEvidenceProviderHttp {
     init: Omit<RequestInit, 'signal'> = {},
   ): Promise<ResearchEvidenceHttpResult> {
     const retrievedAt = new Date(this.nowMs()).toISOString();
-    if (!this.apiKey) {
+    if (!this.apiKey && this.apiKeyRequired) {
       return this.result('NOT_CONFIGURED', retrievedAt, null, 'Required provider API key is not configured.');
     }
 
@@ -110,11 +114,12 @@ export class ResearchEvidenceProviderHttp {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
+      const authenticationHeaders = this.apiKey ? this.authHeaders(this.apiKey) : {};
       const response = await this.fetchImpl(`${this.options.baseUrl.replace(/\/$/, '')}${path}`, {
         ...init,
         headers: {
           Accept: 'application/json',
-          ...this.authHeaders(this.apiKey),
+          ...authenticationHeaders,
           ...(init.headers ?? {}),
         },
         signal: controller.signal,
@@ -141,7 +146,9 @@ export class ResearchEvidenceProviderHttp {
           status,
           retrievedAt,
           data: null,
-          reason: `Provider returned HTTP ${response.status}.`,
+          reason: response.status === 401 || response.status === 403
+            ? `Provider authentication/entitlement rejected (HTTP ${response.status}).`
+            : `Provider returned HTTP ${response.status}.`,
           httpStatus: response.status,
         };
       }
