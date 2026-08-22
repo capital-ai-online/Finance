@@ -186,4 +186,23 @@ describe('Governance Control Plane', () => {
       fixture.adrRegistry.parallelNamespaceReservations.filter((record) => record.state === 'active'),
     ).toEqual([]);
   });
+
+  it('keeps ADR-0099 v1.7 accepted and synchronized after Human Merge of PR #483', () => {
+    const fixture = readFixture();
+    const adr0099 = fixture.adrRegistry.migratedRecords.find((record) => record.displayId === 'ADR-0099');
+    const authority0099 = fixture.authorityRegistry.entries.find((record) => record.authorityId === 'AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20');
+
+    expect(adr0099).toMatchObject({
+      authorityId: 'AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20',
+      version: '1.7.0',
+      lifecycle: 'accepted',
+      path: 'docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md',
+    });
+    expect(authority0099).toMatchObject({
+      displayId: 'ADR-0099',
+      version: '1.7.0',
+      lifecycle: 'accepted',
+      path: 'docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md',
+    });
+  });
 });
