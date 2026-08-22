@@ -4,8 +4,9 @@
 **Last synchronized:** 2026-08-22  
 **Protected scoring authority:** ADR-0087  
 **FinTech workflow authority:** ADR-0099  
+**Post-merge supersession evidence:** `docs/evidence/fintech-core/FINTECH_VALUE_CHAIN_SUPERSESSION_2026-08-22.md`
 
-> Diese Datei beschreibt den aktuellen Runtime-/Authority-Stand. Aeltere Specialized-first-, Universal-Fallback-, Gemini- und direkte Domain-Scoring-Darstellungen sind superseded und besitzen keine aktuelle Architektur-Authority.
+> Diese Datei beschreibt den aktuellen Runtime-/Authority-Stand. Aeltere Specialized-first-, Universal-Fallback-, Gemini-, direkte Domain-Scoring- und vor-ADR-0087-Blueprint-Darstellungen sind superseded und besitzen keine aktuelle Architektur-Authority.
 
 ## 1. Grundprinzip
 
@@ -94,9 +95,11 @@ DeFiLlama ist read-only Evidence Acquisition fuer DeFi-Protokolldaten. Es ist ke
 
 Meme-/DeFi-spezifische Modelllogik kann als Challenger oder registrierter Domain Executor existieren. Produktiv wird sie nur nach expliziter Registry-/Governance-Promotion. Direkte Server-/UI-Aufrufe duerfen keine parallele produktive Authority etablieren.
 
+Die konkrete Meme-/DeFi-Modellsemantik ist nicht Bestandteil der FinTech-Value-Chain-Supersession A. ADR-0100 und bestehende Meme-/DeFi-Feature-/Weight-Projektionen werden in einer separaten Supersession B gegen den dann aktuellen `main` korreliert und neu modelliert.
+
 ## 4. FinTech Core Crypto Module 01
 
-Die Financial Workflow Chain lautet bis FT-6:
+Die Financial Workflow Chain lautet bis FT-6B:
 
 ```text
 Research / Evidence
@@ -104,23 +107,27 @@ Research / Evidence
   -> deterministic Portfolio/Risk inputs
   -> FT-5 Risk Decision Record
   -> FT-5 Compliance Decision Record
-  -> FT-6 canonical OrderIntent binding
+  -> FT-6B canonical OrderIntent binding
   -> PAPER-only simulated handoff
   -> typed Reconciliation
   -> durable Evidence / Supervisor signal
 ```
 
-### FT-6 Invarianten
+### FT-6B Invarianten
 
 - ein `FinTechCoreOrderIntent`;
 - ein `FinTechCoreFixedPoint` fuer execution-relevante Quantity/Price/Money-Werte;
 - Risk-/Compliance-Approval ausschliesslich aus deterministischen FT-5 Decision Records;
 - Decision ID/Hash und Policy ID/Version werden immutable gebunden;
 - `clientOrderId`, `idempotencyKey`, `intentHash` werden deterministisch erzeugt;
-- `RESEARCH`, `GUARDED_LIVE`, `PRODUCTION` erzeugen in FT-6 keinen Execution-Handoff;
+- `RESEARCH`, `GUARDED_LIVE`, `PRODUCTION` erzeugen in FT-6B keinen Execution-Handoff;
 - PAPER bleibt Simulation;
 - Reconciliation-Mismatch bleibt unresolved Evidence und wird nicht automatisch repariert;
 - keine reale Exchange-/Wallet-/Custody-Capability vor FT-7+.
+
+### Legacy Persistence Projection
+
+Kanonische BOUND-FT-6B-Intents verwenden den v2-Persistence-RPC. Der weiterhin vorhandene v1-`UNBOUND`-Pfad ist ausschliesslich Legacy-/Research-Kompatibilitaet und keine zweite OrderIntent- oder Execution-Authority. Seine physische Entfernung benoetigt Consumer-/Replay-/Bestandsdaten-Evidence und bei Security-/Persistence-Boundary-Aenderung eine separate Owner-Freigabe.
 
 ## 5. Superseded Topologien
 
@@ -155,7 +162,7 @@ Research-/Agent-Provider sind austauschbare, nicht-autorisierende Komponenten. D
 
 ### Historische Scoring-Formeln
 
-Aeltere in diesem Dokument gefuehrte Crypto-/Meme-/Commodity-Gewichte und Formeln sind keine aktuelle Model-Registry-Authority. Aktive Gewichte, Versionen und Promotion-Status werden ausschliesslich durch die kanonische Scoring-Modell-/Registry-Governance bestimmt.
+Aeltere in Architektur-/Audit-Dokumenten gefuehrte Crypto-/Meme-/Commodity-Gewichte und Formeln sind keine aktuelle Model-Registry-Authority. Aktive Gewichte, Versionen und Promotion-Status werden ausschliesslich durch die kanonische Scoring-Modell-/Registry-Governance bestimmt.
 
 ## 6. Assetklassen-Erweiterung
 
@@ -185,6 +192,10 @@ Assetklassen duerfen eigene Research-/Feature-/Executor-Module besitzen, aber ke
 - `fintech_core` bleibt privates Financial-Persistence-Schema.
 - Production-/Guarded-Live-Cutover ist ein separater, human-gated FT-7+ Prozess.
 
+### Offener Security-Korrelationsbefund
+
+`FINTECH_CORE_OPERATING_MODE_POLICY` projiziert im aktuellen Runtime-Vertrag noch zukuenftige `GUARDED_LIVE`-/`PRODUCTION`-Capabilities, waehrend der effektive FT-6B-Eligibility-Helper reale Execution fuer alle Modi hard-blocked. Die Projection besitzt keine aktuelle Execution-Authority. Eine fail-closed Code-Normalisierung ist security-/execution-relevant und wird nur nach expliziter Owner-Freigabe umgesetzt.
+
 ## 8. Dokumenten-Authority
 
 Bei Widerspruch gilt folgende Reihenfolge:
@@ -196,3 +207,29 @@ Bei Widerspruch gilt folgende Reihenfolge:
 5. historische/superseded Beschreibungen.
 
 Diese Datei darf nicht verwendet werden, um eine zweite Scoring-, Orchestrator-, Financial-Control- oder Execution-Authority zu begruenden.
+
+## 9. Expliziter Supersession-Index fuer historische FinTech-Projektionen
+
+Die folgenden Dateien bleiben aus Audit-/Traceability-Gruenden im Repository, sind fuer den **aktuellen Architekturzustand jedoch non-authorizing / historical**. Ihre damaligen Scores, Providerannahmen, Scoring-Gewichte, direkten Service-Topologien und Production-Readiness-Aussagen duerfen nicht gegen ADR-0087/ADR-0099 oder aktuelle Runtime-Registries ausgespielt werden:
+
+| Historischer Pfad | Rolle heute | Current-state replacement |
+|---|---|---|
+| `docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md` | historischer Audit-Snapshot 2026-07-31 | ADR-0087 + ADR-0099 + aktuelle Registries |
+| `docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_NACHAUDIT.md` | historischer Audit-Snapshot 2026-08-02 | ADR-0087 + ADR-0099 + aktuelle Registries |
+| `docs/architecture/ENTERPRISE_FINTECH_FINALIZATION_REPORT.md` | historischer Finalisierungs-/Remediation-Snapshot 2026-07-31 | aktuelle FinTech-Core-Roadmap + ADR-0087/0099 |
+| `docs/architecture/ENTERPRISE_SCREENING_SCORING_MASTER_ARCHITECTURE.md` | superseded Pre-Single-Dispatcher Blueprint | ADR-0087 / `ScoringModelRegistry` / `ScoringDispatcher` |
+
+Physische Verschiebung/Loeschung dieser Artefakte ist nicht erforderlich, solange ihre historische Rolle eindeutig und die Referenzierbarkeit fuer Audit/RAG/Tests erhalten bleibt. Eine spaetere Archiv-Migration darf nur mit Referenz-/Consumer-Pruefung erfolgen.
+
+## 10. Post-Merge Current State
+
+Mit Human Merge von PR #483 gilt:
+
+```text
+FT-0 ... FT-6B = DONE on main
+FT-7 = BLOCKED
+FT-8 = PLANNED
+FT-9 = PLANNED
+```
+
+Branch-/PR-Pending-Projektionen fuer FT-6B sind superseded. Die separate Meme-Coin-/DeFi-Supersession beginnt erst nach Abschluss dieser Value-Chain-/Authority-Bereinigung gegen den dann aktuellen `main`.
