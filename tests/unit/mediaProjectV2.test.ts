@@ -7,6 +7,7 @@ import {
 } from '../../src/platform/SocialMediaEngine/Contracts/MediaProject';
 import { validateMediaProjectV2 } from '../../src/platform/SocialMediaEngine/Contracts/MediaProjectValidation';
 import { adaptLegacyMediaRenderManifestV1 } from '../../src/platform/SocialMediaEngine/Rendering/LegacyMediaRenderManifestAdapter';
+import { createCapitalAiProTrialCouponProject } from '../../src/platform/SocialMediaEngine/Editing/MediaStudioTemplates';
 
 const root = process.cwd();
 const graham = JSON.parse(
@@ -55,6 +56,30 @@ describe('ADR-0098 MediaProject v2 contract', () => {
     expect(first.disclosure.requireAtProjectEdges).toBe(true);
     expect(validateMediaProjectV2(first)).toEqual({ ok: true, errors: [] });
     expect(JSON.stringify(first)).not.toMatch(/https?:\/\//i);
+  });
+
+  it('creates the Pro trial coupon from the canonical token-bound Social Media Engine template', () => {
+    const project = createCapitalAiProTrialCouponProject({ aspectRatio: '9:16', durationSeconds: 12 });
+
+    expect(project.canvas).toEqual({ width: 1080, height: 1920, aspectRatio: '9:16' });
+    expect(project.renderRecipe).toMatchObject({
+      templateId: 'capital-ai-pro-trial-coupon',
+      templateVersion: '1.0.0',
+      brandTokenSource: 'docs/frontend/design-tokens.json',
+      brandTextMode: 'deterministic',
+      networkPolicy: 'offline',
+      publishReady: false,
+    });
+    expect(project.tracks[0]?.layers[0]).toMatchObject({
+      kind: 'scene',
+      title: '3 TAGE TRIAL · PRO ABONNEMENT',
+    });
+    expect(project.metadata).toMatchObject({
+      campaign: 'pro-trial-3d',
+      designAuthority: 'docs/frontend/design-tokens.json',
+      draftOnly: true,
+    });
+    expect(validateMediaProjectV2(project)).toEqual({ ok: true, errors: [] });
   });
 
   it('fails closed on duplicate layer ids and overlapping layers on one track', () => {

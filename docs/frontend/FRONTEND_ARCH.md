@@ -1,7 +1,7 @@
 # CAPITAL-AI Frontend Architecture & Interface Guidelines
 
 **Status:** Canonical Frontend Architecture  
-**Stand:** 20. August 2026  
+**Stand:** 22. August 2026  
 **Framework:** React 19 / Vite 6 / Tailwind CSS 4 / Motion
 
 ## 1. Architekturposition und Dokumentrolle
@@ -33,6 +33,7 @@ Die Dokumentrollen sind verbindlich getrennt:
 | Dokument | Rolle | Darf normative Architekturregeln definieren? |
 |---|---|---|
 | `docs/frontend/FRONTEND_ARCH.md` | Frontend-Struktur, Dependency-Richtung, Presentation-/Interaction-Grenzen | **Ja, ausschließlich für Frontend-/Presentation-Struktur** |
+| `docs/frontend/design-tokens.json` + `PHASE0_DESIGN_TOKENS.md` | kanonische maschinenlesbare Branding-/Design-Token-Authority und ihre Renderer-Projektion | **Ja, ausschließlich für Branding-/Design-Tokens** |
 | `docs/frontend/COMPONENT_INVENTORY.md` | Ist-Bestand und Migrationsstatus von UI-Komponenten | **Nein** |
 | `docs/frontend/FRONTEND_ROADMAP.md` | Reihenfolge und Status der Frontend-Migration | **Nein; verweist auf diese Architektur** |
 | `docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md` | kanonische Screening-/Scoring-/Market-Data-Wertschöpfungskette | **Ja, für diesen fachlichen Runtime-Scope** |
@@ -179,9 +180,16 @@ Die bisherigen Pfade unter `src/components/` bleiben bei migrierten Shared-Baust
 
 ## 7. Visual Identity
 
-- Canvas: dunkle neutrale Oberfläche; semantische Surface-Tokens sind gegenüber lokalen Hex-Werten zu bevorzugen.
-- CAPITAL-AI Gold: Premium-/Primärfokus.
-- Cyan/Purple: sekundäre AI-/Live-Akzente; nicht als gleichrangige Primärsignale verwenden.
+Die Visual Identity wird nicht lokal in Komponenten neu definiert. `docs/frontend/design-tokens.json` ist die maschinenlesbare Branding-Authority; `PHASE0_DESIGN_TOKENS.md` dokumentiert ihre Manifest-v6.1-Projektion in Web, PDF, Social Media und externe Renderer.
+
+- Canvas: `#08080C`; erhöhte Surface: `#121215`; Border: `#252529`.
+- CAPITAL-AI Gold `#F9BF21`: Premium-, Primär- und Fokusfarbe.
+- Purple `#8D26FF`: AI-/Intelligence-Akzent.
+- Cyan `#22D3EE`: Market-Data-, Live-Feed- und technische Visualisierungsfarbe.
+- Emerald `#44DE88` und Rose `#F87171`: positive/negative bzw. BUY/SELL-/READY/REJECT-Semantik.
+- Assetklassen und fachliche Visualisierungen konsumieren ausschließlich die semantischen `asset-*`, `score-*`, `factor-*` und `status-*` Rollen aus der kanonischen Registry.
+- Historische `aif-*`-Namen sind nur Compatibility-Aliase. Neue Komponenten dürfen keine lokalen Branding-Hexwerte oder neue `aif-*`-Verwendungen einführen.
+- Headings verwenden **Inter**, Body **Poppins**, technische Daten/Scores **JetBrains Mono**.
 - Glassmorphism bleibt ein unterstützendes Surface-Pattern, kein Selbstzweck.
 - Dekorative Neural-Geometrie wird zentral über `shared/visuals` konsolidiert.
 - Motion muss `prefers-reduced-motion` respektieren.
@@ -191,6 +199,7 @@ Die bisherigen Pfade unter `src/components/` bleiben bei migrierten Shared-Baust
 - Interaktive Ziele mindestens 44×44 px, soweit durch Komponententyp sinnvoll.
 - Fokuszustände bleiben sichtbar und farbunabhängig verständlich.
 - Statuskommunikation nutzt Text/Icon zusätzlich zu Farbe.
+- Assetklassenfarbe wird zusätzlich durch Klassenlabel/Icon kommuniziert.
 - Dialoge besitzen semantische Dialogrollen und Escape-/Close-Verhalten.
 - Loading- und Empty-States werden über gemeinsame Primitives dargestellt.
 - Charts und komplexe Visualisierungen erhalten textuelle Beschreibungen bzw. zugängliche Alternativen.
@@ -207,6 +216,8 @@ Die Konsolidierung ist **strangler-basiert**, nicht Big Bang als einzelner Masse
 6. Für jede Welle die betroffene Parent-Authority ermitteln; fachliche Contracts werden referenziert, nicht in Frontend-Dokumenten dupliziert.
 7. Nach Migration aller Consumer die jeweiligen Legacy-Exports aus `src/components/` entfernen.
 8. `src/components/` wird am Ende gelöscht, sobald keine produktive Implementierung mehr darin verbleibt.
+9. Branding-Legacy bedeutet lokale Alt-Gold-/Cyan-/Blue-/Purple-Hexwerte, Montserrat und historische Aliasnamen; die kanonische Cyan-Rolle selbst ist **kein** Legacy-Wert.
+10. `UniverseBestWorst`, `CryptoScoringEnterprise` und `EnterpriseBinanceQuickAnalysis` werden innerhalb ihrer vorgesehenen BB-4-/BB-6-Wellen auf semantische Token und Feature-Slices migriert; alte Pfade bleiben nur so lange Compatibility-Exports, wie produktive Inbound-Imports existieren.
 
 ## 10. Architektur-Gate und Dokumentationskonsistenz
 
@@ -228,7 +239,8 @@ Der Check läuft innerhalb von `test:raw` und damit unter der aktuellen Quality-
 Zusätzlich gilt als Governance-Regel für Frontend-Dokumente:
 
 1. `FRONTEND_ARCH.md` ist die einzige normative Frontend-Source-Tree-/Dependency-Authority.
-2. `COMPONENT_INVENTORY.md` beschreibt ausschließlich Ist-Bestand und Migrationsstatus.
-3. `FRONTEND_ROADMAP.md` beschreibt ausschließlich Reihenfolge, Status und geplante Arbeit.
-4. Fachliche Runtime-/Data-/Scoring-Regeln müssen auf ihre Parent-Authority verweisen statt sie erneut vollständig zu definieren.
-5. Wird eine Parent-Authority geändert, müssen abhängige Frontend-Dokumente auf veraltete Projektionen geprüft werden; eine duplizierte Ablaufdefinition ist als Dokumentationsdrift zu behandeln.
+2. `docs/frontend/design-tokens.json` ist die einzige maschinenlesbare Branding-/Design-Token-Authority; Renderer projizieren daraus und definieren keine zweite Palette.
+3. `COMPONENT_INVENTORY.md` beschreibt ausschließlich Ist-Bestand und Migrationsstatus.
+4. `FRONTEND_ROADMAP.md` beschreibt ausschließlich Reihenfolge, Status und geplante Arbeit.
+5. Fachliche Runtime-/Data-/Scoring-Regeln müssen auf ihre Parent-Authority verweisen statt sie erneut vollständig zu definieren.
+6. Wird eine Parent-Authority geändert, müssen abhängige Frontend-Dokumente auf veraltete Projektionen geprüft werden; eine duplizierte Ablaufdefinition ist als Dokumentationsdrift zu behandeln.

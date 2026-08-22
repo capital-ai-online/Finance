@@ -16,6 +16,7 @@ export type ProviderCapability =
   | 'onchain'
   | 'governance';
 export type ProviderRole = 'primary' | 'secondary' | 'shadow';
+export type MarketDataBarInterval = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w';
 export type MarketDataQualityState =
   | 'LIVE'
   | 'DELAYED'
@@ -42,6 +43,11 @@ export interface HistoryRequest {
   from?: string;
   to?: string;
   maxPoints?: number;
+  /**
+   * Optional bar resolution. This is a backward-compatible capability extension of the existing
+   * history contract; providers must fail closed when an explicit interval is unsupported.
+   */
+  barInterval?: MarketDataBarInterval;
   includeShadow?: boolean;
   allowedProviderIds?: string[];
 }
@@ -95,6 +101,8 @@ export interface CanonicalMarketDataHistory {
   correlationId: string;
   points: CanonicalMarketDataHistoryPoint[];
   evidenceId: string | null;
+  /** Resolution of the returned bars when the provider can attest it. */
+  barInterval?: MarketDataBarInterval;
   reason?: string;
 }
 
