@@ -12,13 +12,13 @@ registry.registerAll(seedConcepts);
 const catalog = new UiMessageCatalog(registry);
 catalog.registerAll([...seedMessages, ...migrationMessages]);
 
-const reactAdapter = new MessageDeliveryAdapter('react', catalog);
-const accessibilityAdapter = new MessageDeliveryAdapter('accessibility', catalog);
+const reactAdapter = new MessageDeliveryAdapter(catalog, 'react');
+const accessibilityAdapter = new MessageDeliveryAdapter(catalog, 'accessibility');
 
 export function getReactMessage(key: string, locale: UiMessageLocale = 'de', values: MessageValues = {}): string {
-  return reactAdapter.render(key, locale, values);
+  return reactAdapter.format(key, locale, values);
 }
 
 export function getAccessibilityMessage(key: string, locale: UiMessageLocale = 'de', values: MessageValues = {}): string {
-  return accessibilityAdapter.render(key, locale, values);
+  return accessibilityAdapter.format(key, locale, values);
 }
