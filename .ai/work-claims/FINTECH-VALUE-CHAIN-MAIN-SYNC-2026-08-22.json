@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "FINTECH-VALUE-CHAIN-MAIN-SYNC-2026-08-22",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "Synchronize current main state and revalidate DevelopmentChain, SC-MD-SPT-0001, Documentary, Vocabulary and FinTechCore value-chain integration without introducing duplicate authorities or runtime architectures.",
+  "startedAt": "2026-08-22T11:33:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "f01a615edfa4a87939fb07bdce08829a1b46a1e6",
+  "branch": "feat/fintech-value-chain-main-sync-2026-08-22",
+  "openPrCorrelation": {
+    "observedOpenPrCount": 0,
+    "overlap": false,
+    "note": "No open pull requests were present at branch creation."
+  },
+  "claimedPaths": [
+    ".ai/work-claims/FINTECH-VALUE-CHAIN-MAIN-SYNC-2026-08-22.json",
+    "docs/architecture/ROADMAP.md",
+    "docs/roadmaps/SCREENING_SCORING_MARKET_DATA_SPT_ROADMAP.md",
+    "src/platform/Documentary/manifest.json",
+    "src/platform/Documentary/README.md"
+  ],
+  "protectedExistingAuthorities": [
+    "AGENTS.md / AUTH-GOV-AGENT-TRUST-ROOT",
+    "SC-MD-SPT-0001",
+    "ADR-0087 single scoring authority",
+    "ADR-0099 FinTechCore workflow composition authority",
+    "ADR-0100 DeFiLlama evidence-only authority",
+    "ESS-0017 / ADR-0078 Vocabulary Governance",
+    "ESS-0019 Universal AI Agent Control Plane"
+  ],
+  "externalMutationScope": "none",
+  "releaseCondition": "No merge or production mutation is authorized by this claim."
+}
