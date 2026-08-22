@@ -2,6 +2,7 @@
 
 **Document ID:** COMPLIANCE-CAPITAL-AI-MATRIX-2026-08-19  
 **Version:** `1.1.0`  
+**Version authority:** `src/platform/Documentary/Versioning/DocumentaryVersion.ts` + canonical `docs/governance/document-registry.json`; legacy `src/platform/VersionManager` remains read-only under ADR-0096  
 **Status:** GOVERNANCE / ENGINEERING BASELINE — applicability requires factual/legal classification  
 **Owner:** CAPITAL-AI Owner / Security & Compliance  
 **Review date:** 2026-08-22
