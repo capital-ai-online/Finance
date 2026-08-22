@@ -1,155 +1,123 @@
 # ADR-0097 — Documentary Maintenance Agent Control Loop
 
 **Authority ID:** `AUTH-ADR-DOCUMENTARY-MAINTENANCE-CONTROL-LOOP-2026-08-20`  
-**Version:** `1.0.0`  
-**Status:** `PROPOSED` — implementation candidate; effective only after Human Merge  
-**Date:** `2026-08-20`  
+**Version:** `1.1.0`  
+**Status:** `ACCEPTED / IMPLEMENTED` — implementation merged through PR #460; revalidated 2026-08-22  
+**Date:** `2026-08-22`  
 **Decision Owner:** CAPITAL-AI Owner  
-**Scope:** Documentary semantic freshness, Supervisor/Platform-Director authorization wiring, branch-only document mutation, deterministic document versioning, maintenance observability, SC-MD-SPT-0001 evidence-sidecar integration and Draft-PR handoff
+**Scope:** Documentary semantic freshness, Supervisor/Platform-Director authorization wiring, branch-only document mutation, deterministic document versioning, archive-retention planning, maintenance observability, SC-MD-SPT-0001 evidence-sidecar integration and Draft-PR handoff
 
 ## Context
 
-The Documentary baseline already contains deterministic document models, provenance, code discovery, lifecycle governance, a read-only Documentation Hygiene validator, status-event drift detection and a narrowly bounded status-header updater. The repository also already contains the provider-neutral Agent IAM, Compliance policy gate, Platform Director protected-decision boundary, Supervisor observation model, Anthropic/OpenAI model routing, RAG evidence retrieval and a trusted `open-agent-draft-pr.yml` workflow.
+The repository already provides deterministic Documentary models/provenance, code discovery, lifecycle governance, Documentation Hygiene, status-event drift detection, provider-neutral Agent IAM, Compliance policy gates, Platform Director protected decisions, Supervisor observation, Anthropic/OpenAI routing, repository RAG and the trusted `open-agent-draft-pr.yml` workflow.
 
-The remaining gap is the closed maintenance loop requested by the Owner and described by `DOCUMENTARY_EVENT_VALUE_CHAIN_ROADMAP.md` D7/D9, E1/E6 and H1/H5:
-
-```text
-Supervisor finding / recommendation
-        |
-        v
-Platform Director approved decision
-        |
-        v
-Documentary Maintenance Agent
-        |
-        v
-isolated branch -> bounded patch -> Draft PR
-```
-
-The loop must not turn the Supervisor, Documentary, Observability telemetry or an AI provider into a new repository authority.
-
-The repository-wide FinTech value chain `SC-MD-SPT-0001` is separately projected by Quality as 14 read-only structural/evidence stages. Documentary maintenance must integrate with that chain as supporting documentation/evidence capability only; it must not become a fifteenth financial runtime stage or influence market data, classification, scoring, confidence, ranking, eligibility, provider routing, release or deployment decisions.
+PR #460 landed the Documentary Maintenance Control Loop. Subsequent value-chain evolution expanded the canonical Quality projection to 18 stages. The previous VC-13/14-stage Documentary wording therefore became current-state drift even though the architectural boundary remained correct.
 
 ## Decision
 
-### 1. Dedicated Maintenance Agent, no decision authority
+### 1. Dedicated maintenance capability, no decision authority
 
-`src/platform/Documentary/Agents/DocumentaryMaintenanceAgent.ts` is the Documentary semantic-maintenance agent contract. It may assess candidate documents and produce bounded patch proposals. It cannot approve architecture, compliance, governance, releases or merges.
+`src/platform/Documentary/Agents/DocumentaryMaintenanceAgent.ts` remains the semantic-maintenance capability. AI/model output is advisory data only. Deterministic code owns path allowlists, lifecycle/version transitions, hashes, Git boundaries and capability checks.
 
-Semantic model output is advisory data. Deterministic code owns path allowlists, lifecycle/version transitions, hashes and Git boundaries.
+The agent cannot approve architecture, governance, compliance, release, merge, deployment or production mutation.
 
 ### 2. Deterministic freshness discovery before AI
 
-`SemanticFreshnessAnalyzer` reads the canonical Document Registry and identifies candidate documents from explicit source-path references, declared `@depends on` relationships, component semantic scope, document-to-document references and periodic repository-wide full scans.
-
-Archived, superseded and suspended documents are excluded from automatic freshness mutation.
+`SemanticFreshnessAnalyzer` reads the canonical Document Registry and identifies candidates from source-path references, dependencies, semantic scope, document references and periodic full scans. Archived, superseded and suspended artifacts are excluded from automatic semantic mutation.
 
 ### 3. Protected document classes are review-only
 
-The Maintenance Agent never performs semantic full-content mutation on ADRs, archived material, compliance/legal/security documents, governance/control-plane documents, evidence artifacts, release evidence or root authorities/projections outside `docs/`.
+ADRs, archive history, Governance, Compliance, Legal, Security, Evidence, release evidence and root authorities/projections cannot receive autonomous semantic full-content writes. They may be surfaced for Owner review.
 
-Such documents may be reported as freshness candidates, but remain Human/Owner review-only. Existing specialized deterministic mechanisms retain their narrower contracts.
+### 4. Supervisor → Platform Director → Agent binding
 
-### 4. Supervisor -> Platform Director -> Agent binding
+Supervisor emits deterministic recommendation evidence and never approves. Planning requires an exact approved Platform Director decision bound to current Supervisor/source evidence and explicit Agent IAM `ANALYZE`/`PLAN` grants. Repository writes additionally require `BRANCH`, `COMMIT` and, where Draft-PR dispatch is used, `PR` capability.
 
-The Supervisor produces deterministic Documentary maintenance recommendation evidence from freshness and hygiene observations. The Supervisor still does not decide.
+The request kill-switch state is propagated to Agent IAM and cannot be hard-coded inactive.
 
-Before the semantic agent may plan a patch, the orchestrator requires a valid approved `PlatformDecisionRecord`, `Documentary` in affected components, a `PASS` Supervisor assessment whose `evidenceId` exactly matches the current recommendation, matching correlation/source evidence, and explicit Agent IAM `ANALYZE` and `PLAN` grants.
+### 5. Branch-only apply and deterministic versioning
 
-Repository mutations additionally require explicit `BRANCH`, `COMMIT` and, only when Draft-PR dispatch is enabled, `PR` grants. There remains no Agent IAM `MERGE` capability.
+Semantic apply is allowed only on `agent/documentary-maintenance-*`; `main` is rejected. The actual checked-out branch must equal the authorized branch. Repository-relative path validation, symlink rejection, file-size limits and pre/post SHA-256 checks protect against traversal and TOCTOU drift.
 
-The host propagates the request's Agent IAM `killSwitchActive` state into every authorization decision. It must never hard-code an inactive kill switch. An active kill switch therefore prevents mutating capabilities at the existing deny-by-default Agent IAM boundary.
+Applied registered documents receive exactly one patch SemVer increment and lifecycle `generated`; AI never chooses version or approval state.
 
-### 5. Branch-only patch application and deterministic document versioning
+### 6. Current-main binding
 
-A semantic patch may be applied only on `agent/documentary-maintenance-*`. `main` is rejected unconditionally. The Apply contract verifies the **actual checked-out Git branch** and requires it to equal the authorized `branchName`; a caller-supplied maintenance-looking string alone is insufficient.
+The host requires a clean checkout of exact fetched `origin/main`. Request `sourceCommit` must equal that SHA. Existing remote branch identity is rejected rather than force-reused. Final `main` movement before PR handoff invalidates the candidate.
 
-Every patch is protected by repository-relative path validation, non-symlink checks, file-size bounds and pre-/post-plan SHA-256 checks. A TOCTOU mismatch aborts the operation.
+### 7. Existing provider routing and RAG are reused
 
-For each applied document patch, `docs/governance/document-registry.json` is updated deterministically: patch SemVer increments by exactly one and lifecycle becomes `generated`; authority/owner/type/language/path remain unchanged. The AI model never chooses the version or lifecycle state.
-
-### 6. Current-main and branch-identity binding
-
-The Git host requires a clean checkout of the exact fetched current `origin/main`. Request `sourceCommit` must equal that exact Main SHA; stale source evidence cannot start a maintenance branch.
-
-Branch names are correlation-derived under `agent/documentary-maintenance-*`. An already-existing remote branch with the same derived identity is rejected instead of being reused or force-updated. An empty/no-change candidate removes its local branch. If a failure occurs after a remote push but before successful handoff, the host best-effort deletes the orphaned remote candidate.
-
-### 7. Existing AI routing and RAG are reused
-
-No `@openai/agents` or second model-orchestration framework is introduced in this scope. The server adapter reuses `generateStructuredWithFallback()`, `generateTextWithFallback()`, existing Anthropic/OpenAI clients, AI evaluation governance and repository RAG evidence retrieval.
-
-Prompt inputs explicitly treat document text, diffs and retrieved chunks as untrusted data. Model output cannot grant capabilities or alter authorization state.
+No second agent/provider framework is introduced. The adapter reuses the existing Anthropic/OpenAI routing, AI evaluation governance and repository RAG. Retrieved/document content is treated as untrusted data and cannot alter capabilities or authorization.
 
 ### 8. D9 maintenance observability is aggregation-only
 
-`src/platform/Documentary/Observability/DocumentaryMaintenanceObservability.ts` derives a health snapshot from freshness, Supervisor recommendation, patch plan and apply result. It exposes only aggregate counts/ratios such as registry coverage, freshness ratio, orphan rate, candidate count, planned/skipped patches and applied documents.
+Maintenance telemetry contains only bounded counts/ratios and correlation/source metadata. It contains no document bodies, prompts, diffs, user identifiers, credentials or secrets and does not replace central Observability.
 
-No document body, prompt, diff, user identifier, secret or credential is included in the telemetry contract. This is a Documentary maintenance-specific D9 slice and does not replace a central observability platform.
+### 9. Archive retention is a bounded planner, not a deletion authority
 
-### 9. SC-MD-SPT-0001 integration is sidecar-only and non-authorizing
+`ArchiveRetentionAgent` extends the existing Documentary agent surface only for deterministic retention classification.
 
-Documentary maintenance is attached to the FinTech value chain as a read-only Documentation/Evidence sidecar around `VC-13-EVENT-TRACEABILITY-SUPERVISOR`. The existing Quality projection `fintech-value-chain-quality/1.0.0` remains the repository-native structural/evidence check for the 14-stage value chain.
+`archived` is not equivalent to `delete-authorized`. Only old, unregistered, unreferenced, reproducible canonical duplicates under `docs/archive/generated/**` or `docs/archive/transient/**` may become `delete-eligible`. Authorities, Evidence, Security/Compliance artifacts and referenced/registered history remain retained.
 
-This integration does **not** add Documentary as a runtime stage. Documentary does not import or call MarketData, Scoring, Ranking, Eligibility or delivery hotpaths and does not become a dependency of those hotpaths. It consumes governed repository/change/evidence context and emits documentation/maintenance evidence only.
+Even a `delete-eligible` result requires explicit Owner approval, inactive kill switch and an existing maintenance branch. The agent returns a deletion plan with `mutationPerformed=false`; physical deletion remains a normal governed repository patch and Human merge.
 
-Direct effects on market data, classification, scoring, confidence, ranking, eligibility, provider routing, release, deployment or production mutation are forbidden. Quality remains read-only and non-authorizing; Documentary does not depend on Quality for mutation authority.
+### 10. SC-MD-SPT-0001 integration is VC-17 sidecar-only
 
-### 10. Existing Draft-PR workflow is reused
+Documentary maintenance is attached as a read-only Documentation/Evidence sidecar around current `VC-17-EVENT-TRACEABILITY-SUPERVISOR` in the **18-stage** `fintech-value-chain-quality/1.0.0` projection.
 
-The Git host creates a fresh branch from exact fetched `origin/main`, writes only the approved patch set plus one bounded work claim, runs local structural governance checks, stages only explicit paths, commits and pushes the branch. It then dispatches the existing `.github/workflows/open-agent-draft-pr.yml` instead of implementing a second PR path.
+This does **not** add Documentary as a financial runtime stage. Documentary cannot import or call MarketData, Scoring, Ranking, Eligibility, OrderIntent or delivery hotpaths and cannot become their mutation dependency. Direct effects on market data, classification, score, confidence, ranking, eligibility, provider routing, release, deployment or production mutation are forbidden.
 
-Immediately before remote handoff, `origin/main` is fetched again. If `main` changed during the run, the candidate is rejected and must be regenerated from the newer main. Evidence-bound semantic patches are not silently rebased.
+Quality remains read-only/non-authorizing; Documentary does not depend on Quality for mutation authority.
 
-### 11. Governance/Registry/Validation closure is deterministic
+### 11. Existing Draft-PR workflow is reused
 
-The branch provides `documentary:maintenance:test`, `documentary:maintenance:validate` and `documentary:maintenance:prepr` scripts. The closure validator checks exact Work Claim ↔ changed-file equality, branch synchronization with current `origin/main`, `git diff --check`, ADR/Authority/Document Registry identities, Documentary manifest version/contracts/tests, the SC-MD-SPT-0001 sidecar boundary, kill-switch propagation, actual checked-out branch verification, protected path classes, explicit staging and reuse of the existing Draft-PR workflow.
+The host creates a fresh maintenance branch from exact `origin/main`, writes only the approved bounded patch set and one Work Claim, runs local structural checks, stages explicit paths only, commits/pushes, and reuses `.github/workflows/open-agent-draft-pr.yml`.
 
-This validator complements — and does not replace — the canonical Documentation Hygiene, Governance Control Plane and Repository Quality gates.
+No second PR workflow is introduced.
 
-### 12. No pre-PR expensive CI and no merge/deploy
+### 12. Local/ChatGPT sandbox validation is non-authorizing
 
-The host may run targeted/local low-cost checks before PR creation. Full hosted CI remains a post-PR concern. The Maintenance Agent cannot merge, deploy or perform production mutation.
+`sandbox:prepr` may execute existing local checks in a real repository checkout before PR creation. It performs no automatic dependency install, network write, branch push, PR creation, merge, deploy or external platform mutation and cannot replace hosted CI.
+
+### 13. Deterministic validation closure
+
+The closure validator checks Work Claim/diff binding, current-main ancestry, `git diff --check`, ADR/Authority/Document Registry identity, Documentary manifest version/contracts/tests, current VC-17/18-stage sidecar metadata, hot-path isolation, kill-switch propagation, actual branch identity, protected paths, narrow staging and existing Draft-PR workflow reuse.
+
+Historical evidence is not rewritten merely because stage numbering later evolved; current stage assertions are taken from current code/manifest/registry state.
 
 ## Security and data-integrity impact
 
-- deny-by-default Agent IAM is reused;
-- Agent IAM kill-switch state is propagated rather than hard-coded inactive;
-- Platform Director approval is bound to the Supervisor recommendation identity;
-- current Main SHA is bound to the semantic source evidence;
-- prompt-injection content is treated as data rather than instructions;
-- protected documents are excluded from semantic auto-write;
-- content hashes prevent stale-plan application;
-- symlinks/path traversal are rejected;
-- automatic content changes cannot remain `approved` in the registry;
-- actual checked-out branch must equal the authorized maintenance branch before apply;
-- remote agent-branch collisions are rejected;
-- post-push handoff failures attempt remote cleanup;
-- `main` is never an eligible mutation target;
-- no Merge/Deploy/Production capability is granted;
-- telemetry excludes document content, prompts, diffs, user identifiers and secrets;
-- no MarketData/Scoring/Ranking/Eligibility hotpath obtains a Documentary or Quality mutation dependency.
+- deny-by-default Agent IAM reused;
+- kill switch propagated;
+- Platform Director approval bound to Supervisor evidence;
+- current Main SHA bound to source evidence;
+- prompt/RAG content treated as untrusted data;
+- protected documents excluded from semantic auto-write;
+- content hashes and actual branch identity prevent stale/incorrect apply;
+- no direct `main` mutation;
+- no autonomous deletion, merge, deploy or production capability;
+- no financial hotpath gains a Documentary/Quality mutation dependency.
 
-No Supabase, Stripe, Render, production data, secrets or external infrastructure are mutated by this architecture.
+No Supabase, Stripe, Render, secrets or production data are mutated by this ADR.
 
-## Validation / Definition of Done
+## Verification / Definition of Done
 
-1. Semantic freshness discovery is deterministic and registry-based.
-2. Supervisor recommendation evidence is deterministic and fail-closed on hygiene findings.
-3. Platform Director and Supervisor evidence must match before agent planning.
-4. Current `sourceCommit` equals the exact current Main SHA before semantic analysis.
-5. Agent IAM grants are required for analysis, planning and Git mutations; kill-switch state is propagated to the IAM decision.
-6. Semantic full-content mutation is denied for protected document classes.
-7. Patch apply is denied on `main`, outside `agent/documentary-maintenance-*`, and whenever the actual checked-out branch differs from the authorized branch identity.
-8. Applied documents receive deterministic patch-version increments and `generated` lifecycle.
-9. Existing remote branch identity cannot be silently reused.
-10. Existing Draft-PR workflow is reused.
-11. Final `main` drift aborts PR handoff.
-12. D9 maintenance health telemetry is content-free and correlation-bound.
-13. Documentary is declared and validated as a non-authorizing SC-MD-SPT-0001 sidecar around VC-13, not a financial runtime stage.
-14. Work Claim, ADR Registry, Authority Registry, Document Registry and component manifest are mutually consistent.
-15. Targeted unit/type/structural/repository-quality checks pass before PR readiness.
-16. Merge remains a separate Human/Owner action.
+1. deterministic freshness discovery and registry binding;
+2. exact Supervisor/Platform Director evidence binding;
+3. current-main sourceCommit binding;
+4. Agent IAM required for analysis/planning/Git capabilities;
+5. semantic auto-write denied for protected classes;
+6. actual branch must match authorized maintenance branch;
+7. deterministic document patch version/lifecycle transition;
+8. remote branch collision denied;
+9. existing Draft-PR workflow reused;
+10. final main drift aborts handoff;
+11. D9 telemetry remains content-free;
+12. Documentary manifest and validator bind to VC-17 and 18-stage Quality projection;
+13. ArchiveRetentionAgent never performs physical deletion;
+14. local sandbox remains non-authorizing and offline-first;
+15. merge remains separate Human/Owner action.
 
 ## Rollback
 
-Before merge, delete or close the feature branch/Draft PR. No production rollback is required because the agent has no production mutation path. After merge, revert ADR-0097 and the Documentary maintenance-control-loop implementation together on a new branch from then-current `main`; do not restore direct automatic writes to `main` as a shortcut.
+Repository rollback is a Human-gated Git revert on a fresh branch from then-current `main`. No production rollback is implied because this architecture has no direct production mutation path.
