@@ -32,8 +32,7 @@ function evidence(
 }
 
 function providerStatus(status: string): CryptoFeatureEvidence['status'] {
-  if (status === 'VERIFIED') return 'VERIFIED';
-  if (status === 'PARTIAL') return 'NOT_AVAILABLE';
+  if (status === 'VERIFIED' || status === 'PARTIAL') return 'VERIFIED';
   if (status === 'STALE') return 'STALE';
   if (status === 'INVALID') return 'INVALID';
   return 'NOT_AVAILABLE';
