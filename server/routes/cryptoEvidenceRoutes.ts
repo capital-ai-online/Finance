@@ -12,8 +12,9 @@ function normalizeSymbol(value: unknown): string | null {
  * Read-only website projection of provider evidence.
  *
  * HTTP clients supply only an asset symbol. Contract/mint identities, DEX chain/address mappings,
- * Kraken Futures market symbols and Dune queries come exclusively from the reviewed server-side
- * registry. This prevents users/models from redirecting provider reads to arbitrary identities.
+ * Binance/Kraken Futures market symbols and Dune queries come exclusively from the reviewed
+ * server-side registry. This prevents users/models from redirecting provider reads to arbitrary
+ * provider identities or query IDs.
  */
 export const cryptoEvidenceRouter = express.Router();
 
@@ -35,6 +36,7 @@ cryptoEvidenceRouter.get('/:symbol', async (req, res) => {
       goPlusIdentity: identity?.goPlusEvm,
       goPlusSolanaMintAddress: identity?.goPlusSolanaMintAddress,
       dexScreenerIdentity: identity?.dexScreener,
+      binanceFuturesSymbol: identity?.binanceFuturesSymbol,
       krakenFuturesSymbol: identity?.krakenFuturesSymbol,
       dune: identity?.dune,
       includeDefiLlama: true,
