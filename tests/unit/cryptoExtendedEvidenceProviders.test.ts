@@ -168,7 +168,7 @@ describe('SC4 free-tier crypto evidence providers', () => {
       if (text.includes('/funding?')) return jsonResponse({ result: { timestamp: [1_776_744_000], data: { rate: [[0, 0, 0, '0.001']] } } });
       if (text.includes('/liquidation-volume?')) return jsonResponse({ result: { timestamp: [1_776_744_000], data: [5, 6] } });
       if (text.includes('/liquidity?')) return jsonResponse({ result: { timestamp: [1_776_744_000], data: { bid: { liquidity_01: ['1000'] }, ask: { liquidity_01: ['1200'] } } } });
-      return jsonResponse({ result: { timestamp: [1_776_744_000], data: { bid: { slippage_100k: ['0.002'] }, ask: { slippage_100k: ['0.003'] } } });
+      return jsonResponse({ result: { timestamp: [1_776_744_000], data: { bid: { slippage_100k: ['0.002'] }, ask: { slippage_100k: ['0.003'] } } } });
     });
     const provider = new KrakenFuturesAnalyticsProvider({ fetchImpl: fetchImpl as unknown as typeof fetch, baseUrl: 'https://provider.example', nowMs: () => Date.parse('2026-08-22T05:00:00.000Z') });
     const result = await provider.getAnalytics('PI_XBTUSD');

@@ -99,7 +99,7 @@ newsRouter.get('/', async (req, res) => {
     evidenceRef: article.evidenceRef,
     publishedAt: article.publishedAt,
     url: article.url,
-  }))));
+  })));
 
   newsCache.set(cacheKey, { expiresAt: now + NEWS_CACHE_TTL_MS, items });
   res.setHeader('x-capital-ai-news-cache', 'miss');
