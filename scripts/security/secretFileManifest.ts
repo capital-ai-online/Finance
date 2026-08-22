@@ -32,8 +32,10 @@ export const SECRET_FILE_KEYS = [
   'EODHD_API_KEY',
   'TWELVEDATA_API_KEY',
   'FRED_API_KEY',
-  'NEWS_API_KEY',
   'FMP_API_KEY',
+  // SC-4: Dune is the only new crypto-evidence provider secret. Runtime policy additionally
+  // requires Free-Tier attestation + allowlisted saved query IDs; the key alone grants nothing.
+  'DUNE_API_KEY',
   'SMTP_PASSWORD',
   'METRICS_TOKEN',
   'YOUTUBE_CLIENT_SECRET',

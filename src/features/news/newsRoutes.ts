@@ -1,73 +1,108 @@
-// ARCH-AUDIT-0002 (H5, Kapitel 14.5): erster Schritt der Zerlegung von server.ts entlang
-// der Fachdomaenen nach src/features/ (die Domaenen-Ordner existierten bereits als leere
-// Platzhalter - .gitkeep - seit fruehen Aufgaben dieser Session, aber ohne Inhalt). /api/news
-// war die am staerksten in sich geschlossene Route in server.ts (keine Abhaengigkeit von
-// geteiltem Zustand wie assetRegistry/fetchLiveMarketData) und damit der risikoaermste erste
-// Kandidat fuer diese neue Zielstruktur. Verhalten 1:1 aus server.ts uebernommen, keine
-// funktionale Aenderung.
+// ARCH-AUDIT-0002 / SC-4: /api/news is a read-only product projection of external article
+// metadata. GDELT DOC 2.0 is the keyless discovery source; publisher content is never fabricated,
+// scraped into the product or granted scoring authority by this route.
 
 import express from 'express';
+import { GdeltNewsEvidenceProvider } from '../../platform/MarketData/providers/GdeltNewsEvidenceProvider';
 
 export type NewsSentiment = 'positive' | 'negative' | 'neutral';
-
-/**
- * Herkunftskennzeichnung fuer das sentiment-Feld, analog zum dataSource/scoreBasis-Muster
- * (docs/architecture/DATENQUALITAETSSCHICHT.md). classifyNewsSentiment() ist eine deterministische
- * Schluesselwort-Heuristik, keine NLP-/KI-Analyse - 'heuristic' ist damit der einzig zutreffende
- * Wert, solange kein gemessenes/modellbasiertes Sentiment existiert.
- */
 export type NewsSentimentBasis = 'heuristic';
 export const NEWS_SENTIMENT_BASIS: NewsSentimentBasis = 'heuristic';
 
-const POSITIVE_KEYWORDS = ['bullish', 'surge', 'gain', 'rise', 'rally', 'growth'];
-const NEGATIVE_KEYWORDS = ['bearish', 'plummet', 'drop', 'fall', 'crash', 'risk', 'hack'];
+const POSITIVE_KEYWORDS = ['bullish', 'surge', 'gain', 'rise', 'rally', 'growth', 'beats', 'record high'];
+const NEGATIVE_KEYWORDS = ['bearish', 'plummet', 'drop', 'fall', 'crash', 'risk', 'hack', 'misses', 'lawsuit'];
+const NEWS_CACHE_TTL_MS = 5 * 60_000;
+const MAX_NEWS_ITEMS = 20;
 
-/** Rein textbasierte Sentiment-Heuristik (Schluesselwort-Abgleich) - deterministisch, keine KI. */
-export function classifyNewsSentiment(headline: string, description: string): NewsSentiment {
+interface ProjectedNewsItem {
+  id: string;
+  headline: string;
+  summary: string;
+  sentiment: NewsSentiment;
+  sentimentBasis: NewsSentimentBasis;
+  time: string;
+  source: string;
+  evidenceRef: string;
+  publishedAt: string;
+  url: string;
+}
+
+interface NewsCacheEntry {
+  expiresAt: number;
+  items: readonly ProjectedNewsItem[];
+}
+
+const newsCache = new Map<string, NewsCacheEntry>();
+
+export function classifyNewsSentiment(headline: string, description = ''): NewsSentiment {
   const text = `${headline || ''} ${description || ''}`.toLowerCase();
   if (POSITIVE_KEYWORDS.some(kw => text.includes(kw))) return 'positive';
   if (NEGATIVE_KEYWORDS.some(kw => text.includes(kw))) return 'negative';
   return 'neutral';
 }
 
+function normalizedSymbol(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const symbol = value.toUpperCase().trim();
+  return /^[A-Z0-9.=-]{1,20}$/.test(symbol) ? symbol : null;
+}
+
+function normalizedLimit(value: unknown): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 10;
+  return Math.min(MAX_NEWS_ITEMS, Math.max(1, Math.floor(parsed)));
+}
+
+function buildProviderQuery(symbol: string | null): string {
+  if (symbol) return `"${symbol}" (crypto OR cryptocurrency OR market OR finance)`;
+  return '("artificial intelligence" OR fintech OR finance OR markets OR cryptocurrency)';
+}
+
 export const newsRouter = express.Router();
 
 newsRouter.get('/', async (req, res) => {
-  const apiKey = process.env.NEWS_API_KEY;
+  const symbol = normalizedSymbol(req.query.symbol);
+  if (req.query.symbol !== undefined && !symbol) {
+    return res.status(400).json({ status: 'INVALID_REQUEST', reason: 'Ungültiges Asset-Symbol.' });
+  }
 
-  if (!apiKey || apiKey.startsWith('MY_') || apiKey.includes('test') || apiKey.length <= 5) {
+  const limit = normalizedLimit(req.query.limit);
+  const query = buildProviderQuery(symbol);
+  const cacheKey = `${query}|${limit}`;
+  const now = Date.now();
+  const cached = newsCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    res.setHeader('x-capital-ai-news-cache', 'hit');
+    res.setHeader('x-capital-ai-news-provider', 'gdelt');
+    return res.json(cached.items.slice(0, limit));
+  }
+
+  const provider = new GdeltNewsEvidenceProvider();
+  const result = await provider.searchArticles(query, Math.max(limit, 10), '1d');
+
+  if (result.status !== 'VERIFIED') {
     return res.status(503).json({
       status: 'NO_DATA',
-      reason: 'NEWS_API_KEY ist nicht konfiguriert oder ungültig.',
+      source: 'GDELT DOC 2.0',
+      reason: result.reason ?? `GDELT News-Evidence ist nicht verfügbar (${result.status}).`,
     });
   }
 
-  try {
-    const response = await fetch(`https://newsapi.org/v2/everything?q=cryptocurrency+OR+bitcoin+OR+ethereum+OR+finance&sortBy=publishedAt&pageSize=10&apiKey=${apiKey}`);
-    if (response.ok) {
-      const data: any = await response.json();
-      if (data.status === 'ok' && Array.isArray(data.articles)) {
-        const newsItems = data.articles.slice(0, 5).map((art: any, idx: number) => ({
-          id: `news_${idx}_${Date.now()}`,
-          headline: art.title || 'Krypto Markt Update',
-          summary: art.description || art.content || 'Keine detaillierte Beschreibung verfügbar.',
-          sentiment: classifyNewsSentiment(art.title, art.description),
-          sentimentBasis: NEWS_SENTIMENT_BASIS,
-          time: new Date(art.publishedAt || Date.now()).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr',
-          source: art.source?.name || 'NewsAPI',
-        }));
-        return res.json(newsItems);
-      }
-    }
-    return res.status(503).json({
-      status: 'NO_DATA',
-      reason: 'Fehler beim Abrufen der Nachrichten von der externen NewsAPI (Antwort war fehlerhaft).',
-    });
-  } catch (error: any) {
-    console.warn('[News API] Failed to fetch from NewsAPI.org:', error.message || error);
-    return res.status(503).json({
-      status: 'NO_DATA',
-      reason: `Der externe NewsAPI-Aufruf ist fehlgeschlagen: ${error.message || error}`,
-    });
-  }
+  const items: readonly ProjectedNewsItem[] = Object.freeze(result.articles.slice(0, MAX_NEWS_ITEMS).map(article => Object.freeze({
+    id: article.evidenceRef,
+    headline: article.title,
+    summary: 'Artikelmetadaten über GDELT; vollständiger Inhalt und Nutzungsrechte verbleiben beim Herausgeber.',
+    sentiment: classifyNewsSentiment(article.title),
+    sentimentBasis: NEWS_SENTIMENT_BASIS,
+    time: new Date(article.publishedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr',
+    source: article.sourceName,
+    evidenceRef: article.evidenceRef,
+    publishedAt: article.publishedAt,
+    url: article.url,
+  })));
+
+  newsCache.set(cacheKey, { expiresAt: now + NEWS_CACHE_TTL_MS, items });
+  res.setHeader('x-capital-ai-news-cache', 'miss');
+  res.setHeader('x-capital-ai-news-provider', 'gdelt');
+  return res.json(items.slice(0, limit));
 });

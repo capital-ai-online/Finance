@@ -4,7 +4,7 @@ import {
 } from '../../CryptoModuleContracts';
 
 export const CRYPTO_CATEGORY_FEATURE_CONTRACT_VERSION =
-  'fintech-core.crypto/category-features/0.1.0' as const;
+  'fintech-core.crypto/category-features/0.2.0' as const;
 
 export type CryptoFeatureRequirement = 'REQUIRED' | 'OPTIONAL' | 'HARD_GATE';
 export type CryptoFeatureValueType = 'NUMBER' | 'BOOLEAN' | 'TEXT';
@@ -100,6 +100,59 @@ export const CRYPTO_UNIVERSAL_MARKET_FEATURES = Object.freeze([
   definition('tokenomics.totalSupply', 'TOKENOMICS', 'OPTIONAL', 'NUMBER', 'Verified total token supply.', 'token'),
 ] as const);
 
+/**
+ * SC-4 extended provider facts. They are OPTIONAL raw evidence only and do not by themselves
+ * establish a normalized category score, hard-gate PASS, manipulation clearance or trade approval.
+ * The same fact catalog is admitted for Meme and DeFi research so the evidence service can remain
+ * profile-neutral while downstream, versioned feature transforms choose what is semantically usable.
+ */
+const EXTENDED_CRYPTO_PROVIDER_RAW_FEATURES = Object.freeze([
+  definition('security.contractOpenSource', 'RISK', 'OPTIONAL', 'BOOLEAN', 'Provider fact: contract source is published/open source.'),
+  definition('security.contractIsProxy', 'RISK', 'OPTIONAL', 'BOOLEAN', 'Provider fact: contract is a proxy/upgradeable deployment.'),
+  definition('security.mintable', 'RISK', 'OPTIONAL', 'BOOLEAN', 'Provider fact: token supply can be minted.'),
+  definition('security.blacklistFunction', 'RISK', 'OPTIONAL', 'BOOLEAN', 'Provider fact: blacklist capability exists.'),
+  definition('security.transferPausable', 'RISK', 'OPTIONAL', 'BOOLEAN', 'Provider fact: transfers can be paused.'),
+  definition('security.ownerCanChangeBalance', 'RISK', 'OPTIONAL', 'BOOLEAN', 'Provider fact: privileged balance modification capability exists.'),
+  definition('risk.honeypotDetected', 'RISK', 'OPTIONAL', 'BOOLEAN', 'Provider fact: honeypot behavior was detected.'),
+  definition('risk.cannotBuy', 'RISK', 'OPTIONAL', 'BOOLEAN', 'Provider fact: buy simulation/behavior indicates buying is blocked.'),
+  definition('risk.cannotSellAll', 'RISK', 'OPTIONAL', 'BOOLEAN', 'Provider fact: selling the full balance is restricted.'),
+  definition('risk.taxModifiable', 'RISK', 'OPTIONAL', 'BOOLEAN', 'Provider fact: tax/slippage parameters can be modified.'),
+  definition('risk.buyTax', 'RISK', 'OPTIONAL', 'NUMBER', 'Observed/configured buy tax fraction.', 'ratio'),
+  definition('risk.sellTax', 'RISK', 'OPTIONAL', 'NUMBER', 'Observed/configured sell tax fraction.', 'ratio'),
+  definition('risk.transferTax', 'RISK', 'OPTIONAL', 'NUMBER', 'Observed/configured transfer tax fraction.', 'ratio'),
+  definition('distribution.ownerShare', 'COMMUNITY', 'OPTIONAL', 'NUMBER', 'Owner wallet share of token supply.', 'ratio'),
+  definition('distribution.creatorShare', 'COMMUNITY', 'OPTIONAL', 'NUMBER', 'Creator/deployer share of token supply.', 'ratio'),
+  definition('distribution.holderCount', 'COMMUNITY', 'OPTIONAL', 'NUMBER', 'Provider-reported token holder count.', 'wallets'),
+  definition('distribution.topHolderShare', 'COMMUNITY', 'OPTIONAL', 'NUMBER', 'Sum of provider-reported top-holder shares.', 'ratio'),
+  definition('liquidity.lockedLpShare', 'LIQUIDITY', 'OPTIONAL', 'NUMBER', 'Share of provider-reported LP holdings marked locked.', 'ratio'),
+  definition('liquidity.dexLiquidityUsd', 'LIQUIDITY', 'OPTIONAL', 'NUMBER', 'Provider-reported aggregate DEX liquidity.', 'USD'),
+  definition('derivatives.openInterestUsd', 'MARKET', 'OPTIONAL', 'NUMBER', 'Aggregated derivatives open interest.', 'USD'),
+  definition('derivatives.openInterestChange5mPct', 'MARKET', 'OPTIONAL', 'NUMBER', 'Open-interest change over 5 minutes.', 'percent'),
+  definition('derivatives.openInterestChange1hPct', 'MARKET', 'OPTIONAL', 'NUMBER', 'Open-interest change over 1 hour.', 'percent'),
+  definition('derivatives.openInterestChange4hPct', 'MARKET', 'OPTIONAL', 'NUMBER', 'Open-interest change over 4 hours.', 'percent'),
+  definition('derivatives.openInterestChange24hPct', 'MARKET', 'OPTIONAL', 'NUMBER', 'Open-interest change over 24 hours.', 'percent'),
+  definition('derivatives.meanFundingRate', 'MARKET', 'OPTIONAL', 'NUMBER', 'Mean observed funding rate across reported venues.', 'ratio'),
+  definition('risk.liquidationUsd24h', 'RISK', 'OPTIONAL', 'NUMBER', 'Total derivatives liquidations over 24 hours.', 'USD'),
+  definition('risk.longLiquidationUsd24h', 'RISK', 'OPTIONAL', 'NUMBER', 'Long liquidations over 24 hours.', 'USD'),
+  definition('risk.shortLiquidationUsd24h', 'RISK', 'OPTIONAL', 'NUMBER', 'Short liquidations over 24 hours.', 'USD'),
+  definition('liquidity.orderbookBidsUsd1Pct', 'LIQUIDITY', 'OPTIONAL', 'NUMBER', 'Aggregated bid depth within the governed 1 percent range.', 'USD'),
+  definition('liquidity.orderbookAsksUsd1Pct', 'LIQUIDITY', 'OPTIONAL', 'NUMBER', 'Aggregated ask depth within the governed 1 percent range.', 'USD'),
+  definition('tokenomics.nextUnlockAt', 'TOKENOMICS', 'OPTIONAL', 'TEXT', 'ISO timestamp of the next reported token unlock.'),
+  definition('tokenomics.nextUnlockTokens', 'TOKENOMICS', 'OPTIONAL', 'NUMBER', 'Token amount in the next reported unlock.', 'token'),
+  definition('tokenomics.nextUnlockOfCirculatingPct', 'TOKENOMICS', 'OPTIONAL', 'NUMBER', 'Next unlock relative to circulating supply.', 'percent'),
+  definition('tokenomics.nextUnlockOfSupplyPct', 'TOKENOMICS', 'OPTIONAL', 'NUMBER', 'Next unlock relative to total supply.', 'percent'),
+  definition('tokenomics.totalLockedTokens', 'TOKENOMICS', 'OPTIONAL', 'NUMBER', 'Provider-reported currently locked token amount.', 'token'),
+  definition('community.interactions24h', 'COMMUNITY', 'OPTIONAL', 'NUMBER', 'Social interactions over the governed 24 hour window.', 'interactions'),
+  definition('community.mentions24h', 'COMMUNITY', 'OPTIONAL', 'NUMBER', 'Social mentions/posts active over the governed 24 hour window.', 'mentions'),
+  definition('community.activeCreators24h', 'COMMUNITY', 'OPTIONAL', 'NUMBER', 'Active social content creators over the governed 24 hour window.', 'creators'),
+  definition('community.createdPosts24h', 'COMMUNITY', 'OPTIONAL', 'NUMBER', 'Created social posts over the governed 24 hour window.', 'posts'),
+  definition('community.sentimentPct', 'COMMUNITY', 'OPTIONAL', 'NUMBER', 'Provider-reported social sentiment percentage.', 'percent'),
+  definition('community.spamPosts', 'COMMUNITY', 'OPTIONAL', 'NUMBER', 'Provider-reported spam posts over the governed window.', 'posts'),
+  definition('community.socialDominancePct', 'COMMUNITY', 'OPTIONAL', 'NUMBER', 'Provider-reported social dominance.', 'percent'),
+  definition('community.spamRatio', 'COMMUNITY', 'OPTIONAL', 'NUMBER', 'Derived spam posts divided by created posts.', 'ratio'),
+  definition('protocol.activeAddresses24h', 'PROTOCOL', 'OPTIONAL', 'NUMBER', 'Standardized active-address usage over 24 hours.', 'addresses'),
+] as const);
+
 const LAYER1_FEATURES = Object.freeze([
   definition('network.activeAddresses', 'NETWORK', 'REQUIRED', 'NUMBER', 'Active address count for the governed observation window.', 'addresses'),
   definition('network.transactionGrowth', 'NETWORK', 'REQUIRED', 'NUMBER', 'Transaction activity growth over the governed comparison window.', 'percent'),
@@ -142,6 +195,7 @@ const DEFI_FEATURES = Object.freeze([
   definition('tokenomics.emissions', 'TOKENOMICS', 'REQUIRED', 'NUMBER', 'Token emissions for the governed period.', 'token'),
   definition('protocol.treasuryToMarketCap', 'PROTOCOL', 'OPTIONAL', 'NUMBER', 'Treasury value relative to market capitalization.', 'ratio'),
   definition('liquidity.lpConcentration', 'LIQUIDITY', 'REQUIRED', 'NUMBER', 'Liquidity-provider concentration.', 'percent'),
+  ...EXTENDED_CRYPTO_PROVIDER_RAW_FEATURES,
   definition('protocol.smartContractEvidenceVerified', 'PROTOCOL', 'HARD_GATE', 'BOOLEAN', 'Smart-contract deployment/security evidence is present and governed.'),
   definition('risk.oracleRiskWithinPolicy', 'RISK', 'HARD_GATE', 'BOOLEAN', 'Deterministic oracle-risk policy gate evidence.'),
 ]);
@@ -224,6 +278,10 @@ const AI_DEPIN_FEATURES = Object.freeze([
   definition('tokenomics.utility', 'TOKENOMICS', 'REQUIRED', 'NUMBER', 'Token utility tied to network consumption.', 'index'),
 ]);
 
+const MEME_FEATURES = Object.freeze([
+  ...EXTENDED_CRYPTO_PROVIDER_RAW_FEATURES,
+]);
+
 export const CRYPTO_CATEGORY_FEATURE_DEFINITIONS: Readonly<
   Record<CryptoAnalysisProfileId, readonly CryptoFeatureDefinition[]>
 > = Object.freeze({
@@ -236,7 +294,7 @@ export const CRYPTO_CATEGORY_FEATURE_DEFINITIONS: Readonly<
   'exchange-token': EXCHANGE_TOKEN_FEATURES,
   gamefi: GAMEFI_FEATURES,
   'ai-depin': AI_DEPIN_FEATURES,
-  meme: Object.freeze([]),
+  meme: MEME_FEATURES,
   generic: Object.freeze([]),
 });
 

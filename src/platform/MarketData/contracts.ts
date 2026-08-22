@@ -2,7 +2,19 @@ export const MARKET_DATA_CONTRACT_VERSION = 'market-data/1.0.0' as const;
 export const MARKET_DATA_HISTORY_CONTRACT_VERSION = 'market-data-history/1.0.0' as const;
 
 export type MarketDataAssetClass = 'crypto' | 'stock' | 'forex' | 'commodity' | 'index' | 'bond' | 'macro';
-export type ProviderCapability = 'snapshot' | 'quote' | 'trade' | 'history' | 'bars' | 'fundamentals';
+export type ProviderCapability =
+  | 'snapshot'
+  | 'quote'
+  | 'trade'
+  | 'history'
+  | 'bars'
+  | 'fundamentals'
+  | 'security'
+  | 'derivatives'
+  | 'sentiment'
+  | 'news'
+  | 'onchain'
+  | 'governance';
 export type ProviderRole = 'primary' | 'secondary' | 'shadow';
 export type MarketDataBarInterval = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w';
 export type MarketDataQualityState =
