@@ -2,7 +2,7 @@ import { ResearchEvidenceProviderHttp, type ResearchEvidenceProviderHttpOptions 
 
 export const DUNE_PROVIDER_ID = 'dune' as const;
 export const DUNE_BASE_URL = 'https://api.dune.com/api' as const;
-export const DUNE_QUERY_EVIDENCE_CONTRACT_VERSION = 'dune-saved-query-evidence/1.2.0' as const;
+export const DUNE_QUERY_EVIDENCE_CONTRACT_VERSION = 'dune-saved-query-evidence/1.3.0' as const;
 
 export type DuneEvidenceStatus =
   | 'VERIFIED'
@@ -13,6 +13,12 @@ export type DuneEvidenceStatus =
   | 'POLICY_BLOCKED';
 
 export type DuneAccessMode = 'FREE_TIER' | 'TRIAL_14D';
+export type DuneExecutionDiagnosticStatus =
+  | 'READY'
+  | 'NOT_CONFIGURED'
+  | 'SOURCE_UNAVAILABLE'
+  | 'INVALID'
+  | 'QUERY_NOT_GOVERNED';
 
 export interface DuneSavedQueryEvidence {
   readonly contractVersion: typeof DUNE_QUERY_EVIDENCE_CONTRACT_VERSION;
@@ -24,6 +30,26 @@ export interface DuneSavedQueryEvidence {
   readonly executionId: string | null;
   readonly rows: readonly Readonly<Record<string, unknown>>[];
   readonly accessMode: DuneAccessMode;
+  readonly reason?: string;
+}
+
+export interface DuneExecutionDiagnostic {
+  readonly contractVersion: typeof DUNE_QUERY_EVIDENCE_CONTRACT_VERSION;
+  readonly authority: 'DIAGNOSTIC_ONLY';
+  readonly status: DuneExecutionDiagnosticStatus;
+  readonly executionId: string;
+  readonly expectedQueryId: number;
+  readonly returnedQueryId: number | null;
+  readonly state: string | null;
+  readonly isExecutionFinished: boolean | null;
+  readonly submittedAt: string | null;
+  readonly executionStartedAt: string | null;
+  readonly executionEndedAt: string | null;
+  readonly expiresAt: string | null;
+  readonly executionCostCredits: number | null;
+  readonly errorType: string | null;
+  readonly errorMessage: string | null;
+  readonly retrievedAt: string;
   readonly reason?: string;
 }
 
@@ -57,6 +83,17 @@ function parseAccessMode(value: string | undefined): DuneAccessMode {
   return value?.trim().toUpperCase() === 'TRIAL_14D' ? 'TRIAL_14D' : 'FREE_TIER';
 }
 
+function finiteNumber(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value !== 'string' || value.trim() === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function stringOrNull(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value : null;
+}
+
 function failure(
   status: DuneEvidenceStatus,
   queryId: number,
@@ -79,6 +116,34 @@ function failure(
   });
 }
 
+function diagnosticFailure(
+  status: DuneExecutionDiagnosticStatus,
+  executionId: string,
+  expectedQueryId: number,
+  retrievedAt: string,
+  reason: string,
+): DuneExecutionDiagnostic {
+  return Object.freeze({
+    contractVersion: DUNE_QUERY_EVIDENCE_CONTRACT_VERSION,
+    authority: 'DIAGNOSTIC_ONLY' as const,
+    status,
+    executionId,
+    expectedQueryId,
+    returnedQueryId: null,
+    state: null,
+    isExecutionFinished: null,
+    submittedAt: null,
+    executionStartedAt: null,
+    executionEndedAt: null,
+    expiresAt: null,
+    executionCostCredits: null,
+    errorType: null,
+    errorMessage: null,
+    retrievedAt,
+    reason,
+  });
+}
+
 /**
  * Read-only Dune evidence provider with two explicit entitlement modes:
  * FREE_TIER and a time-bounded Owner-attested TRIAL_14D.
@@ -86,6 +151,9 @@ function failure(
  * The trial may broaden accessible Dune datasets, but it never broadens CAPITAL-AI mutation
  * authority: only allowlisted saved-query latest-result reads are permitted. Arbitrary SQL,
  * execute-query, pipelines, exports and credit/overage bypass remain absent by construction.
+ *
+ * A separate diagnostic method may inspect Dune execution status for an already-existing execution.
+ * It never starts/cancels an execution, never returns evidence rows and can never authorize scoring.
  */
 export class DuneQueryEvidenceProvider {
   private readonly http: ResearchEvidenceProviderHttp;
@@ -141,6 +209,77 @@ export class DuneQueryEvidenceProvider {
     if (now < this.trialStartedAt) return 'Dune 14-day trial window has not started.';
     if (now >= this.trialEndsAt) return 'Dune 14-day trial window has expired; provider is fail-closed until FREE_TIER is re-attested.';
     return null;
+  }
+
+  public async inspectExecutionStatus(executionIdInput: string, expectedQueryId: number): Promise<DuneExecutionDiagnostic> {
+    const executionId = executionIdInput.trim();
+    const retrievedAt = new Date(this.nowMs()).toISOString();
+    if (!/^[A-Z0-9_-]{10,80}$/i.test(executionId)) {
+      return diagnosticFailure('INVALID', executionId, expectedQueryId, retrievedAt, 'Dune execution ID has an invalid format.');
+    }
+    if (!Number.isSafeInteger(expectedQueryId) || expectedQueryId <= 0) {
+      return diagnosticFailure('INVALID', executionId, expectedQueryId, retrievedAt, 'Positive expected query ID is required.');
+    }
+    if (!this.allowedQueryIds.has(expectedQueryId)) {
+      return diagnosticFailure(
+        'QUERY_NOT_GOVERNED',
+        executionId,
+        expectedQueryId,
+        retrievedAt,
+        'Expected Dune query ID is not present in the governed allowlist. Diagnostic reads cannot bypass query governance.',
+      );
+    }
+
+    const result = await this.http.requestJson(`/v1/execution/${encodeURIComponent(executionId)}/status`);
+    if (result.status !== 'READY') {
+      return diagnosticFailure(
+        result.status === 'NOT_CONFIGURED' ? 'NOT_CONFIGURED' : 'SOURCE_UNAVAILABLE',
+        executionId,
+        expectedQueryId,
+        result.retrievedAt,
+        result.reason ?? 'Dune execution status unavailable.',
+      );
+    }
+    if (!result.data || typeof result.data !== 'object' || Array.isArray(result.data)) {
+      return diagnosticFailure('INVALID', executionId, expectedQueryId, result.retrievedAt, 'Dune execution status response is not an object.');
+    }
+
+    const root = result.data as Record<string, unknown>;
+    const returnedQueryId = finiteNumber(root.query_id);
+    if (returnedQueryId === null || returnedQueryId !== expectedQueryId) {
+      return Object.freeze({
+        ...diagnosticFailure(
+          'INVALID',
+          executionId,
+          expectedQueryId,
+          result.retrievedAt,
+          `Dune execution/query mismatch: expected ${expectedQueryId}, received ${returnedQueryId ?? 'unknown'}.`,
+        ),
+        returnedQueryId,
+      });
+    }
+
+    const errorObject = root.error && typeof root.error === 'object' && !Array.isArray(root.error)
+      ? root.error as Record<string, unknown>
+      : null;
+    return Object.freeze({
+      contractVersion: DUNE_QUERY_EVIDENCE_CONTRACT_VERSION,
+      authority: 'DIAGNOSTIC_ONLY' as const,
+      status: 'READY' as const,
+      executionId,
+      expectedQueryId,
+      returnedQueryId,
+      state: stringOrNull(root.state),
+      isExecutionFinished: typeof root.is_execution_finished === 'boolean' ? root.is_execution_finished : null,
+      submittedAt: stringOrNull(root.submitted_at),
+      executionStartedAt: stringOrNull(root.execution_started_at),
+      executionEndedAt: stringOrNull(root.execution_ended_at),
+      expiresAt: stringOrNull(root.expires_at),
+      executionCostCredits: finiteNumber(root.execution_cost_credits),
+      errorType: stringOrNull(errorObject?.type),
+      errorMessage: stringOrNull(errorObject?.message),
+      retrievedAt: result.retrievedAt,
+    });
   }
 
   public async getLatestSavedQuery(queryId: number, expectedColumns: readonly string[]): Promise<DuneSavedQueryEvidence> {
