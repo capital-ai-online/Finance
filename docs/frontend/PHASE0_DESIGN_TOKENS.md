@@ -1,4 +1,4 @@
-# CAPITAL-AI — Design Tokens & Branding Manifest v6.0
+# CAPITAL-AI — Design Tokens & Branding Manifest v6.1
 
 **Status:** ACTIVE / CANONICAL  
 **Stand:** 22. August 2026  
@@ -6,159 +6,120 @@
 **Web-Projektion:** `src/index.css` (`@theme`)  
 **Frontend-Architektur:** `docs/frontend/FRONTEND_ARCH.md`
 
----
+## 1. Authority und Provenance
 
-## 1. Zweck und Authority
+`docs/frontend/design-tokens.json` ist der **Single Point of Trust** für maschinenlesbare CAPITAL-AI Designwerte. Web, PDF, Social Media und externe Renderer projizieren diese Registry und dürfen keine eigene Palette als zweite Authority führen.
 
-Die Design-Token-Registry ist der **Single Point of Trust für maschinenlesbare CAPITAL-AI Branding-Werte**. Webanwendung, PDF-Renderer, Social Media Engine und weitere Renderer konsumieren oder projizieren diese Registry. Renderer dürfen keine konkurrierende Markenpalette als eigene Authority etablieren.
-
-Das vom Owner bereitgestellte externe Artefakt **„capital-ai.online — Design & Brand Architecture / Branding Manifest v6.0“** wurde am 22. August 2026 als Designvorgabe korreliert. Es bleibt ein Provenance-/Owner-Input; zur Laufzeit besteht **keine Google-Drive-Abhängigkeit**. Die übernommenen Werte und der SHA-256-Fingerprint der Quelle sind im `provenance`-Block von `design-tokens.json` gebunden.
+Das Owner-Artefakt **„capital-ai.online — Design & Brand Architecture / Branding Manifest v6.0“** bleibt provenance-gebundener Input ohne Runtime-Abhängigkeit zu Google Drive. Die Owner-Ergänzung vom **22. August 2026** stellt Cyan als kanonische Market-/Data-Visualization-Farbe wieder her. Diese konsolidierte Projektion wird als **Manifest v6.1** geführt.
 
 ```text
-Owner / Branding Manifest v6.0
-            ↓ ingest + provenance
-Canonical Design Token Registry
-            ↓
-      ┌─────┼─────────┬───────────┬──────────┐
-      ↓     ↓         ↓           ↓          ↓
-     Web   PDF   Social Media   E-Mail      SEO
+Owner Manifest v6.0 + Owner Amendment v6.1
+                    ↓
+        Canonical Design Token Registry
+                    ↓
+      Web / PDF / Social / External Renderers
 ```
 
-Für die React-Struktur bleibt `FRONTEND_ARCH.md` die normative Presentation-/Dependency-Authority. Dieses Dokument definiert ausschließlich Branding-/Token-Projektion und erzeugt keine zweite Frontend-Architektur.
+Für Source-Tree-, Dependency- und Presentation-Regeln bleibt `FRONTEND_ARCH.md` zuständig. Dieses Dokument erzeugt keine zweite Frontend- oder Financial-Runtime-Architektur.
 
----
+## 2. Aktive Palette
 
-## 2. Branding Manifest v6.0 — aktive Palette
-
-| Tokenrolle | Wert | Verwendung |
+| Rolle | Wert | Semantik |
 |---|---:|---|
-| Background Primary | `#08080C` | Haupt-Canvas |
-| Background Secondary | `#121215` | Cards / erhöhte Flächen |
-| Border | `#252529` | Standard-Divider / Borders |
+| Canvas | `#08080C` | Haupt-Canvas |
+| Surface | `#121215` | erhöhte Flächen |
+| Border | `#252529` | Divider / Borders |
 | Text Primary | `#FFFFFF` | Primärtext |
-| Text Secondary | `#A1A1AA` | Sekundär-/Metatext |
-| Brand Primary / Gold | `#F9BF21` | Brand, CTA, Premium, Fokus |
-| Brand Accent / Purple | `#8D26FF` | AI-/Tech-Akzent |
-| Success / Emerald | `#44DE88` | READY / BUY / positive Semantik |
-| Danger / Rose | `#F87171` | REJECT / SELL / Fehlersemantik |
+| Text Secondary | `#A1A1AA` | Metatext |
+| Gold | `#F9BF21` | Primary / Premium / Fokus |
+| Purple | `#8D26FF` | AI / Intelligence |
+| Cyan | `#22D3EE` | Market Data / Live / Technical Visualization |
+| Emerald | `#44DE88` | READY / BUY / positiv |
+| Rose | `#F87171` | REJECT / SELL / negativ |
 
-### Verbotene aktive UI-Branding-Werte
+### Assetklassen
 
-- Cyan/Blau als Brandingfarbe, insbesondere historische Cyan-/Blue-Akzente.
-- Historisches Gold `#F5C453` bzw. andere Alt-Gold-Varianten als neue lokale Branding-Authority.
-- Montserrat als Heading-Authority.
-- lokale Renderer-Paletten, die von der Token-Registry abweichen.
+| Assetklasse | Semantischer Token | Wert |
+|---|---|---:|
+| Crypto | `asset-crypto` | `#22D3EE` |
+| Aktien | `asset-stock` | `#44DE88` |
+| Indizes | `asset-index` | `#60A5FA` |
+| Forex | `asset-forex` | `#8D26FF` |
+| Rohstoffe | `asset-commodity` | `#F9BF21` |
+| Anleihen | `asset-bond` | `#E879F9` |
 
-Domänenspezifische Asset-/Unterklassenfarben dürfen in der **Content Layer** verwendet werden, wenn sie Daten visualisieren. Sie dürfen nicht die UI-Branding-Authority ersetzen.
+Assetklassenfarbe und Ergebnissemantik sind getrennt. **Best/Worst** bleibt `score-best`/`score-worst`; eine Klassenfarbe darf keine positive oder negative Bewertung implizieren.
 
----
+## 3. Semantische Token-Regel
 
-## 3. Typografie
+Neue oder migrierte Komponenten verwenden ausschließlich Rollen aus der Registry:
+
+- `brand-*` für Markenrollen,
+- `asset-*` für Assetklassen,
+- `score-*` für Scoring-/Ranking-Zustände,
+- `factor-*` für Faktorkategorien,
+- `status-*` für Laufzeit-/Qualitätszustände.
+
+Lokale Branding-Hexwerte sind nicht zulässig. Cyan selbst ist **nicht Legacy**; Legacy sind direkte lokale Cyan-/Blue-Literale und historische Aliasnamen.
+
+Die historischen Namen `aif-gold-*`, `aif-neon-purple` und `aif-neon-cyan` bleiben während der Strangler-Migration nur als Compatibility Surface. `aif-neon-cyan` projiziert auf das kanonische Cyan `#22D3EE`. Neue Komponenten dürfen diese Aliasnamen nicht mehr einführen.
+
+## 4. Typografie
 
 | Rolle | Kanonisch |
 |---|---|
-| Headings / Display | **Inter** |
+| Headings | **Inter** |
 | Body | **Poppins** |
-| Tech / Scores / Data | **JetBrains Mono** |
+| Technical / Scores / Data | **JetBrains Mono** |
 
-`src/index.css` setzt `--font-display` auf Inter und bindet `h1`–`h6` an diese Rolle. Renderer mit technischen Font-Limitierungen dürfen dokumentierte Renderer-Fallbacks verwenden, dürfen daraus aber keine neue Produktfont-Authority ableiten.
+Renderer-spezifische Fallbacks sind technische Adapter und keine alternative Produktfont-Authority.
 
----
+## 5. Renderer-Vertrag
 
-## 4. Kompatibilitäts-Aliase
+### Web
 
-Historische CSS-/Token-Bezeichner wie `aif-gold-*`, `aif-neon-purple` und `aif-neon-cyan` existieren während der strangler-basierten UI-Migration nur als **nicht-authoritative Compatibility Surface**.
+`src/index.css` ist die Tailwind-CSS-4-Projektion der Registry. Fachkomponenten konsumieren semantische Rollen statt Hexwerte.
 
-- `aif-gold-*` projiziert auf Manifest-v6-Gold `#F9BF21`.
-- `aif-neon-purple` projiziert auf Purple `#8D26FF`.
-- `aif-neon-cyan` projiziert ebenfalls auf Purple `#8D26FF`; dadurch kann Legacy-Code keinen Cyan-Brandingwert mehr rendern.
-- Neue Komponenten verwenden ausschließlich semantische `brand-*`-Tokens.
-- Nach Migration aller Consumer werden die historischen Aliasnamen entfernt.
+### PDF
 
-Damit wird die sichtbare Palette sofort konsolidiert, ohne eine zweite Theme-Schicht oder einen Big-Bang-Pfadbruch zu erzeugen.
+`src/platform/PdfReporting/pdfBrand.ts` erhält Build-time Werte aus derselben Registry. Documentation-as-Code liest die Registry ebenfalls direkt. Renderer-Fallbacks dürfen keine zweite Palette etablieren.
 
----
+### Social Media
 
-## 5. Pattern Badge Contract
+`MediaProjectV2` bindet `brandTokenSource` an `docs/frontend/design-tokens.json`. Generative Grafiken ohne diesen Contract bleiben Concept Art und keine Template-Authority.
 
-Pattern-Ergebnisse der kanonischen Scoring-/Orchestrator-Schichten werden nur als **Presentation Projection** dargestellt.
+### Externe Anbieter
 
-| Richtung | Semantik | Farbe |
-|---|---|---:|
-| BUY | strong / medium / weak | Emerald `#44DE88` |
-| SELL | strong / medium / weak | Rose `#F87171` |
-| kein verifiziertes Pattern | `NO PATTERN` | neutral |
+Externe Provider erhalten versionierte Exporte/Contracts aus der Registry. Das Drive-Artefakt oder individuelle Provider-Templates werden nie Runtime-Authority.
 
-Es werden keine Pattern-Platzhalter oder erfundenen Signale erzeugt. Die UI liest verifizierte Ergebnisse und schreibt weder in den kanonischen Score noch in Ranking-/Execution-Contracts.
+## 6. Pattern und Accessibility
 
----
+BUY = Emerald, SELL = Rose. Wenn kein verifiziertes Pattern existiert, zeigt die UI `NO PATTERN`; keine Platzhalter oder erfundenen Signale.
 
-## 6. Renderer-Verträge
+Fokus bleibt Gold mit sichtbarem 2-px-Ring. Status und Assetklasse werden zusätzlich durch Text/Icon kommuniziert. Interaktive Ziele bleiben, soweit sinnvoll, mindestens 44×44 px. `prefers-reduced-motion` ist verbindlich.
 
-### Web / React
+## 7. Strangler-Migration
 
-- Runtime-Projektion über `src/index.css` / Tailwind CSS 4 `@theme`.
-- Shared-Primitives und Branding-Komponenten unter `src/shared`.
-- Inter / Poppins / JetBrains Mono gemäß Rollenvertrag.
+Die bestehende Frontend-Roadmap ist führend. Es wird keine zweite Migrationspipeline eingeführt.
 
-### Client-PDF / jsPDF
+1. Token-Registry und Web-Projektion auf v6.1 konsolidieren. — **umgesetzt**
+2. `UniverseBestWorst` nach `src/features/screening/ui` migrieren. — **umgesetzt**
+3. `CryptoScoringEnterprise` und `EnterpriseBinanceQuickAnalysis` nach `src/features/crypto/ui` migrieren. — **umgesetzt**
+4. Alte Implementierungen unter `src/components` durch dünne Compatibility-Exports ersetzen. — **umgesetzt für diese drei Komponenten**
+5. Weitere Fachkomponenten komponentenweise auf semantische Tokens migrieren.
+6. Compatibility-Dateien erst bei **0 produktiven Inbound-Imports** physisch löschen.
+7. Historische Aliasnamen erst entfernen, wenn keine Consumer mehr existieren.
 
-- `src/platform/PdfReporting/pdfBrand.ts`.
-- Build-time Tokens aus `docs/frontend/design-tokens.json` über `vite.config.ts`.
-- PDF-safe Renderer-Fallbacks sind technische Adapter, keine alternative Brand-Authority.
+Damit werden Legacy-Anbindungen strangler-basiert abgelöst, ohne Parallelarchitektur oder Big-Bang-Risiko.
 
-### Documentation-PDF / WeasyPrint
+## 8. Abnahmekriterien
 
-- `scripts/docs/export_notebooklm_pdfs.py`.
-- Direkte Token-Lektüre aus derselben Registry.
-- Separate Accessibility-/PDF-UA-Verifikation bleibt erforderlich.
-
-### Social Media Engine
-
-- `src/platform/SocialMediaEngine/Contracts/MediaProject.ts` bindet `brandTokenSource` an `docs/frontend/design-tokens.json`.
-- `MediaStudioTemplates.ts` erzeugt Projekte über diesen bestehenden Contract.
-- `scripts/media/capital_ai_media.py` liest dieselbe Registry für deterministische Media-Renderings.
-- Generative Entwürfe ohne diesen Contract sind **Mockups/Concept Art**, keine produktiven Templates.
-
-### E-Mail / SEO / externe Anbieter
-
-Externe Provider erhalten Werte aus einem versionierten Export/Contract der Registry. Die Drive-Grafik oder individuelle Provider-Templates werden nicht zur Laufzeit-Authority. Abweichende lokale Farben/Fonts sind nicht zulässig.
-
----
-
-## 7. Accessibility und Interaktion
-
-- Fokus: Gold `#F9BF21`, 2 px, Offset 4 px.
-- Interaktive Ziele: mindestens 44 × 44 px, sofern durch Komponententyp sinnvoll.
-- Statusinformation wird zusätzlich zu Farbe durch Text/Icon transportiert.
-- `prefers-reduced-motion` bleibt verbindlich.
-
----
-
-## 8. Migration / Suspendierung des Altsystems
-
-Das historische Cyan-/Alt-Gold-/Montserrat-System ist **SUSPENDED**. Neue Implementierung darf es nicht als Authority verwenden.
-
-Die physische Bereinigung erfolgt strangler-basiert:
-
-1. Kanonische Tokenwerte auf Manifest v6.0 projizieren. — **umgesetzt**
-2. Web-Theme / Inter-Headings umstellen. — **umgesetzt**
-3. zentrale Branding-Primitives auf `brand-*` migrieren. — **umgesetzt / laufend**
-4. fachliche Legacy-Komponenten mit lokalen Farbliteralen schrittweise bereinigen.
-5. Brand-Contract-Gate verschärfen, sobald die bekannte Legacy-Allowlist auf null reduziert ist.
-6. historische Aliasnamen entfernen und Alt-Dokumentation unter `docs/archive/` read-only halten.
-
-Kein Archivdokument und keine externe Grafik darf nach der Migration als produktiver Token-Input importiert werden.
-
----
-
-## 9. Abnahmekriterien
-
-- [x] Manifest-v6-Provenance in `design-tokens.json` gebunden.
-- [x] Gold, Purple, Emerald, Rose sowie Surface-/Textwerte zentral konsolidiert.
-- [x] Cyan-Kompatibilitätsalias rendert Purple statt Cyan.
-- [x] Inter als Heading-Rolle in der Webprojektion aktiviert.
-- [x] Social-Media-Contract verweist bereits auf dieselbe Token-Registry.
-- [x] PDF- und Media-Renderer konsumieren dieselbe Registry.
-- [ ] verbleibende lokale Alt-Farbliterale in Legacy-Fachkomponenten vollständig migriert.
-- [ ] Compatibility-Aliase nach Consumer-Migration physisch entfernt.
+- [x] v6.0-Provenance und v6.1-Owner-Amendment in der Registry gebunden.
+- [x] Gold, Purple, Cyan, Emerald und Rose zentral definiert.
+- [x] sechs Assetklassen besitzen separate semantische Rollen.
+- [x] Best/Worst bleibt von Assetklassenfarben getrennt.
+- [x] Inter / Poppins / JetBrains Mono sind rollenbasiert projiziert.
+- [x] Web-, PDF- und Social-Media-Pfade teilen dieselbe Authority.
+- [x] berührte Fachkomponenten wurden in die vorgesehenen Feature-Slices migriert.
+- [ ] verbleibende nicht migrierte Fachkomponenten vollständig von lokalen Farbwerten befreien.
+- [ ] Compatibility-Aliase und Legacy-Pfade nach Inbound-Import-Zahl 0 löschen.
