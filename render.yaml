@@ -12,22 +12,13 @@ services:
     # off to avoid a second, un-attested deployment control plane.
     autoDeployTrigger: off
     healthCheckPath: /healthz
-    # ADR-0037: stay below Render's 30s default termination window so the application can
-    # stop scheduling work, drain HTTP requests and exit before a forced termination.
     maxShutdownDelaySeconds: 30
-    # Deploy-Härtung: echte Secrets (API-Keys, Service-Role-Key, Stripe-Secret/Webhook-Key,
-    # TOTP-Verschlüsselungsschlüssel, SMTP-Passwort, OAuth-Client-Secrets ...) leben NICHT
-    # mehr als einzelne `envVars`, sondern gebündelt in dieser Secret File. Der Inhalt wird
-    # ausschließlich im Render-Dashboard gepflegt (Environment -> Secret Files), niemals hier
-    # im Repo. Vollständige Schlüsselliste: scripts/security/secretFileManifest.ts
-    # (Single Source of Truth, auch für den Boot-Validator server/validateRuntimeSecrets.ts
-    # und das Env-Var-Abdeckungs-Gate in scripts/automation/verifyDeploymentReadiness.ts).
+    # ADR-0037: real secrets live only in finance-secrets.env. Full key inventory is defined by
+    # scripts/security/secretFileManifest.ts. SC-4 DUNE_API_KEY therefore remains in the secret file;
+    # the non-secret Free-Tier policy gates below are normal envVars.
     secretFiles:
       - name: finance-secrets.env
     envVars:
-      # Nur nicht-vertrauliche Konfiguration: clientseitig ohnehin sichtbare VITE_*-Werte,
-      # öffentliche Publishable/Anon-Keys, OAuth-Client-IDs (das *_SECRET-Gegenstück liegt in
-      # der Secret File oben) sowie reine Kennungen/Konfigurationswerte ohne Geheimnischarakter.
       - key: VITE_GA_MEASUREMENT_ID
         sync: false
       - key: VITE_SUPABASE_URL
@@ -38,9 +29,6 @@ services:
         sync: false
       - key: STRIPE_PUBLISHABLE_KEY
         sync: false
-      # Canonical production billing contract. Monthly/yearly variables are the authoritative
-      # keys used by server/stripe.ts. Legacy monthly aliases remain declared temporarily for
-      # backwards compatibility and can be retired in a separately reviewed cleanup.
       - key: STRIPE_PRICE_ID_STARTER_MONTHLY
         sync: false
       - key: STRIPE_PRICE_ID_STARTER_YEARLY
@@ -78,20 +66,14 @@ services:
       - key: FACEBOOK_CLIENT_ID
         sync: false
       # ADR-0089/ADR-0090 — server-only Gemini Research Shadow + Free-Tier-only hardening.
-      # GEMINI_API_KEY stays exclusively in finance-secrets.env and must belong to a Gemini
-      # Free-Tier project with billing disabled. The canonical server factory pins
-      # gemini-2.5-flash and forbids paid-mode/model/price overrides.
       - key: GEMINI_RESEARCH_SHADOW_ENABLED
         value: "false"
       - key: GEMINI_RESEARCH_FREE_TIER_ONLY
         value: "true"
-      # Explicit operator gate. Set true only after verifying the key's Google project has NO
-      # billing account attached. If billing is later enabled, immediately set back to false.
       - key: GEMINI_RESEARCH_FREE_TIER_ATTESTED
         value: "false"
       - key: GEMINI_RESEARCH_REQUESTS_PER_MINUTE
         value: "3"
-      # 50/day is intentionally well below the currently documented 500-RPD free Search quota.
       - key: GEMINI_RESEARCH_DAILY_REQUEST_BUDGET
         value: "50"
       - key: GEMINI_RESEARCH_DAILY_TOKEN_BUDGET
@@ -106,3 +88,14 @@ services:
         value: "1200"
       - key: GEMINI_RESEARCH_THINKING_LEVEL
         value: "low"
+      # SC-4 Dune Free-Tier-only evidence. DUNE_API_KEY stays in finance-secrets.env.
+      # The attestation remains false until the Owner manually verifies the Dune account is Free
+      # and extra-credit spending is disabled/capped.
+      - key: DUNE_FREE_TIER_ONLY
+        value: "true"
+      - key: DUNE_FREE_TIER_ATTESTED
+        value: "false"
+      - key: DUNE_ALLOWED_QUERY_IDS
+        value: ""
+      - key: DUNE_MAX_RESULT_ROWS
+        value: "25"
