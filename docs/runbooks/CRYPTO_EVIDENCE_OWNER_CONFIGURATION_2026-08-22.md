@@ -1,148 +1,134 @@
 # CAPITAL-AI — Crypto Evidence Owner Configuration Runbook
 
-Status: Owner/manual checklist
+Status: Owner/manual checklist — free-provider supersession
 Date: 2026-08-22
 Related: `SC4_CRYPTO_EVIDENCE_POLICY_SUPERSESSION_2026-08-22.md`
 
-This runbook deliberately separates account/billing/security mutations from repository preparation. Complete the phases in order. Do not add secrets to GitHub files or browser-visible `VITE_*` variables.
+This runbook separates account/security/dataset mutations from repository preparation. Never add real secrets to GitHub files, chat, screenshots or browser-visible `VITE_*` variables.
 
-## Phase 0 — Cost and licensing decisions
+## Phase 0 — Provider decision — COMPLETE
 
-- [ ] **NewsAPI:** choose a production-compatible plan before public Landing Page / AI Newsfeed Viewer traffic. Developer/free tier is development-only. Confirm whether overage auto-billing is disabled or capped.
-  - Register / key: `https://newsapi.org/register`
-  - Pricing: `https://newsapi.org/pricing`
-- [ ] **CoinGlass:** choose a commercial-use API plan for public CAPITAL-AI use. Do not treat Hobby/Startup personal plans as commercial production entitlement.
-  - API key/account: `https://www.coinglass.com/user/ApiKey`
-  - Pricing: `https://www.coinglass.com/pricing`
-- [ ] **LunarCrush:** choose a paid plan that explicitly includes the required social/creator endpoints and commercial use.
-  - API keys: `https://lunarcrush.com/developers/api/authentication`
-  - Pricing: `https://lunarcrush.com/pricing`
-- [ ] **Messari:** verify the exact protocol/on-chain endpoint entitlement for the selected subscription. Keep x402/pay-per-request disabled.
-  - API access/key: `https://messari.io/account/api`
-  - API docs: `https://docs.messari.io/`
-- [ ] **Dune:** decide the monthly credit/spending budget and create an API key. Configure account/team spending limits before public traffic.
+- [x] NewsAPI.org excluded. Developer plan is not valid for staging/production, regardless of small/self-owned user count.
+- [x] CoinGlass excluded.
+- [x] LunarCrush excluded.
+- [x] Messari excluded from active default evidence architecture.
+- [x] GoPlus: keyless documented Free Security API baseline selected; no x402/Agent payment.
+- [x] GDELT DOC 2.0 selected for keyless news metadata/provenance.
+- [x] Kraken Futures Public Charts selected for keyless derivatives/market analytics where a governed market exists.
+- [x] DEX Screener Public API selected for keyless DEX pool/liquidity/activity evidence where a governed token identity exists.
+- [x] Sourcify API v2 selected for open-source EVM source/bytecode verification evidence.
+- [x] DeFiLlama public API remains canonical keyless DeFi TVL/fees/revenue source under ADR-0100.
+- [x] Dune may be used only on the Free plan, latest saved-query result reads only, under credit/allowlist limits.
+
+## Phase 1 — API-key/manual account setup
+
+Only Dune requires a new secret for the active SC4 stack.
+
+- [ ] Create/verify a Dune Free account and generate `DUNE_API_KEY`.
   - Sign up: `https://dune.com/auth/register`
   - API settings: `https://dune.com/settings/api`
-  - API docs: `https://docs.dune.com/api-reference/overview/introduction`
-- [ ] **GoPlus:** default to the documented free Security API within vendor rate limits. Create an authenticated token/package only if higher quota is needed. Do not enable Agent/x402 payment.
-  - Security API docs: `https://docs.gopluslabs.io/reference/api-overview`
-  - Access-token docs: `https://docs.gopluslabs.io/reference/generatetoken`
-  - Solana token security: `https://docs.gopluslabs.io/reference/solanatokensecurityusingget`
-- [ ] **DeFiLlama:** keep the accepted keyless public TVL/fees/revenue path unless a separate cost decision approves the paid API.
-  - API docs: `https://defillama.com/docs/api`
-  - Subscription: `https://defillama.com/subscription`
+  - Credit docs: `https://docs.dune.com/resources/credits-billing/how-credits-work`
+- [ ] In Dune account/team billing settings, disable or cap extra-credit spending so Free-Tier use cannot silently charge.
+- [ ] After confirming the account remains Free, set `DUNE_FREE_TIER_ATTESTED=true` in server-side production configuration.
 
-## Phase 1 — Provider account/API-key creation
+No new key is required for GoPlus Free, GDELT, Kraken Public, DEX Screener, Sourcify or DeFiLlama public endpoints.
 
-Generate keys only after Phase 0 is approved.
+## Phase 2 — Production secret configuration
 
-- [ ] `NEWS_API_KEY`
-- [ ] `COINGLASS_API_KEY`
-- [ ] `LUNARCRUSH_API_KEY`
-- [ ] `MESSARI_API_KEY`
-- [ ] `DUNE_API_KEY`
-- [ ] optional `GOPLUS_API_KEY` only for an approved authenticated/higher-quota mode
+Repository preparation:
 
-Never paste keys into chat, issues, pull requests, source files or screenshots.
+- [x] `NEWS_API_KEY` removed from the canonical secret manifest.
+- [x] `DUNE_API_KEY` added to `scripts/security/secretFileManifest.ts`.
+- [x] `DUNE_ALLOWED_QUERY_IDS`, `DUNE_FREE_TIER_ONLY`, `DUNE_FREE_TIER_ATTESTED` and `DUNE_MAX_RESULT_ROWS` remain non-secret governance configuration.
+- [x] GoPlus key remains optional and is not required for the canonical Free baseline.
 
-## Phase 2 — Production secret-manifest approval
+Manual after merge/deployment preparation:
 
-Current `finance-secrets.env` authority already includes `NEWS_API_KEY`. The new provider secrets are not yet part of the canonical secret manifest.
+- [ ] Add the real `DUNE_API_KEY` through the existing Render `finance-secrets.env` process.
+- [ ] Remove any obsolete `NEWS_API_KEY` value from the production secret file after the GDELT supersession is deployed and verified.
+- [ ] Do not add CoinGlass/LunarCrush/Messari keys for SC4.
 
-Owner/security approval required before repository mutation:
+## Phase 3 — Dataset / provider identity governance — OWNER DATA TASK
 
-- [ ] Approve addition of `COINGLASS_API_KEY` to `scripts/security/secretFileManifest.ts`.
-- [ ] Approve addition of `LUNARCRUSH_API_KEY`.
-- [ ] Approve addition of `MESSARI_API_KEY`.
-- [ ] Approve addition of `DUNE_API_KEY`.
-- [ ] Decide whether optional `GOPLUS_API_KEY` should be included; no key is needed for the free baseline.
-- [ ] Keep `DUNE_ALLOWED_QUERY_IDS` outside the secret list as non-secret governance configuration.
-- [ ] After the code change is reviewed/merged, add approved secret values through the existing Render `finance-secrets.env` process.
+No symbol-to-contract/market guessing is allowed. For each supported asset create a reviewed `CryptoEvidenceIdentityRegistry` record containing only applicable fields:
 
-## Phase 3 — Dataset / provider identity governance
+- canonical symbol;
+- EVM chain ID + exact contract address **or** Solana exact mint;
+- DEX Screener chain slug + exact token address;
+- Kraken Futures public market symbol where listed;
+- Dune saved query IDs + expected columns + feature mappings where needed;
+- authoritative source references used to verify every identity;
+- reviewer + verification timestamp + status.
 
-No symbol-to-contract guessing is allowed.
+Manual review groups:
 
-For every supported asset, create a reviewed identity record containing:
-
-- canonical asset ID / symbol;
-- chain/network;
-- EVM chain ID + exact contract address where applicable;
-- Solana exact mint address where applicable;
-- DeFiLlama exact protocol slug where applicable;
-- Messari exact protocol identifier where applicable;
-- Dune saved query IDs + expected output schema where applicable;
-- source/reference used to verify each identity;
-- reviewer, verification timestamp and version.
-
-Mandatory manual/review groups:
-
-- [ ] Meme assets — especially EVM vs Solana split (e.g. Solana SPL/SPL-2022 requires the dedicated GoPlus Solana adapter).
+- [ ] Meme assets — EVM/Solana split, especially DOGE-derived ERC tokens vs native/SPL assets.
 - [ ] DeFi protocol/token identity pairs — protocol and token must not be conflated.
 - [ ] Stablecoins.
 - [ ] Layer 1 / Layer 2.
-- [ ] DEX/AMM, lending, bridges, oracles.
+- [ ] DEX/AMM, lending, bridges and oracles.
 - [ ] LST/restaking.
-- [ ] RWA, AI/DePIN, GameFi, exchange tokens and other registered crypto categories.
+- [ ] RWA, AI/DePIN, GameFi and exchange tokens.
 
-## Phase 4 — Dune saved-query governance
+## Phase 4 — Dune Free-Tier saved-query governance
 
-- [ ] Create/identify saved queries only for features not standardized by canonical providers.
-- [ ] Record query owner, purpose, dataset tables, expected columns, units and freshness window.
-- [ ] Review query for look-ahead leakage and duplicate/correlated data.
-- [ ] Add only approved IDs to `DUNE_ALLOWED_QUERY_IDS`.
-- [ ] Configure credit/spending cap in Dune account/team settings.
-- [ ] Verify schema-drift negative test before LIVE_DATA.
+- [ ] Create/select saved queries only for evidence not standardized by DeFiLlama/GoPlus/Kraken/DEX Screener/Sourcify.
+- [ ] Prefer narrow, low-compute public/owned queries compatible with Dune Small/Medium Free engines.
+- [ ] Record query owner, purpose, tables, exact expected columns, units and freshness window.
+- [ ] Review look-ahead leakage, correlated/double-counted features and protocol identity.
+- [ ] Add approved IDs to `DUNE_ALLOWED_QUERY_IDS`.
+- [ ] Mirror the same IDs/schemas in `CryptoEvidenceIdentityRegistry`; both gates must agree.
+- [ ] Keep `DUNE_MAX_RESULT_ROWS` at 25 unless a reviewed use case justifies another value (hard implementation cap 100).
+- [ ] Verify schema-drift and policy-block negative tests before LIVE_DATA.
+- [ ] Never enable query execution, pipeline execution, raw SQL or `ignore_max_credits_per_request`.
 
 ## Phase 5 — Public dataset/page governance
 
-For Landing Page, AI Newsfeed Viewer and each Crypto Evidence tool, record and display as applicable:
+For Landing Page, AI Newsfeed Viewer and every Crypto Evidence panel, verify:
 
 - [ ] provider/source attribution;
-- [ ] observed/retrieved timestamp and freshness state;
+- [ ] observed/retrieved timestamp and freshness;
 - [ ] evidence status (`VERIFIED`, `STALE`, `NOT_AVAILABLE`, `INVALID`);
-- [ ] methodology / whether the value is raw, transformed or heuristic;
-- [ ] license/plan entitlement and redistribution/display restrictions;
-- [ ] evidence/reference ID without exposing secrets;
+- [ ] methodology: raw vs transformed vs heuristic;
+- [ ] provider usage/licensing note;
+- [ ] evidence/reference ID without secrets;
 - [ ] no-demo/no-synthetic-data handling;
-- [ ] explicit note that Evidence Coverage is data coverage, not investment advice or a score;
-- [ ] retention/cache policy consistent with provider terms.
+- [ ] Evidence Coverage is explicitly data coverage, not an investment/trading score;
+- [ ] retention/cache policy is compatible with provider terms;
+- [ ] GDELT projection links to publisher source and does not reproduce article bodies.
 
-## Phase 6 — Audit / formal-verification evidence
+## Phase 6 — Audit / formal-verification evidence — OWNER + GOVERNANCE TASK
 
-Do not infer these states from a general security API.
-
-- [ ] Verified source/deployment evidence.
-- [ ] Independent audit presence and exact audit reference/version.
-- [ ] Formal-verification evidence where claimed.
-- [ ] Exploit/incident history and unresolved-exploit status.
-- [ ] Upgrade authority / multisig / timelock evidence.
+- [x] Sourcify v2 source/bytecode verification lookup added as open-source evidence.
+- [ ] Independent audit presence and exact audit report/version/source.
+- [ ] Formal-verification evidence where a project actually claims it.
+- [ ] Exploit/incident history and unresolved-exploit state.
+- [ ] Upgrade authority, multisig and timelock evidence.
 - [ ] Oracle source diversity, liveness, deviation protection and fallback design.
 - [ ] Bridge/security dependency evidence where applicable.
-- [ ] Record provenance, freshness, reviewer and policy decision for each hard-gate input.
+- [ ] Provenance/freshness/reviewer for each hard-gate input.
 
-GoPlus may contribute raw contract/security facts, but it is not by itself an audit/formal-verification PASS authority.
+A Sourcify match or GoPlus response is **not** an audit/formal-verification/security PASS by itself.
 
 ## Phase 7 — LIVE_DATA admission
 
-Per category/provider:
+Per provider/asset:
 
-- [ ] key/endpoint configured (or approved keyless path);
-- [ ] plan/license permits public production use;
-- [ ] rate limit and cost cap configured;
-- [ ] identity mapping verified;
-- [ ] freshness/DQ policy satisfied;
+- [ ] applicable identity mapping verified;
+- [ ] provider usage boundary permits the intended public display;
+- [ ] rate-limit/cost gate configured;
+- [ ] freshness/DQ satisfied;
 - [ ] page governance complete;
-- [ ] negative/provider-failure tests pass;
-- [ ] no secret is exposed in browser/network URL/logs.
+- [ ] provider-failure/schema-drift tests pass;
+- [ ] no secret appears in browser URLs/logs.
 
-Only then enable/display that provider as production `LIVE_DATA`.
+Keyless providers may become `LIVE_DATA` only after these gates; keyless does not mean ungoverned.
 
 ## Phase 8 — Model validation before LIVE_SCORING
 
 - [ ] required evidence coverage complete;
 - [ ] model weights/version frozen;
-- [ ] effective-feature and effective-weight fingerprints present;
+- [ ] effective-feature/effective-weight fingerprints present;
 - [ ] correlation/double-counting analysis passed;
 - [ ] walk-forward/out-of-sample validation passed;
 - [ ] liquidity/slippage/cost assumptions validated;
@@ -151,24 +137,15 @@ Only then enable/display that provider as production `LIVE_DATA`.
 - [ ] audit/formal-verification gates complete;
 - [ ] independent human review recorded.
 
-## Phase 9 — Owner LIVE_SCORING promotion
+## Phase 9 — LIVE_SCORING promotion — OWNER APPROVAL COMPLETE, TECHNICAL GATES OPEN
 
-Security-relevant mutation. Requires explicit Owner approval after reviewing `SC4_LIVE_PROMOTION_OWNER_GATE_2026-08-22.md`.
+- [x] Owner approved **Option B — LIVE_SCORING without LIVE_EXECUTION under the documented gates** on 2026-08-22.
+- [ ] Promote a category only when every Phase 3-8 gate applicable to that category is PASS.
+- [ ] Version ScoringModelRegistry/feature contract/executor and record fingerprint at promotion.
+- [ ] Keep any failed category `NOT_COMPUTABLE`/`BLOCKED`; there is no global force-live switch.
 
-Recommended approval scope:
-
-`Option B — LIVE_SCORING without LIVE_EXECUTION, only for categories that pass every documented promotion gate.`
-
-A category failing any gate remains research/challenger / `NOT_COMPUTABLE` or `BLOCKED`; there is no global force-live switch.
+Current state: Meme/DeFi challengers remain non-score-eligible because required evidence/social/audit/backtest gates are still incomplete. The Owner approval is recorded and no second approval is required for the same Option-B scope once the documented gates themselves are satisfied.
 
 ## Phase 10 — LIVE_EXECUTION / FT-7+
 
-Not part of SC4. Separate decision and project required for:
-
-- exchange/broker/custody adapters;
-- real-money order transport;
-- IAM/step-up authorization;
-- position/pre-trade controls;
-- durable reconciliation/settlement;
-- incident and kill-switch runbooks;
-- explicit Owner approval.
+Not authorized. Separate project/decision required for exchange/broker/custody adapters, real-money order transport, IAM/step-up authorization, pre-trade controls, reconciliation, incident/kill-switch runbooks and explicit Owner approval.
