@@ -1,4 +1,5 @@
 import type { FinTechCoreDomainEvent, FinTechCoreWorkflowContext } from '../CoreContracts';
+import type { FinTechCoreFixedPoint } from '../Financial/FixedPoint';
 
 export const FINTECH_CORE_PAPER_TRADING_CONTRACT_VERSION =
   'fintech-core/paper-trading/0.1.0' as const;
@@ -11,11 +12,11 @@ export const PAPER_TRADING_EVENT_TYPES = Object.freeze({
   FILL_SIMULATED: 'PAPER_FILL_SIMULATED',
 } as const);
 
-/** JSON-safe fixed-point value. `atoms` is an integer encoded as a string. */
-export interface PaperFixedPoint {
-  readonly atoms: string;
-  readonly scale: number;
-}
+/**
+ * Backward-compatible FT-4 alias of the single FinTechCore fixed-point representation.
+ * No separate paper-only numeric authority exists after FT-6B.
+ */
+export type PaperFixedPoint = FinTechCoreFixedPoint;
 
 export type PaperCostStatus = 'APPLIED' | 'NOT_APPLICABLE';
 
