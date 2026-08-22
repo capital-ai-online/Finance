@@ -63,13 +63,11 @@ function mockProvider(id: string, state: 'LIVE' | 'UNAVAILABLE' = 'LIVE'): Marke
 
 describe('SC-4/SC-5 ProviderMatrix', () => {
   it('has stable contract version and required gateway providers', () => {
-    expect(PROVIDER_MATRIX_VERSION).toMatch(/^provider-matrix\/1\./);
+    expect(PROVIDER_MATRIX_VERSION).toBe('provider-matrix/1.6.0');
     expect(getProviderMatrixEntry('twelvedata')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('fmp-index')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('coingecko')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('alpaca')?.gatewayStatus).toBe('shadow_only');
-    // SC-5 Phase D: CoinAPI/EODHD registered as gateway-hardened crypto adapters (quorum prep);
-    // TwelveData gains assetClass=crypto. Not yet consumed by cryptoQuoteEvidence.
     expect(getProviderMatrixEntry('coinapi')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('eodhd')?.gatewayStatus).toBe('behind_gateway');
     expect(getProviderMatrixEntry('twelvedata')?.assetClasses).toContain('crypto');
@@ -79,17 +77,18 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
     expect(providersLegacyOffGateway().some((e) => e.id === 'stooq')).toBe(true);
   });
 
-  it('exposes rate-limit overrides for gateway-relevant providers including coingecko', () => {
+  it('exposes rate-limit overrides only for gateway-relevant providers', () => {
     const overrides = rateLimitOverridesFromMatrix();
     expect(overrides.twelvedata?.capacity).toBe(30);
     expect(overrides['fmp-index']?.capacity).toBe(40);
     expect(overrides.alpaca?.capacity).toBe(20);
     expect(overrides.coingecko?.capacity).toBe(25);
-    // SC-5 Phase D: coinapi/eodhd moved from consensus_only to behind_gateway, so they now get a
-    // matrix-managed rate-limit budget too (registration only; not yet consumed for quorum).
     expect(overrides.coinapi?.capacity).toBe(20);
     expect(overrides.eodhd?.capacity).toBe(15);
     expect(overrides.stooq).toBeUndefined();
+    for (const id of ['defillama', 'goplus', 'coinglass', 'lunarcrush', 'messari', 'dune']) {
+      expect(overrides[id]).toBeUndefined();
+    }
   });
 
   it('RateLimitBudget applies per-provider capacity from matrix overrides', () => {
@@ -142,9 +141,27 @@ describe('SC-4/SC-5 ProviderMatrix', () => {
     expect(entry?.gatewayStatus).toBe('not_wired');
     expect(entry?.capabilities).toEqual(['fundamentals']);
     expect(entry?.assetClasses).toEqual(['crypto']);
-    // not_wired must stay excluded from gateway-relevant helpers so it cannot silently join routing/RL wiring.
     expect(rateLimitOverridesFromMatrix().defillama).toBeUndefined();
     expect(providersBehindGateway().some((e) => e.id === 'defillama')).toBe(false);
+  });
+
+  it('keeps all extended evidence specialists outside MarketDataGateway authority', () => {
+    const expected = {
+      goplus: ['security', 'onchain'],
+      coinglass: ['derivatives', 'bars', 'quote'],
+      lunarcrush: ['sentiment'],
+      messari: ['fundamentals', 'onchain', 'governance'],
+      dune: ['onchain', 'governance'],
+    } as const;
+
+    for (const [id, capabilities] of Object.entries(expected)) {
+      const entry = getProviderMatrixEntry(id);
+      expect(entry?.gatewayStatus).toBe('not_wired');
+      expect(entry?.assetClasses).toContain('crypto');
+      expect(entry?.capabilities).toEqual(capabilities);
+      expect(providersBehindGateway().some((candidate) => candidate.id === id)).toBe(false);
+      expect(rateLimitOverridesFromMatrix()[id]).toBeUndefined();
+    }
   });
 
   it('matrix entries have positive rate-limit and circuit policies', () => {
