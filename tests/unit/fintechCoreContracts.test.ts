@@ -45,10 +45,26 @@ function orderIntent(overrides: Partial<FinTechCoreOrderIntent> = {}): FinTechCo
 }
 
 describe('FinTech Core operating-mode and approval contracts', () => {
-  it('keeps real execution disabled in research, paper and emergency modes', () => {
-    expect(FINTECH_CORE_OPERATING_MODE_POLICY.RESEARCH.realExecutionAllowed).toBe(false);
-    expect(FINTECH_CORE_OPERATING_MODE_POLICY.PAPER.realExecutionAllowed).toBe(false);
-    expect(FINTECH_CORE_OPERATING_MODE_POLICY.EMERGENCY.realExecutionAllowed).toBe(false);
+  it('keeps every real-execution capability fail-closed through FT-6B', () => {
+    for (const mode of ['RESEARCH', 'PAPER', 'GUARDED_LIVE', 'PRODUCTION', 'EMERGENCY'] as const) {
+      expect(FINTECH_CORE_OPERATING_MODE_POLICY[mode].realExecutionAllowed).toBe(false);
+    }
+  });
+
+  it('permits simulated new orders only in PAPER through FT-6B', () => {
+    expect(FINTECH_CORE_OPERATING_MODE_POLICY.PAPER).toMatchObject({
+      realExecutionAllowed: false,
+      simulatedExecutionAllowed: true,
+      newOrdersAllowed: true,
+    });
+
+    for (const mode of ['RESEARCH', 'GUARDED_LIVE', 'PRODUCTION', 'EMERGENCY'] as const) {
+      expect(FINTECH_CORE_OPERATING_MODE_POLICY[mode]).toMatchObject({
+        realExecutionAllowed: false,
+        simulatedExecutionAllowed: false,
+        newOrdersAllowed: false,
+      });
+    }
   });
 
   it('keeps FT-6 real execution hard-blocked even for manually approved intents', () => {

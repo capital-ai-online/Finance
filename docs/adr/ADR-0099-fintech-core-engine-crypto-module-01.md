@@ -1,18 +1,19 @@
 # ADR-0099 — CAPITAL-AI FinTech Core Engine: Crypto Module 01
 
 - **Authority ID:** `AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20`
-- **Version:** 1.6.0
+- **Version:** 1.8.0
 - **Date:** 2026-08-22
-- **Lifecycle:** proposed
+- **Lifecycle:** accepted
 - **Roadmap:** `FT-CORE-CRYPTO-01`
-- **Execution Branch:** `feat/fintech-core-ft6-orderintent-reconciliation-2026-08-22`
-- **Branch Start Baseline:** `b180d56a37762c6a558a9b3488ce4f36c70fa2e9`
 - **FT-6A predecessor:** PR #481 merged
+- **FT-6B closure:** PR #483 merged into `main@571de76e4d5f1d33460bf129d2231885dfde9584`
 - **Protected authority:** ADR-0087 / Single Scoring Architecture
+- **Related evidence authority:** ADR-0100 / DeFiLlama evidence-only
+- **Post-merge supersession:** Supersession A+B combined by Owner direction
 
 ## Context
 
-CAPITAL-AI besitzt eine produktive Single-Dispatcher-Scoring-Architektur und einen separaten Crypto-Research-Pfad. Der FinTech Core soll Finanz-Workflows komponieren, ohne eine parallele Scoring-, Evidence-, Governance-, Compliance-Policy-, IAM-, Queue-, Persistence-, Execution- oder Custody-Authority zu schaffen.
+CAPITAL-AI besitzt eine produktive Single-Dispatcher-Scoring-Architektur und einen separaten Crypto-Research-Pfad. Der FinTech Core komponiert Finanz-Workflows, ohne eine parallele Scoring-, Evidence-, Governance-, Compliance-Policy-, IAM-, Queue-, Persistence-, Execution- oder Custody-Authority zu schaffen.
 
 Geschuetzte Scoring-Kette:
 
@@ -29,7 +30,7 @@ UAI Identity
   -> EventMesh/Traceability/Supervisor
 ```
 
-`CryptoOrchestrator` bleibt Research/Enrichment und `scoreEligible=false`. DeFiLlama bleibt Evidence Acquisition.
+`CryptoOrchestrator` bleibt Research/Enrichment und `scoreEligible=false`. DeFiLlama bleibt Evidence Acquisition und besitzt keine Score-/Ranking-/Eligibility-Authority.
 
 ## Decision
 
@@ -55,17 +56,19 @@ Der Core darf nicht besitzen:
 - reale Kapitalbewegung oder autonome Execution in FT-0…FT-6;
 - Quality-, Governance-, Supervisor-, Release- oder Deployment-Authority.
 
-## Operating Modes
+## Operating Modes — fail-closed
+
+Nach expliziter Owner-Freigabe wurde die stale Future-Capability-Projektion in `FINTECH_CORE_OPERATING_MODE_POLICY` korrigiert:
 
 ```text
-RESEARCH      -> keine OrderIntent-Bindung fuer Execution
-PAPER         -> simulierte OrderIntent-/Fill-/Reconciliation-Evidence
-GUARDED_LIVE  -> blockiert
-PRODUCTION    -> blockiert
-EMERGENCY     -> keine neue Order
+RESEARCH      real=false simulated=false newOrders=false
+PAPER         real=false simulated=true  newOrders=true
+GUARDED_LIVE  real=false simulated=false newOrders=false
+PRODUCTION    real=false simulated=false newOrders=false
+EMERGENCY     real=false simulated=false newOrders=false
 ```
 
-Der Real-Execution-Eligibility-Helper bleibt fuer FT-6 hard-blocked. Jede Freischaltung ist FT-7+ und benoetigt eine separate Architektur-/Security-Entscheidung.
+Der Real-Execution-Eligibility-Helper bleibt fuer **alle** Modi `false`. Jede Freischaltung ist FT-7+ und benoetigt eine separate Architektur-/Security-Entscheidung.
 
 ## Persistence Authority
 
@@ -86,7 +89,7 @@ Private Persistence bleibt service-role-only hinter schmalen `SECURITY INVOKER` 
 
 ## Canonical Financial Representation
 
-FT-6B hebt die bereits in FT-4 verwendete Representation zum gemeinsamen Vertrag an:
+FT-6B verwendet die gemeinsame Representation:
 
 ```text
 FinTechCoreFixedPoint {
@@ -118,19 +121,7 @@ Contract Version:
 fintech-core/order-intent/0.2.0
 ```
 
-Execution-relevante Bindings umfassen:
-
-- `bindingState` / `bindingVersion`;
-- `runId`, `traceId`, `correlationId`, `assetId`, `decisionVersion`;
-- `side`, `orderType`;
-- `quantity: FinTechCoreFixedPoint`;
-- typed `priceBounds`;
-- `maxSlippageBps`;
-- deterministic `clientOrderId`, `idempotencyKey`, `intentHash`;
-- Risk Decision ID/Hash + Policy ID/Version;
-- Compliance Decision ID/Hash + Policy ID/Version;
-- `createdAt`, `expiresAt`;
-- `effectClass=SIDE_EFFECTING`.
+Execution-relevante Bindings umfassen `bindingState`/`bindingVersion`, Run-/Trace-/Correlation-/Asset-/Decision-Identitaet, Fixed-Point Quantity/Price Bounds, Slippage, deterministic `clientOrderId`, `idempotencyKey`, `intentHash`, Risk-/Compliance-Decision-/Policy-Bindings, Zeitfenster und `effectClass=SIDE_EFFECTING`.
 
 `bindingState=BOUND` darf nur durch den deterministischen Binder entstehen.
 
@@ -176,17 +167,7 @@ Contract Version:
 fintech-core/reconciliation/0.2.0
 ```
 
-Typed Reconciliation umfasst:
-
-- `orderIntentId`, `clientOrderId`, optional `venueOrderId`;
-- expected/observed Quantity;
-- expected Price Bounds / observed Execution Price;
-- Fee Evidence;
-- Settlement State;
-- `PENDING`, `MATCHED`, `MISMATCH`, `NOT_COMPUTABLE`;
-- Evidence Refs;
-- `observedAt`, `reconciledAt`;
-- `supervisorEscalationRequired`.
+Typed Reconciliation umfasst Order-/Client-/optional Venue-Identitaet, expected/observed Quantity, Price Bounds / Execution Price, Fee Evidence, Settlement State, `PENDING`/`MATCHED`/`MISMATCH`/`NOT_COMPUTABLE`, Evidence Refs, Timestamps und `supervisorEscalationRequired`.
 
 Hard Rules:
 
@@ -199,10 +180,12 @@ Hard Rules:
 
 ## Persistence Evolution / Supabase Mutation
 
-`FinTechCorePersistencePort` besitzt genau einen `appendOrderIntent`-Pfad. Der Serveradapter darf versionierte RPCs routen:
+`FinTechCorePersistencePort` besitzt genau einen `appendOrderIntent`-Pfad. Der Serveradapter routet versionierte RPCs:
 
-- v1 fuer `UNBOUND` Legacy Evidence;
-- v2 fuer canonical `BOUND` FT-6 Evidence.
+- v2 fuer canonical `BOUND` FT-6B Evidence;
+- v1 nur als `UNBOUND` Legacy-/Research-Kompatibilitaet.
+
+Der v1-Pfad ist keine zweite OrderIntent-Authority und darf keine FT-7-/Execution-Berechtigung begruenden. Seine physische Entfernung erfordert Consumer-/Replay-/Bestandsdaten-Evidence und, soweit die Persistence-/Security-Boundary betroffen ist, eine separate Owner-Freigabe.
 
 Repository-Migration:
 
@@ -210,23 +193,29 @@ Repository-Migration:
 supabase/migrations/20260822011500_fintech_core_ft6b_fixed_point_reconciliation.sql
 ```
 
-Sie erweitert die vorhandenen Tabellen additiv und erzeugt service-role-only `SECURITY INVOKER` Boundaries.
-
 Die Migration wurde am **2026-08-22** nach expliziter Owner-Autorisierung auf dem Supabase-Projekt `AIFINANCIAL` angewendet. Remote registriert:
 
 ```text
 20260822012200 fintech_core_ft6b_fixed_point_reconciliation
 ```
 
-Post-Mutation verifiziert:
+Post-Mutation verifiziert: die FT-6B-Funktionen sind `SECURITY INVOKER`, `anon`/`authenticated` besitzen kein EXECUTE, `service_role` besitzt EXECUTE; keine neue Tabelle, kein neues Schema, keine zweite Queue und keine FT-7-Capability wurden eingefuehrt.
 
-- `fintech_core.fixed_point_numeric_v1`: `SECURITY INVOKER`;
-- `public.fintech_core_append_order_intent_v2`: `SECURITY INVOKER`;
-- `public.fintech_core_append_reconciliation_record_v2`: `SECURITY INVOKER`;
-- `anon` / `authenticated`: kein EXECUTE;
-- `service_role`: EXECUTE;
-- keine neue Tabelle, kein neues Schema, keine zweite Queue;
-- keine Live-/FT-7-Capability.
+## Supersession B — Meme / DeFi Research Models
+
+Auf explizite Owner-Anweisung wurde Supersession B vor dem gemeinsamen PR in denselben Branch integriert. Dies erweitert **nicht** die FinTechCore- oder Scoring-Authority.
+
+### Meme
+
+`crypto-meme-integrity@0.2.0` bleibt `challenger`, `scoreEligible=false`, `research-only:not-executable` und besitzt keine executable weights. Trend, Momentum und Volatility Quality sind als `meme-price-path` korrelationsgebunden. Contract-Integrity und Manipulation-Risk sind Promotion-Gates. Die historische Meme-35/25/20/20-Formel ist non-authorizing.
+
+### DeFi
+
+`crypto-defi-fundamental@0.2.0` bleibt ebenfalls non-executable Challenger. TVL, Fees und Revenue sind als `defi-scale-activity` korrelationsgebunden; eine spaetere additive Einzelgewichtung benoetigt validierte De-Korrelation oder einen Latent-Factor.
+
+ADR-0100 akzeptiert DeFiLlama ausschliesslich als Evidence-Provider. `defi-protocol-evidence/1.1.0` liefert `READY` nur bei vollstaendig VERIFIED Evidence; ein komplett stale Set ist explizit `STALE` und nicht score-admissible.
+
+Eine spaetere Meme-/DeFi-Promotion muss die bestehende ADR-0087-Registry-/Dispatcher-/Fingerprint-Authority wiederverwenden. Ein zweiter Dispatcher, eine zweite Registry oder ein Provider-to-Score-Bypass ist unzulaessig.
 
 ## EventMesh / Traceability
 
@@ -247,7 +236,7 @@ Diese Quellen begruenden Governance, Nachvollziehbarkeit und robuste Kontrollen,
 
 ## Dependency Decision
 
-Keine neue Runtime-/Library-Abhaengigkeit fuer FT-6B. Nicht integriert werden Kafka, NATS, Temporal, pgmq, neue Trading-/Policy-Runtimes, CEX-/DEX-/Wallet-/Custody-SDKs oder TA-Lib.
+Keine neue Runtime-/Library-Abhaengigkeit fuer FT-6B oder Supersession B. Nicht integriert werden Kafka, NATS, Temporal, pgmq, neue Trading-/Policy-Runtimes, CEX-/DEX-/Wallet-/Custody-SDKs oder TA-Lib.
 
 ## Consequences
 
@@ -258,22 +247,30 @@ Positiv:
 - exakte Policy-/Decision-Traceability;
 - typed Reconciliation ohne autonomes Repair;
 - Least-Privilege-Supabase-Boundary;
+- fail-closed Operating Modes;
+- Meme-/DeFi-Korrelationen werden vor einer spaeteren Gewichtung explizit kontrolliert;
 - FT-7 bleibt klar getrennt.
 
 Trade-offs:
 
-- Legacy `numeric`-Felder bleiben vorerst als Compatibility Projection bestehen;
-- FT-6B schliesst noch keine reale Execution an;
+- Legacy `numeric`-Felder und der v1-`UNBOUND`-Write bleiben vorerst Compatibility Projection;
+- FT-6B schliesst keine reale Execution an;
+- Meme/DeFi bleiben nicht produktiv scorefaehig;
 - Event-Namen und Live-Settlement bleiben spaeteren expliziten Decisions vorbehalten.
 
-## Validation / Closure
+## Post-Merge / Supersession Closure
 
-Vor Merge bleiben erforderlich:
+PR #483 ist Human-gemergt. FT-6B ist auf `main` abgeschlossen. Supersession A normalisiert Authority-/Current-State-/Legacy-Projektionen und die Owner-approved fail-closed Operating-Mode-Policy. Supersession B finalisiert im selben Branch die Meme-/DeFi-Research-Modellgrenzen, ohne Model-Promotion.
 
-1. aktueller Main-/Open-PR-Korrelationsabgleich;
-2. PR nach kanonischer Governance-Vorlage;
-3. Hosted TypeScript/Lint/Unit-/Architecture-/Governance-Checks erst nach PR-Erstellung;
-4. Behebung echter CI-Befunde;
-5. finaler Authority-/Scope-Review.
+Aktueller Zielzustand dieses PR-Pakets:
 
-FT-7 bleibt blockiert, bis FT-6B gemergt und separat eine Guarded-Live-Entscheidung getroffen wurde.
+```text
+FT-0 ... FT-6B = DONE on main
+Supersession A = implemented / pending PR
+Supersession B = implemented / pending PR
+crypto champion = crypto-technical-provenance@0.7.0 unchanged
+Meme/DeFi productive promotion = BLOCKED
+FT-7 = BLOCKED
+```
+
+Naechster produktiver Execution-Architekturabschnitt bleibt **FT-7 Guarded Live** und ist weiterhin blockiert, bis eine separate Architektur-/Security-Entscheidung einschliesslich Owner-Gate vorliegt.

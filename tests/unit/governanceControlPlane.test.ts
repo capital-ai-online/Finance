@@ -186,4 +186,44 @@ describe('Governance Control Plane', () => {
       fixture.adrRegistry.parallelNamespaceReservations.filter((record) => record.state === 'active'),
     ).toEqual([]);
   });
+
+  it('keeps ADR-0099 v1.8 accepted and synchronized after combined Supersession A+B', () => {
+    const fixture = readFixture();
+    const adr0099 = fixture.adrRegistry.migratedRecords.find((record) => record.displayId === 'ADR-0099');
+    const authority0099 = fixture.authorityRegistry.entries.find((record) => record.authorityId === 'AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20');
+
+    expect(adr0099).toMatchObject({
+      authorityId: 'AUTH-ADR-FINTECH-CORE-CRYPTO-MODULE-01-2026-08-20',
+      version: '1.8.0',
+      lifecycle: 'accepted',
+      path: 'docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md',
+    });
+    expect(authority0099).toMatchObject({
+      displayId: 'ADR-0099',
+      version: '1.8.0',
+      lifecycle: 'accepted',
+      path: 'docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md',
+    });
+  });
+
+  it('keeps ADR-0100 v1.1 accepted and evidence-only after DeFi Supersession B', () => {
+    const fixture = readFixture();
+    const adr0100 = fixture.adrRegistry.migratedRecords.find((record) => record.displayId === 'ADR-0100');
+    const authority0100 = fixture.authorityRegistry.entries.find((record) => record.authorityId === 'AUTH-ADR-DEFILLAMA-DEFI-EVIDENCE-PROVIDER-2026-08-21');
+
+    expect(adr0100).toMatchObject({
+      authorityId: 'AUTH-ADR-DEFILLAMA-DEFI-EVIDENCE-PROVIDER-2026-08-21',
+      version: '1.1.0',
+      lifecycle: 'accepted',
+      path: 'docs/adr/ADR-0100-defillama-defi-evidence-provider.md',
+    });
+    expect(authority0100).toMatchObject({
+      displayId: 'ADR-0100',
+      version: '1.1.0',
+      lifecycle: 'accepted',
+      path: 'docs/adr/ADR-0100-defillama-defi-evidence-provider.md',
+    });
+    expect(String(authority0100?.scope ?? '')).toContain('evidence-only');
+    expect(String(authority0100?.scope ?? '')).toContain('scoreEligible=false');
+  });
 });

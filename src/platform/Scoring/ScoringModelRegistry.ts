@@ -11,6 +11,10 @@ import {
   SOVEREIGN_BENCHMARK_EXECUTOR_KEY,
   TRADITIONAL_SCORING_EXECUTOR_KEY,
 } from './ScoringExecutorAdapters';
+import {
+  CRYPTO_DEFI_RESEARCH_FEATURE_CONTRACT_VERSION,
+  CRYPTO_MEME_RESEARCH_FEATURE_CONTRACT_VERSION,
+} from './CryptoResearchModelContracts';
 
 export const VERIFIED_CRYPTO_TECHNICAL_EXECUTOR_KEY =
   'verifiedCryptoTechnicalScoring.evaluateVerifiedCryptoTechnicalScore' as const;
@@ -36,34 +40,34 @@ const DEFAULT_MODELS: readonly ScoringModelDescriptor[] = [
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
     modelId: 'crypto-meme-integrity',
-    version: '0.1.0',
+    version: '0.2.0',
     alias: 'challenger',
     lifecycle: 'challenger',
     assetClasses: ['crypto'],
-    featureContractVersion: 'fintech-core.crypto/category-features/0.1.0',
+    featureContractVersion: CRYPTO_MEME_RESEARCH_FEATURE_CONTRACT_VERSION,
     resultContractVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
     evidencePolicy: 'research-only',
     executorKey: RESEARCH_ONLY_CHALLENGER_EXECUTOR_KEY,
     priority: 10,
     scoreEligible: false,
     canonicalResultAdapterRequired: true,
-    notes: 'Meme research challenger only. Missing evidence is NOT_COMPUTABLE; no productive routing before validation/promotion.',
+    notes: 'Supersession-B Meme research challenger. No executable weights. Correlated price-path observations must be reduced before any future promotion; missing contract/manipulation evidence remains NOT_COMPUTABLE.',
   },
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,
     modelId: 'crypto-defi-fundamental',
-    version: '0.1.0',
+    version: '0.2.0',
     alias: 'challenger',
     lifecycle: 'challenger',
     assetClasses: ['crypto'],
-    featureContractVersion: 'fintech-core.crypto/category-features/0.1.0',
+    featureContractVersion: CRYPTO_DEFI_RESEARCH_FEATURE_CONTRACT_VERSION,
     resultContractVersion: CANONICAL_SCORE_RESULT_CONTRACT_VERSION,
     evidencePolicy: 'research-only',
     executorKey: RESEARCH_ONLY_CHALLENGER_EXECUTOR_KEY,
     priority: 10,
     scoreEligible: false,
     canonicalResultAdapterRequired: true,
-    notes: 'DeFi fundamental research challenger reusing FinTech Core category feature contracts and hard gates.',
+    notes: 'Supersession-B DeFi research challenger. TVL/fees/revenue remain correlation-bound raw evidence; DeFiLlama is evidence-only and stale/missing evidence never satisfies score or hard-gate semantics.',
   },
   {
     registryVersion: SCORING_MODEL_REGISTRY_VERSION,

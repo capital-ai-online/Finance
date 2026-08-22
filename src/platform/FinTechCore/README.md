@@ -5,8 +5,9 @@ Der `FinTechCore` ist die versionierte finanzielle Workflow-Composition-Schicht 
 ## Aktueller Implementierungsstand
 
 - Roadmap: `FT-CORE-CRYPTO-01`
-- Architekturentscheidung: `ADR-0099` (`proposed`)
+- Architekturentscheidung: `ADR-0099` (`accepted`)
 - Protected Scoring Authority: `ADR-0087`
+- DeFi Evidence Authority: `ADR-0100` (`accepted`, evidence-only)
 - erstes Modul: `fintech-core.crypto`
 - FT-1: Core Engine, Module Registry, deterministic Workflow State Machine
 - FT-2A: provenance-aware Primary-/Secondary-Analyseprofile
@@ -16,8 +17,10 @@ Der `FinTechCore` ist die versionierte finanzielle Workflow-Composition-Schicht 
 - FT-4: deterministic, replay-faehiges Paper Trading
 - FT-5: deterministic Pre-Trade Risk + Compliance Decisions
 - FT-6A: Decision-/Hash-Binding Foundation, gemergt mit PR #481
-- FT-6B: single canonical OrderIntent, gemeinsames Fixed Point, deterministic Approval Binding, typed Reconciliation und v2 Persistence Boundary
+- FT-6B: single canonical OrderIntent, gemeinsames Fixed Point, deterministic Approval Binding, typed Reconciliation und v2 Persistence Boundary, gemergt mit PR #483
+- Supersession B: Meme/DeFi Research Models `0.2.0`, non-executable challengers, keine Promotion
 - reale Exchange-/Custody-Ausfuehrung: **nicht freigeschaltet**
+- FT-7 Guarded Live: **blockiert bis separate Architektur-/Security-Entscheidung**
 
 ## Authority Boundary
 
@@ -36,6 +39,39 @@ UAI
 ```
 
 `CryptoOrchestrator` bleibt Research/Enrichment und `scoreEligible=false`. Der FinTech Core ersetzt keine Scoring-, IAM-, Compliance-Policy-, Quality-, Release-, Deployment- oder Supervisor-Authority.
+
+Der kanonische Crypto Champion bleibt `crypto-technical-provenance@0.7.0`. Die Kategorie-Challenger `crypto-meme-integrity@0.2.0` und `crypto-defi-fundamental@0.2.0` sind `research-only:not-executable`, `scoreEligible=false` und besitzen keine ausfuehrbaren Gewichte.
+
+## Meme / DeFi Research Supersession
+
+### Meme
+
+`crypto-meme-research-features/0.2.0` ersetzt keine produktive Score-Formel. Die historische Meme-35/25/20/20-Formel bleibt Legacy/non-authorizing.
+
+- Trend, Momentum und Volatility Quality sind als `meme-price-path` korrelationsgebunden.
+- Liquiditaet darf nicht als Community-, Popularitaets- oder Manipulations-Evidence wiederverwendet werden.
+- Contract-Integrity und Manipulation-Risk sind Promotion-Gates.
+- Missing/Stale Evidence wird nie zu `0`, PASS oder neutralem Default.
+
+### DeFi
+
+`crypto-defi-research-features/0.2.0` ist ebenfalls ein non-executable Challenger-Contract.
+
+- TVL, Fees und Revenue liegen in derselben Korrelationsgruppe `defi-scale-activity`.
+- Eine spaetere additive Einzelgewichtung benoetigt validierte De-Korrelation oder einen Latent-Factor.
+- `protocol.smartContractEvidenceVerified` und `risk.oracleRiskWithinPolicy` bleiben harte Promotion-/Evidence-Gates.
+- DeFiLlama ist ausschliesslich Evidence-Provider und niemals Score-/Eligibility-Authority.
+
+`defi-protocol-evidence/1.1.0` ist fail-closed:
+
+```text
+READY              -> alle emittierten Features VERIFIED
+PARTIAL            -> mindestens ein VERIFIED, aber Set nicht vollstaendig verified
+STALE              -> kein VERIFIED, aber stale Evidence vorhanden
+SOURCE_UNAVAILABLE -> keine verified/stale Evidence verfuegbar
+```
+
+`STALE`, `NOT_AVAILABLE` und `INVALID` erfuellen keine REQUIRED-/HARD_GATE-Semantik.
 
 ## Financial Representation
 
@@ -130,17 +166,7 @@ EMERGENCY     -> DENY
 
 ## FT-6B Typed Reconciliation
 
-`FinTechCoreReconciliationRecord` fuehrt typed Expected-/Observed-Evidence fuer:
-
-- Quantity;
-- Price Bounds / Execution Price;
-- Fee Evidence;
-- Settlement State;
-- `clientOrderId` und optional `venueOrderId`;
-- `observedAt` / `reconciledAt`;
-- `supervisorEscalationRequired`.
-
-Semantik:
+`FinTechCoreReconciliationRecord` fuehrt typed Expected-/Observed-Evidence fuer Quantity, Price Bounds / Execution Price, Fee Evidence, Settlement State, `clientOrderId`, optional `venueOrderId`, `observedAt`, `reconciledAt` und `supervisorEscalationRequired`.
 
 ```text
 MATCHED        -> Evidence stimmt ueberein
@@ -167,8 +193,7 @@ public.fintech_core_append_order_intent_v2
 public.fintech_core_append_reconciliation_record_v2
 ```
 
-Die Supabase-Mutation wurde am **2026-08-22** nach Owner-Freigabe auf dem Projekt `AIFINANCIAL` angewendet und in Supabase als Migration
-`20260822012200_fintech_core_ft6b_fixed_point_reconciliation` registriert.
+Die Supabase-Mutation wurde am **2026-08-22** nach Owner-Freigabe auf dem Projekt `AIFINANCIAL` angewendet und als Migration `20260822012200_fintech_core_ft6b_fixed_point_reconciliation` registriert.
 
 Post-Mutation-Verifikation:
 
@@ -179,7 +204,16 @@ Post-Mutation-Verifikation:
 - keine neue Tabelle, kein neues Schema, keine zweite Queue;
 - keine Live-Execution-Capability freigeschaltet.
 
-Der Security Advisor meldete nach der Mutation keine FT-6B-spezifische neue Schwachstelle. Bereits bestehende Advisor-Hinweise ausserhalb des FT-6B-Scopes bleiben separat zu behandeln.
+## Legacy Compatibility
+
+`server/fintechCorePersistence.ts` besitzt weiterhin einen v1-RPC-Pfad fuer `bindingState=UNBOUND`. Dieser Pfad ist **Legacy-/Research-Kompatibilitaet**, nicht die kanonische FT-6B-Persistenz fuer BOUND Intents.
+
+```text
+BOUND   -> fintech_core_append_order_intent_v2
+UNBOUND -> fintech_core_append_order_intent_v1  (legacy/research only)
+```
+
+Eine physische Entfernung des v1-Pfads erfolgt erst nach Consumer-/Replay-/Bestandsdaten-Nachweis und gegebenenfalls separater Owner-Freigabe fuer die Persistence-/Security-Boundary.
 
 ## EventMesh
 
@@ -188,7 +222,7 @@ FT-6B fuehrt keine spekulativen Event-Namen ein. Solange kein eindeutiger kanoni
 ## Security / Data Integrity
 
 - Missing/Stale/Mismatched Evidence wird nie synthetisch ergaenzt.
-- Pattern Evidence bleibt nicht-authorizing.
+- Pattern Evidence bleibt non-authorizing.
 - Paper Trading verwendet kein reales Kapital.
 - Risk-/Compliance-Approval wird ausschliesslich aus FT-5 Decision Records abgeleitet.
 - Intent-/Idempotency-/Client-Order-ID-Kollisionen sind fail-closed.
@@ -196,14 +230,30 @@ FT-6B fuehrt keine spekulativen Event-Namen ein. Solange kein eindeutiger kanoni
 - `public.outbox_jobs` bleibt einzige Queue-/Lease-Authority.
 - Exchange-/Custody-/Wallet-Adapter, reales Settlement und Live-Routing bleiben FT-7+.
 
-## Closure Gates
+### Owner-approved Operating-Mode Hardening
 
-Vor Merge von FT-6B bleiben erforderlich:
+Die stale Future-Capability-Projektion wurde nach expliziter Owner-Freigabe am 2026-08-22 behoben. Fuer FT-6 gilt:
 
-1. aktueller Main-/Open-PR-Korrelationsabgleich;
-2. Draft/PR nach kanonischer Governance-Vorlage;
-3. Hosted TypeScript/Lint/Unit-/Architecture-/Governance-Checks erst nach PR-Erstellung;
-4. Auswertung und Behebung echter CI-Befunde;
-5. finaler Scope-/Authority-Review.
+```text
+RESEARCH      real=false simulated=false newOrders=false
+PAPER         real=false simulated=true  newOrders=true
+GUARDED_LIVE  real=false simulated=false newOrders=false
+PRODUCTION    real=false simulated=false newOrders=false
+EMERGENCY     real=false simulated=false newOrders=false
+```
 
-`GUARDED_LIVE` und `PRODUCTION` bleiben trotz angewendeter Persistence-Migration blockiert und erfordern FT-7+ mit eigener Architektur-/Security-Entscheidung.
+`isOrderIntentEligibleForRealExecution(...)` bleibt fuer jeden Modus `false`. FT-7+ benoetigt eine neue Architektur-/Security-Entscheidung.
+
+## Current-State Closure
+
+```text
+FT-0 ... FT-6B = DONE on main
+Supersession A = implemented in branch, pending PR/merge
+Supersession B = implemented in same branch by Owner direction, pending PR/merge
+Meme/DeFi productive promotion = BLOCKED
+FT-7 = BLOCKED
+FT-8 = PLANNED
+FT-9 = PLANNED
+```
+
+Die verbleibenden Meme-/DeFi-Arbeiten sind **Promotion-/Evidence-Validierung innerhalb der bestehenden Architektur**, keine neue Architektur oder separater Dispatcher.

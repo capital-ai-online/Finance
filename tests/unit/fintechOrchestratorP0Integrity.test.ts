@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_SCORING_MODELS,
+  RESEARCH_ONLY_CHALLENGER_EXECUTOR_KEY,
   ScoringModelRegistry,
 } from '../../src/platform/Scoring/ScoringModelRegistry';
+import {
+  CRYPTO_DEFI_RESEARCH_FEATURE_CONTRACT_VERSION,
+  CRYPTO_MEME_RESEARCH_FEATURE_CONTRACT_VERSION,
+} from '../../src/platform/Scoring/CryptoResearchModelContracts';
 import { createUniversalAssetIdentity } from '../../src/platform/Scoring/UniversalAssetAdapter';
 import {
   CRYPTO_SCORING_WEIGHTS,
@@ -41,15 +46,22 @@ describe('P0 Scoring Registry 1.1.0', () => {
     expect(resolution.model.scoreEligible).toBe(true);
   });
 
-  it('registriert Meme und DeFi nur als nicht scorefähige Challenger', () => {
+  it('registriert Meme und DeFi 0.2.0 nur als nicht scorefähige Challenger', () => {
     const registry = new ScoringModelRegistry();
-    for (const modelId of ['crypto-meme-integrity', 'crypto-defi-fundamental']) {
-      const model = registry.get(modelId, '0.1.0');
+    const expected = [
+      ['crypto-meme-integrity', CRYPTO_MEME_RESEARCH_FEATURE_CONTRACT_VERSION],
+      ['crypto-defi-fundamental', CRYPTO_DEFI_RESEARCH_FEATURE_CONTRACT_VERSION],
+    ] as const;
+
+    for (const [modelId, featureContractVersion] of expected) {
+      const model = registry.get(modelId, '0.2.0');
+      expect(model?.version).toBe('0.2.0');
       expect(model?.lifecycle).toBe('challenger');
       expect(model?.alias).toBe('challenger');
       expect(model?.evidencePolicy).toBe('research-only');
       expect(model?.scoreEligible).toBe(false);
-      expect(model?.featureContractVersion).toBe('fintech-core.crypto/category-features/0.1.0');
+      expect(model?.executorKey).toBe(RESEARCH_ONLY_CHALLENGER_EXECUTOR_KEY);
+      expect(model?.featureContractVersion).toBe(featureContractVersion);
     }
   });
 

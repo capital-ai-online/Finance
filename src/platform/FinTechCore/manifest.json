@@ -1,14 +1,20 @@
 {
   "name": "FinTechCore",
-  "version": "0.5.0",
+  "version": "0.6.2",
   "status": "in-implementation",
   "owner": "CAPITAL-AI",
-  "description": "Financial workflow composition layer. Crypto Module 01 now includes FT-0 through FT-6B contracts for research/paper, durable traceability, deterministic risk/compliance, canonical fixed-point OrderIntent binding and typed reconciliation without productive scoring or real execution authority.",
+  "description": "Financial workflow composition layer. Crypto Module 01 includes FT-0 through FT-6B on main for research/paper, durable traceability, deterministic risk/compliance, canonical fixed-point OrderIntent binding and typed reconciliation. Operating-mode policy is fail-closed for GUARDED_LIVE/PRODUCTION; Meme/DeFi category models remain non-executable challengers; FT-7 remains blocked pending a separate architecture/security decision.",
   "category": "platform",
   "roadmap": ["FT-CORE-CRYPTO-01"],
   "adr": ["ADR-0087", "ADR-0099", "ADR-0100"],
+  "adrSemantics": {
+    "ADR-0087": "protected canonical scoring authority; Supersession B keeps Meme/DeFi challengers non-executable and correlation-bound",
+    "ADR-0099": "accepted FinTech Core financial-workflow composition authority through FT-6B",
+    "ADR-0100": "accepted DeFiLlama free-tier evidence-only provider authority; no scoring bypass"
+  },
   "dependencies": [
     "src/platform/Scoring/contracts.ts",
+    "src/platform/Scoring/CryptoResearchModelContracts.ts",
     "src/platform/MarketData/evidenceQualityContracts.ts",
     "src/types/crypto.types.ts",
     "src/services/cryptoSnapshotProvider.ts"
@@ -38,6 +44,7 @@
     "CryptoCategoryProfileResolution",
     "CryptoCategoryFeatureContract",
     "CryptoFeatureEvidence",
+    "CryptoResearchModelContract",
     "PatternEvidence",
     "PatternDetector",
     "PatternReliabilityRegistry",
@@ -54,6 +61,9 @@
     "fintech-core.crypto/0.1.0",
     "fintech-core.crypto/category-profile-resolver/0.1.0",
     "fintech-core.crypto/category-features/0.1.0",
+    "crypto-meme-research-features/0.2.0",
+    "crypto-defi-research-features/0.2.0",
+    "defi-protocol-evidence/1.1.0",
     "fintech-core.crypto/verified-snapshot-feature-adapter/0.1.0",
     "fintech-core.crypto/pattern-detection/0.1.0",
     "fintech-core.crypto/pattern-reliability-registry/0.1.0",
@@ -68,6 +78,7 @@
     "README.md",
     "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
     "docs/adr/ADR-0099-fintech-core-engine-crypto-module-01.md",
+    "docs/adr/ADR-0100-defillama-defi-evidence-provider.md",
     "docs/evidence/fintech-core/FT0_CRYPTO_MODULE_FOUNDATION_2026-08-20.md",
     "docs/evidence/fintech-core/FT1_CORE_ENGINE_FOUNDATION_2026-08-20.md",
     "docs/evidence/fintech-core/FT2A_CRYPTO_CATEGORY_PROFILE_RESOLUTION_2026-08-20.md",
@@ -78,8 +89,10 @@
     "docs/evidence/fintech-core/FT5_DETERMINISTIC_RISK_COMPLIANCE_2026-08-21.md",
     "docs/evidence/fintech-core/FT6A_ORDER_INTENT_RECONCILIATION_2026-08-22.md",
     "docs/evidence/fintech-core/FT6B_ORDER_INTENT_FIXED_POINT_RECONCILIATION_2026-08-22.md",
+    "docs/evidence/fintech-core/FINTECH_VALUE_CHAIN_SUPERSESSION_2026-08-22.md",
     "docs/evidence/fintech-core/FT_SYNC_CHAT_TRANSFER_2026-08-21.md",
-    "docs/evidence/sc-md/SC6_DEFILLAMA_DEFI_EVIDENCE_PROVIDER_2026-08-21.md"
+    "docs/evidence/sc-md/SC6_DEFILLAMA_DEFI_EVIDENCE_PROVIDER_2026-08-21.md",
+    "docs/evidence/sc-md/SC2_MEME_DEFI_MODEL_SUPERSESSION_2026-08-22.md"
   ],
   "tests": [
     "tests/unit/fintechCoreContracts.test.ts",
@@ -99,11 +112,13 @@
     "tests/unit/fintechCoreRiskCompliance.test.ts",
     "tests/unit/fintechCoreOrderIntentBinding.test.ts",
     "tests/unit/fintechCoreFt6Persistence.test.ts",
+    "tests/unit/cryptoResearchModelContracts.test.ts",
+    "tests/unit/defiProtocolEvidence.test.ts",
     "tests/architecture/fintechCoreAuthorityBoundary.test.ts",
     "tests/architecture/fintechCoreFt6AuthorityBoundary.test.ts"
   ],
   "implementation": {
-    "level": "ft6b-canonical-order-intent-fixed-point-reconciliation",
+    "level": "ft6b-merged-plus-meme-defi-research-supersession",
     "implementedAreas": [
       "core contracts and immutable module registry",
       "deterministic workflow state machine",
@@ -119,22 +134,29 @@
       "deterministic clientOrderId/idempotencyKey/intentHash derivation",
       "exact decision hash and policy identity binding",
       "typed decision-to-intent and paper-fill reconciliation with mismatch escalation evidence",
-      "single appendOrderIntent persistence port with versioned v1 legacy and v2 canonical RPC paths",
-      "service-role-only FT-6B migration prepared but not applied",
-      "DeFiLlama protocol evidence provider remains evidence-only and outside scoring/order authority"
+      "single appendOrderIntent persistence port with v2 canonical BOUND RPC and v1 legacy/research UNBOUND compatibility path",
+      "service-role-only FT-6B migration applied and post-mutation verified",
+      "fail-closed FT-6 operating-mode policy: GUARDED_LIVE and PRODUCTION expose no real/simulated execution or new-order capability before FT-7",
+      "Meme and DeFi 0.2.0 research contracts are non-executable challengers inside the existing ScoringModelRegistry",
+      "Meme price-path and DeFi scale/activity correlations are explicitly grouped before any future weighting",
+      "DeFiLlama protocol evidence provider remains evidence-only; fully stale evidence is surfaced as STALE and cannot satisfy score gates"
+    ],
+    "legacyCompatibility": [
+      "fintech_core_append_order_intent_v1 for UNBOUND legacy/research persistence only; not canonical FT-6B execution path",
+      "PostgreSQL numeric fields as persistence compatibility projection; FinTechCoreFixedPoint remains financial authority",
+      "legacy MemeCoinScoringService weighted formula is historical/non-authorizing and not copied into the 0.2.0 challenger contract"
     ],
     "blockedAreas": [
       "guarded live",
       "production execution",
       "exchange/custody/wallet adapters",
       "settlement finality assertion",
-      "FT-6B production migration application and verification",
       "canonical FT-6 EventMesh event-name publication pending event catalog authority",
-      "live acquisition of remaining category-specific evidence",
-      "category evidence promotion into canonical scoring without explicit model-contract approval",
+      "productive Meme model promotion pending governed contract/manipulation evidence and independent validation",
+      "productive DeFi model promotion pending identity, DQ/freshness, correlation and multi-chain/fork validation",
       "24-asset crypto universe final availability/evidence admission proof",
       "concrete TA-Lib or other detector runtime binding"
     ]
   },
-  "authorityBoundary": "FinTechCore composes financial workflows and typed evidence but cannot select or calculate productive scores outside ScoringModelRegistry/ScoringDispatcher. CryptoOrchestrator and pattern/agent outputs remain research-only unless separately promoted by existing evidence/model contracts. FT-6B derives OrderIntent approvals only from authoritative append-only FT-5 decisions, uses deterministic fixed point for execution-relevant financial values, remains PAPER-only, asserts no real execution or settlement finality, and cannot replace IAM, Compliance, Quality, Governance, Supervisor, Release or Deployment authorities."
+  "authorityBoundary": "FinTechCore composes financial workflows and typed evidence but cannot select or calculate productive scores outside ScoringModelRegistry/ScoringDispatcher. CryptoOrchestrator and pattern/agent outputs remain research-only unless separately promoted by existing evidence/model contracts. Meme and DeFi 0.2.0 contracts contain no executable weights and cannot displace crypto-technical-provenance@0.7.0. FT-6B derives OrderIntent approvals only from authoritative append-only FT-5 decisions, uses deterministic fixed point for execution-relevant financial values, remains PAPER-only, asserts no real execution or settlement finality, and cannot replace IAM, Compliance, Quality, Governance, Supervisor, Release or Deployment authorities. GUARDED_LIVE/PRODUCTION are reserved FT-7+ vocabulary and expose no FT-6 capability."
 }

@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  deriveDefiProtocolEvidenceStatus,
   fetchDefiProtocolEvidence,
   isDefiLlamaEvidenceEnabled,
   resetDefiProtocolEvidenceProviderForTests,
 } from '../../src/services/defiProtocolEvidence';
 import { resetProviderHealth } from '../../src/platform/Supervisor/providerHealth';
+import type { CryptoFeatureEvidence } from '../../src/platform/FinTechCore/Modules/Crypto/CryptoCategoryFeatureContracts';
 
 function protocolPayload() {
   return {
@@ -19,6 +21,18 @@ function feesOverviewPayload() {
   };
 }
 
+function evidence(status: CryptoFeatureEvidence['status']): CryptoFeatureEvidence {
+  return {
+    key: 'protocol.tvlUsd',
+    status,
+    value: status === 'VERIFIED' || status === 'STALE' ? 1 : null,
+    provider: status === 'VERIFIED' || status === 'STALE' ? 'DeFiLlama' : null,
+    evidenceRefs: status === 'VERIFIED' || status === 'STALE' ? ['defillama:test'] : [],
+    observedAt: '2026-08-20T12:00:00.000Z',
+    retrievedAt: '2026-08-20T12:00:01.000Z',
+  };
+}
+
 beforeEach(() => {
   resetDefiProtocolEvidenceProviderForTests();
   resetProviderHealth();
@@ -28,6 +42,21 @@ describe('isDefiLlamaEvidenceEnabled', () => {
   it('defaults to enabled and only disables on the literal string "false"', () => {
     expect(isDefiLlamaEvidenceEnabled({} as NodeJS.ProcessEnv)).toBe(true);
     expect(isDefiLlamaEvidenceEnabled({ DEFILLAMA_EVIDENCE_ENABLED: 'false' } as NodeJS.ProcessEnv)).toBe(false);
+  });
+});
+
+describe('deriveDefiProtocolEvidenceStatus', () => {
+  it('requires every emitted feature to be VERIFIED before returning READY', () => {
+    expect(deriveDefiProtocolEvidenceStatus([evidence('VERIFIED'), evidence('VERIFIED')])).toBe('READY');
+    expect(deriveDefiProtocolEvidenceStatus([evidence('VERIFIED'), evidence('STALE')])).toBe('PARTIAL');
+  });
+
+  it('surfaces an all-stale evidence set explicitly as STALE instead of READY', () => {
+    expect(deriveDefiProtocolEvidenceStatus([evidence('STALE'), evidence('STALE')])).toBe('STALE');
+  });
+
+  it('does not convert unavailable/invalid evidence to partial coverage', () => {
+    expect(deriveDefiProtocolEvidenceStatus([evidence('NOT_AVAILABLE'), evidence('INVALID')])).toBe('SOURCE_UNAVAILABLE');
   });
 });
 

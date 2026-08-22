@@ -4,8 +4,11 @@
 **Last synchronized:** 2026-08-22  
 **Protected scoring authority:** ADR-0087  
 **FinTech workflow authority:** ADR-0099  
+**DeFi evidence authority:** ADR-0100  
+**Combined supersession evidence:** `docs/evidence/fintech-core/FINTECH_VALUE_CHAIN_SUPERSESSION_2026-08-22.md`  
+**Meme/DeFi evidence:** `docs/evidence/sc-md/SC2_MEME_DEFI_MODEL_SUPERSESSION_2026-08-22.md`
 
-> Diese Datei beschreibt den aktuellen Runtime-/Authority-Stand. Aeltere Specialized-first-, Universal-Fallback-, Gemini- und direkte Domain-Scoring-Darstellungen sind superseded und besitzen keine aktuelle Architektur-Authority.
+> Diese Datei beschreibt den aktuellen Runtime-/Authority-Stand. Aeltere Specialized-first-, Universal-Fallback-, Gemini-, direkte Domain-Scoring- und vor-ADR-0087-Blueprint-Darstellungen sind superseded und besitzen keine aktuelle Architektur-Authority.
 
 ## 1. Grundprinzip
 
@@ -34,7 +37,8 @@ Universal Asset Identity (UAI)
 4. Kein Specialized-first-/Fallback-Routing darf `ScoringDispatcher` umgehen.
 5. Missing/stale/invalid Evidence wird nicht zu `0`, PASS oder synthetischer Verfuegbarkeit umgedeutet.
 6. Challenger-/Category-/Meme-/DeFi-Modelle werden nur ueber explizite Registry-/Governance-Promotion produktiv.
-7. LLM-/Agent-Ausgaben sind keine Risk-, Compliance-, IAM-, Trading- oder Execution-Freigabe.
+7. Correlated Raw Features duerfen vor validierter De-Korrelation/Latent-Factor-Transformation nicht mehrfach additiv gewichtet werden.
+8. LLM-/Agent-Ausgaben sind keine Risk-, Compliance-, IAM-, Trading- oder Execution-Freigabe.
 
 ## 2. Rollenmodell
 
@@ -42,10 +46,7 @@ Universal Asset Identity (UAI)
 
 Ein Orchestrator komponiert Research-/Evidence-/Workflow-Schritte. Er darf spezialisierte Analysebausteine koordinieren, besitzt aber nicht automatisch Scoring- oder Execution-Authority.
 
-Beispiele:
-
-- `src/orchestrator/cryptoOrchestrator.ts` — Research/Enrichment, `scoreEligible=false`;
-- weitere Assetklassen-Orchestratoren duerfen dieselben UAI-/Evidence-/Dispatcher-Vertraege wiederverwenden, ohne eigene produktive Scoring-Architektur zu erzeugen.
+`src/orchestrator/cryptoOrchestrator.ts` bleibt Research/Enrichment und `scoreEligible=false`. Weitere Assetklassen-Orchestratoren muessen dieselben UAI-/Evidence-/Dispatcher-Vertraege wiederverwenden.
 
 ### ScoringModelRegistry
 
@@ -61,42 +62,80 @@ Ein Adapter verbindet die zentrale Dispatcher-Authority mit einer fachlichen, re
 
 ### FinTechCore
 
-`src/platform/FinTechCore/` ist Financial Workflow Composition Authority gemaess ADR-0099. Der Core komponiert Research/Paper, Risk/Compliance, OrderIntent und Reconciliation, aber besitzt keine produktive Score-Berechnung und keine autonome reale Execution.
+`src/platform/FinTechCore/` ist Financial Workflow Composition Authority gemaess ADR-0099. Der Core komponiert Research/Paper, Risk/Compliance, OrderIntent und Reconciliation, besitzt aber keine produktive Score-Berechnung und keine autonome reale Execution.
 
 ### Supervisor / EventMesh / Traceability
 
 Supervisor und EventMesh beobachten bzw. transportieren Zustands-/Evidence-Signale. Sie duerfen weder Scoring- noch Compliance-/Execution-Entscheidungen heimlich ueberschreiben.
 
-## 3. Crypto-Orchestration
+## 3. Crypto-Orchestration und Supersession B
 
 ### Research Boundary
 
-Der Crypto-Orchestrator darf unter anderem:
+Der Crypto-Orchestrator darf Asset-/Category-Kontext, Market-/On-Chain-/DeFi-/Pattern-Evidence sowie Evidence Quality/Availability anreichern. Er darf keine Registry-/Dispatcher-Selektion umgehen, fehlende Evidence synthetisieren oder Risk-/Compliance-/Execution-Freigaben erzeugen.
 
-- Asset-/Category-Kontext anreichern;
-- Market-/On-Chain-/DeFi-/Pattern-Evidence zusammentragen;
-- Evidence Quality/Availability sichtbar machen;
-- Research-Resultate fuer nachgelagerte kanonische Contracts vorbereiten.
+### Canonical Crypto Champion
 
-Er darf nicht:
+Der produktive Crypto-Champion bleibt unveraendert:
 
-- direkt einen produktiven finalen Score autorisieren;
-- Registry-/Dispatcher-Model Selection umgehen;
-- fehlende Evidence synthetisieren;
-- Risk-/Compliance-Approval erteilen;
-- OrderIntent oder reale Order ausfuehren.
+```text
+crypto-technical-provenance@0.7.0
+```
+
+Eine Meme-/DeFi-Klassifikation ist descriptive routing metadata und besitzt keine Model-Promotion-Authority.
+
+### Meme Challenger 0.2.0
+
+`crypto-meme-integrity@0.2.0` verwendet `crypto-meme-research-features/0.2.0` und bleibt:
+
+```text
+lifecycle=challenger
+scoreEligible=false
+evidencePolicy=research-only
+executor=research-only:not-executable
+executableWeights=false
+```
+
+Die historische 35/25/20/20-Formel des `MemeCoinScoringService` ist non-authorizing und wird nicht in den Challenger uebernommen.
+
+Korrelation:
+
+- `technical.trend`
+- `technical.momentum`
+- `risk.volatilityQuality`
+
+liegen gemeinsam in `meme-price-path`. Vor einer spaeteren Gewichtung ist ein validierter Latent-Factor/De-Korrelationsschritt erforderlich. Liquidity darf weder Community/Popularity noch Manipulation Risk ersetzen. Contract-Integrity und Manipulation-Risk sind Promotion-Gates.
+
+### DeFi Challenger 0.2.0
+
+`crypto-defi-fundamental@0.2.0` verwendet `crypto-defi-research-features/0.2.0` und bleibt ebenfalls non-executable.
+
+Die Raw-Evidence-Werte
+
+- `protocol.tvlUsd`
+- `protocol.feesUsd`
+- `protocol.revenueUsd`
+
+liegen gemeinsam in `defi-scale-activity`. Drei unabhaengige additive positive Gewichte sind ohne validierte De-Korrelation oder Latent-Factor-Transformation nicht zulaessig.
 
 ### DeFiLlama
 
-DeFiLlama ist read-only Evidence Acquisition fuer DeFi-Protokolldaten. Es ist kein Score, kein Ranking, kein Eligibility Gate und keine Order Authority.
+ADR-0100 akzeptiert DeFiLlama ausschliesslich als Evidence-Provider. Es ist kein Score, Ranking, Eligibility Gate, Dispatcher, Orchestrator oder Order Authority.
 
-### Meme / DeFi Challenger
+`defi-protocol-evidence/1.1.0` ist fail-closed:
 
-Meme-/DeFi-spezifische Modelllogik kann als Challenger oder registrierter Domain Executor existieren. Produktiv wird sie nur nach expliziter Registry-/Governance-Promotion. Direkte Server-/UI-Aufrufe duerfen keine parallele produktive Authority etablieren.
+```text
+READY              -> alle emittierten Features VERIFIED
+PARTIAL            -> mindestens ein VERIFIED, Set nicht vollstaendig verified
+STALE              -> kein VERIFIED, stale Evidence vorhanden
+SOURCE_UNAVAILABLE -> keine verified/stale Evidence verfuegbar
+```
+
+`STALE`, `NOT_AVAILABLE` und `INVALID` erfuellen keine REQUIRED-/HARD_GATE-Semantik.
 
 ## 4. FinTech Core Crypto Module 01
 
-Die Financial Workflow Chain lautet bis FT-6:
+Die Financial Workflow Chain lautet bis FT-6B:
 
 ```text
 Research / Evidence
@@ -104,58 +143,57 @@ Research / Evidence
   -> deterministic Portfolio/Risk inputs
   -> FT-5 Risk Decision Record
   -> FT-5 Compliance Decision Record
-  -> FT-6 canonical OrderIntent binding
+  -> FT-6B canonical OrderIntent binding
   -> PAPER-only simulated handoff
   -> typed Reconciliation
   -> durable Evidence / Supervisor signal
 ```
 
-### FT-6 Invarianten
+### FT-6B Invarianten
 
 - ein `FinTechCoreOrderIntent`;
 - ein `FinTechCoreFixedPoint` fuer execution-relevante Quantity/Price/Money-Werte;
 - Risk-/Compliance-Approval ausschliesslich aus deterministischen FT-5 Decision Records;
 - Decision ID/Hash und Policy ID/Version werden immutable gebunden;
 - `clientOrderId`, `idempotencyKey`, `intentHash` werden deterministisch erzeugt;
-- `RESEARCH`, `GUARDED_LIVE`, `PRODUCTION` erzeugen in FT-6 keinen Execution-Handoff;
 - PAPER bleibt Simulation;
 - Reconciliation-Mismatch bleibt unresolved Evidence und wird nicht automatisch repariert;
 - keine reale Exchange-/Wallet-/Custody-Capability vor FT-7+.
 
-## 5. Superseded Topologien
+### Operating Modes — Owner-approved fail-closed
 
-Folgende fruehere Aussagen gelten **nicht** mehr als aktuelle Authority:
-
-### Specialized-first / Universal Fallback
-
-Die fruehere Topologie
+Die stale Future-Capability-Projektion wurde nach expliziter Owner-Freigabe korrigiert:
 
 ```text
-Specialized Scoring Service first
-  else Universal Fallback Engine
+RESEARCH      real=false simulated=false newOrders=false
+PAPER         real=false simulated=true  newOrders=true
+GUARDED_LIVE  real=false simulated=false newOrders=false
+PRODUCTION    real=false simulated=false newOrders=false
+EMERGENCY     real=false simulated=false newOrders=false
 ```
 
-ist superseded. Sie wuerde eine parallele Modellselektion ausserhalb der Registry-/Dispatcher-Kette erlauben.
+`isOrderIntentEligibleForRealExecution(...)` bleibt fuer jeden Modus `false`. FT-7+ benoetigt eine separate Architektur-/Security-Entscheidung.
+
+### Legacy Persistence Projection
+
+Kanonische BOUND-FT-6B-Intents verwenden den v2-Persistence-RPC. Der weiterhin vorhandene v1-`UNBOUND`-Pfad ist ausschliesslich Legacy-/Research-Kompatibilitaet und keine zweite OrderIntent- oder Execution-Authority. Seine physische Entfernung benoetigt Consumer-/Replay-/Bestandsdaten-Evidence und bei Security-/Persistence-Boundary-Aenderung eine separate Owner-Freigabe.
+
+## 5. Superseded Topologien
+
+Folgende fruehere Aussagen gelten nicht mehr als aktuelle Authority:
+
+- Specialized-first / Universal Fallback;
+- direkte Crypto-/Meme-Scoring-Authority aus API-/UI-Pfaden;
+- providergebundene Gemini-/LLM-Scoring-Architektur;
+- historische Crypto-/Meme-/DeFi-Gewichte ausserhalb der aktuellen Registry-/Model-Governance;
+- implizite DeFiLlama-to-Score-Verbindungen;
+- additive Mehrfachgewichtung korrelierter DeFi- oder Meme-Rohsignale ohne validierte De-Korrelation.
 
 Aktuell gilt immer:
 
 ```text
 Registry -> Dispatcher -> registrierter Domain Executor -> CanonicalScoreResult
 ```
-
-### Direkte Crypto-/Meme-Scoring-Authority
-
-Historische Beschreibungen, nach denen `CryptoScoringService`, `MemeCoinScoringService` oder andere Services direkt aus API-/UI-Pfaden die produktive Gesamt-Scoring-Authority bilden, sind superseded. Solche Implementierungen duerfen nur hinter dem kanonischen Dispatcher/Adapter-Vertrag produktive Autoritaet erhalten.
-
-### Gemini-/Provider-Abhaengigkeit
-
-Eine fruehere Beschreibung, wonach spezialisierte Orchestratoren zwingend `@google/genai`, `gemini-2.5-flash` oder einen anderen konkreten LLM-Provider benoetigen, ist superseded.
-
-Research-/Agent-Provider sind austauschbare, nicht-autorisierende Komponenten. Die produktive Scoring- und Financial-Control-Authority bleibt deterministisch und providerunabhaengig.
-
-### Historische Scoring-Formeln
-
-Aeltere in diesem Dokument gefuehrte Crypto-/Meme-/Commodity-Gewichte und Formeln sind keine aktuelle Model-Registry-Authority. Aktive Gewichte, Versionen und Promotion-Status werden ausschliesslich durch die kanonische Scoring-Modell-/Registry-Governance bestimmt.
 
 ## 6. Assetklassen-Erweiterung
 
@@ -184,15 +222,42 @@ Assetklassen duerfen eigene Research-/Feature-/Executor-Module besitzen, aber ke
 - `public.outbox_jobs` bleibt Queue-/Lease-Authority.
 - `fintech_core` bleibt privates Financial-Persistence-Schema.
 - Production-/Guarded-Live-Cutover ist ein separater, human-gated FT-7+ Prozess.
+- Meme/DeFi-Model-Promotion ist ein eigener human-gated Model-Governance-Prozess innerhalb ADR-0087, keine neue Architektur.
 
 ## 8. Dokumenten-Authority
 
 Bei Widerspruch gilt folgende Reihenfolge:
 
-1. aktive ADR-/Governance-Authorities, insbesondere ADR-0087 und ADR-0099;
+1. aktive ADR-/Governance-Authorities, insbesondere ADR-0087, ADR-0099 und ADR-0100;
 2. kanonische Runtime Contracts/Registries;
 3. aktuelle Roadmaps/Evidence;
 4. diese Architekturprojektion;
 5. historische/superseded Beschreibungen.
 
 Diese Datei darf nicht verwendet werden, um eine zweite Scoring-, Orchestrator-, Financial-Control- oder Execution-Authority zu begruenden.
+
+## 9. Expliziter Supersession-Index fuer historische FinTech-Projektionen
+
+| Historischer Pfad | Rolle heute | Current-state replacement |
+|---|---|---|
+| `docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_AUDIT.md` | historischer Audit-Snapshot 2026-07-31 | ADR-0087 + ADR-0099 + aktuelle Registries |
+| `docs/architecture/ENTERPRISE_FINTECH_ARCHITECTURE_NACHAUDIT.md` | historischer Audit-Snapshot 2026-08-02 | ADR-0087 + ADR-0099 + aktuelle Registries |
+| `docs/architecture/ENTERPRISE_FINTECH_FINALIZATION_REPORT.md` | historischer Finalisierungs-/Remediation-Snapshot 2026-07-31 | aktuelle FinTech-Core-Roadmap + ADR-0087/0099/0100 |
+| `docs/architecture/ENTERPRISE_SCREENING_SCORING_MASTER_ARCHITECTURE.md` | superseded Pre-Single-Dispatcher Blueprint | ADR-0087 / `ScoringModelRegistry` / `ScoringDispatcher` |
+
+Physische Verschiebung/Loeschung dieser Artefakte ist nicht erforderlich, solange ihre historische Rolle eindeutig und die Referenzierbarkeit fuer Audit/RAG/Tests erhalten bleibt. Eine spaetere Archiv-Migration darf nur mit Referenz-/Consumer-Pruefung erfolgen.
+
+## 10. Current State
+
+```text
+FT-0 ... FT-6B = DONE on main
+Supersession A = IMPLEMENTED in branch / pending PR
+Supersession B = IMPLEMENTED in same branch / pending PR
+crypto champion = crypto-technical-provenance@0.7.0 unchanged
+Meme/DeFi productive promotion = BLOCKED
+FT-7 = BLOCKED
+FT-8 = PLANNED
+FT-9 = PLANNED
+```
+
+Verbleibende Meme-/DeFi-Arbeiten sind Evidence-/Validation-/Promotion-Arbeit innerhalb der bestehenden Architektur. Sie begruenden keinen weiteren Dispatcher, keine weitere Registry und keine zweite Persistence-/Governance-Authority.
