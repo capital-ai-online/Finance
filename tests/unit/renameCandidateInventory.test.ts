@@ -7,6 +7,7 @@ import {
   validateRenameCandidateInventory,
   type RenameCandidateInventory,
 } from '../../scripts/automation/classifyRenameCandidates';
+import { synchronizeRenameMaterializedState } from '../../scripts/automation/syncRenameCandidateEvidence';
 
 const validInventory: RenameCandidateInventory = {
   schemaVersion: '1.0.0',
@@ -26,6 +27,52 @@ const validInventory: RenameCandidateInventory = {
     },
   ],
 };
+
+type MaterializedEvidence = {
+  schemaVersion: string;
+  authority: string;
+  baselineCommit: string;
+  phase: string;
+  safeMigrationCount: number;
+  migrationPerformed: boolean;
+  phase6Conclusion: string;
+  candidates: Array<{
+    id: string;
+    sourceTerm?: string;
+    targetTerm?: string;
+    vocabularyConceptId?: string;
+    classification: string;
+    mandatoryFindingCodes: string[];
+    decision: string;
+    evidenceSurfaces?: string[];
+    rationale?: string;
+  }>;
+};
+
+type MaterializedBacklog = {
+  schemaVersion: string;
+  authority: string;
+  baselineCommit: string;
+  policy: string;
+  items: Array<{
+    id: string;
+    classification: string;
+    status?: string;
+    requiredNextDecision?: string;
+    protectedSurfaces?: string[];
+    automaticMigrationAllowed: boolean;
+  }>;
+};
+
+function loadMaterializedState(root: string) {
+  const evidence = JSON.parse(
+    fs.readFileSync(path.join(root, 'docs/governance/vocabulary/rename-classification-evidence.json'), 'utf8'),
+  ) as MaterializedEvidence;
+  const backlog = JSON.parse(
+    fs.readFileSync(path.join(root, 'docs/governance/vocabulary/rename-backlog.json'), 'utf8'),
+  ) as MaterializedBacklog;
+  return { evidence, backlog };
+}
 
 describe('Phase 6 rename candidate inventory', () => {
   it('accepts the read-only ESS-0017 inventory contract', () => {
@@ -60,25 +107,13 @@ describe('Phase 6 rename candidate inventory', () => {
     const root = process.cwd();
     const inventory = loadRenameCandidateInventory(path.join(root, 'docs/governance/vocabulary/rename-candidates.json'));
     const classified = classifyRenameCandidateInventory(inventory, root);
-    const evidence = JSON.parse(
-      fs.readFileSync(path.join(root, 'docs/governance/vocabulary/rename-classification-evidence.json'), 'utf8'),
-    ) as {
-      safeMigrationCount: number;
-      migrationPerformed: boolean;
-      phase6Conclusion: string;
-      candidates: Array<{
-        id: string;
-        classification: string;
-        mandatoryFindingCodes: string[];
-        decision: string;
-      }>;
-    };
-    const backlog = JSON.parse(
-      fs.readFileSync(path.join(root, 'docs/governance/vocabulary/rename-backlog.json'), 'utf8'),
-    ) as {
-      items: Array<{ id: string; classification: string; automaticMigrationAllowed: boolean }>;
-    };
+    const { evidence, backlog } = loadMaterializedState(root);
+    const synchronized = synchronizeRenameMaterializedState(inventory, root, evidence, backlog);
 
+    expect(synchronized.evidence).toEqual(evidence);
+    expect(synchronized.backlog).toEqual(backlog);
+    expect(evidence.baselineCommit).toBe(inventory.baselineCommit);
+    expect(backlog.baselineCommit).toBe(inventory.baselineCommit);
     expect(evidence.safeMigrationCount).toBe(0);
     expect(evidence.migrationPerformed).toBe(false);
     expect(evidence.phase6Conclusion).toBe('NO_SAFE_CANDIDATES');
@@ -92,12 +127,32 @@ describe('Phase 6 rename candidate inventory', () => {
       expect(backlogEntry, `Missing backlog entry for ${candidate.id}`).toBeDefined();
       expect(stored?.classification).toBe(candidate.report.classification);
       expect(stored?.decision).toBe('DO_NOT_RENAME');
+      expect(stored?.mandatoryFindingCodes).toEqual([]);
       expect(backlogEntry?.classification).toBe(candidate.report.classification);
       expect(backlogEntry?.automaticMigrationAllowed).toBe(false);
-      for (const code of stored?.mandatoryFindingCodes ?? []) {
-        expect(candidate.report.findings.some((finding) => finding.code === code)).toBe(true);
-      }
       expect(candidate.report.classification).not.toBe('SAFE');
     }
+  });
+
+  it('repairs stale materialized classifications from the live analyzer without authorizing migration', () => {
+    const root = process.cwd();
+    const inventory = loadRenameCandidateInventory(path.join(root, 'docs/governance/vocabulary/rename-candidates.json'));
+    const classified = classifyRenameCandidateInventory(inventory, root);
+    const { evidence, backlog } = loadMaterializedState(root);
+    const staleEvidence = structuredClone(evidence);
+    const staleBacklog = structuredClone(backlog);
+
+    staleEvidence.candidates[0].classification = classified[0].report.classification === 'BLOCKED' ? 'CONDITIONAL' : 'BLOCKED';
+    staleBacklog.items[0].classification = staleEvidence.candidates[0].classification;
+    staleEvidence.candidates[0].mandatoryFindingCodes = ['STALE_SNAPSHOT_CODE'];
+    staleEvidence.migrationPerformed = true;
+    staleBacklog.items[0].automaticMigrationAllowed = true;
+
+    const repaired = synchronizeRenameMaterializedState(inventory, root, staleEvidence, staleBacklog);
+    expect(repaired.evidence.candidates[0].classification).toBe(classified[0].report.classification);
+    expect(repaired.backlog.items[0].classification).toBe(classified[0].report.classification);
+    expect(repaired.evidence.candidates[0].mandatoryFindingCodes).toEqual([]);
+    expect(repaired.evidence.migrationPerformed).toBe(false);
+    expect(repaired.backlog.items[0].automaticMigrationAllowed).toBe(false);
   });
 });

@@ -11,6 +11,7 @@ import {
   renderProductionBaselineBlock,
   PR_TEMPLATE_VERSION,
 } from './lib.mjs';
+import { canonicalizeKnownSectionHeadings } from './prBodySectionContract.mjs';
 
 const baseRef = process.env.PR_BASE_REF || 'origin/main';
 const headRef = process.env.PR_HEAD_REF || 'HEAD';
@@ -79,6 +80,11 @@ let body = template;
 for (const [key, value] of Object.entries(replacements)) {
   body = body.split(`{{${key}}}`).join(String(value));
 }
+
+// Keep generated bodies canonical even when a caller supplies an older compatible
+// template through PR_TEMPLATE_PATH. The validator independently accepts only the
+// explicitly registered aliases; arbitrary renamed sections still fail closed.
+body = canonicalizeKnownSectionHeadings(body);
 
 const unresolved = [...body.matchAll(/\{\{([A-Z0-9_]+)\}\}/g)].map((match) => match[1]);
 if (unresolved.length > 0) {

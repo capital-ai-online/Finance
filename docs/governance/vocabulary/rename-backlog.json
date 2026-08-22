@@ -1,12 +1,12 @@
 {
   "schemaVersion": "1.0.0",
   "authority": "ESS-0017",
-  "baselineCommit": "77cf6ed3143dc39120c55f7c767d4a758bc9735d",
+  "baselineCommit": "04c0e5957aca7025b07f55439e052cef8e070571",
   "policy": "HUMAN_APPROVAL_REQUIRED",
   "items": [
     {
       "id": "REN-0001",
-      "classification": "CONDITIONAL",
+      "classification": "BLOCKED",
       "status": "DEFERRED",
       "requiredNextDecision": "Dedicated billing/runtime dependency migration approval",
       "protectedSurfaces": ["billing", "stripe", "entitlements", "checkout", "runtime"],

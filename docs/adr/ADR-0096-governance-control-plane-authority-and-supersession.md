@@ -60,6 +60,8 @@ ADR-0097 extends Documentary maintenance under this boundary and cannot override
 
 `package.json#version` is the sole current platform-version authority.
 
+`ESS-0004` (Enterprise Version Manager) is explicitly **SUSPENDED / archived** and is superseded for platform-version mutation authority by ADR-0096 plus `package.json#version`. Its archived document may remain as historical evidence, but it may not authorize version mutations, generated state or a parallel Version Manager control plane.
+
 ```text
 package.json#version
    ├─ Release Version Gate — controlled mutation
