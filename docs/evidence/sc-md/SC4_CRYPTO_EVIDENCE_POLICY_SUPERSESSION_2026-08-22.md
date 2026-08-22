@@ -14,6 +14,7 @@ This record supersedes inconsistent, paid-by-default or unsafe evidence behavior
 2. **Binance Public and Kraken Public are co-primary crypto market/derivatives evidence suppliers.** They remain independently attributable to avoid correlated double counting.
 3. `DUNE_API_KEY` is provisioned by the Owner in `finance-secrets.env` with read rights. Key presence alone does not enable Dune reads.
 4. The Owner reports a **14-day Dune entitlement to the fuller dataset surface**. This exact trial term was not independently found in the public Dune documentation during the 2026-08-22 review, so it is treated as Owner-attested account entitlement and must be bounded by explicit timestamps.
+5. Dune is consumed server-side through the existing TypeScript evidence provider. The Owner does not need to perform manual API calls.
 
 Option B does not waive failed/missing gates and does not authorize real orders, custody or exchange execution.
 
@@ -30,10 +31,11 @@ Option B does not waive failed/missing gates and does not authorize real orders,
 | One HTTP/rate-limit implementation per vendor | Shared `ResearchEvidenceProviderHttp` + ProviderMatrix/RateLimitBudget/CircuitBreaker/Supervisor health |
 | Provider response interpreted as PASS | Raw evidence only; policy/gates remain separate and fail closed |
 | Missing/stale/invalid mapped to 0/50/PASS | Explicit `NOT_AVAILABLE` / `STALE` / `INVALID` with null/provenance rules |
-| Arbitrary Dune SQL/query execution | Owner-allowlisted saved-query latest-result GET only, bounded schema/rows |
+| Arbitrary Dune SQL/query execution | Governed saved-query latest-result GET only, bounded schema/rows |
+| Duplicate hard-coded Dune query allowlists | `DuneSavedQueryRegistry` semantic contracts + `DUNE_QUERY_*` environment values as the single numeric query-ID authority |
 | A temporary provider entitlement becoming permanent architecture | Explicit `FREE_TIER` or timestamp-bounded `TRIAL_14D`; automatic policy block at trial expiry |
 | Paid auto-upgrade/overage/x402 | Prohibited unless separately Owner-approved |
-| Browser-supplied provider identities/query IDs | Server-side governed identity registry only |
+| Browser-supplied provider identities/query IDs | Server-side governed identity/query registries only |
 | `LIVE` used ambiguously | `LIVE_DATA`, `LIVE_SCORING`, `LIVE_EXECUTION` remain separate states |
 
 ## Primary crypto market suppliers
@@ -65,7 +67,9 @@ Option B does not waive failed/missing gates and does not authorize real orders,
 - Keyless DEX pool/activity evidence for governed chain/token identities.
 - Does not replace contract-security or canonical price-consensus authority.
 
-### Dune — two governed access modes
+### Dune — TypeScript evidence provider and two governed access modes
+
+The productive Dune integration is the existing server-side TypeScript `DuneQueryEvidenceProvider`. Query contracts live in `DuneSavedQueryRegistry`; deployment supplies only the reviewed numeric IDs through semantic `DUNE_QUERY_*` environment keys. The provider derives its numeric allowlist from these values. `CryptoEvidenceIdentityRegistry` remains responsible for asset/provider identities and no longer duplicates Dune query IDs.
 
 #### `FREE_TIER`
 - Requires `DUNE_FREE_TIER_ATTESTED=true`.
@@ -78,11 +82,16 @@ Option B does not waive failed/missing gates and does not authorize real orders,
 - Trial expiry MUST NOT auto-convert to paid access. Return to `FREE_TIER` requires explicit Free-Tier attestation.
 
 #### Boundaries valid in both Dune modes
-- Only saved query IDs present in the Owner-reviewed registry and `DUNE_ALLOWED_QUERY_IDS`.
-- Only bounded latest-result reads; no arbitrary SQL, execute-query, pipelines or model/user-created query IDs.
-- Requested columns and rows are bounded.
+- Only saved query IDs resolved from the semantic `DUNE_QUERY_*` registry configuration.
+- Only bounded latest-result reads with explicit `limit` and `columns`; no arbitrary SQL, execute-query, pipelines or model/user-created query IDs.
+- Requested columns and rows are bounded and validated before `VERIFIED` evidence.
 - Dataset entitlement may broaden during the trial; **runtime mutation/query authority does not**.
 - No credit/overage bypass or automatic purchase is permitted.
+- Existing execution IDs may be inspected through the diagnostic-only status path. Diagnostic responses cannot become scoring evidence.
+
+#### Official TypeScript SDK boundary
+
+`@duneanalytics/client-sdk` is recognized as Dune's official TypeScript client. Its convenience methods are not automatically safe for the CAPITAL-AI no-execute contract: methods such as query execution/refresh paths can start executions, and result helpers may paginate beyond the local result-row budget. Therefore the current evidence provider keeps its explicit bounded read-only result request. If the SDK is introduced as a dependency, it may only sit behind a restricted adapter that exposes reviewed read-only operations; methods capable of execution, raw SQL, cancellation or unbounded pagination remain unavailable to the evidence layer.
 
 ### GDELT DOC 2.0
 - Keyless article discovery/provenance.
