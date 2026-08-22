@@ -1,8 +1,9 @@
+import { deriveDuneAllowedQueryIds } from '../DuneSavedQueryRegistry';
 import { ResearchEvidenceProviderHttp, type ResearchEvidenceProviderHttpOptions } from './ResearchEvidenceProviderHttp';
 
 export const DUNE_PROVIDER_ID = 'dune' as const;
 export const DUNE_BASE_URL = 'https://api.dune.com/api' as const;
-export const DUNE_QUERY_EVIDENCE_CONTRACT_VERSION = 'dune-saved-query-evidence/1.3.0' as const;
+export const DUNE_QUERY_EVIDENCE_CONTRACT_VERSION = 'dune-saved-query-evidence/1.4.0' as const;
 
 export type DuneEvidenceStatus =
   | 'VERIFIED'
@@ -55,6 +56,7 @@ export interface DuneExecutionDiagnostic {
 
 export interface DuneQueryEvidenceProviderOptions {
   readonly apiKey?: string | null;
+  /** Test/explicit override only. Production derives this set from DuneSavedQueryRegistry env keys. */
   readonly allowedQueryIds?: readonly number[];
   readonly accessMode?: DuneAccessMode;
   readonly freeTierAttested?: boolean;
@@ -67,11 +69,6 @@ export interface DuneQueryEvidenceProviderOptions {
   readonly timeoutMs?: number;
   readonly nowMs?: () => number;
   readonly baseUrl?: string;
-}
-
-function parseAllowedQueryIds(envValue: string | undefined): number[] {
-  if (!envValue?.trim()) return [];
-  return envValue.split(',').map((value) => Number(value.trim())).filter((value) => Number.isSafeInteger(value) && value > 0);
 }
 
 function parseBoolean(value: string | undefined, defaultValue: boolean): boolean {
@@ -149,8 +146,8 @@ function diagnosticFailure(
  * FREE_TIER and a time-bounded Owner-attested TRIAL_14D.
  *
  * The trial may broaden accessible Dune datasets, but it never broadens CAPITAL-AI mutation
- * authority: only allowlisted saved-query latest-result reads are permitted. Arbitrary SQL,
- * execute-query, pipelines, exports and credit/overage bypass remain absent by construction.
+ * authority: only semantically configured saved-query latest-result reads are permitted. Arbitrary
+ * SQL, execute-query, pipelines, exports and credit/overage bypass remain absent by construction.
  *
  * A separate diagnostic method may inspect Dune execution status for an already-existing execution.
  * It never starts/cancels an execution, never returns evidence rows and can never authorize scoring.
@@ -169,7 +166,7 @@ export class DuneQueryEvidenceProvider {
   constructor(options: DuneQueryEvidenceProviderOptions = {}) {
     const env = options.env ?? process.env;
     this.nowMs = options.nowMs ?? Date.now;
-    this.allowedQueryIds = new Set(options.allowedQueryIds ?? parseAllowedQueryIds(env.DUNE_ALLOWED_QUERY_IDS));
+    this.allowedQueryIds = new Set(options.allowedQueryIds ?? deriveDuneAllowedQueryIds(env));
     this.accessMode = options.accessMode ?? parseAccessMode(env.DUNE_ACCESS_MODE);
     this.freeTierAttested = options.freeTierAttested ?? parseBoolean(env.DUNE_FREE_TIER_ATTESTED, false);
     this.trialAttested = options.trialAttested ?? parseBoolean(env.DUNE_TRIAL_ATTESTED, false);
@@ -226,7 +223,7 @@ export class DuneQueryEvidenceProvider {
         executionId,
         expectedQueryId,
         retrievedAt,
-        'Expected Dune query ID is not present in the governed allowlist. Diagnostic reads cannot bypass query governance.',
+        'Expected Dune query ID is not present in the governed semantic registry. Diagnostic reads cannot bypass query governance.',
       );
     }
 
@@ -294,7 +291,7 @@ export class DuneQueryEvidenceProvider {
       return failure('INVALID', queryId, expectedColumns, retrievedAt, this.accessMode, 'Expected Dune columns exceed the governed schema boundary.');
     }
     if (!this.allowedQueryIds.has(queryId)) {
-      return failure('QUERY_NOT_GOVERNED', queryId, expectedColumns, retrievedAt, this.accessMode, 'Dune query ID is not present in the governed allowlist. Arbitrary query execution is forbidden.');
+      return failure('QUERY_NOT_GOVERNED', queryId, expectedColumns, retrievedAt, this.accessMode, 'Dune query ID is not present in the governed semantic registry. Arbitrary query execution is forbidden.');
     }
 
     const columns = encodeURIComponent(expectedColumns.join(','));
