@@ -180,14 +180,15 @@ Die bisherigen Pfade unter `src/components/` bleiben bei migrierten Shared-Baust
 
 ## 7. Visual Identity
 
-Die Visual Identity wird nicht lokal in Komponenten neu definiert. `docs/frontend/design-tokens.json` ist die maschinenlesbare Branding-Authority; `PHASE0_DESIGN_TOKENS.md` dokumentiert ihre Manifest-v6-Projektion in Web, PDF, Social Media und externe Renderer.
+Die Visual Identity wird nicht lokal in Komponenten neu definiert. `docs/frontend/design-tokens.json` ist die maschinenlesbare Branding-Authority; `PHASE0_DESIGN_TOKENS.md` dokumentiert ihre Manifest-v6.1-Projektion in Web, PDF, Social Media und externe Renderer.
 
 - Canvas: `#08080C`; erhöhte Surface: `#121215`; Border: `#252529`.
 - CAPITAL-AI Gold `#F9BF21`: Premium-, Primär- und Fokusfarbe.
-- Purple `#8D26FF`: **einziger** AI-/Tech-Brand-Akzent.
-- Emerald `#44DE88` und Rose `#F87171`: ausschließlich semantische positive/negative bzw. BUY/SELL-/READY/REJECT-Signale.
-- Cyan/Blau ist als aktive **UI-Brandingfarbe suspendiert**. Historische `aif-neon-cyan`-Bezeichner dürfen während der Strangler-Migration nur als Compatibility-Alias existieren und müssen auf Purple projizieren; neue Komponenten verwenden `brand-*`-Tokens.
-- Domänen-/Assetklassenfarben in Charts oder fachlicher Content-Visualisierung bleiben zulässig, sofern sie Daten semantisch codieren und keine konkurrierende UI-Branding-Authority bilden.
+- Purple `#8D26FF`: AI-/Intelligence-Akzent.
+- Cyan `#22D3EE`: Market-Data-, Live-Feed- und technische Visualisierungsfarbe.
+- Emerald `#44DE88` und Rose `#F87171`: positive/negative bzw. BUY/SELL-/READY/REJECT-Semantik.
+- Assetklassen und fachliche Visualisierungen konsumieren ausschließlich die semantischen `asset-*`, `score-*`, `factor-*` und `status-*` Rollen aus der kanonischen Registry.
+- Historische `aif-*`-Namen sind nur Compatibility-Aliase. Neue Komponenten dürfen keine lokalen Branding-Hexwerte oder neue `aif-*`-Verwendungen einführen.
 - Headings verwenden **Inter**, Body **Poppins**, technische Daten/Scores **JetBrains Mono**.
 - Glassmorphism bleibt ein unterstützendes Surface-Pattern, kein Selbstzweck.
 - Dekorative Neural-Geometrie wird zentral über `shared/visuals` konsolidiert.
@@ -198,6 +199,7 @@ Die Visual Identity wird nicht lokal in Komponenten neu definiert. `docs/fronten
 - Interaktive Ziele mindestens 44×44 px, soweit durch Komponententyp sinnvoll.
 - Fokuszustände bleiben sichtbar und farbunabhängig verständlich.
 - Statuskommunikation nutzt Text/Icon zusätzlich zu Farbe.
+- Assetklassenfarbe wird zusätzlich durch Klassenlabel/Icon kommuniziert.
 - Dialoge besitzen semantische Dialogrollen und Escape-/Close-Verhalten.
 - Loading- und Empty-States werden über gemeinsame Primitives dargestellt.
 - Charts und komplexe Visualisierungen erhalten textuelle Beschreibungen bzw. zugängliche Alternativen.
@@ -214,7 +216,8 @@ Die Konsolidierung ist **strangler-basiert**, nicht Big Bang als einzelner Masse
 6. Für jede Welle die betroffene Parent-Authority ermitteln; fachliche Contracts werden referenziert, nicht in Frontend-Dokumenten dupliziert.
 7. Nach Migration aller Consumer die jeweiligen Legacy-Exports aus `src/components/` entfernen.
 8. `src/components/` wird am Ende gelöscht, sobald keine produktive Implementierung mehr darin verbleibt.
-9. Branding-Legacy (`Cyan/Blue`, Alt-Gold, Montserrat und lokale Branding-Hexwerte) wird über die kanonische Token-Registry strangler-basiert entfernt; Compatibility-Aliase sind Übergang, keine zweite Authority.
+9. Branding-Legacy bedeutet lokale Alt-Gold-/Cyan-/Blue-/Purple-Hexwerte, Montserrat und historische Aliasnamen; die kanonische Cyan-Rolle selbst ist **kein** Legacy-Wert.
+10. `UniverseBestWorst`, `CryptoScoringEnterprise` und `EnterpriseBinanceQuickAnalysis` werden innerhalb ihrer vorgesehenen BB-4-/BB-6-Wellen auf semantische Token und Feature-Slices migriert; alte Pfade bleiben nur so lange Compatibility-Exports, wie produktive Inbound-Imports existieren.
 
 ## 10. Architektur-Gate und Dokumentationskonsistenz
 
