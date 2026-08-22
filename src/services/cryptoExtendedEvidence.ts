@@ -8,7 +8,12 @@ import {
   adaptMessariProtocolUsageEvidence,
   type GovernedDuneFeatureMapping,
 } from '../platform/FinTechCore/Modules/Crypto/Adapters/ExtendedCryptoEvidenceAdapters';
+import { adaptGoPlusSolanaEvidence } from '../platform/FinTechCore/Modules/Crypto/Adapters/GoPlusSolanaEvidenceAdapter';
 import { GoPlusTokenSecurityProvider, type GoPlusTokenIdentity } from '../platform/MarketData/providers/GoPlusTokenSecurityProvider';
+import {
+  GoPlusSolanaTokenSecurityProvider,
+  type GoPlusSolanaTokenSecurityEvidence,
+} from '../platform/MarketData/providers/GoPlusSolanaTokenSecurityProvider';
 import { CoinGlassCryptoEvidenceProvider } from '../platform/MarketData/providers/CoinGlassCryptoEvidenceProvider';
 import { LunarCrushSocialEvidenceProvider } from '../platform/MarketData/providers/LunarCrushSocialEvidenceProvider';
 import { MessariProtocolEvidenceProvider } from '../platform/MarketData/providers/MessariProtocolEvidenceProvider';
@@ -16,7 +21,7 @@ import { DuneQueryEvidenceProvider } from '../platform/MarketData/providers/Dune
 import { NewsApiEvidenceProvider, type NewsApiArticleEvidence } from '../platform/MarketData/providers/NewsApiEvidenceProvider';
 import { fetchDefiProtocolEvidence, type DefiProtocolEvidenceResult } from './defiProtocolEvidence';
 
-export const CRYPTO_EXTENDED_EVIDENCE_CONTRACT_VERSION = 'crypto-extended-evidence/1.1.0' as const;
+export const CRYPTO_EXTENDED_EVIDENCE_CONTRACT_VERSION = 'crypto-extended-evidence/1.2.0' as const;
 
 export type CryptoExtendedEvidenceStatus = 'READY' | 'PARTIAL' | 'NOT_AVAILABLE';
 
@@ -28,8 +33,10 @@ export interface GovernedDuneEvidenceRequest {
 
 export interface CryptoExtendedEvidenceRequest {
   readonly symbol: string;
-  /** Trusted provider identity resolved outside user/LLM input. Omit when no governed mapping exists. */
+  /** Trusted EVM provider identity resolved outside user/LLM input. */
   readonly goPlusIdentity?: GoPlusTokenIdentity;
+  /** Trusted Solana mint resolved outside user/LLM input. Mutually exclusive with goPlusIdentity. */
+  readonly goPlusSolanaMintAddress?: string;
   /** Exact provider slug/ID; never derive via fuzzy name matching. */
   readonly messariProtocolIdentifier?: string;
   /** LunarCrush topic; defaults to normalized symbol if no curated topic is supplied. */
@@ -43,7 +50,7 @@ export interface CryptoExtendedEvidenceRequest {
 }
 
 export interface CryptoEvidenceProviderState {
-  readonly provider: 'defillama' | 'goplus' | 'coinglass' | 'lunarcrush' | 'messari' | 'dune' | 'newsapi';
+  readonly provider: 'defillama' | 'goplus' | 'goplus-solana' | 'coinglass' | 'lunarcrush' | 'messari' | 'dune' | 'newsapi';
   readonly status: string;
   readonly reason?: string;
 }
@@ -54,6 +61,8 @@ export interface CryptoExtendedEvidenceResult {
   readonly symbol: string;
   readonly retrievedAt: string;
   readonly evidence: readonly CryptoFeatureEvidence[];
+  /** Solana-specific facts not semantically equivalent to the generic EVM feature catalog. */
+  readonly solanaSecurity: GoPlusSolanaTokenSecurityEvidence | null;
   /** Text evidence remains separate from numeric/category features until a governed NLP model promotes it. */
   readonly newsArticles: readonly NewsApiArticleEvidence[];
   readonly providers: readonly CryptoEvidenceProviderState[];
@@ -66,6 +75,7 @@ export interface CryptoExtendedEvidenceResult {
 
 export interface CryptoExtendedEvidenceDependencies {
   readonly goPlus?: GoPlusTokenSecurityProvider;
+  readonly goPlusSolana?: GoPlusSolanaTokenSecurityProvider;
   readonly coinGlass?: CoinGlassCryptoEvidenceProvider;
   readonly lunarCrush?: LunarCrushSocialEvidenceProvider;
   readonly messari?: MessariProtocolEvidenceProvider;
@@ -80,11 +90,12 @@ function providerState(provider: CryptoEvidenceProviderState['provider'], status
 }
 
 /**
- * Read-only evidence composition for the Meme/DeFi 0.3.0 research package.
+ * Read-only evidence composition for crypto research categories.
  *
  * The service never calls ScoringDispatcher, never derives policy PASS from provider facts and
- * never fabricates values. Text/news evidence remains outside numeric feature evidence until a
- * separately governed NLP transform exists. Provider identity mappings must be trusted and exact.
+ * never fabricates values. Text/news evidence and Solana-only security facts remain separate from
+ * generic numeric feature evidence unless an explicit semantic adapter exists. Provider identity
+ * mappings must be trusted, exact and server-side.
  */
 export async function fetchCryptoExtendedEvidence(
   request: CryptoExtendedEvidenceRequest,
@@ -95,6 +106,11 @@ export async function fetchCryptoExtendedEvidence(
   const evidence: CryptoFeatureEvidence[] = [];
   const newsArticles: NewsApiArticleEvidence[] = [];
   const providers: CryptoEvidenceProviderState[] = [];
+  let solanaSecurity: GoPlusSolanaTokenSecurityEvidence | null = null;
+
+  if (request.goPlusIdentity && request.goPlusSolanaMintAddress) {
+    throw new Error('GOPLUS_IDENTITY_AMBIGUOUS: EVM and Solana identities are mutually exclusive.');
+  }
 
   const coinGlass = dependencies.coinGlass ?? new CoinGlassCryptoEvidenceProvider({ nowMs });
   const lunarCrush = dependencies.lunarCrush ?? new LunarCrushSocialEvidenceProvider({ nowMs });
@@ -122,8 +138,15 @@ export async function fetchCryptoExtendedEvidence(
       evidence.push(...adaptGoPlusTokenSecurityEvidence(result));
       providers.push(providerState('goplus', result.status, result.reason));
     }));
+  } else if (request.goPlusSolanaMintAddress) {
+    const goPlusSolana = dependencies.goPlusSolana ?? new GoPlusSolanaTokenSecurityProvider({ nowMs });
+    coreTasks.push(goPlusSolana.getTokenSecurity(request.goPlusSolanaMintAddress).then((result) => {
+      solanaSecurity = result;
+      evidence.push(...adaptGoPlusSolanaEvidence(result));
+      providers.push(providerState('goplus-solana', result.status, result.reason));
+    }));
   } else {
-    providers.push(providerState('goplus', 'UNSUPPORTED_ASSET', 'No governed chain/contract identity mapping is available.'));
+    providers.push(providerState('goplus', 'UNSUPPORTED_ASSET', 'No governed EVM contract or Solana mint identity mapping is available.'));
   }
 
   if (request.messariProtocolIdentifier) {
@@ -166,7 +189,7 @@ export async function fetchCryptoExtendedEvidence(
 
   const verifiedFeatureCount = evidence.filter((item) => item.status === 'VERIFIED').length;
   const unavailableFeatureCount = evidence.length - verifiedFeatureCount;
-  const hasVerifiedEvidence = verifiedFeatureCount > 0 || newsArticles.length > 0;
+  const hasVerifiedEvidence = verifiedFeatureCount > 0 || newsArticles.length > 0 || solanaSecurity?.status === 'VERIFIED';
   const hasUnavailable = unavailableFeatureCount > 0 || providers.some((item) => !item.status.includes('VERIFIED') && item.status !== 'READY');
   const status: CryptoExtendedEvidenceStatus = !hasVerifiedEvidence
     ? 'NOT_AVAILABLE'
@@ -180,6 +203,7 @@ export async function fetchCryptoExtendedEvidence(
     symbol,
     retrievedAt: new Date(nowMs()).toISOString(),
     evidence: Object.freeze([...evidence].sort((a, b) => a.key.localeCompare(b.key))),
+    solanaSecurity,
     newsArticles: Object.freeze([...newsArticles].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))),
     providers: Object.freeze([...providers]),
     verifiedFeatureCount,
