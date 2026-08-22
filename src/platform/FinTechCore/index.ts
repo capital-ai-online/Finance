@@ -10,6 +10,8 @@ export * from './PaperTrading/PaperTradingWorkflowService';
 export * from './RiskCompliance/RiskComplianceContracts';
 export * from './RiskCompliance/DeterministicPreTradeGate';
 export * from './RiskCompliance/RiskComplianceDecisionRecords';
+export * from './OrderIntent/OrderIntentBinding';
+export * from './Reconciliation/ReconciliationContracts';
 export * from './Modules/Crypto/CryptoCoreModule';
 export * from './Modules/Crypto/CryptoCategoryProfileResolver';
 export * from './Modules/Crypto/CryptoCategoryFeatureContracts';
