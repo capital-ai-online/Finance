@@ -15,7 +15,7 @@ services:
     maxShutdownDelaySeconds: 30
     # ADR-0037: real secrets live only in finance-secrets.env. Full key inventory is defined by
     # scripts/security/secretFileManifest.ts. SC-4 DUNE_API_KEY therefore remains in the secret file;
-    # the non-secret Free-Tier policy gates below are normal envVars.
+    # non-secret entitlement/policy gates below stay normal envVars.
     secretFiles:
       - name: finance-secrets.env
     envVars:
@@ -66,6 +66,8 @@ services:
       - key: FACEBOOK_CLIENT_ID
         sync: false
       # ADR-0089/ADR-0090 — server-only Gemini Research Shadow + Free-Tier-only hardening.
+      # Gemini quotas are project-scoped, not API-key-scoped; no second key is configured merely
+      # to multiply Free-Tier capacity.
       - key: GEMINI_RESEARCH_SHADOW_ENABLED
         value: "false"
       - key: GEMINI_RESEARCH_FREE_TIER_ONLY
@@ -88,13 +90,20 @@ services:
         value: "1200"
       - key: GEMINI_RESEARCH_THINKING_LEVEL
         value: "low"
-      # SC-4 Dune Free-Tier-only evidence. DUNE_API_KEY stays in finance-secrets.env.
-      # The attestation remains false until the Owner manually verifies the Dune account is Free
-      # and extra-credit spending is disabled/capped.
-      - key: DUNE_FREE_TIER_ONLY
-        value: "true"
+      # SC-4 Dune evidence. DUNE_API_KEY stays in finance-secrets.env.
+      # Default remains fail-closed FREE_TIER until entitlement is explicitly attested.
+      # TRIAL_14D is supported only with explicit start/end timestamps + Owner attestation and
+      # automatically blocks at expiry. Dataset entitlement never relaxes query allowlist/no-execute.
+      - key: DUNE_ACCESS_MODE
+        value: "FREE_TIER"
       - key: DUNE_FREE_TIER_ATTESTED
         value: "false"
+      - key: DUNE_TRIAL_ATTESTED
+        value: "false"
+      - key: DUNE_TRIAL_STARTED_AT
+        value: ""
+      - key: DUNE_TRIAL_ENDS_AT
+        value: ""
       - key: DUNE_ALLOWED_QUERY_IDS
         value: ""
       - key: DUNE_MAX_RESULT_ROWS
