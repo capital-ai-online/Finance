@@ -1,9 +1,9 @@
 {
   "name": "FinTechCore",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "status": "in-implementation",
   "owner": "CAPITAL-AI",
-  "description": "Financial workflow composition layer. Crypto Module 01 includes FT-0 through FT-6B on main for research/paper, durable traceability, deterministic risk/compliance, canonical fixed-point OrderIntent binding and typed reconciliation without productive scoring or real execution authority. FT-7 remains blocked pending a separate architecture/security decision.",
+  "description": "Financial workflow composition layer. Crypto Module 01 includes FT-0 through FT-6B on main for research/paper, durable traceability, deterministic risk/compliance, canonical fixed-point OrderIntent binding and typed reconciliation. Operating-mode policy is fail-closed for GUARDED_LIVE/PRODUCTION; FT-7 remains blocked pending a separate architecture/security decision.",
   "category": "platform",
   "roadmap": ["FT-CORE-CRYPTO-01"],
   "adr": ["ADR-0087", "ADR-0099", "ADR-0100"],
@@ -127,6 +127,7 @@
       "typed decision-to-intent and paper-fill reconciliation with mismatch escalation evidence",
       "single appendOrderIntent persistence port with v2 canonical BOUND RPC and v1 legacy/research UNBOUND compatibility path",
       "service-role-only FT-6B migration applied and post-mutation verified",
+      "fail-closed FT-6 operating-mode policy: GUARDED_LIVE and PRODUCTION expose no real/simulated execution or new-order capability before FT-7",
       "DeFiLlama protocol evidence provider remains evidence-only and outside scoring/order authority"
     ],
     "legacyCompatibility": [
@@ -142,9 +143,8 @@
       "live acquisition of remaining category-specific evidence",
       "category evidence promotion into canonical scoring without explicit model-contract approval",
       "24-asset crypto universe final availability/evidence admission proof",
-      "concrete TA-Lib or other detector runtime binding",
-      "security-relevant normalization of stale GUARDED_LIVE/PRODUCTION capability projection pending explicit Owner approval"
+      "concrete TA-Lib or other detector runtime binding"
     ]
   },
-  "authorityBoundary": "FinTechCore composes financial workflows and typed evidence but cannot select or calculate productive scores outside ScoringModelRegistry/ScoringDispatcher. CryptoOrchestrator and pattern/agent outputs remain research-only unless separately promoted by existing evidence/model contracts. FT-6B derives OrderIntent approvals only from authoritative append-only FT-5 decisions, uses deterministic fixed point for execution-relevant financial values, remains PAPER-only, asserts no real execution or settlement finality, and cannot replace IAM, Compliance, Quality, Governance, Supervisor, Release or Deployment authorities."
+  "authorityBoundary": "FinTechCore composes financial workflows and typed evidence but cannot select or calculate productive scores outside ScoringModelRegistry/ScoringDispatcher. CryptoOrchestrator and pattern/agent outputs remain research-only unless separately promoted by existing evidence/model contracts. FT-6B derives OrderIntent approvals only from authoritative append-only FT-5 decisions, uses deterministic fixed point for execution-relevant financial values, remains PAPER-only, asserts no real execution or settlement finality, and cannot replace IAM, Compliance, Quality, Governance, Supervisor, Release or Deployment authorities. GUARDED_LIVE/PRODUCTION are reserved FT-7+ vocabulary and expose no FT-6 capability."
 }
