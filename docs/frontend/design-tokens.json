@@ -1,13 +1,14 @@
 {
   "$schema": "https://design-tokens.github.io/community-group/format/",
   "name": "capital-ai-design-tokens",
-  "version": "0.6.0-brand-manifest-v6",
-  "description": "Canonical CAPITAL-AI design-token registry. Branding Manifest v6.0 is projected through this registry into web, PDF, social media and other renderer adapters; external design documents are provenance inputs, not runtime authorities.",
+  "version": "0.6.0-brand-manifest-v6.1",
+  "description": "Canonical CAPITAL-AI design-token registry. Branding Manifest v6 is projected through this registry into web, PDF, social media and other renderer adapters; external design documents are provenance inputs, not runtime authorities.",
   "provenance": {
-    "brandManifestVersion": "6.0",
-    "sourceType": "owner-supplied-google-drive-artifact",
+    "brandManifestVersion": "6.1",
+    "sourceType": "owner-supplied-google-drive-artifact-plus-owner-amendment",
     "sourceFileId": "1k57e2jFpMnJMVjWK2tB8vSvZM7rUrwcP",
     "sourceSha256": "e4a6f4247fc8dd4aae9414bb3a5964bd248328592b7f3907eb04899d537d88de",
+    "ownerAmendment": "2026-08-22: Cyan restored as canonical market/data-visualization color while Purple remains the AI/intelligence accent.",
     "ingestedAt": "2026-08-22",
     "runtimeAuthority": "docs/frontend/design-tokens.json",
     "webProjection": "src/index.css @theme"
@@ -21,13 +22,36 @@
       "secondary": { "value": "#A1A1AA", "type": "color", "css": "--color-text-secondary" }
     },
     "brand": {
-      "primary": { "value": "#F9BF21", "type": "color", "css": "--color-brand-primary", "note": "Branding Manifest v6.0 AIF Gold / primary focus" },
-      "accent": { "value": "#8D26FF", "type": "color", "css": "--color-brand-accent", "note": "Branding Manifest v6.0 Purple / only AI accent" },
+      "primary": { "value": "#F9BF21", "type": "color", "css": "--color-brand-primary", "note": "Gold / primary focus and premium brand anchor" },
+      "accent": { "value": "#8D26FF", "type": "color", "css": "--color-brand-accent", "note": "Purple / AI and intelligence accent" },
+      "cyan": { "value": "#22D3EE", "type": "color", "css": "--color-brand-cyan", "note": "Cyan / market data, live feeds and technical visualization" },
       "success": { "value": "#44DE88", "type": "color", "css": "--color-brand-success" },
       "danger": { "value": "#F87171", "type": "color", "css": "--color-brand-danger" }
     },
+    "assetClass": {
+      "crypto": { "value": "#22D3EE", "type": "color", "css": "--color-asset-crypto", "note": "Crypto / digital-asset visualization" },
+      "stock": { "value": "#44DE88", "type": "color", "css": "--color-asset-stock" },
+      "index": { "value": "#60A5FA", "type": "color", "css": "--color-asset-index" },
+      "forex": { "value": "#8D26FF", "type": "color", "css": "--color-asset-forex" },
+      "commodity": { "value": "#F9BF21", "type": "color", "css": "--color-asset-commodity" },
+      "bond": { "value": "#E879F9", "type": "color", "css": "--color-asset-bond" }
+    },
+    "score": {
+      "best": { "value": "#44DE88", "type": "color", "css": "--color-score-best" },
+      "worst": { "value": "#F87171", "type": "color", "css": "--color-score-worst" },
+      "warning": { "value": "#F9BF21", "type": "color", "css": "--color-score-warning" },
+      "neutral": { "value": "#A1A1AA", "type": "color", "css": "--color-score-neutral" },
+      "ranking": { "value": "#8D26FF", "type": "color", "css": "--color-score-ranking" }
+    },
+    "factor": {
+      "technical": { "value": "#22D3EE", "type": "color", "css": "--color-factor-technical" },
+      "risk": { "value": "#F9BF21", "type": "color", "css": "--color-factor-risk" },
+      "marketStructure": { "value": "#8D26FF", "type": "color", "css": "--color-factor-market-structure" },
+      "context": { "value": "#44DE88", "type": "color", "css": "--color-factor-context" },
+      "generic": { "value": "#A1A1AA", "type": "color", "css": "--color-factor-generic" }
+    },
     "aif": {
-      "note": "Deprecated compatibility namespace. Do not use for new code; values project the canonical Brand Manifest v6 tokens.",
+      "note": "Deprecated compatibility namespace. Do not use for new code; values project canonical semantic/brand tokens.",
       "gold": {
         "light": { "value": "#F9BF21", "type": "color", "css": "--color-aif-gold-light", "deprecated": true },
         "DEFAULT": { "value": "#F9BF21", "type": "color", "css": "--color-aif-gold-DEFAULT", "deprecated": true },
@@ -35,7 +59,7 @@
         "muted": { "value": "#F9BF21", "type": "color", "css": "--color-aif-gold-muted", "deprecated": true }
       },
       "neon": {
-        "cyan": { "value": "#8D26FF", "type": "color", "css": "--color-aif-neon-cyan", "deprecated": true, "note": "Compatibility alias only. Cyan is forbidden as UI branding by Manifest v6.0 and resolves to Purple." },
+        "cyan": { "value": "#22D3EE", "type": "color", "css": "--color-aif-neon-cyan", "deprecated": true, "note": "Compatibility alias to canonical brand.cyan; new code uses semantic tokens." },
         "purple": { "value": "#8D26FF", "type": "color", "css": "--color-aif-neon-purple", "deprecated": true }
       }
     },
@@ -43,7 +67,8 @@
       "success": { "value": "#44DE88", "type": "color", "note": "validated / READY / BUY semantics" },
       "danger": { "value": "#F87171", "type": "color", "note": "REJECT / error / SELL semantics" },
       "warning": { "value": "#F9BF21", "type": "color", "note": "observe / partial" },
-      "info": { "value": "#8D26FF", "type": "color", "note": "Purple informational/AI accent; no cyan UI branding" },
+      "info": { "value": "#22D3EE", "type": "color", "note": "Market/data/live informational state" },
+      "ai": { "value": "#8D26FF", "type": "color", "note": "AI/intelligence semantic accent" },
       "muted": { "value": "#A1A1AA", "type": "color", "note": "secondary text" },
       "status": {
         "ready": { "value": "#44DE88", "type": "color" },
@@ -53,15 +78,15 @@
       }
     },
     "surface": {
-      "glass": { "value": "rgba(18, 18, 21, 0.72)", "type": "color", "note": "Manifest-v6 glass surface projection" },
-      "elevated": { "value": "#121215", "type": "color", "css": "--color-surface", "note": "Branding Manifest v6.0 secondary surface" }
+      "glass": { "value": "rgba(18, 18, 21, 0.72)", "type": "color", "note": "Glass surface projection" },
+      "elevated": { "value": "#121215", "type": "color", "css": "--color-surface", "note": "Secondary surface" }
     },
     "print": {
       "textPrimary": { "value": "#1D2430", "type": "color", "note": "Primary text on light PDF surfaces" },
       "textSecondary": { "value": "#64748B", "type": "color", "note": "Secondary metadata on light PDF surfaces" },
       "surfaceLight": { "value": "#F8FAFC", "type": "color", "note": "Light report panel background" },
       "borderLight": { "value": "#E2E8F0", "type": "color", "note": "Light report divider and table border" },
-      "link": { "value": "#6D1FD1", "type": "color", "note": "High-contrast print link derived from the Manifest-v6 Purple accent" }
+      "link": { "value": "#6D1FD1", "type": "color", "note": "High-contrast print link derived from Purple" }
     }
   },
   "font": {
@@ -105,8 +130,8 @@
     "glass": { "value": "0 0 0 1px rgba(37,37,41,1)" },
     "goldGlow": { "value": "0 0 20px rgba(249,191,33,0.55)" },
     "purpleGlow": { "value": "0 0 15px rgba(141,38,255,0.65)" },
-    "cyanGlow": { "value": "0 0 15px rgba(141,38,255,0.65)", "deprecated": true, "note": "Compatibility alias to purpleGlow" },
-    "brandPulse": { "value": "0 0 25px rgba(249,191,33,0.25), 0 0 35px rgba(141,38,255,0.16)" }
+    "cyanGlow": { "value": "0 0 15px rgba(34,211,238,0.55)" },
+    "brandPulse": { "value": "0 0 25px rgba(249,191,33,0.25), 0 0 35px rgba(141,38,255,0.16), 0 0 22px rgba(34,211,238,0.10)" }
   },
   "motion": {
     "duration": {
@@ -135,7 +160,7 @@
   },
   "patterns": {
     "glassCard": {
-      "class": "bg-[#121215]/70 border border-[#252529] backdrop-blur-md rounded-xl p-6"
+      "class": "bg-surface/70 border border-border backdrop-blur-md rounded-xl p-6"
     },
     "patternBadge": {
       "noPatternLabel": "NO PATTERN",
