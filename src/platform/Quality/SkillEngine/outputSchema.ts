@@ -1,0 +1,96 @@
+export const SKILL_VERIFICATION_RESULT_SCHEMA: Record<string, unknown> = {
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    'skillId',
+    'component',
+    'baseline',
+    'status',
+    'findings',
+    'vocabulary',
+    'correlations',
+    'quickWins',
+    'priorities',
+    'developments',
+    'evidenceGaps',
+  ],
+  properties: {
+    skillId: { type: 'string' },
+    component: { type: 'string' },
+    baseline: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['mainRef', 'headRef', 'commitSha'],
+      properties: {
+        mainRef: { type: 'string' },
+        headRef: { type: ['string', 'null'] },
+        commitSha: { type: ['string', 'null'] },
+      },
+    },
+    status: {
+      type: 'string',
+      enum: ['PASS', 'PASS_WITH_OBSERVATIONS', 'REMEDIATION_REQUIRED', 'BLOCKED'],
+    },
+    findings: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id', 'errorClass', 'severity', 'title', 'evidencePaths', 'authorityRefs', 'rootCause', 'recommendation', 'priority', 'quickWin'],
+        properties: {
+          id: { type: 'string' },
+          errorClass: { type: 'string' },
+          severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low'] },
+          title: { type: 'string' },
+          evidencePaths: { type: 'array', items: { type: 'string' } },
+          authorityRefs: { type: 'array', items: { type: 'string' } },
+          rootCause: { type: 'string' },
+          recommendation: { type: 'string' },
+          priority: { type: 'string', enum: ['P0', 'P1', 'P2', 'P3'] },
+          quickWin: { type: 'boolean' },
+        },
+      },
+    },
+    vocabulary: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['term', 'status', 'conceptId', 'evidencePaths'],
+        properties: {
+          term: { type: 'string' },
+          status: { type: 'string', enum: ['CANONICAL', 'ALIAS', 'FORBIDDEN', 'NEW_CANDIDATE', 'CONFLICT', 'DEPRECATED', 'ORPHANED'] },
+          conceptId: { type: ['string', 'null'] },
+          evidencePaths: { type: 'array', items: { type: 'string' } },
+        },
+      },
+    },
+    correlations: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['target', 'classification', 'evidencePaths'],
+        properties: {
+          target: { type: 'string' },
+          classification: { type: 'string', enum: ['NO_CORRELATION', 'INTENDED_REUSE', 'OVERLAP', 'DUPLICATE', 'CONFLICT', 'SUPERSESSION_REQUIRED'] },
+          evidencePaths: { type: 'array', items: { type: 'string' } },
+        },
+      },
+    },
+    quickWins: { type: 'array', items: { type: 'string' } },
+    priorities: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['P0', 'P1', 'P2', 'P3'],
+      properties: {
+        P0: { type: 'array', items: { type: 'string' } },
+        P1: { type: 'array', items: { type: 'string' } },
+        P2: { type: 'array', items: { type: 'string' } },
+        P3: { type: 'array', items: { type: 'string' } },
+      },
+    },
+    developments: { type: 'array', items: { type: 'string' } },
+    evidenceGaps: { type: 'array', items: { type: 'string' } },
+  },
+};
