@@ -6,3 +6,5 @@ export * from './ScoringDispatcher';
 export * from './scoringFingerprint';
 export * from './UniverseSla';
 export * from './CryptoResearchModelContracts';
+export * from './CryptoCategoryResearchScoring';
+export * from './CryptoOrchestratorResearchModels';
