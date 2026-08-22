@@ -1,5 +1,6 @@
 export const AI_CONTENT_TRANSPARENCY_SCHEMA = 'ai-content-transparency/1.0.0' as const;
-export const AI_CONTENT_TRANSPARENCY_AUTHORITY = 'AUTH-CONTRACT-AI-CONTENT-TRANSPARENCY-2026-08-22' as const;
+export const AI_CONTENT_TRANSPARENCY_CONTRACT = 'CONTRACT-AI-CONTENT-TRANSPARENCY-0001' as const;
+export const AI_CONTENT_TRANSPARENCY_PARENT_AUTHORITY = 'AUTH-ESS-AI-AGENT-CAPABILITY-PLANE' as const;
 
 export type AiContentOrigin = 'human-authored' | 'ai-assisted' | 'ai-generated';
 export type RetrievalStatus = 'evidence-retrieved' | 'no-evidence';
@@ -22,7 +23,8 @@ export interface AiContentTransparencyEnvelopeInput {
 
 export interface AiContentTransparencyEnvelope {
   schemaVersion: typeof AI_CONTENT_TRANSPARENCY_SCHEMA;
-  authority: typeof AI_CONTENT_TRANSPARENCY_AUTHORITY;
+  contract: typeof AI_CONTENT_TRANSPARENCY_CONTRACT;
+  parentAuthority: typeof AI_CONTENT_TRANSPARENCY_PARENT_AUTHORITY;
   origin: AiContentOrigin;
   provider: string;
   model: string;
@@ -55,7 +57,8 @@ export function createAiContentTransparencyEnvelope(input: AiContentTransparency
 
   return Object.freeze({
     schemaVersion: AI_CONTENT_TRANSPARENCY_SCHEMA,
-    authority: AI_CONTENT_TRANSPARENCY_AUTHORITY,
+    contract: AI_CONTENT_TRANSPARENCY_CONTRACT,
+    parentAuthority: AI_CONTENT_TRANSPARENCY_PARENT_AUTHORITY,
     origin: input.origin ?? 'ai-generated',
     provider: input.provider,
     model: input.model,
