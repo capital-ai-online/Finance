@@ -1,11 +1,11 @@
 import type { CryptoFeatureEvidence, CryptoFeaturePrimitive } from '../CryptoCategoryFeatureContracts';
 import type { GoPlusTokenSecurityEvidence } from '../../../../MarketData/providers/GoPlusTokenSecurityProvider';
-import type { CoinGlassDerivativesEvidence, CoinGlassUnlockEvidence } from '../../../../MarketData/providers/CoinGlassCryptoEvidenceProvider';
-import type { LunarCrushSocialEvidence } from '../../../../MarketData/providers/LunarCrushSocialEvidenceProvider';
-import type { MessariProtocolUsageEvidence } from '../../../../MarketData/providers/MessariProtocolEvidenceProvider';
+import type { KrakenFuturesAnalyticsEvidence } from '../../../../MarketData/providers/KrakenFuturesAnalyticsProvider';
+import type { DexScreenerTokenEvidence } from '../../../../MarketData/providers/DexScreenerTokenEvidenceProvider';
+import type { SourcifyContractVerificationEvidence } from '../../../../MarketData/providers/SourcifyContractVerificationProvider';
 import type { DuneSavedQueryEvidence } from '../../../../MarketData/providers/DuneQueryEvidenceProvider';
 
-export const EXTENDED_CRYPTO_EVIDENCE_ADAPTER_VERSION = 'fintech-core.crypto/extended-evidence-adapters/1.0.0' as const;
+export const EXTENDED_CRYPTO_EVIDENCE_ADAPTER_VERSION = 'fintech-core.crypto/extended-evidence-adapters/1.1.0' as const;
 
 function evidence(
   key: string,
@@ -51,10 +51,7 @@ function lockedShare(items: readonly { percent: number | null; isLocked: boolean
   return locked.length > 0 ? locked.reduce((sum, value) => sum + value, 0) : null;
 }
 
-/**
- * Provider facts only. No aggregate "contractIntegrityVerified" or manipulation PASS is created
- * here; those remain policy/gate decisions outside the provider adapter.
- */
+/** Provider facts only; no aggregate security PASS is created here. */
 export function adaptGoPlusTokenSecurityEvidence(input: GoPlusTokenSecurityEvidence): readonly CryptoFeatureEvidence[] {
   const status = providerStatus(input.status);
   const ref = input.evidenceId;
@@ -82,53 +79,40 @@ export function adaptGoPlusTokenSecurityEvidence(input: GoPlusTokenSecurityEvide
   ]);
 }
 
-export function adaptCoinGlassDerivativesEvidence(input: CoinGlassDerivativesEvidence): readonly CryptoFeatureEvidence[] {
+export function adaptKrakenFuturesAnalyticsEvidence(input: KrakenFuturesAnalyticsEvidence): readonly CryptoFeatureEvidence[] {
   const status = providerStatus(input.status);
   const ref = input.evidenceRefs.length > 0 ? input.evidenceRefs.join('|') : null;
   return Object.freeze([
-    evidence('derivatives.openInterestUsd', input.openInterestUsd, 'coinglass', ref, input.retrievedAt, input.retrievedAt, status),
-    evidence('derivatives.openInterestChange5mPct', input.openInterestChange5mPct, 'coinglass', ref, input.retrievedAt, input.retrievedAt, status),
-    evidence('derivatives.openInterestChange1hPct', input.openInterestChange1hPct, 'coinglass', ref, input.retrievedAt, input.retrievedAt, status),
-    evidence('derivatives.openInterestChange4hPct', input.openInterestChange4hPct, 'coinglass', ref, input.retrievedAt, input.retrievedAt, status),
-    evidence('derivatives.openInterestChange24hPct', input.openInterestChange24hPct, 'coinglass', ref, input.retrievedAt, input.retrievedAt, status),
-    evidence('derivatives.meanFundingRate', input.meanFundingRate, 'coinglass', ref, input.retrievedAt, input.retrievedAt, status),
-    evidence('risk.liquidationUsd24h', input.liquidationUsd24h, 'coinglass', ref, input.retrievedAt, input.retrievedAt, status),
-    evidence('risk.longLiquidationUsd24h', input.longLiquidationUsd24h, 'coinglass', ref, input.retrievedAt, input.retrievedAt, status),
-    evidence('risk.shortLiquidationUsd24h', input.shortLiquidationUsd24h, 'coinglass', ref, input.retrievedAt, input.retrievedAt, status),
-    evidence('liquidity.orderbookBidsUsd1Pct', input.aggregatedBidsUsd1Pct, 'coinglass', ref, input.orderbookObservedAt, input.retrievedAt, status),
-    evidence('liquidity.orderbookAsksUsd1Pct', input.aggregatedAsksUsd1Pct, 'coinglass', ref, input.orderbookObservedAt, input.retrievedAt, status),
+    evidence('derivatives.openInterest', input.openInterest, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
+    evidence('derivatives.openInterestChange1hPct', input.openInterestChangePct, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
+    evidence('derivatives.fundingRate', input.fundingRate, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
+    evidence('risk.liquidationVolume', input.liquidationVolume, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
+    evidence('liquidity.krakenBidLiquidity01', input.bidLiquidity01, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
+    evidence('liquidity.krakenAskLiquidity01', input.askLiquidity01, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
+    evidence('liquidity.krakenBidSlippage100k', input.bidSlippage100k, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
+    evidence('liquidity.krakenAskSlippage100k', input.askSlippage100k, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
   ]);
 }
 
-export function adaptCoinGlassUnlockEvidence(input: CoinGlassUnlockEvidence): readonly CryptoFeatureEvidence[] {
+export function adaptDexScreenerTokenEvidence(input: DexScreenerTokenEvidence): readonly CryptoFeatureEvidence[] {
   const status = providerStatus(input.status);
   return Object.freeze([
-    evidence('tokenomics.nextUnlockAt', input.nextUnlockAt, 'coinglass', input.evidenceRef, input.retrievedAt, input.retrievedAt, status),
-    evidence('tokenomics.nextUnlockTokens', input.nextUnlockTokens, 'coinglass', input.evidenceRef, input.retrievedAt, input.retrievedAt, status),
-    evidence('tokenomics.nextUnlockOfCirculatingPct', input.nextUnlockOfCirculatingPct, 'coinglass', input.evidenceRef, input.retrievedAt, input.retrievedAt, status),
-    evidence('tokenomics.nextUnlockOfSupplyPct', input.nextUnlockOfSupplyPct, 'coinglass', input.evidenceRef, input.retrievedAt, input.retrievedAt, status),
-    evidence('tokenomics.totalLockedTokens', input.totalLockedTokens, 'coinglass', input.evidenceRef, input.retrievedAt, input.retrievedAt, status),
+    evidence('market.dexPairCount', input.pairCount, 'dexscreener', input.evidenceRef, input.retrievedAt, input.retrievedAt, status),
+    evidence('liquidity.dexBestPairLiquidityUsd', input.bestPairLiquidityUsd, 'dexscreener', input.evidenceRef, input.retrievedAt, input.retrievedAt, status),
+    evidence('market.dexVolume24hUsd', input.aggregateVolume24hUsd, 'dexscreener', input.evidenceRef, input.retrievedAt, input.retrievedAt, status),
+    evidence('market.dexBuys24h', input.aggregateBuys24h, 'dexscreener', input.evidenceRef, input.retrievedAt, input.retrievedAt, status),
+    evidence('market.dexSells24h', input.aggregateSells24h, 'dexscreener', input.evidenceRef, input.retrievedAt, input.retrievedAt, status),
+    evidence('market.dexOldestPairCreatedAt', input.oldestPairCreatedAt, 'dexscreener', input.evidenceRef, input.retrievedAt, input.retrievedAt, status),
   ]);
 }
 
-export function adaptLunarCrushSocialEvidence(input: LunarCrushSocialEvidence): readonly CryptoFeatureEvidence[] {
+/** Sourcify lookup is source/bytecode verification evidence, not formal verification or audit PASS. */
+export function adaptSourcifyContractVerificationEvidence(input: SourcifyContractVerificationEvidence): readonly CryptoFeatureEvidence[] {
   const status = providerStatus(input.status);
   return Object.freeze([
-    evidence('community.interactions24h', input.interactions24h, 'lunarcrush', input.evidenceRef, input.observedAt, input.retrievedAt, status),
-    evidence('community.mentions24h', input.mentions24h, 'lunarcrush', input.evidenceRef, input.observedAt, input.retrievedAt, status),
-    evidence('community.activeCreators24h', input.activeCreators24h, 'lunarcrush', input.evidenceRef, input.observedAt, input.retrievedAt, status),
-    evidence('community.createdPosts24h', input.createdPosts24h, 'lunarcrush', input.evidenceRef, input.observedAt, input.retrievedAt, status),
-    evidence('community.sentimentPct', input.sentimentPct, 'lunarcrush', input.evidenceRef, input.observedAt, input.retrievedAt, status),
-    evidence('community.spamPosts', input.spamPosts, 'lunarcrush', input.evidenceRef, input.observedAt, input.retrievedAt, status),
-    evidence('community.socialDominancePct', input.socialDominancePct, 'lunarcrush', input.evidenceRef, input.observedAt, input.retrievedAt, status),
-    evidence('community.spamRatio', input.spamRatio, 'lunarcrush', input.evidenceRef, input.observedAt, input.retrievedAt, status),
-  ]);
-}
-
-export function adaptMessariProtocolUsageEvidence(input: MessariProtocolUsageEvidence): readonly CryptoFeatureEvidence[] {
-  const status = providerStatus(input.status);
-  return Object.freeze([
-    evidence('protocol.activeAddresses24h', input.activeAddresses24h, 'messari', input.evidenceRef, input.observedAt, input.retrievedAt, status),
+    evidence('security.sourceVerified', input.status === 'VERIFIED' ? true : null, 'sourcify', input.evidenceRef, input.verifiedAt, input.retrievedAt, status),
+    evidence('security.sourceVerificationMatch', input.match, 'sourcify', input.evidenceRef, input.verifiedAt, input.retrievedAt, status),
+    evidence('security.sourceVerifiedAt', input.verifiedAt, 'sourcify', input.evidenceRef, input.verifiedAt, input.retrievedAt, status),
   ]);
 }
 
