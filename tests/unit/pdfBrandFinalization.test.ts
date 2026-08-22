@@ -30,7 +30,7 @@ function tokenValue(tokens: Record<string, unknown>, ...segments: string[]): unk
   return current;
 }
 
-describe('CAPITAL-AI Branding Manifest v6 / PDF brand projection', () => {
+describe('CAPITAL-AI Branding Manifest v6.1 / PDF brand projection', () => {
   const tokens = JSON.parse(read('docs/frontend/design-tokens.json')) as Record<string, unknown>;
   const css = read('src/index.css');
   const vite = read('vite.config.ts');
@@ -41,13 +41,14 @@ describe('CAPITAL-AI Branding Manifest v6 / PDF brand projection', () => {
   const requirements = read('scripts/docs/requirements-notebooklm-pdf.txt');
   const verifier = read('scripts/docs/verify_pdf_render.py');
 
-  it('keeps the Manifest v6 canonical palette aligned with the web theme', () => {
+  it('keeps the canonical palette aligned with the web theme', () => {
     const pairs: Array<[string[], string]> = [
       [['color', 'background'], '--color-background'],
       [['color', 'foreground'], '--color-foreground'],
       [['color', 'border'], '--color-border'],
       [['color', 'brand', 'primary'], '--color-brand-primary'],
       [['color', 'brand', 'accent'], '--color-brand-accent'],
+      [['color', 'brand', 'cyan'], '--color-brand-cyan'],
       [['color', 'brand', 'success'], '--color-brand-success'],
       [['color', 'brand', 'danger'], '--color-brand-danger'],
       [['color', 'aif', 'gold', 'DEFAULT'], '--color-aif-gold-DEFAULT'],
@@ -61,19 +62,20 @@ describe('CAPITAL-AI Branding Manifest v6 / PDF brand projection', () => {
 
     expect(tokenValue(tokens, 'color', 'brand', 'primary')).toBe('#F9BF21');
     expect(tokenValue(tokens, 'color', 'brand', 'accent')).toBe('#8D26FF');
+    expect(tokenValue(tokens, 'color', 'brand', 'cyan')).toBe('#22D3EE');
     expect(tokenValue(tokens, 'color', 'brand', 'success')).toBe('#44DE88');
     expect(tokenValue(tokens, 'color', 'brand', 'danger')).toBe('#F87171');
     expect(tokenValue(tokens, 'color', 'background')).toBe('#08080C');
     expect(tokenValue(tokens, 'color', 'surface', 'elevated')).toBe('#121215');
   });
 
-  it('keeps historical cyan naming as a compatibility alias to Purple, never as an active cyan value', () => {
+  it('restores Cyan as the market/data visualization role while keeping the historical alias semantic', () => {
     expect(tokenValue(tokens, 'color', 'aif', 'neon', 'cyan')).toBe(
-      tokenValue(tokens, 'color', 'brand', 'accent'),
+      tokenValue(tokens, 'color', 'brand', 'cyan'),
     );
-    expect(css).not.toContain('#0DDDDD');
-    expect(css).not.toContain('#00D2DC');
-    expect(css).not.toContain('#00D2FF');
+    expect(tokenValue(tokens, 'color', 'semantic', 'info')).toBe('#22D3EE');
+    expect(tokenValue(tokens, 'color', 'assetClass', 'crypto')).toBe('#22D3EE');
+    expect(tokenValue(tokens, 'color', 'brand', 'cyan')).not.toBe(tokenValue(tokens, 'color', 'brand', 'accent'));
   });
 
   it('uses Inter headings, Poppins body and JetBrains Mono data typography', () => {
@@ -94,7 +96,7 @@ describe('CAPITAL-AI Branding Manifest v6 / PDF brand projection', () => {
     expect(pdfBrand).not.toContain('canvas: [24, 24, 27]');
   });
 
-  it('renders the canonical shared mark with Gold and Purple only', () => {
+  it('renders the canonical shared mark with Gold and Purple while Cyan remains a visualization role', () => {
     expect(pdfBrand).toContain('drawCapitalAiEmblem');
     expect(pdfBrand).toContain('drawCapitalAiWordmark');
     expect(pdfBrand).toContain('EMBLEM_NODES');
@@ -139,7 +141,7 @@ describe('CAPITAL-AI Branding Manifest v6 / PDF brand projection', () => {
     expect(requirements).not.toMatch(/PyMuPDF|fitz/i);
     expect(verifier).toContain('pdfinfo');
     expect(verifier).toContain('pdftotext');
-    expect(verifier).toContain('pdftoppm');
+    expect(verifier).toContain('pdoppm');
     expect(verifier).toContain('expect_tagged');
   });
 });
