@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CRYPTO-EVIDENCE-PROVIDER-ADAPTERS-2026-08-22",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "Evidence provider delivery for Meme/DeFi and added Crypto Orchestrator research features",
+  "startedAt": "2026-08-22T06:10:00+02:00",
+  "baseBranch": "feat/crypto-meme-defi-orchestrator-scoring-2026-08-22",
+  "baseSha": "09161ad96fd5c1905a51f6f207fc97b322febae6",
+  "executionBranch": "feat/crypto-evidence-provider-adapters-2026-08-22",
+  "stackDependency": {
+    "pullRequest": 485,
+    "reason": "Evidence adapters bind contracts introduced by PR #485. No PR for this branch is allowed until #485 is merged and this branch is reconciled/rebased against then-current main.",
+    "mustReconcileAgainstMainBeforePr": true
+  },
+  "providerDecisions": {
+    "defillama": "existing canonical DeFi TVL/fees/revenue evidence provider; retain ADR-0100 evidence-only authority",
+    "goplus": "token contract/honeypot/tax/mint/blacklist/proxy/holder/liquidity-lock security evidence",
+    "coinglass": "crypto derivatives and market-microstructure evidence: OI/funding/liquidations/orderbook/bars",
+    "lunarcrush": "social sentiment/mentions/engagement/creator/spam evidence",
+    "messari": "standardized protocol/on-chain usage evidence where DeFiLlama does not provide the required feature",
+    "dune": "governed custom-query fallback for protocol-specific on-chain evidence not standardized by the preceding providers"
+  },
+  "protectedExistingAuthorities": [
+    "assetRegistry as provider-identity mapping authority",
+    "ProviderMatrix as provider inventory/policy authority",
+    "MarketDataGateway for canonical quote/snapshot routing only",
+    "CryptoFeatureEvidence as category evidence contract",
+    "ScoringModelRegistry",
+    "ScoringDispatcher",
+    "CanonicalScoreResult",
+    "ADR-0100 DeFiLlama evidence-only authority",
+    "FT-7 live execution gate"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/CRYPTO-EVIDENCE-PROVIDER-ADAPTERS-2026-08-22.json",
+    "src/platform/MarketData/contracts.ts",
+    "src/platform/MarketData/ProviderMatrix.ts",
+    "src/platform/MarketData/providers/GoPlusTokenSecurityProvider.ts",
+    "src/platform/MarketData/providers/CoinGlassCryptoEvidenceProvider.ts",
+    "src/platform/MarketData/providers/LunarCrushSocialEvidenceProvider.ts",
+    "src/platform/MarketData/providers/MessariProtocolEvidenceProvider.ts",
+    "src/platform/MarketData/providers/DuneQueryEvidenceProvider.ts",
+    "src/platform/FinTechCore/Modules/Crypto/CryptoCategoryFeatureContracts.ts",
+    "src/platform/FinTechCore/Modules/Crypto/Adapters/ExtendedCryptoEvidenceAdapters.ts",
+    "src/services/cryptoExtendedEvidence.ts",
+    "src/lib/assetRegistry.ts",
+    ".env.example",
+    "tests/unit/providerMatrix.test.ts",
+    "tests/unit/cryptoExtendedEvidenceAdapters.test.ts",
+    "docs/evidence/sc-md/SC4_CRYPTO_EXTENDED_EVIDENCE_PROVIDERS_2026-08-22.md"
+  ],
+  "securityBoundary": {
+    "providerKeysCommitted": false,
+    "providersDefaultFailClosedWithoutRequiredKey": true,
+    "providerOutputCanAuthorizeScore": false,
+    "providerOutputCanAuthorizeTrade": false,
+    "liveExecutionChanged": false,
+    "externalMutationPerformed": false
+  },
+  "correlationRules": [
+    "DeFiLlama remains authoritative for existing TVL/fees/revenue evidence; Messari must not silently replace those fields.",
+    "GoPlus security observations are security evidence, not a score or automatic PASS.",
+    "LunarCrush sentiment is external evidence and must remain separable from price/volume confirmations.",
+    "CoinGlass derivatives/microstructure evidence must not become an execution price authority.",
+    "Dune query IDs and output schemas must be explicitly governed; no arbitrary SQL from user/model input.",
+    "Missing/stale/unknown provider fields remain NOT_AVAILABLE/STALE/INVALID and never become 0 or PASS."
+  ]
+}
