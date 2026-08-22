@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.2.0",
   "claimId": "CRYPTO-EVIDENCE-PROVIDER-ADAPTERS-2026-08-22",
   "status": "active",
   "exclusive": true,
@@ -27,12 +27,13 @@
     "dexscreener": "keyless DEX pool/liquidity/activity specialist evidence for governed token identities",
     "sourcify": "keyless EVM source/bytecode verification specialist evidence; not audit/formal-verification PASS",
     "gdelt": "keyless news metadata/provenance source; no article-body republication or score authority",
-    "dune": "read-only Owner-keyed saved-query evidence with FREE_TIER or timestamp-bounded TRIAL_14D entitlement modes and mandatory allowlist/schema/row gates",
+    "dune": "server-side TypeScript read-only saved-query evidence with semantic DUNE_QUERY_* IDs, derived allowlist, bounded rows/schema and FREE_TIER or timestamp-bounded TRIAL_14D entitlement modes",
     "gemini": "reuse existing ADR-0090 Free-Tier Research Shadow; no second same-project key for quota because Gemini limits are project-scoped"
   },
   "excludedProviders": ["newsapi", "coinglass", "lunarcrush", "messari"],
   "protectedExistingAuthorities": [
     "CryptoEvidenceIdentityRegistry for high-impact external provider identities",
+    "DuneSavedQueryRegistry for semantic Dune query/schema contracts and derived allowlist",
     "ProviderMatrix as provider inventory/policy authority",
     "MarketDataGateway for canonical quote/snapshot routing only",
     "CryptoCategoryFeatureContracts as category evidence-definition authority",
@@ -54,6 +55,7 @@
     "src/platform/MarketData/ProviderMatrix.ts",
     "src/platform/MarketData/ProviderMatrixBase.ts",
     "src/platform/MarketData/CryptoEvidenceIdentityRegistry.ts",
+    "src/platform/MarketData/DuneSavedQueryRegistry.ts",
     "src/platform/MarketData/providers/ResearchEvidenceProviderHttp.ts",
     "src/platform/MarketData/providers/BinancePublicAnalyticsProvider.ts",
     "src/platform/MarketData/providers/KrakenFuturesAnalyticsProvider.ts",
@@ -72,6 +74,7 @@
     "tests/unit/providerMatrix.test.ts",
     "tests/unit/cryptoExtendedEvidenceAdapters.test.ts",
     "tests/unit/cryptoExtendedEvidenceProviders.test.ts",
+    "tests/unit/duneSavedQueryRegistry.test.ts",
     "tests/unit/goPlusSolanaEvidence.test.ts",
     "tests/unit/newsEvidenceBoundary.test.ts",
     "docs/evidence/sc-md/SC4_CRYPTO_EVIDENCE_POLICY_SUPERSESSION_2026-08-22.md",
@@ -101,7 +104,14 @@
     "trialAutoBlocksAtExpiry": true,
     "queryExecutionAvailable": false,
     "arbitrarySqlAvailable": false,
-    "allowlistRequired": true
+    "manualOwnerApiCallsRequired": false,
+    "numericQueryIdAuthority": "semantic DUNE_QUERY_* environment values resolved by DuneSavedQueryRegistry",
+    "separateDuneAllowedQueryIdsAuthority": false,
+    "runtimeSchemaValidationRequired": true,
+    "boundedResultReadsRequired": true,
+    "officialTypeScriptSdkReviewed": true,
+    "sdkDependencyInstalled": false,
+    "sdkConvenienceExecutionMethodsAllowed": false
   },
   "transportConsolidation": {
     "sharedTransport": "ResearchEvidenceProviderHttp",
@@ -113,7 +123,8 @@
     "Binance currently owns the generic derivatives raw-feature projection; Kraken remains an independent provider observation set until a separately versioned consensus/correlation transform exists.",
     "DeFiLlama remains authoritative for existing free TVL/fees/revenue fields.",
     "GoPlus/Sourcify security observations are raw evidence, not automatic security/audit/formal-verification PASS.",
-    "Dune query IDs/output schemas are governed and entitlement width never expands runtime query authority.",
+    "Dune query IDs have one numeric authority through semantic DUNE_QUERY_* environment values; DuneSavedQueryRegistry owns semantic schema/mapping contracts and derives the allowlist.",
+    "Dune entitlement width never expands runtime query authority; empty/unverified semantic query variables stay absent and fail closed.",
     "GDELT news metadata and deterministic headline heuristics have no direct scoring authority.",
     "Missing/stale/unknown provider fields remain NOT_AVAILABLE/STALE/INVALID and never become 0 or PASS."
   ]
