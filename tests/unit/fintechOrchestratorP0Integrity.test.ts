@@ -46,7 +46,7 @@ describe('P0 Scoring Registry 1.1.0', () => {
     expect(resolution.model.scoreEligible).toBe(true);
   });
 
-  it('registriert Meme und DeFi 0.2.0 nur als nicht scorefähige Challenger', () => {
+  it('registriert Meme und DeFi 0.3.0 nur als nicht scorefähige Challenger', () => {
     const registry = new ScoringModelRegistry();
     const expected = [
       ['crypto-meme-integrity', CRYPTO_MEME_RESEARCH_FEATURE_CONTRACT_VERSION],
@@ -54,8 +54,8 @@ describe('P0 Scoring Registry 1.1.0', () => {
     ] as const;
 
     for (const [modelId, featureContractVersion] of expected) {
-      const model = registry.get(modelId, '0.2.0');
-      expect(model?.version).toBe('0.2.0');
+      const model = registry.get(modelId, '0.3.0');
+      expect(model?.version).toBe('0.3.0');
       expect(model?.lifecycle).toBe('challenger');
       expect(model?.alias).toBe('challenger');
       expect(model?.evidencePolicy).toBe('research-only');
