@@ -55,6 +55,7 @@ Repository preparation:
 - [x] Dune access mode, trial timestamps/attestations, query allowlist and row cap are non-secret governance configuration.
 - [x] GoPlus key remains optional; canonical Free baseline is keyless.
 - [x] No new secret is required for Binance Public or Kraken Public.
+- [x] Owner-reviewed Dune query IDs `27230` and `5833540` are present in the repository allowlist configuration; entitlement remains fail-closed until separately attested.
 
 Manual production cleanup after the GDELT supersession is deployed and verified:
 
@@ -77,14 +78,78 @@ Binance and Kraken are both primary suppliers but MUST remain separately attribu
 
 ## Phase 5 — Dune query governance
 
-- [ ] Create/select saved queries only for evidence not standardized by DeFiLlama/GoPlus/Binance/Kraken/DEX Screener/Sourcify.
-- [ ] Record query owner, purpose, datasets/tables, exact columns, units and freshness.
-- [ ] Review look-ahead leakage and correlated/double-counted features.
-- [ ] Add approved IDs to `DUNE_ALLOWED_QUERY_IDS`.
-- [ ] Mirror the same IDs/schemas in `CryptoEvidenceIdentityRegistry`.
-- [ ] Keep `DUNE_MAX_RESULT_ROWS=25` unless reviewed; implementation hard cap is 100.
-- [ ] Verify schema-drift, ungoverned-query and entitlement-expiry negative tests.
-- [ ] Never enable arbitrary SQL, execute-query, pipelines or credit-limit bypass.
+General rules:
+
+- [x] Create/select saved queries only for evidence not standardized by DeFiLlama/GoPlus/Binance/Kraken/DEX Screener/Sourcify.
+- [x] Record query owner, purpose, datasets/tables, exact columns, units and freshness.
+- [ ] Review look-ahead leakage and correlated/double-counted features for every query before LIVE_DATA.
+- [x] Add approved IDs to `DUNE_ALLOWED_QUERY_IDS`.
+- [x] Mirror approved IDs/schemas in `CryptoEvidenceIdentityRegistry`.
+- [x] Keep `DUNE_MAX_RESULT_ROWS=25`; implementation hard cap is 100.
+- [ ] Verify schema-drift, ungoverned-query and entitlement-expiry negative tests against the real Dune result surface.
+- [x] Never enable arbitrary SQL, execute-query, pipelines or credit-limit bypass.
+
+### Aave / Ethereum — governed query inventory
+
+| State | Query | Purpose | Expected columns | Mapping / authority |
+|---|---:|---|---|---|
+| `OWNER_ATTESTED_PENDING_RUNTIME_SCHEMA_CHECK` | `5833540` | Active Addresses | `observed_at`, `active_addresses` | `active_addresses` → `protocol.activeAddresses24h` |
+| `OWNER_ATTESTED_PENDING_RUNTIME_SCHEMA_CHECK` | `27230` | Treasury Value Over Time | `observed_at`, `treasury_usd` | raw `treasury_usd` → `protocol.treasuryUsd`; **not** directly `treasuryToMarketCap` |
+| `CUSTOM_QUERY_REQUIRED` | — | Oracle Raw Data | see below | raw oracle facts only; never direct policy PASS |
+| `CUSTOM_QUERY_REQUIRED` | — | Address Retention | see below | raw cohort/retention evidence only |
+
+`27230` is the single selected Treasury query for this contract. Previously considered `91004` is not allowlisted to avoid duplicate/correlated Treasury evidence unless a future review proves it represents a distinct non-overlapping fact.
+
+The public web surface did not reliably expose the result schema of `27230`/`5833540` during the 2026-08-22 review. Owner-provided metadata therefore authorizes pre-registration only; the first real API read must still match the exact expected columns or the provider returns `INVALID`.
+
+### Custom Query A — Aave V3 / Ethereum / Oracle Raw Data
+
+Minimum output required for useful raw evidence:
+
+- `observed_at` — timestamp of the observation row;
+- `asset` — canonical token symbol or, preferably, deterministic asset identity paired with contract address;
+- `oracle_price` — raw/current oracle value;
+- `oracle_address` — Aave oracle/source address used for the asset;
+- `oracle_updated_at` — timestamp of the latest underlying price update / round update;
+- `oracle_decimals` — scaling needed to interpret `oracle_price` correctly.
+
+Recommended additional output if Dune tables expose it reliably:
+
+- `asset_address`;
+- `source_feed_address`;
+- `round_id`;
+- `block_number`;
+- `quote_currency` / base-currency convention;
+- `is_fallback_source` where determinable from governed Aave configuration.
+
+Do **not** return `oracleRiskWithinPolicy=true/false` from Dune. CAPITAL-AI must derive that hard gate from raw provenance/liveness/diversity/deviation/fallback evidence inside its own versioned policy layer.
+
+Target freshness: **hourly**. Rows with absent price scaling or absent update timestamp are not sufficient for oracle-liveness scoring.
+
+### Custom Query B — Aave / Ethereum / Address Retention
+
+A bare `observed_at, retention_rate` row is insufficient because it does not define the cohort or return window. Required output:
+
+- `observed_at` — time after the return window is complete;
+- `cohort_start`;
+- `cohort_end`;
+- `return_window_start`;
+- `return_window_end`;
+- `cohort_addresses` — distinct eligible protocol addresses in the cohort;
+- `retained_addresses` — cohort addresses seen again in the defined return window;
+- `retention_rate` — `retained_addresses / cohort_addresses`, expressed consistently as ratio or percent.
+
+Governance requirements:
+
+- define exactly which Aave V3 Ethereum interactions count as an **active address**;
+- exclude protocol/system/contract addresses where appropriate and document the rule;
+- use completed historical windows only — no future-looking cohort calculation;
+- document whether repeated transactions by one address count once (recommended: distinct wallet once per window);
+- choose one stable retention definition and version it before LIVE_SCORING.
+
+Recommended initial convention: a completed, trailing cohort design with explicit cohort and return-window timestamps. This avoids look-ahead leakage and makes historical backtests reproducible.
+
+Target freshness: **daily**.
 
 ## Phase 6 — Gemini Research Shadow decision
 
