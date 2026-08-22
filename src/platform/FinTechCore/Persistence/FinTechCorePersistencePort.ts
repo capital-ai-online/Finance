@@ -4,6 +4,8 @@ import type {
   FinTechCoreOrderIntent,
   FinTechCoreWorkflowContext,
 } from '../CoreContracts';
+import type { FinTechCoreBoundOrderIntent } from '../OrderIntent/OrderIntentBinding';
+import type { FinTechCoreReconciliationRecord } from '../Reconciliation/ReconciliationContracts';
 import type { FinTechCoreWorkflowState } from '../Runtime/WorkflowStateMachine';
 
 /**
@@ -24,8 +26,14 @@ export interface FinTechCoreWorkflowTransitionPersistenceInput {
   readonly nextState: FinTechCoreWorkflowState;
 }
 
+/** Legacy FT-3 intent scaffold. New FT-6 code must prefer FinTechCoreBoundOrderIntentPersistenceInput. */
 export interface FinTechCoreOrderIntentPersistenceInput {
   readonly intent: FinTechCoreOrderIntent;
+  readonly evidenceRefs?: readonly string[];
+}
+
+export interface FinTechCoreBoundOrderIntentPersistenceInput {
+  readonly intent: FinTechCoreBoundOrderIntent;
   readonly evidenceRefs?: readonly string[];
 }
 
@@ -35,6 +43,10 @@ export interface FinTechCorePersistencePort {
   appendDomainEvent(event: FinTechCoreDomainEvent): Promise<void>;
   appendDecisionRecord(record: FinTechCoreDecisionRecord): Promise<void>;
   appendOrderIntent(input: FinTechCoreOrderIntentPersistenceInput): Promise<void>;
+  /** FT-6 decision/hash-bound OrderIntent persistence; still no execution capability. */
+  appendBoundOrderIntent(input: FinTechCoreBoundOrderIntentPersistenceInput): Promise<void>;
+  /** FT-6 append-only reconciliation evidence. */
+  appendReconciliationRecord(record: FinTechCoreReconciliationRecord): Promise<void>;
 }
 
 /**
