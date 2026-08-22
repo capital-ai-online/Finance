@@ -8,93 +8,115 @@ Claim: `CRYPTO-EVIDENCE-PROVIDER-ADAPTERS-2026-08-22`
 
 This record supersedes inconsistent, paid-by-default or unsafe evidence behavior without creating a second scoring, evidence, risk, compliance or execution authority. Existing canonical authorities remain in force.
 
-## Owner decision — 2026-08-22
+## Owner decisions — 2026-08-22
 
-Approved: **Option B — LIVE_SCORING without LIVE_EXECUTION under the documented gates.**
+1. **Option B — LIVE_SCORING without LIVE_EXECUTION under the documented gates** is approved.
+2. **Binance Public and Kraken Public are co-primary crypto market/derivatives evidence suppliers.** They remain independently attributable to avoid correlated double counting.
+3. `DUNE_API_KEY` is provisioned by the Owner in `finance-secrets.env` with read rights. Key presence alone does not enable Dune reads.
+4. The Owner reports a **14-day Dune entitlement to the fuller dataset surface**. This exact trial term was not independently found in the public Dune documentation during the 2026-08-22 review, so it is treated as Owner-attested account entitlement and must be bounded by explicit timestamps.
 
-This approval authorizes promotion once the category-specific evidence/DQ/backtest/audit gates are satisfied. It does not waive a failed or missing gate and does not authorize real orders, custody or exchange execution.
+Option B does not waive failed/missing gates and does not authorize real orders, custody or exchange execution.
 
 ## Superseded behavior → canonical replacement
 
 | Superseded behavior | Replacement |
 |---|---|
 | NewsAPI.org as Landing Page / AI Newsfeed production source | GDELT DOC 2.0 keyless article discovery/provenance; NewsAPI provider/key/policy removed |
-| Static, synthetic or dynamically fabricated financial headlines | `/api/news` → `GdeltNewsEvidenceProvider` → `VerifiedNewsFeed`; no synthetic fallback |
-| Article sentiment directly changing an asset score | Headline sentiment remains clearly labelled deterministic `heuristic` presentation metadata; no score/ranking authority |
-| CoinGlass derivatives evidence | Kraken Futures Public Charts analytics for governed markets; DEX Screener supplements DEX liquidity/activity |
+| Static/synthetic financial headlines | `/api/news` → `GdeltNewsEvidenceProvider` → `VerifiedNewsFeed`; no synthetic fallback |
+| News sentiment changing a score | Headline sentiment stays labelled deterministic `heuristic` presentation metadata; no score/ranking authority |
+| CoinGlass derivatives evidence | Binance Public + Kraken Public co-primary market/derivatives evidence; DEX Screener supplements DEX activity |
 | LunarCrush social evidence | No paid social provider. Missing social evidence remains explicit and may block Meme promotion |
-| Messari default protocol evidence | DeFiLlama free canonical fields + Owner-allowlisted Dune Free-Tier evidence; no paid/x402 default |
-| One transport/rate-limit implementation per evidence vendor | Shared `ResearchEvidenceProviderHttp` reusing `ProviderMatrix`, `RateLimitBudget`, `CircuitBreaker` and Supervisor health |
-| External provider response interpreted as automatic PASS | Raw evidence only; policy/gate decisions remain separate and fail closed |
-| Missing/stale/invalid values mapped to `0`, neutral `50` or PASS | Explicit `NOT_AVAILABLE` / `STALE` / `INVALID` with null value and provenance rules |
-| Dune arbitrary/model-generated SQL or query execution | Owner-allowlisted saved-query latest-result GET only, bounded columns/rows, Free-Tier attestation required |
-| Paid provider auto-upgrade, automatic overage or x402 machine payment | Prohibited; no active paid crypto-evidence provider in this supersession |
-| Browser-supplied contract/mint/provider market/Dune query identity | Server-side governed identity registry only |
-| `LIVE` used ambiguously | `LIVE_DATA`, `LIVE_SCORING`, `LIVE_EXECUTION` are separate states with separate gates |
-| Evidence charts presented as a new financial score | Evidence Coverage = data-quality/availability projection only; scoring remains `ScoringModelRegistry → ScoringDispatcher → CanonicalScoreResult` |
+| Messari default protocol evidence | DeFiLlama free canonical fields + governed Dune evidence; no paid/x402 default |
+| One HTTP/rate-limit implementation per vendor | Shared `ResearchEvidenceProviderHttp` + ProviderMatrix/RateLimitBudget/CircuitBreaker/Supervisor health |
+| Provider response interpreted as PASS | Raw evidence only; policy/gates remain separate and fail closed |
+| Missing/stale/invalid mapped to 0/50/PASS | Explicit `NOT_AVAILABLE` / `STALE` / `INVALID` with null/provenance rules |
+| Arbitrary Dune SQL/query execution | Owner-allowlisted saved-query latest-result GET only, bounded schema/rows |
+| A temporary provider entitlement becoming permanent architecture | Explicit `FREE_TIER` or timestamp-bounded `TRIAL_14D`; automatic policy block at trial expiry |
+| Paid auto-upgrade/overage/x402 | Prohibited unless separately Owner-approved |
+| Browser-supplied provider identities/query IDs | Server-side governed identity registry only |
+| `LIVE` used ambiguously | `LIVE_DATA`, `LIVE_SCORING`, `LIVE_EXECUTION` remain separate states |
 
-## Active provider policy
+## Primary crypto market suppliers
+
+### Binance Public
+- Keyless public Spot/Futures market evidence.
+- Primary generic raw projection for currently mapped open-interest USD, funding and 1%-orderbook-depth features.
+- Exact futures symbols are governed by `CryptoEvidenceIdentityRegistry`; runtime must not guess contracts from a CAPITAL-AI symbol.
+- No account/private/order endpoint and no execution authority.
+
+### Kraken Public / Futures
+- Keyless primary independent observation set for governed Kraken markets.
+- Open interest, funding, liquidation, liquidity and slippage remain provider-attributable Kraken observations.
+- Kraken and Binance evidence MUST NOT be summed/averaged automatically simply because they describe similar market structure. Any future consensus transform requires a separately versioned correlation policy.
+- No private Kraken endpoint, API trading key, order or execution method is permitted.
+
+## Specialist provider policy
 
 ### GoPlus Free
-- EVM Token Security and Solana Token Security are security evidence only.
-- Canonical CAPITAL-AI use is the documented free/public baseline with a local ceiling of 30 calls/minute.
-- Authenticated higher-quota, AI-Agent billing and x402 are not part of the active architecture.
-- Contract/mint identity MUST come from `CryptoEvidenceIdentityRegistry`.
+- EVM and Solana Token Security are security evidence only.
+- Canonical use remains the free/public baseline; authenticated paid/x402 paths are outside this architecture.
+- Contract/mint identity MUST come from the governed registry.
 
 ### Sourcify API v2
 - Open-source EVM source/bytecode verification lookup only.
-- `exact_match` / `match` proves source-bytecode verification status, **not** formal verification, external audit completion or exploit safety.
-- API v1 is forbidden/deprecated; only v2 may be used.
+- Match status is not formal verification, external audit completion or security PASS.
 
-### Kraken Futures Public Charts
-- Keyless read-only evidence for governed Kraken futures market symbols.
-- Allowed evidence families: open interest, funding, liquidation volume, liquidity and slippage plus public candles where separately needed.
-- No private Kraken endpoint, API trading key, order or execution method is permitted in this package.
-
-### DEX Screener Public API
+### DEX Screener
 - Keyless DEX pool/activity evidence for governed chain/token identities.
-- Local rate limit remains below the vendor-documented public token/pair limit.
-- DEX Screener observations are market evidence and do not replace contract-security or canonical price-consensus authority.
+- Does not replace contract-security or canonical price-consensus authority.
 
-### Dune Free Tier
-- `DUNE_FREE_TIER_ONLY=true` and explicit `DUNE_FREE_TIER_ATTESTED=true` are required before runtime calls.
-- Only saved query IDs in both the Owner-reviewed identity registry and `DUNE_ALLOWED_QUERY_IDS` may be read.
-- Only `GET /v1/query/{query_id}/results` is supported; no execute-query, pipeline, raw SQL or model-generated query method exists.
-- Requested columns and result rows are bounded; `ignore_max_credits_per_request` is never used.
-- Owner must keep Dune extra-credit spending disabled/capped so the Free-Tier boundary cannot silently incur charges.
+### Dune — two governed access modes
+
+#### `FREE_TIER`
+- Requires `DUNE_FREE_TIER_ATTESTED=true`.
+- Uses the Owner-provisioned `DUNE_API_KEY` from `finance-secrets.env`.
+
+#### `TRIAL_14D`
+- Represents the Owner-reported temporary full/fuller-dataset entitlement.
+- Requires `DUNE_TRIAL_ATTESTED=true`, `DUNE_TRIAL_STARTED_AT` and `DUNE_TRIAL_ENDS_AT`.
+- Runtime rejects a window longer than 14 days, blocks before start and blocks automatically at/after the end timestamp.
+- Trial expiry MUST NOT auto-convert to paid access. Return to `FREE_TIER` requires explicit Free-Tier attestation.
+
+#### Boundaries valid in both Dune modes
+- Only saved query IDs present in the Owner-reviewed registry and `DUNE_ALLOWED_QUERY_IDS`.
+- Only bounded latest-result reads; no arbitrary SQL, execute-query, pipelines or model/user-created query IDs.
+- Requested columns and rows are bounded.
+- Dataset entitlement may broaden during the trial; **runtime mutation/query authority does not**.
+- No credit/overage bypass or automatic purchase is permitted.
 
 ### GDELT DOC 2.0
-- Keyless article discovery/provenance for Landing Page and AI Newsfeed Viewer.
-- CAPITAL-AI projects headline, source/domain, publication time and publisher URL only.
-- Publisher article bodies are not scraped/re-published; publisher copyright/licensing remains outside GDELT metadata discovery.
-- Headline heuristics remain presentation metadata only.
+- Keyless article discovery/provenance.
+- Projects metadata/source links only; no article-body republication and no direct scoring authority.
 
 ### DeFiLlama
-- Existing keyless free TVL/fees/revenue evidence remains canonical under ADR-0100.
-- Premium endpoints and paid subscription APIs remain disabled unless separately superseded.
+- Existing keyless TVL/fees/revenue authority remains canonical under ADR-0100.
+- Premium endpoints remain disabled unless separately superseded.
+
+## Gemini boundary
+
+CAPITAL-AI already has the ADR-0090 governed Gemini Research Shadow. Current Gemini API rate limits are project-scoped rather than API-key-scoped; therefore a second API key in the **same Google Cloud project** does not provide additional Free-Tier capacity. A second key may be useful for credential rotation or workload separation, but not quota multiplication.
+
+SC4 decision:
+- do **not** add a second Gemini key merely for capacity;
+- reuse the existing Free-Tier-only Gemini Research Shadow when its existing billing/free-tier attestation gates pass;
+- Gemini may synthesize/explain supplied research evidence but may not become a market-data source, evidence fact authority, scoring authority or execution authority;
+- a separate Google project would require a new privacy/governance/quota decision rather than silent key proliferation.
 
 ## Excluded providers
 
-The following providers are not active in the SC4 runtime, ProviderMatrix or secret configuration:
+Not active in SC4: NewsAPI.org, CoinGlass, LunarCrush, Messari. A stray environment variable must never reactivate them.
 
-- NewsAPI.org
-- CoinGlass
-- LunarCrush
-- Messari
-
-Reintroduction requires a new cost/licensing decision and a new supersession; a stray environment variable must never reactivate them.
-
-## LIVE promotion policy
+## LIVE promotion
 
 ### LIVE_DATA
-May be enabled only when identity, source usage rights, freshness/DQ and public-page provenance are satisfied. Keyless/free does not waive DQ or licensing rules.
+Requires identity, source-use rights, freshness/DQ and public provenance. Free/keyless does not waive these gates.
 
 ### LIVE_SCORING — Owner-approved Option B
-Promotion is authorized **only after** complete required evidence coverage, negative tests, backtest/OOS validation, anti-correlation review, effective-feature/effective-weight fingerprints and audit/formal-verification evidence for the relevant category/model. Until those conditions are demonstrably satisfied the challenger remains non-score-eligible.
+Only after complete required evidence coverage, negative tests, backtest/OOS, anti-correlation review, effective-feature/effective-weight fingerprints and audit/formal-verification evidence for that category/model.
 
 ### LIVE_EXECUTION
-Remains FT-7+ and blocked. No order placement, exchange mutation, custody action or broker connection is authorized by Option B.
+Remains FT-7+ and blocked.
 
 ## Non-authority statement
 
-This supersession changes provider/evidence policy and UI projections only. It does not create an alternative dispatcher, scoring registry, canonical result, risk/compliance authority, persistence authority, queue or execution authority.
+This supersession changes provider/evidence policy and projections only. It does not create an alternative dispatcher, scoring registry, canonical result, risk/compliance, persistence, queue or execution authority.
