@@ -43,6 +43,21 @@ describe('frontend financial data contract regression gate', () => {
     expect(code).toContain('tradeSetup');
   });
 
+  it('places Enterprise scorer intervals directly after the Asset search and keeps them presentation-only', () => {
+    const code = source('src/components/CryptoScoringEnterprise.tsx');
+    const assetSearchIndex = code.indexOf('Asset-Suche');
+    const timeframeIndex = code.indexOf('Analyse-Zeitraum');
+    const selectedAssetHeaderIndex = code.indexOf('Enterprise Universum Scorer');
+    const quickAnalysisIndex = code.indexOf('<EnterpriseBinanceQuickAnalysis');
+
+    expect(assetSearchIndex).toBeGreaterThan(-1);
+    expect(timeframeIndex).toBeGreaterThan(assetSearchIndex);
+    expect(selectedAssetHeaderIndex).toBeGreaterThan(timeframeIndex);
+    expect(quickAnalysisIndex).toBeGreaterThan(selectedAssetHeaderIndex);
+    expect(code).toContain('aria-label="Analyse-Zeitraum des Enterprise Universum Scorers"');
+    expect(code).toContain('Zeitrahmen ist Analysekontext und verändert keinen kanonischen Score im Browser.');
+  });
+
   it('Buffett is stock-only, entitlement-first and hydrates finance values through the verified display boundary', () => {
     const code = source('src/components/BuffetValueCheck.tsx');
     const authorizeIndex = code.indexOf('/api/entitlements/warren-buffett/authorize');
