@@ -27,9 +27,11 @@
     "docs/adr/registry.json",
     "docs/governance/authority-registry.json",
     "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
+    "src/platform/FinTechCore/CoreContracts.ts",
     "src/platform/FinTechCore/README.md",
     "src/platform/FinTechCore/manifest.json",
     "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md",
+    "tests/unit/fintechCoreContracts.test.ts",
     "tests/unit/governanceControlPlane.test.ts",
     "tests/unit/sc2GlobalSingleDispatcher.test.ts"
   ],
@@ -57,16 +59,21 @@
     "reason": "DeFi/Meme model semantics require a distinct correlation and model-governance review after this value-chain cleanup."
   },
   "securityMutationBoundary": {
-    "runtimeSecurityMutationAuthorized": false,
-    "finding": "FINTECH_CORE_OPERATING_MODE_POLICY currently projects GUARDED_LIVE/PRODUCTION capabilities while FT-6B real execution remains hard-blocked.",
-    "proposedFailClosedState": {
+    "runtimeSecurityMutationAuthorized": true,
+    "ownerAuthorizationObservedAt": "2026-08-22T04:23:00+02:00",
+    "finding": "FINTECH_CORE_OPERATING_MODE_POLICY projected GUARDED_LIVE/PRODUCTION capabilities while FT-6B real execution was hard-blocked.",
+    "appliedFailClosedState": {
       "RESEARCH": "real=false,simulated=false,newOrders=false",
       "PAPER": "real=false,simulated=true,newOrders=true",
       "GUARDED_LIVE": "real=false,simulated=false,newOrders=false",
       "PRODUCTION": "real=false,simulated=false,newOrders=false",
       "EMERGENCY": "real=false,simulated=false,newOrders=false"
     },
-    "rule": "No runtime security/execution mutation until explicit Owner approval."
+    "runtimeMutationApplied": true,
+    "negativeRegressionGuard": "tests/unit/fintechCoreContracts.test.ts",
+    "newCapabilityAdded": false,
+    "externalMutationPerformed": false,
+    "ft7GatePreserved": true
   },
   "releaseCondition": "Coordination metadata is released when this supersession is merged, closed, superseded or abandoned."
 }
