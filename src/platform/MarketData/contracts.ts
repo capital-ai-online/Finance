@@ -12,6 +12,7 @@ export type ProviderCapability =
   | 'security'
   | 'derivatives'
   | 'sentiment'
+  | 'news'
   | 'onchain'
   | 'governance';
 export type ProviderRole = 'primary' | 'secondary' | 'shadow';
