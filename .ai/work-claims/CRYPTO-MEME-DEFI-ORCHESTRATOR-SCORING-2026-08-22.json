@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "1.0.0",
+  "claimId": "CRYPTO-MEME-DEFI-ORCHESTRATOR-SCORING-2026-08-22",
+  "status": "active",
+  "exclusive": true,
+  "agent": {
+    "provider": "OpenAI",
+    "model": "GPT-5.6 Sol",
+    "executionSurface": "ChatGPT / GitHub Connector"
+  },
+  "workItem": "Enterprise Crypto Orchestrator Meme/DeFi research-scoring implementation and governed feature expansion after PR #484",
+  "startedAt": "2026-08-22T05:31:00+02:00",
+  "baseBranch": "main",
+  "baseSha": "c1a81db2f75d9fbb0fb17ce4e6440967189ad6be",
+  "executionBranch": "feat/crypto-meme-defi-orchestrator-scoring-2026-08-22",
+  "dependsOn": [
+    "PR #484 merged",
+    "ADR-0087 Single Scoring Architecture",
+    "ADR-0099 FinTech Core Crypto Module 01",
+    "ADR-0100 DeFiLlama evidence-only authority",
+    "SC2 Meme/DeFi Supersession 0.2.0",
+    "FT-2C Pattern Research Engine foundation"
+  ],
+  "claimedPaths": [
+    ".ai/work-claims/CRYPTO-MEME-DEFI-ORCHESTRATOR-SCORING-2026-08-22.json",
+    "src/platform/Scoring/CryptoCategoryResearchScoring.ts",
+    "src/platform/Scoring/CryptoOrchestratorResearchModels.ts",
+    "src/platform/Scoring/CryptoResearchModelContracts.ts",
+    "src/platform/Scoring/ScoringModelRegistry.ts",
+    "src/platform/Scoring/index.ts",
+    "src/orchestrator/cryptoOrchestrator.ts",
+    "tests/unit/cryptoCategoryResearchScoring.test.ts",
+    "tests/unit/cryptoOrchestratorResearchModels.test.ts",
+    "tests/unit/cryptoResearchModelContracts.test.ts",
+    "tests/unit/fintechOrchestratorP0Integrity.test.ts",
+    "tests/unit/cryptoAnalyzeResearchBoundary.test.ts",
+    "docs/evidence/sc-md/SC3_CRYPTO_MEME_DEFI_ORCHESTRATOR_SCORING_2026-08-22.md",
+    "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
+    "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md"
+  ],
+  "sourceInputs": [
+    {
+      "kind": "google-drive-pdf",
+      "fileId": "1oydV1IUGJ1HKlnPoikuwFpJq2tZ_NLck",
+      "title": "Fintech_meme_defi_tools",
+      "role": "Meme/DeFi factor, risk, evidence and model requirements"
+    },
+    {
+      "kind": "google-drive-pdf",
+      "fileId": "1Dfqwv0oVaCnL34AXHduHY-PpfzjW5Fo8",
+      "title": "erstelle ein Kit für den Enterprise Krypto Orchest3.pdf",
+      "role": "Regime, multi-timeframe pattern, sentiment, momentum and kill-switch research requirements"
+    }
+  ],
+  "protectedExistingAuthorities": [
+    "ScoringModelRegistry",
+    "ScoringDispatcher",
+    "CanonicalScoreResult",
+    "CryptoOrchestrator research/enrichment boundary",
+    "PatternResearchEngine and PatternSignalResolver",
+    "ADR-0100 DeFiLlama evidence-only provider boundary",
+    "FT-5 deterministic Risk/Compliance Decision Records",
+    "FT-6 PAPER-only execution capability",
+    "FT-7 real execution gate"
+  ],
+  "correlation": {
+    "mainAtStart": "c1a81db2f75d9fbb0fb17ce4e6440967189ad6be",
+    "mainAtLatestCheck": "c1a81db2f75d9fbb0fb17ce4e6440967189ad6be",
+    "pr484Merged": true,
+    "openPullRequestsAtStart": 0,
+    "openPullRequestsAtLatestCheck": 0,
+    "directOpenPrFileOverlap": false,
+    "branchAheadByBeforeThisMetadataCommit": 17,
+    "branchBehindBy": 0,
+    "mergeBaseMatchesCurrentMain": true,
+    "changedFilesBeforeThisMetadataCommit": 15,
+    "allChangedFilesClaimed": true,
+    "newScoringRegistryAllowed": false,
+    "newScoringDispatcherAllowed": false,
+    "newPatternAuthorityAllowed": false,
+    "newRegimeAuthorityAllowed": false,
+    "defillamaEvidenceOnly": true,
+    "legacyMemeCoinScoringServiceRemainsNonAuthorizing": true
+  },
+  "implementationBoundary": {
+    "memeDefiModelStage": "research-evaluator-and-orchestrator-binding",
+    "researchModelVersion": "0.3.0",
+    "canonicalModelPromotionPerformed": false,
+    "scoreEligible": false,
+    "executionEligible": false,
+    "liveDeploymentAdoptedFromSource": false,
+    "reason": "Full source-defined models are implemented for deterministic research validation first. Canonical/productive promotion remains a separate Owner-approved ScoringModelRegistry/ScoringDispatcher decision after evidence coverage, regression, backtesting and correlation validation.",
+    "missingEvidenceDefault": "NOT_COMPUTABLE",
+    "ft7GatePreserved": true
+  },
+  "validation": {
+    "strictTypeScriptCoreModules": "PASS",
+    "strictTypeScriptScope": [
+      "CryptoCategoryResearchScoring.ts",
+      "CryptoOrchestratorResearchModels.ts",
+      "CryptoResearchModelContracts.ts"
+    ],
+    "hostedCiTriggered": false,
+    "reasonHostedCiNotTriggered": "Repository cost policy allows hosted build/test only after Pull Request creation; no Pull Request has been requested for this branch yet."
+  },
+  "releaseCondition": "Coordination metadata is released when the implementation is merged, closed, superseded or abandoned."
+}
