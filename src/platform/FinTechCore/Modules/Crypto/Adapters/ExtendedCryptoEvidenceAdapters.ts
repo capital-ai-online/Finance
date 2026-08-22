@@ -1,11 +1,12 @@
 import type { CryptoFeatureEvidence, CryptoFeaturePrimitive } from '../CryptoCategoryFeatureContracts';
 import type { GoPlusTokenSecurityEvidence } from '../../../../MarketData/providers/GoPlusTokenSecurityProvider';
+import type { BinancePublicAnalyticsEvidence } from '../../../../MarketData/providers/BinancePublicAnalyticsProvider';
 import type { KrakenFuturesAnalyticsEvidence } from '../../../../MarketData/providers/KrakenFuturesAnalyticsProvider';
 import type { DexScreenerTokenEvidence } from '../../../../MarketData/providers/DexScreenerTokenEvidenceProvider';
 import type { SourcifyContractVerificationEvidence } from '../../../../MarketData/providers/SourcifyContractVerificationProvider';
 import type { DuneSavedQueryEvidence } from '../../../../MarketData/providers/DuneQueryEvidenceProvider';
 
-export const EXTENDED_CRYPTO_EVIDENCE_ADAPTER_VERSION = 'fintech-core.crypto/extended-evidence-adapters/1.1.0' as const;
+export const EXTENDED_CRYPTO_EVIDENCE_ADAPTER_VERSION = 'fintech-core.crypto/extended-evidence-adapters/1.2.0' as const;
 
 function evidence(
   key: string,
@@ -51,7 +52,6 @@ function lockedShare(items: readonly { percent: number | null; isLocked: boolean
   return locked.length > 0 ? locked.reduce((sum, value) => sum + value, 0) : null;
 }
 
-/** Provider facts only; no aggregate security PASS is created here. */
 export function adaptGoPlusTokenSecurityEvidence(input: GoPlusTokenSecurityEvidence): readonly CryptoFeatureEvidence[] {
   const status = providerStatus(input.status);
   const ref = input.evidenceId;
@@ -79,14 +79,30 @@ export function adaptGoPlusTokenSecurityEvidence(input: GoPlusTokenSecurityEvide
   ]);
 }
 
+/** Binance is the canonical generic derivatives/raw-market projection in SC-4. */
+export function adaptBinancePublicAnalyticsEvidence(input: BinancePublicAnalyticsEvidence): readonly CryptoFeatureEvidence[] {
+  const status = providerStatus(input.status);
+  const ref = input.evidenceRefs.length > 0 ? input.evidenceRefs.join('|') : null;
+  const openInterestUsd = input.openInterest !== null && input.markPrice !== null
+    ? input.openInterest * input.markPrice
+    : null;
+  return Object.freeze([
+    evidence('derivatives.openInterestUsd', openInterestUsd, 'binance-public', ref, input.observedAt, input.retrievedAt, status),
+    evidence('derivatives.meanFundingRate', input.fundingRate, 'binance-public', ref, input.observedAt, input.retrievedAt, status),
+    evidence('liquidity.orderbookBidsUsd1Pct', input.bidDepthUsd1Pct, 'binance-public', ref, input.observedAt, input.retrievedAt, status),
+    evidence('liquidity.orderbookAsksUsd1Pct', input.askDepthUsd1Pct, 'binance-public', ref, input.observedAt, input.retrievedAt, status),
+  ]);
+}
+
+/** Kraken stays an independent primary observation set to prevent duplicate feature-key authority. */
 export function adaptKrakenFuturesAnalyticsEvidence(input: KrakenFuturesAnalyticsEvidence): readonly CryptoFeatureEvidence[] {
   const status = providerStatus(input.status);
   const ref = input.evidenceRefs.length > 0 ? input.evidenceRefs.join('|') : null;
   return Object.freeze([
-    evidence('derivatives.openInterest', input.openInterest, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
-    evidence('derivatives.openInterestChange1hPct', input.openInterestChangePct, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
-    evidence('derivatives.fundingRate', input.fundingRate, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
-    evidence('risk.liquidationVolume', input.liquidationVolume, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
+    evidence('derivatives.krakenOpenInterest', input.openInterest, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
+    evidence('derivatives.krakenOpenInterestChangePct', input.openInterestChangePct, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
+    evidence('derivatives.krakenFundingRate', input.fundingRate, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
+    evidence('risk.krakenLiquidationVolume', input.liquidationVolume, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
     evidence('liquidity.krakenBidLiquidity01', input.bidLiquidity01, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
     evidence('liquidity.krakenAskLiquidity01', input.askLiquidity01, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
     evidence('liquidity.krakenBidSlippage100k', input.bidSlippage100k, 'kraken-futures-public', ref, input.observedAt, input.retrievedAt, status),
@@ -106,7 +122,6 @@ export function adaptDexScreenerTokenEvidence(input: DexScreenerTokenEvidence): 
   ]);
 }
 
-/** Sourcify lookup is source/bytecode verification evidence, not formal verification or audit PASS. */
 export function adaptSourcifyContractVerificationEvidence(input: SourcifyContractVerificationEvidence): readonly CryptoFeatureEvidence[] {
   const status = providerStatus(input.status);
   return Object.freeze([
@@ -130,9 +145,7 @@ export function adaptDuneSavedQueryEvidence(
   return Object.freeze(mappings.map((mapping) => {
     const row = input.rows[mapping.rowIndex ?? 0];
     const raw = row?.[mapping.column];
-    const value: CryptoFeaturePrimitive | null = typeof raw === 'number' || typeof raw === 'boolean' || typeof raw === 'string'
-      ? raw
-      : null;
+    const value: CryptoFeaturePrimitive | null = typeof raw === 'number' || typeof raw === 'boolean' || typeof raw === 'string' ? raw : null;
     return evidence(
       mapping.featureKey,
       value,
