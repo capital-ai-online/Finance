@@ -1,16 +1,13 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const repoRoot = path.resolve(__dirname, '../..');
-
 function read(relativePath: string): string {
-  return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
+  return readFileSync(new URL(relativePath, import.meta.url), 'utf8');
 }
 
-const orderIntentSource = read('src/platform/FinTechCore/OrderIntent/OrderIntentBinding.ts');
-const reconciliationSource = read('src/platform/FinTechCore/Reconciliation/ReconciliationContracts.ts');
-const persistenceSource = read('src/platform/FinTechCore/Persistence/FinTechCorePersistencePort.ts');
+const orderIntentSource = read('../../src/platform/FinTechCore/OrderIntent/OrderIntentBinding.ts');
+const reconciliationSource = read('../../src/platform/FinTechCore/Reconciliation/ReconciliationContracts.ts');
+const persistenceSource = read('../../src/platform/FinTechCore/Persistence/FinTechCorePersistencePort.ts');
 
 const forbiddenRuntimeImports = [
   '/agents/',
