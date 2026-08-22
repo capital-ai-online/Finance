@@ -1,6 +1,7 @@
 import express from 'express';
 import { fetchCryptoExtendedEvidence } from '../../src/services/cryptoExtendedEvidence';
 import { resolveCryptoEvidenceIdentity } from '../../src/platform/MarketData/CryptoEvidenceIdentityRegistry';
+import { resolveDuneSavedQueriesForSymbol } from '../../src/platform/MarketData/DuneSavedQueryRegistry';
 
 function normalizeSymbol(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -12,9 +13,9 @@ function normalizeSymbol(value: unknown): string | null {
  * Read-only website projection of provider evidence.
  *
  * HTTP clients supply only an asset symbol. Contract/mint identities, DEX chain/address mappings,
- * Binance/Kraken Futures market symbols and Dune queries come exclusively from the reviewed
- * server-side registry. This prevents users/models from redirecting provider reads to arbitrary
- * provider identities or query IDs.
+ * Binance/Kraken Futures market symbols and Dune query contracts come exclusively from reviewed
+ * server-side registries/configuration. This prevents users/models from redirecting provider reads
+ * to arbitrary provider identities or query IDs.
  */
 export const cryptoEvidenceRouter = express.Router();
 
@@ -31,6 +32,11 @@ cryptoEvidenceRouter.get('/:symbol', async (req, res) => {
 
   try {
     const identity = resolveCryptoEvidenceIdentity(symbol);
+    const duneQueries = resolveDuneSavedQueriesForSymbol(symbol, process.env).map((query) => ({
+      queryId: query.queryId,
+      expectedColumns: query.expectedColumns,
+      mappings: query.mappings,
+    }));
     const result = await fetchCryptoExtendedEvidence({
       symbol,
       goPlusIdentity: identity?.goPlusEvm,
@@ -38,12 +44,15 @@ cryptoEvidenceRouter.get('/:symbol', async (req, res) => {
       dexScreenerIdentity: identity?.dexScreener,
       binanceFuturesSymbol: identity?.binanceFuturesSymbol,
       krakenFuturesSymbol: identity?.krakenFuturesSymbol,
-      dune: identity?.dune,
+      dune: duneQueries,
       includeDefiLlama: true,
       includeNews: false,
     });
     res.setHeader('Cache-Control', 'private, max-age=30, stale-while-revalidate=30');
-    res.setHeader('x-capital-ai-evidence-identity', identity ? 'governed' : 'partial-no-identity');
+    res.setHeader(
+      'x-capital-ai-evidence-identity',
+      identity || duneQueries.length > 0 ? 'governed' : 'partial-no-identity',
+    );
     return res.json(result);
   } catch (error) {
     return res.status(503).json({
