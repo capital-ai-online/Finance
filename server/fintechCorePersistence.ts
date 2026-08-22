@@ -3,12 +3,14 @@ import type {
   FinTechCoreDomainEvent,
 } from '../src/platform/FinTechCore/CoreContracts';
 import type {
+  FinTechCoreBoundOrderIntentPersistenceInput,
   FinTechCoreDomainEventReaderPort,
   FinTechCoreOrderIntentPersistenceInput,
   FinTechCorePersistencePort,
   FinTechCoreWorkflowRunPersistenceInput,
   FinTechCoreWorkflowTransitionPersistenceInput,
 } from '../src/platform/FinTechCore/Persistence/FinTechCorePersistencePort';
+import type { FinTechCoreReconciliationRecord } from '../src/platform/FinTechCore/Reconciliation/ReconciliationContracts';
 import {
   assertPrivilegedSupabaseConfigured,
   getPrivilegedServerSupabase,
@@ -141,12 +143,13 @@ function assertWorkflowTransitionInput(input: FinTechCoreWorkflowTransitionPersi
 }
 
 /**
- * FT-3/FT-4 production durability adapter.
+ * FT-3 through FT-6 production durability adapter.
  *
  * The private `fintech_core` schema is intentionally not exposed through the Data API. This
  * adapter therefore calls narrowly-scoped public RPC entrypoints that are EXECUTE-granted only to
  * `service_role`; those RPCs run SECURITY INVOKER and use the caller's already-scoped private
- * table privileges. FT-4 adds read-only domain-event replay without adding browser access.
+ * table privileges. FT-6 adds decision-bound OrderIntent/reconciliation evidence but no exchange,
+ * custody or settlement side-effect capability.
  */
 export class SupabaseFinTechCorePersistenceAdapter
 implements FinTechCorePersistencePort, FinTechCoreDomainEventReaderPort {
@@ -275,6 +278,61 @@ implements FinTechCorePersistencePort, FinTechCoreDomainEventReaderPort {
       p_effect_class: intent.effectClass,
       p_evidence_refs: [...(input.evidenceRefs ?? [])],
     }, 'FinTech Core order-intent append');
+  }
+
+  async appendBoundOrderIntent(input: FinTechCoreBoundOrderIntentPersistenceInput): Promise<void> {
+    const intent = input.intent;
+    await callPersistenceRpc('fintech_core_append_bound_order_intent_v1', {
+      p_order_intent_id: intent.orderIntentId,
+      p_contract_version: intent.contractVersion,
+      p_binding_version: intent.bindingVersion,
+      p_run_id: intent.runId,
+      p_trace_id: intent.traceId,
+      p_correlation_id: intent.correlationId,
+      p_client_order_id: intent.clientOrderId,
+      p_idempotency_key: intent.idempotencyKey,
+      p_asset_id: intent.assetId,
+      p_side: intent.side,
+      p_quantity: intent.quantity,
+      p_order_type: intent.orderType,
+      p_limit_price: intent.limitPrice ?? null,
+      p_max_slippage_bps: intent.maxSlippageBps,
+      p_strategy_id: intent.strategyId ?? null,
+      p_portfolio_id: intent.portfolioId ?? null,
+      p_decision_version: intent.decisionVersion,
+      p_risk_decision_id: intent.riskDecisionId,
+      p_risk_decision_output_hash: intent.riskDecisionOutputHash,
+      p_compliance_decision_id: intent.complianceDecisionId,
+      p_compliance_decision_output_hash: intent.complianceDecisionOutputHash,
+      p_created_at: intent.createdAt,
+      p_expires_at: intent.expiresAt,
+      p_intent_hash: intent.intentHash,
+      p_effect_class: intent.effectClass,
+      p_evidence_refs: [...(input.evidenceRefs ?? [])],
+    }, 'FinTech Core FT-6 bound order-intent append');
+  }
+
+  async appendReconciliationRecord(record: FinTechCoreReconciliationRecord): Promise<void> {
+    await callPersistenceRpc('fintech_core_append_reconciliation_record_v1', {
+      p_reconciliation_id: record.reconciliationId,
+      p_run_id: record.runId,
+      p_trace_id: record.traceId,
+      p_correlation_id: record.correlationId,
+      p_order_intent_id: record.orderIntentId,
+      p_reconciliation_type: record.reconciliationType,
+      p_status: record.status,
+      p_source_system: record.sourceSystem,
+      p_target_system: record.targetSystem,
+      p_asset_id: record.assetId,
+      p_observed_at: record.observedAt,
+      p_input_hash: record.inputHash,
+      p_output_hash: record.outputHash,
+      p_evidence_refs: [...record.evidenceRefs],
+      p_details: {
+        ...record.details,
+        reconciliationContractVersion: record.reconciliationContractVersion,
+      },
+    }, 'FinTech Core FT-6 reconciliation append');
   }
 }
 

@@ -1,21 +1,22 @@
 {
   "name": "FinTechCore",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "status": "in-implementation",
   "owner": "CAPITAL-AI",
-  "description": "Financial workflow composition layer. Crypto is Module 01; FT-0 through FT-2C are implemented as research/paper foundations without trading or scoring authority.",
+  "description": "Financial workflow composition layer. Crypto is Module 01; FT-0 through FT-6A provide research/paper, durable traceability, deterministic risk/compliance and decision-bound OrderIntent/reconciliation controls without productive scoring or real execution authority.",
   "category": "platform",
   "roadmap": ["FT-CORE-CRYPTO-01"],
-  "adr": ["ADR-0087", "ADR-0099"],
+  "adr": ["ADR-0087", "ADR-0099", "ADR-0100"],
   "dependencies": [
     "src/platform/Scoring/contracts.ts",
+    "src/platform/MarketData/evidenceQualityContracts.ts",
     "src/types/crypto.types.ts",
     "src/services/cryptoSnapshotProvider.ts"
   ],
   "events": {
-    "produces": [],
+    "produces": ["PAPER_ACCOUNT_INITIALIZED", "PAPER_FILL_SIMULATED"],
     "consumes": [],
-    "note": "FT-1/FT-2 define DomainEvent and analysis-evidence contracts only. Runtime EventMesh publication and durable financial event persistence are later roadmap phases."
+    "note": "FinTechCore persists append-only domain/decision/intent/reconciliation evidence through the existing private persistence boundary. Event publication does not create a second EventMesh or queue authority."
   },
   "interfaces": [
     "FinTechCoreEngine",
@@ -25,7 +26,13 @@
     "FinTechCoreDomainEvent",
     "FinTechCoreDecisionRecord",
     "FinTechCoreOrderIntent",
+    "FinTechCoreBoundOrderIntent",
+    "FinTechCoreReconciliationRecord",
     "FinTechCoreWorkflowState",
+    "FinTechCorePersistencePort",
+    "FinTechCoreRiskPolicySnapshot",
+    "FinTechCoreCompliancePolicySnapshot",
+    "FinTechCorePreTradeAuthorizationDecision",
     "CryptoCategoryAnalysisProfile",
     "CryptoCategoryProfileResolution",
     "CryptoCategoryFeatureContract",
@@ -49,7 +56,11 @@
     "fintech-core.crypto/pattern-detection/0.1.0",
     "fintech-core.crypto/pattern-reliability-registry/0.1.0",
     "fintech-core.crypto/pattern-signal-resolver/0.1.0",
-    "fintech-core.crypto/pattern-research-engine/0.1.0"
+    "fintech-core.crypto/pattern-research-engine/0.1.0",
+    "fintech-core/paper-trading/0.1.0",
+    "fintech-core/risk-compliance/0.1.0",
+    "fintech-core/order-intent-binding/0.1.0",
+    "fintech-core/reconciliation/0.1.0"
   ],
   "documentation": [
     "README.md",
@@ -60,7 +71,12 @@
     "docs/evidence/fintech-core/FT2A_CRYPTO_CATEGORY_PROFILE_RESOLUTION_2026-08-20.md",
     "docs/evidence/fintech-core/FT2B_CRYPTO_CATEGORY_FEATURE_CONTRACTS_2026-08-20.md",
     "docs/evidence/fintech-core/FT2C_PATTERN_ENGINE_FOUNDATION_2026-08-20.md",
-    "docs/evidence/fintech-core/FT_SYNC_CHAT_TRANSFER_2026-08-21.md"
+    "docs/evidence/fintech-core/FT3_DURABLE_WORKFLOW_TRACEABILITY_2026-08-21.md",
+    "docs/evidence/fintech-core/FT4_RESEARCH_PAPER_TRADING_2026-08-21.md",
+    "docs/evidence/fintech-core/FT5_DETERMINISTIC_RISK_COMPLIANCE_2026-08-21.md",
+    "docs/evidence/fintech-core/FT6A_ORDER_INTENT_RECONCILIATION_2026-08-22.md",
+    "docs/evidence/fintech-core/FT_SYNC_CHAT_TRANSFER_2026-08-21.md",
+    "docs/evidence/sc-md/SC6_DEFILLAMA_DEFI_EVIDENCE_PROVIDER_2026-08-21.md"
   ],
   "tests": [
     "tests/unit/fintechCoreContracts.test.ts",
@@ -76,40 +92,43 @@
     "tests/unit/fintechCorePatternReliabilityIntegrity.test.ts",
     "tests/unit/fintechCorePatternSignalResolver.test.ts",
     "tests/unit/fintechCorePatternResearchEngine.test.ts",
-    "tests/architecture/fintechCoreAuthorityBoundary.test.ts"
+    "tests/unit/fintechCoreSupabasePersistence.test.ts",
+    "tests/unit/fintechCoreRiskCompliance.test.ts",
+    "tests/unit/fintechCoreOrderIntentBinding.test.ts",
+    "tests/unit/fintechCoreFt6Persistence.test.ts",
+    "tests/architecture/fintechCoreAuthorityBoundary.test.ts",
+    "tests/architecture/fintechCoreFt6AuthorityBoundary.test.ts"
   ],
   "implementation": {
-    "level": "ft2c-pattern-foundation",
+    "level": "ft6a-order-intent-decision-binding-reconciliation",
     "implementedAreas": [
-      "core contracts",
-      "immutable module registry",
+      "core contracts and immutable module registry",
       "deterministic workflow state machine",
-      "side-effect-free core engine",
-      "Crypto Module 01 research/paper descriptor",
-      "category analysis profile contracts",
-      "provenance-aware primary/secondary profile resolution",
-      "agent-research non-promotion boundary",
-      "conditional semantic qualifier gates",
-      "profile-specific feature definition catalogs",
-      "fail-closed required and hard-gate evidence semantics",
-      "universal market/supply evidence separation",
-      "pure verified Crypto snapshot feature adapter",
-      "detector-agnostic OHLCV pattern SPI",
-      "exact-key asset/profile/timeframe/regime/pattern/version reliability registry",
-      "walk-forward and cost-aware research reliability validation",
-      "deterministic multi-timeframe pattern context resolution without synthetic composite score",
-      "pattern research engine with injected detector and no provider/scoring/execution side effects"
+      "Crypto Module 01 RESEARCH/PAPER descriptor",
+      "provenance-aware category analysis profiles and feature contracts",
+      "detector-agnostic pattern research with non-authorizing evidence",
+      "private durable workflow/domain-event/decision/order-intent/reconciliation persistence",
+      "deterministic replayable paper trading with explicit costs",
+      "deterministic risk and compliance gates using versioned external policy snapshots",
+      "append-only risk/compliance decision evidence with input/output hashes",
+      "FT-6A PAPER-only OrderIntent binding derived from approved decision records",
+      "decision output-hash, policy, workflow, idempotency, client-order, TTL and order-bound intent fingerprint",
+      "typed decision-to-intent reconciliation with tamper mismatch evidence",
+      "service-role-only FT-6 persistence migration prepared but not applied",
+      "DeFiLlama protocol evidence provider remains evidence-only and outside scoring/order authority"
     ],
     "blockedAreas": [
       "guarded live",
       "production execution",
-      "durable financial workflow persistence",
-      "live acquisition of missing category-specific metrics",
-      "category feature promotion into a canonical scoring model",
-      "concrete TA-Lib or other detector runtime binding",
-      "risk/compliance execution adapters",
-      "exchange/custody adapters"
+      "exchange/custody/wallet adapters",
+      "settlement finality assertion",
+      "FT-6 production migration verification",
+      "paper-fill reconciliation closure",
+      "live acquisition of remaining category-specific evidence",
+      "category evidence promotion into canonical scoring without explicit model-contract approval",
+      "24-asset crypto universe final availability/evidence admission proof",
+      "concrete TA-Lib or other detector runtime binding"
     ]
   },
-  "authorityBoundary": "FinTechCore composes financial workflows and typed analysis evidence but cannot select or calculate productive scores outside ScoringModelRegistry/ScoringDispatcher. Category and pattern evidence remain non-authorizing. PatternResearchEngine is research-context-only and cannot create an OrderIntent. FinTechCore cannot replace IAM, Compliance, Quality, Governance, Supervisor, Release or Deployment authorities."
+  "authorityBoundary": "FinTechCore composes financial workflows and typed evidence but cannot select or calculate productive scores outside ScoringModelRegistry/ScoringDispatcher. CryptoOrchestrator and pattern/agent outputs remain research-only unless separately promoted by existing evidence/model contracts. FT-6A derives OrderIntent approvals only from authoritative append-only FT-5 decisions, remains PAPER-only, asserts no real execution or settlement finality, and cannot replace IAM, Compliance, Quality, Governance, Supervisor, Release or Deployment authorities."
 }

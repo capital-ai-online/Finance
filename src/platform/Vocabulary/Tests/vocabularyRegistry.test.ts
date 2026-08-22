@@ -17,7 +17,7 @@ function concept(overrides: Partial<VocabularyConcept> = {}): VocabularyConcept 
     status: 'approved',
     version: '1.0.0',
     essReferences: ['ESS-0017'],
-    adrReferences: ['ADR-0046'],
+    adrReferences: ['ADR-0078'],
     traceabilityReferences: [],
     ...overrides,
   };
@@ -84,5 +84,16 @@ describe('VocabularyRegistry contracts', () => {
     input.aliases.push('LateMutation');
     expect(registry.resolveTerm('LateMutation')).toBeUndefined();
     expect(registry.getById(input.id)?.aliases.includes('LateMutation')).toBe(false);
+  });
+
+  it('uses the canonical ADR-0078 vocabulary authority and covers the complete FinTech baseline', () => {
+    const registry = createDefaultVocabularyRegistry();
+    expect(registry.list()).toHaveLength(24);
+    for (const item of registry.list()) {
+      expect(item.adrReferences).toContain('ADR-0078');
+      expect(item.adrReferences).not.toContain('ADR-0046');
+    }
+    expect(registry.getById('VOC-ANALYTICS-0108')?.canonicalCodeTerm).toBe('CanonicalScoreResult');
+    expect(registry.getById('VOC-PRODUCT-0103')?.canonicalCodeTerm).toBe('DeliverySurface');
   });
 });

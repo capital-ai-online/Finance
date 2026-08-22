@@ -1,50 +1,140 @@
 {
   "name": "Vocabulary",
-  "version": "1.0.0",
+  "version": "1.8.0",
   "status": "implemented",
   "owner": "Platform Director",
-  "description": "Canonical Vocabulary Registry for terminology, naming, bilingual wording and controlled alias governance across CAPITAL-AI.",
+  "description": "Canonical Vocabulary Registry with governed UI Message Catalog, 18-stage FinTech wording projection, Usage Index, delivery adapters, Documentary handoff, generated Wiki projection, controlled wording migration and continuous governance closure.",
   "category": "platform",
   "layer": "CrossCutting",
   "lifecycle": "Operational",
   "health": "Unknown",
   "repository": "Finance",
+  "effectiveAfter": "Human Merge",
   "ess": [
     "ESS-0001-CONTRACTS",
-    "ESS-0017",
-    "ESS-0017-CONTRACTS",
     "ESS-0012",
-    "ESS-0013"
+    "ESS-0013",
+    "ESS-0017",
+    "ESS-0017-CONTRACTS"
   ],
-  "adr": [
-    "ADR-0046"
-  ],
+  "adr": ["ADR-0078"],
   "dependencies": [],
   "forbiddenDependencies": [
     "src/platform/EventMesh/Core",
     "src/platform/Knowledge",
     "src/platform/Traceability",
-    "src/platform/Documentary"
+    "src/platform/Documentary",
+    "src/platform/MarketData",
+    "src/platform/Scoring",
+    "src/platform/Ranking"
   ],
   "interfaces": [
-    "IVocabularyRegistry"
+    "IVocabularyRegistry",
+    "Messages/UiMessage.ts",
+    "Messages/UiMessageCatalog.ts",
+    "ValueChain/FintechWordingBinding.ts",
+    "Usage/WordingUsage.ts",
+    "Delivery/MessageDeliveryAdapter.ts",
+    "Projection/VocabularyWordingSnapshot.ts",
+    "Wiki/VocabularyWikiProjection.ts",
+    "Wiki/VocabularyWikiRemotePolicy.ts",
+    "Migration/WordingMigrationPlan.ts"
   ],
   "contracts": [
-    "ESS-0017-CONTRACTS"
+    "ESS-0017-CONTRACTS",
+    "fintech-value-chain-wording/1.0.0",
+    "vocabulary-wording-snapshot/1.0.0",
+    "vocabulary-wiki-projection/1.0.0"
   ],
   "events": {
     "produces": [],
     "consumes": [],
-    "note": "Phase 2 registers no new event names. Event integration follows only after EventCatalog compatibility validation."
+    "note": "VW-0 through VW-8 introduce no second Event authority. Event integration remains subordinate to the canonical EventMesh."
+  },
+  "valueChainIntegration": {
+    "authority": "SC-MD-SPT-0001",
+    "role": "read-only-wording-projection",
+    "stageCoverage": 18,
+    "runtimeStage": false,
+    "financialDecisionAuthority": false,
+    "mutationAuthority": false,
+    "qualityProjectionCorrelation": "src/platform/Quality/ValueChain/FintechValueChainQualityProjection.ts"
+  },
+  "documentaryHandoff": {
+    "snapshot": "Projection/VocabularyWordingSnapshot.ts",
+    "consumer": "src/platform/Documentary/Knowledge/VocabularyWordingDocumentaryProjection.ts",
+    "rule": "Vocabulary does not depend on Documentary; Documentary consumes the snapshot and reuses DocumentaryDocument, D7 Knowledge and DocumentaryTraceability contracts."
+  },
+  "wikiProjection": {
+    "renderer": "Wiki/VocabularyWikiProjection.ts",
+    "remotePolicy": "Wiki/VocabularyWikiRemotePolicy.ts",
+    "renderCommand": "npm run vocabulary:wiki:render",
+    "checkCommand": "npm run vocabulary:wiki:check",
+    "syncCommand": "npm run vocabulary:wiki:sync",
+    "defaultMode": "dry-run",
+    "repositoryAuthoritative": false,
+    "mutationAuthority": false,
+    "publishRequires": ["--apply", "--push"],
+    "remotePolicyMode": "exact-github-allowlist-no-embedded-credentials"
+  },
+  "wordingMigration": {
+    "plan": "Migration/WordingMigrationPlan.ts",
+    "mode": "controlled-incremental",
+    "automaticApplyAllowed": false,
+    "blockingState": "DRIFT",
+    "nonBlockingDebtState": "OPEN"
   },
   "documentation": [
     "README.md",
     "CHANGELOG.md",
     "component.yaml",
-    "docs/architecture/VOCABULARY_GOVERNANCE_MIGRATION_ROADMAP.md"
+    "docs/architecture/VOCABULARY_WORDING_WIKI_ARCHITECTURE.md",
+    "docs/governance/vocabulary/VOCABULARY_WORDING_WIKI_SUPERSESSION_2026-08-21.md",
+    "docs/roadmaps/work-packages/VW-6_GITHUB_WIKI_PROJECTION_2026-08-21.md",
+    "docs/roadmaps/work-packages/VW-7_CONTROLLED_WORDING_MIGRATION_2026-08-21.md",
+    "docs/roadmaps/work-packages/VW-8_CONTINUOUS_GOVERNANCE_RELEASE_CLOSURE_2026-08-21.md",
+    "docs/security/VOCABULARY_WIKI_SYNC_THREAT_MODEL_2026-08-21.md"
   ],
   "tests": [
+    "src/platform/Vocabulary/Tests/vocabularyRegistry.test.ts",
+    "src/platform/Vocabulary/Tests/uiMessageCatalog.test.ts",
+    "src/platform/Vocabulary/Tests/fintechWordingBindings.test.ts",
+    "src/platform/Vocabulary/Tests/wordingUsageIndex.test.ts",
+    "src/platform/Vocabulary/Tests/messageDeliveryAdapter.test.ts",
+    "src/platform/Vocabulary/Tests/vocabularyGovernanceProjection.test.ts",
+    "src/platform/Vocabulary/Tests/vocabularyWikiProjection.test.ts",
+    "src/platform/Vocabulary/Tests/wordingMigrationPlan.test.ts",
     "tests/unit/bilingualDocumentaryProjection.test.ts"
   ],
-  "implementationStatus": "Phase 2 core implemented: typed canonical concepts, deterministic validation, collision detection, bilingual mappings, immutable registry snapshots and initial seed concepts. No active code rename and no EventMesh runtime coupling."
+  "implementation": {
+    "completedWorkPackages": ["VW-0", "VW-1", "VW-2", "VW-3", "VW-4", "VW-5", "VW-6", "VW-7", "VW-8"],
+    "implementedAreas": [
+      "CanonicalVocabularyRegistry",
+      "UiMessageCatalog",
+      "FintechValueChainWordingBindings",
+      "WordingUsageIndex",
+      "DeliveryAdapters",
+      "VocabularyWordingSnapshot",
+      "DocumentaryD7TraceabilityHandoff",
+      "GitHubWikiProjection",
+      "GitHubWikiRemotePolicy",
+      "ControlledWordingMigration",
+      "ContinuousGovernanceClosure"
+    ],
+    "plannedAreas": [
+      "Incremental execution of OPEN VW-7 component migrations as normal feature changes"
+    ]
+  },
+  "validation": {
+    "targetedCommand": "npm run vocabulary:governance:check",
+    "targetedTests": "npm run vocabulary:wording:test",
+    "prePrCommand": "npm run vocabulary:governance:prepr",
+    "stageDriftCheck": true,
+    "exactCommitProjectionBinding": true,
+    "wikiDeterminismCheck": true,
+    "wikiRemoteAllowlistCheck": true,
+    "migrationDriftCheck": true,
+    "closureValidator": "scripts/automation/validateVocabularyGovernanceClosure.ts"
+  },
+  "implementationStatus": "VW-0 through VW-8 implemented as a dependency-free, read-only governance control plane. Wiki output is generated and non-authoritative, the optional sync path is exact-remote allowlisted and explicit-apply/push gated, source wording migration is controlled and incremental, and continuous checks are integrated into the existing repository test chain. No external platform, financial runtime, IAM, Billing, Wiki publish or production mutation is performed by this branch."
 }

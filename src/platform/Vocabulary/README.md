@@ -1,42 +1,94 @@
-# CAPITAL-AI Canonical Vocabulary Registry
+# CAPITAL-AI Canonical Vocabulary & Wording
 
 Authority: `ESS-0017` / `ESS-0017-CONTRACTS`  
-Architecture decision: `ADR-0046`
+Architecture decision: `ADR-0078`  
+Financial parent authority: `SC-MD-SPT-0001` (read-only projection only)  
+Component version: `1.8.0`  
+Implementation baseline: VW-0 through VW-8
 
-## Deutsch
+## Purpose
 
-Die Vocabulary-Komponente ist die kanonische Terminologiequelle fuer CAPITAL-AI. Sie verwaltet stabile Concept-IDs, englische technische Begriffe, deutsche und englische Anzeigeformen, Aliase sowie verbotene Begriffe.
+`src/platform/Vocabulary` is CAPITAL-AI's canonical terminology and product-wording control plane. It owns stable Concept IDs and governed DE/EN wording contracts, but no Financial Runtime, IAM, Billing, Compliance, EventMesh, Knowledge, Traceability, CI, Release, Deployment or production authority.
 
-Phase 2 veraendert keine bestehenden Code-Namen. Ein bestehender Identifier wird erst in Phase 3 nach Safe-Rename-Impact-Analyse geaendert.
+```text
+Canonical Vocabulary Registry
+ -> UI Message Catalog
+ -> Delivery Adapters / Usage Index
+ -> neutral Vocabulary Wording Snapshot
+ -> existing Documentary D7 / Traceability
+ -> generated GitHub Wiki projection
+ -> controlled incremental source migration
+ -> existing repository validation chain
+```
 
-Die Registry erzeugt keinen zweiten Event Bus, Knowledge Graph oder Traceability Store. Phase 2 enthaelt absichtlich keine neuen Event-Namen; die spaetere EventMesh-Anbindung darf erst nach Abgleich mit dem kanonischen EventCatalog erfolgen.
+The governing rule is **Projection, not Redefinition**.
 
-### Verwendung
+## VW-0 through VW-5
+
+- VW-0 — Supersession and authority consolidation around `ADR-0078`.
+- VW-1 — typed bilingual UI Message Catalog with stable keys and fail-closed placeholder validation.
+- VW-2 — read-only Concept/Message bindings for all 18 current `SC-MD-SPT-0001` stages.
+- VW-3 — evidence-based Wording Usage Index and reverse impact.
+- VW-4 — read-only React/PDF/E-Mail/SEO/Accessibility delivery adapters.
+- VW-5 — neutral exact-commit-bound Vocabulary snapshot consumed through existing DocumentaryDocument, D7 Knowledge and DocumentaryTraceability contracts.
+
+Every financial binding remains:
+
+```text
+financialDecisionAuthority = false
+mutationAuthority = false
+```
+
+## VW-6 — GitHub Wiki
+
+`Wiki/VocabularyWikiProjection.ts` renders deterministic managed Markdown. `renderVocabularyWiki.ts` is check-only by default. `syncVocabularyWiki.ts` accepts only an existing clean `Finance.wiki.git` checkout; mutation requires `--apply` and publication additionally requires `--push`.
+
+The Wiki is always a human-readable projection. It is never an authority source, and this branch does not publish it externally before PR.
+
+## VW-7 — controlled source migration
+
+`Migration/WordingMigrationPlan.ts` tracks exact source/literal/Message-Key mappings with `automaticApplyAllowed: false`.
+
+```text
+OPEN      governed literal remains queued
+MIGRATED  source references the stable Message Key
+DRIFT     mapping is ambiguous/broken and blocks governance
+```
+
+The current baseline governs five real `MarketScreener` strings. They remain explicit incremental migration debt where still `OPEN`; this component does not claim a completed repository-wide UI text migration.
+
+A browser-safe resolver is available at `Delivery/browserMessageCatalog.ts` without Node-only dependencies.
+
+## VW-8 — continuous governance
+
+```text
+npm run vocabulary:wording:test
+npm run vocabulary:governance:check
+npm run vocabulary:governance:prepr
+```
+
+The checks cover Message contracts, 18-stage correlation, Documentary handoff, Wiki determinism, migration drift and VW-0…VW-8 closure metadata. The existing `test:raw` path invokes the read-only Vocabulary governance gate.
+
+## Canonical access
 
 ```ts
-import { createDefaultVocabularyRegistry, VocabularyService } from './index';
+import { createDefaultVocabularyRegistry, createDefaultUiMessageCatalog, VocabularyService } from './index';
 
 const registry = createDefaultVocabularyRegistry();
 const vocabulary = new VocabularyService(registry);
+const messages = createDefaultUiMessageCatalog(registry);
 
 vocabulary.getCanonicalTerm('Abonnement'); // Subscription
-vocabulary.getDisplayName('Subscription', 'de'); // Abonnement
+messages.get('screening.action.start')?.text.de; // Screening starten
 ```
 
-### Validierung
+## Boundaries
 
-Contract-Test:
-
-```text
-npx tsx src/platform/Vocabulary/Tests/vocabularyRegistry.test.ts
-```
-
-Geprueft werden unter anderem Concept-ID-Format, technische Begriffe, Authority-Referenzen, Alias-Kollisionen, DE/EN-Aufloesung und Immutable Snapshots.
-
-## English
-
-The Vocabulary component is CAPITAL-AI's canonical terminology source. It manages stable concept identities, English technical terms, German and English display mappings, aliases, forbidden terms and deterministic collision detection.
-
-Phase 2 does not rename existing runtime identifiers. Active renames are deferred to the Safe Rename Gate in Phase 3.
-
-The component does not introduce a second Event Bus, Knowledge Graph or Traceability store. No new event type is registered in Phase 2; EventMesh integration requires canonical EventCatalog compatibility validation first.
+- no direct Financial Hotpath mutation dependency;
+- no synthetic upgrade of `DATA_UNAVAILABLE`, DENY, partial or ineligible states;
+- no autonomous Legal/Compliance approval;
+- no second Event Bus, Knowledge Graph, Traceability Store or CI control plane;
+- no Wiki back-propagation;
+- no blind/automatic source-string replacement;
+- no automatic code rename outside the Safe Rename Gate;
+- no Merge, Release, Deployment, Wiki publication or production mutation authority.

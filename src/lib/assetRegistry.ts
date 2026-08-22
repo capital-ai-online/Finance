@@ -70,6 +70,31 @@ const CRYPTO_COINGECKO_IDS: Record<string, string> = {
   SHIB: 'shiba-inu',
 };
 
+// DeFiLlama-Protokoll-Slugs (https://api.llama.fi/protocol/{slug}) fuer die in der Registry
+// gefuehrten DeFi-Token. Nur kuratierte, verifizierte Slug-Zuordnungen; kein Symbol wird auf
+// Verdacht/Heuristik gemappt, um eine falsche Protokoll-Zuordnung auszuschliessen (P1-01/P1-02).
+// Nicht gelistete Symbole bleiben ohne DeFiLlama-Evidence statt einer geratenen Zuordnung.
+export const CRYPTO_DEFILLAMA_SLUGS: Readonly<Record<string, string>> = {
+  AAVE: 'aave',
+  UNI: 'uniswap',
+  MKR: 'makerdao',
+  LDO: 'lido',
+  CRV: 'curve-finance',
+  COMP: 'compound-finance',
+  SNX: 'synthetix',
+  SUSHI: 'sushiswap',
+  BAL: 'balancer',
+  YFI: 'yearn-finance',
+  '1INCH': '1inch-network',
+  GMX: 'gmx',
+  DYDX: 'dydx',
+  RUNE: 'thorchain',
+  CAKE: 'pancakeswap',
+  JOE: 'traderjoe-dex',
+  FXS: 'frax',
+  PENDLE: 'pendle',
+};
+
 // Stooq-Ticker fuer die US-Aktien aus der Registry (dieselbe .US-Konvention wie im
 // Live-Kurs-Pfad in server.ts, STOCK_TICKERS).
 const STOCK_STOOQ_TICKERS: Record<string, string> = {
