@@ -20,6 +20,11 @@ import {
 } from '../services/classificationAdapter';
 import type { CryptoCategory, CryptoSubCategory, CryptoTier, CryptoAnalysisPayload } from '../types/crypto.types';
 import {
+  evaluateCryptoOrchestratorResearchModels,
+  type CryptoOrchestratorResearchModelAssessment,
+  type CryptoOrchestratorResearchModelRequest,
+} from '../platform/Scoring/CryptoOrchestratorResearchModels';
+import {
   orchestratorAgentRuntimeProjection,
   type OrchestratorAgentDescriptor,
 } from './agentRuntimeProjection';
@@ -69,6 +74,21 @@ export class CryptoOrchestrator {
     this.sentimentAgent = new CryptoSentimentAgent(aiClient, anthropicClient, openaiClient);
     this.riskAgent = new CryptoRiskAgent(aiClient, anthropicClient, openaiClient);
     orchestratorAgentRuntimeProjection.registerMany(CRYPTO_ORCHESTRATOR_AGENT_DESCRIPTORS);
+  }
+
+  /**
+   * Source-backed Meme/DeFi research-model composition.
+   *
+   * This method intentionally delegates deterministic research evaluation to the Scoring platform
+   * instead of implementing another score engine inside the orchestrator. The returned category,
+   * sentiment, momentum, regime, pattern-confluence, signal-fusion and kill-switch projections are
+   * all scoreEligible=false/executionEligible=false. CanonicalScoreResult remains exclusively owned
+   * by ScoringModelRegistry -> ScoringDispatcher and FT-7 real execution remains blocked.
+   */
+  public analyzeCategoryResearchModels(
+    input: CryptoOrchestratorResearchModelRequest,
+  ): CryptoOrchestratorResearchModelAssessment {
+    return evaluateCryptoOrchestratorResearchModels(input);
   }
 
   /**
