@@ -35,7 +35,7 @@ describe('SC4 free-tier crypto evidence providers', () => {
   });
 
   it('fails closed before transport when a key-required provider has no key', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({ ok: true }));
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({ ok: true }));
     const http = new ResearchEvidenceProviderHttp('dune', 'onchain', {
       baseUrl: 'https://provider.example', apiKey: null, fetchImpl: fetchImpl as unknown as typeof fetch,
       nowMs: () => Date.parse('2026-08-22T05:00:00.000Z'),
@@ -46,7 +46,7 @@ describe('SC4 free-tier crypto evidence providers', () => {
   });
 
   it('supports an explicitly governed keyless provider without Authorization header', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({ code: 1, result: {} }));
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({ code: 1, result: {} }));
     const http = new ResearchEvidenceProviderHttp('goplus', 'security', {
       baseUrl: 'https://provider.example', apiKey: null, apiKeyRequired: false,
       fetchImpl: fetchImpl as unknown as typeof fetch, nowMs: () => Date.parse('2026-08-22T05:00:00.000Z'),
@@ -59,7 +59,7 @@ describe('SC4 free-tier crypto evidence providers', () => {
 
   it('allows GoPlus public Security API operation without a configured key', async () => {
     const contractAddress = '0x1111111111111111111111111111111111111111';
-    const fetchImpl = vi.fn(async () => jsonResponse({ code: 1, result: { [contractAddress]: { is_open_source: '1', is_proxy: '0', is_mintable: '0', is_honeypot: '0', holders: [], lp_holders: [] } } }));
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({ code: 1, result: { [contractAddress]: { is_open_source: '1', is_proxy: '0', is_mintable: '0', is_honeypot: '0', holders: [], lp_holders: [] } } }));
     const provider = new GoPlusTokenSecurityProvider({ env: {}, fetchImpl: fetchImpl as unknown as typeof fetch, baseUrl: 'https://provider.example', nowMs: () => Date.parse('2026-08-22T05:00:00.000Z') });
     const result = await provider.getTokenSecurity({ chainId: '1', contractAddress });
     expect(result.status).toBe('VERIFIED');
@@ -68,7 +68,7 @@ describe('SC4 free-tier crypto evidence providers', () => {
   });
 
   it('blocks Dune FREE_TIER before transport until attestation is explicit', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({ result: { rows: [{ value: 1 }] } }));
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({ result: { rows: [{ value: 1 }] } }));
     const provider = new DuneQueryEvidenceProvider({
       apiKey: 'test-key', allowedQueryIds: [123], accessMode: 'FREE_TIER', freeTierAttested: false,
       fetchImpl: fetchImpl as unknown as typeof fetch, baseUrl: 'https://provider.example',
@@ -79,7 +79,7 @@ describe('SC4 free-tier crypto evidence providers', () => {
   });
 
   it('rejects ungoverned Dune query IDs before any network call', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({ result: { rows: [{ value: 1 }] } }));
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({ result: { rows: [{ value: 1 }] } }));
     const provider = new DuneQueryEvidenceProvider({
       apiKey: 'test-key', allowedQueryIds: [123], accessMode: 'FREE_TIER', freeTierAttested: true,
       fetchImpl: fetchImpl as unknown as typeof fetch, baseUrl: 'https://provider.example',
@@ -91,7 +91,7 @@ describe('SC4 free-tier crypto evidence providers', () => {
 
   it('allows only an attested active Dune 14-day trial window', async () => {
     const now = Date.parse('2026-08-22T10:00:00.000Z');
-    const fetchImpl = vi.fn(async () => jsonResponse({ execution_id: 'exec-1', result: { rows: [{ value: 1 }] } }));
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({ execution_id: 'exec-1', result: { rows: [{ value: 1 }] } }));
     const provider = new DuneQueryEvidenceProvider({
       apiKey: 'test-key', allowedQueryIds: [123], accessMode: 'TRIAL_14D', trialAttested: true,
       trialStartedAt: '2026-08-20T00:00:00.000Z', trialEndsAt: '2026-09-03T00:00:00.000Z', nowMs: () => now,
@@ -104,7 +104,7 @@ describe('SC4 free-tier crypto evidence providers', () => {
   });
 
   it('fails closed when the Dune trial expired or exceeds fourteen days', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({ execution_id: 'exec-1', result: { rows: [{ value: 1 }] } }));
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({ execution_id: 'exec-1', result: { rows: [{ value: 1 }] } }));
     const expired = new DuneQueryEvidenceProvider({
       apiKey: 'test-key', allowedQueryIds: [123], accessMode: 'TRIAL_14D', trialAttested: true,
       trialStartedAt: '2026-08-01T00:00:00.000Z', trialEndsAt: '2026-08-15T00:00:00.000Z', nowMs: () => Date.parse('2026-08-22T00:00:00.000Z'),
@@ -124,7 +124,7 @@ describe('SC4 free-tier crypto evidence providers', () => {
   });
 
   it('bounds Dune latest-result reads and fails closed on schema drift', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({ execution_id: 'exec-1', result: { rows: [{ wrong_column: 1 }] } }));
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({ execution_id: 'exec-1', result: { rows: [{ wrong_column: 1 }] } }));
     const provider = new DuneQueryEvidenceProvider({
       apiKey: 'test-key', allowedQueryIds: [123], accessMode: 'FREE_TIER', freeTierAttested: true, maxResultRows: 25,
       fetchImpl: fetchImpl as unknown as typeof fetch, baseUrl: 'https://provider.example',
@@ -136,7 +136,7 @@ describe('SC4 free-tier crypto evidence providers', () => {
   });
 
   it('projects Binance public futures analytics without an API key', async () => {
-    const fetchImpl = vi.fn(async (url: string | URL | Request) => {
+    const fetchImpl = vi.fn(async (url: string | URL | Request, _init?: RequestInit) => {
       const text = String(url);
       if (text.includes('/openInterest?')) return jsonResponse({ openInterest: '10', time: 1_776_744_000_000 });
       if (text.includes('/premiumIndex?')) return jsonResponse({ lastFundingRate: '0.0001', markPrice: '50000', indexPrice: '49990', time: 1_776_744_000_000 });
@@ -154,7 +154,7 @@ describe('SC4 free-tier crypto evidence providers', () => {
   });
 
   it('projects GDELT article metadata without a key', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({ articles: [{ title: 'Bitcoin market update', url: 'https://publisher.example/story', domain: 'publisher.example', seendate: '20260822T050000Z', language: 'English', sourcecountry: 'United States' }] }));
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({ articles: [{ title: 'Bitcoin market update', url: 'https://publisher.example/story', domain: 'publisher.example', seendate: '20260822T050000Z', language: 'English', sourcecountry: 'United States' }] }));
     const provider = new GdeltNewsEvidenceProvider({ fetchImpl: fetchImpl as unknown as typeof fetch, baseUrl: 'https://provider.example', nowMs: () => Date.parse('2026-08-22T05:00:00.000Z') });
     const result = await provider.searchArticles('bitcoin', 10, '1d');
     expect(result.status).toBe('VERIFIED');
@@ -162,7 +162,7 @@ describe('SC4 free-tier crypto evidence providers', () => {
   });
 
   it('projects keyless Kraken Futures analytics conservatively', async () => {
-    const fetchImpl = vi.fn(async (url: string | URL | Request) => {
+    const fetchImpl = vi.fn(async (url: string | URL | Request, _init?: RequestInit) => {
       const text = String(url);
       if (text.includes('/open-interest?')) return jsonResponse({ result: { timestamp: [1_776_744_000], data: [100, 110] } });
       if (text.includes('/funding?')) return jsonResponse({ result: { timestamp: [1_776_744_000], data: { rate: [[0, 0, 0, '0.001']] } } });
@@ -179,7 +179,7 @@ describe('SC4 free-tier crypto evidence providers', () => {
   });
 
   it('projects DEX Screener evidence only for governed token identity', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse([{ pairAddress: 'pair-1', liquidity: { usd: 250000 }, volume: { h24: 500000 }, txns: { h24: { buys: 100, sells: 80 } }, pairCreatedAt: 1_700_000_000_000 }]));
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse([{ pairAddress: 'pair-1', liquidity: { usd: 250000 }, volume: { h24: 500000 }, txns: { h24: { buys: 100, sells: 80 } }, pairCreatedAt: 1_700_000_000_000 }]));
     const provider = new DexScreenerTokenEvidenceProvider({ fetchImpl: fetchImpl as unknown as typeof fetch, baseUrl: 'https://provider.example' });
     const result = await provider.getTokenPairs('solana', 'So11111111111111111111111111111111111111112');
     expect(result.status).toBe('VERIFIED');

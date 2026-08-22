@@ -9,7 +9,7 @@ function jsonResponse(body: unknown, status = 200): Response {
 describe('SC4 GoPlus Solana free evidence', () => {
   it('uses the keyless Solana endpoint and preserves Solana-specific facts', async () => {
     const mint = 'So11111111111111111111111111111111111111112';
-    const fetchImpl = vi.fn(async () => jsonResponse({
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({
       code: 1,
       result: {
         [mint]: {

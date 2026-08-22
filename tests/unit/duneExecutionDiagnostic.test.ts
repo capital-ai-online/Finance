@@ -7,7 +7,7 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 describe('Dune read-only execution diagnostics', () => {
   it('classifies a governed failed execution without creating evidence', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({
       execution_id: '01KT1X6YT5T3877JHGZDM717BR',
       query_id: 5823857,
       is_execution_finished: true,
@@ -42,7 +42,7 @@ describe('Dune read-only execution diagnostics', () => {
   });
 
   it('does not call Dune for an execution tied to an ungoverned query', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({ query_id: 5823857 }));
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({ query_id: 5823857 }));
     const provider = new DuneQueryEvidenceProvider({
       apiKey: 'test-key',
       allowedQueryIds: [27230, 5833540],
@@ -56,7 +56,7 @@ describe('Dune read-only execution diagnostics', () => {
   });
 
   it('rejects an execution/query mismatch fail-closed', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse({
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => jsonResponse({
       execution_id: '01KT1X6YT5T3877JHGZDM717BR',
       query_id: 999,
       is_execution_finished: true,
