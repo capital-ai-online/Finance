@@ -21,13 +21,39 @@ export { DEFAULT_CIRCUIT_BREAKER, DEFAULT_RATE_LIMIT } from './ProviderMatrixBas
 /**
  * SC-4 evidence-provider additive supersession.
  *
- * The historical market-data provider inventory remains byte-identical in ProviderMatrixBase.
- * This canonical projection appends only free/keyless or explicitly free-tier-governed evidence
- * sources. Paid CoinGlass, LunarCrush and NewsAPI integrations are intentionally absent.
+ * Binance Public and Kraken Public are the two primary crypto market/derivatives evidence suppliers.
+ * They remain evidence-only here and do not bypass MarketDataGateway, ScoringDispatcher or the
+ * CanonicalScoreResult authority. Other providers are bounded specialist/secondary sources.
  */
-export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.7.0' as const;
+export const PROVIDER_MATRIX_VERSION = 'provider-matrix/1.8.0' as const;
 
 const EVIDENCE_PROVIDER_ENTRIES: readonly ProviderMatrixEntry[] = Object.freeze([
+  {
+    id: 'binance-public',
+    displayName: 'Binance Public Market Analytics',
+    role: 'primary',
+    capabilities: ['snapshot', 'quote', 'bars', 'derivatives'],
+    assetClasses: ['crypto'],
+    enabled: true,
+    priority: 40,
+    rateLimit: { capacity: 24, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
+    gatewayStatus: 'not_wired',
+    notes: 'Primary keyless crypto evidence supplier alongside Kraken. Public Binance Spot/Futures data only; no account, order, custody or execution authority.',
+  },
+  {
+    id: 'kraken-futures-public',
+    displayName: 'Kraken Futures Public Analytics',
+    role: 'primary',
+    capabilities: ['derivatives', 'bars', 'quote'],
+    assetClasses: ['crypto'],
+    enabled: true,
+    priority: 45,
+    rateLimit: { capacity: 12, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
+    gatewayStatus: 'not_wired',
+    notes: 'Primary keyless crypto evidence supplier alongside Binance: open interest, funding, liquidation, liquidity and slippage for governed markets. No trading/execution authority.',
+  },
   {
     id: 'goplus',
     displayName: 'GoPlus Security',
@@ -39,20 +65,7 @@ const EVIDENCE_PROVIDER_ENTRIES: readonly ProviderMatrixEntry[] = Object.freeze(
     rateLimit: { capacity: 30, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
     gatewayStatus: 'not_wired',
-    notes: 'Evidence-only token-security provider. Canonical CAPITAL-AI use is restricted to the documented free/public baseline (30 calls/minute). Optional paid/x402 modes are prohibited.',
-  },
-  {
-    id: 'kraken-futures-public',
-    displayName: 'Kraken Futures Public Analytics',
-    role: 'secondary',
-    capabilities: ['derivatives', 'bars', 'quote'],
-    assetClasses: ['crypto'],
-    enabled: true,
-    priority: 70,
-    rateLimit: { capacity: 12, windowMs: 60_000 },
-    circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
-    gatewayStatus: 'not_wired',
-    notes: 'Keyless read-only Kraken Futures Charts analytics for governed Kraken market symbols: open interest, funding, liquidation, liquidity and slippage. No trading/execution authority.',
+    notes: 'Evidence-only token-security provider. Canonical CAPITAL-AI use is restricted to the documented free/public baseline. Optional paid/x402 modes are prohibited.',
   },
   {
     id: 'dexscreener',
@@ -65,7 +78,7 @@ const EVIDENCE_PROVIDER_ENTRIES: readonly ProviderMatrixEntry[] = Object.freeze(
     rateLimit: { capacity: 60, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
     gatewayStatus: 'not_wired',
-    notes: 'Keyless DEX market-structure evidence for governed token addresses. Local limit remains below documented 300 rpm token/pair API limit. Not canonical execution-price authority.',
+    notes: 'Keyless DEX market-structure evidence for governed token addresses. Not canonical execution-price authority.',
   },
   {
     id: 'sourcify',
@@ -81,19 +94,6 @@ const EVIDENCE_PROVIDER_ENTRIES: readonly ProviderMatrixEntry[] = Object.freeze(
     notes: 'Open-source contract source/bytecode verification lookup. A Sourcify match is verification evidence only and MUST NOT be interpreted as formal verification, audit completion or security PASS.',
   },
   {
-    id: 'dune',
-    displayName: 'Dune Free-Tier Read Results',
-    role: 'secondary',
-    capabilities: ['onchain', 'governance'],
-    assetClasses: ['crypto'],
-    enabled: true,
-    priority: 95,
-    rateLimit: { capacity: 6, windowMs: 60_000 },
-    circuitBreaker: { failureThreshold: 3, cooldownMs: 90_000 },
-    gatewayStatus: 'not_wired',
-    notes: 'Free-tier-only evidence. Only Owner-allowlisted saved query IDs and bounded latest-result reads are permitted. Query execution, arbitrary SQL, large exports and credit-limit bypass are forbidden.',
-  },
-  {
     id: 'gdelt',
     displayName: 'GDELT DOC 2.0',
     role: 'secondary',
@@ -104,7 +104,20 @@ const EVIDENCE_PROVIDER_ENTRIES: readonly ProviderMatrixEntry[] = Object.freeze(
     rateLimit: { capacity: 12, windowMs: 60_000 },
     circuitBreaker: { failureThreshold: 3, cooldownMs: 60_000 },
     gatewayStatus: 'not_wired',
-    notes: 'Keyless article-discovery/provenance source for Landing Page and AI Newsfeed Viewer. CAPITAL-AI stores/projects metadata and source links only; publisher content rights remain with the publishers.',
+    notes: 'Keyless article-discovery/provenance source. CAPITAL-AI stores/projects metadata and source links only; publisher content rights remain with publishers.',
+  },
+  {
+    id: 'dune',
+    displayName: 'Dune Governed Read Results',
+    role: 'secondary',
+    capabilities: ['onchain', 'governance'],
+    assetClasses: ['crypto'],
+    enabled: true,
+    priority: 95,
+    rateLimit: { capacity: 6, windowMs: 60_000 },
+    circuitBreaker: { failureThreshold: 3, cooldownMs: 90_000 },
+    gatewayStatus: 'not_wired',
+    notes: 'Owner-keyed evidence source. Permanent Free-Tier mode and an explicitly attested 14-day full-data trial are supported as separate bounded access modes. Query allowlist, schema/row limits and no-execute/no-overage rules remain mandatory.',
   },
 ]);
 
