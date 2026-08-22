@@ -29,7 +29,9 @@
     "docs/roadmaps/FINTECH_CORE_CRYPTO_MODULE_01_ROADMAP.md",
     "src/platform/FinTechCore/README.md",
     "src/platform/FinTechCore/manifest.json",
-    "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md"
+    "docs/architecture/ORCHESTRATORS_AND_SCORING_ENGINES.md",
+    "tests/unit/governanceControlPlane.test.ts",
+    "tests/unit/sc2GlobalSingleDispatcher.test.ts"
   ],
   "protectedExistingAuthorities": [
     "ADR-0087 / ScoringModelRegistry / ScoringDispatcher",
@@ -44,7 +46,10 @@
     "mainAtStart": "571de76e4d5f1d33460bf129d2231885dfde9584",
     "pr483Merged": true,
     "openPullRequestsAtStart": 0,
-    "directOpenPrFileOverlap": false
+    "directOpenPrFileOverlap": false,
+    "historicalFintechArchitectureReportsClassifiedNonAuthorizing": true,
+    "canonicalCompatibilityRouterShadowsLegacyCryptoHandlers": true,
+    "legacyUnboundOrderIntentV1ClassifiedNonCanonical": true
   },
   "separateFollowUp": {
     "workItem": "Meme Coin and DeFi Model Supersession",
@@ -54,7 +59,14 @@
   "securityMutationBoundary": {
     "runtimeSecurityMutationAuthorized": false,
     "finding": "FINTECH_CORE_OPERATING_MODE_POLICY currently projects GUARDED_LIVE/PRODUCTION capabilities while FT-6B real execution remains hard-blocked.",
-    "rule": "Document and test remediation proposal only until explicit Owner approval for the security/execution-relevant code mutation."
+    "proposedFailClosedState": {
+      "RESEARCH": "real=false,simulated=false,newOrders=false",
+      "PAPER": "real=false,simulated=true,newOrders=true",
+      "GUARDED_LIVE": "real=false,simulated=false,newOrders=false",
+      "PRODUCTION": "real=false,simulated=false,newOrders=false",
+      "EMERGENCY": "real=false,simulated=false,newOrders=false"
+    },
+    "rule": "No runtime security/execution mutation until explicit Owner approval."
   },
   "releaseCondition": "Coordination metadata is released when this supersession is merged, closed, superseded or abandoned."
 }
