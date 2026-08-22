@@ -2,6 +2,7 @@ export * from './CoreContracts';
 export * from './CoreModuleRegistry';
 export * from './CoreEngine';
 export * from './CryptoModuleContracts';
+export * from './Financial/FixedPoint';
 export * from './Runtime/WorkflowStateMachine';
 export * from './Persistence/FinTechCorePersistencePort';
 export * from './PaperTrading/PaperTradingContracts';
